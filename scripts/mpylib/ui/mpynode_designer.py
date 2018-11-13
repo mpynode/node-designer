@@ -1308,7 +1308,7 @@ class NDInputAttrTree(QTreeWidget):
 
     ATTR_CATEGORY = "input"
     
-    REMOVE_CONNECTIONS_FUNC = "removeIntputConnections"
+    REMOVE_CONNECTIONS_FUNC = "removeInputConnections"
     
     NEW_ATTR_TYPES = MPyNode.listValidInputTypes()
     ATTR_DEFAULT_TYPE = MPyNode.ATTR_TYPE_FLOAT
@@ -1396,7 +1396,7 @@ class NDInputAttrTree(QTreeWidget):
                 attr_name = item.text(0).split()[0]
 
                 try:
-                    func = getattr(self._py_node, self.REMOVE_ATTR_FUNC_NAME)
+                    func = getattr(self._py_node, self.REMOVE_CONNECTIONS_FUNC)
                     func(attr_name)
 
                 except Exception, err:
