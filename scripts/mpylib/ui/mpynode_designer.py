@@ -79,7 +79,7 @@ MEL_ATTR_TYPE_MAP = {"bool":MPyNode.ATTR_TYPE_BOOL,
 
 class NDMainWindow(QMayaWindow):
 
-    VERSION = "0.1.4"
+    VERSION = "1.0.1b1"
     TITLE = "Node Designer " + VERSION
 
     USES_SCENE_OPENED = True
@@ -1813,6 +1813,8 @@ class NDConnectInputAttrDialog(QDialog):
                     attr_item.setText(0, attr)
                     attr_item.setText(1, attr_type)
                     self._list_widget.addTopLevelItem(attr_item)
+                    
+        self._list_widget.setColumnWidth(0, 160)
 
 
     def _buildAttrList(self):
