@@ -1,0 +1,1762 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>mpylib.nodes package &#8212; MPyNode 1.0 documentation</title>
+    <link rel="stylesheet" href="_static/css/adctheme.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="top" title="MPyNode 1.0 documentation" href="index.html" />
+    <link media="only screen and (max-device-width: 480px)" href="_static/css/mobile.css" type="text/css" rel="stylesheet" /> 
+  </head><body>
+<div id="docstitle">
+    <p>MPyNode 1.0 documentation</p>
+</div>
+<div id="header">
+    <div id="title"><h1>mpylib.nodes package</h1></div>
+    <ul id="headerButtons">
+        <li id="toc_button"><div class="headerButton"><a href="#">Table of Contents</a></div></li>
+        <li id="page_buttons">
+            <div class="headerButton"><a href="genindex.html" title="General Index" accesskey="I">index</a></div>
+            <div class="headerButton"><a href="py-modindex.html" title="Python Module Index" >modules</a></div>
+        </li>
+    </ul>
+</div>
+
+<div id="sphinxsidebar">
+  <div class="sphinxsidebarwrapper">
+        <ul><li class="toctree-l1"><a href="index.html">Main Page</a></li></ul>
+        
+      <h3>This Page</h3>
+      <ul class="this-page-menu">
+        <li><a href="_sources/mpylib.nodes.rst.txt"
+               rel="nofollow">Show Source</a></li>
+      </ul>
+    <div id="searchbox" style="display: none">
+        <form class="search" action="search.html" method="get">
+                        <div class="search-wrapper">
+                        <input type="submit" value="" class="search-left"/>
+                        <input class="prettysearch" type="text" name="q" size="18" title="Enter search terms or a module, class or function name."/>
+                        <span class="search-right">&nbsp;</span>
+                        </div>
+          <input type="hidden" name="check_keywords" value="yes" />
+          <input type="hidden" name="area" value="default" />
+        </form>
+    </div>
+    <script type="text/javascript">$('#searchbox').show(0);</script>
+  </div>
+</div>
+
+
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="mpylib-nodes-package">
+<h1>mpylib.nodes package<a class="headerlink" href="#mpylib-nodes-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-mpylib.nodes.mpynode">
+<span id="mpylib-nodes-mpynode-module"></span><h2>mpylib.nodes.mpynode module<a class="headerlink" href="#module-mpylib.nodes.mpynode" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="mpylib.nodes.mpynode.MPyNode">
+<em class="property">class </em><code class="descclassname">mpylib.nodes.mpynode.</code><code class="descname">MPyNode</code><span class="sig-paren">(</span><em>node=None</em>, <em>name=None</em>, <em>exp_str=None</em>, <em>input_map=None</em>, <em>output_map=None</em>, <em>stored_var_map=None</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">mpylib._base.mnode.MNode</span></code></p>
+<p>Universal Python API node</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Attributes:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>INIT_ATTRS</strong></dt>
+<dd></dd>
+<dt><strong>INIT_EXPRESSION_STR</strong></dt>
+<dd></dd>
+<dt><strong>INIT_INPUT_ATTRS</strong></dt>
+<dd></dd>
+<dt><strong>INIT_OUTPUT_ATTRS</strong></dt>
+<dd></dd>
+<dt><strong>INIT_STORED_VARS</strong></dt>
+<dd></dd>
+<dt><strong>PLUGIN_DIR</strong></dt>
+<dd></dd>
+<dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">apiTypeStr</span></code></dt>
+<dd><p class="first last">(readonly) String containing the object’s type name.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Methods</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">DAG_FN_CLASS</span></code></td>
+<td>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">OpenMaya.MFnDagNode</span></code></td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">DG_FN_CLASS</span></code></td>
+<td>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">OpenMaya.MFnDependencyNode</span></code></td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">NODE_LIST_CLASS</span></code></td>
+<td>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">mpylib._base.mnode.MNodeList</span></code></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#mpylib.nodes.mpynode.MPyNode.PY_TYPE_ANGLE" title="mpylib.nodes.mpynode.MPyNode.PY_TYPE_ANGLE"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PY_TYPE_ANGLE</span></code></a></td>
+<td>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">__builtin__.float</span></code></td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#mpylib.nodes.mpynode.MPyNode.PY_TYPE_BOOL" title="mpylib.nodes.mpynode.MPyNode.PY_TYPE_BOOL"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PY_TYPE_BOOL</span></code></a></td>
+<td>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">__builtin__.bool</span></code></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#mpylib.nodes.mpynode.MPyNode.PY_TYPE_COLOR" title="mpylib.nodes.mpynode.MPyNode.PY_TYPE_COLOR"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PY_TYPE_COLOR</span></code></a></td>
+<td>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">__builtin__.list</span></code></td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#mpylib.nodes.mpynode.MPyNode.PY_TYPE_ENUM" title="mpylib.nodes.mpynode.MPyNode.PY_TYPE_ENUM"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PY_TYPE_ENUM</span></code></a></td>
+<td>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">__builtin__.int</span></code></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#mpylib.nodes.mpynode.MPyNode.PY_TYPE_EULER" title="mpylib.nodes.mpynode.MPyNode.PY_TYPE_EULER"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PY_TYPE_EULER</span></code></a></td>
+<td>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">__builtin__.list</span></code></td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#mpylib.nodes.mpynode.MPyNode.PY_TYPE_FLOAT" title="mpylib.nodes.mpynode.MPyNode.PY_TYPE_FLOAT"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PY_TYPE_FLOAT</span></code></a></td>
+<td>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">__builtin__.float</span></code></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#mpylib.nodes.mpynode.MPyNode.PY_TYPE_INT" title="mpylib.nodes.mpynode.MPyNode.PY_TYPE_INT"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PY_TYPE_INT</span></code></a></td>
+<td>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">__builtin__.int</span></code></td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#mpylib.nodes.mpynode.MPyNode.PY_TYPE_MATRIX" title="mpylib.nodes.mpynode.MPyNode.PY_TYPE_MATRIX"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PY_TYPE_MATRIX</span></code></a></td>
+<td>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">__builtin__.list</span></code></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#mpylib.nodes.mpynode.MPyNode.PY_TYPE_PY" title="mpylib.nodes.mpynode.MPyNode.PY_TYPE_PY"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PY_TYPE_PY</span></code></a></td>
+<td>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">__builtin__.str</span></code></td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#mpylib.nodes.mpynode.MPyNode.PY_TYPE_STRING" title="mpylib.nodes.mpynode.MPyNode.PY_TYPE_STRING"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PY_TYPE_STRING</span></code></a></td>
+<td>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">__builtin__.str</span></code></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#mpylib.nodes.mpynode.MPyNode.PY_TYPE_TIME" title="mpylib.nodes.mpynode.MPyNode.PY_TYPE_TIME"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PY_TYPE_TIME</span></code></a></td>
+<td>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">__builtin__.float</span></code></td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#mpylib.nodes.mpynode.MPyNode.PY_TYPE_VECTOR" title="mpylib.nodes.mpynode.MPyNode.PY_TYPE_VECTOR"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PY_TYPE_VECTOR</span></code></a></td>
+<td>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">__builtin__.list</span></code></td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">addAttr</span></code>([long_name,&nbsp;attr_type])</td>
+<td>Adds an attribute of the given long name and given type to the node.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#mpylib.nodes.mpynode.MPyNode.addInputAttr" title="mpylib.nodes.mpynode.MPyNode.addInputAttr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">addInputAttr</span></code></a>(long_name,&nbsp;attr_type[,&nbsp;is_array])</td>
+<td>Adds an input attribute of the given long name and given type to the node.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">addMenuCmd</span></code>(ui_name,&nbsp;cmd_str)</td>
+<td>Add a context sensitive making menu to this node.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#mpylib.nodes.mpynode.MPyNode.addOutputAttr" title="mpylib.nodes.mpynode.MPyNode.addOutputAttr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">addOutputAttr</span></code></a>(long_name,&nbsp;attr_type[,&nbsp;is_array])</td>
+<td>Adds an output attribute of the given long name and given type to the node.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#mpylib.nodes.mpynode.MPyNode.addStoredVariable" title="mpylib.nodes.mpynode.MPyNode.addStoredVariable"><code class="xref py py-obj docutils literal notranslate"><span class="pre">addStoredVariable</span></code></a>(var_name)</td>
+<td>Used to flag an instance property on the node for storage on disc when the file is saved.</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">apiType</span></code></td>
+<td>Returns the function set type for the object.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">applyAttrMap</span></code>(attr_map[,&nbsp;skip_missing,&nbsp;…])</td>
+<td>Apply the attribute values in the given dictionary object to this node.</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">attachMenuItems</span></code>(parent_menu)</td>
+<td>This method attaches any defined menu cmds on this node to the given Maya menu item.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">attributeQuery</span></code>(attr_name,&nbsp;**kargs)</td>
+<td>Query information about the given attribute.</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">bakeResults</span></code>(*args,&nbsp;**kargs)</td>
+<td>Run bakeResults on this node with the given options</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">capitalize</span></code>([include_namespaces])</td>
+<td>String operartion just like str.capitalize().</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">connectAttr</span></code>(src_attr,&nbsp;dst_node,&nbsp;dst_attr,&nbsp;…)</td>
+<td>Connects the given attribute of this node to the given node and attribute.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">count</span></code>(sub[,&nbsp;start,&nbsp;end,&nbsp;include_namespaces])</td>
+<td>String operartion just like str.count().</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">createNode</span></code>(node_type,&nbsp;**kargs)</td>
+<td>Wrapper class method for maya.cmds.createNode thats returns a MNode object instead of a string name</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">delete</span></code>()</td>
+<td>Delete the node from the scene.</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">deleteAttr</span></code>(attr_name)</td>
+<td>Delete the attr with the given name from this node.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#mpylib.nodes.mpynode.MPyNode.deleteInputAttr" title="mpylib.nodes.mpynode.MPyNode.deleteInputAttr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">deleteInputAttr</span></code></a>(attr_name)</td>
+<td>Removes the given input attribute from the node.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#mpylib.nodes.mpynode.MPyNode.deleteOutputAttr" title="mpylib.nodes.mpynode.MPyNode.deleteOutputAttr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">deleteOutputAttr</span></code></a>(attr_name)</td>
+<td>Removes the given output attribute from the node.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">duplicate</span></code>(**kargs)</td>
+<td>Duplicate the node with the given options</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">endswith</span></code>(suffix[,&nbsp;start,&nbsp;end,&nbsp;…])</td>
+<td>String operartion just like str.endswith().</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#mpylib.nodes.mpynode.MPyNode.exportToFile" title="mpylib.nodes.mpynode.MPyNode.exportToFile"><code class="xref py py-obj docutils literal notranslate"><span class="pre">exportToFile</span></code></a>(file_path[,&nbsp;use_binary])</td>
+<td>Export this node to an external file</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">find</span></code>(sub[,&nbsp;start,&nbsp;end,&nbsp;include_namespaces])</td>
+<td>String operartion just like str.find().</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">getAttr</span></code>(attr_name,&nbsp;**kargs)</td>
+<td>Returns the value of the given attr on this node.</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">getAttrMap</span></code>(*args,&nbsp;**kargs)</td>
+<td>Returns an OrderedDict of attributes as keys and their values as values.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">getBasename</span></code>()</td>
+<td>Returns the string name of this node any namespaces.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#mpylib.nodes.mpynode.MPyNode.getExpression" title="mpylib.nodes.mpynode.MPyNode.getExpression"><code class="xref py py-obj docutils literal notranslate"><span class="pre">getExpression</span></code></a>()</td>
+<td>Returns the current python expression within the node.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">getHashCode</span></code>()</td>
+<td>Returns a hash code for the internal Maya object referenced by the MObject within this MNode</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">getInheritedNodeTypes</span></code>()</td>
+<td>Returns the node classes that this node type is inherited from.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#mpylib.nodes.mpynode.MPyNode.getInputAttrMap" title="mpylib.nodes.mpynode.MPyNode.getInputAttrMap"><code class="xref py py-obj docutils literal notranslate"><span class="pre">getInputAttrMap</span></code></a>()</td>
+<td>Returns a dictionary with all input attr names as keys and attribute data as values.</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">getMObject</span></code>()</td>
+<td>Returns the MObject of this node</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">getMObjectHandle</span></code>()</td>
+<td>Returns the MObjectHandle of this node</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">getMenuCmds</span></code>()</td>
+<td>Return all custom marking menu items on this node.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">getMessageAttr</span></code>(attr_name)</td>
+<td>Returns the node that is connected to the given message attribute.</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">getName</span></code>()</td>
+<td>Returns the string name of this node.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">getNamespace</span></code>()</td>
+<td>Return the namespace this node belongs to, if any.</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">getNextAttr</span></code>(attr_prefix[,&nbsp;start_num,&nbsp;max_search])</td>
+<td>Finds the next available attribute that is available with the given prefix.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">getObjectType</span></code>()</td>
+<td>Returns the string node type of this node.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#mpylib.nodes.mpynode.MPyNode.getOutputAttrMap" title="mpylib.nodes.mpynode.MPyNode.getOutputAttrMap"><code class="xref py py-obj docutils literal notranslate"><span class="pre">getOutputAttrMap</span></code></a>()</td>
+<td>Returns a dictionary with all output attr names as keys and attribute data as values.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">getPath</span></code>()</td>
+<td>Returns the full path name of this node.</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">getPluginName</span></code>()</td>
+<td>Return the name of the plugin that defines this node, if any</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">getPlugs</span></code>()</td>
+<td>Returns the string names of all attributes that have incoming connections.</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">getSetAttrCmds</span></code>(attr_name[,&nbsp;long_names,&nbsp;…])</td>
+<td>Returns an tuple of strings containing mel setAttr commands for given attribute and all of its descendent attrs.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#mpylib.nodes.mpynode.MPyNode.getStoredVariables" title="mpylib.nodes.mpynode.MPyNode.getStoredVariables"><code class="xref py py-obj docutils literal notranslate"><span class="pre">getStoredVariables</span></code></a>()</td>
+<td>Returns the nodes “stored variables” as a dictionary.</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">hasAttr</span></code>(attr_name[,&nbsp;parent_attr])</td>
+<td>Returns whether this node has an attribute with the given name.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">hasFn</span></code></td>
+<td>Tests whether object is compatible with the specified function set.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#mpylib.nodes.mpynode.MPyNode.hasStoredVariable" title="mpylib.nodes.mpynode.MPyNode.hasStoredVariable"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hasStoredVariable</span></code></a>(var_name)</td>
+<td>Returns whether the node has an instance property with the given name that has been flagged for storage on disc.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">hasUniqueName</span></code>()</td>
+<td>Indicates whether or not this node’s name is unique within the scene.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#mpylib.nodes.mpynode.MPyNode.importFromFile" title="mpylib.nodes.mpynode.MPyNode.importFromFile"><code class="xref py py-obj docutils literal notranslate"><span class="pre">importFromFile</span></code></a>(file_path)</td>
+<td>Import a MPyNode from an external file.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">index</span></code>(sub[,&nbsp;start,&nbsp;end,&nbsp;include_namespaces])</td>
+<td>String operartion just like str.index().</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">isFromReferencedFile</span></code>()</td>
+<td>Indicates whether or not this node came from a referenced file.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">isLocked</span></code>()</td>
+<td>Indicates whether or not this node is locked.</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">isNull</span></code></td>
+<td>Tests whether there is an internal Maya object.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">isValid</span></code>()</td>
+<td>Tests whether this node is still valid.</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">isalnum</span></code>([include_namespaces])</td>
+<td>String operartion just like str.isalnum().</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">isalpha</span></code>([include_namespaces])</td>
+<td>String operartion just like str.isalpha().</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">islower</span></code>([include_namespaces])</td>
+<td>String operartion just like str.islower().</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">istitle</span></code>([include_namespaces])</td>
+<td>String operartion just like str.istitle().</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">isupper</span></code>([include_namespaces])</td>
+<td>String operartion just like str.isupper().</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">join</span></code>(iterable[,&nbsp;include_namespaces])</td>
+<td>String operartion just like str.join().</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">listAttr</span></code>(*args,&nbsp;**kargs)</td>
+<td>List the atributes on this node</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">listConnections</span></code>([attr_name])</td>
+<td>List connections to this node</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#mpylib.nodes.mpynode.MPyNode.listInputAttrs" title="mpylib.nodes.mpynode.MPyNode.listInputAttrs"><code class="xref py py-obj docutils literal notranslate"><span class="pre">listInputAttrs</span></code></a>()</td>
+<td>Returns the names of the node’s input attributes</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#mpylib.nodes.mpynode.MPyNode.listOutputAttrs" title="mpylib.nodes.mpynode.MPyNode.listOutputAttrs"><code class="xref py py-obj docutils literal notranslate"><span class="pre">listOutputAttrs</span></code></a>()</td>
+<td>Returns the names of the node’s output attributes</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#mpylib.nodes.mpynode.MPyNode.listStoredVariables" title="mpylib.nodes.mpynode.MPyNode.listStoredVariables"><code class="xref py py-obj docutils literal notranslate"><span class="pre">listStoredVariables</span></code></a>()</td>
+<td>Returns the names of the node’s internally stored variables</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#mpylib.nodes.mpynode.MPyNode.listValidInputTypes" title="mpylib.nodes.mpynode.MPyNode.listValidInputTypes"><code class="xref py py-obj docutils literal notranslate"><span class="pre">listValidInputTypes</span></code></a>()</td>
+<td>Class method returns the types of supported input attributes</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#mpylib.nodes.mpynode.MPyNode.listValidOutputTypes" title="mpylib.nodes.mpynode.MPyNode.listValidOutputTypes"><code class="xref py py-obj docutils literal notranslate"><span class="pre">listValidOutputTypes</span></code></a>()</td>
+<td>Class method returns the types of supported output attributes</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">lower</span></code>([include_namespaces])</td>
+<td>String operartion just like str.lower().</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#mpylib.nodes.mpynode.MPyNode.ls" title="mpylib.nodes.mpynode.MPyNode.ls"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ls</span></code></a>(\*args,&nbsp;\*\*kargs)</td>
+<td>class method - returns the nodes of type ‘mPyNode’ in the current scene.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">lstrip</span></code>([chars,&nbsp;include_namespaces])</td>
+<td>String operartion just like str.lstrip().</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">partition</span></code>(sep[,&nbsp;include_namespaces])</td>
+<td>String operartion just like str.partition().</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">removeInputConnections</span></code>(attr_name)</td>
+<td>Remove any incoming connections to the attribute with the given name.</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">removeOutputConnections</span></code>(attr_name)</td>
+<td>Remove any output connections from the attribute with the given name.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#mpylib.nodes.mpynode.MPyNode.removeStoredVariable" title="mpylib.nodes.mpynode.MPyNode.removeStoredVariable"><code class="xref py py-obj docutils literal notranslate"><span class="pre">removeStoredVariable</span></code></a>(var_name)</td>
+<td>Removes the given variable name from the list of variables that will stored to file</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">rename</span></code>(new_name,&nbsp;**kargs)</td>
+<td>Rename this node</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">replace</span></code>(old,&nbsp;new[,&nbsp;count,&nbsp;include_namespaces])</td>
+<td>String operartion just like str.replace().</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">rfind</span></code>(sub[,&nbsp;start,&nbsp;end,&nbsp;include_namespaces])</td>
+<td>String operartion just like str.rfind().</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">rindex</span></code>(sub[,&nbsp;start,&nbsp;end,&nbsp;include_namespaces])</td>
+<td>String operartion just like str.rindex().</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">rpartition</span></code>(sep[,&nbsp;include_namespaces])</td>
+<td>String operartion just like str.rpartition().</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">rsplit</span></code>(sep[,&nbsp;maxsplit,&nbsp;include_namespaces])</td>
+<td>String operartion just like str.rsplit().</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">rstrip</span></code>([chars,&nbsp;include_namespaces])</td>
+<td>String operartion just like str.lstrip().</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">select</span></code>(**kargs)</td>
+<td>Selects this node with the given options.</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">setAttr</span></code>(attr_name,&nbsp;*args,&nbsp;**kargs)</td>
+<td>Sets the given attr to the given value</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">setAttrsFromMap</span></code>(attr_map[,&nbsp;skip_missing])</td>
+<td>Set attribute values from a dictionary object that has attribute names as keys and attribute values as values</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">setDrivenKeyframe</span></code>(attr,&nbsp;driver,&nbsp;driver_attr,&nbsp;…)</td>
+<td>Sets a set driven key on the current node using the given options</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#mpylib.nodes.mpynode.MPyNode.setExpression" title="mpylib.nodes.mpynode.MPyNode.setExpression"><code class="xref py py-obj docutils literal notranslate"><span class="pre">setExpression</span></code></a>(exp_str)</td>
+<td>Set the expression within the node to the given string of python code.</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">setMessageAttr</span></code>(attr_name,&nbsp;node[,&nbsp;lock])</td>
+<td>Connects the given node to the given message attribute on this node.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#mpylib.nodes.mpynode.MPyNode.setStoredVariable" title="mpylib.nodes.mpynode.MPyNode.setStoredVariable"><code class="xref py py-obj docutils literal notranslate"><span class="pre">setStoredVariable</span></code></a>(var_name,&nbsp;var_val)</td>
+<td>Used to set an instance property on the node for use in the expression and storage on disc when the file is saved.</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">setStringAttr</span></code>(attr_name,&nbsp;val,&nbsp;**kargs)</td>
+<td>Sets the given value on the given string attr.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#mpylib.nodes.mpynode.MPyNode.setVariable" title="mpylib.nodes.mpynode.MPyNode.setVariable"><code class="xref py py-obj docutils literal notranslate"><span class="pre">setVariable</span></code></a>(var_name,&nbsp;var_val)</td>
+<td>Used to set an instance property on the node for use in the expression.</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">split</span></code>(sep[,&nbsp;maxsplit,&nbsp;include_namespaces])</td>
+<td>String operartion just like str.split().</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">startswith</span></code>(prefix[,&nbsp;start,&nbsp;end,&nbsp;…])</td>
+<td>String operartion just like str.startswith().</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">strip</span></code>([chars,&nbsp;include_namespaces])</td>
+<td>String operartion just like str.strip().</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">swapcase</span></code>([include_namespaces])</td>
+<td>String operartion just like str.swapcase().</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">upper</span></code>([include_namespaces])</td>
+<td>String operartion just like str.upper().</td>
+</tr>
+</tbody>
+</table>
+<table border="1" class="docutils">
+<colgroup>
+<col width="64%" />
+<col width="36%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>getAddAttrCmd</strong></td>
+<td>&#160;</td>
+</tr>
+<tr class="row-even"><td><strong>getAddAttrMaps</strong></td>
+<td>&#160;</td>
+</tr>
+</tbody>
+</table>
+<dl class="attribute">
+<dt id="mpylib.nodes.mpynode.MPyNode.ASCII_FILE_EXT">
+<code class="descname">ASCII_FILE_EXT</code><em class="property"> = 'mpya'</em><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.ASCII_FILE_EXT" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib.nodes.mpynode.MPyNode.ATTR_DEFAULT_VAL_TYPES">
+<code class="descname">ATTR_DEFAULT_VAL_TYPES</code><em class="property"> = ('int', 'float', 'bool', 'time', 'angle', 'enum')</em><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.ATTR_DEFAULT_VAL_TYPES" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib.nodes.mpynode.MPyNode.ATTR_MAP_ARRAY_KEY">
+<code class="descname">ATTR_MAP_ARRAY_KEY</code><em class="property"> = 'is_array'</em><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.ATTR_MAP_ARRAY_KEY" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib.nodes.mpynode.MPyNode.ATTR_MAP_TYPE_KEY">
+<code class="descname">ATTR_MAP_TYPE_KEY</code><em class="property"> = 'attr_type'</em><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.ATTR_MAP_TYPE_KEY" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib.nodes.mpynode.MPyNode.ATTR_TO_PY_MAP">
+<code class="descname">ATTR_TO_PY_MAP</code><em class="property"> = {'angle': &lt;type 'float'&gt;, 'bool': &lt;type 'bool'&gt;, 'color': &lt;type 'list'&gt;, 'enum': &lt;type 'int'&gt;, 'euler': &lt;type 'list'&gt;, 'float': &lt;type 'float'&gt;, 'int': &lt;type 'int'&gt;, 'matrix': &lt;type 'list'&gt;, 'python': &lt;type 'str'&gt;, 'string': &lt;type 'str'&gt;, 'time': &lt;type 'float'&gt;, 'vector': &lt;type 'list'&gt;}</em><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.ATTR_TO_PY_MAP" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib.nodes.mpynode.MPyNode.ATTR_TYPE_ANGLE">
+<code class="descname">ATTR_TYPE_ANGLE</code><em class="property"> = 'angle'</em><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.ATTR_TYPE_ANGLE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib.nodes.mpynode.MPyNode.ATTR_TYPE_BOOL">
+<code class="descname">ATTR_TYPE_BOOL</code><em class="property"> = 'bool'</em><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.ATTR_TYPE_BOOL" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib.nodes.mpynode.MPyNode.ATTR_TYPE_COLOR">
+<code class="descname">ATTR_TYPE_COLOR</code><em class="property"> = 'color'</em><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.ATTR_TYPE_COLOR" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib.nodes.mpynode.MPyNode.ATTR_TYPE_ENUM">
+<code class="descname">ATTR_TYPE_ENUM</code><em class="property"> = 'enum'</em><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.ATTR_TYPE_ENUM" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib.nodes.mpynode.MPyNode.ATTR_TYPE_EULER">
+<code class="descname">ATTR_TYPE_EULER</code><em class="property"> = 'euler'</em><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.ATTR_TYPE_EULER" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib.nodes.mpynode.MPyNode.ATTR_TYPE_FLOAT">
+<code class="descname">ATTR_TYPE_FLOAT</code><em class="property"> = 'float'</em><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.ATTR_TYPE_FLOAT" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib.nodes.mpynode.MPyNode.ATTR_TYPE_INT">
+<code class="descname">ATTR_TYPE_INT</code><em class="property"> = 'int'</em><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.ATTR_TYPE_INT" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib.nodes.mpynode.MPyNode.ATTR_TYPE_MATRIX">
+<code class="descname">ATTR_TYPE_MATRIX</code><em class="property"> = 'matrix'</em><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.ATTR_TYPE_MATRIX" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib.nodes.mpynode.MPyNode.ATTR_TYPE_MESH">
+<code class="descname">ATTR_TYPE_MESH</code><em class="property"> = 'mesh'</em><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.ATTR_TYPE_MESH" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib.nodes.mpynode.MPyNode.ATTR_TYPE_NURBS_CURVE">
+<code class="descname">ATTR_TYPE_NURBS_CURVE</code><em class="property"> = 'nurbsCurve'</em><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.ATTR_TYPE_NURBS_CURVE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib.nodes.mpynode.MPyNode.ATTR_TYPE_NURBS_SURFACE">
+<code class="descname">ATTR_TYPE_NURBS_SURFACE</code><em class="property"> = 'nurbsSurface'</em><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.ATTR_TYPE_NURBS_SURFACE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib.nodes.mpynode.MPyNode.ATTR_TYPE_PY">
+<code class="descname">ATTR_TYPE_PY</code><em class="property"> = 'python'</em><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.ATTR_TYPE_PY" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib.nodes.mpynode.MPyNode.ATTR_TYPE_STRING">
+<code class="descname">ATTR_TYPE_STRING</code><em class="property"> = 'string'</em><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.ATTR_TYPE_STRING" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib.nodes.mpynode.MPyNode.ATTR_TYPE_TIME">
+<code class="descname">ATTR_TYPE_TIME</code><em class="property"> = 'time'</em><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.ATTR_TYPE_TIME" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib.nodes.mpynode.MPyNode.ATTR_TYPE_VECTOR">
+<code class="descname">ATTR_TYPE_VECTOR</code><em class="property"> = 'vector'</em><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.ATTR_TYPE_VECTOR" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib.nodes.mpynode.MPyNode.BINARY_FILE_EXT">
+<code class="descname">BINARY_FILE_EXT</code><em class="property"> = 'mpyb'</em><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.BINARY_FILE_EXT" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib.nodes.mpynode.MPyNode.CODE_CLASS">
+<code class="descname">CODE_CLASS</code><em class="property"> = 'MPyNode'</em><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.CODE_CLASS" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib.nodes.mpynode.MPyNode.CODE_CLASS_MODULE">
+<code class="descname">CODE_CLASS_MODULE</code><em class="property"> = 'pylib.nodes'</em><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.CODE_CLASS_MODULE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib.nodes.mpynode.MPyNode.CODE_COMPUTE_DEF">
+<code class="descname">CODE_COMPUTE_DEF</code><em class="property"> = '    def _compute(self):\n'</em><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.CODE_COMPUTE_DEF" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib.nodes.mpynode.MPyNode.CODE_COMPUTE_FUNC_NAME">
+<code class="descname">CODE_COMPUTE_FUNC_NAME</code><em class="property"> = '_compute'</em><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.CODE_COMPUTE_FUNC_NAME" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib.nodes.mpynode.MPyNode.CODE_IMPORT_STR">
+<code class="descname">CODE_IMPORT_STR</code><em class="property"> = 'from pylib.nodes import MPyNode\n\n\n'</em><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.CODE_IMPORT_STR" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib.nodes.mpynode.MPyNode.CODE_INIT_EXPRESSION_STR">
+<code class="descname">CODE_INIT_EXPRESSION_STR</code><em class="property"> = ''</em><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.CODE_INIT_EXPRESSION_STR" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib.nodes.mpynode.MPyNode.CODE_INIT_PROPERTIES">
+<code class="descname">CODE_INIT_PROPERTIES</code><em class="property"> = {'INIT_INPUT_ATTRS': None, 'INIT_INPUT_ATTR_ARGS': None, 'INIT_OUTPUT_ATTRS': None, 'INIT_OUTPUT_ATTR_ARGS': None}</em><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.CODE_INIT_PROPERTIES" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib.nodes.mpynode.MPyNode.CODE_TAB">
+<code class="descname">CODE_TAB</code><em class="property"> = '    '</em><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.CODE_TAB" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib.nodes.mpynode.MPyNode.ENUM_ATTR_TYPES">
+<code class="descname">ENUM_ATTR_TYPES</code><em class="property"> = ('enum',)</em><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.ENUM_ATTR_TYPES" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib.nodes.mpynode.MPyNode.EXPRESSION_ATTR_NAME">
+<code class="descname">EXPRESSION_ATTR_NAME</code><em class="property"> = 'expression'</em><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.EXPRESSION_ATTR_NAME" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib.nodes.mpynode.MPyNode.INIT_ATTRS">
+<code class="descname">INIT_ATTRS</code><em class="property"> = None</em><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.INIT_ATTRS" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib.nodes.mpynode.MPyNode.INIT_EXPRESSION_STR">
+<code class="descname">INIT_EXPRESSION_STR</code><em class="property"> = None</em><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.INIT_EXPRESSION_STR" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib.nodes.mpynode.MPyNode.INIT_INPUT_ATTRS">
+<code class="descname">INIT_INPUT_ATTRS</code><em class="property"> = None</em><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.INIT_INPUT_ATTRS" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib.nodes.mpynode.MPyNode.INIT_OUTPUT_ATTRS">
+<code class="descname">INIT_OUTPUT_ATTRS</code><em class="property"> = None</em><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.INIT_OUTPUT_ATTRS" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib.nodes.mpynode.MPyNode.INIT_STORED_VARS">
+<code class="descname">INIT_STORED_VARS</code><em class="property"> = None</em><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.INIT_STORED_VARS" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib.nodes.mpynode.MPyNode.INPUT_TYPES_ANGLE">
+<code class="descname">INPUT_TYPES_ANGLE</code><em class="property"> = ('long', 'short', 'byte', 'float', 'double', 'doubleAngle', 'doubleLinear', 'time', 'bool', 'enum')</em><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.INPUT_TYPES_ANGLE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib.nodes.mpynode.MPyNode.INPUT_TYPES_BOOL">
+<code class="descname">INPUT_TYPES_BOOL</code><em class="property"> = ('long', 'short', 'byte', 'float', 'double', 'doubleAngle', 'doubleLinear', 'time', 'bool', 'enum')</em><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.INPUT_TYPES_BOOL" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib.nodes.mpynode.MPyNode.INPUT_TYPES_COLOR">
+<code class="descname">INPUT_TYPES_COLOR</code><em class="property"> = ('float3', 'double3', 'reflectance', 'spectrum')</em><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.INPUT_TYPES_COLOR" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib.nodes.mpynode.MPyNode.INPUT_TYPES_ENUM">
+<code class="descname">INPUT_TYPES_ENUM</code><em class="property"> = ('long', 'short', 'byte', 'float', 'double', 'doubleAngle', 'doubleLinear', 'time', 'bool', 'enum')</em><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.INPUT_TYPES_ENUM" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib.nodes.mpynode.MPyNode.INPUT_TYPES_EULER">
+<code class="descname">INPUT_TYPES_EULER</code><em class="property"> = ('float3', 'double3', 'reflectance', 'spectrum')</em><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.INPUT_TYPES_EULER" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib.nodes.mpynode.MPyNode.INPUT_TYPES_FLOAT">
+<code class="descname">INPUT_TYPES_FLOAT</code><em class="property"> = ('long', 'short', 'byte', 'float', 'double', 'doubleAngle', 'doubleLinear', 'time', 'bool', 'enum')</em><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.INPUT_TYPES_FLOAT" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib.nodes.mpynode.MPyNode.INPUT_TYPES_INT">
+<code class="descname">INPUT_TYPES_INT</code><em class="property"> = ('long', 'short', 'byte', 'float', 'double', 'doubleAngle', 'doubleLinear', 'time', 'bool', 'enum')</em><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.INPUT_TYPES_INT" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib.nodes.mpynode.MPyNode.INPUT_TYPES_MAP">
+<code class="descname">INPUT_TYPES_MAP</code><em class="property"> = {'angle': ('long', 'short', 'byte', 'float', 'double', 'doubleAngle', 'doubleLinear', 'time', 'bool', 'enum'), 'bool': ('long', 'short', 'byte', 'float', 'double', 'doubleAngle', 'doubleLinear', 'time', 'bool', 'enum'), 'color': ('float3', 'double3', 'reflectance', 'spectrum'), 'enum': ('long', 'short', 'byte', 'float', 'double', 'doubleAngle', 'doubleLinear', 'time', 'bool', 'enum'), 'euler': ('float3', 'double3', 'reflectance', 'spectrum'), 'float': ('long', 'short', 'byte', 'float', 'double', 'doubleAngle', 'doubleLinear', 'time', 'bool', 'enum'), 'int': ('long', 'short', 'byte', 'float', 'double', 'doubleAngle', 'doubleLinear', 'time', 'bool', 'enum'), 'matrix': ('matrix', 'fltMatrix'), 'mesh': ('mesh',), 'nurbsCurve': ('nurbsCurve',), 'nurbsSurface': ('nurbsSurface',), 'python': ('char', 'string'), 'string': ('char', 'string'), 'time': ('long', 'short', 'byte', 'float', 'double', 'doubleAngle', 'doubleLinear', 'time', 'bool', 'enum'), 'vector': ('float3', 'double3', 'reflectance', 'spectrum')}</em><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.INPUT_TYPES_MAP" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib.nodes.mpynode.MPyNode.INPUT_TYPES_MATRIX">
+<code class="descname">INPUT_TYPES_MATRIX</code><em class="property"> = ('matrix', 'fltMatrix')</em><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.INPUT_TYPES_MATRIX" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib.nodes.mpynode.MPyNode.INPUT_TYPES_MESH">
+<code class="descname">INPUT_TYPES_MESH</code><em class="property"> = ('mesh',)</em><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.INPUT_TYPES_MESH" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib.nodes.mpynode.MPyNode.INPUT_TYPES_NURBS_CURVE">
+<code class="descname">INPUT_TYPES_NURBS_CURVE</code><em class="property"> = ('nurbsCurve',)</em><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.INPUT_TYPES_NURBS_CURVE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib.nodes.mpynode.MPyNode.INPUT_TYPES_NURBS_SURFACE">
+<code class="descname">INPUT_TYPES_NURBS_SURFACE</code><em class="property"> = ('nurbsSurface',)</em><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.INPUT_TYPES_NURBS_SURFACE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib.nodes.mpynode.MPyNode.INPUT_TYPES_PY">
+<code class="descname">INPUT_TYPES_PY</code><em class="property"> = ('char', 'string')</em><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.INPUT_TYPES_PY" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib.nodes.mpynode.MPyNode.INPUT_TYPES_STRING">
+<code class="descname">INPUT_TYPES_STRING</code><em class="property"> = ('char', 'string')</em><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.INPUT_TYPES_STRING" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib.nodes.mpynode.MPyNode.INPUT_TYPES_TIME">
+<code class="descname">INPUT_TYPES_TIME</code><em class="property"> = ('long', 'short', 'byte', 'float', 'double', 'doubleAngle', 'doubleLinear', 'time', 'bool', 'enum')</em><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.INPUT_TYPES_TIME" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib.nodes.mpynode.MPyNode.INPUT_TYPES_VECTOR">
+<code class="descname">INPUT_TYPES_VECTOR</code><em class="property"> = ('float3', 'double3', 'reflectance', 'spectrum')</em><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.INPUT_TYPES_VECTOR" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib.nodes.mpynode.MPyNode.MATRIX_ATTR_TYPES">
+<code class="descname">MATRIX_ATTR_TYPES</code><em class="property"> = ('matrix', 'fltMatrix')</em><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.MATRIX_ATTR_TYPES" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib.nodes.mpynode.MPyNode.MESH_ATTR_TYPES">
+<code class="descname">MESH_ATTR_TYPES</code><em class="property"> = ('mesh',)</em><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.MESH_ATTR_TYPES" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib.nodes.mpynode.MPyNode.NEW_INPUT_ATTR_KARGS">
+<code class="descname">NEW_INPUT_ATTR_KARGS</code><em class="property"> = {'multi': False, 'readable': False, 'storable': True, 'writable': True}</em><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.NEW_INPUT_ATTR_KARGS" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib.nodes.mpynode.MPyNode.NEW_INPUT_TYPES">
+<code class="descname">NEW_INPUT_TYPES</code><em class="property"> = {'angle': 'doubleAngle', 'bool': 'bool', 'color': 'double3', 'enum': 'enum', 'euler': 'double3', 'float': 'double', 'int': 'long', 'matrix': 'matrix', 'mesh': 'mesh', 'nurbsCurve': 'nurbsCurve', 'nurbsSurface': 'nurbsSurface', 'python': 'string', 'string': 'string', 'time': 'time', 'vector': 'double3'}</em><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.NEW_INPUT_TYPES" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib.nodes.mpynode.MPyNode.NEW_OUTPUT_ATTR_KARGS">
+<code class="descname">NEW_OUTPUT_ATTR_KARGS</code><em class="property"> = {'multi': False, 'readable': True, 'storable': False, 'writable': False}</em><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.NEW_OUTPUT_ATTR_KARGS" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib.nodes.mpynode.MPyNode.NEW_OUTPUT_TYPES">
+<code class="descname">NEW_OUTPUT_TYPES</code><em class="property"> = {'angle': 'doubleAngle', 'bool': 'bool', 'color': 'double3', 'enum': 'enum', 'euler': 'double3', 'float': 'double', 'int': 'long', 'matrix': 'matrix', 'python': 'string', 'string': 'string', 'time': 'time', 'vector': 'double3'}</em><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.NEW_OUTPUT_TYPES" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib.nodes.mpynode.MPyNode.NODE_NUMERIC_TYPES">
+<code class="descname">NODE_NUMERIC_TYPES</code><em class="property"> = ('int', 'float', 'time', 'angle')</em><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.NODE_NUMERIC_TYPES" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib.nodes.mpynode.MPyNode.NODE_TYPE">
+<code class="descname">NODE_TYPE</code><em class="property"> = 'mPyNode'</em><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.NODE_TYPE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib.nodes.mpynode.MPyNode.NUMERIC_ATTR_TYPES">
+<code class="descname">NUMERIC_ATTR_TYPES</code><em class="property"> = ('long', 'short', 'byte', 'float', 'double', 'doubleAngle', 'doubleLinear', 'time', 'bool', 'enum')</em><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.NUMERIC_ATTR_TYPES" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib.nodes.mpynode.MPyNode.NURBS_CURVE_ATTR_TYPES">
+<code class="descname">NURBS_CURVE_ATTR_TYPES</code><em class="property"> = ('nurbsCurve',)</em><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.NURBS_CURVE_ATTR_TYPES" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib.nodes.mpynode.MPyNode.NURBS_SURFACE_ATTR_TYPES">
+<code class="descname">NURBS_SURFACE_ATTR_TYPES</code><em class="property"> = ('nurbsSurface',)</em><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.NURBS_SURFACE_ATTR_TYPES" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib.nodes.mpynode.MPyNode.OUTPUT_TYPES_ANGLE">
+<code class="descname">OUTPUT_TYPES_ANGLE</code><em class="property"> = ('long', 'short', 'byte', 'float', 'double', 'doubleAngle', 'doubleLinear', 'time', 'bool', 'enum')</em><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.OUTPUT_TYPES_ANGLE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib.nodes.mpynode.MPyNode.OUTPUT_TYPES_BOOL">
+<code class="descname">OUTPUT_TYPES_BOOL</code><em class="property"> = ('long', 'short', 'byte', 'float', 'double', 'doubleAngle', 'doubleLinear', 'time', 'bool', 'enum')</em><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.OUTPUT_TYPES_BOOL" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib.nodes.mpynode.MPyNode.OUTPUT_TYPES_COLOR">
+<code class="descname">OUTPUT_TYPES_COLOR</code><em class="property"> = ('float3', 'double3', 'reflectance', 'spectrum')</em><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.OUTPUT_TYPES_COLOR" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib.nodes.mpynode.MPyNode.OUTPUT_TYPES_ENUM">
+<code class="descname">OUTPUT_TYPES_ENUM</code><em class="property"> = ('long', 'short', 'byte', 'float', 'double', 'doubleAngle', 'doubleLinear', 'time', 'bool', 'enum')</em><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.OUTPUT_TYPES_ENUM" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib.nodes.mpynode.MPyNode.OUTPUT_TYPES_EULER">
+<code class="descname">OUTPUT_TYPES_EULER</code><em class="property"> = ('float3', 'double3', 'reflectance', 'spectrum')</em><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.OUTPUT_TYPES_EULER" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib.nodes.mpynode.MPyNode.OUTPUT_TYPES_FLOAT">
+<code class="descname">OUTPUT_TYPES_FLOAT</code><em class="property"> = ('long', 'short', 'byte', 'float', 'double', 'doubleAngle', 'doubleLinear', 'time', 'bool', 'enum')</em><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.OUTPUT_TYPES_FLOAT" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib.nodes.mpynode.MPyNode.OUTPUT_TYPES_INT">
+<code class="descname">OUTPUT_TYPES_INT</code><em class="property"> = ('long', 'short', 'byte', 'float', 'double', 'doubleAngle', 'doubleLinear', 'time', 'bool', 'enum')</em><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.OUTPUT_TYPES_INT" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib.nodes.mpynode.MPyNode.OUTPUT_TYPES_MAP">
+<code class="descname">OUTPUT_TYPES_MAP</code><em class="property"> = {'angle': ('long', 'short', 'byte', 'float', 'double', 'doubleAngle', 'doubleLinear', 'time', 'bool', 'enum'), 'bool': ('long', 'short', 'byte', 'float', 'double', 'doubleAngle', 'doubleLinear', 'time', 'bool', 'enum'), 'color': ('float3', 'double3', 'reflectance', 'spectrum'), 'enum': ('long', 'short', 'byte', 'float', 'double', 'doubleAngle', 'doubleLinear', 'time', 'bool', 'enum'), 'euler': ('float3', 'double3', 'reflectance', 'spectrum'), 'float': ('long', 'short', 'byte', 'float', 'double', 'doubleAngle', 'doubleLinear', 'time', 'bool', 'enum'), 'int': ('long', 'short', 'byte', 'float', 'double', 'doubleAngle', 'doubleLinear', 'time', 'bool', 'enum'), 'matrix': ('matrix', 'fltMatrix'), 'python': ('char', 'string'), 'string': ('char', 'string'), 'time': ('long', 'short', 'byte', 'float', 'double', 'doubleAngle', 'doubleLinear', 'time', 'bool', 'enum'), 'vector': ('float3', 'double3', 'reflectance', 'spectrum')}</em><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.OUTPUT_TYPES_MAP" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib.nodes.mpynode.MPyNode.OUTPUT_TYPES_MATRIX">
+<code class="descname">OUTPUT_TYPES_MATRIX</code><em class="property"> = ('matrix', 'fltMatrix')</em><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.OUTPUT_TYPES_MATRIX" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib.nodes.mpynode.MPyNode.OUTPUT_TYPES_PY">
+<code class="descname">OUTPUT_TYPES_PY</code><em class="property"> = ('char', 'string')</em><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.OUTPUT_TYPES_PY" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib.nodes.mpynode.MPyNode.OUTPUT_TYPES_STRING">
+<code class="descname">OUTPUT_TYPES_STRING</code><em class="property"> = ('char', 'string')</em><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.OUTPUT_TYPES_STRING" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib.nodes.mpynode.MPyNode.OUTPUT_TYPES_TIME">
+<code class="descname">OUTPUT_TYPES_TIME</code><em class="property"> = ('long', 'short', 'byte', 'float', 'double', 'doubleAngle', 'doubleLinear', 'time', 'bool', 'enum')</em><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.OUTPUT_TYPES_TIME" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib.nodes.mpynode.MPyNode.OUTPUT_TYPES_VECTOR">
+<code class="descname">OUTPUT_TYPES_VECTOR</code><em class="property"> = ('float3', 'double3', 'reflectance', 'spectrum')</em><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.OUTPUT_TYPES_VECTOR" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib.nodes.mpynode.MPyNode.PLUGINS">
+<code class="descname">PLUGINS</code><em class="property"> = ('mpynode_plugin.py',)</em><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.PLUGINS" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib.nodes.mpynode.MPyNode.PLUGIN_CHECK">
+<code class="descname">PLUGIN_CHECK</code><em class="property"> = True</em><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.PLUGIN_CHECK" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib.nodes.mpynode.MPyNode.PY_TYPE_ANGLE">
+<code class="descname">PY_TYPE_ANGLE</code><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.PY_TYPE_ANGLE" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">__builtin__.float</span></code></p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib.nodes.mpynode.MPyNode.PY_TYPE_BOOL">
+<code class="descname">PY_TYPE_BOOL</code><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.PY_TYPE_BOOL" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">__builtin__.bool</span></code></p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib.nodes.mpynode.MPyNode.PY_TYPE_COLOR">
+<code class="descname">PY_TYPE_COLOR</code><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.PY_TYPE_COLOR" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">__builtin__.list</span></code></p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib.nodes.mpynode.MPyNode.PY_TYPE_ENUM">
+<code class="descname">PY_TYPE_ENUM</code><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.PY_TYPE_ENUM" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">__builtin__.int</span></code></p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib.nodes.mpynode.MPyNode.PY_TYPE_EULER">
+<code class="descname">PY_TYPE_EULER</code><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.PY_TYPE_EULER" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">__builtin__.list</span></code></p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib.nodes.mpynode.MPyNode.PY_TYPE_FLOAT">
+<code class="descname">PY_TYPE_FLOAT</code><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.PY_TYPE_FLOAT" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">__builtin__.float</span></code></p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib.nodes.mpynode.MPyNode.PY_TYPE_INT">
+<code class="descname">PY_TYPE_INT</code><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.PY_TYPE_INT" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">__builtin__.int</span></code></p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib.nodes.mpynode.MPyNode.PY_TYPE_MATRIX">
+<code class="descname">PY_TYPE_MATRIX</code><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.PY_TYPE_MATRIX" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">__builtin__.list</span></code></p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib.nodes.mpynode.MPyNode.PY_TYPE_PY">
+<code class="descname">PY_TYPE_PY</code><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.PY_TYPE_PY" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">__builtin__.str</span></code></p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib.nodes.mpynode.MPyNode.PY_TYPE_STRING">
+<code class="descname">PY_TYPE_STRING</code><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.PY_TYPE_STRING" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">__builtin__.str</span></code></p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib.nodes.mpynode.MPyNode.PY_TYPE_TIME">
+<code class="descname">PY_TYPE_TIME</code><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.PY_TYPE_TIME" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">__builtin__.float</span></code></p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib.nodes.mpynode.MPyNode.PY_TYPE_VECTOR">
+<code class="descname">PY_TYPE_VECTOR</code><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.PY_TYPE_VECTOR" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">__builtin__.list</span></code></p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib.nodes.mpynode.MPyNode.RUN_PROFILER_VAR_NAME">
+<code class="descname">RUN_PROFILER_VAR_NAME</code><em class="property"> = 'run_profiler'</em><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.RUN_PROFILER_VAR_NAME" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib.nodes.mpynode.MPyNode.SET_VAR_CALLBACK_NAME">
+<code class="descname">SET_VAR_CALLBACK_NAME</code><em class="property"> = 'setVarCallback'</em><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.SET_VAR_CALLBACK_NAME" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib.nodes.mpynode.MPyNode.STRING_ATTR_TYPES">
+<code class="descname">STRING_ATTR_TYPES</code><em class="property"> = ('char', 'string')</em><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.STRING_ATTR_TYPES" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib.nodes.mpynode.MPyNode.TYPE_ATTR">
+<code class="descname">TYPE_ATTR</code><em class="property"> = 'type'</em><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.TYPE_ATTR" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib.nodes.mpynode.MPyNode.VECTOR_ATTR_TYPES">
+<code class="descname">VECTOR_ATTR_TYPES</code><em class="property"> = ('float3', 'double3', 'reflectance', 'spectrum')</em><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.VECTOR_ATTR_TYPES" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib.nodes.mpynode.MPyNode.VECTOR_COMP_NAMES">
+<code class="descname">VECTOR_COMP_NAMES</code><em class="property"> = {'color': ('R', 'G', 'B'), 'euler': ('X', 'Y', 'Z'), 'vector': ('X', 'Y', 'Z')}</em><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.VECTOR_COMP_NAMES" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib.nodes.mpynode.MPyNode.VECTOR_COMP_TYPES">
+<code class="descname">VECTOR_COMP_TYPES</code><em class="property"> = {'color': 'double', 'euler': 'doubleAngle', 'vector': 'double'}</em><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.VECTOR_COMP_TYPES" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib.nodes.mpynode.MPyNode.WATCH_VALUES_VAR_NAME">
+<code class="descname">WATCH_VALUES_VAR_NAME</code><em class="property"> = '_watch_var_values'</em><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.WATCH_VALUES_VAR_NAME" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib.nodes.mpynode.MPyNode.WRITE_STORED_VARS_CALLBACK_NAME">
+<code class="descname">WRITE_STORED_VARS_CALLBACK_NAME</code><em class="property"> = 'writeStorableVarCallback'</em><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.WRITE_STORED_VARS_CALLBACK_NAME" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mpylib.nodes.mpynode.MPyNode.addInputAttr">
+<code class="descname">addInputAttr</code><span class="sig-paren">(</span><em>long_name</em>, <em>attr_type</em>, <em>is_array=False</em>, <em>**kargs</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.addInputAttr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds an input attribute of the given long name and given type to the node.
+Use MPyNode.listSupportedAttrTypes() to list supported types</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>long_name</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><em>str</em></span></dt>
+<dd><p class="first last">long name of the attribute to add. This will be the name of its variable in the expression</p>
+</dd>
+<dt><strong>attr_type</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><em>str</em></span></dt>
+<dd><p class="first last">type of attribute to add. Use MPyNode.listSupportedAttrTypes() to list supported types</p>
+</dd>
+<dt><strong>is_array</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><em>bool</em>, optional, default = False</span></dt>
+<dd><p class="first last">whether to make this an array attribute</p>
+</dd>
+<dt><strong>kargs</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><em>keyword args</em>, optional</span></dt>
+<dd><p class="first last">keyword args supported by maya.cmds.addAttr</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>*None*</strong></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<dl class="last docutils">
+<dt><a class="reference internal" href="#mpylib.nodes.mpynode.MPyNode.addOutputAttr" title="mpylib.nodes.mpynode.MPyNode.addOutputAttr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">addOutputAttr</span></code></a></dt>
+<dd>Adds an output attribute of the given long name and given type to the node.</dd>
+<dt><a class="reference internal" href="#mpylib.nodes.mpynode.MPyNode.addStoredVariable" title="mpylib.nodes.mpynode.MPyNode.addStoredVariable"><code class="xref py py-obj docutils literal notranslate"><span class="pre">addStoredVariable</span></code></a></dt>
+<dd>Used to flag an instance property on the node for storage on disc when the file is saved</dd>
+</dl>
+</div>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">node</span><span class="o">.</span><span class="n">addInputAttr</span><span class="p">(</span><span class="s2">&quot;floatAttr&quot;</span><span class="p">,</span> <span class="s2">&quot;float&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">node</span><span class="o">.</span><span class="n">addInputAttr</span><span class="p">(</span><span class="s2">&quot;floatArrayAttr&quot;</span><span class="p">,</span> <span class="s2">&quot;float&quot;</span><span class="p">,</span> <span class="n">is_array</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib.nodes.mpynode.MPyNode.addOutputAttr">
+<code class="descname">addOutputAttr</code><span class="sig-paren">(</span><em>long_name</em>, <em>attr_type</em>, <em>is_array=False</em>, <em>**kargs</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.addOutputAttr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds an output attribute of the given long name and given type to the node.
+Use MPyNode.listSupportedAttrTypes() to list supported types</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>long_name</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><em>str</em></span></dt>
+<dd><p class="first last">long name of the attribute to add. This will be the name of its variable in the expression</p>
+</dd>
+<dt><strong>attr_type</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><em>str</em></span></dt>
+<dd><p class="first last">type of attribute to add. Use MPyNode.listSupportedAttrTypes() to list supported types</p>
+</dd>
+<dt><strong>is_array</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><em>bool</em>, optional, default = False</span></dt>
+<dd><p class="first last">whether to make this an array attribute</p>
+</dd>
+<dt><strong>kargs</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><em>keyword args</em>, optional</span></dt>
+<dd><p class="first last">keyword args supported by maya.cmds.addAttr</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>*None*</strong></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<dl class="last docutils">
+<dt><a class="reference internal" href="#mpylib.nodes.mpynode.MPyNode.addInputAttr" title="mpylib.nodes.mpynode.MPyNode.addInputAttr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">addInputAttr</span></code></a></dt>
+<dd>Adds an output attribute of the given long name and given type to the node.</dd>
+<dt><a class="reference internal" href="#mpylib.nodes.mpynode.MPyNode.addStoredVariable" title="mpylib.nodes.mpynode.MPyNode.addStoredVariable"><code class="xref py py-obj docutils literal notranslate"><span class="pre">addStoredVariable</span></code></a></dt>
+<dd>Used to flag an instance property on the node for storage on disc when the file is saved</dd>
+</dl>
+</div>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">node</span><span class="o">.</span><span class="n">addOutputAttr</span><span class="p">(</span><span class="s2">&quot;floatAttr&quot;</span><span class="p">,</span> <span class="s2">&quot;float&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">node</span><span class="o">.</span><span class="n">addOutputAttr</span><span class="p">(</span><span class="s2">&quot;floatArrayAttr&quot;</span><span class="p">,</span> <span class="s2">&quot;float&quot;</span><span class="p">,</span> <span class="n">is_array</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib.nodes.mpynode.MPyNode.addStoredVariable">
+<code class="descname">addStoredVariable</code><span class="sig-paren">(</span><em>var_name</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.addStoredVariable" title="Permalink to this definition">¶</a></dt>
+<dd><p>Used to flag an instance property on the node for storage on disc when the file is saved. The name given 
+should refer to a property on the node instance created/used by the expression (i.e. self.var_name)</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>var_name</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><em>str</em></span></dt>
+<dd><p class="first last">name of the variable to store</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>*None*</strong></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<dl class="last docutils">
+<dt><a class="reference internal" href="#mpylib.nodes.mpynode.MPyNode.addInputAttr" title="mpylib.nodes.mpynode.MPyNode.addInputAttr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">addInputAttr</span></code></a></dt>
+<dd>Adds an input attribute of the given long name and given type to the node.</dd>
+<dt><a class="reference internal" href="#mpylib.nodes.mpynode.MPyNode.addOutputAttr" title="mpylib.nodes.mpynode.MPyNode.addOutputAttr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">addOutputAttr</span></code></a></dt>
+<dd>Adds an output attribute of the given long name and given type to the node.</dd>
+</dl>
+</div>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">node</span><span class="o">.</span><span class="n">addStoredVariable</span><span class="p">(</span><span class="s2">&quot;myVar&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib.nodes.mpynode.MPyNode.deleteInputAttr">
+<code class="descname">deleteInputAttr</code><span class="sig-paren">(</span><em>attr_name</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.deleteInputAttr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Removes the given input attribute from the node.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>attr_name</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><em>str</em></span></dt>
+<dd><p class="first last">string name of the input attribute to remove</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>*None*</strong></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<dl class="last docutils">
+<dt><a class="reference internal" href="#mpylib.nodes.mpynode.MPyNode.deleteOutputAttr" title="mpylib.nodes.mpynode.MPyNode.deleteOutputAttr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">deleteOutputAttr</span></code></a></dt>
+<dd>Removes the given output attribute from the node.</dd>
+<dt><a class="reference internal" href="#mpylib.nodes.mpynode.MPyNode.removeStoredVariable" title="mpylib.nodes.mpynode.MPyNode.removeStoredVariable"><code class="xref py py-obj docutils literal notranslate"><span class="pre">removeStoredVariable</span></code></a></dt>
+<dd>Removes the given variable name from the list of variables that will stored to file</dd>
+</dl>
+</div>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">node</span><span class="o">.</span><span class="n">deleteInputAttr</span><span class="p">(</span><span class="s2">&quot;myVar&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib.nodes.mpynode.MPyNode.deleteOutputAttr">
+<code class="descname">deleteOutputAttr</code><span class="sig-paren">(</span><em>attr_name</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.deleteOutputAttr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Removes the given output attribute from the node.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>attr_name</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><em>str</em></span></dt>
+<dd><p class="first last">string name of the output attribute to remove</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>*None*</strong></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<dl class="last docutils">
+<dt><a class="reference internal" href="#mpylib.nodes.mpynode.MPyNode.deleteInputAttr" title="mpylib.nodes.mpynode.MPyNode.deleteInputAttr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">deleteInputAttr</span></code></a></dt>
+<dd>Removes the given input attribute from the node.</dd>
+<dt><a class="reference internal" href="#mpylib.nodes.mpynode.MPyNode.removeStoredVariable" title="mpylib.nodes.mpynode.MPyNode.removeStoredVariable"><code class="xref py py-obj docutils literal notranslate"><span class="pre">removeStoredVariable</span></code></a></dt>
+<dd>Removes the given variable name from the list of variables that will stored to file</dd>
+</dl>
+</div>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">node</span><span class="o">.</span><span class="n">deleteOutputAttr</span><span class="p">(</span><span class="s2">&quot;myVar&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib.nodes.mpynode.MPyNode.exportToFile">
+<code class="descname">exportToFile</code><span class="sig-paren">(</span><em>file_path</em>, <em>use_binary=True</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.exportToFile" title="Permalink to this definition">¶</a></dt>
+<dd><p>Export this node to an external file</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>file_path</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><em>str</em></span></dt>
+<dd><p class="first last">string file path to export to. Directory structure must exist</p>
+</dd>
+<dt><strong>use_binary</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><em>bool</em>, optional, default=True</span></dt>
+<dd><p class="first last">By default, a binary file is exported. If a text format is desired, set this to False</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>*None*</strong></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<dl class="last docutils">
+<dt><a class="reference internal" href="#mpylib.nodes.mpynode.MPyNode.importFromFile" title="mpylib.nodes.mpynode.MPyNode.importFromFile"><code class="xref py py-obj docutils literal notranslate"><span class="pre">importFromFile</span></code></a></dt>
+<dd>Import a MPyNode from an external file. An nstance of the node will be constructed in the current Maya scene</dd>
+</dl>
+</div>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">node</span><span class="o">.</span><span class="n">exportToFile</span><span class="p">(</span><span class="s2">&quot;C:/temp/file_name.ext&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">node</span><span class="o">.</span><span class="n">exportToFile</span><span class="p">(</span><span class="s2">&quot;C:/temp/file_name.ext&quot;</span><span class="p">,</span> <span class="n">use_binary</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib.nodes.mpynode.MPyNode.getExpression">
+<code class="descname">getExpression</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.getExpression" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the current python expression within the node.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>*str* or *None*</strong></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<dl class="last docutils">
+<dt><a class="reference internal" href="#mpylib.nodes.mpynode.MPyNode.setExpression" title="mpylib.nodes.mpynode.MPyNode.setExpression"><code class="xref py py-obj docutils literal notranslate"><span class="pre">setExpression</span></code></a></dt>
+<dd>Set the expression within the node to the given string of python code.</dd>
+</dl>
+</div>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">exp</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">getExpression</span><span class="p">()</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib.nodes.mpynode.MPyNode.getInputAttrMap">
+<code class="descname">getInputAttrMap</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.getInputAttrMap" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a dictionary with all input attr names as keys and attribute data as values.
+The values of the dictionary are also dictiontaries with the proper addInputAttr() keyword args and values. Note
+that only non-default keyword args are returned. So if an attribute is not “keyable”, for example, no “keyable”
+keyword will be returned in dictionary.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>*dict* with all input attr names as keys and attribute data as values or *None*</strong></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<dl class="last docutils">
+<dt><a class="reference internal" href="#mpylib.nodes.mpynode.MPyNode.addInputAttr" title="mpylib.nodes.mpynode.MPyNode.addInputAttr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">addInputAttr</span></code></a></dt>
+<dd>Adds an input attribute of the given long name and given type to the node.</dd>
+</dl>
+</div>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">input_map</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">getInputAttrMap</span><span class="p">()</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib.nodes.mpynode.MPyNode.getOutputAttrMap">
+<code class="descname">getOutputAttrMap</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.getOutputAttrMap" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a dictionary with all output attr names as keys and attribute data as values.
+The values of the dictionary are also dictiontaries with the proper addOutputAttr() keyword args and values. Note
+that only non-default keyword args are returned. So if an attribute is not “keyable”, for example, no “keyable”
+keyword will be returned in dictionary.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>*dict* with all output attr names as keys and attribute data as values or *None*</strong></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<dl class="last docutils">
+<dt><a class="reference internal" href="#mpylib.nodes.mpynode.MPyNode.addOutputAttr" title="mpylib.nodes.mpynode.MPyNode.addOutputAttr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">addOutputAttr</span></code></a></dt>
+<dd>Adds an output attribute of the given long name and given type to the node.</dd>
+</dl>
+</div>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">input_map</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">getOutputAttrMap</span><span class="p">()</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib.nodes.mpynode.MPyNode.getStoredVariables">
+<code class="descname">getStoredVariables</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.getStoredVariables" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the nodes “stored variables” as a dictionary.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>*dict* or *None* - Keys are string names of the variables and values are their current values</strong></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<dl class="last docutils">
+<dt><a class="reference internal" href="#mpylib.nodes.mpynode.MPyNode.addStoredVariable" title="mpylib.nodes.mpynode.MPyNode.addStoredVariable"><code class="xref py py-obj docutils literal notranslate"><span class="pre">addStoredVariable</span></code></a></dt>
+<dd>Removes the given output attribute from the node.</dd>
+<dt><a class="reference internal" href="#mpylib.nodes.mpynode.MPyNode.setStoredVariable" title="mpylib.nodes.mpynode.MPyNode.setStoredVariable"><code class="xref py py-obj docutils literal notranslate"><span class="pre">setStoredVariable</span></code></a></dt>
+<dd>Used to set an instance property on the node for use in the expression and storage on disc when the file is saved</dd>
+</dl>
+</div>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">var_map</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">getStoredVariables</span><span class="p">()</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib.nodes.mpynode.MPyNode.hasStoredVariable">
+<code class="descname">hasStoredVariable</code><span class="sig-paren">(</span><em>var_name</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.hasStoredVariable" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns whether the node has an instance property with the given name that has been flagged for storage on disc.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>var_name</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><em>str</em></span></dt>
+<dd><p class="first last">name of the variable</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>*bool*</strong></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<dl class="last docutils">
+<dt><a class="reference internal" href="#mpylib.nodes.mpynode.MPyNode.addStoredVariable" title="mpylib.nodes.mpynode.MPyNode.addStoredVariable"><code class="xref py py-obj docutils literal notranslate"><span class="pre">addStoredVariable</span></code></a></dt>
+<dd>Removes the given output attribute from the node.</dd>
+</dl>
+</div>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">node</span><span class="o">.</span><span class="n">hasStoredVariable</span><span class="p">(</span><span class="s2">&quot;myVar&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="mpylib.nodes.mpynode.MPyNode.importFromFile">
+<em class="property">static </em><code class="descname">importFromFile</code><span class="sig-paren">(</span><em>file_path</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.importFromFile" title="Permalink to this definition">¶</a></dt>
+<dd><p>Import a MPyNode from an external file. An instance of the node will be constructed in the current Maya scene</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>file_path</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><em>str</em></span></dt>
+<dd><p class="first last">file path to import from</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>*MPyNode* of the newly created node</strong></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<dl class="last docutils">
+<dt><a class="reference internal" href="#mpylib.nodes.mpynode.MPyNode.importFromFile" title="mpylib.nodes.mpynode.MPyNode.importFromFile"><code class="xref py py-obj docutils literal notranslate"><span class="pre">importFromFile</span></code></a></dt>
+<dd>Export this node to an external file</dd>
+</dl>
+</div>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">new_node</span> <span class="o">=</span> <span class="n">MPyNode</span><span class="o">.</span><span class="n">importFromFile</span><span class="p">(</span><span class="s2">&quot;C:/temp/file_name.ext&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib.nodes.mpynode.MPyNode.listInputAttrs">
+<code class="descname">listInputAttrs</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.listInputAttrs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the names of the node’s input attributes</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>*tuple* of *str* attribute names or *None*</strong></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<dl class="last docutils">
+<dt><a class="reference internal" href="#mpylib.nodes.mpynode.MPyNode.addInputAttr" title="mpylib.nodes.mpynode.MPyNode.addInputAttr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">addInputAttr</span></code></a></dt>
+<dd>Adds an input attribute of the given long name and given type to the node.</dd>
+</dl>
+</div>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">input_attrs</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">listInputAttrs</span><span class="p">()</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib.nodes.mpynode.MPyNode.listOutputAttrs">
+<code class="descname">listOutputAttrs</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.listOutputAttrs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the names of the node’s output attributes</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>*tuple* of *str* attribute names or *None*</strong></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<dl class="last docutils">
+<dt><a class="reference internal" href="#mpylib.nodes.mpynode.MPyNode.addOutputAttr" title="mpylib.nodes.mpynode.MPyNode.addOutputAttr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">addOutputAttr</span></code></a></dt>
+<dd>Adds an output attribute of the given long name and given type to the node.</dd>
+</dl>
+</div>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">output_attrs</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">listOutputAttrs</span><span class="p">()</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib.nodes.mpynode.MPyNode.listStoredVariables">
+<code class="descname">listStoredVariables</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.listStoredVariables" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the names of the node’s internally stored variables</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>*tuple* of *str* variable names or *None*</strong></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<dl class="last docutils">
+<dt><a class="reference internal" href="#mpylib.nodes.mpynode.MPyNode.addStoredVariable" title="mpylib.nodes.mpynode.MPyNode.addStoredVariable"><code class="xref py py-obj docutils literal notranslate"><span class="pre">addStoredVariable</span></code></a></dt>
+<dd>Used to flag an instance property on the node for storage on disc when the file is saved.</dd>
+</dl>
+</div>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">stored_vars</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">listStoredVariables</span><span class="p">()</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="mpylib.nodes.mpynode.MPyNode.listValidInputTypes">
+<em class="property">classmethod </em><code class="descname">listValidInputTypes</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.listValidInputTypes" title="Permalink to this definition">¶</a></dt>
+<dd><blockquote>
+<div>Class method returns the types of supported input attributes</div></blockquote>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>*tuple* of *str* attribute types or *None*</strong></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<dl class="last docutils">
+<dt><a class="reference internal" href="#mpylib.nodes.mpynode.MPyNode.addInputAttr" title="mpylib.nodes.mpynode.MPyNode.addInputAttr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">addInputAttr</span></code></a></dt>
+<dd>Adds an input attribute of the given long name and given type to the node.</dd>
+</dl>
+</div>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">attr_types</span> <span class="o">=</span> <span class="n">MPyNode</span><span class="o">.</span><span class="n">listValidInputTypes</span><span class="p">()</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="mpylib.nodes.mpynode.MPyNode.listValidOutputTypes">
+<em class="property">classmethod </em><code class="descname">listValidOutputTypes</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.listValidOutputTypes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Class method returns the types of supported output attributes</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>*tuple* of *str* attribute types or *None*</strong></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<dl class="last docutils">
+<dt><a class="reference internal" href="#mpylib.nodes.mpynode.MPyNode.addOutputAttr" title="mpylib.nodes.mpynode.MPyNode.addOutputAttr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">addOutputAttr</span></code></a></dt>
+<dd>Adds an output attribute of the given long name and given type to the node.</dd>
+</dl>
+</div>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">attr_types</span> <span class="o">=</span> <span class="n">MPyNode</span><span class="o">.</span><span class="n">listValidInputTypes</span><span class="p">()</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="mpylib.nodes.mpynode.MPyNode.ls">
+<em class="property">classmethod </em><code class="descname">ls</code><span class="sig-paren">(</span><em>*args</em>, <em>**kargs</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.ls" title="Permalink to this definition">¶</a></dt>
+<dd><p>class method - returns the nodes of type ‘mPyNode’ in the current scene. Works just like maya.cmds.ls</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>args</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><em>str</em></span></dt>
+<dd><p class="first last">args supported by maya.cmds.ls</p>
+</dd>
+<dt><strong>kargs</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><em>str</em></span></dt>
+<dd><p class="first last">keyword args supported by maya.cmds.ls</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>*tuple* of *MPyNode* nodes or *None*</strong></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1">## get all mPyNode nodes in the scene</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">nodes</span> <span class="o">=</span> <span class="n">MPyNode</span><span class="o">.</span><span class="n">ls</span><span class="p">()</span>
+<span class="go">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1">## get all mPyNode nodes whose names start with &quot;Foo&quot;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">foo_nodes</span> <span class="o">=</span> <span class="n">MPyNode</span><span class="o">.</span><span class="n">ls</span><span class="p">(</span><span class="s2">&quot;Foo*&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib.nodes.mpynode.MPyNode.removeStoredVariable">
+<code class="descname">removeStoredVariable</code><span class="sig-paren">(</span><em>var_name</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.removeStoredVariable" title="Permalink to this definition">¶</a></dt>
+<dd><p>Removes the given variable name from the list of variables that will stored to file</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>var_name</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><em>str</em></span></dt>
+<dd><p class="first last">name of the variable to remove</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>*None*</strong></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<dl class="last docutils">
+<dt><a class="reference internal" href="#mpylib.nodes.mpynode.MPyNode.addStoredVariable" title="mpylib.nodes.mpynode.MPyNode.addStoredVariable"><code class="xref py py-obj docutils literal notranslate"><span class="pre">addStoredVariable</span></code></a></dt>
+<dd>Used to flag an instance property on the node for storage on disc when the file is saved</dd>
+</dl>
+</div>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">node</span><span class="o">.</span><span class="n">removeStoredVariable</span><span class="p">(</span><span class="s2">&quot;floatAttr&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib.nodes.mpynode.MPyNode.setExpression">
+<code class="descname">setExpression</code><span class="sig-paren">(</span><em>exp_str</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.setExpression" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the expression within the node to the given string of python code.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>exp_str</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><em>str</em></span></dt>
+<dd><p class="first last">python code to set the expression to.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>*None*</strong></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<dl class="last docutils">
+<dt><a class="reference internal" href="#mpylib.nodes.mpynode.MPyNode.getExpression" title="mpylib.nodes.mpynode.MPyNode.getExpression"><code class="xref py py-obj docutils literal notranslate"><span class="pre">getExpression</span></code></a></dt>
+<dd>Returns the current python expression within the node.</dd>
+</dl>
+</div>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">py_node</span><span class="o">.</span><span class="n">setExpression</span><span class="p">(</span><span class="s1">&#39;outAttr = inAttr * 2&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib.nodes.mpynode.MPyNode.setStoredVariable">
+<code class="descname">setStoredVariable</code><span class="sig-paren">(</span><em>var_name</em>, <em>var_val</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.setStoredVariable" title="Permalink to this definition">¶</a></dt>
+<dd><p>Used to set an instance property on the node for use in the expression and storage on disc when the file is saved. The name given
+should refer to a property on the node instance created/used by the expression (i.e. self.var_name)</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>var_name</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><em>str</em></span></dt>
+<dd><p class="first last">name of the variable to set</p>
+</dd>
+<dt><strong>var_val</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><em>object</em></span></dt>
+<dd><p class="first last">python value to assign to the variable</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>*None*</strong></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<dl class="last docutils">
+<dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">getStoredVariable</span></code></dt>
+<dd>Returns the nodes “stored variables” as a dictionary.</dd>
+</dl>
+</div>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">node</span><span class="o">.</span><span class="n">setStoredVariable</span><span class="p">(</span><span class="s2">&quot;myVar&quot;</span><span class="p">,</span> <span class="n">var_val</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib.nodes.mpynode.MPyNode.setVariable">
+<code class="descname">setVariable</code><span class="sig-paren">(</span><em>var_name</em>, <em>var_val</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.setVariable" title="Permalink to this definition">¶</a></dt>
+<dd><p>Used to set an instance property on the node for use in the expression. The name given should refer to a
+property on the node instance created/used by the expression (i.e. self.var_name). This value variable is destroyed
+when the Maya scene is closed.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>var_name</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><em>str</em></span></dt>
+<dd><p class="first last">name of the variable to set</p>
+</dd>
+<dt><strong>var_val</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><em>object</em></span></dt>
+<dd><p class="first last">python value to assign to the variable</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>*None*</strong></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">node</span><span class="o">.</span><span class="n">setVariable</span><span class="p">(</span><span class="s2">&quot;myVar&quot;</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-mpylib.nodes">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-mpylib.nodes" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+          </div> 
+        </div>
+      </div>
+    <div class="footer">
+    <p>
+      &copy; Copyright 2018, Gene Hansen, Eric Vignola.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.8.2 <a href="https://github.com/mga-sphinx/sphinx_adc_theme">ADC Theme</a> .
+    (Revision )
+        </p>
+    </div>
+      <div class="clearer"></div>
+    </div>
+        <div id="breadcrumbs">
+                mpylib.nodes package
+        </div>
+        <script type="text/javascript" charset="utf-8" src="_static/js/toc.js"></script>
+  </body>
+</html>
