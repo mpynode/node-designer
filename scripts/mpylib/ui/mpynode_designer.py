@@ -954,7 +954,7 @@ class NDVariablesTree(QTreeWidget):
     
     COLUMN_NAMES = ("Name", "Value")
     LOG_SIGNAL = Signal(str, int)
-    VR_IGNORE_LIST = ("")
+    VAR_IGNORE_LIST = ("",)
     
     
     def __init__(self, parent=None, py_node=None):
