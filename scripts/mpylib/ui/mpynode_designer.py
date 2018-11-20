@@ -98,8 +98,8 @@ class NDMainWindow(QMayaWindow):
     LOG_ERROR_CALLBACK_NAME = "emitMPyNodeErrorCallback"
     LOG_TXT_CALLBACK_NAME = "emitMPyNodeTextCallback"
     
-    FILE_BINARY_FILTER = "Binary (*." + MPyNode.BINARY_FILE_EXT + ")"
-    FILE_ASCII_FILTER = "Ascii (*." + MPyNode.ASCII_FILE_EXT + ")"
+    FILE_BINARY_FILTER = "Binary (*." + MPyNode._BINARY_FILE_EXT + ")"
+    FILE_ASCII_FILTER = "Ascii (*." + MPyNode._ASCII_FILE_EXT + ")"
     EXPORT_FILE_FILTERS = FILE_BINARY_FILTER + ";;" + FILE_ASCII_FILTER
     
 
@@ -401,7 +401,7 @@ class NDMainWindow(QMayaWindow):
                                                                      "", self.EXPORT_FILE_FILTERS)
             
             if file_path:
-                use_binary, file_ext  = (True, MPyNode.BINARY_FILE_EXT) if selected_filter == self.FILE_BINARY_FILTER else (False, MPyNode.ASCII_FILE_EXT)
+                use_binary, file_ext  = (True, MPyNode._BINARY_FILE_EXT) if selected_filter == self.FILE_BINARY_FILTER else (False, MPyNode._ASCII_FILE_EXT)
                 
                 if not file_path.endswith("." + file_ext):
                     file_path += "." + file_ext
@@ -692,7 +692,7 @@ class NDScriptTabWidget(QTabWidget):
         txt = tab_widget.getText()
 
         if txt:
-            txt = txt.replace('\t', MPyNode.CODE_TAB)
+            txt = txt.replace('\t', MPyNode._CODE_TAB)
         else:
             txt = ""
 
@@ -1153,7 +1153,7 @@ class NDProfileWidget(QWidget):
         
         if self._py_node:
             run_profiler = state == Qt.Checked
-            self._py_node.setStoredVariable(MPyNode.RUN_PROFILER_VAR_NAME, run_profiler)
+            self._py_node.setStoredVariable(MPyNode._RUN_PROFILER_VAR_NAME, run_profiler)
         
         
     def _onNodeChanged(self, py_node):
@@ -1167,8 +1167,8 @@ class NDProfileWidget(QWidget):
             self._profile_cb.setEnabled(True)
             node_vars = self._py_node.getStoredVariables()
             
-            if node_vars and MPyNode.RUN_PROFILER_VAR_NAME in node_vars:
-                self._profile_cb.setChecked(node_vars[MPyNode.RUN_PROFILER_VAR_NAME])
+            if node_vars and MPyNode._RUN_PROFILER_VAR_NAME in node_vars:
+                self._profile_cb.setChecked(node_vars[MPyNode._RUN_PROFILER_VAR_NAME])
             
             else:
                 self._profile_cb.setChecked(False)
@@ -1571,7 +1571,7 @@ class NDInputAttrTree(QTreeWidget):
             for attr_name in attr_names:
                 attr_data = attr_map[attr_name]
 
-                attr_type = attr_data[MPyNode.ATTR_MAP_TYPE_KEY]
+                attr_type = attr_data[MPyNode._ATTR_MAP_TYPE_KEY]
                 is_array = False if not attr_data.has_key(MPyNode.ATTR_MAP_ARRAY_KEY) else True
                 icon_clr = ATTR_COLOR_MAP[attr_type] if ATTR_COLOR_MAP.has_key(attr_type) else ATTR_COLOR_DEFAULT
 
@@ -1700,7 +1700,7 @@ class NDConnectInputAttrDialog(QDialog):
 
     VALID_ATTR_TYPES = MEL_ATTR_TYPE_MAP.keys()
 
-    VALID_ATTR_TYPES_MAP = MPyNode.INPUT_TYPES_MAP
+    VALID_ATTR_TYPES_MAP = MPyNode._INPUT_TYPES_MAP
 
 
     def __init__(self, parent, py_node, py_node_attr, other_nodes):
@@ -1736,7 +1736,7 @@ class NDConnectInputAttrDialog(QDialog):
 
         attr_map = self._py_node.getInputAttrMap()
 
-        self._attr_type = attr_map[self._py_node_attr][MPyNode.ATTR_MAP_TYPE_KEY]
+        self._attr_type = attr_map[self._py_node_attr][MPyNode._ATTR_MAP_TYPE_KEY]
 
 
     def _getFilteredAttrs(self, node, search_str=None):
@@ -1906,7 +1906,7 @@ class NDConnectOutputAttrDialog(NDConnectInputAttrDialog):
         self._replace_cb = None
 
         attr_map = self._py_node.getOutputAttrMap()
-        self._attr_type = attr_map[self._py_node_attr][MPyNode.ATTR_MAP_TYPE_KEY]
+        self._attr_type = attr_map[self._py_node_attr][MPyNode._ATTR_MAP_TYPE_KEY]
         
         
     def _buildAttrList(self):
@@ -2489,7 +2489,7 @@ class NDWatchTable(QTableWidget):
 class NDWatchVarsWidget(QWidget):
     
     CHECKBOX_TEXT = "Watch Values"
-    MPYNODE_VAR_NAME = MPyNode.WATCH_VALUES_VAR_NAME
+    MPYNODE_VAR_NAME = MPyNode._WATCH_VALUES_VAR_NAME
     
 
     def __init__(self, parent=None):

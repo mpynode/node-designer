@@ -36,90 +36,90 @@ class MPyNode(MNode):
     ATTR_TYPE_NURBS_CURVE = "nurbsCurve"
     ATTR_TYPE_NURBS_SURFACE= "nurbsSurface"
 
-    NODE_NUMERIC_TYPES = (ATTR_TYPE_INT, ATTR_TYPE_FLOAT, ATTR_TYPE_TIME, ATTR_TYPE_ANGLE)
-    PY_TYPE_INT = int
-    PY_TYPE_FLOAT = float
-    PY_TYPE_BOOL = bool
-    PY_TYPE_VECTOR = list
-    PY_TYPE_COLOR = list
-    PY_TYPE_MATRIX = list
-    PY_TYPE_ANGLE = float
-    PY_TYPE_EULER = list
-    PY_TYPE_STRING = str
-    PY_TYPE_TIME = float
-    PY_TYPE_ENUM = int
-    PY_TYPE_PY = str
+    _NODE_NUMERIC_TYPES = (ATTR_TYPE_INT, ATTR_TYPE_FLOAT, ATTR_TYPE_TIME, ATTR_TYPE_ANGLE)
+    _PY_TYPE_INT = int
+    _PY_TYPE_FLOAT = float
+    _PY_TYPE_BOOL = bool
+    _PY_TYPE_VECTOR = list
+    _PY_TYPE_COLOR = list
+    _PY_TYPE_MATRIX = list
+    _PY_TYPE_ANGLE = float
+    _PY_TYPE_EULER = list
+    _PY_TYPE_STRING = str
+    _PY_TYPE_TIME = float
+    _PY_TYPE_ENUM = int
+    _PY_TYPE_PY = str
 
-    ATTR_TO_PY_MAP = {ATTR_TYPE_INT:PY_TYPE_INT, ATTR_TYPE_FLOAT:PY_TYPE_FLOAT, ATTR_TYPE_BOOL:PY_TYPE_BOOL,
-                      ATTR_TYPE_VECTOR:PY_TYPE_VECTOR, ATTR_TYPE_MATRIX:PY_TYPE_MATRIX, ATTR_TYPE_COLOR:PY_TYPE_COLOR,
-                      ATTR_TYPE_TIME:PY_TYPE_TIME, ATTR_TYPE_ANGLE:PY_TYPE_ANGLE, ATTR_TYPE_EULER:PY_TYPE_EULER,
-                      ATTR_TYPE_STRING:PY_TYPE_STRING, ATTR_TYPE_PY:PY_TYPE_PY, ATTR_TYPE_ENUM:PY_TYPE_ENUM}
+    _ATTR_TO_PY_MAP = {ATTR_TYPE_INT:_PY_TYPE_INT, ATTR_TYPE_FLOAT:_PY_TYPE_FLOAT, ATTR_TYPE_BOOL:_PY_TYPE_BOOL,
+                       ATTR_TYPE_VECTOR:_PY_TYPE_VECTOR, ATTR_TYPE_MATRIX:_PY_TYPE_MATRIX, ATTR_TYPE_COLOR:_PY_TYPE_COLOR,
+                       ATTR_TYPE_TIME:_PY_TYPE_TIME, ATTR_TYPE_ANGLE:_PY_TYPE_ANGLE, ATTR_TYPE_EULER:_PY_TYPE_EULER,
+                       ATTR_TYPE_STRING:_PY_TYPE_STRING, ATTR_TYPE_PY:_PY_TYPE_PY, ATTR_TYPE_ENUM:_PY_TYPE_ENUM}
 
-    ATTR_DEFAULT_VAL_TYPES = (ATTR_TYPE_INT, ATTR_TYPE_FLOAT, ATTR_TYPE_BOOL, ATTR_TYPE_TIME, ATTR_TYPE_ANGLE, ATTR_TYPE_ENUM)
+    _ATTR_DEFAULT_VAL_TYPES = (ATTR_TYPE_INT, ATTR_TYPE_FLOAT, ATTR_TYPE_BOOL, ATTR_TYPE_TIME, ATTR_TYPE_ANGLE, ATTR_TYPE_ENUM)
 
-    NEW_INPUT_TYPES = {ATTR_TYPE_INT:"long", ATTR_TYPE_FLOAT:"double", ATTR_TYPE_BOOL:"bool", ATTR_TYPE_VECTOR:"double3", ATTR_TYPE_MATRIX:"matrix", ATTR_TYPE_ENUM:"enum",
-                       ATTR_TYPE_COLOR:"double3", ATTR_TYPE_ANGLE:"doubleAngle", ATTR_TYPE_EULER:"double3", ATTR_TYPE_STRING:"string", ATTR_TYPE_TIME:"time", ATTR_TYPE_PY:"string",
-                      ATTR_TYPE_MESH:"mesh", ATTR_TYPE_NURBS_CURVE:"nurbsCurve", ATTR_TYPE_NURBS_SURFACE:"nurbsSurface"}
-    NEW_INPUT_ATTR_KARGS = {"storable":True, "writable":True, "readable":False, "multi":False}
+    _NEW_INPUT_TYPES = {ATTR_TYPE_INT:"long", ATTR_TYPE_FLOAT:"double", ATTR_TYPE_BOOL:"bool", ATTR_TYPE_VECTOR:"double3", ATTR_TYPE_MATRIX:"matrix", ATTR_TYPE_ENUM:"enum",
+                        ATTR_TYPE_COLOR:"double3", ATTR_TYPE_ANGLE:"doubleAngle", ATTR_TYPE_EULER:"double3", ATTR_TYPE_STRING:"string", ATTR_TYPE_TIME:"time", ATTR_TYPE_PY:"string",
+                        ATTR_TYPE_MESH:"mesh", ATTR_TYPE_NURBS_CURVE:"nurbsCurve", ATTR_TYPE_NURBS_SURFACE:"nurbsSurface"}
+    _NEW_INPUT_ATTR_KARGS = {"storable":True, "writable":True, "readable":False, "multi":False}
 
-    NEW_OUTPUT_TYPES = {ATTR_TYPE_INT:"long", ATTR_TYPE_FLOAT:"double", ATTR_TYPE_BOOL:"bool", ATTR_TYPE_VECTOR:"double3", ATTR_TYPE_MATRIX:"matrix", ATTR_TYPE_ENUM:"enum",
-                        ATTR_TYPE_COLOR:"double3", ATTR_TYPE_ANGLE:"doubleAngle", ATTR_TYPE_EULER:"double3", ATTR_TYPE_STRING:"string", ATTR_TYPE_TIME:"time", ATTR_TYPE_PY:"string"}
-    NEW_OUTPUT_ATTR_KARGS = {"storable":False, "writable":False, "readable":True, "multi":False}
+    _NEW_OUTPUT_TYPES = {ATTR_TYPE_INT:"long", ATTR_TYPE_FLOAT:"double", ATTR_TYPE_BOOL:"bool", ATTR_TYPE_VECTOR:"double3", ATTR_TYPE_MATRIX:"matrix", ATTR_TYPE_ENUM:"enum",
+                         ATTR_TYPE_COLOR:"double3", ATTR_TYPE_ANGLE:"doubleAngle", ATTR_TYPE_EULER:"double3", ATTR_TYPE_STRING:"string", ATTR_TYPE_TIME:"time", ATTR_TYPE_PY:"string"}
+    _NEW_OUTPUT_ATTR_KARGS = {"storable":False, "writable":False, "readable":True, "multi":False}
 
-    VECTOR_COMP_NAMES = {ATTR_TYPE_VECTOR:("X", "Y", "Z"), ATTR_TYPE_COLOR:("R", "G", "B"), ATTR_TYPE_EULER:("X", "Y", "Z")}
-    VECTOR_COMP_TYPES = {ATTR_TYPE_VECTOR:"double", ATTR_TYPE_COLOR:"double", ATTR_TYPE_EULER:"doubleAngle"}
+    _VECTOR_COMP_NAMES = {ATTR_TYPE_VECTOR:("X", "Y", "Z"), ATTR_TYPE_COLOR:("R", "G", "B"), ATTR_TYPE_EULER:("X", "Y", "Z")}
+    _VECTOR_COMP_TYPES = {ATTR_TYPE_VECTOR:"double", ATTR_TYPE_COLOR:"double", ATTR_TYPE_EULER:"doubleAngle"}
 
-    ENUM_ATTR_TYPES = ("enum",)
-    NUMERIC_ATTR_TYPES = ("long", "short", "byte", "float", "double", "doubleAngle", "doubleLinear", "time", "bool") + ENUM_ATTR_TYPES
-    MATRIX_ATTR_TYPES = ("matrix", "fltMatrix")
-    VECTOR_ATTR_TYPES = ("float3", "double3", "reflectance", "spectrum")
-    STRING_ATTR_TYPES = ("char", "string")
-    MESH_ATTR_TYPES = ("mesh",)
-    NURBS_CURVE_ATTR_TYPES = ("nurbsCurve",)
-    NURBS_SURFACE_ATTR_TYPES = ("nurbsSurface",)
+    _ENUM_ATTR_TYPES = ("enum",)
+    _NUMERIC_ATTR_TYPES = ("long", "short", "byte", "float", "double", "doubleAngle", "doubleLinear", "time", "bool") + _ENUM_ATTR_TYPES
+    _MATRIX_ATTR_TYPES = ("matrix", "fltMatrix")
+    _VECTOR_ATTR_TYPES = ("float3", "double3", "reflectance", "spectrum")
+    _STRING_ATTR_TYPES = ("char", "string")
+    _MESH_ATTR_TYPES = ("mesh",)
+    _NURBS_CURVE_ATTR_TYPES = ("nurbsCurve",)
+    _NURBS_SURFACE_ATTR_TYPES = ("nurbsSurface",)
 
-    INPUT_TYPES_INT = NUMERIC_ATTR_TYPES
-    INPUT_TYPES_FLOAT = NUMERIC_ATTR_TYPES
-    INPUT_TYPES_BOOL = NUMERIC_ATTR_TYPES
-    INPUT_TYPES_VECTOR = VECTOR_ATTR_TYPES
-    INPUT_TYPES_MATRIX = MATRIX_ATTR_TYPES
-    INPUT_TYPES_COLOR = VECTOR_ATTR_TYPES
-    INPUT_TYPES_TIME = NUMERIC_ATTR_TYPES
-    INPUT_TYPES_ANGLE = NUMERIC_ATTR_TYPES
-    INPUT_TYPES_EULER = VECTOR_ATTR_TYPES
-    INPUT_TYPES_STRING = STRING_ATTR_TYPES
-    INPUT_TYPES_PY = STRING_ATTR_TYPES
-    INPUT_TYPES_ENUM = NUMERIC_ATTR_TYPES
-    INPUT_TYPES_MESH = MESH_ATTR_TYPES
-    INPUT_TYPES_NURBS_CURVE = NURBS_CURVE_ATTR_TYPES
-    INPUT_TYPES_NURBS_SURFACE = NURBS_SURFACE_ATTR_TYPES
+    _INPUT_TYPES_INT = _NUMERIC_ATTR_TYPES
+    _INPUT_TYPES_FLOAT = _NUMERIC_ATTR_TYPES
+    _INPUT_TYPES_BOOL = _NUMERIC_ATTR_TYPES
+    _INPUT_TYPES_VECTOR = _VECTOR_ATTR_TYPES
+    _INPUT_TYPES_MATRIX = _MATRIX_ATTR_TYPES
+    _INPUT_TYPES_COLOR = _VECTOR_ATTR_TYPES
+    _INPUT_TYPES_TIME = _NUMERIC_ATTR_TYPES
+    _INPUT_TYPES_ANGLE = _NUMERIC_ATTR_TYPES
+    _INPUT_TYPES_EULER = _VECTOR_ATTR_TYPES
+    _INPUT_TYPES_STRING = _STRING_ATTR_TYPES
+    _INPUT_TYPES_PY = _STRING_ATTR_TYPES
+    _INPUT_TYPES_ENUM = _NUMERIC_ATTR_TYPES
+    _INPUT_TYPES_MESH = _MESH_ATTR_TYPES
+    _INPUT_TYPES_NURBS_CURVE = _NURBS_CURVE_ATTR_TYPES
+    _INPUT_TYPES_NURBS_SURFACE = _NURBS_SURFACE_ATTR_TYPES
 
-    INPUT_TYPES_MAP = {ATTR_TYPE_INT:INPUT_TYPES_INT, ATTR_TYPE_FLOAT:INPUT_TYPES_FLOAT, ATTR_TYPE_BOOL:INPUT_TYPES_BOOL,
-                       ATTR_TYPE_VECTOR:INPUT_TYPES_VECTOR, ATTR_TYPE_MATRIX:INPUT_TYPES_MATRIX, ATTR_TYPE_COLOR:INPUT_TYPES_COLOR,
-                       ATTR_TYPE_TIME:INPUT_TYPES_TIME, ATTR_TYPE_ANGLE:INPUT_TYPES_ANGLE, ATTR_TYPE_EULER:INPUT_TYPES_EULER,
-                       ATTR_TYPE_STRING:INPUT_TYPES_STRING, ATTR_TYPE_ENUM:INPUT_TYPES_ENUM, ATTR_TYPE_PY:INPUT_TYPES_PY,
-                       ATTR_TYPE_MESH:INPUT_TYPES_MESH,
-                       ATTR_TYPE_NURBS_CURVE:INPUT_TYPES_NURBS_CURVE, ATTR_TYPE_NURBS_SURFACE:INPUT_TYPES_NURBS_SURFACE}
+    _INPUT_TYPES_MAP = {ATTR_TYPE_INT:_INPUT_TYPES_INT, ATTR_TYPE_FLOAT:_INPUT_TYPES_FLOAT, ATTR_TYPE_BOOL:_INPUT_TYPES_BOOL,
+                        ATTR_TYPE_VECTOR:_INPUT_TYPES_VECTOR, ATTR_TYPE_MATRIX:_INPUT_TYPES_MATRIX, ATTR_TYPE_COLOR:_INPUT_TYPES_COLOR,
+                        ATTR_TYPE_TIME:_INPUT_TYPES_TIME, ATTR_TYPE_ANGLE:_INPUT_TYPES_ANGLE, ATTR_TYPE_EULER:_INPUT_TYPES_EULER,
+                        ATTR_TYPE_STRING:_INPUT_TYPES_STRING, ATTR_TYPE_ENUM:_INPUT_TYPES_ENUM, ATTR_TYPE_PY:_INPUT_TYPES_PY,
+                        ATTR_TYPE_MESH:_INPUT_TYPES_MESH,
+                        ATTR_TYPE_NURBS_CURVE:_INPUT_TYPES_NURBS_CURVE, ATTR_TYPE_NURBS_SURFACE:_INPUT_TYPES_NURBS_SURFACE}
 
-    OUTPUT_TYPES_INT = NUMERIC_ATTR_TYPES
-    OUTPUT_TYPES_FLOAT = NUMERIC_ATTR_TYPES
-    OUTPUT_TYPES_BOOL = NUMERIC_ATTR_TYPES
-    OUTPUT_TYPES_VECTOR = VECTOR_ATTR_TYPES
-    OUTPUT_TYPES_MATRIX = MATRIX_ATTR_TYPES
-    OUTPUT_TYPES_COLOR = VECTOR_ATTR_TYPES
-    OUTPUT_TYPES_TIME = NUMERIC_ATTR_TYPES
-    OUTPUT_TYPES_ANGLE = NUMERIC_ATTR_TYPES
-    OUTPUT_TYPES_EULER = VECTOR_ATTR_TYPES
-    OUTPUT_TYPES_STRING = STRING_ATTR_TYPES
-    OUTPUT_TYPES_PY = STRING_ATTR_TYPES
-    OUTPUT_TYPES_ENUM = NUMERIC_ATTR_TYPES
+    _OUTPUT_TYPES_INT = _NUMERIC_ATTR_TYPES
+    _OUTPUT_TYPES_FLOAT = _NUMERIC_ATTR_TYPES
+    _OUTPUT_TYPES_BOOL = _NUMERIC_ATTR_TYPES
+    _OUTPUT_TYPES_VECTOR = _VECTOR_ATTR_TYPES
+    _OUTPUT_TYPES_MATRIX = _MATRIX_ATTR_TYPES
+    _OUTPUT_TYPES_COLOR = _VECTOR_ATTR_TYPES
+    _OUTPUT_TYPES_TIME = _NUMERIC_ATTR_TYPES
+    _OUTPUT_TYPES_ANGLE = _NUMERIC_ATTR_TYPES
+    _OUTPUT_TYPES_EULER = _VECTOR_ATTR_TYPES
+    _OUTPUT_TYPES_STRING = _STRING_ATTR_TYPES
+    _OUTPUT_TYPES_PY = _STRING_ATTR_TYPES
+    _OUTPUT_TYPES_ENUM = _NUMERIC_ATTR_TYPES
 
-    OUTPUT_TYPES_MAP = {ATTR_TYPE_INT:OUTPUT_TYPES_INT, ATTR_TYPE_FLOAT:OUTPUT_TYPES_FLOAT, ATTR_TYPE_BOOL:OUTPUT_TYPES_BOOL,
-                        ATTR_TYPE_VECTOR:OUTPUT_TYPES_VECTOR, ATTR_TYPE_MATRIX:OUTPUT_TYPES_MATRIX, ATTR_TYPE_COLOR:OUTPUT_TYPES_COLOR,
-                       ATTR_TYPE_TIME:OUTPUT_TYPES_TIME, ATTR_TYPE_ANGLE:OUTPUT_TYPES_ANGLE, ATTR_TYPE_EULER:OUTPUT_TYPES_EULER,
-                       ATTR_TYPE_STRING:OUTPUT_TYPES_STRING, ATTR_TYPE_PY:OUTPUT_TYPES_PY, ATTR_TYPE_ENUM:OUTPUT_TYPES_ENUM}
+    _OUTPUT_TYPES_MAP = {ATTR_TYPE_INT:_OUTPUT_TYPES_INT, ATTR_TYPE_FLOAT:_OUTPUT_TYPES_FLOAT, ATTR_TYPE_BOOL:_OUTPUT_TYPES_BOOL,
+                         ATTR_TYPE_VECTOR:_OUTPUT_TYPES_VECTOR, ATTR_TYPE_MATRIX:_OUTPUT_TYPES_MATRIX, ATTR_TYPE_COLOR:_OUTPUT_TYPES_COLOR,
+                         ATTR_TYPE_TIME:_OUTPUT_TYPES_TIME, ATTR_TYPE_ANGLE:_OUTPUT_TYPES_ANGLE, ATTR_TYPE_EULER:_OUTPUT_TYPES_EULER,
+                         ATTR_TYPE_STRING:_OUTPUT_TYPES_STRING, ATTR_TYPE_PY:_OUTPUT_TYPES_PY, ATTR_TYPE_ENUM:_OUTPUT_TYPES_ENUM}
 
-    EXPRESSION_ATTR_NAME = "expression"
+    _EXPRESSION_ATTR_NAME = "expression"
 
     _INPUTS_STR_ATTR_NAME = "_inputAttrs"
     _OUTPUTS_STR_ATTR_NAME = "_outputAttrs"
@@ -127,19 +127,19 @@ class MPyNode(MNode):
     _STORED_VARS_ATTR_NAME = "_storedVarNames"
     _STORED_VARS_DATA_ATTR_NAME = "_storedVarsData"
 
-    RUN_PROFILER_VAR_NAME = "run_profiler"
-    WATCH_VALUES_VAR_NAME = "_watch_var_values"
+    _RUN_PROFILER_VAR_NAME = "run_profiler"
+    _WATCH_VALUES_VAR_NAME = "_watch_var_values"
 
     ##----------------##
-    TYPE_ATTR = "type"
-    INIT_EXPRESSION_STR = None
+    _TYPE_ATTR = "type"
+    _INIT_EXPRESSION_STR = None
 
-    ATTR_MAP_TYPE_KEY = "attr_type"
+    _ATTR_MAP_TYPE_KEY = "attr_type"
     ATTR_MAP_ARRAY_KEY = "is_array"
 
     ##-----callbacks--------##
-    SET_VAR_CALLBACK_NAME = "setVarCallback"
-    WRITE_STORED_VARS_CALLBACK_NAME = "writeStorableVarCallback"
+    _SET_VAR_CALLBACK_NAME = "setVarCallback"
+    _WRITE_STORED_VARS_CALLBACK_NAME = "writeStorableVarCallback"
 
     ##-------------these are for subclassing to create new node 'types'------------------##
 
@@ -161,20 +161,20 @@ class MPyNode(MNode):
 
 
     ##----properties for saving the current node to a python file on disk----##
-    CODE_CLASS_MODULE = "pylib.nodes"
-    CODE_CLASS = "MPyNode"
-    CODE_TAB = "    "
-    CODE_COMPUTE_FUNC_NAME = "_compute"
+    _CODE_CLASS_MODULE = "pylib.nodes"
+    _CODE_CLASS = "MPyNode"
+    _CODE_TAB = "    "
+    _CODE_COMPUTE_FUNC_NAME = "_compute"
 
-    CODE_IMPORT_STR = "from " +  CODE_CLASS_MODULE + " import " + CODE_CLASS + "\n\n\n"
-    CODE_COMPUTE_DEF = CODE_TAB + "def " + CODE_COMPUTE_FUNC_NAME + "(self):\n"
+    _CODE_IMPORT_STR = "from " +  _CODE_CLASS_MODULE + " import " + _CODE_CLASS + "\n\n\n"
+    _CODE_COMPUTE_DEF = _CODE_TAB + "def " + _CODE_COMPUTE_FUNC_NAME + "(self):\n"
 
-    CODE_INIT_EXPRESSION_STR = ""
-    CODE_INIT_PROPERTIES = {"INIT_INPUT_ATTRS":None, "INIT_INPUT_ATTR_ARGS":None,
-                            "INIT_OUTPUT_ATTRS":None, "INIT_OUTPUT_ATTR_ARGS":None}
+    _CODE_INIT_EXPRESSION_STR = ""
+    _CODE_INIT_PROPERTIES = {"INIT_INPUT_ATTRS":None, "INIT_INPUT_ATTR_ARGS":None,
+                             "INIT_OUTPUT_ATTRS":None, "INIT_OUTPUT_ATTR_ARGS":None}
 
-    ASCII_FILE_EXT = "mpya"
-    BINARY_FILE_EXT = "mpyb"
+    _ASCII_FILE_EXT = "mpya"
+    _BINARY_FILE_EXT = "mpyb"
 
 
     def __init__(self, node=None, name=None, exp_str=None, input_map=None, output_map=None, stored_var_map=None):
@@ -212,8 +212,8 @@ class MPyNode(MNode):
 
         if not node:
 
-            if self.INIT_EXPRESSION_STR:
-                self.setExpression(self.INIT_EXPRESSION_STR)
+            if self._INIT_EXPRESSION_STR:
+                self.setExpression(self._INIT_EXPRESSION_STR)
 
             if self.INIT_INPUT_ATTRS:
                 self._initInputAttrs()
@@ -301,7 +301,7 @@ class MPyNode(MNode):
 
         if not self.__class__ == MPyNode:
 
-            self.setStringAttr(self.TYPE_ATTR, self.__class__.__name__, hidden=True)
+            self.setStringAttr(self._TYPE_ATTR, self.__class__.__name__, hidden=True)
 
 
     def _initInputAttrs(self):
@@ -464,9 +464,9 @@ class MPyNode(MNode):
 
             self.addAttr(long_name, attr_mel_type, **kargs)
 
-            if self.VECTOR_COMP_NAMES.has_key(attr_type):
-                for axis in self.VECTOR_COMP_NAMES[attr_type]:
-                    self.addAttr(long_name + axis, self.VECTOR_COMP_TYPES[attr_type], parent=long_name, **orig_kargs)
+            if self._VECTOR_COMP_NAMES.has_key(attr_type):
+                for axis in self._VECTOR_COMP_NAMES[attr_type]:
+                    self.addAttr(long_name + axis, self._VECTOR_COMP_TYPES[attr_type], parent=long_name, **orig_kargs)
 
         self._appendInternalDictAttr(internal_str_attr, long_name, attr_type)
 
@@ -492,7 +492,7 @@ class MPyNode(MNode):
                 attr_type = attr_data[0]
                 is_array = False
 
-                cur_attr_map[self.ATTR_MAP_TYPE_KEY] = attr_data[0]
+                cur_attr_map[self._ATTR_MAP_TYPE_KEY] = attr_data[0]
 
                 if self.attributeQuery(attr_name, multi=True):
                     cur_attr_map[self.ATTR_MAP_ARRAY_KEY] = is_array = True
@@ -504,19 +504,19 @@ class MPyNode(MNode):
                     elif self.getAttr(attr_name, channelBox=True):
                         cur_attr_map["channelBox"] = True
 
-                if attr_type in self.ENUM_ATTR_TYPES:
+                if attr_type in self._ENUM_ATTR_TYPES:
                     enum_names = self.attributeQuery(attr_name, listEnum=True)
 
                     if enum_names is not None:
                         cur_attr_map["enumName"] = self.attributeQuery(attr_name, listEnum=True)[0]
 
-                if attr_type in MPyNode.ATTR_DEFAULT_VAL_TYPES and (not is_array):
+                if attr_type in MPyNode._ATTR_DEFAULT_VAL_TYPES and (not is_array):
                     default_value = self.attributeQuery(attr_name, listDefault=True)
 
                     if default_value is not None:
-                        cur_attr_map["defaultValue"] = MPyNode.ATTR_TO_PY_MAP[attr_type](default_value[0]) 
+                        cur_attr_map["defaultValue"] = MPyNode._ATTR_TO_PY_MAP[attr_type](default_value[0]) 
 
-                if (attr_type in self.NODE_NUMERIC_TYPES) and (not is_array):
+                if (attr_type in self._NODE_NUMERIC_TYPES) and (not is_array):
                     if self.attributeQuery(attr_name, minExists=True):
                         cur_attr_map["min"] = self.attributeQuery(attr_name, minimum=True)[0]
 
@@ -555,7 +555,7 @@ class MPyNode(MNode):
 
         """
 
-        self.setAttr(self.EXPRESSION_ATTR_NAME, str(exp_str), type="string")
+        self.setAttr(self._EXPRESSION_ATTR_NAME, str(exp_str), type="string")
 
 
     def hasStoredVariable(self, var_name):
@@ -654,7 +654,7 @@ class MPyNode(MNode):
 
         ##---send data to the MPx version of the node----##
         callback_data = {self.getHashCode():{var_name:var_val}}
-        om.MUserEventMessage.postUserEvent(self.SET_VAR_CALLBACK_NAME, callback_data)    
+        om.MUserEventMessage.postUserEvent(self._SET_VAR_CALLBACK_NAME, callback_data)    
 
 
     def getStoredVariables(self):
@@ -679,7 +679,7 @@ class MPyNode(MNode):
         """
 
         ##---write current variables values to there stored attribute so we can get their current values---##
-        om.MUserEventMessage.postUserEvent(self.WRITE_STORED_VARS_CALLBACK_NAME, (self.getHashCode(),))
+        om.MUserEventMessage.postUserEvent(self._WRITE_STORED_VARS_CALLBACK_NAME, (self.getHashCode(),))
 
         return self._getInternalPyAttr(self._STORED_VARS_DATA_ATTR_NAME)
 
@@ -704,7 +704,7 @@ class MPyNode(MNode):
 
         """
 
-        exp_str = self.getAttr(self.EXPRESSION_ATTR_NAME)
+        exp_str = self.getAttr(self._EXPRESSION_ATTR_NAME)
 
         if not exp_str or exp_str == "None":
             return None
@@ -751,7 +751,7 @@ class MPyNode(MNode):
 
         kargs["storable"] = True
 
-        self._addNewAttribute(long_name, attr_type, self.NEW_INPUT_TYPES, self.NEW_INPUT_ATTR_KARGS,
+        self._addNewAttribute(long_name, attr_type, self._NEW_INPUT_TYPES, self._NEW_INPUT_ATTR_KARGS,
                               self._INPUTS_STR_ATTR_NAME, is_array=is_array, **kargs)
 
 
@@ -792,7 +792,7 @@ class MPyNode(MNode):
 
         """
 
-        self._addNewAttribute(long_name, attr_type, self.NEW_OUTPUT_TYPES, self.NEW_OUTPUT_ATTR_KARGS,
+        self._addNewAttribute(long_name, attr_type, self._NEW_OUTPUT_TYPES, self._NEW_OUTPUT_ATTR_KARGS,
                               self._OUTPUTS_STR_ATTR_NAME, is_array=is_array, **kargs)
 
 
@@ -1002,7 +1002,7 @@ class MPyNode(MNode):
 
         """
 
-        attr_types = cls.NEW_INPUT_TYPES.keys()
+        attr_types = cls._NEW_INPUT_TYPES.keys()
         attr_types.sort()
 
         return tuple(attr_types)
@@ -1029,7 +1029,7 @@ class MPyNode(MNode):
 
         """
 
-        attr_types = cls.NEW_OUTPUT_TYPES.keys()
+        attr_types = cls._NEW_OUTPUT_TYPES.keys()
         attr_types.sort()
 
         return tuple(attr_types) 
@@ -1256,8 +1256,8 @@ class MPyNode(MNode):
             else:
                 filtered_nodes = []
                 for node in nodes:
-                    if node.hasAttr(cls.TYPE_ATTR):
-                        node_type = node.getAttr(cls.TYPE_ATTR)
+                    if node.hasAttr(cls._TYPE_ATTR):
+                        node_type = node.getAttr(cls._TYPE_ATTR)
 
                         if node_type == cls.__name__:
                             filtered_nodes.append(cls(node))

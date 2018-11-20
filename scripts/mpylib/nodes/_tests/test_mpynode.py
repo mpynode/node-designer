@@ -82,7 +82,7 @@ class TestMPyNode(unittest.TestCase):
         for use_binary in (True, False):
             mc.file(newFile=True, force=True)
             
-            file_ext = MPyNode.BINARY_FILE_EXT if use_binary else MPyNode.ASCII_FILE_EXT
+            file_ext = MPyNode._BINARY_FILE_EXT if use_binary else MPyNode._ASCII_FILE_EXT
             
             self.testInit()
             node = self.TEST_CLASS("test_py_node")
@@ -117,7 +117,7 @@ class TestMPyNode(unittest.TestCase):
         for use_binary in (True, False):
             mc.file(newFile=True, force=True)
             
-            file_ext = MPyNode.BINARY_FILE_EXT if use_binary else MPyNode.ASCII_FILE_EXT
+            file_ext = MPyNode._BINARY_FILE_EXT if use_binary else MPyNode._ASCII_FILE_EXT
             
             self.testInit()
             node = self.TEST_CLASS("test_py_node")
@@ -165,7 +165,7 @@ class TestMPyNode(unittest.TestCase):
         
         for is_array in (False, True):
         
-            for attr_type in MPyNode.NEW_INPUT_TYPES.keys():
+            for attr_type in MPyNode._NEW_INPUT_TYPES.keys():
                 
                 name_suffix = "" if not is_array else "_array"
                 attr_name = "test_" + attr_type + name_suffix
@@ -209,7 +209,7 @@ class TestMPyNode(unittest.TestCase):
         
         for is_array in (False, True):
         
-            for attr_type in MPyNode.NEW_INPUT_TYPES.keys():
+            for attr_type in MPyNode._NEW_INPUT_TYPES.keys():
                 
                 name_suffix = "" if not is_array else "_array"
                 attr_name = "test_" + attr_type + name_suffix
@@ -252,7 +252,7 @@ class TestMPyNode(unittest.TestCase):
         
         for is_array in (False, True):
         
-            for attr_type in MPyNode.NEW_OUTPUT_TYPES.keys():
+            for attr_type in MPyNode._NEW_OUTPUT_TYPES.keys():
                 
                 name_suffix = "" if not is_array else "_array"
                 attr_name = "test_" + attr_type + name_suffix
@@ -294,7 +294,7 @@ class TestMPyNode(unittest.TestCase):
         
         for is_array in (False, True):
         
-            for attr_type in MPyNode.NEW_OUTPUT_TYPES.keys():
+            for attr_type in MPyNode._NEW_OUTPUT_TYPES.keys():
                 
                 name_suffix = "" if not is_array else "_array"
                 attr_name = "test_" + attr_type + name_suffix
@@ -337,7 +337,7 @@ class TestMPyNode(unittest.TestCase):
         
         for is_array in (False, True):
         
-            for attr_type in MPyNode.NEW_INPUT_TYPES.keys():
+            for attr_type in MPyNode._NEW_INPUT_TYPES.keys():
                 
                 name_suffix = "" if not is_array else "_array"
                 attr_name = "test_" + attr_type + name_suffix
@@ -479,7 +479,7 @@ class TestMPyNode(unittest.TestCase):
         
         for is_array in (False, True):
         
-            for attr_type in MPyNode.NEW_OUTPUT_TYPES.keys():
+            for attr_type in MPyNode._NEW_OUTPUT_TYPES.keys():
                 
                 name_suffix = "" if not is_array else "_array"
                 attr_name = "test_" + attr_type + name_suffix
@@ -504,7 +504,7 @@ class TestMPyNode(unittest.TestCase):
             attr_tokens = attr_name.split("_")
             
             self.assertTrue(len(attr_tokens) in (2, 3))
-            self.assertEqual(attr_tokens[1], attr_data[MPyNode.ATTR_MAP_TYPE_KEY])
+            self.assertEqual(attr_tokens[1], attr_data[MPyNode._ATTR_MAP_TYPE_KEY])
             
             if len(attr_tokens) == 2:
                 self.assertFalse(attr_data.has_key(MPyNode.ATTR_MAP_ARRAY_KEY))
@@ -525,7 +525,7 @@ class TestMPyNode(unittest.TestCase):
             attr_tokens = attr_name.split("_")
             
             self.assertTrue(len(attr_tokens) in (2, 3))
-            self.assertEqual(attr_tokens[1], attr_data[MPyNode.ATTR_MAP_TYPE_KEY])
+            self.assertEqual(attr_tokens[1], attr_data[MPyNode._ATTR_MAP_TYPE_KEY])
             
             if len(attr_tokens) == 2:
                 self.assertFalse(attr_data.has_key(MPyNode.ATTR_MAP_ARRAY_KEY))
@@ -539,9 +539,9 @@ class TestMPyNode(unittest.TestCase):
         attr_types = MPyNode.listValidInputTypes()
         
         self.assertEqual(type(attr_types), tuple)
-        self.assertEqual(len(attr_types), len(MPyNode.NEW_INPUT_TYPES))
+        self.assertEqual(len(attr_types), len(MPyNode._NEW_INPUT_TYPES))
         
-        attr_keys = MPyNode.NEW_INPUT_TYPES.keys()
+        attr_keys = MPyNode._NEW_INPUT_TYPES.keys()
         attr_keys.sort()
         
         self.assertSequenceEqual(attr_types, attr_keys)
@@ -552,9 +552,9 @@ class TestMPyNode(unittest.TestCase):
         attr_types = MPyNode.listValidOutputTypes()
         
         self.assertEqual(type(attr_types), tuple)
-        self.assertEqual(len(attr_types), len(MPyNode.NEW_OUTPUT_TYPES))
+        self.assertEqual(len(attr_types), len(MPyNode._NEW_OUTPUT_TYPES))
         
-        attr_keys = MPyNode.NEW_OUTPUT_TYPES.keys()
+        attr_keys = MPyNode._NEW_OUTPUT_TYPES.keys()
         attr_keys.sort()
         
         self.assertSequenceEqual(attr_types, attr_keys)
@@ -1004,8 +1004,8 @@ class TestMPyNode(unittest.TestCase):
         in_attr_name = "inAttr"
         out_attr_name = "outAttr"
         comp_count_attr = "computeCount"
-        attr_mel_type = MPyNode.NEW_INPUT_TYPES[attr_type]
-        out_mel_type = MPyNode.NEW_OUTPUT_TYPES[attr_type] if not out_attr_type else MPyNode.NEW_OUTPUT_TYPES[out_attr_type]
+        attr_mel_type = MPyNode._NEW_INPUT_TYPES[attr_type]
+        out_mel_type = MPyNode._NEW_OUTPUT_TYPES[attr_type] if not out_attr_type else MPyNode._NEW_OUTPUT_TYPES[out_attr_type]
         
         if attr_kargs is None:
             attr_kargs = {}
@@ -1042,7 +1042,7 @@ class TestMPyNode(unittest.TestCase):
             
         else:
             for i, axis in enumerate(("X", "Y", "Z")):
-                comp_name = MPyNode.VECTOR_COMP_NAMES[attr_type][i]
+                comp_name = MPyNode._VECTOR_COMP_NAMES[attr_type][i]
                 
                 if is_array:
                     in_node.connectAttr(input_attr + axis, py_node, pynode_in_attr + "." + in_attr_name + comp_name)
@@ -1113,7 +1113,7 @@ class TestMPyNode(unittest.TestCase):
                 
 class TestChildClass(MPyNode):
     
-    INIT_EXPRESSION_STR = "outAttr = inAttr\nif not hasattr(self, '_comp_count'):\n    self._comp_count = 0\nelse:    self._comp_count += 1\ncomputeCount=self._comp_count"
+    _INIT_EXPRESSION_STR = "outAttr = inAttr\nif not hasattr(self, '_comp_count'):\n    self._comp_count = 0\nelse:    self._comp_count += 1\ncomputeCount=self._comp_count"
     
     INIT_INPUT_ATTRS = {"inAttr":{"attr_type":"float", "is_array":False}}
     
