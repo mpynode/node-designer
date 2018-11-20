@@ -1,0 +1,1459 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>mpylib._base package &#8212; MPyNode 1.0 documentation</title>
+    <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/js/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript" src="_static/js/jquery-fix.js"></script>
+    <script type="text/javascript" src="_static/bootstrap-3.3.7/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="_static/bootstrap-sphinx.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+  </head><body>
+
+  <div id="navbar" class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="index.html"><span><img src="_static/mpynode_hr.png"></span>
+          MPyNode</a>
+        <span class="navbar-text navbar-version pull-left"><b></b></span>
+      </div>
+
+        <div class="collapse navbar-collapse nav-collapse">
+          <ul class="nav navbar-nav">
+            
+            
+              <li class="dropdown globaltoc-container">
+  <a role="button"
+     id="dLabelGlobalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="index.html">Site <b class="caret"></b></a>
+  <ul class="dropdown-menu globaltoc"
+      role="menu"
+      aria-labelledby="dLabelGlobalToc"></ul>
+</li>
+              
+                <li class="dropdown">
+  <a role="button"
+     id="dLabelLocalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="#">Page <b class="caret"></b></a>
+  <ul class="dropdown-menu localtoc"
+      role="menu"
+      aria-labelledby="dLabelLocalToc"><ul>
+<li><a class="reference internal" href="#">mpylib._base package</a><ul>
+<li><a class="reference internal" href="#module-mpylib._base">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</ul>
+</li>
+              
+            
+            
+              
+                
+              
+            
+            
+            
+            
+              <li class="hidden-sm">
+<div id="sourcelink">
+  <a href="_sources/mpylib._base.rst.txt"
+     rel="nofollow">Source</a>
+</div></li>
+            
+          </ul>
+
+          
+            
+<form class="navbar-form navbar-right" action="search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+          
+        </div>
+    </div>
+  </div>
+
+<div class="container">
+  <div class="row">
+    <div class="col-md-12 content">
+      
+  <div class="section" id="mpylib-base-package">
+<h1>mpylib._base package<a class="headerlink" href="#mpylib-base-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="module-mpylib._base">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-mpylib._base" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="mpylib._base.MNode">
+<em class="property">class </em><code class="descname">MNode</code><span class="sig-paren">(</span><em>node=None</em>, <em>node_type=None</em>, <em>name=None</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib._base.MNode" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">OpenMaya.MObject</span></code></p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Purpose:</th><td class="field-body"><dl class="first docutils">
+<dt>Provides object oriented interface for querying/editing DAG or DG nodes inside Maya.</dt>
+<dd><p class="first last">An instance of the MNode class provides storage and access to a single</p>
+</dd>
+</dl>
+<p>Maya node. Methods within the class replace the most commonly use maya 
+commands. Public methods operate on the object stored within the MNode.
+Note that most methods support the same keywords arguments as their
+maya.cmds equivalent.</p>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Extends:</th><td class="field-body"><p class="first last"><em>OpenMaya.MObject</em></p>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="attribute">
+<dt id="mpylib._base.MNode.ATTR_AT_TYPES">
+<code class="descname">ATTR_AT_TYPES</code><em class="property"> = ('bool', 'long', 'short', 'byte', 'char', 'enum', 'float', 'double', 'doubleAngle', 'doubleLinear', 'compound', 'message', 'time', 'matrix', 'fltMatrix', 'reflectance', 'spectrum', 'float2', 'float3', 'double2', 'double3', 'long2', 'long3', 'short2', 'short3')</em><a class="headerlink" href="#mpylib._base.MNode.ATTR_AT_TYPES" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib._base.MNode.ATTR_DT_TYPES">
+<code class="descname">ATTR_DT_TYPES</code><em class="property"> = ('string', 'stringArray', 'reflectanceRGB', 'spectrumRGB', 'float2', 'float3', 'double2', 'double3', 'long2', 'long3', 'short2', 'short3', 'doubleArray', 'Int32Array', 'vectorArray', 'nurbsCurve', 'nurbsSurface', 'mesh', 'lattice', 'pointArray')</em><a class="headerlink" href="#mpylib._base.MNode.ATTR_DT_TYPES" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib._base.MNode.DAG_FN_CLASS">
+<code class="descname">DAG_FN_CLASS</code><a class="headerlink" href="#mpylib._base.MNode.DAG_FN_CLASS" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">OpenMaya.MFnDagNode</span></code></p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib._base.MNode.DAG_FN_FUNCS">
+<code class="descname">DAG_FN_FUNCS</code><em class="property"> = ('absoluteName', 'addAttribute', 'addExternalContentForFileAttr', 'allocateFlag', 'attribute', 'attributeClass', 'attributeCount', 'canBeWritten', 'classification', 'create', 'deallocateAllFlags', 'deallocateFlag', 'dgCallbackIds', 'dgCallbacks', 'dgTimer', 'dgTimerOff', 'dgTimerOn', 'dgTimerQueryState', 'dgTimerReset', 'findAlias', 'findPlug', 'getAffectedAttributes', 'getAffectingAttributes', 'getAliasAttr', 'getAliasList', 'getConnections', 'getExternalContent', 'hasAttribute', 'hasObj', 'isFlagSet', 'isNewAttribute', 'isTrackingEdits', 'name', 'object', 'plugsAlias', 'removeAttribute', 'reorderedAttribute', 'setAlias', 'setDoNotWrite', 'setExternalContent', 'setExternalContentForFileAttr', 'setFlag', 'setName', 'setObject', 'setUuid', 'type', 'userNode', 'uuid', 'addChild', 'dagRoot', 'partialPathName', 'isParentOf', 'childCount', 'isInstancedAttribute', 'instanceCount', 'transformationMatrix', 'child', 'isChildOf', 'removeChild', 'getAllPaths', 'getConnectedSetsAndMembers', 'fullPathName', 'parentCount', 'hasParent', 'removeChildAt', 'parent', 'dagPath', 'hasChild', 'isInstanced')</em><a class="headerlink" href="#mpylib._base.MNode.DAG_FN_FUNCS" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib._base.MNode.DAG_NODE_TYPES">
+<code class="descname">DAG_NODE_TYPES</code><em class="property"> = (110, 456, 248, 247)</em><a class="headerlink" href="#mpylib._base.MNode.DAG_NODE_TYPES" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib._base.MNode.DG_FN_CLASS">
+<code class="descname">DG_FN_CLASS</code><a class="headerlink" href="#mpylib._base.MNode.DG_FN_CLASS" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">OpenMaya.MFnDependencyNode</span></code></p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib._base.MNode.DG_FN_FUNCS">
+<code class="descname">DG_FN_FUNCS</code><em class="property"> = ('absoluteName', 'addAttribute', 'addExternalContentForFileAttr', 'allocateFlag', 'attribute', 'attributeClass', 'attributeCount', 'canBeWritten', 'classification', 'create', 'deallocateAllFlags', 'deallocateFlag', 'dgCallbackIds', 'dgCallbacks', 'dgTimer', 'dgTimerOff', 'dgTimerOn', 'dgTimerQueryState', 'dgTimerReset', 'findAlias', 'findPlug', 'getAffectedAttributes', 'getAffectingAttributes', 'getAliasAttr', 'getAliasList', 'getConnections', 'getExternalContent', 'hasAttribute', 'hasObj', 'isFlagSet', 'isNewAttribute', 'isTrackingEdits', 'name', 'object', 'plugsAlias', 'removeAttribute', 'reorderedAttribute', 'setAlias', 'setDoNotWrite', 'setExternalContent', 'setExternalContentForFileAttr', 'setFlag', 'setName', 'setObject', 'setUuid', 'type', 'userNode', 'uuid')</em><a class="headerlink" href="#mpylib._base.MNode.DG_FN_FUNCS" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib._base.MNode.MENU_ATTR_PREFIX">
+<code class="descname">MENU_ATTR_PREFIX</code><em class="property"> = 'menuCmd_'</em><a class="headerlink" href="#mpylib._base.MNode.MENU_ATTR_PREFIX" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib._base.MNode.MENU_OBJ_NAME_STR">
+<code class="descname">MENU_OBJ_NAME_STR</code><em class="property"> = '~obj~'</em><a class="headerlink" href="#mpylib._base.MNode.MENU_OBJ_NAME_STR" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib._base.MNode.MENU_STR_SEPERATOR">
+<code class="descname">MENU_STR_SEPERATOR</code><em class="property"> = '&#64;'</em><a class="headerlink" href="#mpylib._base.MNode.MENU_STR_SEPERATOR" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib._base.MNode.NODE_LIST_CLASS">
+<code class="descname">NODE_LIST_CLASS</code><a class="headerlink" href="#mpylib._base.MNode.NODE_LIST_CLASS" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <a class="reference internal" href="#mpylib._base.MNodeList" title="mpylib._base.MNodeList"><code class="xref py py-class docutils literal notranslate"><span class="pre">MNodeList</span></code></a></p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib._base.MNode.NODE_TYPE">
+<code class="descname">NODE_TYPE</code><em class="property"> = None</em><a class="headerlink" href="#mpylib._base.MNode.NODE_TYPE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib._base.MNode.PLUGINS">
+<code class="descname">PLUGINS</code><em class="property"> = None</em><a class="headerlink" href="#mpylib._base.MNode.PLUGINS" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib._base.MNode.PLUGIN_CHECK">
+<code class="descname">PLUGIN_CHECK</code><em class="property"> = False</em><a class="headerlink" href="#mpylib._base.MNode.PLUGIN_CHECK" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib._base.MNode.PLUGIN_DIR">
+<code class="descname">PLUGIN_DIR</code><em class="property"> = None</em><a class="headerlink" href="#mpylib._base.MNode.PLUGIN_DIR" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mpylib._base.MNode.addAttr">
+<code class="descname">addAttr</code><span class="sig-paren">(</span><em>long_name=None</em>, <em>attr_type=None</em>, <em>**kargs</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib._base.MNode.addAttr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds an attribute of the given long name and given type to the node.
+Supports all keyword args of maya.cmds.addAttr except “dt” and “at”
+which are replaced by the attr_type arg.</p>
+<dl class="docutils">
+<dt><strong>long_name</strong>   <em>string</em> long name of the attribute to add. This is optional if you prefer to use the</dt>
+<dd>standard Maya <em>longName</em> and/or <em>shortName</em> keywaords instead.</dd>
+<dt><strong>attr_type</strong>   <em>string</em> type of attribute to add. Supports all string types supported by</dt>
+<dd>the “dt” and “at” args of maya.cmds.addAttr</dd>
+</dl>
+<p><strong>kargs</strong>               keyword args supported by maya.cmds.addAttr and keyword ‘channelBox’</p>
+<p><strong>RETURNS</strong>     <em>None</em></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">node_1</span><span class="o">.</span><span class="n">addAttr</span><span class="p">(</span><span class="s2">&quot;test&quot;</span><span class="p">,</span> <span class="s2">&quot;float&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib._base.MNode.addMenuCmd">
+<code class="descname">addMenuCmd</code><span class="sig-paren">(</span><em>ui_name</em>, <em>cmd_str</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib._base.MNode.addMenuCmd" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a context sensitive making menu to this node.</p>
+<p><strong>ui_name</strong>             <em>string</em> menu item name to give this command in the marking menu</p>
+<p><strong>cmd</strong>                 <em>string</em> of python code to run when the menu item is selected</p>
+<p><strong>RETURNS</strong>             None</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib._base.MNode.applyAttrMap">
+<code class="descname">applyAttrMap</code><span class="sig-paren">(</span><em>attr_map</em>, <em>skip_missing=False</em>, <em>skip_errors=False</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib._base.MNode.applyAttrMap" title="Permalink to this definition">¶</a></dt>
+<dd><p>Apply the attribute values in the given dictionary object to this node.</p>
+<p><strong>attr_map</strong>            dictionary object with str attribute names as keys and attribute values as values</p>
+<dl class="docutils">
+<dt><strong>skip_missing</strong>        <em>bool</em> - whether to skip over attributes that are missing from the scene. If False,</dt>
+<dd>a missing attribute will raise a RuntimeError</dd>
+<dt><strong>skip_errors</strong>         <em>bool</em> - whether to skip over setAttr errors. The default, False, will raise an exception</dt>
+<dd>if a setAttr error occurs.</dd>
+</dl>
+<p><strong>RETURNS</strong>                     None</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">attr_map</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;translateX&quot;</span><span class="p">:</span><span class="mf">100.0</span><span class="p">,</span> <span class="s2">&quot;visibility&quot;</span><span class="p">:</span><span class="kc">True</span><span class="p">}</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">node</span><span class="o">.</span><span class="n">applyAttrMap</span><span class="p">(</span><span class="n">attr_map</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib._base.MNode.attachMenuItems">
+<code class="descname">attachMenuItems</code><span class="sig-paren">(</span><em>parent_menu</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib._base.MNode.attachMenuItems" title="Permalink to this definition">¶</a></dt>
+<dd><p>This method attaches any defined menu cmds on this node to the given Maya menu item. Defined menu commands should
+be created using the <em>addMenuCmd</em> method.</p>
+<p>This is designed to be used in Maya’s dagMenuProc.mel but can be used with any Maya menu item.</p>
+<p>To get this to work with default dag marking menu, Maya’s dagMenuProc.mel must be modified with the following mel
+code at the top of global proc dagMenuProc() —</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>python(&quot;import mpylib; mpylib.MNode(&#39;&quot; + $object + &quot;&#39;).attachMenuItems(&#39;&quot; + $parent + &quot;&#39;)&quot;);
+</pre></div>
+</div>
+<p><strong>parent_menu</strong>                 <em>string</em> parent menu item to attach to</p>
+<p><strong>RETURNS</strong>                             None</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib._base.MNode.attributeQuery">
+<code class="descname">attributeQuery</code><span class="sig-paren">(</span><em>attr_name</em>, <em>**kargs</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib._base.MNode.attributeQuery" title="Permalink to this definition">¶</a></dt>
+<dd><p>Query information about the given attribute.</p>
+<p><strong>attr_name</strong>   string name of the attribute to query</p>
+<p><strong>kargs</strong>               keyword args supported by maya.cmds.attributeQuery</p>
+<p><strong>RETURNS</strong>     results of the attribute query</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1">## query the string values of an enum attr</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">node</span><span class="o">.</span><span class="n">attributeQuery</span><span class="p">(</span><span class="s2">&quot;myEnumAttr&quot;</span><span class="p">,</span> <span class="n">listEnum</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="go">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1">## tset if the attr is an enum</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">node</span><span class="o">.</span><span class="n">attributeQuery</span><span class="p">(</span><span class="s2">&quot;myEnumAttr&quot;</span><span class="p">,</span> <span class="n">enum</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib._base.MNode.bakeResults">
+<code class="descname">bakeResults</code><span class="sig-paren">(</span><em>*args</em>, <em>**kargs</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib._base.MNode.bakeResults" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run bakeResults on this node with the given options</p>
+<dl class="docutils">
+<dt><strong>args</strong>                optional string args of attributes to bake. If args are given,</dt>
+<dd>any value given to the <em>attribute</em> flag will be overridden</dd>
+</dl>
+<p><strong>kargs</strong>               keyword args supported by maya.cmds.bakeResults</p>
+<p><strong>RETURNS</strong>     <em>None</em></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">node_1</span><span class="o">.</span><span class="n">bakeResults</span><span class="p">(</span><span class="s2">&quot;translateX&quot;</span><span class="p">,</span> <span class="s2">&quot;scaleY&quot;</span><span class="p">,</span> <span class="n">simulate</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib._base.MNode.capitalize">
+<code class="descname">capitalize</code><span class="sig-paren">(</span><em>include_namespaces=False</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib._base.MNode.capitalize" title="Permalink to this definition">¶</a></dt>
+<dd><p>String operartion just like str.capitalize().
+Return a copy of the objects shortname with only its first character
+capitalized</p>
+<p><strong>include_namespaces</strong>          <em>bool</em> - If False, returned string will not include namespaces. default=False</p>
+<p><strong>RETURNS</strong>             <em>string</em></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib._base.MNode.connectAttr">
+<code class="descname">connectAttr</code><span class="sig-paren">(</span><em>src_attr</em>, <em>dst_node</em>, <em>dst_attr</em>, <em>**kargs</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib._base.MNode.connectAttr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Connects the given attribute of this node to the given node and attribute.</p>
+<p><strong>src_attr</strong>    string name of the source attr on this node</p>
+<p><strong>dst_node</strong>    string name or MNode of the destination node</p>
+<p><strong>dst_attr</strong>    string name of the destination node</p>
+<p><strong>kargs</strong>               keywords arg supported by maya.cmds.connectAttr</p>
+<p><strong>RETURNS</strong>             <em>None</em></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1">## connect node_a translateX to node_b translateZ</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">node_a</span><span class="o">.</span><span class="n">connectAttr</span><span class="p">(</span><span class="s2">&quot;tx&quot;</span><span class="p">,</span> <span class="n">node_b</span><span class="p">,</span> <span class="s2">&quot;tz&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib._base.MNode.count">
+<code class="descname">count</code><span class="sig-paren">(</span><em>sub</em>, <em>start=None</em>, <em>end=None</em>, <em>include_namespaces=False</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib._base.MNode.count" title="Permalink to this definition">¶</a></dt>
+<dd><p>String operartion just like str.count().
+Return the number of (non-overlapping) occurrences of substring sub in string s[start:end].</p>
+<p><strong>sub</strong>                                         <em>string</em> substring to find with the object’s shortname</p>
+<p><strong>start</strong>                                       optional <em>int</em> start index</p>
+<p><strong>end</strong>                                         optional <em>int</em> end index</p>
+<p><strong>include_namespaces</strong>          <em>bool</em> - If False, namespaces in the object’s name will be ignored. default=False</p>
+<p><strong>RETURNS</strong>                                     <em>int</em> index or <em>int</em> -1 is sub-string not found</p>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="mpylib._base.MNode.createNode">
+<em class="property">classmethod </em><code class="descname">createNode</code><span class="sig-paren">(</span><em>node_type</em>, <em>**kargs</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib._base.MNode.createNode" title="Permalink to this definition">¶</a></dt>
+<dd><p>Wrapper class method for maya.cmds.createNode thats returns a MNode object
+instead of a string name</p>
+<p><strong>node_type</strong>   <em>string</em> node type to create</p>
+<p><strong>kargs</strong>               keyword args supported by <em>maya.cmds.createNode</em></p>
+<p><strong>RETURNS</strong>     <em>MNode</em> of newly created node</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">new_node</span> <span class="o">=</span> <span class="n">MNode</span><span class="o">.</span><span class="n">createNode</span><span class="p">(</span><span class="s2">&quot;transform&quot;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;new_node&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">new_node</span> <span class="o">=</span> <span class="n">MNode</span><span class="o">.</span><span class="n">createNode</span><span class="p">(</span><span class="s2">&quot;time&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib._base.MNode.delete">
+<code class="descname">delete</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mpylib._base.MNode.delete" title="Permalink to this definition">¶</a></dt>
+<dd><p>Delete the node from the scene. Trying to access the node after running this method will
+raise a RuntimeError.</p>
+<p><strong>RETURNS</strong>             <em>None</em></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">node</span><span class="o">.</span><span class="n">delete</span><span class="p">()</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib._base.MNode.deleteAttr">
+<code class="descname">deleteAttr</code><span class="sig-paren">(</span><em>attr_name</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib._base.MNode.deleteAttr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Delete the attr with the given name from this node.</p>
+<p><strong>src_attr</strong>    string name of the attr to delete</p>
+<p><strong>RETURNS</strong>             <em>None</em></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">node</span><span class="o">.</span><span class="n">addAttr</span><span class="p">(</span><span class="s2">&quot;foo&quot;</span><span class="p">,</span> <span class="s2">&quot;float&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">node</span><span class="o">.</span><span class="n">deleteAttr</span><span class="p">(</span><span class="s2">&quot;foo&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib._base.MNode.duplicate">
+<code class="descname">duplicate</code><span class="sig-paren">(</span><em>**kargs</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib._base.MNode.duplicate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Duplicate the node with the given options</p>
+<p><strong>kargs</strong>       keywords arg supported by maya.cmds.duplicate</p>
+<p><strong>RETURNS</strong> MNode of the new node</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">new_node</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">duplicate</span><span class="p">()</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib._base.MNode.endswith">
+<code class="descname">endswith</code><span class="sig-paren">(</span><em>suffix</em>, <em>start=None</em>, <em>end=None</em>, <em>include_namespaces=False</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib._base.MNode.endswith" title="Permalink to this definition">¶</a></dt>
+<dd><p>String operartion just like str.endswith().</p>
+<p>Return True if the string ends with the specified suffix, otherwise return False.
+suffix can also be a tuple of suffixes to look for. With optional start, test beginning at that position.
+With optional end, stop comparing at that position.
+Operrates only on the node’s name itself and NOT it’s full path if DAG</p>
+<p><strong>suffix</strong>                              <em>string</em> or <em>tuple</em> of strings to test against</p>
+<p><strong>start</strong>                               optional <em>int</em> test beginning at position</p>
+<p><strong>end</strong>                                 optional <em>int</em> stop comparing at position</p>
+<p><strong>include_namespaces</strong>  optional <em>bool</em> to include namespace in the test (default=False)</p>
+<p><strong>RETURNS</strong>             <em>bool</em></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">node</span> <span class="o">=</span> <span class="n">MNode</span><span class="p">(</span><span class="s2">&quot;cool_node&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">node</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;_node&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1">#RESULT - True</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib._base.MNode.find">
+<code class="descname">find</code><span class="sig-paren">(</span><em>sub</em>, <em>start=None</em>, <em>end=None</em>, <em>include_namespaces=False</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib._base.MNode.find" title="Permalink to this definition">¶</a></dt>
+<dd><p>String operartion just like str.find().</p>
+<p>Return the lowest index in objects shortname where the substring <em>sub</em> is found such that sub is wholly
+contained in s[start:end]. Return -1 on failure</p>
+<p><strong>sub</strong>                                         <em>string</em> substring to find with the object’s shortname</p>
+<p><strong>start</strong>                                       optional <em>int</em> start index</p>
+<p><strong>end</strong>                                         optional <em>int</em> end index</p>
+<p><strong>include_namespaces</strong>          <em>bool</em> - If False, namespaces in the object’s name will be ignored. default=False</p>
+<p><strong>RETURNS</strong>                                     <em>int</em> index or <em>int</em> -1 is sub-string not found</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib._base.MNode.getAddAttrCmd">
+<code class="descname">getAddAttrCmd</code><span class="sig-paren">(</span><em>attr_name</em>, <em>use_long_names=False</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib._base.MNode.getAddAttrCmd" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mpylib._base.MNode.getAddAttrMaps">
+<code class="descname">getAddAttrMaps</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mpylib._base.MNode.getAddAttrMaps" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mpylib._base.MNode.getAttr">
+<code class="descname">getAttr</code><span class="sig-paren">(</span><em>attr_name</em>, <em>**kargs</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib._base.MNode.getAttr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the value of the given attr on this node.</p>
+<p><strong>attr_name</strong>   string name of attr
+<strong>kargs</strong>               keywords arg supported by maya.cmds.getAttr</p>
+<p><strong>RETURNS</strong>             value of the attribute</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">tx_val</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">getAttr</span><span class="p">(</span><span class="s2">&quot;translateX&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib._base.MNode.getAttrMap">
+<code class="descname">getAttrMap</code><span class="sig-paren">(</span><em>*args</em>, <em>**kargs</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib._base.MNode.getAttrMap" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns an OrderedDict of attributes as keys and their values as values.
+This method supports all arguments and keyword arguments used by maya.cmds.listAttr.</p>
+<p><strong>args</strong>                optional specific string pattern of an attribute to query on the node. This supports multiple string args</p>
+<p><strong>kargs</strong>               keywords args supported by maya.cmds.listAttr</p>
+<p><strong>RETURNS</strong>             <em>OrderedDict</em> or <em>None</em></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1">## get the names and values of all keyable attributes on this node </span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">keyable_map</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">getAttrMap</span><span class="p">(</span><span class="n">keyable</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="go">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1">## get names and values of all attributes that start with &quot;trans&quot; </span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">trans_attrs</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">getAttrMap</span><span class="p">(</span><span class="s2">&quot;trans*&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib._base.MNode.getBasename">
+<code class="descname">getBasename</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mpylib._base.MNode.getBasename" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the string name of this node any namespaces.</p>
+<p><strong>RETURNS</strong>             <em>string</em> base name</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">node</span><span class="o">.</span><span class="n">getName</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1">## RESULT: &quot;char:weapon:model:foo:testNode&quot;</span>
+<span class="go">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">node</span><span class="o">.</span><span class="n">getBasename</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1">## RESULT: &quot;testNode&quot;</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib._base.MNode.getHashCode">
+<code class="descname">getHashCode</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mpylib._base.MNode.getHashCode" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a hash code for the internal Maya object referenced by the MObject within this MNode</p>
+<p><strong>RETURNS</strong>             <em>int</em> hash code</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">hash_code</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">getHashCode</span><span class="p">()</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib._base.MNode.getInheritedNodeTypes">
+<code class="descname">getInheritedNodeTypes</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mpylib._base.MNode.getInheritedNodeTypes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the node classes that this node type is inherited from.</p>
+<p><strong>RETURNS</strong>             <em>tuple</em> of <em>string</em> node types or <em>None</em></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">node</span> <span class="o">=</span> <span class="n">MNode</span><span class="o">.</span><span class="n">createNode</span><span class="p">(</span><span class="s2">&quot;transform&quot;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;testNode&quot;</span><span class="p">)</span>
+<span class="go">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">node</span><span class="o">.</span><span class="n">getInheritedNodeTypes</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1">## RESULT: (&quot;containerBase&quot;, &quot;entity&quot;, &quot;dagNode&quot;, &quot;transform&quot;)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib._base.MNode.getMObject">
+<code class="descname">getMObject</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mpylib._base.MNode.getMObject" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the MObject of this node</p>
+<p><strong>RETURNS</strong>             <em>OpenMaya.MObject</em></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">m_obj</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">getMObject</span><span class="p">()</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib._base.MNode.getMObjectHandle">
+<code class="descname">getMObjectHandle</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mpylib._base.MNode.getMObjectHandle" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the MObjectHandle of this node</p>
+<p><strong>RETURNS</strong>             <em>OpenMaya.MObjectHandle</em></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">m_obj_hndl</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">getMObjectHandle</span><span class="p">()</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib._base.MNode.getMenuCmds">
+<code class="descname">getMenuCmds</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mpylib._base.MNode.getMenuCmds" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return all custom marking menu items on this node.</p>
+<p><strong>RETURNS</strong>             OrderedDict with <em>string</em> menu item names as keys and <em>string</em> python commands as values</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib._base.MNode.getMessageAttr">
+<code class="descname">getMessageAttr</code><span class="sig-paren">(</span><em>attr_name</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib._base.MNode.getMessageAttr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the node that is connected to the given message attribute.</p>
+<p><strong>attr_name</strong>           string name of the message attr</p>
+<p><strong>RETURNS</strong>                     <em>MNode</em> or <em>None</em></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">connected_node</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">getMessageAttr</span><span class="p">(</span><span class="s2">&quot;msgAttr&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib._base.MNode.getName">
+<code class="descname">getName</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mpylib._base.MNode.getName" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the string name of this node. Note that is is the short name of the object.
+This method does not return DAG node full paths. Returned name will include all parent namespaces.</p>
+<p><strong>RETURNS</strong>             <em>string</em> name</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">node_a</span> <span class="o">=</span> <span class="n">MNode</span><span class="o">.</span><span class="n">createNode</span><span class="p">(</span><span class="s2">&quot;transform&quot;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;testNode&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">node</span><span class="o">.</span><span class="n">getName</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1">## RESULT: &quot;testNode&quot;</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib._base.MNode.getNamespace">
+<code class="descname">getNamespace</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mpylib._base.MNode.getNamespace" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the namespace this node belongs to, if any. Any returned namespace
+will always start with “:”.</p>
+<p><strong>RETURN</strong>              <em>string</em> namespace or None if node is in the default namespace</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">node</span> <span class="o">=</span> <span class="n">MNode</span><span class="o">.</span><span class="n">createNode</span><span class="p">(</span><span class="s2">&quot;transform&quot;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;test_node&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">mc</span><span class="o">.</span><span class="n">namespace</span><span class="p">(</span><span class="n">add</span><span class="o">=</span><span class="s2">&quot;test&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">node</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="s2">&quot;test:test_node&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">namespace</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">getNamespace</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1">##RESULT - &#39;:test&#39;</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib._base.MNode.getNextAttr">
+<code class="descname">getNextAttr</code><span class="sig-paren">(</span><em>attr_prefix</em>, <em>start_num=0</em>, <em>max_search=500</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib._base.MNode.getNextAttr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Finds the next available attribute that is available with the given prefix. An int is added to
+the end of the given attr prefix. The attribute is not added.</p>
+<p><strong>attr_prefix</strong>         <em>string</em> prefix to use for the attr</p>
+<p><strong>start_num</strong>           <em>int</em> number to start from. default = 0</p>
+<dl class="docutils">
+<dt><strong>max_search</strong>          <em>int</em> protection against infinite loop. An error RuntimeError is raised if an</dt>
+<dd>attribute slot is not found after this many tries. default = 500</dd>
+</dl>
+<p><strong>RETURNS</strong>                     string attribute name</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">new_attr</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">getNextAttr</span><span class="p">(</span><span class="s2">&quot;foo&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1">## RESULT: &quot;foo0&quot;</span>
+<span class="go">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">node</span><span class="o">.</span><span class="n">addAttr</span><span class="p">(</span><span class="n">new_attr</span><span class="p">,</span> <span class="s2">&quot;float&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">next_atr</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">getNextAttr</span><span class="p">(</span><span class="s2">&quot;foo&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1">## RESULT: &quot;foo1&quot;</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib._base.MNode.getObjectType">
+<code class="descname">getObjectType</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mpylib._base.MNode.getObjectType" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the string node type of this node.</p>
+<p><em>RETURNS</em>       <em>string</em> node type</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">node</span> <span class="o">=</span> <span class="n">MNode</span><span class="o">.</span><span class="n">createNode</span><span class="p">(</span><span class="s2">&quot;transform&quot;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;testNode&quot;</span><span class="p">)</span>
+<span class="go">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">node</span><span class="o">.</span><span class="n">getObjectType</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1">## RESULT: &quot;transform&quot;</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib._base.MNode.getPath">
+<code class="descname">getPath</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mpylib._base.MNode.getPath" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the full path name of this node. This is equivalent to casting the node as a string.
+If this node is not DAG, the name of the node will be returned.</p>
+<p><strong>RETURNS</strong>     <em>string</em></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">node_a</span> <span class="o">=</span> <span class="n">MNode</span><span class="o">.</span><span class="n">createNode</span><span class="p">(</span><span class="s2">&quot;transform&quot;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;testNode&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">node</span><span class="o">.</span><span class="n">getName</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1">## RESULT: &quot;testNode&quot;</span>
+<span class="go">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">node</span><span class="o">.</span><span class="n">getPath</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1">## RESULT: &quot;|testNode&quot;</span>
+<span class="go">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">str</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1">## RESULT: &quot;|testNode&quot;</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib._base.MNode.getPluginName">
+<code class="descname">getPluginName</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mpylib._base.MNode.getPluginName" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the name of the plugin that defines this node, if any</p>
+<p><strong>RETURNS</strong>             string name of the plugin where this node is defined or None if the node is native</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib._base.MNode.getPlugs">
+<code class="descname">getPlugs</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mpylib._base.MNode.getPlugs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the string names of all attributes that have incoming connections.</p>
+<p><strong>RETURNS</strong>             <em>tuple</em> of attribute <em>string</em> names or <em>None</em></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span>    <span class="n">plugs</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">getPlugs</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1">## RESULT: None</span>
+<span class="gp">&gt;&gt;&gt; </span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">node_b</span><span class="o">.</span><span class="n">connectAttr</span><span class="p">(</span><span class="s2">&quot;tx&quot;</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="s2">&quot;tz&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="n">plugs</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">getPlugs</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1">## RESULT: (&quot;translateZ&quot;,)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib._base.MNode.getSetAttrCmds">
+<code class="descname">getSetAttrCmds</code><span class="sig-paren">(</span><em>attr_name</em>, <em>long_names=False</em>, <em>non_defaults_only=True</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib._base.MNode.getSetAttrCmds" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns an tuple of strings containing mel setAttr commands for given attribute and
+all of its descendent attrs. This string could be used in a mayaAscii like format. This
+can be used to, if <em>non_defaults_only</em> is <a href="#id1"><span class="problematic" id="id2">*</span></a>True, test if the attribute has changed since the
+node was created.</p>
+<p><strong>attr_name</strong>           <em>string</em> name of the attribute to query</p>
+<p><strong>long_names</strong>          <em>bool</em> - whether to return cmds with long attribute names. default=False</p>
+<dl class="docutils">
+<dt><strong>non_defaults_only</strong>   <em>bool</em> - If True, return a value only if the attribute has been change</dt>
+<dd><blockquote class="first">
+<div>from its default value or if its referenced and has been changed from</div></blockquote>
+<p class="last">its referenced value. default=True</p>
+</dd>
+<dt><strong>RETURNS</strong>                             tuple of string mel setAttr commands like you would see in a mayaAscii file or</dt>
+<dd>None</dd>
+</dl>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">node</span> <span class="o">=</span> <span class="n">MNode</span><span class="o">.</span><span class="n">createNode</span><span class="p">(</span><span class="s2">&quot;transform&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">node</span><span class="o">.</span><span class="n">setAttr</span><span class="p">(</span><span class="s2">&quot;tx&quot;</span><span class="p">,</span> <span class="mf">100.0</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">node</span><span class="o">.</span><span class="n">getSetAttrCmds</span><span class="p">(</span><span class="s2">&quot;tx&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1">#RESULT - [u&#39;       setAttr &quot;.tx&quot; 100.0;&#39;]</span>
+<span class="go">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1">#translateY has not changed so it will return None with non_defaults_only set to True</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">node</span><span class="o">.</span><span class="n">getSetAttrCmds</span><span class="p">(</span><span class="s2">&quot;ty&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1">#RESULT - None</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib._base.MNode.hasAttr">
+<code class="descname">hasAttr</code><span class="sig-paren">(</span><em>attr_name</em>, <em>parent_attr=None</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib._base.MNode.hasAttr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns whether this node has an attribute with the given name.</p>
+<p><strong>attr_name</strong>           string attr name</p>
+<p><strong>RETURNS</strong>                     <em>bool</em></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">node</span><span class="o">.</span><span class="n">hasAttr</span><span class="p">(</span><span class="s2">&quot;foo&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1">## RESULT: False</span>
+<span class="gp">&gt;&gt;&gt; </span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">node</span><span class="o">.</span><span class="n">addAttr</span><span class="p">(</span><span class="s2">&quot;foo&quot;</span><span class="p">,</span> <span class="s2">&quot;float&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">node</span><span class="o">.</span><span class="n">hasAttr</span><span class="p">(</span><span class="s2">&quot;foo&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1">## RESULT: True</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib._base.MNode.hasUniqueName">
+<code class="descname">hasUniqueName</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mpylib._base.MNode.hasUniqueName" title="Permalink to this definition">¶</a></dt>
+<dd><p>Indicates whether or not this node’s name is unique within the scene.</p>
+<p><em>RETURNS</em>       <em>bool</em></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">node</span><span class="o">.</span><span class="n">hasUniqueName</span><span class="p">()</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib._base.MNode.index">
+<code class="descname">index</code><span class="sig-paren">(</span><em>sub</em>, <em>start=None</em>, <em>end=None</em>, <em>include_namespaces=False</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib._base.MNode.index" title="Permalink to this definition">¶</a></dt>
+<dd><p>String operartion just like str.index().
+Return the lowest index in objects shortname where the substring <em>sub</em> is found such that sub is wholly
+contained in s[start:end]. Raises ValueError when the substring is not found.</p>
+<p><strong>sub</strong>                                         <em>string</em> substring to find with the object’s shortname</p>
+<p><strong>start</strong>                                       optional <em>int</em> start index</p>
+<p><strong>end</strong>                                         optional <em>int</em> end index</p>
+<p><strong>include_namespaces</strong>          <em>bool</em> - If False, namespaces in the object’s name will be ignored. default=False</p>
+<p><strong>RETURNS</strong>                                     <em>int</em> index</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib._base.MNode.isFromReferencedFile">
+<code class="descname">isFromReferencedFile</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mpylib._base.MNode.isFromReferencedFile" title="Permalink to this definition">¶</a></dt>
+<dd><p>Indicates whether or not this node came from a referenced file.</p>
+<p><strong>RETURNS</strong>             <em>bool</em></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib._base.MNode.isLocked">
+<code class="descname">isLocked</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mpylib._base.MNode.isLocked" title="Permalink to this definition">¶</a></dt>
+<dd><p>Indicates whether or not this node is locked.</p>
+<p><em>RETURNS</em>       <em>bool</em></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">node</span><span class="o">.</span><span class="n">isLocked</span><span class="p">()</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib._base.MNode.isValid">
+<code class="descname">isValid</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mpylib._base.MNode.isValid" title="Permalink to this definition">¶</a></dt>
+<dd><p>Tests whether this node is still valid. Nodes become invalid if deleted from the scene or a
+new scene is opened.</p>
+<p><strong>RETURNS</strong>                     <em>bool</em></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">node</span><span class="o">.</span><span class="n">isValid</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1">## RESULT: True</span>
+<span class="gp">&gt;&gt;&gt; </span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">node</span><span class="o">.</span><span class="n">delete</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">node</span><span class="o">.</span><span class="n">isValid</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1">## RESULT: False</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib._base.MNode.isalnum">
+<code class="descname">isalnum</code><span class="sig-paren">(</span><em>include_namespaces=False</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib._base.MNode.isalnum" title="Permalink to this definition">¶</a></dt>
+<dd><p>String operartion just like str.isalnum().</p>
+<p>Return true if all characters in the nodes’s shortname are alphanumeric and there is at least one character,
+false otherwise. If <em>include_namespaces</em> arg is <em>True</em>, any ‘:’ characters in the node’s name will be ignored
+and not count towards the result of this method.</p>
+<p><strong>RETURNS</strong>                                     <em>bool</em></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib._base.MNode.isalpha">
+<code class="descname">isalpha</code><span class="sig-paren">(</span><em>include_namespaces=False</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib._base.MNode.isalpha" title="Permalink to this definition">¶</a></dt>
+<dd><p>String operartion just like str.isalpha().</p>
+<p>Return true if all characters in the nodes’s shortname are alpha and there is at least one character,
+false otherwise. If <em>include_namespaces</em> arg is <em>True</em>, any ‘:’ characters in the node’s name will be ignored
+and not count towards the result of this method.</p>
+<p><strong>include_namespaces</strong>          <em>bool</em> - If False, namespaces in the object’s name will be ignored. default=False</p>
+<p><strong>RETURNS</strong>                                     <em>bool</em></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib._base.MNode.islower">
+<code class="descname">islower</code><span class="sig-paren">(</span><em>include_namespaces=False</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib._base.MNode.islower" title="Permalink to this definition">¶</a></dt>
+<dd><p>String operartion just like str.islower().</p>
+<p>Return true if all cased characters in the nodes’s shortname are lowercase and there is at least one cased character,
+false otherwise. If <em>include_namespaces</em> arg is <em>True</em>, any ‘:’ characters in the node’s name will be ignored
+and not count towards the result of this method.</p>
+<p><strong>include_namespaces</strong>          <em>bool</em> - If False, namespaces in the object’s name will be ignored. default=False</p>
+<p><strong>RETURNS</strong>                                     <em>bool</em></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib._base.MNode.istitle">
+<code class="descname">istitle</code><span class="sig-paren">(</span><em>include_namespaces=False</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib._base.MNode.istitle" title="Permalink to this definition">¶</a></dt>
+<dd><p>String operartion just like str.istitle().</p>
+<p>Return true if the nodes’s shortname is a titlecased string and there is at least one character, for example uppercase
+characters may only follow uncased characters and lowercase characters only cased ones. Return false otherwise.
+If <em>include_namespaces</em> arg is <em>True</em>, any ‘:’ characters in the node’s name will be ignored
+and not count towards the result of this method.</p>
+<p><strong>include_namespaces</strong>          <em>bool</em> - If False, namespaces in the object’s name will be ignored. default=False</p>
+<p><strong>RETURNS</strong>                                     <em>bool</em></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib._base.MNode.isupper">
+<code class="descname">isupper</code><span class="sig-paren">(</span><em>include_namespaces=False</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib._base.MNode.isupper" title="Permalink to this definition">¶</a></dt>
+<dd><p>String operartion just like str.isupper().</p>
+<p>Return true if all cased characters in the nodes’s shortname are upercase and there is at least one cased character,
+false otherwise. If <em>include_namespaces</em> arg is <em>True</em>, any ‘:’ characters in the node’s name will be ignored
+and not count towards the result of this method.</p>
+<p><strong>include_namespaces</strong>          <em>bool</em> - If False, namespaces in the object’s name will be ignored. default=False</p>
+<p><strong>RETURNS</strong>                                     <em>bool</em></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib._base.MNode.join">
+<code class="descname">join</code><span class="sig-paren">(</span><em>iterable</em>, <em>include_namespaces=False</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib._base.MNode.join" title="Permalink to this definition">¶</a></dt>
+<dd><p>String operartion just like str.join().</p>
+<p>Return a string which is the concatenation of the strings in the iterable. The separator while be the node’s shortname.</p>
+<p><strong>iterable</strong>    sequence of <em>strings</em> to join using the node’s shortname as the separator</p>
+<p><strong>include_namespaces</strong>          <em>bool</em> - If False, namespaces in the nodes’s name will be ignored. default=False</p>
+<p><strong>RETURNS</strong>             <em>string</em></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib._base.MNode.listAttr">
+<code class="descname">listAttr</code><span class="sig-paren">(</span><em>*args</em>, <em>**kargs</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib._base.MNode.listAttr" title="Permalink to this definition">¶</a></dt>
+<dd><p>List the atributes on this node</p>
+<dl class="docutils">
+<dt><strong>args</strong>                specific string pattern of an attribute to query on the node. This supports</dt>
+<dd>multiple string args</dd>
+</dl>
+<p><strong>kargs</strong>               keywords args supported by maya.cmds.listAttr
+<strong>RETURNS</strong>             List of string atribute names or None</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1">## list all attributes ##</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">attrs</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">listAttr</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1">## list all translate attrs</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">attrs</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">listAttr</span><span class="p">(</span><span class="s2">&quot;translate*&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1">## list translate and rotate attrs</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">attrs</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">listAttr</span><span class="p">(</span><span class="s2">&quot;translate*&quot;</span><span class="p">,</span> <span class="s2">&quot;rotate*&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib._base.MNode.listConnections">
+<code class="descname">listConnections</code><span class="sig-paren">(</span><em>attr_name=None</em>, <em>**kargs</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib._base.MNode.listConnections" title="Permalink to this definition">¶</a></dt>
+<dd><p>List connections to this node</p>
+<p><strong>attr_name</strong>   optional <em>string</em> name of an connected atribute.
+<strong>kargs</strong>               keywords args supported by maya.cmds.listConnections
+<strong>RETURNS</strong>             (<em>MNodeList</em>, <em>None</em>) if the “plugs” karg is not used.</p>
+<blockquote>
+<div><blockquote>
+<div>(<em>MNodeList</em>, <em>tuple*(*string</em> attr_names)) if “plugs” is used.</div></blockquote>
+<p>(<em>None</em>, <em>None</em>) if there are no results.</p>
+</div></blockquote>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span>    <span class="n">nodes</span><span class="p">,</span> <span class="n">plugs</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">listConnections</span><span class="p">(</span><span class="n">source</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib._base.MNode.lower">
+<code class="descname">lower</code><span class="sig-paren">(</span><em>include_namespaces=False</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib._base.MNode.lower" title="Permalink to this definition">¶</a></dt>
+<dd><p>String operartion just like str.lower().</p>
+<p>Return a copy of nodes’s shortname, but with upper case letters converted to lower case.</p>
+<p><strong>include_namespaces</strong>          <em>bool</em> - If False, namespaces in the nodes’s name will be ignored. default=False</p>
+<p><strong>RETURNS</strong>                                     <em>string</em></p>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="mpylib._base.MNode.ls">
+<em class="property">classmethod </em><code class="descname">ls</code><span class="sig-paren">(</span><em>*args</em>, <em>**kargs</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib._base.MNode.ls" title="Permalink to this definition">¶</a></dt>
+<dd><p>Wrapper class method for <em>maya.cmds.ls</em> thats returns a <em>MNodeList</em> result
+instead of a list of string names</p>
+<p><strong>args</strong>                args supported by <em>maya.cmds.ls</em></p>
+<p><strong>kargs</strong>               keyword args supported by <em>maya.cmds.ls</em></p>
+<p><strong>RETURNS</strong>     <em>MNodeList</em> of nodes or <em>None</em></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">foo_nodes</span> <span class="o">=</span> <span class="n">MNode</span><span class="o">.</span><span class="n">ls</span><span class="p">(</span><span class="s2">&quot;foo*&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">time_nodes</span> <span class="o">=</span> <span class="n">MNode</span><span class="o">.</span><span class="n">ls</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="s2">&quot;time&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib._base.MNode.lstrip">
+<code class="descname">lstrip</code><span class="sig-paren">(</span><em>chars=None</em>, <em>include_namespaces=False</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib._base.MNode.lstrip" title="Permalink to this definition">¶</a></dt>
+<dd><p>String operartion just like str.lstrip().</p>
+<p>Return a copy of the node’s shortname with leading characters removed. If chars is omitted or None, whitespace characters
+are removed. If given and not None, chars must be a string; the characters in the string will be stripped from
+the beginning of the string this method is called on.</p>
+<p><strong>chars</strong>                       optional <em>string</em> to strip from the node’s shortname</p>
+<p><strong>RETURNS</strong>                     <em>string</em></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib._base.MNode.partition">
+<code class="descname">partition</code><span class="sig-paren">(</span><em>sep</em>, <em>include_namespaces=False</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib._base.MNode.partition" title="Permalink to this definition">¶</a></dt>
+<dd><p>String operartion just like str.partition().</p>
+<p>Split the nodes’s shortname at the first occurrence of sep, and return a 3-tuple containing the part before the
+separator, the separator itself, and the part after the separator. If the separator is not found, return
+a 3-tuple containing the nodes’s shortname itself, followed by two empty strings.</p>
+<p><strong>include_namespaces</strong>          <em>bool</em> - If False, namespaces in the nodes’s name will be ignored. default=False</p>
+<p><strong>RETURNS</strong>                                     3-tuple containing the part before the separator, the separator itself, and the part after the separator</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib._base.MNode.removeInputConnections">
+<code class="descname">removeInputConnections</code><span class="sig-paren">(</span><em>attr_name</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib._base.MNode.removeInputConnections" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove any incoming connections to the attribute with the given name.</p>
+<p><strong>attr_name</strong>           <em>string</em> name of the attribute</p>
+<p><strong>RETURNS</strong>                     None</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib._base.MNode.removeOutputConnections">
+<code class="descname">removeOutputConnections</code><span class="sig-paren">(</span><em>attr_name</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib._base.MNode.removeOutputConnections" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove any output connections from the attribute with the given name.</p>
+<p><strong>attr_name</strong>           <em>string</em> name of the attribute</p>
+<p><strong>RETURNS</strong>                     None</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib._base.MNode.rename">
+<code class="descname">rename</code><span class="sig-paren">(</span><em>new_name</em>, <em>**kargs</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib._base.MNode.rename" title="Permalink to this definition">¶</a></dt>
+<dd><p>Rename this node</p>
+<p><strong>new_name</strong>    <em>string</em> new name
+<strong>kargs</strong>               keywords args supported by maya.cmds.rename</p>
+<p><strong>RETURNS</strong>             <em>None</em></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib._base.MNode.replace">
+<code class="descname">replace</code><span class="sig-paren">(</span><em>old</em>, <em>new</em>, <em>count=None</em>, <em>include_namespaces=False</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib._base.MNode.replace" title="Permalink to this definition">¶</a></dt>
+<dd><p>String operartion just like str.replace().</p>
+<p>Return a copy of the string with all occurrences of substring old replaced by new. If the optional
+argument count is given, only the first count occurrences are replaced</p>
+<p><strong>old</strong>         sub <em>string</em> in the objects name to replace</p>
+<p><strong>new</strong>         <em>string</em> to replace sub-string <em>old</em> with</p>
+<p><strong>RETURNS</strong> <em>string</em></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib._base.MNode.rfind">
+<code class="descname">rfind</code><span class="sig-paren">(</span><em>sub</em>, <em>start=None</em>, <em>end=None</em>, <em>include_namespaces=False</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib._base.MNode.rfind" title="Permalink to this definition">¶</a></dt>
+<dd><p>String operartion just like str.rfind().
+Return the highest index in objects shortname where the substring <em>sub</em> is found such that sub is wholly
+contained in s[start:end]. Return -1 on failure</p>
+<p><strong>sub</strong>                                         <em>string</em> substring to find with the object’s shortname</p>
+<p><strong>start</strong>                                       optional <em>int</em> start index</p>
+<p><strong>end</strong>                                         optional <em>int</em> end index</p>
+<p><strong>include_namespaces</strong>          <em>bool</em> - If False, namespaces in the object’s name will be ignored. default=False</p>
+<p><strong>RETURNS</strong>                                     <em>int</em> index or <em>int</em> -1 is sub-string not found</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib._base.MNode.rindex">
+<code class="descname">rindex</code><span class="sig-paren">(</span><em>sub</em>, <em>start=None</em>, <em>end=None</em>, <em>include_namespaces=False</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib._base.MNode.rindex" title="Permalink to this definition">¶</a></dt>
+<dd><p>String operartion just like str.rindex().</p>
+<p>Return the highest index in objects shortname where the substring <em>sub</em> is found such that sub is wholly
+contained in s[start:end]. Raises ValueError when the substring is not found.</p>
+<p><strong>sub</strong>                                         <em>string</em> substring to find with the object’s shortname</p>
+<p><strong>start</strong>                                       optional <em>int</em> start index</p>
+<p><strong>end</strong>                                         optional <em>int</em> end index</p>
+<p><strong>include_namespaces</strong>          <em>bool</em> - If False, namespaces in the object’s name will be ignored. default=False</p>
+<p><strong>RETURNS</strong>                                     <em>int</em> index</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib._base.MNode.rpartition">
+<code class="descname">rpartition</code><span class="sig-paren">(</span><em>sep</em>, <em>include_namespaces=False</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib._base.MNode.rpartition" title="Permalink to this definition">¶</a></dt>
+<dd><p>String operartion just like str.rpartition().</p>
+<p>Split the nodes’s shortname at the last occurrence of sep, and return a 3-tuple containing the part before the separator,
+the separator itself, and the part after the separator. If the separator is not found, return a 3-tuple
+containing two empty strings, followed by the string itself.</p>
+<p><strong>include_namespaces</strong>          <em>bool</em> - If False, namespaces in the nodes’s name will be ignored. default=False</p>
+<p><strong>RETURNS</strong>                                     3-tuple containing the part before the separator, the separator itself, and the part after the separator</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib._base.MNode.rsplit">
+<code class="descname">rsplit</code><span class="sig-paren">(</span><em>sep</em>, <em>maxsplit=None</em>, <em>include_namespaces=False</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib._base.MNode.rsplit" title="Permalink to this definition">¶</a></dt>
+<dd><p>String operartion just like str.rsplit().</p>
+<p>Return a list of the words of the nodes’s shortname, scanning from the end. To all intents and purposes, the resulting
+list of words is the same as returned by split(), except when the optional third argument maxsplit is explicitly
+specified and nonzero. If maxsplit is given, at most maxsplit number of splits (the rightmost ones) occur,
+and the remainder of the string is returned as the first element of the list (thus, the list will have at most
+maxsplit+1 elements).</p>
+<p><strong>sep</strong>                                 <em>string</em> delimiter to split by</p>
+<p><strong>maxsplit</strong>                    optional <em>int</em> limit the amount of splits</p>
+<p><strong>include_namespaces</strong>  optional <em>bool</em> to include namespace in the test (default=False)</p>
+<p><strong>RETURNS</strong>                             <em>list</em> of <em>strings</em></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">node</span> <span class="o">=</span> <span class="n">MNode</span><span class="p">(</span><span class="s2">&quot;super_awesome_naming_convention&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">node</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;_&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="c1">#RESULT - [&#39;super&#39;, &#39;awesome&#39;, &#39;naming&#39;, &#39;convention&#39;]</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib._base.MNode.rstrip">
+<code class="descname">rstrip</code><span class="sig-paren">(</span><em>chars=None</em>, <em>include_namespaces=False</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib._base.MNode.rstrip" title="Permalink to this definition">¶</a></dt>
+<dd><p>String operartion just like str.lstrip().</p>
+<p>Return a copy of the node’s shortname with trailing characters removed. If chars is omitted or None, whitespace characters
+are removed. If given and not None, chars must be a string; the characters in the string will be stripped from
+the beginning of the string this method is called on.</p>
+<p><strong>chars</strong>                       optional <em>string</em> to strip from the node’s shortname</p>
+<p><strong>RETURNS</strong>                     <em>string</em></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib._base.MNode.select">
+<code class="descname">select</code><span class="sig-paren">(</span><em>**kargs</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib._base.MNode.select" title="Permalink to this definition">¶</a></dt>
+<dd><p>Selects this node with the given options.</p>
+<p><strong>kargs</strong>               keywords args supported by maya.cmds.select
+<strong>RETURNS</strong>             <em>None</em></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">node</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">repalce</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">node</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">deselect</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib._base.MNode.setAttr">
+<code class="descname">setAttr</code><span class="sig-paren">(</span><em>attr_name</em>, <em>*args</em>, <em>**kargs</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib._base.MNode.setAttr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets the given attr to the given value</p>
+<p><strong>attr_name</strong>   string name of attr to set
+<strong>args</strong>                args supported by maya.cmds.setAttr</p>
+<p><strong>kargs</strong>               keywords arg supported by maya.cmds.setAttr</p>
+<p><strong>RETURNS</strong>             <em>None</em></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">node</span><span class="o">.</span><span class="n">setAttr</span><span class="p">(</span><span class="s2">&quot;translateX&quot;</span><span class="p">,</span> <span class="mf">40.0</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib._base.MNode.setAttrsFromMap">
+<code class="descname">setAttrsFromMap</code><span class="sig-paren">(</span><em>attr_map</em>, <em>skip_missing=True</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib._base.MNode.setAttrsFromMap" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set attribute values from a dictionary object that has attribute names as keys and attribute
+values as values</p>
+<p><strong>attr_map</strong>            dict or OrderedDict that has has attribute names as keys and attribute
+values as values
+<strong>skip_missing</strong>        bool - whether to skip over attributes that exist in the incomming data</p>
+<blockquote>
+<div>but not on the node. default=True</div></blockquote>
+<p><strong>RETURNS</strong>                     None</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">data</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;tx&quot;</span><span class="p">:</span><span class="mf">1.0</span><span class="p">,</span> <span class="s2">&quot;ty&quot;</span><span class="p">:</span><span class="mf">2.0</span><span class="p">,</span> <span class="s2">&quot;tz&quot;</span><span class="p">:</span><span class="mf">3.0</span><span class="p">}</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">node</span><span class="o">.</span><span class="n">setAttrsFromMap</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib._base.MNode.setDrivenKeyframe">
+<code class="descname">setDrivenKeyframe</code><span class="sig-paren">(</span><em>attr</em>, <em>driver</em>, <em>driver_attr</em>, <em>**kargs</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib._base.MNode.setDrivenKeyframe" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets a set driven key on the current node using the given options</p>
+<p><strong>attr</strong>                        <em>string</em> name of the attr to be driven. Use this instead of the standard ‘attribute’ option
+<strong>driver</strong>                      <em>MNode</em> of the node to use as the driver. Use this with the driver_attr</p>
+<blockquote>
+<div>arg instead of using the standard ‘currentDriver’ option</div></blockquote>
+<p><strong>driver_attr</strong>         <em>string</em> name of the attribute on the dirver node to use
+<strong>kargs</strong>                       keywords arg supported by maya.cmds.setDrivenKeyframe
+<strong>RETURNS</strong>                     <em>None</em></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib._base.MNode.setMessageAttr">
+<code class="descname">setMessageAttr</code><span class="sig-paren">(</span><em>attr_name</em>, <em>node</em>, <em>lock=True</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib._base.MNode.setMessageAttr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Connects the given node to the given message attribute on this node. If the attr does not exist, it is created.</p>
+<p><strong>attr_name</strong>           <em>string</em> name of the message attr</p>
+<p><strong>node</strong>                        <em>MNode</em> of the node to connect</p>
+<p><strong>RETURNS</strong>                     <em>MNode</em> or None</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">node_a</span> <span class="o">=</span> <span class="n">MNode</span><span class="o">.</span><span class="n">createNode</span><span class="p">(</span><span class="s2">&quot;transform&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">node_b</span> <span class="o">=</span> <span class="n">MNode</span><span class="o">.</span><span class="n">createNode</span><span class="p">(</span><span class="s2">&quot;transform&quot;</span><span class="p">)</span>
+<span class="go">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">node_a</span><span class="o">.</span><span class="n">setMessageAttr</span><span class="p">(</span><span class="s2">&quot;nodeB&quot;</span><span class="p">,</span> <span class="n">node_b</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib._base.MNode.setStringAttr">
+<code class="descname">setStringAttr</code><span class="sig-paren">(</span><em>attr_name</em>, <em>val</em>, <em>**kargs</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib._base.MNode.setStringAttr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets the given value on the given string attr. If the attr does not exist, it is created.
+<strong>attr_name</strong>           string name of the string attr
+<strong>val</strong>                         value to set the attr to. Non-string values will be cast to string.</p>
+<p><strong>RETURNS</strong>                     <em>None</em></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">node</span><span class="o">.</span><span class="n">setStringAttr</span><span class="p">(</span><span class="s2">&quot;fooAttr&quot;</span><span class="p">,</span> <span class="s2">&quot;fooVal&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib._base.MNode.split">
+<code class="descname">split</code><span class="sig-paren">(</span><em>sep</em>, <em>maxsplit=None</em>, <em>include_namespaces=False</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib._base.MNode.split" title="Permalink to this definition">¶</a></dt>
+<dd><p>String operartion just like str.split().</p>
+<p>Return a list of the words in the node name, using sep as the delimiter string. If maxsplit is given, at most
+maxsplit splits are done (thus, the list will have at most maxsplit+1 elements). If maxsplit is not specified
+or -1, then there is no limit on the number of splits (all possible splits are made).</p>
+<p>If sep is given, consecutive delimiters are not grouped together and are deemed to delimit empty strings
+(for example, ‘1,,2’.split(‘,’) returns [‘1’, ‘’, ‘2’]). The sep argument may consist of multiple characters
+(for example, ‘1&lt;&gt;2&lt;&gt;3’.split(‘&lt;&gt;’) returns [‘1’, ‘2’, ‘3’]). Splitting an empty string with a specified
+separator returns [‘’].</p>
+<p>If sep is not specified or is None, a different splitting algorithm is applied:
+runs of consecutive whitespace are regarded as a single separator, and the result will contain no empty strings
+at the start or end if the string has leading or trailing whitespace. Consequently, splitting an empty string or
+a string consisting of just whitespace with a None separator returns [].</p>
+<p><strong>sep</strong>                                 <em>string</em> delimiter to split by</p>
+<p><strong>maxsplit</strong>                    optional <em>int</em> limit the amount of splits</p>
+<p><strong>include_namespaces</strong>  optional <em>bool</em> to include namespace in the test (default=False)</p>
+<p><strong>RETURNS</strong>                             <em>list</em> of <em>strings</em></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">node</span> <span class="o">=</span> <span class="n">MNode</span><span class="p">(</span><span class="s2">&quot;super_awesome_naming_convention&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">node</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;_&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="c1">#RESULT - [&#39;super&#39;, &#39;awesome&#39;, &#39;naming&#39;, &#39;convention&#39;]</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib._base.MNode.startswith">
+<code class="descname">startswith</code><span class="sig-paren">(</span><em>prefix</em>, <em>start=None</em>, <em>end=None</em>, <em>include_namespaces=False</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib._base.MNode.startswith" title="Permalink to this definition">¶</a></dt>
+<dd><p>String operartion just like str.startswith().</p>
+<p>Return True if nodes’ shortname starts with the prefix, otherwise return False. prefix can also be a tuple of
+prefixes to look for. With optional start, test string beginning at that position. With optional end, stop
+comparing string at that position.</p>
+<p><strong>prefix</strong>                              <em>string</em> or <em>tuple</em> of strings to test against</p>
+<p><strong>start</strong>                               optional <em>int</em> test beginning at position</p>
+<p><strong>end</strong>                                 optional <em>int</em> stop comparing at position</p>
+<p><strong>include_namespaces</strong>  optional <em>bool</em> to include namespace in the test (default=False)</p>
+<p><strong>RETURNS</strong>             <em>bool</em></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">node</span> <span class="o">=</span> <span class="n">MNode</span><span class="p">(</span><span class="s2">&quot;cool_node&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">node</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;cool_&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1">#RESULT - True</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib._base.MNode.strip">
+<code class="descname">strip</code><span class="sig-paren">(</span><em>chars=None</em>, <em>include_namespaces=False</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib._base.MNode.strip" title="Permalink to this definition">¶</a></dt>
+<dd><p>String operartion just like str.strip().</p>
+<p>Return a copy of the node’s shortname with leading and trailing characters removed. If chars is omitted or None,
+whitespace characters are removed. If given and not None, chars must be a string; the characters in the string
+will be stripped from the both ends of the string this method is called on.</p>
+<p><strong>chars</strong>                       optional <em>string</em> to strip from the node’s shortname</p>
+<p><strong>RETURNS</strong>                     <em>string</em></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib._base.MNode.swapcase">
+<code class="descname">swapcase</code><span class="sig-paren">(</span><em>include_namespaces=False</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib._base.MNode.swapcase" title="Permalink to this definition">¶</a></dt>
+<dd><p>String operartion just like str.swapcase().</p>
+<p>Return a copy of node’s shortname, but with lower case letters converted to upper case and vice versa.</p>
+<p><strong>RETURNS</strong>                     <em>string</em></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib._base.MNode.upper">
+<code class="descname">upper</code><span class="sig-paren">(</span><em>include_namespaces=False</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib._base.MNode.upper" title="Permalink to this definition">¶</a></dt>
+<dd><p>String operartion just like str.upper().
+Return a copy of object’s shortname, but with lower case letters converted to upper case.</p>
+<p><strong>RETURNS</strong>                                     <em>string</em></p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="mpylib._base.MNodeList">
+<em class="property">class </em><code class="descname">MNodeList</code><span class="sig-paren">(</span><em>nodes=None</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib._base.MNodeList" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>List type object, used for storing MNode type objects</p>
+<dl class="attribute">
+<dt id="mpylib._base.MNodeList.NODE_CLASS">
+<code class="descname">NODE_CLASS</code><a class="headerlink" href="#mpylib._base.MNodeList.NODE_CLASS" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <a class="reference internal" href="#mpylib._base.MNode" title="mpylib._base.MNode"><code class="xref py py-class docutils literal notranslate"><span class="pre">MNode</span></code></a></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib._base.MNodeList.addAttr">
+<code class="descname">addAttr</code><span class="sig-paren">(</span><em>long_name</em>, <em>attr_type</em>, <em>**kargs</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib._base.MNodeList.addAttr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds an attribute of the given long name and given type to all the nodes in the list.
+Supports all keyword args of maya.cmds.addAttr except “dt” and “at” which are replaced by the attr_type arg.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>long_name</strong> – string long name of the attribute to add</li>
+<li><strong>attr_type</strong> – string type of attribute to add. Supports all string 
+types supported by the “dt” and “at” args of maya.cmds.addAttr</li>
+<li><strong>kargs</strong> – keyword args supported by maya.cmds.addAttr</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">None</p>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">node_list</span><span class="o">.</span><span class="n">addAttr</span><span class="p">(</span><span class="s2">&quot;test&quot;</span><span class="p">,</span> <span class="s2">&quot;float&quot;</span><span class="p">,</span> <span class="n">keyable</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib._base.MNodeList.append">
+<code class="descname">append</code><span class="sig-paren">(</span><em>item</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib._base.MNodeList.append" title="Permalink to this definition">¶</a></dt>
+<dd><p>Built-in method.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib._base.MNodeList.bakeResults">
+<code class="descname">bakeResults</code><span class="sig-paren">(</span><em>*args</em>, <em>**kargs</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib._base.MNodeList.bakeResults" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run bakeResults on nodes in this list with the given options</p>
+<dl class="docutils">
+<dt><strong>args</strong>                optional string args of attributes to bake. If args are given,</dt>
+<dd>any value given to the <em>attribute</em> flag will be overridden</dd>
+</dl>
+<p><strong>kargs</strong>               keyword args supported by maya.cmds.bakeResults
+<strong>RETURNS</strong>     <em>None</em></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">node_list</span><span class="o">.</span><span class="n">bakeResults</span><span class="p">()</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib._base.MNodeList.count">
+<code class="descname">count</code><span class="sig-paren">(</span><em>node</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib._base.MNodeList.count" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Purpose:</th><td class="field-body">Returns the number of occurances of the given node in the list</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">int</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib._base.MNodeList.delete">
+<code class="descname">delete</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mpylib._base.MNodeList.delete" title="Permalink to this definition">¶</a></dt>
+<dd><p>Delete all nodes in the list. List will be empty after caliing this method.</p>
+<p><strong>RETURNS</strong>             <em>None</em></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib._base.MNodeList.extend">
+<code class="descname">extend</code><span class="sig-paren">(</span><em>item</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib._base.MNodeList.extend" title="Permalink to this definition">¶</a></dt>
+<dd><p>Built-in method.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib._base.MNodeList.getAttr">
+<code class="descname">getAttr</code><span class="sig-paren">(</span><em>attr_name</em>, <em>skip_missing=False</em>, <em>**kargs</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib._base.MNodeList.getAttr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the value of the given attr on every node in the list. Can optionally
+skip or error on missing attributes. If a missing attr is skipped, the resulting
+tuple will have placeholder None values representing those nodes.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>attr_name</strong> – string name of attr</li>
+<li><strong>skip_missing</strong> – <dl class="docutils">
+<dt>bool - True to quietly skip any nodes that are missing the</dt>
+<dd>given attr. Missing attrs will result of None in the returned tuple.</dd>
+</dl>
+<p>False will throw an exception on missing attr. default=False</p>
+</li>
+<li><strong>kargs</strong> – keywords arg supported by maya.cmds.getAttr</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">tuple of attribute values or None. Returned tuple indices will correspond to
+the indices of the nodes in this list.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib._base.MNodeList.getAttrMap">
+<code class="descname">getAttrMap</code><span class="sig-paren">(</span><em>*args</em>, <em>**kargs</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib._base.MNodeList.getAttrMap" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns an OrderedDict of all MNodes is this list as keys and OrderedDict of
+attributes/values as values. This method supports all arguments and keyword arguments used
+by maya.cmds.listAttr.</p>
+<p><strong>args</strong>                optional specific string pattern of an attribute to query on the node. This supports multiple string args</p>
+<p><strong>kargs</strong>               keywords args supported by maya.cmds.listAttr</p>
+<p><strong>RETURNS</strong>             <em>OrderedDict</em> or <em>None</em></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1">## get the names and values of all keyable attributes on this node </span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">keyable_map</span> <span class="o">=</span> <span class="n">node_list</span><span class="o">.</span><span class="n">getAttrMap</span><span class="p">(</span><span class="n">keyable</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="go">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1">## get names and values of all attributes that start with &quot;trans&quot; </span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">trans_attrs</span> <span class="o">=</span> <span class="n">node_list</span><span class="o">.</span><span class="n">getAttrMap</span><span class="p">(</span><span class="s2">&quot;trans*&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib._base.MNodeList.index">
+<code class="descname">index</code><span class="sig-paren">(</span><em>x</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib._base.MNodeList.index" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mpylib._base.MNodeList.listNodesOfType">
+<code class="descname">listNodesOfType</code><span class="sig-paren">(</span><em>node_type</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib._base.MNodeList.listNodesOfType" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the nodes within this list that match the given node type.</p>
+<p><strong>node_type</strong>           <em>string</em> node type</p>
+<p><strong>RETURNS</strong>                     <em>MNodeList</em> or <em>None</em></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib._base.MNodeList.listNodesWithAttr">
+<code class="descname">listNodesWithAttr</code><span class="sig-paren">(</span><em>attr_name</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib._base.MNodeList.listNodesWithAttr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the nodes within this list that have an attribute with the given name.</p>
+<p><strong>attr_name</strong>           <em>string</em> attribute name</p>
+<p><strong>RETURNS</strong>                     <em>MNodeList</em> or <em>None</em></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib._base.MNodeList.setAttr">
+<code class="descname">setAttr</code><span class="sig-paren">(</span><em>attr_name</em>, <em>val=None</em>, <em>skip_missing=False</em>, <em>**kargs</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib._base.MNodeList.setAttr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets the given attr to the given value on all nodes in the list</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>attr_name</strong> – string name of attr to set</li>
+<li><strong>val</strong> – value to set the attribute to. This arg is optional if setting attribute
+properties instead of value.</li>
+<li><strong>skip_missing</strong> – bool - True to quietly skip any nodes that are missing the
+given attr. False will throw an exception on missing attr. default=False</li>
+<li><strong>kargs</strong> – keywords arg supported by maya.cmds.setAttr</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">None</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="mpylib._base.MShape">
+<em class="property">class </em><code class="descname">MShape</code><span class="sig-paren">(</span><em>shape</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib._base.MShape" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">mpylib._base.mnode.MNode</span></code></p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Purpose:</th><td class="field-body">Base class for shape node related funtionality. Single instance of
+MShape respresents a single shape node in the current scene.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Extends:</th><td class="field-body">MNode</td>
+</tr>
+</tbody>
+</table>
+<dl class="attribute">
+<dt id="mpylib._base.MShape.NODE_LIST_CLASS">
+<code class="descname">NODE_LIST_CLASS</code><a class="headerlink" href="#mpylib._base.MShape.NODE_LIST_CLASS" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <a class="reference internal" href="#mpylib._base.MShapeList" title="mpylib._base.MShapeList"><code class="xref py py-class docutils literal notranslate"><span class="pre">MShapeList</span></code></a></p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mpylib._base.MShape.NODE_TYPE">
+<code class="descname">NODE_TYPE</code><em class="property"> = 'shape'</em><a class="headerlink" href="#mpylib._base.MShape.NODE_TYPE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mpylib._base.MShape.duplicate">
+<code class="descname">duplicate</code><span class="sig-paren">(</span><em>**kargs</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib._base.MShape.duplicate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Duplicate the node with the given options. This overrides the default MNode version because Maya
+returns the Transform</p>
+<p><strong>kargs</strong>       keywords arg supported by maya.cmds.duplicate</p>
+<p><strong>RETURNS</strong> MNode of the new node</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">new_node</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">duplicate</span><span class="p">()</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib._base.MShape.getDagPath">
+<code class="descname">getDagPath</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mpylib._base.MShape.getDagPath" title="Permalink to this definition">¶</a></dt>
+<dd><p>Utility method for working with the Maya API. Returns MDagPath object for this mesh node.</p>
+<p><strong>RETURNS</strong>             MDagPath</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib._base.MShape.getParent">
+<code class="descname">getParent</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mpylib._base.MShape.getParent" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Purpose:</th><td class="field-body">Returns the shape’s parent node</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">MTrans or None</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib._base.MShape.parent">
+<code class="descname">parent</code><span class="sig-paren">(</span><em>trans</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib._base.MShape.parent" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Purpose:</th><td class="field-body">Parents this shape to another transform. Functions just like
+maya.cmds.parent(shape=True, relative=True).</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Parameters:</th><td class="field-body"><strong>trans</strong> – MNode or string name of a transform node</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">None</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="mpylib._base.MShapeList">
+<em class="property">class </em><code class="descname">MShapeList</code><span class="sig-paren">(</span><em>nodes=None</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib._base.MShapeList" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">mpylib._base.mnode.MNodeList</span></code></p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Purpose:</th><td class="field-body">List type object, used for storing MShape type objects</td>
+</tr>
+</tbody>
+</table>
+<dl class="attribute">
+<dt id="mpylib._base.MShapeList.NODE_CLASS">
+<code class="descname">NODE_CLASS</code><a class="headerlink" href="#mpylib._base.MShapeList.NODE_CLASS" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <a class="reference internal" href="#mpylib._base.MShape" title="mpylib._base.MShape"><code class="xref py py-class docutils literal notranslate"><span class="pre">MShape</span></code></a></p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+
+
+    </div>
+      
+  </div>
+</div>
+<footer class="footer">
+  <div class="container">
+    <p class="pull-right">
+      <a href="#">Back to top</a>
+      
+    </p>
+    <p>
+        &copy; Copyright 2018, Gene Hansen, Eric Vignola.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.2.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>

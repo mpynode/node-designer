@@ -1,0 +1,11 @@
+mpylib.\_base package
+=====================
+
+
+Module contents
+---------------
+
+.. automodule:: mpylib._base
+    :members:
+    :undoc-members:
+    :show-inheritance:
