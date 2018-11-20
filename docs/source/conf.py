@@ -40,6 +40,8 @@ release = u'1.0'
 # ones.
 #extensions = ['sphinx.ext.autodoc', 'sphinx.ext.coverage', 'sphinx.ext.napoleon']
 extensions = ['sphinx.ext.autodoc', 'sphinx.ext.coverage', 'numpydoc']
+#extensions = ['sphinx_automodapi.automodapi','numpydoc']
+numpydoc_show_class_members = False
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -95,6 +97,8 @@ import sphinx_bootstrap_theme
 html_theme = 'bootstrap'
 html_theme_path = sphinx_bootstrap_theme.get_html_theme_path()
 html_logo = "mpynode_hr.png"
+add_module_names = False
+
 
 
 # Theme options are theme-specific and customize the look and feel of a theme
