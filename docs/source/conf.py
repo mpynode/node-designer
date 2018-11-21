@@ -80,7 +80,7 @@ pygments_style = None
 #html_theme = 'armstrong_sphinx'
 #html_theme = 'bootstrap'
 #html_theme = 'guzzle_sphinx_theme'
-#html_theme = 'scipy'
+html_theme = 'scipy'
 #html_theme = 'solar_theme'
 #html_theme = 'sphinx_adc_theme'
 #html_theme = 'sphinx_rtd_theme'
@@ -93,12 +93,12 @@ html_theme_path = [os.path.abspath('./_theme')]
 
 
 # At the top.
-import sphinx_bootstrap_theme
-html_theme = 'bootstrap'
-html_theme_path = sphinx_bootstrap_theme.get_html_theme_path()
+#import sphinx_bootstrap_theme
+#html_theme = 'bootstrap'
+#html_theme_path = sphinx_bootstrap_theme.get_html_theme_path()
 html_logo = "mpynode_hr.png"
-add_module_names = False
-
+#add_module_names = False
+#html_theme_options = {'bootswatch_theme': "cosmo"} #https://bootswatch.com
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the

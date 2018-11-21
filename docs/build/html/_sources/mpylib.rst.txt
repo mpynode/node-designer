@@ -16,5 +16,4 @@ Module contents
 
 .. automodule:: mpylib
     :members:
-    :undoc-members:
     :show-inheritance:
