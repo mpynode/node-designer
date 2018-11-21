@@ -1647,7 +1647,11 @@ class NDOutputAttrTree(NDInputAttrTree):
                 for i, other_node in enumerate(other_nodes):
                     
                     dst_is_array = other_node.attributeQuery(other_attr, multi=True)
-                    src_attrs = [out_attrs[0]] if not dst_is_array else out_attrs
+                    if not is_array:
+                        src_attrs = [out_attrs[0]] if not dst_is_array else out_attrs
+                    else:
+                        src_attrs = [out_attrs[i]] if not dst_is_array else out_attrs
+                        
                     dst_attrs =  [other_attr] if not dst_is_array else [other_attr + "[" + str(in_i) + "]" for in_i in range(len(out_attrs))]
                     
                     for src_attr, dst_attr in map(None, src_attrs, dst_attrs):
