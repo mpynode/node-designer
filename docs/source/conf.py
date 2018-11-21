@@ -97,7 +97,7 @@ html_theme_path = [os.path.abspath('./_theme')]
 #html_theme = 'bootstrap'
 #html_theme_path = sphinx_bootstrap_theme.get_html_theme_path()
 html_logo = "mpynode_hr.png"
-#add_module_names = False
+add_module_names = False
 #html_theme_options = {'bootswatch_theme': "cosmo"} #https://bootswatch.com
 
 # Theme options are theme-specific and customize the look and feel of a theme
