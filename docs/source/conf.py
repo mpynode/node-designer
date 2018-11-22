@@ -38,10 +38,13 @@ release = u'1.0'
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-#extensions = ['sphinx.ext.autodoc', 'sphinx.ext.coverage', 'sphinx.ext.napoleon']
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.coverage', 'numpydoc']
-#extensions = ['sphinx_automodapi.automodapi','numpydoc']
+extensions = ['sphinx.ext.autodoc', 'numpydoc',
+              'sphinx.ext.intersphinx', 'sphinx.ext.coverage',
+              'sphinx.ext.autosummary']
 numpydoc_show_class_members = False
+
+
+
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -65,7 +68,7 @@ language = None
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = []
+exclude_patterns = ['_tests']
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = None
@@ -76,35 +79,19 @@ pygments_style = None
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-#html_theme = 'alabaster'
-#html_theme = 'armstrong_sphinx'
-#html_theme = 'bootstrap'
-#html_theme = 'guzzle_sphinx_theme'
 html_theme = 'scipy'
-#html_theme = 'solar_theme'
-#html_theme = 'sphinx_adc_theme'
-#html_theme = 'sphinx_rtd_theme'
-
 html_theme_path = [os.path.abspath('./_theme')]
+html_theme_options = {
+    "edit_link": "false",
+    "sidebar": "right",
+    "rootlinks": [("https://bitbucket.org/mpynode/mpynode/src/master/", "Bitbucket Master"),
+                  ("https://apps.autodesk.com/MAYA/en/Home/Index", "App Store")]
+}
 
-#from better import better_theme_path
-#html_theme_path = [better_theme_path]
-#html_theme = 'better'
-
-
-# At the top.
-#import sphinx_bootstrap_theme
-#html_theme = 'bootstrap'
-#html_theme_path = sphinx_bootstrap_theme.get_html_theme_path()
 html_logo = "mpynode_hr.png"
 add_module_names = False
-#html_theme_options = {'bootswatch_theme': "cosmo"} #https://bootswatch.com
 
-# Theme options are theme-specific and customize the look and feel of a theme
-# further.  For a list of options available for each theme, see the
-# documentation.
-#
-# html_theme_options = {}
+
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
