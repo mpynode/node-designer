@@ -1,0 +1,38 @@
+mpylib.\_base.\_tests package
+=============================
+
+Submodules
+----------
+
+mpylib.\_base.\_tests.test\_mnode module
+----------------------------------------
+
+.. automodule:: mpylib._base._tests.test_mnode
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+mpylib.\_base.\_tests.test\_mshape module
+-----------------------------------------
+
+.. automodule:: mpylib._base._tests.test_mshape
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+mpylib.\_base.\_tests.test\_mtrans module
+-----------------------------------------
+
+.. automodule:: mpylib._base._tests.test_mtrans
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+Module contents
+---------------
+
+.. automodule:: mpylib._base._tests
+    :members:
+    :undoc-members:
+    :show-inheritance:

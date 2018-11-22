@@ -42,7 +42,7 @@ extensions = ['sphinx.ext.autodoc', 'numpydoc',
               'sphinx.ext.intersphinx', 'sphinx.ext.coverage',
               'sphinx.ext.autosummary']
 numpydoc_show_class_members = False
-
+autodoc_default_flags = ['members','show-inheritance']
 
 
 
@@ -68,7 +68,7 @@ language = None
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = ['_tests']
+exclude_patterns = ['*_tests']
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = None
@@ -90,6 +90,9 @@ html_theme_options = {
 
 html_logo = "mpynode_hr.png"
 add_module_names = False
+html_show_sourcelink = False
+
+
 
 
 

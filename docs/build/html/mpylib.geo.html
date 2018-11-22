@@ -76,22 +76,25 @@
             
   <div class="section" id="mpylib-geo-package">
 <h1>mpylib.geo package<a class="headerlink" href="#mpylib-geo-package" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="module-mpylib.geo">
-<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-mpylib.geo" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-mpylib.geo.mmesh">
+<span id="mpylib-geo-mmesh-module"></span><h2>mpylib.geo.mmesh module<a class="headerlink" href="#module-mpylib.geo.mmesh" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
-<dt id="mpylib.geo.MMesh">
-<em class="property">class </em><code class="descname">MMesh</code><span class="sig-paren">(</span><em>node</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.geo.MMesh" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">mpylib._base.mshape.MShape</span></code></p>
+<dt id="mpylib.geo.mmesh.MMesh">
+<em class="property">class </em><code class="descname">MMesh</code><span class="sig-paren">(</span><em>node</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.geo.mmesh.MMesh" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="mpylib._base.html#mpylib._base.mshape.MShape" title="mpylib._base.mshape.MShape"><code class="xref py py-class docutils literal notranslate"><span class="pre">mpylib._base.mshape.MShape</span></code></a></p>
 <p>Provides object oriented interface for querying/editing poly mesh shape nodes.</p>
 <dl class="attribute">
-<dt id="mpylib.geo.MMesh.DAG_FN_CLASS">
-<code class="descname">DAG_FN_CLASS</code><a class="headerlink" href="#mpylib.geo.MMesh.DAG_FN_CLASS" title="Permalink to this definition">¶</a></dt>
+<dt id="mpylib.geo.mmesh.MMesh.DAG_FN_CLASS">
+<code class="descname">DAG_FN_CLASS</code><a class="headerlink" href="#mpylib.geo.mmesh.MMesh.DAG_FN_CLASS" title="Permalink to this definition">¶</a></dt>
 <dd><p>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">OpenMaya.MFnMesh</span></code></p>
 </dd></dl>
 
 <dl class="method">
-<dt id="mpylib.geo.MMesh.getClosestPoint">
-<code class="descname">getClosestPoint</code><span class="sig-paren">(</span><em>point</em>, <em>space=2</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.geo.MMesh.getClosestPoint" title="Permalink to this definition">¶</a></dt>
+<dt id="mpylib.geo.mmesh.MMesh.getClosestPoint">
+<code class="descname">getClosestPoint</code><span class="sig-paren">(</span><em>point</em>, <em>space=2</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.geo.mmesh.MMesh.getClosestPoint" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a tuple containing the closest point on the mesh to the
 given point and the ID of the face in which that closest point lies.</p>
 <p><strong>point</strong>               MPoint - point to be compared</p>
@@ -100,15 +103,15 @@ given point and the ID of the face in which that closest point lies.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="mpylib.geo.MMesh.getEdgeCount">
-<code class="descname">getEdgeCount</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.geo.MMesh.getEdgeCount" title="Permalink to this definition">¶</a></dt>
+<dt id="mpylib.geo.mmesh.MMesh.getEdgeCount">
+<code class="descname">getEdgeCount</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.geo.mmesh.MMesh.getEdgeCount" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns the number of edges for this mesh.</p>
 <p><strong>RETURNS</strong>             int number of edges</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="mpylib.geo.MMesh.getEdgesConnectedToVerts">
-<code class="descname">getEdgesConnectedToVerts</code><span class="sig-paren">(</span><em>verts=None</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.geo.MMesh.getEdgesConnectedToVerts" title="Permalink to this definition">¶</a></dt>
+<dt id="mpylib.geo.mmesh.MMesh.getEdgesConnectedToVerts">
+<code class="descname">getEdgesConnectedToVerts</code><span class="sig-paren">(</span><em>verts=None</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.geo.mmesh.MMesh.getEdgesConnectedToVerts" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a tuple containing edge indices of all connected edges for all verts on a mesh or specific verts on a mesh.
 If all verts a queried, the indices of the returned tuple will equal the indices of the mesh. If specific
 verts are queried, indices of the returned tuple will match the indices of the prvided vert list.</p>
@@ -128,8 +131,8 @@ verts are queried, indices of the returned tuple will match the indices of the p
 </dd></dl>
 
 <dl class="method">
-<dt id="mpylib.geo.MMesh.getFacesConnectedToVerts">
-<code class="descname">getFacesConnectedToVerts</code><span class="sig-paren">(</span><em>verts=None</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.geo.MMesh.getFacesConnectedToVerts" title="Permalink to this definition">¶</a></dt>
+<dt id="mpylib.geo.mmesh.MMesh.getFacesConnectedToVerts">
+<code class="descname">getFacesConnectedToVerts</code><span class="sig-paren">(</span><em>verts=None</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.geo.mmesh.MMesh.getFacesConnectedToVerts" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a tuple containing face indices of all connected faces for all verts on a mesh or specific verts on a mesh.
 If all verts a queried, the indices of the returned tuple will equal the indices of the mesh. If specific
 verts are queried, indices of the returned tuple will match the indices of the provided vert list.</p>
@@ -149,8 +152,8 @@ verts are queried, indices of the returned tuple will match the indices of the p
 </dd></dl>
 
 <dl class="method">
-<dt id="mpylib.geo.MMesh.getNumUVSets">
-<code class="descname">getNumUVSets</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.geo.MMesh.getNumUVSets" title="Permalink to this definition">¶</a></dt>
+<dt id="mpylib.geo.mmesh.MMesh.getNumUVSets">
+<code class="descname">getNumUVSets</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.geo.mmesh.MMesh.getNumUVSets" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return the number of uv sets within this mesh</p>
 <p><strong>RETURNS</strong>             int</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">mesh</span> <span class="o">=</span> <span class="n">MMesh</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span>
@@ -161,8 +164,8 @@ verts are queried, indices of the returned tuple will match the indices of the p
 </dd></dl>
 
 <dl class="method">
-<dt id="mpylib.geo.MMesh.getPoints">
-<code class="descname">getPoints</code><span class="sig-paren">(</span><em>world_space=False</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.geo.MMesh.getPoints" title="Permalink to this definition">¶</a></dt>
+<dt id="mpylib.geo.mmesh.MMesh.getPoints">
+<code class="descname">getPoints</code><span class="sig-paren">(</span><em>world_space=False</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.geo.mmesh.MMesh.getPoints" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return the positions of all verts on this mesh</p>
 <dl class="docutils">
 <dt><strong>world_space</strong></dt>
@@ -181,27 +184,27 @@ verts are queried, indices of the returned tuple will match the indices of the p
 </dd></dl>
 
 <dl class="method">
-<dt id="mpylib.geo.MMesh.getPolygonCount">
-<code class="descname">getPolygonCount</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.geo.MMesh.getPolygonCount" title="Permalink to this definition">¶</a></dt>
+<dt id="mpylib.geo.mmesh.MMesh.getPolygonCount">
+<code class="descname">getPolygonCount</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.geo.mmesh.MMesh.getPolygonCount" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns the number of polygons for this mesh.</p>
 <p><strong>RETURNS</strong>             int number of polygons</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="mpylib.geo.MMesh.getSkinCluster">
-<code class="descname">getSkinCluster</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.geo.MMesh.getSkinCluster" title="Permalink to this definition">¶</a></dt>
+<dt id="mpylib.geo.mmesh.MMesh.getSkinCluster">
+<code class="descname">getSkinCluster</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.geo.mmesh.MMesh.getSkinCluster" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns skin cluster node feeding this mesh</p>
 <p><strong>RETURNS</strong>             <em>MNode</em> of skinCluster or None</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="mpylib.geo.MMesh.getUVCoords">
-<code class="descname">getUVCoords</code><span class="sig-paren">(</span><em>uv_set=None</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.geo.MMesh.getUVCoords" title="Permalink to this definition">¶</a></dt>
+<dt id="mpylib.geo.mmesh.MMesh.getUVCoords">
+<code class="descname">getUVCoords</code><span class="sig-paren">(</span><em>uv_set=None</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.geo.mmesh.MMesh.getUVCoords" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
-<dt id="mpylib.geo.MMesh.getUVSetNames">
-<code class="descname">getUVSetNames</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.geo.MMesh.getUVSetNames" title="Permalink to this definition">¶</a></dt>
+<dt id="mpylib.geo.mmesh.MMesh.getUVSetNames">
+<code class="descname">getUVSetNames</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.geo.mmesh.MMesh.getUVSetNames" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return the string names of this mesh’s uv sets</p>
 <p><strong>RETURNS</strong>             tuple of string names</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">mesh</span> <span class="o">=</span> <span class="n">MMesh</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span>
@@ -212,8 +215,8 @@ verts are queried, indices of the returned tuple will match the indices of the p
 </dd></dl>
 
 <dl class="method">
-<dt id="mpylib.geo.MMesh.getUVsConnectedToFaces">
-<code class="descname">getUVsConnectedToFaces</code><span class="sig-paren">(</span><em>faces=None</em>, <em>uv_set=None</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.geo.MMesh.getUVsConnectedToFaces" title="Permalink to this definition">¶</a></dt>
+<dt id="mpylib.geo.mmesh.MMesh.getUVsConnectedToFaces">
+<code class="descname">getUVsConnectedToFaces</code><span class="sig-paren">(</span><em>faces=None</em>, <em>uv_set=None</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.geo.mmesh.MMesh.getUVsConnectedToFaces" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a tuple containing uv indices of all connected face vertices for all faces on a mesh or specific faces on a mesh.
 If all faces a queried, the indices of the returned tuple will equal the face indices of the mesh. If specific
 faces are queried, indices of the returned tuple will match the face indices of the provided faces list.</p>
@@ -240,15 +243,15 @@ faces are queried, indices of the returned tuple will match the face indices of 
 </dd></dl>
 
 <dl class="method">
-<dt id="mpylib.geo.MMesh.getVertCount">
-<code class="descname">getVertCount</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.geo.MMesh.getVertCount" title="Permalink to this definition">¶</a></dt>
+<dt id="mpylib.geo.mmesh.MMesh.getVertCount">
+<code class="descname">getVertCount</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.geo.mmesh.MMesh.getVertCount" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns the number of verts</p>
 <p><strong>RETURNS</strong>             <em>int</em></p>
 </dd></dl>
 
 <dl class="method">
-<dt id="mpylib.geo.MMesh.getVertUVIndices">
-<code class="descname">getVertUVIndices</code><span class="sig-paren">(</span><em>verts=None</em>, <em>uv_set=None</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.geo.MMesh.getVertUVIndices" title="Permalink to this definition">¶</a></dt>
+<dt id="mpylib.geo.mmesh.MMesh.getVertUVIndices">
+<code class="descname">getVertUVIndices</code><span class="sig-paren">(</span><em>verts=None</em>, <em>uv_set=None</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.geo.mmesh.MMesh.getVertUVIndices" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a tuple containing UV indices of associated with all verts on a mesh or specific verts on a mesh.
 If all verts a queried, the indices of the returned tuple will equal the indices of the mesh verts. If specific
 verts are queried, indices of the returned tuple will match the indices of the provided vert list.
@@ -270,8 +273,8 @@ Any invalid or missing UVs will be returned as -1.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="mpylib.geo.MMesh.getVertsAsMObject">
-<code class="descname">getVertsAsMObject</code><span class="sig-paren">(</span><em>indices=None</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.geo.MMesh.getVertsAsMObject" title="Permalink to this definition">¶</a></dt>
+<dt id="mpylib.geo.mmesh.MMesh.getVertsAsMObject">
+<code class="descname">getVertsAsMObject</code><span class="sig-paren">(</span><em>indices=None</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.geo.mmesh.MMesh.getVertsAsMObject" title="Permalink to this definition">¶</a></dt>
 <dd><p>Utility method for working with the Maya API. Returns a single MObject that represents multiple verts on this mesh.</p>
 <p><strong>indices</strong>
 optional list/tuple of ints of mesh vert indices to get. If not given, method returns an MObject that represents ALL verts on the mesh</p>
@@ -280,8 +283,8 @@ MObject</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="mpylib.geo.MMesh.getVertsConnectedToFaces">
-<code class="descname">getVertsConnectedToFaces</code><span class="sig-paren">(</span><em>faces=None</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.geo.MMesh.getVertsConnectedToFaces" title="Permalink to this definition">¶</a></dt>
+<dt id="mpylib.geo.mmesh.MMesh.getVertsConnectedToFaces">
+<code class="descname">getVertsConnectedToFaces</code><span class="sig-paren">(</span><em>faces=None</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.geo.mmesh.MMesh.getVertsConnectedToFaces" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a tuple containing vert indices of all connected verts for all faces on a mesh or specific faces on a mesh.
 If all faces a queried, the indices of the returned tuple will equal the face indices of the mesh. If specific
 faces are queried, indices of the returned tuple will match the face indices of the provided faces list.</p>
@@ -307,8 +310,8 @@ faces are queried, indices of the returned tuple will match the face indices of 
 </dd></dl>
 
 <dl class="method">
-<dt id="mpylib.geo.MMesh.getVertsConnectedToVerts">
-<code class="descname">getVertsConnectedToVerts</code><span class="sig-paren">(</span><em>verts=None</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.geo.MMesh.getVertsConnectedToVerts" title="Permalink to this definition">¶</a></dt>
+<dt id="mpylib.geo.mmesh.MMesh.getVertsConnectedToVerts">
+<code class="descname">getVertsConnectedToVerts</code><span class="sig-paren">(</span><em>verts=None</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.geo.mmesh.MMesh.getVertsConnectedToVerts" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a tuple containing vert indices of all connected verts for all verts on a mesh or specific verts on a mesh.
 If all verts a queried, the indices of the returned tuple will equal the vert indices of the mesh. If specific
 verts are queried, indices of the returned tuple will match the indices of the provided vert list.</p>
@@ -328,8 +331,8 @@ verts are queried, indices of the returned tuple will match the indices of the p
 </dd></dl>
 
 <dl class="method">
-<dt id="mpylib.geo.MMesh.setPoints">
-<code class="descname">setPoints</code><span class="sig-paren">(</span><em>points</em>, <em>world_space=False</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.geo.MMesh.setPoints" title="Permalink to this definition">¶</a></dt>
+<dt id="mpylib.geo.mmesh.MMesh.setPoints">
+<code class="descname">setPoints</code><span class="sig-paren">(</span><em>points</em>, <em>world_space=False</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.geo.mmesh.MMesh.setPoints" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sets the positions of the mesh’s vertices. The positions may be 
 given as a sequence of MFloatPoint’s or a sequence of MPoint’s, but
 not a mix of the two.</p>
@@ -344,8 +347,8 @@ not a mix of the two.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="mpylib.geo.MMesh.setVertexColor">
-<code class="descname">setVertexColor</code><span class="sig-paren">(</span><em>vert_indices</em>, <em>**kargs</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.geo.MMesh.setVertexColor" title="Permalink to this definition">¶</a></dt>
+<dt id="mpylib.geo.mmesh.MMesh.setVertexColor">
+<code class="descname">setVertexColor</code><span class="sig-paren">(</span><em>vert_indices</em>, <em>**kargs</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.geo.mmesh.MMesh.setVertexColor" title="Permalink to this definition">¶</a></dt>
 <dd><p>Colors the given verts</p>
 <p><strong>vert_indices</strong>                list/tuple of ints
 <strong>kargs</strong>                               any keyword argument supported by mc.polyColorPerVertex</p>
@@ -354,6 +357,9 @@ not a mix of the two.</p>
 
 </dd></dl>
 
+</div>
+<div class="section" id="module-mpylib.geo">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-mpylib.geo" title="Permalink to this headline">¶</a></h2>
 </div>
 </div>
 
@@ -369,16 +375,13 @@ not a mix of the two.</p>
   <h3><a href="index.html">Table of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">mpylib.geo package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-mpylib.geo.mmesh">mpylib.geo.mmesh module</a></li>
 <li><a class="reference internal" href="#module-mpylib.geo">Module contents</a></li>
 </ul>
 </li>
 </ul>
 
-  <h3>This Page</h3>
-  <div>
-    <a href="_sources/mpylib.geo.rst.txt"
-       rel="nofollow">Show Source</a>
-  </div>
 <div class="this-page-menu">
   <a href="/scipy/docs/scipy-docs/mpylib.geo.rst.rst">Edit page</a>
 </div>

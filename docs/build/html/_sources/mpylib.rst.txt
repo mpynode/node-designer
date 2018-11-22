@@ -6,6 +6,7 @@ Subpackages
 
 .. toctree::
 
+    mpylib._base
     mpylib.api
     mpylib.geo
     mpylib.nodes

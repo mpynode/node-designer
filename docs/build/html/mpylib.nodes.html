@@ -76,16 +76,19 @@
             
   <div class="section" id="mpylib-nodes-package">
 <h1>mpylib.nodes package<a class="headerlink" href="#mpylib-nodes-package" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="module-mpylib.nodes">
-<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-mpylib.nodes" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-mpylib.nodes.mpynode">
+<span id="mpylib-nodes-mpynode-module"></span><h2>mpylib.nodes.mpynode module<a class="headerlink" href="#module-mpylib.nodes.mpynode" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
-<dt id="mpylib.nodes.MPyNode">
-<em class="property">class </em><code class="descname">MPyNode</code><span class="sig-paren">(</span><em>node=None</em>, <em>name=None</em>, <em>exp_str=None</em>, <em>input_map=None</em>, <em>output_map=None</em>, <em>stored_var_map=None</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.nodes.MPyNode" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">mpylib._base.mnode.MNode</span></code></p>
+<dt id="mpylib.nodes.mpynode.MPyNode">
+<em class="property">class </em><code class="descname">MPyNode</code><span class="sig-paren">(</span><em>node=None</em>, <em>name=None</em>, <em>exp_str=None</em>, <em>input_map=None</em>, <em>output_map=None</em>, <em>stored_var_map=None</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="mpylib._base.html#mpylib._base.mnode.MNode" title="mpylib._base.mnode.MNode"><code class="xref py py-class docutils literal notranslate"><span class="pre">mpylib._base.mnode.MNode</span></code></a></p>
 <p>Universal Python API node</p>
 <dl class="method">
-<dt id="mpylib.nodes.MPyNode.addInputAttr">
-<code class="descname">addInputAttr</code><span class="sig-paren">(</span><em>long_name</em>, <em>attr_type</em>, <em>is_array=False</em>, <em>**kargs</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.nodes.MPyNode.addInputAttr" title="Permalink to this definition">¶</a></dt>
+<dt id="mpylib.nodes.mpynode.MPyNode.addInputAttr">
+<code class="descname">addInputAttr</code><span class="sig-paren">(</span><em>long_name</em>, <em>attr_type</em>, <em>is_array=False</em>, <em>**kargs</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.addInputAttr" title="Permalink to this definition">¶</a></dt>
 <dd><p>Adds an input attribute of the given long name and given type to the node.
 Use MPyNode.listSupportedAttrTypes() to list supported types</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -119,9 +122,9 @@ Use MPyNode.listSupportedAttrTypes() to list supported types</p>
 <div class="admonition seealso">
 <p class="first admonition-title">See also</p>
 <dl class="last docutils">
-<dt><a class="reference internal" href="#mpylib.nodes.MPyNode.addOutputAttr" title="mpylib.nodes.MPyNode.addOutputAttr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">addOutputAttr</span></code></a></dt>
+<dt><a class="reference internal" href="#mpylib.nodes.mpynode.MPyNode.addOutputAttr" title="mpylib.nodes.mpynode.MPyNode.addOutputAttr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">addOutputAttr</span></code></a></dt>
 <dd>Adds an output attribute of the given long name and given type to the node.</dd>
-<dt><a class="reference internal" href="#mpylib.nodes.MPyNode.addStoredVariable" title="mpylib.nodes.MPyNode.addStoredVariable"><code class="xref py py-obj docutils literal notranslate"><span class="pre">addStoredVariable</span></code></a></dt>
+<dt><a class="reference internal" href="#mpylib.nodes.mpynode.MPyNode.addStoredVariable" title="mpylib.nodes.mpynode.MPyNode.addStoredVariable"><code class="xref py py-obj docutils literal notranslate"><span class="pre">addStoredVariable</span></code></a></dt>
 <dd>Used to flag an instance property on the node for storage on disc when the file is saved</dd>
 </dl>
 </div>
@@ -133,8 +136,8 @@ Use MPyNode.listSupportedAttrTypes() to list supported types</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="mpylib.nodes.MPyNode.addOutputAttr">
-<code class="descname">addOutputAttr</code><span class="sig-paren">(</span><em>long_name</em>, <em>attr_type</em>, <em>is_array=False</em>, <em>**kargs</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.nodes.MPyNode.addOutputAttr" title="Permalink to this definition">¶</a></dt>
+<dt id="mpylib.nodes.mpynode.MPyNode.addOutputAttr">
+<code class="descname">addOutputAttr</code><span class="sig-paren">(</span><em>long_name</em>, <em>attr_type</em>, <em>is_array=False</em>, <em>**kargs</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.addOutputAttr" title="Permalink to this definition">¶</a></dt>
 <dd><p>Adds an output attribute of the given long name and given type to the node.
 Use MPyNode.listSupportedAttrTypes() to list supported types</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -168,9 +171,9 @@ Use MPyNode.listSupportedAttrTypes() to list supported types</p>
 <div class="admonition seealso">
 <p class="first admonition-title">See also</p>
 <dl class="last docutils">
-<dt><a class="reference internal" href="#mpylib.nodes.MPyNode.addInputAttr" title="mpylib.nodes.MPyNode.addInputAttr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">addInputAttr</span></code></a></dt>
+<dt><a class="reference internal" href="#mpylib.nodes.mpynode.MPyNode.addInputAttr" title="mpylib.nodes.mpynode.MPyNode.addInputAttr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">addInputAttr</span></code></a></dt>
 <dd>Adds an output attribute of the given long name and given type to the node.</dd>
-<dt><a class="reference internal" href="#mpylib.nodes.MPyNode.addStoredVariable" title="mpylib.nodes.MPyNode.addStoredVariable"><code class="xref py py-obj docutils literal notranslate"><span class="pre">addStoredVariable</span></code></a></dt>
+<dt><a class="reference internal" href="#mpylib.nodes.mpynode.MPyNode.addStoredVariable" title="mpylib.nodes.mpynode.MPyNode.addStoredVariable"><code class="xref py py-obj docutils literal notranslate"><span class="pre">addStoredVariable</span></code></a></dt>
 <dd>Used to flag an instance property on the node for storage on disc when the file is saved</dd>
 </dl>
 </div>
@@ -182,8 +185,8 @@ Use MPyNode.listSupportedAttrTypes() to list supported types</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="mpylib.nodes.MPyNode.addStoredVariable">
-<code class="descname">addStoredVariable</code><span class="sig-paren">(</span><em>var_name</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.nodes.MPyNode.addStoredVariable" title="Permalink to this definition">¶</a></dt>
+<dt id="mpylib.nodes.mpynode.MPyNode.addStoredVariable">
+<code class="descname">addStoredVariable</code><span class="sig-paren">(</span><em>var_name</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.addStoredVariable" title="Permalink to this definition">¶</a></dt>
 <dd><p>Used to flag an instance property on the node for storage on disc when the file is saved. The name given 
 should refer to a property on the node instance created/used by the expression (i.e. self.var_name)</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -208,9 +211,9 @@ should refer to a property on the node instance created/used by the expression (
 <div class="admonition seealso">
 <p class="first admonition-title">See also</p>
 <dl class="last docutils">
-<dt><a class="reference internal" href="#mpylib.nodes.MPyNode.addInputAttr" title="mpylib.nodes.MPyNode.addInputAttr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">addInputAttr</span></code></a></dt>
+<dt><a class="reference internal" href="#mpylib.nodes.mpynode.MPyNode.addInputAttr" title="mpylib.nodes.mpynode.MPyNode.addInputAttr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">addInputAttr</span></code></a></dt>
 <dd>Adds an input attribute of the given long name and given type to the node.</dd>
-<dt><a class="reference internal" href="#mpylib.nodes.MPyNode.addOutputAttr" title="mpylib.nodes.MPyNode.addOutputAttr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">addOutputAttr</span></code></a></dt>
+<dt><a class="reference internal" href="#mpylib.nodes.mpynode.MPyNode.addOutputAttr" title="mpylib.nodes.mpynode.MPyNode.addOutputAttr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">addOutputAttr</span></code></a></dt>
 <dd>Adds an output attribute of the given long name and given type to the node.</dd>
 </dl>
 </div>
@@ -221,8 +224,8 @@ should refer to a property on the node instance created/used by the expression (
 </dd></dl>
 
 <dl class="method">
-<dt id="mpylib.nodes.MPyNode.deleteInputAttr">
-<code class="descname">deleteInputAttr</code><span class="sig-paren">(</span><em>attr_name</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.nodes.MPyNode.deleteInputAttr" title="Permalink to this definition">¶</a></dt>
+<dt id="mpylib.nodes.mpynode.MPyNode.deleteInputAttr">
+<code class="descname">deleteInputAttr</code><span class="sig-paren">(</span><em>attr_name</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.deleteInputAttr" title="Permalink to this definition">¶</a></dt>
 <dd><p>Removes the given input attribute from the node.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -246,9 +249,9 @@ should refer to a property on the node instance created/used by the expression (
 <div class="admonition seealso">
 <p class="first admonition-title">See also</p>
 <dl class="last docutils">
-<dt><a class="reference internal" href="#mpylib.nodes.MPyNode.deleteOutputAttr" title="mpylib.nodes.MPyNode.deleteOutputAttr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">deleteOutputAttr</span></code></a></dt>
+<dt><a class="reference internal" href="#mpylib.nodes.mpynode.MPyNode.deleteOutputAttr" title="mpylib.nodes.mpynode.MPyNode.deleteOutputAttr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">deleteOutputAttr</span></code></a></dt>
 <dd>Removes the given output attribute from the node.</dd>
-<dt><a class="reference internal" href="#mpylib.nodes.MPyNode.removeStoredVariable" title="mpylib.nodes.MPyNode.removeStoredVariable"><code class="xref py py-obj docutils literal notranslate"><span class="pre">removeStoredVariable</span></code></a></dt>
+<dt><a class="reference internal" href="#mpylib.nodes.mpynode.MPyNode.removeStoredVariable" title="mpylib.nodes.mpynode.MPyNode.removeStoredVariable"><code class="xref py py-obj docutils literal notranslate"><span class="pre">removeStoredVariable</span></code></a></dt>
 <dd>Removes the given variable name from the list of variables that will stored to file</dd>
 </dl>
 </div>
@@ -259,8 +262,8 @@ should refer to a property on the node instance created/used by the expression (
 </dd></dl>
 
 <dl class="method">
-<dt id="mpylib.nodes.MPyNode.deleteOutputAttr">
-<code class="descname">deleteOutputAttr</code><span class="sig-paren">(</span><em>attr_name</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.nodes.MPyNode.deleteOutputAttr" title="Permalink to this definition">¶</a></dt>
+<dt id="mpylib.nodes.mpynode.MPyNode.deleteOutputAttr">
+<code class="descname">deleteOutputAttr</code><span class="sig-paren">(</span><em>attr_name</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.deleteOutputAttr" title="Permalink to this definition">¶</a></dt>
 <dd><p>Removes the given output attribute from the node.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -284,9 +287,9 @@ should refer to a property on the node instance created/used by the expression (
 <div class="admonition seealso">
 <p class="first admonition-title">See also</p>
 <dl class="last docutils">
-<dt><a class="reference internal" href="#mpylib.nodes.MPyNode.deleteInputAttr" title="mpylib.nodes.MPyNode.deleteInputAttr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">deleteInputAttr</span></code></a></dt>
+<dt><a class="reference internal" href="#mpylib.nodes.mpynode.MPyNode.deleteInputAttr" title="mpylib.nodes.mpynode.MPyNode.deleteInputAttr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">deleteInputAttr</span></code></a></dt>
 <dd>Removes the given input attribute from the node.</dd>
-<dt><a class="reference internal" href="#mpylib.nodes.MPyNode.removeStoredVariable" title="mpylib.nodes.MPyNode.removeStoredVariable"><code class="xref py py-obj docutils literal notranslate"><span class="pre">removeStoredVariable</span></code></a></dt>
+<dt><a class="reference internal" href="#mpylib.nodes.mpynode.MPyNode.removeStoredVariable" title="mpylib.nodes.mpynode.MPyNode.removeStoredVariable"><code class="xref py py-obj docutils literal notranslate"><span class="pre">removeStoredVariable</span></code></a></dt>
 <dd>Removes the given variable name from the list of variables that will stored to file</dd>
 </dl>
 </div>
@@ -297,8 +300,8 @@ should refer to a property on the node instance created/used by the expression (
 </dd></dl>
 
 <dl class="method">
-<dt id="mpylib.nodes.MPyNode.exportToFile">
-<code class="descname">exportToFile</code><span class="sig-paren">(</span><em>file_path</em>, <em>use_binary=True</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.nodes.MPyNode.exportToFile" title="Permalink to this definition">¶</a></dt>
+<dt id="mpylib.nodes.mpynode.MPyNode.exportToFile">
+<code class="descname">exportToFile</code><span class="sig-paren">(</span><em>file_path</em>, <em>use_binary=True</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.exportToFile" title="Permalink to this definition">¶</a></dt>
 <dd><p>Export this node to an external file</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -325,7 +328,7 @@ should refer to a property on the node instance created/used by the expression (
 <div class="admonition seealso">
 <p class="first admonition-title">See also</p>
 <dl class="last docutils">
-<dt><a class="reference internal" href="#mpylib.nodes.MPyNode.importFromFile" title="mpylib.nodes.MPyNode.importFromFile"><code class="xref py py-obj docutils literal notranslate"><span class="pre">importFromFile</span></code></a></dt>
+<dt><a class="reference internal" href="#mpylib.nodes.mpynode.MPyNode.importFromFile" title="mpylib.nodes.mpynode.MPyNode.importFromFile"><code class="xref py py-obj docutils literal notranslate"><span class="pre">importFromFile</span></code></a></dt>
 <dd>Import a MPyNode from an external file. An nstance of the node will be constructed in the current Maya scene</dd>
 </dl>
 </div>
@@ -337,8 +340,8 @@ should refer to a property on the node instance created/used by the expression (
 </dd></dl>
 
 <dl class="method">
-<dt id="mpylib.nodes.MPyNode.getExpression">
-<code class="descname">getExpression</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.nodes.MPyNode.getExpression" title="Permalink to this definition">¶</a></dt>
+<dt id="mpylib.nodes.mpynode.MPyNode.getExpression">
+<code class="descname">getExpression</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.getExpression" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns the current python expression within the node.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -355,7 +358,7 @@ should refer to a property on the node instance created/used by the expression (
 <div class="admonition seealso">
 <p class="first admonition-title">See also</p>
 <dl class="last docutils">
-<dt><a class="reference internal" href="#mpylib.nodes.MPyNode.setExpression" title="mpylib.nodes.MPyNode.setExpression"><code class="xref py py-obj docutils literal notranslate"><span class="pre">setExpression</span></code></a></dt>
+<dt><a class="reference internal" href="#mpylib.nodes.mpynode.MPyNode.setExpression" title="mpylib.nodes.mpynode.MPyNode.setExpression"><code class="xref py py-obj docutils literal notranslate"><span class="pre">setExpression</span></code></a></dt>
 <dd>Set the expression within the node to the given string of python code.</dd>
 </dl>
 </div>
@@ -366,8 +369,8 @@ should refer to a property on the node instance created/used by the expression (
 </dd></dl>
 
 <dl class="method">
-<dt id="mpylib.nodes.MPyNode.getInputAttrMap">
-<code class="descname">getInputAttrMap</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.nodes.MPyNode.getInputAttrMap" title="Permalink to this definition">¶</a></dt>
+<dt id="mpylib.nodes.mpynode.MPyNode.getInputAttrMap">
+<code class="descname">getInputAttrMap</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.getInputAttrMap" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a dictionary with all input attr names as keys and attribute data as values.
 The values of the dictionary are also dictiontaries with the proper addInputAttr() keyword args and values. Note
 that only non-default keyword args are returned. So if an attribute is not “keyable”, for example, no “keyable”
@@ -387,7 +390,7 @@ keyword will be returned in dictionary.</p>
 <div class="admonition seealso">
 <p class="first admonition-title">See also</p>
 <dl class="last docutils">
-<dt><a class="reference internal" href="#mpylib.nodes.MPyNode.addInputAttr" title="mpylib.nodes.MPyNode.addInputAttr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">addInputAttr</span></code></a></dt>
+<dt><a class="reference internal" href="#mpylib.nodes.mpynode.MPyNode.addInputAttr" title="mpylib.nodes.mpynode.MPyNode.addInputAttr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">addInputAttr</span></code></a></dt>
 <dd>Adds an input attribute of the given long name and given type to the node.</dd>
 </dl>
 </div>
@@ -398,8 +401,8 @@ keyword will be returned in dictionary.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="mpylib.nodes.MPyNode.getOutputAttrMap">
-<code class="descname">getOutputAttrMap</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.nodes.MPyNode.getOutputAttrMap" title="Permalink to this definition">¶</a></dt>
+<dt id="mpylib.nodes.mpynode.MPyNode.getOutputAttrMap">
+<code class="descname">getOutputAttrMap</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.getOutputAttrMap" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a dictionary with all output attr names as keys and attribute data as values.
 The values of the dictionary are also dictiontaries with the proper addOutputAttr() keyword args and values. Note
 that only non-default keyword args are returned. So if an attribute is not “keyable”, for example, no “keyable”
@@ -419,7 +422,7 @@ keyword will be returned in dictionary.</p>
 <div class="admonition seealso">
 <p class="first admonition-title">See also</p>
 <dl class="last docutils">
-<dt><a class="reference internal" href="#mpylib.nodes.MPyNode.addOutputAttr" title="mpylib.nodes.MPyNode.addOutputAttr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">addOutputAttr</span></code></a></dt>
+<dt><a class="reference internal" href="#mpylib.nodes.mpynode.MPyNode.addOutputAttr" title="mpylib.nodes.mpynode.MPyNode.addOutputAttr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">addOutputAttr</span></code></a></dt>
 <dd>Adds an output attribute of the given long name and given type to the node.</dd>
 </dl>
 </div>
@@ -430,8 +433,8 @@ keyword will be returned in dictionary.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="mpylib.nodes.MPyNode.getStoredVariables">
-<code class="descname">getStoredVariables</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.nodes.MPyNode.getStoredVariables" title="Permalink to this definition">¶</a></dt>
+<dt id="mpylib.nodes.mpynode.MPyNode.getStoredVariables">
+<code class="descname">getStoredVariables</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.getStoredVariables" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns the nodes “stored variables” as a dictionary.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -448,9 +451,9 @@ keyword will be returned in dictionary.</p>
 <div class="admonition seealso">
 <p class="first admonition-title">See also</p>
 <dl class="last docutils">
-<dt><a class="reference internal" href="#mpylib.nodes.MPyNode.addStoredVariable" title="mpylib.nodes.MPyNode.addStoredVariable"><code class="xref py py-obj docutils literal notranslate"><span class="pre">addStoredVariable</span></code></a></dt>
+<dt><a class="reference internal" href="#mpylib.nodes.mpynode.MPyNode.addStoredVariable" title="mpylib.nodes.mpynode.MPyNode.addStoredVariable"><code class="xref py py-obj docutils literal notranslate"><span class="pre">addStoredVariable</span></code></a></dt>
 <dd>Removes the given output attribute from the node.</dd>
-<dt><a class="reference internal" href="#mpylib.nodes.MPyNode.setStoredVariable" title="mpylib.nodes.MPyNode.setStoredVariable"><code class="xref py py-obj docutils literal notranslate"><span class="pre">setStoredVariable</span></code></a></dt>
+<dt><a class="reference internal" href="#mpylib.nodes.mpynode.MPyNode.setStoredVariable" title="mpylib.nodes.mpynode.MPyNode.setStoredVariable"><code class="xref py py-obj docutils literal notranslate"><span class="pre">setStoredVariable</span></code></a></dt>
 <dd>Used to set an instance property on the node for use in the expression and storage on disc when the file is saved</dd>
 </dl>
 </div>
@@ -461,8 +464,8 @@ keyword will be returned in dictionary.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="mpylib.nodes.MPyNode.hasStoredVariable">
-<code class="descname">hasStoredVariable</code><span class="sig-paren">(</span><em>var_name</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.nodes.MPyNode.hasStoredVariable" title="Permalink to this definition">¶</a></dt>
+<dt id="mpylib.nodes.mpynode.MPyNode.hasStoredVariable">
+<code class="descname">hasStoredVariable</code><span class="sig-paren">(</span><em>var_name</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.hasStoredVariable" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns whether the node has an instance property with the given name that has been flagged for storage on disc.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -486,7 +489,7 @@ keyword will be returned in dictionary.</p>
 <div class="admonition seealso">
 <p class="first admonition-title">See also</p>
 <dl class="last docutils">
-<dt><a class="reference internal" href="#mpylib.nodes.MPyNode.addStoredVariable" title="mpylib.nodes.MPyNode.addStoredVariable"><code class="xref py py-obj docutils literal notranslate"><span class="pre">addStoredVariable</span></code></a></dt>
+<dt><a class="reference internal" href="#mpylib.nodes.mpynode.MPyNode.addStoredVariable" title="mpylib.nodes.mpynode.MPyNode.addStoredVariable"><code class="xref py py-obj docutils literal notranslate"><span class="pre">addStoredVariable</span></code></a></dt>
 <dd>Removes the given output attribute from the node.</dd>
 </dl>
 </div>
@@ -497,8 +500,8 @@ keyword will be returned in dictionary.</p>
 </dd></dl>
 
 <dl class="staticmethod">
-<dt id="mpylib.nodes.MPyNode.importFromFile">
-<em class="property">static </em><code class="descname">importFromFile</code><span class="sig-paren">(</span><em>file_path</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.nodes.MPyNode.importFromFile" title="Permalink to this definition">¶</a></dt>
+<dt id="mpylib.nodes.mpynode.MPyNode.importFromFile">
+<em class="property">static </em><code class="descname">importFromFile</code><span class="sig-paren">(</span><em>file_path</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.importFromFile" title="Permalink to this definition">¶</a></dt>
 <dd><p>Import a MPyNode from an external file. An instance of the node will be constructed in the current Maya scene</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -522,7 +525,7 @@ keyword will be returned in dictionary.</p>
 <div class="admonition seealso">
 <p class="first admonition-title">See also</p>
 <dl class="last docutils">
-<dt><a class="reference internal" href="#mpylib.nodes.MPyNode.importFromFile" title="mpylib.nodes.MPyNode.importFromFile"><code class="xref py py-obj docutils literal notranslate"><span class="pre">importFromFile</span></code></a></dt>
+<dt><a class="reference internal" href="#mpylib.nodes.mpynode.MPyNode.importFromFile" title="mpylib.nodes.mpynode.MPyNode.importFromFile"><code class="xref py py-obj docutils literal notranslate"><span class="pre">importFromFile</span></code></a></dt>
 <dd>Export this node to an external file</dd>
 </dl>
 </div>
@@ -533,8 +536,8 @@ keyword will be returned in dictionary.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="mpylib.nodes.MPyNode.listInputAttrs">
-<code class="descname">listInputAttrs</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.nodes.MPyNode.listInputAttrs" title="Permalink to this definition">¶</a></dt>
+<dt id="mpylib.nodes.mpynode.MPyNode.listInputAttrs">
+<code class="descname">listInputAttrs</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.listInputAttrs" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns the names of the node’s input attributes</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -551,7 +554,7 @@ keyword will be returned in dictionary.</p>
 <div class="admonition seealso">
 <p class="first admonition-title">See also</p>
 <dl class="last docutils">
-<dt><a class="reference internal" href="#mpylib.nodes.MPyNode.addInputAttr" title="mpylib.nodes.MPyNode.addInputAttr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">addInputAttr</span></code></a></dt>
+<dt><a class="reference internal" href="#mpylib.nodes.mpynode.MPyNode.addInputAttr" title="mpylib.nodes.mpynode.MPyNode.addInputAttr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">addInputAttr</span></code></a></dt>
 <dd>Adds an input attribute of the given long name and given type to the node.</dd>
 </dl>
 </div>
@@ -562,8 +565,8 @@ keyword will be returned in dictionary.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="mpylib.nodes.MPyNode.listOutputAttrs">
-<code class="descname">listOutputAttrs</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.nodes.MPyNode.listOutputAttrs" title="Permalink to this definition">¶</a></dt>
+<dt id="mpylib.nodes.mpynode.MPyNode.listOutputAttrs">
+<code class="descname">listOutputAttrs</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.listOutputAttrs" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns the names of the node’s output attributes</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -580,7 +583,7 @@ keyword will be returned in dictionary.</p>
 <div class="admonition seealso">
 <p class="first admonition-title">See also</p>
 <dl class="last docutils">
-<dt><a class="reference internal" href="#mpylib.nodes.MPyNode.addOutputAttr" title="mpylib.nodes.MPyNode.addOutputAttr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">addOutputAttr</span></code></a></dt>
+<dt><a class="reference internal" href="#mpylib.nodes.mpynode.MPyNode.addOutputAttr" title="mpylib.nodes.mpynode.MPyNode.addOutputAttr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">addOutputAttr</span></code></a></dt>
 <dd>Adds an output attribute of the given long name and given type to the node.</dd>
 </dl>
 </div>
@@ -591,8 +594,8 @@ keyword will be returned in dictionary.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="mpylib.nodes.MPyNode.listStoredVariables">
-<code class="descname">listStoredVariables</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.nodes.MPyNode.listStoredVariables" title="Permalink to this definition">¶</a></dt>
+<dt id="mpylib.nodes.mpynode.MPyNode.listStoredVariables">
+<code class="descname">listStoredVariables</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.listStoredVariables" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns the names of the node’s internally stored variables</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -609,7 +612,7 @@ keyword will be returned in dictionary.</p>
 <div class="admonition seealso">
 <p class="first admonition-title">See also</p>
 <dl class="last docutils">
-<dt><a class="reference internal" href="#mpylib.nodes.MPyNode.addStoredVariable" title="mpylib.nodes.MPyNode.addStoredVariable"><code class="xref py py-obj docutils literal notranslate"><span class="pre">addStoredVariable</span></code></a></dt>
+<dt><a class="reference internal" href="#mpylib.nodes.mpynode.MPyNode.addStoredVariable" title="mpylib.nodes.mpynode.MPyNode.addStoredVariable"><code class="xref py py-obj docutils literal notranslate"><span class="pre">addStoredVariable</span></code></a></dt>
 <dd>Used to flag an instance property on the node for storage on disc when the file is saved.</dd>
 </dl>
 </div>
@@ -620,8 +623,8 @@ keyword will be returned in dictionary.</p>
 </dd></dl>
 
 <dl class="classmethod">
-<dt id="mpylib.nodes.MPyNode.listValidInputTypes">
-<em class="property">classmethod </em><code class="descname">listValidInputTypes</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.nodes.MPyNode.listValidInputTypes" title="Permalink to this definition">¶</a></dt>
+<dt id="mpylib.nodes.mpynode.MPyNode.listValidInputTypes">
+<em class="property">classmethod </em><code class="descname">listValidInputTypes</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.listValidInputTypes" title="Permalink to this definition">¶</a></dt>
 <dd><blockquote>
 <div>Class method returns the types of supported input attributes</div></blockquote>
 <table class="docutils field-list" frame="void" rules="none">
@@ -639,7 +642,7 @@ keyword will be returned in dictionary.</p>
 <div class="admonition seealso">
 <p class="first admonition-title">See also</p>
 <dl class="last docutils">
-<dt><a class="reference internal" href="#mpylib.nodes.MPyNode.addInputAttr" title="mpylib.nodes.MPyNode.addInputAttr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">addInputAttr</span></code></a></dt>
+<dt><a class="reference internal" href="#mpylib.nodes.mpynode.MPyNode.addInputAttr" title="mpylib.nodes.mpynode.MPyNode.addInputAttr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">addInputAttr</span></code></a></dt>
 <dd>Adds an input attribute of the given long name and given type to the node.</dd>
 </dl>
 </div>
@@ -650,8 +653,8 @@ keyword will be returned in dictionary.</p>
 </dd></dl>
 
 <dl class="classmethod">
-<dt id="mpylib.nodes.MPyNode.listValidOutputTypes">
-<em class="property">classmethod </em><code class="descname">listValidOutputTypes</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.nodes.MPyNode.listValidOutputTypes" title="Permalink to this definition">¶</a></dt>
+<dt id="mpylib.nodes.mpynode.MPyNode.listValidOutputTypes">
+<em class="property">classmethod </em><code class="descname">listValidOutputTypes</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.listValidOutputTypes" title="Permalink to this definition">¶</a></dt>
 <dd><p>Class method returns the types of supported output attributes</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -668,7 +671,7 @@ keyword will be returned in dictionary.</p>
 <div class="admonition seealso">
 <p class="first admonition-title">See also</p>
 <dl class="last docutils">
-<dt><a class="reference internal" href="#mpylib.nodes.MPyNode.addOutputAttr" title="mpylib.nodes.MPyNode.addOutputAttr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">addOutputAttr</span></code></a></dt>
+<dt><a class="reference internal" href="#mpylib.nodes.mpynode.MPyNode.addOutputAttr" title="mpylib.nodes.mpynode.MPyNode.addOutputAttr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">addOutputAttr</span></code></a></dt>
 <dd>Adds an output attribute of the given long name and given type to the node.</dd>
 </dl>
 </div>
@@ -679,8 +682,8 @@ keyword will be returned in dictionary.</p>
 </dd></dl>
 
 <dl class="classmethod">
-<dt id="mpylib.nodes.MPyNode.ls">
-<em class="property">classmethod </em><code class="descname">ls</code><span class="sig-paren">(</span><em>*args</em>, <em>**kargs</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.nodes.MPyNode.ls" title="Permalink to this definition">¶</a></dt>
+<dt id="mpylib.nodes.mpynode.MPyNode.ls">
+<em class="property">classmethod </em><code class="descname">ls</code><span class="sig-paren">(</span><em>*args</em>, <em>**kargs</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.ls" title="Permalink to this definition">¶</a></dt>
 <dd><p>class method - returns the nodes of type ‘mPyNode’ in the current scene. Works just like maya.cmds.ls</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -715,8 +718,8 @@ keyword will be returned in dictionary.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="mpylib.nodes.MPyNode.removeStoredVariable">
-<code class="descname">removeStoredVariable</code><span class="sig-paren">(</span><em>var_name</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.nodes.MPyNode.removeStoredVariable" title="Permalink to this definition">¶</a></dt>
+<dt id="mpylib.nodes.mpynode.MPyNode.removeStoredVariable">
+<code class="descname">removeStoredVariable</code><span class="sig-paren">(</span><em>var_name</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.removeStoredVariable" title="Permalink to this definition">¶</a></dt>
 <dd><p>Removes the given variable name from the list of variables that will stored to file</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -740,7 +743,7 @@ keyword will be returned in dictionary.</p>
 <div class="admonition seealso">
 <p class="first admonition-title">See also</p>
 <dl class="last docutils">
-<dt><a class="reference internal" href="#mpylib.nodes.MPyNode.addStoredVariable" title="mpylib.nodes.MPyNode.addStoredVariable"><code class="xref py py-obj docutils literal notranslate"><span class="pre">addStoredVariable</span></code></a></dt>
+<dt><a class="reference internal" href="#mpylib.nodes.mpynode.MPyNode.addStoredVariable" title="mpylib.nodes.mpynode.MPyNode.addStoredVariable"><code class="xref py py-obj docutils literal notranslate"><span class="pre">addStoredVariable</span></code></a></dt>
 <dd>Used to flag an instance property on the node for storage on disc when the file is saved</dd>
 </dl>
 </div>
@@ -751,8 +754,8 @@ keyword will be returned in dictionary.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="mpylib.nodes.MPyNode.setExpression">
-<code class="descname">setExpression</code><span class="sig-paren">(</span><em>exp_str</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.nodes.MPyNode.setExpression" title="Permalink to this definition">¶</a></dt>
+<dt id="mpylib.nodes.mpynode.MPyNode.setExpression">
+<code class="descname">setExpression</code><span class="sig-paren">(</span><em>exp_str</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.setExpression" title="Permalink to this definition">¶</a></dt>
 <dd><p>Set the expression within the node to the given string of python code.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -776,7 +779,7 @@ keyword will be returned in dictionary.</p>
 <div class="admonition seealso">
 <p class="first admonition-title">See also</p>
 <dl class="last docutils">
-<dt><a class="reference internal" href="#mpylib.nodes.MPyNode.getExpression" title="mpylib.nodes.MPyNode.getExpression"><code class="xref py py-obj docutils literal notranslate"><span class="pre">getExpression</span></code></a></dt>
+<dt><a class="reference internal" href="#mpylib.nodes.mpynode.MPyNode.getExpression" title="mpylib.nodes.mpynode.MPyNode.getExpression"><code class="xref py py-obj docutils literal notranslate"><span class="pre">getExpression</span></code></a></dt>
 <dd>Returns the current python expression within the node.</dd>
 </dl>
 </div>
@@ -787,8 +790,8 @@ keyword will be returned in dictionary.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="mpylib.nodes.MPyNode.setStoredVariable">
-<code class="descname">setStoredVariable</code><span class="sig-paren">(</span><em>var_name</em>, <em>var_val</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.nodes.MPyNode.setStoredVariable" title="Permalink to this definition">¶</a></dt>
+<dt id="mpylib.nodes.mpynode.MPyNode.setStoredVariable">
+<code class="descname">setStoredVariable</code><span class="sig-paren">(</span><em>var_name</em>, <em>var_val</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.setStoredVariable" title="Permalink to this definition">¶</a></dt>
 <dd><p>Used to set an instance property on the node for use in the expression and storage on disc when the file is saved. The name given
 should refer to a property on the node instance created/used by the expression (i.e. self.var_name)</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -827,8 +830,8 @@ should refer to a property on the node instance created/used by the expression (
 </dd></dl>
 
 <dl class="method">
-<dt id="mpylib.nodes.MPyNode.setVariable">
-<code class="descname">setVariable</code><span class="sig-paren">(</span><em>var_name</em>, <em>var_val</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.nodes.MPyNode.setVariable" title="Permalink to this definition">¶</a></dt>
+<dt id="mpylib.nodes.mpynode.MPyNode.setVariable">
+<code class="descname">setVariable</code><span class="sig-paren">(</span><em>var_name</em>, <em>var_val</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.nodes.mpynode.MPyNode.setVariable" title="Permalink to this definition">¶</a></dt>
 <dd><p>Used to set an instance property on the node for use in the expression. The name given should refer to a
 property on the node instance created/used by the expression (i.e. self.var_name). This value variable is destroyed
 when the Maya scene is closed.</p>
@@ -863,6 +866,9 @@ when the Maya scene is closed.</p>
 </dd></dl>
 
 </div>
+<div class="section" id="module-mpylib.nodes">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-mpylib.nodes" title="Permalink to this headline">¶</a></h2>
+</div>
 </div>
 
 
@@ -877,16 +883,13 @@ when the Maya scene is closed.</p>
   <h3><a href="index.html">Table of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">mpylib.nodes package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-mpylib.nodes.mpynode">mpylib.nodes.mpynode module</a></li>
 <li><a class="reference internal" href="#module-mpylib.nodes">Module contents</a></li>
 </ul>
 </li>
 </ul>
 
-  <h3>This Page</h3>
-  <div>
-    <a href="_sources/mpylib.nodes.rst.txt"
-       rel="nofollow">Show Source</a>
-  </div>
 <div class="this-page-menu">
   <a href="/scipy/docs/scipy-docs/mpylib.nodes.rst.rst">Edit page</a>
 </div>
