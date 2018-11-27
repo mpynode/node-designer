@@ -220,10 +220,7 @@ class NDMainWindow(QMayaWindow):
     def _onLogError(self, data):
         
         if self._cur_py_node and self._cur_py_node == MNode(data[0]):
-            tb_lines = traceback.format_exception(data[1][0], data[1][1], data[1][2])
-            err_str = "Expression failed:\n" + "".join(tb_lines)
-            
-            self._log_widget.write(err_str, QtLog.ERROR_TYPE)
+            self._log_widget.write(data[1], QtLog.ERROR_TYPE)
             
             
     def _onLogText(self, data):

@@ -3,6 +3,7 @@ import copy
 import cProfile
 import cPickle
 import codecs
+import traceback
 from collections import OrderedDict
 
 import maya.api.OpenMaya as om
@@ -561,9 +562,12 @@ class MPyNode(om.MPxNode):
                 exec(self._exp_code_obj, None, self._exec_vars)
 
             except Exception:
-                om.MUserEventMessage.postUserEvent(self.LOG_ERROR_CALLBACK_NAME, (self.thisMObject(), sys.exc_info()))
-                print "Expression failed: " + self._exp_str
-                raise
+                except_data = sys.exc_info()
+                tb_lines = traceback.format_exception(except_data[0], except_data[1], except_data[2])
+                err_str = "Expression failed for " + self._node_fn.name() + ":\n" + "".join(tb_lines)
+                om.MUserEventMessage.postUserEvent(self.LOG_ERROR_CALLBACK_NAME, (self.thisMObject(), err_str))
+                
+                print err_str
             
             
     def _getGenericInput(self, data_block, plug, data_class, get_func_name, is_array=False, array_type=list):
