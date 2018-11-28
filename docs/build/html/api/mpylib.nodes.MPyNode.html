@@ -1,0 +1,1758 @@
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8">
+    
+    <title>MPyNode &mdash; MPyNode 1.0 documentation</title>
+    
+    <link rel="stylesheet" type="text/css" href="../_static/css/spc-bootstrap.css">
+    <link rel="stylesheet" type="text/css" href="../_static/css/spc-extend.css">
+    <link rel="stylesheet" href="../_static/scipy.css" type="text/css" >
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" >
+    <link rel="stylesheet" href="../_static/graphviz.css" type="text/css" >
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/js/copybutton.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" >
+    <link rel="search" title="Search" href="../search.html" >
+    <link rel="top" title="MPyNode 1.0 documentation" href="../index.html" > 
+  </head>
+  <body>
+
+  <div class="container">
+    <div class="header">
+    </div>
+  </div>
+
+
+    <div class="container">
+      <div class="main">
+        
+	<div class="row-fluid">
+	  <div class="span12">
+	    <div class="spc-navbar">
+              
+    <ul class="nav nav-pills pull-left">
+        <li class="active"><a href="https://bitbucket.org/mpynode/mpynode/src/master/">Bitbucket Master</a></li>
+        <li class="active"><a href="https://apps.autodesk.com/MAYA/en/Home/Index">App Store</a></li>
+	
+        <li class="active"><a href="../index.html">MPyNode 1.0 documentation</a></li>
+	 
+    </ul>
+              
+              
+    <ul class="nav nav-pills pull-right">
+      <li class="active">
+        <a href="../genindex.html" title="General Index"
+           accesskey="I">index</a>
+      </li>
+      <li class="active">
+        <a href="../py-modindex.html" title="Python Module Index"
+           >modules</a>
+      </li>
+    </ul>
+              
+	    </div>
+	  </div>
+	</div>
+        
+
+	<div class="row-fluid">
+          <div class="span9">
+            
+        <div class="bodywrapper">
+          <div class="body" id="spc-section-body">
+            
+  <div class="section" id="mpynode">
+<h1>MPyNode<a class="headerlink" href="#mpynode" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="mpylib.nodes.MPyNode">
+<em class="property">class </em><code class="descname">MPyNode</code><span class="sig-paren">(</span><em>node=None</em>, <em>name=None</em>, <em>exp_str=None</em>, <em>input_map=None</em>, <em>output_map=None</em>, <em>stored_var_map=None</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.nodes.MPyNode" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">mpylib._base.mnode.MNode</span></code></p>
+<p>Universal Python API node</p>
+<p class="rubric">Methods Summary</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><a class="reference internal" href="../mpylib.nodes.html#mpylib.nodes.MPyNode.addInputAttr" title="mpylib.nodes.MPyNode.addInputAttr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">addInputAttr</span></code></a>(long_name,&nbsp;attr_type[,&nbsp;is_array])</td>
+<td>Adds an input attribute of the given long name and given type to the node.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="../mpylib.nodes.html#mpylib.nodes.MPyNode.addOutputAttr" title="mpylib.nodes.MPyNode.addOutputAttr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">addOutputAttr</span></code></a>(long_name,&nbsp;attr_type[,&nbsp;is_array])</td>
+<td>Adds an output attribute of the given long name and given type to the node.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="../mpylib.nodes.html#mpylib.nodes.MPyNode.addStoredVariable" title="mpylib.nodes.MPyNode.addStoredVariable"><code class="xref py py-obj docutils literal notranslate"><span class="pre">addStoredVariable</span></code></a>(var_name)</td>
+<td>Used to flag an instance property on the node for storage on disc when the file is saved.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="../mpylib.nodes.html#mpylib.nodes.MPyNode.deleteInputAttr" title="mpylib.nodes.MPyNode.deleteInputAttr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">deleteInputAttr</span></code></a>(attr_name)</td>
+<td>Removes the given input attribute from the node.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="../mpylib.nodes.html#mpylib.nodes.MPyNode.deleteOutputAttr" title="mpylib.nodes.MPyNode.deleteOutputAttr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">deleteOutputAttr</span></code></a>(attr_name)</td>
+<td>Removes the given output attribute from the node.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="../mpylib.nodes.html#mpylib.nodes.MPyNode.exportToFile" title="mpylib.nodes.MPyNode.exportToFile"><code class="xref py py-obj docutils literal notranslate"><span class="pre">exportToFile</span></code></a>(file_path[,&nbsp;use_binary])</td>
+<td>Export this node to an external file</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="../mpylib.nodes.html#mpylib.nodes.MPyNode.getExpression" title="mpylib.nodes.MPyNode.getExpression"><code class="xref py py-obj docutils literal notranslate"><span class="pre">getExpression</span></code></a>()</td>
+<td>Returns the current python expression within the node.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="../mpylib.nodes.html#mpylib.nodes.MPyNode.getInputAttrMap" title="mpylib.nodes.MPyNode.getInputAttrMap"><code class="xref py py-obj docutils literal notranslate"><span class="pre">getInputAttrMap</span></code></a>()</td>
+<td>Returns a dictionary with all input attr names as keys and attribute data as values.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="../mpylib.nodes.html#mpylib.nodes.MPyNode.getOutputAttrMap" title="mpylib.nodes.MPyNode.getOutputAttrMap"><code class="xref py py-obj docutils literal notranslate"><span class="pre">getOutputAttrMap</span></code></a>()</td>
+<td>Returns a dictionary with all output attr names as keys and attribute data as values.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="../mpylib.nodes.html#mpylib.nodes.MPyNode.getStoredVariables" title="mpylib.nodes.MPyNode.getStoredVariables"><code class="xref py py-obj docutils literal notranslate"><span class="pre">getStoredVariables</span></code></a>()</td>
+<td>Returns the nodes “stored variables” as a dictionary.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="../mpylib.nodes.html#mpylib.nodes.MPyNode.hasStoredVariable" title="mpylib.nodes.MPyNode.hasStoredVariable"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hasStoredVariable</span></code></a>(var_name)</td>
+<td>Returns whether the node has an instance property with the given name that has been flagged for storage on disc.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="../mpylib.nodes.html#mpylib.nodes.MPyNode.importFromFile" title="mpylib.nodes.MPyNode.importFromFile"><code class="xref py py-obj docutils literal notranslate"><span class="pre">importFromFile</span></code></a>(file_path)</td>
+<td>Import a MPyNode from an external file.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="../mpylib.nodes.html#mpylib.nodes.MPyNode.listInputAttrs" title="mpylib.nodes.MPyNode.listInputAttrs"><code class="xref py py-obj docutils literal notranslate"><span class="pre">listInputAttrs</span></code></a>()</td>
+<td>Returns the names of the node’s input attributes</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="../mpylib.nodes.html#mpylib.nodes.MPyNode.listOutputAttrs" title="mpylib.nodes.MPyNode.listOutputAttrs"><code class="xref py py-obj docutils literal notranslate"><span class="pre">listOutputAttrs</span></code></a>()</td>
+<td>Returns the names of the node’s output attributes</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="../mpylib.nodes.html#mpylib.nodes.MPyNode.listStoredVariables" title="mpylib.nodes.MPyNode.listStoredVariables"><code class="xref py py-obj docutils literal notranslate"><span class="pre">listStoredVariables</span></code></a>()</td>
+<td>Returns the names of the node’s internally stored variables</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="../mpylib.nodes.html#mpylib.nodes.MPyNode.listValidInputTypes" title="mpylib.nodes.MPyNode.listValidInputTypes"><code class="xref py py-obj docutils literal notranslate"><span class="pre">listValidInputTypes</span></code></a>()</td>
+<td>Class method returns the types of supported input attributes</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="../mpylib.nodes.html#mpylib.nodes.MPyNode.listValidOutputTypes" title="mpylib.nodes.MPyNode.listValidOutputTypes"><code class="xref py py-obj docutils literal notranslate"><span class="pre">listValidOutputTypes</span></code></a>()</td>
+<td>Class method returns the types of supported output attributes</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="../mpylib.nodes.html#mpylib.nodes.MPyNode.ls" title="mpylib.nodes.MPyNode.ls"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ls</span></code></a>(\*args,&nbsp;\*\*kargs)</td>
+<td>class method - returns the nodes of type ‘mPyNode’ in the current scene.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="../mpylib.nodes.html#mpylib.nodes.MPyNode.removeStoredVariable" title="mpylib.nodes.MPyNode.removeStoredVariable"><code class="xref py py-obj docutils literal notranslate"><span class="pre">removeStoredVariable</span></code></a>(var_name)</td>
+<td>Removes the given variable name from the list of variables that will stored to file</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="../mpylib.nodes.html#mpylib.nodes.MPyNode.setExpression" title="mpylib.nodes.MPyNode.setExpression"><code class="xref py py-obj docutils literal notranslate"><span class="pre">setExpression</span></code></a>(exp_str)</td>
+<td>Set the expression within the node to the given string of python code.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="../mpylib.nodes.html#mpylib.nodes.MPyNode.setStoredVariable" title="mpylib.nodes.MPyNode.setStoredVariable"><code class="xref py py-obj docutils literal notranslate"><span class="pre">setStoredVariable</span></code></a>(var_name,&nbsp;var_val)</td>
+<td>Used to set an instance property on the node for use in the expression and storage on disc when the file is saved.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="../mpylib.nodes.html#mpylib.nodes.MPyNode.setVariable" title="mpylib.nodes.MPyNode.setVariable"><code class="xref py py-obj docutils literal notranslate"><span class="pre">setVariable</span></code></a>(var_name,&nbsp;var_val)</td>
+<td>Used to set an instance property on the node for use in the expression.</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Methods Documentation</p>
+<dl class="method">
+<dt id="mpylib.nodes.MPyNode.addInputAttr">
+<code class="descname">addInputAttr</code><span class="sig-paren">(</span><em>long_name</em>, <em>attr_type</em>, <em>is_array=False</em>, <em>**kargs</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.nodes.MPyNode.addInputAttr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds an input attribute of the given long name and given type to the node.
+Use MPyNode.listSupportedAttrTypes() to list supported types</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>long_name</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><em>str</em></span></dt>
+<dd><p class="first last">long name of the attribute to add. This will be the name of its variable in the expression</p>
+</dd>
+<dt><strong>attr_type</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><em>str</em></span></dt>
+<dd><p class="first last">type of attribute to add. Use MPyNode.listSupportedAttrTypes() to list supported types</p>
+</dd>
+<dt><strong>is_array</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><em>bool</em>, optional, default = False</span></dt>
+<dd><p class="first last">whether to make this an array attribute</p>
+</dd>
+<dt><strong>kargs</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><em>keyword args</em>, optional</span></dt>
+<dd><p class="first last">keyword args supported by maya.cmds.addAttr</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>*None*</strong></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<dl class="last docutils">
+<dt><a class="reference internal" href="../mpylib.nodes.html#mpylib.nodes.MPyNode.addOutputAttr" title="mpylib.nodes.MPyNode.addOutputAttr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">addOutputAttr</span></code></a></dt>
+<dd>Adds an output attribute of the given long name and given type to the node.</dd>
+<dt><a class="reference internal" href="../mpylib.nodes.html#mpylib.nodes.MPyNode.addStoredVariable" title="mpylib.nodes.MPyNode.addStoredVariable"><code class="xref py py-obj docutils literal notranslate"><span class="pre">addStoredVariable</span></code></a></dt>
+<dd>Used to flag an instance property on the node for storage on disc when the file is saved</dd>
+</dl>
+</div>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">node</span><span class="o">.</span><span class="n">addInputAttr</span><span class="p">(</span><span class="s2">&quot;floatAttr&quot;</span><span class="p">,</span> <span class="s2">&quot;float&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">node</span><span class="o">.</span><span class="n">addInputAttr</span><span class="p">(</span><span class="s2">&quot;floatArrayAttr&quot;</span><span class="p">,</span> <span class="s2">&quot;float&quot;</span><span class="p">,</span> <span class="n">is_array</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib.nodes.MPyNode.addOutputAttr">
+<code class="descname">addOutputAttr</code><span class="sig-paren">(</span><em>long_name</em>, <em>attr_type</em>, <em>is_array=False</em>, <em>**kargs</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.nodes.MPyNode.addOutputAttr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds an output attribute of the given long name and given type to the node.
+Use MPyNode.listSupportedAttrTypes() to list supported types</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>long_name</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><em>str</em></span></dt>
+<dd><p class="first last">long name of the attribute to add. This will be the name of its variable in the expression</p>
+</dd>
+<dt><strong>attr_type</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><em>str</em></span></dt>
+<dd><p class="first last">type of attribute to add. Use MPyNode.listSupportedAttrTypes() to list supported types</p>
+</dd>
+<dt><strong>is_array</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><em>bool</em>, optional, default = False</span></dt>
+<dd><p class="first last">whether to make this an array attribute</p>
+</dd>
+<dt><strong>kargs</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><em>keyword args</em>, optional</span></dt>
+<dd><p class="first last">keyword args supported by maya.cmds.addAttr</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>*None*</strong></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<dl class="last docutils">
+<dt><a class="reference internal" href="../mpylib.nodes.html#mpylib.nodes.MPyNode.addInputAttr" title="mpylib.nodes.MPyNode.addInputAttr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">addInputAttr</span></code></a></dt>
+<dd>Adds an output attribute of the given long name and given type to the node.</dd>
+<dt><a class="reference internal" href="../mpylib.nodes.html#mpylib.nodes.MPyNode.addStoredVariable" title="mpylib.nodes.MPyNode.addStoredVariable"><code class="xref py py-obj docutils literal notranslate"><span class="pre">addStoredVariable</span></code></a></dt>
+<dd>Used to flag an instance property on the node for storage on disc when the file is saved</dd>
+</dl>
+</div>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">node</span><span class="o">.</span><span class="n">addOutputAttr</span><span class="p">(</span><span class="s2">&quot;floatAttr&quot;</span><span class="p">,</span> <span class="s2">&quot;float&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">node</span><span class="o">.</span><span class="n">addOutputAttr</span><span class="p">(</span><span class="s2">&quot;floatArrayAttr&quot;</span><span class="p">,</span> <span class="s2">&quot;float&quot;</span><span class="p">,</span> <span class="n">is_array</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib.nodes.MPyNode.addStoredVariable">
+<code class="descname">addStoredVariable</code><span class="sig-paren">(</span><em>var_name</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.nodes.MPyNode.addStoredVariable" title="Permalink to this definition">¶</a></dt>
+<dd><p>Used to flag an instance property on the node for storage on disc when the file is saved. The name given 
+should refer to a property on the node instance created/used by the expression (i.e. self.var_name)</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>var_name</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><em>str</em></span></dt>
+<dd><p class="first last">name of the variable to store</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>*None*</strong></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<dl class="last docutils">
+<dt><a class="reference internal" href="../mpylib.nodes.html#mpylib.nodes.MPyNode.addInputAttr" title="mpylib.nodes.MPyNode.addInputAttr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">addInputAttr</span></code></a></dt>
+<dd>Adds an input attribute of the given long name and given type to the node.</dd>
+<dt><a class="reference internal" href="../mpylib.nodes.html#mpylib.nodes.MPyNode.addOutputAttr" title="mpylib.nodes.MPyNode.addOutputAttr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">addOutputAttr</span></code></a></dt>
+<dd>Adds an output attribute of the given long name and given type to the node.</dd>
+</dl>
+</div>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">node</span><span class="o">.</span><span class="n">addStoredVariable</span><span class="p">(</span><span class="s2">&quot;myVar&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib.nodes.MPyNode.deleteInputAttr">
+<code class="descname">deleteInputAttr</code><span class="sig-paren">(</span><em>attr_name</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.nodes.MPyNode.deleteInputAttr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Removes the given input attribute from the node.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>attr_name</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><em>str</em></span></dt>
+<dd><p class="first last">string name of the input attribute to remove</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>*None*</strong></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<dl class="last docutils">
+<dt><a class="reference internal" href="../mpylib.nodes.html#mpylib.nodes.MPyNode.deleteOutputAttr" title="mpylib.nodes.MPyNode.deleteOutputAttr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">deleteOutputAttr</span></code></a></dt>
+<dd>Removes the given output attribute from the node.</dd>
+<dt><a class="reference internal" href="../mpylib.nodes.html#mpylib.nodes.MPyNode.removeStoredVariable" title="mpylib.nodes.MPyNode.removeStoredVariable"><code class="xref py py-obj docutils literal notranslate"><span class="pre">removeStoredVariable</span></code></a></dt>
+<dd>Removes the given variable name from the list of variables that will stored to file</dd>
+</dl>
+</div>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">node</span><span class="o">.</span><span class="n">deleteInputAttr</span><span class="p">(</span><span class="s2">&quot;myVar&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib.nodes.MPyNode.deleteOutputAttr">
+<code class="descname">deleteOutputAttr</code><span class="sig-paren">(</span><em>attr_name</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.nodes.MPyNode.deleteOutputAttr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Removes the given output attribute from the node.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>attr_name</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><em>str</em></span></dt>
+<dd><p class="first last">string name of the output attribute to remove</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>*None*</strong></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<dl class="last docutils">
+<dt><a class="reference internal" href="../mpylib.nodes.html#mpylib.nodes.MPyNode.deleteInputAttr" title="mpylib.nodes.MPyNode.deleteInputAttr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">deleteInputAttr</span></code></a></dt>
+<dd>Removes the given input attribute from the node.</dd>
+<dt><a class="reference internal" href="../mpylib.nodes.html#mpylib.nodes.MPyNode.removeStoredVariable" title="mpylib.nodes.MPyNode.removeStoredVariable"><code class="xref py py-obj docutils literal notranslate"><span class="pre">removeStoredVariable</span></code></a></dt>
+<dd>Removes the given variable name from the list of variables that will stored to file</dd>
+</dl>
+</div>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">node</span><span class="o">.</span><span class="n">deleteOutputAttr</span><span class="p">(</span><span class="s2">&quot;myVar&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib.nodes.MPyNode.exportToFile">
+<code class="descname">exportToFile</code><span class="sig-paren">(</span><em>file_path</em>, <em>use_binary=True</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.nodes.MPyNode.exportToFile" title="Permalink to this definition">¶</a></dt>
+<dd><p>Export this node to an external file</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>file_path</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><em>str</em></span></dt>
+<dd><p class="first last">string file path to export to. Directory structure must exist</p>
+</dd>
+<dt><strong>use_binary</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><em>bool</em>, optional, default=True</span></dt>
+<dd><p class="first last">By default, a binary file is exported. If a text format is desired, set this to False</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>*None*</strong></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<dl class="last docutils">
+<dt><a class="reference internal" href="../mpylib.nodes.html#mpylib.nodes.MPyNode.importFromFile" title="mpylib.nodes.MPyNode.importFromFile"><code class="xref py py-obj docutils literal notranslate"><span class="pre">importFromFile</span></code></a></dt>
+<dd>Import a MPyNode from an external file. An nstance of the node will be constructed in the current Maya scene</dd>
+</dl>
+</div>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">node</span><span class="o">.</span><span class="n">exportToFile</span><span class="p">(</span><span class="s2">&quot;C:/temp/file_name.ext&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">node</span><span class="o">.</span><span class="n">exportToFile</span><span class="p">(</span><span class="s2">&quot;C:/temp/file_name.ext&quot;</span><span class="p">,</span> <span class="n">use_binary</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib.nodes.MPyNode.getExpression">
+<code class="descname">getExpression</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.nodes.MPyNode.getExpression" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the current python expression within the node.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>*str* or *None*</strong></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<dl class="last docutils">
+<dt><a class="reference internal" href="../mpylib.nodes.html#mpylib.nodes.MPyNode.setExpression" title="mpylib.nodes.MPyNode.setExpression"><code class="xref py py-obj docutils literal notranslate"><span class="pre">setExpression</span></code></a></dt>
+<dd>Set the expression within the node to the given string of python code.</dd>
+</dl>
+</div>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">exp</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">getExpression</span><span class="p">()</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib.nodes.MPyNode.getInputAttrMap">
+<code class="descname">getInputAttrMap</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.nodes.MPyNode.getInputAttrMap" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a dictionary with all input attr names as keys and attribute data as values.
+The values of the dictionary are also dictiontaries with the proper addInputAttr() keyword args and values. Note
+that only non-default keyword args are returned. So if an attribute is not “keyable”, for example, no “keyable”
+keyword will be returned in dictionary.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>*dict* with all input attr names as keys and attribute data as values or *None*</strong></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<dl class="last docutils">
+<dt><a class="reference internal" href="../mpylib.nodes.html#mpylib.nodes.MPyNode.addInputAttr" title="mpylib.nodes.MPyNode.addInputAttr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">addInputAttr</span></code></a></dt>
+<dd>Adds an input attribute of the given long name and given type to the node.</dd>
+</dl>
+</div>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">input_map</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">getInputAttrMap</span><span class="p">()</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib.nodes.MPyNode.getOutputAttrMap">
+<code class="descname">getOutputAttrMap</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.nodes.MPyNode.getOutputAttrMap" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a dictionary with all output attr names as keys and attribute data as values.
+The values of the dictionary are also dictiontaries with the proper addOutputAttr() keyword args and values. Note
+that only non-default keyword args are returned. So if an attribute is not “keyable”, for example, no “keyable”
+keyword will be returned in dictionary.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>*dict* with all output attr names as keys and attribute data as values or *None*</strong></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<dl class="last docutils">
+<dt><a class="reference internal" href="../mpylib.nodes.html#mpylib.nodes.MPyNode.addOutputAttr" title="mpylib.nodes.MPyNode.addOutputAttr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">addOutputAttr</span></code></a></dt>
+<dd>Adds an output attribute of the given long name and given type to the node.</dd>
+</dl>
+</div>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">input_map</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">getOutputAttrMap</span><span class="p">()</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib.nodes.MPyNode.getStoredVariables">
+<code class="descname">getStoredVariables</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.nodes.MPyNode.getStoredVariables" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the nodes “stored variables” as a dictionary.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>*dict* or *None* - Keys are string names of the variables and values are their current values</strong></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<dl class="last docutils">
+<dt><a class="reference internal" href="../mpylib.nodes.html#mpylib.nodes.MPyNode.addStoredVariable" title="mpylib.nodes.MPyNode.addStoredVariable"><code class="xref py py-obj docutils literal notranslate"><span class="pre">addStoredVariable</span></code></a></dt>
+<dd>Removes the given output attribute from the node.</dd>
+<dt><a class="reference internal" href="../mpylib.nodes.html#mpylib.nodes.MPyNode.setStoredVariable" title="mpylib.nodes.MPyNode.setStoredVariable"><code class="xref py py-obj docutils literal notranslate"><span class="pre">setStoredVariable</span></code></a></dt>
+<dd>Used to set an instance property on the node for use in the expression and storage on disc when the file is saved</dd>
+</dl>
+</div>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">var_map</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">getStoredVariables</span><span class="p">()</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib.nodes.MPyNode.hasStoredVariable">
+<code class="descname">hasStoredVariable</code><span class="sig-paren">(</span><em>var_name</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.nodes.MPyNode.hasStoredVariable" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns whether the node has an instance property with the given name that has been flagged for storage on disc.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>var_name</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><em>str</em></span></dt>
+<dd><p class="first last">name of the variable</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>*bool*</strong></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<dl class="last docutils">
+<dt><a class="reference internal" href="../mpylib.nodes.html#mpylib.nodes.MPyNode.addStoredVariable" title="mpylib.nodes.MPyNode.addStoredVariable"><code class="xref py py-obj docutils literal notranslate"><span class="pre">addStoredVariable</span></code></a></dt>
+<dd>Removes the given output attribute from the node.</dd>
+</dl>
+</div>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">node</span><span class="o">.</span><span class="n">hasStoredVariable</span><span class="p">(</span><span class="s2">&quot;myVar&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="mpylib.nodes.MPyNode.importFromFile">
+<em class="property">static </em><code class="descname">importFromFile</code><span class="sig-paren">(</span><em>file_path</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.nodes.MPyNode.importFromFile" title="Permalink to this definition">¶</a></dt>
+<dd><p>Import a MPyNode from an external file. An instance of the node will be constructed in the current Maya scene</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>file_path</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><em>str</em></span></dt>
+<dd><p class="first last">file path to import from</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>*MPyNode* of the newly created node</strong></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<dl class="last docutils">
+<dt><a class="reference internal" href="../mpylib.nodes.html#mpylib.nodes.MPyNode.importFromFile" title="mpylib.nodes.MPyNode.importFromFile"><code class="xref py py-obj docutils literal notranslate"><span class="pre">importFromFile</span></code></a></dt>
+<dd>Export this node to an external file</dd>
+</dl>
+</div>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">new_node</span> <span class="o">=</span> <span class="n">MPyNode</span><span class="o">.</span><span class="n">importFromFile</span><span class="p">(</span><span class="s2">&quot;C:/temp/file_name.ext&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib.nodes.MPyNode.listInputAttrs">
+<code class="descname">listInputAttrs</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.nodes.MPyNode.listInputAttrs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the names of the node’s input attributes</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>*tuple* of *str* attribute names or *None*</strong></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<dl class="last docutils">
+<dt><a class="reference internal" href="../mpylib.nodes.html#mpylib.nodes.MPyNode.addInputAttr" title="mpylib.nodes.MPyNode.addInputAttr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">addInputAttr</span></code></a></dt>
+<dd>Adds an input attribute of the given long name and given type to the node.</dd>
+</dl>
+</div>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">input_attrs</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">listInputAttrs</span><span class="p">()</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib.nodes.MPyNode.listOutputAttrs">
+<code class="descname">listOutputAttrs</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.nodes.MPyNode.listOutputAttrs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the names of the node’s output attributes</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>*tuple* of *str* attribute names or *None*</strong></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<dl class="last docutils">
+<dt><a class="reference internal" href="../mpylib.nodes.html#mpylib.nodes.MPyNode.addOutputAttr" title="mpylib.nodes.MPyNode.addOutputAttr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">addOutputAttr</span></code></a></dt>
+<dd>Adds an output attribute of the given long name and given type to the node.</dd>
+</dl>
+</div>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">output_attrs</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">listOutputAttrs</span><span class="p">()</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib.nodes.MPyNode.listStoredVariables">
+<code class="descname">listStoredVariables</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.nodes.MPyNode.listStoredVariables" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the names of the node’s internally stored variables</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>*tuple* of *str* variable names or *None*</strong></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<dl class="last docutils">
+<dt><a class="reference internal" href="../mpylib.nodes.html#mpylib.nodes.MPyNode.addStoredVariable" title="mpylib.nodes.MPyNode.addStoredVariable"><code class="xref py py-obj docutils literal notranslate"><span class="pre">addStoredVariable</span></code></a></dt>
+<dd>Used to flag an instance property on the node for storage on disc when the file is saved.</dd>
+</dl>
+</div>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">stored_vars</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">listStoredVariables</span><span class="p">()</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="mpylib.nodes.MPyNode.listValidInputTypes">
+<em class="property">classmethod </em><code class="descname">listValidInputTypes</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.nodes.MPyNode.listValidInputTypes" title="Permalink to this definition">¶</a></dt>
+<dd><blockquote>
+<div>Class method returns the types of supported input attributes</div></blockquote>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>*tuple* of *str* attribute types or *None*</strong></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<dl class="last docutils">
+<dt><a class="reference internal" href="../mpylib.nodes.html#mpylib.nodes.MPyNode.addInputAttr" title="mpylib.nodes.MPyNode.addInputAttr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">addInputAttr</span></code></a></dt>
+<dd>Adds an input attribute of the given long name and given type to the node.</dd>
+</dl>
+</div>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">attr_types</span> <span class="o">=</span> <span class="n">MPyNode</span><span class="o">.</span><span class="n">listValidInputTypes</span><span class="p">()</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="mpylib.nodes.MPyNode.listValidOutputTypes">
+<em class="property">classmethod </em><code class="descname">listValidOutputTypes</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.nodes.MPyNode.listValidOutputTypes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Class method returns the types of supported output attributes</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>*tuple* of *str* attribute types or *None*</strong></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<dl class="last docutils">
+<dt><a class="reference internal" href="../mpylib.nodes.html#mpylib.nodes.MPyNode.addOutputAttr" title="mpylib.nodes.MPyNode.addOutputAttr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">addOutputAttr</span></code></a></dt>
+<dd>Adds an output attribute of the given long name and given type to the node.</dd>
+</dl>
+</div>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">attr_types</span> <span class="o">=</span> <span class="n">MPyNode</span><span class="o">.</span><span class="n">listValidInputTypes</span><span class="p">()</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="mpylib.nodes.MPyNode.ls">
+<em class="property">classmethod </em><code class="descname">ls</code><span class="sig-paren">(</span><em>*args</em>, <em>**kargs</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.nodes.MPyNode.ls" title="Permalink to this definition">¶</a></dt>
+<dd><p>class method - returns the nodes of type ‘mPyNode’ in the current scene. Works just like maya.cmds.ls</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>args</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><em>str</em></span></dt>
+<dd><p class="first last">args supported by maya.cmds.ls</p>
+</dd>
+<dt><strong>kargs</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><em>str</em></span></dt>
+<dd><p class="first last">keyword args supported by maya.cmds.ls</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>*tuple* of *MPyNode* nodes or *None*</strong></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1">## get all mPyNode nodes in the scene</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">nodes</span> <span class="o">=</span> <span class="n">MPyNode</span><span class="o">.</span><span class="n">ls</span><span class="p">()</span>
+<span class="go">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1">## get all mPyNode nodes whose names start with &quot;Foo&quot;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">foo_nodes</span> <span class="o">=</span> <span class="n">MPyNode</span><span class="o">.</span><span class="n">ls</span><span class="p">(</span><span class="s2">&quot;Foo*&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib.nodes.MPyNode.removeStoredVariable">
+<code class="descname">removeStoredVariable</code><span class="sig-paren">(</span><em>var_name</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.nodes.MPyNode.removeStoredVariable" title="Permalink to this definition">¶</a></dt>
+<dd><p>Removes the given variable name from the list of variables that will stored to file</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>var_name</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><em>str</em></span></dt>
+<dd><p class="first last">name of the variable to remove</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>*None*</strong></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<dl class="last docutils">
+<dt><a class="reference internal" href="../mpylib.nodes.html#mpylib.nodes.MPyNode.addStoredVariable" title="mpylib.nodes.MPyNode.addStoredVariable"><code class="xref py py-obj docutils literal notranslate"><span class="pre">addStoredVariable</span></code></a></dt>
+<dd>Used to flag an instance property on the node for storage on disc when the file is saved</dd>
+</dl>
+</div>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">node</span><span class="o">.</span><span class="n">removeStoredVariable</span><span class="p">(</span><span class="s2">&quot;floatAttr&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib.nodes.MPyNode.setExpression">
+<code class="descname">setExpression</code><span class="sig-paren">(</span><em>exp_str</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.nodes.MPyNode.setExpression" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the expression within the node to the given string of python code.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>exp_str</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><em>str</em></span></dt>
+<dd><p class="first last">python code to set the expression to.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>*None*</strong></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<dl class="last docutils">
+<dt><a class="reference internal" href="../mpylib.nodes.html#mpylib.nodes.MPyNode.getExpression" title="mpylib.nodes.MPyNode.getExpression"><code class="xref py py-obj docutils literal notranslate"><span class="pre">getExpression</span></code></a></dt>
+<dd>Returns the current python expression within the node.</dd>
+</dl>
+</div>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">py_node</span><span class="o">.</span><span class="n">setExpression</span><span class="p">(</span><span class="s1">&#39;outAttr = inAttr * 2&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib.nodes.MPyNode.setStoredVariable">
+<code class="descname">setStoredVariable</code><span class="sig-paren">(</span><em>var_name</em>, <em>var_val</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.nodes.MPyNode.setStoredVariable" title="Permalink to this definition">¶</a></dt>
+<dd><p>Used to set an instance property on the node for use in the expression and storage on disc when the file is saved. The name given
+should refer to a property on the node instance created/used by the expression (i.e. self.var_name)</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>var_name</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><em>str</em></span></dt>
+<dd><p class="first last">name of the variable to set</p>
+</dd>
+<dt><strong>var_val</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><em>object</em></span></dt>
+<dd><p class="first last">python value to assign to the variable</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>*None*</strong></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<dl class="last docutils">
+<dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">getStoredVariable</span></code></dt>
+<dd>Returns the nodes “stored variables” as a dictionary.</dd>
+</dl>
+</div>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">node</span><span class="o">.</span><span class="n">setStoredVariable</span><span class="p">(</span><span class="s2">&quot;myVar&quot;</span><span class="p">,</span> <span class="n">var_val</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib.nodes.MPyNode.setVariable">
+<code class="descname">setVariable</code><span class="sig-paren">(</span><em>var_name</em>, <em>var_val</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.nodes.MPyNode.setVariable" title="Permalink to this definition">¶</a></dt>
+<dd><p>Used to set an instance property on the node for use in the expression. The name given should refer to a
+property on the node instance created/used by the expression (i.e. self.var_name). This value variable is destroyed
+when the Maya scene is closed.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>var_name</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><em>str</em></span></dt>
+<dd><p class="first last">name of the variable to set</p>
+</dd>
+<dt><strong>var_val</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><em>object</em></span></dt>
+<dd><p class="first last">python value to assign to the variable</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>*None*</strong></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">node</span><span class="o">.</span><span class="n">setVariable</span><span class="p">(</span><span class="s2">&quot;myVar&quot;</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt>
+<code class="descname">addInputAttr</code><span class="sig-paren">(</span><em>long_name</em>, <em>attr_type</em>, <em>is_array=False</em>, <em>**kargs</em><span class="sig-paren">)</span></dt>
+<dd><p>Adds an input attribute of the given long name and given type to the node.
+Use MPyNode.listSupportedAttrTypes() to list supported types</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>long_name</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><em>str</em></span></dt>
+<dd><p class="first last">long name of the attribute to add. This will be the name of its variable in the expression</p>
+</dd>
+<dt><strong>attr_type</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><em>str</em></span></dt>
+<dd><p class="first last">type of attribute to add. Use MPyNode.listSupportedAttrTypes() to list supported types</p>
+</dd>
+<dt><strong>is_array</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><em>bool</em>, optional, default = False</span></dt>
+<dd><p class="first last">whether to make this an array attribute</p>
+</dd>
+<dt><strong>kargs</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><em>keyword args</em>, optional</span></dt>
+<dd><p class="first last">keyword args supported by maya.cmds.addAttr</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>*None*</strong></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<dl class="last docutils">
+<dt><a class="reference internal" href="../mpylib.nodes.html#mpylib.nodes.MPyNode.addOutputAttr" title="mpylib.nodes.MPyNode.addOutputAttr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">addOutputAttr</span></code></a></dt>
+<dd>Adds an output attribute of the given long name and given type to the node.</dd>
+<dt><a class="reference internal" href="../mpylib.nodes.html#mpylib.nodes.MPyNode.addStoredVariable" title="mpylib.nodes.MPyNode.addStoredVariable"><code class="xref py py-obj docutils literal notranslate"><span class="pre">addStoredVariable</span></code></a></dt>
+<dd>Used to flag an instance property on the node for storage on disc when the file is saved</dd>
+</dl>
+</div>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">node</span><span class="o">.</span><span class="n">addInputAttr</span><span class="p">(</span><span class="s2">&quot;floatAttr&quot;</span><span class="p">,</span> <span class="s2">&quot;float&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">node</span><span class="o">.</span><span class="n">addInputAttr</span><span class="p">(</span><span class="s2">&quot;floatArrayAttr&quot;</span><span class="p">,</span> <span class="s2">&quot;float&quot;</span><span class="p">,</span> <span class="n">is_array</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt>
+<code class="descname">addOutputAttr</code><span class="sig-paren">(</span><em>long_name</em>, <em>attr_type</em>, <em>is_array=False</em>, <em>**kargs</em><span class="sig-paren">)</span></dt>
+<dd><p>Adds an output attribute of the given long name and given type to the node.
+Use MPyNode.listSupportedAttrTypes() to list supported types</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>long_name</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><em>str</em></span></dt>
+<dd><p class="first last">long name of the attribute to add. This will be the name of its variable in the expression</p>
+</dd>
+<dt><strong>attr_type</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><em>str</em></span></dt>
+<dd><p class="first last">type of attribute to add. Use MPyNode.listSupportedAttrTypes() to list supported types</p>
+</dd>
+<dt><strong>is_array</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><em>bool</em>, optional, default = False</span></dt>
+<dd><p class="first last">whether to make this an array attribute</p>
+</dd>
+<dt><strong>kargs</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><em>keyword args</em>, optional</span></dt>
+<dd><p class="first last">keyword args supported by maya.cmds.addAttr</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>*None*</strong></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<dl class="last docutils">
+<dt><a class="reference internal" href="../mpylib.nodes.html#mpylib.nodes.MPyNode.addInputAttr" title="mpylib.nodes.MPyNode.addInputAttr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">addInputAttr</span></code></a></dt>
+<dd>Adds an output attribute of the given long name and given type to the node.</dd>
+<dt><a class="reference internal" href="../mpylib.nodes.html#mpylib.nodes.MPyNode.addStoredVariable" title="mpylib.nodes.MPyNode.addStoredVariable"><code class="xref py py-obj docutils literal notranslate"><span class="pre">addStoredVariable</span></code></a></dt>
+<dd>Used to flag an instance property on the node for storage on disc when the file is saved</dd>
+</dl>
+</div>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">node</span><span class="o">.</span><span class="n">addOutputAttr</span><span class="p">(</span><span class="s2">&quot;floatAttr&quot;</span><span class="p">,</span> <span class="s2">&quot;float&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">node</span><span class="o">.</span><span class="n">addOutputAttr</span><span class="p">(</span><span class="s2">&quot;floatArrayAttr&quot;</span><span class="p">,</span> <span class="s2">&quot;float&quot;</span><span class="p">,</span> <span class="n">is_array</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt>
+<code class="descname">addStoredVariable</code><span class="sig-paren">(</span><em>var_name</em><span class="sig-paren">)</span></dt>
+<dd><p>Used to flag an instance property on the node for storage on disc when the file is saved. The name given 
+should refer to a property on the node instance created/used by the expression (i.e. self.var_name)</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>var_name</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><em>str</em></span></dt>
+<dd><p class="first last">name of the variable to store</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>*None*</strong></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<dl class="last docutils">
+<dt><a class="reference internal" href="../mpylib.nodes.html#mpylib.nodes.MPyNode.addInputAttr" title="mpylib.nodes.MPyNode.addInputAttr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">addInputAttr</span></code></a></dt>
+<dd>Adds an input attribute of the given long name and given type to the node.</dd>
+<dt><a class="reference internal" href="../mpylib.nodes.html#mpylib.nodes.MPyNode.addOutputAttr" title="mpylib.nodes.MPyNode.addOutputAttr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">addOutputAttr</span></code></a></dt>
+<dd>Adds an output attribute of the given long name and given type to the node.</dd>
+</dl>
+</div>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">node</span><span class="o">.</span><span class="n">addStoredVariable</span><span class="p">(</span><span class="s2">&quot;myVar&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt>
+<code class="descname">deleteInputAttr</code><span class="sig-paren">(</span><em>attr_name</em><span class="sig-paren">)</span></dt>
+<dd><p>Removes the given input attribute from the node.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>attr_name</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><em>str</em></span></dt>
+<dd><p class="first last">string name of the input attribute to remove</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>*None*</strong></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<dl class="last docutils">
+<dt><a class="reference internal" href="../mpylib.nodes.html#mpylib.nodes.MPyNode.deleteOutputAttr" title="mpylib.nodes.MPyNode.deleteOutputAttr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">deleteOutputAttr</span></code></a></dt>
+<dd>Removes the given output attribute from the node.</dd>
+<dt><a class="reference internal" href="../mpylib.nodes.html#mpylib.nodes.MPyNode.removeStoredVariable" title="mpylib.nodes.MPyNode.removeStoredVariable"><code class="xref py py-obj docutils literal notranslate"><span class="pre">removeStoredVariable</span></code></a></dt>
+<dd>Removes the given variable name from the list of variables that will stored to file</dd>
+</dl>
+</div>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">node</span><span class="o">.</span><span class="n">deleteInputAttr</span><span class="p">(</span><span class="s2">&quot;myVar&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt>
+<code class="descname">deleteOutputAttr</code><span class="sig-paren">(</span><em>attr_name</em><span class="sig-paren">)</span></dt>
+<dd><p>Removes the given output attribute from the node.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>attr_name</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><em>str</em></span></dt>
+<dd><p class="first last">string name of the output attribute to remove</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>*None*</strong></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<dl class="last docutils">
+<dt><a class="reference internal" href="../mpylib.nodes.html#mpylib.nodes.MPyNode.deleteInputAttr" title="mpylib.nodes.MPyNode.deleteInputAttr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">deleteInputAttr</span></code></a></dt>
+<dd>Removes the given input attribute from the node.</dd>
+<dt><a class="reference internal" href="../mpylib.nodes.html#mpylib.nodes.MPyNode.removeStoredVariable" title="mpylib.nodes.MPyNode.removeStoredVariable"><code class="xref py py-obj docutils literal notranslate"><span class="pre">removeStoredVariable</span></code></a></dt>
+<dd>Removes the given variable name from the list of variables that will stored to file</dd>
+</dl>
+</div>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">node</span><span class="o">.</span><span class="n">deleteOutputAttr</span><span class="p">(</span><span class="s2">&quot;myVar&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt>
+<code class="descname">exportToFile</code><span class="sig-paren">(</span><em>file_path</em>, <em>use_binary=True</em><span class="sig-paren">)</span></dt>
+<dd><p>Export this node to an external file</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>file_path</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><em>str</em></span></dt>
+<dd><p class="first last">string file path to export to. Directory structure must exist</p>
+</dd>
+<dt><strong>use_binary</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><em>bool</em>, optional, default=True</span></dt>
+<dd><p class="first last">By default, a binary file is exported. If a text format is desired, set this to False</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>*None*</strong></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<dl class="last docutils">
+<dt><a class="reference internal" href="../mpylib.nodes.html#mpylib.nodes.MPyNode.importFromFile" title="mpylib.nodes.MPyNode.importFromFile"><code class="xref py py-obj docutils literal notranslate"><span class="pre">importFromFile</span></code></a></dt>
+<dd>Import a MPyNode from an external file. An nstance of the node will be constructed in the current Maya scene</dd>
+</dl>
+</div>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">node</span><span class="o">.</span><span class="n">exportToFile</span><span class="p">(</span><span class="s2">&quot;C:/temp/file_name.ext&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">node</span><span class="o">.</span><span class="n">exportToFile</span><span class="p">(</span><span class="s2">&quot;C:/temp/file_name.ext&quot;</span><span class="p">,</span> <span class="n">use_binary</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt>
+<code class="descname">getExpression</code><span class="sig-paren">(</span><span class="sig-paren">)</span></dt>
+<dd><p>Returns the current python expression within the node.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>*str* or *None*</strong></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<dl class="last docutils">
+<dt><a class="reference internal" href="../mpylib.nodes.html#mpylib.nodes.MPyNode.setExpression" title="mpylib.nodes.MPyNode.setExpression"><code class="xref py py-obj docutils literal notranslate"><span class="pre">setExpression</span></code></a></dt>
+<dd>Set the expression within the node to the given string of python code.</dd>
+</dl>
+</div>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">exp</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">getExpression</span><span class="p">()</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt>
+<code class="descname">getInputAttrMap</code><span class="sig-paren">(</span><span class="sig-paren">)</span></dt>
+<dd><p>Returns a dictionary with all input attr names as keys and attribute data as values.
+The values of the dictionary are also dictiontaries with the proper addInputAttr() keyword args and values. Note
+that only non-default keyword args are returned. So if an attribute is not “keyable”, for example, no “keyable”
+keyword will be returned in dictionary.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>*dict* with all input attr names as keys and attribute data as values or *None*</strong></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<dl class="last docutils">
+<dt><a class="reference internal" href="../mpylib.nodes.html#mpylib.nodes.MPyNode.addInputAttr" title="mpylib.nodes.MPyNode.addInputAttr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">addInputAttr</span></code></a></dt>
+<dd>Adds an input attribute of the given long name and given type to the node.</dd>
+</dl>
+</div>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">input_map</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">getInputAttrMap</span><span class="p">()</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt>
+<code class="descname">getOutputAttrMap</code><span class="sig-paren">(</span><span class="sig-paren">)</span></dt>
+<dd><p>Returns a dictionary with all output attr names as keys and attribute data as values.
+The values of the dictionary are also dictiontaries with the proper addOutputAttr() keyword args and values. Note
+that only non-default keyword args are returned. So if an attribute is not “keyable”, for example, no “keyable”
+keyword will be returned in dictionary.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>*dict* with all output attr names as keys and attribute data as values or *None*</strong></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<dl class="last docutils">
+<dt><a class="reference internal" href="../mpylib.nodes.html#mpylib.nodes.MPyNode.addOutputAttr" title="mpylib.nodes.MPyNode.addOutputAttr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">addOutputAttr</span></code></a></dt>
+<dd>Adds an output attribute of the given long name and given type to the node.</dd>
+</dl>
+</div>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">input_map</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">getOutputAttrMap</span><span class="p">()</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt>
+<code class="descname">getStoredVariables</code><span class="sig-paren">(</span><span class="sig-paren">)</span></dt>
+<dd><p>Returns the nodes “stored variables” as a dictionary.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>*dict* or *None* - Keys are string names of the variables and values are their current values</strong></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<dl class="last docutils">
+<dt><a class="reference internal" href="../mpylib.nodes.html#mpylib.nodes.MPyNode.addStoredVariable" title="mpylib.nodes.MPyNode.addStoredVariable"><code class="xref py py-obj docutils literal notranslate"><span class="pre">addStoredVariable</span></code></a></dt>
+<dd>Removes the given output attribute from the node.</dd>
+<dt><a class="reference internal" href="../mpylib.nodes.html#mpylib.nodes.MPyNode.setStoredVariable" title="mpylib.nodes.MPyNode.setStoredVariable"><code class="xref py py-obj docutils literal notranslate"><span class="pre">setStoredVariable</span></code></a></dt>
+<dd>Used to set an instance property on the node for use in the expression and storage on disc when the file is saved</dd>
+</dl>
+</div>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">var_map</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">getStoredVariables</span><span class="p">()</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt>
+<code class="descname">hasStoredVariable</code><span class="sig-paren">(</span><em>var_name</em><span class="sig-paren">)</span></dt>
+<dd><p>Returns whether the node has an instance property with the given name that has been flagged for storage on disc.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>var_name</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><em>str</em></span></dt>
+<dd><p class="first last">name of the variable</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>*bool*</strong></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<dl class="last docutils">
+<dt><a class="reference internal" href="../mpylib.nodes.html#mpylib.nodes.MPyNode.addStoredVariable" title="mpylib.nodes.MPyNode.addStoredVariable"><code class="xref py py-obj docutils literal notranslate"><span class="pre">addStoredVariable</span></code></a></dt>
+<dd>Removes the given output attribute from the node.</dd>
+</dl>
+</div>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">node</span><span class="o">.</span><span class="n">hasStoredVariable</span><span class="p">(</span><span class="s2">&quot;myVar&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt>
+<em class="property">static </em><code class="descname">importFromFile</code><span class="sig-paren">(</span><em>file_path</em><span class="sig-paren">)</span></dt>
+<dd><p>Import a MPyNode from an external file. An instance of the node will be constructed in the current Maya scene</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>file_path</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><em>str</em></span></dt>
+<dd><p class="first last">file path to import from</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>*MPyNode* of the newly created node</strong></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<dl class="last docutils">
+<dt><a class="reference internal" href="../mpylib.nodes.html#mpylib.nodes.MPyNode.importFromFile" title="mpylib.nodes.MPyNode.importFromFile"><code class="xref py py-obj docutils literal notranslate"><span class="pre">importFromFile</span></code></a></dt>
+<dd>Export this node to an external file</dd>
+</dl>
+</div>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">new_node</span> <span class="o">=</span> <span class="n">MPyNode</span><span class="o">.</span><span class="n">importFromFile</span><span class="p">(</span><span class="s2">&quot;C:/temp/file_name.ext&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt>
+<code class="descname">listInputAttrs</code><span class="sig-paren">(</span><span class="sig-paren">)</span></dt>
+<dd><p>Returns the names of the node’s input attributes</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>*tuple* of *str* attribute names or *None*</strong></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<dl class="last docutils">
+<dt><a class="reference internal" href="../mpylib.nodes.html#mpylib.nodes.MPyNode.addInputAttr" title="mpylib.nodes.MPyNode.addInputAttr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">addInputAttr</span></code></a></dt>
+<dd>Adds an input attribute of the given long name and given type to the node.</dd>
+</dl>
+</div>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">input_attrs</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">listInputAttrs</span><span class="p">()</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt>
+<code class="descname">listOutputAttrs</code><span class="sig-paren">(</span><span class="sig-paren">)</span></dt>
+<dd><p>Returns the names of the node’s output attributes</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>*tuple* of *str* attribute names or *None*</strong></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<dl class="last docutils">
+<dt><a class="reference internal" href="../mpylib.nodes.html#mpylib.nodes.MPyNode.addOutputAttr" title="mpylib.nodes.MPyNode.addOutputAttr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">addOutputAttr</span></code></a></dt>
+<dd>Adds an output attribute of the given long name and given type to the node.</dd>
+</dl>
+</div>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">output_attrs</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">listOutputAttrs</span><span class="p">()</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt>
+<code class="descname">listStoredVariables</code><span class="sig-paren">(</span><span class="sig-paren">)</span></dt>
+<dd><p>Returns the names of the node’s internally stored variables</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>*tuple* of *str* variable names or *None*</strong></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<dl class="last docutils">
+<dt><a class="reference internal" href="../mpylib.nodes.html#mpylib.nodes.MPyNode.addStoredVariable" title="mpylib.nodes.MPyNode.addStoredVariable"><code class="xref py py-obj docutils literal notranslate"><span class="pre">addStoredVariable</span></code></a></dt>
+<dd>Used to flag an instance property on the node for storage on disc when the file is saved.</dd>
+</dl>
+</div>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">stored_vars</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">listStoredVariables</span><span class="p">()</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="classmethod">
+<dt>
+<em class="property">classmethod </em><code class="descname">listValidInputTypes</code><span class="sig-paren">(</span><span class="sig-paren">)</span></dt>
+<dd><blockquote>
+<div>Class method returns the types of supported input attributes</div></blockquote>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>*tuple* of *str* attribute types or *None*</strong></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<dl class="last docutils">
+<dt><a class="reference internal" href="../mpylib.nodes.html#mpylib.nodes.MPyNode.addInputAttr" title="mpylib.nodes.MPyNode.addInputAttr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">addInputAttr</span></code></a></dt>
+<dd>Adds an input attribute of the given long name and given type to the node.</dd>
+</dl>
+</div>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">attr_types</span> <span class="o">=</span> <span class="n">MPyNode</span><span class="o">.</span><span class="n">listValidInputTypes</span><span class="p">()</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="classmethod">
+<dt>
+<em class="property">classmethod </em><code class="descname">listValidOutputTypes</code><span class="sig-paren">(</span><span class="sig-paren">)</span></dt>
+<dd><p>Class method returns the types of supported output attributes</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>*tuple* of *str* attribute types or *None*</strong></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<dl class="last docutils">
+<dt><a class="reference internal" href="../mpylib.nodes.html#mpylib.nodes.MPyNode.addOutputAttr" title="mpylib.nodes.MPyNode.addOutputAttr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">addOutputAttr</span></code></a></dt>
+<dd>Adds an output attribute of the given long name and given type to the node.</dd>
+</dl>
+</div>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">attr_types</span> <span class="o">=</span> <span class="n">MPyNode</span><span class="o">.</span><span class="n">listValidInputTypes</span><span class="p">()</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="classmethod">
+<dt>
+<em class="property">classmethod </em><code class="descname">ls</code><span class="sig-paren">(</span><em>*args</em>, <em>**kargs</em><span class="sig-paren">)</span></dt>
+<dd><p>class method - returns the nodes of type ‘mPyNode’ in the current scene. Works just like maya.cmds.ls</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>args</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><em>str</em></span></dt>
+<dd><p class="first last">args supported by maya.cmds.ls</p>
+</dd>
+<dt><strong>kargs</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><em>str</em></span></dt>
+<dd><p class="first last">keyword args supported by maya.cmds.ls</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>*tuple* of *MPyNode* nodes or *None*</strong></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1">## get all mPyNode nodes in the scene</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">nodes</span> <span class="o">=</span> <span class="n">MPyNode</span><span class="o">.</span><span class="n">ls</span><span class="p">()</span>
+<span class="go">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1">## get all mPyNode nodes whose names start with &quot;Foo&quot;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">foo_nodes</span> <span class="o">=</span> <span class="n">MPyNode</span><span class="o">.</span><span class="n">ls</span><span class="p">(</span><span class="s2">&quot;Foo*&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt>
+<code class="descname">removeStoredVariable</code><span class="sig-paren">(</span><em>var_name</em><span class="sig-paren">)</span></dt>
+<dd><p>Removes the given variable name from the list of variables that will stored to file</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>var_name</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><em>str</em></span></dt>
+<dd><p class="first last">name of the variable to remove</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>*None*</strong></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<dl class="last docutils">
+<dt><a class="reference internal" href="../mpylib.nodes.html#mpylib.nodes.MPyNode.addStoredVariable" title="mpylib.nodes.MPyNode.addStoredVariable"><code class="xref py py-obj docutils literal notranslate"><span class="pre">addStoredVariable</span></code></a></dt>
+<dd>Used to flag an instance property on the node for storage on disc when the file is saved</dd>
+</dl>
+</div>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">node</span><span class="o">.</span><span class="n">removeStoredVariable</span><span class="p">(</span><span class="s2">&quot;floatAttr&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt>
+<code class="descname">setExpression</code><span class="sig-paren">(</span><em>exp_str</em><span class="sig-paren">)</span></dt>
+<dd><p>Set the expression within the node to the given string of python code.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>exp_str</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><em>str</em></span></dt>
+<dd><p class="first last">python code to set the expression to.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>*None*</strong></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<dl class="last docutils">
+<dt><a class="reference internal" href="../mpylib.nodes.html#mpylib.nodes.MPyNode.getExpression" title="mpylib.nodes.MPyNode.getExpression"><code class="xref py py-obj docutils literal notranslate"><span class="pre">getExpression</span></code></a></dt>
+<dd>Returns the current python expression within the node.</dd>
+</dl>
+</div>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">py_node</span><span class="o">.</span><span class="n">setExpression</span><span class="p">(</span><span class="s1">&#39;outAttr = inAttr * 2&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt>
+<code class="descname">setStoredVariable</code><span class="sig-paren">(</span><em>var_name</em>, <em>var_val</em><span class="sig-paren">)</span></dt>
+<dd><p>Used to set an instance property on the node for use in the expression and storage on disc when the file is saved. The name given
+should refer to a property on the node instance created/used by the expression (i.e. self.var_name)</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>var_name</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><em>str</em></span></dt>
+<dd><p class="first last">name of the variable to set</p>
+</dd>
+<dt><strong>var_val</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><em>object</em></span></dt>
+<dd><p class="first last">python value to assign to the variable</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>*None*</strong></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<dl class="last docutils">
+<dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">getStoredVariable</span></code></dt>
+<dd>Returns the nodes “stored variables” as a dictionary.</dd>
+</dl>
+</div>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">node</span><span class="o">.</span><span class="n">setStoredVariable</span><span class="p">(</span><span class="s2">&quot;myVar&quot;</span><span class="p">,</span> <span class="n">var_val</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt>
+<code class="descname">setVariable</code><span class="sig-paren">(</span><em>var_name</em>, <em>var_val</em><span class="sig-paren">)</span></dt>
+<dd><p>Used to set an instance property on the node for use in the expression. The name given should refer to a
+property on the node instance created/used by the expression (i.e. self.var_name). This value variable is destroyed
+when the Maya scene is closed.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>var_name</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><em>str</em></span></dt>
+<dd><p class="first last">name of the variable to set</p>
+</dd>
+<dt><strong>var_val</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><em>object</em></span></dt>
+<dd><p class="first last">python value to assign to the variable</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>*None*</strong></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">node</span><span class="o">.</span><span class="n">setVariable</span><span class="p">(</span><span class="s2">&quot;myVar&quot;</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+          </div>
+      <div class="spc-rightsidebar span3">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../index.html">
+              <img class="logo" src="../_static/mpynode_hr.png" alt="Logo">
+            </a></p>
+<div class="this-page-menu">
+  <a href="/scipy/docs/scipy-docs/api/mpylib.nodes.MPyNode.rst.rst">Edit page</a>
+</div>
+
+        </div>
+      </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="container container-navbar-bottom">
+      <div class="spc-navbar">
+        
+      </div>
+    </div>
+    <div class="container">
+    <div class="footer">
+    <div class="row-fluid">
+    <ul class="inline pull-left">
+      <li>
+        &copy; Copyright 2018, Gene Hansen, Eric Vignola.
+      </li>
+      <li>
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.8.2.
+      </li>
+    </ul>
+    </div>
+    </div>
+    </div>
+  </body>
+</html>
