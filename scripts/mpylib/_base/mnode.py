@@ -1,6 +1,6 @@
 """
 This module contains the MNode class and all standalone functions that support
-the MNode class. MNode provides object oriented interface for querying/editing DG nodes inside Maya.
+the MNode class. MNode provides an object oriented interface for querying/editing DG nodes inside Maya.
 An instance of the MNode class provides storage and access to a single Maya node. MNode uses 
 a MObject pointer at its core to iteract with the Maya node it represents.
 

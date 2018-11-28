@@ -1,9 +1,11 @@
 import __builtin__
+import os
 import copy
 import sys
 import traceback
 import keyword
 import logging
+import webbrowser
 from collections import OrderedDict
 
 import maya.cmds as mc
@@ -78,9 +80,10 @@ MEL_ATTR_TYPE_MAP = {"bool":MPyNode.ATTR_TYPE_BOOL,
 
 
 class NDMainWindow(QMayaWindow):
-
+    
+    NAME = "Node Designer"
     VERSION = "1.0.1b1"
-    TITLE = "Node Designer " + VERSION
+    TITLE = NAME + " " + VERSION
 
     USES_SCENE_OPENED = True
     USES_DAG_OBJECT_CREATED = True
@@ -102,6 +105,10 @@ class NDMainWindow(QMayaWindow):
     FILE_ASCII_FILTER = "Ascii (*." + MPyNode._ASCII_FILE_EXT + ")"
     EXPORT_FILE_FILTERS = FILE_BINARY_FILTER + ";;" + FILE_ASCII_FILTER
     
+    HELP_DOC_PATH = "docs/build/html"
+    HELP_DOCS_FILE = "index.html"
+    HELP_API_DOCS_FILE = "index.html"
+    
 
     def __init__(self):
 
@@ -119,9 +126,12 @@ class NDMainWindow(QMayaWindow):
         self._new_node_action = None
         self._save_node_action = None
         self._save_all_nodes_action = None
+        self._help_doc_action = None
+        self._help_api_doc_action = None
 
         self._file_menu = None
         self._node_menu = None
+        self._help_menu = None
 
         self._main_tool_bar = None
         self._script_tab_widget = None
@@ -384,11 +394,38 @@ class NDMainWindow(QMayaWindow):
 
         self._save_all_nodes_action = QAction("&Save All", self,
                                               statusTip="Save edits to the all open nodes", triggered=self.saveAllNodes)
+        
+        self._help_doc_action = QAction(self.NAME + " Help", self,
+                                        statusTip="Opens help documentation in a browser", triggered=self.openHelpDocs)
+        
+        self._help_api_doc_action = QAction("Scripting API Reference", self,
+                                            statusTip="Opens API documentation in a browser", triggered=self.openApiDocs)
 
 
     def saveToFile(self):
-
         pass
+    
+    
+    def openHelpDocs(self):
+        
+        self.openDocPage(self.HELP_DOCS_FILE)
+    
+    
+    def openApiDocs(self):
+        
+        self.openDocPage(self.HELP_API_DOCS_FILE)
+        
+        
+    def openDocPage(self, doc_file_name):
+        
+        base_dir = os.path.normpath(os.path.dirname(__file__) + ("../" * 4)).replace("\\", "/")
+        doc_path = "/".join((base_dir, self.HELP_DOC_PATH, doc_file_name))
+        
+        if os.path.exists(doc_path):
+            webbrowser.open(doc_path)
+            
+        else:
+            self._log_widget.write("Could not locate help document: " + doc_path, QtLog.ERROR_TYPE)
     
     
     def exportToFile(self):
@@ -453,6 +490,10 @@ class NDMainWindow(QMayaWindow):
         self._node_menu.addAction(self._new_node_action)
         self._node_menu.addAction(self._save_node_action)
         self._node_menu.addAction(self._save_all_nodes_action)
+        
+        self._help_menu = self.menuBar().addMenu("&Help")
+        self._help_menu.addAction(self._help_doc_action)
+        self._help_menu.addAction(self._help_api_doc_action)
 
 
     def addNewNode(self):
