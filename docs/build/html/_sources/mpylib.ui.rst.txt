@@ -1,15 +1,13 @@
 mpylib.ui package
 =================
 
-Submodules
-----------
+
 
 mpylib.ui.mpynode\_designer module
 ----------------------------------
 
 .. automodule:: mpylib.ui.mpynode_designer
     :members:
-    :undoc-members:
     :show-inheritance:
 
 mpylib.ui.mqt\_main module
@@ -17,7 +15,6 @@ mpylib.ui.mqt\_main module
 
 .. automodule:: mpylib.ui.mqt_main
     :members:
-    :undoc-members:
     :show-inheritance:
 
 mpylib.ui.mqt\_main\_window module
@@ -25,7 +22,6 @@ mpylib.ui.mqt\_main\_window module
 
 .. automodule:: mpylib.ui.mqt_main_window
     :members:
-    :undoc-members:
     :show-inheritance:
 
 mpylib.ui.qt\_log module
@@ -33,7 +29,6 @@ mpylib.ui.qt\_log module
 
 .. automodule:: mpylib.ui.qt_log
     :members:
-    :undoc-members:
     :show-inheritance:
 
 mpylib.ui.qt\_py\_editor module
@@ -58,9 +53,3 @@ mpylib.ui.qt\_py\_profile\_table module
     :show-inheritance:
 
 
-Module contents
----------------
-
-.. automodule:: mpylib.ui
-    :members:
-    :show-inheritance:

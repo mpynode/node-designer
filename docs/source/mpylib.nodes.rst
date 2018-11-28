@@ -1,20 +1,9 @@
-mpylib.nodes package
-====================
+mpylib.nodes module
+===================
 
-Submodules
-----------
-
-mpylib.nodes.mpynode module
----------------------------
-
-.. automodule:: mpylib.nodes.mpynode
-    :members:
-    :show-inheritance:
-
-
-Module contents
----------------
 
 .. automodule:: mpylib.nodes
     :members:
     :show-inheritance:
+
+

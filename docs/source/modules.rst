@@ -1,5 +1,5 @@
-scripts
-=======
+mpylib
+======
 
 .. toctree::
    :maxdepth: 4
