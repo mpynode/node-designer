@@ -105,6 +105,10 @@ class NDMainWindow(QMayaWindow):
     FILE_ASCII_FILTER = "Ascii (*." + MPyNode._ASCII_FILE_EXT + ")"
     EXPORT_FILE_FILTERS = FILE_BINARY_FILTER + ";;" + FILE_ASCII_FILTER
     
+    RESOURCE_DIR_NAME = "resources"
+    
+    ICON_FILE_EXT = "png"
+    
     HELP_DOC_PATH = "docs/build/html"
     HELP_DOCS_FILE = "index.html"
     HELP_API_DOCS_FILE = "index.html"
@@ -119,6 +123,11 @@ class NDMainWindow(QMayaWindow):
         self._v_layout = None
         self._h_splitter = None
         self._v_splitter = None
+        
+        self._new_node_icon = QIcon()
+        self._save_node_icon = QIcon()
+        self._save_all_icon = QIcon()
+        self._help_icon = QIcon()
 
         self._save_to_file_action = None
         self._export_to_file_action = None
@@ -152,6 +161,7 @@ class NDMainWindow(QMayaWindow):
         self._main_widget = QWidget(self)
         self.setCentralWidget(self._main_widget)
 
+        self._collectResources()
         self._buildActions()
 
         self._buildToolBar()
@@ -170,12 +180,36 @@ class NDMainWindow(QMayaWindow):
 
         self.setGeometry(self.DEFAULT_X_POS, self.DEFAULT_Y_POS,
                          self.DEFUALT_WIDTH, self.DEFAULT_HEIGHT)
+        
+        
+    def _collectResources(self):
+        
+        cur_dir = os.path.dirname(__file__).replace("\\", "/")
+        res_dir = cur_dir + "/" + self.RESOURCE_DIR_NAME
+        
+        if os.path.exists(res_dir):
+            
+            for item in os.listdir(res_dir):
+                item_path = res_dir + "/" + item
+                
+                ##----loading icons---##
+                if os.path.isfile(item_path) and item_path.endswith("." + self.ICON_FILE_EXT):
+                    base_name = "_" + item.split(".")[0]
+                    
+                    if hasattr(self, base_name):
+                        icon = getattr(self, base_name)
+                        icon.addFile(item_path)
+        
+        else:
+            print self.NAME + ": no " + self.RESOURCE_DIR_NAME + " directory found"
 
 
     def _buildToolBar(self):
 
         self._main_tool_bar = QToolBar(self)
         self.addToolBar(Qt.TopToolBarArea, self._main_tool_bar)
+        self._main_tool_bar.setAttribute(Qt.WA_AlwaysShowToolTips)
+        self._main_tool_bar.window().setAttribute(Qt.WA_AlwaysShowToolTips)
 
         self._main_tool_bar.addAction(self._new_node_action)
         self._main_tool_bar.addAction(self._save_node_action)
@@ -386,25 +420,24 @@ class NDMainWindow(QMayaWindow):
         self._import_from_file_action = QAction("Import from File", self,
                                                 statusTip="Import a node from a file", triggered=self.importFromFile)
 
-        self._new_node_action = QAction("&New Node", self, shortcut=QKeySequence.New,
+        self._new_node_action = QAction(self._new_node_icon, "&New Node", self, shortcut=QKeySequence.New,
                                         statusTip="Create a new node", triggered=self.addNewNode)
 
-        self._save_node_action = QAction("&Save Node", self, shortcut=QKeySequence(Qt.Key_F5), statusTip="Save edits to the current node",
+        self._save_node_action = QAction(self._save_node_icon, "&Save Node", self, shortcut=QKeySequence(Qt.Key_F5), statusTip="Save edits to the current node",
                                          triggered=self.saveCurrentNode)
 
-        self._save_all_nodes_action = QAction("&Save All", self,
+        self._save_all_nodes_action = QAction(self._save_all_icon, "&Save All", self,
                                               statusTip="Save edits to the all open nodes", triggered=self.saveAllNodes)
         
-        self._help_doc_action = QAction(self.NAME + " Help", self,
+        self._help_doc_action = QAction(self._help_icon, self.NAME + " Help", self,
                                         statusTip="Opens help documentation in a browser", triggered=self.openHelpDocs)
         
-        self._help_api_doc_action = QAction("Scripting API Reference", self,
+        self._help_api_doc_action = QAction(self._help_icon, "Scripting API Reference", self,
                                             statusTip="Opens API documentation in a browser", triggered=self.openApiDocs)
 
 
     def saveToFile(self):
         pass
-    
     
     def openHelpDocs(self):
         
