@@ -281,11 +281,6 @@ class NDMainWindow(QMayaWindow):
         self._variables_widget.setPyNode(None)
 
         self._log_widget.write("Opened scene: " + str(mc.file(q=True, sceneName=True)))
-
-
-    def testCreateNode(self):
-
-        self._log_widget.write("Node Created")
         
 
     def nodeRenamedEvent(self, py_node):
