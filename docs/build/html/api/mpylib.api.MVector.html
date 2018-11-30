@@ -27,7 +27,8 @@
     <script type="text/javascript" src="../_static/js/copybutton.js"></script>
     <link rel="index" title="Index" href="../genindex.html" >
     <link rel="search" title="Search" href="../search.html" >
-    <link rel="top" title="MPyNode 1.0 documentation" href="../index.html" > 
+    <link rel="top" title="MPyNode 1.0 documentation" href="../index.html" >
+    <link rel="up" title="mpylib.api Package" href="../mpylib.api.html" > 
   </head>
   <body>
 
@@ -49,7 +50,8 @@
         <li class="active"><a href="https://apps.autodesk.com/MAYA/en/Home/Index">App Store</a></li>
 	
         <li class="active"><a href="../index.html">MPyNode 1.0 documentation</a></li>
-	 
+	
+          <li class="active"><a href="../mpylib.api.html" accesskey="U">mpylib.api Package</a></li> 
     </ul>
               
               
@@ -82,6 +84,61 @@
 <em class="property">class </em><code class="descname">MVector</code><span class="sig-paren">(</span><em>*args</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.api.MVector" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">OpenMaya.MVector</span></code></p>
 <p>3D vector with double-precision coordinates. Overrides OpenMaya.MVector to add custom functionality</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Attributes:</th><td class="field-body"><dl class="first last docutils">
+<dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">x</span></code></dt>
+<dd><p class="first last">X coordinate</p>
+</dd>
+<dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">y</span></code></dt>
+<dd><p class="first last">Y coordinate</p>
+</dd>
+<dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">z</span></code></dt>
+<dd><p class="first last">Z coordinate</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Methods</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">angle</span></code></td>
+<td>Returns the angle, in radians, between this vector and another.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">isEquivalent</span></code></td>
+<td>Returns True if this vector and another are within a given tolerance of being equal.</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">isParallel</span></code></td>
+<td>Returns True if this vector and another are within the given tolerance of being parallel.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">length</span></code></td>
+<td>Returns the magnitude of this vector.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#mpylib.api.MVector.normal" title="mpylib.api.MVector.normal"><code class="xref py py-obj docutils literal notranslate"><span class="pre">normal</span></code></a>()</td>
+<td>Returns a new vector containing the normalized version of this one.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#mpylib.api.MVector.normalize" title="mpylib.api.MVector.normalize"><code class="xref py py-obj docutils literal notranslate"><span class="pre">normalize</span></code></a>()</td>
+<td>Normalizes this vector in-place and returns a new reference to it.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#mpylib.api.MVector.rotateBy" title="mpylib.api.MVector.rotateBy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">rotateBy</span></code></a>(*args)</td>
+<td>Returns the vector resulting from rotating this one by the given amount.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#mpylib.api.MVector.rotateTo" title="mpylib.api.MVector.rotateTo"><code class="xref py py-obj docutils literal notranslate"><span class="pre">rotateTo</span></code></a>(target)</td>
+<td>Returns the quaternion which will rotate this vector into another.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#mpylib.api.MVector.transformAsNormal" title="mpylib.api.MVector.transformAsNormal"><code class="xref py py-obj docutils literal notranslate"><span class="pre">transformAsNormal</span></code></a>(matrix)</td>
+<td>Returns a new vector which is calculated by postmultiplying this vector by the transpose of the given matrix’s inverse and then normalizing the result.</td>
+</tr>
+</tbody>
+</table>
 <p class="rubric">Methods Summary</p>
 <table border="1" class="longtable docutils">
 <colgroup>
@@ -89,19 +146,19 @@
 <col width="90%" />
 </colgroup>
 <tbody valign="top">
-<tr class="row-odd"><td><a class="reference internal" href="../mpylib.api.html#mpylib.api.MVector.normal" title="mpylib.api.MVector.normal"><code class="xref py py-obj docutils literal notranslate"><span class="pre">normal</span></code></a>()</td>
+<tr class="row-odd"><td><a class="reference internal" href="#mpylib.api.MVector.normal" title="mpylib.api.MVector.normal"><code class="xref py py-obj docutils literal notranslate"><span class="pre">normal</span></code></a>()</td>
 <td>Returns a new vector containing the normalized version of this one.</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="../mpylib.api.html#mpylib.api.MVector.normalize" title="mpylib.api.MVector.normalize"><code class="xref py py-obj docutils literal notranslate"><span class="pre">normalize</span></code></a>()</td>
+<tr class="row-even"><td><a class="reference internal" href="#mpylib.api.MVector.normalize" title="mpylib.api.MVector.normalize"><code class="xref py py-obj docutils literal notranslate"><span class="pre">normalize</span></code></a>()</td>
 <td>Normalizes this vector in-place and returns a new reference to it.</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="../mpylib.api.html#mpylib.api.MVector.rotateBy" title="mpylib.api.MVector.rotateBy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">rotateBy</span></code></a>(*args)</td>
+<tr class="row-odd"><td><a class="reference internal" href="#mpylib.api.MVector.rotateBy" title="mpylib.api.MVector.rotateBy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">rotateBy</span></code></a>(*args)</td>
 <td>Returns the vector resulting from rotating this one by the given amount.</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="../mpylib.api.html#mpylib.api.MVector.rotateTo" title="mpylib.api.MVector.rotateTo"><code class="xref py py-obj docutils literal notranslate"><span class="pre">rotateTo</span></code></a>(target)</td>
+<tr class="row-even"><td><a class="reference internal" href="#mpylib.api.MVector.rotateTo" title="mpylib.api.MVector.rotateTo"><code class="xref py py-obj docutils literal notranslate"><span class="pre">rotateTo</span></code></a>(target)</td>
 <td>Returns the quaternion which will rotate this vector into another.</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="../mpylib.api.html#mpylib.api.MVector.transformAsNormal" title="mpylib.api.MVector.transformAsNormal"><code class="xref py py-obj docutils literal notranslate"><span class="pre">transformAsNormal</span></code></a>(matrix)</td>
+<tr class="row-odd"><td><a class="reference internal" href="#mpylib.api.MVector.transformAsNormal" title="mpylib.api.MVector.transformAsNormal"><code class="xref py py-obj docutils literal notranslate"><span class="pre">transformAsNormal</span></code></a>(matrix)</td>
 <td>Returns a new vector which is calculated by postmultiplying this vector by the transpose of the given matrix’s inverse and then normalizing the result.</td>
 </tr>
 </tbody>
@@ -156,64 +213,6 @@
 <dl class="method">
 <dt id="mpylib.api.MVector.transformAsNormal">
 <code class="descname">transformAsNormal</code><span class="sig-paren">(</span><em>matrix</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.api.MVector.transformAsNormal" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns a new vector which is calculated by postmultiplying this vector by the transpose of the given matrix’s inverse and then normalizing the result.</p>
-<p><strong>matrix</strong>              <em>MMatrix</em></p>
-<p><strong>RETURNS</strong>             <em>MVector</em></p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">matrix</span> <span class="o">=</span> <span class="n">MMatrix</span><span class="p">()</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">new_v</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">transformAsNormal</span><span class="p">(</span><span class="n">matrix</span><span class="p">)</span>
-</pre></div>
-</div>
-</dd></dl>
-
-<dl class="method">
-<dt>
-<code class="descname">normal</code><span class="sig-paren">(</span><span class="sig-paren">)</span></dt>
-<dd><p>Returns a new vector containing the normalized version of this one.</p>
-<p><strong>RETURNS</strong>     <em>MVector</em></p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">new_v</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">normal</span><span class="p">()</span>
-</pre></div>
-</div>
-</dd></dl>
-
-<dl class="method">
-<dt>
-<code class="descname">normalize</code><span class="sig-paren">(</span><span class="sig-paren">)</span></dt>
-<dd><p>Normalizes this vector in-place and returns a new reference to it.</p>
-<p><strong>RETURNS</strong>     <em>MVector</em></p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">v</span><span class="o">.</span><span class="n">normalize</span><span class="p">()</span>
-</pre></div>
-</div>
-</dd></dl>
-
-<dl class="method">
-<dt>
-<code class="descname">rotateBy</code><span class="sig-paren">(</span><em>*args</em><span class="sig-paren">)</span></dt>
-<dd><p>Returns the vector resulting from rotating this one by the given amount.</p>
-<p><strong>args</strong>                single <em>MQuaternion</em> or <em>MEulerRotation</em>, or an axis identifier constant and a <em>float</em> angle</p>
-<p><strong>RETURNS</strong>     <em>MVector</em></p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1">##---rotate by MQuaternion or MEulerRotation---##</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">new_v</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">rotateBy</span><span class="p">(</span><span class="n">rot</span><span class="p">)</span>
-<span class="go">&gt;&gt;&gt;</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="c1">##---rotate by angle radians about the specified axis---##</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">new_v</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">rotateBy</span><span class="p">(</span><span class="n">MVector</span><span class="o">.</span><span class="n">kXaxis</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">)</span>
-</pre></div>
-</div>
-</dd></dl>
-
-<dl class="method">
-<dt>
-<code class="descname">rotateTo</code><span class="sig-paren">(</span><em>target</em><span class="sig-paren">)</span></dt>
-<dd><p>Returns the quaternion which will rotate this vector into another.</p>
-<p><strong>target</strong>              <em>MVector</em></p>
-<p><strong>RETURNS</strong>     <em>MQuaternion</em></p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">q</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">rotateTo</span><span class="p">(</span><span class="n">MVector</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">))</span>
-</pre></div>
-</div>
-</dd></dl>
-
-<dl class="method">
-<dt>
-<code class="descname">transformAsNormal</code><span class="sig-paren">(</span><em>matrix</em><span class="sig-paren">)</span></dt>
 <dd><p>Returns a new vector which is calculated by postmultiplying this vector by the transpose of the given matrix’s inverse and then normalizing the result.</p>
 <p><strong>matrix</strong>              <em>MMatrix</em></p>
 <p><strong>RETURNS</strong>             <em>MVector</em></p>

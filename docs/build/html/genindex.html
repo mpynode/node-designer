@@ -11,6 +11,7 @@
     <link rel="stylesheet" type="text/css" href="_static/css/spc-extend.css">
     <link rel="stylesheet" href="_static/scipy.css" type="text/css" >
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" >
+    <link rel="stylesheet" href="_static/graphviz.css" type="text/css" >
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
@@ -84,45 +85,70 @@
  | <a href="#C"><strong>C</strong></a>
  | <a href="#D"><strong>D</strong></a>
  | <a href="#E"><strong>E</strong></a>
+ | <a href="#F"><strong>F</strong></a>
  | <a href="#G"><strong>G</strong></a>
  | <a href="#H"><strong>H</strong></a>
  | <a href="#I"><strong>I</strong></a>
+ | <a href="#J"><strong>J</strong></a>
  | <a href="#L"><strong>L</strong></a>
  | <a href="#M"><strong>M</strong></a>
  | <a href="#N"><strong>N</strong></a>
+ | <a href="#O"><strong>O</strong></a>
+ | <a href="#P"><strong>P</strong></a>
  | <a href="#R"><strong>R</strong></a>
  | <a href="#S"><strong>S</strong></a>
  | <a href="#T"><strong>T</strong></a>
+ | <a href="#U"><strong>U</strong></a>
+ | <a href="#W"><strong>W</strong></a>
+ | <a href="#X"><strong>X</strong></a>
  
 </div>
 <h2 id="A">A</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="mpylib.nodes.html#mpylib.nodes.MPyNode.addInputAttr">addInputAttr() (MPyNode method)</a>
+      <li><a href="api/mpylib.MNode.html#mpylib.MNode.addAttr">addAttr() (MNode method)</a>
+
+      <ul>
+        <li><a href="api/mpylib.MNodeList.html#mpylib.MNodeList.addAttr">(MNodeList method)</a>
 </li>
-      <li><a href="mpylib.nodes.html#mpylib.nodes.MPyNode.addOutputAttr">addOutputAttr() (MPyNode method)</a>
+      </ul></li>
+      <li><a href="api/mpylib.nodes.MPyNode.html#mpylib.nodes.MPyNode.addInputAttr">addInputAttr() (MPyNode method)</a>
 </li>
-      <li><a href="mpylib.nodes.html#mpylib.nodes.MPyNode.addStoredVariable">addStoredVariable() (MPyNode method)</a>
+      <li><a href="api/mpylib.MNode.html#mpylib.MNode.addMenuCmd">addMenuCmd() (MNode method)</a>
 </li>
-      <li><a href="mpylib.api.html#mpylib.api.MMatrix.adjoint">adjoint() (MMatrix method)</a>
+      <li><a href="api/mpylib.nodes.MPyNode.html#mpylib.nodes.MPyNode.addOutputAttr">addOutputAttr() (MPyNode method)</a>
 </li>
-      <li><a href="mpylib.api.html#mpylib.api.MEulerRotation.alternateSolution">alternateSolution() (MEulerRotation method)</a>
+      <li><a href="api/mpylib.nodes.MPyNode.html#mpylib.nodes.MPyNode.addStoredVariable">addStoredVariable() (MPyNode method)</a>
+</li>
+      <li><a href="api/mpylib.api.MMatrix.html#mpylib.api.MMatrix.adjoint">adjoint() (MMatrix method)</a>
+</li>
+      <li><a href="api/mpylib.MTrans.html#mpylib.MTrans.aimConstraint">aimConstraint() (MTrans method)</a>
+</li>
+      <li><a href="api/mpylib.api.MEulerRotation.html#mpylib.api.MEulerRotation.alternateSolution">alternateSolution() (MEulerRotation method)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="mpylib.api.html#mpylib.api.MQuaternion.asAxisAngle">asAxisAngle() (MQuaternion method)</a>
+      <li><a href="api/mpylib.MNodeList.html#mpylib.MNodeList.append">append() (MNodeList method)</a>
 </li>
-      <li><a href="mpylib.api.html#mpylib.api.MQuaternion.asEulerRotation">asEulerRotation() (MQuaternion method)</a>
+      <li><a href="api/mpylib.MNode.html#mpylib.MNode.applyAttrMap">applyAttrMap() (MNode method)</a>
 </li>
-      <li><a href="mpylib.api.html#mpylib.api.MEulerRotation.asMatrix">asMatrix() (MEulerRotation method)</a>
+      <li><a href="api/mpylib.api.MQuaternion.html#mpylib.api.MQuaternion.asAxisAngle">asAxisAngle() (MQuaternion method)</a>
+</li>
+      <li><a href="api/mpylib.api.MQuaternion.html#mpylib.api.MQuaternion.asEulerRotation">asEulerRotation() (MQuaternion method)</a>
+</li>
+      <li><a href="api/mpylib.api.MEulerRotation.html#mpylib.api.MEulerRotation.asMatrix">asMatrix() (MEulerRotation method)</a>
 
       <ul>
-        <li><a href="mpylib.api.html#mpylib.api.MQuaternion.asMatrix">(MQuaternion method)</a>
+        <li><a href="api/mpylib.api.MQuaternion.html#mpylib.api.MQuaternion.asMatrix">(MQuaternion method)</a>
 </li>
       </ul></li>
-      <li><a href="mpylib.api.html#mpylib.api.MEulerRotation.asQuaternion">asQuaternion() (MEulerRotation method)</a>
+      <li><a href="api/mpylib.api.MEulerRotation.html#mpylib.api.MEulerRotation.asQuaternion">asQuaternion() (MEulerRotation method)</a>
 </li>
-      <li><a href="mpylib.api.html#mpylib.api.MEulerRotation.asVector">asVector() (MEulerRotation method)</a>
+      <li><a href="api/mpylib.api.MEulerRotation.html#mpylib.api.MEulerRotation.asVector">asVector() (MEulerRotation method)</a>
+</li>
+      <li><a href="api/mpylib.MNode.html#mpylib.MNode.attachMenuItems">attachMenuItems() (MNode method)</a>
+</li>
+      <li><a href="api/mpylib.MNode.html#mpylib.MNode.attributeQuery">attributeQuery() (MNode method)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -130,7 +156,15 @@
 <h2 id="B">B</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="mpylib.api.html#mpylib.api.MEulerRotation.bound">bound() (MEulerRotation method)</a>
+      <li><a href="api/mpylib.MNode.html#mpylib.MNode.bakeResults">bakeResults() (MNode method)</a>
+
+      <ul>
+        <li><a href="api/mpylib.MNodeList.html#mpylib.MNodeList.bakeResults">(MNodeList method)</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/mpylib.api.MEulerRotation.html#mpylib.api.MEulerRotation.bound">bound() (MEulerRotation method)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -138,19 +172,45 @@
 <h2 id="C">C</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="mpylib.api.html#mpylib.api.MEulerRotation.closestCut">closestCut() (MEulerRotation method)</a>
+      <li><a href="api/mpylib.MNode.html#mpylib.MNode.capitalize">capitalize() (MNode method)</a>
 </li>
-      <li><a href="mpylib.api.html#mpylib.api.MFnNurbsCurve.closestPoint">closestPoint() (MFnNurbsCurve method)</a>
+      <li><a href="api/mpylib.api.MEulerRotation.html#mpylib.api.MEulerRotation.closestCut">closestCut() (MEulerRotation method)</a>
 </li>
-      <li><a href="mpylib.api.html#mpylib.api.MEulerRotation.closestSolution">closestSolution() (MEulerRotation method)</a>
+      <li><a href="api/mpylib.api.MFnNurbsCurve.html#mpylib.api.MFnNurbsCurve.closestPoint">closestPoint() (MFnNurbsCurve method)</a>
+</li>
+      <li><a href="api/mpylib.api.MEulerRotation.html#mpylib.api.MEulerRotation.closestSolution">closestSolution() (MEulerRotation method)</a>
+</li>
+      <li><a href="api/mpylib.api.MEulerRotation.html#mpylib.api.MEulerRotation.computeAlternateSolution">computeAlternateSolution() (MEulerRotation static method)</a>
+</li>
+      <li><a href="api/mpylib.api.MEulerRotation.html#mpylib.api.MEulerRotation.computeBound">computeBound() (MEulerRotation static method)</a>
+</li>
+      <li><a href="api/mpylib.api.MEulerRotation.html#mpylib.api.MEulerRotation.computeClosestCut">computeClosestCut() (MEulerRotation static method)</a>
+</li>
+      <li><a href="api/mpylib.api.MEulerRotation.html#mpylib.api.MEulerRotation.computeClosestSolution">computeClosestSolution() (MEulerRotation static method)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="mpylib.api.html#mpylib.api.MQuaternion.conjugate">conjugate() (MQuaternion method)</a>
+      <li><a href="api/mpylib.api.MQuaternion.html#mpylib.api.MQuaternion.conjugate">conjugate() (MQuaternion method)</a>
 </li>
-      <li><a href="mpylib.api.html#mpylib.api.MFnNurbsCurve.cvPosition">cvPosition() (MFnNurbsCurve method)</a>
+      <li><a href="api/mpylib.MNode.html#mpylib.MNode.connectAttr">connectAttr() (MNode method)</a>
 </li>
-      <li><a href="mpylib.api.html#mpylib.api.MFnNurbsCurve.cvPositions">cvPositions() (MFnNurbsCurve method)</a>
+      <li><a href="api/mpylib.MTrans.html#mpylib.MTrans.convertLocalVectToWorld">convertLocalVectToWorld() (MTrans method)</a>
+</li>
+      <li><a href="api/mpylib.MNode.html#mpylib.MNode.count">count() (MNode method)</a>
+
+      <ul>
+        <li><a href="api/mpylib.MNodeList.html#mpylib.MNodeList.count">(MNodeList method)</a>
+</li>
+      </ul></li>
+      <li><a href="api/mpylib.MNode.html#mpylib.MNode.createNode">createNode() (mpylib.MNode class method)</a>
+
+      <ul>
+        <li><a href="api/mpylib.MTrans.html#mpylib.MTrans.createNode">(mpylib.MTrans class method)</a>
+</li>
+      </ul></li>
+      <li><a href="api/mpylib.api.MFnNurbsCurve.html#mpylib.api.MFnNurbsCurve.cvPosition">cvPosition() (MFnNurbsCurve method)</a>
+</li>
+      <li><a href="api/mpylib.api.MFnNurbsCurve.html#mpylib.api.MFnNurbsCurve.cvPositions">cvPositions() (MFnNurbsCurve method)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -158,25 +218,55 @@
 <h2 id="D">D</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="mpylib.geo.html#mpylib.geo.MMesh.DAG_FN_CLASS">DAG_FN_CLASS (MMesh attribute)</a>
+      <li><a href="api/mpylib.api.MEulerRotation.html#mpylib.api.MEulerRotation.decompose">decompose() (MEulerRotation static method)</a>
+</li>
+      <li><a href="api/mpylib.MNode.html#mpylib.MNode.delete">delete() (MNode method)</a>
+
+      <ul>
+        <li><a href="api/mpylib.MNodeList.html#mpylib.MNodeList.delete">(MNodeList method)</a>
+</li>
+      </ul></li>
+      <li><a href="api/mpylib.MNode.html#mpylib.MNode.deleteAttr">deleteAttr() (MNode method)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="mpylib.nodes.html#mpylib.nodes.MPyNode.deleteInputAttr">deleteInputAttr() (MPyNode method)</a>
+      <li><a href="api/mpylib.nodes.MPyNode.html#mpylib.nodes.MPyNode.deleteInputAttr">deleteInputAttr() (MPyNode method)</a>
 </li>
-      <li><a href="mpylib.nodes.html#mpylib.nodes.MPyNode.deleteOutputAttr">deleteOutputAttr() (MPyNode method)</a>
+      <li><a href="api/mpylib.nodes.MPyNode.html#mpylib.nodes.MPyNode.deleteOutputAttr">deleteOutputAttr() (MPyNode method)</a>
 </li>
+      <li><a href="api/mpylib.MNode.html#mpylib.MNode.duplicate">duplicate() (MNode method)</a>
+
+      <ul>
+        <li><a href="api/mpylib.MShape.html#mpylib.MShape.duplicate">(MShape method)</a>
+</li>
+      </ul></li>
   </ul></td>
 </tr></table>
 
 <h2 id="E">E</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="mpylib.api.html#mpylib.api.MQuaternion.exp">exp() (MQuaternion method)</a>
+      <li><a href="api/mpylib.MNode.html#mpylib.MNode.endswith">endswith() (MNode method)</a>
+</li>
+      <li><a href="api/mpylib.api.MQuaternion.html#mpylib.api.MQuaternion.exp">exp() (MQuaternion method)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="mpylib.nodes.html#mpylib.nodes.MPyNode.exportToFile">exportToFile() (MPyNode method)</a>
+      <li><a href="api/mpylib.nodes.MPyNode.html#mpylib.nodes.MPyNode.exportToFile">exportToFile() (MPyNode method)</a>
+</li>
+      <li><a href="api/mpylib.MNodeList.html#mpylib.MNodeList.extend">extend() (MNodeList method)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="F">F</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/mpylib.MNode.html#mpylib.MNode.find">find() (MNode method)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/mpylib.MTrans.html#mpylib.MTrans.freeze">freeze() (MTrans method)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -184,51 +274,137 @@
 <h2 id="G">G</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="mpylib.geo.html#mpylib.geo.MMesh.getClosestPoint">getClosestPoint() (MMesh method)</a>
+      <li><a href="api/mpylib.MNode.html#mpylib.MNode.getAddAttrCmd">getAddAttrCmd() (MNode method)</a>
 </li>
-      <li><a href="mpylib.api.html#mpylib.api.MFnNurbsCurve.getDerivativesAtParam">getDerivativesAtParam() (MFnNurbsCurve method)</a>
+      <li><a href="api/mpylib.MNode.html#mpylib.MNode.getAddAttrMaps">getAddAttrMaps() (MNode method)</a>
 </li>
-      <li><a href="mpylib.geo.html#mpylib.geo.MMesh.getEdgeCount">getEdgeCount() (MMesh method)</a>
+      <li><a href="api/mpylib.MTransList.html#mpylib.MTransList.getAnimatedValues">getAnimatedValues() (MTransList method)</a>
 </li>
-      <li><a href="mpylib.geo.html#mpylib.geo.MMesh.getEdgesConnectedToVerts">getEdgesConnectedToVerts() (MMesh method)</a>
+      <li><a href="api/mpylib.MNode.html#mpylib.MNode.getAttr">getAttr() (MNode method)</a>
+
+      <ul>
+        <li><a href="api/mpylib.MNodeList.html#mpylib.MNodeList.getAttr">(MNodeList method)</a>
 </li>
-      <li><a href="mpylib.nodes.html#mpylib.nodes.MPyNode.getExpression">getExpression() (MPyNode method)</a>
+      </ul></li>
+      <li><a href="api/mpylib.MNode.html#mpylib.MNode.getAttrMap">getAttrMap() (MNode method)</a>
+
+      <ul>
+        <li><a href="api/mpylib.MNodeList.html#mpylib.MNodeList.getAttrMap">(MNodeList method)</a>
 </li>
-      <li><a href="mpylib.geo.html#mpylib.geo.MMesh.getFacesConnectedToVerts">getFacesConnectedToVerts() (MMesh method)</a>
+      </ul></li>
+      <li><a href="api/mpylib.MNode.html#mpylib.MNode.getBasename">getBasename() (MNode method)</a>
 </li>
-      <li><a href="mpylib.nodes.html#mpylib.nodes.MPyNode.getInputAttrMap">getInputAttrMap() (MPyNode method)</a>
+      <li><a href="api/mpylib.MTrans.html#mpylib.MTrans.getBaseParent">getBaseParent() (MTrans method)</a>
 </li>
-      <li><a href="mpylib.geo.html#mpylib.geo.MMesh.getNumUVSets">getNumUVSets() (MMesh method)</a>
+      <li><a href="api/mpylib.MTrans.html#mpylib.MTrans.getChildren">getChildren() (MTrans method)</a>
 </li>
-      <li><a href="mpylib.nodes.html#mpylib.nodes.MPyNode.getOutputAttrMap">getOutputAttrMap() (MPyNode method)</a>
+      <li><a href="api/mpylib.geo.MMesh.html#mpylib.geo.MMesh.getClosestPoint">getClosestPoint() (MMesh method)</a>
 </li>
-      <li><a href="mpylib.api.html#mpylib.api.MFnNurbsCurve.getPointAtParam">getPointAtParam() (MFnNurbsCurve method)</a>
+      <li><a href="api/mpylib.api.MColor.html#mpylib.api.MColor.getColorModel">getColorModel() (MColor method)</a>
 </li>
-      <li><a href="mpylib.geo.html#mpylib.geo.MMesh.getPoints">getPoints() (MMesh method)</a>
+      <li><a href="api/mpylib.MShape.html#mpylib.MShape.getDagPath">getDagPath() (MShape method)</a>
+
+      <ul>
+        <li><a href="api/mpylib.MTrans.html#mpylib.MTrans.getDagPath">(MTrans method)</a>
+</li>
+      </ul></li>
+      <li><a href="api/mpylib.api.MColor.html#mpylib.api.MColor.getDataType">getDataType() (MColor method)</a>
+</li>
+      <li><a href="api/mpylib.api.MFnNurbsCurve.html#mpylib.api.MFnNurbsCurve.getDerivativesAtParam">getDerivativesAtParam() (MFnNurbsCurve method)</a>
+</li>
+      <li><a href="api/mpylib.MTrans.html#mpylib.MTrans.getDescendents">getDescendents() (MTrans method)</a>
+</li>
+      <li><a href="api/mpylib.MTrans.html#mpylib.MTrans.getDistance">getDistance() (MTrans method)</a>
+</li>
+      <li><a href="api/mpylib.geo.MMesh.html#mpylib.geo.MMesh.getEdgeCount">getEdgeCount() (MMesh method)</a>
+</li>
+      <li><a href="api/mpylib.geo.MMesh.html#mpylib.geo.MMesh.getEdgesConnectedToVerts">getEdgesConnectedToVerts() (MMesh method)</a>
+</li>
+      <li><a href="api/mpylib.nodes.MPyNode.html#mpylib.nodes.MPyNode.getExpression">getExpression() (MPyNode method)</a>
+</li>
+      <li><a href="api/mpylib.geo.MMesh.html#mpylib.geo.MMesh.getFacesConnectedToVerts">getFacesConnectedToVerts() (MMesh method)</a>
+</li>
+      <li><a href="api/mpylib.MNode.html#mpylib.MNode.getHashCode">getHashCode() (MNode method)</a>
+</li>
+      <li><a href="api/mpylib.MTrans.html#mpylib.MTrans.getHierarchyAttrMap">getHierarchyAttrMap() (MTrans method)</a>
+</li>
+      <li><a href="api/mpylib.MNode.html#mpylib.MNode.getInheritedNodeTypes">getInheritedNodeTypes() (MNode method)</a>
+</li>
+      <li><a href="api/mpylib.nodes.MPyNode.html#mpylib.nodes.MPyNode.getInputAttrMap">getInputAttrMap() (MPyNode method)</a>
+</li>
+      <li><a href="api/mpylib.MNode.html#mpylib.MNode.getMenuCmds">getMenuCmds() (MNode method)</a>
+</li>
+      <li><a href="api/mpylib.MNode.html#mpylib.MNode.getMessageAttr">getMessageAttr() (MNode method)</a>
+</li>
+      <li><a href="api/mpylib.MNode.html#mpylib.MNode.getMObject">getMObject() (MNode method)</a>
+</li>
+      <li><a href="api/mpylib.MNode.html#mpylib.MNode.getMObjectHandle">getMObjectHandle() (MNode method)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="mpylib.geo.html#mpylib.geo.MMesh.getPolygonCount">getPolygonCount() (MMesh method)</a>
+      <li><a href="api/mpylib.MNode.html#mpylib.MNode.getName">getName() (MNode method)</a>
 </li>
-      <li><a href="mpylib.geo.html#mpylib.geo.MMesh.getSkinCluster">getSkinCluster() (MMesh method)</a>
+      <li><a href="api/mpylib.MNode.html#mpylib.MNode.getNamespace">getNamespace() (MNode method)</a>
 </li>
-      <li><a href="mpylib.nodes.html#mpylib.nodes.MPyNode.getStoredVariables">getStoredVariables() (MPyNode method)</a>
+      <li><a href="api/mpylib.MNode.html#mpylib.MNode.getNextAttr">getNextAttr() (MNode method)</a>
 </li>
-      <li><a href="mpylib.geo.html#mpylib.geo.MMesh.getUVCoords">getUVCoords() (MMesh method)</a>
+      <li><a href="api/mpylib.geo.MMesh.html#mpylib.geo.MMesh.getNumUVSets">getNumUVSets() (MMesh method)</a>
 </li>
-      <li><a href="mpylib.geo.html#mpylib.geo.MMesh.getUVsConnectedToFaces">getUVsConnectedToFaces() (MMesh method)</a>
+      <li><a href="api/mpylib.MNode.html#mpylib.MNode.getObjectType">getObjectType() (MNode method)</a>
 </li>
-      <li><a href="mpylib.geo.html#mpylib.geo.MMesh.getUVSetNames">getUVSetNames() (MMesh method)</a>
+      <li><a href="api/mpylib.nodes.MPyNode.html#mpylib.nodes.MPyNode.getOutputAttrMap">getOutputAttrMap() (MPyNode method)</a>
 </li>
-      <li><a href="mpylib.geo.html#mpylib.geo.MMesh.getVertCount">getVertCount() (MMesh method)</a>
+      <li><a href="api/mpylib.MShape.html#mpylib.MShape.getParent">getParent() (MShape method)</a>
+
+      <ul>
+        <li><a href="api/mpylib.MTrans.html#mpylib.MTrans.getParent">(MTrans method)</a>
 </li>
-      <li><a href="mpylib.geo.html#mpylib.geo.MMesh.getVertsAsMObject">getVertsAsMObject() (MMesh method)</a>
+      </ul></li>
+      <li><a href="api/mpylib.MTrans.html#mpylib.MTrans.getParentOfType">getParentOfType() (MTrans method)</a>
 </li>
-      <li><a href="mpylib.geo.html#mpylib.geo.MMesh.getVertsConnectedToFaces">getVertsConnectedToFaces() (MMesh method)</a>
+      <li><a href="api/mpylib.MNode.html#mpylib.MNode.getPath">getPath() (MNode method)</a>
 </li>
-      <li><a href="mpylib.geo.html#mpylib.geo.MMesh.getVertsConnectedToVerts">getVertsConnectedToVerts() (MMesh method)</a>
+      <li><a href="api/mpylib.MNode.html#mpylib.MNode.getPluginName">getPluginName() (MNode method)</a>
 </li>
-      <li><a href="mpylib.geo.html#mpylib.geo.MMesh.getVertUVIndices">getVertUVIndices() (MMesh method)</a>
+      <li><a href="api/mpylib.MNode.html#mpylib.MNode.getPlugs">getPlugs() (MNode method)</a>
+</li>
+      <li><a href="api/mpylib.api.MFnNurbsCurve.html#mpylib.api.MFnNurbsCurve.getPointAtParam">getPointAtParam() (MFnNurbsCurve method)</a>
+</li>
+      <li><a href="api/mpylib.geo.MMesh.html#mpylib.geo.MMesh.getPoints">getPoints() (MMesh method)</a>
+</li>
+      <li><a href="api/mpylib.geo.MMesh.html#mpylib.geo.MMesh.getPolygonCount">getPolygonCount() (MMesh method)</a>
+</li>
+      <li><a href="api/mpylib.MTrans.html#mpylib.MTrans.getRotationAsQuaternion">getRotationAsQuaternion() (MTrans method)</a>
+</li>
+      <li><a href="api/mpylib.MNode.html#mpylib.MNode.getSetAttrCmds">getSetAttrCmds() (MNode method)</a>
+</li>
+      <li><a href="api/mpylib.MTrans.html#mpylib.MTrans.getShapes">getShapes() (MTrans method)</a>
+</li>
+      <li><a href="api/mpylib.geo.MMesh.html#mpylib.geo.MMesh.getSkinCluster">getSkinCluster() (MMesh method)</a>
+</li>
+      <li><a href="api/mpylib.nodes.MPyNode.html#mpylib.nodes.MPyNode.getStoredVariables">getStoredVariables() (MPyNode method)</a>
+</li>
+      <li><a href="api/mpylib.geo.MMesh.html#mpylib.geo.MMesh.getUVCoords">getUVCoords() (MMesh method)</a>
+</li>
+      <li><a href="api/mpylib.geo.MMesh.html#mpylib.geo.MMesh.getUVsConnectedToFaces">getUVsConnectedToFaces() (MMesh method)</a>
+</li>
+      <li><a href="api/mpylib.geo.MMesh.html#mpylib.geo.MMesh.getUVSetNames">getUVSetNames() (MMesh method)</a>
+</li>
+      <li><a href="api/mpylib.geo.MMesh.html#mpylib.geo.MMesh.getVertCount">getVertCount() (MMesh method)</a>
+</li>
+      <li><a href="api/mpylib.geo.MMesh.html#mpylib.geo.MMesh.getVertsAsMObject">getVertsAsMObject() (MMesh method)</a>
+</li>
+      <li><a href="api/mpylib.geo.MMesh.html#mpylib.geo.MMesh.getVertsConnectedToFaces">getVertsConnectedToFaces() (MMesh method)</a>
+</li>
+      <li><a href="api/mpylib.geo.MMesh.html#mpylib.geo.MMesh.getVertsConnectedToVerts">getVertsConnectedToVerts() (MMesh method)</a>
+</li>
+      <li><a href="api/mpylib.geo.MMesh.html#mpylib.geo.MMesh.getVertUVIndices">getVertUVIndices() (MMesh method)</a>
+</li>
+      <li><a href="api/mpylib.MTrans.html#mpylib.MTrans.getWorldSpacePosition">getWorldSpacePosition() (MTrans method)</a>
+</li>
+      <li><a href="api/mpylib.MTrans.html#mpylib.MTrans.getWorldVectors">getWorldVectors() (MTrans method)</a>
+</li>
+      <li><a href="api/mpylib.MTrans.html#mpylib.MTrans.goToInitialPose">goToInitialPose() (MTrans method)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -236,11 +412,15 @@
 <h2 id="H">H</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="mpylib.nodes.html#mpylib.nodes.MPyNode.hasStoredVariable">hasStoredVariable() (MPyNode method)</a>
+      <li><a href="api/mpylib.MNode.html#mpylib.MNode.hasAttr">hasAttr() (MNode method)</a>
+</li>
+      <li><a href="api/mpylib.nodes.MPyNode.html#mpylib.nodes.MPyNode.hasStoredVariable">hasStoredVariable() (MPyNode method)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="mpylib.api.html#mpylib.api.MMatrix.homogenize">homogenize() (MMatrix method)</a>
+      <li><a href="api/mpylib.MNode.html#mpylib.MNode.hasUniqueName">hasUniqueName() (MNode method)</a>
+</li>
+      <li><a href="api/mpylib.api.MMatrix.html#mpylib.api.MMatrix.homogenize">homogenize() (MMatrix method)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -248,37 +428,89 @@
 <h2 id="I">I</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="mpylib.nodes.html#mpylib.nodes.MPyNode.importFromFile">importFromFile() (MPyNode static method)</a>
+      <li><a href="api/mpylib.nodes.MPyNode.html#mpylib.nodes.MPyNode.importFromFile">importFromFile() (MPyNode static method)</a>
 </li>
-      <li><a href="mpylib.api.html#mpylib.api.MEulerRotation.inverse">inverse() (MEulerRotation method)</a>
+      <li><a href="api/mpylib.MNode.html#mpylib.MNode.index">index() (MNode method)</a>
 
       <ul>
-        <li><a href="mpylib.api.html#mpylib.api.MMatrix.inverse">(MMatrix method)</a>
-</li>
-        <li><a href="mpylib.api.html#mpylib.api.MQuaternion.inverse">(MQuaternion method)</a>
+        <li><a href="api/mpylib.MNodeList.html#mpylib.MNodeList.index">(MNodeList method)</a>
 </li>
       </ul></li>
+      <li><a href="api/mpylib.api.MEulerRotation.html#mpylib.api.MEulerRotation.inverse">inverse() (MEulerRotation method)</a>
+
+      <ul>
+        <li><a href="api/mpylib.api.MMatrix.html#mpylib.api.MMatrix.inverse">(MMatrix method)</a>
+</li>
+        <li><a href="api/mpylib.api.MQuaternion.html#mpylib.api.MQuaternion.inverse">(MQuaternion method)</a>
+</li>
+      </ul></li>
+      <li><a href="api/mpylib.MNode.html#mpylib.MNode.isalnum">isalnum() (MNode method)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/mpylib.MNode.html#mpylib.MNode.isalpha">isalpha() (MNode method)</a>
+</li>
+      <li><a href="api/mpylib.MTrans.html#mpylib.MTrans.isChildOf">isChildOf() (MTrans method)</a>
+</li>
+      <li><a href="api/mpylib.MNode.html#mpylib.MNode.isFromReferencedFile">isFromReferencedFile() (MNode method)</a>
+</li>
+      <li><a href="api/mpylib.MNode.html#mpylib.MNode.isLocked">isLocked() (MNode method)</a>
+</li>
+      <li><a href="api/mpylib.MNode.html#mpylib.MNode.islower">islower() (MNode method)</a>
+</li>
+      <li><a href="api/mpylib.MNode.html#mpylib.MNode.istitle">istitle() (MNode method)</a>
+</li>
+      <li><a href="api/mpylib.MNode.html#mpylib.MNode.isupper">isupper() (MNode method)</a>
+</li>
+      <li><a href="api/mpylib.MNode.html#mpylib.MNode.isValid">isValid() (MNode method)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="J">J</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/mpylib.MNode.html#mpylib.MNode.join">join() (MNode method)</a>
+</li>
   </ul></td>
 </tr></table>
 
 <h2 id="L">L</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="mpylib.nodes.html#mpylib.nodes.MPyNode.listInputAttrs">listInputAttrs() (MPyNode method)</a>
+      <li><a href="api/mpylib.MNode.html#mpylib.MNode.listAttr">listAttr() (MNode method)</a>
 </li>
-      <li><a href="mpylib.nodes.html#mpylib.nodes.MPyNode.listOutputAttrs">listOutputAttrs() (MPyNode method)</a>
+      <li><a href="api/mpylib.MNode.html#mpylib.MNode.listConnections">listConnections() (MNode method)</a>
 </li>
-      <li><a href="mpylib.nodes.html#mpylib.nodes.MPyNode.listStoredVariables">listStoredVariables() (MPyNode method)</a>
+      <li><a href="api/mpylib.nodes.MPyNode.html#mpylib.nodes.MPyNode.listInputAttrs">listInputAttrs() (MPyNode method)</a>
+</li>
+      <li><a href="api/mpylib.MNodeList.html#mpylib.MNodeList.listNodesOfType">listNodesOfType() (MNodeList method)</a>
+</li>
+      <li><a href="api/mpylib.MNodeList.html#mpylib.MNodeList.listNodesWithAttr">listNodesWithAttr() (MNodeList method)</a>
+</li>
+      <li><a href="api/mpylib.nodes.MPyNode.html#mpylib.nodes.MPyNode.listOutputAttrs">listOutputAttrs() (MPyNode method)</a>
+</li>
+      <li><a href="api/mpylib.MTrans.html#mpylib.MTrans.listRelatives">listRelatives() (MTrans method)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="mpylib.nodes.html#mpylib.nodes.MPyNode.listValidInputTypes">listValidInputTypes() (mpylib.nodes.MPyNode class method)</a>
+      <li><a href="api/mpylib.nodes.MPyNode.html#mpylib.nodes.MPyNode.listStoredVariables">listStoredVariables() (MPyNode method)</a>
 </li>
-      <li><a href="mpylib.nodes.html#mpylib.nodes.MPyNode.listValidOutputTypes">listValidOutputTypes() (mpylib.nodes.MPyNode class method)</a>
+      <li><a href="api/mpylib.nodes.MPyNode.html#mpylib.nodes.MPyNode.listValidInputTypes">listValidInputTypes() (mpylib.nodes.MPyNode class method)</a>
 </li>
-      <li><a href="mpylib.api.html#mpylib.api.MQuaternion.log">log() (MQuaternion method)</a>
+      <li><a href="api/mpylib.nodes.MPyNode.html#mpylib.nodes.MPyNode.listValidOutputTypes">listValidOutputTypes() (mpylib.nodes.MPyNode class method)</a>
 </li>
-      <li><a href="mpylib.nodes.html#mpylib.nodes.MPyNode.ls">ls() (mpylib.nodes.MPyNode class method)</a>
+      <li><a href="api/mpylib.api.MQuaternion.html#mpylib.api.MQuaternion.log">log() (MQuaternion method)</a>
+</li>
+      <li><a href="api/mpylib.MNode.html#mpylib.MNode.lower">lower() (MNode method)</a>
+</li>
+      <li><a href="api/mpylib.MNode.html#mpylib.MNode.ls">ls() (mpylib.MNode class method)</a>
+
+      <ul>
+        <li><a href="api/mpylib.nodes.MPyNode.html#mpylib.nodes.MPyNode.ls">(mpylib.nodes.MPyNode class method)</a>
+</li>
+      </ul></li>
+      <li><a href="api/mpylib.MNode.html#mpylib.MNode.lstrip">lstrip() (MNode method)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -286,27 +518,37 @@
 <h2 id="M">M</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="mpylib.api.html#mpylib.api.MAngle">MAngle (class in mpylib.api)</a>
+      <li><a href="api/mpylib.api.MAngle.html#mpylib.api.MAngle">MAngle (class in mpylib.api)</a>
 </li>
-      <li><a href="mpylib.api.html#mpylib.api.MColor">MColor (class in mpylib.api)</a>
+      <li><a href="api/mpylib.MTrans.html#mpylib.MTrans.match">match() (MTrans method)</a>
 </li>
-      <li><a href="mpylib.api.html#mpylib.api.MColorArray">MColorArray (class in mpylib.api)</a>
+      <li><a href="api/mpylib.api.MColor.html#mpylib.api.MColor">MColor (class in mpylib.api)</a>
 </li>
-      <li><a href="mpylib.api.html#mpylib.api.MEulerRotation">MEulerRotation (class in mpylib.api)</a>
+      <li><a href="api/mpylib.api.MColorArray.html#mpylib.api.MColorArray">MColorArray (class in mpylib.api)</a>
 </li>
-      <li><a href="mpylib.api.html#mpylib.api.MFnNurbsCurve">MFnNurbsCurve (class in mpylib.api)</a>
+      <li><a href="api/mpylib.api.MEulerRotation.html#mpylib.api.MEulerRotation">MEulerRotation (class in mpylib.api)</a>
 </li>
-      <li><a href="mpylib.api.html#mpylib.api.MMatrix">MMatrix (class in mpylib.api)</a>
+      <li><a href="api/mpylib.api.MFnNurbsCurve.html#mpylib.api.MFnNurbsCurve">MFnNurbsCurve (class in mpylib.api)</a>
 </li>
-      <li><a href="mpylib.api.html#mpylib.api.MMatrixArray">MMatrixArray (class in mpylib.api)</a>
+      <li><a href="api/mpylib.api.MMatrix.html#mpylib.api.MMatrix">MMatrix (class in mpylib.api)</a>
 </li>
-      <li><a href="mpylib.geo.html#mpylib.geo.MMesh">MMesh (class in mpylib.geo)</a>
+      <li><a href="api/mpylib.api.MMatrixArray.html#mpylib.api.MMatrixArray">MMatrixArray (class in mpylib.api)</a>
 </li>
-      <li><a href="mpylib.api.html#mpylib.api.MPoint">MPoint (class in mpylib.api)</a>
+      <li><a href="api/mpylib.geo.MMesh.html#mpylib.geo.MMesh">MMesh (class in mpylib.geo)</a>
+</li>
+      <li><a href="api/mpylib.MNode.html#mpylib.MNode">MNode (class in mpylib)</a>
+</li>
+      <li><a href="api/mpylib.MNodeList.html#mpylib.MNodeList">MNodeList (class in mpylib)</a>
+</li>
+      <li><a href="api/mpylib.MTrans.html#mpylib.MTrans.move">move() (MTrans method)</a>
+</li>
+      <li><a href="api/mpylib.api.MPoint.html#mpylib.api.MPoint">MPoint (class in mpylib.api)</a>
+</li>
+      <li><a href="api/mpylib.api.MPointArray.html#mpylib.api.MPointArray">MPointArray (class in mpylib.api)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="mpylib.api.html#mpylib.api.MPointArray">MPointArray (class in mpylib.api)</a>
+      <li><a href="mpylib.html#module-mpylib">mpylib (module)</a>
 </li>
       <li><a href="mpylib.api.html#module-mpylib.api">mpylib.api (module)</a>
 </li>
@@ -314,17 +556,25 @@
 </li>
       <li><a href="mpylib.nodes.html#module-mpylib.nodes">mpylib.nodes (module)</a>
 </li>
-      <li><a href="mpylib.nodes.html#mpylib.nodes.MPyNode">MPyNode (class in mpylib.nodes)</a>
+      <li><a href="api/mpylib.nodes.MPyNode.html#mpylib.nodes.MPyNode">MPyNode (class in mpylib.nodes)</a>
 </li>
-      <li><a href="mpylib.api.html#mpylib.api.MQuaternion">MQuaternion (class in mpylib.api)</a>
+      <li><a href="api/mpylib.api.MQuaternion.html#mpylib.api.MQuaternion">MQuaternion (class in mpylib.api)</a>
 </li>
-      <li><a href="mpylib.api.html#mpylib.api.MTime">MTime (class in mpylib.api)</a>
+      <li><a href="api/mpylib.MShape.html#mpylib.MShape">MShape (class in mpylib)</a>
 </li>
-      <li><a href="mpylib.api.html#mpylib.api.MTimeArray">MTimeArray (class in mpylib.api)</a>
+      <li><a href="api/mpylib.MShapeList.html#mpylib.MShapeList">MShapeList (class in mpylib)</a>
 </li>
-      <li><a href="mpylib.api.html#mpylib.api.MVector">MVector (class in mpylib.api)</a>
+      <li><a href="api/mpylib.api.MTime.html#mpylib.api.MTime">MTime (class in mpylib.api)</a>
 </li>
-      <li><a href="mpylib.api.html#mpylib.api.MVectorArray">MVectorArray (class in mpylib.api)</a>
+      <li><a href="api/mpylib.api.MTimeArray.html#mpylib.api.MTimeArray">MTimeArray (class in mpylib.api)</a>
+</li>
+      <li><a href="api/mpylib.MTrans.html#mpylib.MTrans">MTrans (class in mpylib)</a>
+</li>
+      <li><a href="api/mpylib.MTransList.html#mpylib.MTransList">MTransList (class in mpylib)</a>
+</li>
+      <li><a href="api/mpylib.api.MVector.html#mpylib.api.MVector">MVector (class in mpylib.api)</a>
+</li>
+      <li><a href="api/mpylib.api.MVectorArray.html#mpylib.api.MVectorArray">MVectorArray (class in mpylib.api)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -332,17 +582,47 @@
 <h2 id="N">N</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="mpylib.api.html#mpylib.api.MFnNurbsCurve.normal">normal() (MFnNurbsCurve method)</a>
+      <li><a href="api/mpylib.api.MFnNurbsCurve.html#mpylib.api.MFnNurbsCurve.normal">normal() (MFnNurbsCurve method)</a>
 
       <ul>
-        <li><a href="mpylib.api.html#mpylib.api.MQuaternion.normal">(MQuaternion method)</a>
+        <li><a href="api/mpylib.api.MQuaternion.html#mpylib.api.MQuaternion.normal">(MQuaternion method)</a>
 </li>
-        <li><a href="mpylib.api.html#mpylib.api.MVector.normal">(MVector method)</a>
+        <li><a href="api/mpylib.api.MVector.html#mpylib.api.MVector.normal">(MVector method)</a>
 </li>
       </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="mpylib.api.html#mpylib.api.MVector.normalize">normalize() (MVector method)</a>
+      <li><a href="api/mpylib.api.MVector.html#mpylib.api.MVector.normalize">normalize() (MVector method)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="O">O</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/mpylib.MTrans.html#mpylib.MTrans.orientConstraint">orientConstraint() (MTrans method)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="P">P</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/mpylib.MShape.html#mpylib.MShape.parent">parent() (MShape method)</a>
+
+      <ul>
+        <li><a href="api/mpylib.MTrans.html#mpylib.MTrans.parent">(MTrans method)</a>
+</li>
+      </ul></li>
+      <li><a href="api/mpylib.MTrans.html#mpylib.MTrans.parentConstraint">parentConstraint() (MTrans method)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/mpylib.MNode.html#mpylib.MNode.partition">partition() (MNode method)</a>
+</li>
+      <li><a href="api/mpylib.MTrans.html#mpylib.MTrans.pointConstraint">pointConstraint() (MTrans method)</a>
+</li>
+      <li><a href="api/mpylib.MTrans.html#mpylib.MTrans.pointOnPolyConstraint">pointOnPolyConstraint() (MTrans method)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -350,15 +630,37 @@
 <h2 id="R">R</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="mpylib.nodes.html#mpylib.nodes.MPyNode.removeStoredVariable">removeStoredVariable() (MPyNode method)</a>
+      <li><a href="api/mpylib.MTrans.html#mpylib.MTrans.removeDrivers">removeDrivers() (MTrans method)</a>
 </li>
-      <li><a href="mpylib.api.html#mpylib.api.MEulerRotation.reorder">reorder() (MEulerRotation method)</a>
+      <li><a href="api/mpylib.MNode.html#mpylib.MNode.removeInputConnections">removeInputConnections() (MNode method)</a>
+</li>
+      <li><a href="api/mpylib.MNode.html#mpylib.MNode.removeOutputConnections">removeOutputConnections() (MNode method)</a>
+</li>
+      <li><a href="api/mpylib.nodes.MPyNode.html#mpylib.nodes.MPyNode.removeStoredVariable">removeStoredVariable() (MPyNode method)</a>
+</li>
+      <li><a href="api/mpylib.MNode.html#mpylib.MNode.rename">rename() (MNode method)</a>
+</li>
+      <li><a href="api/mpylib.api.MEulerRotation.html#mpylib.api.MEulerRotation.reorder">reorder() (MEulerRotation method)</a>
+</li>
+      <li><a href="api/mpylib.MNode.html#mpylib.MNode.replace">replace() (MNode method)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="mpylib.api.html#mpylib.api.MVector.rotateBy">rotateBy() (MVector method)</a>
+      <li><a href="api/mpylib.MNode.html#mpylib.MNode.rfind">rfind() (MNode method)</a>
 </li>
-      <li><a href="mpylib.api.html#mpylib.api.MVector.rotateTo">rotateTo() (MVector method)</a>
+      <li><a href="api/mpylib.MNode.html#mpylib.MNode.rindex">rindex() (MNode method)</a>
+</li>
+      <li><a href="api/mpylib.MTrans.html#mpylib.MTrans.rotate">rotate() (MTrans method)</a>
+</li>
+      <li><a href="api/mpylib.api.MVector.html#mpylib.api.MVector.rotateBy">rotateBy() (MVector method)</a>
+</li>
+      <li><a href="api/mpylib.api.MVector.html#mpylib.api.MVector.rotateTo">rotateTo() (MVector method)</a>
+</li>
+      <li><a href="api/mpylib.MNode.html#mpylib.MNode.rpartition">rpartition() (MNode method)</a>
+</li>
+      <li><a href="api/mpylib.MNode.html#mpylib.MNode.rsplit">rsplit() (MNode method)</a>
+</li>
+      <li><a href="api/mpylib.MNode.html#mpylib.MNode.rstrip">rstrip() (MNode method)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -366,25 +668,65 @@
 <h2 id="S">S</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="mpylib.api.html#mpylib.api.MColor.setColor">setColor() (MColor method)</a>
+      <li><a href="api/mpylib.MTrans.html#mpylib.MTrans.scale">scale() (MTrans method)</a>
 </li>
-      <li><a href="mpylib.nodes.html#mpylib.nodes.MPyNode.setExpression">setExpression() (MPyNode method)</a>
+      <li><a href="api/mpylib.MTrans.html#mpylib.MTrans.scaleConstraint">scaleConstraint() (MTrans method)</a>
 </li>
-      <li><a href="mpylib.geo.html#mpylib.geo.MMesh.setPoints">setPoints() (MMesh method)</a>
+      <li><a href="api/mpylib.MNode.html#mpylib.MNode.select">select() (MNode method)</a>
 </li>
-      <li><a href="mpylib.nodes.html#mpylib.nodes.MPyNode.setStoredVariable">setStoredVariable() (MPyNode method)</a>
+      <li><a href="api/mpylib.MNode.html#mpylib.MNode.setAttr">setAttr() (MNode method)</a>
+
+      <ul>
+        <li><a href="api/mpylib.MNodeList.html#mpylib.MNodeList.setAttr">(MNodeList method)</a>
+</li>
+      </ul></li>
+      <li><a href="api/mpylib.MNode.html#mpylib.MNode.setAttrsFromMap">setAttrsFromMap() (MNode method)</a>
+</li>
+      <li><a href="api/mpylib.api.MColor.html#mpylib.api.MColor.setColor">setColor() (MColor method)</a>
+</li>
+      <li><a href="api/mpylib.MTrans.html#mpylib.MTrans.setCurrentPoseToInitial">setCurrentPoseToInitial() (MTrans method)</a>
+</li>
+      <li><a href="api/mpylib.MNode.html#mpylib.MNode.setDrivenKeyframe">setDrivenKeyframe() (MNode method)</a>
+</li>
+      <li><a href="api/mpylib.nodes.MPyNode.html#mpylib.nodes.MPyNode.setExpression">setExpression() (MPyNode method)</a>
+</li>
+      <li><a href="api/mpylib.MTrans.html#mpylib.MTrans.setInitialPose">setInitialPose() (MTrans method)</a>
+</li>
+      <li><a href="api/mpylib.MNode.html#mpylib.MNode.setMessageAttr">setMessageAttr() (MNode method)</a>
+</li>
+      <li><a href="api/mpylib.geo.MMesh.html#mpylib.geo.MMesh.setPoints">setPoints() (MMesh method)</a>
+</li>
+      <li><a href="api/mpylib.MTrans.html#mpylib.MTrans.setRotationFromQuaternion">setRotationFromQuaternion() (MTrans method)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="mpylib.nodes.html#mpylib.nodes.MPyNode.setVariable">setVariable() (MPyNode method)</a>
+      <li><a href="api/mpylib.nodes.MPyNode.html#mpylib.nodes.MPyNode.setStoredVariable">setStoredVariable() (MPyNode method)</a>
 </li>
-      <li><a href="mpylib.geo.html#mpylib.geo.MMesh.setVertexColor">setVertexColor() (MMesh method)</a>
+      <li><a href="api/mpylib.MNode.html#mpylib.MNode.setStringAttr">setStringAttr() (MNode method)</a>
 </li>
-      <li><a href="mpylib.api.html#mpylib.api.MQuaternion.slerp">slerp() (MQuaternion static method)</a>
+      <li><a href="api/mpylib.nodes.MPyNode.html#mpylib.nodes.MPyNode.setVariable">setVariable() (MPyNode method)</a>
 </li>
-      <li><a href="mpylib.api.html#mpylib.api.MQuaternion.squad">squad() (MQuaternion static method)</a>
+      <li><a href="api/mpylib.geo.MMesh.html#mpylib.geo.MMesh.setVertexColor">setVertexColor() (MMesh method)</a>
 </li>
-      <li><a href="mpylib.api.html#mpylib.api.MQuaternion.squadPt">squadPt() (MQuaternion static method)</a>
+      <li><a href="api/mpylib.MTrans.html#mpylib.MTrans.setWorldSpacePosition">setWorldSpacePosition() (MTrans method)</a>
+</li>
+      <li><a href="api/mpylib.api.MQuaternion.html#mpylib.api.MQuaternion.slerp">slerp() (MQuaternion static method)</a>
+</li>
+      <li><a href="api/mpylib.MTrans.html#mpylib.MTrans.snapRotate">snapRotate() (MTrans method)</a>
+</li>
+      <li><a href="api/mpylib.MTrans.html#mpylib.MTrans.snapTranslate">snapTranslate() (MTrans method)</a>
+</li>
+      <li><a href="api/mpylib.MNode.html#mpylib.MNode.split">split() (MNode method)</a>
+</li>
+      <li><a href="api/mpylib.api.MQuaternion.html#mpylib.api.MQuaternion.squad">squad() (MQuaternion static method)</a>
+</li>
+      <li><a href="api/mpylib.api.MQuaternion.html#mpylib.api.MQuaternion.squadPt">squadPt() (MQuaternion static method)</a>
+</li>
+      <li><a href="api/mpylib.MNode.html#mpylib.MNode.startswith">startswith() (MNode method)</a>
+</li>
+      <li><a href="api/mpylib.MNode.html#mpylib.MNode.strip">strip() (MNode method)</a>
+</li>
+      <li><a href="api/mpylib.MNode.html#mpylib.MNode.swapcase">swapcase() (MNode method)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -392,14 +734,42 @@
 <h2 id="T">T</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="mpylib.api.html#mpylib.api.MFnNurbsCurve.tangent">tangent() (MFnNurbsCurve method)</a>
+      <li><a href="api/mpylib.api.MFnNurbsCurve.html#mpylib.api.MFnNurbsCurve.tangent">tangent() (MFnNurbsCurve method)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="mpylib.api.html#mpylib.api.MVector.transformAsNormal">transformAsNormal() (MVector method)</a>
+      <li><a href="api/mpylib.api.MVector.html#mpylib.api.MVector.transformAsNormal">transformAsNormal() (MVector method)</a>
 </li>
-      <li><a href="mpylib.api.html#mpylib.api.MMatrix.transpose">transpose() (MMatrix method)</a>
+      <li><a href="api/mpylib.api.MMatrix.html#mpylib.api.MMatrix.transpose">transpose() (MMatrix method)</a>
 </li>
+  </ul></td>
+</tr></table>
+
+<h2 id="U">U</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/mpylib.MNode.html#mpylib.MNode.upper">upper() (MNode method)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="W">W</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/mpylib.MTrans.html#mpylib.MTrans.walkChildren">walkChildren() (MTrans method)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="X">X</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/mpylib.MTrans.html#mpylib.MTrans.xform">xform() (MTrans method)</a>
+
+      <ul>
+        <li><a href="api/mpylib.MTransList.html#mpylib.MTransList.xform">(MTransList method)</a>
+</li>
+      </ul></li>
   </ul></td>
 </tr></table>
 

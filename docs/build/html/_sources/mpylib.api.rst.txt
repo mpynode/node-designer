@@ -1,6 +1,4 @@
-mpylib.api module
-=================
+.. automodapi:: mpylib.api
+   :no-inheritance-diagram:
+   :no-undoc-members:
 
-.. automodule:: mpylib.api
-    :members:
-    :show-inheritance:

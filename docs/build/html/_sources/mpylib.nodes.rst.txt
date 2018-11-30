@@ -1,9 +1,3 @@
-mpylib.nodes module
-===================
-
-
-.. automodule:: mpylib.nodes
-    :members:
-    :show-inheritance:
-
-
+.. automodapi:: mpylib.nodes
+   :no-inheritance-diagram:
+   :no-undoc-members:

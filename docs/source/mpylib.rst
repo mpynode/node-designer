@@ -1,12 +1,3 @@
-mpylib package
-==============
-
-Subpackages
------------
-
-.. toctree::
-
-    mpylib.api
-    mpylib.geo
-    mpylib.nodes
-
+.. automodapi:: mpylib
+   :no-inheritance-diagram:
+   :no-undoc-members:

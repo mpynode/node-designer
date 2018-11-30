@@ -27,7 +27,8 @@
     <script type="text/javascript" src="../_static/js/copybutton.js"></script>
     <link rel="index" title="Index" href="../genindex.html" >
     <link rel="search" title="Search" href="../search.html" >
-    <link rel="top" title="MPyNode 1.0 documentation" href="../index.html" > 
+    <link rel="top" title="MPyNode 1.0 documentation" href="../index.html" >
+    <link rel="up" title="mpylib.api Package" href="../mpylib.api.html" > 
   </head>
   <body>
 
@@ -49,7 +50,8 @@
         <li class="active"><a href="https://apps.autodesk.com/MAYA/en/Home/Index">App Store</a></li>
 	
         <li class="active"><a href="../index.html">MPyNode 1.0 documentation</a></li>
-	 
+	
+          <li class="active"><a href="../mpylib.api.html" accesskey="U">mpylib.api Package</a></li> 
     </ul>
               
               
@@ -81,6 +83,57 @@
 <dt id="mpylib.api.MColor">
 <em class="property">class </em><code class="descname">MColor</code><span class="sig-paren">(</span><em>clr=None</em>, <em>model=0</em>, <em>dataType=0</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.api.MColor" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">OpenMaya.MColor</span></code></p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Attributes:</th><td class="field-body"><dl class="first last docutils">
+<dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">a</span></code></dt>
+<dd><p class="first last">alpha component</p>
+</dd>
+<dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">b</span></code></dt>
+<dd><p class="first last">blue component</p>
+</dd>
+<dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">g</span></code></dt>
+<dd><p class="first last">green component</p>
+</dd>
+<dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">r</span></code></dt>
+<dd><p class="first last">red component</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Methods</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">getColor</span></code></td>
+<td>Returns a list containing the color’s components, in the specified color model.</td>
+</tr>
+</tbody>
+</table>
+<table border="1" class="docutils">
+<colgroup>
+<col width="63%" />
+<col width="37%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>getColorModel</strong></td>
+<td>&#160;</td>
+</tr>
+<tr class="row-even"><td><strong>getDataType</strong></td>
+<td>&#160;</td>
+</tr>
+<tr class="row-odd"><td><strong>setColor</strong></td>
+<td>&#160;</td>
+</tr>
+</tbody>
+</table>
 <p class="rubric">Methods Summary</p>
 <table border="1" class="longtable docutils">
 <colgroup>
@@ -94,7 +147,7 @@
 <tr class="row-even"><td><a class="reference internal" href="#mpylib.api.MColor.getDataType" title="mpylib.api.MColor.getDataType"><code class="xref py py-obj docutils literal notranslate"><span class="pre">getDataType</span></code></a>()</td>
 <td></td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="../mpylib.api.html#mpylib.api.MColor.setColor" title="mpylib.api.MColor.setColor"><code class="xref py py-obj docutils literal notranslate"><span class="pre">setColor</span></code></a>(clr[,&nbsp;model,&nbsp;dataType])</td>
+<tr class="row-odd"><td><a class="reference internal" href="#mpylib.api.MColor.setColor" title="mpylib.api.MColor.setColor"><code class="xref py py-obj docutils literal notranslate"><span class="pre">setColor</span></code></a>(clr[,&nbsp;model,&nbsp;dataType])</td>
 <td>Sets the color’s components and color model.</td>
 </tr>
 </tbody>
@@ -113,12 +166,6 @@
 <dl class="method">
 <dt id="mpylib.api.MColor.setColor">
 <code class="descname">setColor</code><span class="sig-paren">(</span><em>clr</em>, <em>model=0</em>, <em>dataType=0</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.api.MColor.setColor" title="Permalink to this definition">¶</a></dt>
-<dd><p>Sets the color’s components and color model.</p>
-</dd></dl>
-
-<dl class="method">
-<dt>
-<code class="descname">setColor</code><span class="sig-paren">(</span><em>clr</em>, <em>model=0</em>, <em>dataType=0</em><span class="sig-paren">)</span></dt>
 <dd><p>Sets the color’s components and color model.</p>
 </dd></dl>
 

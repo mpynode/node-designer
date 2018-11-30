@@ -1,8 +1,3 @@
-mpylib.geo module
-=================
-
-.. automodule:: mpylib.geo
-    :members:
-    :show-inheritance:
-
-
+.. automodapi:: mpylib.geo
+   :no-inheritance-diagram:
+   :no-undoc-members:

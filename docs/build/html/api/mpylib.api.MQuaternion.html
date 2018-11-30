@@ -27,7 +27,8 @@
     <script type="text/javascript" src="../_static/js/copybutton.js"></script>
     <link rel="index" title="Index" href="../genindex.html" >
     <link rel="search" title="Search" href="../search.html" >
-    <link rel="top" title="MPyNode 1.0 documentation" href="../index.html" > 
+    <link rel="top" title="MPyNode 1.0 documentation" href="../index.html" >
+    <link rel="up" title="mpylib.api Package" href="../mpylib.api.html" > 
   </head>
   <body>
 
@@ -49,7 +50,8 @@
         <li class="active"><a href="https://apps.autodesk.com/MAYA/en/Home/Index">App Store</a></li>
 	
         <li class="active"><a href="../index.html">MPyNode 1.0 documentation</a></li>
-	 
+	
+          <li class="active"><a href="../mpylib.api.html" accesskey="U">mpylib.api Package</a></li> 
     </ul>
               
               
@@ -81,6 +83,97 @@
 <dt id="mpylib.api.MQuaternion">
 <em class="property">class </em><code class="descname">MQuaternion</code><span class="sig-paren">(</span><em>*args</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.api.MQuaternion" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">OpenMaya.MQuaternion</span></code></p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Attributes:</th><td class="field-body"><dl class="first last docutils">
+<dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">w</span></code></dt>
+<dd><p class="first last">Real component</p>
+</dd>
+<dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">x</span></code></dt>
+<dd><p class="first last">Imaginary X component</p>
+</dd>
+<dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">y</span></code></dt>
+<dd><p class="first last">Imaginary Y component</p>
+</dd>
+<dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">z</span></code></dt>
+<dd><p class="first last">Imaginary Z component</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Methods</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><a class="reference internal" href="#mpylib.api.MQuaternion.asAxisAngle" title="mpylib.api.MQuaternion.asAxisAngle"><code class="xref py py-obj docutils literal notranslate"><span class="pre">asAxisAngle</span></code></a>()</td>
+<td>Returns the rotation as a tuple containing an axis vector and an angle in radians about that axis.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#mpylib.api.MQuaternion.asEulerRotation" title="mpylib.api.MQuaternion.asEulerRotation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">asEulerRotation</span></code></a>()</td>
+<td>Returns the rotation as an equivalent MEulerRotation.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#mpylib.api.MQuaternion.asMatrix" title="mpylib.api.MQuaternion.asMatrix"><code class="xref py py-obj docutils literal notranslate"><span class="pre">asMatrix</span></code></a>()</td>
+<td>Returns the rotation as an equivalent rotation matrix.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#mpylib.api.MQuaternion.conjugate" title="mpylib.api.MQuaternion.conjugate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">conjugate</span></code></a>()</td>
+<td>Returns the conjugate of this quaternion (i.e.</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">conjugateIt</span></code></td>
+<td>In-place conjugation (i.e.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#mpylib.api.MQuaternion.exp" title="mpylib.api.MQuaternion.exp"><code class="xref py py-obj docutils literal notranslate"><span class="pre">exp</span></code></a>()</td>
+<td>Returns a new quaternion containing the exponent of this one.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#mpylib.api.MQuaternion.inverse" title="mpylib.api.MQuaternion.inverse"><code class="xref py py-obj docutils literal notranslate"><span class="pre">inverse</span></code></a>()</td>
+<td>Returns a new quaternion containing the inverse of this one.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">invertIt</span></code></td>
+<td>In-place inversion.</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">isEquivalent</span></code></td>
+<td>Returns True if the distance between the two quaternions (in quaternion space) is less than or equal to the given tolerance.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#mpylib.api.MQuaternion.log" title="mpylib.api.MQuaternion.log"><code class="xref py py-obj docutils literal notranslate"><span class="pre">log</span></code></a>()</td>
+<td>Returns a new quaternion containing the log of this one.</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">negateIt</span></code></td>
+<td>In-place negation of the x, y, z and w components.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#mpylib.api.MQuaternion.normal" title="mpylib.api.MQuaternion.normal"><code class="xref py py-obj docutils literal notranslate"><span class="pre">normal</span></code></a>()</td>
+<td>Returns a new quaternion containing the normalized version of this one (i.e.</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">normalizeIt</span></code></td>
+<td>In-place normalization (i.e.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">setToXAxis</span></code></td>
+<td>Set this quaternion to be equivalent to a rotation of a given angle, in radians, about the X-axis.</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">setToYAxis</span></code></td>
+<td>Set this quaternion to be equivalent to a rotation of a given angle, in radians, about the Y-axis.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">setToZAxis</span></code></td>
+<td>Set this quaternion to be equivalent to a rotation of a given angle, in radians, about the Z-axis.</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">setValue</span></code></td>
+<td>Set the value of this quaternion to that of the specified MQuaternion, MEulerRotation, MMatrix or MVector and angle.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#mpylib.api.MQuaternion.slerp" title="mpylib.api.MQuaternion.slerp"><code class="xref py py-obj docutils literal notranslate"><span class="pre">slerp</span></code></a>(p,&nbsp;q,&nbsp;t,&nbsp;spin)</td>
+<td>Spherical interpolation of unit quaternions.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#mpylib.api.MQuaternion.squad" title="mpylib.api.MQuaternion.squad"><code class="xref py py-obj docutils literal notranslate"><span class="pre">squad</span></code></a>(p,&nbsp;a,&nbsp;b,&nbsp;q,&nbsp;t[,&nbsp;spin])</td>
+<td>Interpolation along a cubic curve segment in quaternion space.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#mpylib.api.MQuaternion.squadPt" title="mpylib.api.MQuaternion.squadPt"><code class="xref py py-obj docutils literal notranslate"><span class="pre">squadPt</span></code></a>(q0,&nbsp;q1,&nbsp;q2)</td>
+<td>Returns a new quaternion representing an intermediate point (in quaternion space) which when used with squad() will produce a C1 continuous spline.</td>
+</tr>
+</tbody>
+</table>
 <p class="rubric">Methods Summary</p>
 <table border="1" class="longtable docutils">
 <colgroup>
@@ -88,37 +181,37 @@
 <col width="90%" />
 </colgroup>
 <tbody valign="top">
-<tr class="row-odd"><td><a class="reference internal" href="../mpylib.api.html#mpylib.api.MQuaternion.asAxisAngle" title="mpylib.api.MQuaternion.asAxisAngle"><code class="xref py py-obj docutils literal notranslate"><span class="pre">asAxisAngle</span></code></a>()</td>
+<tr class="row-odd"><td><a class="reference internal" href="#mpylib.api.MQuaternion.asAxisAngle" title="mpylib.api.MQuaternion.asAxisAngle"><code class="xref py py-obj docutils literal notranslate"><span class="pre">asAxisAngle</span></code></a>()</td>
 <td>Returns the rotation as a tuple containing an axis vector and an angle in radians about that axis.</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="../mpylib.api.html#mpylib.api.MQuaternion.asEulerRotation" title="mpylib.api.MQuaternion.asEulerRotation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">asEulerRotation</span></code></a>()</td>
+<tr class="row-even"><td><a class="reference internal" href="#mpylib.api.MQuaternion.asEulerRotation" title="mpylib.api.MQuaternion.asEulerRotation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">asEulerRotation</span></code></a>()</td>
 <td>Returns the rotation as an equivalent MEulerRotation.</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="../mpylib.api.html#mpylib.api.MQuaternion.asMatrix" title="mpylib.api.MQuaternion.asMatrix"><code class="xref py py-obj docutils literal notranslate"><span class="pre">asMatrix</span></code></a>()</td>
+<tr class="row-odd"><td><a class="reference internal" href="#mpylib.api.MQuaternion.asMatrix" title="mpylib.api.MQuaternion.asMatrix"><code class="xref py py-obj docutils literal notranslate"><span class="pre">asMatrix</span></code></a>()</td>
 <td>Returns the rotation as an equivalent rotation matrix.</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="../mpylib.api.html#mpylib.api.MQuaternion.conjugate" title="mpylib.api.MQuaternion.conjugate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">conjugate</span></code></a>()</td>
+<tr class="row-even"><td><a class="reference internal" href="#mpylib.api.MQuaternion.conjugate" title="mpylib.api.MQuaternion.conjugate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">conjugate</span></code></a>()</td>
 <td>Returns the conjugate of this quaternion (i.e.</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="../mpylib.api.html#mpylib.api.MQuaternion.exp" title="mpylib.api.MQuaternion.exp"><code class="xref py py-obj docutils literal notranslate"><span class="pre">exp</span></code></a>()</td>
+<tr class="row-odd"><td><a class="reference internal" href="#mpylib.api.MQuaternion.exp" title="mpylib.api.MQuaternion.exp"><code class="xref py py-obj docutils literal notranslate"><span class="pre">exp</span></code></a>()</td>
 <td>Returns a new quaternion containing the exponent of this one.</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="../mpylib.api.html#mpylib.api.MQuaternion.inverse" title="mpylib.api.MQuaternion.inverse"><code class="xref py py-obj docutils literal notranslate"><span class="pre">inverse</span></code></a>()</td>
+<tr class="row-even"><td><a class="reference internal" href="#mpylib.api.MQuaternion.inverse" title="mpylib.api.MQuaternion.inverse"><code class="xref py py-obj docutils literal notranslate"><span class="pre">inverse</span></code></a>()</td>
 <td>Returns a new quaternion containing the inverse of this one.</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="../mpylib.api.html#mpylib.api.MQuaternion.log" title="mpylib.api.MQuaternion.log"><code class="xref py py-obj docutils literal notranslate"><span class="pre">log</span></code></a>()</td>
+<tr class="row-odd"><td><a class="reference internal" href="#mpylib.api.MQuaternion.log" title="mpylib.api.MQuaternion.log"><code class="xref py py-obj docutils literal notranslate"><span class="pre">log</span></code></a>()</td>
 <td>Returns a new quaternion containing the log of this one.</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="../mpylib.api.html#mpylib.api.MQuaternion.normal" title="mpylib.api.MQuaternion.normal"><code class="xref py py-obj docutils literal notranslate"><span class="pre">normal</span></code></a>()</td>
+<tr class="row-even"><td><a class="reference internal" href="#mpylib.api.MQuaternion.normal" title="mpylib.api.MQuaternion.normal"><code class="xref py py-obj docutils literal notranslate"><span class="pre">normal</span></code></a>()</td>
 <td>Returns a new quaternion containing the normalized version of this one (i.e.</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="../mpylib.api.html#mpylib.api.MQuaternion.slerp" title="mpylib.api.MQuaternion.slerp"><code class="xref py py-obj docutils literal notranslate"><span class="pre">slerp</span></code></a>(p,&nbsp;q,&nbsp;t,&nbsp;spin)</td>
+<tr class="row-odd"><td><a class="reference internal" href="#mpylib.api.MQuaternion.slerp" title="mpylib.api.MQuaternion.slerp"><code class="xref py py-obj docutils literal notranslate"><span class="pre">slerp</span></code></a>(p,&nbsp;q,&nbsp;t,&nbsp;spin)</td>
 <td>Spherical interpolation of unit quaternions.</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="../mpylib.api.html#mpylib.api.MQuaternion.squad" title="mpylib.api.MQuaternion.squad"><code class="xref py py-obj docutils literal notranslate"><span class="pre">squad</span></code></a>(p,&nbsp;a,&nbsp;b,&nbsp;q,&nbsp;t[,&nbsp;spin])</td>
+<tr class="row-even"><td><a class="reference internal" href="#mpylib.api.MQuaternion.squad" title="mpylib.api.MQuaternion.squad"><code class="xref py py-obj docutils literal notranslate"><span class="pre">squad</span></code></a>(p,&nbsp;a,&nbsp;b,&nbsp;q,&nbsp;t[,&nbsp;spin])</td>
 <td>Interpolation along a cubic curve segment in quaternion space.</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="../mpylib.api.html#mpylib.api.MQuaternion.squadPt" title="mpylib.api.MQuaternion.squadPt"><code class="xref py py-obj docutils literal notranslate"><span class="pre">squadPt</span></code></a>(q0,&nbsp;q1,&nbsp;q2)</td>
+<tr class="row-odd"><td><a class="reference internal" href="#mpylib.api.MQuaternion.squadPt" title="mpylib.api.MQuaternion.squadPt"><code class="xref py py-obj docutils literal notranslate"><span class="pre">squadPt</span></code></a>(q0,&nbsp;q1,&nbsp;q2)</td>
 <td>Returns a new quaternion representing an intermediate point (in quaternion space) which when used with squad() will produce a C1 continuous spline.</td>
 </tr>
 </tbody>
@@ -192,78 +285,6 @@ complete rotations about the axis which must occur when going from p to q.</p>
 <dl class="staticmethod">
 <dt id="mpylib.api.MQuaternion.squadPt">
 <em class="property">static </em><code class="descname">squadPt</code><span class="sig-paren">(</span><em>q0</em>, <em>q1</em>, <em>q2</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.api.MQuaternion.squadPt" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns a new quaternion representing an intermediate point (in quaternion space) which when used with squad()
-will produce a C1 continuous spline.</p>
-</dd></dl>
-
-<dl class="method">
-<dt>
-<code class="descname">asAxisAngle</code><span class="sig-paren">(</span><span class="sig-paren">)</span></dt>
-<dd><p>Returns the rotation as a tuple containing an axis vector and an angle in radians about that axis.</p>
-</dd></dl>
-
-<dl class="method">
-<dt>
-<code class="descname">asEulerRotation</code><span class="sig-paren">(</span><span class="sig-paren">)</span></dt>
-<dd><p>Returns the rotation as an equivalent MEulerRotation.</p>
-</dd></dl>
-
-<dl class="method">
-<dt>
-<code class="descname">asMatrix</code><span class="sig-paren">(</span><span class="sig-paren">)</span></dt>
-<dd><p>Returns the rotation as an equivalent rotation matrix.</p>
-</dd></dl>
-
-<dl class="method">
-<dt>
-<code class="descname">conjugate</code><span class="sig-paren">(</span><span class="sig-paren">)</span></dt>
-<dd><p>Returns the conjugate of this quaternion (i.e. x, y and z components negated).</p>
-</dd></dl>
-
-<dl class="method">
-<dt>
-<code class="descname">exp</code><span class="sig-paren">(</span><span class="sig-paren">)</span></dt>
-<dd><p>Returns a new quaternion containing the exponent of this one.</p>
-</dd></dl>
-
-<dl class="method">
-<dt>
-<code class="descname">inverse</code><span class="sig-paren">(</span><span class="sig-paren">)</span></dt>
-<dd><p>Returns a new quaternion containing the inverse of this one.</p>
-</dd></dl>
-
-<dl class="method">
-<dt>
-<code class="descname">log</code><span class="sig-paren">(</span><span class="sig-paren">)</span></dt>
-<dd><p>Returns a new quaternion containing the log of this one.</p>
-</dd></dl>
-
-<dl class="method">
-<dt>
-<code class="descname">normal</code><span class="sig-paren">(</span><span class="sig-paren">)</span></dt>
-<dd><p>Returns a new quaternion containing the normalized version of this one (i.e. scaled to unit length).</p>
-</dd></dl>
-
-<dl class="staticmethod">
-<dt>
-<em class="property">static </em><code class="descname">slerp</code><span class="sig-paren">(</span><em>p</em>, <em>q</em>, <em>t</em>, <em>spin</em><span class="sig-paren">)</span></dt>
-<dd><p>Spherical interpolation of unit quaternions. Returns a quaternion along the shortest path (in quaternion space) 
-between p and q, at interpolation value t. Thus a value of 0.0 will return p while a value of 1.0 will return q.
-spin gives the number of complete rotations about the axis which must occur when going from p to q.</p>
-</dd></dl>
-
-<dl class="staticmethod">
-<dt>
-<em class="property">static </em><code class="descname">squad</code><span class="sig-paren">(</span><em>p</em>, <em>a</em>, <em>b</em>, <em>q</em>, <em>t</em>, <em>spin=0</em><span class="sig-paren">)</span></dt>
-<dd><p>Interpolation along a cubic curve segment in quaternion space. Returns a quaternion along the cubic curve
-segment which interpolates p and q, at interpolation value t. Thus a value of 0.0 will return p while a value
-of 1.0 will return q. The curve is C1 continuous with a and b as intermediate points. spins gives the number of
-complete rotations about the axis which must occur when going from p to q.</p>
-</dd></dl>
-
-<dl class="staticmethod">
-<dt>
-<em class="property">static </em><code class="descname">squadPt</code><span class="sig-paren">(</span><em>q0</em>, <em>q1</em>, <em>q2</em><span class="sig-paren">)</span></dt>
 <dd><p>Returns a new quaternion representing an intermediate point (in quaternion space) which when used with squad()
 will produce a C1 continuous spline.</p>
 </dd></dl>

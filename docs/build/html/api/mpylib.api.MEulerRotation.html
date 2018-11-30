@@ -27,7 +27,8 @@
     <script type="text/javascript" src="../_static/js/copybutton.js"></script>
     <link rel="index" title="Index" href="../genindex.html" >
     <link rel="search" title="Search" href="../search.html" >
-    <link rel="top" title="MPyNode 1.0 documentation" href="../index.html" > 
+    <link rel="top" title="MPyNode 1.0 documentation" href="../index.html" >
+    <link rel="up" title="mpylib.api Package" href="../mpylib.api.html" > 
   </head>
   <body>
 
@@ -49,7 +50,8 @@
         <li class="active"><a href="https://apps.autodesk.com/MAYA/en/Home/Index">App Store</a></li>
 	
         <li class="active"><a href="../index.html">MPyNode 1.0 documentation</a></li>
-	 
+	
+          <li class="active"><a href="../mpylib.api.html" accesskey="U">mpylib.api Package</a></li> 
     </ul>
               
               
@@ -81,6 +83,117 @@
 <dt id="mpylib.api.MEulerRotation">
 <em class="property">class </em><code class="descname">MEulerRotation</code><span class="sig-paren">(</span><em>*args</em>, <em>**kargs</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.api.MEulerRotation" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">OpenMaya.MEulerRotation</span></code></p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Attributes:</th><td class="field-body"><dl class="first last docutils">
+<dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">order</span></code></dt>
+<dd><p class="first last">Rotation order</p>
+</dd>
+<dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">x</span></code></dt>
+<dd><p class="first last">X rotation in radians</p>
+</dd>
+<dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">y</span></code></dt>
+<dd><p class="first last">Y rotation in radians</p>
+</dd>
+<dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">z</span></code></dt>
+<dd><p class="first last">Z rotation in radians</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Methods</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">boundIt</span></code></td>
+<td>In-place bounding of each rotation component to lie wthin +/- PI.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">incrementalRotateBy</span></code></td>
+<td>Increase this rotation by a given angle around the specified axis.</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">invertIt</span></code></td>
+<td>In-place inversion of the rotation.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">isEquivalent</span></code></td>
+<td>Returns true if this rotation has the same order as another and their X, Y and Z components are within a tolerance of each other.</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">isZero</span></code></td>
+<td>Returns true if the X, Y and Z components are each within a tolerance of 0.0.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">reorderIt</span></code></td>
+<td>In-place reordering to use the given rotation order.</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">setToAlternateSolution</span></code></td>
+<td>Replace this rotation with an alternate solution.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">setToClosestCut</span></code></td>
+<td>Replace this rotation with the closest cut to a target.</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">setToClosestSolution</span></code></td>
+<td>Replace this rotation with the closest solution to a target.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">setValue</span></code></td>
+<td>Set the rotation.</td>
+</tr>
+</tbody>
+</table>
+<table border="1" class="docutils">
+<colgroup>
+<col width="74%" />
+<col width="26%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>alternateSolution</strong></td>
+<td>&#160;</td>
+</tr>
+<tr class="row-even"><td><strong>asMatrix</strong></td>
+<td>&#160;</td>
+</tr>
+<tr class="row-odd"><td><strong>asQuaternion</strong></td>
+<td>&#160;</td>
+</tr>
+<tr class="row-even"><td><strong>asVector</strong></td>
+<td>&#160;</td>
+</tr>
+<tr class="row-odd"><td><strong>bound</strong></td>
+<td>&#160;</td>
+</tr>
+<tr class="row-even"><td><strong>closestCut</strong></td>
+<td>&#160;</td>
+</tr>
+<tr class="row-odd"><td><strong>closestSolution</strong></td>
+<td>&#160;</td>
+</tr>
+<tr class="row-even"><td><strong>computeAlternateSolution</strong></td>
+<td>&#160;</td>
+</tr>
+<tr class="row-odd"><td><strong>computeBound</strong></td>
+<td>&#160;</td>
+</tr>
+<tr class="row-even"><td><strong>computeClosestCut</strong></td>
+<td>&#160;</td>
+</tr>
+<tr class="row-odd"><td><strong>computeClosestSolution</strong></td>
+<td>&#160;</td>
+</tr>
+<tr class="row-even"><td><strong>decompose</strong></td>
+<td>&#160;</td>
+</tr>
+<tr class="row-odd"><td><strong>inverse</strong></td>
+<td>&#160;</td>
+</tr>
+<tr class="row-even"><td><strong>reorder</strong></td>
+<td>&#160;</td>
+</tr>
+</tbody>
+</table>
 <p class="rubric">Methods Summary</p>
 <table border="1" class="longtable docutils">
 <colgroup>
@@ -88,25 +201,25 @@
 <col width="90%" />
 </colgroup>
 <tbody valign="top">
-<tr class="row-odd"><td><a class="reference internal" href="../mpylib.api.html#mpylib.api.MEulerRotation.alternateSolution" title="mpylib.api.MEulerRotation.alternateSolution"><code class="xref py py-obj docutils literal notranslate"><span class="pre">alternateSolution</span></code></a>()</td>
+<tr class="row-odd"><td><a class="reference internal" href="#mpylib.api.MEulerRotation.alternateSolution" title="mpylib.api.MEulerRotation.alternateSolution"><code class="xref py py-obj docutils literal notranslate"><span class="pre">alternateSolution</span></code></a>()</td>
 <td>Returns an equivalent rotation which is not simply a multiple.</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="../mpylib.api.html#mpylib.api.MEulerRotation.asMatrix" title="mpylib.api.MEulerRotation.asMatrix"><code class="xref py py-obj docutils literal notranslate"><span class="pre">asMatrix</span></code></a>()</td>
+<tr class="row-even"><td><a class="reference internal" href="#mpylib.api.MEulerRotation.asMatrix" title="mpylib.api.MEulerRotation.asMatrix"><code class="xref py py-obj docutils literal notranslate"><span class="pre">asMatrix</span></code></a>()</td>
 <td>Returns the rotation as an equivalent matrix.</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="../mpylib.api.html#mpylib.api.MEulerRotation.asQuaternion" title="mpylib.api.MEulerRotation.asQuaternion"><code class="xref py py-obj docutils literal notranslate"><span class="pre">asQuaternion</span></code></a>()</td>
+<tr class="row-odd"><td><a class="reference internal" href="#mpylib.api.MEulerRotation.asQuaternion" title="mpylib.api.MEulerRotation.asQuaternion"><code class="xref py py-obj docutils literal notranslate"><span class="pre">asQuaternion</span></code></a>()</td>
 <td>Returns the rotation as an equivalent quaternion.</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="../mpylib.api.html#mpylib.api.MEulerRotation.asVector" title="mpylib.api.MEulerRotation.asVector"><code class="xref py py-obj docutils literal notranslate"><span class="pre">asVector</span></code></a>()</td>
+<tr class="row-even"><td><a class="reference internal" href="#mpylib.api.MEulerRotation.asVector" title="mpylib.api.MEulerRotation.asVector"><code class="xref py py-obj docutils literal notranslate"><span class="pre">asVector</span></code></a>()</td>
 <td>Returns the X, Y and Z rotations as a vector.</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="../mpylib.api.html#mpylib.api.MEulerRotation.bound" title="mpylib.api.MEulerRotation.bound"><code class="xref py py-obj docutils literal notranslate"><span class="pre">bound</span></code></a>()</td>
+<tr class="row-odd"><td><a class="reference internal" href="#mpylib.api.MEulerRotation.bound" title="mpylib.api.MEulerRotation.bound"><code class="xref py py-obj docutils literal notranslate"><span class="pre">bound</span></code></a>()</td>
 <td>Returns a new MEulerRotation having this rotation, but with each rotation component bound within +/- PI.</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="../mpylib.api.html#mpylib.api.MEulerRotation.closestCut" title="mpylib.api.MEulerRotation.closestCut"><code class="xref py py-obj docutils literal notranslate"><span class="pre">closestCut</span></code></a>(target)</td>
+<tr class="row-even"><td><a class="reference internal" href="#mpylib.api.MEulerRotation.closestCut" title="mpylib.api.MEulerRotation.closestCut"><code class="xref py py-obj docutils literal notranslate"><span class="pre">closestCut</span></code></a>(target)</td>
 <td>Returns the rotation which is full spin multiples of this one and comes closest to target.</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="../mpylib.api.html#mpylib.api.MEulerRotation.closestSolution" title="mpylib.api.MEulerRotation.closestSolution"><code class="xref py py-obj docutils literal notranslate"><span class="pre">closestSolution</span></code></a>(target)</td>
+<tr class="row-odd"><td><a class="reference internal" href="#mpylib.api.MEulerRotation.closestSolution" title="mpylib.api.MEulerRotation.closestSolution"><code class="xref py py-obj docutils literal notranslate"><span class="pre">closestSolution</span></code></a>(target)</td>
 <td>Returns the equivalent rotation which comes closest to a target.</td>
 </tr>
 <tr class="row-even"><td><a class="reference internal" href="#mpylib.api.MEulerRotation.computeAlternateSolution" title="mpylib.api.MEulerRotation.computeAlternateSolution"><code class="xref py py-obj docutils literal notranslate"><span class="pre">computeAlternateSolution</span></code></a>(rot)</td>
@@ -124,10 +237,10 @@
 <tr class="row-even"><td><a class="reference internal" href="#mpylib.api.MEulerRotation.decompose" title="mpylib.api.MEulerRotation.decompose"><code class="xref py py-obj docutils literal notranslate"><span class="pre">decompose</span></code></a>(matrix,&nbsp;order)</td>
 <td></td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="../mpylib.api.html#mpylib.api.MEulerRotation.inverse" title="mpylib.api.MEulerRotation.inverse"><code class="xref py py-obj docutils literal notranslate"><span class="pre">inverse</span></code></a>()</td>
+<tr class="row-odd"><td><a class="reference internal" href="#mpylib.api.MEulerRotation.inverse" title="mpylib.api.MEulerRotation.inverse"><code class="xref py py-obj docutils literal notranslate"><span class="pre">inverse</span></code></a>()</td>
 <td>Returns a new MEulerRotation containing the inverse rotation of this one and reversed rotation order.</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="../mpylib.api.html#mpylib.api.MEulerRotation.reorder" title="mpylib.api.MEulerRotation.reorder"><code class="xref py py-obj docutils literal notranslate"><span class="pre">reorder</span></code></a>(order)</td>
+<tr class="row-even"><td><a class="reference internal" href="#mpylib.api.MEulerRotation.reorder" title="mpylib.api.MEulerRotation.reorder"><code class="xref py py-obj docutils literal notranslate"><span class="pre">reorder</span></code></a>(order)</td>
 <td>Returns a new MEulerRotation having this rotation, reordered to use the given rotation order.</td>
 </tr>
 </tbody>
@@ -209,60 +322,6 @@
 <dl class="method">
 <dt id="mpylib.api.MEulerRotation.reorder">
 <code class="descname">reorder</code><span class="sig-paren">(</span><em>order</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.api.MEulerRotation.reorder" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns a new MEulerRotation having this rotation, reordered to use the given rotation order.</p>
-</dd></dl>
-
-<dl class="method">
-<dt>
-<code class="descname">alternateSolution</code><span class="sig-paren">(</span><span class="sig-paren">)</span></dt>
-<dd><p>Returns an equivalent rotation which is not simply a multiple.</p>
-</dd></dl>
-
-<dl class="method">
-<dt>
-<code class="descname">asMatrix</code><span class="sig-paren">(</span><span class="sig-paren">)</span></dt>
-<dd><p>Returns the rotation as an equivalent matrix.</p>
-</dd></dl>
-
-<dl class="method">
-<dt>
-<code class="descname">asQuaternion</code><span class="sig-paren">(</span><span class="sig-paren">)</span></dt>
-<dd><p>Returns the rotation as an equivalent quaternion.</p>
-</dd></dl>
-
-<dl class="method">
-<dt>
-<code class="descname">asVector</code><span class="sig-paren">(</span><span class="sig-paren">)</span></dt>
-<dd><p>Returns the X, Y and Z rotations as a vector.</p>
-</dd></dl>
-
-<dl class="method">
-<dt>
-<code class="descname">bound</code><span class="sig-paren">(</span><span class="sig-paren">)</span></dt>
-<dd><p>Returns a new MEulerRotation having this rotation, but with each rotation component bound within +/- PI.</p>
-</dd></dl>
-
-<dl class="method">
-<dt>
-<code class="descname">closestCut</code><span class="sig-paren">(</span><em>target</em><span class="sig-paren">)</span></dt>
-<dd><p>Returns the rotation which is full spin multiples of this one and comes closest to target.</p>
-</dd></dl>
-
-<dl class="method">
-<dt>
-<code class="descname">closestSolution</code><span class="sig-paren">(</span><em>target</em><span class="sig-paren">)</span></dt>
-<dd><p>Returns the equivalent rotation which comes closest to a target.</p>
-</dd></dl>
-
-<dl class="method">
-<dt>
-<code class="descname">inverse</code><span class="sig-paren">(</span><span class="sig-paren">)</span></dt>
-<dd><p>Returns a new MEulerRotation containing the inverse rotation of this one and reversed rotation order.</p>
-</dd></dl>
-
-<dl class="method">
-<dt>
-<code class="descname">reorder</code><span class="sig-paren">(</span><em>order</em><span class="sig-paren">)</span></dt>
 <dd><p>Returns a new MEulerRotation having this rotation, reordered to use the given rotation order.</p>
 </dd></dl>
 
