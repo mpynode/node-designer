@@ -29,6 +29,7 @@
     <link rel="search" title="Search" href="../search.html" >
     <link rel="top" title="MPyNode 1.0 documentation" href="../index.html" >
     <link rel="up" title="mpylib Package" href="../mpylib.html" >
+    <link rel="next" title="MNodeList" href="mpylib.MNodeList.html" >
     <link rel="prev" title="mpylib Package" href="../mpylib.html" > 
   </head>
   <body>
@@ -64,6 +65,10 @@
       <li class="active">
         <a href="../py-modindex.html" title="Python Module Index"
            >modules</a>
+      </li>
+      <li class="active">
+        <a href="mpylib.MNodeList.html" title="MNodeList"
+           accesskey="N">next</a>
       </li>
       <li class="active">
         <a href="../mpylib.html" title="mpylib Package"
@@ -103,272 +108,8 @@ Note that most methods support the same keywords arguments as their
 maya.cmds equivalent.</p>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Extends:</th><td class="field-body"><p class="first"><em>OpenMaya.MObject</em></p>
+<tr class="field-even field"><th class="field-name">Extends:</th><td class="field-body"><p class="first last"><em>OpenMaya.MObject</em></p>
 </td>
-</tr>
-<tr class="field-odd field"><th class="field-name">Attributes:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>NODE_TYPE</strong></dt>
-<dd></dd>
-<dt><strong>PLUGINS</strong></dt>
-<dd></dd>
-<dt><strong>PLUGIN_DIR</strong></dt>
-<dd></dd>
-<dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">apiTypeStr</span></code></dt>
-<dd><p class="first last">(readonly) String containing the object’s type name.</p>
-</dd>
-</dl>
-</td>
-</tr>
-</tbody>
-</table>
-<p class="rubric">Methods</p>
-<table border="1" class="longtable docutils">
-<colgroup>
-<col width="10%" />
-<col width="90%" />
-</colgroup>
-<tbody valign="top">
-<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">DAG_FN_CLASS</span></code></td>
-<td>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">OpenMaya.MFnDagNode</span></code></td>
-</tr>
-<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">DG_FN_CLASS</span></code></td>
-<td>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">OpenMaya.MFnDependencyNode</span></code></td>
-</tr>
-<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">NODE_LIST_CLASS</span></code></td>
-<td>alias of <a class="reference internal" href="mpylib.MNodeList.html#mpylib.MNodeList" title="mpylib.MNodeList"><code class="xref py py-class docutils literal notranslate"><span class="pre">MNodeList</span></code></a></td>
-</tr>
-<tr class="row-even"><td><a class="reference internal" href="#mpylib.MNode.addAttr" title="mpylib.MNode.addAttr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">addAttr</span></code></a>([long_name,&nbsp;attr_type])</td>
-<td>Adds an attribute of the given long name and given type to the node.</td>
-</tr>
-<tr class="row-odd"><td><a class="reference internal" href="#mpylib.MNode.addMenuCmd" title="mpylib.MNode.addMenuCmd"><code class="xref py py-obj docutils literal notranslate"><span class="pre">addMenuCmd</span></code></a>(ui_name,&nbsp;cmd_str)</td>
-<td>Add a context sensitive making menu to this node.</td>
-</tr>
-<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">apiType</span></code></td>
-<td>Returns the function set type for the object.</td>
-</tr>
-<tr class="row-odd"><td><a class="reference internal" href="#mpylib.MNode.applyAttrMap" title="mpylib.MNode.applyAttrMap"><code class="xref py py-obj docutils literal notranslate"><span class="pre">applyAttrMap</span></code></a>(attr_map[,&nbsp;skip_missing,&nbsp;…])</td>
-<td>Apply the attribute values in the given dictionary object to this node.</td>
-</tr>
-<tr class="row-even"><td><a class="reference internal" href="#mpylib.MNode.attachMenuItems" title="mpylib.MNode.attachMenuItems"><code class="xref py py-obj docutils literal notranslate"><span class="pre">attachMenuItems</span></code></a>(parent_menu)</td>
-<td>This method attaches any defined menu cmds on this node to the given Maya menu item.</td>
-</tr>
-<tr class="row-odd"><td><a class="reference internal" href="#mpylib.MNode.attributeQuery" title="mpylib.MNode.attributeQuery"><code class="xref py py-obj docutils literal notranslate"><span class="pre">attributeQuery</span></code></a>(attr_name,&nbsp;**kargs)</td>
-<td>Query information about the given attribute.</td>
-</tr>
-<tr class="row-even"><td><a class="reference internal" href="#mpylib.MNode.bakeResults" title="mpylib.MNode.bakeResults"><code class="xref py py-obj docutils literal notranslate"><span class="pre">bakeResults</span></code></a>(*args,&nbsp;**kargs)</td>
-<td>Run bakeResults on this node with the given options</td>
-</tr>
-<tr class="row-odd"><td><a class="reference internal" href="#mpylib.MNode.capitalize" title="mpylib.MNode.capitalize"><code class="xref py py-obj docutils literal notranslate"><span class="pre">capitalize</span></code></a>([include_namespaces])</td>
-<td>String operartion just like str.capitalize().</td>
-</tr>
-<tr class="row-even"><td><a class="reference internal" href="#mpylib.MNode.connectAttr" title="mpylib.MNode.connectAttr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">connectAttr</span></code></a>(src_attr,&nbsp;dst_node,&nbsp;dst_attr,&nbsp;…)</td>
-<td>Connects the given attribute of this node to the given node and attribute.</td>
-</tr>
-<tr class="row-odd"><td><a class="reference internal" href="#mpylib.MNode.count" title="mpylib.MNode.count"><code class="xref py py-obj docutils literal notranslate"><span class="pre">count</span></code></a>(sub[,&nbsp;start,&nbsp;end,&nbsp;include_namespaces])</td>
-<td>String operartion just like str.count().</td>
-</tr>
-<tr class="row-even"><td><a class="reference internal" href="#mpylib.MNode.createNode" title="mpylib.MNode.createNode"><code class="xref py py-obj docutils literal notranslate"><span class="pre">createNode</span></code></a>(node_type,&nbsp;**kargs)</td>
-<td>Wrapper class method for maya.cmds.createNode thats returns a MNode object instead of a string name</td>
-</tr>
-<tr class="row-odd"><td><a class="reference internal" href="#mpylib.MNode.delete" title="mpylib.MNode.delete"><code class="xref py py-obj docutils literal notranslate"><span class="pre">delete</span></code></a>()</td>
-<td>Delete the node from the scene.</td>
-</tr>
-<tr class="row-even"><td><a class="reference internal" href="#mpylib.MNode.deleteAttr" title="mpylib.MNode.deleteAttr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">deleteAttr</span></code></a>(attr_name)</td>
-<td>Delete the attr with the given name from this node.</td>
-</tr>
-<tr class="row-odd"><td><a class="reference internal" href="#mpylib.MNode.duplicate" title="mpylib.MNode.duplicate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">duplicate</span></code></a>(**kargs)</td>
-<td>Duplicate the node with the given options</td>
-</tr>
-<tr class="row-even"><td><a class="reference internal" href="#mpylib.MNode.endswith" title="mpylib.MNode.endswith"><code class="xref py py-obj docutils literal notranslate"><span class="pre">endswith</span></code></a>(suffix[,&nbsp;start,&nbsp;end,&nbsp;…])</td>
-<td>String operartion just like str.endswith().</td>
-</tr>
-<tr class="row-odd"><td><a class="reference internal" href="#mpylib.MNode.find" title="mpylib.MNode.find"><code class="xref py py-obj docutils literal notranslate"><span class="pre">find</span></code></a>(sub[,&nbsp;start,&nbsp;end,&nbsp;include_namespaces])</td>
-<td>String operartion just like str.find().</td>
-</tr>
-<tr class="row-even"><td><a class="reference internal" href="#mpylib.MNode.getAttr" title="mpylib.MNode.getAttr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">getAttr</span></code></a>(attr_name,&nbsp;**kargs)</td>
-<td>Returns the value of the given attr on this node.</td>
-</tr>
-<tr class="row-odd"><td><a class="reference internal" href="#mpylib.MNode.getAttrMap" title="mpylib.MNode.getAttrMap"><code class="xref py py-obj docutils literal notranslate"><span class="pre">getAttrMap</span></code></a>(*args,&nbsp;**kargs)</td>
-<td>Returns an OrderedDict of attributes as keys and their values as values.</td>
-</tr>
-<tr class="row-even"><td><a class="reference internal" href="#mpylib.MNode.getBasename" title="mpylib.MNode.getBasename"><code class="xref py py-obj docutils literal notranslate"><span class="pre">getBasename</span></code></a>()</td>
-<td>Returns the string name of this node any namespaces.</td>
-</tr>
-<tr class="row-odd"><td><a class="reference internal" href="#mpylib.MNode.getHashCode" title="mpylib.MNode.getHashCode"><code class="xref py py-obj docutils literal notranslate"><span class="pre">getHashCode</span></code></a>()</td>
-<td>Returns a hash code for the internal Maya object referenced by the MObject within this MNode</td>
-</tr>
-<tr class="row-even"><td><a class="reference internal" href="#mpylib.MNode.getInheritedNodeTypes" title="mpylib.MNode.getInheritedNodeTypes"><code class="xref py py-obj docutils literal notranslate"><span class="pre">getInheritedNodeTypes</span></code></a>()</td>
-<td>Returns the node classes that this node type is inherited from.</td>
-</tr>
-<tr class="row-odd"><td><a class="reference internal" href="#mpylib.MNode.getMObject" title="mpylib.MNode.getMObject"><code class="xref py py-obj docutils literal notranslate"><span class="pre">getMObject</span></code></a>()</td>
-<td>Returns the MObject of this node</td>
-</tr>
-<tr class="row-even"><td><a class="reference internal" href="#mpylib.MNode.getMObjectHandle" title="mpylib.MNode.getMObjectHandle"><code class="xref py py-obj docutils literal notranslate"><span class="pre">getMObjectHandle</span></code></a>()</td>
-<td>Returns the MObjectHandle of this node</td>
-</tr>
-<tr class="row-odd"><td><a class="reference internal" href="#mpylib.MNode.getMenuCmds" title="mpylib.MNode.getMenuCmds"><code class="xref py py-obj docutils literal notranslate"><span class="pre">getMenuCmds</span></code></a>()</td>
-<td>Return all custom marking menu items on this node.</td>
-</tr>
-<tr class="row-even"><td><a class="reference internal" href="#mpylib.MNode.getMessageAttr" title="mpylib.MNode.getMessageAttr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">getMessageAttr</span></code></a>(attr_name)</td>
-<td>Returns the node that is connected to the given message attribute.</td>
-</tr>
-<tr class="row-odd"><td><a class="reference internal" href="#mpylib.MNode.getName" title="mpylib.MNode.getName"><code class="xref py py-obj docutils literal notranslate"><span class="pre">getName</span></code></a>()</td>
-<td>Returns the string name of this node.</td>
-</tr>
-<tr class="row-even"><td><a class="reference internal" href="#mpylib.MNode.getNamespace" title="mpylib.MNode.getNamespace"><code class="xref py py-obj docutils literal notranslate"><span class="pre">getNamespace</span></code></a>()</td>
-<td>Return the namespace this node belongs to, if any.</td>
-</tr>
-<tr class="row-odd"><td><a class="reference internal" href="#mpylib.MNode.getNextAttr" title="mpylib.MNode.getNextAttr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">getNextAttr</span></code></a>(attr_prefix[,&nbsp;start_num,&nbsp;max_search])</td>
-<td>Finds the next available attribute that is available with the given prefix.</td>
-</tr>
-<tr class="row-even"><td><a class="reference internal" href="#mpylib.MNode.getObjectType" title="mpylib.MNode.getObjectType"><code class="xref py py-obj docutils literal notranslate"><span class="pre">getObjectType</span></code></a>()</td>
-<td>Returns the string node type of this node.</td>
-</tr>
-<tr class="row-odd"><td><a class="reference internal" href="#mpylib.MNode.getPath" title="mpylib.MNode.getPath"><code class="xref py py-obj docutils literal notranslate"><span class="pre">getPath</span></code></a>()</td>
-<td>Returns the full path name of this node.</td>
-</tr>
-<tr class="row-even"><td><a class="reference internal" href="#mpylib.MNode.getPluginName" title="mpylib.MNode.getPluginName"><code class="xref py py-obj docutils literal notranslate"><span class="pre">getPluginName</span></code></a>()</td>
-<td>Return the name of the plugin that defines this node, if any</td>
-</tr>
-<tr class="row-odd"><td><a class="reference internal" href="#mpylib.MNode.getPlugs" title="mpylib.MNode.getPlugs"><code class="xref py py-obj docutils literal notranslate"><span class="pre">getPlugs</span></code></a>()</td>
-<td>Returns the string names of all attributes that have incoming connections.</td>
-</tr>
-<tr class="row-even"><td><a class="reference internal" href="#mpylib.MNode.getSetAttrCmds" title="mpylib.MNode.getSetAttrCmds"><code class="xref py py-obj docutils literal notranslate"><span class="pre">getSetAttrCmds</span></code></a>(attr_name[,&nbsp;long_names,&nbsp;…])</td>
-<td>Returns an tuple of strings containing mel setAttr commands for given attribute and all of its descendent attrs.</td>
-</tr>
-<tr class="row-odd"><td><a class="reference internal" href="#mpylib.MNode.hasAttr" title="mpylib.MNode.hasAttr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hasAttr</span></code></a>(attr_name[,&nbsp;parent_attr])</td>
-<td>Returns whether this node has an attribute with the given name.</td>
-</tr>
-<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">hasFn</span></code></td>
-<td>Tests whether object is compatible with the specified function set.</td>
-</tr>
-<tr class="row-odd"><td><a class="reference internal" href="#mpylib.MNode.hasUniqueName" title="mpylib.MNode.hasUniqueName"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hasUniqueName</span></code></a>()</td>
-<td>Indicates whether or not this node’s name is unique within the scene.</td>
-</tr>
-<tr class="row-even"><td><a class="reference internal" href="#mpylib.MNode.index" title="mpylib.MNode.index"><code class="xref py py-obj docutils literal notranslate"><span class="pre">index</span></code></a>(sub[,&nbsp;start,&nbsp;end,&nbsp;include_namespaces])</td>
-<td>String operartion just like str.index().</td>
-</tr>
-<tr class="row-odd"><td><a class="reference internal" href="#mpylib.MNode.isFromReferencedFile" title="mpylib.MNode.isFromReferencedFile"><code class="xref py py-obj docutils literal notranslate"><span class="pre">isFromReferencedFile</span></code></a>()</td>
-<td>Indicates whether or not this node came from a referenced file.</td>
-</tr>
-<tr class="row-even"><td><a class="reference internal" href="#mpylib.MNode.isLocked" title="mpylib.MNode.isLocked"><code class="xref py py-obj docutils literal notranslate"><span class="pre">isLocked</span></code></a>()</td>
-<td>Indicates whether or not this node is locked.</td>
-</tr>
-<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">isNull</span></code></td>
-<td>Tests whether there is an internal Maya object.</td>
-</tr>
-<tr class="row-even"><td><a class="reference internal" href="#mpylib.MNode.isValid" title="mpylib.MNode.isValid"><code class="xref py py-obj docutils literal notranslate"><span class="pre">isValid</span></code></a>()</td>
-<td>Tests whether this node is still valid.</td>
-</tr>
-<tr class="row-odd"><td><a class="reference internal" href="#mpylib.MNode.isalnum" title="mpylib.MNode.isalnum"><code class="xref py py-obj docutils literal notranslate"><span class="pre">isalnum</span></code></a>([include_namespaces])</td>
-<td>String operartion just like str.isalnum().</td>
-</tr>
-<tr class="row-even"><td><a class="reference internal" href="#mpylib.MNode.isalpha" title="mpylib.MNode.isalpha"><code class="xref py py-obj docutils literal notranslate"><span class="pre">isalpha</span></code></a>([include_namespaces])</td>
-<td>String operartion just like str.isalpha().</td>
-</tr>
-<tr class="row-odd"><td><a class="reference internal" href="#mpylib.MNode.islower" title="mpylib.MNode.islower"><code class="xref py py-obj docutils literal notranslate"><span class="pre">islower</span></code></a>([include_namespaces])</td>
-<td>String operartion just like str.islower().</td>
-</tr>
-<tr class="row-even"><td><a class="reference internal" href="#mpylib.MNode.istitle" title="mpylib.MNode.istitle"><code class="xref py py-obj docutils literal notranslate"><span class="pre">istitle</span></code></a>([include_namespaces])</td>
-<td>String operartion just like str.istitle().</td>
-</tr>
-<tr class="row-odd"><td><a class="reference internal" href="#mpylib.MNode.isupper" title="mpylib.MNode.isupper"><code class="xref py py-obj docutils literal notranslate"><span class="pre">isupper</span></code></a>([include_namespaces])</td>
-<td>String operartion just like str.isupper().</td>
-</tr>
-<tr class="row-even"><td><a class="reference internal" href="#mpylib.MNode.join" title="mpylib.MNode.join"><code class="xref py py-obj docutils literal notranslate"><span class="pre">join</span></code></a>(iterable[,&nbsp;include_namespaces])</td>
-<td>String operartion just like str.join().</td>
-</tr>
-<tr class="row-odd"><td><a class="reference internal" href="#mpylib.MNode.listAttr" title="mpylib.MNode.listAttr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">listAttr</span></code></a>(*args,&nbsp;**kargs)</td>
-<td>List the atributes on this node</td>
-</tr>
-<tr class="row-even"><td><a class="reference internal" href="#mpylib.MNode.listConnections" title="mpylib.MNode.listConnections"><code class="xref py py-obj docutils literal notranslate"><span class="pre">listConnections</span></code></a>([attr_name])</td>
-<td>List connections to this node</td>
-</tr>
-<tr class="row-odd"><td><a class="reference internal" href="#mpylib.MNode.lower" title="mpylib.MNode.lower"><code class="xref py py-obj docutils literal notranslate"><span class="pre">lower</span></code></a>([include_namespaces])</td>
-<td>String operartion just like str.lower().</td>
-</tr>
-<tr class="row-even"><td><a class="reference internal" href="#mpylib.MNode.ls" title="mpylib.MNode.ls"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ls</span></code></a>(*args,&nbsp;**kargs)</td>
-<td>Wrapper class method for <em>maya.cmds.ls</em> thats returns a <em>MNodeList</em> result instead of a list of string names</td>
-</tr>
-<tr class="row-odd"><td><a class="reference internal" href="#mpylib.MNode.lstrip" title="mpylib.MNode.lstrip"><code class="xref py py-obj docutils literal notranslate"><span class="pre">lstrip</span></code></a>([chars,&nbsp;include_namespaces])</td>
-<td>String operartion just like str.lstrip().</td>
-</tr>
-<tr class="row-even"><td><a class="reference internal" href="#mpylib.MNode.partition" title="mpylib.MNode.partition"><code class="xref py py-obj docutils literal notranslate"><span class="pre">partition</span></code></a>(sep[,&nbsp;include_namespaces])</td>
-<td>String operartion just like str.partition().</td>
-</tr>
-<tr class="row-odd"><td><a class="reference internal" href="#mpylib.MNode.removeInputConnections" title="mpylib.MNode.removeInputConnections"><code class="xref py py-obj docutils literal notranslate"><span class="pre">removeInputConnections</span></code></a>(attr_name)</td>
-<td>Remove any incoming connections to the attribute with the given name.</td>
-</tr>
-<tr class="row-even"><td><a class="reference internal" href="#mpylib.MNode.removeOutputConnections" title="mpylib.MNode.removeOutputConnections"><code class="xref py py-obj docutils literal notranslate"><span class="pre">removeOutputConnections</span></code></a>(attr_name)</td>
-<td>Remove any output connections from the attribute with the given name.</td>
-</tr>
-<tr class="row-odd"><td><a class="reference internal" href="#mpylib.MNode.rename" title="mpylib.MNode.rename"><code class="xref py py-obj docutils literal notranslate"><span class="pre">rename</span></code></a>(new_name,&nbsp;**kargs)</td>
-<td>Rename this node</td>
-</tr>
-<tr class="row-even"><td><a class="reference internal" href="#mpylib.MNode.replace" title="mpylib.MNode.replace"><code class="xref py py-obj docutils literal notranslate"><span class="pre">replace</span></code></a>(old,&nbsp;new[,&nbsp;count,&nbsp;include_namespaces])</td>
-<td>String operartion just like str.replace().</td>
-</tr>
-<tr class="row-odd"><td><a class="reference internal" href="#mpylib.MNode.rfind" title="mpylib.MNode.rfind"><code class="xref py py-obj docutils literal notranslate"><span class="pre">rfind</span></code></a>(sub[,&nbsp;start,&nbsp;end,&nbsp;include_namespaces])</td>
-<td>String operartion just like str.rfind().</td>
-</tr>
-<tr class="row-even"><td><a class="reference internal" href="#mpylib.MNode.rindex" title="mpylib.MNode.rindex"><code class="xref py py-obj docutils literal notranslate"><span class="pre">rindex</span></code></a>(sub[,&nbsp;start,&nbsp;end,&nbsp;include_namespaces])</td>
-<td>String operartion just like str.rindex().</td>
-</tr>
-<tr class="row-odd"><td><a class="reference internal" href="#mpylib.MNode.rpartition" title="mpylib.MNode.rpartition"><code class="xref py py-obj docutils literal notranslate"><span class="pre">rpartition</span></code></a>(sep[,&nbsp;include_namespaces])</td>
-<td>String operartion just like str.rpartition().</td>
-</tr>
-<tr class="row-even"><td><a class="reference internal" href="#mpylib.MNode.rsplit" title="mpylib.MNode.rsplit"><code class="xref py py-obj docutils literal notranslate"><span class="pre">rsplit</span></code></a>(sep[,&nbsp;maxsplit,&nbsp;include_namespaces])</td>
-<td>String operartion just like str.rsplit().</td>
-</tr>
-<tr class="row-odd"><td><a class="reference internal" href="#mpylib.MNode.rstrip" title="mpylib.MNode.rstrip"><code class="xref py py-obj docutils literal notranslate"><span class="pre">rstrip</span></code></a>([chars,&nbsp;include_namespaces])</td>
-<td>String operartion just like str.lstrip().</td>
-</tr>
-<tr class="row-even"><td><a class="reference internal" href="#mpylib.MNode.select" title="mpylib.MNode.select"><code class="xref py py-obj docutils literal notranslate"><span class="pre">select</span></code></a>(**kargs)</td>
-<td>Selects this node with the given options.</td>
-</tr>
-<tr class="row-odd"><td><a class="reference internal" href="#mpylib.MNode.setAttr" title="mpylib.MNode.setAttr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">setAttr</span></code></a>(attr_name,&nbsp;*args,&nbsp;**kargs)</td>
-<td>Sets the given attr to the given value</td>
-</tr>
-<tr class="row-even"><td><a class="reference internal" href="#mpylib.MNode.setAttrsFromMap" title="mpylib.MNode.setAttrsFromMap"><code class="xref py py-obj docutils literal notranslate"><span class="pre">setAttrsFromMap</span></code></a>(attr_map[,&nbsp;skip_missing])</td>
-<td>Set attribute values from a dictionary object that has attribute names as keys and attribute values as values</td>
-</tr>
-<tr class="row-odd"><td><a class="reference internal" href="#mpylib.MNode.setDrivenKeyframe" title="mpylib.MNode.setDrivenKeyframe"><code class="xref py py-obj docutils literal notranslate"><span class="pre">setDrivenKeyframe</span></code></a>(attr,&nbsp;driver,&nbsp;driver_attr,&nbsp;…)</td>
-<td>Sets a set driven key on the current node using the given options</td>
-</tr>
-<tr class="row-even"><td><a class="reference internal" href="#mpylib.MNode.setMessageAttr" title="mpylib.MNode.setMessageAttr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">setMessageAttr</span></code></a>(attr_name,&nbsp;node[,&nbsp;lock])</td>
-<td>Connects the given node to the given message attribute on this node.</td>
-</tr>
-<tr class="row-odd"><td><a class="reference internal" href="#mpylib.MNode.setStringAttr" title="mpylib.MNode.setStringAttr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">setStringAttr</span></code></a>(attr_name,&nbsp;val,&nbsp;**kargs)</td>
-<td>Sets the given value on the given string attr.</td>
-</tr>
-<tr class="row-even"><td><a class="reference internal" href="#mpylib.MNode.split" title="mpylib.MNode.split"><code class="xref py py-obj docutils literal notranslate"><span class="pre">split</span></code></a>(sep[,&nbsp;maxsplit,&nbsp;include_namespaces])</td>
-<td>String operartion just like str.split().</td>
-</tr>
-<tr class="row-odd"><td><a class="reference internal" href="#mpylib.MNode.startswith" title="mpylib.MNode.startswith"><code class="xref py py-obj docutils literal notranslate"><span class="pre">startswith</span></code></a>(prefix[,&nbsp;start,&nbsp;end,&nbsp;…])</td>
-<td>String operartion just like str.startswith().</td>
-</tr>
-<tr class="row-even"><td><a class="reference internal" href="#mpylib.MNode.strip" title="mpylib.MNode.strip"><code class="xref py py-obj docutils literal notranslate"><span class="pre">strip</span></code></a>([chars,&nbsp;include_namespaces])</td>
-<td>String operartion just like str.strip().</td>
-</tr>
-<tr class="row-odd"><td><a class="reference internal" href="#mpylib.MNode.swapcase" title="mpylib.MNode.swapcase"><code class="xref py py-obj docutils literal notranslate"><span class="pre">swapcase</span></code></a>([include_namespaces])</td>
-<td>String operartion just like str.swapcase().</td>
-</tr>
-<tr class="row-even"><td><a class="reference internal" href="#mpylib.MNode.upper" title="mpylib.MNode.upper"><code class="xref py py-obj docutils literal notranslate"><span class="pre">upper</span></code></a>([include_namespaces])</td>
-<td>String operartion just like str.upper().</td>
-</tr>
-</tbody>
-</table>
-<table border="1" class="docutils">
-<colgroup>
-<col width="64%" />
-<col width="36%" />
-</colgroup>
-<tbody valign="top">
-<tr class="row-odd"><td><strong>getAddAttrCmd</strong></td>
-<td>&#160;</td>
-</tr>
-<tr class="row-even"><td><strong>getAddAttrMaps</strong></td>
-<td>&#160;</td>
 </tr>
 </tbody>
 </table>
@@ -1553,6 +1294,9 @@ Return a copy of object’s shortname, but with lower case letters converted to 
   <h4>Previous topic</h4>
   <p class="topless"><a href="../mpylib.html"
                         title="previous chapter">mpylib Package</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="mpylib.MNodeList.html"
+                        title="next chapter">MNodeList</a></p>
 <div class="this-page-menu">
   <a href="/scipy/docs/scipy-docs/api/mpylib.MNode.rst.rst">Edit page</a>
 </div>

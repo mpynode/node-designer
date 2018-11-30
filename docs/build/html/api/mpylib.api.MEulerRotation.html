@@ -28,7 +28,9 @@
     <link rel="index" title="Index" href="../genindex.html" >
     <link rel="search" title="Search" href="../search.html" >
     <link rel="top" title="MPyNode 1.0 documentation" href="../index.html" >
-    <link rel="up" title="mpylib.api Package" href="../mpylib.api.html" > 
+    <link rel="up" title="mpylib.api Package" href="../mpylib.api.html" >
+    <link rel="next" title="MFnNurbsCurve" href="mpylib.api.MFnNurbsCurve.html" >
+    <link rel="prev" title="MColorArray" href="mpylib.api.MColorArray.html" > 
   </head>
   <body>
 
@@ -64,6 +66,14 @@
         <a href="../py-modindex.html" title="Python Module Index"
            >modules</a>
       </li>
+      <li class="active">
+        <a href="mpylib.api.MFnNurbsCurve.html" title="MFnNurbsCurve"
+           accesskey="N">next</a>
+      </li>
+      <li class="active">
+        <a href="mpylib.api.MColorArray.html" title="MColorArray"
+           accesskey="P">previous</a>
+      </li>
     </ul>
               
 	    </div>
@@ -83,117 +93,6 @@
 <dt id="mpylib.api.MEulerRotation">
 <em class="property">class </em><code class="descname">MEulerRotation</code><span class="sig-paren">(</span><em>*args</em>, <em>**kargs</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.api.MEulerRotation" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">OpenMaya.MEulerRotation</span></code></p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Attributes:</th><td class="field-body"><dl class="first last docutils">
-<dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">order</span></code></dt>
-<dd><p class="first last">Rotation order</p>
-</dd>
-<dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">x</span></code></dt>
-<dd><p class="first last">X rotation in radians</p>
-</dd>
-<dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">y</span></code></dt>
-<dd><p class="first last">Y rotation in radians</p>
-</dd>
-<dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">z</span></code></dt>
-<dd><p class="first last">Z rotation in radians</p>
-</dd>
-</dl>
-</td>
-</tr>
-</tbody>
-</table>
-<p class="rubric">Methods</p>
-<table border="1" class="longtable docutils">
-<colgroup>
-<col width="10%" />
-<col width="90%" />
-</colgroup>
-<tbody valign="top">
-<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">boundIt</span></code></td>
-<td>In-place bounding of each rotation component to lie wthin +/- PI.</td>
-</tr>
-<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">incrementalRotateBy</span></code></td>
-<td>Increase this rotation by a given angle around the specified axis.</td>
-</tr>
-<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">invertIt</span></code></td>
-<td>In-place inversion of the rotation.</td>
-</tr>
-<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">isEquivalent</span></code></td>
-<td>Returns true if this rotation has the same order as another and their X, Y and Z components are within a tolerance of each other.</td>
-</tr>
-<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">isZero</span></code></td>
-<td>Returns true if the X, Y and Z components are each within a tolerance of 0.0.</td>
-</tr>
-<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">reorderIt</span></code></td>
-<td>In-place reordering to use the given rotation order.</td>
-</tr>
-<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">setToAlternateSolution</span></code></td>
-<td>Replace this rotation with an alternate solution.</td>
-</tr>
-<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">setToClosestCut</span></code></td>
-<td>Replace this rotation with the closest cut to a target.</td>
-</tr>
-<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">setToClosestSolution</span></code></td>
-<td>Replace this rotation with the closest solution to a target.</td>
-</tr>
-<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">setValue</span></code></td>
-<td>Set the rotation.</td>
-</tr>
-</tbody>
-</table>
-<table border="1" class="docutils">
-<colgroup>
-<col width="74%" />
-<col width="26%" />
-</colgroup>
-<tbody valign="top">
-<tr class="row-odd"><td><strong>alternateSolution</strong></td>
-<td>&#160;</td>
-</tr>
-<tr class="row-even"><td><strong>asMatrix</strong></td>
-<td>&#160;</td>
-</tr>
-<tr class="row-odd"><td><strong>asQuaternion</strong></td>
-<td>&#160;</td>
-</tr>
-<tr class="row-even"><td><strong>asVector</strong></td>
-<td>&#160;</td>
-</tr>
-<tr class="row-odd"><td><strong>bound</strong></td>
-<td>&#160;</td>
-</tr>
-<tr class="row-even"><td><strong>closestCut</strong></td>
-<td>&#160;</td>
-</tr>
-<tr class="row-odd"><td><strong>closestSolution</strong></td>
-<td>&#160;</td>
-</tr>
-<tr class="row-even"><td><strong>computeAlternateSolution</strong></td>
-<td>&#160;</td>
-</tr>
-<tr class="row-odd"><td><strong>computeBound</strong></td>
-<td>&#160;</td>
-</tr>
-<tr class="row-even"><td><strong>computeClosestCut</strong></td>
-<td>&#160;</td>
-</tr>
-<tr class="row-odd"><td><strong>computeClosestSolution</strong></td>
-<td>&#160;</td>
-</tr>
-<tr class="row-even"><td><strong>decompose</strong></td>
-<td>&#160;</td>
-</tr>
-<tr class="row-odd"><td><strong>inverse</strong></td>
-<td>&#160;</td>
-</tr>
-<tr class="row-even"><td><strong>reorder</strong></td>
-<td>&#160;</td>
-</tr>
-</tbody>
-</table>
 <p class="rubric">Methods Summary</p>
 <table border="1" class="longtable docutils">
 <colgroup>
@@ -338,6 +237,12 @@
             <p class="logo"><a href="../index.html">
               <img class="logo" src="../_static/mpynode_hr.png" alt="Logo">
             </a></p>
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="mpylib.api.MColorArray.html"
+                        title="previous chapter">MColorArray</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="mpylib.api.MFnNurbsCurve.html"
+                        title="next chapter">MFnNurbsCurve</a></p>
 <div class="this-page-menu">
   <a href="/scipy/docs/scipy-docs/api/mpylib.api.MEulerRotation.rst.rst">Edit page</a>
 </div>

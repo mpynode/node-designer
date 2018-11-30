@@ -28,7 +28,9 @@
     <link rel="index" title="Index" href="../genindex.html" >
     <link rel="search" title="Search" href="../search.html" >
     <link rel="top" title="MPyNode 1.0 documentation" href="../index.html" >
-    <link rel="up" title="mpylib Package" href="../mpylib.html" > 
+    <link rel="up" title="mpylib Package" href="../mpylib.html" >
+    <link rel="next" title="MShape" href="mpylib.MShape.html" >
+    <link rel="prev" title="MNode" href="mpylib.MNode.html" > 
   </head>
   <body>
 
@@ -64,6 +66,14 @@
         <a href="../py-modindex.html" title="Python Module Index"
            >modules</a>
       </li>
+      <li class="active">
+        <a href="mpylib.MShape.html" title="MShape"
+           accesskey="N">next</a>
+      </li>
+      <li class="active">
+        <a href="mpylib.MNode.html" title="MNode"
+           accesskey="P">previous</a>
+      </li>
     </ul>
               
 	    </div>
@@ -84,70 +94,6 @@
 <em class="property">class </em><code class="descname">MNodeList</code><span class="sig-paren">(</span><em>nodes=None</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.MNodeList" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>List type object, used for storing MNode type objects</p>
-<p class="rubric">Methods</p>
-<table border="1" class="longtable docutils">
-<colgroup>
-<col width="10%" />
-<col width="90%" />
-</colgroup>
-<tbody valign="top">
-<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">NODE_CLASS</span></code></td>
-<td>alias of <a class="reference internal" href="mpylib.MNode.html#mpylib.MNode" title="mpylib.MNode"><code class="xref py py-class docutils literal notranslate"><span class="pre">MNode</span></code></a></td>
-</tr>
-<tr class="row-even"><td><a class="reference internal" href="#mpylib.MNodeList.addAttr" title="mpylib.MNodeList.addAttr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">addAttr</span></code></a>(long_name,&nbsp;attr_type,&nbsp;**kargs)</td>
-<td>Adds an attribute of the given long name and given type to all the nodes in the list.</td>
-</tr>
-<tr class="row-odd"><td><a class="reference internal" href="#mpylib.MNodeList.append" title="mpylib.MNodeList.append"><code class="xref py py-obj docutils literal notranslate"><span class="pre">append</span></code></a>(item)</td>
-<td>Built-in method.</td>
-</tr>
-<tr class="row-even"><td><a class="reference internal" href="#mpylib.MNodeList.bakeResults" title="mpylib.MNodeList.bakeResults"><code class="xref py py-obj docutils literal notranslate"><span class="pre">bakeResults</span></code></a>(*args,&nbsp;**kargs)</td>
-<td>Run bakeResults on nodes in this list with the given options</td>
-</tr>
-<tr class="row-odd"><td><a class="reference internal" href="#mpylib.MNodeList.count" title="mpylib.MNodeList.count"><code class="xref py py-obj docutils literal notranslate"><span class="pre">count</span></code></a>(node)</td>
-<td><table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">purpose:</th><td class="field-body">Returns the number of occurances of the given node in the list</td>
-</tr>
-</tbody>
-</table>
-</td>
-</tr>
-<tr class="row-even"><td><a class="reference internal" href="#mpylib.MNodeList.delete" title="mpylib.MNodeList.delete"><code class="xref py py-obj docutils literal notranslate"><span class="pre">delete</span></code></a>()</td>
-<td>Delete all nodes in the list.</td>
-</tr>
-<tr class="row-odd"><td><a class="reference internal" href="#mpylib.MNodeList.extend" title="mpylib.MNodeList.extend"><code class="xref py py-obj docutils literal notranslate"><span class="pre">extend</span></code></a>(item)</td>
-<td>Built-in method.</td>
-</tr>
-<tr class="row-even"><td><a class="reference internal" href="#mpylib.MNodeList.getAttr" title="mpylib.MNodeList.getAttr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">getAttr</span></code></a>(attr_name[,&nbsp;skip_missing])</td>
-<td>Returns the value of the given attr on every node in the list.</td>
-</tr>
-<tr class="row-odd"><td><a class="reference internal" href="#mpylib.MNodeList.getAttrMap" title="mpylib.MNodeList.getAttrMap"><code class="xref py py-obj docutils literal notranslate"><span class="pre">getAttrMap</span></code></a>(*args,&nbsp;**kargs)</td>
-<td>Returns an OrderedDict of all MNodes is this list as keys and OrderedDict of attributes/values as values.</td>
-</tr>
-<tr class="row-even"><td><a class="reference internal" href="#mpylib.MNodeList.listNodesOfType" title="mpylib.MNodeList.listNodesOfType"><code class="xref py py-obj docutils literal notranslate"><span class="pre">listNodesOfType</span></code></a>(node_type)</td>
-<td>Return the nodes within this list that match the given node type.</td>
-</tr>
-<tr class="row-odd"><td><a class="reference internal" href="#mpylib.MNodeList.listNodesWithAttr" title="mpylib.MNodeList.listNodesWithAttr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">listNodesWithAttr</span></code></a>(attr_name)</td>
-<td>Return the nodes within this list that have an attribute with the given name.</td>
-</tr>
-<tr class="row-even"><td><a class="reference internal" href="#mpylib.MNodeList.setAttr" title="mpylib.MNodeList.setAttr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">setAttr</span></code></a>(attr_name[,&nbsp;val,&nbsp;skip_missing])</td>
-<td>Sets the given attr to the given value on all nodes in the list</td>
-</tr>
-</tbody>
-</table>
-<table border="1" class="docutils">
-<colgroup>
-<col width="47%" />
-<col width="53%" />
-</colgroup>
-<tbody valign="top">
-<tr class="row-odd"><td><strong>index</strong></td>
-<td>&#160;</td>
-</tr>
-</tbody>
-</table>
 <p class="rubric">Methods Summary</p>
 <table border="1" class="longtable docutils">
 <colgroup>
@@ -385,6 +331,12 @@ given attr. False will throw an exception on missing attr. default=False</li>
             <p class="logo"><a href="../index.html">
               <img class="logo" src="../_static/mpynode_hr.png" alt="Logo">
             </a></p>
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="mpylib.MNode.html"
+                        title="previous chapter">MNode</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="mpylib.MShape.html"
+                        title="next chapter">MShape</a></p>
 <div class="this-page-menu">
   <a href="/scipy/docs/scipy-docs/api/mpylib.MNodeList.rst.rst">Edit page</a>
 </div>

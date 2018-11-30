@@ -5,7 +5,7 @@ import os, shutil, glob, sys
 
 
 # Files to fix
-html_dir  = r'C:\Users\Eric\Documents\mpynode2\docs\build\html\api'
+html_dir  = r'.\build\html\api'
 fixes     = {'._base.mnode':'',
              '._base.mshape':''}
 

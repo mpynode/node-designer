@@ -14,7 +14,8 @@
 #
 import os
 import sys
-sys.path.insert(0, os.path.abspath(r'C:\Users\Eric\Documents\mpynode2\scripts'))
+print os.path.abspath(r'..\..\scripts')
+sys.path.insert(0, os.path.abspath(r'..\..\scripts'))
 
 
 # -- Project information -----------------------------------------------------
@@ -39,7 +40,7 @@ release = u'1.0'
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = ['sphinx.ext.autodoc', 'sphinxcontrib.restbuilder', 'numpydoc', 'sphinx_automodapi.automodapi']
-numpydoc_show_class_members = True
+numpydoc_show_class_members = False
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']

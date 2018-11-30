@@ -5,6 +5,7 @@ MNode
 
 .. autoclass:: MNode
    :show-inheritance:
+   :no-undoc-members:
 
    .. rubric:: Methods Summary
 
