@@ -30,10 +30,20 @@ Or by subclassing:
 ```
 from mpylib.nodes import MPyNode
 class NewNodeClass(MPyNode):
-    INIT_INPUT_ATTRS = {'inFloat':{'attr_type':'float', 'is_array':False}}
-    INIT_OUTPUT_ATTRS = {'outFloat':{'attr_type':'float', 'is_array':False}}
-    INIT_EXPRESSION_STR  = 'outFloat = inFloat'
+    INIT_INPUT_ATTRS    = {'inFloat':{'attr_type':'float', 'is_array':False}}
+    INIT_OUTPUT_ATTRS   = {'outFloat':{'attr_type':'float', 'is_array':False}}
+    INIT_EXPRESSION_STR = 'outFloat = inFloat'
                       
 new_node = NewNodeClass()
 all_new_nodes = NewNodeClass.ls()
 ```
+
+## Documentation
+**coming soon**
+
+## Authors
+* **Gene Hansen**  (gene.hansen@gmail.com)
+* **Eric Vignola** (eric.vignola@gmail.com)
+
+## License
+All Rights Reserved
