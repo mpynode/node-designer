@@ -6,12 +6,7 @@ Welcome to MPyNode's documentation!
 **allowing users to easily develop nodes with Maya's Python API.**
 
 
-.. rubric:: Indices and tables
-
-* :ref:`genindex`
-* :ref:`modindex`
-
-.. rubric:: Package documentation
+.. rubric:: Documentation
 
 .. toctree::
     mpylib
