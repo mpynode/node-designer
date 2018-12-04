@@ -204,6 +204,7 @@ class NDMainWindow(QMayaWindow):
         self._variables_widget.LOG_SIGNAL.connect(self._log_widget.write)
         
         self._scene_tree.LOG_SIGNAL.connect(self._log_widget.write)
+        self._scene_tree.ADD_NODE_SIGNAL.connect(self.addNewNode)
         self._scene_tree.DELETE_NODE_SIGNAL.connect(self._deleteNodesEvent)
         
         
@@ -2471,7 +2472,7 @@ class NDAddAttrDialog(QDialog):
 
 class NDSceneTree(QTreeWidget):
     
-    ADD_NODE_SIGNAL = Signal(tuple)
+    ADD_NODE_SIGNAL = Signal()
     DELETE_NODE_SIGNAL = Signal(tuple)
     LOG_SIGNAL = Signal(str, int)
 
@@ -2501,7 +2502,7 @@ class NDSceneTree(QTreeWidget):
         
     def _addNewNode(self):
         
-        pass
+        self.ADD_NODE_SIGNAL.emit()
         
         
     def _deleteSelectedNodes(self):
@@ -2524,7 +2525,9 @@ class NDSceneTree(QTreeWidget):
 
         menu = QMenu(self)
         menu.addAction(self._new_node_action)
-        menu.addAction(self._delete_nodes_action)
+        
+        if self.currentItem():
+            menu.addAction(self._delete_nodes_action)
 
         action = menu.exec_(self.mapToGlobal(event.pos()))
         
