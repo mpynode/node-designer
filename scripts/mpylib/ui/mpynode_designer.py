@@ -36,7 +36,7 @@ from qt_py_profile_table import QtPyProfileTable
 from mqt_main_window import QMayaWindow
 
 from ..nodes import MPyNode
-from .._base import MNode
+from .._base import MNode, MUndo
 
 
 ATTR_COLOR_DEFAULT = (80, 230, 80)
@@ -85,9 +85,6 @@ class NDMainWindow(QMayaWindow):
     VERSION = "1.0.1b1"
     TITLE = NAME + " " + VERSION
 
-    USES_SCENE_OPENED = True
-    USES_DAG_OBJECT_CREATED = True
-
     DEFAULT_X_POS = 200
     DEFAULT_Y_POS = 200
     DEFUALT_WIDTH = 900
@@ -123,11 +120,6 @@ class NDMainWindow(QMayaWindow):
         self._v_layout = None
         self._h_splitter = None
         self._v_splitter = None
-        
-        self._new_node_icon = QIcon()
-        self._save_node_icon = QIcon()
-        self._save_all_icon = QIcon()
-        self._help_icon = QIcon()
 
         self._save_to_file_action = None
         self._export_to_file_action = None
@@ -161,7 +153,6 @@ class NDMainWindow(QMayaWindow):
         self._main_widget = QWidget(self)
         self.setCentralWidget(self._main_widget)
 
-        self._collectResources()
         self._buildActions()
 
         self._buildToolBar()
@@ -181,28 +172,6 @@ class NDMainWindow(QMayaWindow):
         self.setGeometry(self.DEFAULT_X_POS, self.DEFAULT_Y_POS,
                          self.DEFUALT_WIDTH, self.DEFAULT_HEIGHT)
         
-        
-    def _collectResources(self):
-        
-        cur_dir = os.path.dirname(__file__).replace("\\", "/")
-        res_dir = cur_dir + "/" + self.RESOURCE_DIR_NAME
-        
-        if os.path.exists(res_dir):
-            
-            for item in os.listdir(res_dir):
-                item_path = res_dir + "/" + item
-                
-                ##----loading icons---##
-                if os.path.isfile(item_path) and item_path.endswith("." + self.ICON_FILE_EXT):
-                    base_name = "_" + item.split(".")[0]
-                    
-                    if hasattr(self, base_name):
-                        icon = getattr(self, base_name)
-                        icon.addFile(item_path)
-        
-        else:
-            print self.NAME + ": no " + self.RESOURCE_DIR_NAME + " directory found"
-
 
     def _buildToolBar(self):
 
@@ -217,6 +186,9 @@ class NDMainWindow(QMayaWindow):
 
 
     def _setSignals(self):
+        """
+        Defines events that happen when the main UI recieves a specific Qt Signal
+        """
 
         self._script_tab_widget.LOG_SIGNAL.connect(self._log_widget.write)
 
@@ -226,13 +198,13 @@ class NDMainWindow(QMayaWindow):
         self._attributes_widget.SCRIPT_SIGNAL.connect(self.writeScriptToLog)
         self._attributes_widget.NODE_RENAME_SIGNAL.connect(self.nodeRenamedEvent)
 
-        self._scene_tree.itemClicked.connect(self.sceneSelectChangeEvent)
+        self._scene_tree.itemSelectionChanged.connect(self.sceneSelectChangeEvent)
         self._scene_tree.itemDoubleClicked.connect(self.sceneDoubleClickEvent)
-
-        self.SCENE_OPENED.connect(self.sceneOpenRefresh)
-        #self.DAG_OBJECT_CREATED.connect(self.testCreateNode)
         
         self._variables_widget.LOG_SIGNAL.connect(self._log_widget.write)
+        
+        self._scene_tree.LOG_SIGNAL.connect(self._log_widget.write)
+        self._scene_tree.DELETE_NODE_SIGNAL.connect(self._deleteNodesEvent)
         
         
     def _setCallbacks(self):
@@ -241,6 +213,19 @@ class NDMainWindow(QMayaWindow):
         self._callback_array.append(om.MUserEventMessage.addUserEventCallback(self.INPUT_VALUES_CALLABCK_NAME, self._onWatchInputs, None))
         self._callback_array.append(om.MUserEventMessage.addUserEventCallback(self.LOG_ERROR_CALLBACK_NAME, self._onLogError, None))
         self._callback_array.append(om.MUserEventMessage.addUserEventCallback(self.LOG_TXT_CALLBACK_NAME, self._onLogText, None))
+        
+        self._callback_array.append(om.MSceneMessage.addCallback(om.MSceneMessage.kAfterOpen, self._onSceneOpen))
+        self._callback_array.append(om.MSceneMessage.addCallback(om.MSceneMessage.kAfterNew, self._onSceneOpen))
+        self._callback_array.append(om.MDGMessage.addNodeAddedCallback(self._onNodeCreated, MPyNode.NODE_TYPE))
+        self._callback_array.append(om.MDGMessage.addNodeRemovedCallback(self._onNodeDeleted, MPyNode.NODE_TYPE))
+        
+        
+    def _deleteNodesEvent(self, nodes):
+        
+        if nodes:
+            for node in nodes:
+                node.delete()
+                del(node)
         
         
     def _onLogProfile(self, data):
@@ -271,9 +256,41 @@ class NDMainWindow(QMayaWindow):
         
         if self._cur_py_node and self._cur_py_node == MNode(data[0]):
             self._log_widget.write(data[1])
+            
+            
+    def _onNodeCreated(self, obj, data):
+        
+        self._scene_tree.refresh()
+        
+        py_node = MPyNode(obj)
+        self._log_widget.write("New node added: " + py_node.getName())
+        
+        
+    def _onNodeDeleted(self, obj, data):
+        """
+        Called by MDGMessage.addNodeRemovedCallback
+        """
+        
+        py_node = MPyNode(obj)
+        
+        ##----find if there is an open script tab and close it----##
+        tab_index = self._script_tab_widget.getIndexOfNode(py_node)
+        is_cur_tab = False
+        
+        if not tab_index is None:
+            self._script_tab_widget.removeTab(tab_index)
+            is_cur_tab = True if self._script_tab_widget.currentIndex() == tab_index else False
+        
+        ##---print to log---##
+        node_name = py_node.getName()
+        self._log_widget.write("Node deleted: " + node_name)
+        
+        ##----api callback used by this function is pre-delete so wait to refresh the ui----##
+        mc.evalDeferred(self._scene_tree.refresh)
+        mc.evalDeferred(self._attributes_widget.refresh)
 
 
-    def sceneOpenRefresh(self):
+    def _onSceneOpen(self, data):
 
         self._script_tab_widget.closeAllTabs()
         self._scene_tree.refresh()
@@ -409,25 +426,25 @@ class NDMainWindow(QMayaWindow):
         self._save_to_file_action = QAction("Save to File", self,
                                             statusTip="Save current node as python class", triggered=self.saveToFile)
         
-        self._export_to_file_action = QAction("Export to File", self,
+        self._export_to_file_action = QAction(ICON_MANAGER["export_node_icon"], "Export to File", self,
                                               statusTip="Export current node to a file", triggered=self.exportToFile)
         
-        self._import_from_file_action = QAction("Import from File", self,
+        self._import_from_file_action = QAction(ICON_MANAGER["import_node_icon"], "Import from File", self,
                                                 statusTip="Import a node from a file", triggered=self.importFromFile)
 
-        self._new_node_action = QAction(self._new_node_icon, "&New Node", self, shortcut=QKeySequence.New,
+        self._new_node_action = QAction(ICON_MANAGER["new_node_icon"], "&New Node", self, shortcut=QKeySequence.New,
                                         statusTip="Create a new node", triggered=self.addNewNode)
 
-        self._save_node_action = QAction(self._save_node_icon, "&Save Node", self, shortcut=QKeySequence(Qt.Key_F5), statusTip="Save edits to the current node",
+        self._save_node_action = QAction(ICON_MANAGER["save_node_icon"], "&Save Node", self, shortcut=QKeySequence(Qt.Key_F5), statusTip="Save edits to the current node",
                                          triggered=self.saveCurrentNode)
 
-        self._save_all_nodes_action = QAction(self._save_all_icon, "&Save All", self,
+        self._save_all_nodes_action = QAction(ICON_MANAGER["save_all_icon"], "&Save All", self,
                                               statusTip="Save edits to the all open nodes", triggered=self.saveAllNodes)
         
-        self._help_doc_action = QAction(self._help_icon, self.NAME + " Help", self,
+        self._help_doc_action = QAction(ICON_MANAGER["help_icon"], self.NAME + " Help", self,
                                         statusTip="Opens help documentation in a browser", triggered=self.openHelpDocs)
         
-        self._help_api_doc_action = QAction(self._help_icon, "Scripting API Reference", self,
+        self._help_api_doc_action = QAction(ICON_MANAGER["help_icon"], "Scripting API Reference", self,
                                             statusTip="Opens API documentation in a browser", triggered=self.openApiDocs)
 
 
@@ -531,14 +548,10 @@ class NDMainWindow(QMayaWindow):
             return None
 
         else:
-            py_node = self.NODE_PARENT_CLASSES[0]()
+            py_node = MUndo(self.NODE_PARENT_CLASSES[0].createNode)()
 
             tab_widget, tab_index = self._script_tab_widget.addNewTab(py_node)
             self._script_tab_widget.setCurrentIndex(tab_index)
-
-            self._log_widget.write("New node added: " + py_node.getName())
-
-            self._scene_tree.refresh()
 
             return py_node
 
@@ -546,29 +559,26 @@ class NDMainWindow(QMayaWindow):
     def sceneDoubleClickEvent(self, item, column):
 
         if item:
-
             py_node = item.getMPyNode()
 
             if py_node and py_node.isValid():
-
                 py_node.select(replace=True)
 
             else:
                 self._log_widget.write("Cannot locate node in scene", QtLog.ERROR_TYPE)
 
 
-    def sceneSelectChangeEvent(self, item, col):
+    def sceneSelectChangeEvent(self):
+        
+        cur_sel = self._scene_tree.currentItem()
 
-        if item:
-
-            py_node = item.getMPyNode()
-
+        if cur_sel:
+            py_node = cur_sel.getMPyNode()
+            
             if py_node:
-
                 tab_index = self._script_tab_widget.getIndexOfNode(py_node)
 
                 if tab_index is not None:
-
                     self._script_tab_widget.setCurrentIndex(tab_index)
 
                 else:
@@ -785,17 +795,19 @@ class NDScriptTabWidget(QTabWidget):
     def showNodeSaveDlg(self, node_name):
 
         dlg = QMessageBox()
+        dlg.setWindowTitle("Save Node")
         dlg.setText(str(node_name) + " has been modified")
         dlg.setInformativeText("Save to changes to node?")
         dlg.setStandardButtons(QMessageBox.Save | QMessageBox.Discard | QMessageBox.Cancel)
         dlg.setDefaultButton(QMessageBox.Save)
 
-        return dlg.exec_()        
+        return dlg.exec_()
 
 
     def showNewNodeSaveDlg(self):
 
         dlg = QMessageBox()
+        dlg.setWindowTitle("Save Node")
         dlg.setText("There is no scene node associated with this script.")
         dlg.setInformativeText("Save to new node?")
         dlg.setStandardButtons(QMessageBox.Save | QMessageBox.Discard | QMessageBox.Cancel)
@@ -817,7 +829,7 @@ class NDScriptTabWidget(QTabWidget):
         tab_widget = self.currentWidget()
 
         if tab_widget:
-            self._saveTabNode(tab_widget)
+            MUndo(self._saveTabNode, tab_widget)()
 
         else:
             self.LOG_SIGNAL.emit("Nothing to save.", 1)
@@ -1528,7 +1540,7 @@ class NDInputAttrTree(QTreeWidget):
                 
                     add_func = getattr(self._py_node, self.ADD_ATTR_FUNC_NAME)
     
-                    add_func(attr_name, attr_type, is_array=is_array, **display_option)
+                    MUndo(add_func, attr_name, attr_type, is_array=is_array, **display_option)()
     
                     self.refresh()
     
@@ -2458,16 +2470,75 @@ class NDAddAttrDialog(QDialog):
 
 
 class NDSceneTree(QTreeWidget):
+    
+    ADD_NODE_SIGNAL = Signal(tuple)
+    DELETE_NODE_SIGNAL = Signal(tuple)
+    LOG_SIGNAL = Signal(str, int)
 
 
     def __init__(self, parent=None):
 
         super(NDSceneTree, self).__init__(parent)
+        
+        self._node_removed_action = None
+        
+        self._buildActions()
 
         self.setColumnCount(1)
         self.setHeaderItem(QTreeWidgetItem(["Name"]))
+        
+        self.setSelectionMode(QAbstractItemView.ContiguousSelection)
+        
+        
+    def _buildActions(self):
+        
+        self._new_node_action = QAction(ICON_MANAGER["new_node_icon"], "&New Node", self, shortcut=QKeySequence.New,
+                                        statusTip="Create a new node", triggered=self._addNewNode)     
+        
+        self._delete_nodes_action = QAction(ICON_MANAGER["delete_node_icon"], "Delete Node(s)", self,
+                                            statusTip="Delete selected node(s)", triggered=self._deleteSelectedNodes)
+        
+        
+    def _addNewNode(self):
+        
+        pass
+        
+        
+    def _deleteSelectedNodes(self):
+        
+        items = self.selectedItems()
+        
+        if items:
+            
+            do_delete = self.showNodeDeleteDlg()
+            
+            if do_delete == QMessageBox.Yes:
+                py_nodes = [item.getMPyNode() for item in items]
+                self.DELETE_NODE_SIGNAL.emit(tuple(py_nodes))
+        
+        else:
+            self.LOG_SIGNAL.emit("Nothing selected in the Scene list", QtLog.ERROR_TYPE)
+            
+            
+    def contextMenuEvent(self, event):
 
-        #self.setSelectionMode(QAbstractItemView.ExtendedSelection)
+        menu = QMenu(self)
+        menu.addAction(self._new_node_action)
+        menu.addAction(self._delete_nodes_action)
+
+        action = menu.exec_(self.mapToGlobal(event.pos()))
+        
+        
+    def showNodeDeleteDlg(self):
+
+        dlg = QMessageBox()
+        dlg.setWindowTitle("Delete")
+        dlg.setText("This will remove selected nodes")
+        dlg.setInformativeText("Delete selected nodes?")
+        dlg.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+        dlg.setDefaultButton(QMessageBox.No)
+
+        return dlg.exec_()    
 
 
     def refresh(self, node_class=MPyNode, str_exp=None):
@@ -2479,7 +2550,8 @@ class NDSceneTree(QTreeWidget):
         if py_nodes:
 
             for py_node in py_nodes:
-                NDSceneTreeItem(self, py_node)
+                scene_item = NDSceneTreeItem(self, py_node)
+                scene_item.setIcon(0, ICON_MANAGER["logo_blue_icon"])
 
 
 class NDSceneTreeItem(QTreeWidgetItem):
@@ -2635,3 +2707,61 @@ class NDWatchVarsWidget(QWidget):
                 self._watch_table.refresh(data)
         else:  
             self._watch_table.refresh()
+            
+            
+            
+class NDIconManager(object):
+    
+    DIR_NAME = "resources"
+    
+    FILE_EXTS = ("png",)
+    
+    
+    def __init__(self):
+        
+        self._icon_map = {}
+        
+        self._collectIcons()
+    
+    
+    def _collectIcons(self):
+        
+        cur_dir = os.path.dirname(__file__).replace("\\", "/")
+        res_dir = cur_dir + "/" + self.DIR_NAME
+        
+        if os.path.exists(res_dir):
+            
+            for item in os.listdir(res_dir):
+                item_path = res_dir + "/" + item
+                
+                ##----loading icons---##
+                if os.path.isfile(item_path) and item_path.split(".")[-1] in self.FILE_EXTS:
+                    base_name = item.split(".")[0]
+                    
+                    self._icon_map[base_name] = QIcon(item_path)
+        
+        else:
+            print self.NAME + ": no " + self.RESOURCE_DIR_NAME + " directory found"
+            
+            
+    def __len__(self):
+        
+        return len(self._icon_map)
+    
+    
+    def __getitem__(self, key):
+        
+        return self._icon_map[key]
+    
+    
+    def __missing__(self, key):
+        
+        return QIcon()
+    
+    
+    def __contains__(self, item):
+        
+        return item in self._icon_map
+    
+    
+ICON_MANAGER = NDIconManager()

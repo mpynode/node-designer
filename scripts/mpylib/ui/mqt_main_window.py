@@ -26,6 +26,8 @@ class QMayaWindow(QMainWindow):
     PRE_SCENE_OPENED = None
     
     USES_DAG_OBJECT_CREATED = False
+    DAG_OBJECT_CREATED = None
+    
     USES_NAME_CHANGED = False
     
     
@@ -53,6 +55,9 @@ class QMayaWindow(QMainWindow):
             
         if self.USES_PRE_SCENE_OPENED:
             self.PRE_SCENE_OPENED = QMayaMain.createPreSceneOpenSignal()
+            
+        if self.USES_DAG_OBJECT_CREATED:
+            self.DAG_OBJECT_CREATED = QMayaMain.createDagObjCreatedSignal()
         
         
     def closeEvent(self, event):

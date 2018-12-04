@@ -82,22 +82,6 @@ class MTrans(MNode):
 
         if not self.hasFn(om.MFn.kTransform):
             raise TypeError("Given node must be " + self.NODE_TYPE + " type. " + str(self))
-    
-    
-    @classmethod
-    def createNode(cls, *args, **kargs):
-        """
-        Create a new transform node
-
-        **kargs**		keyword args supported by *maya.cmds.createNode*.
-
-        **RETURNS** 	*MTrans* of newly created node
-
-        >>> new_node = MTrans.createNode(name="new_trans")
-
-        """          
-        
-        return cls(cls.__bases__[0].createNode(cls.NODE_TYPE, **kargs))
 
 
     def convertLocalVectToWorld(self, vct):

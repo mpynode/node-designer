@@ -57,12 +57,12 @@ class QMayaMain(object):
     
     
     @classmethod
-    def getSceneSignalObject(cls):
+    def getSignalObject(cls):
         """
-        Static method, returns the OpenSceneEvent object being used by the scene. If one does not exist,
+        Get the QMayaSignals object being used by this class. If one does not exist,
         a new one will be created and returned.
         
-        :RETURNS:	OpenSceneEvent
+        :RETURNS:	QMayaSignals
         """
 
         if cls.SCENE_SIGNAL_OBJ is None:
@@ -80,7 +80,7 @@ class QMayaMain(object):
         :returns:	None
         """
 
-        sig = QMayaMain.getSceneSignalObject()
+        sig = QMayaMain.getSignalObject()
         sig.SCENE_OPENED.emit()
         
         
@@ -89,18 +89,16 @@ class QMayaMain(object):
         """
         :purpose:	This function sets a SceneOpened MEventMessage callback that can be used
                     to keep any listening Qt widgets up to date. The the callback event
-                    tells the main maya window QObject to emit the signal SIG_SCENE_OPEN. 
-                    A new callback is only created if none yet exist. When a new callback is created
-                    the env var MG_SCENE_OPEN_EVENT_ID is set to its event id. Additional calls to this
-                    function do nothing if the var HMS_ASM_SCENE_EVENT_ID already exists.
-        :returns:	int event id
+                    tells the main maya window QObject to emit the signal SCENE_OPENED. 
+                    A new callback is only created if none yet exist 
+        :returns:	Qt Signal object
         """
     
         if cls.SCENE_OPENED_CALLBACK is None:
             
-            cls.SCENE_OPENED_CALLBACK = om.MEventMessage.addEventCallback("SceneOpened", cls.sceneOpenEvent)
+            cls.SCENE_OPENED_CALLBACK = om.MSceneMessage.addCallback(om.MSceneMessage.kAfterOpen, cls.sceneOpenEvent)
     
-        sig_obj = cls.getSceneSignalObject()
+        sig_obj = cls.getSignalObject()
         
         return sig_obj.SCENE_OPENED
     
@@ -110,7 +108,7 @@ class QMayaMain(object):
         """
         """
 
-        sig = QMayaMain.getSceneSignalObject()
+        sig = QMayaMain.getSignalObject()
         sig.PRE_SCENE_OPENED.emit()
         
         
@@ -121,31 +119,20 @@ class QMayaMain(object):
     
         if cls.PRE_SCENE_OPENED_CALLBACK is None:
             
-            cls.PRE_SCENE_OPENED_CALLBACK = om.MEventMessage.addEventCallback("PreFileNewOrOpened", cls.preSceneOpenEvent)
+            cls.PRE_SCENE_OPENED_CALLBACK = om.MSceneMessage.addCallback(om.MSceneMessage.kBeforeOpen, cls.preSceneOpenEvent)
     
-        sig_obj = cls.getSceneSignalObject()
+        sig_obj = cls.getSignalObject()
         
         return sig_obj.PRE_SCENE_OPENED    
-    
-    
-    @classmethod
-    def getDagObjCreatedSignal(cls):
-        """
-        """
-
-        if cls.DAG_OBJ_CREATED_SIGNAL is None:
-            cls.DAG_OBJ_CREATED_SIGNAL = QMayaSignals().DAG_OBJECT_CREATED
-
-        return cls.DAG_OBJ_CREATED_SIGNAL
     
     
     @staticmethod
     def dagObjCreatedEvent(event):
         """
         """
-
-        signal = QMayaMain.getDagObjCreatedSignal()
-        signal.emit()
+        
+        sig = QMayaMain.getSignalObject()
+        sig.DAG_OBJECT_CREATED.emit()
         
         
     @classmethod
@@ -157,8 +144,7 @@ class QMayaMain(object):
             
             cls.DAG_OBJ_CREATED_CALLBACK = om.MEventMessage.addEventCallback("DagObjectCreated", cls.dagObjCreatedEvent)
     
-        return cls.getDagObjCreatedSignal()    
-    
+        return cls.getSignalObject().DAG_OBJECT_CREATED
     
     
 class QMayaSignals(QObject):

@@ -1306,12 +1306,11 @@ class MPyNodeEventManager(object):
         """
         Called by custom callback "writeStorableVarCallback" to write the current value of all stored variables on the
         given node to the node.
-        """        
+        """
         
         for node_hash in data:
             
-            if node_hash in self._py_nodes:
-                
+            if node_hash in self._py_nodes and self._py_nodes[node_hash].isValid():
                 self._py_nodes[node_hash].writeStoredVariables()
             
             else:
