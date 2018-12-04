@@ -88,25 +88,25 @@
 <col width="90%" />
 </colgroup>
 <tbody valign="top">
-<tr class="row-odd"><td><a class="reference internal" href="../mpylib.api.html#mpylib.api.MFnNurbsCurve.closestPoint" title="mpylib.api.MFnNurbsCurve.closestPoint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">closestPoint</span></code></a>(test_pnt[,&nbsp;guess,&nbsp;tolerance,&nbsp;space])</td>
+<tr class="row-odd"><td><a class="reference internal" href="#mpylib.api.MFnNurbsCurve.closestPoint" title="mpylib.api.MFnNurbsCurve.closestPoint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">closestPoint</span></code></a>(test_pnt[,&nbsp;guess,&nbsp;tolerance,&nbsp;space])</td>
 <td>Returns a tuple containing the point on the curve which is closest to ‘testPoint’, and the parameter value at which that point occurs.</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="../mpylib.api.html#mpylib.api.MFnNurbsCurve.cvPosition" title="mpylib.api.MFnNurbsCurve.cvPosition"><code class="xref py py-obj docutils literal notranslate"><span class="pre">cvPosition</span></code></a>(index[,&nbsp;space])</td>
+<tr class="row-even"><td><a class="reference internal" href="#mpylib.api.MFnNurbsCurve.cvPosition" title="mpylib.api.MFnNurbsCurve.cvPosition"><code class="xref py py-obj docutils literal notranslate"><span class="pre">cvPosition</span></code></a>(index[,&nbsp;space])</td>
 <td>Returns the position of a single control vertex.</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="../mpylib.api.html#mpylib.api.MFnNurbsCurve.cvPositions" title="mpylib.api.MFnNurbsCurve.cvPositions"><code class="xref py py-obj docutils literal notranslate"><span class="pre">cvPositions</span></code></a>([space])</td>
+<tr class="row-odd"><td><a class="reference internal" href="#mpylib.api.MFnNurbsCurve.cvPositions" title="mpylib.api.MFnNurbsCurve.cvPositions"><code class="xref py py-obj docutils literal notranslate"><span class="pre">cvPositions</span></code></a>([space])</td>
 <td>Returns the positions of all of the curve’s control vertices.</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="../mpylib.api.html#mpylib.api.MFnNurbsCurve.getDerivativesAtParam" title="mpylib.api.MFnNurbsCurve.getDerivativesAtParam"><code class="xref py py-obj docutils literal notranslate"><span class="pre">getDerivativesAtParam</span></code></a>(param[,&nbsp;space])</td>
+<tr class="row-even"><td><a class="reference internal" href="#mpylib.api.MFnNurbsCurve.getDerivativesAtParam" title="mpylib.api.MFnNurbsCurve.getDerivativesAtParam"><code class="xref py py-obj docutils literal notranslate"><span class="pre">getDerivativesAtParam</span></code></a>(param[,&nbsp;space])</td>
 <td>Evaluates the curve at the given parameter value, returning a tuple containing the position and first derivative at that value.</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="../mpylib.api.html#mpylib.api.MFnNurbsCurve.getPointAtParam" title="mpylib.api.MFnNurbsCurve.getPointAtParam"><code class="xref py py-obj docutils literal notranslate"><span class="pre">getPointAtParam</span></code></a>(param[,&nbsp;space])</td>
+<tr class="row-odd"><td><a class="reference internal" href="#mpylib.api.MFnNurbsCurve.getPointAtParam" title="mpylib.api.MFnNurbsCurve.getPointAtParam"><code class="xref py py-obj docutils literal notranslate"><span class="pre">getPointAtParam</span></code></a>(param[,&nbsp;space])</td>
 <td>Returns the point on the curve at the given parameter value.</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="../mpylib.api.html#mpylib.api.MFnNurbsCurve.normal" title="mpylib.api.MFnNurbsCurve.normal"><code class="xref py py-obj docutils literal notranslate"><span class="pre">normal</span></code></a>(param[,&nbsp;space])</td>
+<tr class="row-even"><td><a class="reference internal" href="#mpylib.api.MFnNurbsCurve.normal" title="mpylib.api.MFnNurbsCurve.normal"><code class="xref py py-obj docutils literal notranslate"><span class="pre">normal</span></code></a>(param[,&nbsp;space])</td>
 <td>Returns the normal at the given parameter value on the curve.</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="../mpylib.api.html#mpylib.api.MFnNurbsCurve.tangent" title="mpylib.api.MFnNurbsCurve.tangent"><code class="xref py py-obj docutils literal notranslate"><span class="pre">tangent</span></code></a>(param[,&nbsp;space])</td>
+<tr class="row-odd"><td><a class="reference internal" href="#mpylib.api.MFnNurbsCurve.tangent" title="mpylib.api.MFnNurbsCurve.tangent"><code class="xref py py-obj docutils literal notranslate"><span class="pre">tangent</span></code></a>(param[,&nbsp;space])</td>
 <td>Returns the normalized tangent vector at the given parameter value on the curve.</td>
 </tr>
 </tbody>
@@ -217,123 +217,6 @@ the normal is defined by the local curvature at the parameter.</p>
 <dl class="method">
 <dt id="mpylib.api.MFnNurbsCurve.tangent">
 <code class="descname">tangent</code><span class="sig-paren">(</span><em>param</em>, <em>space=kObject</em><span class="sig-paren">)</span> &#x2192; MVector<a class="headerlink" href="#mpylib.api.MFnNurbsCurve.tangent" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns the normalized tangent vector at the given parameter value
-on the curve.</p>
-<ul class="simple">
-<li>param (float) - parameter value at which to find the tangent</li>
-<li><dl class="first docutils">
-<dt>space   (int) - an MSpace constant giving the coordinate space in</dt>
-<dd>which the tangent should be returned</dd>
-</dl>
-</li>
-</ul>
-</dd></dl>
-
-<dl class="method">
-<dt>
-<code class="descname">closestPoint</code><span class="sig-paren">(</span><em>test_pnt</em>, <em>guess=None</em>, <em>tolerance=0.001</em>, <em>space=2</em><span class="sig-paren">)</span></dt>
-<dd><p>Returns a tuple containing the point on the curve which is closest
-to ‘testPoint’, and the parameter value at which that point occurs.</p>
-<ul class="simple">
-<li>testPoint (MPoint) - point to get closest to</li>
-<li><dl class="first docutils">
-<dt>guess      (float) - a guess as to roughly where on the curve the</dt>
-<dd>closest point will be. If the guess is in the
-correct span than it can significantly speed
-up the search. If not then it may slow down
-the search a bit. If no guess is supplied
-then the search will begin at the start of
-the curve.</dd>
-</dl>
-</li>
-<li><dl class="first docutils">
-<dt>tolerance  (float) - maximum allowed distance between the curve</dt>
-<dd>and the returned point.</dd>
-</dl>
-</li>
-<li>space (MSpace constant) - coordinate space to use for the points</li>
-</ul>
-</dd></dl>
-
-<dl class="method">
-<dt>
-<code class="descname">cvPosition</code><span class="sig-paren">(</span><em>index</em>, <em>space=kObject</em><span class="sig-paren">)</span> &#x2192; MPoint</dt>
-<dd><p>Returns the position of a single control vertex.</p>
-<ul class="simple">
-<li>index (int) - index of the CV to return</li>
-<li><dl class="first docutils">
-<dt>space (int) - an MSpace constant giving the coordinate space in</dt>
-<dd>which the point is given</dd>
-</dl>
-</li>
-</ul>
-</dd></dl>
-
-<dl class="method">
-<dt>
-<code class="descname">cvPositions</code><span class="sig-paren">(</span><em>space=kObject</em><span class="sig-paren">)</span> &#x2192; MPointArray</dt>
-<dd><p>Returns the positions of all of the curve’s control vertices.</p>
-<ul class="simple">
-<li><dl class="first docutils">
-<dt>space (int) - an MSpace constant giving the coordinate space in</dt>
-<dd>which the point is given</dd>
-</dl>
-</li>
-</ul>
-</dd></dl>
-
-<dl class="method">
-<dt>
-<code class="descname">getDerivativesAtParam</code><span class="sig-paren">(</span><em>param</em>, <em>space=kObject) -&gt; (MPoint</em>, <em>MVector</em><span class="optional">[</span>, <em>MVector</em><span class="optional">]</span><span class="sig-paren">)</span></dt>
-<dd><p>Evaluates the curve at the given parameter value, returning a tuple
-containing the position and first derivative at that value. If ‘dUU’
-is True then the returned tuple will include the second derivative
-as well as its third element.</p>
-<ul class="simple">
-<li>param (float) - parameter value at which to do the evaluation</li>
-<li><dl class="first docutils">
-<dt>space   (int) - an MSpace constant giving the coordinate space in</dt>
-<dd>which the point is given</dd>
-</dl>
-</li>
-<li>dUU    (bool) - if True include the second derivative in the result.</li>
-</ul>
-</dd></dl>
-
-<dl class="method">
-<dt>
-<code class="descname">getPointAtParam</code><span class="sig-paren">(</span><em>param</em>, <em>space=kObject</em><span class="sig-paren">)</span> &#x2192; MPoint</dt>
-<dd><p>Returns the point on the curve at the given parameter value.</p>
-<ul class="simple">
-<li>param (float) - parameter value at which to find the point</li>
-<li><dl class="first docutils">
-<dt>space   (int) - an MSpace constant giving the coordinate space in</dt>
-<dd>which the point should be returned</dd>
-</dl>
-</li>
-</ul>
-</dd></dl>
-
-<dl class="method">
-<dt>
-<code class="descname">normal</code><span class="sig-paren">(</span><em>param</em>, <em>space=kObject</em><span class="sig-paren">)</span> &#x2192; MVector</dt>
-<dd><p>Returns the normal at the given parameter value on the curve. For
-degree 1 curves the normal is the vector at right angles to the
-curve that lies in the average plane of the curve. For higher degrees
-the normal is defined by the local curvature at the parameter.</p>
-<ul class="simple">
-<li>param (float) - parameter value at which to find the normal</li>
-<li><dl class="first docutils">
-<dt>space   (int) - an MSpace constant giving the coordinate space in</dt>
-<dd>which the normal should be returned</dd>
-</dl>
-</li>
-</ul>
-</dd></dl>
-
-<dl class="method">
-<dt>
-<code class="descname">tangent</code><span class="sig-paren">(</span><em>param</em>, <em>space=kObject</em><span class="sig-paren">)</span> &#x2192; MVector</dt>
 <dd><p>Returns the normalized tangent vector at the given parameter value
 on the curve.</p>
 <ul class="simple">

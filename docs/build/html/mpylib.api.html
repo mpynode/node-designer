@@ -4,12 +4,13 @@
   <head>
     <meta charset="utf-8">
     
-    <title>mpylib.api module &mdash; MPyNode 1.0 documentation</title>
+    <title>mpylib.api Package &mdash; MPyNode 1.0 documentation</title>
     
     <link rel="stylesheet" type="text/css" href="_static/css/spc-bootstrap.css">
     <link rel="stylesheet" type="text/css" href="_static/css/spc-extend.css">
     <link rel="stylesheet" href="_static/scipy.css" type="text/css" >
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" >
+    <link rel="stylesheet" href="_static/graphviz.css" type="text/css" >
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
@@ -26,7 +27,9 @@
     <script type="text/javascript" src="_static/js/copybutton.js"></script>
     <link rel="index" title="Index" href="genindex.html" >
     <link rel="search" title="Search" href="search.html" >
-    <link rel="top" title="MPyNode 1.0 documentation" href="index.html" > 
+    <link rel="top" title="MPyNode 1.0 documentation" href="index.html" >
+    <link rel="next" title="MAngle" href="api/mpylib.api.MAngle.html" >
+    <link rel="prev" title="MTransList" href="api/mpylib.MTransList.html" > 
   </head>
   <body>
 
@@ -61,6 +64,14 @@
         <a href="py-modindex.html" title="Python Module Index"
            >modules</a>
       </li>
+      <li class="active">
+        <a href="api/mpylib.api.MAngle.html" title="MAngle"
+           accesskey="N">next</a>
+      </li>
+      <li class="active">
+        <a href="api/mpylib.MTransList.html" title="MTransList"
+           accesskey="P">previous</a>
+      </li>
     </ul>
               
 	    </div>
@@ -75,427 +86,60 @@
           <div class="body" id="spc-section-body">
             
   <div class="section" id="module-mpylib.api">
-<span id="mpylib-api-module"></span><h1>mpylib.api module<a class="headerlink" href="#module-mpylib.api" title="Permalink to this headline">¶</a></h1>
-<dl class="class">
-<dt id="mpylib.api.MAngle">
-<em class="property">class </em><code class="descname">MAngle</code><span class="sig-paren">(</span><em>*args</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.api.MAngle" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">OpenMaya.MAngle</span></code></p>
-</dd></dl>
-
-<dl class="class">
-<dt id="mpylib.api.MColor">
-<em class="property">class </em><code class="descname">MColor</code><span class="sig-paren">(</span><em>clr=None</em>, <em>model=0</em>, <em>dataType=0</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.api.MColor" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">OpenMaya.MColor</span></code></p>
-<dl class="method">
-<dt id="mpylib.api.MColor.setColor">
-<code class="descname">setColor</code><span class="sig-paren">(</span><em>clr</em>, <em>model=0</em>, <em>dataType=0</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.api.MColor.setColor" title="Permalink to this definition">¶</a></dt>
-<dd><p>Sets the color’s components and color model.</p>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="mpylib.api.MColorArray">
-<em class="property">class </em><code class="descname">MColorArray</code><span class="sig-paren">(</span><em>*args</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.api.MColorArray" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">OpenMaya.MColorArray</span></code></p>
-</dd></dl>
-
-<dl class="class">
-<dt id="mpylib.api.MEulerRotation">
-<em class="property">class </em><code class="descname">MEulerRotation</code><span class="sig-paren">(</span><em>*args</em>, <em>**kargs</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.api.MEulerRotation" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">OpenMaya.MEulerRotation</span></code></p>
-<dl class="method">
-<dt id="mpylib.api.MEulerRotation.alternateSolution">
-<code class="descname">alternateSolution</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.api.MEulerRotation.alternateSolution" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns an equivalent rotation which is not simply a multiple.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="mpylib.api.MEulerRotation.asMatrix">
-<code class="descname">asMatrix</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.api.MEulerRotation.asMatrix" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns the rotation as an equivalent matrix.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="mpylib.api.MEulerRotation.asQuaternion">
-<code class="descname">asQuaternion</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.api.MEulerRotation.asQuaternion" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns the rotation as an equivalent quaternion.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="mpylib.api.MEulerRotation.asVector">
-<code class="descname">asVector</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.api.MEulerRotation.asVector" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns the X, Y and Z rotations as a vector.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="mpylib.api.MEulerRotation.bound">
-<code class="descname">bound</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.api.MEulerRotation.bound" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns a new MEulerRotation having this rotation, but with each rotation component bound within +/- PI.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="mpylib.api.MEulerRotation.closestCut">
-<code class="descname">closestCut</code><span class="sig-paren">(</span><em>target</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.api.MEulerRotation.closestCut" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns the rotation which is full spin multiples of this one and comes closest to target.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="mpylib.api.MEulerRotation.closestSolution">
-<code class="descname">closestSolution</code><span class="sig-paren">(</span><em>target</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.api.MEulerRotation.closestSolution" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns the equivalent rotation which comes closest to a target.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="mpylib.api.MEulerRotation.inverse">
-<code class="descname">inverse</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.api.MEulerRotation.inverse" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns a new MEulerRotation containing the inverse rotation of this one and reversed rotation order.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="mpylib.api.MEulerRotation.reorder">
-<code class="descname">reorder</code><span class="sig-paren">(</span><em>order</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.api.MEulerRotation.reorder" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns a new MEulerRotation having this rotation, reordered to use the given rotation order.</p>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="mpylib.api.MFnNurbsCurve">
-<em class="property">class </em><code class="descname">MFnNurbsCurve</code><span class="sig-paren">(</span><em>*args</em>, <em>**kargs</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.api.MFnNurbsCurve" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">OpenMaya.MFnNurbsCurve</span></code></p>
-<dl class="method">
-<dt id="mpylib.api.MFnNurbsCurve.closestPoint">
-<code class="descname">closestPoint</code><span class="sig-paren">(</span><em>test_pnt</em>, <em>guess=None</em>, <em>tolerance=0.001</em>, <em>space=2</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.api.MFnNurbsCurve.closestPoint" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns a tuple containing the point on the curve which is closest
-to ‘testPoint’, and the parameter value at which that point occurs.</p>
-<ul class="simple">
-<li>testPoint (MPoint) - point to get closest to</li>
-<li><dl class="first docutils">
-<dt>guess      (float) - a guess as to roughly where on the curve the</dt>
-<dd>closest point will be. If the guess is in the
-correct span than it can significantly speed
-up the search. If not then it may slow down
-the search a bit. If no guess is supplied
-then the search will begin at the start of
-the curve.</dd>
-</dl>
-</li>
-<li><dl class="first docutils">
-<dt>tolerance  (float) - maximum allowed distance between the curve</dt>
-<dd>and the returned point.</dd>
-</dl>
-</li>
-<li>space (MSpace constant) - coordinate space to use for the points</li>
-</ul>
-</dd></dl>
-
-<dl class="method">
-<dt id="mpylib.api.MFnNurbsCurve.cvPosition">
-<code class="descname">cvPosition</code><span class="sig-paren">(</span><em>index</em>, <em>space=kObject</em><span class="sig-paren">)</span> &#x2192; MPoint<a class="headerlink" href="#mpylib.api.MFnNurbsCurve.cvPosition" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns the position of a single control vertex.</p>
-<ul class="simple">
-<li>index (int) - index of the CV to return</li>
-<li><dl class="first docutils">
-<dt>space (int) - an MSpace constant giving the coordinate space in</dt>
-<dd>which the point is given</dd>
-</dl>
-</li>
-</ul>
-</dd></dl>
-
-<dl class="method">
-<dt id="mpylib.api.MFnNurbsCurve.cvPositions">
-<code class="descname">cvPositions</code><span class="sig-paren">(</span><em>space=kObject</em><span class="sig-paren">)</span> &#x2192; MPointArray<a class="headerlink" href="#mpylib.api.MFnNurbsCurve.cvPositions" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns the positions of all of the curve’s control vertices.</p>
-<ul class="simple">
-<li><dl class="first docutils">
-<dt>space (int) - an MSpace constant giving the coordinate space in</dt>
-<dd>which the point is given</dd>
-</dl>
-</li>
-</ul>
-</dd></dl>
-
-<dl class="method">
-<dt id="mpylib.api.MFnNurbsCurve.getDerivativesAtParam">
-<code class="descname">getDerivativesAtParam</code><span class="sig-paren">(</span><em>param</em>, <em>space=kObject) -&gt; (MPoint</em>, <em>MVector</em><span class="optional">[</span>, <em>MVector</em><span class="optional">]</span><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.api.MFnNurbsCurve.getDerivativesAtParam" title="Permalink to this definition">¶</a></dt>
-<dd><p>Evaluates the curve at the given parameter value, returning a tuple
-containing the position and first derivative at that value. If ‘dUU’
-is True then the returned tuple will include the second derivative
-as well as its third element.</p>
-<ul class="simple">
-<li>param (float) - parameter value at which to do the evaluation</li>
-<li><dl class="first docutils">
-<dt>space   (int) - an MSpace constant giving the coordinate space in</dt>
-<dd>which the point is given</dd>
-</dl>
-</li>
-<li>dUU    (bool) - if True include the second derivative in the result.</li>
-</ul>
-</dd></dl>
-
-<dl class="method">
-<dt id="mpylib.api.MFnNurbsCurve.getPointAtParam">
-<code class="descname">getPointAtParam</code><span class="sig-paren">(</span><em>param</em>, <em>space=kObject</em><span class="sig-paren">)</span> &#x2192; MPoint<a class="headerlink" href="#mpylib.api.MFnNurbsCurve.getPointAtParam" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns the point on the curve at the given parameter value.</p>
-<ul class="simple">
-<li>param (float) - parameter value at which to find the point</li>
-<li><dl class="first docutils">
-<dt>space   (int) - an MSpace constant giving the coordinate space in</dt>
-<dd>which the point should be returned</dd>
-</dl>
-</li>
-</ul>
-</dd></dl>
-
-<dl class="method">
-<dt id="mpylib.api.MFnNurbsCurve.normal">
-<code class="descname">normal</code><span class="sig-paren">(</span><em>param</em>, <em>space=kObject</em><span class="sig-paren">)</span> &#x2192; MVector<a class="headerlink" href="#mpylib.api.MFnNurbsCurve.normal" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns the normal at the given parameter value on the curve. For
-degree 1 curves the normal is the vector at right angles to the
-curve that lies in the average plane of the curve. For higher degrees
-the normal is defined by the local curvature at the parameter.</p>
-<ul class="simple">
-<li>param (float) - parameter value at which to find the normal</li>
-<li><dl class="first docutils">
-<dt>space   (int) - an MSpace constant giving the coordinate space in</dt>
-<dd>which the normal should be returned</dd>
-</dl>
-</li>
-</ul>
-</dd></dl>
-
-<dl class="method">
-<dt id="mpylib.api.MFnNurbsCurve.tangent">
-<code class="descname">tangent</code><span class="sig-paren">(</span><em>param</em>, <em>space=kObject</em><span class="sig-paren">)</span> &#x2192; MVector<a class="headerlink" href="#mpylib.api.MFnNurbsCurve.tangent" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns the normalized tangent vector at the given parameter value
-on the curve.</p>
-<ul class="simple">
-<li>param (float) - parameter value at which to find the tangent</li>
-<li><dl class="first docutils">
-<dt>space   (int) - an MSpace constant giving the coordinate space in</dt>
-<dd>which the tangent should be returned</dd>
-</dl>
-</li>
-</ul>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="mpylib.api.MMatrix">
-<em class="property">class </em><code class="descname">MMatrix</code><span class="sig-paren">(</span><em>*args</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.api.MMatrix" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">OpenMaya.MMatrix</span></code></p>
-<dl class="method">
-<dt id="mpylib.api.MMatrix.adjoint">
-<code class="descname">adjoint</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.api.MMatrix.adjoint" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns a new matrix containing this matrix’s adjoint.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="mpylib.api.MMatrix.homogenize">
-<code class="descname">homogenize</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.api.MMatrix.homogenize" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns a new matrix containing the homogenized version of this matrix.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="mpylib.api.MMatrix.inverse">
-<code class="descname">inverse</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.api.MMatrix.inverse" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns a new matrix containing this matrix’s inverse.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="mpylib.api.MMatrix.transpose">
-<code class="descname">transpose</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.api.MMatrix.transpose" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns a new matrix containing this matrix’s inverse.</p>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="mpylib.api.MMatrixArray">
-<em class="property">class </em><code class="descname">MMatrixArray</code><span class="sig-paren">(</span><em>*args</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.api.MMatrixArray" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">OpenMaya.MMatrixArray</span></code></p>
-</dd></dl>
-
-<dl class="class">
-<dt id="mpylib.api.MPoint">
-<em class="property">class </em><code class="descname">MPoint</code><span class="sig-paren">(</span><em>*args</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.api.MPoint" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">OpenMaya.MPoint</span></code></p>
-</dd></dl>
-
-<dl class="class">
-<dt id="mpylib.api.MPointArray">
-<em class="property">class </em><code class="descname">MPointArray</code><span class="sig-paren">(</span><em>*args</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.api.MPointArray" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">OpenMaya.MPointArray</span></code></p>
-</dd></dl>
-
-<dl class="class">
-<dt id="mpylib.api.MQuaternion">
-<em class="property">class </em><code class="descname">MQuaternion</code><span class="sig-paren">(</span><em>*args</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.api.MQuaternion" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">OpenMaya.MQuaternion</span></code></p>
-<dl class="method">
-<dt id="mpylib.api.MQuaternion.asAxisAngle">
-<code class="descname">asAxisAngle</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.api.MQuaternion.asAxisAngle" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns the rotation as a tuple containing an axis vector and an angle in radians about that axis.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="mpylib.api.MQuaternion.asEulerRotation">
-<code class="descname">asEulerRotation</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.api.MQuaternion.asEulerRotation" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns the rotation as an equivalent MEulerRotation.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="mpylib.api.MQuaternion.asMatrix">
-<code class="descname">asMatrix</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.api.MQuaternion.asMatrix" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns the rotation as an equivalent rotation matrix.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="mpylib.api.MQuaternion.conjugate">
-<code class="descname">conjugate</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.api.MQuaternion.conjugate" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns the conjugate of this quaternion (i.e. x, y and z components negated).</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="mpylib.api.MQuaternion.exp">
-<code class="descname">exp</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.api.MQuaternion.exp" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns a new quaternion containing the exponent of this one.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="mpylib.api.MQuaternion.inverse">
-<code class="descname">inverse</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.api.MQuaternion.inverse" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns a new quaternion containing the inverse of this one.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="mpylib.api.MQuaternion.log">
-<code class="descname">log</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.api.MQuaternion.log" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns a new quaternion containing the log of this one.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="mpylib.api.MQuaternion.normal">
-<code class="descname">normal</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.api.MQuaternion.normal" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns a new quaternion containing the normalized version of this one (i.e. scaled to unit length).</p>
-</dd></dl>
-
-<dl class="staticmethod">
-<dt id="mpylib.api.MQuaternion.slerp">
-<em class="property">static </em><code class="descname">slerp</code><span class="sig-paren">(</span><em>p</em>, <em>q</em>, <em>t</em>, <em>spin</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.api.MQuaternion.slerp" title="Permalink to this definition">¶</a></dt>
-<dd><p>Spherical interpolation of unit quaternions. Returns a quaternion along the shortest path (in quaternion space) 
-between p and q, at interpolation value t. Thus a value of 0.0 will return p while a value of 1.0 will return q.
-spin gives the number of complete rotations about the axis which must occur when going from p to q.</p>
-</dd></dl>
-
-<dl class="staticmethod">
-<dt id="mpylib.api.MQuaternion.squad">
-<em class="property">static </em><code class="descname">squad</code><span class="sig-paren">(</span><em>p</em>, <em>a</em>, <em>b</em>, <em>q</em>, <em>t</em>, <em>spin=0</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.api.MQuaternion.squad" title="Permalink to this definition">¶</a></dt>
-<dd><p>Interpolation along a cubic curve segment in quaternion space. Returns a quaternion along the cubic curve
-segment which interpolates p and q, at interpolation value t. Thus a value of 0.0 will return p while a value
-of 1.0 will return q. The curve is C1 continuous with a and b as intermediate points. spins gives the number of
-complete rotations about the axis which must occur when going from p to q.</p>
-</dd></dl>
-
-<dl class="staticmethod">
-<dt id="mpylib.api.MQuaternion.squadPt">
-<em class="property">static </em><code class="descname">squadPt</code><span class="sig-paren">(</span><em>q0</em>, <em>q1</em>, <em>q2</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.api.MQuaternion.squadPt" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns a new quaternion representing an intermediate point (in quaternion space) which when used with squad()
-will produce a C1 continuous spline.</p>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="mpylib.api.MTime">
-<em class="property">class </em><code class="descname">MTime</code><span class="sig-paren">(</span><em>*args</em>, <em>**kargs</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.api.MTime" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">OpenMaya.MTime</span></code></p>
-</dd></dl>
-
-<dl class="class">
-<dt id="mpylib.api.MTimeArray">
-<em class="property">class </em><code class="descname">MTimeArray</code><span class="sig-paren">(</span><em>*args</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.api.MTimeArray" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">OpenMaya.MTimeArray</span></code></p>
-</dd></dl>
-
-<dl class="class">
-<dt id="mpylib.api.MVector">
-<em class="property">class </em><code class="descname">MVector</code><span class="sig-paren">(</span><em>*args</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.api.MVector" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">OpenMaya.MVector</span></code></p>
-<p>3D vector with double-precision coordinates. Overrides OpenMaya.MVector to add custom functionality</p>
-<dl class="method">
-<dt id="mpylib.api.MVector.normal">
-<code class="descname">normal</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.api.MVector.normal" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns a new vector containing the normalized version of this one.</p>
-<p><strong>RETURNS</strong>     <em>MVector</em></p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">new_v</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">normal</span><span class="p">()</span>
-</pre></div>
+<span id="mpylib-api-package"></span><h1>mpylib.api Package<a class="headerlink" href="#module-mpylib.api" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="classes">
+<h2>Classes<a class="headerlink" href="#classes" title="Permalink to this headline">¶</a></h2>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><a class="reference internal" href="api/mpylib.api.MAngle.html#mpylib.api.MAngle" title="mpylib.api.MAngle"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MAngle</span></code></a>(*args)</td>
+<td></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="api/mpylib.api.MColor.html#mpylib.api.MColor" title="mpylib.api.MColor"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MColor</span></code></a>([clr,&nbsp;model,&nbsp;dataType])</td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="api/mpylib.api.MColorArray.html#mpylib.api.MColorArray" title="mpylib.api.MColorArray"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MColorArray</span></code></a>(*args)</td>
+<td></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="api/mpylib.api.MEulerRotation.html#mpylib.api.MEulerRotation" title="mpylib.api.MEulerRotation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MEulerRotation</span></code></a>(*args,&nbsp;**kargs)</td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="api/mpylib.api.MFnNurbsCurve.html#mpylib.api.MFnNurbsCurve" title="mpylib.api.MFnNurbsCurve"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MFnNurbsCurve</span></code></a>(*args,&nbsp;**kargs)</td>
+<td></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="api/mpylib.api.MMatrix.html#mpylib.api.MMatrix" title="mpylib.api.MMatrix"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MMatrix</span></code></a>(*args)</td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="api/mpylib.api.MMatrixArray.html#mpylib.api.MMatrixArray" title="mpylib.api.MMatrixArray"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MMatrixArray</span></code></a>(*args)</td>
+<td></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="api/mpylib.api.MPoint.html#mpylib.api.MPoint" title="mpylib.api.MPoint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MPoint</span></code></a>(*args)</td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="api/mpylib.api.MPointArray.html#mpylib.api.MPointArray" title="mpylib.api.MPointArray"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MPointArray</span></code></a>(*args)</td>
+<td></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="api/mpylib.api.MQuaternion.html#mpylib.api.MQuaternion" title="mpylib.api.MQuaternion"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MQuaternion</span></code></a>(*args)</td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="api/mpylib.api.MTime.html#mpylib.api.MTime" title="mpylib.api.MTime"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MTime</span></code></a>(*args,&nbsp;**kargs)</td>
+<td></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="api/mpylib.api.MTimeArray.html#mpylib.api.MTimeArray" title="mpylib.api.MTimeArray"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MTimeArray</span></code></a>(*args)</td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="api/mpylib.api.MVector.html#mpylib.api.MVector" title="mpylib.api.MVector"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MVector</span></code></a>(*args)</td>
+<td>3D vector with double-precision coordinates.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="api/mpylib.api.MVectorArray.html#mpylib.api.MVectorArray" title="mpylib.api.MVectorArray"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MVectorArray</span></code></a>(*args)</td>
+<td>The MVectorArray class provides an array of MVector elements using a common array interface and reference semantics.</td>
+</tr>
+</tbody>
+</table>
 </div>
-</dd></dl>
-
-<dl class="method">
-<dt id="mpylib.api.MVector.normalize">
-<code class="descname">normalize</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.api.MVector.normalize" title="Permalink to this definition">¶</a></dt>
-<dd><p>Normalizes this vector in-place and returns a new reference to it.</p>
-<p><strong>RETURNS</strong>     <em>MVector</em></p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">v</span><span class="o">.</span><span class="n">normalize</span><span class="p">()</span>
-</pre></div>
-</div>
-</dd></dl>
-
-<dl class="method">
-<dt id="mpylib.api.MVector.rotateBy">
-<code class="descname">rotateBy</code><span class="sig-paren">(</span><em>*args</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.api.MVector.rotateBy" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns the vector resulting from rotating this one by the given amount.</p>
-<p><strong>args</strong>                single <em>MQuaternion</em> or <em>MEulerRotation</em>, or an axis identifier constant and a <em>float</em> angle</p>
-<p><strong>RETURNS</strong>     <em>MVector</em></p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1">##---rotate by MQuaternion or MEulerRotation---##</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">new_v</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">rotateBy</span><span class="p">(</span><span class="n">rot</span><span class="p">)</span>
-<span class="go">&gt;&gt;&gt;</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="c1">##---rotate by angle radians about the specified axis---##</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">new_v</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">rotateBy</span><span class="p">(</span><span class="n">MVector</span><span class="o">.</span><span class="n">kXaxis</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">)</span>
-</pre></div>
-</div>
-</dd></dl>
-
-<dl class="method">
-<dt id="mpylib.api.MVector.rotateTo">
-<code class="descname">rotateTo</code><span class="sig-paren">(</span><em>target</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.api.MVector.rotateTo" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns the quaternion which will rotate this vector into another.</p>
-<p><strong>target</strong>              <em>MVector</em></p>
-<p><strong>RETURNS</strong>     <em>MQuaternion</em></p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">q</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">rotateTo</span><span class="p">(</span><span class="n">MVector</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">))</span>
-</pre></div>
-</div>
-</dd></dl>
-
-<dl class="method">
-<dt id="mpylib.api.MVector.transformAsNormal">
-<code class="descname">transformAsNormal</code><span class="sig-paren">(</span><em>matrix</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.api.MVector.transformAsNormal" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns a new vector which is calculated by postmultiplying this vector by the transpose of the given matrix’s inverse and then normalizing the result.</p>
-<p><strong>matrix</strong>              <em>MMatrix</em></p>
-<p><strong>RETURNS</strong>             <em>MVector</em></p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">matrix</span> <span class="o">=</span> <span class="n">MMatrix</span><span class="p">()</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">new_v</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">transformAsNormal</span><span class="p">(</span><span class="n">matrix</span><span class="p">)</span>
-</pre></div>
-</div>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="mpylib.api.MVectorArray">
-<em class="property">class </em><code class="descname">MVectorArray</code><span class="sig-paren">(</span><em>*args</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.api.MVectorArray" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">OpenMaya.MVectorArray</span></code></p>
-<p>The MVectorArray class provides an array of MVector elements using a common array interface and reference
-semantics. See Working with M*Array Classes for more details.</p>
-<p>Trying to override muliply functionality causes Maya to crash. If user multiplys this array by a int value
-it will return version of OpenMaya.MVectorArray as a result.</p>
-</dd></dl>
-
 </div>
 
 
@@ -507,6 +151,20 @@ it will return version of OpenMaya.MVectorArray as a result.</p>
             <p class="logo"><a href="index.html">
               <img class="logo" src="_static/mpynode_hr.png" alt="Logo">
             </a></p>
+  <h3><a href="index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">mpylib.api Package</a><ul>
+<li><a class="reference internal" href="#classes">Classes</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="api/mpylib.MTransList.html"
+                        title="previous chapter">MTransList</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="api/mpylib.api.MAngle.html"
+                        title="next chapter">MAngle</a></p>
 <div class="this-page-menu">
   <a href="/scipy/docs/scipy-docs/mpylib.api.rst.rst">Edit page</a>
 </div>

@@ -4,12 +4,13 @@
   <head>
     <meta charset="utf-8">
     
-    <title>mpylib package &mdash; MPyNode 1.0 documentation</title>
+    <title>mpylib Package &mdash; MPyNode 1.0 documentation</title>
     
     <link rel="stylesheet" type="text/css" href="_static/css/spc-bootstrap.css">
     <link rel="stylesheet" type="text/css" href="_static/css/spc-extend.css">
     <link rel="stylesheet" href="_static/scipy.css" type="text/css" >
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" >
+    <link rel="stylesheet" href="_static/graphviz.css" type="text/css" >
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
@@ -26,7 +27,9 @@
     <script type="text/javascript" src="_static/js/copybutton.js"></script>
     <link rel="index" title="Index" href="genindex.html" >
     <link rel="search" title="Search" href="search.html" >
-    <link rel="top" title="MPyNode 1.0 documentation" href="index.html" > 
+    <link rel="top" title="MPyNode 1.0 documentation" href="index.html" >
+    <link rel="next" title="MNode" href="api/mpylib.MNode.html" >
+    <link rel="prev" title="Welcome to MPyNode’s documentation!" href="index.html" > 
   </head>
   <body>
 
@@ -61,6 +64,14 @@
         <a href="py-modindex.html" title="Python Module Index"
            >modules</a>
       </li>
+      <li class="active">
+        <a href="api/mpylib.MNode.html" title="MNode"
+           accesskey="N">next</a>
+      </li>
+      <li class="active">
+        <a href="index.html" title="Welcome to MPyNode’s documentation!"
+           accesskey="P">previous</a>
+      </li>
     </ul>
               
 	    </div>
@@ -74,17 +85,68 @@
         <div class="bodywrapper">
           <div class="body" id="spc-section-body">
             
-  <div class="section" id="mpylib-package">
-<h1>mpylib package<a class="headerlink" href="#mpylib-package" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="subpackages">
-<h2>Subpackages<a class="headerlink" href="#subpackages" title="Permalink to this headline">¶</a></h2>
-<div class="toctree-wrapper compound">
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="mpylib.api.html">mpylib.api module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="mpylib.geo.html">mpylib.geo module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="mpylib.nodes.html">mpylib.nodes module</a></li>
-</ul>
-</div>
+  <div class="section" id="module-mpylib">
+<span id="mpylib-package"></span><h1>mpylib Package<a class="headerlink" href="#module-mpylib" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="classes">
+<h2>Classes<a class="headerlink" href="#classes" title="Permalink to this headline">¶</a></h2>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><a class="reference internal" href="api/mpylib.MNode.html#mpylib.MNode" title="mpylib.MNode"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MNode</span></code></a>([node,&nbsp;node_type,&nbsp;name])</td>
+<td><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">purpose:</th><td class="field-body">Provides object oriented interface for querying/editing DAG or DG nodes inside Maya.</td>
+</tr>
+</tbody>
+</table>
+</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="api/mpylib.MNodeList.html#mpylib.MNodeList" title="mpylib.MNodeList"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MNodeList</span></code></a>([nodes])</td>
+<td>List type object, used for storing MNode type objects</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="api/mpylib.MShape.html#mpylib.MShape" title="mpylib.MShape"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MShape</span></code></a>(shape)</td>
+<td><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">purpose:</th><td class="field-body">Base class for shape node related funtionality. Single instance of</td>
+</tr>
+</tbody>
+</table>
+</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="api/mpylib.MShapeList.html#mpylib.MShapeList" title="mpylib.MShapeList"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MShapeList</span></code></a>([nodes])</td>
+<td><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">purpose:</th><td class="field-body">List type object, used for storing MShape type objects</td>
+</tr>
+</tbody>
+</table>
+</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="api/mpylib.MTrans.html#mpylib.MTrans" title="mpylib.MTrans"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MTrans</span></code></a>([node,&nbsp;name])</td>
+<td>Provides object oriented interface for querying/editing DAG nodes inside Maya.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="api/mpylib.MTransList.html#mpylib.MTransList" title="mpylib.MTransList"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MTransList</span></code></a>([nodes])</td>
+<td><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">purpose:</th><td class="field-body">List like object for storing and interacting with multiple transform nodes.</td>
+</tr>
+</tbody>
+</table>
+</td>
+</tr>
+</tbody>
+</table>
 </div>
 </div>
 
@@ -99,12 +161,18 @@
             </a></p>
   <h3><a href="index.html">Table of Contents</a></h3>
   <ul>
-<li><a class="reference internal" href="#">mpylib package</a><ul>
-<li><a class="reference internal" href="#subpackages">Subpackages</a></li>
+<li><a class="reference internal" href="#">mpylib Package</a><ul>
+<li><a class="reference internal" href="#classes">Classes</a></li>
 </ul>
 </li>
 </ul>
 
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="index.html"
+                        title="previous chapter">Welcome to MPyNode’s documentation!</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="api/mpylib.MNode.html"
+                        title="next chapter">MNode</a></p>
 <div class="this-page-menu">
   <a href="/scipy/docs/scipy-docs/mpylib.rst.rst">Edit page</a>
 </div>

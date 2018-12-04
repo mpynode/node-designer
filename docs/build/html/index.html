@@ -10,6 +10,7 @@
     <link rel="stylesheet" type="text/css" href="_static/css/spc-extend.css">
     <link rel="stylesheet" href="_static/scipy.css" type="text/css" >
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" >
+    <link rel="stylesheet" href="_static/graphviz.css" type="text/css" >
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
@@ -26,7 +27,8 @@
     <script type="text/javascript" src="_static/js/copybutton.js"></script>
     <link rel="index" title="Index" href="genindex.html" >
     <link rel="search" title="Search" href="search.html" >
-    <link rel="top" title="MPyNode 1.0 documentation" href="#" > 
+    <link rel="top" title="MPyNode 1.0 documentation" href="#" >
+    <link rel="next" title="mpylib Package" href="mpylib.html" > 
   </head>
   <body>
 
@@ -59,6 +61,10 @@
         <a href="py-modindex.html" title="Python Module Index"
            >modules</a>
       </li>
+      <li class="active">
+        <a href="mpylib.html" title="mpylib Package"
+           accesskey="N">next</a>
+      </li>
     </ul>
               
 	    </div>
@@ -74,15 +80,61 @@
             
   <div class="section" id="welcome-to-mpynode-s-documentation">
 <h1>Welcome to MPyNode’s documentation!<a class="headerlink" href="#welcome-to-mpynode-s-documentation" title="Permalink to this headline">¶</a></h1>
+<p><strong>MPyNode simplifies all the technical overhead required by MPxNode,</strong></p>
+<p><strong>allowing users to easily develop nodes with Maya’s Python API.</strong></p>
+<p class="rubric">Documentation</p>
 <div class="toctree-wrapper compound">
-</div>
-</div>
-<div class="section" id="indices-and-tables">
-<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h1>
-<ul class="simple">
-<li><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></li>
-<li><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></li>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="mpylib.html">mpylib Package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="mpylib.html#classes">Classes</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="api/mpylib.MNode.html">MNode</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/mpylib.MNodeList.html">MNodeList</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/mpylib.MShape.html">MShape</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/mpylib.MShapeList.html">MShapeList</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/mpylib.MTrans.html">MTrans</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/mpylib.MTransList.html">MTransList</a></li>
 </ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="mpylib.api.html">mpylib.api Package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="mpylib.api.html#classes">Classes</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="api/mpylib.api.MAngle.html">MAngle</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/mpylib.api.MColor.html">MColor</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/mpylib.api.MColorArray.html">MColorArray</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/mpylib.api.MEulerRotation.html">MEulerRotation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/mpylib.api.MFnNurbsCurve.html">MFnNurbsCurve</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/mpylib.api.MMatrix.html">MMatrix</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/mpylib.api.MMatrixArray.html">MMatrixArray</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/mpylib.api.MPoint.html">MPoint</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/mpylib.api.MPointArray.html">MPointArray</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/mpylib.api.MQuaternion.html">MQuaternion</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/mpylib.api.MTime.html">MTime</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/mpylib.api.MTimeArray.html">MTimeArray</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/mpylib.api.MVector.html">MVector</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/mpylib.api.MVectorArray.html">MVectorArray</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="mpylib.geo.html">mpylib.geo Package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="mpylib.geo.html#classes">Classes</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="api/mpylib.geo.MMesh.html">MMesh</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="mpylib.nodes.html">mpylib.nodes Package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="mpylib.nodes.html#classes">Classes</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="api/mpylib.nodes.MPyNode.html">MPyNode</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+<p class="rubric">Tutorials</p>
+<p>Coming soon!</p>
 </div>
 
 
@@ -94,12 +146,9 @@
             <p class="logo"><a href="#">
               <img class="logo" src="_static/mpynode_hr.png" alt="Logo">
             </a></p>
-  <h3><a href="#">Table of Contents</a></h3>
-  <ul>
-<li><a class="reference internal" href="#">Welcome to MPyNode’s documentation!</a></li>
-<li><a class="reference internal" href="#indices-and-tables">Indices and tables</a></li>
-</ul>
-
+  <h4>Next topic</h4>
+  <p class="topless"><a href="mpylib.html"
+                        title="next chapter">mpylib Package</a></p>
 <div class="this-page-menu">
   <a href="/scipy/docs/scipy-docs/index.rst.rst">Edit page</a>
 </div>

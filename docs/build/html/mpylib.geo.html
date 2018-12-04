@@ -4,12 +4,13 @@
   <head>
     <meta charset="utf-8">
     
-    <title>mpylib.geo module &mdash; MPyNode 1.0 documentation</title>
+    <title>mpylib.geo Package &mdash; MPyNode 1.0 documentation</title>
     
     <link rel="stylesheet" type="text/css" href="_static/css/spc-bootstrap.css">
     <link rel="stylesheet" type="text/css" href="_static/css/spc-extend.css">
     <link rel="stylesheet" href="_static/scipy.css" type="text/css" >
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" >
+    <link rel="stylesheet" href="_static/graphviz.css" type="text/css" >
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
@@ -26,7 +27,9 @@
     <script type="text/javascript" src="_static/js/copybutton.js"></script>
     <link rel="index" title="Index" href="genindex.html" >
     <link rel="search" title="Search" href="search.html" >
-    <link rel="top" title="MPyNode 1.0 documentation" href="index.html" > 
+    <link rel="top" title="MPyNode 1.0 documentation" href="index.html" >
+    <link rel="next" title="MMesh" href="api/mpylib.geo.MMesh.html" >
+    <link rel="prev" title="MVectorArray" href="api/mpylib.api.MVectorArray.html" > 
   </head>
   <body>
 
@@ -61,6 +64,14 @@
         <a href="py-modindex.html" title="Python Module Index"
            >modules</a>
       </li>
+      <li class="active">
+        <a href="api/mpylib.geo.MMesh.html" title="MMesh"
+           accesskey="N">next</a>
+      </li>
+      <li class="active">
+        <a href="api/mpylib.api.MVectorArray.html" title="MVectorArray"
+           accesskey="P">previous</a>
+      </li>
     </ul>
               
 	    </div>
@@ -75,283 +86,21 @@
           <div class="body" id="spc-section-body">
             
   <div class="section" id="module-mpylib.geo">
-<span id="mpylib-geo-module"></span><h1>mpylib.geo module<a class="headerlink" href="#module-mpylib.geo" title="Permalink to this headline">¶</a></h1>
-<dl class="class">
-<dt id="mpylib.geo.MMesh">
-<em class="property">class </em><code class="descname">MMesh</code><span class="sig-paren">(</span><em>node</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.geo.MMesh" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">mpylib._base.mshape.MShape</span></code></p>
-<p>Provides object oriented interface for querying/editing poly mesh shape nodes.</p>
-<dl class="attribute">
-<dt id="mpylib.geo.MMesh.DAG_FN_CLASS">
-<code class="descname">DAG_FN_CLASS</code><a class="headerlink" href="#mpylib.geo.MMesh.DAG_FN_CLASS" title="Permalink to this definition">¶</a></dt>
-<dd><p>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">OpenMaya.MFnMesh</span></code></p>
-</dd></dl>
-
-<dl class="method">
-<dt id="mpylib.geo.MMesh.getClosestPoint">
-<code class="descname">getClosestPoint</code><span class="sig-paren">(</span><em>point</em>, <em>space=2</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.geo.MMesh.getClosestPoint" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns a tuple containing the closest point on the mesh to the
-given point and the ID of the face in which that closest point lies.</p>
-<p><strong>point</strong>               MPoint - point to be compared</p>
-<p><strong>space</strong>               MSpace constant - Coordinate space to use. Default = OpenMaya.MSpace.kObject</p>
-<p><strong>RETURNS</strong>             Tuple (MPoint, int)</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="mpylib.geo.MMesh.getEdgeCount">
-<code class="descname">getEdgeCount</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.geo.MMesh.getEdgeCount" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns the number of edges for this mesh.</p>
-<p><strong>RETURNS</strong>             int number of edges</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="mpylib.geo.MMesh.getEdgesConnectedToVerts">
-<code class="descname">getEdgesConnectedToVerts</code><span class="sig-paren">(</span><em>verts=None</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.geo.MMesh.getEdgesConnectedToVerts" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns a tuple containing edge indices of all connected edges for all verts on a mesh or specific verts on a mesh.
-If all verts a queried, the indices of the returned tuple will equal the indices of the mesh. If specific
-verts are queried, indices of the returned tuple will match the indices of the prvided vert list.</p>
-<p><strong>verts</strong>               Optional sequence of <em>int</em> mesh indices to query. Default=None, which queries ALL verts on the mesh</p>
-<p><strong>RETURNS</strong>             Tuple of sequences of connected edge indices</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1">##--connected verts for all edges on a cube</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">mesh</span> <span class="o">=</span> <span class="n">MMesh</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">verts</span> <span class="o">=</span> <span class="n">mesh</span><span class="o">.</span><span class="n">getEdgesConnectedToVerts</span><span class="p">()</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="c1">##RESULTS -- ((10,0,4), (11,5,0), (6,4,1), (7,1,5), (8,6,2), (9,2,7), (10,8,3), (11,3,9))</span>
-<span class="go">&gt;&gt;&gt;</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="c1">##--connected edges for vert 1, 2 and 3</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">mesh</span> <span class="o">=</span> <span class="n">MMesh</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">verts</span> <span class="o">=</span> <span class="n">mesh</span><span class="o">.</span><span class="n">getEdgesConnectedToVerts</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="c1">##RESULTS -- ((11,5,0), (6,4,1), (7,1,5))</span>
-</pre></div>
+<span id="mpylib-geo-package"></span><h1>mpylib.geo Package<a class="headerlink" href="#module-mpylib.geo" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="classes">
+<h2>Classes<a class="headerlink" href="#classes" title="Permalink to this headline">¶</a></h2>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><a class="reference internal" href="api/mpylib.geo.MMesh.html#mpylib.geo.MMesh" title="mpylib.geo.MMesh"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MMesh</span></code></a>(node)</td>
+<td>Provides object oriented interface for querying/editing poly mesh shape nodes.</td>
+</tr>
+</tbody>
+</table>
 </div>
-</dd></dl>
-
-<dl class="method">
-<dt id="mpylib.geo.MMesh.getFacesConnectedToVerts">
-<code class="descname">getFacesConnectedToVerts</code><span class="sig-paren">(</span><em>verts=None</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.geo.MMesh.getFacesConnectedToVerts" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns a tuple containing face indices of all connected faces for all verts on a mesh or specific verts on a mesh.
-If all verts a queried, the indices of the returned tuple will equal the indices of the mesh. If specific
-verts are queried, indices of the returned tuple will match the indices of the provided vert list.</p>
-<p><strong>verts</strong>               Optional sequence of <em>int</em> mesh indices to query. Default=None, which queries ALL verts on the mesh</p>
-<p><strong>RETURNS</strong>             Tuple of sequences of connected face indices</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1">##--connected faces for all verts on a cube</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">mesh</span> <span class="o">=</span> <span class="n">MMesh</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">verts</span> <span class="o">=</span> <span class="n">mesh</span><span class="o">.</span><span class="n">getFacesConnectedToVerts</span><span class="p">()</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="c1">##RESULTS -- ((5,0,3), (3,0,4), (1,0,5), (4,0,1), (2,1,5), (4,1,2), (3,2,5), (4,2,3))</span>
-<span class="go">&gt;&gt;&gt;</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="c1">##--connected faces for vert 1, 2 and 3</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">mesh</span> <span class="o">=</span> <span class="n">MMesh</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">verts</span> <span class="o">=</span> <span class="n">mesh</span><span class="o">.</span><span class="n">getFacesConnectedToVerts</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">))</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="c1">##RESULTS -- ((3,0,4), (1,0,5), (4,0,1))</span>
-</pre></div>
-</div>
-</dd></dl>
-
-<dl class="method">
-<dt id="mpylib.geo.MMesh.getNumUVSets">
-<code class="descname">getNumUVSets</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.geo.MMesh.getNumUVSets" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return the number of uv sets within this mesh</p>
-<p><strong>RETURNS</strong>             int</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">mesh</span> <span class="o">=</span> <span class="n">MMesh</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">uv_sets</span> <span class="o">=</span> <span class="n">mesh</span><span class="o">.</span><span class="n">getUVSetNames</span><span class="p">()</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="c1">##RESULTS -- 1</span>
-</pre></div>
-</div>
-</dd></dl>
-
-<dl class="method">
-<dt id="mpylib.geo.MMesh.getPoints">
-<code class="descname">getPoints</code><span class="sig-paren">(</span><em>world_space=False</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.geo.MMesh.getPoints" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return the positions of all verts on this mesh</p>
-<dl class="docutils">
-<dt><strong>world_space</strong></dt>
-<dd>Optional <em>bool</em> - whether to return the positions as world space values. default=False</dd>
-<dt><strong>RETURNS</strong></dt>
-<dd>MPointArray representing the x,y,z positions of the verts on the mesh</dd>
-</dl>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">mesh</span> <span class="o">=</span> <span class="n">MMesh</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">vrt_pos</span> <span class="o">=</span> <span class="n">mesh</span><span class="o">.</span><span class="n">getPoints</span><span class="p">(</span><span class="n">world_space</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="go">&gt;&gt;&gt;</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">vert_0_x</span> <span class="o">=</span> <span class="n">vrt_pos</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">vert_0_y</span> <span class="o">=</span> <span class="n">vrt_pos</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">vert_0_z</span> <span class="o">=</span> <span class="n">vrt_pos</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">2</span><span class="p">]</span>
-</pre></div>
-</div>
-</dd></dl>
-
-<dl class="method">
-<dt id="mpylib.geo.MMesh.getPolygonCount">
-<code class="descname">getPolygonCount</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.geo.MMesh.getPolygonCount" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns the number of polygons for this mesh.</p>
-<p><strong>RETURNS</strong>             int number of polygons</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="mpylib.geo.MMesh.getSkinCluster">
-<code class="descname">getSkinCluster</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.geo.MMesh.getSkinCluster" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns skin cluster node feeding this mesh</p>
-<p><strong>RETURNS</strong>             <em>MNode</em> of skinCluster or None</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="mpylib.geo.MMesh.getUVCoords">
-<code class="descname">getUVCoords</code><span class="sig-paren">(</span><em>uv_set=None</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.geo.MMesh.getUVCoords" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="mpylib.geo.MMesh.getUVSetNames">
-<code class="descname">getUVSetNames</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.geo.MMesh.getUVSetNames" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return the string names of this mesh’s uv sets</p>
-<p><strong>RETURNS</strong>             tuple of string names</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">mesh</span> <span class="o">=</span> <span class="n">MMesh</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">uv_sets</span> <span class="o">=</span> <span class="n">mesh</span><span class="o">.</span><span class="n">getUVSetNames</span><span class="p">()</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="c1">##RESULTS -- (&#39;map1&#39;, &#39;map2&#39;)</span>
-</pre></div>
-</div>
-</dd></dl>
-
-<dl class="method">
-<dt id="mpylib.geo.MMesh.getUVsConnectedToFaces">
-<code class="descname">getUVsConnectedToFaces</code><span class="sig-paren">(</span><em>faces=None</em>, <em>uv_set=None</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.geo.MMesh.getUVsConnectedToFaces" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns a tuple containing uv indices of all connected face vertices for all faces on a mesh or specific faces on a mesh.
-If all faces a queried, the indices of the returned tuple will equal the face indices of the mesh. If specific
-faces are queried, indices of the returned tuple will match the face indices of the provided faces list.</p>
-<p><strong>faces</strong>               Optional sequence of <em>int</em> mesh face indices to query. Default=None, which queries ALL faces on the mesh
-<strong>uv_set</strong>      Optional uv_set name, if none given code will return current uvSet</p>
-<p><strong>RETURNS</strong>             Tuple of sequences of connected uv indices</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1">##--connected uvs for all faces on a cube</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">mesh</span> <span class="o">=</span> <span class="n">MMesh</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">uvs</span> <span class="o">=</span> <span class="n">mesh</span><span class="o">.</span><span class="n">getUVsConnectedToFaces</span><span class="p">()</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="c1">##RESULTS -- results = ((0, 1, 3, 2),(2, 3, 5, 4),(4, 5, 7, 6),(6, 7, 1, 0),(1, 7, 5, 3),(6, 0, 2, 4))</span>
-<span class="gp">&gt;&gt;&gt; </span>
-<span class="gp">&gt;&gt;&gt; </span><span class="c1">##----get uvs connected to face 0------##</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">face_0_uvs</span> <span class="o">=</span> <span class="n">mesh</span><span class="o">.</span><span class="n">getUVsConnectedToFaces</span><span class="p">(</span><span class="n">faces</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-<span class="go">&gt;&gt;&gt;</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="c1">##--connected uvs for face 1, 2 and 3</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">mesh</span> <span class="o">=</span> <span class="n">MMesh</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">uvs</span> <span class="o">=</span> <span class="n">mesh</span><span class="o">.</span><span class="n">getUVsConnectedToFaces</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="c1">##RESULTS -- ((2, 3, 5, 4), (4, 5, 7, 6), (6, 7, 1, 0))</span>
-<span class="go">&gt;&gt;&gt;</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="c1">##----get uvs connected to face 1 which is at index 0 in the returned sequence------##</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">face_1_uvs</span> <span class="o">=</span> <span class="n">uvs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-</pre></div>
-</div>
-</dd></dl>
-
-<dl class="method">
-<dt id="mpylib.geo.MMesh.getVertCount">
-<code class="descname">getVertCount</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.geo.MMesh.getVertCount" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns the number of verts</p>
-<p><strong>RETURNS</strong>             <em>int</em></p>
-</dd></dl>
-
-<dl class="method">
-<dt id="mpylib.geo.MMesh.getVertUVIndices">
-<code class="descname">getVertUVIndices</code><span class="sig-paren">(</span><em>verts=None</em>, <em>uv_set=None</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.geo.MMesh.getVertUVIndices" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns a tuple containing UV indices of associated with all verts on a mesh or specific verts on a mesh.
-If all verts a queried, the indices of the returned tuple will equal the indices of the mesh verts. If specific
-verts are queried, indices of the returned tuple will match the indices of the provided vert list.
-Any invalid or missing UVs will be returned as -1.</p>
-<p><strong>verts</strong>               Optional sequence of <em>int</em> vert indices to query. Default=None, which queries ALL verts on the mesh
-<strong>uv_set</strong>              Optional string name of a uvset to query. If None, the ‘current’ uvset will be queried.</p>
-<p><strong>RETURNS</strong>             Tuple of sequences of UV int indices. Invalid or missing UVs will return an index of -1.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1">##--connected verts for all edges on a cube</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">mesh</span> <span class="o">=</span> <span class="n">MMesh</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">uvs</span> <span class="o">=</span> <span class="n">mesh</span><span class="o">.</span><span class="n">getVertUVIndices</span><span class="p">(</span><span class="n">uv_set</span><span class="o">=</span><span class="s2">&quot;map1&quot;</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="c1">##RESULTS -- results = ((0, 0, 8),(9, 1, 1),(2, 2, 2),(3, 3, 3),(4, 4, 13),(11, 5, 5),(6, 6, 12),(10, 7, 7))</span>
-<span class="go">&gt;&gt;&gt;</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="c1">##--connected edges for vert 1, 2 and 3</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">mesh</span> <span class="o">=</span> <span class="n">MMesh</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">verts</span> <span class="o">=</span> <span class="n">mesh</span><span class="o">.</span><span class="n">getVertUVIndices</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="c1">##RESULTS -- ((9, 1, 1),(2, 2, 2),(3, 3, 3))</span>
-</pre></div>
-</div>
-</dd></dl>
-
-<dl class="method">
-<dt id="mpylib.geo.MMesh.getVertsAsMObject">
-<code class="descname">getVertsAsMObject</code><span class="sig-paren">(</span><em>indices=None</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.geo.MMesh.getVertsAsMObject" title="Permalink to this definition">¶</a></dt>
-<dd><p>Utility method for working with the Maya API. Returns a single MObject that represents multiple verts on this mesh.</p>
-<p><strong>indices</strong>
-optional list/tuple of ints of mesh vert indices to get. If not given, method returns an MObject that represents ALL verts on the mesh</p>
-<p><strong>RETURNS</strong>
-MObject</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="mpylib.geo.MMesh.getVertsConnectedToFaces">
-<code class="descname">getVertsConnectedToFaces</code><span class="sig-paren">(</span><em>faces=None</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.geo.MMesh.getVertsConnectedToFaces" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns a tuple containing vert indices of all connected verts for all faces on a mesh or specific faces on a mesh.
-If all faces a queried, the indices of the returned tuple will equal the face indices of the mesh. If specific
-faces are queried, indices of the returned tuple will match the face indices of the provided faces list.</p>
-<p><strong>faces</strong>               Optional sequence of <em>int</em> mesh face indices to query. Default=None, which queries ALL faces on the mesh</p>
-<p><strong>RETURNS</strong>             Tuple of sequences of connected vert indices</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1">##--connected verts for all faces on a cube</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">mesh</span> <span class="o">=</span> <span class="n">MMesh</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">verts</span> <span class="o">=</span> <span class="n">mesh</span><span class="o">.</span><span class="n">getVertsConnectedToFaces</span><span class="p">()</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="c1">##RESULTS -- results = ((0, 1, 3, 2),(2, 3, 5, 4),(4, 5, 7, 6),(6, 7, 1, 0),(1, 7, 5, 3),(6, 0, 2, 4))</span>
-<span class="gp">&gt;&gt;&gt; </span>
-<span class="gp">&gt;&gt;&gt; </span><span class="c1">##----get verts connected to face 0------##</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">face_0_verts</span> <span class="o">=</span> <span class="n">verts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-<span class="go">&gt;&gt;&gt;</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="c1">##--connected verts for face 1, 2 and 3</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">mesh</span> <span class="o">=</span> <span class="n">MMesh</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">verts</span> <span class="o">=</span> <span class="n">mesh</span><span class="o">.</span><span class="n">getVertsConnectedToFaces</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="c1">##RESULTS -- ((2, 3, 5, 4), (4, 5, 7, 6), (6, 7, 1, 0))</span>
-<span class="go">&gt;&gt;&gt;</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="c1">##----get verts connected to face 1 which is at index 0 in the returned sequence------##</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">face_1_verts</span> <span class="o">=</span> <span class="n">verts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-</pre></div>
-</div>
-</dd></dl>
-
-<dl class="method">
-<dt id="mpylib.geo.MMesh.getVertsConnectedToVerts">
-<code class="descname">getVertsConnectedToVerts</code><span class="sig-paren">(</span><em>verts=None</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.geo.MMesh.getVertsConnectedToVerts" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns a tuple containing vert indices of all connected verts for all verts on a mesh or specific verts on a mesh.
-If all verts a queried, the indices of the returned tuple will equal the vert indices of the mesh. If specific
-verts are queried, indices of the returned tuple will match the indices of the provided vert list.</p>
-<p><strong>verts</strong>               Optional sequence of <em>int</em> mesh indices to query. Default=None, which queries ALL verts on the mesh</p>
-<p><strong>RETURNS</strong>             Tuple of sequences of connected vert indices</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1">##--connected verts for all verts on a cube</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">mesh</span> <span class="o">=</span> <span class="n">MMesh</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">verts</span> <span class="o">=</span> <span class="n">mesh</span><span class="o">.</span><span class="n">getVertsConnectedToVerts</span><span class="p">()</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="c1">##RESULTS -- ((2,1,6), (0,3,7), (3,0,4), (1,2,5), (5,2,6), (3,4,7), (7,4,0), (5,6,1))</span>
-<span class="go">&gt;&gt;&gt;</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="c1">##--connected verts for vert 1, 2 and 3</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">mesh</span> <span class="o">=</span> <span class="n">MMesh</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">verts</span> <span class="o">=</span> <span class="n">mesh</span><span class="o">.</span><span class="n">getVertsConnectedToVerts</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">))</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="c1">##RESULTS -- ((0,3,7), (3,0,4), (1,2,5))</span>
-</pre></div>
-</div>
-</dd></dl>
-
-<dl class="method">
-<dt id="mpylib.geo.MMesh.setPoints">
-<code class="descname">setPoints</code><span class="sig-paren">(</span><em>points</em>, <em>world_space=False</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.geo.MMesh.setPoints" title="Permalink to this definition">¶</a></dt>
-<dd><p>Sets the positions of the mesh’s vertices. The positions may be 
-given as a sequence of MFloatPoint’s or a sequence of MPoint’s, but
-not a mix of the two.</p>
-<dl class="docutils">
-<dt><strong>points</strong></dt>
-<dd>sequence of MPoint or MFloatPoint positions to set.</dd>
-<dt><strong>world_space</strong></dt>
-<dd>Optional <em>bool</em> - whether to return the positions as world space values. default=False</dd>
-<dt><strong>RETURNS</strong></dt>
-<dd>MPointArray representing the x,y,z positions of the verts on the mesh</dd>
-</dl>
-</dd></dl>
-
-<dl class="method">
-<dt id="mpylib.geo.MMesh.setVertexColor">
-<code class="descname">setVertexColor</code><span class="sig-paren">(</span><em>vert_indices</em>, <em>**kargs</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.geo.MMesh.setVertexColor" title="Permalink to this definition">¶</a></dt>
-<dd><p>Colors the given verts</p>
-<p><strong>vert_indices</strong>                list/tuple of ints
-<strong>kargs</strong>                               any keyword argument supported by mc.polyColorPerVertex</p>
-<p><strong>RETURNS</strong>                             None</p>
-</dd></dl>
-
-</dd></dl>
-
 </div>
 
 
@@ -363,6 +112,20 @@ not a mix of the two.</p>
             <p class="logo"><a href="index.html">
               <img class="logo" src="_static/mpynode_hr.png" alt="Logo">
             </a></p>
+  <h3><a href="index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">mpylib.geo Package</a><ul>
+<li><a class="reference internal" href="#classes">Classes</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="api/mpylib.api.MVectorArray.html"
+                        title="previous chapter">MVectorArray</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="api/mpylib.geo.MMesh.html"
+                        title="next chapter">MMesh</a></p>
 <div class="this-page-menu">
   <a href="/scipy/docs/scipy-docs/mpylib.geo.rst.rst">Edit page</a>
 </div>
