@@ -228,7 +228,6 @@ class MPyNode(om.MPxNode):
     def print_(self, txt):
         
         om.MUserEventMessage.postUserEvent(self.LOG_TXT_CALLBACK_NAME, (self.thisMObject(), str(txt)))
-        
     
     
     def readStoredVariables(self):
@@ -1176,6 +1175,7 @@ class MPyNodeEventManager(object):
         
         self._py_nodes = {}
         self._add_node_queue = []
+        self._py_nodes_removed = {}
         
         self._scene_open_cb_id = None
         self._scene_read_cb_id = None
@@ -1232,9 +1232,9 @@ class MPyNodeEventManager(object):
     def _onNodeAdded(self, m_obj, data):
         """
         Called by this class' MDGMessage.addNodeAddedCallback
-        """        
+        """
         
-        self._processNodeQueue()
+        self._processNodeQueue(m_obj=m_obj)
         
         
     def _onNodeRemoved(self, m_obj, data):
@@ -1246,6 +1246,10 @@ class MPyNodeEventManager(object):
             hash_code = om.MObjectHandle(m_obj).hashCode()
             
             if self._py_nodes.has_key(hash_code):
+                
+                if not self._py_nodes_removed.has_key(hash_code):
+                    self._py_nodes_removed[hash_code] = self._py_nodes[hash_code]
+                
                 del(self._py_nodes[hash_code])
         
         
@@ -1315,8 +1319,9 @@ class MPyNodeEventManager(object):
             
             else:
                 raise RuntimeError("Unable to write storable variables for node: " + str(node_hash))
+            
         
-    def _processNodeQueue(self):
+    def _processNodeQueue(self, m_obj=None):
         """
         Safely moves added nodes from the 'queue' to the main node list
         """
@@ -1326,6 +1331,16 @@ class MPyNodeEventManager(object):
                 self.addNode(py_node)
                 
             self._add_node_queue = []
+            
+        if m_obj:
+            hash_code = om.MObjectHandle(m_obj).hashCode()
+            
+            if self._py_nodes_removed.has_key(hash_code):
+                self.addNode(self._py_nodes_removed[hash_code])
+                del(self._py_nodes_removed[hash_code])
+            
+        #if m_obj:
+            #self.addNode(MPyNode(m_obj))
     
     
     def addNodeToQueue(self, py_node):
@@ -1388,4 +1403,5 @@ class MPyNodeEventManager(object):
         """          
         
         self._clearNodeMap()
+        self._py_nodes_removed = {}
         self._add_node_queue = []

@@ -36,7 +36,7 @@ from qt_py_profile_table import QtPyProfileTable
 from mqt_main_window import QMayaWindow
 
 from ..nodes import MPyNode
-from .._base import MNode, MUndo
+from .._base import MNode, MNodeList, MUndo
 
 
 ATTR_COLOR_DEFAULT = (80, 230, 80)
@@ -87,7 +87,7 @@ class NDMainWindow(QMayaWindow):
 
     DEFAULT_X_POS = 200
     DEFAULT_Y_POS = 200
-    DEFUALT_WIDTH = 900
+    DEFAULT_WIDTH = 1050
     DEFAULT_HEIGHT = 600
 
     NODE_PARENT_CLASSES = (MPyNode,)
@@ -145,7 +145,8 @@ class NDMainWindow(QMayaWindow):
         self._profile_widget = None
         self._watch_var_values_widget = None
         
-        self._callback_array = om.MCallbackIdArray()
+        self._ui_callback_array = om.MCallbackIdArray()
+        self._node_callback_map = {}
 
         self.setDocumentMode(True) ##---does this help keep focus?...probably not
 
@@ -167,10 +168,10 @@ class NDMainWindow(QMayaWindow):
         self._buildMenus()
 
         self._setSignals()
-        self._setCallbacks()
+        self._setSceneCallbacks()
 
         self.setGeometry(self.DEFAULT_X_POS, self.DEFAULT_Y_POS,
-                         self.DEFUALT_WIDTH, self.DEFAULT_HEIGHT)
+                         self.DEFAULT_WIDTH, self.DEFAULT_HEIGHT)
         
 
     def _buildToolBar(self):
@@ -191,7 +192,6 @@ class NDMainWindow(QMayaWindow):
         """
 
         self._script_tab_widget.LOG_SIGNAL.connect(self._log_widget.write)
-
         self._script_tab_widget.currentChanged.connect(self._scriptTabChanged)
 
         self._attributes_widget.LOG_SIGNAL.connect(self._log_widget.write)
@@ -199,29 +199,53 @@ class NDMainWindow(QMayaWindow):
         self._attributes_widget.NODE_RENAME_SIGNAL.connect(self.nodeRenamedEvent)
 
         self._scene_tree.itemSelectionChanged.connect(self.sceneSelectChangeEvent)
-        self._scene_tree.itemDoubleClicked.connect(self.sceneDoubleClickEvent)
+        self._scene_tree.LOG_SIGNAL.connect(self._log_widget.write)
+        self._scene_tree.ADD_NODE_SIGNAL.connect(self.addNewNodeEvent)
+        self._scene_tree.DELETE_NODE_SIGNAL.connect(self.deleteNodesEvent)
+        #self._scene_tree.NODE_RENAME_SIGNAL.connect(self.nodeRenamedEvent)
         
         self._variables_widget.LOG_SIGNAL.connect(self._log_widget.write)
         
-        self._scene_tree.LOG_SIGNAL.connect(self._log_widget.write)
-        self._scene_tree.ADD_NODE_SIGNAL.connect(self.addNewNode)
-        self._scene_tree.DELETE_NODE_SIGNAL.connect(self._deleteNodesEvent)
+        
+    def _setSceneCallbacks(self):
+        """
+        Creates Maya callbacks that monitor the current scene and report
+        relevant events back to the ui. Callbacks are killed on ui close.
+        """
+        
+        self._ui_callback_array.append(om.MUserEventMessage.addUserEventCallback(self.PROFILE_CALLBACK_NAME, self._onLogProfile, None))
+        self._ui_callback_array.append(om.MUserEventMessage.addUserEventCallback(self.INPUT_VALUES_CALLABCK_NAME, self._onWatchInputs, None))
+        self._ui_callback_array.append(om.MUserEventMessage.addUserEventCallback(self.LOG_ERROR_CALLBACK_NAME, self._onLogError, None))
+        self._ui_callback_array.append(om.MUserEventMessage.addUserEventCallback(self.LOG_TXT_CALLBACK_NAME, self._onLogText, None))
+        
+        self._ui_callback_array.append(om.MSceneMessage.addCallback(om.MSceneMessage.kAfterOpen, self._onSceneOpen))
+        self._ui_callback_array.append(om.MSceneMessage.addCallback(om.MSceneMessage.kAfterNew, self._onSceneOpen))
+        self._ui_callback_array.append(om.MDGMessage.addNodeAddedCallback(self._onNodeAdded, MPyNode.NODE_TYPE))
+        self._ui_callback_array.append(om.MDGMessage.addNodeRemovedCallback(self._onNodeRemoved, MPyNode.NODE_TYPE))
         
         
-    def _setCallbacks(self):
+    def _addNameChangedCallback(self, py_node):
         
-        self._callback_array.append(om.MUserEventMessage.addUserEventCallback(self.PROFILE_CALLBACK_NAME, self._onLogProfile, None))
-        self._callback_array.append(om.MUserEventMessage.addUserEventCallback(self.INPUT_VALUES_CALLABCK_NAME, self._onWatchInputs, None))
-        self._callback_array.append(om.MUserEventMessage.addUserEventCallback(self.LOG_ERROR_CALLBACK_NAME, self._onLogError, None))
-        self._callback_array.append(om.MUserEventMessage.addUserEventCallback(self.LOG_TXT_CALLBACK_NAME, self._onLogText, None))
+        if not self._node_callback_map.has_key(py_node):
+            self._node_callback_map[py_node] = om.MNodeMessage.addNameChangedCallback(py_node, self._onNodeRenamed)
+    
+    
+    def _removeNameChangedCallback(self, py_node):
         
-        self._callback_array.append(om.MSceneMessage.addCallback(om.MSceneMessage.kAfterOpen, self._onSceneOpen))
-        self._callback_array.append(om.MSceneMessage.addCallback(om.MSceneMessage.kAfterNew, self._onSceneOpen))
-        self._callback_array.append(om.MDGMessage.addNodeAddedCallback(self._onNodeCreated, MPyNode.NODE_TYPE))
-        self._callback_array.append(om.MDGMessage.addNodeRemovedCallback(self._onNodeDeleted, MPyNode.NODE_TYPE))
+        if self._node_callback_map.has_key(py_node):
+            try:
+                om.MMessage.removeCallback(self._node_callback_map[py_node])
+            
+            except RuntimeError, err:
+                pass
+            
+            del(self._node_callback_map[py_node])
         
         
-    def _deleteNodesEvent(self, nodes):
+    def deleteNodesEvent(self, nodes):
+        """
+        Called when the user deletes a node using the ui. Note that this will invoke _onNodeRemoved through a callback
+        """
         
         if nodes:
             for node in nodes:
@@ -259,17 +283,25 @@ class NDMainWindow(QMayaWindow):
             self._log_widget.write(data[1])
             
             
-    def _onNodeCreated(self, obj, data):
+    def _onNodeAdded(self, obj, data):
+        """
+        Called by MDGMessage.addNodeAddedCallback. Refreshes the scene widget whenever
+        a mPyNode is added to the Maya scene.
+        """
+        
+        py_node = MPyNode(obj)
+        
+        self._addNameChangedCallback(py_node)
         
         self._scene_tree.refresh()
         
-        py_node = MPyNode(obj)
         self._log_widget.write("New node added: " + py_node.getName())
         
         
-    def _onNodeDeleted(self, obj, data):
+    def _onNodeRemoved(self, obj, data):
         """
-        Called by MDGMessage.addNodeRemovedCallback
+        Called by MDGMessage.addNodeRemovedCallback. Refreshes appropriate widgets whenever
+        a mPyNode is removed from the Maya scene.
         """
         
         py_node = MPyNode(obj)
@@ -281,6 +313,9 @@ class NDMainWindow(QMayaWindow):
         if not tab_index is None:
             self._script_tab_widget.removeTab(tab_index)
             is_cur_tab = True if self._script_tab_widget.currentIndex() == tab_index else False
+            
+        ##---remove any callbacks monitoring the node----##
+        self._removeNameChangedCallback(py_node)
         
         ##---print to log---##
         node_name = py_node.getName()
@@ -288,12 +323,24 @@ class NDMainWindow(QMayaWindow):
         
         ##----api callback used by this function is pre-delete so wait to refresh the ui----##
         mc.evalDeferred(self._scene_tree.refresh)
-        mc.evalDeferred(self._attributes_widget.refresh)
+        
+        
+    def _onNodeRenamed(self, obj, old_name, data):
+        
+        py_node = MPyNode(obj)
+        
+        self._script_tab_widget._updateTabNodeName(py_node)
+        self._scene_tree.refresh()
+        
+        self._log_widget.write("Node renamed: " + str(old_name) + " -----> " + py_node.getName())
 
 
     def _onSceneOpen(self, data):
+        
+        self.removeNodeCallbacks()
 
         self._script_tab_widget.closeAllTabs()
+        self.refreshNodeCallbacks()
         self._scene_tree.refresh()
         self._attributes_widget.refresh(None)
         self._variables_widget.setPyNode(None)
@@ -353,12 +400,12 @@ class NDMainWindow(QMayaWindow):
         self._panel_tab_widget = QTabWidget(self._main_widget)
         self._panel_tab_widget.setMovable(False)
         self._panel_tab_widget.setTabsClosable(False)
-
+        
+        self._buildSceneTree()
         self._buildAttributesWidget()
         self._buildStorageWidget()
-        self._buildSceneTree()
-
-        self._panel_tab_widget.setCurrentIndex(2)
+        
+        self._panel_tab_widget.setCurrentIndex(0)
 
 
     def _buildAttributesWidget(self):
@@ -380,7 +427,8 @@ class NDMainWindow(QMayaWindow):
         self._scene_tree = NDSceneTree(self._main_widget)
 
         self._panel_tab_widget.addTab(self._scene_tree, "Scene")
-
+        
+        self.refreshNodeCallbacks()
         self._scene_tree.refresh()
         
         
@@ -416,7 +464,7 @@ class NDMainWindow(QMayaWindow):
 
         self._v_layout.addWidget(self._h_splitter)
 
-        self._h_splitter.setSizes([int(self.DEFUALT_WIDTH * 0.27), int(self.DEFUALT_WIDTH * 0.72)])
+        self._h_splitter.setSizes([int(self.DEFAULT_WIDTH * 0.27), int(self.DEFAULT_WIDTH * 0.72)])
         self._v_splitter.setSizes([int(self.DEFAULT_HEIGHT * 0.83), int(self.DEFAULT_HEIGHT * 0.16)])
 
         #self._v_splitter.setSizes((800, 1))
@@ -434,7 +482,7 @@ class NDMainWindow(QMayaWindow):
                                                 statusTip="Import a node from a file", triggered=self.importFromFile)
 
         self._new_node_action = QAction(ICON_MANAGER["new_node_icon"], "&New Node", self, shortcut=QKeySequence.New,
-                                        statusTip="Create a new node", triggered=self.addNewNode)
+                                        statusTip="Create a new node", triggered=self.addNewNodeEvent)
 
         self._save_node_action = QAction(ICON_MANAGER["save_node_icon"], "&Save Node", self, shortcut=QKeySequence(Qt.Key_F5), statusTip="Save edits to the current node",
                                          triggered=self.saveCurrentNode)
@@ -528,7 +576,6 @@ class NDMainWindow(QMayaWindow):
     def _buildMenus(self):
 
         self._file_menu = self.menuBar().addMenu("&File")
-        #self._file_menu.addAction(self._save_to_file_action)
         self._file_menu.addAction(self._import_from_file_action)
         self._file_menu.addAction(self._export_to_file_action)
 
@@ -542,7 +589,10 @@ class NDMainWindow(QMayaWindow):
         self._help_menu.addAction(self._help_api_doc_action)
 
 
-    def addNewNode(self):
+    def addNewNodeEvent(self):
+        """
+        Called when the user created a new node using the ui. Note that this will invoke _onNodeAdded through a callback
+        """
 
         if len(self.NODE_PARENT_CLASSES) != 1:
             self._log_widget.write("TODO: More than one parent class available")
@@ -570,6 +620,10 @@ class NDMainWindow(QMayaWindow):
 
 
     def sceneSelectChangeEvent(self):
+        """
+        Called when the selection in the Scene widget changes. Opens or selects the appropriate tab in
+        the Script Tab widget.
+        """
         
         cur_sel = self._scene_tree.currentItem()
 
@@ -601,9 +655,41 @@ class NDMainWindow(QMayaWindow):
         self._script_tab_widget.saveAllNodes()
         
     
-    def removeCallbacks(self):
+    def removeAllCallbacks(self):
+        """
+        Remove ALL callbacks used by the ui (scene and node specific)
+        """
         
-        om.MMessage.removeCallbacks(self._callback_array)
+        ##---remove general ui callbacks---##
+        om.MMessage.removeCallbacks(self._ui_callback_array)
+        self._ui_callback_array = om.MCallbackIdArray()
+        
+        self.removeNodeCallbacks()
+            
+            
+    def removeNodeCallbacks(self):
+        """
+        Remove all nodes specific callbacks from the scene
+        """
+        
+        for py_node in self._node_callback_map.keys():
+            self._removeNameChangedCallback(py_node)
+            
+            
+    def refreshNodeCallbacks(self):
+        """
+        Removes any existings node specific callbacks and rebuilds callbacks based
+        on the scene contents
+        """
+        
+        self.removeNodeCallbacks()
+        
+        py_nodes = MPyNode.ls()
+        
+        if py_nodes:
+            for py_node in py_nodes:
+                self._addNameChangedCallback(py_node)
+        
         
         
     def writeScriptToLog(self, func, args, kargs):
@@ -630,7 +716,7 @@ class NDMainWindow(QMayaWindow):
 
         if close_ok:
             
-            self.removeCallbacks()
+            self.removeAllCallbacks()
             
             super(NDMainWindow, self).closeEvent(event)
             event.accept()
@@ -2474,30 +2560,103 @@ class NDSceneTree(QTreeWidget):
     
     ADD_NODE_SIGNAL = Signal()
     DELETE_NODE_SIGNAL = Signal(tuple)
+    NODE_RENAME_SIGNAL = Signal(object)
     LOG_SIGNAL = Signal(str, int)
-
+    
 
     def __init__(self, parent=None):
 
         super(NDSceneTree, self).__init__(parent)
         
-        self._node_removed_action = None
+        self._node_rename_action = None
+        self._new_node_action = None
+        self._delete_nodes_action = None
         
         self._buildActions()
+        self._setSignals()
 
         self.setColumnCount(1)
         self.setHeaderItem(QTreeWidgetItem(["Name"]))
         
-        self.setSelectionMode(QAbstractItemView.ContiguousSelection)
+        self.setSelectionMode(QAbstractItemView.ExtendedSelection)
+        
+        
+    def _setSignals(self):
+        
+        self.itemChanged.connect(self._renameNode)
         
         
     def _buildActions(self):
         
         self._new_node_action = QAction(ICON_MANAGER["new_node_icon"], "&New Node", self, shortcut=QKeySequence.New,
-                                        statusTip="Create a new node", triggered=self._addNewNode)     
+                                        statusTip="Create a new node", triggered=self._addNewNode)
+        
+        self._select_nodes_action = QAction(ICON_MANAGER["select_nodes_icon"], "Select Node(s)", self,
+                                           statusTip="Select Node(s)", triggered=self._selectNodes)             
         
         self._delete_nodes_action = QAction(ICON_MANAGER["delete_node_icon"], "Delete Node(s)", self,
                                             statusTip="Delete selected node(s)", triggered=self._deleteSelectedNodes)
+        
+        
+    def _selectNodes(self):
+        
+        sel_items = self.selectedItems()
+        
+        if sel_items:
+            
+            node_list = [item.getMPyNode() for item in sel_items]
+            mc.select(node_list, replace=True)
+        
+       
+    def _renameNode(self, item):
+        
+        py_node = item.getMPyNode()
+        
+        if py_node:
+            node_name = py_node.getName()
+            item_text = item.text(0)
+            
+            if node_name != item_text:
+                if item_text:
+                    
+                    try:
+                        MUndo(py_node.rename, item_text)()
+                        
+                    except RuntimeError, err:
+                        item.setText(0, node_name)
+                        new_name = node_name
+                        
+                    #else:
+                        #new_name = py_node.getName()
+                        #item.setText(0, new_name)
+                        
+                else:
+                    item.setText(0, py_node.getName())
+                
+                #self.NODE_RENAME_SIGNAL.emit(py_node)
+                
+                
+    def _nodeNameChanged(self):
+
+        if self._py_node:
+
+            txt = self._name_field.text()
+            orig_node_name = self._py_node.getName()
+
+            if txt != orig_node_name:
+
+                try:
+                    self._py_node.rename(txt)
+
+                except Exception, err:
+                    self.LOG_SIGNAL.emit(err.message, 1)
+
+                node_name = self._py_node.getName()
+                self._name_field.setText(node_name)
+
+                #self.NODE_RENAME_SIGNAL.emit(self._py_node)
+
+                self.LOG_SIGNAL.emit("Rename \"" + orig_node_name + "\" to \"" + self._py_node.getName() + "\"", 0)    
         
         
     def _addNewNode(self):
@@ -2524,9 +2683,14 @@ class NDSceneTree(QTreeWidget):
     def contextMenuEvent(self, event):
 
         menu = QMenu(self)
+        cur_item = self.currentItem()
+        
+        if cur_item:
+            menu.addAction(self._select_nodes_action)
+        
         menu.addAction(self._new_node_action)
         
-        if self.currentItem():
+        if cur_item:
             menu.addAction(self._delete_nodes_action)
 
         action = menu.exec_(self.mapToGlobal(event.pos()))
@@ -2558,19 +2722,25 @@ class NDSceneTree(QTreeWidget):
 
 
 class NDSceneTreeItem(QTreeWidgetItem):
+    
+    DEFAULT_FLAGS = Qt.ItemIsEnabled | Qt.ItemIsSelectable | Qt.ItemIsEditable
+    
 
     def __init__(self, parent, py_node):
 
         super(NDSceneTreeItem, self).__init__(parent)
+        
+        self.setFlags(self.DEFAULT_FLAGS)
 
         self._py_node = py_node
 
-        self.setText(0, py_node.getName())
-
 
     def getMPyNode(self):
-
-        return self._py_node
+        
+        if hasattr(self, "_py_node"):
+            return self._py_node
+        
+        return None
 
 
 class NDLogWidget(QtLog):
