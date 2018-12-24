@@ -38,7 +38,6 @@ from mqt_main_window import QMayaWindow
 from ..nodes import MPyNode
 from .._base import MNode, MNodeList, MUndo
 
-
 ATTR_COLOR_DEFAULT = (80, 230, 80)
 ATTR_COLOR_DARK_GREEN = (0, 128, 1)
 ATTR_COLOR_GREEN = (80, 230, 80)
@@ -224,17 +223,19 @@ class NDMainWindow(QMayaWindow):
         self._ui_callback_array.append(om.MDGMessage.addNodeRemovedCallback(self._onNodeRemoved, MPyNode.NODE_TYPE))
         
         
-    def _addNameChangedCallback(self, py_node):
+    def _setNodeCallbacks(self, py_node):
         
         if not self._node_callback_map.has_key(py_node):
-            self._node_callback_map[py_node] = om.MNodeMessage.addNameChangedCallback(py_node, self._onNodeRenamed)
+            self._node_callback_map[py_node] = (om.MNodeMessage.addNameChangedCallback(py_node, self._onNodeRenamed),
+                                                om.MNodeMessage.addAttributeChangedCallback(py_node, self._onAttributeChanged))
     
     
-    def _removeNameChangedCallback(self, py_node):
+    def _removeNodeCallbacks(self, py_node):
         
         if self._node_callback_map.has_key(py_node):
             try:
-                om.MMessage.removeCallback(self._node_callback_map[py_node])
+                for event_id in self._node_callback_map[py_node]:
+                    om.MMessage.removeCallback(event_id)
             
             except RuntimeError, err:
                 pass
@@ -291,7 +292,7 @@ class NDMainWindow(QMayaWindow):
         
         py_node = MPyNode(obj)
         
-        self._addNameChangedCallback(py_node)
+        self._setNodeCallbacks(py_node)
         
         self._scene_tree.refresh()
         
@@ -315,7 +316,7 @@ class NDMainWindow(QMayaWindow):
             is_cur_tab = True if self._script_tab_widget.currentIndex() == tab_index else False
             
         ##---remove any callbacks monitoring the node----##
-        self._removeNameChangedCallback(py_node)
+        self._removeNodeCallbacks(py_node)
         
         ##---print to log---##
         node_name = py_node.getName()
@@ -333,6 +334,31 @@ class NDMainWindow(QMayaWindow):
         self._scene_tree.refresh()
         
         self._log_widget.write("Node renamed: " + str(old_name) + " -----> " + py_node.getName())
+            
+            
+    def _onAttributeChanged(self, attr_msg, plug, other_plug, data):
+        
+        node_attr_name = plug.name()
+        attr_name = node_attr_name.split(".")[-1]
+        
+        if (attr_msg & om.MNodeMessage.kAttributeAdded) == om.MNodeMessage.kAttributeAdded\
+         or (attr_msg & om.MNodeMessage.kAttributeArrayAdded) == om.MNodeMessage.kAttributeArrayAdded:
+            self._log_widget.write("Attribute added: " + attr_name, QtLog.SUCCESS_TYPE)
+            
+        elif (attr_msg & om.MNodeMessage.kAttributeRemoved) == om.MNodeMessage.kAttributeRemoved\
+             or (attr_msg & om.MNodeMessage.kAttributeArrayRemoved) == om.MNodeMessage.kAttributeArrayRemoved:
+            self._log_widget.write("Attribute removed: " + attr_name, QtLog.SUCCESS_TYPE)
+        
+        elif (attr_msg & om.MNodeMessage.kAttributeRenamed) == om.MNodeMessage.kAttributeRenamed:
+            self._log_widget.write("Attribute renamed: " + attr_name, QtLog.SUCCESS_TYPE)
+        
+        ##---message values require bitwise operators---##
+        if (attr_msg & om.MNodeMessage.kAttributeSet) == om.MNodeMessage.kAttributeSet:
+            
+            if attr_name in (MPyNode._INPUTS_STR_ATTR_NAME, MPyNode._OUTPUTS_STR_ATTR_NAME):
+                
+                self._attributes_widget.refreshInputs()
+                self._attributes_widget.refreshOutputs()
 
 
     def _onSceneOpen(self, data):
@@ -673,7 +699,7 @@ class NDMainWindow(QMayaWindow):
         """
         
         for py_node in self._node_callback_map.keys():
-            self._removeNameChangedCallback(py_node)
+            self._removeNodeCallbacks(py_node)
             
             
     def refreshNodeCallbacks(self):
@@ -688,11 +714,14 @@ class NDMainWindow(QMayaWindow):
         
         if py_nodes:
             for py_node in py_nodes:
-                self._addNameChangedCallback(py_node)
-        
+                self._setNodeCallbacks(py_node)
         
         
     def writeScriptToLog(self, func, args, kargs):
+        """
+        Meant to be a formating function that prints the given function
+        and argumnets to the log as command history
+        """
         
         log_txt = func.__name__ + "("
         
@@ -1420,14 +1449,24 @@ class NDAttributesWidget(QWidget):
             self._buildTextField(py_node)
             self._buildInputFrame(py_node)
             self._buildOutputFrame(py_node)
-
-            self._input_frame.refresh()
+            
+            self.refreshInputs()
+            self.refreshOutputs()
+            
             self._output_frame.refresh()
 
         else:
             self._py_node = None
 
         self._setSignals()
+        
+        
+    def refreshInputs(self):
+        self._input_frame.refresh()
+    
+    
+    def refreshOutputs(self):
+        self._output_frame.refresh()
 
 
     def _buildInputFrame(self, py_node):
@@ -1485,6 +1524,8 @@ class NDInputAttrTree(QTreeWidget):
     ATTR_ADDED_SIGNAL = Signal(str)
     LOG_SIGNAL = Signal(str, int)
     SCRIPT_SIGNAL = Signal(object, tuple, dict)
+    
+    MIN_MAX_TYPES = (MPyNode.ATTR_TYPE_FLOAT, MPyNode.ATTR_TYPE_INT, MPyNode.ATTR_TYPE_TIME, MPyNode.ATTR_TYPE_ANGLE)
 
 
     def __init__(self, parent, py_node):
@@ -1502,11 +1543,27 @@ class NDInputAttrTree(QTreeWidget):
 
         self.setFrameStyle(QFrame.Panel | QFrame.Plain)
         self.setLineWidth(1)
-
         self.setSelectionMode(QAbstractItemView.ExtendedSelection)
-        self.itemDoubleClicked.connect(self.attrDoubleClickEvent)
-
+        
+        self._setSignals()
         self._buildActions()
+        
+        
+    def mousePressEvent(self, event):
+        """
+        Overriding parent class method to add middle click functionality
+        """
+        
+        if event.button() == Qt.MiddleButton:
+            self.selectNode()
+        
+        else:
+            super(NDInputAttrTree, self).mousePressEvent(event)    
+        
+        
+    def _setSignals(self):
+        
+        self.itemChanged.connect(self._renameAttr)
 
 
     def _buildActions(self):
@@ -1522,19 +1579,44 @@ class NDInputAttrTree(QTreeWidget):
 
         self._remove_inputs_action = QAction("Diconnect All " + self.ATTR_CATEGORY.capitalize() + "s", self,
                                              statusTip="Diconnect all connections to this attribute", triggered=self.removeAllConnections)
-
-
-    def attrDoubleClickEvent(self, item, column):
-
+        
+        
+    def _renameAttr(self, item):
+        """
+        Triggered when the user renames an attribute using the UI
+        """
+        
         if item:
-
-            if self._py_node and self._py_node.isValid():
-
-                self._py_node.select(replace=True)
-
-            else:
-                self.LOG_SIGNAL.emit("Cannot locate node in scene", QtLog.ERROR_TYPE)
-
+            new_name = item.text(0)
+            cur_name = item.getCurrentName()
+            is_array = item.isArray()
+            text_suffix = "" if not is_array else NDAttrTreeItem.ARRAY_SUFFIX
+                
+            if new_name:
+                
+                if is_array and new_name.endswith(NDAttrTreeItem.ARRAY_SUFFIX):
+                    new_name = new_name[:0 - len(NDAttrTreeItem.ARRAY_SUFFIX)]
+                
+                if (new_name != cur_name):
+                
+                    new_name = self._attrNameCheck(new_name, action_type="rename")
+                    
+                    if new_name:
+                        
+                        if self.ATTR_CATEGORY == "input":
+                            MUndo(self._py_node.renameInputAttr, cur_name, new_name)()
+                            
+                        else:
+                            MUndo(self._py_node.renameOutputAttr, cur_name, new_name)()
+                            
+                    else:
+                        item.setCurrentName(cur_name)
+                        item.setText(0, cur_name + text_suffix)
+                        
+            elif cur_name:
+                item.setCurrentName(cur_name)
+                item.setText(0, cur_name + text_suffix)
+                
 
     def contextMenuEvent(self, event):
 
@@ -1550,6 +1632,15 @@ class NDInputAttrTree(QTreeWidget):
             menu.addAction(self._remove_inputs_action)
 
         action = menu.exec_(self.mapToGlobal(event.pos()))
+        
+        
+    def selectNode(self):
+        """
+        select the node associated with the attributes
+        """
+        
+        if self._py_node:
+            self._py_node.select(replace=True)
 
 
     def removeAllConnections(self):
@@ -1602,54 +1693,83 @@ class NDInputAttrTree(QTreeWidget):
 
 
     def showAddAttrDlg(self):
+        
+        is_input = True if self.ATTR_CATEGORY == "input" else False
 
-        dlg = NDAddAttrDialog(self, self.NEW_ATTR_TYPES, self._py_node.getName(), self.ATTR_DEFAULT_TYPE)
-        dlg.ADD_ATTR_SIGNAL.connect(self.addNewAttrEvent)
+        dlg = NDAddAttrDialog(self, self.NEW_ATTR_TYPES, self._py_node.getName(), self.ATTR_DEFAULT_TYPE, is_input=is_input)
+        dlg.ADD_ATTR_SIGNAL.connect(self._addNewAttrEvent) ##---this is for the "Add" button in dialog
 
         result = dlg.exec_()
-
+        
+        ##---if ok was pressed---##
         if result:
             attr_name = dlg.getAttrName()
             attr_type = dlg.getAttrType()
             is_array = dlg.getIsArray()
             display_option = dlg.getAttrDisplayOptions(attr_type, is_array)
 
-            self.addNewAttrEvent(attr_name, attr_type, display_option, is_array)
+            self._addNewAttrEvent(attr_name, attr_type, display_option, is_array, is_input)
 
 
-    def addNewAttrEvent(self, attr_name, attr_type, display_option, is_array):
-
+    def _addNewAttrEvent(self, attr_name, attr_type, display_option, is_array, is_input):
+        
+        attr_name = self._attrNameCheck(attr_name)
+        
         if attr_name:
-            if not self._py_node.hasAttr(attr_name):
-                
-                ##-----make sure the attribute name is not a Python keyword or builtin---##
-                if (not attr_name in keyword.kwlist) and (not attr_name in dir(__builtin__)):
-                
-                    add_func = getattr(self._py_node, self.ADD_ATTR_FUNC_NAME)
-    
-                    MUndo(add_func, attr_name, attr_type, is_array=is_array, **display_option)()
-    
-                    self.refresh()
-    
-                    self.ATTR_ADDED_SIGNAL.emit(attr_name)
-                    self.LOG_SIGNAL.emit("Attribute '" + attr_name + "' added to node " + self._py_node.getName() , 2)
-                    self.SCRIPT_SIGNAL.emit(add_func, (attr_type, is_array), display_option)
-                    
-                    ##---automatically hoook up default time nodes as input if a time input is created---##
-                    if attr_type == MPyNode.ATTR_TYPE_TIME:
-                        time_nodes = MNode.ls(type="time")
-                        
-                        if time_nodes:
-                            time_nodes[0].connectAttr("outTime", self._py_node, attr_name)
-                    
-                else:
-                    self.LOG_SIGNAL.emit("Cannot add attribute. The name \"" + attr_name + "\" is Python keyword or builtin", 1)
+            MUndo(self._addAttrWrapper, display_option, is_array, attr_name, attr_type)()
+        
 
-            else:
-                self.LOG_SIGNAL.emit("Node already has an attribute named: " + attr_name, 1)
+    def _attrNameCheck(self, attr_name, action_type="add"):
+        
+        if not attr_name:
+            self.LOG_SIGNAL.emit("Cannot " + action_type + " an attribute with no name.", QtLog.ERROR_TYPE)
+            return None
+        
+        ##---auto-convert dashes to underscores---###
+        attr_name = attr_name.replace("-", "_")
+        
+        if self._py_node.hasAttr(attr_name):
+            self.LOG_SIGNAL.emit("Cannot " + action_type + " attribute. Node already has an attribute named: " + attr_name, QtLog.ERROR_TYPE)
+            return None
+        
+        ##---check for invalid charcters in the new name---##
+        invalid_chars = filter(lambda char: (not char.isalnum()) and (char != "_"), attr_name)
+        
+        if invalid_chars:
+            self.LOG_SIGNAL.emit("Cannot " + action_type + " attribute. Given name has invalid characters: " + invalid_chars, QtLog.ERROR_TYPE)
+            return None
+        
+        ##---makes sure new name doesn't start with a number---##
+        if attr_name[0].isdigit():
+            self.LOG_SIGNAL.emit("Cannot " + action_type + " attribute. Attributes names cannot start with a number: " + attr_name, QtLog.ERROR_TYPE)
+            return None
+        
+        ##-----make sure the attribute name is not a Python keyword or builtin---##
+        if (attr_name in keyword.kwlist) or (attr_name in dir(__builtin__)):
+            self.LOG_SIGNAL.emit("Cannot " + action_type + " attribute. The name \"" + attr_name + "\" is Python keyword or builtin", QtLog.ERROR_TYPE)
+            return None
+        
+        return attr_name
+        
 
-        else:
-            self.LOG_SIGNAL.emit("Cannot add an " + self.ATTR_CATEGORY + " attr with no name.", 1)
+    def _addAttrWrapper(self, display_option, is_array, attr_name, attr_type):
+        """
+        Exists so that adding input/output attrs can be wrapped in the single undo
+        """
+        
+        add_func = getattr(self._py_node, self.ADD_ATTR_FUNC_NAME)
+        
+        add_func(attr_name, attr_type, is_array=is_array, **display_option)
+        
+        ##---automatically hook up default time nodes as input if a time input is created---##
+        if (attr_type == MPyNode.ATTR_TYPE_TIME) and (not is_array):
+            time_nodes = MNode.ls(type="time")
+            
+            if time_nodes:
+                time_nodes[0].connectAttr("outTime", self._py_node, attr_name)
+        
+        ##---write add attr command to the log----## 
+        self.SCRIPT_SIGNAL.emit(add_func, (attr_name, attr_type, is_array), display_option)
 
 
     def connectAttrEvent(self, py_node_attr, other_nodes, other_attr, append=True):
@@ -1701,25 +1821,28 @@ class NDInputAttrTree(QTreeWidget):
 
         if sel_items:
 
-            for item in sel_items:
+            MUndo(self._deleteAttrWrapper, sel_items)()
+        
 
-                attr_name = item.text(0)
+    def _deleteAttrWrapper(self, sel_items):
+        
+        for item in sel_items:
 
-                if attr_name:
-                    if self._py_node and self._py_node.isValid():
+            attr_name = item.text(0)
 
-                        attr_name = attr_name.split("[")[0].strip()
+            if attr_name:
+                if self._py_node and self._py_node.isValid():
 
-                        list_func = getattr(self._py_node, self.LIST_ATTR_FUNC_NAME)
-                        attrs = list_func()
+                    attr_name = attr_name.split("[")[0].strip()
 
-                        if attrs and attr_name in attrs:
+                    list_func = getattr(self._py_node, self.LIST_ATTR_FUNC_NAME)
+                    attrs = list_func()
 
-                            delete_func = getattr(self._py_node, self.REMOVE_ATTR_FUNC_NAME)
+                    if attrs and attr_name in attrs:
 
-                            delete_func(attr_name)
+                        delete_func = getattr(self._py_node, self.REMOVE_ATTR_FUNC_NAME)
 
-        self.refresh()
+                        delete_func(attr_name)
 
 
     def refresh(self):
@@ -1729,9 +1852,8 @@ class NDInputAttrTree(QTreeWidget):
         attr_map = list_func()
 
         if attr_map:
-            ##---default alpha order on attribute names---##
-            attr_names = attr_map.keys()
-            attr_names.sort()
+            ##---default alphabetical order on attribute names---##
+            attr_names = sorted(attr_map.keys())
 
             for attr_name in attr_names:
                 attr_data = attr_map[attr_name]
@@ -1840,17 +1962,53 @@ class NDOutputAttrTree(NDInputAttrTree):
 
 
 class NDAttrTreeItem(QTreeWidgetItem):
+    
+    DEFAULT_FLAGS = Qt.ItemIsEnabled | Qt.ItemIsSelectable | Qt.ItemIsEditable
+    ARRAY_SUFFIX = " [ ]"
+    
 
     def __init__(self, parent, attr_name, attr_type, is_array=False, icon_clr=(80, 230, 80)):
 
         super(NDAttrTreeItem, self).__init__(parent)
+        
+        self._cur_name = attr_name
+        self._is_array = is_array
+        
+        self.setFlags(self.DEFAULT_FLAGS)
 
-        item_txt = attr_name if not is_array else attr_name + " [ ]"
+        item_txt = attr_name if not is_array else attr_name + self.ARRAY_SUFFIX
 
         self.setIcon(0, NDAttrIcon(icon_clr))
         self.setText(0, item_txt)
         self.setToolTip(0, attr_type)
-
+        
+        
+    #def data(self, agr1, arg2):
+        
+        #super(NDAttrTreeItem, self).data(agr1, arg2)
+        
+        
+    def getCurrentName(self):
+        
+        return self._cur_name
+    
+    
+    def setCurrentName(self, new_name):
+        
+        self._cur_name = new_name
+        
+        
+    def isArray(self):
+        
+        return self._is_array
+    
+    
+    #def setText(self, column, text):
+        
+        #item_txt = text if not self._is_array else text + self.ARRAY_SUFFIX
+        
+        #super(NDAttrTreeItem, self).setText(column, item_txt)
+        
 
 class NDAttrIcon(QIcon):
 
@@ -2104,7 +2262,7 @@ class NDAddAttrDialog(QDialog):
 
     ATTR_TYPE_MAP = OrderedDict((map(None, DISPLAY_TYPES, (KEYABLE_ATTR_OPTS, DISPLAYABLE_ATTR_OPTS, HIDDEN_ATTR_OPTS))))
 
-    ADD_ATTR_SIGNAL = Signal(str, str, dict, bool)
+    ADD_ATTR_SIGNAL = Signal(str, str, dict, bool, bool)
     
     FLOAT_DEFAULT_VAL = 0.0
     INT_DEFAULT_VAL = 0
@@ -2116,11 +2274,12 @@ class NDAddAttrDialog(QDialog):
     BLANK_FRAME_INDEX = 4
 
 
-    def __init__(self, parent, attr_types, node_name, default_type=None):
+    def __init__(self, parent, attr_types, node_name, default_type=None, is_input=True):
 
         super(NDAddAttrDialog, self).__init__()
 
         self._attr_types = attr_types
+        self._is_input = is_input
 
         self._name_field = None
         self._type_combo = None
@@ -2174,7 +2333,6 @@ class NDAddAttrDialog(QDialog):
     def _buildAttrFrame(self):
 
         self._attr_frame = QFrame(self)
-        #self._attr_frame.setFrameStyle(QFrame.Panel | QFrame.Plain)
 
         h_layout = QHBoxLayout(self._attr_frame)
 
@@ -2320,7 +2478,6 @@ class NDAddAttrDialog(QDialog):
     def _buildPropertiesFrame(self):
         
         self._properties_frame = QFrame(self)
-        #self._properties_frame.setFrameStyle(QFrame.Panel | QFrame.Plain)
         
         v_layout_1 = QVBoxLayout(self._properties_frame)
         
@@ -2523,7 +2680,7 @@ class NDAddAttrDialog(QDialog):
         is_array = self.getIsArray()
         display_opts = self.getAttrDisplayOptions(attr_type, is_array)
 
-        self.ADD_ATTR_SIGNAL.emit(attr_name, attr_type, display_opts, is_array)
+        self.ADD_ATTR_SIGNAL.emit(attr_name, attr_type, display_opts, is_array, self._is_input)
 
 
     def getAttrName(self):
@@ -2560,7 +2717,6 @@ class NDSceneTree(QTreeWidget):
     
     ADD_NODE_SIGNAL = Signal()
     DELETE_NODE_SIGNAL = Signal(tuple)
-    NODE_RENAME_SIGNAL = Signal(object)
     LOG_SIGNAL = Signal(str, int)
     
 
@@ -2579,6 +2735,18 @@ class NDSceneTree(QTreeWidget):
         self.setHeaderItem(QTreeWidgetItem(["Name"]))
         
         self.setSelectionMode(QAbstractItemView.ExtendedSelection)
+        
+        
+    def mousePressEvent(self, event):
+        """
+        Overriding parent class method to add middle click functionality
+        """
+        
+        if event.button() == Qt.MiddleButton:
+            self._selectNodes()
+        
+        else:
+            super(NDSceneTree, self).mousePressEvent(event)
         
         
     def _setSignals(self):
@@ -2626,14 +2794,8 @@ class NDSceneTree(QTreeWidget):
                         item.setText(0, node_name)
                         new_name = node_name
                         
-                    #else:
-                        #new_name = py_node.getName()
-                        #item.setText(0, new_name)
-                        
                 else:
                     item.setText(0, py_node.getName())
-                
-                #self.NODE_RENAME_SIGNAL.emit(py_node)
                 
                 
     def _nodeNameChanged(self):

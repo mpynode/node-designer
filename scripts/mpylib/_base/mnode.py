@@ -1175,6 +1175,22 @@ class MNode(om.MObject):
         """          
 
         mc.rename(*(self, new_name), **kargs)
+        
+        
+    def renameAttr(self, attr_name, new_name):
+        """
+        Rename the given user created attribute
+        
+        **attr_name**	*string* new name
+        
+        **new_name**	*string* new name
+
+        **RETURNS**		*string* new name
+        """
+        
+        obj_attr = self + "." + attr_name
+        
+        return mc.renameAttr(*(obj_attr, new_name))
 
 
     def select(self, **kargs):

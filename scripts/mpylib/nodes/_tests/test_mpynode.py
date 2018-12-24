@@ -180,7 +180,6 @@ class TestMPyNode(unittest.TestCase):
                 else:
                     self.assertEqual(node.getAttr(attr_name, size=True), 1)
                     
-                    
                 ##---test internal data---##
                 data_check_dict[attr_name] = [attr_type]
                 internal_str = node._getInternalInputString()
@@ -191,6 +190,68 @@ class TestMPyNode(unittest.TestCase):
                 
                 self.assertEqual(type(interal_dict), dict)
                 self.assertEqual(len(interal_dict), i)
+                i += 1
+                
+                for internal_attr, internal_type in interal_dict.items():
+                    self.assertSequenceEqual(interal_dict[internal_attr], data_check_dict[internal_attr])
+                    
+        return data_check_dict
+    
+    
+    def testRenameInputAttr(self):
+        
+        return self._testRenameAttr()
+    
+    
+    def testRenameOutputAttr(self):
+        
+        return self._testRenameAttr(is_input=False)    
+    
+
+    def _testRenameAttr(self, is_input=True):
+        
+        node = self.TEST_CLASS(name="test_node")
+        data_check_dict = {}
+        i = 1
+        in_node = self.TEST_CLASS(name="in_node")
+        
+        
+        for is_array in (False, True):
+            
+            attr_types = MPyNode._NEW_INPUT_TYPES.keys() if is_input else MPyNode._NEW_OUTPUT_TYPES.keys()
+        
+            for attr_type in attr_types:
+                
+                name_suffix = "" if not is_array else "_array"
+                attr_name = "test_" + attr_type + name_suffix
+                attr_renamed = "testRenamed_" + attr_type + name_suffix
+                
+                add_func =  getattr(node, "addInputAttr") if is_input else getattr(node, "addOutputAttr")
+                rename_func = getattr(node, "renameInputAttr") if is_input else getattr(node, "renameOutputAttr")
+                
+                add_func(attr_name, attr_type, is_array=is_array)
+                rename_func(attr_name, attr_renamed)
+                
+                self.assertFalse(node.hasAttr(attr_name))
+                self.assertTrue(node.hasAttr(attr_renamed))
+                
+                if is_array:
+                    self.assertEqual(node.getAttr(attr_renamed, size=True), 0)
+                    
+                else:
+                    self.assertEqual(node.getAttr(attr_renamed, size=True), 1)
+                    
+                ##---test internal data---##
+                data_check_dict[attr_renamed] = [attr_type]
+                internal_str = node._getInternalInputString() if is_input else node._getInternalOutputString()
+                
+                self.assertTrue(internal_str is not None)
+                
+                interal_dict = cPickle.loads(codecs.decode(internal_str.encode(), "base64"))
+                
+                self.assertEqual(type(interal_dict), dict)
+                self.assertEqual(len(interal_dict), i)
+                self.assertFalse(interal_dict.has_key(attr_name))
                 i += 1
                 
                 for internal_attr, internal_type in interal_dict.items():

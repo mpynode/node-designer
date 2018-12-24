@@ -346,6 +346,19 @@ class MPyNode(MNode):
             py_data[attr_name] = [attr_type]
 
         self._setInternalPyAttr(internal_attr, py_data)
+        
+        
+    def _renameInternalDictAttr(self, internal_attr, attr_name, new_name):
+        
+        py_data = self._getInternalPyAttr(internal_attr)
+        
+        if py_data:
+            if attr_name in py_data:
+                val = py_data[attr_name]
+                py_data[new_name] = val
+                del(py_data[attr_name])
+                
+                self._setInternalPyAttr(internal_attr, py_data)
 
 
     def _appendInternalListAttr(self, internal_attr, val):
@@ -794,7 +807,47 @@ class MPyNode(MNode):
 
         self._addNewAttribute(long_name, attr_type, self._NEW_OUTPUT_TYPES, self._NEW_OUTPUT_ATTR_KARGS,
                               self._OUTPUTS_STR_ATTR_NAME, is_array=is_array, **kargs)
-
+        
+    
+    def renameInputAttr(self, attr_name, new_name):
+        
+        self._renameInputOutput(attr_name, new_name, True)
+        
+        
+    def renameOutputAttr(self, attr_name, new_name):
+        
+        self._renameInputOutput(attr_name, new_name, False)
+        
+        
+    def _renameInputOutput(self, attr_name, new_name, is_input):
+        
+        list_func = getattr(self, "getInputAttrMap") if is_input else getattr(self, "getOutputAttrMap")
+        attr_map = list_func()
+        
+        if not attr_map:
+            raise RuntimeError("Node has no input/outputs to rename")
+        
+        if not attr_name in attr_map:
+            raise RuntimeError("Node has no input/outputs named " + attr_name)
+        
+        is_array = True if ("is_array" in attr_map[attr_name]) and (attr_map[attr_name]["is_array"]) else False
+        
+        is_src, is_dest = (True, False) if is_input else (False, True)
+        con_nodes, plugs = self.listConnections(attr_name, source=is_src, destination=is_dest, plugs=True)
+        
+        del_func =  getattr(self, "deleteInputAttr") if is_input else getattr(self, "deleteOutputAttr")
+        del_func(attr_name)
+        add_func =  getattr(self, "addInputAttr") if is_input else getattr(self, "addOutputAttr")
+        add_func(new_name, **attr_map[attr_name])
+        
+        if con_nodes:
+            for i, con_list in enumerate(map(None, con_nodes, plugs)):
+                dest_name = new_name if not is_array else new_name + "[" + str(i) + "]"
+                con_list[0].connectAttr(con_list[1], self, dest_name)
+        
+        #str_attr = self._INPUTS_STR_ATTR_NAME if is_input else self._OUTPUTS_STR_ATTR_NAME
+        #self._renameInternalDictAttr(str_attr, attr_name, new_name)
+        
 
     def addStoredVariable(self, var_name):
         """

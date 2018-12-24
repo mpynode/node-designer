@@ -895,6 +895,22 @@ class TestMNode(unittest.TestCase):
     
                 name = node.getName()
                 self.assertEqual(name, "test:" + basename)
+                
+                
+    def testRenameAttr(self):
+        
+        test_attr_name = "attrName"
+        new_attr_name = "newAttrName"
+        
+        for node in filter(None, (self._dag_node, self._dg_node)):
+            
+            node.addAttr(test_attr_name, "float")
+            self.assertTrue(node.hasAttr(test_attr_name))
+            
+            result = node.renameAttr(test_attr_name, new_attr_name)
+            self.assertFalse(node.hasAttr(test_attr_name))
+            self.assertTrue(node.hasAttr(new_attr_name))
+            self.assertEqual(new_attr_name, result)
 
 
     def testSelect(self):

@@ -37,15 +37,15 @@ class QtPythonHighlighter (QSyntaxHighlighter):
         
         QSyntaxHighlighter.__init__(self, document)
         
-        self._styles = {"keyword": self._formatText("khaki"),
-                        "operator": self._formatText("white"),
-                        "brace": self._formatText("darkGray"),
-                        "defclass": self._formatText("deepskyblue", "bold"),
-                        "string": self._formatText("violet"),
-                        "string2": self._formatText("salmon"),
-                        "comment": self._formatText("springgreen", "italic"),
-                        "self": self._formatText("azure", "italic"),
-                        "numbers": self._formatText("skyblue")}        
+        self._styles = {"keyword": self._formatText((249, 38, 102)),
+                        "operator": self._formatText((255, 255, 255)),
+                        "brace": self._formatText((255, 255, 255)),
+                        "defclass": self._formatText((146, 226, 46), "bold"),
+                        "string": self._formatText((230, 219, 91)),
+                        "string2": self._formatText((230, 219, 91)),
+                        "comment": self._formatText((127, 192, 88), "italic"),
+                        "self": self._formatText((0, 166, 210), "italic"),
+                        "numbers": self._formatText((174, 129, 222))}        
 
         # Multi-line strings (expression, flag, style)
         # FIXME: The triple-quotes in these two lines will mess up the
@@ -97,8 +97,8 @@ class QtPythonHighlighter (QSyntaxHighlighter):
         Return a QTextCharFormat with the given attributes.
         """
         
-        clr = QColor()
-        clr.setNamedColor(color)
+        clr = QColor(*color)
+        #clr.setNamedColor(color)
     
         txt_format = QTextCharFormat()
         txt_format.setForeground(clr)
