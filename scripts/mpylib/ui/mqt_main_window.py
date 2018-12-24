@@ -19,6 +19,8 @@ class QMayaWindow(QMainWindow):
     
     TITLE = "QMayaWindow"
     
+    REPLACE_EXISTING = True
+    
     USES_SCENE_OPENED = False
     SCENE_OPENED = None
     
@@ -39,6 +41,10 @@ class QMayaWindow(QMainWindow):
         """
         
         self._maya_win = QMayaMain.getMainWindow()
+        
+        if self.REPLACE_EXISTING:
+            self._replaceExisting(self._maya_win)
+        
         self._maya_signals = None
         
         QMainWindow.__init__(self, self._maya_win)
@@ -46,6 +52,15 @@ class QMayaWindow(QMainWindow):
         self._setMayaSignals()
         
         self.setWindowTitle(self.TITLE)
+        
+        
+    def _replaceExisting(self, parent):
+        
+        children = parent.children()
+        
+        for child in children:
+            if str(type(self)) == str(type(child)):
+                child.close()
         
     
     def _setMayaSignals(self):

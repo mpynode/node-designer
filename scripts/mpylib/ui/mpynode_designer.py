@@ -746,8 +746,7 @@ class NDMainWindow(QMayaWindow):
         if close_ok:
             
             self.removeAllCallbacks()
-            
-            super(NDMainWindow, self).closeEvent(event)
+            self.deleteLater()
             event.accept()
 
         else:
