@@ -195,13 +195,11 @@ class NDMainWindow(QMayaWindow):
 
         self._attributes_widget.LOG_SIGNAL.connect(self._log_widget.write)
         self._attributes_widget.SCRIPT_SIGNAL.connect(self.writeScriptToLog)
-        self._attributes_widget.NODE_RENAME_SIGNAL.connect(self.nodeRenamedEvent)
 
         self._scene_tree.itemSelectionChanged.connect(self.sceneSelectChangeEvent)
         self._scene_tree.LOG_SIGNAL.connect(self._log_widget.write)
         self._scene_tree.ADD_NODE_SIGNAL.connect(self.addNewNodeEvent)
         self._scene_tree.DELETE_NODE_SIGNAL.connect(self.deleteNodesEvent)
-        #self._scene_tree.NODE_RENAME_SIGNAL.connect(self.nodeRenamedEvent)
         
         self._variables_widget.LOG_SIGNAL.connect(self._log_widget.write)
         
@@ -1388,7 +1386,6 @@ class NDAttributesWidget(QWidget):
 
     LOG_SIGNAL = Signal(str, int)
     SCRIPT_SIGNAL = Signal(object, tuple, dict)
-    NODE_RENAME_SIGNAL = Signal(object)
 
 
     def __init__(self, parent=None):
@@ -1425,17 +1422,13 @@ class NDAttributesWidget(QWidget):
             if txt != orig_node_name:
 
                 try:
-                    self._py_node.rename(txt)
+                    MUndo(self._py_node.rename(txt))
 
                 except Exception, err:
                     self.LOG_SIGNAL.emit(err.message, 1)
 
                 node_name = self._py_node.getName()
                 self._name_field.setText(node_name)
-
-                self.NODE_RENAME_SIGNAL.emit(self._py_node)
-
-                self.LOG_SIGNAL.emit("Rename \"" + orig_node_name + "\" to \"" + self._py_node.getName() + "\"", 0)
 
 
     def refresh(self, py_node=None):

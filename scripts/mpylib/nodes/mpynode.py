@@ -842,11 +842,13 @@ class MPyNode(MNode):
         
         if con_nodes:
             for i, con_list in enumerate(map(None, con_nodes, plugs)):
-                dest_name = new_name if not is_array else new_name + "[" + str(i) + "]"
-                con_list[0].connectAttr(con_list[1], self, dest_name)
-        
-        #str_attr = self._INPUTS_STR_ATTR_NAME if is_input else self._OUTPUTS_STR_ATTR_NAME
-        #self._renameInternalDictAttr(str_attr, attr_name, new_name)
+                node_attr_name = new_name if not is_array else new_name + "[" + str(i) + "]"
+                
+                if is_input:
+                    con_list[0].connectAttr(con_list[1], self, node_attr_name)
+                    
+                else:
+                    self.connectAttr(node_attr_name, con_list[0], con_list[1])
         
 
     def addStoredVariable(self, var_name):
