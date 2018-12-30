@@ -13,7 +13,7 @@ else:
     from PySide.QtGui import QColor, QTextCharFormat, QFont, QSyntaxHighlighter
 
 
-class QtPythonHighlighter (QSyntaxHighlighter):
+class QtPythonHighlighter(QSyntaxHighlighter):
     """
     Syntax highlighter for the Python language.
     """
@@ -32,73 +32,67 @@ class QtPythonHighlighter (QSyntaxHighlighter):
 
     BRACES = ("\{", "\}", "\(", "\)", "\[", "\]")
     
+    VAR_PATTERN_PREFIX = "\\b"
+    VAR_PATTERN_SUFFIX = "\\b"
+    
     
     def __init__(self, document):
         
-        QSyntaxHighlighter.__init__(self, document)
+        super(QtPythonHighlighter, self).__init__(document)
         
-        self._styles = {"keyword": self._formatText((249, 38, 102)),
-                        "operator": self._formatText((255, 255, 255)),
-                        "brace": self._formatText((255, 255, 255)),
-                        "defclass": self._formatText((146, 226, 46), "bold"),
-                        "string": self._formatText((230, 219, 91)),
-                        "string2": self._formatText((230, 219, 91)),
-                        "comment": self._formatText((127, 192, 88), "italic"),
-                        "self": self._formatText((0, 166, 210), "italic"),
-                        "numbers": self._formatText((174, 129, 222))}        
+        self._styles = {"keyword": QtPythonHighlighter.formatText((249, 38, 102)),
+                        "operator": QtPythonHighlighter.formatText((255, 255, 255)),
+                        "brace": QtPythonHighlighter.formatText((255, 255, 255)),
+                        "defclass": QtPythonHighlighter.formatText((146, 226, 46), "bold"),
+                        "string": QtPythonHighlighter.formatText((230, 219, 91)),
+                        "string2": QtPythonHighlighter.formatText((230, 219, 91)),
+                        "comment": QtPythonHighlighter.formatText((127, 192, 88), "italic"),
+                        "self": QtPythonHighlighter.formatText((0, 166, 210), "italic"),
+                        "numbers": QtPythonHighlighter.formatText((174, 129, 222))}        
 
         # Multi-line strings (expression, flag, style)
         # FIXME: The triple-quotes in these two lines will mess up the
         # syntax highlighting from this point onward
         self._tri_single = (QRegExp("'''"), 1, self._styles["string2"])
         self._tri_double = (QRegExp('"""'), 2, self._styles["string2"])
+        
+        self._rules = {}
+        self._default_rules = [(r"\b%s\b" % keyword, 0, self._styles["keyword"]) for keyword in self.KEYWORDS]
+        self._default_rules += [(r"%s" % operator, 0, self._styles["operator"]) for operator in self.OPERATORS]
+        self._default_rules += [(r"%s" % brace, 0, self._styles["brace"]) for brace in self.BRACES]
+        self._default_rules += [(r'\bself\b', 0, self._styles['self']),
+                               (r'"[^"\\]*(\\.[^"\\]*)*"', 0, self._styles['string']),
+                               (r"'[^'\\]*(\\.[^'\\]*)*'", 0, self._styles['string']),
+                               (r'\bdef\b\s*(\w+)', 1, self._styles['defclass']),
+                               (r'\bclass\b\s*(\w+)', 1, self._styles['defclass']),
+                               (r'\b[+-]?[0-9]+[lL]?\b', 0, self._styles['numbers']),
+                               (r'\b[+-]?0[xX][0-9A-Fa-f]+[lL]?\b', 0, self._styles['numbers']),
+                               (r'\b[+-]?[0-9]+(?:\.[0-9]+)?(?:[eE][+-]?[0-9]+)?\b', 0, self._styles['numbers'])]
+        self._comment_rules = [(r'#[^\n]*', 0, self._styles['comment'])]
+        self._var_rules_map = {}
 
-        rules = []
+        self.rebuildRules()
+        
 
-        # Keyword, operator, and brace rules
-        rules += [(r'\b%s\b' % w, 0, self._styles['keyword'])
-            for w in self.KEYWORDS]
-        rules += [(r'%s' % o, 0, self._styles['operator'])
-            for o in self.OPERATORS]
-        rules += [(r'%s' % b, 0, self._styles['brace'])
-            for b in self.BRACES]
-
-        # All other rules
-        rules += [
-            # 'self'
-            (r'\bself\b', 0, self._styles['self']),
-
-            # Double-quoted string, possibly containing escape sequences
-            (r'"[^"\\]*(\\.[^"\\]*)*"', 0, self._styles['string']),
-            # Single-quoted string, possibly containing escape sequences
-            (r"'[^'\\]*(\\.[^'\\]*)*'", 0, self._styles['string']),
-
-            # 'def' followed by an identifier
-            (r'\bdef\b\s*(\w+)', 1, self._styles['defclass']),
-            # 'class' followed by an identifier
-            (r'\bclass\b\s*(\w+)', 1, self._styles['defclass']),
-
-            # From '#' until a newline
-            (r'#[^\n]*', 0, self._styles['comment']),
-
-            # Numeric literals
-            (r'\b[+-]?[0-9]+[lL]?\b', 0, self._styles['numbers']),
-            (r'\b[+-]?0[xX][0-9A-Fa-f]+[lL]?\b', 0, self._styles['numbers']),
-            (r'\b[+-]?[0-9]+(?:\.[0-9]+)?(?:[eE][+-]?[0-9]+)?\b', 0, self._styles['numbers']),
-        ]
-
-        # Build a QRegExp for each pattern
-        self.rules = [(QRegExp(pat), index, fmt)
-            for (pat, index, fmt) in rules]
+    def rebuildRules(self):
+        
+        self._rules = [(QRegExp(pat), index, fmt) for (pat, index, fmt) in self._default_rules]
+        
+        if self._var_rules_map:
+            self._rules += [(QRegExp(pat), index, fmt) for (pat, index, fmt) in self._var_rules_map.values()]
+            
+        self._rules += [(QRegExp(pat), index, fmt) for (pat, index, fmt) in self._comment_rules]
+            
+        self.rehighlight()
         
     
-    def _formatText(self, color, style=""):
+    @classmethod
+    def formatText(cls, color, style=""):
         """
         Return a QTextCharFormat with the given attributes.
         """
         
         clr = QColor(*color)
-        #clr.setNamedColor(color)
     
         txt_format = QTextCharFormat()
         txt_format.setForeground(clr)
@@ -118,7 +112,7 @@ class QtPythonHighlighter (QSyntaxHighlighter):
         """
         
         # Do other syntax formatting
-        for expression, nth, format in self.rules:
+        for expression, nth, format in self._rules:
             index = expression.indexIn(text, 0)
 
             while index >= 0:
@@ -178,15 +172,48 @@ class QtPythonHighlighter (QSyntaxHighlighter):
             return False
         
         
+    def clearVarColors(self):
+        self._var_rules_map = {}
         
-#if __name__ == "__main__":
+        
+    def setVarColorMap(self, var_map):
+        
+        self._var_rules_map = {}
+        
+        for var_name, color in var_map.items():
+            reg_ex = self.VAR_PATTERN_PREFIX + var_name + self.VAR_PATTERN_SUFFIX
+            style = self.formatText(color, style="italic")
+            
+            self._var_rules_map[var_name] = (QRegExp(reg_ex), 0, style)
+            
+        self.rebuildRules()
     
-    #from PySide.QtGui import QApplication, QPlainTextEdit
     
-    #app = QApplication([])
+    def appendVarColor(self, var_name, color):
+        
+        reg_ex = self.VAR_PATTERN_PREFIX + var_name + self.VAR_PATTERN_SUFFIX
+        style = self.formatText(color, style="italic")
+        
+        self._var_rules_map[var_name] = (QRegExp(reg_ex), 0, style)
+        self.rebuildRules()
+        
+        
+    def removeVarColor(self, var_name):
+        
+        if var_name in self._var_rules_map:
+            del(self._var_rules_map[var_name])
+            
+        self.rebuildRules()
+        
+        
+if __name__ == "__main__":
     
-    #editor = QPlainTextEdit()
-    #highlight = QtPythonHighlighter(editor.document())
-    #editor.show()
+    from PySide2.QtWidgets import QApplication, QPlainTextEdit
     
-    #app.exec_()
+    app = QApplication([])
+    
+    editor = QPlainTextEdit()
+    highlight = QtPythonHighlighter(editor.document())
+    editor.show()
+    
+    app.exec_()

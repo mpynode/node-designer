@@ -34,6 +34,7 @@ class QtPythonEditor(QPlainTextEdit):
     
     DEFAULT_FONT_FAMILY = "Courier"
     DEFAULT_FONT_SIZE = 10
+    DEFAULT_LINE_WRAP_MODE = QPlainTextEdit.NoWrap
     
     TAB_STOP = 4
     
@@ -44,6 +45,7 @@ class QtPythonEditor(QPlainTextEdit):
         
         self._highlighter = self.HIGHLIGHTER_CLASS(self.document())      
         self._line_number_widget = QtLineNumberArea(self)
+        self.setLineWrapMode(self.DEFAULT_LINE_WRAP_MODE)
         
         self._initTextAttrs()
         self._initEvents()
@@ -74,7 +76,7 @@ class QtPythonEditor(QPlainTextEdit):
         
         super(QtPythonEditor, self).resizeEvent(event)
     
-        cr = self.contentsRect();
+        cr = self.contentsRect()
         self._line_number_widget.setGeometry(QRect(cr.left(), cr.top(),
                                                    self.lineNumberAreaWidth(), cr.height()))
         
@@ -122,6 +124,7 @@ class QtPythonEditor(QPlainTextEdit):
             selection.cursor = self.textCursor()
             selection.cursor.clearSelection()
             extraSelections.append(selection)
+            
         self.setExtraSelections(extraSelections)
         
         
@@ -148,7 +151,11 @@ class QtPythonEditor(QPlainTextEdit):
             block = block.next()
             top = bottom
             bottom = top + self.blockBoundingRect(block).height()
-            blockNumber += 1    
+            blockNumber += 1
+            
+            
+    def getHighlighter(self):
+        return self._highlighter
         
 
 if __name__ == "__main__":

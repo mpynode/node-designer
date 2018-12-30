@@ -175,6 +175,8 @@ class MPyNode(MNode):
 
     _ASCII_FILE_EXT = "mpya"
     _BINARY_FILE_EXT = "mpyb"
+    
+    _UI_ATTR_COLOR_ATTR_NAME = "uiAttrColors"
 
 
     def __init__(self, node=None, name=None, exp_str=None, input_map=None, output_map=None, stored_var_map=None):
@@ -541,6 +543,32 @@ class MPyNode(MNode):
             return attr_map
 
         return None
+    
+    
+    def _updateUiAttrColorMap(self, clr_map_update):
+        
+        clr_map = {}
+        
+        if not self.hasAttr(self._UI_ATTR_COLOR_ATTR_NAME):
+            self.addAttr(self._UI_ATTR_COLOR_ATTR_NAME, "string")
+            
+        else:
+            clr_map = self._getInternalPyAttr(self._UI_ATTR_COLOR_ATTR_NAME)
+            
+            if not clr_map:
+                clr_map = {}
+                
+        clr_map.update(clr_map_update)
+        
+        self._setInternalPyAttr(self._UI_ATTR_COLOR_ATTR_NAME, clr_map)
+        
+        
+    def _getUiAttrColorMap(self):
+        
+        if not self.hasAttr(self._UI_ATTR_COLOR_ATTR_NAME):
+            return None
+        
+        return self._getInternalPyAttr(self._UI_ATTR_COLOR_ATTR_NAME)
 
 
     def setExpression(self, exp_str):

@@ -13,19 +13,19 @@ import maya.api.OpenMaya as om
 
 if mc.about(apiVersion=True) < 201700:
     import PySide
-    from PySide.QtCore import Qt, Signal, Slot, QSize, QObject
+    from PySide.QtCore import Qt, Signal, Slot, QSize, QObject, QRegExp
     from PySide.QtGui import QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QSplitter, QColor, QStatusBar, QMessageBox, QTreeWidget, QTreeWidgetItem, QDialog, QComboBox, QCheckBox
     from PySide.QtGui import QFont, QFontMetrics, QPlainTextEdit, QTabWidget, QTabBar, QAction, QKeySequence, QLineEdit, QFrame, QLabel, QMenu, QIcon, QPixmap, QPushButton, QStackedLayout
     from PySide.QtGui import QRadioButton, QButtonGroup, QCompleter, QTextCursor, QAbstractItemView, QToolBar, QListWidget, QTableWidget, QTableWidgetItem, QHeaderView, QFileDialog, QGridLayout
-    from PySide.QtGui import QDoubleValidator, QIntValidator, QListWidgetItem
+    from PySide.QtGui import QDoubleValidator, QIntValidator, QListWidgetItem, QColorDialog
 
 else:
     import PySide2
     PySide = PySide2
-    from PySide2.QtCore import Qt, Signal, Slot, QSize, QObject
+    from PySide2.QtCore import Qt, Signal, Slot, QSize, QObject, QRegExp
     from PySide2.QtGui import QColor, QFont, QFontMetrics, QKeySequence, QIcon, QPixmap, QTextCursor, QDoubleValidator, QIntValidator
     from PySide2.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QSplitter, QStatusBar, QMessageBox, QTreeWidget, QTreeWidgetItem, QDialog, QComboBox, QCheckBox
-    from PySide2.QtWidgets import QPlainTextEdit, QTabWidget, QTabBar, QLineEdit, QFrame, QLabel, QMenu, QPushButton, QStackedLayout, QGridLayout, QListWidgetItem
+    from PySide2.QtWidgets import QPlainTextEdit, QTabWidget, QTabBar, QLineEdit, QFrame, QLabel, QMenu, QPushButton, QStackedLayout, QGridLayout, QListWidgetItem, QColorDialog
     from PySide2.QtWidgets import QRadioButton, QButtonGroup, QCompleter, QAbstractItemView, QToolBar, QAction, QListWidget, QTableWidget, QTableWidgetItem, QHeaderView, QFileDialog
 
 from qt_log import QtLog
@@ -46,18 +46,22 @@ ATTR_COLOR_DARK_BLUE = (10, 40, 195)
 ATTR_COLOR_GREY_BLUE = (128, 170, 170)
 ATTR_COLOR_ORANGE = (221, 135, 36)
 ATTR_COLOR_PINK = (230, 1, 230)
-ATTR_COLOR_BLACK = (0, 0, 0)
-ATTR_COLOR_PY_YELLOW = (255, 218, 76)
+ATTR_COLOR_BLACK = (128, 128, 128)
+ATTR_COLOR_BROWN = (146, 101, 49)
+ATTR_COLOR_YELLOW = (255, 218, 76)
 
 ATTR_COLOR_MAP = {MPyNode.ATTR_TYPE_INT:ATTR_COLOR_DARK_GREEN, MPyNode.ATTR_TYPE_FLOAT:ATTR_COLOR_GREEN,
+                  MPyNode.ATTR_TYPE_VECTOR:ATTR_COLOR_GREEN,
                   MPyNode.ATTR_TYPE_ANGLE:ATTR_COLOR_BLUE, MPyNode.ATTR_TYPE_BOOL:ATTR_COLOR_ORANGE,
                   MPyNode.ATTR_TYPE_COLOR:ATTR_COLOR_GREEN, MPyNode.ATTR_TYPE_EULER:ATTR_COLOR_GREEN,
                   MPyNode.ATTR_TYPE_MATRIX:ATTR_COLOR_GREY_BLUE, MPyNode.ATTR_TYPE_MESH:ATTR_COLOR_PINK,
                   MPyNode.ATTR_TYPE_NURBS_CURVE:ATTR_COLOR_BLUE, MPyNode.ATTR_TYPE_NURBS_SURFACE:ATTR_COLOR_BLACK,
                   MPyNode.ATTR_TYPE_STRING:ATTR_COLOR_DARK_BLUE,
-                  MPyNode.ATTR_TYPE_PY:ATTR_COLOR_PY_YELLOW,
+                  MPyNode.ATTR_TYPE_PY:ATTR_COLOR_YELLOW,
                   MPyNode.ATTR_TYPE_TIME:ATTR_COLOR_GREEN,
-                  MPyNode.ATTR_TYPE_ENUM:ATTR_COLOR_BLACK}
+                  MPyNode.ATTR_TYPE_ENUM:ATTR_COLOR_BROWN}
+
+ATTR_UI_COLOR_ATTR_NAME = "uiAttrColors"
 
 MEL_ATTR_TYPE_MAP = {"bool":MPyNode.ATTR_TYPE_BOOL,
                      "long":MPyNode.ATTR_TYPE_INT, "short":MPyNode.ATTR_TYPE_INT, "byte":MPyNode.ATTR_TYPE_INT,
@@ -69,8 +73,8 @@ MEL_ATTR_TYPE_MAP = {"bool":MPyNode.ATTR_TYPE_BOOL,
                      "time":MPyNode.ATTR_TYPE_TIME,
                      "matrix":MPyNode.ATTR_TYPE_MATRIX, "fltMatrix":MPyNode.ATTR_TYPE_MATRIX,
                      "reflectance":MPyNode.ATTR_TYPE_COLOR, "spectrum":MPyNode.ATTR_TYPE_COLOR,
-                     "float2":MPyNode.ATTR_TYPE_FLOAT, "float3":MPyNode.ATTR_TYPE_FLOAT,
-                     "double2":MPyNode.ATTR_TYPE_FLOAT, "double3":MPyNode.ATTR_TYPE_FLOAT,
+                     "float2":MPyNode.ATTR_TYPE_FLOAT, "float3":MPyNode.ATTR_TYPE_VECTOR,
+                     "double2":MPyNode.ATTR_TYPE_FLOAT, "double3":MPyNode.ATTR_TYPE_VECTOR,
                      "doubleArray":MPyNode.ATTR_TYPE_FLOAT, "floatArray":MPyNode.ATTR_TYPE_FLOAT,
                      "Int32Array":MPyNode.ATTR_TYPE_INT,
                      "vectorArray":MPyNode.ATTR_TYPE_VECTOR,
@@ -175,7 +179,7 @@ class NDMainWindow(QMayaWindow):
 
     def _buildToolBar(self):
 
-        self._main_tool_bar = QToolBar(self)
+        self._main_tool_bar = NDToolBar(self)
         self.addToolBar(Qt.TopToolBarArea, self._main_tool_bar)
         self._main_tool_bar.setAttribute(Qt.WA_AlwaysShowToolTips)
         self._main_tool_bar.window().setAttribute(Qt.WA_AlwaysShowToolTips)
@@ -191,10 +195,11 @@ class NDMainWindow(QMayaWindow):
         """
 
         self._script_tab_widget.LOG_SIGNAL.connect(self._log_widget.write)
-        self._script_tab_widget.currentChanged.connect(self._scriptTabChanged)
+        self._script_tab_widget.currentChanged.connect(self.scriptTabChanged)
 
         self._attributes_widget.LOG_SIGNAL.connect(self._log_widget.write)
         self._attributes_widget.SCRIPT_SIGNAL.connect(self.writeScriptToLog)
+        self._attributes_widget.ATTR_COLOR_CHANGE_SIGNAL.connect(self.setAttrColorData)
 
         self._scene_tree.itemSelectionChanged.connect(self.sceneSelectChangeEvent)
         self._scene_tree.LOG_SIGNAL.connect(self._log_widget.write)
@@ -339,6 +344,7 @@ class NDMainWindow(QMayaWindow):
         node_attr_name = plug.name()
         attr_name = node_attr_name.split(".")[-1]
         
+        ##---message values for attribute changes require bitwise operators---##
         if (attr_msg & om.MNodeMessage.kAttributeAdded) == om.MNodeMessage.kAttributeAdded\
          or (attr_msg & om.MNodeMessage.kAttributeArrayAdded) == om.MNodeMessage.kAttributeArrayAdded:
             self._log_widget.write("Attribute added: " + attr_name, QtLog.SUCCESS_TYPE)
@@ -350,13 +356,15 @@ class NDMainWindow(QMayaWindow):
         elif (attr_msg & om.MNodeMessage.kAttributeRenamed) == om.MNodeMessage.kAttributeRenamed:
             self._log_widget.write("Attribute renamed: " + attr_name, QtLog.SUCCESS_TYPE)
         
-        ##---message values require bitwise operators---##
         if (attr_msg & om.MNodeMessage.kAttributeSet) == om.MNodeMessage.kAttributeSet:
             
-            if attr_name in (MPyNode._INPUTS_STR_ATTR_NAME, MPyNode._OUTPUTS_STR_ATTR_NAME):
+            if attr_name in (MPyNode._INPUTS_STR_ATTR_NAME, MPyNode._OUTPUTS_STR_ATTR_NAME,
+                             MPyNode._UI_ATTR_COLOR_ATTR_NAME):
                 
                 self._attributes_widget.refreshInputs()
                 self._attributes_widget.refreshOutputs()
+                
+                self._script_tab_widget.refreshCurrentTab()
 
 
     def _onSceneOpen(self, data):
@@ -378,7 +386,7 @@ class NDMainWindow(QMayaWindow):
         self._scene_tree.refresh()
 
 
-    def _scriptTabChanged(self, tab_index):
+    def scriptTabChanged(self, tab_index):
         
         def _clearWidgets():
             self._cur_py_node = None
@@ -602,15 +610,18 @@ class NDMainWindow(QMayaWindow):
         self._file_menu = self.menuBar().addMenu("&File")
         self._file_menu.addAction(self._import_from_file_action)
         self._file_menu.addAction(self._export_to_file_action)
+        self._file_menu.setToolTipsVisible(True)
 
         self._node_menu = self.menuBar().addMenu("&Node")
         self._node_menu.addAction(self._new_node_action)
         self._node_menu.addAction(self._save_node_action)
         self._node_menu.addAction(self._save_all_nodes_action)
+        self._node_menu.setToolTipsVisible(True)
         
         self._help_menu = self.menuBar().addMenu("&Help")
         self._help_menu.addAction(self._help_doc_action)
         self._help_menu.addAction(self._help_api_doc_action)
+        self._help_menu.setToolTipsVisible(True)
 
 
     def addNewNodeEvent(self):
@@ -677,6 +688,28 @@ class NDMainWindow(QMayaWindow):
     def saveAllNodes(self):
 
         self._script_tab_widget.saveAllNodes()
+        
+        
+    def setAttrColorData(self, clr_map_update):
+        
+        def _setAttrWrapper(map_update):
+            
+            clr_map = {}
+            
+            if not self._cur_py_node.hasAttr(ATTR_UI_COLOR_ATTR_NAME):
+                self._cur_py_node.addAttr(ATTR_UI_COLOR_ATTR_NAME, "string")
+                
+            else:
+                clr_map = self._cur_py_node._getInternalPyAttr(ATTR_UI_COLOR_ATTR_NAME)
+                
+                if not clr_map:
+                    clr_map = {}
+                    
+            clr_map.update(map_update)
+            
+            self._cur_py_node._setInternalPyAttr(ATTR_UI_COLOR_ATTR_NAME, clr_map)
+            
+        _setAttrWrapper(clr_map_update)
         
     
     def removeAllCallbacks(self):
@@ -755,7 +788,7 @@ class NDScriptTabWidget(QTabWidget):
 
     NEW_TAB_NAME = "untitled"
     UNSVAED_CHAR = "*"
-
+    
     LOG_SIGNAL = Signal(str, int)
 
 
@@ -768,6 +801,14 @@ class NDScriptTabWidget(QTabWidget):
         self.setDocumentMode(True) ##---does this help keep focus?...probably not
 
         self._setSignals()
+        
+        
+    def refreshCurrentTab(self):
+        
+        script_widget = self.currentWidget()
+        
+        if script_widget:
+            script_widget.refresh()
 
 
     def _updateTabNodeName(self, py_node):
@@ -804,6 +845,7 @@ class NDScriptTabWidget(QTabWidget):
         tab_index = self.addTab(tab_widget, self.NEW_TAB_NAME + self.UNSVAED_CHAR)
 
         self.setTabText(tab_index, py_node.getName())
+        self.refreshCurrentTab()
 
         tab_widget.LOG_SIGNAL.connect(self.LOG_SIGNAL.emit)
 
@@ -963,7 +1005,7 @@ class NDScriptTabWidget(QTabWidget):
 class NDScriptEditor(QtPythonEditor):
 
     TAB_STOP = 4
-
+    
     LOG_SIGNAL = Signal(str, int)
 
 
@@ -974,9 +1016,39 @@ class NDScriptEditor(QtPythonEditor):
         self._py_node = py_node
 
         if self._py_node:
+            
             exp_str = self._py_node.getExpression()
-
             self.setText(exp_str)
+            
+            
+    def refresh(self):
+        
+        highlighter = self.getHighlighter()
+        
+        if self._py_node and highlighter:
+            
+            new_clr_map = {}
+            
+            input_map = self._py_node.getInputAttrMap()
+            output_map = self._py_node.getOutputAttrMap()
+            
+            current_clr_map = self._py_node._getUiAttrColorMap()
+            
+            if not current_clr_map:
+                current_clr_map = {}            
+            
+            for attr_map in (input_map, output_map):
+                for attr_name, attr_data in attr_map.items():
+
+                    if not attr_name in current_clr_map:
+                        attr_type = attr_data["attr_type"]
+                        attr_clr = ATTR_COLOR_MAP[attr_type]
+                        
+                        new_clr_map[attr_name] = attr_clr
+                    
+                    new_clr_map.update(current_clr_map)
+        
+            highlighter.setVarColorMap(new_clr_map)        
 
 
     def getMPyNode(self):
@@ -998,6 +1070,7 @@ class NDScriptEditor(QtPythonEditor):
 
         else:
             self.document().setPlainText("")
+            
 
     def getText(self):
 
@@ -1026,6 +1099,7 @@ class NDScriptEditor(QtPythonEditor):
                 return True
 
         return False
+        
     
     
 class NDToolsTabWidget(QTabWidget):
@@ -1386,6 +1460,7 @@ class NDAttributesWidget(QWidget):
 
     LOG_SIGNAL = Signal(str, int)
     SCRIPT_SIGNAL = Signal(object, tuple, dict)
+    ATTR_COLOR_CHANGE_SIGNAL = Signal(dict)
 
 
     def __init__(self, parent=None):
@@ -1406,10 +1481,12 @@ class NDAttributesWidget(QWidget):
         if self._input_frame:
             self._input_frame.LOG_SIGNAL.connect(self.LOG_SIGNAL.emit)
             self._input_frame.SCRIPT_SIGNAL.connect(self.SCRIPT_SIGNAL.emit)
+            self._input_frame.ATTR_COLOR_CHANGE_SIGNAL.connect(self.ATTR_COLOR_CHANGE_SIGNAL.emit)
 
         if self._output_frame:
             self._output_frame.LOG_SIGNAL.connect(self.LOG_SIGNAL.emit)
             self._output_frame.SCRIPT_SIGNAL.connect(self.SCRIPT_SIGNAL.emit)
+            self._output_frame.ATTR_COLOR_CHANGE_SIGNAL.connect(self.ATTR_COLOR_CHANGE_SIGNAL.emit)
 
 
     def _nodeNameChanged(self):
@@ -1454,11 +1531,15 @@ class NDAttributesWidget(QWidget):
         
         
     def refreshInputs(self):
-        self._input_frame.refresh()
+        
+        if self._input_frame:
+            self._input_frame.refresh()
     
     
     def refreshOutputs(self):
-        self._output_frame.refresh()
+        
+        if self._output_frame:
+            self._output_frame.refresh()
 
 
     def _buildInputFrame(self, py_node):
@@ -1513,7 +1594,7 @@ class NDInputAttrTree(QTreeWidget):
     LIST_ATTR_FUNC_NAME = "getInputAttrMap"
     REMOVE_ATTR_FUNC_NAME = "deleteInputAttr"
 
-    ATTR_ADDED_SIGNAL = Signal(str)
+    ATTR_COLOR_CHANGE_SIGNAL = Signal(dict)
     LOG_SIGNAL = Signal(str, int)
     SCRIPT_SIGNAL = Signal(object, tuple, dict)
     
@@ -1529,6 +1610,7 @@ class NDInputAttrTree(QTreeWidget):
         self._delete_attr_action = None
         self._connect_attr_action = None
         self._remove_inputs_action = None
+        self._show_color_picker_action = None
 
         self.setColumnCount(1)
         self.setHeaderItem(QTreeWidgetItem([self.ATTR_CATEGORY.upper()]))
@@ -1571,6 +1653,10 @@ class NDInputAttrTree(QTreeWidget):
 
         self._remove_inputs_action = QAction("Diconnect All " + self.ATTR_CATEGORY.capitalize() + "s", self,
                                              statusTip="Diconnect all connections to this attribute", triggered=self.removeAllConnections)
+        
+        self._show_color_picker_action = QAction("Set " + self.ATTR_CATEGORY.capitalize() + " Color....", self,
+                                                 statusTip="Set the display/syntax color of this " + self.ATTR_CATEGORY.capitalize(),
+                                                 triggered=self.showAttrColorPicker)
         
         
     def _renameAttr(self, item):
@@ -1619,6 +1705,7 @@ class NDInputAttrTree(QTreeWidget):
 
         if sel_items:
             menu.addAction(self._delete_attr_action)
+            menu.addAction(self._show_color_picker_action)
             menu.addSeparator()
             menu.addAction(self._connect_attr_action)
             menu.addAction(self._remove_inputs_action)
@@ -1655,7 +1742,39 @@ class NDInputAttrTree(QTreeWidget):
                     self.LOG_SIGNAL.emit(self.ATTR_CATEGORY + "s disconnected from: " + attr_name, 2)
 
         else:
-            self.LOG_SIGNAL.emit("No attributes selected", 1)        
+            self.LOG_SIGNAL.emit("No attributes selected", 1)
+            
+            
+    def showAttrColorPicker(self):
+        
+        dlg = QColorDialog(self)
+        result = dlg.exec_()
+        
+        if result:
+            attr_clr_map = {}
+            clr = dlg.currentColor().getRgb()[:-1]
+            sel_items = self.selectedItems()
+            
+            if sel_items:
+                for item in sel_items:
+                    item.setIcon(0, NDAttrIcon(clr))
+                    
+                    item_name = item.text(0)
+                    attr_name = item_name if not item_name.endswith(NDAttrTreeItem.ARRAY_SUFFIX) else item_name[:0 - len(NDAttrTreeItem.ARRAY_SUFFIX)]
+                    attr_clr_map[attr_name] = clr
+                    
+                self.ATTR_COLOR_CHANGE_SIGNAL.emit(attr_clr_map)
+                
+        
+    def _getAttrColorData(self):
+        
+        if self._py_node.hasAttr(ATTR_UI_COLOR_ATTR_NAME):
+            clr_map = self._py_node._getInternalPyAttr(ATTR_UI_COLOR_ATTR_NAME)
+            
+            if clr_map:
+                return clr_map
+            
+        return None
 
 
     def showConnectAttrDlg(self):
@@ -1737,7 +1856,7 @@ class NDInputAttrTree(QTreeWidget):
             return None
         
         ##-----make sure the attribute name is not a Python keyword or builtin---##
-        if (attr_name in keyword.kwlist) or (attr_name in dir(__builtin__)):
+        if (attr_name in keyword.kwlist) or (attr_name in dir(__builtin__)) or (attr_name in ("self",)):
             self.LOG_SIGNAL.emit("Cannot " + action_type + " attribute. The name \"" + attr_name + "\" is Python keyword or builtin", QtLog.ERROR_TYPE)
             return None
         
@@ -1846,13 +1965,20 @@ class NDInputAttrTree(QTreeWidget):
         if attr_map:
             ##---default alphabetical order on attribute names---##
             attr_names = sorted(attr_map.keys())
+            attr_clr_map = self._getAttrColorData()
 
             for attr_name in attr_names:
                 attr_data = attr_map[attr_name]
 
                 attr_type = attr_data[MPyNode._ATTR_MAP_TYPE_KEY]
                 is_array = False if not attr_data.has_key(MPyNode.ATTR_MAP_ARRAY_KEY) else True
-                icon_clr = ATTR_COLOR_MAP[attr_type] if ATTR_COLOR_MAP.has_key(attr_type) else ATTR_COLOR_DEFAULT
+                
+                icon_clr = None
+                if attr_clr_map and (attr_name in attr_clr_map):
+                    icon_clr = attr_clr_map[attr_name]
+                
+                else:
+                    icon_clr = ATTR_COLOR_MAP[attr_type] if ATTR_COLOR_MAP.has_key(attr_type) else ATTR_COLOR_DEFAULT
 
                 self.addTopLevelItem(NDAttrTreeItem(self, attr_name, attr_type, is_array=is_array, icon_clr=icon_clr))
 
@@ -2005,9 +2131,12 @@ class NDAttrTreeItem(QTreeWidgetItem):
 class NDAttrIcon(QIcon):
 
     def __init__(self, clr):
+        
+        if type(clr) != QColor:
+            clr = QColor(*clr)
 
         pixmap = QPixmap(10, 10)
-        pixmap.fill(QColor(*clr))
+        pixmap.fill(clr)
 
         super(NDAttrIcon, self).__init__(pixmap)
 
@@ -3089,6 +3218,18 @@ class NDIconManager(object):
     def __contains__(self, item):
         
         return item in self._icon_map
+    
+    
+class NDToolBar(QToolBar):
+    
+    
+    def __init__(self, parent):
+        
+        super(NDToolBar, self).__init__(parent)
+        
+        
+    def contextMenuEvent(self, event):
+        pass
     
     
 ICON_MANAGER = NDIconManager()
