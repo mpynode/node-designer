@@ -692,24 +692,7 @@ class NDMainWindow(QMayaWindow):
         
     def setAttrColorData(self, clr_map_update):
         
-        def _setAttrWrapper(map_update):
-            
-            clr_map = {}
-            
-            if not self._cur_py_node.hasAttr(ATTR_UI_COLOR_ATTR_NAME):
-                self._cur_py_node.addAttr(ATTR_UI_COLOR_ATTR_NAME, "string")
-                
-            else:
-                clr_map = self._cur_py_node._getInternalPyAttr(ATTR_UI_COLOR_ATTR_NAME)
-                
-                if not clr_map:
-                    clr_map = {}
-                    
-            clr_map.update(map_update)
-            
-            self._cur_py_node._setInternalPyAttr(ATTR_UI_COLOR_ATTR_NAME, clr_map)
-            
-        _setAttrWrapper(clr_map_update)
+        MUndo(self._cur_py_node._updateUiAttrColorMap, clr_map_update)()
         
     
     def removeAllCallbacks(self):
