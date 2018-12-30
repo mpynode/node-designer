@@ -1021,15 +1021,17 @@ class NDScriptEditor(QtPythonEditor):
                 current_clr_map = {}            
             
             for attr_map in (input_map, output_map):
-                for attr_name, attr_data in attr_map.items():
-
-                    if not attr_name in current_clr_map:
-                        attr_type = attr_data["attr_type"]
-                        attr_clr = ATTR_COLOR_MAP[attr_type]
+                
+                if attr_map:
+                    for attr_name, attr_data in attr_map.items():
+    
+                        if not attr_name in current_clr_map:
+                            attr_type = attr_data["attr_type"]
+                            attr_clr = ATTR_COLOR_MAP[attr_type]
+                            
+                            new_clr_map[attr_name] = attr_clr
                         
-                        new_clr_map[attr_name] = attr_clr
-                    
-                    new_clr_map.update(current_clr_map)
+                        new_clr_map.update(current_clr_map)
         
             highlighter.setVarColorMap(new_clr_map)        
 
