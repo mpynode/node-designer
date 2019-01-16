@@ -8,6 +8,17 @@ import logging
 import webbrowser
 from collections import OrderedDict
 
+
+# Cython workaround
+# Without this when running the cythonized code will error out
+# complaining about a missing __file__ object.
+import inspect
+if not hasattr(sys.modules[__name__], '__file__'):
+    __file__ = inspect.getfile(inspect.currentframe())
+
+
+
+
 import maya.cmds as mc
 import maya.api.OpenMaya as om
 
@@ -56,7 +67,7 @@ ATTR_COLOR_MAP = {MPyNode.ATTR_TYPE_INT:ATTR_COLOR_DARK_GREEN, MPyNode.ATTR_TYPE
                   MPyNode.ATTR_TYPE_COLOR:ATTR_COLOR_GREEN, MPyNode.ATTR_TYPE_EULER:ATTR_COLOR_GREEN,
                   MPyNode.ATTR_TYPE_MATRIX:ATTR_COLOR_GREY_BLUE, MPyNode.ATTR_TYPE_MESH:ATTR_COLOR_PINK,
                   MPyNode.ATTR_TYPE_NURBS_CURVE:ATTR_COLOR_BLUE, MPyNode.ATTR_TYPE_NURBS_SURFACE:ATTR_COLOR_BLACK,
-                  MPyNode.ATTR_TYPE_STRING:ATTR_COLOR_DARK_BLUE,
+                  MPyNode.ATTR_TYPE_STRING:ATTR_COLOR_YELLOW,
                   MPyNode.ATTR_TYPE_PY:ATTR_COLOR_YELLOW,
                   MPyNode.ATTR_TYPE_TIME:ATTR_COLOR_GREEN,
                   MPyNode.ATTR_TYPE_ENUM:ATTR_COLOR_BROWN}
