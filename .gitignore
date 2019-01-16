@@ -1,3 +1,4 @@
 *.pyc
 *.swatches
 *.wpu
+.DS_Store
