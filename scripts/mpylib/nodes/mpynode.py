@@ -3,7 +3,6 @@ import copy
 import cPickle
 from collections import OrderedDict
 
-import maya.cmds as mc
 import maya.api.OpenMaya as om
 
 from .._base import MNode
@@ -34,7 +33,7 @@ class MPyNode(MNode):
 
     ATTR_TYPE_MESH = "mesh"
     ATTR_TYPE_NURBS_CURVE = "nurbsCurve"
-    ATTR_TYPE_NURBS_SURFACE= "nurbsSurface"
+    ATTR_TYPE_NURBS_SURFACE = "nurbsSurface"
 
     _NODE_NUMERIC_TYPES = (ATTR_TYPE_INT, ATTR_TYPE_FLOAT, ATTR_TYPE_TIME, ATTR_TYPE_ANGLE)
     _PY_TYPE_INT = int
@@ -132,7 +131,7 @@ class MPyNode(MNode):
 
     ##----------------##
     _TYPE_ATTR = "type"
-    _INIT_EXPRESSION_STR = None
+    INIT_EXPRESSION_STR = None
 
     _ATTR_MAP_TYPE_KEY = "attr_type"
     ATTR_MAP_ARRAY_KEY = "is_array"
@@ -153,10 +152,10 @@ class MPyNode(MNode):
 
     ##----dictionary with string attribute names as keys and keyword argument dictionaries as values for intializing generic attributes---##
     ##----these attribute will NOT be accessible from within the compute process of node-----##
-    ##----The keywords in the argument dictionaries are those supported be the addAttr() method of this class---## 
+    ##----The keywords in the argument dictionaries are those supported be the addAttr() method of this class---##
     INIT_ATTRS = None
-    
-    ##----dictionary with storable variable names as keys and the variable's value as values---##     
+
+    ##----dictionary with storable variable names as keys and the variable's value as values---##
     INIT_STORED_VARS = None
 
 
@@ -175,7 +174,7 @@ class MPyNode(MNode):
 
     _ASCII_FILE_EXT = "mpya"
     _BINARY_FILE_EXT = "mpyb"
-    
+
     _UI_ATTR_COLOR_ATTR_NAME = "uiAttrColors"
 
 
@@ -186,7 +185,7 @@ class MPyNode(MNode):
         **node**		*string* name or *MNode* of an existing mPyNode to intialize from. A new mPyNode is created
         if this arg is not provided.
 
-        **name**		optional *string* name to give the node if creating a new node. Ignored 
+        **name**		optional *string* name to give the node if creating a new node. Ignored
         if initializing from an existing mPyNode
 
         **RETURNS**		*None*
@@ -214,8 +213,8 @@ class MPyNode(MNode):
 
         if not node:
 
-            if self._INIT_EXPRESSION_STR:
-                self.setExpression(self._INIT_EXPRESSION_STR)
+            if self.INIT_EXPRESSION_STR:
+                self.setExpression(self.INIT_EXPRESSION_STR)
 
             if self.INIT_INPUT_ATTRS:
                 self._initInputAttrs()
@@ -234,17 +233,17 @@ class MPyNode(MNode):
 
             if output_map:
                 self._initOutputsFromMap(output_map)
-                
+
             if stored_var_map:
                 self._initStoredVarsFromMap(stored_var_map)
-                
+
             elif self.INIT_STORED_VARS:
                 self._initStoredVarsFromMap(self.INIT_STORED_VARS)
 
             self._addTypeAttr()
 
 
-    def _createNew(self, name=None, input_map=None, output_map=None, stored_var_map=None):
+    def _createNew(self, name=None):
         """
         Build a new node and return it as MNode
         """
@@ -274,7 +273,7 @@ class MPyNode(MNode):
     def _initOutputsFromMap(self, output_map):
         """
         Create output attributes from the given dictionary
-        """        
+        """
 
         cur_outputs = self.listOutputAttrs()
 
@@ -321,13 +320,13 @@ class MPyNode(MNode):
         """
 
         for attr_name, attr_args in self.INIT_OUTPUT_ATTRS.items():
-            self.addOutputAttr(attr_name, **attr_args) 
+            self.addOutputAttr(attr_name, **attr_args)
 
 
     def _initGenAttrs(self):
         """
         Creates input attributes if the INIT_OUTPUT_ATTRS property is set
-        """    
+        """
 
         for attr_name, attr_args in self.INIT_ATTRS.items():
             self.addAttr(attr_name, **attr_args)
@@ -348,18 +347,18 @@ class MPyNode(MNode):
             py_data[attr_name] = [attr_type]
 
         self._setInternalPyAttr(internal_attr, py_data)
-        
-        
+
+
     def _renameInternalDictAttr(self, internal_attr, attr_name, new_name):
-        
+
         py_data = self._getInternalPyAttr(internal_attr)
-        
+
         if py_data:
             if attr_name in py_data:
                 val = py_data[attr_name]
                 py_data[new_name] = val
-                del(py_data[attr_name])
-                
+                del py_data[attr_name]
+
                 self._setInternalPyAttr(internal_attr, py_data)
 
 
@@ -409,7 +408,7 @@ class MPyNode(MNode):
         """
         Returns the attribute data stored in the given internal string attribute as a dictionary of lists.
         Keys of the list are the attribute names while the values are [str(attr_type)]
-        """        
+        """
 
         str_val = self.getAttr(attr_name)
 
@@ -448,14 +447,14 @@ class MPyNode(MNode):
     def _getInternalOutputString(self):
         """
         For unit testing use only. Returns the value of the internal output string so it can be validated
-        """        
+        """
 
         str_val = self.getAttr(self._OUTPUTS_STR_ATTR_NAME)
 
         if str_val:
             return str(str_val)
 
-        return None    
+        return None
 
 
     def _addNewAttribute(self, long_name, attr_type, attr_map, karg_map, internal_str_attr, is_array=False, **kargs):
@@ -529,7 +528,7 @@ class MPyNode(MNode):
                     default_value = self.attributeQuery(attr_name, listDefault=True)
 
                     if default_value is not None:
-                        cur_attr_map["defaultValue"] = MPyNode._ATTR_TO_PY_MAP[attr_type](default_value[0]) 
+                        cur_attr_map["defaultValue"] = MPyNode._ATTR_TO_PY_MAP[attr_type](default_value[0])
 
                 if (attr_type in self._NODE_NUMERIC_TYPES) and (not is_array):
                     if self.attributeQuery(attr_name, minExists=True):
@@ -543,31 +542,31 @@ class MPyNode(MNode):
             return attr_map
 
         return None
-    
-    
+
+
     def _updateUiAttrColorMap(self, clr_map_update):
-        
+
         clr_map = {}
-        
+
         if not self.hasAttr(self._UI_ATTR_COLOR_ATTR_NAME):
             self.addAttr(self._UI_ATTR_COLOR_ATTR_NAME, "string")
-            
+
         else:
             clr_map = self._getInternalPyAttr(self._UI_ATTR_COLOR_ATTR_NAME)
-            
+
             if not clr_map:
                 clr_map = {}
-                
+
         clr_map.update(clr_map_update)
-        
+
         self._setInternalPyAttr(self._UI_ATTR_COLOR_ATTR_NAME, clr_map)
-        
-        
+
+
     def _getUiAttrColorMap(self):
-        
+
         if not self.hasAttr(self._UI_ATTR_COLOR_ATTR_NAME):
             return None
-        
+
         return self._getInternalPyAttr(self._UI_ATTR_COLOR_ATTR_NAME)
 
 
@@ -695,28 +694,28 @@ class MPyNode(MNode):
 
         ##---send data to the MPx version of the node----##
         callback_data = {self.getHashCode():{var_name:var_val}}
-        om.MUserEventMessage.postUserEvent(self._SET_VAR_CALLBACK_NAME, callback_data)    
+        om.MUserEventMessage.postUserEvent(self._SET_VAR_CALLBACK_NAME, callback_data)
 
 
     def getStoredVariables(self):
         """
         getStoredVariables()
-    
+
             Returns the nodes "stored variables" as a dictionary.
-    
+
             Returns
             -------
             *dict* or *None* - Keys are string names of the variables and values are their current values
-            
+
             See Also
             --------
             addStoredVariable : Removes the given output attribute from the node.
             setStoredVariable : Used to set an instance property on the node for use in the expression and storage on disc when the file is saved
-    
+
             Examples
             --------
             >>> var_map = node.getStoredVariables()
-    
+
         """
 
         ##---write current variables values to there stored attribute so we can get their current values---##
@@ -835,55 +834,55 @@ class MPyNode(MNode):
 
         self._addNewAttribute(long_name, attr_type, self._NEW_OUTPUT_TYPES, self._NEW_OUTPUT_ATTR_KARGS,
                               self._OUTPUTS_STR_ATTR_NAME, is_array=is_array, **kargs)
-        
-    
+
+
     def renameInputAttr(self, attr_name, new_name):
-        
+
         self._renameInputOutput(attr_name, new_name, True)
-        
-        
+
+
     def renameOutputAttr(self, attr_name, new_name):
-        
+
         self._renameInputOutput(attr_name, new_name, False)
-        
-        
+
+
     def _renameInputOutput(self, attr_name, new_name, is_input):
-        
+
         list_func = getattr(self, "getInputAttrMap") if is_input else getattr(self, "getOutputAttrMap")
         attr_map = list_func()
-        
+
         if not attr_map:
             raise RuntimeError("Node has no input/outputs to rename")
-        
+
         if not attr_name in attr_map:
             raise RuntimeError("Node has no input/outputs named " + attr_name)
-        
+
         is_array = True if ("is_array" in attr_map[attr_name]) and (attr_map[attr_name]["is_array"]) else False
-        
+
         is_src, is_dest = (True, False) if is_input else (False, True)
         con_nodes, plugs = self.listConnections(attr_name, source=is_src, destination=is_dest, plugs=True)
-        
-        del_func =  getattr(self, "deleteInputAttr") if is_input else getattr(self, "deleteOutputAttr")
+
+        del_func = getattr(self, "deleteInputAttr") if is_input else getattr(self, "deleteOutputAttr")
         del_func(attr_name)
-        add_func =  getattr(self, "addInputAttr") if is_input else getattr(self, "addOutputAttr")
+        add_func = getattr(self, "addInputAttr") if is_input else getattr(self, "addOutputAttr")
         add_func(new_name, **attr_map[attr_name])
-        
+
         if con_nodes:
             for i, con_list in enumerate(map(None, con_nodes, plugs)):
                 node_attr_name = new_name if not is_array else new_name + "[" + str(i) + "]"
-                
+
                 if is_input:
                     con_list[0].connectAttr(con_list[1], self, node_attr_name)
-                    
+
                 else:
                     self.connectAttr(node_attr_name, con_list[0], con_list[1])
-        
+
 
     def addStoredVariable(self, var_name):
         """
         addStoredVariable(var_name)
 
-            Used to flag an instance property on the node for storage on disc when the file is saved. The name given 
+            Used to flag an instance property on the node for storage on disc when the file is saved. The name given
             should refer to a property on the node instance created/used by the expression (i.e. self.var_name)
 
             Parameters
@@ -981,24 +980,24 @@ class MPyNode(MNode):
     def getInputAttrMap(self):
         """
         getInputAttrMap()
-        
+
             Returns a dictionary with all input attr names as keys and attribute data as values.
             The values of the dictionary are also dictiontaries with the proper addInputAttr() keyword args and values. Note
             that only non-default keyword args are returned. So if an attribute is not "keyable", for example, no "keyable"
             keyword will be returned in dictionary.
-    
+
             Returns
             -------
             *dict* with all input attr names as keys and attribute data as values or *None*
-            
+
             See Also
             --------
             addInputAttr : Adds an input attribute of the given long name and given type to the node.
-    
+
             Examples
             --------
             >>> input_map = node.getInputAttrMap()
-    
+
         """
 
         return self._getAttrMap(self._INPUTS_STR_ATTR_NAME, is_input=True)
@@ -1007,24 +1006,24 @@ class MPyNode(MNode):
     def getOutputAttrMap(self):
         """
         getOutputAttrMap()
-    
+
             Returns a dictionary with all output attr names as keys and attribute data as values.
             The values of the dictionary are also dictiontaries with the proper addOutputAttr() keyword args and values. Note
             that only non-default keyword args are returned. So if an attribute is not "keyable", for example, no "keyable"
             keyword will be returned in dictionary.
-    
+
             Returns
             -------
             *dict* with all output attr names as keys and attribute data as values or *None*
-            
+
             See Also
             --------
             addOutputAttr : Adds an output attribute of the given long name and given type to the node.
-    
+
             Examples
             --------
             >>> input_map = node.getOutputAttrMap()
-    
+
         """
 
         return self._getAttrMap(self._OUTPUTS_STR_ATTR_NAME)
@@ -1059,7 +1058,7 @@ class MPyNode(MNode):
 
         if cur_vars and var_name in cur_vars:
 
-            updated_vars = filter(lambda a: a != var_name, cur_vars)
+            updated_vars = [a for a in cur_vars if a != var_name]
 
             self._setInternalPyAttr(self._STORED_VARS_ATTR_NAME, updated_vars)
 
@@ -1115,7 +1114,7 @@ class MPyNode(MNode):
         attr_types = cls._NEW_OUTPUT_TYPES.keys()
         attr_types.sort()
 
-        return tuple(attr_types) 
+        return tuple(attr_types)
 
 
     def deleteInputAttr(self, attr_name):
@@ -1151,7 +1150,7 @@ class MPyNode(MNode):
             in_attr_dict = self._getInternalPyAttr(self._INPUTS_STR_ATTR_NAME)
 
             if in_attr_dict and in_attr_dict.has_key(attr_name):
-                del(in_attr_dict[attr_name])
+                del in_attr_dict[attr_name]
 
                 self._setInternalPyAttr(self._INPUTS_STR_ATTR_NAME, in_attr_dict)
 
@@ -1194,7 +1193,7 @@ class MPyNode(MNode):
             out_attr_dict = self._getInternalPyAttr(self._OUTPUTS_STR_ATTR_NAME)
 
             if out_attr_dict and out_attr_dict.has_key(attr_name):
-                del(out_attr_dict[attr_name])
+                del out_attr_dict[attr_name]
 
                 self._setInternalPyAttr(self._OUTPUTS_STR_ATTR_NAME, out_attr_dict)
 
@@ -1273,7 +1272,7 @@ class MPyNode(MNode):
         #if expr_str:
             #code_str += expr_str
 
-        #fh = open(file_path, "w") 
+        #fh = open(file_path, "w")
         #fh.write(code_str)
         #fh.close()
 
@@ -1294,7 +1293,7 @@ class MPyNode(MNode):
         Built-in method. Handles pickling of the current Maya node. Same as __reduce__() but handles a protocol argument.
         """
 
-        return self.__reduce__()    
+        return self.__reduce__()
 
 
     @classmethod
@@ -1386,4 +1385,3 @@ class MPyNode(MNode):
 
         else:
             raise IOError("given path does not exist: " + str(file_path))
-
