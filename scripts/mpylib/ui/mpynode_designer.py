@@ -9,16 +9,6 @@ import webbrowser
 from collections import OrderedDict
 
 
-# Cython workaround
-# Without this when running the cythonized code will error out
-# complaining about a missing __file__ object.
-import inspect
-if not hasattr(sys.modules[__name__], '__file__'):
-    __file__ = inspect.getfile(inspect.currentframe())
-
-
-
-
 import maya.cmds as mc
 import maya.api.OpenMaya as om
 
