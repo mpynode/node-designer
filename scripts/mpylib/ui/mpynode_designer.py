@@ -39,6 +39,9 @@ from mqt_main_window import QMayaWindow
 from ..nodes import MPyNode
 from .._base import MNode, MNodeList, MUndo
 
+APP_NAME = "Node Designer"
+APP_VERSION = "1.0.1b1"
+
 ATTR_COLOR_DEFAULT = (80, 230, 80)
 ATTR_COLOR_DARK_GREEN = (0, 128, 1)
 ATTR_COLOR_GREEN = (80, 230, 80)
@@ -84,9 +87,9 @@ MEL_ATTR_TYPE_MAP = {"bool":MPyNode.ATTR_TYPE_BOOL,
 
 
 class NDMainWindow(QMayaWindow):
-    
-    NAME = "Node Designer"
-    VERSION = "1.0.1b1"
+
+    NAME = APP_NAME
+    VERSION = APP_VERSION
     TITLE = NAME + " " + VERSION
 
     DEFAULT_X_POS = 200
@@ -95,30 +98,30 @@ class NDMainWindow(QMayaWindow):
     DEFAULT_HEIGHT = 600
 
     NODE_PARENT_CLASSES = (MPyNode,)
-    
+
     PROFILE_CALLBACK_NAME = "emitMPyNodeProfileCallback"
     INPUT_VALUES_CALLABCK_NAME = "emitMPyNodeInputValuesCallback"
     OUTPUT_VALUES_CALLABCK_NAME = "emitMPyNodeOutputValuesCallback"
     LOG_ERROR_CALLBACK_NAME = "emitMPyNodeErrorCallback"
     LOG_TXT_CALLBACK_NAME = "emitMPyNodeTextCallback"
-    
+
     FILE_BINARY_FILTER = "Binary (*." + MPyNode._BINARY_FILE_EXT + ")"
     FILE_ASCII_FILTER = "Ascii (*." + MPyNode._ASCII_FILE_EXT + ")"
     EXPORT_FILE_FILTERS = FILE_BINARY_FILTER + ";;" + FILE_ASCII_FILTER
-    
+
     RESOURCE_DIR_NAME = "resources"
-    
+
     ICON_FILE_EXT = "png"
-    
+
     HELP_DOC_PATH = "docs/build/html"
     HELP_DOCS_FILE = "index.html"
     HELP_API_DOCS_FILE = "index.html"
-    
+
 
     def __init__(self):
 
         super(NDMainWindow, self).__init__()
-        
+
         self._cur_py_node = None
 
         self._v_layout = None
@@ -148,7 +151,7 @@ class NDMainWindow(QMayaWindow):
         self._log_widget = None
         self._profile_widget = None
         self._watch_var_values_widget = None
-        
+
         self._ui_callback_array = om.MCallbackIdArray()
         self._node_callback_map = {}
 
@@ -176,7 +179,7 @@ class NDMainWindow(QMayaWindow):
 
         self.setGeometry(self.DEFAULT_X_POS, self.DEFAULT_Y_POS,
                          self.DEFAULT_WIDTH, self.DEFAULT_HEIGHT)
-        
+
 
     def _buildToolBar(self):
 
@@ -206,170 +209,170 @@ class NDMainWindow(QMayaWindow):
         self._scene_tree.LOG_SIGNAL.connect(self._log_widget.write)
         self._scene_tree.ADD_NODE_SIGNAL.connect(self.addNewNodeEvent)
         self._scene_tree.DELETE_NODE_SIGNAL.connect(self.deleteNodesEvent)
-        
+
         self._variables_widget.LOG_SIGNAL.connect(self._log_widget.write)
-        
-        
+
+
     def _setSceneCallbacks(self):
         """
         Creates Maya callbacks that monitor the current scene and report
         relevant events back to the ui. Callbacks are killed on ui close.
         """
-        
+
         self._ui_callback_array.append(om.MUserEventMessage.addUserEventCallback(self.PROFILE_CALLBACK_NAME, self._onLogProfile, None))
         self._ui_callback_array.append(om.MUserEventMessage.addUserEventCallback(self.INPUT_VALUES_CALLABCK_NAME, self._onWatchInputs, None))
         self._ui_callback_array.append(om.MUserEventMessage.addUserEventCallback(self.LOG_ERROR_CALLBACK_NAME, self._onLogError, None))
         self._ui_callback_array.append(om.MUserEventMessage.addUserEventCallback(self.LOG_TXT_CALLBACK_NAME, self._onLogText, None))
-        
+
         self._ui_callback_array.append(om.MSceneMessage.addCallback(om.MSceneMessage.kAfterOpen, self._onSceneOpen))
         self._ui_callback_array.append(om.MSceneMessage.addCallback(om.MSceneMessage.kAfterNew, self._onSceneOpen))
         self._ui_callback_array.append(om.MDGMessage.addNodeAddedCallback(self._onNodeAdded, MPyNode.NODE_TYPE))
         self._ui_callback_array.append(om.MDGMessage.addNodeRemovedCallback(self._onNodeRemoved, MPyNode.NODE_TYPE))
-        
-        
+
+
     def _setNodeCallbacks(self, py_node):
-        
+
         if not self._node_callback_map.has_key(py_node):
             self._node_callback_map[py_node] = (om.MNodeMessage.addNameChangedCallback(py_node, self._onNodeRenamed),
                                                 om.MNodeMessage.addAttributeChangedCallback(py_node, self._onAttributeChanged))
-    
-    
+
+
     def _removeNodeCallbacks(self, py_node):
-        
+
         if self._node_callback_map.has_key(py_node):
             try:
                 for event_id in self._node_callback_map[py_node]:
                     om.MMessage.removeCallback(event_id)
-            
+
             except RuntimeError, err:
                 pass
-            
+
             del(self._node_callback_map[py_node])
-        
-        
+
+
     def deleteNodesEvent(self, nodes):
         """
         Called when the user deletes a node using the ui. Note that this will invoke _onNodeRemoved through a callback
         """
-        
+
         if nodes:
             for node in nodes:
                 node.delete()
                 del(node)
-        
-        
+
+
     def _onLogProfile(self, data):
-        
+
         if self._cur_py_node and self._cur_py_node == MNode(data[0]):
             self._profile_widget._onLogProfile(self._cur_py_node, data[1])
-            
+
         else:
             self._profile_widget._onLogProfile()
-            
-            
+
+
     def _onWatchInputs(self, data):
-        
+
         if self._cur_py_node and self._cur_py_node == MNode(data[0]):
             self._watch_var_values_widget._onWatchVariables(self._cur_py_node, data[1])
-            
+
         else:
             self._watch_var_values_widget._onWatchVariables()
-            
-            
+
+
     def _onLogError(self, data):
-        
+
         if self._cur_py_node and self._cur_py_node == MNode(data[0]):
             self._log_widget.write(data[1], QtLog.ERROR_TYPE)
-            
-            
+
+
     def _onLogText(self, data):
-        
+
         if self._cur_py_node and self._cur_py_node == MNode(data[0]):
             self._log_widget.write(data[1])
-            
-            
+
+
     def _onNodeAdded(self, obj, data):
         """
         Called by MDGMessage.addNodeAddedCallback. Refreshes the scene widget whenever
         a mPyNode is added to the Maya scene.
         """
-        
+
         py_node = MPyNode(obj)
-        
+
         self._setNodeCallbacks(py_node)
-        
+
         self._scene_tree.refresh()
-        
+
         self._log_widget.write("New node added: " + py_node.getName())
-        
-        
+
+
     def _onNodeRemoved(self, obj, data):
         """
         Called by MDGMessage.addNodeRemovedCallback. Refreshes appropriate widgets whenever
         a mPyNode is removed from the Maya scene.
         """
-        
+
         py_node = MPyNode(obj)
-        
+
         ##----find if there is an open script tab and close it----##
         tab_index = self._script_tab_widget.getIndexOfNode(py_node)
         is_cur_tab = False
-        
+
         if not tab_index is None:
             self._script_tab_widget.removeTab(tab_index)
             is_cur_tab = True if self._script_tab_widget.currentIndex() == tab_index else False
-            
+
         ##---remove any callbacks monitoring the node----##
         self._removeNodeCallbacks(py_node)
-        
+
         ##---print to log---##
         node_name = py_node.getName()
         self._log_widget.write("Node deleted: " + node_name)
-        
+
         ##----api callback used by this function is pre-delete so wait to refresh the ui----##
         mc.evalDeferred(self._scene_tree.refresh)
-        
-        
+
+
     def _onNodeRenamed(self, obj, old_name, data):
-        
+
         py_node = MPyNode(obj)
-        
+
         self._script_tab_widget._updateTabNodeName(py_node)
         self._scene_tree.refresh()
-        
+
         self._log_widget.write("Node renamed: " + str(old_name) + " -----> " + py_node.getName())
-            
-            
+
+
     def _onAttributeChanged(self, attr_msg, plug, other_plug, data):
-        
+
         node_attr_name = plug.name()
         attr_name = node_attr_name.split(".")[-1]
-        
+
         ##---message values for attribute changes require bitwise operators---##
         if (attr_msg & om.MNodeMessage.kAttributeAdded) == om.MNodeMessage.kAttributeAdded\
          or (attr_msg & om.MNodeMessage.kAttributeArrayAdded) == om.MNodeMessage.kAttributeArrayAdded:
             self._log_widget.write("Attribute added: " + attr_name, QtLog.SUCCESS_TYPE)
-            
+
         elif (attr_msg & om.MNodeMessage.kAttributeRemoved) == om.MNodeMessage.kAttributeRemoved\
              or (attr_msg & om.MNodeMessage.kAttributeArrayRemoved) == om.MNodeMessage.kAttributeArrayRemoved:
             self._log_widget.write("Attribute removed: " + attr_name, QtLog.SUCCESS_TYPE)
-        
+
         elif (attr_msg & om.MNodeMessage.kAttributeRenamed) == om.MNodeMessage.kAttributeRenamed:
             self._log_widget.write("Attribute renamed: " + attr_name, QtLog.SUCCESS_TYPE)
-        
+
         if (attr_msg & om.MNodeMessage.kAttributeSet) == om.MNodeMessage.kAttributeSet:
-            
+
             if attr_name in (MPyNode._INPUTS_STR_ATTR_NAME, MPyNode._OUTPUTS_STR_ATTR_NAME,
                              MPyNode._UI_ATTR_COLOR_ATTR_NAME):
-                
+
                 self._attributes_widget.refreshInputs()
                 self._attributes_widget.refreshOutputs()
-                
+
                 self._script_tab_widget.refreshCurrentTab()
 
 
     def _onSceneOpen(self, data):
-        
+
         self.removeNodeCallbacks()
 
         self._script_tab_widget.closeAllTabs()
@@ -379,7 +382,7 @@ class NDMainWindow(QMayaWindow):
         self._variables_widget.setPyNode(None)
 
         self._log_widget.write("Opened scene: " + str(mc.file(q=True, sceneName=True)))
-        
+
 
     def nodeRenamedEvent(self, py_node):
 
@@ -388,13 +391,13 @@ class NDMainWindow(QMayaWindow):
 
 
     def scriptTabChanged(self, tab_index):
-        
+
         def _clearWidgets():
             self._cur_py_node = None
             self._attributes_widget.refresh(None)
             self._variables_widget.setPyNode(None)
             self._profile_widget._onNodeChanged(None)
-            self._watch_var_values_widget._onNodeChanged(None)            
+            self._watch_var_values_widget._onNodeChanged(None)
 
         if tab_index != -1:
             tab_widget = self._script_tab_widget.widget(tab_index)
@@ -409,7 +412,7 @@ class NDMainWindow(QMayaWindow):
 
             else:
                 _clearWidgets()
-                
+
         else:
             _clearWidgets()
 
@@ -433,11 +436,11 @@ class NDMainWindow(QMayaWindow):
         self._panel_tab_widget = QTabWidget(self._main_widget)
         self._panel_tab_widget.setMovable(False)
         self._panel_tab_widget.setTabsClosable(False)
-        
+
         self._buildSceneTree()
         self._buildAttributesWidget()
         self._buildStorageWidget()
-        
+
         self._panel_tab_widget.setCurrentIndex(0)
 
 
@@ -446,12 +449,12 @@ class NDMainWindow(QMayaWindow):
         self._attributes_widget = NDAttributesWidget(self._main_widget)
 
         self._panel_tab_widget.addTab(self._attributes_widget, "Attributes")
-        
-        
+
+
     def _buildStorageWidget(self):
-        
+
         self._variables_widget = NDVariablesWidget(self._main_widget)
-        
+
         self._panel_tab_widget.addTab(self._variables_widget, "Storage")
 
 
@@ -460,23 +463,23 @@ class NDMainWindow(QMayaWindow):
         self._scene_tree = NDSceneTree(self._main_widget)
 
         self._panel_tab_widget.addTab(self._scene_tree, "Scene")
-        
+
         self.refreshNodeCallbacks()
         self._scene_tree.refresh()
-        
-        
+
+
     def _buildToolsTabWidget(self):
-        
+
         self._tools_tab_widget = QTabWidget(self._main_widget)
         self._tools_tab_widget.setMovable(True)
-        self._tools_tab_widget.setTabsClosable(False)      
-        
+        self._tools_tab_widget.setTabsClosable(False)
+
         self._log_widget = NDLogWidget(self._main_widget)
         self._tools_tab_widget.addTab(self._log_widget, "Log")
-        
+
         self._profile_widget = NDProfileWidget(self._main_widget)
         self._tools_tab_widget.addTab(self._profile_widget, "Profile")
-        
+
         self._watch_var_values_widget = NDWatchVarsWidget(self._main_widget)
         self._tools_tab_widget.addTab(self._watch_var_values_widget, "Watch")
 
@@ -484,7 +487,7 @@ class NDMainWindow(QMayaWindow):
     def _buildSplitter(self):
         """
         Builds and configures the main splitter widget
-        """        
+        """
 
         self._v_splitter = QSplitter(Qt.Vertical, self._main_widget)
         self._h_splitter = QSplitter(Qt.Horizontal, self._main_widget)
@@ -507,10 +510,10 @@ class NDMainWindow(QMayaWindow):
 
         self._save_to_file_action = QAction("Save to File", self,
                                             statusTip="Save current node as python class", triggered=self.saveToFile)
-        
+
         self._export_to_file_action = QAction(ICON_MANAGER["export_node_icon"], "Export to File", self,
                                               statusTip="Export current node to a file", triggered=self.exportToFile)
-        
+
         self._import_from_file_action = QAction(ICON_MANAGER["import_node_icon"], "Import from File", self,
                                                 statusTip="Import a node from a file", triggered=self.importFromFile)
 
@@ -522,89 +525,99 @@ class NDMainWindow(QMayaWindow):
 
         self._save_all_nodes_action = QAction(ICON_MANAGER["save_all_icon"], "&Save All", self,
                                               statusTip="Save edits to the all open nodes", triggered=self.saveAllNodes)
-        
+
         self._help_doc_action = QAction(ICON_MANAGER["help_icon"], self.NAME + " Help", self,
                                         statusTip="Opens help documentation in a browser", triggered=self.openHelpDocs)
-        
+
         self._help_api_doc_action = QAction(ICON_MANAGER["help_icon"], "Scripting API Reference", self,
                                             statusTip="Opens API documentation in a browser", triggered=self.openApiDocs)
+
+        self._about_dialog_action = QAction(ICON_MANAGER["help_icon"], "About " + self.NAME, self,
+                                            statusTip="Show the about window", triggered=self.showAboutDialog)
 
 
     def saveToFile(self):
         pass
-    
+
     def openHelpDocs(self):
-        
+
         self.openDocPage(self.HELP_DOCS_FILE)
-    
-    
+
+
     def openApiDocs(self):
-        
+
         self.openDocPage(self.HELP_API_DOCS_FILE)
-        
-        
+
+
     def openDocPage(self, doc_file_name):
-        
+
         base_dir = os.path.normpath(os.path.dirname(__file__) + ("../" * 4)).replace("\\", "/")
         doc_path = "/".join((base_dir, self.HELP_DOC_PATH, doc_file_name))
-        
+
         if os.path.exists(doc_path):
             webbrowser.open(doc_path)
-            
+
         else:
             self._log_widget.write("Could not locate help document: " + doc_path, QtLog.ERROR_TYPE)
-    
-    
+
+
     def exportToFile(self):
-        
+
         if self._cur_py_node:
             file_path, selected_filter = QFileDialog.getSaveFileName(self, "Exporting " + self._cur_py_node.getName(),
                                                                      "", self.EXPORT_FILE_FILTERS)
-            
+
             if file_path:
                 use_binary, file_ext  = (True, MPyNode._BINARY_FILE_EXT) if selected_filter == self.FILE_BINARY_FILTER else (False, MPyNode._ASCII_FILE_EXT)
-                
+
                 if not file_path.endswith("." + file_ext):
                     file_path += "." + file_ext
-                
+
                 try:
                     self._cur_py_node.exportToFile(file_path, use_binary=use_binary)
-                    
+
                 except Exception, err:
                     err_txt = "Error exporting to file -> " + str(file_path)
                     self._log_widget.write(err_txt, QtLog.ERROR_TYPE)
                     self._onLogError((self._cur_py_node, sys.exc_info()))
-                
+
                 else:
                     self._log_widget.write("Exported to file -> " + str(file_path))
-        
+
         else:
             self._log_widget.write("No active nodes", QtLog.ERROR_TYPE)
-    
-    
+
+
+    def showAboutDialog(self):
+
+        dlg = NDAboutDialog(self)
+
+        result = dlg.exec_()
+
+
     def importFromFile(self):
-        
+
         node_list = []
-        
+
         file_paths, selected_filter = QFileDialog.getOpenFileNames(self, "Import Node ",
                                                                   "", self.EXPORT_FILE_FILTERS)
-        
+
         if file_paths:
             for file_path in file_paths:
                 try:
                     node_list.append(MPyNode.importFromFile(file_path))
-                    
+
                 except Exception, err:
                     err_txt = "Error importing file -> " + str(file_path)
                     self._log_widget.write(err_txt, QtLog.ERROR_TYPE)
-                    self._onLogError((self._cur_py_node, sys.exc_info()))                 
-                
+                    self._onLogError((self._cur_py_node, sys.exc_info()))
+
         if node_list:
-            self._scene_tree.refresh()  
+            self._scene_tree.refresh()
             return node_list
-        
+
         return None
-    
+
 
     def _buildMenus(self):
 
@@ -618,10 +631,11 @@ class NDMainWindow(QMayaWindow):
         self._node_menu.addAction(self._save_node_action)
         self._node_menu.addAction(self._save_all_nodes_action)
         self._node_menu.setToolTipsVisible(True)
-        
+
         self._help_menu = self.menuBar().addMenu("&Help")
         self._help_menu.addAction(self._help_doc_action)
         self._help_menu.addAction(self._help_api_doc_action)
+        self._help_menu.addAction(self._about_dialog_action)
         self._help_menu.setToolTipsVisible(True)
 
 
@@ -660,12 +674,12 @@ class NDMainWindow(QMayaWindow):
         Called when the selection in the Scene widget changes. Opens or selects the appropriate tab in
         the Script Tab widget.
         """
-        
+
         cur_sel = self._scene_tree.currentItem()
 
         if cur_sel:
             py_node = cur_sel.getMPyNode()
-            
+
             if py_node:
                 tab_index = self._script_tab_widget.getIndexOfNode(py_node)
 
@@ -689,65 +703,65 @@ class NDMainWindow(QMayaWindow):
     def saveAllNodes(self):
 
         self._script_tab_widget.saveAllNodes()
-        
-        
+
+
     def setAttrColorData(self, clr_map_update):
-        
+
         MUndo(self._cur_py_node._updateUiAttrColorMap, clr_map_update)()
-        
-    
+
+
     def removeAllCallbacks(self):
         """
         Remove ALL callbacks used by the ui (scene and node specific)
         """
-        
+
         ##---remove general ui callbacks---##
         om.MMessage.removeCallbacks(self._ui_callback_array)
         self._ui_callback_array = om.MCallbackIdArray()
-        
+
         self.removeNodeCallbacks()
-            
-            
+
+
     def removeNodeCallbacks(self):
         """
         Remove all nodes specific callbacks from the scene
         """
-        
+
         for py_node in self._node_callback_map.keys():
             self._removeNodeCallbacks(py_node)
-            
-            
+
+
     def refreshNodeCallbacks(self):
         """
         Removes any existings node specific callbacks and rebuilds callbacks based
         on the scene contents
         """
-        
+
         self.removeNodeCallbacks()
-        
+
         py_nodes = MPyNode.ls()
-        
+
         if py_nodes:
             for py_node in py_nodes:
                 self._setNodeCallbacks(py_node)
-        
-        
+
+
     def writeScriptToLog(self, func, args, kargs):
         """
         Meant to be a formating function that prints the given function
         and argumnets to the log as command history
         """
-        
+
         log_txt = func.__name__ + "("
-        
+
         if args:
             log_txt += ", ".join([str(arg) for arg in args]) + ", "
-        
+
         if kargs:
             log_txt += ", ".join([str(key) + "=" + str(val) for key, val in kargs.items()])
-        
+
         log_txt += ")"
-        
+
         self._log_widget.write(log_txt)
 
 
@@ -759,7 +773,7 @@ class NDMainWindow(QMayaWindow):
         close_ok = self._script_tab_widget._tabCloseCheckAll()
 
         if close_ok:
-            
+
             self.removeAllCallbacks()
             self.deleteLater()
             event.accept()
@@ -772,7 +786,7 @@ class NDScriptTabWidget(QTabWidget):
 
     NEW_TAB_NAME = "untitled"
     UNSVAED_CHAR = "*"
-    
+
     LOG_SIGNAL = Signal(str, int)
 
 
@@ -785,12 +799,12 @@ class NDScriptTabWidget(QTabWidget):
         self.setDocumentMode(True) ##---does this help keep focus?...probably not
 
         self._setSignals()
-        
-        
+
+
     def refreshCurrentTab(self):
-        
+
         script_widget = self.currentWidget()
-        
+
         if script_widget:
             script_widget.refresh()
 
@@ -989,7 +1003,7 @@ class NDScriptTabWidget(QTabWidget):
 class NDScriptEditor(QtPythonEditor):
 
     TAB_STOP = 4
-    
+
     LOG_SIGNAL = Signal(str, int)
 
 
@@ -1000,49 +1014,49 @@ class NDScriptEditor(QtPythonEditor):
         self._py_node = py_node
 
         if self._py_node:
-            
+
             exp_str = self._py_node.getExpression()
             self.setText(exp_str)
-            
-            
+
+
     def refresh(self):
-        
+
         highlighter = self.getHighlighter()
-        
+
         if self._py_node and highlighter:
-            
+
             new_clr_map = {}
-            
+
             input_map = self._py_node.getInputAttrMap()
             output_map = self._py_node.getOutputAttrMap()
-            
+
             current_clr_map = self._py_node._getUiAttrColorMap()
-            
+
             if not current_clr_map:
-                current_clr_map = {}            
-            
+                current_clr_map = {}
+
             for attr_map in (input_map, output_map):
-                
+
                 if attr_map:
                     for attr_name, attr_data in attr_map.items():
-    
+
                         if not attr_name in current_clr_map:
                             attr_type = attr_data["attr_type"]
                             attr_clr = ATTR_COLOR_MAP[attr_type]
-                            
+
                             new_clr_map[attr_name] = attr_clr
-                        
+
                         new_clr_map.update(current_clr_map)
-        
-            highlighter.setVarColorMap(new_clr_map)        
+
+            highlighter.setVarColorMap(new_clr_map)
 
 
     def getMPyNode(self):
-        
+
         try:
             if not self._py_node.isValid():
                 self._py_node = None
-                
+
         except:
             self._py_node = None
 
@@ -1056,7 +1070,7 @@ class NDScriptEditor(QtPythonEditor):
 
         else:
             self.document().setPlainText("")
-            
+
 
     def getText(self):
 
@@ -1085,165 +1099,165 @@ class NDScriptEditor(QtPythonEditor):
                 return True
 
         return False
-        
-    
-    
+
+
+
 class NDToolsTabWidget(QTabWidget):
-    
+
     def __init__(self, parent=None):
-    
+
         super(NDToolsTabWidget, self).__init__(parent)
-    
+
 
 class NDVariablesWidget(QWidget):
-    
+
     LOG_SIGNAL = Signal(str, int)
-    
-    
+
+
     def __init__(self, parent=None):
-        
+
         super(NDVariablesWidget, self).__init__(parent)
-        
+
         self._py_node = None
-        
+
         self._button_panel = None
         self._variable_tree = None
-        
+
         self._v_layout = QVBoxLayout(self)
-        
+
         self.setLayout(self._v_layout)
         self._v_layout.setSpacing(0)
         self._v_layout.setContentsMargins(0, 0, 0, 0)
-        
-        
+
+
     def _buildButtonPanel(self):
-        
+
         self._button_panel = QFrame(self)
         button_layout = QHBoxLayout(self._button_panel)
-        
+
         plus_var_button = QPushButton("+", self._button_panel)
         plus_var_button.setMinimumSize(QSize(20, 20))
         plus_var_button.setMaximumSize(QSize(20, 20))
         plus_var_button.clicked.connect(self._onAddVariable)
-        
+
         minus_var_button = QPushButton("-", self._button_panel)
         minus_var_button.setMinimumSize(QSize(20, 20))
         minus_var_button.setMaximumSize(QSize(20, 20))
         minus_var_button.clicked.connect(self._onRemoveVariable)
-        
+
         refresh_button = QPushButton("Refresh", self._button_panel)
         refresh_button.setMaximumHeight(20)
         refresh_button.clicked.connect(self._onRefresh)
-        
+
         button_layout.addWidget(plus_var_button)
         button_layout.addWidget(minus_var_button)
         button_layout.addWidget(refresh_button)
         button_layout.addStretch(1)
         button_layout.setSpacing(3)
         button_layout.addWidget(refresh_button)
-        
+
         self._button_panel.setLayout(button_layout)
         self._v_layout.addWidget(self._button_panel)
-        
-        
+
+
     def _onRefresh(self):
-        
+
         self.refresh()
-        
-        
+
+
     def _onAddVariable(self):
-        
+
         self._variable_tree.addNewItem()
-        
-        
+
+
     def _onRemoveVariable(self):
-        
+
         sel_item = self._variable_tree.currentItem()
-        
+
         if sel_item:
             root = self._variable_tree.invisibleRootItem()
-            
+
             for item in self._variable_tree.selectedItems():
                 item.delete()
                 root.removeChild(item)
-        
-        
+
+
     def setPyNode(self, py_node=None):
-        
+
         self._py_node = py_node
-        
+
         self.refresh()
-        
-    
+
+
     def refresh(self):
-        
+
         self.clear()
-        
+
         if self._py_node:
-            
+
             self._buildButtonPanel()
-            
+
             self._variable_tree = NDVariablesTree(self, py_node=self._py_node)
             self._v_layout.addWidget(self._variable_tree)
-            
+
             self._variable_tree.refresh()
             self._variable_tree.LOG_SIGNAL.connect(self.LOG_SIGNAL.emit)
-        
-        
+
+
     def clear(self):
 
         if self._variable_tree:
             self._variable_tree.deleteLater()
             self._variable_tree = None
-            
+
         if self._button_panel:
             self._button_panel.deleteLater()
-            self._button_panel = None            
-        
-        
+            self._button_panel = None
+
+
 class NDVariablesTree(QTreeWidget):
-    
+
     COLUMN_NAMES = ("Name", "Value")
     LOG_SIGNAL = Signal(str, int)
     VAR_IGNORE_LIST = ("",)
-    
-    
+
+
     def __init__(self, parent=None, py_node=None):
 
         super(NDVariablesTree, self).__init__(parent)
-        
+
         self._py_node = py_node
-    
+
         self.setColumnCount(len(self.COLUMN_NAMES))
         self.setHeaderItem(QTreeWidgetItem(self.COLUMN_NAMES))
         self.setSelectionMode(QAbstractItemView.ContiguousSelection)
-        
-        
+
+
     def addNewItem(self):
-        
+
         tree_item = NDVariablesTreeItem(self, self._py_node, None, None, self.LOG_SIGNAL)
-        
+
         tree_item.setSelected(True)
-        
-        
+
+
     def refresh(self, str_exp="*"):
 
         self.clear()
 
         if self._py_node:
-            
+
             var_map = self._py_node.getStoredVariables()
-            
+
             if var_map:
                 for var_name in sorted(var_map.keys()):
-                    
+
                     NDVariablesTreeItem(self, self._py_node, var_name, var_map[var_name], self.LOG_SIGNAL)
-        
-        
+
+
 class NDVariablesTreeItem(QTreeWidgetItem):
-    
+
     DEFAULT_FLAGS = Qt.ItemIsEnabled | Qt.ItemIsSelectable | Qt.ItemIsEditable
-    
+
 
     def __init__(self, parent, py_node, var_name, var_val, log_sig=None):
 
@@ -1251,196 +1265,196 @@ class NDVariablesTreeItem(QTreeWidgetItem):
 
         self._py_node = py_node
         self._log_signal = log_sig
-        
+
         self._var_name = None
         self._var_name_str = ""
         self._var_val = None
         self._var_val_str = "None"
-        
+
         self.setFlags(self.DEFAULT_FLAGS)
-        
+
         self.refresh(var_name, var_val)
-        
-        
+
+
     def _setVarName(self, var_name):
-        
+
         if (var_name is not None) and (var_name != self._var_name):
-            
+
             ##---make sure that there isn't a variable already set with that name---##
             if (self._var_name is None) or (not self._py_node.hasStoredVariable(var_name)):
                 cur_val = None
-                
+
                 ##----if this item represents a variable that is already named....replace it with this one---##
                 if (self._var_name is not None) and (self._py_node.hasStoredVariable(self._var_name)):
                     cur_val = self._py_node.getStoredVariables()[self._var_name]
                     self._py_node.removeStoredVariable(self._var_name)
-                
+
                 self._var_name = str(var_name) if var_name else None
                 self._var_name_str = str(var_name) if var_name else ""
-                
+
                 if self._var_name_str:
                     self._py_node.setStoredVariable(self._var_name, cur_val)
-                    
+
                     if self._log_signal:
                         self._log_signal.emit("Variable named: " + str(var_name), 2)
-                    
+
             else:
                 self._log_signal.emit("Variable name is invalid or conflicts with existing variable: " + str(var_name), 1)
-        
-        return self._var_name_str    
-        
-        
+
+        return self._var_name_str
+
+
     def _setVarValue(self, var_val):
-        
+
         self._var_val = var_val
         self._var_val_str = ""
-        
+
         if type(var_val) in (str, unicode, chr, unichr):
             self._var_val_str = "\"" + str(var_val) + "\""
-            
+
         else:
             self._var_val_str = str(var_val)
-            
+
         if self._var_name is not None:
             self._py_node.setStoredVariable(self._var_name, var_val)
-            
+
             if self._log_signal:
-                self._log_signal.emit("Variable set: " + str(self._var_name) + " = " + str(var_val), 2)            
-            
+                self._log_signal.emit("Variable set: " + str(self._var_name) + " = " + str(var_val), 2)
+
         return self._var_val_str
-    
-    
+
+
     def setName(self, var_name):
-        
+
         name_str = self._setVarName(var_name)
         self.setText(0, name_str)
-        
-        
+
+
     def setValue(self, var_val):
-        
+
         val_str = self._setVarValue(var_val)
-        
+
         self.setText(1, val_str)
-    
-    
+
+
     def refresh(self, var_name=None, var_val=None):
-        
+
         self.setName(var_name)
         self.setValue(var_val)
-        
-        
+
+
     def delete(self):
-        
+
         if self._var_name and self._py_node.hasStoredVariable(self._var_name):
             self._py_node.removeStoredVariable(self._var_name)
-        
-        
+
+
     def setData(self, col, role, data):
-        
+
         if col == 0:
-            
+
             var_name_str = self._setVarName(data)
-            
+
             super(NDVariablesTreeItem, self).setData(col, role, var_name_str)
-            
+
         else:
             try:
                 py_data = eval(data)
-                
+
             except Exception, err:
-                
+
                 err_txt = "Error: invalid python value given -> " + str(data) + "\n" + str(err)
-                
+
                 if self._log_signal:
                     self._log_signal.emit(err_txt, 1)
-                    
+
                 else:
                     print err_txt
-                    
+
             else:
                 var_val_str = self._setVarValue(py_data)
-                
+
                 super(NDVariablesTreeItem, self).setData(col, role, var_val_str)
-                
-                
+
+
 class NDProfileWidget(QWidget):
 
-    
+
     def __init__(self, parent=None):
 
         super(NDProfileWidget, self).__init__(parent)
-        
+
         self._py_node = None
         self._profile_cb = None
         self._profile_table = None
-        
+
         self._v_layout = QVBoxLayout(self)
         self.setLayout(self._v_layout)
-        
+
         self._buildCheckbox()
         self._buildTable()
-        
-    
+
+
     def _buildCheckbox(self):
-        
+
         self._profile_cb = QCheckBox(self)
         self._profile_cb.setText("Run Profiler")
         self._profile_cb.setChecked(False)
         self._profile_cb.setEnabled(False)
         self._v_layout.addWidget(self._profile_cb)
-        
+
         self._profile_cb.stateChanged.connect(self._onToggleProfiler)
-        
-    
+
+
     def _buildTable(self):
-        
+
         self._profile_table = QtPyProfileTable(self)
         self._v_layout.addWidget(self._profile_table)
-        
-    
+
+
     def _onToggleProfiler(self, state):
-        
+
         self._profile_table.refresh()
-        
+
         if self._py_node:
             run_profiler = state == Qt.Checked
             self._py_node.setStoredVariable(MPyNode._RUN_PROFILER_VAR_NAME, run_profiler)
-        
-        
+
+
     def _onNodeChanged(self, py_node):
         """
         Designed to be called when the UI changes its current node. This resets the profiler widget to relfect the
         node change.
         """
-        
+
         if py_node:
             self._py_node = py_node
             self._profile_cb.setEnabled(True)
             node_vars = self._py_node.getStoredVariables()
-            
+
             if node_vars and MPyNode._RUN_PROFILER_VAR_NAME in node_vars:
                 self._profile_cb.setChecked(node_vars[MPyNode._RUN_PROFILER_VAR_NAME])
-            
+
             else:
                 self._profile_cb.setChecked(False)
-                
+
         else:
             self._py_node = None
             self._profile_cb.setChecked(False)
             self._profile_cb.setEnabled(False)
-                
+
         self._profile_table.refresh()
-        
-        
+
+
     def _onLogProfile(self, py_node=None, data=None):
-        
+
         if py_node:
             if data:
                 data = sorted(data,key=lambda x: x.totaltime)[::-1] # [evignola] Sort data by total time, highest to lowest
                 self._profile_table.refresh(data)
-        else:  
+        else:
             self._profile_table.refresh()
-    
+
 
 class NDAttributesWidget(QWidget):
 
@@ -1504,26 +1518,26 @@ class NDAttributesWidget(QWidget):
             self._buildTextField(py_node)
             self._buildInputFrame(py_node)
             self._buildOutputFrame(py_node)
-            
+
             self.refreshInputs()
             self.refreshOutputs()
-            
+
             self._output_frame.refresh()
 
         else:
             self._py_node = None
 
         self._setSignals()
-        
-        
+
+
     def refreshInputs(self):
-        
+
         if self._input_frame:
             self._input_frame.refresh()
-    
-    
+
+
     def refreshOutputs(self):
-        
+
         if self._output_frame:
             self._output_frame.refresh()
 
@@ -1571,9 +1585,9 @@ class NDAttributesWidget(QWidget):
 class NDInputAttrTree(QTreeWidget):
 
     ATTR_CATEGORY = "input"
-    
+
     REMOVE_CONNECTIONS_FUNC = "removeInputConnections"
-    
+
     NEW_ATTR_TYPES = MPyNode.listValidInputTypes()
     ATTR_DEFAULT_TYPE = MPyNode.ATTR_TYPE_FLOAT
     ADD_ATTR_FUNC_NAME = "addInputAttr"
@@ -1583,7 +1597,7 @@ class NDInputAttrTree(QTreeWidget):
     ATTR_COLOR_CHANGE_SIGNAL = Signal(dict)
     LOG_SIGNAL = Signal(str, int)
     SCRIPT_SIGNAL = Signal(object, tuple, dict)
-    
+
     MIN_MAX_TYPES = (MPyNode.ATTR_TYPE_FLOAT, MPyNode.ATTR_TYPE_INT, MPyNode.ATTR_TYPE_TIME, MPyNode.ATTR_TYPE_ANGLE)
 
 
@@ -1604,25 +1618,25 @@ class NDInputAttrTree(QTreeWidget):
         self.setFrameStyle(QFrame.Panel | QFrame.Plain)
         self.setLineWidth(1)
         self.setSelectionMode(QAbstractItemView.ExtendedSelection)
-        
+
         self._setSignals()
         self._buildActions()
-        
-        
+
+
     def mousePressEvent(self, event):
         """
         Overriding parent class method to add middle click functionality
         """
-        
+
         if event.button() == Qt.MiddleButton:
             self.selectNode()
-        
+
         else:
-            super(NDInputAttrTree, self).mousePressEvent(event)    
-        
-        
+            super(NDInputAttrTree, self).mousePressEvent(event)
+
+
     def _setSignals(self):
-        
+
         self.itemChanged.connect(self._renameAttr)
 
 
@@ -1632,55 +1646,55 @@ class NDInputAttrTree(QTreeWidget):
                                         statusTip="Create a new " + self.ATTR_CATEGORY, triggered=self.showAddAttrDlg)
 
         self._delete_attr_action = QAction("Delete " + self.ATTR_CATEGORY.capitalize(), self,
-                                           statusTip="Delete " + self.ATTR_CATEGORY + " from selected node", triggered=self.deleteSelectedAttrs)            
+                                           statusTip="Delete " + self.ATTR_CATEGORY + " from selected node", triggered=self.deleteSelectedAttrs)
 
         self._connect_attr_action = QAction("Connect Attrs to " + self.ATTR_CATEGORY.capitalize(), self,
                                             statusTip="Connect attributes from selected node(s)", triggered=self.showConnectAttrDlg)
 
         self._remove_inputs_action = QAction("Diconnect All " + self.ATTR_CATEGORY.capitalize() + "s", self,
                                              statusTip="Diconnect all connections to this attribute", triggered=self.removeAllConnections)
-        
+
         self._show_color_picker_action = QAction("Set " + self.ATTR_CATEGORY.capitalize() + " Color....", self,
                                                  statusTip="Set the display/syntax color of this " + self.ATTR_CATEGORY.capitalize(),
                                                  triggered=self.showAttrColorPicker)
-        
-        
+
+
     def _renameAttr(self, item):
         """
         Triggered when the user renames an attribute using the UI
         """
-        
+
         if item:
             new_name = item.text(0)
             cur_name = item.getCurrentName()
             is_array = item.isArray()
             text_suffix = "" if not is_array else NDAttrTreeItem.ARRAY_SUFFIX
-                
+
             if new_name:
-                
+
                 if is_array and new_name.endswith(NDAttrTreeItem.ARRAY_SUFFIX):
                     new_name = new_name[:0 - len(NDAttrTreeItem.ARRAY_SUFFIX)]
-                
+
                 if (new_name != cur_name):
-                
+
                     new_name = self._attrNameCheck(new_name, action_type="rename")
-                    
+
                     if new_name:
-                        
+
                         if self.ATTR_CATEGORY == "input":
                             MUndo(self._py_node.renameInputAttr, cur_name, new_name)()
-                            
+
                         else:
                             MUndo(self._py_node.renameOutputAttr, cur_name, new_name)()
-                            
+
                     else:
                         item.setCurrentName(cur_name)
                         item.setText(0, cur_name + text_suffix)
-                        
+
             elif cur_name:
                 item.setCurrentName(cur_name)
                 item.setText(0, cur_name + text_suffix)
-                
+
 
     def contextMenuEvent(self, event):
 
@@ -1697,13 +1711,13 @@ class NDInputAttrTree(QTreeWidget):
             menu.addAction(self._remove_inputs_action)
 
         action = menu.exec_(self.mapToGlobal(event.pos()))
-        
-        
+
+
     def selectNode(self):
         """
         select the node associated with the attributes
         """
-        
+
         if self._py_node:
             self._py_node.select(replace=True)
 
@@ -1729,37 +1743,37 @@ class NDInputAttrTree(QTreeWidget):
 
         else:
             self.LOG_SIGNAL.emit("No attributes selected", 1)
-            
-            
+
+
     def showAttrColorPicker(self):
-        
+
         dlg = QColorDialog(self)
         result = dlg.exec_()
-        
+
         if result:
             attr_clr_map = {}
             clr = dlg.currentColor().getRgb()[:-1]
             sel_items = self.selectedItems()
-            
+
             if sel_items:
                 for item in sel_items:
                     item.setIcon(0, NDAttrIcon(clr))
-                    
+
                     item_name = item.text(0)
                     attr_name = item_name if not item_name.endswith(NDAttrTreeItem.ARRAY_SUFFIX) else item_name[:0 - len(NDAttrTreeItem.ARRAY_SUFFIX)]
                     attr_clr_map[attr_name] = clr
-                    
+
                 self.ATTR_COLOR_CHANGE_SIGNAL.emit(attr_clr_map)
-                
-        
+
+
     def _getAttrColorData(self):
-        
+
         if self._py_node.hasAttr(ATTR_UI_COLOR_ATTR_NAME):
             clr_map = self._py_node._getInternalPyAttr(ATTR_UI_COLOR_ATTR_NAME)
-            
+
             if clr_map:
                 return clr_map
-            
+
         return None
 
 
@@ -1790,14 +1804,14 @@ class NDInputAttrTree(QTreeWidget):
 
 
     def showAddAttrDlg(self):
-        
+
         is_input = True if self.ATTR_CATEGORY == "input" else False
 
         dlg = NDAddAttrDialog(self, self.NEW_ATTR_TYPES, self._py_node.getName(), self.ATTR_DEFAULT_TYPE, is_input=is_input)
         dlg.ADD_ATTR_SIGNAL.connect(self._addNewAttrEvent) ##---this is for the "Add" button in dialog
 
         result = dlg.exec_()
-        
+
         ##---if ok was pressed---##
         if result:
             attr_name = dlg.getAttrName()
@@ -1809,63 +1823,63 @@ class NDInputAttrTree(QTreeWidget):
 
 
     def _addNewAttrEvent(self, attr_name, attr_type, display_option, is_array, is_input):
-        
+
         attr_name = self._attrNameCheck(attr_name)
-        
+
         if attr_name:
             MUndo(self._addAttrWrapper, display_option, is_array, attr_name, attr_type)()
-        
+
 
     def _attrNameCheck(self, attr_name, action_type="add"):
-        
+
         if not attr_name:
             self.LOG_SIGNAL.emit("Cannot " + action_type + " an attribute with no name.", QtLog.ERROR_TYPE)
             return None
-        
+
         ##---auto-convert dashes to underscores---###
         attr_name = attr_name.replace("-", "_")
-        
+
         if self._py_node.hasAttr(attr_name):
             self.LOG_SIGNAL.emit("Cannot " + action_type + " attribute. Node already has an attribute named: " + attr_name, QtLog.ERROR_TYPE)
             return None
-        
+
         ##---check for invalid charcters in the new name---##
         invalid_chars = filter(lambda char: (not char.isalnum()) and (char != "_"), attr_name)
-        
+
         if invalid_chars:
             self.LOG_SIGNAL.emit("Cannot " + action_type + " attribute. Given name has invalid characters: " + invalid_chars, QtLog.ERROR_TYPE)
             return None
-        
+
         ##---makes sure new name doesn't start with a number---##
         if attr_name[0].isdigit():
             self.LOG_SIGNAL.emit("Cannot " + action_type + " attribute. Attributes names cannot start with a number: " + attr_name, QtLog.ERROR_TYPE)
             return None
-        
+
         ##-----make sure the attribute name is not a Python keyword or builtin---##
         if (attr_name in keyword.kwlist) or (attr_name in dir(__builtin__)) or (attr_name in ("self",)):
             self.LOG_SIGNAL.emit("Cannot " + action_type + " attribute. The name \"" + attr_name + "\" is Python keyword or builtin", QtLog.ERROR_TYPE)
             return None
-        
+
         return attr_name
-        
+
 
     def _addAttrWrapper(self, display_option, is_array, attr_name, attr_type):
         """
         Exists so that adding input/output attrs can be wrapped in the single undo
         """
-        
+
         add_func = getattr(self._py_node, self.ADD_ATTR_FUNC_NAME)
-        
+
         add_func(attr_name, attr_type, is_array=is_array, **display_option)
-        
+
         ##---automatically hook up default time nodes as input if a time input is created---##
         if (attr_type == MPyNode.ATTR_TYPE_TIME) and (not is_array):
             time_nodes = MNode.ls(type="time")
-            
+
             if time_nodes:
                 time_nodes[0].connectAttr("outTime", self._py_node, attr_name)
-        
-        ##---write add attr command to the log----## 
+
+        ##---write add attr command to the log----##
         self.SCRIPT_SIGNAL.emit(add_func, (attr_name, attr_type, is_array), display_option)
 
 
@@ -1919,10 +1933,10 @@ class NDInputAttrTree(QTreeWidget):
         if sel_items:
 
             MUndo(self._deleteAttrWrapper, sel_items)()
-        
+
 
     def _deleteAttrWrapper(self, sel_items):
-        
+
         for item in sel_items:
 
             attr_name = item.text(0)
@@ -1958,11 +1972,11 @@ class NDInputAttrTree(QTreeWidget):
 
                 attr_type = attr_data[MPyNode._ATTR_MAP_TYPE_KEY]
                 is_array = False if not attr_data.has_key(MPyNode.ATTR_MAP_ARRAY_KEY) else True
-                
+
                 icon_clr = None
                 if attr_clr_map and (attr_name in attr_clr_map):
                     icon_clr = attr_clr_map[attr_name]
-                
+
                 else:
                     icon_clr = ATTR_COLOR_MAP[attr_type] if ATTR_COLOR_MAP.has_key(attr_type) else ATTR_COLOR_DEFAULT
 
@@ -1972,7 +1986,7 @@ class NDInputAttrTree(QTreeWidget):
 class NDOutputAttrTree(NDInputAttrTree):
 
     ATTR_CATEGORY = "output"
-    
+
     REMOVE_CONNECTIONS_FUNC = "removeOutputConnections"
 
     NEW_ATTR_TYPES = MPyNode.listValidOutputTypes()
@@ -2014,70 +2028,70 @@ class NDOutputAttrTree(NDInputAttrTree):
 
 
     def connectAttrEvent(self, py_node_attr, other_nodes, other_attr, append=False, replace=True):
-        
+
         if other_nodes:
             if other_attr:
                 is_array = False if not self._py_node.getOutputAttrMap()[py_node_attr].has_key(MPyNode.ATTR_MAP_ARRAY_KEY) else True
-                
+
                 ##---figure out what output attrs to use----##
                 out_attrs = [py_node_attr]
                 if is_array:
                     if not append:
-                        out_attrs = [py_node_attr + "[" + str(i) + "]" for i in range(len(other_nodes))] 
-                        
+                        out_attrs = [py_node_attr + "[" + str(i) + "]" for i in range(len(other_nodes))]
+
                     else:
                         start_i = self._py_node.getAttr(py_node_attr, size=True)
                         end_i = start_i + len(other_nodes)
                         out_attrs = [py_node_attr + "[" + str(i) + "]" for i in range(start_i, end_i)]
-                
+
                 ##---remove any existing output connections if "replace" is on-----##
                 if replace:
                     for out_attr in out_attrs:
                         self._py_node.removeOutputConnections(out_attr)
-                
+
                 for i, other_node in enumerate(other_nodes):
-                    
+
                     dst_is_array = other_node.attributeQuery(other_attr, multi=True)
                     if not is_array:
                         src_attrs = [out_attrs[0]] if not dst_is_array else out_attrs
                     else:
                         src_attrs = [out_attrs[i]] if not dst_is_array else out_attrs
-                        
+
                     dst_attrs =  [other_attr] if not dst_is_array else [other_attr + "[" + str(in_i) + "]" for in_i in range(len(out_attrs))]
-                    
+
                     for src_attr, dst_attr in map(None, src_attrs, dst_attrs):
-                        
+
                         if (not src_attr is None) and (not dst_attr is None):
                             try:
                                 self._py_node.connectAttr(src_attr, other_node, dst_attr, force=True)
-                            
+
                             except Exception, err:
                                 self.LOG_SIGNAL.emit(None, QtLog.LAST_EXCEPTION_TYPE)
 
                             else:
                                 self.LOG_SIGNAL.emit(self._py_node.getName() + "." + src_attr + " -------> "\
                                                      + other_node.getName() + "." + dst_attr, QtLog.SUCCESS_TYPE)
-                            
+
             else:
                 self.LOG_SIGNAL.emit("No source attribute given.", 1)
 
         else:
-            self.LOG_SIGNAL.emit("No source nodes given.", 1)    
+            self.LOG_SIGNAL.emit("No source nodes given.", 1)
 
 
 class NDAttrTreeItem(QTreeWidgetItem):
-    
+
     DEFAULT_FLAGS = Qt.ItemIsEnabled | Qt.ItemIsSelectable | Qt.ItemIsEditable
     ARRAY_SUFFIX = " [ ]"
-    
+
 
     def __init__(self, parent, attr_name, attr_type, is_array=False, icon_clr=(80, 230, 80)):
 
         super(NDAttrTreeItem, self).__init__(parent)
-        
+
         self._cur_name = attr_name
         self._is_array = is_array
-        
+
         self.setFlags(self.DEFAULT_FLAGS)
 
         item_txt = attr_name if not is_array else attr_name + self.ARRAY_SUFFIX
@@ -2085,39 +2099,39 @@ class NDAttrTreeItem(QTreeWidgetItem):
         self.setIcon(0, NDAttrIcon(icon_clr))
         self.setText(0, item_txt)
         self.setToolTip(0, attr_type)
-        
-        
+
+
     #def data(self, agr1, arg2):
-        
+
         #super(NDAttrTreeItem, self).data(agr1, arg2)
-        
-        
+
+
     def getCurrentName(self):
-        
+
         return self._cur_name
-    
-    
+
+
     def setCurrentName(self, new_name):
-        
+
         self._cur_name = new_name
-        
-        
+
+
     def isArray(self):
-        
+
         return self._is_array
-    
-    
+
+
     #def setText(self, column, text):
-        
+
         #item_txt = text if not self._is_array else text + self.ARRAY_SUFFIX
-        
+
         #super(NDAttrTreeItem, self).setText(column, item_txt)
-        
+
 
 class NDAttrIcon(QIcon):
 
     def __init__(self, clr):
-        
+
         if type(clr) != QColor:
             clr = QColor(*clr)
 
@@ -2147,7 +2161,7 @@ class NDConnectInputAttrDialog(QDialog):
         self._other_nodes = other_nodes
 
         self._attr_list_frame = None
-        self._button_frame = None        
+        self._button_frame = None
 
         self._filter_field = None
         self._list_widget = None
@@ -2248,7 +2262,7 @@ class NDConnectInputAttrDialog(QDialog):
                     attr_item.setText(0, attr)
                     attr_item.setText(1, attr_type)
                     self._list_widget.addTopLevelItem(attr_item)
-                    
+
         self._list_widget.setColumnWidth(0, 160)
 
 
@@ -2279,7 +2293,7 @@ class NDConnectInputAttrDialog(QDialog):
         h_layout.addWidget(self._force_cb)
 
         v_layout.addLayout(h_layout)
-        
+
         return h_layout
 
 
@@ -2324,7 +2338,7 @@ class NDConnectInputAttrDialog(QDialog):
 
     def getAppendConnect(self):
 
-        return bool(self._force_cb.checkState()) 
+        return bool(self._force_cb.checkState())
 
 
 class NDConnectOutputAttrDialog(NDConnectInputAttrDialog):
@@ -2333,28 +2347,28 @@ class NDConnectOutputAttrDialog(NDConnectInputAttrDialog):
                          {"connectable":True, "write":True, "hasData":True, "multi":True}]
 
     VALID_ATTR_TYPES = MEL_ATTR_TYPE_MAP.keys()
-    
+
 
     def _queryNodeAttrType(self):
-        
+
         self._replace_cb = None
 
         attr_map = self._py_node.getOutputAttrMap()
         self._attr_type = attr_map[self._py_node_attr][MPyNode._ATTR_MAP_TYPE_KEY]
-        
-        
+
+
     def _buildAttrList(self):
-        
+
         h_layout = super(NDConnectOutputAttrDialog, self)._buildAttrList()
-        
+
         self._replace_cb = QCheckBox(self._button_frame)
         self._replace_cb.setText("Replace")
         self._replace_cb.setChecked(True)
         h_layout.addWidget(self._replace_cb)
-        
+
         return h_layout
-        
-        
+
+
     def getReplaceConnect(self):
 
         return bool(self._replace_cb.checkState())
@@ -2370,10 +2384,10 @@ class NDAddAttrDialog(QDialog):
     ATTR_TYPE_MAP = OrderedDict((map(None, DISPLAY_TYPES, (KEYABLE_ATTR_OPTS, DISPLAYABLE_ATTR_OPTS, HIDDEN_ATTR_OPTS))))
 
     ADD_ATTR_SIGNAL = Signal(str, str, dict, bool, bool)
-    
+
     FLOAT_DEFAULT_VAL = 0.0
     INT_DEFAULT_VAL = 0
-    
+
     STACK_LAYOUT_MAP = {MPyNode.ATTR_TYPE_FLOAT:0, MPyNode.ATTR_TYPE_ANGLE:0, MPyNode.ATTR_TYPE_TIME:0,
                         MPyNode.ATTR_TYPE_INT:1,
                         MPyNode.ATTR_TYPE_BOOL:2,
@@ -2398,32 +2412,32 @@ class NDAddAttrDialog(QDialog):
         self._properties_frame = None
         self._property_layout = None
         self._button_frame = None
-        
+
         self._float_frame = None
         self._float_min_field = None
         self._float_max_field = None
         self._float_default_field = None
-        
+
         self._int_frame = None
         self._int_min_field = None
         self._int_max_field = None
         self._int_default_field = None
-        
+
         self._bool_frame = None
         self._bool_radio_grp = None
-        
+
         self._enum_frame = None
         self._enum_name_list = None
-        
+
         self._blank_frame = None
-        
+
         self._property_func_map = {MPyNode.ATTR_TYPE_FLOAT:self._getFloatProperties,
                                    MPyNode.ATTR_TYPE_ANGLE:self._getFloatProperties,
                                    MPyNode.ATTR_TYPE_TIME:self._getFloatProperties,
                                    MPyNode.ATTR_TYPE_INT:self._getIntProperties,
                                    MPyNode.ATTR_TYPE_BOOL:self._getBoolProperties,
                                    MPyNode.ATTR_TYPE_ENUM:self._getEnumProperties}
-        
+
         self._main_layout = QVBoxLayout(self)
         self.setLayout(self._main_layout)
 
@@ -2432,7 +2446,7 @@ class NDAddAttrDialog(QDialog):
         self._buildButtonFrame()
 
         self.setWindowTitle("Add Attribute: " + node_name)
-        
+
         self._setSignals()
         self._setDefaultType(default_type)
 
@@ -2450,7 +2464,7 @@ class NDAddAttrDialog(QDialog):
         v_layout_1.addWidget(QLabel("Make attribute:", self._attr_frame))
 
         h_layout.addLayout(v_layout_1)
-        
+
         v_layout_2 = QVBoxLayout()
 
         self._name_field = QLineEdit(self._attr_frame)
@@ -2480,150 +2494,150 @@ class NDAddAttrDialog(QDialog):
         h_layout.addLayout(v_layout_2)
 
         self._main_layout.addWidget(self._attr_frame)
-        
-        
+
+
     def _setSignals(self):
-        
+
         self._type_combo.currentIndexChanged.connect(self._typeChangedEvent)
         self._array_check.stateChanged.connect(self._enablePropertiesWidget)
-        
-        
+
+
     def _enablePropertiesWidget(self, state):
-        
+
         self._properties_frame.setEnabled(not bool(state))
-    
-        
+
+
     def _typeChangedEvent(self, index):
-        
+
         attr_type = self._attr_types[index]
-        
+
         if self.STACK_LAYOUT_MAP.has_key(attr_type):
             self._property_layout.setCurrentIndex(self.STACK_LAYOUT_MAP[attr_type])
-            
+
         else:
             self._property_layout.setCurrentIndex(self.BLANK_FRAME_INDEX)
-        
-        
+
+
     def _setDefaultType(self, default_type):
-        
+
         if default_type:
             if default_type in self._attr_types:
                 self._type_combo.setCurrentIndex(list(self._attr_types).index(default_type))
-                
-                
+
+
     def _getFloatProperties(self):
-        
+
         properties = {}
         min_val = self._float_min_field.text()
         max_val = self._float_max_field.text()
         default_val = self._float_default_field.text()
-        
+
         if min_val != "":
             properties["min"] = float(min_val)
-            
+
         if max_val != "":
             properties["max"] = float(max_val)
-            
+
         if default_val != "":
             properties["defaultValue"] = float(default_val)
-            
+
         return properties if properties else None
-    
-    
+
+
     def _getIntProperties(self):
-        
+
         properties = {}
         min_val = self._int_min_field.text()
         max_val = self._int_max_field.text()
         default_val = self._int_default_field.text()
-        
+
         if min_val != "":
             properties["min"] = int(min_val)
-            
+
         if max_val != "":
             properties["max"] = int(max_val)
-            
+
         if default_val != "":
             properties["defaultValue"] = int(default_val)
-            
+
         return properties if properties else None
-    
-    
+
+
     def _getBoolProperties(self):
-        
+
         properties = {}
-        
+
         default_val = self._bool_radio_grp.checkedId()
-        
+
         if default_val > 0:
             properties["defaultValue"] = bool(default_val)
-            
+
         return properties if properties else None
-    
-    
+
+
     def _getEnumProperties(self):
-        
+
         properties = {}
-        
+
         item_count = self._enum_name_list.count()
-        
+
         if item_count > 0:
             enum_items = []
             for i in range(item_count):
                 item = self._enum_name_list.item(i)
                 item_text = item.text()
-                
+
                 if item_text:
                     enum_items.append(str(item_text))
-                    
+
             if enum_items:
                 properties["enumName"] = ":".join(enum_items)
-        
-        return properties if properties else None      
-        
-        
+
+        return properties if properties else None
+
+
     def _buildPropertiesFrame(self):
-        
+
         self._properties_frame = QFrame(self)
-        
+
         v_layout_1 = QVBoxLayout(self._properties_frame)
-        
+
         label = QLabel("Attribute Properties", self._properties_frame)
         label.setStyleSheet("QLabel { background-color : gray; color : silver; font: bold large;}")
         v_layout_1.addWidget(label)
-        
+
         self._property_layout = QStackedLayout(self._properties_frame)
-        
+
         ##-----0 - float ----##
         self._buildFloatPropertiesFrame()
         self._property_layout.addWidget(self._float_frame)
-        
+
         ##-----1 - int ----##
         self._buildIntPropertiesFrame()
         self._property_layout.addWidget(self._int_frame)
-        
+
         ##-----2 - bool ----##
         self._buildBoolPropertiesFrame()
         self._property_layout.addWidget(self._bool_frame)
-        
+
         ##-----3 - blank ----##
         self._buildEnumPropertiesFrame()
-        self._property_layout.addWidget(self._enum_frame)        
-        
+        self._property_layout.addWidget(self._enum_frame)
+
         ##-----4 - blank ----##
         self._buildBlankPropertiesFrame()
         self._property_layout.addWidget(self._blank_frame)
-        
+
         v_layout_1.addLayout(self._property_layout)
         self._main_layout.addWidget(self._properties_frame, stretch=1)
-        
-        
+
+
     def _buildIntPropertiesFrame(self):
-        
+
         self._int_frame = QFrame(self)
         v_layout = QVBoxLayout(self._int_frame)
         v_layout.setContentsMargins(2, 2, 2, 2)
-    
+
         h_layout_1 = QHBoxLayout(self._int_frame)
         min_label = QLabel("Minimum:", self._int_frame)
         min_label.setMinimumWidth(60)
@@ -2632,7 +2646,7 @@ class NDAddAttrDialog(QDialog):
         self._int_min_field.setValidator(QIntValidator())
         h_layout_1.addWidget(self._int_min_field)
         v_layout.addLayout(h_layout_1)
-    
+
         h_layout_2 = QHBoxLayout(self._int_frame)
         max_label = QLabel("Maximum:", self._int_frame)
         max_label.setMinimumWidth(60)
@@ -2641,7 +2655,7 @@ class NDAddAttrDialog(QDialog):
         self._int_max_field.setValidator(QIntValidator())
         h_layout_2.addWidget(self._int_max_field)
         v_layout.addLayout(h_layout_2)
-    
+
         h_layout_3 = QHBoxLayout(self._int_frame)
         default_label = QLabel("Default:", self._int_frame)
         default_label.setMinimumWidth(60)
@@ -2651,16 +2665,16 @@ class NDAddAttrDialog(QDialog):
         self._int_default_field.setText(str(self.INT_DEFAULT_VAL))
         h_layout_3.addWidget(self._int_default_field)
         v_layout.addLayout(h_layout_3)
-    
+
         v_layout.addStretch(1)
-    
-    
+
+
     def _buildFloatPropertiesFrame(self):
-        
+
         self._float_frame = QFrame(self)
         v_layout = QVBoxLayout(self._float_frame)
         v_layout.setContentsMargins(2, 2, 2, 2)
-        
+
         h_layout_1 = QHBoxLayout(self._float_frame)
         min_label = QLabel("Minimum:", self._float_frame)
         min_label.setMinimumWidth(60)
@@ -2669,7 +2683,7 @@ class NDAddAttrDialog(QDialog):
         self._float_min_field.setValidator(QDoubleValidator())
         h_layout_1.addWidget(self._float_min_field)
         v_layout.addLayout(h_layout_1)
-        
+
         h_layout_2 = QHBoxLayout(self._float_frame)
         max_label = QLabel("Maximum:", self._float_frame)
         max_label.setMinimumWidth(60)
@@ -2678,7 +2692,7 @@ class NDAddAttrDialog(QDialog):
         self._float_max_field.setValidator(QDoubleValidator())
         h_layout_2.addWidget(self._float_max_field)
         v_layout.addLayout(h_layout_2)
-        
+
         h_layout_3 = QHBoxLayout(self._float_frame)
         default_label = QLabel("Default:", self._float_frame)
         default_label.setMinimumWidth(60)
@@ -2688,38 +2702,38 @@ class NDAddAttrDialog(QDialog):
         self._float_default_field.setText(str(self.FLOAT_DEFAULT_VAL))
         h_layout_3.addWidget(self._float_default_field)
         v_layout.addLayout(h_layout_3)
-        
+
         v_layout.addStretch(1)
-        
-        
+
+
     def _buildBoolPropertiesFrame(self):
-        
+
         self._bool_frame = QFrame(self)
         v_layout = QVBoxLayout(self._bool_frame)
         h_layout = QHBoxLayout(self._bool_frame)
-        
+
         h_layout.addWidget(QLabel("Default:", self._bool_frame))
         self._bool_radio_grp = QButtonGroup(self._bool_frame)
-        
+
         true_button = QRadioButton("True", self._bool_frame)
         true_button.setChecked(True)
         self._bool_radio_grp.addButton(true_button, 1)
         h_layout.addWidget(true_button)
-        
+
         false_button = QRadioButton("False", self._bool_frame)
         self._bool_radio_grp.addButton(false_button, 0)
         h_layout.addWidget(false_button)
-        
+
         v_layout.addLayout(h_layout)
         v_layout.addStretch(1)
-        
-        
+
+
     def _buildEnumPropertiesFrame(self):
-        
+
         self._enum_frame = QFrame(self)
         v_layout = QVBoxLayout(self._enum_frame)
         h_layout_1 = QHBoxLayout(self._enum_frame)
-        
+
         plus_button = QPushButton("+", self._enum_frame)
         plus_button.setMaximumWidth(25)
         h_layout_1.addWidget(plus_button)
@@ -2728,32 +2742,32 @@ class NDAddAttrDialog(QDialog):
         h_layout_1.addWidget(minus_button)
         h_layout_1.addStretch(1)
         v_layout.addLayout(h_layout_1)
-        
+
         self._enum_name_list = QListWidget(self._enum_frame)
-        
+
         v_layout.addWidget(self._enum_name_list)
-        
+
         plus_button.clicked.connect(self._addEnumItem)
         minus_button.clicked.connect(self._removeEnumItem)
-        
-        
+
+
     def _buildBlankPropertiesFrame(self):
-        
+
         self._blank_frame = QFrame(self)
-        
-    
+
+
     def _addEnumItem(self):
-        
+
         new_item = QListWidgetItem("")
         new_item.setFlags(Qt.ItemIsEditable | Qt.ItemIsEnabled | Qt.ItemIsSelectable)
         self._enum_name_list.addItem(new_item)
         self._enum_name_list.setCurrentItem(new_item)
-        
-        
+
+
     def _removeEnumItem(self):
-        
+
         cur_item = self._enum_name_list.currentItem()
-        
+
         if cur_item:
             self._enum_name_list.takeItem(self._enum_name_list.row(cur_item))
 
@@ -2775,7 +2789,7 @@ class NDAddAttrDialog(QDialog):
 
         cancel_button = QPushButton("Cancel", self._button_frame)
         cancel_button.clicked.connect(self.reject)
-        layout.addWidget(cancel_button)        
+        layout.addWidget(cancel_button)
 
         self._main_layout.addWidget(self._button_frame)
 
@@ -2808,103 +2822,103 @@ class NDAddAttrDialog(QDialog):
     def getAttrDisplayOptions(self, attr_type, is_array):
 
         button_id = self._radio_grp.checkedId()
-        
+
         display_opts = copy.deepcopy(self.ATTR_TYPE_MAP[self.DISPLAY_TYPES[button_id]])
-        
+
         if (attr_type in self._property_func_map) and (not is_array):
             properties = self._property_func_map[attr_type]()
-            
+
             if not properties is None:
-                display_opts.update(properties)        
+                display_opts.update(properties)
 
         return display_opts
 
 
 class NDSceneTree(QTreeWidget):
-    
+
     ADD_NODE_SIGNAL = Signal()
     DELETE_NODE_SIGNAL = Signal(tuple)
     LOG_SIGNAL = Signal(str, int)
-    
+
 
     def __init__(self, parent=None):
 
         super(NDSceneTree, self).__init__(parent)
-        
+
         self._node_rename_action = None
         self._new_node_action = None
         self._delete_nodes_action = None
-        
+
         self._buildActions()
         self._setSignals()
 
         self.setColumnCount(1)
         self.setHeaderItem(QTreeWidgetItem(["Name"]))
-        
+
         self.setSelectionMode(QAbstractItemView.ExtendedSelection)
-        
-        
+
+
     def mousePressEvent(self, event):
         """
         Overriding parent class method to add middle click functionality
         """
-        
+
         if event.button() == Qt.MiddleButton:
             self._selectNodes()
-        
+
         else:
             super(NDSceneTree, self).mousePressEvent(event)
-        
-        
+
+
     def _setSignals(self):
-        
+
         self.itemChanged.connect(self._renameNode)
-        
-        
+
+
     def _buildActions(self):
-        
+
         self._new_node_action = QAction(ICON_MANAGER["new_node_icon"], "&New Node", self, shortcut=QKeySequence.New,
                                         statusTip="Create a new node", triggered=self._addNewNode)
-        
+
         self._select_nodes_action = QAction(ICON_MANAGER["select_nodes_icon"], "Select Node(s)", self,
-                                           statusTip="Select Node(s)", triggered=self._selectNodes)             
-        
+                                           statusTip="Select Node(s)", triggered=self._selectNodes)
+
         self._delete_nodes_action = QAction(ICON_MANAGER["delete_node_icon"], "Delete Node(s)", self,
                                             statusTip="Delete selected node(s)", triggered=self._deleteSelectedNodes)
-        
-        
+
+
     def _selectNodes(self):
-        
+
         sel_items = self.selectedItems()
-        
+
         if sel_items:
-            
+
             node_list = [item.getMPyNode() for item in sel_items]
             mc.select(node_list, replace=True)
-        
-       
+
+
     def _renameNode(self, item):
-        
+
         py_node = item.getMPyNode()
-        
+
         if py_node:
             node_name = py_node.getName()
             item_text = item.text(0)
-            
+
             if node_name != item_text:
                 if item_text:
-                    
+
                     try:
                         MUndo(py_node.rename, item_text)()
-                        
+
                     except RuntimeError, err:
                         item.setText(0, node_name)
                         new_name = node_name
-                        
+
                 else:
                     item.setText(0, py_node.getName())
-                
-                
+
+
     def _nodeNameChanged(self):
 
         if self._py_node:
@@ -2925,46 +2939,46 @@ class NDSceneTree(QTreeWidget):
 
                 #self.NODE_RENAME_SIGNAL.emit(self._py_node)
 
-                self.LOG_SIGNAL.emit("Rename \"" + orig_node_name + "\" to \"" + self._py_node.getName() + "\"", 0)    
-        
-        
+                self.LOG_SIGNAL.emit("Rename \"" + orig_node_name + "\" to \"" + self._py_node.getName() + "\"", 0)
+
+
     def _addNewNode(self):
-        
+
         self.ADD_NODE_SIGNAL.emit()
-        
-        
+
+
     def _deleteSelectedNodes(self):
-        
+
         items = self.selectedItems()
-        
+
         if items:
-            
+
             do_delete = self.showNodeDeleteDlg()
-            
+
             if do_delete == QMessageBox.Yes:
                 py_nodes = [item.getMPyNode() for item in items]
                 self.DELETE_NODE_SIGNAL.emit(tuple(py_nodes))
-        
+
         else:
             self.LOG_SIGNAL.emit("Nothing selected in the Scene list", QtLog.ERROR_TYPE)
-            
-            
+
+
     def contextMenuEvent(self, event):
 
         menu = QMenu(self)
         cur_item = self.currentItem()
-        
+
         if cur_item:
             menu.addAction(self._select_nodes_action)
-        
+
         menu.addAction(self._new_node_action)
-        
+
         if cur_item:
             menu.addAction(self._delete_nodes_action)
 
         action = menu.exec_(self.mapToGlobal(event.pos()))
-        
-        
+
+
     def showNodeDeleteDlg(self):
 
         dlg = QMessageBox()
@@ -2974,7 +2988,7 @@ class NDSceneTree(QTreeWidget):
         dlg.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
         dlg.setDefaultButton(QMessageBox.No)
 
-        return dlg.exec_()    
+        return dlg.exec_()
 
 
     def refresh(self, node_class=MPyNode, str_exp=None):
@@ -2991,24 +3005,24 @@ class NDSceneTree(QTreeWidget):
 
 
 class NDSceneTreeItem(QTreeWidgetItem):
-    
+
     DEFAULT_FLAGS = Qt.ItemIsEnabled | Qt.ItemIsSelectable | Qt.ItemIsEditable
-    
+
 
     def __init__(self, parent, py_node):
 
         super(NDSceneTreeItem, self).__init__(parent)
-        
+
         self.setFlags(self.DEFAULT_FLAGS)
 
         self._py_node = py_node
 
 
     def getMPyNode(self):
-        
+
         if hasattr(self, "_py_node"):
             return self._py_node
-        
+
         return None
 
 
@@ -3020,202 +3034,249 @@ class NDLogWidget(QtLog):
     def __init__(self, parent=None):
 
         super(NDLogWidget, self).__init__(parent)
-        
-        
+
+
 class NDWatchTable(QTableWidget):
-    
+
     HEADER_TITLES = ("Variable Name", "Value", "Type")
-    
-    
+
+
     def __init__(self, parent=None):
-        
+
         super(NDWatchTable, self).__init__(0, len(NDWatchTable.HEADER_TITLES), parent=parent)
-        
+
         self._buildHeaders()
-        
+
 
     def _buildHeaders(self):
-        
+
         v_header = QHeaderView(Qt.Orientation.Vertical)
         h_header = QHeaderView(Qt.Orientation.Horizontal)
-        
+
         if PySide.__version_info__[0] == 1:
             v_header.setResizeMode(QHeaderView.ResizeToContents)
             h_header.setResizeMode(QHeaderView.ResizeToContents)
-        
+
         else:
             v_header.setSectionResizeMode(QHeaderView.ResizeToContents)
             h_header.setSectionResizeMode(QHeaderView.ResizeToContents)
-        
+
         self.setVerticalHeader(v_header)
         self.setHorizontalHeader(h_header)
         self.setHorizontalHeaderLabels(self.HEADER_TITLES)
-        
-        
+
+
     def refresh(self, var_dict=None):
-        
+
         self.clearContents()
-        
+
         if var_dict:
             self.setRowCount(len(var_dict))
-            
+
             for row, var_name in enumerate(var_dict.keys()):
                 for col, txt in enumerate((var_name, str(var_dict[var_name]), str(type(var_dict[var_name])))):
-                    
+
                     item = QTableWidgetItem(txt)
                     item.setFlags(Qt.ItemIsEnabled) #disables editing
                     self.setItem(row, col, item)
-                        
+
         else:
             self.setRowCount(0)
-            
-            
+
+
 class NDWatchVarsWidget(QWidget):
-    
+
     CHECKBOX_TEXT = "Watch Values"
     MPYNODE_VAR_NAME = MPyNode._WATCH_VALUES_VAR_NAME
-    
+
 
     def __init__(self, parent=None):
 
         super(NDWatchVarsWidget, self).__init__(parent)
-        
+
         self._py_node = None
         self._watch_cb = None
         self._watch_table = None
-        
+
         self._v_layout = QVBoxLayout(self)
         self.setLayout(self._v_layout)
-        
+
         self._buildCheckbox()
         self._buildTable()
-        
-    
+
+
     def _buildCheckbox(self):
-        
+
         self._watch_cb = QCheckBox(self)
         self._watch_cb.setText(self.CHECKBOX_TEXT)
         self._watch_cb.setChecked(False)
         self._watch_cb.setEnabled(False)
         self._v_layout.addWidget(self._watch_cb)
-        
+
         self._watch_cb.stateChanged.connect(self._onToggleWatch)
-        
-    
+
+
     def _buildTable(self):
-        
+
         self._watch_table = NDWatchTable(self)
         self._v_layout.addWidget(self._watch_table)
-        
-    
+
+
     def _onToggleWatch(self, state):
-        
+
         self._watch_table.refresh()
-        
+
         if self._py_node:
             watch_vars = state == Qt.Checked
             self._py_node.setVariable(self.MPYNODE_VAR_NAME, watch_vars)
-        
-        
+
+
     def _onNodeChanged(self, py_node):
         """
         Designed to be called when the UI changes its current node. This resets the profiler widget to relfect the
         node change.
         """
-        
+
         if py_node:
             self._py_node = py_node
             self._watch_cb.setEnabled(True)
             node_vars = self._py_node.getStoredVariables()
-            
+
             if node_vars and self.MPYNODE_VAR_NAME in node_vars:
                 self._watch_cb.setChecked(node_vars[self.MPYNODE_VAR_NAME])
-            
+
             else:
                 self._watch_cb.setChecked(False)
-                
+
         else:
             self._py_node = None
             self._watch_cb.setChecked(False)
             self._watch_cb.setEnabled(False)
-                
+
         self._watch_table.refresh()
-        
-        
+
+
     def _onWatchVariables(self, py_node=None, data=None):
-        
+
         if py_node:
             if data:
                 self._watch_table.refresh(data)
-        else:  
+        else:
             self._watch_table.refresh()
-            
-            
-            
+
+
+class NDAboutDialog(QDialog):
+    """
+    Dialog window class for the Node Deigner 'about' window
+    """
+
+    TITLE = APP_NAME + " " + APP_VERSION
+    LICENSE_TEXT_STR = "Legal shit"
+
+    BG_ICON_NAME = "about_dialog_bg"
+
+    WIDTH = 512
+    HEIGHT = 512
+
+
+    def __init__(self, parent):
+
+        super(NDAboutDialog, self).__init__(parent)
+
+        self._main_layout = QVBoxLayout(self)
+        self.setLayout(self._main_layout)
+
+        self._buildTextEdit(parent)
+
+        self.setFixedSize(self.WIDTH, self.HEIGHT)
+        self.setWindowTitle(self.TITLE)
+
+
+    def _buildTextEdit(self, parent):
+
+        self._text_widget = QPlainTextEdit(parent)
+        self._text_widget.appendPlainText(self.LICENSE_TEXT_STR)
+        self._text_widget.setReadOnly(True)
+
+        icon_path = ICON_MANAGER.getFilePath(self.BG_ICON_NAME)
+
+        if icon_path:
+            self._text_widget.setStyleSheet("background-image: url(" + icon_path + ")")
+
+        self._main_layout.addWidget(self._text_widget)
+
+
 class NDIconManager(object):
-    
+
     DIR_NAME = "resources"
-    
+
     FILE_EXTS = ("png",)
-    
-    
+
+
     def __init__(self):
-        
+
         self._icon_map = {}
-        
+        self._icon_path_map = {}
+
         self._collectIcons()
-    
-    
+
+
     def _collectIcons(self):
-        
+
         cur_dir = os.path.dirname(__file__).replace("\\", "/")
         res_dir = cur_dir + "/" + self.DIR_NAME
-        
+
         if os.path.exists(res_dir):
-            
+
             for item in os.listdir(res_dir):
-                item_path = res_dir + "/" + item
-                
+                icon_path = res_dir + "/" + item
+
                 ##----loading icons---##
-                if os.path.isfile(item_path) and item_path.split(".")[-1] in self.FILE_EXTS:
+                if os.path.isfile(icon_path) and icon_path.split(".")[-1] in self.FILE_EXTS:
                     base_name = item.split(".")[0]
-                    
-                    self._icon_map[base_name] = QIcon(item_path)
-        
+
+                    self._icon_map[base_name] = QIcon(icon_path)
+                    self._icon_path_map[base_name] = icon_path
+
         else:
             print self.NAME + ": no " + self.RESOURCE_DIR_NAME + " directory found"
-            
-            
+
+
     def __len__(self):
-        
+
         return len(self._icon_map)
-    
-    
+
+
     def __getitem__(self, key):
-        
+
         return self._icon_map[key]
-    
-    
+
+
     def __missing__(self, key):
-        
+
         return QIcon()
-    
-    
+
+
     def __contains__(self, item):
-        
+
         return item in self._icon_map
-    
-    
+
+
+    def getFilePath(self, icon_name):
+
+        return self._icon_path_map[icon_name] if icon_name in self._icon_path_map else None
+
+
 class NDToolBar(QToolBar):
-    
-    
+
+
     def __init__(self, parent):
-        
+
         super(NDToolBar, self).__init__(parent)
-        
-        
+
+
     def contextMenuEvent(self, event):
         pass
-    
-    
+
+
 ICON_MANAGER = NDIconManager()
