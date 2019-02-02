@@ -2,6 +2,7 @@ import __builtin__
 import os
 import copy
 import sys
+import stat
 import traceback
 import keyword
 import logging
@@ -14,7 +15,7 @@ import maya.api.OpenMaya as om
 
 if mc.about(apiVersion=True) < 201700:
     import PySide
-    from PySide.QtCore import Qt, Signal, Slot, QSize, QObject, QRegExp
+    from PySide.QtCore import Qt, Signal, Slot, QSize, QObject, QRegExp, QObject
     from PySide.QtGui import QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QSplitter, QColor, QStatusBar, QMessageBox, QTreeWidget, QTreeWidgetItem, QDialog, QComboBox, QCheckBox
     from PySide.QtGui import QFont, QFontMetrics, QPlainTextEdit, QTabWidget, QTabBar, QAction, QKeySequence, QLineEdit, QFrame, QLabel, QMenu, QIcon, QPixmap, QPushButton, QStackedLayout
     from PySide.QtGui import QRadioButton, QButtonGroup, QCompleter, QTextCursor, QAbstractItemView, QToolBar, QListWidget, QTableWidget, QTableWidgetItem, QHeaderView, QFileDialog, QGridLayout
@@ -23,7 +24,7 @@ if mc.about(apiVersion=True) < 201700:
 else:
     import PySide2
     PySide = PySide2
-    from PySide2.QtCore import Qt, Signal, Slot, QSize, QObject, QRegExp
+    from PySide2.QtCore import Qt, Signal, Slot, QSize, QObject, QRegExp, QObject
     from PySide2.QtGui import QColor, QFont, QFontMetrics, QKeySequence, QIcon, QPixmap, QTextCursor, QDoubleValidator, QIntValidator
     from PySide2.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QSplitter, QStatusBar, QMessageBox, QTreeWidget, QTreeWidgetItem, QDialog, QComboBox, QCheckBox
     from PySide2.QtWidgets import QPlainTextEdit, QTabWidget, QTabBar, QLineEdit, QFrame, QLabel, QMenu, QPushButton, QStackedLayout, QGridLayout, QListWidgetItem, QColorDialog
@@ -85,8 +86,78 @@ MEL_ATTR_TYPE_MAP = {"bool":MPyNode.ATTR_TYPE_BOOL,
                      "nurbsCurve":MPyNode.ATTR_TYPE_NURBS_CURVE, "nurbsSurface":MPyNode.ATTR_TYPE_NURBS_CURVE,
                      "mesh":MPyNode.ATTR_TYPE_MESH}
 
+BASE_DIR = os.path.dirname(__file__).replace("\\", "/")
+ERROR_LOG_PATH = BASE_DIR + "/" + APP_NAME.lower().replace(" ", "_") + "_error_log.txt"
+
+
+class NDErrorLog(QObject):
+    """
+    QObject to hold a Signal that can be used to send uncaught errors to the UI
+    """
+
+    LOG_SIGNAL = Signal(str, int)
+
+
+    def __init__(self):
+
+        super(NDErrorLog, self).__init__()
+
+
+    def emitError(self, err_str):
+        """
+        Emit this error
+
+        **err_str**		*string* error to send to the UI
+        """
+
+        self.LOG_SIGNAL.emit(err_str, QtLog.ERROR_TYPE)
+
+
+ERROR_LOG_OBJ = NDErrorLog()
+
+
+def logError(func):
+    """
+    Decorator function that that catches unhandled exceptions and writes
+    them to a log file. Will also attempt to emit an Qt signal to any running UI
+    so the error can be displayed to the user
+
+    **func**	function object to wrap
+
+    >>> @logError
+
+    """
+
+    def errorWrap(*args, **kargs):
+        """
+        Function passed into errorWrap() will be wraped in this function
+        """
+
+        try:
+            return func(*args, **kargs)
+
+        except Exception, err:
+
+            if os.path.exists(BASE_DIR):
+                if os.path.exists(ERROR_LOG_PATH) and not os.access(ERROR_LOG_PATH, os.W_OK):
+                    os.chmod(ERROR_LOG_PATH, stat.S_IWRITE )
+
+                with open(ERROR_LOG_PATH, "a") as log_file:
+                    err_str = traceback.format_exc()
+
+                    log_file.write("\n\n" + err_str)
+                    ERROR_LOG_OBJ.emitError(err_str)
+
+            ##----re-throw caught exception---##
+            raise
+
+    return errorWrap
+
 
 class NDMainWindow(QMayaWindow):
+    """
+    The main UI class window.
+    """
 
     NAME = APP_NAME
     VERSION = APP_VERSION
@@ -212,6 +283,8 @@ class NDMainWindow(QMayaWindow):
 
         self._variables_widget.LOG_SIGNAL.connect(self._log_widget.write)
 
+        ERROR_LOG_OBJ.LOG_SIGNAL.connect(self._log_widget.write)
+
 
     def _setSceneCallbacks(self):
         """
@@ -250,6 +323,7 @@ class NDMainWindow(QMayaWindow):
             del(self._node_callback_map[py_node])
 
 
+    @logError
     def deleteNodesEvent(self, nodes):
         """
         Called when the user deletes a node using the ui. Note that this will invoke _onNodeRemoved through a callback
@@ -390,6 +464,7 @@ class NDMainWindow(QMayaWindow):
         self._scene_tree.refresh()
 
 
+    @logError
     def scriptTabChanged(self, tab_index):
 
         def _clearWidgets():
@@ -532,23 +607,27 @@ class NDMainWindow(QMayaWindow):
         self._help_api_doc_action = QAction(ICON_MANAGER["help_icon"], "Scripting API Reference", self,
                                             statusTip="Opens API documentation in a browser", triggered=self.openApiDocs)
 
-        self._about_dialog_action = QAction(ICON_MANAGER["help_icon"], "About " + self.NAME, self,
+        self._about_dialog_action = QAction(ICON_MANAGER["about_icon"], "About " + self.NAME, self,
                                             statusTip="Show the about window", triggered=self.showAboutDialog)
 
-
+    @logError
     def saveToFile(self):
         pass
 
+
+    @logError
     def openHelpDocs(self):
 
         self.openDocPage(self.HELP_DOCS_FILE)
 
 
+    @logError
     def openApiDocs(self):
 
         self.openDocPage(self.HELP_API_DOCS_FILE)
 
 
+    @logError
     def openDocPage(self, doc_file_name):
 
         base_dir = os.path.normpath(os.path.dirname(__file__) + ("../" * 4)).replace("\\", "/")
@@ -561,6 +640,7 @@ class NDMainWindow(QMayaWindow):
             self._log_widget.write("Could not locate help document: " + doc_path, QtLog.ERROR_TYPE)
 
 
+    @logError
     def exportToFile(self):
 
         if self._cur_py_node:
@@ -588,6 +668,7 @@ class NDMainWindow(QMayaWindow):
             self._log_widget.write("No active nodes", QtLog.ERROR_TYPE)
 
 
+    @logError
     def showAboutDialog(self):
 
         dlg = NDAboutDialog(self)
@@ -595,6 +676,7 @@ class NDMainWindow(QMayaWindow):
         result = dlg.exec_()
 
 
+    @logError
     def importFromFile(self):
 
         node_list = []
@@ -639,6 +721,7 @@ class NDMainWindow(QMayaWindow):
         self._help_menu.setToolTipsVisible(True)
 
 
+    @logError
     def addNewNodeEvent(self):
         """
         Called when the user created a new node using the ui. Note that this will invoke _onNodeAdded through a callback
@@ -669,6 +752,7 @@ class NDMainWindow(QMayaWindow):
                 self._log_widget.write("Cannot locate node in scene", QtLog.ERROR_TYPE)
 
 
+    @logError
     def sceneSelectChangeEvent(self):
         """
         Called when the selection in the Scene widget changes. Opens or selects the appropriate tab in
@@ -695,16 +779,19 @@ class NDMainWindow(QMayaWindow):
                     self._log_widget.write("Editing node: " + tab_widget._py_node.getName())
 
 
+    @logError
     def saveCurrentNode(self):
 
         self._script_tab_widget.saveCurrentNode()
 
 
+    @logError
     def saveAllNodes(self):
 
         self._script_tab_widget.saveAllNodes()
 
 
+    @logError
     def setAttrColorData(self, clr_map_update):
 
         MUndo(self._cur_py_node._updateUiAttrColorMap, clr_map_update)()
@@ -746,6 +833,7 @@ class NDMainWindow(QMayaWindow):
                 self._setNodeCallbacks(py_node)
 
 
+    @logError
     def writeScriptToLog(self, func, args, kargs):
         """
         Meant to be a formating function that prints the given function
@@ -765,6 +853,7 @@ class NDMainWindow(QMayaWindow):
         self._log_widget.write(log_txt)
 
 
+    @logError
     def closeEvent(self, event):
         """
         OVERRIDE... check for unsaved scripts
@@ -969,6 +1058,7 @@ class NDScriptTabWidget(QTabWidget):
         return dlg.exec_()
 
 
+    @logError
     def closeTabEvent(self, tab_index):
 
         close = self._tabCloseCheck(tab_index)
@@ -1019,6 +1109,7 @@ class NDScriptEditor(QtPythonEditor):
             self.setText(exp_str)
 
 
+    @logError
     def refresh(self):
 
         highlighter = self.getHighlighter()
@@ -1642,7 +1733,7 @@ class NDInputAttrTree(QTreeWidget):
 
     def _buildActions(self):
 
-        self._add_attr_action = QAction("Add New " + self.ATTR_CATEGORY.capitalize(), self,
+        self._add_attr_action = QAction(ICON_MANAGER["add_input_icon"], "Add New " + self.ATTR_CATEGORY.capitalize(), self,
                                         statusTip="Create a new " + self.ATTR_CATEGORY, triggered=self.showAddAttrDlg)
 
         self._delete_attr_action = QAction("Delete " + self.ATTR_CATEGORY.capitalize(), self,
@@ -1659,6 +1750,7 @@ class NDInputAttrTree(QTreeWidget):
                                                  triggered=self.showAttrColorPicker)
 
 
+    @logError
     def _renameAttr(self, item):
         """
         Triggered when the user renames an attribute using the UI
@@ -1883,6 +1975,7 @@ class NDInputAttrTree(QTreeWidget):
         self.SCRIPT_SIGNAL.emit(add_func, (attr_name, attr_type, is_array), display_option)
 
 
+    @logError
     def connectAttrEvent(self, py_node_attr, other_nodes, other_attr, append=True):
 
         def doConnectAttr(py_node, py_node_attr, other_node, other_attr, force_connect=True):
@@ -2101,11 +2194,6 @@ class NDAttrTreeItem(QTreeWidgetItem):
         self.setToolTip(0, attr_type)
 
 
-    #def data(self, agr1, arg2):
-
-        #super(NDAttrTreeItem, self).data(agr1, arg2)
-
-
     def getCurrentName(self):
 
         return self._cur_name
@@ -2119,13 +2207,6 @@ class NDAttrTreeItem(QTreeWidgetItem):
     def isArray(self):
 
         return self._is_array
-
-
-    #def setText(self, column, text):
-
-        #item_txt = text if not self._is_array else text + self.ARRAY_SUFFIX
-
-        #super(NDAttrTreeItem, self).setText(column, item_txt)
 
 
 class NDAttrIcon(QIcon):
@@ -2502,11 +2583,13 @@ class NDAddAttrDialog(QDialog):
         self._array_check.stateChanged.connect(self._enablePropertiesWidget)
 
 
+    @logError
     def _enablePropertiesWidget(self, state):
 
         self._properties_frame.setEnabled(not bool(state))
 
 
+    @logError
     def _typeChangedEvent(self, index):
 
         attr_type = self._attr_types[index]
@@ -2897,6 +2980,7 @@ class NDSceneTree(QTreeWidget):
             mc.select(node_list, replace=True)
 
 
+    @logError
     def _renameNode(self, item):
 
         py_node = item.getMPyNode()

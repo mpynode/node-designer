@@ -2,3 +2,4 @@
 *.swatches
 *.wpu
 .DS_Store
+scripts/mpylib/ui/node_designer_error_log.txt
