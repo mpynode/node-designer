@@ -1736,22 +1736,22 @@ class NDInputAttrTree(QTreeWidget):
         self._add_attr_action = QAction(ICON_MANAGER["add_input_icon"], "Add New " + self.ATTR_CATEGORY.capitalize(), self,
                                         statusTip="Create a new " + self.ATTR_CATEGORY, triggered=self.showAddAttrDlg)
 
-        self._delete_attr_action = QAction("Delete " + self.ATTR_CATEGORY.capitalize(), self,
+        self._delete_attr_action = QAction(ICON_MANAGER["remove_input_icon"], "Delete " + self.ATTR_CATEGORY.capitalize(), self,
                                            statusTip="Delete " + self.ATTR_CATEGORY + " from selected node", triggered=self.deleteSelectedAttrs)
 
-        self._connect_attr_action = QAction("Connect Attrs to " + self.ATTR_CATEGORY.capitalize(), self,
+        self._connect_attr_action = QAction(ICON_MANAGER["connect_attr_icon"], "Connect Attrs to " + self.ATTR_CATEGORY.capitalize(), self,
                                             statusTip="Connect attributes from selected node(s)", triggered=self.showConnectAttrDlg)
 
-        self._remove_inputs_action = QAction("Diconnect All " + self.ATTR_CATEGORY.capitalize() + "s", self,
+        self._remove_inputs_action = QAction(ICON_MANAGER["disconnect_attr_icon"], "Diconnect All " + self.ATTR_CATEGORY.capitalize() + "s", self,
                                              statusTip="Diconnect all connections to this attribute", triggered=self.removeAllConnections)
 
-        self._show_color_picker_action = QAction("Set " + self.ATTR_CATEGORY.capitalize() + " Color....", self,
+        self._show_color_picker_action = QAction(ICON_MANAGER["set_color_icon"], "Set " + self.ATTR_CATEGORY.capitalize() + " Color....", self,
                                                  statusTip="Set the display/syntax color of this " + self.ATTR_CATEGORY.capitalize(),
                                                  triggered=self.showAttrColorPicker)
 
 
     @logError
-    def _renameAttr(self, item):
+    def _renameAttr(self, item, col):
         """
         Triggered when the user renames an attribute using the UI
         """
@@ -2981,7 +2981,7 @@ class NDSceneTree(QTreeWidget):
 
 
     @logError
-    def _renameNode(self, item):
+    def _renameNode(self, item, col):
 
         py_node = item.getMPyNode()
 
