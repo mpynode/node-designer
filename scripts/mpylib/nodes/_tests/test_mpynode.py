@@ -11,11 +11,11 @@ try:
 except:
     pass
 
+import maya.api.OpenMaya as om
 import maya.cmds as mc
 
-from mpylib import MNode, MTrans
+from mpylib import MNode
 from mpylib.nodes import MPyNode
-from mpylib.geo import MMesh
 
 
 class TestMPyNode(unittest.TestCase):
@@ -493,8 +493,8 @@ class TestMPyNode(unittest.TestCase):
 
     def testFunctionalStoredVariables(self):
 
-        in_node = MTrans(name="in_node")
-        out_node = MTrans(name="out_node")
+        in_node = MNode.createNode("transform", name="in_node")
+        out_node = MNode.createNode("transform", name="out_node")
 
         node = self.TEST_CLASS(name="test_py_node")
         node.addStoredVariable("testVar")
@@ -521,8 +521,8 @@ class TestMPyNode(unittest.TestCase):
         for i in range(2, 100):
             mc.file(out_file_name, open=True, force=True)
 
-            in_node = MTrans("in_node")
-            out_node = MTrans("out_node")
+            in_node = MNode("in_node")
+            out_node = MNode("out_node")
             in_node.setAttr("translateX", float(i) + 1.0)
             out_value = out_node.getAttr("translateX")
 
@@ -629,8 +629,8 @@ class TestMPyNode(unittest.TestCase):
 
             mc.playbackOptions(e=True, minTime=1, maxTime=100)
 
-            in_node = MTrans(mc.spaceLocator(name="in_node")[0])
-            out_node = MTrans(mc.spaceLocator(name="out_node")[0])
+            in_node = MNode(mc.spaceLocator(name="in_node")[0])
+            out_node = MNode(mc.spaceLocator(name="out_node")[0])
 
             attr_type = "float"
             input_attr = "translateX"
@@ -649,8 +649,8 @@ class TestMPyNode(unittest.TestCase):
 
             mc.playbackOptions(e=True, minTime=1, maxTime=100)
 
-            in_node = MTrans(mc.spaceLocator(name="in_node")[0])
-            out_node = MTrans(mc.spaceLocator(name="out_node")[0])
+            in_node = MNode(mc.spaceLocator(name="in_node")[0])
+            out_node = MNode(mc.spaceLocator(name="out_node")[0])
 
             attr_type = "enum"
             input_attr = "testEnum"
@@ -671,8 +671,8 @@ class TestMPyNode(unittest.TestCase):
 
             mc.playbackOptions(e=True, minTime=1, maxTime=100)
 
-            in_node = MTrans(mc.spaceLocator(name="in_node")[0])
-            out_node = MTrans(mc.spaceLocator(name="out_node")[0])
+            in_node = MNode(mc.spaceLocator(name="in_node")[0])
+            out_node = MNode(mc.spaceLocator(name="out_node")[0])
 
             attr_type = "int"
             input_attr = "testInt"
@@ -691,8 +691,8 @@ class TestMPyNode(unittest.TestCase):
 
             mc.playbackOptions(e=True, minTime=1, maxTime=100)
 
-            in_node = MTrans(mc.spaceLocator(name="in_node")[0])
-            out_node = MTrans(mc.spaceLocator(name="out_node")[0])
+            in_node = MNode(mc.spaceLocator(name="in_node")[0])
+            out_node = MNode(mc.spaceLocator(name="out_node")[0])
 
             attr_type = "bool"
             input_attr = "testBool"
@@ -711,8 +711,8 @@ class TestMPyNode(unittest.TestCase):
 
                 mc.playbackOptions(e=True, minTime=1, maxTime=100)
 
-                in_node = MTrans(mc.spaceLocator(name="in_node")[0])
-                out_node = MTrans(mc.spaceLocator(name="out_node")[0])
+                in_node = MNode(mc.spaceLocator(name="in_node")[0])
+                out_node = MNode(mc.spaceLocator(name="out_node")[0])
 
                 attr_type = "vector"
                 input_attr = "translate"
@@ -731,7 +731,7 @@ class TestMPyNode(unittest.TestCase):
 
             mc.playbackOptions(e=True, minTime=1, maxTime=100)
 
-            in_node = MTrans(mc.spaceLocator(name="in_node")[0])
+            in_node = MNode(mc.spaceLocator(name="in_node")[0])
             out_node = MNode.createNode("multMatrix", name="matrix_out_node")
 
             attr_type = "matrix"
@@ -752,8 +752,8 @@ class TestMPyNode(unittest.TestCase):
 
                 mc.playbackOptions(e=True, minTime=1, maxTime=100)
 
-                in_node = MTrans(mc.spaceLocator(name="in_node")[0])
-                out_node = MTrans(mc.spaceLocator(name="out_node")[0])
+                in_node = MNode(mc.spaceLocator(name="in_node")[0])
+                out_node = MNode(mc.spaceLocator(name="out_node")[0])
 
                 attr_type = "color"
                 input_attr = "translate"
@@ -772,8 +772,8 @@ class TestMPyNode(unittest.TestCase):
 
             mc.playbackOptions(e=True, minTime=1, maxTime=100)
 
-            in_node = MTrans(mc.spaceLocator(name="in_node")[0])
-            out_node = MTrans(mc.spaceLocator(name="out_node")[0])
+            in_node = MNode(mc.spaceLocator(name="in_node")[0])
+            out_node = MNode(mc.spaceLocator(name="out_node")[0])
 
             attr_type = "angle"
             input_attr = "rotateX"
@@ -792,8 +792,8 @@ class TestMPyNode(unittest.TestCase):
 
                 mc.playbackOptions(e=True, minTime=1, maxTime=100)
 
-                in_node = MTrans(mc.spaceLocator(name="in_node")[0])
-                out_node = MTrans(mc.spaceLocator(name="out_node")[0])
+                in_node = MNode(mc.spaceLocator(name="in_node")[0])
+                out_node = MNode(mc.spaceLocator(name="out_node")[0])
 
                 attr_type = MPyNode.ATTR_TYPE_EULER
                 input_attr = "rotate"
@@ -812,8 +812,8 @@ class TestMPyNode(unittest.TestCase):
 
             mc.playbackOptions(e=True, minTime=1, maxTime=100)
 
-            in_node = MTrans(mc.spaceLocator(name="in_node")[0])
-            out_node = MTrans(mc.spaceLocator(name="out_node")[0])
+            in_node = MNode(mc.spaceLocator(name="in_node")[0])
+            out_node = MNode(mc.spaceLocator(name="out_node")[0])
 
             attr_type = "string"
             input_attr = "string_test"
@@ -833,8 +833,8 @@ class TestMPyNode(unittest.TestCase):
 
             mc.playbackOptions(e=True, minTime=1, maxTime=100)
 
-            in_node = MTrans(mc.spaceLocator(name="in_node")[0])
-            out_node = MTrans(mc.spaceLocator(name="out_node")[0])
+            in_node = MNode(mc.spaceLocator(name="in_node")[0])
+            out_node = MNode(mc.spaceLocator(name="out_node")[0])
 
             in_py_node = MPyNode(name="in_py_node")
             out_py_node = MPyNode(name="out_py_node")
@@ -905,9 +905,13 @@ class TestMPyNode(unittest.TestCase):
             geo_points = []
 
             for i in range(num_meshes):
-                new_mesh = MMesh(MTrans(mc.polyCube(name="in_node_" + str(i), ch=False)[0]).getShapes()[0])
+
+                cube_trans = mc.polyCube(name="in_node_" + str(i), ch=False)[0]
+                new_mesh = MNode(mc.listRelatives(cube_trans, shapes=True, fullPath=True)[0])
                 in_nodes.append(new_mesh)
-                geo_points.append(new_mesh.getPoints())
+
+                fn_set = om.MFnMesh(new_mesh)
+                geo_points.append(fn_set.getPoints(om.MSpace.kObject))
 
             attr_type = "mesh"
             input_attr = "worldMesh[0]"
@@ -921,8 +925,8 @@ class TestMPyNode(unittest.TestCase):
 
         mc.playbackOptions(e=True, minTime=1, maxTime=100)
 
-        in_node = MTrans(mc.spaceLocator(name="in_node")[0])
-        out_node = MTrans(mc.spaceLocator(name="out_node")[0])
+        in_node = MNode(mc.spaceLocator(name="in_node")[0])
+        out_node = MNode(mc.spaceLocator(name="out_node")[0])
 
         py_node = TestChildClass()
 
@@ -941,19 +945,6 @@ class TestMPyNode(unittest.TestCase):
         anim_values = (1.0, 100.0)
 
         self._runFunctionalTest(in_node, out_node, attr_type, input_attr, output_attr, input_attr, anim_values, False, py_node=py_node)
-
-
-    #def testSaveToFile(self):
-
-        #out_file_name = os.environ["TEMP"].replace("\\", "/") + "/test_mpynode.py"
-
-        #if os.path.exists(out_file_name):
-            #os.remove(out_file_name)
-
-        #py_node = TestChildClass()
-        #py_node.setExpression("outFloat = 1.0\noutInt = 1")
-
-        #py_node.saveToFile("TestChildClass", out_file_name)
 
 
     def testReduce(self):
@@ -1034,7 +1025,7 @@ class TestMPyNode(unittest.TestCase):
         if attr_kargs is None:
             attr_kargs = {}
 
-        out_node = MTrans(mc.spaceLocator(name="out_node")[0])
+        out_node = MNode(mc.spaceLocator(name="out_node")[0])
 
         py_node = self.TEST_CLASS(name="test_py_node")
         py_node.setExpression(expr_str)
