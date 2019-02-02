@@ -1,3 +1,27 @@
+"""
+MIT License
+
+Copyright (c) 2019 Gene Hansen, Eric Vignola
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+"""
+
 import __builtin__
 import os
 import copy
@@ -8,7 +32,6 @@ import keyword
 import logging
 import webbrowser
 from collections import OrderedDict
-
 
 import maya.cmds as mc
 import maya.api.OpenMaya as om
@@ -275,10 +298,12 @@ class NDMainWindow(QMayaWindow):
         self._attributes_widget.LOG_SIGNAL.connect(self._log_widget.write)
         self._attributes_widget.SCRIPT_SIGNAL.connect(self.writeScriptToLog)
         self._attributes_widget.ATTR_COLOR_CHANGE_SIGNAL.connect(self.setAttrColorData)
+        self._attributes_widget.NODE_RENAME_SIGNAL.connect(self.nodeRenamedByAttrWidgetEvent)
 
         self._scene_tree.itemSelectionChanged.connect(self.sceneSelectChangeEvent)
         self._scene_tree.LOG_SIGNAL.connect(self._log_widget.write)
         self._scene_tree.ADD_NODE_SIGNAL.connect(self.addNewNodeEvent)
+        self._scene_tree.NODE_RENAME_SIGNAL.connect(self.nodeRenamedBySceneTreeEvent)
         self._scene_tree.DELETE_NODE_SIGNAL.connect(self.deleteNodesEvent)
 
         self._variables_widget.LOG_SIGNAL.connect(self._log_widget.write)
@@ -721,6 +746,16 @@ class NDMainWindow(QMayaWindow):
         self._help_menu.setToolTipsVisible(True)
 
 
+    def nodeRenamedBySceneTreeEvent(self, new_name):
+
+        self._attributes_widget.setNodeNameText(new_name)
+
+
+    def nodeRenamedByAttrWidgetEvent(self, new_name):
+
+        self._scene_tree.refresh()
+
+
     @logError
     def addNewNodeEvent(self):
         """
@@ -932,7 +967,7 @@ class NDScriptTabWidget(QTabWidget):
         tab_index = self.addTab(tab_widget, self.NEW_TAB_NAME + self.UNSVAED_CHAR)
 
         self.setTabText(tab_index, py_node.getName())
-        self.refreshCurrentTab()
+        tab_widget.refresh()
 
         tab_widget.LOG_SIGNAL.connect(self.LOG_SIGNAL.emit)
 
@@ -1552,6 +1587,7 @@ class NDAttributesWidget(QWidget):
     LOG_SIGNAL = Signal(str, int)
     SCRIPT_SIGNAL = Signal(object, tuple, dict)
     ATTR_COLOR_CHANGE_SIGNAL = Signal(dict)
+    NODE_RENAME_SIGNAL = Signal(str)
 
 
     def __init__(self, parent=None):
@@ -1590,13 +1626,22 @@ class NDAttributesWidget(QWidget):
             if txt != orig_node_name:
 
                 try:
-                    MUndo(self._py_node.rename(txt))
+                    MUndo(self._py_node.rename, txt)()
 
                 except Exception, err:
                     self.LOG_SIGNAL.emit(err.message, 1)
 
+                else:
+                    self.NODE_RENAME_SIGNAL.emit(txt)
+
                 node_name = self._py_node.getName()
                 self._name_field.setText(node_name)
+
+
+    def setNodeNameText(self, new_name):
+
+        if self._py_node:
+            self._name_field.setText(new_name)
 
 
     def refresh(self, py_node=None):
@@ -1702,13 +1747,13 @@ class NDInputAttrTree(QTreeWidget):
         self._connect_attr_action = None
         self._remove_inputs_action = None
         self._show_color_picker_action = None
+        self._select_nodes_action = None
 
         self.setColumnCount(1)
         self.setHeaderItem(QTreeWidgetItem([self.ATTR_CATEGORY.upper()]))
 
         self.setFrameStyle(QFrame.Panel | QFrame.Plain)
         self.setLineWidth(1)
-        self.setSelectionMode(QAbstractItemView.ExtendedSelection)
 
         self._setSignals()
         self._buildActions()
@@ -1748,6 +1793,9 @@ class NDInputAttrTree(QTreeWidget):
         self._show_color_picker_action = QAction(ICON_MANAGER["set_color_icon"], "Set " + self.ATTR_CATEGORY.capitalize() + " Color....", self,
                                                  statusTip="Set the display/syntax color of this " + self.ATTR_CATEGORY.capitalize(),
                                                  triggered=self.showAttrColorPicker)
+
+        self._select_nodes_action = QAction(ICON_MANAGER["select_nodes_icon"], "Select Node", self,
+                                            statusTip="Select Node(s)", triggered=self.selectNode)
 
 
     @logError
@@ -1801,6 +1849,9 @@ class NDInputAttrTree(QTreeWidget):
             menu.addSeparator()
             menu.addAction(self._connect_attr_action)
             menu.addAction(self._remove_inputs_action)
+
+        menu.addSeparator()
+        menu.addAction(self._select_nodes_action)
 
         action = menu.exec_(self.mapToGlobal(event.pos()))
 
@@ -2020,6 +2071,14 @@ class NDInputAttrTree(QTreeWidget):
 
 
     def deleteSelectedAttrs(self):
+        """
+        Called when the user wants to delete an input/output attr from the node.
+
+        Note that this is limited to one attr at a time by the class' single selection
+        mode. This was done to fixed an error caused by a race condition between Maya
+        telling the widget to refresh after the first attr is deleted and the actual
+        deletion of the second attr.
+        """
 
         sel_items = self.selectedItems()
 
@@ -2029,6 +2088,14 @@ class NDInputAttrTree(QTreeWidget):
 
 
     def _deleteAttrWrapper(self, sel_items):
+        """
+        Delete attr wrapper for occupying a single undo slot
+
+        Note that this is limited to one attr at a time by the class' single selection
+        mode. This was done to fixed an error caused by a race condition between Maya
+        telling the widget to refresh after the first attr is deleted and the actual
+        deletion of the second attr.1
+        """
 
         for item in sel_items:
 
@@ -2920,6 +2987,7 @@ class NDAddAttrDialog(QDialog):
 class NDSceneTree(QTreeWidget):
 
     ADD_NODE_SIGNAL = Signal()
+    NODE_RENAME_SIGNAL = Signal(str)
     DELETE_NODE_SIGNAL = Signal(tuple)
     LOG_SIGNAL = Signal(str, int)
 
@@ -2998,6 +3066,9 @@ class NDSceneTree(QTreeWidget):
                     except RuntimeError, err:
                         item.setText(0, node_name)
                         new_name = node_name
+
+                    else:
+                        self.NODE_RENAME_SIGNAL.emit(item_text)
 
                 else:
                     item.setText(0, py_node.getName())
@@ -3255,29 +3326,6 @@ class NDAboutDialog(QDialog):
     """
 
     TITLE = APP_NAME + " " + APP_VERSION
-    LICENSE_TEXT_STR = """MIT License
-
-Copyright (c) 2019 Gene Hansen, Eric Vignola
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-
-"""
 
     BG_ICON_NAME = "about_dialog_bg"
 
@@ -3301,7 +3349,7 @@ SOFTWARE.
     def _buildTextEdit(self, parent):
 
         self._text_widget = QPlainTextEdit(parent)
-        self._text_widget.appendPlainText(self.LICENSE_TEXT_STR)
+        self._text_widget.appendPlainText(__doc__)
         self._text_widget.setReadOnly(True)
 
         icon_path = ICON_MANAGER.getFilePath(self.BG_ICON_NAME)
@@ -3374,11 +3422,6 @@ class NDIconManager(object):
 
 
 class NDToolBar(QToolBar):
-
-
-    def __init__(self, parent):
-
-        super(NDToolBar, self).__init__(parent)
 
 
     def contextMenuEvent(self, event):
