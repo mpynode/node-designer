@@ -29,7 +29,7 @@
     <link rel="search" title="Search" href="../search.html" >
     <link rel="top" title="MPyNode 1.0 documentation" href="../index.html" >
     <link rel="up" title="mpylib Package" href="../mpylib.html" >
-    <link rel="next" title="MNodeList" href="mpylib.MNodeList.html" >
+    <link rel="next" title="MShape" href="mpylib.MShape.html" >
     <link rel="prev" title="mpylib Package" href="../mpylib.html" > 
   </head>
   <body>
@@ -67,7 +67,7 @@
            >modules</a>
       </li>
       <li class="active">
-        <a href="mpylib.MNodeList.html" title="MNodeList"
+        <a href="mpylib.MShape.html" title="MShape"
            accesskey="N">next</a>
       </li>
       <li class="active">
@@ -147,7 +147,7 @@ maya.cmds equivalent.</p>
 <tr class="row-odd"><td><a class="reference internal" href="#mpylib.MNode.count" title="mpylib.MNode.count"><code class="xref py py-obj docutils literal notranslate"><span class="pre">count</span></code></a>(sub[,&nbsp;start,&nbsp;end,&nbsp;include_namespaces])</td>
 <td>String operartion just like str.count().</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#mpylib.MNode.createNode" title="mpylib.MNode.createNode"><code class="xref py py-obj docutils literal notranslate"><span class="pre">createNode</span></code></a>(node_type,&nbsp;**kargs)</td>
+<tr class="row-even"><td><a class="reference internal" href="#mpylib.MNode.createNode" title="mpylib.MNode.createNode"><code class="xref py py-obj docutils literal notranslate"><span class="pre">createNode</span></code></a>([node_type])</td>
 <td>Wrapper class method for maya.cmds.createNode thats returns a MNode object instead of a string name</td>
 </tr>
 <tr class="row-odd"><td><a class="reference internal" href="#mpylib.MNode.delete" title="mpylib.MNode.delete"><code class="xref py py-obj docutils literal notranslate"><span class="pre">delete</span></code></a>()</td>
@@ -470,7 +470,7 @@ Return the number of (non-overlapping) occurrences of substring sub in string s[
 
 <dl class="classmethod">
 <dt id="mpylib.MNode.createNode">
-<em class="property">classmethod </em><code class="descname">createNode</code><span class="sig-paren">(</span><em>node_type</em>, <em>**kargs</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.MNode.createNode" title="Permalink to this definition">¶</a></dt>
+<em class="property">classmethod </em><code class="descname">createNode</code><span class="sig-paren">(</span><em>node_type=None</em>, <em>**kargs</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.MNode.createNode" title="Permalink to this definition">¶</a></dt>
 <dd><p>Wrapper class method for maya.cmds.createNode thats returns a MNode object
 instead of a string name</p>
 <p><strong>node_type</strong>   <em>string</em> node type to create</p>
@@ -1295,8 +1295,8 @@ Return a copy of object’s shortname, but with lower case letters converted to 
   <p class="topless"><a href="../mpylib.html"
                         title="previous chapter">mpylib Package</a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="mpylib.MNodeList.html"
-                        title="next chapter">MNodeList</a></p>
+  <p class="topless"><a href="mpylib.MShape.html"
+                        title="next chapter">MShape</a></p>
 <div class="this-page-menu">
   <a href="/scipy/docs/scipy-docs/api/mpylib.MNode.rst.rst">Edit page</a>
 </div>

@@ -29,8 +29,8 @@
     <link rel="search" title="Search" href="../search.html" >
     <link rel="top" title="MPyNode 1.0 documentation" href="../index.html" >
     <link rel="up" title="mpylib Package" href="../mpylib.html" >
-    <link rel="next" title="MTransList" href="mpylib.MTransList.html" >
-    <link rel="prev" title="MShapeList" href="mpylib.MShapeList.html" > 
+    <link rel="next" title="MNodeList" href="mpylib.MNodeList.html" >
+    <link rel="prev" title="MShape" href="mpylib.MShape.html" > 
   </head>
   <body>
 
@@ -67,11 +67,11 @@
            >modules</a>
       </li>
       <li class="active">
-        <a href="mpylib.MTransList.html" title="MTransList"
+        <a href="mpylib.MNodeList.html" title="MNodeList"
            accesskey="N">next</a>
       </li>
       <li class="active">
-        <a href="mpylib.MShapeList.html" title="MShapeList"
+        <a href="mpylib.MShape.html" title="MShape"
            accesskey="P">previous</a>
       </li>
     </ul>
@@ -95,7 +95,7 @@
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">mpylib.MNode</span></code></p>
 <p>Provides object oriented interface for querying/editing DAG nodes inside Maya. An instance of the MTrans class
 provides storage and access to a single Maya transform node. Methods within the class replace the most
-commonly used maya DAG commands. Public methods operate on the object stored within the MTrans instance. Note that most 
+commonly used maya DAG commands. Public methods operate on the object stored within the MTrans instance. Note that most
 methods support the same keywords arguments as their maya.cmds equivalent.</p>
 <p class="rubric">Methods Summary</p>
 <table border="1" class="longtable docutils">
@@ -110,8 +110,8 @@ methods support the same keywords arguments as their maya.cmds equivalent.</p>
 <tr class="row-even"><td><a class="reference internal" href="#mpylib.MTrans.convertLocalVectToWorld" title="mpylib.MTrans.convertLocalVectToWorld"><code class="xref py py-obj docutils literal notranslate"><span class="pre">convertLocalVectToWorld</span></code></a>(vct)</td>
 <td>Converts transform’s given local vector to world space</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#mpylib.MTrans.createNode" title="mpylib.MTrans.createNode"><code class="xref py py-obj docutils literal notranslate"><span class="pre">createNode</span></code></a>(*args,&nbsp;**kargs)</td>
-<td>Create a new transform node</td>
+<tr class="row-odd"><td><a class="reference internal" href="#mpylib.MTrans.createNode" title="mpylib.MTrans.createNode"><code class="xref py py-obj docutils literal notranslate"><span class="pre">createNode</span></code></a>([node_type])</td>
+<td>Wrapper class method for maya.cmds.createNode thats returns a MNode object instead of a string name</td>
 </tr>
 <tr class="row-even"><td><a class="reference internal" href="#mpylib.MTrans.freeze" title="mpylib.MTrans.freeze"><code class="xref py py-obj docutils literal notranslate"><span class="pre">freeze</span></code></a>(**kargs)</td>
 <td>Freezes (makeIdentity) the transform</td>
@@ -289,11 +289,14 @@ methods support the same keywords arguments as their maya.cmds equivalent.</p>
 
 <dl class="classmethod">
 <dt id="mpylib.MTrans.createNode">
-<em class="property">classmethod </em><code class="descname">createNode</code><span class="sig-paren">(</span><em>*args</em>, <em>**kargs</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.MTrans.createNode" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create a new transform node</p>
-<p><strong>kargs</strong>               keyword args supported by <em>maya.cmds.createNode</em>.</p>
-<p><strong>RETURNS</strong>     <em>MTrans</em> of newly created node</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">new_node</span> <span class="o">=</span> <span class="n">MTrans</span><span class="o">.</span><span class="n">createNode</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;new_trans&quot;</span><span class="p">)</span>
+<em class="property">classmethod </em><code class="descname">createNode</code><span class="sig-paren">(</span><em>node_type=None</em>, <em>**kargs</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.MTrans.createNode" title="Permalink to this definition">¶</a></dt>
+<dd><p>Wrapper class method for maya.cmds.createNode thats returns a MNode object
+instead of a string name</p>
+<p><strong>node_type</strong>   <em>string</em> node type to create</p>
+<p><strong>kargs</strong>               keyword args supported by <em>maya.cmds.createNode</em></p>
+<p><strong>RETURNS</strong>     <em>MNode</em> of newly created node</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">new_node</span> <span class="o">=</span> <span class="n">MNode</span><span class="o">.</span><span class="n">createNode</span><span class="p">(</span><span class="s2">&quot;transform&quot;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;new_node&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">new_node</span> <span class="o">=</span> <span class="n">MNode</span><span class="o">.</span><span class="n">createNode</span><span class="p">(</span><span class="s2">&quot;time&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 </dd></dl>
@@ -367,7 +370,7 @@ This method supports all arguments and keyword arguments used by maya.cmds.listA
 <p><strong>RETURNS</strong>                     <em>OrderedDict</em> or <em>None</em></p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1">#get all the keyable attributes</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">a</span><span class="o">.</span><span class="n">getHierarchyAttrMap</span><span class="p">(</span><span class="n">keyable</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span>
+<span class="go">&gt;&gt;&gt;</span>
 <span class="gp">&gt;&gt;&gt; </span>    <span class="c1">#get all keyable translate and rotate attributes</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">a</span><span class="o">.</span><span class="n">getHierarchyAttrMap</span><span class="p">(</span><span class="n">attr_strs</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;translate?&#39;</span><span class="p">,</span> <span class="s1">&#39;rotate?&#39;</span><span class="p">),</span> <span class="n">keyable</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
@@ -436,7 +439,7 @@ unless specifc attribute names are provided.</p>
 </dl>
 <p><strong>RETURNS</strong>             <em>None</em></p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="bp">self</span><span class="o">.</span><span class="n">goToInitialPose</span><span class="p">()</span>
-<span class="gp">&gt;&gt;&gt; </span>
+<span class="go">&gt;&gt;&gt;</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="bp">self</span><span class="o">.</span><span class="n">goToInitialPose</span><span class="p">(</span><span class="n">attrs</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;translateX&quot;</span><span class="p">,</span> <span class="s2">&quot;translateY&quot;</span><span class="p">))</span>
 </pre></div>
 </div>
@@ -518,7 +521,7 @@ maya.cmds.move.</p>
 </td>
 </tr>
 <tr class="field-even field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>args</strong> – string names, MNodes or MTransforms of an existing transform nodes to 
+<li><strong>args</strong> – string names, MNodes or MTransforms of an existing transform nodes to
 constrain to.</li>
 <li><strong>kargs</strong> – any keyword argument supported by maya.cmds.orientConstraint command</li>
 </ul>
@@ -670,7 +673,7 @@ attributes are stored in the pose unless specific attributes are given.</p>
 </dl>
 <p><strong>RETURNS</strong>             <em>None</em></p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="bp">self</span><span class="o">.</span><span class="n">setCurrentPoseToInitial</span><span class="p">()</span>
-<span class="gp">&gt;&gt;&gt; </span>
+<span class="go">&gt;&gt;&gt;</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="bp">self</span><span class="o">.</span><span class="n">setCurrentPoseToInitial</span><span class="p">(</span><span class="n">attrs</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;translateX&quot;</span><span class="p">,</span> <span class="s2">&quot;translateY&quot;</span><span class="p">))</span>
 </pre></div>
 </div>
@@ -725,7 +728,7 @@ attributes are stored in the pose unless specific attributes are given.</p>
 <dt id="mpylib.MTrans.walkChildren">
 <code class="descname">walkChildren</code><span class="sig-paren">(</span><em>include_root=False</em>, <em>obj_type=None</em>, <em>stop_on_type=False</em>, <em>child_first=False</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.MTrans.walkChildren" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generator function that will recursively walk down the dag hierarchy, returning child
-transforms as it goes. The order that child nodes are returned can be controlled with the 
+transforms as it goes. The order that child nodes are returned can be controlled with the
 child_first arg.</p>
 <p><strong>include_root</strong>                <em>bool</em> - include this node in the result. default=False</p>
 <dl class="docutils">
@@ -735,7 +738,7 @@ child_first arg.</p>
 <p class="last">finding a node that doesn’t match this type will prevent recursion
 past that node. default=None</p>
 </dd>
-<dt><strong>stop_on_type</strong>                <em>bool</em> - when paired with the <em>obj_type</em> arg, turning this on will </dt>
+<dt><strong>stop_on_type</strong>                <em>bool</em> - when paired with the <em>obj_type</em> arg, turning this on will</dt>
 <dd>will prevent recursion past nodes that don’t match <em>obj_type</em></dd>
 <dt><strong>child_first</strong>                 <em>bool</em> - If True, return from the bottom of the hierarchy up to this node.</dt>
 <dd><blockquote class="first">
@@ -765,10 +768,10 @@ past that node. default=None</p>
 <span class="go">&gt;&gt;&gt;</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">a</span><span class="o">.</span><span class="n">walkChildren</span><span class="p">(</span><span class="n">obj_type</span><span class="o">=</span><span class="s2">&quot;transform&quot;</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="c1">## RESULT - (b, e, f, d)</span>
-<span class="gp">&gt;&gt;&gt; </span>
+<span class="go">&gt;&gt;&gt;</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">a</span><span class="o">.</span><span class="n">walkChildren</span><span class="p">(</span><span class="n">include_root</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="c1">## RESULT - (a, b, c, e, f, d)</span>
-<span class="gp">&gt;&gt;&gt; </span>
+<span class="go">&gt;&gt;&gt;</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">a</span><span class="o">.</span><span class="n">walkChildren</span><span class="p">(</span><span class="n">include_root</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">obj_type</span><span class="o">=</span><span class="s2">&quot;transform&quot;</span><span class="p">,</span> <span class="n">stop_on_type</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="c1">## RESULT - (a, b) ## joint stops recursion</span>
 </pre></div>
@@ -797,11 +800,11 @@ past that node. default=None</p>
               <img class="logo" src="../_static/mpynode_hr.png" alt="Logo">
             </a></p>
   <h4>Previous topic</h4>
-  <p class="topless"><a href="mpylib.MShapeList.html"
-                        title="previous chapter">MShapeList</a></p>
+  <p class="topless"><a href="mpylib.MShape.html"
+                        title="previous chapter">MShape</a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="mpylib.MTransList.html"
-                        title="next chapter">MTransList</a></p>
+  <p class="topless"><a href="mpylib.MNodeList.html"
+                        title="next chapter">MNodeList</a></p>
 <div class="this-page-menu">
   <a href="/scipy/docs/scipy-docs/api/mpylib.MTrans.rst.rst">Edit page</a>
 </div>

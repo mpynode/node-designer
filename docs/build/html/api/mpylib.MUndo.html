@@ -4,7 +4,7 @@
   <head>
     <meta charset="utf-8">
     
-    <title>MTransList &mdash; MPyNode 1.0 documentation</title>
+    <title>MUndo &mdash; MPyNode 1.0 documentation</title>
     
     <link rel="stylesheet" type="text/css" href="../_static/css/spc-bootstrap.css">
     <link rel="stylesheet" type="text/css" href="../_static/css/spc-extend.css">
@@ -29,8 +29,8 @@
     <link rel="search" title="Search" href="../search.html" >
     <link rel="top" title="MPyNode 1.0 documentation" href="../index.html" >
     <link rel="up" title="mpylib Package" href="../mpylib.html" >
-    <link rel="next" title="MUndo" href="mpylib.MUndo.html" >
-    <link rel="prev" title="MShapeList" href="mpylib.MShapeList.html" > 
+    <link rel="next" title="mpylib.api Package" href="../mpylib.api.html" >
+    <link rel="prev" title="MTransList" href="mpylib.MTransList.html" > 
   </head>
   <body>
 
@@ -67,11 +67,11 @@
            >modules</a>
       </li>
       <li class="active">
-        <a href="mpylib.MUndo.html" title="MUndo"
+        <a href="../mpylib.api.html" title="mpylib.api Package"
            accesskey="N">next</a>
       </li>
       <li class="active">
-        <a href="mpylib.MShapeList.html" title="MShapeList"
+        <a href="mpylib.MTransList.html" title="MTransList"
            accesskey="P">previous</a>
       </li>
     </ul>
@@ -87,22 +87,13 @@
         <div class="bodywrapper">
           <div class="body" id="spc-section-body">
             
-  <div class="section" id="mtranslist">
-<h1>MTransList<a class="headerlink" href="#mtranslist" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="mundo">
+<h1>MUndo<a class="headerlink" href="#mundo" title="Permalink to this headline">¶</a></h1>
 <dl class="class">
-<dt id="mpylib.MTransList">
-<em class="property">class </em><code class="descname">MTransList</code><span class="sig-paren">(</span><em>nodes=None</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.MTransList" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">mpylib.MNodeList</span></code></p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Purpose:</th><td class="field-body">List like object for storing and interacting with multiple transform nodes.</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Extends:</th><td class="field-body">MNodeList</td>
-</tr>
-</tbody>
-</table>
+<dt id="mpylib.MUndo">
+<em class="property">class </em><code class="descname">MUndo</code><span class="sig-paren">(</span><em>func</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.MUndo" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Wraps a call to the given python function in MEL so it occupies a single undo slot.</p>
 <p class="rubric">Methods Summary</p>
 <table border="1" class="longtable docutils">
 <colgroup>
@@ -110,26 +101,25 @@
 <col width="90%" />
 </colgroup>
 <tbody valign="top">
-<tr class="row-odd"><td><a class="reference internal" href="#mpylib.MTransList.getAnimatedValues" title="mpylib.MTransList.getAnimatedValues"><code class="xref py py-obj docutils literal notranslate"><span class="pre">getAnimatedValues</span></code></a>([start_frame,&nbsp;end_frame,&nbsp;…])</td>
+<tr class="row-odd"><td><a class="reference internal" href="#mpylib.MUndo.__call__" title="mpylib.MUndo.__call__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__call__</span></code></a>(…)&nbsp;&lt;==&gt;&nbsp;x(…)</td>
 <td></td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#mpylib.MTransList.xform" title="mpylib.MTransList.xform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">xform</span></code></a>(**kargs)</td>
-<td>Functions just like maya.cmds.xform</td>
+<tr class="row-even"><td><a class="reference internal" href="#mpylib.MUndo.wrap" title="mpylib.MUndo.wrap"><code class="xref py py-obj docutils literal notranslate"><span class="pre">wrap</span></code></a>(func)</td>
+<td>Puts the wrapped <cite>func</cite> into a single Maya Undo action, then  undoes it when the function enters the finally: block</td>
 </tr>
 </tbody>
 </table>
 <p class="rubric">Methods Documentation</p>
 <dl class="method">
-<dt id="mpylib.MTransList.getAnimatedValues">
-<code class="descname">getAnimatedValues</code><span class="sig-paren">(</span><em>start_frame=None</em>, <em>end_frame=None</em>, <em>step_size=1.0</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.MTransList.getAnimatedValues" title="Permalink to this definition">¶</a></dt>
+<dt id="mpylib.MUndo.__call__">
+<code class="descname">__call__</code><span class="sig-paren">(</span><em>...) &lt;==&gt; x(...</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.MUndo.__call__" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
-<dt id="mpylib.MTransList.xform">
-<code class="descname">xform</code><span class="sig-paren">(</span><em>**kargs</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.MTransList.xform" title="Permalink to this definition">¶</a></dt>
-<dd><p>Functions just like maya.cmds.xform</p>
-<p><strong>kargs</strong>               all keyword args supported by maya.cmds.xform</p>
-<p><strong>RETURNS</strong>             value based on a xform query or None</p>
+<dl class="staticmethod">
+<dt id="mpylib.MUndo.wrap">
+<em class="property">static </em><code class="descname">wrap</code><span class="sig-paren">(</span><em>func</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.MUndo.wrap" title="Permalink to this definition">¶</a></dt>
+<dd><p>Puts the wrapped <cite>func</cite> into a single Maya Undo action, then 
+undoes it when the function enters the finally: block</p>
 </dd></dl>
 
 </dd></dl>
@@ -146,13 +136,13 @@
               <img class="logo" src="../_static/mpynode_hr.png" alt="Logo">
             </a></p>
   <h4>Previous topic</h4>
-  <p class="topless"><a href="mpylib.MShapeList.html"
-                        title="previous chapter">MShapeList</a></p>
+  <p class="topless"><a href="mpylib.MTransList.html"
+                        title="previous chapter">MTransList</a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="mpylib.MUndo.html"
-                        title="next chapter">MUndo</a></p>
+  <p class="topless"><a href="../mpylib.api.html"
+                        title="next chapter">mpylib.api Package</a></p>
 <div class="this-page-menu">
-  <a href="/scipy/docs/scipy-docs/api/mpylib.MTransList.rst.rst">Edit page</a>
+  <a href="/scipy/docs/scipy-docs/api/mpylib.MUndo.rst.rst">Edit page</a>
 </div>
 
         </div>

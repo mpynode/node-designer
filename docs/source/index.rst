@@ -11,7 +11,6 @@ Welcome to MPyNode's documentation!
 .. toctree::
     mpylib
     mpylib.api
-    mpylib.geo
     mpylib.nodes
 
 .. rubric:: Tutorials
