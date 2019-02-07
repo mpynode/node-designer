@@ -42,6 +42,7 @@ import webbrowser
 from collections import OrderedDict
 
 import maya.cmds as mc
+import maya.mel as mel
 import maya.api.OpenMaya as om
 
 if mc.about(apiVersion=True) < 201700:
@@ -121,6 +122,31 @@ BASE_DIR = os.path.dirname(__file__).replace("\\", "/")
 ERROR_LOG_PATH = BASE_DIR + "/" + APP_NAME.lower().replace(" ", "_") + "_error_log.txt"
 
 
+
+def initShelf():
+    ''' Simple shelf init function
+    '''
+    
+    
+    cmd = '''from mpylib.ui import NDMainWindow
+win = NDMainWindow()
+win.show()
+'''
+    
+    # Make the icon exists
+    icon = '%s/Resources/shelf_icon.png'%os.path.split(__file__)[0]
+
+    if os.path.isfile(icon):
+        top_shelf = mel.eval('$tmp_gShelfTopLevel=$gShelfTopLevel')
+        top_tabs  = mc.shelfTabLayout(top_shelf,q=True,tl=True)
+    
+        # If shelf is missing, create it
+        if not 'Node Designer' in top_tabs:
+            tab = mc.shelfLayout('Node Designer',parent=top_shelf,visible=True)
+            mc.shelfButton(image=icon,parent=tab,command=cmd)
+            
+            
+            
 class NDErrorLog(QObject):
     """
     QObject to hold a Signal that can be used to send uncaught errors to the UI
