@@ -1,2 +1,2 @@
-from mpynode_designer import NDMainWindow
+from mpynode_designer import NDMainWindow, initShelf
 
