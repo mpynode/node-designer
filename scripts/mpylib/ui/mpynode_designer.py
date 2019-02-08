@@ -1,32 +1,36 @@
 """
-BSD 3-Clause License:
-Copyright (c)  2019, Gene Hansen, Eric Vignola 
-All rights reserved. 
+This module contains the main class' used in the Node designer ui
+"""
 
-Redistribution and use in source and binary forms, with or without 
+LICENSE_STR ="""
+BSD 3-Clause License:
+Copyright (c)  2019, Gene Hansen, Eric Vignola
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
 
 
-1. Redistributions of source code must retain the above copyright notice, 
+1. Redistributions of source code must retain the above copyright notice,
    this list of conditions and the following disclaimer.
-   
-2. Redistributions in binary form must reproduce the above copyright notice, 
-   this list of conditions and the following disclaimer in the documentation 
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
    and/or other materials provided with the distribution.
-   
-3. Neither the name of copyright holders nor the names of its 
-   contributors may be used to endorse or promote products derived from 
+
+3. Neither the name of copyright holders nor the names of its
+   contributors may be used to endorse or promote products derived from
    this software without specific prior written permission.
-   
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
-AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE 
-DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE 
-FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL 
-DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR 
-SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER 
-CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, 
-OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE 
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 
@@ -119,6 +123,9 @@ MEL_ATTR_TYPE_MAP = {"bool":MPyNode.ATTR_TYPE_BOOL,
 
 BASE_DIR = os.path.dirname(__file__).replace("\\", "/")
 ERROR_LOG_PATH = BASE_DIR + "/" + APP_NAME.lower().replace(" ", "_") + "_error_log.txt"
+
+##---check for and load the MPyNode plugin---##
+MPyNode.pluginCheck()
 
 
 class NDErrorLog(QObject):
@@ -837,7 +844,7 @@ class NDMainWindow(QMayaWindow):
     @logError
     def setAttrColorData(self, clr_map_update):
 
-        MUndo(self._cur_py_node._updateUiAttrColorMap, clr_map_update)()
+        MUndo(self._cur_py_node.updateUiAttrColorMap, clr_map_update)()
 
 
     def removeAllCallbacks(self):
@@ -1164,7 +1171,7 @@ class NDScriptEditor(QtPythonEditor):
             input_map = self._py_node.getInputAttrMap()
             output_map = self._py_node.getOutputAttrMap()
 
-            current_clr_map = self._py_node._getUiAttrColorMap()
+            current_clr_map = self._py_node.getUiAttrColorMap()
 
             if not current_clr_map:
                 current_clr_map = {}
@@ -3357,7 +3364,7 @@ class NDAboutDialog(QDialog):
     def _buildTextEdit(self, parent):
 
         self._text_widget = QPlainTextEdit(parent)
-        self._text_widget.appendPlainText(__doc__)
+        self._text_widget.appendPlainText(LICENSE_STR)
         self._text_widget.setReadOnly(True)
 
         icon_path = ICON_MANAGER.getFilePath(self.BG_ICON_NAME)
