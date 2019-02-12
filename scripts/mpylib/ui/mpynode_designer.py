@@ -1,5 +1,7 @@
 """
-This module contains the main class' used in the Node designer ui
+Author: Gene Hansen
+
+This module contains the main classes used in the Node designer ui
 """
 
 LICENSE_STR ="""
@@ -79,6 +81,11 @@ from .._base import MNode, MNodeList, MUndo
 APP_NAME = "Node Designer"
 APP_VERSION = "1.0.1b1"
 
+BASE_DIR = os.path.dirname(__file__).replace("\\", "/")
+RESOURCE_DIR_NAME = "resources"
+RESOURCE_DIR = BASE_DIR + "/" + RESOURCE_DIR_NAME
+ERROR_LOG_PATH = BASE_DIR + "/" + APP_NAME.lower().replace(" ", "_") + "_error_log.txt"
+
 ATTR_COLOR_DEFAULT = (80, 230, 80)
 ATTR_COLOR_DARK_GREEN = (0, 128, 1)
 ATTR_COLOR_GREEN = (80, 230, 80)
@@ -122,49 +129,16 @@ MEL_ATTR_TYPE_MAP = {"bool":MPyNode.ATTR_TYPE_BOOL,
                      "nurbsCurve":MPyNode.ATTR_TYPE_NURBS_CURVE, "nurbsSurface":MPyNode.ATTR_TYPE_NURBS_CURVE,
                      "mesh":MPyNode.ATTR_TYPE_MESH}
 
-BASE_DIR = os.path.dirname(__file__).replace("\\", "/")
-ERROR_LOG_PATH = BASE_DIR + "/" + APP_NAME.lower().replace(" ", "_") + "_error_log.txt"
-
 ##---check for and load the MPyNode plugin---##
 MPyNode.pluginCheck()
 
 
-
-def initShelf():
-    ''' Simple shelf init function
-    '''
-    
-    
-    cmd = '''from mpylib.ui import NDMainWindow
-win = NDMainWindow()
-win.show()
-'''
-    
-    # Make the icon exists
-    icon = '%s/Resources/shelf_icon.png'%os.path.split(__file__)[0]
-
-    if os.path.isfile(icon):
-        top_shelf = mel.eval('$tmp_gShelfTopLevel=$gShelfTopLevel')
-        top_tabs  = mc.shelfTabLayout(top_shelf,q=True,tl=True)
-    
-        # If shelf is missing, create it
-        if not 'Node Designer' in top_tabs:
-            tab = mc.shelfLayout('Node Designer',parent=top_shelf,visible=True)
-            mc.shelfButton(image=icon,parent=tab,command=cmd)
-            
-            
-            
 class NDErrorLog(QObject):
     """
     QObject to hold a Signal that can be used to send uncaught errors to the UI
     """
 
     LOG_SIGNAL = Signal(str, int)
-
-
-    def __init__(self):
-
-        super(NDErrorLog, self).__init__()
 
 
     def emitError(self, err_str):
@@ -240,13 +214,9 @@ class NDMainWindow(QMayaWindow):
     LOG_ERROR_CALLBACK_NAME = "emitMPyNodeErrorCallback"
     LOG_TXT_CALLBACK_NAME = "emitMPyNodeTextCallback"
 
-    FILE_BINARY_FILTER = "Binary (*." + MPyNode._BINARY_FILE_EXT + ")"
-    FILE_ASCII_FILTER = "Ascii (*." + MPyNode._ASCII_FILE_EXT + ")"
+    FILE_BINARY_FILTER = "Binary (*." + MPyNode.BINARY_FILE_EXT + ")"
+    FILE_ASCII_FILTER = "Ascii (*." + MPyNode.ASCII_FILE_EXT + ")"
     EXPORT_FILE_FILTERS = FILE_BINARY_FILTER + ";;" + FILE_ASCII_FILTER
-
-    RESOURCE_DIR_NAME = "resources"
-
-    ICON_FILE_EXT = "png"
 
     HELP_DOC_PATH = "docs/build/html"
     HELP_DOCS_FILE = "index.html"
@@ -503,7 +473,7 @@ class NDMainWindow(QMayaWindow):
         if (attr_msg & om.MNodeMessage.kAttributeSet) == om.MNodeMessage.kAttributeSet:
 
             if attr_name in (MPyNode._INPUTS_STR_ATTR_NAME, MPyNode._OUTPUTS_STR_ATTR_NAME,
-                             MPyNode._UI_ATTR_COLOR_ATTR_NAME):
+                             MPyNode.UI_ATTR_COLOR_ATTR_NAME):
 
                 self._attributes_widget.refreshInputs()
                 self._attributes_widget.refreshOutputs()
@@ -714,7 +684,7 @@ class NDMainWindow(QMayaWindow):
                                                                      "", self.EXPORT_FILE_FILTERS)
 
             if file_path:
-                use_binary, file_ext  = (True, MPyNode._BINARY_FILE_EXT) if selected_filter == self.FILE_BINARY_FILTER else (False, MPyNode._ASCII_FILE_EXT)
+                use_binary, file_ext  = (True, MPyNode.BINARY_FILE_EXT) if selected_filter == self.FILE_BINARY_FILTER else (False, MPyNode.ASCII_FILE_EXT)
 
                 if not file_path.endswith("." + file_ext):
                     file_path += "." + file_ext
@@ -1936,7 +1906,7 @@ class NDInputAttrTree(QTreeWidget):
 
         if result:
             attr_clr_map = {}
-            clr = dlg.currentColor().getRgb()[:-1]
+            clr = dlg.currentColor().getRgb()[:-1] #don't need the alpha component
             sel_items = self.selectedItems()
 
             if sel_items:
@@ -3363,7 +3333,7 @@ class NDWatchVarsWidget(QWidget):
 
 class NDAboutDialog(QDialog):
     """
-    Dialog window class for the Node Deigner 'about' window
+    Dialog window class for the Node Designer 'about' window
     """
 
     TITLE = APP_NAME + " " + APP_VERSION
@@ -3402,8 +3372,14 @@ class NDAboutDialog(QDialog):
 
 
 class NDIconManager(object):
+    """
+    Dictionary like objects that automatically finds available icon
+    resources on disk and makes them available as QIcon object and full string
+    paths.
 
-    DIR_NAME = "resources"
+    The keys of the object are base file names minus any file extension
+
+    """
 
     FILE_EXTS = ("png",)
 
@@ -3418,13 +3394,10 @@ class NDIconManager(object):
 
     def _collectIcons(self):
 
-        cur_dir = os.path.dirname(__file__).replace("\\", "/")
-        res_dir = cur_dir + "/" + self.DIR_NAME
+        if os.path.exists(RESOURCE_DIR):
 
-        if os.path.exists(res_dir):
-
-            for item in os.listdir(res_dir):
-                icon_path = res_dir + "/" + item
+            for item in os.listdir(RESOURCE_DIR):
+                icon_path = RESOURCE_DIR + "/" + item
 
                 ##----loading icons---##
                 if os.path.isfile(icon_path) and icon_path.split(".")[-1] in self.FILE_EXTS:
@@ -3434,7 +3407,7 @@ class NDIconManager(object):
                     self._icon_path_map[base_name] = icon_path
 
         else:
-            print self.NAME + ": no " + self.RESOURCE_DIR_NAME + " directory found"
+            print "no " + RESOURCE_DIR_NAME + " directory found"
 
 
     def __len__(self):
@@ -3463,10 +3436,36 @@ class NDIconManager(object):
 
 
 class NDToolBar(QToolBar):
+    """
+    Toolsbar class for the main window. Exists only to disable the default context menu
+    """
 
 
     def contextMenuEvent(self, event):
+        """
+        Overrides base class method. Exists only to disable the default context menu
+        """
+
         pass
+
+
+def initShelf():
+    """
+    Node Designer shelf init function
+    """
+
+    cmd = "from mpylib.ui import NDMainWindow\nwin = NDMainWindow()\nwin.show()"
+
+    icon_path = ICON_MANAGER.getFilePath("shelf_icon")
+
+    if icon_path:
+        top_shelf = mel.eval('$tmp_gShelfTopLevel=$gShelfTopLevel')
+        top_tabs  = mc.shelfTabLayout(top_shelf,q=True,tl=True)
+
+        ##----if shelf is missing, create it---##
+        if not APP_NAME in top_tabs:
+            tab = mc.shelfLayout(APP_NAME, parent=top_shelf,visible=True)
+            mc.shelfButton(image=icon_path,parent=tab,command=cmd)
 
 
 ICON_MANAGER = NDIconManager()

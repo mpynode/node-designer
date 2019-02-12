@@ -82,7 +82,7 @@ class TestMPyNode(unittest.TestCase):
         for use_binary in (True, False):
             mc.file(newFile=True, force=True)
 
-            file_ext = MPyNode._BINARY_FILE_EXT if use_binary else MPyNode._ASCII_FILE_EXT
+            file_ext = MPyNode.BINARY_FILE_EXT if use_binary else MPyNode.ASCII_FILE_EXT
 
             self.testInit()
             node = self.TEST_CLASS("test_py_node")
@@ -117,7 +117,7 @@ class TestMPyNode(unittest.TestCase):
         for use_binary in (True, False):
             mc.file(newFile=True, force=True)
 
-            file_ext = MPyNode._BINARY_FILE_EXT if use_binary else MPyNode._ASCII_FILE_EXT
+            file_ext = MPyNode.BINARY_FILE_EXT if use_binary else MPyNode.ASCII_FILE_EXT
 
             self.testInit()
             node = self.TEST_CLASS("test_py_node")

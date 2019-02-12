@@ -1,3 +1,9 @@
+"""
+Author: Gene Hansen
+
+This module contains the main class for interacting with mPyNode nodes on a scripting level
+"""
+
 import os
 import copy
 import cPickle
@@ -172,36 +178,63 @@ class MPyNode(MNode):
     _CODE_INIT_PROPERTIES = {"INIT_INPUT_ATTRS":None, "INIT_INPUT_ATTR_ARGS":None,
                              "INIT_OUTPUT_ATTRS":None, "INIT_OUTPUT_ATTR_ARGS":None}
 
-    _ASCII_FILE_EXT = "mpya"
-    _BINARY_FILE_EXT = "mpyb"
+    ASCII_FILE_EXT = "mpya"
+    BINARY_FILE_EXT = "mpyb"
 
-    _UI_ATTR_COLOR_ATTR_NAME = "uiAttrColors"
+    UI_ATTR_COLOR_ATTR_NAME = "uiAttrColors"
 
 
     def __init__(self, node=None, name=None, exp_str=None, input_map=None, output_map=None, stored_var_map=None):
         """
-        Initialize a new MPyNode object
+        __init__(node=None, name=None, exp_str=None, input_map=None, output_map=None, stored_var_map=None)
 
-        **node**		*string* name or *MNode* of an existing mPyNode to intialize from. A new mPyNode is created
-        if this arg is not provided.
+            Initialize a new MPyNode object
 
-        **name**		optional *string* name to give the node if creating a new node. Ignored
-        if initializing from an existing mPyNode
+            Parameters
+            ----------
+            node : *str* name, *MPyNode*, *MNode* or *MObject*
+                an existing mPyNode to intialize from. A new mPyNode is created if this arg is not provided.
 
-        **RETURNS**		*None*
+            name : optional *str*
+                optional name to give the node if creating a new one. Ignored if initializing from an existing node
 
-        >>> ## create new mPyNode
-        >>> node = MPyNode()
-        >>>
-        >>> ## create new mPyNode and set its name at same time
-        >>> node = MPyNode(name="fooFoo")
-        >>>
-        >>> ## intialize a new MPyNode instance from an existing mPyNode node
-        >>> node = MPyNode("existingNodeName")
+            exp_str: optional *str*
+            	optional expression to give the node if creating a new one. Ignored if initializing from an existing node
 
+            input_map: optional *dict*
+            	optional dictionary representing inputs to give the node if creating a new one. Ignored if initializing from an existing node.
+                Keys of dictionary are string long names of input attributes and the values are dictionaries containing the keyword args to
+                pass to addInputAttr()
+
+            output_map: optional *dict*
+            	optional dictionary representing outputs to give the node if creating a new one. Ignored if initializing from an existing node.
+                Keys of dictionary are string long names of output attributes and the values are dictionaries containing the keyword args to
+                pass to addOutputAttr()
+
+            stored_var_map: optional *dict*
+            	optional dictionary representing stored variables to give the node if creating a new one. Ignored if initializing from an existing node.
+                Keys of dictionary are string names of variables to create and the values are the values to assign the variable
+
+            name : optional *str*
+                optional name to give the node if creating a new one. Ignored if initializing from an existing node
+
+            Returns
+            -------
+            *None*
+
+            Examples
+            --------
+            >>> ## create new mPyNode
+            >>> node = MPyNode()
+            >>>
+            >>> ## create new mPyNode and set its name at same time
+            >>> node = MPyNode(name="fooFoo")
+            >>>
+            >>> ## intialize a new MPyNode instance from an existing mPyNode node
+            >>> node = MPyNode("existingNodeName")
         """
 
-        self._pluginCheck()
+        self.pluginCheck()
 
         if not node:
             new_node = self._createNew(name)
@@ -350,6 +383,10 @@ class MPyNode(MNode):
 
 
     def _renameInternalDictAttr(self, internal_attr, attr_name, new_name):
+        """
+        Finds the node attriute of the given name, stored within the given string
+        attribute and renames it to the given name
+        """
 
         py_data = self._getInternalPyAttr(internal_attr)
 
@@ -485,11 +522,6 @@ class MPyNode(MNode):
         self._appendInternalDictAttr(internal_str_attr, long_name, attr_type)
 
 
-    def _getFormattedExpression(self):
-
-        return None
-
-
     def _getAttrMap(self, internal_attr_name, is_input=False):
         """
         Handles building a dictionary of input or output attr data based on the give attribute query function
@@ -544,35 +576,138 @@ class MPyNode(MNode):
         return None
 
 
-    def _updateUiAttrColorMap(self, clr_map_update):
+    def _renameInputOutput(self, attr_name, new_name, is_input):
+        """
+        Renames an input or output attr to the given name
+        """
+
+        list_func = getattr(self, "getInputAttrMap") if is_input else getattr(self, "getOutputAttrMap")
+        attr_map = list_func()
+
+        if not attr_map:
+            raise RuntimeError("Node has no input/outputs to rename")
+
+        if not attr_name in attr_map:
+            raise RuntimeError("Node has no input/outputs named " + attr_name)
+
+        is_array = True if ("is_array" in attr_map[attr_name]) and (attr_map[attr_name]["is_array"]) else False
+
+        is_src, is_dest = (True, False) if is_input else (False, True)
+        con_nodes, plugs = self.listConnections(attr_name, source=is_src, destination=is_dest, plugs=True)
+
+        del_func = getattr(self, "deleteInputAttr") if is_input else getattr(self, "deleteOutputAttr")
+        del_func(attr_name)
+        add_func = getattr(self, "addInputAttr") if is_input else getattr(self, "addOutputAttr")
+        add_func(new_name, **attr_map[attr_name])
+
+        if con_nodes:
+            for i, con_list in enumerate(map(None, con_nodes, plugs)):
+                node_attr_name = new_name if not is_array else new_name + "[" + str(i) + "]"
+
+                if is_input:
+                    con_list[0].connectAttr(con_list[1], self, node_attr_name)
+
+                else:
+                    self.connectAttr(node_attr_name, con_list[0], con_list[1])
+
+
+    def __reduce__(self):
+        """
+        Built-in method. Handles pickling of the current Maya node.
+        """
+
+        node_name = self.getName()
+        input_map = self.getInputAttrMap()
+        output_map = self.getOutputAttrMap()
+        stored_var_map = self.getStoredVariables()
+        expr_str = self.getExpression()
+
+        return (self.__class__, (None, node_name, expr_str, input_map, output_map, stored_var_map))
+
+
+    def __reduce_ex__(self, protocol):
+        """
+        Built-in method. Handles pickling of the current Maya node. Same as __reduce__() but handles a protocol argument.
+        """
+
+        return self.__reduce__()
+
+
+    def updateUiAttrColorMap(self, clr_map_update):
+        """
+        updateUiAttrColorMap(clr_map_update)
+
+            Attribute color perferences are stored on the the node for uses with the UI.
+            This method appends the given color data dictionary to the color data already stored on
+            the node, if any.
+
+            Parameters
+            ----------
+            clr_map_update : *dict*
+                dictionary with *str* attribute names as keys and values are 3 *int* rgb (255) sequence
+
+            Returns
+            -------
+            *None*
+
+            See Also
+            --------
+            getUiAttrColorMap : Returns the dictionary with the custom UI colors assigned to the
+            node's attributes
+
+            Examples
+            --------
+            >>> new_clrs = {"myAttr":(255, 0, 0)}
+            >>> py_node.updateUiAttrColorMap(new_clrs)
+        """
 
         clr_map = {}
 
-        if not self.hasAttr(self._UI_ATTR_COLOR_ATTR_NAME):
-            self.addAttr(self._UI_ATTR_COLOR_ATTR_NAME, "string")
+        if not self.hasAttr(self.UI_ATTR_COLOR_ATTR_NAME):
+            self.addAttr(self.UI_ATTR_COLOR_ATTR_NAME, "string")
 
         else:
-            clr_map = self._getInternalPyAttr(self._UI_ATTR_COLOR_ATTR_NAME)
+            clr_map = self._getInternalPyAttr(self.UI_ATTR_COLOR_ATTR_NAME)
 
             if not clr_map:
                 clr_map = {}
 
         clr_map.update(clr_map_update)
 
-        self._setInternalPyAttr(self._UI_ATTR_COLOR_ATTR_NAME, clr_map)
+        self._setInternalPyAttr(self.UI_ATTR_COLOR_ATTR_NAME, clr_map)
 
 
-    def _getUiAttrColorMap(self):
+    def getUiAttrColorMap(self):
+        """
+        getUiAttrColorMap()
 
-        if not self.hasAttr(self._UI_ATTR_COLOR_ATTR_NAME):
+            Attribute color perferences are stored on the the node for uses with the UI.
+            This method returns the dictionary with the custom UI colors assigned to the
+            node's attributes
+
+            Returns
+            -------
+            *None*
+
+            See Also
+            --------
+            getExpression : Returns the current python expression within the node.
+
+            Examples
+            --------
+            >>> py_node.getUiAttrColorMap()
+
+        """
+
+        if not self.hasAttr(self.UI_ATTR_COLOR_ATTR_NAME):
             return None
 
-        return self._getInternalPyAttr(self._UI_ATTR_COLOR_ATTR_NAME)
+        return self._getInternalPyAttr(self.UI_ATTR_COLOR_ATTR_NAME)
 
 
     def setExpression(self, exp_str):
         """
-            setExpression(exp_str)
+        setExpression(exp_str)
 
             Set the expression within the node to the given string of python code.
 
@@ -837,45 +972,63 @@ class MPyNode(MNode):
 
 
     def renameInputAttr(self, attr_name, new_name):
+        """
+        renameInputAttr(attr_name, new_name)
+
+            Renames the node input with the given new name.
+
+            Parameters
+            ----------
+            attr_name : *str*
+                name of the input attribute to rename
+
+            new_name : *str*
+                new name to given the input attribute
+
+            Returns
+            -------
+            *None*
+
+            See Also
+            --------
+            renameOutputAttr : Renames the node output with the given new name.
+
+            Examples
+            --------
+            >>> node.renameInputAttr("inputAttr1", "inputAttr2")
+        """
 
         self._renameInputOutput(attr_name, new_name, True)
 
 
     def renameOutputAttr(self, attr_name, new_name):
+        """
+        renameOutputAttr(attr_name, new_name)
+
+            Renames the node output with the given new name.
+
+            Parameters
+            ----------
+            attr_name : *str*
+                name of the output attribute to rename
+
+            new_name : *str*
+                new name to given the output attribute
+
+            Returns
+            -------
+            *None*
+
+            See Also
+            --------
+            renameInputAttr : Renames the node input with the given new name.
+
+            Examples
+            --------
+            >>> node.renameOutputAttr("inputAttr1", "inputAttr2")
+        """
 
         self._renameInputOutput(attr_name, new_name, False)
-
-
-    def _renameInputOutput(self, attr_name, new_name, is_input):
-
-        list_func = getattr(self, "getInputAttrMap") if is_input else getattr(self, "getOutputAttrMap")
-        attr_map = list_func()
-
-        if not attr_map:
-            raise RuntimeError("Node has no input/outputs to rename")
-
-        if not attr_name in attr_map:
-            raise RuntimeError("Node has no input/outputs named " + attr_name)
-
-        is_array = True if ("is_array" in attr_map[attr_name]) and (attr_map[attr_name]["is_array"]) else False
-
-        is_src, is_dest = (True, False) if is_input else (False, True)
-        con_nodes, plugs = self.listConnections(attr_name, source=is_src, destination=is_dest, plugs=True)
-
-        del_func = getattr(self, "deleteInputAttr") if is_input else getattr(self, "deleteOutputAttr")
-        del_func(attr_name)
-        add_func = getattr(self, "addInputAttr") if is_input else getattr(self, "addOutputAttr")
-        add_func(new_name, **attr_map[attr_name])
-
-        if con_nodes:
-            for i, con_list in enumerate(map(None, con_nodes, plugs)):
-                node_attr_name = new_name if not is_array else new_name + "[" + str(i) + "]"
-
-                if is_input:
-                    con_list[0].connectAttr(con_list[1], self, node_attr_name)
-
-                else:
-                    self.connectAttr(node_attr_name, con_list[0], con_list[1])
 
 
     def addStoredVariable(self, var_name):
@@ -1255,47 +1408,6 @@ class MPyNode(MNode):
             fh.close()
 
 
-    #def saveToFile(self, class_name, file_path):
-
-        #if os.path.exists(file_path) and os.access(file_path, os.W_OK):
-            #raise IOError("Cannot write to path: " + str(file_path))
-
-        #if not os.path.exists(os.path.dirname(file_path)):
-            #raise IOError("Directory does not exist: " + str(os.path.dirname(file_path)))
-
-        #code_str = self.CODE_IMPORT_STR
-        #code_str += "class " + str(class_name) + "(" + self.CODE_CLASS + "):\n\n"
-        #code_str += self.CODE_COMPUTE_DEF
-
-        #expr_str = self._getFormattedExpression()
-
-        #if expr_str:
-            #code_str += expr_str
-
-        #fh = open(file_path, "w")
-        #fh.write(code_str)
-        #fh.close()
-
-
-    def __reduce__(self):
-
-        node_name = self.getName()
-        input_map = self.getInputAttrMap()
-        output_map = self.getOutputAttrMap()
-        stored_var_map = self.getStoredVariables()
-        expr_str = self.getExpression()
-
-        return (self.__class__, (None, node_name, expr_str, input_map, output_map, stored_var_map))
-
-
-    def __reduce_ex__(self, protocol):
-        """
-        Built-in method. Handles pickling of the current Maya node. Same as __reduce__() but handles a protocol argument.
-        """
-
-        return self.__reduce__()
-
-
     @classmethod
     def ls(cls, *args, **kargs):
         """
@@ -1325,7 +1437,7 @@ class MPyNode(MNode):
 
         """
 
-        cls._pluginCheck()
+        cls.pluginCheck()
 
         kargs["type"] = cls.NODE_TYPE
 

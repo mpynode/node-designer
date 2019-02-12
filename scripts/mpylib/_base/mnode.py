@@ -1,4 +1,6 @@
 """
+Author: Gene Hansen
+
 This module contains the MNode class and all standalone functions that support
 the MNode class. MNode provides an object oriented interface for querying/editing DG nodes inside Maya.
 An instance of the MNode class provides storage and access to a single Maya node. MNode uses
@@ -111,10 +113,31 @@ class MNode(om.MObject):
 
     def __init__(self, node=None, node_type=None, name=None):
         """
-        Initialize a new MNode object
+        __init__(node=None, node_type=None, name=None)
 
-        :arg		node: string name, MObject or MNode to intialize from
-        :returns:	None
+            Initialize a new MNode object
+
+            Parameters
+            ----------
+            node : *str* name, *MNode* or *MObject*
+                an existing node to intialize from. A new node is created if this arg is not provided and
+                a node type provided with the *node_type* or class property *NODE_TYPE*
+
+            node_type : *str*, optional
+                string node type to create. Ignored if initializing from an existing node
+
+            name : *str*, optional
+                optional name to give the node if creating a new one. Ignored if initializing from an existing node
+
+            Returns
+            -------
+            *None*
+
+            Examples
+            --------
+            >>> existing_node = MNode("existingNode")
+            >>>
+            >>> new_node = MNode(node_type="transform", name="newNode")
         """
 
         self._obj_hndl = None
@@ -131,10 +154,10 @@ class MNode(om.MObject):
         ##----wrap an existing node---##
         else:
 
-            if type(node) == om.MObject:
+            if isinstance(node, om.MObject):
                 m_obj = node
 
-            elif type(node) in (str, unicode):
+            elif isinstance(node, (str, unicode)):
                 m_obj = self._getMObjectByName(node)
 
             elif isinstance(node, MNode):
@@ -183,7 +206,7 @@ class MNode(om.MObject):
 
 
     @classmethod
-    def _pluginCheck(cls):
+    def pluginCheck(cls):
         """
         @classmethod - Not used in the base MNode class. Can be used in child classes to check for and load plugin dependencies
         automatically.
@@ -550,6 +573,8 @@ class MNode(om.MObject):
         if results:
             return self.__class__(results)
 
+        return None
+
 
     def getAttr(self, attr_name, **kargs):
         """
@@ -899,6 +924,21 @@ class MNode(om.MObject):
 
 
     def getAddAttrCmd(self, attr_name, use_long_names=False):
+        """
+        Returns a string containing mel addAttr command for re-creating given dynamic attribute.
+        This string could be used in a mayaAscii like format.
+
+        **attr_name**		*string* name of the dynamic attribute to query
+
+        **long_names**		*bool* - whether to return cmds with long attribute names. default=False
+
+        **RETURNS**			*string* mel addAttr commands like you would see in a mayaAscii file or *None*
+
+        >>> node = MNode.createNode("transform")
+        >>> node.addAttr("test", "float")
+        >>> node.getAddAttrCmd("test")
+        >>> #RESULT - '\taddAttr -ci true -sn "test" -ln "test" -at "float";'
+        """
 
         attr_fn = om.MFnAttribute(self._fn_set.attribute(attr_name))
 
@@ -906,6 +946,12 @@ class MNode(om.MObject):
 
 
     def getAddAttrMaps(self):
+        """
+        Returns a dictionary that contains addAttr details for all user defined dynamic
+        attributes on the current node.
+
+        *RETURNS*	*dict* containing keywords: "long_name", "short_name", "attr_type"
+        """
 
         attr_list = []
         user_attrs = self.listAttr(userDefined=True)
@@ -914,7 +960,7 @@ class MNode(om.MObject):
             for attr_name in user_attrs:
                 attr_map = {}
                 attr_map["long_name"] = self.attributeQuery(attr_name, longName=True)
-                attr_map["shortName"] = self.attributeQuery(attr_name, shortName=True)
+                attr_map["short_name"] = self.attributeQuery(attr_name, shortName=True)
                 attr_map["attr_type"] = self.getAttr(attr_name, type=True)
 
                 attr_list.append(attr_map)
@@ -1158,8 +1204,7 @@ class MNode(om.MObject):
 
                 return MNodeList(node_list), tuple(attr_list)
 
-            else:
-                return MNodeList(results), None
+            return MNodeList(results), None
 
         return None, None
 
@@ -1226,15 +1271,15 @@ class MNode(om.MObject):
             if array_size:
                 dst_attrs = [attr_name + "[" + str(i) + "]" for i in xrange(array_size)] + [attr_name]
 
-        for attr_name in dst_attrs:
+        for dst_attr in dst_attrs:
 
-            nodes, plugs = self.listConnections(attr_name, destination=False, source=True, plugs=True)
+            nodes, plugs = self.listConnections(dst_attr, destination=False, source=True, plugs=True)
 
             if nodes:
 
                 for node, plug in map(None, nodes, plugs):
 
-                    mc.disconnectAttr(str(node) + "." + plug, str(self) + "." + attr_name)
+                    mc.disconnectAttr(str(node) + "." + plug, str(self) + "." + dst_attr)
 
 
     def removeOutputConnections(self, attr_name):
@@ -1253,12 +1298,12 @@ class MNode(om.MObject):
         if indices:
             dst_attrs = [attr_name + "[" + str(i) + "]" for i in xrange(len(indices))] + [attr_name]
 
-        for attr_name in dst_attrs:
-            nodes, plugs = self.listConnections(attr_name, destination=True, source=False, plugs=True)
+        for dst_attr in dst_attrs:
+            nodes, plugs = self.listConnections(dst_attr, destination=True, source=False, plugs=True)
 
             if nodes:
                 for node, plug in map(None, nodes, plugs):
-                    mc.disconnectAttr(str(self) + "." + attr_name, str(node) + "." + plug)
+                    mc.disconnectAttr(str(self) + "." + dst_attr, str(node) + "." + plug)
 
 
 
@@ -1558,7 +1603,7 @@ class MNode(om.MObject):
 
             return name.rindex(sub, start, end)
 
-        except ValueError, e:
+        except ValueError, err:
             raise ValueError("substring " + str(sub) + " not found in node name: " + name)
 
 
@@ -2064,8 +2109,8 @@ def _unpickleNode(cls, node_type, add_attr_args, set_attr_args, kargs):
     new_node = MNode.createNode(node_type, **kargs)
 
     if add_attr_args:
-        for args, kargs in add_attr_args:
-            new_node.addAttr(*args, **kargs)
+        for args, key_args in add_attr_args:
+            new_node.addAttr(*args, **key_args)
 
     return cls(new_node)
 
@@ -2334,7 +2379,7 @@ class MNodeList(object):
 
         """
 
-        attr_map  = OrderedDict()
+        attr_map = OrderedDict()
 
         for node in self._node_list:
 

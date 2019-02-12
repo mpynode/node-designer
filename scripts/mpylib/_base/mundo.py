@@ -13,51 +13,60 @@ class MUndo(object):
     _call_args = None
     _call_kargs = None
     _call_return = None
-    
-    
-    def __init__(self, func, *args, **kwargs):
+
+
+    def __init__(self, func, *args, **kargs):
         """
-        Create a new MUndo wrapper object around the given python function with the given arguments.
-        
-        **func**		python function object to call. Note that this is not the string name of the function but
-        				instead the function itself.
-        
-        **args**		args supported by the function passed into the *func* arg
-        
-        **kargs**		args supported by the function passed into the *func* arg
-        
-        *RETURNS*		None
-        
-        >>> ##the ending '()' calls the MUndo object as soon as its created
-        >>> MUndo(myCoolFunc, arg1, arg2, keyword1="test", keyword2="test2")()
-        
+        __init__(func, \*args, \*\*kwargs)
+
+            Create a new MUndo wrapper object around the given python function with the given arguments.
+
+            Parameters
+            ----------
+            func : function object
+                python function object to wrap and call. Note that this is not the string name of the function but
+                instead the function object itself.
+
+            args : *positional args*, optional
+                positional args to pass the the wrapped function
+
+            kargs : *keyword args*, optional
+                keyword args to pass the the wrapped function
+
+            Returns
+            -------
+            *None*
+
+            Examples
+            --------
+            >>> ##the ending '()' calls the MUndo object as soon as its created
+            >>> MUndo(myCoolFunc, arg1, arg2, keyword1="test", keyword2="test2")()
         """
 
         self.func = func
         self.args = args
-        self.kwargs = kwargs
-        
-        
+        self.kargs = kargs
+
+
     @staticmethod
     def wrap(func):
-        """ Puts the wrapped `func` into a single Maya Undo action, then 
-            undoes it when the function enters the finally: block
         """
-        
+        Puts the wrapped `func` into a single Maya Undo action, then undoes it when
+        the function enters the finally: block
+        """
+
         @wraps(func)
-        def _undofunc(*args, **kwargs):
+        def _undofunc(*args, **kargs):
             try:
-                # start an undo chunk
                 mc.undoInfo(ock=True)
-                return func(*args, **kwargs)
-            
+                return func(*args, **kargs)
+
             finally:
-                # after calling the func, end the undo chunk and undo
                 mc.undoInfo(cck=True)
                 mc.undo()
-    
-        return _undofunc    
-        
+
+        return _undofunc
+
 
     @classmethod
     def _run(cls):
@@ -67,13 +76,13 @@ class MUndo(object):
         kargs = cls._call_kargs
 
         cls._call_return = func(*args, **kargs)
-        
+
 
     def __call__(self, *args):
 
         self.__class__._call_func = self.func
         self.__class__._call_args = self.args
-        self.__class__._call_kargs = self.kwargs
+        self.__class__._call_kargs = self.kargs
 
         mel.eval("python(\"from mpylib import MUndo; MUndo._run()\")")
 
