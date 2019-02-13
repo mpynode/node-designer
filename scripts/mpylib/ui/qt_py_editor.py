@@ -2,12 +2,12 @@ try:
     import PySide
     
 except ImportError, err:
-    from PySide2.QtWidgets import QWidget, QPlainTextEdit, QTextEdit
+    from PySide2.QtWidgets import QWidget, QPlainTextEdit, QTextEdit, QDesktopWidget
     from PySide2.QtGui import QColor, QFont, QFontMetrics, QTextFormat, QPainter
     from PySide2.QtCore import QSize, Qt, QRect
 
 else:
-    from PySide.QtGui import QWidget, QPlainTextEdit, QTextEdit, QColor, QTextFormat, QPainter, QFontMetrics, QFont
+    from PySide.QtGui import QWidget, QPlainTextEdit, QTextEdit, QColor, QTextFormat, QPainter, QFontMetrics, QFont, QDesktopWidget
     from PySide.QtCore import QSize, Qt, QRect
 
 from qt_py_highlighter import QtPythonHighlighter
@@ -33,7 +33,13 @@ class QtPythonEditor(QPlainTextEdit):
     HIGHLIGHTER_CLASS = QtPythonHighlighter
     
     DEFAULT_FONT_FAMILY = "Courier"
-    DEFAULT_FONT_SIZE = 10
+    DEFAULT_FONT_SIZE = 10 # Comfortable at 1920 * 1080
+    
+    # Look at current pixel density and adapt font size so it remains comfortable
+    screen_geo = QDesktopWidget().screenGeometry(-1)
+    density = screen_geo.height() * screen_geo.width()
+    DEFAULT_FONT_SIZE *= max(1, int(density / (1920. * 1080. )))
+    
     DEFAULT_LINE_WRAP_MODE = QPlainTextEdit.NoWrap
     
     TAB_STOP = 4
