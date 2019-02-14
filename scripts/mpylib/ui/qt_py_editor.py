@@ -1,14 +1,14 @@
 try:
     import PySide
-    
+
 except ImportError, err:
     from PySide2.QtWidgets import QWidget, QPlainTextEdit, QTextEdit
     from PySide2.QtGui import QColor, QFont, QFontMetrics, QTextFormat, QPainter
-    from PySide2.QtCore import QSize, Qt, QRect
+    from PySide2.QtCore import QSize, Qt, QRect, QEvent
 
 else:
     from PySide.QtGui import QWidget, QPlainTextEdit, QTextEdit, QColor, QTextFormat, QPainter, QFontMetrics, QFont
-    from PySide.QtCore import QSize, Qt, QRect
+    from PySide.QtCore import QSize, Qt, QRect, QEvent
 
 from qt_py_highlighter import QtPythonHighlighter
 
@@ -28,71 +28,84 @@ class QtLineNumberArea(QWidget):
 
 
 class QtPythonEditor(QPlainTextEdit):
-    
+
     HIGHLIGHT_COLOR = Qt.lightGray
     HIGHLIGHTER_CLASS = QtPythonHighlighter
-    
+
     DEFAULT_FONT_FAMILY = "Courier"
     DEFAULT_FONT_SIZE = 10
     DEFAULT_LINE_WRAP_MODE = QPlainTextEdit.NoWrap
-    
+
     TAB_STOP = 4
-    
-    
+
+
     def __init__(self, parent=None):
-        
+
         QPlainTextEdit.__init__(self, parent)
-        
-        self._highlighter = self.HIGHLIGHTER_CLASS(self.document())      
+
+        self._highlighter = self.HIGHLIGHTER_CLASS(self.document())
         self._line_number_widget = QtLineNumberArea(self)
         self.setLineWrapMode(self.DEFAULT_LINE_WRAP_MODE)
-        
+
         self._initTextAttrs()
         self._initEvents()
-        
+
 
     def _initEvents(self):
-        
+
         self.blockCountChanged.connect(self.updateLineNumberAreaWidth)
         self.updateRequest.connect(self.updateLineNumberArea)
         #self.cursorPositionChanged.connect(self.highlightCurrentLine)
-        
+
         self.updateLineNumberAreaWidth()
-        
+
 
     def _initTextAttrs(self):
-        
+
         font = QFont()
         font.setFamily(self.DEFAULT_FONT_FAMILY)
         font.setStyleHint(QFont.Monospace)
         font.setFixedPitch(True)
         font.setPointSize(self.DEFAULT_FONT_SIZE)
-    
+
         self.setFont(font)
         self.setTabStopWidth(self.TAB_STOP * QFontMetrics(font).width(" "))
-        
-        
+
+
     def resizeEvent(self, event):
-        
+
         super(QtPythonEditor, self).resizeEvent(event)
-    
+
         cr = self.contentsRect()
         self._line_number_widget.setGeometry(QRect(cr.left(), cr.top(),
                                                    self.lineNumberAreaWidth(), cr.height()))
-        
-        
+
+
+    def eventFilter(self, obj, event):
+        """
+        Implemented here to enable standard text editor ctrl+scroll_wheel text zooming
+        """
+
+        if event.type() == QEvent.Wheel:
+            if event.modifiers() == Qt.ControlModifier:
+                if event.delta() > 0:
+                    self.zoomIn(2)
+                else:
+                    self.zoomOut(2)
+
+
     def lineNumberAreaWidth(self):
-        
+
         digits = 1
         count = max(1, self.blockCount())
         while count >= 10:
             count /= 10
             digits += 1
         space = 3 + self.fontMetrics().width("9") * digits
-        
+
         return space
-    
-    
+
+
     def updateLineNumberArea(self, rect, dy):
 
         if dy:
@@ -103,15 +116,15 @@ class QtPythonEditor(QPlainTextEdit):
 
         if rect.contains(self.viewport().rect()):
             self.updateLineNumberAreaWidth()
-    
-    
+
+
     def updateLineNumberAreaWidth(self):
-        
+
         self.setViewportMargins(self.lineNumberAreaWidth(), 0, 0, 0)
-        
-        
+
+
     def highlightCurrentLine(self):
-        
+
         extraSelections = []
 
         if not self.isReadOnly():
@@ -124,21 +137,21 @@ class QtPythonEditor(QPlainTextEdit):
             selection.cursor = self.textCursor()
             selection.cursor.clearSelection()
             extraSelections.append(selection)
-            
+
         self.setExtraSelections(extraSelections)
-        
-        
+
+
     def lineNumberAreaPaintEvent(self, event):
-        
+
         mypainter = QPainter(self._line_number_widget)
-    
+
         mypainter.fillRect(event.rect(), Qt.lightGray)
-    
+
         block = self.firstVisibleBlock()
         blockNumber = block.blockNumber()
         top = self.blockBoundingGeometry(block).translated(self.contentOffset()).top()
         bottom = top + self.blockBoundingRect(block).height()
-    
+
         # Just to make sure I use the right font
         height = self.fontMetrics().height()
         while block.isValid() and (top <= event.rect().bottom()):
@@ -147,24 +160,28 @@ class QtPythonEditor(QPlainTextEdit):
                 mypainter.setPen(Qt.black)
                 mypainter.drawText(0, top, self._line_number_widget.width(), height,
                                    Qt.AlignRight, number)
-    
+
             block = block.next()
             top = bottom
             bottom = top + self.blockBoundingRect(block).height()
             blockNumber += 1
-            
-            
+
+
     def getHighlighter(self):
         return self._highlighter
-        
+
 
 if __name__ == "__main__":
-    
-    from PySide.QtGui import QApplication
-    
+
+    try:
+        from PySide.QtGui import QApplication
+
+    except ImportError, err:
+        from PySide2.QtWidgets import QApplication
+
     app = QApplication([])
-    
+
     editor = QtPythonEditor()
     editor.show()
-    
+
     app.exec_()
