@@ -77,6 +77,8 @@ from mqt_main_window import QMayaWindow
 
 from ..nodes import MPyNode
 from .._base import MNode, MNodeList, MUndo
+from ..files import IniFile
+
 
 APP_NAME = "Node Designer"
 APP_VERSION = "1.0.1b1"
@@ -85,6 +87,7 @@ BASE_DIR = os.path.dirname(__file__).replace("\\", "/")
 RESOURCE_DIR_NAME = "resources"
 RESOURCE_DIR = BASE_DIR + "/" + RESOURCE_DIR_NAME
 ERROR_LOG_PATH = BASE_DIR + "/" + APP_NAME.lower().replace(" ", "_") + "_error_log.txt"
+PREF_FILE_PATH = BASE_DIR + "/" + APP_NAME.lower().replace(" ", "_") + "_prefs.ini"
 
 ATTR_COLOR_DEFAULT = (80, 230, 80)
 ATTR_COLOR_DARK_GREEN = (0, 128, 1)
@@ -260,6 +263,8 @@ class NDMainWindow(QMayaWindow):
         self._ui_callback_array = om.MCallbackIdArray()
         self._node_callback_map = {}
 
+        self._prefs = None
+
         self.setDocumentMode(True) ##---does this help keep focus?...probably not
 
         ##---create a blank master widget to be parent of all ui widgets----##
@@ -284,6 +289,8 @@ class NDMainWindow(QMayaWindow):
 
         self.setGeometry(self.DEFAULT_X_POS, self.DEFAULT_Y_POS,
                          self.DEFAULT_WIDTH, self.DEFAULT_HEIGHT)
+
+        self._loadPrefs()
 
 
     def _buildToolBar(self):
@@ -357,6 +364,33 @@ class NDMainWindow(QMayaWindow):
                 pass
 
             del(self._node_callback_map[py_node])
+
+
+    def _loadPrefs(self):
+
+        file_path = PREF_FILE_PATH if os.path.exists(PREF_FILE_PATH) else None
+
+        self._prefs = IniFile(file_path)
+
+        if self._prefs:
+            if self._prefs.has_key("editor"):
+                editor_prefs = self._prefs["editor"]
+
+                if editor_prefs.has_key("font_size"):
+                    self._script_tab_widget.setTextFontSize(editor_prefs["font_size"])
+
+
+    def _writePrefs(self, prefs=None):
+
+        if not prefs:
+            prefs = IniFile()
+
+            prefs["editor"] = OrderedDict()
+            prefs["editor"]["font_size"] = self._script_tab_widget.getTextFontSize()
+
+
+        if prefs:
+            prefs.write(PREF_FILE_PATH)
 
 
     @logError
@@ -909,6 +943,8 @@ class NDMainWindow(QMayaWindow):
 
         if close_ok:
 
+            self._writePrefs()
+
             self.removeAllCallbacks()
             self.deleteLater()
             event.accept()
@@ -924,10 +960,14 @@ class NDScriptTabWidget(QTabWidget):
 
     LOG_SIGNAL = Signal(str, int)
 
+    DEFAULT_TEXT_FONT_SIZE = QtPythonEditor.DEFAULT_FONT_SIZE
+
 
     def __init__(self, parent=None):
 
         super(NDScriptTabWidget, self).__init__(parent)
+
+        self._text_font_size =  self.DEFAULT_TEXT_FONT_SIZE
 
         self.setMovable(True)
         self.setTabsClosable(True)
@@ -990,6 +1030,24 @@ class NDScriptTabWidget(QTabWidget):
         tab_widget = self.widget(tab_index)
 
         return tab_widget.hasUnsavedChanges()
+
+
+    def setTextFontSize(self, font_size):
+
+        tab_count = self.count()
+
+        if tab_count:
+            for tab_index in xrange(tab_count):
+
+                text_widget = self.widget(tab_index)
+                text_widget.setFontSize(font_size)
+                text_widget.refresh()
+
+
+    def getTextFontSize(self):
+
+        return self._text_font_size
+
 
 
     def _tabCloseCheckAll(self):
