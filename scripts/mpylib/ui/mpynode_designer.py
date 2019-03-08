@@ -45,6 +45,7 @@ import traceback
 import keyword
 import logging
 import webbrowser
+import urllib2
 from collections import OrderedDict
 
 import maya.cmds as mc
@@ -221,9 +222,8 @@ class NDMainWindow(QMayaWindow):
     FILE_ASCII_FILTER = "Ascii (*." + MPyNode.ASCII_FILE_EXT + ")"
     EXPORT_FILE_FILTERS = FILE_BINARY_FILTER + ";;" + FILE_ASCII_FILTER
 
-    HELP_DOC_PATH = "docs/build/html"
-    HELP_DOCS_FILE = "index.html"
-    HELP_API_DOCS_FILE = "index.html"
+    HELP_DOCS_URL = "https://mpynode.bitbucket.io"
+    HELP_API_DOCS_URL = "https://mpynode.bitbucket.io/genindex.html"
 
 
     def __init__(self):
@@ -688,26 +688,22 @@ class NDMainWindow(QMayaWindow):
     @logError
     def openHelpDocs(self):
 
-        self.openDocPage(self.HELP_DOCS_FILE)
+        self.openDocPage(self.HELP_DOCS_URL)
 
 
     @logError
     def openApiDocs(self):
 
-        self.openDocPage(self.HELP_API_DOCS_FILE)
+        self.openDocPage(self.HELP_API_DOCS_URL)
 
 
     @logError
-    def openDocPage(self, doc_file_name):
-
-        base_dir = os.path.normpath(os.path.dirname(__file__) + ("../" * 4)).replace("\\", "/")
-        doc_path = "/".join((base_dir, self.HELP_DOC_PATH, doc_file_name))
-
-        if os.path.exists(doc_path):
-            webbrowser.open(doc_path)
-
-        else:
-            self._log_widget.write("Could not locate help document: " + doc_path, QtLog.ERROR_TYPE)
+    def openDocPage(self, url):
+        try:
+            urllib2.urlopen(url) # Make sure site is reachable.
+            webbrowser.open(url)
+        except:
+            self._log_widget.write("URL Unreachable: " + url, QtLog.ERROR_TYPE)
 
 
     @logError
