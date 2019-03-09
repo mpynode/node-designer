@@ -18,7 +18,12 @@ from mpylib.ui import NDMainWindow
 win = NDMainWindow()
 win.show()
 ```
-Or use the scripting API directly:
+Or use the provided helper to create a shelf button:
+```
+import mpylib
+mpylib.ui.initShelf()
+```
+You can also use the scripting API directly:
 ```
 from mpylib.nodes import MPyNode
 node = MPyNode()
@@ -26,7 +31,7 @@ node.addInputAttr('inFloat','float', is_array=False, keyable=True)
 node.addOutputAttr('outFloat','float', is_array=False, keyable=True)
 node.setExpression('outFloat = inFloat')
 ```
-Or by subclassing:
+Or subclass MPyNode and customize it to fit your needs:
 ```
 from mpylib.nodes import MPyNode
 class NewNodeClass(MPyNode):
