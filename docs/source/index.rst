@@ -13,7 +13,5 @@ Welcome to MPyNode's documentation!
     mpylib.api
     mpylib.nodes
 
-.. rubric:: Tutorials
 
-Coming soon!
 
