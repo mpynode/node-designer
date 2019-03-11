@@ -21,7 +21,7 @@ sys.path.insert(0, os.path.abspath(r'..\..\scripts'))
 # -- Project information -----------------------------------------------------
 
 project = u'MPyNode'
-copyright = u'2018, Gene Hansen, Eric Vignola'
+copyright = u'2019, Gene Hansen, Eric Vignola'
 author = u'Gene Hansen, Eric Vignola'
 
 # The short X.Y version
