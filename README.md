@@ -1,7 +1,10 @@
-# MPyNode
+# Node Designer
 A Universal Python node for Autodesk's Maya.
 
-MPyNode simplifies all the technical overhead required by MPxNode, allowing users to easily develop nodes with Maya's Python API.
+Node Designer simplifies the technical overhead required by MPxNode, allowing users to easily develop nodes with Maya's Python API.
+
+[![Node Designer](https://i.imgur.com/zMVItXHh.png)](https://vimeo.com/322550713)
+
 
 ### Feature Highlights
 * Fully scriptable Python API.
@@ -44,7 +47,7 @@ all_new_nodes = NewNodeClass.ls()
 ```
 
 ## Documentation 
-coming soon
+https://mpynode.bitbucket.io/
 
 ## Authors
 * **Gene Hansen**  (gene.hansen@gmail.com)
