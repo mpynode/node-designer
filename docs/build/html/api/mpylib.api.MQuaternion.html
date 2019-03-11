@@ -48,8 +48,8 @@
 	    <div class="spc-navbar">
               
     <ul class="nav nav-pills pull-left">
-        <li class="active"><a href="https://bitbucket.org/mpynode/mpynode/src/master/">Bitbucket Master</a></li>
-        <li class="active"><a href="https://apps.autodesk.com/MAYA/en/Home/Index">App Store</a></li>
+        <li class="active"><a href="https://bitbucket.org/mpynode/mpynode/src/master/">Bitbucket</a></li>
+        <li class="active"><a href="http://http://www.mpynode.com/">Website</a></li>
 	
         <li class="active"><a href="../index.html">MPyNode 1.0 documentation</a></li>
 	
@@ -93,6 +93,8 @@
 <dt id="mpylib.api.MQuaternion">
 <em class="property">class </em><code class="descname">MQuaternion</code><span class="sig-paren">(</span><em>*args</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.api.MQuaternion" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">OpenMaya.MQuaternion</span></code></p>
+<p>Override of the Maya API class of the same name to make
+the data within the class ‘picklable’</p>
 <p class="rubric">Methods Summary</p>
 <table border="1" class="longtable docutils">
 <colgroup>
@@ -187,7 +189,7 @@
 <dl class="staticmethod">
 <dt id="mpylib.api.MQuaternion.slerp">
 <em class="property">static </em><code class="descname">slerp</code><span class="sig-paren">(</span><em>p</em>, <em>q</em>, <em>t</em>, <em>spin</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.api.MQuaternion.slerp" title="Permalink to this definition">¶</a></dt>
-<dd><p>Spherical interpolation of unit quaternions. Returns a quaternion along the shortest path (in quaternion space) 
+<dd><p>Spherical interpolation of unit quaternions. Returns a quaternion along the shortest path (in quaternion space)
 between p and q, at interpolation value t. Thus a value of 0.0 will return p while a value of 1.0 will return q.
 spin gives the number of complete rotations about the axis which must occur when going from p to q.</p>
 </dd></dl>

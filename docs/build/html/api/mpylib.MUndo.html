@@ -30,7 +30,7 @@
     <link rel="top" title="MPyNode 1.0 documentation" href="../index.html" >
     <link rel="up" title="mpylib Package" href="../mpylib.html" >
     <link rel="next" title="mpylib.api Package" href="../mpylib.api.html" >
-    <link rel="prev" title="MTransList" href="mpylib.MTransList.html" > 
+    <link rel="prev" title="MNodeList" href="mpylib.MNodeList.html" > 
   </head>
   <body>
 
@@ -48,8 +48,8 @@
 	    <div class="spc-navbar">
               
     <ul class="nav nav-pills pull-left">
-        <li class="active"><a href="https://bitbucket.org/mpynode/mpynode/src/master/">Bitbucket Master</a></li>
-        <li class="active"><a href="https://apps.autodesk.com/MAYA/en/Home/Index">App Store</a></li>
+        <li class="active"><a href="https://bitbucket.org/mpynode/mpynode/src/master/">Bitbucket</a></li>
+        <li class="active"><a href="http://http://www.mpynode.com/">Website</a></li>
 	
         <li class="active"><a href="../index.html">MPyNode 1.0 documentation</a></li>
 	
@@ -71,7 +71,7 @@
            accesskey="N">next</a>
       </li>
       <li class="active">
-        <a href="mpylib.MTransList.html" title="MTransList"
+        <a href="mpylib.MNodeList.html" title="MNodeList"
            accesskey="P">previous</a>
       </li>
     </ul>
@@ -91,7 +91,7 @@
 <h1>MUndo<a class="headerlink" href="#mundo" title="Permalink to this headline">¶</a></h1>
 <dl class="class">
 <dt id="mpylib.MUndo">
-<em class="property">class </em><code class="descname">MUndo</code><span class="sig-paren">(</span><em>func</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.MUndo" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descname">MUndo</code><span class="sig-paren">(</span><em>func</em>, <em>*args</em>, <em>**kargs</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.MUndo" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Wraps a call to the given python function in MEL so it occupies a single undo slot.</p>
 <p class="rubric">Methods Summary</p>
@@ -105,7 +105,7 @@
 <td></td>
 </tr>
 <tr class="row-even"><td><a class="reference internal" href="#mpylib.MUndo.wrap" title="mpylib.MUndo.wrap"><code class="xref py py-obj docutils literal notranslate"><span class="pre">wrap</span></code></a>(func)</td>
-<td>Puts the wrapped <cite>func</cite> into a single Maya Undo action, then  undoes it when the function enters the finally: block</td>
+<td>Puts the wrapped <cite>func</cite> into a single Maya Undo action, then undoes it when the function enters the finally: block</td>
 </tr>
 </tbody>
 </table>
@@ -118,8 +118,8 @@
 <dl class="staticmethod">
 <dt id="mpylib.MUndo.wrap">
 <em class="property">static </em><code class="descname">wrap</code><span class="sig-paren">(</span><em>func</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.MUndo.wrap" title="Permalink to this definition">¶</a></dt>
-<dd><p>Puts the wrapped <cite>func</cite> into a single Maya Undo action, then 
-undoes it when the function enters the finally: block</p>
+<dd><p>Puts the wrapped <cite>func</cite> into a single Maya Undo action, then undoes it when
+the function enters the finally: block</p>
 </dd></dl>
 
 </dd></dl>
@@ -136,8 +136,8 @@ undoes it when the function enters the finally: block</p>
               <img class="logo" src="../_static/mpynode_hr.png" alt="Logo">
             </a></p>
   <h4>Previous topic</h4>
-  <p class="topless"><a href="mpylib.MTransList.html"
-                        title="previous chapter">MTransList</a></p>
+  <p class="topless"><a href="mpylib.MNodeList.html"
+                        title="previous chapter">MNodeList</a></p>
   <h4>Next topic</h4>
   <p class="topless"><a href="../mpylib.api.html"
                         title="next chapter">mpylib.api Package</a></p>

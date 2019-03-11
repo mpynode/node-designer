@@ -48,8 +48,8 @@
 	    <div class="spc-navbar">
               
     <ul class="nav nav-pills pull-left">
-        <li class="active"><a href="https://bitbucket.org/mpynode/mpynode/src/master/">Bitbucket Master</a></li>
-        <li class="active"><a href="https://apps.autodesk.com/MAYA/en/Home/Index">App Store</a></li>
+        <li class="active"><a href="https://bitbucket.org/mpynode/mpynode/src/master/">Bitbucket</a></li>
+        <li class="active"><a href="http://http://www.mpynode.com/">Website</a></li>
 	
         <li class="active"><a href="../index.html">MPyNode 1.0 documentation</a></li>
 	
@@ -93,6 +93,8 @@
 <dt id="mpylib.api.MColor">
 <em class="property">class </em><code class="descname">MColor</code><span class="sig-paren">(</span><em>clr=None</em>, <em>model=0</em>, <em>dataType=0</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.api.MColor" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">OpenMaya.MColor</span></code></p>
+<p>Override of the Maya API class of the same name to make
+the data within the class ‘picklable’</p>
 <p class="rubric">Methods Summary</p>
 <table border="1" class="longtable docutils">
 <colgroup>
@@ -101,13 +103,13 @@
 </colgroup>
 <tbody valign="top">
 <tr class="row-odd"><td><a class="reference internal" href="#mpylib.api.MColor.getColorModel" title="mpylib.api.MColor.getColorModel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">getColorModel</span></code></a>()</td>
-<td></td>
+<td>Returns the color model used by this MColor object</td>
 </tr>
 <tr class="row-even"><td><a class="reference internal" href="#mpylib.api.MColor.getDataType" title="mpylib.api.MColor.getDataType"><code class="xref py py-obj docutils literal notranslate"><span class="pre">getDataType</span></code></a>()</td>
-<td></td>
+<td>Returns the color data type used by this MColor object</td>
 </tr>
 <tr class="row-odd"><td><a class="reference internal" href="#mpylib.api.MColor.setColor" title="mpylib.api.MColor.setColor"><code class="xref py py-obj docutils literal notranslate"><span class="pre">setColor</span></code></a>(clr[,&nbsp;model,&nbsp;dataType])</td>
-<td>Sets the color’s components and color model.</td>
+<td>Override of the base class version to add functionality</td>
 </tr>
 </tbody>
 </table>
@@ -115,17 +117,21 @@
 <dl class="method">
 <dt id="mpylib.api.MColor.getColorModel">
 <code class="descname">getColorModel</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.api.MColor.getColorModel" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Returns the color model used by this MColor object</p>
+<p><em>RETURNS</em>       <em>int</em> representing the color model type such as MColor.kRGB</p>
+</dd></dl>
 
 <dl class="method">
 <dt id="mpylib.api.MColor.getDataType">
 <code class="descname">getDataType</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.api.MColor.getDataType" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Returns the color data type used by this MColor object</p>
+<p><em>RETURNS</em>       <em>int</em> representing the color data type such as MColor.kFloat</p>
+</dd></dl>
 
 <dl class="method">
 <dt id="mpylib.api.MColor.setColor">
 <code class="descname">setColor</code><span class="sig-paren">(</span><em>clr</em>, <em>model=0</em>, <em>dataType=0</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.api.MColor.setColor" title="Permalink to this definition">¶</a></dt>
-<dd><p>Sets the color’s components and color model.</p>
+<dd><p>Override of the base class version to add functionality</p>
 </dd></dl>
 
 </dd></dl>

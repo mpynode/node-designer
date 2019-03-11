@@ -48,8 +48,8 @@
 	    <div class="spc-navbar">
               
     <ul class="nav nav-pills pull-left">
-        <li class="active"><a href="https://bitbucket.org/mpynode/mpynode/src/master/">Bitbucket Master</a></li>
-        <li class="active"><a href="https://apps.autodesk.com/MAYA/en/Home/Index">App Store</a></li>
+        <li class="active"><a href="https://bitbucket.org/mpynode/mpynode/src/master/">Bitbucket</a></li>
+        <li class="active"><a href="http://http://www.mpynode.com/">Website</a></li>
 	
         <li class="active"><a href="../index.html">MPyNode 1.0 documentation</a></li>
 	
@@ -93,10 +93,12 @@
 <dt id="mpylib.api.MVectorArray">
 <em class="property">class </em><code class="descname">MVectorArray</code><span class="sig-paren">(</span><em>*args</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.api.MVectorArray" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">OpenMaya.MVectorArray</span></code></p>
+<p>Override of the Maya API class of the same name to make
+the data within the class ‘picklable’</p>
 <p>The MVectorArray class provides an array of MVector elements using a common array interface and reference
 semantics. See Working with M*Array Classes for more details.</p>
 <p>Trying to override muliply functionality causes Maya to crash. If user multiplys this array by a int value
-it will return version of OpenMaya.MVectorArray as a result.</p>
+it will return base version of OpenMaya.MVectorArray as a result.</p>
 </dd></dl>
 
 </div>

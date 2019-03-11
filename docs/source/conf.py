@@ -80,8 +80,8 @@ html_theme_path = [os.path.abspath('./_theme')]
 html_theme_options = {
     "edit_link": "false",
     "sidebar": "right",
-    "rootlinks": [("https://bitbucket.org/mpynode/mpynode/src/master/", "Bitbucket Master"),
-                  ("https://apps.autodesk.com/MAYA/en/Home/Index", "App Store")]
+    "rootlinks": [("https://bitbucket.org/mpynode/mpynode/src/master/", "Bitbucket"),
+                  ("http://http://www.mpynode.com/", "Website")]
 }
 
 html_logo = "mpynode_hr.png"

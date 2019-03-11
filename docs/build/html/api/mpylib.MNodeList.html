@@ -29,8 +29,8 @@
     <link rel="search" title="Search" href="../search.html" >
     <link rel="top" title="MPyNode 1.0 documentation" href="../index.html" >
     <link rel="up" title="mpylib Package" href="../mpylib.html" >
-    <link rel="next" title="MShapeList" href="mpylib.MShapeList.html" >
-    <link rel="prev" title="MTrans" href="mpylib.MTrans.html" > 
+    <link rel="next" title="MUndo" href="mpylib.MUndo.html" >
+    <link rel="prev" title="MNode" href="mpylib.MNode.html" > 
   </head>
   <body>
 
@@ -48,8 +48,8 @@
 	    <div class="spc-navbar">
               
     <ul class="nav nav-pills pull-left">
-        <li class="active"><a href="https://bitbucket.org/mpynode/mpynode/src/master/">Bitbucket Master</a></li>
-        <li class="active"><a href="https://apps.autodesk.com/MAYA/en/Home/Index">App Store</a></li>
+        <li class="active"><a href="https://bitbucket.org/mpynode/mpynode/src/master/">Bitbucket</a></li>
+        <li class="active"><a href="http://http://www.mpynode.com/">Website</a></li>
 	
         <li class="active"><a href="../index.html">MPyNode 1.0 documentation</a></li>
 	
@@ -67,11 +67,11 @@
            >modules</a>
       </li>
       <li class="active">
-        <a href="mpylib.MShapeList.html" title="MShapeList"
+        <a href="mpylib.MUndo.html" title="MUndo"
            accesskey="N">next</a>
       </li>
       <li class="active">
-        <a href="mpylib.MTrans.html" title="MTrans"
+        <a href="mpylib.MNode.html" title="MNode"
            accesskey="P">previous</a>
       </li>
     </ul>
@@ -159,7 +159,7 @@ Supports all keyword args of maya.cmds.addAttr except “dt” and “at” whic
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>long_name</strong> – string long name of the attribute to add</li>
-<li><strong>attr_type</strong> – string type of attribute to add. Supports all string 
+<li><strong>attr_type</strong> – string type of attribute to add. Supports all string
 types supported by the “dt” and “at” args of maya.cmds.addAttr</li>
 <li><strong>kargs</strong> – keyword args supported by maya.cmds.addAttr</li>
 </ul>
@@ -263,10 +263,10 @@ by maya.cmds.listAttr.</p>
 <p><strong>args</strong>                optional specific string pattern of an attribute to query on the node. This supports multiple string args</p>
 <p><strong>kargs</strong>               keywords args supported by maya.cmds.listAttr</p>
 <p><strong>RETURNS</strong>             <em>OrderedDict</em> or <em>None</em></p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1">## get the names and values of all keyable attributes on this node </span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1">## get the names and values of all keyable attributes on this node</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">keyable_map</span> <span class="o">=</span> <span class="n">node_list</span><span class="o">.</span><span class="n">getAttrMap</span><span class="p">(</span><span class="n">keyable</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="go">&gt;&gt;&gt;</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="c1">## get names and values of all attributes that start with &quot;trans&quot; </span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1">## get names and values of all attributes that start with &quot;trans&quot;</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">trans_attrs</span> <span class="o">=</span> <span class="n">node_list</span><span class="o">.</span><span class="n">getAttrMap</span><span class="p">(</span><span class="s2">&quot;trans*&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -332,11 +332,11 @@ given attr. False will throw an exception on missing attr. default=False</li>
               <img class="logo" src="../_static/mpynode_hr.png" alt="Logo">
             </a></p>
   <h4>Previous topic</h4>
-  <p class="topless"><a href="mpylib.MTrans.html"
-                        title="previous chapter">MTrans</a></p>
+  <p class="topless"><a href="mpylib.MNode.html"
+                        title="previous chapter">MNode</a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="mpylib.MShapeList.html"
-                        title="next chapter">MShapeList</a></p>
+  <p class="topless"><a href="mpylib.MUndo.html"
+                        title="next chapter">MUndo</a></p>
 <div class="this-page-menu">
   <a href="/scipy/docs/scipy-docs/api/mpylib.MNodeList.rst.rst">Edit page</a>
 </div>

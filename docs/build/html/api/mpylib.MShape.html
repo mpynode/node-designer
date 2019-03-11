@@ -27,10 +27,7 @@
     <script type="text/javascript" src="../_static/js/copybutton.js"></script>
     <link rel="index" title="Index" href="../genindex.html" >
     <link rel="search" title="Search" href="../search.html" >
-    <link rel="top" title="MPyNode 1.0 documentation" href="../index.html" >
-    <link rel="up" title="mpylib Package" href="../mpylib.html" >
-    <link rel="next" title="MTrans" href="mpylib.MTrans.html" >
-    <link rel="prev" title="MNode" href="mpylib.MNode.html" > 
+    <link rel="top" title="MPyNode 1.0 documentation" href="../index.html" > 
   </head>
   <body>
 
@@ -48,12 +45,11 @@
 	    <div class="spc-navbar">
               
     <ul class="nav nav-pills pull-left">
-        <li class="active"><a href="https://bitbucket.org/mpynode/mpynode/src/master/">Bitbucket Master</a></li>
-        <li class="active"><a href="https://apps.autodesk.com/MAYA/en/Home/Index">App Store</a></li>
+        <li class="active"><a href="https://bitbucket.org/mpynode/mpynode/src/master/">Bitbucket</a></li>
+        <li class="active"><a href="http://http://www.mpynode.com/">Website</a></li>
 	
         <li class="active"><a href="../index.html">MPyNode 1.0 documentation</a></li>
-	
-          <li class="active"><a href="../mpylib.html" accesskey="U">mpylib Package</a></li> 
+	 
     </ul>
               
               
@@ -65,14 +61,6 @@
       <li class="active">
         <a href="../py-modindex.html" title="Python Module Index"
            >modules</a>
-      </li>
-      <li class="active">
-        <a href="mpylib.MTrans.html" title="MTrans"
-           accesskey="N">next</a>
-      </li>
-      <li class="active">
-        <a href="mpylib.MNode.html" title="MNode"
-           accesskey="P">previous</a>
       </li>
     </ul>
               
@@ -89,113 +77,6 @@
             
   <div class="section" id="mshape">
 <h1>MShape<a class="headerlink" href="#mshape" title="Permalink to this headline">¶</a></h1>
-<dl class="class">
-<dt id="mpylib.MShape">
-<em class="property">class </em><code class="descname">MShape</code><span class="sig-paren">(</span><em>shape</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.MShape" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">mpylib.MNode</span></code></p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Purpose:</th><td class="field-body">Base class for shape node related funtionality. Single instance of
-MShape respresents a single shape node in the current scene.</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Extends:</th><td class="field-body">MNode</td>
-</tr>
-</tbody>
-</table>
-<p class="rubric">Methods Summary</p>
-<table border="1" class="longtable docutils">
-<colgroup>
-<col width="10%" />
-<col width="90%" />
-</colgroup>
-<tbody valign="top">
-<tr class="row-odd"><td><a class="reference internal" href="#mpylib.MShape.duplicate" title="mpylib.MShape.duplicate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">duplicate</span></code></a>(**kargs)</td>
-<td>Duplicate the node with the given options.</td>
-</tr>
-<tr class="row-even"><td><a class="reference internal" href="#mpylib.MShape.getDagPath" title="mpylib.MShape.getDagPath"><code class="xref py py-obj docutils literal notranslate"><span class="pre">getDagPath</span></code></a>()</td>
-<td>Utility method for working with the Maya API.</td>
-</tr>
-<tr class="row-odd"><td><a class="reference internal" href="#mpylib.MShape.getParent" title="mpylib.MShape.getParent"><code class="xref py py-obj docutils literal notranslate"><span class="pre">getParent</span></code></a>()</td>
-<td><table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">purpose:</th><td class="field-body">Returns the shape’s parent node</td>
-</tr>
-</tbody>
-</table>
-</td>
-</tr>
-<tr class="row-even"><td><a class="reference internal" href="#mpylib.MShape.parent" title="mpylib.MShape.parent"><code class="xref py py-obj docutils literal notranslate"><span class="pre">parent</span></code></a>(trans)</td>
-<td><table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">purpose:</th><td class="field-body">Parents this shape to another transform. Functions just like</td>
-</tr>
-</tbody>
-</table>
-</td>
-</tr>
-</tbody>
-</table>
-<p class="rubric">Methods Documentation</p>
-<dl class="method">
-<dt id="mpylib.MShape.duplicate">
-<code class="descname">duplicate</code><span class="sig-paren">(</span><em>**kargs</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.MShape.duplicate" title="Permalink to this definition">¶</a></dt>
-<dd><p>Duplicate the node with the given options. This overrides the default MNode version because Maya
-returns the Transform</p>
-<p><strong>kargs</strong>       keywords arg supported by maya.cmds.duplicate</p>
-<p><strong>RETURNS</strong> MNode of the new node</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">new_node</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">duplicate</span><span class="p">()</span>
-</pre></div>
-</div>
-</dd></dl>
-
-<dl class="method">
-<dt id="mpylib.MShape.getDagPath">
-<code class="descname">getDagPath</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.MShape.getDagPath" title="Permalink to this definition">¶</a></dt>
-<dd><p>Utility method for working with the Maya API. Returns MDagPath object for this mesh node.</p>
-<p><strong>RETURNS</strong>             MDagPath</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="mpylib.MShape.getParent">
-<code class="descname">getParent</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.MShape.getParent" title="Permalink to this definition">¶</a></dt>
-<dd><table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Purpose:</th><td class="field-body">Returns the shape’s parent node</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">MTrans or None</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="method">
-<dt id="mpylib.MShape.parent">
-<code class="descname">parent</code><span class="sig-paren">(</span><em>trans</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.MShape.parent" title="Permalink to this definition">¶</a></dt>
-<dd><table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Purpose:</th><td class="field-body">Parents this shape to another transform. Functions just like
-maya.cmds.parent(shape=True, relative=True).</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Parameters:</th><td class="field-body"><strong>trans</strong> – MNode or string name of a transform node</td>
-</tr>
-<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">None</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-</dd></dl>
-
 </div>
 
 
@@ -207,12 +88,6 @@ maya.cmds.parent(shape=True, relative=True).</td>
             <p class="logo"><a href="../index.html">
               <img class="logo" src="../_static/mpynode_hr.png" alt="Logo">
             </a></p>
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="mpylib.MNode.html"
-                        title="previous chapter">MNode</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="mpylib.MTrans.html"
-                        title="next chapter">MTrans</a></p>
 <div class="this-page-menu">
   <a href="/scipy/docs/scipy-docs/api/mpylib.MShape.rst.rst">Edit page</a>
 </div>
