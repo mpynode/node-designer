@@ -21,7 +21,7 @@ sys.path.insert(0, os.path.abspath(r'..\..\scripts'))
 # -- Project information -----------------------------------------------------
 
 project = u'MPyNode'
-copyright = u'2018, Gene Hansen, Eric Vignola'
+copyright = u'2019, Gene Hansen, Eric Vignola'
 author = u'Gene Hansen, Eric Vignola'
 
 # The short X.Y version
@@ -80,8 +80,8 @@ html_theme_path = [os.path.abspath('./_theme')]
 html_theme_options = {
     "edit_link": "false",
     "sidebar": "right",
-    "rootlinks": [("https://bitbucket.org/mpynode/mpynode/src/master/", "Bitbucket Master"),
-                  ("https://apps.autodesk.com/MAYA/en/Home/Index", "App Store")]
+    "rootlinks": [("https://bitbucket.org/mpynode/mpynode/src/master/", "Bitbucket"),
+                  ("http://www.mpynode.com/", "Website")]
 }
 
 html_logo = "mpynode_hr.png"

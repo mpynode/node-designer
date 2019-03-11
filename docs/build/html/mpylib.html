@@ -47,8 +47,8 @@
 	    <div class="spc-navbar">
               
     <ul class="nav nav-pills pull-left">
-        <li class="active"><a href="https://bitbucket.org/mpynode/mpynode/src/master/">Bitbucket Master</a></li>
-        <li class="active"><a href="https://apps.autodesk.com/MAYA/en/Home/Index">App Store</a></li>
+        <li class="active"><a href="https://bitbucket.org/mpynode/mpynode/src/master/">Bitbucket</a></li>
+        <li class="active"><a href="http://www.mpynode.com/">Website</a></li>
 	
         <li class="active"><a href="index.html">MPyNode 1.0 documentation</a></li>
 	 
@@ -106,46 +106,10 @@
 </table>
 </td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="api/mpylib.MShape.html#mpylib.MShape" title="mpylib.MShape"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MShape</span></code></a>(shape)</td>
-<td><table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">purpose:</th><td class="field-body">Base class for shape node related funtionality. Single instance of</td>
-</tr>
-</tbody>
-</table>
-</td>
-</tr>
-<tr class="row-odd"><td><a class="reference internal" href="api/mpylib.MTrans.html#mpylib.MTrans" title="mpylib.MTrans"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MTrans</span></code></a>([node,&nbsp;name])</td>
-<td>Provides object oriented interface for querying/editing DAG nodes inside Maya.</td>
-</tr>
 <tr class="row-even"><td><a class="reference internal" href="api/mpylib.MNodeList.html#mpylib.MNodeList" title="mpylib.MNodeList"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MNodeList</span></code></a>([nodes])</td>
 <td>List type object, used for storing MNode type objects</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="api/mpylib.MShapeList.html#mpylib.MShapeList" title="mpylib.MShapeList"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MShapeList</span></code></a>([nodes])</td>
-<td><table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">purpose:</th><td class="field-body">List type object, used for storing MShape type objects</td>
-</tr>
-</tbody>
-</table>
-</td>
-</tr>
-<tr class="row-even"><td><a class="reference internal" href="api/mpylib.MTransList.html#mpylib.MTransList" title="mpylib.MTransList"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MTransList</span></code></a>([nodes])</td>
-<td><table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">purpose:</th><td class="field-body">List like object for storing and interacting with multiple transform nodes.</td>
-</tr>
-</tbody>
-</table>
-</td>
-</tr>
-<tr class="row-odd"><td><a class="reference internal" href="api/mpylib.MUndo.html#mpylib.MUndo" title="mpylib.MUndo"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MUndo</span></code></a>(func,&nbsp;*args,&nbsp;**kwargs)</td>
+<tr class="row-odd"><td><a class="reference internal" href="api/mpylib.MUndo.html#mpylib.MUndo" title="mpylib.MUndo"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MUndo</span></code></a>(func,&nbsp;*args,&nbsp;**kargs)</td>
 <td>Wraps a call to the given python function in MEL so it occupies a single undo slot.</td>
 </tr>
 </tbody>
@@ -196,7 +160,7 @@
     <div class="row-fluid">
     <ul class="inline pull-left">
       <li>
-        &copy; Copyright 2018, Gene Hansen, Eric Vignola.
+        &copy; Copyright 2019, Gene Hansen, Eric Vignola.
       </li>
       <li>
       Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.8.2.
