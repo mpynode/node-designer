@@ -219,8 +219,8 @@ class NDMainWindow(QMayaWindow):
     FILE_ASCII_FILTER = "Ascii (*." + MPyNode.ASCII_FILE_EXT + ")"
     EXPORT_FILE_FILTERS = FILE_BINARY_FILTER + ";;" + FILE_ASCII_FILTER
 
-    HELP_DOCS_URL = "https://mpynode.bitbucket.io"
-    HELP_API_DOCS_URL = "https://mpynode.bitbucket.io/genindex.html"
+    HELP_DOCS_URL = "http://www.mpynode.com/node-designer.html"
+    HELP_API_DOCS_URL = "https://mpynode.bitbucket.io/index.html"
 
 
     def __init__(self):
