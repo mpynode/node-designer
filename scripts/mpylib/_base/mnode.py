@@ -266,18 +266,26 @@ class MNode(om.MObject):
     @classmethod
     def createNode(cls, node_type=None, **kargs):
         """
-        Wrapper class method for maya.cmds.createNode thats returns a MNode object
-        instead of a string name
+        createNode(node_type=None, \*\*kargs)
 
-        **node_type**	*string* node type to create
+            Wrapper class method for maya.cmds.createNode thats returns a MNode object
+            instead of a string name
 
-        **kargs**		keyword args supported by *maya.cmds.createNode*
+            Parameters
+            ----------
+            node_type : *str* node type to create
 
-        **RETURNS** 	*MNode* of newly created node
+            kargs : *dict*
+                keyword args supported by *maya.cmds.createNode*
 
-        >>> new_node = MNode.createNode("transform", name="new_node")
-        >>> new_node = MNode.createNode("time")
+            Returns
+            -------
+            *MNode* of newly created node
 
+            Examples
+            --------
+        	>>> new_node = MNode.createNode("transform", name="new_node")
+        	>>> new_node = MNode.createNode("time")
         """
 
         if node_type is None:

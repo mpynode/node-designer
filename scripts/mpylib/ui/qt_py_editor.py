@@ -93,6 +93,10 @@ class QtPythonEditor(QPlainTextEdit):
                 else:
                     self.zoomOut(2)
 
+                return True
+
+        return False
+
 
     def lineNumberAreaWidth(self):
 
@@ -168,7 +172,15 @@ class QtPythonEditor(QPlainTextEdit):
 
 
     def getHighlighter(self):
+
         return self._highlighter
+
+
+    def setFontSize(self, size):
+
+        font = self.font()
+        font.setPointSize(size)
+        self.setFont(font)
 
 
 if __name__ == "__main__":
