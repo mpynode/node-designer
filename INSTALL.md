@@ -1,9 +1,8 @@
 #INSTALLATION INSTRUCTIONS
-#-------------------------
 
-1) Clone/Download https://bitbucket.org/mpynode/node-designer/src/release/ 
+###1) Clone/Download https://bitbucket.org/mpynode/node-designer/src/release/ 
 
-2) Copy the following to a location listed under MAYA_PLUGIN_PATH
+###2) Copy the following to a location listed under MAYA_PLUGIN_PATH
 * ./node-designer/plug-ins/_mpynode
 * ./node-designer/plug-ins/mpynode_plugin.py
 ```
@@ -22,7 +21,7 @@ $MAYA_APP_DIR/Maya/<version>/plug-ins
 $MAYA_APP_DIR/Maya/plug-ins
 ```
 
-3) Copy the following to a location listed under PYTHONPATH
+###3) Copy the following to a location listed under PYTHONPATH
 * ./node-designer/scripts/mpylib
 ```
 PYTHONPATH default locations
@@ -46,20 +45,20 @@ $MAYA_APP_DIR/Maya/scripts
 $MAYA_APP_DIR/Maya/<version>/prefs/shelves
 ```
 
-4) Launch Node Designer directly
+###4) Launch Node Designer directly
 ```
 from mpylib.ui import NDMainWindow
 win = NDMainWindow()
 win.show()
 ```
 
-5) Optionally, create a shelf button with this helper
+###5) Optionally, create a shelf button with this helper
 ```
 import mpylib
 mpylib.ui.initShelf()
 ```
 
-6) Use the API directly to create nodes, or subclass for full integration into your pipeline.
+###6) Use the API directly to create nodes, or subclass for full integration into your pipeline.
 ```
 # Direct API calls
 from mpylib.nodes import MPyNode
