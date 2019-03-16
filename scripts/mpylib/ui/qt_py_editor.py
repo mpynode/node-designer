@@ -38,7 +38,10 @@ class QtPythonEditor(QPlainTextEdit):
 
     TAB_STOP = 4
 
-
+    _font = None
+    _font_size = DEFAULT_FONT_SIZE
+    
+    
     def __init__(self, parent=None):
 
         QPlainTextEdit.__init__(self, parent)
@@ -49,6 +52,7 @@ class QtPythonEditor(QPlainTextEdit):
 
         self._initTextAttrs()
         self._initEvents()
+
 
 
     def _initEvents(self):
@@ -62,14 +66,14 @@ class QtPythonEditor(QPlainTextEdit):
 
     def _initTextAttrs(self):
 
-        font = QFont()
-        font.setFamily(self.DEFAULT_FONT_FAMILY)
-        font.setStyleHint(QFont.Monospace)
-        font.setFixedPitch(True)
-        font.setPointSize(self.DEFAULT_FONT_SIZE)
+        self.font = QFont()
+        self.font.setFamily(self.DEFAULT_FONT_FAMILY)
+        self.font.setStyleHint(QFont.Monospace)
+        self.font.setFixedPitch(True)
+        self.font.setPointSize(self._font_size)
 
-        self.setFont(font)
-        self.setTabStopWidth(self.TAB_STOP * QFontMetrics(font).width(" "))
+        self.setFont(self.font)
+        self.setTabStopWidth(self.TAB_STOP * QFontMetrics(self.font).width(" "))
 
 
     def resizeEvent(self, event):
@@ -89,9 +93,15 @@ class QtPythonEditor(QPlainTextEdit):
         if event.type() == QEvent.Wheel:
             if event.modifiers() == Qt.ControlModifier:
                 if event.delta() > 0:
-                    self.zoomIn(2)
+                    self._font_size = max(self._font_size-2,self.DEFAULT_FONT_SIZE)
+                    #self.zoomIn(2)
                 else:
-                    self.zoomOut(2)
+                    self._font_size = max(self._font_size+2,self.DEFAULT_FONT_SIZE)
+                    #self.zoomOut(2)
+                    
+                self.font.setPointSize(self._font_size)
+                self.setFont(self.font)
+                self.setTabStopWidth(self.TAB_STOP * QFontMetrics(self.font).width(" "))                    
 
                 return True
 
