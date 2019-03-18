@@ -82,7 +82,7 @@ from ..files import IniFile
 
 
 APP_NAME = "Node Designer"
-APP_VERSION = "1.0.1b1"
+APP_VERSION = "1.0.1"
 
 BASE_DIR = os.path.dirname(__file__).replace("\\", "/")
 RESOURCE_DIR_NAME = "resources"
