@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8">
+    
+    <title>MVector &mdash; MPyNode 1.0 documentation</title>
+    
+    <link rel="stylesheet" type="text/css" href="../_static/css/spc-bootstrap.css">
+    <link rel="stylesheet" type="text/css" href="../_static/css/spc-extend.css">
+    <link rel="stylesheet" href="../_static/scipy.css" type="text/css" >
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" >
+    <link rel="stylesheet" href="../_static/graphviz.css" type="text/css" >
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/js/copybutton.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" >
+    <link rel="search" title="Search" href="../search.html" >
+    <link rel="top" title="MPyNode 1.0 documentation" href="../index.html" >
+    <link rel="up" title="mpylib.api Package" href="../mpylib.api.html" >
+    <link rel="next" title="MVectorArray" href="mpylib.api.MVectorArray.html" >
+    <link rel="prev" title="MTimeArray" href="mpylib.api.MTimeArray.html" > 
+  </head>
+  <body>
+
+  <div class="container">
+    <div class="header">
+    </div>
+  </div>
+
+
+    <div class="container">
+      <div class="main">
+        
+	<div class="row-fluid">
+	  <div class="span12">
+	    <div class="spc-navbar">
+              
+    <ul class="nav nav-pills pull-left">
+        <li class="active"><a href="https://bitbucket.org/mpynode/mpynode/src/master/">Bitbucket</a></li>
+        <li class="active"><a href="http://www.mpynode.com/">Website</a></li>
+	
+        <li class="active"><a href="../index.html">MPyNode 1.0 documentation</a></li>
+	
+          <li class="active"><a href="../mpylib.api.html" accesskey="U">mpylib.api Package</a></li> 
+    </ul>
+              
+              
+    <ul class="nav nav-pills pull-right">
+      <li class="active">
+        <a href="../genindex.html" title="General Index"
+           accesskey="I">index</a>
+      </li>
+      <li class="active">
+        <a href="../py-modindex.html" title="Python Module Index"
+           >modules</a>
+      </li>
+      <li class="active">
+        <a href="mpylib.api.MVectorArray.html" title="MVectorArray"
+           accesskey="N">next</a>
+      </li>
+      <li class="active">
+        <a href="mpylib.api.MTimeArray.html" title="MTimeArray"
+           accesskey="P">previous</a>
+      </li>
+    </ul>
+              
+	    </div>
+	  </div>
+	</div>
+        
+
+	<div class="row-fluid">
+          <div class="span9">
+            
+        <div class="bodywrapper">
+          <div class="body" id="spc-section-body">
+            
+  <div class="section" id="mvector">
+<h1>MVector<a class="headerlink" href="#mvector" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="mpylib.api.MVector">
+<em class="property">class </em><code class="descname">MVector</code><span class="sig-paren">(</span><em>*args</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.api.MVector" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">OpenMaya.MVector</span></code></p>
+<p>Override of the Maya API class of the same name to make
+the data within the class ‘picklable’</p>
+<p class="rubric">Methods Summary</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><a class="reference internal" href="#mpylib.api.MVector.normal" title="mpylib.api.MVector.normal"><code class="xref py py-obj docutils literal notranslate"><span class="pre">normal</span></code></a>()</td>
+<td>Returns a new vector containing the normalized version of this one.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#mpylib.api.MVector.normalize" title="mpylib.api.MVector.normalize"><code class="xref py py-obj docutils literal notranslate"><span class="pre">normalize</span></code></a>()</td>
+<td>Normalizes this vector in-place and returns a new reference to it.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#mpylib.api.MVector.rotateBy" title="mpylib.api.MVector.rotateBy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">rotateBy</span></code></a>(*args)</td>
+<td>Returns the vector resulting from rotating this one by the given amount.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#mpylib.api.MVector.rotateTo" title="mpylib.api.MVector.rotateTo"><code class="xref py py-obj docutils literal notranslate"><span class="pre">rotateTo</span></code></a>(target)</td>
+<td>Returns the quaternion which will rotate this vector into another.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#mpylib.api.MVector.transformAsNormal" title="mpylib.api.MVector.transformAsNormal"><code class="xref py py-obj docutils literal notranslate"><span class="pre">transformAsNormal</span></code></a>(matrix)</td>
+<td>Returns a new vector which is calculated by postmultiplying this vector by the transpose of the given matrix’s inverse and then normalizing the result.</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Methods Documentation</p>
+<dl class="method">
+<dt id="mpylib.api.MVector.normal">
+<code class="descname">normal</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.api.MVector.normal" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a new vector containing the normalized version of this one.</p>
+<p><strong>RETURNS</strong>     <em>MVector</em></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">new_v</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">normal</span><span class="p">()</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib.api.MVector.normalize">
+<code class="descname">normalize</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.api.MVector.normalize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Normalizes this vector in-place and returns a new reference to it.</p>
+<p><strong>RETURNS</strong>     <em>MVector</em></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">v</span><span class="o">.</span><span class="n">normalize</span><span class="p">()</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib.api.MVector.rotateBy">
+<code class="descname">rotateBy</code><span class="sig-paren">(</span><em>*args</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.api.MVector.rotateBy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the vector resulting from rotating this one by the given amount.</p>
+<p><strong>args</strong>                single <em>MQuaternion</em> or <em>MEulerRotation</em>, or an axis identifier constant and a <em>float</em> angle</p>
+<p><strong>RETURNS</strong>     <em>MVector</em></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1">##---rotate by MQuaternion or MEulerRotation---##</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">new_v</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">rotateBy</span><span class="p">(</span><span class="n">rot</span><span class="p">)</span>
+<span class="go">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1">##---rotate by angle radians about the specified axis---##</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">new_v</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">rotateBy</span><span class="p">(</span><span class="n">MVector</span><span class="o">.</span><span class="n">kXaxis</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib.api.MVector.rotateTo">
+<code class="descname">rotateTo</code><span class="sig-paren">(</span><em>target</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.api.MVector.rotateTo" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the quaternion which will rotate this vector into another.</p>
+<p><strong>target</strong>              <em>MVector</em></p>
+<p><strong>RETURNS</strong>     <em>MQuaternion</em></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">q</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">rotateTo</span><span class="p">(</span><span class="n">MVector</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">))</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="mpylib.api.MVector.transformAsNormal">
+<code class="descname">transformAsNormal</code><span class="sig-paren">(</span><em>matrix</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.api.MVector.transformAsNormal" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a new vector which is calculated by postmultiplying this vector by the transpose of the given matrix’s inverse and then normalizing the result.</p>
+<p><strong>matrix</strong>              <em>MMatrix</em></p>
+<p><strong>RETURNS</strong>             <em>MVector</em></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">matrix</span> <span class="o">=</span> <span class="n">MMatrix</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">new_v</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">transformAsNormal</span><span class="p">(</span><span class="n">matrix</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+          </div>
+      <div class="spc-rightsidebar span3">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../index.html">
+              <img class="logo" src="../_static/mpynode_hr.png" alt="Logo">
+            </a></p>
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="mpylib.api.MTimeArray.html"
+                        title="previous chapter">MTimeArray</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="mpylib.api.MVectorArray.html"
+                        title="next chapter">MVectorArray</a></p>
+<div class="this-page-menu">
+  <a href="/scipy/docs/scipy-docs/api/mpylib.api.MVector.rst.rst">Edit page</a>
+</div>
+
+        </div>
+      </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="container container-navbar-bottom">
+      <div class="spc-navbar">
+        
+      </div>
+    </div>
+    <div class="container">
+    <div class="footer">
+    <div class="row-fluid">
+    <ul class="inline pull-left">
+      <li>
+        &copy; Copyright 2019, Gene Hansen, Eric Vignola.
+      </li>
+      <li>
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.8.2.
+      </li>
+    </ul>
+    </div>
+    </div>
+    </div>
+  </body>
+</html>
