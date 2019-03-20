@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8">
+    
+    <title>MUndo &mdash; MPyNode 1.0 documentation</title>
+    
+    <link rel="stylesheet" type="text/css" href="../_static/css/spc-bootstrap.css">
+    <link rel="stylesheet" type="text/css" href="../_static/css/spc-extend.css">
+    <link rel="stylesheet" href="../_static/scipy.css" type="text/css" >
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" >
+    <link rel="stylesheet" href="../_static/graphviz.css" type="text/css" >
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/js/copybutton.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" >
+    <link rel="search" title="Search" href="../search.html" >
+    <link rel="top" title="MPyNode 1.0 documentation" href="../index.html" >
+    <link rel="up" title="mpylib Package" href="../mpylib.html" >
+    <link rel="next" title="mpylib.api Package" href="../mpylib.api.html" >
+    <link rel="prev" title="MNodeList" href="mpylib.MNodeList.html" > 
+  </head>
+  <body>
+
+  <div class="container">
+    <div class="header">
+    </div>
+  </div>
+
+
+    <div class="container">
+      <div class="main">
+        
+	<div class="row-fluid">
+	  <div class="span12">
+	    <div class="spc-navbar">
+              
+    <ul class="nav nav-pills pull-left">
+        <li class="active"><a href="https://github.com/mpynode/node-designer/">GitHub</a></li>
+        <li class="active"><a href="http://www.mpynode.com/">Website</a></li>
+	
+        <li class="active"><a href="../index.html">MPyNode 1.0 documentation</a></li>
+	
+          <li class="active"><a href="../mpylib.html" accesskey="U">mpylib Package</a></li> 
+    </ul>
+              
+              
+    <ul class="nav nav-pills pull-right">
+      <li class="active">
+        <a href="../genindex.html" title="General Index"
+           accesskey="I">index</a>
+      </li>
+      <li class="active">
+        <a href="../py-modindex.html" title="Python Module Index"
+           >modules</a>
+      </li>
+      <li class="active">
+        <a href="../mpylib.api.html" title="mpylib.api Package"
+           accesskey="N">next</a>
+      </li>
+      <li class="active">
+        <a href="mpylib.MNodeList.html" title="MNodeList"
+           accesskey="P">previous</a>
+      </li>
+    </ul>
+              
+	    </div>
+	  </div>
+	</div>
+        
+
+	<div class="row-fluid">
+          <div class="span9">
+            
+        <div class="bodywrapper">
+          <div class="body" id="spc-section-body">
+            
+  <div class="section" id="mundo">
+<h1>MUndo<a class="headerlink" href="#mundo" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="mpylib.MUndo">
+<em class="property">class </em><code class="descname">MUndo</code><span class="sig-paren">(</span><em>func</em>, <em>*args</em>, <em>**kargs</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.MUndo" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Wraps a call to the given python function in MEL so it occupies a single undo slot.</p>
+<p class="rubric">Methods Summary</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><a class="reference internal" href="#mpylib.MUndo.__call__" title="mpylib.MUndo.__call__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__call__</span></code></a>(…)&nbsp;&lt;==&gt;&nbsp;x(…)</td>
+<td></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#mpylib.MUndo.wrap" title="mpylib.MUndo.wrap"><code class="xref py py-obj docutils literal notranslate"><span class="pre">wrap</span></code></a>(func)</td>
+<td>Puts the wrapped <cite>func</cite> into a single Maya Undo action, then undoes it when the function enters the finally: block</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Methods Documentation</p>
+<dl class="method">
+<dt id="mpylib.MUndo.__call__">
+<code class="descname">__call__</code><span class="sig-paren">(</span><em>...) &lt;==&gt; x(...</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.MUndo.__call__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="staticmethod">
+<dt id="mpylib.MUndo.wrap">
+<em class="property">static </em><code class="descname">wrap</code><span class="sig-paren">(</span><em>func</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.MUndo.wrap" title="Permalink to this definition">¶</a></dt>
+<dd><p>Puts the wrapped <cite>func</cite> into a single Maya Undo action, then undoes it when
+the function enters the finally: block</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+          </div>
+      <div class="spc-rightsidebar span3">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../index.html">
+              <img class="logo" src="../_static/mpynode_hr.png" alt="Logo">
+            </a></p>
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="mpylib.MNodeList.html"
+                        title="previous chapter">MNodeList</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="../mpylib.api.html"
+                        title="next chapter">mpylib.api Package</a></p>
+<div class="this-page-menu">
+  <a href="/scipy/docs/scipy-docs/api/mpylib.MUndo.rst.rst">Edit page</a>
+</div>
+
+        </div>
+      </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="container container-navbar-bottom">
+      <div class="spc-navbar">
+        
+      </div>
+    </div>
+    <div class="container">
+    <div class="footer">
+    <div class="row-fluid">
+    <ul class="inline pull-left">
+      <li>
+        &copy; Copyright 2019, Gene Hansen, Eric Vignola.
+      </li>
+      <li>
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.8.2.
+      </li>
+    </ul>
+    </div>
+    </div>
+    </div>
+  </body>
+</html>
