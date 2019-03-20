@@ -48,7 +48,7 @@
 	    <div class="spc-navbar">
               
     <ul class="nav nav-pills pull-left">
-        <li class="active"><a href="https://bitbucket.org/mpynode/mpynode/src/master/">Bitbucket</a></li>
+        <li class="active"><a href="https://github.com/mpynode/node-designer/">GitHub</a></li>
         <li class="active"><a href="http://www.mpynode.com/">Website</a></li>
 	
         <li class="active"><a href="../index.html">MPyNode 1.0 documentation</a></li>
@@ -473,9 +473,28 @@ Return the number of (non-overlapping) occurrences of substring sub in string s[
 <em class="property">classmethod </em><code class="descname">createNode</code><span class="sig-paren">(</span><em>node_type=None</em>, <em>**kargs</em><span class="sig-paren">)</span><a class="headerlink" href="#mpylib.MNode.createNode" title="Permalink to this definition">¶</a></dt>
 <dd><p>Wrapper class method for maya.cmds.createNode thats returns a MNode object
 instead of a string name</p>
-<p><strong>node_type</strong>   <em>string</em> node type to create</p>
-<p><strong>kargs</strong>               keyword args supported by <em>maya.cmds.createNode</em></p>
-<p><strong>RETURNS</strong>     <em>MNode</em> of newly created node</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>node_type</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><em>str</em> node type to create</span></dt>
+<dd></dd>
+<dt><strong>kargs</strong> <span class="classifier-delimiter">:</span> <span class="classifier"><em>dict</em></span></dt>
+<dd><p class="first last">keyword args supported by <em>maya.cmds.createNode</em></p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>*MNode* of newly created node</strong></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Examples</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">new_node</span> <span class="o">=</span> <span class="n">MNode</span><span class="o">.</span><span class="n">createNode</span><span class="p">(</span><span class="s2">&quot;transform&quot;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;new_node&quot;</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">new_node</span> <span class="o">=</span> <span class="n">MNode</span><span class="o">.</span><span class="n">createNode</span><span class="p">(</span><span class="s2">&quot;time&quot;</span><span class="p">)</span>
 </pre></div>

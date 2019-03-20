@@ -14,8 +14,8 @@
 #
 import os
 import sys
-print os.path.abspath(r'..\..\scripts')
-sys.path.insert(0, os.path.abspath(r'..\..\scripts'))
+print os.path.abspath(r'..\..\..\scripts')
+sys.path.insert(0, os.path.abspath(r'..\..\..\scripts'))
 
 
 # -- Project information -----------------------------------------------------
@@ -80,7 +80,7 @@ html_theme_path = [os.path.abspath('./_theme')]
 html_theme_options = {
     "edit_link": "false",
     "sidebar": "right",
-    "rootlinks": [("https://bitbucket.org/mpynode/mpynode/src/master/", "Bitbucket"),
+    "rootlinks": [("https://github.com/mpynode/node-designer/", "GitHub"),
                   ("http://www.mpynode.com/", "Website")]
 }
 
