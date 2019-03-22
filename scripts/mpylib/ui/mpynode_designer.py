@@ -1,7 +1,7 @@
 """
 Author: Gene Hansen
 
-This module contains the main classes used in the Node designer ui
+This module contains the main classes used in the Node Designer ui
 """
 
 LICENSE_STR ="""
@@ -52,6 +52,8 @@ import maya.cmds as mc
 import maya.mel as mel
 import maya.api.OpenMaya as om
 
+USES_PYSIDE_2 = False
+
 if mc.about(apiVersion=True) < 201700:
     import PySide
     from PySide.QtCore import Qt, Signal, Slot, QSize, QObject, QRegExp, QObject
@@ -63,6 +65,7 @@ if mc.about(apiVersion=True) < 201700:
 else:
     import PySide2
     PySide = PySide2
+    USES_PYSIDE_2 = True
     from PySide2.QtCore import Qt, Signal, Slot, QSize, QObject, QRegExp, QObject
     from PySide2.QtGui import QColor, QFont, QFontMetrics, QKeySequence, QIcon, QPixmap, QTextCursor, QDoubleValidator, QIntValidator
     from PySide2.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QSplitter, QStatusBar, QMessageBox, QTreeWidget, QTreeWidgetItem, QDialog, QComboBox, QCheckBox
@@ -772,19 +775,21 @@ class NDMainWindow(QMayaWindow):
         self._file_menu = self.menuBar().addMenu("&File")
         self._file_menu.addAction(self._import_from_file_action)
         self._file_menu.addAction(self._export_to_file_action)
-        self._file_menu.setToolTipsVisible(True)
 
         self._node_menu = self.menuBar().addMenu("&Node")
         self._node_menu.addAction(self._new_node_action)
         self._node_menu.addAction(self._save_node_action)
         self._node_menu.addAction(self._save_all_nodes_action)
-        self._node_menu.setToolTipsVisible(True)
 
         self._help_menu = self.menuBar().addMenu("&Help")
         self._help_menu.addAction(self._help_doc_action)
         self._help_menu.addAction(self._help_api_doc_action)
         self._help_menu.addAction(self._about_dialog_action)
-        self._help_menu.setToolTipsVisible(True)
+
+        if USES_PYSIDE_2:
+            self._help_menu.setToolTipsVisible(True)
+            self._file_menu.setToolTipsVisible(True)
+            self._node_menu.setToolTipsVisible(True)
 
 
     def nodeRenamedBySceneTreeEvent(self, new_name):
