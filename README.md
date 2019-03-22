@@ -46,6 +46,23 @@ new_node = NewNodeClass()
 all_new_nodes = NewNodeClass.ls()
 ```
 
+
+### Future Features
+#### MPyNode
+* MPyDeformerNode 
+* MPyTransformNode
+* MPySurfaceShapeNode
+#### Node Designer
+* Code Auto-complete
+* Code Auto-indent
+* Code smart search and replace
+* File --> Export to python class
+* Add and define node level methods that can be called from the main expression/compute function
+* Add a custom icon to nodes that will appear in the outliner, node edtior, hypergraph, etc
+* Edit the properties of inputs/outputs (min, max, type, etc) after creation
+* Interactive debugging
+
+
 ## Documentation 
 https://mpynode.bitbucket.io/
 
