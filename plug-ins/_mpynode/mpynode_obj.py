@@ -1047,11 +1047,15 @@ class MPyNode(om.MPxNode):
         """
         
         try:
-            return cPickle.loads(codecs.decode(data.encode(), "base64"))
-        
+            try:
+                return cPickle.loads(codecs.decode(data.encode(), "base64"))
+            except:
+                return cPickle.loads(str(data)) # backwards compatibility with default cPickle protocol    
         except:
-            return cPickle.loads(str(data)) # backwards compatibility with default cPickle protocol    
-            
+            pass
+        
+        return None
+    
 
     @classmethod
     def nodeCreator(cls):
