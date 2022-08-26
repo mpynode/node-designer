@@ -13,7 +13,11 @@ class MAngle(om.MAngle):
 
     def __init__(self, *args):
 
-        super(MAngle, self).__init__(*args)
+        try:
+            super().__init__(*args) # python3
+        except:
+            super(MAngle, self).__init__(*args) # python2
+            
 
 
     def __reduce__(self):
@@ -28,7 +32,11 @@ class MAngle(om.MAngle):
 
     def __repr__(self):
 
-        return super(MAngle, self).__repr__().replace("maya.api.OpenMaya.", "MPyNode.")
+        try:
+            return super().__repr__().replace("maya.api.OpenMaya.", "MPyNode.") # python3
+        except:
+            return super(MAngle, self).__repr__().replace("maya.api.OpenMaya.", "MPyNode.") # python2
+            
 
 
 class MColor(om.MColor):
@@ -43,10 +51,18 @@ class MColor(om.MColor):
         self._data_type = dataType
 
         if clr:
-            super(MColor, self).__init__(clr, model=model, dataType=dataType)
+            try:
+                super().__init__(clr, model=model, dataType=dataType) # python3
+            except:
+                super(MColor, self).__init__(clr, model=model, dataType=dataType) # python2
+                
 
         else:
-            super(MColor, self).__init__()
+            try:
+                super().__init__() # python3
+            except:
+                super(MColor, self).__init__() # python2
+                
 
 
     def __reduce__(self):
@@ -61,47 +77,83 @@ class MColor(om.MColor):
 
     def __add__(self, y):
 
-        return MColor(super(MColor, self).__add__(y))
+        try:
+            return MColor(super().__add__(y)) # python3
+        except:
+            return MColor(super(MColor, self).__add__(y)) # python2
+            
 
 
     def __radd__(self, y):
 
-        return MColor(super(MColor, self).__radd__(y))
+        try:
+            return MColor(super().__radd__(y)) # python3
+        except:
+            return MColor(super(MColor, self).__radd__(y)) # python2
+            
 
 
     def __iadd__(self, y):
 
-        return MColor(super(MColor, self).__iadd__(y))
+        try:
+            return MColor(super().__iadd__(y)) # python3
+        except:
+            return MColor(super(MColor, self).__iadd__(y)) # python2
+            
 
 
     def __mul__(self, y):
 
-        return  MColor(super(MColor, self).__mul__(y))
+        try:
+            return  MColor(super().__mul__(y)) # python3
+        except:
+            return  MColor(super(MColor, self).__mul__(y)) # python2
+            
 
 
     def __rmul__(self, y):
 
-        return  MColor(super(MColor, self).__rmul__(y))
+        try:
+            return  MColor(super().__rmul__(y)) # python3
+        except:
+            return  MColor(super(MColor, self).__rmul__(y)) # python2
+            
 
 
     def __imul__(self, y):
 
-        return  MColor(super(MColor, self).__imul__(y))
+        try:
+            return  MColor(super().__imul__(y)) # python3
+        except:
+            return  MColor(super(MColor, self).__imul__(y)) # python2
+            
 
 
     def __div__(self, y):
 
-        return MColor(super(MVector, self).__div__(y))
+        try:
+            return MColor(super().__div__(y)) # python3
+        except:
+            return MColor(super(MVector, self).__div__(y)) # python2
+            
 
 
     def __idiv__(self, y):
 
-        return MColor(super(MVector, self).__idiv__(y))
+        try:
+            return MColor(super().__idiv__(y)) # python3
+        except:
+            return MColor(super(MVector, self).__idiv__(y)) # python2
+            
 
 
     def __rdiv__(self, y):
 
-        return MColor(super(MVector, self).__rdiv__(y))
+        try:
+            return MColor(super().__rdiv__(y)) # python3
+        except:
+            return MColor(super(MVector, self).__rdiv__(y)) # python2
+            
 
 
     def __str__(self):
@@ -111,7 +163,11 @@ class MColor(om.MColor):
 
     def __repr__(self):
 
-        return super(MColor, self).__repr__().replace("maya.api.OpenMaya.", "MPyNode.")
+        try:
+            return super().__repr__().replace("maya.api.OpenMaya.", "MPyNode.") # python3
+        except:
+            return super(MColor, self).__repr__().replace("maya.api.OpenMaya.", "MPyNode.") # python2
+            
 
 
     def setColor(self, clr, model=om.MColor.kRGB, dataType=om.MColor.kFloat):
@@ -122,7 +178,11 @@ class MColor(om.MColor):
         self._model = model
         self._data_type = dataType
 
-        super(MColor, self).setColor(clr, model=model, dataType=dataType)
+        try:
+            super().setColor(clr, model=model, dataType=dataType) # python3
+        except:
+            super(MColor, self).setColor(clr, model=model, dataType=dataType) # python2
+            
 
 
     def getColorModel(self):
@@ -154,7 +214,11 @@ class MColorArray(om.MColorArray):
 
     def __init__(self, *args):
 
-        super(MColorArray, self).__init__(*args)
+        try:
+            super().__init__(*args) # python3
+        except:
+            super(MColorArray, self).__init__(*args) # python2
+            
 
 
     def __reduce__(self):
@@ -169,22 +233,38 @@ class MColorArray(om.MColorArray):
 
     def __getitem__(self, i):
 
-        return MColor(super(MColorArray, self).__getitem__(i))
+        try:
+            return MColor(super().__getitem__(i)) # python3
+        except:
+            return MColor(super(MColorArray, self).__getitem__(i)) # python2
+            
 
 
     def __getslice__(self, i, j):
 
-        return MColorArray(super(MVectorArray, self).__getslice__(i, j))
+        try:
+            return MColorArray(super().__getslice__(i, j)) # python3
+        except:
+            return MColorArray(super(MVectorArray, self).__getslice__(i, j)) # python2
+            
 
 
     def __repr__(self):
 
-        return super(MColorArray, self).__repr__().replace("maya.api.OpenMaya.", "MPyNode.")
+        try:
+            return super().__repr__().replace("maya.api.OpenMaya.", "MPyNode.") # python3
+        except:
+            return super(MColorArray, self).__repr__().replace("maya.api.OpenMaya.", "MPyNode.") # python2
+            
 
 
     def __str__(self):
 
-        return super(MColorArray, self).__str__().replace("maya.api.OpenMaya.", "MPyNode.")
+        try:
+            return super().__str__().replace("maya.api.OpenMaya.", "MPyNode.") # python3
+        except:
+            return super(MColorArray, self).__str__().replace("maya.api.OpenMaya.", "MPyNode.") # python2
+            
 
 
 class MEulerRotation(om.MEulerRotation):
@@ -196,7 +276,11 @@ class MEulerRotation(om.MEulerRotation):
 
     def __init__(self, *args, **kargs):
 
-        super(MEulerRotation, self).__init__(*args, **kargs)
+        try:
+            super().__init__(*args, **kargs) # python3
+        except:
+            super(MEulerRotation, self).__init__(*args, **kargs) # python2
+            
 
 
     def __reduce__(self):
@@ -216,87 +300,155 @@ class MEulerRotation(om.MEulerRotation):
 
     def __repr__(self):
 
-        return super(MEulerRotation, self).__repr__().replace("maya.api.OpenMaya.", "MPyNode.")
+        try:
+            return super().__repr__().replace("maya.api.OpenMaya.", "MPyNode.") # python3
+        except:
+            return super(MEulerRotation, self).__repr__().replace("maya.api.OpenMaya.", "MPyNode.") # python2
+            
 
 
     def __add__(self, y):
 
-        return MEulerRotation(super(MEulerRotation, self).__add__(y))
+        try:
+            return MEulerRotation(super().__add__(y)) # python3
+        except:
+            return MEulerRotation(super(MEulerRotation, self).__add__(y)) # python2
+            
 
 
     def __radd__(self, y):
 
-        return MEulerRotation(super(MEulerRotation, self).__radd__(y))
+        try:
+            return MEulerRotation(super().__radd__(y)) # python3
+        except:
+            return MEulerRotation(super(MEulerRotation, self).__radd__(y)) # python2
+            
 
 
     def __iadd__(self, y):
 
-        return MEulerRotation(super(MEulerRotation, self).__iadd__(y))
+        try:
+            return MEulerRotation(super().__iadd__(y)) # python3
+        except:
+            return MEulerRotation(super(MEulerRotation, self).__iadd__(y)) # python2
+            
 
 
     def __sub__(self, y):
 
-        return MEulerRotation(super(MEulerRotation, self).__sub__(y))
+        try:
+            return MEulerRotation(super().__sub__(y)) # python3
+        except:
+            return MEulerRotation(super(MEulerRotation, self).__sub__(y)) # python2
+            
 
 
     def __rsub__(self, y):
 
-        return MEulerRotation(super(MEulerRotation, self).__rsub__(y))
+        try:
+            return MEulerRotation(super().__rsub__(y)) # python3
+        except:
+            return MEulerRotation(super(MEulerRotation, self).__rsub__(y)) # python2
+            
 
 
     def __isub__(self, y):
 
-        return MEulerRotation(super(MEulerRotation, self).__isub__(y))
+        try:
+            return MEulerRotation(super().__isub__(y)) # python3
+        except:
+            return MEulerRotation(super(MEulerRotation, self).__isub__(y)) # python2
+            
 
 
     def __mul__(self, y):
 
-        return MEulerRotation(super(MEulerRotation, self).__mul__(y))
+        try:
+            return MEulerRotation(super().__mul__(y)) # python3
+        except:
+            return MEulerRotation(super(MEulerRotation, self).__mul__(y)) # python2
+            
 
 
     def __rmul__(self, y):
 
-        return MEulerRotation(super(MEulerRotation, self).__rmul__(y))
+        try:
+            return MEulerRotation(super().__rmul__(y)) # python3
+        except:
+            return MEulerRotation(super(MEulerRotation, self).__rmul__(y)) # python2
+            
 
 
     def __imul__(self, y):
 
-        return MEulerRotation(super(MEulerRotation, self).__imul__(y))
+        try:
+            return MEulerRotation(super().__imul__(y)) # python3
+        except:
+            return MEulerRotation(super(MEulerRotation, self).__imul__(y)) # python2
+            
 
 
     def alternateSolution(self):
 
-        return MEulerRotation(super(MEulerRotation, self).alternateSolution())
+        try:
+            return MEulerRotation(super().alternateSolution()) # python3
+        except:
+            return MEulerRotation(super(MEulerRotation, self).alternateSolution()) # python2
+            
 
 
     def asMatrix(self):
 
-        return MMatrix(super(MEulerRotation, self).asMatrix())
+        try:
+            return MMatrix(super().asMatrix()) # python3
+        except:
+            return MMatrix(super(MEulerRotation, self).asMatrix()) # python2
+            
 
 
     def asQuaternion(self):
 
-        return MQuaternion(super(MEulerRotation, self).asQuaternion())
+        try:
+            return MQuaternion(super().asQuaternion()) # python3
+        except:
+            return MQuaternion(super(MEulerRotation, self).asQuaternion()) # python2
+            
 
 
     def asVector(self):
 
-        return MVector(super(MEulerRotation, self).asVector())
+        try:
+            return MVector(super().asVector()) # python3
+        except:
+            return MVector(super(MEulerRotation, self).asVector()) # python2
+            
 
 
     def bound(self):
 
-        return MEulerRotation(super(MEulerRotation, self).bound())
+        try:
+            return MEulerRotation(super().bound()) # python3
+        except:
+            return MEulerRotation(super(MEulerRotation, self).bound()) # python2
+            
 
 
     def closestCut(self, target):
 
-        return MEulerRotation(super(MEulerRotation, self).closestCut(target))
+        try:
+            return MEulerRotation(super().closestCut(target)) # python3
+        except:
+            return MEulerRotation(super(MEulerRotation, self).closestCut(target)) # python2
+            
 
 
     def closestSolution(self, target):
 
-        return MEulerRotation(super(MEulerRotation, self).closestSolution(target))
+        try:
+            return MEulerRotation(super().closestSolution(target)) # python3
+        except:
+            return MEulerRotation(super(MEulerRotation, self).closestSolution(target)) # python2
+            
 
 
     @staticmethod
@@ -331,12 +483,20 @@ class MEulerRotation(om.MEulerRotation):
 
     def inverse(self):
 
-        return MEulerRotation(super(MEulerRotation, self).inverse())
+        try:
+            return MEulerRotation(super().inverse()) # python3
+        except:
+            return MEulerRotation(super(MEulerRotation, self).inverse()) # python2
+            
 
 
     def reorder(self, order):
 
-        return MEulerRotation(super(MEulerRotation, self).reorder(order))
+        try:
+            return MEulerRotation(super().reorder(order)) # python3
+        except:
+            return MEulerRotation(super(MEulerRotation, self).reorder(order)) # python2
+            
 
 
 class MFnMesh(om.MFnMesh):
@@ -348,12 +508,20 @@ class MFnMesh(om.MFnMesh):
 
     def __init__(self, *args, **kargs):
 
-        super(MFnMesh, self).__init__(*args, **kargs)
+        try:
+            super().__init__(*args, **kargs) # python3
+        except:
+            super(MFnMesh, self).__init__(*args, **kargs) # python2
+            
 
 
     def getPoints(self, space=om.MSpace.kObject):
 
-        return MPointArray(super(MFnMesh, self).getPoints(space))
+        try:
+            return MPointArray(super().getPoints(space)) # python3
+        except:
+            return MPointArray(super(MFnMesh, self).getPoints(space)) # python2
+            
 
 
 class MFnNurbsCurve(om.MFnNurbsCurve):
@@ -365,29 +533,49 @@ class MFnNurbsCurve(om.MFnNurbsCurve):
 
     def __init__(self, *args, **kargs):
 
-        super(MFnNurbsCurve, self).__init__(*args, **kargs)
+        try:
+            super().__init__(*args, **kargs) # python3
+        except:
+            super(MFnNurbsCurve, self).__init__(*args, **kargs) # python2
+            
 
 
     def closestPoint(self, test_pnt, guess=None, tolerance=om.MFnNurbsCurve.kPointTolerance, space=om.MSpace.kObject):
 
-        pnt, param = super(MFnNurbsCurve, self).closestPoint(test_pnt, guess, tolerance, space)
+        try:
+            pnt, param = super().closestPoint(test_pnt, guess, tolerance, space) # python3
+        except:
+            pnt, param = super(MFnNurbsCurve, self).closestPoint(test_pnt, guess, tolerance, space) # python2
+            
 
         return MPoint(pnt), param
 
 
     def cvPosition(self, index, space=om.MSpace.kObject):
 
-        return MPoint(super(MFnNurbsCurve, self).cvPosition(index, space))
+        try:
+            return MPoint(super().cvPosition(index, space)) # python3
+        except:
+            return MPoint(super(MFnNurbsCurve, self).cvPosition(index, space)) # python2
+            
 
 
     def cvPositions(self, space=om.MSpace.kObject):
 
-        return MPointArray(super(MFnNurbsCurve, self).cvPositions(space))
+        try:
+            return MPointArray(super().cvPositions(space)) # python3
+        except:
+            return MPointArray(super(MFnNurbsCurve, self).cvPositions(space)) # python2
+            
 
 
     def getDerivativesAtParam(self, param, space=om.MSpace.kObject, dUU=False):
 
-        result = super(MFnNurbsCurve, self).getDerivativesAtParam(param, space=space, dUU=dUU)
+        try:
+            result = super().getDerivativesAtParam(param, space=space, dUU=dUU) # python3
+        except:
+            result = super(MFnNurbsCurve, self).getDerivativesAtParam(param, space=space, dUU=dUU) # python2
+            
 
         if len(result) < 3:
             return MPoint(result[0]), MVector(result[1])
@@ -398,17 +586,29 @@ class MFnNurbsCurve(om.MFnNurbsCurve):
 
     def getPointAtParam(self, param, space=om.MSpace.kObject):
 
-        return MPoint(super(MFnNurbsCurve, self).getPointAtParam(param, space))
+        try:
+            return MPoint(super().getPointAtParam(param, space)) # python3
+        except:
+            return MPoint(super(MFnNurbsCurve, self).getPointAtParam(param, space)) # python2
+            
 
 
     def normal(self, param, space=om.MSpace.kObject):
 
-        return MVector(super(MFnNurbsCurve, self).normal(param, space))
+        try:
+            return MVector(super().normal(param, space)) # python3
+        except:
+            return MVector(super(MFnNurbsCurve, self).normal(param, space)) # python2
+            
 
 
     def tangent(self, param, space=om.MSpace.kObject):
 
-        return MVector(super(MFnNurbsCurve, self).tangent(param, space))
+        try:
+            return MVector(super().tangent(param, space)) # python3
+        except:
+            return MVector(super(MFnNurbsCurve, self).tangent(param, space)) # python2
+            
 
 
 
@@ -421,7 +621,11 @@ class MMatrix(om.MMatrix):
 
     def __init__(self, *args):
 
-        super(MMatrix, self).__init__(*args)
+        try:
+            super().__init__(*args) # python3
+        except:
+            super(MMatrix, self).__init__(*args) # python2
+            
 
 
     def __reduce__(self):
@@ -436,37 +640,65 @@ class MMatrix(om.MMatrix):
 
     def __add__(self, y):
 
-        return MMatrix(super(MMatrix, self).__add__(y))
+        try:
+            return MMatrix(super().__add__(y)) # python3
+        except:
+            return MMatrix(super(MMatrix, self).__add__(y)) # python2
+            
 
 
     def __radd__(self, y):
 
-        return MMatrix(super(MMatrix, self).__radd__(y))
+        try:
+            return MMatrix(super().__radd__(y)) # python3
+        except:
+            return MMatrix(super(MMatrix, self).__radd__(y)) # python2
+            
 
 
     def __iadd__(self, y):
 
-        return MMatrix(super(MMatrix, self).__iadd__(y))
+        try:
+            return MMatrix(super().__iadd__(y)) # python3
+        except:
+            return MMatrix(super(MMatrix, self).__iadd__(y)) # python2
+            
 
 
     def __sub__(self, y):
 
-        return MMatrix(super(MMatrix, self).__sub__(y))
+        try:
+            return MMatrix(super().__sub__(y)) # python3
+        except:
+            return MMatrix(super(MMatrix, self).__sub__(y)) # python2
+            
 
 
     def __rsub__(self, y):
 
-        return MMatrix(super(MMatrix, self).__rsub__(y))
+        try:
+            return MMatrix(super().__rsub__(y)) # python3
+        except:
+            return MMatrix(super(MMatrix, self).__rsub__(y)) # python2
+            
 
 
     def __isub__(self, y):
 
-        return MMatrix(super(MMatrix, self).__isub__(y))
+        try:
+            return MMatrix(super().__isub__(y)) # python3
+        except:
+            return MMatrix(super(MMatrix, self).__isub__(y)) # python2
+            
 
 
     def __mul__(self, y):
 
-        result = super(MMatrix, self).__mul__(y)
+        try:
+            result = super().__mul__(y) # python3
+        except:
+            result = super(MMatrix, self).__mul__(y) # python2
+            
 
         if result is NotImplemented:
             return NotImplemented
@@ -476,12 +708,20 @@ class MMatrix(om.MMatrix):
 
     def __rmul__(self, y):
 
-        return MMatrix(super(MMatrix, self).__rmul__(y))
+        try:
+            return MMatrix(super().__rmul__(y)) # python3
+        except:
+            return MMatrix(super(MMatrix, self).__rmul__(y)) # python2
+            
 
 
     def __imul__(self, y):
 
-        return MMatrix(super(MMatrix, self).__imul__(y))
+        try:
+            return MMatrix(super().__imul__(y)) # python3
+        except:
+            return MMatrix(super(MMatrix, self).__imul__(y)) # python2
+            
 
 
     def adjoint(self):
@@ -489,7 +729,11 @@ class MMatrix(om.MMatrix):
         Returns a new matrix containing this matrix's adjoint.
         """
 
-        return MMatrix(super(MMatrix, self).adjoint())
+        try:
+            return MMatrix(super().adjoint()) # python3
+        except:
+            return MMatrix(super(MMatrix, self).adjoint()) # python2
+            
 
 
     def homogenize(self):
@@ -497,7 +741,11 @@ class MMatrix(om.MMatrix):
         Returns a new matrix containing the homogenized version of this matrix.
         """
 
-        return MMatrix(super(MMatrix, self).homogenize())
+        try:
+            return MMatrix(super().homogenize()) # python3
+        except:
+            return MMatrix(super(MMatrix, self).homogenize()) # python2
+            
 
 
     def inverse(self):
@@ -505,7 +753,11 @@ class MMatrix(om.MMatrix):
         Returns a new matrix containing this matrix's inverse.
         """
 
-        return MMatrix(super(MMatrix, self).inverse())
+        try:
+            return MMatrix(super().inverse()) # python3
+        except:
+            return MMatrix(super(MMatrix, self).inverse()) # python2
+            
 
 
     def transpose(self):
@@ -513,7 +765,11 @@ class MMatrix(om.MMatrix):
         Returns a new matrix containing this matrix's inverse.
         """
 
-        return MMatrix(super(MMatrix, self).transpose())
+        try:
+            return MMatrix(super().transpose()) # python3
+        except:
+            return MMatrix(super(MMatrix, self).transpose()) # python2
+            
 
 
 class MMatrixArray(om.MMatrixArray):
@@ -525,7 +781,11 @@ class MMatrixArray(om.MMatrixArray):
 
     def __init__(self, *args):
 
-        super(MMatrixArray, self).__init__(*args)
+        try:
+            super().__init__(*args) # python3
+        except:
+            super(MMatrixArray, self).__init__(*args) # python2
+            
 
 
     def __reduce__(self):
@@ -540,22 +800,38 @@ class MMatrixArray(om.MMatrixArray):
 
     def __getitem__(self, i):
 
-        return MMatrix(super(MMatrixArray, self).__getitem__(i))
+        try:
+            return MMatrix(super().__getitem__(i)) # python3
+        except:
+            return MMatrix(super(MMatrixArray, self).__getitem__(i)) # python2
+            
 
 
     def __getslice__(self, i, j):
 
-        return MMatrixArray(super(MMatrixArray, self).__getslice__(i, j))
+        try:
+            return MMatrixArray(super().__getslice__(i, j)) # python3
+        except:
+            return MMatrixArray(super(MMatrixArray, self).__getslice__(i, j)) # python2
+            
 
 
     def __repr__(self):
 
-        return super(MMatrixArray, self).__repr__().replace("maya.api.OpenMaya.", "MPyNode.")
+        try:
+            return super().__repr__().replace("maya.api.OpenMaya.", "MPyNode.") # python3
+        except:
+            return super(MMatrixArray, self).__repr__().replace("maya.api.OpenMaya.", "MPyNode.") # python2
+            
 
 
     def __str__(self):
 
-        return super(MMatrixArray, self).__str__().replace("maya.api.OpenMaya.", "MPyNode.")
+        try:
+            return super().__str__().replace("maya.api.OpenMaya.", "MPyNode.") # python3
+        except:
+            return super(MMatrixArray, self).__str__().replace("maya.api.OpenMaya.", "MPyNode.") # python2
+            
 
 
 class MPoint(om.MPoint):
@@ -567,7 +843,11 @@ class MPoint(om.MPoint):
 
     def __init__(self, *args):
 
-        super(MPoint, self).__init__(*args)
+        try:
+            super().__init__(*args) # python3
+        except:
+            super(MPoint, self).__init__(*args) # python2
+            
 
 
     def __reduce__(self):
@@ -582,47 +862,83 @@ class MPoint(om.MPoint):
 
     def __add__(self, y):
 
-        return MPoint(super(MPoint, self).__add__(y))
+        try:
+            return MPoint(super().__add__(y)) # python3
+        except:
+            return MPoint(super(MPoint, self).__add__(y)) # python2
+            
 
 
     def __radd__(self, y):
 
-        return MPoint(super(MPoint, self).__radd__(y))
+        try:
+            return MPoint(super().__radd__(y)) # python3
+        except:
+            return MPoint(super(MPoint, self).__radd__(y)) # python2
+            
 
 
     def __iadd__(self, y):
 
-        return MPoint(super(MPoint, self).__iadd__(y))
+        try:
+            return MPoint(super().__iadd__(y)) # python3
+        except:
+            return MPoint(super(MPoint, self).__iadd__(y)) # python2
+            
 
 
     def __mul__(self, y):
 
-        return  MPoint(super(MPoint, self).__mul__(y))
+        try:
+            return  MPoint(super().__mul__(y)) # python3
+        except:
+            return  MPoint(super(MPoint, self).__mul__(y)) # python2
+            
 
 
     def __rmul__(self, y):
 
-        return  MPoint(super(MPoint, self).__rmul__(y))
+        try:
+            return  MPoint(super().__rmul__(y)) # python3
+        except:
+            return  MPoint(super(MPoint, self).__rmul__(y)) # python2
+            
 
 
     def __imul__(self, y):
 
-        return  MPoint(super(MPoint, self).__imul__(y))
+        try:
+            return  MPoint(super().__imul__(y)) # python3
+        except:
+            return  MPoint(super(MPoint, self).__imul__(y)) # python2
+            
 
 
     def __div__(self, y):
 
-        return MPoint(super(MPoint, self).__div__(y))
+        try:
+            return MPoint(super().__div__(y)) # python3
+        except:
+            return MPoint(super(MPoint, self).__div__(y)) # python2
+            
 
 
     def __rdiv__(self, y):
 
-        return MPoint(super(MPoint, self).__rdiv__(y))
+        try:
+            return MPoint(super().__rdiv__(y)) # python3
+        except:
+            return MPoint(super(MPoint, self).__rdiv__(y)) # python2
+            
 
 
     def __sub__(self, y):
 
-        diff = super(MPoint, self).__sub__(y)
+        try:
+            diff = super().__sub__(y) # python3
+        except:
+            diff = super(MPoint, self).__sub__(y) # python2
+            
 
         if type(diff) == om.MVector:
             return MVector(diff)
@@ -632,7 +948,11 @@ class MPoint(om.MPoint):
 
     def __rsub__(self, y):
 
-        diff = super(MPoint, self).__rsub__(y)
+        try:
+            diff = super().__rsub__(y) # python3
+        except:
+            diff = super(MPoint, self).__rsub__(y) # python2
+            
 
         if type(diff) == om.MVector:
             return MVector(diff)
@@ -645,7 +965,11 @@ class MPoint(om.MPoint):
         In-place subtract
         """
 
-        return MPoint(super(MPoint, self).__isub__(y))
+        try:
+            return MPoint(super().__isub__(y)) # python3
+        except:
+            return MPoint(super(MPoint, self).__isub__(y)) # python2
+            
 
 
     def __str__(self):
@@ -655,7 +979,11 @@ class MPoint(om.MPoint):
 
     def __repr__(self):
 
-        return super(MPoint, self).__repr__().replace("maya.api.OpenMaya.", "MPyNode.")
+        try:
+            return super().__repr__().replace("maya.api.OpenMaya.", "MPyNode.") # python3
+        except:
+            return super(MPoint, self).__repr__().replace("maya.api.OpenMaya.", "MPyNode.") # python2
+            
 
 
 class MPointArray(om.MPointArray):
@@ -667,7 +995,11 @@ class MPointArray(om.MPointArray):
 
     def __init__(self, *args):
 
-        super(MPointArray, self).__init__(*args)
+        try:
+            super().__init__(*args) # python3
+        except:
+            super(MPointArray, self).__init__(*args) # python2
+            
 
 
     def __reduce__(self):
@@ -688,27 +1020,47 @@ class MPointArray(om.MPointArray):
 
     def __iadd__(self, y):
 
-        return MPointArray(super(MVectorArray, self).__iadd__(y))
+        try:
+            return MPointArray(super().__iadd__(y)) # python3
+        except:
+            return MPointArray(super(MVectorArray, self).__iadd__(y)) # python2
+            
 
 
     def __getitem__(self, i):
 
-        return MPoint(super(MPointArray, self).__getitem__(i))
+        try:
+            return MPoint(super().__getitem__(i)) # python3
+        except:
+            return MPoint(super(MPointArray, self).__getitem__(i)) # python2
+            
 
 
     def __getslice__(self, i, j):
 
-        return MPointArray(super(MPointArray, self).__getslice__(i, j))
+        try:
+            return MPointArray(super().__getslice__(i, j)) # python3
+        except:
+            return MPointArray(super(MPointArray, self).__getslice__(i, j)) # python2
+            
 
 
     def __repr__(self):
 
-        return super(MPointArray, self).__repr__().replace("maya.api.OpenMaya.", "MPyNode.")
+        try:
+            return super().__repr__().replace("maya.api.OpenMaya.", "MPyNode.") # python3
+        except:
+            return super(MPointArray, self).__repr__().replace("maya.api.OpenMaya.", "MPyNode.") # python2
+            
 
 
     def __str__(self):
 
-        return super(MPointArray, self).__str__().replace("maya.api.OpenMaya.", "MPyNode.")
+        try:
+            return super().__str__().replace("maya.api.OpenMaya.", "MPyNode.") # python3
+        except:
+            return super(MPointArray, self).__str__().replace("maya.api.OpenMaya.", "MPyNode.") # python2
+            
 
 
 class MQuaternion(om.MQuaternion):
@@ -720,7 +1072,11 @@ class MQuaternion(om.MQuaternion):
 
     def __init__(self, *args):
 
-        super(MQuaternion, self).__init__(*args)
+        try:
+            super().__init__(*args) # python3
+        except:
+            super(MQuaternion, self).__init__(*args) # python2
+            
 
 
     def __reduce__(self):
@@ -740,42 +1096,74 @@ class MQuaternion(om.MQuaternion):
 
     def __repr__(self):
 
-        return super(MQuaternion, self).__repr__().replace("maya.api.OpenMaya.", "MPyNode.")
+        try:
+            return super().__repr__().replace("maya.api.OpenMaya.", "MPyNode.") # python3
+        except:
+            return super(MQuaternion, self).__repr__().replace("maya.api.OpenMaya.", "MPyNode.") # python2
+            
 
 
     def __add__(self, y):
 
-        return MQuaternion(super(MQuaternion, self).__add__(y))
+        try:
+            return MQuaternion(super().__add__(y)) # python3
+        except:
+            return MQuaternion(super(MQuaternion, self).__add__(y)) # python2
+            
 
 
     def __radd__(self, y):
 
-        return MQuaternion(super(MQuaternion, self).__radd__(y))
+        try:
+            return MQuaternion(super().__radd__(y)) # python3
+        except:
+            return MQuaternion(super(MQuaternion, self).__radd__(y)) # python2
+            
 
 
     def __sub__(self, y):
 
-        return MQuaternion(super(MQuaternion, self).__sub__(y))
+        try:
+            return MQuaternion(super().__sub__(y)) # python3
+        except:
+            return MQuaternion(super(MQuaternion, self).__sub__(y)) # python2
+            
 
 
     def __rsub__(self, y):
 
-        return MQuaternion(super(MQuaternion, self).__rsub__(y))
+        try:
+            return MQuaternion(super().__rsub__(y)) # python3
+        except:
+            return MQuaternion(super(MQuaternion, self).__rsub__(y)) # python2
+            
 
 
     def __mul__(self, y):
 
-        return MQuaternion(super(MQuaternion, self).__mul__(y))
+        try:
+            return MQuaternion(super().__mul__(y)) # python3
+        except:
+            return MQuaternion(super(MQuaternion, self).__mul__(y)) # python2
+            
 
 
     def __rmul__(self, y):
 
-        return MQuaternion(super(MQuaternion, self).__rmul__(y))
+        try:
+            return MQuaternion(super().__rmul__(y)) # python3
+        except:
+            return MQuaternion(super(MQuaternion, self).__rmul__(y)) # python2
+            
 
 
     def __imul__(self, y):
 
-        return MQuaternion(super(MQuaternion, self).__imul__(y))
+        try:
+            return MQuaternion(super().__imul__(y)) # python3
+        except:
+            return MQuaternion(super(MQuaternion, self).__imul__(y)) # python2
+            
 
 
     def __neg__(self):
@@ -783,7 +1171,11 @@ class MQuaternion(om.MQuaternion):
         Component-by-component negation
         """
 
-        return MQuaternion(super(MQuaternion, self).__neg__())
+        try:
+            return MQuaternion(super().__neg__()) # python3
+        except:
+            return MQuaternion(super(MQuaternion, self).__neg__()) # python2
+            
 
 
     def asAxisAngle(self):
@@ -791,7 +1183,11 @@ class MQuaternion(om.MQuaternion):
         Returns the rotation as a tuple containing an axis vector and an angle in radians about that axis.
         """
 
-        vect, angle = super(MQuaternion, self).asAxisAngle()
+        try:
+            vect, angle = super().asAxisAngle() # python3
+        except:
+            vect, angle = super(MQuaternion, self).asAxisAngle() # python2
+            
 
         return MVector(vect), angle
 
@@ -801,7 +1197,11 @@ class MQuaternion(om.MQuaternion):
         Returns the rotation as an equivalent MEulerRotation.
         """
 
-        return MEulerRotation(super(MQuaternion, self).asEulerRotation())
+        try:
+            return MEulerRotation(super().asEulerRotation()) # python3
+        except:
+            return MEulerRotation(super(MQuaternion, self).asEulerRotation()) # python2
+            
 
 
     def asMatrix(self):
@@ -809,7 +1209,11 @@ class MQuaternion(om.MQuaternion):
         Returns the rotation as an equivalent rotation matrix.
         """
 
-        return MMatrix(super(MQuaternion, self).asMatrix())
+        try:
+            return MMatrix(super().asMatrix()) # python3
+        except:
+            return MMatrix(super(MQuaternion, self).asMatrix()) # python2
+            
 
 
     def conjugate(self):
@@ -817,7 +1221,11 @@ class MQuaternion(om.MQuaternion):
         Returns the conjugate of this quaternion (i.e. x, y and z components negated).
         """
 
-        return MQuaternion(super(MQuaternion, self).conjugate())
+        try:
+            return MQuaternion(super().conjugate()) # python3
+        except:
+            return MQuaternion(super(MQuaternion, self).conjugate()) # python2
+            
 
 
     def exp(self):
@@ -825,7 +1233,11 @@ class MQuaternion(om.MQuaternion):
         Returns a new quaternion containing the exponent of this one.
         """
 
-        return MQuaternion(super(MQuaternion, self).exp())
+        try:
+            return MQuaternion(super().exp()) # python3
+        except:
+            return MQuaternion(super(MQuaternion, self).exp()) # python2
+            
 
 
     def inverse(self):
@@ -833,7 +1245,11 @@ class MQuaternion(om.MQuaternion):
         Returns a new quaternion containing the inverse of this one.
         """
 
-        return MQuaternion(super(MQuaternion, self).inverse())
+        try:
+            return MQuaternion(super().inverse()) # python3
+        except:
+            return MQuaternion(super(MQuaternion, self).inverse()) # python2
+            
 
 
     def log(self):
@@ -841,7 +1257,11 @@ class MQuaternion(om.MQuaternion):
         Returns a new quaternion containing the log of this one.
         """
 
-        return MQuaternion(super(MQuaternion, self).log())
+        try:
+            return MQuaternion(super().log()) # python3
+        except:
+            return MQuaternion(super(MQuaternion, self).log()) # python2
+            
 
 
     def normal(self):
@@ -849,7 +1269,11 @@ class MQuaternion(om.MQuaternion):
         Returns a new quaternion containing the normalized version of this one (i.e. scaled to unit length).
         """
 
-        return MQuaternion(super(MQuaternion, self).normal())
+        try:
+            return MQuaternion(super().normal()) # python3
+        except:
+            return MQuaternion(super(MQuaternion, self).normal()) # python2
+            
 
 
     @staticmethod
@@ -893,7 +1317,11 @@ class MTime(om.MTime):
 
     def __init__(self, *args, **kargs):
 
-        super(MTime, self).__init__(*args, **kargs)
+        try:
+            super().__init__(*args, **kargs) # python3
+        except:
+            super(MTime, self).__init__(*args, **kargs) # python2
+            
 
 
     def __reduce__(self):
@@ -908,12 +1336,20 @@ class MTime(om.MTime):
 
     def __str__(self):
 
-        return super(MTime, self).__str__()
+        try:
+            return super().__str__() # python3
+        except:
+            return super(MTime, self).__str__() # python2
+            
 
 
     def __repr__(self):
 
-        return super(MTime, self).__repr__().replace("maya.api.OpenMaya.", "MPyNode.")
+        try:
+            return super().__repr__().replace("maya.api.OpenMaya.", "MPyNode.") # python3
+        except:
+            return super(MTime, self).__repr__().replace("maya.api.OpenMaya.", "MPyNode.") # python2
+            
 
 
 class MTimeArray(om.MTimeArray):
@@ -933,7 +1369,11 @@ class MTimeArray(om.MTimeArray):
                 in_times = args[0]
                 args = ()
 
-        super(MTimeArray, self).__init__(*args)
+        try:
+            super().__init__(*args) # python3
+        except:
+            super(MTimeArray, self).__init__(*args) # python2
+            
 
         if in_times:
             for time_args in in_times:
@@ -956,22 +1396,38 @@ class MTimeArray(om.MTimeArray):
 
     def __getitem__(self, i):
 
-        return MTime(super(MTimeArray, self).__getitem__(i))
+        try:
+            return MTime(super().__getitem__(i)) # python3
+        except:
+            return MTime(super(MTimeArray, self).__getitem__(i)) # python2
+            
 
 
     def __getslice__(self, i, j):
 
-        return MTimeArray(super(MTimeArray, self).__getslice__(i, j))
+        try:
+            return MTimeArray(super().__getslice__(i, j)) # python3
+        except:
+            return MTimeArray(super(MTimeArray, self).__getslice__(i, j)) # python2
+            
 
 
     def __str__(self):
 
-        return super(MTimeArray, self).__str__().replace("maya.api.OpenMaya.", "MPyNode.")
+        try:
+            return super().__str__().replace("maya.api.OpenMaya.", "MPyNode.") # python3
+        except:
+            return super(MTimeArray, self).__str__().replace("maya.api.OpenMaya.", "MPyNode.") # python2
+            
 
 
     def __repr__(self):
 
-        return super(MTimeArray, self).__repr__().replace("maya.api.OpenMaya.", "MPyNode.")
+        try:
+            return super().__repr__().replace("maya.api.OpenMaya.", "MPyNode.") # python3
+        except:
+            return super(MTimeArray, self).__repr__().replace("maya.api.OpenMaya.", "MPyNode.") # python2
+            
 
 
 class MVector(om.MVector):
@@ -982,7 +1438,11 @@ class MVector(om.MVector):
 
     def __init__(self, *args):
 
-        super(MVector, self).__init__(*args)
+        try:
+            super().__init__(*args) # python3
+        except:
+            super(MVector, self).__init__(*args) # python2
+            
 
 
     def __reduce__(self):
@@ -997,27 +1457,47 @@ class MVector(om.MVector):
 
     def __add__(self, y):
 
-        return MVector(super(MVector, self).__add__(y))
+        try:
+            return MVector(super().__add__(y)) # python3
+        except:
+            return MVector(super(MVector, self).__add__(y)) # python2
+            
 
 
     def __radd__(self, y):
 
-        return MVector(super(MVector, self).__radd__(y))
+        try:
+            return MVector(super().__radd__(y)) # python3
+        except:
+            return MVector(super(MVector, self).__radd__(y)) # python2
+            
 
 
     def __iadd__(self, y):
 
-        return MVector(super(MVector, self).__iadd__(y))
+        try:
+            return MVector(super().__iadd__(y)) # python3
+        except:
+            return MVector(super(MVector, self).__iadd__(y)) # python2
+            
 
 
     def __sub__(self, y):
 
-        return MVector(super(MVector, self).__sub__(y))
+        try:
+            return MVector(super().__sub__(y)) # python3
+        except:
+            return MVector(super(MVector, self).__sub__(y)) # python2
+            
 
 
     def __rsub__(self, y):
 
-        return MVector(super(MVector, self).__rsub__(y))
+        try:
+            return MVector(super().__rsub__(y)) # python3
+        except:
+            return MVector(super(MVector, self).__rsub__(y)) # python2
+            
 
 
     def __isub__(self, y):
@@ -1025,7 +1505,11 @@ class MVector(om.MVector):
         In-place subtract
         """
 
-        return MVector(super(MVector, self).__isub__(y))
+        try:
+            return MVector(super().__isub__(y)) # python3
+        except:
+            return MVector(super(MVector, self).__isub__(y)) # python2
+            
 
 
     def __xor__(self, y):
@@ -1033,7 +1517,11 @@ class MVector(om.MVector):
         Cross product
         """
 
-        return MVector(super(MVector, self).__xor__(y))
+        try:
+            return MVector(super().__xor__(y)) # python3
+        except:
+            return MVector(super(MVector, self).__xor__(y)) # python2
+            
 
 
     def __rxor__(self, y):
@@ -1041,12 +1529,20 @@ class MVector(om.MVector):
         Reverse cross product
         """
 
-        return MVector(super(MVector, self).__rxor__(y))
+        try:
+            return MVector(super().__rxor__(y)) # python3
+        except:
+            return MVector(super(MVector, self).__rxor__(y)) # python2
+            
 
 
     def __mul__(self, y):
 
-        result = super(MVector, self).__mul__(y)
+        try:
+            result = super().__mul__(y) # python3
+        except:
+            result = super(MVector, self).__mul__(y) # python2
+            
 
         if type(result) == om.MVector:
             return MVector(result)
@@ -1056,7 +1552,11 @@ class MVector(om.MVector):
 
     def __rmul__(self, y):
 
-        result = super(MVector, self).__rmul__(y)
+        try:
+            result = super().__rmul__(y) # python3
+        except:
+            result = super(MVector, self).__rmul__(y) # python2
+            
 
         if type(result) == om.MVector:
             return MVector(result)
@@ -1066,7 +1566,11 @@ class MVector(om.MVector):
 
     def __imul__(self, y):
 
-        result = super(MVector, self).__imul__(y)
+        try:
+            result = super().__imul__(y) # python3
+        except:
+            result = super(MVector, self).__imul__(y) # python2
+            
 
         if type(result) == om.MVector:
             return MVector(result)
@@ -1076,17 +1580,29 @@ class MVector(om.MVector):
 
     def __div__(self, y):
 
-        return MVector(super(MVector, self).__div__(y))
+        try:
+            return MVector(super().__div__(y)) # python3
+        except:
+            return MVector(super(MVector, self).__div__(y)) # python2
+            
 
 
     def __idiv__(self, y):
 
-        return MVector(super(MVector, self).__idiv__(y))
+        try:
+            return MVector(super().__idiv__(y)) # python3
+        except:
+            return MVector(super(MVector, self).__idiv__(y)) # python2
+            
 
 
     def __rdiv__(self, y):
 
-        return MVector(super(MVector, self).__rdiv__(y))
+        try:
+            return MVector(super().__rdiv__(y)) # python3
+        except:
+            return MVector(super(MVector, self).__rdiv__(y)) # python2
+            
 
 
     def __neg__(self):
@@ -1094,7 +1610,11 @@ class MVector(om.MVector):
         New vector which is the negative if the given vector.
         """
 
-        return MVector(super(MVector, self).__neg__())
+        try:
+            return MVector(super().__neg__()) # python3
+        except:
+            return MVector(super(MVector, self).__neg__()) # python2
+            
 
 
     def __str__(self):
@@ -1104,7 +1624,11 @@ class MVector(om.MVector):
 
     def __repr__(self):
 
-        return super(MVector, self).__repr__().replace("maya.api.OpenMaya.", "MPyNode.")
+        try:
+            return super().__repr__().replace("maya.api.OpenMaya.", "MPyNode.") # python3
+        except:
+            return super(MVector, self).__repr__().replace("maya.api.OpenMaya.", "MPyNode.") # python2
+            
 
 
     def normal(self):
@@ -1117,7 +1641,11 @@ class MVector(om.MVector):
 
         """
 
-        return MVector(super(MVector, self).normal())
+        try:
+            return MVector(super().normal()) # python3
+        except:
+            return MVector(super(MVector, self).normal()) # python2
+            
 
 
     def normalize(self):
@@ -1130,7 +1658,11 @@ class MVector(om.MVector):
 
         """
 
-        return MVector(super(MVector, self).normalize())
+        try:
+            return MVector(super().normalize()) # python3
+        except:
+            return MVector(super(MVector, self).normalize()) # python2
+            
 
 
     def rotateBy(self, *args):
@@ -1149,7 +1681,11 @@ class MVector(om.MVector):
 
         """
 
-        return MVector(super(MVector, self).rotateBy(*args))
+        try:
+            return MVector(super().rotateBy(*args)) # python3
+        except:
+            return MVector(super(MVector, self).rotateBy(*args)) # python2
+            
 
 
     def rotateTo(self, target):
@@ -1164,7 +1700,11 @@ class MVector(om.MVector):
 
         """
 
-        return MQuaternion(super(MVector, self).rotateTo(target))
+        try:
+            return MQuaternion(super().rotateTo(target)) # python3
+        except:
+            return MQuaternion(super(MVector, self).rotateTo(target)) # python2
+            
 
 
     def transformAsNormal(self, matrix):
@@ -1180,7 +1720,11 @@ class MVector(om.MVector):
 
         """
 
-        return MVector(super(MVector, self).transformAsNormal(matrix))
+        try:
+            return MVector(super().transformAsNormal(matrix)) # python3
+        except:
+            return MVector(super(MVector, self).transformAsNormal(matrix)) # python2
+            
 
 
 class MVectorArray(om.MVectorArray):
@@ -1198,7 +1742,11 @@ class MVectorArray(om.MVectorArray):
 
     def __init__(self, *args):
 
-        super(MVectorArray, self).__init__(*args)
+        try:
+            super().__init__(*args) # python3
+        except:
+            super(MVectorArray, self).__init__(*args) # python2
+            
 
 
     def __reduce__(self):
@@ -1213,22 +1761,38 @@ class MVectorArray(om.MVectorArray):
 
     def __getitem__(self, i):
 
-        return MVector(super(MVectorArray, self).__getitem__(i))
+        try:
+            return MVector(super().__getitem__(i)) # python3
+        except:
+            return MVector(super(MVectorArray, self).__getitem__(i)) # python2
+            
 
 
     def __getslice__(self, i, j):
 
-        return MVectorArray(super(MVectorArray, self).__getslice__(i, j))
+        try:
+            return MVectorArray(super().__getslice__(i, j)) # python3
+        except:
+            return MVectorArray(super(MVectorArray, self).__getslice__(i, j)) # python2
+            
 
 
     def __repr__(self):
 
-        return super(MVectorArray, self).__repr__().replace("maya.api.OpenMaya.", "MPyNode.")
+        try:
+            return super().__repr__().replace("maya.api.OpenMaya.", "MPyNode.") # python3
+        except:
+            return super(MVectorArray, self).__repr__().replace("maya.api.OpenMaya.", "MPyNode.") # python2
+            
 
 
     def __str__(self):
 
-        return super(MVectorArray, self).__str__().replace("maya.api.OpenMaya.", "MPyNode.")
+        try:
+            return super().__str__().replace("maya.api.OpenMaya.", "MPyNode.") # python3
+        except:
+            return super(MVectorArray, self).__str__().replace("maya.api.OpenMaya.", "MPyNode.") # python2
+            
 
 
     def __add__(self, y):
@@ -1239,4 +1803,8 @@ class MVectorArray(om.MVectorArray):
 
     def __iadd__(self, y):
 
-        return MVectorArray(super(MVectorArray, self).__iadd__(y))
+        try:
+            return MVectorArray(super().__iadd__(y)) # python3
+        except:
+            return MVectorArray(super(MVectorArray, self).__iadd__(y)) # python2
+            

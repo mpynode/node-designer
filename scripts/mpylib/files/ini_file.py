@@ -7,7 +7,7 @@ a blank instance can be created. The keys of the this dictionary like object are
 names within the ini file. The value within the section is also a dictionary that contains
 the properties of that section as key/value pairs.
 
-This class is built on ConfigParser, so it requires that the contents of the ini file be grouped
+This class is built on configparser, so it requires that the contents of the ini file be grouped
 into sections.
 
 The IninFile class allows ini files to be included within other ini files by using the syntax
@@ -34,8 +34,14 @@ ini file name is treated as a relative path from the base directory of the file 
 
 import os
 import copy
-import ConfigParser
 from collections import OrderedDict
+
+try:
+    import configparser
+    unicode = str
+except:
+    import ConfigParser as configparser
+    
 
 
 class IniFile(object):
@@ -91,6 +97,15 @@ class IniFile(object):
             else:
                 raise RuntimeError("File does not exist: " + str(self._ini_path))
 
+
+
+    def __contains__(self, k):
+        """
+        :purpose:	Built-in method. Test for the presence of section name in the IniFile.
+        :returns:	bool
+        """
+        return k in self._data        
+    
 
     def _deepCopy(self, src_dict):
         """
@@ -185,7 +200,8 @@ class IniFile(object):
 
         fh = open(cur_path, 'r')
 
-        for line in fh.xreadlines():
+        #for line in fh.xreadlines():
+        for line in fh.readlines():
 
             line = line.strip()
 
@@ -212,8 +228,8 @@ class IniFile(object):
         PRIVATE METHOD: Read the contents of the given ini file without worrying about includes
         """
 
-        ini = ConfigParser.SafeConfigParser()
-        ini.optionxform = str  #keep the case of the sections and values
+        ini = configparser.SafeConfigParser()
+        ini.optionxform = str  #keep the caseconfigparserions and values
 
         ini.read(ini_path)
 
@@ -221,7 +237,8 @@ class IniFile(object):
 
             values = ini.items(section)
 
-            if not self._data.has_key(section):
+            #if not self._data.has_key(section):
+            if not section in self._data:
                 self._data[section] = OrderedDict()
 
             for value in values:
@@ -352,7 +369,8 @@ class IniFile(object):
         :returns:	bool
         """
 
-        return self._data.has_key(k)
+        #return self._data.has_key(k)
+        return k in self._data
 
 
     def items(self):
@@ -426,7 +444,8 @@ class IniFile(object):
 
         """
 
-        if self.has_key(k):
+        #if self.has_key(k):
+        if k in self:
             return self[k]
 
         elif not d is None:

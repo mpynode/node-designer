@@ -1,7 +1,7 @@
 """
 Author: Gene Hansen
 
-This module contains the main classes used in the Node Designer ui
+This module contains the main classes used in the Node designer ui
 """
 
 LICENSE_STR ="""
@@ -36,7 +36,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 
-import __builtin__
+
 import os
 import copy
 import sys
@@ -45,14 +45,25 @@ import traceback
 import keyword
 import logging
 import webbrowser
-import urllib2
 from collections import OrderedDict
 
 import maya.cmds as mc
 import maya.mel as mel
 import maya.api.OpenMaya as om
 
-USES_PYSIDE_2 = False
+
+try:
+    # python2
+    import __builtin__ as builtins
+    import urllib2
+except:
+    # python3
+    import builtins
+    import urllib.request as urllib2
+    unicode = str
+    unichr = chr    
+
+
 
 if mc.about(apiVersion=True) < 201700:
     import PySide
@@ -65,19 +76,18 @@ if mc.about(apiVersion=True) < 201700:
 else:
     import PySide2
     PySide = PySide2
-    USES_PYSIDE_2 = True
     from PySide2.QtCore import Qt, Signal, Slot, QSize, QObject, QRegExp, QObject
     from PySide2.QtGui import QColor, QFont, QFontMetrics, QKeySequence, QIcon, QPixmap, QTextCursor, QDoubleValidator, QIntValidator
     from PySide2.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QSplitter, QStatusBar, QMessageBox, QTreeWidget, QTreeWidgetItem, QDialog, QComboBox, QCheckBox
     from PySide2.QtWidgets import QPlainTextEdit, QTabWidget, QTabBar, QLineEdit, QFrame, QLabel, QMenu, QPushButton, QStackedLayout, QGridLayout, QListWidgetItem, QColorDialog
     from PySide2.QtWidgets import QRadioButton, QButtonGroup, QCompleter, QAbstractItemView, QToolBar, QAction, QListWidget, QTableWidget, QTableWidgetItem, QHeaderView, QFileDialog
 
-from qt_log import QtLog
-from qt_py_editor import QtPythonEditor
-from qt_py_highlighter import QtPythonHighlighter
-from qt_py_profile_table import QtPyProfileTable
+from .qt_log import QtLog
+from .qt_py_editor import QtPythonEditor
+from .qt_py_highlighter import QtPythonHighlighter
+from .qt_py_profile_table import QtPyProfileTable
 
-from mqt_main_window import QMayaWindow
+from .mqt_main_window import QMayaWindow
 
 from ..nodes import MPyNode
 from .._base import MNode, MNodeList, MUndo
@@ -181,7 +191,7 @@ def logError(func):
         try:
             return func(*args, **kargs)
 
-        except Exception, err:
+        except Exception as err:
 
             if os.path.exists(BASE_DIR):
                 if os.path.exists(ERROR_LOG_PATH) and not os.access(ERROR_LOG_PATH, os.W_OK):
@@ -226,12 +236,16 @@ class NDMainWindow(QMayaWindow):
     EXPORT_FILE_FILTERS = FILE_BINARY_FILTER + ";;" + FILE_ASCII_FILTER
 
     HELP_DOCS_URL = "http://www.mpynode.com/node-designer.html"
-    HELP_API_DOCS_URL = "https://mpynode.github.io/node-designer/"
+    HELP_API_DOCS_URL = "https://mpynode.bitbucket.io/index.html"
 
 
     def __init__(self):
 
-        super(NDMainWindow, self).__init__()
+        try:
+            super().__init__() # python3
+        except:
+            super(NDMainWindow, self).__init__() # python2
+            
 
         self._cur_py_node = None
 
@@ -351,19 +365,21 @@ class NDMainWindow(QMayaWindow):
 
     def _setNodeCallbacks(self, py_node):
 
-        if not self._node_callback_map.has_key(py_node):
+        #if not self._node_callback_map.has_key(py_node):
+        if not py_node in self._node_callback_map:
             self._node_callback_map[py_node] = (om.MNodeMessage.addNameChangedCallback(py_node, self._onNodeRenamed),
                                                 om.MNodeMessage.addAttributeChangedCallback(py_node, self._onAttributeChanged))
 
 
     def _removeNodeCallbacks(self, py_node):
 
-        if self._node_callback_map.has_key(py_node):
+        #if self._node_callback_map.has_key(py_node):
+        if py_node in self._node_callback_map:
             try:
                 for event_id in self._node_callback_map[py_node]:
                     om.MMessage.removeCallback(event_id)
 
-            except RuntimeError, err:
+            except RuntimeError as err:
                 pass
 
             del(self._node_callback_map[py_node])
@@ -376,10 +392,12 @@ class NDMainWindow(QMayaWindow):
         self._prefs = IniFile(file_path)
 
         if self._prefs:
-            if self._prefs.has_key("editor"):
+            #if self._prefs.has_key("editor"):
+            if "editor" in self._prefs:
                 editor_prefs = self._prefs["editor"]
 
-                if editor_prefs.has_key("font_size"):
+                #if editor_prefs.has_key("font_size"):
+                if "font_size" in editor_prefs:
                     self._script_tab_widget.setTextFontSize(editor_prefs["font_size"])
 
 
@@ -725,7 +743,7 @@ class NDMainWindow(QMayaWindow):
                 try:
                     self._cur_py_node.exportToFile(file_path, use_binary=use_binary)
 
-                except Exception, err:
+                except Exception as err:
                     err_txt = "Error exporting to file -> " + str(file_path)
                     self._log_widget.write(err_txt, QtLog.ERROR_TYPE)
                     self._onLogError((self._cur_py_node, sys.exc_info()))
@@ -758,7 +776,7 @@ class NDMainWindow(QMayaWindow):
                 try:
                     node_list.append(MPyNode.importFromFile(file_path))
 
-                except Exception, err:
+                except Exception as err:
                     err_txt = "Error importing file -> " + str(file_path)
                     self._log_widget.write(err_txt, QtLog.ERROR_TYPE)
                     self._onLogError((self._cur_py_node, sys.exc_info()))
@@ -775,21 +793,19 @@ class NDMainWindow(QMayaWindow):
         self._file_menu = self.menuBar().addMenu("&File")
         self._file_menu.addAction(self._import_from_file_action)
         self._file_menu.addAction(self._export_to_file_action)
+        self._file_menu.setToolTipsVisible(True)
 
         self._node_menu = self.menuBar().addMenu("&Node")
         self._node_menu.addAction(self._new_node_action)
         self._node_menu.addAction(self._save_node_action)
         self._node_menu.addAction(self._save_all_nodes_action)
+        self._node_menu.setToolTipsVisible(True)
 
         self._help_menu = self.menuBar().addMenu("&Help")
         self._help_menu.addAction(self._help_doc_action)
         self._help_menu.addAction(self._help_api_doc_action)
         self._help_menu.addAction(self._about_dialog_action)
-
-        if USES_PYSIDE_2:
-            self._help_menu.setToolTipsVisible(True)
-            self._file_menu.setToolTipsVisible(True)
-            self._node_menu.setToolTipsVisible(True)
+        self._help_menu.setToolTipsVisible(True)
 
 
     def nodeRenamedBySceneTreeEvent(self, new_name):
@@ -895,7 +911,7 @@ class NDMainWindow(QMayaWindow):
         Remove all nodes specific callbacks from the scene
         """
 
-        for py_node in self._node_callback_map.keys():
+        for py_node in list(self._node_callback_map.keys()):
             self._removeNodeCallbacks(py_node)
 
 
@@ -966,7 +982,11 @@ class NDScriptTabWidget(QTabWidget):
 
     def __init__(self, parent=None):
 
-        super(NDScriptTabWidget, self).__init__(parent)
+        try:
+            super().__init__(parent) # python3
+        except:
+            super(NDScriptTabWidget, self).__init__(parent) # python2
+            
 
         self._text_font_size =  self.DEFAULT_TEXT_FONT_SIZE
 
@@ -991,7 +1011,7 @@ class NDScriptTabWidget(QTabWidget):
 
         if tab_count:
 
-            for i in xrange(tab_count):
+            for i in range(tab_count):
 
                 widget = self.widget(i)
 
@@ -1038,7 +1058,7 @@ class NDScriptTabWidget(QTabWidget):
         tab_count = self.count()
 
         if tab_count:
-            for tab_index in xrange(tab_count):
+            for tab_index in range(tab_count):
 
                 text_widget = self.widget(tab_index)
                 text_widget.setFontSize(font_size)
@@ -1056,7 +1076,7 @@ class NDScriptTabWidget(QTabWidget):
         tab_count = self.count()
 
         if tab_count:
-            for tab_index in xrange(tab_count):
+            for tab_index in range(tab_count):
 
                 if self.hasExpressionChanged(tab_index):
                     tab_widget = self.widget(tab_index)
@@ -1129,7 +1149,7 @@ class NDScriptTabWidget(QTabWidget):
         tab_count = self.count()
 
         if tab_count:
-            for i in xrange(tab_count):
+            for i in range(tab_count):
 
                 tab_node = self.widget(i).getMPyNode()
 
@@ -1189,7 +1209,7 @@ class NDScriptTabWidget(QTabWidget):
 
         if tab_count:
 
-            for tab_index in xrange(tab_count):
+            for tab_index in range(tab_count):
                 tab_widget = self.widget(tab_index)
 
                 self._saveTabNode(tab_widget)
@@ -1204,7 +1224,11 @@ class NDScriptEditor(QtPythonEditor):
 
     def __init__(self, parent=None, py_node=None):
 
-        super(NDScriptEditor, self).__init__(parent)
+        try:
+            super().__init__(parent) # python3
+        except:
+            super(NDScriptEditor, self).__init__(parent) # python2
+            
 
         self._py_node = py_node
 
@@ -1302,7 +1326,11 @@ class NDToolsTabWidget(QTabWidget):
 
     def __init__(self, parent=None):
 
-        super(NDToolsTabWidget, self).__init__(parent)
+        try:
+            super().__init__(parent) # python3
+        except:
+            super(NDToolsTabWidget, self).__init__(parent) # python2
+            
 
 
 class NDVariablesWidget(QWidget):
@@ -1312,7 +1340,11 @@ class NDVariablesWidget(QWidget):
 
     def __init__(self, parent=None):
 
-        super(NDVariablesWidget, self).__init__(parent)
+        try:
+            super().__init__(parent) # python3
+        except:
+            super(NDVariablesWidget, self).__init__(parent) # python2
+            
 
         self._py_node = None
 
@@ -1420,7 +1452,11 @@ class NDVariablesTree(QTreeWidget):
 
     def __init__(self, parent=None, py_node=None):
 
-        super(NDVariablesTree, self).__init__(parent)
+        try:
+            super().__init__(parent) # python3
+        except:
+            super(NDVariablesTree, self).__init__(parent) # python2
+            
 
         self._py_node = py_node
 
@@ -1457,7 +1493,11 @@ class NDVariablesTreeItem(QTreeWidgetItem):
 
     def __init__(self, parent, py_node, var_name, var_val, log_sig=None):
 
-        super(NDVariablesTreeItem, self).__init__(parent)
+        try:
+            super().__init__(parent) # python3
+        except:
+            super(NDVariablesTreeItem, self).__init__(parent) # python2
+            
 
         self._py_node = py_node
         self._log_signal = log_sig
@@ -1551,26 +1591,34 @@ class NDVariablesTreeItem(QTreeWidgetItem):
 
             var_name_str = self._setVarName(data)
 
-            super(NDVariablesTreeItem, self).setData(col, role, var_name_str)
+            try:
+                super().setData(col, role, var_name_str) # python3
+            except:
+                super(NDVariablesTreeItem, self).setData(col, role, var_name_str) # python2
+                
 
         else:
             try:
                 py_data = eval(data)
 
-            except Exception, err:
+            except Exception as err:
 
-                err_txt = "Error: invalid python value given -> " + str(data) + "\n" + str(err)
+                err_txt = "Error: invalid python value given -> " + data + "\n" + str(err)
 
                 if self._log_signal:
                     self._log_signal.emit(err_txt, 1)
 
                 else:
-                    print err_txt
+                    print (err_txt)
 
             else:
                 var_val_str = self._setVarValue(py_data)
 
-                super(NDVariablesTreeItem, self).setData(col, role, var_val_str)
+                try:
+                    super().setData(col, role, var_val_str) # python3
+                except:
+                    super(NDVariablesTreeItem, self).setData(col, role, var_val_str) # python2
+                    
 
 
 class NDProfileWidget(QWidget):
@@ -1578,7 +1626,11 @@ class NDProfileWidget(QWidget):
 
     def __init__(self, parent=None):
 
-        super(NDProfileWidget, self).__init__(parent)
+        try:
+            super().__init__(parent) # python3
+        except:
+            super(NDProfileWidget, self).__init__(parent) # python2
+            
 
         self._py_node = None
         self._profile_cb = None
@@ -1662,7 +1714,11 @@ class NDAttributesWidget(QWidget):
 
     def __init__(self, parent=None):
 
-        super(NDAttributesWidget, self).__init__(parent)
+        try:
+            super().__init__(parent) # python3
+        except:
+            super(NDAttributesWidget, self).__init__(parent) # python2
+            
 
         self._py_node = None
         self._name_field = None
@@ -1698,7 +1754,7 @@ class NDAttributesWidget(QWidget):
                 try:
                     MUndo(self._py_node.rename, txt)()
 
-                except Exception, err:
+                except Exception as err:
                     self.LOG_SIGNAL.emit(err.message, 1)
 
                 else:
@@ -1809,7 +1865,11 @@ class NDInputAttrTree(QTreeWidget):
 
     def __init__(self, parent, py_node):
 
-        super(NDInputAttrTree, self).__init__(parent)
+        try:
+            super().__init__(parent) # python3
+        except:
+            super(NDInputAttrTree, self).__init__(parent) # python2
+            
 
         self._py_node = py_node
         self._add_attr_action = None
@@ -1838,7 +1898,11 @@ class NDInputAttrTree(QTreeWidget):
             self.selectNode()
 
         else:
-            super(NDInputAttrTree, self).mousePressEvent(event)
+            try:
+                super().mousePressEvent(event) # python3
+            except:
+                super(NDInputAttrTree, self).mousePressEvent(event) # python2
+                
 
 
     def _setSignals(self):
@@ -1948,7 +2012,7 @@ class NDInputAttrTree(QTreeWidget):
                     func = getattr(self._py_node, self.REMOVE_CONNECTIONS_FUNC)
                     func(attr_name)
 
-                except Exception, err:
+                except Exception as err:
                     self.LOG_SIGNAL.emit(err.message, 1)
 
                 else:
@@ -2057,7 +2121,8 @@ class NDInputAttrTree(QTreeWidget):
             return None
 
         ##---check for invalid charcters in the new name---##
-        invalid_chars = filter(lambda char: (not char.isalnum()) and (char != "_"), attr_name)
+        #invalid_chars = filter(lambda char: (not char.isalnum()) and (char != "_"), attr_name)
+        invalid_chars = list(filter(lambda char: (not char.isalnum()) and (char != "_"), attr_name))
 
         if invalid_chars:
             self.LOG_SIGNAL.emit("Cannot " + action_type + " attribute. Given name has invalid characters: " + invalid_chars, QtLog.ERROR_TYPE)
@@ -2069,7 +2134,7 @@ class NDInputAttrTree(QTreeWidget):
             return None
 
         ##-----make sure the attribute name is not a Python keyword or builtin---##
-        if (attr_name in keyword.kwlist) or (attr_name in dir(__builtin__)) or (attr_name in ("self",)):
+        if (attr_name in keyword.kwlist) or (attr_name in dir(builtins)) or (attr_name in ("self",)):
             self.LOG_SIGNAL.emit("Cannot " + action_type + " attribute. The name \"" + attr_name + "\" is Python keyword or builtin", QtLog.ERROR_TYPE)
             return None
 
@@ -2107,7 +2172,7 @@ class NDInputAttrTree(QTreeWidget):
             try:
                 other_node.connectAttr(other_attr, py_node, py_node_attr, force=force_connect)
 
-            except Exception, err:
+            except Exception as err:
                 self.LOG_SIGNAL.emit(None, QtLog.LAST_EXCEPTION_TYPE)
 
             else:
@@ -2116,8 +2181,10 @@ class NDInputAttrTree(QTreeWidget):
         if other_nodes:
             if other_attr:
 
-                is_array = False if not self._py_node.getInputAttrMap()[py_node_attr].has_key(MPyNode.ATTR_MAP_ARRAY_KEY) else True
+                #is_array = False if not self._py_node.getInputAttrMap()[py_node_attr].has_key(MPyNode.ATTR_MAP_ARRAY_KEY) else True
+                is_array = False if not MPyNode.ATTR_MAP_ARRAY_KEY in self._py_node.getInputAttrMap()[py_node_attr] else True
 
+                
                 if not is_array:
                     doConnectAttr(self._py_node, py_node_attr, other_nodes[0], other_attr)
 
@@ -2201,15 +2268,17 @@ class NDInputAttrTree(QTreeWidget):
                 attr_data = attr_map[attr_name]
 
                 attr_type = attr_data[MPyNode._ATTR_MAP_TYPE_KEY]
-                is_array = False if not attr_data.has_key(MPyNode.ATTR_MAP_ARRAY_KEY) else True
+                #is_array = False if not attr_data.has_key(MPyNode.ATTR_MAP_ARRAY_KEY) else True
+                is_array = False if not MPyNode.ATTR_MAP_ARRAY_KEY in attr_data else True
 
                 icon_clr = None
                 if attr_clr_map and (attr_name in attr_clr_map):
                     icon_clr = attr_clr_map[attr_name]
 
                 else:
-                    icon_clr = ATTR_COLOR_MAP[attr_type] if ATTR_COLOR_MAP.has_key(attr_type) else ATTR_COLOR_DEFAULT
-
+                    #icon_clr = ATTR_COLOR_MAP[attr_type] if ATTR_COLOR_MAP.has_key(attr_type) else ATTR_COLOR_DEFAULT
+                    icon_clr = ATTR_COLOR_MAP[attr_type] if attr_type in ATTR_COLOR_MAP else ATTR_COLOR_DEFAULT
+                    
                 self.addTopLevelItem(NDAttrTreeItem(self, attr_name, attr_type, is_array=is_array, icon_clr=icon_clr))
 
 
@@ -2261,7 +2330,8 @@ class NDOutputAttrTree(NDInputAttrTree):
 
         if other_nodes:
             if other_attr:
-                is_array = False if not self._py_node.getOutputAttrMap()[py_node_attr].has_key(MPyNode.ATTR_MAP_ARRAY_KEY) else True
+                #is_array = False if not self._py_node.getOutputAttrMap()[py_node_attr].has_key(MPyNode.ATTR_MAP_ARRAY_KEY) else True
+                is_array = False if not MPyNode.ATTR_MAP_ARRAY_KEY in self._py_node.getOutputAttrMap()[py_node_attr] else True
 
                 ##---figure out what output attrs to use----##
                 out_attrs = [py_node_attr]
@@ -2289,13 +2359,14 @@ class NDOutputAttrTree(NDInputAttrTree):
 
                     dst_attrs =  [other_attr] if not dst_is_array else [other_attr + "[" + str(in_i) + "]" for in_i in range(len(out_attrs))]
 
-                    for src_attr, dst_attr in map(None, src_attrs, dst_attrs):
+                    #for src_attr, dst_attr in map(None, src_attrs, dst_attrs):
+                    for src_attr, dst_attr in zip(src_attrs, dst_attrs):
 
                         if (not src_attr is None) and (not dst_attr is None):
                             try:
                                 self._py_node.connectAttr(src_attr, other_node, dst_attr, force=True)
 
-                            except Exception, err:
+                            except Exception as err:
                                 self.LOG_SIGNAL.emit(None, QtLog.LAST_EXCEPTION_TYPE)
 
                             else:
@@ -2317,7 +2388,11 @@ class NDAttrTreeItem(QTreeWidgetItem):
 
     def __init__(self, parent, attr_name, attr_type, is_array=False, icon_clr=(80, 230, 80)):
 
-        super(NDAttrTreeItem, self).__init__(parent)
+        try:
+            super().__init__(parent) # python3
+        except:
+            super(NDAttrTreeItem, self).__init__(parent) # python2
+            
 
         self._cur_name = attr_name
         self._is_array = is_array
@@ -2356,7 +2431,11 @@ class NDAttrIcon(QIcon):
         pixmap = QPixmap(10, 10)
         pixmap.fill(clr)
 
-        super(NDAttrIcon, self).__init__(pixmap)
+        try:
+            super().__init__(pixmap) # python3
+        except:
+            super(NDAttrIcon, self).__init__(pixmap) # python2
+            
 
 
 class NDConnectInputAttrDialog(QDialog):
@@ -2371,7 +2450,11 @@ class NDConnectInputAttrDialog(QDialog):
 
     def __init__(self, parent, py_node, py_node_attr, other_nodes):
 
-        super(NDConnectInputAttrDialog, self).__init__()
+        try:
+            super().__init__() # python3
+        except:
+            super(NDConnectInputAttrDialog, self).__init__() # python2
+            
 
         self._py_node = py_node
         self._py_node_attr = py_node_attr
@@ -2577,7 +2660,11 @@ class NDConnectOutputAttrDialog(NDConnectInputAttrDialog):
 
     def _buildAttrList(self):
 
-        h_layout = super(NDConnectOutputAttrDialog, self)._buildAttrList()
+        try:
+            h_layout = super()._buildAttrList() # python3
+        except:
+            h_layout = super(NDConnectOutputAttrDialog, self)._buildAttrList() # python2
+            
 
         self._replace_cb = QCheckBox(self._button_frame)
         self._replace_cb.setText("Replace")
@@ -2599,7 +2686,8 @@ class NDAddAttrDialog(QDialog):
     DISPLAYABLE_ATTR_OPTS = {"channelBox":True}
     HIDDEN_ATTR_OPTS = {}
 
-    ATTR_TYPE_MAP = OrderedDict((map(None, DISPLAY_TYPES, (KEYABLE_ATTR_OPTS, DISPLAYABLE_ATTR_OPTS, HIDDEN_ATTR_OPTS))))
+    #ATTR_TYPE_MAP = OrderedDict((map(None, DISPLAY_TYPES, (KEYABLE_ATTR_OPTS, DISPLAYABLE_ATTR_OPTS, HIDDEN_ATTR_OPTS))))
+    ATTR_TYPE_MAP = OrderedDict((zip(DISPLAY_TYPES, (KEYABLE_ATTR_OPTS, DISPLAYABLE_ATTR_OPTS, HIDDEN_ATTR_OPTS))))
 
     ADD_ATTR_SIGNAL = Signal(str, str, dict, bool, bool)
 
@@ -2615,7 +2703,11 @@ class NDAddAttrDialog(QDialog):
 
     def __init__(self, parent, attr_types, node_name, default_type=None, is_input=True):
 
-        super(NDAddAttrDialog, self).__init__()
+        try:
+            super().__init__() # python3
+        except:
+            super(NDAddAttrDialog, self).__init__() # python2
+            
 
         self._attr_types = attr_types
         self._is_input = is_input
@@ -2731,7 +2823,8 @@ class NDAddAttrDialog(QDialog):
 
         attr_type = self._attr_types[index]
 
-        if self.STACK_LAYOUT_MAP.has_key(attr_type):
+        #if self.STACK_LAYOUT_MAP.has_key(attr_type):
+        if attr_type in self.STACK_LAYOUT_MAP:
             self._property_layout.setCurrentIndex(self.STACK_LAYOUT_MAP[attr_type])
 
         else:
@@ -3064,7 +3157,11 @@ class NDSceneTree(QTreeWidget):
 
     def __init__(self, parent=None):
 
-        super(NDSceneTree, self).__init__(parent)
+        try:
+            super().__init__(parent) # python3
+        except:
+            super(NDSceneTree, self).__init__(parent) # python2
+            
 
         self._node_rename_action = None
         self._new_node_action = None
@@ -3088,7 +3185,11 @@ class NDSceneTree(QTreeWidget):
             self._selectNodes()
 
         else:
-            super(NDSceneTree, self).mousePressEvent(event)
+            try:
+                super().mousePressEvent(event) # python3
+            except:
+                super(NDSceneTree, self).mousePressEvent(event) # python2
+                
 
 
     def _setSignals(self):
@@ -3133,7 +3234,7 @@ class NDSceneTree(QTreeWidget):
                     try:
                         MUndo(py_node.rename, item_text)()
 
-                    except RuntimeError, err:
+                    except RuntimeError as err:
                         item.setText(0, node_name)
                         new_name = node_name
 
@@ -3156,7 +3257,7 @@ class NDSceneTree(QTreeWidget):
                 try:
                     self._py_node.rename(txt)
 
-                except Exception, err:
+                except Exception as err:
                     self.LOG_SIGNAL.emit(err.message, 1)
 
                 node_name = self._py_node.getName()
@@ -3236,7 +3337,11 @@ class NDSceneTreeItem(QTreeWidgetItem):
 
     def __init__(self, parent, py_node):
 
-        super(NDSceneTreeItem, self).__init__(parent)
+        try:
+            super().__init__(parent) # python3
+        except:
+            super(NDSceneTreeItem, self).__init__(parent) # python2
+            
 
         self.setFlags(self.DEFAULT_FLAGS)
 
@@ -3258,7 +3363,11 @@ class NDLogWidget(QtLog):
 
     def __init__(self, parent=None):
 
-        super(NDLogWidget, self).__init__(parent)
+        try:
+            super().__init__(parent) # python3
+        except:
+            super(NDLogWidget, self).__init__(parent) # python2
+            
 
 
 class NDWatchTable(QTableWidget):
@@ -3268,7 +3377,11 @@ class NDWatchTable(QTableWidget):
 
     def __init__(self, parent=None):
 
-        super(NDWatchTable, self).__init__(0, len(NDWatchTable.HEADER_TITLES), parent=parent)
+        try:
+            super().__init__(0, len(NDWatchTable.HEADER_TITLES), parent=parent) # python3
+        except:
+            super(NDWatchTable, self).__init__(0, len(NDWatchTable.HEADER_TITLES), parent=parent) # python2
+            
 
         self._buildHeaders()
 
@@ -3317,7 +3430,11 @@ class NDWatchVarsWidget(QWidget):
 
     def __init__(self, parent=None):
 
-        super(NDWatchVarsWidget, self).__init__(parent)
+        try:
+            super().__init__(parent) # python3
+        except:
+            super(NDWatchVarsWidget, self).__init__(parent) # python2
+            
 
         self._py_node = None
         self._watch_cb = None
@@ -3405,7 +3522,11 @@ class NDAboutDialog(QDialog):
 
     def __init__(self, parent):
 
-        super(NDAboutDialog, self).__init__(parent)
+        try:
+            super().__init__(parent) # python3
+        except:
+            super(NDAboutDialog, self).__init__(parent) # python2
+            
 
         self._main_layout = QVBoxLayout(self)
         self.setLayout(self._main_layout)
@@ -3466,7 +3587,7 @@ class NDIconManager(object):
                     self._icon_path_map[base_name] = icon_path
 
         else:
-            print "no " + RESOURCE_DIR_NAME + " directory found"
+            print ("no " + RESOURCE_DIR_NAME + " directory found")
 
 
     def __len__(self):

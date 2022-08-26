@@ -1,7 +1,7 @@
 try:
     import PySide
 
-except ImportError, err:
+except ImportError as err:
     from PySide2.QtWidgets import QWidget, QPlainTextEdit, QTextEdit
     from PySide2.QtGui import QColor, QFont, QFontMetrics, QTextFormat, QPainter
     from PySide2.QtCore import QSize, Qt, QRect, QEvent
@@ -10,13 +10,17 @@ else:
     from PySide.QtGui import QWidget, QPlainTextEdit, QTextEdit, QColor, QTextFormat, QPainter, QFontMetrics, QFont
     from PySide.QtCore import QSize, Qt, QRect, QEvent
 
-from qt_py_highlighter import QtPythonHighlighter
+from .qt_py_highlighter import QtPythonHighlighter
 
 
 class QtLineNumberArea(QWidget):
 
     def __init__(self, editor):
-        super(QtLineNumberArea, self).__init__(editor)
+        try:
+            super().__init__(editor) # python3
+        except:
+            super(QtLineNumberArea, self).__init__(editor) # python2
+            
         self._txt_editor = editor
 
     def sizeHint(self):
@@ -78,7 +82,11 @@ class QtPythonEditor(QPlainTextEdit):
 
     def resizeEvent(self, event):
 
-        super(QtPythonEditor, self).resizeEvent(event)
+        try:
+            super().resizeEvent(event) # python3
+        except:
+            super(QtPythonEditor, self).resizeEvent(event) # python2
+            
 
         cr = self.contentsRect()
         self._line_number_widget.setGeometry(QRect(cr.left(), cr.top(),
@@ -198,7 +206,7 @@ if __name__ == "__main__":
     try:
         from PySide.QtGui import QApplication
 
-    except ImportError, err:
+    except ImportError as err:
         from PySide2.QtWidgets import QApplication
 
     app = QApplication([])

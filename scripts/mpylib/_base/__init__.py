@@ -1,3 +1,3 @@
-from mnode import MNode, MNodeList
-from mundo import MUndo
+from .mnode import MNode, MNodeList
+from .mundo import MUndo
 

@@ -6,10 +6,19 @@ This module contains the main class for interacting with mPyNode nodes on a scri
 
 import os
 import copy
-import cPickle
 from collections import OrderedDict
 
 import maya.api.OpenMaya as om
+
+
+    
+try:
+    import cPickle as pickle # python2
+except:
+    import pickle # python3
+
+    
+
 
 from .._base import MNode
 
@@ -299,7 +308,8 @@ class MPyNode(MNode):
             cur_inputs = {}
 
         for input_name in input_map.keys():
-            if not cur_inputs.has_key(input_name):
+            #if not cur_inputs.has_key(input_name):
+            if not input_name in cur_inputs:
                 self.addInputAttr(input_name, **input_map[input_name])
 
 
@@ -315,7 +325,8 @@ class MPyNode(MNode):
 
         for output_name in output_map.keys():
 
-            if not cur_outputs.has_key(output_name):
+            #if not cur_outputs.has_key(output_name):
+            if not output_name in cur_outputs:
                 self.addOutputAttr(output_name, **output_map[output_name])
 
 
@@ -376,7 +387,8 @@ class MPyNode(MNode):
         if not py_data:
             py_data = {str(attr_name):[str(attr_type)]}
 
-        elif not py_data.has_key(attr_name):
+        #elif not py_data.has_key(attr_name):
+        elif not attr_name in py_data:
             py_data[attr_name] = [attr_type]
 
         self._setInternalPyAttr(internal_attr, py_data)
@@ -515,7 +527,8 @@ class MPyNode(MNode):
 
             self.addAttr(long_name, attr_mel_type, **kargs)
 
-            if self._VECTOR_COMP_NAMES.has_key(attr_type):
+            #if self._VECTOR_COMP_NAMES.has_key(attr_type):
+            if attr_type in self._VECTOR_COMP_NAMES:
                 for axis in self._VECTOR_COMP_NAMES[attr_type]:
                     self.addAttr(long_name + axis, self._VECTOR_COMP_TYPES[attr_type], parent=long_name, **orig_kargs)
 
@@ -601,7 +614,8 @@ class MPyNode(MNode):
         add_func(new_name, **attr_map[attr_name])
 
         if con_nodes:
-            for i, con_list in enumerate(map(None, con_nodes, plugs)):
+            #for i, con_list in enumerate(map(None, con_nodes, plugs)):
+            for i, con_list in enumerate(zip(con_nodes, plugs)):
                 node_attr_name = new_name if not is_array else new_name + "[" + str(i) + "]"
 
                 if is_input:
@@ -1237,8 +1251,9 @@ class MPyNode(MNode):
 
         """
 
-        attr_types = cls._NEW_INPUT_TYPES.keys()
-        attr_types.sort()
+        #attr_types = cls._NEW_INPUT_TYPES.keys()
+        #attr_types.sort()
+        attr_types = sorted(cls._NEW_INPUT_TYPES.keys())
 
         return tuple(attr_types)
 
@@ -1264,8 +1279,9 @@ class MPyNode(MNode):
 
         """
 
-        attr_types = cls._NEW_OUTPUT_TYPES.keys()
-        attr_types.sort()
+        #attr_types = cls._NEW_OUTPUT_TYPES.keys()
+        #attr_types.sort()
+        attr_types = sorted(cls._NEW_OUTPUT_TYPES.keys())
 
         return tuple(attr_types)
 
@@ -1302,7 +1318,8 @@ class MPyNode(MNode):
 
             in_attr_dict = self._getInternalPyAttr(self._INPUTS_STR_ATTR_NAME)
 
-            if in_attr_dict and in_attr_dict.has_key(attr_name):
+            #if in_attr_dict and in_attr_dict.has_key(attr_name):
+            if in_attr_dict and attr_name in in_attr_dict:
                 del in_attr_dict[attr_name]
 
                 self._setInternalPyAttr(self._INPUTS_STR_ATTR_NAME, in_attr_dict)
@@ -1345,7 +1362,8 @@ class MPyNode(MNode):
 
             out_attr_dict = self._getInternalPyAttr(self._OUTPUTS_STR_ATTR_NAME)
 
-            if out_attr_dict and out_attr_dict.has_key(attr_name):
+            #if out_attr_dict and out_attr_dict.has_key(attr_name):
+            if out_attr_dict and attr_name in out_attr_dict:
                 del out_attr_dict[attr_name]
 
                 self._setInternalPyAttr(self._OUTPUTS_STR_ATTR_NAME, out_attr_dict)
@@ -1393,19 +1411,27 @@ class MPyNode(MNode):
         if not os.path.exists(os.path.dirname(file_path)):
             raise IOError("Directory does not exist: " + str(os.path.dirname(file_path)))
 
-        protocol = 2 if use_binary else 0
+        #protocol = 2 if use_binary else 0
+        protocol = pickle.HIGHEST_PROTOCOL if use_binary else 0
 
-        fh = open(file_path, "wb") if use_binary else open(file_path, "w")
+        #fh = open(file_path, "wb") if use_binary else open(file_path, "w")
 
+        #try:
+            #pickle.dump(self, fh, protocol=protocol)
+
+        #except:
+            #fh.close()
+            #raise
+
+        #else:
+            #fh.close()
+            
         try:
-            cPickle.dump(self, fh, protocol=protocol)
-
+            with open(file_path, 'w') as io:
+                pickle.dump(self, io, protocol=protocol)
         except:
-            fh.close()
-            raise
-
-        else:
-            fh.close()
+            with open(file_path, 'wb') as io:
+                pickle.dump(self, io, protocol=protocol)           
 
 
     @classmethod
@@ -1491,7 +1517,7 @@ class MPyNode(MNode):
         if os.path.exists(file_path):
 
             fh = open(file_path, "r")
-            node = cPickle.load(fh)
+            node = pickle.load(fh)
 
             return node
 

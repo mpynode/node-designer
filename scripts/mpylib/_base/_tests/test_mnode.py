@@ -1,6 +1,5 @@
 import unittest
 import os
-import cPickle
 from collections import OrderedDict
 
 try:
@@ -9,10 +8,19 @@ try:
 except:
     pass
 
+
+    
+try:
+    import cPickle as pickle # python2
+except:
+    import pickle # python3
+
+
+
 import maya.cmds as mc
 import maya.api.OpenMaya as om
 
-from mpylib import MNode, MNodeList
+from .mpylib import MNode, MNodeList
 
 
 class TestMNode(unittest.TestCase):
@@ -112,15 +120,16 @@ class TestMNode(unittest.TestCase):
 
     def testGetInheritedNodeTypes(self):
 
-        for node, node_types in map(None, (self._dag_node, self._dg_node), (self.DAG_INHERITED_TYPES, self.DG_INHERITED_TYPES)):
-            
+        #for node, node_types in map(None, (self._dag_node, self._dg_node), (self.DAG_INHERITED_TYPES, self.DG_INHERITED_TYPES)):
+        for node, node_types in zip((self._dag_node, self._dg_node), (self.DAG_INHERITED_TYPES, self.DG_INHERITED_TYPES)):    
             if node:
                 result = node.getInheritedNodeTypes()
     
                 self.assertEqual(type(result), tuple)
                 self.assertEqual(len(result), len(node_types))
     
-                for result_type, node_type in map(None, result, node_types):
+                #for result_type, node_type in map(None, result, node_types):
+                for result_type, node_type in zip(result, node_types):
     
                     self.assertEqual(type(result_type), type(node_type))
                     self.assertEqual(result_type, node_type)
@@ -490,7 +499,8 @@ class TestMNode(unittest.TestCase):
 
     def testBakeResults(self):
 
-        for node, attr in map(None, (self._dag_node, self._dg_node), (self.DAG_GET_ATTR, self.DG_GET_ATTR)):
+        #for node, attr in map(None, (self._dag_node, self._dg_node), (self.DAG_GET_ATTR, self.DG_GET_ATTR)):
+        for node, attr in zip((self._dag_node, self._dg_node), (self.DAG_GET_ATTR, self.DG_GET_ATTR)):
             
             if node and (attr is not None):
                 
@@ -510,7 +520,8 @@ class TestMNode(unittest.TestCase):
 
         dag_b = self.TEST_CLASS.createNode("transform", name="dag_node_b")
 
-        for node, attr in map(None, (self._dag_node, self._dg_node), (self.DAG_GET_ATTR, self.DG_GET_ATTR)):
+        #for node, attr in map(None, (self._dag_node, self._dg_node), (self.DAG_GET_ATTR, self.DG_GET_ATTR)):
+        for node, attr in zip((self._dag_node, self._dg_node), (self.DAG_GET_ATTR, self.DG_GET_ATTR)):
             
             if node and (attr is not None):
                 
@@ -763,7 +774,8 @@ class TestMNode(unittest.TestCase):
 
     def testHasAttr(self):
 
-        for node, attr in map(None, (self._dag_node, self._dg_node), (self.DAG_GET_ATTR, self.DG_GET_ATTR)):
+        #for node, attr in map(None, (self._dag_node, self._dg_node), (self.DAG_GET_ATTR, self.DG_GET_ATTR)):
+        for node, attr in zip((self._dag_node, self._dg_node), (self.DAG_GET_ATTR, self.DG_GET_ATTR)):
             
             if node and (attr is not None):
                 self.assertTrue(node.hasAttr(attr))
@@ -827,7 +839,8 @@ class TestMNode(unittest.TestCase):
     
                 self.assertEqual(len(all_attrs), len(mc_attrs))
     
-                for attr_a, attr_b in map(None, all_attrs, mc_attrs):
+                #for attr_a, attr_b in map(None, all_attrs, mc_attrs):
+                for attr_a, attr_b in zip(all_attrs, mc_attrs):
                     self.assertEqual(attr_a, attr_b)
 
         trans_attrs = self._dag_node.listAttr("translate*")
@@ -842,7 +855,8 @@ class TestMNode(unittest.TestCase):
 
         dag_b = self.TEST_CLASS.createNode("transform", name="dag_node_b")
 
-        for node, attr in map(None, (self._dag_node, self._dg_node), (self.DAG_GET_ATTR, self.DG_GET_ATTR)):
+        #for node, attr in map(None, (self._dag_node, self._dg_node), (self.DAG_GET_ATTR, self.DG_GET_ATTR)):
+        for node, attr in zip((self._dag_node, self._dg_node), (self.DAG_GET_ATTR, self.DG_GET_ATTR)):
             
             if node:
                 if attr is not None:
@@ -870,8 +884,8 @@ class TestMNode(unittest.TestCase):
 
     def testGetObjectType(self):
 
-        for node, node_type in map(None, (self._dag_node, self._dg_node), (self.DAG_NODE_TYPE, self.DG_NODE_TYPE)):
-
+        #for node, node_type in map(None, (self._dag_node, self._dg_node), (self.DAG_NODE_TYPE, self.DG_NODE_TYPE)):
+        for node, node_type in zip((self._dag_node, self._dg_node), (self.DAG_NODE_TYPE, self.DG_NODE_TYPE)):
             if node:
                 self.assertEqual(node.getObjectType(), node_type)
 
@@ -881,7 +895,8 @@ class TestMNode(unittest.TestCase):
         mc.namespace(add="test")
         mc.namespace(add="test:test1")      
 
-        for node, basename in map(None, (self._dag_node, self._dg_node), (self.DAG_NODE_NAME, self.DG_NODE_NAME)):
+        #for node, basename in map(None, (self._dag_node, self._dg_node), (self.DAG_NODE_NAME, self.DG_NODE_NAME)):
+        for node, basename in zip((self._dag_node, self._dg_node), (self.DAG_NODE_NAME, self.DG_NODE_NAME)):
 
             if node:
                 name = node.getName()
@@ -950,8 +965,8 @@ class TestMNode(unittest.TestCase):
 
         val = 1234.5
 
-        for node, attr in map(None, (self._dag_node, self._dg_node), (self.DAG_GET_ATTR, self.DG_GET_ATTR)):
-            
+        #for node, attr in map(None, (self._dag_node, self._dg_node), (self.DAG_GET_ATTR, self.DG_GET_ATTR)):
+        for node, attr in zip((self._dag_node, self._dg_node), (self.DAG_GET_ATTR, self.DG_GET_ATTR)): 
             if node and (attr is not None):
                 node.setAttr(attr, val)
     
@@ -1067,11 +1082,11 @@ class TestMNode(unittest.TestCase):
             #for attr_name, attr_type in test_attr_map.items():
                 #node.addAttr(attr_name, attr_type)
             
-            #node_str = cPickle.dumps(node)
+            #node_str = pickle.dumps(node)
             
             #mc.file(newFile=True, force=True)
             
-            #new_node = cPickle.loads(node_str)
+            #new_node = pickle.loads(node_str)
             
             #self.assertEqual(new_node.getName(), node_name)
             #self.assertEqual(new_node.getObjectType(), node_type)
@@ -1187,7 +1202,7 @@ class TestMNode(unittest.TestCase):
                 include_namespaces = False
                 orig_name = node.getBasename()
     
-                for i in xrange(2):
+                for i in range(2):
     
                     if i == 1:
                         node.rename("test_ns:" + orig_name)
@@ -1214,7 +1229,7 @@ class TestMNode(unittest.TestCase):
                 include_namespaces = False
                 orig_name = node.getBasename()
     
-                for i in xrange(2):
+                for i in range(2):
     
                     if i == 1:
                         node.rename("test_ns:" + orig_name)
@@ -1241,7 +1256,7 @@ class TestMNode(unittest.TestCase):
                 include_namespaces = False
                 orig_name = node.getBasename()
     
-                for i in xrange(2):
+                for i in range(2):
     
                     if i == 1:
                         node.rename("test_ns:" + orig_name)
@@ -1269,7 +1284,7 @@ class TestMNode(unittest.TestCase):
                 include_namespaces = False
                 orig_name = node.getBasename()
     
-                for i in xrange(2):
+                for i in range(2):
     
                     if i == 1:
                         node.rename("test_ns:" + orig_name)
@@ -1301,7 +1316,7 @@ class TestMNode(unittest.TestCase):
                 include_namespaces = False
                 orig_name = node.getBasename()
     
-                for i in xrange(2):
+                for i in range(2):
     
                     if i == 1:
                         node.rename("test_ns:" + orig_name)
@@ -1327,7 +1342,7 @@ class TestMNode(unittest.TestCase):
             if node:
                 include_namespaces = False
     
-                for i in xrange(2):
+                for i in range(2):
     
                     result = node.getBasename().join(("1", "2", "3"))
     
@@ -1349,7 +1364,7 @@ class TestMNode(unittest.TestCase):
             if node:
                 include_namespaces = False
     
-                for i in xrange(2):
+                for i in range(2):
     
                     result = node.getBasename().lower()
     
@@ -1371,7 +1386,7 @@ class TestMNode(unittest.TestCase):
             if node:
                 include_namespaces = False
     
-                for i in xrange(2):
+                for i in range(2):
     
                     result = node.getBasename().lstrip("de")
     
@@ -1396,7 +1411,7 @@ class TestMNode(unittest.TestCase):
             if node:
                 include_namespaces = False
     
-                for i in xrange(2):
+                for i in range(2):
     
                     result = node.getBasename().partition("_")
     
@@ -1450,7 +1465,7 @@ class TestMNode(unittest.TestCase):
             if node:
                 include_namespaces = False
     
-                for i in xrange(2):
+                for i in range(2):
     
                     result = node.getBasename().rpartition("_")
     
@@ -1492,7 +1507,7 @@ class TestMNode(unittest.TestCase):
             if node:
                 include_namespaces = False
     
-                for i in xrange(2):
+                for i in range(2):
     
                     result = node.getBasename().rstrip("de")
     
@@ -1517,7 +1532,7 @@ class TestMNode(unittest.TestCase):
             if node:
                 include_namespaces = False
     
-                for i in xrange(2):
+                for i in range(2):
     
                     result = node.getBasename().strip("de")
     
@@ -1542,7 +1557,7 @@ class TestMNode(unittest.TestCase):
             if node:
                 include_namespaces = False
     
-                for i in xrange(2):
+                for i in range(2):
     
                     result = node.getBasename().swapcase()
     
@@ -1564,7 +1579,7 @@ class TestMNode(unittest.TestCase):
             if node:
                 include_namespaces = False
     
-                for i in xrange(2):
+                for i in range(2):
     
                     result = node.getBasename().upper()
     

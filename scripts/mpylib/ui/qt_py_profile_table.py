@@ -4,7 +4,7 @@ import os
 try:
     import PySide
     
-except ImportError, err:
+except ImportError as err:
     import PySide2
     from PySide2.QtWidgets import QTableWidget, QTableWidgetItem, QHeaderView, QWidget, QHBoxLayout
     from PySide2.QtCore import Qt
@@ -22,7 +22,11 @@ class QtPyProfileTable(QTableWidget):
     
     def __init__(self, parent=None):
         
-        super(QtPyProfileTable, self).__init__(0, 6, parent=parent)
+        try:
+            super().__init__(0, 6, parent=parent) # python3
+        except:
+            super(QtPyProfileTable, self).__init__(0, 6, parent=parent) # python2
+            
         
         self._buildHeaders()
         
@@ -77,7 +81,7 @@ if __name__ == "__main__":
     try:
         import PySide
         
-    except ImportError, err:
+    except ImportError as err:
         from PySide2.QtWidgets import QApplication
     
     else:

@@ -1,1 +1,1 @@
-from ini_file import IniFile
+from .ini_file import IniFile

@@ -45,10 +45,6 @@
 * Select the node and change some variables to see the effects.
 
 
-###./node-designer/examples/api_examples/grip.py
-* An API implementation  exampleof a "grip" node.
-
-
 ###./node-designer/examples/numpy_examples/autoFrame.ma
 * !!! requires numpy !!!
 * Autoframes a given mesh to a camera's with/height.

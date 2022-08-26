@@ -2,7 +2,6 @@ import unittest
 import tempfile
 import os
 import string
-import cPickle
 import codecs
 
 try:
@@ -11,11 +10,22 @@ try:
 except:
     pass
 
+
+        
+try:
+    import cPickle as pickle # python2
+except:
+    import pickle # python3
+    unicode = str
+    
+    
+
+
 import maya.api.OpenMaya as om
 import maya.cmds as mc
 
-from mpylib import MNode
-from mpylib.nodes import MPyNode
+from .mpylib import MNode
+from .mpylib.nodes import MPyNode
 
 
 class TestMPyNode(unittest.TestCase):
@@ -54,7 +64,7 @@ class TestMPyNode(unittest.TestCase):
 
         new_nodes = []
 
-        for i in xrange(10):
+        for i in range(10):
             new_nodes.append(self.TEST_CLASS(name="new_node_" + str(i)))
 
         results = self.TEST_CLASS.ls()
@@ -66,7 +76,7 @@ class TestMPyNode(unittest.TestCase):
 
         new_nodes = []
 
-        for i in xrange(10):
+        for i in range(10):
             new_nodes.append(TestChildClass(name="new_child_" + str(i)))
 
         results = TestChildClass.ls()
@@ -99,9 +109,9 @@ class TestMPyNode(unittest.TestCase):
             fh = open(temp_file)
 
             try:
-                node = cPickle.load(fh)
+                node = pickle.load(fh)
 
-            except Exception, err:
+            except Exception as err:
                 fh.close()
                 raise
 
@@ -186,7 +196,7 @@ class TestMPyNode(unittest.TestCase):
 
                 self.assertTrue(internal_str is not None)
 
-                interal_dict = cPickle.loads(codecs.decode(internal_str.encode(), "base64"))
+                interal_dict = pickle.loads(codecs.decode(internal_str.encode(), "base64"))
 
                 self.assertEqual(type(interal_dict), dict)
                 self.assertEqual(len(interal_dict), i)
@@ -247,11 +257,12 @@ class TestMPyNode(unittest.TestCase):
 
                 self.assertTrue(internal_str is not None)
 
-                interal_dict = cPickle.loads(codecs.decode(internal_str.encode(), "base64"))
+                interal_dict = pickle.loads(codecs.decode(internal_str.encode(), "base64"))
 
                 self.assertEqual(type(interal_dict), dict)
                 self.assertEqual(len(interal_dict), i)
-                self.assertFalse(interal_dict.has_key(attr_name))
+                #self.assertFalse(interal_dict.has_key(attr_name))
+                self.assertFalse(attr_name in interal_dict)
                 i += 1
 
                 for internal_attr, internal_type in interal_dict.items():
@@ -288,7 +299,7 @@ class TestMPyNode(unittest.TestCase):
 
                 self.assertTrue(internal_str is not None)
 
-                interal_dict = cPickle.loads(codecs.decode(internal_str.encode(), "base64"))
+                interal_dict = pickle.loads(codecs.decode(internal_str.encode(), "base64"))
 
                 i -= 1
 
@@ -331,7 +342,7 @@ class TestMPyNode(unittest.TestCase):
 
                 self.assertTrue(internal_str is not None)
 
-                interal_dict = cPickle.loads(codecs.decode(internal_str.encode(), "base64"))
+                interal_dict = pickle.loads(codecs.decode(internal_str.encode(), "base64"))
 
                 i -= 1
 
@@ -376,7 +387,7 @@ class TestMPyNode(unittest.TestCase):
 
                 self.assertTrue(internal_str is not None)
 
-                interal_dict = cPickle.loads(codecs.decode(internal_str.encode(), "base64"))
+                interal_dict = pickle.loads(codecs.decode(internal_str.encode(), "base64"))
 
                 self.assertEqual(type(interal_dict), dict)
                 self.assertEqual(len(interal_dict), i)
@@ -429,7 +440,8 @@ class TestMPyNode(unittest.TestCase):
 
         stored_vars = node.listStoredVariables()
 
-        for var_name, letter in map(None, stored_vars, string.ascii_lowercase):
+        #for var_name, letter in map(None, stored_vars, string.ascii_lowercase):
+        for var_name, letter in zip(stored_vars, string.ascii_lowercase):
             self.assertEqual(var_name, letter)
 
 
@@ -568,7 +580,8 @@ class TestMPyNode(unittest.TestCase):
             self.assertEqual(attr_tokens[1], attr_data[MPyNode._ATTR_MAP_TYPE_KEY])
 
             if len(attr_tokens) == 2:
-                self.assertFalse(attr_data.has_key(MPyNode.ATTR_MAP_ARRAY_KEY))
+                #self.assertFalse(attr_data.has_key(MPyNode.ATTR_MAP_ARRAY_KEY))
+                self.assertFalse(MPyNode.ATTR_MAP_ARRAY_KEY in attr_data)
 
             else:
                 self.assertTrue(attr_data[MPyNode.ATTR_MAP_ARRAY_KEY])
@@ -589,7 +602,8 @@ class TestMPyNode(unittest.TestCase):
             self.assertEqual(attr_tokens[1], attr_data[MPyNode._ATTR_MAP_TYPE_KEY])
 
             if len(attr_tokens) == 2:
-                self.assertFalse(attr_data.has_key(MPyNode.ATTR_MAP_ARRAY_KEY))
+                #self.assertFalse(attr_data.has_key(MPyNode.ATTR_MAP_ARRAY_KEY))
+                self.assertFalse(MPyNode.ATTR_MAP_ARRAY_KEY in attr_data)
 
             else:
                 self.assertTrue(attr_data[MPyNode.ATTR_MAP_ARRAY_KEY])
@@ -656,7 +670,7 @@ class TestMPyNode(unittest.TestCase):
             input_attr = "testEnum"
             output_attr = "testEnum"
             output_attr_2 = "testEnum2"
-            enum_names = ":".join(["enum" + str(i) for i in xrange(100)])
+            enum_names = ":".join(["enum" + str(i) for i in range(100)])
             attr_kargs={"enumName":enum_names}
             anim_values = (1, 100)
 
@@ -862,7 +876,7 @@ class TestMPyNode(unittest.TestCase):
                 in_py_node.connectAttr("outPy[1]", out_py_node, "inPy[1]")
                 out_py_node.connectAttr("outFloat", out_node, "tx")
 
-            for f in xrange(101):
+            for f in range(101):
 
                 mc.currentTime(f, update=True)
 
@@ -977,20 +991,22 @@ class TestMPyNode(unittest.TestCase):
         for var_name, var_val in stored_vars.items():
             node.setStoredVariable(var_name, var_val)
 
-        node_str = cPickle.dumps(node)
-        new_node = cPickle.loads(node_str)
+        node_str = pickle.dumps(node)
+        new_node = pickle.loads(node_str)
 
         ##----test inputs----##
         result_inputs = new_node.getInputAttrMap()
         self.assertEqual(len(result_inputs), len(input_maps))
 
         for attr_name, attr_data in result_inputs.items():
-            self.assertTrue(input_maps.has_key(attr_name))
+            #self.assertTrue(input_maps.has_key(attr_name))
+            self.assertTrue(attr_name in input_maps)
             test_data = input_maps[attr_name]
             self.assertEqual(len(attr_data), len(test_data))
 
             for key, val in attr_data.items():
-                self.assertTrue(test_data.has_key(key))
+                #self.assertTrue(test_data.has_key(key))
+                self.assertTrue(key in test_data)
                 self.assertEqual(val, test_data[key])
 
         ##----test output----##
@@ -998,12 +1014,14 @@ class TestMPyNode(unittest.TestCase):
         self.assertEqual(len(result_outputs), len(output_maps))
 
         for attr_name, attr_data in result_outputs.items():
-            self.assertTrue(output_maps.has_key(attr_name))
+            #self.assertTrue(output_maps.has_key(attr_name))
+            self.assertTrue(attr_name in output_maps)
             test_data = output_maps[attr_name]
             self.assertEqual(len(attr_data), len(test_data))
 
             for key, val in attr_data.items():
-                self.assertTrue(test_data.has_key(key))
+                #self.assertTrue(test_data.has_key(key))
+                self.assertTrue(key in test_data)
                 self.assertEqual(val, test_data[key])
 
         ##----test stored variables----##
@@ -1045,7 +1063,7 @@ class TestMPyNode(unittest.TestCase):
 
 
         for i in range(len(in_nodes)):
-            print py_node.getAttr("outAttr[" + str(i) + "]")
+            print (py_node.getAttr("outAttr[" + str(i) + "]"))
 
 
     def _runFunctionalTest(self, in_node, out_node, attr_type, input_attr, output_attr, anim_attr, anim_values, is_array, py_node=None,
@@ -1135,7 +1153,7 @@ class TestMPyNode(unittest.TestCase):
         mc.file(rename=out_file_name)
         mc.file(save=True, force=True, type="mayaAscii")
 
-        for i in xrange(2):
+        for i in range(2):
 
             ##--reopen scene second time around---##
             if i:
@@ -1147,7 +1165,7 @@ class TestMPyNode(unittest.TestCase):
                 if not anim_values and attr_mel_type != "time":
                     in_node.setAttr(input_attr, input_value, type=attr_mel_type)
 
-            for f in xrange(101):
+            for f in range(101):
 
                 mc.currentTime(f, update=True)
 

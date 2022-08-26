@@ -3,7 +3,7 @@ import sys
 try:
     import PySide
     
-except ImportError, err:
+except ImportError as err:
     from PySide2.QtCore import QRegExp
     from PySide2.QtGui import QColor, QTextCharFormat, QFont, QSyntaxHighlighter
     from PySide2.QtWidgets import QTextEdit
@@ -38,7 +38,11 @@ class QtPythonHighlighter(QSyntaxHighlighter):
     
     def __init__(self, document):
         
-        super(QtPythonHighlighter, self).__init__(document)
+        try:
+            super().__init__(document) # python3
+        except:
+            super(QtPythonHighlighter, self).__init__(document) # python2
+            
         
         self._styles = {"keyword": QtPythonHighlighter.formatText((249, 38, 102)),
                         "operator": QtPythonHighlighter.formatText((255, 255, 255)),

@@ -7,7 +7,7 @@ if mc.about(apiVersion=True) < 201700:
 else:
     from PySide2.QtWidgets import QDockWidget
 
-from mqt_main import QMayaMain
+from .mqt_main import QMayaMain
 
 
 

@@ -1,0 +1,1957 @@
+
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 956, in closeEvent
+    close_ok = self._script_tab_widget._tabCloseCheckAll()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1074, in _tabCloseCheckAll
+    if self.hasExpressionChanged(tab_index):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1046, in hasExpressionChanged
+    return tab_widget.hasUnsavedChanges()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1307, in hasUnsavedChanges
+    self.LOG_SIGNAL.emit("Error: node is no longer valid")
+TypeError: LOG_SIGNAL(QString,int) needs 2 argument(s), 1 given!
+
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 956, in closeEvent
+    close_ok = self._script_tab_widget._tabCloseCheckAll()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1074, in _tabCloseCheckAll
+    if self.hasExpressionChanged(tab_index):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1046, in hasExpressionChanged
+    return tab_widget.hasUnsavedChanges()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1307, in hasUnsavedChanges
+    self.LOG_SIGNAL.emit("Error: node is no longer valid")
+TypeError: LOG_SIGNAL(QString,int) needs 2 argument(s), 1 given!
+
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 962, in closeEvent
+    self.removeAllCallbacks()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 903, in removeAllCallbacks
+    self.removeNodeCallbacks()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 911, in removeNodeCallbacks
+    for py_node in self._node_callback_map.keys():
+RuntimeError: dictionary changed size during iteration
+
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 956, in closeEvent
+    close_ok = self._script_tab_widget._tabCloseCheckAll()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1074, in _tabCloseCheckAll
+    if self.hasExpressionChanged(tab_index):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1046, in hasExpressionChanged
+    return tab_widget.hasUnsavedChanges()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1307, in hasUnsavedChanges
+    self.LOG_SIGNAL.emit("Error: node is no longer valid")
+TypeError: LOG_SIGNAL(QString,int) needs 2 argument(s), 1 given!
+
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 956, in closeEvent
+    close_ok = self._script_tab_widget._tabCloseCheckAll()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1074, in _tabCloseCheckAll
+    if self.hasExpressionChanged(tab_index):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1046, in hasExpressionChanged
+    return tab_widget.hasUnsavedChanges()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1307, in hasUnsavedChanges
+    self.LOG_SIGNAL.emit("Error: node is no longer valid")
+TypeError: LOG_SIGNAL(QString,int) needs 2 argument(s), 1 given!
+
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 956, in closeEvent
+    close_ok = self._script_tab_widget._tabCloseCheckAll()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1074, in _tabCloseCheckAll
+    if self.hasExpressionChanged(tab_index):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1046, in hasExpressionChanged
+    return tab_widget.hasUnsavedChanges()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1307, in hasUnsavedChanges
+    self.LOG_SIGNAL.emit("Error: node is no longer valid")
+TypeError: LOG_SIGNAL(QString,int) needs 2 argument(s), 1 given!
+
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 962, in closeEvent
+    self.removeAllCallbacks()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 903, in removeAllCallbacks
+    self.removeNodeCallbacks()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 911, in removeNodeCallbacks
+    for py_node in self._node_callback_map.keys():
+RuntimeError: dictionary changed size during iteration
+
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 956, in closeEvent
+    close_ok = self._script_tab_widget._tabCloseCheckAll()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1074, in _tabCloseCheckAll
+    if self.hasExpressionChanged(tab_index):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1046, in hasExpressionChanged
+    return tab_widget.hasUnsavedChanges()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1307, in hasUnsavedChanges
+    self.LOG_SIGNAL.emit("Error: node is no longer valid")
+TypeError: LOG_SIGNAL(QString,int) needs 2 argument(s), 1 given!
+
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 956, in closeEvent
+    close_ok = self._script_tab_widget._tabCloseCheckAll()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1074, in _tabCloseCheckAll
+    if self.hasExpressionChanged(tab_index):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1046, in hasExpressionChanged
+    return tab_widget.hasUnsavedChanges()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1307, in hasUnsavedChanges
+    self.LOG_SIGNAL.emit("Error: node is no longer valid")
+TypeError: LOG_SIGNAL(QString,int) needs 2 argument(s), 1 given!
+
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 956, in closeEvent
+    close_ok = self._script_tab_widget._tabCloseCheckAll()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1074, in _tabCloseCheckAll
+    if self.hasExpressionChanged(tab_index):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1046, in hasExpressionChanged
+    return tab_widget.hasUnsavedChanges()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1307, in hasUnsavedChanges
+    self.LOG_SIGNAL.emit("Error: node is no longer valid")
+TypeError: LOG_SIGNAL(QString,int) needs 2 argument(s), 1 given!
+
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 956, in closeEvent
+    close_ok = self._script_tab_widget._tabCloseCheckAll()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1074, in _tabCloseCheckAll
+    if self.hasExpressionChanged(tab_index):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1046, in hasExpressionChanged
+    return tab_widget.hasUnsavedChanges()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1307, in hasUnsavedChanges
+    self.LOG_SIGNAL.emit("Error: node is no longer valid")
+TypeError: LOG_SIGNAL(QString,int) needs 2 argument(s), 1 given!
+
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 962, in closeEvent
+    self.removeAllCallbacks()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 903, in removeAllCallbacks
+    self.removeNodeCallbacks()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 911, in removeNodeCallbacks
+    for py_node in self._node_callback_map.keys():
+RuntimeError: dictionary changed size during iteration
+
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 956, in closeEvent
+    close_ok = self._script_tab_widget._tabCloseCheckAll()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1074, in _tabCloseCheckAll
+    if self.hasExpressionChanged(tab_index):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1046, in hasExpressionChanged
+    return tab_widget.hasUnsavedChanges()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1307, in hasUnsavedChanges
+    self.LOG_SIGNAL.emit("Error: node is no longer valid")
+TypeError: LOG_SIGNAL(QString,int) needs 2 argument(s), 1 given!
+
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 956, in closeEvent
+    close_ok = self._script_tab_widget._tabCloseCheckAll()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1074, in _tabCloseCheckAll
+    if self.hasExpressionChanged(tab_index):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1046, in hasExpressionChanged
+    return tab_widget.hasUnsavedChanges()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1307, in hasUnsavedChanges
+    self.LOG_SIGNAL.emit("Error: node is no longer valid")
+TypeError: LOG_SIGNAL(QString,int) needs 2 argument(s), 1 given!
+
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 956, in closeEvent
+    close_ok = self._script_tab_widget._tabCloseCheckAll()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1074, in _tabCloseCheckAll
+    if self.hasExpressionChanged(tab_index):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1046, in hasExpressionChanged
+    return tab_widget.hasUnsavedChanges()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1307, in hasUnsavedChanges
+    self.LOG_SIGNAL.emit("Error: node is no longer valid")
+TypeError: LOG_SIGNAL(QString,int) needs 2 argument(s), 1 given!
+
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 956, in closeEvent
+    close_ok = self._script_tab_widget._tabCloseCheckAll()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1074, in _tabCloseCheckAll
+    if self.hasExpressionChanged(tab_index):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1046, in hasExpressionChanged
+    return tab_widget.hasUnsavedChanges()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1307, in hasUnsavedChanges
+    self.LOG_SIGNAL.emit("Error: node is no longer valid")
+TypeError: LOG_SIGNAL(QString,int) needs 2 argument(s), 1 given!
+
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 956, in closeEvent
+    close_ok = self._script_tab_widget._tabCloseCheckAll()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1074, in _tabCloseCheckAll
+    if self.hasExpressionChanged(tab_index):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1046, in hasExpressionChanged
+    return tab_widget.hasUnsavedChanges()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1307, in hasUnsavedChanges
+    self.LOG_SIGNAL.emit("Error: node is no longer valid")
+TypeError: LOG_SIGNAL(QString,int) needs 2 argument(s), 1 given!
+
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 962, in closeEvent
+    self.removeAllCallbacks()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 903, in removeAllCallbacks
+    self.removeNodeCallbacks()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 911, in removeNodeCallbacks
+    for py_node in self._node_callback_map.keys():
+RuntimeError: dictionary changed size during iteration
+
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 956, in closeEvent
+    close_ok = self._script_tab_widget._tabCloseCheckAll()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1074, in _tabCloseCheckAll
+    if self.hasExpressionChanged(tab_index):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1046, in hasExpressionChanged
+    return tab_widget.hasUnsavedChanges()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1307, in hasUnsavedChanges
+    self.LOG_SIGNAL.emit("Error: node is no longer valid")
+TypeError: LOG_SIGNAL(QString,int) needs 2 argument(s), 1 given!
+
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 956, in closeEvent
+    close_ok = self._script_tab_widget._tabCloseCheckAll()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1074, in _tabCloseCheckAll
+    if self.hasExpressionChanged(tab_index):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1046, in hasExpressionChanged
+    return tab_widget.hasUnsavedChanges()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1307, in hasUnsavedChanges
+    self.LOG_SIGNAL.emit("Error: node is no longer valid")
+TypeError: LOG_SIGNAL(QString,int) needs 2 argument(s), 1 given!
+
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 956, in closeEvent
+    close_ok = self._script_tab_widget._tabCloseCheckAll()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1074, in _tabCloseCheckAll
+    if self.hasExpressionChanged(tab_index):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1046, in hasExpressionChanged
+    return tab_widget.hasUnsavedChanges()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1307, in hasUnsavedChanges
+    self.LOG_SIGNAL.emit("Error: node is no longer valid")
+TypeError: LOG_SIGNAL(QString,int) needs 2 argument(s), 1 given!
+
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 956, in closeEvent
+    close_ok = self._script_tab_widget._tabCloseCheckAll()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1074, in _tabCloseCheckAll
+    if self.hasExpressionChanged(tab_index):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1046, in hasExpressionChanged
+    return tab_widget.hasUnsavedChanges()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1307, in hasUnsavedChanges
+    self.LOG_SIGNAL.emit("Error: node is no longer valid")
+TypeError: LOG_SIGNAL(QString,int) needs 2 argument(s), 1 given!
+
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 956, in closeEvent
+    close_ok = self._script_tab_widget._tabCloseCheckAll()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1074, in _tabCloseCheckAll
+    if self.hasExpressionChanged(tab_index):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1046, in hasExpressionChanged
+    return tab_widget.hasUnsavedChanges()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1307, in hasUnsavedChanges
+    self.LOG_SIGNAL.emit("Error: node is no longer valid")
+TypeError: LOG_SIGNAL(QString,int) needs 2 argument(s), 1 given!
+
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 956, in closeEvent
+    close_ok = self._script_tab_widget._tabCloseCheckAll()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1074, in _tabCloseCheckAll
+    if self.hasExpressionChanged(tab_index):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1046, in hasExpressionChanged
+    return tab_widget.hasUnsavedChanges()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1307, in hasUnsavedChanges
+    self.LOG_SIGNAL.emit("Error: node is no longer valid")
+TypeError: LOG_SIGNAL(QString,int) needs 2 argument(s), 1 given!
+
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 962, in closeEvent
+    self.removeAllCallbacks()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 903, in removeAllCallbacks
+    self.removeNodeCallbacks()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 911, in removeNodeCallbacks
+    for py_node in self._node_callback_map.keys():
+RuntimeError: dictionary changed size during iteration
+
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 956, in closeEvent
+    close_ok = self._script_tab_widget._tabCloseCheckAll()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1074, in _tabCloseCheckAll
+    if self.hasExpressionChanged(tab_index):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1046, in hasExpressionChanged
+    return tab_widget.hasUnsavedChanges()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1307, in hasUnsavedChanges
+    self.LOG_SIGNAL.emit("Error: node is no longer valid")
+TypeError: LOG_SIGNAL(QString,int) needs 2 argument(s), 1 given!
+
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 956, in closeEvent
+    close_ok = self._script_tab_widget._tabCloseCheckAll()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1074, in _tabCloseCheckAll
+    if self.hasExpressionChanged(tab_index):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1046, in hasExpressionChanged
+    return tab_widget.hasUnsavedChanges()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1307, in hasUnsavedChanges
+    self.LOG_SIGNAL.emit("Error: node is no longer valid")
+TypeError: LOG_SIGNAL(QString,int) needs 2 argument(s), 1 given!
+
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 956, in closeEvent
+    close_ok = self._script_tab_widget._tabCloseCheckAll()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1074, in _tabCloseCheckAll
+    if self.hasExpressionChanged(tab_index):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1046, in hasExpressionChanged
+    return tab_widget.hasUnsavedChanges()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1307, in hasUnsavedChanges
+    self.LOG_SIGNAL.emit("Error: node is no longer valid")
+TypeError: LOG_SIGNAL(QString,int) needs 2 argument(s), 1 given!
+
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 956, in closeEvent
+    close_ok = self._script_tab_widget._tabCloseCheckAll()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1074, in _tabCloseCheckAll
+    if self.hasExpressionChanged(tab_index):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1046, in hasExpressionChanged
+    return tab_widget.hasUnsavedChanges()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1307, in hasUnsavedChanges
+    self.LOG_SIGNAL.emit("Error: node is no longer valid")
+TypeError: LOG_SIGNAL(QString,int) needs 2 argument(s), 1 given!
+
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 956, in closeEvent
+    close_ok = self._script_tab_widget._tabCloseCheckAll()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1074, in _tabCloseCheckAll
+    if self.hasExpressionChanged(tab_index):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1046, in hasExpressionChanged
+    return tab_widget.hasUnsavedChanges()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1307, in hasUnsavedChanges
+    self.LOG_SIGNAL.emit("Error: node is no longer valid")
+TypeError: LOG_SIGNAL(QString,int) needs 2 argument(s), 1 given!
+
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 956, in closeEvent
+    close_ok = self._script_tab_widget._tabCloseCheckAll()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1074, in _tabCloseCheckAll
+    if self.hasExpressionChanged(tab_index):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1046, in hasExpressionChanged
+    return tab_widget.hasUnsavedChanges()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1307, in hasUnsavedChanges
+    self.LOG_SIGNAL.emit("Error: node is no longer valid")
+TypeError: LOG_SIGNAL(QString,int) needs 2 argument(s), 1 given!
+
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 956, in closeEvent
+    close_ok = self._script_tab_widget._tabCloseCheckAll()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1074, in _tabCloseCheckAll
+    if self.hasExpressionChanged(tab_index):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1046, in hasExpressionChanged
+    return tab_widget.hasUnsavedChanges()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1307, in hasUnsavedChanges
+    self.LOG_SIGNAL.emit("Error: node is no longer valid")
+TypeError: LOG_SIGNAL(QString,int) needs 2 argument(s), 1 given!
+
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 962, in closeEvent
+    self.removeAllCallbacks()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 903, in removeAllCallbacks
+    self.removeNodeCallbacks()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 911, in removeNodeCallbacks
+    for py_node in self._node_callback_map.keys():
+RuntimeError: dictionary changed size during iteration
+
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 956, in closeEvent
+    close_ok = self._script_tab_widget._tabCloseCheckAll()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1074, in _tabCloseCheckAll
+    if self.hasExpressionChanged(tab_index):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1046, in hasExpressionChanged
+    return tab_widget.hasUnsavedChanges()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1307, in hasUnsavedChanges
+    self.LOG_SIGNAL.emit("Error: node is no longer valid")
+TypeError: LOG_SIGNAL(QString,int) needs 2 argument(s), 1 given!
+
+
+Traceback (most recent call last):
+  File "C:/Program Files/Autodesk/Maya2022\Python37\lib\encodings\base64_codec.py", line 19, in base64_decode
+    return (base64.decodebytes(input), len(input))
+  File "C:\Program Files\Autodesk\Maya2022\Python37\lib\base64.py", line 546, in decodebytes
+    return binascii.a2b_base64(s)
+binascii.Error: Incorrect padding
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\_base\mnode.py", line 2114, in _loadPickle
+    return pickle.loads(codecs.decode(data.encode(), "base64"))
+binascii.Error: decoding with 'base64' codec failed (Error: Incorrect padding)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 568, in scriptTabChanged
+    self._attributes_widget.refresh(py_node)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1742, in refresh
+    self.refreshOutputs()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1761, in refreshOutputs
+    self._output_frame.refresh()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 2206, in refresh
+    attr_map = list_func()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 1197, in getOutputAttrMap
+    return self._getAttrMap(self._OUTPUTS_STR_ATTR_NAME)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 537, in _getAttrMap
+    internal_attr_map = self._getInternalAttrMap(internal_attr_name)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 460, in _getInternalAttrMap
+    return self._loadPickle(str_val)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\_base\mnode.py", line 2117, in _loadPickle
+    return pickle.loads(str(data)) # backwards compatibility with default pickle protocol
+TypeError: a bytes-like object is required, not 'str'
+
+
+Traceback (most recent call last):
+  File "C:/Program Files/Autodesk/Maya2022\Python37\lib\encodings\base64_codec.py", line 19, in base64_decode
+    return (base64.decodebytes(input), len(input))
+  File "C:\Program Files\Autodesk\Maya2022\Python37\lib\base64.py", line 546, in decodebytes
+    return binascii.a2b_base64(s)
+binascii.Error: Incorrect padding
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\_base\mnode.py", line 2114, in _loadPickle
+    return pickle.loads(codecs.decode(data.encode(), "base64"))
+binascii.Error: decoding with 'base64' codec failed (Error: Incorrect padding)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1240, in refresh
+    output_map = self._py_node.getOutputAttrMap()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 1197, in getOutputAttrMap
+    return self._getAttrMap(self._OUTPUTS_STR_ATTR_NAME)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 537, in _getAttrMap
+    internal_attr_map = self._getInternalAttrMap(internal_attr_name)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 460, in _getInternalAttrMap
+    return self._loadPickle(str_val)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\_base\mnode.py", line 2117, in _loadPickle
+    return pickle.loads(str(data)) # backwards compatibility with default pickle protocol
+TypeError: a bytes-like object is required, not 'str'
+
+
+Traceback (most recent call last):
+  File "C:/Program Files/Autodesk/Maya2022\Python37\lib\encodings\base64_codec.py", line 19, in base64_decode
+    return (base64.decodebytes(input), len(input))
+  File "C:\Program Files\Autodesk\Maya2022\Python37\lib\base64.py", line 546, in decodebytes
+    return binascii.a2b_base64(s)
+binascii.Error: Incorrect padding
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\_base\mnode.py", line 2114, in _loadPickle
+    return pickle.loads(codecs.decode(data.encode(), "base64"))
+binascii.Error: decoding with 'base64' codec failed (Error: Incorrect padding)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 868, in sceneSelectChangeEvent
+    tab_widget, tab_index = self._script_tab_widget.addNewTab(py_node)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1035, in addNewTab
+    tab_widget.refresh()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1240, in refresh
+    output_map = self._py_node.getOutputAttrMap()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 1197, in getOutputAttrMap
+    return self._getAttrMap(self._OUTPUTS_STR_ATTR_NAME)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 537, in _getAttrMap
+    internal_attr_map = self._getInternalAttrMap(internal_attr_name)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 460, in _getInternalAttrMap
+    return self._loadPickle(str_val)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\_base\mnode.py", line 2117, in _loadPickle
+    return pickle.loads(str(data)) # backwards compatibility with default pickle protocol
+TypeError: a bytes-like object is required, not 'str'
+
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 962, in closeEvent
+    self.removeAllCallbacks()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 903, in removeAllCallbacks
+    self.removeNodeCallbacks()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 911, in removeNodeCallbacks
+    for py_node in self._node_callback_map.keys():
+RuntimeError: dictionary changed size during iteration
+
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 956, in closeEvent
+    close_ok = self._script_tab_widget._tabCloseCheckAll()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1074, in _tabCloseCheckAll
+    if self.hasExpressionChanged(tab_index):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1046, in hasExpressionChanged
+    return tab_widget.hasUnsavedChanges()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1307, in hasUnsavedChanges
+    self.LOG_SIGNAL.emit("Error: node is no longer valid")
+TypeError: LOG_SIGNAL(QString,int) needs 2 argument(s), 1 given!
+
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 956, in closeEvent
+    close_ok = self._script_tab_widget._tabCloseCheckAll()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1074, in _tabCloseCheckAll
+    if self.hasExpressionChanged(tab_index):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1046, in hasExpressionChanged
+    return tab_widget.hasUnsavedChanges()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1307, in hasUnsavedChanges
+    self.LOG_SIGNAL.emit("Error: node is no longer valid")
+TypeError: LOG_SIGNAL(QString,int) needs 2 argument(s), 1 given!
+
+
+Traceback (most recent call last):
+  File "C:/Program Files/Autodesk/Maya2022\Python37\lib\encodings\base64_codec.py", line 19, in base64_decode
+    return (base64.decodebytes(input), len(input))
+  File "C:\Program Files\Autodesk\Maya2022\Python37\lib\base64.py", line 546, in decodebytes
+    return binascii.a2b_base64(s)
+binascii.Error: Incorrect padding
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\_base\mnode.py", line 2114, in _loadPickle
+    return pickle.loads(codecs.decode(data.encode(), "base64"))
+binascii.Error: decoding with 'base64' codec failed (Error: Incorrect padding)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 568, in scriptTabChanged
+    self._attributes_widget.refresh(py_node)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1742, in refresh
+    self.refreshOutputs()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1761, in refreshOutputs
+    self._output_frame.refresh()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 2206, in refresh
+    attr_map = list_func()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 1197, in getOutputAttrMap
+    return self._getAttrMap(self._OUTPUTS_STR_ATTR_NAME)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 537, in _getAttrMap
+    internal_attr_map = self._getInternalAttrMap(internal_attr_name)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 460, in _getInternalAttrMap
+    return self._loadPickle(str_val)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\_base\mnode.py", line 2117, in _loadPickle
+TypeError: a bytes-like object is required, not 'str'
+
+
+Traceback (most recent call last):
+  File "C:/Program Files/Autodesk/Maya2022\Python37\lib\encodings\base64_codec.py", line 19, in base64_decode
+    return (base64.decodebytes(input), len(input))
+  File "C:\Program Files\Autodesk\Maya2022\Python37\lib\base64.py", line 546, in decodebytes
+    return binascii.a2b_base64(s)
+binascii.Error: Incorrect padding
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\_base\mnode.py", line 2114, in _loadPickle
+    return pickle.loads(codecs.decode(data.encode(), "base64"))
+binascii.Error: decoding with 'base64' codec failed (Error: Incorrect padding)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1240, in refresh
+    output_map = self._py_node.getOutputAttrMap()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 1197, in getOutputAttrMap
+    return self._getAttrMap(self._OUTPUTS_STR_ATTR_NAME)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 537, in _getAttrMap
+    internal_attr_map = self._getInternalAttrMap(internal_attr_name)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 460, in _getInternalAttrMap
+    return self._loadPickle(str_val)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\_base\mnode.py", line 2117, in _loadPickle
+TypeError: a bytes-like object is required, not 'str'
+
+
+Traceback (most recent call last):
+  File "C:/Program Files/Autodesk/Maya2022\Python37\lib\encodings\base64_codec.py", line 19, in base64_decode
+    return (base64.decodebytes(input), len(input))
+  File "C:\Program Files\Autodesk\Maya2022\Python37\lib\base64.py", line 546, in decodebytes
+    return binascii.a2b_base64(s)
+binascii.Error: Incorrect padding
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\_base\mnode.py", line 2114, in _loadPickle
+    return pickle.loads(codecs.decode(data.encode(), "base64"))
+binascii.Error: decoding with 'base64' codec failed (Error: Incorrect padding)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 868, in sceneSelectChangeEvent
+    tab_widget, tab_index = self._script_tab_widget.addNewTab(py_node)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1035, in addNewTab
+    tab_widget.refresh()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1240, in refresh
+    output_map = self._py_node.getOutputAttrMap()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 1197, in getOutputAttrMap
+    return self._getAttrMap(self._OUTPUTS_STR_ATTR_NAME)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 537, in _getAttrMap
+    internal_attr_map = self._getInternalAttrMap(internal_attr_name)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 460, in _getInternalAttrMap
+    return self._loadPickle(str_val)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\_base\mnode.py", line 2117, in _loadPickle
+TypeError: a bytes-like object is required, not 'str'
+
+
+Traceback (most recent call last):
+  File "C:/Program Files/Autodesk/Maya2022\Python37\lib\encodings\base64_codec.py", line 19, in base64_decode
+    return (base64.decodebytes(input), len(input))
+  File "C:\Program Files\Autodesk\Maya2022\Python37\lib\base64.py", line 546, in decodebytes
+    return binascii.a2b_base64(s)
+binascii.Error: Incorrect padding
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\_base\mnode.py", line 2114, in _loadPickle
+    return pickle.loads(codecs.decode(data.encode(), "base64"))
+binascii.Error: decoding with 'base64' codec failed (Error: Incorrect padding)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\_base\mnode.py", line 2119, in _loadPickle
+    return pickle.loads(str(data)) # backwards compatibility with default pickle protocol in python 2.7
+TypeError: a bytes-like object is required, not 'str'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 568, in scriptTabChanged
+    self._attributes_widget.refresh(py_node)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1742, in refresh
+    self.refreshOutputs()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1761, in refreshOutputs
+    self._output_frame.refresh()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 2206, in refresh
+    attr_map = list_func()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 1197, in getOutputAttrMap
+    return self._getAttrMap(self._OUTPUTS_STR_ATTR_NAME)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 537, in _getAttrMap
+    internal_attr_map = self._getInternalAttrMap(internal_attr_name)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 460, in _getInternalAttrMap
+    return self._loadPickle(str_val)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\_base\mnode.py", line 2121, in _loadPickle
+    return pickle.loads(data) # finally
+TypeError: a bytes-like object is required, not 'str'
+
+
+Traceback (most recent call last):
+  File "C:/Program Files/Autodesk/Maya2022\Python37\lib\encodings\base64_codec.py", line 19, in base64_decode
+    return (base64.decodebytes(input), len(input))
+  File "C:\Program Files\Autodesk\Maya2022\Python37\lib\base64.py", line 546, in decodebytes
+    return binascii.a2b_base64(s)
+binascii.Error: Incorrect padding
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\_base\mnode.py", line 2114, in _loadPickle
+    return pickle.loads(codecs.decode(data.encode(), "base64"))
+binascii.Error: decoding with 'base64' codec failed (Error: Incorrect padding)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\_base\mnode.py", line 2119, in _loadPickle
+    return pickle.loads(str(data)) # backwards compatibility with default pickle protocol in python 2.7
+TypeError: a bytes-like object is required, not 'str'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1240, in refresh
+    output_map = self._py_node.getOutputAttrMap()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 1197, in getOutputAttrMap
+    return self._getAttrMap(self._OUTPUTS_STR_ATTR_NAME)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 537, in _getAttrMap
+    internal_attr_map = self._getInternalAttrMap(internal_attr_name)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 460, in _getInternalAttrMap
+    return self._loadPickle(str_val)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\_base\mnode.py", line 2121, in _loadPickle
+    return pickle.loads(data) # finally
+TypeError: a bytes-like object is required, not 'str'
+
+
+Traceback (most recent call last):
+  File "C:/Program Files/Autodesk/Maya2022\Python37\lib\encodings\base64_codec.py", line 19, in base64_decode
+    return (base64.decodebytes(input), len(input))
+  File "C:\Program Files\Autodesk\Maya2022\Python37\lib\base64.py", line 546, in decodebytes
+    return binascii.a2b_base64(s)
+binascii.Error: Incorrect padding
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\_base\mnode.py", line 2114, in _loadPickle
+    return pickle.loads(codecs.decode(data.encode(), "base64"))
+binascii.Error: decoding with 'base64' codec failed (Error: Incorrect padding)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\_base\mnode.py", line 2119, in _loadPickle
+    return pickle.loads(str(data)) # backwards compatibility with default pickle protocol in python 2.7
+TypeError: a bytes-like object is required, not 'str'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 868, in sceneSelectChangeEvent
+    tab_widget, tab_index = self._script_tab_widget.addNewTab(py_node)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1035, in addNewTab
+    tab_widget.refresh()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1240, in refresh
+    output_map = self._py_node.getOutputAttrMap()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 1197, in getOutputAttrMap
+    return self._getAttrMap(self._OUTPUTS_STR_ATTR_NAME)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 537, in _getAttrMap
+    internal_attr_map = self._getInternalAttrMap(internal_attr_name)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 460, in _getInternalAttrMap
+    return self._loadPickle(str_val)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\_base\mnode.py", line 2121, in _loadPickle
+    return pickle.loads(data) # finally
+TypeError: a bytes-like object is required, not 'str'
+
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 962, in closeEvent
+    self.removeAllCallbacks()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 903, in removeAllCallbacks
+    self.removeNodeCallbacks()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 911, in removeNodeCallbacks
+    for py_node in self._node_callback_map.keys():
+RuntimeError: dictionary changed size during iteration
+
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 966, in closeEvent
+    self.removeAllCallbacks()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 907, in removeAllCallbacks
+    self.removeNodeCallbacks()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 915, in removeNodeCallbacks
+    for py_node in self._node_callback_map.keys():
+RuntimeError: dictionary changed size during iteration
+
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 960, in closeEvent
+    close_ok = self._script_tab_widget._tabCloseCheckAll()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1082, in _tabCloseCheckAll
+    if self.hasExpressionChanged(tab_index):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1054, in hasExpressionChanged
+    return tab_widget.hasUnsavedChanges()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1319, in hasUnsavedChanges
+    self.LOG_SIGNAL.emit("Error: node is no longer valid")
+TypeError: LOG_SIGNAL(QString,int) needs 2 argument(s), 1 given!
+
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\_base\mnode.py", line 2118, in _loadPickle
+    return pickle.loads(codecs.decode(data.encode(), "base64"))
+_pickle.UnpicklingError: invalid load key, 'v'.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 572, in scriptTabChanged
+    self._attributes_widget.refresh(py_node)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1786, in refresh
+    self.refreshOutputs()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1805, in refreshOutputs
+    self._output_frame.refresh()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 2258, in refresh
+    attr_map = list_func()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 1197, in getOutputAttrMap
+    return self._getAttrMap(self._OUTPUTS_STR_ATTR_NAME)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 537, in _getAttrMap
+    internal_attr_map = self._getInternalAttrMap(internal_attr_name)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 460, in _getInternalAttrMap
+    return self._loadPickle(str_val)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\_base\mnode.py", line 2121, in _loadPickle
+    return pickle.loads(str(data)) # backwards compatibility with default pickle protocol
+TypeError: a bytes-like object is required, not 'str'
+
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\_base\mnode.py", line 2118, in _loadPickle
+    return pickle.loads(codecs.decode(data.encode(), "base64"))
+_pickle.UnpicklingError: invalid load key, 'v'.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1252, in refresh
+    output_map = self._py_node.getOutputAttrMap()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 1197, in getOutputAttrMap
+    return self._getAttrMap(self._OUTPUTS_STR_ATTR_NAME)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 537, in _getAttrMap
+    internal_attr_map = self._getInternalAttrMap(internal_attr_name)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 460, in _getInternalAttrMap
+    return self._loadPickle(str_val)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\_base\mnode.py", line 2121, in _loadPickle
+    return pickle.loads(str(data)) # backwards compatibility with default pickle protocol
+TypeError: a bytes-like object is required, not 'str'
+
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\_base\mnode.py", line 2118, in _loadPickle
+    return pickle.loads(codecs.decode(data.encode(), "base64"))
+_pickle.UnpicklingError: invalid load key, 'v'.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 872, in sceneSelectChangeEvent
+    tab_widget, tab_index = self._script_tab_widget.addNewTab(py_node)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1043, in addNewTab
+    tab_widget.refresh()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1252, in refresh
+    output_map = self._py_node.getOutputAttrMap()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 1197, in getOutputAttrMap
+    return self._getAttrMap(self._OUTPUTS_STR_ATTR_NAME)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 537, in _getAttrMap
+    internal_attr_map = self._getInternalAttrMap(internal_attr_name)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 460, in _getInternalAttrMap
+    return self._loadPickle(str_val)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\_base\mnode.py", line 2121, in _loadPickle
+    return pickle.loads(str(data)) # backwards compatibility with default pickle protocol
+TypeError: a bytes-like object is required, not 'str'
+
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 966, in closeEvent
+    self.removeAllCallbacks()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 907, in removeAllCallbacks
+    self.removeNodeCallbacks()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 915, in removeNodeCallbacks
+    for py_node in self._node_callback_map.keys():
+RuntimeError: dictionary changed size during iteration
+
+
+Traceback (most recent call last):
+  File "C:/Program Files/Autodesk/Maya2022\Python37\lib\encodings\base64_codec.py", line 19, in base64_decode
+    return (base64.decodebytes(input), len(input))
+  File "C:\Program Files\Autodesk\Maya2022\Python37\lib\base64.py", line 546, in decodebytes
+    return binascii.a2b_base64(s)
+binascii.Error: Incorrect padding
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\_base\mnode.py", line 2118, in _loadPickle
+    return pickle.loads(codecs.decode(data.encode(), "base64"))
+binascii.Error: decoding with 'base64' codec failed (Error: Incorrect padding)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 572, in scriptTabChanged
+    self._attributes_widget.refresh(py_node)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1786, in refresh
+    self.refreshOutputs()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1805, in refreshOutputs
+    self._output_frame.refresh()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 2258, in refresh
+    attr_map = list_func()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 1197, in getOutputAttrMap
+    return self._getAttrMap(self._OUTPUTS_STR_ATTR_NAME)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 537, in _getAttrMap
+    internal_attr_map = self._getInternalAttrMap(internal_attr_name)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 460, in _getInternalAttrMap
+    return self._loadPickle(str_val)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\_base\mnode.py", line 2121, in _loadPickle
+    return pickle.loads(str(data)) # backwards compatibility with default pickle protocol
+TypeError: a bytes-like object is required, not 'str'
+
+
+Traceback (most recent call last):
+  File "C:/Program Files/Autodesk/Maya2022\Python37\lib\encodings\base64_codec.py", line 19, in base64_decode
+    return (base64.decodebytes(input), len(input))
+  File "C:\Program Files\Autodesk\Maya2022\Python37\lib\base64.py", line 546, in decodebytes
+    return binascii.a2b_base64(s)
+binascii.Error: Incorrect padding
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\_base\mnode.py", line 2118, in _loadPickle
+    return pickle.loads(codecs.decode(data.encode(), "base64"))
+binascii.Error: decoding with 'base64' codec failed (Error: Incorrect padding)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1252, in refresh
+    output_map = self._py_node.getOutputAttrMap()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 1197, in getOutputAttrMap
+    return self._getAttrMap(self._OUTPUTS_STR_ATTR_NAME)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 537, in _getAttrMap
+    internal_attr_map = self._getInternalAttrMap(internal_attr_name)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 460, in _getInternalAttrMap
+    return self._loadPickle(str_val)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\_base\mnode.py", line 2121, in _loadPickle
+    return pickle.loads(str(data)) # backwards compatibility with default pickle protocol
+TypeError: a bytes-like object is required, not 'str'
+
+
+Traceback (most recent call last):
+  File "C:/Program Files/Autodesk/Maya2022\Python37\lib\encodings\base64_codec.py", line 19, in base64_decode
+    return (base64.decodebytes(input), len(input))
+  File "C:\Program Files\Autodesk\Maya2022\Python37\lib\base64.py", line 546, in decodebytes
+    return binascii.a2b_base64(s)
+binascii.Error: Incorrect padding
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\_base\mnode.py", line 2118, in _loadPickle
+    return pickle.loads(codecs.decode(data.encode(), "base64"))
+binascii.Error: decoding with 'base64' codec failed (Error: Incorrect padding)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 872, in sceneSelectChangeEvent
+    tab_widget, tab_index = self._script_tab_widget.addNewTab(py_node)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1043, in addNewTab
+    tab_widget.refresh()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1252, in refresh
+    output_map = self._py_node.getOutputAttrMap()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 1197, in getOutputAttrMap
+    return self._getAttrMap(self._OUTPUTS_STR_ATTR_NAME)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 537, in _getAttrMap
+    internal_attr_map = self._getInternalAttrMap(internal_attr_name)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 460, in _getInternalAttrMap
+    return self._loadPickle(str_val)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\_base\mnode.py", line 2121, in _loadPickle
+    return pickle.loads(str(data)) # backwards compatibility with default pickle protocol
+TypeError: a bytes-like object is required, not 'str'
+
+
+Traceback (most recent call last):
+  File "C:/Program Files/Autodesk/Maya2022\Python37\lib\encodings\base64_codec.py", line 19, in base64_decode
+    return (base64.decodebytes(input), len(input))
+  File "C:\Program Files\Autodesk\Maya2022\Python37\lib\base64.py", line 546, in decodebytes
+    return binascii.a2b_base64(s)
+binascii.Error: Incorrect padding
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\_base\mnode.py", line 2118, in _loadPickle
+    return pickle.loads(codecs.decode(data.encode(), "base64"))
+binascii.Error: decoding with 'base64' codec failed (Error: Incorrect padding)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\_base\mnode.py", line 2124, in _loadPickle
+    return pickle.loads(str(data))
+TypeError: a bytes-like object is required, not 'str'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 572, in scriptTabChanged
+    self._attributes_widget.refresh(py_node)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1786, in refresh
+    self.refreshOutputs()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1805, in refreshOutputs
+    self._output_frame.refresh()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 2258, in refresh
+    attr_map = list_func()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 1197, in getOutputAttrMap
+    return self._getAttrMap(self._OUTPUTS_STR_ATTR_NAME)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 537, in _getAttrMap
+    internal_attr_map = self._getInternalAttrMap(internal_attr_name)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 460, in _getInternalAttrMap
+    return self._loadPickle(str_val)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\_base\mnode.py", line 2126, in _loadPickle
+    return pickle.loads(data)
+TypeError: a bytes-like object is required, not 'str'
+
+
+Traceback (most recent call last):
+  File "C:/Program Files/Autodesk/Maya2022\Python37\lib\encodings\base64_codec.py", line 19, in base64_decode
+    return (base64.decodebytes(input), len(input))
+  File "C:\Program Files\Autodesk\Maya2022\Python37\lib\base64.py", line 546, in decodebytes
+    return binascii.a2b_base64(s)
+binascii.Error: Incorrect padding
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\_base\mnode.py", line 2118, in _loadPickle
+    return pickle.loads(codecs.decode(data.encode(), "base64"))
+binascii.Error: decoding with 'base64' codec failed (Error: Incorrect padding)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\_base\mnode.py", line 2124, in _loadPickle
+    return pickle.loads(str(data))
+TypeError: a bytes-like object is required, not 'str'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1252, in refresh
+    output_map = self._py_node.getOutputAttrMap()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 1197, in getOutputAttrMap
+    return self._getAttrMap(self._OUTPUTS_STR_ATTR_NAME)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 537, in _getAttrMap
+    internal_attr_map = self._getInternalAttrMap(internal_attr_name)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 460, in _getInternalAttrMap
+    return self._loadPickle(str_val)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\_base\mnode.py", line 2126, in _loadPickle
+    return pickle.loads(data)
+TypeError: a bytes-like object is required, not 'str'
+
+
+Traceback (most recent call last):
+  File "C:/Program Files/Autodesk/Maya2022\Python37\lib\encodings\base64_codec.py", line 19, in base64_decode
+    return (base64.decodebytes(input), len(input))
+  File "C:\Program Files\Autodesk\Maya2022\Python37\lib\base64.py", line 546, in decodebytes
+    return binascii.a2b_base64(s)
+binascii.Error: Incorrect padding
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\_base\mnode.py", line 2118, in _loadPickle
+    return pickle.loads(codecs.decode(data.encode(), "base64"))
+binascii.Error: decoding with 'base64' codec failed (Error: Incorrect padding)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\_base\mnode.py", line 2124, in _loadPickle
+    return pickle.loads(str(data))
+TypeError: a bytes-like object is required, not 'str'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 872, in sceneSelectChangeEvent
+    tab_widget, tab_index = self._script_tab_widget.addNewTab(py_node)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1043, in addNewTab
+    tab_widget.refresh()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1252, in refresh
+    output_map = self._py_node.getOutputAttrMap()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 1197, in getOutputAttrMap
+    return self._getAttrMap(self._OUTPUTS_STR_ATTR_NAME)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 537, in _getAttrMap
+    internal_attr_map = self._getInternalAttrMap(internal_attr_name)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 460, in _getInternalAttrMap
+    return self._loadPickle(str_val)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\_base\mnode.py", line 2126, in _loadPickle
+    return pickle.loads(data)
+TypeError: a bytes-like object is required, not 'str'
+
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 572, in scriptTabChanged
+    self._attributes_widget.refresh(py_node)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1785, in refresh
+    self.refreshInputs()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1799, in refreshInputs
+    self._input_frame.refresh()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 2258, in refresh
+    attr_map = list_func()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 1171, in getInputAttrMap
+    return self._getAttrMap(self._INPUTS_STR_ATTR_NAME, is_input=True)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 537, in _getAttrMap
+    internal_attr_map = self._getInternalAttrMap(internal_attr_name)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 460, in _getInternalAttrMap
+    return self._loadPickle(str_val)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\_base\mnode.py", line 2118, in _loadPickle
+    pickle.dump(data, io)
+TypeError: write() argument must be str, not bytes
+
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1251, in refresh
+    input_map = self._py_node.getInputAttrMap()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 1171, in getInputAttrMap
+    return self._getAttrMap(self._INPUTS_STR_ATTR_NAME, is_input=True)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 537, in _getAttrMap
+    internal_attr_map = self._getInternalAttrMap(internal_attr_name)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 460, in _getInternalAttrMap
+    return self._loadPickle(str_val)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\_base\mnode.py", line 2118, in _loadPickle
+    pickle.dump(data, io)
+TypeError: write() argument must be str, not bytes
+
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 872, in sceneSelectChangeEvent
+    tab_widget, tab_index = self._script_tab_widget.addNewTab(py_node)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1043, in addNewTab
+    tab_widget.refresh()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1251, in refresh
+    input_map = self._py_node.getInputAttrMap()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 1171, in getInputAttrMap
+    return self._getAttrMap(self._INPUTS_STR_ATTR_NAME, is_input=True)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 537, in _getAttrMap
+    internal_attr_map = self._getInternalAttrMap(internal_attr_name)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 460, in _getInternalAttrMap
+    return self._loadPickle(str_val)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\_base\mnode.py", line 2118, in _loadPickle
+    pickle.dump(data, io)
+TypeError: write() argument must be str, not bytes
+
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 572, in scriptTabChanged
+    self._attributes_widget.refresh(py_node)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1786, in refresh
+    self.refreshOutputs()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1805, in refreshOutputs
+    self._output_frame.refresh()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 2258, in refresh
+    attr_map = list_func()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 1197, in getOutputAttrMap
+    return self._getAttrMap(self._OUTPUTS_STR_ATTR_NAME)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 537, in _getAttrMap
+    internal_attr_map = self._getInternalAttrMap(internal_attr_name)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 460, in _getInternalAttrMap
+    return self._loadPickle(str_val)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\_base\mnode.py", line 2121, in _loadPickle
+    pickle.loads(codecs.decode(data.encode(), "base64"))
+_pickle.UnpicklingError: invalid load key, 'v'.
+
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1252, in refresh
+    output_map = self._py_node.getOutputAttrMap()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 1197, in getOutputAttrMap
+    return self._getAttrMap(self._OUTPUTS_STR_ATTR_NAME)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 537, in _getAttrMap
+    internal_attr_map = self._getInternalAttrMap(internal_attr_name)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 460, in _getInternalAttrMap
+    return self._loadPickle(str_val)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\_base\mnode.py", line 2121, in _loadPickle
+    pickle.loads(codecs.decode(data.encode(), "base64"))
+_pickle.UnpicklingError: invalid load key, 'v'.
+
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 872, in sceneSelectChangeEvent
+    tab_widget, tab_index = self._script_tab_widget.addNewTab(py_node)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1043, in addNewTab
+    tab_widget.refresh()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1252, in refresh
+    output_map = self._py_node.getOutputAttrMap()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 1197, in getOutputAttrMap
+    return self._getAttrMap(self._OUTPUTS_STR_ATTR_NAME)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 537, in _getAttrMap
+    internal_attr_map = self._getInternalAttrMap(internal_attr_name)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 460, in _getInternalAttrMap
+    return self._loadPickle(str_val)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\_base\mnode.py", line 2121, in _loadPickle
+    pickle.loads(codecs.decode(data.encode(), "base64"))
+_pickle.UnpicklingError: invalid load key, 'v'.
+
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 572, in scriptTabChanged
+    self._attributes_widget.refresh(py_node)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1785, in refresh
+    self.refreshInputs()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1799, in refreshInputs
+    self._input_frame.refresh()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 2258, in refresh
+    attr_map = list_func()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 1173, in getInputAttrMap
+    return self._getAttrMap(self._INPUTS_STR_ATTR_NAME, is_input=True)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 539, in _getAttrMap
+    internal_attr_map = self._getInternalAttrMap(internal_attr_name)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 458, in _getInternalAttrMap
+    aetaertaertare
+NameError: name 'aetaertaertare' is not defined
+
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1251, in refresh
+    input_map = self._py_node.getInputAttrMap()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 1173, in getInputAttrMap
+    return self._getAttrMap(self._INPUTS_STR_ATTR_NAME, is_input=True)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 539, in _getAttrMap
+    internal_attr_map = self._getInternalAttrMap(internal_attr_name)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 458, in _getInternalAttrMap
+    aetaertaertare
+NameError: name 'aetaertaertare' is not defined
+
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 872, in sceneSelectChangeEvent
+    tab_widget, tab_index = self._script_tab_widget.addNewTab(py_node)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1043, in addNewTab
+    tab_widget.refresh()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1251, in refresh
+    input_map = self._py_node.getInputAttrMap()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 1173, in getInputAttrMap
+    return self._getAttrMap(self._INPUTS_STR_ATTR_NAME, is_input=True)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 539, in _getAttrMap
+    internal_attr_map = self._getInternalAttrMap(internal_attr_name)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 458, in _getInternalAttrMap
+    aetaertaertare
+NameError: name 'aetaertaertare' is not defined
+
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 966, in closeEvent
+    self.removeAllCallbacks()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 907, in removeAllCallbacks
+    self.removeNodeCallbacks()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 915, in removeNodeCallbacks
+    for py_node in self._node_callback_map.keys():
+RuntimeError: dictionary changed size during iteration
+
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\_base\mnode.py", line 2118, in _loadPickle
+    return pickle.loads(codecs.decode(data.encode(), "base64"))
+_pickle.UnpicklingError: invalid load key, 'v'.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 572, in scriptTabChanged
+    self._attributes_widget.refresh(py_node)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1786, in refresh
+    self.refreshOutputs()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1805, in refreshOutputs
+    self._output_frame.refresh()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 2258, in refresh
+    attr_map = list_func()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 1196, in getOutputAttrMap
+    return self._getAttrMap(self._OUTPUTS_STR_ATTR_NAME)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 536, in _getAttrMap
+    internal_attr_map = self._getInternalAttrMap(internal_attr_name)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 459, in _getInternalAttrMap
+    return self._loadPickle(str_val)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\_base\mnode.py", line 2121, in _loadPickle
+    return pickle.loads(str(data)) # backwards compatibility with default pickle protocol
+TypeError: a bytes-like object is required, not 'str'
+
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\_base\mnode.py", line 2118, in _loadPickle
+    return pickle.loads(codecs.decode(data.encode(), "base64"))
+_pickle.UnpicklingError: invalid load key, 'v'.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1252, in refresh
+    output_map = self._py_node.getOutputAttrMap()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 1196, in getOutputAttrMap
+    return self._getAttrMap(self._OUTPUTS_STR_ATTR_NAME)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 536, in _getAttrMap
+    internal_attr_map = self._getInternalAttrMap(internal_attr_name)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 459, in _getInternalAttrMap
+    return self._loadPickle(str_val)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\_base\mnode.py", line 2121, in _loadPickle
+    return pickle.loads(str(data)) # backwards compatibility with default pickle protocol
+TypeError: a bytes-like object is required, not 'str'
+
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\_base\mnode.py", line 2118, in _loadPickle
+    return pickle.loads(codecs.decode(data.encode(), "base64"))
+_pickle.UnpicklingError: invalid load key, 'v'.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 872, in sceneSelectChangeEvent
+    tab_widget, tab_index = self._script_tab_widget.addNewTab(py_node)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1043, in addNewTab
+    tab_widget.refresh()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1252, in refresh
+    output_map = self._py_node.getOutputAttrMap()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 1196, in getOutputAttrMap
+    return self._getAttrMap(self._OUTPUTS_STR_ATTR_NAME)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 536, in _getAttrMap
+    internal_attr_map = self._getInternalAttrMap(internal_attr_name)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 459, in _getInternalAttrMap
+    return self._loadPickle(str_val)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\_base\mnode.py", line 2121, in _loadPickle
+    return pickle.loads(str(data)) # backwards compatibility with default pickle protocol
+TypeError: a bytes-like object is required, not 'str'
+
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\_base\mnode.py", line 2123, in _loadPickle
+    return pickle.loads(codecs.decode(data.encode(), "base64"))
+_pickle.UnpicklingError: invalid load key, 'v'.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 572, in scriptTabChanged
+    self._attributes_widget.refresh(py_node)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1786, in refresh
+    self.refreshOutputs()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1805, in refreshOutputs
+    self._output_frame.refresh()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 2258, in refresh
+    attr_map = list_func()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 1196, in getOutputAttrMap
+    return self._getAttrMap(self._OUTPUTS_STR_ATTR_NAME)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 536, in _getAttrMap
+    internal_attr_map = self._getInternalAttrMap(internal_attr_name)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 459, in _getInternalAttrMap
+    return self._loadPickle(str_val)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\_base\mnode.py", line 2126, in _loadPickle
+    return pickle.loads(str(data)) # backwards compatibility with default pickle protocol
+TypeError: a bytes-like object is required, not 'str'
+
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\_base\mnode.py", line 2123, in _loadPickle
+    return pickle.loads(codecs.decode(data.encode(), "base64"))
+_pickle.UnpicklingError: invalid load key, 'v'.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1252, in refresh
+    output_map = self._py_node.getOutputAttrMap()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 1196, in getOutputAttrMap
+    return self._getAttrMap(self._OUTPUTS_STR_ATTR_NAME)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 536, in _getAttrMap
+    internal_attr_map = self._getInternalAttrMap(internal_attr_name)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 459, in _getInternalAttrMap
+    return self._loadPickle(str_val)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\_base\mnode.py", line 2126, in _loadPickle
+    return pickle.loads(str(data)) # backwards compatibility with default pickle protocol
+TypeError: a bytes-like object is required, not 'str'
+
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\_base\mnode.py", line 2123, in _loadPickle
+    return pickle.loads(codecs.decode(data.encode(), "base64"))
+_pickle.UnpicklingError: invalid load key, 'v'.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 872, in sceneSelectChangeEvent
+    tab_widget, tab_index = self._script_tab_widget.addNewTab(py_node)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1043, in addNewTab
+    tab_widget.refresh()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1252, in refresh
+    output_map = self._py_node.getOutputAttrMap()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 1196, in getOutputAttrMap
+    return self._getAttrMap(self._OUTPUTS_STR_ATTR_NAME)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 536, in _getAttrMap
+    internal_attr_map = self._getInternalAttrMap(internal_attr_name)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 459, in _getInternalAttrMap
+    return self._loadPickle(str_val)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\_base\mnode.py", line 2126, in _loadPickle
+    return pickle.loads(str(data)) # backwards compatibility with default pickle protocol
+TypeError: a bytes-like object is required, not 'str'
+
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\_base\mnode.py", line 2123, in _loadPickle
+    return pickle.loads(codecs.decode(data.encode(), "base64"))
+_pickle.UnpicklingError: invalid load key, 'v'.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 572, in scriptTabChanged
+    self._attributes_widget.refresh(py_node)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1786, in refresh
+    self.refreshOutputs()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1805, in refreshOutputs
+    self._output_frame.refresh()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 2258, in refresh
+    attr_map = list_func()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 1203, in getOutputAttrMap
+    return self._getAttrMap(self._OUTPUTS_STR_ATTR_NAME)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 543, in _getAttrMap
+    internal_attr_map = self._getInternalAttrMap(internal_attr_name)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 463, in _getInternalAttrMap
+    data = self._loadPickle(str_val)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\_base\mnode.py", line 2126, in _loadPickle
+    return pickle.loads(str(data)) # backwards compatibility with default pickle protocol
+TypeError: a bytes-like object is required, not 'str'
+
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\_base\mnode.py", line 2123, in _loadPickle
+    return pickle.loads(codecs.decode(data.encode(), "base64"))
+_pickle.UnpicklingError: invalid load key, 'v'.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1252, in refresh
+    output_map = self._py_node.getOutputAttrMap()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 1203, in getOutputAttrMap
+    return self._getAttrMap(self._OUTPUTS_STR_ATTR_NAME)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 543, in _getAttrMap
+    internal_attr_map = self._getInternalAttrMap(internal_attr_name)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 463, in _getInternalAttrMap
+    data = self._loadPickle(str_val)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\_base\mnode.py", line 2126, in _loadPickle
+    return pickle.loads(str(data)) # backwards compatibility with default pickle protocol
+TypeError: a bytes-like object is required, not 'str'
+
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\_base\mnode.py", line 2123, in _loadPickle
+    return pickle.loads(codecs.decode(data.encode(), "base64"))
+_pickle.UnpicklingError: invalid load key, 'v'.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 872, in sceneSelectChangeEvent
+    tab_widget, tab_index = self._script_tab_widget.addNewTab(py_node)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1043, in addNewTab
+    tab_widget.refresh()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1252, in refresh
+    output_map = self._py_node.getOutputAttrMap()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 1203, in getOutputAttrMap
+    return self._getAttrMap(self._OUTPUTS_STR_ATTR_NAME)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 543, in _getAttrMap
+    internal_attr_map = self._getInternalAttrMap(internal_attr_name)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 463, in _getInternalAttrMap
+    data = self._loadPickle(str_val)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\_base\mnode.py", line 2126, in _loadPickle
+    return pickle.loads(str(data)) # backwards compatibility with default pickle protocol
+TypeError: a bytes-like object is required, not 'str'
+
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 966, in closeEvent
+    self.removeAllCallbacks()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 907, in removeAllCallbacks
+    self.removeNodeCallbacks()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 915, in removeNodeCallbacks
+    for py_node in self._node_callback_map.keys():
+RuntimeError: dictionary changed size during iteration
+
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 966, in closeEvent
+    self.removeAllCallbacks()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 907, in removeAllCallbacks
+    self.removeNodeCallbacks()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 915, in removeNodeCallbacks
+    for py_node in self._node_callback_map.keys():
+RuntimeError: dictionary changed size during iteration
+
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 966, in closeEvent
+    self.removeAllCallbacks()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 907, in removeAllCallbacks
+    self.removeNodeCallbacks()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 915, in removeNodeCallbacks
+    for py_node in self._node_callback_map.keys():
+RuntimeError: dictionary changed size during iteration
+
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 572, in scriptTabChanged
+    self._attributes_widget.refresh(py_node)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1785, in refresh
+    self.refreshInputs()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1799, in refreshInputs
+    self._input_frame.refresh()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 2258, in refresh
+    attr_map = list_func()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 1171, in getInputAttrMap
+    return self._getAttrMap(self._INPUTS_STR_ATTR_NAME, is_input=True)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 537, in _getAttrMap
+    internal_attr_map = self._getInternalAttrMap(internal_attr_name)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 460, in _getInternalAttrMap
+    return self._loadPickle(str_val)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\_base\mnode.py", line 2121, in _loadPickle
+    except:
+BadPickleGet: ASVFQAAAAAAAAB9lIwEdGltZZRdlIwEdGltZZRhcy4=
+
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1251, in refresh
+    input_map = self._py_node.getInputAttrMap()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 1171, in getInputAttrMap
+    return self._getAttrMap(self._INPUTS_STR_ATTR_NAME, is_input=True)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 537, in _getAttrMap
+    internal_attr_map = self._getInternalAttrMap(internal_attr_name)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 460, in _getInternalAttrMap
+    return self._loadPickle(str_val)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\_base\mnode.py", line 2121, in _loadPickle
+    except:
+BadPickleGet: ASVFQAAAAAAAAB9lIwEdGltZZRdlIwEdGltZZRhcy4=
+
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 872, in sceneSelectChangeEvent
+    tab_widget, tab_index = self._script_tab_widget.addNewTab(py_node)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1043, in addNewTab
+    tab_widget.refresh()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1251, in refresh
+    input_map = self._py_node.getInputAttrMap()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 1171, in getInputAttrMap
+    return self._getAttrMap(self._INPUTS_STR_ATTR_NAME, is_input=True)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 537, in _getAttrMap
+    internal_attr_map = self._getInternalAttrMap(internal_attr_name)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 460, in _getInternalAttrMap
+    return self._loadPickle(str_val)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\_base\mnode.py", line 2121, in _loadPickle
+    except:
+BadPickleGet: ASVFQAAAAAAAAB9lIwEdGltZZRdlIwEdGltZZRhcy4=
+
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 866, in sceneSelectChangeEvent
+    tab_index = self._script_tab_widget.getIndexOfNode(py_node)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1157, in getIndexOfNode
+    if tab_node == py_node:
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\_base\mnode.py", line 2047, in __eq__
+    if str(self) == str(other):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\_base\mnode.py", line 1485, in __str__
+    return self.getPath()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\_base\mnode.py", line 1091, in getPath
+    raise RuntimeError("Attempted to acces an invalid MObject handle")
+RuntimeError: Attempted to acces an invalid MObject handle
+
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 866, in sceneSelectChangeEvent
+    tab_index = self._script_tab_widget.getIndexOfNode(py_node)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1157, in getIndexOfNode
+    if tab_node == py_node:
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\_base\mnode.py", line 2047, in __eq__
+    if str(self) == str(other):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\_base\mnode.py", line 1485, in __str__
+    return self.getPath()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\_base\mnode.py", line 1091, in getPath
+    raise RuntimeError("Attempted to acces an invalid MObject handle")
+RuntimeError: Attempted to acces an invalid MObject handle
+
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 866, in sceneSelectChangeEvent
+    tab_index = self._script_tab_widget.getIndexOfNode(py_node)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1157, in getIndexOfNode
+    if tab_node == py_node:
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\_base\mnode.py", line 2047, in __eq__
+    if str(self) == str(other):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\_base\mnode.py", line 1485, in __str__
+    return self.getPath()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\_base\mnode.py", line 1091, in getPath
+    raise RuntimeError("Attempted to acces an invalid MObject handle")
+RuntimeError: Attempted to acces an invalid MObject handle
+
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 866, in sceneSelectChangeEvent
+    tab_index = self._script_tab_widget.getIndexOfNode(py_node)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1157, in getIndexOfNode
+    if tab_node == py_node:
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\_base\mnode.py", line 2047, in __eq__
+    if str(self) == str(other):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\_base\mnode.py", line 1485, in __str__
+    return self.getPath()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\_base\mnode.py", line 1091, in getPath
+    raise RuntimeError("Attempted to acces an invalid MObject handle")
+RuntimeError: Attempted to acces an invalid MObject handle
+
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 866, in sceneSelectChangeEvent
+    tab_index = self._script_tab_widget.getIndexOfNode(py_node)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1157, in getIndexOfNode
+    if tab_node == py_node:
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\_base\mnode.py", line 2047, in __eq__
+    if str(self) == str(other):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\_base\mnode.py", line 1485, in __str__
+    return self.getPath()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\_base\mnode.py", line 1091, in getPath
+    raise RuntimeError("Attempted to acces an invalid MObject handle")
+RuntimeError: Attempted to acces an invalid MObject handle
+
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 966, in closeEvent
+    self.removeAllCallbacks()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 907, in removeAllCallbacks
+    self.removeNodeCallbacks()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 915, in removeNodeCallbacks
+    for py_node in self._node_callback_map.keys():
+RuntimeError: dictionary changed size during iteration
+
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 872, in sceneSelectChangeEvent
+    tab_widget, tab_index = self._script_tab_widget.addNewTab(py_node)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1039, in addNewTab
+    tab_widget = NDScriptEditor(self, py_node)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1238, in __init__
+    exp_str = self._py_node.getExpression()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 895, in getExpression
+    exp_str = self.getAttr(self._EXPRESSION_ATTR_NAME)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\_base\mnode.py", line 612, in getAttr
+    return mc.getAttr(*(self + "." + attr_name,), **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\_base\mnode.py", line 1454, in __add__
+    return self.getName() + other.getName() if isinstance(other, MNode) else self.getName() + str(other)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\_base\mnode.py", line 838, in getName
+    self._raiseInvalidError()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\_base\mnode.py", line 2101, in _raiseInvalidError
+    raise RuntimeError("Node is invalid.")
+RuntimeError: Node is invalid.
+
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 966, in closeEvent
+    self.removeAllCallbacks()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 907, in removeAllCallbacks
+    self.removeNodeCallbacks()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 915, in removeNodeCallbacks
+    for py_node in list(self._node_callback_map.keys()):
+RuntimeError: dictionary changed size during iteration
+
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 966, in closeEvent
+    self.removeAllCallbacks()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 907, in removeAllCallbacks
+    self.removeNodeCallbacks()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 915, in removeNodeCallbacks
+    for py_node in list(self._node_callback_map.keys()):
+RuntimeError: dictionary changed size during iteration
+
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 966, in closeEvent
+    self.removeAllCallbacks()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 907, in removeAllCallbacks
+    self.removeNodeCallbacks()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 915, in removeNodeCallbacks
+    for py_node in list(self._node_callback_map.keys()):
+RuntimeError: dictionary changed size during iteration
+
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 966, in closeEvent
+    self.removeAllCallbacks()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 907, in removeAllCallbacks
+    self.removeNodeCallbacks()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 915, in removeNodeCallbacks
+    for py_node in list(self._node_callback_map.keys()):
+RuntimeError: dictionary changed size during iteration
+
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 966, in closeEvent
+    self.removeAllCallbacks()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 907, in removeAllCallbacks
+    self.removeNodeCallbacks()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 915, in removeNodeCallbacks
+    for py_node in list(self._node_callback_map.keys()):
+RuntimeError: dictionary changed size during iteration
+
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 195, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 872, in sceneSelectChangeEvent
+    tab_widget, tab_index = self._script_tab_widget.addNewTab(py_node)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1039, in addNewTab
+    tab_widget = NDScriptEditor(self, py_node)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 1238, in __init__
+    exp_str = self._py_node.getExpression()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 895, in getExpression
+    exp_str = self.getAttr(self._EXPRESSION_ATTR_NAME)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\_base\mnode.py", line 612, in getAttr
+    return mc.getAttr(*(self + "." + attr_name,), **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\_base\mnode.py", line 1454, in __add__
+    return self.getName() + other.getName() if isinstance(other, MNode) else self.getName() + str(other)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\_base\mnode.py", line 838, in getName
+    self._raiseInvalidError()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\_base\mnode.py", line 2101, in _raiseInvalidError
+    raise RuntimeError("Node is invalid.")
+RuntimeError: Node is invalid.
+
+
+Traceback (most recent call last):
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 192, in errorWrap
+    return func(*args, **kargs)
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\ui\mpynode_designer.py", line 832, in addNewNodeEvent
+    py_node = MUndo(self.NODE_PARENT_CLASSES[0].createNode)()
+  File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\_base\mundo.py", line 87, in __call__
+    mel.eval("python(\"from mpylib import MUndo; MUndo._run()\")")
+RuntimeError: Error occurred during execution of MEL script
+line 1: Expected type string, MObject or MNode..got type <type 'unicode'>
+# Traceback (most recent call last):
+#   File "<maya console>", line 1, in <module>
+#   File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\_base\mundo.py", line 78, in _run
+#     cls._call_return = func(*args, **kargs)
+#   File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\_base\mnode.py", line 312, in createNode
+#     return cls(node)
+#   File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\nodes\mpynode.py", line 250, in __init__
+#     MNode.__init__(self, new_node)
+#   File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\_base\mnode.py", line 172, in __init__
+#     raise TypeError("Expected type string, MObject or MNode..got type " + str(type(node)))
+# TypeError: Expected type string, MObject or MNode..got type <type 'unicode'>

@@ -4,7 +4,7 @@ import traceback
 try:
     import PySide
     
-except ImportError, err:
+except ImportError as err:
     from PySide2.QtCore import Qt
     from PySide2.QtGui import QColor, QTextCursor
     from PySide2.QtWidgets import QTextEdit, QMenu, QAction
@@ -65,7 +65,8 @@ class QtLog(QTextEdit):
         if txt_format == self.LAST_EXCEPTION_TYPE:
             text = "".join(traceback.format_exception(*sys.exc_info()))
 
-        if self.TEXT_COLOR_MAP.has_key(txt_format):
+        #if self.TEXT_COLOR_MAP.has_key(txt_format):
+        if txt_format in self.TEXT_COLOR_MAP:
 
             cur_clr = self.textColor()
 

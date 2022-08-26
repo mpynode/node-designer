@@ -9,13 +9,13 @@ if mc.about(apiVersion=True) < 201700:
     import shiboken
 
     from PySide.QtCore import SIGNAL, Signal, Slot, QObject
-    from PySide.QtGui import QWidget
+    from PySide.QtGui import QWidget, QApplication
 
 else:
     import shiboken2 as shiboken
     
     from PySide2.QtCore import SIGNAL, Signal, Slot, QObject
-    from PySide2.QtWidgets import QWidget
+    from PySide2.QtWidgets import QWidget, QApplication
 
 
 class QMayaMain(object):
@@ -47,7 +47,10 @@ class QMayaMain(object):
     
         ##---if ptr is None, that means Maya is in some sort of batch mode (no ui)---##
         if ptr is not None:
-            cls.MAIN_WIN = shiboken.wrapInstance(long(ptr), QWidget)
+            #cls.MAIN_WIN = shiboken.wrapInstance(long(ptr), QWidget)
+            app = QApplication.instance()
+            cls.MAIN_WIN = next(w for w in app.topLevelWidgets() if w.objectName()=='MayaWindow') 
+                
             return cls.MAIN_WIN
         
         else:

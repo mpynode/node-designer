@@ -7,7 +7,7 @@ An instance of the MNode class provides storage and access to a single Maya node
 a MObject pointer at its core to iteract with the Maya node it represents.
 
 >>> node = MNode("node_1")
->>> print node.getName()
+>>> print (node.getName())
 >>> 'node_1'
 
 Methods within the class replace the most commonly used maya commands. Public methods operate on
@@ -30,7 +30,7 @@ of an object. MNode handles this for you so you are free to parent, unparent, re
 >>> node = mc.parent(node, "node_2")
 >>> node = mc.parent(node, world=True)
 >>> node = mc.rename(node, "node_1")
->>> print node
+>>> print (node)
 >>> ## 'node_1'
 >>>
 >>>
@@ -39,7 +39,7 @@ of an object. MNode handles this for you so you are free to parent, unparent, re
 >>> node.parent("node_2")
 >>> node.parent(world=True)
 >>> node.rename("node_1")
->>> print node
+>>> print (node)
 >>> ## 'node_1'
 
 Because MNode has a __str__ method, passing an MNode object to a standard Maya command will function
@@ -49,12 +49,18 @@ properly. All Maya commands call __str__ when taking object input.
 
 import os
 import inspect
-import cPickle
 import codecs
 from collections import OrderedDict
 
 import maya.cmds as mc
 import maya.api.OpenMaya as om
+
+
+try:
+    import cPickle as pickle # python2
+except:
+    import pickle # python3
+    unicode = str
 
 
 class MNode(om.MObject):
@@ -166,10 +172,14 @@ class MNode(om.MObject):
             else:
                 raise TypeError("Expected type string, MObject or MNode..got type " + str(type(node)))
 
-        super(MNode, self).__init__(m_obj)
+        try:
+            super().__init__(m_obj) # python3
+        except:
+            super(MNode, self).__init__(m_obj) # python2
+            
 
         ##----use a dag function set if this is a dag node---##
-        if filter(self.hasFn, self.DAG_NODE_TYPES):
+        if list(filter(self.hasFn, self.DAG_NODE_TYPES)):
 
             self._dag_path = om.MDagPath()
             fn_set = om.MFnDagNode(self)
@@ -244,8 +254,8 @@ class MNode(om.MObject):
                 cur_dir = os.path.dirname(inspect.getfile(cls))
                 plug_dir = os.path.normpath(os.path.join(cur_dir, cls.PLUGIN_DIR)).replace("\\", "/")
 
-                if os.environ.has_key("MAYA_PLUG_IN_PATH"):
-
+                #if os.environ.has_key("MAYA_PLUG_IN_PATH"):
+                if "MAYA_PLUG_IN_PATH" in os.environ:
                     if not plug_dir in os.environ["MAYA_PLUG_IN_PATH"]:
                         os.environ["MAYA_PLUG_IN_PATH"] += ";" + plug_dir
 
@@ -366,7 +376,8 @@ class MNode(om.MObject):
 
         cb = None
 
-        if kargs.has_key("channelBox"):
+        #if kargs.has_key("channelBox"):
+        if "channelBox" in kargs:
             cb = kargs["channelBox"]
             del kargs["channelBox"]
 
@@ -660,7 +671,7 @@ class MNode(om.MObject):
                     try:
                         attr_map[attr_name] = self.getAttr(attr_name)
 
-                    except Exception, err:
+                    except Exception as err:
                         raise RuntimeError("Error trying to query attr: '" + str(attr_name) + ".'\n" + err.message)
 
             return attr_map
@@ -694,7 +705,7 @@ class MNode(om.MObject):
                 try:
                     self.setAttr(attr_name, attr_val)
 
-                except Exception, err:
+                except Exception as err:
                     if not skip_errors:
                         raise err
 
@@ -1194,7 +1205,8 @@ class MNode(om.MObject):
 
         """
 
-        return_plugs = kargs.has_key("plugs") or kargs.has_key("p")
+        #return_plugs = kargs.has_key("plugs") or kargs.has_key("p")
+        return_plugs = "plugs" in kargs or "p" in kargs
         node = self + "." + attr_name if attr_name else self
 
         results = mc.listConnections(node, **kargs)
@@ -1277,7 +1289,7 @@ class MNode(om.MObject):
             array_size = self.getAttr(attr_name, size=True)
 
             if array_size:
-                dst_attrs = [attr_name + "[" + str(i) + "]" for i in xrange(array_size)] + [attr_name]
+                dst_attrs = [attr_name + "[" + str(i) + "]" for i in range(array_size)] + [attr_name]
 
         for dst_attr in dst_attrs:
 
@@ -1285,7 +1297,8 @@ class MNode(om.MObject):
 
             if nodes:
 
-                for node, plug in map(None, nodes, plugs):
+                #for node, plug in map(None, nodes, plugs):
+                for node, plug in zip(nodes, plugs):
 
                     mc.disconnectAttr(str(node) + "." + plug, str(self) + "." + dst_attr)
 
@@ -1304,13 +1317,14 @@ class MNode(om.MObject):
         indices = self.getAttr(attr_name, multiIndices=True)
 
         if indices:
-            dst_attrs = [attr_name + "[" + str(i) + "]" for i in xrange(len(indices))] + [attr_name]
+            dst_attrs = [attr_name + "[" + str(i) + "]" for i in range(len(indices))] + [attr_name]
 
         for dst_attr in dst_attrs:
             nodes, plugs = self.listConnections(dst_attr, destination=True, source=False, plugs=True)
 
             if nodes:
-                for node, plug in map(None, nodes, plugs):
+                #for node, plug in map(None, nodes, plugs):
+                for node, plug in zip(nodes, plugs):
                     mc.disconnectAttr(str(self) + "." + dst_attr, str(node) + "." + plug)
 
 
@@ -1583,7 +1597,7 @@ class MNode(om.MObject):
 
             return name.index(sub, start, end)
 
-        except ValueError, err:
+        except ValueError as err:
             raise ValueError("substring " + str(sub) + " not found in node name: " + name)
 
 
@@ -1611,7 +1625,7 @@ class MNode(om.MObject):
 
             return name.rindex(sub, start, end)
 
-        except ValueError, err:
+        except ValueError as err:
             raise ValueError("substring " + str(sub) + " not found in node name: " + name)
 
 
@@ -2091,22 +2105,28 @@ class MNode(om.MObject):
 
     def _dumpPickle(self, data):
         """
-        Use base64 encoding to convert python data to a pure ASCII string via cPickle at its highest protocol
+        Use base64 encoding to convert python data to a pure ASCII string via pickle at its highest protocol
         """
 
-        return codecs.encode(cPickle.dumps(data, protocol=cPickle.HIGHEST_PROTOCOL), "base64").decode()
+        return codecs.encode(pickle.dumps(data, protocol=pickle.HIGHEST_PROTOCOL), "base64").decode()
 
 
     def _loadPickle(self, data):
         """
-        Use base64 decoding to convert a pure ASCII string back to a python data via cPickle
+        Use base64 decoding to convert a pure ASCII string back to a python data via pickle
         """
 
         try:
-            return cPickle.loads(codecs.decode(data.encode(), "base64"))
+            return pickle.loads(codecs.decode(data.encode(), "base64"))
 
         except:
-            return cPickle.loads(str(data)) # backwards compatibility with default cPickle protocol
+            #return pickle.loads(str(data)) # backwards compatibility with default pickle protocol
+            try:
+                return pickle.loads(str.encode(data)) # python3
+            except:
+                return pickle.loads(str(data)) # python2
+
+
 
 
 def _unpickleNode(cls, node_type, add_attr_args, set_attr_args, kargs):

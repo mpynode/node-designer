@@ -3,14 +3,14 @@ import os
 import maya.api.OpenMaya as om
 import maya.api.OpenMayaRender as omr
 
-from ._mpynode import MPyNode, MPyNodeEventManager
+from mpylib._mpynode import MPyNode, MPyNodeEventManager
 
 NODE_PY_CLASS = None
 ##----if this env var is set to 1, no compiled versions of the class will be loaded---##
 ENV_VAR_PY_ONLY = "MPY_SCRIPTED_ONLY"
 
 ##----determine if the compiled version should be used or use scripted version---##
-if os.environ.has_key(ENV_VAR_PY_ONLY) and (os.environ[ENV_VAR_PY_ONLY] == "1"):
+if ENV_VAR_PY_ONLY in os.environ and (os.environ[ENV_VAR_PY_ONLY] == "1"):
     NODE_PY_CLASS = MPyNode
 
 ##----try loading the compiled version. If error, fall back to pure script----## 
