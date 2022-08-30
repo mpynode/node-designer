@@ -1,17 +1,18 @@
 #!wing
-#!version=6.0
+#!version=8.0
 ##################################################################
-# Wing IDE project file                                          #
+# Wing project file                                              #
 ##################################################################
 [project attributes]
 proj.directory-list = [{'dirloc': loc('plug-ins'),
                         'excludes': (),
-                        'filter': u'*',
+                        'filter': '*',
                         'include_hidden': False,
                         'recursive': True,
                         'watch_for_changes': True},
                        {'dirloc': loc('scripts'),
-                        'excludes': [u'mpylib/geo'],
+                        'excludes': ['python2',
+                                     'mpylib/geo'],
                         'filter': '*',
                         'include_hidden': False,
                         'recursive': True,
