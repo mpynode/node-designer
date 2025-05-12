@@ -1,14 +1,8 @@
-try:
-    import PySide
 
-except ImportError as err:
-    from PySide2.QtWidgets import QWidget, QPlainTextEdit, QTextEdit
-    from PySide2.QtGui import QColor, QFont, QFontMetrics, QTextFormat, QPainter
-    from PySide2.QtCore import QSize, Qt, QRect, QEvent
 
-else:
-    from PySide.QtGui import QWidget, QPlainTextEdit, QTextEdit, QColor, QTextFormat, QPainter, QFontMetrics, QFont
-    from PySide.QtCore import QSize, Qt, QRect, QEvent
+from Qt.QtWidgets import QWidget, QPlainTextEdit, QTextEdit
+from Qt.QtGui import QColor, QFont, QFontMetrics, QTextFormat, QPainter
+from Qt.QtCore import QSize, Qt, QRect, QEvent
 
 from .qt_py_highlighter import QtPythonHighlighter
 
@@ -203,11 +197,8 @@ class QtPythonEditor(QPlainTextEdit):
 
 if __name__ == "__main__":
 
-    try:
-        from PySide.QtGui import QApplication
 
-    except ImportError as err:
-        from PySide2.QtWidgets import QApplication
+    from Qt.QtWidgets import QApplication
 
     app = QApplication([])
 

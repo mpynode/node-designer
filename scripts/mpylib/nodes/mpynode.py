@@ -17,9 +17,6 @@ try:
 except:
     import pickle # python3
 
-    
-
-
 from .._base import MNode
 
 

@@ -3,11 +3,7 @@ import os
 import maya.cmds as mc
 import maya.api.OpenMaya as om
 
-if mc.about(apiVersion=True) < 201700:
-    from PySide.QtGui import QMainWindow
-
-else:
-    from PySide2.QtWidgets import QMainWindow
+from Qt.QtWidgets import QMainWindow
 
 from .mqt_main import QMayaMain
 

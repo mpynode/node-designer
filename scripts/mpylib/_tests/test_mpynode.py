@@ -24,8 +24,8 @@ except:
 import maya.api.OpenMaya as om
 import maya.cmds as mc
 
-from .mpylib import MNode
-from .mpylib.nodes import MPyNode
+from mpylib import MNode
+from mpylib.nodes import MPyNode
 
 
 class TestMPyNode(unittest.TestCase):
@@ -97,7 +97,7 @@ class TestMPyNode(unittest.TestCase):
             self.testInit()
             node = self.TEST_CLASS("test_py_node")
 
-            temp_file = os.environ["TEMP"] + "\\testExportToFile." + file_ext
+            temp_file = os.path.join(os.environ["TEMP"], f"testExportToFile.{file_ext}")
             if os.path.exists(temp_file):
                 os.remove(temp_file)
 
@@ -106,19 +106,14 @@ class TestMPyNode(unittest.TestCase):
             self.assertTrue(os.path.exists(temp_file))
 
             mc.file(newFile=True, force=True)
-            fh = open(temp_file)
-
-            try:
-                node = pickle.load(fh)
-
-            except Exception as err:
-                fh.close()
-                raise
-
-            else:
-                fh.close()
-
-            self.assertTrue(node.isValid())
+            with open(temp_file, 'rb' if use_binary else 'r') as fh:
+                try:
+                    node = pickle.load(fh) if use_binary else pickle.loads(fh.read().encode('latin1'))
+                except Exception as err:
+                    raise
+                else:
+                    self.assertTrue(node.isValid())
+                      
             os.remove(temp_file)
 
 
@@ -132,7 +127,7 @@ class TestMPyNode(unittest.TestCase):
             self.testInit()
             node = self.TEST_CLASS("test_py_node")
 
-            temp_file = os.environ["TEMP"] + "\\testExportToFile." + file_ext
+            temp_file = os.path.join(os.environ["TEMP"], f"testExportToFile.{file_ext}")
             if os.path.exists(temp_file):
                 os.remove(temp_file)
 
@@ -142,8 +137,9 @@ class TestMPyNode(unittest.TestCase):
 
             mc.file(newFile=True, force=True)
 
-            node = MPyNode.importFromFile(temp_file)
-            self.assertTrue(node.isValid())
+            with open(temp_file, 'rb' if use_binary else 'r') as fh:
+                node = pickle.load(fh) if use_binary else pickle.loads(fh.read().encode('latin1'))
+                self.assertTrue(node.isValid())
 
             os.remove(temp_file)
 
@@ -616,7 +612,7 @@ class TestMPyNode(unittest.TestCase):
         self.assertEqual(type(attr_types), tuple)
         self.assertEqual(len(attr_types), len(MPyNode._NEW_INPUT_TYPES))
 
-        attr_keys = MPyNode._NEW_INPUT_TYPES.keys()
+        attr_keys = list(MPyNode._NEW_INPUT_TYPES.keys())
         attr_keys.sort()
 
         self.assertSequenceEqual(attr_types, attr_keys)
@@ -629,7 +625,7 @@ class TestMPyNode(unittest.TestCase):
         self.assertEqual(type(attr_types), tuple)
         self.assertEqual(len(attr_types), len(MPyNode._NEW_OUTPUT_TYPES))
 
-        attr_keys = MPyNode._NEW_OUTPUT_TYPES.keys()
+        attr_keys = list(MPyNode._NEW_OUTPUT_TYPES.keys())
         attr_keys.sort()
 
         self.assertSequenceEqual(attr_types, attr_keys)

@@ -3,16 +3,14 @@ import copy
 import cProfile
 import codecs
 import traceback
+import pickle
 #from collections import UserDict
 
 import maya.api.OpenMaya as om
 import maya.api.OpenMayaUI as omui
 import maya.api.OpenMayaRender as omr
 
-try:
-    import cPickle as pickle # python2
-except:
-    import pickle # python3
+
     
     
 from ._openmaya import MAngle, MColor, MColorArray, MEulerRotation

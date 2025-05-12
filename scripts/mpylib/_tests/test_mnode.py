@@ -8,7 +8,6 @@ try:
 except:
     pass
 
-
     
 try:
     import cPickle as pickle # python2
@@ -20,7 +19,7 @@ except:
 import maya.cmds as mc
 import maya.api.OpenMaya as om
 
-from .mpylib import MNode, MNodeList
+from mpylib import MNode, MNodeList
 
 
 class TestMNode(unittest.TestCase):
@@ -585,7 +584,7 @@ class TestMNode(unittest.TestCase):
             
     def testGetAddAttrMaps(self):
         
-        attrs = ({"attr_type":"float", "long_name":"floatAttr", "shortName":"fltAttr"},)
+        attrs = ({"attr_type":"float", "long_name":"floatAttr", "short_name":"fltAttr"},)
         
         for node in (self._dag_node, self._dg_node):
             

@@ -61,26 +61,13 @@ except:
     import builtins
     import urllib.request as urllib2
     unicode = str
-    unichr = chr    
+    unichr = chr
 
-
-
-if mc.about(apiVersion=True) < 201700:
-    import PySide
-    from PySide.QtCore import Qt, Signal, Slot, QSize, QObject, QRegExp, QObject
-    from PySide.QtGui import QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QSplitter, QColor, QStatusBar, QMessageBox, QTreeWidget, QTreeWidgetItem, QDialog, QComboBox, QCheckBox
-    from PySide.QtGui import QFont, QFontMetrics, QPlainTextEdit, QTabWidget, QTabBar, QAction, QKeySequence, QLineEdit, QFrame, QLabel, QMenu, QIcon, QPixmap, QPushButton, QStackedLayout
-    from PySide.QtGui import QRadioButton, QButtonGroup, QCompleter, QTextCursor, QAbstractItemView, QToolBar, QListWidget, QTableWidget, QTableWidgetItem, QHeaderView, QFileDialog, QGridLayout
-    from PySide.QtGui import QDoubleValidator, QIntValidator, QListWidgetItem, QColorDialog
-
-else:
-    import PySide2
-    PySide = PySide2
-    from PySide2.QtCore import Qt, Signal, Slot, QSize, QObject, QRegExp, QObject
-    from PySide2.QtGui import QColor, QFont, QFontMetrics, QKeySequence, QIcon, QPixmap, QTextCursor, QDoubleValidator, QIntValidator
-    from PySide2.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QSplitter, QStatusBar, QMessageBox, QTreeWidget, QTreeWidgetItem, QDialog, QComboBox, QCheckBox
-    from PySide2.QtWidgets import QPlainTextEdit, QTabWidget, QTabBar, QLineEdit, QFrame, QLabel, QMenu, QPushButton, QStackedLayout, QGridLayout, QListWidgetItem, QColorDialog
-    from PySide2.QtWidgets import QRadioButton, QButtonGroup, QCompleter, QAbstractItemView, QToolBar, QAction, QListWidget, QTableWidget, QTableWidgetItem, QHeaderView, QFileDialog
+from Qt.QtCore import Qt, Signal, Slot, QSize, QObject, QRegExp, QObject
+from Qt.QtGui import QColor, QFont, QFontMetrics, QKeySequence, QIcon, QPixmap, QTextCursor, QDoubleValidator, QIntValidator
+from Qt.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QSplitter, QStatusBar, QMessageBox, QTreeWidget, QTreeWidgetItem, QDialog, QComboBox, QCheckBox
+from Qt.QtWidgets import QPlainTextEdit, QTabWidget, QTabBar, QLineEdit, QFrame, QLabel, QMenu, QPushButton, QStackedLayout, QGridLayout, QListWidgetItem, QColorDialog
+from Qt.QtWidgets import QRadioButton, QButtonGroup, QCompleter, QAbstractItemView, QToolBar, QAction, QListWidget, QTableWidget, QTableWidgetItem, QHeaderView, QFileDialog
 
 from .qt_log import QtLog
 from .qt_py_editor import QtPythonEditor
@@ -818,7 +805,7 @@ class NDMainWindow(QMayaWindow):
         self._scene_tree.refresh()
 
 
-    @logError
+    #@logError
     def addNewNodeEvent(self):
         """
         Called when the user created a new node using the ui. Note that this will invoke _onNodeAdded through a callback
@@ -3391,13 +3378,9 @@ class NDWatchTable(QTableWidget):
         v_header = QHeaderView(Qt.Orientation.Vertical)
         h_header = QHeaderView(Qt.Orientation.Horizontal)
 
-        if PySide.__version_info__[0] == 1:
-            v_header.setResizeMode(QHeaderView.ResizeToContents)
-            h_header.setResizeMode(QHeaderView.ResizeToContents)
 
-        else:
-            v_header.setSectionResizeMode(QHeaderView.ResizeToContents)
-            h_header.setSectionResizeMode(QHeaderView.ResizeToContents)
+        v_header.setSectionResizeMode(QHeaderView.ResizeToContents)
+        h_header.setSectionResizeMode(QHeaderView.ResizeToContents)
 
         self.setVerticalHeader(v_header)
         self.setHorizontalHeader(h_header)

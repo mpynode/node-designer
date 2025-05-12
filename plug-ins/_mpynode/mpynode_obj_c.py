@@ -1,7 +1,6 @@
+from .mpynode_obj import MPyNode
 
-from mpynode_obj import MPyNode
-
-import mpynode_obj_cy
+from  . import mpynode_obj_cy_win_2024 as mpynode_obj_cy
 
 
 class MPyNodeC(MPyNode):

@@ -1,16 +1,7 @@
-import sys
 
-try:
-    import PySide
-    
-except ImportError as err:
-    from PySide2.QtCore import QRegExp
-    from PySide2.QtGui import QColor, QTextCharFormat, QFont, QSyntaxHighlighter
-    from PySide2.QtWidgets import QTextEdit
-
-else:
-    from PySide.QtCore import QRegExp
-    from PySide.QtGui import QColor, QTextCharFormat, QFont, QSyntaxHighlighter
+from Qt.QtCore import QRegExp
+from Qt.QtGui import QColor, QTextCharFormat, QFont, QSyntaxHighlighter
+from Qt.QtWidgets import QTextEdit
 
 
 class QtPythonHighlighter(QSyntaxHighlighter):
@@ -212,7 +203,7 @@ class QtPythonHighlighter(QSyntaxHighlighter):
         
 if __name__ == "__main__":
     
-    from PySide2.QtWidgets import QApplication, QPlainTextEdit
+    from Qt.QtWidgets import QApplication, QPlainTextEdit
     
     app = QApplication([])
     

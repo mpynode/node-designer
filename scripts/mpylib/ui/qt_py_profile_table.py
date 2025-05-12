@@ -1,18 +1,9 @@
 import types
 import os
 
-try:
-    import PySide
-    
-except ImportError as err:
-    import PySide2
-    from PySide2.QtWidgets import QTableWidget, QTableWidgetItem, QHeaderView, QWidget, QHBoxLayout
-    from PySide2.QtCore import Qt
-    PySide = PySide2
+from Qt.QtWidgets import QTableWidget, QTableWidgetItem, QHeaderView, QWidget, QHBoxLayout
+from Qt.QtCore import Qt
 
-else:
-    from PySide.QtGui import QTableWidget, QTableWidgetItem, QHeaderView, QWidget, QHBoxLayout
-    from PySide.QtCore import Qt
     
     
 class QtPyProfileTable(QTableWidget):
@@ -36,13 +27,8 @@ class QtPyProfileTable(QTableWidget):
         v_header = QHeaderView(Qt.Orientation.Vertical)
         h_header = QHeaderView(Qt.Orientation.Horizontal)
         
-        if PySide.__version_info__[0] == 1:
-            v_header.setResizeMode(QHeaderView.ResizeToContents)
-            h_header.setResizeMode(QHeaderView.ResizeToContents)
-        
-        else:
-            v_header.setSectionResizeMode(QHeaderView.ResizeToContents)
-            h_header.setSectionResizeMode(QHeaderView.ResizeToContents)
+        v_header.setSectionResizeMode(QHeaderView.ResizeToContents)
+        h_header.setSectionResizeMode(QHeaderView.ResizeToContents)
         
         self.setVerticalHeader(v_header)
         self.setHorizontalHeader(h_header)
@@ -78,15 +64,8 @@ if __name__ == "__main__":
     import sys
     import cProfile
     
-    try:
-        import PySide
-        
-    except ImportError as err:
-        from PySide2.QtWidgets import QApplication
+    from Qt.QtWidgets import QApplication
     
-    else:
-        from PySide.QtGui import QApplication
-        
         
     def testA(a, b):
         

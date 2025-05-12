@@ -1,17 +1,9 @@
 import sys
 import traceback
 
-try:
-    import PySide
-    
-except ImportError as err:
-    from PySide2.QtCore import Qt
-    from PySide2.QtGui import QColor, QTextCursor
-    from PySide2.QtWidgets import QTextEdit, QMenu, QAction
-
-else:
-    from PySide.QtCore import Qt
-    from PySide.QtGui import QTextEdit, QColor, QTextCursor, QMenu, QAction
+from Qt.QtCore import Qt
+from Qt.QtGui import QColor, QTextCursor
+from Qt.QtWidgets import QTextEdit, QMenu, QAction
 
 
 class QtLog(QTextEdit):

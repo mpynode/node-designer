@@ -363,6 +363,10 @@ class MNode(om.MObject):
 
         if long_name:
             kargs["longName"] = long_name
+            
+        if "short_name" in kargs:
+            kargs["shortName"] = kargs["short_name"]
+            del(kargs["short_name"])
 
         if attr_type:
             if attr_type in self.ATTR_AT_TYPES:
@@ -2072,6 +2076,13 @@ class MNode(om.MObject):
 
 
     def __nonzero__(self):
+        """
+        Obsolete in Python 3...use __bool__ instead
+        """
+
+        return self.isValid()
+    
+    def __bool__(self):
         """
         Built-in method. Called to implement truth value testing and the built-in operation bool()
         """

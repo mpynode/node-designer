@@ -1,0 +1,30 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Maya Debugger: Remote Attach",
+            "type": "debugpy",
+            "request": "attach",
+            "connect": {
+                "host": "localhost",
+                "port": 5678
+            },
+            "pathMappings": [
+                {
+                    "localRoot": "${workspaceFolder}",
+                    "remoteRoot": "${workspaceFolder}"
+                }
+            ],
+            "logToFile": true
+        },
+        {
+            "name": "Maya Unit Tests",
+            "type": "python",
+            "request": "launch",
+            "program": "C:/Program Files/Autodesk/Maya2024/bin/mayapy.exe",
+            "args": ["-m", "unittest", "discover", "-s", "${workspaceFolder}/scripts/mpylib", "-p", "test_*.py"],
+            "cwd": "${workspaceFolder}",
+            "stopOnEntry": false,
+        }
+    ]
+}

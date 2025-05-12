@@ -1955,3 +1955,117 @@ line 1: Expected type string, MObject or MNode..got type <type 'unicode'>
 #   File "C:\Users\ericvignola\perforce\fbavatars\_common\library\maya\scripts\python\3rd-party\mpylib\_base\mnode.py", line 172, in __init__
 #     raise TypeError("Expected type string, MObject or MNode..got type " + str(type(node)))
 # TypeError: Expected type string, MObject or MNode..got type <type 'unicode'>
+
+
+Traceback (most recent call last):
+  File "E:\dev\maya\node-designer\scripts\mpylib\ui\mpynode_designer.py", line 179, in errorWrap
+    return func(*args, **kargs)
+           ^^^^^^^^^^^^^^^^^^^^
+TypeError: NDMainWindow.addNewNodeEvent() takes 1 positional argument but 2 were given
+
+
+Traceback (most recent call last):
+  File "E:\dev\maya\node-designer\scripts\mpylib\ui\mpynode_designer.py", line 179, in errorWrap
+    return func(*args, **kargs)
+           ^^^^^^^^^^^^^^^^^^^^
+TypeError: NDMainWindow.addNewNodeEvent() takes 1 positional argument but 2 were given
+
+
+Traceback (most recent call last):
+  File "E:\dev\maya\node-designer\scripts\mpylib\ui\mpynode_designer.py", line 179, in errorWrap
+    return func(*args, **kargs)
+           ^^^^^^^^^^^^^^^^^^^^
+TypeError: NDMainWindow.addNewNodeEvent() takes 1 positional argument but 2 were given
+
+
+Traceback (most recent call last):
+  File "E:\dev\maya\node-designer\scripts\mpylib\ui\mpynode_designer.py", line 1215, in __init__
+    super().__init__(parent) # python3
+    ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\dev\maya\node-designer\scripts\mpylib\ui\qt_py_editor.py", line 47, in __init__
+    self._highlighter = self.HIGHLIGHTER_CLASS(self.document())
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\dev\maya\node-designer\scripts\mpylib\ui\qt_py_highlighter.py", line 69, in __init__
+    self.rebuildRules()
+  File "E:\dev\maya\node-designer\scripts\mpylib\ui\qt_py_highlighter.py", line 81, in rebuildRules
+    self.rehighlight()
+  File "E:\dev\maya\node-designer\scripts\mpylib\ui\qt_py_highlighter.py", line 111, in highlightBlock
+    index = expression.indexIn(text, 0)
+            ^^^^^^^^^^^^^^^^^^
+AttributeError: 'PySide6.QtCore.QRegularExpression' object has no attribute 'indexIn'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "E:\dev\maya\node-designer\scripts\mpylib\ui\mpynode_designer.py", line 179, in errorWrap
+    return func(*args, **kargs)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "E:\dev\maya\node-designer\scripts\mpylib\ui\mpynode_designer.py", line 858, in sceneSelectChangeEvent
+    tab_widget, tab_index = self._script_tab_widget.addNewTab(py_node)
+                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\dev\maya\node-designer\scripts\mpylib\ui\mpynode_designer.py", line 1025, in addNewTab
+    tab_widget = NDScriptEditor(self, py_node)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\dev\maya\node-designer\scripts\mpylib\ui\mpynode_designer.py", line 1217, in __init__
+    super(NDScriptEditor, self).__init__(parent) # python2
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\dev\maya\node-designer\scripts\mpylib\ui\qt_py_editor.py", line 45, in __init__
+    QPlainTextEdit.__init__(self, parent)
+RuntimeError: You can't initialize an PySide6.QtWidgets.QPlainTextEdit object in class NDScriptEditor twice!
+
+
+Traceback (most recent call last):
+  File "E:\dev\maya\node-designer\scripts\mpylib\ui\mpynode_designer.py", line 179, in errorWrap
+    return func(*args, **kargs)
+           ^^^^^^^^^^^^^^^^^^^^
+TypeError: NDMainWindow.addNewNodeEvent() takes 1 positional argument but 2 were given
+
+
+Traceback (most recent call last):
+  File "E:\dev\maya\node-designer\scripts\mpylib\ui\mpynode_designer.py", line 179, in errorWrap
+    return func(*args, **kargs)
+           ^^^^^^^^^^^^^^^^^^^^
+TypeError: NDMainWindow.addNewNodeEvent() takes 1 positional argument but 2 were given
+
+
+Traceback (most recent call last):
+  File "E:\dev\maya\node-designer\scripts\mpylib\ui\mpynode_designer.py", line 179, in errorWrap
+    return func(*args, **kargs)
+           ^^^^^^^^^^^^^^^^^^^^
+TypeError: NDMainWindow.addNewNodeEvent() takes 1 positional argument but 2 were given
+
+
+Traceback (most recent call last):
+  File "E:\dev\maya\node-designer\scripts\mpylib\ui\mpynode_designer.py", line 1215, in __init__
+    super().__init__(parent) # python3
+    ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\dev\maya\node-designer\scripts\mpylib\ui\qt_py_editor.py", line 47, in __init__
+    self._highlighter = self.HIGHLIGHTER_CLASS(self.document())
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\dev\maya\node-designer\scripts\mpylib\ui\qt_py_highlighter.py", line 69, in __init__
+    self.rebuildRules()
+  File "E:\dev\maya\node-designer\scripts\mpylib\ui\qt_py_highlighter.py", line 81, in rebuildRules
+    self.rehighlight()
+  File "E:\dev\maya\node-designer\scripts\mpylib\ui\qt_py_highlighter.py", line 111, in highlightBlock
+    index = expression.indexIn(text, 0)
+            ^^^^^^^^^^^^^^^^^^
+AttributeError: 'PySide6.QtCore.QRegularExpression' object has no attribute 'indexIn'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "E:\dev\maya\node-designer\scripts\mpylib\ui\mpynode_designer.py", line 179, in errorWrap
+    return func(*args, **kargs)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "E:\dev\maya\node-designer\scripts\mpylib\ui\mpynode_designer.py", line 858, in sceneSelectChangeEvent
+    tab_widget, tab_index = self._script_tab_widget.addNewTab(py_node)
+                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\dev\maya\node-designer\scripts\mpylib\ui\mpynode_designer.py", line 1025, in addNewTab
+    tab_widget = NDScriptEditor(self, py_node)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\dev\maya\node-designer\scripts\mpylib\ui\mpynode_designer.py", line 1217, in __init__
+    super(NDScriptEditor, self).__init__(parent) # python2
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "E:\dev\maya\node-designer\scripts\mpylib\ui\qt_py_editor.py", line 45, in __init__
+    QPlainTextEdit.__init__(self, parent)
+RuntimeError: You can't initialize an PySide6.QtWidgets.QPlainTextEdit object in class NDScriptEditor twice!

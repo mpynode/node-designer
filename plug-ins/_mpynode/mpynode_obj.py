@@ -1,16 +1,12 @@
 import sys
-import copy
 import cProfile
-import cPickle
+import pickle
 import codecs
 import traceback
-from collections import OrderedDict
 
 import maya.api.OpenMaya as om
-import maya.api.OpenMayaUI as omui
-import maya.api.OpenMayaRender as omr
 
-from _openmaya import MAngle, MColor, MColorArray, MEulerRotation, MFnNurbsCurve, MMatrix, MMatrixArray, MPoint, MPointArray, MQuaternion, MTime, MTimeArray, MVector, MVectorArray
+from ._openmaya import MAngle, MColor, MColorArray, MEulerRotation, MFnNurbsCurve, MMatrix, MMatrixArray, MPoint, MPointArray, MQuaternion, MTime, MTimeArray, MVector, MVectorArray
 
 
 class MPyNode(om.MPxNode):
@@ -340,7 +336,7 @@ class MPyNode(om.MPxNode):
 
             for attr_name, plug_data in self._output_plug_map.items():
 
-                if self._exec_vars.has_key(attr_name):
+                if attr_name in self._exec_vars:
 
                     ##----call the appropriate _set method for the current plug----##
                     plug_data[1](data_block, plug_data[0], self._exec_vars[attr_name], is_array=plug_data[3])
@@ -378,7 +374,7 @@ class MPyNode(om.MPxNode):
         plug_name = plug.partialName() if not plug.isChild else plug.parent().partialName()
         
         ##---look for the attribute name in the input map...handling array attr syntax as needed---##
-        if (self._input_plug_map.has_key(plug_name.split("[")[0])) or (plug == self.__class__._expression_plug):
+        if (plug_name.split("[")[0] in self._input_plug_map) or (plug == self.__class__._expression_plug):
 
             ##---set affected_plugs equal to all output plugs----##
             for out_plug_name in self._output_plug_map.keys():
@@ -566,7 +562,7 @@ class MPyNode(om.MPxNode):
                 err_str = "Expression failed for " + self._node_fn.name() + ":\n" + "".join(tb_lines)
                 om.MUserEventMessage.postUserEvent(self.LOG_ERROR_CALLBACK_NAME, (self.thisMObject(), err_str))
                 
-                print err_str
+                print(err_str)
             
             
     def _getGenericInput(self, data_block, plug, data_class, get_func_name, is_array=False, array_type=list):
@@ -1035,22 +1031,22 @@ class MPyNode(om.MPxNode):
             
     def _dumpPickle(self, data):
         """
-        Use base64 encoding to convert python data to a pure ASCII string via cPickle at its highest protocol
+        Use base64 encoding to convert python data to a pure ASCII string via pickle at its highest protocol
         """
         
-        return codecs.encode(cPickle.dumps(data,protocol=cPickle.HIGHEST_PROTOCOL), "base64").decode()
+        return codecs.encode(pickle.dumps(data,protocol=pickle.HIGHEST_PROTOCOL), "base64").decode()
     
     
     def _loadPickle(self, data):
         """
-        Use base64 decoding to convert a pure ASCII string back to a python data via cPickle
+        Use base64 decoding to convert a pure ASCII string back to a python data via pickle
         """
         
         try:
             try:
-                return cPickle.loads(codecs.decode(data.encode(), "base64"))
+                return pickle.loads(codecs.decode(data.encode(), "base64"))
             except:
-                return cPickle.loads(str(data)) # backwards compatibility with default cPickle protocol    
+                return pickle.loads(str(data)) # backwards compatibility with default pickle protocol    
         except:
             pass
         
@@ -1249,9 +1245,9 @@ class MPyNodeEventManager(object):
         if not m_obj.isNull():
             hash_code = om.MObjectHandle(m_obj).hashCode()
             
-            if self._py_nodes.has_key(hash_code):
+            if hash_code in self._py_nodes:
                 
-                if not self._py_nodes_removed.has_key(hash_code):
+                if not hash_code in self._py_nodes_removed:
                     self._py_nodes_removed[hash_code] = self._py_nodes[hash_code]
                 
                 del(self._py_nodes[hash_code])
@@ -1339,7 +1335,7 @@ class MPyNodeEventManager(object):
         if m_obj:
             hash_code = om.MObjectHandle(m_obj).hashCode()
             
-            if self._py_nodes_removed.has_key(hash_code):
+            if hash_code in self._py_nodes_removed:
                 self.addNode(self._py_nodes_removed[hash_code])
                 del(self._py_nodes_removed[hash_code])
             
@@ -1372,7 +1368,7 @@ class MPyNodeEventManager(object):
         
         hash_code = py_node.getHashCode()
         
-        if not self._py_nodes.has_key(hash_code):
+        if not hash_code in self._py_nodes:
             self._py_nodes[hash_code] = py_node
         
     
@@ -1387,7 +1383,7 @@ class MPyNodeEventManager(object):
         
         hash_code = py_node.getHashCode()
         
-        if self._py_nodes.has_key(hash_code):
+        if hash_code in self._py_nodes:
             del(self._py_nodes[hash_code])
             
             

@@ -1,11 +1,8 @@
 
 import maya.cmds as mc
 
-if mc.about(apiVersion=True) < 201700:
-    from PySide.QtGui import QDockWidget
 
-else:
-    from PySide2.QtWidgets import QDockWidget
+from Qt.QtWidgets import QDockWidget
 
 from .mqt_main import QMayaMain
 

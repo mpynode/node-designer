@@ -4,18 +4,14 @@ import maya.cmds as mc
 import maya.OpenMayaUI as omui
 import maya.OpenMaya as om
 
-
-if mc.about(apiVersion=True) < 201700:
-    import shiboken
-
-    from PySide.QtCore import SIGNAL, Signal, Slot, QObject
-    from PySide.QtGui import QWidget, QApplication
-
-else:
+try:
     import shiboken2 as shiboken
     
-    from PySide2.QtCore import SIGNAL, Signal, Slot, QObject
-    from PySide2.QtWidgets import QWidget, QApplication
+except ImportError:
+    import shiboken6 as shiboken
+
+from Qt.QtCore import Signal, Slot, QObject
+from Qt.QtWidgets import QWidget, QApplication
 
 
 class QMayaMain(object):

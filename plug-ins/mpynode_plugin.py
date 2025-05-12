@@ -5,22 +5,29 @@ import maya.api.OpenMayaRender as omr
 
 from mpylib._mpynode import MPyNode, MPyNodeEventManager
 
-NODE_PY_CLASS = None
 ##----if this env var is set to 1, no compiled versions of the class will be loaded---##
 ENV_VAR_PY_ONLY = "MPY_SCRIPTED_ONLY"
 
-##----determine if the compiled version should be used or use scripted version---##
-if ENV_VAR_PY_ONLY in os.environ and (os.environ[ENV_VAR_PY_ONLY] == "1"):
-    NODE_PY_CLASS = MPyNode
+NODE_PY_CLASS = MPyNode
 
-##----try loading the compiled version. If error, fall back to pure script----## 
-else:
-    try:
-        from ._mpynode import MPyNodeC
-    except:
-        NODE_PY_CLASS = MPyNode
-    else:
-        NODE_PY_CLASS = MPyNodeC
+from _mpynode import MPyNodeC
+NODE_PY_CLASS = MPyNodeC
+
+##----determine if the compiled version should be used or use scripted version---##
+# if ENV_VAR_PY_ONLY in os.environ and (os.environ[ENV_VAR_PY_ONLY] == "1"):
+#     NODE_PY_CLASS = MPyNode
+
+# # ##----try loading the compiled version. If error, fall back to pure script----## 
+# else:
+#     try:
+#         from _mpynode import MPyNodeC
+        
+#     except Exception as err:
+#         print("Failed to import compiled version of MPyNode. Using pure python version instead.")
+#         print(f"Error: {err}")
+#         NODE_PY_CLASS = MPyNode
+#     else:
+#         NODE_PY_CLASS = MPyNodeC
 
     
 def maya_useNewAPI():
