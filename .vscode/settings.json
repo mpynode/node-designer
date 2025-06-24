@@ -9,7 +9,7 @@
     "python.testing.pytestEnabled": false,
     "python.testing.unittestEnabled": true,
     "python.envFile": "${workspaceFolder}/.env",
-    "python.defaultInterpreterPath": "C:/Program Files/Autodesk/Maya2024/bin/mayapy.exe",
+    "python.defaultInterpreterPath": "C:/Program Files/Autodesk/Maya2026/bin/mayapy.exe",
     "python.pythonPath": "C:/Program Files/Autodesk/Maya2025/bin/mayapy.exe",
     "python.workspaceSymbols.enabled": true,
     "python.analysis.extraPaths": [

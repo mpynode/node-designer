@@ -10,9 +10,6 @@ ENV_VAR_PY_ONLY = "MPY_SCRIPTED_ONLY"
 
 NODE_PY_CLASS = MPyNode
 
-from _mpynode import MPyNodeC
-NODE_PY_CLASS = MPyNodeC
-
 ##----determine if the compiled version should be used or use scripted version---##
 # if ENV_VAR_PY_ONLY in os.environ and (os.environ[ENV_VAR_PY_ONLY] == "1"):
 #     NODE_PY_CLASS = MPyNode

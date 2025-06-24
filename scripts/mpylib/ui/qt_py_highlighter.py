@@ -1,5 +1,15 @@
 
-from Qt.QtCore import QRegExp
+
+##---for some reason the Qt.py shim does not support QregularExpression from QtCore
+try:
+    from Qt.QtCore import QRegularExpression
+    
+except ImportError:
+    try:
+        from PySide6.QtCore import QRegularExpression
+    except ImportError:
+        from PySide2.QtCore import QRegularExpression
+        
 from Qt.QtGui import QColor, QTextCharFormat, QFont, QSyntaxHighlighter
 from Qt.QtWidgets import QTextEdit
 
@@ -29,11 +39,7 @@ class QtPythonHighlighter(QSyntaxHighlighter):
     
     def __init__(self, document):
         
-        try:
-            super().__init__(document) # python3
-        except:
-            super(QtPythonHighlighter, self).__init__(document) # python2
-            
+        super().__init__(document)
         
         self._styles = {"keyword": QtPythonHighlighter.formatText((249, 38, 102)),
                         "operator": QtPythonHighlighter.formatText((255, 255, 255)),
@@ -48,8 +54,8 @@ class QtPythonHighlighter(QSyntaxHighlighter):
         # Multi-line strings (expression, flag, style)
         # FIXME: The triple-quotes in these two lines will mess up the
         # syntax highlighting from this point onward
-        self._tri_single = (QRegExp("'''"), 1, self._styles["string2"])
-        self._tri_double = (QRegExp('"""'), 2, self._styles["string2"])
+        self._tri_single = (QRegularExpression("'''"), 1, self._styles["string2"])
+        self._tri_double = (QRegularExpression('"""'), 2, self._styles["string2"])
         
         self._rules = {}
         self._default_rules = [(r"\b%s\b" % keyword, 0, self._styles["keyword"]) for keyword in self.KEYWORDS]
@@ -71,12 +77,12 @@ class QtPythonHighlighter(QSyntaxHighlighter):
 
     def rebuildRules(self):
         
-        self._rules = [(QRegExp(pat), index, fmt) for (pat, index, fmt) in self._default_rules]
+        self._rules = [(QRegularExpression(pat), index, fmt) for (pat, index, fmt) in self._default_rules]
         
         if self._var_rules_map:
-            self._rules += [(QRegExp(pat), index, fmt) for (pat, index, fmt) in self._var_rules_map.values()]
+            self._rules += [(QRegularExpression(pat), index, fmt) for (pat, index, fmt) in self._var_rules_map.values()]
             
-        self._rules += [(QRegExp(pat), index, fmt) for (pat, index, fmt) in self._comment_rules]
+        self._rules += [(QRegularExpression(pat), index, fmt) for (pat, index, fmt) in self._comment_rules]
             
         self.rehighlight()
         
@@ -108,14 +114,12 @@ class QtPythonHighlighter(QSyntaxHighlighter):
         
         # Do other syntax formatting
         for expression, nth, format in self._rules:
-            index = expression.indexIn(text, 0)
-
-            while index >= 0:
-                # We actually want the index of the nth match
-                index = expression.pos(nth)
-                length = len(expression.cap(nth))
+            match_iter = expression.globalMatch(text)
+            while match_iter.hasNext():
+                match = match_iter.next()
+                index = match.capturedStart(nth)
+                length = len(match.captured(nth))
                 self.setFormat(index, length, format)
-                index = expression.indexIn(text, index + length)
 
         self.setCurrentBlockState(0)
 
@@ -128,7 +132,7 @@ class QtPythonHighlighter(QSyntaxHighlighter):
     def matchMultiline(self, text, delimiter, in_state, style):
         """
         Do highlighting of multi-line strings. ``delimiter`` should be a
-        ``QRegExp`` for triple-single-quotes or triple-double-quotes, and
+        ``QRegularExpression`` for triple-single-quotes or triple-double-quotes, and
         ``in_state`` should be a unique integer to represent the corresponding
         state changes when inside those strings. Returns True if we're still
         inside a multi-line string when this function is finished.
@@ -139,26 +143,40 @@ class QtPythonHighlighter(QSyntaxHighlighter):
             add = 0
         # Otherwise, look for the delimiter on this line
         else:
-            start = delimiter.indexIn(text)
-            # Move past this match
-            add = delimiter.matchedLength()
+            match = delimiter.match(text)
+            if match.hasMatch():
+                start = match.capturedStart()
+                add = match.capturedLength()
+            else:
+                start = -1
+                add = 0
 
         # As long as there's a delimiter match on this line...
         while start >= 0:
             # Look for the ending delimiter
-            end = delimiter.indexIn(text, start + add)
+            match_end = delimiter.match(text, start + add)
+            if match_end.hasMatch():
+                end = match_end.capturedStart()
+            else:
+                end = -1
             # Ending delimiter on this line?
-            if end >= add:
-                length = end - start + add + delimiter.matchedLength()
+            if end >= 0:
+                length = end - start + match_end.capturedLength()
                 self.setCurrentBlockState(0)
             # No; multi-line string
             else:
                 self.setCurrentBlockState(in_state)
-                length = len(text) - start + add
+                length = len(text) - start
             # Apply formatting
             self.setFormat(start, length, style)
             # Look for the next match
-            start = delimiter.indexIn(text, start + length)
+            match = delimiter.match(text, start + length)
+            if match.hasMatch():
+                start = match.capturedStart()
+                add = match.capturedLength()
+            else:
+                start = -1
+                add = 0
 
         # Return True if still inside a multi-line string, False otherwise
         if self.currentBlockState() == in_state:
@@ -178,9 +196,8 @@ class QtPythonHighlighter(QSyntaxHighlighter):
         for var_name, color in var_map.items():
             reg_ex = self.VAR_PATTERN_PREFIX + var_name + self.VAR_PATTERN_SUFFIX
             style = self.formatText(color, style="italic")
-            
-            self._var_rules_map[var_name] = (QRegExp(reg_ex), 0, style)
-            
+
+            self._var_rules_map[var_name] = (QRegularExpression(reg_ex), 0, style)
         self.rebuildRules()
     
     
@@ -189,7 +206,7 @@ class QtPythonHighlighter(QSyntaxHighlighter):
         reg_ex = self.VAR_PATTERN_PREFIX + var_name + self.VAR_PATTERN_SUFFIX
         style = self.formatText(color, style="italic")
         
-        self._var_rules_map[var_name] = (QRegExp(reg_ex), 0, style)
+        self._var_rules_map[var_name] = (QRegularExpression(reg_ex), 0, style)
         self.rebuildRules()
         
         

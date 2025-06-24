@@ -4,7 +4,7 @@
         {
             "label": "Run Maya Python",
             "type": "shell",
-            "command": "C:/Program Files/Autodesk/Maya2024/bin/mayapy.exe",
+            "command": "C:/Program Files/Autodesk/Maya2026/bin/mayapy.exe",
             "args": [
                 "${file}"
             ],

@@ -71,7 +71,13 @@ class QtPythonEditor(QPlainTextEdit):
         self.font.setPointSize(self._font_size)
 
         self.setFont(self.font)
-        self.setTabStopWidth(self.TAB_STOP * QFontMetrics(self.font).width(" "))
+        
+        #--for Qt5 and above, use setTabStopDistance (expects pixels)--##
+        try:
+            self.setTabStopDistance(self.TAB_STOP * QFontMetrics(self.font).horizontalAdvance(" "))
+        except AttributeError:
+            #--fallback for older Qt versions---##
+            self.setTabStopWidth(self.TAB_STOP * QFontMetrics(self.font).width(" "))
 
 
     def resizeEvent(self, event):
@@ -103,12 +109,15 @@ class QtPythonEditor(QPlainTextEdit):
                     
                 self.font.setPointSize(self._font_size)
                 self.setFont(self.font)
-                self.setTabStopWidth(self.TAB_STOP * QFontMetrics(self.font).width(" "))                    
+                
+                try:
+                    self.setTabStopDistance(self.TAB_STOP * QFontMetrics(self.font).horizontalAdvance(" "))
+                except AttributeError:
+                    self.setTabStopWidth(self.TAB_STOP * QFontMetrics(self.font).width(" "))
 
                 return True
 
         return False
-
 
     def lineNumberAreaWidth(self):
 
@@ -117,8 +126,15 @@ class QtPythonEditor(QPlainTextEdit):
         while count >= 10:
             count /= 10
             digits += 1
-        space = 3 + self.fontMetrics().width("9") * digits
-
+        try:
+            ##---Qt5 and above ---##
+            char_width = self.fontMetrics().horizontalAdvance("9")
+        except AttributeError:
+            ##---older Qt versions ---##
+            char_width = self.fontMetrics().width("9")
+            
+        space = 3 + char_width * digits
+        
         return space
 
 

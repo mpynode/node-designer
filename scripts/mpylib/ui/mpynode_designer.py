@@ -51,17 +51,10 @@ import maya.cmds as mc
 import maya.mel as mel
 import maya.api.OpenMaya as om
 
-
-try:
-    # python2
-    import __builtin__ as builtins
-    import urllib2
-except:
-    # python3
-    import builtins
-    import urllib.request as urllib2
-    unicode = str
-    unichr = chr
+import builtins
+import urllib.request as urllib2
+unicode = str
+unichr = chr
 
 from Qt.QtCore import Qt, Signal, Slot, QSize, QObject, QRegExp, QObject
 from Qt.QtGui import QColor, QFont, QFontMetrics, QKeySequence, QIcon, QPixmap, QTextCursor, QDoubleValidator, QIntValidator
@@ -80,9 +73,8 @@ from ..nodes import MPyNode
 from .._base import MNode, MNodeList, MUndo
 from ..files import IniFile
 
-
 APP_NAME = "Node Designer"
-APP_VERSION = "1.0.1"
+APP_VERSION = "1.0.2 r1"
 
 BASE_DIR = os.path.dirname(__file__).replace("\\", "/")
 RESOURCE_DIR_NAME = "resources"
@@ -176,7 +168,13 @@ def logError(func):
         """
 
         try:
-            return func(*args, **kargs)
+            out_args = args
+            
+            ##---qt6 slots recieve an extra first argument, remove it before passing args to destination function---##
+            # if QT_MAJOR_VERSION >= 6:
+            #     out_args = args[1:] if len(args) > 1 else ()
+
+            return func(*out_args, **kargs)
 
         except Exception as err:
 
@@ -689,18 +687,18 @@ class NDMainWindow(QMayaWindow):
                                             statusTip="Show the about window", triggered=self.showAboutDialog)
 
     @logError
-    def saveToFile(self):
+    def saveToFile(self, *args, **kwargs):
         pass
 
 
     @logError
-    def openHelpDocs(self):
+    def openHelpDocs(self, *args, **kwargs):
 
         self.openDocPage(self.HELP_DOCS_URL)
 
 
     @logError
-    def openApiDocs(self):
+    def openApiDocs(self, *args, **kwargs):
 
         self.openDocPage(self.HELP_API_DOCS_URL)
 
@@ -715,7 +713,7 @@ class NDMainWindow(QMayaWindow):
 
 
     @logError
-    def exportToFile(self):
+    def exportToFile(self, *args, **kwargs):
 
         if self._cur_py_node:
             file_path, selected_filter = QFileDialog.getSaveFileName(self, "Exporting " + self._cur_py_node.getName(),
@@ -743,7 +741,7 @@ class NDMainWindow(QMayaWindow):
 
 
     @logError
-    def showAboutDialog(self):
+    def showAboutDialog(self, *args, **kwargs):
 
         dlg = NDAboutDialog(self)
 
@@ -751,7 +749,7 @@ class NDMainWindow(QMayaWindow):
 
 
     @logError
-    def importFromFile(self):
+    def importFromFile(self, *args, **kwargs):
 
         node_list = []
 
@@ -806,7 +804,7 @@ class NDMainWindow(QMayaWindow):
 
 
     #@logError
-    def addNewNodeEvent(self):
+    def addNewNodeEvent(self, ):
         """
         Called when the user created a new node using the ui. Note that this will invoke _onNodeAdded through a callback
         """
@@ -864,13 +862,13 @@ class NDMainWindow(QMayaWindow):
 
 
     @logError
-    def saveCurrentNode(self):
+    def saveCurrentNode(self, *args, **kwargs):
 
         self._script_tab_widget.saveCurrentNode()
 
 
     @logError
-    def saveAllNodes(self):
+    def saveAllNodes(self, *args, **kwargs):
 
         self._script_tab_widget.saveAllNodes()
 
@@ -1211,12 +1209,8 @@ class NDScriptEditor(QtPythonEditor):
 
     def __init__(self, parent=None, py_node=None):
 
-        try:
-            super().__init__(parent) # python3
-        except:
-            super(NDScriptEditor, self).__init__(parent) # python2
+        super().__init__(parent)
             
-
         self._py_node = py_node
 
         if self._py_node:
@@ -2626,7 +2620,7 @@ class NDConnectInputAttrDialog(QDialog):
 
     def getAppendConnect(self):
 
-        return bool(self._force_cb.checkState())
+        return self._force_cb.checkState() == Qt.Checked
 
 
 class NDConnectOutputAttrDialog(NDConnectInputAttrDialog):
@@ -2663,7 +2657,7 @@ class NDConnectOutputAttrDialog(NDConnectInputAttrDialog):
 
     def getReplaceConnect(self):
 
-        return bool(self._replace_cb.checkState())
+        return self._replace_cb.checkState() == Qt.Checked
 
 
 class NDAddAttrDialog(QDialog):
@@ -3116,7 +3110,7 @@ class NDAddAttrDialog(QDialog):
 
     def getIsArray(self):
 
-        return bool(self._array_check.checkState())
+        return self._array_check.checkState() == Qt.Checked
 
 
     def getAttrDisplayOptions(self, attr_type, is_array):

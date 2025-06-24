@@ -21,7 +21,7 @@
             "name": "Maya Unit Tests",
             "type": "python",
             "request": "launch",
-            "program": "C:/Program Files/Autodesk/Maya2024/bin/mayapy.exe",
+            "program": "C:/Program Files/Autodesk/Maya2026/bin/mayapy.exe",
             "args": ["-m", "unittest", "discover", "-s", "${workspaceFolder}/scripts/mpylib", "-p", "test_*.py"],
             "cwd": "${workspaceFolder}",
             "stopOnEntry": false,
