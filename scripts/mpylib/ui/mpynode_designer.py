@@ -45,6 +45,7 @@ import traceback
 import keyword
 import logging
 import webbrowser
+import types
 from collections import OrderedDict
 
 import maya.cmds as mc
@@ -61,6 +62,12 @@ from Qt.QtGui import QColor, QFont, QFontMetrics, QKeySequence, QIcon, QPixmap, 
 from Qt.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QSplitter, QStatusBar, QMessageBox, QTreeWidget, QTreeWidgetItem, QDialog, QComboBox, QCheckBox
 from Qt.QtWidgets import QPlainTextEdit, QTabWidget, QTabBar, QLineEdit, QFrame, QLabel, QMenu, QPushButton, QStackedLayout, QGridLayout, QListWidgetItem, QColorDialog
 from Qt.QtWidgets import QRadioButton, QButtonGroup, QCompleter, QAbstractItemView, QToolBar, QAction, QListWidget, QTableWidget, QTableWidgetItem, QHeaderView, QFileDialog
+
+# Qt.Checked Enum reverse compatibility
+try:
+    QT_CHECKED_VALUE = Qt.Checked.value
+except AttributeError:
+    QT_CHECKED_VALUE = int(Qt.Checked)
 
 from .qt_log import QtLog
 from .qt_py_editor import QtPythonEditor
@@ -1646,7 +1653,7 @@ class NDProfileWidget(QWidget):
         self._profile_table.refresh()
 
         if self._py_node:
-            run_profiler = state == Qt.Checked
+            run_profiler = state == QT_CHECKED_VALUE
             self._py_node.setStoredVariable(MPyNode._RUN_PROFILER_VAR_NAME, run_profiler)
 
 
@@ -2620,7 +2627,7 @@ class NDConnectInputAttrDialog(QDialog):
 
     def getAppendConnect(self):
 
-        return self._force_cb.checkState() == Qt.Checked
+        return self._force_cb.checkState() == QT_CHECKED_VALUE
 
 
 class NDConnectOutputAttrDialog(NDConnectInputAttrDialog):
@@ -2657,7 +2664,7 @@ class NDConnectOutputAttrDialog(NDConnectInputAttrDialog):
 
     def getReplaceConnect(self):
 
-        return self._replace_cb.checkState() == Qt.Checked
+        return self._replace_cb.checkState() == QT_CHECKED_VALUE
 
 
 class NDAddAttrDialog(QDialog):
@@ -3110,7 +3117,7 @@ class NDAddAttrDialog(QDialog):
 
     def getIsArray(self):
 
-        return self._array_check.checkState() == Qt.Checked
+        return self._array_check.checkState() == QT_CHECKED_VALUE
 
 
     def getAttrDisplayOptions(self, attr_type, is_array):
@@ -3358,12 +3365,7 @@ class NDWatchTable(QTableWidget):
 
     def __init__(self, parent=None):
 
-        try:
-            super().__init__(0, len(NDWatchTable.HEADER_TITLES), parent=parent) # python3
-        except:
-            super(NDWatchTable, self).__init__(0, len(NDWatchTable.HEADER_TITLES), parent=parent) # python2
-            
-
+        super().__init__(0, len(NDWatchTable.HEADER_TITLES), parent=parent) 
         self._buildHeaders()
 
 
@@ -3371,7 +3373,6 @@ class NDWatchTable(QTableWidget):
 
         v_header = QHeaderView(Qt.Orientation.Vertical)
         h_header = QHeaderView(Qt.Orientation.Horizontal)
-
 
         v_header.setSectionResizeMode(QHeaderView.ResizeToContents)
         h_header.setSectionResizeMode(QHeaderView.ResizeToContents)
@@ -3382,19 +3383,22 @@ class NDWatchTable(QTableWidget):
 
 
     def refresh(self, var_dict=None):
-
+        # refresh variables, but ignore imported modules and builtins
+        
         self.clearContents()
-
         if var_dict:
-            self.setRowCount(len(var_dict))
-
-            for row, var_name in enumerate(var_dict.keys()):
+            valid_names = []
+            for var_name in sorted(var_dict):
+                if var_name not in ['__builtins__', 'self']:
+                    if not isinstance(var_dict[var_name], types.ModuleType):
+                        valid_names.append(var_name)
+                    
+            self.setRowCount(len(valid_names))
+            for row, var_name in enumerate(valid_names):
                 for col, txt in enumerate((var_name, str(var_dict[var_name]), str(type(var_dict[var_name])))):
-
                     item = QTableWidgetItem(txt)
                     item.setFlags(Qt.ItemIsEnabled) #disables editing
                     self.setItem(row, col, item)
-
         else:
             self.setRowCount(0)
 
@@ -3407,11 +3411,7 @@ class NDWatchVarsWidget(QWidget):
 
     def __init__(self, parent=None):
 
-        try:
-            super().__init__(parent) # python3
-        except:
-            super(NDWatchVarsWidget, self).__init__(parent) # python2
-            
+        super().__init__(parent) # python3
 
         self._py_node = None
         self._watch_cb = None
@@ -3446,7 +3446,7 @@ class NDWatchVarsWidget(QWidget):
         self._watch_table.refresh()
 
         if self._py_node:
-            watch_vars = state == Qt.Checked
+            watch_vars = state == QT_CHECKED_VALUE
             self._py_node.setVariable(self.MPYNODE_VAR_NAME, watch_vars)
 
 
