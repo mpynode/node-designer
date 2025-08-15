@@ -1,1 +1,1 @@
-from .mpynode import MPyNode
+from mpylib.nodes.mpynode import MPyNode

@@ -4,20 +4,15 @@ Author: Gene Hansen
 This module contains the main class for interacting with mPyNode nodes on a scripting level
 """
 
-import os
 import copy
+import os
+
+import pickle
 from collections import OrderedDict
 
 import maya.api.OpenMaya as om
 
-
-    
-try:
-    import cPickle as pickle # python2
-except:
-    import pickle # python3
-
-from .._base import MNode
+from mpylib._base import MNode
 
 
 class MPyNode(MNode):
@@ -47,7 +42,12 @@ class MPyNode(MNode):
     ATTR_TYPE_NURBS_CURVE = "nurbsCurve"
     ATTR_TYPE_NURBS_SURFACE = "nurbsSurface"
 
-    _NODE_NUMERIC_TYPES = (ATTR_TYPE_INT, ATTR_TYPE_FLOAT, ATTR_TYPE_TIME, ATTR_TYPE_ANGLE)
+    _NODE_NUMERIC_TYPES = (
+        ATTR_TYPE_INT,
+        ATTR_TYPE_FLOAT,
+        ATTR_TYPE_TIME,
+        ATTR_TYPE_ANGLE,
+    )
     _PY_TYPE_INT = int
     _PY_TYPE_FLOAT = float
     _PY_TYPE_BOOL = bool
@@ -61,27 +61,98 @@ class MPyNode(MNode):
     _PY_TYPE_ENUM = int
     _PY_TYPE_PY = str
 
-    _ATTR_TO_PY_MAP = {ATTR_TYPE_INT:_PY_TYPE_INT, ATTR_TYPE_FLOAT:_PY_TYPE_FLOAT, ATTR_TYPE_BOOL:_PY_TYPE_BOOL,
-                       ATTR_TYPE_VECTOR:_PY_TYPE_VECTOR, ATTR_TYPE_MATRIX:_PY_TYPE_MATRIX, ATTR_TYPE_COLOR:_PY_TYPE_COLOR,
-                       ATTR_TYPE_TIME:_PY_TYPE_TIME, ATTR_TYPE_ANGLE:_PY_TYPE_ANGLE, ATTR_TYPE_EULER:_PY_TYPE_EULER,
-                       ATTR_TYPE_STRING:_PY_TYPE_STRING, ATTR_TYPE_PY:_PY_TYPE_PY, ATTR_TYPE_ENUM:_PY_TYPE_ENUM}
+    _ATTR_TO_PY_MAP = {
+        ATTR_TYPE_INT: _PY_TYPE_INT,
+        ATTR_TYPE_FLOAT: _PY_TYPE_FLOAT,
+        ATTR_TYPE_BOOL: _PY_TYPE_BOOL,
+        ATTR_TYPE_VECTOR: _PY_TYPE_VECTOR,
+        ATTR_TYPE_MATRIX: _PY_TYPE_MATRIX,
+        ATTR_TYPE_COLOR: _PY_TYPE_COLOR,
+        ATTR_TYPE_TIME: _PY_TYPE_TIME,
+        ATTR_TYPE_ANGLE: _PY_TYPE_ANGLE,
+        ATTR_TYPE_EULER: _PY_TYPE_EULER,
+        ATTR_TYPE_STRING: _PY_TYPE_STRING,
+        ATTR_TYPE_PY: _PY_TYPE_PY,
+        ATTR_TYPE_ENUM: _PY_TYPE_ENUM,
+    }
 
-    _ATTR_DEFAULT_VAL_TYPES = (ATTR_TYPE_INT, ATTR_TYPE_FLOAT, ATTR_TYPE_BOOL, ATTR_TYPE_TIME, ATTR_TYPE_ANGLE, ATTR_TYPE_ENUM)
+    _ATTR_DEFAULT_VAL_TYPES = (
+        ATTR_TYPE_INT,
+        ATTR_TYPE_FLOAT,
+        ATTR_TYPE_BOOL,
+        ATTR_TYPE_TIME,
+        ATTR_TYPE_ANGLE,
+        ATTR_TYPE_ENUM,
+    )
 
-    _NEW_INPUT_TYPES = {ATTR_TYPE_INT:"long", ATTR_TYPE_FLOAT:"double", ATTR_TYPE_BOOL:"bool", ATTR_TYPE_VECTOR:"double3", ATTR_TYPE_MATRIX:"matrix", ATTR_TYPE_ENUM:"enum",
-                        ATTR_TYPE_COLOR:"double3", ATTR_TYPE_ANGLE:"doubleAngle", ATTR_TYPE_EULER:"double3", ATTR_TYPE_STRING:"string", ATTR_TYPE_TIME:"time", ATTR_TYPE_PY:"string",
-                        ATTR_TYPE_MESH:"mesh", ATTR_TYPE_NURBS_CURVE:"nurbsCurve", ATTR_TYPE_NURBS_SURFACE:"nurbsSurface"}
-    _NEW_INPUT_ATTR_KARGS = {"storable":True, "writable":True, "readable":False, "multi":False}
+    _NEW_INPUT_TYPES = {
+        ATTR_TYPE_INT: "long",
+        ATTR_TYPE_FLOAT: "double",
+        ATTR_TYPE_BOOL: "bool",
+        ATTR_TYPE_VECTOR: "double3",
+        ATTR_TYPE_MATRIX: "matrix",
+        ATTR_TYPE_ENUM: "enum",
+        ATTR_TYPE_COLOR: "double3",
+        ATTR_TYPE_ANGLE: "doubleAngle",
+        ATTR_TYPE_EULER: "double3",
+        ATTR_TYPE_STRING: "string",
+        ATTR_TYPE_TIME: "time",
+        ATTR_TYPE_PY: "string",
+        ATTR_TYPE_MESH: "mesh",
+        ATTR_TYPE_NURBS_CURVE: "nurbsCurve",
+        ATTR_TYPE_NURBS_SURFACE: "nurbsSurface",
+    }
+    _NEW_INPUT_ATTR_KARGS = {
+        "storable": True,
+        "writable": True,
+        "readable": False,
+        "multi": False,
+    }
 
-    _NEW_OUTPUT_TYPES = {ATTR_TYPE_INT:"long", ATTR_TYPE_FLOAT:"double", ATTR_TYPE_BOOL:"bool", ATTR_TYPE_VECTOR:"double3", ATTR_TYPE_MATRIX:"matrix", ATTR_TYPE_ENUM:"enum",
-                         ATTR_TYPE_COLOR:"double3", ATTR_TYPE_ANGLE:"doubleAngle", ATTR_TYPE_EULER:"double3", ATTR_TYPE_STRING:"string", ATTR_TYPE_TIME:"time", ATTR_TYPE_PY:"string"}
-    _NEW_OUTPUT_ATTR_KARGS = {"storable":False, "writable":False, "readable":True, "multi":False}
+    _NEW_OUTPUT_TYPES = {
+        ATTR_TYPE_INT: "long",
+        ATTR_TYPE_FLOAT: "double",
+        ATTR_TYPE_BOOL: "bool",
+        ATTR_TYPE_VECTOR: "double3",
+        ATTR_TYPE_MATRIX: "matrix",
+        ATTR_TYPE_ENUM: "enum",
+        ATTR_TYPE_COLOR: "double3",
+        ATTR_TYPE_ANGLE: "doubleAngle",
+        ATTR_TYPE_EULER: "double3",
+        ATTR_TYPE_STRING: "string",
+        ATTR_TYPE_TIME: "time",
+        ATTR_TYPE_PY: "string",
+    }
+    _NEW_OUTPUT_ATTR_KARGS = {
+        "storable": False,
+        "writable": False,
+        "readable": True,
+        "multi": False,
+    }
 
-    _VECTOR_COMP_NAMES = {ATTR_TYPE_VECTOR:("X", "Y", "Z"), ATTR_TYPE_COLOR:("R", "G", "B"), ATTR_TYPE_EULER:("X", "Y", "Z")}
-    _VECTOR_COMP_TYPES = {ATTR_TYPE_VECTOR:"double", ATTR_TYPE_COLOR:"double", ATTR_TYPE_EULER:"doubleAngle"}
+    _VECTOR_COMP_NAMES = {
+        ATTR_TYPE_VECTOR: ("X", "Y", "Z"),
+        ATTR_TYPE_COLOR: ("R", "G", "B"),
+        ATTR_TYPE_EULER: ("X", "Y", "Z"),
+    }
+    _VECTOR_COMP_TYPES = {
+        ATTR_TYPE_VECTOR: "double",
+        ATTR_TYPE_COLOR: "double",
+        ATTR_TYPE_EULER: "doubleAngle",
+    }
 
     _ENUM_ATTR_TYPES = ("enum",)
-    _NUMERIC_ATTR_TYPES = ("long", "short", "byte", "float", "double", "doubleAngle", "doubleLinear", "time", "bool") + _ENUM_ATTR_TYPES
+    _NUMERIC_ATTR_TYPES = (
+        "long",
+        "short",
+        "byte",
+        "float",
+        "double",
+        "doubleAngle",
+        "doubleLinear",
+        "time",
+        "bool",
+    ) + _ENUM_ATTR_TYPES
     _MATRIX_ATTR_TYPES = ("matrix", "fltMatrix")
     _VECTOR_ATTR_TYPES = ("float3", "double3", "reflectance", "spectrum")
     _STRING_ATTR_TYPES = ("char", "string")
@@ -105,12 +176,23 @@ class MPyNode(MNode):
     _INPUT_TYPES_NURBS_CURVE = _NURBS_CURVE_ATTR_TYPES
     _INPUT_TYPES_NURBS_SURFACE = _NURBS_SURFACE_ATTR_TYPES
 
-    _INPUT_TYPES_MAP = {ATTR_TYPE_INT:_INPUT_TYPES_INT, ATTR_TYPE_FLOAT:_INPUT_TYPES_FLOAT, ATTR_TYPE_BOOL:_INPUT_TYPES_BOOL,
-                        ATTR_TYPE_VECTOR:_INPUT_TYPES_VECTOR, ATTR_TYPE_MATRIX:_INPUT_TYPES_MATRIX, ATTR_TYPE_COLOR:_INPUT_TYPES_COLOR,
-                        ATTR_TYPE_TIME:_INPUT_TYPES_TIME, ATTR_TYPE_ANGLE:_INPUT_TYPES_ANGLE, ATTR_TYPE_EULER:_INPUT_TYPES_EULER,
-                        ATTR_TYPE_STRING:_INPUT_TYPES_STRING, ATTR_TYPE_ENUM:_INPUT_TYPES_ENUM, ATTR_TYPE_PY:_INPUT_TYPES_PY,
-                        ATTR_TYPE_MESH:_INPUT_TYPES_MESH,
-                        ATTR_TYPE_NURBS_CURVE:_INPUT_TYPES_NURBS_CURVE, ATTR_TYPE_NURBS_SURFACE:_INPUT_TYPES_NURBS_SURFACE}
+    _INPUT_TYPES_MAP = {
+        ATTR_TYPE_INT: _INPUT_TYPES_INT,
+        ATTR_TYPE_FLOAT: _INPUT_TYPES_FLOAT,
+        ATTR_TYPE_BOOL: _INPUT_TYPES_BOOL,
+        ATTR_TYPE_VECTOR: _INPUT_TYPES_VECTOR,
+        ATTR_TYPE_MATRIX: _INPUT_TYPES_MATRIX,
+        ATTR_TYPE_COLOR: _INPUT_TYPES_COLOR,
+        ATTR_TYPE_TIME: _INPUT_TYPES_TIME,
+        ATTR_TYPE_ANGLE: _INPUT_TYPES_ANGLE,
+        ATTR_TYPE_EULER: _INPUT_TYPES_EULER,
+        ATTR_TYPE_STRING: _INPUT_TYPES_STRING,
+        ATTR_TYPE_ENUM: _INPUT_TYPES_ENUM,
+        ATTR_TYPE_PY: _INPUT_TYPES_PY,
+        ATTR_TYPE_MESH: _INPUT_TYPES_MESH,
+        ATTR_TYPE_NURBS_CURVE: _INPUT_TYPES_NURBS_CURVE,
+        ATTR_TYPE_NURBS_SURFACE: _INPUT_TYPES_NURBS_SURFACE,
+    }
 
     _OUTPUT_TYPES_INT = _NUMERIC_ATTR_TYPES
     _OUTPUT_TYPES_FLOAT = _NUMERIC_ATTR_TYPES
@@ -125,10 +207,20 @@ class MPyNode(MNode):
     _OUTPUT_TYPES_PY = _STRING_ATTR_TYPES
     _OUTPUT_TYPES_ENUM = _NUMERIC_ATTR_TYPES
 
-    _OUTPUT_TYPES_MAP = {ATTR_TYPE_INT:_OUTPUT_TYPES_INT, ATTR_TYPE_FLOAT:_OUTPUT_TYPES_FLOAT, ATTR_TYPE_BOOL:_OUTPUT_TYPES_BOOL,
-                         ATTR_TYPE_VECTOR:_OUTPUT_TYPES_VECTOR, ATTR_TYPE_MATRIX:_OUTPUT_TYPES_MATRIX, ATTR_TYPE_COLOR:_OUTPUT_TYPES_COLOR,
-                         ATTR_TYPE_TIME:_OUTPUT_TYPES_TIME, ATTR_TYPE_ANGLE:_OUTPUT_TYPES_ANGLE, ATTR_TYPE_EULER:_OUTPUT_TYPES_EULER,
-                         ATTR_TYPE_STRING:_OUTPUT_TYPES_STRING, ATTR_TYPE_PY:_OUTPUT_TYPES_PY, ATTR_TYPE_ENUM:_OUTPUT_TYPES_ENUM}
+    _OUTPUT_TYPES_MAP = {
+        ATTR_TYPE_INT: _OUTPUT_TYPES_INT,
+        ATTR_TYPE_FLOAT: _OUTPUT_TYPES_FLOAT,
+        ATTR_TYPE_BOOL: _OUTPUT_TYPES_BOOL,
+        ATTR_TYPE_VECTOR: _OUTPUT_TYPES_VECTOR,
+        ATTR_TYPE_MATRIX: _OUTPUT_TYPES_MATRIX,
+        ATTR_TYPE_COLOR: _OUTPUT_TYPES_COLOR,
+        ATTR_TYPE_TIME: _OUTPUT_TYPES_TIME,
+        ATTR_TYPE_ANGLE: _OUTPUT_TYPES_ANGLE,
+        ATTR_TYPE_EULER: _OUTPUT_TYPES_EULER,
+        ATTR_TYPE_STRING: _OUTPUT_TYPES_STRING,
+        ATTR_TYPE_PY: _OUTPUT_TYPES_PY,
+        ATTR_TYPE_ENUM: _OUTPUT_TYPES_ENUM,
+    }
 
     _EXPRESSION_ATTR_NAME = "expression"
 
@@ -170,27 +262,39 @@ class MPyNode(MNode):
     ##----dictionary with storable variable names as keys and the variable's value as values---##
     INIT_STORED_VARS = None
 
-
     ##----properties for saving the current node to a python file on disk----##
     _CODE_CLASS_MODULE = "pylib.nodes"
     _CODE_CLASS = "MPyNode"
     _CODE_TAB = "    "
     _CODE_COMPUTE_FUNC_NAME = "_compute"
 
-    _CODE_IMPORT_STR = "from " +  _CODE_CLASS_MODULE + " import " + _CODE_CLASS + "\n\n\n"
+    _CODE_IMPORT_STR = (
+        "from " + _CODE_CLASS_MODULE + " import " + _CODE_CLASS + "\n\n\n"
+    )
     _CODE_COMPUTE_DEF = _CODE_TAB + "def " + _CODE_COMPUTE_FUNC_NAME + "(self):\n"
 
     _CODE_INIT_EXPRESSION_STR = ""
-    _CODE_INIT_PROPERTIES = {"INIT_INPUT_ATTRS":None, "INIT_INPUT_ATTR_ARGS":None,
-                             "INIT_OUTPUT_ATTRS":None, "INIT_OUTPUT_ATTR_ARGS":None}
+    _CODE_INIT_PROPERTIES = {
+        "INIT_INPUT_ATTRS": None,
+        "INIT_INPUT_ATTR_ARGS": None,
+        "INIT_OUTPUT_ATTRS": None,
+        "INIT_OUTPUT_ATTR_ARGS": None,
+    }
 
     ASCII_FILE_EXT = "mpya"
     BINARY_FILE_EXT = "mpyb"
 
     UI_ATTR_COLOR_ATTR_NAME = "uiAttrColors"
 
-
-    def __init__(self, node=None, name=None, exp_str=None, input_map=None, output_map=None, stored_var_map=None):
+    def __init__(
+        self,
+        node=None,
+        name=None,
+        exp_str=None,
+        input_map=None,
+        output_map=None,
+        stored_var_map=None,
+    ):
         """
         __init__(node=None, name=None, exp_str=None, input_map=None, output_map=None, stored_var_map=None)
 
@@ -205,20 +309,20 @@ class MPyNode(MNode):
                 optional name to give the node if creating a new one. Ignored if initializing from an existing node
 
             exp_str: optional *str*
-            	optional expression to give the node if creating a new one. Ignored if initializing from an existing node
+                optional expression to give the node if creating a new one. Ignored if initializing from an existing node
 
             input_map: optional *dict*
-            	optional dictionary representing inputs to give the node if creating a new one. Ignored if initializing from an existing node.
+                optional dictionary representing inputs to give the node if creating a new one. Ignored if initializing from an existing node.
                 Keys of dictionary are string long names of input attributes and the values are dictionaries containing the keyword args to
                 pass to addInputAttr()
 
             output_map: optional *dict*
-            	optional dictionary representing outputs to give the node if creating a new one. Ignored if initializing from an existing node.
+                optional dictionary representing outputs to give the node if creating a new one. Ignored if initializing from an existing node.
                 Keys of dictionary are string long names of output attributes and the values are dictionaries containing the keyword args to
                 pass to addOutputAttr()
 
             stored_var_map: optional *dict*
-            	optional dictionary representing stored variables to give the node if creating a new one. Ignored if initializing from an existing node.
+                optional dictionary representing stored variables to give the node if creating a new one. Ignored if initializing from an existing node.
                 Keys of dictionary are string names of variables to create and the values are the values to assign the variable
 
             name : optional *str*
@@ -251,7 +355,6 @@ class MPyNode(MNode):
         MNode.__init__(self, new_node)
 
         if not node:
-
             if self.INIT_EXPRESSION_STR:
                 self.setExpression(self.INIT_EXPRESSION_STR)
 
@@ -281,7 +384,6 @@ class MPyNode(MNode):
 
             self._addTypeAttr()
 
-
     def _createNew(self, name=None):
         """
         Build a new node and return it as MNode
@@ -292,7 +394,6 @@ class MPyNode(MNode):
             name = classname[0].lower() + classname[1:] + "1"
 
         return MNode.createNode(self.NODE_TYPE, name=name)
-
 
     def _initInputsFromMap(self, input_map):
         """
@@ -305,10 +406,8 @@ class MPyNode(MNode):
             cur_inputs = {}
 
         for input_name in input_map.keys():
-            #if not cur_inputs.has_key(input_name):
-            if not input_name in cur_inputs:
+            if input_name not in cur_inputs:
                 self.addInputAttr(input_name, **input_map[input_name])
-
 
     def _initOutputsFromMap(self, output_map):
         """
@@ -321,11 +420,8 @@ class MPyNode(MNode):
             cur_outputs = {}
 
         for output_name in output_map.keys():
-
-            #if not cur_outputs.has_key(output_name):
-            if not output_name in cur_outputs:
+            if output_name not in cur_outputs:
                 self.addOutputAttr(output_name, **output_map[output_name])
-
 
     def _initStoredVarsFromMap(self, stored_var_map):
         """
@@ -335,16 +431,13 @@ class MPyNode(MNode):
         for var_name, var_val in stored_var_map.items():
             self.setStoredVariable(var_name, var_val)
 
-
     def _addTypeAttr(self):
         """
         Sets an string attr on the node to mark its 'type'
         """
 
         if not self.__class__ == MPyNode:
-
             self.setStringAttr(self._TYPE_ATTR, self.__class__.__name__, hidden=True)
-
 
     def _initInputAttrs(self):
         """
@@ -354,7 +447,6 @@ class MPyNode(MNode):
         for attr_name, attr_args in self.INIT_INPUT_ATTRS.items():
             self.addInputAttr(attr_name, **attr_args)
 
-
     def _initOutputAttrs(self):
         """
         Creates input attributes if the INIT_OUTPUT_ATTRS property is set
@@ -363,7 +455,6 @@ class MPyNode(MNode):
         for attr_name, attr_args in self.INIT_OUTPUT_ATTRS.items():
             self.addOutputAttr(attr_name, **attr_args)
 
-
     def _initGenAttrs(self):
         """
         Creates input attributes if the INIT_OUTPUT_ATTRS property is set
@@ -371,7 +462,6 @@ class MPyNode(MNode):
 
         for attr_name, attr_args in self.INIT_ATTRS.items():
             self.addAttr(attr_name, **attr_args)
-
 
     def _appendInternalDictAttr(self, internal_attr, attr_name, attr_type):
         """
@@ -382,14 +472,12 @@ class MPyNode(MNode):
         py_data = self._getInternalPyAttr(internal_attr)
 
         if not py_data:
-            py_data = {str(attr_name):[str(attr_type)]}
+            py_data = {str(attr_name): [str(attr_type)]}
 
-        #elif not py_data.has_key(attr_name):
-        elif not attr_name in py_data:
+        elif attr_name not in py_data:
             py_data[attr_name] = [attr_type]
 
         self._setInternalPyAttr(internal_attr, py_data)
-
 
     def _renameInternalDictAttr(self, internal_attr, attr_name, new_name):
         """
@@ -407,7 +495,6 @@ class MPyNode(MNode):
 
                 self._setInternalPyAttr(internal_attr, py_data)
 
-
     def _appendInternalListAttr(self, internal_attr, val):
         """
         Appends the given val to the node's attribute of the given name as a python list
@@ -422,7 +509,6 @@ class MPyNode(MNode):
 
         self._setInternalPyAttr(internal_attr, py_list)
 
-
     def _setInternalPyAttr(self, internal_attr, py_data):
         """
         Sets the given internal string attribute to the string value of the given dictionary
@@ -432,7 +518,6 @@ class MPyNode(MNode):
 
         self.setAttr(internal_attr, str_val, type="string")
 
-
     def _getInternalPyAttr(self, attr_name):
         """
         Gets the given internal string attribute as its dictionary value
@@ -441,14 +526,12 @@ class MPyNode(MNode):
         str_val = self.getAttr(attr_name)
 
         if str_val:
-
             py_data = self._loadPickle(str_val)
 
             if py_data:
                 return py_data
 
         return None
-
 
     def _getInternalAttrMap(self, attr_name):
         """
@@ -463,7 +546,6 @@ class MPyNode(MNode):
 
         return None
 
-
     def _getAttrStringList(self, attr_name):
         """
         Returns the attribute names stored in the given internal string attribute.
@@ -475,7 +557,6 @@ class MPyNode(MNode):
             return tuple(attr_dict.keys())
 
         return None
-
 
     def _getInternalInputString(self):
         """
@@ -489,7 +570,6 @@ class MPyNode(MNode):
 
         return None
 
-
     def _getInternalOutputString(self):
         """
         For unit testing use only. Returns the value of the internal output string so it can be validated
@@ -502,16 +582,25 @@ class MPyNode(MNode):
 
         return None
 
-
-    def _addNewAttribute(self, long_name, attr_type, attr_map, karg_map, internal_str_attr, is_array=False, **kargs):
+    def _addNewAttribute(
+        self,
+        long_name,
+        attr_type,
+        attr_map,
+        karg_map,
+        internal_str_attr,
+        is_array=False,
+        **kargs,
+    ):
         """
         Adds a new input or output attibute to the node using the given args.
         """
 
         if not self.hasAttr(long_name):
-
-            if not attr_type in attr_map.keys():
-                raise TypeError("attribute type " + str(attr_type) + " not supported by mPyNode")
+            if attr_type not in attr_map:
+                raise TypeError(
+                    "attribute type " + str(attr_type) + " not supported by mPyNode"
+                )
 
             attr_mel_type = attr_map[attr_type]
 
@@ -524,13 +613,17 @@ class MPyNode(MNode):
 
             self.addAttr(long_name, attr_mel_type, **kargs)
 
-            #if self._VECTOR_COMP_NAMES.has_key(attr_type):
+            # if self._VECTOR_COMP_NAMES.has_key(attr_type):
             if attr_type in self._VECTOR_COMP_NAMES:
                 for axis in self._VECTOR_COMP_NAMES[attr_type]:
-                    self.addAttr(long_name + axis, self._VECTOR_COMP_TYPES[attr_type], parent=long_name, **orig_kargs)
+                    self.addAttr(
+                        long_name + axis,
+                        self._VECTOR_COMP_TYPES[attr_type],
+                        parent=long_name,
+                        **orig_kargs,
+                    )
 
         self._appendInternalDictAttr(internal_str_attr, long_name, attr_type)
-
 
     def _getAttrMap(self, internal_attr_name, is_input=False):
         """
@@ -541,9 +634,7 @@ class MPyNode(MNode):
         attr_map = OrderedDict()
 
         if internal_attr_map:
-
             for attr_name, attr_data in internal_attr_map.items():
-
                 cur_attr_map = {}
                 attr_type = attr_data[0]
                 is_array = False
@@ -564,20 +655,28 @@ class MPyNode(MNode):
                     enum_names = self.attributeQuery(attr_name, listEnum=True)
 
                     if enum_names is not None:
-                        cur_attr_map["enumName"] = self.attributeQuery(attr_name, listEnum=True)[0]
+                        cur_attr_map["enumName"] = self.attributeQuery(
+                            attr_name, listEnum=True
+                        )[0]
 
                 if attr_type in MPyNode._ATTR_DEFAULT_VAL_TYPES and (not is_array):
                     default_value = self.attributeQuery(attr_name, listDefault=True)
 
                     if default_value is not None:
-                        cur_attr_map["defaultValue"] = MPyNode._ATTR_TO_PY_MAP[attr_type](default_value[0])
+                        cur_attr_map["defaultValue"] = MPyNode._ATTR_TO_PY_MAP[
+                            attr_type
+                        ](default_value[0])
 
                 if (attr_type in self._NODE_NUMERIC_TYPES) and (not is_array):
                     if self.attributeQuery(attr_name, minExists=True):
-                        cur_attr_map["min"] = self.attributeQuery(attr_name, minimum=True)[0]
+                        cur_attr_map["min"] = self.attributeQuery(
+                            attr_name, minimum=True
+                        )[0]
 
                     if self.attributeQuery(attr_name, maxExists=True):
-                        cur_attr_map["max"] = self.attributeQuery(attr_name, maximum=True)[0]
+                        cur_attr_map["max"] = self.attributeQuery(
+                            attr_name, maximum=True
+                        )[0]
 
                 attr_map[attr_name] = cur_attr_map
 
@@ -585,42 +684,60 @@ class MPyNode(MNode):
 
         return None
 
-
     def _renameInputOutput(self, attr_name, new_name, is_input):
         """
         Renames an input or output attr to the given name
         """
 
-        list_func = getattr(self, "getInputAttrMap") if is_input else getattr(self, "getOutputAttrMap")
+        list_func = (
+            getattr(self, "getInputAttrMap")
+            if is_input
+            else getattr(self, "getOutputAttrMap")
+        )
         attr_map = list_func()
 
         if not attr_map:
             raise RuntimeError("Node has no input/outputs to rename")
 
-        if not attr_name in attr_map:
+        if attr_name not in attr_map:
             raise RuntimeError("Node has no input/outputs named " + attr_name)
 
-        is_array = True if ("is_array" in attr_map[attr_name]) and (attr_map[attr_name]["is_array"]) else False
+        is_array = (
+            True
+            if ("is_array" in attr_map[attr_name]) and (attr_map[attr_name]["is_array"])
+            else False
+        )
 
         is_src, is_dest = (True, False) if is_input else (False, True)
-        con_nodes, plugs = self.listConnections(attr_name, source=is_src, destination=is_dest, plugs=True)
+        con_nodes, plugs = self.listConnections(
+            attr_name, source=is_src, destination=is_dest, plugs=True
+        )
 
-        del_func = getattr(self, "deleteInputAttr") if is_input else getattr(self, "deleteOutputAttr")
+        del_func = (
+            getattr(self, "deleteInputAttr")
+            if is_input
+            else getattr(self, "deleteOutputAttr")
+        )
         del_func(attr_name)
-        add_func = getattr(self, "addInputAttr") if is_input else getattr(self, "addOutputAttr")
+        add_func = (
+            getattr(self, "addInputAttr")
+            if is_input
+            else getattr(self, "addOutputAttr")
+        )
         add_func(new_name, **attr_map[attr_name])
 
         if con_nodes:
-            #for i, con_list in enumerate(map(None, con_nodes, plugs)):
+            # for i, con_list in enumerate(map(None, con_nodes, plugs)):
             for i, con_list in enumerate(zip(con_nodes, plugs)):
-                node_attr_name = new_name if not is_array else new_name + "[" + str(i) + "]"
+                node_attr_name = (
+                    new_name if not is_array else new_name + "[" + str(i) + "]"
+                )
 
                 if is_input:
                     con_list[0].connectAttr(con_list[1], self, node_attr_name)
 
                 else:
                     self.connectAttr(node_attr_name, con_list[0], con_list[1])
-
 
     def __reduce__(self):
         """
@@ -633,8 +750,10 @@ class MPyNode(MNode):
         stored_var_map = self.getStoredVariables()
         expr_str = self.getExpression()
 
-        return (self.__class__, (None, node_name, expr_str, input_map, output_map, stored_var_map))
-
+        return (
+            self.__class__,
+            (None, node_name, expr_str, input_map, output_map, stored_var_map),
+        )
 
     def __reduce_ex__(self, protocol):
         """
@@ -642,7 +761,6 @@ class MPyNode(MNode):
         """
 
         return self.__reduce__()
-
 
     def updateUiAttrColorMap(self, clr_map_update):
         """
@@ -687,7 +805,6 @@ class MPyNode(MNode):
 
         self._setInternalPyAttr(self.UI_ATTR_COLOR_ATTR_NAME, clr_map)
 
-
     def getUiAttrColorMap(self):
         """
         getUiAttrColorMap()
@@ -715,7 +832,6 @@ class MPyNode(MNode):
 
         return self._getInternalPyAttr(self.UI_ATTR_COLOR_ATTR_NAME)
 
-
     def setExpression(self, exp_str):
         """
         setExpression(exp_str)
@@ -742,7 +858,6 @@ class MPyNode(MNode):
         """
 
         self.setAttr(self._EXPRESSION_ATTR_NAME, str(exp_str), type="string")
-
 
     def hasStoredVariable(self, var_name):
         """
@@ -775,7 +890,6 @@ class MPyNode(MNode):
             return var_name in all_vars
 
         return False
-
 
     def setStoredVariable(self, var_name, var_val):
         """
@@ -811,7 +925,6 @@ class MPyNode(MNode):
 
         self.setVariable(var_name, var_val)
 
-
     def setVariable(self, var_name, var_val):
         """
         setVariable(var_name, var_val)
@@ -839,9 +952,8 @@ class MPyNode(MNode):
         """
 
         ##---send data to the MPx version of the node----##
-        callback_data = {self.getHashCode():{var_name:var_val}}
+        callback_data = {self.getHashCode(): {var_name: var_val}}
         om.MUserEventMessage.postUserEvent(self._SET_VAR_CALLBACK_NAME, callback_data)
-
 
     def getStoredVariables(self):
         """
@@ -865,10 +977,11 @@ class MPyNode(MNode):
         """
 
         ##---write current variables values to there stored attribute so we can get their current values---##
-        om.MUserEventMessage.postUserEvent(self._WRITE_STORED_VARS_CALLBACK_NAME, (self.getHashCode(),))
+        om.MUserEventMessage.postUserEvent(
+            self._WRITE_STORED_VARS_CALLBACK_NAME, (self.getHashCode(),)
+        )
 
         return self._getInternalPyAttr(self._STORED_VARS_DATA_ATTR_NAME)
-
 
     def getExpression(self):
         """
@@ -897,10 +1010,9 @@ class MPyNode(MNode):
 
         return str(exp_str)
 
-
     def addInputAttr(self, long_name, attr_type, is_array=False, **kargs):
         """
-        addInputAttr(long_name, attr_type, is_array=False, \*\*kargs)
+        addInputAttr(long_name, attr_type, is_array=False, **kargs)
 
             Adds an input attribute of the given long name and given type to the node.
             Use MPyNode.listSupportedAttrTypes() to list supported types
@@ -937,13 +1049,19 @@ class MPyNode(MNode):
 
         kargs["storable"] = True
 
-        self._addNewAttribute(long_name, attr_type, self._NEW_INPUT_TYPES, self._NEW_INPUT_ATTR_KARGS,
-                              self._INPUTS_STR_ATTR_NAME, is_array=is_array, **kargs)
-
+        self._addNewAttribute(
+            long_name,
+            attr_type,
+            self._NEW_INPUT_TYPES,
+            self._NEW_INPUT_ATTR_KARGS,
+            self._INPUTS_STR_ATTR_NAME,
+            is_array=is_array,
+            **kargs,
+        )
 
     def addOutputAttr(self, long_name, attr_type, is_array=False, **kargs):
         """
-        addOutputAttr(long_name, attr_type, is_array=False, \*\*kargs)
+        addOutputAttr(long_name, attr_type, is_array=False, **kargs)
 
             Adds an output attribute of the given long name and given type to the node.
             Use MPyNode.listSupportedAttrTypes() to list supported types
@@ -978,9 +1096,15 @@ class MPyNode(MNode):
 
         """
 
-        self._addNewAttribute(long_name, attr_type, self._NEW_OUTPUT_TYPES, self._NEW_OUTPUT_ATTR_KARGS,
-                              self._OUTPUTS_STR_ATTR_NAME, is_array=is_array, **kargs)
-
+        self._addNewAttribute(
+            long_name,
+            attr_type,
+            self._NEW_OUTPUT_TYPES,
+            self._NEW_OUTPUT_ATTR_KARGS,
+            self._OUTPUTS_STR_ATTR_NAME,
+            is_array=is_array,
+            **kargs,
+        )
 
     def renameInputAttr(self, attr_name, new_name):
         """
@@ -1011,7 +1135,6 @@ class MPyNode(MNode):
 
         self._renameInputOutput(attr_name, new_name, True)
 
-
     def renameOutputAttr(self, attr_name, new_name):
         """
         renameOutputAttr(attr_name, new_name)
@@ -1040,7 +1163,6 @@ class MPyNode(MNode):
         """
 
         self._renameInputOutput(attr_name, new_name, False)
-
 
     def addStoredVariable(self, var_name):
         """
@@ -1071,7 +1193,6 @@ class MPyNode(MNode):
 
         self._appendInternalListAttr(self._STORED_VARS_ATTR_NAME, var_name)
 
-
     def listInputAttrs(self):
         """
         listInputAttrs()
@@ -1093,7 +1214,6 @@ class MPyNode(MNode):
         """
 
         return self._getAttrStringList(self._INPUTS_STR_ATTR_NAME)
-
 
     def listOutputAttrs(self):
         """
@@ -1117,7 +1237,6 @@ class MPyNode(MNode):
 
         return self._getAttrStringList(self._OUTPUTS_STR_ATTR_NAME)
 
-
     def listStoredVariables(self):
         """
         listStoredVariables()
@@ -1139,7 +1258,6 @@ class MPyNode(MNode):
         """
 
         return self._getInternalPyAttr(self._STORED_VARS_ATTR_NAME)
-
 
     def getInputAttrMap(self):
         """
@@ -1166,7 +1284,6 @@ class MPyNode(MNode):
 
         return self._getAttrMap(self._INPUTS_STR_ATTR_NAME, is_input=True)
 
-
     def getOutputAttrMap(self):
         """
         getOutputAttrMap()
@@ -1191,7 +1308,6 @@ class MPyNode(MNode):
         """
 
         return self._getAttrMap(self._OUTPUTS_STR_ATTR_NAME)
-
 
     def removeStoredVariable(self, var_name):
         """
@@ -1221,11 +1337,9 @@ class MPyNode(MNode):
         cur_vars = self.listStoredVariables()
 
         if cur_vars and var_name in cur_vars:
-
             updated_vars = [a for a in cur_vars if a != var_name]
 
             self._setInternalPyAttr(self._STORED_VARS_ATTR_NAME, updated_vars)
-
 
     @classmethod
     def listValidInputTypes(cls):
@@ -1248,12 +1362,11 @@ class MPyNode(MNode):
 
         """
 
-        #attr_types = cls._NEW_INPUT_TYPES.keys()
-        #attr_types.sort()
+        # attr_types = cls._NEW_INPUT_TYPES.keys()
+        # attr_types.sort()
         attr_types = sorted(cls._NEW_INPUT_TYPES.keys())
 
         return tuple(attr_types)
-
 
     @classmethod
     def listValidOutputTypes(cls):
@@ -1276,12 +1389,11 @@ class MPyNode(MNode):
 
         """
 
-        #attr_types = cls._NEW_OUTPUT_TYPES.keys()
-        #attr_types.sort()
+        # attr_types = cls._NEW_OUTPUT_TYPES.keys()
+        # attr_types.sort()
         attr_types = sorted(cls._NEW_OUTPUT_TYPES.keys())
 
         return tuple(attr_types)
-
 
     def deleteInputAttr(self, attr_name):
         """
@@ -1312,10 +1424,9 @@ class MPyNode(MNode):
         in_attrs = self.listInputAttrs()
 
         if in_attrs and (attr_name in in_attrs):
-
             in_attr_dict = self._getInternalPyAttr(self._INPUTS_STR_ATTR_NAME)
 
-            #if in_attr_dict and in_attr_dict.has_key(attr_name):
+            # if in_attr_dict and in_attr_dict.has_key(attr_name):
             if in_attr_dict and attr_name in in_attr_dict:
                 del in_attr_dict[attr_name]
 
@@ -1324,8 +1435,9 @@ class MPyNode(MNode):
             self.deleteAttr(attr_name)
 
         else:
-            raise RuntimeError(str(self) + " has no input attr called: " + str(attr_name))
-
+            raise RuntimeError(
+                str(self) + " has no input attr called: " + str(attr_name)
+            )
 
     def deleteOutputAttr(self, attr_name):
         """
@@ -1356,10 +1468,9 @@ class MPyNode(MNode):
         out_attrs = self.listOutputAttrs()
 
         if out_attrs and (attr_name in out_attrs):
-
             out_attr_dict = self._getInternalPyAttr(self._OUTPUTS_STR_ATTR_NAME)
 
-            #if out_attr_dict and out_attr_dict.has_key(attr_name):
+            # if out_attr_dict and out_attr_dict.has_key(attr_name):
             if out_attr_dict and attr_name in out_attr_dict:
                 del out_attr_dict[attr_name]
 
@@ -1368,8 +1479,9 @@ class MPyNode(MNode):
             self.deleteAttr(attr_name)
 
         else:
-            raise RuntimeError(str(self) + " has no input attr called: " + str(attr_name))
-
+            raise RuntimeError(
+                str(self) + " has no input attr called: " + str(attr_name)
+            )
 
     def exportToFile(self, file_path, use_binary=True):
         """
@@ -1406,35 +1518,36 @@ class MPyNode(MNode):
             raise IOError("Cannot write to path: " + str(file_path))
 
         if not os.path.exists(os.path.dirname(file_path)):
-            raise IOError("Directory does not exist: " + str(os.path.dirname(file_path)))
+            raise IOError(
+                "Directory does not exist: " + str(os.path.dirname(file_path))
+            )
 
-        #protocol = 2 if use_binary else 0
+        # protocol = 2 if use_binary else 0
         protocol = pickle.HIGHEST_PROTOCOL if use_binary else 0
 
-        #fh = open(file_path, "wb") if use_binary else open(file_path, "w")
+        # fh = open(file_path, "wb") if use_binary else open(file_path, "w")
 
-        #try:
-            #pickle.dump(self, fh, protocol=protocol)
+        # try:
+        # pickle.dump(self, fh, protocol=protocol)
 
-        #except:
-            #fh.close()
-            #raise
+        # except:
+        # fh.close()
+        # raise
 
-        #else:
-            #fh.close()
-            
+        # else:
+        # fh.close()
+
         try:
-            with open(file_path, 'w') as io:
+            with open(file_path, "w") as io:
                 pickle.dump(self, io, protocol=protocol)
         except:
-            with open(file_path, 'wb') as io:
-                pickle.dump(self, io, protocol=protocol)           
-
+            with open(file_path, "wb") as io:
+                pickle.dump(self, io, protocol=protocol)
 
     @classmethod
     def ls(cls, *args, **kargs):
         """
-        ls(\*args, \*\*kargs)
+        ls(*args, **kargs)
 
             class method - returns the nodes of type 'mPyNode' in the current scene. Works just like maya.cmds.ls
 
@@ -1484,7 +1597,6 @@ class MPyNode(MNode):
 
         return None
 
-
     @staticmethod
     def importFromFile(file_path):
         """
@@ -1512,7 +1624,6 @@ class MPyNode(MNode):
         """
 
         if os.path.exists(file_path):
-
             fh = open(file_path, "r")
             node = pickle.load(fh)
 

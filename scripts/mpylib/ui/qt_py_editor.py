@@ -1,32 +1,23 @@
-
-
-from Qt.QtWidgets import QWidget, QPlainTextEdit, QTextEdit
-from Qt.QtGui import QColor, QFont, QFontMetrics, QTextFormat, QPainter
-from Qt.QtCore import QSize, Qt, QRect, QEvent
-
-from .qt_py_highlighter import QtPythonHighlighter
+from mpylib.ui.qt_py_highlighter import QtPythonHighlighter
+from Qt.QtCore import QEvent, QRect, QSize, Qt
+from Qt.QtGui import QColor, QFont, QFontMetrics, QPainter, QTextFormat
+from Qt.QtWidgets import QPlainTextEdit, QTextEdit, QWidget
 
 
 class QtLineNumberArea(QWidget):
-
     def __init__(self, editor):
-        try:
-            super().__init__(editor) # python3
-        except:
-            super(QtLineNumberArea, self).__init__(editor) # python2
-            
+        super().__init__(editor)
+
         self._txt_editor = editor
 
     def sizeHint(self):
         return QSize(self._txt_editor.lineNumberAreaWidth(), 0)
-
 
     def paintEvent(self, event):
         self._txt_editor.lineNumberAreaPaintEvent(event)
 
 
 class QtPythonEditor(QPlainTextEdit):
-
     HIGHLIGHT_COLOR = Qt.lightGray
     HIGHLIGHTER_CLASS = QtPythonHighlighter
 
@@ -38,10 +29,8 @@ class QtPythonEditor(QPlainTextEdit):
 
     _font = None
     _font_size = DEFAULT_FONT_SIZE
-    
-    
-    def __init__(self, parent=None):
 
+    def __init__(self, parent=None):
         QPlainTextEdit.__init__(self, parent)
 
         self._highlighter = self.HIGHLIGHTER_CLASS(self.document())
@@ -51,19 +40,14 @@ class QtPythonEditor(QPlainTextEdit):
         self._initTextAttrs()
         self._initEvents()
 
-
-
     def _initEvents(self):
-
         self.blockCountChanged.connect(self.updateLineNumberAreaWidth)
         self.updateRequest.connect(self.updateLineNumberArea)
-        #self.cursorPositionChanged.connect(self.highlightCurrentLine)
+        # self.cursorPositionChanged.connect(self.highlightCurrentLine)
 
         self.updateLineNumberAreaWidth()
 
-
     def _initTextAttrs(self):
-
         self.font = QFont()
         self.font.setFamily(self.DEFAULT_FONT_FAMILY)
         self.font.setStyleHint(QFont.Monospace)
@@ -71,27 +55,23 @@ class QtPythonEditor(QPlainTextEdit):
         self.font.setPointSize(self._font_size)
 
         self.setFont(self.font)
-        
-        #--for Qt5 and above, use setTabStopDistance (expects pixels)--##
+
+        # --for Qt5 and above, use setTabStopDistance (expects pixels)--##
         try:
-            self.setTabStopDistance(self.TAB_STOP * QFontMetrics(self.font).horizontalAdvance(" "))
+            self.setTabStopDistance(
+                self.TAB_STOP * QFontMetrics(self.font).horizontalAdvance(" ")
+            )
         except AttributeError:
-            #--fallback for older Qt versions---##
+            # --fallback for older Qt versions---##
             self.setTabStopWidth(self.TAB_STOP * QFontMetrics(self.font).width(" "))
 
-
     def resizeEvent(self, event):
-
-        try:
-            super().resizeEvent(event) # python3
-        except:
-            super(QtPythonEditor, self).resizeEvent(event) # python2
-            
+        super().resizeEvent(event)
 
         cr = self.contentsRect()
-        self._line_number_widget.setGeometry(QRect(cr.left(), cr.top(),
-                                                   self.lineNumberAreaWidth(), cr.height()))
-
+        self._line_number_widget.setGeometry(
+            QRect(cr.left(), cr.top(), self.lineNumberAreaWidth(), cr.height())
+        )
 
     def eventFilter(self, obj, event):
         """
@@ -101,26 +81,29 @@ class QtPythonEditor(QPlainTextEdit):
         if event.type() == QEvent.Wheel:
             if event.modifiers() == Qt.ControlModifier:
                 if event.delta() > 0:
-                    self._font_size = max(self._font_size-2,self.DEFAULT_FONT_SIZE)
-                    #self.zoomIn(2)
+                    self._font_size = max(self._font_size - 2, self.DEFAULT_FONT_SIZE)
+                    # self.zoomIn(2)
                 else:
-                    self._font_size = max(self._font_size+2,self.DEFAULT_FONT_SIZE)
-                    #self.zoomOut(2)
-                    
+                    self._font_size = max(self._font_size + 2, self.DEFAULT_FONT_SIZE)
+                    # self.zoomOut(2)
+
                 self.font.setPointSize(self._font_size)
                 self.setFont(self.font)
-                
+
                 try:
-                    self.setTabStopDistance(self.TAB_STOP * QFontMetrics(self.font).horizontalAdvance(" "))
+                    self.setTabStopDistance(
+                        self.TAB_STOP * QFontMetrics(self.font).horizontalAdvance(" ")
+                    )
                 except AttributeError:
-                    self.setTabStopWidth(self.TAB_STOP * QFontMetrics(self.font).width(" "))
+                    self.setTabStopWidth(
+                        self.TAB_STOP * QFontMetrics(self.font).width(" ")
+                    )
 
                 return True
 
         return False
 
     def lineNumberAreaWidth(self):
-
         digits = 1
         count = max(1, self.blockCount())
         while count >= 10:
@@ -132,31 +115,26 @@ class QtPythonEditor(QPlainTextEdit):
         except AttributeError:
             ##---older Qt versions ---##
             char_width = self.fontMetrics().width("9")
-            
+
         space = 3 + char_width * digits
-        
+
         return space
 
-
     def updateLineNumberArea(self, rect, dy):
-
         if dy:
             self._line_number_widget.scroll(0, dy)
         else:
-            self._line_number_widget.update(0, rect.y(), self._line_number_widget.width(),
-                                       rect.height())
+            self._line_number_widget.update(
+                0, rect.y(), self._line_number_widget.width(), rect.height()
+            )
 
         if rect.contains(self.viewport().rect()):
             self.updateLineNumberAreaWidth()
 
-
     def updateLineNumberAreaWidth(self):
-
         self.setViewportMargins(self.lineNumberAreaWidth(), 0, 0, 0)
 
-
     def highlightCurrentLine(self):
-
         extraSelections = []
 
         if not self.isReadOnly():
@@ -172,9 +150,7 @@ class QtPythonEditor(QPlainTextEdit):
 
         self.setExtraSelections(extraSelections)
 
-
     def lineNumberAreaPaintEvent(self, event):
-
         mypainter = QPainter(self._line_number_widget)
 
         mypainter.fillRect(event.rect(), Qt.lightGray)
@@ -190,30 +166,30 @@ class QtPythonEditor(QPlainTextEdit):
             if block.isVisible() and (bottom >= event.rect().top()):
                 number = str(blockNumber + 1)
                 mypainter.setPen(Qt.black)
-                mypainter.drawText(0, top, self._line_number_widget.width(), height,
-                                   Qt.AlignRight, number)
+                mypainter.drawText(
+                    0,
+                    top,
+                    self._line_number_widget.width(),
+                    height,
+                    Qt.AlignRight,
+                    number,
+                )
 
             block = block.next()
             top = bottom
             bottom = top + self.blockBoundingRect(block).height()
             blockNumber += 1
 
-
     def getHighlighter(self):
-
         return self._highlighter
 
-
     def setFontSize(self, size):
-
         font = self.font()
         font.setPointSize(size)
         self.setFont(font)
 
 
 if __name__ == "__main__":
-
-
     from Qt.QtWidgets import QApplication
 
     app = QApplication([])

@@ -47,26 +47,24 @@ properly. All Maya commands call __str__ when taking object input.
 
 """
 
-import os
-import inspect
 import codecs
+import inspect
+import os
+
+import pickle
 from collections import OrderedDict
 
-import maya.cmds as mc
 import maya.api.OpenMaya as om
 
+import maya.cmds as mc
 
-try:
-    import cPickle as pickle # python2
-except:
-    import pickle # python3
-    unicode = str
+unicode = str
 
 
 class MNode(om.MObject):
     """
     :purpose: 	Provides object oriented interface for querying/editing DAG or DG nodes inside Maya.
-    			An instance of the MNode class provides storage and access to a single
+                        An instance of the MNode class provides storage and access to a single
                 Maya node. Methods within the class replace the most commonly use maya
                 commands. Public methods operate on the object stored within the MNode.
                 Note that most methods support the same keywords arguments as their
@@ -74,39 +72,145 @@ class MNode(om.MObject):
     :extends:	*OpenMaya.MObject*
     """
 
-    ATTR_AT_TYPES = ("bool", "long", "short", "byte", "char", "enum", "float", "double",
-                     "doubleAngle", "doubleLinear", "compound", "message", "time", "matrix",
-                     "fltMatrix", "reflectance", "spectrum", "float2", "float3", "double2", "double3",
-                     "long2", "long3", "short2", "short3")
+    ATTR_AT_TYPES = (
+        "bool",
+        "long",
+        "short",
+        "byte",
+        "char",
+        "enum",
+        "float",
+        "double",
+        "doubleAngle",
+        "doubleLinear",
+        "compound",
+        "message",
+        "time",
+        "matrix",
+        "fltMatrix",
+        "reflectance",
+        "spectrum",
+        "float2",
+        "float3",
+        "double2",
+        "double3",
+        "long2",
+        "long3",
+        "short2",
+        "short3",
+    )
 
-    ATTR_DT_TYPES = ("string", "stringArray", "reflectanceRGB", "spectrumRGB",
-                     "float2", "float3", "double2", "double3", "long2", "long3", "short2",
-                     "short3", "doubleArray", "Int32Array", "vectorArray", "nurbsCurve",
-                     "nurbsSurface", "mesh", "lattice", "pointArray")
+    ATTR_DT_TYPES = (
+        "string",
+        "stringArray",
+        "reflectanceRGB",
+        "spectrumRGB",
+        "float2",
+        "float3",
+        "double2",
+        "double3",
+        "long2",
+        "long3",
+        "short2",
+        "short3",
+        "doubleArray",
+        "Int32Array",
+        "vectorArray",
+        "nurbsCurve",
+        "nurbsSurface",
+        "mesh",
+        "lattice",
+        "pointArray",
+    )
 
     NODE_TYPE = None
-    NODE_LIST_CLASS = None #has to initalzied at bottom of module
+    NODE_LIST_CLASS = None  # has to initalzied at bottom of module
 
     ##---for overriding with specific function sets in child classes---##
     DG_FN_CLASS = om.MFnDependencyNode
     DAG_FN_CLASS = om.MFnDagNode
 
-    DG_FN_FUNCS = ("absoluteName", "addAttribute", "addExternalContentForFileAttr", "allocateFlag", "attribute",
-                   "attributeClass", "attributeCount", "canBeWritten", "classification", "create",
-                   "deallocateAllFlags", "deallocateFlag", "dgCallbackIds", "dgCallbacks", "dgTimer", "dgTimerOff",
-                   "dgTimerOn", "dgTimerQueryState", "dgTimerReset", "findAlias", "findPlug", "getAffectedAttributes",
-                   "getAffectingAttributes", "getAliasAttr", "getAliasList", "getConnections", "getExternalContent",
-                   "hasAttribute", "hasObj", "isFlagSet", "isNewAttribute", "isTrackingEdits", "name", "object",
-                   "plugsAlias", "removeAttribute", "reorderedAttribute", "setAlias", "setDoNotWrite",
-                   "setExternalContent", "setExternalContentForFileAttr", "setFlag", "setName", "setObject",
-                   "setUuid", "type", "userNode", "uuid")
+    DG_FN_FUNCS = (
+        "absoluteName",
+        "addAttribute",
+        "addExternalContentForFileAttr",
+        "allocateFlag",
+        "attribute",
+        "attributeClass",
+        "attributeCount",
+        "canBeWritten",
+        "classification",
+        "create",
+        "deallocateAllFlags",
+        "deallocateFlag",
+        "dgCallbackIds",
+        "dgCallbacks",
+        "dgTimer",
+        "dgTimerOff",
+        "dgTimerOn",
+        "dgTimerQueryState",
+        "dgTimerReset",
+        "findAlias",
+        "findPlug",
+        "getAffectedAttributes",
+        "getAffectingAttributes",
+        "getAliasAttr",
+        "getAliasList",
+        "getConnections",
+        "getExternalContent",
+        "hasAttribute",
+        "hasObj",
+        "isFlagSet",
+        "isNewAttribute",
+        "isTrackingEdits",
+        "name",
+        "object",
+        "plugsAlias",
+        "removeAttribute",
+        "reorderedAttribute",
+        "setAlias",
+        "setDoNotWrite",
+        "setExternalContent",
+        "setExternalContentForFileAttr",
+        "setFlag",
+        "setName",
+        "setObject",
+        "setUuid",
+        "type",
+        "userNode",
+        "uuid",
+    )
 
-    DAG_FN_FUNCS = DG_FN_FUNCS + ("addChild", "dagRoot", "partialPathName", "isParentOf", "childCount",
-                                  "isInstancedAttribute", "instanceCount", "transformationMatrix", "child", "isChildOf",
-                                  "removeChild", "getAllPaths", "getConnectedSetsAndMembers", "fullPathName",
-                                  "parentCount", "hasParent", "removeChildAt", "parent", "dagPath", "hasChild", "isInstanced")
+    DAG_FN_FUNCS = DG_FN_FUNCS + (
+        "addChild",
+        "dagRoot",
+        "partialPathName",
+        "isParentOf",
+        "childCount",
+        "isInstancedAttribute",
+        "instanceCount",
+        "transformationMatrix",
+        "child",
+        "isChildOf",
+        "removeChild",
+        "getAllPaths",
+        "getConnectedSetsAndMembers",
+        "fullPathName",
+        "parentCount",
+        "hasParent",
+        "removeChildAt",
+        "parent",
+        "dagPath",
+        "hasChild",
+        "isInstanced",
+    )
 
-    DAG_NODE_TYPES = (om.MFn.kTransform, om.MFn.kPluginLocatorNode, om.MFn.kShape, om.MFn.kWorld)
+    DAG_NODE_TYPES = (
+        om.MFn.kTransform,
+        om.MFn.kPluginLocatorNode,
+        om.MFn.kShape,
+        om.MFn.kWorld,
+    )
 
     MENU_ATTR_PREFIX = "menuCmd_"
     MENU_STR_SEPERATOR = "@"
@@ -115,7 +219,6 @@ class MNode(om.MObject):
     PLUGIN_CHECK = False
     PLUGIN_DIR = None
     PLUGINS = None
-
 
     def __init__(self, node=None, node_type=None, name=None):
         """
@@ -159,7 +262,6 @@ class MNode(om.MObject):
 
         ##----wrap an existing node---##
         else:
-
             if isinstance(node, om.MObject):
                 m_obj = node
 
@@ -170,17 +272,15 @@ class MNode(om.MObject):
                 m_obj = node.getMObject()
 
             else:
-                raise TypeError("Expected type string, MObject or MNode..got type " + str(type(node)))
+                raise TypeError(
+                    "Expected type string, MObject or MNode..got type "
+                    + str(type(node))
+                )
 
-        try:
-            super().__init__(m_obj) # python3
-        except:
-            super(MNode, self).__init__(m_obj) # python2
-            
+        super().__init__(m_obj)
 
         ##----use a dag function set if this is a dag node---##
         if list(filter(self.hasFn, self.DAG_NODE_TYPES)):
-
             self._dag_path = om.MDagPath()
             fn_set = om.MFnDagNode(self)
             self._dag_path = fn_set.getPath()
@@ -195,25 +295,21 @@ class MNode(om.MObject):
         self._obj_hndl = om.MObjectHandle(self)
         self._linkFnMethods()
 
-
     def _linkFnMethods(self):
         """
         Called by __init__ to link the funcations of the underlying Maya function set with this instance
-		"""
+        """
 
         if self._fn_set_funcs:
             for attr in self._fn_set_funcs:
                 if hasattr(self._fn_set, attr) and not hasattr(self, attr):
                     setattr(self, attr, getattr(self._fn_set, attr))
 
-
     def _buildNew(self, node_type, name):
-
-        kargs = {"name":name} if name else {}
+        kargs = {"name": name} if name else {}
         node_name = mc.createNode(*(node_type,), **kargs)
 
         return self._getMObjectByName(node_name)
-
 
     @classmethod
     def pluginCheck(cls):
@@ -234,49 +330,45 @@ class MNode(om.MObject):
 
         ::
 
-        	class MyAwesomeNode(MNode):
+                class MyAwesomeNode(MNode):
 
-        		PLUGIN_CHECK = True
-        		PLUGINS = ("superPlugin", "coolPlugin")
+                        PLUGIN_CHECK = True
+                        PLUGINS = ("superPlugin", "coolPlugin")
 
-        		def __init__(self, node):
+                        def __init__(self, node):
 
-        			self.__class__._pluginCheck()
+                                self.__class__._pluginCheck()
 
-        		 	MNode.__init__(self, node)
+                                MNode.__init__(self, node)
 
         """
 
         if cls.PLUGIN_CHECK:
-
             if cls.PLUGIN_DIR:
-
                 cur_dir = os.path.dirname(inspect.getfile(cls))
-                plug_dir = os.path.normpath(os.path.join(cur_dir, cls.PLUGIN_DIR)).replace("\\", "/")
+                plug_dir = os.path.normpath(
+                    os.path.join(cur_dir, cls.PLUGIN_DIR)
+                ).replace("\\", "/")
 
-                #if os.environ.has_key("MAYA_PLUG_IN_PATH"):
+                # if os.environ.has_key("MAYA_PLUG_IN_PATH"):
                 if "MAYA_PLUG_IN_PATH" in os.environ:
-                    if not plug_dir in os.environ["MAYA_PLUG_IN_PATH"]:
+                    if plug_dir not in os.environ["MAYA_PLUG_IN_PATH"]:
                         os.environ["MAYA_PLUG_IN_PATH"] += ";" + plug_dir
 
                 else:
                     os.environ["MAYA_PLUG_IN_PATH"] = plug_dir
 
             if cls.PLUGINS:
-
                 for plugin_name in cls.PLUGINS:
-
                     if not mc.pluginInfo(plugin_name, q=True, loaded=True):
-
                         mc.loadPlugin(plugin_name)
 
             cls.PLUGIN_CHECK = False
 
-
     @classmethod
     def createNode(cls, node_type=None, **kargs):
         """
-        createNode(node_type=None, \*\*kargs)
+        createNode(node_type=None, **kargs)
 
             Wrapper class method for maya.cmds.createNode thats returns a MNode object
             instead of a string name
@@ -294,8 +386,8 @@ class MNode(om.MObject):
 
             Examples
             --------
-        	>>> new_node = MNode.createNode("transform", name="new_node")
-        	>>> new_node = MNode.createNode("time")
+                >>> new_node = MNode.createNode("transform", name="new_node")
+                >>> new_node = MNode.createNode("time")
         """
 
         if node_type is None:
@@ -311,7 +403,6 @@ class MNode(om.MObject):
             return None
 
         return cls(node)
-
 
     @classmethod
     def ls(cls, *args, **kargs):
@@ -340,7 +431,6 @@ class MNode(om.MObject):
 
         return None
 
-
     def addAttr(self, long_name=None, attr_type=None, **kargs):
         """
         Adds an attribute of the given long name and given type to the node.
@@ -348,10 +438,10 @@ class MNode(om.MObject):
         which are replaced by the attr_type arg.
 
         **long_name** 	*string* long name of the attribute to add. This is optional if you prefer to use the
-        				standard Maya *longName* and/or *shortName* keywaords instead.
+                                        standard Maya *longName* and/or *shortName* keywaords instead.
 
         **attr_type** 	*string* type of attribute to add. Supports all string types supported by
-        				the "dt" and "at" args of maya.cmds.addAttr
+                                        the "dt" and "at" args of maya.cmds.addAttr
 
         **kargs**		keyword args supported by maya.cmds.addAttr and keyword 'channelBox'
 
@@ -363,10 +453,10 @@ class MNode(om.MObject):
 
         if long_name:
             kargs["longName"] = long_name
-            
+
         if "short_name" in kargs:
             kargs["shortName"] = kargs["short_name"]
-            del(kargs["short_name"])
+            del kargs["short_name"]
 
         if attr_type:
             if attr_type in self.ATTR_AT_TYPES:
@@ -376,11 +466,16 @@ class MNode(om.MObject):
                 kargs["dt"] = attr_type
 
             else:
-                raise TypeError("Cannot add attribute of unknown type " + str(attr_type) + " to node: " + str(self))
+                raise TypeError(
+                    "Cannot add attribute of unknown type "
+                    + str(attr_type)
+                    + " to node: "
+                    + str(self)
+                )
 
         cb = None
 
-        #if kargs.has_key("channelBox"):
+        # if kargs.has_key("channelBox"):
         if "channelBox" in kargs:
             cb = kargs["channelBox"]
             del kargs["channelBox"]
@@ -389,7 +484,6 @@ class MNode(om.MObject):
 
         if cb is not None:
             self.setAttr(kargs["longName"], channelBox=cb)
-
 
     def addMenuCmd(self, ui_name, cmd_str):
         """
@@ -408,7 +502,6 @@ class MNode(om.MObject):
 
         self.setStringAttr(attr_name, attr_str)
 
-
     def getMenuCmds(self):
         """
         Return all custom marking menu items on this node.
@@ -420,11 +513,9 @@ class MNode(om.MObject):
         attr_names = self.listAttr(self.MENU_ATTR_PREFIX + "*", userDefined=True)
 
         if attr_names:
-
             menu_map = OrderedDict()
 
             for attr_name in attr_names:
-
                 attr_val = self.getAttr(attr_name)
 
                 if attr_val:
@@ -434,13 +525,14 @@ class MNode(om.MObject):
                         menu_map[attr_tokens[0]] = attr_tokens[1]
 
                     else:
-                        om.MGlobal.displayWarning("Could not precess making menu: " + str(attr_val))
+                        om.MGlobal.displayWarning(
+                            "Could not precess making menu: " + str(attr_val)
+                        )
 
             if menu_map:
                 return menu_map
 
         return None
-
 
     def attachMenuItems(self, parent_menu):
         """
@@ -454,7 +546,7 @@ class MNode(om.MObject):
 
         ::
 
-        	python("import mpylib; mpylib.MNode('" + $object + "').attachMenuItems('" + $parent + "')");
+                python("import mpylib; mpylib.MNode('" + $object + "').attachMenuItems('" + $parent + "')");
 
         **parent_menu**			*string* parent menu item to attach to
 
@@ -465,19 +557,17 @@ class MNode(om.MObject):
         menu_cmds = self.getMenuCmds()
 
         if menu_cmds:
-
             mc.setParent(parent_menu, menu=True)
 
             for cmd_name, cmd_str in menu_cmds.items():
-
                 if self.MENU_OBJ_NAME_STR in cmd_str:
-                    cmd_str = cmd_str.replace(self.MENU_OBJ_NAME_STR, "'" + str(self) + "'")
+                    cmd_str = cmd_str.replace(
+                        self.MENU_OBJ_NAME_STR, "'" + str(self) + "'"
+                    )
 
                 mc.menuItem(label=cmd_name, command=cmd_str)
 
             mc.menuItem(divider=True)
-
-
 
     def attributeQuery(self, attr_name, **kargs):
         """
@@ -501,13 +591,12 @@ class MNode(om.MObject):
 
         return mc.attributeQuery(attr_name, **kargs)
 
-
     def bakeResults(self, *args, **kargs):
         """
         Run bakeResults on this node with the given options
 
         **args**		optional string args of attributes to bake. If args are given,
-        				any value given to the *attribute* flag will be overridden
+                                        any value given to the *attribute* flag will be overridden
         **kargs** 		keyword args supported by maya.cmds.bakeResults
 
         **RETURNS** 	*None*
@@ -520,7 +609,6 @@ class MNode(om.MObject):
             kargs["attribute"] = args
 
         mc.bakeResults(self, **kargs)
-
 
     def connectAttr(self, src_attr, dst_node, dst_attr, **kargs):
         """
@@ -545,7 +633,6 @@ class MNode(om.MObject):
 
         mc.connectAttr(*(self + "." + src_attr, dst), **kargs)
 
-
     def delete(self):
         """
         Delete the node from the scene. Trying to access the node after running this method will
@@ -562,7 +649,6 @@ class MNode(om.MObject):
         else:
             self._raiseInvalidError()
 
-
     def deleteAttr(self, attr_name):
         """
         Delete the attr with the given name from this node.
@@ -577,7 +663,6 @@ class MNode(om.MObject):
         """
 
         mc.deleteAttr(self + "." + attr_name)
-
 
     def duplicate(self, **kargs):
         """
@@ -598,7 +683,6 @@ class MNode(om.MObject):
 
         return None
 
-
     def getAttr(self, attr_name, **kargs):
         """
         Returns the value of the given attr on this node.
@@ -614,7 +698,6 @@ class MNode(om.MObject):
 
         return mc.getAttr(*(self + "." + attr_name,), **kargs)
 
-
     def setAttrsFromMap(self, attr_map, skip_missing=True):
         """
         Set attribute values from a dictionary object that has attribute names as keys and attribute
@@ -623,7 +706,7 @@ class MNode(om.MObject):
         **attr_map**		dict or OrderedDict that has has attribute names as keys and attribute
         values as values
         **skip_missing**	bool - whether to skip over attributes that exist in the incomming data
-        					but not on the node. default=True
+                                                but not on the node. default=True
 
         **RETURNS**			None
 
@@ -633,11 +716,8 @@ class MNode(om.MObject):
         """
 
         for attr_name, val in attr_map.items():
-
             if (not skip_missing) or self.hasAttr(attr_name):
-
                 self.setAttr(attr_name, val)
-
 
     def getAttrMap(self, *args, **kargs):
         """
@@ -669,19 +749,21 @@ class MNode(om.MObject):
             attr_map = OrderedDict()
 
             for attr_name in attr_names:
-
-                if (not skip_multi) or (not "." in attr_name):
-
+                if (not skip_multi) or ("." not in attr_name):
                     try:
                         attr_map[attr_name] = self.getAttr(attr_name)
 
                     except Exception as err:
-                        raise RuntimeError("Error trying to query attr: '" + str(attr_name) + ".'\n" + err.message)
+                        raise RuntimeError(
+                            "Error trying to query attr: '"
+                            + str(attr_name)
+                            + ".'\n"
+                            + err.message
+                        )
 
             return attr_map
 
         return None
-
 
     def applyAttrMap(self, attr_map, skip_missing=False, skip_errors=False):
         """
@@ -690,10 +772,10 @@ class MNode(om.MObject):
         **attr_map**		dictionary object with str attribute names as keys and attribute values as values
 
         **skip_missing**	*bool* - whether to skip over attributes that are missing from the scene. If False,
-        					a missing attribute will raise a RuntimeError
+                                                a missing attribute will raise a RuntimeError
 
         **skip_errors**		*bool* - whether to skip over setAttr errors. The default, False, will raise an exception
-        					if a setAttr error occurs.
+                                                if a setAttr error occurs.
 
         **RETURNS**			None
 
@@ -703,16 +785,13 @@ class MNode(om.MObject):
         """
 
         for attr_name, attr_val in attr_map.items():
-
             if (not skip_missing) or (self.hasAttr(attr_name)):
-
                 try:
                     self.setAttr(attr_name, attr_val)
 
                 except Exception as err:
                     if not skip_errors:
                         raise err
-
 
     def getMessageAttr(self, attr_name):
         """
@@ -727,10 +806,10 @@ class MNode(om.MObject):
         """
 
         if mc.attributeQuery(attr_name, node=self, exists=True):
-
             if mc.attributeQuery(attr_name, node=self, message=True):
-                nodes, attrs = self.listConnections(attr_name, source=True,
-                                                    destination=False, shapes=True)
+                nodes, attrs = self.listConnections(
+                    attr_name, source=True, destination=False, shapes=True
+                )
 
                 if nodes:
                     return nodes[0]
@@ -738,10 +817,11 @@ class MNode(om.MObject):
                 return None
 
             else:
-                raise RuntimeError("Given attribute is not type 'message': " + str(attr_name))
+                raise RuntimeError(
+                    "Given attribute is not type 'message': " + str(attr_name)
+                )
 
         return None
-
 
     def getMObject(self):
         """
@@ -755,7 +835,6 @@ class MNode(om.MObject):
 
         return om.MObject(self)
 
-
     def getMObjectHandle(self):
         """
         Returns the MObjectHandle of this node
@@ -767,7 +846,6 @@ class MNode(om.MObject):
         """
 
         return self._obj_hndl
-
 
     def getHashCode(self):
         """
@@ -781,7 +859,6 @@ class MNode(om.MObject):
 
         return self._obj_hndl.hashCode()
 
-
     def getNextAttr(self, attr_prefix, start_num=0, max_search=500):
         """
         Finds the next available attribute that is available with the given prefix. An int is added to
@@ -792,7 +869,7 @@ class MNode(om.MObject):
         **start_num** 		*int* number to start from. default = 0
 
         **max_search**		*int* protection against infinite loop. An error RuntimeError is raised if an
-        					attribute slot is not found after this many tries. default = 500
+                                                attribute slot is not found after this many tries. default = 500
 
         **RETURNS**			string attribute name
 
@@ -820,7 +897,6 @@ class MNode(om.MObject):
 
         return next_attr
 
-
     def getName(self):
         """
         Returns the string name of this node. Note that is is the short name of the object.
@@ -840,7 +916,6 @@ class MNode(om.MObject):
         else:
             self._raiseInvalidError()
 
-
     def getBasename(self):
         """
         Returns the string name of this node any namespaces.
@@ -858,7 +933,6 @@ class MNode(om.MObject):
         name = self.getName()
 
         return name.split(":")[-1]
-
 
     def getNamespace(self):
         """
@@ -887,7 +961,6 @@ class MNode(om.MObject):
 
         return None
 
-
     def getPluginName(self):
         """
         Return the name of the plugin that defines this node, if any
@@ -899,7 +972,6 @@ class MNode(om.MObject):
             return str(self._fn_set.pluginName)
 
         return None
-
 
     def getSetAttrCmds(self, attr_name, long_names=False, non_defaults_only=True):
         """
@@ -913,11 +985,11 @@ class MNode(om.MObject):
         **long_names**		*bool* - whether to return cmds with long attribute names. default=False
 
         **non_defaults_only**	*bool* - If True, return a value only if the attribute has been change
-        						from its default value or if its referenced and has been changed from
+                                                        from its default value or if its referenced and has been changed from
                                 its referenced value. default=True
 
         **RETURNS**				tuple of string mel setAttr commands like you would see in a mayaAscii file or
-        						None
+                                                        None
 
         >>> node = MNode.createNode("transform")
         >>> node.setAttr("tx", 100.0)
@@ -931,7 +1003,6 @@ class MNode(om.MObject):
         """
 
         if self.hasAttr(attr_name):
-
             mode = om.MPlug.kChanged if non_defaults_only else om.MPlug.kAll
 
             plug = self._fn_set.findPlug(attr_name, False)
@@ -943,8 +1014,9 @@ class MNode(om.MObject):
             return None
 
         else:
-            raise RuntimeError("Attribute " + str(attr_name) + " does not exist on node: " + str(self))
-
+            raise RuntimeError(
+                "Attribute " + str(attr_name) + " does not exist on node: " + str(self)
+            )
 
     def getAddAttrCmd(self, attr_name, use_long_names=False):
         """
@@ -966,7 +1038,6 @@ class MNode(om.MObject):
         attr_fn = om.MFnAttribute(self._fn_set.attribute(attr_name))
 
         return str(attr_fn.getAddAttrCmd(use_long_names))
-
 
     def getAddAttrMaps(self):
         """
@@ -990,7 +1061,6 @@ class MNode(om.MObject):
 
         return tuple(attr_list) if attr_list else None
 
-
     def hasUniqueName(self):
         """
         Indicates whether or not this node's name is unique within the scene.
@@ -1002,7 +1072,6 @@ class MNode(om.MObject):
         """
 
         return bool(self._fn_set.hasUniqueName())
-
 
     def isLocked(self):
         """
@@ -1016,7 +1085,6 @@ class MNode(om.MObject):
 
         return self._fn_set.isLocked
 
-
     def isFromReferencedFile(self):
         """
         Indicates whether or not this node came from a referenced file.
@@ -1025,7 +1093,6 @@ class MNode(om.MObject):
         """
 
         return self._fn_set.isFromReferencedFile
-
 
     def getObjectType(self):
         """
@@ -1041,7 +1108,6 @@ class MNode(om.MObject):
         """
 
         return mc.objectType(self)
-
 
     def getInheritedNodeTypes(self):
         """
@@ -1063,7 +1129,6 @@ class MNode(om.MObject):
 
         return None
 
-
     def getPath(self):
         """
         Returns the full path name of this node. This is equivalent to casting the node as a string.
@@ -1084,7 +1149,6 @@ class MNode(om.MObject):
         """
 
         if self._obj_hndl.isValid():
-
             if hasattr(self._fn_set, "fullPathName"):
                 return str(self._fn_set.fullPathName())
 
@@ -1092,7 +1156,6 @@ class MNode(om.MObject):
 
         else:
             raise RuntimeError("Attempted to acces an invalid MObject handle")
-
 
     def getPlugs(self):
         """
@@ -1110,13 +1173,19 @@ class MNode(om.MObject):
 
         """
 
-        all_plugs = mc.listConnections(self, destination=False, source=True, connections=True)
+        all_plugs = mc.listConnections(
+            self, destination=False, source=True, connections=True
+        )
 
         if all_plugs:
-            return tuple([".".join(all_plugs[i].split(".")[1:]) for i in range(0, len(all_plugs), 2)])
+            return tuple(
+                [
+                    ".".join(all_plugs[i].split(".")[1:])
+                    for i in range(0, len(all_plugs), 2)
+                ]
+            )
 
         return None
-
 
     def hasAttr(self, attr_name, parent_attr=None):
         """
@@ -1139,16 +1208,15 @@ class MNode(om.MObject):
             return mc.attributeQuery(attr_name, node=self, exists=True)
 
         else:
-
             if mc.attributeQuery(parent_attr, node=self, exists=True):
-
-                child_attrs = mc.attributeQuery(parent_attr, node=self, listChildren=True)
+                child_attrs = mc.attributeQuery(
+                    parent_attr, node=self, listChildren=True
+                )
 
                 if child_attrs and (attr_name in child_attrs):
                     return True
 
         return False
-
 
     def isValid(self):
         """
@@ -1168,13 +1236,12 @@ class MNode(om.MObject):
 
         return self._obj_hndl.isValid()
 
-
     def listAttr(self, *args, **kargs):
         """
         List the atributes on this node
 
         **args**		specific string pattern of an attribute to query on the node. This supports
-                    	multiple string args
+                        multiple string args
         **kargs** 		keywords args supported by maya.cmds.listAttr
         **RETURNS**		List of string atribute names or None
 
@@ -1194,7 +1261,6 @@ class MNode(om.MObject):
 
         return mc.listAttr(self, **kargs)
 
-
     def listConnections(self, attr_name=None, **kargs):
         """
         List connections to this node
@@ -1202,21 +1268,20 @@ class MNode(om.MObject):
         **attr_name**	optional *string* name of an connected atribute.
         **kargs** 		keywords args supported by maya.cmds.listConnections
         **RETURNS**		(*MNodeList*, *None*) if the "plugs" karg is not used.
-        				(*MNodeList*, *tuple*(*string* attr_names)) if "plugs" is used.
-                    	(*None*, *None*) if there are no results.
+                                        (*MNodeList*, *tuple*(*string* attr_names)) if "plugs" is used.
+                        (*None*, *None*) if there are no results.
 
         >>>	nodes, plugs = node.listConnections(source=True)
 
         """
 
-        #return_plugs = kargs.has_key("plugs") or kargs.has_key("p")
+        # return_plugs = kargs.has_key("plugs") or kargs.has_key("p")
         return_plugs = "plugs" in kargs or "p" in kargs
         node = self + "." + attr_name if attr_name else self
 
         results = mc.listConnections(node, **kargs)
 
         if results:
-
             if return_plugs:
                 node_list = []
                 attr_list = []
@@ -1232,7 +1297,6 @@ class MNode(om.MObject):
 
         return None, None
 
-
     def rename(self, new_name, **kargs):
         """
         Rename this node
@@ -1244,7 +1308,6 @@ class MNode(om.MObject):
         """
 
         mc.rename(*(self, new_name), **kargs)
-
 
     def renameAttr(self, attr_name, new_name):
         """
@@ -1261,7 +1324,6 @@ class MNode(om.MObject):
 
         return mc.renameAttr(*(obj_attr, new_name))
 
-
     def select(self, **kargs):
         """
         Selects this node with the given options.
@@ -1276,7 +1338,6 @@ class MNode(om.MObject):
 
         return mc.select(*(self,), **kargs)
 
-
     def removeInputConnections(self, attr_name):
         """
         Remove any incoming connections to the attribute with the given name.
@@ -1289,23 +1350,25 @@ class MNode(om.MObject):
 
         dst_attrs = [attr_name]
 
-        if (not "[" in attr_name) and self.attributeQuery(attr_name, multi=True):
+        if ("[" not in attr_name) and self.attributeQuery(attr_name, multi=True):
             array_size = self.getAttr(attr_name, size=True)
 
             if array_size:
-                dst_attrs = [attr_name + "[" + str(i) + "]" for i in range(array_size)] + [attr_name]
+                dst_attrs = [
+                    attr_name + "[" + str(i) + "]" for i in range(array_size)
+                ] + [attr_name]
 
         for dst_attr in dst_attrs:
-
-            nodes, plugs = self.listConnections(dst_attr, destination=False, source=True, plugs=True)
+            nodes, plugs = self.listConnections(
+                dst_attr, destination=False, source=True, plugs=True
+            )
 
             if nodes:
-
-                #for node, plug in map(None, nodes, plugs):
+                # for node, plug in map(None, nodes, plugs):
                 for node, plug in zip(nodes, plugs):
-
-                    mc.disconnectAttr(str(node) + "." + plug, str(self) + "." + dst_attr)
-
+                    mc.disconnectAttr(
+                        str(node) + "." + plug, str(self) + "." + dst_attr
+                    )
 
     def removeOutputConnections(self, attr_name):
         """
@@ -1321,18 +1384,21 @@ class MNode(om.MObject):
         indices = self.getAttr(attr_name, multiIndices=True)
 
         if indices:
-            dst_attrs = [attr_name + "[" + str(i) + "]" for i in range(len(indices))] + [attr_name]
+            dst_attrs = [
+                attr_name + "[" + str(i) + "]" for i in range(len(indices))
+            ] + [attr_name]
 
         for dst_attr in dst_attrs:
-            nodes, plugs = self.listConnections(dst_attr, destination=True, source=False, plugs=True)
+            nodes, plugs = self.listConnections(
+                dst_attr, destination=True, source=False, plugs=True
+            )
 
             if nodes:
-                #for node, plug in map(None, nodes, plugs):
+                # for node, plug in map(None, nodes, plugs):
                 for node, plug in zip(nodes, plugs):
-                    mc.disconnectAttr(str(self) + "." + dst_attr, str(node) + "." + plug)
-
-
-
+                    mc.disconnectAttr(
+                        str(self) + "." + dst_attr, str(node) + "." + plug
+                    )
 
     def setAttr(self, attr_name, *args, **kargs):
         """
@@ -1355,14 +1421,13 @@ class MNode(om.MObject):
         else:
             mc.setAttr(*(str(self) + "." + attr_name,), **kargs)
 
-
     def setDrivenKeyframe(self, attr, driver, driver_attr, **kargs):
         """
         Sets a set driven key on the current node using the given options
 
         **attr**			*string* name of the attr to be driven. Use this instead of the standard 'attribute' option
         **driver** 			*MNode* of the node to use as the driver. Use this with the driver_attr
-        					arg instead of using the standard 'currentDriver' option
+                                                arg instead of using the standard 'currentDriver' option
         **driver_attr**		*string* name of the attribute on the dirver node to use
         **kargs**			keywords arg supported by maya.cmds.setDrivenKeyframe
         **RETURNS**			*None*
@@ -1373,7 +1438,6 @@ class MNode(om.MObject):
         kargs["currentDriver"] = current_driver
 
         return mc.setDrivenKeyframe(*(self,), **kargs)
-
 
     def setStringAttr(self, attr_name, val, **kargs):
         """
@@ -1393,7 +1457,6 @@ class MNode(om.MObject):
         ##---unlock, set value and then relock-----##
         self.setAttr(attr_name, lock=False)
         self.setAttr(attr_name, str(val), type="string", lock=True)
-
 
     def setMessageAttr(self, attr_name, node, lock=True):
         """
@@ -1425,26 +1488,26 @@ class MNode(om.MObject):
         if lock_on or lock:
             self.setAttr(attr_name, lock=True)
 
-
     def __reduce__(self):
         """
-		Built-in method. Handles pickling of the current Maya node.
-		"""
+        Built-in method. Handles pickling of the current Maya node.
+        """
 
-        kargs = {"name":self.getBasename()}
+        kargs = {"name": self.getBasename()}
 
         add_attr_map = self.getAddAttrArgs()
 
-        return (_unpickleNode, (self.__class__, self.getObjectType(), add_attr_map, None, kargs))
-
+        return (
+            _unpickleNode,
+            (self.__class__, self.getObjectType(), add_attr_map, None, kargs),
+        )
 
     def __reduce_ex__(self, protocol):
         """
         Built-in method. Handles pickling of the current Maya node. Same as __reduce__() but handles a protocol argument.
-		"""
+        """
 
         return self.__reduce__()
-
 
     def __add__(self, other):
         """
@@ -1457,8 +1520,11 @@ class MNode(om.MObject):
         >>> #Result: "fooNode.translateX"
         """
 
-        return self.getName() + other.getName() if isinstance(other, MNode) else self.getName() + str(other)
-
+        return (
+            self.getName() + other.getName()
+            if isinstance(other, MNode)
+            else self.getName() + str(other)
+        )
 
     def __radd__(self, other):
         """
@@ -1471,8 +1537,11 @@ class MNode(om.MObject):
         >>> #Result:  "char:fooNode"
         """
 
-        return other.getName() + self.getName() if isinstance(other, MNode) else str(other) + self.getName()
-
+        return (
+            other.getName() + self.getName()
+            if isinstance(other, MNode)
+            else str(other) + self.getName()
+        )
 
     def __repr__(self):
         """
@@ -1481,7 +1550,6 @@ class MNode(om.MObject):
 
         return type(self).__name__ + "(" + self.getName() + ")"
 
-
     def __str__(self):
         """
         Built-in method. Returns the string full path representation the Maya node represented by this
@@ -1489,7 +1557,6 @@ class MNode(om.MObject):
         """
 
         return self.getPath()
-
 
     def capitalize(self, include_namespaces=False):
         """
@@ -1507,7 +1574,6 @@ class MNode(om.MObject):
             return self.getBasename().capitalize()
 
         return self.getName().capitalize()
-
 
     def count(self, sub, start=None, end=None, include_namespaces=False):
         """
@@ -1529,7 +1595,6 @@ class MNode(om.MObject):
         name = self.getBasename() if not include_namespaces else self.getName()
 
         return name.count(sub, start, end)
-
 
     def find(self, sub, start=None, end=None, include_namespaces=False):
         """
@@ -1554,7 +1619,6 @@ class MNode(om.MObject):
 
         return name.find(sub, start, end)
 
-
     def rfind(self, sub, start=None, end=None, include_namespaces=False):
         """
         String operartion just like str.rfind().
@@ -1576,7 +1640,6 @@ class MNode(om.MObject):
         name = self.getBasename() if not include_namespaces else self.getName()
 
         return name.rfind(sub, start, end)
-
 
     def index(self, sub, start=None, end=None, include_namespaces=False):
         """
@@ -1601,9 +1664,8 @@ class MNode(om.MObject):
 
             return name.index(sub, start, end)
 
-        except ValueError as err:
-            raise ValueError("substring " + str(sub) + " not found in node name: " + name)
-
+        except ValueError:
+            raise ValueError(f"substring {sub} not found in node name: {name}")
 
     def rindex(self, sub, start=None, end=None, include_namespaces=False):
         """
@@ -1630,8 +1692,9 @@ class MNode(om.MObject):
             return name.rindex(sub, start, end)
 
         except ValueError as err:
-            raise ValueError("substring " + str(sub) + " not found in node name: " + name)
-
+            raise ValueError(
+                "substring " + str(sub) + " not found in node name: " + name
+            )
 
     def isalnum(self, include_namespaces=False):
         """
@@ -1645,10 +1708,13 @@ class MNode(om.MObject):
 
         """
 
-        name = self.getBasename() if not include_namespaces else self.getName().replace(":", "")
+        name = (
+            self.getBasename()
+            if not include_namespaces
+            else self.getName().replace(":", "")
+        )
 
         return name.isalnum()
-
 
     def isalpha(self, include_namespaces=False):
         """
@@ -1664,10 +1730,13 @@ class MNode(om.MObject):
 
         """
 
-        name = self.getBasename() if not include_namespaces else self.getName().replace(":", "")
+        name = (
+            self.getBasename()
+            if not include_namespaces
+            else self.getName().replace(":", "")
+        )
 
         return name.isalpha()
-
 
     def islower(self, include_namespaces=False):
         """
@@ -1683,10 +1752,13 @@ class MNode(om.MObject):
 
         """
 
-        name = self.getBasename() if not include_namespaces else self.getName().replace(":", "")
+        name = (
+            self.getBasename()
+            if not include_namespaces
+            else self.getName().replace(":", "")
+        )
 
         return name.islower()
-
 
     def istitle(self, include_namespaces=False):
         """
@@ -1703,10 +1775,13 @@ class MNode(om.MObject):
 
         """
 
-        name = self.getBasename() if not include_namespaces else self.getName().replace(":", "")
+        name = (
+            self.getBasename()
+            if not include_namespaces
+            else self.getName().replace(":", "")
+        )
 
         return name.istitle()
-
 
     def isupper(self, include_namespaces=False):
         """
@@ -1722,10 +1797,13 @@ class MNode(om.MObject):
 
         """
 
-        name = self.getBasename() if not include_namespaces else self.getName().replace(":", "")
+        name = (
+            self.getBasename()
+            if not include_namespaces
+            else self.getName().replace(":", "")
+        )
 
         return name.isupper()
-
 
     def join(self, iterable, include_namespaces=False):
         """
@@ -1744,7 +1822,6 @@ class MNode(om.MObject):
 
         return name.join(iterable)
 
-
     def lower(self, include_namespaces=False):
         """
         String operartion just like str.lower().
@@ -1760,7 +1837,6 @@ class MNode(om.MObject):
         name = self.getBasename() if not include_namespaces else self.getName()
 
         return name.lower()
-
 
     def partition(self, sep, include_namespaces=False):
         """
@@ -1780,7 +1856,6 @@ class MNode(om.MObject):
 
         return name.partition(sep)
 
-
     def rpartition(self, sep, include_namespaces=False):
         """
         String operartion just like str.rpartition().
@@ -1798,7 +1873,6 @@ class MNode(om.MObject):
         name = self.getBasename() if not include_namespaces else self.getName()
 
         return name.rpartition(sep)
-
 
     def replace(self, old, new, count=None, include_namespaces=False):
         """
@@ -1821,7 +1895,6 @@ class MNode(om.MObject):
             return name.replace(old, new)
 
         return name.replace(old, new, count)
-
 
     def endswith(self, suffix, start=None, end=None, include_namespaces=False):
         """
@@ -1851,10 +1924,9 @@ class MNode(om.MObject):
 
         name = self.getBasename() if not include_namespaces else self.getName()
 
-        args = [item for item in (suffix, start, end) if not item is None]
+        args = [item for item in (suffix, start, end) if item is not None]
 
         return name.endswith(*args)
-
 
     def split(self, sep, maxsplit=None, include_namespaces=False):
         """
@@ -1894,10 +1966,9 @@ class MNode(om.MObject):
 
         name = self.getBasename() if not include_namespaces else self.getName()
 
-        args = [item for item in (sep, maxsplit) if not item is None]
+        args = [item for item in (sep, maxsplit) if item is not None]
 
         return name.split(*args)
-
 
     def rsplit(self, sep, maxsplit=None, include_namespaces=False):
         """
@@ -1926,10 +1997,9 @@ class MNode(om.MObject):
 
         name = self.getBasename() if not include_namespaces else self.getName()
 
-        args = [item for item in (sep, maxsplit) if not item is None]
+        args = [item for item in (sep, maxsplit) if item is not None]
 
         return name.rsplit(*args)
-
 
     def startswith(self, prefix, start=None, end=None, include_namespaces=False):
         """
@@ -1958,10 +2028,9 @@ class MNode(om.MObject):
 
         name = self.getBasename() if not include_namespaces else self.getName()
 
-        args = [item for item in (prefix, start, end) if not item is None]
+        args = [item for item in (prefix, start, end) if item is not None]
 
         return name.startswith(*args)
-
 
     def strip(self, chars=None, include_namespaces=False):
         """
@@ -1980,7 +2049,6 @@ class MNode(om.MObject):
 
         return name.strip(chars)
 
-
     def lstrip(self, chars=None, include_namespaces=False):
         """
         String operartion just like str.lstrip().
@@ -1997,7 +2065,6 @@ class MNode(om.MObject):
         name = self.getBasename() if not include_namespaces else self.getName()
 
         return name.lstrip(chars)
-
 
     def rstrip(self, chars=None, include_namespaces=False):
         """
@@ -2016,7 +2083,6 @@ class MNode(om.MObject):
 
         return name.rstrip(chars)
 
-
     def swapcase(self, include_namespaces=False):
         """
         String operartion just like str.swapcase().
@@ -2029,7 +2095,6 @@ class MNode(om.MObject):
         name = self.getBasename() if not include_namespaces else self.getName()
 
         return name.swapcase()
-
 
     def upper(self, include_namespaces=False):
         """
@@ -2044,7 +2109,6 @@ class MNode(om.MObject):
 
         return name.upper()
 
-
     def __eq__(self, other):
         """
         Built-in method. Enables the use of '==' syntax with the MNode class
@@ -2054,7 +2118,6 @@ class MNode(om.MObject):
             return True
 
         return False
-
 
     def __ne__(self, other):
         """
@@ -2066,7 +2129,6 @@ class MNode(om.MObject):
 
         return False
 
-
     def __hash__(self):
         """
         Built-in method. For operations on members of hashed collections including set, frozenset, and dict
@@ -2074,21 +2136,19 @@ class MNode(om.MObject):
 
         return self._obj_hndl.hashCode()
 
-
     def __nonzero__(self):
         """
         Obsolete in Python 3...use __bool__ instead
         """
 
         return self.isValid()
-    
+
     def __bool__(self):
         """
         Built-in method. Called to implement truth value testing and the built-in operation bool()
         """
 
         return self.isValid()
-
 
     def _getMObjectByName(self, node_name):
         """
@@ -2104,7 +2164,6 @@ class MNode(om.MObject):
 
         return m_obj
 
-
     def _raiseInvalidError(self):
         """
         PRIVATE METHOD: Called when the core MObject has become invalid (has been deleted from
@@ -2113,37 +2172,29 @@ class MNode(om.MObject):
 
         raise RuntimeError("Node is invalid.")
 
-
     def _dumpPickle(self, data):
         """
         Use base64 encoding to convert python data to a pure ASCII string via pickle at its highest protocol
         """
 
-        return codecs.encode(pickle.dumps(data, protocol=pickle.HIGHEST_PROTOCOL), "base64").decode()
-
+        return codecs.encode(
+            pickle.dumps(data, protocol=pickle.HIGHEST_PROTOCOL), "base64"
+        ).decode()
 
     def _loadPickle(self, data):
         """
         Use base64 decoding to convert a pure ASCII string back to a python data via pickle
         """
-
         try:
             return pickle.loads(codecs.decode(data.encode(), "base64"))
-
         except:
-            #return pickle.loads(str(data)) # backwards compatibility with default pickle protocol
-            try:
-                return pickle.loads(str.encode(data)) # python3
-            except:
-                return pickle.loads(str(data)) # python2
-
-
+            return pickle.loads(str.encode(data))
 
 
 def _unpickleNode(cls, node_type, add_attr_args, set_attr_args, kargs):
     """
     Entry point for pickler to unpickle a pickled Maya node. Must be a module level function for whatever reason.
-	"""
+    """
 
     new_node = MNode.createNode(node_type, **kargs)
 
@@ -2154,14 +2205,12 @@ def _unpickleNode(cls, node_type, add_attr_args, set_attr_args, kargs):
     return cls(new_node)
 
 
-
 class MNodeList(object):
     """
     List type object, used for storing MNode type objects
     """
 
     NODE_CLASS = MNode
-
 
     def __init__(self, nodes=None):
         """
@@ -2176,8 +2225,6 @@ class MNodeList(object):
         if nodes:
             self._node_list = [self.NODE_CLASS(node) for node in nodes]
 
-
-
     def delete(self):
         """
         Delete all nodes in the list. List will be empty after caliing this method.
@@ -2187,7 +2234,6 @@ class MNodeList(object):
 
         self._applyFunction("delete")
         self._node_list = []
-
 
     def __contains__(self, item):
         """
@@ -2200,14 +2246,12 @@ class MNodeList(object):
 
         return False
 
-
     def __nonzero__(self):
         """
         Built-in method. Called to implement truth value testing and the built-in operation bool()
         """
 
         return True if self._node_list else False
-
 
     def __delitem__(self, key):
         """
@@ -2216,14 +2260,12 @@ class MNodeList(object):
 
         del self._node_list[key]
 
-
     def __getitem__(self, key):
         """
         Built-in method.
         """
 
         return self._node_list[key]
-
 
     def __iter__(self):
         """
@@ -2233,14 +2275,12 @@ class MNodeList(object):
         for item in self._node_list:
             yield item
 
-
     def __len__(self):
         """
         Built-in method.
         """
 
         return len(self._node_list)
-
 
     def __setitem__(self, key, value):
         """
@@ -2249,18 +2289,19 @@ class MNodeList(object):
 
         self._node_list[key] = self.NODE_CLASS(value)
 
-
     def __str__(self):
         """
         Built-in method.
         """
 
         if self._node_list:
-
-            return "[" + ", ".join(["\"" + node.__str__() + "\""for node in self._node_list]) + "]"
+            return (
+                "["
+                + ", ".join(['"' + node.__str__() + '"' for node in self._node_list])
+                + "]"
+            )
 
         return "[]"
-
 
     def __repr__(self):
         """
@@ -2268,11 +2309,13 @@ class MNodeList(object):
         """
 
         if self._node_list:
-
-            return "[" + ", ".join(["\"" + node.__repr__() + "\"" for node in self._node_list]) + "]"
+            return (
+                "["
+                + ", ".join(['"' + node.__repr__() + '"' for node in self._node_list])
+                + "]"
+            )
 
         return "[]"
-
 
     def append(self, item):
         """
@@ -2282,7 +2325,6 @@ class MNodeList(object):
         item = self.NODE_CLASS(item)
 
         self._node_list.append(item)
-
 
     def count(self, node):
         """
@@ -2294,7 +2336,6 @@ class MNodeList(object):
 
         return self._node_list.count(node)
 
-
     def extend(self, item):
         """
         Built-in method.
@@ -2304,7 +2345,6 @@ class MNodeList(object):
 
         self._node_list.extend(item_list)
 
-
     def getAttr(self, attr_name, skip_missing=False, **kargs):
         """
         Returns the value of the given attr on every node in the list. Can optionally
@@ -2313,24 +2353,21 @@ class MNodeList(object):
 
         :arg		attr_name: string name of attr
         :arg		skip_missing: bool - True to quietly skip any nodes that are missing the
-        			given attr. Missing attrs will result of None in the returned tuple.
+                                given attr. Missing attrs will result of None in the returned tuple.
                     False will throw an exception on missing attr. default=False
         :arg		kargs: keywords arg supported by maya.cmds.getAttr
         :returns:	tuple of attribute values or None. Returned tuple indices will correspond to
-        			the indices of the nodes in this list.
+                                the indices of the nodes in this list.
 
         """
 
         result = []
 
         for node in self._node_list:
-
             if (node.hasAttr(attr_name)) or (not skip_missing):
-
                 result.append(node.getAttr(attr_name, **kargs))
 
             elif skip_missing:
-
                 result.append(None)
 
         if result:
@@ -2338,27 +2375,23 @@ class MNodeList(object):
 
         return None
 
-
     def setAttr(self, attr_name, val=None, skip_missing=False, **kargs):
         """
         Sets the given attr to the given value on all nodes in the list
 
         :arg		attr_name: string name of attr to set
         :arg		val: value to set the attribute to. This arg is optional if setting attribute
-        			properties instead of value.
+                                properties instead of value.
         :arg		skip_missing: bool - True to quietly skip any nodes that are missing the
-        			given attr. False will throw an exception on missing attr. default=False
+                                given attr. False will throw an exception on missing attr. default=False
         :arg		kargs: keywords arg supported by maya.cmds.setAttr
         :returns:	None
 
         """
 
         for node in self._node_list:
-
             if (node.hasAttr(attr_name)) or (not skip_missing):
-
                 node.setAttr(attr_name, val, **kargs)
-
 
     def addAttr(self, long_name, attr_type, **kargs):
         """
@@ -2367,7 +2400,7 @@ class MNodeList(object):
 
         :arg 		long_name: string long name of the attribute to add
         :arg 		attr_type: string type of attribute to add. Supports all string
-        			types supported by the "dt" and "at" args of maya.cmds.addAttr
+                                types supported by the "dt" and "at" args of maya.cmds.addAttr
         :arg		kargs: keyword args supported by maya.cmds.addAttr
         :returns: 	None
 
@@ -2377,13 +2410,12 @@ class MNodeList(object):
 
         return self._applyFunction("addAttr", *(long_name, attr_type), **kargs)
 
-
     def bakeResults(self, *args, **kargs):
         """
         Run bakeResults on nodes in this list with the given options
 
         **args**		optional string args of attributes to bake. If args are given,
-        				any value given to the *attribute* flag will be overridden
+                                        any value given to the *attribute* flag will be overridden
         **kargs** 		keyword args supported by maya.cmds.bakeResults
         **RETURNS** 	*None*
 
@@ -2395,8 +2427,6 @@ class MNodeList(object):
             kargs["attribute"] = args
 
         mc.bakeResults(self, **kargs)
-
-
 
     def getAttrMap(self, *args, **kargs):
         """
@@ -2421,7 +2451,6 @@ class MNodeList(object):
         attr_map = OrderedDict()
 
         for node in self._node_list:
-
             attr_vals = node.getAttrMap(*args, **kargs)
 
             if attr_vals:
@@ -2431,7 +2460,6 @@ class MNodeList(object):
             return attr_map
 
         return None
-
 
     def listNodesOfType(self, node_type):
         """
@@ -2443,14 +2471,14 @@ class MNodeList(object):
         """
 
         if self._node_list:
-
-            results = [node for node in self._node_list if node.getObjectType() == node_type]
+            results = [
+                node for node in self._node_list if node.getObjectType() == node_type
+            ]
 
             if results:
                 return self.__class__(results)
 
         return None
-
 
     def listNodesWithAttr(self, attr_name):
         """
@@ -2462,14 +2490,12 @@ class MNodeList(object):
         """
 
         if self._node_list:
-
             results = [node for node in self._node_list if node.hasAttr(attr_name)]
 
             if results:
                 return self.__class__(results)
 
         return None
-
 
     def _applyFunction(self, func_name, *args, **kargs):
         """
@@ -2485,9 +2511,7 @@ class MNodeList(object):
 
         return tuple(result)
 
-
     def index(self, x):
-
         return self._node_list.index(x)
 
 

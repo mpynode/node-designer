@@ -1,24 +1,20 @@
-import unittest
-import tempfile
+import codecs
 import os
 import string
-import codecs
+import tempfile
+import unittest
 
 try:
     import maya.standalone
+
     maya.standalone.initialize()
 except:
     pass
 
 
-        
-try:
-    import cPickle as pickle # python2
-except:
-    import pickle # python3
-    unicode = str
-    
-    
+import pickle
+
+unicode = str
 
 
 import maya.api.OpenMaya as om
@@ -29,17 +25,12 @@ from mpylib.nodes import MPyNode
 
 
 class TestMPyNode(unittest.TestCase):
-
     TEST_CLASS = MPyNode
 
-
     def setUp(self):
-
         mc.file(newFile=True, force=True)
 
-
     def testInit(self):
-
         node = self.TEST_CLASS()
         name = self.TEST_CLASS.__name__[0].lower() + self.TEST_CLASS.__name__[1:] + "1"
         self.assertEqual(node.getName(), name)
@@ -50,18 +41,14 @@ class TestMPyNode(unittest.TestCase):
         new_node = self.TEST_CLASS(name="test_py_node")
         self.assertEqual(new_node.getName(), "test_py_node")
 
-
     def testDelete(self):
-
         self.testInit()
 
         node = self.TEST_CLASS("test_py_node")
 
         node.delete()
 
-
     def testLs(self):
-
         new_nodes = []
 
         for i in range(10):
@@ -86,9 +73,7 @@ class TestMPyNode(unittest.TestCase):
             self.assertTrue(node in results)
             self.assertEqual(type(node), TestChildClass)
 
-
     def testExportToFile(self):
-
         for use_binary in (True, False):
             mc.file(newFile=True, force=True)
 
@@ -106,19 +91,21 @@ class TestMPyNode(unittest.TestCase):
             self.assertTrue(os.path.exists(temp_file))
 
             mc.file(newFile=True, force=True)
-            with open(temp_file, 'rb' if use_binary else 'r') as fh:
+            with open(temp_file, "rb" if use_binary else "r") as fh:
                 try:
-                    node = pickle.load(fh) if use_binary else pickle.loads(fh.read().encode('latin1'))
-                except Exception as err:
+                    node = (
+                        pickle.load(fh)
+                        if use_binary
+                        else pickle.loads(fh.read().encode("latin1"))
+                    )
+                except Exception:
                     raise
                 else:
                     self.assertTrue(node.isValid())
-                      
+
             os.remove(temp_file)
 
-
     def testImportFromFile(self):
-
         for use_binary in (True, False):
             mc.file(newFile=True, force=True)
 
@@ -137,15 +124,17 @@ class TestMPyNode(unittest.TestCase):
 
             mc.file(newFile=True, force=True)
 
-            with open(temp_file, 'rb' if use_binary else 'r') as fh:
-                node = pickle.load(fh) if use_binary else pickle.loads(fh.read().encode('latin1'))
+            with open(temp_file, "rb" if use_binary else "r") as fh:
+                node = (
+                    pickle.load(fh)
+                    if use_binary
+                    else pickle.loads(fh.read().encode("latin1"))
+                )
                 self.assertTrue(node.isValid())
 
             os.remove(temp_file)
 
-
     def testSetExpression(self):
-
         node = self.TEST_CLASS()
 
         exp_str = "i = 1 + 1"
@@ -157,22 +146,16 @@ class TestMPyNode(unittest.TestCase):
         exp_str = "self.test_init = 0.0"
         node.setExpression(exp_str)
 
-
     def testGetExpression(self):
-
         self.testSetExpression()
 
-
     def testAddInputAttr(self):
-
         node = self.TEST_CLASS(name="test_node")
         data_check_dict = {}
         i = 1
 
         for is_array in (False, True):
-
             for attr_type in MPyNode._NEW_INPUT_TYPES.keys():
-
                 name_suffix = "" if not is_array else "_array"
                 attr_name = "test_" + attr_type + name_suffix
 
@@ -192,48 +175,54 @@ class TestMPyNode(unittest.TestCase):
 
                 self.assertTrue(internal_str is not None)
 
-                interal_dict = pickle.loads(codecs.decode(internal_str.encode(), "base64"))
+                interal_dict = pickle.loads(
+                    codecs.decode(internal_str.encode(), "base64")
+                )
 
                 self.assertEqual(type(interal_dict), dict)
                 self.assertEqual(len(interal_dict), i)
                 i += 1
 
-                for internal_attr, internal_type in interal_dict.items():
-                    self.assertSequenceEqual(interal_dict[internal_attr], data_check_dict[internal_attr])
+                for internal_attr in interal_dict:
+                    self.assertSequenceEqual(
+                        interal_dict[internal_attr], data_check_dict[internal_attr]
+                    )
 
         return data_check_dict
 
-
     def testRenameInputAttr(self):
-
         return self._testRenameAttr()
 
-
     def testRenameOutputAttr(self):
-
         return self._testRenameAttr(is_input=False)
 
-
     def _testRenameAttr(self, is_input=True):
-
         node = self.TEST_CLASS(name="test_node")
         data_check_dict = {}
         i = 1
-        in_node = self.TEST_CLASS(name="in_node")
-
 
         for is_array in (False, True):
-
-            attr_types = MPyNode._NEW_INPUT_TYPES.keys() if is_input else MPyNode._NEW_OUTPUT_TYPES.keys()
+            attr_types = (
+                MPyNode._NEW_INPUT_TYPES.keys()
+                if is_input
+                else MPyNode._NEW_OUTPUT_TYPES.keys()
+            )
 
             for attr_type in attr_types:
-
                 name_suffix = "" if not is_array else "_array"
                 attr_name = "test_" + attr_type + name_suffix
                 attr_renamed = "testRenamed_" + attr_type + name_suffix
 
-                add_func =  getattr(node, "addInputAttr") if is_input else getattr(node, "addOutputAttr")
-                rename_func = getattr(node, "renameInputAttr") if is_input else getattr(node, "renameOutputAttr")
+                add_func = (
+                    getattr(node, "addInputAttr")
+                    if is_input
+                    else getattr(node, "addOutputAttr")
+                )
+                rename_func = (
+                    getattr(node, "renameInputAttr")
+                    if is_input
+                    else getattr(node, "renameOutputAttr")
+                )
 
                 add_func(attr_name, attr_type, is_array=is_array)
                 rename_func(attr_name, attr_renamed)
@@ -249,36 +238,38 @@ class TestMPyNode(unittest.TestCase):
 
                 ##---test internal data---##
                 data_check_dict[attr_renamed] = [attr_type]
-                internal_str = node._getInternalInputString() if is_input else node._getInternalOutputString()
+                internal_str = (
+                    node._getInternalInputString()
+                    if is_input
+                    else node._getInternalOutputString()
+                )
 
                 self.assertTrue(internal_str is not None)
 
-                interal_dict = pickle.loads(codecs.decode(internal_str.encode(), "base64"))
+                interal_dict = pickle.loads(
+                    codecs.decode(internal_str.encode(), "base64")
+                )
 
                 self.assertEqual(type(interal_dict), dict)
                 self.assertEqual(len(interal_dict), i)
-                #self.assertFalse(interal_dict.has_key(attr_name))
                 self.assertFalse(attr_name in interal_dict)
                 i += 1
 
-                for internal_attr, internal_type in interal_dict.items():
-
-                    self.assertSequenceEqual(interal_dict[internal_attr], data_check_dict[internal_attr])
+                for internal_attr in interal_dict:
+                    self.assertSequenceEqual(
+                        interal_dict[internal_attr], data_check_dict[internal_attr]
+                    )
 
         return data_check_dict
 
-
     def testDeleteInputAttr(self):
-
         data_check_dict = self.testAddInputAttr()
         i = len(data_check_dict)
 
         node = self.TEST_CLASS("test_node")
 
         for is_array in (False, True):
-
             for attr_type in MPyNode._NEW_INPUT_TYPES.keys():
-
                 name_suffix = "" if not is_array else "_array"
                 attr_name = "test_" + attr_type + name_suffix
 
@@ -291,11 +282,13 @@ class TestMPyNode(unittest.TestCase):
                 ##---test internal data---##
                 internal_str = node._getInternalInputString()
 
-                del(data_check_dict[attr_name])
+                del data_check_dict[attr_name]
 
                 self.assertTrue(internal_str is not None)
 
-                interal_dict = pickle.loads(codecs.decode(internal_str.encode(), "base64"))
+                interal_dict = pickle.loads(
+                    codecs.decode(internal_str.encode(), "base64")
+                )
 
                 i -= 1
 
@@ -303,25 +296,22 @@ class TestMPyNode(unittest.TestCase):
                     self.assertEqual(type(interal_dict), dict)
                     self.assertEqual(len(interal_dict), i)
 
-                    for internal_attr, internal_type in interal_dict.items():
-
-                        self.assertSequenceEqual(interal_dict[internal_attr], data_check_dict[internal_attr])
+                    for internal_attr in interal_dict:
+                        self.assertSequenceEqual(
+                            interal_dict[internal_attr], data_check_dict[internal_attr]
+                        )
 
                 else:
                     self.assertTrue(interal_dict is None)
 
-
     def testDeleteOutputAttr(self):
-
         data_check_dict = self.testAddOutputAttr()
         i = len(data_check_dict)
 
         node = self.TEST_CLASS("test_node")
 
         for is_array in (False, True):
-
             for attr_type in MPyNode._NEW_OUTPUT_TYPES.keys():
-
                 name_suffix = "" if not is_array else "_array"
                 attr_name = "test_" + attr_type + name_suffix
 
@@ -334,11 +324,13 @@ class TestMPyNode(unittest.TestCase):
                 ##---test internal data---##
                 internal_str = node._getInternalOutputString()
 
-                del(data_check_dict[attr_name])
+                del data_check_dict[attr_name]
 
                 self.assertTrue(internal_str is not None)
 
-                interal_dict = pickle.loads(codecs.decode(internal_str.encode(), "base64"))
+                interal_dict = pickle.loads(
+                    codecs.decode(internal_str.encode(), "base64")
+                )
 
                 i -= 1
 
@@ -346,24 +338,21 @@ class TestMPyNode(unittest.TestCase):
                     self.assertEqual(type(interal_dict), dict)
                     self.assertEqual(len(interal_dict), i)
 
-                    for internal_attr, internal_type in interal_dict.items():
-
-                        self.assertSequenceEqual(interal_dict[internal_attr], data_check_dict[internal_attr])
+                    for internal_attr in interal_dict:
+                        self.assertSequenceEqual(
+                            interal_dict[internal_attr], data_check_dict[internal_attr]
+                        )
 
                 else:
                     self.assertTrue(interal_dict is None)
 
-
     def testAddOutputAttr(self):
-
         node = self.TEST_CLASS(name="test_node")
         data_check_dict = {}
         i = 1
 
         for is_array in (False, True):
-
             for attr_type in MPyNode._NEW_OUTPUT_TYPES.keys():
-
                 name_suffix = "" if not is_array else "_array"
                 attr_name = "test_" + attr_type + name_suffix
 
@@ -383,30 +372,29 @@ class TestMPyNode(unittest.TestCase):
 
                 self.assertTrue(internal_str is not None)
 
-                interal_dict = pickle.loads(codecs.decode(internal_str.encode(), "base64"))
+                interal_dict = pickle.loads(
+                    codecs.decode(internal_str.encode(), "base64")
+                )
 
                 self.assertEqual(type(interal_dict), dict)
                 self.assertEqual(len(interal_dict), i)
                 i += 1
 
-                for internal_attr, internal_type in interal_dict.items():
-
-                    self.assertSequenceEqual(interal_dict[internal_attr], data_check_dict[internal_attr])
+                for internal_attr in interal_dict:
+                    self.assertSequenceEqual(
+                        interal_dict[internal_attr], data_check_dict[internal_attr]
+                    )
 
         return data_check_dict
 
-
     def testListInputAttrs(self):
-
         self.testAddInputAttr()
 
         node = self.TEST_CLASS("test_node")
         attr_list = []
 
         for is_array in (False, True):
-
             for attr_type in MPyNode._NEW_INPUT_TYPES.keys():
-
                 name_suffix = "" if not is_array else "_array"
                 attr_name = "test_" + attr_type + name_suffix
 
@@ -417,9 +405,7 @@ class TestMPyNode(unittest.TestCase):
         for attr in results:
             self.assertTrue(attr in attr_list)
 
-
     def testAddStoredVariable(self):
-
         self.testInit()
 
         node = self.TEST_CLASS("test_py_node")
@@ -427,22 +413,18 @@ class TestMPyNode(unittest.TestCase):
         for var_name in string.ascii_lowercase:
             node.addStoredVariable(var_name)
 
-
     def testListStoredVariables(self):
-
         self.testAddStoredVariable()
 
         node = self.TEST_CLASS("test_py_node")
 
         stored_vars = node.listStoredVariables()
 
-        #for var_name, letter in map(None, stored_vars, string.ascii_lowercase):
+        # for var_name, letter in map(None, stored_vars, string.ascii_lowercase):
         for var_name, letter in zip(stored_vars, string.ascii_lowercase):
             self.assertEqual(var_name, letter)
 
-
     def testHasStoredVariable(self):
-
         self.testAddStoredVariable()
 
         node = self.TEST_CLASS("test_py_node")
@@ -450,38 +432,29 @@ class TestMPyNode(unittest.TestCase):
         self.assertFalse(node.hasStoredVariable("foo"))
 
         for var_name in string.ascii_lowercase:
-
             self.assertTrue(node.hasStoredVariable(var_name))
 
-
     def testSetStoredVariable(self):
-
         self.testInit()
 
         node = self.TEST_CLASS("test_py_node")
 
-        for i, var_name in enumerate(string.ascii_lowercase):
-
-            node.setStoredVariable(var_name, {var_name:{unicode(var_name):1}})
-
+        for var_name in string.ascii_lowercase:
+            node.setStoredVariable(var_name, {var_name: {unicode(var_name): 1}})
 
     def testGetStoredVariables(self):
-
         self.testSetStoredVariable()
 
         node = self.TEST_CLASS("test_py_node")
 
         var_map = node.getStoredVariables()
 
-        for i, var_name in enumerate(string.ascii_lowercase):
-
+        for var_name in string.ascii_lowercase:
             self.assertTrue(var_name in var_map)
             self.assertEqual(type(var_map[var_name]), dict)
-            self.assertEqual(var_map[var_name][var_name], {unicode(var_name):1})
-
+            self.assertEqual(var_map[var_name][var_name], {unicode(var_name): 1})
 
     def testRemoveStoredVariable(self):
-
         self.testAddStoredVariable()
 
         node = self.TEST_CLASS("test_py_node")
@@ -498,9 +471,7 @@ class TestMPyNode(unittest.TestCase):
 
         self.assertFalse(removed_var in var_names)
 
-
     def testFunctionalStoredVariables(self):
-
         in_node = MNode.createNode("transform", name="in_node")
         out_node = MNode.createNode("transform", name="out_node")
 
@@ -510,7 +481,9 @@ class TestMPyNode(unittest.TestCase):
         node.addInputAttr("inAttr", "float", keyable=True, defaultValue=-1.0)
         node.addOutputAttr("outAttr", "float")
 
-        node.setExpression("if not hasattr(self, 'testVar'):\n\tself.testVar = 1.0\nelse:\n\tself.testVar += 1.0\noutAttr = self.testVar\n")
+        node.setExpression(
+            "if not hasattr(self, 'testVar'):\n\tself.testVar = 1.0\nelse:\n\tself.testVar += 1.0\noutAttr = self.testVar\n"
+        )
 
         in_node.connectAttr("translateX", node, "inAttr")
         node.connectAttr("outAttr", out_node, "translateX")
@@ -538,18 +511,14 @@ class TestMPyNode(unittest.TestCase):
 
             mc.file(save=True, force=True, type="mayaAscii")
 
-
     def testListOutputAttrs(self):
-
         self.testAddOutputAttr()
 
         node = self.TEST_CLASS("test_node")
         attr_list = []
 
         for is_array in (False, True):
-
             for attr_type in MPyNode._NEW_OUTPUT_TYPES.keys():
-
                 name_suffix = "" if not is_array else "_array"
                 attr_name = "test_" + attr_type + name_suffix
 
@@ -560,53 +529,45 @@ class TestMPyNode(unittest.TestCase):
         for attr in results:
             self.assertTrue(attr in attr_list)
 
-
     def testGetInputAttrMap(self):
-
         self.testAddInputAttr()
 
         node = self.TEST_CLASS("test_node")
         attr_map = node.getInputAttrMap()
 
         for attr_name, attr_data in attr_map.items():
-
             attr_tokens = attr_name.split("_")
 
             self.assertTrue(len(attr_tokens) in (2, 3))
             self.assertEqual(attr_tokens[1], attr_data[MPyNode._ATTR_MAP_TYPE_KEY])
 
             if len(attr_tokens) == 2:
-                #self.assertFalse(attr_data.has_key(MPyNode.ATTR_MAP_ARRAY_KEY))
+                # self.assertFalse(attr_data.has_key(MPyNode.ATTR_MAP_ARRAY_KEY))
                 self.assertFalse(MPyNode.ATTR_MAP_ARRAY_KEY in attr_data)
 
             else:
                 self.assertTrue(attr_data[MPyNode.ATTR_MAP_ARRAY_KEY])
 
-
     def testGetOutputAttrMap(self):
-
         self.testAddOutputAttr()
 
         node = self.TEST_CLASS("test_node")
         attr_map = node.getOutputAttrMap()
 
         for attr_name, attr_data in attr_map.items():
-
             attr_tokens = attr_name.split("_")
 
             self.assertTrue(len(attr_tokens) in (2, 3))
             self.assertEqual(attr_tokens[1], attr_data[MPyNode._ATTR_MAP_TYPE_KEY])
 
             if len(attr_tokens) == 2:
-                #self.assertFalse(attr_data.has_key(MPyNode.ATTR_MAP_ARRAY_KEY))
+                # self.assertFalse(attr_data.has_key(MPyNode.ATTR_MAP_ARRAY_KEY))
                 self.assertFalse(MPyNode.ATTR_MAP_ARRAY_KEY in attr_data)
 
             else:
                 self.assertTrue(attr_data[MPyNode.ATTR_MAP_ARRAY_KEY])
 
-
     def testListValidInputTypes(self):
-
         attr_types = MPyNode.listValidInputTypes()
 
         self.assertEqual(type(attr_types), tuple)
@@ -617,9 +578,7 @@ class TestMPyNode(unittest.TestCase):
 
         self.assertSequenceEqual(attr_types, attr_keys)
 
-
     def testListValidOutputTypes(self):
-
         attr_types = MPyNode.listValidOutputTypes()
 
         self.assertEqual(type(attr_types), tuple)
@@ -630,11 +589,8 @@ class TestMPyNode(unittest.TestCase):
 
         self.assertSequenceEqual(attr_types, attr_keys)
 
-
     def testFunctionalFloat(self):
-
         for is_array in (False, True):
-
             mc.file(newFile=True, force=True)
 
             mc.playbackOptions(e=True, minTime=1, maxTime=100)
@@ -648,13 +604,20 @@ class TestMPyNode(unittest.TestCase):
             output_attr_2 = "translateY"
             anim_values = (1.0, 100.0)
 
-            self._runFunctionalTest(in_node, out_node, attr_type, input_attr, output_attr, input_attr, anim_values, is_array, output_attr_2=output_attr_2)
-
+            self._runFunctionalTest(
+                in_node,
+                out_node,
+                attr_type,
+                input_attr,
+                output_attr,
+                input_attr,
+                anim_values,
+                is_array,
+                output_attr_2=output_attr_2,
+            )
 
     def testFunctionalEnum(self):
-
         for is_array in (False, True):
-
             mc.file(newFile=True, force=True)
 
             mc.playbackOptions(e=True, minTime=1, maxTime=100)
@@ -667,16 +630,24 @@ class TestMPyNode(unittest.TestCase):
             output_attr = "testEnum"
             output_attr_2 = "testEnum2"
             enum_names = ":".join(["enum" + str(i) for i in range(100)])
-            attr_kargs={"enumName":enum_names}
+            attr_kargs = {"enumName": enum_names}
             anim_values = (1, 100)
 
-            self._runFunctionalTest(in_node, out_node, attr_type, input_attr, output_attr, input_attr, anim_values, is_array, output_attr_2=output_attr_2, attr_kargs=attr_kargs)
-
+            self._runFunctionalTest(
+                in_node,
+                out_node,
+                attr_type,
+                input_attr,
+                output_attr,
+                input_attr,
+                anim_values,
+                is_array,
+                output_attr_2=output_attr_2,
+                attr_kargs=attr_kargs,
+            )
 
     def testFunctionalInt(self):
-
         for is_array in (False, True):
-
             mc.file(newFile=True, force=True)
 
             mc.playbackOptions(e=True, minTime=1, maxTime=100)
@@ -690,13 +661,20 @@ class TestMPyNode(unittest.TestCase):
             output_attr_2 = "testInt2"
             anim_values = (1, 100)
 
-            self._runFunctionalTest(in_node, out_node, attr_type, input_attr, output_attr, input_attr, anim_values, is_array, output_attr_2=output_attr_2)
-
+            self._runFunctionalTest(
+                in_node,
+                out_node,
+                attr_type,
+                input_attr,
+                output_attr,
+                input_attr,
+                anim_values,
+                is_array,
+                output_attr_2=output_attr_2,
+            )
 
     def testFunctionalBool(self):
-
         for is_array in (False, True):
-
             mc.file(newFile=True, force=True)
 
             mc.playbackOptions(e=True, minTime=1, maxTime=100)
@@ -710,11 +688,19 @@ class TestMPyNode(unittest.TestCase):
             out_attr_2 = "testBool2"
             anim_values = (True, False)
 
-            self._runFunctionalTest(in_node, out_node, attr_type, input_attr, output_attr, input_attr, anim_values, is_array, output_attr_2=out_attr_2)
-
+            self._runFunctionalTest(
+                in_node,
+                out_node,
+                attr_type,
+                input_attr,
+                output_attr,
+                input_attr,
+                anim_values,
+                is_array,
+                output_attr_2=out_attr_2,
+            )
 
     def testFunctionalVector(self):
-
         for is_array in (False, True):
             for use_comp_names in (False, True):
                 mc.file(newFile=True, force=True)
@@ -730,13 +716,21 @@ class TestMPyNode(unittest.TestCase):
                 output_attr_2 = "translate"
                 anim_values = ((1.0, 1.0, 1.0), (100.0, 200.0, 300.0))
 
-                self._runFunctionalTest(in_node, out_node, attr_type, input_attr, output_attr, input_attr, anim_values, is_array, output_attr_2=output_attr_2, use_comp_names=use_comp_names)
-
+                self._runFunctionalTest(
+                    in_node,
+                    out_node,
+                    attr_type,
+                    input_attr,
+                    output_attr,
+                    input_attr,
+                    anim_values,
+                    is_array,
+                    output_attr_2=output_attr_2,
+                    use_comp_names=use_comp_names,
+                )
 
     def testFunctionalMatrix(self):
-
         for is_array in (False, True):
-
             mc.file(newFile=True, force=True)
 
             mc.playbackOptions(e=True, minTime=1, maxTime=100)
@@ -751,11 +745,19 @@ class TestMPyNode(unittest.TestCase):
             anim_attr = "translate"
             anim_values = ((1.0, 1.0, 1.0), (100.0, 200.0, 300.0))
 
-            self._runFunctionalTest(in_node, out_node, attr_type, input_attr, output_attr, anim_attr, anim_values, is_array, output_attr_2=output_attr_2)
-
+            self._runFunctionalTest(
+                in_node,
+                out_node,
+                attr_type,
+                input_attr,
+                output_attr,
+                anim_attr,
+                anim_values,
+                is_array,
+                output_attr_2=output_attr_2,
+            )
 
     def testFunctionalColor(self):
-
         for is_array in (False, True):
             for use_comp_names in (False, True):
                 mc.file(newFile=True, force=True)
@@ -771,13 +773,21 @@ class TestMPyNode(unittest.TestCase):
                 output_attr_2 = "translate"
                 anim_values = ((1.0, 1.0, 1.0), (100.0, 200.0, 300.0))
 
-                self._runFunctionalTest(in_node, out_node, attr_type, input_attr, output_attr, input_attr, anim_values, is_array, output_attr_2=output_attr_2, use_comp_names=use_comp_names)
-
+                self._runFunctionalTest(
+                    in_node,
+                    out_node,
+                    attr_type,
+                    input_attr,
+                    output_attr,
+                    input_attr,
+                    anim_values,
+                    is_array,
+                    output_attr_2=output_attr_2,
+                    use_comp_names=use_comp_names,
+                )
 
     def testFunctionalAngle(self):
-
         for is_array in (False, True):
-
             mc.file(newFile=True, force=True)
 
             mc.playbackOptions(e=True, minTime=1, maxTime=100)
@@ -791,11 +801,19 @@ class TestMPyNode(unittest.TestCase):
             out_attr_2 = "rotateY"
             anim_values = (1.0, 100.0)
 
-            self._runFunctionalTest(in_node, out_node, attr_type, input_attr, output_attr, input_attr, anim_values, is_array, output_attr_2=out_attr_2)
-
+            self._runFunctionalTest(
+                in_node,
+                out_node,
+                attr_type,
+                input_attr,
+                output_attr,
+                input_attr,
+                anim_values,
+                is_array,
+                output_attr_2=out_attr_2,
+            )
 
     def testFunctionalEuler(self):
-
         for is_array in (False, True):
             for use_comp_names in (False, True):
                 mc.file(newFile=True, force=True)
@@ -811,13 +829,21 @@ class TestMPyNode(unittest.TestCase):
                 output_attr_2 = "scale"
                 anim_values = ((1.0, 1.0, 1.0), (100.0, 200.0, 300.0))
 
-                self._runFunctionalTest(in_node, out_node, attr_type, input_attr, output_attr, input_attr, anim_values, is_array, output_attr_2=output_attr_2, use_comp_names=use_comp_names)
-
+                self._runFunctionalTest(
+                    in_node,
+                    out_node,
+                    attr_type,
+                    input_attr,
+                    output_attr,
+                    input_attr,
+                    anim_values,
+                    is_array,
+                    output_attr_2=output_attr_2,
+                    use_comp_names=use_comp_names,
+                )
 
     def testFunctionalString(self):
-
         for is_array in (False, True):
-
             mc.file(newFile=True, force=True)
 
             mc.playbackOptions(e=True, minTime=1, maxTime=100)
@@ -832,13 +858,21 @@ class TestMPyNode(unittest.TestCase):
             output_attr_2 = "string_test2"
             anim_values = None
 
-            self._runFunctionalTest(in_node, out_node, attr_type, input_attr, output_attr, input_attr, anim_values, is_array, input_value=input_value, output_attr_2=output_attr_2)
-
+            self._runFunctionalTest(
+                in_node,
+                out_node,
+                attr_type,
+                input_attr,
+                output_attr,
+                input_attr,
+                anim_values,
+                is_array,
+                input_value=input_value,
+                output_attr_2=output_attr_2,
+            )
 
     def testFunctionalPy(self):
-
         for is_array in (False, True):
-
             mc.file(newFile=True, force=True)
 
             mc.playbackOptions(e=True, minTime=1, maxTime=100)
@@ -865,7 +899,9 @@ class TestMPyNode(unittest.TestCase):
 
             else:
                 in_py_node.setExpression("outPy = [{'test':inFloat}, {'test':inFloat}]")
-                out_py_node.setExpression("outFloat = inPy[0]['test'] + inPy[1]['test']")
+                out_py_node.setExpression(
+                    "outFloat = inPy[0]['test'] + inPy[1]['test']"
+                )
 
                 in_node.connectAttr("tx", in_py_node, "inFloat")
                 in_py_node.connectAttr("outPy[0]", out_py_node, "inPy[0]")
@@ -873,7 +909,6 @@ class TestMPyNode(unittest.TestCase):
                 out_py_node.connectAttr("outFloat", out_node, "tx")
 
             for f in range(101):
-
                 mc.currentTime(f, update=True)
 
                 in_node.setAttr("tx", float(f))
@@ -881,11 +916,8 @@ class TestMPyNode(unittest.TestCase):
 
                 self.assertEqual(float(f) + float(f), out_val)
 
-
     def testFunctionalTime(self):
-
         for is_array in (False, True):
-
             mc.file(newFile=True, force=True)
 
             mc.playbackOptions(e=True, minTime=1, maxTime=100)
@@ -896,16 +928,21 @@ class TestMPyNode(unittest.TestCase):
             attr_type = "time"
             input_attr = "outTime"
             output_attr = "inputA"
-            output_attr_2 = "inputB"
             anim_values = None
 
-            self._runFunctionalTest(in_node, out_node, attr_type, input_attr, output_attr, input_attr, anim_values, is_array)
-
+            self._runFunctionalTest(
+                in_node,
+                out_node,
+                attr_type,
+                input_attr,
+                output_attr,
+                input_attr,
+                anim_values,
+                is_array,
+            )
 
     def testFunctionalMesh(self):
-
         for is_array in (False, True):
-
             mc.file(newFile=True, force=True)
 
             mc.playbackOptions(e=True, minTime=1, maxTime=100)
@@ -915,9 +952,10 @@ class TestMPyNode(unittest.TestCase):
             geo_points = []
 
             for i in range(num_meshes):
-
                 cube_trans = mc.polyCube(name="in_node_" + str(i), ch=False)[0]
-                new_mesh = MNode(mc.listRelatives(cube_trans, shapes=True, fullPath=True)[0])
+                new_mesh = MNode(
+                    mc.listRelatives(cube_trans, shapes=True, fullPath=True)[0]
+                )
                 in_nodes.append(new_mesh)
 
                 fn_set = om.MFnMesh(new_mesh)
@@ -925,14 +963,17 @@ class TestMPyNode(unittest.TestCase):
 
             attr_type = "mesh"
             input_attr = "worldMesh[0]"
-            expr_str = "outAttr = inGeo.getPoints()" if not is_array else "outAttr = inGeo[0].getPoints()"
-            anim_values = None
+            expr_str = (
+                "outAttr = inGeo.getPoints()"
+                if not is_array
+                else "outAttr = inGeo[0].getPoints()"
+            )
 
-            self._runFunctionalGeoTest(in_nodes, input_attr, attr_type, is_array, expr_str, geo_points)
-
+            self._runFunctionalGeoTest(
+                in_nodes, input_attr, attr_type, is_array, expr_str, geo_points
+            )
 
     def testChildClass(self):
-
         mc.playbackOptions(e=True, minTime=1, maxTime=100)
 
         in_node = MNode(mc.spaceLocator(name="in_node")[0])
@@ -940,13 +981,13 @@ class TestMPyNode(unittest.TestCase):
 
         py_node = TestChildClass()
 
-        for i, attr_name in enumerate(TestChildClass.INIT_INPUT_ATTRS):
+        for attr_name in TestChildClass.INIT_INPUT_ATTRS:
             self.assertTrue(py_node.hasAttr(attr_name))
 
-        for i, attr_name in enumerate(TestChildClass.INIT_OUTPUT_ATTRS):
+        for attr_name in TestChildClass.INIT_OUTPUT_ATTRS:
             self.assertTrue(py_node.hasAttr(attr_name))
 
-        for i, attr_name in enumerate(TestChildClass.INIT_ATTRS):
+        for attr_name in TestChildClass.INIT_ATTRS:
             self.assertTrue(py_node.hasAttr(attr_name))
 
         attr_type = "float"
@@ -954,27 +995,53 @@ class TestMPyNode(unittest.TestCase):
         output_attr = "translateX"
         anim_values = (1.0, 100.0)
 
-        self._runFunctionalTest(in_node, out_node, attr_type, input_attr, output_attr, input_attr, anim_values, False, py_node=py_node)
-
+        self._runFunctionalTest(
+            in_node,
+            out_node,
+            attr_type,
+            input_attr,
+            output_attr,
+            input_attr,
+            anim_values,
+            False,
+            py_node=py_node,
+        )
 
     def testReduce(self):
-
         exp = "floatOutput = floatInput * 2.0\nintOutput = intInput + enumInput"
 
         node = MPyNode()
         node.rename("test_mpynode")
 
-        input_maps = {"floatInput":{"attr_type":"float", "keyable":True, "defaultValue":100.0},
-                      "intInput":{"attr_type":"int","min":1, "max":3, "channelBox":True, "defaultValue":3},
-                      "enumInput":{"attr_type":"enum", "enumName":"one=1:three=3:five=5", "defaultValue":1},
-                      "stringInput":{"attr_type":"string"},
-                      "arrayInput":{"attr_type":"float", "is_array":True},
-                      "boolInput":{"attr_type":"bool", "defaultValue":True}}
+        input_maps = {
+            "floatInput": {
+                "attr_type": "float",
+                "keyable": True,
+                "defaultValue": 100.0,
+            },
+            "intInput": {
+                "attr_type": "int",
+                "min": 1,
+                "max": 3,
+                "channelBox": True,
+                "defaultValue": 3,
+            },
+            "enumInput": {
+                "attr_type": "enum",
+                "enumName": "one=1:three=3:five=5",
+                "defaultValue": 1,
+            },
+            "stringInput": {"attr_type": "string"},
+            "arrayInput": {"attr_type": "float", "is_array": True},
+            "boolInput": {"attr_type": "bool", "defaultValue": True},
+        }
 
-        output_maps = {"floatOutput":{"attr_type":"float", "defaultValue":1.0},
-                       "intOutput":{"attr_type":"int", "defaultValue":0}}
+        output_maps = {
+            "floatOutput": {"attr_type": "float", "defaultValue": 1.0},
+            "intOutput": {"attr_type": "int", "defaultValue": 0},
+        }
 
-        stored_vars = {"var_1":1.0, "var_2":2.0}
+        stored_vars = {"var_1": 1.0, "var_2": 2.0}
 
         for attr_name, attr_map in input_maps.items():
             node.addInputAttr(attr_name, **attr_map)
@@ -995,13 +1062,13 @@ class TestMPyNode(unittest.TestCase):
         self.assertEqual(len(result_inputs), len(input_maps))
 
         for attr_name, attr_data in result_inputs.items():
-            #self.assertTrue(input_maps.has_key(attr_name))
+            # self.assertTrue(input_maps.has_key(attr_name))
             self.assertTrue(attr_name in input_maps)
             test_data = input_maps[attr_name]
             self.assertEqual(len(attr_data), len(test_data))
 
             for key, val in attr_data.items():
-                #self.assertTrue(test_data.has_key(key))
+                # self.assertTrue(test_data.has_key(key))
                 self.assertTrue(key in test_data)
                 self.assertEqual(val, test_data[key])
 
@@ -1010,13 +1077,13 @@ class TestMPyNode(unittest.TestCase):
         self.assertEqual(len(result_outputs), len(output_maps))
 
         for attr_name, attr_data in result_outputs.items():
-            #self.assertTrue(output_maps.has_key(attr_name))
+            # self.assertTrue(output_maps.has_key(attr_name))
             self.assertTrue(attr_name in output_maps)
             test_data = output_maps[attr_name]
             self.assertEqual(len(attr_data), len(test_data))
 
             for key, val in attr_data.items():
-                #self.assertTrue(test_data.has_key(key))
+                # self.assertTrue(test_data.has_key(key))
                 self.assertTrue(key in test_data)
                 self.assertEqual(val, test_data[key])
 
@@ -1032,14 +1099,18 @@ class TestMPyNode(unittest.TestCase):
         result_exp = new_node.getExpression()
         self.assertEqual(result_exp, exp)
 
-
-    def _runFunctionalGeoTest(self, in_nodes, input_attr, attr_type, is_array, expr_str, geo_points,
-                              attr_kargs=None):
-
+    def _runFunctionalGeoTest(
+        self,
+        in_nodes,
+        input_attr,
+        attr_type,
+        is_array,
+        expr_str,
+        geo_points,
+        attr_kargs=None,
+    ):
         if attr_kargs is None:
             attr_kargs = {}
-
-        out_node = MNode(mc.spaceLocator(name="out_node")[0])
 
         py_node = self.TEST_CLASS(name="test_py_node")
         py_node.setExpression(expr_str)
@@ -1057,21 +1128,38 @@ class TestMPyNode(unittest.TestCase):
             for i, in_node in enumerate(in_nodes):
                 in_node.connectAttr(input_attr, py_node, "inGeo[" + str(i) + "]")
 
-
         for i in range(len(in_nodes)):
-            print (py_node.getAttr("outAttr[" + str(i) + "]"))
+            print(py_node.getAttr("outAttr[" + str(i) + "]"))
 
-
-    def _runFunctionalTest(self, in_node, out_node, attr_type, input_attr, output_attr, anim_attr, anim_values, is_array, py_node=None,
-                           out_attr_type=None, input_value=None, expr_str=None, output_attr_2=None, attr_kargs=None, use_comp_names=False):
-
+    def _runFunctionalTest(
+        self,
+        in_node,
+        out_node,
+        attr_type,
+        input_attr,
+        output_attr,
+        anim_attr,
+        anim_values,
+        is_array,
+        py_node=None,
+        out_attr_type=None,
+        input_value=None,
+        expr_str=None,
+        output_attr_2=None,
+        attr_kargs=None,
+        use_comp_names=False,
+    ):
         in_node_name = str(in_node)
         out_node_name = str(out_node)
         in_attr_name = "inAttr"
         out_attr_name = "outAttr"
         comp_count_attr = "computeCount"
         attr_mel_type = MPyNode._NEW_INPUT_TYPES[attr_type]
-        out_mel_type = MPyNode._NEW_OUTPUT_TYPES[attr_type] if not out_attr_type else MPyNode._NEW_OUTPUT_TYPES[out_attr_type]
+        out_mel_type = (
+            MPyNode._NEW_OUTPUT_TYPES[attr_type]
+            if not out_attr_type
+            else MPyNode._NEW_OUTPUT_TYPES[out_attr_type]
+        )
 
         if attr_kargs is None:
             attr_kargs = {}
@@ -1086,10 +1174,16 @@ class TestMPyNode(unittest.TestCase):
             py_node = self.TEST_CLASS(name="test_py_node")
             py_node.setExpression(expr_str)
 
-            py_node.addInputAttr(in_attr_name, attr_type, is_array=is_array, **attr_kargs)
-            py_node.addOutputAttr(out_attr_name, out_attr_type, is_array=is_array, **attr_kargs)
+            py_node.addInputAttr(
+                in_attr_name, attr_type, is_array=is_array, **attr_kargs
+            )
+            py_node.addOutputAttr(
+                out_attr_name, out_attr_type, is_array=is_array, **attr_kargs
+            )
 
-            py_node.addInputAttr("dummyInput", "float", is_array=True) ##adding to make sure it doesn't cause multiple calls to compute()
+            py_node.addInputAttr(
+                "dummyInput", "float", is_array=True
+            )  ##adding to make sure it doesn't cause multiple calls to compute()
             py_node.setAttr("dummyInput", size=10)
             py_node.addOutputAttr(comp_count_attr, "int")
 
@@ -1111,10 +1205,16 @@ class TestMPyNode(unittest.TestCase):
                 comp_name = MPyNode._VECTOR_COMP_NAMES[attr_type][i]
 
                 if is_array:
-                    in_node.connectAttr(input_attr + axis, py_node, pynode_in_attr + "." + in_attr_name + comp_name)
+                    in_node.connectAttr(
+                        input_attr + axis,
+                        py_node,
+                        pynode_in_attr + "." + in_attr_name + comp_name,
+                    )
 
                 else:
-                    in_node.connectAttr(input_attr + axis, py_node, in_attr_name + comp_name)
+                    in_node.connectAttr(
+                        input_attr + axis, py_node, in_attr_name + comp_name
+                    )
 
         if is_array and output_attr_2:
             py_node.setAttr(out_attr_name, size=2)
@@ -1124,7 +1224,6 @@ class TestMPyNode(unittest.TestCase):
 
             py_node.connectAttr(out_attr_name + "[1]", out_node, output_attr_2)
 
-
         child_in_attrs = in_node.attributeQuery(anim_attr, listChildren=True)
 
         if input_value is not None:
@@ -1133,14 +1232,22 @@ class TestMPyNode(unittest.TestCase):
         if anim_values is not None:
             ##---not a compound attr---##
             if not child_in_attrs:
-                mc.setKeyframe(in_node, attribute=anim_attr, time=1, value=anim_values[0])
-                mc.setKeyframe(in_node, attribute=anim_attr, time=100, value=anim_values[1])
+                mc.setKeyframe(
+                    in_node, attribute=anim_attr, time=1, value=anim_values[0]
+                )
+                mc.setKeyframe(
+                    in_node, attribute=anim_attr, time=100, value=anim_values[1]
+                )
 
             ##---compound attr---##
             else:
-                for i, child_attr in enumerate(child_in_attrs):
-                    mc.setKeyframe(in_node, attribute=anim_attr, time=1, value=anim_values[0][i])
-                    mc.setKeyframe(in_node, attribute=anim_attr, time=100, value=anim_values[1][i])
+                for i, _ in enumerate(child_in_attrs):
+                    mc.setKeyframe(
+                        in_node, attribute=anim_attr, time=1, value=anim_values[0][i]
+                    )
+                    mc.setKeyframe(
+                        in_node, attribute=anim_attr, time=100, value=anim_values[1][i]
+                    )
 
         out_file_name = os.environ["TEMP"].replace("\\", "/") + "/test_mpynode.ma"
 
@@ -1150,7 +1257,6 @@ class TestMPyNode(unittest.TestCase):
         mc.file(save=True, force=True, type="mayaAscii")
 
         for i in range(2):
-
             ##--reopen scene second time around---##
             if i:
                 mc.file(out_file_name, open=True, force=True)
@@ -1162,7 +1268,6 @@ class TestMPyNode(unittest.TestCase):
                     in_node.setAttr(input_attr, input_value, type=attr_mel_type)
 
             for f in range(101):
-
                 mc.currentTime(f, update=True)
 
                 in_val = in_node.getAttr(input_attr)
@@ -1178,31 +1283,31 @@ class TestMPyNode(unittest.TestCase):
 
 
 class TestChildClass(MPyNode):
-
     INIT_EXPRESSION_STR = "outAttr = inAttr\nif not hasattr(self, '_comp_count'):\n    self._comp_count = 0\nelse:    self._comp_count += 1\ncomputeCount=self._comp_count"
 
-    INIT_INPUT_ATTRS = {"inAttr":{"attr_type":"float", "is_array":False}}
+    INIT_INPUT_ATTRS = {"inAttr": {"attr_type": "float", "is_array": False}}
 
-    INIT_OUTPUT_ATTRS = {"outAttr":{"attr_type":"float", "is_array":False},
-                         "computeCount":{"attr_type":"int", "is_array":False}}
+    INIT_OUTPUT_ATTRS = {
+        "outAttr": {"attr_type": "float", "is_array": False},
+        "computeCount": {"attr_type": "int", "is_array": False},
+    }
 
-    INIT_ATTRS = {"testAttr1":{"attr_type":"message"}}
-
-
-
-#class TestMPyShape(TestMPyNode):
-
-    #TEST_CLASS = MPyShape
+    INIT_ATTRS = {"testAttr1": {"attr_type": "message"}}
 
 
-    #def testShapeAttrs(self):
+# class TestMPyShape(TestMPyNode):
 
-        #node = self.TEST_CLASS(name="testShape")
-
-        #for attr_name in (self.TEST_CLASS.COMPUTE_SHAPE_ATTR_NAME, self.TEST_CLASS.VERT_POS_ATTR_NAME):
-            #self.assertTrue(node.hasAttr(attr_name))
+# TEST_CLASS = MPyShape
 
 
-    #def testFunctionalShapeAttrs(self):
+# def testShapeAttrs(self):
 
-        #pass
+# node = self.TEST_CLASS(name="testShape")
+
+# for attr_name in (self.TEST_CLASS.COMPUTE_SHAPE_ATTR_NAME, self.TEST_CLASS.VERT_POS_ATTR_NAME):
+# self.assertTrue(node.hasAttr(attr_name))
+
+
+# def testFunctionalShapeAttrs(self):
+
+# pass

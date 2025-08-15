@@ -1,66 +1,64 @@
-import os
-
 import maya.cmds as mc
-import maya.OpenMayaUI as omui
 import maya.OpenMaya as om
+import maya.OpenMayaUI as omui
 
 try:
     import shiboken2 as shiboken
-    
+
 except ImportError:
     import shiboken6 as shiboken
 
-from Qt.QtCore import Signal, Slot, QObject
-from Qt.QtWidgets import QWidget, QApplication
+from Qt.QtCore import QObject, Signal, Slot
+from Qt.QtWidgets import QApplication, QWidget
 
 
 class QMayaMain(object):
     """
     Class for interacting with the Maya UI on the Qt level
     """
-    
+
     MAIN_WIN = None
-    
+
     SCENE_SIGNAL_OBJ = None
-    
+
     SCENE_OPENED_CALLBACK = None
     PRE_SCENE_OPENED_CALLBACK = None
     DAG_OBJ_CREATED_CALLBACK = None
-    
-    
+
     @classmethod
     def getMainWindow(cls):
         """
         Returns the main Maya ui as a QWidget
-        
+
         **RETURNS**		QWidget or None
         """
-        
+
         if cls.MAIN_WIN is not None:
             return cls.MAIN_WIN
-    
+
         ptr = omui.MQtUtil.mainWindow()
-    
+
         ##---if ptr is None, that means Maya is in some sort of batch mode (no ui)---##
         if ptr is not None:
-            #cls.MAIN_WIN = shiboken.wrapInstance(long(ptr), QWidget)
+            # cls.MAIN_WIN = shiboken.wrapInstance(long(ptr), QWidget)
             app = QApplication.instance()
-            cls.MAIN_WIN = next(w for w in app.topLevelWidgets() if w.objectName()=='MayaWindow') 
-                
+            cls.MAIN_WIN = next(
+                w for w in app.topLevelWidgets() if w.objectName() == "MayaWindow"
+            )
+
             return cls.MAIN_WIN
-        
+
         else:
             cls.MAIN_WIN = None
-    
+
         return None
-    
-    
+
     @classmethod
     def getSignalObject(cls):
         """
         Get the QMayaSignals object being used by this class. If one does not exist,
         a new one will be created and returned.
-        
+
         :RETURNS:	QMayaSignals
         """
 
@@ -69,92 +67,83 @@ class QMayaMain(object):
 
         return cls.SCENE_SIGNAL_OBJ
 
-
-
     @staticmethod
     def sceneOpenEvent(event):
         """
         :purpose:	Emits a sceneOpened Qt signal from the current OpenSceneEvent object for the
-        			scene. If no OpenSceneEvent object exists, one will be created.
+                                scene. If no OpenSceneEvent object exists, one will be created.
         :returns:	None
         """
 
         sig = QMayaMain.getSignalObject()
         sig.SCENE_OPENED.emit()
-        
-        
+
     @classmethod
     def createSceneOpenSignal(cls):
         """
         :purpose:	This function sets a SceneOpened MEventMessage callback that can be used
                     to keep any listening Qt widgets up to date. The the callback event
-                    tells the main maya window QObject to emit the signal SCENE_OPENED. 
-                    A new callback is only created if none yet exist 
+                    tells the main maya window QObject to emit the signal SCENE_OPENED.
+                    A new callback is only created if none yet exist
         :returns:	Qt Signal object
         """
-    
+
         if cls.SCENE_OPENED_CALLBACK is None:
-            
-            cls.SCENE_OPENED_CALLBACK = om.MSceneMessage.addCallback(om.MSceneMessage.kAfterOpen, cls.sceneOpenEvent)
-    
+            cls.SCENE_OPENED_CALLBACK = om.MSceneMessage.addCallback(
+                om.MSceneMessage.kAfterOpen, cls.sceneOpenEvent
+            )
+
         sig_obj = cls.getSignalObject()
-        
+
         return sig_obj.SCENE_OPENED
-    
-    
+
     @staticmethod
     def preSceneOpenEvent(event):
-        """
-        """
+        """ """
 
         sig = QMayaMain.getSignalObject()
         sig.PRE_SCENE_OPENED.emit()
-        
-        
+
     @classmethod
     def createPreSceneOpenSignal(cls):
-        """
-        """
-    
+        """ """
+
         if cls.PRE_SCENE_OPENED_CALLBACK is None:
-            
-            cls.PRE_SCENE_OPENED_CALLBACK = om.MSceneMessage.addCallback(om.MSceneMessage.kBeforeOpen, cls.preSceneOpenEvent)
-    
+            cls.PRE_SCENE_OPENED_CALLBACK = om.MSceneMessage.addCallback(
+                om.MSceneMessage.kBeforeOpen, cls.preSceneOpenEvent
+            )
+
         sig_obj = cls.getSignalObject()
-        
-        return sig_obj.PRE_SCENE_OPENED    
-    
-    
+
+        return sig_obj.PRE_SCENE_OPENED
+
     @staticmethod
     def dagObjCreatedEvent(event):
-        """
-        """
-        
+        """ """
+
         sig = QMayaMain.getSignalObject()
         sig.DAG_OBJECT_CREATED.emit()
-        
-        
+
     @classmethod
     def createDagObjCreatedSignal(cls):
-        """
-        """
-    
+        """ """
+
         if cls.DAG_OBJ_CREATED_CALLBACK is None:
-            
-            cls.DAG_OBJ_CREATED_CALLBACK = om.MEventMessage.addEventCallback("DagObjectCreated", cls.dagObjCreatedEvent)
-    
+            cls.DAG_OBJ_CREATED_CALLBACK = om.MEventMessage.addEventCallback(
+                "DagObjectCreated", cls.dagObjCreatedEvent
+            )
+
         return cls.getSignalObject().DAG_OBJECT_CREATED
-    
-    
+
+
 class QMayaSignals(QObject):
     """
     :purpose:	Signal object to be called when a new Maya scene is opened
     """
-    
+
     SCENE_OPENED = Signal()
     PRE_SCENE_OPENED = Signal()
     SCENE_IMPORTED = Signal()
-    
+
     DAG_OBJECT_CREATED = Signal()
     NAME_CHANGED = Signal()
-    

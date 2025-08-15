@@ -1,1 +1,1 @@
-from .ini_file import IniFile
+from mpylib.files.ini_file import IniFile
