@@ -1,9 +1,8 @@
 import os
 import types
 
-from Qt.QtCore import Qt
 
-from Qt.QtWidgets import QHeaderView, QTableWidget, QTableWidgetItem
+from mpylib.ui.qt_wrapper import Qt, QHeaderView, QTableWidget, QTableWidgetItem
 
 
 class QtPyProfileTable(QTableWidget):

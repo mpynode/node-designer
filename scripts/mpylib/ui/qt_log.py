@@ -1,9 +1,9 @@
 import sys
 import traceback
 
-from Qt.QtCore import Qt
-from Qt.QtGui import QColor, QTextCursor
-from Qt.QtWidgets import QAction, QMenu, QTextEdit
+from mpylib.ui.qt_wrapper import Qt
+from mpylib.ui.qt_wrapper import QColor, QTextCursor
+from mpylib.ui.qt_wrapper import QAction, QMenu, QTextEdit
 
 
 class QtLog(QTextEdit):

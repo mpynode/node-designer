@@ -1,15 +1,8 @@
-##---for some reason the Qt.py shim does not support QregularExpression from QtCore
-try:
-    from Qt.QtCore import QRegularExpression
+from mpylib.ui.qt_wrapper import QRegularExpression
 
-except ImportError:
-    try:
-        from PySide6.QtCore import QRegularExpression
-    except ImportError:
-        from PySide2.QtCore import QRegularExpression
 
-from Qt.QtGui import QColor, QFont, QSyntaxHighlighter, QTextCharFormat
-from Qt.QtWidgets import QTextEdit
+from mpylib.ui.qt_wrapper import QColor, QFont, QSyntaxHighlighter, QTextCharFormat
+from mpylib.ui.qt_wrapper import QTextEdit
 
 
 class QtPythonHighlighter(QSyntaxHighlighter):

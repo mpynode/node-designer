@@ -1,7 +1,7 @@
 from mpylib.ui.qt_py_highlighter import QtPythonHighlighter
-from Qt.QtCore import QEvent, QRect, QSize, Qt
-from Qt.QtGui import QColor, QFont, QFontMetrics, QPainter, QTextFormat
-from Qt.QtWidgets import QPlainTextEdit, QTextEdit, QWidget
+from mpylib.ui.qt_wrapper import QEvent, QRect, QSize, Qt
+from mpylib.ui.qt_wrapper import QColor, QFont, QFontMetrics, QPainter, QTextFormat
+from mpylib.ui.qt_wrapper import QPlainTextEdit, QTextEdit, QWidget
 
 
 class QtLineNumberArea(QWidget):

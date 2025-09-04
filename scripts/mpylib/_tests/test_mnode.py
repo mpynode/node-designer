@@ -1,6 +1,7 @@
 import os
 import unittest
 from collections import OrderedDict
+import tempfile
 
 try:
     import maya.standalone
@@ -306,27 +307,25 @@ class TestMNode(unittest.TestCase):
 
                 node_names.append(node.getName())
 
-        tmp_path = os.environ["TEMP"] + "/testIsFromReferencedFile.ma"
-        mc.file(rename=tmp_path)
-        mc.file(force=True, save=True, type="mayaAscii")
+        with tempfile.NamedTemporaryFile(mode='w+', delete=True, suffix='.ma') as temp_file:
+            mc.file(rename=temp_file.name)
+            mc.file(force=True, save=True, type="mayaAscii")
+            mc.file(force=True, newFile=True)
+    
+            mc.file(
+                temp_file.name,
+                reference=True,
+                type="mayaAscii",
+                mergeNamespacesOnClash=False,
+                namespace="test",
+                options="v=1",
+            )
+    
+            for node_name in node_names:
+                node = MNode("test:" + node_name)
+                self.assertTrue(node.isFromReferencedFile())
+    
 
-        mc.file(force=True, newFile=True)
-
-        mc.file(
-            tmp_path,
-            reference=True,
-            type="mayaAscii",
-            mergeNamespacesOnClash=False,
-            namespace="test",
-            options="v=1",
-        )
-
-        for node_name in node_names:
-            node = MNode("test:" + node_name)
-
-            self.assertTrue(node.isFromReferencedFile())
-
-        os.remove(tmp_path)
 
     def testLs(self):
         nodes = self.TEST_CLASS.ls()

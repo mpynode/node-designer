@@ -45,7 +45,9 @@ import os
 import stat
 import sys
 import traceback
-import urllib.request as urllib2
+import urllib
+import certifi
+import ssl
 import webbrowser
 from collections import OrderedDict
 
@@ -57,8 +59,12 @@ import maya.mel as mel
 unicode = str
 unichr = chr
 
-from Qt.QtCore import QObject, QRegExp, QSize, Qt, Signal, Slot
-from Qt.QtGui import (
+from mpylib.ui.qt_wrapper import (
+    QObject,
+    QSize,
+    Qt,
+    Signal,
+    Slot,
     QColor,
     QDoubleValidator,
     QFont,
@@ -68,8 +74,6 @@ from Qt.QtGui import (
     QKeySequence,
     QPixmap,
     QTextCursor,
-)
-from Qt.QtWidgets import (
     QAbstractItemView,
     QAction,
     QButtonGroup,
@@ -290,7 +294,7 @@ class NDMainWindow(QMayaWindow):
     FILE_ASCII_FILTER = "Ascii (*." + MPyNode.ASCII_FILE_EXT + ")"
     EXPORT_FILE_FILTERS = FILE_BINARY_FILTER + ";;" + FILE_ASCII_FILTER
 
-    HELP_DOCS_URL = "http://www.mpynode.com/node-designer.html"
+    HELP_DOCS_URL = "https://github.com/mpynode/node-designer"
     HELP_API_DOCS_URL = "https://mpynode.bitbucket.io/index.html"
 
     def __init__(self):
@@ -811,8 +815,9 @@ class NDMainWindow(QMayaWindow):
 
     @logError
     def openDocPage(self, url):
+        context = ssl.create_default_context(cafile=certifi.where())
         try:
-            urllib2.urlopen(url)  # Make sure site is reachable.
+            urllib.request.urlopen(url, context=context, timeout=5) # Make sure site is reachable.
             webbrowser.open(url)
         except:
             self._log_widget.write("URL Unreachable: " + url, QtLog.ERROR_TYPE)

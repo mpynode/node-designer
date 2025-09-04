@@ -8,8 +8,8 @@ try:
 except ImportError:
     import shiboken6 as shiboken
 
-from Qt.QtCore import QObject, Signal, Slot
-from Qt.QtWidgets import QApplication, QWidget
+from mpylib.ui.qt_wrapper import QObject, Signal, Slot
+from mpylib.ui.qt_wrapper import QApplication, QWidget
 
 
 class QMayaMain(object):

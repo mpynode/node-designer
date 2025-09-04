@@ -1,6 +1,6 @@
 from mpylib.ui.mqt_main import QMayaMain
 
-from Qt.QtWidgets import QDockWidget
+from mpylib.ui.qt_wrapper import QDockWidget
 
 
 class QMayaDockWidget(QDockWidget):

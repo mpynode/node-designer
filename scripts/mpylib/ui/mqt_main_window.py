@@ -2,7 +2,7 @@ import maya.cmds as mc
 
 from mpylib.ui.mqt_main import QMayaMain
 
-from Qt.QtWidgets import QMainWindow
+from mpylib.ui.qt_wrapper import QMainWindow
 
 
 class QMayaWindow(QMainWindow):

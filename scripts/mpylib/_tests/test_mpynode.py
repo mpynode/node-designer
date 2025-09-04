@@ -82,28 +82,26 @@ class TestMPyNode(unittest.TestCase):
             self.testInit()
             node = self.TEST_CLASS("test_py_node")
 
-            temp_file = os.path.join(os.environ["TEMP"], f"testExportToFile.{file_ext}")
-            if os.path.exists(temp_file):
-                os.remove(temp_file)
+            with tempfile.NamedTemporaryFile(mode='w+', delete=True, suffix=f'.{file_ext}') as temp_file:
+                os.remove(temp_file.name)
+                self.assertFalse(os.path.exists(temp_file.name))
+                node.exportToFile(temp_file.name, use_binary=use_binary)
+                self.assertTrue(os.path.exists(temp_file.name))
+    
+                mc.file(newFile=True, force=True)
+                with open(temp_file.name, "rb" if use_binary else "r") as fh:
+                    try:
+                        node = (
+                            pickle.load(fh)
+                            if use_binary
+                            else pickle.loads(fh.read().encode("latin1"))
+                        )
+                    except Exception:
+                        raise
+                    else:
+                        self.assertTrue(node.isValid())
 
-            self.assertFalse(os.path.exists(temp_file))
-            node.exportToFile(temp_file, use_binary=use_binary)
-            self.assertTrue(os.path.exists(temp_file))
 
-            mc.file(newFile=True, force=True)
-            with open(temp_file, "rb" if use_binary else "r") as fh:
-                try:
-                    node = (
-                        pickle.load(fh)
-                        if use_binary
-                        else pickle.loads(fh.read().encode("latin1"))
-                    )
-                except Exception:
-                    raise
-                else:
-                    self.assertTrue(node.isValid())
-
-            os.remove(temp_file)
 
     def testImportFromFile(self):
         for use_binary in (True, False):
@@ -114,25 +112,23 @@ class TestMPyNode(unittest.TestCase):
             self.testInit()
             node = self.TEST_CLASS("test_py_node")
 
-            temp_file = os.path.join(os.environ["TEMP"], f"testExportToFile.{file_ext}")
-            if os.path.exists(temp_file):
-                os.remove(temp_file)
+            with tempfile.NamedTemporaryFile(mode='w+', delete=True, suffix=f'.{file_ext}') as temp_file:
+                os.remove(temp_file.name)
+                self.assertFalse(os.path.exists(temp_file.name))
+                node.exportToFile(temp_file.name, use_binary=use_binary)
+                self.assertTrue(os.path.exists(temp_file.name))
+    
+                mc.file(newFile=True, force=True)
+    
+                with open(temp_file.name, "rb" if use_binary else "r") as fh:
+                    node = (
+                        pickle.load(fh)
+                        if use_binary
+                        else pickle.loads(fh.read().encode("latin1"))
+                    )
+                    self.assertTrue(node.isValid())
 
-            self.assertFalse(os.path.exists(temp_file))
-            node.exportToFile(temp_file, use_binary=use_binary)
-            self.assertTrue(os.path.exists(temp_file))
-
-            mc.file(newFile=True, force=True)
-
-            with open(temp_file, "rb" if use_binary else "r") as fh:
-                node = (
-                    pickle.load(fh)
-                    if use_binary
-                    else pickle.loads(fh.read().encode("latin1"))
-                )
-                self.assertTrue(node.isValid())
-
-            os.remove(temp_file)
+  
 
     def testSetExpression(self):
         node = self.TEST_CLASS()
@@ -494,22 +490,22 @@ class TestMPyNode(unittest.TestCase):
 
         self.assertEqual(out_value, 1.0)
 
-        out_file_name = os.environ["TEMP"].replace("\\", "/") + "/test_mpynode.ma"
-
-        mc.file(rename=out_file_name)
-        mc.file(save=True, force=True, type="mayaAscii")
-
-        for i in range(2, 100):
-            mc.file(out_file_name, open=True, force=True)
-
-            in_node = MNode("in_node")
-            out_node = MNode("out_node")
-            in_node.setAttr("translateX", float(i) + 1.0)
-            out_value = out_node.getAttr("translateX")
-
-            self.assertEqual(out_value, float(i))
-
+        with tempfile.NamedTemporaryFile(mode='w+', delete=True, suffix=f'.ma') as temp_file:
+            
+            mc.file(rename=temp_file.name)
             mc.file(save=True, force=True, type="mayaAscii")
+    
+            for i in range(2, 100):
+                mc.file(temp_file.name, open=True, force=True)
+    
+                in_node = MNode("in_node")
+                out_node = MNode("out_node")
+                in_node.setAttr("translateX", float(i) + 1.0)
+                out_value = out_node.getAttr("translateX")
+    
+                self.assertEqual(out_value, float(i))
+    
+                mc.file(save=True, force=True, type="mayaAscii")
 
     def testListOutputAttrs(self):
         self.testAddOutputAttr()
@@ -1249,38 +1245,36 @@ class TestMPyNode(unittest.TestCase):
                         in_node, attribute=anim_attr, time=100, value=anim_values[1][i]
                     )
 
-        out_file_name = os.environ["TEMP"].replace("\\", "/") + "/test_mpynode.ma"
-
-        py_node_name = str(py_node)
-
-        mc.file(rename=out_file_name)
-        mc.file(save=True, force=True, type="mayaAscii")
-
-        for i in range(2):
-            ##--reopen scene second time around---##
-            if i:
-                mc.file(out_file_name, open=True, force=True)
-                in_node = MNode(in_node_name)
-                out_node = MNode(out_node_name)
-                py_node = self.TEST_CLASS(py_node_name)
-
-                if not anim_values and attr_mel_type != "time":
-                    in_node.setAttr(input_attr, input_value, type=attr_mel_type)
-
-            for f in range(101):
-                mc.currentTime(f, update=True)
-
-                in_val = in_node.getAttr(input_attr)
-                out_val = out_node.getAttr(output_attr)
-
-                self.assertEqual(in_val, out_val)
-
-            if attr_type != "string":
-                self.assertTrue(py_node.getAttr("computeCount") in (99, 100))
-
-        if os.path.exists(out_file_name):
-            os.remove(out_file_name)
-
+        with tempfile.NamedTemporaryFile(mode='w+', delete=True, suffix='.ma') as temp_file:
+            
+            py_node_name = str(py_node)
+    
+            mc.file(rename=temp_file.name)
+            mc.file(save=True, force=True, type="mayaAscii")
+    
+            for i in range(2):
+                ##--reopen scene second time around---##
+                if i:
+                    mc.file(temp_file.name, open=True, force=True)
+                    in_node = MNode(in_node_name)
+                    out_node = MNode(out_node_name)
+                    py_node = self.TEST_CLASS(py_node_name)
+    
+                    if not anim_values and attr_mel_type != "time":
+                        in_node.setAttr(input_attr, input_value, type=attr_mel_type)
+    
+                for f in range(101):
+                    mc.currentTime(f, update=True)
+    
+                    in_val = in_node.getAttr(input_attr)
+                    out_val = out_node.getAttr(output_attr)
+    
+                    self.assertEqual(in_val, out_val)
+    
+                if attr_type != "string":
+                    self.assertTrue(py_node.getAttr("computeCount") in (99, 100))
+    
+    
 
 class TestChildClass(MPyNode):
     INIT_EXPRESSION_STR = "outAttr = inAttr\nif not hasattr(self, '_comp_count'):\n    self._comp_count = 0\nelse:    self._comp_count += 1\ncomputeCount=self._comp_count"
