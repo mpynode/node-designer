@@ -84,7 +84,7 @@ drift apart — two if-chains is how `np.take`/`np.cumsum` ended up free-only an
 `take`, `conj`, `byteswap`, `resize`, and the in-place statement forms
 `sort`/`fill`/`put`/`itemset`/`setflags` (plus the free `np.put`). A method
 numpy has and the table does not is a **test failure**
-(`_tests/test_py_to_cpp_array_methods.py`), not a surprise at compile time.
+(`tests/compile/transpiler/test_py_to_cpp_array_methods.py`), not a surprise at compile time.
 
 Measured numpy behaviours the kernels reproduce, each of which the obvious C++
 spelling gets wrong: `round` is half-to-**even** (`std::round` differs on 3 of
@@ -206,9 +206,9 @@ MPYNODE_ROOT=$PWD PYTHONPATH=$PWD/scripts QT_QPA_PLATFORM=offscreen \
 | `py_to_cpp_test.py` | AST transpiler parity + reject-or-lower | `ALL PASS` |
 | `nd_lower_test.py` | family lowering (generic/geo/deform/xform + RNG) vs numpy + rejects | `ALL PASS` |
 
-They are gate-protected by `_tests/test_native_transpiler_harnesses.py` (subprocess
+They are gate-protected by `tests/compile/transpiler/test_native_transpiler_harnesses.py` (subprocess
 under the gate's `mayapy`), so new fixtures ride along automatically. The flagship
-`_tests/test_native_gol_e2e.py` additionally compiles the full GoL mPyMesh
+`tests/compile/nodes/test_native_gol_e2e.py` additionally compiles the full GoL mPyMesh
 translation unit against the running mayapy's Maya devkit headers (SKIPs — never
 fails — with no compiler/devkit).
 

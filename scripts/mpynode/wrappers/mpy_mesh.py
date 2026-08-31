@@ -72,7 +72,7 @@ class MPyMesh(MPyNode):
     # construction in mpynode/_api2/mpy_mesh.py). A real plug WINS on read for
     # these, so a user input/output of the same name COEXISTS with the write
     # buffer instead of being shadowed. reserved_names un-reserves them;
-    # _tests/test_reserved_names AST-parses the real call.
+    # tests/authoring/test_reserved_names AST-parses the real call.
     COEXISTING_SCRATCH_SLOTS = (
         "points",
         "counts",

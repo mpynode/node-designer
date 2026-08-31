@@ -7,7 +7,7 @@ pane -- gets the real WRAPPER. The two are DISJOINT, so a panel that lists both
 while you edit one is advertising calls that raise ``AttributeError``. The
 editor pushes the active tab in via :meth:`NDFrameworkWidget.setActiveTier`,
 and ``plug_tree_walker.framework_scope_for`` decides which groups exist at all
-(see ``_tests/test_framework_tier_scope`` for the measurements behind it).
+(see ``tests/ui/test_framework_tier_scope`` for the measurements behind it).
 
 Groups, all display-only:
 
@@ -37,7 +37,7 @@ Groups, all display-only:
     tuple. CURATED per wrapper via ``AUTHORING_API``, not derived from
     ``dir()``: derivation could not tell a real authoring verb from internal
     table plumbing, so it listed methods the wrapper's own docstrings describe
-    as automatic. ``_tests/test_authoring_api_allowlist`` is the drift guard
+    as automatic. ``tests/framework/test_authoring_api_allowlist`` is the drift guard
     curation costs. Rows carry no spec, so the jump-to-source menu correctly
     stays inert on them.
   * **Draw types** -- mPyLocator on the COMPUTE tab only: the ``Draw*`` classes

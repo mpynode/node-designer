@@ -18,7 +18,7 @@ TWO copies, ONE behavior:
     BAREBONES fast path, the porter, tests) with NO Maya at import time.
 
 Because they cannot share code, they are kept in lock-step by the drift-guard
-test ``mpynode._tests.test_file_texture_ops_drift`` -- it execs the inline
+test ``tests.nodes.test_file_texture_ops_drift`` -- it execs the inline
 source and asserts every function/matrix here produces byte-identical output.
 When you change the math in one, change the other and the drift test proves it.
 

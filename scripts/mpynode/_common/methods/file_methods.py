@@ -29,7 +29,7 @@ def _helper(self, init_name, ops_name):
     pre-filter framework behaviour that is always available.
 
     Behaviour is identical either way: the two copies are held in lock-step by
-    ``_tests/test_file_texture_ops_drift`` (and both by the C++ nd_tex_*
+    ``tests/nodes/test_file_texture_ops_drift`` (and both by the C++ nd_tex_*
     kernels), and the signatures match argument-for-argument."""
     try:
         return self.get_init_helper(init_name)

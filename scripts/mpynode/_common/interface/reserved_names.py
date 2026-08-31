@@ -18,7 +18,7 @@ What counts as reserved, and where each part comes from:
   without Maya AND a real evaluation. They are declared on the wrapper class
   instead, across two tuples: ``INTERNAL_API_SLOTS`` (already shipping; also
   drives the Framework / Variables tabs) and ``RESERVED_COMPUTE_LOCALS`` (the
-  seeded names that are deliberately NOT UI rows). ``_tests/test_reserved_names``
+  seeded names that are deliberately NOT UI rows). ``tests/authoring/test_reserved_names``
   AST-parses the real seed dicts out of ``_api1`` / ``_api2`` and fails if the
   union stops matching.
 

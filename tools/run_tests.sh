@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Run MPyNode unit tests under mayapy 2026 with the standard env.
-# Usage:  tools/run_tests.sh mpynode._tests.test_draw_types [more modules...]
+# Usage:  tools/run_tests.sh tests.nodes.test_draw_types [more modules...]
 set -uo pipefail
 TOOLS_DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$TOOLS_DIR/.."
@@ -16,11 +16,14 @@ export MPYNODE_ROOT="$PWD"
 # site-packages, so that dir must NOT carry its own numpy: a second numpy
 # shadows Maya's 1.26.4 and fails three ndarray tests outright (ptp and
 # itemset were removed from ndarray in NumPy 2.0, to_device was added).
-export PYTHONPATH="$PWD/scripts${MPYNODE_EXTRA_PYTHONPATH:+:$MPYNODE_EXTRA_PYTHONPATH}"
+# $PWD itself is on the path so the suite imports as `tests.<area>.<module>`.
+# Discovery would add it anyway, but naming ONE module on the command line does
+# not go through discovery, and without this that form dies on `import tests`.
+export PYTHONPATH="$PWD/scripts:$PWD${MPYNODE_EXTRA_PYTHONPATH:+:$MPYNODE_EXTRA_PYTHONPATH}"
 export MAYA_PLUG_IN_PATH="$PWD/plug-ins"
 # T38: headless has no way to show the trust prompt, so an untrusted scene
 # fails closed -- Init AND Compute stop exec'ing. This is the suite's explicit
-# opt-in for the repo's own fixtures (run_tests.bat:28 already sets it). Tests
+# opt-in for the repo's own fixtures (run_tests.bat:35 already sets it). Tests
 # that exercise the DENY path pop it in setUp.
 export MPYNODE_TRUST_PICKLE=1
 
@@ -28,11 +31,11 @@ export MPYNODE_TRUST_PICKLE=1
 # exit 0, so failures were reported as success. tools/_unittest_exit.py runs the
 # same TestProgram and exits with the real status.
 #
-# No args => discover, matching run_tests.bat:30-33. Forwarding "$@" bare made a
+# No args => discover, matching run_tests.bat:37-41. Forwarding "$@" bare made a
 # bare `run_tests.sh` print "Ran 0 tests" / "OK" and exit 0 -- a false green that
 # survives the `^OK( \(|$)` grep the suite is verified with.
 if [ "$#" -eq 0 ]; then
-    "$MAYAPY" "$TOOLS_DIR/_unittest_exit.py" discover -s scripts/mpynode/_tests -t scripts -p "test_*.py"
+    "$MAYAPY" "$TOOLS_DIR/_unittest_exit.py" discover -s tests -t . -p "test_*.py"
 else
     "$MAYAPY" "$TOOLS_DIR/_unittest_exit.py" "$@"
 fi

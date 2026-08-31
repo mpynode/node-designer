@@ -7,7 +7,7 @@ Editor, Paint Skin Weights, ``cmds.skinPercent`` -- read and write the
 default reads. The Compute below is standard linear-blend skinning (LBS); it is
 numerically identical to the verified demo in
 ``_demos/build_mPySkinCluster_customLBS.py`` (proven by
-``_tests/test_skin_cluster_lbs_parity.py``), so a freshly-created node deforms
+``tests/nodes/test_skin_cluster_lbs_parity.py``), so a freshly-created node deforms
 correctly the moment weights are painted.
 
 The skinning math is the blessed ``self.linear_blend(rest, weights, joint,

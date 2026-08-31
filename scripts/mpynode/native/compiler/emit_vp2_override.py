@@ -7,7 +7,7 @@ a registered ``MHWRender::MPxShadingNodeOverride``, and codegen emits none. This
 module splices that override into the finalized single-node ``.cpp`` AFTER the
 porter (a deterministic text transform -- the AI body is reused untouched, so no
 re-port), mirroring the GUI-confirmed prototype in
-``_tests/data/scanline_defs.py`` but generalized to ANY mPyFile:
+``tests/data/scanline_defs.py`` but generalized to ANY mPyFile:
 
   * The override reuses Maya's built-in ``mayaFileTexture`` fragment (no custom
     GPU shader) and, in ``updateShader``, bakes the WHOLE pixel buffer for the

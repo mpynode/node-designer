@@ -57,7 +57,7 @@ class MPyLocator(MPyNode, MethodsSourceMixin):
     # for these, so a user input/output of the same name COEXISTS with the
     # write slot instead of being shadowed. The draw CONTEXT slots (time /
     # selected / is_lead / hovered / selection_color) have no backing plug and
-    # are NOT scratch, so they stay reserved. _tests/test_reserved_names
+    # are NOT scratch, so they stay reserved. tests/authoring/test_reserved_names
     # AST-parses the real call.
     COEXISTING_SCRATCH_SLOTS = (
         "auto_highlight",

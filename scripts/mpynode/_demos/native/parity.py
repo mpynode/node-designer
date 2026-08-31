@@ -2,7 +2,7 @@
 
 Builds (via :mod:`build`) and loads the native plugin, drives the full igloo
 through it at resolution 16, and asserts the emitted mesh matches BOTH the
-saved ``TestSDFIgloo`` reference (``_tests/test_assets/test_sdf.igloo.npz``,
+saved ``TestSDFIgloo`` reference (``tests/test_assets/test_sdf.igloo.npz``,
 12509 points) AND the pure-numpy ``sdf_dmc`` module -- proving the C++ is a
 faithful translation. It then times Python vs C++ and pushes the native node
 to resolution 32 to show it scales to denser fields with the same parity.
@@ -42,7 +42,7 @@ from mpynode._common.nodes.mesh import sdf_dmc
 import build as _build
 
 NATIVE_TYPE = "mPyMeshSDF"
-_REF_NPZ = os.path.join(_SCRIPTS, "mpynode", "_tests", "test_assets",
+_REF_NPZ = os.path.join(os.path.dirname(_SCRIPTS), "tests", "test_assets",
                         "test_sdf.igloo.npz")
 
 

@@ -1,0 +1,1648 @@
+"""NDApiView -- the Script tab's read-only baked-.py surface.
+
+The load-bearing claims are all mechanical, so they are all tested here:
+
+* the buffer is EXACTLY what the bake emits (no synthesized document);
+* expression bodies are really hidden, via QTextBlock.setVisible, which
+  QPlainTextDocumentLayout honours;
+* line numbers stay TRUE baked numbers across a fold, because blockNumber()
+  survives folding and the shipped gutter skips invisible blocks;
+* re-loading re-applies the fold -- setPlainText silently clears every
+  visibility flag, so a view that folds once and reloads shows everything;
+* looking at the tab never mutates the node (the bake's class-name resolver
+  prompts AND stamps _pyClass; this view must not go near it).
+"""
+
+from __future__ import annotations
+
+import os
+
+os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+_QAPP = None
+try:
+    from PySide6.QtWidgets import QApplication as _QApplication
+except Exception:
+    try:
+        from PySide2.QtWidgets import QApplication as _QApplication
+    except Exception:
+        _QApplication = None
+if _QApplication is not None:
+    _QAPP = _QApplication.instance() or _QApplication(["mayapy-apiview-test"])
+
+# Straight from the binding: qt_wrapper re-exports QRect and QSize but not
+# QPoint, and widening the shared shim for a test is the wrong direction.
+try:
+    from PySide6.QtCore import QPoint as _QPoint
+except Exception:
+    try:
+        from PySide2.QtCore import QPoint as _QPoint
+    except Exception:
+        _QPoint = None
+
+import unittest
+
+import maya.cmds as mc
+
+from tests._setup import ensure_plugins_loaded, standalone_init
+
+
+def setUpModule():
+    standalone_init()
+    ensure_plugins_loaded()
+
+
+def _qapp_available():
+    return _QAPP is not None
+
+
+@unittest.skipUnless(_qapp_available(), "Qt unavailable")
+class TestApiView(unittest.TestCase):
+    def _node(self, name="apiView"):
+        from mpynode import MPyNode
+
+        mc.file(new=True, force=True)
+        n = MPyNode.create(name=name)
+        n.add_input_attr("inFloat", "float")
+        n.add_output_attr("outFloat", "float")
+        n.set_init_expression(
+            "\n".join("a%d = %d" % (i, i) for i in range(20)) + "\n")
+        n.set_compute_expression("self.outFloat = self.inFloat\n")
+        return n
+
+    def _view(self, py_node):
+        from mpynode.ui.widgets.api_view import NDApiView
+
+        return NDApiView(py_node)
+
+    def test_buffer_is_exactly_the_bake(self):
+        from mpynode._common.io import py_export
+
+        n = self._node()
+        v = self._view(n)
+        try:
+            self.assertEqual(v.toPlainText(),
+                             py_export.generate_node_script(n))
+        finally:
+            v.deleteLater()
+
+    def test_expression_bodies_are_hidden(self):
+        n = self._node()
+        v = self._view(n)
+        try:
+            self.assertGreater(v.hiddenLineCount(), 15,
+                               "the 20-line init body should be folded away")
+            doc = v.document()
+            init = [r for r in v.regions() if r["kind"] == "expr_init"][0]
+            # the rail line stays visible -- it carries the managed call AND
+            # the user's first body line, which the exporter puts on one line
+            self.assertTrue(
+                doc.findBlockByNumber(init["start"]).isVisible())
+            for ln in range(init["start"] + 1, init["end"] + 1):
+                self.assertFalse(doc.findBlockByNumber(ln).isVisible(),
+                                 "line %d should be folded" % ln)
+        finally:
+            v.deleteLater()
+
+    def test_line_numbers_stay_true_baked_numbers(self):
+        # blockNumber() is preserved across a fold, so the gutter runs
+        # non-contiguously rather than renumbering. This is what lets the view
+        # claim its line numbers are the bake's line numbers.
+        n = self._node()
+        v = self._view(n)
+        try:
+            doc = v.document()
+            visible = [i for i in range(doc.blockCount())
+                       if doc.findBlockByNumber(i).isVisible()]
+            src_lines = v.source().split("\n")
+            for i in visible:
+                self.assertEqual(doc.findBlockByNumber(i).text(),
+                                 src_lines[i])
+            # and they really are non-contiguous
+            gaps = [b - a for a, b in zip(visible, visible[1:]) if b - a > 1]
+            self.assertTrue(gaps, "expected a numbering gap across the fold")
+        finally:
+            v.deleteLater()
+
+    def test_refresh_reapplies_the_fold(self):
+        # setPlainText clears every block's visibility flag.
+        n = self._node()
+        v = self._view(n)
+        try:
+            first = v.hiddenLineCount()
+            self.assertGreater(first, 0)
+            v.refresh()
+            self.assertEqual(v.hiddenLineCount(), first)
+        finally:
+            v.deleteLater()
+
+    def test_starts_clean_and_refuses_drops(self):
+        # No longer whole-widget read-only: the Methods regions are edited here.
+        # A drop can insert at one place and delete at another, which is two
+        # guarded ranges, so drops stay off.
+        n = self._node()
+        v = self._view(n)
+        try:
+            self.assertFalse(v.hasUnsavedChanges())
+            self.assertFalse(v.acceptDrops())
+        finally:
+            v.deleteLater()
+
+    def test_opening_the_view_does_not_stamp_py_class(self):
+        # resolve_bake_class_name() prompts and calls set_py_class(); the view
+        # must call the generator directly instead.
+        n = self._node()
+        before = n.get_py_class()
+        v = self._view(n)
+        try:
+            v.refresh()
+            self.assertEqual(n.get_py_class(), before)
+        finally:
+            v.deleteLater()
+
+    def test_edit_guard_refuses_generated_spans(self):
+        # setReadOnly is whole-widget, so the managed spans are protected by
+        # refusing the keystroke. A leak here corrupts the bake contract.
+        n = self._node()
+        v = self._view(n)
+        refusals = []
+        v.editRefused.connect(refusals.append)
+        try:
+            before = v.toPlainText()
+            for kind in ("class_decl", "build_signature", "return"):
+                hits = [r for r in v.regions() if r["kind"] == kind]
+                if not hits:
+                    continue
+                self._caret_on(v, hits[0]["start"])
+                self._type(v, "Z")
+                self.assertEqual(v.toPlainText(), before,
+                                 "%s accepted a keystroke" % kind)
+            self.assertTrue(refusals, "no refusal was reported")
+            self.assertFalse(v.hasUnsavedChanges())
+        finally:
+            v.deleteLater()
+
+    def test_edit_inside_a_member_splices_back_alone(self):
+        n = self._node()
+        n.set_methods_source(
+            "def helper(x):\n    return x * 2\n\n\n"
+            "def setup(self):\n    return 1\n")
+        v = self._view(n)
+        try:
+            member = [r for r in v.regions()
+                      if r["kind"] == "method_member"][0]
+            self._caret_on(v, member["end"], end_of_line=True)
+            self._type(v, "  # edited")
+            self.assertTrue(v.hasUnsavedChanges())
+            v.markSaved()
+            saved = n.get_methods_source()
+            self.assertIn("# edited", saved)
+            self.assertIn("return x * 2", saved, "helper() was disturbed")
+            self.assertFalse(v.hasUnsavedChanges())
+        finally:
+            v.deleteLater()
+
+    def test_a_def_the_bake_skips_survives_a_save(self):
+        # `build` is reserved: the exporter refuses it and emits a warning
+        # comment with NO editable region. Because write-back is a per-region
+        # splice and not a re-parse of the baked text, the def stays put.
+        n = self._node()
+        n.set_methods_source(
+            "def build(self):\n    return 'skipped'\n\n\n"
+            "def setup(self):\n    return 1\n")
+        v = self._view(n)
+        try:
+            member = [r for r in v.regions()
+                      if r["kind"] == "method_member"][0]
+            self._caret_on(v, member["end"], end_of_line=True)
+            self._type(v, "  # ok")
+            v.markSaved()
+            saved = n.get_methods_source()
+            self.assertIn("return 'skipped'", saved)
+            self.assertIn("# ok", saved)
+        finally:
+            v.deleteLater()
+
+    def test_unedited_save_is_a_no_op(self):
+        n = self._node()
+        n.set_methods_source("def setup(self):\n    return 1\n")
+        before = n.get_methods_source()
+        v = self._view(n)
+        try:
+            self.assertFalse(v.hasUnsavedChanges())
+            v.markSaved()
+            self.assertEqual(n.get_methods_source(), before)
+        finally:
+            v.deleteLater()
+
+    def test_refresh_does_not_discard_unsaved_edits(self):
+        # refresh() re-bakes from the node. Running it over a dirty buffer
+        # would silently throw away whatever was typed.
+        n = self._node()
+        n.set_methods_source("def setup(self):\n    return 1\n")
+        v = self._view(n)
+        try:
+            member = [r for r in v.regions()
+                      if r["kind"] == "method_member"][0]
+            self._caret_on(v, member["end"], end_of_line=True)
+            self._type(v, "  # keep me")
+            v.refresh()
+            self.assertIn("# keep me", v.toPlainText())
+            self.assertTrue(v.hasUnsavedChanges())
+        finally:
+            v.deleteLater()
+
+    def test_synthesized_classmethod_is_not_written_back(self):
+        # A cls-first def gains an @classmethod in the bake that has no
+        # counterpart in the source; splicing it back would add one per save.
+        n = self._node()
+        n.set_methods_source("def setup(cls):\n    return 1\n")
+        v = self._view(n)
+        try:
+            self.assertIn("@classmethod", v.toPlainText())
+            member = [r for r in v.regions()
+                      if r["kind"] == "method_member"][0]
+            self.assertTrue(member.get("synth_classmethod"))
+            self._caret_on(v, member["end"], end_of_line=True)
+            self._type(v, "  # x")
+            v.markSaved()
+            saved = n.get_methods_source()
+            self.assertNotIn("@classmethod", saved)
+            self.assertIn("# x", saved)
+        finally:
+            v.deleteLater()
+
+    @staticmethod
+    def _caret_on(view, line, end_of_line=False):
+        block = view.document().findBlockByNumber(int(line))
+        cursor = view.textCursor()
+        cursor.setPosition(
+            block.position() + (len(block.text()) if end_of_line else 0))
+        view.setTextCursor(cursor)
+
+    @staticmethod
+    def _type(view, text):
+        try:
+            from PySide6.QtGui import QKeyEvent
+            from PySide6.QtCore import QEvent, Qt as _Qt
+        except Exception:
+            from PySide2.QtGui import QKeyEvent
+            from PySide2.QtCore import QEvent, Qt as _Qt
+        for ch in text:
+            view.keyPressEvent(QKeyEvent(
+                QEvent.KeyPress, _Qt.Key_A, _Qt.NoModifier, ch))
+
+    def test_any_line_of_an_expression_resolves_to_its_tier(self):
+        n = self._node()
+        v = self._view(n)
+        try:
+            init = [r for r in v.regions() if r["kind"] == "expr_init"][0]
+            self.assertEqual(init["label"], "Init")
+            # the region is the hit target, so any of its lines routes
+            self.assertIsNotNone(v.regionAt(init["start"]))
+            self.assertEqual(v.regionAt(init["start"])["label"], "Init")
+        finally:
+            v.deleteLater()
+
+    def test_caret_never_rests_in_a_folded_line(self):
+        from mpynode.ui.qt_wrapper import QTextCursor
+
+        n = self._node()
+        v = self._view(n)
+        try:
+            init = [r for r in v.regions() if r["kind"] == "expr_init"][0]
+            hidden_line = init["start"] + 1
+            cur = v.textCursor()
+            cur.setPosition(
+                v.document().findBlockByNumber(hidden_line).position())
+            v.setTextCursor(cur)
+            self.assertTrue(v.textCursor().block().isVisible(),
+                            "caret was left inside a folded block")
+            del QTextCursor
+        finally:
+            v.deleteLater()
+
+    def test_escaped_expression_is_left_unfolded(self):
+        # A carriage return forces the repr'd accumulator form, which has no
+        # single rail to fold under; collapsing it would hide it behind
+        # nothing clickable.
+        from mpynode import MPyNode
+
+        mc.file(new=True, force=True)
+        n = MPyNode.create(name="apiEsc")
+        n.set_compute_expression("a = 1\r\nb = 2\n")
+        v = self._view(n)
+        try:
+            comp = [r for r in v.regions() if r["kind"] == "expr_compute"][0]
+            self.assertFalse(comp["inline"])
+            doc = v.document()
+            for ln in range(comp["start"], comp["end"] + 1):
+                self.assertTrue(doc.findBlockByNumber(ln).isVisible())
+        finally:
+            v.deleteLater()
+
+    def test_variable_name_parsed_off_a_declaration(self):
+        from mpynode.ui.widgets.api_view import _var_name_on
+
+        self.assertEqual(
+            _var_name_on("        node.add_variable('board', persistent=True)"),
+            "board")
+        self.assertEqual(
+            _var_name_on('        node.add_variable("b2", persistent=True)'),
+            "b2")
+        self.assertIsNone(_var_name_on("        node = cls.create(name=name)"))
+
+    def test_survives_a_node_with_no_expressions(self):
+        from mpynode import MPyNode
+
+        mc.file(new=True, force=True)
+        n = MPyNode.create(name="apiBare")
+        v = self._view(n)
+        try:
+            self.assertIn("class ", v.toPlainText())
+            # Expression bodies are the only thing that folds, and this node
+            # has none -- nothing generated is hidden on arrival any more.
+            self.assertEqual(v.hiddenLineCount(), 0)
+        finally:
+            v.deleteLater()
+
+
+@unittest.skipUnless(_qapp_available(), "Qt unavailable")
+class TestManagedMarkAndScrolling(unittest.TestCase):
+    """The managed mark moved off the text and into the gutter + a wash.
+
+    The old right-edge diamond was drawn at a VIEWPORT-fixed x. Qt scrolls a
+    QPlainTextEdit horizontally by blitting and repainting only the newly
+    exposed strip, so every diamond got copied sideways and nothing erased the
+    copy -- markers smeared into trails across the line.
+    """
+
+    def _node(self, name="apiMark"):
+        from mpynode import MPyNode
+
+        mc.file(new=True, force=True)
+        n = MPyNode.create(name=name)
+        n.set_init_expression(
+            "\n".join("a%d = %d" % (i, i) for i in range(20)) + "\n")
+        n.set_methods_source(
+            "def helper(x):\n"
+            + "".join("    y%d = x + %d\n" % (i, i) for i in range(40))
+            + "    return x\n")
+        return n
+
+    def _view(self, py_node):
+        from mpynode.ui.widgets.api_view import NDApiView
+
+        v = NDApiView(py_node)
+        v.resize(700, 500)
+        return v
+
+    def test_no_diamond_is_drawn_anywhere(self):
+        import inspect
+
+        from mpynode.ui.widgets import api_view
+
+        self.assertNotIn("◆", inspect.getsource(api_view))
+
+    def test_horizontal_scroll_is_wired_to_a_full_repaint(self):
+        n = self._node()
+        v = self._view(n)
+        try:
+            # disconnect() raises if the connection was never made, which is
+            # the whole claim: without it the blit leaves stale pixels behind.
+            v.horizontalScrollBar().valueChanged.disconnect(
+                v._repaint_viewport)
+        except (RuntimeError, TypeError) as exc:  # pragma: no cover
+            self.fail("hscroll not bound to a repaint: %s" % exc)
+        finally:
+            v.deleteLater()
+
+    def test_one_rule_decides_generated_for_gutter_and_wash(self):
+        # The bar and the tint are two halves of one signal; they read the
+        # same predicate so they cannot drift apart.
+        n = self._node()
+        v = self._view(n)
+        try:
+            decl = [r for r in v.regions() if r["kind"] == "class_decl"][0]
+            self.assertTrue(v._marks_generated(decl, decl["start"]))
+            mine = [r for r in v.regions() if v._is_editable(r)]
+            self.assertTrue(mine, "expected an editable member region")
+            self.assertFalse(v._marks_generated(mine[0], mine[0]["start"]))
+        finally:
+            v.deleteLater()
+
+    def test_the_gutter_claims_room_for_the_bar(self):
+        from mpynode.ui.widgets.editor_core import QtPythonEditor
+
+        n = self._node()
+        v = self._view(n)
+        plain = QtPythonEditor()
+        try:
+            self.assertGreater(v.lineNumberAreaWidth(),
+                               plain.lineNumberAreaWidth())
+        finally:
+            v.deleteLater()
+            plain.deleteLater()
+
+    def test_the_file_opens_on_code_not_on_a_generated_preamble(self):
+        # It used to open on 16 lines of export documentation, folded, above
+        # the imports. The top of the file belongs to whoever writes it.
+        n = self._node()
+        v = self._view(n)
+        try:
+            text = v.toPlainText()
+            self.assertNotIn("Baked by the MPyNode Node Designer", text)
+            first = next(ln for ln in text.split("\n") if ln.strip())
+            self.assertTrue(first.startswith("from mpynode import"), first)
+        finally:
+            v.deleteLater()
+
+    def test_refresh_keeps_your_place(self):
+        # refresh() runs on EVERY return to the tab and calls setPlainText,
+        # which sends the caret and the scrollbar home. The tier editors keep
+        # their place for free because they are buffers, not projections.
+        n = self._node()
+        v = self._view(n)
+        v.show()
+        try:
+            doc = v.document()
+            target = max(i for i in range(doc.blockCount())
+                         if doc.findBlockByNumber(i).isVisible())
+            self.assertTrue(v.goToLine(target))
+            caret = v.textCursor().blockNumber()
+            self.assertEqual(caret, target)
+            v.refresh()
+            self.assertEqual(v.textCursor().blockNumber(), caret)
+        finally:
+            v.deleteLater()
+
+    def test_a_restored_caret_never_lands_in_a_fold(self):
+        n = self._node()
+        v = self._view(n)
+        try:
+            rail = [r for r in v.regions() if r["kind"] == "expr_init"][0]
+            hidden = rail["start"] + 1
+            v._restore_position((hidden, 0, 0, 0))
+            self.assertTrue(v.textCursor().block().isVisible())
+        finally:
+            v.deleteLater()
+
+    def test_restore_clamps_to_a_shorter_document(self):
+        n = self._node()
+        v = self._view(n)
+        try:
+            v._restore_position((10 ** 6, 10 ** 6, 10 ** 6, 10 ** 6))
+            self.assertLess(v.textCursor().blockNumber(),
+                            v.document().blockCount())
+        finally:
+            v.deleteLater()
+
+
+@unittest.skipUnless(_qapp_available(), "Qt unavailable")
+class TestContextMenuIsGuardedToo(unittest.TestCase):
+    """``keyPressEvent`` is not the only way to mutate a document.
+
+    Qt's standard menu wires Cut / Delete straight to the C++ slots, so they
+    never reach the keystroke guard and a Python override of ``cut()`` is not
+    called either -- the menu has to be rebuilt, not patched.
+    """
+
+    def _node(self, name="apiMenu"):
+        from mpynode import MPyNode
+
+        mc.file(new=True, force=True)
+        n = MPyNode.create(name=name)
+        n.set_methods_source(
+            "@maya_command(name='doThing')\n"
+            "def do_thing(self, count=1):\n"
+            "    total = count + 1\n"
+            "    return total\n")
+        return n
+
+    def _view(self, py_node):
+        from mpynode.ui.widgets.api_view import NDApiView
+
+        v = NDApiView(py_node)
+        v.resize(700, 500)
+        v.show()
+        return v
+
+    class _Ev:
+        def __init__(self, pt):
+            self._pt = pt
+
+        def pos(self):
+            return self._pt
+
+    def _point_on(self, view, block_no, col=2):
+        from mpynode.ui.qt_wrapper import QTextCursor
+
+        block = view.document().findBlockByNumber(block_no)
+        cursor = QTextCursor(block)
+        cursor.setPosition(block.position() + min(col, len(block.text())))
+        point = view.cursorRect(cursor).center()
+        # Prove the coordinate really lands where we meant, rather than
+        # silently hit-testing onto a scrolled-away neighbour.
+        self.assertEqual(
+            view.cursorForPosition(point).block().blockNumber(), block_no)
+        return point
+
+    def test_generated_lines_get_the_read_only_menu(self):
+        n = self._node()
+        v = self._view(n)
+        try:
+            decl = [r for r in v.regions() if r["kind"] == "class_decl"][0]
+            self.assertFalse(
+                v._menu_may_mutate(self._Ev(self._point_on(v, decl["start"]))))
+        finally:
+            v.deleteLater()
+
+    def test_your_own_code_keeps_the_full_menu(self):
+        n = self._node()
+        v = self._view(n)
+        try:
+            mine = [r for r in v.regions() if v._is_editable(r)][0]
+            body = mine["start"] + 2
+            self.assertTrue(
+                v._menu_may_mutate(self._Ev(self._point_on(v, body, 6))))
+        finally:
+            v.deleteLater()
+
+    def test_a_selection_reaching_into_generated_text_locks_the_menu(self):
+        from mpynode.ui.qt_wrapper import QTextCursor
+
+        n = self._node()
+        v = self._view(n)
+        try:
+            mine = [r for r in v.regions() if v._is_editable(r)][0]
+            point = self._point_on(v, mine["start"] + 2, 6)
+            decl = [r for r in v.regions() if r["kind"] == "class_decl"][0]
+            block = v.document().findBlockByNumber(decl["start"])
+            cursor = v.textCursor()
+            cursor.setPosition(block.position())
+            cursor.setPosition(block.position() + len(block.text()),
+                               QTextCursor.KeepAnchor)
+            v.setTextCursor(cursor)
+            self.assertTrue(v.textCursor().hasSelection())
+            self.assertFalse(v._menu_may_mutate(self._Ev(point)))
+        finally:
+            v.deleteLater()
+
+    def test_load_from_file_is_offered_normally_but_not_here(self):
+        from mpynode.ui.widgets.editor_core import QtPythonEditor
+
+        n = self._node()
+        v = self._view(n)
+        plain = QtPythonEditor()
+        try:
+            self.assertTrue(plain._offers_file_load())
+            self.assertFalse(v._offers_file_load())
+        finally:
+            v.deleteLater()
+            plain.deleteLater()
+
+    def test_a_dismissed_menu_does_not_open_the_file_dialog(self):
+        # load_act is None when the action is suppressed, and a dismissed menu
+        # returns None too -- so the dispatch has to test "is not None" first.
+        import inspect
+
+        from mpynode.ui.widgets.editor_core import QtPythonEditor
+
+        src = inspect.getsource(QtPythonEditor.contextMenuEvent)
+        self.assertIn("load_act is not None and chosen is load_act", src)
+
+    def test_an_external_setplaintext_resyncs_the_regions(self):
+        # Rename and Promote both apply their rewrite through
+        # rename_var._set_editor_text -> setPlainText. Without a resync that
+        # unfolds the document and collapses every maintained cursor, and the
+        # next save splices the wrong slices back into the Methods source.
+        n = self._node()
+        v = self._view(n)
+        try:
+            cursors = len(v._region_cursors)
+            folded = v.hiddenLineCount()
+            baseline = v._methods_from_document()
+            v.setPlainText(v.toPlainText())
+            self.assertEqual(len(v._region_cursors), cursors)
+            self.assertEqual(v.hiddenLineCount(), folded)
+            self.assertEqual(v._methods_from_document(), baseline)
+        finally:
+            v.deleteLater()
+
+
+@unittest.skipUnless(_qapp_available(), "Qt unavailable")
+class TestManagedBlocksAreSolid(unittest.TestCase):
+    """A blank line between two generated regions belonged to NO region.
+
+    That is the worst of both worlds: unmarked, so it read as yours, and
+    outside every region cursor, so typing there was silently refused. It also
+    chopped ``build()`` into stripes instead of one managed block.
+    """
+
+    def _node(self, name="apiSolid"):
+        from mpynode import MPyNode
+
+        mc.file(new=True, force=True)
+        n = MPyNode.create(name=name)
+        n.add_input_attr("maxVal", "float", default_value=100.0)
+        n.add_input_attr("minVal", "float", default_value=1.0)
+        n.add_output_attr("sort", "float", is_array=True)
+        n.add_variable("board", persistent=True)
+        n.set_init_expression("# Init tab\na = 1\nb = 2\n")
+        n.set_methods_source("def helper(x):\n    return x\n")
+        return n
+
+    def _view(self, py_node):
+        from mpynode.ui.widgets.api_view import NDApiView
+
+        v = NDApiView(py_node)
+        v.resize(900, 620)
+        return v
+
+    def test_no_line_between_regions_belongs_to_nothing(self):
+        n = self._node()
+        v = self._view(n)
+        try:
+            claimed = sorted(v._block_region)
+            holes = [i for i in range(min(claimed), max(claimed) + 1)
+                     if v.regionAt(i) is None]
+            self.assertEqual(holes, [], "unclaimed interior lines")
+        finally:
+            v.deleteLater()
+
+    def test_every_gap_reads_as_managed_and_stays_locked(self):
+        n = self._node()
+        v = self._view(n)
+        try:
+            gaps = [i for i in sorted(v._block_region)
+                    if v.regionAt(i).get("kind") == "gap"]
+            self.assertTrue(gaps, "expected blank separators in the bake")
+            for i in gaps:
+                region = v.regionAt(i)
+                self.assertTrue(v._marks_generated(region, i),
+                                "gap %d should paint as managed" % (i + 1))
+                self.assertFalse(v._is_editable(region))
+        finally:
+            v.deleteLater()
+
+    def test_the_blank_line_inside_build_is_no_longer_a_trap(self):
+        # The reported bug: a blank line between the inputs and outputs blocks
+        # looked editable and refused every keystroke.
+        n = self._node()
+        v = self._view(n)
+        try:
+            src = v.source().split("\n")
+            first = next(i for i, t in enumerate(src) if "--- inputs ---" in t)
+            last = next(i for i, t in enumerate(src) if "--- outputs ---" in t)
+            blanks = [i for i in range(first, last) if not src[i].strip()]
+            self.assertTrue(blanks, "expected a separator inside build()")
+            for i in blanks:
+                region = v.regionAt(i)
+                self.assertIsNotNone(region)
+                self.assertTrue(v._marks_generated(region, i))
+                pos = v.document().findBlockByNumber(i).position()
+                self.assertFalse(v._allows(pos, pos),
+                                 "still locked, and now it looks locked")
+        finally:
+            v.deleteLater()
+
+    def test_blank_lines_inside_your_own_function_stay_yours(self):
+        # A gap INSIDE an editable region is within its span and must never be
+        # swept up by the gap fill.
+        from mpynode import MPyNode
+
+        mc.file(new=True, force=True)
+        n = MPyNode.create(name="apiOwnGap")
+        n.set_methods_source("def helper(x):\n    a = 1\n\n    return a\n")
+        v = self._view(n)
+        try:
+            member = [r for r in v.regions() if v._is_editable(r)][0]
+            for i in range(member["start"], member["end"] + 1):
+                self.assertIsNot(v.regionAt(i).get("kind"), "gap")
+                self.assertTrue(v._is_editable(v.regionAt(i)))
+        finally:
+            v.deleteLater()
+
+    def test_trailing_blanks_past_the_last_region_are_left_alone(self):
+        # Claiming them would paint a managed band under empty space.
+        n = self._node()
+        v = self._view(n)
+        try:
+            last = max(v._block_region)
+            for i in range(last + 1, v.document().blockCount()):
+                self.assertIsNone(v.regionAt(i))
+        finally:
+            v.deleteLater()
+
+
+@unittest.skipUnless(_qapp_available(), "Qt unavailable")
+class TestOneSignalNotTwo(unittest.TestCase):
+    """The per-tier zone bands are gone, and the wash follows the palette."""
+
+    def _view(self):
+        from mpynode import MPyNode
+        from mpynode.ui.widgets.api_view import NDApiView
+
+        mc.file(new=True, force=True)
+        n = MPyNode.create(name="apiOneSig")
+        n.set_init_expression("# Init tab\na = 1\nb = 2\nc = 3\n")
+        v = NDApiView(n)
+        v.resize(900, 620)
+        return v
+
+    def test_zone_colours_are_gone(self):
+        from mpynode.ui.widgets import api_view
+
+        self.assertFalse(hasattr(api_view, "_ZONE_COLORS"))
+
+    def test_the_wash_is_derived_from_the_palette_not_hard_coded(self):
+        # The editor is dark in Maya and light in a headless render. A fixed
+        # grey vanishes against one of them; blending toward the palette's
+        # text colour reads as grey on both.
+        from mpynode.ui.qt_wrapper import QPalette
+        from mpynode.ui.widgets.api_view import _TINT_ALPHA
+
+        v = self._view()
+        try:
+            wash = v._wash(_TINT_ALPHA)
+            text = v.palette().color(QPalette.Text)
+            self.assertEqual(
+                (wash.red(), wash.green(), wash.blue()),
+                (text.red(), text.green(), text.blue()))
+            self.assertEqual(wash.alpha(), _TINT_ALPHA)
+        finally:
+            v.deleteLater()
+
+    def test_the_fold_marker_sits_where_the_body_was(self):
+        # Drawn right-aligned at the viewport edge it landed ON TOP of the
+        # code whenever the rail line was long enough to reach.
+        import inspect
+
+        from mpynode.ui.widgets.api_view import NDApiView
+
+        src = inspect.getsource(NDApiView._paint_fold_marker)
+        self.assertIn("body_col", src)
+        self.assertIn("AlignLeft", src)
+
+    def test_the_rail_still_carries_a_fold_count(self):
+        # The count is drawn, not clicked: the marker teleports to the tier
+        # like the rest of the rail, and the fold moved to the context menu.
+        v = self._view()
+        try:
+            rail = [r for r in v.regions()
+                    if r.get("body_col") and r["kind"].startswith("expr_")]
+            self.assertTrue(rail)
+            for r in rail:
+                self.assertTrue(v._fold_counts.get(r["start"]))
+        finally:
+            v.deleteLater()
+
+
+@unittest.skipUnless(_qapp_available(), "Qt unavailable")
+class TestTheEditGuardBoundary(unittest.TestCase):
+    """Insertion and removal need DIFFERENT rules at a region's first char.
+
+    Measured: with a maintained cursor on 865..960, inserting at 865 moves it
+    to 866..961 and leaves the new character OUTSIDE, so the write-back drops
+    it. Removal has no such ambiguity -- taking text off the front just
+    shrinks the selection.
+
+    Applying the insert rule to both made the first character of every region
+    immortal: you could backspace a class away letter by letter and be left
+    with a lone ``c`` that nothing could delete, i.e. a syntax error the editor
+    would not let you repair.
+    """
+
+    METHODS = (
+        "class SetupError(Exception):\n"
+        '    """Cannot support setup."""\n'
+        "\n\n"
+        "def _has_shape(node, shape_types):\n"
+        "    return False\n"
+    )
+
+    def _view(self, name="apiGuard"):
+        from mpynode.wrappers.mpy_locator import MPyLocator
+        from mpynode.ui.widgets.api_view import NDApiView
+
+        mc.file(new=True, force=True)
+        node = MPyLocator.create(name=name)
+        node.set_methods_source(self.METHODS)
+        view = NDApiView(node)
+        view.resize(1000, 700)
+        return node, view
+
+    def _span(self, view, region):
+        doc = view.document()
+        first = doc.findBlockByNumber(region["start"])
+        last = doc.findBlockByNumber(view._claim_end(region))
+        return first.position(), last.position() + len(last.text())
+
+    def _first_editable(self, view):
+        return sorted((r for r in view.regions() if view._is_editable(r)),
+                      key=lambda r: r["start"])[0]
+
+    def test_a_whole_region_can_be_selected_and_deleted(self):
+        _node, v = self._view()
+        try:
+            lo, hi = self._span(v, self._first_editable(v))
+            self.assertTrue(v._allows(lo, hi, removing=True))
+        finally:
+            v.deleteLater()
+
+    def test_the_first_character_can_be_removed(self):
+        _node, v = self._view()
+        try:
+            lo, _hi = self._span(v, self._first_editable(v))
+            self.assertTrue(v._allows(lo, lo + 1, removing=True))
+        finally:
+            v.deleteLater()
+
+    def test_inserting_at_the_anchor_is_still_refused(self):
+        # The load-bearing half: relaxing this would lose the character.
+        _node, v = self._view()
+        try:
+            lo, _hi = self._span(v, self._first_editable(v))
+            self.assertFalse(v._allows(lo, lo))
+            self.assertTrue(v._allows(lo + 1, lo + 1))
+        finally:
+            v.deleteLater()
+
+    def test_a_removal_may_not_reach_outside_the_region(self):
+        _node, v = self._view()
+        try:
+            lo, hi = self._span(v, self._first_editable(v))
+            self.assertFalse(v._allows(lo - 1, lo + 1, removing=True))
+            self.assertFalse(v._allows(lo, hi + 5, removing=True))
+        finally:
+            v.deleteLater()
+
+    def test_deleting_a_class_reaches_the_methods_source_and_still_parses(self):
+        import ast
+
+        from mpynode.ui.qt_wrapper import QTextCursor
+
+        node, v = self._view()
+        v.show()
+        try:
+            region = self._first_editable(v)
+            lo, hi = self._span(v, region)
+            cursor = v.textCursor()
+            cursor.setPosition(lo)
+            cursor.setPosition(hi, QTextCursor.KeepAnchor)
+            v.setTextCursor(cursor)
+            self.assertTrue(v._allows(lo, hi, removing=True))
+            cursor.removeSelectedText()
+            v._after_edit()
+            v.markSaved()
+            source = node.get_methods_source()
+            self.assertNotIn("class SetupError", source)
+            self.assertIn("_has_shape", source, "the neighbour must survive")
+            ast.parse(source)
+        finally:
+            v.deleteLater()
+
+
+@unittest.skipUnless(_qapp_available(), "Qt unavailable")
+class TestGapsFollowTheirNeighbour(unittest.TestCase):
+    """A blank line between two of YOUR functions is yours, not the bake's."""
+
+    METHODS = (
+        "def one(x):\n    return x\n"
+        "\n\n"
+        "def two(x):\n    return x\n"
+    )
+
+    def _view(self, name="apiGaps"):
+        from mpynode.wrappers.mpy_locator import MPyLocator
+        from mpynode.ui.widgets.api_view import NDApiView
+
+        mc.file(new=True, force=True)
+        node = MPyLocator.create(name=name)
+        node.set_methods_source(self.METHODS)
+        view = NDApiView(node)
+        view.resize(1000, 700)
+        return node, view
+
+    def test_no_gap_between_two_editable_regions_reads_as_managed(self):
+        _node, v = self._view()
+        try:
+            regions = sorted(v.regions(), key=lambda r: r["start"])
+            offenders = []
+            for a, b in zip(regions, regions[1:]):
+                if not (v._is_editable(a) and v._is_editable(b)):
+                    continue
+                for line in range(a["end"] + 1, b["start"]):
+                    if v._marks_generated(v.regionAt(line), line):
+                        offenders.append(line + 1)
+            self.assertEqual(offenders, [])
+        finally:
+            v.deleteLater()
+
+    def test_you_can_type_in_the_gap_after_your_own_function(self):
+        _node, v = self._view()
+        try:
+            first = sorted((r for r in v.regions() if v._is_editable(r)),
+                           key=lambda r: r["start"])[0]
+            gap = first["end"] + 1
+            self.assertFalse(v.source().split("\n")[gap].strip(),
+                             "expected a blank separator")
+            pos = v.document().findBlockByNumber(gap).position()
+            self.assertTrue(v._allows(pos, pos))
+        finally:
+            v.deleteLater()
+
+    def test_a_gap_after_generated_code_stays_locked(self):
+        # Directionality is the rule: a gap joins the region ABOVE it. After
+        # the hoisted imports there is nothing of yours to attach to, so it
+        # stays the bake's. (The gap before ``class`` is a different case --
+        # it follows YOUR last function, so it is yours.)
+        _node, v = self._view()
+        try:
+            imports = [r for r in v.regions() if r["kind"] == "imports"][0]
+            after = imports["end"] + 1
+            region = v.regionAt(after)
+            self.assertIsNotNone(region)
+            self.assertFalse(v.source().split("\n")[after].strip())
+            self.assertTrue(v._marks_generated(region, after))
+            self.assertFalse(v._is_editable(region))
+        finally:
+            v.deleteLater()
+
+    def test_the_gap_before_the_class_belongs_to_your_last_function(self):
+        _node, v = self._view()
+        try:
+            decl = [r for r in v.regions() if r["kind"] == "class_decl"][0]
+            before = decl["start"] - 1
+            region = v.regionAt(before)
+            self.assertIsNotNone(region)
+            self.assertTrue(v._is_editable(region),
+                            "module scope: you must be able to add a def here")
+        finally:
+            v.deleteLater()
+
+    def test_saving_repeatedly_does_not_grow_blank_lines(self):
+        # _claim_end pulls blank lines the BAKE added into the region, and the
+        # Methods source never held them. Without the trailing strip on
+        # write-back the file gains a blank line on every single save.
+        node, v = self._view()
+        try:
+            before = node.get_methods_source()
+            for _ in range(4):
+                v.markSaved()
+                v.refresh(force=True)
+            self.assertEqual(node.get_methods_source(), before)
+        finally:
+            v.deleteLater()
+
+    def test_the_strip_helper_leaves_interior_blanks_alone(self):
+        from mpynode.ui.widgets.api_view import _strip_trailing_blanks
+
+        self.assertEqual(_strip_trailing_blanks("a\n\nb\n\n\n"), "a\n\nb")
+        self.assertEqual(_strip_trailing_blanks("a"), "a")
+        self.assertEqual(_strip_trailing_blanks("\n\n"), "")
+
+
+@unittest.skipUnless(_qapp_available(), "Qt unavailable")
+class TestFoldsAndWhatOpensThem(unittest.TestCase):
+    """One fold, one contract.
+
+    An EXPRESSION body opens -- but from the context menu, because the LEFT
+    click on its rail belongs to the tier it names. Spending that click on a
+    fold is what made ``‹ 80 lines ›`` refuse to take the user to their own
+    Compute code.
+
+    Nothing ELSE folds. The generated preamble used to, which meant the file
+    opened on documentation with a numbering hole in it; that text is on the
+    Identity tab and the top of the file is the user's own now.
+    """
+
+    def _view(self, name="apiFold"):
+        from mpynode.wrappers.mpy_locator import MPyLocator
+        from mpynode.ui.widgets.api_view import NDApiView
+
+        mc.file(new=True, force=True)
+        node = MPyLocator.create(name=name)
+        node.set_init_expression("# Init\na = 1\nb = 2\nc = 3\n")
+        view = NDApiView(node)
+        view.resize(1000, 700)
+        view.show()
+        # Offscreen, repaint() on an unmapped widget is a no-op, so the paint
+        # pass that records the marker rects never runs without this.
+        _QAPP.processEvents()
+        return node, view
+
+    def _repaint(self, view):
+        view.repaint()
+        _QAPP.processEvents()
+
+    def _rail(self, view):
+        return [r for r in view.regions() if r["kind"] == "expr_init"][0]
+
+    # -- nothing but an expression body ------------------------------------
+
+    def test_only_expression_bodies_are_folded_on_arrival(self):
+        _node, v = self._view()
+        try:
+            doc = v.document()
+            hidden = [i for i in range(doc.blockCount())
+                      if not doc.findBlockByNumber(i).isVisible()]
+            self.assertTrue(hidden, "the init body should still fold")
+            rails = [r for r in v.regions()
+                     if r["kind"].startswith("expr_") and r["end"] > r["start"]]
+            covered = set()
+            for r in rails:
+                covered.update(range(r["start"] + 1, r["end"] + 1))
+            self.assertFalse(set(hidden) - covered,
+                             "something other than an expression body folded")
+        finally:
+            v.deleteLater()
+
+    def test_the_users_own_header_is_never_folded(self):
+        # It is THEIR text at the top of THEIR file. Folding it would repeat
+        # the preamble mistake with the one block that is not generated.
+        from mpynode.wrappers.mpy_locator import MPyLocator
+        from mpynode.ui.widgets.api_view import NDApiView
+
+        mc.file(new=True, force=True)
+        node = MPyLocator.create(name="apiOwnHdr")
+        node.set_methods_source("# Mine.\n# Two lines of it.\n\ndef f(self):\n    return 1\n")
+        v = NDApiView(node)
+        v.resize(1000, 700)
+        try:
+            header = [r for r in v.regions() if r["kind"] == "header"][0]
+            doc = v.document()
+            for ln in range(header["start"], header["end"] + 1):
+                self.assertTrue(doc.findBlockByNumber(ln).isVisible(), ln)
+            self.assertFalse(v.toggleFoldAt(header["start"]))
+        finally:
+            v.deleteLater()
+
+    # -- an expression body ----------------------------------------------
+
+    def test_an_expression_body_toggles_from_the_menu(self):
+        _node, v = self._view()
+        try:
+            rail = self._rail(v)
+            doc = v.document()
+            body = range(rail["start"] + 1, rail["end"] + 1)
+            self.assertTrue(
+                all(not doc.findBlockByNumber(i).isVisible() for i in body))
+            self.assertTrue(v.toggleFoldAt(rail["start"]))
+            self.assertTrue(
+                all(doc.findBlockByNumber(i).isVisible() for i in body))
+            self.assertTrue(v.toggleFoldAt(rail["start"]))
+            self.assertTrue(
+                all(not doc.findBlockByNumber(i).isVisible() for i in body))
+        finally:
+            v.deleteLater()
+
+    def test_the_menu_reaches_the_fold_from_a_body_line_too(self):
+        # Collapse has to be findable from wherever the user is READING, not
+        # only from the one line that opened the body.
+        _node, v = self._view()
+        try:
+            rail = self._rail(v)
+            v.toggleFoldAt(rail["start"])
+            _QAPP.processEvents()
+            block = v.document().findBlockByNumber(rail["start"] + 2)
+            geo = v.blockBoundingGeometry(block).translated(v.contentOffset())
+            point = _QPoint(8, int(geo.top() + geo.height() / 2))
+            found = v._fold_region_at(point)
+            self.assertIsNotNone(found)
+            self.assertEqual(found["kind"], "expr_init")
+        finally:
+            v.deleteLater()
+
+    def test_an_open_fold_survives_the_rebake(self):
+        # refresh() runs on every return to the tab; an unfold that did not
+        # survive it would snap shut behind the user's back.
+        _node, v = self._view()
+        try:
+            rail = self._rail(v)
+            v.toggleFoldAt(rail["start"])
+            v.refresh(force=True)
+            self.assertTrue(
+                v.document().findBlockByNumber(rail["start"] + 1).isVisible())
+        finally:
+            v.deleteLater()
+
+    def test_toggling_a_line_that_is_not_a_rail_does_nothing(self):
+        _node, v = self._view()
+        try:
+            self.assertFalse(v.toggleFoldAt(10 ** 6))
+        finally:
+            v.deleteLater()
+
+    def test_the_rail_marker_covers_the_opening_delimiter_too(self):
+        # It starts at open_col -- where the call's argument begins -- NOT at
+        # body_col, which is three columns further right, past the opening
+        # delimiter. Anchored at body_col the reader was left looking at a
+        # bare triple quote and the first character of a body the marker says
+        # is not being shown.
+        _node, v = self._view()
+        try:
+            self._repaint(v)
+            rail = self._rail(v)
+            rect = v._marker_rects.get(rail["start"])
+            self.assertIsNotNone(rect, "no marker was drawn on the rail")
+            metrics = v.fontMetrics()
+            try:
+                char_w = metrics.horizontalAdvance("9")
+            except AttributeError:
+                char_w = metrics.width("9")
+            # The gap between the two IS the delimiter, and it is what the
+            # marker now swallows.
+            self.assertEqual(rail["body_col"] - rail["open_col"], 3)
+            open_at = (int(v.contentOffset().x())
+                       + int(rail["open_col"] * char_w))
+            self.assertEqual(rect[0], open_at)
+        finally:
+            v.deleteLater()
+
+    def test_the_folded_rail_shows_no_quotes_at_all(self):
+        # The rail used to open on a triple-SINGLE quote and close on a
+        # triple-DOUBLE one, because the closer was hardcoded while the opener
+        # is whichever of the two the exporter picked to dodge a collision in
+        # the body. Covering the whole argument means neither delimiter is
+        # drawn, so the two can no longer disagree.
+        _node, v = self._view()
+        try:
+            self._repaint(v)
+            rail = self._rail(v)
+            drawn = v.document().findBlockByNumber(rail["start"]).text()
+            visible = drawn[:rail["open_col"]]
+            self.assertNotIn("'", visible)
+            self.assertNotIn('"', visible)
+            self.assertTrue(visible.rstrip().endswith("("), visible)
+        finally:
+            v.deleteLater()
+
+    def test_an_opened_fold_leaves_no_stale_marker(self):
+        _node, v = self._view()
+        try:
+            rail = self._rail(v)
+            self._repaint(v)
+            self.assertIn(rail["start"], v._marker_rects)
+            v.toggleFoldAt(rail["start"])
+            self._repaint(v)
+            self.assertNotIn(rail["start"], v._marker_rects)
+        finally:
+            v.deleteLater()
+
+
+@unittest.skipUnless(_qapp_available(), "Qt unavailable")
+class TestAClickGoesWhereTheThingIsAuthored(unittest.TestCase):
+    """A generated block is a read-only rendering of something the user edits
+    somewhere else. Clicking it goes THERE.
+
+    The regression this pins: the fold marker used to swallow the click, so
+    ``‹ 80 lines ›`` -- the one part of the rail a user would aim at to reach
+    their Compute code -- was the only part that refused to.
+    """
+
+    def _view(self, name="apiJump"):
+        from mpynode import MPyNode
+        from mpynode.ui.widgets.api_view import NDApiView
+
+        mc.file(new=True, force=True)
+        node = MPyNode.create(name=name)
+        node.add_input_attr("inFloat", "float")
+        node.add_output_attr("outFloat", "float")
+        node.set_init_expression("import math\nseed = 1\nscale = 2\n")
+        node.set_compute_expression(
+            "\n".join("row_%02d = %d" % (i, i) for i in range(30)) + "\n")
+        view = NDApiView(node)
+        view.resize(1200, 800)
+        view.show()
+        _QAPP.processEvents()
+        view.repaint()
+        _QAPP.processEvents()
+        return node, view
+
+    def _click(self, view, point):
+        from mpynode.ui.qt_wrapper import Qt
+        try:
+            from PySide6.QtGui import QMouseEvent
+            from PySide6.QtCore import QEvent, QPointF
+        except Exception:
+            from PySide2.QtGui import QMouseEvent
+            from PySide2.QtCore import QEvent, QPointF
+        view.mousePressEvent(QMouseEvent(
+            QEvent.MouseButtonPress, QPointF(point),
+            Qt.LeftButton, Qt.LeftButton, Qt.NoModifier))
+        _QAPP.processEvents()
+
+    def _mid_of(self, view, line):
+        block = view.document().findBlockByNumber(line)
+        geo = view.blockBoundingGeometry(block).translated(
+            view.contentOffset())
+        return _QPoint(8, int(geo.top() + geo.height() / 2))
+
+    def test_clicking_the_fold_marker_reports_the_tier_and_stays_put(self):
+        # It used to raise the Compute tab. Retracted: the tier is already on
+        # screen under the marker, so the jump cost the reader their place. It
+        # reports the region -- the host highlights -- and nothing moves.
+        _node, v = self._view()
+        seen = []
+        v.regionActivated.connect(seen.append)
+        try:
+            rail = [r for r in v.regions()
+                    if r["kind"] == "expr_compute"][0]["start"]
+            rect = v._marker_rects.get(rail)
+            self.assertIsNotNone(rect, "no marker to aim at")
+            hidden = v.hiddenLineCount()
+            x0, x1, y0, y1 = rect
+            self._click(v, _QPoint(int((x0 + x1) / 2), int((y0 + y1) / 2)))
+            self.assertEqual([r["label"] for r in seen], ["Compute"])
+            self.assertEqual(v.hiddenLineCount(), hidden,
+                             "the click must not also expand the body")
+        finally:
+            v.deleteLater()
+
+    def test_clicking_the_call_text_reports_the_same_way(self):
+        # Both halves of the rail mean the same thing, so they must agree.
+        _node, v = self._view()
+        seen = []
+        v.regionActivated.connect(seen.append)
+        try:
+            rail = [r for r in v.regions()
+                    if r["kind"] == "expr_init"][0]["start"]
+            self._click(v, self._mid_of(v, rail))
+            self.assertEqual([r["label"] for r in seen], ["Init"])
+        finally:
+            v.deleteLater()
+
+    def test_the_view_no_longer_offers_a_tier_signal_at_all(self):
+        # Not merely unwired -- removed, so nothing can quietly reconnect it
+        # and bring the teleport back.
+        _node, v = self._view()
+        try:
+            self.assertFalse(hasattr(v, "tierActivated"))
+        finally:
+            v.deleteLater()
+
+    def test_an_attribute_block_routes_to_the_attributes_tab(self):
+        for kind, label in (("attrs_in", "Inputs"), ("attrs_out", "Outputs")):
+            _node, v = self._view()
+            seen = []
+            v.attributesActivated.connect(seen.append)
+            try:
+                region = [r for r in v.regions() if r["kind"] == kind][0]
+                self._click(v, self._mid_of(v, region["start"] + 1))
+                self.assertEqual(seen, [label])
+            finally:
+                v.deleteLater()
+
+    def test_the_variables_block_routes_even_off_its_comment_line(self):
+        # The comment line names no variable. It still means "variables", so
+        # swallowing the click there would make the block feel half-dead.
+        _node, v = self._view()
+        _node.set_variable("board", [1, 2, 3], persistent=True)
+        v.refresh(force=True)
+        _QAPP.processEvents()
+        seen = []
+        v.variableActivated.connect(seen.append)
+        try:
+            region = [r for r in v.regions() if r["kind"] == "vars"][0]
+            self._click(v, self._mid_of(v, region["start"]))
+            self.assertEqual(seen, [""])
+            del seen[:]
+            self._click(v, self._mid_of(v, region["start"] + 1))
+            self.assertEqual(seen, ["board"])
+        finally:
+            v.deleteLater()
+
+
+@unittest.skipUnless(_qapp_available(), "Qt unavailable")
+class TestYouCanMakeRoomAroundAManagedBlock(unittest.TestCase):
+    """Return opens a line above a managed block; Backspace closes it again.
+
+    The rule the user asked for, and the reason it needs both halves: a fold,
+    a gap or a boundary that can be collapsed but not restored is a one-way
+    door. Return with the caret at the head of ANY block pushes it down;
+    Backspace in the blank run above it pulls it back up until the two blocks
+    touch.
+
+    WHERE THE RESULT LIVES depends on the boundary, and that is not a detail:
+    the top of the file is Methods lines 1..N (real text, spliced back), while
+    a gap inside ``build()`` has no text to hold, so only the COUNT is stored
+    -- on the node, because the view re-bakes its buffer on every visit and
+    spacing kept in the widget would not survive a tab switch.
+    """
+
+    def _view(self, name="apiRoom"):
+        from mpynode import MPyNode
+        from mpynode.ui.widgets.api_view import NDApiView
+
+        mc.file(new=True, force=True)
+        node = MPyNode.create(name=name)
+        node.add_input_attr("inFloat", "float")
+        node.add_output_attr("outFloat", "float")
+        node.set_compute_expression("self.outFloat = self.inFloat\n")
+        view = NDApiView(node)
+        view.resize(900, 600)
+        return node, view
+
+    def _key(self, view, key, text=""):
+        from mpynode.ui.qt_wrapper import Qt
+        try:
+            from PySide6.QtGui import QKeyEvent
+            from PySide6.QtCore import QEvent
+        except ImportError:            # pragma: no cover
+            from PySide2.QtGui import QKeyEvent
+            from PySide2.QtCore import QEvent
+        view.keyPressEvent(QKeyEvent(QEvent.KeyPress, key, Qt.NoModifier, text))
+
+    @property
+    def _Qt(self):
+        from mpynode.ui.qt_wrapper import Qt
+
+        return Qt
+
+    def _caret(self, view, block_no, col=0):
+        block = view.document().findBlockByNumber(block_no)
+        cursor = view.textCursor()
+        cursor.setPosition(block.position() + col)
+        view.setTextCursor(cursor)
+
+    def _line_of(self, view, needle):
+        for i, text in enumerate(view.toPlainText().split("\n")):
+            if needle in text:
+                return i
+        raise AssertionError("no line holding %r" % needle)
+
+    # -- the top of the file ------------------------------------------------
+
+    def test_return_on_line_one_pushes_the_file_down(self):
+        _node, v = self._view()
+        try:
+            self.assertTrue(v.toPlainText().startswith("from mpynode import"))
+            self._caret(v, 0)
+            self._key(v, self._Qt.Key_Return, "\n")
+            lines = v.toPlainText().split("\n")
+            self.assertEqual(lines[0], "")
+            self.assertTrue(lines[1].startswith("from mpynode import"))
+            # ...and the caret is in the room, not below it. Qt leaves it at
+            # the head of the block that moved; the next keystroke would go to
+            # the wrong line and be refused.
+            self.assertEqual(v.textCursor().blockNumber(), 0)
+        finally:
+            v.deleteLater()
+
+    def test_typing_before_the_imports_is_still_refused(self):
+        # Only a NEWLINE is safe at that exact spot -- a character would land
+        # on the generated line itself.
+        _node, v = self._view()
+        refused = []
+        v.editRefused.connect(refused.append)
+        try:
+            self._caret(v, 0)
+            self._key(v, self._Qt.Key_A, "a")
+            self.assertTrue(refused)
+            self.assertTrue(
+                v.toPlainText().startswith("from mpynode import"))
+        finally:
+            v.deleteLater()
+
+    def test_the_room_you_made_is_yours_to_write_in(self):
+        node, v = self._view()
+        try:
+            self._caret(v, 0)
+            self._key(v, self._Qt.Key_Return, "\n")
+            for ch in "# mine":
+                self._key(v, self._Qt.Key_A, ch)
+            self.assertEqual(v.toPlainText().split("\n")[0], "# mine")
+            v.markSaved()
+            self.assertIn("# mine", node.get_methods_source() or "")
+            v.refresh()
+            self.assertEqual(v.toPlainText().split("\n")[0], "# mine")
+        finally:
+            v.deleteLater()
+
+    def test_deleting_the_header_puts_the_code_back_on_line_one(self):
+        node, v = self._view()
+        try:
+            node.set_methods_source("# gone soon\n\ndef helper(x):\n"
+                                    "    return x\n")
+            # force: writing the plug from outside makes this view's baseline
+            # stale, which reads as "dirty", which makes refresh a no-op.
+            v.refresh(force=True)
+            self.assertEqual(v.toPlainText().split("\n")[0], "# gone soon")
+            from mpynode.ui.qt_wrapper import QTextCursor
+
+            limit = v._top_limit()
+            cursor = v.textCursor()
+            cursor.setPosition(0)
+            cursor.setPosition(limit, QTextCursor.KeepAnchor)
+            v.setTextCursor(cursor)
+            self._key(v, self._Qt.Key_Delete)
+            self.assertTrue(
+                v.toPlainText().startswith("from mpynode import"))
+            v.markSaved()
+            v.refresh()
+            self.assertTrue(
+                v.toPlainText().startswith("from mpynode import"))
+        finally:
+            v.deleteLater()
+
+    # -- a boundary inside build() -----------------------------------------
+
+    def test_return_opens_a_line_above_a_managed_block(self):
+        _node, v = self._view()
+        try:
+            at = self._line_of(v, "# --- outputs ---")
+            self.assertEqual(v.toPlainText().split("\n")[at - 1], "")
+            self._caret(v, at)
+            self._key(v, self._Qt.Key_Return, "\n")
+            at = self._line_of(v, "# --- outputs ---")
+            lines = v.toPlainText().split("\n")
+            self.assertEqual([lines[at - 2], lines[at - 1]], ["", ""])
+            self.assertEqual(v._spacing_from_document().get("attrs_out"), 2)
+        finally:
+            v.deleteLater()
+
+    def test_backspace_closes_it_until_the_blocks_touch(self):
+        _node, v = self._view()
+        try:
+            for _ in range(4):
+                at = self._line_of(v, "# --- outputs ---")
+                self._caret(v, at)
+                self._key(v, self._Qt.Key_Backspace)
+            at = self._line_of(v, "# --- outputs ---")
+            above = v.toPlainText().split("\n")[at - 1]
+            self.assertIn("add_input_attr", above,
+                          "the two blocks should be touching")
+            self.assertEqual(v._spacing_from_document().get("attrs_out"), 0)
+        finally:
+            v.deleteLater()
+
+    def test_backspace_stops_at_zero_and_never_eats_the_block_above(self):
+        _node, v = self._view()
+        try:
+            for _ in range(12):        # far more than the gap ever held
+                at = self._line_of(v, "# --- outputs ---")
+                self._caret(v, at)
+                self._key(v, self._Qt.Key_Backspace)
+            text = v.toPlainText()
+            self.assertIn("node.add_input_attr('inFloat', 'float')", text)
+            self.assertIn("# --- inputs ---", text)
+        finally:
+            v.deleteLater()
+
+    def test_a_gap_takes_a_newline_but_not_a_character(self):
+        # A gap holds no text in the node's data model, so a character typed
+        # there would promise a round trip that does not exist.
+        _node, v = self._view()
+        refused = []
+        v.editRefused.connect(refused.append)
+        try:
+            at = self._line_of(v, "# --- outputs ---")
+            self._caret(v, at - 1)
+            self._key(v, self._Qt.Key_X, "x")
+            self.assertTrue(refused)
+            self.assertNotIn("x\n        # --- outputs ---", v.toPlainText())
+        finally:
+            v.deleteLater()
+
+    # -- persistence --------------------------------------------------------
+
+    def test_the_spacing_is_stored_on_the_node_and_survives_a_refresh(self):
+        node, v = self._view()
+        try:
+            at = self._line_of(v, "# --- outputs ---")
+            self._caret(v, at)
+            self._key(v, self._Qt.Key_Return, "\n")
+            self.assertTrue(v.hasUnsavedChanges())
+            v.markSaved()
+            self.assertEqual(node.get_api_gap_spacing(), {"attrs_out": 2})
+            v.refresh()
+            at = self._line_of(v, "# --- outputs ---")
+            lines = v.toPlainText().split("\n")
+            self.assertEqual([lines[at - 2], lines[at - 1]], ["", ""])
+            self.assertFalse(v.hasUnsavedChanges())
+        finally:
+            v.deleteLater()
+
+    def test_an_untouched_node_stores_nothing(self):
+        # The map is SPARSE on purpose: an empty one bakes byte-for-byte what
+        # the exporter baked before any of this existed.
+        node, v = self._view()
+        try:
+            self.assertEqual(v._spacing_from_document(), {})
+            v.markSaved()
+            self.assertEqual(node.get_api_gap_spacing(), {})
+        finally:
+            v.deleteLater()
+
+
+@unittest.skipUnless(_qapp_available(), "Qt unavailable")
+class TestTheMetadataBannerAndTheHeaderZone(unittest.TestCase):
+    """The Node Info banner sits ABOVE the user's header zone.
+
+    That distinction is load-bearing, and getting it wrong DESTROYED DATA. The
+    zone is positional -- everything between ``_top_start`` and the first
+    generated line -- and the save reads it off the document, not off a region,
+    so that a header the user has only just begun still lands. When the banner
+    shipped without ``_ABOVE_TOP_ZONE`` it became the first generated region,
+    the limit went to 0, the zone vanished, and the save spliced an EMPTY
+    header over Methods lines 1..N: every node with metadata lost its header
+    the first time it was saved from this view.
+
+    The suite did not catch it because nothing built a node with metadata AND a
+    header AND then saved. These tests are that missing case.
+    """
+
+    META = {"authors": ["Ada L"], "copyright": "(c) 2026 Studio"}
+    SRC = '"""My own header."""\n\n\ndef helper():\n    return 1\n'
+
+    def _node(self, meta, src=None, name="apiBanner"):
+        from mpynode import MPyNode
+
+        mc.file(new=True, force=True)
+        n = MPyNode.create(name=name)
+        if src is not None:
+            n.set_methods_source(src)
+        if meta is not None:
+            n.set_metadata(meta)
+        return n
+
+    def _view(self, node):
+        from mpynode.ui.widgets.api_view import NDApiView
+
+        v = NDApiView(node)
+        v.resize(900, 620)
+        return v
+
+    def test_a_save_does_not_eat_the_users_header(self):
+        v = self._view(self._node(self.META, self.SRC))
+        try:
+            rebuilt = v._methods_from_document()
+            self.assertIsNotNone(rebuilt)
+            self.assertIn('"""My own header."""', rebuilt)
+            self.assertIn("def helper():", rebuilt)
+        finally:
+            v.deleteLater()
+
+    def test_the_banner_is_never_written_back_as_methods_source(self):
+        # The mirror image of the same bug: a zone starting at 0 would swallow
+        # the banner and save it as if the user had typed it.
+        v = self._view(self._node(self.META, self.SRC))
+        try:
+            rebuilt = v._methods_from_document() or ""
+            self.assertNotIn("Generated by Node Designer", rebuilt)
+            self.assertNotIn("copyright:", rebuilt)
+        finally:
+            v.deleteLater()
+
+    def test_the_zone_is_identical_with_and_without_a_banner(self):
+        plain = self._view(self._node(None, self.SRC, "apiPlain"))
+        try:
+            expected = plain._top_text()
+        finally:
+            plain.deleteLater()
+        v = self._view(self._node(self.META, self.SRC, "apiMeta"))
+        try:
+            self.assertEqual(v._top_text(), expected)
+            self.assertEqual(v._top_start() > 0, True)  # past the banner
+        finally:
+            v.deleteLater()
+
+    def test_return_opens_room_between_the_banner_and_the_imports(self):
+        """With no header of your own there is nowhere to type -- the banner
+        butts against the imports. Return at the top of the generated block has
+        to open a line, exactly as it does on a node with no banner."""
+        v = self._view(self._node(self.META, None, "apiRoom"))
+        try:
+            limit = v._top_limit()
+            self.assertTrue(v._allows(limit, limit, False, True))
+        finally:
+            v.deleteLater()
+
+    def test_the_banner_itself_still_refuses_every_keystroke(self):
+        v = self._view(self._node(self.META, self.SRC, "apiRefuse"))
+        try:
+            # Position 2 is inside the first bar line of the banner.
+            self.assertFalse(v._allows(2, 2, False, False))
+            self.assertFalse(v._allows(2, 3, True, False))
+        finally:
+            v.deleteLater()
+
+    def test_typing_in_the_opened_room_reaches_the_methods_source(self):
+        from mpynode.ui.qt_wrapper import QTextCursor
+
+        v = self._view(self._node(self.META, None, "apiType"))
+        try:
+            cur = QTextCursor(v.document())
+            cur.setPosition(v._top_limit())
+            cur.insertText("\n")
+            v._after_edit()
+            cur.setPosition(v._top_start())
+            cur.insertText("# my own note")
+            v._after_edit()
+            self.assertIn("# my own note", v._methods_from_document() or "")
+        finally:
+            v.deleteLater()
+
+
+if __name__ == "__main__":
+    unittest.main()

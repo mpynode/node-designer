@@ -136,14 +136,14 @@ cd compiled_templates/_combined_plugin && ./build.sh 2026
 
 These scripts are generated, not hand-written; `tools/regen_build_scripts.py`
 refreshes them from the generators and
-`mpynode._tests.test_build_script_freshness` fails if a committed one has
+`tests.compile.freshness.test_build_script_freshness` fails if a committed one has
 drifted.
 
 ## Running the test suite
 
 ```bash
-tools/run_tests.sh                       # everything
-tools/run_tests.sh mpynode._tests.test_attr_types   # one module
+tools/run_tests.sh                                   # everything
+tools/run_tests.sh tests.attributes.test_attr_types  # one module
 ```
 
 On Windows use `tools\run_tests.bat`, its exact mirror.

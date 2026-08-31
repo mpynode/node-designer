@@ -27,7 +27,7 @@ The Python side of this demo lives in:
 
 ## Verified result
 
-Against `_tests/test_assets/test_sdf.igloo.npz` (12509 points / 12518 faces):
+Against `tests/test_assets/test_sdf.igloo.npz` (12509 points / 12518 faces):
 
 - resolution 16: `maxerr ≈ 1.18e-07`, `indices_equal = True` (bit-exact topology)
 - resolution 32: 50542 points, `indices_equal = True` — the C++ stays faithful at

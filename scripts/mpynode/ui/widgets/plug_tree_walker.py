@@ -432,7 +432,7 @@ def wrapper_property_rows_for(node_name):
 # SelfProxy; the API tab (setup / demo / @maya_command bodies, and the Methods
 # module it absorbed) gets the real WRAPPER. The two surfaces are disjoint, and
 # showing one while editing the other is pure noise -- MEASURED on mPyFile
-# (_tests/test_framework_tier_scope.py re-measures all of this, so a future
+# (tests/ui/test_framework_tier_scope.py re-measures all of this, so a future
 # change to SelfProxy cannot silently make the panel lie):
 #
 #   wrapper     read_texture / time / fileName -> AttributeError

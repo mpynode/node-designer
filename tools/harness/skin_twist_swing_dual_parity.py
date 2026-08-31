@@ -48,7 +48,7 @@ import mpynode
 from mpynode._base.plugins import load_or_reload_native_plugin
 from mpynode._common.methods import skin_blend
 from mpynode._demos.twist_swing_skin_source import COMPUTE, INIT, METHODS
-from mpynode._tests.test_skin_cluster_lbs_arm_parity import (
+from tests.nodes.test_skin_cluster_lbs_arm_parity import (
     _arm_path, _extract_stock_skin, _mesh_pts)
 
 for _b in glob.glob(os.path.join(OUT, "*.bundle")):

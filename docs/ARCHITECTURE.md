@@ -74,6 +74,7 @@ and no AI — which is what makes the freshness gates (section 5) possible.
 | `templates/` | 37 shipped gallery templates, `templates/<Type>/<Name>/{template.mpn,description.md}` across all 12 node types. |
 | `compiled_templates/` | Everything compiled, under one roof. 39 per-template C++ build trees (40 node `.cpp` files — `MPyLocator/Mesh Regions` ships two types), plus `_combined_plugin/` (below), which is not a node family. Sources + the full stage lineage are committed; binaries are not. |
 | `compiled_templates/_combined_plugin/` | The multi-node build tree that links every template into one plug-in, plus the turnkey demo around it: `build/` (37 namespaced fragments + the generated `plugin_main.cpp`, and the full stage lineage), 39 `.ma` demo scenes, `reports/`, and `plugin/` — where you build `mPyMega` (37/37 node types + 32 bundled commands). No binary is committed; its `build.sh` / `build.bat` compiles `build/` and installs the result into `plugin/`. The filename must stay `mPyMega.*` — Maya takes the plug-in name from it and the scenes `requires "mPyMega"`. |
+| `tests/` | The unit suite, outside the package so shipping `scripts/mpynode/` does not ship the tests. 278 test modules grouped by area: `nodes/`, `ui/`, `authoring/`, `attributes/`, `framework/`, and `compile/` (split into `transpiler/`, `pipeline/`, `nodes/`, `optimizer/`, `freshness/`). Shared bootstrap `_setup.py`, repo anchors `_paths.py`, fixtures in `data/` and `test_assets/`. |
 | `docs/` | All reference material: `index.md` (the API guide), `CHEATSHEET.md` (the authoring quick reference), this file, `PORTING.md` (Windows/Linux finish-and-verify handoff), and `node_types/` (one `.md` per type + `_input_type_contract.md`). Only `index.md` and `node_types/` are reachable from the in-app Help menu — `docs_locator` enumerates exactly those. |
 | `tools/` | Every dev/CI script, and the only place they live — there are no runners at the repo root. The four gate launchers are `run_tests.sh` / `run_tests.bat` (unit suite) and `run_parity_sweep.sh` / `.bat` (compiled parity), plus `build_compiled_templates.sh`, the freshness checkers (`check_stage1_freshness.py`, `check_std_includes.py`, `regen_build_scripts.py`, `regen_mega_transpiled.py`), `parity_sweep/`, and the probes and audits. Most of these are not optional: thirteen are executed or imported by the unit suite, so deleting one turns tests red. `tools/harness/` holds the attended out-of-suite mayapy drivers (see its `README.md`), including `benchmark_node.py`, which the AI optimizer shells out to at runtime. |
 | `icons/` | UI icons for the Node Designer. |
@@ -102,7 +103,6 @@ facts are the whole install: `MAYA_PLUG_IN_PATH` contains `plug-ins/` and
 | `_api1/`, `_api2/` | The actual `MPx*` subclass implementations, split by Maya API generation. Never imported by users directly. |
 | `_base/`, `_defaults/` | `commands.py` (create/duplicate/convert), `node_swap.py`, `node_callbacks.py`, `plugins.py`, `eval_helpers.py`; per-type starter content (`file_defaults.py`, three `skin_cluster_*_defaults.py`, `starter_registry.py`). |
 | `_demos/` | **The template generator**, not sample code. `build_templates.py` (~711 KB) authors, runs and verifies every gallery template and writes it only when its verification passes. |
-| `_tests/` | The unit suite: 277 `.py` files, 273 of them test modules, flat layout plus `data/` and `test_assets/`. |
 | `_node_registry.py`, `ndio.py`, `mpynode.ini` | Single source of truth for the 12 node types; compilable file IO usable from an expression; the ini (all keys shipped commented out) that is tier two of data-home resolution. |
 
 ### `_common/` sub-areas
@@ -295,12 +295,12 @@ this": `use_cache = reuse_cache and (ai_assist or not needs_llm)`.
 Two independent gates, because they cover different files.
 
 **Gate 1 — stage 1.** `tools/check_stage1_freshness.py` (measurement) +
-`_tests/test_stage1_codegen_freshness.py` (the gate) re-derive every checked-in
+`tests/compile/freshness/test_stage1_codegen_freshness.py` (the gate) re-derive every checked-in
 `1_transpiled.cpp` from the manifest-embedded spec and byte-compare against
 today's transpiler — no compiler, no linker, no bundler, no AI. It runs in a
 mayapy subprocess under `PYTHONHASHSEED=0` (codegen order is only reproducible
 under a pinned seed) and is a **ratchet** over
-`_tests/data/stage1_stale_baseline.json`: an artifact *not* in the baseline must
+`tests/data/stage1_stale_baseline.json`: an artifact *not* in the baseline must
 match fresh codegen, and one *in* the baseline must **still be stale**, so the
 list can only shrink. It is currently **empty** — so all 76 stage-1 artifacts in
 the gated tree (`TREES = ("compiled_templates",)` — the 39 per-template trees
@@ -322,7 +322,7 @@ baseline is not a gate; `--write-baseline` leaves a reviewable diff naming every
 artifact that newly rotted.
 
 **Gate 2 — the shipped artifact.**
-`_tests/test_shipped_artifact_freshness.py`. Stage 1 is regenerated every run
+`tests/compile/freshness/test_shipped_artifact_freshness.py`. Stage 1 is regenerated every run
 and so is fresh by construction; what **links** is `build/<ty>/<ty>.cpp`, which
 comes through the port cache. Detection uses the emitter's own stamp: if
 `1_transpiled.cpp` and `3_optimized/00_baseline.cpp` from the *same* build carry
@@ -335,7 +335,7 @@ permanent red); today that list is exactly one,
 than it looks: `_nodes()` walks `compiled_templates/<fam>/<tpl>/build`, so the
 family-level `compiled_templates/MPyDeformer/build/` tree (holding
 `sineRippleDefault`) is never visited — **unpinned**, not pinned. The mega tree
-has its own `_tests/test_mega_stage1_freshness.py`, refreshed with
+has its own `tests/compile/freshness/test_mega_stage1_freshness.py`, refreshed with
 `mayapy tools/regen_mega_transpiled.py` (codegen only, no compiler).
 
 ### Determinism
@@ -445,7 +445,7 @@ launchd `PATH`.
 
 ```bash
 tools/run_tests.sh                                   # whole suite (mayapy 2026)
-tools/run_tests.sh mpynode._tests.test_draw_types    # one module
+tools/run_tests.sh tests.nodes.test_draw_types       # one module
 MAYAPY=<maya-install>/bin/mayapy tools/run_tests.sh  # override the default 2026
 ```
 
@@ -463,15 +463,21 @@ MPYNODE_TRUST_PICKLE=1    # headless cannot show the trust prompt; without it In
 
 Both run `tools/_unittest_exit.py`, **not** `-m unittest`: after
 `maya.standalone.initialize()` mayapy's teardown forces exit 0, so real failures
-were reported as success. With no args they spell out `discover -s
-scripts/mpynode/_tests -t scripts -p "test_*.py"`, because forwarding `"$@"`
-bare made a bare invocation print "Ran 0 tests / OK" — a false green that
-survives an `^OK` grep.
+were reported as success. With no args they spell out `discover -s tests -t .
+-p "test_*.py"`, because forwarding `"$@"` bare made a bare invocation print
+"Ran 0 tests / OK" — a false green that survives an `^OK` grep.
 
-**Size.** 6,673 `def test_` methods across 273 test modules (277 `.py` under
-`_tests/`; the non-test four are `__init__.py`, `_setup.py`,
-`_bench_lock_child.py`, `_stub_compiled_plugin.py`). Flat layout — the only
-subdirectories are `data/` and `test_assets/`.
+**Size.** 6,763 `def test_` methods across 278 test modules (290 `.py` under
+`tests/`; the non-test twelve are `_setup.py`, `_paths.py`,
+`_bench_lock_child.py`, `_stub_compiled_plugin.py`, `data/scanline_defs.py` and
+the seven package `__init__.py`). Grouped by area rather than flat: six
+top-level packages, with `compile/` split five further ways.
+
+Because a category package sits two levels below the repo root and a
+sub-category three, no test counts `dirname` levels to find the root — they all
+import `tests._paths`. A hand-counted walk that is wrong by one does not raise;
+it resolves nothing and the artifact gates quietly **skip**, which is why the
+suite is verified on its skip count as well as its pass count.
 
 **What the freshness gates protect.** The suite cannot compile C++, so the two
 gates from section 5 are how it keeps checked-in artifacts honest.
@@ -522,7 +528,7 @@ Work top to bottom.
 | `_common/lifecycle/init_header.py` | The per-type `self.<...>` idiom block — the Init header is where users actually learn a type's surface. |
 | `_common/node_setups/<Type>.py` | Optional per-type default `setup()`. |
 | `native/compiler/` | Only for a genuinely new *family*: a `node_scaffold.generate_cpp` dispatch branch, an `emit_<family>.py` and an `nd_lower.try_lower_<family>`. A type reusing an existing base (`MPxNode`, `MPxDeformerNode`) usually needs nothing here. |
-| `docs/node_types/mPy<Type>.md`, `_tests/`, `templates/` | The Help menu auto-lists the docs dir; every registry entry currently has at least one template. |
+| `docs/node_types/mPy<Type>.md`, `tests/`, `templates/` | The Help menu auto-lists the docs dir; every registry entry currently has at least one template. |
 
 ### Adding a template
 

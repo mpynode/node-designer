@@ -17,8 +17,10 @@ import sys
 import tempfile
 
 sys.path.insert(0, os.path.join(os.environ["MPYNODE_ROOT"], "scripts"))
+# The suite lives at the repo root, alongside scripts/ rather than inside it.
+sys.path.insert(0, os.environ["MPYNODE_ROOT"])
 
-from mpynode._tests._setup import standalone_init, ensure_plugins_loaded
+from tests._setup import standalone_init, ensure_plugins_loaded
 
 
 def hdr(t):

@@ -8,7 +8,7 @@ disk against TODAY's transpiler without re-running a build: no compiler, no
 linker, no bundle, no AI.
 
 This is the measurement half of the T87 gate. The gate itself lives in
-``mpynode._tests.test_stage1_codegen_freshness``, which runs this script in a
+``tests.compile.freshness.test_stage1_codegen_freshness``, which runs this script in a
 subprocess with ``PYTHONHASHSEED=0`` (see T69: codegen order is only reproducible
 under a pinned seed) and compares the result against a checked-in baseline of
 known-stale artifacts.
@@ -32,8 +32,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # snapshots are frozen copies and must never be gated.
 TREES = ("compiled_templates",)
 STAGE_FILE = "1_transpiled.cpp"
-BASELINE = os.path.join(ROOT, "scripts", "mpynode", "_tests", "data",
-                        "stage1_stale_baseline.json")
+BASELINE = os.path.join(ROOT, "tests", "data", "stage1_stale_baseline.json")
 
 
 def _rel(path):

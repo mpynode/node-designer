@@ -69,7 +69,7 @@ class MPyNurbsSurface(MPyNode):
     # read for these, so a user input/output of the same name COEXISTS with the
     # write buffer instead of being shadowed. The build-param defaults
     # (degree_u/v, form_u/v) are deliberately NOT scratch there, so they stay
-    # reserved. _tests/test_reserved_names AST-parses the real call.
+    # reserved. tests/authoring/test_reserved_names AST-parses the real call.
     COEXISTING_SCRATCH_SLOTS = (
         "cvs",
         "num_cvs_u",

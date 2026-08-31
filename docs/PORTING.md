@@ -134,7 +134,7 @@ how the macOS path drives the compiler directly.
 
 **New**
 * `scripts/mpynode/native/toolchain/toolchain.py` — the platform abstraction.
-* `scripts/mpynode/_tests/test_native_toolchain.py` — pins the macOS argv as a
+* `tests/compile/pipeline/test_native_toolchain.py` — pins the macOS argv as a
   byte-for-byte regression anchor and the MSVC argv as a contract, and covers
   build.sh/build.bat correctness (incl. the batch `%%`-quoting trap).
   *(formerly `test_toolchain.py` + `test_native_build_scripts.py`, merged in the
@@ -185,7 +185,7 @@ refactored build pipeline still produces a working `.bundle` at parity.
 
 1. **Sanity: toolchain unit tests** (no compiler needed):
    ```
-   tools\run_tests.bat mpynode._tests.test_native_toolchain
+   tools\run_tests.bat tests.compile.pipeline.test_native_toolchain
    ```
    Expect all green. (If `mayapy.exe` isn't at the default path, set
    `MAYA_LOCATION` first.)

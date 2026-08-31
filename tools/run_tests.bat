@@ -2,7 +2,7 @@
 REM Run the mpynode unit suite under mayapy on Windows.
 REM
 REM   tools\run_tests.bat                                  (whole suite)
-REM   tools\run_tests.bat mpynode._tests.test_toolchain    (one module)
+REM   tools\run_tests.bat tests.nodes.test_draw_types      (one module)
 REM
 REM Mirrors run_tests.sh -- same env, same runner, same exit status. The
 REM optional MPYNODE_EXTRA_PYTHONPATH entry (numpy / scipy / PIL) that
@@ -25,13 +25,17 @@ set "MAYAPY=%MAYA_LOCATION%\bin\mayapy.exe"
 
 set "MPYNODE_USE_STUDIO=1"
 set "MPYNODE_ROOT=%HERE%"
-set "PYTHONPATH=%HERE%scripts"
+REM The repo root is on the path too, so the suite imports as
+REM `tests.<area>.<module>`. HERE carries a trailing separator, which a path
+REM entry does not want, so trim it. Discovery would add the root by itself,
+REM but naming ONE module on the command line bypasses discovery entirely.
+set "PYTHONPATH=%HERE%scripts;%HERE:~0,-1%"
 set "MAYA_PLUG_IN_PATH=%HERE%plug-ins"
 set "QT_QPA_PLATFORM=offscreen"
 set "MPYNODE_TRUST_PICKLE=1"
 
 if "%~1"=="" (
-    "%MAYAPY%" "%HERE%tools\_unittest_exit.py" discover -s scripts\mpynode\_tests -t scripts -p "test_*.py"
+    "%MAYAPY%" "%HERE%tools\_unittest_exit.py" discover -s tests -t . -p "test_*.py"
 ) else (
     "%MAYAPY%" "%HERE%tools\_unittest_exit.py" %*
 )
