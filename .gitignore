@@ -1,0 +1,68 @@
+# ---- Local working state (never leaves this machine) ----------------------
+# Development snapshots. Large, machine-local, and deliberately kept on disk.
+_snapshots/
+_snapshots.7z
+*.7z
+
+# Per-machine runtime state: port cache, your preferences, the pickle-trust
+# allowlist. Regenerated on demand; committing it would leak local config and
+# churn on every run.
+.mpynode_local/
+
+# Agent / editor local settings
+.claude/
+.superpowers/
+.vscode/
+.idea/
+
+# ---- Python ---------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+build/lib/
+dist/
+
+# ---- Compiled Maya plug-ins ------------------------------------------------
+# NO binaries ship. A Maya plug-in is built against one Maya version's devkit
+# and will not load in another, so shipping one would be shipping something
+# most users cannot use. The .cpp sources and the full optimizer step lineage
+# under compiled_templates/**/build/stages/ ARE committed, so every binary is
+# reproducible on the user's own machine:
+#   one tree   -- bash <tree>/build/build.sh [maya-version]
+#   all trees  -- tools/build_compiled_templates.sh
+#   mega demo  -- compiled_templates/_combined_plugin/build.sh [maya-version]
+#                 (build.bat on Windows)
+*.bundle
+*.so
+*.mll
+*.pyd
+*.o
+*.obj
+*.dylib
+
+# ---- Build scratch ---------------------------------------------------------
+_optscratch/
+_runner/
+compile.log
+**/build/_optscratch/
+*.bak
+*.orig
+
+# ---- Local launchers / machine state ---------------------------------------
+# Developer-machine conveniences and per-run state. They are useful locally but
+# are specific to one install, so they are never part of what ships.
+/LaunchMaya2026.app/
+/launch_maya2024.sh
+/userSetup.py
+.bench.lock
+
+# ---- OS / editor junk ------------------------------------------------------
+.DS_Store
+.DS_Store?
+._*
+Thumbs.db
+desktop.ini
+*~
+*.swp

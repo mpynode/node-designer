@@ -1,0 +1,61 @@
+{
+  "accepted": true,
+  "baseline_ms": 0.0039,
+  "best_ms": 0.002,
+  "created": 1787965074.438741,
+  "ledger": [
+    {
+      "compiled": true,
+      "duration_s": null,
+      "fix_rounds": 0,
+      "hypothesis": "",
+      "index": 0,
+      "ms": 0.0039,
+      "note": "",
+      "outcome": "baseline",
+      "parity": null,
+      "predicted_speedup": null,
+      "risk": "",
+      "slug": null,
+      "speedup": null,
+      "theme": ""
+    },
+    {
+      "compiled": true,
+      "duration_s": 956.748,
+      "fix_rounds": 0,
+      "hypothesis": "this node is ELEMENTWISE with an output of exactly one texel, so there is no algorithmic exponent to attack -- the benchmark perturbs `density` (the first numeric non-array input in sorted order), which never re-seeds and never steps the board, so every timed tick runs the sampling tail only. That tail was nd::from_data for uvCoord, four default-constructed nd::Array locals, a full nd::Array<bool> copy of the board (two Shape vectors + shared_ptr), two slices, two floors, two subs, two muls, a 2-D slice, and a from_data of the 3-vector output -- each of which allocates a shared_ptr<vector<T>> plus two std::vector<int64_t> Shapes. At ~50 mallocs x ~35 ns that is ~1.7 us of the 3.5 us tick, and all of it computes values that fit in registers.",
+      "index": 1,
+      "ms": 0.002,
+      "note": "",
+      "outcome": "accept",
+      "parity": "pass",
+      "predicted_speedup": 2.2,
+      "risk": "parity of the sampled cell. Three places had to keep the source's exact spelling: (1) uvCoord reaches the ported body as float2, so the double the VP2 caller passes is still round-tripped through float before the fract, (2) the truncating (int64_t) casts and the STRICT `<` in `cse < w-1 ? cse : w-1` are kept in double, direction and strictness unchanged, since those select an index, and (3) nd::Sl::at was verified to lower to `offset += i * strides[ax]`, which is exactly the flat index used now. `nl_board` became a reference INTO the state rather than an Array copy -- the self-assignment `st.board = _gol_step(st.board)` is safe because the step builds a complete temporary before the move-assign.",
+      "slug": "scalar_texel_no_ndarray",
+      "speedup": 1.95,
+      "theme": "the per-texel sample was built out of ~50 heap-allocating nd::Array temporaries to read ONE bool out of a board that never changes between ticks; replace the whole tail with scalar arithmetic and a direct strided index"
+    },
+    {
+      "compiled": null,
+      "duration_s": 1115.608,
+      "fix_rounds": 0,
+      "hypothesis": "this node is ELEMENTWISE/O(1), not query-shaped: the bench seeds width/height from randint(-6,6) so the board is at most 6x6, bakePath is path-like and left empty so no PNG is ever written, and the perturb closure moves `density` -- which only feeds _gol_seed and so never reseeds while frame and shape hold. Every timed tick therefore hits the do-nothing path, and the only lever is the fixed overhead wrapped around it. Hoisting seed/step/rgba/bake behind noinline calls and gating the whole advance block on one short-circuited guard should shrink nd_texel to the sample itself and cut the prologue, register saves and exception-cleanup paths.",
+      "index": 2,
+      "ms": null,
+      "note": "introduces __attribute__ (1 new) -- the .cpp must also compile with MSVC cl.exe /std:c++17",
+      "outcome": "invalid-candidate",
+      "parity": null,
+      "predicted_speedup": 1.15,
+      "risk": "the guard re-tests the source's own conditions from outside instead of running them inline, so it has to be exactly equivalent, not merely similar: `!board_isset` is tested FIRST and `||` short-circuits, so board.shape[0] is never read before the board exists (the original got that for free by seeding first), and _nd_advance still re-runs all three original blocks with their original guards verbatim, so entering it early is harmless and entering it late is impossible. in_aBakePath.length() is side-effect-free, so evaluating it in the guard rather than at the bake site changes nothing.",
+      "slug": "cold_split_advance",
+      "speedup": null,
+      "theme": "the per-texel hot path was carrying the seed/step/bake code inline -- clang had folded three cold lambdas into nd_texel, making it 11.5 KB with a huge frame and nd::Array cleanup landing pads, so the sample paid for work it almost never does"
+    }
+  ],
+  "parity_gate": "authored+pointwise",
+  "reason": "accepted (1.95x)",
+  "rounds": 2,
+  "speedup": 1.95,
+  "type_name": "gameOfLifeTex"
+}

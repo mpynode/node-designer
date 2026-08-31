@@ -1,0 +1,61 @@
+{
+  "accepted": true,
+  "baseline_ms": 0.0023,
+  "best_ms": 0.002,
+  "created": 1787677821.017905,
+  "ledger": [
+    {
+      "compiled": true,
+      "duration_s": null,
+      "fix_rounds": 0,
+      "hypothesis": "",
+      "index": 0,
+      "ms": 0.0023,
+      "note": "",
+      "outcome": "baseline",
+      "parity": null,
+      "predicted_speedup": null,
+      "risk": "",
+      "slug": null,
+      "speedup": null,
+      "theme": ""
+    },
+    {
+      "compiled": true,
+      "duration_s": 448.156,
+      "fix_rounds": 0,
+      "hypothesis": "this is an ELEMENTWISE node at n=1, not a QUERY node -- the harness seeds reset=1 ('held reshuffle') and only sort[0] exists, so regen fires on every tick and the entire per-eval cost is std::mt19937_64 state init plus a first-draw twist (~624 word-ops) plus a handful of Maya-side allocations. There is no scan to accelerate and no cross-eval structure worth caching, so the lever is deleting fixed overhead, not changing an exponent.",
+      "index": 1,
+      "ms": 0.002,
+      "note": "",
+      "outcome": "accept",
+      "parity": "pass",
+      "predicted_speedup": 2.0,
+      "risk": "the RNG stream changes, but the spec marks this node 'NOT bit-identical to Python, so pointwise parity is skipped'; splitmix64 keeps the same uniform [0,1) range and the same deterministic seeding expression, so the lerp still lands inside [minVal, maxVal] and the sort/text convergence behaviour is unchanged",
+      "slug": "splitmix64_rng",
+      "speedup": 1.15,
+      "theme": "the node re-seeds a 312-word Mersenne Twister every evaluation to draw a single double; replace it with splitmix64 and strip the per-eval allocations around it"
+    },
+    {
+      "compiled": null,
+      "duration_s": 847.293,
+      "fix_rounds": 0,
+      "hypothesis": "every element of the sort multi already exists, so builder()+addElement()+set() re-installs the whole multi for nothing and an outputValue()/next() walk should be strictly cheaper",
+      "index": 2,
+      "ms": null,
+      "note": "candidate is identical to the current best",
+      "outcome": "no-change",
+      "parity": null,
+      "predicted_speedup": 1.3,
+      "risk": "a walk writes the elements that EXIST while addElement(0..n-1) would CREATE 0..n-1, so sparse logical indices diverge; guarded with an elementIndex() density check that falls back to the builder",
+      "slug": "walk_array_no_builder",
+      "speedup": null,
+      "theme": "replace the MArrayDataBuilder round-trip on the sort output with an in-place walk of the already-existing elements; it lost, so the round ships the pristine file unchanged"
+    }
+  ],
+  "parity_gate": "authored+pointwise",
+  "reason": "accepted (1.15x)",
+  "rounds": 2,
+  "speedup": 1.15,
+  "type_name": "bubbleSort"
+}

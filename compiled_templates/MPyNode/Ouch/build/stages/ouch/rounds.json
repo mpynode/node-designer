@@ -1,0 +1,61 @@
+{
+  "accepted": true,
+  "baseline_ms": 0.0012,
+  "best_ms": 0.001,
+  "created": 1787678417.2236521,
+  "ledger": [
+    {
+      "compiled": true,
+      "duration_s": null,
+      "fix_rounds": 0,
+      "hypothesis": "",
+      "index": 0,
+      "ms": 0.0012,
+      "note": "",
+      "outcome": "baseline",
+      "parity": null,
+      "predicted_speedup": null,
+      "risk": "",
+      "slug": null,
+      "speedup": null,
+      "theme": ""
+    },
+    {
+      "compiled": true,
+      "duration_s": 543.165,
+      "fix_rounds": 0,
+      "hypothesis": "compute() does no arithmetic worth measuring (one double compare, three float stores). Every microsecond is API and DG overhead, so the only lever is call count. Three calls were pure waste: MDataHandle::asString() on audioFile returns an MString BY VALUE (refcount + heap copy) and the result was immediately discarded via (void)in_aAudioFile; a `static std::vector<NodeState*>` was linearly scanned on (const void*)this every eval to find a single bool; and the codegen prologue did set3Float(0,0,0) that every branch below overwrote. Removing all three should cut the controllable slice roughly in half.",
+      "index": 1,
+      "ms": 0.001,
+      "note": "",
+      "outcome": "accept",
+      "parity": "pass",
+      "predicted_speedup": 1.3,
+      "risk": "Eliding the audioFile datablock read is the only change with a semantic edge. It is safe because `color` has zero numerical dependence on audioFile (the whole audio block is ND_PORT_INCOMPLETE -- it needs disk I/O and QMediaPlayer, neither of which exists in a compiled compute), and because the attributeAffects(aAudioFile, aColor*) wiring is left completely intact, so the plug contract and dirty propagation are unchanged. Second risk: asDouble() in place of asAngle().asRadians() could have silently returned 0.0 on a kAngle handle, which would have made every eval red and failed parity -- so it was not assumed, it was VERIFIED in-situ with a one-shot print on a warmup call (asDouble=3.49066e-05, asRadians=3.49066e-05, `==` true) before being adopted. The threshold compare keeps the source's type (double), direction (<) and strictness, so the tie at 0.165009870842 resolves identically.",
+      "slug": "drop_dead_string_read",
+      "speedup": 1.2,
+      "theme": "This node is neither elementwise nor query-shaped -- it is a two-branch scalar compare whose entire cost is per-call Maya API overhead, so the win is deleting the API calls that produce nothing: the unused audioFile MString read, the static-registry scan over `this`, and a dead zero-write to the colour output."
+    },
+    {
+      "compiled": true,
+      "duration_s": 366.509,
+      "fix_rounds": 0,
+      "hypothesis": "The node is neither ELEMENTWISE nor QUERY shaped: its only inputs are a scalar angle and an unused string, and its only output is a 3-float colour. There is no N and no M, so no acceleration structure, no parallel map and no cross-evaluation cache can apply (the one input that matters, angle, is perturbed by the harness on every tick by design, so any cache would be a guaranteed miss and any output memo would be a parity failure). I predicted before measuring that nothing would move the number, and that the honest deliverable was a leaner-but-identical compute plus the evidence for why the floor is where it is.",
+      "index": 2,
+      "ms": 0.0013,
+      "note": "",
+      "outcome": "not-faster",
+      "parity": "pass",
+      "predicted_speedup": 1.0,
+      "risk": "The latch reduction is the only place correctness could slip. In the Python, the red path reads `if not self.pain: self.pain = True` -- the guard exists ONLY to fire the one-shot playback, which is unported, so the assignment is unconditional in effect and the path always ENDS with pain==true; the green path always sets it false. `_pain = painful` is therefore exactly equivalent, not merely close. The threshold test keeps the source's type (double), direction and strictness (`<`), so an exact tie at 0.165009870842 resolves to the same branch it did before; blue is 0.0f on both paths, and the ternaries select between exact constants, so no arithmetic was introduced that could round differently.",
+      "slug": "collapse_colour_branch",
+      "speedup": null,
+      "theme": "This node has no array, geometry or query work at all -- compute() is one scalar read, one compare and a 3-float write -- so the only change worth making was collapsing the two set3Float call sites into one; the node was already at the harness's measurement floor."
+    }
+  ],
+  "parity_gate": "authored+pointwise",
+  "reason": "accepted (1.20x)",
+  "rounds": 2,
+  "speedup": 1.2,
+  "type_name": "ouch"
+}

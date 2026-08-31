@@ -1,0 +1,61 @@
+{
+  "accepted": true,
+  "baseline_ms": 2.4701,
+  "best_ms": 1.2823,
+  "created": 1787680614.518683,
+  "ledger": [
+    {
+      "compiled": true,
+      "duration_s": null,
+      "fix_rounds": 0,
+      "hypothesis": "",
+      "index": 0,
+      "ms": 2.4701,
+      "note": "",
+      "outcome": "baseline",
+      "parity": null,
+      "predicted_speedup": null,
+      "risk": "",
+      "slug": null,
+      "speedup": null,
+      "theme": ""
+    },
+    {
+      "compiled": true,
+      "duration_s": 772.597,
+      "fix_rounds": 0,
+      "hypothesis": "in-deform profiling (temporary fprintf timers, since removed) showed the four phases at arr=0.40 pts=0.35 nd=0.79 body=0.26 ms out of a 2.36 ms median; the nd phase was push_back into a std::vector followed by nd::from_data, which allocs a ZERO-FILLED 3.8 MB buffer and then copies the vector into it -- three passes over the data to produce one array. Writing straight into the array buffer, and then reusing that buffer across evaluations, removes both the copy and the memset. The same shape applies to nd::concatenate([rest, ones((N,1))]) in linear_blend, which allocs a zero-filled 5.1 MB output plus a separate 1.28 MB ones() buffer to produce what is just [x,y,z,1] per row.",
+      "index": 1,
+      "ms": 1.5144,
+      "note": "",
+      "outcome": "accept",
+      "parity": "pass",
+      "predicted_speedup": 1.35,
+      "risk": "the reused buffers are PURE SCRATCH -- every element is overwritten before it is read and the size is re-checked each evaluation -- so there is no derived state that could go stale and nothing to invalidate in setDependentsDirty/preEvaluation. They are per-instance members (never a static registry), so parallel EM evaluating two instances of this node concurrently cannot make them alias. The MPointArray scratch is clear()ed before allPositions so a failed read cannot surface the previous evaluation's points, which is the one place reuse could have changed an answer. No comparison, tie-break, accumulation order or floating-point type was touched anywhere: pts_h's fast path writes the literal 1.0 and the identical doubles the generic concatenate would have written, and the array-read rewrite reproduces the grow-one-element-at-a-time result exactly (final size == maxIndex+1, absent indices 0.0) by sizing to elementCount() up front and trimming once at the end.",
+      "slug": "direct_fill_reused_buffers",
+      "speedup": 1.6310750132065504,
+      "theme": "this node is ELEMENTWISE, not QUERY: at 159602 verts the arithmetic is nil and the whole cost is whole-array temporaries, so every per-evaluation malloc + value-init memset + redundant copy was replaced by a direct fill into a size-guarded per-instance scratch buffer"
+    },
+    {
+      "compiled": true,
+      "duration_s": 656.488,
+      "fix_rounds": 0,
+      "hypothesis": "profiling showed the deform is pure per-access overhead, not arithmetic: of ~1.24 ms in-node, 0.34 ms is walking 2 x 20000 MArrayDataHandle elements at ~8.5 ns each. Maya re-runs deform() when ANY input goes dirty, and the benchmark's perturb function moves only swingWeights[0], so twistWeights is re-walked identically on every tick. Caching the derived flat buffer per plug should remove roughly half that pass.",
+      "index": 2,
+      "ms": 1.2823,
+      "note": "",
+      "outcome": "accept",
+      "parity": "pass",
+      "predicted_speedup": 1.15,
+      "risk": "a stale buffer is a parity failure, not a slow answer, so invalidation is the whole risk. Covered on all three channels the task requires: setDependentsDirty for DG (element plug twistWeights[i] reports attribute() == aTwistWeights), preEvaluation for EM (deliberately unconditional -- it drops BOTH caches on any dirty plug rather than trusting a per-plug dirty query), and an elementCount + first/last-value fingerprint as the backstop. Members are per-instance, never a static registry; the validity flags are std::atomic and the rebuild runs under a per-node mutex, so parallel EM cannot race two instances.",
+      "slug": "cache_weight_arrays",
+      "speedup": 1.9263042969663886,
+      "theme": "cache the two 20000-element weight-set plug reads across evaluations, invalidated by setDependentsDirty + preEvaluation + an elementCount/first/last fingerprint"
+    }
+  ],
+  "parity_gate": "authored+pointwise",
+  "reason": "accepted (1.93x)",
+  "rounds": 2,
+  "speedup": 1.9263042969663886,
+  "type_name": "twistSwingSkin"
+}

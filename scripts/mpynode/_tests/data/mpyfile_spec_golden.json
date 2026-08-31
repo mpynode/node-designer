@@ -1,0 +1,444 @@
+{
+  "file_brightness_contrast": {
+    "inputs": {
+      "brightness": {
+        "cpp": {
+          "cat": "scalar",
+          "cpp": "float",
+          "data": "kFloat",
+          "fn": "MFnNumericAttribute",
+          "portable": true,
+          "read": "asFloat"
+        },
+        "default_value": 1.0,
+        "is_array": false,
+        "portable": true,
+        "type": "float"
+      },
+      "contrast": {
+        "cpp": {
+          "cat": "scalar",
+          "cpp": "float",
+          "data": "kFloat",
+          "fn": "MFnNumericAttribute",
+          "portable": true,
+          "read": "asFloat"
+        },
+        "default_value": 1.0,
+        "is_array": false,
+        "portable": true,
+        "type": "float"
+      },
+      "fileName": {
+        "cpp": {
+          "cat": "string",
+          "cpp": "MString",
+          "data": "kString",
+          "fn": "MFnTypedAttribute",
+          "portable": true,
+          "read": "asString"
+        },
+        "is_array": false,
+        "portable": true,
+        "type": "string"
+      },
+      "uvCoord": {
+        "cpp": {
+          "cat": "vector2",
+          "cpp": "float[2]",
+          "data": "k2Float",
+          "fn": "MFnNumericAttribute",
+          "portable": true,
+          "read": "asFloat2"
+        },
+        "is_array": false,
+        "portable": true,
+        "type": "float2"
+      }
+    },
+    "outputs": {
+      "outAlpha": {
+        "cpp": {
+          "cat": "scalar",
+          "cpp": "float",
+          "data": "kFloat",
+          "fn": "MFnNumericAttribute",
+          "portable": true,
+          "read": "asFloat"
+        },
+        "is_array": false,
+        "portable": true,
+        "type": "float"
+      },
+      "outColor": {
+        "cpp": {
+          "cat": "color",
+          "cpp": "float[3]",
+          "data": "color",
+          "fn": "MFnNumericAttribute",
+          "portable": true,
+          "read": "asFloat3"
+        },
+        "is_array": false,
+        "portable": true,
+        "type": "color"
+      }
+    },
+    "suggested": {
+      "class_name": "BrightContrastTex",
+      "heaviness": "medium",
+      "mpx_base": "MPxNode",
+      "node_type_name": "brightContrastTex",
+      "note": "texture/file evaluation node",
+      "reads_image_file": true,
+      "type_id": "0x00071673"
+    }
+  },
+  "file_scanline": {
+    "inputs": {
+      "bands": {
+        "cpp": {
+          "cat": "scalar",
+          "cpp": "int",
+          "data": "kInt",
+          "fn": "MFnNumericAttribute",
+          "portable": true,
+          "read": "asInt"
+        },
+        "default_value": 12,
+        "is_array": false,
+        "min_value": 1,
+        "portable": true,
+        "type": "int"
+      },
+      "fileName": {
+        "cpp": {
+          "cat": "string",
+          "cpp": "MString",
+          "data": "kString",
+          "fn": "MFnTypedAttribute",
+          "portable": true,
+          "read": "asString"
+        },
+        "is_array": false,
+        "portable": true,
+        "type": "string"
+      },
+      "frame": {
+        "cpp": {
+          "cat": "unit",
+          "cpp": "double",
+          "data": "kTime",
+          "fn": "MFnUnitAttribute",
+          "portable": true,
+          "read": "asMTime"
+        },
+        "is_array": false,
+        "portable": true,
+        "type": "time"
+      },
+      "intensity": {
+        "cpp": {
+          "cat": "scalar",
+          "cpp": "float",
+          "data": "kFloat",
+          "fn": "MFnNumericAttribute",
+          "portable": true,
+          "read": "asFloat"
+        },
+        "default_value": 0.6,
+        "is_array": false,
+        "max_value": 1.0,
+        "min_value": 0.0,
+        "portable": true,
+        "type": "float"
+      },
+      "speed": {
+        "cpp": {
+          "cat": "scalar",
+          "cpp": "float",
+          "data": "kFloat",
+          "fn": "MFnNumericAttribute",
+          "portable": true,
+          "read": "asFloat"
+        },
+        "default_value": 0.1,
+        "is_array": false,
+        "portable": true,
+        "type": "float"
+      },
+      "uvCoord": {
+        "cpp": {
+          "cat": "vector2",
+          "cpp": "float[2]",
+          "data": "k2Float",
+          "fn": "MFnNumericAttribute",
+          "portable": true,
+          "read": "asFloat2"
+        },
+        "is_array": false,
+        "portable": true,
+        "type": "float2"
+      }
+    },
+    "outputs": {
+      "outAlpha": {
+        "cpp": {
+          "cat": "scalar",
+          "cpp": "float",
+          "data": "kFloat",
+          "fn": "MFnNumericAttribute",
+          "portable": true,
+          "read": "asFloat"
+        },
+        "is_array": false,
+        "portable": true,
+        "type": "float"
+      },
+      "outColor": {
+        "cpp": {
+          "cat": "color",
+          "cpp": "float[3]",
+          "data": "color",
+          "fn": "MFnNumericAttribute",
+          "portable": true,
+          "read": "asFloat3"
+        },
+        "is_array": false,
+        "portable": true,
+        "type": "color"
+      }
+    },
+    "suggested": {
+      "class_name": "ScanlineTex",
+      "heaviness": "medium",
+      "mpx_base": "MPxNode",
+      "node_type_name": "scanlineTex",
+      "note": "texture/file evaluation node",
+      "reads_image_file": true,
+      "type_id": "0x000764b6"
+    }
+  },
+  "file_simple": {
+    "inputs": {
+      "brightness": {
+        "cpp": {
+          "cat": "scalar",
+          "cpp": "float",
+          "data": "kFloat",
+          "fn": "MFnNumericAttribute",
+          "portable": true,
+          "read": "asFloat"
+        },
+        "default_value": 1.0,
+        "is_array": false,
+        "portable": true,
+        "type": "float"
+      },
+      "contrast": {
+        "cpp": {
+          "cat": "scalar",
+          "cpp": "float",
+          "data": "kFloat",
+          "fn": "MFnNumericAttribute",
+          "portable": true,
+          "read": "asFloat"
+        },
+        "default_value": 1.0,
+        "is_array": false,
+        "portable": true,
+        "type": "float"
+      },
+      "fileName": {
+        "cpp": {
+          "cat": "string",
+          "cpp": "MString",
+          "data": "kString",
+          "fn": "MFnTypedAttribute",
+          "portable": true,
+          "read": "asString"
+        },
+        "is_array": false,
+        "portable": true,
+        "type": "string"
+      },
+      "uvCoord": {
+        "cpp": {
+          "cat": "vector2",
+          "cpp": "float[2]",
+          "data": "k2Float",
+          "fn": "MFnNumericAttribute",
+          "portable": true,
+          "read": "asFloat2"
+        },
+        "is_array": false,
+        "portable": true,
+        "type": "float2"
+      }
+    },
+    "outputs": {
+      "outAlpha": {
+        "cpp": {
+          "cat": "scalar",
+          "cpp": "float",
+          "data": "kFloat",
+          "fn": "MFnNumericAttribute",
+          "portable": true,
+          "read": "asFloat"
+        },
+        "is_array": false,
+        "portable": true,
+        "type": "float"
+      },
+      "outColor": {
+        "cpp": {
+          "cat": "color",
+          "cpp": "float[3]",
+          "data": "color",
+          "fn": "MFnNumericAttribute",
+          "portable": true,
+          "read": "asFloat3"
+        },
+        "is_array": false,
+        "portable": true,
+        "type": "color"
+      }
+    },
+    "suggested": {
+      "class_name": "FileTexture",
+      "heaviness": "medium",
+      "mpx_base": "MPxNode",
+      "node_type_name": "fileTexture",
+      "note": "texture/file evaluation node",
+      "reads_image_file": true,
+      "type_id": "0x00075cd3"
+    }
+  },
+  "game_of_life_texture": {
+    "inputs": {
+      "density": {
+        "cpp": {
+          "cat": "scalar",
+          "cpp": "float",
+          "data": "kFloat",
+          "fn": "MFnNumericAttribute",
+          "portable": true,
+          "read": "asFloat"
+        },
+        "default_value": 0.5,
+        "is_array": false,
+        "max_value": 1.0,
+        "min_value": 0.0,
+        "portable": true,
+        "type": "float"
+      },
+      "frame": {
+        "cpp": {
+          "cat": "unit",
+          "cpp": "double",
+          "data": "kTime",
+          "fn": "MFnUnitAttribute",
+          "portable": true,
+          "read": "asMTime"
+        },
+        "is_array": false,
+        "portable": true,
+        "type": "time"
+      },
+      "height": {
+        "cpp": {
+          "cat": "scalar",
+          "cpp": "int",
+          "data": "kInt",
+          "fn": "MFnNumericAttribute",
+          "portable": true,
+          "read": "asInt"
+        },
+        "default_value": 100,
+        "is_array": false,
+        "portable": true,
+        "type": "int"
+      },
+      "reset": {
+        "cpp": {
+          "cat": "enum",
+          "cpp": "short",
+          "data": "enum",
+          "fn": "MFnEnumAttribute",
+          "portable": true,
+          "read": "asShort"
+        },
+        "enum_names": [
+          "False",
+          "True"
+        ],
+        "is_array": false,
+        "portable": true,
+        "type": "enum"
+      },
+      "uvCoord": {
+        "cpp": {
+          "cat": "vector2",
+          "cpp": "float[2]",
+          "data": "k2Float",
+          "fn": "MFnNumericAttribute",
+          "portable": true,
+          "read": "asFloat2"
+        },
+        "is_array": false,
+        "portable": true,
+        "type": "float2"
+      },
+      "width": {
+        "cpp": {
+          "cat": "scalar",
+          "cpp": "int",
+          "data": "kInt",
+          "fn": "MFnNumericAttribute",
+          "portable": true,
+          "read": "asInt"
+        },
+        "default_value": 100,
+        "is_array": false,
+        "portable": true,
+        "type": "int"
+      }
+    },
+    "outputs": {
+      "outAlpha": {
+        "cpp": {
+          "cat": "scalar",
+          "cpp": "float",
+          "data": "kFloat",
+          "fn": "MFnNumericAttribute",
+          "portable": true,
+          "read": "asFloat"
+        },
+        "is_array": false,
+        "portable": true,
+        "type": "float"
+      },
+      "outColor": {
+        "cpp": {
+          "cat": "color",
+          "cpp": "float[3]",
+          "data": "color",
+          "fn": "MFnNumericAttribute",
+          "portable": true,
+          "read": "asFloat3"
+        },
+        "is_array": false,
+        "portable": true,
+        "type": "color"
+      }
+    },
+    "suggested": {
+      "class_name": "GameOfLifeTex",
+      "heaviness": "medium",
+      "mpx_base": "MPxNode",
+      "node_type_name": "gameOfLifeTex",
+      "note": "texture/file evaluation node",
+      "type_id": "0x000761c6"
+    }
+  }
+}

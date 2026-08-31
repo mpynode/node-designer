@@ -1,0 +1,574 @@
+{
+  "affects_outputs": {
+    "borderColor": [],
+    "colorSpace": [],
+    "fileName": [],
+    "filterMode": [],
+    "maxAnisotropy": [],
+    "maxLOD": [],
+    "minLOD": [],
+    "mipLODBias": [],
+    "mipmapMode": [],
+    "preFilter": [],
+    "preFilterKernel": [],
+    "preFilterRadius": [],
+    "uvCoord": [],
+    "uvFilterSize": [],
+    "wrapModeU": [],
+    "wrapModeV": []
+  },
+  "children": {
+    "borderColorB": {
+      "attributeType": "float",
+      "channelBox": false,
+      "connectable": true,
+      "default": [
+        0.0
+      ],
+      "hidden": false,
+      "keyable": true,
+      "readable": true,
+      "shortName": "bcb",
+      "storable": true,
+      "usedAsColor": false,
+      "usedAsFilename": false,
+      "writable": true
+    },
+    "borderColorG": {
+      "attributeType": "float",
+      "channelBox": false,
+      "connectable": true,
+      "default": [
+        0.0
+      ],
+      "hidden": false,
+      "keyable": true,
+      "readable": true,
+      "shortName": "bcg",
+      "storable": true,
+      "usedAsColor": false,
+      "usedAsFilename": false,
+      "writable": true
+    },
+    "borderColorR": {
+      "attributeType": "float",
+      "channelBox": false,
+      "connectable": true,
+      "default": [
+        0.0
+      ],
+      "hidden": false,
+      "keyable": true,
+      "readable": true,
+      "shortName": "bcr",
+      "storable": true,
+      "usedAsColor": false,
+      "usedAsFilename": false,
+      "writable": true
+    },
+    "outColorB": {
+      "attributeType": "float",
+      "channelBox": false,
+      "connectable": true,
+      "default": [
+        0.0
+      ],
+      "hidden": false,
+      "keyable": false,
+      "readable": true,
+      "shortName": "ocb",
+      "storable": false,
+      "usedAsColor": false,
+      "usedAsFilename": false,
+      "writable": false
+    },
+    "outColorG": {
+      "attributeType": "float",
+      "channelBox": false,
+      "connectable": true,
+      "default": [
+        0.0
+      ],
+      "hidden": false,
+      "keyable": false,
+      "readable": true,
+      "shortName": "ocg",
+      "storable": false,
+      "usedAsColor": false,
+      "usedAsFilename": false,
+      "writable": false
+    },
+    "outColorR": {
+      "attributeType": "float",
+      "channelBox": false,
+      "connectable": true,
+      "default": [
+        0.0
+      ],
+      "hidden": false,
+      "keyable": false,
+      "readable": true,
+      "shortName": "ocr",
+      "storable": false,
+      "usedAsColor": false,
+      "usedAsFilename": false,
+      "writable": false
+    },
+    "uCoord": {
+      "attributeType": "float",
+      "channelBox": false,
+      "connectable": true,
+      "default": [
+        0.0
+      ],
+      "hidden": false,
+      "keyable": true,
+      "readable": true,
+      "shortName": "u",
+      "storable": true,
+      "usedAsColor": false,
+      "usedAsFilename": false,
+      "writable": true
+    },
+    "uvFilterSizeX": {
+      "attributeType": "float",
+      "channelBox": false,
+      "connectable": true,
+      "default": [
+        0.0
+      ],
+      "hidden": true,
+      "keyable": false,
+      "readable": true,
+      "shortName": "fsx",
+      "storable": true,
+      "usedAsColor": false,
+      "usedAsFilename": false,
+      "writable": true
+    },
+    "uvFilterSizeY": {
+      "attributeType": "float",
+      "channelBox": false,
+      "connectable": true,
+      "default": [
+        0.0
+      ],
+      "hidden": true,
+      "keyable": false,
+      "readable": true,
+      "shortName": "fsy",
+      "storable": true,
+      "usedAsColor": false,
+      "usedAsFilename": false,
+      "writable": true
+    },
+    "vCoord": {
+      "attributeType": "float",
+      "channelBox": false,
+      "connectable": true,
+      "default": [
+        0.0
+      ],
+      "hidden": false,
+      "keyable": true,
+      "readable": true,
+      "shortName": "v",
+      "storable": true,
+      "usedAsColor": false,
+      "usedAsFilename": false,
+      "writable": true
+    }
+  },
+  "decl_order": [
+    "fileName",
+    "uvCoord",
+    "uvFilterSize",
+    "colorSpace",
+    "preFilter",
+    "preFilterKernel",
+    "preFilterRadius",
+    "filterMode",
+    "maxAnisotropy",
+    "mipmapMode",
+    "mipLODBias",
+    "minLOD",
+    "maxLOD",
+    "wrapModeU",
+    "wrapModeV",
+    "borderColor",
+    "outColor",
+    "outAlpha"
+  ],
+  "presets": {
+    "borderColor": {
+      "attributeType": "float3",
+      "channelBox": false,
+      "connectable": true,
+      "default": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "hidden": false,
+      "keyable": true,
+      "readable": true,
+      "shortName": "bcl",
+      "storable": true,
+      "usedAsColor": true,
+      "usedAsFilename": false,
+      "writable": true
+    },
+    "colorSpace": {
+      "attributeType": "enum",
+      "channelBox": false,
+      "connectable": true,
+      "default": [
+        0.0
+      ],
+      "enum": "[Texture] sRGB Encoded Rec.709 (sRGB):[Texture] Gamma 1.8 Encoded Rec.709:[Texture] Gamma 2.2 Encoded Rec.709:[Texture] Gamma 2.4 Encoded Rec.709:[Texture] sRGB Encoded AP1:[Texture] Gamma 2.2 Encoded AP1:[Texture] sRGB Encoded P3-D65:[Texture] Gamma 2.2 Encoded AdobeRGB:[Scene-linear] scene-linear Rec.709-sRGB:[Scene-linear] ACEScg:[Scene-linear] ACES2065-1:[Scene-linear] scene-linear DCI-P3 D65:[Scene-linear] scene-linear AdobeRGB:[Scene-linear] scene-linear Rec.2020:[Display] sRGB:[Display] Gamma 2.2 / Rec.709:[Display] Rec.1886 / Rec.709 video:[Display] AdobeRGB:[Display] DCI-P3 D65:[Utility] Raw:[Log] ACEScct:[Log] ARRI LogC v3 EI800 / AlexaWideGamut:[Log] RED Log3G10 / REDWideGamutRGB:[Log] Sony SLog3 / SGamut3:[Log] Log film scan (ADX10)",
+      "hidden": false,
+      "keyable": false,
+      "max": [
+        24.0
+      ],
+      "min": [
+        0.0
+      ],
+      "readable": true,
+      "shortName": "cs",
+      "storable": true,
+      "usedAsColor": false,
+      "usedAsFilename": false,
+      "writable": true
+    },
+    "fileName": {
+      "attributeType": "typed",
+      "channelBox": false,
+      "connectable": true,
+      "default": null,
+      "hidden": false,
+      "keyable": false,
+      "readable": true,
+      "shortName": "fn",
+      "storable": true,
+      "usedAsColor": false,
+      "usedAsFilename": true,
+      "writable": true
+    },
+    "filterMode": {
+      "attributeType": "enum",
+      "channelBox": false,
+      "connectable": true,
+      "default": [
+        2.0
+      ],
+      "enum": "Point:Linear:Anisotropic",
+      "hidden": false,
+      "keyable": true,
+      "max": [
+        2.0
+      ],
+      "min": [
+        0.0
+      ],
+      "readable": true,
+      "shortName": "fm",
+      "storable": true,
+      "usedAsColor": false,
+      "usedAsFilename": false,
+      "writable": true
+    },
+    "maxAnisotropy": {
+      "attributeType": "long",
+      "channelBox": false,
+      "connectable": true,
+      "default": [
+        16.0
+      ],
+      "hidden": false,
+      "keyable": true,
+      "max": [
+        16.0
+      ],
+      "min": [
+        1.0
+      ],
+      "readable": true,
+      "shortName": "maxa",
+      "storable": true,
+      "usedAsColor": false,
+      "usedAsFilename": false,
+      "writable": true
+    },
+    "maxLOD": {
+      "attributeType": "long",
+      "channelBox": false,
+      "connectable": true,
+      "default": [
+        16.0
+      ],
+      "hidden": false,
+      "keyable": true,
+      "max": [
+        16.0
+      ],
+      "min": [
+        0.0
+      ],
+      "readable": true,
+      "shortName": "mxl",
+      "storable": true,
+      "usedAsColor": false,
+      "usedAsFilename": false,
+      "writable": true
+    },
+    "minLOD": {
+      "attributeType": "long",
+      "channelBox": false,
+      "connectable": true,
+      "default": [
+        0.0
+      ],
+      "hidden": false,
+      "keyable": true,
+      "max": [
+        16.0
+      ],
+      "min": [
+        0.0
+      ],
+      "readable": true,
+      "shortName": "mnl",
+      "storable": true,
+      "usedAsColor": false,
+      "usedAsFilename": false,
+      "writable": true
+    },
+    "mipLODBias": {
+      "attributeType": "float",
+      "channelBox": false,
+      "connectable": true,
+      "default": [
+        0.0
+      ],
+      "hidden": false,
+      "keyable": true,
+      "max": [
+        8.0
+      ],
+      "min": [
+        -8.0
+      ],
+      "readable": true,
+      "shortName": "mlb",
+      "storable": true,
+      "usedAsColor": false,
+      "usedAsFilename": false,
+      "writable": true
+    },
+    "mipmapMode": {
+      "attributeType": "enum",
+      "channelBox": false,
+      "connectable": true,
+      "default": [
+        1.0
+      ],
+      "enum": "None:Auto",
+      "hidden": false,
+      "keyable": true,
+      "max": [
+        1.0
+      ],
+      "min": [
+        0.0
+      ],
+      "readable": true,
+      "shortName": "mmm",
+      "storable": true,
+      "usedAsColor": false,
+      "usedAsFilename": false,
+      "writable": true
+    },
+    "outAlpha": {
+      "attributeType": "float",
+      "channelBox": false,
+      "connectable": true,
+      "default": [
+        1.0
+      ],
+      "hidden": false,
+      "keyable": false,
+      "readable": true,
+      "shortName": "oa",
+      "storable": false,
+      "usedAsColor": false,
+      "usedAsFilename": false,
+      "writable": false
+    },
+    "outColor": {
+      "attributeType": "float3",
+      "channelBox": false,
+      "connectable": true,
+      "default": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "hidden": false,
+      "keyable": false,
+      "readable": true,
+      "shortName": "oc",
+      "storable": false,
+      "usedAsColor": true,
+      "usedAsFilename": false,
+      "writable": false
+    },
+    "preFilter": {
+      "attributeType": "bool",
+      "channelBox": false,
+      "connectable": true,
+      "default": [
+        0.0
+      ],
+      "hidden": false,
+      "keyable": true,
+      "max": [
+        1.0
+      ],
+      "min": [
+        0.0
+      ],
+      "readable": true,
+      "shortName": "pf",
+      "storable": true,
+      "usedAsColor": false,
+      "usedAsFilename": false,
+      "writable": true
+    },
+    "preFilterKernel": {
+      "attributeType": "enum",
+      "channelBox": false,
+      "connectable": true,
+      "default": [
+        3.0
+      ],
+      "enum": "Box:Quadratic:Quartic:Gaussian",
+      "hidden": false,
+      "keyable": false,
+      "max": [
+        3.0
+      ],
+      "min": [
+        0.0
+      ],
+      "readable": true,
+      "shortName": "pfk",
+      "storable": true,
+      "usedAsColor": false,
+      "usedAsFilename": false,
+      "writable": true
+    },
+    "preFilterRadius": {
+      "attributeType": "float",
+      "channelBox": false,
+      "connectable": true,
+      "default": [
+        2.0
+      ],
+      "hidden": false,
+      "keyable": true,
+      "max": [
+        8.0
+      ],
+      "min": [
+        0.0
+      ],
+      "readable": true,
+      "shortName": "pfr",
+      "storable": true,
+      "usedAsColor": false,
+      "usedAsFilename": false,
+      "writable": true
+    },
+    "uvCoord": {
+      "attributeType": "float2",
+      "channelBox": false,
+      "connectable": true,
+      "default": [
+        0.0,
+        0.0
+      ],
+      "hidden": false,
+      "keyable": false,
+      "readable": true,
+      "shortName": "uv",
+      "storable": true,
+      "usedAsColor": false,
+      "usedAsFilename": false,
+      "writable": true
+    },
+    "uvFilterSize": {
+      "attributeType": "float2",
+      "channelBox": false,
+      "connectable": true,
+      "default": [
+        0.0,
+        0.0
+      ],
+      "hidden": true,
+      "keyable": false,
+      "readable": true,
+      "shortName": "fs",
+      "storable": true,
+      "usedAsColor": false,
+      "usedAsFilename": false,
+      "writable": true
+    },
+    "wrapModeU": {
+      "attributeType": "enum",
+      "channelBox": false,
+      "connectable": true,
+      "default": [
+        0.0
+      ],
+      "enum": "Wrap:Clamp:Mirror:Border",
+      "hidden": false,
+      "keyable": true,
+      "max": [
+        3.0
+      ],
+      "min": [
+        0.0
+      ],
+      "readable": true,
+      "shortName": "wmu",
+      "storable": true,
+      "usedAsColor": false,
+      "usedAsFilename": false,
+      "writable": true
+    },
+    "wrapModeV": {
+      "attributeType": "enum",
+      "channelBox": false,
+      "connectable": true,
+      "default": [
+        0.0
+      ],
+      "enum": "Wrap:Clamp:Mirror:Border",
+      "hidden": false,
+      "keyable": true,
+      "max": [
+        3.0
+      ],
+      "min": [
+        0.0
+      ],
+      "readable": true,
+      "shortName": "wmv",
+      "storable": true,
+      "usedAsColor": false,
+      "usedAsFilename": false,
+      "writable": true
+    }
+  }
+}

@@ -1,0 +1,61 @@
+{
+  "accepted": true,
+  "baseline_ms": 2.8739,
+  "best_ms": 0.5774,
+  "created": 1787675736.919652,
+  "ledger": [
+    {
+      "compiled": true,
+      "duration_s": null,
+      "fix_rounds": 0,
+      "hypothesis": "",
+      "index": 0,
+      "ms": 2.8739,
+      "note": "",
+      "outcome": "baseline",
+      "parity": null,
+      "predicted_speedup": null,
+      "risk": "",
+      "slug": null,
+      "speedup": null,
+      "theme": ""
+    },
+    {
+      "compiled": true,
+      "duration_s": 639.185,
+      "fix_rounds": 0,
+      "hypothesis": "compute() is pure input marshalling. np.take(vstack([pts, zeros(1,3)]), clusters, axis=0) reads exactly the rows in `clusters`, yet the lowered code built a full float->double table per mesh (push_back + a second copy in from_data), then copied each table AGAIN in vstack just to append one zero row -- four full passes over 3.8 MB apiece to fetch N*L rows. Likewise bindMatrices is clamped to bind[:min(cl.shape[0], bind.shape[0])], so with one clusterTags element exactly one of 20000 matrices survives, but all 20000 were read via inputValue()/asMatrix(). Fuse vstack+take into a direct gather off MFnMesh::getRawPoints (the (double)float cast is exact, so every gathered value is bit-identical), read only the bind prefix the clamp can reach, and get the array's logical length from the last physical element instead of walking all 20000.",
+      "index": 1,
+      "ms": 0.5774,
+      "note": "",
+      "outcome": "accept",
+      "parity": "pass",
+      "predicted_speedup": 3.0,
+      "risk": "np.take wraps a negative index modulo the table height, and the -1 padding relies on that to land on the appended zero row -- so the fused gather must use the PER-TABLE height (_nRest+1 vs _nDef+1) or a rest and deformed mesh with different vertex counts would wrap differently than they used to. The bind-prefix read additionally assumes MArrayDataHandle walks elements in ascending logical-index order (used both to break out of the prefix loop and to take the last physical element as the max index); a sparse array walked out of order would report the wrong length and mis-set the min() clamp.",
+      "slug": "gather_not_marshal",
+      "speedup": 4.977312088673363,
+      "theme": "this node is a GATHER, not a grid: stop materialising two 159k-vertex point tables and 20000 bind matrices when the cluster index block only ever names a handful of rows"
+    },
+    {
+      "compiled": null,
+      "duration_s": 656.631,
+      "fix_rounds": 0,
+      "hypothesis": "the node is ELEMENTWISE-shaped but its array inputs are decoys: seed_bench_scene drives a string multi at [0] only, so clusterTags has 1 element and n=1 (a single 3x3 SVD) while bindMatrices' 20000 elements are clamped away by min(cl,bind) and cost 0.1 us to skip. That left the two kMesh inputs as the only thing that could be expensive, and the guess was that a 159602-vert mesh was being DEEP-COPIED into this node's datablock on each dirty pull -- which MFnAttribute::setCached(false) would remove by reading through to the source",
+      "index": 2,
+      "ms": null,
+      "note": "candidate is identical to the current best",
+      "outcome": "no-change",
+      "parity": null,
+      "predicted_speedup": 2.0,
+      "risk": "setCached(false) hands out a handle that aliases the upstream data rather than a private copy, so getRawPoints() would dangle if the pointer outlived compute(); it does not here, but the same edit on a node that stashed the pointer would read freed geometry",
+      "slug": "profile_upstream_bound_no_win",
+      "speedup": null,
+      "theme": "instrumented the whole compute and found 96% of it is Maya evaluating two upstream worldMesh[0] plugs inside data.inputValue(); nothing inside this file can reach that cost, and both attribute-level knobs that could have (setCached/setStorable) measured as noise, so the round ships the baseline unchanged"
+    }
+  ],
+  "parity_gate": "authored+pointwise",
+  "reason": "accepted (4.98x)",
+  "rounds": 2,
+  "speedup": 4.977312088673363,
+  "type_name": "procrustesTags"
+}

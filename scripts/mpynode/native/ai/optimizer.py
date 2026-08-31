@@ -1,0 +1,370 @@
+"""The AI C++ optimizer orchestration engine.
+
+A pure, side-effect-injected loop that rewrites a compiled node's C++ for speed
+and accepts a candidate ONLY if it (1) compiles, (2) still matches the
+interpreted Python (parity PASS -- a SKIP is NOT a pass), AND (3) is measurably
+faster than the current best. Otherwise it keeps the original C++ unchanged
+(honest reject). It can never ship a faster-but-wrong or slower node.
+
+Every side effect is a caller-supplied function, so this module imports no LLM /
+Maya / compiler and is fully unit-testable with stubs:
+  * optimize_fn(cpp) -> candidate_cpp        propose a faster whole-file .cpp
+  * fix_fn(cpp, errors) -> candidate_cpp     repair a non-compiling candidate
+  * compile_fn(cpp) -> (ok, log, bundle)     build the candidate
+  * parity_fn(bundle) -> ParityVerdict       compiled-vs-interpreted parity
+  * benchmark_fn(bundle) -> ms | None        median wall-clock (None=unmeasurable)
+
+The live bindings for these live in ``optimizer_live`` (lazy Maya/LLM imports).
+"""
+
+from __future__ import annotations
+
+import time
+from dataclasses import dataclass, field
+from typing import Callable, List, Optional
+
+
+# Parity verdict statuses. SKIP means "could not be checked" -- it is NEVER a
+# pass; the optimizer refuses to accept a candidate it cannot prove correct.
+PARITY_PASS = "pass"
+PARITY_FAIL = "fail"
+PARITY_SKIP = "skip"
+
+
+@dataclass
+class ParityVerdict:
+    status: str
+    maxerr: Optional[float] = None
+    reason: str = ""
+
+
+def is_unchanged(candidate: str, current: str) -> bool:
+    """Whether ``candidate`` IS the incumbent source rather than a new one.
+
+    The single definition, because there are two readers: the no-change gate
+    below, and ``optimizer_live``'s ``candidates`` counter (which feeds the
+    run-level "the AI never delivered anything" verdict). They disagreed --
+    exact there, stripped here -- so a verbatim echo scored a candidate while
+    the gate recorded it as no-change, and one node's phantom candidate
+    suppressed the verdict for a whole batch.
+
+    Only whole-file leading/trailing whitespace is ignored: the one-shot path
+    returns ``prompt._extract_body(...)``, which strips, so a model that echoes
+    the file back differs from the on-disk baseline by a trailing newline and
+    exact ``==`` would miss it. Nothing is normalised per line -- a change to
+    any line, whitespace included, still reads as a real edit, because
+    discarding a real optimization costs more than spending one round measuring
+    a cosmetic one.
+    """
+    return candidate.strip() == current.strip()
+
+
+@dataclass
+class RoundRecord:
+    index: int                 # 0 = baseline, 1.. = optimize rounds
+    outcome: str               # "baseline" / "accept" / "parity-fail" / ...
+    note: str = ""
+    compiled: Optional[bool] = None
+    parity: Optional[str] = None
+    ms: Optional[float] = None
+    speedup: Optional[float] = None
+    fix_rounds: int = 0
+    # What the optimizer SAID it was doing, from round_meta_fn. `slug` is a short
+    # theme name and doubles as the version filename; `predicted_speedup` is
+    # recorded BEFORE the measurement so the report can show predicted vs actual --
+    # the divergences are the useful part.
+    slug: Optional[str] = None
+    theme: str = ""
+    hypothesis: str = ""
+    predicted_speedup: Optional[float] = None
+    risk: str = ""
+    duration_s: Optional[float] = None
+    # Where THIS round's binary was built -- a scratch path with the lifetime of
+    # the run. Handed to round_cb so a caller can keep the artifact, and kept OUT
+    # of the durable ledger, where it would be a lie by the time anyone read it.
+    bundle: Optional[str] = None
+
+
+@dataclass
+class OptimizeResult:
+    accepted: bool
+    best_cpp: str
+    baseline_ms: Optional[float]
+    best_ms: Optional[float]
+    speedup: float
+    rounds: int
+    ledger: List[RoundRecord] = field(default_factory=list)
+    reason: str = ""
+
+
+def _log(log_cb, msg):
+    if log_cb is not None:
+        try:
+            log_cb(msg)
+        except Exception:
+            pass
+
+
+def _fetch_meta(round_meta_fn):
+    """What the optimizer SAYS it just attempted, or ``{}``.
+
+    Never fatal. This is report material -- a node must not lose a real
+    optimization because its narrator misbehaved.
+    """
+    if round_meta_fn is None:
+        return {}
+    try:
+        return dict(round_meta_fn() or {})
+    except Exception:
+        return {}
+
+
+def _round_intent(tag, i, rounds, meta):
+    """One line saying what this round is ATTEMPTING, before it is judged.
+
+    The outcome lines report what happened; this reports the claim, so the two
+    read as a pair ("trying X, predicted 3x" then "1.84x"). Returns ``None``
+    when the optimizer stated no theme -- saying nothing beats a hollow line.
+    """
+    theme = (meta.get("theme") or "").strip()
+    if not theme:
+        return None
+    bits = []
+    pred = meta.get("predicted_speedup")
+    if pred:
+        bits.append("predicted %.2fx" % pred)
+    if meta.get("risk"):
+        bits.append("risk: %s" % meta["risk"])
+    return "%sround %d/%d trying: %s%s" % (
+        tag, i, rounds, theme, (" (%s)" % ", ".join(bits)) if bits else "")
+
+
+def _offer_history(history_sink, ledger):
+    """Hand the rounds resolved SO FAR to the caller, before the next proposal.
+
+    The mirror image of ``round_meta_fn``, which already carries data the other
+    way (adapter -> engine). It exists because each optimize round is a FRESH
+    process with no memory of the last: a rejected round leaves nothing behind,
+    so the next one can re-propose the idea that just lost.
+
+    A COPY is passed, never the engine's own list -- this is read-only context,
+    and a sink that mutates its argument must not be able to blank the ledger
+    that becomes rounds.json. Never fatal, for the same reason ``_fetch_meta``
+    is not: context is report material, and a node must not lose a real
+    optimization because its narrator misbehaved.
+    """
+    if history_sink is None:
+        return
+    try:
+        history_sink(list(ledger))
+    except Exception:
+        pass
+
+
+def _emit_round(round_cb, record, cpp_text):
+    """Hand a resolved round (and the source it produced) to the caller."""
+    if round_cb is None:
+        return
+    try:
+        round_cb(record, cpp_text)
+    except Exception:
+        pass
+
+
+def _compile_with_fixes(cpp, compile_fn, fix_fn, max_fix_rounds, log_cb=None,
+                        tag="", validate_fn=None):
+    """Compile ``cpp``; on failure feed the compiler errors to ``fix_fn`` up to
+    ``max_fix_rounds`` times. Returns (ok, log, bundle, cpp, fix_rounds).
+
+    A fix whose output ``validate_fn`` rejects is DISCARDED and the loop stops
+    with the last known-good ``cpp``. Feeding a corrupt candidate back in only
+    produced a second corrupt candidate.
+    """
+    ok, log, bundle = compile_fn(cpp)
+    fixes = 0
+    while not ok and fixes < max_fix_rounds:
+        fixes += 1
+        cand = fix_fn(cpp, log)
+        why = validate_fn(cand, cpp) if validate_fn else None
+        if why:
+            _log(log_cb, "%sfix round %d rejected: %s" % (tag, fixes, why))
+            return ok, log, bundle, cpp, fixes
+        cpp = cand
+        ok, log, bundle = compile_fn(cpp)
+    return ok, log, bundle, cpp, fixes
+
+
+def optimize_cpp(baseline_cpp: str, *,
+                 optimize_fn: Callable[[str], str],
+                 fix_fn: Callable[[str, str], str],
+                 compile_fn: Callable[[str], tuple],
+                 parity_fn: Callable[[str], ParityVerdict],
+                 benchmark_fn: Callable[[str], Optional[float]],
+                 rounds: int = 3,
+                 min_speedup: float = 1.05,
+                 max_fix_rounds: int = 2,
+                 label: str = "",
+                 log_cb=None,
+                 validate_fn: Optional[Callable[[str, str], Optional[str]]]
+                 = None,
+                 round_meta_fn: Optional[Callable[[], dict]] = None,
+                 round_cb=None,
+                 history_sink: Optional[Callable[[List[RoundRecord]],
+                                                 None]] = None) -> OptimizeResult:
+    """Optimize ``baseline_cpp`` under the parity+speed gate. See module docstring.
+
+    Accepts a candidate iff it compiles, parity is PASS, and it is faster than the
+    current best by at least ``min_speedup`` (candidate_ms < best_ms / min_speedup).
+    Each round proposes FROM the current best, so accepted rounds compound. On any
+    failure the ORIGINAL ``baseline_cpp`` is returned unchanged (honest reject).
+
+    ``validate_fn(candidate, current) -> reason | None`` is an OPTIONAL cheap
+    pre-check applied to whatever the model returns, before spending a compile
+    on it. It keeps this module content-agnostic: the live binding supplies
+    ``optimizer_knowledge.implausible_reason`` (truncated / prose answers),
+    while stub-driven tests inject nothing.
+
+    ``round_meta_fn() -> dict`` is called once per round, right after
+    ``optimize_fn``, for what the optimizer says it just attempted
+    (``slug`` / ``theme`` / ``hypothesis`` / ``predicted_speedup`` / ``risk``).
+    ``round_cb(record, cpp_text)`` receives EVERY resolved round -- accepted,
+    rejected or errored -- with the source it produced. Rejected rounds matter
+    most: "structure-of-arrays made it 2x slower" is only learnable if the
+    attempt was kept. Both are optional and neither can fail a round.
+
+    ``history_sink(ledger_so_far)`` is called once per round, BEFORE
+    ``optimize_fn``, with the rounds already resolved. Without it a round is
+    handed only the current-best source, so a REJECTED idea leaves no trace and
+    the next round can spend itself re-proposing it. Optional, because
+    ``optimize_fn`` is a one-argument contract that predates this.
+    """
+    ledger: List[RoundRecord] = []
+    tag = ("[%s] " % label) if label else ""
+
+    # Baseline: already-shipped, trusted C++, so it is NOT re-parity-checked (the
+    # reference is the interpreted Python). It only has to compile and benchmark so
+    # candidates have a speed target. If it can't, optimizing is a safe no-op.
+    b_ok, _b_log, b_bundle, _b_cpp, _b_fx = _compile_with_fixes(
+        baseline_cpp, compile_fn, fix_fn, 0, log_cb=log_cb, tag=tag)
+    def _baseline(note, **kw):
+        rec = RoundRecord(0, "baseline", note, **kw)
+        ledger.append(rec)
+        _emit_round(round_cb, rec, baseline_cpp)
+        return rec
+
+    if not b_ok:
+        _log(log_cb, "%sbaseline did not compile; skipping optimization" % tag)
+        _baseline("did not compile", compiled=False)
+        return OptimizeResult(False, baseline_cpp, None, None, 1.0, 0, ledger,
+                              "baseline did not compile")
+    baseline_ms = benchmark_fn(b_bundle)
+    if baseline_ms is None:
+        _log(log_cb, "%sbaseline could not be benchmarked; skipping" % tag)
+        _baseline("unmeasurable", compiled=True)
+        return OptimizeResult(False, baseline_cpp, None, None, 1.0, 0, ledger,
+                              "baseline could not be benchmarked")
+    _baseline("", compiled=True, ms=baseline_ms, bundle=b_bundle)
+    _log(log_cb, "%sbaseline %.3f ms; up to %d optimize round(s)"
+         % (tag, baseline_ms, rounds))
+
+    best_cpp = baseline_cpp
+    best_ms = baseline_ms
+
+    for i in range(1, rounds + 1):
+        started = time.time()
+        meta = {}
+        cand = None
+
+        def _round(outcome, **kw):
+            """Record one resolved round, stamped with what it claimed to do.
+
+            One place rather than seven, so a new outcome cannot silently ship
+            without its theme, its timing, or its source.
+            """
+            rec = RoundRecord(
+                i, outcome,
+                duration_s=round(time.time() - started, 3),
+                slug=(meta.get("slug") or None),
+                theme=(meta.get("theme") or ""),
+                hypothesis=(meta.get("hypothesis") or ""),
+                predicted_speedup=meta.get("predicted_speedup"),
+                risk=(meta.get("risk") or ""),
+                **kw)
+            ledger.append(rec)
+            _emit_round(round_cb, rec, cand)
+            return rec
+
+        # Before the proposal, not after: a round informed by history it has
+        # not been handed yet is the whole defect this closes.
+        _offer_history(history_sink, ledger)
+
+        # Say the round BEGAN. `_round_intent` below cannot: the theme comes from
+        # the optimizer, so it does not exist until the blocking call below returns
+        # -- possibly tens of minutes. Otherwise the first sign is the outcome.
+        _log(log_cb, "%sround %d/%d starting" % (tag, i, rounds))
+
+        try:
+            cand = optimize_fn(best_cpp)
+            meta = _fetch_meta(round_meta_fn)
+            intent = _round_intent(tag, i, rounds, meta)
+            if intent:
+                _log(log_cb, intent)
+            # Reject a truncated / prose answer BEFORE spending a compile and a
+            # fix round on it.
+            why = validate_fn(cand, best_cpp) if validate_fn else None
+            if why:
+                _log(log_cb, "%sround %d: invalid candidate (%s)" % (tag, i, why))
+                _round("invalid-candidate", note=why)
+                continue
+            # A candidate identical to the incumbent is not a candidate. Left to
+            # run it re-compiles and re-benchmarks the SAME bytes, so timing
+            # jitter alone decides -- that is how an "accept" at 1.15x got
+            # recorded against a file byte-identical to its own baseline. Judged
+            # BEFORE compile / parity / benchmark are spent on it. See
+            # ``is_unchanged`` for why the comparison is stripped.
+            if is_unchanged(cand, best_cpp):
+                _log(log_cb, "%sround %d: no change to the source" % (tag, i))
+                _round("no-change",
+                       note="candidate is identical to the current best")
+                continue
+            ok, log, bundle, cand, fx = _compile_with_fixes(
+                cand, compile_fn, fix_fn, max_fix_rounds, log_cb=log_cb, tag=tag,
+                validate_fn=validate_fn)
+            if not ok:
+                _log(log_cb, "%sround %d: did not compile" % (tag, i))
+                _round("compile-failed", compiled=False, fix_rounds=fx)
+                continue
+            verdict = parity_fn(bundle)
+            if verdict.status != PARITY_PASS:
+                _log(log_cb, "%sround %d: parity %s" % (tag, i, verdict.status))
+                _round("parity-%s" % verdict.status, note=verdict.reason,
+                       compiled=True, parity=verdict.status, fix_rounds=fx,
+                       bundle=bundle)
+                continue
+            ms = benchmark_fn(bundle)
+            if ms is None:
+                _log(log_cb, "%sround %d: unmeasurable" % (tag, i))
+                _round("unmeasurable", compiled=True, parity=PARITY_PASS,
+                       fix_rounds=fx, bundle=bundle)
+                continue
+            if ms < best_ms / min_speedup:
+                speedup = baseline_ms / ms
+                _log(log_cb, "%sround %d: ACCEPT %.3f ms (%.2fx vs baseline)"
+                     % (tag, i, ms, speedup))
+                _round("accept", compiled=True, parity=PARITY_PASS, ms=ms,
+                       speedup=speedup, fix_rounds=fx, bundle=bundle)
+                best_cpp, best_ms = cand, ms
+            else:
+                _log(log_cb, "%sround %d: not faster (%.3f ms vs best %.3f ms)"
+                     % (tag, i, ms, best_ms))
+                _round("not-faster", compiled=True, parity=PARITY_PASS, ms=ms,
+                       fix_rounds=fx, bundle=bundle)
+        except Exception as exc:  # a flaky adapter must not abort the whole run
+            _log(log_cb, "%sround %d: error %s" % (tag, i, exc))
+            _round("error", note=str(exc))
+
+    accepted = best_cpp is not baseline_cpp
+    speedup = (baseline_ms / best_ms) if best_ms else 1.0
+    reason = ("accepted (%.2fx)" % speedup) if accepted else "no candidate beat the baseline"
+    return OptimizeResult(accepted, best_cpp, baseline_ms, best_ms, speedup,
+                          rounds, ledger, reason)

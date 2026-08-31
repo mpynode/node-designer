@@ -1,0 +1,61 @@
+{
+  "accepted": true,
+  "baseline_ms": 0.0035,
+  "best_ms": 0.002,
+  "created": 1787964928.663994,
+  "ledger": [
+    {
+      "compiled": true,
+      "duration_s": null,
+      "fix_rounds": 0,
+      "hypothesis": "",
+      "index": 0,
+      "ms": 0.0035,
+      "note": "",
+      "outcome": "baseline",
+      "parity": null,
+      "predicted_speedup": null,
+      "risk": "",
+      "slug": null,
+      "speedup": null,
+      "theme": ""
+    },
+    {
+      "compiled": true,
+      "duration_s": 1208.189,
+      "fix_rounds": 0,
+      "hypothesis": "This node has no scan and no second collection, so there is no acceleration structure to build; the whole compute is a bilinear tap plus six multiply-adds. That means the arithmetic is already free and 100% of the addressable time is overhead around it. Two sources: (1) nd::from_data<double>({u,v},{2}) is a make_shared<vector> plus two Shape vectors, and nd::slice(...).item() allocates again just to read a component back out -- roughly a dozen mallocs per tick to carry four numbers; (2) the texture is resolved through nd_tex_load_linear twice per tick (once inside nd_texel, once for outSize) when the answer is not just cacheable within the tick but across the whole animation, because fileName/colorSpace/preFilter/preFilterKernel/preFilterRadius are static while uvCoord and the grade animate.",
+      "index": 1,
+      "ms": 0.002,
+      "note": "",
+      "outcome": "accept",
+      "parity": "pass",
+      "predicted_speedup": 1.8,
+      "risk": "The scalarisation is only bit-safe if every narrowing is preserved exactly. The generated form round-trips uv as float->double->(stored in Array)->double->float, and the output as double->(stored)->double->float; a plain double[2] and a direct (float)nl_r reproduce both narrowings in the same order, so no comparison, tie or rounding moves. The cross-evaluation texture cache is the real risk: keyed on five inputs, it must invalidate on all of them or a re-presented earlier input set returns a stale buffer. Handled on both dirty paths -- setDependentsDirty for DG (checking the child's parent attribute too) and preEvaluation for EM (dirtyPlugExists on all five, plus unconditional invalidation in any non-normal context) -- with the flag as std::atomic and the rebuild under a per-instance mutex, since parallel EM can have two instances in compute() at once.",
+      "slug": "drop_nd_array_temporaries",
+      "speedup": 1.75,
+      "theme": "fileTexture is ELEMENTWISE with N=1 -- one texel per compute() -- so the only thing that costs anything is per-evaluation overhead: the generated code built and tore down heap-allocated nd::Array temporaries to move four doubles around, and re-resolved the same texture pointer twice a tick."
+    },
+    {
+      "compiled": true,
+      "duration_s": 909.449,
+      "fix_rounds": 0,
+      "hypothesis": "This node is ELEMENTWISE and degenerate: compute() does ONE bilinear texel, so the arithmetic is nothing and the entire measurement is per-access overhead -- opaque Maya accessor calls plus the DG plug machinery. Instrumenting confirmed exactly one compute() per tick, for outAlpha only (outColor is served clean off the same pass), so there is no redundant-invocation win to be had. That leaves the count of Maya calls inside the one compute as the only lever. The existing _texResValid cache never actually hits: the benchmark's dgdirty(node) dirties fileName along with everything else, setDependentsDirty fires invalidateTexRes(), and every tick therefore takes the rebuild branch -- five extra data.inputValue() reads, an MString deep-compare, a nearbyintf, and a scan of the eight-row thread_local memo with its std::string::compare. The dirty flag only says 'might have changed'; an item-2 content fingerprint says 'did change', and on this node the answer is always no. Predicted the fingerprint would remove roughly the memo scan and leave the five reads, so a modest single-digit-percent win.",
+      "index": 2,
+      "ms": 0.002,
+      "note": "",
+      "outcome": "not-faster",
+      "parity": "pass",
+      "predicted_speedup": 1.05,
+      "risk": "The fingerprint is deliberately STRICTER than the cache key nd_tex_load_linear builds for itself -- that one quantises preFilterRadius to 0.1 before comparing, this one memcmps the raw float bits, so -0.0 vs +0.0 and NaN vs NaN both miss and force a resolve. A fingerprint finer than the key it guards can only cause an extra lookup, never hand back a buffer belonging to a different key, so the sampled pixels are bit-identical. Invalidation is unchanged and still covers all three paths (setDependentsDirty for DG, preEvaluation for EM, and now the fingerprint as the item-2 backstop); the state stays per-instance, the rebuild stays under _texResMutex, and nothing is keyed on an input that parity re-presents. Deleting the two priming output writes is safe because nd_texel is float arithmetic over an already-resolved buffer -- no allocation, no Maya call, so it cannot throw -- and the catch returns kFailure without publishing a value anyway. The alpha read-back likewise returned the exact bits just written through the handle.",
+      "slug": "fingerprint_revalidate_texres",
+      "speedup": null,
+      "theme": "dgdirty marks every plug dirty each tick, so the already-cached texture resolution was torn down and re-resolved on every single evaluation; compare a content fingerprint of the five keying inputs instead and revalidate the pointer in place, and delete the two dead priming writes to the output handles"
+    }
+  ],
+  "parity_gate": "authored+pointwise",
+  "reason": "accepted (1.75x)",
+  "rounds": 2,
+  "speedup": 1.75,
+  "type_name": "fileTexture"
+}

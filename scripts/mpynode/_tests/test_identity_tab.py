@@ -1,0 +1,261 @@
+"""Identity panel + Option A scene-tree rendering.
+
+Option A: the scene tree's column 1 renders the node's canonical Class as
+``Class(Parent)`` when classed and ``Parent()`` when class-less, where Parent is
+the root wrapper class name for the node's native type (MPyNode/MPyFile/...) --
+mirroring the baked ``class X(Parent):`` line.
+
+Identity panel (minimal layout): Class is the ONE editable field; the node type
+is the derived camelCase (lower-first) of the Class, shown only inside the two
+read-only projection lines (Python API + Native C++), both resolving to
+``<type>1`` -- the SAME name Maya gives a node created either way.
+
+Importing the widget pulls Qt, so create a QApplication at IMPORT time (before
+maya.standalone installs a non-GUI QCoreApplication). Mirrors the other UI test
+modules.
+"""
+
+from __future__ import annotations
+
+import os
+
+os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+import unittest
+
+# QApplication at IMPORT time -- mirrors the other UI test modules.
+_QAPP = None
+try:
+    from PySide6.QtWidgets import QApplication as _QApp
+except Exception:
+    try:
+        from PySide2.QtWidgets import QApplication as _QApp
+    except Exception:
+        _QApp = None
+if _QApp is not None:
+    _QAPP = _QApp.instance() or _QApp(["nd-identity-tab-test"])
+
+from ._setup import ensure_plugins_loaded, standalone_init
+
+
+def setUpModule():
+    standalone_init()
+    ensure_plugins_loaded()
+
+
+class TestOptionA(unittest.TestCase):
+    def test_classed_label(self):
+        import maya.cmds as mc
+        from mpynode.wrappers._mpy_node import MPyNode
+        from mpynode.ui.widgets.scene_tree import NDSceneTreeItem
+
+        mc.file(new=True, force=True)
+        n = MPyNode.create(name="optA#")
+        n.set_py_class("mpynode_user.Procrustes")
+        item = NDSceneTreeItem(None, n.get_name(), "mPyNode")
+        self.assertEqual(item.text(1), "Procrustes(MPyNode)")
+
+    def test_classless_label(self):
+        import maya.cmds as mc
+        from mpynode.wrappers._mpy_node import MPyNode
+        from mpynode.ui.widgets.scene_tree import NDSceneTreeItem
+
+        mc.file(new=True, force=True)
+        n = MPyNode.create(name="optAless#")  # class-less
+        item = NDSceneTreeItem(None, n.get_name(), "mPyNode")
+        self.assertEqual(item.text(1), "MPyNode()")
+
+
+class TestIdentityTab(unittest.TestCase):
+    def setUp(self):
+        import maya.cmds as mc
+
+        mc.file(new=True, force=True)
+        ensure_plugins_loaded()
+
+    def test_classed_shows_derived_type_and_both_projections(self):
+        from mpynode.wrappers._mpy_node import MPyNode
+        from mpynode.ui.widgets.identity_tab import NDIdentityWidget
+
+        n = MPyNode.create(name="idtab#")
+        n.set_py_class("mpynode_user.Procrustes")
+        w = NDIdentityWidget()
+        w.setPyNode(n)
+        self.assertEqual(w.class_name_text(), "Procrustes")
+        self.assertEqual(w.node_type_text(), "procrustes")
+        # Python API line ties create() to the camelCase type + index.
+        py = w.python_api_text()
+        self.assertIn("Procrustes.create()", py)
+        self.assertIn("procrustes1", py)
+        # Native C++ line uses the SAME type + index.
+        cpp = w.native_cpp_text()
+        self.assertIn("mc.createNode('procrustes')", cpp)
+        self.assertIn("procrustes1", cpp)
+
+    def test_multiword_class_camelcases_the_type(self):
+        from mpynode.wrappers._mpy_node import MPyNode
+        from mpynode.ui.widgets.identity_tab import NDIdentityWidget
+
+        n = MPyNode.create(name="idtabmw#")
+        n.set_py_class("mpynode_user.ProcrustesConstraint")
+        w = NDIdentityWidget()
+        w.setPyNode(n)
+        self.assertEqual(w.node_type_text(), "procrustesConstraint")
+        self.assertIn("procrustesConstraint1", w.native_cpp_text())
+        self.assertIn("ProcrustesConstraint.create()", w.python_api_text())
+
+    def test_classless_is_empty(self):
+        from mpynode.wrappers._mpy_node import MPyNode
+        from mpynode.ui.widgets.identity_tab import NDIdentityWidget
+
+        n = MPyNode.create(name="idtabless#")
+        w = NDIdentityWidget()
+        w.setPyNode(n)
+        self.assertEqual(w.class_name_text(), "")
+        self.assertEqual(w.node_type_text(), "")
+
+    def test_naming_a_classless_node_commits(self):
+        """Typing a PascalCase name into the Class field + Enter fires
+        ``editingFinished`` -> ``_commit_class``, which synthesizes + stamps the
+        canonical class, repopulates the derived projections, and emits
+        ``classChanged``."""
+        from mpynode.wrappers._mpy_node import MPyNode
+        from mpynode.ui.widgets.identity_tab import NDIdentityWidget
+
+        n = MPyNode.create(name="idnameflow#")
+        w = NDIdentityWidget()
+        w.setPyNode(n)
+        self.assertEqual(w.class_name_text(), "")  # class-less to start
+        emitted = []
+        w.classChanged.connect(lambda s: emitted.append(s))
+        w._class_edit.setText("MyThing")
+        w._commit_class()
+        self.assertEqual(n.get_py_class(), "mpynode_user.MyThing")
+        self.assertEqual(w.class_name_text(), "MyThing")
+        self.assertEqual(w.node_type_text(), "myThing")
+        self.assertIn("myThing1", w.native_cpp_text())
+        self.assertEqual(emitted, ["MyThing"])
+
+    def test_refresh_survives_deleted_node(self):
+        """If the backing node is gone (deleted / externally renamed),
+        ``refresh()`` must NOT raise -- it degrades to the empty render so the
+        sibling panels (Attributes/Framework/Variables/Profile/Watch) still
+        populate."""
+        import maya.cmds as mc
+        from mpynode.wrappers._mpy_node import MPyNode
+        from mpynode.ui.widgets.identity_tab import NDIdentityWidget
+
+        n = MPyNode.create(name="idgone#")
+        n.set_py_class("mpynode_user.Ghosty")
+        w = NDIdentityWidget()
+        w.setPyNode(n)
+        self.assertEqual(w.class_name_text(), "Ghosty")
+        mc.delete(n.get_name())          # backing node now dead
+        w.refresh()                      # must not raise
+        self.assertEqual(w.node_type_text(), "")
+        self.assertEqual(w.class_name_text(), "")
+
+    def test_recommit_same_class_does_not_reemit(self):
+        """Focus-out on an already-classed node with no edit fires
+        ``editingFinished`` -> ``_commit_class``; an unchanged name must NOT
+        re-synthesize or re-emit ``classChanged`` (which would trigger a
+        redundant scene-tree re-render)."""
+        from mpynode.wrappers._mpy_node import MPyNode
+        from mpynode.ui.widgets.identity_tab import NDIdentityWidget
+
+        n = MPyNode.create(name="idrecommit#")
+        n.set_py_class("mpynode_user.Keeper")
+        w = NDIdentityWidget()
+        w.setPyNode(n)
+        self.assertEqual(w.class_name_text(), "Keeper")
+        emitted = []
+        w.classChanged.connect(lambda s: emitted.append(s))
+        w._commit_class()                # simulate focus-out, no edit
+        self.assertEqual(emitted, [])    # no redundant re-emit
+        self.assertEqual(n.get_py_class(), "mpynode_user.Keeper")
+
+    def test_invalid_class_name_rejected(self):
+        """A non-PascalCase entry is rejected: the node stays class-less and the
+        field resets (no partial stamp)."""
+        from mpynode.wrappers._mpy_node import MPyNode
+        from mpynode.ui.widgets.identity_tab import NDIdentityWidget
+
+        n = MPyNode.create(name="idbadname#")
+        w = NDIdentityWidget()
+        w.setPyNode(n)
+        w._class_edit.setText("has space")
+        w._commit_class()
+        self.assertEqual(n.get_py_class() or "", "")
+        self.assertEqual(w.class_name_text(), "")
+
+
+class TestTheBakeContractIsReadableHere(unittest.TestCase):
+    """The baked .py's 16-line preamble now lives on this panel.
+
+    It used to be readable only by unfolding the top of the API view, which
+    put a paragraph about export semantics in front of the code on every
+    visit -- and still left its actual answer hard to find. The question it
+    settles ("my node has a persistent audio buffer, why is it not in the
+    bake?") is a fact about the export, which is what this panel is for.
+    """
+
+    def setUp(self):
+        import maya.cmds as mc
+
+        mc.file(new=True, force=True)
+        ensure_plugins_loaded()
+
+    def _widget(self):
+        from mpynode.wrappers._mpy_node import MPyNode
+        from mpynode.ui.widgets.identity_tab import NDIdentityWidget
+
+        n = MPyNode.create(name="idbake#")
+        w = NDIdentityWidget()
+        w.setPyNode(n)
+        return n, w
+
+    def test_it_is_the_exporters_own_text_not_a_paraphrase(self):
+        # A second copy would drift from the exporter it describes.
+        from mpynode._common.io.py_export import BAKE_CONTRACT
+        from mpynode.ui.widgets.identity_tab import _bake_contract_text
+
+        text = _bake_contract_text("mPyNode")
+        for phrase in ("ONE-WAY bake", "NOT included", ".mpn export"):
+            self.assertIn(phrase, text)
+            self.assertIn(phrase, BAKE_CONTRACT)
+
+    def test_the_node_type_is_substituted(self):
+        from mpynode.ui.widgets.identity_tab import _bake_contract_text
+
+        self.assertIn("mPyLocator", _bake_contract_text("mPyLocator"))
+        self.assertNotIn("%(native_type)s", _bake_contract_text("mPyMesh"))
+
+    def test_paragraphs_are_reflowed_to_one_line_each(self):
+        # The source is hard-wrapped to fit a .py; a label that re-wraps
+        # pre-wrapped text reads as ragged.
+        from mpynode.ui.widgets.identity_tab import _bake_contract_text
+
+        text = _bake_contract_text("mPyNode")
+        self.assertFalse([ln for ln in text.split("\n")
+                          if ln.startswith("#")])
+        self.assertGreaterEqual(len(text.split("\n\n")), 4)
+        for para in text.split("\n\n"):
+            self.assertNotIn("\n", para, "a paragraph kept its source wrap")
+
+    def test_it_populates_for_a_class_less_node_too(self):
+        # A node with no Class stamped is exactly when the user is likeliest
+        # to be asking what a bake would keep.
+        _n, w = self._widget()
+        self.assertEqual(w.class_name_text(), "")
+        self.assertIn("NOT included", w.bake_contract_text())
+
+    def test_it_hides_rather_than_showing_an_empty_heading(self):
+        from mpynode.ui.widgets.identity_tab import NDIdentityWidget
+
+        w = NDIdentityWidget()
+        w.setPyNode(None)
+        self.assertEqual(w.bake_contract_text(), "")
+        self.assertFalse(w._bake_header.isVisible())
+
+
+if __name__ == "__main__":
+    unittest.main()

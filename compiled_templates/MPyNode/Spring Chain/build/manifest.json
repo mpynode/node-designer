@@ -1,0 +1,217 @@
+{
+  "manifest_version": 1,
+  "porter_recipe_version": "19",
+  "provider": "claude_cli",
+  "model": "claude-opus-5[1m]",
+  "strict": false,
+  "plugin_name": "MPyNode_Spring_Chain",
+  "bundle": "compiled_templates/MPyNode/Spring Chain/MPyNode_Spring_Chain.bundle",
+  "created": 1787678923.113173,
+  "nodes": [
+    {
+      "source_node": "springChain",
+      "type_name": "springChain",
+      "type_id": "0x000148ac",
+      "type_id_source": "derived",
+      "base": "MPxNode",
+      "spec_hash": "57960893d560ac29f2391d61de75481a17122acff20ec5a3a841a5a0778c5592",
+      "port_cache_key": "57960893d560ac29f2391d61de75481a17122acff20ec5a3a841a5a0778c5592",
+      "cache": "miss",
+      "build_status": "compiled",
+      "build_reason": "",
+      "ported": true,
+      "incomplete": [],
+      "invented_io": [],
+      "missing_includes": [],
+      "verify": {
+        "ran": true,
+        "pass": true,
+        "maxerr": null,
+        "tol": 0.0001,
+        "reason": "outputs produced no comparable components across the sweep -- pointwise parity skipped (vacuous) | authored @maya_test: 1/1 passed",
+        "timing": {
+          "measured": false,
+          "reason": "not timed -- generic parity did not pass for this node, so there is no trustworthy pair to measure (outputs produced no comparable components across the sweep -- pointwise parity skipped (vacuous))"
+        },
+        "authored_test": {
+          "ran": true,
+          "passed": true,
+          "count": 1,
+          "passes": 1,
+          "reason": ""
+        }
+      },
+      "spec": {
+        "schema_version": 1,
+        "source_node": "springChain",
+        "mpy_type": "mPyNode",
+        "suggested": {
+          "node_type_name": "springChain",
+          "class_name": "SpringChain",
+          "type_id": "0x000749b0",
+          "mpx_base": "MPxNode",
+          "note": "plain dependency node",
+          "heaviness": "easy"
+        },
+        "inputs": {
+          "damping": {
+            "type": "float",
+            "is_array": false,
+            "portable": true,
+            "cpp": {
+              "cat": "scalar",
+              "fn": "MFnNumericAttribute",
+              "data": "kFloat",
+              "cpp": "float",
+              "read": "asFloat",
+              "portable": true
+            },
+            "default_value": 0.6
+          },
+          "driver": {
+            "type": "vector",
+            "is_array": false,
+            "portable": true,
+            "cpp": {
+              "cat": "vector",
+              "fn": "MFnNumericAttribute",
+              "data": "k3Double",
+              "cpp": "double[3]",
+              "read": "asDouble3",
+              "portable": true
+            }
+          },
+          "gravity": {
+            "type": "vector",
+            "is_array": false,
+            "portable": true,
+            "cpp": {
+              "cat": "vector",
+              "fn": "MFnNumericAttribute",
+              "data": "k3Double",
+              "cpp": "double[3]",
+              "read": "asDouble3",
+              "portable": true
+            }
+          },
+          "mass": {
+            "type": "float",
+            "is_array": false,
+            "portable": true,
+            "cpp": {
+              "cat": "scalar",
+              "fn": "MFnNumericAttribute",
+              "data": "kFloat",
+              "cpp": "float",
+              "read": "asFloat",
+              "portable": true
+            },
+            "default_value": 1.0
+          },
+          "maxDistance": {
+            "type": "float",
+            "is_array": false,
+            "portable": true,
+            "cpp": {
+              "cat": "scalar",
+              "fn": "MFnNumericAttribute",
+              "data": "kFloat",
+              "cpp": "float",
+              "read": "asFloat",
+              "portable": true
+            }
+          },
+          "minDistance": {
+            "type": "float",
+            "is_array": false,
+            "portable": true,
+            "cpp": {
+              "cat": "scalar",
+              "fn": "MFnNumericAttribute",
+              "data": "kFloat",
+              "cpp": "float",
+              "read": "asFloat",
+              "portable": true
+            }
+          },
+          "resetBuffer": {
+            "type": "enum",
+            "is_array": false,
+            "portable": true,
+            "cpp": {
+              "cat": "enum",
+              "fn": "MFnEnumAttribute",
+              "data": "enum",
+              "cpp": "short",
+              "read": "asShort",
+              "portable": true
+            },
+            "enum_names": [
+              "False",
+              "True"
+            ]
+          },
+          "tension": {
+            "type": "float",
+            "is_array": false,
+            "portable": true,
+            "cpp": {
+              "cat": "scalar",
+              "fn": "MFnNumericAttribute",
+              "data": "kFloat",
+              "cpp": "float",
+              "read": "asFloat",
+              "portable": true
+            },
+            "default_value": 0.3
+          },
+          "time": {
+            "type": "time",
+            "is_array": false,
+            "portable": true,
+            "cpp": {
+              "cat": "unit",
+              "fn": "MFnUnitAttribute",
+              "data": "kTime",
+              "cpp": "double",
+              "read": "asMTime",
+              "portable": true
+            }
+          }
+        },
+        "outputs": {
+          "driven": {
+            "type": "vector",
+            "is_array": true,
+            "portable": true,
+            "cpp": {
+              "cat": "vector",
+              "fn": "MFnNumericAttribute",
+              "data": "k3Double",
+              "cpp": "double[3]",
+              "read": "asDouble3",
+              "portable": true
+            }
+          }
+        },
+        "variables": {},
+        "compute": "# Name: Simple spring solver  (numpy-first port)\n# Author: Eric Vignola - eric.vignola@gmail.com\n# self.initialized (session-only) avoids an integration on the first eval after\n# load. self.position / self.velocity persist. driven = vector array output.\n#\n# (Imports + helper functions live in the Init tab.)\n\n# ---------------------------- Main ----------------------------#\n\n# Fresh (vanilla) node, or one whose buffers were never restored: seed the\n# spring buffers so the first integration has state. The original relied on\n# restored stored vars; gallery templates ship vanilla (no stored vars).\nif not hasattr(self, 'velocity'):\n    self.velocity = [np.zeros(3) for _ in range(len(self.driven))]\n    self.position = [np.zeros(3) for _ in range(len(self.driven))]\n\n# First eval after a load: just mark initialized + push the stored buffer out\n# (self.initialized is session-only -> absent again on the next load).\nif not hasattr(self, 'initialized'):\n    self.initialized = True\n\nelse:\n    n = len(self.driven)\n\n    if self.resetBuffer:\n        self.velocity = [np.zeros(3) for _ in range(n)]\n        self.position = [np.zeros(3) for _ in range(n)]\n\n    elif len(self.velocity) < n:\n        for _ in range(len(self.velocity), n):\n            self.velocity.append(np.zeros(3))\n            self.position.append(np.zeros(3))\n\n    elif len(self.velocity) > n:\n        self.velocity = self.velocity[:n]\n        self.position = self.position[:n]\n\n    else:\n        # Initial drag\n        self.position[0], self.velocity[0] = spring(\n            self.driver, self.position[0], self.velocity[0],\n            self.gravity, self.tension, self.mass, self.damping, self.minDistance, self.maxDistance)\n\n        # Spring forces down the chain\n        for i in range(1, n):\n            self.position[i], self.velocity[i] = spring(\n                self.position[i - 1], self.position[i], self.velocity[i],\n                self.gravity, self.tension, self.mass, self.damping, self.minDistance, self.maxDistance)\n\n\n# Output positions from the stored buffer\nself.driven[:] = np.asarray(self.position, dtype=float)\n",
+        "init": "# Init tab \u2014 runs once per file open (not per compute()).\n# Imports + helper functions shared by the Compute expression.\n\nimport numpy as np\n\n\ndef spring(p0, p1, v, g, k, m, d, minDist=0., maxDist=0.):\n    p0 = np.asarray(p0, dtype=float)\n    p1 = np.asarray(p1, dtype=float)\n    v = np.asarray(v, dtype=float)\n    g = np.asarray(g, dtype=float)\n\n    # Acceleration -> velocity -> position\n    s = p0 - p1\n    a = k * s / m - d * v / m + g\n    v = v + a\n    p1 = p1 + v\n\n    # Simple distance limits\n    if minDist or maxDist:\n        s = p0 - p1\n        length = float(np.linalg.norm(s))\n        if length != 0:\n            s = s / length\n\n        if minDist > 0. and length < minDist:\n            p1 = p0 - s * minDist\n            v = np.zeros(3)\n        elif maxDist > 0. and length > maxDist:\n            p1 = p0 - s * maxDist\n            v = np.zeros(3)\n\n    return p1, v\n",
+        "affects": "all",
+        "methods": "# Build a complete, self-contained spring_chain demo: a driver locator\n# (keyframed so PLAYING the timeline swings it back and forth) plus a chain of\n# 100 spheres that lag behind it under tension/damping (secondary motion).\n# Gravity is zeroed. The driver carries USER attributes mirroring the node's\n# tuning inputs (gravity, tension, damping, mass, max/minDistance) wired straight\n# into the node, so users tweak the chain's feel right on the driver's channel\n# box. The chain is wired to the driven output array and time is wired to time1.\ndef demo(self):\n    from maya import cmds as mc\n    name = self.get_name()\n    n_links = 100\n    driver = mc.spaceLocator(name=\"springDriver#\")[0]\n    mc.connectAttr(driver + \".translate\", name + \".driver\", force=True)\n    for t, x in ((1, 0.0), (24, 10.0), (48, 0.0)):\n        mc.setKeyframe(driver + \".translateX\", time=t, value=x)\n    # Mirror the node's tuning inputs onto the driver and wire them straight in,\n    # so the chain is tuned right on the driver (gravity zeroed).\n    mc.addAttr(driver, longName=\"gravity\", attributeType=\"double3\", keyable=True)\n    for ax in \"XYZ\":\n        mc.addAttr(driver, longName=\"gravity\" + ax, attributeType=\"double\",\n                   parent=\"gravity\", keyable=True)\n    mc.setAttr(driver + \".gravity\", 0.0, 0.0, 0.0, type=\"double3\")\n    mc.connectAttr(driver + \".gravity\", name + \".gravity\", force=True)\n    for attr, val in ((\"tension\", 0.3), (\"damping\", 0.6), (\"mass\", 1.0),\n                      (\"maxDistance\", 1.5), (\"minDistance\", 0.0)):\n        mc.addAttr(driver, longName=attr, attributeType=\"double\",\n                   defaultValue=val, keyable=True)\n        mc.setAttr(driver + \".\" + attr, val)\n        mc.connectAttr(driver + \".\" + attr, name + \".\" + attr, force=True)\n    # add_input_attr already auto-connects time1.outTime -> .time on the\n    # template-apply path; only wire it here as a fallback if that didn't\n    # happen (re-issuing an identical connection just emits a noisy\n    # \"already connected\" warning).\n    if mc.objExists(\"time1\") and not mc.listConnections(\n            name + \".time\", s=True, d=False):\n        try:\n            mc.connectAttr(\"time1.outTime\", name + \".time\", force=True)\n        except Exception:\n            pass\n    grp = mc.group(empty=True, name=\"springChain#\")\n    for i in range(n_links):\n        link = mc.polySphere(name=\"springLink#\", radius=0.3)[0]\n        link = mc.parent(link, grp)[0]\n        mc.connectAttr(name + \".driven[%d]\" % i, link + \".translate\", force=True)\n    return name\n\n\n@maya_test(label=\"Spring chain: the driven mass accelerates toward the driver\", digits=3)\ndef test_spring_chain(self):\n    \"\"\"Same test passes interpreted and compiled (parity): with the buffers reset\n    to rest, integrating the spring pulls driven[0] toward the driver. Drives\n    `self` through public plugs (time is the integration tick).\"\"\"\n    from maya import cmds as mc\n    import math\n    from mpynode._common.methods.test_helpers import assert_true\n    name = self.get_name()\n\n    def _set(plug, *vals, **kw):\n        for s in (mc.listConnections(plug, s=True, d=False, plugs=True) or []):\n            mc.disconnectAttr(s, plug)\n        mc.setAttr(plug, *vals, **kw)\n\n    # Ensure driven outputs exist (reuse the demo's chain if present).\n    n = mc.getAttr(name + \".driven\", size=True) or 0\n    if n < 2:\n        for i in range(4):\n            loc = mc.spaceLocator(name=\"springTest#\")[0]\n            mc.connectAttr(\"%s.driven[%d]\" % (name, i), loc + \".translate\", force=True)\n        n = 4\n\n    _set(name + \".gravity\", 0.0, 0.0, 0.0, type=\"double3\")\n    _set(name + \".tension\", 0.3)\n    _set(name + \".damping\", 0.6)\n    _set(name + \".mass\", 1.0)\n    _set(name + \".minDistance\", 0.0)\n    _set(name + \".maxDistance\", 0.0)\n    _set(name + \".driver\", 10.0, 0.0, 0.0, type=\"double3\")\n\n    def tick():\n        _set(name + \".time\", mc.getAttr(name + \".time\") + 1)\n\n    # Hold the buffers at rest (resetBuffer=True) for two ticks so integration\n    # starts from a known zero state regardless of prior evals, then release.\n    _set(name + \".resetBuffer\", 1)\n    tick(); tick()\n    start = mc.getAttr(\"%s.driven[0]\" % name)[0]\n    _set(name + \".resetBuffer\", 0)\n    for _ in range(10):\n        tick()\n    end = mc.getAttr(\"%s.driven[0]\" % name)[0]\n\n    moved = math.sqrt(sum((end[i] - start[i]) ** 2 for i in range(3)))\n    assert_true(moved > 0.5,\n                \"driven[0] should accelerate toward the driver; moved %.4f\" % moved)\n    assert_true(end[0] > start[0],\n                \"driven[0] should move toward the +X driver; start=%r end=%r\" % (start, end))\n",
+        "commands": [],
+        "portability": {
+          "portable": true,
+          "blockers": [],
+          "warnings": [
+            "uses numpy -- vectorized math is reverse-engineered to C++ loops (verify numerically; np.random maps to C++ <random>; file I/O lowers only where the dtype is explicit -- np.fromfile/np.save/.tofile and ndio.read/ndio.write -- while np.load/np.loadtxt are blockers)"
+          ],
+          "unported": [],
+          "reads_image_file": false,
+          "reads_embedded_image": false,
+          "uses_mesh_intersector": false
+        }
+      }
+    }
+  ]
+}

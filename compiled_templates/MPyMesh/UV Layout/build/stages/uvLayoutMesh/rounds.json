@@ -1,0 +1,61 @@
+{
+  "accepted": true,
+  "baseline_ms": 19.0084,
+  "best_ms": 1.6381,
+  "created": 1787677672.763573,
+  "ledger": [
+    {
+      "compiled": true,
+      "duration_s": null,
+      "fix_rounds": 0,
+      "hypothesis": "",
+      "index": 0,
+      "ms": 19.0084,
+      "note": "",
+      "outcome": "baseline",
+      "parity": null,
+      "predicted_speedup": null,
+      "risk": "",
+      "slug": null,
+      "speedup": null,
+      "theme": ""
+    },
+    {
+      "compiled": true,
+      "duration_s": 678.447,
+      "fix_rounds": 0,
+      "hypothesis": "this node is ELEMENTWISE, not QUERY -- there is no inner scan over a second collection, so there is no acceleration structure to build. The cost is pure per-access API overhead: the port read UVs one id at a time via MFnMesh::getUV(ui, u, v, &setName), which is ~160k out-of-line calls that each re-resolve the UV set BY NAME, and it then copied the 640k-element face-index array four times (uvIds -> ibuf -> indices -> MIntArray -> create). Bulk getUVs plus passing Maya's own uvCounts/uvIds straight to create when the c>=3 filter drops nothing should remove both.",
+      "index": 1,
+      "ms": 12.2403,
+      "note": "",
+      "outcome": "accept",
+      "parity": "pass",
+      "predicted_speedup": 2.0,
+      "risk": "getUVs is all-or-nothing where the original bailed at the first failing id, so a partially-unreadable set now yields an empty mesh instead of a truncated one -- same fail-soft contract the port already documents. The create()-passthrough is gated on a proof that the filter is the identity (every count >= 3 AND counts sum exactly to nIds), which is exactly the predicate the filter loop tests, so the arrays handed to create are bit-identical to the filtered ones. No comparison that selects a winner was touched and no float type was narrowed.",
+      "slug": "bulk_uv_read",
+      "speedup": 1.5529357940573354,
+      "theme": "replace the per-id getUV loop with one getUVs call, then stop round-tripping Maya's UV face lists through three redundant int buffers before handing them back to create()"
+    },
+    {
+      "compiled": true,
+      "duration_s": 802.626,
+      "fix_rounds": 0,
+      "hypothesis": "profiling showed create() at 10-12 ms of a 12.5 ms compute while every other pass summed to 1.2 ms; no constant-factor work on the reads could matter, and copy() of an already-built poly structure is a deep memcpy rather than a topology derivation, so it should be an order of magnitude cheaper",
+      "index": 2,
+      "ms": 1.6381,
+      "note": "",
+      "outcome": "accept",
+      "parity": "pass",
+      "predicted_speedup": 4.0,
+      "risk": "the template is an unowned MFnMeshData MObject, so it is guarded by an MObjectHandle isValid/isAlive check and rebuilt if Maya reclaims it; correctness does not depend on any dirty flag because the cache key is recomputed from the live input on every single evaluation",
+      "slug": "cache_topology_template",
+      "speedup": 11.603931383920397,
+      "theme": "MFnMesh::create was 90% of compute, so cache the built mesh as a topology TEMPLATE keyed on an exact content hash of (counts, indices, nPoints) and produce each evaluation's output with MFnMesh::copy plus freshly-read points instead of a fresh create"
+    }
+  ],
+  "parity_gate": "authored+pointwise",
+  "reason": "accepted (11.60x)",
+  "rounds": 2,
+  "speedup": 11.603931383920397,
+  "type_name": "uvLayoutMesh"
+}

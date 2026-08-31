@@ -1,0 +1,144 @@
+{
+  "manifest_version": 1,
+  "porter_recipe_version": "19",
+  "provider": "claude_cli",
+  "model": "claude-opus-5[1m]",
+  "strict": false,
+  "plugin_name": "MPyNode_Ouch",
+  "bundle": "compiled_templates/MPyNode/Ouch/MPyNode_Ouch.bundle",
+  "created": 1787678418.486271,
+  "nodes": [
+    {
+      "source_node": "ouch",
+      "type_name": "ouch",
+      "type_id": "0x00043e63",
+      "type_id_source": "derived",
+      "base": "MPxNode",
+      "spec_hash": "0c6f2c81d8e8ce1f3033580cf461d0a89c92dcaf8a8de8abc0516bfdd95cc46b",
+      "port_cache_key": "0c6f2c81d8e8ce1f3033580cf461d0a89c92dcaf8a8de8abc0516bfdd95cc46b",
+      "cache": "miss",
+      "build_status": "compiled",
+      "build_reason": "",
+      "ported": true,
+      "incomplete": [
+        "the whole audio block (self.audioData / self.audioPath /",
+        "player.setPosition(0)/play()/stop() have no C++ equivalent"
+      ],
+      "invented_io": [],
+      "missing_includes": [],
+      "verify": {
+        "ran": true,
+        "pass": true,
+        "maxerr": 0.0,
+        "tol": 0.0001,
+        "reason": "verified with 1 geo/string input(s) left at default (unwired, could not be synthesized): audioFile | authored @maya_test: 1/1 passed",
+        "timing": {
+          "measured": true,
+          "py_ms": 0.07691700011491776,
+          "cpp_ms": 0.005999929271638393,
+          "n": 3,
+          "truncated": false,
+          "scene": "geo 140 / array 5000",
+          "ratio": 0.07800524282894816,
+          "verdict": "below-floor",
+          "rung": [
+            140,
+            5000
+          ]
+        },
+        "authored_test": {
+          "ran": true,
+          "passed": true,
+          "count": 1,
+          "passes": 1,
+          "reason": ""
+        }
+      },
+      "spec": {
+        "schema_version": 1,
+        "source_node": "ouch",
+        "mpy_type": "mPyNode",
+        "suggested": {
+          "node_type_name": "ouch",
+          "class_name": "Ouch",
+          "type_id": "0x00077c63",
+          "mpx_base": "MPxNode",
+          "note": "plain dependency node",
+          "heaviness": "easy"
+        },
+        "inputs": {
+          "angle": {
+            "type": "angle",
+            "is_array": false,
+            "portable": true,
+            "cpp": {
+              "cat": "unit",
+              "fn": "MFnUnitAttribute",
+              "data": "kAngle",
+              "cpp": "double",
+              "read": "asMAngle",
+              "portable": true
+            }
+          },
+          "audioFile": {
+            "type": "string",
+            "is_array": false,
+            "portable": true,
+            "cpp": {
+              "cat": "string",
+              "fn": "MFnTypedAttribute",
+              "data": "kString",
+              "cpp": "MString",
+              "read": "asString",
+              "portable": true
+            }
+          }
+        },
+        "outputs": {
+          "color": {
+            "type": "color",
+            "is_array": false,
+            "portable": true,
+            "cpp": {
+              "cat": "color",
+              "fn": "MFnNumericAttribute",
+              "data": "color",
+              "cpp": "float[3]",
+              "read": "asFloat3",
+              "portable": true
+            }
+          }
+        },
+        "variables": {},
+        "compute": "# Name: Ouch!!!!  (port)\n# When the arm bends the wrong way, play the audio clip on Qt's media player\n# (async -- does NOT pause Maya) and paint the arm red. color = colour output.\n#\n# self.audioData is the SINGLE source of truth for playback. The async player is\n# (re)built whenever the CONTENT of self.audioData changes -- so it always plays\n# whatever is in the buffer, whether that came from the baked clip, a right-click\n# \"Load media\" onto audioData, or a disk (re)load below. There is exactly ONE\n# audio buffer: self.audioData (persistent).\n#\n# audioFile is an OPTIONAL loader: point it at a .wav / .mp3 / ... and that file\n# is read INTO self.audioData. self.audioPath is a TEMPORARY session guard (never\n# saved) that just remembers which path we have already loaded, so we do not\n# re-read the same file from disk every frame.\n#\n# (Imports + the ouch_* helper functions live in the Init tab.)\n\n# -- keep self.audioData in sync with an optional audioFile -------------------\n# Guarded as a whole so a headless / Qt-less session -- or a not-yet-loaded Init\n# namespace -- can never stop the colour output below from computing.\ntry:\n    raw = self.audioFile or \"\"\n\n    # First eval this session: a buffer we already carry (the baked clip, or a\n    # right-click load that was saved) is authoritative -- adopt the current\n    # audioFile as \"already loaded\" so a reopened scene never re-reads it from\n    # disk and clobbers the buffer. Only a genuinely EMPTY buffer loads on open.\n    if not hasattr(self, \"audioPath\"):\n        self.audioPath = raw if getattr(self, \"audioData\", None) else None\n\n    # Load from disk ONLY when audioFile names a path we have not already loaded\n    # this session. Mark the guard even on failure so a bad path can't re-read\n    # every frame.\n    if raw != self.audioPath:\n        self.audioPath = raw\n        path = ouch_resolve_clip_path(raw)\n        if path:\n            data = ouch_load_bytes(path)\n            if data is not None:\n                self.audioData = data          # the ONE audio buffer (persistent)\n\n    # (Re)build the async player whenever the BUFFER CONTENT changes -- covers a\n    # disk reload AND a manual right-click \"Load media\" onto audioData. Latched\n    # on a content hash so a Qt-less session doesn't retry it on every eval.\n    data = getattr(self, \"audioData\", None)\n    if data:\n        sig = ouch_bytes_signature(data)\n        if getattr(self, \"_player_sig\", None) != sig:\n            self._player_sig = sig\n            old = getattr(self, \"_player\", None)\n            if old is not None:\n                try:\n                    old.stop()\n                except Exception:\n                    pass\n            self._player = ouch_make_player(data, sig)\nexcept Exception:\n    pass\n\n# -- colour + one-shot playback ----------------------------------------------\n# Session-only latch so the bend audio plays once per bend (seeded here so a\n# vanilla node -- or one whose Init namespace hasn't loaded -- never reads an\n# unset self.pain in the red branch below).\nif not hasattr(self, \"pain\"):\n    self.pain = False\n\nself.color = [0, 1, 0]\nif self.angle < 0.165009870842:\n    self.color = [1, 0, 0]\n    if not self.pain:\n        self.pain = True\n        player = getattr(self, \"_player\", None)\n        if player is not None:\n            player.setPosition(0)\n            player.play()\nelse:\n    self.pain = False\n    # Arm back in a safe position -- stop the clip if it is still playing.\n    player = getattr(self, \"_player\", None)\n    if player is not None:\n        player.stop()",
+        "init": "# Init tab -- runs once per file open (not per compute()).\n# Imports + helper functions shared by the Compute expression. Everything\n# defined at module level here (the imports AND the functions) is available in\n# the Compute tab as a bare name -- so the compute code can call e.g.\n# ouch_load_bytes(...) directly.\n\nimport os\nimport hashlib\n\n\ndef ouch_resolve_clip_path(raw):\n    \"\"\"Resolve a requested clip path from the 'audioFile' string. An absolute\n    path is used as-is; a relative one resolves against the open scene's\n    directory. An empty request resolves to '' (nothing to load) -- the baked\n    self.audioData buffer is authoritative, so we never auto-hunt for a file.\"\"\"\n    raw = (raw or \"\").strip()\n    if not raw:\n        return \"\"\n    if os.path.isabs(raw):\n        return raw\n    import maya.cmds as mc\n    scene = mc.file(q=True, sceneName=True)\n    sdir = os.path.dirname(scene) if scene else \"\"\n    return os.path.join(sdir, raw) if sdir else raw\n\n\ndef ouch_load_bytes(path):\n    \"\"\"Read the whole clip into memory, or None if it can't be read.\"\"\"\n    try:\n        with open(path, \"rb\") as fh:\n            return fh.read()\n    except Exception:\n        return None\n\n\ndef ouch_bytes_signature(data):\n    \"\"\"md5 of the raw audio bytes. This -- NOT the file's path / size / mtime --\n    is what gates the player rebuild, so ANY change to self.audioData (a disk\n    load OR a manual right-click 'Load media') rebuilds the player and plays the\n    new clip. self.audioData is the single source of truth for playback.\"\"\"\n    try:\n        return hashlib.md5(bytes(data)).hexdigest()\n    except Exception:\n        return \"baked\"\n\n\ndef ouch_audio_ext(data):\n    \"\"\"Pick the temp-file extension that matches the audio bytes so the player's\n    backend decodes them. QMediaPlayer keys its decoder off the file suffix, so\n    e.g. MP3 bytes MUST land in a .mp3 file, not a .wav. Falls back to .wav.\"\"\"\n    try:\n        h = bytes(data)[:12]\n    except Exception:\n        return \".wav\"\n    if h[:4] == b\"RIFF\" and h[8:12] == b\"WAVE\":\n        return \".wav\"\n    if h[:3] == b\"ID3\" or (len(h) >= 2 and h[0] == 0xFF and (h[1] & 0xE0) == 0xE0):\n        return \".mp3\"\n    if h[:4] == b\"OggS\":\n        return \".ogg\"\n    if h[:4] == b\"fLaC\":\n        return \".flac\"\n    if h[:4] == b\"FORM\" and h[8:12] in (b\"AIFF\", b\"AIFC\"):\n        return \".aiff\"\n    if h[4:8] == b\"ftyp\" and h[8:11] in (b\"M4A\", b\"M4B\", b\"M4P\"):\n        return \".m4a\"\n    return \".wav\"\n\n\ndef ouch_make_player(data, sig):\n    \"\"\"Materialise 'data' to a temp file with the right extension and build Qt's\n    async media player. The temp file is named by the content signature so\n    distinct clips get distinct files (never a stale one), and MP3/OGG/FLAC bytes\n    get a suffix their backend recognises.\"\"\"\n    try:\n        import tempfile\n        from mpynode.ui.qt_wrapper import make_audio_player\n        tmp = os.path.join(\n            tempfile.gettempdir(),\n            \"mpynode_ouch_%s%s\" % ((sig or \"0\")[:12], ouch_audio_ext(data)))\n        with open(tmp, \"wb\") as fh:\n            fh.write(bytes(data))\n        return make_audio_player(tmp)\n    except Exception:\n        return None",
+        "affects": "all",
+        "external_helpers": "# --- from module 'mpynode.ui.qt_wrapper' ---\ndef make_audio_player(path, parent=None):\n    \"\"\"Build an UN-muted QMediaPlayer for a local audio file and return it (or\n    None if QtMultimedia is unavailable). The caller keeps the ref and drives\n    play() / setPosition(ms) / stop() directly (those are identical across\n    PySide2/PySide6). Hides the Qt5/Qt6 source-setting + audio-output split.\n\n    Unlike :func:`start_video_preview` this does NOT mute or loop -- it is for\n    the Variables/Watch tab click-to-play / drag-to-scrub waveform audio.\n\n    Returns None when QtMultimedia is unavailable OR a player cannot be\n    constructed (e.g. no platform audio backend / device), so callers degrade\n    to render-only (waveform shown, no playback) rather than penalize the user.\n    \"\"\"\n    if not HAS_QT_MULTIMEDIA:\n        return None\n    player = None\n    try:\n        player = QMediaPlayer(parent)\n        url = QUrl.fromLocalFile(path)\n        if QT_BINDING == \"PySide6\":\n            audio = QAudioOutput()\n            audio.setParent(player)  # Qt parent-owns it (GC-safe)\n            player.setAudioOutput(audio)\n            player.setSource(url)\n        else:\n            player.setMedia(QMediaContent(url))\n            try:\n                player.setVolume(100)\n            except Exception:\n                pass\n        return player\n    except Exception:\n        # A backend failure surfaces AFTER construction, and the player is\n        # already parented to a live tab widget, so dropping the Python ref\n        # would leak it under the tab. Release it before degrading to None.\n        if player is not None:\n            try:\n                player.deleteLater()\n            except Exception:\n                pass\n        return None",
+        "external_helper_units": [
+          {
+            "module": "mpynode.ui.qt_wrapper",
+            "name": "make_audio_player",
+            "source": "def make_audio_player(path, parent=None):\n    \"\"\"Build an UN-muted QMediaPlayer for a local audio file and return it (or\n    None if QtMultimedia is unavailable). The caller keeps the ref and drives\n    play() / setPosition(ms) / stop() directly (those are identical across\n    PySide2/PySide6). Hides the Qt5/Qt6 source-setting + audio-output split.\n\n    Unlike :func:`start_video_preview` this does NOT mute or loop -- it is for\n    the Variables/Watch tab click-to-play / drag-to-scrub waveform audio.\n\n    Returns None when QtMultimedia is unavailable OR a player cannot be\n    constructed (e.g. no platform audio backend / device), so callers degrade\n    to render-only (waveform shown, no playback) rather than penalize the user.\n    \"\"\"\n    if not HAS_QT_MULTIMEDIA:\n        return None\n    player = None\n    try:\n        player = QMediaPlayer(parent)\n        url = QUrl.fromLocalFile(path)\n        if QT_BINDING == \"PySide6\":\n            audio = QAudioOutput()\n            audio.setParent(player)  # Qt parent-owns it (GC-safe)\n            player.setAudioOutput(audio)\n            player.setSource(url)\n        else:\n            player.setMedia(QMediaContent(url))\n            try:\n                player.setVolume(100)\n            except Exception:\n                pass\n        return player\n    except Exception:\n        # A backend failure surfaces AFTER construction, and the player is\n        # already parented to a live tab widget, so dropping the Python ref\n        # would leak it under the tab. Release it before degrading to None.\n        if player is not None:\n            try:\n                player.deleteLater()\n            except Exception:\n                pass\n        return None"
+          }
+        ],
+        "methods": "# Build a complete, self-contained ouch demo: import the bundled skinned arm\n# (arm.ma -- a 3-joint chain + skinned mesh), drive `angle` from the elbow's\n# rotateY, and shade the arm mesh with a lambert whose colour follows the node's\n# `color` output. The node paints RED (and plays the clip) when `angle` drops\n# BELOW a small threshold (~9.5 deg), GREEN above it -- so the elbow is keyframed\n# through a flex arc: bent (green) -> straightened into NEGATIVE rotateY (red, the\n# clip fires) -> bent again (green). Play the timeline to hear the ouch.\n#\n# The bundled ouch.wav's BYTES are baked PERSISTENTLY onto the node as the\n# self.audioData buffer -- the single source of truth for playback -- so the clip\n# travels with the scene. The Compute tab (re)builds the async player whenever\n# audioData's CONTENT changes, so swapping the clip -- either by pointing\n# audioFile at a new file OR by right-clicking audioData and choosing \"Load\n# media\" -- just plays the new sound. audioPath is a temporary runtime guard the\n# Compute tab seeds; it is intentionally NOT baked here.\ndef demo(self):\n    from maya import cmds as mc\n    import os\n    name = self.get_name()\n    # --- skinned arm (falls back to a plain chain + cube if missing) --------\n    elbow = None\n    meshes = []\n    try:\n        from mpynode._common.util.template_gallery import _bundled_templates_root\n        root = _bundled_templates_root()\n        arm = os.path.join(root or \"\", \"MPyNode\", \"Ouch\", \"arm.ma\")\n        if os.path.isfile(arm):\n            new = mc.file(arm, i=True, ignoreVersion=True,\n                          returnNewNodes=True) or []\n            joints = mc.ls(new, type=\"joint\", long=True) or []\n            # Prefer an exact leaf-name match for the elbow; fall back to a\n            # substring (robust to import renames / node-order changes).\n            elbow = next(\n                (j for j in joints if j.rsplit(\"|\", 1)[-1] == \"loarm_r_JNT\"),\n                None) or next((j for j in joints if \"loarm\" in j), None)\n            meshes = [m for m in (mc.ls(new, type=\"mesh\", long=True) or [])\n                      if not mc.getAttr(m + \".intermediateObject\")]\n    except Exception:\n        elbow = None\n        meshes = []\n    if elbow is None:\n        mc.select(clear=True)\n        mc.joint(name=\"ouchShoulder#\", position=(0, 0, 0))\n        elbow = mc.joint(name=\"ouchElbow#\", position=(3, 0, 0))\n        mc.joint(name=\"ouchWrist#\", position=(6, 0, 0))\n        geo = mc.polyCube(name=\"ouchGeo#\", width=2, height=2, depth=2)[0]\n        mc.setAttr(geo + \".translate\", 3.0, 2.0, 0.0, type=\"double3\")\n        meshes = mc.listRelatives(geo, shapes=True, fullPath=True) or []\n    # Drive `angle` from the elbow's rotateY, then keyframe a flex arc so PLAYING\n    # the timeline plays the ouch: the arm starts bent (angle above the red\n    # threshold -> GREEN), straightens into NEGATIVE rotateY (angle below the\n    # threshold -> RED, the clip fires), then bends back positive (GREEN, silent).\n    mc.connectAttr(elbow + \".rotateY\", name + \".angle\", force=True)\n    for f, ry in ((1, 30.0), (45, -30.0), (90, 30.0)):\n        mc.setKeyframe(elbow + \".rotateY\", time=f, value=ry)\n    mc.playbackOptions(min=1, max=90)\n    mc.currentTime(1)\n    # --- shading -----------------------------------------------------------\n    shd = mc.shadingNode(\"lambert\", asShader=True, name=\"ouchShader#\")\n    sg = mc.sets(renderable=True, noSurfaceShader=True, empty=True, name=shd + \"SG\")\n    mc.connectAttr(shd + \".outColor\", sg + \".surfaceShader\", force=True)\n    for m in meshes:\n        try:\n            mc.sets(m, edit=True, forceElement=sg)\n        except Exception:\n            pass\n    mc.connectAttr(name + \".color\", shd + \".color\", force=True)\n    # --- persistent audio --------------------------------------------------\n    # Bake the clip's BYTES onto the node as the persistent self.audioData buffer\n    # -- the single source of truth for playback, so the demo (and any clip you\n    # later drop in via the right-click \"Load media\" action) travels with the\n    # scene. audioFile just points at the source .wav so you can see where the\n    # sound came from and re-load it; audioPath / audioSig are NOT baked -- the\n    # player now follows audioData's content, not a file signature.\n    try:\n        from mpynode._common.util.template_gallery import _bundled_templates_root\n        root = _bundled_templates_root()\n        wav = os.path.join(root or \"\", \"MPyNode\", \"Ouch\", \"ouch.wav\")\n        if os.path.isfile(wav):\n            mc.setAttr(name + \".audioFile\", wav, type=\"string\")\n            with open(wav, \"rb\") as _fh:\n                data = _fh.read()\n            self.set_variable(\"audioData\", data, persistent=True)\n    except Exception:\n        pass\n    # This demo IMPORTS arm.ma, so frame the WHOLE scene -- an imported\n    # rig can land anywhere, and leaving it off screen shows the user\n    # nothing.\n    try:\n        mc.viewFit(all=True)\n    except Exception:\n        pass\n    return name\n\n\n@maya_test(label=\"Ouch: the arm turns red below the pain angle, green above\", digits=3)\ndef test_ouch(self):\n    \"\"\"Same test passes interpreted and compiled (parity): the color output is\n    green while the elbow angle is safe and flips red once it bends below the\n    ~0.165 rad pain threshold. Drives `self.angle` directly (radians).\"\"\"\n    from maya import cmds as mc\n    from mpynode._common.methods.test_helpers import assert_close\n    name = self.get_name()\n\n    def _set(plug, *vals, **kw):\n        for s in (mc.listConnections(plug, s=True, d=False, plugs=True) or []):\n            mc.disconnectAttr(s, plug)\n        mc.setAttr(plug, *vals, **kw)\n\n    prev = mc.currentUnit(query=True, angle=True)\n    mc.currentUnit(angle=\"rad\")\n    try:\n        _set(name + \".angle\", 0.5)             # safe (> ~0.165 rad) -> green\n        mc.dgdirty(name + \".color\")\n        green = mc.getAttr(name + \".color\")[0]\n        assert_close(list(green), [0.0, 1.0, 0.0],\n                     msg=\"arm should be green above the pain angle; got %r\" % (green,))\n\n        _set(name + \".angle\", 0.05)            # bent the wrong way -> red\n        mc.dgdirty(name + \".color\")\n        red = mc.getAttr(name + \".color\")[0]\n        assert_close(list(red), [1.0, 0.0, 0.0],\n                     msg=\"arm should be red below the pain angle; got %r\" % (red,))\n    finally:\n        mc.currentUnit(angle=prev)\n",
+        "commands": [],
+        "portability": {
+          "portable": true,
+          "blockers": [],
+          "warnings": [
+            "file I/O via open() (no C++ lowering)",
+            "calls maya.cmds -- a compiled compute has no command engine; the equivalent is the Maya C++ API (MFn*/MPlug) on data the node already has, and scene MUTATION has no equivalent at all"
+          ],
+          "unported": [
+            "file I/O via open() (no C++ lowering)",
+            "calls maya.cmds -- a compiled compute has no command engine; the equivalent is the Maya C++ API (MFn*/MPlug) on data the node already has, and scene MUTATION has no equivalent at all"
+          ],
+          "reads_image_file": false,
+          "reads_embedded_image": false,
+          "uses_mesh_intersector": false
+        }
+      }
+    }
+  ]
+}

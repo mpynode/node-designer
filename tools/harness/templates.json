@@ -1,0 +1,335 @@
+[
+  {
+    "mpn": "templates/MPyNode/DNET/template.mpn",
+    "folder": "MPyNode_DNET",
+    "plugin": "MPyNode_DNET_plugin",
+    "native_type": "mPyNode",
+    "node_name": "dnet",
+    "demo_label": "Grid Net",
+    "n_demos": 3
+  },
+  {
+    "mpn": "templates/MPyBlendShape/Combo Correctives/template.mpn",
+    "folder": "MPyBlendShape_Combo_Correctives",
+    "plugin": "MPyBlendShape_Combo_Correctives_plugin",
+    "native_type": "mPyBlendShape",
+    "node_name": "comboCorrectives",
+    "demo_label": "Combo + In-Between Correctives",
+    "n_demos": 1
+  },
+  {
+    "mpn": "templates/MPyConstraint/Procrustes Tags/template.mpn",
+    "folder": "MPyConstraint_Procrustes_Tags",
+    "plugin": "MPyConstraint_Procrustes_Tags_plugin",
+    "native_type": "mPyConstraint",
+    "node_name": "procrustesTags",
+    "demo_label": "Run demo",
+    "n_demos": 1
+  },
+  {
+    "mpn": "templates/MPyDeformer/NURBS Wave/template.mpn",
+    "folder": "MPyDeformer_NURBS_Wave",
+    "plugin": "MPyDeformer_NURBS_Wave_plugin",
+    "native_type": "mPyDeformer",
+    "node_name": "nurbsWave",
+    "demo_label": "Wave a NURBS Plane",
+    "n_demos": 1
+  },
+  {
+    "mpn": "templates/MPyDeformer/Patch Relax/template.mpn",
+    "folder": "MPyDeformer_Patch_Relax",
+    "plugin": "MPyDeformer_Patch_Relax_plugin",
+    "native_type": "mPyDeformer",
+    "node_name": "patchRelax",
+    "demo_label": "Relax a Squashed Sphere",
+    "n_demos": 1
+  },
+  {
+    "mpn": "templates/MPyDeformer/RBF Wrap Deformer/template.mpn",
+    "folder": "MPyDeformer_RBF_Wrap_Deformer",
+    "plugin": "MPyDeformer_RBF_Wrap_Deformer_plugin",
+    "native_type": "mPyDeformer",
+    "node_name": "rbfWrapDeformer",
+    "demo_label": "Wrap a Sphere in a Cube Cage",
+    "n_demos": 1
+  },
+  {
+    "mpn": "templates/MPyDeformer/Sine Ripple/template.mpn",
+    "folder": "MPyDeformer_Sine_Ripple",
+    "plugin": "MPyDeformer_Sine_Ripple_plugin",
+    "native_type": "mPyDeformer",
+    "node_name": "sineRipple",
+    "demo_label": "Ripple a Plane",
+    "n_demos": 1
+  },
+  {
+    "mpn": "templates/MPyDeformer/Unit Sphere Collision/template.mpn",
+    "folder": "MPyDeformer_Unit_Sphere_Collision",
+    "plugin": "MPyDeformer_Unit_Sphere_Collision_plugin",
+    "native_type": "mPyDeformer",
+    "node_name": "unitSphereCollision",
+    "demo_label": "Collide a Sphere Through a Plane",
+    "n_demos": 1
+  },
+  {
+    "mpn": "templates/MPyFile/File Composite/template.mpn",
+    "folder": "MPyFile_File_Composite",
+    "plugin": "MPyFile_File_Composite_plugin",
+    "native_type": "mPyFile",
+    "node_name": "compositeTexture",
+    "demo_label": "Run demo",
+    "n_demos": 1
+  },
+  {
+    "mpn": "templates/MPyFile/File Scanline/template.mpn",
+    "folder": "MPyFile_File_Scanline",
+    "plugin": "MPyFile_File_Scanline_plugin",
+    "native_type": "mPyFile",
+    "node_name": "scanlineTex",
+    "demo_label": "Run demo",
+    "n_demos": 1
+  },
+  {
+    "mpn": "templates/MPyFile/File Simple/template.mpn",
+    "folder": "MPyFile_File_Simple",
+    "plugin": "MPyFile_File_Simple_plugin",
+    "native_type": "mPyFile",
+    "node_name": "fileTexture",
+    "demo_label": "Run demo",
+    "n_demos": 1
+  },
+  {
+    "mpn": "templates/MPyFile/Game Of Life Texture/template.mpn",
+    "folder": "MPyFile_Game_Of_Life_Texture",
+    "plugin": "MPyFile_Game_Of_Life_Texture_plugin",
+    "native_type": "mPyFile",
+    "node_name": "gameOfLifeTex",
+    "demo_label": "Run demo",
+    "n_demos": 1
+  },
+  {
+    "mpn": "templates/MPyIkSolver/Two Bone IK/template.mpn",
+    "folder": "MPyIkSolver_Two_Bone_IK",
+    "plugin": "MPyIkSolver_Two_Bone_IK_plugin",
+    "native_type": "mPyIkSolver",
+    "node_name": "twoBoneIK",
+    "demo_label": "Two-Bone IK Leg",
+    "n_demos": 1
+  },
+  {
+    "mpn": "templates/MPyLocator/Animated Selection/template.mpn",
+    "folder": "MPyLocator_Animated_Selection",
+    "plugin": "MPyLocator_Animated_Selection_plugin",
+    "native_type": "mPyLocator",
+    "node_name": "animatedSelection",
+    "demo_label": "Run demo",
+    "n_demos": 1
+  },
+  {
+    "mpn": "templates/MPyLocator/Animated Text/template.mpn",
+    "folder": "MPyLocator_Animated_Text",
+    "plugin": "MPyLocator_Animated_Text_plugin",
+    "native_type": "mPyLocator",
+    "node_name": "animatedText",
+    "demo_label": "Run demo",
+    "n_demos": 1
+  },
+  {
+    "mpn": "templates/MPyLocator/Mesh Regions/template.mpn",
+    "folder": "MPyLocator_Mesh_Regions",
+    "plugin": "MPyLocator_Mesh_Regions_plugin",
+    "native_type": "mPyLocator",
+    "node_name": "meshRegions",
+    "demo_label": "Run demo",
+    "n_demos": 1
+  },
+  {
+    "mpn": "templates/MPyLocator/Widget Showcase/template.mpn",
+    "folder": "MPyLocator_Widget_Showcase",
+    "plugin": "MPyLocator_Widget_Showcase_plugin",
+    "native_type": "mPyLocator",
+    "node_name": "widgetShowcase",
+    "demo_label": "Run demo",
+    "n_demos": 1
+  },
+  {
+    "mpn": "templates/MPyMesh/Disk Mesh Cache/template.mpn",
+    "folder": "MPyMesh_Disk_Mesh_Cache",
+    "plugin": "MPyMesh_Disk_Mesh_Cache_plugin",
+    "native_type": "mPyMesh",
+    "node_name": "diskMeshCache",
+    "demo_label": "Disk Mesh Cache: play a 48-frame cache off disk",
+    "n_demos": 1
+  },
+  {
+    "mpn": "templates/MPyMesh/Game Of Life/template.mpn",
+    "folder": "MPyMesh_Game_Of_Life",
+    "plugin": "MPyMesh_Game_Of_Life_plugin",
+    "native_type": "mPyMesh",
+    "node_name": "gameOfLifeMesh",
+    "demo_label": "Run demo",
+    "n_demos": 1
+  },
+  {
+    "mpn": "templates/MPyMesh/JSON Mesh Reader/template.mpn",
+    "folder": "MPyMesh_JSON_Mesh_Reader",
+    "plugin": "MPyMesh_JSON_Mesh_Reader_plugin",
+    "native_type": "mPyMesh",
+    "node_name": "jsonMeshReader",
+    "demo_label": "JSON Mesh Reader: stream a mesh sequence off disk",
+    "n_demos": 1
+  },
+  {
+    "mpn": "templates/MPyMesh/Mesh Maze/template.mpn",
+    "folder": "MPyMesh_Mesh_Maze",
+    "plugin": "MPyMesh_Mesh_Maze_plugin",
+    "native_type": "mPyMesh",
+    "node_name": "meshMaze",
+    "demo_label": "Maze on a sphere",
+    "n_demos": 1
+  },
+  {
+    "mpn": "templates/MPyMesh/Metaballs/template.mpn",
+    "folder": "MPyMesh_Metaballs",
+    "plugin": "MPyMesh_Metaballs_plugin",
+    "native_type": "mPyMesh",
+    "node_name": "metaballs",
+    "demo_label": "Run demo",
+    "n_demos": 1
+  },
+  {
+    "mpn": "templates/MPyMesh/UV Layout/template.mpn",
+    "folder": "MPyMesh_UV_Layout",
+    "plugin": "MPyMesh_UV_Layout_plugin",
+    "native_type": "mPyMesh",
+    "node_name": "uvLayoutMesh",
+    "demo_label": "UV layout of a sphere",
+    "n_demos": 1
+  },
+  {
+    "mpn": "templates/MPyMesh/Voxelize/template.mpn",
+    "folder": "MPyMesh_Voxelize",
+    "plugin": "MPyMesh_Voxelize_plugin",
+    "native_type": "mPyMesh",
+    "node_name": "voxelizeMesh",
+    "demo_label": "Voxelize a sphere",
+    "n_demos": 1
+  },
+  {
+    "mpn": "templates/MPyNode/Bubble Sort/template.mpn",
+    "folder": "MPyNode_Bubble_Sort",
+    "plugin": "MPyNode_Bubble_Sort_plugin",
+    "native_type": "mPyNode",
+    "node_name": "bubbleSort",
+    "demo_label": "Run demo",
+    "n_demos": 1
+  },
+  {
+    "mpn": "templates/MPyNode/Hex Attribute/template.mpn",
+    "folder": "MPyNode_Hex_Attribute",
+    "plugin": "MPyNode_Hex_Attribute_plugin",
+    "native_type": "mPyNode",
+    "node_name": "hexAttribute",
+    "demo_label": "Run demo",
+    "n_demos": 1
+  },
+  {
+    "mpn": "templates/MPyNode/Ouch/template.mpn",
+    "folder": "MPyNode_Ouch",
+    "plugin": "MPyNode_Ouch_plugin",
+    "native_type": "mPyNode",
+    "node_name": "ouch",
+    "demo_label": "Run demo",
+    "n_demos": 1
+  },
+  {
+    "mpn": "templates/MPyNode/RBF Wrap/template.mpn",
+    "folder": "MPyNode_RBF_Wrap",
+    "plugin": "MPyNode_RBF_Wrap_plugin",
+    "native_type": "mPyNode",
+    "node_name": "rbfWrap",
+    "demo_label": "Wrap an Arm with a Cage",
+    "n_demos": 1
+  },
+  {
+    "mpn": "templates/MPyNode/Spine/template.mpn",
+    "folder": "MPyNode_Spine",
+    "plugin": "MPyNode_Spine_plugin",
+    "native_type": "mPyNode",
+    "node_name": "spine",
+    "demo_label": "Run demo",
+    "n_demos": 1
+  },
+  {
+    "mpn": "templates/MPyNode/Spline/template.mpn",
+    "folder": "MPyNode_Spline",
+    "plugin": "MPyNode_Spline_plugin",
+    "native_type": "mPyNode",
+    "node_name": "spline",
+    "demo_label": "Run demo",
+    "n_demos": 1
+  },
+  {
+    "mpn": "templates/MPyNode/Spring Chain/template.mpn",
+    "folder": "MPyNode_Spring_Chain",
+    "plugin": "MPyNode_Spring_Chain_plugin",
+    "native_type": "mPyNode",
+    "node_name": "springChain",
+    "demo_label": "Run demo",
+    "n_demos": 1
+  },
+  {
+    "mpn": "templates/MPyNurbsCurve/NURBS Helix/template.mpn",
+    "folder": "MPyNurbsCurve_NURBS_Helix",
+    "plugin": "MPyNurbsCurve_NURBS_Helix_plugin",
+    "native_type": "mPyNurbsCurve",
+    "node_name": "helixCurve",
+    "demo_label": "Animated Helix Curve",
+    "n_demos": 1
+  },
+  {
+    "mpn": "templates/MPyNurbsSurface/NURBS Ripple/template.mpn",
+    "folder": "MPyNurbsSurface_NURBS_Ripple",
+    "plugin": "MPyNurbsSurface_NURBS_Ripple_plugin",
+    "native_type": "mPyNurbsSurface",
+    "node_name": "rippleSurf",
+    "demo_label": "Animated Ripple Surface",
+    "n_demos": 1
+  },
+  {
+    "mpn": "templates/MPySkinCluster/Dual Quaternion Skin/template.mpn",
+    "folder": "MPySkinCluster_Dual_Quaternion_Skin",
+    "plugin": "MPySkinCluster_Dual_Quaternion_Skin_plugin",
+    "native_type": "mPySkinCluster",
+    "node_name": "dualQuaternionSkin",
+    "demo_label": "Skin a Two-Bone Arm (DQS)",
+    "n_demos": 1
+  },
+  {
+    "mpn": "templates/MPySkinCluster/Linear Blend Skin/template.mpn",
+    "folder": "MPySkinCluster_Linear_Blend_Skin",
+    "plugin": "MPySkinCluster_Linear_Blend_Skin_plugin",
+    "native_type": "mPySkinCluster",
+    "node_name": "linearBlendSkin",
+    "demo_label": "Skin a Two-Bone Arm (LBS)",
+    "n_demos": 1
+  },
+  {
+    "mpn": "templates/MPySkinCluster/Twist Swing Skin/template.mpn",
+    "folder": "MPySkinCluster_Twist_Swing_Skin",
+    "plugin": "MPySkinCluster_Twist_Swing_Skin_plugin",
+    "native_type": "mPySkinCluster",
+    "node_name": "twistSwingSkin",
+    "demo_label": "Two-Weight-Set Twist/Swing Arm",
+    "n_demos": 1
+  },
+  {
+    "mpn": "templates/MPyTransform/Aim Between Matrices/template.mpn",
+    "folder": "MPyTransform_Aim_Between_Matrices",
+    "plugin": "MPyTransform_Aim_Between_Matrices_plugin",
+    "native_type": "mPyTransform",
+    "node_name": "aimTransform",
+    "demo_label": "Aim Between Two Locators",
+    "n_demos": 1
+  }
+]

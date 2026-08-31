@@ -1,0 +1,20 @@
+# MPySkinCluster_Twist_Swing_Skin -- compile report
+
+Generated 2026-08-25 10:56
+
+| node | status | assist | optimize | detail |
+|---|---|---|---|---|
+| `twistSwingSkin` | compiled | -- | **1.93x** | [report](build/stages/twistSwingSkin/REPORT.md) |
+
+## Layout
+
+```
+<Plugin>.bundle              the plug-in you load
+build/source/                the C++ that was compiled -- and only that
+build/stages/<Type>/         how it got there (kept; never swept)
+  1_transpiled.cpp             deterministic, no AI
+  2_assisted.cpp               AI filled the unported region(s)
+  3_optimized/NN_<slug>.cpp    one file per optimize round, rejects included
+  rounds.json                  machine-readable ledger
+  REPORT.md                    this node's full story
+```

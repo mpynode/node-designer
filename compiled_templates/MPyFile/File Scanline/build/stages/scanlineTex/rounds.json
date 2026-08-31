@@ -1,0 +1,61 @@
+{
+  "accepted": true,
+  "baseline_ms": 0.0041,
+  "best_ms": 0.0021,
+  "created": 1787962780.083141,
+  "ledger": [
+    {
+      "compiled": true,
+      "duration_s": null,
+      "fix_rounds": 0,
+      "hypothesis": "",
+      "index": 0,
+      "ms": 0.0041,
+      "note": "",
+      "outcome": "baseline",
+      "parity": null,
+      "predicted_speedup": null,
+      "risk": "",
+      "slug": null,
+      "speedup": null,
+      "theme": ""
+    },
+    {
+      "compiled": true,
+      "duration_s": 993.261,
+      "fix_rounds": 0,
+      "hypothesis": "the node is ELEMENTWISE with N=1, so there is no algorithm to improve and no acceleration structure to build -- per-access overhead is the entire cost. At 4.2 us a tick, a shared_ptr<vector<double>> allocation per nd:: op is the dominant term, not the sin() or the bilinear sample.",
+      "index": 1,
+      "ms": 0.0023,
+      "note": "",
+      "outcome": "accept",
+      "parity": "pass",
+      "predicted_speedup": 3.0,
+      "risk": "the scalarisation must not reassociate. Every nd:: op here was already double (nd::sin/nd::floor lower to std::sin/std::floor on double, and binary() evaluates a OP b elementwise), so the rewrite keeps the exact parenthesisation of the generated expression -- ((vv*bands - frame*speed) * 2.0) * pi -- and -ffp-contract=off keeps the compiler from fusing it. No comparison or tie-break is touched.",
+      "slug": "scalarize_0d_arrays",
+      "speedup": 1.782608695652174,
+      "theme": "this texture node computes ONE texel per compute(), but the ported band math ran through nd::Array temporaries that were all 0-d -- roughly ten heap allocations to hold one double each; replacing them with plain double arithmetic (same std::sin/std::floor, same order, same type) cut the measured tick nearly in half"
+    },
+    {
+      "compiled": true,
+      "duration_s": 726.41,
+      "fix_rounds": 0,
+      "hypothesis": "this node is ELEMENTWISE with an output of exactly ONE texel per compute -- no array inputs, no geometry inputs -- so there is no O(N) pass and no scan to accelerate. The only per-evaluation costs inside the file are the 13 data.inputValue() reads, the texture-memo probe and one bilinear tap. The memo was the one place doing real avoidable work: NdTexMemo held a std::string, which makes `static thread_local NdTexMemo memo[8]` non-trivially-destructible, forcing a __cxa_thread_atexit registration and an initialisation-guard check behind a TLS wrapper call on EVERY access -- overhead sitting in front of a probe whose entire purpose is to be cheaper than the std::map lookup it guards. Making the row POD (fixed char buffer) makes the block constant-initialised and the access a direct offset. Separately, nd_texel took `MString in_aFileName` BY VALUE, a malloc+strcpy+free per texel -- the exact copy the callsite comment two frames up says it had already eliminated at the datablock end.",
+      "index": 2,
+      "ms": 0.0021,
+      "note": "",
+      "outcome": "accept",
+      "parity": "pass",
+      "predicted_speedup": 1.15,
+      "risk": "a 512-byte path buffer per row grows the TLS block from ~256 B to ~4 KB, which is worse on an 8-row MISS scan; it is neutral-to-better on the hit-at-row-0 path this workload always takes. A path >= 512 chars now refuses to memoise (valid stays false) and falls through to the mutex+map lookup -- slower for that pathological case but never wrong, and a truncated buffer can therefore never alias a different file. strcmp(m.path, pc) is semantically identical to the old m.path.compare(pc) == 0, and passing the MString by const& cannot change a value nothing mutates, so both edits are bit-identical by construction.",
+      "slug": "pod_tls_texmemo",
+      "speedup": 1.9523809523809528,
+      "theme": "drop the std::string out of the thread_local texture memo so the row array is trivially destructible and clang can address it as a plain TLS offset instead of a guarded wrapper call, and stop deep-copying the MString path into nd_texel on every texel"
+    }
+  ],
+  "parity_gate": "authored+pointwise",
+  "reason": "accepted (1.95x)",
+  "rounds": 2,
+  "speedup": 1.9523809523809528,
+  "type_name": "scanlineTex"
+}

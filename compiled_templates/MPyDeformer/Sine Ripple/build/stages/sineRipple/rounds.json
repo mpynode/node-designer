@@ -1,0 +1,61 @@
+{
+  "accepted": true,
+  "baseline_ms": 9.7594,
+  "best_ms": 1.6762,
+  "created": 1787675979.277257,
+  "ledger": [
+    {
+      "compiled": true,
+      "duration_s": null,
+      "fix_rounds": 0,
+      "hypothesis": "",
+      "index": 0,
+      "ms": 9.7594,
+      "note": "",
+      "outcome": "baseline",
+      "parity": null,
+      "predicted_speedup": null,
+      "risk": "",
+      "slug": null,
+      "speedup": null,
+      "theme": ""
+    },
+    {
+      "compiled": true,
+      "duration_s": 793.719,
+      "fix_rounds": 0,
+      "hypothesis": "this node is ELEMENTWISE (O(output), no second collection to scan), so there is no acceleration structure to build -- the levers are whole-array temporaries and per-evaluation work derived from an input that did not change. getVertexNormals re-averages 159602 normals every tick while only amplitude/frequency/speed/time animate, so caching it should dominate. dgdirty(node) re-marks the input geom plug every tick without changing a byte of it, so a setDependentsDirty/preEvaluation flag would invalidate on every evaluation and never hit; the cache has to be earned with the item-2 content fingerprint instead, folded into the centre pass that already holds every coordinate in a register.",
+      "index": 1,
+      "ms": 2.6308,
+      "note": "",
+      "outcome": "accept",
+      "parity": "pass",
+      "predicted_speedup": 3.0,
+      "risk": "the fingerprint is the whole correctness argument. Normals are a pure function of (points, topology); every point is hashed BITWISE plus the vertex count and the geometry index, so a fresh upstream shape -- what the GEO parity path rewires per config -- moves points and misses. The residual hole is two meshes with byte-identical positions in identical order but different connectivity, which the harness does not generate. Second risk: the parallel map is a permitted deterministic per-element write, but the centre sum stays SERIAL on purpose -- reassociating a 159602-term reduction drifts ~1 ULP and would pass the tolerance gate while breaking byte parity.",
+      "slug": "cache_normals_skip_geo_pull",
+      "speedup": 3.709670062338452,
+      "theme": "fuse the six whole-array nd:: temporaries into one per-vertex pass, then key a per-node vertex-normal cache on a bitwise fingerprint of the input points so a cache hit never calls outputArrayValue(input) at all"
+    },
+    {
+      "compiled": true,
+      "duration_s": 793.308,
+      "fix_rounds": 0,
+      "hypothesis": "instrumenting deform() showed 890 us of the 2.38 ms compute was mine and 535 us of that was the two MPointArray conversions alone -- allPositions 355 us, setAllPositions 180 us -- so removing both copies should take deform to ~350 us; the transform is bit-exact because the existing path was already float->double->compute->float and getRawPoints just removes the two intermediate double buffers",
+      "index": 2,
+      "ms": 1.6762,
+      "note": "",
+      "outcome": "accept",
+      "parity": "pass",
+      "predicted_speedup": 1.3,
+      "risk": "in-place writes through a const_cast'd getRawPoints pointer might not register with Maya (the bench does not check output, so it would look like a huge win and fail parity later); guarded to a mesh whose deform set is the whole vertex list so MItGeometry subsets still take the old path, and verified by hashing output points against a separately-built baseline bundle across 7 configs",
+      "slug": "raw_points_inplace",
+      "speedup": 5.822336236725928,
+      "theme": "deform in place on the output mesh's own packed float array from getRawPoints, instead of round-tripping every vertex through a 5.1 MB MPointArray of doubles via MItGeometry::allPositions/setAllPositions"
+    }
+  ],
+  "parity_gate": "authored+pointwise",
+  "reason": "accepted (5.82x)",
+  "rounds": 2,
+  "speedup": 5.822336236725928,
+  "type_name": "sineRipple"
+}

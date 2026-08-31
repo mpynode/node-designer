@@ -1,0 +1,61 @@
+{
+  "accepted": true,
+  "baseline_ms": 4.4373,
+  "best_ms": 0.0012,
+  "created": 1787679153.683518,
+  "ledger": [
+    {
+      "compiled": true,
+      "duration_s": null,
+      "fix_rounds": 0,
+      "hypothesis": "",
+      "index": 0,
+      "ms": 4.4373,
+      "note": "",
+      "outcome": "baseline",
+      "parity": null,
+      "predicted_speedup": null,
+      "risk": "",
+      "slug": null,
+      "speedup": null,
+      "theme": ""
+    },
+    {
+      "compiled": true,
+      "duration_s": 827.987,
+      "fix_rounds": 0,
+      "hypothesis": "the lowered form is QUERY-shaped by accident: for every sample it scans all c control points and adds cv[k]*0.0 for all but d+1 of them. The knot span s (kv[s] <= u < kv[s+1]) is closed-form for an open uniform knot vector, so the scan collapses to k in [s-d, s]. Adding an exact 0.0 to a nonzero double is the identity, so restricting the loop in the same increasing-k order reproduces the accumulation bit for bit rather than merely within tolerance. Three consequences, each measured separately: (1) O(n*c) -> O(n*(d+1)) arithmetic; (2) the UNION of the per-sample spans is the only part of the cv multi the answer can depend on, and that union is a pure function of (i, n, c, degree) -- computable in a pre-pass with no cv reads at all -- so the 20000-element MArrayDataHandle walk shrinks to the window plus cv[c-1] for the endpoint override; (3) the c+degree+1 knot vector is just clamp(j-degree, 0, c-degree), so it never needs to be materialised.",
+      "index": 1,
+      "ms": 0.0012,
+      "note": "",
+      "outcome": "accept",
+      "parity": "pass",
+      "predicted_speedup": 15.0,
+      "risk": "Skipping k whose weight is exactly 0.0 is the identity for every nonzero accumulator but NOT for signed zero: an all-zero span sum could come out +0.0 where the full scan yielded -0.0. Numerically equal, and no tie/ranking comparison anywhere in this node depends on it. Second risk: c is now taken from the last physical element's logical index instead of from walking every element, which is only valid because Maya stores multi elements in ascending logical order; the windowed seek is further gated on _cnt == _c (provably gap-free) and a SPARSE multi falls back to the full sequential read. Third: negative degree makes nd::at1 wrap its index and the recursion never bottoms out, so _degree < 0 keeps the original lowered path verbatim rather than acquiring new behaviour.",
+      "slug": "span_limited_deboor",
+      "speedup": 3697.75,
+      "theme": "a degree-d b-spline basis is nonzero on only d+1 control points, so compute the knot span once and let it prune the CV scan, the cv reads and the knot vector all at once"
+    },
+    {
+      "compiled": true,
+      "duration_s": 457.215,
+      "fix_rounds": 0,
+      "hypothesis": "an in-process profile (buffered std::chrono, dumped after the timed region) showed steady-state compute() at 210-290 ns against a ~1100 ns measured tick, so ~75-80% of what the benchmark times is Maya DG dispatch plus the Python asMDataHandle() call and is untouchable; of the ~250 ns that IS ours the four segments were near-equal at 1-2 clock ticks each (the clock quantizes at ~41.7 ns), and the only segment holding a heap allocation and a whole-array swap was the output write, so replacing the builder with in-place element handles was the one place left where a LEVEL of work could be removed rather than a constant shaved",
+      "index": 2,
+      "ms": 0.0013,
+      "note": "",
+      "outcome": "not-faster",
+      "parity": "pass",
+      "predicted_speedup": 1.3,
+      "risk": "MArrayDataBuilder's real job is CREATING logical indices, so bypassing it is only equivalent when the output multi is already dense; the dense test is elementCount == n AND the last physical element's logical index == n-1, which given ascending logical indices leaves no gap, and every other shape (sparse, or a count mismatch) still takes the builder verbatim. The scratch buffer is a per-instance member, never static, and is resized then fully overwritten in [0,n) on every call, so it carries an allocation across evaluations but never a value -- no staleness surface, and two nodes under a parallel EM cannot share it.",
+      "slug": "bypass_output_builder",
+      "speedup": null,
+      "theme": "the node was already at its algorithmic floor, so the round went to the output write: skip MArrayDataBuilder and the array swap when the samples multi already holds exactly the logical indices 0..n-1, and stop re-allocating the sample scratch every evaluation"
+    }
+  ],
+  "parity_gate": "authored+pointwise",
+  "reason": "accepted (3697.75x)",
+  "rounds": 2,
+  "speedup": 3697.75,
+  "type_name": "spline"
+}

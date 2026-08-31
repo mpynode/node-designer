@@ -1,0 +1,61 @@
+{
+  "accepted": true,
+  "baseline_ms": 0.0205,
+  "best_ms": 0.0015,
+  "created": 1787683917.9672818,
+  "ledger": [
+    {
+      "compiled": true,
+      "duration_s": null,
+      "fix_rounds": 0,
+      "hypothesis": "",
+      "index": 0,
+      "ms": 0.0205,
+      "note": "",
+      "outcome": "baseline",
+      "parity": null,
+      "predicted_speedup": null,
+      "risk": "",
+      "slug": null,
+      "speedup": null,
+      "theme": ""
+    },
+    {
+      "compiled": true,
+      "duration_s": 981.215,
+      "fix_rounds": 0,
+      "hypothesis": "This is an ELEMENTWISE node with an output of three numbers, not a QUERY node, so there is no acceleration structure to build: the entire 20.1 us is fixed per-call arithmetic. nd_exact() reconstructs the exact decimal expansion of a double via `reps` passes of a schoolbook multiply over a growing base-10 digit vector -- O(reps^2) with reps ~= 52 for a typical mantissa, and it is called SIX times per compute (once inside nd_py_round and once inside nd_py_repr, per component). Carrying the same exact integer in base-1e9 limbs and multiplying by 5^12 / 2^29 per pass does identical arithmetic with ~100x fewer inner operations. The second cost is nd_py_repr's shortest-round-trip search, which scans p = 1, 2, 3, ... and does a std::stod plus several substr/append allocations per step, so it pays ~8 parses per component. But nd_py_round has ALREADY produced a decimal D with a known digit count and has ALREADY handed D to strtod -- so D's digit count is an upper bound on the shortest length, and D's own round-trip result is known by construction. Probe there instead of at p = 1.",
+      "index": 1,
+      "ms": 0.002,
+      "note": "",
+      "outcome": "accept",
+      "parity": "pass",
+      "predicted_speedup": 3.5,
+      "risk": "The hinted probe is the only change that alters CONTROL FLOW rather than representation, so it is the one that could pick a different winner. It is safe because the round-trip predicate is monotone in p -- correct rounding to p+1 digits is never farther from av than to p digits, so the set of round-tripping p is an up-set and locating its minimum by walking down from a hint finds the same p as scanning up from 1. Every comparison kept the source's type, direction and strictness: the round-half-to-even tie test is byte-for-byte the original, the round-trip test is still an exact `back != av` on doubles, and the strtod-skip is an exact identity (same digits, same exponent => same strtod result) rather than a tolerance. std::stod's ERANGE-throws-out_of_range behaviour is reproduced explicitly via errno so subnormal candidates are still rejected exactly as before. Verified by extracting the functions VERBATIM out of hexAttribute.cpp into the harness and diffing against the original implementation over 325,242 (value, decimals) cases -- 6000 randoms spanning 1e-20..1e20, plus signed zeros, infinities, NaN, 5e-324, DBL_MAX, 1e16/1e17/1e22/1e23 and the classic 0.30000000000000004 / 1234567890123456789.0 repr traps, crossed with decimals in [-8, 18]: 0 mismatches, on both the standalone round/repr path and the fused round->hint->repr path the node actually uses.",
+      "slug": "limb_decimal_expansion",
+      "speedup": 10.25,
+      "theme": "the node is three Python float-to-string conversions, and all of its time went into expanding a double's exact decimal one base-10 digit at a time -- carry it in base-1e9 limbs instead, then stop re-parsing candidates that are already known to round-trip"
+    },
+    {
+      "compiled": true,
+      "duration_s": 843.56,
+      "fix_rounds": 0,
+      "hypothesis": "This node is ELEMENTWISE and tiny (3 doubles in, one ~180-char hex string out), so there is no acceleration structure to build and no array to thread -- the whole cost is inside nd_exact() and strtod(). nd_exact() builds all ~55 exact decimal digits of a double as a bignum and is called 6x per compute (once per coordinate in round(), once more in repr()); strtod() is called ~6x to re-parse the decimals just produced. Replacing the bignum with exact 128-bit integer arithmetic and strtod with a single correctly-rounded multiply/divide should remove ~3/4 of the compute.",
+      "index": 2,
+      "ms": 0.0015,
+      "note": "",
+      "outcome": "accept",
+      "parity": "pass",
+      "predicted_speedup": 2.5,
+      "risk": "Every one of these is a tie-resolving path, so nothing was allowed to get looser: round() is half-to-EVEN on the exact value, and repr() picks the SHORTEST decimal that strtod's back bit-exactly. The guard/sticky shift reproduces half-to-even on the exact dyadic value rather than approximating it, and the Clinger path only fires when int(d) < 2^53 and |exp| <= 22, where the single multiply/divide IS the correctly-rounded result -- outside that window every helper returns false and the original bignum + strtod code runs unchanged. Second risk: nd_repr_fast derives decpt from the round()'s decimal rather than from the exact expansion; that is only safe because a <=16-digit decimal sits >= 1e-15 (relative) from any power of ten while half an ulp is ~1.1e-16, so it cannot round across a decade.",
+      "slug": "dyadic_round_no_bignum",
+      "speedup": 13.666666666666666,
+      "theme": "Python's round()/repr() were driving a base-1e9 exact-decimal expansion six times per compute; both collapse to one 64x64->128 multiply plus a shift-with-sticky, because x*10^nd is the dyadic rational (m*5^nd)*2^(e+nd) and every decimal the node emits is short enough for Clinger's exactly-representable window."
+    }
+  ],
+  "parity_gate": "authored+pointwise",
+  "reason": "accepted (13.67x)",
+  "rounds": 2,
+  "speedup": 13.666666666666666,
+  "type_name": "hexAttribute"
+}

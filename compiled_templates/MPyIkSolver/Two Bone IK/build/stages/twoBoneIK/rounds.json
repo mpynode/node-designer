@@ -1,0 +1,61 @@
+{
+  "accepted": false,
+  "baseline_ms": 0.0058,
+  "best_ms": 0.0058,
+  "created": 1787677015.367021,
+  "ledger": [
+    {
+      "compiled": true,
+      "duration_s": null,
+      "fix_rounds": 0,
+      "hypothesis": "",
+      "index": 0,
+      "ms": 0.0058,
+      "note": "",
+      "outcome": "baseline",
+      "parity": null,
+      "predicted_speedup": null,
+      "risk": "",
+      "slug": null,
+      "speedup": null,
+      "theme": ""
+    },
+    {
+      "compiled": true,
+      "duration_s": 551.517,
+      "fix_rounds": 0,
+      "hypothesis": "this node is neither ELEMENTWISE nor QUERY -- it is O(1): three joints, one law-of-cosines solve. There is no collection to accelerate and nothing to thread (the whole pass is far under the 50 us region floor). The only real work is constant overhead: the generic nd:: engine allocated roughly forty shared_ptr<vector<double>> temporaries for 3-, 9- and 16-element vectors per solve, and the Maya side did ten findPlug(const char*) attribute-table walks per solve. Both are pure overhead that a hand lowering removes without touching a single arithmetic operation.",
+      "index": 1,
+      "ms": null,
+      "note": "authored @maya_test FAILED: test_two_bone_ik: knee barely bends (rotateX=0.00)",
+      "outcome": "parity-fail",
+      "parity": "fail",
+      "predicted_speedup": 1.6,
+      "risk": "bit-parity. The rewrite reproduces every operation in the source order: norm as sqrt of a left-to-right acc = acc + x*x fold; rot3 as (eye + s*k) + (1-c)*(k@k) with ascending-l accumulation from a zero accumulator; the full 4x4 w_rest @ delta including the delta[l][3] zero terms; the clamp spelled min-then-max exactly as lowered; the reach clamp keeping the source's (hi < mx ? hi : mx) direction and strictness. No comparison that selects a branch was narrowed or loosened, and -ffp-contract=off keeps the multiply-adds unfused, so the doubles follow the same rounding path the array engine took.",
+      "slug": "scalar_solve_cached_attrs",
+      "speedup": null,
+      "theme": "lower the 3-joint IK solve from nd::Array temporaries to plain doubles and replace the ten per-solve string findPlug() lookups with cached attribute MObjects"
+    },
+    {
+      "compiled": true,
+      "duration_s": 678.934,
+      "fix_rounds": 0,
+      "hypothesis": "The node is neither ELEMENTWISE nor QUERY -- it is a fixed-size 3-joint analytic IK, O(1) in every benchmark knob. --bench-array 20000 and --bench-geo 400 do not reach it at all: an MPxIkSolverNode has no typed or array inputs, so the harness falls through to bench_ik_rig(), which builds a 4-joint chain plus an ikHandle and times cmds.getAttr('<tip>.worldMatrix[0]'). With no N to attack, the only levers are constant-factor: the ~70 std::make_shared<std::vector<double>> allocations the nd:: temporaries cost (every 3-vector is a heap array), and the ~14 string-keyed findPlug calls per solve.",
+      "index": 2,
+      "ms": null,
+      "note": "authored @maya_test FAILED: test_two_bone_ik: knee barely bends (rotateX=0.00)",
+      "outcome": "parity-fail",
+      "parity": "fail",
+      "predicted_speedup": 1.6,
+      "risk": "Rewriting the numeric core by hand is the one thing that can silently break parity, so every accumulation had to keep the runtime's exact order and operand order. Verified rather than assumed -- see verification below.",
+      "slug": "scalar_lower_solve",
+      "speedup": null,
+      "theme": "Hand-lower the nd::Array solve to stack scalars and cache the attribute handles -- then discover by ablation that doSolve() is entirely below the benchmark's noise floor, because the timed region is a Python cmds.getAttr and not the solve."
+    }
+  ],
+  "parity_gate": "authored+pointwise",
+  "reason": "no candidate beat the baseline",
+  "rounds": 2,
+  "speedup": 1.0,
+  "type_name": "twoBoneIK"
+}

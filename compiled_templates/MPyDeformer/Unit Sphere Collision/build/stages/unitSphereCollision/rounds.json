@@ -1,0 +1,61 @@
+{
+  "accepted": true,
+  "baseline_ms": 26.2431,
+  "best_ms": 1.6506,
+  "created": 1787676956.8192692,
+  "ledger": [
+    {
+      "compiled": true,
+      "duration_s": null,
+      "fix_rounds": 0,
+      "hypothesis": "",
+      "index": 0,
+      "ms": 26.2431,
+      "note": "",
+      "outcome": "baseline",
+      "parity": null,
+      "predicted_speedup": null,
+      "risk": "",
+      "slug": null,
+      "speedup": null,
+      "theme": ""
+    },
+    {
+      "compiled": true,
+      "duration_s": 548.134,
+      "fix_rounds": 0,
+      "hypothesis": "this node is ELEMENTWISE, not query-shaped -- the ported math is ~40 flops over 159,602 verts and cannot be 26 ms on its own, so the cost has to be somewhere other than the arithmetic. It was: codegen scaffolding walked MItMeshVertex over every vertex calling getConnectedVertices + sort + unique into a heap-allocated inner std::vector per vertex, filled adjStart/adjNbr, and the ported region then never referenced either. With that gone the remaining cost is transport, not compute, so the next levers are per-access overhead (MPointArray::operator[] is an out-of-line call into the Maya dylib, ~6 per vertex) and whole-array temporaries, exactly as the ELEMENTWISE branch of the brief predicts.",
+      "index": 1,
+      "ms": 2.0839,
+      "note": "",
+      "outcome": "accept",
+      "parity": "pass",
+      "predicted_speedup": 6.0,
+      "risk": "The in-place point path is the sharp edge. It takes &pts[0] as a double* and strides it, which is only valid if MPointArray's storage is a contiguous MPoint[]. That is strongly implied (operator[] returns a genuine MPoint&, and there is an MPointArray(const MPoint[], count) ctor) but it is not a documented guarantee, so the layout is PROBED at runtime -- stride == sizeof(MPoint), sizeof(MPoint) == 4*sizeof(double), and x/y/z/w at offsets 0/8/16/24 -- and anything unexpected falls back to the previous get()/rebuild copy path. Second risk is the pool: element i reads and writes only sp[4i..4i+3] and pr[4i..4i+2], so the split cannot change the answer, but the chunk cursor had to be a pool MEMBER, since Maya's EM can have two instances of this node in a region at once and a file-scope cursor would let each rewind the other.",
+      "slug": "drop_dead_adjacency",
+      "speedup": 12.593262632563942,
+      "theme": "the deform() prologue built a full CSR vertex-adjacency table that the ported compute never reads; deleting it, then moving the per-vertex map onto raw in-place double* and a persistent pool, took 29.4 ms to 2.1 ms"
+    },
+    {
+      "compiled": true,
+      "duration_s": 644.639,
+      "fix_rounds": 0,
+      "hypothesis": "This node is ELEMENTWISE, not QUERY: one fixed 2x-matvec + sqrt per vertex, no inner scan, so there is no acceleration structure to build and the arithmetic is not the lever. The prior round had already hoisted the matrices, cached the accumulating buffer per-instance and threaded the map, which left the Maya-side bulk transfer as the largest thing still inside deform(). MItGeometry exposes only MPointArray for bulk access (I checked MItGeometry.h -- there is no MFloatPointArray overload), so allPositions()/setAllPositions() cost a 5.1 MB heap array plus a widen of 479k floats and a narrow back. MFnMesh::getRawPoints() hands back the mesh's actual float[3n] buffer; const_cast'ing it and writing in place performs exactly the same two casts the Maya calls perform internally, so the values are bit-identical while per-eval traffic drops from ~34 MB to ~14 MB. Guarded on the geometry really being a mesh with full membership (nv == iter.count()), with the original MPointArray path kept as the fallback, and closed with updateSurface() so the bbox/normal caches invalidate exactly as setPoints would.",
+      "index": 2,
+      "ms": 1.6506,
+      "note": "",
+      "outcome": "accept",
+      "parity": "pass",
+      "predicted_speedup": 1.6,
+      "risk": "Two real ones. (1) block.outputArrayValue(outputGeom) inside deform() could in principle re-enter compute -- it does not, because outputArrayValue only returns the datablock's storage and never pulls. (2) Writing through a const_cast'ed getRawPoints() bypasses MFnMesh's own invalidation, so a stale bounding box or stale normals would be a silently wrong result that a timing number cannot see. I verified this against the numpy reference in a separate mayapy harness across 12 randomised pusher transforms with the buffer accumulating between steps: worst deviation 1.68e-07, which is just the float32 mesh store and is present in the baseline too. No comparison was narrowed, loosened or moved to float -- the `d > 0.0 && d < 1.0` test and both matvecs stay in double exactly as written.",
+      "slug": "raw_float_mesh_points",
+      "speedup": 15.899127589967282,
+      "theme": "Stop round-tripping 160k verts through MItGeometry's MPointArray. Fetch the output mesh from the datablock and read/write its own float[3n] point store in place, so the 5.1 MB allocation, the float->double widen and the double->float narrow all disappear."
+    }
+  ],
+  "parity_gate": "authored+pointwise",
+  "reason": "accepted (15.90x)",
+  "rounds": 2,
+  "speedup": 15.899127589967282,
+  "type_name": "unitSphereCollision"
+}

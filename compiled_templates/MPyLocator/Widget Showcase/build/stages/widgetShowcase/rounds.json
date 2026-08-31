@@ -1,0 +1,29 @@
+{
+  "accepted": false,
+  "baseline_ms": null,
+  "best_ms": null,
+  "created": 1787676079.333369,
+  "ledger": [
+    {
+      "compiled": true,
+      "duration_s": null,
+      "fix_rounds": 0,
+      "hypothesis": "",
+      "index": 0,
+      "ms": null,
+      "note": "unmeasurable",
+      "outcome": "baseline",
+      "parity": null,
+      "predicted_speedup": null,
+      "risk": "",
+      "slug": null,
+      "speedup": null,
+      "theme": ""
+    }
+  ],
+  "parity_gate": "authored+pointwise",
+  "reason": "baseline could not be benchmarked",
+  "rounds": 0,
+  "speedup": 1.0,
+  "type_name": "widgetShowcase"
+}

@@ -1,0 +1,226 @@
+//Maya ASCII 2026 scene
+//Name: MPyFile_File_Simple.ma
+//Last modified: Tue, Aug 25, 2026 12:19:38 PM
+//Codeset: UTF-8
+requires maya "2026";
+requires -nodeType "fileTexture" "mPyMega" "1.0";
+requires -nodeType "aiStandardSurface" -nodeType "aiOslShader" "mtoa" "5.5.4.2";
+currentUnit -l centimeter -a degree -t film;
+fileInfo "application" "maya";
+fileInfo "product" "Maya 2026";
+fileInfo "version" "2026";
+fileInfo "cutIdentifier" "202510291147-60ec9eda33";
+fileInfo "osv" "Mac OS X 20.6.2";
+fileInfo "UUID" "102DEC84-B643-FB48-3F34-25B3624BCE1E";
+createNode transform -s -n "persp";
+	rename -uid "8902E382-2349-931C-846F-9CB815ADA4AD";
+	setAttr ".v" no;
+	setAttr ".t" -type "double3" 28 21 28 ;
+	setAttr ".r" -type "double3" -27.938352729602379 44.999999999999972 -5.172681101354183e-14 ;
+createNode camera -s -n "perspShape" -p "persp";
+	rename -uid "2F8A38BF-6648-A447-6C2F-3A985609398F";
+	setAttr -k off ".v" no;
+	setAttr ".fl" 34.999999999999993;
+	setAttr ".coi" 44.82186966202994;
+	setAttr ".imn" -type "string" "persp";
+	setAttr ".den" -type "string" "persp_depth";
+	setAttr ".man" -type "string" "persp_mask";
+	setAttr ".hc" -type "string" "viewSet -p %camera";
+createNode transform -s -n "top";
+	rename -uid "1383BAAE-0F4F-E2FA-13D4-8C95FA508F37";
+	setAttr ".v" no;
+	setAttr ".t" -type "double3" 0 1000.1 0 ;
+	setAttr ".r" -type "double3" -89.999999999999986 0 0 ;
+createNode camera -s -n "topShape" -p "top";
+	rename -uid "B08C2630-EF44-D57B-E110-96B13B560F0E";
+	setAttr -k off ".v" no;
+	setAttr ".rnd" no;
+	setAttr ".coi" 1000.1;
+	setAttr ".ow" 30;
+	setAttr ".imn" -type "string" "top";
+	setAttr ".den" -type "string" "top_depth";
+	setAttr ".man" -type "string" "top_mask";
+	setAttr ".hc" -type "string" "viewSet -t %camera";
+	setAttr ".o" yes;
+createNode transform -s -n "front";
+	rename -uid "BAAA0318-154B-6207-5D83-6D9F5B86B7C1";
+	setAttr ".v" no;
+	setAttr ".t" -type "double3" 0 0 1000.1 ;
+createNode camera -s -n "frontShape" -p "front";
+	rename -uid "9B4A3707-2C4A-D081-757A-47BF25AAE341";
+	setAttr -k off ".v" no;
+	setAttr ".rnd" no;
+	setAttr ".coi" 1000.1;
+	setAttr ".ow" 30;
+	setAttr ".imn" -type "string" "front";
+	setAttr ".den" -type "string" "front_depth";
+	setAttr ".man" -type "string" "front_mask";
+	setAttr ".hc" -type "string" "viewSet -f %camera";
+	setAttr ".o" yes;
+createNode transform -s -n "side";
+	rename -uid "BECD75FB-7347-BCD7-FF44-DA9F4864C022";
+	setAttr ".v" no;
+	setAttr ".t" -type "double3" 1000.1 0 0 ;
+	setAttr ".r" -type "double3" 0 89.999999999999986 0 ;
+createNode camera -s -n "sideShape" -p "side";
+	rename -uid "78E05935-D147-8AE3-172F-A89FF209343C";
+	setAttr -k off ".v" no;
+	setAttr ".rnd" no;
+	setAttr ".coi" 1000.1;
+	setAttr ".ow" 30;
+	setAttr ".imn" -type "string" "side";
+	setAttr ".den" -type "string" "side_depth";
+	setAttr ".man" -type "string" "side_mask";
+	setAttr ".hc" -type "string" "viewSet -s %camera";
+	setAttr ".o" yes;
+createNode transform -n "fileTexture_sphere";
+	rename -uid "A116989B-A245-4C52-E127-D4A958791869";
+createNode mesh -n "fileTexture_sphereShape" -p "fileTexture_sphere";
+	rename -uid "F6A9C610-7D49-5F8D-3792-609E0A829FD8";
+	setAttr -k off ".v";
+	setAttr ".vir" yes;
+	setAttr ".vif" yes;
+	setAttr ".uvst[0].uvsn" -type "string" "map1";
+	setAttr ".cuvs" -type "string" "map1";
+	setAttr ".dcc" -type "string" "Diffuse";
+	setAttr ".covm[0]"  0 1 1;
+	setAttr ".cdvm[0]"  0 1 1;
+	setAttr ".ndt" 0;
+createNode lightLinker -s -n "lightLinker1";
+	rename -uid "A16CE290-C64D-38C5-06DD-0EA88042F24D";
+	setAttr -s 3 ".lnk";
+	setAttr -s 3 ".slnk";
+createNode shapeEditorManager -n "shapeEditorManager";
+	rename -uid "CBE4C6C8-A947-FC6D-B7A3-9DB4CB34C1C7";
+createNode poseInterpolatorManager -n "poseInterpolatorManager";
+	rename -uid "4A847927-D048-3EE6-7856-B7BD16CA23D5";
+createNode displayLayerManager -n "layerManager";
+	rename -uid "741B5D10-F74B-5028-E97A-38B7AB589B0B";
+createNode displayLayer -n "defaultLayer";
+	rename -uid "B9E86941-DE47-F409-2055-FA8FA123FC73";
+	setAttr ".ufem" -type "stringArray" 0  ;
+createNode renderLayerManager -n "renderLayerManager";
+	rename -uid "2D093B6D-BA49-B703-2E75-4CA1797AFA7E";
+createNode renderLayer -n "defaultRenderLayer";
+	rename -uid "1A3A6252-5142-ED3F-D8AA-1C8A323B72D0";
+	setAttr ".g" yes;
+createNode polySphere -n "polySphere1";
+	rename -uid "BCDC411D-224C-E407-2558-AD84AC2E2898";
+	setAttr ".r" 5;
+	setAttr ".sa" 32;
+	setAttr ".sh" 32;
+createNode surfaceShader -n "fileTexture_surface";
+	rename -uid "8BB0DAD0-F145-8036-A316-AEA8D1184FCB";
+createNode shadingEngine -n "fileTexture_surfaceSG";
+	rename -uid "FE462230-7E48-5D80-2393-769B4B7BA90B";
+	setAttr ".ihi" 0;
+	setAttr ".ro" yes;
+createNode materialInfo -n "materialInfo1";
+	rename -uid "21C5AEA0-1344-B369-97EC-33BB3345CE7E";
+createNode aiOslShader -n "fileTexture_arnoldOsl";
+	rename -uid "F9C954CF-C54D-6C1D-8073-34987754534E";
+	addAttr -r false -ci true -sn "paramFileName" -ln "fileName" -ct "oslAttribute" 
+		-dt "string";
+	addAttr -r false -ci true -sn "paramBrightness" -ln "brightness" -ct "oslAttribute" 
+		-dv 1 -at "float";
+	addAttr -r false -ci true -sn "paramContrast" -ln "contrast" -ct "oslAttribute" 
+		-dv 1 -at "float";
+	addAttr -w false -uac -sn "paramOutColor" -ln "outColor" -ct "oslAttribute" -at "float3" 
+		-nc 3;
+	addAttr -w false -sn "paramOutColorR" -ln "outColorR" -at "float" -p "outColor";
+	addAttr -w false -sn "paramOutColorG" -ln "outColorG" -at "float" -p "outColor";
+	addAttr -w false -sn "paramOutColorB" -ln "outColorB" -at "float" -p "outColor";
+	addAttr -w false -sn "paramOutAlpha" -ln "outAlpha" -ct "oslAttribute" -at "float";
+	setAttr ".code" -type "string" (
+		"// ----------------------------------------------------------------------\n// fileSimple -- OSL shader source (Open Shading Language)\n//\n// This tab is a RENDER TARGET, not an execution tier: the text here is\n// exposed as the connectable string output `.osl`. Wire it into an\n// aiOslShader (Arnold) so the renderer reproduces the same brightness/\n// contrast file-texture LOOK the Compute tab computes.\n//\n// It mirrors the Compute tab exactly:\n//   * sample the texture with the same (1 - v) V-flip the Compute tab\n//     uses: Maya's surface V is bottom-up while the image buffer is\n//     top-down, so both Compute and this shader pass (1 - v) to land on\n//     the same row as a standard Maya file node. texture() also does the\n//     sampling/filtering for us (no manual pixel indexing needed).\n//   * linearize the sampled sRGB colour to scene-linear (see below), the\n//     same conversion Compute's read_texture() applies, BEFORE adjusting it.\n//   * per channel:  c = c * brightness;\n//                   c = (c - 0.5) * contrast + 0.5;\n"
+		+ "//                   clamp to [0, 1].\n//     OSL color arithmetic is component-wise, so each expression applies\n//     the formula to R, G and B at once -- the same look as Compute's\n//     `for ch in (r, g, b)` loop.\n//   * pass the sampled alpha straight through to outAlpha.\n//\n// COLOUR MANAGEMENT: Arnold's OSL texture() returns the RAW sRGB file\n// values -- it does NOT auto color-manage the sample (verified by a real\n// Arnold render: without the conversion below the OSL surface renders\n// ~2.3x too bright vs the Compute/Viewport tiers and a stock file node).\n// We therefore linearize here so all three tiers (and a real Maya file\n// node) agree. There is no double-conversion risk precisely because\n// texture() does not color-manage.\n// ----------------------------------------------------------------------\n\n// sRGB-encoded -> scene-linear, component-wise piecewise EOTF (mirrors\n// _defaults/file_defaults.py::_srgb_eotf and the framework's\n// file_texture_ops.srgb_eotf). step()/mix()/pow() are component-wise, so\n"
+		+ "// this branches per channel without a loop. max() guards pow() against any\n// negative sample.\ncolor srgb_to_linear(color c)\n{\n    color lo = c / 12.92;\n    color hi = pow(max((c + color(0.055)) / 1.055, color(0.0)), 2.4);\n    // step(edge, x) = (x >= edge) per component; mix picks hi where c>=0.04045.\n    return mix(lo, hi, step(color(0.04045), c));\n}\n\nshader fileSimple(\n    string fileName = \"\",                 // image path (matches self.fileName)\n    float brightness = 1.0,               // matches self.brightness\n    float contrast = 1.0,                 // matches self.contrast\n    output color outColor = color(0),\n    output float outAlpha = 1.0)\n{\n    // Sample the texture at the renderer's surface coords (u, v). The\n    // (1 - v) flip matches the Compute tab, which samples image row\n    // (1.0 - vv) because MImage stores rows bottom-up. The optional\n    // \"alpha\" output captures the texture's alpha channel (Compute's `a`).\n    float a = 1.0;\n    color c = texture(fileName, u, 1.0 - v, \"alpha\", a);\n"
+		+ "\n    // sRGB -> scene-linear (read_texture() does this). Alpha is\n    // already linear, so it is NOT converted -- only the colour.\n    c = srgb_to_linear(c);\n\n    // brightness: scale about black.   (Compute: ch = ch * bright)\n    color bright = c * brightness;\n    // contrast: scale about mid-grey 0.5.  (Compute: (ch-0.5)*contrast+0.5)\n    color shaped = (bright - color(0.5)) * contrast + color(0.5);\n\n    // keep the result in the displayable range, then pass alpha through.\n    outColor = clamp(shaped, color(0), color(1));\n    outAlpha = a;\n}\n");
+	setAttr ".code_cache" -type "string" (
+		"// ----------------------------------------------------------------------\n// fileSimple -- OSL shader source (Open Shading Language)\n//\n// This tab is a RENDER TARGET, not an execution tier: the text here is\n// exposed as the connectable string output `.osl`. Wire it into an\n// aiOslShader (Arnold) so the renderer reproduces the same brightness/\n// contrast file-texture LOOK the Compute tab computes.\n//\n// It mirrors the Compute tab exactly:\n//   * sample the texture with the same (1 - v) V-flip the Compute tab\n//     uses: Maya's surface V is bottom-up while the image buffer is\n//     top-down, so both Compute and this shader pass (1 - v) to land on\n//     the same row as a standard Maya file node. texture() also does the\n//     sampling/filtering for us (no manual pixel indexing needed).\n//   * linearize the sampled sRGB colour to scene-linear (see below), the\n//     same conversion Compute's read_texture() applies, BEFORE adjusting it.\n//   * per channel:  c = c * brightness;\n//                   c = (c - 0.5) * contrast + 0.5;\n"
+		+ "//                   clamp to [0, 1].\n//     OSL color arithmetic is component-wise, so each expression applies\n//     the formula to R, G and B at once -- the same look as Compute's\n//     `for ch in (r, g, b)` loop.\n//   * pass the sampled alpha straight through to outAlpha.\n//\n// COLOUR MANAGEMENT: Arnold's OSL texture() returns the RAW sRGB file\n// values -- it does NOT auto color-manage the sample (verified by a real\n// Arnold render: without the conversion below the OSL surface renders\n// ~2.3x too bright vs the Compute/Viewport tiers and a stock file node).\n// We therefore linearize here so all three tiers (and a real Maya file\n// node) agree. There is no double-conversion risk precisely because\n// texture() does not color-manage.\n// ----------------------------------------------------------------------\n\n// sRGB-encoded -> scene-linear, component-wise piecewise EOTF (mirrors\n// _defaults/file_defaults.py::_srgb_eotf and the framework's\n// file_texture_ops.srgb_eotf). step()/mix()/pow() are component-wise, so\n"
+		+ "// this branches per channel without a loop. max() guards pow() against any\n// negative sample.\ncolor srgb_to_linear(color c)\n{\n    color lo = c / 12.92;\n    color hi = pow(max((c + color(0.055)) / 1.055, color(0.0)), 2.4);\n    // step(edge, x) = (x >= edge) per component; mix picks hi where c>=0.04045.\n    return mix(lo, hi, step(color(0.04045), c));\n}\n\nshader fileSimple(\n    string fileName = \"\",                 // image path (matches self.fileName)\n    float brightness = 1.0,               // matches self.brightness\n    float contrast = 1.0,                 // matches self.contrast\n    output color outColor = color(0),\n    output float outAlpha = 1.0)\n{\n    // Sample the texture at the renderer's surface coords (u, v). The\n    // (1 - v) flip matches the Compute tab, which samples image row\n    // (1.0 - vv) because MImage stores rows bottom-up. The optional\n    // \"alpha\" output captures the texture's alpha channel (Compute's `a`).\n    float a = 1.0;\n    color c = texture(fileName, u, 1.0 - v, \"alpha\", a);\n"
+		+ "\n    // sRGB -> scene-linear (read_texture() does this). Alpha is\n    // already linear, so it is NOT converted -- only the colour.\n    c = srgb_to_linear(c);\n\n    // brightness: scale about black.   (Compute: ch = ch * bright)\n    color bright = c * brightness;\n    // contrast: scale about mid-grey 0.5.  (Compute: (ch-0.5)*contrast+0.5)\n    color shaped = (bright - color(0.5)) * contrast + color(0.5);\n\n    // keep the result in the displayable range, then pass alpha through.\n    outColor = clamp(shaped, color(0), color(1));\n    outAlpha = a;\n}\n");
+	setAttr ".paramFileName" -type "string" "/Users/ericvignola/Documents/node-designer2-file/MPyNode/templates/MPyFile/File Simple/test_grid.png";
+createNode aiStandardSurface -n "fileTexture_arnoldMtl";
+	rename -uid "EB01A47B-E64D-A9CB-74D3-F193D3C4F91C";
+	setAttr ".specular" 0;
+createNode fileTexture -n "fileTexture";
+	rename -uid "FA9149EE-F74B-FC42-D569-52AA12FDB5D5";
+	setAttr ".fileName" -type "string" "/Users/ericvignola/Documents/node-designer2-file/MPyNode/templates/MPyFile/File Simple/test_grid.png";
+	setAttr ".preFilterRadius" 2;
+createNode script -n "uiConfigurationScriptNode";
+	rename -uid "19D95750-DD4E-DB79-258B-46B7943264B4";
+	setAttr ".b" -type "string" "// Maya Mel UI Configuration File.\n// No UI generated in batch mode.\n";
+	setAttr ".st" 3;
+createNode script -n "sceneConfigurationScriptNode";
+	rename -uid "CB250567-F342-0A62-A9C9-36BAB07D4A12";
+	setAttr ".b" -type "string" "playbackOptions -min 1 -max 120 -ast 1 -aet 200 ";
+	setAttr ".st" 6;
+select -ne :time1;
+	setAttr ".o" 1;
+	setAttr ".unw" 1;
+select -ne :hardwareRenderingGlobals;
+	setAttr ".otfna" -type "stringArray" 22 "NURBS Curves" "NURBS Surfaces" "Polygons" "Subdiv Surface" "Particles" "Particle Instance" "Fluids" "Strokes" "Image Planes" "UI" "Lights" "Cameras" "Locators" "Joints" "IK Handles" "Deformers" "Motion Trails" "Components" "Hair Systems" "Follicles" "Misc. UI" "Ornaments"  ;
+	setAttr ".otfva" -type "Int32Array" 22 0 1 1 1 1 1
+		 1 1 1 0 0 0 0 0 0 0 0 0
+		 0 0 0 0 ;
+	setAttr ".fprt" yes;
+	setAttr ".rtfm" 3;
+select -ne :renderPartition;
+	setAttr -s 3 ".st";
+select -ne :renderGlobalsList1;
+select -ne :defaultShaderList1;
+	setAttr -s 8 ".s";
+select -ne :postProcessList1;
+	setAttr -s 2 ".p";
+select -ne :defaultRenderingList1;
+select -ne :standardSurface1;
+	setAttr ".bc" -type "float3" 0.40000001 0.40000001 0.40000001 ;
+	setAttr ".sr" 0.5;
+select -ne :openPBR_shader1;
+	setAttr ".bc" -type "float3" 0.40000001 0.40000001 0.40000001 ;
+	setAttr ".sr" 0.5;
+select -ne :initialShadingGroup;
+	setAttr ".ro" yes;
+select -ne :initialParticleSE;
+	setAttr ".ro" yes;
+select -ne :defaultRenderGlobals;
+	addAttr -ci true -h true -sn "dss" -ln "defaultSurfaceShader" -dt "string";
+	setAttr ".dss" -type "string" "openPBR_shader1";
+select -ne :defaultResolution;
+	setAttr ".pa" 1;
+select -ne :defaultColorMgtGlobals;
+	setAttr ".cfe" yes;
+	setAttr ".cfp" -type "string" "<MAYA_RESOURCES>/OCIO-configs/Maya2022-default/config.ocio";
+	setAttr ".vtn" -type "string" "ACES 1.0 SDR-video (sRGB)";
+	setAttr ".vn" -type "string" "ACES 1.0 SDR-video";
+	setAttr ".dn" -type "string" "sRGB";
+	setAttr ".wsn" -type "string" "ACEScg";
+	setAttr ".otn" -type "string" "ACES 1.0 SDR-video (sRGB)";
+	setAttr ".potn" -type "string" "ACES 1.0 SDR-video (sRGB)";
+select -ne :hardwareRenderGlobals;
+	setAttr ".ctrs" 256;
+	setAttr ".btrs" 512;
+connectAttr "polySphere1.out" "fileTexture_sphereShape.i";
+relationship "link" ":lightLinker1" ":initialShadingGroup.message" ":defaultLightSet.message";
+relationship "link" ":lightLinker1" ":initialParticleSE.message" ":defaultLightSet.message";
+relationship "link" ":lightLinker1" "fileTexture_surfaceSG.message" ":defaultLightSet.message";
+relationship "shadowLink" ":lightLinker1" ":initialShadingGroup.message" ":defaultLightSet.message";
+relationship "shadowLink" ":lightLinker1" ":initialParticleSE.message" ":defaultLightSet.message";
+relationship "shadowLink" ":lightLinker1" "fileTexture_surfaceSG.message" ":defaultLightSet.message";
+connectAttr "layerManager.dli[0]" "defaultLayer.id";
+connectAttr "renderLayerManager.rlmi[0]" "defaultRenderLayer.rlid";
+connectAttr "fileTexture.outColor" "fileTexture_surface.oc";
+connectAttr "fileTexture_surface.oc" "fileTexture_surfaceSG.ss";
+connectAttr "fileTexture_sphereShape.iog" "fileTexture_surfaceSG.dsm" -na;
+connectAttr "fileTexture_arnoldMtl.out" "fileTexture_surfaceSG.ai_surface_shader"
+		;
+connectAttr "fileTexture_surfaceSG.msg" "materialInfo1.sg";
+connectAttr "fileTexture_arnoldOsl.paramOutColor" "fileTexture_arnoldMtl.base_color"
+		;
+connectAttr "fileTexture_surfaceSG.pa" ":renderPartition.st" -na;
+connectAttr "fileTexture_surface.msg" ":defaultShaderList1.s" -na;
+connectAttr "fileTexture_arnoldMtl.msg" ":defaultShaderList1.s" -na;
+connectAttr "defaultRenderLayer.msg" ":defaultRenderingList1.r" -na;
+// End of MPyFile_File_Simple.ma

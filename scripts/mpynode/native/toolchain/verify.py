@@ -1,0 +1,2781 @@
+"""Parity verification for compiled native plugins.
+
+Split out of :mod:`mpynode.native.toolchain.compile_controller` (the BUILD
+half). This module owns the PARITY-VERIFY half: load a freshly built ``.bundle``
+and check each surviving node's compiled type against its Python original
+mPyNode, per MPx family (scalar compute / deformer / iksolver / geometry
+generator). Two delivery wrappers are provided -- ``main_thread_verify_fn``
+(marshals onto Maya's main thread for a GUI caller) and ``subprocess_verify_fn``
+(runs the check in a throwaway ``mayapy`` process so the caller's live scene is
+never touched). ``compile_controller.compile_plugin`` calls ``_default_verify``
+(or an injected ``verify_fn``) at its verify stage.
+
+Import-safe under plain ``python3``: there is NO ``import maya`` at module top;
+every Maya / numpy / mpynode-runtime import is lazy INSIDE the function that
+needs it, mirroring the original module's headless guarantee.
+"""
+
+from __future__ import annotations
+
+import math
+import os
+import shutil
+import time
+
+from mpynode.native.toolchain import toolchain
+
+_MAYA_DEFAULT = toolchain.default_maya_dir()
+
+
+# ---------------------------------------------------------------------------
+# Default parity verify (lazily imports maya -- never at module top)
+# ---------------------------------------------------------------------------
+
+
+def _default_verify(bundle_path, rows, maya=_MAYA_DEFAULT,
+                    run_authored_tests=True):
+    """Load the bundle and parity-check each surviving node vs its Python original.
+
+    Returns ``{type_name: {"ran": bool, "pass": bool|None, "maxerr": float|None,
+    "tol": float|None, "reason": str}}``. NEVER raises -- a verify failure is a
+    node-row flag, not a build failure (design "Failure handling").
+
+    ``run_authored_tests`` (default True) additionally runs each node's authored
+    ``@maya_test`` methods against the COMPILED node -- a stronger, author-written
+    correctness gate. Default True so every headless caller (the test suite, the
+    per-template audit, a direct call) keeps exercising authored tests; the Node
+    Designer compile dialog passes ``False`` to make running them opt-in (the
+    built-in generic byte-parity check below always runs regardless).
+
+    Lazily imports ``maya.cmds`` INSIDE this function so the module stays
+    import-safe under plain python3. Implements the same per-family verify
+    (scalar / deformer / iksolver) the parity sweep uses. In the app this runs
+    on the caller's thread, which marshals it to Maya's main thread.
+    """
+    out = {}
+    try:
+        import maya.cmds as cmds  # noqa: F401  (lazy: keeps module headless-safe)
+    except Exception as exc:
+        for r in rows:
+            out[r["type_name"]] = {
+                "ran": False, "pass": None, "maxerr": None, "tol": None,
+                "reason": "verify skipped (no Maya runtime): %s" % exc,
+            }
+        return out
+
+    base = os.path.basename(bundle_path)
+    try:
+        if not cmds.pluginInfo(base, q=True, loaded=True):
+            cmds.loadPlugin(bundle_path)
+    except Exception as exc:
+        for r in rows:
+            out[r["type_name"]] = {
+                "ran": False, "pass": None, "maxerr": None, "tol": None,
+                "reason": "loadPlugin failed: %s" % exc,
+            }
+        return out
+
+    # ONE deadline for the WHOLE bundle, computed before the row loop and threaded
+    # down -- never per node. The dialog calls subprocess_verify_fn with
+    # timeout=600 for the entire bundle, so a per-node timing budget on a multi-node
+    # build would push the process past it and turn EVERY row into "subprocess
+    # verify produced no result", which is far worse than no timing at all.
+    deadline = time.perf_counter() + _TIMING_BUDGET_S
+    for r in rows:
+        tn = r["type_name"]
+        try:
+            res = _verify_one(cmds, bundle_path, r["spec"], maya=maya,
+                              deadline=deadline)
+        except Exception as exc:
+            # A harness exception means we COULD NOT verify -- NOT a parity
+            # failure. Flag it as a not-run skip (ran=False/pass=None) so the
+            # build is never falsely reported as "FAILED parity".
+            res = {"ran": False, "pass": None, "maxerr": None, "tol": None,
+                   "reason": "verify could not run: %s" % exc}
+        # Generic parity did not run/pass -> the node was never timed. Wherever
+        # parity SKIPS (skinCluster, mesh-input IK solvers, stride-coupled arrays,
+        # NURBS CV deformers, AI-ported RNG, ...) that is a real coverage hole, and
+        # an ABSENT timing field would read as "measured, fine". Say it instead.
+        if _timing_enabled() and "timing" not in res:
+            res["timing"] = {
+                "measured": False,
+                "reason": "not timed -- generic parity did not pass for this "
+                          "node, so there is no trustworthy pair to measure (%s)"
+                          % (res.get("reason") or "skipped")}
+        # Augment with the node's authored @maya_test(s): a stronger gate for
+        # behaviour the generic harness can't drive (moving UVs, deleting a face).
+        # Runs the SAME test the interpreted node passes against the COMPILED
+        # node, and can upgrade a generic "skip" into a real pass/fail. Gated on
+        # ``run_authored_tests`` so the GUI can make it opt-in.
+        if run_authored_tests:
+            try:
+                authored = _run_authored_tests(cmds, bundle_path, r["spec"])
+            except Exception as exc:
+                authored = {"ran": True, "passed": False, "count": 0,
+                            "passes": 0,
+                            "reason": "authored @maya_test harness error: %s"
+                            % exc}
+            if authored is not None:
+                res = _merge_authored_test(res, authored)
+        out[tn] = res
+    return out
+
+
+def _run_authored_tests(cmds, bundle_path, spec):
+    """Run the node's authored ``@maya_test``(s) (from ``spec['methods']``)
+    against a freshly-created COMPILED node instance. Returns ``None`` when the
+    node defines no tests, else an aggregate
+    ``{ran, passed, count, passes, reason}``. Each test runs in its own fresh
+    scene (mirroring :func:`_verify_geo`) so they can't contaminate one another.
+    """
+    source = (spec or {}).get("methods") or ""
+    from mpynode._common import node_setups
+
+    test_specs = node_setups.find_tests(source)
+    if not test_specs:
+        return None
+    from mpynode._common.methods import methods_registry
+
+    name = spec["suggested"]["node_type_name"]
+    base = os.path.basename(bundle_path)
+    # The interpreted node gets time1.outTime wired into every non-array kTime
+    # input by the wrapper's add_input_attr (_mpy_node.py: attr_type == "time"
+    # and not is_array), and .mpn deserialize restores it. createNode() below
+    # does not, so an authored test that reads a time-driven input sees 0.0 on
+    # the compiled node while the interpreted one sees currentTime -- a Game of
+    # Life board seeded from `frame` then diverges and the test fails on a node
+    # whose C++ is correct.
+    time_ins = [k for k, v in (spec.get("inputs") or {}).items()
+                if v.get("type") == "time" and not v.get("is_array")]
+    results = []
+    for ts in test_specs:
+        cmds.file(new=True, force=True)
+        if not cmds.pluginInfo(base, q=True, loaded=True):
+            cmds.loadPlugin(bundle_path)
+        comp = cmds.createNode(name)
+        for a in time_ins:
+            try:
+                if not cmds.objExists("time1"):
+                    cmds.createNode("time", name="time1", skipSelect=True)
+                cmds.connectAttr("time1.outTime", "%s.%s" % (comp, a),
+                                 force=True)
+            except Exception:
+                pass
+        results.append(
+            methods_registry.run_test_on_node_name(comp, source, ts.func_name))
+    passes = sum(1 for r in results if r["passed"])
+    fails = [r for r in results if not r["passed"]]
+    reason = "" if not fails else "; ".join(
+        "%s: %s" % (r["name"], r["error"]) for r in fails)
+    return {"ran": True, "passed": not fails, "count": len(results),
+            "passes": passes, "reason": reason}
+
+
+def _merge_authored_test(res, authored):
+    """Fold an authored ``@maya_test`` aggregate into a generic verify ``res``.
+
+    The authored test is a real verification, so:
+      * when the generic verify SKIPPED (``ran=False``) it becomes the verdict
+        (a complex geo node the generic harness couldn't drive now gets a real
+        pass/fail);
+      * when the generic verify RAN, both must pass.
+    The aggregate is attached under ``res['authored_test']`` and summarised in
+    ``reason`` so the compile report can surface it."""
+    res = dict(res)
+    res["authored_test"] = authored
+    if authored.get("ran"):
+        if res.get("ran"):
+            res["pass"] = bool(res.get("pass")) and bool(authored["passed"])
+        else:
+            res["ran"] = True
+            res["pass"] = bool(authored["passed"])
+            if res.get("tol") is None:
+                res["tol"] = 0.0
+    if not authored["passed"]:
+        extra = "authored @maya_test FAILED: %s" % (authored.get("reason") or "")
+    else:
+        extra = ("authored @maya_test: %d/%d passed"
+                 % (authored.get("passes", 0), authored.get("count", 0)))
+    prev = (res.get("reason") or "").strip()
+    res["reason"] = (prev + " | " + extra) if prev else extra
+    return res
+
+
+def _attr_components(val):
+    """Flatten a ``cmds.getAttr`` return into a flat list of floats so parity
+    compares EVERY component. A scalar -> ``[v]``; a double3 (Maya returns
+    ``[(x, y, z)]``) -> ``[x, y, z]``; a matrix (flat 16) -> all 16. The old
+    code peeled lists down to ``val[0]`` -- comparing only X of a vector and
+    only m[0][0] of a matrix -> a port wrong on any other component scored
+    maxerr~=0 and falsely "verified". Raises (caught upstream as a skip) if a
+    leaf isn't numeric (e.g. a string attr the generic harness can't compare)."""
+    if isinstance(val, (list, tuple)):
+        out = []
+        for e in val:
+            out.extend(_attr_components(e))
+        return out
+    return [float(val)]
+
+
+def _components_maxerr(a, b):
+    """Max abs difference across paired components (over the shorter length).
+    0.0 when either side is empty -- the OUT loop only calls this for declared
+    outputs, so empty means nothing to compare, not a pass/fail signal."""
+    return max((abs(x - y) for x, y in zip(a, b)), default=0.0)
+
+
+# A discrepancy from a genuine PORT bug (wrong sign / index / formula) is bounded
+# by the OUTPUT magnitude -- O(scene units) for any real node, well under this
+# ceiling. A divergence ABOVE it (or a non-finite result) means the computation
+# blew up under randomized inputs: the signature of a STATEFUL / ITERATIVE solver
+# (dnet feeds output positions back across evals) sensitive to float-accumulation
+# order, for which drive-and-compare parity is not a valid check. Classified as an
+# INCONCLUSIVE SKIP. Only ever downgrades FAIL->SKIP, so it can never mask a real
+# bug as a PASS.
+_DIVERGE_CEIL = 1.0e6
+
+# How far past `tol` a CARRY-STATE drift is still read as drift rather than a
+# port bug -- see _carry_state_drift. Deliberately tight: the band exists to
+# excuse two correct-but-differently-advanced solver trajectories separating,
+# and a systematic port bug is bounded by OUTPUT magnitude, which is orders
+# above this. dnet's maxDisplacement sentinel diverged by exactly 1.0 = 1e4 x
+# tol, so it stays a FAIL under this rule; its residual carry drift is 1.83 x.
+_CARRY_DRIFT_MULT = 10.0
+
+
+# ---------------------------------------------------------------------------
+# Compiled-vs-interpreted TIMING guard
+#
+# Parity answers "does it compute the same thing", never "at what cost". A
+# voxelize port swapped MMeshIntersector (octree) for MFnMesh::getClosestPoint
+# with a NULL MMeshIsectAccelParams*: identical answers, deterministic, through
+# every gate -- and 714 SECONDS per evaluation where the accelerated form took
+# 0.125 s. Nothing here measured speed, so nothing could see it.
+#
+# The thresholds below are REASONED (from ~8% recorded run-to-run noise, the 15 ms
+# bench floor and a ~0.4 ms fixed whole-evaluation cost), NOT calibrated against a
+# table of real nodes. So the guard MEASURES AND RECORDS unconditionally but only
+# emits a `warning` when MPYNODE_TIMING_WARN is set -- see _timing_warn_enabled.
+# ---------------------------------------------------------------------------
+def _env_float(name, default):
+    """Read a float from the environment, falling back on anything unparseable.
+    These are parsed at MODULE scope, so a typo (MPYNODE_TIMING_WARN_RATIO=five)
+    would otherwise raise at import and take the whole toolchain package down with
+    it -- its __init__ imports this module. The bare `or` idiom covers an empty
+    string but not a non-numeric one."""
+    try:
+        return float(os.environ.get(name, "") or default)
+    except (TypeError, ValueError):
+        return float(default)
+
+
+_TIMING_WARN_RATIO = _env_float("MPYNODE_TIMING_WARN_RATIO", 5)
+_TIMING_LOUD_RATIO = 10.0
+_TIMING_BUDGET_S = _env_float("MPYNODE_TIMING_BUDGET_S", 90)
+_TIMING_SAMPLES = 3
+
+
+def _timing_enabled():
+    """Is the timing pass allowed to run at all? On unless MPYNODE_TIMING says
+    otherwise -- recording numbers is cheap next to the parity sweep and the
+    global budget (_TIMING_BUDGET_S) bounds the whole bundle."""
+    return (os.environ.get("MPYNODE_TIMING", "1") or "1").strip().lower() \
+        not in ("0", "off", "false", "no")
+
+
+def _timing_warn_enabled():
+    """May a measurement be turned into a `warning`? OFF by default: the 5.0
+    threshold has no calibration table behind it yet, and an unvalidated warning
+    on every compile is worse than none. The numbers land in the row regardless."""
+    return (os.environ.get("MPYNODE_TIMING_WARN", "") or "").strip().lower() \
+        in ("1", "on", "true", "yes")
+
+
+def _timing_floor_ms():
+    """The noise floor, read from the OPTIMIZER's single source of truth rather
+    than re-declared here (lazy import keeps this module headless-safe)."""
+    try:
+        from mpynode.native.ai import optimizer_live as _ol
+        return float(_ol._BENCH_FLOOR_MS)
+    except Exception:
+        return 15.0
+
+
+def _timing_rungs():
+    """The two scene sizes the timing pass may use, ``(geo_density, array_len)``
+    each, taken from the optimizer's bench ladder so the sizes have ONE spelling.
+    Rung A is the cheap probe; rung B is only reached via the interlock in
+    :func:`_run_timing`."""
+    try:
+        from mpynode.native.ai import optimizer_live as _ol
+        return _ol._BENCH_LADDER[0], _ol._BENCH_LADDER[2]
+    except Exception:
+        return (40, 512), (140, 5000)
+
+
+def _time_pair(cmds, py_node, cpp_node, pull_py, pull_cpp, perturbs, deadline):
+    """Best-of-N wall time for one pull of each side. Returns
+    ``{"py_ms", "cpp_ms", "n", "truncated"}`` or None.
+
+    ``perturbs`` are :func:`bench_perturb_fn` closures, one per node. They MUST be
+    called OUTSIDE the timed region and once per tick for BOTH nodes -- each keeps
+    its own counter, so one tick leaves the two nodes at the SAME value. Without
+    them a content-memoizing compute is timed as a cache hit (measured on the
+    kd-tree: 0.169 ms static vs 1.785 ms with one query point moved).
+
+    min(), not median: run-to-run noise is one-sided (an interruption only ADDS
+    time), so the minimum is the closest estimate of intrinsic cost -- and taking
+    it on BOTH sides removes "the compiled sample was unluckily high" as a route
+    to a false alarm."""
+    if not perturbs or any(p is None for p in perturbs):
+        return None
+    # UNTIMED warm-up: drops every first-touch cost (accelerator build, MImage
+    # load, plugin page-in) that would otherwise land in sample #1.
+    for p in perturbs:
+        p()
+    pull_py()
+    pull_cpp()
+
+    py_s, cpp_s = [], []
+    truncated = False
+    for _ in range(_TIMING_SAMPLES):
+        for p in perturbs:
+            p()
+        # Interleaved, so a machine-wide load spike hits both sides.
+        t0 = time.perf_counter()
+        pull_py()
+        py_s.append(time.perf_counter() - t0)
+        t0 = time.perf_counter()
+        pull_cpp()
+        cpp_s.append(time.perf_counter() - t0)
+        if deadline is not None and time.perf_counter() > deadline:
+            truncated = True
+            break
+    if not py_s or not cpp_s:
+        return None                 # fewer than one COMPLETE pair
+    return {"py_ms": min(py_s) * 1000.0, "cpp_ms": min(cpp_s) * 1000.0,
+            "n": min(len(py_s), len(cpp_s)), "truncated": truncated}
+
+
+def _timing_verdict(py_ms, cpp_ms, floor_ms, n, truncated, scene,
+                    mesh_query=False, warn=None):
+    """Classify one measurement into a named, actionable row (pure -- no Maya).
+
+    Same job as :func:`_staleness_reason`: turn a number into a sentence someone
+    can act on. ``mesh_query`` is the spec's ``uses_mesh_intersector`` flag (set by
+    spec_extractor._MESH_QUERY_PATTERNS); ``warn`` overrides the env gate."""
+    if py_ms is None or cpp_ms is None:
+        return {"measured": False,
+                "reason": "timing not measured (no complete paired sample)"}
+    row = {"measured": True, "py_ms": py_ms, "cpp_ms": cpp_ms, "n": n,
+           "truncated": bool(truncated), "scene": scene}
+    # THE FLOOR IS ON THE MAX, NOT ON py_ms -- do not "fix" this back. A floor on
+    # the interpreted side alone would make the guard PERMANENTLY SILENT on the
+    # exact asymptotic defect it exists for: geometry density (the only generic
+    # knob) grows the COMPILED side's cost while the interpreted side stays flat,
+    # so py_ms would sit under the floor forever no matter how slow the port got.
+    if max(py_ms, cpp_ms) < floor_ms:
+        row["ratio"] = (cpp_ms / py_ms) if py_ms > 0 else None
+        row["verdict"] = "below-floor"
+        return row
+    ratio = (cpp_ms / py_ms) if py_ms > 0 else float("inf")
+    row["ratio"] = ratio
+    if ratio < _TIMING_WARN_RATIO:
+        row["verdict"] = "ok"
+        return row
+    loud = ratio >= _TIMING_LOUD_RATIO
+    row["verdict"] = "much-slower" if loud else "slower"
+    if warn is None:
+        warn = _timing_warn_enabled()
+    if not warn:
+        return row
+    if loud:
+        msg = ("TIMING: the compiled node measured %.1fx -- ORDERS OF MAGNITUDE "
+               "slower than the interpreted Python it replaces (%.1f ms vs %.1f "
+               "ms, best of %d, %s); this is almost certainly an algorithmic "
+               "regression in the port, not a constant factor."
+               % (ratio, cpp_ms, py_ms, n, scene))
+    else:
+        msg = ("TIMING: the compiled node measured %.1fx SLOWER than the "
+               "interpreted Python it replaces (%.1f ms vs %.1f ms, best of %d, "
+               "%s). If the Python leans on a vectorised numpy/BLAS/scipy kernel "
+               "this can be expected." % (ratio, cpp_ms, py_ms, n, scene))
+    if mesh_query:
+        msg += (" It uses an ACCELERATED Maya query (MMeshIntersector, "
+                "MMeshIsectAccelParams) -- check the port did not lower it to an "
+                "unaccelerated linear scan.")
+    if truncated:
+        msg += (" (measurement cut short by the timing budget; the ratio is a "
+                "lower bound)")
+    row["warning"] = msg
+    return row
+
+
+def _pair_stats(a, b):
+    """Compare paired components tolerating divergence. Returns
+    ``(maxerr, n_comparable, n_diverged)``:
+      * a pair with BOTH sides non-finite (both implementations blew up) is
+        counted in ``n_diverged`` and excluded from ``maxerr`` (not a signal);
+      * a pair with EXACTLY ONE side non-finite is a real discrepancy -> +inf;
+      * otherwise the abs difference contributes to ``maxerr``."""
+    maxerr = 0.0
+    n_cmp = 0
+    n_div = 0
+    for x, y in zip(a, b):
+        fx, fy = math.isfinite(x), math.isfinite(y)
+        if not fx and not fy:
+            n_div += 1
+            continue
+        if fx != fy:
+            maxerr = float("inf")
+            n_cmp += 1
+            continue
+        maxerr = max(maxerr, abs(x - y))
+        n_cmp += 1
+    return maxerr, n_cmp, n_div
+
+
+def _set_plug(cmds, plug, t, v):
+    """setAttr one input plug per type. vector/euler/color are double3 (color's
+    usedAsColor float3 accepts a double3 setAttr, verified); quaternion is an
+    at='compound' of 4 double children X/Y/Z/W (no parent setAttr, so drive the
+    children); matrix is a flat-16 -type "matrix"; everything else is a plain
+    scalar. Works on both a plain plug and a multi ELEMENT plug (node.attr[i])."""
+    if t in ("vector", "euler", "color"):
+        cmds.setAttr(plug, v[0], v[1], v[2], type="double3")
+    elif t == "float2":
+        # numeric compound-2 (mPyFile's uvCoord = uCoord/vCoord) -> double2 setAttr.
+        cmds.setAttr(plug, v[0], v[1], type="double2")
+    elif t == "quaternion":
+        for ax, ev in zip(("X", "Y", "Z", "W"), v):
+            cmds.setAttr(plug + ax, ev)
+    elif t == "matrix":
+        cmds.setAttr(plug, *[float(x) for x in v], type="matrix")
+    else:
+        cmds.setAttr(plug, v)
+
+
+def _rand_matrix16(random):
+    """A non-trivial but well-formed row-vector affine matrix (flat-16, row-major):
+    random 3x3 upper-left + translate row, last column (indices 3/7/11/15) pinned
+    to the affine [0,0,0,1] so Maya accepts it as a matrix."""
+    m = [random.uniform(-1.5, 1.5) for _ in range(16)]
+    m[3] = m[7] = m[11] = 0.0
+    m[15] = 1.0
+    return m
+
+
+def _elem_value(t, random, enum_n=2):
+    """A random driveable value for ONE plug or multi-element of attr-type t."""
+    if t == "float2":
+        return [random.uniform(0.0, 1.0) for _ in range(2)]
+    if t in ("vector", "euler"):
+        return [random.uniform(-2.0, 2.0) for _ in range(3)]
+    if t == "color":
+        return [random.uniform(0.0, 1.0) for _ in range(3)]
+    if t == "quaternion":
+        return [random.uniform(-1.0, 1.0) for _ in range(4)]
+    if t == "matrix":
+        return _rand_matrix16(random)
+    if t == "bool":
+        return random.choice([0, 1])
+    if t == "int":
+        return random.randint(-6, 6)
+    if t == "enum":
+        return random.randint(0, max(0, enum_n - 1))
+    if t == "time":
+        return float(random.randint(1, 48))
+    return random.uniform(-4.0, 4.0)
+
+
+def _array_values(t, k, random, enum_n=2):
+    """K driveable multi-element values for an ARRAY input of type ``t``.
+
+    int arrays are seeded in ``[0, k-1]`` (NOT the wide scalar range): a node that
+    uses an int array as INDICES into a parallel array (e.g. dnet's
+    ``index0``/``index1`` into ``positions``) would read OUT OF BOUNDS on an
+    arbitrary int, and an OOB read in a compiled C++ node HARD-CRASHES the process
+    (a segfault is uncatchable in-process). Keeping indices within the seeded
+    element count makes array driving crash-safe for the common index-array
+    pattern while still exercising real parity."""
+    if t == "int":
+        return [random.randint(0, max(0, k - 1)) for _ in range(k)]
+    return [_elem_value(t, random, enum_n) for _ in range(k)]
+
+
+# TYPED geo inputs -- driveable by WIRING a real upstream shape into the plug. The
+# same source feeds both nodes, so both read identical geometry: a NON-vacuous
+# probe for a geo-consuming node that used to be left at default (vacuous PASS).
+# One that can't be wired on BOTH sides (a codegen gap) is peeled and annotated.
+_GEO_IN_TYPES = frozenset(("nurbsCurve", "mesh", "nurbsSurface"))
+
+# INPUT types the harness cannot synthesize a coherent value for: ``string``/
+# ``hex`` carry no numeric sample, so they are LEFT AT THEIR DEFAULT on both nodes
+# (identical, if unexercised) rather than setAttr'd with a float. The compared==0
+# vacuous guard downstream turns a genuinely-needed unwired input into an honest
+# skip instead of a false PASS.
+_NON_DRIVEABLE_IN = frozenset(("string", "hex"))
+
+# Output geometry plug per typed geo input kind (the connection SOURCE the wiring
+# helper reads off a freshly-built upstream shape).
+_GEO_SRC_PLUG = {
+    "mesh": ".worldMesh[0]",
+    "nurbsCurve": ".worldSpace[0]",
+    "nurbsSurface": ".worldSpace[0]",
+}
+
+
+def _make_upstream_shape(cmds, geo_type, cfg, density=None):
+    """Build a deterministic upstream shape for a typed geo input and return its
+    output-geometry plug (``worldMesh`` / ``worldSpace``). ``cfg`` varies the
+    resolution so a multi-element / multi-config wiring exercises distinct
+    topology rather than one repeated shape.
+
+    ``density`` (BENCHMARK use only) requests a DENSE shape instead of the tiny
+    parity one. Parity only needs a few verts to compare values; a benchmark
+    needs enough geometry for the compute to dominate the tick. Left None the
+    shapes are byte-identical to before, so the parity path is unaffected."""
+    if geo_type == "mesh":
+        if density:
+            tr = cmds.polySphere(sx=int(density), sy=int(density), ch=False)[0]
+        else:
+            sx = 1 + (cfg % 3)
+            tr = cmds.polyCube(sx=sx, sy=sx, sz=sx, ch=False)[0]
+    elif geo_type == "nurbsCurve":
+        tr = cmds.circle(ch=False, s=(int(density) if density else 6 + (cfg % 4)))[0]
+    else:  # nurbsSurface
+        # cfg-varying like the mesh and curve branches above. Held at a constant 4
+        # this built five IDENTICAL spheres across the sweep, so a nurbsSurface
+        # consumer got no topology variation at all. `% 3` against _GEO_CFGS = 5
+        # keeps the A->B->C->A revisit the sweep relies on, and cfg 0 still yields
+        # 4 -- so the scalar parity path, which always passes cfg 0, is unchanged.
+        n = int(density) if density else 4 + (cfg % 3)
+        tr = cmds.sphere(ch=False, sections=n, spans=n)[0]
+    shp = cmds.listRelatives(tr, s=True, f=True)[0]
+    return shp + _GEO_SRC_PLUG[geo_type]
+
+
+def _wire_geo_input(cmds, nodes, attr, geo_type, is_array, cfg, density=None,
+                    rewire=False):
+    """Connect a real upstream shape into a typed geo INPUT plug on EVERY node in
+    ``nodes`` (the SAME source per element -> identical geometry on the Python and
+    compiled sides). Idempotent: a plug already connected is left alone and no
+    orphan shape is created for it. Returns ``True`` only if every needed plug got
+    wired; ``False`` (caller peels + annotates) when a plug is missing on a side or
+    a connect raises -- the signature of a geo-input codegen gap.
+
+    ``rewire=True`` drops the already-connected skip so the caller can REPLACE the
+    upstream shape (a fresh one for this ``cfg`` / ``density``). Default False, so
+    every pre-existing caller keeps the idempotent behaviour byte-for-byte."""
+    n_elems = 3 if is_array else 1
+    ok = True
+    for i in range(n_elems):
+        need = []
+        for nd in nodes:
+            dst = ("%s.%s[%d]" % (nd, attr, i)) if is_array else ("%s.%s" % (nd, attr))
+            try:
+                if not cmds.objExists(dst):
+                    ok = False
+                    continue
+                if not rewire and cmds.listConnections(dst, s=True, d=False):
+                    continue  # already wired (both sides share it or a prior cfg)
+                need.append(dst)
+            except Exception:
+                ok = False
+        if not need:
+            continue
+        try:
+            src = _make_upstream_shape(cmds, geo_type, cfg + i, density=density)
+        except Exception:
+            ok = False
+            continue
+        for dst in need:
+            try:
+                cmds.connectAttr(src, dst, force=True)
+            except Exception:
+                ok = False
+    return ok
+
+
+_PACKED_SEED_CAST = {"doubleArray": float, "Int32Array": int}
+
+
+def _packed_dt(cmds, node, attr):
+    """dataType of a PACKED (typed-array) input plug, else None for a multi.
+
+    Detected from the LIVE plug rather than the spec because the seeder drives
+    the interpreted and the compiled node through this one path and a scene
+    saved before packed storage still carries a numeric multi. A packed plug has
+    NO element plugs, so a per-element ``attr[i]`` setAttr raises -- and a raise
+    inside the harness reports as a not-run SKIP, i.e. the node would ship green
+    with parity never actually checked."""
+    try:
+        if cmds.attributeQuery(attr, node=node, multi=True):
+            return None
+        dt = cmds.getAttr("%s.%s" % (node, attr), type=True)
+    except Exception:
+        return None
+    return dt if dt in _PACKED_SEED_CAST else None
+
+
+def _seed_packed(cmds, plug, dt, values):
+    """Write a whole packed table in ONE setAttr. True if it was written."""
+    cast = _PACKED_SEED_CAST[dt]
+    try:
+        cmds.setAttr(plug, [cast(v) for v in values], type=dt)
+        return True
+    except Exception:
+        return False
+
+
+def _drive_array_input(cmds, nodes, attr, t, values):
+    """setAttr the multi ELEMENT plugs attr[0..K-1] to ``values`` on every node.
+    A connected multi is left to its source (identical on both sides). A packed
+    (typed-array) input has no element plugs and is written whole instead."""
+    for nd in nodes:
+        base = nd + "." + attr
+        try:
+            if cmds.listConnections(base, s=True, d=False):
+                continue
+        except Exception:
+            pass
+        dt = _packed_dt(cmds, nd, attr)
+        if dt:
+            _seed_packed(cmds, base, dt, values)
+            continue
+        for i, ev in enumerate(values):
+            _set_plug(cmds, "%s[%d]" % (base, i), t, ev)
+
+
+def _read_array_output(cmds, node, attr):
+    """(flat component list, element count) for a multi OUTPUT plug. Pulls the
+    plug first (dgeval) so the compute populates its elements, then reads every
+    written logical index and flattens all components (so a wrong Y/Z/matrix
+    element can't hide)."""
+    plug = node + "." + attr
+    try:
+        cmds.dgeval(plug)
+    except Exception:
+        pass
+    try:
+        idxs = cmds.getAttr(plug, multiIndices=True) or []
+    except Exception:
+        idxs = []
+    comps = []
+    for i in idxs:
+        try:
+            comps.extend(_attr_components(cmds.getAttr("%s[%d]" % (plug, i))))
+        except Exception:
+            pass
+    return comps, len(idxs)
+
+
+def _read_outputs(cmds, node, out_meta):
+    """Read EVERY declared output off one node -> ``{attr: (components, count)}``
+    (``count`` is None for a non-array plug). The READ half of the scalar parity
+    compare, so the timing pull and the parity compare force exactly the same
+    evaluation."""
+    out = {}
+    for o, m in out_meta.items():
+        if m.get("is_array"):
+            out[o] = _read_array_output(cmds, node, o)
+        else:
+            # ALL components (see _attr_components): comparing only [0] silently
+            # passed a vector wrong on Y/Z or a transposed matrix.
+            out[o] = (_attr_components(cmds.getAttr(node + "." + o)), None)
+    return out
+
+
+def _apply_drive(cmds, nodes, drive):
+    """Set one recorded input set onto both nodes.
+
+    ``drive`` is ``{attr: (type, is_array, value)}`` -- captured once so the SAME
+    inputs can be re-presented later (see :func:`_staleness_reason`).
+    """
+    for attr, (t, is_array, value) in drive.items():
+        if is_array:
+            _drive_array_input(cmds, nodes, attr, t, value)
+        else:
+            _drive_input(cmds, nodes, attr, t, value)
+
+
+def _staleness_reason(maxerr, replay_err, tol):
+    """Did the node only diverge when an EARLIER input set came back?
+
+    The parity loop drives 30 fresh random input sets, so a compiled node that
+    never invalidates a cache is already caught -- its output stops tracking the
+    interpreted one immediately. What that loop cannot see is a cache keyed on
+    the WRONG thing: correct while inputs keep changing, wrong the moment a
+    previously-seen state is presented again. Randomized draws essentially never
+    revisit an exact prior state, so the loop is blind to it by construction.
+
+    Re-presenting input set #1 at the end closes that gap for one extra
+    evaluation. A divergence that appears ONLY on the replay is a specific,
+    nameable defect (stale or mis-keyed cached state), not a generic parity
+    failure, and saying so is the difference between an actionable report and
+    "it did not match".
+
+    NOTE the reference is the interpreted node at every step -- deliberately NOT
+    "the replay must equal the first reading". A node with persistent state is
+    SUPPOSED to answer differently the second time it sees the same input, and
+    an equality rule would condemn it for working correctly.
+    """
+    if replay_err is None or not math.isfinite(replay_err):
+        return None
+    if replay_err <= tol:
+        return None
+    if maxerr > tol:
+        return None                 # already failing; nothing extra to say
+    return ("output diverged (%.3g > tol %.3g) only when an EARLIER input set "
+            "was presented again, after matching across 30 fresh input sets -- "
+            "the signature of state cached across evaluations that is stale or "
+            "keyed on the wrong input" % (replay_err, tol))
+
+
+def _drive_input(cmds, nodes, attr, t, v):
+    """Set input ``attr = v`` on every node in ``nodes``, ROBUST to CONNECTED
+    plugs -- so a node with connected (e.g. texture / time) inputs is verified
+    instead of aborting the whole parity check.
+
+    A connected plug can't be ``setAttr``'d (Maya raises), so it is left to its
+    incoming source, which is identical on both the Python and compiled node. A
+    ``time`` input is special: on a Python mPyNode ``time`` is auto-connected to
+    ``time1`` but on the compiled node it is a plain, UNCONNECTED plug, so we
+    drive the shared timeline (``currentTime``) AND ``setAttr`` the value onto any
+    unconnected time plug -- driving BOTH sides to the same frame."""
+    if t == "time":
+        try:
+            cmds.currentTime(v)
+        except Exception:
+            pass
+    for nd in nodes:
+        plug = nd + "." + attr
+        try:
+            if cmds.listConnections(plug, s=True, d=False):
+                continue  # connected: value comes from the source (both sides)
+        except Exception:
+            pass
+        _set_plug(cmds, plug, t, v)
+
+
+# =====================================================================
+# BENCHMARK scene seeding (shared with tools/harness/benchmark_node.py)
+#
+# The AI optimizer only accepts a candidate that benchmarks measurably faster, so
+# a node whose inputs are never driven benchmarks an EMPTY compute and nothing can
+# ever be accepted. The type knowledge lives HERE next to _elem_value/_set_plug/
+# _wire_geo_input rather than being duplicated into the harness.
+#
+# EVERY supported input and output type is driven/pulled, single AND array. Only
+# `python` and `message` are out of scope (no scene-side value).
+# =====================================================================
+
+# No driveable scene value: a python attr is a live object, a message plug a pure
+# connection. Everything else -- including string/hex, which PARITY leaves alone
+# -- is seeded here.
+_BENCH_SKIP_TYPES = frozenset(("python", "message"))
+
+
+def _bench_string_value(t, attr):
+    """A harmless text value for a string-backed input (string / hex).
+
+    Parity leaves these at default (it cannot synthesize a value comparable on
+    both sides), but a BENCHMARK only needs the node to do its normal work, and
+    a node that branches on a string would otherwise take a different path than
+    it does in production. Anything that looks like a path is left alone -- a
+    bogus filename makes a file node do MORE (and different) work, not less."""
+    low = (attr or "").lower()
+    if any(k in low for k in ("file", "path", "dir", "folder", "image", "tex")):
+        return None
+    return "bench" if t != "hex" else "0"
+
+
+def seed_bench_scene(cmds, node, spec, *, k_array=512, geo_density=40,
+                     rand=None):
+    """Drive EVERY supported input of ``node`` at benchmark scale.
+
+    Returns ``{"driven": [...], "skipped": [(attr, type, why)], "arrays": n}``
+    so a caller can prove the workload was non-vacuous instead of assuming it.
+    Never raises: a plug that refuses a value is recorded and skipped, because a
+    partially-seeded benchmark is still a valid RELATIVE measurement (baseline
+    and candidate see the identical scene) while an exception is not.
+    """
+    import random as _random
+    rand = rand or _random.Random(20260808)
+    enum_of = {}
+    for nm, m in (spec.get("inputs") or {}).items():
+        if isinstance(m, dict) and m.get("enum_names"):
+            enum_of[nm] = list(m["enum_names"])
+
+    report = {"driven": [], "skipped": [], "arrays": 0}
+    for attr, meta in sorted((spec.get("inputs") or {}).items()):
+        if not isinstance(meta, dict):
+            continue
+        t = meta.get("type")
+        is_arr = bool(meta.get("is_array"))
+        if t in _BENCH_SKIP_TYPES:
+            report["skipped"].append((attr, t, "no scene-side value"))
+            continue
+        try:
+            if t in _GEO_IN_TYPES:
+                ok = _wire_geo_input(cmds, (node,), attr, t, is_arr, 0,
+                                     density=geo_density)
+                (report["driven"] if ok else report["skipped"]).append(
+                    (attr, t, "geo") if ok else (attr, t, "geo wire failed"))
+                if is_arr:
+                    report["arrays"] += 1
+                continue
+            if t in ("string", "hex"):
+                v = _bench_string_value(t, attr)
+                if v is None:
+                    report["skipped"].append((attr, t, "path-like; left default"))
+                    continue
+                tgt = ("%s.%s[0]" % (node, attr)) if is_arr \
+                    else ("%s.%s" % (node, attr))
+                cmds.setAttr(tgt, v, type="string")
+                report["driven"].append((attr, t, "string"))
+                continue
+            n_enum = len(enum_of.get(attr, [])) or 2
+            if is_arr:
+                vals = _array_values(t, int(k_array), rand, n_enum)
+                _drive_array_input(cmds, (node,), attr, t, vals)
+                report["driven"].append((attr, t, "array[%d]" % len(vals)))
+                report["arrays"] += 1
+            else:
+                _drive_input(cmds, (node,), attr, t, _elem_value(t, rand, n_enum))
+                report["driven"].append((attr, t, "scalar"))
+        except Exception as exc:
+            report["skipped"].append((attr, t, str(exc)[:80]))
+    return report
+
+
+# Families whose real output is a NATIVE base-class plug rather than a declared
+# spec output. 24 of 44 templates declare no output at all (a deformer's result
+# leaves through outputGeometry), so pulling only DECLARED outputs times those
+# nodes doing nothing. Sourced from Maya (readable + non-writable attrs on a fresh
+# node), not guessed; mesh/curve/surface defer to codegen._GEO_INFO so the attr
+# name has ONE spelling.
+_NATIVE_BENCH_OUTPUTS = {
+    "mPyDeformer":     (("outputGeometry", True),),
+    "mPySkinCluster":  (("outputGeometry", True),),
+    "mPyBlendShape":   (("outputGeometry", True),),
+    "mPyTransform":    (("matrix", False), ("_outLocalFlat", True)),
+    "mPyFile":         (("outColor", False), ("outAlpha", False)),
+}
+
+# Families with NO compute-driven output plug -- a plug-pull benchmark cannot
+# measure them, and saying so beats reporting a silent zero.
+#   * mPyLocator's per-frame math is computeBuffers(), called from the DRAW
+#     OVERRIDE, never from MPxNode::compute. Its readable plugs are inherited DAG
+#     state, and batch mayapy has no viewport to trigger a draw.
+#   * mPyIkSolver's work is doSolve(), driven by an ikHandle -- measurable only
+#     with a joint chain + handle rig (see bench_ik_rig()).
+_BENCH_NO_PLUG_OUTPUT = {
+    "mPyLocator": "work happens in the draw override (computeBuffers), not "
+                  "compute; batch mayapy has no viewport to trigger it",
+    "mPyIkSolver": "work happens in MPxIkSolverNode::doSolve(); drive it with "
+                   "bench_ik_rig() instead of a plug pull",
+}
+
+
+def bench_pull_plugs(spec):
+    """The output plugs a benchmark must pull, as ``[(attr, is_array)]``.
+
+    ALL of them: pulling only one output lets the DG leave the others clean, so
+    a node that writes three arrays would be timed doing a third of its work.
+    ``python``/``message`` outputs are excluded (nothing to pull).
+
+    Declared outputs are UNIONed with the family's native output rather than
+    used as a fallback: a deformer that also declares a scalar output still does
+    its real work in ``deform()``, so pulling only the scalar would time the
+    cheap half. Returns [] for the families in ``_BENCH_NO_PLUG_OUTPUT``.
+    """
+    out = []
+    for attr, meta in sorted((spec.get("outputs") or {}).items()):
+        if not isinstance(meta, dict):
+            continue
+        if meta.get("type") in _BENCH_SKIP_TYPES:
+            continue
+        out.append((attr, bool(meta.get("is_array"))))
+
+    mpy_type = spec.get("mpy_type")
+    native = list(_NATIVE_BENCH_OUTPUTS.get(mpy_type, ()))
+    # Geometry generators: reuse the codegen table so outMesh/outCurve/outSurface
+    # are never re-spelled here.
+    from mpynode.native import compiler as codegen
+    kind = codegen._geo_kind(spec)
+    if kind:
+        native.append((codegen._GEO_INFO[kind]["attr"], False))
+
+    seen = {a for a, _ in out}
+    for attr, is_arr in native:
+        if attr not in seen:
+            out.append((attr, is_arr))
+            seen.add(attr)
+    return out
+
+
+def bench_make_node(cmds, spec, type_name, density=40):
+    """Create the node to BENCHMARK, attached to whatever it needs to do work.
+
+    `createNode` is right for a compute node and wrong for a deformer: a
+    deformer's geometry arrives through the native ``input[0].inputGeometry``,
+    which is not a declared spec input, so a bare `createNode` yields an ORPHAN
+    with no mesh. Pulling ``outputGeometry`` then computes nothing and the node
+    times as ~0.1 ms -- empty, not fast, and indistinguishable from fast in a
+    ranking. The parity path already knows this (it uses ``cmds.deformer``);
+    this is the same knowledge, so a family can never be driveable there and
+    silently vacuous here.
+
+    Returns the node whose plugs the benchmark should pull.
+    """
+    from mpynode.native import compiler as codegen
+    base = (spec.get("suggested") or {}).get("mpx_base") or ""
+    mpy_type = spec.get("mpy_type") or ""
+    is_deformer = (base in getattr(codegen, "_DEFORMER_BASES", ())
+                   or mpy_type in ("mPyDeformer", "mPySkinCluster",
+                                   "mPyBlendShape"))
+    if is_deformer:
+        d = max(3, int(density))
+        xf = cmds.polySphere(r=1, sx=d, sy=d, ch=False)[0]
+        return cmds.deformer(xf, type=type_name)[0]
+    return cmds.createNode(type_name)
+
+
+def bench_perturb_fn(cmds, node, spec):
+    """A cheap callable that CHANGES one input value, or ``None``.
+
+    ``dgdirty`` marks plugs dirty but leaves their VALUES identical, so a compute
+    that memoizes on input content ("same points and same queries as last call ->
+    reuse the answer") turns every timed tick into a no-op. That is not a
+    speedup, it is the benchmark measuring a cache hit: an AI optimizer handed
+    this workload is rewarded for adding a memo table instead of for making the
+    algorithm faster, and in a real rig the fast path barely ever fires -- Maya
+    only calls compute() when something genuinely changed.
+
+    Measured on the optimized kDTree: 0.169 ms with static inputs vs 1.785 ms
+    with one query point moved -- a 10.6x reporting error.
+
+    So move ONE scalar element between ticks. Deliberately the cheapest possible
+    change: it must invalidate a content cache without altering the size of the
+    workload, and the caller must run it OUTSIDE the timed region. Geometry
+    inputs are never chosen -- rebuilding a 40k-vert shape per tick would cost
+    more than the node does.
+    """
+    numeric = ("double", "float", "int", "long", "short", "bool", "angle",
+               "double3", "float3", "vector", "point", "color", "euler")
+    cands = []
+    for attr, meta in sorted((spec.get("inputs") or {}).items()):
+        if not isinstance(meta, dict):
+            continue
+        t = meta.get("type")
+        if t not in numeric:
+            continue
+        # An array element is the cheapest thing to move and exists on exactly
+        # the nodes whose arrays make the workload big.
+        cands.append((attr, t, bool(meta.get("is_array"))))
+    cands.sort(key=lambda c: (not c[2],))  # arrays first
+
+    for attr, t, is_arr in cands:
+        tgt = ("%s.%s[0]" % (node, attr)) if is_arr else ("%s.%s" % (node, attr))
+        try:
+            if not cmds.objExists(tgt):
+                continue
+            if cmds.listConnections(tgt, s=True, d=False):
+                continue  # driven from upstream; writing it would fail
+            cur = cmds.getAttr(tgt)
+        except Exception:
+            continue
+
+        state = {"i": 0}
+
+        def _perturb(_tgt=tgt, _t=t, _state=state):
+            _state["i"] += 1
+            k = _state["i"]
+            try:
+                if _t in ("double3", "float3", "vector", "point", "color",
+                          "euler"):
+                    cmds.setAttr(_tgt, 1e-3 * k, 2e-3, 3e-3)
+                elif _t == "bool":
+                    cmds.setAttr(_tgt, k % 2)
+                elif _t in ("int", "long", "short"):
+                    cmds.setAttr(_tgt, k)
+                else:
+                    cmds.setAttr(_tgt, 1e-3 * k)
+            except Exception:
+                pass
+
+        # PROVE the perturb actually MOVES the value. _perturb swallows its own
+        # setAttr error, so calling it can never raise -- wrapping it in try/except
+        # tested nothing, and a locked or otherwise unwritable plug sailed through
+        # to be timed as exactly the cache hit this function exists to prevent
+        # (measured: 3 setAttr attempts, 0 values changed). Does NOT cover a
+        # range-clamped plug that stops moving on a LATER tick.
+        try:
+            _perturb()
+            if cmds.getAttr(tgt) == cur:
+                continue
+        except Exception:
+            continue
+        return _perturb
+    return None
+
+
+def bench_ik_rig(cmds, solver_node, n_joints=4, spacing=3.0):
+    """Give an mPyIkSolver something to solve, and return a pull callable.
+
+    An IK solver has no output plug: doSolve() runs when an ikHandle evaluates.
+    Build a joint chain driven by a handle bound to this solver, then pulling
+    the end joint's worldMatrix forces the solve. Mirrors the chain+handle drive
+    in native/ai/verify_scripts.py.
+
+    Returns ``(pull, goal_handle)`` or ``(None, None)`` if the rig cannot be
+    built -- callers treat that as an honest skip, never a zero.
+    """
+    try:
+        cmds.select(clear=True)
+        joints = []
+        for i in range(max(2, int(n_joints))):
+            joints.append(cmds.joint(p=(i * spacing, 0.0, 0.0)))
+        handle = cmds.ikHandle(sj=joints[0], ee=joints[-1],
+                               sol=solver_node)[0]
+    except Exception:
+        return None, None
+
+    tip = joints[-1]
+
+    def _pull():
+        # Reading the tip through the DG is what forces the solve.
+        cmds.getAttr("%s.worldMatrix[0]" % tip)
+
+    return _pull, handle
+
+
+def _scale_pair_scene(cmds, nodes, in_meta, density, k_array, rand):
+    """Grow the EXISTING parity pair's scene to a measurable size.
+
+    Parity already stood both nodes up in a fresh scene with identical inputs;
+    only the SIZE is wrong for a timing measurement. So re-wire the geo inputs at
+    ``density`` and re-seed the array inputs at ``k_array`` -- on BOTH nodes, from
+    the same source/values, so the pair stays comparable.
+
+    SCALARS are deliberately left exactly as parity left them. Notably this does
+    NOT call :func:`seed_bench_scene`: its voxelize configuration (voxelSize=0.96 /
+    maxVoxels=4) is a dead scene, while the parity defaults (0.25 / 20000) are the
+    live one -- timing a dead scene measures nothing."""
+    for attr, meta in sorted((in_meta or {}).items()):
+        if not isinstance(meta, dict):
+            continue
+        t = meta.get("type")
+        is_arr = bool(meta.get("is_array"))
+        try:
+            if t in _GEO_IN_TYPES:
+                _wire_geo_input(cmds, nodes, attr, t, is_arr, 0,
+                                density=density, rewire=True)
+            elif is_arr and t not in _NON_DRIVEABLE_IN \
+                    and t not in _BENCH_SKIP_TYPES:
+                n_enum = len(meta.get("enum_names") or []) or 2
+                _drive_array_input(cmds, nodes, attr, t,
+                                   _array_values(t, int(k_array), rand, n_enum))
+        except Exception:
+            pass
+
+
+def _pull_geo_plug(om2, node, attr):
+    """Force ONE evaluation of a geometry output and do nothing else.
+
+    Deliberately not :func:`_read_geo_components`: its MFn extraction
+    (getPoints/getVertices/getVertexNormals/getFaceVertexColors) would sit inside
+    the timed region as a large constant common to both sides and drag the ratio
+    toward 1.0, hiding the very regression this measures."""
+    sel = om2.MSelectionList()
+    sel.add(node)
+    plug = om2.MFnDependencyNode(sel.getDependNode(0)).findPlug(attr, True)
+    plug.asMObject()
+
+
+def _run_timing(cmds, spec, py_node, cpp_node, pull_py, pull_cpp, in_meta,
+                deadline):
+    """Time the compiled node against the interpreted one on the SAME pair.
+
+    NEVER raises -- any problem degrades to ``{"measured": False, "reason": ...}``,
+    because a timing hiccup must not turn a passing parity row into a failure."""
+    try:
+        import random as _random
+
+        if deadline is None:
+            # A direct caller (verify_scripts, a test) owns no bundle-wide budget;
+            # give it a local one so this can never hang.
+            deadline = time.perf_counter() + _TIMING_BUDGET_S
+        if time.perf_counter() > deadline:
+            return {"measured": False, "reason": "timing budget exhausted"}
+
+        floor = _timing_floor_ms()
+        mesh_query = bool((spec.get("suggested") or {}).get(
+            "uses_mesh_intersector"))
+        rand = _random.Random(20260812)
+        rungs = _timing_rungs()
+        res = None
+        rung = None
+        # Two rungs only, never a ladder climb: A, then at most B.
+        for geo_d, k_arr in rungs:
+            if time.perf_counter() > deadline:
+                if res is not None:
+                    break
+                return {"measured": False, "reason": "timing budget exhausted"}
+            _scale_pair_scene(cmds, (py_node, cpp_node), in_meta, geo_d, k_arr,
+                              rand)
+            perturbs = [bench_perturb_fn(cmds, py_node, spec),
+                        bench_perturb_fn(cmds, cpp_node, spec)]
+            if any(p is None for p in perturbs):
+                return {"measured": False,
+                        "reason": "not measured (no perturbable input -- a "
+                                  "content-memoizing compute would be timed as a "
+                                  "cache hit)"}
+            r = _time_pair(cmds, py_node, cpp_node, pull_py, pull_cpp, perturbs,
+                           deadline)
+            if r is None:
+                return {"measured": False,
+                        "reason": "not measured (no complete paired sample was "
+                                  "taken)"}
+            res, rung = r, (geo_d, k_arr)
+            # LOAD-BEARING INTERLOCK -- the ENTIRE protection against hanging. A
+            # single compiled evaluation cannot be interrupted once entered, and
+            # the regime this guard exists for was 714 SECONDS per eval. So step up
+            # to the bigger rung ONLY from a measurement that was both below the
+            # noise floor (nothing learned yet) AND cheap (< 1 s). Never step up
+            # after an already-expensive rung.
+            if not (max(r["py_ms"], r["cpp_ms"]) < floor and r["cpp_ms"] < 1000.0):
+                break
+        if res is None:
+            return {"measured": False, "reason": "not measured (no rung ran)"}
+        row = _timing_verdict(res["py_ms"], res["cpp_ms"], floor, res["n"],
+                              res["truncated"],
+                              "geo %d / array %d" % (rung[0], rung[1]),
+                              mesh_query=mesh_query)
+        row["rung"] = [rung[0], rung[1]]
+        return row
+    except Exception as exc:
+        return {"measured": False, "reason": "timing not measured: %s" % exc}
+
+
+def _has_stride_coupled_arrays(spec):
+    """True when the compute RESHAPES an array input by a scalar-int input (a
+    'stride'/'width'), so the node's parallel array inputs are CROSS-COUPLED:
+    their element counts must be mutually consistent (``len(flat) % width == 0``,
+    and the reshaped row count must line up with a companion ``matrix[]``/array
+    input). The generic parity harness seeds every multi INDEPENDENTLY at random,
+    so it cannot satisfy that coupling -- the interpreted reference raises
+    mid-compute (leaving a stale output) and the pointwise compare is a false
+    fail. Detect the pattern so ``_verify_one`` can skip and defer to the authored
+    ``@maya_test`` (which sets up a coherent set). Example: procrustesCluster --
+    ``Lw = int(self.clusterWidth)`` then ``flat.reshape(-1, Lw)`` with a parallel
+    ``bindMatrices`` matrix[].
+
+    Conservative by construction (matches only a scalar-int input that demonstrably
+    feeds a ``reshape``): a node like procrustesSingle, whose width comes from the
+    array's OWN shape (``Lw = int(flat.shape[0])``) and which declares NO int
+    scalar input, does NOT match -- its generic parity legitimately runs."""
+    compute = spec.get("compute") or ""
+    if "reshape" not in compute:
+        return False
+    inputs = spec.get("inputs") or {}
+    int_scalars = [n for n, m in inputs.items()
+                   if isinstance(m, dict) and m.get("type") == "int"
+                   and not m.get("is_array")]
+    has_array_in = any(isinstance(m, dict) and m.get("is_array")
+                       for m in inputs.values())
+    if not (int_scalars and has_array_in):
+        return False
+    import re as _re2
+    for n in int_scalars:
+        # direct: reshape( ... self.<n> ... )
+        if _re2.search(r"reshape\s*\([^)]*self\.%s\b" % _re2.escape(n), compute):
+            return True
+        # aliased: <local> = int(self.<n>)   ...   reshape( ... <local> ... )
+        for am in _re2.finditer(
+                r"(\w+)\s*=\s*int\(\s*self\.%s\b" % _re2.escape(n), compute):
+            alias = am.group(1)
+            if _re2.search(r"reshape\s*\([^)]*\b%s\b" % _re2.escape(alias),
+                           compute):
+                return True
+    return False
+
+
+def _has_carry_state(spec):
+    """True when the compute keeps a value BETWEEN evaluations -- a solver carry
+    buffer, an integrator's velocity, a latched rest length.
+
+    Delegates to ``_persistent_state_vars``, the SAME definition codegen uses to
+    give such a var a per-node home, so the harness and the compiler cannot
+    disagree about what "stateful" means. 6 of the 43 shipped templates match."""
+    compute = spec.get("compute") or ""
+    if not compute:
+        return False
+    declared = set(spec.get("inputs") or {}) | set(spec.get("outputs") or {})
+    from mpynode.native.compiler.nd_lower import _persistent_state_vars
+    try:
+        return bool(_persistent_state_vars(compute, declared))
+    except SyntaxError:
+        return False
+
+
+def _interp_is_idempotent(cmds, node, out_meta, tol):
+    """Does the INTERPRETED node answer the same twice for UNCHANGED inputs?
+
+    Pointwise interp-vs-compiled parity silently assumes the two sides evaluate
+    the same number of times. They do not: an interpreted mPyNode re-runs its
+    compute 2-3x per ``dgdirty`` where the compiled node runs once. For a node
+    carrying state that asymmetry advances the two trajectories differently, and
+    the compare measures the harness rather than the port -- dnet drifts 1.8e-4
+    that way while being faithful to 1.0e-9.
+
+    So MEASURE it per drive instead of assuming: dirty the interpreted node,
+    make it recompute, and see whether its own answer moved. A drive where it
+    did is not comparable and is excluded; the rest are compared for real. The
+    ``dgdirty`` is required -- ``_read_outputs`` is a plain ``getAttr`` and a
+    clean plug would hand back the cached value, making every node look
+    idempotent."""
+    before = _read_outputs(cmds, node, out_meta)
+    cmds.dgdirty(node)
+    after = _read_outputs(cmds, node, out_meta)
+    for o in out_meta:
+        a, b = before.get(o), after.get(o)
+        if a is None or b is None:
+            continue
+        me, nc, _nd = _pair_stats(a[0], b[0])
+        if nc and (not math.isfinite(me) or me > tol):
+            return False
+    return True
+
+
+def _carry_state_drift(spec, maxerr, tol):
+    """True when a SMALL divergence comes from state the compute carries across
+    evaluations, for which pointwise interp-vs-compiled parity is not defined.
+
+    An interpreted mPyNode re-runs its compute 2-3x per ``dgdirty`` where the
+    compiled node runs once, so anything the compute keeps between evaluations
+    -- a solver carry buffer, an integrator's velocity -- is advanced a
+    DIFFERENT number of times on the two sides. Both are individually correct;
+    the trajectories simply separate. dnet is the case in point: with
+    ``resetBuffer=0`` its positions come from the carried buffer, and on the one
+    drive where the solver relaxes nothing (``iterations <= 0``) there is no
+    contraction left to pull the two back together.
+
+    Keyed on ``_persistent_state_vars`` -- the SAME definition codegen already
+    uses to give a carry-over var a per-node home -- so this cannot fire on a
+    stateless node. That structural precondition is the point: the pre-existing
+    magnitude-only ceiling (_DIVERGE_CEIL) was wide enough to absorb a real port
+    bug, and dnet's maxDisplacement sentinel sat behind it. Bounded at
+    _CARRY_DRIFT_MULT x tol on top, so a sentinel-class error (1e4 x tol) still
+    FAILS. Only ever downgrades FAIL->SKIP, never produces a PASS."""
+    if not (math.isfinite(maxerr) and tol < maxerr <= tol * _CARRY_DRIFT_MULT):
+        return False
+    return _has_carry_state(spec)
+
+
+def _uses_nurbs_cv_idiom(spec):
+    """True when a deformer's compute reads/writes NURBS control points via
+    ``cvPositions()`` / ``setCVPositions()`` -- the NURBS-deformer idiom for a
+    curve/surface. The generic deformer drive attaches BOTH the interpreted and
+    the compiled node to a polygon SPHERE, but this compute only handles a NURBS
+    output handle: on a mesh the interpreted node's ``cvPositions()`` raises and
+    leaves the rest mesh, while the compiled deform (geometry-agnostic
+    ``MItGeometry``) still runs -- so the pointwise compare is a false fail. Detect
+    it so ``_verify_one`` skips and defers to the authored ``@maya_test`` (which
+    drives a real NURBS surface). Same class as the skinCluster / mesh-iksolver /
+    stride-coupled skips -- see :func:`_has_stride_coupled_arrays`."""
+    compute = spec.get("compute") or ""
+    return "cvPositions" in compute or "setCVPositions" in compute
+
+
+def _is_stale_tail_shrink(na, nb, hiwater):
+    """Is this array-length divergence the KNOWN interpreted-vs-compiled
+    element-lifetime gap rather than a port bug?
+
+    The two sides keep array elements for different lengths of time, on purpose
+    (T14/T94 -- see ``_api2.helpers.write_multi_plug_value``). The interpreted
+    reference takes the datablock's existing builder, so its element count is a
+    HIGH-WATER MARK across the sweep; the compiled node builds a fresh sized
+    builder, so its count is what THIS evaluation produced. A node whose output
+    shrinks therefore reports ``na > nb`` with no port bug in sight.
+
+    ``hiwater`` is the largest count the COMPILED side has produced so far in
+    this sweep, and it is what keeps the excuse narrow: agreement implies the
+    interpreted high-water equals the compiled high-water, so the divergence is
+    only excused when the compiled node DID reach ``na`` at some point and has
+    since written fewer. A port that is systematically short (Python 4 vs
+    compiled 2 every evaluation, ``hiwater == 2``) never reaches it and stays a
+    real mismatch, as does a compiled side that produced MORE than the
+    interpreted reference ever did.
+
+    A shrink to ZERO is NOT this gap and is never excused (T101). ``emit_attr``
+    guards the rewrite with ``if (!out_<mem>.empty())``, so an evaluation whose
+    compute assigns nothing leaves the compiled array with every element it
+    already had -- a compiled count of 0 after the node has produced more is
+    UNREACHABLE while that guard stands. Seeing one means the array was WIPED
+    (the T96 signature, i.e. the guard is gone), which is a real failure, not a
+    tail drop. Rejecting it costs the T94 excuse nothing: a genuine short write
+    always leaves at least one element behind.
+
+    That branch is no longer a no-op: since 2026-08-20 it writes the per-type
+    DEFAULT to each surviving element, matching the interpreted pre-seed. The
+    reachability argument above is unchanged -- it writes in place and never
+    touches the element COUNT -- but this gate is count-only, so it can neither
+    see nor score that fill. What does is the VALUE comparison in
+    ``_compare_once``; and that comparison never reached the empty branch on
+    procrustesTags, because ``clusterTags`` is a string array and strings are in
+    ``_NON_DRIVEABLE_IN``, so no drive could ever empty it. The divergence sat
+    green for that reason, not because a count agreed.
+
+    What this cannot see -- and no count can, now that the interpreted count is
+    a high-water mark -- is a port that shrinks ONLY mid-sweep while the Python
+    keeps its length. That case is indistinguishable from the intended
+    semantics; the shared prefix is still compared pointwise.
+    """
+    return 0 < nb < na == hiwater
+
+
+def _with_stale_tail(reason, stale_tail):
+    """Append the excused-shrink note (if any) to a row's ``reason``.
+
+    Excused, but NEVER SILENT: say which outputs shrank and by how much, so a
+    reader can tell "the semantics gap fired here" from "no array divergence".
+    Called on every :func:`_verify_one` return reachable once the sweep has run
+    -- appending it on the normal path only dropped the note from rows that are
+    vacuous, beyond ``_DIVERGE_CEIL``, or carry another real count mismatch,
+    which is exactly where a reader needs both facts.
+    """
+    if not stale_tail:
+        return reason
+    note = ("array output(s) shrank below the interpreted reference's "
+            "preserved element count (%s) -- the DELIBERATE compiled-vs-"
+            "interpreted element-lifetime gap (see "
+            "_api2.helpers.write_multi_plug_value), not a port error; the "
+            "shared prefix was still compared"
+            % ", ".join("%s Python %d vs compiled %d" % (o, na, nb)
+                        for o, (na, nb) in sorted(stale_tail.items())))
+    return (reason + " -- " if reason else "") + note
+
+
+def _count_mismatch_reason(o, na, nb, geo_wired_any, unassigned):
+    """Classify ONE array-length divergence. Returns ``(ran, passed, reason)``.
+
+    Three causes are distinguishable, and the original single test collapsed the
+    first two into the third's excuse:
+
+    * the compiled body populated an output the Python compute NEVER ASSIGNS.
+      That is provable from the spec without running anything, so it is a real
+      FAIL whose reason names the cause. Blaming the harness here is what let a
+      kd-tree port ship ``distance``/``closestIndex`` values harvested from two
+      discarded Python locals.
+    * the PYTHON side came back empty while a geometry input was wired: the
+      interpreted reference cannot evaluate a synthesized upstream shape in a
+      headless standalone (live MFn query) where the compiled node reads its own
+      datablock and succeeds. Genuinely inconclusive -> SKIP.
+    * anything else -- INCLUDING the compiled side being the empty one, which is
+      the classic broken-port signature. The old test was ``min(na, nb) == 0``,
+      symmetric, so it skipped that direction too AND narrated it as "the
+      interpreted reference could not evaluate", the exact opposite of the truth.
+    """
+    if o in (unassigned or ()):
+        return (True, False,
+                "array output %r: the compiled body populated %d element(s) for "
+                "an output the Python compute never assigns (Python %d) -- the "
+                "port invented values instead of leaving it untouched"
+                % (o, nb, na))
+    if geo_wired_any and na == 0 and nb > 0:
+        return (False, None,
+                "array output %r count diverged (Python %d vs compiled %d) with "
+                "a wired geometry input -- the interpreted reference could not "
+                "evaluate the synthesized geometry headlessly (live MFn query); "
+                "pointwise parity inconclusive -- skipped" % (o, na, nb))
+    return (True, False,
+            "array output %r element count differs (Python %d vs compiled %d)"
+            % (o, na, nb))
+
+
+def _pick_count_verdict(mismatches, geo_wired_any, unassigned):
+    """The strongest verdict among every output that diverged in length.
+
+    ``count_mismatch`` used to be one slot overwritten on every hit across the
+    30-iteration sweep, so whichever output diverged LAST decided the outcome --
+    a benign geometry-driven skip recorded last would bury a real failure
+    recorded first. A real verdict now outranks an inconclusive one, and ties
+    break on the output name so the answer does not depend on dict order.
+    """
+    verdicts = [(o, _count_mismatch_reason(o, na, nb, geo_wired_any, unassigned))
+                for o, (na, nb) in sorted(mismatches.items())]
+    verdicts.sort(key=lambda pair: (0 if pair[1][0] else 1, pair[0]))
+    return verdicts[0][1]
+
+
+def _verify_one(cmds, bundle_path, spec, maya=_MAYA_DEFAULT, deadline=None):
+    """Parity-check ONE node (compiled type vs the Python original mPyNode).
+
+    Dispatches by MPx base: compute (scalar plug compare), deformer (point
+    compare on a sphere), iksolver (joint world-position compare). Returns a row
+    ``{ran, pass, maxerr, tol, reason}``.
+
+    ``deadline`` is the BUNDLE-WIDE ``time.perf_counter()`` cut-off for the
+    optional timing pass (owned by :func:`_default_verify`); None means "no shared
+    budget", and the timing pass falls back to its own local one.
+    """
+    import random
+
+    from mpynode.native import compiler as codegen
+    from mpynode.native.compiler import emit_compute
+    from mpynode.native.spec import spec_extractor
+
+    # RNG parity depends on WHICH porter path the node took:
+    #   * DETERMINISTICALLY LOWERED RNG maps to nd::MT19937, which reproduces
+    #     numpy's legacy RandomState draw-for-draw (nd_rng_test.py) -- pointwise
+    #     parity is MEANINGFUL and MUST run (bit-exact, maxerr == 0).
+    #   * AI-PORTED RNG uses C++ <random>, NOT bit-identical to Python -- a
+    #     pointwise check would always "fail", so skip it.
+    # The scaffold's PORT region marker distinguishes the two: a fully lowered node
+    # has NO PORT_BEGIN. RNG can only survive lowering via the bit-exact
+    # nd::MT19937 idiom, so "no PORT region" implies "bit-exact RNG". Checking the
+    # SCAFFOLD, not the filled .cpp, is correct: the LLM only fills the PORT
+    # region, never removes it.
+    if spec_extractor.spec_uses_rng(spec):
+        try:
+            _scaffold = codegen.generate_cpp(spec)
+        except Exception:
+            _scaffold = ""
+        if (not _scaffold) or (codegen.PORT_BEGIN in _scaffold):
+            return {"ran": False, "pass": None, "maxerr": None, "tol": None,
+                    "reason": "uses RNG via the AI porter (C++ <random>); not "
+                              "bit-identical to Python -- pointwise parity "
+                              "skipped"}
+        # else: RNG was deterministically lowered to bit-exact nd::MT19937 --
+        # fall through and parity-check it like any other numeric node.
+
+    # Geometry generators emit a TYPED geo data attr, not scalar plugs, and take
+    # ARRAY inputs. The generic scalar harness below can neither read a geo output
+    # nor drive multis, so route geo nodes to a dedicated component-parity branch
+    # BEFORE the array skip claims them. (The RNG skip above still applies first.)
+    #
+    # This runs BEFORE the image skip below. A geo node that ALSO reads an image
+    # used to hit that skip first and lose ALL of its parity checking -- silently,
+    # because the controller swallows verify problems. The image read now NARROWS
+    # the claim: string inputs are driven EMPTY, so both sides take the same
+    # no-file fallback and the geometry is compared for real while the
+    # decoded-pixel path is not. That caveat rides on the row's reason.
+    _gk = codegen._geo_kind(spec)
+    if _gk:
+        row = _verify_geo(cmds, bundle_path, spec, _gk, deadline=deadline)
+        if spec_extractor.spec_reads_image_file(spec):
+            row["reason"] = "; ".join(
+                x for x in (row.get("reason"), _GEO_IMAGE_NOTE) if x)
+        return row
+
+    # Texture/file nodes read their image via MImage::readFromFile at eval time,
+    # so output depends on EXTERNAL file state and MImage's decode / colour
+    # management will not match a raw PIL/cv2 read bit-for-bit. Skip BEFORE
+    # touching the scene -- the build is still verified to compile + load; this is
+    # a not-checked flag, NOT a parity failure.
+    #
+    # The deformer family and the ik solver are EXCLUDED for exactly the reason
+    # geo was hoisted above this: they have real parity branches further down, and
+    # letting this skip claim them would forfeit ALL of it silently. Both of those
+    # branches leave string inputs at their DEFAULT on either node (see the
+    # `_NON_DRIVEABLE_IN` continue in each drive loop), so the two take the SAME
+    # no-file fallback -- the deformation / solve is compared for real and only the
+    # decoded-pixel path goes unexercised. That caveat rides on the row's reason.
+    reads_img = spec_extractor.spec_reads_image_file(spec)
+    base = spec.get("suggested", {}).get("mpx_base", "MPxNode")
+    if reads_img and base not in codegen._DEFORMER_BASES \
+            and base != codegen._IKSOLVER_BASE:
+        return {"ran": False, "pass": None, "maxerr": None, "tol": None,
+                "reason": "reads an image file (MImage::readFromFile); output "
+                          "depends on external file state -- pointwise parity "
+                          "skipped (build verified to compile + load)"}
+
+    # ARRAY (multi) attrs are DRIVEN and COMPARED: multi INPUT element plugs are
+    # setAttr'd on both nodes and multi OUTPUT plugs read back index-by-index. A
+    # non-vacuous guard skips the row if no component ended up comparable, so an
+    # empty-output node is a not-checked skip, never a false PASS.
+
+    # float2 (uvCoord) is the texture interface -- a NATIVE mPyFile attr, never
+    # user-declarable, so a texture node is rebuilt AS an mPyFile below and its
+    # uvCoord DRIVEN with outColor/outAlpha compared. Most file nodes were already
+    # skipped above via reads_image_file; a PROCEDURAL texture (no file read) falls
+    # through and gets real parity. A float2 on a NON-texture node has no host to
+    # rebuild on (can't happen today) -- skip honestly rather than raise.
+    tex = sorted({n for n, m in
+                  list((spec.get("inputs") or {}).items())
+                  + list((spec.get("outputs") or {}).items())
+                  if isinstance(m, dict) and m.get("type") == "float2"})
+    if tex and spec.get("mpy_type") != "mPyFile":
+        return {"ran": False, "pass": None, "maxerr": None, "tol": None,
+                "reason": "uses float2 attr(s) %s on a non-mPyFile node; float2 is "
+                          "the native texture interface and has no generic host to "
+                          "rebuild on -- pointwise parity skipped" % ", ".join(tex)}
+
+    # Cross-coupled array inputs (procrustesCluster's flat `clusters` reshaped by
+    # `clusterWidth`, one row per `bindMatrices` element): the generic drive seeds
+    # each multi INDEPENDENTLY, so it cannot produce a mutually-consistent set. Fed
+    # an inconsistent one the interpreted reference RAISES mid-compute while the
+    # compiled C++ reshapes its own way -> a FALSE fail. Defer to the authored
+    # @maya_test, which sets up a coherent set. See _has_stride_coupled_arrays.
+    if _has_stride_coupled_arrays(spec):
+        return {"ran": False, "pass": None, "maxerr": None, "tol": None,
+                "reason": "compute reshapes an array input by a scalar-int "
+                          "stride/width -- its array inputs are cross-coupled "
+                          "(element counts must be mutually consistent), which the "
+                          "generic per-input random drive cannot synthesize; "
+                          "pointwise parity skipped (authored @maya_test is the "
+                          "parity gate)"}
+
+    name = spec["suggested"]["node_type_name"]
+
+    # ----- deformer family -----
+    if base in codegen._DEFORMER_BASES:
+        import mpynode
+        tol = 1e-3
+        src_type = spec.get("mpy_type") or "mPyDeformer"
+        # A skinCluster attached with a bare cmds.deformer has NO wired joints and
+        # NO painted weights (J=0), so the generic point-compare pits two
+        # degenerate skins against each other: LBS collapses to zeros (a vacuous
+        # "pass") and DQS's qr[0] throws IndexError and crashes Maya. Skip here;
+        # tools/harness/skin_*_parity.py is the source of truth.
+        if base == "MPxSkinCluster" or src_type == "mPySkinCluster":
+            return {"ran": False, "pass": None, "maxerr": None, "tol": tol,
+                    "reason": "skinCluster needs a bound rig (wired joints + "
+                              "painted weights); generic point-compare skipped "
+                              "-- see tools/harness/skin_*_parity.py"}
+        # A NURBS geometry filter (cvPositions/setCVPositions) only handles NURBS
+        # output; the generic drive attaches a polygon SPHERE, on which the
+        # interpreted node raises and the pointwise compare is a false fail. Defer
+        # to the authored @maya_test (drives a real NURBS surface).
+        if _uses_nurbs_cv_idiom(spec):
+            return {"ran": False, "pass": None, "maxerr": None, "tol": tol,
+                    "reason": "NURBS CV-idiom deformer "
+                              "(cvPositions/setCVPositions); generic drive uses a "
+                              "polygon sphere, so pointwise parity is skipped -- "
+                              "authored @maya_test drives a real NURBS surface"}
+        IN_META = spec.get("inputs") or {}
+        INP = {k: v["type"] for k, v in IN_META.items()}
+        ENUM = {k: (v.get("enum_names") or [])
+                for k, v in IN_META.items() if v.get("type") == "enum"}
+        K_ARR = 4
+        cmds.file(new=True, force=True)
+        if not cmds.pluginInfo(os.path.basename(bundle_path), q=True, loaded=True):
+            cmds.loadPlugin(bundle_path)
+        random.seed(7)
+
+        def sph(nm):
+            return cmds.polySphere(r=1, sx=12, sy=12, ch=False, name=nm)[0]
+
+        sa = sph("origS_" + name)
+        da = cmds.deformer(sa, type=src_type)[0]
+        w = mpynode.wrap_node(da)
+        for nm, m in IN_META.items():
+            t = m["type"]
+            ia = bool(m.get("is_array"))
+            if t == "enum":
+                w.add_input_attr(nm, t, is_array=ia, enum_names=ENUM.get(nm) or None)
+            else:
+                w.add_input_attr(nm, t, is_array=ia)
+        if (spec.get("init") or "").strip():
+            w.set_init_expression(spec["init"])
+        w.set_compute_expression(spec["compute"])
+        sb = sph("cmpS_" + name)
+        db = cmds.deformer(sb, type=name)[0]
+
+        def smp(nm, t):
+            if t == "bool":
+                return random.choice([0, 1])
+            if t == "enum":
+                return random.randint(0, max(0, len(ENUM.get(nm, [])) - 1))
+            if t in ("vector", "euler", "color"):
+                return [random.uniform(0.0, 1.0) for _ in range(3)]
+            if t == "quaternion":
+                return [random.uniform(-1.0, 1.0) for _ in range(4)]
+            if t == "matrix":
+                return _rand_matrix16(random)
+            if t == "time":
+                return float(random.randint(1, 24))
+            if "iter" in nm.lower() or t == "int":
+                return random.randint(1, 8)
+            if nm.lower() == "mu":
+                return random.uniform(-0.62, -0.40)
+            if nm.lower() in ("lam", "lambda"):
+                return random.uniform(0.15, 0.6)
+            return random.uniform(0.0, 1.0)
+
+        def pts(sp):
+            return cmds.xform(sp + ".vtx[*]", q=True, os=True, t=True)
+
+        maxerr = 0.0
+        for _ in range(10):
+            env = random.uniform(0, 1)
+            cmds.setAttr(da + ".envelope", env)
+            cmds.setAttr(db + ".envelope", env)
+            for a, m in IN_META.items():
+                t = m["type"]
+                if t in _NON_DRIVEABLE_IN or t in _GEO_IN_TYPES:
+                    continue  # string/geo input: left at default (identical both)
+                if m.get("is_array"):
+                    vals = _array_values(t, K_ARR, random,
+                                         len(ENUM.get(a, [])) or 2)
+                    _drive_array_input(cmds, (da, db), a, t, vals)
+                else:
+                    _drive_input(cmds, (da, db), a, t, smp(a, t))
+            pa, pb = pts(sa), pts(sb)
+            for i in range(min(len(pa), len(pb))):
+                maxerr = max(maxerr, abs(pa[i] - pb[i]))
+        row = {"ran": True, "pass": maxerr <= tol, "maxerr": maxerr,
+               "tol": tol, "reason": _IMAGE_UNEXERCISED_NOTE if reads_img else ""}
+        if _timing_enabled():
+            # v1 scope: the deformer pair is bound to a fixed 12x12 sphere and its
+            # pull marshals every vertex through Python, so a ratio measured here
+            # would be dominated by the harness, not the node. Say so in the row --
+            # a blank timing field would read as "measured, fine".
+            row["timing"] = {
+                "measured": False,
+                "reason": "deformer timing not implemented -- the parity pair is "
+                          "bound to a fixed 12x12 sphere and its pull marshals "
+                          "every vertex through Python"}
+        return row
+
+    # ----- iksolver family -----
+    if base == codegen._IKSOLVER_BASE:
+        tol = 1e-3
+        # Mesh-input solvers need a wired floor for a meaningful check; the
+        # generic harness skips those (it would compare two identity solvers).
+        mesh_inputs = [n for n, m in (spec.get("inputs") or {}).items()
+                       if m.get("type") == "mesh"]
+        if mesh_inputs:
+            return {"ran": False, "pass": None, "maxerr": None, "tol": tol,
+                    "reason": "mesh-input IK solver needs a wired floor; "
+                              "skipped in generic verify"}
+        # An IK solver has no output plug -- doSolve() runs when an ikHandle
+        # evaluates -- so the observable is the JOINT WORLD POSITIONS it authors
+        # (robust to euler representation, unlike comparing rotate channels).
+        # Stand up two identical 3-joint chains, bind one handle to the
+        # interpreted solver and one to the compiled solver, move both to the SAME
+        # goals while driving the same input samples, and compare. Same drive as
+        # native/ai/verify_scripts._verify_script_iksolver and
+        # tools/parity_sweep/parity_mPyIkSolver.py, run in-process here.
+        import mpynode
+        src_type = spec.get("mpy_type") or "mPyIkSolver"
+        IN_META = spec.get("inputs") or {}
+        ENUM = {k: (v.get("enum_names") or [])
+                for k, v in IN_META.items() if v.get("type") == "enum"}
+        K_ARR = 4
+        cmds.file(new=True, force=True)
+        if not cmds.pluginInfo(os.path.basename(bundle_path), q=True, loaded=True):
+            cmds.loadPlugin(bundle_path)
+        random.seed(11)
+
+        def chain(prefix, n=3, blen=5.0):
+            cmds.select(clear=True)
+            js = [cmds.joint(p=(i * blen, 0.0, 0.0), name="%s_j%d" % (prefix, i))
+                  for i in range(n)]
+            # A slight bend so the solve plane is well-defined.
+            cmds.setAttr(js[1] + ".preferredAngleZ", 10.0)
+            return js
+
+        def ws(joints):
+            out = []
+            for j in joints:
+                out.extend(cmds.xform(j, q=True, ws=True, t=True))
+            return out
+
+        sa = cmds.createNode(src_type)
+        w = mpynode.wrap_node(sa)
+        for nm, m in IN_META.items():
+            t = m["type"]
+            ia = bool(m.get("is_array"))
+            if t == "enum":
+                w.add_input_attr(nm, t, is_array=ia, enum_names=ENUM.get(nm) or None)
+            else:
+                w.add_input_attr(nm, t, is_array=ia)
+        if (spec.get("init") or "").strip():
+            w.set_init_expression(spec["init"])
+        w.set_compute_expression(spec["compute"])
+        sb = cmds.createNode(name)
+
+        ja = chain("srcIk_" + name)
+        ha = cmds.ikHandle(sj=ja[0], ee=ja[-1], sol=sa)[0]
+        jb = chain("cmpIk_" + name)
+        hb = cmds.ikHandle(sj=jb[0], ee=jb[-1], sol=sb)[0]
+
+        rest = ws(ja)
+        maxerr = 0.0
+        moved = False
+        for _ in range(8):
+            goal = (random.uniform(2.0, 9.0), random.uniform(-4.0, 4.0),
+                    random.uniform(-4.0, 4.0))
+            for h in (ha, hb):
+                cmds.xform(h, ws=True, t=goal)
+            for a, m in IN_META.items():
+                t = m["type"]
+                if t in _NON_DRIVEABLE_IN or t in _GEO_IN_TYPES:
+                    continue  # string/geo input: left at default (identical both)
+                enum_n = len(ENUM.get(a, [])) or 2
+                if m.get("is_array"):
+                    _drive_array_input(cmds, (sa, sb), a, t,
+                                       _array_values(t, K_ARR, random, enum_n))
+                else:
+                    _drive_input(cmds, (sa, sb), a, t,
+                                 _elem_value(t, random, enum_n))
+            pa, pb = ws(ja), ws(jb)
+            for i in range(min(len(pa), len(pb))):
+                maxerr = max(maxerr, abs(pa[i] - pb[i]))
+                if abs(pa[i] - rest[i]) > tol:
+                    moved = True
+        if not moved:
+            # The REFERENCE chain never left its rest pose, so maxerr is 0 because
+            # nothing ever solved -- a vacuous pass, not a parity result. Say so.
+            return {"ran": False, "pass": None, "maxerr": None, "tol": tol,
+                    "reason": "the interpreted solver never moved its chain (no "
+                              "solve was driven), so a pointwise compare would be "
+                              "vacuous -- parity skipped"}
+        row = {"ran": True, "pass": maxerr <= tol, "maxerr": maxerr,
+               "tol": tol, "reason": _IMAGE_UNEXERCISED_NOTE if reads_img else ""}
+        if _timing_enabled():
+            # doSolve() is driven by an ikHandle, not a plug pull, so the shared
+            # _run_timing (which perturbs inputs and pulls output plugs) does not
+            # apply. A blank timing field would read as "measured, fine".
+            row["timing"] = {
+                "measured": False,
+                "reason": "iksolver timing not implemented -- doSolve() is driven "
+                          "by an ikHandle rather than an output-plug pull (see "
+                          "bench_ik_rig)"}
+        return row
+
+    # ----- scalar compute family (now also drives/compares ARRAY multis) -----
+    tol = 1e-4
+    from mpynode.wrappers._mpy_node import MPyNode
+    IN_META = spec.get("inputs") or {}
+    OUT_META = spec.get("outputs") or {}
+    INP = {k: v["type"] for k, v in IN_META.items()}
+    OUT = {k: v["type"] for k, v in OUT_META.items()}
+    ENUM = {k: (v.get("enum_names") or [])
+            for k, v in IN_META.items() if v.get("type") == "enum"}
+    if not OUT:
+        # No outputs to compare -> the parity loop below would be vacuous (maxerr
+        # stays 0.0 -> a false PASS). Mark as a not-run skip BEFORE touching the
+        # scene; the build still compiled + loaded.
+        return {"ran": False, "pass": None, "maxerr": None, "tol": tol,
+                "reason": "no scalar outputs to compare -- pointwise parity "
+                          "skipped (vacuous check)"}
+    # Number of elements seeded into each array (multi) INPUT. Parallel per-shape
+    # arrays (dnet index0/index1/...) all get K so they align by index; identical
+    # seeds on both nodes make even degenerate values a valid parity probe.
+    K_ARR = 4
+    cmds.file(new=True, force=True)
+    if not cmds.pluginInfo(os.path.basename(bundle_path), q=True, loaded=True):
+        cmds.loadPlugin(bundle_path)
+    random.seed(1234)
+    # Texture nodes expose uvCoord / outColor / outAlpha / fileName as NATIVE attrs
+    # (not add_input_attr'd), so a generic mPyNode can't host them. Rebuild the
+    # Python original AS an mPyFile; a preset already present on the fresh node is
+    # skipped in the add loops below. Genuine USER attrs are still added normally.
+    is_texture = spec.get("mpy_type") == "mPyFile"
+    if is_texture:
+        from mpynode.wrappers.mpy_file import MPyFile
+        w = MPyFile.create(name="orig_" + name)
+    else:
+        w = MPyNode.create(name="orig_" + name)
+    orig = w.get_name()
+
+    def _is_native(node, attr):
+        try:
+            return bool(cmds.attributeQuery(attr, node=node, exists=True))
+        except Exception:
+            return False
+
+    for nm, m in IN_META.items():
+        if is_texture and _is_native(orig, nm):
+            continue  # native preset (uvCoord/fileName/...) already present
+        t = m["type"]
+        ia = bool(m.get("is_array"))
+        if t == "enum":
+            w.add_input_attr(nm, t, is_array=ia, enum_names=ENUM.get(nm) or None)
+        else:
+            w.add_input_attr(nm, t, is_array=ia)
+    for nm, m in OUT_META.items():
+        if is_texture and _is_native(orig, nm):
+            continue  # native output (outColor/outAlpha) already present
+        w.add_output_attr(nm, m["type"], is_array=bool(m.get("is_array")))
+    if (spec.get("init") or "").strip():
+        w.set_init_expression(spec["init"])
+    w.set_compute_expression(spec["compute"])
+    comp = cmds.createNode(name)
+
+    def smp(t, nm):
+        if t == "bool":
+            return random.choice([0, 1])
+        if t == "int":
+            return random.randint(-6, 6)
+        if t == "enum":
+            return random.randint(0, max(0, len(ENUM.get(nm, [])) - 1))
+        if t == "float2":
+            # texture uvCoord: sample across a few tiles so u-v wrap/floor is
+            # exercised, not only the [0,1) cell.
+            return [random.uniform(-2.0, 2.0) for _ in range(2)]
+        if t == "color":
+            return [random.uniform(0, 1) for _ in range(3)]
+        if t in ("vector", "euler"):
+            return [random.uniform(-4, 4) for _ in range(3)]
+        if t == "quaternion":
+            return [random.uniform(-1, 1) for _ in range(4)]
+        if t == "matrix":
+            return _rand_matrix16(random)
+        if t == "time":
+            return float(random.randint(1, 48))
+        return random.uniform(-4, 4)
+
+    # TYPED geo inputs: wire a real upstream shape into each so a geo-consuming
+    # node gets REAL parity instead of a vacuous default read. Wired ONCE; the
+    # connection persists across the drive loop. One that can't be wired on both
+    # sides (a codegen gap) is peeled.
+    geo_unwired = []
+    for nm, m in IN_META.items():
+        if m["type"] in _GEO_IN_TYPES:
+            if not _wire_geo_input(cmds, (orig, comp), nm, m["type"],
+                                   bool(m.get("is_array")), 0):
+                geo_unwired.append(nm)
+
+    # string inputs (+ any geo input that could not be wired) are left at their
+    # default on BOTH nodes (identical state) -- recorded so a PASS is honestly
+    # annotated as only-partially-exercised.
+    peeled = sorted([nm for nm, m in IN_META.items()
+                     if m["type"] in _NON_DRIVEABLE_IN] + geo_unwired)
+    maxerr = 0.0
+    compared = 0                    # non-vacuous guard: components actually paired
+    diverged = 0                   # pairs where BOTH sides blew up (non-finite)
+    # name -> (py_count, compiled_count). A DICT, not one slot: every diverging
+    # output is kept so the strongest verdict decides (_pick_count_verdict).
+    count_mismatch = {}
+    # name -> largest element count the COMPILED side has produced so far, and
+    # the divergences excused against it (_is_stale_tail_shrink). Post-T14 the
+    # interpreted count is a HIGH-WATER MARK and the compiled one is per-eval, so
+    # recording every na != nb turned the deliberate semantics gap into a FAIL.
+    out_hiwater = {}
+    stale_tail = {}
+    first_drive = None              # input set #1, re-presented after the loop
+
+    def _compare_once():
+        """One compiled-vs-interpreted comparison over every output."""
+        err, ncomp, ndiv = 0.0, 0, 0
+        ra = _read_outputs(cmds, orig, OUT_META)
+        rb = _read_outputs(cmds, comp, OUT_META)
+        for o, m in OUT_META.items():
+            ao, na = ra[o]
+            bo, nb = rb[o]
+            if m.get("is_array"):
+                hw = max(out_hiwater.get(o, 0), nb)
+                out_hiwater[o] = hw
+                if na != nb:
+                    if _is_stale_tail_shrink(na, nb, hw):
+                        stale_tail[o] = (na, nb)
+                    else:
+                        count_mismatch[o] = (na, nb)
+            me, nc, nd = _pair_stats(ao, bo)
+            err = max(err, me)
+            ncomp += nc
+            ndiv += nd
+        return err, ncomp, ndiv
+
+    # Only a carry-state node can be non-idempotent, and the probe costs an extra
+    # evaluation per drive -- so decide ONCE, structurally, instead of probing all
+    # 43 templates. See _interp_is_idempotent.
+    carry_state = _has_carry_state(spec)
+    noncomparable_drives = 0
+    for _ in range(30):
+        drive = {}
+        for a, m in IN_META.items():
+            t = m["type"]
+            if t in _NON_DRIVEABLE_IN or t in _GEO_IN_TYPES:
+                continue  # string peeled; geo already wired to an upstream shape
+            if m.get("is_array"):
+                drive[a] = (t, True, _array_values(t, K_ARR, random,
+                                                   len(ENUM.get(a, [])) or 2))
+            else:
+                drive[a] = (t, False, smp(t, a))
+        _apply_drive(cmds, (orig, comp), drive)
+        if carry_state and not _interp_is_idempotent(cmds, orig, OUT_META, tol):
+            # The reference moved under its own feet on this input set, so the
+            # two sides cannot be lined up here. Excluded, and COUNTED -- a
+            # quietly shrunken sweep reads as "covered everything".
+            noncomparable_drives += 1
+            continue
+        # Only a comparable drive is worth replaying (_staleness_reason).
+        if first_drive is None:
+            first_drive = drive
+        me, nc, nd = _compare_once()
+        maxerr = max(maxerr, me)
+        compared += nc
+        diverged += nd
+
+    # A -> B -> A. Everything above walks FORWARD through fresh random states, so
+    # it can never revisit one -- which is exactly where a mis-keyed cache hides.
+    # Re-present input set #1 and compare against the interpreted node again.
+    loop_maxerr = maxerr            # before the replay, so the two can be told apart
+    replay_err = None
+    if first_drive:
+        _apply_drive(cmds, (orig, comp), first_drive)
+        # Re-checked, not assumed: this input set was comparable when it was
+        # first seen, but the reference has evaluated many times since.
+        if not (carry_state
+                and not _interp_is_idempotent(cmds, orig, OUT_META, tol)):
+            replay_err, nc, nd = _compare_once()
+            maxerr = max(maxerr, replay_err)
+            compared += nc
+            diverged += nd
+    if count_mismatch:
+        # The cause is decided per output by _count_mismatch_reason; when several
+        # diverged the strongest verdict wins.
+        geo_ins = [nm for nm, m in IN_META.items()
+                   if m["type"] in _GEO_IN_TYPES]
+        geo_wired_any = any(nm not in geo_unwired for nm in geo_ins)
+        unassigned = emit_compute.unassigned_output_plugs(
+            list(OUT_META), spec.get("compute"))
+        ran, passed, why = _pick_count_verdict(count_mismatch, geo_wired_any,
+                                               unassigned)
+        return {"ran": ran, "pass": passed, "maxerr": maxerr, "tol": tol,
+                "reason": _with_stale_tail(why, stale_tail)}
+    # Divergence guard: a non-finite or beyond-ceiling maxerr under randomized
+    # inputs is the signature of a stateful/iterative solver (see _DIVERGE_CEIL),
+    # NOT a systematic port bug -> inconclusive skip, never a false FAIL.
+    if not math.isfinite(maxerr) or maxerr > _DIVERGE_CEIL:
+        return {"ran": False, "pass": None, "maxerr": maxerr, "tol": tol,
+                "reason": _with_stale_tail(
+                    "outputs diverge beyond the sanity ceiling (%.1e) under "
+                    "randomized inputs -- the signature of a stateful/"
+                    "iterative solver, for which naive pointwise parity is "
+                    "not a valid check -- skipped" % _DIVERGE_CEIL,
+                    stale_tail)}
+    if _carry_state_drift(spec, maxerr, tol):
+        return {"ran": False, "pass": None, "maxerr": maxerr, "tol": tol,
+                "reason": _with_stale_tail(
+                    "compute carries state across evaluations and the outputs "
+                    "drifted by %.3g (<= %gx tol %.3g) -- the interpreted node "
+                    "re-runs its compute 2-3x per dgdirty where the compiled "
+                    "node runs once, so the two carry buffers are advanced a "
+                    "different number of times; pointwise parity is not a "
+                    "valid check -- skipped (authored @maya_test is the parity "
+                    "gate)" % (maxerr, _CARRY_DRIFT_MULT, tol),
+                    stale_tail)}
+    if compared == 0:
+        # Zero comparable components across all configs -- a vacuous check (an
+        # array output that never populated, or both sides blew up identically).
+        # Skip rather than a false PASS.
+        why = ("the interpreted reference was non-idempotent on every one of "
+               "the 30 input sets, so none could be lined up"
+               if noncomparable_drives >= 30 else
+               "both implementations blew up (non-finite) on every comparable "
+               "component" if diverged else "outputs produced no comparable "
+               "components across the sweep")
+        return {"ran": False, "pass": None, "maxerr": None, "tol": tol,
+                "reason": _with_stale_tail(
+                    "%s -- pointwise parity skipped (vacuous)" % why,
+                    stale_tail)}
+    reason = ""
+    if noncomparable_drives:
+        reason = ("compared on %d of 30 input sets: on %d the interpreted "
+                  "reference was non-idempotent (it carries state and re-runs "
+                  "its compute 2-3x per dgdirty where the compiled node runs "
+                  "once), so those cannot be lined up pointwise"
+                  % (30 - noncomparable_drives, noncomparable_drives))
+    if peeled:
+        reason = ((reason + " -- " if reason else "")
+                  + "verified with %d geo/string input(s) left at default "
+                    "(unwired, could not be synthesized): %s"
+                  % (len(peeled), ", ".join(peeled)))
+    # Excused, but never silent -- see _with_stale_tail.
+    reason = _with_stale_tail(reason, stale_tail)
+    # Name the failure when it is specifically the replay that broke. A bare
+    # "maxerr too large" sends someone hunting through the maths; "it only broke
+    # when an earlier input came back" points straight at the cache.
+    stale = _staleness_reason(loop_maxerr, replay_err, tol)
+    if stale:
+        reason = (reason + " -- " if reason else "") + stale
+    passed = maxerr <= tol
+    row = {"ran": True, "pass": passed, "maxerr": maxerr,
+           "tol": tol, "reason": reason}
+    # Gated on the GENERIC verdict computed RIGHT HERE, never the merged one:
+    # _merge_authored_test ANDs an authored-test failure into `pass` afterwards,
+    # and gating on that would silence the guard on exactly the nodes whose
+    # authored test is red. Requiring generic parity to have PASSED also rules out
+    # the biggest false positive: an interpreted compute that raises mid-evaluation
+    # is FAST, and would otherwise read as "the compiled node is 1000x slower".
+    if passed and _timing_enabled():
+        row["timing"] = _run_timing(
+            cmds, spec, orig, comp,
+            lambda: _read_outputs(cmds, orig, OUT_META),
+            lambda: _read_outputs(cmds, comp, OUT_META),
+            IN_META, deadline)
+    return row
+
+
+# ---------------------------------------------------------------------------
+# Geometry-generator parity (mPyMesh / mPyNurbsCurve / mPyNurbsSurface)
+# ---------------------------------------------------------------------------
+
+# Deterministic input configs the geo parity sweep tries. Config 0 uses declared
+# defaults (author-chosen to build valid geometry); later configs perturb scalars
+# within valid ranges so parity covers a range of geometry, not one sample.
+#
+# LOAD-BEARING with _make_upstream_shape's mesh branch (``sx = 1 + (cfg % 3)``):
+# because 5 configs run over a period-3 shape, cfg 3 rebuilds the SAME topology as
+# cfg 0. That A->B->C->A revisit is the mis-keyed-cache probe for GEOMETRY inputs
+# (the scalar path buys the same probe by replaying input set #1 -- see
+# _staleness_reason). Changing this count or that modulo so the sequence never
+# revisits a shape SILENTLY DELETES the probe.
+_GEO_CFGS = 5
+
+# The mesh idiom is build_default_output(points, counts, indices). Trace which
+# INPUT feeds each role by matching `self.<role> = ... self.<input>` so the sweep
+# can seed array inputs into ONE valid polygon. Curve/surface generators feed a CV
+# array plus, for a surface, the numU/numV grid dims.
+import re as _re
+
+# The CV feeder is the FIRST ``self.<input>`` after ``=``, not a trailing scalar:
+# ``self.cvs = self.cvsIn * self.scale`` must attribute cvs->cvsIn. A greedy
+# ``[^\n]*`` backtracks to the LAST self.X (``scale``), leaving the CV array
+# unseeded -- fatal for surfaces. ``*?`` (lazy) stops at the first one.
+_GEO_ROLE_RE = {
+    "points": _re.compile(r"self\.points\s*=\s*[^\n]*?self\.(\w+)"),
+    "counts": _re.compile(r"self\.counts\s*=\s*[^\n]*?self\.(\w+)"),
+    "indices": _re.compile(r"self\.indices\s*=\s*[^\n]*?self\.(\w+)"),
+    "cvs": _re.compile(r"self\.cvs\s*=\s*[^\n]*?self\.(\w+)"),
+    "numU": _re.compile(r"self\.num_cvs_u\s*=\s*[^\n]*?self\.(\w+)"),
+    "numV": _re.compile(r"self\.num_cvs_v\s*=\s*[^\n]*?self\.(\w+)"),
+}
+
+# The CONSTRUCTOR form -- ``Mesh(points=p, counts=c, indices=i)`` -- names the
+# role in the KEYWORD, never in a ``self.<role>`` member, so none of the patterns
+# above can fire on it. ``Mesh(points=self.vin, counts=self.cin, ...)`` detected NO
+# roles: `cin` got the generic 0..3 ramp, the mesh refused to build ("indices
+# length 4 != sum(counts) 6"), every config came back EMPTY and the node returned
+# a not-run SKIP -- which reads as green in a summary. Each keyword's value is
+# scanned only as far as the next ``,`` or ``)`` so one role cannot steal the next
+# argument's input. ``points=`` is kind-dependent, resolved in _geo_input_roles.
+_GEO_CTOR_ROLE_RE = {
+    "counts": _re.compile(r"\bcounts\s*=\s*[^\n,)]*?self\.(\w+)"),
+    "indices": _re.compile(r"\bindices\s*=\s*[^\n,)]*?self\.(\w+)"),
+    "numU": _re.compile(r"\bnum_u\s*=\s*[^\n,)]*?self\.(\w+)"),
+    "numV": _re.compile(r"\bnum_v\s*=\s*[^\n,)]*?self\.(\w+)"),
+}
+_GEO_CTOR_POINTS_RE = _re.compile(r"\bpoints\s*=\s*[^\n,)]*?self\.(\w+)")
+
+# A surface needs numU*numV == len(cvs) with numU,numV >= degree+1 (=4 at the
+# default degree 3). The CV seed is therefore a _GEO_SURF_DIM x _GEO_SURF_DIM
+# grid and the detected numU/numV inputs are driven to _GEO_SURF_DIM so the
+# grid is valid for EVERY config (a degree-3 curve is happy with the same run).
+_GEO_SURF_DIM = 4
+
+# Rides on the verify row of a geo node that also reads an image file: its
+# GEOMETRY is genuinely compared, but string inputs are driven empty so both sides
+# stay on the no-file fallback and nothing about the decoded image is checked.
+_GEO_IMAGE_NOTE = ("reads an image file (MImage::readFromFile): the harness "
+                   "drives its path input(s) EMPTY, so geometry parity above is "
+                   "real but the image/texture-colour path is NOT exercised")
+
+# Same narrowing for the deformer family and the ik solver, which reach their
+# parity branches because the image skip above deliberately does not claim them.
+# Those drives leave string inputs at their DEFAULT rather than driving them
+# empty -- identical on both nodes either way, which is what makes the compare
+# real -- so the wording differs from the geo note above.
+_IMAGE_UNEXERCISED_NOTE = ("reads an image file (MImage::readFromFile): the "
+                           "harness leaves its path input(s) at their DEFAULT on "
+                           "both nodes, so the parity above is real but the "
+                           "image/texture-colour path is NOT exercised")
+
+
+def _geo_input_roles(compute, kind=None):
+    """Map an input name -> its geometry role (points/counts/indices/cvs) by
+    scanning the compute source for the build_default_output feeder idiom OR the
+    Mesh/NurbsCurve/NurbsSurface CONSTRUCTOR form. Best-effort: an input with no
+    detected role gets generic seeding. The member form wins where both appear
+    -- it is the direct feeder. ``kind`` disambiguates the ctor's ``points=``
+    keyword: mesh vertices need one quad, curve/surface CVs need the grid."""
+    roles = {}
+    for role, rx in _GEO_ROLE_RE.items():
+        m = rx.search(compute or "")
+        if m:
+            roles[m.group(1)] = role
+    m = _GEO_CTOR_POINTS_RE.search(compute or "")
+    if m:
+        roles.setdefault(m.group(1), "points" if kind == "mesh" else "cvs")
+    for role, rx in _GEO_CTOR_ROLE_RE.items():
+        m = rx.search(compute or "")
+        if m:
+            roles.setdefault(m.group(1), role)
+    return roles
+
+
+def _geo_scalar_value(meta, t, cfg, random, role=None):
+    """A driveable value for a non-array scalar input at config ``cfg``. Config 0
+    uses the declared default (valid geometry); later configs perturb it while
+    keeping size-like ints POSITIVE (a negative board/degree builds nothing).
+    A numU/numV grid-dim input is pinned to the CV grid's dimension for EVERY
+    config so numU*numV keeps matching the seeded CV count (an empty surface
+    otherwise)."""
+    if role in ("numU", "numV"):
+        return _GEO_SURF_DIM
+    if t == "string":
+        # Driven EMPTY on BOTH sides: the harness owns no fixture, and inventing
+        # a path would pit MImage's decode against PIL's. Empty keeps both sides
+        # on the SAME no-file fallback -- honest for the GEOMETRY, but the
+        # file-backed branch is never exercised (see _GEO_IMAGE_NOTE).
+        return ""
+    dv = meta.get("default_value")
+    if cfg == 0 and dv is not None:
+        if t in ("vector", "euler", "color") and not isinstance(dv, (list, tuple)):
+            return [dv, dv, dv]
+        return dv
+    if t == "color":
+        # float3 RGB: perturbed like a vector, but an undeclared default draws
+        # from 0..1 (the generic -2..2 jitter would hand out a negative colour).
+        if isinstance(dv, (list, tuple)) and len(dv) == 3:
+            return [dv[i] + 0.1 * cfg for i in range(3)]
+        return [random.uniform(0.0, 1.0) for _ in range(3)]
+    if t == "bool":
+        return random.choice([0, 1])
+    if t == "enum":
+        n = len(meta.get("enum_names") or []) or 2
+        return random.randint(0, n - 1)
+    if t == "int":
+        base = int(dv) if isinstance(dv, (int, float)) else 6
+        return max(1, base + cfg)               # stay positive for size inputs
+    if t == "time":
+        return float(cfg + 1)
+    if t in ("vector", "euler"):
+        if isinstance(dv, (list, tuple)) and len(dv) == 3:
+            return [dv[i] + 0.1 * cfg for i in range(3)]
+        return [random.uniform(-2, 2) for _ in range(3)]
+    base = float(dv) if isinstance(dv, (int, float)) else 1.0
+    return base + 0.25 * cfg
+
+
+def _geo_array_value(role, t, cfg):
+    """A structurally-valid seed for an ARRAY input given its detected role, so
+    the generator can build ONE quad (mesh) or a short CV run (curve/surface).
+    Returns a list of per-element values (scalars, or [x,y,z] for vectors)."""
+    if role == "counts":
+        return [4]                              # one quad
+    if role == "indices":
+        return [0, 1, 2, 3]                     # its four corners
+    if t == "matrix":
+        # a matrix-array geo input (e.g. an SDF shape-stream's per-shape world
+        # matrices): one translated identity per config -> a single valid shape
+        # frame. Flat-16 row-major, matching setAttr -type "matrix".
+        tx = 0.1 * cfg
+        return [[1.0, 0.0, 0.0, 0.0,
+                 0.0, 1.0, 0.0, 0.0,
+                 0.0, 0.0, 1.0, 0.0,
+                 tx, 0.0, 0.0, 1.0]]
+    if role == "cvs":
+        # A DIM x DIM CV grid, U-major (row u, col v at u*DIM+v). Enough for a
+        # degree-3 curve (>= degree+1 CVs) AND a DIM x DIM surface where
+        # numU*numV == len(cvs). Perturbing the spacing per config exercises
+        # distinct geometry without changing the grid dims.
+        s = 1.0 + 0.1 * cfg
+        return [[u * s, v * s, 0.0]
+                for u in range(_GEO_SURF_DIM) for v in range(_GEO_SURF_DIM)]
+    if role == "points" or t in ("vector", "euler"):
+        # A non-degenerate unit quad in the XY plane (mesh vertex/CV run).
+        s = 1.0 + 0.1 * cfg
+        return [[0.0, 0.0, 0.0], [s, 0.0, 0.0], [s, s, 0.0], [0.0, s, 0.0]]
+    if t == "bool":
+        # a bool multi rejects setAttr values past 1 ("past its maximum value
+        # of 1"); alternate 0/1 rather than the generic 0..3 ramp.
+        return [0, 1, 0, 1]
+    # Unknown int array with no detected role: a short ramp (best effort). If
+    # this fails to build geometry the components>0 guard skips honestly.
+    return [0, 1, 2, 3]
+
+
+def _drive_geo_inputs(cmds, nodes, inputs, roles, cfg, random):
+    """Set identical values on every node in ``nodes`` for input config ``cfg``.
+    Scalars prefer their declared default; arrays get a role-seeded valid set;
+    ``time`` inputs drive the shared timeline (a time plug may be auto-connected
+    to time1 on the Python original -- currentTime drives that, setAttr the
+    unconnected compiled plug)."""
+    for nm, meta in inputs.items():
+        t = meta.get("type")
+        if t in _GEO_IN_TYPES:
+            # A TYPED geo input on a generator (e.g. mesh-in -> mesh-out relax):
+            # wire a FRESH upstream shape for this cfg. rewire=True is what makes
+            # the geometry actually vary across the sweep -- left idempotent the
+            # cfg-0 shape stayed connected for all 5 configs and every geo-in node
+            # was only ever parity-checked against ONE 8-vertex cube.
+            _wire_geo_input(cmds, nodes, nm, t, bool(meta.get("is_array")), cfg,
+                            rewire=True)
+            continue
+        if meta.get("is_array"):
+            vals = _geo_array_value(roles.get(nm), t, cfg)
+            for nd in nodes:
+                dt = _packed_dt(cmds, nd, nm)
+                if dt:
+                    # No element plugs on a packed table -- write it whole.
+                    _seed_packed(cmds, "%s.%s" % (nd, nm), dt, vals)
+                    continue
+                for i, ev in enumerate(vals):
+                    plug = "%s.%s[%d]" % (nd, nm, i)
+                    if t in ("vector", "euler"):
+                        cmds.setAttr(plug, ev[0], ev[1], ev[2], type="double3")
+                    elif t == "matrix":
+                        # a matrix element multi wants the flat-16 -type flag
+                        # (a bare setAttr raises "not a simple numeric attribute").
+                        cmds.setAttr(plug, *ev, type="matrix")
+                    else:
+                        cmds.setAttr(plug, ev)
+            continue
+        v = _geo_scalar_value(meta, t, cfg, random, roles.get(nm))
+        if t == "time":
+            cmds.currentTime(v)
+            for nd in nodes:
+                if not cmds.listConnections(nd + "." + nm, s=True, d=False):
+                    cmds.setAttr(nd + "." + nm, v)
+            continue
+        for nd in nodes:
+            if t in ("vector", "euler", "color"):
+                # a colour is a float3 compound; -type double3 sets it too. A
+                # bare setAttr raises "Error reading data element number 2".
+                cmds.setAttr(nd + "." + nm, v[0], v[1], v[2], type="double3")
+            elif t == "string":
+                # a string plug needs the -type flag ("not a simple numeric
+                # attribute") -- without it the whole node's geo parity was lost
+                # to a harness exception, which reports as a not-run SKIP.
+                cmds.setAttr(nd + "." + nm, v, type="string")
+            else:
+                cmds.setAttr(nd + "." + nm, v)
+
+
+def _read_geo_components(om2, node, kind, info):
+    """Read the geo data MObject off ``node.<out attr>`` and return
+    ``{"pts": [x,y,z,...], "topo": <hashable>}`` -- or None when the plug holds
+    no geometry (empty / null). ``pts`` is a FLAT float list (all components, so
+    a wrong Y/Z can never hide); ``topo`` captures connectivity so a points-only
+    match with different topology still fails."""
+    sel = om2.MSelectionList()
+    sel.add(node)
+    mob = sel.getDependNode(0)
+    plug = om2.MFnDependencyNode(mob).findPlug(info["attr"], True)
+    try:
+        data = plug.asMObject()
+    except Exception:
+        return None
+    if data.isNull():
+        return None
+
+    def _flat(pt_array):
+        out = []
+        for p in pt_array:
+            out.extend((p.x, p.y, p.z))
+        return out
+
+    # An EMPTY geometry (an all-dead Game-of-Life board -> 0-vertex mesh) is a
+    # valid null-ish data object: MFn* may CONSTRUCT on it yet raise "Object does
+    # not exist" on first access. Wrap the whole per-kind read so it reports None
+    # ("no geometry") -- never a crash, never a false PASS.
+    try:
+        if kind == "mesh":
+            mfn = om2.MFnMesh(data)
+            if mfn.numVertices == 0:
+                return None
+            counts, connects = mfn.getVertices()
+            # Normals + colors are part of the output contract, so compare them
+            # too: a native gap that drops a channel then FAILS instead of
+            # false-passing on a points-only match. Color-set NAMES go in `topo`,
+            # so a present-vs-absent set is a hard topology mismatch.
+            attrs = []
+            try:
+                nrm = mfn.getVertexNormals(False, om2.MSpace.kObject)
+                for v in nrm:
+                    attrs.extend((v.x, v.y, v.z))
+            except Exception:
+                pass
+            color_sets = tuple(mfn.getColorSetNames() or [])
+            for cs in color_sets:
+                try:
+                    for c in mfn.getFaceVertexColors(cs):
+                        attrs.extend((c.r, c.g, c.b, c.a))
+                except Exception:
+                    pass
+            return {"pts": _flat(mfn.getPoints(om2.MSpace.kObject)),
+                    "topo": (tuple(counts), tuple(connects), color_sets),
+                    "attrs": attrs}
+        if kind == "curve":
+            mfn = om2.MFnNurbsCurve(data)
+            if mfn.numCVs == 0:
+                return None
+            # form + knots are in `topo`, so periodic vs open and any custom knot
+            # vector are compared for free (a native form/knot gap -> hard fail).
+            return {"pts": _flat(mfn.cvPositions(om2.MSpace.kObject)),
+                    "topo": (mfn.degree, int(mfn.form),
+                             tuple(round(k, 9) for k in mfn.knots())),
+                    "attrs": []}
+        # surface
+        mfn = om2.MFnNurbsSurface(data)
+        if mfn.numCVsInU == 0 or mfn.numCVsInV == 0:
+            return None
+        return {"pts": _flat(mfn.cvPositions(om2.MSpace.kObject)),
+                "topo": (mfn.degreeInU, mfn.degreeInV,
+                         int(mfn.formInU), int(mfn.formInV),
+                         tuple(round(k, 9) for k in mfn.knotsInU()),
+                         tuple(round(k, 9) for k in mfn.knotsInV())),
+                "attrs": []}
+    except Exception:
+        return None
+
+
+def _topo_mismatch_detail(a, b):
+    """Name WHAT diverged between two ``topo`` tuples, as a short clause.
+
+    "geo topology mismatch on outMesh (cfg 0)" named nothing: a 2-cell diagonal
+    disagreement and a 7% backend divergence read identically. (Measured on the
+    shipped voxelize bundle: interp 546 faces vs compiled 510, 91 vs 85 cubes.)
+    Phrasing mirrors :func:`_count_mismatch_reason` -- deliberately NOT shared with
+    it: the two data shapes have nothing in common and there are only two sites.
+
+    Mesh ``topo`` is ``(counts, connects, color_sets)``; a curve/surface ``topo``
+    is a degree/form/knots tuple, which is named by POSITION instead so this never
+    raises on a non-mesh kind."""
+    mesh_like = (len(a) == 3 and len(b) == 3
+                 and all(isinstance(t[0], tuple) and isinstance(t[1], tuple)
+                         for t in (a, b)))
+    if not mesh_like:
+        for i, (x, y) in enumerate(zip(a, b)):
+            if x != y:
+                return ("topology element %d differs (interp %.60s vs compiled "
+                        "%.60s)" % (i, repr(x), repr(y)))
+        return ("topology tuples differ in length (interp %d vs compiled %d "
+                "elements)" % (len(a), len(b)))
+
+    ca, cb = a[0], b[0]
+    if len(ca) != len(cb):
+        return ("vertex/face COUNT differs: interp %d faces / %d connects vs "
+                "compiled %d / %d (%+d faces)"
+                % (len(ca), len(a[1]), len(cb), len(b[1]), len(cb) - len(ca)))
+    for i, (x, y) in enumerate(zip(ca, cb)):
+        if x != y:
+            return ("face-size list differs at face %d (interp %d vs compiled %d)"
+                    % (i, x, y))
+    if a[1] != b[1]:
+        for i, (x, y) in enumerate(zip(a[1], b[1])):
+            if x != y:
+                return ("connectivity differs at the same counts (%d faces): "
+                        "first difference at flat index %d (interp %d vs "
+                        "compiled %d)" % (len(ca), i, x, y))
+        return ("connectivity differs at the same counts (%d faces): interp %d "
+                "connects vs compiled %d" % (len(ca), len(a[1]), len(b[1])))
+    if a[2] != b[2]:
+        return ("colour sets differ: interp %s vs compiled %s"
+                % (list(a[2]) or "none", list(b[2]) or "none"))
+    return "topology tuples compare unequal but no element difference was found"
+
+
+def _dump_geo_mismatch(dirpath, name, cfg, ci, cc):
+    """Write both sides' ``pts`` and face-size list to ``dirpath`` for offline
+    diagnosis (opt-in via MPYNODE_VERIFY_DUMP). Diagnosis ONLY: the gate's verdict
+    is unchanged, because our generators emit in canonical sorted order (ordered
+    maxerr == 0 on matching configs), so the ordered compare is already correct --
+    "which cells differ" is a question for a throwaway script, not the gate.
+    Never raises; the caller returns the SAME failing row either way."""
+    import json
+
+    try:
+        os.makedirs(dirpath, exist_ok=True)
+        for side, comp in (("interp", ci), ("compiled", cc)):
+            path = os.path.join(dirpath, "%s_cfg%d_%s.json" % (name, cfg, side))
+            # topo[0] is the face-size list on a mesh but a bare degree int on a
+            # curve/surface -- keep both writable.
+            topo0 = (comp.get("topo") or (None,))[0]
+            with open(path, "w") as fh:
+                json.dump({"pts": list(comp.get("pts") or []),
+                           "topo0": (list(topo0)
+                                     if isinstance(topo0, (list, tuple))
+                                     else topo0)}, fh)
+    except Exception:
+        pass
+
+
+def _verify_geo(cmds, bundle_path, spec, kind, deadline=None):
+    """Component parity for a geometry generator: rebuild the Python original,
+    build the compiled node, drive identical inputs, and compare the geometry
+    (topology + every point component) read straight off the output data plug
+    via MFn*. NON-VACUOUS: if every sampled config yields EMPTY geometry the
+    parity was never exercised, so return a not-run skip rather than a false
+    PASS. A topology mismatch for the same inputs is a hard FAIL."""
+    import random
+
+    import maya.api.OpenMaya as om2
+    import mpynode
+    from mpynode.native import compiler as codegen
+
+    tol = 1e-4
+    name = spec["suggested"]["node_type_name"]
+    mpy_type = spec.get("mpy_type") or "mPyMesh"
+    info = codegen._GEO_INFO[kind]
+    inputs = spec.get("inputs") or {}
+    roles = _geo_input_roles(spec.get("compute") or "", kind)
+
+    cmds.file(new=True, force=True)
+    if not cmds.pluginInfo(os.path.basename(bundle_path), q=True, loaded=True):
+        cmds.loadPlugin(bundle_path)
+    random.seed(4242)
+
+    # Rebuild the Python original from the spec (its geo output attr is intrinsic
+    # to the mPy* type -- we add only the user INPUT attrs).
+    interp = cmds.createNode(mpy_type)
+    w = mpynode.wrap_node(interp)
+    for nm, meta in inputs.items():
+        t = meta.get("type")
+        kw = {}
+        if meta.get("is_array"):
+            kw["is_array"] = True
+        if t == "enum":
+            kw["enum_names"] = meta.get("enum_names") or None
+        w.add_input_attr(nm, t, **kw)
+    if (spec.get("init") or "").strip():
+        w.set_init_expression(spec["init"])
+    w.set_compute_expression(spec["compute"])
+    comp = cmds.createNode(name)
+
+    saw_geom = False
+    maxerr = 0.0
+    for cfg in range(_GEO_CFGS):
+        _drive_geo_inputs(cmds, (interp, comp), inputs, roles, cfg, random)
+        ci = _read_geo_components(om2, interp, kind, info)
+        cc = _read_geo_components(om2, comp, kind, info)
+        if ci is None or cc is None:
+            # One (or both) built nothing this config; not comparable. If the
+            # SIDES DISAGREE on emptiness that is a real divergence, not a skip.
+            if (ci is None) != (cc is None):
+                return {"ran": True, "pass": False, "maxerr": float("inf"),
+                        "tol": tol,
+                        "reason": "geo emptiness mismatch on %s (cfg %d): "
+                                  "interp=%s compiled=%s"
+                                  % (info["attr"], cfg,
+                                     "empty" if ci is None else "built",
+                                     "empty" if cc is None else "built")}
+            continue
+        if ci["topo"] != cc["topo"]:
+            dump_dir = os.environ.get("MPYNODE_VERIFY_DUMP")
+            if dump_dir:
+                _dump_geo_mismatch(dump_dir, name, cfg, ci, cc)
+            return {"ran": True, "pass": False, "maxerr": float("inf"),
+                    "tol": tol,
+                    "reason": "geo topology mismatch on %s (cfg %d): %s"
+                              % (info["attr"], cfg,
+                                 _topo_mismatch_detail(ci["topo"], cc["topo"]))}
+        # Normals/colors ("attrs") must match in LENGTH first -- a differing
+        # count means one side emitted a channel the other dropped (e.g. compiled
+        # never wrote normals), which a component loop would silently truncate.
+        ai, ac = ci.get("attrs", []), cc.get("attrs", [])
+        if len(ai) != len(ac):
+            return {"ran": True, "pass": False, "maxerr": float("inf"),
+                    "tol": tol,
+                    "reason": "geo normals/colors channel mismatch on %s (cfg %d):"
+                              " interp %d comps vs compiled %d"
+                              % (info["attr"], cfg, len(ai), len(ac))}
+        n = min(len(ci["pts"]), len(cc["pts"]))
+        if n:
+            saw_geom = True
+            for i in range(n):
+                d = abs(ci["pts"][i] - cc["pts"][i])
+                if d > maxerr:
+                    maxerr = d
+        for i in range(len(ai)):
+            d = abs(ai[i] - ac[i])
+            if d > maxerr:
+                maxerr = d
+    if not saw_geom:
+        return {"ran": False, "pass": None, "maxerr": None, "tol": tol,
+                "reason": "every sampled config produced EMPTY geometry -- geo "
+                          "parity not exercised (build compiled + loaded OK)"}
+    passed = maxerr <= tol
+    row = {"ran": True, "pass": passed, "maxerr": maxerr,
+           "tol": tol, "reason": ""}
+    # Gated on the GENERIC verdict here, not the merged one (see the twin call in
+    # _verify_one): _merge_authored_test folds an authored-test failure into `pass`
+    # afterwards, so gating on that would silence the guard on the very nodes whose
+    # authored test is red -- voxelize among them.
+    if passed and _timing_enabled():
+        row["timing"] = _run_timing(
+            cmds, spec, interp, comp,
+            lambda: _pull_geo_plug(om2, interp, info["attr"]),
+            lambda: _pull_geo_plug(om2, comp, info["attr"]),
+            inputs, deadline)
+    return row
+
+
+# ---------------------------------------------------------------------------
+# Main-thread verify bridge (for GUI callers)
+# ---------------------------------------------------------------------------
+
+
+def main_thread_verify_fn(maya=_MAYA_DEFAULT, run_authored_tests=True):
+    """Return a ``verify_fn`` that runs the default parity check ON MAYA'S MAIN
+    THREAD -- the correct thing for a GUI caller to pass to ``compile_plugin`` /
+    ``CompileController.start``.
+
+    ``compile_plugin`` calls ``verify_fn(bundle_path, rows)`` on its WORKER
+    thread, but ``_default_verify`` mutates the Maya scene (loadPlugin, file new,
+    polySphere, createNode, setAttr/getAttr) and Maya's API is NOT thread-safe
+    (design "threading spine", step 6). This factory's closure marshals that work
+    onto Maya's main thread via ``maya.utils.executeInMainThreadWithResult``,
+    which blocks the worker until the main thread returns the result.
+
+    Import-safe: ``maya.utils`` is imported lazily INSIDE the closure (never at
+    module top), and if it is unavailable (headless python3) the closure falls
+    back to calling ``_default_verify`` directly -- which itself degrades to
+    per-node "verify skipped (no Maya runtime)" rows. So it is safe to pass
+    unconditionally.
+    """
+
+    def _verify(bundle_path, rows):
+        try:
+            import maya.utils as _mutils
+        except Exception:
+            # No Maya runtime (headless) -- _default_verify degrades gracefully.
+            return _default_verify(bundle_path, rows, maya=maya,
+                                   run_authored_tests=run_authored_tests)
+        return _mutils.executeInMainThreadWithResult(
+            lambda: _default_verify(bundle_path, rows, maya=maya,
+                                    run_authored_tests=run_authored_tests))
+
+    return _verify
+
+
+# ---------------------------------------------------------------------------
+# Subprocess verify (scene-safe -- the verify's file(new) hits a throwaway
+# process, NEVER the caller's live Maya scene)
+# ---------------------------------------------------------------------------
+
+
+_VERIFY_WORKER_CODE = (
+    "import mpynode.native.toolchain.verify as _c; _c._verify_worker_main()"
+)
+
+
+def _skip_rows(rows, reason):
+    """Build a per-row 'verify skipped' result dict (the verify_fn contract)."""
+    out = {}
+    for r in rows or []:
+        try:
+            out[r["type_name"]] = {
+                "ran": False, "pass": None, "maxerr": None, "tol": None,
+                "reason": reason,
+            }
+        except Exception:
+            pass
+    return out
+
+
+def _mayapy_for(maya):
+    """Resolve the ``mayapy`` executable from a Maya install dir, cross-platform.
+
+    Thin wrapper over :func:`native.toolchain.mayapy_path` (kept for callers/
+    tests that reference this name).
+    """
+    return toolchain.mayapy_path(maya)
+
+
+def _scripts_root():
+    """The ``scripts/`` dir (PYTHONPATH root for ``mpynode``) and the project
+    root (which holds ``plug-ins/``), derived from THIS file's location:
+    ``<root>/scripts/mpynode/native/toolchain/verify.py``."""
+    toolchain_dir = os.path.dirname(os.path.abspath(__file__))
+    native_dir = os.path.dirname(toolchain_dir)
+    mpynode_dir = os.path.dirname(native_dir)
+    scripts_dir = os.path.dirname(mpynode_dir)
+    root_dir = os.path.dirname(scripts_dir)
+    return scripts_dir, root_dir
+
+
+def _default_verify_runner(argv, env, timeout):
+    """Spawn the verify worker; returns the process return code. The worker
+    writes its result JSON to ``env['MPYNODE_VERIFY_RESULT']`` -- this runner
+    does not parse stdout."""
+    import subprocess
+
+    proc = subprocess.run(argv, env=env, timeout=timeout,
+                          stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    return proc.returncode
+
+
+def _run_subprocess_verify(bundle_path, rows, *, maya=_MAYA_DEFAULT, runner=None,
+                           timeout=600, run_authored_tests=True):
+    """Run the parity verify in a separate mayapy process. Returns the same
+    ``{type_name: {ran,pass,maxerr,tol,reason}}`` dict as ``_default_verify``.
+    NEVER raises -- any failure degrades to per-node 'verify skipped' rows so a
+    broken verify can never fail (or block) the build, and never touches the
+    caller's scene."""
+    import json
+    import tempfile
+
+    rows = rows or []
+    if not rows:
+        return {}
+
+    runner = runner or _default_verify_runner
+    tmpdir = None
+    try:
+        tmpdir = tempfile.mkdtemp(prefix="mpynode_verify_")
+        payload_path = os.path.join(tmpdir, "payload.json")
+        result_path = os.path.join(tmpdir, "result.json")
+
+        # Only ship what the worker needs: bundle, (type_name, spec) per row,
+        # and whether to run the authored @maya_test(s) inside the worker.
+        payload = {
+            "bundle_path": bundle_path,
+            "maya": maya,
+            "run_authored_tests": bool(run_authored_tests),
+            "rows": [{"type_name": r["type_name"], "spec": r.get("spec")}
+                     for r in rows],
+        }
+        with open(payload_path, "w") as fh:
+            json.dump(payload, fh, default=str)
+
+        scripts_dir, root_dir = _scripts_root()
+        env = dict(os.environ)
+        # Make the subprocess import THIS mpynode + find the api plugins, and
+        # tell the worker where to read/write.
+        cur_pp = env.get("PYTHONPATH", "")
+        env["PYTHONPATH"] = scripts_dir + (os.pathsep + cur_pp if cur_pp else "")
+        cur_pi = env.get("MAYA_PLUG_IN_PATH", "")
+        plugins_dir = os.path.join(root_dir, "plug-ins")
+        env["MAYA_PLUG_IN_PATH"] = plugins_dir + (
+            os.pathsep + cur_pi if cur_pi else "")
+        env["MPYNODE_VERIFY_PAYLOAD"] = payload_path
+        env["MPYNODE_VERIFY_RESULT"] = result_path
+        # Avoid a Maya-version mismatch when a different-version mayapy is
+        # spawned from the current session.
+        for v in ("MAYA_LOCATION", "PYTHONHOME"):
+            env.pop(v, None)
+        # A mis-compiled bundle can SEGFAULT this child mayapy. Disable Autodesk's
+        # crash reporter (CER/CIP) so a sandboxed child crash never pops a "Maya
+        # closed unexpectedly" dialog; a no-result run is already a SKIP (#60).
+        env.setdefault("MAYA_DISABLE_CER", "1")
+        env.setdefault("MAYA_DISABLE_CIP", "1")
+
+        argv = [_mayapy_for(maya), "-c", _VERIFY_WORKER_CODE]
+        try:
+            runner(argv, env, timeout)
+        except Exception as exc:
+            return _skip_rows(rows, "subprocess verify failed to run: %s" % exc)
+
+        if not os.path.isfile(result_path):
+            return _skip_rows(
+                rows, "subprocess verify produced no result (the verify "
+                      "process may have crashed)")
+        try:
+            with open(result_path) as fh:
+                res = json.load(fh)
+        except Exception as exc:
+            return _skip_rows(
+                rows, "subprocess verify result unreadable: %s" % exc)
+
+        if not isinstance(res, dict):
+            return _skip_rows(rows, "subprocess verify result malformed")
+        # Backfill any rows the worker did not report (defensive).
+        for r in rows:
+            res.setdefault(r["type_name"], {
+                "ran": False, "pass": None, "maxerr": None, "tol": None,
+                "reason": "subprocess verify did not report this node",
+            })
+        return res
+    except Exception as exc:
+        return _skip_rows(rows, "subprocess verify error: %s" % exc)
+    finally:
+        if tmpdir is not None:
+            try:
+                shutil.rmtree(tmpdir, ignore_errors=True)
+            except Exception:
+                pass
+
+
+def subprocess_verify_fn(maya=_MAYA_DEFAULT, runner=None, timeout=600,
+                         run_authored_tests=True):
+    """Return a ``verify_fn`` that runs the parity check in a SEPARATE mayapy
+    process -- the scene-safe replacement for ``main_thread_verify_fn``.
+
+    ``_default_verify`` calls ``cmds.file(new=True, force=True)`` to build a
+    clean test scene; run in-process (even marshalled to the main thread) that
+    WIPES the user's live session. This factory's closure ships the verify into
+    a throwaway ``maya.standalone`` process whose ``file(new)`` only affects that
+    process, so the caller's scene is never touched while the parity guarantee is
+    kept.
+
+    Contract matches ``main_thread_verify_fn``: ``verify_fn(bundle_path, rows)``
+    -> ``{type_name: {ran,pass,maxerr,tol,reason}}``; NEVER raises; degrades to
+    'verify skipped' rows when no subprocess can run. ``runner`` is injectable
+    for tests (default spawns ``mayapy``)."""
+
+    def _verify(bundle_path, rows):
+        return _run_subprocess_verify(bundle_path, rows, maya=maya,
+                                      runner=runner, timeout=timeout,
+                                      run_authored_tests=run_authored_tests)
+
+    return _verify
+
+
+def _verify_worker_run(payload, init_maya=True, verify_impl=None):
+    """The body the subprocess runs: (optionally) init maya.standalone + load
+    the mpynode api plugins, then run the parity verify over the payload rows.
+    ``init_maya`` / ``verify_impl`` are injectable for headless unit tests."""
+    if init_maya:
+        try:
+            import maya.standalone
+            maya.standalone.initialize()
+        except Exception:
+            pass
+        try:
+            import maya.cmds as _cmds
+            for p in ("mpynode_api1", "mpynode_api2"):
+                try:
+                    if not _cmds.pluginInfo(p, q=True, loaded=True):
+                        _cmds.loadPlugin(p, quiet=True)
+                except Exception:
+                    pass
+        except Exception:
+            pass
+    impl = verify_impl or _default_verify
+    return impl(payload["bundle_path"], payload.get("rows") or [],
+                maya=payload.get("maya", _MAYA_DEFAULT),
+                run_authored_tests=payload.get("run_authored_tests", True))
+
+
+def _verify_worker_main():
+    """ENTRY POINT executed inside the mayapy verify subprocess (via ``-c``).
+    Reads the payload + result paths from the environment, runs the verify, and
+    writes the result JSON. Never lets an exception escape (a crash would just
+    leave no result file, which the parent reads as a skip)."""
+    import json
+
+    payload_path = os.environ.get("MPYNODE_VERIFY_PAYLOAD", "")
+    result_path = os.environ.get("MPYNODE_VERIFY_RESULT", "")
+    out = {}
+    payload = {}
+    try:
+        with open(payload_path) as fh:
+            payload = json.load(fh)
+        out = _verify_worker_run(payload)
+    except Exception as exc:
+        for r in (payload.get("rows") or []):
+            try:
+                out[r["type_name"]] = {
+                    "ran": False, "pass": None, "maxerr": None, "tol": None,
+                    "reason": "verify worker error: %s" % exc,
+                }
+            except Exception:
+                pass
+    try:
+        # Atomic write (tmp + os.replace) so a timeout/SIGKILL mid-write can't
+        # leave the parent a torn file it would misreport as 'unreadable'.
+        tmp = "%s.tmp-%d" % (result_path, os.getpid())
+        with open(tmp, "w") as fh:
+            json.dump(out, fh, default=str)
+        os.replace(tmp, result_path)
+    except Exception:
+        pass

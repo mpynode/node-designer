@@ -1,0 +1,61 @@
+{
+  "accepted": true,
+  "baseline_ms": 12.9968,
+  "best_ms": 1.6834,
+  "created": 1787165893.8891342,
+  "ledger": [
+    {
+      "compiled": true,
+      "duration_s": null,
+      "fix_rounds": 0,
+      "hypothesis": "",
+      "index": 0,
+      "ms": 12.9968,
+      "note": "",
+      "outcome": "baseline",
+      "parity": null,
+      "predicted_speedup": null,
+      "risk": "",
+      "slug": null,
+      "speedup": null,
+      "theme": ""
+    },
+    {
+      "compiled": true,
+      "duration_s": 721.05,
+      "fix_rounds": 0,
+      "hypothesis": "The lowered nd:: chain allocates and streams ~10 arrays of 3N doubles (1.3 MB each at N=159602) to do arithmetic that fits in registers, so it is memory-bound rather than FLOP-bound and a single fused loop should win outright. After fusing, profiling should show whether the residual cost is arithmetic or a Maya API call -- and it turned out to be MFnMesh::getVertexNormals at 2.3 ms of a 3.9 ms deform, which depends only on the input mesh while the benchmark animates the scalars, making it the textbook derived-state cache.",
+      "index": 1,
+      "ms": 2.3795,
+      "note": "",
+      "outcome": "accept",
+      "parity": "pass",
+      "predicted_speedup": 3.0,
+      "risk": "The normals cache is validated by a data fingerprint rather than by a dirty flag. Maya hands the deformer a rotating set of THREE recycled MMeshGeom allocations for an unchanged upstream shape, so the raw-point POINTER differs every tick and a pointer+count key never hit (measured: 5.21 ms, one hit in thirteen). Forcing invalidation from setDependentsDirty/preEvaluation was worse still (9.17 ms) because dgdirty marks the input geometry dirty on every tick. The shipped key is an eight-lane FNV content hash over the mesh's raw float point buffer plus vertex/polygon/edge counts -- strictly stronger than the dirty flag at detecting an actual change, and it costs ~90 us against the 2.3 ms it saves. A re-wired upstream shape (the GEO parity path) changes the point bytes and rebuilds. The residual exposure is a mesh mutated in place to bytes that collide with the previous hash at identical vertex, polygon and edge counts.",
+      "slug": "cache_normals_fuse_thread",
+      "speedup": 5.461987812565665,
+      "theme": "This is an elementwise deformer, so the answer was three layers: collapse the eleven nd:: whole-array temporaries into one fused per-vertex pass, cache the per-vertex normals across evaluations behind a content hash of the input mesh's raw point buffer, and run the surviving per-vertex map on a persistent worker pool."
+    },
+    {
+      "compiled": true,
+      "duration_s": 713.001,
+      "fix_rounds": 0,
+      "hypothesis": "the node arrived already caching normals, centre and a thread pool, so the arithmetic was no longer the cost; an instrumented build showed deform() was only 0.73 ms of the 2.21 ms tick and that 0.51 ms of that 0.73 was pure marshalling -- allPositions() widening 159602 float triples into a 5.1 MB MPointArray and setAllPositions() narrowing them back. Both ends already had a raw float buffer in hand (the fingerprint block calls getRawPoints on the input mesh), and float->double widening is exact, so routing around the staging array is bit-identical rather than merely close.",
+      "index": 2,
+      "ms": 1.6834,
+      "note": "",
+      "outcome": "accept",
+      "parity": "pass",
+      "predicted_speedup": 1.35,
+      "risk": "writing the output mesh's buffer through a const_cast'd getRawPoints() is the sharp edge. If Maya still had input and output copy-on-write shared, the in-place write would corrupt the very buffer the next tick fingerprints -- silently rebuilding normals every tick AND accumulating displacement. Guarded explicitly: the fast path is refused when dst == src or when the vertex counts disagree, falling back to the staged MPointArray path. Confirmed safe in the profile, where nrm stayed at 0.003 ms every tick (cache hit), proving the input mesh was left intact. Second risk: skipping setAllPositions() means Maya's cached bounding box / normals for the OUTPUT mesh are not invalidated; point data reads correctly, but a downstream consumer of the output's cached normals would see stale values.",
+      "slug": "raw_mesh_buffers",
+      "speedup": 7.720565522157538,
+      "theme": "profile first, then delete both MPointArray staging copies: read positions from the input mesh's raw float buffer and write the deformed result straight into the output mesh's raw float buffer, so allPositions() and setAllPositions() disappear entirely"
+    }
+  ],
+  "parity_gate": "authored+pointwise",
+  "reason": "accepted (7.72x)",
+  "rounds": 2,
+  "speedup": 7.720565522157538,
+  "type_name": "sineRippleDefault"
+}

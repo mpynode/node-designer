@@ -1,0 +1,61 @@
+{
+  "accepted": true,
+  "baseline_ms": 2.3093,
+  "best_ms": 0.5537,
+  "created": 1787677451.039432,
+  "ledger": [
+    {
+      "compiled": true,
+      "duration_s": null,
+      "fix_rounds": 0,
+      "hypothesis": "",
+      "index": 0,
+      "ms": 2.3093,
+      "note": "",
+      "outcome": "baseline",
+      "parity": null,
+      "predicted_speedup": null,
+      "risk": "",
+      "slug": null,
+      "speedup": null,
+      "theme": ""
+    },
+    {
+      "compiled": true,
+      "duration_s": 695.153,
+      "fix_rounds": 0,
+      "hypothesis": "The lowered numpy pipeline pays for the grid twice over: it builds a (52080,3) point array via arange/floordiv/mod/take/stack, then per shape runs a generic matmul with a runtime integer div/mod per element and 4-6 more whole-grid temporaries, then a separate full-array CSG pass. Fusing all of that into one scalar loop that issues the identical per-element op sequence should be bit-exact and remove ~15MB of memory traffic and ~30 allocations. The dual-marching-cubes stage then dominates, where every corner read goes through nd::at3 (which reloads a heap std::vector of strides per access) and a 4-element scratch array is heap-allocated inside the innermost loop. Finally the fused field map is a textbook parallel map with a deterministic per-element write, ~500us serial, so a persistent pool should take it near-free.",
+      "index": 1,
+      "ms": 0.6872,
+      "note": "",
+      "outcome": "accept",
+      "parity": "pass",
+      "predicted_speedup": 3.0,
+      "risk": "Bit-exactness is the whole risk, and it is all in operation ORDER, not in tolerance. The rewrite reproduces the exact fold order of every reduction (sum_mul left-folds from 0, reduce_min left-folds from +INFINITY through minimum_elem's NaN-propagating form), keeps std::pow(x,2.0) rather than substituting x*x, keeps the divisor as `scale` rather than the zero-guarded `safe` where the source did, and keeps every tie-resolving comparison at its source type/direction/strictness (v0 < v1 for quad winding, cfg > 0 && cfg < 255, >= iso_value for the corner sign). Threading was kept to the one pass where element p is a pure function of p, so the chunk split cannot reach the answer; the chunk cursor is a pool member, not file-scope, because Maya's EM can have two instances of this node in a region at once.",
+      "slug": "fuse_field_raw_dmc_thread",
+      "speedup": 3.360448195576251,
+      "theme": "This node is grid-shaped at a much smaller size than the brief implies -- the harness's builtin metaClay scene overrides the generic seeding, so it is 3 shapes on a 48x35x31 lattice, not 20000 shapes -- so the win is removing whole-array temporaries and strided nd:: accessors, then threading the one pass that clears the 50us floor."
+    },
+    {
+      "compiled": true,
+      "duration_s": 660.883,
+      "fix_rounds": 0,
+      "hypothesis": "this node is GRID-shaped, not QUERY-shaped -- 3 shapes over a ~48x35x31 lattice -- and a previous round had already fused the SDF field evaluation and raw-pointered the DMC traversal, so the arithmetic was no longer the cost. What was left was pure marshalling: DMC wrote _pts/_idx, copied them into a packed float64 array, and compute() then sliced/reshaped/astype'd that array back apart into points/counts/indices, touching every vertex and index five times; the result was then handed to Maya one element at a time through MPointArray::append / MIntArray::append. Removing the round-trip and appending in bulk should cost nothing numerically because int32 -> double -> int64 -> int is exact over these ranges and MPoint(x,y,z) is the same triple either way.",
+      "index": 2,
+      "ms": 0.5537,
+      "note": "",
+      "outcome": "accept",
+      "parity": "pass",
+      "predicted_speedup": 1.2,
+      "risk": "the DMC lambda declared a dead local nd::Array<double> points that shadowed the output vector, so the in-place write silently bound to the wrong object until that declaration was removed -- caught by the compiler, not by a wrong number. The float64 packing was also the only thing forcing indices through int64; writing int straight through keeps the values identical but relies on the vertex count staying inside int32, which the buffer is already sized in.",
+      "slug": "direct_mesh_writeback",
+      "speedup": 4.1706700379266755,
+      "theme": "the dual-marching-cubes core now writes MPoint/int output buffers in place and the Maya arrays are built with bulk constructors, deleting a packed-float64 round-trip and ~36k per-element append() API calls"
+    }
+  ],
+  "parity_gate": "authored+pointwise",
+  "reason": "accepted (4.17x)",
+  "rounds": 2,
+  "speedup": 4.1706700379266755,
+  "type_name": "metaballs"
+}

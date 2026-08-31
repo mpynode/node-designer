@@ -1,0 +1,61 @@
+{
+  "accepted": true,
+  "baseline_ms": 8.7233,
+  "best_ms": 1.821,
+  "created": 1787679149.601465,
+  "ledger": [
+    {
+      "compiled": true,
+      "duration_s": null,
+      "fix_rounds": 0,
+      "hypothesis": "",
+      "index": 0,
+      "ms": 8.7233,
+      "note": "",
+      "outcome": "baseline",
+      "parity": null,
+      "predicted_speedup": null,
+      "risk": "",
+      "slug": null,
+      "speedup": null,
+      "theme": ""
+    },
+    {
+      "compiled": true,
+      "duration_s": 672.242,
+      "fix_rounds": 0,
+      "hypothesis": "this node is ELEMENTWISE over 20000 samples, but the rotation block hid a QUERY-shaped inner cost: std::lower_bound over 160 KB of keys is ~14 dependent L2 loads per sample, and the same control matrix is re-normalised and re-row-normed for every sample that lands on it; a bucket table makes the search O(1) with a bit-identical result, and an O(nCM) precompute pass amortises the rest",
+      "index": 1,
+      "ms": 7.6934,
+      "note": "",
+      "outcome": "accept",
+      "parity": "pass",
+      "predicted_speedup": 1.4,
+      "risk": "the bucket table must return exactly bisect_left, so each bucket is finished with the SAME std::lower_bound on the bracketed range rather than a linear scan with a recomputed comparison; the exp/log scale path replaces pow(|s0|,1-t)*pow(|s1|,t) with exp((1-t)log s0 + t log s1), which is guarded by an any-zero-scale flag because log(0) would turn t==0/1 into NaN where pow() returns a finite value",
+      "slug": "bucket_index_keys",
+      "speedup": 1.1338679907453142,
+      "theme": "replace the per-sample bisect_left over the 20000-entry chord-length key table with a uniform bucket table that brackets each query to a handful of adjacent entries, and hoist the per-control-matrix up-row/scale/log work out of the sample loop"
+    },
+    {
+      "compiled": true,
+      "duration_s": 629.284,
+      "fix_rounds": 0,
+      "hypothesis": "profiling said tangent() cost 2.5ms of a 7.1ms loop while getPointAtParam cost 0.28ms -- a 9x gap that only makes sense if getPointAtParam was being SKIPPED, i.e. the samples land outside [0,1] and findParamFromLength keeps clamping w onto one endpoint param. If w repeats, tangent(w) repeats, and once u leaves the key span blend saturates so the slerped normal, the basis, the MTransformationMatrix euler and the blended scale all repeat too. Memoizing on exact bit equality is identity-preserving, not tolerance-preserving, so it cannot move the answer.",
+      "index": 2,
+      "ms": 1.821,
+      "note": "",
+      "outcome": "accept",
+      "parity": "pass",
+      "predicted_speedup": 2.0,
+      "risk": "the memos are exact by construction (bit-equal key -> same pure function -> same value), so the only real exposure is the findParamFromLength plateau cache, which is justified by MONOTONICITY alone rather than by any assumption about how Maya clamps out-of-range lengths: if La < Lb both map to param W, every L between them is sandwiched and must map to W. A NaN blend never compares equal and falls through to the full path.",
+      "slug": "memo_bit_equal_pure_queries",
+      "speedup": 4.790389895661725,
+      "theme": "every per-sample NURBS query and the whole rotation/scale block are pure functions of a key that barely changes across the 20000 samples, so one-entry memos keyed on BIT-EQUAL arguments replace 60000 Maya curve calls with 17"
+    }
+  ],
+  "parity_gate": "authored+pointwise",
+  "reason": "accepted (4.79x)",
+  "rounds": 2,
+  "speedup": 4.790389895661725,
+  "type_name": "spine"
+}

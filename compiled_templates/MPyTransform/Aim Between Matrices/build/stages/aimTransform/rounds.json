@@ -1,0 +1,61 @@
+{
+  "accepted": true,
+  "baseline_ms": 0.0082,
+  "best_ms": 0.002,
+  "created": 1787680499.1251001,
+  "ledger": [
+    {
+      "compiled": true,
+      "duration_s": null,
+      "fix_rounds": 0,
+      "hypothesis": "",
+      "index": 0,
+      "ms": 0.0082,
+      "note": "",
+      "outcome": "baseline",
+      "parity": null,
+      "predicted_speedup": null,
+      "risk": "",
+      "slug": null,
+      "speedup": null,
+      "theme": ""
+    },
+    {
+      "compiled": true,
+      "duration_s": 659.292,
+      "fix_rounds": 0,
+      "hypothesis": "the node is ELEMENTWISE with an output of exactly 16 doubles -- the arithmetic is nothing, so 100% of the cost is per-access overhead. The nd:: lowering heap-allocates ~20 shared_ptr<vector<double>> Arrays to do 4x4 work; desiredLocal() then re-fetches matrix0/matrix1/parentWorld via findPlug-by-name + MPlug::getValue + MFnMatrixData even though compute() had just pulled all three through the datablock; and nd_gate_mix decomposes a base matrix that its three compile-time-true gates guarantee it will never read. Remove the allocations and the duplicate DG reads and the whole thing collapses onto the DG plumbing floor.",
+      "index": 1,
+      "ms": 0.0022,
+      "note": "",
+      "outcome": "accept",
+      "parity": "pass",
+      "predicted_speedup": 3.0,
+      "risk": "every step had to be bit-exact, not merely close. The scalar rewrite replicates nd::norm's ascending acc = acc + x*x fold, nd::dot1d's ascending accumulation, nd::cross's operand order, and nd::inv's Gauss-Jordan partial pivot on the augmented 4x8 -- including its `best < 1e-12` singularity test and its `if (f == 0.0) continue` skip -- operation for operation, all in double. No comparison that selects a pivot or a branch was narrowed, loosened, or reordered. The inverse(L) cache is the one place a stale value could ship: it is keyed on memcmp of all 16 raw doubles of L (bitwise, not tolerance), is a per-instance member under a std::mutex rather than a static registry, and caches only the intermediate inverse -- never the node's output -- so a hit can only return exactly what the recompute would have.",
+      "slug": "scalarise_and_feed_datablock",
+      "speedup": 3.7272727272727275,
+      "theme": "this node is 4x4 scalar math wearing an ndarray costume: replace the nd:: lowering with stack scalars, stop re-reading the three matrix inputs through MPlug when compute() already holds them, and cache inverse(L) on the exact bits of L"
+    },
+    {
+      "compiled": true,
+      "duration_s": 633.577,
+      "fix_rounds": 0,
+      "hypothesis": "This node is ELEMENTWISE and tiny -- the whole numerical job is 4x4 scalar math on three matrix inputs, and the polySphere/20000-element inputs the bench drives are never read by compute(). A previous porter had already collapsed the nd::Array lowering to stack scalars and cached inverse(L). That left exactly one repeated Maya-API cost in the hot path: MArrayDataBuilder + 16 x addElement() (each an index search/insert) + arrH.set() commit, rebuilding an output array whose shape is a fixed 0..15 and never changes. Replacing it with jumpToArrayElement(0) + next() over the existing elements, guarded by elementCount()==16 and a per-element elementIndex() check with a full builder fallback, removes the builder allocation and the 16 searches without touching a single written value.",
+      "index": 2,
+      "ms": 0.002,
+      "note": "",
+      "outcome": "accept",
+      "parity": "pass",
+      "predicted_speedup": 1.25,
+      "risk": "The in-place path depends on the output array already holding exactly logical indices 0..15. Guarded two ways -- elementCount()==16 up front and elementIndex()==i before each write -- and any mismatch falls through to the original builder path, which rewrites all 16 regardless. No arithmetic, no comparison, and no written value changed, so parity is structurally unaffected.",
+      "slug": "inplace_array_write",
+      "speedup": 4.1000000000000005,
+      "theme": "write the 16 output-array elements in place instead of rebuilding them through an MArrayDataBuilder every tick; the node turned out to be entirely harness-bound, so the change is unmeasurable rather than a win"
+    }
+  ],
+  "parity_gate": "authored+pointwise",
+  "reason": "accepted (4.10x)",
+  "rounds": 2,
+  "speedup": 4.1000000000000005,
+  "type_name": "aimTransform"
+}

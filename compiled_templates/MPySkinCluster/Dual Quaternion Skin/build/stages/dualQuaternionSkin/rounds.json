@@ -1,0 +1,61 @@
+{
+  "accepted": true,
+  "baseline_ms": 1.7873,
+  "best_ms": 0.6507,
+  "created": 1787680104.279325,
+  "ledger": [
+    {
+      "compiled": true,
+      "duration_s": null,
+      "fix_rounds": 0,
+      "hypothesis": "",
+      "index": 0,
+      "ms": 1.7873,
+      "note": "",
+      "outcome": "baseline",
+      "parity": null,
+      "predicted_speedup": null,
+      "risk": "",
+      "slug": null,
+      "speedup": null,
+      "theme": ""
+    },
+    {
+      "compiled": true,
+      "duration_s": 642.731,
+      "fix_rounds": 0,
+      "hypothesis": "profiling showed the benchmark drives ZERO influences (J=0, skinN=0, skinJ=0, n=159602), so every DQS array op is empty and the only real work is (a) MItGeometry::allPositions, (b) copying 159602 points into an nd::Array, and (c) per-object allocator churn in the nd runtime before it throws on the N-vs-skinN reshape. from_data() made three passes over 3.8 MB (reserve+push_back, alloc's zero-fill, then an element-wise assign) and re-mmap'd the buffer every tick; collapsing that to one pass over a buffer that survives the evaluation should remove most of it",
+      "index": 1,
+      "ms": 1.0341,
+      "note": "",
+      "outcome": "accept",
+      "parity": "pass",
+      "predicted_speedup": 1.6,
+      "risk": "the scratch members make deform() non-reentrant on a single node instance. Maya serialises a given node's compute and the task brief classifies these nodes Serial, so concurrent EM evaluation of DIFFERENT instances is fine (the state is per-instance, never a static registry). No comparison, tie-break, type or rounding was touched, and every arithmetic loop is byte-for-byte the code that was there before -- the edits are allocation and lifetime only.",
+      "slug": "reuse_point_buffers",
+      "speedup": 1.7283628275795377,
+      "theme": "the node is elementwise, not query-shaped, so the win was deleting whole-array temporaries: adopt the marshalling vector instead of copying it, reuse the MPointArray and the point buffer across evaluations, and stop heap-allocating an empty buffer for every one of the ~90 nd::Array locals"
+    },
+    {
+      "compiled": true,
+      "duration_s": 604.293,
+      "fix_rounds": 0,
+      "hypothesis": "this node is ELEMENTWISE, not query-shaped, and at the benchmark's sizes the arithmetic is nil -- every array input is empty (the spec declares no inputs, so matrix/bindPreMatrix/weightList arrive with 0 elements) while the mesh is 159,602 verts. So the whole cost is per-vertex marshalling: allPositions() writes 5.1 MB of (x,y,z,1) doubles that we immediately re-read into a (N,3) double buffer. Taking the mesh's float positions directly off the already-computed outputGeom handle removes one full 5.1 MB materialisation and turns the marshal into a single 1.9 MB read / 3.8 MB write widening loop.",
+      "index": 2,
+      "ms": 0.6507,
+      "note": "",
+      "outcome": "accept",
+      "parity": "pass",
+      "predicted_speedup": 1.5,
+      "risk": "getRawPoints() is the WHOLE vertex list, whereas MItGeometry may cover a component subset -- so the fast path is gated on numVertices() == iter.count() and falls back to allPositions() otherwise. The MPointArray is still sized and filled on the write-back path, including the tail past the rows the lowered code produced, which is restored from the rest buffer so setAllPositions() sees exactly what it saw before.",
+      "slug": "raw_points_read",
+      "speedup": 2.746734286153374,
+      "theme": "read the rest points straight off MFnMesh::getRawPoints() and widen float->double in one pass, instead of materialising a 159k-element MPointArray with MItGeometry::allPositions() and then re-reading it"
+    }
+  ],
+  "parity_gate": "authored+pointwise",
+  "reason": "accepted (2.75x)",
+  "rounds": 2,
+  "speedup": 2.746734286153374,
+  "type_name": "dualQuaternionSkin"
+}

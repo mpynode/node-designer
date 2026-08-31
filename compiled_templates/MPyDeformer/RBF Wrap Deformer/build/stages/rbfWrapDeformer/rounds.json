@@ -1,0 +1,61 @@
+{
+  "accepted": true,
+  "baseline_ms": 2279.4031,
+  "best_ms": 0.2242,
+  "created": 1787675711.622538,
+  "ledger": [
+    {
+      "compiled": true,
+      "duration_s": null,
+      "fix_rounds": 0,
+      "hypothesis": "",
+      "index": 0,
+      "ms": 2279.4031,
+      "note": "",
+      "outcome": "baseline",
+      "parity": null,
+      "predicted_speedup": null,
+      "risk": "",
+      "slug": null,
+      "speedup": null,
+      "theme": ""
+    },
+    {
+      "compiled": true,
+      "duration_s": 619.441,
+      "fix_rounds": 0,
+      "hypothesis": "nd::inv on the (M+4)=1566 augmented system is ~7.7e9 ops and is a pure function of restCage alone, while deformCage animates through T only -- so an exact-memcmp cache of inv(A) removes the whole O(n^3) level from every evaluation after the first; what remains is 2.44M std::log calls and ~8 whole-array 19.5MB temporaries, both of which fuse away, and H is likewise a pure function of (rest, P)",
+      "index": 1,
+      "ms": 1.6922,
+      "note": "",
+      "outcome": "accept",
+      "parity": "pass",
+      "predicted_speedup": 30.0,
+      "risk": "a cache keyed on a geometry input is not covered by the SCALAR parity path, so the fingerprint is an exact byte-compare of the full converted double buffer rather than pointer+count -- strictly stronger, and unlike a setDependentsDirty flag it is not falsely invalidated by dgdirty. Nothing about the OUTPUT is cached: W = Ainv @ T is rebuilt every evaluation from the animating deformCage, as is warped and the envelope blend. The fused kernels are bit-identical, not merely within tolerance: pc[i] and the k=3 dot accumulate ascending from 0.0 with operand order A*B exactly as nd::sum_mul and nd::matmul2d's 4-row block do, the same nd::maximum_elem is called, and mm_k_by3 only reorders WHICH output column is being accumulated, never the order of the k terms within any one of them.",
+      "slug": "cache_rest_inverse_and_basis",
+      "speedup": 1347.0057321829572,
+      "theme": "the 1566x1566 Gauss-Jordan inverse and the RBF basis matrix H depend only on inputs the benchmark never changes, so cache both on an exact byte-compare of the source buffers and fuse the e2->Ke->H chain into one allocation-free pass"
+    },
+    {
+      "compiled": true,
+      "duration_s": 607.08,
+      "fix_rounds": 0,
+      "hypothesis": "the file arrived already caching rc/inv(A) on the restCage and H on the deformed points, so the only work left per evaluation was TWO full streams of a 19.6 MB matrix: Ainv in W = Ainv @ T, and H in warped = H @ W. W depends solely on Ainv and the deformCage, which the bench never moves, so a content fingerprint on the deformCage buffer should delete the first stream outright. What remains is a pure parallel map -- output row i is a function of H row i and the tiny read-only W -- so a dynamic-cursor pool should turn the second stream from one core's ~30 GB/s into the chip's aggregate bandwidth, bit-identically, because no reduction is ever split across threads",
+      "index": 2,
+      "ms": 0.2242,
+      "note": "",
+      "outcome": "accept",
+      "parity": "pass",
+      "predicted_speedup": 4.0,
+      "risk": "the W cache is keyed on inv(A) validity AND the raw deformCage bytes, so a stale W can only surface if BOTH the restCage fingerprint and the deformCage fingerprint miss a real change -- both are exact byte compares of the source buffers, which is strictly stronger than pointer+count. The threading risk is the chunk cursor: it is an std::atomic member of the pool, which is itself a per-node member, so two instances evaluating concurrently under the EM cannot rewind each other. Each row still accumulates its k terms serially in ascending l from 0.0, so the answer is independent of thread count and of where chunk boundaries land",
+      "slug": "cache_solve_thread_eval_matmul",
+      "speedup": 10166.829170383586,
+      "theme": "cache W = inv(A) @ T as derived state keyed on the deformCage bytes, then spread the remaining bandwidth-bound (Nn x M+4) @ (M+4,3) evaluation matmul over a persistent per-node worker pool"
+    }
+  ],
+  "parity_gate": "authored+pointwise",
+  "reason": "accepted (10166.83x)",
+  "rounds": 2,
+  "speedup": 10166.829170383586,
+  "type_name": "rbfWrapDeformer"
+}

@@ -1,0 +1,38 @@
+{
+  "data": {
+    "class_path": "mpynode_user.SineRipple",
+    "expression": "# Sine-ripple deformer: each vertex rides a travelling sine wave along its\n# surface normal. The wave's phase advances with distance from the mesh\n# centre and with time, so it animates as the timeline plays.\nmesh = self.outputGeometry[0]            # writable handle for this output mesh\npts = mesh.getPoints()                   # (N, 3) object-space points (numpy)\n\n# True per-vertex normals (object space). The output handle wraps an API-1\n# MFnMesh, so use the in-out MFloatVectorArray form.\nnrm = om.MFloatVectorArray()\nmesh.getVertexNormals(False, nrm, om.MSpace.kObject)\nnormals = np.array([[nrm[i].x, nrm[i].y, nrm[i].z]\n                    for i in range(nrm.length())], dtype=float)\n\namp = self.amplitude\nfreq = self.frequency\nspeed = self.speed\nenv = self.envelope               # built-in deformer envelope (0..1)\n\ncentre = pts.mean(axis=0)\ndist = np.linalg.norm(pts - centre, axis=1)\nphase = 2.0 * np.pi * freq * dist - speed * self.time\noffset = (amp * np.sin(phase))[:, None] * normals\n\nmesh.setPoints(pts + env * offset)\n",
+    "init_source": "import numpy as np\nimport maya.OpenMaya as om\n",
+    "input_attrs": {
+      "amplitude": {
+        "attr_type": "float",
+        "default_value": 0.4,
+        "is_array": false,
+        "order": 0
+      },
+      "frequency": {
+        "attr_type": "float",
+        "default_value": 0.6,
+        "is_array": false,
+        "order": 1
+      },
+      "speed": {
+        "attr_type": "float",
+        "default_value": 0.1,
+        "is_array": false,
+        "order": 2
+      },
+      "time": {
+        "attr_type": "time",
+        "is_array": false,
+        "order": 3
+      }
+    },
+    "methods_source": "@maya_test(label=\"Ripple deforms the mesh (rest at envelope 0)\", digits=4)\ndef test_ripple(self):\n    \"\"\"Validate the node's INTENT (same test passes on the interpreted node and\n    its C++ compile -> parity): with the wave OFF (envelope 0, or amplitude 0)\n    the mesh sits exactly at rest; with the wave ON it actually moves.\"\"\"\n    from maya import cmds as mc\n    import maya.api.OpenMaya as om2\n    import numpy as np\n    from mpynode._common.methods.test_helpers import assert_close, assert_true\n\n    name = self.get_name()\n\n    def _set(plug, *vals):\n        # A demo may have CONNECTED this input; break it so the test can drive it.\n        for s in (mc.listConnections(plug, s=True, d=False, plugs=True) or []):\n            mc.disconnectAttr(s, plug)\n        mc.setAttr(plug, *vals)\n\n    # Validate whatever mesh this deformer already drives (e.g. the demo's\n    # plane); build one only if it drives nothing yet. Keeps the test on `self`\n    # (interpreted==compiled parity) and robust to a live, demo-populated scene\n    # and repeated runs.\n    geo = mc.deformer(name, q=True, geometry=True) or []\n    if geo:\n        sh = (mc.ls(geo[0], long=True) or [geo[0]])[0]\n    else:\n        pl = mc.polyPlane(w=10, h=10, sx=12, sy=12, name=\"rippleTest#\")[0]\n        mc.deformer(name, e=True, g=pl)\n        sh = mc.listRelatives(pl, shapes=True, noIntermediate=True, f=True)[0]\n    xf = mc.listRelatives(sh, parent=True, f=True)[0]\n\n    def pts(amp, env, frame=1):\n        _set(name + \".amplitude\", amp)\n        _set(name + \".envelope\", env)\n        mc.currentTime(frame)\n        mc.dgdirty(name + \".outputGeometry\")\n        mc.getAttr(sh + \".outMesh\")\n        sel = om2.MSelectionList(); sel.add(xf)\n        fn = om2.MFnMesh(sel.getDagPath(0))\n        return np.array([[p.x, p.y, p.z]\n                         for p in fn.getPoints(om2.MSpace.kObject)])\n\n    rest = pts(0.0, 1.0)          # amplitude 0 -> zero offset\n    env_off = pts(0.6, 0.0)       # envelope 0 -> zero offset\n    deformed = pts(0.6, 1.0)      # wave ON -> real displacement\n\n    # Both \"off\" states must equal the rest mesh (component-wise).\n    assert_close(env_off.ravel().tolist(), rest.ravel().tolist())\n    # ...and turning the wave on must actually move points.\n    moved = float(np.abs(deformed - rest).max())\n    assert_true(moved > 0.05,\n                \"ripple should displace the mesh (max move %.4f)\" % moved)\n\n\n@maya_demo(label=\"Ripple a Plane\")\ndef demo(self):\n    \"\"\"Create a subdivided plane, attach this ripple deformer to it, dial in a\n    visible wave, and set a one-loop playback range. Press play to watch the\n    wave travel across the surface (the wave advances with `time` and with\n    distance from the mesh centre).\"\"\"\n    from maya import cmds as mc\n    name = self.get_name()\n\n    plane = mc.polyPlane(w=10, h=10, sx=24, sy=24, name=\"rippleTarget#\")[0]\n    mc.setAttr(plane + \".translate\", 0.0, 0.0, 0.0, type=\"double3\")\n    # Attach THIS deformer to the plane (idempotent -- adopt the bare node).\n    if name not in (mc.listHistory(plane) or []):\n        mc.deformer(name, e=True, g=plane)\n\n    mc.setAttr(name + \".amplitude\", 0.6)\n    mc.setAttr(name + \".frequency\", 0.8)\n    mc.setAttr(name + \".speed\", 0.15)\n    # Auto-wire the animation clock if the template-apply path did not already.\n    if not (mc.listConnections(name + \".time\", s=True, d=False) or []):\n        try:\n            mc.connectAttr(\"time1.outTime\", name + \".time\", force=True)\n        except Exception:\n            pass\n\n    mc.playbackOptions(min=1, max=120)\n    mc.currentTime(1)\n    mc.select(plane, replace=True)\n    try:\n        for _panel in mc.getPanel(type=\"modelPanel\") or []:\n            _cam = mc.modelEditor(_panel, query=True, camera=True)\n            if _cam:\n                mc.viewFit(_cam, allObjects=True)\n    except Exception:\n        pass\n    return name\n",
+    "native_type": "mPyDeformer",
+    "node_name": "sineRipple",
+    "output_attrs": {},
+    "stored_vars": "{\"protocol\":8,\"format\":\"keyed2\",\"codec\":\"zlib\",\"has_pickle\":false,\"data_b64\":\"eJyrrgUAAXUA+Q==\"}"
+  },
+  "version": 2
+}

@@ -1,0 +1,222 @@
+{
+  "manifest_version": 1,
+  "porter_recipe_version": "24",
+  "provider": "claude_cli",
+  "model": "claude-opus-5[1m]",
+  "strict": false,
+  "plugin_name": "MPyFile_Game_Of_Life_Texture",
+  "bundle": "compiled_templates/MPyFile/Game Of Life Texture/MPyFile_Game_Of_Life_Texture.bundle",
+  "created": 1787965076.956897,
+  "nodes": [
+    {
+      "source_node": "gameOfLifeTex",
+      "type_name": "gameOfLifeTex",
+      "type_id": "0x0001051f",
+      "type_id_source": "derived",
+      "base": "MPxNode",
+      "spec_hash": "81e7714d0ed8dbf45eaf52c4944a70105bb38a3568d2e38c951b30b147e00be0",
+      "port_cache_key": "81e7714d0ed8dbf45eaf52c4944a70105bb38a3568d2e38c951b30b147e00be0",
+      "cache": "hit",
+      "build_status": "compiled",
+      "build_reason": "",
+      "ported": false,
+      "incomplete": [],
+      "invented_io": [],
+      "missing_includes": [],
+      "vp2_skip": "",
+      "verify": {
+        "ran": true,
+        "pass": true,
+        "maxerr": 0.0,
+        "tol": 0.0001,
+        "reason": "verified with 1 geo/string input(s) left at default (unwired, could not be synthesized): bakePath | authored @maya_test: 1/1 passed",
+        "timing": {
+          "measured": true,
+          "py_ms": 0.13325002510100603,
+          "cpp_ms": 0.00925001222640276,
+          "n": 3,
+          "truncated": false,
+          "scene": "geo 140 / array 5000",
+          "ratio": 0.06941846517020223,
+          "verdict": "below-floor",
+          "rung": [
+            140,
+            5000
+          ]
+        },
+        "authored_test": {
+          "ran": true,
+          "passed": true,
+          "count": 1,
+          "passes": 1,
+          "reason": ""
+        }
+      },
+      "spec": {
+        "schema_version": 1,
+        "source_node": "gameOfLifeTex",
+        "mpy_type": "mPyFile",
+        "suggested": {
+          "node_type_name": "gameOfLifeTex",
+          "class_name": "GameOfLifeTex",
+          "type_id": "0x000761c6",
+          "mpx_base": "MPxNode",
+          "note": "texture/file evaluation node",
+          "heaviness": "medium"
+        },
+        "inputs": {
+          "width": {
+            "type": "int",
+            "is_array": false,
+            "portable": true,
+            "cpp": {
+              "cat": "scalar",
+              "fn": "MFnNumericAttribute",
+              "data": "kInt",
+              "cpp": "int",
+              "read": "asInt",
+              "portable": true
+            },
+            "default_value": 100
+          },
+          "height": {
+            "type": "int",
+            "is_array": false,
+            "portable": true,
+            "cpp": {
+              "cat": "scalar",
+              "fn": "MFnNumericAttribute",
+              "data": "kInt",
+              "cpp": "int",
+              "read": "asInt",
+              "portable": true
+            },
+            "default_value": 100
+          },
+          "density": {
+            "type": "float",
+            "is_array": false,
+            "portable": true,
+            "cpp": {
+              "cat": "scalar",
+              "fn": "MFnNumericAttribute",
+              "data": "kFloat",
+              "cpp": "float",
+              "read": "asFloat",
+              "portable": true
+            },
+            "min_value": 0.0,
+            "max_value": 1.0,
+            "default_value": 0.5
+          },
+          "frame": {
+            "type": "time",
+            "is_array": false,
+            "portable": true,
+            "cpp": {
+              "cat": "unit",
+              "fn": "MFnUnitAttribute",
+              "data": "kTime",
+              "cpp": "double",
+              "read": "asMTime",
+              "portable": true
+            }
+          },
+          "reset": {
+            "type": "enum",
+            "is_array": false,
+            "portable": true,
+            "cpp": {
+              "cat": "enum",
+              "fn": "MFnEnumAttribute",
+              "data": "enum",
+              "cpp": "short",
+              "read": "asShort",
+              "portable": true
+            },
+            "enum_names": [
+              "False",
+              "True"
+            ]
+          },
+          "bakePath": {
+            "type": "string",
+            "is_array": false,
+            "portable": true,
+            "cpp": {
+              "cat": "string",
+              "fn": "MFnTypedAttribute",
+              "data": "kString",
+              "cpp": "MString",
+              "read": "asString",
+              "portable": true
+            }
+          },
+          "uvCoord": {
+            "type": "float2",
+            "is_array": false,
+            "portable": true,
+            "cpp": {
+              "cat": "vector2",
+              "fn": "MFnNumericAttribute",
+              "data": "k2Float",
+              "cpp": "float[2]",
+              "read": "asFloat2",
+              "portable": true
+            },
+            "children": [
+              "uCoord",
+              "vCoord"
+            ]
+          }
+        },
+        "outputs": {
+          "outAlpha": {
+            "type": "float",
+            "is_array": false,
+            "portable": true,
+            "cpp": {
+              "cat": "scalar",
+              "fn": "MFnNumericAttribute",
+              "data": "kFloat",
+              "cpp": "float",
+              "read": "asFloat",
+              "portable": true
+            }
+          },
+          "outColor": {
+            "type": "color",
+            "is_array": false,
+            "portable": true,
+            "cpp": {
+              "cat": "color",
+              "fn": "MFnNumericAttribute",
+              "data": "color",
+              "cpp": "float[3]",
+              "read": "asFloat3",
+              "portable": true
+            }
+          }
+        },
+        "variables": {},
+        "compute": "# Conway's Game of Life as a procedural texture. A bounded numpy board (no\n# wrap) advances one step per frame and is sampled per-UV: white = alive,\n# black = dead. Drive `frame` (auto-wired to the timeline) to animate; set\n# `reset` True to reseed `density` random cells; `width`/`height` set the grid.\n# Spelled to LOWER to C++ (it must: nd::MT19937 reproduces numpy's RandomState\n# stream bit-for-bit, so the compiled node seeds the SAME board -- an AI port\n# would substitute a different generator and diverge). That means: the advance is\n# inline rather than `_gol_advance(self)` (the node object cannot be passed into a\n# helper), the first-run seed is hasattr-guarded (persistent state must be written\n# before it is read), uvCoord is indexed rather than tuple-unpacked, and the\n# sampled cell is float()-ed (an indexed element is a rank-0 array, not a scalar).\nhh = max(1, int(self.height))\nww = max(1, int(self.width))\nfr = float(self.frame)\ndens = float(self.density)\nreset_on = int(self.reset) == 1\nif not hasattr(self, \"board\"):\n    self.board = _gol_seed(hh, ww, dens, seed=int(fr) if reset_on else 0)\n    self.lastFrame = fr\n    self.bakedFrame = -1.0\nboard = self.board\nshape_bad = (int(board.shape[0]) != hh or int(board.shape[1]) != ww)\nif shape_bad or fr != self.lastFrame:\n    if reset_on or shape_bad:\n        # While reset is held, vary the seed by frame so the random startup is\n        # live (density edits are visible); else seed deterministically.\n        board = _gol_seed(hh, ww, dens, seed=int(fr) if reset_on else 0)\n    else:\n        board = _gol_step(board)\n    self.board = board\n    self.lastFrame = fr\n# Bake the frame for the OSL/Arnold tier, which samples the file (Game of Life is\n# stateful, so a shader cannot evaluate it from (u, v, t)). The third argument\n# writes a FRAME-STAMPED name (bakePath \"x.png\" -> \"x.0007.png\"): Arnold's texture\n# system caches by filename and never re-stats, so re-baking one fixed path leaves\n# a render showing whichever frame it read first. The result is ASSIGNED (a blessed\n# call left as a bare statement is dropped from the emitted C++), and bakedFrame\n# advances only on SUCCESS so an unwritable path is retried rather than marked done.\nif self.bakePath != \"\" and fr != self.bakedFrame:\n    baked = self.write_texture(self.bakePath, _gol_rgba(board), fr)\n    if baked:\n        self.bakedFrame = fr\nh, w = int(board.shape[0]), int(board.shape[1])\nu = self.uvCoord[0]\nv = self.uvCoord[1]\nuu = u - np.floor(u)\nvv = v - np.floor(v)\ncx = min(w - 1, int(uu * w))\ncy = min(h - 1, int((1.0 - vv) * h))\nalive = 1.0 if float(board[cy, cx]) > 0.5 else 0.0\nself.outColor = (alive, alive, alive)\nself.outAlpha = 1.0\n",
+        "init": "import numpy as np\n\ndef _gol_seed(h, w, density, seed=0):\n    \"\"\"Random board: a `density` fraction of cells alive. Deterministic for a\n    given (shape, density, seed) so a reset is reproducible.\"\"\"\n    rng = np.random.RandomState(int(seed) & 0x7fffffff)\n    return rng.random((int(h), int(w))) < float(density)\n\ndef _gol_step(board):\n    \"\"\"One Conway step on a BOUNDED grid: neighbours beyond the edge are dead\n    (zero padding, NOT np.roll), so live cells never wrap around the border --\n    a glider that reaches a wall dies rather than reappearing on the far side.\"\"\"\n    b = board.astype(np.uint8)\n    pad = np.zeros((b.shape[0] + 2, b.shape[1] + 2), dtype=np.uint8)\n    pad[1:-1, 1:-1] = b\n    n = (pad[:-2, :-2] + pad[:-2, 1:-1] + pad[:-2, 2:] +\n         pad[1:-1, :-2]                 + pad[1:-1, 2:] +\n         pad[2:, :-2]  + pad[2:, 1:-1]  + pad[2:, 2:])\n    return (n == 3) | ((b == 1) & (n == 2))\n\ndef _gol_rgba(board):\n    \"\"\"(H, W) bool board -> (H, W, 4) float32 RGBA, white alive / black dead.\n\n    Spelled with an explicit shape tuple and full slices (NOT `board.shape + (4,)`\n    / `out[..., i]`): shape arithmetic and Ellipsis indexing do not transpile, and\n    the Compute tier has to lower to C++ so its RNG stays bit-exact.\"\"\"\n    alive = board.astype(np.float32)\n    out = np.zeros((board.shape[0], board.shape[1], 4), dtype=np.float32)\n    out[:, :, 0] = alive\n    out[:, :, 1] = alive\n    out[:, :, 2] = alive\n    out[:, :, 3] = 1.0\n    return out\n\ndef _gol_advance(node):\n    \"\"\"Seed or step the board ONCE for the current frame (idempotent per frame\n    so Compute and Viewport can both call it without double-stepping) and return\n    the (H, W) bool board.\n\n    Stored on `node` (process-global, survives the per-UV / per-frame evals):\n      board  -- the live grid       lastFrame -- frame it last advanced\n\n    The OSL bake is NOT done here: the Compute tier owns it (via the blessed\n    self.write_texture, which has a C++ twin), so it happens in the compiled node\n    too. This helper is what the VIEWPORT tier calls -- it shares the same two\n    stored vars, so whichever tier runs first advances and the other no-ops.\n    \"\"\"\n    h = max(1, int(node.height))\n    w = max(1, int(node.width))\n    density = float(node.density)\n    frame = float(node.frame)\n    board = getattr(node, \"board\", None)\n    reset_on = (int(node.reset) == 1)\n    shape_bad = (board is None or getattr(board, \"shape\", None) != (h, w))\n    if shape_bad or frame != getattr(node, \"lastFrame\", None):\n        if reset_on or shape_bad:\n            # While reset is held, vary the seed by frame so the random startup\n            # is live (density edits are visible); else seed deterministically.\n            board = _gol_seed(h, w, density, seed=int(frame) if reset_on else 0)\n        else:\n            board = _gol_step(board)\n        node.board = board\n        node.lastFrame = frame\n    return board\n",
+        "affects": "all",
+        "methods": "# Full setup for the Game of Life texture: create a polyPlane and a lambert\n# shader, assign the shader to the plane, and connect this node's outColor into\n# the lambert's colour so the simulation displays. Also stores the per-node PNG\n# path the OSL tier reads and (best effort) builds the Arnold render path.\n\n\ndef demo(self):\n    from maya import cmds as mc\n    import os, tempfile\n    name = self.get_name()\n\n    # 1. A plane to show the texture on.\n    plane = mc.polyPlane(width=10, height=10, subdivisionsX=1,\n                         subdivisionsY=1, name=name + \"_plane\")[0]\n\n    # 2. A lambert + shading group; assign the plane; drive its colour from us.\n    shader = mc.shadingNode(\"lambert\", asShader=True, name=name + \"_lambert\")\n    sg = mc.sets(renderable=True, noSurfaceShader=True, empty=True, name=shader + \"SG\")\n    mc.connectAttr(shader + \".outColor\", sg + \".surfaceShader\", force=True)\n    mc.sets(plane, edit=True, forceElement=sg)\n    mc.connectAttr(name + \".outColor\", shader + \".color\", force=True)\n\n    # 3. The per-node PNG the OSL/Arnold tier reads (one file, overwritten each\n    #    frame). Set it on the node's bakePath INPUT (Compute reads it there and\n    #    bakes via self.write_texture) AND point the OSL shader at the SAME path\n    #    so the two agree.\n    bake = os.path.join(\n        tempfile.gettempdir(),\n        \"mpy_gol_%s.png\" % name.replace(\"|\", \"_\").replace(\":\", \"_\"))\n    mc.setAttr(name + \".bakePath\", bake, type=\"string\")\n\n    # 4. Arnold render path (best effort -- the viewport scene is valid without\n    #    it). Compile an aiOslShader from this node's .osl output, point it at the\n    #    baked PNG, and route it through the shadingEngine's aiSurfaceShader so\n    #    Arnold renders the board per-UV while the lambert keeps the viewport.\n    try:\n        from mpynode._common.osl.osl_targets import apply_osl_to_arnold\n        osl = apply_osl_to_arnold(name)\n        if osl:\n            if mc.attributeQuery(\"fileName\", node=osl, exists=True):\n                mc.setAttr(osl + \".fileName\", bake, type=\"string\")\n            # The shader rebuilds the per-frame bake name from fileName +\n            # bakeFrame, so bakeFrame MUST track the node's frame -- left at 0\n            # it samples one file forever, which is the stale render the\n            # sequence bake exists to avoid. Driving it from an animated plug\n            # is also what makes MtoA re-translate the shader each frame.\n            if mc.attributeQuery(\"bakeFrame\", node=osl, exists=True):\n                mc.connectAttr(name + \".frame\", osl + \".bakeFrame\", force=True)\n            if mc.attributeQuery(\"aiSurfaceShader\", node=sg, exists=True):\n                amtl = mc.shadingNode(\"aiStandardSurface\", asShader=True,\n                                      name=name + \"_arnoldMtl\")\n                try:\n                    mc.setAttr(amtl + \".specular\", 0.0)\n                except Exception:\n                    pass\n                mc.connectAttr(osl + \".outColor\", amtl + \".baseColor\", force=True)\n                mc.connectAttr(amtl + \".outColor\", sg + \".aiSurfaceShader\", force=True)\n    except Exception:\n        pass\n\n    # 5. Force one eval at the current frame so the board exists and is baked now.\n    try:\n        mc.dgdirty(name + \".outColor\")\n        mc.getAttr(name + \".outColor\")\n    except Exception:\n        pass\n    return name\n\n\n@maya_test(label=\"Game of Life texture samples the live board\", digits=3)\ndef test_game_of_life(self):\n    \"\"\"Validate the node's INTENT (the SAME test passes on the interpreted node\n    and its C++ compile -> parity): with `reset` ON the per-UV texture equals\n    the deterministic seed board (a bounded, no-wrap Conway grid seeded from the\n    frame); with `reset` OFF, advancing one frame applies exactly one bounded\n    Conway step. Sampled through the PUBLIC uCoord/vCoord/outColor plugs.\"\"\"\n    from maya import cmds as mc\n    import numpy as np\n    from mpynode._common.methods.test_helpers import assert_true\n\n    name = self.get_name()\n\n    # Reproduce the node's bounded-Conway kernel locally (its Init-tier\n    # _gol_seed / _gol_step are not visible from the Methods namespace).\n    def _seed(h, w, density, seed):\n        rng = np.random.RandomState(int(seed) & 0x7fffffff)\n        return rng.random((int(h), int(w))) < float(density)\n\n    def _step(board):\n        b = board.astype(np.uint8)\n        pad = np.zeros((b.shape[0] + 2, b.shape[1] + 2), dtype=np.uint8)\n        pad[1:-1, 1:-1] = b\n        n = (pad[:-2, :-2] + pad[:-2, 1:-1] + pad[:-2, 2:] +\n             pad[1:-1, :-2]                 + pad[1:-1, 2:] +\n             pad[2:, :-2]  + pad[2:, 1:-1]  + pad[2:, 2:])\n        return (n == 3) | ((b == 1) & (n == 2))\n\n    g = 5\n    mc.setAttr(name + \".width\", g)\n    mc.setAttr(name + \".height\", g)\n    mc.setAttr(name + \".density\", 0.5)\n\n    def sample(cx, cy):\n        # Sample the centre of cell (cx, cy). The Compute tier flips v, so\n        # vCoord = 1 - (cy + 0.5)/g lands on board row cy (top-down).\n        mc.setAttr(name + \".uCoord\", (cx + 0.5) / float(g))\n        mc.setAttr(name + \".vCoord\", 1.0 - (cy + 0.5) / float(g))\n        mc.dgdirty(name + \".outColor\")\n        return mc.getAttr(name + \".outColor\")[0][0]\n\n    # 1) reset ON at frame 5 -> texture == deterministic seed board (seed=frame).\n    mc.setAttr(name + \".reset\", 1)\n    mc.currentTime(5)\n    board = _seed(g, g, 0.5, 5)\n    for cy in range(g):\n        for cx in range(g):\n            assert_true((sample(cx, cy) > 0.5) == bool(board[cy, cx]),\n                        \"seed cell (%d,%d) does not match the seeded board\" % (cx, cy))\n\n    # 2) reset OFF + advance one frame -> exactly one bounded Conway step.\n    mc.setAttr(name + \".reset\", 0)\n    mc.currentTime(6)\n    stepped = _step(board)\n    for cy in range(g):\n        for cx in range(g):\n            assert_true((sample(cx, cy) > 0.5) == bool(stepped[cy, cx]),\n                        \"stepped cell (%d,%d) does not match one Conway step\" % (cx, cy))\n\n\n\"\"\"Setup source for mPyFile nodes (self-first instance method).\"\"\"\n\n# VANILLA: this body ships as EMBEDDED PYTHON inside a compiled .mll and must run\n# on a machine with Maya but WITHOUT mpynode, so the setup_helpers ``_selection``\n# and the pure-cmds ``_api2.mpy_file.ensure_in_texture_list`` it used to import are\n# inlined below. They are FUNCTION-LOCAL rather than module-level because\n# node_setups.merge_type_default APPENDS this file to the host node's own methods\n# source -- a module-level def would clobber a same-named helper the host already\n# defines. ``warm_init_namespace`` is the one name that stays an import; see the\n# call site for why that is safe.\ndef setup(self, *args, **kwargs):\n    from maya import cmds as mc\n\n    def _selection(override=None, exclude=None):\n        \"\"\"Inputs for setup: `override` (the snapshot \"Run setup\" passes) wins\n        over the live selection; `exclude` drops this node so it is never its\n        own input.\"\"\"\n        sel = list(override) if override is not None else (\n            mc.ls(selection=True, long=False) or [])\n        return [n for n in sel if n != exclude] if exclude else sel\n\n    def _ensure_in_texture_list(n):\n        \"\"\"Wire ``n.message -> defaultTextureList1.textures`` so the Hypershade\n        can graph the node (parity with ``shadingNode -asTexture``).\n\n        Idempotent AND self-healing: it inspects the texture-list's source plugs\n        so it is robust to the create-time race where ``shadingNode -asTexture``\n        ALSO wires this connection -- duplicates are disconnected so exactly one\n        remains. Vendored from _api2.mpy_file.ensure_in_texture_list, which is\n        pure maya.cmds and works against a compiled node too -- importing it\n        would drag mpynode into a compiled bundle.\"\"\"\n        try:\n            if not mc.objExists(n):\n                return False\n            msg = n + \".message\"\n            if not mc.objExists(\"defaultTextureList1\"):\n                # Default node is created on demand by shadingNode; make it so\n                # the connection has a destination even in a minimal scene.\n                try:\n                    mc.createNode(\"defaultTextureList\",\n                                  name=\"defaultTextureList1\", shared=True)\n                except Exception:\n                    pass\n            pairs = mc.listConnections(\n                \"defaultTextureList1.textures\", connections=True, plugs=True,\n                source=True, destination=False) or []\n            mine = [pairs[i] for i in range(0, len(pairs) - 1, 2)\n                    if pairs[i + 1] == msg]\n            if mine:\n                for extra in mine[1:]:\n                    try:\n                        mc.disconnectAttr(msg, extra)\n                    except Exception:\n                        pass\n                return True\n            mc.connectAttr(msg, \"defaultTextureList1.textures\",\n                           nextAvailable=True)\n            return True\n        except Exception:\n            return False\n\n    name = self.get_name()\n    # ``self`` is the already-created mPyFile (create() ran shadingNode -asTexture,\n    # wired time1, seeded Init/Compute/Viewport + a place2dTexture). Wire outColor\n    # on top of that plumbing -- do NOT re-create place2dTexture or re-seed.\n    _ensure_in_texture_list(name)\n    # INTERPRETED-ONLY, and deliberately left as an import rather than vendored:\n    # it registers the node's Init source into mpynode's init registry, and it\n    # gates on the ``_initSource`` plug -- which a compiled node does not have\n    # (command_dispatch.COMPILED_UNSUPPORTED), so a vendored copy could only ever\n    # return False in a bundle. Guarded so a missing mpynode skips it instead of\n    # killing the whole setup; the function itself never raises.\n    try:\n        from mpynode._api2.mpy_file import warm_init_namespace\n        warm_init_namespace(name)\n    except Exception:\n        pass\n\n    # Selection snapshot (build()/Run setup pass it via kwargs[\"selection\"]);\n    # exclude self so it is never treated as its own shader input.\n    def _is_surface_shader(n):\n        cls_tags = mc.getClassification(mc.nodeType(n)) or []\n        return any(\"shader/surface\" in t for t in cls_tags)\n    sel = [s for s in _selection(override=kwargs.get(\"selection\"),\n                                 exclude=name) if _is_surface_shader(s)]\n\n    if sel:\n        shader = sel[-1]\n        dest = next((a for a in (\"color\", \"baseColor\")\n                     if mc.attributeQuery(a, node=shader, exists=True)), None)\n        if dest:\n            mc.connectAttr(name + \".outColor\", \"%s.%s\" % (shader, dest), force=True)\n    return name\n",
+        "commands": [],
+        "portability": {
+          "portable": true,
+          "blockers": [],
+          "warnings": [
+            "uses RNG (np.random/random) -- mapped to C++ <random>, seeded deterministically per compute() from inputs; NOT bit-identical to Python, so pointwise parity is skipped",
+            "uses numpy -- vectorized math is reverse-engineered to C++ loops (verify numerically; np.random maps to C++ <random>; file I/O lowers only where the dtype is explicit -- np.fromfile/np.save/.tofile and ndio.read/ndio.write -- while np.load/np.loadtxt are blockers)"
+          ],
+          "unported": [],
+          "reads_image_file": false,
+          "reads_embedded_image": false,
+          "uses_mesh_intersector": false
+        }
+      }
+    }
+  ]
+}

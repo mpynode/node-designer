@@ -1,0 +1,1751 @@
+[
+ {
+  "folder": "MPyNode_DNET",
+  "mpn": "templates/MPyNode/DNET/template.mpn",
+  "native_type": "mPyNode",
+  "source_name": "dnet",
+  "demo_label": "Grid Net",
+  "compiled_type": "mPyDnet",
+  "status": "ok",
+  "demos": [
+   {
+    "func_name": "demo",
+    "label": "Grid Net",
+    "ma_basename": "MPyNode_DNET__demo",
+    "build": {
+     "demo": "demo",
+     "mpn": "templates/MPyNode/DNET/template.mpn",
+     "built": true,
+     "ma": "compiled_templates/MPyNode_DNET/MPyNode_DNET__demo.ma",
+     "ma_basename": "MPyNode_DNET__demo",
+     "compiled_type": "mPyDnet",
+     "swapped": true,
+     "eval_ok": true,
+     "aux_interpreted": [],
+     "errors": [],
+     "notes": [],
+     "via": "mega",
+     "companions": [],
+     "compiled_node": "dnet"
+    },
+    "reopen": {
+     "ma": "compiled_templates/MPyNode_DNET/MPyNode_DNET__demo.ma",
+     "reopened": true,
+     "compiled_type": "mPyDnet",
+     "compiled_nodes": 1,
+     "mesh_verts": 18336,
+     "unknown_nodes": 0,
+     "unknown_plugins": [],
+     "errors": []
+    },
+    "status": "ok"
+   },
+   {
+    "func_name": "demo_layout",
+    "label": "Layout Net (JSON)",
+    "ma_basename": "MPyNode_DNET__demo_layout",
+    "build": {
+     "demo": "demo_layout",
+     "mpn": "templates/MPyNode/DNET/template.mpn",
+     "built": true,
+     "ma": "compiled_templates/MPyNode_DNET/MPyNode_DNET__demo_layout.ma",
+     "ma_basename": "MPyNode_DNET__demo_layout",
+     "compiled_type": "mPyDnet",
+     "swapped": true,
+     "eval_ok": true,
+     "aux_interpreted": [],
+     "errors": [],
+     "notes": [],
+     "via": "mega",
+     "companions": [],
+     "compiled_node": "dnet"
+    },
+    "reopen": {
+     "ma": "compiled_templates/MPyNode_DNET/MPyNode_DNET__demo_layout.ma",
+     "reopened": true,
+     "compiled_type": "mPyDnet",
+     "compiled_nodes": 1,
+     "mesh_verts": 31664,
+     "unknown_nodes": 0,
+     "unknown_plugins": [],
+     "errors": []
+    },
+    "status": "ok"
+   },
+   {
+    "func_name": "demo_two_knots",
+    "label": "Two Knots (Shapes)",
+    "ma_basename": "MPyNode_DNET__demo_two_knots",
+    "build": {
+     "demo": "demo_two_knots",
+     "mpn": "templates/MPyNode/DNET/template.mpn",
+     "built": true,
+     "ma": "compiled_templates/MPyNode_DNET/MPyNode_DNET__demo_two_knots.ma",
+     "ma_basename": "MPyNode_DNET__demo_two_knots",
+     "compiled_type": "mPyDnet",
+     "swapped": true,
+     "eval_ok": true,
+     "aux_interpreted": [],
+     "errors": [],
+     "notes": [],
+     "via": "mega",
+     "companions": [],
+     "compiled_node": "dnet"
+    },
+    "reopen": {
+     "ma": "compiled_templates/MPyNode_DNET/MPyNode_DNET__demo_two_knots.ma",
+     "reopened": true,
+     "compiled_type": "mPyDnet",
+     "compiled_nodes": 1,
+     "mesh_verts": 288,
+     "unknown_nodes": 0,
+     "unknown_plugins": [],
+     "errors": []
+    },
+    "status": "ok"
+   }
+  ],
+  "issues": [],
+  "multi_demo": true
+ },
+ {
+  "folder": "MPyBlendShape_Combo_Correctives",
+  "mpn": "templates/MPyBlendShape/Combo Correctives/template.mpn",
+  "native_type": "mPyBlendShape",
+  "source_name": "comboCorrectives",
+  "demo_label": "Combo + In-Between Correctives",
+  "compiled_type": "comboCorrectives",
+  "status": "ok",
+  "demos": [
+   {
+    "func_name": "demo",
+    "label": "Combo + In-Between Correctives",
+    "ma_basename": "MPyBlendShape_Combo_Correctives",
+    "build": {
+     "demo": "demo",
+     "mpn": "templates/MPyBlendShape/Combo Correctives/template.mpn",
+     "built": true,
+     "ma": "compiled_templates/MPyBlendShape_Combo_Correctives/MPyBlendShape_Combo_Correctives.ma",
+     "ma_basename": "MPyBlendShape_Combo_Correctives",
+     "compiled_type": "comboCorrectives",
+     "swapped": true,
+     "eval_ok": true,
+     "aux_interpreted": [],
+     "errors": [],
+     "notes": [],
+     "via": "mega",
+     "companions": [],
+     "compiled_node": "comboCorrectives"
+    },
+    "reopen": {
+     "ma": "compiled_templates/MPyBlendShape_Combo_Correctives/MPyBlendShape_Combo_Correctives.ma",
+     "reopened": true,
+     "compiled_type": "comboCorrectives",
+     "compiled_nodes": 1,
+     "mesh_verts": 220714,
+     "unknown_nodes": 0,
+     "unknown_plugins": [
+      "vrayformaya",
+      "stereoCamera",
+      "rpmaya",
+      "mtorsubdiv",
+      "TitanDDS"
+     ],
+     "errors": []
+    },
+    "status": "ok"
+   }
+  ],
+  "issues": [],
+  "multi_demo": false
+ },
+ {
+  "folder": "MPyConstraint_Procrustes_Tags",
+  "mpn": "templates/MPyConstraint/Procrustes Tags/template.mpn",
+  "native_type": "mPyConstraint",
+  "source_name": "procrustesTags",
+  "demo_label": "Run demo",
+  "compiled_type": "procrustesTags",
+  "status": "ok",
+  "demos": [
+   {
+    "func_name": "demo",
+    "label": "Run demo",
+    "ma_basename": "MPyConstraint_Procrustes_Tags",
+    "build": {
+     "demo": "demo",
+     "mpn": "templates/MPyConstraint/Procrustes Tags/template.mpn",
+     "built": true,
+     "ma": "compiled_templates/MPyConstraint_Procrustes_Tags/MPyConstraint_Procrustes_Tags.ma",
+     "ma_basename": "MPyConstraint_Procrustes_Tags",
+     "compiled_type": "procrustesTags",
+     "swapped": true,
+     "eval_ok": true,
+     "aux_interpreted": [],
+     "errors": [],
+     "notes": [],
+     "via": "mega",
+     "companions": [],
+     "compiled_node": "procrustesTags"
+    },
+    "reopen": {
+     "ma": "compiled_templates/MPyConstraint_Procrustes_Tags/MPyConstraint_Procrustes_Tags.ma",
+     "reopened": true,
+     "compiled_type": "procrustesTags",
+     "compiled_nodes": 1,
+     "mesh_verts": 656,
+     "unknown_nodes": 0,
+     "unknown_plugins": [],
+     "errors": []
+    },
+    "status": "ok"
+   }
+  ],
+  "issues": [],
+  "multi_demo": false
+ },
+ {
+  "folder": "MPyDeformer_NURBS_Wave",
+  "mpn": "templates/MPyDeformer/NURBS Wave/template.mpn",
+  "native_type": "mPyDeformer",
+  "source_name": "nurbsWave",
+  "demo_label": "Wave a NURBS Plane",
+  "compiled_type": "nurbsWave",
+  "status": "ok",
+  "demos": [
+   {
+    "func_name": "demo",
+    "label": "Wave a NURBS Plane",
+    "ma_basename": "MPyDeformer_NURBS_Wave",
+    "build": {
+     "demo": "demo",
+     "mpn": "templates/MPyDeformer/NURBS Wave/template.mpn",
+     "built": true,
+     "ma": "compiled_templates/MPyDeformer_NURBS_Wave/MPyDeformer_NURBS_Wave.ma",
+     "ma_basename": "MPyDeformer_NURBS_Wave",
+     "compiled_type": "nurbsWave",
+     "swapped": true,
+     "eval_ok": true,
+     "aux_interpreted": [],
+     "errors": [],
+     "notes": [],
+     "via": "mega",
+     "companions": [],
+     "compiled_node": "nurbsWave"
+    },
+    "reopen": {
+     "ma": "compiled_templates/MPyDeformer_NURBS_Wave/MPyDeformer_NURBS_Wave.ma",
+     "reopened": true,
+     "compiled_type": "nurbsWave",
+     "compiled_nodes": 1,
+     "mesh_verts": 0,
+     "unknown_nodes": 0,
+     "unknown_plugins": [],
+     "errors": []
+    },
+    "status": "ok"
+   }
+  ],
+  "issues": [],
+  "multi_demo": false
+ },
+ {
+  "folder": "MPyDeformer_Patch_Relax",
+  "mpn": "templates/MPyDeformer/Patch Relax/template.mpn",
+  "native_type": "mPyDeformer",
+  "source_name": "patchRelax",
+  "demo_label": "Relax a Squashed Sphere",
+  "compiled_type": "patchRelax",
+  "status": "ok",
+  "demos": [
+   {
+    "func_name": "demo",
+    "label": "Relax a Squashed Sphere",
+    "ma_basename": "MPyDeformer_Patch_Relax",
+    "build": {
+     "demo": "demo",
+     "mpn": "templates/MPyDeformer/Patch Relax/template.mpn",
+     "built": true,
+     "ma": "compiled_templates/MPyDeformer_Patch_Relax/MPyDeformer_Patch_Relax.ma",
+     "ma_basename": "MPyDeformer_Patch_Relax",
+     "compiled_type": "patchRelax",
+     "swapped": true,
+     "eval_ok": true,
+     "aux_interpreted": [],
+     "errors": [],
+     "notes": [],
+     "via": "mega",
+     "companions": [],
+     "compiled_node": "patchRelax"
+    },
+    "reopen": {
+     "ma": "compiled_templates/MPyDeformer_Patch_Relax/MPyDeformer_Patch_Relax.ma",
+     "reopened": true,
+     "compiled_type": "patchRelax",
+     "compiled_nodes": 1,
+     "mesh_verts": 1662,
+     "unknown_nodes": 0,
+     "unknown_plugins": [],
+     "errors": []
+    },
+    "status": "ok"
+   }
+  ],
+  "issues": [],
+  "multi_demo": false
+ },
+ {
+  "folder": "MPyDeformer_RBF_Wrap_Deformer",
+  "mpn": "templates/MPyDeformer/RBF Wrap Deformer/template.mpn",
+  "native_type": "mPyDeformer",
+  "source_name": "rbfWrapDeformer",
+  "demo_label": "Wrap a Sphere in a Cube Cage",
+  "compiled_type": "rbfWrapDeformer",
+  "status": "ok",
+  "demos": [
+   {
+    "func_name": "demo",
+    "label": "Wrap a Sphere in a Cube Cage",
+    "ma_basename": "MPyDeformer_RBF_Wrap_Deformer",
+    "build": {
+     "demo": "demo",
+     "mpn": "templates/MPyDeformer/RBF Wrap Deformer/template.mpn",
+     "built": true,
+     "ma": "compiled_templates/MPyDeformer_RBF_Wrap_Deformer/MPyDeformer_RBF_Wrap_Deformer.ma",
+     "ma_basename": "MPyDeformer_RBF_Wrap_Deformer",
+     "compiled_type": "rbfWrapDeformer",
+     "swapped": true,
+     "eval_ok": true,
+     "aux_interpreted": [],
+     "errors": [],
+     "notes": [],
+     "via": "mega",
+     "companions": [],
+     "compiled_node": "rbfWrapDeformer"
+    },
+    "reopen": {
+     "ma": "compiled_templates/MPyDeformer_RBF_Wrap_Deformer/MPyDeformer_RBF_Wrap_Deformer.ma",
+     "reopened": true,
+     "compiled_type": "rbfWrapDeformer",
+     "compiled_nodes": 1,
+     "mesh_verts": 1186,
+     "unknown_nodes": 0,
+     "unknown_plugins": [],
+     "errors": []
+    },
+    "status": "ok"
+   }
+  ],
+  "issues": [],
+  "multi_demo": false
+ },
+ {
+  "folder": "MPyDeformer_Sine_Ripple",
+  "mpn": "templates/MPyDeformer/Sine Ripple/template.mpn",
+  "native_type": "mPyDeformer",
+  "source_name": "sineRipple",
+  "demo_label": "Ripple a Plane",
+  "compiled_type": "sineRipple",
+  "status": "ok",
+  "demos": [
+   {
+    "func_name": "demo",
+    "label": "Ripple a Plane",
+    "ma_basename": "MPyDeformer_Sine_Ripple",
+    "build": {
+     "demo": "demo",
+     "mpn": "templates/MPyDeformer/Sine Ripple/template.mpn",
+     "built": true,
+     "ma": "compiled_templates/MPyDeformer_Sine_Ripple/MPyDeformer_Sine_Ripple.ma",
+     "ma_basename": "MPyDeformer_Sine_Ripple",
+     "compiled_type": "sineRipple",
+     "swapped": true,
+     "eval_ok": true,
+     "aux_interpreted": [],
+     "errors": [],
+     "notes": [],
+     "via": "mega",
+     "companions": [],
+     "compiled_node": "sineRipple"
+    },
+    "reopen": {
+     "ma": "compiled_templates/MPyDeformer_Sine_Ripple/MPyDeformer_Sine_Ripple.ma",
+     "reopened": true,
+     "compiled_type": "sineRipple",
+     "compiled_nodes": 1,
+     "mesh_verts": 1250,
+     "unknown_nodes": 0,
+     "unknown_plugins": [],
+     "errors": []
+    },
+    "status": "ok"
+   }
+  ],
+  "issues": [],
+  "multi_demo": false
+ },
+ {
+  "folder": "MPyDeformer_Unit_Sphere_Collision",
+  "mpn": "templates/MPyDeformer/Unit Sphere Collision/template.mpn",
+  "native_type": "mPyDeformer",
+  "source_name": "unitSphereCollision",
+  "demo_label": "Collide a Sphere Through a Plane",
+  "compiled_type": "unitSphereCollision",
+  "status": "ok",
+  "demos": [
+   {
+    "func_name": "demo",
+    "label": "Collide a Sphere Through a Plane",
+    "ma_basename": "MPyDeformer_Unit_Sphere_Collision",
+    "build": {
+     "demo": "demo",
+     "mpn": "templates/MPyDeformer/Unit Sphere Collision/template.mpn",
+     "built": true,
+     "ma": "compiled_templates/MPyDeformer_Unit_Sphere_Collision/MPyDeformer_Unit_Sphere_Collision.ma",
+     "ma_basename": "MPyDeformer_Unit_Sphere_Collision",
+     "compiled_type": "unitSphereCollision",
+     "swapped": true,
+     "eval_ok": true,
+     "aux_interpreted": [],
+     "errors": [],
+     "notes": [],
+     "via": "mega",
+     "companions": [],
+     "compiled_node": "unitSphereCollision"
+    },
+    "reopen": {
+     "ma": "compiled_templates/MPyDeformer_Unit_Sphere_Collision/MPyDeformer_Unit_Sphere_Collision.ma",
+     "reopened": true,
+     "compiled_type": "unitSphereCollision",
+     "compiled_nodes": 1,
+     "mesh_verts": 2032,
+     "unknown_nodes": 0,
+     "unknown_plugins": [],
+     "errors": []
+    },
+    "status": "ok"
+   }
+  ],
+  "issues": [],
+  "multi_demo": false
+ },
+ {
+  "folder": "MPyFile_File_Composite",
+  "mpn": "templates/MPyFile/File Composite/template.mpn",
+  "native_type": "mPyFile",
+  "source_name": "compositeTexture",
+  "demo_label": "Run demo",
+  "compiled_type": "compositeTexture",
+  "status": "ok",
+  "demos": [
+   {
+    "func_name": "demo",
+    "label": "Run demo",
+    "ma_basename": "MPyFile_File_Composite",
+    "build": {
+     "demo": "demo",
+     "mpn": "templates/MPyFile/File Composite/template.mpn",
+     "built": true,
+     "ma": "compiled_templates/MPyFile_File_Composite/MPyFile_File_Composite.ma",
+     "ma_basename": "MPyFile_File_Composite",
+     "compiled_type": "compositeTexture",
+     "swapped": true,
+     "eval_ok": true,
+     "aux_interpreted": [],
+     "errors": [],
+     "notes": [],
+     "via": "mega",
+     "companions": [],
+     "compiled_node": "compositeTexture"
+    },
+    "reopen": {
+     "ma": "compiled_templates/MPyFile_File_Composite/MPyFile_File_Composite.ma",
+     "reopened": true,
+     "compiled_type": "compositeTexture",
+     "compiled_nodes": 1,
+     "mesh_verts": 4,
+     "unknown_nodes": 0,
+     "unknown_plugins": [],
+     "errors": []
+    },
+    "status": "ok"
+   }
+  ],
+  "issues": [],
+  "multi_demo": false
+ },
+ {
+  "folder": "MPyFile_File_Scanline",
+  "mpn": "templates/MPyFile/File Scanline/template.mpn",
+  "native_type": "mPyFile",
+  "source_name": "scanlineTex",
+  "demo_label": "Run demo",
+  "compiled_type": "scanlineTex",
+  "status": "ok",
+  "demos": [
+   {
+    "func_name": "demo",
+    "label": "Run demo",
+    "ma_basename": "MPyFile_File_Scanline",
+    "build": {
+     "demo": "demo",
+     "mpn": "templates/MPyFile/File Scanline/template.mpn",
+     "built": true,
+     "ma": "compiled_templates/MPyFile_File_Scanline/MPyFile_File_Scanline.ma",
+     "ma_basename": "MPyFile_File_Scanline",
+     "compiled_type": "scanlineTex",
+     "swapped": true,
+     "eval_ok": true,
+     "aux_interpreted": [],
+     "errors": [],
+     "notes": [],
+     "via": "mega",
+     "companions": [],
+     "compiled_node": "scanlineTex"
+    },
+    "reopen": {
+     "ma": "compiled_templates/MPyFile_File_Scanline/MPyFile_File_Scanline.ma",
+     "reopened": true,
+     "compiled_type": "scanlineTex",
+     "compiled_nodes": 1,
+     "mesh_verts": 4,
+     "unknown_nodes": 0,
+     "unknown_plugins": [],
+     "errors": []
+    },
+    "status": "ok"
+   }
+  ],
+  "issues": [],
+  "multi_demo": false
+ },
+ {
+  "folder": "MPyFile_File_Simple",
+  "mpn": "templates/MPyFile/File Simple/template.mpn",
+  "native_type": "mPyFile",
+  "source_name": "fileTexture",
+  "demo_label": "Run demo",
+  "compiled_type": "fileTexture",
+  "status": "ok",
+  "demos": [
+   {
+    "func_name": "demo",
+    "label": "Run demo",
+    "ma_basename": "MPyFile_File_Simple",
+    "build": {
+     "demo": "demo",
+     "mpn": "templates/MPyFile/File Simple/template.mpn",
+     "built": true,
+     "ma": "compiled_templates/MPyFile_File_Simple/MPyFile_File_Simple.ma",
+     "ma_basename": "MPyFile_File_Simple",
+     "compiled_type": "fileTexture",
+     "swapped": true,
+     "eval_ok": true,
+     "aux_interpreted": [],
+     "errors": [],
+     "notes": [],
+     "via": "mega",
+     "companions": [],
+     "compiled_node": "fileTexture"
+    },
+    "reopen": {
+     "ma": "compiled_templates/MPyFile_File_Simple/MPyFile_File_Simple.ma",
+     "reopened": true,
+     "compiled_type": "fileTexture",
+     "compiled_nodes": 1,
+     "mesh_verts": 994,
+     "unknown_nodes": 0,
+     "unknown_plugins": [],
+     "errors": []
+    },
+    "status": "ok"
+   }
+  ],
+  "issues": [],
+  "multi_demo": false
+ },
+ {
+  "folder": "MPyFile_Game_Of_Life_Texture",
+  "mpn": "templates/MPyFile/Game Of Life Texture/template.mpn",
+  "native_type": "mPyFile",
+  "source_name": "gameOfLifeTex",
+  "demo_label": "Run demo",
+  "compiled_type": "gameOfLifeTex",
+  "status": "ok",
+  "demos": [
+   {
+    "func_name": "demo",
+    "label": "Run demo",
+    "ma_basename": "MPyFile_Game_Of_Life_Texture",
+    "build": {
+     "demo": "demo",
+     "mpn": "templates/MPyFile/Game Of Life Texture/template.mpn",
+     "built": true,
+     "ma": "compiled_templates/MPyFile_Game_Of_Life_Texture/MPyFile_Game_Of_Life_Texture.ma",
+     "ma_basename": "MPyFile_Game_Of_Life_Texture",
+     "compiled_type": "gameOfLifeTex",
+     "swapped": true,
+     "eval_ok": true,
+     "aux_interpreted": [],
+     "errors": [],
+     "notes": [],
+     "via": "mega",
+     "companions": [],
+     "compiled_node": "gameOfLifeTex"
+    },
+    "reopen": {
+     "ma": "compiled_templates/MPyFile_Game_Of_Life_Texture/MPyFile_Game_Of_Life_Texture.ma",
+     "reopened": true,
+     "compiled_type": "gameOfLifeTex",
+     "compiled_nodes": 1,
+     "mesh_verts": 4,
+     "unknown_nodes": 0,
+     "unknown_plugins": [],
+     "errors": []
+    },
+    "status": "ok"
+   }
+  ],
+  "issues": [],
+  "multi_demo": false
+ },
+ {
+  "folder": "MPyIkSolver_Two_Bone_IK",
+  "mpn": "templates/MPyIkSolver/Two Bone IK/template.mpn",
+  "native_type": "mPyIkSolver",
+  "source_name": "twoBoneIK",
+  "demo_label": "Two-Bone IK Leg",
+  "compiled_type": "twoBoneIK",
+  "status": "ok",
+  "demos": [
+   {
+    "func_name": "demo",
+    "label": "Two-Bone IK Leg",
+    "ma_basename": "MPyIkSolver_Two_Bone_IK",
+    "build": {
+     "demo": "demo",
+     "mpn": "templates/MPyIkSolver/Two Bone IK/template.mpn",
+     "built": true,
+     "ma": "compiled_templates/MPyIkSolver_Two_Bone_IK/MPyIkSolver_Two_Bone_IK.ma",
+     "ma_basename": "MPyIkSolver_Two_Bone_IK",
+     "compiled_type": "twoBoneIK",
+     "swapped": true,
+     "eval_ok": true,
+     "aux_interpreted": [],
+     "errors": [],
+     "notes": [],
+     "via": "mega",
+     "companions": [],
+     "compiled_node": "twoBoneIK"
+    },
+    "reopen": {
+     "ma": "compiled_templates/MPyIkSolver_Two_Bone_IK/MPyIkSolver_Two_Bone_IK.ma",
+     "reopened": true,
+     "compiled_type": "twoBoneIK",
+     "compiled_nodes": 1,
+     "mesh_verts": 0,
+     "unknown_nodes": 0,
+     "unknown_plugins": [],
+     "errors": []
+    },
+    "status": "ok"
+   }
+  ],
+  "issues": [],
+  "multi_demo": false
+ },
+ {
+  "folder": "MPyLocator_Animated_Selection",
+  "mpn": "templates/MPyLocator/Animated Selection/template.mpn",
+  "native_type": "mPyLocator",
+  "source_name": "animatedSelection",
+  "demo_label": "Run demo",
+  "compiled_type": "animatedSelection",
+  "status": "ok",
+  "demos": [
+   {
+    "func_name": "demo",
+    "label": "Run demo",
+    "ma_basename": "MPyLocator_Animated_Selection",
+    "build": {
+     "demo": "demo",
+     "mpn": "templates/MPyLocator/Animated Selection/template.mpn",
+     "built": true,
+     "ma": "compiled_templates/MPyLocator_Animated_Selection/MPyLocator_Animated_Selection.ma",
+     "ma_basename": "MPyLocator_Animated_Selection",
+     "compiled_type": "animatedSelection",
+     "swapped": true,
+     "eval_ok": true,
+     "aux_interpreted": [],
+     "errors": [],
+     "notes": [],
+     "via": "mega",
+     "companions": [],
+     "compiled_node": "animatedSelection"
+    },
+    "reopen": {
+     "ma": "compiled_templates/MPyLocator_Animated_Selection/MPyLocator_Animated_Selection.ma",
+     "reopened": true,
+     "compiled_type": "animatedSelection",
+     "compiled_nodes": 1,
+     "mesh_verts": 0,
+     "unknown_nodes": 0,
+     "unknown_plugins": [],
+     "errors": []
+    },
+    "status": "ok"
+   }
+  ],
+  "issues": [],
+  "multi_demo": false
+ },
+ {
+  "folder": "MPyLocator_Animated_Text",
+  "mpn": "templates/MPyLocator/Animated Text/template.mpn",
+  "native_type": "mPyLocator",
+  "source_name": "animatedText",
+  "demo_label": "Run demo",
+  "compiled_type": "animatedText",
+  "status": "ok",
+  "demos": [
+   {
+    "func_name": "demo",
+    "label": "Run demo",
+    "ma_basename": "MPyLocator_Animated_Text",
+    "build": {
+     "demo": "demo",
+     "mpn": "templates/MPyLocator/Animated Text/template.mpn",
+     "built": true,
+     "ma": "compiled_templates/MPyLocator_Animated_Text/MPyLocator_Animated_Text.ma",
+     "ma_basename": "MPyLocator_Animated_Text",
+     "compiled_type": "animatedText",
+     "swapped": true,
+     "eval_ok": true,
+     "aux_interpreted": [],
+     "errors": [],
+     "notes": [],
+     "via": "mega",
+     "companions": [],
+     "compiled_node": "animatedText"
+    },
+    "reopen": {
+     "ma": "compiled_templates/MPyLocator_Animated_Text/MPyLocator_Animated_Text.ma",
+     "reopened": true,
+     "compiled_type": "animatedText",
+     "compiled_nodes": 1,
+     "mesh_verts": 0,
+     "unknown_nodes": 0,
+     "unknown_plugins": [],
+     "errors": []
+    },
+    "status": "ok"
+   }
+  ],
+  "issues": [],
+  "multi_demo": false
+ },
+ {
+  "folder": "MPyLocator_Mesh_Regions",
+  "mpn": "templates/MPyLocator/Mesh Regions/template.mpn",
+  "native_type": "mPyLocator",
+  "source_name": "meshRegions",
+  "demo_label": "Run demo",
+  "compiled_type": "meshRegionLocator",
+  "status": "ok",
+  "demos": [
+   {
+    "func_name": "demo",
+    "label": "Run demo",
+    "ma_basename": "MPyLocator_Mesh_Regions",
+    "build": {
+     "demo": "demo",
+     "mpn": "templates/MPyLocator/Mesh Regions/template.mpn",
+     "built": true,
+     "ma": "compiled_templates/MPyLocator_Mesh_Regions/MPyLocator_Mesh_Regions.ma",
+     "ma_basename": "MPyLocator_Mesh_Regions",
+     "compiled_type": "meshRegionLocator",
+     "swapped": true,
+     "eval_ok": true,
+     "aux_interpreted": [
+      "|bottomLipRegion|bottomLipRegionShape",
+      "|bottomLipRightRegion|bottomLipRightRegionShape",
+      "|mouthLeftRegion|mouthLeftRegionShape",
+      "|mouthRightRegion|mouthRightRegionShape",
+      "|topLipLeftRegion|topLipLeftRegionShape",
+      "|topLipRegion|topLipRegionShape",
+      "|topLipRightRegion|topLipRightRegionShape"
+     ],
+     "errors": [],
+     "notes": [
+      "7 auxiliary mPyLocator node(s) left interpreted (different config; not compiled by this single-node template): bottomLipRegionShape, bottomLipRightRegionShape, mouthLeftRegionShape, mouthRightRegionShape, topLipLeftRegionShape, topLipRegionShape, topLipRightRegionShape",
+      "7 unknown node(s) removed before save -- no plug-in in this mayapy provides them: defaultArnoldRenderOptions, headModel:aiImagerDenoiserNoice1, headModel:aiImagerDenoiserOidn1, headModel:aiImagerDenoiserOptix1, headModel:aiImagerLensEffects1, headModel:aiImagerLightMixer1, headModel:aiImagerTonemap1"
+     ],
+     "via": "mega",
+     "companions": [],
+     "compiled_node": "bottomLipLeftRegionShape"
+    },
+    "reopen": {
+     "ma": "compiled_templates/MPyLocator_Mesh_Regions/MPyLocator_Mesh_Regions.ma",
+     "reopened": true,
+     "compiled_type": "meshRegionLocator",
+     "compiled_nodes": 1,
+     "mesh_verts": 2612,
+     "unknown_nodes": 0,
+     "unknown_plugins": [],
+     "errors": []
+    },
+    "status": "ok"
+   }
+  ],
+  "issues": [
+   "[Run demo] note: 7 auxiliary mPyLocator node(s) left interpreted (different config; not compiled by this single-node template): bottomLipRegionShape, bottomLipRightRegionShape, mouthLeftRegionShape, mouthRightRegionShape, topLipLeftRegionShape, topLipRegionShape, topLipRightRegionShape",
+   "[Run demo] note: 7 unknown node(s) removed before save -- no plug-in in this mayapy provides them: defaultArnoldRenderOptions, headModel:aiImagerDenoiserNoice1, headModel:aiImagerDenoiserOidn1, headModel:aiImagerDenoiserOptix1, headModel:aiImagerLensEffects1, headModel:aiImagerLightMixer1, headModel:aiImagerTonemap1"
+  ],
+  "multi_demo": false
+ },
+ {
+  "folder": "MPyLocator_Widget_Showcase",
+  "mpn": "templates/MPyLocator/Widget Showcase/template.mpn",
+  "native_type": "mPyLocator",
+  "source_name": "widgetShowcase",
+  "demo_label": "Run demo",
+  "compiled_type": "widgetShowcase",
+  "status": "ok",
+  "demos": [
+   {
+    "func_name": "demo",
+    "label": "Run demo",
+    "ma_basename": "MPyLocator_Widget_Showcase",
+    "build": {
+     "demo": "demo",
+     "mpn": "templates/MPyLocator/Widget Showcase/template.mpn",
+     "built": true,
+     "ma": "compiled_templates/MPyLocator_Widget_Showcase/MPyLocator_Widget_Showcase.ma",
+     "ma_basename": "MPyLocator_Widget_Showcase",
+     "compiled_type": "widgetShowcase",
+     "swapped": true,
+     "eval_ok": true,
+     "aux_interpreted": [],
+     "errors": [],
+     "notes": [],
+     "via": "mega",
+     "companions": [],
+     "compiled_node": "widgetShowcase"
+    },
+    "reopen": {
+     "ma": "compiled_templates/MPyLocator_Widget_Showcase/MPyLocator_Widget_Showcase.ma",
+     "reopened": true,
+     "compiled_type": "widgetShowcase",
+     "compiled_nodes": 1,
+     "mesh_verts": 0,
+     "unknown_nodes": 0,
+     "unknown_plugins": [],
+     "errors": []
+    },
+    "status": "ok"
+   }
+  ],
+  "issues": [],
+  "multi_demo": false
+ },
+ {
+  "folder": "MPyMesh_Disk_Mesh_Cache",
+  "mpn": "templates/MPyMesh/Disk Mesh Cache/template.mpn",
+  "native_type": "mPyMesh",
+  "source_name": "diskMeshCache",
+  "demo_label": "Disk Mesh Cache: play a 48-frame cache off disk",
+  "compiled_type": "diskMeshCache",
+  "status": "ok",
+  "demos": [
+   {
+    "func_name": "demo",
+    "label": "Disk Mesh Cache: play a 48-frame cache off disk",
+    "ma_basename": "MPyMesh_Disk_Mesh_Cache",
+    "build": {
+     "demo": "demo",
+     "mpn": "templates/MPyMesh/Disk Mesh Cache/template.mpn",
+     "built": true,
+     "ma": "compiled_templates/MPyMesh_Disk_Mesh_Cache/MPyMesh_Disk_Mesh_Cache.ma",
+     "ma_basename": "MPyMesh_Disk_Mesh_Cache",
+     "compiled_type": "diskMeshCache",
+     "swapped": true,
+     "eval_ok": true,
+     "aux_interpreted": [],
+     "errors": [],
+     "notes": [],
+     "via": "mega",
+     "companions": [],
+     "compiled_node": "diskMeshCache"
+    },
+    "reopen": {
+     "ma": "compiled_templates/MPyMesh_Disk_Mesh_Cache/MPyMesh_Disk_Mesh_Cache.ma",
+     "reopened": true,
+     "compiled_type": "diskMeshCache",
+     "compiled_nodes": 1,
+     "mesh_verts": 1089,
+     "unknown_nodes": 0,
+     "unknown_plugins": [],
+     "errors": []
+    },
+    "status": "ok"
+   }
+  ],
+  "issues": [],
+  "multi_demo": false
+ },
+ {
+  "folder": "MPyMesh_Game_Of_Life",
+  "mpn": "templates/MPyMesh/Game Of Life/template.mpn",
+  "native_type": "mPyMesh",
+  "source_name": "gameOfLifeMesh",
+  "demo_label": "Run demo",
+  "compiled_type": "gameOfLifeMesh",
+  "status": "ok",
+  "demos": [
+   {
+    "func_name": "demo",
+    "label": "Run demo",
+    "ma_basename": "MPyMesh_Game_Of_Life",
+    "build": {
+     "demo": "demo",
+     "mpn": "templates/MPyMesh/Game Of Life/template.mpn",
+     "built": true,
+     "ma": "compiled_templates/MPyMesh_Game_Of_Life/MPyMesh_Game_Of_Life.ma",
+     "ma_basename": "MPyMesh_Game_Of_Life",
+     "compiled_type": "gameOfLifeMesh",
+     "swapped": true,
+     "eval_ok": true,
+     "aux_interpreted": [],
+     "errors": [],
+     "notes": [],
+     "via": "mega",
+     "companions": [],
+     "compiled_node": "gameOfLifeMesh"
+    },
+    "reopen": {
+     "ma": "compiled_templates/MPyMesh_Game_Of_Life/MPyMesh_Game_Of_Life.ma",
+     "reopened": true,
+     "compiled_type": "gameOfLifeMesh",
+     "compiled_nodes": 1,
+     "mesh_verts": 1016,
+     "unknown_nodes": 0,
+     "unknown_plugins": [],
+     "errors": []
+    },
+    "status": "ok"
+   }
+  ],
+  "issues": [],
+  "multi_demo": false
+ },
+ {
+  "folder": "MPyMesh_JSON_Mesh_Reader",
+  "mpn": "templates/MPyMesh/JSON Mesh Reader/template.mpn",
+  "native_type": "mPyMesh",
+  "source_name": "jsonMeshReader",
+  "demo_label": "JSON Mesh Reader: stream a mesh sequence off disk",
+  "compiled_type": "jsonMeshReader",
+  "status": "ok",
+  "demos": [
+   {
+    "func_name": "demo",
+    "label": "JSON Mesh Reader: stream a mesh sequence off disk",
+    "ma_basename": "MPyMesh_JSON_Mesh_Reader",
+    "build": {
+     "demo": "demo",
+     "mpn": "templates/MPyMesh/JSON Mesh Reader/template.mpn",
+     "built": true,
+     "ma": "compiled_templates/MPyMesh_JSON_Mesh_Reader/MPyMesh_JSON_Mesh_Reader.ma",
+     "ma_basename": "MPyMesh_JSON_Mesh_Reader",
+     "compiled_type": "jsonMeshReader",
+     "swapped": true,
+     "eval_ok": true,
+     "aux_interpreted": [],
+     "errors": [],
+     "notes": [],
+     "via": "mega",
+     "companions": [],
+     "compiled_node": "jsonMeshReader"
+    },
+    "reopen": {
+     "ma": "compiled_templates/MPyMesh_JSON_Mesh_Reader/MPyMesh_JSON_Mesh_Reader.ma",
+     "reopened": true,
+     "compiled_type": "jsonMeshReader",
+     "compiled_nodes": 1,
+     "mesh_verts": 8,
+     "unknown_nodes": 0,
+     "unknown_plugins": [],
+     "errors": []
+    },
+    "status": "ok"
+   }
+  ],
+  "issues": [],
+  "multi_demo": false
+ },
+ {
+  "folder": "MPyMesh_Mesh_Maze",
+  "mpn": "templates/MPyMesh/Mesh Maze/template.mpn",
+  "native_type": "mPyMesh",
+  "source_name": "meshMaze",
+  "demo_label": "Maze on a sphere",
+  "compiled_type": "meshMaze",
+  "status": "ok",
+  "demos": [
+   {
+    "func_name": "demo",
+    "label": "Maze on a sphere",
+    "ma_basename": "MPyMesh_Mesh_Maze",
+    "build": {
+     "demo": "demo",
+     "mpn": "templates/MPyMesh/Mesh Maze/template.mpn",
+     "built": true,
+     "ma": "compiled_templates/MPyMesh_Mesh_Maze/MPyMesh_Mesh_Maze.ma",
+     "ma_basename": "MPyMesh_Mesh_Maze",
+     "compiled_type": "meshMaze",
+     "swapped": true,
+     "eval_ok": true,
+     "aux_interpreted": [],
+     "errors": [],
+     "notes": [],
+     "via": "mega",
+     "companions": [],
+     "compiled_node": "meshMaze"
+    },
+    "reopen": {
+     "ma": "compiled_templates/MPyMesh_Mesh_Maze/MPyMesh_Mesh_Maze.ma",
+     "reopened": true,
+     "compiled_type": "meshMaze",
+     "compiled_nodes": 1,
+     "mesh_verts": 3250,
+     "unknown_nodes": 0,
+     "unknown_plugins": [],
+     "errors": []
+    },
+    "status": "ok"
+   }
+  ],
+  "issues": [],
+  "multi_demo": false
+ },
+ {
+  "folder": "MPyMesh_Metaballs",
+  "mpn": "templates/MPyMesh/Metaballs/template.mpn",
+  "native_type": "mPyMesh",
+  "source_name": "metaballs",
+  "demo_label": "Run demo",
+  "compiled_type": "metaballs",
+  "status": "ok",
+  "demos": [
+   {
+    "func_name": "demo",
+    "label": "Run demo",
+    "ma_basename": "MPyMesh_Metaballs",
+    "build": {
+     "demo": "demo",
+     "mpn": "templates/MPyMesh/Metaballs/template.mpn",
+     "built": true,
+     "ma": "compiled_templates/MPyMesh_Metaballs/MPyMesh_Metaballs.ma",
+     "ma_basename": "MPyMesh_Metaballs",
+     "compiled_type": "metaballs",
+     "swapped": true,
+     "eval_ok": true,
+     "aux_interpreted": [],
+     "errors": [],
+     "notes": [],
+     "via": "mega",
+     "companions": [],
+     "compiled_node": "metaballs"
+    },
+    "reopen": {
+     "ma": "compiled_templates/MPyMesh_Metaballs/MPyMesh_Metaballs.ma",
+     "reopened": true,
+     "compiled_type": "metaballs",
+     "compiled_nodes": 1,
+     "mesh_verts": 9918,
+     "unknown_nodes": 0,
+     "unknown_plugins": [],
+     "errors": []
+    },
+    "status": "ok"
+   }
+  ],
+  "issues": [],
+  "multi_demo": false
+ },
+ {
+  "folder": "MPyMesh_UV_Layout",
+  "mpn": "templates/MPyMesh/UV Layout/template.mpn",
+  "native_type": "mPyMesh",
+  "source_name": "uvLayoutMesh",
+  "demo_label": "UV layout of a sphere",
+  "compiled_type": "uvLayoutMesh",
+  "status": "ok",
+  "demos": [
+   {
+    "func_name": "demo",
+    "label": "UV layout of a sphere",
+    "ma_basename": "MPyMesh_UV_Layout",
+    "build": {
+     "demo": "demo",
+     "mpn": "templates/MPyMesh/UV Layout/template.mpn",
+     "built": true,
+     "ma": "compiled_templates/MPyMesh_UV_Layout/MPyMesh_UV_Layout.ma",
+     "ma_basename": "MPyMesh_UV_Layout",
+     "compiled_type": "uvLayoutMesh",
+     "swapped": true,
+     "eval_ok": true,
+     "aux_interpreted": [],
+     "errors": [],
+     "notes": [],
+     "via": "mega",
+     "companions": [],
+     "compiled_node": "uvLayoutMesh"
+    },
+    "reopen": {
+     "ma": "compiled_templates/MPyMesh_UV_Layout/MPyMesh_UV_Layout.ma",
+     "reopened": true,
+     "compiled_type": "uvLayoutMesh",
+     "compiled_nodes": 1,
+     "mesh_verts": 821,
+     "unknown_nodes": 0,
+     "unknown_plugins": [],
+     "errors": []
+    },
+    "status": "ok"
+   }
+  ],
+  "issues": [],
+  "multi_demo": false
+ },
+ {
+  "folder": "MPyMesh_Voxelize",
+  "mpn": "templates/MPyMesh/Voxelize/template.mpn",
+  "native_type": "mPyMesh",
+  "source_name": "voxelizeMesh",
+  "demo_label": "Voxelize a sphere",
+  "compiled_type": "voxelizeMesh",
+  "status": "ok",
+  "demos": [
+   {
+    "func_name": "demo",
+    "label": "Voxelize a sphere",
+    "ma_basename": "MPyMesh_Voxelize",
+    "build": {
+     "demo": "demo",
+     "mpn": "templates/MPyMesh/Voxelize/template.mpn",
+     "built": true,
+     "ma": "compiled_templates/MPyMesh_Voxelize/MPyMesh_Voxelize.ma",
+     "ma_basename": "MPyMesh_Voxelize",
+     "compiled_type": "voxelizeMesh",
+     "swapped": true,
+     "eval_ok": true,
+     "aux_interpreted": [],
+     "errors": [],
+     "notes": [],
+     "via": "mega",
+     "companions": [],
+     "compiled_node": "voxelizeMesh"
+    },
+    "reopen": {
+     "ma": "compiled_templates/MPyMesh_Voxelize/MPyMesh_Voxelize.ma",
+     "reopened": true,
+     "compiled_type": "voxelizeMesh",
+     "compiled_nodes": 1,
+     "mesh_verts": 3390,
+     "unknown_nodes": 0,
+     "unknown_plugins": [],
+     "errors": []
+    },
+    "status": "ok"
+   }
+  ],
+  "issues": [],
+  "multi_demo": false
+ },
+ {
+  "folder": "MPyNode_Bubble_Sort",
+  "mpn": "templates/MPyNode/Bubble Sort/template.mpn",
+  "native_type": "mPyNode",
+  "source_name": "bubbleSort",
+  "demo_label": "Run demo",
+  "compiled_type": "bubbleSort",
+  "status": "ok",
+  "demos": [
+   {
+    "func_name": "demo",
+    "label": "Run demo",
+    "ma_basename": "MPyNode_Bubble_Sort",
+    "build": {
+     "demo": "demo",
+     "mpn": "templates/MPyNode/Bubble Sort/template.mpn",
+     "built": true,
+     "ma": "compiled_templates/MPyNode_Bubble_Sort/MPyNode_Bubble_Sort.ma",
+     "ma_basename": "MPyNode_Bubble_Sort",
+     "compiled_type": "bubbleSort",
+     "swapped": true,
+     "eval_ok": true,
+     "aux_interpreted": [],
+     "errors": [],
+     "notes": [],
+     "via": "mega",
+     "companions": [],
+     "compiled_node": "bubbleSort"
+    },
+    "reopen": {
+     "ma": "compiled_templates/MPyNode_Bubble_Sort/MPyNode_Bubble_Sort.ma",
+     "reopened": true,
+     "compiled_type": "bubbleSort",
+     "compiled_nodes": 1,
+     "mesh_verts": 800,
+     "unknown_nodes": 0,
+     "unknown_plugins": [],
+     "errors": []
+    },
+    "status": "ok"
+   }
+  ],
+  "issues": [],
+  "multi_demo": false
+ },
+ {
+  "folder": "MPyNode_Hex_Attribute",
+  "mpn": "templates/MPyNode/Hex Attribute/template.mpn",
+  "native_type": "mPyNode",
+  "source_name": "hexAttribute",
+  "demo_label": "Run demo",
+  "compiled_type": "hexAttribute",
+  "status": "ok",
+  "demos": [
+   {
+    "func_name": "demo",
+    "label": "Run demo",
+    "ma_basename": "MPyNode_Hex_Attribute",
+    "build": {
+     "demo": "demo",
+     "mpn": "templates/MPyNode/Hex Attribute/template.mpn",
+     "built": true,
+     "ma": "compiled_templates/MPyNode_Hex_Attribute/MPyNode_Hex_Attribute.ma",
+     "ma_basename": "MPyNode_Hex_Attribute",
+     "compiled_type": "hexAttribute",
+     "swapped": true,
+     "eval_ok": true,
+     "aux_interpreted": [],
+     "errors": [],
+     "notes": [],
+     "via": "mega",
+     "companions": [],
+     "compiled_node": "hexAttribute"
+    },
+    "reopen": {
+     "ma": "compiled_templates/MPyNode_Hex_Attribute/MPyNode_Hex_Attribute.ma",
+     "reopened": true,
+     "compiled_type": "hexAttribute",
+     "compiled_nodes": 1,
+     "mesh_verts": 7540,
+     "unknown_nodes": 0,
+     "unknown_plugins": [],
+     "errors": []
+    },
+    "status": "ok"
+   }
+  ],
+  "issues": [],
+  "multi_demo": false
+ },
+ {
+  "folder": "MPyNode_Ouch",
+  "mpn": "templates/MPyNode/Ouch/template.mpn",
+  "native_type": "mPyNode",
+  "source_name": "ouch",
+  "demo_label": "Run demo",
+  "compiled_type": "ouch",
+  "status": "ok",
+  "demos": [
+   {
+    "func_name": "demo",
+    "label": "Run demo",
+    "ma_basename": "MPyNode_Ouch",
+    "build": {
+     "demo": "demo",
+     "mpn": "templates/MPyNode/Ouch/template.mpn",
+     "built": true,
+     "ma": "compiled_templates/MPyNode_Ouch/MPyNode_Ouch.ma",
+     "ma_basename": "MPyNode_Ouch",
+     "compiled_type": "ouch",
+     "swapped": true,
+     "eval_ok": true,
+     "aux_interpreted": [],
+     "errors": [],
+     "notes": [],
+     "via": "mega",
+     "companions": [],
+     "compiled_node": "ouch"
+    },
+    "reopen": {
+     "ma": "compiled_templates/MPyNode_Ouch/MPyNode_Ouch.ma",
+     "reopened": true,
+     "compiled_type": "ouch",
+     "compiled_nodes": 1,
+     "mesh_verts": 884,
+     "unknown_nodes": 0,
+     "unknown_plugins": [],
+     "errors": []
+    },
+    "status": "ok"
+   }
+  ],
+  "issues": [],
+  "multi_demo": false
+ },
+ {
+  "folder": "MPyNode_RBF_Wrap",
+  "mpn": "templates/MPyNode/RBF Wrap/template.mpn",
+  "native_type": "mPyNode",
+  "source_name": "rbfWrap",
+  "demo_label": "Wrap an Arm with a Cage",
+  "compiled_type": "rbfWrap",
+  "status": "ok",
+  "demos": [
+   {
+    "func_name": "demo",
+    "label": "Wrap an Arm with a Cage",
+    "ma_basename": "MPyNode_RBF_Wrap",
+    "build": {
+     "demo": "demo",
+     "mpn": "templates/MPyNode/RBF Wrap/template.mpn",
+     "built": true,
+     "ma": "compiled_templates/MPyNode_RBF_Wrap/MPyNode_RBF_Wrap.ma",
+     "ma_basename": "MPyNode_RBF_Wrap",
+     "compiled_type": "rbfWrap",
+     "swapped": true,
+     "eval_ok": true,
+     "aux_interpreted": [],
+     "errors": [],
+     "notes": [],
+     "via": "mega",
+     "companions": [],
+     "compiled_node": "rbfWrap"
+    },
+    "reopen": {
+     "ma": "compiled_templates/MPyNode_RBF_Wrap/MPyNode_RBF_Wrap.ma",
+     "reopened": true,
+     "compiled_type": "rbfWrap",
+     "compiled_nodes": 1,
+     "mesh_verts": 1452,
+     "unknown_nodes": 0,
+     "unknown_plugins": [],
+     "errors": []
+    },
+    "status": "ok"
+   }
+  ],
+  "issues": [],
+  "multi_demo": false
+ },
+ {
+  "folder": "MPyNode_Spine",
+  "mpn": "templates/MPyNode/Spine/template.mpn",
+  "native_type": "mPyNode",
+  "source_name": "spine",
+  "demo_label": "Run demo",
+  "compiled_type": "spine",
+  "status": "ok",
+  "demos": [
+   {
+    "func_name": "demo",
+    "label": "Spine From Four Controls",
+    "ma_basename": "MPyNode_Spine",
+    "build": {
+     "demo": "demo",
+     "mpn": "templates/MPyNode/Spine/template.mpn",
+     "built": true,
+     "ma": "compiled_templates/MPyNode_Spine/MPyNode_Spine.ma",
+     "ma_basename": "MPyNode_Spine",
+     "compiled_type": "spine",
+     "swapped": true,
+     "eval_ok": true,
+     "aux_interpreted": [],
+     "errors": [],
+     "notes": [],
+     "via": "mega",
+     "companions": [],
+     "compiled_node": "spine"
+    },
+    "reopen": {
+     "ma": "compiled_templates/MPyNode_Spine/MPyNode_Spine.ma",
+     "reopened": true,
+     "compiled_type": "spine",
+     "compiled_nodes": 1,
+     "mesh_verts": 0,
+     "unknown_nodes": 0,
+     "unknown_plugins": [],
+     "errors": []
+    },
+    "status": "ok"
+   }
+  ],
+  "issues": [],
+  "multi_demo": false
+ },
+ {
+  "folder": "MPyNode_Spline",
+  "mpn": "templates/MPyNode/Spline/template.mpn",
+  "native_type": "mPyNode",
+  "source_name": "spline",
+  "demo_label": "Run demo",
+  "compiled_type": "spline",
+  "status": "ok",
+  "demos": [
+   {
+    "func_name": "demo",
+    "label": "Run demo",
+    "ma_basename": "MPyNode_Spline",
+    "build": {
+     "demo": "demo",
+     "mpn": "templates/MPyNode/Spline/template.mpn",
+     "built": true,
+     "ma": "compiled_templates/MPyNode_Spline/MPyNode_Spline.ma",
+     "ma_basename": "MPyNode_Spline",
+     "compiled_type": "spline",
+     "swapped": true,
+     "eval_ok": true,
+     "aux_interpreted": [],
+     "errors": [],
+     "notes": [],
+     "via": "mega",
+     "companions": [],
+     "compiled_node": "spline"
+    },
+    "reopen": {
+     "ma": "compiled_templates/MPyNode_Spline/MPyNode_Spline.ma",
+     "reopened": true,
+     "compiled_type": "spline",
+     "compiled_nodes": 1,
+     "mesh_verts": 9168,
+     "unknown_nodes": 0,
+     "unknown_plugins": [],
+     "errors": []
+    },
+    "status": "ok"
+   }
+  ],
+  "issues": [],
+  "multi_demo": false
+ },
+ {
+  "folder": "MPyNode_Spring_Chain",
+  "mpn": "templates/MPyNode/Spring Chain/template.mpn",
+  "native_type": "mPyNode",
+  "source_name": "springChain",
+  "demo_label": "Run demo",
+  "compiled_type": "springChain",
+  "status": "ok",
+  "demos": [
+   {
+    "func_name": "demo",
+    "label": "Run demo",
+    "ma_basename": "MPyNode_Spring_Chain",
+    "build": {
+     "demo": "demo",
+     "mpn": "templates/MPyNode/Spring Chain/template.mpn",
+     "built": true,
+     "ma": "compiled_templates/MPyNode_Spring_Chain/MPyNode_Spring_Chain.ma",
+     "ma_basename": "MPyNode_Spring_Chain",
+     "compiled_type": "springChain",
+     "swapped": true,
+     "eval_ok": true,
+     "aux_interpreted": [],
+     "errors": [],
+     "notes": [],
+     "via": "mega",
+     "companions": [],
+     "compiled_node": "springChain"
+    },
+    "reopen": {
+     "ma": "compiled_templates/MPyNode_Spring_Chain/MPyNode_Spring_Chain.ma",
+     "reopened": true,
+     "compiled_type": "springChain",
+     "compiled_nodes": 1,
+     "mesh_verts": 38200,
+     "unknown_nodes": 0,
+     "unknown_plugins": [],
+     "errors": []
+    },
+    "status": "ok"
+   }
+  ],
+  "issues": [],
+  "multi_demo": false
+ },
+ {
+  "folder": "MPyNurbsCurve_NURBS_Helix",
+  "mpn": "templates/MPyNurbsCurve/NURBS Helix/template.mpn",
+  "native_type": "mPyNurbsCurve",
+  "source_name": "helixCurve",
+  "demo_label": "Animated Helix Curve",
+  "compiled_type": "helixCurve",
+  "status": "ok",
+  "demos": [
+   {
+    "func_name": "demo",
+    "label": "Animated Helix Curve",
+    "ma_basename": "MPyNurbsCurve_NURBS_Helix",
+    "build": {
+     "demo": "demo",
+     "mpn": "templates/MPyNurbsCurve/NURBS Helix/template.mpn",
+     "built": true,
+     "ma": "compiled_templates/MPyNurbsCurve_NURBS_Helix/MPyNurbsCurve_NURBS_Helix.ma",
+     "ma_basename": "MPyNurbsCurve_NURBS_Helix",
+     "compiled_type": "helixCurve",
+     "swapped": true,
+     "eval_ok": true,
+     "aux_interpreted": [],
+     "errors": [],
+     "notes": [],
+     "via": "mega",
+     "companions": [],
+     "compiled_node": "helixCurve"
+    },
+    "reopen": {
+     "ma": "compiled_templates/MPyNurbsCurve_NURBS_Helix/MPyNurbsCurve_NURBS_Helix.ma",
+     "reopened": true,
+     "compiled_type": "helixCurve",
+     "compiled_nodes": 1,
+     "mesh_verts": 0,
+     "unknown_nodes": 0,
+     "unknown_plugins": [],
+     "errors": []
+    },
+    "status": "ok"
+   }
+  ],
+  "issues": [],
+  "multi_demo": false
+ },
+ {
+  "folder": "MPyNurbsSurface_NURBS_Ripple",
+  "mpn": "templates/MPyNurbsSurface/NURBS Ripple/template.mpn",
+  "native_type": "mPyNurbsSurface",
+  "source_name": "rippleSurf",
+  "demo_label": "Animated Ripple Surface",
+  "compiled_type": "rippleSurf",
+  "status": "ok",
+  "demos": [
+   {
+    "func_name": "demo",
+    "label": "Animated Ripple Surface",
+    "ma_basename": "MPyNurbsSurface_NURBS_Ripple",
+    "build": {
+     "demo": "demo",
+     "mpn": "templates/MPyNurbsSurface/NURBS Ripple/template.mpn",
+     "built": true,
+     "ma": "compiled_templates/MPyNurbsSurface_NURBS_Ripple/MPyNurbsSurface_NURBS_Ripple.ma",
+     "ma_basename": "MPyNurbsSurface_NURBS_Ripple",
+     "compiled_type": "rippleSurf",
+     "swapped": true,
+     "eval_ok": true,
+     "aux_interpreted": [],
+     "errors": [],
+     "notes": [],
+     "via": "mega",
+     "companions": [],
+     "compiled_node": "rippleSurf"
+    },
+    "reopen": {
+     "ma": "compiled_templates/MPyNurbsSurface_NURBS_Ripple/MPyNurbsSurface_NURBS_Ripple.ma",
+     "reopened": true,
+     "compiled_type": "rippleSurf",
+     "compiled_nodes": 1,
+     "mesh_verts": 0,
+     "unknown_nodes": 0,
+     "unknown_plugins": [],
+     "errors": []
+    },
+    "status": "ok"
+   }
+  ],
+  "issues": [],
+  "multi_demo": false
+ },
+ {
+  "folder": "MPySkinCluster_Dual_Quaternion_Skin",
+  "mpn": "templates/MPySkinCluster/Dual Quaternion Skin/template.mpn",
+  "native_type": "mPySkinCluster",
+  "source_name": "dualQuaternionSkin",
+  "demo_label": "Skin a Two-Bone Arm (DQS)",
+  "compiled_type": "dualQuaternionSkin",
+  "status": "ok",
+  "demos": [
+   {
+    "func_name": "demo",
+    "label": "Skin a Two-Bone Arm (DQS)",
+    "ma_basename": "MPySkinCluster_Dual_Quaternion_Skin",
+    "build": {
+     "demo": "demo",
+     "mpn": "templates/MPySkinCluster/Dual Quaternion Skin/template.mpn",
+     "built": true,
+     "ma": "compiled_templates/MPySkinCluster_Dual_Quaternion_Skin/MPySkinCluster_Dual_Quaternion_Skin.ma",
+     "ma_basename": "MPySkinCluster_Dual_Quaternion_Skin",
+     "compiled_type": "dualQuaternionSkin",
+     "swapped": true,
+     "eval_ok": true,
+     "aux_interpreted": [],
+     "errors": [],
+     "notes": [],
+     "via": "mega",
+     "companions": [],
+     "compiled_node": "dualQuaternionSkin"
+    },
+    "reopen": {
+     "ma": "compiled_templates/MPySkinCluster_Dual_Quaternion_Skin/MPySkinCluster_Dual_Quaternion_Skin.ma",
+     "reopened": true,
+     "compiled_type": "dualQuaternionSkin",
+     "compiled_nodes": 1,
+     "mesh_verts": 884,
+     "unknown_nodes": 0,
+     "unknown_plugins": [],
+     "errors": []
+    },
+    "status": "ok"
+   }
+  ],
+  "issues": [],
+  "multi_demo": false
+ },
+ {
+  "folder": "MPySkinCluster_Linear_Blend_Skin",
+  "mpn": "templates/MPySkinCluster/Linear Blend Skin/template.mpn",
+  "native_type": "mPySkinCluster",
+  "source_name": "linearBlendSkin",
+  "demo_label": "Skin a Two-Bone Arm (LBS)",
+  "compiled_type": "linearBlendSkin",
+  "status": "ok",
+  "demos": [
+   {
+    "func_name": "demo",
+    "label": "Skin a Two-Bone Arm (LBS)",
+    "ma_basename": "MPySkinCluster_Linear_Blend_Skin",
+    "build": {
+     "demo": "demo",
+     "mpn": "templates/MPySkinCluster/Linear Blend Skin/template.mpn",
+     "built": true,
+     "ma": "compiled_templates/MPySkinCluster_Linear_Blend_Skin/MPySkinCluster_Linear_Blend_Skin.ma",
+     "ma_basename": "MPySkinCluster_Linear_Blend_Skin",
+     "compiled_type": "linearBlendSkin",
+     "swapped": true,
+     "eval_ok": true,
+     "aux_interpreted": [],
+     "errors": [],
+     "notes": [],
+     "via": "mega",
+     "companions": [],
+     "compiled_node": "linearBlendSkin"
+    },
+    "reopen": {
+     "ma": "compiled_templates/MPySkinCluster_Linear_Blend_Skin/MPySkinCluster_Linear_Blend_Skin.ma",
+     "reopened": true,
+     "compiled_type": "linearBlendSkin",
+     "compiled_nodes": 1,
+     "mesh_verts": 884,
+     "unknown_nodes": 0,
+     "unknown_plugins": [],
+     "errors": []
+    },
+    "status": "ok"
+   }
+  ],
+  "issues": [],
+  "multi_demo": false
+ },
+ {
+  "folder": "MPySkinCluster_Twist_Swing_Skin",
+  "mpn": "templates/MPySkinCluster/Twist Swing Skin/template.mpn",
+  "native_type": "mPySkinCluster",
+  "source_name": "twistSwingSkin",
+  "demo_label": "Two-Weight-Set Twist/Swing Arm",
+  "compiled_type": "twistSwingSkin",
+  "status": "ok",
+  "demos": [
+   {
+    "func_name": "demo",
+    "label": "Two-Weight-Set Twist/Swing Arm",
+    "ma_basename": "MPySkinCluster_Twist_Swing_Skin",
+    "build": {
+     "demo": "demo",
+     "mpn": "templates/MPySkinCluster/Twist Swing Skin/template.mpn",
+     "built": true,
+     "ma": "compiled_templates/MPySkinCluster_Twist_Swing_Skin/MPySkinCluster_Twist_Swing_Skin.ma",
+     "ma_basename": "MPySkinCluster_Twist_Swing_Skin",
+     "compiled_type": "twistSwingSkin",
+     "swapped": true,
+     "eval_ok": true,
+     "aux_interpreted": [],
+     "errors": [],
+     "notes": [],
+     "via": "mega",
+     "companions": [],
+     "compiled_node": "twistSwingSkin"
+    },
+    "reopen": {
+     "ma": "compiled_templates/MPySkinCluster_Twist_Swing_Skin/MPySkinCluster_Twist_Swing_Skin.ma",
+     "reopened": true,
+     "compiled_type": "twistSwingSkin",
+     "compiled_nodes": 1,
+     "mesh_verts": 884,
+     "unknown_nodes": 0,
+     "unknown_plugins": [],
+     "errors": []
+    },
+    "status": "ok"
+   }
+  ],
+  "issues": [],
+  "multi_demo": false
+ },
+ {
+  "folder": "MPyTransform_Aim_Between_Matrices",
+  "mpn": "templates/MPyTransform/Aim Between Matrices/template.mpn",
+  "native_type": "mPyTransform",
+  "source_name": "aimTransform",
+  "demo_label": "Aim Between Two Locators",
+  "compiled_type": "aimTransform",
+  "status": "ok",
+  "demos": [
+   {
+    "func_name": "demo",
+    "label": "Aim Between Two Locators",
+    "ma_basename": "MPyTransform_Aim_Between_Matrices",
+    "build": {
+     "demo": "demo",
+     "mpn": "templates/MPyTransform/Aim Between Matrices/template.mpn",
+     "built": true,
+     "ma": "compiled_templates/MPyTransform_Aim_Between_Matrices/MPyTransform_Aim_Between_Matrices.ma",
+     "ma_basename": "MPyTransform_Aim_Between_Matrices",
+     "compiled_type": "aimTransform",
+     "swapped": true,
+     "eval_ok": true,
+     "aux_interpreted": [],
+     "errors": [],
+     "notes": [],
+     "via": "mega",
+     "companions": [],
+     "compiled_node": "aimTransform"
+    },
+    "reopen": {
+     "ma": "compiled_templates/MPyTransform_Aim_Between_Matrices/MPyTransform_Aim_Between_Matrices.ma",
+     "reopened": true,
+     "compiled_type": "aimTransform",
+     "compiled_nodes": 1,
+     "mesh_verts": 8,
+     "unknown_nodes": 0,
+     "unknown_plugins": [],
+     "errors": []
+    },
+    "status": "ok"
+   }
+  ],
+  "issues": [],
+  "multi_demo": false
+ }
+]

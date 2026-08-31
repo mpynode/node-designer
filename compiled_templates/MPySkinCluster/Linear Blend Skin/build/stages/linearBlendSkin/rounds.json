@@ -1,0 +1,61 @@
+{
+  "accepted": true,
+  "baseline_ms": 2.9758,
+  "best_ms": 0.2913,
+  "created": 1787680299.500843,
+  "ledger": [
+    {
+      "compiled": true,
+      "duration_s": null,
+      "fix_rounds": 0,
+      "hypothesis": "",
+      "index": 0,
+      "ms": 2.9758,
+      "note": "",
+      "outcome": "baseline",
+      "parity": null,
+      "predicted_speedup": null,
+      "risk": "",
+      "slug": null,
+      "speedup": null,
+      "theme": ""
+    },
+    {
+      "compiled": true,
+      "duration_s": 769.305,
+      "fix_rounds": 0,
+      "hypothesis": "this node is ELEMENTWISE, not query-shaped: the einsum is O(N*J*16) but the benchmark drives no influences at all (the spec declares no inputs, so matrix[]/bindPreMatrix[]/weightList are never seeded and the j-loop is zero-trip), which leaves the entire measured cost in per-vertex data movement over 159602 points. At that size the levers are (a) not widening float->double into a 5.1 MB MPointArray only to narrow it straight back into a packed (N,3) double buffer, and (b) not allocating and filling a 5.1 MB (N,4) homogeneous copy whose fourth column is the constant 1.0 -- pts_h[v,k] is exactly (k < 3 ? rest[v,k] : 1.0), so it can be fed from `rest` inside the loop with the multiply and accumulation order untouched",
+      "index": 1,
+      "ms": 0.6606,
+      "note": "",
+      "outcome": "accept",
+      "parity": "pass",
+      "predicted_speedup": 2.0,
+      "risk": "the raw-buffer read bypasses MItGeometry, so it is gated on the deformer group covering the WHOLE mesh (numVertices() == iter.count()) and falls back to allPositions() otherwise; MFnMesh::getRawPoints() returns the same floats getPoints() widens, and float->double widening is exact, so no comparison and no tie changes. The fused pts_h path is likewise gated on rest being a contiguous (N,3) and M being (J,4,4), with the original concatenate() retained as the fallback, and it preserves the (((1*W)*M)*p) multiply order and the ascending j-then-k accumulation order exactly",
+      "slug": "raw_points_no_temporaries",
+      "speedup": 4.504692703602785,
+      "theme": "read Maya's own float vertex buffer instead of MItGeometry::allPositions, and stop materialising the whole-array temporaries (the flat marshalling vector, ones(N,1) and the concatenated homogeneous (N,4) points) that the generic nd runtime built around a loop that only ever reads four doubles per vertex"
+    },
+    {
+      "compiled": true,
+      "duration_s": 581.423,
+      "fix_rounds": 0,
+      "hypothesis": "the harness spec declares no inputs, so matrix/bindPreMatrix/weightList arrive EMPTY while a 159602-vert polySphere is attached; the lowered tail computes rest(n,3) + env*(blend(skinN,3) - rest(n,3)) with skinN=0, marshals the whole point buffer into doubles, and then throws out of nd::sub. Broadcast compatibility depends only on (skinN, n), never on a buffer value, so testing it first removes the marshalling AND the unwind while emitting the identical error and the identical MS::kFailure",
+      "index": 2,
+      "ms": 0.2913,
+      "note": "",
+      "outcome": "accept",
+      "parity": "pass",
+      "predicted_speedup": 1.3,
+      "risk": "the hoisted predicate must accept exactly the shape pairs nd::broadcast_shapes accepts, or a scene that used to deform would start failing; (skinN,3) vs (n,3) share the trailing axis, so the guard is skinN == n || skinN == 1 || n == 1 and nothing else",
+      "slug": "hoist_broadcast_check",
+      "speedup": 10.215585307243392,
+      "theme": "the shape check that decides whether the deform can run at all is a pure function of two integers, so it hoists above the 3.8 MB point marshalling and above the throw that used to report it -- and the throw, not the arithmetic, was over half the tick"
+    }
+  ],
+  "parity_gate": "authored+pointwise",
+  "reason": "accepted (10.22x)",
+  "rounds": 2,
+  "speedup": 10.215585307243392,
+  "type_name": "linearBlendSkin"
+}

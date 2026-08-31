@@ -1,0 +1,56 @@
+{
+  "data": {
+    "class_path": "mpynode_user.AnimatedSelection",
+    "expression": "# Polygon-shading showcase cube: spins on scene time, \"pops\" on mouse\n# HOVER (wall-clock elastic tween), and recolours via the `color_mode`\n# enum. Selection tints the FILL only (highlight_fill) while the wireframe\n# keeps its own colour (highlight_wire=False) -- per-aspect highlighting.\n# Animation state lives in getattr-defaulted vars, so it needs no seeding.\nhovered = bool(self.hovered)\nnow = float(_wallclock.time())\nduration = max(self.popDuration, 1e-3)\namount = self.popAmount\n\nprev = bool(getattr(self, \"prev_hovered\", False))\nanim_start = float(getattr(self, \"anim_start_t\", 0.0))\nanim_from = float(getattr(self, \"anim_from\", 0.0))\nanim_to = float(getattr(self, \"anim_to\", 0.0))\n\nelapsed = (now - anim_start) / duration\nelapsed = 0.0 if elapsed < 0.0 else (1.0 if elapsed > 1.0 else elapsed)\ncurrent_pop = anim_from + (anim_to - anim_from) * elastic_in_out(elapsed)\n\nif hovered != prev:\n    self.anim_start_t = now\n    self.anim_from = current_pop\n    self.anim_to = 1.0 if hovered else 0.0\n    self.prev_hovered = hovered\n    elapsed = 0.0\n\nscale = 1.0 + amount * current_pop\n\n# Spin on scene time at the user-tunable spinSpeed (rad / frame).\nang = self.time * self.spinSpeed\nspun = ((cube_pts * scale) @ rot_y(ang).T) @ rot_x(ang * 0.6).T\n\n# The four fill modes are named after the buffer key each one drives, so the\n# enum maps straight onto a DrawMesh keyword. They are mutually exclusive --\n# passing two raises instead of silently letting the renderer pick by\n# precedence.\nmode = self.color_mode.name()\nif mode == \"face\":\n    fill = {\"color\": FACE_HUES}                       # flat, per face\nelif mode == \"vertex\":\n    fill = {\"vertex_colors\": VERTEX_COLORS}           # smooth, per point\nelif mode == \"face_vertex\":\n    fill = {\"face_vertex_colors\": FACE_VERTEX_COLORS}  # per corner\nelse:  # \"uniform\"\n    fill = {\"uniform_color\": (0.45, 0.85, 1.0, 0.6)}  # one setColor call\n\n# highlight_fill/highlight_wire are per-ASPECT: selection tints the fill but\n# leaves the wireframe its own colour. outline_boundary_only=False keeps every\n# cube edge, matching the wire overlay this demo is showing off.\ncube = DrawMesh(spun, cube_cnt, cube_idx,\n                cull_backfaces=True, precise_hover=True,\n                highlight_fill=True, highlight_wire=False, **fill)\n\nif self.show_wireframe:\n    cube = cube.outlined((0.04, 0.04, 0.06, 1.0), width=self.wire_width, boundary_only=False)\n\nself.draw = cube\nself.auto_highlight = False      # we drive highlighting ourselves\nself.auto_refresh = bool(elapsed < 1.0)\n",
+    "init_source": "import math\nimport time as _wallclock\nimport numpy as np\nfrom mpynode._common.draw.draw_types import DrawMesh\n\n\ndef elastic_in_out(t):\n    # Penner elastic in/out easing on [0, 1]: 0 at 0, 1 at 1, spring wobble.\n    if t <= 0.0:\n        return 0.0\n    if t >= 1.0:\n        return 1.0\n    p = 0.45\n    s = p / 4.0\n    t2 = 2.0 * t - 1.0\n    if t2 < 0.0:\n        return -0.5 * (2.0 ** (10.0 * t2)) * math.sin((t2 - s) * (2.0 * math.pi / p))\n    return (2.0 ** (-10.0 * t2)) * math.sin((t2 - s) * (2.0 * math.pi / p)) * 0.5 + 1.0\n\n\ncube_pts = np.array([\n        [-1.0, -1.0, -1.0], [1.0, -1.0, -1.0], [1.0, 1.0, -1.0], [-1.0, 1.0, -1.0],\n        [-1.0, -1.0, 1.0], [1.0, -1.0, 1.0], [1.0, 1.0, 1.0], [-1.0, 1.0, 1.0]], dtype=np.float64)\ncube_idx = np.array(\n    [0, 3, 2, 1, 4, 5, 6, 7, 0, 1, 5, 4, 2, 3, 7, 6, 0, 4, 7, 3, 1, 2, 6, 5], dtype=np.int64)\ncube_cnt = np.array([4, 4, 4, 4, 4, 4], dtype=np.int64)\n\nFACE_HUES = np.array([\n        [0.90, 0.20, 0.25, 1.0], [0.95, 0.55, 0.15, 1.0], [0.95, 0.85, 0.20, 1.0],\n        [0.30, 0.80, 0.35, 1.0], [0.25, 0.55, 0.95, 1.0], [0.60, 0.35, 0.85, 1.0]], dtype=np.float64)\n\n\ndef rot_y(a):\n    c, s = math.cos(a), math.sin(a)\n    return np.array([[c, 0.0, s], [0.0, 1.0, 0.0], [-s, 0.0, c]], dtype=np.float64)\n\n\ndef rot_x(a):\n    c, s = math.cos(a), math.sin(a)\n    return np.array([[1.0, 0.0, 0.0], [0.0, c, -s], [0.0, s, c]], dtype=np.float64)\n\n\ndef vertex_palette():\n    rgb = (cube_pts + 1.0) * 0.5\n    return np.concatenate([rgb, np.ones((cube_pts.shape[0], 1))], axis=1)\n\n\ndef face_vertex_palette():\n    out = []\n    for f, c in enumerate(cube_cnt):\n        c = int(c)\n        for k in range(c):\n            col = FACE_HUES[f].copy()\n            col[:3] = col[:3] * (1.0 if k == 0 else 0.4)\n            out.append(col)\n    return np.array(out, dtype=np.float64)\n\n\nVERTEX_COLORS = vertex_palette()\nFACE_VERTEX_COLORS = face_vertex_palette()\n",
+    "input_attrs": {
+      "color_mode": {
+        "attr_type": "enum",
+        "enum_names": [
+          "face",
+          "vertex",
+          "face_vertex",
+          "uniform"
+        ],
+        "is_array": false,
+        "order": 0
+      },
+      "popAmount": {
+        "attr_type": "float",
+        "default_value": 0.45,
+        "is_array": false,
+        "order": 5
+      },
+      "popDuration": {
+        "attr_type": "float",
+        "default_value": 0.6,
+        "is_array": false,
+        "order": 4
+      },
+      "show_wireframe": {
+        "attr_type": "bool",
+        "default_value": true,
+        "is_array": false,
+        "order": 1
+      },
+      "spinSpeed": {
+        "attr_type": "float",
+        "default_value": 0.04,
+        "is_array": false,
+        "order": 3
+      },
+      "wire_width": {
+        "attr_type": "float",
+        "default_value": 2.0,
+        "is_array": false,
+        "order": 2
+      }
+    },
+    "methods_source": "# Animated Selection setup: playback range for the spin + frame it. The\n# hover pop is interactive (wall-clock), so it plays without playback too.\ndef demo(self):\n    from maya import cmds as mc\n    name = self.get_name()\n    try:\n        mc.playbackOptions(minTime=1, maxTime=240,\n                           animationStartTime=1, animationEndTime=240)\n        mc.currentTime(1)\n    except Exception:\n        pass\n    try:\n        for _panel in mc.getPanel(type=\"modelPanel\") or []:\n            _cam = mc.modelEditor(_panel, query=True, camera=True)\n            if _cam:\n                mc.viewFit(_cam, allObjects=True)\n    except Exception:\n        pass\n    return name\n\n\n@maya_test(label=\"Animated selection: color modes, wireframe, spin\", digits=3)\ndef test_animated_selection(self):\n    \"\"\"Validate the node's INTENT through its draw buffers (a locator's only\n    output), exactly as the builder's own live gate does: each ``color_mode``\n    drives the matching polygon colour key with backface culling on,\n    ``show_wireframe`` toggles the wireframe overlay, and ``spinSpeed`` genuinely\n    spins the cube over time.\n\n    A COMPILED C++ locator (MPxLocatorNode) exposes no Python\n    ``evaluateDrawItems``, so its draw buffers are not reachable here -- that\n    parity is covered by the dedicated ``-DMPYNODE_PROBE`` numerical buffer\n    comparison. When the buffers cannot be read (compiled node) this test skips\n    cleanly so it never false-fails parity.\"\"\"\n    import numpy as np\n    from maya import cmds as mc\n    from mpynode.wrappers.mpy_locator import MPyLocator\n    from mpynode._common.methods.test_helpers import assert_true\n\n    name = self.get_name()\n    w = MPyLocator(name)\n\n    def _poly(time_value=0.0):\n        \"\"\"This frame's polygon buffer, or None.\"\"\"\n        for cmd in w.evaluate_draw_commands(time_value)[\"commands\"]:\n            if cmd[\"slot\"] == \"polygons\":\n                return cmd[\"buffer\"]\n        return None\n\n    # The output lives in draw commands reached via evaluateDrawItems, which only\n    # the interpreted mPyNode exposes to Python. On a compiled node this is\n    # unavailable -> skip (compiled parity is probe-verified).\n    try:\n        probe = _poly(30.0)\n    except Exception:\n        return\n    if probe is None:\n        return\n\n    # 1) Each color_mode drives the matching polygon colour key (backface-culled).\n    for i, key in enumerate(\n            [\"face_colors\", \"vertex_colors\", \"face_vertex_colors\", \"colors\"]):\n        mc.setAttr(name + \".color_mode\", i)\n        poly = _poly(30.0)\n        assert_true(poly is not None and key in poly\n                    and poly.get(\"cull_backfaces\") is True,\n                    \"color_mode %d must set %r with cull_backfaces\" % (i, key))\n\n    # 2) show_wireframe toggles the wireframe overlay on/off.\n    mc.setAttr(name + \".color_mode\", 0)\n    mc.setAttr(name + \".show_wireframe\", True)\n    assert_true(\"wireframe\" in (_poly() or {}),\n                \"show_wireframe True must add a wireframe overlay\")\n    mc.setAttr(name + \".show_wireframe\", False)\n    assert_true(\"wireframe\" not in (_poly() or {}),\n                \"show_wireframe False must drop the wireframe overlay\")\n\n    # 3) spinSpeed actually spins: two different times give different points.\n    mc.setAttr(name + \".spinSpeed\", 0.5)\n    s0 = np.asarray(_poly(0.0)[\"points\"])\n    s1 = np.asarray(_poly(10.0)[\"points\"])\n    assert_true(not np.allclose(s0, s1),\n                \"spinSpeed should rotate the cube over time\")\n",
+    "native_type": "mPyLocator",
+    "node_name": "animatedSelection",
+    "output_attrs": {},
+    "stored_vars": "{\"protocol\":8,\"format\":\"keyed2\",\"codec\":\"zlib\",\"has_pickle\":false,\"data_b64\":\"eJyrrgUAAXUA+Q==\"}"
+  },
+  "version": 2
+}

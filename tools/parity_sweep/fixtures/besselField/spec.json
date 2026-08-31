@@ -1,0 +1,97 @@
+{
+  "schema_version": 1,
+  "source_node": "besselField",
+  "mpy_type": "mPyNode",
+  "suggested": {
+    "node_type_name": "besselField",
+    "class_name": "BesselField",
+    "type_id": "0x00072d14",
+    "mpx_base": "MPxNode",
+    "note": "plain dependency node",
+    "heaviness": "easy"
+  },
+  "inputs": {
+    "falloff": {
+      "type": "float",
+      "is_array": false,
+      "portable": true,
+      "cpp": {
+        "cat": "scalar",
+        "fn": "MFnNumericAttribute",
+        "data": "kFloat",
+        "cpp": "float",
+        "read": "asFloat",
+        "portable": true
+      },
+      "default_value": 1.5
+    },
+    "freq": {
+      "type": "float",
+      "is_array": false,
+      "portable": true,
+      "cpp": {
+        "cat": "scalar",
+        "fn": "MFnNumericAttribute",
+        "data": "kFloat",
+        "cpp": "float",
+        "read": "asFloat",
+        "portable": true
+      },
+      "default_value": 2.5
+    },
+    "pos": {
+      "type": "vector",
+      "is_array": false,
+      "portable": true,
+      "cpp": {
+        "cat": "vector",
+        "fn": "MFnNumericAttribute",
+        "data": "k3Double",
+        "cpp": "double[3]",
+        "read": "asDouble3",
+        "portable": true
+      }
+    },
+    "radius": {
+      "type": "float",
+      "is_array": false,
+      "portable": true,
+      "cpp": {
+        "cat": "scalar",
+        "fn": "MFnNumericAttribute",
+        "data": "kFloat",
+        "cpp": "float",
+        "read": "asFloat",
+        "portable": true
+      },
+      "default_value": 3.0
+    }
+  },
+  "outputs": {
+    "outValue": {
+      "type": "double",
+      "is_array": false,
+      "portable": true,
+      "cpp": {
+        "cat": "scalar",
+        "fn": "MFnNumericAttribute",
+        "data": "kDouble",
+        "cpp": "double",
+        "read": "asDouble",
+        "portable": true
+      }
+    }
+  },
+  "variables": {},
+  "compute": "# Bessel ripple windowed by an error-function shell:\n#   output = j0(freq * r) * erf(falloff * (radius - r)),  r = |pos|\np = self.pos\nr = float(np.sqrt(p[0] * p[0] + p[1] * p[1] + p[2] * p[2]))\nripple = float(j0(self.freq * r))\nwindow = float(erf(self.falloff * (self.radius - r)))\nself.outValue = float(ripple * window)\n",
+  "init": "import numpy as np\nfrom scipy.special import j0, erf\n",
+  "affects": "all",
+  "portability": {
+    "portable": true,
+    "blockers": [],
+    "warnings": [
+      "uses numpy -- vectorized math is reverse-engineered to C++ loops (verify numerically; np.random/np.fromfile are blockers)",
+      "uses scipy -- special/interpolate/linalg map to hand-rolled C++ (A&S Bessel ~1e-6, Cox-de Boor, dense LU); verify numerically"
+    ]
+  }
+}

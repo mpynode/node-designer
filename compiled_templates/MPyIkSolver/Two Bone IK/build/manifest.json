@@ -1,0 +1,98 @@
+{
+  "manifest_version": 1,
+  "porter_recipe_version": "19",
+  "provider": "claude_cli",
+  "model": "claude-opus-5[1m]",
+  "strict": false,
+  "plugin_name": "MPyIkSolver_Two_Bone_IK",
+  "bundle": "compiled_templates/MPyIkSolver/Two Bone IK/MPyIkSolver_Two_Bone_IK.bundle",
+  "created": 1787677017.1827478,
+  "nodes": [
+    {
+      "source_node": "twoBoneIK",
+      "type_name": "twoBoneIK",
+      "type_id": "0x0007569c",
+      "type_id_source": "derived",
+      "base": "MPxIkSolverNode",
+      "spec_hash": "5e41df1ccce98d19d22ebdad8e71f689f60fcf91704a409ad8339825e82bf99e",
+      "port_cache_key": "5e41df1ccce98d19d22ebdad8e71f689f60fcf91704a409ad8339825e82bf99e",
+      "cache": "miss",
+      "build_status": "compiled",
+      "build_reason": "",
+      "ported": false,
+      "incomplete": [],
+      "invented_io": [],
+      "missing_includes": [],
+      "verify": {
+        "ran": true,
+        "pass": false,
+        "maxerr": null,
+        "tol": 0.0,
+        "reason": "verify could not run: 'NoneType' object has no attribute 'set_init_expression' | authored @maya_test FAILED: test_two_bone_ik: knee barely bends (rotateX=0.00)",
+        "timing": {
+          "measured": false,
+          "reason": "not timed -- generic parity did not pass for this node, so there is no trustworthy pair to measure (verify could not run: 'NoneType' object has no attribute 'set_init_expression')"
+        },
+        "authored_test": {
+          "ran": true,
+          "passed": false,
+          "count": 1,
+          "passes": 0,
+          "reason": "test_two_bone_ik: knee barely bends (rotateX=0.00)"
+        }
+      },
+      "spec": {
+        "schema_version": 1,
+        "source_node": "twoBoneIK",
+        "mpy_type": "mPyIkSolver",
+        "suggested": {
+          "node_type_name": "twoBoneIK",
+          "class_name": "TwoBoneIK",
+          "type_id": "0x000756ba",
+          "mpx_base": "MPxIkSolverNode",
+          "note": "custom IK solver (doSolve)",
+          "heaviness": "hard"
+        },
+        "inputs": {},
+        "outputs": {},
+        "variables": {},
+        "compute": "# 2-bone analytic IK (law of cosines) producing per-joint WORLD matrices.\n# Runs during the IK solve when this node is the solver on an ikHandle driving a\n# 3-joint chain (root -> mid -> tip). The solve is jointOrient-agnostic: it reads\n# each joint's rest (bind) world frame and rotates it so the bone aims correctly,\n# then the bridge applies the result via offsetParentMatrix (rotate-only by\n# default) -- the joints' own channels and jointOrient are left untouched.\n#\n# NOTE: this minimal solver's bend plane comes from the pole vector if present,\n# else the rest knee direction (stable, avoids knee-pop). Add a dedicated pole\n# input + reference axis for production rigs.\nimport math\nimport numpy as np\n\njoints = self.joints\nif len(joints) >= 3:\n    p0 = np.asarray(joints[0][\"world_position\"], float)   # root (hip)\n    p1 = np.asarray(joints[1][\"world_position\"], float)   # mid  (knee)\n    p2 = np.asarray(joints[2][\"world_position\"], float)   # tip  (ankle)\n    W0 = np.asarray(joints[0][\"world_matrix\"], float).reshape(4, 4)\n    W1 = np.asarray(joints[1][\"world_matrix\"], float).reshape(4, 4)\n    B1 = float(np.linalg.norm(p1 - p0))       # upper bone length (rigid)\n    B2 = float(np.linalg.norm(p2 - p1))       # lower bone length (rigid)\n\n    target = np.asarray(self.end_effector, float)\n    goal_vec = target - p0\n    reach = float(np.linalg.norm(goal_vec))\n    if reach > 1e-9 and B1 > 1e-9 and B2 > 1e-9:\n        goal_dir = goal_vec / reach\n        # clamp reachable distance (law-of-cosines domain)\n        d = min(max(reach, abs(B1 - B2) + 1e-4), B1 + B2 - 1e-4)\n        goal_pt = p0 + d * goal_dir\n\n        pole = np.asarray(self.pole_vector, float)\n        ref = (pole - p0) if float(np.linalg.norm(pole)) > 1e-6 else (p1 - p0)\n        bend_n = np.cross(goal_dir, ref)\n        if float(np.linalg.norm(bend_n)) < 1e-6:\n            bend_n = np.cross(goal_dir, np.array([0.0, 0.0, 1.0]))\n        if float(np.linalg.norm(bend_n)) < 1e-6:\n            bend_n = np.cross(goal_dir, np.array([1.0, 0.0, 0.0]))\n        bend_n = bend_n / np.linalg.norm(bend_n)\n\n        cos_a = (B1 * B1 + d * d - B2 * B2) / (2.0 * B1 * d)\n        alpha = math.acos(max(-1.0, min(1.0, cos_a)))\n\n        def rot3(axis, ang):\n            # column-vector Rodrigues rotation (R @ v) about a unit axis.\n            x, y, z = axis[0], axis[1], axis[2]\n            c = math.cos(ang)\n            s = math.sin(ang)\n            k = np.array([[0.0, -z, y], [z, 0.0, -x], [-y, x, 0.0]])\n            return np.eye(3) + s * k + (1.0 - c) * (k @ k)\n\n        upper_dir = rot3(bend_n, alpha) @ goal_dir\n        upper_dir = upper_dir / np.linalg.norm(upper_dir)\n        knee_pt = p0 + B1 * upper_dir\n        lower_dir = goal_pt - knee_pt\n        lower_dir = lower_dir / np.linalg.norm(lower_dir)\n\n        def aim(w_rest, rest_dir, new_dir):\n            # World matrix that re-aims a joint's bind frame so its bone points\n            # from rest_dir to new_dir. Returns w_rest @ delta, where delta's\n            # rotation is the transpose of the (column) rotation mapping\n            # rest_dir->new_dir (row-vector Maya). Only rotation is used\n            # downstream (translate is gated off), so the delta translation is 0.\n            a = rest_dir / np.linalg.norm(rest_dir)\n            b = new_dir / np.linalg.norm(new_dir)\n            v = np.cross(a, b)\n            s = float(np.linalg.norm(v))\n            c = float(np.dot(a, b))\n            if s < 1e-9:\n                rct = np.eye(3)\n            else:\n                rct = rot3(v / s, -math.acos(max(-1.0, min(1.0, c))))\n            delta = np.eye(4)\n            delta[:3, :3] = rct\n            return w_rest @ delta\n\n        self.world_matrices[0] = aim(W0, p1 - p0, upper_dir)   # root aims upper bone\n        self.world_matrices[1] = aim(W1, p2 - p1, lower_dir)   # mid  aims lower bone\n        # tip (joint 2) is left as None -> it follows the chain.\n        self.apply_rotate = True       # reorient the joints...\n        self.apply_translate = False   # ...keep their rest translate (bone lengths)\n        self.apply_scale = False\n",
+        "init": "import math\nimport numpy as np\n",
+        "affects": "all",
+        "methods": "@maya_demo(label=\"Two-Bone IK Leg\")\ndef demo(self):\n    \"\"\"Build a 3-joint leg (hip -> knee -> ankle, bones down -Y) and drive it\n    with an ikHandle that uses THIS solver, then wire a draggable goal locator to\n    the handle. Move the goal to watch the knee bend via the analytic\n    law-of-cosines solve.\"\"\"\n    from maya import cmds as mc\n    name = self.get_name()\n\n    def _uni(base):\n        n, i = base, 1\n        while mc.objExists(n):\n            i += 1\n            n = \"%s%d\" % (base, i)\n        return n\n\n    mc.select(clear=True)\n    hip = mc.rename(mc.joint(position=(0.0, 5.0, 0.0)), _uni(\"ikHip\"))\n    knee = mc.rename(mc.joint(position=(0.0, 0.0, 0.0)), _uni(\"ikKnee\"))\n    ankle = mc.rename(mc.joint(position=(0.0, -5.0, 0.0)), _uni(\"ikAnkle\"))\n    handle = mc.ikHandle(startJoint=hip, endEffector=ankle, solver=name, name=\"ikLeg#\")[0]\n\n    goal = mc.spaceLocator(name=\"ikGoal#\")[0]\n    mc.setAttr(goal + \".translate\", 3.0, 1.0, 2.0, type=\"double3\")\n    mc.pointConstraint(goal, handle, maintainOffset=False)\n\n    mc.select(goal, replace=True)\n    try:\n        mc.viewFit(hip, goal)\n    except Exception:\n        pass\n    return name\n\n\n@maya_test(label=\"Two-bone IK: tip reaches a reachable goal and the knee bends\", digits=3)\ndef test_two_bone_ik(self):\n    \"\"\"Validate the solver's INTENT (same test passes interpreted AND compiled ->\n    parity): a 3-joint leg (hip -> knee -> ankle, bones down -Y) driven by an\n    ikHandle bound to THIS solver, with the handle pulled to a reachable goal,\n    lands the ankle (tip) on the goal and bends the knee -- mirroring the\n    builder's live compute_ok (dist_close < 1.0, bend_close > 15).\"\"\"\n    from maya import cmds as mc\n    import numpy as np\n    from mpynode._common.methods.test_helpers import assert_true\n\n    name = self.get_name()\n\n    mc.select(clear=True)\n    hip = mc.joint(position=(0.0, 5.0, 0.0))\n    knee = mc.joint(position=(0.0, 0.0, 0.0))\n    ankle = mc.joint(position=(0.0, -5.0, 0.0))\n    handle = mc.ikHandle(startJoint=hip, endEffector=ankle, solver=name)[0]\n\n    goal = (3.0, 1.0, 2.0)   # inside the 10-unit reach of the two 5-unit bones\n    mc.move(goal[0], goal[1], goal[2], handle)\n    mc.refresh(force=True)\n\n    tip = mc.xform(ankle, q=True, ws=True, t=True)\n    dist = float(np.linalg.norm(np.array(tip) - np.array(goal)))\n    bend = abs(mc.xform(knee, q=True, ro=True)[0])\n\n    # Tip reaches the goal (chain solved) and the knee is genuinely bent.\n    assert_true(dist < 1.0, \"tip is %.3f from the goal\" % dist)\n    assert_true(bend > 15.0, \"knee barely bends (rotateX=%.2f)\" % bend)\n\n\n\"\"\"Setup source for mPyIkSolver nodes (self-first instance method).\"\"\"\n\n# Also this node's CREATE command, the way cmds.blendShape both makes the node\n# and wires it. Un-named because this file is shared by every node of the type\n# -- see maya_command.resolve_create_command_names.\n#\n# VANILLA: this body ships as EMBEDDED PYTHON inside a compiled .mll and must run\n# on a machine with Maya but WITHOUT mpynode, so the setup_helpers it used to\n# import (_selection, _joints, SetupError) are inlined below. They are\n# FUNCTION-LOCAL rather than module-level because node_setups.merge_type_default\n# APPENDS this file to the host node's own methods source -- a module-level def\n# would clobber a same-named helper the host already defines.\n@maya_command(creates=True)\ndef setup(self, *args, **kwargs):\n    from maya import cmds as mc\n\n    class SetupError(Exception):\n        \"\"\"The current selection / scene state can't support setup for this node.\n        Message is user-facing (it names what to select).\"\"\"\n\n    def _selection(override=None, exclude=None):\n        \"\"\"Inputs for setup: `override` (the snapshot \"Run setup\" passes) wins\n        over the live selection; `exclude` drops this node so it is never its\n        own input.\"\"\"\n        sel = list(override) if override is not None else (\n            mc.ls(selection=True, long=False) or [])\n        return [n for n in sel if n != exclude] if exclude else sel\n\n    def _joints(sel):\n        return [n for n in sel if mc.nodeType(n) == \"joint\"]\n\n    name = self.get_name()\n    joints = _joints(_selection(override=kwargs.get(\"selection\"), exclude=name))\n    if len(joints) < 2:\n        raise SetupError(\"select the START joint then the END joint of the chain \"\n                         \"to build an IK handle for %s\" % self.NATIVE_TYPE)\n    # GOTCHA: ikHandle solver= wants an EXISTING solver NODE NAME -- ``self`` is\n    # that already-created solver. Build the handle against the selected chain.\n    mc.ikHandle(startJoint=joints[0], endEffector=joints[-1], solver=name)\n    return name\n",
+        "commands": [
+          {
+            "name": "twoBoneIK",
+            "name_explicit": false,
+            "func_name": "setup",
+            "undoable": true,
+            "creates": true,
+            "is_factory": false,
+            "is_static": false,
+            "params": [],
+            "body_src": "@maya_command(creates=True)\ndef setup(self, *args, **kwargs):\n    from maya import cmds as mc\n\n    class SetupError(Exception):\n        \"\"\"The current selection / scene state can't support setup for this node.\n        Message is user-facing (it names what to select).\"\"\"\n\n    def _selection(override=None, exclude=None):\n        \"\"\"Inputs for setup: `override` (the snapshot \"Run setup\" passes) wins\n        over the live selection; `exclude` drops this node so it is never its\n        own input.\"\"\"\n        sel = list(override) if override is not None else (\n            mc.ls(selection=True, long=False) or [])\n        return [n for n in sel if n != exclude] if exclude else sel\n\n    def _joints(sel):\n        return [n for n in sel if mc.nodeType(n) == \"joint\"]\n\n    name = self.get_name()\n    joints = _joints(_selection(override=kwargs.get(\"selection\"), exclude=name))\n    if len(joints) < 2:\n        raise SetupError(\"select the START joint then the END joint of the chain \"\n                         \"to build an IK handle for %s\" % self.NATIVE_TYPE)\n    # GOTCHA: ikHandle solver= wants an EXISTING solver NODE NAME -- ``self`` is\n    # that already-created solver. Build the handle against the selected chain.\n    mc.ikHandle(startJoint=joints[0], endEffector=joints[-1], solver=name)\n    return name",
+            "lineno": 80
+          }
+        ],
+        "portability": {
+          "portable": true,
+          "blockers": [],
+          "warnings": [
+            "uses numpy -- vectorized math is reverse-engineered to C++ loops (verify numerically; np.random maps to C++ <random>; file I/O lowers only where the dtype is explicit -- np.fromfile/np.save/.tofile and ndio.read/ndio.write -- while np.load/np.loadtxt are blockers)"
+          ],
+          "unported": [],
+          "reads_image_file": false,
+          "reads_embedded_image": false,
+          "uses_mesh_intersector": false
+        }
+      },
+      "commands": [
+        {
+          "name": "twoBoneIK",
+          "func_name": "setup",
+          "kind": "creates"
+        }
+      ]
+    }
+  ]
+}

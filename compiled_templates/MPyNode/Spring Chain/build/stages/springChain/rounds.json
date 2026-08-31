@@ -1,0 +1,61 @@
+{
+  "accepted": true,
+  "baseline_ms": 0.0015,
+  "best_ms": 0.0014,
+  "created": 1787678922.0615199,
+  "ledger": [
+    {
+      "compiled": true,
+      "duration_s": null,
+      "fix_rounds": 0,
+      "hypothesis": "",
+      "index": 0,
+      "ms": 0.0015,
+      "note": "",
+      "outcome": "baseline",
+      "parity": null,
+      "predicted_speedup": null,
+      "risk": "",
+      "slug": null,
+      "speedup": null,
+      "theme": ""
+    },
+    {
+      "compiled": true,
+      "duration_s": 439.734,
+      "fix_rounds": 0,
+      "hypothesis": "the workload description promises 20000-element arrays and a 159k-vert sphere, but springChain has NO array inputs and NO geometry inputs -- the only array is the driven OUTPUT, whose elementCount comes from downstream connections. So compute() is ~11 Maya API calls over a handful of elements, and the only lever is removing API calls: one outputArrayValue instead of two, no MArrayDataBuilder allocate + set() rebuild, no out_aDriven heap allocation per evaluate",
+      "index": 1,
+      "ms": 0.0016,
+      "note": "",
+      "outcome": "not-faster",
+      "parity": "pass",
+      "predicted_speedup": 1.3,
+      "risk": "the in-place walk writes position[i] to the i-th EXISTING element while MArrayDataBuilder densifies to logical indices 0..n-1; those diverge on a sparse driven array, so the walk is guarded by an elementIndex()==i check per element and falls back to the verbatim builder path on any mismatch. Deleting the static registry also changes lifetime semantics, but in the safe direction (no cross-node inheritance of a dead node's buffers)",
+      "slug": "drop_builder_and_registry",
+      "speedup": null,
+      "theme": "this node is API-overhead-bound at ~1.5us, not algorithm-bound: collapse the two outputArrayValue calls into one, delete the per-compute MArrayDataBuilder rebuild and the staging vector in favour of a guarded in-place element walk, and lift the leaking static NodeState registry into a per-instance member"
+    },
+    {
+      "compiled": true,
+      "duration_s": 501.218,
+      "fix_rounds": 0,
+      "hypothesis": "the spec declares no array and no geometry inputs, so --bench-array 20000 / --bench-geo 400 seed nothing and n = elementCount(driven) = 1 (confirmed by instrumenting the node: 'DBG n=1 pos=1'). The spring integration is therefore ~3 flops and irrelevant; the measurable cost is Maya API call count per compute. Cutting the per-call constant should get most of the way to the harness floor.",
+      "index": 2,
+      "ms": 0.0014,
+      "note": "",
+      "outcome": "accept",
+      "parity": "pass",
+      "predicted_speedup": 1.6,
+      "risk": "dropping the unused `time` read leaves that input plug unclean; it is safe because in_aTime was dead in the ported body and attributeAffects(aTime, aDriven) still re-invokes compute on a time change, so the output value is bit-identical",
+      "slug": "strip_percall_overhead",
+      "speedup": 1.0714285714285714,
+      "theme": "this node is not compute-bound at all -- the benchmark drives it with exactly ONE driven element, so every microsecond is per-call fixed overhead (datablock lookups, two MArrayDataHandle acquisitions, a heap-allocating temp vector, an MArrayDataBuilder rebuild and a static registry scan); removing that overhead is the whole win"
+    }
+  ],
+  "parity_gate": "authored+pointwise",
+  "reason": "accepted (1.07x)",
+  "rounds": 2,
+  "speedup": 1.0714285714285714,
+  "type_name": "springChain"
+}

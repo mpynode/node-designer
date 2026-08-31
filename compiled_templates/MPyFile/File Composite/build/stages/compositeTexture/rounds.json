@@ -1,0 +1,61 @@
+{
+  "accepted": true,
+  "baseline_ms": 0.2095,
+  "best_ms": 0.0022,
+  "created": 1787962974.056309,
+  "ledger": [
+    {
+      "compiled": true,
+      "duration_s": null,
+      "fix_rounds": 0,
+      "hypothesis": "",
+      "index": 0,
+      "ms": 0.2095,
+      "note": "",
+      "outcome": "baseline",
+      "parity": null,
+      "predicted_speedup": null,
+      "risk": "",
+      "slug": null,
+      "speedup": null,
+      "theme": ""
+    },
+    {
+      "compiled": true,
+      "duration_s": 1194.759,
+      "fix_rounds": 0,
+      "hypothesis": "the harness leaves `layers` at ONE element (verify._bench_string_value refuses any attr whose name looks path-like, and it drives only layers[0]='bench'), while `opacities` is filled to 20000. So the alpha-over loop runs once and every microsecond is in the opacity multi: 20000 x (elementIndex + inputValue + asFloat + next) plus vector<float> -> vector<double> -> shared vector<double> inside an nd::Array. Removing two of the three 160KB temporaries and one of the four per-element Maya calls should take roughly a third off.",
+      "index": 1,
+      "ms": 0.1315,
+      "note": "",
+      "outcome": "accept",
+      "parity": "pass",
+      "predicted_speedup": 1.45,
+      "risk": "the dense fast path skips elementIndex(), so it is only sound because a multi iterates in strictly ascending logical index -- n elements with first==0 and last==n-1 can only be {0..n-1}. Both probes are checked and anything gappy falls back to the original indexed loop. Cross-checked in Maya: dense{0,1,2} == sparse{0,1,2,9}, gappy{0,2,9} == dense{0,1.0,2}, short{0,1} == dense{0,1,2=1.0}, and the results are non-vacuous (differ from the blank stack).",
+      "slug": "dense_multi_read_no_temps",
+      "speedup": 1.5931558935361216,
+      "theme": "this node is not query-shaped and barely touches its layer stack -- the entire measured cost is reading one 20000-element float multi and copying it three times, so prove the multi is dense to drop 20000 elementIndex() calls and collapse the three whole-array temporaries into one"
+    },
+    {
+      "compiled": true,
+      "duration_s": 742.459,
+      "fix_rounds": 0,
+      "hypothesis": "this node is ELEMENTWISE with a degenerate output of ONE texel: nd_tex_composite_layers loops `for i < nPaths` and reads `(i < nOps) ? ops[i] : 1.0`, and the bench drives layers with 1 element and opacities with 20000. So 19999 of the 20000 MArrayDataHandle inputValue()/next() pairs feed a value no expression can observe. Removing them should leave only Maya's dirty/pull overhead and a single bilinear sample; I predicted the read was essentially the entire 0.132 ms.",
+      "index": 2,
+      "ms": 0.0022,
+      "note": "",
+      "outcome": "accept",
+      "parity": "pass",
+      "predicted_speedup": 20.0,
+      "risk": "the bound has to be the LAYER count, not the element count, or a deep stack loses real opacities. Two sub-cases had to be preserved exactly: a hole (no element at logical index i) must still read as the documented 1.0 default, and a GAPPY multi must not be truncated by physical position. Both hold because a multi iterates in strictly ascending logical index, so the element at physical position p has logical index >= p and every in-range index lives inside the first _opsNeed positions; the small-stack path sidesteps the question entirely by asking for logical indices directly via jumpToElement(), whose miss leaves the 1.0 prefill standing. Deeper-than-64 stacks keep the original positional walk, merely bounded.",
+      "slug": "bound_opacity_read_to_layers",
+      "speedup": 95.22727272727272,
+      "theme": "the compositor only ever indexes ops[i] for i < layer count, so reading the whole opacities multi is dead work -- bound the read at the layer count and address those few logical indices directly instead of walking the array"
+    }
+  ],
+  "parity_gate": "authored+pointwise",
+  "reason": "accepted (95.23x)",
+  "rounds": 2,
+  "speedup": 95.22727272727272,
+  "type_name": "compositeTexture"
+}

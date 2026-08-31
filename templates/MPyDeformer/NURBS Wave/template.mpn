@@ -1,0 +1,32 @@
+{
+  "data": {
+    "class_path": "mpynode_user.NurbsWave",
+    "expression": "# NURBS wave deformer: push each CV along X (the default nurbsPlane's normal --\n# that plane lies in YZ with X=0) by a travelling sine of its Y coordinate, so a\n# clear wave ripples across the surface. Reads CVs via the NURBS idiom\n# cvPositions()/setCVPositions() (mPyDeformer also accepts mesh\n# getPoints/setPoints). `time` (auto-wired to the timeline) animates the wave;\n# `envelope` (0..1) blends it against rest.\nimport numpy as np\nh = self.outputGeometry[0]\nrest = h.cvPositions()                 # (N, 3) object-space CVs (numpy)\nenv = float(self.envelope)\nout = rest.copy()\nout[:, 0] = out[:, 0] + env * self.amplitude * np.sin(rest[:, 1] * self.freq + self.time * 0.1)\nh.setCVPositions(out)\n",
+    "init_source": "import numpy as np\n",
+    "input_attrs": {
+      "amplitude": {
+        "attr_type": "float",
+        "default_value": 0.5,
+        "is_array": false,
+        "order": 0
+      },
+      "freq": {
+        "attr_type": "float",
+        "default_value": 1.0,
+        "is_array": false,
+        "order": 1
+      },
+      "time": {
+        "attr_type": "time",
+        "is_array": false,
+        "order": 2
+      }
+    },
+    "methods_source": "@maya_test(label=\"Wave deforms a NURBS plane (rest at envelope 0)\", digits=4)\ndef test_nurbs_wave(self):\n    \"\"\"Validate the node's INTENT (interpreted node AND its C++ compile -> parity):\n    with the wave OFF (envelope 0, or amplitude 0) the surface sits at rest; with\n    it ON the CVs actually move. Drives ONLY public plugs + cmds -> valid against\n    the compiled node too.\"\"\"\n    from maya import cmds as mc\n    import maya.api.OpenMaya as om2\n    import numpy as np\n    from mpynode._common.methods.test_helpers import assert_close, assert_true\n\n    name = self.get_name()\n\n    def _set(plug, *vals):\n        for s in (mc.listConnections(plug, s=True, d=False, plugs=True) or []):\n            mc.disconnectAttr(s, plug)\n        mc.setAttr(plug, *vals)\n\n    # Deform whatever NURBS geo this filter already drives; build one only if it\n    # drives nothing yet (keeps the test on `self`, robust to repeated runs).\n    geo = mc.deformer(name, q=True, geometry=True) or []\n    if geo:\n        sh = (mc.ls(geo[0], long=True) or [geo[0]])[0]\n    else:\n        pl = mc.nurbsPlane(w=6.0, lengthRatio=1.0, patchesU=8, patchesV=8,\n                           name=\"nurbsWaveTest#\")[0]\n        mc.deformer(name, e=True, g=pl)\n        sh = mc.listRelatives(pl, shapes=True, noIntermediate=True, f=True)[0]\n\n    def cvs(amp, env, frame=1):\n        _set(name + \".amplitude\", amp)\n        _set(name + \".envelope\", env)\n        mc.currentTime(frame)\n        mc.dgdirty(name + \".outputGeometry\")\n        mc.dgeval(sh + \".worldSpace\")\n        sel = om2.MSelectionList(); sel.add(sh)\n        fn = om2.MFnNurbsSurface(sel.getDagPath(0))\n        return np.array([[p.x, p.y, p.z]\n                         for p in fn.cvPositions(om2.MSpace.kObject)])\n\n    rest = cvs(0.0, 1.0)          # amplitude 0 -> zero offset\n    env_off = cvs(0.6, 0.0)       # envelope 0 -> zero offset\n    deformed = cvs(0.6, 1.0)      # wave ON -> real displacement\n\n    assert_close(env_off.ravel().tolist(), rest.ravel().tolist())\n    moved = float(np.abs(deformed - rest).max())\n    assert_true(moved > 0.05,\n                \"wave should displace the surface (max move %.4f)\" % moved)\n\n\n@maya_demo(label=\"Wave a NURBS Plane\")\ndef demo(self):\n    \"\"\"Create a NURBS plane, attach this deformer, dial in a visible wave and set\n    a one-loop playback range. Press play to watch the wave travel (it advances\n    with `time`).\"\"\"\n    from maya import cmds as mc\n    name = self.get_name()\n\n    plane = mc.nurbsPlane(w=8.0, lengthRatio=1.0, patchesU=12, patchesV=12,\n                          name=\"nurbsWaveTarget#\")[0]\n    if name not in (mc.listHistory(plane) or []):\n        mc.deformer(name, e=True, g=plane)\n\n    mc.setAttr(name + \".amplitude\", 0.8)\n    mc.setAttr(name + \".freq\", 1.2)\n    if not (mc.listConnections(name + \".time\", s=True, d=False) or []):\n        try:\n            mc.connectAttr(\"time1.outTime\", name + \".time\", force=True)\n        except Exception:\n            pass\n\n    mc.playbackOptions(min=1, max=120)\n    mc.currentTime(1)\n    mc.select(plane, replace=True)\n    try:\n        for _panel in mc.getPanel(type=\"modelPanel\") or []:\n            _cam = mc.modelEditor(_panel, query=True, camera=True)\n            if _cam:\n                mc.viewFit(_cam, allObjects=True)\n    except Exception:\n        pass\n    return name\n",
+    "native_type": "mPyDeformer",
+    "node_name": "nurbsWave",
+    "output_attrs": {},
+    "stored_vars": "{\"protocol\":8,\"format\":\"keyed2\",\"codec\":\"zlib\",\"has_pickle\":false,\"data_b64\":\"eJyrrgUAAXUA+Q==\"}"
+  },
+  "version": 2
+}

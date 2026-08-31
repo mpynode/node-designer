@@ -1,0 +1,61 @@
+{
+  "accepted": true,
+  "baseline_ms": 18.3858,
+  "best_ms": 8.0797,
+  "created": 1787677897.4492202,
+  "ledger": [
+    {
+      "compiled": true,
+      "duration_s": null,
+      "fix_rounds": 0,
+      "hypothesis": "",
+      "index": 0,
+      "ms": 18.3858,
+      "note": "",
+      "outcome": "baseline",
+      "parity": null,
+      "predicted_speedup": null,
+      "risk": "",
+      "slug": null,
+      "speedup": null,
+      "theme": ""
+    },
+    {
+      "compiled": true,
+      "duration_s": 888.155,
+      "fix_rounds": 0,
+      "hypothesis": "the node is neither elementwise nor query-shaped -- it is BUILD-shaped: one O(E log E) sort/unique/adjacency construction feeding a cheap O(V+E) DFS. The benchmark's perturb function picks the alphabetically-first numeric attribute, which is `end`, so inMesh never actually changes across the nine timed ticks and the entire graph build is recomputed for nothing. Caching it should remove ~5.5 of 18.4 ms, and replacing 623k one-at-a-time MPointArray/MIntArray append() calls with the bulk pointer constructors should remove another ~3 ms.",
+      "index": 1,
+      "ms": 9.1224,
+      "note": "",
+      "outcome": "accept",
+      "parity": "pass",
+      "predicted_speedup": 2.4,
+      "risk": "the cache is keyed on (numVertices, numPolygons, numFaceVertices, getRawPoints() pointer, FNV hash of the whole raw point buffer) and is additionally invalidated from setDependentsDirty and preEvaluation. The hooks alone are NOT sufficient and are deliberately not load-bearing: mc.dgdirty(node) marks every plug including inMesh, so wiring the hooks as a hard discard made the cache miss on all nine ticks (measured 15.65 ms, worse than no cache). The fingerprint is checked unconditionally on every compute() and is strictly stronger than the hook signal, so the GEO parity path that rewires a fresh upstream shape per config is covered by the content hash rather than by the DG notification.",
+      "slug": "cache_mesh_topology",
+      "speedup": 2.015456458826624,
+      "theme": "everything the maze derives from inMesh -- points, vertex normals, the deduplicated edge list, the inverse map and the CSR dual graph -- is cached on a per-instance fingerprint, so a tick that only moves a scalar carves and extrudes without rebuilding the graph; the output arrays are also handed to Maya through bulk MPointArray/MIntArray constructors instead of per-element append()"
+    },
+    {
+      "compiled": true,
+      "duration_s": 732.776,
+      "fix_rounds": 0,
+      "hypothesis": "profiling first would show the maze itself is noise; a 19.5k-slab unwelded soup (155,688 verts / 116,766 quads / 467,064 connects) is marshalling-bound, and create's per-polygon duplicate-index validation is pure waste when every quad is vbase+0..7 by construction",
+      "index": 2,
+      "ms": 8.0797,
+      "note": "",
+      "outcome": "accept",
+      "parity": "pass",
+      "predicted_speedup": 1.15,
+      "risk": "setCheckSamePointTwice(false) is only sound because the wall batcher emits four DISTINCT indices per quad; the slow generic path is left with the full validation scan so a hand-fed soup still degrades to an empty mesh rather than a crash",
+      "slug": "skip_same_point_check",
+      "speedup": 2.2755547854499545,
+      "theme": "the node is 85% MFnMesh::create, so the round went into create's own cost -- turning off its same-point-twice scan and filling MFloatPointArray/MIntArray in place instead of staging through std::vector"
+    }
+  ],
+  "parity_gate": "authored+pointwise",
+  "reason": "accepted (2.28x)",
+  "rounds": 2,
+  "speedup": 2.2755547854499545,
+  "type_name": "meshMaze"
+}

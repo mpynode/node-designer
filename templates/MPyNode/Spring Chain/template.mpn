@@ -1,0 +1,73 @@
+{
+  "data": {
+    "class_path": "mpynode_user.SpringChain",
+    "expression": "# Name: Simple spring solver  (numpy-first port)\n# Author: Eric Vignola - eric.vignola@gmail.com\n# self.initialized (session-only) avoids an integration on the first eval after\n# load. self.position / self.velocity persist. driven = vector array output.\n#\n# (Imports + helper functions live in the Init tab.)\n\n# ---------------------------- Main ----------------------------#\n\n# Fresh (vanilla) node, or one whose buffers were never restored: seed the\n# spring buffers so the first integration has state. The original relied on\n# restored stored vars; gallery templates ship vanilla (no stored vars).\nif not hasattr(self, 'velocity'):\n    self.velocity = [np.zeros(3) for _ in range(len(self.driven))]\n    self.position = [np.zeros(3) for _ in range(len(self.driven))]\n\n# First eval after a load: just mark initialized + push the stored buffer out\n# (self.initialized is session-only -> absent again on the next load).\nif not hasattr(self, 'initialized'):\n    self.initialized = True\n\nelse:\n    n = len(self.driven)\n\n    if self.resetBuffer:\n        self.velocity = [np.zeros(3) for _ in range(n)]\n        self.position = [np.zeros(3) for _ in range(n)]\n\n    elif len(self.velocity) < n:\n        for _ in range(len(self.velocity), n):\n            self.velocity.append(np.zeros(3))\n            self.position.append(np.zeros(3))\n\n    elif len(self.velocity) > n:\n        self.velocity = self.velocity[:n]\n        self.position = self.position[:n]\n\n    else:\n        # Initial drag\n        self.position[0], self.velocity[0] = spring(\n            self.driver, self.position[0], self.velocity[0],\n            self.gravity, self.tension, self.mass, self.damping, self.minDistance, self.maxDistance)\n\n        # Spring forces down the chain\n        for i in range(1, n):\n            self.position[i], self.velocity[i] = spring(\n                self.position[i - 1], self.position[i], self.velocity[i],\n                self.gravity, self.tension, self.mass, self.damping, self.minDistance, self.maxDistance)\n\n\n# Output positions from the stored buffer\nself.driven[:] = np.asarray(self.position, dtype=float)\n",
+    "init_source": "# Init tab \u2014 runs once per file open (not per compute()).\n# Imports + helper functions shared by the Compute expression.\n\nimport numpy as np\n\n\ndef spring(p0, p1, v, g, k, m, d, minDist=0., maxDist=0.):\n    p0 = np.asarray(p0, dtype=float)\n    p1 = np.asarray(p1, dtype=float)\n    v = np.asarray(v, dtype=float)\n    g = np.asarray(g, dtype=float)\n\n    # Acceleration -> velocity -> position\n    s = p0 - p1\n    a = k * s / m - d * v / m + g\n    v = v + a\n    p1 = p1 + v\n\n    # Simple distance limits\n    if minDist or maxDist:\n        s = p0 - p1\n        length = float(np.linalg.norm(s))\n        if length != 0:\n            s = s / length\n\n        if minDist > 0. and length < minDist:\n            p1 = p0 - s * minDist\n            v = np.zeros(3)\n        elif maxDist > 0. and length > maxDist:\n            p1 = p0 - s * maxDist\n            v = np.zeros(3)\n\n    return p1, v\n",
+    "input_attrs": {
+      "damping": {
+        "attr_type": "float",
+        "default_value": 0.6,
+        "is_array": false,
+        "order": 0
+      },
+      "driver": {
+        "attr_type": "vector",
+        "is_array": false,
+        "order": 1
+      },
+      "gravity": {
+        "attr_type": "vector",
+        "is_array": false,
+        "order": 2
+      },
+      "mass": {
+        "attr_type": "float",
+        "default_value": 1.0,
+        "is_array": false,
+        "order": 3
+      },
+      "maxDistance": {
+        "attr_type": "float",
+        "is_array": false,
+        "order": 4
+      },
+      "minDistance": {
+        "attr_type": "float",
+        "is_array": false,
+        "order": 5
+      },
+      "resetBuffer": {
+        "attr_type": "enum",
+        "enum_names": [
+          "False",
+          "True"
+        ],
+        "is_array": false,
+        "order": 6
+      },
+      "tension": {
+        "attr_type": "float",
+        "default_value": 0.3,
+        "is_array": false,
+        "order": 7
+      },
+      "time": {
+        "attr_type": "time",
+        "is_array": false,
+        "order": 8
+      }
+    },
+    "methods_source": "# Build a complete, self-contained spring_chain demo: a driver locator\n# (keyframed so PLAYING the timeline swings it back and forth) plus a chain of\n# 100 spheres that lag behind it under tension/damping (secondary motion).\n# Gravity is zeroed. The driver carries USER attributes mirroring the node's\n# tuning inputs (gravity, tension, damping, mass, max/minDistance) wired straight\n# into the node, so users tweak the chain's feel right on the driver's channel\n# box. The chain is wired to the driven output array and time is wired to time1.\ndef demo(self):\n    from maya import cmds as mc\n    name = self.get_name()\n    n_links = 100\n    driver = mc.spaceLocator(name=\"springDriver#\")[0]\n    mc.connectAttr(driver + \".translate\", name + \".driver\", force=True)\n    for t, x in ((1, 0.0), (24, 10.0), (48, 0.0)):\n        mc.setKeyframe(driver + \".translateX\", time=t, value=x)\n    # Mirror the node's tuning inputs onto the driver and wire them straight in,\n    # so the chain is tuned right on the driver (gravity zeroed).\n    mc.addAttr(driver, longName=\"gravity\", attributeType=\"double3\", keyable=True)\n    for ax in \"XYZ\":\n        mc.addAttr(driver, longName=\"gravity\" + ax, attributeType=\"double\",\n                   parent=\"gravity\", keyable=True)\n    mc.setAttr(driver + \".gravity\", 0.0, 0.0, 0.0, type=\"double3\")\n    mc.connectAttr(driver + \".gravity\", name + \".gravity\", force=True)\n    for attr, val in ((\"tension\", 0.3), (\"damping\", 0.6), (\"mass\", 1.0),\n                      (\"maxDistance\", 1.5), (\"minDistance\", 0.0)):\n        mc.addAttr(driver, longName=attr, attributeType=\"double\",\n                   defaultValue=val, keyable=True)\n        mc.setAttr(driver + \".\" + attr, val)\n        mc.connectAttr(driver + \".\" + attr, name + \".\" + attr, force=True)\n    # add_input_attr already auto-connects time1.outTime -> .time on the\n    # template-apply path; only wire it here as a fallback if that didn't\n    # happen (re-issuing an identical connection just emits a noisy\n    # \"already connected\" warning).\n    if mc.objExists(\"time1\") and not mc.listConnections(\n            name + \".time\", s=True, d=False):\n        try:\n            mc.connectAttr(\"time1.outTime\", name + \".time\", force=True)\n        except Exception:\n            pass\n    grp = mc.group(empty=True, name=\"springChain#\")\n    for i in range(n_links):\n        link = mc.polySphere(name=\"springLink#\", radius=0.3)[0]\n        link = mc.parent(link, grp)[0]\n        mc.connectAttr(name + \".driven[%d]\" % i, link + \".translate\", force=True)\n    try:\n        for _panel in mc.getPanel(type=\"modelPanel\") or []:\n            _cam = mc.modelEditor(_panel, query=True, camera=True)\n            if _cam:\n                mc.viewFit(_cam, allObjects=True)\n    except Exception:\n        pass\n    return name\n\n\n@maya_test(label=\"Spring chain: the driven mass accelerates toward the driver\", digits=3)\ndef test_spring_chain(self):\n    \"\"\"Same test passes interpreted and compiled (parity): with the buffers reset\n    to rest, integrating the spring pulls driven[0] toward the driver. Drives\n    `self` through public plugs (time is the integration tick).\"\"\"\n    from maya import cmds as mc\n    import math\n    from mpynode._common.methods.test_helpers import assert_true\n    name = self.get_name()\n\n    def _set(plug, *vals, **kw):\n        for s in (mc.listConnections(plug, s=True, d=False, plugs=True) or []):\n            mc.disconnectAttr(s, plug)\n        mc.setAttr(plug, *vals, **kw)\n\n    # Ensure driven outputs exist (reuse the demo's chain if present).\n    n = mc.getAttr(name + \".driven\", size=True) or 0\n    if n < 2:\n        for i in range(4):\n            loc = mc.spaceLocator(name=\"springTest#\")[0]\n            mc.connectAttr(\"%s.driven[%d]\" % (name, i), loc + \".translate\", force=True)\n        n = 4\n\n    _set(name + \".gravity\", 0.0, 0.0, 0.0, type=\"double3\")\n    _set(name + \".tension\", 0.3)\n    _set(name + \".damping\", 0.6)\n    _set(name + \".mass\", 1.0)\n    _set(name + \".minDistance\", 0.0)\n    _set(name + \".maxDistance\", 0.0)\n    _set(name + \".driver\", 10.0, 0.0, 0.0, type=\"double3\")\n\n    def tick():\n        _set(name + \".time\", mc.getAttr(name + \".time\") + 1)\n\n    # Hold the buffers at rest (resetBuffer=True) for two ticks so integration\n    # starts from a known zero state regardless of prior evals, then release.\n    _set(name + \".resetBuffer\", 1)\n    tick(); tick()\n    start = mc.getAttr(\"%s.driven[0]\" % name)[0]\n    _set(name + \".resetBuffer\", 0)\n    for _ in range(10):\n        tick()\n    end = mc.getAttr(\"%s.driven[0]\" % name)[0]\n\n    moved = math.sqrt(sum((end[i] - start[i]) ** 2 for i in range(3)))\n    assert_true(moved > 0.5,\n                \"driven[0] should accelerate toward the driver; moved %.4f\" % moved)\n    assert_true(end[0] > start[0],\n                \"driven[0] should move toward the +X driver; start=%r end=%r\" % (start, end))\n",
+    "native_type": "mPyNode",
+    "node_name": "springChain",
+    "output_attrs": {
+      "driven": {
+        "attr_type": "vector",
+        "is_array": true,
+        "order": 0
+      }
+    },
+    "stored_vars": "{\"protocol\":8,\"format\":\"keyed2\",\"codec\":\"zlib\",\"has_pickle\":false,\"data_b64\":\"eJyrrgUAAXUA+Q==\"}"
+  },
+  "version": 2
+}

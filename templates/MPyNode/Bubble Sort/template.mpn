@@ -1,0 +1,54 @@
+{
+  "data": {
+    "class_path": "mpynode_user.BubbleSort",
+    "expression": "# Name: Bubble Sort!  (port)\n# Author: Eric Vignola - eric.vignola@gmail.com\n#\n# One bubble-sort pass per evaluation over n normalized random floats, where\n# n = len(self.sort) = the number of connected outputs. Each output is lerped\n# LIVE between minVal and maxVal, so dragging min/max rescales every output\n# instantly (no re-sort). self.data / self.sorted are session-only.\n#\n# reset enum:  0 = False (sort one pass per eval, then hold sorted)\n#              1 = True  (held reshuffle: regenerate every eval, never sorts)\n#              2 = Auto  (sort, then auto-regenerate on completion -> loops\n#                         forever with fresh patterns)\n#\n# (Imports live in the Init tab.)\n\nn = len(self.sort)\nreset = self.reset\n\n# (re)generate normalized [0, 1] data: first eval, output-count change,\n# True (held reshuffle), or Auto once the previous pass finished sorting.\nregen = (not hasattr(self, 'data')) or len(self.data) != n\nif reset == 1:\n    regen = True\nif reset == 2 and getattr(self, 'sorted', False):\n    regen = True\n\nif regen:\n    self.data = [random.random() for _ in range(n)]\n    self.sorted = False\n\n# one bubble pass (skipped while held in True so it keeps reshuffling)\nif reset != 1 and not self.sorted:\n    self.sorted = True\n    for i in range(n - 1):\n        if self.data[i] > self.data[i + 1]:\n            self.sorted = False\n            self.data[i], self.data[i + 1] = self.data[i + 1], self.data[i]\n\nself.text = 'SORTED!!!' if self.sorted else 'UNSORTED!!!'\n\n# lerp each (partially) sorted float between the LIVE min/max\nlo, hi = self.minVal, self.maxVal\nself.sort = [lo + t * (hi - lo) for t in self.data]\n",
+    "init_source": "# Init tab \u2014 runs once per file open (not per compute()).\n# Imports + helper functions shared by the Compute expression.\n\nimport random\n",
+    "input_attrs": {
+      "maxVal": {
+        "attr_type": "float",
+        "default_value": 100.0,
+        "is_array": false,
+        "order": 0
+      },
+      "minVal": {
+        "attr_type": "float",
+        "default_value": 1.0,
+        "is_array": false,
+        "order": 1
+      },
+      "reset": {
+        "attr_type": "enum",
+        "default_value": 2,
+        "enum_names": [
+          "False",
+          "True",
+          "Auto"
+        ],
+        "is_array": false,
+        "order": 2
+      },
+      "time": {
+        "attr_type": "time",
+        "is_array": false,
+        "order": 3
+      }
+    },
+    "methods_source": "# Build a complete, self-contained bubble-sort demo: 100 unit cubes lined up one\n# unit apart along X (grouped under one parent), each cube's scaleY driven by one\n# element of the sorted output array, so they form animated bars that sort\n# themselves as the timeline plays. The node is put into looping Auto mode\n# (reset=2) over a 1..100 value range (maxVal=100) so the bars span the row.\ndef demo(self):\n    from maya import cmds as mc\n    name = self.get_name()\n    count = 100\n    grp = mc.group(empty=True, name=\"bubbleSort_cubes#\")\n    for i in range(count):\n        cube = mc.polyCube(name=\"bubbleSortCube#\")[0]\n        cube = mc.parent(cube, grp)[0]\n        mc.setAttr(cube + \".translateX\", float(i))     # spaced 1 unit in X\n        mc.connectAttr(name + \".sort[%d]\" % i, cube + \".scaleY\", force=True)\n    # add_input_attr already auto-connects time1.outTime -> .time on the\n    # template-apply path; only wire it here as a fallback if that didn't\n    # happen (re-issuing an identical connection just emits a noisy\n    # \"already connected\" warning).\n    if mc.objExists(\"time1\") and not mc.listConnections(\n            name + \".time\", s=True, d=False):\n        try:\n            mc.connectAttr(\"time1.outTime\", name + \".time\", force=True)\n        except Exception:\n            pass\n    mc.setAttr(name + \".reset\", 2)         # Auto -- re-randomize + loop forever\n    mc.setAttr(name + \".maxVal\", 100.0)    # bars span the 1..100 value range\n    try:\n        for _panel in mc.getPanel(type=\"modelPanel\") or []:\n            _cam = mc.modelEditor(_panel, query=True, camera=True)\n            if _cam:\n                mc.viewFit(_cam, allObjects=True)\n    except Exception:\n        pass\n    return name\n\n\n@maya_test(label=\"Bubble sort: outputs lerp within [min,max] and converge to SORTED\", digits=4)\ndef test_bubble_sort(self):\n    \"\"\"Validate the node's INTENT (same test passes interpreted and compiled ->\n    parity): every output is a live lerp inside [minVal, maxVal], and with reset\n    held at 'sort one pass per eval' the array converges to a non-decreasing,\n    SORTED state within n passes. Drives `self` directly through public plugs.\"\"\"\n    from maya import cmds as mc\n    from mpynode._common.methods.test_helpers import assert_true, assert_equal\n    name = self.get_name()\n\n    def _set(plug, *vals, **kw):\n        # A demo may have CONNECTED this input; break it so the test can drive it.\n        for s in (mc.listConnections(plug, s=True, d=False, plugs=True) or []):\n            mc.disconnectAttr(s, plug)\n        mc.setAttr(plug, *vals, **kw)\n\n    # n = number of connected outputs. Reuse the demo's cubes if present; else\n    # wire our own so len(self.sort) is non-zero.\n    n = mc.getAttr(name + \".sort\", size=True) or 0\n    if n < 4:\n        for i in range(8):\n            loc = mc.spaceLocator(name=\"bubbleTest#\")[0]\n            mc.connectAttr(\"%s.sort[%d]\" % (name, i), loc + \".scaleY\", force=True)\n        n = 8\n\n    _set(name + \".minVal\", 1.0)\n    _set(name + \".maxVal\", 100.0)\n    _set(name + \".reset\", 0)          # sort one pass per eval, then hold sorted\n\n    def tick():\n        # `time` is the (unused) dirty tick; bumping it forces one recompute.\n        _set(name + \".time\", mc.getAttr(name + \".time\") + 1)\n\n    tick()\n    vals0 = [mc.getAttr(\"%s.sort[%d]\" % (name, i)) for i in range(n)]\n    assert_true(all(1.0 - 1e-6 <= v <= 100.0 + 1e-6 for v in vals0),\n                \"every output must lerp within [minVal, maxVal]; got %r\" % vals0)\n\n    # Bubble sort needs at most n-1 passes; give it a small margin.\n    for _ in range(n + 3):\n        if mc.getAttr(name + \".text\") == \"SORTED!!!\":\n            break\n        tick()\n    assert_equal(mc.getAttr(name + \".text\"), \"SORTED!!!\",\n                 \"output should converge to SORTED within n passes\")\n    vals = [mc.getAttr(\"%s.sort[%d]\" % (name, i)) for i in range(n)]\n    assert_true(all(vals[i] <= vals[i + 1] + 1e-6 for i in range(n - 1)),\n                \"sorted output must be non-decreasing; got %r\" % vals)\n",
+    "native_type": "mPyNode",
+    "node_name": "bubbleSort",
+    "output_attrs": {
+      "sort": {
+        "attr_type": "float",
+        "is_array": true,
+        "order": 0
+      },
+      "text": {
+        "attr_type": "string",
+        "is_array": false,
+        "order": 1
+      }
+    },
+    "stored_vars": "{\"protocol\":8,\"format\":\"keyed2\",\"codec\":\"zlib\",\"has_pickle\":false,\"data_b64\":\"eJyrrgUAAXUA+Q==\"}"
+  },
+  "version": 2
+}

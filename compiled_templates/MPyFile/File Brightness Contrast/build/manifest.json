@@ -1,0 +1,166 @@
+{
+  "manifest_version": 1,
+  "porter_recipe_version": "18",
+  "provider": "claude_cli",
+  "model": "claude-opus-5[1m]",
+  "strict": false,
+  "plugin_name": "basics_MPyFile_File_Brightness_Contrast",
+  "bundle": "compiled_templates/MPyFile/File Brightness Contrast/basics_MPyFile_File_Brightness_Contrast.bundle",
+  "created": 1787188345.843613,
+  "nodes": [
+    {
+      "source_node": "brightContrastTex",
+      "type_name": "brightContrastTex",
+      "type_id": "0x000310cb",
+      "type_id_source": "derived",
+      "base": "MPxNode",
+      "spec_hash": "9779995bc26ee2b7fff352b6f42dbc2e0a9fc1f22679a3577f22c881d0c95eab",
+      "port_cache_key": "9779995bc26ee2b7fff352b6f42dbc2e0a9fc1f22679a3577f22c881d0c95eab",
+      "cache": "miss",
+      "build_status": "compiled",
+      "build_reason": "",
+      "ported": true,
+      "incomplete": [],
+      "invented_io": [],
+      "missing_includes": [],
+      "verify": {
+        "ran": true,
+        "pass": true,
+        "maxerr": null,
+        "tol": 0.0,
+        "reason": "reads an image file (MImage::readFromFile); output depends on external file state -- pointwise parity skipped (build verified to compile + load) | authored @maya_test: 1/1 passed",
+        "timing": {
+          "measured": false,
+          "reason": "not timed -- generic parity did not pass for this node, so there is no trustworthy pair to measure (reads an image file (MImage::readFromFile); output depends on external file state -- pointwise parity skipped (build verified to compile + load))"
+        },
+        "authored_test": {
+          "ran": true,
+          "passed": true,
+          "count": 1,
+          "passes": 1,
+          "reason": ""
+        }
+      },
+      "spec": {
+        "schema_version": 1,
+        "source_node": "brightContrastTex",
+        "mpy_type": "mPyFile",
+        "suggested": {
+          "node_type_name": "brightContrastTex",
+          "class_name": "BrightContrastTex",
+          "type_id": "0x00071673",
+          "mpx_base": "MPxNode",
+          "note": "texture/file evaluation node",
+          "heaviness": "medium",
+          "reads_image_file": true
+        },
+        "inputs": {
+          "brightness": {
+            "type": "float",
+            "is_array": false,
+            "portable": true,
+            "cpp": {
+              "cat": "scalar",
+              "fn": "MFnNumericAttribute",
+              "data": "kFloat",
+              "cpp": "float",
+              "read": "asFloat",
+              "portable": true
+            },
+            "default_value": 1.0
+          },
+          "contrast": {
+            "type": "float",
+            "is_array": false,
+            "portable": true,
+            "cpp": {
+              "cat": "scalar",
+              "fn": "MFnNumericAttribute",
+              "data": "kFloat",
+              "cpp": "float",
+              "read": "asFloat",
+              "portable": true
+            },
+            "default_value": 1.0
+          },
+          "fileName": {
+            "type": "string",
+            "is_array": false,
+            "portable": true,
+            "cpp": {
+              "cat": "string",
+              "fn": "MFnTypedAttribute",
+              "data": "kString",
+              "cpp": "MString",
+              "read": "asString",
+              "portable": true
+            }
+          },
+          "uvCoord": {
+            "type": "float2",
+            "is_array": false,
+            "portable": true,
+            "cpp": {
+              "cat": "vector2",
+              "fn": "MFnNumericAttribute",
+              "data": "k2Float",
+              "cpp": "float[2]",
+              "read": "asFloat2",
+              "portable": true
+            },
+            "children": [
+              "uCoord",
+              "vCoord"
+            ]
+          }
+        },
+        "outputs": {
+          "outAlpha": {
+            "type": "float",
+            "is_array": false,
+            "portable": true,
+            "cpp": {
+              "cat": "scalar",
+              "fn": "MFnNumericAttribute",
+              "data": "kFloat",
+              "cpp": "float",
+              "read": "asFloat",
+              "portable": true
+            }
+          },
+          "outColor": {
+            "type": "color",
+            "is_array": false,
+            "portable": true,
+            "cpp": {
+              "cat": "color",
+              "fn": "MFnNumericAttribute",
+              "data": "color",
+              "cpp": "float[3]",
+              "read": "asFloat3",
+              "portable": true
+            }
+          }
+        },
+        "variables": {},
+        "compute": "# File texture with a brightness / contrast filter. Reads the image at\n# `fileName`, samples it (nearest-neighbour) at the incoming `uvCoord`,\n# applies brightness then contrast (pivoted at mid-grey), and writes\n# `outColor` / `outAlpha`.\nimg = _read_image(self.fileName)\nu, v = self.uvCoord\n\nif img is None:\n    self.outColor = (1.0, 0.0, 1.0)          # magenta = no/!readable file\n    self.outAlpha = 1.0\nelse:\n    h, w = img.shape[0], img.shape[1]\n    uu = u - np.floor(u)                      # wrap into [0,1)\n    vv = v - np.floor(v)\n    # Map u/v uniformly across all w/h texels (same cell mapping on both\n    # axes). v is flipped because Maya's V runs bottom-up while the image\n    # buffer is top-down (see _read_image) -- matching a standard file node.\n    px = min(w - 1, int(uu * w))\n    py = min(h - 1, int((1.0 - vv) * h))\n    r, g, b, a = (float(c) for c in img[py, px])\n\n    bright = self.brightness\n    contrast = self.contrast\n    out = []\n    for ch in (r, g, b):\n        ch = ch * bright\n        ch = (ch - 0.5) * contrast + 0.5\n        out.append(max(0.0, min(1.0, ch)))\n    self.outColor = (out[0], out[1], out[2])\n    self.outAlpha = a\n",
+        "init": "import os, ctypes\nimport numpy as np\nimport maya.api.OpenMaya as om\n\n# Per-node cache so the image is read from disk once, not every compute().\n_IMG_CACHE = {}\n\ndef _srgb_to_linear(rgb):\n    \"\"\"sRGB-encoded -> scene-linear (vectorized piecewise EOTF).\n\n    This is the SAME conversion Maya's built-in `file` node and the canonical\n    mPyFile default (`_defaults/file_defaults.py::_srgb_eotf`) apply when an\n    sRGB texture is loaded. Without it the node would emit RAW sRGB values\n    straight into the (scene-linear) shading pipeline and render ~2.3x too\n    bright (e.g. a mid-grey 0.502 would stay 0.502 instead of becoming 0.216).\n    \"\"\"\n    low = rgb / 12.92\n    high = np.power((rgb + 0.055) / 1.055, 2.4)\n    return np.where(rgb <= 0.04045, low, high).astype(np.float32)\n\ndef _read_image(path):\n    \"\"\"Read an image into an (H, W, 4) float32 array in SCENE-LINEAR [0,1]\n    using Maya's built-in MImage (no PIL needed). The RGB channels are\n    linearized from sRGB (alpha is left as-is) so this node shades at the same\n    brightness as a standard Maya `file` node. Returns None if unusable.\"\"\"\n    if not path or not os.path.isfile(path):\n        return None\n    if path in _IMG_CACHE:\n        return _IMG_CACHE[path]\n    arr = None\n    try:\n        img = om.MImage()\n        img.readFromFile(path)\n        w, h = img.getSize()\n        raw = ctypes.string_at(img.pixels(), w * h * 4)        # RGBA uint8\n        f = (np.frombuffer(raw, dtype=np.uint8)\n               .astype(np.float32).reshape(h, w, 4) / 255.0)\n        # Colour management: linearize the sRGB pixels to scene-linear (RGB\n        # only -- alpha is already linear). Matches Maya's file node so the\n        # surface is not ~2.3x too bright.\n        f[..., :3] = _srgb_to_linear(f[..., :3])\n        # MImage rows are stored BOTTOM-UP; flip to TOP-DOWN (the numpy/PIL\n        # convention Maya's built-in file node + the native port use) so the\n        # Compute / Viewport / OSL tiers all match a standard file node.\n        arr = np.ascontiguousarray(f[::-1])\n    except Exception:\n        arr = None\n    _IMG_CACHE[path] = arr\n    return arr\n",
+        "affects": "all",
+        "methods": "@maya_test(label=\"File samples image; brightness scales; missing->magenta\", digits=3)\ndef test_file_brightness_contrast(self):\n    \"\"\"Validate the node's INTENT (the SAME test passes on the interpreted node\n    and its C++ compile -> parity):\n\n      1. The image is sampled at the incoming uv with V running bottom-up (the\n         TOP of the gradient is the brightest row) and sRGB is linearized like\n         a stock Maya file node (top ~= linear(rows[h-1]), bottom ~= 0).\n      2. brightness scales the sample about black (2x -> ~2x, clamped to 1).\n      3. A missing file falls back to magenta (1, 0, 1) and never raises.\n    \"\"\"\n    import os\n    import tempfile\n    from maya import cmds as mc\n    import maya.api.OpenMaya as om2\n    from mpynode._common.methods.test_helpers import assert_close, assert_true\n\n    name = self.get_name()\n\n    # Write a per-row grey GRADIENT (row r -> grey r*30) so V-sampling is\n    # actually exercised -- a solid image would hide row-index bugs.\n    h = w = 8\n    rows = [r * 30 for r in range(h)]                  # 0,30,...,210\n    buf = bytearray()\n    for r in range(h):\n        buf += bytes([rows[r], rows[r], rows[r], 255]) * w\n    path = os.path.join(tempfile.gettempdir(), \"_mpyfile_\" + name + \"_grad.png\")\n    im = om2.MImage()\n    im.create(w, h, 4, om2.MImage.kByte)\n    im.setPixels(bytes(buf), w, h)\n    im.writeToFile(path, \"png\")\n    mc.setAttr(name + \".fileName\", path, type=\"string\")\n\n    def out_color(u, v, bright=1.0, contrast=1.0):\n        mc.setAttr(name + \".uCoord\", u)\n        mc.setAttr(name + \".vCoord\", v)\n        mc.setAttr(name + \".brightness\", bright)\n        mc.setAttr(name + \".contrast\", contrast)\n        mc.dgdirty(name + \".outColor\")\n        return mc.getAttr(name + \".outColor\")[0]\n\n    def _lin(s):                                       # sRGB -> scene-linear\n        return s / 12.92 if s <= 0.04045 else ((s + 0.055) / 1.055) ** 2.4\n\n    # 1) V-sampling + sRGB->linear. v near 1 -> TOP row (last written, brightest\n    #    = rows[h-1]); v near 0 -> BOTTOM row (rows[0] = 0 -> 0 linear).\n    top = out_color(0.5, 0.99)[0]\n    bottom = out_color(0.5, 0.01)[0]\n    assert_close(top, _lin(rows[h - 1] / 255.0))\n    assert_close(bottom, _lin(rows[0] / 255.0))\n    assert_true(top > bottom + 0.05,\n                \"top of the gradient must sample brighter than the bottom\")\n\n    # 2) brightness scales the sample about black (2x, clamped to 1).\n    g = out_color(0.5, 0.5, 1.0, 1.0)[0]\n    b2 = out_color(0.5, 0.5, 2.0, 1.0)[0]\n    assert_close(b2, min(1.0, g * 2.0))\n\n    # 3) Missing file -> magenta fallback, no raise.\n    mc.setAttr(name + \".fileName\", \"\", type=\"string\")\n    mc.dgdirty(name + \".outColor\")\n    miss = mc.getAttr(name + \".outColor\")[0]\n    assert_close(list(miss), [1.0, 0.0, 1.0])\n\n\n@maya_demo(label=\"Brightness/Contrast on a Plane\")\ndef demo(self):\n    \"\"\"Create a plane and a lambert shader driven by this node's outColor, point\n    fileName at the shipped grid image, and dial in a visible brightness lift +\n    contrast punch. When MtoA is present, also wire the Arnold OSL render path.\"\"\"\n    from maya import cmds as mc\n    import os\n    name = self.get_name()\n\n    # 1. A plane + lambert; assign the shader; drive its colour from us.\n    plane = mc.polyPlane(w=10, h=10, sx=1, sy=1, name=name + \"_plane\")[0]\n    mc.setAttr(plane + \".rotateX\", 90.0)          # face +Z so the swatch reads\n    shader = mc.shadingNode(\"lambert\", asShader=True, name=name + \"_lambert\")\n    sg = mc.sets(renderable=True, noSurfaceShader=True, empty=True,\n                 name=shader + \"SG\")\n    mc.connectAttr(shader + \".outColor\", sg + \".surfaceShader\", force=True)\n    mc.sets(plane, edit=True, forceElement=sg)\n    mc.connectAttr(name + \".outColor\", shader + \".color\", force=True)\n\n    # 2. Point fileName at the shipped grid image (beside the file_simple\n    #    template) -- a stable path that survives save / reopen.\n    grid = None\n    try:\n        from mpynode._common.util.template_gallery import _bundled_templates_root\n        root = _bundled_templates_root()\n        if root:\n            cand = os.path.join(root, \"basics\", \"MPyFile\", \"File Simple\",\n                                \"test_grid.png\")\n            if os.path.isfile(cand):\n                grid = cand\n    except Exception:\n        grid = None\n    if grid:\n        mc.setAttr(name + \".fileName\", grid, type=\"string\")\n\n    # 3. A visible brightness lift + contrast punch so the effect is obvious.\n    mc.setAttr(name + \".brightness\", 1.3)\n    mc.setAttr(name + \".contrast\", 1.4)\n\n    # 4. Arnold OSL render path (best effort -- viewport is valid without it).\n    try:\n        from mpynode._common.osl.osl_targets import apply_osl_to_arnold\n        osl = apply_osl_to_arnold(name)\n        if osl and grid and mc.attributeQuery(\"fileName\", node=osl, exists=True):\n            mc.setAttr(osl + \".fileName\", grid, type=\"string\")\n    except Exception:\n        pass\n\n    # 5. Force one eval so the swatch / viewport show the result immediately.\n    try:\n        mc.dgdirty(name + \".outColor\")\n        mc.getAttr(name + \".outColor\")\n    except Exception:\n        pass\n    mc.select(plane, replace=True)\n    return name\n\n\n\"\"\"Setup source for mPyFile nodes (self-first instance method).\"\"\"\n\n# VANILLA: this body ships as EMBEDDED PYTHON inside a compiled .mll and must run\n# on a machine with Maya but WITHOUT mpynode, so the setup_helpers ``_selection``\n# and the pure-cmds ``_api2.mpy_file.ensure_in_texture_list`` it used to import are\n# inlined below. They are FUNCTION-LOCAL rather than module-level because\n# node_setups.merge_type_default APPENDS this file to the host node's own methods\n# source -- a module-level def would clobber a same-named helper the host already\n# defines. ``warm_init_namespace`` is the one name that stays an import; see the\n# call site for why that is safe.\ndef setup(self, *args, **kwargs):\n    from maya import cmds as mc\n\n    def _selection(override=None, exclude=None):\n        \"\"\"Inputs for setup: `override` (the snapshot \"Run setup\" passes) wins\n        over the live selection; `exclude` drops this node so it is never its\n        own input.\"\"\"\n        sel = list(override) if override is not None else (\n            mc.ls(selection=True, long=False) or [])\n        return [n for n in sel if n != exclude] if exclude else sel\n\n    def _ensure_in_texture_list(n):\n        \"\"\"Wire ``n.message -> defaultTextureList1.textures`` so the Hypershade\n        can graph the node (parity with ``shadingNode -asTexture``).\n\n        Idempotent AND self-healing: it inspects the texture-list's source plugs\n        so it is robust to the create-time race where ``shadingNode -asTexture``\n        ALSO wires this connection -- duplicates are disconnected so exactly one\n        remains. Vendored from _api2.mpy_file.ensure_in_texture_list, which is\n        pure maya.cmds and works against a compiled node too -- importing it\n        would drag mpynode into a compiled bundle.\"\"\"\n        try:\n            if not mc.objExists(n):\n                return False\n            msg = n + \".message\"\n            if not mc.objExists(\"defaultTextureList1\"):\n                # Default node is created on demand by shadingNode; make it so\n                # the connection has a destination even in a minimal scene.\n                try:\n                    mc.createNode(\"defaultTextureList\",\n                                  name=\"defaultTextureList1\", shared=True)\n                except Exception:\n                    pass\n            pairs = mc.listConnections(\n                \"defaultTextureList1.textures\", connections=True, plugs=True,\n                source=True, destination=False) or []\n            mine = [pairs[i] for i in range(0, len(pairs) - 1, 2)\n                    if pairs[i + 1] == msg]\n            if mine:\n                for extra in mine[1:]:\n                    try:\n                        mc.disconnectAttr(msg, extra)\n                    except Exception:\n                        pass\n                return True\n            mc.connectAttr(msg, \"defaultTextureList1.textures\",\n                           nextAvailable=True)\n            return True\n        except Exception:\n            return False\n\n    name = self.get_name()\n    # ``self`` is the already-created mPyFile (create() ran shadingNode -asTexture,\n    # wired time1, seeded Init/Compute/Viewport + a place2dTexture). Wire outColor\n    # on top of that plumbing -- do NOT re-create place2dTexture or re-seed.\n    _ensure_in_texture_list(name)\n    # INTERPRETED-ONLY, and deliberately left as an import rather than vendored:\n    # it registers the node's Init source into mpynode's init registry, and it\n    # gates on the ``_initSource`` plug -- which a compiled node does not have\n    # (command_dispatch.COMPILED_UNSUPPORTED), so a vendored copy could only ever\n    # return False in a bundle. Guarded so a missing mpynode skips it instead of\n    # killing the whole setup; the function itself never raises.\n    try:\n        from mpynode._api2.mpy_file import warm_init_namespace\n        warm_init_namespace(name)\n    except Exception:\n        pass\n\n    # Selection snapshot (build()/Run setup pass it via kwargs[\"selection\"]);\n    # exclude self so it is never treated as its own shader input.\n    def _is_surface_shader(n):\n        cls_tags = mc.getClassification(mc.nodeType(n)) or []\n        return any(\"shader/surface\" in t for t in cls_tags)\n    sel = [s for s in _selection(override=kwargs.get(\"selection\"),\n                                 exclude=name) if _is_surface_shader(s)]\n\n    if sel:\n        shader = sel[-1]\n        dest = next((a for a in (\"color\", \"baseColor\")\n                     if mc.attributeQuery(a, node=shader, exists=True)), None)\n        if dest:\n            mc.connectAttr(name + \".outColor\", \"%s.%s\" % (shader, dest), force=True)\n    return name\n",
+        "commands": [],
+        "portability": {
+          "portable": true,
+          "blockers": [],
+          "warnings": [
+            "reads an image file (MImage.readFromFile) -> ported to MImage::readFromFile; output depends on external file state, so pointwise parity is loose/skipped (not bit-identical to PIL/cv2)",
+            "uses numpy -- vectorized math is reverse-engineered to C++ loops (verify numerically; np.random maps to C++ <random>; file I/O lowers only where the dtype is explicit -- np.fromfile/np.save/.tofile and ndio.read/ndio.write -- while np.load/np.loadtxt are blockers)"
+          ],
+          "unported": [],
+          "reads_image_file": true,
+          "reads_embedded_image": false,
+          "uses_mesh_intersector": false
+        }
+      }
+    }
+  ]
+}

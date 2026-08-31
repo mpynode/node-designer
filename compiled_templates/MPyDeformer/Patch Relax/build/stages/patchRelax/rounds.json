@@ -1,0 +1,61 @@
+{
+  "accepted": true,
+  "baseline_ms": 4.7782,
+  "best_ms": 1.5144,
+  "created": 1787676010.1307452,
+  "ledger": [
+    {
+      "compiled": true,
+      "duration_s": null,
+      "fix_rounds": 0,
+      "hypothesis": "",
+      "index": 0,
+      "ms": 4.7782,
+      "note": "",
+      "outcome": "baseline",
+      "parity": null,
+      "predicted_speedup": null,
+      "risk": "",
+      "slug": null,
+      "speedup": null,
+      "theme": ""
+    },
+    {
+      "compiled": true,
+      "duration_s": 881.325,
+      "fix_rounds": 0,
+      "hypothesis": "ringNbrs is 20000 elements while the mesh is 159602 verts, so `flat.shape[0] == N * Kw` can never hold and `out` is always literally `P`; the entire 4.78 ms is therefore MArrayDataHandle walking + three full-size double buffers (nd::from_data allocs a zero-init vector and then copies a second one onto it) + MPointArray::operator[] called 320k times across the DSO boundary, none of which is arithmetic",
+      "index": 1,
+      "ms": 2.2859,
+      "note": "",
+      "outcome": "accept",
+      "parity": "pass",
+      "predicted_speedup": 1.3,
+      "risk": "the raw MPoint* base pointer assumes MPointArray stores contiguous {x,y,z,w} doubles, which the Maya API does not document -- guarded at runtime with sizeof(MPoint)==4*sizeof(double), offsetof(x)==0 and &pts[1]-&pts[0]==1, falling back to operator[] if any of them fails; and the lazy restMesh pull means an unread input plug stays dirty, which is legal and matches the Python but is a visible DG behaviour change",
+      "slug": "fuse_marshalling",
+      "speedup": 2.090292663721073,
+      "theme": "at bench scale the ring gate is CLOSED, so patch_relax never runs and the node is pure ELEMENTWISE marshalling -- so delete every whole-array temporary between Maya's MPointArray and the nd::Array, and make each input lazy exactly where the Python makes it lazy"
+    },
+    {
+      "compiled": true,
+      "duration_s": 713.221,
+      "fix_rounds": 0,
+      "hypothesis": "the node is ELEMENTWISE, not QUERY -- the patch_relax gate (flat.shape[0] == N*Kw, 20000 vs 159602) can never open under the bench scene, so nothing algorithmic is running and the whole cost is per-access overhead. An in-deform profile showed 0.62 ms of the 2.10 ms median inside deform() and 0.51 ms of THAT in allPositions (0.35) + setAllPositions (0.16), which build and consume a 5.1 MB MPointArray of doubles that the mesh stores as floats anyway. Reaching the output geometry through block.outputArrayValue(outputGeom) and writing its raw float buffer directly removes both marshalling passes without changing a single arithmetic operation: the blend is still evaluated in double on values that were float-exact to begin with, exactly as MPoint delivered them.",
+      "index": 2,
+      "ms": 1.5144,
+      "note": "",
+      "outcome": "accept",
+      "parity": "pass",
+      "predicted_speedup": 1.35,
+      "risk": "writing through a const_cast on MFnMesh::getRawPoints is only safe while the deformer set covers the WHOLE mesh -- a partial set would move vertices MItGeometry never visited -- so the fast path is gated on iter.count() == numVertices() and every failure (no handle, no mesh, partial set) falls back to the untouched MItGeometry path. Skipping setAllPositions also skips its bookkeeping; MFnMesh::updateSurface() as insurance was measured at 1.691 vs 1.528 ms (~10%) and dropped, since updateSurface is a redraw signal for DAG shapes and both the bench and the parity check read points straight out of the buffer.",
+      "slug": "inplace_mesh_floats",
+      "speedup": 3.155176967776017,
+      "theme": "profile first, then delete the MItGeometry double round-trip: deform the output mesh's own float point buffer in place instead of marshalling 159k MPoints out through allPositions and back through setAllPositions"
+    }
+  ],
+  "parity_gate": "authored+pointwise",
+  "reason": "accepted (3.16x)",
+  "rounds": 2,
+  "speedup": 3.155176967776017,
+  "type_name": "patchRelax"
+}

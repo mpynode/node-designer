@@ -1,0 +1,118 @@
+{
+  "manifest_version": 1,
+  "porter_recipe_version": "19",
+  "provider": "claude_cli",
+  "model": "claude-opus-5[1m]",
+  "strict": false,
+  "plugin_name": "MPyNode_Hex_Attribute",
+  "bundle": "compiled_templates/MPyNode/Hex Attribute/MPyNode_Hex_Attribute.bundle",
+  "created": 1787683918.99611,
+  "nodes": [
+    {
+      "source_node": "hexAttribute",
+      "type_name": "hexAttribute",
+      "type_id": "0x00023402",
+      "type_id_source": "derived",
+      "base": "MPxNode",
+      "spec_hash": "3f85456453f567fca24f445e4842ace4802eb6646117f601d92f46a769bc1e42",
+      "port_cache_key": "3f85456453f567fca24f445e4842ace4802eb6646117f601d92f46a769bc1e42",
+      "cache": "hit",
+      "build_status": "compiled",
+      "build_reason": "",
+      "ported": true,
+      "incomplete": [],
+      "invented_io": [],
+      "missing_includes": [],
+      "verify": {
+        "ran": true,
+        "pass": true,
+        "maxerr": null,
+        "tol": 0.0,
+        "reason": "verify could not run: could not convert string to float: '44 52 41 47 20 4d 45 20 41 52 4f 55 4e 44 21 0a 58 3a 20 2d 30 2e 34 37 34 31 33 39 0a 59 3a 20 2d 33 2e 39 34 30 30 36 38 0a 5a 3a 20 33 2e 32 38 37 38 30 38 0a' | authored @maya_test: 1/1 passed",
+        "timing": {
+          "measured": false,
+          "reason": "not timed -- generic parity did not pass for this node, so there is no trustworthy pair to measure (verify could not run: could not convert string to float: '44 52 41 47 20 4d 45 20 41 52 4f 55 4e 44 21 0a 58 3a 20 2d 30 2e 34 37 34 31 33 39 0a 59 3a 20 2d 33 2e 39 34 30 30 36 38 0a 5a 3a 20 33 2e 32 38 37 38 30 38 0a')"
+        },
+        "authored_test": {
+          "ran": true,
+          "passed": true,
+          "count": 1,
+          "passes": 1,
+          "reason": ""
+        }
+      },
+      "spec": {
+        "schema_version": 1,
+        "source_node": "hexAttribute",
+        "mpy_type": "mPyNode",
+        "suggested": {
+          "node_type_name": "hexAttribute",
+          "class_name": "HexAttribute",
+          "type_id": "0x000731e1",
+          "mpx_base": "MPxNode",
+          "note": "plain dependency node",
+          "heaviness": "easy"
+        },
+        "inputs": {
+          "decimals": {
+            "type": "int",
+            "is_array": false,
+            "portable": true,
+            "cpp": {
+              "cat": "scalar",
+              "fn": "MFnNumericAttribute",
+              "data": "kInt",
+              "cpp": "int",
+              "read": "asInt",
+              "portable": true
+            },
+            "default_value": 2
+          },
+          "inPosition": {
+            "type": "vector",
+            "is_array": false,
+            "portable": true,
+            "cpp": {
+              "cat": "vector",
+              "fn": "MFnNumericAttribute",
+              "data": "k3Double",
+              "cpp": "double[3]",
+              "read": "asDouble3",
+              "portable": true
+            }
+          }
+        },
+        "outputs": {
+          "output": {
+            "type": "hex",
+            "is_array": false,
+            "portable": true,
+            "cpp": {
+              "cat": "string",
+              "fn": "MFnTypedAttribute",
+              "data": "kString",
+              "cpp": "MString",
+              "read": "asString",
+              "portable": true
+            }
+          }
+        },
+        "variables": {},
+        "compute": "# Name: Text Mesh Generator  (numpy-first port)\n# Author: Eric Vignola - eric.vignola@gmail.com\n# The `output` attribute is typed `hex`: assign plain text and the attr\n# auto-encodes it to the space-separated UTF-8 hex a Maya `type` node\n# consumes as mesh text -- no manual unicode -> hex step needed.\n\n# Convert XYZ input (a numpy 3-vector) to rounded strings.\nself.output = 'DRAG ME AROUND!\\n'\nself.output += 'X: %s\\n' % round(float(self.inPosition[0]), self.decimals)\nself.output += 'Y: %s\\n' % round(float(self.inPosition[1]), self.decimals)\nself.output += 'Z: %s\\n' % round(float(self.inPosition[2]), self.decimals)\n",
+        "init": "",
+        "affects": "all",
+        "methods": "# Build a complete, self-contained hex_attribute demo: a Maya Type text mesh\n# whose PARENT transform is the draggable control -- that transform's translate\n# feeds inPosition, and the node's hex `output` feeds the Type node, so dragging\n# the visible text updates the rendered X/Y/Z it shows. The text is extruded\n# (typeExtrude) so it has real thickness. The Type plugin is optional: if it is\n# missing a locator shape stands in under the same transform (the hex `output`\n# is still live in the Watch tab).\ndef demo(self):\n    from maya import cmds as mc\n    name = self.get_name()\n    mc.setAttr(name + \".decimals\", 2)\n    # The draggable PARENT transform -- its translate drives inPosition, and the\n    # text mesh lives under it so it moves (and re-labels) as you drag.\n    xf = mc.createNode(\"transform\", name=\"hexDragMe#\")\n    mc.setAttr(xf + \".translate\", 1.0, 2.0, 3.0, type=\"double3\")\n    mc.connectAttr(xf + \".translate\", name + \".inPosition\", force=True)\n    try:\n        if not mc.pluginInfo(\"Type\", query=True, loaded=True):\n            mc.loadPlugin(\"Type\", quiet=True)\n        type_node = mc.createNode(\"type\", name=\"hexType#\")\n        mc.connectAttr(name + \".output\", type_node + \".textInput\", force=True)\n        # Extrude the text so it reads as a solid, thick object.\n        extrude = mc.createNode(\"typeExtrude\", name=\"hexExtrude#\")\n        mc.connectAttr(type_node + \".outputMesh\", extrude + \".inputMesh\", force=True)\n        mc.connectAttr(type_node + \".vertsPerChar\", extrude + \".vertsPerChar\", force=True)\n        mc.setAttr(extrude + \".enableExtrusion\", True)\n        mc.setAttr(extrude + \".extrudeDistance\", 0.75)\n        mesh_shp = mc.createNode(\"mesh\", parent=xf, name=xf + \"Shape\")\n        mc.connectAttr(extrude + \".outputMesh\", mesh_shp + \".inMesh\", force=True)\n        mc.sets(mesh_shp, edit=True, forceElement=\"initialShadingGroup\")\n    except Exception:\n        # No Type plugin -- drop a visible locator shape under the transform so\n        # there is still something obvious to drag.\n        try:\n            mc.createNode(\"locator\", parent=xf, name=xf + \"Shape\")\n        except Exception:\n            pass\n    return name\n\n\n@maya_test(label=\"Hex attr: output encodes the live X/Y/Z label text\", digits=4)\ndef test_hex_attribute(self):\n    \"\"\"Same test passes interpreted and compiled (parity): setting inPosition +\n    decimals makes the `hex` output carry the rounded X/Y/Z label. Drives `self`\n    through public plugs; decodes the space-separated UTF-8 hex back to text.\"\"\"\n    from maya import cmds as mc\n    from mpynode._common.methods.test_helpers import assert_true\n    name = self.get_name()\n\n    def _set(plug, *vals, **kw):\n        for s in (mc.listConnections(plug, s=True, d=False, plugs=True) or []):\n            mc.disconnectAttr(s, plug)\n        mc.setAttr(plug, *vals, **kw)\n\n    _set(name + \".decimals\", 2)\n    _set(name + \".inPosition\", 1.5, 2.0, 3.25, type=\"double3\")\n\n    raw = mc.getAttr(name + \".output\") or \"\"\n    # The `hex` attr stores space-separated UTF-8 hex a Maya `type` node consumes;\n    # decode it back to the label text (fall back if a build returns it decoded).\n    if \"DRAG ME\" in raw:\n        text = raw\n    else:\n        text = bytes.fromhex(raw.replace(\" \", \"\")).decode(\"utf-8\")\n\n    assert_true(\"X: 1.5\" in text, \"expected 'X: 1.5' in decoded output %r\" % text)\n    assert_true(\"Y: 2.0\" in text, \"expected 'Y: 2.0' in decoded output %r\" % text)\n    assert_true(\"Z: 3.25\" in text, \"expected 'Z: 3.25' in decoded output %r\" % text)\n",
+        "commands": [],
+        "portability": {
+          "portable": true,
+          "blockers": [],
+          "warnings": [],
+          "unported": [],
+          "reads_image_file": false,
+          "reads_embedded_image": false,
+          "uses_mesh_intersector": false
+        }
+      }
+    }
+  ]
+}

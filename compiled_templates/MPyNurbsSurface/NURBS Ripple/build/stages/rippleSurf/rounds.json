@@ -1,0 +1,61 @@
+{
+  "accepted": true,
+  "baseline_ms": 0.0122,
+  "best_ms": 0.0057,
+  "created": 1787679834.237988,
+  "ledger": [
+    {
+      "compiled": true,
+      "duration_s": null,
+      "fix_rounds": 0,
+      "hypothesis": "",
+      "index": 0,
+      "ms": 0.0122,
+      "note": "",
+      "outcome": "baseline",
+      "parity": null,
+      "predicted_speedup": null,
+      "risk": "",
+      "slug": null,
+      "speedup": null,
+      "theme": ""
+    },
+    {
+      "compiled": true,
+      "duration_s": 546.049,
+      "fix_rounds": 0,
+      "hypothesis": "this node is ELEMENTWISE and TINY: 4 scalar inputs, a fixed 64-CV grid, zero array and zero geometry inputs, so the whole 10.5 us is fixed overhead rather than arithmetic. Two structural facts should dominate. First, Uf[i*8+j] depends only on i and Vf[i*8+j] only on j, so Yf = (amp*sin(Uf*freq+phase)) * cos(Vf*freq+phase) factors into S[i]*C[j] -- 16 transcendentals instead of 128, with identical operands and identical association, so bit-exact. Second, the generated lowering routes those 64 doubles through ~10 shared_ptr-backed nd::Array temporaries (linspace x2, zeros(8,8) x2, broadcast add x2, reshape x2, stack, Yf) plus a std::vector<MPoint> and 64 MPointArray::append calls that regrow from empty every evaluation; none of that survives if the grid is built on the stack into a per-instance MPointArray. Expect the residual to be Maya's own MFnNurbsSurfaceData::create + MFnNurbsSurface::create, which is irreducible.",
+      "index": 1,
+      "ms": 0.0057,
+      "note": "",
+      "outcome": "accept",
+      "parity": "pass",
+      "predicted_speedup": 2.0,
+      "risk": "the numpy broadcasts against zeros((8,8)) look like no-ops and are not: x + 0.0 is the identity for every double EXCEPT -0.0, which yields +0.0, and size = -0.0f reaches u[7] as -0.0 through linspace's exact-endpoint store. Folding the adds away would flip a sign bit in the output, so both `_ln[i] + 0.0` and `0.0 + _ln[i]` are kept verbatim. Same reasoning keeps linspace's `a + step*i` form and its endpoint overwrite rather than a fused expression.",
+      "slug": "separable_ripple_grid",
+      "speedup": 2.1403508771929824,
+      "theme": "the 8x8 ripple is a separable outer product, so the nd::Array pipeline and 112 of its 128 transcendentals are pure bookkeeping -- compute S[i]*C[j] straight into a reused MPointArray"
+    },
+    {
+      "compiled": true,
+      "duration_s": 804.812,
+      "fix_rounds": 0,
+      "hypothesis": "this node is ELEMENTWISE and tiny -- 64 CVs, 16 transcendentals -- so no arithmetic change can matter; at ~5.7 us/eval the only per-evaluation costs left are Maya API calls, and the two unconditional ones are MFnNurbsSurfaceData::create (a heap allocation) and MDataHandle::setMObject. Both disappear once the container is reused, since MFnNurbsSurface::create fully overwrites the geometry inside it.",
+      "index": 2,
+      "ms": 0.0071,
+      "note": "",
+      "outcome": "not-faster",
+      "parity": "pass",
+      "predicted_speedup": 1.15,
+      "risk": "reusing the output data container mutates geometry a downstream consumer may still reference, and skipping setMObject relies on setClean() alone to signal the write. Verified bit-identical (repr() of every CV/knot double, not a tolerance compare) across 6 configs on TWO read paths -- direct plug pull and through a connected nurbsSurface shape -- with the 6th config a repeat of the 1st after four different ones, so a stale container would show up as a diff. The allocate-fresh branch still runs whenever the handle does not already hold a kNurbsSurfaceData, which is what the GEO parity path hits when it re-wires a fresh shape per config.",
+      "slug": "reuse_out_data_container",
+      "speedup": null,
+      "theme": "reclaim the kNurbsSurfaceData container already parked in the output handle and build into it, instead of allocating a fresh one plus a setMObject round trip every evaluation"
+    }
+  ],
+  "parity_gate": "authored+pointwise",
+  "reason": "accepted (2.14x)",
+  "rounds": 2,
+  "speedup": 2.1403508771929824,
+  "type_name": "rippleSurf"
+}

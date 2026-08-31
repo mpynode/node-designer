@@ -1,0 +1,61 @@
+{
+  "accepted": true,
+  "baseline_ms": 4.2187,
+  "best_ms": 0.6998,
+  "created": 1787675682.910877,
+  "ledger": [
+    {
+      "compiled": true,
+      "duration_s": null,
+      "fix_rounds": 0,
+      "hypothesis": "",
+      "index": 0,
+      "ms": 4.2187,
+      "note": "",
+      "outcome": "baseline",
+      "parity": null,
+      "predicted_speedup": null,
+      "risk": "",
+      "slug": null,
+      "speedup": null,
+      "theme": ""
+    },
+    {
+      "compiled": true,
+      "duration_s": 652.208,
+      "fix_rounds": 0,
+      "hypothesis": "This node is ELEMENTWISE, not query-shaped: one sin per vertex over a 159,602-vert polySphere. The arithmetic cannot be the bottleneck, so the cost has to be per-access overhead and whole-array temporaries -- the lowered nd form materialised six of them (a push_back'd std::vector<double>, a from_data copy, a .copy(), two column slices and the sin result) and then paid two more 5 MB gather/scatter copies with a float<->double conversion per element in allPositions/setAllPositions. Removing levels of copying, not making the sin cheaper, is the lever.",
+      "index": 1,
+      "ms": 1.6736,
+      "note": "",
+      "outcome": "accept",
+      "parity": "pass",
+      "predicted_speedup": 3.0,
+      "risk": "Writing through a const_cast'd getRawPoints() bypasses MItGeometry, so it is only valid when the deformer set covers every vertex (guarded by nv == iter.count(), with the original MItGeometry path kept as the fallback) and only if the output mesh is a genuine private copy rather than a COW alias of the input -- an alias would silently deform an already-deformed mesh. Also float storage: the kernel widens float->double, does the identical double arithmetic, and stores back through the same single round-to-nearest that setAllPositions would have applied, so it is bit-identical rather than a precision shortcut.",
+      "slug": "raw_points_inplace",
+      "speedup": 2.5207337476099427,
+      "theme": "Fuse the nd expression tree into one loop, then stop round-tripping 160k verts through an MPointArray at all -- deform the output mesh's own float point buffer in place, with a persistent per-node pool mapping over disjoint vertex ranges."
+    },
+    {
+      "compiled": true,
+      "duration_s": 662.498,
+      "fix_rounds": 0,
+      "hypothesis": "the arithmetic was already a rounding error in the total: a no-op deform() still measured 1.418 ms of a 1.569 ms tick, and aliasing the input mesh to the output with no copy at all measured 0.521 ms, so ~0.90 ms per evaluation is Maya's input->output mesh copy plus iterator construction and NOT the sine; the output data object the datablock already holds has the identical topology every tick, so reusing that shell and streaming src->dst with the wave fused into the same pass removes a whole level of work rather than making the existing work cheaper",
+      "index": 2,
+      "ms": 0.6998,
+      "note": "",
+      "outcome": "accept",
+      "parity": "pass",
+      "predicted_speedup": 2.0,
+      "risk": "the reused output shell keeps its topology from the previous evaluation, so a freshly wired upstream shape whose vertex/polygon/face-vertex/edge counts all coincide with the old one would get new points on old connectivity, and geo topology is compared exactly; gated on a four-way topology fingerprint plus a coverage flag that only Maya's own MItGeometry can set, so any mismatch falls through to MPxDeformerNode::compute() and re-verifies",
+      "slug": "skip_deformer_mesh_copy",
+      "speedup": 6.028436696198915,
+      "theme": "override compute() so the wave is written straight into the datablock's existing output mesh buffer, instead of letting MPxGeometryFilter deep-copy the 160k-vert input mesh into the output and then hand us an MItGeometry over it"
+    }
+  ],
+  "parity_gate": "authored+pointwise",
+  "reason": "accepted (6.03x)",
+  "rounds": 2,
+  "speedup": 6.028436696198915,
+  "type_name": "nurbsWave"
+}

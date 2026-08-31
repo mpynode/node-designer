@@ -1,0 +1,61 @@
+{
+  "accepted": true,
+  "baseline_ms": 73.6654,
+  "best_ms": 0.2855,
+  "created": 1788191954.922037,
+  "ledger": [
+    {
+      "compiled": true,
+      "duration_s": null,
+      "fix_rounds": 0,
+      "hypothesis": "",
+      "index": 0,
+      "ms": 73.6654,
+      "note": "",
+      "outcome": "baseline",
+      "parity": null,
+      "predicted_speedup": null,
+      "risk": "",
+      "slug": null,
+      "speedup": null,
+      "theme": ""
+    },
+    {
+      "compiled": true,
+      "duration_s": 860.407,
+      "fix_rounds": 0,
+      "hypothesis": "accumulate_deltas spelled every += as nd::add(nd::slice(out,{Sl::at(b)}), s).item(), which builds a shared_ptr-backed Array view AND an allocated result Array for each of the three components of each of ~178k (target, component) pairs -- roughly a million allocations per evaluation, so the arithmetic is invisible next to malloc. Replacing it with out[b] = out[b] + wt*dlt[d] keeps the exact operand order and the exact double add, so it is bit-identical. Secondarily, inbetween_hat rescans all 2000 ibase entries for every one of 2000 targets (4M iterations); its lo/hi are an order-independent max/min over the knots sharing a main, so a per-main sorted knot list plus lower_bound/upper_bound selects the identical doubles in O(log n).",
+      "index": 1,
+      "ms": 0.3238,
+      "note": "",
+      "outcome": "accept",
+      "parity": "pass",
+      "predicted_speedup": 15.0,
+      "risk": "The scatter rewrite hoists the (3j+2 < nd) guard into the loop bound j < nd/3, which only removes iterations that did nothing -- but it is the kind of clamp that is easy to get off by one, so the bound was derived rather than guessed. The knot index changes a linear max/min into a binary search: it falls back to the literal scan when iknot is shorter than ibase (the scan reads iknot[j] for j < nib, which the index cannot reproduce) or when any knot is NaN (which would make the sorted order meaningless). Ties are safe because max/min over a set is order-independent and both comparisons stayed strict.",
+      "slug": "raw_scatter_deltas",
+      "speedup": 227.50277949351454,
+      "theme": "the delta accumulator was heap-allocating three nd::Array temporaries per vertex-component; a raw-pointer scatter plus a per-main sorted knot index for the in-between rescan took the node from 73.7 ms to 0.35 ms"
+    },
+    {
+      "compiled": true,
+      "duration_s": 731.584,
+      "fix_rounds": 0,
+      "hypothesis": "in-file profiling showed the baked scatter was 0.147 ms of a 0.275 ms compute; only 576 of 8012 vertices are ever written, so the 192 KB zero-init, the 24k-double rest-point snapshot and the 8012-vertex rewrite are all pure overhead, and the clamped per-target [lo,hi) plus the per-row vertex id are derived state that never moves while the weights animate",
+      "index": 2,
+      "ms": 0.2855,
+      "note": "",
+      "outcome": "accept",
+      "parity": "pass",
+      "predicted_speedup": 1.35,
+      "risk": "the cache is keyed by an exact memcmp of targetOffset and targetComponents plus the vertex count and delta length, and is additionally cleared from setDependentsDirty and preEvaluation, so a table edit cannot go stale in any evaluation mode; the accumulator itself is rebuilt from the live weights every tick and is never cached",
+      "slug": "compact_slot_scatter_cache",
+      "speedup": 258.0224168126095,
+      "theme": "cache the targetOffset/targetComponents-derived scatter topology per instance, accumulate into a compact 576-slot buffer instead of a 24k-double per-vertex array, and touch only the vertices a delta row actually names"
+    }
+  ],
+  "parity_gate": "authored+pointwise",
+  "reason": "accepted (258.02x)",
+  "rounds": 2,
+  "speedup": 258.0224168126095,
+  "type_name": "comboCorrectives"
+}

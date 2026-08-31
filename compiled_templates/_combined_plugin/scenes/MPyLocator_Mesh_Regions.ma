@@ -1,0 +1,8788 @@
+//Maya ASCII 2026 scene
+//Name: MPyLocator_Mesh_Regions.ma
+//Last modified: Tue, Aug 25, 2026 12:20:12 PM
+//Codeset: UTF-8
+requires maya "2026";
+requires -nodeType "meshRegionLocator" "mPyMega" "1.0";
+requires -nodeType "mPyLocator" "mpynode_api2.py" "1.0.0a1";
+currentUnit -l centimeter -a degree -t film;
+fileInfo "application" "maya";
+fileInfo "product" "Maya 2026";
+fileInfo "version" "2026";
+fileInfo "cutIdentifier" "202510291147-60ec9eda33";
+fileInfo "osv" "Mac OS X 20.6.2";
+fileInfo "UUID" "3C3EFC74-D545-E210-603A-1784DB311B9E";
+createNode transform -s -n "persp";
+	rename -uid "093D0186-2B46-7BEA-565B-8E93C4069E22";
+	setAttr ".v" no;
+	setAttr ".t" -type "double3" 28 21 28 ;
+	setAttr ".r" -type "double3" -27.938352729602379 44.999999999999972 -5.172681101354183e-14 ;
+createNode camera -s -n "perspShape" -p "persp";
+	rename -uid "1837B13F-AB4F-410C-DCA5-C6AACE788329";
+	setAttr -k off ".v" no;
+	setAttr ".fl" 34.999999999999993;
+	setAttr ".coi" 44.82186966202994;
+	setAttr ".imn" -type "string" "persp";
+	setAttr ".den" -type "string" "persp_depth";
+	setAttr ".man" -type "string" "persp_mask";
+	setAttr ".hc" -type "string" "viewSet -p %camera";
+createNode transform -s -n "top";
+	rename -uid "4DEE2D33-2342-322E-5782-31A4DBCC6EE9";
+	setAttr ".v" no;
+	setAttr ".t" -type "double3" 0 1000.1 0 ;
+	setAttr ".r" -type "double3" -89.999999999999986 0 0 ;
+createNode camera -s -n "topShape" -p "top";
+	rename -uid "C66735B4-0040-094B-4BA0-839D33439C36";
+	setAttr -k off ".v" no;
+	setAttr ".rnd" no;
+	setAttr ".coi" 1000.1;
+	setAttr ".ow" 30;
+	setAttr ".imn" -type "string" "top";
+	setAttr ".den" -type "string" "top_depth";
+	setAttr ".man" -type "string" "top_mask";
+	setAttr ".hc" -type "string" "viewSet -t %camera";
+	setAttr ".o" yes;
+createNode transform -s -n "front";
+	rename -uid "8ECE75FC-6341-2B81-93AD-69A7D6973011";
+	setAttr ".v" no;
+	setAttr ".t" -type "double3" 0 0 1000.1 ;
+createNode camera -s -n "frontShape" -p "front";
+	rename -uid "99FF6109-ED48-F5E0-22ED-9FA4CB8473D1";
+	setAttr -k off ".v" no;
+	setAttr ".rnd" no;
+	setAttr ".coi" 1000.1;
+	setAttr ".ow" 30;
+	setAttr ".imn" -type "string" "front";
+	setAttr ".den" -type "string" "front_depth";
+	setAttr ".man" -type "string" "front_mask";
+	setAttr ".hc" -type "string" "viewSet -f %camera";
+	setAttr ".o" yes;
+createNode transform -s -n "side";
+	rename -uid "874E3D7B-B441-622F-DDF6-76940D2D0D81";
+	setAttr ".v" no;
+	setAttr ".t" -type "double3" 1000.1 0 0 ;
+	setAttr ".r" -type "double3" 0 89.999999999999986 0 ;
+createNode camera -s -n "sideShape" -p "side";
+	rename -uid "F230EC59-E24A-A93F-D781-53A288FE0F94";
+	setAttr -k off ".v" no;
+	setAttr ".rnd" no;
+	setAttr ".coi" 1000.1;
+	setAttr ".ow" 30;
+	setAttr ".imn" -type "string" "side";
+	setAttr ".den" -type "string" "side_depth";
+	setAttr ".man" -type "string" "side_mask";
+	setAttr ".hc" -type "string" "viewSet -s %camera";
+	setAttr ".o" yes;
+createNode transform -n "bottomLipRegion";
+	rename -uid "59097F24-4F45-8A49-3C7E-4582C4E31C58";
+	setAttr ".t" -type "double3" 5.498814584622583e-08 150.78984369550432 8.4041535684040607 ;
+createNode mPyLocator -n "bottomLipRegionShape" -p "bottomLipRegion";
+	rename -uid "C102FB6E-E847-A248-EC79-19B6239CDBD2";
+	addAttr -ci true -k true -sn "inMesh" -ln "inMesh" -dt "mesh";
+	addAttr -ci true -k true -sn "regionTag" -ln "regionTag" -dt "string";
+	addAttr -ci true -k true -sn "offset" -ln "offset" -dv 0.1 -at "float";
+	addAttr -ci true -k true -sn "hoverOffset" -ln "hoverOffset" -dv 0.25 -at "float";
+	addAttr -ci true -k true -sn "selectOffset" -ln "selectOffset" -dv 0.5 -at "float";
+	addAttr -ci true -k true -sn "hoverDur" -ln "hoverDur" -dv 0.35 -at "float";
+	addAttr -ci true -uac -k true -sn "defaultColor" -ln "defaultColor" -at "float3" 
+		-nc 3;
+	addAttr -ci true -k true -sn "defaultColorR" -ln "defaultColorR" -dv 0.25 -at "float" 
+		-p "defaultColor";
+	addAttr -ci true -k true -sn "defaultColorG" -ln "defaultColorG" -dv 0.5 -at "float" 
+		-p "defaultColor";
+	addAttr -ci true -k true -sn "defaultColorB" -ln "defaultColorB" -dv 0.95 -at "float" 
+		-p "defaultColor";
+	addAttr -ci true -uac -k true -sn "hoverColor" -ln "hoverColor" -at "float3" -nc 
+		3;
+	addAttr -ci true -k true -sn "hoverColorR" -ln "hoverColorR" -dv 1 -at "float" -p "hoverColor";
+	addAttr -ci true -k true -sn "hoverColorG" -ln "hoverColorG" -dv 0.82 -at "float" 
+		-p "hoverColor";
+	addAttr -ci true -k true -sn "hoverColorB" -ln "hoverColorB" -dv 0.15 -at "float" 
+		-p "hoverColor";
+	addAttr -ci true -uac -k true -sn "selectColor" -ln "selectColor" -at "float3" -nc 
+		3;
+	addAttr -ci true -k true -sn "selectColorR" -ln "selectColorR" -dv 0.3 -at "float" 
+		-p "selectColor";
+	addAttr -ci true -k true -sn "selectColorG" -ln "selectColorG" -dv 0.85 -at "float" 
+		-p "selectColor";
+	addAttr -ci true -k true -sn "selectColorB" -ln "selectColorB" -dv 0.9 -at "float" 
+		-p "selectColor";
+	addAttr -ci true -uac -k true -sn "outlineColor" -ln "outlineColor" -at "float3" 
+		-nc 3;
+	addAttr -ci true -k true -sn "outlineColorR" -ln "outlineColorR" -dv 0.02 -at "float" 
+		-p "outlineColor";
+	addAttr -ci true -k true -sn "outlineColorG" -ln "outlineColorG" -dv 0.02 -at "float" 
+		-p "outlineColor";
+	addAttr -ci true -k true -sn "outlineColorB" -ln "outlineColorB" -dv 0.04 -at "float" 
+		-p "outlineColor";
+	addAttr -ci true -uac -k true -sn "outlineHoverColor" -ln "outlineHoverColor" -at "float3" 
+		-nc 3;
+	addAttr -ci true -k true -sn "outlineHoverColorR" -ln "outlineHoverColorR" -dv 0.02 
+		-at "float" -p "outlineHoverColor";
+	addAttr -ci true -k true -sn "outlineHoverColorG" -ln "outlineHoverColorG" -dv 0.02 
+		-at "float" -p "outlineHoverColor";
+	addAttr -ci true -k true -sn "outlineHoverColorB" -ln "outlineHoverColorB" -dv 0.04 
+		-at "float" -p "outlineHoverColor";
+	addAttr -ci true -uac -k true -sn "outlineSelectColor" -ln "outlineSelectColor" 
+		-at "float3" -nc 3;
+	addAttr -ci true -k true -sn "outlineSelectColorR" -ln "outlineSelectColorR" -dv 
+		0.02 -at "float" -p "outlineSelectColor";
+	addAttr -ci true -k true -sn "outlineSelectColorG" -ln "outlineSelectColorG" -dv 
+		0.02 -at "float" -p "outlineSelectColor";
+	addAttr -ci true -k true -sn "outlineSelectColorB" -ln "outlineSelectColorB" -dv 
+		0.04 -at "float" -p "outlineSelectColor";
+	addAttr -ci true -k true -sn "alpha" -ln "alpha" -dv 0.8 -min 0 -max 1 -at "float";
+	addAttr -ci true -h true -sn "_initSource" -ln "_initSource" -dt "string";
+	addAttr -ci true -h true -sn "_methodsSource" -ln "_methodsSource" -dt "string";
+	addAttr -ci true -h true -sn "class_path" -ln "class_path" -dt "string";
+	setAttr -k off ".v";
+	setAttr "._computeSource" -type "string" (
+		"# Draw the bound mesh's component-tag region as a coloured patch. The region\n# MEMBERSHIP is resolved LIVE from the input mesh DATA every evaluation (via\n# MFnGeometryData), keyed by this gizmo's tag NAME (`regionTag`, baked once by\n# setup) -- so editing the component tag (add/remove faces) updates the drawn\n# region immediately, and a compiled C++ node resolves the SAME way off its own\n# input handle. self.inMesh is the live world-space MFnMesh (worldMesh[0]) used\n# for the geometry; the tag membership comes from that same input's data. Falls\n# back to a legacy baked `regions` dict for scenes saved before this change.\nmesh = self.inMesh\n# The region is chosen purely by NAME via the `regionTag` string input. If the\n# name matches no component tag on the input mesh, the region goes BLANK (a typo\n# or a removed/renamed tag reads as empty). Only when regionTag is unset do we\n# honour a legacy baked `regions` dict (scenes saved before regionTag existed /\n# the build probe).\n_tag = getattr(self, \"regionTag\", None)\n"
+		+ "# ONE read of the input data, shared by the tag membership and the source\n# transform below (both live on the same MFnGeometryData).\n_mdata = mesh_data_from_node_plug(node_name_from_self(self), \"inMesh\")\n_wmat = mesh_matrix_from_mesh_data(_mdata)\nregions = None\nif _tag:\n    _faces = tag_indices_from_mesh_data(_mdata, _tag)\n    if _faces:\n        regions = {_tag: _faces}\n    # else: named tag has no match -> leave regions None -> blank (no fallback).\nelse:\n    _legacy = getattr(self, \"regions\", None)\n    if isinstance(_legacy, dict) and _legacy:\n        regions = _legacy\nif mesh is None or not regions:\n    self.draw = None\nelse:\n    offset = self.offset\n    hover_offset = self.hoverOffset\n    select_offset = self.selectOffset\n    hover_dur = max(self.hoverDur, 1e-3)\n    alpha = float(self.alpha)\n    # Per-state RGB colours (each a 3-float `color` input) + one shared alpha.\n    # The active colour tweens default->hover on the SAME elastic curve as the\n    # lift, and snaps to the select colour when selected. Each input carries its\n"
+		+ "    # own attr DEFAULT, so what is read here is exactly what the user dialled --\n    # all-zero means BLACK, not \"unset\". Nothing is substituted.\n    def_c = np.asarray(self.defaultColor, dtype=np.float64).ravel()[:3]\n    hov_c = np.asarray(self.hoverColor, dtype=np.float64).ravel()[:3]\n    sel_c = np.asarray(self.selectColor, dtype=np.float64).ravel()[:3]\n    # The outline around each patch has the SAME three states, on the same\n    # curve, so it can read as its own accent rather than a fixed dark edge.\n    odef_c = np.asarray(self.outlineColor, dtype=np.float64).ravel()[:3]\n    ohov_c = np.asarray(self.outlineHoverColor, dtype=np.float64).ravel()[:3]\n    osel_c = np.asarray(self.outlineSelectColor, dtype=np.float64).ravel()[:3]\n\n    hovered = bool(self.hovered)\n    selected = bool(self.selected)\n    if selected:\n        hovered = False          # selected shows only its selected form\n    now = float(_wallclock.time())\n\n    h_cur, h_e = tween(now, float(getattr(self, \"hv_start\", 0.0)),\n                       float(getattr(self, \"hv_from\", 0.0)),\n"
+		+ "                       float(getattr(self, \"hv_to\", 0.0)), hover_dur)\n    if hovered != bool(getattr(self, \"hv_prev\", False)):\n        self.hv_start = now\n        self.hv_from = h_cur\n        self.hv_to = 1.0 if hovered else 0.0\n        self.hv_prev = hovered\n        h_e = 0.0\n\n    # THREE ABSOLUTE normal offsets (world units): the patch floats at `offset`\n    # at rest, tweens to `hoverOffset` on hover, and snaps to `selectOffset`\n    # when selected. Absolute (not additive) + a fixed normal lift (never an\n    # in-plane centroid balloon), so the pop is identical no matter how many\n    # faces the tag covers -- a tag grown to span the whole mesh lifts by the\n    # same amount as a tiny one.\n    lift = offset + (hover_offset - offset) * h_cur\n    if selected:\n        lift = select_offset\n    if lift < MIN_OFFSET:\n        lift = MIN_OFFSET\n\n    # Active fill colour: tween default->hover on the hover curve, snap to the\n    # select colour when selected; append the shared alpha to make the RGBA row\n    # the polygons buffer expects.\n"
+		+ "    rgb = def_c + (hov_c - def_c) * h_cur\n    if selected:\n        rgb = sel_c\n    rgba = np.concatenate([rgb, [alpha]])\n\n    # The outline rides the SAME hover curve and the same select snap. It stays\n    # opaque: `alpha` fades the FILL so the surface shows through, and letting\n    # the silhouette fade with it would wash the patch's edge out entirely.\n    orgb = odef_c + (ohov_c - odef_c) * h_cur\n    if selected:\n        orgb = osel_c\n    orgba = np.concatenate([orgb, [1.0]])\n\n    # One DrawMesh per tag. `self.draw` takes the LIST straight -- no `sum()`\n    # and no `+` chain to build -- and draws them in the order appended. This\n    # used to be four parallel accumulator lists plus a hand-rolled\n    # `idx + voff` rebase.\n    patches = []\n    for tag in sorted(regions.keys()):\n        faces = np.asarray(regions[tag], dtype=np.int64).ravel()\n        if faces.size == 0:\n            continue\n        pts, idx, cnt, nrm = extract_region(mesh, faces, with_normals=True)\n        if pts.shape[0] == 0:\n            continue\n"
+		+ "        # extract_region reads OBJECT space: the mesh DATA carries the source\n        # transform as a SEPARATE matrix, and a data-built MFnMesh has no DAG\n        # path so getPoints(kWorld) cannot reach world. `world_space=True` below\n        # takes these points AS world, so apply that matrix here -- without it\n        # the patch draws at the ORIGIN and never follows the mesh. Maya is\n        # row-vector (p * M): the 3x3 rotates/scales, row 3 translates.\n        if _wmat is not None:\n            _m = np.asarray(_wmat, dtype=np.float64).reshape(4, 4)\n            pts = pts @ _m[:3, :3] + _m[3, :3]\n            nrm = nrm @ _m[:3, :3]\n            _mag = np.linalg.norm(nrm, axis=1, keepdims=True)\n            nrm = nrm / np.where(_mag > 1e-12, _mag, 1.0)\n        patches.append(DrawMesh(\n            pts + nrm * lift, cnt, idx, color=rgba,\n            outline=orgba, outline_width=2.0,\n            outline_boundary_only=True,   # clean outer silhouette only\n            world_space=True,             # follow the mesh, not the locator\n"
+		+ "            precise_hover=True))\n\n    if not patches:\n        self.draw = None\n    else:\n        self.draw = patches\n        self.auto_highlight = False\n        self.auto_refresh = bool(h_e < 1.0)\n");
+	setAttr "._inputAttrs" -type "string" (
+		"{\"alpha\":{\"attr_type\":\"float\",\"default_value\":0.8,\"is_array\":false,\"max_value\":1.0,\"min_value\":0.0,\"order\":12},\"defaultColor\":{\"attr_type\":\"color\",\"default_value\":[0.25,0.5,0.95],\"is_array\":false,\"order\":6},\"hoverColor\":{\"attr_type\":\"color\",\"default_value\":[1.0,0.82,0.15],\"is_array\":false,\"order\":7},\"hoverDur\":{\"attr_type\":\"float\",\"default_value\":0.35,\"is_array\":false,\"order\":5},\"hoverOffset\":{\"attr_type\":\"float\",\"default_value\":0.25,\"is_array\":false,\"order\":3},\"inMesh\":{\"attr_type\":\"mesh\",\"is_array\":false,\"order\":0},\"offset\":{\"attr_type\":\"float\",\"default_value\":0.1,\"is_array\":false,\"order\":2},\"outlineColor\":{\"attr_type\":\"color\",\"default_value\":[0.02,0.02,0.04],\"is_array\":false,\"order\":9},\"outlineHoverColor\":{\"attr_type\":\"color\",\"default_value\":[0.02,0.02,0.04],\"is_array\":false,\"order\":10},\"outlineSelectColor\":{\"attr_type\":\"color\",\"default_value\":[0.02,0.02,0.04],\"is_array\":false,\"order\":11},\"regionTag\":{\"attr_type\":\"string\",\"is_array\":false,\"order\":1},\"selectColor\":{\"attr_type\":\"color\",\"default_value\":[0.3,0.85,0.9],\"is_array\":false,\"order\":8},\"selectOffset\":{\"attr_type\":\"float\",\"default_value\":0.5,\"is_array\":false,\"order\":4}}");
+	setAttr -k on ".inMesh";
+	setAttr -k on ".regionTag" -type "string" "bottomLip";
+	setAttr "._initSource" -type "string" (
+		"import math\nimport time as _wallclock\nimport numpy as np\nfrom mpynode._common.draw.draw_types import DrawMesh\nfrom mpynode._common.nodes.mesh.mesh_region import extract_region\nfrom mpynode._common.nodes.mesh.component_tags import (\n    node_name_from_self, mesh_data_from_node_plug, tag_indices_from_mesh_data,\n    mesh_matrix_from_mesh_data)\n\nMIN_OFFSET = 0.004      # floor so elastic undershoot never dips into the mesh\n# Fill AND outline colour, plus the per-state offsets, are LIVE input attrs\n# (defaultColor / hoverColor / selectColor, outlineColor / outlineHoverColor /\n# outlineSelectColor, offset / hoverOffset / selectOffset / alpha), so the\n# palette/tint constants that used to live here are gone -- the compute reads\n# them off self.<attr> and a user can tweak each one interactively. Every colour\n# input carries its OWN attr default, so a raw-created node already looks right\n# and the compute never has to guess whether a value is \"unset\": all-zero means\n# exactly BLACK, which is the colour the user dialled.\n"
+		+ "\n\ndef elastic_in_out(t):\n    if t <= 0.0:\n        return 0.0\n    if t >= 1.0:\n        return 1.0\n    p = 0.45\n    s = p / 4.0\n    t2 = 2.0 * t - 1.0\n    if t2 < 0.0:\n        return -0.5 * (2.0 ** (10.0 * t2)) * math.sin((t2 - s) * (2.0 * math.pi / p))\n    return (2.0 ** (-10.0 * t2)) * math.sin((t2 - s) * (2.0 * math.pi / p)) * 0.5 + 1.0\n\n\ndef tween(now, start, frm, to, dur):\n    e = (now - start) / max(dur, 1e-3)\n    e = 0.0 if e < 0.0 else (1.0 if e > 1.0 else e)\n    return frm + (to - frm) * elastic_in_out(e), e\n");
+	setAttr "._methodsSource" -type "string" (
+		"class SetupError(Exception):\n    \"\"\"The current selection / scene state can't support setup for this node.\n    Message is user-facing (it names what to select).\"\"\"\n\n\ndef _has_shape(node, shape_types):\n    from maya import cmds as mc\n    if mc.nodeType(node) in shape_types:\n        return True\n    for st in shape_types:\n        if mc.listRelatives(node, shapes=True, type=st, noIntermediate=True):\n            return True\n    return False\n\n\ndef _meshes(sel):\n    return [n for n in sel if _has_shape(n, (\"mesh\",))]\n\n\n# Region-extraction helpers, VENDORED from\n# mpynode._common.nodes.mesh.mesh_region. setup is a @maya_command body, which\n# ships as embedded python inside the compiled .mll -- where mpynode is NOT\n# importable -- so extract_region and its whole closure (mesh_arrays /\n# mesh_vertex_normals and their api1 fallbacks) are carried here instead of\n# imported. numpy + the OpenMaya modules are imported per-def.\ndef _is_api2(mesh):\n    \"\"\"True for an API-2.0 function set, False for a legacy API-1.0 one.\n    Both classes are named ``MFnMesh``, so we distinguish by module:\n"
+		+ "    API 1.0 is ``maya.OpenMaya``; API 2.0 reports ``OpenMaya``.\"\"\"\n    return type(mesh).__module__ != \"maya.OpenMaya\"\n\n\ndef _arrays_api1(mesh, space):\n    \"\"\"Legacy API-1.0 read path. API 1.0 has no vectorized point accessor,\n    so points go through a small per-vertex loop; connectivity uses the\n    scalar-iterable MIntArray (np.fromiter).\"\"\"\n    import numpy as np\n    import maya.OpenMaya as om1\n\n    space1 = om1.MSpace.kObject if space is None else int(space)\n    pa = om1.MPointArray()\n    mesh.getPoints(pa, space1)\n    n = pa.length()\n    pts = np.empty((n, 3), dtype=np.float64)\n    for i in range(n):\n        p = pa[i]\n        pts[i, 0] = p.x\n        pts[i, 1] = p.y\n        pts[i, 2] = p.z\n    counts1 = om1.MIntArray()\n    connects1 = om1.MIntArray()\n    mesh.getVertices(counts1, connects1)\n    counts = np.fromiter(counts1, dtype=np.int64, count=counts1.length())\n    connects = np.fromiter(connects1, dtype=np.int64, count=connects1.length())\n    return pts, counts, connects\n\n\ndef mesh_arrays(mesh, space=None):\n"
+		+ "    \"\"\"Return ``(points (V,3) float64, counts (F,) int64, connects (C,) int64)``\n    for an ``MFnMesh`` (API 2.0 preferred, API 1.0 supported).\"\"\"\n    import numpy as np\n    import maya.api.OpenMaya as om\n\n    if not _is_api2(mesh):\n        return _arrays_api1(mesh, space)\n    if space is None:\n        space = om.MSpace.kObject\n    # getPoints -> MPointArray; np.array gives (V, 4) [x,y,z,w] -> drop w.\n    pts = np.asarray(mesh.getPoints(space))[:, :3].astype(np.float64)\n    counts_arr, connects_arr = mesh.getVertices()\n    counts = np.asarray(counts_arr, dtype=np.int64)\n    connects = np.asarray(connects_arr, dtype=np.int64)\n    return pts, counts, connects\n\n\ndef _normals_api1(mesh, space):\n    \"\"\"Legacy API-1.0 per-vertex normal read (out-param + small loop).\"\"\"\n    import numpy as np\n    import maya.OpenMaya as om1\n\n    space1 = om1.MSpace.kObject if space is None else int(space)\n    nrm = om1.MFloatVectorArray()\n    mesh.getVertexNormals(False, nrm, space1)\n    n = nrm.length()\n    out = np.empty((n, 3), dtype=np.float64)\n"
+		+ "    for i in range(n):\n        v = nrm[i]\n        out[i, 0] = v.x\n        out[i, 1] = v.y\n        out[i, 2] = v.z\n    return out\n\n\ndef mesh_vertex_normals(mesh, space=None):\n    \"\"\"Return ``(V, 3)`` unit per-vertex normals (Maya's averaged vertex\n    normals) for an ``MFnMesh``, aligned with ``mesh_arrays`` point order.\"\"\"\n    import numpy as np\n    import maya.api.OpenMaya as om\n\n    if not _is_api2(mesh):\n        n = _normals_api1(mesh, space)\n    else:\n        if space is None:\n            space = om.MSpace.kObject\n        n = np.asarray(\n            mesh.getVertexNormals(False, space))[:, :3].astype(np.float64)\n    # Defensive renormalize (Maya returns unit normals, but guard zeros).\n    mag = np.linalg.norm(n, axis=1, keepdims=True)\n    return n / np.where(mag > 1e-12, mag, 1.0)\n\n\ndef extract_region(mesh, face_ids, space=None, with_normals=False):\n    \"\"\"Build a compact polygon buffer for the faces in ``face_ids`` from a\n    live ``MFnMesh``.\n\n    Returns ``(points, indices, counts)`` -- or, when ``with_normals`` is\n"
+		+ "    True, ``(points, indices, counts, normals)``. The region's vertices are\n    compacted + remapped, so ``indices`` refer only to the returned\n    ``points``. Fully vectorized -- no per-face loops.\"\"\"\n    import numpy as np\n\n    def _empty():\n        z3 = np.zeros((0, 3), dtype=np.float64)\n        zi = np.zeros((0,), dtype=np.int64)\n        return (z3, zi, zi.copy(), z3.copy()) if with_normals else (z3, zi, zi.copy())\n\n    if mesh is None:\n        return _empty()\n    pts, counts, connects = mesh_arrays(mesh, space)\n    face_ids = np.asarray(face_ids, dtype=np.int64).ravel()\n    if face_ids.size == 0 or counts.shape[0] == 0:\n        return _empty()\n    # Keep only valid face ids.\n    face_ids = face_ids[(face_ids >= 0) & (face_ids < counts.shape[0])]\n    if face_ids.size == 0:\n        return _empty()\n\n    face_off = np.cumsum(counts) - counts          # start offset into connects/face\n    sel_counts = counts[face_ids]                  # (M,)\n    starts = face_off[face_ids]                    # (M,)\n    total = int(sel_counts.sum())\n"
+		+ "    if total == 0:\n        return _empty()\n\n    # Flatten the selected faces' connectivity positions (vectorized).\n    face_of = np.repeat(np.arange(face_ids.size), sel_counts)            # (total,)\n    within = np.arange(total) - (np.cumsum(sel_counts) - sel_counts)[face_of]\n    connect_pos = starts[face_of] + within                              # (total,)\n    region_verts = connects[connect_pos]                                # global vertex ids\n\n    # Compact the used vertices + remap the connectivity to 0..U-1.\n    uniq, inverse = np.unique(region_verts, return_inverse=True)\n    region_points = pts[uniq]\n    region_indices = inverse.astype(np.int64)\n    region_counts = sel_counts.astype(np.int64)\n    if not with_normals:\n        return region_points, region_indices, region_counts\n    region_normals = mesh_vertex_normals(mesh, space)[uniq]\n    return region_points, region_indices, region_counts, region_normals\n\n\n# Mesh Regions demo: fabricate the whole showcase scene. Import the bundled\n# head model, resolve EVERY component tag, then build ONE gizmo PER tag -- `self`\n"
+		+ "# is the first tag's gizmo and each remaining tag gets a DUPLICATE of `self`\n# (which carries its Init/Compute/Methods sources + input attrs along). The\n# demo only creates + arranges the gizmos: it sets each gizmo's `regionTag`\n# and then DELEGATES the actual per-node binding (`inMesh` wire + positioning) to\n# that gizmo's own ``setup`` via ``run_setup([mesh])`` -- so demo and setup never\n# duplicate the wiring logic.\ndef get_component_tag_faces(mesh_shape):\n    \"\"\"\n    Retrieves component tags on a mesh shape and returns a dictionary.\n    Keys are the tag names.\n    Values are flattened, unique, and sorted lists of face indices.\n    \"\"\"\n    from maya import cmds as mc\n\n    attr_path = f\"{mesh_shape}.outMesh\"\n    tags = mc.geometryAttrInfo(attr_path, componentTagNames=True)\n\n    tag_faces_dict = {}\n\n    if not tags:\n        return tag_faces_dict\n\n    for tag in tags:\n        contents = mc.geometryAttrInfo(attr_path, componentTagExpression=tag, components=True)\n\n        # Use a set to automatically guarantee unique indices\n"
+		+ "        face_indices = set()\n\n        if contents:\n            for comp in contents:\n                comp = comp.strip()\n\n                # Check if the string represents a face (starts with 'f[' or 'F[')\n                if comp.lower().startswith('f['):\n                    # Extract the contents inside the square brackets\n                    inner_str = comp.split('[')[1].split(']')[0]\n\n                    # Handle ranges (e.g., '10:55')\n                    if ':' in inner_str:\n                        start_idx, end_idx = inner_str.split(':')\n                        # range() stops before the end value, so we add 1 to make it inclusive\n                        face_indices.update(range(int(start_idx), int(end_idx) + 1))\n\n                    # Handle single digits (e.g., '10')\n                    else:\n                        face_indices.add(int(inner_str))\n\n        # Convert the set back to a list and sort it\n        tag_faces_dict[tag] = sorted(list(face_indices))\n\n    return tag_faces_dict\n\n\ndef demo(self):\n"
+		+ "    from maya import cmds as mc\n    from mpynode import wrap_node\n    import os\n    import re\n    name = self.get_name()\n\n    head = None\n    try:\n        from mpynode._common.util.template_gallery import _bundled_templates_root\n        root = _bundled_templates_root()\n        if root:\n            cand = os.path.join(root, \"MPyLocator\", \"Mesh Regions\", \"head.ma\")\n            if os.path.isfile(cand):\n                head = cand\n    except Exception:\n        head = None\n    if not head:\n        return name\n\n    new_nodes = mc.file(head, i=True, returnNewNodes=True,\n                        namespace=\"headModel\") or []\n    meshes = [n for n in new_nodes if mc.nodeType(n) == \"mesh\"]\n    if not meshes:\n        meshes = mc.ls(\"headModel:*\", type=\"mesh\", long=True) or []\n    if not meshes:\n        return name\n    shape = (mc.ls(meshes[0], long=True) or [meshes[0]])[0]\n\n    tags = sorted(get_component_tag_faces(shape).keys())\n    if not tags:\n        return name\n\n    def _san(tag):\n        s = re.sub(r\"[^0-9A-Za-z_]\", \"_\", str(tag))\n"
+		+ "        if not s:\n            s = \"region\"\n        if s[0].isdigit():\n            s = \"_\" + s\n        return s + \"Region\"\n\n    # self is tag[0]'s gizmo; duplicate it once per remaining tag. Capture\n    # self's FULL DAG paths up front so later name-based lookups can't go\n    # ambiguous once dup shapes share the short name (Maya keeps a duplicated\n    # shape's short name identical to the original's).\n    self_shape = (mc.ls(name, long=True) or [name])[0]\n    self_tf = (mc.listRelatives(self_shape, parent=True, fullPath=True) or [self_shape])[0]\n\n    shapes = [self_shape]\n    for _ in tags[1:]:\n        dup_tf = mc.duplicate(self_tf, returnRootsOnly=True)[0]\n        dup_tf = (mc.ls(dup_tf, long=True) or [dup_tf])[0]\n        dsh = (mc.listRelatives(dup_tf, shapes=True, type=\"mPyLocator\", fullPath=True)\n               or mc.listRelatives(dup_tf, shapes=True, fullPath=True) or [])\n        if dsh:\n            shapes.append(dsh[0])\n\n    for idx, tag in enumerate(tags):\n        if idx >= len(shapes):\n            break\n"
+		+ "        sh = shapes[idx]\n        # Name THIS gizmo's region via the live `regionTag` string selector, then\n        # let its OWN setup wire the mesh (setup honours an already-set name) --\n        # one code path for both \"Run demo\" and a standalone \"Run setup\".\n        try:\n            mc.setAttr(sh + \".regionTag\", tag, type=\"string\")\n        except Exception:\n            pass\n        try:\n            w = wrap_node(sh)\n            if w is not None:\n                w.run_setup([shape])\n        except Exception:\n            pass\n        # Give each gizmo a DISTINCT default colour so the showcase reads as\n        # separate regions; hover/select/outline keep their shared attr\n        # defaults. Set AFTER run_setup so nothing setup does can win over it.\n        try:\n            _pal = [(0.25, 0.50, 0.95), (0.95, 0.45, 0.25), (0.30, 0.80, 0.40),\n                    (0.80, 0.35, 0.85), (0.95, 0.82, 0.20), (0.30, 0.85, 0.90),\n                    (0.95, 0.35, 0.55), (0.55, 0.85, 0.25), (0.45, 0.35, 0.90),\n                    (0.90, 0.60, 0.20), (0.20, 0.70, 0.70), (0.70, 0.70, 0.95)]\n"
+		+ "            _c = _pal[idx % len(_pal)]\n            for _ch, _v in zip(\"RGB\", _c):\n                mc.setAttr(\"%s.defaultColor%s\" % (sh, _ch), _v)\n        except Exception:\n            pass\n        # rename transform + shape after the tag for a readable outliner\n        try:\n            tf = mc.listRelatives(sh, parent=True, fullPath=True)\n            if tf:\n                new_tf = mc.rename(tf[0], _san(tag))\n                nsh = mc.listRelatives(new_tf, shapes=True, fullPath=True)\n                if nsh:\n                    mc.rename(nsh[0], _san(tag) + \"Shape\")\n                    fixed = mc.listRelatives(new_tf, shapes=True, fullPath=True)\n                    if fixed:\n                        shapes[idx] = fixed[0]\n        except Exception:\n            pass\n\n    # This demo IMPORTS a maya file, so frame the WHOLE scene rather than just\n    # the gizmos -- an imported mesh can sit anywhere, and fitting only the\n    # locators can leave the head off screen with nothing visible to the user.\n    try:\n        mc.viewFit(all=True)\n"
+		+ "    except Exception:\n        pass\n    return shapes[0]\n\n\n@maya_test(label=\"Region draws in the node's RGBA colour; select lifts it\", digits=3)\ndef test_mesh_regions(self):\n    \"\"\"Validate the node's INTENT (the SAME test passes on the interpreted node\n    and its C++ compile -> parity). A locator has no numeric mesh output, so --\n    exactly as the builder's own live-check does -- assert the DRAW BUFFERS:\n\n      1. A bound region draws ONE RGBA face-colour per face carrying the node's\n         `defaultColor` RGB + the `alpha` input (rest state), outlined in\n         `outlineColor` at full opacity.\n      2. Selecting the gizmo snaps the fill to `selectColor` and the outline to\n         `outlineSelectColor` (alpha survives) and lifts the patch by exactly\n         `selectOffset - offset` along the normals -- region-size-independent.\n      3. A colour dialled to (0,0,0) draws BLACK. Nothing substitutes a\n         fallback, so every colour in the cube is reachable.\n    \"\"\"\n    from maya import cmds as mc\n    import maya.api.OpenMaya as om2\n"
+		+ "    import numpy as np\n    from mpynode._common.methods.test_helpers import (\n        assert_close, assert_equal, assert_true)\n\n    name = self.get_name()\n\n    def _set(plug, *vals, **kw):\n        # A demo (or user) may have CONNECTED this input; break incoming\n        # connections first so the test can drive it, then set it.\n        for s in (mc.listConnections(plug, s=True, d=False, plugs=True) or []):\n            mc.disconnectAttr(s, plug)\n        mc.setAttr(plug, *vals, **kw)\n\n    # Validate whatever mesh THIS node already consumes (e.g. the demo's head\n    # model); build a probe sphere ONLY if `inMesh` drives nothing yet. Keeps the\n    # test on `self` (parity) and robust to a live, demo-populated scene + reruns.\n    src = mc.listConnections(name + \".inMesh\", s=True, d=False) or []\n    if not src:\n        probe = mc.polySphere(sx=20, sy=20, name=\"regionProbe#\")[0]\n        pshape = mc.listRelatives(probe, shapes=True, fullPath=True)[0]\n        mc.connectAttr(pshape + \".worldMesh[0]\", name + \".inMesh\", force=True)\n"
+		+ "\n    # Drive the draw deterministically off `self` through the COMPONENT-TAG\n    # path. Not the legacy `regions` dict: that is a stored Python var, and a\n    # compiled node has no _storedVarNames/_storedVarsData plug to receive one,\n    # so forcing it made this test unrunnable against the C++ build -- which is\n    # the parity claim in the docstring above. Tagging a known face range keeps\n    # the region deterministic AND portable. `create=True` on an existing name\n    # is idempotent, so a re-run in a live scene is safe.\n    shape = (mc.listConnections(name + \".inMesh\", s=True, d=False,\n                                shapes=True) or [None])[0]\n    assert_true(shape is not None, \"inMesh must be driven by a mesh shape\")\n    n_faces = mc.polyEvaluate(shape, face=True)\n    last_face = min(15, int(n_faces) - 1)\n    mc.componentTag(\"%s.f[0:%d]\" % (shape, last_face), create=True,\n                    newTagName=\"mpyTestRegion\")\n    # Seed known colours + offsets. Every input is broken-then-set so no\n    # demo/user connection can win over the values this test drives.\n"
+		+ "    _set(name + \".regionTag\", \"mpyTestRegion\", type=\"string\")\n    probe_rgb = (0.20, 0.55, 0.90)\n    for ch, val in zip(\"RGB\", probe_rgb):\n        _set(\"%s.defaultColor%s\" % (name, ch), val)\n    sel_rgb = (0.30, 0.85, 0.90)\n    for ch, val in zip(\"RGB\", sel_rgb):\n        _set(\"%s.selectColor%s\" % (name, ch), val)\n    # Outline colours, deliberately nothing like the fill so a swapped-in fill\n    # value could not satisfy the outline assertions below.\n    out_rgb = (0.90, 0.10, 0.40)\n    for ch, val in zip(\"RGB\", out_rgb):\n        _set(\"%s.outlineColor%s\" % (name, ch), val)\n    out_sel_rgb = (0.10, 0.95, 0.20)\n    for ch, val in zip(\"RGB\", out_sel_rgb):\n        _set(\"%s.outlineSelectColor%s\" % (name, ch), val)\n    _set(name + \".alpha\", 0.8)\n    _set(name + \".offset\", 0.1)\n    _set(name + \".selectOffset\", 0.5)\n    mc.dgdirty(name)\n\n    # Read the ordered draw commands via the node's PUBLIC MPx surface using the\n    # node NAME only -- so this runs identically on the interpreted node AND a\n    # compiled node (the parity point), never the interpreted-only wrapper.\n"
+		+ "    # One patch is drawn PER TAG; the tag driven above is the only one this test\n    # names, so the first patch answers every assertion below.\n    def _draw(selected=False):\n        sl = om2.MSelectionList(); sl.add(name)\n        mpx = om2.MFnDependencyNode(sl.getDependNode(0)).userNode()\n        return mpx.evaluateDrawItems(0.0, selected=selected) or {}\n\n    def _poly(selected=False):\n        for cmd in _draw(selected).get(\"commands\") or []:\n            if cmd[\"slot\"] == \"polygons\":\n                return cmd[\"buffer\"]\n        return None\n\n    # A COMPILED C++ locator (MPxLocatorNode) exposes no Python\n    # evaluateDrawItems, so its draw buffers are unreachable here -- that parity\n    # is covered by the dedicated -DMPYNODE_PROBE numerical buffer comparison.\n    # Skip cleanly rather than false-fail, the same guard test_animated_selection\n    # and test_animated_text already use. AttributeError ONLY: a node that HAS\n    # the surface but draws nothing must still fail the assertion below.\n    try:\n        _draw(False)\n"
+		+ "    except AttributeError:\n        return\n\n    # 1) REST state: one RGBA row per face = defaultColor RGB + alpha (0.8).\n    poly = _poly(False)\n    assert_true(poly is not None, \"the bound region must draw a patch\")\n    fcol = np.asarray(poly[\"face_colors\"])\n    cnt = np.asarray(poly[\"counts\"])\n    assert_true(fcol.ndim == 2 and fcol.shape[1] == 4,\n                \"face colours must be RGBA rows\")\n    assert_equal(fcol.shape[0], cnt.shape[0],\n                 \"one face colour per face (%d vs %d)\"\n                 % (fcol.shape[0], cnt.shape[0]))\n    assert_close(fcol[:, :3].mean(axis=0).tolist(), list(probe_rgb))\n    assert_true(bool(np.allclose(fcol[:, 3], 0.8, atol=1e-3)),\n                \"the alpha input must reach the fill\")\n    wire = np.asarray(poly[\"wireframe\"], dtype=np.float64).ravel()\n    assert_close(wire[:3].tolist(), list(out_rgb))\n    assert_close(float(wire[3]), 1.0,\n                 msg=\"the outline stays opaque; alpha dials the fill only\")\n\n    # 2) SELECT state: fill snaps to selectColor, the outline to\n"
+		+ "    #    outlineSelectColor, alpha survives, and the patch lifts by exactly\n    #    selectOffset - offset (0.5 - 0.1) along the normals.\n    rest_pts = np.asarray(poly[\"points\"])\n    psel = _poly(True)\n    fcs = np.asarray(psel[\"face_colors\"])\n    disp = np.linalg.norm(np.asarray(psel[\"points\"]) - rest_pts, axis=1)\n    assert_close(fcs[:, :3].mean(axis=0).tolist(), list(sel_rgb))\n    assert_true(bool(np.allclose(fcs[:, 3], 0.8, atol=1e-3)),\n                \"alpha survives selection\")\n    assert_close(np.asarray(psel[\"wireframe\"],\n                            dtype=np.float64).ravel()[:3].tolist(), list(out_sel_rgb))\n    assert_close(float(disp.max()), 0.5 - 0.1, digits=2,\n                 msg=\"select lift must equal selectOffset - offset\")\n\n    # 3) ZERO IS A COLOUR. Dialling a state to (0,0,0) must draw BLACK -- the\n    #    compute substitutes nothing, so the value on the plug is the value on\n    #    screen. Asserted on the fill AND the outline, since each used to have\n    #    (fill) or lacked entirely (outline) its own path to the buffer.\n"
+		+ "    for ch in \"RGB\":\n        _set(\"%s.defaultColor%s\" % (name, ch), 0.0)\n        _set(\"%s.outlineColor%s\" % (name, ch), 0.0)\n    mc.dgdirty(name)\n    pblack = _poly(False)\n    assert_true(pblack is not None, \"an all-black region must still draw\")\n    assert_close(np.asarray(pblack[\"face_colors\"])[:, :3].mean(\n        axis=0).tolist(), [0.0, 0.0, 0.0])\n    assert_close(np.asarray(pblack[\"wireframe\"],\n                            dtype=np.float64).ravel()[:3].tolist(), [0.0, 0.0, 0.0])\n\n\n\n# Mesh Regions setup: bind THIS ONE gizmo to a single region of a mesh in the\n# current selection (NO scene fabrication -- that is the `demo`\\'s job). Resolves\n# ONE mesh, honours this gizmo\\'s `regionTag` string (or defaults it to the first\n# component tag when unset), and wires the mesh\\'s live world-space geometry into\n# `inMesh`. `demo` calls this once per tag after setting each gizmo\\'s `regionTag`,\n# so the two hooks share one wiring path.\n@maya_command(creates=True)\ndef setup(self, selection=None, *args, **kwargs):\n    from maya import cmds as mc\n"
+		+ "    name = self.get_name()\n\n    # Resolve ONE mesh: from the passed selection (in pick order), else the live\n    # selection, else an already-connected inMesh source. Drop self so selecting\n    # the gizmo alongside the mesh is harmless.\n    order = [o for o in (selection or mc.ls(selection=True) or []) if o != name]\n    meshes = _meshes(order) if order else []\n    if not meshes:\n        src = mc.listConnections(name + \".inMesh\", source=True,\n                                 destination=False, shapes=True) or []\n        meshes = _meshes(src) if src else []\n    if not meshes:\n        raise SetupError(\"Select the mesh to bind this region gizmo to.\")\n    shape = (mc.ls(meshes[0], long=True) or [meshes[0]])[0]\n\n    regions = get_component_tag_faces(shape)\n    if not regions:\n        raise SetupError(\"Mesh has no component tags to bind a region to.\")\n    tags = sorted(regions.keys())\n\n    # The region is chosen by NAME via the LIVE `regionTag` string INPUT. Honour\n    # an already-set name (the demo sets one per gizmo, or the user typed one);\n"
+		+ "    # otherwise default to the first tag so a fresh bind shows something. A user\n    # can retype it in the Channel Box / Attribute Editor and the region\n    # retargets on the next redraw (a name with no match draws blank). The\n    # face-id MEMBERSHIP is never frozen -- the draw resolves it LIVE from the\n    # input mesh data each evaluation, so editing the component tag updates the\n    # region. The string name also marshals into the compiled node.\n    try:\n        cur = mc.getAttr(name + \".regionTag\") or \"\"\n    except Exception:\n        cur = \"\"\n    tag = cur or tags[0]\n    if not cur:\n        try:\n            mc.setAttr(name + \".regionTag\", tag, type=\"string\")\n        except Exception:\n            pass\n    mc.connectAttr(shape + \".worldMesh[0]\", name + \".inMesh\", force=True)\n\n    # Move THIS gizmo's transform to the centroid of its region's vertices so\n    # the handle sits on the patch it controls. The patch is drawn in world\n    # space (see LOC_REGION_COMPUTE), so this only repositions the manipulator,\n"
+		+ "    # not the drawing. Wrapped so binding never fails on positioning.\n    try:\n        import maya.api.OpenMaya as om\n        import numpy as np\n        sel = om.MSelectionList()\n        sel.add(shape)\n        mfn = om.MFnMesh(sel.getDagPath(0))\n        pts = extract_region(mfn, regions[tag], space=om.MSpace.kWorld)[0]\n        if pts.shape[0]:\n            ctr = pts.mean(axis=0)\n            tf = (mc.listRelatives(name, parent=True, fullPath=True) or [None])[0]\n            if tf:\n                mc.xform(tf, worldSpace=True, translation=(\n                    float(ctr[0]), float(ctr[1]), float(ctr[2])))\n    except Exception:\n        pass\n\n    # Make the bound mesh unselectable so the region gizmos are easy to grab\n    # (reference display: visible in the viewport but unpickable).\n    try:\n        mc.setAttr(shape + \".overrideEnabled\", 1)\n        mc.setAttr(shape + \".overrideDisplayType\", 2)\n    except Exception:\n        pass\n\n    try:\n        mc.dgdirty(name)\n    except Exception:\n        pass\n    return name\n");
+	setAttr ".class_path" -type "string" "mpynode_user.MeshRegionLocator";
+createNode transform -n "headModel:face";
+	rename -uid "8435F117-9946-9176-739E-20AA672751EA";
+createNode mesh -n "headModel:faceShape" -p "headModel:face";
+	rename -uid "803A83E7-304A-4851-79EF-6F8F7E4D8F75";
+	setAttr -k off ".v";
+	setAttr ".ovdt" 2;
+	setAttr ".ove" yes;
+	setAttr ".vir" yes;
+	setAttr ".vif" yes;
+	setAttr ".uvst[0].uvsn" -type "string" "map1";
+	setAttr ".cuvs" -type "string" "map1";
+	setAttr ".dcc" -type "string" "Ambient+Diffuse";
+	setAttr ".covm[0]"  0 1 1;
+	setAttr ".cdvm[0]"  0 1 1;
+	setAttr ".ndt" 0;
+createNode mesh -n "headModel:faceShapeOrig" -p "headModel:face";
+	rename -uid "63C5C6A6-D948-B5B9-149A-53BE02069E13";
+	setAttr -k off ".v";
+	setAttr ".io" yes;
+	setAttr ".vir" yes;
+	setAttr ".vif" yes;
+	setAttr -s 8 ".gtag";
+	setAttr ".gtag[0].gtagnm" -type "string" "bottomLip";
+	setAttr ".gtag[0].gtagcmp" -type "componentList" 18 "f[293]" "f[300:301]" "f[307:309]" "f[313:315]" "f[318:320]" "f[323:324]" "f[327]" "f[475:477]" "f[499:501]" "f[914]" "f[921:922]" "f[928:930]" "f[934:936]" "f[939:941]" "f[944:945]" "f[948]" "f[1096:1098]" "f[1120:1122]";
+	setAttr ".gtag[1].gtagnm" -type "string" "topLip";
+	setAttr ".gtag[1].gtagcmp" -type "componentList" 22 "f[85]" "f[98:99]" "f[114:115]" "f[130:132]" "f[144:146]" "f[159:161]" "f[176:177]" "f[193]" "f[454:456]" "f[478:480]" "f[575:578]" "f[706]" "f[719:720]" "f[735:736]" "f[751:753]" "f[765:767]" "f[780:782]" "f[797:798]" "f[814]" "f[1075:1077]" "f[1099:1101]" "f[1196:1199]";
+	setAttr ".gtag[2].gtagnm" -type "string" "bottomLipLeft";
+	setAttr ".gtag[2].gtagcmp" -type "componentList" 12 "f[247]" "f[258:259]" "f[270:272]" "f[281:284]" "f[289:292]" "f[297:299]" "f[305:306]" "f[312]" "f[378:382]" "f[393:397]" "f[469:474]" "f[493:498]";
+	setAttr ".gtag[3].gtagnm" -type "string" "bottomLipRight";
+	setAttr ".gtag[3].gtagcmp" -type "componentList" 12 "f[868]" "f[879:880]" "f[891:893]" "f[902:905]" "f[910:913]" "f[918:920]" "f[926:927]" "f[933]" "f[999:1003]" "f[1014:1018]" "f[1090:1095]" "f[1114:1119]";
+	setAttr ".gtag[4].gtagnm" -type "string" "topLipLeft";
+	setAttr ".gtag[4].gtagcmp" -type "componentList" 14 "f[147:148]" "f[162:164]" "f[178:180]" "f[194:196]" "f[205]" "f[207:209]" "f[218:219]" "f[232]" "f[370:373]" "f[402:406]" "f[417]" "f[457:462]" "f[481:486]" "f[579:583]";
+	setAttr ".gtag[5].gtagnm" -type "string" "topLipRight";
+	setAttr ".gtag[5].gtagcmp" -type "componentList" 14 "f[768:769]" "f[783:785]" "f[799:801]" "f[815:817]" "f[826]" "f[828:830]" "f[839:840]" "f[853]" "f[991:994]" "f[1023:1027]" "f[1038]" "f[1078:1083]" "f[1102:1107]" "f[1200:1204]";
+	setAttr ".gtag[6].gtagnm" -type "string" "mouthLeft";
+	setAttr ".gtag[6].gtagcmp" -type "componentList" 21 "f[181]" "f[210]" "f[214]" "f[220:222]" "f[226:228]" "f[233:235]" "f[238]" "f[240:241]" "f[244:246]" "f[250]" "f[252:253]" "f[256:257]" "f[262]" "f[264:265]" "f[275]" "f[287]" "f[331:332]" "f[463:468]" "f[487:492]" "f[549:555]" "f[565:571]";
+	setAttr ".gtag[7].gtagnm" -type "string" "mouthRight";
+	setAttr ".gtag[7].gtagcmp" -type "componentList" 21 "f[802]" "f[831]" "f[835]" "f[841:843]" "f[847:849]" "f[854:856]" "f[859]" "f[861:862]" "f[865:867]" "f[871]" "f[873:874]" "f[877:878]" "f[883]" "f[885:886]" "f[896]" "f[908]" "f[952:953]" "f[1084:1089]" "f[1108:1113]" "f[1170:1176]" "f[1186:1192]";
+	setAttr ".uvst[0].uvsn" -type "string" "map1";
+	setAttr -s 1306 ".uvst[0].uvsp";
+	setAttr ".uvst[0].uvsp[0:249]" -type "float2" 0.54691398 0.322759 0.54747301
+		 0.31524399 0.564834 0.31554201 0.561441 0.32222399 0.532112 0.32578799 0.53105301
+		 0.321825 0.519068 0.32712999 0.518408 0.324092 0.50783002 0.324669 0.50809401 0.32731399
+		 0.5 0.327106 0.5 0.32455701 0.56988901 0.307053 0.55490202 0.30386901 0.54083699
+		 0.30179501 0.527291 0.318241 0.53638899 0.311782 0.51705599 0.32048401 0.50733399
+		 0.32103199 0.5 0.320887 0.57893503 0.31847301 0.57426298 0.324606 0.58441001 0.31198499
+		 0.52358103 0.314868 0.52676499 0.30949199 0.51612198 0.31546399 0.50700998 0.31554699
+		 0.5 0.31525999 0.51684999 0.30878901 0.50713301 0.30833599 0.5 0.30782801 0.52904201
+		 0.301496 0.51796901 0.30089301 0.50765502 0.300221 0.5 0.29969001 0.5 0.562262 0.50617898
+		 0.56217498 0.5 0.55321801 0.50571603 0.55318099 0.51244098 0.56188399 0.5 0.545313
+		 0.50539201 0.545367 0.51143903 0.55282301 0.51881999 0.56085598 0.5 0.53841698 0.505189
+		 0.538589 0.51067197 0.54507798 0.51716298 0.55176002 0.52507901 0.55864799 0.531308
+		 0.55548102 0.50507599 0.53258002 0.5 0.53231603 0.5 0.52663702 0.50502402 0.52692401
+		 0.510068 0.53844702 0.51582003 0.54405999 0.52283603 0.549761 0.52845502 0.54682797
+		 0.53751898 0.55162501 0.50499099 0.521137 0.5 0.52094698 0.5 0.51512802 0.50498098
+		 0.51511902 0.50967199 0.53262001 0.50951701 0.52724802 0.51467901 0.53757298 0.52087802
+		 0.54219902 0.52578199 0.53937697 0.53396499 0.54300898 0.54390401 0.54725498 0.5
+		 0.50927401 0.50498301 0.509076 0.50962698 0.52183402 0.50992298 0.51608199 0.51380098
+		 0.53213 0.513412 0.52744299 0.519041 0.53590298 0.52315199 0.53319299 0.53057098
+		 0.53561699 0.53956801 0.53829402 0.55092001 0.54270399 0.5 0.50377601 0.50485802
+		 0.50341702 0.51030302 0.51010901 0.51385999 0.522901 0.51481801 0.51775098 0.52041698
+		 0.528337 0.51748002 0.52480102 0.51942903 0.52026099 0.52350301 0.52416402 0.527143
+		 0.52936399 0.54610503 0.53212303 0.55905402 0.53881502 0.50459301 0.49797499 0.5
+		 0.49852699 0.5 0.492504 0.50431198 0.49200299 0.51045001 0.50420499 0.51589298 0.51200598
+		 0.55560201 0.53054202 0.56746298 0.53419101 0.575629 0.52843797 0.50393403 0.48492399
+		 0.5 0.48529601 0.5 0.478917 0.50386101 0.47884899 0.50992501 0.49833801 0.50889099
+		 0.49211401 0.51678097 0.50607997 0.521626 0.514691 0.52677202 0.51890999 0.56407201
+		 0.52659601 0.571872 0.519862 0.58371502 0.52221203 0.50475299 0.470211 0.5 0.470027
+		 0.5 0.46652299 0.50545001 0.46656901 0.50779098 0.48506099 0.50765997 0.47911799
+		 0.516693 0.50003201 0.51490998 0.49303699 0.52396798 0.50896502 0.53028899 0.51366901
+		 0.54377401 0.52093202 0.53941399 0.51542598 0.54544002 0.51129699 0.55028999 0.51753902
+		 0.57892501 0.512694 0.59210098 0.51580298 0.5 0.461786 0.50629401 0.46176699 0.50945801
+		 0.47056001 0.51109201 0.46678099 0.51188499 0.48519701 0.51146603 0.47947401 0.52662498
+		 0.50315797 0.52403998 0.49693301 0.53439802 0.509314 0.53500098 0.50037003 0.54019201
+		 0.50522602 0.55730897 0.51350302 0.55174798 0.50649101 0.55691099 0.50083703 0.56284201
+		 0.50755697 0.58602399 0.50525099 0.60103798 0.50904202 0.5 0.45588201 0.50694901
+		 0.455919 0.51296401 0.46186399 0.51437098 0.471544 0.51889098 0.46781501 0.515118
+		 0.48457801 0.51493299 0.48012701 0.51769799 0.489557 0.52390897 0.49217799 0.53228599
+		 0.49592799 0.55069798 0.49389699 0.54600298 0.50011402 0.54101801 0.49539101 0.54508102
+		 0.488778 0.56090301 0.49388799 0.56421798 0.48774201 0.56866503 0.49874499 0.56504101
+		 0.500902 0.57508701 0.50270998 0.58083099 0.494773 0.59359998 0.497852 0.610268 0.50129402
+		 0.5 0.45048001 0.50721699 0.450479 0.51424098 0.45588899 0.52176702 0.462143 0.51829398
+		 0.47361901 0.52228302 0.47156 0.517766 0.48149499 0.51721102 0.484231 0.52043098
+		 0.48390001 0.52330202 0.48517099 0.52384901 0.48810899 0.51936501 0.48688099 0.53095102
+		 0.49087101 0.537925 0.49111 0.54084301 0.48509499 0.54508603 0.471551 0.55691999
+		 0.47845399 0.55427003 0.485901 0.54680002 0.480443 0.56669098 0.48238 0.57189399
+		 0.49261099 0.57640398 0.48543599 0.58719403 0.48708901 0.60139102 0.48991799 0.61838698
+		 0.49249399 0.623936 0.48227599 0.5 0.445705 0.50717598 0.44561499 0.51450801 0.45011801
+		 0.52323997 0.455699 0.53178 0.46788499 0.53412902 0.462827 0.53011602 0.47164801
+		 0.52354503 0.47359201 0.52126998 0.47538701 0.52521402 0.47707999 0.52798802 0.47440299
+		 0.52607602 0.48282599 0.52904099 0.48613599 0.52247697 0.48034799 0.53566903 0.48639899
+		 0.53797501 0.483046 0.53762197 0.474208 0.54080898 0.47897699 0.54787201 0.46602699
+		 0.55921102 0.47327799 0.57057798 0.47602201 0.58165401 0.47809201 0.593328 0.47923899
+		 0.60816598 0.48143801 0.61216599 0.471847 0.62818402 0.471001 0.630404 0.45899799
+		 0.63039798 0.38264301 0.62737501 0.36963299 0.63370699 0.40800399 0.63237399 0.395257
+		 0.51409 0.44496599 0.52286601 0.449247 0.53528303 0.455623 0.53345299 0.47687399
+		 0.529791 0.47956499 0.533279 0.48209101 0.53659201 0.479469 0.55021 0.45644099 0.56240898
+		 0.46638301 0.57490402 0.46884099 0.58616298 0.470411 0.59784198 0.47091499 0.60122699
+		 0.46206501 0.61519903 0.46136799 0.61718303 0.45004001 0.63200003 0.44640899 0.62282097
+		 0.35588601 0.61979997 0.38207099 0.61743301 0.370628 0.633385 0.43359801 0.63397998
+		 0.420737 0.62045401 0.426323 0.62145501 0.41486099 0.507218 0.437655;
+	setAttr ".uvst[0].uvsp[250:499]" 0.5 0.43765801 0.5 0.43392301 0.50797802 0.43406901
+		 0.521613 0.44351801 0.53325599 0.44783601 0.55924499 0.44949701 0.56730503 0.45915601
+		 0.57905698 0.461501 0.58993101 0.462511 0.59303999 0.45436499 0.60364699 0.45236999
+		 0.60549802 0.44178501 0.61880898 0.438115 0.616561 0.34198099 0.61365002 0.35827899
+		 0.60957098 0.381221 0.60768902 0.37107 0.62174398 0.40383101 0.62108999 0.39302599
+		 0.50769597 0.429822 0.5 0.42978799 0.5 0.424245 0.506998 0.42410699 0.51693499 0.43445599
+		 0.51263499 0.43761599 0.530599 0.44127199 0.54423898 0.44521999 0.553074 0.440157
+		 0.57210201 0.45228601 0.56546003 0.44337201 0.58277702 0.45418999 0.58582503 0.44687399
+		 0.59537899 0.44545999 0.59714597 0.43562201 0.60728103 0.43062299 0.60824502 0.345406
+		 0.59740198 0.31996199 0.60473198 0.35991499 0.60151303 0.38019001 0.59994501 0.37103
+		 0.61094898 0.40009499 0.61056799 0.390811 0.60912299 0.41982201 0.61038101 0.409659
+		 0.5 0.41786399 0.50628698 0.41741699 0.51618898 0.429353 0.51500398 0.42344499 0.52828097
+		 0.43631801 0.52005899 0.43880001 0.52621698 0.43193999 0.54027301 0.437644 0.54866099
+		 0.43257001 0.56001198 0.434742 0.57925099 0.439502 0.57615298 0.445806 0.570216 0.43797201
+		 0.57351899 0.43305701 0.58811998 0.43897 0.58991498 0.43006501 0.59895599 0.42508
+		 0.60039401 0.34821999 0.59100801 0.32529801 0.59751701 0.36097899 0.59429598 0.37900901
+		 0.59281099 0.371003 0.60262698 0.39707801 0.60232103 0.38881201 0.60078698 0.41502801
+		 0.602054 0.40571001 0.5 0.41149801 0.505898 0.410925 0.51376897 0.41639099 0.52467102
+		 0.42719901 0.522991 0.42143801 0.53735799 0.43256599 0.53494602 0.42831999 0.54535002
+		 0.427349 0.54261303 0.423228 0.555848 0.426882 0.57884198 0.411544 0.57365 0.40823799
+		 0.57596099 0.40084901 0.58076203 0.403422 0.58315402 0.424795 0.58145201 0.432675
+		 0.575387 0.42702699 0.57701999 0.41986001 0.591636 0.420156 0.59394401 0.350499 0.58515
+		 0.33029401 0.59036201 0.36229199 0.58767098 0.378566 0.58153701 0.37864 0.57960099
+		 0.372603 0.585899 0.371784 0.59515703 0.394059 0.59493601 0.386724 0.59334803 0.41055799
+		 0.59459001 0.40182701 0.50485897 0.39872599 0.5 0.39890599 0.5 0.389723 0.50335002
+		 0.38993099 0.51297301 0.410018 0.52126497 0.41479 0.53277802 0.42351899 0.53048903
+		 0.41794199 0.54001403 0.418807 0.53737003 0.41376501 0.55216402 0.42145801 0.548971
+		 0.41763499 0.58483398 0.41563299 0.58695102 0.35340399 0.58017302 0.33491799 0.57006103
+		 0.33006701 0.576882 0.36638501 0.58326298 0.364362 0.588624 0.39189801 0.58287799
+		 0.39042899 0.58265698 0.38445199 0.588431 0.385261 0.58648002 0.40669501 0.58234102
+		 0.396732 0.587883 0.39888 0.51095498 0.397872 0.508654 0.389406 0.52823198 0.41193101
+		 0.51997101 0.40861401 0.534518 0.40862599 0.54589701 0.41388401 0.54285198 0.409742
+		 0.55410099 0.41240799 0.55782503 0.41572601 0.56935698 0.40545899 0.571854 0.39878401
+		 0.57459801 0.33994299 0.56538397 0.33556601 0.57338101 0.36043301 0.57985198 0.35705799
+		 0.55836499 0.32770199 0.57612598 0.37879801 0.57406503 0.373575 0.52641702 0.40632999
+		 0.516747 0.39669701 0.51353002 0.38897401 0.53197497 0.40372699 0.53955901 0.40533099
+		 0.54703301 0.40594599 0.550497 0.40926301 0.56806701 0.396709 0.56557697 0.40282601
+		 0.56184 0.40070799 0.56420898 0.39496601 0.57753402 0.39464301 0.57329798 0.39291
+		 0.56877899 0.34491 0.56291902 0.34962499 0.555264 0.34566399 0.56040698 0.340747
+		 0.554582 0.33317 0.54516298 0.32819399 0.571293 0.36838901 0.57796401 0.38912499
+		 0.57743901 0.38380501 0.57132798 0.379006 0.569251 0.374459 0.51758999 0.388228 0.52198601
+		 0.39524201 0.52153897 0.38751 0.52655399 0.393729 0.536484 0.400904 0.54342502 0.402008
+		 0.55785698 0.39881599 0.55388302 0.39682901 0.55607498 0.39253199 0.56021798 0.39388099
+		 0.565341 0.39011699 0.56931102 0.39142999 0.57349902 0.38803399 0.57279199 0.38346899
+		 0.54603702 0.342758 0.55028701 0.338269 0.54235297 0.33296901 0.567729 0.363491 0.53146398
+		 0.32952401 0.56653702 0.370033 0.56698102 0.37924299 0.56299299 0.37949699 0.56123698
+		 0.37590501 0.565027 0.37524799 0.530734 0.39201799 0.52514899 0.38653901 0.54011899
+		 0.39788499 0.55017799 0.394618 0.55195999 0.39109099 0.56146502 0.38926601 0.557338
+		 0.388634 0.568519 0.383145 0.56950903 0.38693699 0.56542999 0.38627201 0.56438899
+		 0.382963 0.55767202 0.35398901 0.55081803 0.349931 0.53588998 0.34100601 0.53902102
+		 0.3373 0.52973002 0.333004 0.56305897 0.36591399 0.51877701 0.32988 0.55889398 0.37237599
+		 0.56247002 0.371308 0.55181903 0.377249 0.554636 0.37687001 0.55582702 0.37983301
+		 0.55266201 0.379913 0.52825099 0.386015 0.534091 0.390212 0.54647797 0.39159399 0.548235
+		 0.38914701 0.55316103 0.387835 0.55673099 0.38275599 0.55722398 0.38565701 0.553451
+		 0.385142 0.55315298 0.38253099 0.55369598 0.357521 0.54760802 0.35319501 0.54263401
+		 0.346479 0.52581602 0.33940899 0.52770197 0.336328 0.51787901 0.33253199 0.55607098
+		 0.368949 0.55925101 0.36763999 0.50795197 0.32963401 0.55310303 0.37389901 0.555803
+		 0.37318 0.55775702 0.376454 0.55071503 0.37455499 0.54961902 0.38007799 0.54902703
+		 0.37779501 0.53882003 0.386924 0.534307 0.384592 0.53720599 0.38371399 0.54063398
+		 0.38563699 0.54918498 0.38688099 0.54977202 0.38462099 0.54984099 0.38238201 0.55085999
+		 0.35991701 0.54844201 0.361963 0.54324901 0.35819399 0.54531002 0.355654;
+	setAttr ".uvst[0].uvsp[500:749]" 0.540245 0.34937301 0.53348702 0.34402999
+		 0.51595801 0.33801001 0.51691902 0.33525699 0.50762099 0.33192101 0.55102301 0.37097001
+		 0.55334198 0.370022 0.5 0.32933801 0.54832202 0.37538901 0.544056 0.38059101 0.54167002
+		 0.38099399 0.541646 0.38039899 0.54390001 0.37927499 0.54221201 0.38432199 0.53930098
+		 0.382916 0.54324502 0.383003 0.540631 0.38203901 0.54111397 0.38151801 0.543814 0.381778
+		 0.54602599 0.36388099 0.54373503 0.365381 0.53904599 0.362811 0.54106802 0.360753
+		 0.53688401 0.35445601 0.538472 0.35182399 0.53173202 0.34650099 0.524198 0.342125
+		 0.50682801 0.33699 0.507254 0.33431399 0.5 0.33149201 0.54919797 0.371876 0.54340702
+		 0.37782499 0.540784 0.37997401 0.541861 0.36698899 0.53715801 0.364952 0.53324699
+		 0.36028099 0.53511798 0.35749701 0.52930599 0.35135299 0.53043401 0.34874201 0.522829
+		 0.34455201 0.51499599 0.34062499 0.5 0.336496 0.5 0.333758 0.54728401 0.373 0.54021299
+		 0.369109 0.53561997 0.367632 0.53166002 0.36300501 0.52668297 0.35794601 0.52813202
+		 0.35460901 0.52102202 0.349446 0.52180099 0.34689999 0.51404202 0.342978 0.50640702
+		 0.33968401 0.53976297 0.37980601 0.54257703 0.37617201 0.53691399 0.37490401 0.53612
+		 0.37942001 0.53124899 0.380211 0.532897 0.37458199 0.53046 0.366328 0.525446 0.361231
+		 0.51955003 0.35606 0.52036297 0.352633 0.512586 0.347886 0.51324803 0.34528801 0.50595897
+		 0.341905 0.5 0.33930001 0.52662802 0.38097501 0.52811801 0.37453499 0.524616 0.36503199
+		 0.51868403 0.35969701 0.51196599 0.35481799 0.51214302 0.35117999 0.505108 0.346764
+		 0.50555599 0.344069 0.5 0.34143901 0.52029198 0.381661 0.52241302 0.37453699 0.51806003
+		 0.363749 0.511778 0.35842001 0.50497198 0.35403299 0.50482202 0.350214 0.5 0.34617901
+		 0.5 0.343481 0.51343 0.38312101 0.51621997 0.37438399 0.51134801 0.36252701 0.50516701
+		 0.357696 0.5 0.353679 0.5 0.34977499 0.50778598 0.383883 0.50992399 0.37415799 0.50512099
+		 0.36161301 0.5 0.357344 0.50324899 0.38413101 0.50451499 0.37387601 0.5 0.36121899
+		 0.5 0.38418701 0.5 0.373815 0.55929101 0.379693 0.56043202 0.38291201 0.561243 0.38596299
+		 0.51917797 0.47823399 0.51616102 0.47650501 0.51249897 0.47514701 0.50835001 0.47443199
+		 0.50422299 0.47410199 0.5 0.47395301 0.53530699 0.53097397 0.53111601 0.52459902
+		 0.539711 0.52578503 0.53504503 0.51971102 0.54761797 0.52530003 0.55386299 0.52393299
+		 0.56903899 0.51052302 0.56165397 0.52013803 0.57137299 0.41585499 0.56622601 0.41265601
+		 0.55817199 0.40685001 0.56197 0.40945601 0.55438501 0.40440601 0.55076599 0.40180701
+		 0.54700398 0.39849699 0.54348999 0.39473999 0.537094 0.38828799 0.53174198 0.38518301
+		 0.53827798 0.379518 0.54024601 0.375312 0.54423898 0.370915 0.54603899 0.36932999
+		 0.54789799 0.36815101 0.550125 0.367044 0.552625 0.365684 0.55536097 0.36419901 0.55872101
+		 0.36216199 0.56323397 0.35898101 0.56894201 0.35486799 0.57527202 0.350555 0.58181101
+		 0.34602201 0.58820701 0.341883 0.59389502 0.33849901 0.60080302 0.33456701 0.60816902
+		 0.33021799 0.56958199 0.428523 0.56974101 0.42289799 0.56569499 0.43028501 0.51735097
+		 0.53099501 0.5 0.441493 0.50710201 0.441351 0.51350498 0.44062901 0.56282699 0.42098501
+		 0.5 0.405586 0.505512 0.405312 0.51224297 0.40450999 0.518686 0.403083 0.52456498
+		 0.40110701 0.52956599 0.39897799 0.53385401 0.396617 0.53733999 0.39408499 0.540434
+		 0.39144099 0.54262799 0.38925499 0.54430598 0.38747299 0.54549301 0.38570601 0.54630798
+		 0.38387901 0.54673302 0.382083 0.54674202 0.380283 0.54645199 0.378382 0.54593402
+		 0.37641099 0.54514599 0.37437099 0.54241902 0.37283599 0.538652 0.371636 0.53436601
+		 0.37064201 0.52942401 0.36989301 0.523718 0.36914 0.51729 0.36835 0.51070398 0.36752799
+		 0.504857 0.366817 0.5 0.366588 0.51611203 0.52771902 0.45308599 0.322759 0.438559
+		 0.32222399 0.435166 0.31554201 0.45252699 0.31524399 0.46894699 0.321825 0.46788901
+		 0.32578799 0.481592 0.324092 0.480932 0.32712999 0.49217001 0.324669 0.49190599 0.32731399
+		 0.44509801 0.30386901 0.43011099 0.307053 0.45916301 0.30179501 0.46361101 0.311782
+		 0.472709 0.318241 0.48294401 0.32048401 0.49266601 0.32103199 0.42573699 0.324606
+		 0.421065 0.31847301 0.41558999 0.31198499 0.47323501 0.30949199 0.476419 0.314868
+		 0.48387799 0.31546399 0.49298999 0.31554699 0.48315001 0.30878901 0.49286699 0.30833599
+		 0.47095901 0.301496 0.48203099 0.30089301 0.49234501 0.300221 0.493821 0.56217498
+		 0.494284 0.55318099 0.48755899 0.56188399 0.49460801 0.545367 0.488561 0.55282301
+		 0.48118001 0.56085598 0.494811 0.538589 0.489328 0.54507798 0.48283699 0.55176002
+		 0.468692 0.55548102 0.47492099 0.55864799 0.49492401 0.53258002 0.49497601 0.52692401
+		 0.489932 0.53844702 0.48417899 0.54405999 0.47154501 0.54682797 0.477164 0.549761
+		 0.46248099 0.55162501 0.49500901 0.521137 0.49501899 0.51511902 0.49032801 0.53262001
+		 0.49048299 0.52724802 0.48532099 0.53757298 0.47421801 0.53937697 0.47912201 0.54219902
+		 0.46603501 0.54300898 0.45609599 0.54725498 0.49501699 0.509076 0.49037299 0.52183402
+		 0.49007699 0.51608199 0.48619899 0.53213 0.486588 0.52744299 0.47684899 0.53319299
+		 0.480959 0.53590298 0.46942899 0.53561699 0.46043199 0.53829402 0.44907999 0.54270399
+		 0.49514201 0.50341702 0.48969701 0.51010901 0.48614001 0.522901 0.48518199 0.51775098
+		 0.479583 0.528337;
+	setAttr ".uvst[0].uvsp[750:999]" 0.47649699 0.52416402 0.480571 0.52026099
+		 0.48252001 0.52480102 0.472857 0.52936399 0.453895 0.53212303 0.44094601 0.53881502
+		 0.49540699 0.49797499 0.49568799 0.49200299 0.48954999 0.50420499 0.48410699 0.51200598
+		 0.44439799 0.53054202 0.424371 0.52843797 0.43253699 0.53419101 0.496066 0.48492399
+		 0.49613899 0.47884899 0.49007499 0.498337 0.49110901 0.49211401 0.483219 0.50607997
+		 0.478374 0.514691 0.47322801 0.51890999 0.428128 0.519862 0.43592799 0.52659601 0.41628501
+		 0.52221203 0.49524701 0.470211 0.49454901 0.46656901 0.49220899 0.48506099 0.49234
+		 0.47911799 0.483307 0.50003201 0.48508999 0.493038 0.47603199 0.50896502 0.46971101
+		 0.51366901 0.45622599 0.52093202 0.44971001 0.51753902 0.45456001 0.51129699 0.46058601
+		 0.51542598 0.42107499 0.512694 0.40789899 0.51580298 0.49370599 0.46176699 0.49054199
+		 0.47056001 0.48890799 0.46678099 0.48811501 0.48519701 0.488534 0.47947401 0.47337499
+		 0.50315797 0.47595999 0.49693301 0.46560201 0.509314 0.45980799 0.50522602 0.46499899
+		 0.50037003 0.442691 0.51350302 0.43715799 0.50755697 0.44308901 0.50083703 0.44825199
+		 0.50649101 0.41397601 0.50525099 0.39896199 0.50904202 0.49305099 0.455919 0.48703599
+		 0.46186399 0.48563001 0.471544 0.48110899 0.46781501 0.484882 0.48457801 0.48506701
+		 0.48012701 0.476091 0.49217799 0.48230201 0.489557 0.46771401 0.49592799 0.44930199
+		 0.49389699 0.45491901 0.488778 0.45898199 0.49539101 0.45399699 0.50011402 0.43909699
+		 0.49388799 0.43495899 0.500902 0.431335 0.49874499 0.43578199 0.48774201 0.41916901
+		 0.494773 0.42491299 0.50270998 0.4064 0.497852 0.389732 0.50129402 0.49278301 0.450479
+		 0.48575899 0.45588899 0.47823301 0.462143 0.48170599 0.47361901 0.47771701 0.47156
+		 0.482234 0.48149499 0.48278901 0.484231 0.47956899 0.48390001 0.48063499 0.48688099
+		 0.47615099 0.48810899 0.47669801 0.48517099 0.46904901 0.49087101 0.45915699 0.48509499
+		 0.462075 0.49111 0.454914 0.471551 0.45320001 0.480443 0.44573 0.485901 0.44308001
+		 0.47845399 0.42810601 0.49261099 0.43330899 0.48238 0.42359599 0.48543599 0.412806
+		 0.48708901 0.39860901 0.48991799 0.376064 0.48227599 0.38161299 0.49249399 0.49282399
+		 0.44561499 0.48549199 0.45011801 0.47676 0.455699 0.46822 0.46788499 0.46587101 0.462827
+		 0.46988401 0.47164801 0.47872999 0.47538701 0.476455 0.47359201 0.47478601 0.47707999
+		 0.47201201 0.47440299 0.47095901 0.48613599 0.47392401 0.48282599 0.477523 0.48034799
+		 0.46202499 0.483046 0.464331 0.48639899 0.462378 0.474208 0.45919099 0.47897699 0.44078901
+		 0.47327799 0.45212799 0.46602699 0.42942199 0.47602201 0.41834599 0.47809201 0.406672
+		 0.47923899 0.38783401 0.471847 0.39183399 0.48143801 0.369596 0.45899799 0.37181601
+		 0.471001 0.37262499 0.36963299 0.36960199 0.38264301 0.36762601 0.395257 0.36629301
+		 0.40800399 0.48591 0.44496599 0.47713399 0.449247 0.464717 0.455623 0.466546 0.47687399
+		 0.470209 0.47956499 0.466721 0.48209101 0.46340799 0.479469 0.43759099 0.46638301
+		 0.44979 0.45644099 0.42509601 0.46884099 0.41383699 0.470411 0.39877301 0.46206501
+		 0.40215799 0.47091499 0.382817 0.45004001 0.384801 0.46136799 0.368 0.44640899 0.377179
+		 0.35588601 0.38256699 0.370628 0.3802 0.38207099 0.36601999 0.420737 0.366615 0.43359801
+		 0.37854499 0.41486099 0.37954599 0.426323 0.492782 0.437655 0.49202201 0.43406901
+		 0.47838601 0.44351801 0.46674401 0.44783601 0.432695 0.45915601 0.44075501 0.44949701
+		 0.42094299 0.461501 0.40696001 0.45436499 0.41006899 0.462511 0.39450201 0.44178501
+		 0.39635301 0.45236999 0.38119099 0.438115 0.383439 0.34198099 0.38635001 0.35827899
+		 0.39231101 0.37107 0.39042899 0.381221 0.37891001 0.39302599 0.37825599 0.40383101
+		 0.492304 0.429822 0.493002 0.42410699 0.48306501 0.43445599 0.48736501 0.43761599
+		 0.469401 0.44127199 0.45576099 0.44521999 0.446926 0.440157 0.42789799 0.45228601
+		 0.43454 0.44337201 0.414175 0.44687399 0.41722301 0.45418999 0.402854 0.43562201
+		 0.40462101 0.44545999 0.392719 0.43062299 0.39175501 0.345406 0.40259799 0.31996199
+		 0.39526799 0.35991499 0.40005401 0.37103 0.39848599 0.38019001 0.38943201 0.390811
+		 0.38905099 0.40009499 0.38962001 0.40965801 0.39087701 0.41982201 0.49371299 0.41741699
+		 0.48381099 0.429353 0.48499599 0.42344499 0.471719 0.43631801 0.47378299 0.43193999
+		 0.47994101 0.43880001 0.45972699 0.437644 0.45133901 0.43257001 0.43998799 0.434742
+		 0.42074901 0.439502 0.42648101 0.43305701 0.429784 0.43797201 0.42384699 0.445806
+		 0.41008499 0.43006501 0.41187999 0.43897 0.40104401 0.42508 0.39960599 0.34821999
+		 0.40899199 0.32529801 0.40248099 0.36097899 0.40718499 0.371005 0.40570199 0.37900901
+		 0.397679 0.38881201 0.39737299 0.39707801 0.397946 0.40571001 0.39921299 0.41502801
+		 0.494102 0.410925 0.486231 0.41639099 0.47532901 0.42719901 0.477009 0.42143801 0.46264201
+		 0.43256599 0.46505401 0.42831999 0.45465001 0.427349 0.457387 0.423228 0.444152 0.426882
+		 0.42115799 0.411544 0.419238 0.403422 0.42403901 0.40084901 0.42635 0.40823799 0.41684601
+		 0.424795 0.42298001 0.41986001 0.424613 0.42702699 0.41854799 0.432675 0.408364 0.420156
+		 0.406055 0.35049999 0.41485 0.33029401 0.40963399 0.36229399 0.41231999 0.37856701
+		 0.41408899 0.371788 0.42037499 0.37261501 0.41844201 0.37864301 0.405063 0.386724
+		 0.40484199 0.394059 0.40540999 0.40182701 0.406652 0.41055799 0.495141 0.39872599
+		 0.49665001 0.38993099 0.48702699 0.410018;
+	setAttr ".uvst[0].uvsp[1000:1249]" 0.478735 0.41479 0.46722201 0.42351899 0.469511
+		 0.41794199 0.459986 0.418807 0.46263 0.41376501 0.44783601 0.42145801 0.451029 0.41763499
+		 0.41516599 0.41563299 0.41304699 0.35340601 0.429939 0.33006701 0.41982701 0.33491799
+		 0.423098 0.36639801 0.41672599 0.36436799 0.41137499 0.39189801 0.41156399 0.38525999
+		 0.417328 0.38444799 0.41711801 0.39042699 0.41352001 0.40669501 0.412117 0.39888
+		 0.41765901 0.396732 0.48904499 0.397872 0.491346 0.389406 0.47176799 0.41193101 0.480028
+		 0.40861401 0.465482 0.40862599 0.45410299 0.41388401 0.45714799 0.409742 0.442175
+		 0.41572601 0.44589901 0.41240799 0.428146 0.39878401 0.43064299 0.40545899 0.434616
+		 0.33556601 0.42540199 0.33994401 0.42014101 0.35706401 0.42660499 0.36044401 0.44163501
+		 0.32770199 0.42589799 0.373595 0.42383701 0.37880099 0.47358301 0.40632999 0.483253
+		 0.39669701 0.48647001 0.38897401 0.468025 0.40372699 0.46044099 0.40533099 0.45296699
+		 0.40594599 0.449503 0.40926301 0.431934 0.39670801 0.43579099 0.39496499 0.43816
+		 0.40070799 0.434423 0.40282601 0.422465 0.394642 0.42670301 0.39290699 0.43122 0.34491199
+		 0.43959299 0.340747 0.44473499 0.34566501 0.43707699 0.34962901 0.445418 0.33317
+		 0.45483699 0.32819399 0.42867801 0.36841401 0.42253101 0.38378999 0.422021 0.389117
+		 0.430709 0.37449101 0.42861801 0.37901101 0.47801399 0.39524201 0.48241001 0.388228
+		 0.47344601 0.393729 0.478461 0.38751 0.463516 0.400904 0.45657501 0.402008 0.44214299
+		 0.39881599 0.43978101 0.39388099 0.44392401 0.39253199 0.44611701 0.39682901 0.430693
+		 0.391426 0.43465099 0.390111 0.42716199 0.38343701 0.426485 0.388015 0.44971299 0.338269
+		 0.45396301 0.342758 0.457647 0.33296901 0.43224999 0.36351299 0.46853599 0.32952401
+		 0.43343201 0.37007901 0.43296301 0.379255 0.43494499 0.37528801 0.43870401 0.37592
+		 0.43693599 0.37950799 0.469266 0.39201799 0.47485101 0.38653901 0.45988101 0.39788499
+		 0.448039 0.39109099 0.44982201 0.394618 0.43852499 0.389265 0.44265401 0.38863501
+		 0.43143401 0.38311201 0.43555099 0.38295001 0.43453199 0.38625801 0.43046901 0.386913
+		 0.44918001 0.349933 0.44232199 0.35399899 0.46097901 0.3373 0.46410999 0.34100601
+		 0.47027001 0.333004 0.43691599 0.36594999 0.48122299 0.32988 0.43750501 0.371355
+		 0.44105101 0.37239799 0.44813499 0.37726301 0.44729099 0.379949 0.444094 0.379859
+		 0.445283 0.37688601 0.47174901 0.386015 0.465909 0.390212 0.45176399 0.38914701 0.453522
+		 0.39159399 0.44683301 0.38783401 0.44320399 0.382745 0.44681501 0.382588 0.44652501
+		 0.38513899 0.44273999 0.38565001 0.45238799 0.35319999 0.44629401 0.357537 0.45736599
+		 0.346479 0.472298 0.336328 0.47418299 0.33940899 0.48212099 0.33253199 0.440725 0.36768001
+		 0.44389001 0.36897501 0.492048 0.32963401 0.44684201 0.373907 0.442159 0.37646601
+		 0.44413301 0.373189 0.44925299 0.37456101 0.45095801 0.377799 0.45036399 0.38008001
+		 0.46118 0.386924 0.45936799 0.385638 0.46279401 0.38371399 0.465693 0.384592 0.450811
+		 0.386879 0.45014 0.38235399 0.45021701 0.384608 0.449128 0.35993901 0.45468301 0.355663
+		 0.456743 0.35820201 0.45154399 0.361983 0.45975399 0.34937301 0.46651301 0.34402999
+		 0.48308101 0.33525699 0.48404199 0.33801001 0.49237901 0.33192101 0.44661501 0.37003499
+		 0.44894001 0.370978 0.451666 0.37539101 0.45593899 0.38058901 0.45609099 0.379271
+		 0.45835099 0.38039899 0.45833001 0.38100001 0.45779499 0.384325 0.46069899 0.382916
+		 0.45675799 0.38300601 0.45618501 0.38177899 0.45888901 0.38152 0.459369 0.38203901
+		 0.453958 0.36389399 0.45892301 0.36075801 0.46094701 0.362813 0.456249 0.365385 0.46152601
+		 0.35182601 0.46311501 0.35445699 0.46826699 0.34650099 0.475802 0.342125 0.492746
+		 0.33431399 0.49317199 0.33699 0.450775 0.37187901 0.456588 0.37781599 0.45921499
+		 0.37997401 0.46283701 0.364952 0.45812801 0.36698899 0.46487999 0.35749799 0.46675199
+		 0.36028099 0.46956599 0.34874201 0.47069401 0.35135299 0.477171 0.34455201 0.48500401
+		 0.34062499 0.45270401 0.37299901 0.46438 0.36763299 0.45978501 0.369109 0.468339
+		 0.363004 0.47186801 0.35460901 0.473317 0.35794601 0.47819901 0.34689999 0.47897699
+		 0.349446 0.48595801 0.342978 0.49359301 0.33968401 0.457421 0.37615401 0.460242 0.37980601
+		 0.46308699 0.37489 0.467107 0.37457299 0.46877301 0.38021499 0.46387699 0.37941799
+		 0.46954 0.366328 0.47455299 0.361231 0.479637 0.352633 0.48045 0.35606 0.486752 0.34528801
+		 0.48741299 0.347886 0.494041 0.341905 0.471885 0.37453201 0.47337401 0.38097599 0.475384
+		 0.36503199 0.481316 0.35969701 0.48803401 0.35481799 0.487856 0.35117999 0.49444401
+		 0.344069 0.494892 0.346764 0.477588 0.374538 0.479707 0.38166001 0.48194 0.363749
+		 0.488222 0.35842001 0.49517801 0.350214 0.49502799 0.35403299 0.48378 0.37438399
+		 0.48657 0.38312101 0.48865101 0.36252701 0.49483299 0.357696 0.49007601 0.37415799
+		 0.49221399 0.383883 0.49487901 0.36161301 0.49548501 0.37387601 0.49675101 0.38413101
+		 0.44061899 0.37970799 0.43949199 0.38290301 0.43871099 0.38595599 0.480822 0.47823399
+		 0.48383901 0.47650501 0.487501 0.47514701 0.49164999 0.47443199 0.49577701 0.47410199
+		 0.46469399 0.53097397 0.46888399 0.52459902 0.460289 0.52578503 0.464955 0.51971102
+		 0.452382 0.52530003 0.44613701 0.52393299 0.430962 0.51052302 0.438346 0.52013803
+		 0.43377399 0.41265601 0.42862701 0.41585499 0.44182801 0.40685001 0.43803 0.40945601;
+	setAttr ".uvst[0].uvsp[1250:1305]" 0.44561499 0.40440601 0.44923401 0.40180701
+		 0.45299599 0.39849699 0.45651001 0.39473999 0.462906 0.38828799 0.46825799 0.38518301
+		 0.45975199 0.375294 0.461734 0.37951499 0.45394099 0.36933199 0.45575401 0.370913
+		 0.45207599 0.368157 0.449848 0.36705899 0.44462299 0.364236 0.44735399 0.36571401
+		 0.43675101 0.35900101 0.44126299 0.362192 0.43105 0.35487601 0.42472401 0.35055801
+		 0.41179299 0.341883 0.41818801 0.34602401 0.40610501 0.33849901 0.39919701 0.33456701
+		 0.39183101 0.33021799 0.43041801 0.428523 0.43025899 0.42289799 0.43430501 0.43028501
+		 0.482649 0.53099501 0.49289799 0.441351 0.48649499 0.44062901 0.43717301 0.42098501
+		 0.494488 0.405312 0.487757 0.40450999 0.481314 0.403083 0.47543499 0.40110701 0.47043401
+		 0.39897799 0.46614599 0.396617 0.46266001 0.39408499 0.459566 0.39144099 0.45737299
+		 0.38925499 0.455695 0.387474 0.454512 0.38570899 0.453264 0.38207701 0.45370001 0.38388801
+		 0.45354399 0.37837499 0.45325401 0.380272 0.45406201 0.376405 0.454849 0.37436101
+		 0.45758101 0.37282699 0.46134999 0.371629 0.465637 0.370639 0.470577 0.369892 0.476282
+		 0.36914 0.48271 0.36835 0.48929599 0.36752799 0.495143 0.366817 0.483888 0.52771997;
+	setAttr ".cuvs" -type "string" "map1";
+	setAttr ".dcc" -type "string" "Ambient+Diffuse";
+	setAttr ".covm[0]"  0 1 1;
+	setAttr ".cdvm[0]"  0 1 1;
+	setAttr -s 1306 ".vt";
+	setAttr ".vt[0:165]"  1.92203712 149.002532959 7.1425848 1.90125203 149.4758606 7.26530838
+		 3.02587986 149.25146484 6.017102242 2.4182117 149.52719116 6.91385746 2.50985193 149.19671631 6.6922636
+		 0.42439374 149.81039429 7.78280735 0.86396205 149.51707458 7.70444107 0.87622088 149.74459839 7.71198368
+		 1.36170554 149.63420105 7.55762482 1.33188987 149.33898926 7.54322052 0.42002785 149.59909058 7.77547121
+		 2.60736966 148.87252808 6.33391237 2.13495922 148.50617981 6.68439388 1.6679914 148.19259644 6.94977379
+		 0.81274378 149.25192261 7.70946646 1.20584249 149.0887146 7.5711031 0.40480477 149.29937744 7.77578211
+		 2.81918168 149.77565002 6.65476465 2.93473482 149.50500488 6.376616 1.068939686 148.86584473 7.5944643
+		 0.77286106 148.89450073 7.68548489 0.3908112 148.90267944 7.75106955 0.80329049 148.43212891 7.5771656
+		 1.18896675 148.50942993 7.45528793 0.39358497 148.38420105 7.64469051 1.54713285 148.70864868 7.31665516
+		 1.24961996 148.059661865 7.19328594 0.82346237 147.9596405 7.33482265 0.40469626 147.88543701 7.39701462
+		 0.30658132 157.64024353 9.38815498 0.29460782 157.21636963 9.58755112 0.27572912 156.81904602 9.79235458
+		 0.25255811 156.1035614 10.19749069 0.25098759 155.74761963 10.41364384 0.26361436 155.19552612 10.66377735
+		 0.26406437 155.024169922 10.6344471 0.21782301 154.60324097 10.38186264 0.19786412 154.4223938 10.19490433
+		 0.16519423 154.14051819 9.63601685 0.16453117 153.98907471 9.1033783 0.19515979 153.83770752 9.096420288
+		 0.2163531 153.6630249 9.1180687 0.23397821 153.51254272 9.1507225 0.26333606 153.2565918 9.23034096
+		 0.34739363 152.7673645 9.20988369 0.32808986 152.51115417 9.047682762 0.3012079 152.24234009 8.82154179
+		 0.26112098 152.2611084 7.99008083 0.29886574 152.70974731 7.94730091 0.33707154 151.56376648 7.51710558
+		 0.28810629 151.9906311 7.8577137 0.33531168 151.7648468 8.64297199 0.35524175 151.43838501 8.75216675
+		 0.37127203 151.077423096 8.78707314 0.40820715 150.65158081 8.60721207 0.40921843 150.47125244 8.30431271
+		 0.4056665 150.34751892 8.13887596 0.40772927 150.18963623 7.97729683 0.41864187 149.94569397 7.80425167
+		 0.57385749 157.60238647 9.31253242 0.55099994 157.17453003 9.53201675 0.52284676 156.796875 9.73916054
+		 0.48772824 156.13186646 10.11810875 0.49215961 155.80415344 10.32102489 0.52717668 155.25332642 10.57756424
+		 0.53867197 155.082626343 10.56049538 0.47920507 154.62922668 10.30794525 0.42541194 154.43029785 10.11052895
+		 0.34926033 154.16394043 9.55584908 0.34578145 154.020446777 9.075984955 0.40853137 153.86975098 9.078811646
+		 0.45596656 153.7101593 9.10519695 0.4882482 153.56126404 9.14574623 0.81781936 153.27326965 9.19501877
+		 0.75598389 152.83651733 9.15569305 0.72029674 152.56565857 8.9907074 0.6711787 152.28427124 8.74579716
+		 0.63021451 152.2774353 7.91355038 0.70799738 152.68093872 7.82481575 0.82707429 151.16433716 8.70733452
+		 0.8693341 150.71755981 8.55082607 0.85473442 150.50759888 8.25053024 0.84651017 150.38247681 8.095603943
+		 0.83382463 150.20993042 7.9326539 0.85671234 149.90571594 7.74157953 0.73038524 157.58718872 9.18957138
+		 0.71314645 157.11631775 9.45440292 0.69309664 156.75605774 9.66160107 0.66728306 156.15583801 10.02717495
+		 0.68340826 155.88093567 10.19432449 0.77408016 155.36392212 10.41594505 0.80794221 155.18081665 10.4189682
+		 0.83993053 154.68830872 10.14249802 0.74819052 154.45988464 9.88493538 0.53805172 154.23756409 9.42039299
+		 0.60241151 154.097290039 8.98070908 0.69562703 153.91348267 8.98807526 0.76814473 153.74636841 9.010250092
+		 0.79216337 153.5916748 9.065022469 1.19733906 153.21340942 9.022964478 1.22066355 153.56651306 8.85573387
+		 1.16401768 152.79690552 8.98826408 1.10953903 152.53199768 8.84255409 1.079968929 152.61592102 7.67545033
+		 1.38277364 152.56460571 7.53939152 1.04201293 151.73748779 7.36874485 1.35498893 151.8270874 7.25176907
+		 0.6954695 151.62127686 7.46051645 0.60205185 152.041595459 7.8006258 0.72687405 151.85876465 8.56938267
+		 0.78113711 151.52584839 8.67756081 1.28039217 151.29434204 8.53729057 1.20643067 151.6338501 8.51921082
+		 1.31823409 150.8449707 8.40887356 1.29405117 150.59645081 8.13931561 1.28616381 150.45423889 7.99402809
+		 1.28073442 150.25680542 7.83141041 1.33659601 149.86312866 7.60916424 1.026454449 157.33944702 8.88720322
+		 0.95298636 156.96066284 9.18074799 0.9028331 156.61251831 9.45049477 0.8604086 156.050308228 9.93413353
+		 0.91203845 155.62786865 10.18781281 1.0080909729 155.3704834 10.20971489 1.2488091 154.85928345 9.8121748
+		 1.1210556 154.65917969 9.67192078 0.80161935 154.48513794 9.61186981 1.020570517 154.68687439 9.50493431
+		 0.6117568 154.39376831 9.30032349 0.70598352 154.30543518 8.880867 1.021308899 154.12611389 8.76939964
+		 0.9418062 154.31799316 8.75994682 1.11893964 153.95748901 8.77183056 1.22158158 153.75830078 8.78256035
+		 1.69629502 153.50448608 8.57219791 1.79209268 153.8421936 8.41752625 1.60958314 153.09564209 8.74289513
+		 1.54325581 152.69223022 8.74890804 1.46710658 152.43353271 8.61235523 1.040237904 152.27365112 8.62646675
+		 1.37830806 152.19802856 8.42469025 0.9729749 152.27281189 7.80906677 1.294945 152.24533081 7.69891453
+		 1.62289464 152.54403687 7.39392948 1.5540185 152.22622681 7.58060789 1.6207304 151.90454102 7.11211395
+		 1.27147579 152.16662598 7.55120468 1.55593061 152.20092773 7.41031218 0.95209432 152.11209106 7.69531536
+		 1.12982523 151.95172119 8.42388916 1.56134033 151.74310303 8.30106735 1.47465968 152.0077056885 8.2187891
+		 1.65005136 151.45394897 8.30934906 1.69810891 151.013031006 8.20248032 1.68049765 150.73406982 7.98237991
+		 1.68905377 150.56896973 7.84371567 1.71424007 150.34228516 7.67225742 1.83333707 149.80728149 7.37880135
+		 1.17612934 157.14727783 8.73604774 1.084132195 156.77919006 9.049503326 1.010569215 156.45056152 9.35011864
+		 0.95501888 155.88482666 9.93503189 1.096846223 155.6444397 9.90689468 1.4336462 155.13821411 9.64022255
+		 1.46698999 154.81396484 9.45533371 1.58818519 155.060577393 9.37022781;
+	setAttr ".vt[166:331]" 1.32924211 154.67221069 9.37804222 1.19167221 154.75708008 9.22663116
+		 0.709373 154.83790588 9.23471451 0.75711429 154.94917297 8.93037224 0.65985447 154.67808533 9.26869774
+		 0.61867058 154.54620361 9.24003601 0.71660244 154.45176697 8.83978462 0.84744906 154.49502563 8.76225758
+		 1.17721558 154.32553101 8.67182732 1.051011443 154.54872131 8.65844727 1.46576762 154.23257446 8.48101425
+		 1.60360599 154.11856079 8.43713665 2.12071991 154.20428467 8.12229443 1.94552612 154.42935181 8.15636063
+		 2.20747995 153.66995239 8.19173813 2.38012123 153.98672485 8.023727417 2.096947908 153.37936401 8.31265736
+		 1.9841038 152.93928528 8.44997501 1.88849723 152.54841614 8.45532036 1.79612446 152.32142639 8.33212185
+		 1.68427634 152.121521 8.18477535 1.78325212 152.21723938 7.44738388 1.93790817 152.082672119 7.9611721
+		 1.83882236 152.50683594 7.23518276 2.17050266 152.42654419 7.0042667389 1.83380556 151.96356201 6.95783567
+		 1.78918791 152.2166748 7.27236271 1.76026368 152.061096191 7.9708786 1.99039745 152.11521912 7.73747063
+		 1.84502077 151.85517883 8.049925804 1.94403815 151.62442017 8.056051254 2.0056893826 151.20613098 7.97320938
+		 2.011095047 150.89599609 7.78844166 2.050339222 150.69528198 7.64116001 2.11546707 150.43640137 7.45977879
+		 2.30862474 149.8309021 7.095970154 1.34012353 156.95111084 8.56440639 1.24447811 156.55982971 8.86865139
+		 1.14660954 156.24833679 9.2092247 1.46622396 155.81411743 8.98684502 1.62049806 155.65328979 8.81687641
+		 1.83815229 154.85099792 8.74656868 1.92784214 155.26091003 8.38218689 1.63033831 154.61880493 8.88929653
+		 1.3761301 154.57775879 8.8729496 1.29345345 154.59783936 8.80692482 0.60346061 154.75831604 8.98535919
+		 1.88414681 154.50894165 8.17379093 2.21774578 155.014373779 7.98349571 2.065342426 155.11871338 8.097898483
+		 2.45518637 154.81863403 7.8861599 2.7000556 154.59460449 7.80038357 2.59972429 153.80209351 7.90894794
+		 2.92956066 154.37303162 7.7120266 2.47739935 153.51620483 8.022687912 2.39221001 153.24809265 8.10238266
+		 2.29297423 152.76828003 8.16802788 2.15777302 152.409729 8.16296196 2.058685303 152.23756409 8.074959755
+		 2.3176477 152.061462402 7.5837369 2.43572807 152.14932251 7.67185593 2.14019513 152.23045349 7.20050812
+		 2.42464638 152.40866089 6.72212601 2.41705489 152.24118042 6.95228577 2.12667274 152.067565918 6.70353889
+		 2.14154792 152.22921753 6.99808216 2.35196018 152.19454956 7.38412333 2.085122585 151.95980835 7.79469776
+		 2.42683983 152.11082458 7.42013216 2.17027092 151.78887939 7.81139374 2.25340867 151.41726685 7.75976467
+		 2.30037785 151.079925537 7.59072351 2.37249613 150.84011841 7.43773651 2.47185421 150.56919861 7.25382805
+		 2.7004807 150.028594971 6.86770105 3.4646008 150.49728394 6.36431789 3.33069992 150.64399719 6.56632233
+		 3.61451817 150.31973267 6.06539917 3.74363494 150.15597534 5.70211697 1.53867865 156.76461792 8.38394928
+		 1.41967297 156.29934692 8.67606163 1.46579742 155.98579407 8.72681808 1.58183634 155.89511108 8.53245926
+		 1.99673057 155.49255371 8.11011887 2.34238338 155.34536743 7.95905638 2.63173103 155.14497375 7.85456562
+		 2.89556789 154.921875 7.75677872 3.15495157 154.68800354 7.65280294 3.31518674 153.91659546 7.50721359
+		 3.60449266 154.19749451 7.41693401 2.95763636 153.44485474 7.68208599 2.84351063 153.24336243 7.75564003
+		 2.94994712 152.73446655 7.5978384 2.72330928 152.48132324 7.69850206 2.53748035 152.24154663 7.7115674
+		 2.70910478 152.094223022 7.29769421 2.80367041 152.1232605 7.32229757 2.6047492 152.084136963 7.24421597
+		 2.48831463 152.36579895 6.64011812 2.57527018 152.27130127 6.43588161 2.37568951 152.1321106 6.52456379
+		 2.40936232 152.22174072 6.83098125 2.60915685 152.21203613 7.15904522 2.66941738 152.1640625 7.17973995
+		 2.49328947 152.013183594 7.41754484 2.72190261 152.10614014 7.17787266 2.61313677 151.77539063 7.37167311
+		 2.74438667 151.46524048 7.23984337 2.86755824 151.25765991 7.11862469 3.014185667 151.036529541 6.96500969
+		 3.73032713 151.31994629 6.5150609 3.35464001 151.50616455 6.82207441 3.90971422 151.2401123 6.3291893
+		 4.11697197 151.15182495 6.052188873 4.31457567 151.069763184 5.69104767 1.81989515 156.61196899 8.1876812
+		 1.67705405 156.20399475 8.37882614 2.25853395 155.912323 8.026821136 2.56835938 155.7461853 7.89653635
+		 2.86772609 155.55786133 7.78668308 3.16985178 155.34628296 7.6767683 3.48291326 155.10818481 7.56011772
+		 4.021209717 154.57603455 7.2865181 3.91662025 153.64135742 7.15491486 4.35306549 153.96365356 6.9819932
+		 3.6136508 153.40827942 7.26538277 3.22864604 153.034194946 7.44593 3.090246916 152.87167358 7.51689339
+		 3.20488119 152.66375732 7.37800503 3.18528008 152.37928772 7.28064156 2.99925828 152.23400879 7.32458067
+		 2.86201692 152.094512939 7.18631411 3.060306072 152.13674927 7.18841362 2.68794966 152.10127258 7.12765026
+		 2.49422216 152.22875977 6.85890102 2.57666039 152.19522095 6.7409935 2.465904 152.16651917 6.49828005
+		 2.51359129 152.22073364 6.78661633 2.81353378 152.11547852 7.10228062 2.85706735 151.95681763 7.14025974
+		 2.95356798 151.98875427 7.088069916 3.048295021 151.74841309 7.012368202 3.19058371 151.62335205 6.92914867
+		 3.45538712 151.69747925 6.81719685 3.83856201 151.60134888 6.53930378 4.04166317 151.5619812 6.36131287
+		 4.28476524 151.52571106 6.093406677 4.52097702 151.50091553 5.75188351 2.46747494 156.30541992 7.89870358
+		 2.78523302 156.15211487 7.77701855 3.11795139 155.98376465 7.66219807 3.47766161 155.78717041 7.5441761
+		 3.85053802 155.55163574 7.41626406 4.4517765 154.98034668 7.11466312 4.80961466 154.30856323 6.76689911
+		 4.44518471 153.6060791 6.82268143 4.89679146 153.92294312 6.59018993 4.020870209 153.33053589 7.01214695
+		 3.73319149 153.13150024 7.12946892 3.34241676 152.79849243 7.30851507 3.30321479 152.46536255 7.23527193
+		 3.37368035 152.29072571 7.10775661 3.25583315 152.22869873 7.14720058 3.043573856 152.034515381 7.083047867
+		 3.27185655 152.0023040771 7.0051522255 2.88167763 152.085601807 7.073381424;
+	setAttr ".vt[332:497]" 2.76631212 152.14093018 7.024677277 2.70897627 152.20649719 7.077902794
+		 3.15690899 151.8387146 6.97703648 3.28942633 151.76202393 6.9079237 3.4058609 152.0055847168 6.95117474
+		 3.56000233 152.02545166 6.87496471 3.94272113 152.091705322 6.64519262 4.18135977 152.14614868 6.49081326
+		 4.47428799 152.21621704 6.25576448 4.77966213 152.31137085 5.95437622 4.92514706 153.51916504 6.4126873
+		 4.49580193 153.24765015 6.65790367 4.10301113 153.022460938 6.86439419 3.83156967 152.86270142 6.99377108
+		 3.44237304 152.57250977 7.17335606 3.513134 152.36889648 7.04537344 3.89940953 152.60348511 6.86250401
+		 4.16036797 152.7298584 6.72467041 4.515872 152.89645386 6.50860548 4.90355158 153.1105957 6.24238873
+		 2.76058912 152.16465759 7.097127438 2.82106996 152.11190796 7.053702354 2.77506685 152.095947266 7.16769123
+		 0.56476939 154.59312439 9.043402672 0.55799246 154.41159058 9.11816978 0.50641555 154.21676636 9.22311783
+		 0.33860302 154.11860657 9.31028366 0.16334176 154.080734253 9.37068176 0.245516 154.80909729 10.53519917
+		 0.53567362 154.8637085 10.46225548 0.8529042 154.95321655 10.31719208 1.13898325 155.07925415 10.07387352
+		 1.29237962 155.32260132 9.80879021 1.31380403 156.026855469 9.056326866 2.012026787 155.10229492 8.25417709
+		 1.88317788 154.66296387 8.39905834 1.5603435 154.38577271 8.57559204 1.28859913 154.43260193 8.70166302
+		 1.22796345 154.55465698 8.70020485 1.014930487 154.98960876 9.05525589 0.8234092 154.80908203 9.39433479
+		 0.74279326 154.587677 9.43920135 0.67988288 154.3989563 9.46735668 0.59724253 154.29855347 9.64073086
+		 0.37528551 154.25657654 9.83157253 0.18145858 154.248703 9.92541885 0.67297971 154.50704956 9.36943054
+		 3.076231003 152.54782104 7.4395752 2.87633586 152.35353088 7.50381279 2.69345427 152.17556763 7.50925398
+		 2.59912801 152.11358643 7.47371387 2.47747755 152.069030762 7.40295601 2.29170156 152.23345947 7.076116562
+		 2.31142163 152.42492676 6.86049604 2.25423288 152.09197998 6.58741713 2.28384304 152.22714233 6.90278625
+		 2.49220443 152.21012878 7.26154518 2.55763865 152.14752197 7.28991699 2.6164093 152.072723389 7.28576231
+		 2.74677181 151.88949585 7.22988605 2.91039562 151.62945557 7.10049486 3.046251297 151.45950317 7.0020980835
+		 3.20411015 151.28343201 6.87346649 3.5645709 150.99128723 6.51368237 3.72011423 150.88134766 6.32173347
+		 3.89360714 150.7512207 6.037514687 4.053638458 150.62129211 5.66880512 3.40208483 149.68408203 5.79534817
+		 3.29358482 149.89016724 6.16780567 3.16215277 150.11296082 6.47152996 3.039760113 150.30827332 6.6840353
+		 2.76923823 150.7800293 7.092375755 2.64534307 151.032333374 7.26425695 2.5429225 151.27366638 7.40942144
+		 2.45027924 151.61288452 7.55510426 2.34904003 151.92236328 7.5956254 2.26137733 152.050125122 7.59202957
+		 2.18440032 152.15856934 7.54551649 1.9762125 152.22207642 7.11870289 1.99998593 152.015472412 6.80148888
+		 2.014075756 152.46629333 7.11457539 1.96880198 152.22479248 7.32537937 2.13570452 152.063751221 7.76534843
+		 2.25525975 152.18325806 7.86861753 2.36265254 152.31091309 7.91957188 2.53849149 152.62014771 7.9113884
+		 4.18600464 155.27368164 7.27367401 3.77780342 154.84620667 7.42884254 3.3947711 154.44366455 7.53981876
+		 3.1344862 154.14938354 7.61440468 2.7915566 153.62719727 7.79559135 2.68295646 153.37788391 7.87989616
+		 2.76376057 153.099502563 7.80650473 4.66004086 154.66156006 6.94573784 4.21230125 154.28788757 7.13710451
+		 3.78094912 153.9335022 7.28761387 3.47480154 153.66932678 7.39023209 3.10105419 153.24964905 7.56904888
+		 2.96885014 153.070587158 7.64315605 0.26077801 156.45755005 9.98890305 0.49958065 156.46299744 9.92391205
+		 0.67392647 156.45249939 9.83930397 0.87867665 156.31906128 9.69353676 0.98103118 156.16195679 9.64395142
+		 1.12098932 155.96121216 9.56433392 1.31429732 155.71875 9.45450306 1.46600282 155.5007019 9.35700989
+		 1.61231232 155.28353882 9.19439507 1.92296946 155.076522827 8.58705235 2.014432669 154.95103455 8.31544304
+		 2.06958437 154.8208313 8.092844009 2.12754393 154.70259094 8.024608612 2.30113673 154.51246643 7.96646404
+		 2.5320344 154.29092407 7.88663673 2.74441385 154.087219238 7.79733753 2.93742561 153.88340759 7.70088816
+		 3.10935163 153.67037964 7.59595919 3.25929832 153.44747925 7.48236084 3.3927393 153.21064758 7.36007309
+		 3.51233673 152.95552063 7.2251687 3.61069703 152.70661926 7.091883659 3.68394041 152.47766113 6.96646404
+		 3.73381925 152.056549072 6.77815008 3.64338541 151.64654541 6.69475365 3.53640223 151.40579224 6.68673897
+		 3.38052988 151.12268066 6.70850515 3.16929269 150.82511902 6.77650738 2.90171671 150.53736877 6.89748716
+		 2.58104253 150.30101013 7.066073418 2.1982348 150.13302612 7.27455616 1.75722504 150.066436768 7.50517654
+		 1.29457974 150.048309326 7.69383907 0.83194602 150.047744751 7.80687523 0.41117981 150.060760498 7.8660574
+		 0.34390432 152.97006226 9.29829216 0.76519716 153.060638428 9.25513554 1.19946766 153.010253906 9.070045471
+		 1.59946418 152.90263367 8.80068493 1.96266007 152.737854 8.48538208 2.2430563 152.57440186 8.18398094
+		 2.46306252 152.45474243 7.92371988 2.63796329 152.35397339 7.70779324 2.79193926 152.26225281 7.51163197
+		 2.91105366 152.17288208 7.33180714 2.96534204 152.10871887 7.19525623 2.95385981 152.058746338 7.089960098
+		 2.87634134 152.059448242 7.10508394 2.78478551 152.037704468 7.16666985 2.68131757 151.98812866 7.26476383
+		 2.56020069 151.89807129 7.40333557 2.41655326 151.76252747 7.58671904 2.23584771 151.58740234 7.80149746
+		 2.0073683262 151.38247681 8.03677845 1.70719337 151.18618774 8.28427505 1.32776296 151.0034484863 8.5092144
+		 0.86644876 150.85929871 8.6716671 0.40002844 150.78088379 8.74490738 0.24986093 153.38056946 9.18876457
+		 0.51219946 153.41926575 9.19175148 0.80437177 153.43154907 9.12964249 1.20267689 153.38287354 8.9415493
+		 1.64141273 153.27386475 8.66809845 2.024319649 153.14022827 8.39514923 2.34307194 152.9876709 8.13828373
+		 2.63360071 152.83157349 7.88044453 2.81624126 152.60820007 7.67404842;
+	setAttr ".vt[498:663]" 2.96443176 152.4480896 7.48311996 3.084078312 152.30325317 7.30803776
+		 3.15510917 152.17649841 7.17412758 3.14967823 152.014587402 7.047178268 3.045926094 151.91152954 7.040138721
+		 2.94069767 151.8604126 7.084981918 2.81427813 151.77783203 7.17335939 2.66588497 151.63793945 7.32495928
+		 2.48349714 151.46508789 7.50295448 2.26696062 151.26470947 7.69365788 2.00086832047 151.055877686 7.89131355
+		 1.68283737 150.87191772 8.097410202 1.29824805 150.72016907 8.27137947 0.8604238 150.61392212 8.39269352
+		 0.41245711 150.56176758 8.45056534 0.29621983 152.064453125 8.5039463 0.64583999 152.1267395 8.4518261
+		 0.99109912 152.12210083 8.35098267 1.3180871 152.067657471 8.18384361 1.59916162 152.026916504 7.98892784
+		 1.83440685 152.014343262 7.80204868 2.032555103 152.020202637 7.62704277 2.21938086 152.043273926 7.46316242
+		 2.38877821 152.0730896 7.30409241 2.52031279 152.099304199 7.1616354 2.6111598 152.12088013 7.060050011
+		 2.70574713 152.15673828 6.96460438 2.64872289 152.24017334 7.030597687 2.54138851 152.25390625 7.098221302
+		 2.42045212 152.25941467 7.1915884 2.27583289 152.26220703 7.30267906 2.10035515 152.24911499 7.45102596
+		 1.90541363 152.23043823 7.61789894 1.6801188 152.21551514 7.81340265 1.41536367 152.19439697 8.039433479
+		 1.075078726 152.15803528 8.25740242 0.67576104 152.083343506 8.40262604 0.30487967 151.99482727 8.46676445
+		 2.14534426 156.45794678 8.031732559 1.95592248 156.073394775 8.18207169 1.74591053 155.74330139 8.31799126
+		 1.79152727 155.46203613 8.58247948 1.78911591 155.17483521 8.88538933 1.7364912 154.96966553 9.053218842
+		 1.57796025 154.7333374 9.16127491 1.38463438 154.64651489 9.10831928 1.27702355 154.72372437 8.95061684
+		 1.13072896 154.86437988 8.69881725 0.87275773 154.75170898 8.71557522 0.7154389 154.64465332 8.80481339
+		 0.61083257 154.54470825 8.88297272 0.56947494 154.38101196 8.96077442 0.50069666 154.18798828 9.068443298
+		 0.32837781 154.090057373 9.14306545 0.15860149 154.044586182 9.17287064 4.67271519 151.91543579 5.84336329
+		 4.40226269 151.87789917 6.16165066 4.13211441 151.85620117 6.41094589 3.91036558 151.84707642 6.57681704
+		 3.70676756 151.85116577 6.72166586 3.52510834 151.86077881 6.83317804 3.36395645 151.8822937 6.91857767
+		 3.22807503 151.91799927 6.97691011 3.1103456 151.96025085 7.030296326 3.010480165 152.0074157715 7.071688175
+		 2.92877984 152.054718018 7.076992035 2.86612868 152.097671509 7.056502342 2.81261444 152.14041138 7.045467854
+		 2.76399088 152.18521118 7.025537968 2.705585 152.21580505 6.97660732 2.5701685 152.21061707 6.75098419
+		 2.53436661 152.20591736 6.45856857 4.84962082 152.70443726 6.087305069 4.50999165 152.55383301 6.37323475
+		 4.18988609 152.43875122 6.59700871 3.94069242 152.34429932 6.74068928 3.72818756 152.26208496 6.85867882
+		 3.55481911 152.19132996 6.94570971 3.40930796 152.13841248 7.010472298 3.28416395 152.1008606 7.057880402
+		 3.16933441 152.081085205 7.091802597 3.064021587 152.073120117 7.11834717 2.96592259 152.078704834 7.12672758
+		 2.8815484 152.087432861 7.11679506 2.80866051 152.10023499 7.095912457 2.73918581 152.12005615 7.061897278
+		 2.66982222 152.13372803 6.99522352 2.54552698 152.21038818 6.78428555 2.54173851 152.33273315 6.5318203
+		 0.28608167 153.12698364 9.27822304 0.52917701 153.16499329 9.27528095 0.52834582 153.28158569 9.2344799
+		 2.61919856 153.13793945 7.92366028 2.83135319 152.92984009 7.73197794 0.28057492 152.076324463 8.21089554
+		 0.62776124 152.12658691 8.16527367 0.96422112 152.12107849 8.068612099 1.27826262 152.078842163 7.92453861
+		 1.5467782 152.063949585 7.77327728 1.78461051 152.062271118 7.62398577 1.98467207 152.077056885 7.47815609
+		 2.16469741 152.10437012 7.3357749 2.32903862 152.12631226 7.19894409 2.46085548 152.14854431 7.070302963
+		 2.54711771 152.15887451 6.97591209 2.60268211 152.15859985 6.91069984 2.63405275 152.17138672 6.88291311
+		 2.63587666 152.22280884 6.89607573 2.58298683 152.24900818 6.94223833 2.47743917 152.26025391 6.9976778
+		 2.35269094 152.2784729 7.081195831 2.20584774 152.28520203 7.18158054 2.034030437 152.27960205 7.31546593
+		 1.84443617 152.2747345 7.47066784 1.61077929 152.27450562 7.63362455 1.33234 152.26690674 7.82028008
+		 0.99428678 152.23707581 8.0084571838 0.61677635 152.18003845 8.13759804 0.28213084 152.10595703 8.19964409
+		 0.8753497 157.50976563 9.028036118 0.83213228 157.087127686 9.30569172 0.80722928 156.71734619 9.54757118
+		 0.78808677 156.4160614 9.75357246 0.77982318 156.14691162 9.95327473 0.77073103 155.94644165 10.097249985
+		 0.82958442 155.82038879 10.13997841 0.73962253 155.62701416 10.32045364 0.51475948 155.49046326 10.48993397
+		 0.25586951 155.43421936 10.58550358 0 149.61660767 7.796278 0 149.82218933 7.80235004
+		 0 149.95655823 7.82367182 0 150.064575195 7.88504314 0 150.18692017 7.99361277 0 150.34536743 8.15649605
+		 0 150.46626282 8.32274914 0 150.54881287 8.46722126 0 150.63067627 8.61117744 0 150.75424194 8.75740242
+		 0 151.049942017 8.80219841 0 151.40550232 8.7662735 0 151.72640991 8.66189003 0 151.95443726 8.48048019
+		 0 152.066162109 8.20338345 0 151.96963501 7.87351227 0 151.54501343 7.54103088 0 152.72346497 7.97862339
+		 0 152.24984741 8.011395454 0 152.039932251 8.23087597 0 152.023284912 8.53000832
+		 0 152.21682739 8.84078693 0 152.45774841 9.048488617 0 152.70825195 9.20671844 0 152.90841675 9.28950787
+		 0 153.091003418 9.26667213 0 153.23257446 9.21484375 0 153.35614014 9.17191601 0 153.48724365 9.13464928
+		 0 153.64318848 9.10427761 0 153.83270264 9.088907242 0 153.98291016 9.10602379 0 154.031768799 9.17646503
+		 0 154.070236206 9.3857069 0 154.13768005 9.67380619 0 154.25950623 9.9780283 0 154.42803955 10.22869873;
+	setAttr ".vt[664:829]" 0 154.60812378 10.4168539 0 154.7991333 10.56185246
+		 0 155.0056610107 10.65836811 0 155.17868042 10.69352722 0 155.41114807 10.62042904
+		 0 155.71551514 10.45425224 0 156.080444336 10.23676014 0 156.44578552 10.018081665
+		 0 156.82171631 9.81341171 0 157.22793579 9.61252213 0 157.6526947 9.41498756 0 149.31269836 7.79873514
+		 0 148.90621948 7.77665663 0 148.37924194 7.6748004 0 147.87420654 7.4350214 -1.92203712 149.002532959 7.1425848
+		 -1.90125203 149.4758606 7.26530838 -3.02587986 149.25146484 6.017102242 -2.4182117 149.52719116 6.91385746
+		 -2.50985193 149.19671631 6.6922636 -0.42439374 149.81039429 7.78280735 -0.86396205 149.51707458 7.70444107
+		 -0.87622088 149.74459839 7.71198368 -1.36170554 149.63420105 7.55762482 -1.33188987 149.33898926 7.54322052
+		 -0.42002785 149.59909058 7.77547121 -2.60736966 148.87252808 6.33391237 -2.13495922 148.50617981 6.68439388
+		 -1.6679914 148.19259644 6.94977379 -0.81274378 149.25192261 7.70946646 -1.20584249 149.0887146 7.5711031
+		 -0.40480477 149.29937744 7.77578211 -2.81918168 149.77565002 6.65476465 -2.93473482 149.50500488 6.376616
+		 -1.068939686 148.86584473 7.5944643 -0.77286106 148.89450073 7.68548489 -0.3908112 148.90267944 7.75106955
+		 -0.80329049 148.43212891 7.5771656 -1.18896675 148.50942993 7.45528793 -0.39358497 148.38420105 7.64469051
+		 -1.54713285 148.70864868 7.31665516 -1.24961996 148.059661865 7.19328594 -0.82346237 147.9596405 7.33482265
+		 -0.40469626 147.88543701 7.39701462 -0.30658132 157.64024353 9.38815498 -0.29460782 157.21636963 9.58755112
+		 -0.27572912 156.81904602 9.79235458 -0.25255811 156.1035614 10.19749069 -0.2509861 155.74761963 10.41364384
+		 -0.26361436 155.19552612 10.66377735 -0.26406437 155.024169922 10.6344471 -0.21782301 154.60324097 10.38186264
+		 -0.19786412 154.4223938 10.19490433 -0.16519423 154.14051819 9.63601685 -0.16453117 153.98907471 9.1033783
+		 -0.19515979 153.83770752 9.096420288 -0.2163531 153.6630249 9.1180687 -0.23397821 153.51254272 9.1507225
+		 -0.26333606 153.2565918 9.23034096 -0.34739363 152.7673645 9.20988369 -0.32808986 152.51115417 9.047682762
+		 -0.3012079 152.24234009 8.82154179 -0.26112098 152.2611084 7.99008083 -0.29886574 152.70974731 7.94730091
+		 -0.3370716 151.56376648 7.51710558 -0.28810629 151.9906311 7.8577137 -0.33531168 151.7648468 8.64297199
+		 -0.35524175 151.43838501 8.75216675 -0.37126985 151.077423096 8.78707314 -0.40820715 150.65158081 8.60721207
+		 -0.40921843 150.47125244 8.30431271 -0.4056665 150.34751892 8.13887596 -0.40772927 150.18963623 7.97729683
+		 -0.41864187 149.94569397 7.80425167 -0.57385749 157.60238647 9.31253242 -0.55099994 157.17453003 9.53201675
+		 -0.52284676 156.796875 9.73916054 -0.48772824 156.13186646 10.11810875 -0.49215961 155.80415344 10.32102489
+		 -0.52717668 155.25332642 10.57756424 -0.53867197 155.082626343 10.56049538 -0.47920477 154.62921143 10.3079443
+		 -0.42541194 154.43029785 10.11052895 -0.34926033 154.16394043 9.55584908 -0.34578145 154.020446777 9.075984955
+		 -0.40853137 153.86975098 9.078811646 -0.45596656 153.7101593 9.10519695 -0.4882482 153.56126404 9.14574623
+		 -0.81781936 153.27326965 9.19501877 -0.75598389 152.83651733 9.15569305 -0.72029674 152.56565857 8.9907074
+		 -0.6711787 152.28427124 8.74579716 -0.63021451 152.2774353 7.91355038 -0.70799738 152.68093872 7.82481575
+		 -0.82707429 151.16433716 8.70733452 -0.8693341 150.71755981 8.55082607 -0.85473442 150.50759888 8.25053024
+		 -0.84651017 150.38247681 8.095603943 -0.83382463 150.20993042 7.9326539 -0.85671234 149.90571594 7.74157953
+		 -0.73038524 157.58718872 9.18957138 -0.71314645 157.11631775 9.45440292 -0.69309664 156.75605774 9.66160107
+		 -0.66728306 156.15583801 10.02717495 -0.68340826 155.88093567 10.19432449 -0.77408016 155.36392212 10.41594505
+		 -0.80794221 155.18081665 10.4189682 -0.83993053 154.68830872 10.14249802 -0.74819052 154.45988464 9.88493538
+		 -0.53805172 154.23756409 9.42039299 -0.60241151 154.097290039 8.98070908 -0.69562703 153.91348267 8.98807526
+		 -0.76814473 153.74636841 9.010250092 -0.79216337 153.5916748 9.065022469 -1.19733906 153.21340942 9.022964478
+		 -1.22066355 153.56651306 8.85573387 -1.16401768 152.79690552 8.98826408 -1.10953903 152.53199768 8.84255409
+		 -1.079968929 152.61592102 7.67545033 -1.38277233 152.56460571 7.53939247 -1.04201293 151.73748779 7.36874485
+		 -1.35498869 151.8270874 7.25176907 -0.6954695 151.62127686 7.46051645 -0.60205185 152.041595459 7.8006258
+		 -0.72687405 151.85876465 8.56938267 -0.78113711 151.52584839 8.67756081 -1.28039217 151.29434204 8.53729057
+		 -1.20643067 151.6338501 8.51921082 -1.31823409 150.8449707 8.40887356 -1.29405117 150.59645081 8.13931561
+		 -1.28616381 150.45423889 7.99402809 -1.28073442 150.25680542 7.83141041 -1.33659601 149.86312866 7.60916424
+		 -1.026454449 157.33944702 8.88720322 -0.95298636 156.96066284 9.18074799 -0.9028331 156.61251831 9.45049477
+		 -0.8604086 156.050308228 9.93413353 -0.91203845 155.62786865 10.18781281 -1.0080909729 155.3704834 10.20971489
+		 -1.2488091 154.85928345 9.8121748 -1.1210556 154.65917969 9.67192078 -0.80161935 154.48513794 9.61186981
+		 -1.020570517 154.68687439 9.50493431 -0.6117568 154.39376831 9.30032349 -0.70598352 154.30543518 8.880867
+		 -1.021308899 154.12611389 8.76939964 -0.9418062 154.31799316 8.75994682 -1.11893964 153.95748901 8.77183056
+		 -1.22157919 153.75830078 8.7825613 -1.69629502 153.50448608 8.57219791 -1.79209268 153.8421936 8.41752625
+		 -1.60958314 153.09564209 8.74289513 -1.54325581 152.69223022 8.74890804 -1.46710658 152.43353271 8.61235523
+		 -1.040237904 152.27365112 8.62646675 -1.37830806 152.19802856 8.42469025 -0.9729749 152.27281189 7.80906677
+		 -1.294945 152.24533081 7.69891453 -1.62289464 152.54403687 7.39392948 -1.5540185 152.22622681 7.58060789
+		 -1.6207304 151.90454102 7.11211395 -1.27147579 152.16662598 7.55120468 -1.55593061 152.20092773 7.41031218
+		 -0.95209432 152.11209106 7.69531536 -1.12982464 151.95172119 8.42388916 -1.56134033 151.74310303 8.30106735;
+	setAttr ".vt[830:995]" -1.47465968 152.0077056885 8.2187891 -1.65005136 151.45394897 8.30934906
+		 -1.69810891 151.013031006 8.20248032 -1.68049765 150.73406982 7.98237991 -1.68905377 150.56896973 7.84371567
+		 -1.714239 150.34228516 7.6722579 -1.83333707 149.80728149 7.37880135 -1.17612934 157.14727783 8.73604774
+		 -1.084132195 156.77919006 9.049503326 -1.010569215 156.45056152 9.35011864 -0.95501888 155.88482666 9.93503189
+		 -1.096846223 155.6444397 9.90689468 -1.4336462 155.13821411 9.64022255 -1.46698999 154.81396484 9.45533371
+		 -1.58818519 155.060577393 9.37022781 -1.32924211 154.67221069 9.37804222 -1.19167221 154.75708008 9.22663116
+		 -0.709373 154.83790588 9.23471451 -0.75711429 154.94917297 8.93037224 -0.65985447 154.67808533 9.26869774
+		 -0.61867058 154.54620361 9.24003601 -0.71660244 154.45176697 8.83978462 -0.84744906 154.49502563 8.76225758
+		 -1.17721558 154.32553101 8.67182732 -1.051011443 154.54872131 8.65844727 -1.46576762 154.23257446 8.48101425
+		 -1.60360599 154.11856079 8.43713665 -2.12071991 154.20428467 8.12229443 -1.94552612 154.42935181 8.15636063
+		 -2.20747995 153.66995239 8.19173813 -2.38011932 153.98672485 8.023728371 -2.096947908 153.37936401 8.31265736
+		 -1.9841038 152.93928528 8.44997501 -1.88849485 152.54841614 8.45532227 -1.79612446 152.32142639 8.33212185
+		 -1.68427634 152.121521 8.18477535 -1.78325212 152.21723938 7.44738388 -1.93790817 152.082672119 7.9611721
+		 -1.83882236 152.50683594 7.23518276 -2.17050266 152.42654419 7.0042667389 -1.83380556 151.96356201 6.95783567
+		 -1.78918791 152.2166748 7.27236271 -1.76026368 152.061096191 7.9708786 -1.99039745 152.11521912 7.73747063
+		 -1.84502077 151.85517883 8.049925804 -1.94403815 151.62442017 8.056051254 -2.0056893826 151.20613098 7.97320938
+		 -2.011095047 150.89599609 7.78844166 -2.050339222 150.69528198 7.64116001 -2.11546707 150.43640137 7.45977879
+		 -2.30862474 149.8309021 7.095970154 -1.34012353 156.95111084 8.56440639 -1.24447811 156.55982971 8.86865139
+		 -1.14660954 156.24833679 9.2092247 -1.46622396 155.81411743 8.98684502 -1.62049806 155.65328979 8.81687641
+		 -1.83815229 154.85099792 8.74656868 -1.92784214 155.26091003 8.38218689 -1.63033831 154.61880493 8.88929653
+		 -1.3761301 154.57775879 8.8729496 -1.29345345 154.59783936 8.80692482 -0.60346061 154.75831604 8.98535919
+		 -1.88414681 154.50894165 8.17379093 -2.21774578 155.014373779 7.98349571 -2.065342426 155.11871338 8.097898483
+		 -2.45518637 154.81863403 7.8861599 -2.7000556 154.59460449 7.80038357 -2.59972429 153.80209351 7.90894794
+		 -2.92956066 154.37303162 7.7120266 -2.47739935 153.51620483 8.022687912 -2.39221001 153.24809265 8.10238266
+		 -2.29297423 152.76828003 8.16802788 -2.15777302 152.409729 8.16296196 -2.058685303 152.23756409 8.074959755
+		 -2.3176477 152.061462402 7.5837369 -2.43572807 152.14932251 7.67185593 -2.14019513 152.23045349 7.20050812
+		 -2.42464638 152.40866089 6.72212601 -2.41705489 152.24118042 6.95228577 -2.12667274 152.067565918 6.70353889
+		 -2.14154792 152.22921753 6.99808216 -2.35196018 152.19454956 7.38412333 -2.085122585 151.95980835 7.79469776
+		 -2.42683983 152.11082458 7.42013216 -2.17027092 151.78887939 7.81139374 -2.25340867 151.41726685 7.75976467
+		 -2.30037785 151.079925537 7.59072351 -2.37249613 150.84011841 7.43773651 -2.47185421 150.56919861 7.25382805
+		 -2.7004807 150.028594971 6.86770105 -3.4646008 150.49728394 6.36431789 -3.33069992 150.64399719 6.56632233
+		 -3.61451817 150.31973267 6.06539917 -3.74363494 150.15597534 5.70211697 -1.53867865 156.76461792 8.38394928
+		 -1.41967297 156.29934692 8.67606163 -1.46579742 155.98579407 8.72681808 -1.58183634 155.89511108 8.53245926
+		 -1.99673057 155.49255371 8.11011887 -2.34238338 155.34536743 7.95905638 -2.63173103 155.14497375 7.85456562
+		 -2.89556789 154.921875 7.75677872 -3.15495157 154.68800354 7.65280294 -3.31518674 153.91659546 7.50721359
+		 -3.60449195 154.19749451 7.41693449 -2.95763636 153.44485474 7.68208599 -2.84351063 153.24336243 7.75564003
+		 -2.94994688 152.73446655 7.5978384 -2.72330928 152.48132324 7.69850206 -2.53748035 152.24154663 7.7115674
+		 -2.70910478 152.094223022 7.29769421 -2.80367041 152.1232605 7.32229757 -2.6047492 152.084136963 7.24421597
+		 -2.48831463 152.36579895 6.64011812 -2.57527018 152.27130127 6.43588161 -2.37568951 152.1321106 6.52456379
+		 -2.40936232 152.22174072 6.83098125 -2.60915685 152.21203613 7.15904522 -2.66941643 152.1640625 7.17973995
+		 -2.49328947 152.013183594 7.41754484 -2.72190261 152.10614014 7.17787266 -2.61313677 151.77539063 7.37167311
+		 -2.74438667 151.46524048 7.23984337 -2.86755824 151.25765991 7.11862469 -3.014185667 151.036529541 6.96500969
+		 -3.73032713 151.31994629 6.5150609 -3.35464001 151.50616455 6.82207441 -3.90971422 151.2401123 6.3291893
+		 -4.11697197 151.15182495 6.052188873 -4.31457567 151.069763184 5.69104767 -1.81989515 156.61196899 8.1876812
+		 -1.67705405 156.20399475 8.37882614 -2.25853395 155.912323 8.026821136 -2.56835938 155.7461853 7.89653635
+		 -2.86772609 155.55786133 7.78668308 -3.16985178 155.34628296 7.6767683 -3.48291326 155.10818481 7.56011772
+		 -4.021209717 154.57603455 7.2865181 -3.91661954 153.64135742 7.15491533 -4.35306549 153.96365356 6.9819932
+		 -3.6136508 153.40827942 7.26538277 -3.22864604 153.034194946 7.44593 -3.090246916 152.87167358 7.51689339
+		 -3.20488119 152.66375732 7.37800503 -3.18528008 152.37928772 7.28064156 -2.99925828 152.23400879 7.32458067
+		 -2.86201692 152.094512939 7.18631411 -3.060306072 152.13674927 7.18841362 -2.68794966 152.10127258 7.12764978
+		 -2.49422216 152.22875977 6.85890102 -2.57666039 152.19522095 6.7409935 -2.465904 152.16651917 6.49828005
+		 -2.51359129 152.22073364 6.78661633 -2.81353378 152.11547852 7.10228062 -2.85706735 151.95681763 7.14025974
+		 -2.95356798 151.98875427 7.088069916 -3.048294783 151.74841309 7.012368202 -3.19058371 151.62335205 6.92914867
+		 -3.45538712 151.69747925 6.81719685 -3.83856201 151.60134888 6.53930378 -4.04166317 151.5619812 6.36131287
+		 -4.28476524 151.52571106 6.093406677 -4.52097702 151.50091553 5.75188351 -2.46747494 156.30541992 7.89870358
+		 -2.78523302 156.15211487 7.77701855 -3.11795139 155.98376465 7.66219807;
+	setAttr ".vt[996:1161]" -3.47766161 155.78717041 7.5441761 -3.85053802 155.55163574 7.41626406
+		 -4.4517765 154.98034668 7.11466312 -4.80961466 154.30856323 6.76689911 -4.44518471 153.6060791 6.82268143
+		 -4.89679146 153.92294312 6.59018993 -4.020870209 153.33053589 7.01214695 -3.73319149 153.13150024 7.12946892
+		 -3.34241676 152.79849243 7.30851507 -3.30321479 152.46536255 7.23527193 -3.37368011 152.29072571 7.10775661
+		 -3.25583315 152.22869873 7.14720058 -3.043573856 152.034515381 7.083047867 -3.27185655 152.0023040771 7.0051522255
+		 -2.88167763 152.085601807 7.073381424 -2.76631165 152.14093018 7.0246768 -2.70897627 152.20649719 7.077902794
+		 -3.15690899 151.8387146 6.97703648 -3.28942633 151.76202393 6.9079237 -3.4058609 152.0055847168 6.95117474
+		 -3.56000233 152.02545166 6.87496471 -3.94272113 152.091705322 6.64519262 -4.18135977 152.14614868 6.49081326
+		 -4.47428799 152.21621704 6.25576448 -4.77966213 152.31137085 5.95437622 -4.92514706 153.51916504 6.4126873
+		 -4.49580193 153.24765015 6.65790367 -4.10301113 153.022460938 6.86439419 -3.83156967 152.86270142 6.99377108
+		 -3.44237304 152.57250977 7.17335606 -3.513134 152.36889648 7.04537344 -3.89940953 152.60348511 6.86250401
+		 -4.16036797 152.7298584 6.72467041 -4.515872 152.89645386 6.50860548 -4.90355158 153.1105957 6.24238873
+		 -2.76058912 152.16465759 7.097127438 -2.82106996 152.11190796 7.053702354 -2.77506685 152.095947266 7.16769123
+		 -0.56476939 154.59312439 9.043402672 -0.55799246 154.41159058 9.11816978 -0.50641555 154.21676636 9.22311783
+		 -0.33860302 154.11860657 9.31028366 -0.16334176 154.080734253 9.37068176 -0.245516 154.80909729 10.53519917
+		 -0.53567362 154.8637085 10.46225548 -0.8529042 154.95321655 10.31719208 -1.13898325 155.07925415 10.07387352
+		 -1.29237962 155.32260132 9.80879021 -1.31380403 156.026855469 9.056326866 -2.012026787 155.10229492 8.25417709
+		 -1.88317657 154.66296387 8.39906025 -1.5603435 154.38577271 8.57559204 -1.28859913 154.43260193 8.70166302
+		 -1.22796345 154.55465698 8.70020485 -1.014930487 154.98960876 9.05525589 -0.8234092 154.80908203 9.39433479
+		 -0.74279326 154.587677 9.43920135 -0.67988288 154.3989563 9.46735668 -0.59724253 154.29855347 9.64073086
+		 -0.37528551 154.25657654 9.83157253 -0.18145858 154.248703 9.92541885 -0.67297971 154.50704956 9.36943054
+		 -3.076231003 152.54782104 7.4395752 -2.87633586 152.35353088 7.50381279 -2.69345427 152.17556763 7.50925398
+		 -2.59912801 152.11358643 7.47371387 -2.47747755 152.069030762 7.40295601 -2.29170156 152.23345947 7.076116562
+		 -2.31142163 152.42492676 6.86049604 -2.25423288 152.09197998 6.58741713 -2.28384304 152.22714233 6.90278625
+		 -2.49220443 152.21012878 7.26154518 -2.55763865 152.14752197 7.28991699 -2.6164093 152.072723389 7.28576231
+		 -2.74677181 151.88949585 7.22988605 -2.91039562 151.62945557 7.10049486 -3.046251297 151.45950317 7.0020980835
+		 -3.20411015 151.28343201 6.87346649 -3.5645709 150.99128723 6.51368237 -3.72011423 150.88134766 6.32173347
+		 -3.8936069 150.7512207 6.037514687 -4.053638458 150.62129211 5.66880512 -3.40208483 149.68408203 5.79534817
+		 -3.29358482 149.89016724 6.16780567 -3.16215277 150.11296082 6.47152996 -3.039759636 150.30827332 6.68403578
+		 -2.76923823 150.7800293 7.092375755 -2.6453433 151.032333374 7.26425695 -2.5429225 151.27366638 7.40942144
+		 -2.45027924 151.61288452 7.55510426 -2.34904003 151.92236328 7.5956254 -2.26137733 152.050125122 7.59202957
+		 -2.18440032 152.15856934 7.54551649 -1.9762125 152.22207642 7.11870289 -1.99998593 152.015472412 6.80148888
+		 -2.014075756 152.46629333 7.11457539 -1.96880198 152.22479248 7.32537937 -2.13570452 152.063751221 7.76534843
+		 -2.25525975 152.18325806 7.86861753 -2.36265254 152.31091309 7.91957188 -2.53848982 152.62014771 7.91138983
+		 -4.18600464 155.27368164 7.27367401 -3.77780342 154.84620667 7.42884254 -3.3947711 154.44366455 7.53981876
+		 -3.1344862 154.14938354 7.61440468 -2.7915566 153.62719727 7.79559135 -2.68295646 153.37788391 7.87989616
+		 -2.76375961 153.099502563 7.80650568 -4.66004086 154.66156006 6.94573784 -4.21230125 154.28788757 7.13710451
+		 -3.78094912 153.9335022 7.28761387 -3.47480154 153.66932678 7.39023209 -3.10105419 153.24964905 7.56904888
+		 -2.96885014 153.070587158 7.64315605 -0.26077801 156.45755005 9.98890305 -0.49958065 156.46299744 9.92391205
+		 -0.67392647 156.45249939 9.83930397 -0.87867665 156.31906128 9.69353676 -0.98103118 156.16195679 9.64395142
+		 -1.12098932 155.96121216 9.56433392 -1.31429732 155.71875 9.45450306 -1.46600282 155.5007019 9.35700989
+		 -1.61231232 155.28353882 9.19439507 -1.92296946 155.076522827 8.58705235 -2.014432669 154.95103455 8.31544304
+		 -2.06958437 154.8208313 8.092844009 -2.12754393 154.70259094 8.024608612 -2.30113673 154.51246643 7.96646404
+		 -2.5320344 154.29092407 7.88663673 -2.74441385 154.087219238 7.79733753 -2.93742561 153.88340759 7.70088816
+		 -3.10935163 153.67037964 7.59595919 -3.25929832 153.44747925 7.48236084 -3.3927393 153.21064758 7.36007309
+		 -3.51233673 152.95552063 7.2251687 -3.61069703 152.70661926 7.091883659 -3.68394041 152.47766113 6.96646404
+		 -3.73381925 152.056549072 6.77815008 -3.64338541 151.64654541 6.69475365 -3.53640223 151.40579224 6.68673897
+		 -3.38052988 151.12268066 6.70850515 -3.16929269 150.82511902 6.77650738 -2.90171671 150.53736877 6.89748716
+		 -2.58104253 150.30101013 7.066073418 -2.1982348 150.13302612 7.27455616 -1.75722504 150.066436768 7.50517654
+		 -1.29457974 150.048309326 7.69383907 -0.83194602 150.047744751 7.80687523 -0.41117981 150.060760498 7.8660574
+		 -0.34390432 152.97006226 9.29829216 -0.76519716 153.060638428 9.25513554 -1.19946766 153.010253906 9.070045471
+		 -1.59946418 152.90263367 8.80068493 -1.96265852 152.737854 8.48538399 -2.2430563 152.57440186 8.18398094
+		 -2.46306252 152.45474243 7.92371988 -2.63796329 152.35397339 7.70779324 -2.79193926 152.26225281 7.51163197
+		 -2.91105366 152.17288208 7.33180714 -2.96534204 152.10871887 7.19525623 -2.95385981 152.058746338 7.089960098
+		 -2.87634063 152.059448242 7.10508394 -2.78478551 152.037704468 7.16666985 -2.68131757 151.98812866 7.26476383
+		 -2.56020069 151.89807129 7.40333557 -2.41655326 151.76252747 7.58671904;
+	setAttr ".vt[1162:1305]" -2.23584771 151.58740234 7.80149746 -2.0073683262 151.38247681 8.03677845
+		 -1.70719337 151.18618774 8.28427505 -1.32776296 151.0034484863 8.5092144 -0.86644876 150.85929871 8.6716671
+		 -0.40002844 150.78088379 8.74490738 -0.24986093 153.38056946 9.18876457 -0.51219946 153.41926575 9.19175148
+		 -0.80437088 153.43154907 9.12964249 -1.20267689 153.38287354 8.9415493 -1.64141273 153.27386475 8.66809845
+		 -2.024319649 153.14022827 8.39514923 -2.34307194 152.9876709 8.13828373 -2.63360071 152.83157349 7.88044453
+		 -2.81624126 152.60820007 7.67404842 -2.96443176 152.4480896 7.48311996 -3.084078312 152.30325317 7.30803776
+		 -3.15510917 152.17649841 7.17412758 -3.14967823 152.014587402 7.047178268 -3.045926094 151.91152954 7.040138721
+		 -2.94069767 151.8604126 7.084981918 -2.81427813 151.77783203 7.17335939 -2.66588497 151.63793945 7.32495928
+		 -2.48349714 151.46508789 7.50295448 -2.26696062 151.26470947 7.69365788 -2.00086832047 151.055877686 7.89131355
+		 -1.68283737 150.87191772 8.097410202 -1.29824805 150.72016907 8.27137947 -0.8604238 150.61392212 8.39269352
+		 -0.41245711 150.56176758 8.45056534 -0.29621983 152.064453125 8.5039463 -0.64583999 152.1267395 8.4518261
+		 -0.99109912 152.12210083 8.35098267 -1.3180871 152.067657471 8.18384361 -1.59916162 152.026916504 7.98892784
+		 -1.83440685 152.014343262 7.80204868 -2.032555103 152.020202637 7.62704277 -2.21938086 152.043273926 7.46316242
+		 -2.38877821 152.0730896 7.30409241 -2.52031279 152.099304199 7.1616354 -2.6111598 152.12088013 7.060050011
+		 -2.70574713 152.15673828 6.96460438 -2.64872289 152.24017334 7.030597687 -2.54138851 152.25390625 7.098221302
+		 -2.42045212 152.25941467 7.1915884 -2.27583289 152.26220703 7.30267906 -2.10035396 152.24911499 7.45102596
+		 -1.90541363 152.23043823 7.61789894 -1.6801188 152.21551514 7.81340265 -1.41536367 152.19439697 8.039433479
+		 -1.075078726 152.15803528 8.25740242 -0.67576104 152.083343506 8.40262604 -0.30487967 151.99482727 8.46676445
+		 -2.14534426 156.45794678 8.031732559 -1.95592248 156.073394775 8.18207169 -1.74591053 155.74330139 8.31799126
+		 -1.79152727 155.46203613 8.58247948 -1.78911591 155.17483521 8.88538933 -1.7364912 154.96966553 9.053218842
+		 -1.57796025 154.7333374 9.16127491 -1.38463438 154.64651489 9.10831928 -1.27702355 154.72372437 8.95061684
+		 -1.13072896 154.86437988 8.69881725 -0.87275773 154.75170898 8.71557522 -0.7154389 154.64465332 8.80481339
+		 -0.61083257 154.54470825 8.88297272 -0.56947488 154.38101196 8.96077442 -0.50069666 154.18798828 9.068443298
+		 -0.32837781 154.090057373 9.14306545 -0.15860149 154.044586182 9.17287064 -4.67271471 151.91543579 5.84336329
+		 -4.40226269 151.87789917 6.16165066 -4.13211441 151.85620117 6.41094589 -3.9103651 151.84707642 6.57681704
+		 -3.70676756 151.85116577 6.72166586 -3.52510834 151.86077881 6.83317804 -3.36395645 151.8822937 6.91857767
+		 -3.22807503 151.91799927 6.97691011 -3.11034489 151.96025085 7.030296803 -3.010480165 152.0074157715 7.071688175
+		 -2.92877984 152.054718018 7.076992035 -2.86612868 152.097671509 7.056502342 -2.81261444 152.14041138 7.045467854
+		 -2.76399088 152.18521118 7.025537968 -2.70558476 152.21580505 6.97660685 -2.5701685 152.21061707 6.75098419
+		 -2.53436661 152.20591736 6.45856857 -4.84962082 152.70443726 6.087305069 -4.50999165 152.55383301 6.37323475
+		 -4.18988609 152.43875122 6.59700871 -3.94069242 152.34429932 6.74068928 -3.72818756 152.26208496 6.85867882
+		 -3.55481911 152.19132996 6.94570971 -3.40930796 152.13841248 7.010472298 -3.28416395 152.1008606 7.057880402
+		 -3.16933441 152.081085205 7.091802597 -3.064021587 152.073120117 7.11834717 -2.96592259 152.078704834 7.12672758
+		 -2.8815484 152.087432861 7.11679506 -2.80866051 152.10023499 7.095912457 -2.73918581 152.12005615 7.061897278
+		 -2.66982222 152.13372803 6.99522352 -2.54552698 152.21038818 6.78428555 -2.54173851 152.33273315 6.5318203
+		 -0.28608167 153.12698364 9.27822304 -0.52917701 153.16499329 9.27528095 -0.52834582 153.28158569 9.2344799
+		 -2.61919856 153.13793945 7.92366028 -2.83135319 152.92984009 7.73197794 -0.28057492 152.076324463 8.21089554
+		 -0.62776124 152.12658691 8.16527367 -0.96422112 152.12107849 8.068612099 -1.27826262 152.078842163 7.92453861
+		 -1.5467782 152.063949585 7.77327728 -1.78461051 152.062271118 7.62398577 -1.98467195 152.077056885 7.47815561
+		 -2.16469741 152.10437012 7.3357749 -2.32903862 152.12631226 7.19894409 -2.46085548 152.14854431 7.070302963
+		 -2.54711771 152.15887451 6.97591209 -2.60268211 152.15859985 6.91069984 -2.63405275 152.17138672 6.88291311
+		 -2.6358757 152.22280884 6.8960743 -2.58298683 152.24900818 6.94223833 -2.4774375 152.26025391 6.99767733
+		 -2.35269094 152.2784729 7.081195831 -2.20584774 152.28520203 7.18158054 -2.034030437 152.27960205 7.31546593
+		 -1.84443617 152.2747345 7.47066784 -1.61077976 152.27450562 7.63362598 -1.33234 152.26690674 7.82028008
+		 -0.99428678 152.23707581 8.0084571838 -0.61677635 152.18003845 8.13759804 -0.28213084 152.10595703 8.19964409
+		 -0.8753497 157.50976563 9.028036118 -0.83213228 157.087127686 9.30569172 -0.80722928 156.71734619 9.54757118
+		 -0.78808677 156.4160614 9.75357246 -0.77982318 156.14691162 9.95327473 -0.77073056 155.94644165 10.097249985
+		 -0.82958364 155.82038879 10.13997936 -0.73962253 155.62701416 10.32045364 -0.51475948 155.49046326 10.48993397
+		 -0.25586951 155.43421936 10.58550358;
+	setAttr -s 2548 ".ed";
+	setAttr ".ed[0:165]"  1 0 1 0 4 1 4 3 1 3 1 1 1 8 1 8 9 1 9 0 1 8 7 1 7 6 1
+		 6 9 1 10 6 1 7 5 1 5 10 1 5 628 1 628 627 1 627 10 1 9 15 1 15 25 1 25 0 1 6 14 1
+		 14 15 1 16 14 1 10 16 1 627 675 1 675 16 1 4 18 1 18 17 1 17 3 1 11 2 0 2 18 1 4 11 1
+		 15 19 1 19 23 1 23 25 1 20 19 1 14 20 1 16 21 1 21 20 1 675 676 1 676 21 1 22 23 1
+		 20 22 1 24 22 1 21 24 1 676 677 1 677 24 1 12 11 0 0 12 1 25 13 1 13 12 0 26 13 0
+		 23 26 1 27 26 0 22 27 1 28 27 0 24 28 1 677 678 1 678 28 0 29 674 0 674 673 1 673 30 1
+		 30 29 1 673 672 1 672 31 1 31 30 1 59 29 0 30 60 1 60 59 1 672 671 1 671 431 1 431 31 1
+		 31 61 1 61 60 1 85 59 0 60 86 1 86 85 1 32 670 1 670 669 1 669 33 1 33 32 1 431 432 1
+		 432 61 1 61 87 1 87 86 1 118 617 0 617 618 1 618 119 1 119 118 1 626 668 1 668 667 1
+		 667 34 1 34 626 1 62 32 1 33 63 1 63 62 1 432 433 1 433 87 1 618 619 1 619 120 1
+		 120 119 1 158 118 0 119 159 1 159 158 1 667 666 1 666 35 1 35 34 1 625 626 1 34 64 1
+		 64 625 1 88 62 1 63 89 1 89 88 1 619 620 1 620 434 1 434 120 1 120 160 1 160 159 1
+		 202 158 0 159 203 1 203 202 1 666 665 1 665 360 1 360 35 1 35 65 1 65 64 1 624 625 1
+		 64 90 1 90 624 1 121 623 1 623 122 1 122 161 1 161 121 1 434 435 1 435 160 1 245 202 0
+		 203 246 1 246 245 1 36 664 1 664 663 1 663 37 1 37 36 1 360 361 1 361 65 1 65 91 1
+		 91 90 1 281 245 0 246 282 1 282 281 1 377 662 1 662 661 1 661 38 1 38 377 1 66 36 1
+		 37 67 1 67 66 1 361 362 1 362 91 1 122 90 1 91 123 1 123 122 1 123 162 1 162 161 1
+		 314 536 0 536 537 1 537 283 1 283 314 1;
+	setAttr ".ed[166:331]" 552 659 1 659 658 1 658 39 1 39 552 1 376 377 1 38 68 1
+		 68 376 1 92 66 1 67 93 1 93 92 1 362 363 1 363 123 1 363 364 1 364 162 1 205 438 1
+		 438 439 1 439 206 1 206 205 1 283 284 1 284 315 1 315 314 0 658 657 1 657 40 1 40 39 1
+		 551 552 1 39 69 1 69 551 1 375 376 1 68 94 1 94 375 1 124 92 1 93 125 1 125 124 1
+		 163 124 1 124 164 1 164 165 1 165 163 1 539 540 1 540 440 1 440 208 1 208 539 1 284 285 1
+		 285 316 1 316 315 0 657 656 1 656 41 1 41 40 1 40 70 1 70 69 1 550 551 1 69 95 1
+		 95 550 1 374 375 1 94 128 1 128 374 1 93 126 1 126 127 1 127 125 1 125 166 1 166 164 1
+		 207 541 1 541 542 1 542 209 1 209 207 1 441 442 1 442 215 1 215 366 1 366 441 1 284 250 1
+		 250 251 1 251 285 1 285 286 1 286 317 1 317 316 0 656 655 1 655 42 1 42 41 1 41 71 1
+		 71 70 1 70 96 1 96 95 1 549 550 1 95 129 1 129 549 1 171 378 1 378 374 1 128 171 1
+		 170 168 1 168 372 1 372 373 1 373 170 1 127 167 1 167 166 1 542 543 1 543 210 1 210 209 1
+		 176 213 1 213 367 1 367 368 1 368 176 1 442 443 1 443 214 1 214 215 1 250 214 1 214 216 1
+		 216 251 1 251 252 1 252 286 1 286 287 1 287 318 1 318 317 0 655 654 1 654 489 1 489 42 1
+		 42 72 1 72 71 1 71 97 1 97 96 1 130 95 1 96 132 1 132 130 1 130 131 1 131 129 1 129 172 1
+		 172 548 1 548 549 1 547 548 1 172 173 1 173 547 1 168 169 1 169 371 1 371 372 1 212 169 1
+		 170 212 1 543 544 1 544 211 1 211 210 1 174 176 1 368 369 1 369 174 1 176 177 1 177 179 1
+		 179 213 1 443 444 1 444 216 1 216 217 1 217 252 1 252 253 1 253 287 1 418 419 1 419 288 1
+		 288 319 1 319 418 0 489 490 1 490 72 1 72 98 1 98 97 1 97 133 1 133 132 1 176 130 1
+		 132 177 1 174 131 1 131 173 1 175 546 1 546 547 1 173 175 1;
+	setAttr ".ed[332:497]" 545 546 1 175 370 1 370 545 1 175 174 1 369 370 1 177 135 1
+		 135 178 1 178 179 1 444 445 1 445 217 1 217 219 1 219 253 1 419 420 1 420 255 1 255 288 1
+		 425 426 1 426 290 1 290 320 1 320 425 0 553 554 1 554 312 1 312 313 1 313 553 0 351 342 0
+		 342 343 1 343 350 1 350 351 1 587 652 1 652 651 1 651 466 1 466 587 1 490 491 1 491 98 1
+		 98 100 1 100 133 1 133 135 1 135 180 1 180 181 1 181 178 1 445 446 1 446 219 1 420 421 1
+		 421 254 1 254 255 1 426 427 1 427 289 1 289 290 1 290 321 1 321 322 1 322 320 0 312 279 1
+		 279 280 1 280 313 0 554 555 1 555 311 1 311 312 1 570 571 1 571 340 1 340 341 1 341 570 0
+		 342 322 0 321 343 1 44 650 1 650 649 1 649 45 1 45 44 1 467 588 1 588 587 1 466 467 1
+		 491 492 1 492 100 1 100 134 1 134 135 1 134 182 1 182 180 1 218 181 1 180 220 1 220 218 1
+		 421 447 1 447 448 1 448 254 1 427 428 1 428 291 1 291 289 1 289 323 1 323 321 1 279 397 1
+		 397 398 1 398 280 0 311 278 1 278 279 1 555 556 1 556 310 1 310 311 1 571 572 1 572 339 1
+		 339 340 1 343 344 1 344 349 1 349 350 1 323 344 1 649 648 1 648 46 1 46 45 1 74 44 1
+		 45 75 1 75 74 1 99 73 1 73 467 1 467 468 1 468 99 1 492 493 1 493 134 1 493 494 1
+		 494 182 1 182 221 1 221 220 1 256 422 1 422 423 1 423 257 1 257 256 1 428 449 1 449 450 1
+		 450 291 1 291 324 1 324 323 1 278 396 1 396 397 1 399 400 1 400 18 1 2 399 0 310 276 1
+		 276 278 1 556 557 1 557 455 1 455 310 1 572 573 1 573 338 1 338 339 1 344 345 1 345 348 1
+		 348 349 1 324 345 1 648 647 1 647 513 1 513 46 1 46 76 1 76 75 1 101 74 1 75 102 1
+		 102 101 1 136 99 1 468 469 1 469 136 1 183 136 1 469 470 1 470 183 1 494 495 1 495 221 1
+		 294 379 1 379 295 1 295 326 1 326 294 1 292 429 1 429 430 1 430 293 1;
+	setAttr ".ed[498:663]" 293 292 1 450 451 1 451 324 1 276 395 1 395 396 1 400 401 1
+		 401 17 1 455 456 1 456 276 1 558 559 1 559 335 1 335 309 1 309 558 1 573 574 1 574 454 1
+		 454 338 1 345 452 1 452 453 1 453 348 1 451 452 1 47 645 1 645 644 1 644 48 0 48 47 1
+		 513 514 1 514 76 1 139 102 1 76 139 1 137 101 1 102 138 1 138 137 1 184 137 1 138 185 1
+		 185 184 1 222 183 1 470 471 1 471 222 1 325 292 1 293 294 1 294 325 1 456 457 1 457 395 1
+		 401 402 1 402 240 1 240 17 1 308 277 1 277 309 1 335 308 1 575 576 1 576 336 1 336 337 1
+		 337 575 1 346 326 1 326 327 1 327 347 1 347 346 1 346 325 1 77 47 1 48 78 0 78 77 1
+		 139 140 1 140 138 1 514 515 1 515 139 1 140 186 1 186 185 1 223 184 1 185 224 1 224 223 1
+		 471 472 1 472 417 1 417 222 1 379 498 1 498 499 1 499 295 1 402 459 1 459 460 1 460 240 1
+		 308 393 1 393 394 1 394 277 1 240 201 1 201 3 1 559 560 1 560 334 1 334 335 1 515 516 1
+		 516 140 1 141 77 1 78 103 0 103 141 1 516 517 1 517 186 1 186 188 1 188 224 1 415 416 1
+		 416 223 1 224 415 1 296 380 1 380 474 1 474 475 1 475 296 1 328 295 1 499 500 1 500 328 1
+		 328 327 1 403 404 1 404 238 1 238 239 1 239 403 1 460 461 1 461 201 1 201 157 1 157 1 1
+		 334 307 1 307 308 1 576 577 1 577 330 1 330 336 1 560 561 1 561 502 1 502 334 1 103 104 0
+		 104 142 1 142 141 1 104 143 0 143 144 1 144 142 1 517 518 1 518 188 1 414 415 1 188 414 1
+		 381 382 1 382 261 1 261 262 1 262 381 1 475 476 1 476 298 1 298 296 1 577 578 1 578 501 1
+		 501 330 1 238 199 1 199 200 1 200 239 1 461 462 1 462 157 1 307 392 1 392 393 1 157 117 1
+		 117 8 1 502 503 1 503 307 1 562 563 1 563 478 1 478 306 1 306 562 1 187 144 1 143 189 0
+		 189 187 1 518 519 1 519 414 1 382 383 1 383 263 1 263 261 1 297 262 1;
+	setAttr ".ed[664:829]" 261 354 1 354 297 1 329 579 1 579 580 1 580 477 1 477 329 1
+		 404 405 1 405 237 1 237 238 1 199 155 1 155 156 1 156 200 1 462 463 1 463 117 1 503 504 1
+		 504 392 1 117 84 1 84 7 1 478 479 1 479 305 1 305 306 1 333 352 1 352 565 1 565 566 1
+		 566 333 1 412 413 1 413 187 1 189 412 0 383 521 1 521 522 1 522 263 1 263 299 1 299 354 1
+		 353 582 1 582 583 1 583 332 1 332 353 1 405 506 1 506 507 1 507 237 1 237 198 1 198 199 1
+		 155 115 1 115 116 1 116 156 1 463 464 1 464 84 1 479 480 1 480 391 1 391 305 1 84 58 1
+		 58 5 1 269 271 1 271 304 1 304 352 1 352 269 1 333 268 1 268 269 1 566 567 1 567 525 1
+		 525 333 1 384 385 1 385 228 0 228 229 1 229 384 1 522 523 1 523 299 1 583 584 1 584 524 1
+		 524 332 1 406 482 1 482 483 1 483 236 1 236 406 1 507 508 1 508 198 1 198 154 1 154 155 1
+		 115 82 1 82 83 1 83 116 1 464 465 1 465 58 1 269 389 1 389 390 1 390 271 1 58 629 1
+		 629 628 1 525 526 1 526 268 1 568 569 1 569 302 0 302 303 1 303 568 1 300 229 1 228 264 0
+		 264 300 1 585 586 1 586 265 0 265 301 1 301 585 1 407 408 1 408 233 1 233 235 1 235 407 1
+		 483 484 1 484 197 1 197 236 1 508 509 1 509 154 1 154 114 1 114 115 1 82 56 1 56 57 1
+		 57 83 1 465 630 1 630 629 1 268 388 1 388 389 1 267 303 1 302 266 0 266 267 1 408 409 1
+		 409 194 1 194 233 1 233 195 1 195 196 1 196 235 1 484 485 1 485 153 1 153 197 1 509 510 1
+		 510 114 1 114 81 1 81 82 1 56 632 1 632 631 1 631 57 1 526 527 1 527 388 1 409 529 1
+		 529 530 1 530 194 1 194 193 1 193 195 1 195 150 1 150 152 1 152 196 1 485 486 1 486 113 1
+		 113 153 1 510 511 1 511 81 1 81 55 1 55 56 1 266 386 0 386 387 1 387 267 1 410 411 1
+		 411 191 0 191 192 1 192 410 1 530 531 1 531 193 1 193 151 1 151 150 1;
+	setAttr ".ed[830:995]" 150 112 1 112 111 1 111 152 1 486 487 1 487 80 1 80 113 1
+		 511 512 1 512 55 1 55 633 1 633 632 1 191 145 0 145 147 1 147 192 1 531 532 1 532 151 1
+		 149 112 1 151 149 1 110 79 1 79 111 1 112 110 1 487 488 1 488 54 1 54 80 1 512 634 1
+		 634 633 1 145 106 0 106 146 1 146 147 1 532 533 1 533 149 1 149 109 1 109 110 1 110 52 1
+		 52 53 1 53 79 1 488 636 1 636 635 1 635 54 1 106 105 0 105 148 1 148 146 1 533 534 1
+		 534 109 1 109 51 1 51 52 1 52 638 1 638 637 1 637 53 1 105 107 0 107 108 1 108 148 1
+		 534 535 1 535 51 1 51 639 1 639 638 1 107 49 0 49 50 1 50 108 1 535 640 1 640 639 1
+		 49 643 0 643 642 1 642 50 1 564 565 1 304 564 1 331 581 1 581 582 1 353 331 1 170 171 1
+		 171 355 1 355 212 1 128 356 1 356 355 1 94 357 1 357 356 1 68 358 1 358 357 1 38 359 1
+		 359 358 1 661 660 1 660 359 1 160 204 1 204 203 1 435 436 1 436 204 1 365 246 1 204 365 1
+		 436 437 1 437 365 1 365 205 1 205 247 1 247 246 1 247 248 1 248 282 1 206 248 1 249 283 1
+		 537 538 1 538 249 1 538 539 1 208 249 1 249 250 1 208 366 1 215 249 1 665 664 1 36 360 1
+		 66 361 1 92 362 1 124 363 1 163 364 1 437 438 1 440 441 1 367 207 1 209 368 1 210 369 1
+		 211 370 1 544 545 1 371 167 1 127 372 1 126 373 1 378 373 1 126 374 1 93 375 1 67 376 1
+		 37 377 1 663 662 1 379 258 1 258 497 1 497 498 1 473 474 1 380 259 1 259 473 1 260 226 1
+		 226 382 1 381 260 1 226 225 1 225 383 1 520 521 1 225 520 1 227 190 1 190 385 0 384 227 1
+		 386 230 0 230 231 1 231 387 1 527 528 1 528 232 1 232 388 1 232 234 1 234 389 1 234 270 1
+		 270 390 1 480 481 1 481 272 1 272 391 1 504 505 1 505 273 1 273 392 1 273 274 1 274 393 1
+		 274 275 1 275 394 1 457 458 1 458 242 1 242 395 1 242 241 1 241 396 1;
+	setAttr ".ed[996:1161]" 241 243 1 243 397 1 243 244 1 244 398 0 243 400 1 399 244 0
+		 241 401 1 242 402 1 458 459 1 274 404 1 403 275 1 273 405 1 505 506 1 481 482 1 406 272 1
+		 234 408 1 407 270 1 232 409 1 528 529 1 230 411 0 410 231 1 227 413 1 412 190 0 519 520 1
+		 225 414 1 226 415 1 260 416 1 472 473 1 259 417 1 293 258 1 424 591 1 591 430 1 430 257 1
+		 257 424 1 287 419 1 418 318 0 253 420 1 219 421 1 446 447 1 422 218 1 220 423 1 288 426 1
+		 425 319 0 255 427 1 254 428 1 448 449 1 429 256 1 423 590 1 590 424 1 671 670 1 32 431 1
+		 62 432 1 88 433 1 620 621 1 621 121 1 121 434 1 161 435 1 162 436 1 364 437 1 163 438 1
+		 165 439 1 540 541 1 207 440 1 367 441 1 213 442 1 179 443 1 178 444 1 181 445 1 218 446 1
+		 422 447 1 256 448 1 429 449 1 292 450 1 325 451 1 346 452 1 347 453 1 574 575 1 337 454 1
+		 557 558 1 309 455 1 277 456 1 394 457 1 275 458 1 403 459 1 239 460 1 200 461 1 156 462 1
+		 116 463 1 83 464 1 57 465 1 631 630 1 651 650 1 44 466 1 74 467 1 101 468 1 137 469 1
+		 184 470 1 223 471 1 416 472 1 260 473 1 381 474 1 262 475 1 297 476 1 580 581 1 331 477 1
+		 563 564 1 304 478 1 271 479 1 390 480 1 270 481 1 407 482 1 235 483 1 196 484 1 152 485 1
+		 111 486 1 79 487 1 53 488 1 637 636 1 654 653 1 653 43 1 43 489 1 43 589 1 589 490 1
+		 491 73 1 99 492 1 136 493 1 183 494 1 222 495 1 417 496 1 496 495 1 259 497 1 497 496 1
+		 380 498 1 296 499 1 298 500 1 578 579 1 329 501 1 561 562 1 306 502 1 305 503 1 391 504 1
+		 272 505 1 406 506 1 236 507 1 197 508 1 153 509 1 113 510 1 80 511 1 54 512 1 635 634 1
+		 647 646 1 646 592 1 592 513 1 592 593 1 593 514 1 593 594 1 594 515 1 594 595 1 595 516 1
+		 595 596 1 596 517 1 596 597 1 597 518 1 597 598 1 598 519 1 598 599 1;
+	setAttr ".ed[1162:1327]" 599 520 1 599 600 1 600 521 1 600 601 1 601 522 1 601 602 1
+		 602 523 1 584 603 1 603 604 1 604 524 1 567 605 1 605 606 1 606 525 1 606 607 1 607 526 1
+		 607 608 1 608 527 1 608 609 1 609 528 1 609 610 1 610 529 1 610 611 1 611 530 1 611 612 1
+		 612 531 1 612 613 1 613 532 1 613 614 1 614 533 1 614 615 1 615 534 1 615 616 1 616 535 1
+		 616 641 1 641 640 1 536 281 0 282 537 1 248 538 1 206 539 1 439 540 1 165 541 1 164 542 1
+		 166 543 1 167 544 1 371 545 1 169 546 1 212 547 1 355 548 1 356 549 1 357 550 1 358 551 1
+		 359 552 1 660 659 1 340 554 1 553 341 0 339 555 1 338 556 1 454 557 1 337 558 1 336 559 1
+		 330 560 1 501 561 1 329 562 1 477 563 1 331 564 1 353 565 1 332 566 1 524 567 1 604 605 1
+		 265 569 0 568 301 1 350 571 1 570 351 0 349 572 1 348 573 1 453 574 1 347 575 1 327 576 1
+		 328 577 1 500 578 1 298 579 1 476 580 1 297 581 1 354 582 1 299 583 1 523 584 1 602 603 1
+		 264 586 0 585 300 1 588 589 1 43 587 1 653 652 1 73 589 1 221 590 1 496 590 1 258 591 1
+		 591 496 1 592 47 1 77 593 1 141 594 1 142 595 1 144 596 1 187 597 1 413 598 1 227 599 1
+		 384 600 1 229 601 1 300 602 1 585 603 1 301 604 1 568 605 1 303 606 1 267 607 1 387 608 1
+		 231 609 1 410 610 1 192 611 1 147 612 1 146 613 1 148 614 1 108 615 1 50 616 1 642 641 1
+		 646 645 1 617 85 0 86 618 1 87 619 1 433 620 1 88 621 1 89 622 1 622 621 1 623 624 1
+		 622 623 1 89 624 1 63 625 1 33 626 1 669 668 1 680 682 1 682 683 1 683 679 1 679 680 1
+		 679 688 1 688 687 1 687 680 1 688 685 1 685 686 1 686 687 1 689 684 1 684 686 1 685 689 1
+		 689 627 1 628 684 1 679 704 1 704 694 1 694 688 1 694 693 1 693 685 1 695 689 1 693 695 1
+		 695 675 1 682 696 1 696 697 1 697 683 1 690 683 1 697 681 1 681 690 0;
+	setAttr ".ed[1328:1493]" 704 702 1 702 698 1 698 694 1 699 693 1 698 699 1 699 700 1
+		 700 695 1 700 676 1 701 699 1 702 701 1 703 700 1 701 703 1 703 677 1 691 679 1 690 691 0
+		 691 692 0 692 704 1 705 702 1 692 705 0 706 701 1 705 706 0 707 703 1 706 707 0 707 678 0
+		 708 709 1 709 673 1 674 708 0 709 710 1 710 672 1 738 739 1 739 709 1 708 738 0 710 1110 1
+		 1110 671 1 739 740 1 740 710 1 764 765 1 765 739 1 738 764 0 711 712 1 712 669 1
+		 670 711 1 740 1111 1 1111 1110 1 765 766 1 766 740 1 797 798 1 798 1297 1 1297 1296 1
+		 1296 797 0 1305 713 1 713 667 1 668 1305 1 741 742 1 742 712 1 711 741 1 766 1112 1
+		 1112 1111 1 798 799 1 799 1298 1 1298 1297 1 837 838 1 838 798 1 797 837 0 713 714 1
+		 714 666 1 1304 743 1 743 713 1 1305 1304 1 767 768 1 768 742 1 741 767 1 799 1113 1
+		 1113 1299 1 1299 1298 1 838 839 1 839 799 1 881 882 1 882 838 1 837 881 0 714 1039 1
+		 1039 665 1 743 744 1 744 714 1 1303 769 1 769 743 1 1304 1303 1 800 840 1 840 801 1
+		 801 1302 1 1302 800 1 839 1114 1 1114 1113 1 924 925 1 925 882 1 881 924 0 715 716 1
+		 716 663 1 664 715 1 744 1040 1 1040 1039 1 769 770 1 770 744 1 960 961 1 961 925 1
+		 924 960 0 1056 717 1 717 661 1 662 1056 1 745 746 1 746 716 1 715 745 1 770 1041 1
+		 1041 1040 1 801 802 1 802 770 1 769 801 1 840 841 1 841 802 1 993 962 1 962 1216 1
+		 1216 1215 1 1215 993 0 1231 718 1 718 658 1 659 1231 1 1055 747 1 747 717 1 1056 1055 1
+		 771 772 1 772 746 1 745 771 1 802 1042 1 1042 1041 1 841 1043 1 1043 1042 1 884 885 1
+		 885 1118 1 1118 1117 1 1117 884 1 993 994 0 994 963 1 963 962 1 718 719 1 719 657 1
+		 1230 748 1 748 718 1 1231 1230 1 1054 773 1 773 747 1 1055 1054 1 803 804 1 804 772 1
+		 771 803 1 842 844 1 844 843 1 843 803 1 803 842 1 1218 887 1 887 1119 1 1119 1219 1
+		 1219 1218 1 994 995 0 995 964 1 964 963 1 719 720 1;
+	setAttr ".ed[1494:1659]" 720 656 1 748 749 1 749 719 1 1229 774 1 774 748 1 1230 1229 1
+		 1053 807 1 807 773 1 1054 1053 1 804 806 1 806 805 1 805 772 1 843 845 1 845 804 1
+		 886 888 1 888 1221 1 1221 1220 1 1220 886 1 1120 1045 1 1045 894 1 894 1121 1 1121 1120 1
+		 964 930 1 930 929 1 929 963 1 995 996 0 996 965 1 965 964 1 720 721 1 721 655 1 749 750 1
+		 750 720 1 774 775 1 775 749 1 1228 808 1 808 774 1 1229 1228 1 850 807 1 1053 1057 1
+		 1057 850 1 849 1052 1 1052 1051 1 1051 847 1 847 849 1 845 846 1 846 806 1 888 889 1
+		 889 1222 1 1222 1221 1 855 1047 1 1047 1046 1 1046 892 1 892 855 1 894 893 1 893 1122 1
+		 1122 1121 1 930 895 1 895 893 1 893 929 1 965 931 1 931 930 1 996 997 0 997 966 1
+		 966 965 1 721 1168 1 1168 654 1 750 751 1 751 721 1 775 776 1 776 750 1 809 811 1
+		 811 775 1 774 809 1 808 810 1 810 809 1 1228 1227 1 1227 851 1 851 808 1 1226 852 1
+		 852 851 1 1227 1226 1 1051 1050 1 1050 848 1 848 847 1 891 849 1 848 891 1 889 890 1
+		 890 1223 1 1223 1222 1 853 1048 1 1048 1047 1 855 853 1 892 858 1 858 856 1 856 855 1
+		 895 1123 1 1123 1122 1 931 896 1 896 895 1 966 932 1 932 931 1 1097 998 0 998 967 1
+		 967 1098 1 1098 1097 1 751 1169 1 1169 1168 1 776 777 1 777 751 1 811 812 1 812 776 1
+		 856 811 1 809 855 1 810 853 1 852 810 1 854 852 1 1226 1225 1 1225 854 1 1224 1049 1
+		 1049 854 1 1225 1224 1 1049 1048 1 853 854 1 858 857 1 857 814 1 814 856 1 896 1124 1
+		 1124 1123 1 932 898 1 898 896 1 967 934 1 934 1099 1 1099 1098 1 1104 999 0 999 969 1
+		 969 1105 1 1105 1104 1 1232 992 0 992 991 1 991 1233 1 1233 1232 1 1030 1029 1 1029 1022 1
+		 1022 1021 1 1021 1030 0 1266 1145 1 1145 651 1 652 1266 1 777 1170 1 1170 1169 1
+		 812 779 1 779 777 1 814 812 1 857 860 1 860 859 1 859 814 1 898 1125 1 1125 1124 1
+		 934 933 1 933 1100 1 1100 1099 1 969 968 1 968 1106 1 1106 1105 1 999 1001 0 1001 1000 1;
+	setAttr ".ed[1660:1825]" 1000 969 1 992 959 0 959 958 1 958 991 1 991 990 1 990 1234 1
+		 1234 1233 1 1249 1020 0 1020 1019 1 1019 1250 1 1250 1249 1 1022 1000 1 1001 1021 0
+		 723 724 1 724 649 1 650 723 1 1146 1145 1 1266 1267 1 1267 1146 1 779 1171 1 1171 1170 1
+		 814 813 1 813 779 1 859 861 1 861 813 1 897 899 1 899 859 1 860 897 1 933 1127 1
+		 1127 1126 1 1126 1100 1 968 970 1 970 1107 1 1107 1106 1 1000 1002 1 1002 968 1 959 1077 0
+		 1077 1076 1 1076 958 1 958 957 1 957 990 1 990 989 1 989 1235 1 1235 1234 1 1019 1018 1
+		 1018 1251 1 1251 1250 1 1029 1028 1 1028 1023 1 1023 1022 1 1023 1002 1 724 725 1
+		 725 648 1 753 754 1 754 724 1 723 753 1 778 1147 1 1147 1146 1 1146 752 1 752 778 1
+		 813 1172 1 1172 1171 1 861 1173 1 1173 1172 1 899 900 1 900 861 1 935 936 1 936 1102 1
+		 1102 1101 1 1101 935 1 970 1129 1 1129 1128 1 1128 1107 1 1002 1003 1 1003 970 1
+		 1076 1075 1 1075 957 1 1078 681 0 697 1079 1 1079 1078 1 957 955 1 955 989 1 989 1134 1
+		 1134 1236 1 1236 1235 1 1018 1017 1 1017 1252 1 1252 1251 1 1028 1027 1 1027 1024 1
+		 1024 1023 1 1024 1003 1 725 1192 1 1192 647 1 754 755 1 755 725 1 780 781 1 781 754 1
+		 753 780 1 815 1148 1 1148 1147 1 778 815 1 862 1149 1 1149 1148 1 815 862 1 900 1174 1
+		 1174 1173 1 973 1005 1 1005 974 1 974 1058 1 1058 973 1 971 972 1 972 1109 1 1109 1108 1
+		 1108 971 1 1003 1130 1 1130 1129 1 1075 1074 1 1074 955 1 696 1080 1 1080 1079 1
+		 955 1135 1 1135 1134 1 1237 988 1 988 1014 1 1014 1238 1 1238 1237 1 1017 1133 1
+		 1133 1253 1 1253 1252 1 1027 1132 1 1132 1131 1 1131 1024 1 1131 1130 1 726 727 1
+		 727 644 0 645 726 1 755 1193 1 1193 1192 1 818 755 1 781 818 1 816 817 1 817 781 1
+		 780 816 1 863 864 1 864 817 1 816 863 1 901 1150 1 1150 1149 1 862 901 1 1004 973 1
+		 973 972 1 971 1004 1 1074 1136 1 1136 1135 1 696 919 1 919 1081 1 1081 1080 1 987 1014 1
+		 988 956 1 956 987 1 1254 1016 1 1016 1015 1 1015 1255 1 1255 1254 1 1025 1026 1;
+	setAttr ".ed[1826:1991]" 1026 1006 1 1006 1005 1 1005 1025 1 1004 1025 1 756 757 1
+		 757 727 0 726 756 1 817 819 1 819 818 1 818 1194 1 1194 1193 1 864 865 1 865 819 1
+		 902 903 1 903 864 1 863 902 1 901 1096 1 1096 1151 1 1151 1150 1 974 1178 1 1178 1177 1
+		 1177 1058 1 919 1139 1 1139 1138 1 1138 1081 1 956 1073 1 1073 1072 1 1072 987 1
+		 682 880 1 880 919 1 1014 1013 1 1013 1239 1 1239 1238 1 819 1195 1 1195 1194 1 820 782 1
+		 782 757 0 756 820 1 865 1196 1 1196 1195 1 903 867 1 867 865 1 1094 903 1 902 1095 1
+		 1095 1094 1 975 1154 1 1154 1153 1 1153 1059 1 1059 975 1 1007 1179 1 1179 1178 1
+		 974 1007 1 1006 1007 1 1082 918 1 918 917 1 917 1083 1 1083 1082 1 880 1140 1 1140 1139 1
+		 680 836 1 836 880 1 987 986 1 986 1013 1 1015 1009 1 1009 1256 1 1256 1255 1 1013 1181 1
+		 1181 1240 1 1240 1239 1 820 821 1 821 783 1 783 782 0 821 823 1 823 822 1 822 783 0
+		 867 1197 1 1197 1196 1 1093 867 1 1094 1093 1 1060 941 1 941 940 1 940 1061 1 1061 1060 1
+		 975 977 1 977 1155 1 1155 1154 1 1009 1180 1 1180 1257 1 1257 1256 1 918 879 1 879 878 1
+		 878 917 1 836 1141 1 1141 1140 1 1072 1071 1 1071 986 1 687 796 1 796 836 1 986 1182 1
+		 1182 1181 1 1241 985 1 985 1157 1 1157 1242 1 1242 1241 1 866 868 1 868 822 0 823 866 1
+		 1093 1198 1 1198 1197 1 940 942 1 942 1062 1 1062 1061 1 976 1033 1 1033 940 1 941 976 1
+		 1008 1156 1 1156 1259 1 1259 1258 1 1258 1008 1 917 916 1 916 1084 1 1084 1083 1
+		 879 835 1 835 834 1 834 878 1 796 1142 1 1142 1141 1 1071 1183 1 1183 1182 1 686 763 1
+		 763 796 1 985 984 1 984 1158 1 1158 1157 1 1012 1245 1 1245 1244 1 1244 1031 1 1031 1012 1
+		 1091 868 0 866 1092 1 1092 1091 1 942 1201 1 1201 1200 1 1200 1062 1 1033 978 1 978 942 1
+		 1032 1011 1 1011 1262 1 1262 1261 1 1261 1032 1 916 1186 1 1186 1185 1 1185 1084 1
+		 878 877 1 877 916 1 835 795 1 795 794 1 794 834 1 763 1143 1 1143 1142 1 984 1070 1
+		 1070 1159 1 1159 1158 1 684 737 1 737 763 1 948 1031 1;
+	setAttr ".ed[1992:2157]" 1031 983 1 983 950 1 950 948 1 948 947 1 947 1012 1
+		 1012 1204 1 1204 1246 1 1246 1245 1 1063 908 1 908 907 1 907 1064 0 1064 1063 1 978 1202 1
+		 1202 1201 1 1011 1203 1 1203 1263 1 1263 1262 1 1085 915 1 915 1162 1 1162 1161 1
+		 1161 1085 1 877 1187 1 1187 1186 1 834 833 1 833 877 1 795 762 1 762 761 1 761 794 1
+		 737 1144 1 1144 1143 1 950 1069 1 1069 1068 1 1068 948 1 629 737 1 947 1205 1 1205 1204 1
+		 1247 982 1 982 981 1 981 1248 0 1248 1247 1 979 943 1 943 907 0 908 979 1 1264 980 1
+		 980 944 1 944 1265 0 1265 1264 1 1086 914 1 914 912 1 912 1087 1 1087 1086 1 915 876 1
+		 876 1163 1 1163 1162 1 833 1188 1 1188 1187 1 794 793 1 793 833 1 762 736 1 736 735 1
+		 735 761 1 630 1144 1 1068 1067 1 1067 947 1 946 945 1 945 981 0 982 946 1 912 873 1
+		 873 1088 1 1088 1087 1 914 875 1 875 874 1 874 912 1 876 832 1 832 1164 1 1164 1163 1
+		 793 1189 1 1189 1188 1 761 760 1 760 793 1 736 631 1 632 735 1 1067 1206 1 1206 1205 1
+		 873 1209 1 1209 1208 1 1208 1088 1 874 872 1 872 873 1 875 831 1 831 829 1 829 874 1
+		 832 792 1 792 1165 1 1165 1164 1 760 1190 1 1190 1189 1 735 734 1 734 760 1 946 1066 1
+		 1066 1065 1 1065 945 0 1089 871 1 871 870 1 870 1090 0 1090 1089 1 872 1210 1 1210 1209 1
+		 829 830 1 830 872 1 831 790 1 790 791 1 791 829 1 792 759 1 759 1166 1 1166 1165 1
+		 734 1191 1 1191 1190 1 633 734 1 871 826 1 826 824 1 824 870 0 830 1211 1 1211 1210 1
+		 828 830 1 791 828 1 789 791 1 790 758 1 758 789 1 759 733 1 733 1167 1 1167 1166 1
+		 634 1191 1 826 825 1 825 785 1 785 824 0 828 1212 1 1212 1211 1 789 788 1 788 828 1
+		 758 732 1 732 731 1 731 789 1 733 635 1 636 1167 1 825 827 1 827 784 1 784 785 0
+		 788 1213 1 1213 1212 1 731 730 1 730 788 1 732 637 1 638 731 1 827 787 1 787 786 1
+		 786 784 0 730 1214 1 1214 1213 1 639 730 1 787 729 1 729 728 1 728 786 0 640 1214 1
+		 729 642 1 643 728 0;
+	setAttr ".ed[2158:2323]" 1243 983 1 1244 1243 1 1010 1032 1 1261 1260 1 1260 1010 1
+		 891 1034 1 1034 850 1 850 849 1 1034 1035 1 1035 807 1 1035 1036 1 1036 773 1 1036 1037 1
+		 1037 747 1 1037 1038 1 1038 717 1 1038 660 1 882 883 1 883 839 1 883 1115 1 1115 1114 1
+		 1044 883 1 925 1044 1 1044 1116 1 1116 1115 1 925 926 1 926 884 1 884 1044 1 961 927 1
+		 927 926 1 927 885 1 928 1217 1 1217 1216 1 962 928 1 928 887 1 1218 1217 1 929 928 1
+		 928 894 1 1045 887 1 1039 715 1 1040 745 1 1041 771 1 1042 803 1 1043 842 1 1117 1116 1
+		 1120 1119 1 1047 888 1 886 1046 1 1048 889 1 1049 890 1 1224 1223 1 1051 806 1 846 1050 1
+		 1052 805 1 1053 805 1 1052 1057 1 1054 772 1 1055 746 1 1056 716 1 1177 1176 1 1176 937 1
+		 937 1058 1 1152 938 1 938 1059 1 1153 1152 1 939 1060 1 1061 905 1 905 939 1 1062 904 1
+		 904 905 1 1199 904 1 1200 1199 1 906 1063 1 1064 869 0 869 906 1 1066 910 1 910 909 1
+		 909 1065 0 1067 911 1 911 1207 1 1207 1206 1 1068 913 1 913 911 1 1069 949 1 949 913 1
+		 1070 951 1 951 1160 1 1160 1159 1 1071 952 1 952 1184 1 1184 1183 1 1072 953 1 953 952 1
+		 1073 954 1 954 953 1 1074 921 1 921 1137 1 1137 1136 1 1075 920 1 920 921 1 1076 922 1
+		 922 920 1 1077 923 0 923 922 1 923 1078 0 1079 922 1 1080 920 1 1081 921 1 1138 1137 1
+		 954 1082 1 1083 953 1 1084 952 1 1185 1184 1 951 1085 1 1161 1160 1 949 1086 1 1087 913 1
+		 1088 911 1 1208 1207 1 910 1089 1 1090 909 0 869 1091 0 1092 906 1 1093 904 1 1199 1198 1
+		 1094 905 1 1095 939 1 1096 938 1 1152 1151 1 937 972 1 1103 936 1 936 1109 1 1109 1270 1
+		 1270 1103 1 997 1097 0 1098 966 1 1099 932 1 1100 898 1 1126 1125 1 1102 899 1 897 1101 1
+		 998 1104 0 1105 967 1 1106 934 1 1107 933 1 1128 1127 1 935 1108 1 1103 1269 1 1269 1102 1
+		 1110 711 1 1111 741 1 1112 767 1 1113 800 1 800 1300 1 1300 1299 1 1114 840 1 1115 841 1
+		 1116 1043 1 1117 842 1 1118 844 1 1119 886 1 1220 1219 1 1120 1046 1 1121 892 1 1122 858 1
+		 1123 857 1;
+	setAttr ".ed[2324:2489]" 1124 860 1 1125 897 1 1126 1101 1 1127 935 1 1128 1108 1
+		 1129 971 1 1130 1004 1 1131 1025 1 1132 1026 1 1133 1016 1 1254 1253 1 1134 988 1
+		 1237 1236 1 1135 956 1 1136 1073 1 1137 954 1 1138 1082 1 1139 918 1 1140 879 1 1141 835 1
+		 1142 795 1 1143 762 1 1144 736 1 1145 723 1 1146 753 1 1147 780 1 1148 816 1 1149 863 1
+		 1150 902 1 1151 1095 1 1152 939 1 1153 1060 1 1154 941 1 1155 976 1 1156 1010 1 1260 1259 1
+		 1157 983 1 1243 1242 1 1158 950 1 1159 1069 1 1160 949 1 1161 1086 1 1162 914 1 1163 875 1
+		 1164 831 1 1165 790 1 1166 758 1 1167 732 1 1168 722 1 722 653 1 1169 1268 1 1268 722 1
+		 1171 778 1 752 1170 1 1172 815 1 1173 862 1 1174 901 1 1174 1175 1 1175 1096 1 1175 1176 1
+		 1176 938 1 1177 1059 1 1178 975 1 1179 977 1 1180 1008 1 1258 1257 1 1181 985 1 1241 1240 1
+		 1182 984 1 1183 1070 1 1184 951 1 1185 1085 1 1186 915 1 1187 876 1 1188 832 1 1189 792 1
+		 1190 759 1 1191 733 1 1192 1271 1 1271 646 1 1193 1272 1 1272 1271 1 1194 1273 1
+		 1273 1272 1 1195 1274 1 1274 1273 1 1196 1275 1 1275 1274 1 1197 1276 1 1276 1275 1
+		 1198 1277 1 1277 1276 1 1199 1278 1 1278 1277 1 1200 1279 1 1279 1278 1 1201 1280 1
+		 1280 1279 1 1202 1281 1 1281 1280 1 1203 1283 1 1283 1282 1 1282 1263 1 1204 1285 1
+		 1285 1284 1 1284 1246 1 1205 1286 1 1286 1285 1 1206 1287 1 1287 1286 1 1207 1288 1
+		 1288 1287 1 1208 1289 1 1289 1288 1 1209 1290 1 1290 1289 1 1210 1291 1 1291 1290 1
+		 1211 1292 1 1292 1291 1 1212 1293 1 1293 1292 1 1213 1294 1 1294 1293 1 1214 1295 1
+		 1295 1294 1 641 1295 1 1216 961 1 960 1215 0 1217 927 1 1218 885 1 1219 1118 1 1220 844 1
+		 1221 843 1 1222 845 1 1223 846 1 1224 1050 1 1225 848 1 1226 891 1 1227 1034 1 1228 1035 1
+		 1229 1036 1 1230 1037 1 1231 1038 1 1020 1232 0 1233 1019 1 1234 1018 1 1235 1017 1
+		 1236 1133 1 1237 1016 1 1238 1015 1 1239 1009 1 1240 1180 1 1241 1008 1 1242 1156 1
+		 1243 1010 1 1244 1032 1 1245 1011 1 1246 1203 1 1284 1283 1 980 1247 1 1248 944 0
+		 1030 1249 0 1250 1029 1 1251 1028 1 1252 1027 1;
+	setAttr ".ed[2490:2547]" 1253 1132 1 1254 1026 1 1255 1006 1 1256 1007 1 1257 1179 1
+		 1258 977 1 1259 1155 1 1260 976 1 1261 1033 1 1262 978 1 1263 1202 1 1282 1281 1
+		 979 1264 1 1265 943 0 1266 722 1 1268 1267 1 1268 752 1 1269 900 1 1269 1175 1 1175 1270 1
+		 1270 937 1 1272 756 1 726 1271 1 1273 820 1 1274 821 1 1275 823 1 1276 866 1 1277 1092 1
+		 1278 906 1 1279 1063 1 1280 908 1 1281 979 1 1282 1264 1 1283 980 1 1284 1247 1 1285 982 1
+		 1286 946 1 1287 1066 1 1288 910 1 1289 1089 1 1290 871 1 1291 826 1 1292 825 1 1293 827 1
+		 1294 787 1 1295 729 1 1297 765 1 764 1296 0 1298 766 1 1299 1112 1 1300 767 1 1300 1301 1
+		 1301 768 1 1303 1302 1 1302 1301 1 1303 768 1 1304 742 1 1305 712 1;
+	setAttr -s 1242 -ch 4968 ".fc";
+	setAttr ".fc[0:499]" -type "polyFaces" 
+		f 4 0 1 2 3
+		mu 0 4 0 1 2 3
+		f 4 4 5 6 -1
+		mu 0 4 0 4 5 1
+		f 4 7 8 9 -6
+		mu 0 4 4 6 7 5
+		f 4 10 -9 11 12
+		mu 0 4 8 7 6 9
+		f 4 -13 13 14 15
+		mu 0 4 8 9 10 11
+		f 4 16 17 18 -7
+		mu 0 4 5 15 16 1
+		f 4 -10 19 20 -17
+		mu 0 4 5 7 17 15
+		f 4 21 -20 -11 22
+		mu 0 4 18 17 7 8
+		f 4 -23 -16 23 24
+		mu 0 4 18 8 11 19
+		f 4 25 26 27 -3
+		mu 0 4 2 20 21 3
+		f 4 28 29 -26 30
+		mu 0 4 12 22 20 2
+		f 4 31 32 33 -18
+		mu 0 4 15 23 24 16
+		f 4 34 -32 -21 35
+		mu 0 4 25 23 15 17
+		f 4 -22 36 37 -36
+		mu 0 4 17 18 26 25
+		f 4 -37 -25 38 39
+		mu 0 4 26 18 19 27
+		f 4 40 -33 -35 41
+		mu 0 4 28 24 23 25
+		f 4 42 -42 -38 43
+		mu 0 4 29 28 25 26
+		f 4 44 45 -44 -40
+		mu 0 4 27 30 29 26
+		f 4 46 -31 -2 47
+		mu 0 4 13 12 2 1
+		f 4 -48 -19 48 49
+		mu 0 4 13 1 16 14
+		f 4 50 -49 -34 51
+		mu 0 4 31 14 16 24
+		f 4 52 -52 -41 53
+		mu 0 4 32 31 24 28
+		f 4 54 -54 -43 55
+		mu 0 4 33 32 28 29
+		f 4 -56 -46 56 57
+		mu 0 4 33 29 30 34
+		f 4 58 59 60 61
+		mu 0 4 36 35 37 38
+		f 4 -61 62 63 64
+		mu 0 4 38 37 40 41
+		f 4 65 -62 66 67
+		mu 0 4 39 36 38 42
+		f 4 -64 68 69 70
+		mu 0 4 41 40 44 45
+		f 4 -67 -65 71 72
+		mu 0 4 42 38 41 46
+		f 4 73 -68 74 75
+		mu 0 4 43 39 42 47
+		f 4 76 77 78 79
+		mu 0 4 50 51 52 53
+		f 4 -72 -71 80 81
+		mu 0 4 46 41 45 54
+		f 4 -75 -73 82 83
+		mu 0 4 47 42 46 55
+		f 4 84 85 86 87
+		mu 0 4 49 48 56 57
+		f 4 88 89 90 91
+		mu 0 4 59 60 61 62
+		f 4 92 -80 93 94
+		mu 0 4 63 50 53 64
+		f 4 -83 -82 95 96
+		mu 0 4 55 46 54 65
+		f 4 -87 97 98 99
+		mu 0 4 57 56 66 67
+		f 4 100 -88 101 102
+		mu 0 4 58 49 57 68
+		f 4 -91 103 104 105
+		mu 0 4 62 61 70 71
+		f 4 106 -92 107 108
+		mu 0 4 72 59 62 73
+		f 4 109 -95 110 111
+		mu 0 4 74 63 64 75
+		f 4 -99 112 113 114
+		mu 0 4 67 66 76 77
+		f 4 -102 -100 115 116
+		mu 0 4 68 57 67 78
+		f 4 117 -103 118 119
+		mu 0 4 69 58 68 79
+		f 4 -105 120 121 122
+		mu 0 4 71 70 81 82
+		f 4 -108 -106 123 124
+		mu 0 4 73 62 71 83
+		f 4 125 -109 126 127
+		mu 0 4 84 72 73 85
+		f 4 128 129 130 131
+		mu 0 4 86 87 88 89
+		f 4 -116 -115 132 133
+		mu 0 4 78 67 77 90
+		f 4 134 -120 135 136
+		mu 0 4 80 69 79 91
+		f 4 137 138 139 140
+		mu 0 4 93 94 95 96
+		f 4 -124 -123 141 142
+		mu 0 4 83 71 82 97
+		f 4 -127 -125 143 144
+		mu 0 4 85 73 83 98
+		f 4 145 -137 146 147
+		mu 0 4 92 80 91 99
+		f 4 148 149 150 151
+		mu 0 4 102 103 104 105
+		f 4 152 -141 153 154
+		mu 0 4 106 93 96 107
+		f 4 -144 -143 155 156
+		mu 0 4 98 83 97 108
+		f 4 157 -145 158 159
+		mu 0 4 88 85 98 109
+		f 4 -131 -160 160 161
+		mu 0 4 89 88 109 110
+		f 4 162 163 164 165
+		mu 0 4 101 100 111 112
+		f 4 166 167 168 169
+		mu 0 4 114 115 116 117
+		f 4 170 -152 171 172
+		mu 0 4 118 102 105 119
+		f 4 173 -155 174 175
+		mu 0 4 120 106 107 121
+		f 4 -159 -157 176 177
+		mu 0 4 109 98 108 122
+		f 4 -161 -178 178 179
+		mu 0 4 110 109 122 123
+		f 4 180 181 182 183
+		mu 0 4 124 125 126 127
+		f 4 -166 184 185 186
+		mu 0 4 101 112 128 113
+		f 4 -169 187 188 189
+		mu 0 4 117 116 130 131
+		f 4 190 -170 191 192
+		mu 0 4 132 114 117 133
+		f 4 193 -173 194 195
+		mu 0 4 134 118 119 135
+		f 4 196 -176 197 198
+		mu 0 4 136 120 121 137
+		f 4 199 200 201 202
+		mu 0 4 138 136 139 140
+		f 4 203 204 205 206
+		mu 0 4 141 142 143 144
+		f 4 -186 207 208 209
+		mu 0 4 113 128 145 129
+		f 4 -189 210 211 212
+		mu 0 4 131 130 147 148
+		f 4 -192 -190 213 214
+		mu 0 4 133 117 131 149
+		f 4 215 -193 216 217
+		mu 0 4 150 132 133 151
+		f 4 218 -196 219 220
+		mu 0 4 152 134 135 153
+		f 4 -198 221 222 223
+		mu 0 4 137 121 154 155
+		f 4 -201 -199 224 225
+		mu 0 4 139 136 137 156
+		f 4 226 227 228 229
+		mu 0 4 157 158 159 160
+		f 4 230 231 232 233
+		mu 0 4 161 162 163 164
+		f 4 234 235 236 -208
+		mu 0 4 128 165 166 145
+		f 4 -209 237 238 239
+		mu 0 4 129 145 167 146
+		f 4 -212 240 241 242
+		mu 0 4 148 147 169 170
+		f 4 -214 -213 243 244
+		mu 0 4 149 131 148 171
+		f 4 -217 -215 245 246
+		mu 0 4 151 133 149 172
+		f 4 247 -218 248 249
+		mu 0 4 173 150 151 174
+		f 4 250 251 -221 252
+		mu 0 4 175 176 152 153
+		f 4 253 254 255 256
+		mu 0 4 177 178 179 180
+		f 4 -225 -224 257 258
+		mu 0 4 156 137 155 181
+		f 4 -229 259 260 261
+		mu 0 4 160 159 182 183
+		f 4 262 263 264 265
+		mu 0 4 184 185 186 187
+		f 4 266 267 268 -232
+		mu 0 4 162 188 189 163
+		f 4 269 270 271 -236
+		mu 0 4 165 189 190 166
+		f 4 -237 272 273 -238
+		mu 0 4 145 166 191 167
+		f 4 -239 274 275 276
+		mu 0 4 146 167 192 168
+		f 4 -242 277 278 279
+		mu 0 4 170 169 195 196
+		f 4 -244 -243 280 281
+		mu 0 4 171 148 170 197
+		f 4 -246 -245 282 283
+		mu 0 4 172 149 171 198
+		f 4 284 -247 285 286
+		mu 0 4 199 151 172 200
+		f 4 -249 -285 287 288
+		mu 0 4 174 151 199 201
+		f 4 289 290 291 -250
+		mu 0 4 174 202 203 173
+		f 4 292 -291 293 294
+		mu 0 4 204 203 202 205
+		f 4 295 296 297 -255
+		mu 0 4 178 206 207 179
+		f 4 298 -296 -254 299
+		mu 0 4 208 206 178 177
+		f 4 -261 300 301 302
+		mu 0 4 183 182 209 210
+		f 4 303 -266 304 305
+		mu 0 4 211 184 187 212
+		f 4 -263 306 307 308
+		mu 0 4 185 184 213 214
+		f 4 -268 309 310 -271
+		mu 0 4 189 188 215 190
+		f 4 -272 311 312 -273
+		mu 0 4 166 190 216 191
+		f 4 -274 313 314 -275
+		mu 0 4 167 191 217 192
+		f 4 315 316 317 318
+		mu 0 4 193 218 219 194
+		f 4 -281 -280 319 320
+		mu 0 4 197 170 196 226
+		f 4 -283 -282 321 322
+		mu 0 4 198 171 197 227
+		f 4 -286 -284 323 324
+		mu 0 4 200 172 198 228
+		f 4 325 -287 326 -307
+		mu 0 4 184 199 200 213
+		f 4 327 -288 -326 -304
+		mu 0 4 211 201 199 184
+		f 4 -290 -289 328 -294
+		mu 0 4 202 174 201 205
+		f 4 329 330 -295 331
+		mu 0 4 229 230 204 205
+		f 4 332 -330 333 334
+		mu 0 4 231 230 229 232
+		f 4 335 -306 336 -334
+		mu 0 4 229 211 212 232
+		f 4 337 338 339 -308
+		mu 0 4 213 233 234 214
+		f 4 -311 340 341 -312
+		mu 0 4 190 215 235 216
+		f 4 -313 342 343 -314
+		mu 0 4 191 216 236 217
+		f 4 344 345 346 -317
+		mu 0 4 218 237 238 219
+		f 4 347 348 349 350
+		mu 0 4 220 239 240 221
+		f 4 351 352 353 354
+		mu 0 4 222 243 244 223
+		f 4 355 356 357 358
+		mu 0 4 246 245 247 248
+		f 4 359 360 361 362
+		mu 0 4 249 250 251 252
+		f 4 -322 -321 363 364
+		mu 0 4 227 197 226 253
+		f 4 -324 -323 365 366
+		mu 0 4 228 198 227 254
+		f 4 -327 -325 367 -338
+		mu 0 4 213 200 228 233
+		f 4 -329 -328 -336 -332
+		mu 0 4 205 201 211 229
+		f 4 -339 368 369 370
+		mu 0 4 234 233 255 256
+		f 4 -342 371 372 -343
+		mu 0 4 216 235 257 236
+		f 4 373 374 375 -346
+		mu 0 4 237 258 259 238
+		f 4 376 377 378 -349
+		mu 0 4 239 260 261 240
+		f 4 -350 379 380 381
+		mu 0 4 221 240 262 241
+		f 4 382 383 384 -354
+		mu 0 4 244 264 242 223
+		f 4 385 386 387 -353
+		mu 0 4 243 265 266 244
+		f 4 388 389 390 391
+		mu 0 4 224 267 268 225
+		f 4 392 -381 393 -357
+		mu 0 4 245 241 262 247
+		f 4 394 395 396 397
+		mu 0 4 269 270 271 272
+		f 4 398 399 -363 400
+		mu 0 4 273 274 249 252
+		f 4 -365 401 402 -366
+		mu 0 4 227 253 275 254
+		f 4 -367 403 404 -368
+		mu 0 4 228 254 276 233
+		f 4 -369 -405 405 406
+		mu 0 4 255 233 276 277
+		f 4 407 -370 408 409
+		mu 0 4 278 256 255 279
+		f 4 -375 410 411 412
+		mu 0 4 259 258 280 281
+		f 4 -378 413 414 415
+		mu 0 4 261 260 282 283
+		f 4 -380 -379 416 417
+		mu 0 4 262 240 261 284
+		f 4 418 419 420 -384
+		mu 0 4 264 285 263 242
+		f 4 421 422 -383 -388
+		mu 0 4 266 287 264 244
+		f 4 423 424 425 -387
+		mu 0 4 265 288 289 266
+		f 4 426 427 428 -390
+		mu 0 4 267 290 291 268
+		f 4 -358 429 430 431
+		mu 0 4 248 247 292 293
+		f 4 -394 -418 432 -430
+		mu 0 4 247 262 284 292
+		f 4 -397 433 434 435
+		mu 0 4 272 271 294 295
+		f 4 436 -398 437 438
+		mu 0 4 296 269 272 297
+		f 4 439 440 441 442
+		mu 0 4 298 299 273 300
+		f 4 -404 -403 443 444
+		mu 0 4 276 254 275 301
+		f 4 -406 -445 445 446
+		mu 0 4 277 276 301 302
+		f 4 -409 -407 447 448
+		mu 0 4 279 255 277 303
+		f 4 449 450 451 452
+		mu 0 4 304 305 306 307
+		f 4 -415 453 454 455
+		mu 0 4 283 282 308 309
+		f 4 -417 -416 456 457
+		mu 0 4 284 261 283 310
+		f 4 458 459 -419 -423
+		mu 0 4 287 311 285 264
+		f 4 460 461 -30 462
+		mu 0 4 286 312 20 22
+		f 4 463 464 -422 -426
+		mu 0 4 289 313 287 266
+		f 4 465 466 467 -425
+		mu 0 4 288 314 315 289
+		f 4 468 469 470 -428
+		mu 0 4 290 316 317 291
+		f 4 -431 471 472 473
+		mu 0 4 293 292 318 319
+		f 4 -433 -458 474 -472
+		mu 0 4 292 284 310 318
+		f 4 -435 475 476 477
+		mu 0 4 295 294 320 321
+		f 4 -438 -436 478 479
+		mu 0 4 297 272 295 322
+		f 4 480 -439 481 482
+		mu 0 4 323 296 297 324
+		f 4 483 -443 484 485
+		mu 0 4 325 298 300 326
+		f 4 486 -486 487 488
+		mu 0 4 327 325 326 328
+		f 4 -448 -447 489 490
+		mu 0 4 303 277 302 329
+		f 4 491 492 493 494
+		mu 0 4 330 331 332 333
+		f 4 495 496 497 498
+		mu 0 4 334 335 336 337
+		f 4 -457 -456 499 500
+		mu 0 4 310 283 309 338
+		f 4 501 502 -459 -465
+		mu 0 4 313 339 311 287
+		f 4 503 504 -27 -462
+		mu 0 4 312 340 21 20
+		f 4 505 506 -464 -468
+		mu 0 4 315 341 313 289
+		f 4 507 508 509 510
+		mu 0 4 342 343 344 345
+		f 4 511 512 513 -470
+		mu 0 4 316 346 347 317
+		f 4 -473 514 515 516
+		mu 0 4 319 318 348 349
+		f 4 -475 -501 517 -515
+		mu 0 4 318 310 338 348
+		f 4 518 519 520 521
+		mu 0 4 350 351 352 353
+		f 4 -479 -478 522 523
+		mu 0 4 322 295 321 354
+		f 4 524 -482 -480 525
+		mu 0 4 355 324 297 322
+		f 4 526 -483 527 528
+		mu 0 4 356 323 324 357
+		f 4 529 -529 530 531
+		mu 0 4 358 356 357 359
+		f 4 532 -489 533 534
+		mu 0 4 360 327 328 361
+		f 4 535 -499 536 537
+		mu 0 4 362 334 337 330
+		f 4 538 539 -502 -507
+		mu 0 4 341 363 339 313
+		f 4 540 541 542 -505
+		mu 0 4 340 364 365 21
+		f 4 543 544 -510 545
+		mu 0 4 366 367 345 344
+		f 4 546 547 548 549
+		mu 0 4 368 369 370 371
+		f 4 550 551 552 553
+		mu 0 4 372 333 373 374
+		f 4 554 -538 -495 -551
+		mu 0 4 372 362 330 333
+		f 4 555 -522 556 557
+		mu 0 4 375 350 353 376
+		f 4 -528 -525 558 559
+		mu 0 4 357 324 355 377
+		f 4 -526 -524 560 561
+		mu 0 4 355 322 354 378
+		f 4 -531 -560 562 563
+		mu 0 4 359 357 377 379
+		f 4 564 -532 565 566
+		mu 0 4 380 358 359 381
+		f 4 567 568 569 -535
+		mu 0 4 361 382 383 360
+		f 4 -493 570 571 572
+		mu 0 4 332 331 384 385
+		f 4 573 574 575 -542
+		mu 0 4 364 386 387 365
+		f 4 576 577 578 -544
+		mu 0 4 366 388 389 367
+		f 4 579 580 -28 -543
+		mu 0 4 365 390 3 21
+		f 4 581 582 583 -509
+		mu 0 4 343 391 392 344
+		f 4 584 585 -559 -562
+		mu 0 4 378 393 377 355
+		f 4 586 -558 587 588
+		mu 0 4 394 375 376 395
+		f 4 -563 -586 589 590
+		mu 0 4 379 377 393 396
+		f 4 -566 -564 591 592
+		mu 0 4 381 359 379 397
+		f 4 593 594 -567 595
+		mu 0 4 398 399 380 381
+		f 4 596 597 598 599
+		mu 0 4 400 401 402 403
+		f 4 600 -573 601 602
+		mu 0 4 404 332 385 405
+		f 4 -552 -494 -601 603
+		mu 0 4 373 333 332 404
+		f 4 604 605 606 607
+		mu 0 4 406 407 408 409
+		f 4 608 609 -580 -576
+		mu 0 4 387 410 390 365
+		f 4 610 611 -4 -581
+		mu 0 4 390 411 0 3
+		f 4 612 613 -546 -584
+		mu 0 4 392 412 366 344
+		f 4 -548 614 615 616
+		mu 0 4 370 369 413 414
+		f 4 617 618 619 -583
+		mu 0 4 391 415 416 392
+		f 4 -589 620 621 622
+		mu 0 4 394 395 417 418
+		f 4 -622 623 624 625
+		mu 0 4 418 417 419 420
+		f 4 -591 626 627 -592
+		mu 0 4 379 396 421 397
+		f 4 628 -596 -593 629
+		mu 0 4 422 398 381 397
+		f 4 630 631 632 633
+		mu 0 4 423 424 425 426
+		f 4 -600 634 635 636
+		mu 0 4 400 403 427 428
+		f 4 637 638 639 -616
+		mu 0 4 413 429 430 414
+		f 4 640 641 642 -607
+		mu 0 4 408 431 432 409
+		f 4 643 644 -611 -610
+		mu 0 4 410 433 411 390
+		f 4 645 646 -577 -614
+		mu 0 4 412 434 388 366
+		f 4 647 648 -5 -612
+		mu 0 4 411 435 4 0
+		f 4 -620 649 650 -613
+		mu 0 4 392 416 436 412
+		f 4 651 652 653 654
+		mu 0 4 437 438 439 440
+		f 4 655 -625 656 657
+		mu 0 4 441 420 419 442
+		f 4 658 659 -630 -628
+		mu 0 4 421 443 422 397
+		f 4 -632 660 661 662
+		mu 0 4 425 424 444 445
+		f 4 663 -633 664 665
+		mu 0 4 446 426 425 447
+		f 4 666 667 668 669
+		mu 0 4 448 449 450 451
+		f 4 670 671 672 -606
+		mu 0 4 407 452 453 408
+		f 4 673 674 675 -642
+		mu 0 4 431 454 455 432
+		f 4 676 677 -648 -645
+		mu 0 4 433 456 435 411
+		f 4 678 679 -646 -651
+		mu 0 4 436 457 434 412
+		f 4 680 681 -8 -649
+		mu 0 4 435 458 6 4
+		f 4 682 683 684 -654
+		mu 0 4 439 459 460 440
+		f 4 685 686 687 688
+		mu 0 4 461 462 463 464
+		f 4 689 690 -658 691
+		mu 0 4 465 466 441 442
+		f 4 -662 692 693 694
+		mu 0 4 445 444 467 468
+		f 4 -663 695 696 -665
+		mu 0 4 425 445 469 447
+		f 4 697 698 699 700
+		mu 0 4 470 471 472 473
+		f 4 701 702 703 -672
+		mu 0 4 452 474 475 453
+		f 4 704 705 -641 -673
+		mu 0 4 453 476 431 408
+		f 4 706 707 708 -675
+		mu 0 4 454 477 478 455
+		f 4 709 710 -681 -678
+		mu 0 4 456 479 458 435
+		f 4 -684 711 712 713
+		mu 0 4 460 459 480 481
+		f 4 714 715 -12 -682
+		mu 0 4 458 482 9 6
+		f 4 716 717 718 719
+		mu 0 4 483 484 485 462
+		f 4 -720 -686 720 721
+		mu 0 4 483 462 461 486
+		f 4 722 723 724 -689
+		mu 0 4 464 487 488 461
+		f 4 725 726 727 728
+		mu 0 4 489 490 491 492
+		f 4 -696 -695 729 730
+		mu 0 4 469 445 468 493
+		f 4 -700 731 732 733
+		mu 0 4 473 472 494 495
+		f 4 734 735 736 737
+		mu 0 4 496 497 498 499
+		f 4 738 739 -705 -704
+		mu 0 4 475 500 476 453
+		f 4 740 741 -674 -706
+		mu 0 4 476 501 454 431
+		f 4 742 743 744 -708
+		mu 0 4 477 502 503 478
+		f 4 745 746 -715 -711
+		mu 0 4 479 504 482 458
+		f 4 747 748 749 -717
+		mu 0 4 483 505 506 484
+		f 4 750 751 -14 -716
+		mu 0 4 482 507 10 9
+		f 4 -721 -725 752 753
+		mu 0 4 486 461 488 508
+		f 4 754 755 756 757
+		mu 0 4 509 510 511 512
+		f 4 758 -728 759 760
+		mu 0 4 513 492 491 514
+		f 4 761 762 763 764
+		mu 0 4 515 516 517 518
+		f 4 765 766 767 768
+		mu 0 4 519 520 521 522
+		f 4 769 770 771 -737
+		mu 0 4 498 523 524 499
+		f 4 772 773 -741 -740
+		mu 0 4 500 525 501 476
+		f 4 774 775 -707 -742
+		mu 0 4 501 526 477 454
+		f 4 776 777 778 -744
+		mu 0 4 502 527 528 503
+		f 4 779 780 -751 -747
+		mu 0 4 504 529 507 482
+		f 4 781 782 -748 -722
+		mu 0 4 486 530 505 483
+		f 4 783 -757 784 785
+		mu 0 4 531 512 511 532
+		f 4 786 787 788 -767
+		mu 0 4 520 533 534 521
+		f 4 789 790 791 -768
+		mu 0 4 521 535 536 522
+		f 4 792 793 794 -771
+		mu 0 4 523 537 538 524
+		f 4 795 796 -775 -774
+		mu 0 4 525 539 526 501
+		f 4 797 798 -743 -776
+		mu 0 4 526 540 502 477
+		f 4 799 800 801 -778
+		mu 0 4 527 541 542 528
+		f 4 802 803 -782 -754
+		mu 0 4 508 543 530 486
+		f 4 804 805 806 -788
+		mu 0 4 533 544 545 534
+		f 4 -789 807 808 -790
+		mu 0 4 521 534 546 535
+		f 4 809 810 811 -791
+		mu 0 4 535 547 548 536
+		f 4 812 813 814 -794
+		mu 0 4 537 549 550 538
+		f 4 815 816 -798 -797
+		mu 0 4 539 551 540 526
+		f 4 817 818 -777 -799
+		mu 0 4 540 552 527 502
+		f 4 819 820 821 -786
+		mu 0 4 532 553 554 531
+		f 4 822 823 824 825
+		mu 0 4 555 556 557 558
+		f 4 826 827 -808 -807
+		mu 0 4 545 559 546 534
+		f 4 828 829 -810 -809
+		mu 0 4 546 560 547 535
+		f 4 830 831 832 -811
+		mu 0 4 547 561 562 548
+		f 4 833 834 835 -814
+		mu 0 4 549 563 564 550
+		f 4 836 837 -818 -817
+		mu 0 4 551 565 552 540
+		f 4 838 839 -800 -819
+		mu 0 4 552 566 541 527
+		f 4 840 841 842 -825
+		mu 0 4 557 567 568 558
+		f 4 -828 843 844 -829
+		mu 0 4 546 559 569 560
+		f 4 845 -831 -830 846
+		mu 0 4 570 561 547 560
+		f 4 847 848 -832 849
+		mu 0 4 571 572 562 561
+		f 4 850 851 852 -835
+		mu 0 4 563 573 574 564
+		f 4 853 854 -839 -838
+		mu 0 4 565 575 566 552
+		f 4 855 856 857 -842
+		mu 0 4 567 576 577 568
+		f 4 -845 858 859 -847
+		mu 0 4 560 569 578 570
+		f 4 860 861 -850 -846
+		mu 0 4 570 579 571 561
+		f 4 862 863 864 -848
+		mu 0 4 571 580 581 572
+		f 4 865 866 867 -852
+		mu 0 4 573 582 583 574
+		f 4 -857 868 869 870
+		mu 0 4 577 576 584 585
+		f 4 871 872 -861 -860
+		mu 0 4 578 586 579 570
+		f 4 873 874 -863 -862
+		mu 0 4 579 587 580 571
+		f 4 875 876 877 -864
+		mu 0 4 580 588 589 581
+		f 4 -870 878 879 880
+		mu 0 4 585 584 590 591
+		f 4 881 882 -874 -873
+		mu 0 4 586 592 587 579
+		f 4 883 884 -876 -875
+		mu 0 4 587 593 588 580
+		f 4 885 886 887 -880
+		mu 0 4 590 594 595 591
+		f 4 888 889 -884 -883
+		mu 0 4 592 596 593 587
+		f 4 890 891 892 -887
+		mu 0 4 594 597 598 595
+		f 4 893 -687 -719 894
+		mu 0 4 599 463 462 485
+		f 4 895 896 -698 897
+		mu 0 4 600 601 471 470
+		f 4 -300 898 899 900
+		mu 0 4 208 177 175 602
+		f 4 -900 -253 901 902
+		mu 0 4 602 175 153 603
+		f 4 -220 903 904 -902
+		mu 0 4 153 135 604 603
+		f 4 -195 905 906 -904
+		mu 0 4 135 119 605 604
+		f 4 -172 907 908 -906
+		mu 0 4 119 105 606 605
+		f 4 -151 909 910 -908
+		mu 0 4 105 104 607 606
+		f 4 -117 911 912 -119
+		mu 0 4 68 78 608 79
+		f 4 -134 913 914 -912
+		mu 0 4 78 90 609 608
+		f 4 915 -136 -913 916
+		mu 0 4 610 91 79 608
+		f 4 917 918 -917 -915
+		mu 0 4 609 611 610 608
+		f 4 -916 919 920 921
+		mu 0 4 91 610 124 612
+		f 4 -147 -922 922 923
+		mu 0 4 99 91 612 613
+		f 4 -921 -184 924 -923
+		mu 0 4 612 124 127 613
+		f 4 925 -165 926 927
+		mu 0 4 614 112 111 615
+		f 4 928 -207 929 -928
+		mu 0 4 615 141 144 614
+		f 4 -235 -185 -926 930
+		mu 0 4 165 128 112 614
+		f 4 -930 931 -233 932
+		mu 0 4 614 144 164 163
+		f 4 -269 -270 -931 -933
+		mu 0 4 163 189 165 614
+		f 4 -122 933 -138 934
+		mu 0 4 82 81 94 93
+		f 4 -142 -935 -153 935
+		mu 0 4 97 82 93 106
+		f 4 -156 -936 -174 936
+		mu 0 4 108 97 106 120
+		f 4 -177 -937 -197 937
+		mu 0 4 122 108 120 136
+		f 4 -179 -938 -200 938
+		mu 0 4 123 122 136 138
+		f 4 -919 939 -181 -920
+		mu 0 4 610 611 125 124
+		f 4 940 -234 -932 -206
+		mu 0 4 143 161 164 144
+		f 4 -265 941 -230 942
+		mu 0 4 187 186 157 160
+		f 4 -305 -943 -262 943
+		mu 0 4 212 187 160 183
+		f 4 -337 -944 -303 944
+		mu 0 4 232 212 183 210
+		f 4 945 -335 -945 -302
+		mu 0 4 209 231 232 210
+		f 4 -298 946 -258 947
+		mu 0 4 179 207 181 155
+		f 4 -256 -948 -223 948
+		mu 0 4 180 179 155 154
+		f 4 -252 949 -949 950
+		mu 0 4 152 176 180 154
+		f 4 -222 951 -219 -951
+		mu 0 4 154 121 134 152
+		f 4 -175 952 -194 -952
+		mu 0 4 121 107 118 134
+		f 4 -154 953 -171 -953
+		mu 0 4 107 96 102 118
+		f 4 -140 954 -149 -954
+		mu 0 4 96 95 103 102
+		f 4 -899 -257 -950 -251
+		mu 0 4 175 177 180 176
+		f 4 955 956 957 -571
+		mu 0 4 331 616 617 384
+		f 4 958 -598 959 960
+		mu 0 4 618 402 401 619
+		f 4 961 962 -631 963
+		mu 0 4 620 621 424 423
+		f 4 -661 -963 964 965
+		mu 0 4 444 424 621 622
+		f 4 966 -693 -966 967
+		mu 0 4 623 467 444 622
+		f 4 968 969 -726 970
+		mu 0 4 624 625 490 489
+		f 4 -821 971 972 973
+		mu 0 4 554 553 626 627
+		f 4 -804 974 975 976
+		mu 0 4 530 543 628 629
+		f 4 -783 -977 977 978
+		mu 0 4 505 530 629 630
+		f 4 -749 -979 979 980
+		mu 0 4 506 505 630 631
+		f 4 -713 981 982 983
+		mu 0 4 481 480 632 633
+		f 4 -680 984 985 986
+		mu 0 4 434 457 634 635
+		f 4 -647 -987 987 988
+		mu 0 4 388 434 635 636
+		f 4 -578 -989 989 990
+		mu 0 4 389 388 636 637
+		f 4 991 992 993 -540
+		mu 0 4 363 638 639 339
+		f 4 -503 -994 994 995
+		mu 0 4 311 339 639 640
+		f 4 -460 -996 996 997
+		mu 0 4 285 311 640 641
+		f 4 -420 -998 998 999
+		mu 0 4 263 285 641 642
+		f 4 -999 1000 -461 1001
+		mu 0 4 642 641 312 286
+		f 4 -997 1002 -504 -1001
+		mu 0 4 641 640 340 312
+		f 4 -995 1003 -541 -1003
+		mu 0 4 640 639 364 340
+		f 4 -993 1004 -574 -1004
+		mu 0 4 639 638 386 364
+		f 4 -990 1005 -605 1006
+		mu 0 4 637 636 407 406
+		f 4 -988 1007 -671 -1006
+		mu 0 4 636 635 452 407
+		f 4 -986 1008 -702 -1008
+		mu 0 4 635 634 474 452
+		f 4 -983 1009 -735 1010
+		mu 0 4 633 632 497 496
+		f 4 -980 1011 -766 1012
+		mu 0 4 631 630 520 519
+		f 4 -978 1013 -787 -1012
+		mu 0 4 630 629 533 520
+		f 4 -976 1014 -805 -1014
+		mu 0 4 629 628 544 533
+		f 4 -973 1015 -823 1016
+		mu 0 4 627 626 556 555
+		f 4 -969 1017 -690 1018
+		mu 0 4 625 624 466 465
+		f 4 1019 -968 1020 -660
+		mu 0 4 443 623 622 422
+		f 4 -965 1021 -629 -1021
+		mu 0 4 622 621 398 422
+		f 4 -962 1022 -594 -1022
+		mu 0 4 621 620 399 398
+		f 4 1023 -961 1024 -569
+		mu 0 4 382 618 619 383
+		f 4 1025 -956 -492 -537
+		mu 0 4 337 616 331 330
+		f 4 1026 1027 1028 1029
+		mu 0 4 643 644 336 307
+		f 4 -276 1030 -316 1031
+		mu 0 4 168 192 218 193
+		f 4 -315 1032 -345 -1031
+		mu 0 4 192 217 237 218
+		f 4 -344 1033 -374 -1033
+		mu 0 4 217 236 258 237
+		f 4 1034 -411 -1034 -373
+		mu 0 4 257 280 258 236
+		f 4 -451 1035 -410 1036
+		mu 0 4 306 305 278 279
+		f 4 -318 1037 -348 1038
+		mu 0 4 194 219 239 220
+		f 4 -347 1039 -377 -1038
+		mu 0 4 219 238 260 239
+		f 4 -414 -1040 -376 1040
+		mu 0 4 282 260 238 259
+		f 4 1041 -454 -1041 -413
+		mu 0 4 281 308 282 259
+		f 4 -497 1042 -453 -1029
+		mu 0 4 336 335 304 307
+		f 4 -1030 -452 1043 1044
+		mu 0 4 643 307 306 645
+		f 4 -70 1045 -77 1046
+		mu 0 4 45 44 51 50
+		f 4 -81 -1047 -93 1047
+		mu 0 4 54 45 50 63
+		f 4 -96 -1048 -110 1048
+		mu 0 4 65 54 63 74
+		f 4 -114 1049 1050 1051
+		mu 0 4 77 76 646 86
+		f 4 -133 -1052 -132 1052
+		mu 0 4 90 77 86 89
+		f 4 -914 -1053 -162 1053
+		mu 0 4 609 90 89 110
+		f 4 -180 1054 -918 -1054
+		mu 0 4 110 123 611 609
+		f 4 -940 -1055 -939 1055
+		mu 0 4 125 611 123 138
+		f 4 -182 -1056 -203 1056
+		mu 0 4 126 125 138 140
+		f 4 -205 1057 -227 1058
+		mu 0 4 143 142 158 157
+		f 4 1059 -941 -1059 -942
+		mu 0 4 186 161 143 157
+		f 4 1060 -231 -1060 -264
+		mu 0 4 185 162 161 186
+		f 4 -309 1061 -267 -1061
+		mu 0 4 185 214 188 162
+		f 4 -310 -1062 -340 1062
+		mu 0 4 215 188 214 234
+		f 4 -341 -1063 -371 1063
+		mu 0 4 235 215 234 256
+		f 4 -372 -1064 -408 1064
+		mu 0 4 257 235 256 278
+		f 4 1065 -1035 -1065 -1036
+		mu 0 4 305 280 257 278
+		f 4 -412 -1066 -450 1066
+		mu 0 4 281 280 305 304
+		f 4 1067 -1042 -1067 -1043
+		mu 0 4 335 308 281 304
+		f 4 -455 -1068 -496 1068
+		mu 0 4 309 308 335 334
+		f 4 -500 -1069 -536 1069
+		mu 0 4 338 309 334 362
+		f 4 -518 -1070 -555 1070
+		mu 0 4 348 338 362 372
+		f 4 -516 -1071 -554 1071
+		mu 0 4 349 348 372 374
+		f 4 1072 -550 1073 -513
+		mu 0 4 346 368 371 347
+		f 4 1074 -511 1075 -467
+		mu 0 4 314 342 345 315
+		f 4 -545 1076 -506 -1076
+		mu 0 4 345 367 341 315
+		f 4 1077 -539 -1077 -579
+		mu 0 4 389 363 341 367
+		f 4 1078 -992 -1078 -991
+		mu 0 4 637 638 363 389
+		f 4 -1005 -1079 -1007 1079
+		mu 0 4 386 638 637 406
+		f 4 -575 -1080 -608 1080
+		mu 0 4 387 386 406 409
+		f 4 -643 1081 -609 -1081
+		mu 0 4 409 432 410 387
+		f 4 -676 1082 -644 -1082
+		mu 0 4 432 455 433 410
+		f 4 -709 1083 -677 -1083
+		mu 0 4 455 478 456 433
+		f 4 -745 1084 -710 -1084
+		mu 0 4 478 503 479 456
+		f 4 -779 1085 -746 -1085
+		mu 0 4 503 528 504 479
+		f 4 -802 1086 -780 -1086
+		mu 0 4 528 542 529 504
+		f 4 -362 1087 -395 1088
+		mu 0 4 252 251 270 269
+		f 4 -401 -1089 -437 1089
+		mu 0 4 273 252 269 296
+		f 4 -442 -1090 -481 1090
+		mu 0 4 300 273 296 323
+		f 4 -485 -1091 -527 1091
+		mu 0 4 326 300 323 356
+		f 4 -488 -1092 -530 1092
+		mu 0 4 328 326 356 358
+		f 4 -534 -1093 -565 1093
+		mu 0 4 361 328 358 380
+		f 4 1094 -568 -1094 -595
+		mu 0 4 399 382 361 380
+		f 4 1095 -1024 -1095 -1023
+		mu 0 4 620 618 382 399
+		f 4 1096 -959 -1096 -964
+		mu 0 4 423 402 618 620
+		f 4 -599 -1097 -634 1097
+		mu 0 4 403 402 423 426
+		f 4 -635 -1098 -664 1098
+		mu 0 4 427 403 426 446
+		f 4 -669 1099 -896 1100
+		mu 0 4 451 450 601 600
+		f 4 1101 -895 1102 -653
+		mu 0 4 438 599 485 439
+		f 4 -718 1103 -683 -1103
+		mu 0 4 485 484 459 439
+		f 4 -712 -1104 -750 1104
+		mu 0 4 480 459 484 506
+		f 4 -982 -1105 -981 1105
+		mu 0 4 632 480 506 631
+		f 4 -1010 -1106 -1013 1106
+		mu 0 4 497 632 631 519
+		f 4 -736 -1107 -769 1107
+		mu 0 4 498 497 519 522
+		f 4 -792 1108 -770 -1108
+		mu 0 4 522 536 523 498
+		f 4 -812 1109 -793 -1109
+		mu 0 4 536 548 537 523
+		f 4 -833 1110 -813 -1110
+		mu 0 4 548 562 549 537
+		f 4 -849 1111 -834 -1111
+		mu 0 4 562 572 563 549
+		f 4 -865 1112 -851 -1112
+		mu 0 4 572 581 573 563
+		f 4 -878 1113 -866 -1113
+		mu 0 4 581 589 582 573
+		f 4 -279 1114 1115 1116
+		mu 0 4 196 195 647 648
+		f 4 -320 -1117 1117 1118
+		mu 0 4 226 196 648 649
+		f 4 -402 1119 -440 1120
+		mu 0 4 275 253 299 298
+		f 4 -444 -1121 -484 1121
+		mu 0 4 301 275 298 325
+		f 4 -446 -1122 -487 1122
+		mu 0 4 302 301 325 327
+		f 4 -490 -1123 -533 1123
+		mu 0 4 329 302 327 360
+		f 4 1124 1125 -1124 -570
+		mu 0 4 383 650 329 360
+		f 4 1126 1127 -1125 -1025
+		mu 0 4 619 617 650 383
+		f 4 -958 -1127 -960 1128
+		mu 0 4 384 617 619 401
+		f 4 -572 -1129 -597 1129
+		mu 0 4 385 384 401 400
+		f 4 -602 -1130 -637 1130
+		mu 0 4 405 385 400 428
+		f 4 -639 1131 -667 1132
+		mu 0 4 430 429 449 448
+		f 4 1133 -655 1134 -619
+		mu 0 4 415 437 440 416
+		f 4 -650 -1135 -685 1135
+		mu 0 4 436 416 440 460
+		f 4 -714 1136 -679 -1136
+		mu 0 4 460 481 457 436
+		f 4 -985 -1137 -984 1137
+		mu 0 4 634 457 481 633
+		f 4 -1009 -1138 -1011 1138
+		mu 0 4 474 634 633 496
+		f 4 -703 -1139 -738 1139
+		mu 0 4 475 474 496 499
+		f 4 -772 1140 -739 -1140
+		mu 0 4 499 524 500 475
+		f 4 -795 1141 -773 -1141
+		mu 0 4 524 538 525 500
+		f 4 -815 1142 -796 -1142
+		mu 0 4 538 550 539 525
+		f 4 -836 1143 -816 -1143
+		mu 0 4 550 564 551 539;
+	setAttr ".fc[500:999]"
+		f 4 -853 1144 -837 -1144
+		mu 0 4 564 574 565 551
+		f 4 -868 1145 -854 -1145
+		mu 0 4 574 583 575 565
+		f 4 -477 1146 1147 1148
+		mu 0 4 321 320 651 652
+		f 4 -523 -1149 1149 1150
+		mu 0 4 354 321 652 653
+		f 4 -561 -1151 1151 1152
+		mu 0 4 378 354 653 654
+		f 4 1153 1154 -585 -1153
+		mu 0 4 654 655 393 378
+		f 4 -590 -1155 1155 1156
+		mu 0 4 396 393 655 656
+		f 4 -627 -1157 1157 1158
+		mu 0 4 421 396 656 657
+		f 4 1159 1160 -659 -1159
+		mu 0 4 657 658 443 421
+		f 4 1161 1162 -1020 -1161
+		mu 0 4 658 659 623 443
+		f 4 1163 1164 -967 -1163
+		mu 0 4 659 660 467 623
+		f 4 -694 -1165 1165 1166
+		mu 0 4 468 467 660 661
+		f 4 -730 -1167 1167 1168
+		mu 0 4 493 468 661 662
+		f 4 -733 1169 1170 1171
+		mu 0 4 495 494 663 664
+		f 4 -724 1172 1173 1174
+		mu 0 4 488 487 665 666
+		f 4 -753 -1175 1175 1176
+		mu 0 4 508 488 666 667
+		f 4 1177 1178 -803 -1177
+		mu 0 4 667 668 543 508
+		f 4 -975 -1179 1179 1180
+		mu 0 4 628 543 668 669
+		f 4 -1015 -1181 1181 1182
+		mu 0 4 544 628 669 670
+		f 4 -806 -1183 1183 1184
+		mu 0 4 545 544 670 671
+		f 4 1185 1186 -827 -1185
+		mu 0 4 671 672 559 545
+		f 4 -844 -1187 1187 1188
+		mu 0 4 569 559 672 673
+		f 4 -859 -1189 1189 1190
+		mu 0 4 578 569 673 674
+		f 4 1191 1192 -872 -1191
+		mu 0 4 674 675 586 578
+		f 4 1193 1194 -882 -1193
+		mu 0 4 675 676 592 586
+		f 4 1195 1196 -889 -1195
+		mu 0 4 676 677 596 592
+		f 4 -164 1197 -148 1198
+		mu 0 4 111 100 92 99
+		f 4 -927 -1199 -924 1199
+		mu 0 4 615 111 99 613
+		f 4 -925 1200 -929 -1200
+		mu 0 4 613 127 141 615
+		f 4 -183 1201 -204 -1201
+		mu 0 4 127 126 142 141
+		f 4 -1058 -1202 -1057 1202
+		mu 0 4 158 142 126 140
+		f 4 -228 -1203 -202 1203
+		mu 0 4 159 158 140 139
+		f 4 -260 -1204 -226 1204
+		mu 0 4 182 159 139 156
+		f 4 -301 -1205 -259 1205
+		mu 0 4 209 182 156 181
+		f 4 1206 -946 -1206 -947
+		mu 0 4 207 231 209 181
+		f 4 1207 -333 -1207 -297
+		mu 0 4 206 230 231 207
+		f 4 -331 -1208 -299 1208
+		mu 0 4 204 230 206 208
+		f 4 -901 1209 -293 -1209
+		mu 0 4 208 602 203 204
+		f 4 -292 -1210 -903 1210
+		mu 0 4 173 203 602 603
+		f 4 -905 1211 -248 -1211
+		mu 0 4 603 604 150 173
+		f 4 -907 1212 -216 -1212
+		mu 0 4 604 605 132 150
+		f 4 -909 1213 -191 -1213
+		mu 0 4 605 606 114 132
+		f 4 -911 1214 -167 -1214
+		mu 0 4 606 607 115 114
+		f 4 1215 -352 1216 -391
+		mu 0 4 268 243 222 225
+		f 4 1217 -386 -1216 -429
+		mu 0 4 291 265 243 268
+		f 4 1218 -424 -1218 -471
+		mu 0 4 317 288 265 291
+		f 4 1219 -466 -1219 -514
+		mu 0 4 347 314 288 317
+		f 4 1220 -1075 -1220 -1074
+		mu 0 4 371 342 314 347
+		f 4 1221 -508 -1221 -549
+		mu 0 4 370 343 342 371
+		f 4 -617 1222 -582 -1222
+		mu 0 4 370 414 391 343
+		f 4 1223 -618 -1223 -640
+		mu 0 4 430 415 391 414
+		f 4 1224 -1134 -1224 -1133
+		mu 0 4 448 437 415 430
+		f 4 1225 -652 -1225 -670
+		mu 0 4 451 438 437 448
+		f 4 1226 -1102 -1226 -1101
+		mu 0 4 600 599 438 451
+		f 4 1227 -894 -1227 -898
+		mu 0 4 470 463 599 600
+		f 4 -688 -1228 -701 1228
+		mu 0 4 464 463 470 473
+		f 4 -734 1229 -723 -1229
+		mu 0 4 473 495 487 464
+		f 4 1230 -1173 -1230 -1172
+		mu 0 4 664 665 487 495
+		f 4 -764 1231 -755 1232
+		mu 0 4 518 517 510 509
+		f 4 1233 -389 1234 -359
+		mu 0 4 248 267 224 246
+		f 4 1235 -427 -1234 -432
+		mu 0 4 293 290 267 248
+		f 4 1236 -469 -1236 -474
+		mu 0 4 319 316 290 293
+		f 4 1237 -512 -1237 -517
+		mu 0 4 349 346 316 319
+		f 4 1238 -1073 -1238 -1072
+		mu 0 4 374 368 346 349
+		f 4 -553 1239 -547 -1239
+		mu 0 4 374 373 369 368
+		f 4 -615 -1240 -604 1240
+		mu 0 4 413 369 373 404
+		f 4 -603 1241 -638 -1241
+		mu 0 4 404 405 429 413
+		f 4 -1132 -1242 -1131 1242
+		mu 0 4 449 429 405 428
+		f 4 -668 -1243 -636 1243
+		mu 0 4 450 449 428 427
+		f 4 -1100 -1244 -1099 1244
+		mu 0 4 601 450 427 446
+		f 4 -897 -1245 -666 1245
+		mu 0 4 471 601 446 447
+		f 4 -699 -1246 -697 1246
+		mu 0 4 472 471 447 469
+		f 4 -732 -1247 -731 1247
+		mu 0 4 494 472 469 493
+		f 4 1248 -1170 -1248 -1169
+		mu 0 4 662 663 494 493
+		f 4 -761 1249 -762 1250
+		mu 0 4 513 514 516 515
+		f 4 1251 -1118 1252 -400
+		mu 0 4 274 649 648 249
+		f 4 -1116 1253 -360 -1253
+		mu 0 4 648 647 250 249
+		f 4 1254 -1252 -399 -441
+		mu 0 4 299 649 274 273
+		f 4 -1119 -1255 -1120 -364
+		mu 0 4 226 649 299 253
+		f 4 -1044 -1037 -449 1255
+		mu 0 4 645 306 279 303
+		f 4 -1126 1256 -1256 -491
+		mu 0 4 329 650 645 303
+		f 4 -1128 -957 1257 1258
+		mu 0 4 650 617 616 644
+		f 4 -1028 -1258 -1026 -498
+		mu 0 4 336 644 616 337
+		f 4 -1027 -1045 -1257 -1259
+		mu 0 4 644 643 645 650
+		f 4 -1150 1259 -556 1260
+		mu 0 4 653 652 350 375
+		f 4 -1152 -1261 -587 1261
+		mu 0 4 654 653 375 394
+		f 4 1262 -1154 -1262 -623
+		mu 0 4 418 655 654 394
+		f 4 -1156 -1263 -626 1263
+		mu 0 4 656 655 418 420
+		f 4 -1158 -1264 -656 1264
+		mu 0 4 657 656 420 441
+		f 4 1265 -1160 -1265 -691
+		mu 0 4 466 658 657 441
+		f 4 1266 -1162 -1266 -1018
+		mu 0 4 624 659 658 466
+		f 4 1267 -1164 -1267 -971
+		mu 0 4 489 660 659 624
+		f 4 -1166 -1268 -729 1268
+		mu 0 4 661 660 489 492
+		f 4 -1168 -1269 -759 1269
+		mu 0 4 662 661 492 513
+		f 4 1270 -1249 -1270 -1251
+		mu 0 4 515 663 662 513
+		f 4 -1171 -1271 -765 1271
+		mu 0 4 664 663 515 518
+		f 4 1272 -1231 -1272 -1233
+		mu 0 4 509 665 664 518
+		f 4 -1174 -1273 -758 1273
+		mu 0 4 666 665 509 512
+		f 4 -1176 -1274 -784 1274
+		mu 0 4 667 666 512 531
+		f 4 -822 1275 -1178 -1275
+		mu 0 4 531 554 668 667
+		f 4 -1180 -1276 -974 1276
+		mu 0 4 669 668 554 627
+		f 4 -1182 -1277 -1017 1277
+		mu 0 4 670 669 627 555
+		f 4 -1184 -1278 -826 1278
+		mu 0 4 671 670 555 558
+		f 4 -843 1279 -1186 -1279
+		mu 0 4 558 568 672 671
+		f 4 -1188 -1280 -858 1280
+		mu 0 4 673 672 568 577
+		f 4 -1190 -1281 -871 1281
+		mu 0 4 674 673 577 585
+		f 4 -881 1282 -1192 -1282
+		mu 0 4 585 591 675 674
+		f 4 -888 1283 -1194 -1283
+		mu 0 4 591 595 676 675
+		f 4 -893 1284 -1196 -1284
+		mu 0 4 595 598 677 676
+		f 4 -1148 1285 -519 -1260
+		mu 0 4 652 651 351 350
+		f 4 -86 1286 -76 1287
+		mu 0 4 56 48 43 47
+		f 4 -98 -1288 -84 1288
+		mu 0 4 66 56 47 55
+		f 4 -113 -1289 -97 1289
+		mu 0 4 76 66 55 65
+		f 4 -1050 -1290 -1049 1290
+		mu 0 4 646 76 65 74
+		f 4 1291 1292 -1291 -112
+		mu 0 4 75 678 646 74
+		f 4 -130 1293 -128 -158
+		mu 0 4 88 87 84 85
+		f 4 -1051 -1293 1294 -129
+		mu 0 4 86 646 678 87
+		f 4 -1294 -1295 -1292 1295
+		mu 0 4 84 87 678 75
+		f 4 -111 1296 -126 -1296
+		mu 0 4 75 64 72 84
+		f 4 -94 1297 -107 -1297
+		mu 0 4 64 53 59 72
+		f 4 -79 1298 -89 -1298
+		mu 0 4 53 52 60 59
+		f 4 1299 1300 1301 1302
+		mu 0 4 679 680 681 682
+		f 4 -1303 1303 1304 1305
+		mu 0 4 679 682 683 684
+		f 4 -1305 1306 1307 1308
+		mu 0 4 684 683 685 686
+		f 4 1309 1310 -1308 1311
+		mu 0 4 687 688 686 685
+		f 4 1312 -15 1313 -1310
+		mu 0 4 687 11 10 688
+		f 4 -1304 1314 1315 1316
+		mu 0 4 683 682 692 693
+		f 4 -1317 1317 1318 -1307
+		mu 0 4 683 693 694 685
+		f 4 1319 -1312 -1319 1320
+		mu 0 4 695 687 685 694
+		f 4 1321 -24 -1313 -1320
+		mu 0 4 695 19 11 687
+		f 4 -1301 1322 1323 1324
+		mu 0 4 681 680 696 697
+		f 4 1325 -1325 1326 1327
+		mu 0 4 690 681 697 698
+		f 4 -1316 1328 1329 1330
+		mu 0 4 693 692 699 700
+		f 4 1331 -1318 -1331 1332
+		mu 0 4 701 694 693 700
+		f 4 -1332 1333 1334 -1321
+		mu 0 4 694 701 702 695
+		f 4 1335 -39 -1322 -1335
+		mu 0 4 702 27 19 695
+		f 4 1336 -1333 -1330 1337
+		mu 0 4 703 701 700 699
+		f 4 1338 -1334 -1337 1339
+		mu 0 4 704 702 701 703
+		f 4 -1336 -1339 1340 -45
+		mu 0 4 27 702 704 30
+		f 4 1341 -1302 -1326 1342
+		mu 0 4 689 682 681 690
+		f 4 1343 1344 -1315 -1342
+		mu 0 4 689 691 692 682
+		f 4 1345 -1329 -1345 1346
+		mu 0 4 705 699 692 691
+		f 4 1347 -1338 -1346 1348
+		mu 0 4 706 703 699 705
+		f 4 1349 -1340 -1348 1350
+		mu 0 4 707 704 703 706
+		f 4 1351 -57 -1341 -1350
+		mu 0 4 707 34 30 704
+		f 4 1352 1353 -60 1354
+		mu 0 4 708 709 37 35
+		f 4 1355 1356 -63 -1354
+		mu 0 4 709 711 40 37
+		f 4 1357 1358 -1353 1359
+		mu 0 4 710 712 709 708
+		f 4 1360 1361 -69 -1357
+		mu 0 4 711 714 44 40
+		f 4 1362 1363 -1356 -1359
+		mu 0 4 712 715 711 709
+		f 4 1364 1365 -1358 1366
+		mu 0 4 713 716 712 710
+		f 4 1367 1368 -78 1369
+		mu 0 4 719 720 52 51
+		f 4 1370 1371 -1361 -1364
+		mu 0 4 715 721 714 711
+		f 4 1372 1373 -1363 -1366
+		mu 0 4 716 722 715 712
+		f 4 1374 1375 1376 1377
+		mu 0 4 717 723 724 718
+		f 4 1378 1379 -90 1380
+		mu 0 4 726 727 61 60
+		f 4 1381 1382 -1368 1383
+		mu 0 4 728 729 720 719
+		f 4 1384 1385 -1371 -1374
+		mu 0 4 722 730 721 715
+		f 4 1386 1387 1388 -1376
+		mu 0 4 723 731 732 724
+		f 4 1389 1390 -1375 1391
+		mu 0 4 725 733 723 717
+		f 4 1392 1393 -104 -1380
+		mu 0 4 727 735 70 61
+		f 4 1394 1395 -1379 1396
+		mu 0 4 736 737 727 726
+		f 4 1397 1398 -1382 1399
+		mu 0 4 738 739 729 728
+		f 4 1400 1401 1402 -1388
+		mu 0 4 731 740 741 732
+		f 4 1403 1404 -1387 -1391
+		mu 0 4 733 742 731 723
+		f 4 1405 1406 -1390 1407
+		mu 0 4 734 743 733 725
+		f 4 1408 1409 -121 -1394
+		mu 0 4 735 745 81 70
+		f 4 1410 1411 -1393 -1396
+		mu 0 4 737 746 735 727
+		f 4 1412 1413 -1395 1414
+		mu 0 4 747 748 737 736
+		f 4 1415 1416 1417 1418
+		mu 0 4 749 750 751 752
+		f 4 1419 1420 -1401 -1405
+		mu 0 4 742 753 740 731
+		f 4 1421 1422 -1406 1423
+		mu 0 4 744 754 743 734
+		f 4 1424 1425 -139 1426
+		mu 0 4 756 757 95 94
+		f 4 1427 1428 -1409 -1412
+		mu 0 4 746 758 745 735
+		f 4 1429 1430 -1411 -1414
+		mu 0 4 748 759 746 737
+		f 4 1431 1432 -1422 1433
+		mu 0 4 755 760 754 744
+		f 4 1434 1435 -150 1436
+		mu 0 4 763 764 104 103
+		f 4 1437 1438 -1425 1439
+		mu 0 4 765 766 757 756
+		f 4 1440 1441 -1428 -1431
+		mu 0 4 759 767 758 746
+		f 4 1442 1443 -1430 1444
+		mu 0 4 751 768 759 748
+		f 4 1445 1446 -1443 -1417
+		mu 0 4 750 769 768 751
+		f 4 1447 1448 1449 1450
+		mu 0 4 761 770 771 762
+		f 4 1451 1452 -168 1453
+		mu 0 4 773 774 116 115
+		f 4 1454 1455 -1435 1456
+		mu 0 4 775 776 764 763
+		f 4 1457 1458 -1438 1459
+		mu 0 4 777 778 766 765
+		f 4 1460 1461 -1441 -1444
+		mu 0 4 768 779 767 759
+		f 4 1462 1463 -1461 -1447
+		mu 0 4 769 780 779 768
+		f 4 1464 1465 1466 1467
+		mu 0 4 781 782 783 784
+		f 4 1468 1469 1470 -1448
+		mu 0 4 761 772 785 770
+		f 4 1471 1472 -188 -1453
+		mu 0 4 774 787 130 116
+		f 4 1473 1474 -1452 1475
+		mu 0 4 788 789 774 773
+		f 4 1476 1477 -1455 1478
+		mu 0 4 790 791 776 775
+		f 4 1479 1480 -1458 1481
+		mu 0 4 792 793 778 777
+		f 4 1482 1483 1484 1485
+		mu 0 4 794 795 796 792
+		f 4 1486 1487 1488 1489
+		mu 0 4 797 798 799 800
+		f 4 1490 1491 1492 -1470
+		mu 0 4 772 786 801 785
+		f 4 1493 1494 -211 -1473
+		mu 0 4 787 803 147 130
+		f 4 1495 1496 -1472 -1475
+		mu 0 4 789 804 787 774
+		f 4 1497 1498 -1474 1499
+		mu 0 4 805 806 789 788
+		f 4 1500 1501 -1477 1502
+		mu 0 4 807 808 791 790
+		f 4 1503 1504 1505 -1481
+		mu 0 4 793 809 810 778
+		f 4 1506 1507 -1480 -1485
+		mu 0 4 796 811 793 792
+		f 4 1508 1509 1510 1511
+		mu 0 4 812 813 814 815
+		f 4 1512 1513 1514 1515
+		mu 0 4 816 817 818 819
+		f 4 -1493 1516 1517 1518
+		mu 0 4 785 801 820 821
+		f 4 1519 1520 1521 -1492
+		mu 0 4 786 802 822 801
+		f 4 1522 1523 -241 -1495
+		mu 0 4 803 824 169 147
+		f 4 1524 1525 -1494 -1497
+		mu 0 4 804 825 803 787
+		f 4 1526 1527 -1496 -1499
+		mu 0 4 806 826 804 789
+		f 4 1528 1529 -1498 1530
+		mu 0 4 827 828 806 805
+		f 4 1531 -1501 1532 1533
+		mu 0 4 829 808 807 830
+		f 4 1534 1535 1536 1537
+		mu 0 4 831 832 833 834
+		f 4 1538 1539 -1504 -1508
+		mu 0 4 811 835 809 793
+		f 4 1540 1541 1542 -1510
+		mu 0 4 813 836 837 814
+		f 4 1543 1544 1545 1546
+		mu 0 4 838 839 840 841
+		f 4 -1515 1547 1548 1549
+		mu 0 4 819 818 842 843
+		f 4 -1518 1550 1551 1552
+		mu 0 4 821 820 844 842
+		f 4 -1522 1553 1554 -1517
+		mu 0 4 801 822 845 820
+		f 4 1555 1556 1557 -1521
+		mu 0 4 802 823 846 822
+		f 4 1558 1559 -278 -1524
+		mu 0 4 824 849 195 169
+		f 4 1560 1561 -1523 -1526
+		mu 0 4 825 850 824 803
+		f 4 1562 1563 -1525 -1528
+		mu 0 4 826 851 825 804
+		f 4 1564 1565 -1527 1566
+		mu 0 4 852 853 826 806
+		f 4 1567 1568 -1567 -1530
+		mu 0 4 828 854 852 806
+		f 4 -1529 1569 1570 1571
+		mu 0 4 828 827 855 856
+		f 4 1572 1573 -1571 1574
+		mu 0 4 857 858 856 855
+		f 4 -1537 1575 1576 1577
+		mu 0 4 834 833 859 860
+		f 4 1578 -1538 -1578 1579
+		mu 0 4 861 831 834 860
+		f 4 1580 1581 1582 -1542
+		mu 0 4 836 862 863 837
+		f 4 1583 1584 -1544 1585
+		mu 0 4 864 865 839 838
+		f 4 1586 1587 1588 -1547
+		mu 0 4 841 866 867 838
+		f 4 -1552 1589 1590 -1549
+		mu 0 4 842 844 868 843
+		f 4 -1555 1591 1592 -1551
+		mu 0 4 820 845 869 844
+		f 4 -1558 1593 1594 -1554
+		mu 0 4 822 846 870 845
+		f 4 1595 1596 1597 1598
+		mu 0 4 848 847 871 872
+		f 4 1599 1600 -1559 -1562
+		mu 0 4 850 879 849 824
+		f 4 1601 1602 -1561 -1564
+		mu 0 4 851 880 850 825
+		f 4 1603 1604 -1563 -1566
+		mu 0 4 853 881 851 826
+		f 4 -1589 1605 -1565 1606
+		mu 0 4 838 867 853 852
+		f 4 -1586 -1607 -1569 1607
+		mu 0 4 864 838 852 854
+		f 4 -1574 1608 -1568 -1572
+		mu 0 4 856 858 854 828
+		f 4 1609 -1573 1610 1611
+		mu 0 4 882 858 857 883
+		f 4 1612 1613 -1612 1614
+		mu 0 4 884 885 882 883
+		f 4 -1614 1615 -1584 1616
+		mu 0 4 882 885 865 864
+		f 4 -1588 1617 1618 1619
+		mu 0 4 867 866 886 887
+		f 4 -1593 1620 1621 -1590
+		mu 0 4 844 869 888 868
+		f 4 -1595 1622 1623 -1592
+		mu 0 4 845 870 889 869
+		f 4 -1598 1624 1625 1626
+		mu 0 4 872 871 890 891
+		f 4 1627 1628 1629 1630
+		mu 0 4 874 873 892 893
+		f 4 1631 1632 1633 1634
+		mu 0 4 876 875 896 897
+		f 4 1635 1636 1637 1638
+		mu 0 4 898 900 901 899
+		f 4 1639 1640 -361 1641
+		mu 0 4 902 903 251 250
+		f 4 1642 1643 -1600 -1603
+		mu 0 4 880 904 879 850
+		f 4 1644 1645 -1602 -1605
+		mu 0 4 881 905 880 851
+		f 4 -1620 1646 -1604 -1606
+		mu 0 4 867 887 881 853
+		f 4 -1610 -1617 -1608 -1609
+		mu 0 4 858 882 864 854
+		f 4 1647 1648 1649 -1619
+		mu 0 4 886 906 907 887
+		f 4 -1624 1650 1651 -1621
+		mu 0 4 869 889 908 888
+		f 4 -1626 1652 1653 1654
+		mu 0 4 891 890 909 910
+		f 4 -1630 1655 1656 1657
+		mu 0 4 893 892 911 912
+		f 4 1658 1659 1660 -1629
+		mu 0 4 873 894 913 892
+		f 4 -1633 1661 1662 1663
+		mu 0 4 896 875 895 915
+		f 4 -1634 1664 1665 1666
+		mu 0 4 897 896 916 917
+		f 4 1667 1668 1669 1670
+		mu 0 4 878 877 918 919
+		f 4 -1638 1671 -1660 1672
+		mu 0 4 899 901 913 894
+		f 4 1673 1674 -396 1675
+		mu 0 4 920 921 271 270
+		f 4 1676 -1640 1677 1678
+		mu 0 4 922 903 902 923
+		f 4 -1646 1679 1680 -1643
+		mu 0 4 880 905 924 904
+		f 4 -1647 1681 1682 -1645
+		mu 0 4 881 887 925 905
+		f 4 1683 1684 -1682 -1650
+		mu 0 4 907 926 925 887
+		f 4 1685 1686 -1649 1687
+		mu 0 4 927 928 907 906
+		f 4 1688 1689 1690 -1654
+		mu 0 4 909 929 930 910
+		f 4 1691 1692 1693 -1657
+		mu 0 4 911 931 932 912
+		f 4 1694 1695 -1656 -1661
+		mu 0 4 913 933 911 892
+		f 4 -1663 1696 1697 1698
+		mu 0 4 915 895 914 934
+		f 4 -1665 -1664 1699 1700
+		mu 0 4 916 896 915 936
+		f 4 -1666 1701 1702 1703
+		mu 0 4 917 916 937 938
+		f 4 -1670 1704 1705 1706
+		mu 0 4 919 918 939 940
+		f 4 1707 1708 1709 -1637
+		mu 0 4 900 941 942 901
+		f 4 -1710 1710 -1695 -1672
+		mu 0 4 901 942 933 913
+		f 4 1711 1712 -434 -1675
+		mu 0 4 921 943 294 271
+		f 4 1713 1714 -1674 1715
+		mu 0 4 944 945 921 920
+		f 4 1716 1717 1718 1719
+		mu 0 4 946 947 922 948
+		f 4 1720 1721 -1680 -1683
+		mu 0 4 925 949 924 905
+		f 4 1722 1723 -1721 -1685
+		mu 0 4 926 950 949 925
+		f 4 1724 1725 -1684 -1687
+		mu 0 4 928 951 926 907
+		f 4 1726 1727 1728 1729
+		mu 0 4 952 953 954 955
+		f 4 1730 1731 1732 -1693
+		mu 0 4 931 956 957 932
+		f 4 1733 1734 -1692 -1696
+		mu 0 4 933 958 931 911
+		f 4 -1700 -1699 1735 1736
+		mu 0 4 936 915 934 959
+		f 4 1737 -1327 1738 1739
+		mu 0 4 935 698 697 960
+		f 4 -1702 -1701 1740 1741
+		mu 0 4 937 916 936 961
+		f 4 -1703 1742 1743 1744
+		mu 0 4 938 937 962 963
+		f 4 -1706 1745 1746 1747
+		mu 0 4 940 939 964 965
+		f 4 1748 1749 1750 -1709
+		mu 0 4 941 966 967 942
+		f 4 -1751 1751 -1734 -1711
+		mu 0 4 942 967 958 933
+		f 4 1752 1753 -476 -1713
+		mu 0 4 943 968 320 294
+		f 4 1754 1755 -1712 -1715
+		mu 0 4 945 969 943 921
+		f 4 1756 1757 -1714 1758
+		mu 0 4 970 971 945 944
+		f 4 1759 1760 -1717 1761
+		mu 0 4 972 973 947 946
+		f 4 1762 1763 -1760 1764
+		mu 0 4 974 975 973 972
+		f 4 1765 1766 -1723 -1726
+		mu 0 4 951 976 950 926
+		f 4 1767 1768 1769 1770
+		mu 0 4 977 978 979 980
+		f 4 1771 1772 1773 1774
+		mu 0 4 981 982 983 984
+		f 4 1775 1776 -1731 -1735
+		mu 0 4 958 985 956 931
+		f 4 -1741 -1737 1777 1778
+		mu 0 4 961 936 959 986
+		f 4 -1739 -1324 1779 1780
+		mu 0 4 960 697 696 987
+		f 4 -1743 -1742 1781 1782
+		mu 0 4 962 937 961 988
+		f 4 1783 1784 1785 1786
+		mu 0 4 989 990 991 992
+		f 4 -1747 1787 1788 1789
+		mu 0 4 965 964 993 994
+		f 4 1790 1791 1792 -1750
+		mu 0 4 966 995 996 967
+		f 4 -1793 1793 -1776 -1752
+		mu 0 4 967 996 985 958
+		f 4 1794 1795 -520 1796
+		mu 0 4 997 998 352 351
+		f 4 1797 1798 -1753 -1756
+		mu 0 4 969 999 968 943
+		f 4 1799 -1755 -1758 1800
+		mu 0 4 1000 969 945 971
+		f 4 1801 1802 -1757 1803
+		mu 0 4 1001 1002 971 970
+		f 4 1804 1805 -1802 1806
+		mu 0 4 1003 1004 1002 1001
+		f 4 1807 1808 -1763 1809
+		mu 0 4 1005 1006 975 974
+		f 4 1810 1811 -1772 1812
+		mu 0 4 1007 977 982 981
+		f 4 -1782 -1779 1813 1814
+		mu 0 4 988 961 986 1008
+		f 4 -1780 1815 1816 1817
+		mu 0 4 987 696 1009 1010
+		f 4 1818 -1785 1819 1820
+		mu 0 4 1011 991 990 1012
+		f 4 1821 1822 1823 1824
+		mu 0 4 1013 1014 1015 1016
+		f 4 1825 1826 1827 1828
+		mu 0 4 1017 1018 1019 978
+		f 4 -1829 -1768 -1811 1829
+		mu 0 4 1017 978 977 1007
+		f 4 1830 1831 -1795 1832
+		mu 0 4 1020 1021 998 997
+		f 4 1833 1834 -1801 -1803
+		mu 0 4 1002 1022 1000 971
+		f 4 1835 1836 -1798 -1800
+		mu 0 4 1000 1023 999 969
+		f 4 1837 1838 -1834 -1806
+		mu 0 4 1004 1024 1022 1002
+		f 4 1839 1840 -1805 1841
+		mu 0 4 1025 1026 1004 1003
+		f 4 -1808 1842 1843 1844
+		mu 0 4 1006 1005 1027 1028
+		f 4 1845 1846 1847 -1770
+		mu 0 4 979 1029 1030 980
+		f 4 -1817 1848 1849 1850
+		mu 0 4 1010 1009 1031 1032
+		f 4 -1821 1851 1852 1853
+		mu 0 4 1011 1012 1033 1034
+		f 4 -1816 -1323 1854 1855
+		mu 0 4 1009 696 680 1035
+		f 4 -1786 1856 1857 1858
+		mu 0 4 992 991 1036 1037
+		f 4 -1836 -1835 1859 1860
+		mu 0 4 1023 1000 1022 1038
+		f 4 1861 1862 -1831 1863
+		mu 0 4 1039 1040 1021 1020
+		f 4 1864 1865 -1860 -1839
+		mu 0 4 1024 1041 1038 1022
+		f 4 1866 1867 -1838 -1841
+		mu 0 4 1026 1042 1024 1004
+		f 4 1868 -1840 1869 1870
+		mu 0 4 1043 1026 1025 1044
+		f 4 1871 1872 1873 1874
+		mu 0 4 1045 1046 1047 1048
+		f 4 1875 1876 -1846 1877
+		mu 0 4 1049 1050 1029 979
+		f 4 1878 -1878 -1769 -1828
+		mu 0 4 1019 1049 979 978
+		f 4 1879 1880 1881 1882
+		mu 0 4 1051 1052 1053 1054
+		f 4 -1849 -1856 1883 1884
+		mu 0 4 1031 1009 1035 1055
+		f 4 -1855 -1300 1885 1886
+		mu 0 4 1035 680 679 1056
+		f 4 -1857 -1819 1887 1888
+		mu 0 4 1036 991 1011 1057
+		f 4 1889 1890 1891 -1824
+		mu 0 4 1015 1058 1059 1016
+		f 4 -1858 1892 1893 1894
+		mu 0 4 1037 1036 1060 1061
+		f 4 1895 1896 1897 -1862
+		mu 0 4 1039 1062 1063 1040
+		f 4 1898 1899 1900 -1897
+		mu 0 4 1062 1064 1065 1063
+		f 4 -1868 1901 1902 -1865
+		mu 0 4 1024 1042 1066 1041
+		f 4 1903 -1867 -1869 1904
+		mu 0 4 1067 1042 1026 1043
+		f 4 1905 1906 1907 1908
+		mu 0 4 1068 1069 1070 1071
+		f 4 1909 1910 1911 -1872
+		mu 0 4 1045 1072 1073 1046
+		f 4 -1891 1912 1913 1914
+		mu 0 4 1059 1058 1074 1075
+		f 4 -1881 1915 1916 1917
+		mu 0 4 1053 1052 1076 1077
+		f 4 -1884 -1887 1918 1919
+		mu 0 4 1055 1035 1056 1078
+		f 4 -1888 -1854 1920 1921
+		mu 0 4 1057 1011 1034 1079
+		f 4 -1886 -1306 1922 1923
+		mu 0 4 1056 679 684 1080
+		f 4 -1889 1924 1925 -1893
+		mu 0 4 1036 1057 1081 1060
+		f 4 1926 1927 1928 1929
+		mu 0 4 1082 1083 1084 1085
+		f 4 1930 1931 -1900 1932
+		mu 0 4 1086 1087 1065 1064
+		f 4 -1902 -1904 1933 1934
+		mu 0 4 1066 1042 1067 1088
+		f 4 1935 1936 1937 -1908
+		mu 0 4 1070 1089 1090 1071
+		f 4 1938 1939 -1907 1940
+		mu 0 4 1091 1092 1070 1069
+		f 4 1941 1942 1943 1944
+		mu 0 4 1093 1094 1095 1096
+		f 4 -1882 1945 1946 1947
+		mu 0 4 1054 1053 1097 1098
+		f 4 -1917 1948 1949 1950
+		mu 0 4 1077 1076 1099 1100
+		f 4 -1919 -1924 1951 1952
+		mu 0 4 1078 1056 1080 1101
+		f 4 -1925 -1922 1953 1954
+		mu 0 4 1081 1057 1079 1102
+		f 4 -1923 -1309 1955 1956
+		mu 0 4 1080 684 686 1103
+		f 4 -1928 1957 1958 1959
+		mu 0 4 1084 1083 1104 1105
+		f 4 1960 1961 1962 1963
+		mu 0 4 1106 1107 1108 1109
+		f 4 1964 -1931 1965 1966
+		mu 0 4 1110 1087 1086 1111
+		f 4 1967 1968 1969 -1937
+		mu 0 4 1089 1112 1113 1090
+		f 4 -1940 1970 1971 -1936
+		mu 0 4 1070 1092 1114 1089
+		f 4 1972 1973 1974 1975
+		mu 0 4 1115 1116 1117 1118
+		f 4 -1947 1976 1977 1978
+		mu 0 4 1098 1097 1119 1120
+		f 4 -1946 -1918 1979 1980
+		mu 0 4 1097 1053 1077 1121
+		f 4 -1950 1981 1982 1983
+		mu 0 4 1100 1099 1122 1123
+		f 4 -1952 -1957 1984 1985
+		mu 0 4 1101 1080 1103 1124
+		f 4 1986 1987 1988 -1959
+		mu 0 4 1104 1125 1126 1105
+		f 4 -1956 -1311 1989 1990
+		mu 0 4 1103 686 688 1127
+		f 4 1991 1992 1993 1994
+		mu 0 4 1128 1109 1129 1130
+		f 4 1995 1996 -1964 -1992
+		mu 0 4 1128 1131 1106 1109
+		f 4 -1961 1997 1998 1999
+		mu 0 4 1107 1106 1132 1133
+		f 4 2000 2001 2002 2003
+		mu 0 4 1134 1135 1136 1137
+		f 4 2004 2005 -1968 -1972
+		mu 0 4 1114 1138 1112 1089
+		f 4 2006 2007 2008 -1974
+		mu 0 4 1116 1139 1140 1117
+		f 4 2009 2010 2011 2012
+		mu 0 4 1141 1142 1143 1144
+		f 4 -1977 -1981 2013 2014
+		mu 0 4 1119 1097 1121 1145
+		f 4 -1980 -1951 2015 2016
+		mu 0 4 1121 1077 1100 1146
+		f 4 -1983 2017 2018 2019
+		mu 0 4 1123 1122 1147 1148
+		f 4 -1985 -1991 2020 2021
+		mu 0 4 1124 1103 1127 1149
+		f 4 -1995 2022 2023 2024
+		mu 0 4 1128 1130 1150 1151
+		f 4 -1990 -1314 -752 2025
+		mu 0 4 1127 688 10 507
+		f 4 2026 2027 -1998 -1997
+		mu 0 4 1131 1152 1132 1106
+		f 4 2028 2029 2030 2031
+		mu 0 4 1153 1154 1155 1156
+		f 4 2032 2033 -2002 2034
+		mu 0 4 1157 1158 1136 1135
+		f 4 2035 2036 2037 2038
+		mu 0 4 1159 1160 1161 1162
+		f 4 2039 2040 2041 2042
+		mu 0 4 1163 1164 1165 1166
+		f 4 -2011 2043 2044 2045
+		mu 0 4 1143 1142 1167 1168
+		f 4 -2014 -2017 2046 2047
+		mu 0 4 1145 1121 1146 1169
+		f 4 -2016 -1984 2048 2049
+		mu 0 4 1146 1100 1123 1170
+		f 4 -2019 2050 2051 2052
+		mu 0 4 1148 1147 1171 1172
+		f 4 -2021 -2026 -781 2053
+		mu 0 4 1149 1127 507 529
+		f 4 -1996 -2025 2054 2055
+		mu 0 4 1131 1128 1151 1173
+		f 4 2056 2057 -2030 2058
+		mu 0 4 1174 1175 1155 1154
+		f 4 -2042 2059 2060 2061
+		mu 0 4 1166 1165 1176 1177
+		f 4 -2041 2062 2063 2064
+		mu 0 4 1165 1164 1178 1179
+		f 4 -2045 2065 2066 2067
+		mu 0 4 1168 1167 1180 1181
+		f 4 -2047 -2050 2068 2069
+		mu 0 4 1169 1146 1170 1182
+		f 4 -2049 -2020 2070 2071
+		mu 0 4 1170 1123 1148 1183
+		f 4 -2052 2072 -801 2073
+		mu 0 4 1172 1171 542 541
+		f 4 -2027 -2056 2074 2075
+		mu 0 4 1152 1131 1173 1184
+		f 4 -2061 2076 2077 2078
+		mu 0 4 1177 1176 1185 1186
+		f 4 -2065 2079 2080 -2060
+		mu 0 4 1165 1179 1187 1176
+		f 4 -2064 2081 2082 2083
+		mu 0 4 1179 1178 1188 1189
+		f 4 -2067 2084 2085 2086
+		mu 0 4 1181 1180 1190 1191
+		f 4 -2069 -2072 2087 2088
+		mu 0 4 1182 1170 1183 1192
+		f 4 -2071 -2053 2089 2090
+		mu 0 4 1183 1148 1172 1193
+		f 4 -2057 2091 2092 2093
+		mu 0 4 1175 1174 1194 1195
+		f 4 2094 2095 2096 2097
+		mu 0 4 1196 1197 1198 1199
+		f 4 -2077 -2081 2098 2099
+		mu 0 4 1185 1176 1187 1200
+		f 4 -2080 -2084 2100 2101
+		mu 0 4 1187 1179 1189 1201
+		f 4 -2083 2102 2103 2104
+		mu 0 4 1189 1188 1202 1203
+		f 4 -2086 2105 2106 2107
+		mu 0 4 1191 1190 1204 1205
+		f 4 -2088 -2091 2108 2109
+		mu 0 4 1192 1183 1193 1206
+		f 4 -2090 -2074 -840 2110
+		mu 0 4 1193 1172 541 566
+		f 4 -2096 2111 2112 2113
+		mu 0 4 1198 1197 1207 1208
+		f 4 -2102 2114 2115 -2099
+		mu 0 4 1187 1201 1209 1200
+		f 4 2116 -2101 -2105 2117
+		mu 0 4 1210 1201 1189 1203
+		f 4 2118 -2104 2119 2120
+		mu 0 4 1211 1203 1202 1212
+		f 4 -2107 2121 2122 2123
+		mu 0 4 1205 1204 1213 1214
+		f 4 -2109 -2111 -855 2124
+		mu 0 4 1206 1193 566 575
+		f 4 -2113 2125 2126 2127
+		mu 0 4 1208 1207 1215 1216
+		f 4 -2117 2128 2129 -2115
+		mu 0 4 1201 1210 1217 1209
+		f 4 -2118 -2119 2130 2131
+		mu 0 4 1210 1203 1211 1218
+		f 4 -2121 2132 2133 2134
+		mu 0 4 1211 1212 1219 1220
+		f 4 -2123 2135 -867 2136
+		mu 0 4 1214 1213 583 582
+		f 4 2137 2138 2139 -2127
+		mu 0 4 1215 1221 1222 1216
+		f 4 -2129 -2132 2140 2141
+		mu 0 4 1217 1210 1218 1223
+		f 4 -2131 -2135 2142 2143
+		mu 0 4 1218 1211 1220 1224
+		f 4 -2134 2144 -877 2145
+		mu 0 4 1220 1219 589 588
+		f 4 2146 2147 2148 -2139
+		mu 0 4 1221 1225 1226 1222
+		f 4 -2141 -2144 2149 2150
+		mu 0 4 1223 1218 1224 1227
+		f 4 -2143 -2146 -885 2151
+		mu 0 4 1224 1220 588 593
+		f 4 -2148 2152 2153 2154
+		mu 0 4 1226 1225 1228 1229
+		f 4 -2150 -2152 -890 2155
+		mu 0 4 1227 1224 593 596
+		f 4 -2154 2156 -892 2157
+		mu 0 4 1229 1228 598 597
+		f 4 2158 -1993 -1963 2159
+		mu 0 4 1230 1129 1109 1108
+		f 4 2160 -1976 2161 2162
+		mu 0 4 1231 1115 1118 1232
+		f 4 2163 2164 2165 -1579
+		mu 0 4 861 1233 829 831
+		f 4 2166 2167 -1532 -2165
+		mu 0 4 1233 1234 808 829
+		f 4 -2168 2168 2169 -1502
+		mu 0 4 808 1234 1235 791
+		f 4 -2170 2170 2171 -1478
+		mu 0 4 791 1235 1236 776
+		f 4 -2172 2172 2173 -1456
+		mu 0 4 776 1236 1237 764
+		f 4 -2174 2174 -910 -1436
+		mu 0 4 764 1237 607 104
+		f 4 -1407 2175 2176 -1404
+		mu 0 4 733 743 1238 742
+		f 4 -2177 2177 2178 -1420
+		mu 0 4 742 1238 1239 753
+		f 4 2179 -2176 -1423 2180
+		mu 0 4 1240 1238 743 754
+		f 4 -2178 -2180 2181 2182
+		mu 0 4 1239 1238 1240 1241
+		f 4 2183 2184 2185 -2181
+		mu 0 4 754 1242 781 1240
+		f 4 2186 2187 -2184 -1433
+		mu 0 4 760 1243 1242 754
+		f 4 -2188 2188 -1465 -2185
+		mu 0 4 1242 1243 782 781
+		f 4 2189 2190 -1449 2191
+		mu 0 4 1244 1245 771 770
+		f 4 -2190 2192 -1487 2193
+		mu 0 4 1245 1244 798 797
+		f 4 2194 -2192 -1471 -1519
+		mu 0 4 821 1244 770 785
+		f 4 2195 -1514 2196 -2193
+		mu 0 4 1244 818 817 798
+		f 4 -2196 -2195 -1553 -1548
+		mu 0 4 818 1244 821 842
+		f 4 2197 -1427 -934 -1410
+		mu 0 4 745 756 94 81
+		f 4 2198 -1440 -2198 -1429
+		mu 0 4 758 765 756 745
+		f 4 2199 -1460 -2199 -1442
+		mu 0 4 767 777 765 758
+		f 4 2200 -1482 -2200 -1462
+		mu 0 4 779 792 777 767
+		f 4 2201 -1486 -2201 -1464
+		mu 0 4 780 794 792 779
+		f 4 -2186 -1468 2202 -2182
+		mu 0 4 1240 781 784 1241
+		f 4 -1488 -2197 -1513 2203
+		mu 0 4 799 798 817 816
+		f 4 2204 -1509 2205 -1545
+		mu 0 4 839 813 812 840
+		f 4 2206 -1541 -2205 -1585
+		mu 0 4 865 836 813 839
+		f 4 2207 -1581 -2207 -1616
+		mu 0 4 885 862 836 865
+		f 4 -1582 -2208 -1613 2208
+		mu 0 4 863 862 885 884
+		f 4 2209 -1540 2210 -1576
+		mu 0 4 833 809 835 859
+		f 4 2211 -1505 -2210 -1536
+		mu 0 4 832 810 809 833
+		f 4 2212 -2212 2213 -1533
+		mu 0 4 807 810 832 830
+		f 4 -2213 -1503 2214 -1506
+		mu 0 4 810 807 790 778
+		f 4 -2215 -1479 2215 -1459
+		mu 0 4 778 790 775 766
+		f 4 -2216 -1457 2216 -1439
+		mu 0 4 766 775 763 757
+		f 4 -2217 -1437 -955 -1426
+		mu 0 4 757 763 103 95
+		f 4 -1534 -2214 -1535 -2166
+		mu 0 4 829 830 832 831
+		f 4 -1848 2217 2218 2219
+		mu 0 4 980 1030 1246 1247
+		f 4 2220 2221 -1874 2222
+		mu 0 4 1248 1249 1048 1047
+		f 4 2223 -1909 2224 2225
+		mu 0 4 1250 1068 1071 1251
+		f 4 2226 2227 -2225 -1938
+		mu 0 4 1090 1252 1251 1071
+		f 4 2228 -2227 -1970 2229
+		mu 0 4 1253 1252 1090 1113
+		f 4 2230 -2004 2231 2232
+		mu 0 4 1254 1134 1137 1255
+		f 4 2233 2234 2235 -2093
+		mu 0 4 1194 1256 1257 1195
+		f 4 2236 2237 2238 -2075
+		mu 0 4 1173 1258 1259 1184
+		f 4 2239 2240 -2237 -2055
+		mu 0 4 1151 1260 1258 1173;
+	setAttr ".fc[1000:1241]"
+		f 4 2241 2242 -2240 -2024
+		mu 0 4 1150 1261 1260 1151
+		f 4 2243 2244 2245 -1988
+		mu 0 4 1125 1262 1263 1126
+		f 4 2246 2247 2248 -1954
+		mu 0 4 1079 1264 1265 1102
+		f 4 2249 2250 -2247 -1921
+		mu 0 4 1034 1266 1264 1079
+		f 4 2251 2252 -2250 -1853
+		mu 0 4 1033 1267 1266 1034
+		f 4 -1814 2253 2254 2255
+		mu 0 4 1008 986 1268 1269
+		f 4 2256 2257 -2254 -1778
+		mu 0 4 959 1270 1268 986
+		f 4 2258 2259 -2257 -1736
+		mu 0 4 934 1271 1270 959
+		f 4 2260 2261 -2259 -1698
+		mu 0 4 914 1272 1271 934
+		f 4 2262 -1740 2263 -2262
+		mu 0 4 1272 935 960 1271
+		f 4 -2264 -1781 2264 -2260
+		mu 0 4 1271 960 987 1270
+		f 4 -2265 -1818 2265 -2258
+		mu 0 4 1270 987 1010 1268
+		f 4 -2266 -1851 2266 -2255
+		mu 0 4 1268 1010 1032 1269
+		f 4 2267 -1883 2268 -2253
+		mu 0 4 1267 1051 1054 1266
+		f 4 -2269 -1948 2269 -2251
+		mu 0 4 1266 1054 1098 1264
+		f 4 -2270 -1979 2270 -2248
+		mu 0 4 1264 1098 1120 1265
+		f 4 2271 -2013 2272 -2245
+		mu 0 4 1262 1141 1144 1263
+		f 4 2273 -2043 2274 -2243
+		mu 0 4 1261 1163 1166 1260
+		f 4 -2275 -2062 2275 -2241
+		mu 0 4 1260 1166 1177 1258
+		f 4 -2276 -2079 2276 -2238
+		mu 0 4 1258 1177 1186 1259
+		f 4 2277 -2098 2278 -2235
+		mu 0 4 1256 1196 1199 1257
+		f 4 2279 -1967 2280 -2233
+		mu 0 4 1255 1110 1111 1254
+		f 4 -1934 2281 -2229 2282
+		mu 0 4 1088 1067 1252 1253
+		f 4 -2282 -1905 2283 -2228
+		mu 0 4 1252 1067 1043 1251
+		f 4 -2284 -1871 2284 -2226
+		mu 0 4 1251 1043 1044 1250
+		f 4 -1844 2285 -2221 2286
+		mu 0 4 1028 1027 1249 1248
+		f 4 -1812 -1771 -2220 2287
+		mu 0 4 982 977 980 1247
+		f 4 2288 2289 2290 2291
+		mu 0 4 1273 953 983 1274
+		f 4 2292 -1599 2293 -1557
+		mu 0 4 823 848 872 846
+		f 4 -2294 -1627 2294 -1594
+		mu 0 4 846 872 891 870
+		f 4 -2295 -1655 2295 -1623
+		mu 0 4 870 891 910 889
+		f 4 -1651 -2296 -1691 2296
+		mu 0 4 908 889 910 930
+		f 4 2297 -1686 2298 -1729
+		mu 0 4 954 928 927 955
+		f 4 2299 -1631 2300 -1597
+		mu 0 4 847 874 893 871
+		f 4 -2301 -1658 2301 -1625
+		mu 0 4 871 893 912 890
+		f 4 2302 -1653 -2302 -1694
+		mu 0 4 932 909 890 912
+		f 4 -1689 -2303 -1733 2303
+		mu 0 4 929 909 932 957
+		f 4 -2290 -1727 2304 -1774
+		mu 0 4 983 953 952 984
+		f 4 2305 2306 -1728 -2289
+		mu 0 4 1273 1275 954 953
+		f 4 2307 -1370 -1046 -1362
+		mu 0 4 714 719 51 44
+		f 4 2308 -1384 -2308 -1372
+		mu 0 4 721 728 719 714
+		f 4 2309 -1400 -2309 -1386
+		mu 0 4 730 738 728 721
+		f 4 2310 2311 2312 -1402
+		mu 0 4 740 749 1276 741
+		f 4 2313 -1416 -2311 -1421
+		mu 0 4 753 750 749 740
+		f 4 2314 -1446 -2314 -2179
+		mu 0 4 1239 769 750 753
+		f 4 -2315 -2183 2315 -1463
+		mu 0 4 769 1239 1241 780
+		f 4 2316 -2202 -2316 -2203
+		mu 0 4 784 794 780 1241
+		f 4 2317 -1483 -2317 -1467
+		mu 0 4 783 795 794 784
+		f 4 2318 -1512 2319 -1489
+		mu 0 4 799 812 815 800
+		f 4 -2206 -2319 -2204 2320
+		mu 0 4 840 812 799 816
+		f 4 -1546 -2321 -1516 2321
+		mu 0 4 841 840 816 819
+		f 4 -2322 -1550 2322 -1587
+		mu 0 4 841 819 843 866
+		f 4 2323 -1618 -2323 -1591
+		mu 0 4 868 886 866 843
+		f 4 2324 -1648 -2324 -1622
+		mu 0 4 888 906 886 868
+		f 4 2325 -1688 -2325 -1652
+		mu 0 4 908 927 906 888
+		f 4 -2299 -2326 -2297 2326
+		mu 0 4 955 927 908 930
+		f 4 2327 -1730 -2327 -1690
+		mu 0 4 929 952 955 930
+		f 4 -2305 -2328 -2304 2328
+		mu 0 4 984 952 929 957
+		f 4 2329 -1775 -2329 -1732
+		mu 0 4 956 981 984 957
+		f 4 2330 -1813 -2330 -1777
+		mu 0 4 985 1007 981 956
+		f 4 2331 -1830 -2331 -1794
+		mu 0 4 996 1017 1007 985
+		f 4 2332 -1826 -2332 -1792
+		mu 0 4 995 1018 1017 996
+		f 4 -1789 2333 -1822 2334
+		mu 0 4 994 993 1014 1013
+		f 4 -1744 2335 -1784 2336
+		mu 0 4 963 962 990 989
+		f 4 -2336 -1783 2337 -1820
+		mu 0 4 990 962 988 1012
+		f 4 -1852 -2338 -1815 2338
+		mu 0 4 1033 1012 988 1008
+		f 4 -2252 -2339 -2256 2339
+		mu 0 4 1267 1033 1008 1269
+		f 4 2340 -2268 -2340 -2267
+		mu 0 4 1032 1051 1267 1269
+		f 4 2341 -1880 -2341 -1850
+		mu 0 4 1031 1052 1051 1032
+		f 4 -2342 -1885 2342 -1916
+		mu 0 4 1052 1031 1055 1076
+		f 4 -2343 -1920 2343 -1949
+		mu 0 4 1076 1055 1078 1099
+		f 4 -2344 -1953 2344 -1982
+		mu 0 4 1099 1078 1101 1122
+		f 4 -2345 -1986 2345 -2018
+		mu 0 4 1122 1101 1124 1147
+		f 4 -2346 -2022 2346 -2051
+		mu 0 4 1147 1124 1149 1171
+		f 4 -2347 -2054 -1087 -2073
+		mu 0 4 1171 1149 529 542
+		f 4 2347 -1676 -1088 -1641
+		mu 0 4 903 920 270 251
+		f 4 2348 -1716 -2348 -1677
+		mu 0 4 922 944 920 903
+		f 4 2349 -1759 -2349 -1718
+		mu 0 4 947 970 944 922
+		f 4 2350 -1804 -2350 -1761
+		mu 0 4 973 1001 970 947
+		f 4 2351 -1807 -2351 -1764
+		mu 0 4 975 1003 1001 973
+		f 4 2352 -1842 -2352 -1809
+		mu 0 4 1006 1025 1003 975
+		f 4 -1870 -2353 -1845 2353
+		mu 0 4 1044 1025 1006 1028
+		f 4 -2285 -2354 -2287 2354
+		mu 0 4 1250 1044 1028 1248
+		f 4 -2224 -2355 -2223 2355
+		mu 0 4 1068 1250 1248 1047
+		f 4 2356 -1906 -2356 -1873
+		mu 0 4 1046 1069 1068 1047
+		f 4 2357 -1941 -2357 -1912
+		mu 0 4 1073 1091 1069 1046
+		f 4 2358 -2163 2359 -1943
+		mu 0 4 1094 1231 1232 1095
+		f 4 -1929 2360 -2159 2361
+		mu 0 4 1085 1084 1129 1230
+		f 4 -2361 -1960 2362 -1994
+		mu 0 4 1129 1084 1105 1130
+		f 4 2363 -2023 -2363 -1989
+		mu 0 4 1126 1150 1130 1105
+		f 4 2364 -2242 -2364 -2246
+		mu 0 4 1263 1261 1150 1126
+		f 4 2365 -2274 -2365 -2273
+		mu 0 4 1144 1163 1261 1263
+		f 4 2366 -2040 -2366 -2012
+		mu 0 4 1143 1164 1163 1144
+		f 4 -2367 -2046 2367 -2063
+		mu 0 4 1164 1143 1168 1178
+		f 4 -2368 -2068 2368 -2082
+		mu 0 4 1178 1168 1181 1188
+		f 4 -2369 -2087 2369 -2103
+		mu 0 4 1188 1181 1191 1202
+		f 4 -2370 -2108 2370 -2120
+		mu 0 4 1202 1191 1205 1212
+		f 4 -2371 -2124 2371 -2133
+		mu 0 4 1212 1205 1214 1219
+		f 4 -2372 -2137 -1114 -2145
+		mu 0 4 1219 1214 582 589
+		f 4 2372 2373 -1115 -1560
+		mu 0 4 849 1277 647 195
+		f 4 2374 2375 -2373 -1601
+		mu 0 4 879 1278 1277 849
+		f 4 2376 -1720 2377 -1681
+		mu 0 4 924 946 948 904
+		f 4 2378 -1762 -2377 -1722
+		mu 0 4 949 972 946 924
+		f 4 2379 -1765 -2379 -1724
+		mu 0 4 950 974 972 949
+		f 4 2380 -1810 -2380 -1767
+		mu 0 4 976 1005 974 950
+		f 4 -1843 -2381 2381 2382
+		mu 0 4 1027 1005 976 1279
+		f 4 -2286 -2383 2383 2384
+		mu 0 4 1249 1027 1279 1246
+		f 4 2385 -2222 -2385 -2218
+		mu 0 4 1030 1048 1249 1246
+		f 4 2386 -1875 -2386 -1847
+		mu 0 4 1029 1045 1048 1030
+		f 4 2387 -1910 -2387 -1877
+		mu 0 4 1050 1072 1045 1029
+		f 4 2388 -1945 2389 -1914
+		mu 0 4 1074 1093 1096 1075
+		f 4 -1894 2390 -1927 2391
+		mu 0 4 1061 1060 1083 1082
+		f 4 2392 -1958 -2391 -1926
+		mu 0 4 1081 1104 1083 1060
+		f 4 -2393 -1955 2393 -1987
+		mu 0 4 1104 1081 1102 1125
+		f 4 2394 -2244 -2394 -2249
+		mu 0 4 1265 1262 1125 1102
+		f 4 2395 -2272 -2395 -2271
+		mu 0 4 1120 1141 1262 1265
+		f 4 2396 -2010 -2396 -1978
+		mu 0 4 1119 1142 1141 1120
+		f 4 -2397 -2015 2397 -2044
+		mu 0 4 1142 1119 1145 1167
+		f 4 -2398 -2048 2398 -2066
+		mu 0 4 1167 1145 1169 1180
+		f 4 -2399 -2070 2399 -2085
+		mu 0 4 1180 1169 1182 1190
+		f 4 -2400 -2089 2400 -2106
+		mu 0 4 1190 1182 1192 1204
+		f 4 -2401 -2110 2401 -2122
+		mu 0 4 1204 1192 1206 1213
+		f 4 -2402 -2125 -1146 -2136
+		mu 0 4 1213 1206 575 583
+		f 4 2402 2403 -1147 -1754
+		mu 0 4 968 1280 651 320
+		f 4 2404 2405 -2403 -1799
+		mu 0 4 999 1281 1280 968
+		f 4 2406 2407 -2405 -1837
+		mu 0 4 1023 1282 1281 999
+		f 4 -2407 -1861 2408 2409
+		mu 0 4 1282 1023 1038 1283
+		f 4 2410 2411 -2409 -1866
+		mu 0 4 1041 1284 1283 1038
+		f 4 2412 2413 -2411 -1903
+		mu 0 4 1066 1285 1284 1041
+		f 4 -2413 -1935 2414 2415
+		mu 0 4 1285 1066 1088 1286
+		f 4 -2415 -2283 2416 2417
+		mu 0 4 1286 1088 1253 1287
+		f 4 -2417 -2230 2418 2419
+		mu 0 4 1287 1253 1113 1288
+		f 4 2420 2421 -2419 -1969
+		mu 0 4 1112 1289 1288 1113
+		f 4 2422 2423 -2421 -2006
+		mu 0 4 1138 1290 1289 1112
+		f 4 2424 2425 2426 -2008
+		mu 0 4 1139 1291 1292 1140
+		f 4 2427 2428 2429 -1999
+		mu 0 4 1132 1293 1294 1133
+		f 4 2430 2431 -2428 -2028
+		mu 0 4 1152 1295 1293 1132
+		f 4 -2431 -2076 2432 2433
+		mu 0 4 1295 1152 1184 1296
+		f 4 2434 2435 -2433 -2239
+		mu 0 4 1259 1297 1296 1184
+		f 4 2436 2437 -2435 -2277
+		mu 0 4 1186 1298 1297 1259
+		f 4 2438 2439 -2437 -2078
+		mu 0 4 1185 1299 1298 1186
+		f 4 -2439 -2100 2440 2441
+		mu 0 4 1299 1185 1200 1300
+		f 4 2442 2443 -2441 -2116
+		mu 0 4 1209 1301 1300 1200
+		f 4 2444 2445 -2443 -2130
+		mu 0 4 1217 1302 1301 1209
+		f 4 -2445 -2142 2446 2447
+		mu 0 4 1302 1217 1223 1303
+		f 4 -2447 -2151 2448 2449
+		mu 0 4 1303 1223 1227 1304
+		f 4 -2449 -2156 -1197 2450
+		mu 0 4 1304 1227 596 677
+		f 4 2451 -1432 2452 -1450
+		mu 0 4 771 760 755 762
+		f 4 2453 -2187 -2452 -2191
+		mu 0 4 1245 1243 760 771
+		f 4 -2454 -2194 2454 -2189
+		mu 0 4 1243 1245 797 782
+		f 4 -2455 -1490 2455 -1466
+		mu 0 4 782 797 800 783
+		f 4 2456 -2318 -2456 -2320
+		mu 0 4 815 795 783 800
+		f 4 2457 -1484 -2457 -1511
+		mu 0 4 814 796 795 815
+		f 4 2458 -1507 -2458 -1543
+		mu 0 4 837 811 796 814
+		f 4 2459 -1539 -2459 -1583
+		mu 0 4 863 835 811 837
+		f 4 -2211 -2460 -2209 2460
+		mu 0 4 859 835 863 884
+		f 4 -1577 -2461 -1615 2461
+		mu 0 4 860 859 884 883
+		f 4 2462 -1580 -2462 -1611
+		mu 0 4 857 861 860 883
+		f 4 -2463 -1575 2463 -2164
+		mu 0 4 861 857 855 1233
+		f 4 2464 -2167 -2464 -1570
+		mu 0 4 827 1234 1233 855
+		f 4 -2465 -1531 2465 -2169
+		mu 0 4 1234 827 805 1235
+		f 4 -2466 -1500 2466 -2171
+		mu 0 4 1235 805 788 1236
+		f 4 -2467 -1476 2467 -2173
+		mu 0 4 1236 788 773 1237
+		f 4 -2468 -1454 -1215 -2175
+		mu 0 4 1237 773 115 607
+		f 4 -1669 2468 -1635 2469
+		mu 0 4 918 877 876 897
+		f 4 -1705 -2470 -1667 2470
+		mu 0 4 939 918 897 917
+		f 4 -1746 -2471 -1704 2471
+		mu 0 4 964 939 917 938
+		f 4 -1788 -2472 -1745 2472
+		mu 0 4 993 964 938 963
+		f 4 -2334 -2473 -2337 2473
+		mu 0 4 1014 993 963 989
+		f 4 -1823 -2474 -1787 2474
+		mu 0 4 1015 1014 989 992
+		f 4 -2475 -1859 2475 -1890
+		mu 0 4 1015 992 1037 1058
+		f 4 -1913 -2476 -1895 2476
+		mu 0 4 1074 1058 1037 1061
+		f 4 -2389 -2477 -2392 2477
+		mu 0 4 1093 1074 1061 1082
+		f 4 -1942 -2478 -1930 2478
+		mu 0 4 1094 1093 1082 1085
+		f 4 -2359 -2479 -2362 2479
+		mu 0 4 1231 1094 1085 1230
+		f 4 -2161 -2480 -2160 2480
+		mu 0 4 1115 1231 1230 1108
+		f 4 2481 -1973 -2481 -1962
+		mu 0 4 1107 1116 1115 1108
+		f 4 -2482 -2000 2482 -2007
+		mu 0 4 1116 1107 1133 1139
+		f 4 -2425 -2483 -2430 2483
+		mu 0 4 1291 1139 1133 1294
+		f 4 2484 -2032 2485 -2037
+		mu 0 4 1160 1153 1156 1161
+		f 4 -1636 2486 -1671 2487
+		mu 0 4 900 898 878 919
+		f 4 -1708 -2488 -1707 2488
+		mu 0 4 941 900 919 940
+		f 4 -1749 -2489 -1748 2489
+		mu 0 4 966 941 940 965
+		f 4 -1791 -2490 -1790 2490
+		mu 0 4 995 966 965 994
+		f 4 -2333 -2491 -2335 2491
+		mu 0 4 1018 995 994 1013
+		f 4 -2492 -1825 2492 -1827
+		mu 0 4 1018 1013 1016 1019
+		f 4 2493 -1879 -2493 -1892
+		mu 0 4 1059 1049 1019 1016
+		f 4 -2494 -1915 2494 -1876
+		mu 0 4 1049 1059 1075 1050
+		f 4 2495 -2388 -2495 -2390
+		mu 0 4 1096 1072 1050 1075
+		f 4 2496 -1911 -2496 -1944
+		mu 0 4 1095 1073 1072 1096
+		f 4 2497 -2358 -2497 -2360
+		mu 0 4 1232 1091 1073 1095
+		f 4 2498 -1939 -2498 -2162
+		mu 0 4 1118 1092 1091 1232
+		f 4 2499 -1971 -2499 -1975
+		mu 0 4 1117 1114 1092 1118
+		f 4 2500 -2005 -2500 -2009
+		mu 0 4 1140 1138 1114 1117
+		f 4 -2423 -2501 -2427 2501
+		mu 0 4 1290 1138 1140 1292
+		f 4 2502 -2039 2503 -2033
+		mu 0 4 1157 1159 1162 1158
+		f 4 -1678 2504 -2376 2505
+		mu 0 4 923 902 1277 1278
+		f 4 -2505 -1642 -1254 -2374
+		mu 0 4 1277 902 250 647
+		f 4 -1719 -1679 -2506 2506
+		mu 0 4 948 922 923 1278
+		f 4 -1644 -2378 -2507 -2375
+		mu 0 4 879 904 948 1278
+		f 4 2507 -1725 -2298 -2307
+		mu 0 4 1275 951 928 954
+		f 4 -1766 -2508 2508 -2382
+		mu 0 4 976 951 1275 1279
+		f 4 2509 2510 -2219 -2384
+		mu 0 4 1279 1274 1247 1246
+		f 4 -1773 -2288 -2511 -2291
+		mu 0 4 983 982 1247 1274
+		f 4 -2510 -2509 -2306 -2292
+		mu 0 4 1274 1279 1275 1273
+		f 4 2511 -1833 2512 -2406
+		mu 0 4 1281 1020 997 1280
+		f 4 2513 -1864 -2512 -2408
+		mu 0 4 1282 1039 1020 1281
+		f 4 -1896 -2514 -2410 2514
+		mu 0 4 1062 1039 1282 1283
+		f 4 2515 -1899 -2515 -2412
+		mu 0 4 1284 1064 1062 1283
+		f 4 2516 -1933 -2516 -2414
+		mu 0 4 1285 1086 1064 1284
+		f 4 -1966 -2517 -2416 2517
+		mu 0 4 1111 1086 1285 1286
+		f 4 -2281 -2518 -2418 2518
+		mu 0 4 1254 1111 1286 1287
+		f 4 -2231 -2519 -2420 2519
+		mu 0 4 1134 1254 1287 1288
+		f 4 2520 -2001 -2520 -2422
+		mu 0 4 1289 1135 1134 1288
+		f 4 2521 -2035 -2521 -2424
+		mu 0 4 1290 1157 1135 1289
+		f 4 -2503 -2522 -2502 2522
+		mu 0 4 1159 1157 1290 1292
+		f 4 2523 -2036 -2523 -2426
+		mu 0 4 1291 1160 1159 1292
+		f 4 -2485 -2524 -2484 2524
+		mu 0 4 1153 1160 1291 1294
+		f 4 2525 -2029 -2525 -2429
+		mu 0 4 1293 1154 1153 1294
+		f 4 2526 -2059 -2526 -2432
+		mu 0 4 1295 1174 1154 1293
+		f 4 -2527 -2434 2527 -2092
+		mu 0 4 1174 1295 1296 1194
+		f 4 2528 -2234 -2528 -2436
+		mu 0 4 1297 1256 1194 1296
+		f 4 2529 -2278 -2529 -2438
+		mu 0 4 1298 1196 1256 1297
+		f 4 2530 -2095 -2530 -2440
+		mu 0 4 1299 1197 1196 1298
+		f 4 -2531 -2442 2531 -2112
+		mu 0 4 1197 1299 1300 1207
+		f 4 2532 -2126 -2532 -2444
+		mu 0 4 1301 1215 1207 1300
+		f 4 2533 -2138 -2533 -2446
+		mu 0 4 1302 1221 1215 1301
+		f 4 -2534 -2448 2534 -2147
+		mu 0 4 1221 1302 1303 1225
+		f 4 -2535 -2450 2535 -2153
+		mu 0 4 1225 1303 1304 1228
+		f 4 -2536 -2451 -1285 -2157
+		mu 0 4 1228 1304 677 598
+		f 4 -2513 -1797 -1286 -2404
+		mu 0 4 1280 997 351 651
+		f 4 2536 -1365 2537 -1377
+		mu 0 4 724 716 713 718
+		f 4 2538 -1373 -2537 -1389
+		mu 0 4 732 722 716 724
+		f 4 2539 -1385 -2539 -1403
+		mu 0 4 741 730 722 732
+		f 4 2540 -2310 -2540 -2313
+		mu 0 4 1276 738 730 741
+		f 4 -1398 -2541 2541 2542
+		mu 0 4 739 738 1276 1305
+		f 4 -1445 -1413 2543 -1418
+		mu 0 4 751 748 747 752
+		f 4 -1419 2544 -2542 -2312
+		mu 0 4 749 752 1305 1276
+		f 4 2545 -2543 -2545 -2544
+		mu 0 4 747 739 1305 752
+		f 4 -2546 -1415 2546 -1399
+		mu 0 4 739 747 736 729
+		f 4 -2547 -1397 2547 -1383
+		mu 0 4 729 736 726 720
+		f 4 -2548 -1381 -1299 -1369
+		mu 0 4 720 726 60 52;
+	setAttr ".cd" -type "dataPolyComponent" Index_Data Edge 0 ;
+	setAttr ".cvd" -type "dataPolyComponent" Index_Data Vertex 0 ;
+	setAttr ".pd[0]" -type "dataPolyComponent" Index_Data UV 0 ;
+	setAttr ".hfd" -type "dataPolyComponent" Index_Data Face 0 ;
+	setAttr ".ndt" 0;
+createNode transform -n "bottomLipLeftRegion";
+	rename -uid "69EF0163-EF42-1003-EAB5-09ABE30896E9";
+	setAttr ".t" -type "double3" 2.1090972593852451 151.37358719961983 7.679683157375881 ;
+createNode meshRegionLocator -n "bottomLipLeftRegionShape" -p "bottomLipLeftRegion";
+	rename -uid "E8E3080E-AA4F-8211-617C-87B0A429BFBE";
+	setAttr ".rmc" -type "string" "";
+	setAttr ".tna" -type "string" "";
+	setAttr ".tpt" -type "string" "";
+	setAttr ".vwn" -type "string" "";
+	setAttr ".ctrt" -type "string" "";
+	setAttr ".ctor" -type "string" "";
+	setAttr ".cdat" -type "string" "";
+	setAttr ".ctyp" -type "string" "";
+	setAttr -k off ".v";
+	setAttr ".regionTag" -type "string" "bottomLipLeft";
+	setAttr ".defaultColor" -type "float3" 0.94999999 0.44999999 0.25 ;
+createNode transform -n "bottomLipRightRegion";
+	rename -uid "EE0EFF8D-514A-7595-F18A-6AB1D7316CCA";
+	setAttr ".t" -type "double3" -2.1090972529990331 151.37358719961983 7.679683157375881 ;
+createNode mPyLocator -n "bottomLipRightRegionShape" -p "bottomLipRightRegion";
+	rename -uid "665A6D12-4E4B-6761-C02F-BEBDE4AD8321";
+	addAttr -ci true -k true -sn "inMesh" -ln "inMesh" -dt "mesh";
+	addAttr -ci true -k true -sn "regionTag" -ln "regionTag" -dt "string";
+	addAttr -ci true -k true -sn "offset" -ln "offset" -dv 0.1 -at "float";
+	addAttr -ci true -k true -sn "hoverOffset" -ln "hoverOffset" -dv 0.25 -at "float";
+	addAttr -ci true -k true -sn "selectOffset" -ln "selectOffset" -dv 0.5 -at "float";
+	addAttr -ci true -k true -sn "hoverDur" -ln "hoverDur" -dv 0.35 -at "float";
+	addAttr -ci true -uac -k true -sn "defaultColor" -ln "defaultColor" -at "float3" 
+		-nc 3;
+	addAttr -ci true -k true -sn "defaultColorR" -ln "defaultColorR" -dv 0.25 -at "float" 
+		-p "defaultColor";
+	addAttr -ci true -k true -sn "defaultColorG" -ln "defaultColorG" -dv 0.5 -at "float" 
+		-p "defaultColor";
+	addAttr -ci true -k true -sn "defaultColorB" -ln "defaultColorB" -dv 0.95 -at "float" 
+		-p "defaultColor";
+	addAttr -ci true -uac -k true -sn "hoverColor" -ln "hoverColor" -at "float3" -nc 
+		3;
+	addAttr -ci true -k true -sn "hoverColorR" -ln "hoverColorR" -dv 1 -at "float" -p "hoverColor";
+	addAttr -ci true -k true -sn "hoverColorG" -ln "hoverColorG" -dv 0.82 -at "float" 
+		-p "hoverColor";
+	addAttr -ci true -k true -sn "hoverColorB" -ln "hoverColorB" -dv 0.15 -at "float" 
+		-p "hoverColor";
+	addAttr -ci true -uac -k true -sn "selectColor" -ln "selectColor" -at "float3" -nc 
+		3;
+	addAttr -ci true -k true -sn "selectColorR" -ln "selectColorR" -dv 0.3 -at "float" 
+		-p "selectColor";
+	addAttr -ci true -k true -sn "selectColorG" -ln "selectColorG" -dv 0.85 -at "float" 
+		-p "selectColor";
+	addAttr -ci true -k true -sn "selectColorB" -ln "selectColorB" -dv 0.9 -at "float" 
+		-p "selectColor";
+	addAttr -ci true -uac -k true -sn "outlineColor" -ln "outlineColor" -at "float3" 
+		-nc 3;
+	addAttr -ci true -k true -sn "outlineColorR" -ln "outlineColorR" -dv 0.02 -at "float" 
+		-p "outlineColor";
+	addAttr -ci true -k true -sn "outlineColorG" -ln "outlineColorG" -dv 0.02 -at "float" 
+		-p "outlineColor";
+	addAttr -ci true -k true -sn "outlineColorB" -ln "outlineColorB" -dv 0.04 -at "float" 
+		-p "outlineColor";
+	addAttr -ci true -uac -k true -sn "outlineHoverColor" -ln "outlineHoverColor" -at "float3" 
+		-nc 3;
+	addAttr -ci true -k true -sn "outlineHoverColorR" -ln "outlineHoverColorR" -dv 0.02 
+		-at "float" -p "outlineHoverColor";
+	addAttr -ci true -k true -sn "outlineHoverColorG" -ln "outlineHoverColorG" -dv 0.02 
+		-at "float" -p "outlineHoverColor";
+	addAttr -ci true -k true -sn "outlineHoverColorB" -ln "outlineHoverColorB" -dv 0.04 
+		-at "float" -p "outlineHoverColor";
+	addAttr -ci true -uac -k true -sn "outlineSelectColor" -ln "outlineSelectColor" 
+		-at "float3" -nc 3;
+	addAttr -ci true -k true -sn "outlineSelectColorR" -ln "outlineSelectColorR" -dv 
+		0.02 -at "float" -p "outlineSelectColor";
+	addAttr -ci true -k true -sn "outlineSelectColorG" -ln "outlineSelectColorG" -dv 
+		0.02 -at "float" -p "outlineSelectColor";
+	addAttr -ci true -k true -sn "outlineSelectColorB" -ln "outlineSelectColorB" -dv 
+		0.04 -at "float" -p "outlineSelectColor";
+	addAttr -ci true -k true -sn "alpha" -ln "alpha" -dv 0.8 -min 0 -max 1 -at "float";
+	addAttr -ci true -h true -sn "_initSource" -ln "_initSource" -dt "string";
+	addAttr -ci true -h true -sn "_methodsSource" -ln "_methodsSource" -dt "string";
+	addAttr -ci true -h true -sn "class_path" -ln "class_path" -dt "string";
+	setAttr -k off ".v";
+	setAttr "._computeSource" -type "string" (
+		"# Draw the bound mesh's component-tag region as a coloured patch. The region\n# MEMBERSHIP is resolved LIVE from the input mesh DATA every evaluation (via\n# MFnGeometryData), keyed by this gizmo's tag NAME (`regionTag`, baked once by\n# setup) -- so editing the component tag (add/remove faces) updates the drawn\n# region immediately, and a compiled C++ node resolves the SAME way off its own\n# input handle. self.inMesh is the live world-space MFnMesh (worldMesh[0]) used\n# for the geometry; the tag membership comes from that same input's data. Falls\n# back to a legacy baked `regions` dict for scenes saved before this change.\nmesh = self.inMesh\n# The region is chosen purely by NAME via the `regionTag` string input. If the\n# name matches no component tag on the input mesh, the region goes BLANK (a typo\n# or a removed/renamed tag reads as empty). Only when regionTag is unset do we\n# honour a legacy baked `regions` dict (scenes saved before regionTag existed /\n# the build probe).\n_tag = getattr(self, \"regionTag\", None)\n"
+		+ "# ONE read of the input data, shared by the tag membership and the source\n# transform below (both live on the same MFnGeometryData).\n_mdata = mesh_data_from_node_plug(node_name_from_self(self), \"inMesh\")\n_wmat = mesh_matrix_from_mesh_data(_mdata)\nregions = None\nif _tag:\n    _faces = tag_indices_from_mesh_data(_mdata, _tag)\n    if _faces:\n        regions = {_tag: _faces}\n    # else: named tag has no match -> leave regions None -> blank (no fallback).\nelse:\n    _legacy = getattr(self, \"regions\", None)\n    if isinstance(_legacy, dict) and _legacy:\n        regions = _legacy\nif mesh is None or not regions:\n    self.draw = None\nelse:\n    offset = self.offset\n    hover_offset = self.hoverOffset\n    select_offset = self.selectOffset\n    hover_dur = max(self.hoverDur, 1e-3)\n    alpha = float(self.alpha)\n    # Per-state RGB colours (each a 3-float `color` input) + one shared alpha.\n    # The active colour tweens default->hover on the SAME elastic curve as the\n    # lift, and snaps to the select colour when selected. Each input carries its\n"
+		+ "    # own attr DEFAULT, so what is read here is exactly what the user dialled --\n    # all-zero means BLACK, not \"unset\". Nothing is substituted.\n    def_c = np.asarray(self.defaultColor, dtype=np.float64).ravel()[:3]\n    hov_c = np.asarray(self.hoverColor, dtype=np.float64).ravel()[:3]\n    sel_c = np.asarray(self.selectColor, dtype=np.float64).ravel()[:3]\n    # The outline around each patch has the SAME three states, on the same\n    # curve, so it can read as its own accent rather than a fixed dark edge.\n    odef_c = np.asarray(self.outlineColor, dtype=np.float64).ravel()[:3]\n    ohov_c = np.asarray(self.outlineHoverColor, dtype=np.float64).ravel()[:3]\n    osel_c = np.asarray(self.outlineSelectColor, dtype=np.float64).ravel()[:3]\n\n    hovered = bool(self.hovered)\n    selected = bool(self.selected)\n    if selected:\n        hovered = False          # selected shows only its selected form\n    now = float(_wallclock.time())\n\n    h_cur, h_e = tween(now, float(getattr(self, \"hv_start\", 0.0)),\n                       float(getattr(self, \"hv_from\", 0.0)),\n"
+		+ "                       float(getattr(self, \"hv_to\", 0.0)), hover_dur)\n    if hovered != bool(getattr(self, \"hv_prev\", False)):\n        self.hv_start = now\n        self.hv_from = h_cur\n        self.hv_to = 1.0 if hovered else 0.0\n        self.hv_prev = hovered\n        h_e = 0.0\n\n    # THREE ABSOLUTE normal offsets (world units): the patch floats at `offset`\n    # at rest, tweens to `hoverOffset` on hover, and snaps to `selectOffset`\n    # when selected. Absolute (not additive) + a fixed normal lift (never an\n    # in-plane centroid balloon), so the pop is identical no matter how many\n    # faces the tag covers -- a tag grown to span the whole mesh lifts by the\n    # same amount as a tiny one.\n    lift = offset + (hover_offset - offset) * h_cur\n    if selected:\n        lift = select_offset\n    if lift < MIN_OFFSET:\n        lift = MIN_OFFSET\n\n    # Active fill colour: tween default->hover on the hover curve, snap to the\n    # select colour when selected; append the shared alpha to make the RGBA row\n    # the polygons buffer expects.\n"
+		+ "    rgb = def_c + (hov_c - def_c) * h_cur\n    if selected:\n        rgb = sel_c\n    rgba = np.concatenate([rgb, [alpha]])\n\n    # The outline rides the SAME hover curve and the same select snap. It stays\n    # opaque: `alpha` fades the FILL so the surface shows through, and letting\n    # the silhouette fade with it would wash the patch's edge out entirely.\n    orgb = odef_c + (ohov_c - odef_c) * h_cur\n    if selected:\n        orgb = osel_c\n    orgba = np.concatenate([orgb, [1.0]])\n\n    # One DrawMesh per tag. `self.draw` takes the LIST straight -- no `sum()`\n    # and no `+` chain to build -- and draws them in the order appended. This\n    # used to be four parallel accumulator lists plus a hand-rolled\n    # `idx + voff` rebase.\n    patches = []\n    for tag in sorted(regions.keys()):\n        faces = np.asarray(regions[tag], dtype=np.int64).ravel()\n        if faces.size == 0:\n            continue\n        pts, idx, cnt, nrm = extract_region(mesh, faces, with_normals=True)\n        if pts.shape[0] == 0:\n            continue\n"
+		+ "        # extract_region reads OBJECT space: the mesh DATA carries the source\n        # transform as a SEPARATE matrix, and a data-built MFnMesh has no DAG\n        # path so getPoints(kWorld) cannot reach world. `world_space=True` below\n        # takes these points AS world, so apply that matrix here -- without it\n        # the patch draws at the ORIGIN and never follows the mesh. Maya is\n        # row-vector (p * M): the 3x3 rotates/scales, row 3 translates.\n        if _wmat is not None:\n            _m = np.asarray(_wmat, dtype=np.float64).reshape(4, 4)\n            pts = pts @ _m[:3, :3] + _m[3, :3]\n            nrm = nrm @ _m[:3, :3]\n            _mag = np.linalg.norm(nrm, axis=1, keepdims=True)\n            nrm = nrm / np.where(_mag > 1e-12, _mag, 1.0)\n        patches.append(DrawMesh(\n            pts + nrm * lift, cnt, idx, color=rgba,\n            outline=orgba, outline_width=2.0,\n            outline_boundary_only=True,   # clean outer silhouette only\n            world_space=True,             # follow the mesh, not the locator\n"
+		+ "            precise_hover=True))\n\n    if not patches:\n        self.draw = None\n    else:\n        self.draw = patches\n        self.auto_highlight = False\n        self.auto_refresh = bool(h_e < 1.0)\n");
+	setAttr "._inputAttrs" -type "string" (
+		"{\"alpha\":{\"attr_type\":\"float\",\"default_value\":0.8,\"is_array\":false,\"max_value\":1.0,\"min_value\":0.0,\"order\":12},\"defaultColor\":{\"attr_type\":\"color\",\"default_value\":[0.25,0.5,0.95],\"is_array\":false,\"order\":6},\"hoverColor\":{\"attr_type\":\"color\",\"default_value\":[1.0,0.82,0.15],\"is_array\":false,\"order\":7},\"hoverDur\":{\"attr_type\":\"float\",\"default_value\":0.35,\"is_array\":false,\"order\":5},\"hoverOffset\":{\"attr_type\":\"float\",\"default_value\":0.25,\"is_array\":false,\"order\":3},\"inMesh\":{\"attr_type\":\"mesh\",\"is_array\":false,\"order\":0},\"offset\":{\"attr_type\":\"float\",\"default_value\":0.1,\"is_array\":false,\"order\":2},\"outlineColor\":{\"attr_type\":\"color\",\"default_value\":[0.02,0.02,0.04],\"is_array\":false,\"order\":9},\"outlineHoverColor\":{\"attr_type\":\"color\",\"default_value\":[0.02,0.02,0.04],\"is_array\":false,\"order\":10},\"outlineSelectColor\":{\"attr_type\":\"color\",\"default_value\":[0.02,0.02,0.04],\"is_array\":false,\"order\":11},\"regionTag\":{\"attr_type\":\"string\",\"is_array\":false,\"order\":1},\"selectColor\":{\"attr_type\":\"color\",\"default_value\":[0.3,0.85,0.9],\"is_array\":false,\"order\":8},\"selectOffset\":{\"attr_type\":\"float\",\"default_value\":0.5,\"is_array\":false,\"order\":4}}");
+	setAttr -k on ".inMesh";
+	setAttr -k on ".regionTag" -type "string" "bottomLipRight";
+	setAttr -k on ".defaultColor" -type "float3" 0.30000001 0.80000001 0.40000001 ;
+	setAttr "._initSource" -type "string" (
+		"import math\nimport time as _wallclock\nimport numpy as np\nfrom mpynode._common.draw.draw_types import DrawMesh\nfrom mpynode._common.nodes.mesh.mesh_region import extract_region\nfrom mpynode._common.nodes.mesh.component_tags import (\n    node_name_from_self, mesh_data_from_node_plug, tag_indices_from_mesh_data,\n    mesh_matrix_from_mesh_data)\n\nMIN_OFFSET = 0.004      # floor so elastic undershoot never dips into the mesh\n# Fill AND outline colour, plus the per-state offsets, are LIVE input attrs\n# (defaultColor / hoverColor / selectColor, outlineColor / outlineHoverColor /\n# outlineSelectColor, offset / hoverOffset / selectOffset / alpha), so the\n# palette/tint constants that used to live here are gone -- the compute reads\n# them off self.<attr> and a user can tweak each one interactively. Every colour\n# input carries its OWN attr default, so a raw-created node already looks right\n# and the compute never has to guess whether a value is \"unset\": all-zero means\n# exactly BLACK, which is the colour the user dialled.\n"
+		+ "\n\ndef elastic_in_out(t):\n    if t <= 0.0:\n        return 0.0\n    if t >= 1.0:\n        return 1.0\n    p = 0.45\n    s = p / 4.0\n    t2 = 2.0 * t - 1.0\n    if t2 < 0.0:\n        return -0.5 * (2.0 ** (10.0 * t2)) * math.sin((t2 - s) * (2.0 * math.pi / p))\n    return (2.0 ** (-10.0 * t2)) * math.sin((t2 - s) * (2.0 * math.pi / p)) * 0.5 + 1.0\n\n\ndef tween(now, start, frm, to, dur):\n    e = (now - start) / max(dur, 1e-3)\n    e = 0.0 if e < 0.0 else (1.0 if e > 1.0 else e)\n    return frm + (to - frm) * elastic_in_out(e), e\n");
+	setAttr "._methodsSource" -type "string" (
+		"class SetupError(Exception):\n    \"\"\"The current selection / scene state can't support setup for this node.\n    Message is user-facing (it names what to select).\"\"\"\n\n\ndef _has_shape(node, shape_types):\n    from maya import cmds as mc\n    if mc.nodeType(node) in shape_types:\n        return True\n    for st in shape_types:\n        if mc.listRelatives(node, shapes=True, type=st, noIntermediate=True):\n            return True\n    return False\n\n\ndef _meshes(sel):\n    return [n for n in sel if _has_shape(n, (\"mesh\",))]\n\n\n# Region-extraction helpers, VENDORED from\n# mpynode._common.nodes.mesh.mesh_region. setup is a @maya_command body, which\n# ships as embedded python inside the compiled .mll -- where mpynode is NOT\n# importable -- so extract_region and its whole closure (mesh_arrays /\n# mesh_vertex_normals and their api1 fallbacks) are carried here instead of\n# imported. numpy + the OpenMaya modules are imported per-def.\ndef _is_api2(mesh):\n    \"\"\"True for an API-2.0 function set, False for a legacy API-1.0 one.\n    Both classes are named ``MFnMesh``, so we distinguish by module:\n"
+		+ "    API 1.0 is ``maya.OpenMaya``; API 2.0 reports ``OpenMaya``.\"\"\"\n    return type(mesh).__module__ != \"maya.OpenMaya\"\n\n\ndef _arrays_api1(mesh, space):\n    \"\"\"Legacy API-1.0 read path. API 1.0 has no vectorized point accessor,\n    so points go through a small per-vertex loop; connectivity uses the\n    scalar-iterable MIntArray (np.fromiter).\"\"\"\n    import numpy as np\n    import maya.OpenMaya as om1\n\n    space1 = om1.MSpace.kObject if space is None else int(space)\n    pa = om1.MPointArray()\n    mesh.getPoints(pa, space1)\n    n = pa.length()\n    pts = np.empty((n, 3), dtype=np.float64)\n    for i in range(n):\n        p = pa[i]\n        pts[i, 0] = p.x\n        pts[i, 1] = p.y\n        pts[i, 2] = p.z\n    counts1 = om1.MIntArray()\n    connects1 = om1.MIntArray()\n    mesh.getVertices(counts1, connects1)\n    counts = np.fromiter(counts1, dtype=np.int64, count=counts1.length())\n    connects = np.fromiter(connects1, dtype=np.int64, count=connects1.length())\n    return pts, counts, connects\n\n\ndef mesh_arrays(mesh, space=None):\n"
+		+ "    \"\"\"Return ``(points (V,3) float64, counts (F,) int64, connects (C,) int64)``\n    for an ``MFnMesh`` (API 2.0 preferred, API 1.0 supported).\"\"\"\n    import numpy as np\n    import maya.api.OpenMaya as om\n\n    if not _is_api2(mesh):\n        return _arrays_api1(mesh, space)\n    if space is None:\n        space = om.MSpace.kObject\n    # getPoints -> MPointArray; np.array gives (V, 4) [x,y,z,w] -> drop w.\n    pts = np.asarray(mesh.getPoints(space))[:, :3].astype(np.float64)\n    counts_arr, connects_arr = mesh.getVertices()\n    counts = np.asarray(counts_arr, dtype=np.int64)\n    connects = np.asarray(connects_arr, dtype=np.int64)\n    return pts, counts, connects\n\n\ndef _normals_api1(mesh, space):\n    \"\"\"Legacy API-1.0 per-vertex normal read (out-param + small loop).\"\"\"\n    import numpy as np\n    import maya.OpenMaya as om1\n\n    space1 = om1.MSpace.kObject if space is None else int(space)\n    nrm = om1.MFloatVectorArray()\n    mesh.getVertexNormals(False, nrm, space1)\n    n = nrm.length()\n    out = np.empty((n, 3), dtype=np.float64)\n"
+		+ "    for i in range(n):\n        v = nrm[i]\n        out[i, 0] = v.x\n        out[i, 1] = v.y\n        out[i, 2] = v.z\n    return out\n\n\ndef mesh_vertex_normals(mesh, space=None):\n    \"\"\"Return ``(V, 3)`` unit per-vertex normals (Maya's averaged vertex\n    normals) for an ``MFnMesh``, aligned with ``mesh_arrays`` point order.\"\"\"\n    import numpy as np\n    import maya.api.OpenMaya as om\n\n    if not _is_api2(mesh):\n        n = _normals_api1(mesh, space)\n    else:\n        if space is None:\n            space = om.MSpace.kObject\n        n = np.asarray(\n            mesh.getVertexNormals(False, space))[:, :3].astype(np.float64)\n    # Defensive renormalize (Maya returns unit normals, but guard zeros).\n    mag = np.linalg.norm(n, axis=1, keepdims=True)\n    return n / np.where(mag > 1e-12, mag, 1.0)\n\n\ndef extract_region(mesh, face_ids, space=None, with_normals=False):\n    \"\"\"Build a compact polygon buffer for the faces in ``face_ids`` from a\n    live ``MFnMesh``.\n\n    Returns ``(points, indices, counts)`` -- or, when ``with_normals`` is\n"
+		+ "    True, ``(points, indices, counts, normals)``. The region's vertices are\n    compacted + remapped, so ``indices`` refer only to the returned\n    ``points``. Fully vectorized -- no per-face loops.\"\"\"\n    import numpy as np\n\n    def _empty():\n        z3 = np.zeros((0, 3), dtype=np.float64)\n        zi = np.zeros((0,), dtype=np.int64)\n        return (z3, zi, zi.copy(), z3.copy()) if with_normals else (z3, zi, zi.copy())\n\n    if mesh is None:\n        return _empty()\n    pts, counts, connects = mesh_arrays(mesh, space)\n    face_ids = np.asarray(face_ids, dtype=np.int64).ravel()\n    if face_ids.size == 0 or counts.shape[0] == 0:\n        return _empty()\n    # Keep only valid face ids.\n    face_ids = face_ids[(face_ids >= 0) & (face_ids < counts.shape[0])]\n    if face_ids.size == 0:\n        return _empty()\n\n    face_off = np.cumsum(counts) - counts          # start offset into connects/face\n    sel_counts = counts[face_ids]                  # (M,)\n    starts = face_off[face_ids]                    # (M,)\n    total = int(sel_counts.sum())\n"
+		+ "    if total == 0:\n        return _empty()\n\n    # Flatten the selected faces' connectivity positions (vectorized).\n    face_of = np.repeat(np.arange(face_ids.size), sel_counts)            # (total,)\n    within = np.arange(total) - (np.cumsum(sel_counts) - sel_counts)[face_of]\n    connect_pos = starts[face_of] + within                              # (total,)\n    region_verts = connects[connect_pos]                                # global vertex ids\n\n    # Compact the used vertices + remap the connectivity to 0..U-1.\n    uniq, inverse = np.unique(region_verts, return_inverse=True)\n    region_points = pts[uniq]\n    region_indices = inverse.astype(np.int64)\n    region_counts = sel_counts.astype(np.int64)\n    if not with_normals:\n        return region_points, region_indices, region_counts\n    region_normals = mesh_vertex_normals(mesh, space)[uniq]\n    return region_points, region_indices, region_counts, region_normals\n\n\n# Mesh Regions demo: fabricate the whole showcase scene. Import the bundled\n# head model, resolve EVERY component tag, then build ONE gizmo PER tag -- `self`\n"
+		+ "# is the first tag's gizmo and each remaining tag gets a DUPLICATE of `self`\n# (which carries its Init/Compute/Methods sources + input attrs along). The\n# demo only creates + arranges the gizmos: it sets each gizmo's `regionTag`\n# and then DELEGATES the actual per-node binding (`inMesh` wire + positioning) to\n# that gizmo's own ``setup`` via ``run_setup([mesh])`` -- so demo and setup never\n# duplicate the wiring logic.\ndef get_component_tag_faces(mesh_shape):\n    \"\"\"\n    Retrieves component tags on a mesh shape and returns a dictionary.\n    Keys are the tag names.\n    Values are flattened, unique, and sorted lists of face indices.\n    \"\"\"\n    from maya import cmds as mc\n\n    attr_path = f\"{mesh_shape}.outMesh\"\n    tags = mc.geometryAttrInfo(attr_path, componentTagNames=True)\n\n    tag_faces_dict = {}\n\n    if not tags:\n        return tag_faces_dict\n\n    for tag in tags:\n        contents = mc.geometryAttrInfo(attr_path, componentTagExpression=tag, components=True)\n\n        # Use a set to automatically guarantee unique indices\n"
+		+ "        face_indices = set()\n\n        if contents:\n            for comp in contents:\n                comp = comp.strip()\n\n                # Check if the string represents a face (starts with 'f[' or 'F[')\n                if comp.lower().startswith('f['):\n                    # Extract the contents inside the square brackets\n                    inner_str = comp.split('[')[1].split(']')[0]\n\n                    # Handle ranges (e.g., '10:55')\n                    if ':' in inner_str:\n                        start_idx, end_idx = inner_str.split(':')\n                        # range() stops before the end value, so we add 1 to make it inclusive\n                        face_indices.update(range(int(start_idx), int(end_idx) + 1))\n\n                    # Handle single digits (e.g., '10')\n                    else:\n                        face_indices.add(int(inner_str))\n\n        # Convert the set back to a list and sort it\n        tag_faces_dict[tag] = sorted(list(face_indices))\n\n    return tag_faces_dict\n\n\ndef demo(self):\n"
+		+ "    from maya import cmds as mc\n    from mpynode import wrap_node\n    import os\n    import re\n    name = self.get_name()\n\n    head = None\n    try:\n        from mpynode._common.util.template_gallery import _bundled_templates_root\n        root = _bundled_templates_root()\n        if root:\n            cand = os.path.join(root, \"MPyLocator\", \"Mesh Regions\", \"head.ma\")\n            if os.path.isfile(cand):\n                head = cand\n    except Exception:\n        head = None\n    if not head:\n        return name\n\n    new_nodes = mc.file(head, i=True, returnNewNodes=True,\n                        namespace=\"headModel\") or []\n    meshes = [n for n in new_nodes if mc.nodeType(n) == \"mesh\"]\n    if not meshes:\n        meshes = mc.ls(\"headModel:*\", type=\"mesh\", long=True) or []\n    if not meshes:\n        return name\n    shape = (mc.ls(meshes[0], long=True) or [meshes[0]])[0]\n\n    tags = sorted(get_component_tag_faces(shape).keys())\n    if not tags:\n        return name\n\n    def _san(tag):\n        s = re.sub(r\"[^0-9A-Za-z_]\", \"_\", str(tag))\n"
+		+ "        if not s:\n            s = \"region\"\n        if s[0].isdigit():\n            s = \"_\" + s\n        return s + \"Region\"\n\n    # self is tag[0]'s gizmo; duplicate it once per remaining tag. Capture\n    # self's FULL DAG paths up front so later name-based lookups can't go\n    # ambiguous once dup shapes share the short name (Maya keeps a duplicated\n    # shape's short name identical to the original's).\n    self_shape = (mc.ls(name, long=True) or [name])[0]\n    self_tf = (mc.listRelatives(self_shape, parent=True, fullPath=True) or [self_shape])[0]\n\n    shapes = [self_shape]\n    for _ in tags[1:]:\n        dup_tf = mc.duplicate(self_tf, returnRootsOnly=True)[0]\n        dup_tf = (mc.ls(dup_tf, long=True) or [dup_tf])[0]\n        dsh = (mc.listRelatives(dup_tf, shapes=True, type=\"mPyLocator\", fullPath=True)\n               or mc.listRelatives(dup_tf, shapes=True, fullPath=True) or [])\n        if dsh:\n            shapes.append(dsh[0])\n\n    for idx, tag in enumerate(tags):\n        if idx >= len(shapes):\n            break\n"
+		+ "        sh = shapes[idx]\n        # Name THIS gizmo's region via the live `regionTag` string selector, then\n        # let its OWN setup wire the mesh (setup honours an already-set name) --\n        # one code path for both \"Run demo\" and a standalone \"Run setup\".\n        try:\n            mc.setAttr(sh + \".regionTag\", tag, type=\"string\")\n        except Exception:\n            pass\n        try:\n            w = wrap_node(sh)\n            if w is not None:\n                w.run_setup([shape])\n        except Exception:\n            pass\n        # Give each gizmo a DISTINCT default colour so the showcase reads as\n        # separate regions; hover/select/outline keep their shared attr\n        # defaults. Set AFTER run_setup so nothing setup does can win over it.\n        try:\n            _pal = [(0.25, 0.50, 0.95), (0.95, 0.45, 0.25), (0.30, 0.80, 0.40),\n                    (0.80, 0.35, 0.85), (0.95, 0.82, 0.20), (0.30, 0.85, 0.90),\n                    (0.95, 0.35, 0.55), (0.55, 0.85, 0.25), (0.45, 0.35, 0.90),\n                    (0.90, 0.60, 0.20), (0.20, 0.70, 0.70), (0.70, 0.70, 0.95)]\n"
+		+ "            _c = _pal[idx % len(_pal)]\n            for _ch, _v in zip(\"RGB\", _c):\n                mc.setAttr(\"%s.defaultColor%s\" % (sh, _ch), _v)\n        except Exception:\n            pass\n        # rename transform + shape after the tag for a readable outliner\n        try:\n            tf = mc.listRelatives(sh, parent=True, fullPath=True)\n            if tf:\n                new_tf = mc.rename(tf[0], _san(tag))\n                nsh = mc.listRelatives(new_tf, shapes=True, fullPath=True)\n                if nsh:\n                    mc.rename(nsh[0], _san(tag) + \"Shape\")\n                    fixed = mc.listRelatives(new_tf, shapes=True, fullPath=True)\n                    if fixed:\n                        shapes[idx] = fixed[0]\n        except Exception:\n            pass\n\n    # This demo IMPORTS a maya file, so frame the WHOLE scene rather than just\n    # the gizmos -- an imported mesh can sit anywhere, and fitting only the\n    # locators can leave the head off screen with nothing visible to the user.\n    try:\n        mc.viewFit(all=True)\n"
+		+ "    except Exception:\n        pass\n    return shapes[0]\n\n\n@maya_test(label=\"Region draws in the node's RGBA colour; select lifts it\", digits=3)\ndef test_mesh_regions(self):\n    \"\"\"Validate the node's INTENT (the SAME test passes on the interpreted node\n    and its C++ compile -> parity). A locator has no numeric mesh output, so --\n    exactly as the builder's own live-check does -- assert the DRAW BUFFERS:\n\n      1. A bound region draws ONE RGBA face-colour per face carrying the node's\n         `defaultColor` RGB + the `alpha` input (rest state), outlined in\n         `outlineColor` at full opacity.\n      2. Selecting the gizmo snaps the fill to `selectColor` and the outline to\n         `outlineSelectColor` (alpha survives) and lifts the patch by exactly\n         `selectOffset - offset` along the normals -- region-size-independent.\n      3. A colour dialled to (0,0,0) draws BLACK. Nothing substitutes a\n         fallback, so every colour in the cube is reachable.\n    \"\"\"\n    from maya import cmds as mc\n    import maya.api.OpenMaya as om2\n"
+		+ "    import numpy as np\n    from mpynode._common.methods.test_helpers import (\n        assert_close, assert_equal, assert_true)\n\n    name = self.get_name()\n\n    def _set(plug, *vals, **kw):\n        # A demo (or user) may have CONNECTED this input; break incoming\n        # connections first so the test can drive it, then set it.\n        for s in (mc.listConnections(plug, s=True, d=False, plugs=True) or []):\n            mc.disconnectAttr(s, plug)\n        mc.setAttr(plug, *vals, **kw)\n\n    # Validate whatever mesh THIS node already consumes (e.g. the demo's head\n    # model); build a probe sphere ONLY if `inMesh` drives nothing yet. Keeps the\n    # test on `self` (parity) and robust to a live, demo-populated scene + reruns.\n    src = mc.listConnections(name + \".inMesh\", s=True, d=False) or []\n    if not src:\n        probe = mc.polySphere(sx=20, sy=20, name=\"regionProbe#\")[0]\n        pshape = mc.listRelatives(probe, shapes=True, fullPath=True)[0]\n        mc.connectAttr(pshape + \".worldMesh[0]\", name + \".inMesh\", force=True)\n"
+		+ "\n    # Drive the draw deterministically off `self` through the COMPONENT-TAG\n    # path. Not the legacy `regions` dict: that is a stored Python var, and a\n    # compiled node has no _storedVarNames/_storedVarsData plug to receive one,\n    # so forcing it made this test unrunnable against the C++ build -- which is\n    # the parity claim in the docstring above. Tagging a known face range keeps\n    # the region deterministic AND portable. `create=True` on an existing name\n    # is idempotent, so a re-run in a live scene is safe.\n    shape = (mc.listConnections(name + \".inMesh\", s=True, d=False,\n                                shapes=True) or [None])[0]\n    assert_true(shape is not None, \"inMesh must be driven by a mesh shape\")\n    n_faces = mc.polyEvaluate(shape, face=True)\n    last_face = min(15, int(n_faces) - 1)\n    mc.componentTag(\"%s.f[0:%d]\" % (shape, last_face), create=True,\n                    newTagName=\"mpyTestRegion\")\n    # Seed known colours + offsets. Every input is broken-then-set so no\n    # demo/user connection can win over the values this test drives.\n"
+		+ "    _set(name + \".regionTag\", \"mpyTestRegion\", type=\"string\")\n    probe_rgb = (0.20, 0.55, 0.90)\n    for ch, val in zip(\"RGB\", probe_rgb):\n        _set(\"%s.defaultColor%s\" % (name, ch), val)\n    sel_rgb = (0.30, 0.85, 0.90)\n    for ch, val in zip(\"RGB\", sel_rgb):\n        _set(\"%s.selectColor%s\" % (name, ch), val)\n    # Outline colours, deliberately nothing like the fill so a swapped-in fill\n    # value could not satisfy the outline assertions below.\n    out_rgb = (0.90, 0.10, 0.40)\n    for ch, val in zip(\"RGB\", out_rgb):\n        _set(\"%s.outlineColor%s\" % (name, ch), val)\n    out_sel_rgb = (0.10, 0.95, 0.20)\n    for ch, val in zip(\"RGB\", out_sel_rgb):\n        _set(\"%s.outlineSelectColor%s\" % (name, ch), val)\n    _set(name + \".alpha\", 0.8)\n    _set(name + \".offset\", 0.1)\n    _set(name + \".selectOffset\", 0.5)\n    mc.dgdirty(name)\n\n    # Read the ordered draw commands via the node's PUBLIC MPx surface using the\n    # node NAME only -- so this runs identically on the interpreted node AND a\n    # compiled node (the parity point), never the interpreted-only wrapper.\n"
+		+ "    # One patch is drawn PER TAG; the tag driven above is the only one this test\n    # names, so the first patch answers every assertion below.\n    def _draw(selected=False):\n        sl = om2.MSelectionList(); sl.add(name)\n        mpx = om2.MFnDependencyNode(sl.getDependNode(0)).userNode()\n        return mpx.evaluateDrawItems(0.0, selected=selected) or {}\n\n    def _poly(selected=False):\n        for cmd in _draw(selected).get(\"commands\") or []:\n            if cmd[\"slot\"] == \"polygons\":\n                return cmd[\"buffer\"]\n        return None\n\n    # A COMPILED C++ locator (MPxLocatorNode) exposes no Python\n    # evaluateDrawItems, so its draw buffers are unreachable here -- that parity\n    # is covered by the dedicated -DMPYNODE_PROBE numerical buffer comparison.\n    # Skip cleanly rather than false-fail, the same guard test_animated_selection\n    # and test_animated_text already use. AttributeError ONLY: a node that HAS\n    # the surface but draws nothing must still fail the assertion below.\n    try:\n        _draw(False)\n"
+		+ "    except AttributeError:\n        return\n\n    # 1) REST state: one RGBA row per face = defaultColor RGB + alpha (0.8).\n    poly = _poly(False)\n    assert_true(poly is not None, \"the bound region must draw a patch\")\n    fcol = np.asarray(poly[\"face_colors\"])\n    cnt = np.asarray(poly[\"counts\"])\n    assert_true(fcol.ndim == 2 and fcol.shape[1] == 4,\n                \"face colours must be RGBA rows\")\n    assert_equal(fcol.shape[0], cnt.shape[0],\n                 \"one face colour per face (%d vs %d)\"\n                 % (fcol.shape[0], cnt.shape[0]))\n    assert_close(fcol[:, :3].mean(axis=0).tolist(), list(probe_rgb))\n    assert_true(bool(np.allclose(fcol[:, 3], 0.8, atol=1e-3)),\n                \"the alpha input must reach the fill\")\n    wire = np.asarray(poly[\"wireframe\"], dtype=np.float64).ravel()\n    assert_close(wire[:3].tolist(), list(out_rgb))\n    assert_close(float(wire[3]), 1.0,\n                 msg=\"the outline stays opaque; alpha dials the fill only\")\n\n    # 2) SELECT state: fill snaps to selectColor, the outline to\n"
+		+ "    #    outlineSelectColor, alpha survives, and the patch lifts by exactly\n    #    selectOffset - offset (0.5 - 0.1) along the normals.\n    rest_pts = np.asarray(poly[\"points\"])\n    psel = _poly(True)\n    fcs = np.asarray(psel[\"face_colors\"])\n    disp = np.linalg.norm(np.asarray(psel[\"points\"]) - rest_pts, axis=1)\n    assert_close(fcs[:, :3].mean(axis=0).tolist(), list(sel_rgb))\n    assert_true(bool(np.allclose(fcs[:, 3], 0.8, atol=1e-3)),\n                \"alpha survives selection\")\n    assert_close(np.asarray(psel[\"wireframe\"],\n                            dtype=np.float64).ravel()[:3].tolist(), list(out_sel_rgb))\n    assert_close(float(disp.max()), 0.5 - 0.1, digits=2,\n                 msg=\"select lift must equal selectOffset - offset\")\n\n    # 3) ZERO IS A COLOUR. Dialling a state to (0,0,0) must draw BLACK -- the\n    #    compute substitutes nothing, so the value on the plug is the value on\n    #    screen. Asserted on the fill AND the outline, since each used to have\n    #    (fill) or lacked entirely (outline) its own path to the buffer.\n"
+		+ "    for ch in \"RGB\":\n        _set(\"%s.defaultColor%s\" % (name, ch), 0.0)\n        _set(\"%s.outlineColor%s\" % (name, ch), 0.0)\n    mc.dgdirty(name)\n    pblack = _poly(False)\n    assert_true(pblack is not None, \"an all-black region must still draw\")\n    assert_close(np.asarray(pblack[\"face_colors\"])[:, :3].mean(\n        axis=0).tolist(), [0.0, 0.0, 0.0])\n    assert_close(np.asarray(pblack[\"wireframe\"],\n                            dtype=np.float64).ravel()[:3].tolist(), [0.0, 0.0, 0.0])\n\n\n\n# Mesh Regions setup: bind THIS ONE gizmo to a single region of a mesh in the\n# current selection (NO scene fabrication -- that is the `demo`\\'s job). Resolves\n# ONE mesh, honours this gizmo\\'s `regionTag` string (or defaults it to the first\n# component tag when unset), and wires the mesh\\'s live world-space geometry into\n# `inMesh`. `demo` calls this once per tag after setting each gizmo\\'s `regionTag`,\n# so the two hooks share one wiring path.\n@maya_command(creates=True)\ndef setup(self, selection=None, *args, **kwargs):\n    from maya import cmds as mc\n"
+		+ "    name = self.get_name()\n\n    # Resolve ONE mesh: from the passed selection (in pick order), else the live\n    # selection, else an already-connected inMesh source. Drop self so selecting\n    # the gizmo alongside the mesh is harmless.\n    order = [o for o in (selection or mc.ls(selection=True) or []) if o != name]\n    meshes = _meshes(order) if order else []\n    if not meshes:\n        src = mc.listConnections(name + \".inMesh\", source=True,\n                                 destination=False, shapes=True) or []\n        meshes = _meshes(src) if src else []\n    if not meshes:\n        raise SetupError(\"Select the mesh to bind this region gizmo to.\")\n    shape = (mc.ls(meshes[0], long=True) or [meshes[0]])[0]\n\n    regions = get_component_tag_faces(shape)\n    if not regions:\n        raise SetupError(\"Mesh has no component tags to bind a region to.\")\n    tags = sorted(regions.keys())\n\n    # The region is chosen by NAME via the LIVE `regionTag` string INPUT. Honour\n    # an already-set name (the demo sets one per gizmo, or the user typed one);\n"
+		+ "    # otherwise default to the first tag so a fresh bind shows something. A user\n    # can retype it in the Channel Box / Attribute Editor and the region\n    # retargets on the next redraw (a name with no match draws blank). The\n    # face-id MEMBERSHIP is never frozen -- the draw resolves it LIVE from the\n    # input mesh data each evaluation, so editing the component tag updates the\n    # region. The string name also marshals into the compiled node.\n    try:\n        cur = mc.getAttr(name + \".regionTag\") or \"\"\n    except Exception:\n        cur = \"\"\n    tag = cur or tags[0]\n    if not cur:\n        try:\n            mc.setAttr(name + \".regionTag\", tag, type=\"string\")\n        except Exception:\n            pass\n    mc.connectAttr(shape + \".worldMesh[0]\", name + \".inMesh\", force=True)\n\n    # Move THIS gizmo's transform to the centroid of its region's vertices so\n    # the handle sits on the patch it controls. The patch is drawn in world\n    # space (see LOC_REGION_COMPUTE), so this only repositions the manipulator,\n"
+		+ "    # not the drawing. Wrapped so binding never fails on positioning.\n    try:\n        import maya.api.OpenMaya as om\n        import numpy as np\n        sel = om.MSelectionList()\n        sel.add(shape)\n        mfn = om.MFnMesh(sel.getDagPath(0))\n        pts = extract_region(mfn, regions[tag], space=om.MSpace.kWorld)[0]\n        if pts.shape[0]:\n            ctr = pts.mean(axis=0)\n            tf = (mc.listRelatives(name, parent=True, fullPath=True) or [None])[0]\n            if tf:\n                mc.xform(tf, worldSpace=True, translation=(\n                    float(ctr[0]), float(ctr[1]), float(ctr[2])))\n    except Exception:\n        pass\n\n    # Make the bound mesh unselectable so the region gizmos are easy to grab\n    # (reference display: visible in the viewport but unpickable).\n    try:\n        mc.setAttr(shape + \".overrideEnabled\", 1)\n        mc.setAttr(shape + \".overrideDisplayType\", 2)\n    except Exception:\n        pass\n\n    try:\n        mc.dgdirty(name)\n    except Exception:\n        pass\n    return name\n");
+	setAttr ".class_path" -type "string" "mpynode_user.MeshRegionLocator";
+createNode transform -n "mouthLeftRegion";
+	rename -uid "DF6C94C6-9442-3124-54BD-1A82C2981698";
+	setAttr ".t" -type "double3" 2.9190544386704764 152.02502208285861 7.1271445618735418 ;
+createNode mPyLocator -n "mouthLeftRegionShape" -p "mouthLeftRegion";
+	rename -uid "80EB7D6F-9846-01C7-CE70-D0A7B03349C7";
+	addAttr -ci true -k true -sn "inMesh" -ln "inMesh" -dt "mesh";
+	addAttr -ci true -k true -sn "regionTag" -ln "regionTag" -dt "string";
+	addAttr -ci true -k true -sn "offset" -ln "offset" -dv 0.1 -at "float";
+	addAttr -ci true -k true -sn "hoverOffset" -ln "hoverOffset" -dv 0.25 -at "float";
+	addAttr -ci true -k true -sn "selectOffset" -ln "selectOffset" -dv 0.5 -at "float";
+	addAttr -ci true -k true -sn "hoverDur" -ln "hoverDur" -dv 0.35 -at "float";
+	addAttr -ci true -uac -k true -sn "defaultColor" -ln "defaultColor" -at "float3" 
+		-nc 3;
+	addAttr -ci true -k true -sn "defaultColorR" -ln "defaultColorR" -dv 0.25 -at "float" 
+		-p "defaultColor";
+	addAttr -ci true -k true -sn "defaultColorG" -ln "defaultColorG" -dv 0.5 -at "float" 
+		-p "defaultColor";
+	addAttr -ci true -k true -sn "defaultColorB" -ln "defaultColorB" -dv 0.95 -at "float" 
+		-p "defaultColor";
+	addAttr -ci true -uac -k true -sn "hoverColor" -ln "hoverColor" -at "float3" -nc 
+		3;
+	addAttr -ci true -k true -sn "hoverColorR" -ln "hoverColorR" -dv 1 -at "float" -p "hoverColor";
+	addAttr -ci true -k true -sn "hoverColorG" -ln "hoverColorG" -dv 0.82 -at "float" 
+		-p "hoverColor";
+	addAttr -ci true -k true -sn "hoverColorB" -ln "hoverColorB" -dv 0.15 -at "float" 
+		-p "hoverColor";
+	addAttr -ci true -uac -k true -sn "selectColor" -ln "selectColor" -at "float3" -nc 
+		3;
+	addAttr -ci true -k true -sn "selectColorR" -ln "selectColorR" -dv 0.3 -at "float" 
+		-p "selectColor";
+	addAttr -ci true -k true -sn "selectColorG" -ln "selectColorG" -dv 0.85 -at "float" 
+		-p "selectColor";
+	addAttr -ci true -k true -sn "selectColorB" -ln "selectColorB" -dv 0.9 -at "float" 
+		-p "selectColor";
+	addAttr -ci true -uac -k true -sn "outlineColor" -ln "outlineColor" -at "float3" 
+		-nc 3;
+	addAttr -ci true -k true -sn "outlineColorR" -ln "outlineColorR" -dv 0.02 -at "float" 
+		-p "outlineColor";
+	addAttr -ci true -k true -sn "outlineColorG" -ln "outlineColorG" -dv 0.02 -at "float" 
+		-p "outlineColor";
+	addAttr -ci true -k true -sn "outlineColorB" -ln "outlineColorB" -dv 0.04 -at "float" 
+		-p "outlineColor";
+	addAttr -ci true -uac -k true -sn "outlineHoverColor" -ln "outlineHoverColor" -at "float3" 
+		-nc 3;
+	addAttr -ci true -k true -sn "outlineHoverColorR" -ln "outlineHoverColorR" -dv 0.02 
+		-at "float" -p "outlineHoverColor";
+	addAttr -ci true -k true -sn "outlineHoverColorG" -ln "outlineHoverColorG" -dv 0.02 
+		-at "float" -p "outlineHoverColor";
+	addAttr -ci true -k true -sn "outlineHoverColorB" -ln "outlineHoverColorB" -dv 0.04 
+		-at "float" -p "outlineHoverColor";
+	addAttr -ci true -uac -k true -sn "outlineSelectColor" -ln "outlineSelectColor" 
+		-at "float3" -nc 3;
+	addAttr -ci true -k true -sn "outlineSelectColorR" -ln "outlineSelectColorR" -dv 
+		0.02 -at "float" -p "outlineSelectColor";
+	addAttr -ci true -k true -sn "outlineSelectColorG" -ln "outlineSelectColorG" -dv 
+		0.02 -at "float" -p "outlineSelectColor";
+	addAttr -ci true -k true -sn "outlineSelectColorB" -ln "outlineSelectColorB" -dv 
+		0.04 -at "float" -p "outlineSelectColor";
+	addAttr -ci true -k true -sn "alpha" -ln "alpha" -dv 0.8 -min 0 -max 1 -at "float";
+	addAttr -ci true -h true -sn "_initSource" -ln "_initSource" -dt "string";
+	addAttr -ci true -h true -sn "_methodsSource" -ln "_methodsSource" -dt "string";
+	addAttr -ci true -h true -sn "class_path" -ln "class_path" -dt "string";
+	setAttr -k off ".v";
+	setAttr "._computeSource" -type "string" (
+		"# Draw the bound mesh's component-tag region as a coloured patch. The region\n# MEMBERSHIP is resolved LIVE from the input mesh DATA every evaluation (via\n# MFnGeometryData), keyed by this gizmo's tag NAME (`regionTag`, baked once by\n# setup) -- so editing the component tag (add/remove faces) updates the drawn\n# region immediately, and a compiled C++ node resolves the SAME way off its own\n# input handle. self.inMesh is the live world-space MFnMesh (worldMesh[0]) used\n# for the geometry; the tag membership comes from that same input's data. Falls\n# back to a legacy baked `regions` dict for scenes saved before this change.\nmesh = self.inMesh\n# The region is chosen purely by NAME via the `regionTag` string input. If the\n# name matches no component tag on the input mesh, the region goes BLANK (a typo\n# or a removed/renamed tag reads as empty). Only when regionTag is unset do we\n# honour a legacy baked `regions` dict (scenes saved before regionTag existed /\n# the build probe).\n_tag = getattr(self, \"regionTag\", None)\n"
+		+ "# ONE read of the input data, shared by the tag membership and the source\n# transform below (both live on the same MFnGeometryData).\n_mdata = mesh_data_from_node_plug(node_name_from_self(self), \"inMesh\")\n_wmat = mesh_matrix_from_mesh_data(_mdata)\nregions = None\nif _tag:\n    _faces = tag_indices_from_mesh_data(_mdata, _tag)\n    if _faces:\n        regions = {_tag: _faces}\n    # else: named tag has no match -> leave regions None -> blank (no fallback).\nelse:\n    _legacy = getattr(self, \"regions\", None)\n    if isinstance(_legacy, dict) and _legacy:\n        regions = _legacy\nif mesh is None or not regions:\n    self.draw = None\nelse:\n    offset = self.offset\n    hover_offset = self.hoverOffset\n    select_offset = self.selectOffset\n    hover_dur = max(self.hoverDur, 1e-3)\n    alpha = float(self.alpha)\n    # Per-state RGB colours (each a 3-float `color` input) + one shared alpha.\n    # The active colour tweens default->hover on the SAME elastic curve as the\n    # lift, and snaps to the select colour when selected. Each input carries its\n"
+		+ "    # own attr DEFAULT, so what is read here is exactly what the user dialled --\n    # all-zero means BLACK, not \"unset\". Nothing is substituted.\n    def_c = np.asarray(self.defaultColor, dtype=np.float64).ravel()[:3]\n    hov_c = np.asarray(self.hoverColor, dtype=np.float64).ravel()[:3]\n    sel_c = np.asarray(self.selectColor, dtype=np.float64).ravel()[:3]\n    # The outline around each patch has the SAME three states, on the same\n    # curve, so it can read as its own accent rather than a fixed dark edge.\n    odef_c = np.asarray(self.outlineColor, dtype=np.float64).ravel()[:3]\n    ohov_c = np.asarray(self.outlineHoverColor, dtype=np.float64).ravel()[:3]\n    osel_c = np.asarray(self.outlineSelectColor, dtype=np.float64).ravel()[:3]\n\n    hovered = bool(self.hovered)\n    selected = bool(self.selected)\n    if selected:\n        hovered = False          # selected shows only its selected form\n    now = float(_wallclock.time())\n\n    h_cur, h_e = tween(now, float(getattr(self, \"hv_start\", 0.0)),\n                       float(getattr(self, \"hv_from\", 0.0)),\n"
+		+ "                       float(getattr(self, \"hv_to\", 0.0)), hover_dur)\n    if hovered != bool(getattr(self, \"hv_prev\", False)):\n        self.hv_start = now\n        self.hv_from = h_cur\n        self.hv_to = 1.0 if hovered else 0.0\n        self.hv_prev = hovered\n        h_e = 0.0\n\n    # THREE ABSOLUTE normal offsets (world units): the patch floats at `offset`\n    # at rest, tweens to `hoverOffset` on hover, and snaps to `selectOffset`\n    # when selected. Absolute (not additive) + a fixed normal lift (never an\n    # in-plane centroid balloon), so the pop is identical no matter how many\n    # faces the tag covers -- a tag grown to span the whole mesh lifts by the\n    # same amount as a tiny one.\n    lift = offset + (hover_offset - offset) * h_cur\n    if selected:\n        lift = select_offset\n    if lift < MIN_OFFSET:\n        lift = MIN_OFFSET\n\n    # Active fill colour: tween default->hover on the hover curve, snap to the\n    # select colour when selected; append the shared alpha to make the RGBA row\n    # the polygons buffer expects.\n"
+		+ "    rgb = def_c + (hov_c - def_c) * h_cur\n    if selected:\n        rgb = sel_c\n    rgba = np.concatenate([rgb, [alpha]])\n\n    # The outline rides the SAME hover curve and the same select snap. It stays\n    # opaque: `alpha` fades the FILL so the surface shows through, and letting\n    # the silhouette fade with it would wash the patch's edge out entirely.\n    orgb = odef_c + (ohov_c - odef_c) * h_cur\n    if selected:\n        orgb = osel_c\n    orgba = np.concatenate([orgb, [1.0]])\n\n    # One DrawMesh per tag. `self.draw` takes the LIST straight -- no `sum()`\n    # and no `+` chain to build -- and draws them in the order appended. This\n    # used to be four parallel accumulator lists plus a hand-rolled\n    # `idx + voff` rebase.\n    patches = []\n    for tag in sorted(regions.keys()):\n        faces = np.asarray(regions[tag], dtype=np.int64).ravel()\n        if faces.size == 0:\n            continue\n        pts, idx, cnt, nrm = extract_region(mesh, faces, with_normals=True)\n        if pts.shape[0] == 0:\n            continue\n"
+		+ "        # extract_region reads OBJECT space: the mesh DATA carries the source\n        # transform as a SEPARATE matrix, and a data-built MFnMesh has no DAG\n        # path so getPoints(kWorld) cannot reach world. `world_space=True` below\n        # takes these points AS world, so apply that matrix here -- without it\n        # the patch draws at the ORIGIN and never follows the mesh. Maya is\n        # row-vector (p * M): the 3x3 rotates/scales, row 3 translates.\n        if _wmat is not None:\n            _m = np.asarray(_wmat, dtype=np.float64).reshape(4, 4)\n            pts = pts @ _m[:3, :3] + _m[3, :3]\n            nrm = nrm @ _m[:3, :3]\n            _mag = np.linalg.norm(nrm, axis=1, keepdims=True)\n            nrm = nrm / np.where(_mag > 1e-12, _mag, 1.0)\n        patches.append(DrawMesh(\n            pts + nrm * lift, cnt, idx, color=rgba,\n            outline=orgba, outline_width=2.0,\n            outline_boundary_only=True,   # clean outer silhouette only\n            world_space=True,             # follow the mesh, not the locator\n"
+		+ "            precise_hover=True))\n\n    if not patches:\n        self.draw = None\n    else:\n        self.draw = patches\n        self.auto_highlight = False\n        self.auto_refresh = bool(h_e < 1.0)\n");
+	setAttr "._inputAttrs" -type "string" (
+		"{\"alpha\":{\"attr_type\":\"float\",\"default_value\":0.8,\"is_array\":false,\"max_value\":1.0,\"min_value\":0.0,\"order\":12},\"defaultColor\":{\"attr_type\":\"color\",\"default_value\":[0.25,0.5,0.95],\"is_array\":false,\"order\":6},\"hoverColor\":{\"attr_type\":\"color\",\"default_value\":[1.0,0.82,0.15],\"is_array\":false,\"order\":7},\"hoverDur\":{\"attr_type\":\"float\",\"default_value\":0.35,\"is_array\":false,\"order\":5},\"hoverOffset\":{\"attr_type\":\"float\",\"default_value\":0.25,\"is_array\":false,\"order\":3},\"inMesh\":{\"attr_type\":\"mesh\",\"is_array\":false,\"order\":0},\"offset\":{\"attr_type\":\"float\",\"default_value\":0.1,\"is_array\":false,\"order\":2},\"outlineColor\":{\"attr_type\":\"color\",\"default_value\":[0.02,0.02,0.04],\"is_array\":false,\"order\":9},\"outlineHoverColor\":{\"attr_type\":\"color\",\"default_value\":[0.02,0.02,0.04],\"is_array\":false,\"order\":10},\"outlineSelectColor\":{\"attr_type\":\"color\",\"default_value\":[0.02,0.02,0.04],\"is_array\":false,\"order\":11},\"regionTag\":{\"attr_type\":\"string\",\"is_array\":false,\"order\":1},\"selectColor\":{\"attr_type\":\"color\",\"default_value\":[0.3,0.85,0.9],\"is_array\":false,\"order\":8},\"selectOffset\":{\"attr_type\":\"float\",\"default_value\":0.5,\"is_array\":false,\"order\":4}}");
+	setAttr -k on ".inMesh";
+	setAttr -k on ".regionTag" -type "string" "mouthLeft";
+	setAttr -k on ".defaultColor" -type "float3" 0.80000001 0.34999999 0.85000002 ;
+	setAttr "._initSource" -type "string" (
+		"import math\nimport time as _wallclock\nimport numpy as np\nfrom mpynode._common.draw.draw_types import DrawMesh\nfrom mpynode._common.nodes.mesh.mesh_region import extract_region\nfrom mpynode._common.nodes.mesh.component_tags import (\n    node_name_from_self, mesh_data_from_node_plug, tag_indices_from_mesh_data,\n    mesh_matrix_from_mesh_data)\n\nMIN_OFFSET = 0.004      # floor so elastic undershoot never dips into the mesh\n# Fill AND outline colour, plus the per-state offsets, are LIVE input attrs\n# (defaultColor / hoverColor / selectColor, outlineColor / outlineHoverColor /\n# outlineSelectColor, offset / hoverOffset / selectOffset / alpha), so the\n# palette/tint constants that used to live here are gone -- the compute reads\n# them off self.<attr> and a user can tweak each one interactively. Every colour\n# input carries its OWN attr default, so a raw-created node already looks right\n# and the compute never has to guess whether a value is \"unset\": all-zero means\n# exactly BLACK, which is the colour the user dialled.\n"
+		+ "\n\ndef elastic_in_out(t):\n    if t <= 0.0:\n        return 0.0\n    if t >= 1.0:\n        return 1.0\n    p = 0.45\n    s = p / 4.0\n    t2 = 2.0 * t - 1.0\n    if t2 < 0.0:\n        return -0.5 * (2.0 ** (10.0 * t2)) * math.sin((t2 - s) * (2.0 * math.pi / p))\n    return (2.0 ** (-10.0 * t2)) * math.sin((t2 - s) * (2.0 * math.pi / p)) * 0.5 + 1.0\n\n\ndef tween(now, start, frm, to, dur):\n    e = (now - start) / max(dur, 1e-3)\n    e = 0.0 if e < 0.0 else (1.0 if e > 1.0 else e)\n    return frm + (to - frm) * elastic_in_out(e), e\n");
+	setAttr "._methodsSource" -type "string" (
+		"class SetupError(Exception):\n    \"\"\"The current selection / scene state can't support setup for this node.\n    Message is user-facing (it names what to select).\"\"\"\n\n\ndef _has_shape(node, shape_types):\n    from maya import cmds as mc\n    if mc.nodeType(node) in shape_types:\n        return True\n    for st in shape_types:\n        if mc.listRelatives(node, shapes=True, type=st, noIntermediate=True):\n            return True\n    return False\n\n\ndef _meshes(sel):\n    return [n for n in sel if _has_shape(n, (\"mesh\",))]\n\n\n# Region-extraction helpers, VENDORED from\n# mpynode._common.nodes.mesh.mesh_region. setup is a @maya_command body, which\n# ships as embedded python inside the compiled .mll -- where mpynode is NOT\n# importable -- so extract_region and its whole closure (mesh_arrays /\n# mesh_vertex_normals and their api1 fallbacks) are carried here instead of\n# imported. numpy + the OpenMaya modules are imported per-def.\ndef _is_api2(mesh):\n    \"\"\"True for an API-2.0 function set, False for a legacy API-1.0 one.\n    Both classes are named ``MFnMesh``, so we distinguish by module:\n"
+		+ "    API 1.0 is ``maya.OpenMaya``; API 2.0 reports ``OpenMaya``.\"\"\"\n    return type(mesh).__module__ != \"maya.OpenMaya\"\n\n\ndef _arrays_api1(mesh, space):\n    \"\"\"Legacy API-1.0 read path. API 1.0 has no vectorized point accessor,\n    so points go through a small per-vertex loop; connectivity uses the\n    scalar-iterable MIntArray (np.fromiter).\"\"\"\n    import numpy as np\n    import maya.OpenMaya as om1\n\n    space1 = om1.MSpace.kObject if space is None else int(space)\n    pa = om1.MPointArray()\n    mesh.getPoints(pa, space1)\n    n = pa.length()\n    pts = np.empty((n, 3), dtype=np.float64)\n    for i in range(n):\n        p = pa[i]\n        pts[i, 0] = p.x\n        pts[i, 1] = p.y\n        pts[i, 2] = p.z\n    counts1 = om1.MIntArray()\n    connects1 = om1.MIntArray()\n    mesh.getVertices(counts1, connects1)\n    counts = np.fromiter(counts1, dtype=np.int64, count=counts1.length())\n    connects = np.fromiter(connects1, dtype=np.int64, count=connects1.length())\n    return pts, counts, connects\n\n\ndef mesh_arrays(mesh, space=None):\n"
+		+ "    \"\"\"Return ``(points (V,3) float64, counts (F,) int64, connects (C,) int64)``\n    for an ``MFnMesh`` (API 2.0 preferred, API 1.0 supported).\"\"\"\n    import numpy as np\n    import maya.api.OpenMaya as om\n\n    if not _is_api2(mesh):\n        return _arrays_api1(mesh, space)\n    if space is None:\n        space = om.MSpace.kObject\n    # getPoints -> MPointArray; np.array gives (V, 4) [x,y,z,w] -> drop w.\n    pts = np.asarray(mesh.getPoints(space))[:, :3].astype(np.float64)\n    counts_arr, connects_arr = mesh.getVertices()\n    counts = np.asarray(counts_arr, dtype=np.int64)\n    connects = np.asarray(connects_arr, dtype=np.int64)\n    return pts, counts, connects\n\n\ndef _normals_api1(mesh, space):\n    \"\"\"Legacy API-1.0 per-vertex normal read (out-param + small loop).\"\"\"\n    import numpy as np\n    import maya.OpenMaya as om1\n\n    space1 = om1.MSpace.kObject if space is None else int(space)\n    nrm = om1.MFloatVectorArray()\n    mesh.getVertexNormals(False, nrm, space1)\n    n = nrm.length()\n    out = np.empty((n, 3), dtype=np.float64)\n"
+		+ "    for i in range(n):\n        v = nrm[i]\n        out[i, 0] = v.x\n        out[i, 1] = v.y\n        out[i, 2] = v.z\n    return out\n\n\ndef mesh_vertex_normals(mesh, space=None):\n    \"\"\"Return ``(V, 3)`` unit per-vertex normals (Maya's averaged vertex\n    normals) for an ``MFnMesh``, aligned with ``mesh_arrays`` point order.\"\"\"\n    import numpy as np\n    import maya.api.OpenMaya as om\n\n    if not _is_api2(mesh):\n        n = _normals_api1(mesh, space)\n    else:\n        if space is None:\n            space = om.MSpace.kObject\n        n = np.asarray(\n            mesh.getVertexNormals(False, space))[:, :3].astype(np.float64)\n    # Defensive renormalize (Maya returns unit normals, but guard zeros).\n    mag = np.linalg.norm(n, axis=1, keepdims=True)\n    return n / np.where(mag > 1e-12, mag, 1.0)\n\n\ndef extract_region(mesh, face_ids, space=None, with_normals=False):\n    \"\"\"Build a compact polygon buffer for the faces in ``face_ids`` from a\n    live ``MFnMesh``.\n\n    Returns ``(points, indices, counts)`` -- or, when ``with_normals`` is\n"
+		+ "    True, ``(points, indices, counts, normals)``. The region's vertices are\n    compacted + remapped, so ``indices`` refer only to the returned\n    ``points``. Fully vectorized -- no per-face loops.\"\"\"\n    import numpy as np\n\n    def _empty():\n        z3 = np.zeros((0, 3), dtype=np.float64)\n        zi = np.zeros((0,), dtype=np.int64)\n        return (z3, zi, zi.copy(), z3.copy()) if with_normals else (z3, zi, zi.copy())\n\n    if mesh is None:\n        return _empty()\n    pts, counts, connects = mesh_arrays(mesh, space)\n    face_ids = np.asarray(face_ids, dtype=np.int64).ravel()\n    if face_ids.size == 0 or counts.shape[0] == 0:\n        return _empty()\n    # Keep only valid face ids.\n    face_ids = face_ids[(face_ids >= 0) & (face_ids < counts.shape[0])]\n    if face_ids.size == 0:\n        return _empty()\n\n    face_off = np.cumsum(counts) - counts          # start offset into connects/face\n    sel_counts = counts[face_ids]                  # (M,)\n    starts = face_off[face_ids]                    # (M,)\n    total = int(sel_counts.sum())\n"
+		+ "    if total == 0:\n        return _empty()\n\n    # Flatten the selected faces' connectivity positions (vectorized).\n    face_of = np.repeat(np.arange(face_ids.size), sel_counts)            # (total,)\n    within = np.arange(total) - (np.cumsum(sel_counts) - sel_counts)[face_of]\n    connect_pos = starts[face_of] + within                              # (total,)\n    region_verts = connects[connect_pos]                                # global vertex ids\n\n    # Compact the used vertices + remap the connectivity to 0..U-1.\n    uniq, inverse = np.unique(region_verts, return_inverse=True)\n    region_points = pts[uniq]\n    region_indices = inverse.astype(np.int64)\n    region_counts = sel_counts.astype(np.int64)\n    if not with_normals:\n        return region_points, region_indices, region_counts\n    region_normals = mesh_vertex_normals(mesh, space)[uniq]\n    return region_points, region_indices, region_counts, region_normals\n\n\n# Mesh Regions demo: fabricate the whole showcase scene. Import the bundled\n# head model, resolve EVERY component tag, then build ONE gizmo PER tag -- `self`\n"
+		+ "# is the first tag's gizmo and each remaining tag gets a DUPLICATE of `self`\n# (which carries its Init/Compute/Methods sources + input attrs along). The\n# demo only creates + arranges the gizmos: it sets each gizmo's `regionTag`\n# and then DELEGATES the actual per-node binding (`inMesh` wire + positioning) to\n# that gizmo's own ``setup`` via ``run_setup([mesh])`` -- so demo and setup never\n# duplicate the wiring logic.\ndef get_component_tag_faces(mesh_shape):\n    \"\"\"\n    Retrieves component tags on a mesh shape and returns a dictionary.\n    Keys are the tag names.\n    Values are flattened, unique, and sorted lists of face indices.\n    \"\"\"\n    from maya import cmds as mc\n\n    attr_path = f\"{mesh_shape}.outMesh\"\n    tags = mc.geometryAttrInfo(attr_path, componentTagNames=True)\n\n    tag_faces_dict = {}\n\n    if not tags:\n        return tag_faces_dict\n\n    for tag in tags:\n        contents = mc.geometryAttrInfo(attr_path, componentTagExpression=tag, components=True)\n\n        # Use a set to automatically guarantee unique indices\n"
+		+ "        face_indices = set()\n\n        if contents:\n            for comp in contents:\n                comp = comp.strip()\n\n                # Check if the string represents a face (starts with 'f[' or 'F[')\n                if comp.lower().startswith('f['):\n                    # Extract the contents inside the square brackets\n                    inner_str = comp.split('[')[1].split(']')[0]\n\n                    # Handle ranges (e.g., '10:55')\n                    if ':' in inner_str:\n                        start_idx, end_idx = inner_str.split(':')\n                        # range() stops before the end value, so we add 1 to make it inclusive\n                        face_indices.update(range(int(start_idx), int(end_idx) + 1))\n\n                    # Handle single digits (e.g., '10')\n                    else:\n                        face_indices.add(int(inner_str))\n\n        # Convert the set back to a list and sort it\n        tag_faces_dict[tag] = sorted(list(face_indices))\n\n    return tag_faces_dict\n\n\ndef demo(self):\n"
+		+ "    from maya import cmds as mc\n    from mpynode import wrap_node\n    import os\n    import re\n    name = self.get_name()\n\n    head = None\n    try:\n        from mpynode._common.util.template_gallery import _bundled_templates_root\n        root = _bundled_templates_root()\n        if root:\n            cand = os.path.join(root, \"MPyLocator\", \"Mesh Regions\", \"head.ma\")\n            if os.path.isfile(cand):\n                head = cand\n    except Exception:\n        head = None\n    if not head:\n        return name\n\n    new_nodes = mc.file(head, i=True, returnNewNodes=True,\n                        namespace=\"headModel\") or []\n    meshes = [n for n in new_nodes if mc.nodeType(n) == \"mesh\"]\n    if not meshes:\n        meshes = mc.ls(\"headModel:*\", type=\"mesh\", long=True) or []\n    if not meshes:\n        return name\n    shape = (mc.ls(meshes[0], long=True) or [meshes[0]])[0]\n\n    tags = sorted(get_component_tag_faces(shape).keys())\n    if not tags:\n        return name\n\n    def _san(tag):\n        s = re.sub(r\"[^0-9A-Za-z_]\", \"_\", str(tag))\n"
+		+ "        if not s:\n            s = \"region\"\n        if s[0].isdigit():\n            s = \"_\" + s\n        return s + \"Region\"\n\n    # self is tag[0]'s gizmo; duplicate it once per remaining tag. Capture\n    # self's FULL DAG paths up front so later name-based lookups can't go\n    # ambiguous once dup shapes share the short name (Maya keeps a duplicated\n    # shape's short name identical to the original's).\n    self_shape = (mc.ls(name, long=True) or [name])[0]\n    self_tf = (mc.listRelatives(self_shape, parent=True, fullPath=True) or [self_shape])[0]\n\n    shapes = [self_shape]\n    for _ in tags[1:]:\n        dup_tf = mc.duplicate(self_tf, returnRootsOnly=True)[0]\n        dup_tf = (mc.ls(dup_tf, long=True) or [dup_tf])[0]\n        dsh = (mc.listRelatives(dup_tf, shapes=True, type=\"mPyLocator\", fullPath=True)\n               or mc.listRelatives(dup_tf, shapes=True, fullPath=True) or [])\n        if dsh:\n            shapes.append(dsh[0])\n\n    for idx, tag in enumerate(tags):\n        if idx >= len(shapes):\n            break\n"
+		+ "        sh = shapes[idx]\n        # Name THIS gizmo's region via the live `regionTag` string selector, then\n        # let its OWN setup wire the mesh (setup honours an already-set name) --\n        # one code path for both \"Run demo\" and a standalone \"Run setup\".\n        try:\n            mc.setAttr(sh + \".regionTag\", tag, type=\"string\")\n        except Exception:\n            pass\n        try:\n            w = wrap_node(sh)\n            if w is not None:\n                w.run_setup([shape])\n        except Exception:\n            pass\n        # Give each gizmo a DISTINCT default colour so the showcase reads as\n        # separate regions; hover/select/outline keep their shared attr\n        # defaults. Set AFTER run_setup so nothing setup does can win over it.\n        try:\n            _pal = [(0.25, 0.50, 0.95), (0.95, 0.45, 0.25), (0.30, 0.80, 0.40),\n                    (0.80, 0.35, 0.85), (0.95, 0.82, 0.20), (0.30, 0.85, 0.90),\n                    (0.95, 0.35, 0.55), (0.55, 0.85, 0.25), (0.45, 0.35, 0.90),\n                    (0.90, 0.60, 0.20), (0.20, 0.70, 0.70), (0.70, 0.70, 0.95)]\n"
+		+ "            _c = _pal[idx % len(_pal)]\n            for _ch, _v in zip(\"RGB\", _c):\n                mc.setAttr(\"%s.defaultColor%s\" % (sh, _ch), _v)\n        except Exception:\n            pass\n        # rename transform + shape after the tag for a readable outliner\n        try:\n            tf = mc.listRelatives(sh, parent=True, fullPath=True)\n            if tf:\n                new_tf = mc.rename(tf[0], _san(tag))\n                nsh = mc.listRelatives(new_tf, shapes=True, fullPath=True)\n                if nsh:\n                    mc.rename(nsh[0], _san(tag) + \"Shape\")\n                    fixed = mc.listRelatives(new_tf, shapes=True, fullPath=True)\n                    if fixed:\n                        shapes[idx] = fixed[0]\n        except Exception:\n            pass\n\n    # This demo IMPORTS a maya file, so frame the WHOLE scene rather than just\n    # the gizmos -- an imported mesh can sit anywhere, and fitting only the\n    # locators can leave the head off screen with nothing visible to the user.\n    try:\n        mc.viewFit(all=True)\n"
+		+ "    except Exception:\n        pass\n    return shapes[0]\n\n\n@maya_test(label=\"Region draws in the node's RGBA colour; select lifts it\", digits=3)\ndef test_mesh_regions(self):\n    \"\"\"Validate the node's INTENT (the SAME test passes on the interpreted node\n    and its C++ compile -> parity). A locator has no numeric mesh output, so --\n    exactly as the builder's own live-check does -- assert the DRAW BUFFERS:\n\n      1. A bound region draws ONE RGBA face-colour per face carrying the node's\n         `defaultColor` RGB + the `alpha` input (rest state), outlined in\n         `outlineColor` at full opacity.\n      2. Selecting the gizmo snaps the fill to `selectColor` and the outline to\n         `outlineSelectColor` (alpha survives) and lifts the patch by exactly\n         `selectOffset - offset` along the normals -- region-size-independent.\n      3. A colour dialled to (0,0,0) draws BLACK. Nothing substitutes a\n         fallback, so every colour in the cube is reachable.\n    \"\"\"\n    from maya import cmds as mc\n    import maya.api.OpenMaya as om2\n"
+		+ "    import numpy as np\n    from mpynode._common.methods.test_helpers import (\n        assert_close, assert_equal, assert_true)\n\n    name = self.get_name()\n\n    def _set(plug, *vals, **kw):\n        # A demo (or user) may have CONNECTED this input; break incoming\n        # connections first so the test can drive it, then set it.\n        for s in (mc.listConnections(plug, s=True, d=False, plugs=True) or []):\n            mc.disconnectAttr(s, plug)\n        mc.setAttr(plug, *vals, **kw)\n\n    # Validate whatever mesh THIS node already consumes (e.g. the demo's head\n    # model); build a probe sphere ONLY if `inMesh` drives nothing yet. Keeps the\n    # test on `self` (parity) and robust to a live, demo-populated scene + reruns.\n    src = mc.listConnections(name + \".inMesh\", s=True, d=False) or []\n    if not src:\n        probe = mc.polySphere(sx=20, sy=20, name=\"regionProbe#\")[0]\n        pshape = mc.listRelatives(probe, shapes=True, fullPath=True)[0]\n        mc.connectAttr(pshape + \".worldMesh[0]\", name + \".inMesh\", force=True)\n"
+		+ "\n    # Drive the draw deterministically off `self` through the COMPONENT-TAG\n    # path. Not the legacy `regions` dict: that is a stored Python var, and a\n    # compiled node has no _storedVarNames/_storedVarsData plug to receive one,\n    # so forcing it made this test unrunnable against the C++ build -- which is\n    # the parity claim in the docstring above. Tagging a known face range keeps\n    # the region deterministic AND portable. `create=True` on an existing name\n    # is idempotent, so a re-run in a live scene is safe.\n    shape = (mc.listConnections(name + \".inMesh\", s=True, d=False,\n                                shapes=True) or [None])[0]\n    assert_true(shape is not None, \"inMesh must be driven by a mesh shape\")\n    n_faces = mc.polyEvaluate(shape, face=True)\n    last_face = min(15, int(n_faces) - 1)\n    mc.componentTag(\"%s.f[0:%d]\" % (shape, last_face), create=True,\n                    newTagName=\"mpyTestRegion\")\n    # Seed known colours + offsets. Every input is broken-then-set so no\n    # demo/user connection can win over the values this test drives.\n"
+		+ "    _set(name + \".regionTag\", \"mpyTestRegion\", type=\"string\")\n    probe_rgb = (0.20, 0.55, 0.90)\n    for ch, val in zip(\"RGB\", probe_rgb):\n        _set(\"%s.defaultColor%s\" % (name, ch), val)\n    sel_rgb = (0.30, 0.85, 0.90)\n    for ch, val in zip(\"RGB\", sel_rgb):\n        _set(\"%s.selectColor%s\" % (name, ch), val)\n    # Outline colours, deliberately nothing like the fill so a swapped-in fill\n    # value could not satisfy the outline assertions below.\n    out_rgb = (0.90, 0.10, 0.40)\n    for ch, val in zip(\"RGB\", out_rgb):\n        _set(\"%s.outlineColor%s\" % (name, ch), val)\n    out_sel_rgb = (0.10, 0.95, 0.20)\n    for ch, val in zip(\"RGB\", out_sel_rgb):\n        _set(\"%s.outlineSelectColor%s\" % (name, ch), val)\n    _set(name + \".alpha\", 0.8)\n    _set(name + \".offset\", 0.1)\n    _set(name + \".selectOffset\", 0.5)\n    mc.dgdirty(name)\n\n    # Read the ordered draw commands via the node's PUBLIC MPx surface using the\n    # node NAME only -- so this runs identically on the interpreted node AND a\n    # compiled node (the parity point), never the interpreted-only wrapper.\n"
+		+ "    # One patch is drawn PER TAG; the tag driven above is the only one this test\n    # names, so the first patch answers every assertion below.\n    def _draw(selected=False):\n        sl = om2.MSelectionList(); sl.add(name)\n        mpx = om2.MFnDependencyNode(sl.getDependNode(0)).userNode()\n        return mpx.evaluateDrawItems(0.0, selected=selected) or {}\n\n    def _poly(selected=False):\n        for cmd in _draw(selected).get(\"commands\") or []:\n            if cmd[\"slot\"] == \"polygons\":\n                return cmd[\"buffer\"]\n        return None\n\n    # A COMPILED C++ locator (MPxLocatorNode) exposes no Python\n    # evaluateDrawItems, so its draw buffers are unreachable here -- that parity\n    # is covered by the dedicated -DMPYNODE_PROBE numerical buffer comparison.\n    # Skip cleanly rather than false-fail, the same guard test_animated_selection\n    # and test_animated_text already use. AttributeError ONLY: a node that HAS\n    # the surface but draws nothing must still fail the assertion below.\n    try:\n        _draw(False)\n"
+		+ "    except AttributeError:\n        return\n\n    # 1) REST state: one RGBA row per face = defaultColor RGB + alpha (0.8).\n    poly = _poly(False)\n    assert_true(poly is not None, \"the bound region must draw a patch\")\n    fcol = np.asarray(poly[\"face_colors\"])\n    cnt = np.asarray(poly[\"counts\"])\n    assert_true(fcol.ndim == 2 and fcol.shape[1] == 4,\n                \"face colours must be RGBA rows\")\n    assert_equal(fcol.shape[0], cnt.shape[0],\n                 \"one face colour per face (%d vs %d)\"\n                 % (fcol.shape[0], cnt.shape[0]))\n    assert_close(fcol[:, :3].mean(axis=0).tolist(), list(probe_rgb))\n    assert_true(bool(np.allclose(fcol[:, 3], 0.8, atol=1e-3)),\n                \"the alpha input must reach the fill\")\n    wire = np.asarray(poly[\"wireframe\"], dtype=np.float64).ravel()\n    assert_close(wire[:3].tolist(), list(out_rgb))\n    assert_close(float(wire[3]), 1.0,\n                 msg=\"the outline stays opaque; alpha dials the fill only\")\n\n    # 2) SELECT state: fill snaps to selectColor, the outline to\n"
+		+ "    #    outlineSelectColor, alpha survives, and the patch lifts by exactly\n    #    selectOffset - offset (0.5 - 0.1) along the normals.\n    rest_pts = np.asarray(poly[\"points\"])\n    psel = _poly(True)\n    fcs = np.asarray(psel[\"face_colors\"])\n    disp = np.linalg.norm(np.asarray(psel[\"points\"]) - rest_pts, axis=1)\n    assert_close(fcs[:, :3].mean(axis=0).tolist(), list(sel_rgb))\n    assert_true(bool(np.allclose(fcs[:, 3], 0.8, atol=1e-3)),\n                \"alpha survives selection\")\n    assert_close(np.asarray(psel[\"wireframe\"],\n                            dtype=np.float64).ravel()[:3].tolist(), list(out_sel_rgb))\n    assert_close(float(disp.max()), 0.5 - 0.1, digits=2,\n                 msg=\"select lift must equal selectOffset - offset\")\n\n    # 3) ZERO IS A COLOUR. Dialling a state to (0,0,0) must draw BLACK -- the\n    #    compute substitutes nothing, so the value on the plug is the value on\n    #    screen. Asserted on the fill AND the outline, since each used to have\n    #    (fill) or lacked entirely (outline) its own path to the buffer.\n"
+		+ "    for ch in \"RGB\":\n        _set(\"%s.defaultColor%s\" % (name, ch), 0.0)\n        _set(\"%s.outlineColor%s\" % (name, ch), 0.0)\n    mc.dgdirty(name)\n    pblack = _poly(False)\n    assert_true(pblack is not None, \"an all-black region must still draw\")\n    assert_close(np.asarray(pblack[\"face_colors\"])[:, :3].mean(\n        axis=0).tolist(), [0.0, 0.0, 0.0])\n    assert_close(np.asarray(pblack[\"wireframe\"],\n                            dtype=np.float64).ravel()[:3].tolist(), [0.0, 0.0, 0.0])\n\n\n\n# Mesh Regions setup: bind THIS ONE gizmo to a single region of a mesh in the\n# current selection (NO scene fabrication -- that is the `demo`\\'s job). Resolves\n# ONE mesh, honours this gizmo\\'s `regionTag` string (or defaults it to the first\n# component tag when unset), and wires the mesh\\'s live world-space geometry into\n# `inMesh`. `demo` calls this once per tag after setting each gizmo\\'s `regionTag`,\n# so the two hooks share one wiring path.\n@maya_command(creates=True)\ndef setup(self, selection=None, *args, **kwargs):\n    from maya import cmds as mc\n"
+		+ "    name = self.get_name()\n\n    # Resolve ONE mesh: from the passed selection (in pick order), else the live\n    # selection, else an already-connected inMesh source. Drop self so selecting\n    # the gizmo alongside the mesh is harmless.\n    order = [o for o in (selection or mc.ls(selection=True) or []) if o != name]\n    meshes = _meshes(order) if order else []\n    if not meshes:\n        src = mc.listConnections(name + \".inMesh\", source=True,\n                                 destination=False, shapes=True) or []\n        meshes = _meshes(src) if src else []\n    if not meshes:\n        raise SetupError(\"Select the mesh to bind this region gizmo to.\")\n    shape = (mc.ls(meshes[0], long=True) or [meshes[0]])[0]\n\n    regions = get_component_tag_faces(shape)\n    if not regions:\n        raise SetupError(\"Mesh has no component tags to bind a region to.\")\n    tags = sorted(regions.keys())\n\n    # The region is chosen by NAME via the LIVE `regionTag` string INPUT. Honour\n    # an already-set name (the demo sets one per gizmo, or the user typed one);\n"
+		+ "    # otherwise default to the first tag so a fresh bind shows something. A user\n    # can retype it in the Channel Box / Attribute Editor and the region\n    # retargets on the next redraw (a name with no match draws blank). The\n    # face-id MEMBERSHIP is never frozen -- the draw resolves it LIVE from the\n    # input mesh data each evaluation, so editing the component tag updates the\n    # region. The string name also marshals into the compiled node.\n    try:\n        cur = mc.getAttr(name + \".regionTag\") or \"\"\n    except Exception:\n        cur = \"\"\n    tag = cur or tags[0]\n    if not cur:\n        try:\n            mc.setAttr(name + \".regionTag\", tag, type=\"string\")\n        except Exception:\n            pass\n    mc.connectAttr(shape + \".worldMesh[0]\", name + \".inMesh\", force=True)\n\n    # Move THIS gizmo's transform to the centroid of its region's vertices so\n    # the handle sits on the patch it controls. The patch is drawn in world\n    # space (see LOC_REGION_COMPUTE), so this only repositions the manipulator,\n"
+		+ "    # not the drawing. Wrapped so binding never fails on positioning.\n    try:\n        import maya.api.OpenMaya as om\n        import numpy as np\n        sel = om.MSelectionList()\n        sel.add(shape)\n        mfn = om.MFnMesh(sel.getDagPath(0))\n        pts = extract_region(mfn, regions[tag], space=om.MSpace.kWorld)[0]\n        if pts.shape[0]:\n            ctr = pts.mean(axis=0)\n            tf = (mc.listRelatives(name, parent=True, fullPath=True) or [None])[0]\n            if tf:\n                mc.xform(tf, worldSpace=True, translation=(\n                    float(ctr[0]), float(ctr[1]), float(ctr[2])))\n    except Exception:\n        pass\n\n    # Make the bound mesh unselectable so the region gizmos are easy to grab\n    # (reference display: visible in the viewport but unpickable).\n    try:\n        mc.setAttr(shape + \".overrideEnabled\", 1)\n        mc.setAttr(shape + \".overrideDisplayType\", 2)\n    except Exception:\n        pass\n\n    try:\n        mc.dgdirty(name)\n    except Exception:\n        pass\n    return name\n");
+	setAttr ".class_path" -type "string" "mpynode_user.MeshRegionLocator";
+createNode transform -n "mouthRightRegion";
+	rename -uid "7B191AE1-C54B-E8DB-30BB-589745052797";
+	setAttr ".t" -type "double3" -2.9190543923113079 152.02502208285861 7.1271445552508039 ;
+createNode mPyLocator -n "mouthRightRegionShape" -p "mouthRightRegion";
+	rename -uid "7B16A6B6-F249-13B3-913F-8DB42E3EB73E";
+	addAttr -ci true -k true -sn "inMesh" -ln "inMesh" -dt "mesh";
+	addAttr -ci true -k true -sn "regionTag" -ln "regionTag" -dt "string";
+	addAttr -ci true -k true -sn "offset" -ln "offset" -dv 0.1 -at "float";
+	addAttr -ci true -k true -sn "hoverOffset" -ln "hoverOffset" -dv 0.25 -at "float";
+	addAttr -ci true -k true -sn "selectOffset" -ln "selectOffset" -dv 0.5 -at "float";
+	addAttr -ci true -k true -sn "hoverDur" -ln "hoverDur" -dv 0.35 -at "float";
+	addAttr -ci true -uac -k true -sn "defaultColor" -ln "defaultColor" -at "float3" 
+		-nc 3;
+	addAttr -ci true -k true -sn "defaultColorR" -ln "defaultColorR" -dv 0.25 -at "float" 
+		-p "defaultColor";
+	addAttr -ci true -k true -sn "defaultColorG" -ln "defaultColorG" -dv 0.5 -at "float" 
+		-p "defaultColor";
+	addAttr -ci true -k true -sn "defaultColorB" -ln "defaultColorB" -dv 0.95 -at "float" 
+		-p "defaultColor";
+	addAttr -ci true -uac -k true -sn "hoverColor" -ln "hoverColor" -at "float3" -nc 
+		3;
+	addAttr -ci true -k true -sn "hoverColorR" -ln "hoverColorR" -dv 1 -at "float" -p "hoverColor";
+	addAttr -ci true -k true -sn "hoverColorG" -ln "hoverColorG" -dv 0.82 -at "float" 
+		-p "hoverColor";
+	addAttr -ci true -k true -sn "hoverColorB" -ln "hoverColorB" -dv 0.15 -at "float" 
+		-p "hoverColor";
+	addAttr -ci true -uac -k true -sn "selectColor" -ln "selectColor" -at "float3" -nc 
+		3;
+	addAttr -ci true -k true -sn "selectColorR" -ln "selectColorR" -dv 0.3 -at "float" 
+		-p "selectColor";
+	addAttr -ci true -k true -sn "selectColorG" -ln "selectColorG" -dv 0.85 -at "float" 
+		-p "selectColor";
+	addAttr -ci true -k true -sn "selectColorB" -ln "selectColorB" -dv 0.9 -at "float" 
+		-p "selectColor";
+	addAttr -ci true -uac -k true -sn "outlineColor" -ln "outlineColor" -at "float3" 
+		-nc 3;
+	addAttr -ci true -k true -sn "outlineColorR" -ln "outlineColorR" -dv 0.02 -at "float" 
+		-p "outlineColor";
+	addAttr -ci true -k true -sn "outlineColorG" -ln "outlineColorG" -dv 0.02 -at "float" 
+		-p "outlineColor";
+	addAttr -ci true -k true -sn "outlineColorB" -ln "outlineColorB" -dv 0.04 -at "float" 
+		-p "outlineColor";
+	addAttr -ci true -uac -k true -sn "outlineHoverColor" -ln "outlineHoverColor" -at "float3" 
+		-nc 3;
+	addAttr -ci true -k true -sn "outlineHoverColorR" -ln "outlineHoverColorR" -dv 0.02 
+		-at "float" -p "outlineHoverColor";
+	addAttr -ci true -k true -sn "outlineHoverColorG" -ln "outlineHoverColorG" -dv 0.02 
+		-at "float" -p "outlineHoverColor";
+	addAttr -ci true -k true -sn "outlineHoverColorB" -ln "outlineHoverColorB" -dv 0.04 
+		-at "float" -p "outlineHoverColor";
+	addAttr -ci true -uac -k true -sn "outlineSelectColor" -ln "outlineSelectColor" 
+		-at "float3" -nc 3;
+	addAttr -ci true -k true -sn "outlineSelectColorR" -ln "outlineSelectColorR" -dv 
+		0.02 -at "float" -p "outlineSelectColor";
+	addAttr -ci true -k true -sn "outlineSelectColorG" -ln "outlineSelectColorG" -dv 
+		0.02 -at "float" -p "outlineSelectColor";
+	addAttr -ci true -k true -sn "outlineSelectColorB" -ln "outlineSelectColorB" -dv 
+		0.04 -at "float" -p "outlineSelectColor";
+	addAttr -ci true -k true -sn "alpha" -ln "alpha" -dv 0.8 -min 0 -max 1 -at "float";
+	addAttr -ci true -h true -sn "_initSource" -ln "_initSource" -dt "string";
+	addAttr -ci true -h true -sn "_methodsSource" -ln "_methodsSource" -dt "string";
+	addAttr -ci true -h true -sn "class_path" -ln "class_path" -dt "string";
+	setAttr -k off ".v";
+	setAttr "._computeSource" -type "string" (
+		"# Draw the bound mesh's component-tag region as a coloured patch. The region\n# MEMBERSHIP is resolved LIVE from the input mesh DATA every evaluation (via\n# MFnGeometryData), keyed by this gizmo's tag NAME (`regionTag`, baked once by\n# setup) -- so editing the component tag (add/remove faces) updates the drawn\n# region immediately, and a compiled C++ node resolves the SAME way off its own\n# input handle. self.inMesh is the live world-space MFnMesh (worldMesh[0]) used\n# for the geometry; the tag membership comes from that same input's data. Falls\n# back to a legacy baked `regions` dict for scenes saved before this change.\nmesh = self.inMesh\n# The region is chosen purely by NAME via the `regionTag` string input. If the\n# name matches no component tag on the input mesh, the region goes BLANK (a typo\n# or a removed/renamed tag reads as empty). Only when regionTag is unset do we\n# honour a legacy baked `regions` dict (scenes saved before regionTag existed /\n# the build probe).\n_tag = getattr(self, \"regionTag\", None)\n"
+		+ "# ONE read of the input data, shared by the tag membership and the source\n# transform below (both live on the same MFnGeometryData).\n_mdata = mesh_data_from_node_plug(node_name_from_self(self), \"inMesh\")\n_wmat = mesh_matrix_from_mesh_data(_mdata)\nregions = None\nif _tag:\n    _faces = tag_indices_from_mesh_data(_mdata, _tag)\n    if _faces:\n        regions = {_tag: _faces}\n    # else: named tag has no match -> leave regions None -> blank (no fallback).\nelse:\n    _legacy = getattr(self, \"regions\", None)\n    if isinstance(_legacy, dict) and _legacy:\n        regions = _legacy\nif mesh is None or not regions:\n    self.draw = None\nelse:\n    offset = self.offset\n    hover_offset = self.hoverOffset\n    select_offset = self.selectOffset\n    hover_dur = max(self.hoverDur, 1e-3)\n    alpha = float(self.alpha)\n    # Per-state RGB colours (each a 3-float `color` input) + one shared alpha.\n    # The active colour tweens default->hover on the SAME elastic curve as the\n    # lift, and snaps to the select colour when selected. Each input carries its\n"
+		+ "    # own attr DEFAULT, so what is read here is exactly what the user dialled --\n    # all-zero means BLACK, not \"unset\". Nothing is substituted.\n    def_c = np.asarray(self.defaultColor, dtype=np.float64).ravel()[:3]\n    hov_c = np.asarray(self.hoverColor, dtype=np.float64).ravel()[:3]\n    sel_c = np.asarray(self.selectColor, dtype=np.float64).ravel()[:3]\n    # The outline around each patch has the SAME three states, on the same\n    # curve, so it can read as its own accent rather than a fixed dark edge.\n    odef_c = np.asarray(self.outlineColor, dtype=np.float64).ravel()[:3]\n    ohov_c = np.asarray(self.outlineHoverColor, dtype=np.float64).ravel()[:3]\n    osel_c = np.asarray(self.outlineSelectColor, dtype=np.float64).ravel()[:3]\n\n    hovered = bool(self.hovered)\n    selected = bool(self.selected)\n    if selected:\n        hovered = False          # selected shows only its selected form\n    now = float(_wallclock.time())\n\n    h_cur, h_e = tween(now, float(getattr(self, \"hv_start\", 0.0)),\n                       float(getattr(self, \"hv_from\", 0.0)),\n"
+		+ "                       float(getattr(self, \"hv_to\", 0.0)), hover_dur)\n    if hovered != bool(getattr(self, \"hv_prev\", False)):\n        self.hv_start = now\n        self.hv_from = h_cur\n        self.hv_to = 1.0 if hovered else 0.0\n        self.hv_prev = hovered\n        h_e = 0.0\n\n    # THREE ABSOLUTE normal offsets (world units): the patch floats at `offset`\n    # at rest, tweens to `hoverOffset` on hover, and snaps to `selectOffset`\n    # when selected. Absolute (not additive) + a fixed normal lift (never an\n    # in-plane centroid balloon), so the pop is identical no matter how many\n    # faces the tag covers -- a tag grown to span the whole mesh lifts by the\n    # same amount as a tiny one.\n    lift = offset + (hover_offset - offset) * h_cur\n    if selected:\n        lift = select_offset\n    if lift < MIN_OFFSET:\n        lift = MIN_OFFSET\n\n    # Active fill colour: tween default->hover on the hover curve, snap to the\n    # select colour when selected; append the shared alpha to make the RGBA row\n    # the polygons buffer expects.\n"
+		+ "    rgb = def_c + (hov_c - def_c) * h_cur\n    if selected:\n        rgb = sel_c\n    rgba = np.concatenate([rgb, [alpha]])\n\n    # The outline rides the SAME hover curve and the same select snap. It stays\n    # opaque: `alpha` fades the FILL so the surface shows through, and letting\n    # the silhouette fade with it would wash the patch's edge out entirely.\n    orgb = odef_c + (ohov_c - odef_c) * h_cur\n    if selected:\n        orgb = osel_c\n    orgba = np.concatenate([orgb, [1.0]])\n\n    # One DrawMesh per tag. `self.draw` takes the LIST straight -- no `sum()`\n    # and no `+` chain to build -- and draws them in the order appended. This\n    # used to be four parallel accumulator lists plus a hand-rolled\n    # `idx + voff` rebase.\n    patches = []\n    for tag in sorted(regions.keys()):\n        faces = np.asarray(regions[tag], dtype=np.int64).ravel()\n        if faces.size == 0:\n            continue\n        pts, idx, cnt, nrm = extract_region(mesh, faces, with_normals=True)\n        if pts.shape[0] == 0:\n            continue\n"
+		+ "        # extract_region reads OBJECT space: the mesh DATA carries the source\n        # transform as a SEPARATE matrix, and a data-built MFnMesh has no DAG\n        # path so getPoints(kWorld) cannot reach world. `world_space=True` below\n        # takes these points AS world, so apply that matrix here -- without it\n        # the patch draws at the ORIGIN and never follows the mesh. Maya is\n        # row-vector (p * M): the 3x3 rotates/scales, row 3 translates.\n        if _wmat is not None:\n            _m = np.asarray(_wmat, dtype=np.float64).reshape(4, 4)\n            pts = pts @ _m[:3, :3] + _m[3, :3]\n            nrm = nrm @ _m[:3, :3]\n            _mag = np.linalg.norm(nrm, axis=1, keepdims=True)\n            nrm = nrm / np.where(_mag > 1e-12, _mag, 1.0)\n        patches.append(DrawMesh(\n            pts + nrm * lift, cnt, idx, color=rgba,\n            outline=orgba, outline_width=2.0,\n            outline_boundary_only=True,   # clean outer silhouette only\n            world_space=True,             # follow the mesh, not the locator\n"
+		+ "            precise_hover=True))\n\n    if not patches:\n        self.draw = None\n    else:\n        self.draw = patches\n        self.auto_highlight = False\n        self.auto_refresh = bool(h_e < 1.0)\n");
+	setAttr "._inputAttrs" -type "string" (
+		"{\"alpha\":{\"attr_type\":\"float\",\"default_value\":0.8,\"is_array\":false,\"max_value\":1.0,\"min_value\":0.0,\"order\":12},\"defaultColor\":{\"attr_type\":\"color\",\"default_value\":[0.25,0.5,0.95],\"is_array\":false,\"order\":6},\"hoverColor\":{\"attr_type\":\"color\",\"default_value\":[1.0,0.82,0.15],\"is_array\":false,\"order\":7},\"hoverDur\":{\"attr_type\":\"float\",\"default_value\":0.35,\"is_array\":false,\"order\":5},\"hoverOffset\":{\"attr_type\":\"float\",\"default_value\":0.25,\"is_array\":false,\"order\":3},\"inMesh\":{\"attr_type\":\"mesh\",\"is_array\":false,\"order\":0},\"offset\":{\"attr_type\":\"float\",\"default_value\":0.1,\"is_array\":false,\"order\":2},\"outlineColor\":{\"attr_type\":\"color\",\"default_value\":[0.02,0.02,0.04],\"is_array\":false,\"order\":9},\"outlineHoverColor\":{\"attr_type\":\"color\",\"default_value\":[0.02,0.02,0.04],\"is_array\":false,\"order\":10},\"outlineSelectColor\":{\"attr_type\":\"color\",\"default_value\":[0.02,0.02,0.04],\"is_array\":false,\"order\":11},\"regionTag\":{\"attr_type\":\"string\",\"is_array\":false,\"order\":1},\"selectColor\":{\"attr_type\":\"color\",\"default_value\":[0.3,0.85,0.9],\"is_array\":false,\"order\":8},\"selectOffset\":{\"attr_type\":\"float\",\"default_value\":0.5,\"is_array\":false,\"order\":4}}");
+	setAttr -k on ".inMesh";
+	setAttr -k on ".regionTag" -type "string" "mouthRight";
+	setAttr -k on ".defaultColor" -type "float3" 0.94999999 0.81999999 0.2 ;
+	setAttr "._initSource" -type "string" (
+		"import math\nimport time as _wallclock\nimport numpy as np\nfrom mpynode._common.draw.draw_types import DrawMesh\nfrom mpynode._common.nodes.mesh.mesh_region import extract_region\nfrom mpynode._common.nodes.mesh.component_tags import (\n    node_name_from_self, mesh_data_from_node_plug, tag_indices_from_mesh_data,\n    mesh_matrix_from_mesh_data)\n\nMIN_OFFSET = 0.004      # floor so elastic undershoot never dips into the mesh\n# Fill AND outline colour, plus the per-state offsets, are LIVE input attrs\n# (defaultColor / hoverColor / selectColor, outlineColor / outlineHoverColor /\n# outlineSelectColor, offset / hoverOffset / selectOffset / alpha), so the\n# palette/tint constants that used to live here are gone -- the compute reads\n# them off self.<attr> and a user can tweak each one interactively. Every colour\n# input carries its OWN attr default, so a raw-created node already looks right\n# and the compute never has to guess whether a value is \"unset\": all-zero means\n# exactly BLACK, which is the colour the user dialled.\n"
+		+ "\n\ndef elastic_in_out(t):\n    if t <= 0.0:\n        return 0.0\n    if t >= 1.0:\n        return 1.0\n    p = 0.45\n    s = p / 4.0\n    t2 = 2.0 * t - 1.0\n    if t2 < 0.0:\n        return -0.5 * (2.0 ** (10.0 * t2)) * math.sin((t2 - s) * (2.0 * math.pi / p))\n    return (2.0 ** (-10.0 * t2)) * math.sin((t2 - s) * (2.0 * math.pi / p)) * 0.5 + 1.0\n\n\ndef tween(now, start, frm, to, dur):\n    e = (now - start) / max(dur, 1e-3)\n    e = 0.0 if e < 0.0 else (1.0 if e > 1.0 else e)\n    return frm + (to - frm) * elastic_in_out(e), e\n");
+	setAttr "._methodsSource" -type "string" (
+		"class SetupError(Exception):\n    \"\"\"The current selection / scene state can't support setup for this node.\n    Message is user-facing (it names what to select).\"\"\"\n\n\ndef _has_shape(node, shape_types):\n    from maya import cmds as mc\n    if mc.nodeType(node) in shape_types:\n        return True\n    for st in shape_types:\n        if mc.listRelatives(node, shapes=True, type=st, noIntermediate=True):\n            return True\n    return False\n\n\ndef _meshes(sel):\n    return [n for n in sel if _has_shape(n, (\"mesh\",))]\n\n\n# Region-extraction helpers, VENDORED from\n# mpynode._common.nodes.mesh.mesh_region. setup is a @maya_command body, which\n# ships as embedded python inside the compiled .mll -- where mpynode is NOT\n# importable -- so extract_region and its whole closure (mesh_arrays /\n# mesh_vertex_normals and their api1 fallbacks) are carried here instead of\n# imported. numpy + the OpenMaya modules are imported per-def.\ndef _is_api2(mesh):\n    \"\"\"True for an API-2.0 function set, False for a legacy API-1.0 one.\n    Both classes are named ``MFnMesh``, so we distinguish by module:\n"
+		+ "    API 1.0 is ``maya.OpenMaya``; API 2.0 reports ``OpenMaya``.\"\"\"\n    return type(mesh).__module__ != \"maya.OpenMaya\"\n\n\ndef _arrays_api1(mesh, space):\n    \"\"\"Legacy API-1.0 read path. API 1.0 has no vectorized point accessor,\n    so points go through a small per-vertex loop; connectivity uses the\n    scalar-iterable MIntArray (np.fromiter).\"\"\"\n    import numpy as np\n    import maya.OpenMaya as om1\n\n    space1 = om1.MSpace.kObject if space is None else int(space)\n    pa = om1.MPointArray()\n    mesh.getPoints(pa, space1)\n    n = pa.length()\n    pts = np.empty((n, 3), dtype=np.float64)\n    for i in range(n):\n        p = pa[i]\n        pts[i, 0] = p.x\n        pts[i, 1] = p.y\n        pts[i, 2] = p.z\n    counts1 = om1.MIntArray()\n    connects1 = om1.MIntArray()\n    mesh.getVertices(counts1, connects1)\n    counts = np.fromiter(counts1, dtype=np.int64, count=counts1.length())\n    connects = np.fromiter(connects1, dtype=np.int64, count=connects1.length())\n    return pts, counts, connects\n\n\ndef mesh_arrays(mesh, space=None):\n"
+		+ "    \"\"\"Return ``(points (V,3) float64, counts (F,) int64, connects (C,) int64)``\n    for an ``MFnMesh`` (API 2.0 preferred, API 1.0 supported).\"\"\"\n    import numpy as np\n    import maya.api.OpenMaya as om\n\n    if not _is_api2(mesh):\n        return _arrays_api1(mesh, space)\n    if space is None:\n        space = om.MSpace.kObject\n    # getPoints -> MPointArray; np.array gives (V, 4) [x,y,z,w] -> drop w.\n    pts = np.asarray(mesh.getPoints(space))[:, :3].astype(np.float64)\n    counts_arr, connects_arr = mesh.getVertices()\n    counts = np.asarray(counts_arr, dtype=np.int64)\n    connects = np.asarray(connects_arr, dtype=np.int64)\n    return pts, counts, connects\n\n\ndef _normals_api1(mesh, space):\n    \"\"\"Legacy API-1.0 per-vertex normal read (out-param + small loop).\"\"\"\n    import numpy as np\n    import maya.OpenMaya as om1\n\n    space1 = om1.MSpace.kObject if space is None else int(space)\n    nrm = om1.MFloatVectorArray()\n    mesh.getVertexNormals(False, nrm, space1)\n    n = nrm.length()\n    out = np.empty((n, 3), dtype=np.float64)\n"
+		+ "    for i in range(n):\n        v = nrm[i]\n        out[i, 0] = v.x\n        out[i, 1] = v.y\n        out[i, 2] = v.z\n    return out\n\n\ndef mesh_vertex_normals(mesh, space=None):\n    \"\"\"Return ``(V, 3)`` unit per-vertex normals (Maya's averaged vertex\n    normals) for an ``MFnMesh``, aligned with ``mesh_arrays`` point order.\"\"\"\n    import numpy as np\n    import maya.api.OpenMaya as om\n\n    if not _is_api2(mesh):\n        n = _normals_api1(mesh, space)\n    else:\n        if space is None:\n            space = om.MSpace.kObject\n        n = np.asarray(\n            mesh.getVertexNormals(False, space))[:, :3].astype(np.float64)\n    # Defensive renormalize (Maya returns unit normals, but guard zeros).\n    mag = np.linalg.norm(n, axis=1, keepdims=True)\n    return n / np.where(mag > 1e-12, mag, 1.0)\n\n\ndef extract_region(mesh, face_ids, space=None, with_normals=False):\n    \"\"\"Build a compact polygon buffer for the faces in ``face_ids`` from a\n    live ``MFnMesh``.\n\n    Returns ``(points, indices, counts)`` -- or, when ``with_normals`` is\n"
+		+ "    True, ``(points, indices, counts, normals)``. The region's vertices are\n    compacted + remapped, so ``indices`` refer only to the returned\n    ``points``. Fully vectorized -- no per-face loops.\"\"\"\n    import numpy as np\n\n    def _empty():\n        z3 = np.zeros((0, 3), dtype=np.float64)\n        zi = np.zeros((0,), dtype=np.int64)\n        return (z3, zi, zi.copy(), z3.copy()) if with_normals else (z3, zi, zi.copy())\n\n    if mesh is None:\n        return _empty()\n    pts, counts, connects = mesh_arrays(mesh, space)\n    face_ids = np.asarray(face_ids, dtype=np.int64).ravel()\n    if face_ids.size == 0 or counts.shape[0] == 0:\n        return _empty()\n    # Keep only valid face ids.\n    face_ids = face_ids[(face_ids >= 0) & (face_ids < counts.shape[0])]\n    if face_ids.size == 0:\n        return _empty()\n\n    face_off = np.cumsum(counts) - counts          # start offset into connects/face\n    sel_counts = counts[face_ids]                  # (M,)\n    starts = face_off[face_ids]                    # (M,)\n    total = int(sel_counts.sum())\n"
+		+ "    if total == 0:\n        return _empty()\n\n    # Flatten the selected faces' connectivity positions (vectorized).\n    face_of = np.repeat(np.arange(face_ids.size), sel_counts)            # (total,)\n    within = np.arange(total) - (np.cumsum(sel_counts) - sel_counts)[face_of]\n    connect_pos = starts[face_of] + within                              # (total,)\n    region_verts = connects[connect_pos]                                # global vertex ids\n\n    # Compact the used vertices + remap the connectivity to 0..U-1.\n    uniq, inverse = np.unique(region_verts, return_inverse=True)\n    region_points = pts[uniq]\n    region_indices = inverse.astype(np.int64)\n    region_counts = sel_counts.astype(np.int64)\n    if not with_normals:\n        return region_points, region_indices, region_counts\n    region_normals = mesh_vertex_normals(mesh, space)[uniq]\n    return region_points, region_indices, region_counts, region_normals\n\n\n# Mesh Regions demo: fabricate the whole showcase scene. Import the bundled\n# head model, resolve EVERY component tag, then build ONE gizmo PER tag -- `self`\n"
+		+ "# is the first tag's gizmo and each remaining tag gets a DUPLICATE of `self`\n# (which carries its Init/Compute/Methods sources + input attrs along). The\n# demo only creates + arranges the gizmos: it sets each gizmo's `regionTag`\n# and then DELEGATES the actual per-node binding (`inMesh` wire + positioning) to\n# that gizmo's own ``setup`` via ``run_setup([mesh])`` -- so demo and setup never\n# duplicate the wiring logic.\ndef get_component_tag_faces(mesh_shape):\n    \"\"\"\n    Retrieves component tags on a mesh shape and returns a dictionary.\n    Keys are the tag names.\n    Values are flattened, unique, and sorted lists of face indices.\n    \"\"\"\n    from maya import cmds as mc\n\n    attr_path = f\"{mesh_shape}.outMesh\"\n    tags = mc.geometryAttrInfo(attr_path, componentTagNames=True)\n\n    tag_faces_dict = {}\n\n    if not tags:\n        return tag_faces_dict\n\n    for tag in tags:\n        contents = mc.geometryAttrInfo(attr_path, componentTagExpression=tag, components=True)\n\n        # Use a set to automatically guarantee unique indices\n"
+		+ "        face_indices = set()\n\n        if contents:\n            for comp in contents:\n                comp = comp.strip()\n\n                # Check if the string represents a face (starts with 'f[' or 'F[')\n                if comp.lower().startswith('f['):\n                    # Extract the contents inside the square brackets\n                    inner_str = comp.split('[')[1].split(']')[0]\n\n                    # Handle ranges (e.g., '10:55')\n                    if ':' in inner_str:\n                        start_idx, end_idx = inner_str.split(':')\n                        # range() stops before the end value, so we add 1 to make it inclusive\n                        face_indices.update(range(int(start_idx), int(end_idx) + 1))\n\n                    # Handle single digits (e.g., '10')\n                    else:\n                        face_indices.add(int(inner_str))\n\n        # Convert the set back to a list and sort it\n        tag_faces_dict[tag] = sorted(list(face_indices))\n\n    return tag_faces_dict\n\n\ndef demo(self):\n"
+		+ "    from maya import cmds as mc\n    from mpynode import wrap_node\n    import os\n    import re\n    name = self.get_name()\n\n    head = None\n    try:\n        from mpynode._common.util.template_gallery import _bundled_templates_root\n        root = _bundled_templates_root()\n        if root:\n            cand = os.path.join(root, \"MPyLocator\", \"Mesh Regions\", \"head.ma\")\n            if os.path.isfile(cand):\n                head = cand\n    except Exception:\n        head = None\n    if not head:\n        return name\n\n    new_nodes = mc.file(head, i=True, returnNewNodes=True,\n                        namespace=\"headModel\") or []\n    meshes = [n for n in new_nodes if mc.nodeType(n) == \"mesh\"]\n    if not meshes:\n        meshes = mc.ls(\"headModel:*\", type=\"mesh\", long=True) or []\n    if not meshes:\n        return name\n    shape = (mc.ls(meshes[0], long=True) or [meshes[0]])[0]\n\n    tags = sorted(get_component_tag_faces(shape).keys())\n    if not tags:\n        return name\n\n    def _san(tag):\n        s = re.sub(r\"[^0-9A-Za-z_]\", \"_\", str(tag))\n"
+		+ "        if not s:\n            s = \"region\"\n        if s[0].isdigit():\n            s = \"_\" + s\n        return s + \"Region\"\n\n    # self is tag[0]'s gizmo; duplicate it once per remaining tag. Capture\n    # self's FULL DAG paths up front so later name-based lookups can't go\n    # ambiguous once dup shapes share the short name (Maya keeps a duplicated\n    # shape's short name identical to the original's).\n    self_shape = (mc.ls(name, long=True) or [name])[0]\n    self_tf = (mc.listRelatives(self_shape, parent=True, fullPath=True) or [self_shape])[0]\n\n    shapes = [self_shape]\n    for _ in tags[1:]:\n        dup_tf = mc.duplicate(self_tf, returnRootsOnly=True)[0]\n        dup_tf = (mc.ls(dup_tf, long=True) or [dup_tf])[0]\n        dsh = (mc.listRelatives(dup_tf, shapes=True, type=\"mPyLocator\", fullPath=True)\n               or mc.listRelatives(dup_tf, shapes=True, fullPath=True) or [])\n        if dsh:\n            shapes.append(dsh[0])\n\n    for idx, tag in enumerate(tags):\n        if idx >= len(shapes):\n            break\n"
+		+ "        sh = shapes[idx]\n        # Name THIS gizmo's region via the live `regionTag` string selector, then\n        # let its OWN setup wire the mesh (setup honours an already-set name) --\n        # one code path for both \"Run demo\" and a standalone \"Run setup\".\n        try:\n            mc.setAttr(sh + \".regionTag\", tag, type=\"string\")\n        except Exception:\n            pass\n        try:\n            w = wrap_node(sh)\n            if w is not None:\n                w.run_setup([shape])\n        except Exception:\n            pass\n        # Give each gizmo a DISTINCT default colour so the showcase reads as\n        # separate regions; hover/select/outline keep their shared attr\n        # defaults. Set AFTER run_setup so nothing setup does can win over it.\n        try:\n            _pal = [(0.25, 0.50, 0.95), (0.95, 0.45, 0.25), (0.30, 0.80, 0.40),\n                    (0.80, 0.35, 0.85), (0.95, 0.82, 0.20), (0.30, 0.85, 0.90),\n                    (0.95, 0.35, 0.55), (0.55, 0.85, 0.25), (0.45, 0.35, 0.90),\n                    (0.90, 0.60, 0.20), (0.20, 0.70, 0.70), (0.70, 0.70, 0.95)]\n"
+		+ "            _c = _pal[idx % len(_pal)]\n            for _ch, _v in zip(\"RGB\", _c):\n                mc.setAttr(\"%s.defaultColor%s\" % (sh, _ch), _v)\n        except Exception:\n            pass\n        # rename transform + shape after the tag for a readable outliner\n        try:\n            tf = mc.listRelatives(sh, parent=True, fullPath=True)\n            if tf:\n                new_tf = mc.rename(tf[0], _san(tag))\n                nsh = mc.listRelatives(new_tf, shapes=True, fullPath=True)\n                if nsh:\n                    mc.rename(nsh[0], _san(tag) + \"Shape\")\n                    fixed = mc.listRelatives(new_tf, shapes=True, fullPath=True)\n                    if fixed:\n                        shapes[idx] = fixed[0]\n        except Exception:\n            pass\n\n    # This demo IMPORTS a maya file, so frame the WHOLE scene rather than just\n    # the gizmos -- an imported mesh can sit anywhere, and fitting only the\n    # locators can leave the head off screen with nothing visible to the user.\n    try:\n        mc.viewFit(all=True)\n"
+		+ "    except Exception:\n        pass\n    return shapes[0]\n\n\n@maya_test(label=\"Region draws in the node's RGBA colour; select lifts it\", digits=3)\ndef test_mesh_regions(self):\n    \"\"\"Validate the node's INTENT (the SAME test passes on the interpreted node\n    and its C++ compile -> parity). A locator has no numeric mesh output, so --\n    exactly as the builder's own live-check does -- assert the DRAW BUFFERS:\n\n      1. A bound region draws ONE RGBA face-colour per face carrying the node's\n         `defaultColor` RGB + the `alpha` input (rest state), outlined in\n         `outlineColor` at full opacity.\n      2. Selecting the gizmo snaps the fill to `selectColor` and the outline to\n         `outlineSelectColor` (alpha survives) and lifts the patch by exactly\n         `selectOffset - offset` along the normals -- region-size-independent.\n      3. A colour dialled to (0,0,0) draws BLACK. Nothing substitutes a\n         fallback, so every colour in the cube is reachable.\n    \"\"\"\n    from maya import cmds as mc\n    import maya.api.OpenMaya as om2\n"
+		+ "    import numpy as np\n    from mpynode._common.methods.test_helpers import (\n        assert_close, assert_equal, assert_true)\n\n    name = self.get_name()\n\n    def _set(plug, *vals, **kw):\n        # A demo (or user) may have CONNECTED this input; break incoming\n        # connections first so the test can drive it, then set it.\n        for s in (mc.listConnections(plug, s=True, d=False, plugs=True) or []):\n            mc.disconnectAttr(s, plug)\n        mc.setAttr(plug, *vals, **kw)\n\n    # Validate whatever mesh THIS node already consumes (e.g. the demo's head\n    # model); build a probe sphere ONLY if `inMesh` drives nothing yet. Keeps the\n    # test on `self` (parity) and robust to a live, demo-populated scene + reruns.\n    src = mc.listConnections(name + \".inMesh\", s=True, d=False) or []\n    if not src:\n        probe = mc.polySphere(sx=20, sy=20, name=\"regionProbe#\")[0]\n        pshape = mc.listRelatives(probe, shapes=True, fullPath=True)[0]\n        mc.connectAttr(pshape + \".worldMesh[0]\", name + \".inMesh\", force=True)\n"
+		+ "\n    # Drive the draw deterministically off `self` through the COMPONENT-TAG\n    # path. Not the legacy `regions` dict: that is a stored Python var, and a\n    # compiled node has no _storedVarNames/_storedVarsData plug to receive one,\n    # so forcing it made this test unrunnable against the C++ build -- which is\n    # the parity claim in the docstring above. Tagging a known face range keeps\n    # the region deterministic AND portable. `create=True` on an existing name\n    # is idempotent, so a re-run in a live scene is safe.\n    shape = (mc.listConnections(name + \".inMesh\", s=True, d=False,\n                                shapes=True) or [None])[0]\n    assert_true(shape is not None, \"inMesh must be driven by a mesh shape\")\n    n_faces = mc.polyEvaluate(shape, face=True)\n    last_face = min(15, int(n_faces) - 1)\n    mc.componentTag(\"%s.f[0:%d]\" % (shape, last_face), create=True,\n                    newTagName=\"mpyTestRegion\")\n    # Seed known colours + offsets. Every input is broken-then-set so no\n    # demo/user connection can win over the values this test drives.\n"
+		+ "    _set(name + \".regionTag\", \"mpyTestRegion\", type=\"string\")\n    probe_rgb = (0.20, 0.55, 0.90)\n    for ch, val in zip(\"RGB\", probe_rgb):\n        _set(\"%s.defaultColor%s\" % (name, ch), val)\n    sel_rgb = (0.30, 0.85, 0.90)\n    for ch, val in zip(\"RGB\", sel_rgb):\n        _set(\"%s.selectColor%s\" % (name, ch), val)\n    # Outline colours, deliberately nothing like the fill so a swapped-in fill\n    # value could not satisfy the outline assertions below.\n    out_rgb = (0.90, 0.10, 0.40)\n    for ch, val in zip(\"RGB\", out_rgb):\n        _set(\"%s.outlineColor%s\" % (name, ch), val)\n    out_sel_rgb = (0.10, 0.95, 0.20)\n    for ch, val in zip(\"RGB\", out_sel_rgb):\n        _set(\"%s.outlineSelectColor%s\" % (name, ch), val)\n    _set(name + \".alpha\", 0.8)\n    _set(name + \".offset\", 0.1)\n    _set(name + \".selectOffset\", 0.5)\n    mc.dgdirty(name)\n\n    # Read the ordered draw commands via the node's PUBLIC MPx surface using the\n    # node NAME only -- so this runs identically on the interpreted node AND a\n    # compiled node (the parity point), never the interpreted-only wrapper.\n"
+		+ "    # One patch is drawn PER TAG; the tag driven above is the only one this test\n    # names, so the first patch answers every assertion below.\n    def _draw(selected=False):\n        sl = om2.MSelectionList(); sl.add(name)\n        mpx = om2.MFnDependencyNode(sl.getDependNode(0)).userNode()\n        return mpx.evaluateDrawItems(0.0, selected=selected) or {}\n\n    def _poly(selected=False):\n        for cmd in _draw(selected).get(\"commands\") or []:\n            if cmd[\"slot\"] == \"polygons\":\n                return cmd[\"buffer\"]\n        return None\n\n    # A COMPILED C++ locator (MPxLocatorNode) exposes no Python\n    # evaluateDrawItems, so its draw buffers are unreachable here -- that parity\n    # is covered by the dedicated -DMPYNODE_PROBE numerical buffer comparison.\n    # Skip cleanly rather than false-fail, the same guard test_animated_selection\n    # and test_animated_text already use. AttributeError ONLY: a node that HAS\n    # the surface but draws nothing must still fail the assertion below.\n    try:\n        _draw(False)\n"
+		+ "    except AttributeError:\n        return\n\n    # 1) REST state: one RGBA row per face = defaultColor RGB + alpha (0.8).\n    poly = _poly(False)\n    assert_true(poly is not None, \"the bound region must draw a patch\")\n    fcol = np.asarray(poly[\"face_colors\"])\n    cnt = np.asarray(poly[\"counts\"])\n    assert_true(fcol.ndim == 2 and fcol.shape[1] == 4,\n                \"face colours must be RGBA rows\")\n    assert_equal(fcol.shape[0], cnt.shape[0],\n                 \"one face colour per face (%d vs %d)\"\n                 % (fcol.shape[0], cnt.shape[0]))\n    assert_close(fcol[:, :3].mean(axis=0).tolist(), list(probe_rgb))\n    assert_true(bool(np.allclose(fcol[:, 3], 0.8, atol=1e-3)),\n                \"the alpha input must reach the fill\")\n    wire = np.asarray(poly[\"wireframe\"], dtype=np.float64).ravel()\n    assert_close(wire[:3].tolist(), list(out_rgb))\n    assert_close(float(wire[3]), 1.0,\n                 msg=\"the outline stays opaque; alpha dials the fill only\")\n\n    # 2) SELECT state: fill snaps to selectColor, the outline to\n"
+		+ "    #    outlineSelectColor, alpha survives, and the patch lifts by exactly\n    #    selectOffset - offset (0.5 - 0.1) along the normals.\n    rest_pts = np.asarray(poly[\"points\"])\n    psel = _poly(True)\n    fcs = np.asarray(psel[\"face_colors\"])\n    disp = np.linalg.norm(np.asarray(psel[\"points\"]) - rest_pts, axis=1)\n    assert_close(fcs[:, :3].mean(axis=0).tolist(), list(sel_rgb))\n    assert_true(bool(np.allclose(fcs[:, 3], 0.8, atol=1e-3)),\n                \"alpha survives selection\")\n    assert_close(np.asarray(psel[\"wireframe\"],\n                            dtype=np.float64).ravel()[:3].tolist(), list(out_sel_rgb))\n    assert_close(float(disp.max()), 0.5 - 0.1, digits=2,\n                 msg=\"select lift must equal selectOffset - offset\")\n\n    # 3) ZERO IS A COLOUR. Dialling a state to (0,0,0) must draw BLACK -- the\n    #    compute substitutes nothing, so the value on the plug is the value on\n    #    screen. Asserted on the fill AND the outline, since each used to have\n    #    (fill) or lacked entirely (outline) its own path to the buffer.\n"
+		+ "    for ch in \"RGB\":\n        _set(\"%s.defaultColor%s\" % (name, ch), 0.0)\n        _set(\"%s.outlineColor%s\" % (name, ch), 0.0)\n    mc.dgdirty(name)\n    pblack = _poly(False)\n    assert_true(pblack is not None, \"an all-black region must still draw\")\n    assert_close(np.asarray(pblack[\"face_colors\"])[:, :3].mean(\n        axis=0).tolist(), [0.0, 0.0, 0.0])\n    assert_close(np.asarray(pblack[\"wireframe\"],\n                            dtype=np.float64).ravel()[:3].tolist(), [0.0, 0.0, 0.0])\n\n\n\n# Mesh Regions setup: bind THIS ONE gizmo to a single region of a mesh in the\n# current selection (NO scene fabrication -- that is the `demo`\\'s job). Resolves\n# ONE mesh, honours this gizmo\\'s `regionTag` string (or defaults it to the first\n# component tag when unset), and wires the mesh\\'s live world-space geometry into\n# `inMesh`. `demo` calls this once per tag after setting each gizmo\\'s `regionTag`,\n# so the two hooks share one wiring path.\n@maya_command(creates=True)\ndef setup(self, selection=None, *args, **kwargs):\n    from maya import cmds as mc\n"
+		+ "    name = self.get_name()\n\n    # Resolve ONE mesh: from the passed selection (in pick order), else the live\n    # selection, else an already-connected inMesh source. Drop self so selecting\n    # the gizmo alongside the mesh is harmless.\n    order = [o for o in (selection or mc.ls(selection=True) or []) if o != name]\n    meshes = _meshes(order) if order else []\n    if not meshes:\n        src = mc.listConnections(name + \".inMesh\", source=True,\n                                 destination=False, shapes=True) or []\n        meshes = _meshes(src) if src else []\n    if not meshes:\n        raise SetupError(\"Select the mesh to bind this region gizmo to.\")\n    shape = (mc.ls(meshes[0], long=True) or [meshes[0]])[0]\n\n    regions = get_component_tag_faces(shape)\n    if not regions:\n        raise SetupError(\"Mesh has no component tags to bind a region to.\")\n    tags = sorted(regions.keys())\n\n    # The region is chosen by NAME via the LIVE `regionTag` string INPUT. Honour\n    # an already-set name (the demo sets one per gizmo, or the user typed one);\n"
+		+ "    # otherwise default to the first tag so a fresh bind shows something. A user\n    # can retype it in the Channel Box / Attribute Editor and the region\n    # retargets on the next redraw (a name with no match draws blank). The\n    # face-id MEMBERSHIP is never frozen -- the draw resolves it LIVE from the\n    # input mesh data each evaluation, so editing the component tag updates the\n    # region. The string name also marshals into the compiled node.\n    try:\n        cur = mc.getAttr(name + \".regionTag\") or \"\"\n    except Exception:\n        cur = \"\"\n    tag = cur or tags[0]\n    if not cur:\n        try:\n            mc.setAttr(name + \".regionTag\", tag, type=\"string\")\n        except Exception:\n            pass\n    mc.connectAttr(shape + \".worldMesh[0]\", name + \".inMesh\", force=True)\n\n    # Move THIS gizmo's transform to the centroid of its region's vertices so\n    # the handle sits on the patch it controls. The patch is drawn in world\n    # space (see LOC_REGION_COMPUTE), so this only repositions the manipulator,\n"
+		+ "    # not the drawing. Wrapped so binding never fails on positioning.\n    try:\n        import maya.api.OpenMaya as om\n        import numpy as np\n        sel = om.MSelectionList()\n        sel.add(shape)\n        mfn = om.MFnMesh(sel.getDagPath(0))\n        pts = extract_region(mfn, regions[tag], space=om.MSpace.kWorld)[0]\n        if pts.shape[0]:\n            ctr = pts.mean(axis=0)\n            tf = (mc.listRelatives(name, parent=True, fullPath=True) or [None])[0]\n            if tf:\n                mc.xform(tf, worldSpace=True, translation=(\n                    float(ctr[0]), float(ctr[1]), float(ctr[2])))\n    except Exception:\n        pass\n\n    # Make the bound mesh unselectable so the region gizmos are easy to grab\n    # (reference display: visible in the viewport but unpickable).\n    try:\n        mc.setAttr(shape + \".overrideEnabled\", 1)\n        mc.setAttr(shape + \".overrideDisplayType\", 2)\n    except Exception:\n        pass\n\n    try:\n        mc.dgdirty(name)\n    except Exception:\n        pass\n    return name\n");
+	setAttr ".class_path" -type "string" "mpynode_user.MeshRegionLocator";
+createNode transform -n "topLipRegion";
+	rename -uid "6FFD6E78-DE43-D425-F4BD-CCB9829F5669";
+	setAttr ".t" -type "double3" 4.7510948734007019e-08 153.10830224078634 9.0715913081514667 ;
+createNode mPyLocator -n "topLipRegionShape" -p "topLipRegion";
+	rename -uid "916FE0AD-4440-23F5-C53F-D09231FCE006";
+	addAttr -ci true -k true -sn "inMesh" -ln "inMesh" -dt "mesh";
+	addAttr -ci true -k true -sn "regionTag" -ln "regionTag" -dt "string";
+	addAttr -ci true -k true -sn "offset" -ln "offset" -dv 0.1 -at "float";
+	addAttr -ci true -k true -sn "hoverOffset" -ln "hoverOffset" -dv 0.25 -at "float";
+	addAttr -ci true -k true -sn "selectOffset" -ln "selectOffset" -dv 0.5 -at "float";
+	addAttr -ci true -k true -sn "hoverDur" -ln "hoverDur" -dv 0.35 -at "float";
+	addAttr -ci true -uac -k true -sn "defaultColor" -ln "defaultColor" -at "float3" 
+		-nc 3;
+	addAttr -ci true -k true -sn "defaultColorR" -ln "defaultColorR" -dv 0.25 -at "float" 
+		-p "defaultColor";
+	addAttr -ci true -k true -sn "defaultColorG" -ln "defaultColorG" -dv 0.5 -at "float" 
+		-p "defaultColor";
+	addAttr -ci true -k true -sn "defaultColorB" -ln "defaultColorB" -dv 0.95 -at "float" 
+		-p "defaultColor";
+	addAttr -ci true -uac -k true -sn "hoverColor" -ln "hoverColor" -at "float3" -nc 
+		3;
+	addAttr -ci true -k true -sn "hoverColorR" -ln "hoverColorR" -dv 1 -at "float" -p "hoverColor";
+	addAttr -ci true -k true -sn "hoverColorG" -ln "hoverColorG" -dv 0.82 -at "float" 
+		-p "hoverColor";
+	addAttr -ci true -k true -sn "hoverColorB" -ln "hoverColorB" -dv 0.15 -at "float" 
+		-p "hoverColor";
+	addAttr -ci true -uac -k true -sn "selectColor" -ln "selectColor" -at "float3" -nc 
+		3;
+	addAttr -ci true -k true -sn "selectColorR" -ln "selectColorR" -dv 0.3 -at "float" 
+		-p "selectColor";
+	addAttr -ci true -k true -sn "selectColorG" -ln "selectColorG" -dv 0.85 -at "float" 
+		-p "selectColor";
+	addAttr -ci true -k true -sn "selectColorB" -ln "selectColorB" -dv 0.9 -at "float" 
+		-p "selectColor";
+	addAttr -ci true -uac -k true -sn "outlineColor" -ln "outlineColor" -at "float3" 
+		-nc 3;
+	addAttr -ci true -k true -sn "outlineColorR" -ln "outlineColorR" -dv 0.02 -at "float" 
+		-p "outlineColor";
+	addAttr -ci true -k true -sn "outlineColorG" -ln "outlineColorG" -dv 0.02 -at "float" 
+		-p "outlineColor";
+	addAttr -ci true -k true -sn "outlineColorB" -ln "outlineColorB" -dv 0.04 -at "float" 
+		-p "outlineColor";
+	addAttr -ci true -uac -k true -sn "outlineHoverColor" -ln "outlineHoverColor" -at "float3" 
+		-nc 3;
+	addAttr -ci true -k true -sn "outlineHoverColorR" -ln "outlineHoverColorR" -dv 0.02 
+		-at "float" -p "outlineHoverColor";
+	addAttr -ci true -k true -sn "outlineHoverColorG" -ln "outlineHoverColorG" -dv 0.02 
+		-at "float" -p "outlineHoverColor";
+	addAttr -ci true -k true -sn "outlineHoverColorB" -ln "outlineHoverColorB" -dv 0.04 
+		-at "float" -p "outlineHoverColor";
+	addAttr -ci true -uac -k true -sn "outlineSelectColor" -ln "outlineSelectColor" 
+		-at "float3" -nc 3;
+	addAttr -ci true -k true -sn "outlineSelectColorR" -ln "outlineSelectColorR" -dv 
+		0.02 -at "float" -p "outlineSelectColor";
+	addAttr -ci true -k true -sn "outlineSelectColorG" -ln "outlineSelectColorG" -dv 
+		0.02 -at "float" -p "outlineSelectColor";
+	addAttr -ci true -k true -sn "outlineSelectColorB" -ln "outlineSelectColorB" -dv 
+		0.04 -at "float" -p "outlineSelectColor";
+	addAttr -ci true -k true -sn "alpha" -ln "alpha" -dv 0.8 -min 0 -max 1 -at "float";
+	addAttr -ci true -h true -sn "_initSource" -ln "_initSource" -dt "string";
+	addAttr -ci true -h true -sn "_methodsSource" -ln "_methodsSource" -dt "string";
+	addAttr -ci true -h true -sn "class_path" -ln "class_path" -dt "string";
+	setAttr -k off ".v";
+	setAttr "._computeSource" -type "string" (
+		"# Draw the bound mesh's component-tag region as a coloured patch. The region\n# MEMBERSHIP is resolved LIVE from the input mesh DATA every evaluation (via\n# MFnGeometryData), keyed by this gizmo's tag NAME (`regionTag`, baked once by\n# setup) -- so editing the component tag (add/remove faces) updates the drawn\n# region immediately, and a compiled C++ node resolves the SAME way off its own\n# input handle. self.inMesh is the live world-space MFnMesh (worldMesh[0]) used\n# for the geometry; the tag membership comes from that same input's data. Falls\n# back to a legacy baked `regions` dict for scenes saved before this change.\nmesh = self.inMesh\n# The region is chosen purely by NAME via the `regionTag` string input. If the\n# name matches no component tag on the input mesh, the region goes BLANK (a typo\n# or a removed/renamed tag reads as empty). Only when regionTag is unset do we\n# honour a legacy baked `regions` dict (scenes saved before regionTag existed /\n# the build probe).\n_tag = getattr(self, \"regionTag\", None)\n"
+		+ "# ONE read of the input data, shared by the tag membership and the source\n# transform below (both live on the same MFnGeometryData).\n_mdata = mesh_data_from_node_plug(node_name_from_self(self), \"inMesh\")\n_wmat = mesh_matrix_from_mesh_data(_mdata)\nregions = None\nif _tag:\n    _faces = tag_indices_from_mesh_data(_mdata, _tag)\n    if _faces:\n        regions = {_tag: _faces}\n    # else: named tag has no match -> leave regions None -> blank (no fallback).\nelse:\n    _legacy = getattr(self, \"regions\", None)\n    if isinstance(_legacy, dict) and _legacy:\n        regions = _legacy\nif mesh is None or not regions:\n    self.draw = None\nelse:\n    offset = self.offset\n    hover_offset = self.hoverOffset\n    select_offset = self.selectOffset\n    hover_dur = max(self.hoverDur, 1e-3)\n    alpha = float(self.alpha)\n    # Per-state RGB colours (each a 3-float `color` input) + one shared alpha.\n    # The active colour tweens default->hover on the SAME elastic curve as the\n    # lift, and snaps to the select colour when selected. Each input carries its\n"
+		+ "    # own attr DEFAULT, so what is read here is exactly what the user dialled --\n    # all-zero means BLACK, not \"unset\". Nothing is substituted.\n    def_c = np.asarray(self.defaultColor, dtype=np.float64).ravel()[:3]\n    hov_c = np.asarray(self.hoverColor, dtype=np.float64).ravel()[:3]\n    sel_c = np.asarray(self.selectColor, dtype=np.float64).ravel()[:3]\n    # The outline around each patch has the SAME three states, on the same\n    # curve, so it can read as its own accent rather than a fixed dark edge.\n    odef_c = np.asarray(self.outlineColor, dtype=np.float64).ravel()[:3]\n    ohov_c = np.asarray(self.outlineHoverColor, dtype=np.float64).ravel()[:3]\n    osel_c = np.asarray(self.outlineSelectColor, dtype=np.float64).ravel()[:3]\n\n    hovered = bool(self.hovered)\n    selected = bool(self.selected)\n    if selected:\n        hovered = False          # selected shows only its selected form\n    now = float(_wallclock.time())\n\n    h_cur, h_e = tween(now, float(getattr(self, \"hv_start\", 0.0)),\n                       float(getattr(self, \"hv_from\", 0.0)),\n"
+		+ "                       float(getattr(self, \"hv_to\", 0.0)), hover_dur)\n    if hovered != bool(getattr(self, \"hv_prev\", False)):\n        self.hv_start = now\n        self.hv_from = h_cur\n        self.hv_to = 1.0 if hovered else 0.0\n        self.hv_prev = hovered\n        h_e = 0.0\n\n    # THREE ABSOLUTE normal offsets (world units): the patch floats at `offset`\n    # at rest, tweens to `hoverOffset` on hover, and snaps to `selectOffset`\n    # when selected. Absolute (not additive) + a fixed normal lift (never an\n    # in-plane centroid balloon), so the pop is identical no matter how many\n    # faces the tag covers -- a tag grown to span the whole mesh lifts by the\n    # same amount as a tiny one.\n    lift = offset + (hover_offset - offset) * h_cur\n    if selected:\n        lift = select_offset\n    if lift < MIN_OFFSET:\n        lift = MIN_OFFSET\n\n    # Active fill colour: tween default->hover on the hover curve, snap to the\n    # select colour when selected; append the shared alpha to make the RGBA row\n    # the polygons buffer expects.\n"
+		+ "    rgb = def_c + (hov_c - def_c) * h_cur\n    if selected:\n        rgb = sel_c\n    rgba = np.concatenate([rgb, [alpha]])\n\n    # The outline rides the SAME hover curve and the same select snap. It stays\n    # opaque: `alpha` fades the FILL so the surface shows through, and letting\n    # the silhouette fade with it would wash the patch's edge out entirely.\n    orgb = odef_c + (ohov_c - odef_c) * h_cur\n    if selected:\n        orgb = osel_c\n    orgba = np.concatenate([orgb, [1.0]])\n\n    # One DrawMesh per tag. `self.draw` takes the LIST straight -- no `sum()`\n    # and no `+` chain to build -- and draws them in the order appended. This\n    # used to be four parallel accumulator lists plus a hand-rolled\n    # `idx + voff` rebase.\n    patches = []\n    for tag in sorted(regions.keys()):\n        faces = np.asarray(regions[tag], dtype=np.int64).ravel()\n        if faces.size == 0:\n            continue\n        pts, idx, cnt, nrm = extract_region(mesh, faces, with_normals=True)\n        if pts.shape[0] == 0:\n            continue\n"
+		+ "        # extract_region reads OBJECT space: the mesh DATA carries the source\n        # transform as a SEPARATE matrix, and a data-built MFnMesh has no DAG\n        # path so getPoints(kWorld) cannot reach world. `world_space=True` below\n        # takes these points AS world, so apply that matrix here -- without it\n        # the patch draws at the ORIGIN and never follows the mesh. Maya is\n        # row-vector (p * M): the 3x3 rotates/scales, row 3 translates.\n        if _wmat is not None:\n            _m = np.asarray(_wmat, dtype=np.float64).reshape(4, 4)\n            pts = pts @ _m[:3, :3] + _m[3, :3]\n            nrm = nrm @ _m[:3, :3]\n            _mag = np.linalg.norm(nrm, axis=1, keepdims=True)\n            nrm = nrm / np.where(_mag > 1e-12, _mag, 1.0)\n        patches.append(DrawMesh(\n            pts + nrm * lift, cnt, idx, color=rgba,\n            outline=orgba, outline_width=2.0,\n            outline_boundary_only=True,   # clean outer silhouette only\n            world_space=True,             # follow the mesh, not the locator\n"
+		+ "            precise_hover=True))\n\n    if not patches:\n        self.draw = None\n    else:\n        self.draw = patches\n        self.auto_highlight = False\n        self.auto_refresh = bool(h_e < 1.0)\n");
+	setAttr "._inputAttrs" -type "string" (
+		"{\"alpha\":{\"attr_type\":\"float\",\"default_value\":0.8,\"is_array\":false,\"max_value\":1.0,\"min_value\":0.0,\"order\":12},\"defaultColor\":{\"attr_type\":\"color\",\"default_value\":[0.25,0.5,0.95],\"is_array\":false,\"order\":6},\"hoverColor\":{\"attr_type\":\"color\",\"default_value\":[1.0,0.82,0.15],\"is_array\":false,\"order\":7},\"hoverDur\":{\"attr_type\":\"float\",\"default_value\":0.35,\"is_array\":false,\"order\":5},\"hoverOffset\":{\"attr_type\":\"float\",\"default_value\":0.25,\"is_array\":false,\"order\":3},\"inMesh\":{\"attr_type\":\"mesh\",\"is_array\":false,\"order\":0},\"offset\":{\"attr_type\":\"float\",\"default_value\":0.1,\"is_array\":false,\"order\":2},\"outlineColor\":{\"attr_type\":\"color\",\"default_value\":[0.02,0.02,0.04],\"is_array\":false,\"order\":9},\"outlineHoverColor\":{\"attr_type\":\"color\",\"default_value\":[0.02,0.02,0.04],\"is_array\":false,\"order\":10},\"outlineSelectColor\":{\"attr_type\":\"color\",\"default_value\":[0.02,0.02,0.04],\"is_array\":false,\"order\":11},\"regionTag\":{\"attr_type\":\"string\",\"is_array\":false,\"order\":1},\"selectColor\":{\"attr_type\":\"color\",\"default_value\":[0.3,0.85,0.9],\"is_array\":false,\"order\":8},\"selectOffset\":{\"attr_type\":\"float\",\"default_value\":0.5,\"is_array\":false,\"order\":4}}");
+	setAttr -k on ".inMesh";
+	setAttr -k on ".regionTag" -type "string" "topLip";
+	setAttr -k on ".defaultColor" -type "float3" 0.30000001 0.85000002 0.89999998 ;
+	setAttr "._initSource" -type "string" (
+		"import math\nimport time as _wallclock\nimport numpy as np\nfrom mpynode._common.draw.draw_types import DrawMesh\nfrom mpynode._common.nodes.mesh.mesh_region import extract_region\nfrom mpynode._common.nodes.mesh.component_tags import (\n    node_name_from_self, mesh_data_from_node_plug, tag_indices_from_mesh_data,\n    mesh_matrix_from_mesh_data)\n\nMIN_OFFSET = 0.004      # floor so elastic undershoot never dips into the mesh\n# Fill AND outline colour, plus the per-state offsets, are LIVE input attrs\n# (defaultColor / hoverColor / selectColor, outlineColor / outlineHoverColor /\n# outlineSelectColor, offset / hoverOffset / selectOffset / alpha), so the\n# palette/tint constants that used to live here are gone -- the compute reads\n# them off self.<attr> and a user can tweak each one interactively. Every colour\n# input carries its OWN attr default, so a raw-created node already looks right\n# and the compute never has to guess whether a value is \"unset\": all-zero means\n# exactly BLACK, which is the colour the user dialled.\n"
+		+ "\n\ndef elastic_in_out(t):\n    if t <= 0.0:\n        return 0.0\n    if t >= 1.0:\n        return 1.0\n    p = 0.45\n    s = p / 4.0\n    t2 = 2.0 * t - 1.0\n    if t2 < 0.0:\n        return -0.5 * (2.0 ** (10.0 * t2)) * math.sin((t2 - s) * (2.0 * math.pi / p))\n    return (2.0 ** (-10.0 * t2)) * math.sin((t2 - s) * (2.0 * math.pi / p)) * 0.5 + 1.0\n\n\ndef tween(now, start, frm, to, dur):\n    e = (now - start) / max(dur, 1e-3)\n    e = 0.0 if e < 0.0 else (1.0 if e > 1.0 else e)\n    return frm + (to - frm) * elastic_in_out(e), e\n");
+	setAttr "._methodsSource" -type "string" (
+		"class SetupError(Exception):\n    \"\"\"The current selection / scene state can't support setup for this node.\n    Message is user-facing (it names what to select).\"\"\"\n\n\ndef _has_shape(node, shape_types):\n    from maya import cmds as mc\n    if mc.nodeType(node) in shape_types:\n        return True\n    for st in shape_types:\n        if mc.listRelatives(node, shapes=True, type=st, noIntermediate=True):\n            return True\n    return False\n\n\ndef _meshes(sel):\n    return [n for n in sel if _has_shape(n, (\"mesh\",))]\n\n\n# Region-extraction helpers, VENDORED from\n# mpynode._common.nodes.mesh.mesh_region. setup is a @maya_command body, which\n# ships as embedded python inside the compiled .mll -- where mpynode is NOT\n# importable -- so extract_region and its whole closure (mesh_arrays /\n# mesh_vertex_normals and their api1 fallbacks) are carried here instead of\n# imported. numpy + the OpenMaya modules are imported per-def.\ndef _is_api2(mesh):\n    \"\"\"True for an API-2.0 function set, False for a legacy API-1.0 one.\n    Both classes are named ``MFnMesh``, so we distinguish by module:\n"
+		+ "    API 1.0 is ``maya.OpenMaya``; API 2.0 reports ``OpenMaya``.\"\"\"\n    return type(mesh).__module__ != \"maya.OpenMaya\"\n\n\ndef _arrays_api1(mesh, space):\n    \"\"\"Legacy API-1.0 read path. API 1.0 has no vectorized point accessor,\n    so points go through a small per-vertex loop; connectivity uses the\n    scalar-iterable MIntArray (np.fromiter).\"\"\"\n    import numpy as np\n    import maya.OpenMaya as om1\n\n    space1 = om1.MSpace.kObject if space is None else int(space)\n    pa = om1.MPointArray()\n    mesh.getPoints(pa, space1)\n    n = pa.length()\n    pts = np.empty((n, 3), dtype=np.float64)\n    for i in range(n):\n        p = pa[i]\n        pts[i, 0] = p.x\n        pts[i, 1] = p.y\n        pts[i, 2] = p.z\n    counts1 = om1.MIntArray()\n    connects1 = om1.MIntArray()\n    mesh.getVertices(counts1, connects1)\n    counts = np.fromiter(counts1, dtype=np.int64, count=counts1.length())\n    connects = np.fromiter(connects1, dtype=np.int64, count=connects1.length())\n    return pts, counts, connects\n\n\ndef mesh_arrays(mesh, space=None):\n"
+		+ "    \"\"\"Return ``(points (V,3) float64, counts (F,) int64, connects (C,) int64)``\n    for an ``MFnMesh`` (API 2.0 preferred, API 1.0 supported).\"\"\"\n    import numpy as np\n    import maya.api.OpenMaya as om\n\n    if not _is_api2(mesh):\n        return _arrays_api1(mesh, space)\n    if space is None:\n        space = om.MSpace.kObject\n    # getPoints -> MPointArray; np.array gives (V, 4) [x,y,z,w] -> drop w.\n    pts = np.asarray(mesh.getPoints(space))[:, :3].astype(np.float64)\n    counts_arr, connects_arr = mesh.getVertices()\n    counts = np.asarray(counts_arr, dtype=np.int64)\n    connects = np.asarray(connects_arr, dtype=np.int64)\n    return pts, counts, connects\n\n\ndef _normals_api1(mesh, space):\n    \"\"\"Legacy API-1.0 per-vertex normal read (out-param + small loop).\"\"\"\n    import numpy as np\n    import maya.OpenMaya as om1\n\n    space1 = om1.MSpace.kObject if space is None else int(space)\n    nrm = om1.MFloatVectorArray()\n    mesh.getVertexNormals(False, nrm, space1)\n    n = nrm.length()\n    out = np.empty((n, 3), dtype=np.float64)\n"
+		+ "    for i in range(n):\n        v = nrm[i]\n        out[i, 0] = v.x\n        out[i, 1] = v.y\n        out[i, 2] = v.z\n    return out\n\n\ndef mesh_vertex_normals(mesh, space=None):\n    \"\"\"Return ``(V, 3)`` unit per-vertex normals (Maya's averaged vertex\n    normals) for an ``MFnMesh``, aligned with ``mesh_arrays`` point order.\"\"\"\n    import numpy as np\n    import maya.api.OpenMaya as om\n\n    if not _is_api2(mesh):\n        n = _normals_api1(mesh, space)\n    else:\n        if space is None:\n            space = om.MSpace.kObject\n        n = np.asarray(\n            mesh.getVertexNormals(False, space))[:, :3].astype(np.float64)\n    # Defensive renormalize (Maya returns unit normals, but guard zeros).\n    mag = np.linalg.norm(n, axis=1, keepdims=True)\n    return n / np.where(mag > 1e-12, mag, 1.0)\n\n\ndef extract_region(mesh, face_ids, space=None, with_normals=False):\n    \"\"\"Build a compact polygon buffer for the faces in ``face_ids`` from a\n    live ``MFnMesh``.\n\n    Returns ``(points, indices, counts)`` -- or, when ``with_normals`` is\n"
+		+ "    True, ``(points, indices, counts, normals)``. The region's vertices are\n    compacted + remapped, so ``indices`` refer only to the returned\n    ``points``. Fully vectorized -- no per-face loops.\"\"\"\n    import numpy as np\n\n    def _empty():\n        z3 = np.zeros((0, 3), dtype=np.float64)\n        zi = np.zeros((0,), dtype=np.int64)\n        return (z3, zi, zi.copy(), z3.copy()) if with_normals else (z3, zi, zi.copy())\n\n    if mesh is None:\n        return _empty()\n    pts, counts, connects = mesh_arrays(mesh, space)\n    face_ids = np.asarray(face_ids, dtype=np.int64).ravel()\n    if face_ids.size == 0 or counts.shape[0] == 0:\n        return _empty()\n    # Keep only valid face ids.\n    face_ids = face_ids[(face_ids >= 0) & (face_ids < counts.shape[0])]\n    if face_ids.size == 0:\n        return _empty()\n\n    face_off = np.cumsum(counts) - counts          # start offset into connects/face\n    sel_counts = counts[face_ids]                  # (M,)\n    starts = face_off[face_ids]                    # (M,)\n    total = int(sel_counts.sum())\n"
+		+ "    if total == 0:\n        return _empty()\n\n    # Flatten the selected faces' connectivity positions (vectorized).\n    face_of = np.repeat(np.arange(face_ids.size), sel_counts)            # (total,)\n    within = np.arange(total) - (np.cumsum(sel_counts) - sel_counts)[face_of]\n    connect_pos = starts[face_of] + within                              # (total,)\n    region_verts = connects[connect_pos]                                # global vertex ids\n\n    # Compact the used vertices + remap the connectivity to 0..U-1.\n    uniq, inverse = np.unique(region_verts, return_inverse=True)\n    region_points = pts[uniq]\n    region_indices = inverse.astype(np.int64)\n    region_counts = sel_counts.astype(np.int64)\n    if not with_normals:\n        return region_points, region_indices, region_counts\n    region_normals = mesh_vertex_normals(mesh, space)[uniq]\n    return region_points, region_indices, region_counts, region_normals\n\n\n# Mesh Regions demo: fabricate the whole showcase scene. Import the bundled\n# head model, resolve EVERY component tag, then build ONE gizmo PER tag -- `self`\n"
+		+ "# is the first tag's gizmo and each remaining tag gets a DUPLICATE of `self`\n# (which carries its Init/Compute/Methods sources + input attrs along). The\n# demo only creates + arranges the gizmos: it sets each gizmo's `regionTag`\n# and then DELEGATES the actual per-node binding (`inMesh` wire + positioning) to\n# that gizmo's own ``setup`` via ``run_setup([mesh])`` -- so demo and setup never\n# duplicate the wiring logic.\ndef get_component_tag_faces(mesh_shape):\n    \"\"\"\n    Retrieves component tags on a mesh shape and returns a dictionary.\n    Keys are the tag names.\n    Values are flattened, unique, and sorted lists of face indices.\n    \"\"\"\n    from maya import cmds as mc\n\n    attr_path = f\"{mesh_shape}.outMesh\"\n    tags = mc.geometryAttrInfo(attr_path, componentTagNames=True)\n\n    tag_faces_dict = {}\n\n    if not tags:\n        return tag_faces_dict\n\n    for tag in tags:\n        contents = mc.geometryAttrInfo(attr_path, componentTagExpression=tag, components=True)\n\n        # Use a set to automatically guarantee unique indices\n"
+		+ "        face_indices = set()\n\n        if contents:\n            for comp in contents:\n                comp = comp.strip()\n\n                # Check if the string represents a face (starts with 'f[' or 'F[')\n                if comp.lower().startswith('f['):\n                    # Extract the contents inside the square brackets\n                    inner_str = comp.split('[')[1].split(']')[0]\n\n                    # Handle ranges (e.g., '10:55')\n                    if ':' in inner_str:\n                        start_idx, end_idx = inner_str.split(':')\n                        # range() stops before the end value, so we add 1 to make it inclusive\n                        face_indices.update(range(int(start_idx), int(end_idx) + 1))\n\n                    # Handle single digits (e.g., '10')\n                    else:\n                        face_indices.add(int(inner_str))\n\n        # Convert the set back to a list and sort it\n        tag_faces_dict[tag] = sorted(list(face_indices))\n\n    return tag_faces_dict\n\n\ndef demo(self):\n"
+		+ "    from maya import cmds as mc\n    from mpynode import wrap_node\n    import os\n    import re\n    name = self.get_name()\n\n    head = None\n    try:\n        from mpynode._common.util.template_gallery import _bundled_templates_root\n        root = _bundled_templates_root()\n        if root:\n            cand = os.path.join(root, \"MPyLocator\", \"Mesh Regions\", \"head.ma\")\n            if os.path.isfile(cand):\n                head = cand\n    except Exception:\n        head = None\n    if not head:\n        return name\n\n    new_nodes = mc.file(head, i=True, returnNewNodes=True,\n                        namespace=\"headModel\") or []\n    meshes = [n for n in new_nodes if mc.nodeType(n) == \"mesh\"]\n    if not meshes:\n        meshes = mc.ls(\"headModel:*\", type=\"mesh\", long=True) or []\n    if not meshes:\n        return name\n    shape = (mc.ls(meshes[0], long=True) or [meshes[0]])[0]\n\n    tags = sorted(get_component_tag_faces(shape).keys())\n    if not tags:\n        return name\n\n    def _san(tag):\n        s = re.sub(r\"[^0-9A-Za-z_]\", \"_\", str(tag))\n"
+		+ "        if not s:\n            s = \"region\"\n        if s[0].isdigit():\n            s = \"_\" + s\n        return s + \"Region\"\n\n    # self is tag[0]'s gizmo; duplicate it once per remaining tag. Capture\n    # self's FULL DAG paths up front so later name-based lookups can't go\n    # ambiguous once dup shapes share the short name (Maya keeps a duplicated\n    # shape's short name identical to the original's).\n    self_shape = (mc.ls(name, long=True) or [name])[0]\n    self_tf = (mc.listRelatives(self_shape, parent=True, fullPath=True) or [self_shape])[0]\n\n    shapes = [self_shape]\n    for _ in tags[1:]:\n        dup_tf = mc.duplicate(self_tf, returnRootsOnly=True)[0]\n        dup_tf = (mc.ls(dup_tf, long=True) or [dup_tf])[0]\n        dsh = (mc.listRelatives(dup_tf, shapes=True, type=\"mPyLocator\", fullPath=True)\n               or mc.listRelatives(dup_tf, shapes=True, fullPath=True) or [])\n        if dsh:\n            shapes.append(dsh[0])\n\n    for idx, tag in enumerate(tags):\n        if idx >= len(shapes):\n            break\n"
+		+ "        sh = shapes[idx]\n        # Name THIS gizmo's region via the live `regionTag` string selector, then\n        # let its OWN setup wire the mesh (setup honours an already-set name) --\n        # one code path for both \"Run demo\" and a standalone \"Run setup\".\n        try:\n            mc.setAttr(sh + \".regionTag\", tag, type=\"string\")\n        except Exception:\n            pass\n        try:\n            w = wrap_node(sh)\n            if w is not None:\n                w.run_setup([shape])\n        except Exception:\n            pass\n        # Give each gizmo a DISTINCT default colour so the showcase reads as\n        # separate regions; hover/select/outline keep their shared attr\n        # defaults. Set AFTER run_setup so nothing setup does can win over it.\n        try:\n            _pal = [(0.25, 0.50, 0.95), (0.95, 0.45, 0.25), (0.30, 0.80, 0.40),\n                    (0.80, 0.35, 0.85), (0.95, 0.82, 0.20), (0.30, 0.85, 0.90),\n                    (0.95, 0.35, 0.55), (0.55, 0.85, 0.25), (0.45, 0.35, 0.90),\n                    (0.90, 0.60, 0.20), (0.20, 0.70, 0.70), (0.70, 0.70, 0.95)]\n"
+		+ "            _c = _pal[idx % len(_pal)]\n            for _ch, _v in zip(\"RGB\", _c):\n                mc.setAttr(\"%s.defaultColor%s\" % (sh, _ch), _v)\n        except Exception:\n            pass\n        # rename transform + shape after the tag for a readable outliner\n        try:\n            tf = mc.listRelatives(sh, parent=True, fullPath=True)\n            if tf:\n                new_tf = mc.rename(tf[0], _san(tag))\n                nsh = mc.listRelatives(new_tf, shapes=True, fullPath=True)\n                if nsh:\n                    mc.rename(nsh[0], _san(tag) + \"Shape\")\n                    fixed = mc.listRelatives(new_tf, shapes=True, fullPath=True)\n                    if fixed:\n                        shapes[idx] = fixed[0]\n        except Exception:\n            pass\n\n    # This demo IMPORTS a maya file, so frame the WHOLE scene rather than just\n    # the gizmos -- an imported mesh can sit anywhere, and fitting only the\n    # locators can leave the head off screen with nothing visible to the user.\n    try:\n        mc.viewFit(all=True)\n"
+		+ "    except Exception:\n        pass\n    return shapes[0]\n\n\n@maya_test(label=\"Region draws in the node's RGBA colour; select lifts it\", digits=3)\ndef test_mesh_regions(self):\n    \"\"\"Validate the node's INTENT (the SAME test passes on the interpreted node\n    and its C++ compile -> parity). A locator has no numeric mesh output, so --\n    exactly as the builder's own live-check does -- assert the DRAW BUFFERS:\n\n      1. A bound region draws ONE RGBA face-colour per face carrying the node's\n         `defaultColor` RGB + the `alpha` input (rest state), outlined in\n         `outlineColor` at full opacity.\n      2. Selecting the gizmo snaps the fill to `selectColor` and the outline to\n         `outlineSelectColor` (alpha survives) and lifts the patch by exactly\n         `selectOffset - offset` along the normals -- region-size-independent.\n      3. A colour dialled to (0,0,0) draws BLACK. Nothing substitutes a\n         fallback, so every colour in the cube is reachable.\n    \"\"\"\n    from maya import cmds as mc\n    import maya.api.OpenMaya as om2\n"
+		+ "    import numpy as np\n    from mpynode._common.methods.test_helpers import (\n        assert_close, assert_equal, assert_true)\n\n    name = self.get_name()\n\n    def _set(plug, *vals, **kw):\n        # A demo (or user) may have CONNECTED this input; break incoming\n        # connections first so the test can drive it, then set it.\n        for s in (mc.listConnections(plug, s=True, d=False, plugs=True) or []):\n            mc.disconnectAttr(s, plug)\n        mc.setAttr(plug, *vals, **kw)\n\n    # Validate whatever mesh THIS node already consumes (e.g. the demo's head\n    # model); build a probe sphere ONLY if `inMesh` drives nothing yet. Keeps the\n    # test on `self` (parity) and robust to a live, demo-populated scene + reruns.\n    src = mc.listConnections(name + \".inMesh\", s=True, d=False) or []\n    if not src:\n        probe = mc.polySphere(sx=20, sy=20, name=\"regionProbe#\")[0]\n        pshape = mc.listRelatives(probe, shapes=True, fullPath=True)[0]\n        mc.connectAttr(pshape + \".worldMesh[0]\", name + \".inMesh\", force=True)\n"
+		+ "\n    # Drive the draw deterministically off `self` through the COMPONENT-TAG\n    # path. Not the legacy `regions` dict: that is a stored Python var, and a\n    # compiled node has no _storedVarNames/_storedVarsData plug to receive one,\n    # so forcing it made this test unrunnable against the C++ build -- which is\n    # the parity claim in the docstring above. Tagging a known face range keeps\n    # the region deterministic AND portable. `create=True` on an existing name\n    # is idempotent, so a re-run in a live scene is safe.\n    shape = (mc.listConnections(name + \".inMesh\", s=True, d=False,\n                                shapes=True) or [None])[0]\n    assert_true(shape is not None, \"inMesh must be driven by a mesh shape\")\n    n_faces = mc.polyEvaluate(shape, face=True)\n    last_face = min(15, int(n_faces) - 1)\n    mc.componentTag(\"%s.f[0:%d]\" % (shape, last_face), create=True,\n                    newTagName=\"mpyTestRegion\")\n    # Seed known colours + offsets. Every input is broken-then-set so no\n    # demo/user connection can win over the values this test drives.\n"
+		+ "    _set(name + \".regionTag\", \"mpyTestRegion\", type=\"string\")\n    probe_rgb = (0.20, 0.55, 0.90)\n    for ch, val in zip(\"RGB\", probe_rgb):\n        _set(\"%s.defaultColor%s\" % (name, ch), val)\n    sel_rgb = (0.30, 0.85, 0.90)\n    for ch, val in zip(\"RGB\", sel_rgb):\n        _set(\"%s.selectColor%s\" % (name, ch), val)\n    # Outline colours, deliberately nothing like the fill so a swapped-in fill\n    # value could not satisfy the outline assertions below.\n    out_rgb = (0.90, 0.10, 0.40)\n    for ch, val in zip(\"RGB\", out_rgb):\n        _set(\"%s.outlineColor%s\" % (name, ch), val)\n    out_sel_rgb = (0.10, 0.95, 0.20)\n    for ch, val in zip(\"RGB\", out_sel_rgb):\n        _set(\"%s.outlineSelectColor%s\" % (name, ch), val)\n    _set(name + \".alpha\", 0.8)\n    _set(name + \".offset\", 0.1)\n    _set(name + \".selectOffset\", 0.5)\n    mc.dgdirty(name)\n\n    # Read the ordered draw commands via the node's PUBLIC MPx surface using the\n    # node NAME only -- so this runs identically on the interpreted node AND a\n    # compiled node (the parity point), never the interpreted-only wrapper.\n"
+		+ "    # One patch is drawn PER TAG; the tag driven above is the only one this test\n    # names, so the first patch answers every assertion below.\n    def _draw(selected=False):\n        sl = om2.MSelectionList(); sl.add(name)\n        mpx = om2.MFnDependencyNode(sl.getDependNode(0)).userNode()\n        return mpx.evaluateDrawItems(0.0, selected=selected) or {}\n\n    def _poly(selected=False):\n        for cmd in _draw(selected).get(\"commands\") or []:\n            if cmd[\"slot\"] == \"polygons\":\n                return cmd[\"buffer\"]\n        return None\n\n    # A COMPILED C++ locator (MPxLocatorNode) exposes no Python\n    # evaluateDrawItems, so its draw buffers are unreachable here -- that parity\n    # is covered by the dedicated -DMPYNODE_PROBE numerical buffer comparison.\n    # Skip cleanly rather than false-fail, the same guard test_animated_selection\n    # and test_animated_text already use. AttributeError ONLY: a node that HAS\n    # the surface but draws nothing must still fail the assertion below.\n    try:\n        _draw(False)\n"
+		+ "    except AttributeError:\n        return\n\n    # 1) REST state: one RGBA row per face = defaultColor RGB + alpha (0.8).\n    poly = _poly(False)\n    assert_true(poly is not None, \"the bound region must draw a patch\")\n    fcol = np.asarray(poly[\"face_colors\"])\n    cnt = np.asarray(poly[\"counts\"])\n    assert_true(fcol.ndim == 2 and fcol.shape[1] == 4,\n                \"face colours must be RGBA rows\")\n    assert_equal(fcol.shape[0], cnt.shape[0],\n                 \"one face colour per face (%d vs %d)\"\n                 % (fcol.shape[0], cnt.shape[0]))\n    assert_close(fcol[:, :3].mean(axis=0).tolist(), list(probe_rgb))\n    assert_true(bool(np.allclose(fcol[:, 3], 0.8, atol=1e-3)),\n                \"the alpha input must reach the fill\")\n    wire = np.asarray(poly[\"wireframe\"], dtype=np.float64).ravel()\n    assert_close(wire[:3].tolist(), list(out_rgb))\n    assert_close(float(wire[3]), 1.0,\n                 msg=\"the outline stays opaque; alpha dials the fill only\")\n\n    # 2) SELECT state: fill snaps to selectColor, the outline to\n"
+		+ "    #    outlineSelectColor, alpha survives, and the patch lifts by exactly\n    #    selectOffset - offset (0.5 - 0.1) along the normals.\n    rest_pts = np.asarray(poly[\"points\"])\n    psel = _poly(True)\n    fcs = np.asarray(psel[\"face_colors\"])\n    disp = np.linalg.norm(np.asarray(psel[\"points\"]) - rest_pts, axis=1)\n    assert_close(fcs[:, :3].mean(axis=0).tolist(), list(sel_rgb))\n    assert_true(bool(np.allclose(fcs[:, 3], 0.8, atol=1e-3)),\n                \"alpha survives selection\")\n    assert_close(np.asarray(psel[\"wireframe\"],\n                            dtype=np.float64).ravel()[:3].tolist(), list(out_sel_rgb))\n    assert_close(float(disp.max()), 0.5 - 0.1, digits=2,\n                 msg=\"select lift must equal selectOffset - offset\")\n\n    # 3) ZERO IS A COLOUR. Dialling a state to (0,0,0) must draw BLACK -- the\n    #    compute substitutes nothing, so the value on the plug is the value on\n    #    screen. Asserted on the fill AND the outline, since each used to have\n    #    (fill) or lacked entirely (outline) its own path to the buffer.\n"
+		+ "    for ch in \"RGB\":\n        _set(\"%s.defaultColor%s\" % (name, ch), 0.0)\n        _set(\"%s.outlineColor%s\" % (name, ch), 0.0)\n    mc.dgdirty(name)\n    pblack = _poly(False)\n    assert_true(pblack is not None, \"an all-black region must still draw\")\n    assert_close(np.asarray(pblack[\"face_colors\"])[:, :3].mean(\n        axis=0).tolist(), [0.0, 0.0, 0.0])\n    assert_close(np.asarray(pblack[\"wireframe\"],\n                            dtype=np.float64).ravel()[:3].tolist(), [0.0, 0.0, 0.0])\n\n\n\n# Mesh Regions setup: bind THIS ONE gizmo to a single region of a mesh in the\n# current selection (NO scene fabrication -- that is the `demo`\\'s job). Resolves\n# ONE mesh, honours this gizmo\\'s `regionTag` string (or defaults it to the first\n# component tag when unset), and wires the mesh\\'s live world-space geometry into\n# `inMesh`. `demo` calls this once per tag after setting each gizmo\\'s `regionTag`,\n# so the two hooks share one wiring path.\n@maya_command(creates=True)\ndef setup(self, selection=None, *args, **kwargs):\n    from maya import cmds as mc\n"
+		+ "    name = self.get_name()\n\n    # Resolve ONE mesh: from the passed selection (in pick order), else the live\n    # selection, else an already-connected inMesh source. Drop self so selecting\n    # the gizmo alongside the mesh is harmless.\n    order = [o for o in (selection or mc.ls(selection=True) or []) if o != name]\n    meshes = _meshes(order) if order else []\n    if not meshes:\n        src = mc.listConnections(name + \".inMesh\", source=True,\n                                 destination=False, shapes=True) or []\n        meshes = _meshes(src) if src else []\n    if not meshes:\n        raise SetupError(\"Select the mesh to bind this region gizmo to.\")\n    shape = (mc.ls(meshes[0], long=True) or [meshes[0]])[0]\n\n    regions = get_component_tag_faces(shape)\n    if not regions:\n        raise SetupError(\"Mesh has no component tags to bind a region to.\")\n    tags = sorted(regions.keys())\n\n    # The region is chosen by NAME via the LIVE `regionTag` string INPUT. Honour\n    # an already-set name (the demo sets one per gizmo, or the user typed one);\n"
+		+ "    # otherwise default to the first tag so a fresh bind shows something. A user\n    # can retype it in the Channel Box / Attribute Editor and the region\n    # retargets on the next redraw (a name with no match draws blank). The\n    # face-id MEMBERSHIP is never frozen -- the draw resolves it LIVE from the\n    # input mesh data each evaluation, so editing the component tag updates the\n    # region. The string name also marshals into the compiled node.\n    try:\n        cur = mc.getAttr(name + \".regionTag\") or \"\"\n    except Exception:\n        cur = \"\"\n    tag = cur or tags[0]\n    if not cur:\n        try:\n            mc.setAttr(name + \".regionTag\", tag, type=\"string\")\n        except Exception:\n            pass\n    mc.connectAttr(shape + \".worldMesh[0]\", name + \".inMesh\", force=True)\n\n    # Move THIS gizmo's transform to the centroid of its region's vertices so\n    # the handle sits on the patch it controls. The patch is drawn in world\n    # space (see LOC_REGION_COMPUTE), so this only repositions the manipulator,\n"
+		+ "    # not the drawing. Wrapped so binding never fails on positioning.\n    try:\n        import maya.api.OpenMaya as om\n        import numpy as np\n        sel = om.MSelectionList()\n        sel.add(shape)\n        mfn = om.MFnMesh(sel.getDagPath(0))\n        pts = extract_region(mfn, regions[tag], space=om.MSpace.kWorld)[0]\n        if pts.shape[0]:\n            ctr = pts.mean(axis=0)\n            tf = (mc.listRelatives(name, parent=True, fullPath=True) or [None])[0]\n            if tf:\n                mc.xform(tf, worldSpace=True, translation=(\n                    float(ctr[0]), float(ctr[1]), float(ctr[2])))\n    except Exception:\n        pass\n\n    # Make the bound mesh unselectable so the region gizmos are easy to grab\n    # (reference display: visible in the viewport but unpickable).\n    try:\n        mc.setAttr(shape + \".overrideEnabled\", 1)\n        mc.setAttr(shape + \".overrideDisplayType\", 2)\n    except Exception:\n        pass\n\n    try:\n        mc.dgdirty(name)\n    except Exception:\n        pass\n    return name\n");
+	setAttr ".class_path" -type "string" "mpynode_user.MeshRegionLocator";
+createNode transform -n "topLipLeftRegion";
+	rename -uid "CC8580C5-0244-C2FF-AAA4-DC96DE4AC985";
+	setAttr ".t" -type "double3" 2.1770662268002829 152.72079035441081 8.0977770487467442 ;
+createNode mPyLocator -n "topLipLeftRegionShape" -p "topLipLeftRegion";
+	rename -uid "9F8F5EE7-374D-04FA-C657-FABDF02CBB56";
+	addAttr -ci true -k true -sn "inMesh" -ln "inMesh" -dt "mesh";
+	addAttr -ci true -k true -sn "regionTag" -ln "regionTag" -dt "string";
+	addAttr -ci true -k true -sn "offset" -ln "offset" -dv 0.1 -at "float";
+	addAttr -ci true -k true -sn "hoverOffset" -ln "hoverOffset" -dv 0.25 -at "float";
+	addAttr -ci true -k true -sn "selectOffset" -ln "selectOffset" -dv 0.5 -at "float";
+	addAttr -ci true -k true -sn "hoverDur" -ln "hoverDur" -dv 0.35 -at "float";
+	addAttr -ci true -uac -k true -sn "defaultColor" -ln "defaultColor" -at "float3" 
+		-nc 3;
+	addAttr -ci true -k true -sn "defaultColorR" -ln "defaultColorR" -dv 0.25 -at "float" 
+		-p "defaultColor";
+	addAttr -ci true -k true -sn "defaultColorG" -ln "defaultColorG" -dv 0.5 -at "float" 
+		-p "defaultColor";
+	addAttr -ci true -k true -sn "defaultColorB" -ln "defaultColorB" -dv 0.95 -at "float" 
+		-p "defaultColor";
+	addAttr -ci true -uac -k true -sn "hoverColor" -ln "hoverColor" -at "float3" -nc 
+		3;
+	addAttr -ci true -k true -sn "hoverColorR" -ln "hoverColorR" -dv 1 -at "float" -p "hoverColor";
+	addAttr -ci true -k true -sn "hoverColorG" -ln "hoverColorG" -dv 0.82 -at "float" 
+		-p "hoverColor";
+	addAttr -ci true -k true -sn "hoverColorB" -ln "hoverColorB" -dv 0.15 -at "float" 
+		-p "hoverColor";
+	addAttr -ci true -uac -k true -sn "selectColor" -ln "selectColor" -at "float3" -nc 
+		3;
+	addAttr -ci true -k true -sn "selectColorR" -ln "selectColorR" -dv 0.3 -at "float" 
+		-p "selectColor";
+	addAttr -ci true -k true -sn "selectColorG" -ln "selectColorG" -dv 0.85 -at "float" 
+		-p "selectColor";
+	addAttr -ci true -k true -sn "selectColorB" -ln "selectColorB" -dv 0.9 -at "float" 
+		-p "selectColor";
+	addAttr -ci true -uac -k true -sn "outlineColor" -ln "outlineColor" -at "float3" 
+		-nc 3;
+	addAttr -ci true -k true -sn "outlineColorR" -ln "outlineColorR" -dv 0.02 -at "float" 
+		-p "outlineColor";
+	addAttr -ci true -k true -sn "outlineColorG" -ln "outlineColorG" -dv 0.02 -at "float" 
+		-p "outlineColor";
+	addAttr -ci true -k true -sn "outlineColorB" -ln "outlineColorB" -dv 0.04 -at "float" 
+		-p "outlineColor";
+	addAttr -ci true -uac -k true -sn "outlineHoverColor" -ln "outlineHoverColor" -at "float3" 
+		-nc 3;
+	addAttr -ci true -k true -sn "outlineHoverColorR" -ln "outlineHoverColorR" -dv 0.02 
+		-at "float" -p "outlineHoverColor";
+	addAttr -ci true -k true -sn "outlineHoverColorG" -ln "outlineHoverColorG" -dv 0.02 
+		-at "float" -p "outlineHoverColor";
+	addAttr -ci true -k true -sn "outlineHoverColorB" -ln "outlineHoverColorB" -dv 0.04 
+		-at "float" -p "outlineHoverColor";
+	addAttr -ci true -uac -k true -sn "outlineSelectColor" -ln "outlineSelectColor" 
+		-at "float3" -nc 3;
+	addAttr -ci true -k true -sn "outlineSelectColorR" -ln "outlineSelectColorR" -dv 
+		0.02 -at "float" -p "outlineSelectColor";
+	addAttr -ci true -k true -sn "outlineSelectColorG" -ln "outlineSelectColorG" -dv 
+		0.02 -at "float" -p "outlineSelectColor";
+	addAttr -ci true -k true -sn "outlineSelectColorB" -ln "outlineSelectColorB" -dv 
+		0.04 -at "float" -p "outlineSelectColor";
+	addAttr -ci true -k true -sn "alpha" -ln "alpha" -dv 0.8 -min 0 -max 1 -at "float";
+	addAttr -ci true -h true -sn "_initSource" -ln "_initSource" -dt "string";
+	addAttr -ci true -h true -sn "_methodsSource" -ln "_methodsSource" -dt "string";
+	addAttr -ci true -h true -sn "class_path" -ln "class_path" -dt "string";
+	setAttr -k off ".v";
+	setAttr "._computeSource" -type "string" (
+		"# Draw the bound mesh's component-tag region as a coloured patch. The region\n# MEMBERSHIP is resolved LIVE from the input mesh DATA every evaluation (via\n# MFnGeometryData), keyed by this gizmo's tag NAME (`regionTag`, baked once by\n# setup) -- so editing the component tag (add/remove faces) updates the drawn\n# region immediately, and a compiled C++ node resolves the SAME way off its own\n# input handle. self.inMesh is the live world-space MFnMesh (worldMesh[0]) used\n# for the geometry; the tag membership comes from that same input's data. Falls\n# back to a legacy baked `regions` dict for scenes saved before this change.\nmesh = self.inMesh\n# The region is chosen purely by NAME via the `regionTag` string input. If the\n# name matches no component tag on the input mesh, the region goes BLANK (a typo\n# or a removed/renamed tag reads as empty). Only when regionTag is unset do we\n# honour a legacy baked `regions` dict (scenes saved before regionTag existed /\n# the build probe).\n_tag = getattr(self, \"regionTag\", None)\n"
+		+ "# ONE read of the input data, shared by the tag membership and the source\n# transform below (both live on the same MFnGeometryData).\n_mdata = mesh_data_from_node_plug(node_name_from_self(self), \"inMesh\")\n_wmat = mesh_matrix_from_mesh_data(_mdata)\nregions = None\nif _tag:\n    _faces = tag_indices_from_mesh_data(_mdata, _tag)\n    if _faces:\n        regions = {_tag: _faces}\n    # else: named tag has no match -> leave regions None -> blank (no fallback).\nelse:\n    _legacy = getattr(self, \"regions\", None)\n    if isinstance(_legacy, dict) and _legacy:\n        regions = _legacy\nif mesh is None or not regions:\n    self.draw = None\nelse:\n    offset = self.offset\n    hover_offset = self.hoverOffset\n    select_offset = self.selectOffset\n    hover_dur = max(self.hoverDur, 1e-3)\n    alpha = float(self.alpha)\n    # Per-state RGB colours (each a 3-float `color` input) + one shared alpha.\n    # The active colour tweens default->hover on the SAME elastic curve as the\n    # lift, and snaps to the select colour when selected. Each input carries its\n"
+		+ "    # own attr DEFAULT, so what is read here is exactly what the user dialled --\n    # all-zero means BLACK, not \"unset\". Nothing is substituted.\n    def_c = np.asarray(self.defaultColor, dtype=np.float64).ravel()[:3]\n    hov_c = np.asarray(self.hoverColor, dtype=np.float64).ravel()[:3]\n    sel_c = np.asarray(self.selectColor, dtype=np.float64).ravel()[:3]\n    # The outline around each patch has the SAME three states, on the same\n    # curve, so it can read as its own accent rather than a fixed dark edge.\n    odef_c = np.asarray(self.outlineColor, dtype=np.float64).ravel()[:3]\n    ohov_c = np.asarray(self.outlineHoverColor, dtype=np.float64).ravel()[:3]\n    osel_c = np.asarray(self.outlineSelectColor, dtype=np.float64).ravel()[:3]\n\n    hovered = bool(self.hovered)\n    selected = bool(self.selected)\n    if selected:\n        hovered = False          # selected shows only its selected form\n    now = float(_wallclock.time())\n\n    h_cur, h_e = tween(now, float(getattr(self, \"hv_start\", 0.0)),\n                       float(getattr(self, \"hv_from\", 0.0)),\n"
+		+ "                       float(getattr(self, \"hv_to\", 0.0)), hover_dur)\n    if hovered != bool(getattr(self, \"hv_prev\", False)):\n        self.hv_start = now\n        self.hv_from = h_cur\n        self.hv_to = 1.0 if hovered else 0.0\n        self.hv_prev = hovered\n        h_e = 0.0\n\n    # THREE ABSOLUTE normal offsets (world units): the patch floats at `offset`\n    # at rest, tweens to `hoverOffset` on hover, and snaps to `selectOffset`\n    # when selected. Absolute (not additive) + a fixed normal lift (never an\n    # in-plane centroid balloon), so the pop is identical no matter how many\n    # faces the tag covers -- a tag grown to span the whole mesh lifts by the\n    # same amount as a tiny one.\n    lift = offset + (hover_offset - offset) * h_cur\n    if selected:\n        lift = select_offset\n    if lift < MIN_OFFSET:\n        lift = MIN_OFFSET\n\n    # Active fill colour: tween default->hover on the hover curve, snap to the\n    # select colour when selected; append the shared alpha to make the RGBA row\n    # the polygons buffer expects.\n"
+		+ "    rgb = def_c + (hov_c - def_c) * h_cur\n    if selected:\n        rgb = sel_c\n    rgba = np.concatenate([rgb, [alpha]])\n\n    # The outline rides the SAME hover curve and the same select snap. It stays\n    # opaque: `alpha` fades the FILL so the surface shows through, and letting\n    # the silhouette fade with it would wash the patch's edge out entirely.\n    orgb = odef_c + (ohov_c - odef_c) * h_cur\n    if selected:\n        orgb = osel_c\n    orgba = np.concatenate([orgb, [1.0]])\n\n    # One DrawMesh per tag. `self.draw` takes the LIST straight -- no `sum()`\n    # and no `+` chain to build -- and draws them in the order appended. This\n    # used to be four parallel accumulator lists plus a hand-rolled\n    # `idx + voff` rebase.\n    patches = []\n    for tag in sorted(regions.keys()):\n        faces = np.asarray(regions[tag], dtype=np.int64).ravel()\n        if faces.size == 0:\n            continue\n        pts, idx, cnt, nrm = extract_region(mesh, faces, with_normals=True)\n        if pts.shape[0] == 0:\n            continue\n"
+		+ "        # extract_region reads OBJECT space: the mesh DATA carries the source\n        # transform as a SEPARATE matrix, and a data-built MFnMesh has no DAG\n        # path so getPoints(kWorld) cannot reach world. `world_space=True` below\n        # takes these points AS world, so apply that matrix here -- without it\n        # the patch draws at the ORIGIN and never follows the mesh. Maya is\n        # row-vector (p * M): the 3x3 rotates/scales, row 3 translates.\n        if _wmat is not None:\n            _m = np.asarray(_wmat, dtype=np.float64).reshape(4, 4)\n            pts = pts @ _m[:3, :3] + _m[3, :3]\n            nrm = nrm @ _m[:3, :3]\n            _mag = np.linalg.norm(nrm, axis=1, keepdims=True)\n            nrm = nrm / np.where(_mag > 1e-12, _mag, 1.0)\n        patches.append(DrawMesh(\n            pts + nrm * lift, cnt, idx, color=rgba,\n            outline=orgba, outline_width=2.0,\n            outline_boundary_only=True,   # clean outer silhouette only\n            world_space=True,             # follow the mesh, not the locator\n"
+		+ "            precise_hover=True))\n\n    if not patches:\n        self.draw = None\n    else:\n        self.draw = patches\n        self.auto_highlight = False\n        self.auto_refresh = bool(h_e < 1.0)\n");
+	setAttr "._inputAttrs" -type "string" (
+		"{\"alpha\":{\"attr_type\":\"float\",\"default_value\":0.8,\"is_array\":false,\"max_value\":1.0,\"min_value\":0.0,\"order\":12},\"defaultColor\":{\"attr_type\":\"color\",\"default_value\":[0.25,0.5,0.95],\"is_array\":false,\"order\":6},\"hoverColor\":{\"attr_type\":\"color\",\"default_value\":[1.0,0.82,0.15],\"is_array\":false,\"order\":7},\"hoverDur\":{\"attr_type\":\"float\",\"default_value\":0.35,\"is_array\":false,\"order\":5},\"hoverOffset\":{\"attr_type\":\"float\",\"default_value\":0.25,\"is_array\":false,\"order\":3},\"inMesh\":{\"attr_type\":\"mesh\",\"is_array\":false,\"order\":0},\"offset\":{\"attr_type\":\"float\",\"default_value\":0.1,\"is_array\":false,\"order\":2},\"outlineColor\":{\"attr_type\":\"color\",\"default_value\":[0.02,0.02,0.04],\"is_array\":false,\"order\":9},\"outlineHoverColor\":{\"attr_type\":\"color\",\"default_value\":[0.02,0.02,0.04],\"is_array\":false,\"order\":10},\"outlineSelectColor\":{\"attr_type\":\"color\",\"default_value\":[0.02,0.02,0.04],\"is_array\":false,\"order\":11},\"regionTag\":{\"attr_type\":\"string\",\"is_array\":false,\"order\":1},\"selectColor\":{\"attr_type\":\"color\",\"default_value\":[0.3,0.85,0.9],\"is_array\":false,\"order\":8},\"selectOffset\":{\"attr_type\":\"float\",\"default_value\":0.5,\"is_array\":false,\"order\":4}}");
+	setAttr -k on ".inMesh";
+	setAttr -k on ".regionTag" -type "string" "topLipLeft";
+	setAttr -k on ".defaultColor" -type "float3" 0.94999999 0.34999999 0.55000001 ;
+	setAttr "._initSource" -type "string" (
+		"import math\nimport time as _wallclock\nimport numpy as np\nfrom mpynode._common.draw.draw_types import DrawMesh\nfrom mpynode._common.nodes.mesh.mesh_region import extract_region\nfrom mpynode._common.nodes.mesh.component_tags import (\n    node_name_from_self, mesh_data_from_node_plug, tag_indices_from_mesh_data,\n    mesh_matrix_from_mesh_data)\n\nMIN_OFFSET = 0.004      # floor so elastic undershoot never dips into the mesh\n# Fill AND outline colour, plus the per-state offsets, are LIVE input attrs\n# (defaultColor / hoverColor / selectColor, outlineColor / outlineHoverColor /\n# outlineSelectColor, offset / hoverOffset / selectOffset / alpha), so the\n# palette/tint constants that used to live here are gone -- the compute reads\n# them off self.<attr> and a user can tweak each one interactively. Every colour\n# input carries its OWN attr default, so a raw-created node already looks right\n# and the compute never has to guess whether a value is \"unset\": all-zero means\n# exactly BLACK, which is the colour the user dialled.\n"
+		+ "\n\ndef elastic_in_out(t):\n    if t <= 0.0:\n        return 0.0\n    if t >= 1.0:\n        return 1.0\n    p = 0.45\n    s = p / 4.0\n    t2 = 2.0 * t - 1.0\n    if t2 < 0.0:\n        return -0.5 * (2.0 ** (10.0 * t2)) * math.sin((t2 - s) * (2.0 * math.pi / p))\n    return (2.0 ** (-10.0 * t2)) * math.sin((t2 - s) * (2.0 * math.pi / p)) * 0.5 + 1.0\n\n\ndef tween(now, start, frm, to, dur):\n    e = (now - start) / max(dur, 1e-3)\n    e = 0.0 if e < 0.0 else (1.0 if e > 1.0 else e)\n    return frm + (to - frm) * elastic_in_out(e), e\n");
+	setAttr "._methodsSource" -type "string" (
+		"class SetupError(Exception):\n    \"\"\"The current selection / scene state can't support setup for this node.\n    Message is user-facing (it names what to select).\"\"\"\n\n\ndef _has_shape(node, shape_types):\n    from maya import cmds as mc\n    if mc.nodeType(node) in shape_types:\n        return True\n    for st in shape_types:\n        if mc.listRelatives(node, shapes=True, type=st, noIntermediate=True):\n            return True\n    return False\n\n\ndef _meshes(sel):\n    return [n for n in sel if _has_shape(n, (\"mesh\",))]\n\n\n# Region-extraction helpers, VENDORED from\n# mpynode._common.nodes.mesh.mesh_region. setup is a @maya_command body, which\n# ships as embedded python inside the compiled .mll -- where mpynode is NOT\n# importable -- so extract_region and its whole closure (mesh_arrays /\n# mesh_vertex_normals and their api1 fallbacks) are carried here instead of\n# imported. numpy + the OpenMaya modules are imported per-def.\ndef _is_api2(mesh):\n    \"\"\"True for an API-2.0 function set, False for a legacy API-1.0 one.\n    Both classes are named ``MFnMesh``, so we distinguish by module:\n"
+		+ "    API 1.0 is ``maya.OpenMaya``; API 2.0 reports ``OpenMaya``.\"\"\"\n    return type(mesh).__module__ != \"maya.OpenMaya\"\n\n\ndef _arrays_api1(mesh, space):\n    \"\"\"Legacy API-1.0 read path. API 1.0 has no vectorized point accessor,\n    so points go through a small per-vertex loop; connectivity uses the\n    scalar-iterable MIntArray (np.fromiter).\"\"\"\n    import numpy as np\n    import maya.OpenMaya as om1\n\n    space1 = om1.MSpace.kObject if space is None else int(space)\n    pa = om1.MPointArray()\n    mesh.getPoints(pa, space1)\n    n = pa.length()\n    pts = np.empty((n, 3), dtype=np.float64)\n    for i in range(n):\n        p = pa[i]\n        pts[i, 0] = p.x\n        pts[i, 1] = p.y\n        pts[i, 2] = p.z\n    counts1 = om1.MIntArray()\n    connects1 = om1.MIntArray()\n    mesh.getVertices(counts1, connects1)\n    counts = np.fromiter(counts1, dtype=np.int64, count=counts1.length())\n    connects = np.fromiter(connects1, dtype=np.int64, count=connects1.length())\n    return pts, counts, connects\n\n\ndef mesh_arrays(mesh, space=None):\n"
+		+ "    \"\"\"Return ``(points (V,3) float64, counts (F,) int64, connects (C,) int64)``\n    for an ``MFnMesh`` (API 2.0 preferred, API 1.0 supported).\"\"\"\n    import numpy as np\n    import maya.api.OpenMaya as om\n\n    if not _is_api2(mesh):\n        return _arrays_api1(mesh, space)\n    if space is None:\n        space = om.MSpace.kObject\n    # getPoints -> MPointArray; np.array gives (V, 4) [x,y,z,w] -> drop w.\n    pts = np.asarray(mesh.getPoints(space))[:, :3].astype(np.float64)\n    counts_arr, connects_arr = mesh.getVertices()\n    counts = np.asarray(counts_arr, dtype=np.int64)\n    connects = np.asarray(connects_arr, dtype=np.int64)\n    return pts, counts, connects\n\n\ndef _normals_api1(mesh, space):\n    \"\"\"Legacy API-1.0 per-vertex normal read (out-param + small loop).\"\"\"\n    import numpy as np\n    import maya.OpenMaya as om1\n\n    space1 = om1.MSpace.kObject if space is None else int(space)\n    nrm = om1.MFloatVectorArray()\n    mesh.getVertexNormals(False, nrm, space1)\n    n = nrm.length()\n    out = np.empty((n, 3), dtype=np.float64)\n"
+		+ "    for i in range(n):\n        v = nrm[i]\n        out[i, 0] = v.x\n        out[i, 1] = v.y\n        out[i, 2] = v.z\n    return out\n\n\ndef mesh_vertex_normals(mesh, space=None):\n    \"\"\"Return ``(V, 3)`` unit per-vertex normals (Maya's averaged vertex\n    normals) for an ``MFnMesh``, aligned with ``mesh_arrays`` point order.\"\"\"\n    import numpy as np\n    import maya.api.OpenMaya as om\n\n    if not _is_api2(mesh):\n        n = _normals_api1(mesh, space)\n    else:\n        if space is None:\n            space = om.MSpace.kObject\n        n = np.asarray(\n            mesh.getVertexNormals(False, space))[:, :3].astype(np.float64)\n    # Defensive renormalize (Maya returns unit normals, but guard zeros).\n    mag = np.linalg.norm(n, axis=1, keepdims=True)\n    return n / np.where(mag > 1e-12, mag, 1.0)\n\n\ndef extract_region(mesh, face_ids, space=None, with_normals=False):\n    \"\"\"Build a compact polygon buffer for the faces in ``face_ids`` from a\n    live ``MFnMesh``.\n\n    Returns ``(points, indices, counts)`` -- or, when ``with_normals`` is\n"
+		+ "    True, ``(points, indices, counts, normals)``. The region's vertices are\n    compacted + remapped, so ``indices`` refer only to the returned\n    ``points``. Fully vectorized -- no per-face loops.\"\"\"\n    import numpy as np\n\n    def _empty():\n        z3 = np.zeros((0, 3), dtype=np.float64)\n        zi = np.zeros((0,), dtype=np.int64)\n        return (z3, zi, zi.copy(), z3.copy()) if with_normals else (z3, zi, zi.copy())\n\n    if mesh is None:\n        return _empty()\n    pts, counts, connects = mesh_arrays(mesh, space)\n    face_ids = np.asarray(face_ids, dtype=np.int64).ravel()\n    if face_ids.size == 0 or counts.shape[0] == 0:\n        return _empty()\n    # Keep only valid face ids.\n    face_ids = face_ids[(face_ids >= 0) & (face_ids < counts.shape[0])]\n    if face_ids.size == 0:\n        return _empty()\n\n    face_off = np.cumsum(counts) - counts          # start offset into connects/face\n    sel_counts = counts[face_ids]                  # (M,)\n    starts = face_off[face_ids]                    # (M,)\n    total = int(sel_counts.sum())\n"
+		+ "    if total == 0:\n        return _empty()\n\n    # Flatten the selected faces' connectivity positions (vectorized).\n    face_of = np.repeat(np.arange(face_ids.size), sel_counts)            # (total,)\n    within = np.arange(total) - (np.cumsum(sel_counts) - sel_counts)[face_of]\n    connect_pos = starts[face_of] + within                              # (total,)\n    region_verts = connects[connect_pos]                                # global vertex ids\n\n    # Compact the used vertices + remap the connectivity to 0..U-1.\n    uniq, inverse = np.unique(region_verts, return_inverse=True)\n    region_points = pts[uniq]\n    region_indices = inverse.astype(np.int64)\n    region_counts = sel_counts.astype(np.int64)\n    if not with_normals:\n        return region_points, region_indices, region_counts\n    region_normals = mesh_vertex_normals(mesh, space)[uniq]\n    return region_points, region_indices, region_counts, region_normals\n\n\n# Mesh Regions demo: fabricate the whole showcase scene. Import the bundled\n# head model, resolve EVERY component tag, then build ONE gizmo PER tag -- `self`\n"
+		+ "# is the first tag's gizmo and each remaining tag gets a DUPLICATE of `self`\n# (which carries its Init/Compute/Methods sources + input attrs along). The\n# demo only creates + arranges the gizmos: it sets each gizmo's `regionTag`\n# and then DELEGATES the actual per-node binding (`inMesh` wire + positioning) to\n# that gizmo's own ``setup`` via ``run_setup([mesh])`` -- so demo and setup never\n# duplicate the wiring logic.\ndef get_component_tag_faces(mesh_shape):\n    \"\"\"\n    Retrieves component tags on a mesh shape and returns a dictionary.\n    Keys are the tag names.\n    Values are flattened, unique, and sorted lists of face indices.\n    \"\"\"\n    from maya import cmds as mc\n\n    attr_path = f\"{mesh_shape}.outMesh\"\n    tags = mc.geometryAttrInfo(attr_path, componentTagNames=True)\n\n    tag_faces_dict = {}\n\n    if not tags:\n        return tag_faces_dict\n\n    for tag in tags:\n        contents = mc.geometryAttrInfo(attr_path, componentTagExpression=tag, components=True)\n\n        # Use a set to automatically guarantee unique indices\n"
+		+ "        face_indices = set()\n\n        if contents:\n            for comp in contents:\n                comp = comp.strip()\n\n                # Check if the string represents a face (starts with 'f[' or 'F[')\n                if comp.lower().startswith('f['):\n                    # Extract the contents inside the square brackets\n                    inner_str = comp.split('[')[1].split(']')[0]\n\n                    # Handle ranges (e.g., '10:55')\n                    if ':' in inner_str:\n                        start_idx, end_idx = inner_str.split(':')\n                        # range() stops before the end value, so we add 1 to make it inclusive\n                        face_indices.update(range(int(start_idx), int(end_idx) + 1))\n\n                    # Handle single digits (e.g., '10')\n                    else:\n                        face_indices.add(int(inner_str))\n\n        # Convert the set back to a list and sort it\n        tag_faces_dict[tag] = sorted(list(face_indices))\n\n    return tag_faces_dict\n\n\ndef demo(self):\n"
+		+ "    from maya import cmds as mc\n    from mpynode import wrap_node\n    import os\n    import re\n    name = self.get_name()\n\n    head = None\n    try:\n        from mpynode._common.util.template_gallery import _bundled_templates_root\n        root = _bundled_templates_root()\n        if root:\n            cand = os.path.join(root, \"MPyLocator\", \"Mesh Regions\", \"head.ma\")\n            if os.path.isfile(cand):\n                head = cand\n    except Exception:\n        head = None\n    if not head:\n        return name\n\n    new_nodes = mc.file(head, i=True, returnNewNodes=True,\n                        namespace=\"headModel\") or []\n    meshes = [n for n in new_nodes if mc.nodeType(n) == \"mesh\"]\n    if not meshes:\n        meshes = mc.ls(\"headModel:*\", type=\"mesh\", long=True) or []\n    if not meshes:\n        return name\n    shape = (mc.ls(meshes[0], long=True) or [meshes[0]])[0]\n\n    tags = sorted(get_component_tag_faces(shape).keys())\n    if not tags:\n        return name\n\n    def _san(tag):\n        s = re.sub(r\"[^0-9A-Za-z_]\", \"_\", str(tag))\n"
+		+ "        if not s:\n            s = \"region\"\n        if s[0].isdigit():\n            s = \"_\" + s\n        return s + \"Region\"\n\n    # self is tag[0]'s gizmo; duplicate it once per remaining tag. Capture\n    # self's FULL DAG paths up front so later name-based lookups can't go\n    # ambiguous once dup shapes share the short name (Maya keeps a duplicated\n    # shape's short name identical to the original's).\n    self_shape = (mc.ls(name, long=True) or [name])[0]\n    self_tf = (mc.listRelatives(self_shape, parent=True, fullPath=True) or [self_shape])[0]\n\n    shapes = [self_shape]\n    for _ in tags[1:]:\n        dup_tf = mc.duplicate(self_tf, returnRootsOnly=True)[0]\n        dup_tf = (mc.ls(dup_tf, long=True) or [dup_tf])[0]\n        dsh = (mc.listRelatives(dup_tf, shapes=True, type=\"mPyLocator\", fullPath=True)\n               or mc.listRelatives(dup_tf, shapes=True, fullPath=True) or [])\n        if dsh:\n            shapes.append(dsh[0])\n\n    for idx, tag in enumerate(tags):\n        if idx >= len(shapes):\n            break\n"
+		+ "        sh = shapes[idx]\n        # Name THIS gizmo's region via the live `regionTag` string selector, then\n        # let its OWN setup wire the mesh (setup honours an already-set name) --\n        # one code path for both \"Run demo\" and a standalone \"Run setup\".\n        try:\n            mc.setAttr(sh + \".regionTag\", tag, type=\"string\")\n        except Exception:\n            pass\n        try:\n            w = wrap_node(sh)\n            if w is not None:\n                w.run_setup([shape])\n        except Exception:\n            pass\n        # Give each gizmo a DISTINCT default colour so the showcase reads as\n        # separate regions; hover/select/outline keep their shared attr\n        # defaults. Set AFTER run_setup so nothing setup does can win over it.\n        try:\n            _pal = [(0.25, 0.50, 0.95), (0.95, 0.45, 0.25), (0.30, 0.80, 0.40),\n                    (0.80, 0.35, 0.85), (0.95, 0.82, 0.20), (0.30, 0.85, 0.90),\n                    (0.95, 0.35, 0.55), (0.55, 0.85, 0.25), (0.45, 0.35, 0.90),\n                    (0.90, 0.60, 0.20), (0.20, 0.70, 0.70), (0.70, 0.70, 0.95)]\n"
+		+ "            _c = _pal[idx % len(_pal)]\n            for _ch, _v in zip(\"RGB\", _c):\n                mc.setAttr(\"%s.defaultColor%s\" % (sh, _ch), _v)\n        except Exception:\n            pass\n        # rename transform + shape after the tag for a readable outliner\n        try:\n            tf = mc.listRelatives(sh, parent=True, fullPath=True)\n            if tf:\n                new_tf = mc.rename(tf[0], _san(tag))\n                nsh = mc.listRelatives(new_tf, shapes=True, fullPath=True)\n                if nsh:\n                    mc.rename(nsh[0], _san(tag) + \"Shape\")\n                    fixed = mc.listRelatives(new_tf, shapes=True, fullPath=True)\n                    if fixed:\n                        shapes[idx] = fixed[0]\n        except Exception:\n            pass\n\n    # This demo IMPORTS a maya file, so frame the WHOLE scene rather than just\n    # the gizmos -- an imported mesh can sit anywhere, and fitting only the\n    # locators can leave the head off screen with nothing visible to the user.\n    try:\n        mc.viewFit(all=True)\n"
+		+ "    except Exception:\n        pass\n    return shapes[0]\n\n\n@maya_test(label=\"Region draws in the node's RGBA colour; select lifts it\", digits=3)\ndef test_mesh_regions(self):\n    \"\"\"Validate the node's INTENT (the SAME test passes on the interpreted node\n    and its C++ compile -> parity). A locator has no numeric mesh output, so --\n    exactly as the builder's own live-check does -- assert the DRAW BUFFERS:\n\n      1. A bound region draws ONE RGBA face-colour per face carrying the node's\n         `defaultColor` RGB + the `alpha` input (rest state), outlined in\n         `outlineColor` at full opacity.\n      2. Selecting the gizmo snaps the fill to `selectColor` and the outline to\n         `outlineSelectColor` (alpha survives) and lifts the patch by exactly\n         `selectOffset - offset` along the normals -- region-size-independent.\n      3. A colour dialled to (0,0,0) draws BLACK. Nothing substitutes a\n         fallback, so every colour in the cube is reachable.\n    \"\"\"\n    from maya import cmds as mc\n    import maya.api.OpenMaya as om2\n"
+		+ "    import numpy as np\n    from mpynode._common.methods.test_helpers import (\n        assert_close, assert_equal, assert_true)\n\n    name = self.get_name()\n\n    def _set(plug, *vals, **kw):\n        # A demo (or user) may have CONNECTED this input; break incoming\n        # connections first so the test can drive it, then set it.\n        for s in (mc.listConnections(plug, s=True, d=False, plugs=True) or []):\n            mc.disconnectAttr(s, plug)\n        mc.setAttr(plug, *vals, **kw)\n\n    # Validate whatever mesh THIS node already consumes (e.g. the demo's head\n    # model); build a probe sphere ONLY if `inMesh` drives nothing yet. Keeps the\n    # test on `self` (parity) and robust to a live, demo-populated scene + reruns.\n    src = mc.listConnections(name + \".inMesh\", s=True, d=False) or []\n    if not src:\n        probe = mc.polySphere(sx=20, sy=20, name=\"regionProbe#\")[0]\n        pshape = mc.listRelatives(probe, shapes=True, fullPath=True)[0]\n        mc.connectAttr(pshape + \".worldMesh[0]\", name + \".inMesh\", force=True)\n"
+		+ "\n    # Drive the draw deterministically off `self` through the COMPONENT-TAG\n    # path. Not the legacy `regions` dict: that is a stored Python var, and a\n    # compiled node has no _storedVarNames/_storedVarsData plug to receive one,\n    # so forcing it made this test unrunnable against the C++ build -- which is\n    # the parity claim in the docstring above. Tagging a known face range keeps\n    # the region deterministic AND portable. `create=True` on an existing name\n    # is idempotent, so a re-run in a live scene is safe.\n    shape = (mc.listConnections(name + \".inMesh\", s=True, d=False,\n                                shapes=True) or [None])[0]\n    assert_true(shape is not None, \"inMesh must be driven by a mesh shape\")\n    n_faces = mc.polyEvaluate(shape, face=True)\n    last_face = min(15, int(n_faces) - 1)\n    mc.componentTag(\"%s.f[0:%d]\" % (shape, last_face), create=True,\n                    newTagName=\"mpyTestRegion\")\n    # Seed known colours + offsets. Every input is broken-then-set so no\n    # demo/user connection can win over the values this test drives.\n"
+		+ "    _set(name + \".regionTag\", \"mpyTestRegion\", type=\"string\")\n    probe_rgb = (0.20, 0.55, 0.90)\n    for ch, val in zip(\"RGB\", probe_rgb):\n        _set(\"%s.defaultColor%s\" % (name, ch), val)\n    sel_rgb = (0.30, 0.85, 0.90)\n    for ch, val in zip(\"RGB\", sel_rgb):\n        _set(\"%s.selectColor%s\" % (name, ch), val)\n    # Outline colours, deliberately nothing like the fill so a swapped-in fill\n    # value could not satisfy the outline assertions below.\n    out_rgb = (0.90, 0.10, 0.40)\n    for ch, val in zip(\"RGB\", out_rgb):\n        _set(\"%s.outlineColor%s\" % (name, ch), val)\n    out_sel_rgb = (0.10, 0.95, 0.20)\n    for ch, val in zip(\"RGB\", out_sel_rgb):\n        _set(\"%s.outlineSelectColor%s\" % (name, ch), val)\n    _set(name + \".alpha\", 0.8)\n    _set(name + \".offset\", 0.1)\n    _set(name + \".selectOffset\", 0.5)\n    mc.dgdirty(name)\n\n    # Read the ordered draw commands via the node's PUBLIC MPx surface using the\n    # node NAME only -- so this runs identically on the interpreted node AND a\n    # compiled node (the parity point), never the interpreted-only wrapper.\n"
+		+ "    # One patch is drawn PER TAG; the tag driven above is the only one this test\n    # names, so the first patch answers every assertion below.\n    def _draw(selected=False):\n        sl = om2.MSelectionList(); sl.add(name)\n        mpx = om2.MFnDependencyNode(sl.getDependNode(0)).userNode()\n        return mpx.evaluateDrawItems(0.0, selected=selected) or {}\n\n    def _poly(selected=False):\n        for cmd in _draw(selected).get(\"commands\") or []:\n            if cmd[\"slot\"] == \"polygons\":\n                return cmd[\"buffer\"]\n        return None\n\n    # A COMPILED C++ locator (MPxLocatorNode) exposes no Python\n    # evaluateDrawItems, so its draw buffers are unreachable here -- that parity\n    # is covered by the dedicated -DMPYNODE_PROBE numerical buffer comparison.\n    # Skip cleanly rather than false-fail, the same guard test_animated_selection\n    # and test_animated_text already use. AttributeError ONLY: a node that HAS\n    # the surface but draws nothing must still fail the assertion below.\n    try:\n        _draw(False)\n"
+		+ "    except AttributeError:\n        return\n\n    # 1) REST state: one RGBA row per face = defaultColor RGB + alpha (0.8).\n    poly = _poly(False)\n    assert_true(poly is not None, \"the bound region must draw a patch\")\n    fcol = np.asarray(poly[\"face_colors\"])\n    cnt = np.asarray(poly[\"counts\"])\n    assert_true(fcol.ndim == 2 and fcol.shape[1] == 4,\n                \"face colours must be RGBA rows\")\n    assert_equal(fcol.shape[0], cnt.shape[0],\n                 \"one face colour per face (%d vs %d)\"\n                 % (fcol.shape[0], cnt.shape[0]))\n    assert_close(fcol[:, :3].mean(axis=0).tolist(), list(probe_rgb))\n    assert_true(bool(np.allclose(fcol[:, 3], 0.8, atol=1e-3)),\n                \"the alpha input must reach the fill\")\n    wire = np.asarray(poly[\"wireframe\"], dtype=np.float64).ravel()\n    assert_close(wire[:3].tolist(), list(out_rgb))\n    assert_close(float(wire[3]), 1.0,\n                 msg=\"the outline stays opaque; alpha dials the fill only\")\n\n    # 2) SELECT state: fill snaps to selectColor, the outline to\n"
+		+ "    #    outlineSelectColor, alpha survives, and the patch lifts by exactly\n    #    selectOffset - offset (0.5 - 0.1) along the normals.\n    rest_pts = np.asarray(poly[\"points\"])\n    psel = _poly(True)\n    fcs = np.asarray(psel[\"face_colors\"])\n    disp = np.linalg.norm(np.asarray(psel[\"points\"]) - rest_pts, axis=1)\n    assert_close(fcs[:, :3].mean(axis=0).tolist(), list(sel_rgb))\n    assert_true(bool(np.allclose(fcs[:, 3], 0.8, atol=1e-3)),\n                \"alpha survives selection\")\n    assert_close(np.asarray(psel[\"wireframe\"],\n                            dtype=np.float64).ravel()[:3].tolist(), list(out_sel_rgb))\n    assert_close(float(disp.max()), 0.5 - 0.1, digits=2,\n                 msg=\"select lift must equal selectOffset - offset\")\n\n    # 3) ZERO IS A COLOUR. Dialling a state to (0,0,0) must draw BLACK -- the\n    #    compute substitutes nothing, so the value on the plug is the value on\n    #    screen. Asserted on the fill AND the outline, since each used to have\n    #    (fill) or lacked entirely (outline) its own path to the buffer.\n"
+		+ "    for ch in \"RGB\":\n        _set(\"%s.defaultColor%s\" % (name, ch), 0.0)\n        _set(\"%s.outlineColor%s\" % (name, ch), 0.0)\n    mc.dgdirty(name)\n    pblack = _poly(False)\n    assert_true(pblack is not None, \"an all-black region must still draw\")\n    assert_close(np.asarray(pblack[\"face_colors\"])[:, :3].mean(\n        axis=0).tolist(), [0.0, 0.0, 0.0])\n    assert_close(np.asarray(pblack[\"wireframe\"],\n                            dtype=np.float64).ravel()[:3].tolist(), [0.0, 0.0, 0.0])\n\n\n\n# Mesh Regions setup: bind THIS ONE gizmo to a single region of a mesh in the\n# current selection (NO scene fabrication -- that is the `demo`\\'s job). Resolves\n# ONE mesh, honours this gizmo\\'s `regionTag` string (or defaults it to the first\n# component tag when unset), and wires the mesh\\'s live world-space geometry into\n# `inMesh`. `demo` calls this once per tag after setting each gizmo\\'s `regionTag`,\n# so the two hooks share one wiring path.\n@maya_command(creates=True)\ndef setup(self, selection=None, *args, **kwargs):\n    from maya import cmds as mc\n"
+		+ "    name = self.get_name()\n\n    # Resolve ONE mesh: from the passed selection (in pick order), else the live\n    # selection, else an already-connected inMesh source. Drop self so selecting\n    # the gizmo alongside the mesh is harmless.\n    order = [o for o in (selection or mc.ls(selection=True) or []) if o != name]\n    meshes = _meshes(order) if order else []\n    if not meshes:\n        src = mc.listConnections(name + \".inMesh\", source=True,\n                                 destination=False, shapes=True) or []\n        meshes = _meshes(src) if src else []\n    if not meshes:\n        raise SetupError(\"Select the mesh to bind this region gizmo to.\")\n    shape = (mc.ls(meshes[0], long=True) or [meshes[0]])[0]\n\n    regions = get_component_tag_faces(shape)\n    if not regions:\n        raise SetupError(\"Mesh has no component tags to bind a region to.\")\n    tags = sorted(regions.keys())\n\n    # The region is chosen by NAME via the LIVE `regionTag` string INPUT. Honour\n    # an already-set name (the demo sets one per gizmo, or the user typed one);\n"
+		+ "    # otherwise default to the first tag so a fresh bind shows something. A user\n    # can retype it in the Channel Box / Attribute Editor and the region\n    # retargets on the next redraw (a name with no match draws blank). The\n    # face-id MEMBERSHIP is never frozen -- the draw resolves it LIVE from the\n    # input mesh data each evaluation, so editing the component tag updates the\n    # region. The string name also marshals into the compiled node.\n    try:\n        cur = mc.getAttr(name + \".regionTag\") or \"\"\n    except Exception:\n        cur = \"\"\n    tag = cur or tags[0]\n    if not cur:\n        try:\n            mc.setAttr(name + \".regionTag\", tag, type=\"string\")\n        except Exception:\n            pass\n    mc.connectAttr(shape + \".worldMesh[0]\", name + \".inMesh\", force=True)\n\n    # Move THIS gizmo's transform to the centroid of its region's vertices so\n    # the handle sits on the patch it controls. The patch is drawn in world\n    # space (see LOC_REGION_COMPUTE), so this only repositions the manipulator,\n"
+		+ "    # not the drawing. Wrapped so binding never fails on positioning.\n    try:\n        import maya.api.OpenMaya as om\n        import numpy as np\n        sel = om.MSelectionList()\n        sel.add(shape)\n        mfn = om.MFnMesh(sel.getDagPath(0))\n        pts = extract_region(mfn, regions[tag], space=om.MSpace.kWorld)[0]\n        if pts.shape[0]:\n            ctr = pts.mean(axis=0)\n            tf = (mc.listRelatives(name, parent=True, fullPath=True) or [None])[0]\n            if tf:\n                mc.xform(tf, worldSpace=True, translation=(\n                    float(ctr[0]), float(ctr[1]), float(ctr[2])))\n    except Exception:\n        pass\n\n    # Make the bound mesh unselectable so the region gizmos are easy to grab\n    # (reference display: visible in the viewport but unpickable).\n    try:\n        mc.setAttr(shape + \".overrideEnabled\", 1)\n        mc.setAttr(shape + \".overrideDisplayType\", 2)\n    except Exception:\n        pass\n\n    try:\n        mc.dgdirty(name)\n    except Exception:\n        pass\n    return name\n");
+	setAttr ".class_path" -type "string" "mpynode_user.MeshRegionLocator";
+createNode transform -n "topLipRightRegion";
+	rename -uid "7262EA28-904D-731F-16F7-219922BB68C0";
+	setAttr ".t" -type "double3" -2.1770660738150278 152.72079035441081 8.0977771679560338 ;
+createNode mPyLocator -n "topLipRightRegionShape" -p "topLipRightRegion";
+	rename -uid "3A4C7FF4-574E-2918-3900-78B4B717E530";
+	addAttr -ci true -k true -sn "inMesh" -ln "inMesh" -dt "mesh";
+	addAttr -ci true -k true -sn "regionTag" -ln "regionTag" -dt "string";
+	addAttr -ci true -k true -sn "offset" -ln "offset" -dv 0.1 -at "float";
+	addAttr -ci true -k true -sn "hoverOffset" -ln "hoverOffset" -dv 0.25 -at "float";
+	addAttr -ci true -k true -sn "selectOffset" -ln "selectOffset" -dv 0.5 -at "float";
+	addAttr -ci true -k true -sn "hoverDur" -ln "hoverDur" -dv 0.35 -at "float";
+	addAttr -ci true -uac -k true -sn "defaultColor" -ln "defaultColor" -at "float3" 
+		-nc 3;
+	addAttr -ci true -k true -sn "defaultColorR" -ln "defaultColorR" -dv 0.25 -at "float" 
+		-p "defaultColor";
+	addAttr -ci true -k true -sn "defaultColorG" -ln "defaultColorG" -dv 0.5 -at "float" 
+		-p "defaultColor";
+	addAttr -ci true -k true -sn "defaultColorB" -ln "defaultColorB" -dv 0.95 -at "float" 
+		-p "defaultColor";
+	addAttr -ci true -uac -k true -sn "hoverColor" -ln "hoverColor" -at "float3" -nc 
+		3;
+	addAttr -ci true -k true -sn "hoverColorR" -ln "hoverColorR" -dv 1 -at "float" -p "hoverColor";
+	addAttr -ci true -k true -sn "hoverColorG" -ln "hoverColorG" -dv 0.82 -at "float" 
+		-p "hoverColor";
+	addAttr -ci true -k true -sn "hoverColorB" -ln "hoverColorB" -dv 0.15 -at "float" 
+		-p "hoverColor";
+	addAttr -ci true -uac -k true -sn "selectColor" -ln "selectColor" -at "float3" -nc 
+		3;
+	addAttr -ci true -k true -sn "selectColorR" -ln "selectColorR" -dv 0.3 -at "float" 
+		-p "selectColor";
+	addAttr -ci true -k true -sn "selectColorG" -ln "selectColorG" -dv 0.85 -at "float" 
+		-p "selectColor";
+	addAttr -ci true -k true -sn "selectColorB" -ln "selectColorB" -dv 0.9 -at "float" 
+		-p "selectColor";
+	addAttr -ci true -uac -k true -sn "outlineColor" -ln "outlineColor" -at "float3" 
+		-nc 3;
+	addAttr -ci true -k true -sn "outlineColorR" -ln "outlineColorR" -dv 0.02 -at "float" 
+		-p "outlineColor";
+	addAttr -ci true -k true -sn "outlineColorG" -ln "outlineColorG" -dv 0.02 -at "float" 
+		-p "outlineColor";
+	addAttr -ci true -k true -sn "outlineColorB" -ln "outlineColorB" -dv 0.04 -at "float" 
+		-p "outlineColor";
+	addAttr -ci true -uac -k true -sn "outlineHoverColor" -ln "outlineHoverColor" -at "float3" 
+		-nc 3;
+	addAttr -ci true -k true -sn "outlineHoverColorR" -ln "outlineHoverColorR" -dv 0.02 
+		-at "float" -p "outlineHoverColor";
+	addAttr -ci true -k true -sn "outlineHoverColorG" -ln "outlineHoverColorG" -dv 0.02 
+		-at "float" -p "outlineHoverColor";
+	addAttr -ci true -k true -sn "outlineHoverColorB" -ln "outlineHoverColorB" -dv 0.04 
+		-at "float" -p "outlineHoverColor";
+	addAttr -ci true -uac -k true -sn "outlineSelectColor" -ln "outlineSelectColor" 
+		-at "float3" -nc 3;
+	addAttr -ci true -k true -sn "outlineSelectColorR" -ln "outlineSelectColorR" -dv 
+		0.02 -at "float" -p "outlineSelectColor";
+	addAttr -ci true -k true -sn "outlineSelectColorG" -ln "outlineSelectColorG" -dv 
+		0.02 -at "float" -p "outlineSelectColor";
+	addAttr -ci true -k true -sn "outlineSelectColorB" -ln "outlineSelectColorB" -dv 
+		0.04 -at "float" -p "outlineSelectColor";
+	addAttr -ci true -k true -sn "alpha" -ln "alpha" -dv 0.8 -min 0 -max 1 -at "float";
+	addAttr -ci true -h true -sn "_initSource" -ln "_initSource" -dt "string";
+	addAttr -ci true -h true -sn "_methodsSource" -ln "_methodsSource" -dt "string";
+	addAttr -ci true -h true -sn "class_path" -ln "class_path" -dt "string";
+	setAttr -k off ".v";
+	setAttr "._computeSource" -type "string" (
+		"# Draw the bound mesh's component-tag region as a coloured patch. The region\n# MEMBERSHIP is resolved LIVE from the input mesh DATA every evaluation (via\n# MFnGeometryData), keyed by this gizmo's tag NAME (`regionTag`, baked once by\n# setup) -- so editing the component tag (add/remove faces) updates the drawn\n# region immediately, and a compiled C++ node resolves the SAME way off its own\n# input handle. self.inMesh is the live world-space MFnMesh (worldMesh[0]) used\n# for the geometry; the tag membership comes from that same input's data. Falls\n# back to a legacy baked `regions` dict for scenes saved before this change.\nmesh = self.inMesh\n# The region is chosen purely by NAME via the `regionTag` string input. If the\n# name matches no component tag on the input mesh, the region goes BLANK (a typo\n# or a removed/renamed tag reads as empty). Only when regionTag is unset do we\n# honour a legacy baked `regions` dict (scenes saved before regionTag existed /\n# the build probe).\n_tag = getattr(self, \"regionTag\", None)\n"
+		+ "# ONE read of the input data, shared by the tag membership and the source\n# transform below (both live on the same MFnGeometryData).\n_mdata = mesh_data_from_node_plug(node_name_from_self(self), \"inMesh\")\n_wmat = mesh_matrix_from_mesh_data(_mdata)\nregions = None\nif _tag:\n    _faces = tag_indices_from_mesh_data(_mdata, _tag)\n    if _faces:\n        regions = {_tag: _faces}\n    # else: named tag has no match -> leave regions None -> blank (no fallback).\nelse:\n    _legacy = getattr(self, \"regions\", None)\n    if isinstance(_legacy, dict) and _legacy:\n        regions = _legacy\nif mesh is None or not regions:\n    self.draw = None\nelse:\n    offset = self.offset\n    hover_offset = self.hoverOffset\n    select_offset = self.selectOffset\n    hover_dur = max(self.hoverDur, 1e-3)\n    alpha = float(self.alpha)\n    # Per-state RGB colours (each a 3-float `color` input) + one shared alpha.\n    # The active colour tweens default->hover on the SAME elastic curve as the\n    # lift, and snaps to the select colour when selected. Each input carries its\n"
+		+ "    # own attr DEFAULT, so what is read here is exactly what the user dialled --\n    # all-zero means BLACK, not \"unset\". Nothing is substituted.\n    def_c = np.asarray(self.defaultColor, dtype=np.float64).ravel()[:3]\n    hov_c = np.asarray(self.hoverColor, dtype=np.float64).ravel()[:3]\n    sel_c = np.asarray(self.selectColor, dtype=np.float64).ravel()[:3]\n    # The outline around each patch has the SAME three states, on the same\n    # curve, so it can read as its own accent rather than a fixed dark edge.\n    odef_c = np.asarray(self.outlineColor, dtype=np.float64).ravel()[:3]\n    ohov_c = np.asarray(self.outlineHoverColor, dtype=np.float64).ravel()[:3]\n    osel_c = np.asarray(self.outlineSelectColor, dtype=np.float64).ravel()[:3]\n\n    hovered = bool(self.hovered)\n    selected = bool(self.selected)\n    if selected:\n        hovered = False          # selected shows only its selected form\n    now = float(_wallclock.time())\n\n    h_cur, h_e = tween(now, float(getattr(self, \"hv_start\", 0.0)),\n                       float(getattr(self, \"hv_from\", 0.0)),\n"
+		+ "                       float(getattr(self, \"hv_to\", 0.0)), hover_dur)\n    if hovered != bool(getattr(self, \"hv_prev\", False)):\n        self.hv_start = now\n        self.hv_from = h_cur\n        self.hv_to = 1.0 if hovered else 0.0\n        self.hv_prev = hovered\n        h_e = 0.0\n\n    # THREE ABSOLUTE normal offsets (world units): the patch floats at `offset`\n    # at rest, tweens to `hoverOffset` on hover, and snaps to `selectOffset`\n    # when selected. Absolute (not additive) + a fixed normal lift (never an\n    # in-plane centroid balloon), so the pop is identical no matter how many\n    # faces the tag covers -- a tag grown to span the whole mesh lifts by the\n    # same amount as a tiny one.\n    lift = offset + (hover_offset - offset) * h_cur\n    if selected:\n        lift = select_offset\n    if lift < MIN_OFFSET:\n        lift = MIN_OFFSET\n\n    # Active fill colour: tween default->hover on the hover curve, snap to the\n    # select colour when selected; append the shared alpha to make the RGBA row\n    # the polygons buffer expects.\n"
+		+ "    rgb = def_c + (hov_c - def_c) * h_cur\n    if selected:\n        rgb = sel_c\n    rgba = np.concatenate([rgb, [alpha]])\n\n    # The outline rides the SAME hover curve and the same select snap. It stays\n    # opaque: `alpha` fades the FILL so the surface shows through, and letting\n    # the silhouette fade with it would wash the patch's edge out entirely.\n    orgb = odef_c + (ohov_c - odef_c) * h_cur\n    if selected:\n        orgb = osel_c\n    orgba = np.concatenate([orgb, [1.0]])\n\n    # One DrawMesh per tag. `self.draw` takes the LIST straight -- no `sum()`\n    # and no `+` chain to build -- and draws them in the order appended. This\n    # used to be four parallel accumulator lists plus a hand-rolled\n    # `idx + voff` rebase.\n    patches = []\n    for tag in sorted(regions.keys()):\n        faces = np.asarray(regions[tag], dtype=np.int64).ravel()\n        if faces.size == 0:\n            continue\n        pts, idx, cnt, nrm = extract_region(mesh, faces, with_normals=True)\n        if pts.shape[0] == 0:\n            continue\n"
+		+ "        # extract_region reads OBJECT space: the mesh DATA carries the source\n        # transform as a SEPARATE matrix, and a data-built MFnMesh has no DAG\n        # path so getPoints(kWorld) cannot reach world. `world_space=True` below\n        # takes these points AS world, so apply that matrix here -- without it\n        # the patch draws at the ORIGIN and never follows the mesh. Maya is\n        # row-vector (p * M): the 3x3 rotates/scales, row 3 translates.\n        if _wmat is not None:\n            _m = np.asarray(_wmat, dtype=np.float64).reshape(4, 4)\n            pts = pts @ _m[:3, :3] + _m[3, :3]\n            nrm = nrm @ _m[:3, :3]\n            _mag = np.linalg.norm(nrm, axis=1, keepdims=True)\n            nrm = nrm / np.where(_mag > 1e-12, _mag, 1.0)\n        patches.append(DrawMesh(\n            pts + nrm * lift, cnt, idx, color=rgba,\n            outline=orgba, outline_width=2.0,\n            outline_boundary_only=True,   # clean outer silhouette only\n            world_space=True,             # follow the mesh, not the locator\n"
+		+ "            precise_hover=True))\n\n    if not patches:\n        self.draw = None\n    else:\n        self.draw = patches\n        self.auto_highlight = False\n        self.auto_refresh = bool(h_e < 1.0)\n");
+	setAttr "._inputAttrs" -type "string" (
+		"{\"alpha\":{\"attr_type\":\"float\",\"default_value\":0.8,\"is_array\":false,\"max_value\":1.0,\"min_value\":0.0,\"order\":12},\"defaultColor\":{\"attr_type\":\"color\",\"default_value\":[0.25,0.5,0.95],\"is_array\":false,\"order\":6},\"hoverColor\":{\"attr_type\":\"color\",\"default_value\":[1.0,0.82,0.15],\"is_array\":false,\"order\":7},\"hoverDur\":{\"attr_type\":\"float\",\"default_value\":0.35,\"is_array\":false,\"order\":5},\"hoverOffset\":{\"attr_type\":\"float\",\"default_value\":0.25,\"is_array\":false,\"order\":3},\"inMesh\":{\"attr_type\":\"mesh\",\"is_array\":false,\"order\":0},\"offset\":{\"attr_type\":\"float\",\"default_value\":0.1,\"is_array\":false,\"order\":2},\"outlineColor\":{\"attr_type\":\"color\",\"default_value\":[0.02,0.02,0.04],\"is_array\":false,\"order\":9},\"outlineHoverColor\":{\"attr_type\":\"color\",\"default_value\":[0.02,0.02,0.04],\"is_array\":false,\"order\":10},\"outlineSelectColor\":{\"attr_type\":\"color\",\"default_value\":[0.02,0.02,0.04],\"is_array\":false,\"order\":11},\"regionTag\":{\"attr_type\":\"string\",\"is_array\":false,\"order\":1},\"selectColor\":{\"attr_type\":\"color\",\"default_value\":[0.3,0.85,0.9],\"is_array\":false,\"order\":8},\"selectOffset\":{\"attr_type\":\"float\",\"default_value\":0.5,\"is_array\":false,\"order\":4}}");
+	setAttr -k on ".inMesh";
+	setAttr -k on ".regionTag" -type "string" "topLipRight";
+	setAttr -k on ".defaultColor" -type "float3" 0.55000001 0.85000002 0.25 ;
+	setAttr "._initSource" -type "string" (
+		"import math\nimport time as _wallclock\nimport numpy as np\nfrom mpynode._common.draw.draw_types import DrawMesh\nfrom mpynode._common.nodes.mesh.mesh_region import extract_region\nfrom mpynode._common.nodes.mesh.component_tags import (\n    node_name_from_self, mesh_data_from_node_plug, tag_indices_from_mesh_data,\n    mesh_matrix_from_mesh_data)\n\nMIN_OFFSET = 0.004      # floor so elastic undershoot never dips into the mesh\n# Fill AND outline colour, plus the per-state offsets, are LIVE input attrs\n# (defaultColor / hoverColor / selectColor, outlineColor / outlineHoverColor /\n# outlineSelectColor, offset / hoverOffset / selectOffset / alpha), so the\n# palette/tint constants that used to live here are gone -- the compute reads\n# them off self.<attr> and a user can tweak each one interactively. Every colour\n# input carries its OWN attr default, so a raw-created node already looks right\n# and the compute never has to guess whether a value is \"unset\": all-zero means\n# exactly BLACK, which is the colour the user dialled.\n"
+		+ "\n\ndef elastic_in_out(t):\n    if t <= 0.0:\n        return 0.0\n    if t >= 1.0:\n        return 1.0\n    p = 0.45\n    s = p / 4.0\n    t2 = 2.0 * t - 1.0\n    if t2 < 0.0:\n        return -0.5 * (2.0 ** (10.0 * t2)) * math.sin((t2 - s) * (2.0 * math.pi / p))\n    return (2.0 ** (-10.0 * t2)) * math.sin((t2 - s) * (2.0 * math.pi / p)) * 0.5 + 1.0\n\n\ndef tween(now, start, frm, to, dur):\n    e = (now - start) / max(dur, 1e-3)\n    e = 0.0 if e < 0.0 else (1.0 if e > 1.0 else e)\n    return frm + (to - frm) * elastic_in_out(e), e\n");
+	setAttr "._methodsSource" -type "string" (
+		"class SetupError(Exception):\n    \"\"\"The current selection / scene state can't support setup for this node.\n    Message is user-facing (it names what to select).\"\"\"\n\n\ndef _has_shape(node, shape_types):\n    from maya import cmds as mc\n    if mc.nodeType(node) in shape_types:\n        return True\n    for st in shape_types:\n        if mc.listRelatives(node, shapes=True, type=st, noIntermediate=True):\n            return True\n    return False\n\n\ndef _meshes(sel):\n    return [n for n in sel if _has_shape(n, (\"mesh\",))]\n\n\n# Region-extraction helpers, VENDORED from\n# mpynode._common.nodes.mesh.mesh_region. setup is a @maya_command body, which\n# ships as embedded python inside the compiled .mll -- where mpynode is NOT\n# importable -- so extract_region and its whole closure (mesh_arrays /\n# mesh_vertex_normals and their api1 fallbacks) are carried here instead of\n# imported. numpy + the OpenMaya modules are imported per-def.\ndef _is_api2(mesh):\n    \"\"\"True for an API-2.0 function set, False for a legacy API-1.0 one.\n    Both classes are named ``MFnMesh``, so we distinguish by module:\n"
+		+ "    API 1.0 is ``maya.OpenMaya``; API 2.0 reports ``OpenMaya``.\"\"\"\n    return type(mesh).__module__ != \"maya.OpenMaya\"\n\n\ndef _arrays_api1(mesh, space):\n    \"\"\"Legacy API-1.0 read path. API 1.0 has no vectorized point accessor,\n    so points go through a small per-vertex loop; connectivity uses the\n    scalar-iterable MIntArray (np.fromiter).\"\"\"\n    import numpy as np\n    import maya.OpenMaya as om1\n\n    space1 = om1.MSpace.kObject if space is None else int(space)\n    pa = om1.MPointArray()\n    mesh.getPoints(pa, space1)\n    n = pa.length()\n    pts = np.empty((n, 3), dtype=np.float64)\n    for i in range(n):\n        p = pa[i]\n        pts[i, 0] = p.x\n        pts[i, 1] = p.y\n        pts[i, 2] = p.z\n    counts1 = om1.MIntArray()\n    connects1 = om1.MIntArray()\n    mesh.getVertices(counts1, connects1)\n    counts = np.fromiter(counts1, dtype=np.int64, count=counts1.length())\n    connects = np.fromiter(connects1, dtype=np.int64, count=connects1.length())\n    return pts, counts, connects\n\n\ndef mesh_arrays(mesh, space=None):\n"
+		+ "    \"\"\"Return ``(points (V,3) float64, counts (F,) int64, connects (C,) int64)``\n    for an ``MFnMesh`` (API 2.0 preferred, API 1.0 supported).\"\"\"\n    import numpy as np\n    import maya.api.OpenMaya as om\n\n    if not _is_api2(mesh):\n        return _arrays_api1(mesh, space)\n    if space is None:\n        space = om.MSpace.kObject\n    # getPoints -> MPointArray; np.array gives (V, 4) [x,y,z,w] -> drop w.\n    pts = np.asarray(mesh.getPoints(space))[:, :3].astype(np.float64)\n    counts_arr, connects_arr = mesh.getVertices()\n    counts = np.asarray(counts_arr, dtype=np.int64)\n    connects = np.asarray(connects_arr, dtype=np.int64)\n    return pts, counts, connects\n\n\ndef _normals_api1(mesh, space):\n    \"\"\"Legacy API-1.0 per-vertex normal read (out-param + small loop).\"\"\"\n    import numpy as np\n    import maya.OpenMaya as om1\n\n    space1 = om1.MSpace.kObject if space is None else int(space)\n    nrm = om1.MFloatVectorArray()\n    mesh.getVertexNormals(False, nrm, space1)\n    n = nrm.length()\n    out = np.empty((n, 3), dtype=np.float64)\n"
+		+ "    for i in range(n):\n        v = nrm[i]\n        out[i, 0] = v.x\n        out[i, 1] = v.y\n        out[i, 2] = v.z\n    return out\n\n\ndef mesh_vertex_normals(mesh, space=None):\n    \"\"\"Return ``(V, 3)`` unit per-vertex normals (Maya's averaged vertex\n    normals) for an ``MFnMesh``, aligned with ``mesh_arrays`` point order.\"\"\"\n    import numpy as np\n    import maya.api.OpenMaya as om\n\n    if not _is_api2(mesh):\n        n = _normals_api1(mesh, space)\n    else:\n        if space is None:\n            space = om.MSpace.kObject\n        n = np.asarray(\n            mesh.getVertexNormals(False, space))[:, :3].astype(np.float64)\n    # Defensive renormalize (Maya returns unit normals, but guard zeros).\n    mag = np.linalg.norm(n, axis=1, keepdims=True)\n    return n / np.where(mag > 1e-12, mag, 1.0)\n\n\ndef extract_region(mesh, face_ids, space=None, with_normals=False):\n    \"\"\"Build a compact polygon buffer for the faces in ``face_ids`` from a\n    live ``MFnMesh``.\n\n    Returns ``(points, indices, counts)`` -- or, when ``with_normals`` is\n"
+		+ "    True, ``(points, indices, counts, normals)``. The region's vertices are\n    compacted + remapped, so ``indices`` refer only to the returned\n    ``points``. Fully vectorized -- no per-face loops.\"\"\"\n    import numpy as np\n\n    def _empty():\n        z3 = np.zeros((0, 3), dtype=np.float64)\n        zi = np.zeros((0,), dtype=np.int64)\n        return (z3, zi, zi.copy(), z3.copy()) if with_normals else (z3, zi, zi.copy())\n\n    if mesh is None:\n        return _empty()\n    pts, counts, connects = mesh_arrays(mesh, space)\n    face_ids = np.asarray(face_ids, dtype=np.int64).ravel()\n    if face_ids.size == 0 or counts.shape[0] == 0:\n        return _empty()\n    # Keep only valid face ids.\n    face_ids = face_ids[(face_ids >= 0) & (face_ids < counts.shape[0])]\n    if face_ids.size == 0:\n        return _empty()\n\n    face_off = np.cumsum(counts) - counts          # start offset into connects/face\n    sel_counts = counts[face_ids]                  # (M,)\n    starts = face_off[face_ids]                    # (M,)\n    total = int(sel_counts.sum())\n"
+		+ "    if total == 0:\n        return _empty()\n\n    # Flatten the selected faces' connectivity positions (vectorized).\n    face_of = np.repeat(np.arange(face_ids.size), sel_counts)            # (total,)\n    within = np.arange(total) - (np.cumsum(sel_counts) - sel_counts)[face_of]\n    connect_pos = starts[face_of] + within                              # (total,)\n    region_verts = connects[connect_pos]                                # global vertex ids\n\n    # Compact the used vertices + remap the connectivity to 0..U-1.\n    uniq, inverse = np.unique(region_verts, return_inverse=True)\n    region_points = pts[uniq]\n    region_indices = inverse.astype(np.int64)\n    region_counts = sel_counts.astype(np.int64)\n    if not with_normals:\n        return region_points, region_indices, region_counts\n    region_normals = mesh_vertex_normals(mesh, space)[uniq]\n    return region_points, region_indices, region_counts, region_normals\n\n\n# Mesh Regions demo: fabricate the whole showcase scene. Import the bundled\n# head model, resolve EVERY component tag, then build ONE gizmo PER tag -- `self`\n"
+		+ "# is the first tag's gizmo and each remaining tag gets a DUPLICATE of `self`\n# (which carries its Init/Compute/Methods sources + input attrs along). The\n# demo only creates + arranges the gizmos: it sets each gizmo's `regionTag`\n# and then DELEGATES the actual per-node binding (`inMesh` wire + positioning) to\n# that gizmo's own ``setup`` via ``run_setup([mesh])`` -- so demo and setup never\n# duplicate the wiring logic.\ndef get_component_tag_faces(mesh_shape):\n    \"\"\"\n    Retrieves component tags on a mesh shape and returns a dictionary.\n    Keys are the tag names.\n    Values are flattened, unique, and sorted lists of face indices.\n    \"\"\"\n    from maya import cmds as mc\n\n    attr_path = f\"{mesh_shape}.outMesh\"\n    tags = mc.geometryAttrInfo(attr_path, componentTagNames=True)\n\n    tag_faces_dict = {}\n\n    if not tags:\n        return tag_faces_dict\n\n    for tag in tags:\n        contents = mc.geometryAttrInfo(attr_path, componentTagExpression=tag, components=True)\n\n        # Use a set to automatically guarantee unique indices\n"
+		+ "        face_indices = set()\n\n        if contents:\n            for comp in contents:\n                comp = comp.strip()\n\n                # Check if the string represents a face (starts with 'f[' or 'F[')\n                if comp.lower().startswith('f['):\n                    # Extract the contents inside the square brackets\n                    inner_str = comp.split('[')[1].split(']')[0]\n\n                    # Handle ranges (e.g., '10:55')\n                    if ':' in inner_str:\n                        start_idx, end_idx = inner_str.split(':')\n                        # range() stops before the end value, so we add 1 to make it inclusive\n                        face_indices.update(range(int(start_idx), int(end_idx) + 1))\n\n                    # Handle single digits (e.g., '10')\n                    else:\n                        face_indices.add(int(inner_str))\n\n        # Convert the set back to a list and sort it\n        tag_faces_dict[tag] = sorted(list(face_indices))\n\n    return tag_faces_dict\n\n\ndef demo(self):\n"
+		+ "    from maya import cmds as mc\n    from mpynode import wrap_node\n    import os\n    import re\n    name = self.get_name()\n\n    head = None\n    try:\n        from mpynode._common.util.template_gallery import _bundled_templates_root\n        root = _bundled_templates_root()\n        if root:\n            cand = os.path.join(root, \"MPyLocator\", \"Mesh Regions\", \"head.ma\")\n            if os.path.isfile(cand):\n                head = cand\n    except Exception:\n        head = None\n    if not head:\n        return name\n\n    new_nodes = mc.file(head, i=True, returnNewNodes=True,\n                        namespace=\"headModel\") or []\n    meshes = [n for n in new_nodes if mc.nodeType(n) == \"mesh\"]\n    if not meshes:\n        meshes = mc.ls(\"headModel:*\", type=\"mesh\", long=True) or []\n    if not meshes:\n        return name\n    shape = (mc.ls(meshes[0], long=True) or [meshes[0]])[0]\n\n    tags = sorted(get_component_tag_faces(shape).keys())\n    if not tags:\n        return name\n\n    def _san(tag):\n        s = re.sub(r\"[^0-9A-Za-z_]\", \"_\", str(tag))\n"
+		+ "        if not s:\n            s = \"region\"\n        if s[0].isdigit():\n            s = \"_\" + s\n        return s + \"Region\"\n\n    # self is tag[0]'s gizmo; duplicate it once per remaining tag. Capture\n    # self's FULL DAG paths up front so later name-based lookups can't go\n    # ambiguous once dup shapes share the short name (Maya keeps a duplicated\n    # shape's short name identical to the original's).\n    self_shape = (mc.ls(name, long=True) or [name])[0]\n    self_tf = (mc.listRelatives(self_shape, parent=True, fullPath=True) or [self_shape])[0]\n\n    shapes = [self_shape]\n    for _ in tags[1:]:\n        dup_tf = mc.duplicate(self_tf, returnRootsOnly=True)[0]\n        dup_tf = (mc.ls(dup_tf, long=True) or [dup_tf])[0]\n        dsh = (mc.listRelatives(dup_tf, shapes=True, type=\"mPyLocator\", fullPath=True)\n               or mc.listRelatives(dup_tf, shapes=True, fullPath=True) or [])\n        if dsh:\n            shapes.append(dsh[0])\n\n    for idx, tag in enumerate(tags):\n        if idx >= len(shapes):\n            break\n"
+		+ "        sh = shapes[idx]\n        # Name THIS gizmo's region via the live `regionTag` string selector, then\n        # let its OWN setup wire the mesh (setup honours an already-set name) --\n        # one code path for both \"Run demo\" and a standalone \"Run setup\".\n        try:\n            mc.setAttr(sh + \".regionTag\", tag, type=\"string\")\n        except Exception:\n            pass\n        try:\n            w = wrap_node(sh)\n            if w is not None:\n                w.run_setup([shape])\n        except Exception:\n            pass\n        # Give each gizmo a DISTINCT default colour so the showcase reads as\n        # separate regions; hover/select/outline keep their shared attr\n        # defaults. Set AFTER run_setup so nothing setup does can win over it.\n        try:\n            _pal = [(0.25, 0.50, 0.95), (0.95, 0.45, 0.25), (0.30, 0.80, 0.40),\n                    (0.80, 0.35, 0.85), (0.95, 0.82, 0.20), (0.30, 0.85, 0.90),\n                    (0.95, 0.35, 0.55), (0.55, 0.85, 0.25), (0.45, 0.35, 0.90),\n                    (0.90, 0.60, 0.20), (0.20, 0.70, 0.70), (0.70, 0.70, 0.95)]\n"
+		+ "            _c = _pal[idx % len(_pal)]\n            for _ch, _v in zip(\"RGB\", _c):\n                mc.setAttr(\"%s.defaultColor%s\" % (sh, _ch), _v)\n        except Exception:\n            pass\n        # rename transform + shape after the tag for a readable outliner\n        try:\n            tf = mc.listRelatives(sh, parent=True, fullPath=True)\n            if tf:\n                new_tf = mc.rename(tf[0], _san(tag))\n                nsh = mc.listRelatives(new_tf, shapes=True, fullPath=True)\n                if nsh:\n                    mc.rename(nsh[0], _san(tag) + \"Shape\")\n                    fixed = mc.listRelatives(new_tf, shapes=True, fullPath=True)\n                    if fixed:\n                        shapes[idx] = fixed[0]\n        except Exception:\n            pass\n\n    # This demo IMPORTS a maya file, so frame the WHOLE scene rather than just\n    # the gizmos -- an imported mesh can sit anywhere, and fitting only the\n    # locators can leave the head off screen with nothing visible to the user.\n    try:\n        mc.viewFit(all=True)\n"
+		+ "    except Exception:\n        pass\n    return shapes[0]\n\n\n@maya_test(label=\"Region draws in the node's RGBA colour; select lifts it\", digits=3)\ndef test_mesh_regions(self):\n    \"\"\"Validate the node's INTENT (the SAME test passes on the interpreted node\n    and its C++ compile -> parity). A locator has no numeric mesh output, so --\n    exactly as the builder's own live-check does -- assert the DRAW BUFFERS:\n\n      1. A bound region draws ONE RGBA face-colour per face carrying the node's\n         `defaultColor` RGB + the `alpha` input (rest state), outlined in\n         `outlineColor` at full opacity.\n      2. Selecting the gizmo snaps the fill to `selectColor` and the outline to\n         `outlineSelectColor` (alpha survives) and lifts the patch by exactly\n         `selectOffset - offset` along the normals -- region-size-independent.\n      3. A colour dialled to (0,0,0) draws BLACK. Nothing substitutes a\n         fallback, so every colour in the cube is reachable.\n    \"\"\"\n    from maya import cmds as mc\n    import maya.api.OpenMaya as om2\n"
+		+ "    import numpy as np\n    from mpynode._common.methods.test_helpers import (\n        assert_close, assert_equal, assert_true)\n\n    name = self.get_name()\n\n    def _set(plug, *vals, **kw):\n        # A demo (or user) may have CONNECTED this input; break incoming\n        # connections first so the test can drive it, then set it.\n        for s in (mc.listConnections(plug, s=True, d=False, plugs=True) or []):\n            mc.disconnectAttr(s, plug)\n        mc.setAttr(plug, *vals, **kw)\n\n    # Validate whatever mesh THIS node already consumes (e.g. the demo's head\n    # model); build a probe sphere ONLY if `inMesh` drives nothing yet. Keeps the\n    # test on `self` (parity) and robust to a live, demo-populated scene + reruns.\n    src = mc.listConnections(name + \".inMesh\", s=True, d=False) or []\n    if not src:\n        probe = mc.polySphere(sx=20, sy=20, name=\"regionProbe#\")[0]\n        pshape = mc.listRelatives(probe, shapes=True, fullPath=True)[0]\n        mc.connectAttr(pshape + \".worldMesh[0]\", name + \".inMesh\", force=True)\n"
+		+ "\n    # Drive the draw deterministically off `self` through the COMPONENT-TAG\n    # path. Not the legacy `regions` dict: that is a stored Python var, and a\n    # compiled node has no _storedVarNames/_storedVarsData plug to receive one,\n    # so forcing it made this test unrunnable against the C++ build -- which is\n    # the parity claim in the docstring above. Tagging a known face range keeps\n    # the region deterministic AND portable. `create=True` on an existing name\n    # is idempotent, so a re-run in a live scene is safe.\n    shape = (mc.listConnections(name + \".inMesh\", s=True, d=False,\n                                shapes=True) or [None])[0]\n    assert_true(shape is not None, \"inMesh must be driven by a mesh shape\")\n    n_faces = mc.polyEvaluate(shape, face=True)\n    last_face = min(15, int(n_faces) - 1)\n    mc.componentTag(\"%s.f[0:%d]\" % (shape, last_face), create=True,\n                    newTagName=\"mpyTestRegion\")\n    # Seed known colours + offsets. Every input is broken-then-set so no\n    # demo/user connection can win over the values this test drives.\n"
+		+ "    _set(name + \".regionTag\", \"mpyTestRegion\", type=\"string\")\n    probe_rgb = (0.20, 0.55, 0.90)\n    for ch, val in zip(\"RGB\", probe_rgb):\n        _set(\"%s.defaultColor%s\" % (name, ch), val)\n    sel_rgb = (0.30, 0.85, 0.90)\n    for ch, val in zip(\"RGB\", sel_rgb):\n        _set(\"%s.selectColor%s\" % (name, ch), val)\n    # Outline colours, deliberately nothing like the fill so a swapped-in fill\n    # value could not satisfy the outline assertions below.\n    out_rgb = (0.90, 0.10, 0.40)\n    for ch, val in zip(\"RGB\", out_rgb):\n        _set(\"%s.outlineColor%s\" % (name, ch), val)\n    out_sel_rgb = (0.10, 0.95, 0.20)\n    for ch, val in zip(\"RGB\", out_sel_rgb):\n        _set(\"%s.outlineSelectColor%s\" % (name, ch), val)\n    _set(name + \".alpha\", 0.8)\n    _set(name + \".offset\", 0.1)\n    _set(name + \".selectOffset\", 0.5)\n    mc.dgdirty(name)\n\n    # Read the ordered draw commands via the node's PUBLIC MPx surface using the\n    # node NAME only -- so this runs identically on the interpreted node AND a\n    # compiled node (the parity point), never the interpreted-only wrapper.\n"
+		+ "    # One patch is drawn PER TAG; the tag driven above is the only one this test\n    # names, so the first patch answers every assertion below.\n    def _draw(selected=False):\n        sl = om2.MSelectionList(); sl.add(name)\n        mpx = om2.MFnDependencyNode(sl.getDependNode(0)).userNode()\n        return mpx.evaluateDrawItems(0.0, selected=selected) or {}\n\n    def _poly(selected=False):\n        for cmd in _draw(selected).get(\"commands\") or []:\n            if cmd[\"slot\"] == \"polygons\":\n                return cmd[\"buffer\"]\n        return None\n\n    # A COMPILED C++ locator (MPxLocatorNode) exposes no Python\n    # evaluateDrawItems, so its draw buffers are unreachable here -- that parity\n    # is covered by the dedicated -DMPYNODE_PROBE numerical buffer comparison.\n    # Skip cleanly rather than false-fail, the same guard test_animated_selection\n    # and test_animated_text already use. AttributeError ONLY: a node that HAS\n    # the surface but draws nothing must still fail the assertion below.\n    try:\n        _draw(False)\n"
+		+ "    except AttributeError:\n        return\n\n    # 1) REST state: one RGBA row per face = defaultColor RGB + alpha (0.8).\n    poly = _poly(False)\n    assert_true(poly is not None, \"the bound region must draw a patch\")\n    fcol = np.asarray(poly[\"face_colors\"])\n    cnt = np.asarray(poly[\"counts\"])\n    assert_true(fcol.ndim == 2 and fcol.shape[1] == 4,\n                \"face colours must be RGBA rows\")\n    assert_equal(fcol.shape[0], cnt.shape[0],\n                 \"one face colour per face (%d vs %d)\"\n                 % (fcol.shape[0], cnt.shape[0]))\n    assert_close(fcol[:, :3].mean(axis=0).tolist(), list(probe_rgb))\n    assert_true(bool(np.allclose(fcol[:, 3], 0.8, atol=1e-3)),\n                \"the alpha input must reach the fill\")\n    wire = np.asarray(poly[\"wireframe\"], dtype=np.float64).ravel()\n    assert_close(wire[:3].tolist(), list(out_rgb))\n    assert_close(float(wire[3]), 1.0,\n                 msg=\"the outline stays opaque; alpha dials the fill only\")\n\n    # 2) SELECT state: fill snaps to selectColor, the outline to\n"
+		+ "    #    outlineSelectColor, alpha survives, and the patch lifts by exactly\n    #    selectOffset - offset (0.5 - 0.1) along the normals.\n    rest_pts = np.asarray(poly[\"points\"])\n    psel = _poly(True)\n    fcs = np.asarray(psel[\"face_colors\"])\n    disp = np.linalg.norm(np.asarray(psel[\"points\"]) - rest_pts, axis=1)\n    assert_close(fcs[:, :3].mean(axis=0).tolist(), list(sel_rgb))\n    assert_true(bool(np.allclose(fcs[:, 3], 0.8, atol=1e-3)),\n                \"alpha survives selection\")\n    assert_close(np.asarray(psel[\"wireframe\"],\n                            dtype=np.float64).ravel()[:3].tolist(), list(out_sel_rgb))\n    assert_close(float(disp.max()), 0.5 - 0.1, digits=2,\n                 msg=\"select lift must equal selectOffset - offset\")\n\n    # 3) ZERO IS A COLOUR. Dialling a state to (0,0,0) must draw BLACK -- the\n    #    compute substitutes nothing, so the value on the plug is the value on\n    #    screen. Asserted on the fill AND the outline, since each used to have\n    #    (fill) or lacked entirely (outline) its own path to the buffer.\n"
+		+ "    for ch in \"RGB\":\n        _set(\"%s.defaultColor%s\" % (name, ch), 0.0)\n        _set(\"%s.outlineColor%s\" % (name, ch), 0.0)\n    mc.dgdirty(name)\n    pblack = _poly(False)\n    assert_true(pblack is not None, \"an all-black region must still draw\")\n    assert_close(np.asarray(pblack[\"face_colors\"])[:, :3].mean(\n        axis=0).tolist(), [0.0, 0.0, 0.0])\n    assert_close(np.asarray(pblack[\"wireframe\"],\n                            dtype=np.float64).ravel()[:3].tolist(), [0.0, 0.0, 0.0])\n\n\n\n# Mesh Regions setup: bind THIS ONE gizmo to a single region of a mesh in the\n# current selection (NO scene fabrication -- that is the `demo`\\'s job). Resolves\n# ONE mesh, honours this gizmo\\'s `regionTag` string (or defaults it to the first\n# component tag when unset), and wires the mesh\\'s live world-space geometry into\n# `inMesh`. `demo` calls this once per tag after setting each gizmo\\'s `regionTag`,\n# so the two hooks share one wiring path.\n@maya_command(creates=True)\ndef setup(self, selection=None, *args, **kwargs):\n    from maya import cmds as mc\n"
+		+ "    name = self.get_name()\n\n    # Resolve ONE mesh: from the passed selection (in pick order), else the live\n    # selection, else an already-connected inMesh source. Drop self so selecting\n    # the gizmo alongside the mesh is harmless.\n    order = [o for o in (selection or mc.ls(selection=True) or []) if o != name]\n    meshes = _meshes(order) if order else []\n    if not meshes:\n        src = mc.listConnections(name + \".inMesh\", source=True,\n                                 destination=False, shapes=True) or []\n        meshes = _meshes(src) if src else []\n    if not meshes:\n        raise SetupError(\"Select the mesh to bind this region gizmo to.\")\n    shape = (mc.ls(meshes[0], long=True) or [meshes[0]])[0]\n\n    regions = get_component_tag_faces(shape)\n    if not regions:\n        raise SetupError(\"Mesh has no component tags to bind a region to.\")\n    tags = sorted(regions.keys())\n\n    # The region is chosen by NAME via the LIVE `regionTag` string INPUT. Honour\n    # an already-set name (the demo sets one per gizmo, or the user typed one);\n"
+		+ "    # otherwise default to the first tag so a fresh bind shows something. A user\n    # can retype it in the Channel Box / Attribute Editor and the region\n    # retargets on the next redraw (a name with no match draws blank). The\n    # face-id MEMBERSHIP is never frozen -- the draw resolves it LIVE from the\n    # input mesh data each evaluation, so editing the component tag updates the\n    # region. The string name also marshals into the compiled node.\n    try:\n        cur = mc.getAttr(name + \".regionTag\") or \"\"\n    except Exception:\n        cur = \"\"\n    tag = cur or tags[0]\n    if not cur:\n        try:\n            mc.setAttr(name + \".regionTag\", tag, type=\"string\")\n        except Exception:\n            pass\n    mc.connectAttr(shape + \".worldMesh[0]\", name + \".inMesh\", force=True)\n\n    # Move THIS gizmo's transform to the centroid of its region's vertices so\n    # the handle sits on the patch it controls. The patch is drawn in world\n    # space (see LOC_REGION_COMPUTE), so this only repositions the manipulator,\n"
+		+ "    # not the drawing. Wrapped so binding never fails on positioning.\n    try:\n        import maya.api.OpenMaya as om\n        import numpy as np\n        sel = om.MSelectionList()\n        sel.add(shape)\n        mfn = om.MFnMesh(sel.getDagPath(0))\n        pts = extract_region(mfn, regions[tag], space=om.MSpace.kWorld)[0]\n        if pts.shape[0]:\n            ctr = pts.mean(axis=0)\n            tf = (mc.listRelatives(name, parent=True, fullPath=True) or [None])[0]\n            if tf:\n                mc.xform(tf, worldSpace=True, translation=(\n                    float(ctr[0]), float(ctr[1]), float(ctr[2])))\n    except Exception:\n        pass\n\n    # Make the bound mesh unselectable so the region gizmos are easy to grab\n    # (reference display: visible in the viewport but unpickable).\n    try:\n        mc.setAttr(shape + \".overrideEnabled\", 1)\n        mc.setAttr(shape + \".overrideDisplayType\", 2)\n    except Exception:\n        pass\n\n    try:\n        mc.dgdirty(name)\n    except Exception:\n        pass\n    return name\n");
+	setAttr ".class_path" -type "string" "mpynode_user.MeshRegionLocator";
+createNode lightLinker -s -n "lightLinker1";
+	rename -uid "39DDC4CC-1648-2DA8-3912-87BB90004C41";
+	setAttr -s 15 ".lnk";
+	setAttr -s 8 ".slnk";
+createNode shapeEditorManager -n "shapeEditorManager";
+	rename -uid "C996F038-7E44-F9D1-7CC2-0B9D366E3E3B";
+	setAttr ".bsdt[0].bscd" -type "Int32Array" 3 4 3 0 ;
+createNode poseInterpolatorManager -n "poseInterpolatorManager";
+	rename -uid "CDFEBA75-344D-58C6-F951-27BDA87FF690";
+	setAttr -s 2 ".tpdt";
+	setAttr ".tpdt[0].tpcd" -type "Int32Array" 1 -1 ;
+	setAttr ".tpdt[1].tpcd" -type "Int32Array" 0 ;
+	setAttr ".tpdt[1].tpdn" -type "string" "headModel";
+createNode displayLayerManager -n "layerManager";
+	rename -uid "A62F4514-5147-AD8B-195C-29B90E45A629";
+createNode displayLayer -n "defaultLayer";
+	rename -uid "464EE4BD-934D-BDDA-70F8-AD8B8B81C09C";
+	setAttr ".ufem" -type "stringArray" 0  ;
+createNode renderLayerManager -n "renderLayerManager";
+	rename -uid "B33D4AE2-064A-7636-E4E7-A6998673A869";
+createNode renderLayer -n "defaultRenderLayer";
+	rename -uid "6D983BA4-1743-DBEB-42BF-E78D16B476F9";
+	setAttr ".g" yes;
+createNode script -n "headModel:sceneConfigurationScriptNode";
+	rename -uid "8D8C49CA-9943-A9DF-B6B7-C8AEEAFE15AE";
+	setAttr ".b" -type "string" "playbackOptions -min 1 -max 120 -ast 1 -aet 200 ";
+	setAttr ".st" 6;
+createNode bump2d -n "headModel:eyeGeo_Eye_003_bump2d1";
+	rename -uid "B6DD850E-0940-4D9F-63E4-DF97582B2097";
+	setAttr ".p3d" yes;
+	setAttr ".vc2" -type "float3" 9.9999997e-06 9.9999997e-06 0 ;
+createNode animLayer -n "headModel:BaseAnimation";
+	rename -uid "9934B411-B44A-BF32-13AE-6BBCC8B667C4";
+	setAttr ".ovrd" yes;
+createNode animCurveTU -n "headModel:comboCorrectives_cheekRaiserL";
+	rename -uid "12B91269-A144-85A4-0158-37871A89D11D";
+	setAttr ".tan" 18;
+	setAttr ".wgt" no;
+	setAttr -s 381 ".ktv";
+	setAttr ".ktv[0:249]"  0 0 0.8 0.019435787573456764 1.6 0.019257137551903725
+		 2.4 0.018992360681295395 3.2 0.018552739173173904 4 0.018200833350419998 4.8 0.017935620620846748
+		 5.6 0.017686387524008751 6.4 0.017378037795424461 7.2 0.017106635496020317 8 0.016979893669486046
+		 8.8 0.016989404335618019 9.6 0.017233759164810181 10.4 0.017503706738352776 11.2 0.017981713637709618
+		 12 0.020362500101327896 12.8 0.038051281124353409 13.6 0.089107416570186615 14.4 0.12524987757205963
+		 15.2 0.14364880323410034 16 0.15050582587718964 16.8 0.15328666567802429 17.6 0.15489721298217773
+		 18.4 0.15514819324016571 19.2 0.15480770170688629 20 0.15448606014251709 20.8 0.1549115926027298
+		 21.6 0.15580672025680542 22.4 0.15633989870548248 23.2 0.15683645009994507 24 0.15731778740882874
+		 24.8 0.15707892179489136 25.6 0.15702107548713684 26.4 0.1571456640958786 27.2 0.15766513347625732
+		 28 0.15843769907951355 28.8 0.15904757380485535 29.6 0.15974973142147064 30.4 0.16024020314216614
+		 31.2 0.16007982194423676 32 0.15870118141174316 32.8 0.17835442721843719 33.6 0.22777774930000305
+		 34.4 0.25164222717285156 35.2 0.20935015380382538 36 0.18690986931324005 36.8 0.1705678254365921
+		 37.6 0.16167111694812775 38.4 0.15511995553970337 39.2 0.14499084651470184 40 0.14070677757263184
+		 40.8 0.13856060802936554 41.6 0.13683007657527924 42.4 0.13537539541721344 43.2 0.13388024270534515
+		 44 0.13252872228622437 44.8 0.13111618161201477 45.6 0.12980957329273224 46.4 0.12879586219787598
+		 47.2 0.12792788445949554 48 0.12713700532913208 48.8 0.12653997540473938 49.6 0.12556453049182892
+		 50.4 0.1197059229016304 51.2 0.081604555249214172 52 0.044014830142259598 52.8 0.028156308457255363
+		 53.6 0.022174958139657974 54.4 0.018712306395173073 55.2 0.016291454434394836 56 0.014463041909039021
+		 56.8 0.013128628022968769 57.6 0.012136419303715229 58.4 0.010976887308061123 59.2 0.010079585015773773
+		 60 0.0093002254143357277 60.8 0.0088365441188216209 61.6 0.008594440296292305 62.4 0.0084053343161940575
+		 63.2 0.008282884955406189 64 0.0084249135106801987 64.8 0.0086328368633985519 65.6 0.0090230060741305351
+		 66.4 0.0095485309138894081 67.2 0.010130326263606548 68 0.010637018829584122 68.8 0.011122766882181168
+		 69.6 0.011593474075198174 70.4 0.011973286978900433 71.2 0.012329715304076672 72 0.012856973335146904
+		 72.8 0.012889371253550053 73.6 0.012361655011773109 74.4 0.012325994670391083 75.2 0.013215542770922184
+		 76 0.017704540863633156 76.8 0.029775645583868027 77.6 0.043388724327087402 78.4 0.054103288799524307
+		 79.2 0.063830159604549408 80 0.067727826535701752 80.8 0.069964423775672913 81.6 0.070506647229194641
+		 82.4 0.070498645305633545 83.2 0.07026219367980957 84 0.069851018488407135 84.8 0.069348990917205811
+		 85.6 0.068825796246528625 86.4 0.06878187507390976 87.2 0.069249361753463745 88 0.070114769041538239
+		 88.8 0.071139276027679443 89.6 0.071738049387931824 90.4 0.072196461260318756 91.2 0.072215832769870758
+		 92 0.072192735970020294 92.8 0.083650305867195129 93.6 0.14970636367797852 94.4 0.22244435548782349
+		 95.2 0.25549989938735962 96 0.28021648526191711 96.8 0.3043610155582428 97.6 0.31179049611091614
+		 98.4 0.31511068344116211 99.2 0.3163284957408905 100 0.31604841351509094 100.8 0.31286972761154175
+		 101.6 0.31029990315437317 102.4 0.30736514925956726 103.2 0.30644544959068298 104 0.30568677186965942
+		 104.8 0.30519208312034607 105.6 0.30429396033287048 106.4 0.30441275238990784 107.2 0.30400693416595459
+		 108 0.30351847410202026 108.8 0.30249392986297607 109.6 0.30207836627960205 110.4 0.30210152268409729
+		 111.2 0.30034720897674561 112 0.29646250605583191 112.8 0.23755113780498505 113.6 0.18448284268379211
+		 114.4 0.16825616359710693 115.2 0.15931977331638336 116 0.15444007515907288 116.8 0.15240670740604401
+		 117.6 0.15182130038738251 118.4 0.152065709233284 119.2 0.15321880578994751 120 0.15469090640544891
+		 120.8 0.15565328299999237 121.6 0.15455628931522369 122.4 0.1533743292093277 123.2 0.15331874787807465
+		 124 0.15355637669563293 124.8 0.15740582346916199 125.6 0.16860641539096832 126.4 0.17214092612266541
+		 127.2 0.17222443222999573 128 0.1715911477804184 128.8 0.17087617516517639 129.6 0.17024584114551544
+		 130.4 0.17004470527172089 131.2 0.17041544616222382 132 0.17083649337291718 132.8 0.17143921554088593
+		 133.6 0.1726507842540741 134.4 0.17392648756504059 135.2 0.17517095804214478 136 0.17581184208393097
+		 136.8 0.17624591290950775 137.6 0.17664226889610291 138.4 0.17733301222324371 139.2 0.17819346487522125
+		 140 0.17875853180885315 140.8 0.17957876622676849 141.6 0.18053056299686432 142.4 0.18159697949886322
+		 143.2 0.18245093524456024 144 0.18296091258525848 144.8 0.18304325640201569 145.6 0.18344038724899292
+		 146.4 0.18379555642604828 147.2 0.18364344537258148 148 0.18326479196548462 148.8 0.18323391675949097
+		 149.6 0.18382234871387482 150.4 0.18403856456279755 151.2 0.18472619354724884 152 0.18561716377735138
+		 152.8 0.1866537481546402 153.6 0.19192647933959961 154.4 0.1980183869600296 155.2 0.20374666154384613
+		 156 0.20835320651531219 156.8 0.2063637375831604 157.6 0.20011359453201294 158.4 0.19642281532287598
+		 159.2 0.19339251518249512 160 0.18810336291790009 160.8 0.18084798753261566 161.6 0.17768378555774689
+		 162.4 0.24930396676063538 163.2 0.28354421257972717 164 0.25936669111251831 164.8 0.23002907633781433
+		 165.6 0.210934117436409 166.4 0.1984306275844574 167.2 0.18897248804569244 168 0.1816413551568985
+		 168.8 0.17686054110527039 169.6 0.17283520102500916 170.4 0.21758292615413666 171.2 0.30279028415679932
+		 172 0.31549051403999329 172.8 0.25270876288414001 173.6 0.2124914675951004 174.4 0.18244218826293945
+		 175.2 0.16362862288951874 176 0.13480748236179352 176.8 0.1250164657831192 177.6 0.11839479953050613
+		 178.4 0.10902596265077591 179.2 0.096395194530487061 180 0.090238526463508606 180.8 0.087229125201702118
+		 181.6 0.077965438365936279 182.4 0.073098495602607727 183.2 0.071125172078609467
+		 184 0.064438991248607635 184.8 0.048079468309879303 185.6 0.036821864545345306 186.4 0.021325675770640373
+		 187.2 0.01341484859585762 188 0.0088684652000665665 188.8 0.0065730875357985497 189.6 0.0050451369024813175
+		 190.4 0.0037950344849377871 191.2 0.002880047308281064 192 0.0020856999326497316
+		 192.8 0.0015722096432000399 193.6 0.0012073791585862637 194.4 0.00084992614574730396
+		 195.2 0.0006014324608258903 196 0.000521408102940768 196.8 0.00056759826838970184
+		 197.6 0.00066521053668111563 198.4 0.00089884293265640736 199.2 0.0010575067717581987;
+	setAttr ".ktv[250:380]" 200 0.0012083606561645865 200.8 0.0012388228205963969
+		 201.6 0.0012400000123307109 202.4 0.0012499999720603228 203.2 0.0014174809912219644
+		 204 0.0015526238130405545 204.8 0.0016452128766104579 205.6 0.0016959347994998097
+		 206.4 0.0018522805767133832 207.2 0.001986675662919879 208 0.0023399726487696171
+		 208.8 0.0027670001145452261 209.6 0.0031360976863652468 210.4 0.0034930061083287001
+		 211.2 0.0037806318141520023 212 0.0040815174579620361 212.8 0.0043929228559136391
+		 213.6 0.0046703391708433628 214.4 0.004877147264778614 215.2 0.0048902803100645542
+		 216 0.0045594624243676662 216.8 0.0040994416922330856 217.6 0.0039937626570463181
+		 218.4 0.0039109578356146812 219.2 0.0035666318144649267 220 0.0029750310350209475
+		 220.8 0.0025365129113197327 221.6 0.0023234179243445396 222.4 0.0021400556433945894
+		 223.2 0.0019231954356655478 224 0.0017956382362172008 224.8 0.0018657143227756023
+		 225.6 0.0023522109258919954 226.4 0.0030623292550444603 227.2 0.003469372633844614
+		 228 0.0034131382126361132 228.8 0.0027907385956496 229.6 0.0017648347420617938 230.4 0.00072011363226920366
+		 231.2 0.00025680297403596342 232 0.00077196536585688591 232.8 0.0012331417528912425
+		 233.6 0.0014573134249076247 234.4 0.0025946064852178097 235.2 0.014805632643401623
+		 236 0.025783879682421684 236.8 0.038871251046657562 237.6 0.05206013098359108 238.4 0.06553243100643158
+		 239.2 0.071824148297309875 240 0.07749185711145401 240.8 0.082675434648990631 241.6 0.087500356137752533
+		 242.4 0.093460842967033386 243.2 0.096295423805713654 244 0.097312115132808685 244.8 0.09844139963388443
+		 245.6 0.099466860294342041 246.4 0.099973134696483612 247.2 0.099602945148944855
+		 248 0.097765929996967316 248.8 0.076915152370929718 249.6 0.063845902681350708 250.4 0.059605356305837631
+		 251.2 0.056465692818164825 252 0.055208291858434677 252.8 0.054192349314689636 253.6 0.05238497257232666
+		 254.4 0.048883948475122452 255.2 0.045689567923545837 256 0.043709777295589447 256.8 0.042419087141752243
+		 257.6 0.04187338799238205 258.4 0.042274791747331619 259.2 0.058250147849321365 260 0.076857171952724457
+		 260.8 0.095433473587036133 261.6 0.11451427638530731 262.4 0.13222886621952057 263.2 0.15654328465461731
+		 264 0.16414296627044678 264.8 0.17607519030570984 265.6 0.19587644934654236 266.4 0.20561331510543823
+		 267.2 0.21043524146080017 268 0.21219326555728912 268.8 0.21299788355827332 269.6 0.2135310024023056
+		 270.4 0.21425157785415649 271.2 0.21471410989761353 272 0.21496197581291199 272.8 0.21562367677688599
+		 273.6 0.21642079949378967 274.4 0.21681192517280579 275.2 0.21703320741653442 276 0.21758526563644409
+		 276.8 0.21799403429031372 277.6 0.21769322454929352 278.4 0.21652159094810486 279.2 0.21818259358406067
+		 280 0.27963200211524963 280.8 0.2955571711063385 281.6 0.276866614818573 282.4 0.25773721933364868
+		 283.2 0.24352042376995087 284 0.23506376147270203 284.8 0.23084524273872375 285.6 0.22798191010951996
+		 286.4 0.22605419158935547 287.2 0.22477410733699799 288 0.2234438955783844 288.8 0.21990086138248444
+		 289.6 0.21735064685344696 290.4 0.2134225070476532 291.2 0.21007998287677765 292 0.20856417715549469
+		 292.8 0.20763604342937469 293.6 0.20630562305450439 294.4 0.20568999648094177 295.2 0.20568999648094177
+		 296 0.20568999648094177 296.8 0.20568999648094177 297.6 0.20568999648094177 298.4 0.20568999648094177
+		 299.2 0.20568999648094177 300 0.20568999648094177 300.8 0.20568999648094177 301.6 0.20568999648094177
+		 302.4 0.20568999648094177 303.2 0.20568999648094177 304 0.20568999648094177;
+createNode animCurveTU -n "headModel:comboCorrectives_cheekRaiserR";
+	rename -uid "136B840E-7D40-A566-19DE-1391A6AAA336";
+	setAttr ".tan" 18;
+	setAttr ".wgt" no;
+	setAttr -s 381 ".ktv";
+	setAttr ".ktv[0:249]"  0 0 0.8 0.017872419208288193 1.6 0.017535315826535225
+		 2.4 0.017131214961409569 3.2 0.016632048413157463 4 0.016232864931225777 4.8 0.015936132520437241
+		 5.6 0.015724914148449898 6.4 0.015466698445379734 7.2 0.01521737314760685 8 0.015109580010175705
+		 8.8 0.015021489933133125 9.6 0.015136880800127983 10.4 0.015267577953636646 11.2 0.015567255206406116
+		 12 0.017378948628902435 12.8 0.031286559998989105 13.6 0.079004064202308655 14.4 0.11937625706195831
+		 15.2 0.13548727333545685 16 0.14071619510650635 16.8 0.14471137523651123 17.6 0.1485372930765152
+		 18.4 0.14999063313007355 19.2 0.15088436007499695 20 0.15165087580680847 20.8 0.1535947173833847
+		 21.6 0.1555345356464386 22.4 0.15674246847629547 23.2 0.15777373313903809 24 0.15869198739528656
+		 24.8 0.1588643342256546 25.6 0.15922808647155762 26.4 0.16001732647418976 27.2 0.16146363317966461
+		 28 0.16306318342685699 28.8 0.16424517333507538 29.6 0.16540621221065521 30.4 0.16638585925102234
+		 31.2 0.16657307744026184 32 0.16370789706707001 32.8 0.17246514558792114 33.6 0.19790883362293243
+		 34.4 0.21163094043731689 35.2 0.20649099349975586 36 0.18738390505313873 36.8 0.17221459746360779
+		 37.6 0.16282336413860321 38.4 0.15699294209480286 39.2 0.14748278260231018 40 0.14261627197265625
+		 40.8 0.13997137546539307 41.6 0.13802270591259003 42.4 0.13656477630138397 43.2 0.13514943420886993
+		 44 0.13384892046451569 44.8 0.13243691623210907 45.6 0.13108856976032257 46.4 0.13012515008449554
+		 47.2 0.12924748659133911 48 0.12831160426139832 48.8 0.12764118611812592 49.6 0.12612175941467285
+		 50.4 0.11784195154905319 51.2 0.076810531318187714 52 0.04567660391330719 52.8 0.032096736133098602
+		 53.6 0.026475735008716583 54.4 0.023397032171487808 55.2 0.021172260865569115 56 0.019459366798400879
+		 56.8 0.018398983404040337 57.6 0.01764824241399765 58.4 0.016747757792472839 59.2 0.016137564554810524
+		 60 0.015758669003844261 60.8 0.015594353899359703 61.6 0.015657981857657433 62.4 0.015775850042700768
+		 63.2 0.015944808721542358 64 0.016348902136087418 64.8 0.016794243827462196 65.6 0.0173487588763237
+		 66.4 0.017982965335249901 67.2 0.018630405887961388 68 0.019261471927165985 68.8 0.019867284223437309
+		 69.6 0.020473472774028778 70.4 0.020843660458922386 71.2 0.02122969925403595 72 0.021729534491896629
+		 72.8 0.021571554243564606 73.6 0.020735576748847961 74.4 0.020435137674212456 75.2 0.021192323416471481
+		 76 0.024695761501789093 76.8 0.034657027572393417 77.6 0.048851672559976578 78.4 0.057297449558973312
+		 79.2 0.064030706882476807 80 0.0663624107837677 80.8 0.067707642912864685 81.6 0.067878387868404388
+		 82.4 0.067807964980602264 83.2 0.067651793360710144 84 0.067220963537693024 84.8 0.066836453974246979
+		 85.6 0.06651933491230011 86.4 0.066642254590988159 87.2 0.067186519503593445 88 0.068184033036231995
+		 88.8 0.069309219717979431 89.6 0.069948047399520874 90.4 0.070395275950431824 91.2 0.070464536547660828
+		 92 0.070499509572982788 92.8 0.08671492338180542 93.6 0.15920576453208923 94.4 0.22959908843040466
+		 95.2 0.25702053308486938 96 0.27091675996780396 96.8 0.2852914035320282 97.6 0.29060044884681702
+		 98.4 0.29316198825836182 99.2 0.29422333836555481 100 0.29421329498291016 100.8 0.29317936301231384
+		 101.6 0.29183045029640198 102.4 0.28898060321807861 103.2 0.28782486915588379 104 0.28698557615280151
+		 104.8 0.28657174110412598 105.6 0.28588345646858215 106.4 0.28570759296417236 107.2 0.28504258394241333
+		 108 0.28462746739387512 108.8 0.2839108407497406 109.6 0.28341922163963318 110.4 0.28321614861488342
+		 111.2 0.28256547451019287 112 0.28180938959121704 112.8 0.255653977394104 113.6 0.2002776563167572
+		 114.4 0.18218903243541718 115.2 0.17148248851299286 116 0.16497944295406342 116.8 0.16236598789691925
+		 117.6 0.16134415566921234 118.4 0.16110880672931671 119.2 0.1618574857711792 120 0.16277545690536499
+		 120.8 0.16338525712490082 121.6 0.16199120879173279 122.4 0.1601676344871521 123.2 0.15982072055339813
+		 124 0.15995006263256073 124.8 0.16228137910366058 125.6 0.16408060491085052 126.4 0.16499581933021545
+		 127.2 0.16611693799495697 128 0.16963404417037964 128.8 0.1720358282327652 129.6 0.17415361106395721
+		 130.4 0.17810213565826416 131.2 0.18218104541301727 132 0.18424433469772339 132.8 0.18588794767856598
+		 133.6 0.18956549465656281 134.4 0.19145005941390991 135.2 0.19294123351573944 136 0.19372682273387909
+		 136.8 0.19412674009799957 137.6 0.19430112838745117 138.4 0.19481997191905975 139.2 0.19549500942230225
+		 140 0.19589346647262573 140.8 0.19646203517913818 141.6 0.19720730185508728 142.4 0.19820016622543335
+		 143.2 0.19920466840267181 144 0.2000010758638382 144.8 0.2002943754196167 145.6 0.20081628859043121
+		 146.4 0.20120477676391602 147.2 0.20120880007743835 148 0.20105345547199249 148.8 0.20118607580661774
+		 149.6 0.20197036862373352 150.4 0.20213951170444489 151.2 0.20272229611873627 152 0.20365503430366516
+		 152.8 0.20473021268844604 153.6 0.2089255303144455 154.4 0.21085779368877411 155.2 0.21223525702953339
+		 156 0.21441832184791565 156.8 0.21405449509620667 157.6 0.21040752530097961 158.4 0.20668324828147888
+		 159.2 0.20355744659900665 160 0.19767066836357117 160.8 0.18943846225738525 161.6 0.18586890399456024
+		 162.4 0.2028491348028183 163.2 0.2169039249420166 164 0.22137062251567841 164.8 0.22067801654338837
+		 165.6 0.21317079663276672 166.4 0.20187167823314667 167.2 0.19184991717338562 168 0.18568304181098938
+		 168.8 0.18191806972026825 169.6 0.17831295728683472 170.4 0.18623955547809601 171.2 0.28492134809494019
+		 172 0.29624152183532715 172.8 0.23267744481563568 173.6 0.20401303470134735 174.4 0.18221467733383179
+		 175.2 0.16498303413391113 176 0.13382954895496368 176.8 0.12303216010332108 177.6 0.11617475003004074
+		 178.4 0.10456585139036179 179.2 0.089361689984798431 180 0.083133257925510406 180.8 0.080430962145328522
+		 181.6 0.070563144981861115 182.4 0.06582372635602951 183.2 0.063983671367168427 184 0.058148298412561417
+		 184.8 0.04317711666226387 185.6 0.033588577061891556 186.4 0.021220406517386436 187.2 0.015169716440141201
+		 188 0.011155754327774048 188.8 0.0090466439723968506 189.6 0.0076192957349121571
+		 190.4 0.0063669653609395027 191.2 0.005410047248005867 192 0.0046052378602325916
+		 192.8 0.0041022095829248428 193.6 0.0038345092907547951 194.4 0.0036399632226675749
+		 195.2 0.0035987300798296928 196 0.0037531030829995871 196.8 0.004061833955347538
+		 197.6 0.0043908422812819481 198.4 0.0049298759549856186 199.2 0.0055009620264172554;
+	setAttr ".ktv[250:380]" 200 0.0060221306048333645 200.8 0.0064152791164815426
+		 201.6 0.0067135868594050407 202.4 0.0068777762353420258 203.2 0.0071733077056705952
+		 204 0.007375247310847044 204.8 0.0074940160848200321 205.6 0.0076028858311474323
+		 206.4 0.0078478697687387466 207.2 0.0080253435298800468 208 0.0084489714354276657
+		 208.8 0.0088374996557831764 209.6 0.0091784875839948654 210.4 0.009515705518424511
+		 211.2 0.009844338521361351 212 0.010179053992033005 212.8 0.010530788451433182 213.6 0.010838934220373631
+		 214.4 0.011018369346857071 215.2 0.011040280573070049 216 0.010660814121365547 216.8 0.010072690434753895
+		 217.6 0.0099056446924805641 218.4 0.010063737630844116 219.2 0.0096738943830132484
+		 220 0.0088983187451958656 220.8 0.0080066891387104988 221.6 0.007264954037964344
+		 222.4 0.0066401390358805656 223.2 0.006009986624121666 224 0.0056469147093594074
+		 224.8 0.0055576195009052753 225.6 0.0059216590598225594 226.4 0.0066621517762541771
+		 227.2 0.0071279974654316902 228 0.0070449183695018291 228.8 0.0064218020997941494
+		 229.6 0.0052643595263361931 230.4 0.0041980682872235775 231.2 0.0039571993984282017
+		 232 0.0053214449435472488 232.8 0.0065286969766020775 233.6 0.0073470147326588631
+		 234.4 0.00956749077886343 235.2 0.023217076435685158 236 0.034325223416090012 236.8 0.048152502626180649
+		 237.6 0.063485018908977509 238.4 0.077902793884277344 239.2 0.084845975041389465
+		 240 0.090683430433273315 240.8 0.096483603119850159 241.6 0.10225552320480347 242.4 0.10837727040052414
+		 243.2 0.11125420033931732 244 0.11233952641487122 244.8 0.11365050822496414 245.6 0.11480563879013062
+		 246.4 0.11541132628917694 247.2 0.11499889940023422 248 0.11149638146162033 248.8 0.084990903735160828
+		 249.6 0.071642458438873291 250.4 0.067736402153968811 251.2 0.065765224397182465
+		 252 0.06524195522069931 252.8 0.064582906663417816 253.6 0.06282651424407959 254.4 0.059034291654825211
+		 255.2 0.054672926664352417 256 0.051668249070644379 256.8 0.050024405121803284 257.6 0.049357078969478607
+		 258.4 0.049693718552589417 259.2 0.072262056171894073 260 0.092994034290313721 260.8 0.11123701930046082
+		 261.6 0.12616497278213501 262.4 0.13733632862567902 263.2 0.16146935522556305 264 0.16801756620407104
+		 264.8 0.1810222864151001 265.6 0.20172667503356934 266.4 0.21211488544940948 267.2 0.21798853576183319
+		 268 0.22007964551448822 268.8 0.22108340263366699 269.6 0.22188292443752289 270.4 0.22292189300060272
+		 271.2 0.22374081611633301 272 0.22445826232433319 272.8 0.22528508305549622 273.6 0.2261977344751358
+		 274.4 0.22685383260250092 275.2 0.22733834385871887 276 0.22779016196727753 276.8 0.22789639234542847
+		 277.6 0.22731709480285645 278.4 0.22554822266101837 279.2 0.22609226405620575 280 0.24479666352272034
+		 280.8 0.24990685284137726 281.6 0.25064834952354431 282.4 0.24887888133525848 283.2 0.24184660613536835
+		 284 0.23509684205055237 284.8 0.2311454564332962 285.6 0.22821885347366333 286.4 0.2260785847902298
+		 287.2 0.22465960681438446 288 0.22303013503551483 288.8 0.21791718900203705 289.6 0.21485766768455505
+		 290.4 0.21176068484783173 291.2 0.20916728675365448 292 0.20791560411453247 292.8 0.20735648274421692
+		 293.6 0.20632773637771606 294.4 0.20579999685287476 295.2 0.20579999685287476 296 0.20579999685287476
+		 296.8 0.20579999685287476 297.6 0.20579999685287476 298.4 0.20579999685287476 299.2 0.20579999685287476
+		 300 0.20579999685287476 300.8 0.20579999685287476 301.6 0.20579999685287476 302.4 0.20579999685287476
+		 303.2 0.20579999685287476 304 0.20579999685287476;
+createNode animCurveTU -n "headModel:comboCorrectives_chinRaiserB";
+	rename -uid "A42A998F-A84C-1E92-489A-1DAB48814D39";
+	setAttr ".tan" 18;
+	setAttr ".wgt" no;
+	setAttr -s 381 ".ktv";
+	setAttr ".ktv[0:249]"  0 0 0.8 0.023477895185351372 1.6 0.023232972249388695
+		 2.4 0.02272968553006649 3.2 0.022261356934905052 4 0.021796248853206635 4.8 0.021115841343998909
+		 5.6 0.020144075155258179 6.4 0.019279647618532181 7.2 0.018870322033762932 8 0.018722204491496086
+		 8.8 0.019162846729159355 9.6 0.019355839118361473 10.4 0.019660318270325661 11.2 0.020747309550642967
+		 12 0.02837054431438446 12.8 0.034905079752206802 13.6 0.037619516253471375 14.4 0.048663068562746048
+		 15.2 0.062101121991872787 16 0.072816029191017151 16.8 0.075951658189296722 17.6 0.075979933142662048
+		 18.4 0.070005930960178375 19.2 0.065926909446716309 20 0.063856169581413269 20.8 0.062370233237743378
+		 21.6 0.060946013778448105 22.4 0.05529315397143364 23.2 0.051642630249261856 24 0.050259493291378021
+		 24.8 0.048213377594947815 25.6 0.045963626354932785 26.4 0.044305227696895599 27.2 0.043035421520471573
+		 28 0.040266264230012894 28.8 0.038908872753381729 29.6 0.038706928491592407 30.4 0.039135627448558807
+		 31.2 0.040540445595979691 32 0.050154514610767365 32.8 0.060102246701717377 33.6 0.075288638472557068
+		 34.4 0.082501150667667389 35.2 0.081583224236965179 36 0.079177282750606537 36.8 0.078621461987495422
+		 37.6 0.079292505979537964 38.4 0.081153392791748047 39.2 0.082923151552677155 40 0.08499927818775177
+		 40.8 0.086390584707260132 41.6 0.087495625019073486 42.4 0.088340558111667633 43.2 0.088383041322231293
+		 44 0.089043110609054565 44.8 0.08917216956615448 45.6 0.089330993592739105 46.4 0.089607849717140198
+		 47.2 0.089571744203567505 48 0.090003415942192078 48.8 0.089910291135311127 49.6 0.088759422302246094
+		 50.4 0.084841400384902954 51.2 0.040570560842752457 52 0.0037649432197213173 52.8 0
+		 53.6 0 54.4 0 55.2 0 56 0 56.8 0 57.6 0 58.4 0 59.2 0 60 0 60.8 0 61.6 0 62.4 0 63.2 0
+		 64 0 64.8 0 65.6 0 66.4 0 67.2 0 68 0 68.8 0 69.6 0 70.4 0 71.2 0 72 0 72.8 0 73.6 0
+		 74.4 0 75.2 0 76 0 76.8 0 77.6 0 78.4 0 79.2 0 80 0 80.8 0.0035984634887427092 81.6 0.0084647899493575096
+		 82.4 0.01212961133569479 83.2 0.022634692490100861 84 0.027841752395033836 84.8 0.031505949795246124
+		 85.6 0.03296409547328949 86.4 0.033743377774953842 87.2 0.034406520426273346 88 0.03520602360367775
+		 88.8 0.035909406840801239 89.6 0.036437332630157471 90.4 0.036360595375299454 91.2 0.036329999566078186
+		 92 0.036131300032138824 92.8 0.033082760870456696 93.6 0.017301468178629875 94.4 0.0077550341375172138
+		 95.2 0 96 0 96.8 0 97.6 0 98.4 0 99.2 0 100 0 100.8 0 101.6 0 102.4 0 103.2 0 104 0
+		 104.8 0 105.6 0 106.4 0 107.2 0 108 0 108.8 0 109.6 0 110.4 0 111.2 0 112 0 112.8 0
+		 113.6 0.023513732478022575 114.4 0.036228988319635391 115.2 0.04104015976190567 116 0.042940955609083176
+		 116.8 0.044559653848409653 117.6 0.045971464365720749 118.4 0.047133099287748337
+		 119.2 0.04806855320930481 120 0.049110908061265945 120.8 0.050120245665311813 121.6 0.05091431736946106
+		 122.4 0.051475364714860916 123.2 0.051907852292060852 124 0.051398452371358871 124.8 0.03810037299990654
+		 125.6 0.0003076940483879298 126.4 0 127.2 0 128 0 128.8 0 129.6 0 130.4 0 131.2 0
+		 132 0 132.8 0 133.6 0 134.4 0 135.2 0 136 0 136.8 0 137.6 0 138.4 0 139.2 0 140 0
+		 140.8 0 141.6 0 142.4 0 143.2 0 144 0 144.8 0 145.6 0 146.4 0 147.2 0 148 0 148.8 0
+		 149.6 0 150.4 0 151.2 0 152 0 152.8 0 153.6 0 154.4 0 155.2 0 156 0.0059326901100575924
+		 156.8 0.060535058379173279 157.6 0.093555457890033722 158.4 0.10390543937683105 159.2 0.10637588798999786
+		 160 0.10028918832540512 160.8 0.091391555964946747 161.6 0.084654420614242554 162.4 0.081931836903095245
+		 163.2 0.089667379856109619 164 0.09164109081029892 164.8 0.091303445398807526 165.6 0.089689403772354126
+		 166.4 0.088100999593734741 167.2 0.085007227957248688 168 0.07945551723241806 168.8 0.075534403324127197
+		 169.6 0.073209427297115326 170.4 0.072460822761058807 171.2 0.13411907851696014 172 0.14391317963600159
+		 172.8 0.098784983158111572 173.6 0.076044000685214996 174.4 0.067455455660820007
+		 175.2 0.064438186585903168 176 0.062639683485031128 176.8 0.059506755322217941 177.6 0.055769823491573334
+		 178.4 0.046201594173908234 179.2 0.038090221583843231 180 0.035703744739294052 180.8 0.034425482153892517
+		 181.6 0.033611897379159927 182.4 0.033370282500982285 183.2 0.033277124166488647
+		 184 0.033055901527404785 184.8 0.02399183064699173 185.6 0.0031687940936535597 186.4 0
+		 187.2 0 188 0 188.8 0 189.6 0 190.4 0 191.2 0 192 0 192.8 0 193.6 0 194.4 0 195.2 0
+		 196 0 196.8 0 197.6 0 198.4 0 199.2 0;
+	setAttr ".ktv[250:380]" 200 0 200.8 0 201.6 0 202.4 0 203.2 0 204 0 204.8 0
+		 205.6 0 206.4 0 207.2 0 208 0 208.8 0 209.6 0 210.4 0 211.2 0 212 0 212.8 0 213.6 0
+		 214.4 0 215.2 0 216 0 216.8 0 217.6 0 218.4 0 219.2 0 220 0 220.8 0 221.6 0 222.4 0
+		 223.2 0 224 0 224.8 0 225.6 0 226.4 0 227.2 0 228 0 228.8 0 229.6 0 230.4 0 231.2 0
+		 232 0 232.8 0 233.6 0 234.4 0 235.2 0 236 0 236.8 0 237.6 0 238.4 0 239.2 0 240 0
+		 240.8 0 241.6 0 242.4 0 243.2 0 244 0 244.8 0 245.6 0 246.4 0 247.2 0 248 0 248.8 0
+		 249.6 0 250.4 0 251.2 0 252 0 252.8 0 253.6 0 254.4 0 255.2 0 256 0 256.8 0 257.6 0
+		 258.4 0 259.2 0 260 0 260.8 0 261.6 0 262.4 0 263.2 0 264 0.006098948884755373 264.8 0.025256525725126266
+		 265.6 0.039923503994941711 266.4 0.044125977903604507 267.2 0.045894917100667953
+		 268 0.047284506261348724 268.8 0.048684526234865189 269.6 0.050239421427249908 270.4 0.051750790327787399
+		 271.2 0.053109493106603622 272 0.054563652724027634 272.8 0.055806148797273636 273.6 0.056475177407264709
+		 274.4 0.056442920118570328 275.2 0.056883048266172409 276 0.05657215416431427 276.8 0.054997872561216354
+		 277.6 0.053414825350046158 278.4 0.053442221134901047 279.2 0.054659333080053329
+		 280 0.06476999819278717 280.8 0.07069426029920578 281.6 0.070934467017650604 282.4 0.062031112611293793
+		 283.2 0.058180764317512512 284 0.056350540369749069 284.8 0.054820429533720016 285.6 0.053928371518850327
+		 286.4 0.05308954045176506 287.2 0.052469983696937561 288 0.051776252686977386 288.8 0.050985623151063919
+		 289.6 0.050279721617698669 290.4 0.049672074615955353 291.2 0.049255207180976868
+		 292 0.048534225672483444 292.8 0.048083361238241196 293.6 0.047538746148347855 294.4 0.047380000352859497
+		 295.2 0.047380000352859497 296 0.047380000352859497 296.8 0.047380000352859497 297.6 0.047380000352859497
+		 298.4 0.047380000352859497 299.2 0.047380000352859497 300 0.047380000352859497 300.8 0.047380000352859497
+		 301.6 0.047380000352859497 302.4 0.047380000352859497 303.2 0.047380000352859497
+		 304 0.047380000352859497;
+createNode animCurveTU -n "headModel:comboCorrectives_chinRaiserT";
+	rename -uid "2D392307-6F4A-3CA1-99A9-A8B1F0EF24FD";
+	setAttr ".tan" 18;
+	setAttr ".wgt" no;
+	setAttr -s 381 ".ktv";
+	setAttr ".ktv[0:249]"  0 0 0.8 0 1.6 0 2.4 0 3.2 0 4 0 4.8 0 5.6 0 6.4 0
+		 7.2 0 8 0 8.8 0 9.6 0 10.4 0 11.2 0 12 0 12.8 0 13.6 0 14.4 0 15.2 0 16 0 16.8 0
+		 17.6 0 18.4 0 19.2 0 20 0 20.8 0 21.6 0 22.4 0 23.2 0 24 0 24.8 0 25.6 0 26.4 0 27.2 0
+		 28 0 28.8 0 29.6 0 30.4 0 31.2 0 32 0 32.8 0 33.6 0.030021976679563522 34.4 0.04745183140039444
+		 35.2 0.043296996504068375 36 0.037777848541736603 36.8 0.036066867411136627 37.6 0.035308517515659332
+		 38.4 0.034247443079948425 39.2 0.032947849482297897 40 0.032052773982286453 40.8 0.030991606414318085
+		 41.6 0.03006371483206749 42.4 0.0295993871986866 43.2 0.028885938227176666 44 0.028402030467987061
+		 44.8 0.026868727058172226 45.6 0.025766542181372643 46.4 0.025521479547023773 47.2 0.025460872799158096
+		 48 0.025826169177889824 48.8 0.026033949106931686 49.6 0.026099050417542458 50.4 0.026761580258607864
+		 51.2 0.027154775336384773 52 0.020975168794393539 52.8 0 53.6 0 54.4 0 55.2 0 56 0
+		 56.8 0 57.6 0 58.4 0 59.2 0 60 0 60.8 0 61.6 0 62.4 0 63.2 0 64 0 64.8 0 65.6 0 66.4 0
+		 67.2 0 68 0 68.8 0 69.6 0 70.4 0 71.2 0 72 0 72.8 0 73.6 0 74.4 0 75.2 0.00060680322349071503
+		 76 7.8801187797239436e-09 76.8 0 77.6 0 78.4 0 79.2 0 80 0 80.8 0 81.6 0 82.4 0 83.2 0
+		 84 0 84.8 0 85.6 0 86.4 0 87.2 0 88 0 88.8 0 89.6 0 90.4 0 91.2 0 92 0 92.8 0.018759438768029213
+		 93.6 0.12429004162549973 94.4 0.21768194437026978 95.2 0.27240407466888428 96 0.30873015522956848
+		 96.8 0.3291923999786377 97.6 0.33935657143592834 98.4 0.34455341100692749 99.2 0.34655424952507019
+		 100 0.34730750322341919 100.8 0.34743842482566833 101.6 0.34755906462669373 102.4 0.34782710671424866
+		 103.2 0.34828644990921021 104 0.34811845421791077 104.8 0.34782618284225464 105.6 0.34753164649009705
+		 106.4 0.34696418046951294 107.2 0.34643498063087463 108 0.34623277187347412 108.8 0.34645035862922668
+		 109.6 0.34692078828811646 110.4 0.34715384244918823 111.2 0.34725308418273926 112 0.31358376145362854
+		 112.8 0.17265349626541138 113.6 0.083113096654415131 114.4 0.055109135806560516 115.2 0.04549558088183403
+		 116 0.040664628148078918 116.8 0.038355067372322083 117.6 0.036361120641231537 118.4 0.035134404897689819
+		 119.2 0.034896750003099442 120 0.035467270761728287 120.8 0.035624470561742783 121.6 0.035163227468729019
+		 122.4 0.034303586930036545 123.2 0.033833038061857224 124 0.033200334757566452 124.8 0.033117789775133133
+		 125.6 0.032979018986225128 126.4 0.02458186075091362 127.2 0.0046584908850491047
+		 128 0 128.8 0 129.6 0 130.4 0 131.2 0 132 0 132.8 0 133.6 0 134.4 0 135.2 0 136 0
+		 136.8 0 137.6 0 138.4 0 139.2 0 140 0 140.8 0 141.6 0 142.4 0 143.2 0 144 0 144.8 0
+		 145.6 0 146.4 0 147.2 0 148 0 148.8 0 149.6 0 150.4 0 151.2 0 152 0 152.8 0 153.6 0
+		 154.4 0 155.2 0.0028738591354340315 156 0.014256987720727921 156.8 0.01647639274597168
+		 157.6 0.01976926252245903 158.4 0.023687684908509254 159.2 0.025666071102023125 160 0.026221899315714836
+		 160.8 0.025528969243168831 161.6 0.024611463770270348 162.4 0.035639092326164246
+		 163.2 0.05045028030872345 164 0.053860597312450409 164.8 0.05388081818819046 165.6 0.049471959471702576
+		 166.4 0.043558064848184586 167.2 0.035651680082082748 168 0.029444238170981407 168.8 0.026415448635816574
+		 169.6 0.024654952809214592 170.4 0.028889948502182961 171.2 0.091414749622344971
+		 172 0.10229987651109695 172.8 0.071274206042289734 173.6 0.050342928618192673 174.4 0.035811372101306915
+		 175.2 0.031651213765144348 176 0.029680294916033745 176.8 0.028242709115147591 177.6 0.026754161342978477
+		 178.4 0.020124364644289017 179.2 0.01390839833766222 180 0.011686119250953197 180.8 0.010040828958153725
+		 181.6 0.0089112250134348869 182.4 0.0085402810946106911 183.2 0.0086412401869893074
+		 184 0.011112595908343792 184.8 0.013007771223783493 185.6 0.0090130073949694633 186.4 0
+		 187.2 0 188 0 188.8 0 189.6 0 190.4 0 191.2 0 192 0 192.8 0 193.6 0 194.4 0 195.2 0
+		 196 0 196.8 0 197.6 0 198.4 0 199.2 0;
+	setAttr ".ktv[250:380]" 200 0 200.8 0 201.6 0 202.4 0 203.2 0 204 0 204.8 0
+		 205.6 0 206.4 0 207.2 0 208 0 208.8 0 209.6 0 210.4 0 211.2 0 212 0 212.8 0 213.6 0
+		 214.4 0 215.2 0 216 0 216.8 0 217.6 0 218.4 0 219.2 0.00096426316304132342 220 0
+		 220.8 0 221.6 0 222.4 0 223.2 0 224 0 224.8 0 225.6 0 226.4 0 227.2 0 228 0 228.8 0
+		 229.6 0 230.4 0 231.2 0 232 0 232.8 0 233.6 0 234.4 0 235.2 0 236 0 236.8 0 237.6 0
+		 238.4 0 239.2 0 240 0 240.8 0 241.6 0 242.4 0 243.2 0 244 0 244.8 0 245.6 0 246.4 0
+		 247.2 0 248 0 248.8 0 249.6 0 250.4 0.0057661142200231552 251.2 0.014658238738775253
+		 252 0.018052129074931145 252.8 0.020263686776161194 253.6 0.021529169753193855 254.4 0.01133076474070549
+		 255.2 0.00016590792802162468 256 0 256.8 0 257.6 0 258.4 0 259.2 0.015612049959599972
+		 260 0.032113596796989441 260.8 0.034443136304616928 261.6 0.019020812585949898 262.4 0.00018968117365147918
+		 263.2 0 264 0 264.8 0 265.6 0 266.4 0 267.2 0.0021367566660046577 268 0.0033767821732908487
+		 268.8 0.0041042543016374111 269.6 0.0048019755631685257 270.4 0.0056829699315130711
+		 271.2 0.0066659771837294102 272 0.007709970697760582 272.8 0.0088363299146294594
+		 273.6 0.0099194468930363655 274.4 0.011268296279013157 275.2 0.015693375840783119
+		 276 0.019817208871245384 276.8 0.021743828430771828 277.6 0.023074159398674965 278.4 0.028979621827602386
+		 279.2 0.039942603558301926 280 0.064839333295822144 280.8 0.072681136429309845 281.6 0.071393497288227081
+		 282.4 0.062170006334781647 283.2 0.057384505867958069 284 0.055095750838518143 284.8 0.05276951938867569
+		 285.6 0.051285788416862488 286.4 0.050008822232484818 287.2 0.049025837332010269
+		 288 0.047794070094823837 288.8 0.046650417149066925 289.6 0.045723877847194672 290.4 0.044776301831007004
+		 291.2 0.043884113430976868 292 0.043047059327363968 292.8 0.042422112077474594 293.6 0.041549865156412125
+		 294.4 0.041360002011060715 295.2 0.041360002011060715 296 0.041360002011060715 296.8 0.041360002011060715
+		 297.6 0.041360002011060715 298.4 0.041360002011060715 299.2 0.041360002011060715
+		 300 0.041360002011060715 300.8 0.041360002011060715 301.6 0.041360002011060715 302.4 0.041360002011060715
+		 303.2 0.041360002011060715 304 0.041360002011060715;
+createNode animCurveTU -n "headModel:comboCorrectives_dimplerL";
+	rename -uid "C2636B57-F848-D94A-EA5B-A8B68AD703A2";
+	setAttr ".tan" 18;
+	setAttr ".wgt" no;
+	setAttr -s 381 ".ktv";
+	setAttr ".ktv[0:249]"  0 0 0.8 0.10869372636079788 1.6 0.11456354707479477
+		 2.4 0.11928971856832504 3.2 0.12106450647115707 4 0.12174036353826523 4.8 0.12174051254987717
+		 5.6 0.12092605233192444 6.4 0.11967769265174866 7.2 0.11726529151201248 8 0.1161021962761879
+		 8.8 0.11662045121192932 9.6 0.11693595349788666 10.4 0.11873319745063782 11.2 0.14100325107574463
+		 12 0.18178941309452057 12.8 0.29406559467315674 13.6 0.31967595219612122 14.4 0.29371467232704163
+		 15.2 0.30696752667427063 16 0.32076817750930786 16.8 0.32159319519996643 17.6 0.31965547800064087
+		 18.4 0.30476367473602295 19.2 0.29912081360816956 20 0.29656627774238586 20.8 0.29206973314285278
+		 21.6 0.28789675235748291 22.4 0.26500335335731506 23.2 0.25933301448822021 24 0.25818076729774475
+		 24.8 0.25782716274261475 25.6 0.25211945176124573 26.4 0.24645453691482544 27.2 0.24289742112159729
+		 28 0.22937855124473572 28.8 0.2301914393901825 29.6 0.23450392484664917 30.4 0.23953111469745636
+		 31.2 0.25067248940467834 32 0.2593955397605896 32.8 0.25970369577407837 33.6 0.24498087167739868
+		 34.4 0.22907386720180511 35.2 0.2227889746427536 36 0.22051167488098145 36.8 0.21956288814544678
+		 37.6 0.22608169913291931 38.4 0.24589678645133972 39.2 0.25345936417579651 40 0.2567172646522522
+		 40.8 0.25950759649276733 41.6 0.2613273561000824 42.4 0.26089820265769958 43.2 0.24965052306652069
+		 44 0.25168991088867188 44.8 0.25292253494262695 45.6 0.25499749183654785 46.4 0.25520360469818115
+		 47.2 0.25278973579406738 48 0.25136682391166687 48.8 0.24744154512882233 49.6 0.22821694612503052
+		 50.4 0.18796324729919434 51.2 0.076116673648357391 52 0.020488664507865906 52.8 0.003327071201056242
+		 53.6 0 54.4 0 55.2 0 56 0 56.8 0 57.6 0 58.4 0 59.2 0 60 0 60.8 0 61.6 0 62.4 0 63.2 0
+		 64 0 64.8 0 65.6 0 66.4 0 67.2 0 68 0 68.8 0 69.6 0 70.4 0 71.2 0 72 0 72.8 0 73.6 0
+		 74.4 6.3986824727635394e-08 75.2 0.007553422823548317 76 0.023928936570882797 76.8 0.036350663751363754
+		 77.6 0.052399441599845886 78.4 0.065370701253414154 79.2 0.13077598810195923 80 0.16562332212924957
+		 80.8 0.17576661705970764 81.6 0.17612530291080475 82.4 0.17197629809379578 83.2 0.17253273725509644
+		 84 0.17370791733264923 84.8 0.17457683384418488 85.6 0.17446723580360413 86.4 0.16962875425815582
+		 87.2 0.16766907274723053 88 0.16676564514636993 88.8 0.16307160258293152 89.6 0.15930935740470886
+		 90.4 0.15267670154571533 91.2 0.14622311294078827 92 0.12941856682300568 92.8 0.090477138757705688
+		 93.6 0.074909061193466187 94.4 0.071896128356456757 95.2 0.071738168597221375 96 0.072735592722892761
+		 96.8 0.074165999889373779 97.6 0.07555776834487915 98.4 0.076945178210735321 99.2 0.07778254896402359
+		 100 0.078360937535762787 100.8 0.078728921711444855 101.6 0.078953646123409271 102.4 0.078951358795166016
+		 103.2 0.078962773084640503 104 0.078897625207901001 104.8 0.079144485294818878 105.6 0.079249493777751923
+		 106.4 0.079535156488418579 107.2 0.079635165631771088 108 0.07960733026266098 108.8 0.079278692603111267
+		 109.6 0.079125016927719116 110.4 0.079186141490936279 111.2 0.079169757664203644
+		 112 0.079249687492847443 112.8 0.09168040007352829 113.6 0.098341837525367737 114.4 0.11156152188777924
+		 115.2 0.12782870233058929 116 0.13420337438583374 116.8 0.14472188055515289 117.6 0.15263840556144714
+		 118.4 0.1562776118516922 119.2 0.15644218027591705 120 0.1554427295923233 120.8 0.15504275262355804
+		 121.6 0.15494717657566071 122.4 0.15538732707500458 123.2 0.15563374757766724 124 0.15429092943668365
+		 124.8 0.1490851491689682 125.6 0.14594860374927521 126.4 0.14287813007831573 127.2 0.14136764407157898
+		 128 0.14168813824653625 128.8 0.14269730448722839 129.6 0.14486746490001678 130.4 0.14786204695701599
+		 131.2 0.15073508024215698 132 0.15385814011096954 132.8 0.15550816059112549 133.6 0.15814030170440674
+		 134.4 0.15973067283630371 135.2 0.16081124544143677 136 0.16188664734363556 136.8 0.1628926694393158
+		 137.6 0.16308355331420898 138.4 0.16367918252944946 139.2 0.16410711407661438 140 0.1643550843000412
+		 140.8 0.16433140635490417 141.6 0.16418440639972687 142.4 0.16453666985034943 143.2 0.16516986489295959
+		 144 0.16600969433784485 144.8 0.16640976071357727 145.6 0.16642245650291443 146.4 0.16621182858943939
+		 147.2 0.16626681387424469 148 0.16635413467884064 148.8 0.16642041504383087 149.6 0.16629481315612793
+		 150.4 0.16464582085609436 151.2 0.16321243345737457 152 0.16252337396144867 152.8 0.16232743859291077
+		 153.6 0.16234320402145386 154.4 0.16434825956821442 155.2 0.17843085527420044 156 0.19015766680240631
+		 156.8 0.26007509231567383 157.6 0.29905110597610474 158.4 0.30969560146331787 159.2 0.30711859464645386
+		 160 0.27790799736976624 160.8 0.25211042165756226 161.6 0.23204115033149719 162.4 0.21110610663890839
+		 163.2 0.22751009464263916 164 0.22937844693660736 164.8 0.22062116861343384 165.6 0.21928687393665314
+		 166.4 0.21893078088760376 167.2 0.21917721629142761 168 0.2187480628490448 168.8 0.21331828832626343
+		 169.6 0.20872674882411957 170.4 0.20244637131690979 171.2 0.21087475121021271 172 0.21899987757205963
+		 172.8 0.21026687324047089 173.6 0.18178722262382507 174.4 0.17463910579681396 175.2 0.16477833688259125
+		 176 0.15252603590488434 176.8 0.14113357663154602 177.6 0.13384005427360535 178.4 0.12354488670825958
+		 179.2 0.11304063349962234 180 0.11044781655073166 180.8 0.1093038022518158 181.6 0.10854630172252655
+		 182.4 0.10814175754785538 183.2 0.10738614946603775 184 0.088196732103824615 184.8 0.043451469391584396
+		 185.6 0.018067410215735435 186.4 0.0037544190417975187 187.2 1.5382684068754315e-06
+		 188 0 188.8 0 189.6 0 190.4 0 191.2 0 192 0 192.8 0 193.6 0 194.4 0 195.2 0 196 0
+		 196.8 0 197.6 0 198.4 0 199.2 0;
+	setAttr ".ktv[250:380]" 200 0 200.8 0 201.6 0 202.4 0 203.2 0 204 0 204.8 0
+		 205.6 0 206.4 0 207.2 0 208 0 208.8 0 209.6 0 210.4 0 211.2 0 212 0 212.8 0 213.6 0
+		 214.4 0 215.2 0 216 0 216.8 0 217.6 0.0024602753110229969 218.4 0.012052956037223339
+		 219.2 0.015663526952266693 220 0.017081482335925102 220.8 0.016946105286478996 221.6 0.016510253772139549
+		 222.4 0.013913755305111408 223.2 0.0062705562449991703 224 4.4634947698796168e-05
+		 224.8 0 225.6 0 226.4 0 227.2 0 228 0 228.8 0 229.6 0 230.4 0 231.2 0 232 0.011783063411712646
+		 232.8 0.025578772649168968 233.6 0.04604194313287735 234.4 0.10073906183242798 235.2 0.12934674322605133
+		 236 0.14815081655979156 236.8 0.16876499354839325 237.6 0.18174813687801361 238.4 0.18655009567737579
+		 239.2 0.19083988666534424 240 0.19336703419685364 240.8 0.19365212321281433 241.6 0.19376620650291443
+		 242.4 0.19324885308742523 243.2 0.19255538284778595 244 0.19126352667808533 244.8 0.18946908414363861
+		 245.6 0.18049171566963196 246.4 0.15977883338928223 247.2 0.12204936146736145 248 0.090234577655792236
+		 248.8 0.069756664335727692 249.6 0.057579956948757172 250.4 0.052678130567073822
+		 251.2 0.05057903379201889 252 0.049342673271894455 252.8 0.045034635812044144 253.6 0.03778500109910965
+		 254.4 0.026597753167152405 255.2 0.01946680061519146 256 0.016651419922709465 256.8 0.015491426922380924
+		 257.6 0.014680470339953899 258.4 0.013940137811005116 259.2 0.02122863382101059 260 0.041980300098657608
+		 260.8 0.058638948947191238 261.6 0.068391315639019012 262.4 0.092338107526302338
+		 263.2 0.11375091969966888 264 0.15941783785820007 264.8 0.2087571918964386 265.6 0.22011761367321014
+		 266.4 0.22141948342323303 267.2 0.22115606069564819 268 0.22263850271701813 268.8 0.22712266445159912
+		 269.6 0.2322930246591568 270.4 0.23418900370597839 271.2 0.23530903458595276 272 0.23623083531856537
+		 272.8 0.23680754005908966 273.6 0.23223763704299927 274.4 0.21762275695800781 275.2 0.2128487229347229
+		 276 0.19615949690341949 276.8 0.18725509941577911 277.6 0.18122157454490662 278.4 0.17890004813671112
+		 279.2 0.17743159830570221 280 0.18092532455921173 280.8 0.1838323175907135 281.6 0.18432767689228058
+		 282.4 0.18156500160694122 283.2 0.1789679080247879 284 0.17704057693481445 284.8 0.17443716526031494
+		 285.6 0.17302027344703674 286.4 0.17200465500354767 287.2 0.17186518013477325 288 0.17163991928100586
+		 288.8 0.17074410617351532 289.6 0.16950522363185883 290.4 0.16796152293682098 291.2 0.16436879336833954
+		 292 0.15935401618480682 292.8 0.15725815296173096 293.6 0.15503323078155518 294.4 0.15424999594688416
+		 295.2 0.15424999594688416 296 0.15424999594688416 296.8 0.15424999594688416 297.6 0.15424999594688416
+		 298.4 0.15424999594688416 299.2 0.15424999594688416 300 0.15424999594688416 300.8 0.15424999594688416
+		 301.6 0.15424999594688416 302.4 0.15424999594688416 303.2 0.15424999594688416 304 0.15424999594688416;
+createNode animCurveTU -n "headModel:comboCorrectives_dimplerR";
+	rename -uid "527B5301-444F-F89E-399B-49B1861B35F9";
+	setAttr ".tan" 18;
+	setAttr ".wgt" no;
+	setAttr -s 381 ".ktv";
+	setAttr ".ktv[0:249]"  0 0 0.8 0.10824406147003174 1.6 0.11357989907264709
+		 2.4 0.11810897290706635 3.2 0.11986418068408966 4 0.12055832892656326 4.8 0.12057051062583923
+		 5.6 0.11965849995613098 6.4 0.11834858357906342 7.2 0.11645644903182983 8 0.11544272303581238
+		 8.8 0.11602985858917236 9.6 0.11630856990814209 10.4 0.11785239726305008 11.2 0.14035934209823608
+		 12 0.18125088512897491 12.8 0.29594263434410095 13.6 0.32108274102210999 14.4 0.28711521625518799
+		 15.2 0.30784913897514343 16 0.32209542393684387 16.8 0.32327020168304443 17.6 0.32177507877349854
+		 18.4 0.30998250842094421 19.2 0.30488103628158569 20 0.30167892575263977 20.8 0.29659762978553772
+		 21.6 0.29282021522521973 22.4 0.2708469033241272 23.2 0.26517218351364136 24 0.26400148868560791
+		 24.8 0.26371797919273376 25.6 0.25808677077293396 26.4 0.2524721622467041 27.2 0.24907155334949493
+		 28 0.23599259555339813 28.8 0.23600415885448456 29.6 0.24000698328018188 30.4 0.24456317722797394
+		 31.2 0.25501725077629089 32 0.26171663403511047 32.8 0.25960415601730347 33.6 0.24365805089473724
+		 34.4 0.22881476581096649 35.2 0.2214658260345459 36 0.21826648712158203 36.8 0.2170826643705368
+		 37.6 0.22292041778564453 38.4 0.24141548573970795 39.2 0.2488531768321991 40 0.25252029299736023
+		 40.8 0.25553849339485168 41.6 0.25766342878341675 42.4 0.2572576105594635 43.2 0.24676521122455597
+		 44 0.24818816781044006 44.8 0.24923983216285706 45.6 0.25164398550987244 46.4 0.25191286206245422
+		 47.2 0.24922949075698853 48 0.24780352413654327 48.8 0.24390910565853119 49.6 0.22334438562393188
+		 50.4 0.18214972317218781 51.2 0.071315310895442963 52 0.018964217975735664 52.8 0.0028190454468131065
+		 53.6 0 54.4 0 55.2 0 56 0 56.8 0 57.6 0 58.4 0 59.2 0 60 0 60.8 0 61.6 0 62.4 0 63.2 0
+		 64 0 64.8 0 65.6 0 66.4 0 67.2 0 68 0 68.8 0 69.6 0 70.4 0 71.2 0 72 0 72.8 0 73.6 0
+		 74.4 0 75.2 0.0042108464986085892 76 0.018210776150226593 76.8 0.028819950297474861
+		 77.6 0.043909076601266861 78.4 0.056773293763399124 79.2 0.12238927185535431 80 0.15708188712596893
+		 80.8 0.16849936544895172 81.6 0.17005732655525208 82.4 0.16702389717102051 83.2 0.16824805736541748
+		 84 0.17005671560764313 84.8 0.1711915135383606 85.6 0.17131003737449646 86.4 0.16775144636631012
+		 87.2 0.16621838510036469 88 0.1653856486082077 88.8 0.16126175224781036 89.6 0.15733695030212402
+		 90.4 0.15080022811889648 91.2 0.144100621342659 92 0.12696291506290436 92.8 0.088502973318099976
+		 93.6 0.072150610387325287 94.4 0.068846516311168671 95.2 0.068457044661045074 96 0.069305956363677979
+		 96.8 0.070940025150775909 97.6 0.072385489940643311 98.4 0.073815010488033295 99.2 0.074720121920108795
+		 100 0.075330279767513275 100.8 0.075717337429523468 101.6 0.075963065028190613 102.4 0.076027967035770416
+		 103.2 0.076088614761829376 104 0.076018817722797394 104.8 0.076265513896942139 105.6 0.076329618692398071
+		 106.4 0.076673433184623718 107.2 0.07687193900346756 108 0.076867327094078064 108.8 0.076528690755367279
+		 109.6 0.076440833508968353 110.4 0.076564602553844452 111.2 0.076469041407108307
+		 112 0.076399058103561401 112.8 0.086521707475185394 113.6 0.093857139348983765 114.4 0.10900112241506577
+		 115.2 0.12569010257720947 116 0.13229250907897949 116.8 0.14262351393699646 117.6 0.14961525797843933
+		 118.4 0.15279917418956757 119.2 0.15287463366985321 120 0.15184454619884491 120.8 0.15141460299491882
+		 121.6 0.15132611989974976 122.4 0.15178731083869934 123.2 0.15201394259929657 124 0.15043830871582031
+		 124.8 0.14475157856941223 125.6 0.14049778878688812 126.4 0.13431023061275482 127.2 0.13147750496864319
+		 128 0.13106930255889893 128.8 0.13159582018852234 129.6 0.13277040421962738 130.4 0.13473586738109589
+		 131.2 0.1369398832321167 132 0.13960185647010803 132.8 0.1410883367061615 133.6 0.14345259964466095
+		 134.4 0.14497345685958862 135.2 0.14598104357719421 136 0.14692269265651703 136.8 0.14778368175029755
+		 137.6 0.14794436097145081 138.4 0.14843380451202393 139.2 0.14877769351005554 140 0.14900508522987366
+		 140.8 0.14901094138622284 141.6 0.14889328181743622 142.4 0.1491885781288147 143.2 0.14968854188919067
+		 144 0.15034651756286621 144.8 0.15056191384792328 145.6 0.1504749059677124 146.4 0.15019287168979645
+		 147.2 0.15016268193721771 148 0.15018722414970398 148.8 0.15018390119075775 149.6 0.14996595680713654
+		 150.4 0.14825963973999023 151.2 0.14666581153869629 152 0.14580580592155457 152.8 0.14559422433376312
+		 153.6 0.14557318389415741 154.4 0.14841671288013458 155.2 0.16630341112613678 156 0.18215548992156982
+		 156.8 0.256847083568573 157.6 0.29577368497848511 158.4 0.3065255880355835 159.2 0.30428028106689453
+		 160 0.27498093247413635 160.8 0.24862201511859894 161.6 0.22874310612678528 162.4 0.20970346033573151
+		 163.2 0.22308933734893799 164 0.22492897510528564 164.8 0.21889321506023407 165.6 0.21773335337638855
+		 166.4 0.21706266701221466 167.2 0.21686634421348572 168 0.21604937314987183 168.8 0.20880648493766785
+		 169.6 0.20360028743743896 170.4 0.19669732451438904 171.2 0.21506577730178833 172 0.22420093417167664
+		 172.8 0.20704777538776398 173.6 0.17999610304832458 174.4 0.17261858284473419 175.2 0.16195414960384369
+		 176 0.14869983494281769 176.8 0.13698925077915192 177.6 0.12946699559688568 178.4 0.11867403984069824
+		 179.2 0.10757564008235931 180 0.10490018874406815 180.8 0.10373406112194061 181.6 0.10303352028131485
+		 182.4 0.10260293632745743 183.2 0.10181759297847748 184 0.084168463945388794 184.8 0.040647435933351517
+		 185.6 0.015985457226634026 186.4 0.0022491617128252983 187.2 0 188 0 188.8 0 189.6 0
+		 190.4 0 191.2 0 192 0 192.8 0 193.6 0 194.4 0 195.2 0 196 0 196.8 0 197.6 0 198.4 0
+		 199.2 0;
+	setAttr ".ktv[250:380]" 200 0 200.8 0 201.6 0 202.4 0 203.2 0 204 0 204.8 0
+		 205.6 0 206.4 0 207.2 0 208 0 208.8 0 209.6 0 210.4 0 211.2 0 212 0 212.8 0 213.6 0
+		 214.4 0 215.2 0 216 0 216.8 0 217.6 0 218.4 0.0074423481710255146 219.2 0.011186261661350727
+		 220 0.01282698567956686 220.8 0.013009999878704548 221.6 0.012863845564424992 222.4 0.011106315068900585
+		 223.2 0.004644579254090786 224 1.1278722922725137e-05 224.8 0 225.6 0 226.4 0 227.2 0
+		 228 0 228.8 0 229.6 0 230.4 0 231.2 0 232 0 232.8 0.010936016216874123 233.6 0.038947165012359619
+		 234.4 0.092412471771240234 235.2 0.12190382927656174 236 0.14167836308479309 236.8 0.16338373720645905
+		 237.6 0.17660559713840485 238.4 0.18254512548446655 239.2 0.18709211051464081 240 0.18957808613777161
+		 240.8 0.1896355152130127 241.6 0.18931655585765839 242.4 0.18836590647697449 243.2 0.18715229630470276
+		 244 0.18412128090858459 244.8 0.18048985302448273 245.6 0.1705750972032547 246.4 0.14828552305698395
+		 247.2 0.11176881194114685 248 0.081510782241821289 248.8 0.062789700925350189 249.6 0.05078597366809845
+		 250.4 0.045932572335004807 251.2 0.043912846595048904 252 0.042684163898229599 252.8 0.038227319717407227
+		 253.6 0.031285710632801056 254.4 0.021871505305171013 255.2 0.015675682574510574
+		 256 0.013094207271933556 256.8 0.011942519806325436 257.6 0.011084162630140781 258.4 0.01025659404695034
+		 259.2 0.014737516641616821 260 0.031750209629535675 260.8 0.046993885189294815 261.6 0.057880118489265442
+		 262.4 0.08597448468208313 263.2 0.10813423991203308 264 0.15424376726150513 264.8 0.20321711897850037
+		 265.6 0.21458372473716736 266.4 0.21629105508327484 267.2 0.21628853678703308 268 0.21808615326881409
+		 268.8 0.2225714772939682 269.6 0.2280714213848114 270.4 0.23002831637859344 271.2 0.23119479417800903
+		 272 0.23216952383518219 272.8 0.23281262814998627 273.6 0.22873838245868683 274.4 0.21451079845428467
+		 275.2 0.20980021357536316 276 0.19232073426246643 276.8 0.18351276218891144 277.6 0.17805814743041992
+		 278.4 0.17613610625267029 279.2 0.1748620867729187 280 0.18042333424091339 280.8 0.18435387313365936
+		 281.6 0.18499067425727844 282.4 0.18139998614788055 283.2 0.17744077742099762 284 0.17495070397853851
+		 284.8 0.17206153273582458 285.6 0.17055477201938629 286.4 0.16951514780521393 287.2 0.16936518251895905
+		 288 0.16914659738540649 288.8 0.16824659705162048 289.6 0.16703097522258759 290.4 0.16555386781692505
+		 291.2 0.16215358674526215 292 0.15721115469932556 292.8 0.15488073229789734 293.6 0.15245974063873291
+		 294.4 0.15163999795913696 295.2 0.15163999795913696 296 0.15163999795913696 296.8 0.15163999795913696
+		 297.6 0.15163999795913696 298.4 0.15163999795913696 299.2 0.15163999795913696 300 0.15163999795913696
+		 300.8 0.15163999795913696 301.6 0.15163999795913696 302.4 0.15163999795913696 303.2 0.15163999795913696
+		 304 0.15163999795913696;
+createNode animCurveTU -n "headModel:comboCorrectives_jawDrop";
+	rename -uid "43413258-9143-628F-CC90-5BB0BA4B007B";
+	setAttr ".tan" 18;
+	setAttr ".wgt" no;
+	setAttr -s 381 ".ktv";
+	setAttr ".ktv[0:249]"  0 0 0.8 0 1.6 0 2.4 0 3.2 0 4 0 4.8 0 5.6 0 6.4 0
+		 7.2 0 8 0 8.8 0 9.6 0 10.4 0 11.2 0 12 0 12.8 0 13.6 0 14.4 0 15.2 0 16 0 16.8 0
+		 17.6 0 18.4 0 19.2 0 20 0 20.8 0 21.6 0 22.4 0 23.2 0 24 0 24.8 0 25.6 0 26.4 0 27.2 0
+		 28 0 28.8 0 29.6 0 30.4 0 31.2 0 32 0 32.8 0 33.6 0 34.4 0 35.2 0 36 0 36.8 0 37.6 0
+		 38.4 0 39.2 0 40 0 40.8 0 41.6 0 42.4 0 43.2 0 44 0 44.8 0 45.6 0 46.4 0 47.2 0 48 0
+		 48.8 0 49.6 0 50.4 0 51.2 0 52 0 52.8 0.04982704296708107 53.6 0.2049260139465332
+		 54.4 0.36126390099525452 55.2 0.46920868754386902 56 0.61304724216461182 56.8 0.6965479850769043
+		 57.6 0.7267003059387207 58.4 0.73783111572265625 59.2 0.74028027057647705 60 0.73587697744369507
+		 60.8 0.72309190034866333 61.6 0.71051579713821411 62.4 0.69197720289230347 63.2 0.67813634872436523
+		 64 0.66875112056732178 64.8 0.66453325748443604 65.6 0.65192991495132446 66.4 0.6431499719619751
+		 67.2 0.63686239719390869 68 0.62668150663375854 68.8 0.6226392388343811 69.6 0.61791640520095825
+		 70.4 0.61490917205810547 71.2 0.60787308216094971 72 0.60321921110153198 72.8 0.58619433641433716
+		 73.6 0.54583591222763062 74.4 0.44175201654434204 75.2 0.29155999422073364 76 0.20989012718200684
+		 76.8 0.19197419285774231 77.6 0.1746656596660614 78.4 0.087989300489425659 79.2 0.052428349852561951
+		 80 0.00024183941422961652 80.8 0 81.6 0 82.4 0 83.2 0 84 0 84.8 0 85.6 0 86.4 0 87.2 0
+		 88 0 88.8 0 89.6 0 90.4 0 91.2 0 92 0 92.8 0 93.6 0 94.4 0 95.2 0 96 0 96.8 0 97.6 0
+		 98.4 0 99.2 0 100 0 100.8 0 101.6 0 102.4 0 103.2 0 104 0 104.8 0 105.6 0 106.4 0
+		 107.2 0 108 0 108.8 0 109.6 0 110.4 0 111.2 0 112 0 112.8 0 113.6 0 114.4 0 115.2 0
+		 116 0 116.8 0 117.6 0 118.4 0 119.2 0 120 0 120.8 0 121.6 0 122.4 0 123.2 0 124 0
+		 124.8 0 125.6 0 126.4 0 127.2 0 128 0 128.8 0.0024782905820757151 129.6 0.024044085294008255
+		 130.4 0.033729299902915955 131.2 0.036390423774719238 132 0.037165947258472443 132.8 0.037110250443220139
+		 133.6 0.035918630659580231 134.4 0.03271922841668129 135.2 0.030224837362766266 136 0.025225760415196419
+		 136.8 0.021765677258372307 137.6 0.020138835534453392 138.4 0.017272476106882095
+		 139.2 0.014740492217242718 140 0.012002415955066681 140.8 0.0082971928641200066 141.6 0.0066251321695744991
+		 142.4 0.0061582513153553009 143.2 0.0067057670094072819 144 0.0077381818555295467
+		 144.8 0.0081170713528990746 145.6 0.0088240327313542366 146.4 0.0088547095656394958
+		 147.2 0.0083846533671021461 148 0.0082741333171725273 148.8 0.0074717928655445576
+		 149.6 0.0043294900096952915 150.4 1.7330351909095043e-07 151.2 0 152 0 152.8 0 153.6 0
+		 154.4 0 155.2 0 156 0 156.8 0 157.6 0 158.4 0 159.2 0 160 0 160.8 0 161.6 0 162.4 0
+		 163.2 0 164 0 164.8 0 165.6 0 166.4 0 167.2 0 168 0 168.8 0 169.6 0 170.4 0 171.2 0
+		 172 0 172.8 0 173.6 0 174.4 0 175.2 0 176 0 176.8 0 177.6 0 178.4 0 179.2 0 180 0
+		 180.8 0 181.6 0 182.4 0 183.2 0 184 0 184.8 0 185.6 0 186.4 0.25784692168235779 187.2 0.47970736026763916
+		 188 0.65451425313949585 188.8 0.73091542720794678 189.6 0.7688787579536438 190.4 0.80322736501693726
+		 191.2 0.82492327690124512 192 0.83535504341125488 192.8 0.83816134929656982 193.6 0.83885812759399414
+		 194.4 0.83873772621154785 195.2 0.83761888742446899 196 0.8365633487701416 196.8 0.83249199390411377
+		 197.6 0.82854998111724854 198.4 0.82510507106781006 199.2 0.82127076387405396;
+	setAttr ".ktv[250:380]" 200 0.81246459484100342 200.8 0.8089141845703125 201.6 0.8069348931312561
+		 202.4 0.80528849363327026 203.2 0.8041379451751709 204 0.80234527587890625 204.8 0.80054819583892822
+		 205.6 0.79691153764724731 206.4 0.79134976863861084 207.2 0.79019194841384888 208 0.7895810604095459
+		 208.8 0.7881813645362854 209.6 0.78711771965026855 210.4 0.78542399406433105 211.2 0.78489720821380615
+		 212 0.78500372171401978 212.8 0.78425443172454834 213.6 0.78352910280227661 214.4 0.78356432914733887
+		 215.2 0.7837899923324585 216 0.78298568725585938 216.8 0.75767433643341064 217.6 0.6070103645324707
+		 218.4 0.36723655462265015 219.2 0.19186046719551086 220 0.058158807456493378 220.8 1.0063961326522985e-06
+		 221.6 0 222.4 0.012889550998806953 223.2 0.063656821846961975 224 0.16894936561584473
+		 224.8 0.3337118923664093 225.6 0.44203644990921021 226.4 0.549061119556427 227.2 0.64447504281997681
+		 228 0.74906003475189209 228.8 0.80315834283828735 229.6 0.86261492967605591 230.4 0.8980904221534729
+		 231.2 0.91855257749557495 232 0.93633347749710083 232.8 0.9352526068687439 233.6 0.8550226092338562
+		 234.4 0.83272850513458252 235.2 0.82680612802505493 236 0.82557106018066406 236.8 0.82539749145507812
+		 237.6 0.82377278804779053 238.4 0.79461222887039185 239.2 0.78132116794586182 240 0.77371567487716675
+		 240.8 0.75631225109100342 241.6 0.73627728223800659 242.4 0.69964617490768433 243.2 0.68799138069152832
+		 244 0.6805884838104248 244.8 0.64487022161483765 245.6 0.62339103221893311 246.4 0.5835113525390625
+		 247.2 0.53673142194747925 248 0.46131229400634766 248.8 0.42176064848899841 249.6 0.3588445782661438
+		 250.4 0.34479334950447083 251.2 0.36386683583259583 252 0.38732489943504333 252.8 0.39141693711280823
+		 253.6 0.39421325922012329 254.4 0.39692941308021545 255.2 0.39706665277481079 256 0.39669078588485718
+		 256.8 0.39567112922668457 257.6 0.37384605407714844 258.4 0.30745333433151245 259.2 0.15165604650974274
+		 260 0.067591622471809387 260.8 0.036818020045757294 261.6 0 262.4 0 263.2 0 264 0
+		 264.8 0 265.6 0 266.4 0 267.2 0 268 0 268.8 0 269.6 0 270.4 0 271.2 0 272 0 272.8 0
+		 273.6 0 274.4 0 275.2 0 276 0 276.8 0 277.6 0 278.4 0 279.2 0 280 0 280.8 0 281.6 0
+		 282.4 0 283.2 0 284 0 284.8 0 285.6 0 286.4 0 287.2 0 288 0 288.8 0 289.6 0 290.4 0
+		 291.2 0 292 0 292.8 0 293.6 0 294.4 0 295.2 0 296 0 296.8 0 297.6 0 298.4 0 299.2 0
+		 300 0 300.8 0 301.6 0 302.4 0 303.2 0 304 0;
+createNode animCurveTU -n "headModel:comboCorrectives_jawSidewaysLeft";
+	rename -uid "EEC58080-494A-316F-B6C7-2FA60CDD66D0";
+	setAttr ".tan" 18;
+	setAttr ".wgt" no;
+	setAttr -s 381 ".ktv";
+	setAttr ".ktv[0:249]"  0 0 0.8 0 1.6 0 2.4 0 3.2 0 4 0 4.8 0 5.6 0 6.4 0
+		 7.2 0 8 0 8.8 0 9.6 0 10.4 0 11.2 0 12 0 12.8 0 13.6 0 14.4 0 15.2 0 16 0 16.8 0
+		 17.6 0 18.4 0 19.2 0 20 0 20.8 0 21.6 0 22.4 0 23.2 0 24 0 24.8 0 25.6 0 26.4 0 27.2 0
+		 28 0 28.8 0 29.6 0 30.4 0 31.2 0 32 0 32.8 0 33.6 0 34.4 0 35.2 0 36 0 36.8 0 37.6 0
+		 38.4 0 39.2 0 40 0 40.8 0 41.6 0 42.4 0 43.2 0 44 0 44.8 0 45.6 0 46.4 0 47.2 0 48 0
+		 48.8 0 49.6 0 50.4 0 51.2 0 52 0 52.8 0 53.6 0 54.4 0 55.2 0 56 0 56.8 0 57.6 0 58.4 0.0013148569269105792
+		 59.2 0.003482745960354805 60 0.0094988187775015831 60.8 0.011916409246623516 61.6 0.016441458836197853
+		 62.4 0.02018309012055397 63.2 0.022351538762450218 64 0.023563643917441368 64.8 0.024908451363444328
+		 65.6 0.025577254593372345 66.4 0.025096697732806206 67.2 0.024329785257577896 68 0.024059509858489037
+		 68.8 0.024136684834957123 69.6 0.024403715506196022 70.4 0.023577528074383736 71.2 0.023300256580114365
+		 72 0.022692175582051277 72.8 0.02286156639456749 73.6 0.022782428190112114 74.4 0.022223846986889839
+		 75.2 0.034816756844520569 76 0.037538733333349228 76.8 0.020118067041039467 77.6 0.00966646708548069
+		 78.4 3.7217574572423473e-05 79.2 0 80 0 80.8 0 81.6 0 82.4 0 83.2 0 84 0 84.8 0 85.6 0
+		 86.4 0 87.2 0 88 0 88.8 0 89.6 0 90.4 0 91.2 0 92 0 92.8 0 93.6 0 94.4 0 95.2 0 96 0
+		 96.8 0 97.6 0 98.4 0 99.2 0 100 0 100.8 0 101.6 0 102.4 0 103.2 0 104 0 104.8 0 105.6 0
+		 106.4 0 107.2 0 108 0 108.8 0 109.6 0 110.4 0 111.2 0 112 0 112.8 0 113.6 0 114.4 0
+		 115.2 0 116 0 116.8 0 117.6 0 118.4 0 119.2 0 120 0 120.8 0 121.6 0 122.4 0 123.2 0
+		 124 0 124.8 0 125.6 0 126.4 0 127.2 0 128 0.01058910321444273 128.8 0.016417233273386955
+		 129.6 0.022633964195847511 130.4 0.02584432065486908 131.2 0.027327535673975945 132 0.028382422402501106
+		 132.8 0.028889443725347519 133.6 0.028569543734192848 134.4 0.027904536575078964
+		 135.2 0.027469752356410027 136 0.027289047837257385 136.8 0.026973463594913483 137.6 0.026374179869890213
+		 138.4 0.02567620761692524 139.2 0.024906320497393608 140 0.024341486394405365 140.8 0.023600058630108833
+		 141.6 0.022754853591322899 142.4 0.022129040211439133 143.2 0.021931085735559464
+		 144 0.022303333505988121 144.8 0.022760327905416489 145.6 0.023021824657917023 146.4 0.023226596415042877
+		 147.2 0.023597506806254387 148 0.024254169315099716 148.8 0.024366965517401695 149.6 0.023937646299600601
+		 150.4 0.023156246170401573 151.2 0.022065406665205956 152 0.020622007548809052 152.8 0.014758661389350891
+		 153.6 0.0071888421662151814 154.4 0 155.2 0 156 0 156.8 0 157.6 0 158.4 0 159.2 0
+		 160 0 160.8 0 161.6 0 162.4 0 163.2 0 164 0 164.8 0 165.6 0 166.4 0 167.2 0 168 0
+		 168.8 0 169.6 0 170.4 0 171.2 0 172 0 172.8 0 173.6 0 174.4 0 175.2 0 176 0 176.8 0
+		 177.6 0 178.4 0 179.2 0 180 0 180.8 0 181.6 0 182.4 0 183.2 0 184 0 184.8 0 185.6 0
+		 186.4 0 187.2 0 188 0 188.8 0 189.6 0 190.4 0 191.2 0 192 0 192.8 0 193.6 0 194.4 0
+		 195.2 0 196 0 196.8 0 197.6 0 198.4 0 199.2 0;
+	setAttr ".ktv[250:380]" 200 0 200.8 0.0012615800369530916 201.6 0.0022126010153442621
+		 202.4 0.0017006407724693418 203.2 0.00052040716400370002 204 0 204.8 0 205.6 0 206.4 0
+		 207.2 0 208 0 208.8 0 209.6 0 210.4 0 211.2 0 212 0 212.8 0 213.6 0 214.4 0 215.2 0
+		 216 0 216.8 0 217.6 0.0061327307485044003 218.4 0.079239971935749054 219.2 0.060183208435773849
+		 220 0.047777317464351654 220.8 0.01889466680586338 221.6 0.0060864482074975967 222.4 0.0031460083555430174
+		 223.2 0.0024347931612282991 224 0.002557447412982583 224.8 0.0022100000642240047
+		 225.6 2.7818530725198798e-05 226.4 0 227.2 0 228 0 228.8 0 229.6 0 230.4 0 231.2 0
+		 232 0 232.8 0.02835363894701004 233.6 0.093579694628715515 234.4 0.10129000246524811
+		 235.2 0.082266613841056824 236 0.065563134849071503 236.8 0.050791248679161072 237.6 0.042497016489505768
+		 238.4 0.032812520861625671 239.2 0.026055490598082542 240 0.015788396820425987 240.8 0.0109960762783885
+		 241.6 0.0079279309138655663 242.4 0.0022983229719102383 243.2 5.9663398133125156e-07
+		 244 0 244.8 0.00056842301273718476 245.6 0.00094663887284696102 246.4 0.0037713954225182533
+		 247.2 0.0069219795987010002 248 0.0086479848250746727 248.8 0.0086300000548362732
+		 249.6 0.0081555861979722977 250.4 0.013677505776286125 251.2 0.02073928527534008
+		 252 0.023812592029571533 252.8 0.025048715993762016 253.6 0.025587590411305428 254.4 0.025896748527884483
+		 255.2 0.025567036122083664 256 0.024410929530858994 256.8 0.023122217506170273 257.6 0.022106779739260674
+		 258.4 0.021202292293310165 259.2 0.020445670932531357 260 0.019597725942730904 260.8 0.0093012852594256401
+		 261.6 0 262.4 0 263.2 0 264 0 264.8 0 265.6 0 266.4 0 267.2 0 268 0 268.8 0 269.6 0
+		 270.4 0 271.2 0 272 0 272.8 0 273.6 0 274.4 0 275.2 0 276 0 276.8 0 277.6 0 278.4 0
+		 279.2 0 280 0 280.8 0 281.6 0 282.4 0 283.2 0 284 0 284.8 0 285.6 0 286.4 0 287.2 0
+		 288 0 288.8 0 289.6 0 290.4 0 291.2 0 292 0 292.8 0 293.6 0 294.4 0 295.2 0 296 0
+		 296.8 0 297.6 0 298.4 0 299.2 0 300 0 300.8 0 301.6 0 302.4 0 303.2 0 304 0;
+createNode animCurveTU -n "headModel:comboCorrectives_jawSidewaysRight";
+	rename -uid "20BC12F6-584D-FCBC-2D4C-3CA51B0AB5EE";
+	setAttr ".tan" 18;
+	setAttr ".wgt" no;
+	setAttr -s 381 ".ktv";
+	setAttr ".ktv[0:249]"  0 0 0.8 0.004190217237919569 1.6 0.0051745749078691006
+		 2.4 0.0063329879194498062 3.2 0.0068903714418411255 4 0.0075435941107571125 4.8 0.0082210907712578773
+		 5.6 0.0086031211540102959 6.4 0.0085331257432699203 7.2 0.0083451606333255768 8 0.0082233594730496407
+		 8.8 0.0090153925120830536 9.6 0.010092440061271191 10.4 0.010864511132240295 11.2 0.01102110929787159
+		 12 0.010505558922886848 12.8 0.0093868793919682503 13.6 0.0073239384219050407 14.4 0.0027789243031293154
+		 15.2 6.3999999838415533e-05 16 0 16.8 0 17.6 0 18.4 0 19.2 0 20 0 20.8 0 21.6 0 22.4 0
+		 23.2 0 24 0 24.8 0 25.6 0 26.4 0 27.2 0 28 0 28.8 0 29.6 0 30.4 0 31.2 0 32 0 32.8 0
+		 33.6 0 34.4 0 35.2 0 36 0 36.8 0 37.6 0 38.4 0 39.2 0 40 0 40.8 0 41.6 0 42.4 0 43.2 0
+		 44 0 44.8 0 45.6 0 46.4 0 47.2 0 48 0 48.8 0 49.6 0 50.4 0 51.2 0.0040812571533024311
+		 52 0.0054797162301838398 52.8 0 53.6 0 54.4 0 55.2 0 56 0 56.8 0 57.6 0 58.4 0 59.2 0
+		 60 0 60.8 0 61.6 0 62.4 0 63.2 0 64 0 64.8 0 65.6 0 66.4 0 67.2 0 68 0 68.8 0 69.6 0
+		 70.4 0 71.2 0 72 0 72.8 0 73.6 0 74.4 0 75.2 0 76 0 76.8 0 77.6 0 78.4 0 79.2 0 80 0
+		 80.8 0 81.6 0 82.4 0 83.2 0 84 0.00060822156956419349 84.8 0.0011705063516274095
+		 85.6 0.0010278988629579544 86.4 0.0014837533235549927 87.2 0.0021493646781891584
+		 88 0.0025181167293339968 88.8 0.0030696101021021605 89.6 0.0039210268296301365 90.4 0.0049829133786261082
+		 91.2 0.0057540689595043659 92 0.0069359270855784416 92.8 0.0084884986281394958 93.6 0.0094839595258235931
+		 94.4 0.0094511741772294044 95.2 0.0085444105789065361 96 0.0088178683072328568 96.8 0.013771653175354004
+		 97.6 0.016769243404269218 98.4 0.018504440784454346 99.2 0.020111678168177605 100 0.02133173868060112
+		 100.8 0.021566834300756454 101.6 0.021845955401659012 102.4 0.022190317511558533
+		 103.2 0.022703958675265312 104 0.02271660603582859 104.8 0.022617241367697716 105.6 0.022112300619482994
+		 106.4 0.022824089974164963 107.2 0.02399662509560585 108 0.024093739688396454 108.8 0.023699626326560974
+		 109.6 0.024215739220380783 110.4 0.024643059819936752 111.2 0.023079853504896164
+		 112 0.021696250885725021 112.8 0.0081645231693983078 113.6 0.0017198541900143027
+		 114.4 4.7936082410160452e-06 115.2 0 116 0 116.8 0 117.6 0 118.4 0 119.2 0 120 0
+		 120.8 0 121.6 0 122.4 0 123.2 0 124 0 124.8 0 125.6 0 126.4 0 127.2 0 128 0 128.8 0
+		 129.6 0 130.4 0 131.2 0 132 0 132.8 0 133.6 0 134.4 0 135.2 0 136 0 136.8 0 137.6 0
+		 138.4 0 139.2 0 140 0 140.8 0 141.6 0 142.4 0 143.2 0 144 0 144.8 0 145.6 0 146.4 0
+		 147.2 0 148 0 148.8 0 149.6 0 150.4 0 151.2 0 152 0 152.8 0 153.6 0 154.4 0 155.2 0
+		 156 0 156.8 0 157.6 0 158.4 0 159.2 0 160 0 160.8 0 161.6 0 162.4 0 163.2 0 164 0
+		 164.8 0 165.6 0 166.4 0 167.2 0 168 0 168.8 0 169.6 0 170.4 0 171.2 0.0023938312660902739
+		 172 0.009203239344060421 172.8 0.011915977112948895 173.6 0.012052971869707108 174.4 0.010494266636669636
+		 175.2 0.009282134473323822 176 0.0089685292914509773 176.8 0.0094557590782642365
+		 177.6 0.010063988156616688 178.4 0.010840957053005695 179.2 0.01208887156099081 180 0.013317613862454891
+		 180.8 0.014453955926001072 181.6 0.016169393435120583 182.4 0.017821716144680977
+		 183.2 0.018996596336364746 184 0.021216895431280136 184.8 0.022316835820674896 185.6 0.014774047769606113
+		 186.4 0.0014930779580026865 187.2 0 188 0 188.8 0 189.6 0 190.4 0 191.2 0 192 0 192.8 0
+		 193.6 0 194.4 0 195.2 0 196 0 196.8 0 197.6 0 198.4 0 199.2 0;
+	setAttr ".ktv[250:380]" 200 0 200.8 0 201.6 0 202.4 0 203.2 0 204 0 204.8 0
+		 205.6 0 206.4 0 207.2 0 208 0 208.8 0 209.6 0 210.4 0 211.2 0 212 0 212.8 0 213.6 0
+		 214.4 0 215.2 0 216 0 216.8 0 217.6 0 218.4 0 219.2 0 220 0 220.8 0 221.6 0 222.4 0
+		 223.2 0 224 0 224.8 0 225.6 0 226.4 0 227.2 0 228 0 228.8 0 229.6 0 230.4 0 231.2 0
+		 232 0 232.8 0 233.6 0 234.4 0 235.2 0 236 0 236.8 0 237.6 0 238.4 0 239.2 0 240 0
+		 240.8 0 241.6 0 242.4 0 243.2 0 244 0 244.8 0 245.6 0 246.4 0 247.2 0 248 0 248.8 0
+		 249.6 0 250.4 0 251.2 0 252 0 252.8 0 253.6 0 254.4 0 255.2 0 256 0 256.8 0 257.6 0
+		 258.4 0 259.2 0 260 0 260.8 0 261.6 0 262.4 0 263.2 0 264 0 264.8 0 265.6 0 266.4 0
+		 267.2 0 268 0 268.8 0 269.6 0 270.4 0 271.2 0 272 0 272.8 0 273.6 0 274.4 0 275.2 0
+		 276 0 276.8 0 277.6 0 278.4 0 279.2 0 280 0 280.8 0 281.6 0 282.4 0 283.2 0 284 0
+		 284.8 0 285.6 0 286.4 0 287.2 0 288 0 288.8 0 289.6 0 290.4 0 291.2 0 292 0 292.8 0
+		 293.6 0 294.4 0 295.2 0 296 0 296.8 0 297.6 0 298.4 0 299.2 0 300 0 300.8 0 301.6 0
+		 302.4 0 303.2 0 304 0;
+createNode animCurveTU -n "headModel:comboCorrectives_jawThrust";
+	rename -uid "BD74D010-6145-1036-A66A-9082CEB0F00F";
+	setAttr ".tan" 18;
+	setAttr ".wgt" no;
+	setAttr -s 381 ".ktv";
+	setAttr ".ktv[0:249]"  0 0 0.8 0.00074323371518403292 1.6 0.010172259993851185
+		 2.4 0.018627230077981949 3.2 0.021526940166950226 4 0.022205101326107979 4.8 0.022140000015497208
+		 5.6 0.021179482340812683 6.4 0.020008135586977005 7.2 0.014925844967365265 8 0.012629999779164791
+		 8.8 0.012688212096691132 9.6 0.012486359104514122 10.4 0.01321305800229311 11.2 0.016795223578810692
+		 12 0.019929388538002968 12.8 0.083666242659091949 13.6 0.064175523817539215 14.4 0.00021202836069278419
+		 15.2 0 16 0 16.8 0 17.6 0 18.4 0 19.2 0.0037537373136729002 20 0.009255116805434227
+		 20.8 0.011413633823394775 21.6 0.012664019130170345 22.4 0.013058979995548725 23.2 0.013250745832920074
+		 24 0.013565637171268463 24.8 0.014110542833805084 25.6 0.013988125137984753 26.4 0.01377579104155302
+		 27.2 0.013829609379172325 28 0.013555945828557014 28.8 0.013523047789931297 29.6 0.013844026252627373
+		 30.4 0.014346778392791748 31.2 0.014704474247992039 32 0.010855388827621937 32.8 0
+		 33.6 0 34.4 0 35.2 0 36 0 36.8 0 37.6 0 38.4 0 39.2 0 40 0 40.8 0 41.6 0 42.4 0 43.2 0
+		 44 0 44.8 0 45.6 0 46.4 0 47.2 0 48 0 48.8 0 49.6 0 50.4 0 51.2 0 52 0 52.8 0.021564589813351631
+		 53.6 0.10309226810932159 54.4 0.12155119329690933 55.2 0.12509122490882874 56 0.12814874947071075
+		 56.8 0.17746777832508087 57.6 0.19739608466625214 58.4 0.20381680130958557 59.2 0.20752879977226257
+		 60 0.21078376471996307 60.8 0.21160514652729034 61.6 0.21142807602882385 62.4 0.21064193546772003
+		 63.2 0.20945923030376434 64 0.20560508966445923 64.8 0.19978174567222595 65.6 0.19057156145572662
+		 66.4 0.18359081447124481 67.2 0.17797784507274628 68 0.17517462372779846 68.8 0.1695394366979599
+		 69.6 0.16079573333263397 70.4 0.15380957722663879 71.2 0.1507817804813385 72 0.14234432578086853
+		 72.8 0.1051638200879097 73.6 0.07731395959854126 74.4 0.036699507385492325 75.2 0
+		 76 0 76.8 0 77.6 0 78.4 0 79.2 0.013547653332352638 80 0.03101751022040844 80.8 0.0040993103757500648
+		 81.6 0 82.4 0 83.2 0 84 0 84.8 0 85.6 0 86.4 0 87.2 0 88 0 88.8 0 89.6 0 90.4 0 91.2 0
+		 92 0 92.8 0 93.6 0 94.4 0 95.2 0 96 0 96.8 0 97.6 0 98.4 0 99.2 0 100 0 100.8 0 101.6 0
+		 102.4 0 103.2 0 104 0 104.8 0 105.6 0 106.4 0 107.2 0 108 0 108.8 0 109.6 0 110.4 0
+		 111.2 0 112 0 112.8 0 113.6 0 114.4 0 115.2 0 116 0 116.8 0 117.6 0 118.4 0 119.2 0
+		 120 0 120.8 0 121.6 0 122.4 0 123.2 0 124 0 124.8 0 125.6 0 126.4 0 127.2 0 128 0
+		 128.8 0 129.6 0.0074183493852615356 130.4 0.015467265620827675 131.2 0.019113089889287949
+		 132 0.022051321342587471 132.8 0.023458357900381088 133.6 0.024160457774996758 134.4 0.024563301354646683
+		 135.2 0.024289455264806747 136 0.024016031995415688 136.8 0.024099387228488922 137.6 0.0241691954433918
+		 138.4 0.024042313918471336 139.2 0.023851532489061356 140 0.023779967799782753 140.8 0.023453740403056145
+		 141.6 0.023236727342009544 142.4 0.023036981001496315 143.2 0.022834338247776031
+		 144 0.022836968302726746 144.8 0.022954046726226807 145.6 0.022864086553454399 146.4 0.022516800090670586
+		 147.2 0.02202223427593708 148 0.021498929709196091 148.8 0.020483532920479774 149.6 0.017737792804837227
+		 150.4 0.0087802698835730553 151.2 0.00010752653179224581 152 0 152.8 0 153.6 0 154.4 0
+		 155.2 0 156 0 156.8 0 157.6 0 158.4 0 159.2 0 160 0 160.8 0 161.6 0 162.4 0 163.2 0
+		 164 0 164.8 0 165.6 0 166.4 0 167.2 0 168 0 168.8 0 169.6 0 170.4 0 171.2 0 172 0
+		 172.8 0 173.6 0 174.4 0 175.2 0 176 0 176.8 0 177.6 0 178.4 0 179.2 0 180 0 180.8 0
+		 181.6 0 182.4 0 183.2 0 184 0 184.8 0 185.6 0 186.4 0.03857068344950676 187.2 0.076078638434410095
+		 188 0.067530296742916107 188.8 0.067397445440292358 189.6 0.073880381882190704 190.4 0.082264341413974762
+		 191.2 0.10618411749601364 192 0.12430819869041443 192.8 0.12879453599452972 193.6 0.1313624382019043
+		 194.4 0.13393589854240417 195.2 0.13727483153343201 196 0.13940988481044769 196.8 0.1403203159570694
+		 197.6 0.14143773913383484 198.4 0.14229875802993774 199.2 0.14408294856548309;
+	setAttr ".ktv[250:380]" 200 0.14520590007305145 200.8 0.14559173583984375 201.6 0.14623408019542694
+		 202.4 0.14579015970230103 203.2 0.14535799622535706 204 0.1444934755563736 204.8 0.14406555891036987
+		 205.6 0.14397305250167847 206.4 0.14429228007793427 207.2 0.14393730461597443 208 0.14372597634792328
+		 208.8 0.14335733652114868 209.6 0.14248214662075043 210.4 0.14168669283390045 211.2 0.14119097590446472
+		 212 0.14131440222263336 212.8 0.14089122414588928 213.6 0.14068983495235443 214.4 0.13887397944927216
+		 215.2 0.13555310666561127 216 0.13080307841300964 216.8 0.12568293511867523 217.6 0.035237938165664673
+		 218.4 0.0003966492076870054 219.2 0 220 0 220.8 0 221.6 0 222.4 0 223.2 0 224 0 224.8 0.014571904204785824
+		 225.6 0.023136582225561142 226.4 0.027278633788228035 227.2 0.039271041750907898
+		 228 0.059645034372806549 228.8 0.065682262182235718 229.6 0.066604621708393097 230.4 0.066407613456249237
+		 231.2 0.067795984447002411 232 0.089219421148300171 232.8 0.15385574102401733 233.6 0.2142043262720108
+		 234.4 0.23565606772899628 235.2 0.24221430718898773 236 0.24393634498119354 236.8 0.24597500264644623
+		 237.6 0.25547149777412415 238.4 0.26430037617683411 239.2 0.27126955986022949 240 0.2692834734916687
+		 240.8 0.23890809714794159 241.6 0.22358344495296478 242.4 0.21341083943843842 243.2 0.2075561136007309
+		 244 0.20393544435501099 244.8 0.20175036787986755 245.6 0.19940215349197388 246.4 0.19004960358142853
+		 247.2 0.1676693856716156 248 0.14289157092571259 248.8 0.12041272968053818 249.6 0.078444086015224457
+		 250.4 0.032910209149122238 251.2 0.00036344880936667323 252 0 252.8 0 253.6 0 254.4 0
+		 255.2 0 256 0 256.8 0 257.6 0 258.4 0 259.2 0 260 0 260.8 0 261.6 0 262.4 0 263.2 0
+		 264 0 264.8 0 265.6 0 266.4 0 267.2 0 268 0 268.8 0 269.6 0 270.4 0 271.2 0 272 0
+		 272.8 0 273.6 0 274.4 0 275.2 0 276 0 276.8 0 277.6 0 278.4 0 279.2 0 280 0 280.8 0
+		 281.6 0 282.4 0 283.2 0 284 0 284.8 0 285.6 0 286.4 0 287.2 0 288 0 288.8 0 289.6 0
+		 290.4 0 291.2 0 292 0 292.8 0 293.6 0 294.4 0 295.2 0 296 0 296.8 0 297.6 0 298.4 0
+		 299.2 0 300 0 300.8 0 301.6 0 302.4 0 303.2 0 304 0;
+createNode animCurveTU -n "headModel:comboCorrectives_lipCornerDepressorL";
+	rename -uid "093E55D8-E741-4EEE-FE75-8EA954D86386";
+	setAttr ".tan" 18;
+	setAttr ".wgt" no;
+	setAttr -s 381 ".ktv";
+	setAttr ".ktv[0:249]"  0 0 0.8 0 1.6 0 2.4 0 3.2 0 4 0 4.8 0 5.6 0 6.4 0
+		 7.2 0 8 0 8.8 0 9.6 0 10.4 0 11.2 0 12 0 12.8 0 13.6 0 14.4 0 15.2 0 16 0 16.8 0
+		 17.6 0 18.4 0 19.2 0 20 0 20.8 0 21.6 0 22.4 0 23.2 0 24 0 24.8 0 25.6 0 26.4 0 27.2 0
+		 28 0 28.8 0 29.6 0 30.4 0 31.2 0 32 0 32.8 0 33.6 0 34.4 0 35.2 0 36 0 36.8 0 37.6 0
+		 38.4 0 39.2 0 40 0 40.8 0 41.6 0 42.4 0 43.2 0 44 0 44.8 0 45.6 0 46.4 0 47.2 0 48 0
+		 48.8 0 49.6 0 50.4 0 51.2 0 52 0 52.8 0.025921067222952843 53.6 0.08911440521478653
+		 54.4 0.11588335782289505 55.2 0.12099110335111618 56 0.15257936716079712 56.8 0.2208256870508194
+		 57.6 0.23608452081680298 58.4 0.24361930787563324 59.2 0.25714561343193054 60 0.26350677013397217
+		 60.8 0.26550671458244324 61.6 0.26650911569595337 62.4 0.26538851857185364 63.2 0.26177403330802917
+		 64 0.25067955255508423 64.8 0.23972912132740021 65.6 0.22921149432659149 66.4 0.21643796563148499
+		 67.2 0.2099851667881012 68 0.19477167725563049 68.8 0.17394633591175079 69.6 0.16152398288249969
+		 70.4 0.15265919268131256 71.2 0.14929181337356567 72 0.13570915162563324 72.8 0.10369973629713058
+		 73.6 0.087533362209796906 74.4 0.047783050686120987 75.2 0 76 0 76.8 0 77.6 0 78.4 0
+		 79.2 0 80 0 80.8 0 81.6 0 82.4 0 83.2 0 84 0 84.8 0 85.6 0 86.4 0 87.2 0 88 0 88.8 0
+		 89.6 0 90.4 0 91.2 0 92 0 92.8 0 93.6 0 94.4 0 95.2 0 96 0 96.8 0 97.6 0 98.4 0 99.2 0
+		 100 0 100.8 0 101.6 0 102.4 0 103.2 0 104 0 104.8 0 105.6 0 106.4 0 107.2 0 108 0
+		 108.8 0 109.6 0 110.4 0 111.2 0 112 0 112.8 0 113.6 0 114.4 0 115.2 0 116 0 116.8 0
+		 117.6 0 118.4 0 119.2 0 120 0 120.8 0 121.6 0 122.4 0 123.2 0 124 0 124.8 0 125.6 0
+		 126.4 0 127.2 0 128 0 128.8 0 129.6 0 130.4 0 131.2 0 132 0 132.8 0 133.6 0 134.4 0
+		 135.2 0 136 0 136.8 0 137.6 0 138.4 0 139.2 0 140 0 140.8 0 141.6 0 142.4 0 143.2 0
+		 144 0 144.8 0 145.6 0 146.4 0 147.2 0 148 0 148.8 0 149.6 0 150.4 0 151.2 0 152 0
+		 152.8 0 153.6 0 154.4 0 155.2 0 156 0 156.8 0 157.6 0 158.4 0 159.2 0 160 0 160.8 0
+		 161.6 0 162.4 0 163.2 0 164 0 164.8 0 165.6 0 166.4 0 167.2 0 168 0 168.8 0 169.6 0
+		 170.4 0 171.2 0 172 0 172.8 0 173.6 0 174.4 0 175.2 0 176 0 176.8 0 177.6 0 178.4 0
+		 179.2 0 180 0 180.8 0 181.6 0 182.4 0 183.2 0 184 0 184.8 0 185.6 0 186.4 0.042605515569448471
+		 187.2 0.091418206691741943 188 0.094391986727714539 188.8 0.091460607945919037 189.6 0.092914141714572906
+		 190.4 0.13518868386745453 191.2 0.21024744212627411 192 0.2460741251707077 192.8 0.24273760616779327
+		 193.6 0.23977282643318176 194.4 0.23829859495162964 195.2 0.23719574511051178 196 0.2363116592168808
+		 196.8 0.23187607526779175 197.6 0.2294994443655014 198.4 0.23400658369064331 199.2 0.24479618668556213;
+	setAttr ".ktv[250:380]" 200 0.24757425487041473 200.8 0.24837523698806763 201.6 0.25077313184738159
+		 202.4 0.25171634554862976 203.2 0.24932445585727692 204 0.24694986641407013 204.8 0.24710452556610107
+		 205.6 0.24761681258678436 206.4 0.24859383702278137 207.2 0.24817396700382233 208 0.24745205044746399
+		 208.8 0.24126334488391876 209.6 0.23729394376277924 210.4 0.229296013712883 211.2 0.22745257616043091
+		 212 0.23308120667934418 212.8 0.22932298481464386 213.6 0.2260783463716507 214.4 0.22332075238227844
+		 215.2 0.22200484573841095 216 0.22106270492076874 216.8 0.22023046016693115 217.6 0.12054785341024399
+		 218.4 0.038974195718765259 219.2 0 220 0 220.8 0 221.6 0 222.4 0 223.2 0.0033069124910980463
+		 224 0.053950175642967224 224.8 0.069748573005199432 225.6 0.031105577945709229 226.4 0.020555188879370689
+		 227.2 0.01868225634098053 228 0.025615338236093521 228.8 0.055193804204463959 229.6 0.14635589718818665
+		 230.4 0.2530321478843689 231.2 0.3723507821559906 232 0.45078983902931213 232.8 0.36906537413597107
+		 233.6 0.088984623551368713 234.4 0 235.2 0 236 0 236.8 0 237.6 0 238.4 0 239.2 0
+		 240 0 240.8 0 241.6 0 242.4 0 243.2 0 244 0 244.8 0 245.6 0 246.4 0 247.2 0 248 0
+		 248.8 0 249.6 0 250.4 0 251.2 0 252 0 252.8 0 253.6 0 254.4 0 255.2 0 256 0 256.8 0
+		 257.6 0 258.4 0 259.2 0 260 0 260.8 0 261.6 0 262.4 0 263.2 0 264 0 264.8 0 265.6 0
+		 266.4 0 267.2 0 268 0 268.8 0 269.6 0 270.4 0 271.2 0 272 0 272.8 0 273.6 0 274.4 0
+		 275.2 0 276 0 276.8 0 277.6 0 278.4 0 279.2 0 280 0 280.8 0 281.6 0 282.4 0 283.2 0
+		 284 0 284.8 0 285.6 0 286.4 0 287.2 0 288 0 288.8 0 289.6 0 290.4 0 291.2 0 292 0
+		 292.8 0 293.6 0 294.4 0 295.2 0 296 0 296.8 0 297.6 0 298.4 0 299.2 0 300 0 300.8 0
+		 301.6 0 302.4 0 303.2 0 304 0;
+createNode animCurveTU -n "headModel:comboCorrectives_lipCornerDepressorR";
+	rename -uid "5621A794-C940-7FBB-15A6-2380FBDE30B4";
+	setAttr ".tan" 18;
+	setAttr ".wgt" no;
+	setAttr -s 381 ".ktv";
+	setAttr ".ktv[0:249]"  0 0 0.8 0 1.6 0 2.4 0 3.2 0 4 0 4.8 0 5.6 0 6.4 0
+		 7.2 0 8 0 8.8 0 9.6 0 10.4 0 11.2 0 12 0 12.8 0 13.6 0 14.4 0 15.2 0 16 0 16.8 0
+		 17.6 0 18.4 0 19.2 0 20 0 20.8 0 21.6 0 22.4 0 23.2 0 24 0 24.8 0 25.6 0 26.4 0 27.2 0
+		 28 0 28.8 0 29.6 0 30.4 0 31.2 0 32 0 32.8 0 33.6 0 34.4 0 35.2 0 36 0 36.8 0 37.6 0
+		 38.4 0 39.2 0 40 0 40.8 0 41.6 0 42.4 0 43.2 0 44 0 44.8 0 45.6 0 46.4 0 47.2 0 48 0
+		 48.8 0 49.6 0 50.4 0 51.2 0 52 0 52.8 0.043010834604501724 53.6 0.10198874026536942
+		 54.4 0.13427430391311646 55.2 0.14237171411514282 56 0.17486873269081116 56.8 0.23524570465087891
+		 57.6 0.25773918628692627 58.4 0.2646300196647644 59.2 0.27476057410240173 60 0.27941086888313293
+		 60.8 0.28178393840789795 61.6 0.28300878405570984 62.4 0.27743619680404663 63.2 0.26888808608055115
+		 64 0.25891676545143127 64.8 0.24546356499195099 65.6 0.23280805349349976 66.4 0.22465822100639343
+		 67.2 0.21636977791786194 68 0.19592021405696869 68.8 0.17612634599208832 69.6 0.16645939648151398
+		 70.4 0.16040198504924774 71.2 0.15648183226585388 72 0.14621254801750183 72.8 0.10724873840808868
+		 73.6 0.0908222496509552 74.4 0.051624957472085953 75.2 0 76 0 76.8 0 77.6 0 78.4 0
+		 79.2 0 80 0 80.8 0 81.6 0 82.4 0 83.2 0 84 0 84.8 0 85.6 0 86.4 0 87.2 0 88 0 88.8 0
+		 89.6 0 90.4 0 91.2 0 92 0 92.8 0 93.6 0 94.4 0 95.2 0 96 0 96.8 0 97.6 0 98.4 0 99.2 0
+		 100 0 100.8 0 101.6 0 102.4 0 103.2 0 104 0 104.8 0 105.6 0 106.4 0 107.2 0 108 0
+		 108.8 0 109.6 0 110.4 0 111.2 0 112 0 112.8 0 113.6 0 114.4 0 115.2 0 116 0 116.8 0
+		 117.6 0 118.4 0 119.2 0 120 0 120.8 0 121.6 0 122.4 0 123.2 0 124 0 124.8 0 125.6 0
+		 126.4 0 127.2 0 128 0 128.8 0 129.6 0 130.4 0 131.2 0 132 0 132.8 0 133.6 0 134.4 0
+		 135.2 0 136 0 136.8 0 137.6 0 138.4 0 139.2 0 140 0 140.8 0 141.6 0 142.4 0 143.2 0
+		 144 0 144.8 0 145.6 0 146.4 0 147.2 0 148 0 148.8 0 149.6 0 150.4 0 151.2 0 152 0
+		 152.8 0 153.6 0 154.4 0 155.2 0 156 0 156.8 0 157.6 0 158.4 0 159.2 0 160 0 160.8 0
+		 161.6 0 162.4 0 163.2 0 164 0 164.8 0 165.6 0 166.4 0 167.2 0 168 0 168.8 0 169.6 0
+		 170.4 0 171.2 0 172 0 172.8 0 173.6 0 174.4 0 175.2 0 176 0 176.8 0 177.6 0 178.4 0
+		 179.2 0 180 0 180.8 0 181.6 0 182.4 0 183.2 0 184 0 184.8 0 185.6 0 186.4 0.071575820446014404
+		 187.2 0.12107299268245697 188 0.12093298137187958 188.8 0.11665952950716019 189.6 0.12292774766683578
+		 190.4 0.17348067462444305 191.2 0.2463962733745575 192 0.28205764293670654 192.8 0.28125891089439392
+		 193.6 0.27801975607872009 194.4 0.27589398622512817 195.2 0.27366432547569275 196 0.27191081643104553
+		 196.8 0.26099580526351929 197.6 0.25587481260299683 198.4 0.25798755884170532 199.2 0.2644297182559967;
+	setAttr ".ktv[250:380]" 200 0.26582196354866028 200.8 0.26583114266395569 201.6 0.26755252480506897
+		 202.4 0.26856714487075806 203.2 0.26880756020545959 204 0.26792716979980469 204.8 0.26865777373313904
+		 205.6 0.26895609498023987 206.4 0.26970154047012329 207.2 0.26924598217010498 208 0.26873302459716797
+		 208.8 0.26642951369285583 209.6 0.26262339949607849 210.4 0.25263485312461853 211.2 0.25024873018264771
+		 212 0.25919139385223389 212.8 0.25494331121444702 213.6 0.25131678581237793 214.4 0.24857199192047119
+		 215.2 0.2449447363615036 216 0.24251477420330048 216.8 0.24183040857315063 217.6 0.1202390193939209
+		 218.4 0.0012274440377950668 219.2 0 220 0 220.8 0 221.6 0 222.4 0 223.2 0.0011694009881466627
+		 224 0.05329538881778717 224.8 0.070480480790138245 225.6 0.05858723446726799 226.4 0.051450707018375397
+		 227.2 0.050140369683504105 228 0.059317894279956818 228.8 0.081178046762943268 229.6 0.17669272422790527
+		 230.4 0.28441193699836731 231.2 0.41435664892196655 232 0.48732432723045349 232.8 0.38492798805236816
+		 233.6 0.05734865739941597 234.4 0 235.2 0 236 0 236.8 0 237.6 0 238.4 0 239.2 0 240 0
+		 240.8 0 241.6 0 242.4 0 243.2 0 244 0 244.8 0 245.6 0 246.4 0 247.2 0 248 0 248.8 0
+		 249.6 0 250.4 0 251.2 0 252 0 252.8 0 253.6 0 254.4 0 255.2 0 256 0 256.8 0 257.6 0
+		 258.4 0 259.2 0 260 0 260.8 0 261.6 0 262.4 0 263.2 0 264 0 264.8 0 265.6 0 266.4 0
+		 267.2 0 268 0 268.8 0 269.6 0 270.4 0 271.2 0 272 0 272.8 0 273.6 0 274.4 0 275.2 0
+		 276 0 276.8 0 277.6 0 278.4 0 279.2 0 280 0 280.8 0 281.6 0 282.4 0 283.2 0 284 0
+		 284.8 0 285.6 0 286.4 0 287.2 0 288 0 288.8 0 289.6 0 290.4 0 291.2 0 292 0 292.8 0
+		 293.6 0 294.4 0 295.2 0 296 0 296.8 0 297.6 0 298.4 0 299.2 0 300 0 300.8 0 301.6 0
+		 302.4 0 303.2 0 304 0;
+createNode animCurveTU -n "headModel:comboCorrectives_lipCornerPullerL";
+	rename -uid "536910EE-DD4E-16D4-7552-F3AA27F58557";
+	setAttr ".tan" 18;
+	setAttr ".wgt" no;
+	setAttr -s 381 ".ktv";
+	setAttr ".ktv[0:249]"  0 0 0.8 0 1.6 0 2.4 0 3.2 0 4 0 4.8 0 5.6 0 6.4 0
+		 7.2 0 8 0 8.8 0 9.6 0 10.4 0 11.2 0.05568704754114151 12 0.17121048271656036 12.8 0.36056944727897644
+		 13.6 0.5633925199508667 14.4 0.66239470243453979 15.2 0.70425260066986084 16 0.72615170478820801
+		 16.8 0.7365877628326416 17.6 0.73929440975189209 18.4 0.7368277907371521 19.2 0.73249739408493042
+		 20 0.72304511070251465 20.8 0.71873217821121216 21.6 0.71817648410797119 22.4 0.71766835451126099
+		 23.2 0.71668714284896851 24 0.71341240406036377 24.8 0.70080095529556274 25.6 0.69788604974746704
+		 26.4 0.69584602117538452 27.2 0.69190043210983276 28 0.68795740604400635 28.8 0.68594366312026978
+		 29.6 0.68523091077804565 30.4 0.68457257747650146 31.2 0.68416857719421387 32 0.68413245677947998
+		 32.8 0.68355649709701538 33.6 0.68253201246261597 34.4 0.68214064836502075 35.2 0.68249022960662842
+		 36 0.68298852443695068 36.8 0.68266630172729492 37.6 0.6817435622215271 38.4 0.67512756586074829
+		 39.2 0.6566198468208313 40 0.6503751277923584 40.8 0.64847803115844727 41.6 0.64738047122955322
+		 42.4 0.64671105146408081 43.2 0.64449948072433472 44 0.64130210876464844 44.8 0.63224071264266968
+		 45.6 0.62659519910812378 46.4 0.62588149309158325 47.2 0.62603825330734253 48 0.62489664554595947
+		 48.8 0.62168377637863159 49.6 0.59003591537475586 50.4 0.52079826593399048 51.2 0.26801773905754089
+		 52 0.0012724006082862616 52.8 0 53.6 0 54.4 0 55.2 0 56 0 56.8 0 57.6 0 58.4 0 59.2 0
+		 60 0 60.8 0 61.6 0 62.4 0 63.2 0 64 0 64.8 0 65.6 0 66.4 0 67.2 0 68 0 68.8 0 69.6 0
+		 70.4 0 71.2 0 72 0 72.8 0 73.6 0 74.4 0 75.2 0 76 0.044965300709009171 76.8 0.2098383754491806
+		 77.6 0.29222795367240906 78.4 0.34093201160430908 79.2 0.38740929961204529 80 0.41075459122657776
+		 80.8 0.4458354115486145 81.6 0.45625755190849304 82.4 0.46757930517196655 83.2 0.47210967540740967
+		 84 0.47159239649772644 84.8 0.47106835246086121 85.6 0.47080579400062561 86.4 0.47043812274932861
+		 87.2 0.471466064453125 88 0.47300392389297485 88.8 0.47407901287078857 89.6 0.47102528810501099
+		 90.4 0.46522602438926697 91.2 0.43525046110153198 92 0.40872952342033386 92.8 0.39498147368431091
+		 93.6 0.44097229838371277 94.4 0.47840654850006104 95.2 0.50987410545349121 96 0.54080206155776978
+		 96.8 0.567158043384552 97.6 0.5764317512512207 98.4 0.5844876766204834 99.2 0.58667784929275513
+		 100 0.5872008204460144 100.8 0.5868416428565979 101.6 0.5851062536239624 102.4 0.5820540189743042
+		 103.2 0.58061981201171875 104 0.57970201969146729 104.8 0.57953035831451416 105.6 0.5796281099319458
+		 106.4 0.58101683855056763 107.2 0.58143788576126099 108 0.58080601692199707 108.8 0.57818841934204102
+		 109.6 0.57705259323120117 110.4 0.5773322582244873 111.2 0.57720905542373657 112 0.57841688394546509
+		 112.8 0.58371329307556152 113.6 0.58540821075439453 114.4 0.58609122037887573 115.2 0.58653521537780762
+		 116 0.5877230167388916 116.8 0.59962946176528931 117.6 0.61680895090103149 118.4 0.62305128574371338
+		 119.2 0.62927144765853882 120 0.63292092084884644 120.8 0.63518983125686646 121.6 0.63518220186233521
+		 122.4 0.6353447437286377 123.2 0.6370164155960083 124 0.639637291431427 124.8 0.67061907052993774
+		 125.6 0.71255362033843994 126.4 0.73096239566802979 127.2 0.75258040428161621 128 0.76514112949371338
+		 128.8 0.76877367496490479 129.6 0.7715497612953186 130.4 0.77747166156768799 131.2 0.78488045930862427
+		 132 0.79194062948226929 132.8 0.79513710737228394 133.6 0.79945778846740723 134.4 0.80181753635406494
+		 135.2 0.80347180366516113 136 0.80614286661148071 136.8 0.80858439207077026 137.6 0.80895036458969116
+		 138.4 0.81006836891174316 139.2 0.81116116046905518 140 0.81201028823852539 140.8 0.81287968158721924
+		 141.6 0.81352514028549194 142.4 0.81447207927703857 143.2 0.81532448530197144 144 0.81645059585571289
+		 144.8 0.81684321165084839 145.6 0.81660139560699463 146.4 0.8163413405418396 147.2 0.81624734401702881
+		 148 0.81599068641662598 148.8 0.8162195086479187 149.6 0.81738466024398804 150.4 0.81751328706741333
+		 151.2 0.81789952516555786 152 0.81932908296585083 152.8 0.82151490449905396 153.6 0.82640272378921509
+		 154.4 0.83220517635345459 155.2 0.83518743515014648 156 0.83263140916824341 156.8 0.78503549098968506
+		 157.6 0.77232831716537476 158.4 0.76699364185333252 159.2 0.76074415445327759 160 0.74680870771408081
+		 160.8 0.73317879438400269 161.6 0.72048193216323853 162.4 0.71532493829727173 163.2 0.70353597402572632
+		 164 0.70209890604019165 164.8 0.70268946886062622 165.6 0.70284861326217651 166.4 0.70207953453063965
+		 167.2 0.70002609491348267 168 0.69072222709655762 168.8 0.68239158391952515 169.6 0.6726347804069519
+		 170.4 0.64196497201919556 171.2 0.56874597072601318 172 0.56717121601104736 172.8 0.60399883985519409
+		 173.6 0.61903780698776245 174.4 0.62302786111831665 175.2 0.59837418794631958 176 0.55725693702697754
+		 176.8 0.53525716066360474 177.6 0.51192003488540649 178.4 0.48166307806968689 179.2 0.45010152459144592
+		 180 0.43489906191825867 180.8 0.42595860362052917 181.6 0.37562406063079834 182.4 0.36159941554069519
+		 183.2 0.33834660053253174 184 0.22126047313213348 184.8 0.054681781679391861 185.6 0
+		 186.4 0 187.2 0 188 0 188.8 0 189.6 0 190.4 0 191.2 0 192 0 192.8 0 193.6 0 194.4 0
+		 195.2 0 196 0 196.8 0 197.6 0 198.4 0 199.2 0;
+	setAttr ".ktv[250:380]" 200 0 200.8 0 201.6 0 202.4 0 203.2 0 204 0 204.8 0
+		 205.6 0 206.4 0 207.2 0 208 0 208.8 0 209.6 0 210.4 0 211.2 0 212 0 212.8 0 213.6 0
+		 214.4 0 215.2 0 216 0 216.8 0 217.6 0 218.4 0 219.2 0 220 0 220.8 0 221.6 0 222.4 0
+		 223.2 0 224 0 224.8 0 225.6 0 226.4 0 227.2 0 228 0 228.8 0 229.6 0 230.4 0 231.2 0
+		 232 0 232.8 0 233.6 0 234.4 0 235.2 0.21806706488132477 236 0.32555884122848511 236.8 0.44636499881744385
+		 237.6 0.52298963069915771 238.4 0.58394718170166016 239.2 0.62344306707382202 240 0.68543660640716553
+		 240.8 0.70816755294799805 241.6 0.72802513837814331 242.4 0.74353957176208496 243.2 0.74761003255844116
+		 244 0.74540936946868896 244.8 0.74428290128707886 245.6 0.74190229177474976 246.4 0.69800674915313721
+		 247.2 0.58118534088134766 248 0.40723887085914612 248.8 0.20910060405731201 249.6 0.1291176825761795
+		 250.4 0.035922493785619736 251.2 0.0010411279508844018 252 0 252.8 0 253.6 0 254.4 0
+		 255.2 0 256 0 256.8 0 257.6 0 258.4 0 259.2 0.079173244535923004 260 0.23061907291412354
+		 260.8 0.38938656449317932 261.6 0.52255016565322876 262.4 0.64672094583511353 263.2 0.70166105031967163
+		 264 0.73230326175689697 264.8 0.76963537931442261 265.6 0.79742783308029175 266.4 0.81350880861282349
+		 267.2 0.8203970193862915 268 0.82317757606506348 268.8 0.82476729154586792 269.6 0.82779192924499512
+		 270.4 0.83002972602844238 271.2 0.83104294538497925 272 0.83097958564758301 272.8 0.83070755004882812
+		 273.6 0.83026009798049927 274.4 0.82911491394042969 275.2 0.82424628734588623 276 0.81995409727096558
+		 276.8 0.81745791435241699 277.6 0.80760973691940308 278.4 0.78464716672897339 279.2 0.77335810661315918
+		 280 0.77104401588439941 280.8 0.76951652765274048 281.6 0.76813054084777832 282.4 0.76816332340240479
+		 283.2 0.76849228143692017 284 0.76904141902923584 284.8 0.76939302682876587 285.6 0.77005261182785034
+		 286.4 0.7704082727432251 287.2 0.7707897424697876 288 0.77043795585632324 288.8 0.76924508810043335
+		 289.6 0.76652079820632935 290.4 0.75961697101593018 291.2 0.74591422080993652 292 0.74052256345748901
+		 292.8 0.73372739553451538 293.6 0.72773259878158569 294.4 0.72672998905181885 295.2 0.72672998905181885
+		 296 0.72672998905181885 296.8 0.72672998905181885 297.6 0.72672998905181885 298.4 0.72672998905181885
+		 299.2 0.72672998905181885 300 0.72672998905181885 300.8 0.72672998905181885 301.6 0.72672998905181885
+		 302.4 0.72672998905181885 303.2 0.72672998905181885 304 0.72672998905181885;
+createNode animCurveTU -n "headModel:comboCorrectives_lipCornerPullerR";
+	rename -uid "A072041C-A349-4155-7788-69807C1150CF";
+	setAttr ".tan" 18;
+	setAttr ".wgt" no;
+	setAttr -s 381 ".ktv";
+	setAttr ".ktv[0:249]"  0 0 0.8 0 1.6 0 2.4 0 3.2 0 4 0 4.8 0 5.6 0 6.4 0
+		 7.2 0 8 0 8.8 0 9.6 0 10.4 0 11.2 0.03554496169090271 12 0.16111670434474945 12.8 0.3526090681552887
+		 13.6 0.5564953088760376 14.4 0.65762972831726074 15.2 0.69853055477142334 16 0.71825361251831055
+		 16.8 0.72731214761734009 17.6 0.72996968030929565 18.4 0.72904878854751587 19.2 0.7254403829574585
+		 20 0.71379297971725464 20.8 0.70881044864654541 21.6 0.70825421810150146 22.4 0.70799553394317627
+		 23.2 0.70733284950256348 24 0.70471435785293579 24.8 0.69338309764862061 25.6 0.69060289859771729
+		 26.4 0.68870115280151367 27.2 0.68530595302581787 28 0.68161177635192871 28.8 0.67952817678451538
+		 29.6 0.67865526676177979 30.4 0.67795264720916748 31.2 0.67761683464050293 32 0.67783254384994507
+		 32.8 0.67754018306732178 33.6 0.6743963360786438 34.4 0.67322194576263428 35.2 0.67358708381652832
+		 36 0.67469006776809692 36.8 0.6752592921257019 37.6 0.67502784729003906 38.4 0.6703941822052002
+		 39.2 0.65353620052337646 40 0.64733576774597168 40.8 0.64529329538345337 41.6 0.64406502246856689
+		 42.4 0.64320653676986694 43.2 0.64105379581451416 44 0.63821876049041748 44.8 0.62976962327957153
+		 45.6 0.62479764223098755 46.4 0.62411576509475708 47.2 0.62376308441162109 48 0.62015068531036377
+		 48.8 0.61525005102157593 49.6 0.57176363468170166 50.4 0.49098464846611023 51.2 0.21141445636749268
+		 52 0.00060686084907501936 52.8 0 53.6 0 54.4 0 55.2 0 56 0 56.8 0 57.6 0 58.4 0 59.2 0
+		 60 0 60.8 0 61.6 0 62.4 0 63.2 0 64 0 64.8 0 65.6 0 66.4 0 67.2 0 68 0 68.8 0 69.6 0
+		 70.4 0 71.2 0 72 0 72.8 0 73.6 0 74.4 0 75.2 0 76 0.073733903467655182 76.8 0.19344845414161682
+		 77.6 0.2741951048374176 78.4 0.31383654475212097 79.2 0.35503509640693665 80 0.38057145476341248
+		 80.8 0.42424845695495605 81.6 0.43577396869659424 82.4 0.45174089074134827 83.2 0.4580339789390564
+		 84 0.45855048298835754 84.8 0.45862078666687012 85.6 0.45895642042160034 86.4 0.4590204656124115
+		 87.2 0.46128994226455688 88 0.46397152543067932 88.8 0.46482935547828674 89.6 0.460182785987854
+		 90.4 0.45327019691467285 91.2 0.42396673560142517 92 0.39712914824485779 92.8 0.3878537118434906
+		 93.6 0.43897569179534912 94.4 0.48580986261367798 95.2 0.51453214883804321 96 0.54600852727890015
+		 96.8 0.56620305776596069 97.6 0.5744897723197937 98.4 0.58283358812332153 99.2 0.58538007736206055
+		 100 0.58665186166763306 100.8 0.58732497692108154 101.6 0.58717387914657593 102.4 0.58595818281173706
+		 103.2 0.58482426404953003 104 0.58388322591781616 104.8 0.58383584022521973 105.6 0.58428645133972168
+		 106.4 0.58551269769668579 107.2 0.58596628904342651 108 0.58450472354888916 108.8 0.58076143264770508
+		 109.6 0.57921510934829712 110.4 0.57957375049591064 111.2 0.57974070310592651 112 0.58164870738983154
+		 112.8 0.59944730997085571 113.6 0.60543346405029297 114.4 0.6060490608215332 115.2 0.60538917779922485
+		 116 0.6053197979927063 116.8 0.6084093451499939 117.6 0.61972492933273315 118.4 0.624053955078125
+		 119.2 0.6286780834197998 120 0.63133549690246582 120.8 0.6332281231880188 121.6 0.63333868980407715
+		 122.4 0.63370341062545776 123.2 0.6357155442237854 124 0.63858324289321899 124.8 0.67254602909088135
+		 125.6 0.71148240566253662 126.4 0.72646301984786987 127.2 0.74735349416732788 128 0.76029187440872192
+		 128.8 0.76475882530212402 129.6 0.76929003000259399 130.4 0.77566748857498169 131.2 0.78295648097991943
+		 132 0.78952544927597046 132.8 0.79247736930847168 133.6 0.79588323831558228 134.4 0.79790705442428589
+		 135.2 0.79935163259506226 136 0.80167496204376221 136.8 0.80362635850906372 137.6 0.80397951602935791
+		 138.4 0.80492377281188965 139.2 0.805961012840271 140 0.80687195062637329 140.8 0.807839035987854
+		 141.6 0.80849510431289673 142.4 0.80944144725799561 143.2 0.81024879217147827 144 0.81135976314544678
+		 144.8 0.81174325942993164 145.6 0.81158894300460815 146.4 0.81137102842330933 147.2 0.81127583980560303
+		 148 0.81112551689147949 148.8 0.81140947341918945 149.6 0.81255418062210083 150.4 0.81289190053939819
+		 151.2 0.81348741054534912 152 0.81545567512512207 152.8 0.81854879856109619 153.6 0.8231501579284668
+		 154.4 0.82895368337631226 155.2 0.83315193653106689 156 0.83246129751205444 156.8 0.79283648729324341
+		 157.6 0.77982312440872192 158.4 0.77359497547149658 159.2 0.76622873544692993 160 0.75020426511764526
+		 160.8 0.73261106014251709 161.6 0.71736162900924683 162.4 0.70248705148696899 163.2 0.68088006973266602
+		 164 0.6858481764793396 164.8 0.69048547744750977 165.6 0.69159018993377686 166.4 0.69129109382629395
+		 167.2 0.68997591733932495 168 0.68364685773849487 168.8 0.67492866516113281 169.6 0.6646190881729126
+		 170.4 0.61479848623275757 171.2 0.54201644659042358 172 0.53706192970275879 172.8 0.58388876914978027
+		 173.6 0.6014862060546875 174.4 0.60608726739883423 175.2 0.58258140087127686 176 0.52996993064880371
+		 176.8 0.50646436214447021 177.6 0.48448452353477478 178.4 0.44290030002593994 179.2 0.4064943790435791
+		 180 0.39257296919822693 180.8 0.3836837112903595 181.6 0.32447361946105957 182.4 0.31053182482719421
+		 183.2 0.28964555263519287 184 0.16369771957397461 184.8 0.011571693234145641 185.6 0
+		 186.4 0 187.2 0 188 0 188.8 0 189.6 0 190.4 0 191.2 0 192 0 192.8 0 193.6 0 194.4 0
+		 195.2 0 196 0 196.8 0 197.6 0 198.4 0 199.2 0;
+	setAttr ".ktv[250:380]" 200 0 200.8 0 201.6 0 202.4 0 203.2 0 204 0 204.8 0
+		 205.6 0 206.4 0 207.2 0 208 0 208.8 0 209.6 0 210.4 0 211.2 0 212 0 212.8 0 213.6 0
+		 214.4 0 215.2 0 216 0 216.8 0 217.6 0 218.4 0 219.2 0 220 0 220.8 0 221.6 0 222.4 0
+		 223.2 0 224 0 224.8 0 225.6 0 226.4 0 227.2 0 228 0 228.8 0 229.6 0 230.4 0 231.2 0
+		 232 0 232.8 0 233.6 0 234.4 0.031130373477935791 235.2 0.24804496765136719 236 0.33809724450111389
+		 236.8 0.44225376844406128 237.6 0.51320236921310425 238.4 0.5733182430267334 239.2 0.60860747098922729
+		 240 0.65886396169662476 240.8 0.6838037371635437 241.6 0.70297104120254517 242.4 0.71728301048278809
+		 243.2 0.72152554988861084 244 0.72162157297134399 244.8 0.72205299139022827 245.6 0.72024619579315186
+		 246.4 0.67997503280639648 247.2 0.56684702634811401 248 0.39212092757225037 248.8 0.18626667559146881
+		 249.6 0.11582095175981522 250.4 0.042030654847621918 251.2 0.0051846080459654331
+		 252 0 252.8 0 253.6 0 254.4 0 255.2 0 256 0 256.8 0 257.6 0 258.4 0 259.2 0.076696813106536865
+		 260 0.23160809278488159 260.8 0.387696772813797 261.6 0.52032893896102905 262.4 0.64541041851043701
+		 263.2 0.70152801275253296 264 0.72933197021484375 264.8 0.76559180021286011 265.6 0.792411208152771
+		 266.4 0.80860245227813721 267.2 0.8159680962562561 268 0.81861364841461182 268.8 0.8199341893196106
+		 269.6 0.82278084754943848 270.4 0.8248559832572937 271.2 0.82583969831466675 272 0.82596176862716675
+		 272.8 0.82582265138626099 273.6 0.82550573348999023 274.4 0.82462942600250244 275.2 0.82128721475601196
+		 276 0.8168865442276001 276.8 0.81471681594848633 277.6 0.80716049671173096 278.4 0.78841507434844971
+		 279.2 0.77692049741744995 280 0.77304738759994507 280.8 0.76783865690231323 281.6 0.76520437002182007
+		 282.4 0.76527833938598633 283.2 0.76579678058624268 284 0.76650810241699219 284.8 0.76708322763442993
+		 285.6 0.76793062686920166 286.4 0.76830881834030151 287.2 0.7687675952911377 288 0.76839953660964966
+		 288.8 0.76662534475326538 289.6 0.76345789432525635 290.4 0.75624138116836548 291.2 0.74096572399139404
+		 292 0.73597824573516846 292.8 0.72859013080596924 293.6 0.72187376022338867 294.4 0.7208399772644043
+		 295.2 0.7208399772644043 296 0.7208399772644043 296.8 0.7208399772644043 297.6 0.7208399772644043
+		 298.4 0.7208399772644043 299.2 0.7208399772644043 300 0.7208399772644043 300.8 0.7208399772644043
+		 301.6 0.7208399772644043 302.4 0.7208399772644043 303.2 0.7208399772644043 304 0.7208399772644043;
+createNode animCurveTU -n "headModel:comboCorrectives_lipFunnelerBL";
+	rename -uid "0E0D1ED4-7049-A728-5934-CCA75F4E9B1A";
+	setAttr ".tan" 18;
+	setAttr ".wgt" no;
+	setAttr -s 381 ".ktv";
+	setAttr ".ktv[0:249]"  0 0 0.8 0 1.6 0 2.4 0 3.2 0 4 0 4.8 0 5.6 0 6.4 0
+		 7.2 0 8 0 8.8 0 9.6 0 10.4 0 11.2 0 12 0 12.8 0 13.6 0 14.4 0 15.2 0 16 0 16.8 0
+		 17.6 0 18.4 0 19.2 0 20 0 20.8 0 21.6 0 22.4 0 23.2 0 24 0 24.8 0 25.6 0 26.4 0 27.2 0
+		 28 0 28.8 0 29.6 0 30.4 0 31.2 0 32 0 32.8 0 33.6 0 34.4 0 35.2 0 36 0 36.8 0 37.6 0
+		 38.4 0 39.2 0 40 0 40.8 0 41.6 0 42.4 0 43.2 0 44 0 44.8 0 45.6 0 46.4 0 47.2 0 48 0
+		 48.8 0 49.6 0 50.4 0 51.2 0 52 0 52.8 3.7071285419187916e-07 53.6 0.022368673235177994
+		 54.4 0.058455921709537506 55.2 0.07273893803358078 56 0.093880921602249146 56.8 0.15349613130092621
+		 57.6 0.18368008732795715 58.4 0.19273598492145538 59.2 0.19420357048511505 60 0.19214655458927155
+		 60.8 0.18450373411178589 61.6 0.17528687417507172 62.4 0.15506561100482941 63.2 0.14356037974357605
+		 64 0.13863115012645721 64.8 0.13613016903400421 65.6 0.13482993841171265 66.4 0.13404874503612518
+		 67.2 0.13400974869728088 68 0.13369108736515045 68.8 0.13316096365451813 69.6 0.1299203634262085
+		 70.4 0.12283787876367569 71.2 0.12134038656949997 72 0.12011334300041199 72.8 0.10008601099252701
+		 73.6 0.093607433140277863 74.4 0.16869911551475525 75.2 0.30350184440612793 76 0.15706130862236023
+		 76.8 0.050219021737575531 77.6 0.02103123813867569 78.4 0.007454361766576767 79.2 0
+		 80 0 80.8 0 81.6 0 82.4 0 83.2 0 84 0 84.8 0 85.6 0 86.4 0 87.2 0 88 0 88.8 0 89.6 0
+		 90.4 0 91.2 0 92 0 92.8 0 93.6 0 94.4 0.0022077322937548161 95.2 0.014126656576991081
+		 96 0.01634669117629528 96.8 0.014740080572664738 97.6 0.012024490162730217 98.4 0.0080094551667571068
+		 99.2 0.0048885094001889229 100 0.0029784922953695059 100.8 0.00070179859176278114
+		 101.6 0 102.4 0 103.2 0 104 0 104.8 0 105.6 0 106.4 0 107.2 0 108 0 108.8 0 109.6 0
+		 110.4 0 111.2 0 112 0 112.8 0 113.6 0 114.4 0 115.2 0 116 0 116.8 0 117.6 0 118.4 0
+		 119.2 0 120 0 120.8 0 121.6 0 122.4 0 123.2 0 124 0 124.8 0 125.6 0 126.4 0 127.2 0
+		 128 0 128.8 0 129.6 0 130.4 0 131.2 0 132 0 132.8 0 133.6 0 134.4 0 135.2 0 136 0
+		 136.8 0 137.6 0 138.4 0 139.2 0 140 0 140.8 0 141.6 0 142.4 0 143.2 0 144 0 144.8 0
+		 145.6 0 146.4 0 147.2 0 148 0 148.8 0 149.6 0 150.4 0 151.2 0 152 0 152.8 0 153.6 0
+		 154.4 0 155.2 0 156 0 156.8 0 157.6 0 158.4 0 159.2 0 160 0 160.8 0 161.6 0 162.4 0
+		 163.2 0 164 0 164.8 0 165.6 0 166.4 0 167.2 0 168 0 168.8 0 169.6 0 170.4 0 171.2 0
+		 172 0 172.8 0 173.6 0 174.4 0 175.2 0 176 0 176.8 0 177.6 0 178.4 0 179.2 0 180 0
+		 180.8 0 181.6 0 182.4 0 183.2 0 184 0 184.8 0 185.6 0 186.4 0.0037950575351715088
+		 187.2 0.03932388499379158 188 0.0829663947224617 188.8 0.12009651213884354 189.6 0.14721140265464783
+		 190.4 0.20383903384208679 191.2 0.27236932516098022 192 0.29044371843338013 192.8 0.28030744194984436
+		 193.6 0.27410280704498291 194.4 0.26425868272781372 195.2 0.25494968891143799 196 0.25061288475990295
+		 196.8 0.23810480535030365 197.6 0.23169262707233429 198.4 0.22029425203800201 199.2 0.21353106200695038;
+	setAttr ".ktv[250:380]" 200 0.2057981938123703 200.8 0.20214833319187164 201.6 0.20087318122386932
+		 202.4 0.19862256944179535 203.2 0.19255456328392029 204 0.18633958697319031 204.8 0.1842997670173645
+		 205.6 0.18323962390422821 206.4 0.18251520395278931 207.2 0.18164063990116119 208 0.18163999915122986
+		 208.8 0.17880366742610931 209.6 0.17464436590671539 210.4 0.17219312489032745 211.2 0.17302924394607544
+		 212 0.17563155293464661 212.8 0.17398415505886078 213.6 0.17258583009243011 214.4 0.17178304493427277
+		 215.2 0.17123588919639587 216 0.17011299729347229 216.8 0.17034457623958588 217.6 0.37268012762069702
+		 218.4 0.22956064343452454 219.2 0.093853108584880829 220 0.0057617682032287121 220.8 0
+		 221.6 0 222.4 0 223.2 0 224 0.0092834196984767914 224.8 0.031795237213373184 225.6 0.061878364533185959
+		 226.4 0.096985191106796265 227.2 0.10502246022224426 228 0.12472371757030487 228.8 0.15066273510456085
+		 229.6 0.24209542572498322 230.4 0.35939717292785645 231.2 0.53681284189224243 232 0.76761221885681152
+		 232.8 0.57133221626281738 233.6 0.16809609532356262 234.4 0.059651575982570648 235.2 0.026103412732481956
+		 236 0.019299030303955078 236.8 0.017252499237656593 237.6 0.016372568905353546 238.4 0.014542480930685997
+		 239.2 0.0086923642084002495 240 1.6307367332046852e-05 240.8 0 241.6 0 242.4 0 243.2 0
+		 244 0 244.8 0 245.6 0 246.4 0 247.2 0 248 0.029130885377526283 248.8 0.10306756943464279
+		 249.6 0.16624714434146881 250.4 0.2532317042350769 251.2 0.35279881954193115 252 0.38781219720840454
+		 252.8 0.36756023764610291 253.6 0.28759372234344482 254.4 0.19010922312736511 255.2 0.13032941520214081
+		 256 0.099327541887760162 256.8 0.077906787395477295 257.6 0.069928973913192749 258.4 0.067656286060810089
+		 259.2 0.1827346533536911 260 0.17952674627304077 260.8 0.089193932712078094 261.6 0.0076433680951595306
+		 262.4 0 263.2 0 264 0 264.8 0 265.6 0 266.4 0 267.2 0 268 0 268.8 0 269.6 0 270.4 0
+		 271.2 0 272 0 272.8 0 273.6 0 274.4 0 275.2 0 276 0 276.8 0 277.6 0 278.4 0 279.2 0
+		 280 0 280.8 0 281.6 0 282.4 0 283.2 0 284 0 284.8 0 285.6 0 286.4 0 287.2 0 288 0
+		 288.8 0 289.6 0 290.4 0 291.2 0 292 0 292.8 0 293.6 0 294.4 0 295.2 0 296 0 296.8 0
+		 297.6 0 298.4 0 299.2 0 300 0 300.8 0 301.6 0 302.4 0 303.2 0 304 0;
+createNode animCurveTU -n "headModel:comboCorrectives_lipFunnelerBR";
+	rename -uid "3500D01D-3248-258A-8D12-E39EFDF87BCF";
+	setAttr ".tan" 18;
+	setAttr ".wgt" no;
+	setAttr -s 381 ".ktv";
+	setAttr ".ktv[0:249]"  0 0 0.8 0 1.6 0 2.4 0 3.2 0 4 0 4.8 0 5.6 0 6.4 0
+		 7.2 0 8 0 8.8 0 9.6 0 10.4 0 11.2 0 12 0 12.8 0 13.6 0 14.4 0 15.2 0 16 0 16.8 0
+		 17.6 0 18.4 0 19.2 0 20 0 20.8 0 21.6 0 22.4 0 23.2 0 24 0 24.8 0 25.6 0 26.4 0 27.2 0
+		 28 0 28.8 0 29.6 0 30.4 0 31.2 0 32 0 32.8 0 33.6 0 34.4 0 35.2 0 36 0 36.8 0 37.6 0
+		 38.4 0 39.2 0 40 0 40.8 0 41.6 0 42.4 0 43.2 0 44 0 44.8 0 45.6 0 46.4 0 47.2 0 48 0
+		 48.8 0 49.6 0 50.4 0 51.2 0 52 0 52.8 3.7071285419187916e-07 53.6 0.022368673235177994
+		 54.4 0.058455921709537506 55.2 0.07273893803358078 56 0.093880921602249146 56.8 0.15349613130092621
+		 57.6 0.18368008732795715 58.4 0.19273598492145538 59.2 0.19420357048511505 60 0.19214655458927155
+		 60.8 0.18450373411178589 61.6 0.17528687417507172 62.4 0.15506561100482941 63.2 0.14356037974357605
+		 64 0.13863115012645721 64.8 0.13613016903400421 65.6 0.13482993841171265 66.4 0.13404874503612518
+		 67.2 0.13400974869728088 68 0.13369108736515045 68.8 0.13316096365451813 69.6 0.1299203634262085
+		 70.4 0.12283787876367569 71.2 0.12134038656949997 72 0.12011334300041199 72.8 0.10008601099252701
+		 73.6 0.093607433140277863 74.4 0.16869911551475525 75.2 0.30350184440612793 76 0.15706130862236023
+		 76.8 0.050219021737575531 77.6 0.02103123813867569 78.4 0.007454361766576767 79.2 0
+		 80 0 80.8 0 81.6 0 82.4 0 83.2 0 84 0 84.8 0 85.6 0 86.4 0 87.2 0 88 0 88.8 0 89.6 0
+		 90.4 0 91.2 0 92 0 92.8 0 93.6 0 94.4 0.0022077322937548161 95.2 0.014126656576991081
+		 96 0.01634669117629528 96.8 0.014740080572664738 97.6 0.012024490162730217 98.4 0.0080094551667571068
+		 99.2 0.0048885094001889229 100 0.0029784922953695059 100.8 0.00070179859176278114
+		 101.6 0 102.4 0 103.2 0 104 0 104.8 0 105.6 0 106.4 0 107.2 0 108 0 108.8 0 109.6 0
+		 110.4 0 111.2 0 112 0 112.8 0 113.6 0 114.4 0 115.2 0 116 0 116.8 0 117.6 0 118.4 0
+		 119.2 0 120 0 120.8 0 121.6 0 122.4 0 123.2 0 124 0 124.8 0 125.6 0 126.4 0 127.2 0
+		 128 0 128.8 0 129.6 0 130.4 0 131.2 0 132 0 132.8 0 133.6 0 134.4 0 135.2 0 136 0
+		 136.8 0 137.6 0 138.4 0 139.2 0 140 0 140.8 0 141.6 0 142.4 0 143.2 0 144 0 144.8 0
+		 145.6 0 146.4 0 147.2 0 148 0 148.8 0 149.6 0 150.4 0 151.2 0 152 0 152.8 0 153.6 0
+		 154.4 0 155.2 0 156 0 156.8 0 157.6 0 158.4 0 159.2 0 160 0 160.8 0 161.6 0 162.4 0
+		 163.2 0 164 0 164.8 0 165.6 0 166.4 0 167.2 0 168 0 168.8 0 169.6 0 170.4 0 171.2 0
+		 172 0 172.8 0 173.6 0 174.4 0 175.2 0 176 0 176.8 0 177.6 0 178.4 0 179.2 0 180 0
+		 180.8 0 181.6 0 182.4 0 183.2 0 184 0 184.8 0 185.6 0 186.4 0.0037950575351715088
+		 187.2 0.03932388499379158 188 0.0829663947224617 188.8 0.12009651213884354 189.6 0.14721140265464783
+		 190.4 0.20383903384208679 191.2 0.27236932516098022 192 0.29044371843338013 192.8 0.28030744194984436
+		 193.6 0.27410280704498291 194.4 0.26425868272781372 195.2 0.25494968891143799 196 0.25061288475990295
+		 196.8 0.23810480535030365 197.6 0.23169262707233429 198.4 0.22029425203800201 199.2 0.21353106200695038;
+	setAttr ".ktv[250:380]" 200 0.2057981938123703 200.8 0.20214833319187164 201.6 0.20087318122386932
+		 202.4 0.19862256944179535 203.2 0.19255456328392029 204 0.18633958697319031 204.8 0.1842997670173645
+		 205.6 0.18323962390422821 206.4 0.18251520395278931 207.2 0.18164063990116119 208 0.18163999915122986
+		 208.8 0.17880366742610931 209.6 0.17464436590671539 210.4 0.17219312489032745 211.2 0.17302924394607544
+		 212 0.17563155293464661 212.8 0.17398415505886078 213.6 0.17258583009243011 214.4 0.17178304493427277
+		 215.2 0.17123588919639587 216 0.17011299729347229 216.8 0.17034457623958588 217.6 0.37268012762069702
+		 218.4 0.22956064343452454 219.2 0.093853108584880829 220 0.0057617682032287121 220.8 0
+		 221.6 0 222.4 0 223.2 0 224 0.0092834196984767914 224.8 0.031795237213373184 225.6 0.061878364533185959
+		 226.4 0.096985191106796265 227.2 0.10502246022224426 228 0.12472371757030487 228.8 0.15066273510456085
+		 229.6 0.24209542572498322 230.4 0.35939717292785645 231.2 0.53681284189224243 232 0.76761221885681152
+		 232.8 0.57133221626281738 233.6 0.16809609532356262 234.4 0.059651575982570648 235.2 0.026103412732481956
+		 236 0.019299030303955078 236.8 0.017252499237656593 237.6 0.016372568905353546 238.4 0.014542480930685997
+		 239.2 0.0086923642084002495 240 1.6307367332046852e-05 240.8 0 241.6 0 242.4 0 243.2 0
+		 244 0 244.8 0 245.6 0 246.4 0 247.2 0 248 0.029130885377526283 248.8 0.10306756943464279
+		 249.6 0.16624714434146881 250.4 0.2532317042350769 251.2 0.35279881954193115 252 0.38781219720840454
+		 252.8 0.36756023764610291 253.6 0.28759372234344482 254.4 0.19010922312736511 255.2 0.13032941520214081
+		 256 0.099327541887760162 256.8 0.077906787395477295 257.6 0.069928973913192749 258.4 0.067656286060810089
+		 259.2 0.1827346533536911 260 0.17952674627304077 260.8 0.089193932712078094 261.6 0.0076433680951595306
+		 262.4 0 263.2 0 264 0 264.8 0 265.6 0 266.4 0 267.2 0 268 0 268.8 0 269.6 0 270.4 0
+		 271.2 0 272 0 272.8 0 273.6 0 274.4 0 275.2 0 276 0 276.8 0 277.6 0 278.4 0 279.2 0
+		 280 0 280.8 0 281.6 0 282.4 0 283.2 0 284 0 284.8 0 285.6 0 286.4 0 287.2 0 288 0
+		 288.8 0 289.6 0 290.4 0 291.2 0 292 0 292.8 0 293.6 0 294.4 0 295.2 0 296 0 296.8 0
+		 297.6 0 298.4 0 299.2 0 300 0 300.8 0 301.6 0 302.4 0 303.2 0 304 0;
+createNode animCurveTU -n "headModel:comboCorrectives_lipFunnelerTL";
+	rename -uid "542FCE90-F342-7DEE-82CD-DC86E7EE1F5F";
+	setAttr ".tan" 18;
+	setAttr ".wgt" no;
+	setAttr -s 381 ".ktv";
+	setAttr ".ktv[0:249]"  0 0 0.8 0 1.6 0 2.4 0 3.2 0 4 0 4.8 0 5.6 0 6.4 0
+		 7.2 0 8 0 8.8 0 9.6 0 10.4 0 11.2 0 12 0 12.8 0 13.6 0 14.4 0 15.2 0 16 0 16.8 0
+		 17.6 0 18.4 0 19.2 0 20 0 20.8 0 21.6 0 22.4 0 23.2 0 24 0 24.8 0 25.6 0 26.4 0 27.2 0
+		 28 0 28.8 0 29.6 0 30.4 0 31.2 0 32 0 32.8 0 33.6 0 34.4 0 35.2 0 36 0 36.8 0 37.6 0
+		 38.4 0 39.2 0 40 0 40.8 0 41.6 0 42.4 0 43.2 0 44 0 44.8 0 45.6 0 46.4 0 47.2 0 48 0
+		 48.8 0 49.6 0 50.4 0 51.2 0 52 0 52.8 3.7071285419187916e-07 53.6 0.022368673235177994
+		 54.4 0.058455921709537506 55.2 0.07273893803358078 56 0.093880921602249146 56.8 0.15349613130092621
+		 57.6 0.18368008732795715 58.4 0.19273598492145538 59.2 0.19420357048511505 60 0.19214655458927155
+		 60.8 0.18450373411178589 61.6 0.17528687417507172 62.4 0.15506561100482941 63.2 0.14356037974357605
+		 64 0.13863115012645721 64.8 0.13613016903400421 65.6 0.13482993841171265 66.4 0.13404874503612518
+		 67.2 0.13400974869728088 68 0.13369108736515045 68.8 0.13316096365451813 69.6 0.1299203634262085
+		 70.4 0.12283787876367569 71.2 0.12134038656949997 72 0.12011334300041199 72.8 0.10008601099252701
+		 73.6 0.093607433140277863 74.4 0.16869911551475525 75.2 0.30350184440612793 76 0.15706130862236023
+		 76.8 0.050219021737575531 77.6 0.02103123813867569 78.4 0.007454361766576767 79.2 0
+		 80 0 80.8 0 81.6 0 82.4 0 83.2 0 84 0 84.8 0 85.6 0 86.4 0 87.2 0 88 0 88.8 0 89.6 0
+		 90.4 0 91.2 0 92 0 92.8 0 93.6 0 94.4 0.0022077322937548161 95.2 0.014126656576991081
+		 96 0.01634669117629528 96.8 0.014740080572664738 97.6 0.012024490162730217 98.4 0.0080094551667571068
+		 99.2 0.0048885094001889229 100 0.0029784922953695059 100.8 0.00070179859176278114
+		 101.6 0 102.4 0 103.2 0 104 0 104.8 0 105.6 0 106.4 0 107.2 0 108 0 108.8 0 109.6 0
+		 110.4 0 111.2 0 112 0 112.8 0 113.6 0 114.4 0 115.2 0 116 0 116.8 0 117.6 0 118.4 0
+		 119.2 0 120 0 120.8 0 121.6 0 122.4 0 123.2 0 124 0 124.8 0 125.6 0 126.4 0 127.2 0
+		 128 0 128.8 0 129.6 0 130.4 0 131.2 0 132 0 132.8 0 133.6 0 134.4 0 135.2 0 136 0
+		 136.8 0 137.6 0 138.4 0 139.2 0 140 0 140.8 0 141.6 0 142.4 0 143.2 0 144 0 144.8 0
+		 145.6 0 146.4 0 147.2 0 148 0 148.8 0 149.6 0 150.4 0 151.2 0 152 0 152.8 0 153.6 0
+		 154.4 0 155.2 0 156 0 156.8 0 157.6 0 158.4 0 159.2 0 160 0 160.8 0 161.6 0 162.4 0
+		 163.2 0 164 0 164.8 0 165.6 0 166.4 0 167.2 0 168 0 168.8 0 169.6 0 170.4 0 171.2 0
+		 172 0 172.8 0 173.6 0 174.4 0 175.2 0 176 0 176.8 0 177.6 0 178.4 0 179.2 0 180 0
+		 180.8 0 181.6 0 182.4 0 183.2 0 184 0 184.8 0 185.6 0 186.4 0.0037950575351715088
+		 187.2 0.03932388499379158 188 0.0829663947224617 188.8 0.12009651213884354 189.6 0.14721140265464783
+		 190.4 0.20383903384208679 191.2 0.27236932516098022 192 0.29044371843338013 192.8 0.28030744194984436
+		 193.6 0.27410280704498291 194.4 0.26425868272781372 195.2 0.25494968891143799 196 0.25061288475990295
+		 196.8 0.23810480535030365 197.6 0.23169262707233429 198.4 0.22029425203800201 199.2 0.21353106200695038;
+	setAttr ".ktv[250:380]" 200 0.2057981938123703 200.8 0.20214833319187164 201.6 0.20087318122386932
+		 202.4 0.19862256944179535 203.2 0.19255456328392029 204 0.18633958697319031 204.8 0.1842997670173645
+		 205.6 0.18323962390422821 206.4 0.18251520395278931 207.2 0.18164063990116119 208 0.18163999915122986
+		 208.8 0.17880366742610931 209.6 0.17464436590671539 210.4 0.17219312489032745 211.2 0.17302924394607544
+		 212 0.17563155293464661 212.8 0.17398415505886078 213.6 0.17258583009243011 214.4 0.17178304493427277
+		 215.2 0.17123588919639587 216 0.17011299729347229 216.8 0.17034457623958588 217.6 0.37268012762069702
+		 218.4 0.22956064343452454 219.2 0.093853108584880829 220 0.0057617682032287121 220.8 0
+		 221.6 0 222.4 0 223.2 0 224 0.0092834196984767914 224.8 0.031795237213373184 225.6 0.061878364533185959
+		 226.4 0.096985191106796265 227.2 0.10502246022224426 228 0.12472371757030487 228.8 0.15066273510456085
+		 229.6 0.24209542572498322 230.4 0.35939717292785645 231.2 0.53681284189224243 232 0.76761221885681152
+		 232.8 0.57133221626281738 233.6 0.16809609532356262 234.4 0.059651575982570648 235.2 0.026103412732481956
+		 236 0.019299030303955078 236.8 0.017252499237656593 237.6 0.016372568905353546 238.4 0.014542480930685997
+		 239.2 0.0086923642084002495 240 1.6307367332046852e-05 240.8 0 241.6 0 242.4 0 243.2 0
+		 244 0 244.8 0 245.6 0 246.4 0 247.2 0 248 0.029130885377526283 248.8 0.10306756943464279
+		 249.6 0.16624714434146881 250.4 0.2532317042350769 251.2 0.35279881954193115 252 0.38781219720840454
+		 252.8 0.36756023764610291 253.6 0.28759372234344482 254.4 0.19010922312736511 255.2 0.13032941520214081
+		 256 0.099327541887760162 256.8 0.077906787395477295 257.6 0.069928973913192749 258.4 0.067656286060810089
+		 259.2 0.1827346533536911 260 0.17952674627304077 260.8 0.089193932712078094 261.6 0.0076433680951595306
+		 262.4 0 263.2 0 264 0 264.8 0 265.6 0 266.4 0 267.2 0 268 0 268.8 0 269.6 0 270.4 0
+		 271.2 0 272 0 272.8 0 273.6 0 274.4 0 275.2 0 276 0 276.8 0 277.6 0 278.4 0 279.2 0
+		 280 0 280.8 0 281.6 0 282.4 0 283.2 0 284 0 284.8 0 285.6 0 286.4 0 287.2 0 288 0
+		 288.8 0 289.6 0 290.4 0 291.2 0 292 0 292.8 0 293.6 0 294.4 0 295.2 0 296 0 296.8 0
+		 297.6 0 298.4 0 299.2 0 300 0 300.8 0 301.6 0 302.4 0 303.2 0 304 0;
+createNode animCurveTU -n "headModel:comboCorrectives_lipFunnelerTR";
+	rename -uid "47A47F9E-F941-CDA2-FCC0-938807525E5C";
+	setAttr ".tan" 18;
+	setAttr ".wgt" no;
+	setAttr -s 381 ".ktv";
+	setAttr ".ktv[0:249]"  0 0 0.8 0 1.6 0 2.4 0 3.2 0 4 0 4.8 0 5.6 0 6.4 0
+		 7.2 0 8 0 8.8 0 9.6 0 10.4 0 11.2 0 12 0 12.8 0 13.6 0 14.4 0 15.2 0 16 0 16.8 0
+		 17.6 0 18.4 0 19.2 0 20 0 20.8 0 21.6 0 22.4 0 23.2 0 24 0 24.8 0 25.6 0 26.4 0 27.2 0
+		 28 0 28.8 0 29.6 0 30.4 0 31.2 0 32 0 32.8 0 33.6 0 34.4 0 35.2 0 36 0 36.8 0 37.6 0
+		 38.4 0 39.2 0 40 0 40.8 0 41.6 0 42.4 0 43.2 0 44 0 44.8 0 45.6 0 46.4 0 47.2 0 48 0
+		 48.8 0 49.6 0 50.4 0 51.2 0 52 0 52.8 3.7071285419187916e-07 53.6 0.022368673235177994
+		 54.4 0.058455921709537506 55.2 0.07273893803358078 56 0.093880921602249146 56.8 0.15349613130092621
+		 57.6 0.18368008732795715 58.4 0.19273598492145538 59.2 0.19420357048511505 60 0.19214655458927155
+		 60.8 0.18450373411178589 61.6 0.17528687417507172 62.4 0.15506561100482941 63.2 0.14356037974357605
+		 64 0.13863115012645721 64.8 0.13613016903400421 65.6 0.13482993841171265 66.4 0.13404874503612518
+		 67.2 0.13400974869728088 68 0.13369108736515045 68.8 0.13316096365451813 69.6 0.1299203634262085
+		 70.4 0.12283787876367569 71.2 0.12134038656949997 72 0.12011334300041199 72.8 0.10008601099252701
+		 73.6 0.093607433140277863 74.4 0.16869911551475525 75.2 0.30350184440612793 76 0.15706130862236023
+		 76.8 0.050219021737575531 77.6 0.02103123813867569 78.4 0.007454361766576767 79.2 0
+		 80 0 80.8 0 81.6 0 82.4 0 83.2 0 84 0 84.8 0 85.6 0 86.4 0 87.2 0 88 0 88.8 0 89.6 0
+		 90.4 0 91.2 0 92 0 92.8 0 93.6 0 94.4 0.0022077322937548161 95.2 0.014126656576991081
+		 96 0.01634669117629528 96.8 0.014740080572664738 97.6 0.012024490162730217 98.4 0.0080094551667571068
+		 99.2 0.0048885094001889229 100 0.0029784922953695059 100.8 0.00070179859176278114
+		 101.6 0 102.4 0 103.2 0 104 0 104.8 0 105.6 0 106.4 0 107.2 0 108 0 108.8 0 109.6 0
+		 110.4 0 111.2 0 112 0 112.8 0 113.6 0 114.4 0 115.2 0 116 0 116.8 0 117.6 0 118.4 0
+		 119.2 0 120 0 120.8 0 121.6 0 122.4 0 123.2 0 124 0 124.8 0 125.6 0 126.4 0 127.2 0
+		 128 0 128.8 0 129.6 0 130.4 0 131.2 0 132 0 132.8 0 133.6 0 134.4 0 135.2 0 136 0
+		 136.8 0 137.6 0 138.4 0 139.2 0 140 0 140.8 0 141.6 0 142.4 0 143.2 0 144 0 144.8 0
+		 145.6 0 146.4 0 147.2 0 148 0 148.8 0 149.6 0 150.4 0 151.2 0 152 0 152.8 0 153.6 0
+		 154.4 0 155.2 0 156 0 156.8 0 157.6 0 158.4 0 159.2 0 160 0 160.8 0 161.6 0 162.4 0
+		 163.2 0 164 0 164.8 0 165.6 0 166.4 0 167.2 0 168 0 168.8 0 169.6 0 170.4 0 171.2 0
+		 172 0 172.8 0 173.6 0 174.4 0 175.2 0 176 0 176.8 0 177.6 0 178.4 0 179.2 0 180 0
+		 180.8 0 181.6 0 182.4 0 183.2 0 184 0 184.8 0 185.6 0 186.4 0.0037950575351715088
+		 187.2 0.03932388499379158 188 0.0829663947224617 188.8 0.12009651213884354 189.6 0.14721140265464783
+		 190.4 0.20383903384208679 191.2 0.27236932516098022 192 0.29044371843338013 192.8 0.28030744194984436
+		 193.6 0.27410280704498291 194.4 0.26425868272781372 195.2 0.25494968891143799 196 0.25061288475990295
+		 196.8 0.23810480535030365 197.6 0.23169262707233429 198.4 0.22029425203800201 199.2 0.21353106200695038;
+	setAttr ".ktv[250:380]" 200 0.2057981938123703 200.8 0.20214833319187164 201.6 0.20087318122386932
+		 202.4 0.19862256944179535 203.2 0.19255456328392029 204 0.18633958697319031 204.8 0.1842997670173645
+		 205.6 0.18323962390422821 206.4 0.18251520395278931 207.2 0.18164063990116119 208 0.18163999915122986
+		 208.8 0.17880366742610931 209.6 0.17464436590671539 210.4 0.17219312489032745 211.2 0.17302924394607544
+		 212 0.17563155293464661 212.8 0.17398415505886078 213.6 0.17258583009243011 214.4 0.17178304493427277
+		 215.2 0.17123588919639587 216 0.17011299729347229 216.8 0.17034457623958588 217.6 0.37268012762069702
+		 218.4 0.22956064343452454 219.2 0.093853108584880829 220 0.0057617682032287121 220.8 0
+		 221.6 0 222.4 0 223.2 0 224 0.0092834196984767914 224.8 0.031795237213373184 225.6 0.061878364533185959
+		 226.4 0.096985191106796265 227.2 0.10502246022224426 228 0.12472371757030487 228.8 0.15066273510456085
+		 229.6 0.24209542572498322 230.4 0.35939717292785645 231.2 0.53681284189224243 232 0.76761221885681152
+		 232.8 0.57133221626281738 233.6 0.16809609532356262 234.4 0.059651575982570648 235.2 0.026103412732481956
+		 236 0.019299030303955078 236.8 0.017252499237656593 237.6 0.016372568905353546 238.4 0.014542480930685997
+		 239.2 0.0086923642084002495 240 1.6307367332046852e-05 240.8 0 241.6 0 242.4 0 243.2 0
+		 244 0 244.8 0 245.6 0 246.4 0 247.2 0 248 0.029130885377526283 248.8 0.10306756943464279
+		 249.6 0.16624714434146881 250.4 0.2532317042350769 251.2 0.35279881954193115 252 0.38781219720840454
+		 252.8 0.36756023764610291 253.6 0.28759372234344482 254.4 0.19010922312736511 255.2 0.13032941520214081
+		 256 0.099327541887760162 256.8 0.077906787395477295 257.6 0.069928973913192749 258.4 0.067656286060810089
+		 259.2 0.1827346533536911 260 0.17952674627304077 260.8 0.089193932712078094 261.6 0.0076433680951595306
+		 262.4 0 263.2 0 264 0 264.8 0 265.6 0 266.4 0 267.2 0 268 0 268.8 0 269.6 0 270.4 0
+		 271.2 0 272 0 272.8 0 273.6 0 274.4 0 275.2 0 276 0 276.8 0 277.6 0 278.4 0 279.2 0
+		 280 0 280.8 0 281.6 0 282.4 0 283.2 0 284 0 284.8 0 285.6 0 286.4 0 287.2 0 288 0
+		 288.8 0 289.6 0 290.4 0 291.2 0 292 0 292.8 0 293.6 0 294.4 0 295.2 0 296 0 296.8 0
+		 297.6 0 298.4 0 299.2 0 300 0 300.8 0 301.6 0 302.4 0 303.2 0 304 0;
+createNode animCurveTU -n "headModel:comboCorrectives_lipPressorL";
+	rename -uid "65F43790-E54F-EBFD-0071-A3BB19A504BA";
+	setAttr ".tan" 18;
+	setAttr ".wgt" no;
+	setAttr -s 381 ".ktv";
+	setAttr ".ktv[0:249]"  0 0 0.8 0.021957896649837494 1.6 0.021754013374447823
+		 2.4 0.021270448341965675 3.2 0.02081308513879776 4 0.020452186465263367 4.8 0.020020730793476105
+		 5.6 0.019347198307514191 6.4 0.018860271200537682 7.2 0.018671473488211632 8 0.01873210072517395
+		 8.8 0.019065825268626213 9.6 0.019168959930539131 10.4 0.019305158406496048 11.2 0.020018944516777992
+		 12 0.021079402416944504 12.8 0.022284757345914841 13.6 0.022977976128458977 14.4 0.023936217650771141
+		 15.2 0.024984158575534821 16 0.025875981897115707 16.8 0.025985695421695709 17.6 0.025597767904400826
+		 18.4 0.024787859991192818 19.2 0.023875867947936058 20 0.023195857182145119 20.8 0.02263270691037178
+		 21.6 0.021952193230390549 22.4 0.020804833620786667 23.2 0.019633743911981583 24 0.018882980570197105
+		 24.8 0.018157521262764931 25.6 0.017246542498469353 26.4 0.016243645921349525 27.2 0.015454861335456371
+		 28 0.014581212773919106 28.8 0.014028442092239857 29.6 0.013841227628290653 30.4 0.013850574381649494
+		 31.2 0.014100790955126286 32 0.014678744599223137 32.8 0.021662233397364616 33.6 0.044122889637947083
+		 34.4 0.050526656210422516 35.2 0.044281300157308578 36 0.036514837294816971 36.8 0.032732967287302017
+		 37.6 0.031069276854395866 38.4 0.030399350449442863 39.2 0.030109146609902382 40 0.029924428090453148
+		 40.8 0.029801718890666962 41.6 0.02962988056242466 42.4 0.029407361522316933 43.2 0.028886130079627037
+		 44 0.028738638386130333 44.8 0.028614364564418793 45.6 0.028574513271450996 46.4 0.028485022485256195
+		 47.2 0.028260409832000732 48 0.028330657631158829 48.8 0.028295444324612617 49.6 0.027788249775767326
+		 50.4 0.02699197456240654 51.2 0.022037848830223083 52 0.0024435939267277718 52.8 0
+		 53.6 0 54.4 0 55.2 0 56 0 56.8 0 57.6 0 58.4 0 59.2 0 60 0 60.8 0 61.6 0 62.4 0 63.2 0
+		 64 0 64.8 0 65.6 0 66.4 0 67.2 0 68 0 68.8 0 69.6 0 70.4 0 71.2 0 72 0 72.8 0 73.6 0
+		 74.4 0 75.2 0 76 0 76.8 0 77.6 0 78.4 0 79.2 0 80 0 80.8 0 81.6 0 82.4 0 83.2 0.00076225725933909416
+		 84 0.0022578716743737459 84.8 0.0034206327982246876 85.6 0.0043698404915630817 86.4 0.0049730967730283737
+		 87.2 0.005541499238461256 88 0.0061172796413302422 88.8 0.0064397831447422504 89.6 0.006625778041779995
+		 90.4 0.0065758852288126945 91.2 0.0066387034021317959 92 0.0065072639845311642 92.8 0.0060043339617550373
+		 93.6 0.0045887758024036884 94.4 0.0045744939707219601 95.2 0.0055570960976183414
+		 96 0.0078588966280221939 96.8 0.010672238655388355 97.6 0.01254178024828434 98.4 0.014084687456488609
+		 99.2 0.015083665028214455 100 0.015809625387191772 100.8 0.016292590647935867 101.6 0.016601912677288055
+		 102.4 0.016888463869690895 103.2 0.017219206318259239 104 0.017409324645996094 104.8 0.017656551674008369
+		 105.6 0.01779923215508461 106.4 0.018015850335359573 107.2 0.018183551728725433 108 0.018269084393978119
+		 108.8 0.018260933458805084 109.6 0.018345821648836136 110.4 0.018485371023416519
+		 111.2 0.01854916475713253 112 0.018325937911868095 112.8 0.017758751288056374 113.6 0.016503557562828064
+		 114.4 0.015742596238851547 115.2 0.015137110836803913 116 0.014523378573358059 116.8 0.014240359887480736
+		 117.6 0.014050646685063839 118.4 0.013980476185679436 119.2 0.013788940384984016
+		 120 0.013656362891197205 120.8 0.013563685119152069 121.6 0.013445191085338593 122.4 0.013231642544269562
+		 123.2 0.012953219003975391 124 0.012419930659234524 124.8 0.011453376151621342 125.6 0.008265642449259758
+		 126.4 0.0044983718544244766 127.2 0.0013741437578573823 128 3.0699270610057283e-06
+		 128.8 0 129.6 0 130.4 0 131.2 0 132 0 132.8 0 133.6 0 134.4 0 135.2 0 136 0 136.8 0
+		 137.6 0 138.4 0 139.2 0 140 0 140.8 0 141.6 0 142.4 0 143.2 0 144 0 144.8 0 145.6 0
+		 146.4 0 147.2 0 148 0 148.8 0 149.6 0 150.4 0 151.2 0 152 0 152.8 0 153.6 0 154.4 0
+		 155.2 0 156 0 156.8 0.010119955986738205 157.6 0.024176761507987976 158.4 0.029537307098507881
+		 159.2 0.031567215919494629 160 0.032119560986757278 160.8 0.031399797648191452 161.6 0.030365051701664925
+		 162.4 0.035290781408548355 163.2 0.05561075359582901 164 0.056753598153591156 164.8 0.046481221914291382
+		 165.6 0.041296865791082382 166.4 0.038218952715396881 167.2 0.035915620625019073
+		 168 0.033945359289646149 168.8 0.031876031309366226 169.6 0.030090013518929482 170.4 0.033188290894031525
+		 171.2 0.10854259878396988 172 0.11877231299877167 172.8 0.068266957998275757 173.6 0.042299937456846237
+		 174.4 0.03197706863284111 175.2 0.027633996680378914 176 0.024752674624323845 176.8 0.022548388689756393
+		 177.6 0.020850231871008873 178.4 0.018683616071939468 179.2 0.015900459140539169
+		 180 0.014310693368315697 180.8 0.013026325963437557 181.6 0.012160276062786579 182.4 0.011642212048172951
+		 183.2 0.01127156987786293 184 0.010975901037454605 184.8 0.009917709045112133 185.6 0.0066828555427491665
+		 186.4 0 187.2 0 188 0 188.8 0 189.6 0 190.4 0 191.2 0 192 0 192.8 0 193.6 0 194.4 0
+		 195.2 0 196 0 196.8 0 197.6 0 198.4 0 199.2 0;
+	setAttr ".ktv[250:380]" 200 0 200.8 0 201.6 0 202.4 0 203.2 0 204 0 204.8 0
+		 205.6 0 206.4 0 207.2 0 208 0 208.8 0 209.6 0 210.4 0 211.2 0 212 0 212.8 0 213.6 0
+		 214.4 0 215.2 0 216 0 216.8 0 217.6 0 218.4 0 219.2 0 220 0 220.8 0 221.6 0 222.4 0
+		 223.2 0 224 0 224.8 0 225.6 0 226.4 0 227.2 0 228 0 228.8 0 229.6 0 230.4 0 231.2 0
+		 232 0 232.8 0 233.6 0 234.4 0 235.2 0 236 0 236.8 0 237.6 0 238.4 0 239.2 0 240 0
+		 240.8 0 241.6 0 242.4 0 243.2 0 244 0 244.8 0 245.6 0 246.4 0 247.2 0 248 0 248.8 0
+		 249.6 0 250.4 0 251.2 0 252 0 252.8 0 253.6 0 254.4 0 255.2 0 256 0 256.8 0 257.6 0
+		 258.4 0 259.2 0 260 0 260.8 0 261.6 0 262.4 0 263.2 0 264 0 264.8 0.0016783924074843526
+		 265.6 0.0063182483427226543 266.4 0.0085990047082304955 267.2 0.0099565945565700531
+		 268 0.011318315751850605 268.8 0.012664157897233963 269.6 0.013877791352570057 270.4 0.01500257384032011
+		 271.2 0.01593809574842453 272 0.016849970445036888 272.8 0.017729658633470535 273.6 0.018276482820510864
+		 274.4 0.018251623958349228 275.2 0.018232561647891998 276 0.017913563176989555 276.8 0.01720106415450573
+		 277.6 0.016399754211306572 278.4 0.016078455373644829 279.2 0.016038810834288597
+		 280 0.02075466513633728 280.8 0.025110445916652679 281.6 0.026423398405313492 282.4 0.025912778452038765
+		 283.2 0.024879669770598412 284 0.023867001757025719 284.8 0.022850882261991501 285.6 0.021964358165860176
+		 286.4 0.021187096834182739 287.2 0.02053067646920681 288 0.020007994025945663 288.8 0.019500827416777611
+		 289.6 0.019069835543632507 290.4 0.018750401213765144 291.2 0.018508905544877052
+		 292 0.01819426566362381 292.8 0.017931565642356873 293.6 0.017615996301174164 294.4 0.017470000311732292
+		 295.2 0.017470000311732292 296 0.017470000311732292 296.8 0.017470000311732292 297.6 0.017470000311732292
+		 298.4 0.017470000311732292 299.2 0.017470000311732292 300 0.017470000311732292 300.8 0.017470000311732292
+		 301.6 0.017470000311732292 302.4 0.017470000311732292 303.2 0.017470000311732292
+		 304 0.017470000311732292;
+createNode animCurveTU -n "headModel:comboCorrectives_lipPressorR";
+	rename -uid "139EA58C-3A49-253D-5247-039682354E49";
+	setAttr ".tan" 18;
+	setAttr ".wgt" no;
+	setAttr -s 381 ".ktv";
+	setAttr ".ktv[0:249]"  0 0 0.8 0.025551686063408852 1.6 0.025495577603578568
+		 2.4 0.025142360478639603 3.2 0.024795159697532654 4 0.02455744706094265 4.8 0.024228176102042198
+		 5.6 0.023645231500267982 6.4 0.023208929225802422 7.2 0.023098524659872055 8 0.023202728480100632
+		 8.8 0.023634634912014008 9.6 0.023777920752763748 10.4 0.023925157263875008 11.2 0.024630051106214523
+		 12 0.025630438700318336 12.8 0.026658639311790466 13.6 0.026922760531306267 14.4 0.027183666825294495
+		 15.2 0.027372961863875389 16 0.027281381189823151 16.8 0.026439869776368141 17.6 0.025380238890647888
+		 18.4 0.024187551811337471 19.2 0.023035060614347458 20 0.02226678840816021 20.8 0.021654022857546806
+		 21.6 0.02096165157854557 22.4 0.019881179556250572 23.2 0.018809538334608078 24 0.018168674781918526
+		 24.8 0.017589420080184937 25.6 0.016822207719087601 26.4 0.015999304130673409 27.2 0.01538173109292984
+		 28 0.014656011015176773 28.8 0.014235462993383408 29.6 0.014109386131167412 30.4 0.014198276214301586
+		 31.2 0.014518949203193188 32 0.015011337585747242 32.8 0.019799137488007545 33.6 0.039199300110340118
+		 34.4 0.044991094619035721 35.2 0.039637017995119095 36 0.034079380333423615 36.8 0.031704775989055634
+		 37.6 0.030421983450651169 38.4 0.029889695346355438 39.2 0.029791407287120819 40 0.029780631884932518
+		 40.8 0.029753904789686203 41.6 0.029706588014960289 42.4 0.02957429364323616 43.2 0.029173269867897034
+		 44 0.029190195724368095 44.8 0.029227819293737411 45.6 0.029321504756808281 46.4 0.029331434518098831
+		 47.2 0.029190614819526672 48 0.02933802455663681 48.8 0.029363632202148438 49.6 0.028924601152539253
+		 50.4 0.028216492384672165 51.2 0.024249022826552391 52 0.0048879403620958328 52.8 0
+		 53.6 0 54.4 0 55.2 0 56 0 56.8 0 57.6 0 58.4 0 59.2 0 60 0 60.8 0 61.6 0 62.4 0 63.2 0
+		 64 0 64.8 0 65.6 0 66.4 0 67.2 0 68 0 68.8 0 69.6 0 70.4 0 71.2 0 72 0 72.8 0 73.6 0
+		 74.4 0 75.2 0 76 0 76.8 0 77.6 0 78.4 0 79.2 0 80 0 80.8 0 81.6 0.00070043408777564764
+		 82.4 0.00205582519993186 83.2 0.004040042869746685 84 0.0056776972487568855 84.8 0.0069264555349946022
+		 85.6 0.0078991223126649857 86.4 0.0085834721103310585 87.2 0.0092286532744765282
+		 88 0.0098768603056669235 88.8 0.010299726389348507 89.6 0.010590711608529091 90.4 0.010660000145435333
+		 91.2 0.010843518190085888 92 0.010947578586637974 92.8 0.010739075019955635 93.6 0.0099993878975510597
+		 94.4 0.011268137954175472 95.2 0.014863917604088783 96 0.020318970084190369 96.8 0.023918585851788521
+		 97.6 0.025918353348970413 98.4 0.027394931763410568 99.2 0.028326086699962616 100 0.029106998816132545
+		 100.8 0.029631007462739944 101.6 0.030009601265192032 102.4 0.030299138277769089
+		 103.2 0.030591979622840881 104 0.030695255845785141 104.8 0.030906552448868752 105.6 0.031049361452460289
+		 106.4 0.031187232583761215 107.2 0.031286776065826416 108 0.031300917267799377 108.8 0.031241869553923607
+		 109.6 0.031307492405176163 110.4 0.031406916677951813 111.2 0.031449045985937119
+		 112 0.031206874176859856 112.8 0.030536282807588577 113.6 0.027351925149559975 114.4 0.025663822889328003
+		 115.2 0.024314034730195999 116 0.023056866601109505 116.8 0.022163625806570053 117.6 0.021275043487548828
+		 118.4 0.020603928714990616 119.2 0.019928444176912308 120 0.019327271729707718 120.8 0.018782112747430801
+		 121.6 0.018348690122365952 122.4 0.017843587324023247 123.2 0.017295364290475845
+		 124 0.016567312180995941 124.8 0.01527540385723114 125.6 0.010862290859222412 126.4 0.0063660466112196445
+		 127.2 0.0034555927850306034 128 0.0018479486461728811 128.8 0.00080541858915239573
+		 129.6 4.6956523874541745e-05 130.4 0 131.2 0 132 0 132.8 0 133.6 0 134.4 0 135.2 0
+		 136 0 136.8 0 137.6 0 138.4 0 139.2 4.9024416512111202e-05 140 0.00023339138715527952
+		 140.8 0.00036906430614180863 141.6 0.00042551453225314617 142.4 0.00055555702419951558
+		 143.2 0.00075806881068274379 144 0.0010101513471454382 144.8 0.0011719076428562403
+		 145.6 0.0012475476833060384 146.4 0.0013089535059407353 147.2 0.0013841388281434774
+		 148 0.0014100000262260437 148.8 0.001473905285820365 149.6 0.001687167095951736 150.4 0.0017180922441184521
+		 151.2 0.0017851351294666529 152 0.0020060262177139521 152.8 0.0021351564209908247
+		 153.6 0.0021980525925755501 154.4 0.002390159759670496 155.2 0.002988891676068306
+		 156 0.00385502097196877 156.8 0.011023035272955894 157.6 0.024156229570508003 158.4 0.029587170109152794
+		 159.2 0.031712263822555542 160 0.032378830015659332 160.8 0.031746480613946915 161.6 0.030766250565648079
+		 162.4 0.0321369469165802 163.2 0.048160184174776077 164 0.049524702131748199 164.8 0.042130805552005768
+		 165.6 0.038162745535373688 166.4 0.035899423062801361 167.2 0.03424956277012825 168 0.032810639590024948
+		 168.8 0.031390883028507233 169.6 0.029995894059538841 170.4 0.032542701810598373
+		 171.2 0.11343540251255035 172 0.12212889641523361 172.8 0.066665105521678925 173.6 0.04002419114112854
+		 174.4 0.03053862601518631 175.2 0.027185780927538872 176 0.02524280920624733 176.8 0.023678431287407875
+		 177.6 0.022298961877822876 178.4 0.020395215600728989 179.2 0.017775097861886024
+		 180 0.016294758766889572 180.8 0.015075762756168842 181.6 0.014294690452516079 182.4 0.013903860934078693
+		 183.2 0.013678628019988537 184 0.013552950695157051 184.8 0.012773388996720314 185.6 0.0088720051571726799
+		 186.4 0 187.2 0 188 0 188.8 0 189.6 0 190.4 0 191.2 0 192 0 192.8 0 193.6 0 194.4 0
+		 195.2 0 196 0 196.8 0 197.6 0 198.4 0 199.2 0;
+	setAttr ".ktv[250:380]" 200 0 200.8 0 201.6 0 202.4 0 203.2 0 204 0 204.8 0
+		 205.6 0 206.4 0 207.2 0 208 0 208.8 0 209.6 0 210.4 0 211.2 0 212 0 212.8 0 213.6 0
+		 214.4 0 215.2 0 216 0 216.8 0 217.6 0 218.4 0 219.2 0 220 0 220.8 0 221.6 0 222.4 0
+		 223.2 0 224 0 224.8 0 225.6 0 226.4 0 227.2 0 228 0 228.8 0 229.6 0 230.4 0 231.2 0
+		 232 0 232.8 0 233.6 0 234.4 0 235.2 0 236 0 236.8 0 237.6 0 238.4 0 239.2 0 240 0
+		 240.8 0 241.6 0 242.4 0 243.2 0 244 0 244.8 0 245.6 0 246.4 0 247.2 0 248 0 248.8 0
+		 249.6 0 250.4 0 251.2 0 252 0 252.8 0 253.6 0 254.4 0 255.2 0 256 0 256.8 0 257.6 0
+		 258.4 0 259.2 0 260 0 260.8 0 261.6 0 262.4 0 263.2 0 264 0 264.8 0.0017750371480360627
+		 265.6 0.0060999197885394096 266.4 0.0083990041166543961 267.2 0.0098022166639566422
+		 268 0.011205840855836868 268.8 0.012572955340147018 269.6 0.013815212994813919 270.4 0.014981187880039215
+		 271.2 0.015974918380379677 272 0.01695670560002327 272.8 0.017895974218845367 273.6 0.018482562154531479
+		 274.4 0.018563874065876007 275.2 0.01867363415658474 276 0.018457349389791489 276.8 0.017860637977719307
+		 277.6 0.017152413725852966 278.4 0.01686563715338707 279.2 0.016841189935803413 280 0.018642665818333626
+		 280.8 0.020886039361357689 281.6 0.021888058632612228 282.4 0.02163388766348362 283.2 0.020998131483793259
+		 284 0.020366886630654335 284.8 0.019746733829379082 285.6 0.019218914210796356 286.4 0.018740257248282433
+		 287.2 0.018332405015826225 288 0.018019823357462883 288.8 0.017727263271808624 289.6 0.017488468438386917
+		 290.4 0.017375100404024124 291.2 0.017317561432719231 292 0.017174279317259789 292.8 0.017075391486287117
+		 293.6 0.016916248947381973 294.4 0.016860000789165497 295.2 0.016860000789165497
+		 296 0.016860000789165497 296.8 0.016860000789165497 297.6 0.016860000789165497 298.4 0.016860000789165497
+		 299.2 0.016860000789165497 300 0.016860000789165497 300.8 0.016860000789165497 301.6 0.016860000789165497
+		 302.4 0.016860000789165497 303.2 0.016860000789165497 304 0.016860000789165497;
+createNode animCurveTU -n "headModel:comboCorrectives_lipPuckerL";
+	rename -uid "6F6AEDF2-354E-62E1-14BD-5ABF5C024E43";
+	setAttr ".tan" 18;
+	setAttr ".wgt" no;
+	setAttr -s 381 ".ktv";
+	setAttr ".ktv[0:249]"  0 0 0.8 0 1.6 0 2.4 0 3.2 0 4 0 4.8 0 5.6 0 6.4 0
+		 7.2 0 8 0 8.8 0 9.6 0 10.4 0 11.2 0 12 0 12.8 0 13.6 0 14.4 0 15.2 0 16 0 16.8 0
+		 17.6 0 18.4 0 19.2 0 20 0 20.8 0 21.6 0 22.4 0 23.2 0 24 0 24.8 0 25.6 0 26.4 0 27.2 0
+		 28 0 28.8 0 29.6 0 30.4 0 31.2 0 32 0 32.8 0 33.6 0 34.4 0 35.2 0 36 0 36.8 0 37.6 0
+		 38.4 0 39.2 0 40 0 40.8 0 41.6 0 42.4 0 43.2 0 44 0 44.8 0 45.6 0 46.4 0 47.2 0 48 0
+		 48.8 0 49.6 0 50.4 0 51.2 0 52 0 52.8 0 53.6 0 54.4 0.13391809165477753 55.2 0.23457677662372589
+		 56 0.32714998722076416 56.8 0.41245743632316589 57.6 0.46122056245803833 58.4 0.47187834978103638
+		 59.2 0.44724667072296143 60 0.42291557788848877 60.8 0.38648658990859985 61.6 0.35703036189079285
+		 62.4 0.32768517732620239 63.2 0.30626711249351501 64 0.28687548637390137 64.8 0.27899789810180664
+		 65.6 0.27355176210403442 66.4 0.26785799860954285 67.2 0.26343199610710144 68 0.25327533483505249
+		 68.8 0.24963748455047607 69.6 0.24679584801197052 70.4 0.24521559476852417 71.2 0.24375100433826447
+		 72 0.23520272970199585 72.8 0.23117494583129883 73.6 0.22388127446174622 74.4 0.1019725576043129
+		 75.2 0 76 0 76.8 0 77.6 0 78.4 0 79.2 0 80 0 80.8 0 81.6 0 82.4 0 83.2 0 84 0 84.8 0
+		 85.6 0 86.4 0 87.2 0 88 0 88.8 0 89.6 0 90.4 0 91.2 0 92 0 92.8 0 93.6 0 94.4 0 95.2 0
+		 96 0 96.8 0 97.6 0 98.4 0 99.2 0 100 0 100.8 0 101.6 0 102.4 0 103.2 0 104 0 104.8 0
+		 105.6 0 106.4 0 107.2 0 108 0 108.8 0 109.6 0 110.4 0 111.2 0 112 0 112.8 0 113.6 0
+		 114.4 0 115.2 0 116 0 116.8 0 117.6 0 118.4 0 119.2 0 120 0 120.8 0 121.6 0 122.4 0
+		 123.2 0 124 0 124.8 0 125.6 0 126.4 0 127.2 0 128 0 128.8 0 129.6 0 130.4 0 131.2 0
+		 132 0 132.8 0 133.6 0 134.4 0 135.2 0 136 0 136.8 0 137.6 0 138.4 0 139.2 0 140 0
+		 140.8 0 141.6 0 142.4 0 143.2 0 144 0 144.8 0 145.6 0 146.4 0 147.2 0 148 0 148.8 0
+		 149.6 0 150.4 0 151.2 0 152 0 152.8 0 153.6 0 154.4 0 155.2 0 156 0 156.8 0 157.6 0
+		 158.4 0 159.2 0 160 0 160.8 0 161.6 0 162.4 0 163.2 0 164 0 164.8 0 165.6 0 166.4 0
+		 167.2 0 168 0 168.8 0 169.6 0 170.4 0 171.2 0 172 0 172.8 0 173.6 0 174.4 0 175.2 0
+		 176 0 176.8 0 177.6 0 178.4 0 179.2 0 180 0 180.8 0 181.6 0 182.4 0 183.2 0 184 0
+		 184.8 0 185.6 0 186.4 0.05538799986243248 187.2 0.23588071763515472 188 0.49800550937652588
+		 188.8 0.57260847091674805 189.6 0.59552979469299316 190.4 0.6279328465461731 191.2 0.641318678855896
+		 192 0.64471137523651123 192.8 0.63498425483703613 193.6 0.60612225532531738 194.4 0.59469038248062134
+		 195.2 0.58059656620025635 196 0.56816351413726807 196.8 0.54389399290084839 197.6 0.53281641006469727
+		 198.4 0.48081701993942261 199.2 0.45989531278610229;
+	setAttr ".ktv[250:380]" 200 0.45151409506797791 200.8 0.44377735257148743 201.6 0.43259894847869873
+		 202.4 0.42605990171432495 203.2 0.41529601812362671 204 0.41241472959518433 204.8 0.41071370244026184
+		 205.6 0.40328729152679443 206.4 0.3848784863948822 207.2 0.39001992344856262 208 0.39303094148635864
+		 208.8 0.39067733287811279 209.6 0.38791784644126892 210.4 0.38637015223503113 211.2 0.38635209202766418
+		 212 0.38631850481033325 212.8 0.38287779688835144 213.6 0.38282313942909241 214.4 0.39178666472434998
+		 215.2 0.39466455578804016 216 0.39570868015289307 216.8 0.3735317587852478 217.6 0.1538025289773941
+		 218.4 0.00053127499995753169 219.2 0 220 0 220.8 0 221.6 0 222.4 0 223.2 0 224 0.018132267519831657
+		 224.8 0.14843617379665375 225.6 0.29250502586364746 226.4 0.38683128356933594 227.2 0.50412619113922119
+		 228 0.56776660680770874 228.8 0.62494909763336182 229.6 0.68456250429153442 230.4 0.7033500075340271
+		 231.2 0.70628374814987183 232 0.63262224197387695 232.8 0.46521767973899841 233.6 0.054567314684391022
+		 234.4 0 235.2 0 236 0 236.8 0 237.6 0 238.4 0 239.2 0 240 0 240.8 0 241.6 0 242.4 0
+		 243.2 0 244 0 244.8 0 245.6 0 246.4 0 247.2 0 248 0 248.8 0 249.6 0 250.4 0 251.2 0
+		 252 0 252.8 0 253.6 0.027871826663613319 254.4 0.079904109239578247 255.2 0.097801752388477325
+		 256 0.10455037653446198 256.8 0.10480217635631561 257.6 0.10467506945133209 258.4 0.10443735867738724
+		 259.2 0.00085607497021555901 260 0 260.8 0 261.6 0 262.4 0 263.2 0 264 0 264.8 0
+		 265.6 0 266.4 0 267.2 0 268 0 268.8 0 269.6 0 270.4 0 271.2 0 272 0 272.8 0 273.6 0
+		 274.4 0 275.2 0 276 0 276.8 0 277.6 0 278.4 0 279.2 0 280 0 280.8 0 281.6 0 282.4 0
+		 283.2 0 284 0 284.8 0 285.6 0 286.4 0 287.2 0 288 0 288.8 0 289.6 0 290.4 0 291.2 0
+		 292 0 292.8 0 293.6 0 294.4 0 295.2 0 296 0 296.8 0 297.6 0 298.4 0 299.2 0 300 0
+		 300.8 0 301.6 0 302.4 0 303.2 0 304 0;
+createNode animCurveTU -n "headModel:comboCorrectives_lipPuckerR";
+	rename -uid "1B37F153-9143-F7B2-EEAE-71977F4F7B9F";
+	setAttr ".tan" 18;
+	setAttr ".wgt" no;
+	setAttr -s 381 ".ktv";
+	setAttr ".ktv[0:249]"  0 0 0.8 0 1.6 0 2.4 0 3.2 0 4 0 4.8 0 5.6 0 6.4 0
+		 7.2 0 8 0 8.8 0 9.6 0 10.4 0 11.2 0 12 0 12.8 0 13.6 0 14.4 0 15.2 0 16 0 16.8 0
+		 17.6 0 18.4 0 19.2 0 20 0 20.8 0 21.6 0 22.4 0 23.2 0 24 0 24.8 0 25.6 0 26.4 0 27.2 0
+		 28 0 28.8 0 29.6 0 30.4 0 31.2 0 32 0 32.8 0 33.6 0 34.4 0 35.2 0 36 0 36.8 0 37.6 0
+		 38.4 0 39.2 0 40 0 40.8 0 41.6 0 42.4 0 43.2 0 44 0 44.8 0 45.6 0 46.4 0 47.2 0 48 0
+		 48.8 0 49.6 0 50.4 0 51.2 0 52 0 52.8 0 53.6 0 54.4 0.13391809165477753 55.2 0.23457677662372589
+		 56 0.32714998722076416 56.8 0.41245743632316589 57.6 0.46122056245803833 58.4 0.47187834978103638
+		 59.2 0.44724667072296143 60 0.42291557788848877 60.8 0.38648658990859985 61.6 0.35703036189079285
+		 62.4 0.32768517732620239 63.2 0.30626711249351501 64 0.28687548637390137 64.8 0.27899789810180664
+		 65.6 0.27355176210403442 66.4 0.26785799860954285 67.2 0.26343199610710144 68 0.25327533483505249
+		 68.8 0.24963748455047607 69.6 0.24679584801197052 70.4 0.24521559476852417 71.2 0.24375100433826447
+		 72 0.23520272970199585 72.8 0.23117494583129883 73.6 0.22388127446174622 74.4 0.1019725576043129
+		 75.2 0 76 0 76.8 0 77.6 0 78.4 0 79.2 0 80 0 80.8 0 81.6 0 82.4 0 83.2 0 84 0 84.8 0
+		 85.6 0 86.4 0 87.2 0 88 0 88.8 0 89.6 0 90.4 0 91.2 0 92 0 92.8 0 93.6 0 94.4 0 95.2 0
+		 96 0 96.8 0 97.6 0 98.4 0 99.2 0 100 0 100.8 0 101.6 0 102.4 0 103.2 0 104 0 104.8 0
+		 105.6 0 106.4 0 107.2 0 108 0 108.8 0 109.6 0 110.4 0 111.2 0 112 0 112.8 0 113.6 0
+		 114.4 0 115.2 0 116 0 116.8 0 117.6 0 118.4 0 119.2 0 120 0 120.8 0 121.6 0 122.4 0
+		 123.2 0 124 0 124.8 0 125.6 0 126.4 0 127.2 0 128 0 128.8 0 129.6 0 130.4 0 131.2 0
+		 132 0 132.8 0 133.6 0 134.4 0 135.2 0 136 0 136.8 0 137.6 0 138.4 0 139.2 0 140 0
+		 140.8 0 141.6 0 142.4 0 143.2 0 144 0 144.8 0 145.6 0 146.4 0 147.2 0 148 0 148.8 0
+		 149.6 0 150.4 0 151.2 0 152 0 152.8 0 153.6 0 154.4 0 155.2 0 156 0 156.8 0 157.6 0
+		 158.4 0 159.2 0 160 0 160.8 0 161.6 0 162.4 0 163.2 0 164 0 164.8 0 165.6 0 166.4 0
+		 167.2 0 168 0 168.8 0 169.6 0 170.4 0 171.2 0 172 0 172.8 0 173.6 0 174.4 0 175.2 0
+		 176 0 176.8 0 177.6 0 178.4 0 179.2 0 180 0 180.8 0 181.6 0 182.4 0 183.2 0 184 0
+		 184.8 0 185.6 0 186.4 0.05538799986243248 187.2 0.23588071763515472 188 0.49800550937652588
+		 188.8 0.57260847091674805 189.6 0.59552979469299316 190.4 0.6279328465461731 191.2 0.641318678855896
+		 192 0.64471137523651123 192.8 0.63498425483703613 193.6 0.60612225532531738 194.4 0.59469038248062134
+		 195.2 0.58059656620025635 196 0.56816351413726807 196.8 0.54389399290084839 197.6 0.53281641006469727
+		 198.4 0.48081701993942261 199.2 0.45989531278610229;
+	setAttr ".ktv[250:380]" 200 0.45151409506797791 200.8 0.44377735257148743 201.6 0.43259894847869873
+		 202.4 0.42605990171432495 203.2 0.41529601812362671 204 0.41241472959518433 204.8 0.41071370244026184
+		 205.6 0.40328729152679443 206.4 0.3848784863948822 207.2 0.39001992344856262 208 0.39303094148635864
+		 208.8 0.39067733287811279 209.6 0.38791784644126892 210.4 0.38637015223503113 211.2 0.38635209202766418
+		 212 0.38631850481033325 212.8 0.38287779688835144 213.6 0.38282313942909241 214.4 0.39178666472434998
+		 215.2 0.39466455578804016 216 0.39570868015289307 216.8 0.3735317587852478 217.6 0.1538025289773941
+		 218.4 0.00053127499995753169 219.2 0 220 0 220.8 0 221.6 0 222.4 0 223.2 0 224 0.018132267519831657
+		 224.8 0.14843617379665375 225.6 0.29250502586364746 226.4 0.38683128356933594 227.2 0.50412619113922119
+		 228 0.56776660680770874 228.8 0.62494909763336182 229.6 0.68456250429153442 230.4 0.7033500075340271
+		 231.2 0.70628374814987183 232 0.63262224197387695 232.8 0.46521767973899841 233.6 0.054567314684391022
+		 234.4 0 235.2 0 236 0 236.8 0 237.6 0 238.4 0 239.2 0 240 0 240.8 0 241.6 0 242.4 0
+		 243.2 0 244 0 244.8 0 245.6 0 246.4 0 247.2 0 248 0 248.8 0 249.6 0 250.4 0 251.2 0
+		 252 0 252.8 0 253.6 0.027871826663613319 254.4 0.079904109239578247 255.2 0.097801752388477325
+		 256 0.10455037653446198 256.8 0.10480217635631561 257.6 0.10467506945133209 258.4 0.10443735867738724
+		 259.2 0.00085607497021555901 260 0 260.8 0 261.6 0 262.4 0 263.2 0 264 0 264.8 0
+		 265.6 0 266.4 0 267.2 0 268 0 268.8 0 269.6 0 270.4 0 271.2 0 272 0 272.8 0 273.6 0
+		 274.4 0 275.2 0 276 0 276.8 0 277.6 0 278.4 0 279.2 0 280 0 280.8 0 281.6 0 282.4 0
+		 283.2 0 284 0 284.8 0 285.6 0 286.4 0 287.2 0 288 0 288.8 0 289.6 0 290.4 0 291.2 0
+		 292 0 292.8 0 293.6 0 294.4 0 295.2 0 296 0 296.8 0 297.6 0 298.4 0 299.2 0 300 0
+		 300.8 0 301.6 0 302.4 0 303.2 0 304 0;
+createNode animCurveTU -n "headModel:comboCorrectives_lipStretcherL";
+	rename -uid "0060A157-E44B-CC53-4371-5180EAB1AC6F";
+	setAttr ".tan" 18;
+	setAttr ".wgt" no;
+	setAttr -s 381 ".ktv";
+	setAttr ".ktv[0:249]"  0 0 0.8 0 1.6 0 2.4 0 3.2 0 4 0 4.8 0 5.6 0 6.4 0
+		 7.2 0 8 0 8.8 0 9.6 0 10.4 0 11.2 0 12 0 12.8 0 13.6 7.6751923188567162e-05 14.4 0.00029618857661262155
+		 15.2 0 16 0 16.8 0.001003808923996985 17.6 0.018421681597828865 18.4 0.032296285033226013
+		 19.2 0.040094207972288132 20 0.045099258422851562 20.8 0.048504568636417389 21.6 0.052030716091394424
+		 22.4 0.053455114364624023 23.2 0.054737001657485962 24 0.055833373218774796 24.8 0.056740034371614456
+		 25.6 0.05742158368229866 26.4 0.05758386105298996 27.2 0.057617265731096268 28 0.057798851281404495
+		 28.8 0.057882551103830338 29.6 0.0576910600066185 30.4 0.057745400816202164 31.2 0.057188853621482849
+		 32 0.038995634764432907 32.8 0.0053587080910801888 33.6 5.7900656429410446e-06 34.4 0
+		 35.2 0 36 0 36.8 0 37.6 0 38.4 0 39.2 0.00056426937226206064 40 0.0018795154755935073
+		 40.8 0.0031453741248697042 41.6 0.0042683794163167477 42.4 0.0049409866333007812
+		 43.2 0.0054889647290110588 44 0.0060156378895044327 44.8 0.0065410910174250603 45.6 0.0069224806502461433
+		 46.4 0.0070749786682426929 47.2 0.0072602569125592709 48 0.0073847309686243534 48.8 0.0076897116377949715
+		 49.6 0.0080368593335151672 50.4 0.0082972096279263496 51.2 0.0080069834366440773
+		 52 0.0097235376015305519 52.8 0.046815026551485062 53.6 0.067120209336280823 54.4 0.071892008185386658
+		 55.2 0.06899135559797287 56 0.069028615951538086 56.8 0.096018455922603607 57.6 0.11054506897926331
+		 58.4 0.11810942739248276 59.2 0.12705953419208527 60 0.13318730890750885 60.8 0.13830167055130005
+		 61.6 0.14343859255313873 62.4 0.14579659700393677 63.2 0.14783018827438354 64 0.15031237900257111
+		 64.8 0.15149560570716858 65.6 0.15210555493831635 66.4 0.1522572785615921 67.2 0.15234987437725067
+		 68 0.1521310955286026 68.8 0.15139958262443542 69.6 0.14982509613037109 70.4 0.144524946808815
+		 71.2 0.14130161702632904 72 0.1392168402671814 72.8 0.10267040878534317 73.6 0.078955329954624176
+		 74.4 0.11220909655094147 75.2 0.19188103079795837 76 0.13754342496395111 76.8 0.082760900259017944
+		 77.6 0.061325270682573318 78.4 0.052815146744251251 79.2 0.043769355863332748 80 0.035429641604423523
+		 80.8 0.030961999669671059 81.6 0.027433032169938087 82.4 0.021755242720246315 83.2 0.019270455464720726
+		 84 0.01794172078371048 84.8 0.017022404819726944 85.6 0.016236569732427597 86.4 0.015639342367649078
+		 87.2 0.015532844699919224 88 0.015580522827804089 88.8 0.015629826113581657 89.6 0.015755778178572655
+		 90.4 0.015872936695814133 91.2 0.015971297398209572 92 0.015794841572642326 92.8 0.015790490433573723
+		 93.6 0.015588816255331039 94.4 0.0077960193157196045 95.2 0 96 0 96.8 0 97.6 0 98.4 0
+		 99.2 0 100 0 100.8 0 101.6 0 102.4 0 103.2 0 104 0 104.8 0 105.6 0 106.4 0 107.2 0
+		 108 0 108.8 0 109.6 0 110.4 0 111.2 0 112 0 112.8 0 113.6 0 114.4 0 115.2 0 116 0
+		 116.8 0.00042072223732247949 117.6 0.001861336175352335 118.4 0.0029844047967344522
+		 119.2 0.0036515567917376757 120 0.0038018182385712862 120.8 0.0038326289504766464
+		 121.6 0.0038737701252102852 122.4 0.0041477582417428493 123.2 0.0044982116669416428
+		 124 0.0046633565798401833 124.8 0.0048806802369654179 125.6 0.012533523142337799
+		 126.4 0.038197208195924759 127.2 0.065209388732910156 128 0.082193009555339813 128.8 0.092340104281902313
+		 129.6 0.10216943174600601 130.4 0.10707774758338928 131.2 0.10913383215665817 132 0.11067871749401093
+		 132.8 0.11150912940502167 133.6 0.11216682940721512 134.4 0.11240000277757645 135.2 0.11201950162649155
+		 136 0.11167608946561813 136.8 0.11140245199203491 137.6 0.1111188679933548 138.4 0.11084461957216263
+		 139.2 0.11036478728055954 140 0.10989318042993546 140.8 0.10889262706041336 141.6 0.10791037231683731
+		 142.4 0.10739269107580185 143.2 0.10724324733018875 144 0.10734999924898148 144.8 0.10745134949684143
+		 145.6 0.10726898908615112 146.4 0.10685472190380096 147.2 0.1066814586520195 148 0.10667137056589127
+		 148.8 0.10609961301088333 149.6 0.1019405722618103 150.4 0.092152081429958344 151.2 0.081670261919498444
+		 152 0.073782928287982941 152.8 0.062076922506093979 153.6 0.049126129597425461 154.4 0.039194840937852859
+		 155.2 0.026059197261929512 156 0.013204812072217464 156.8 0.0051153232343494892 157.6 0.0023188523482531309
+		 158.4 0.00045115759712643921 159.2 0 160 0 160.8 0 161.6 0 162.4 0 163.2 0 164 0
+		 164.8 0 165.6 0 166.4 0 167.2 0 168 0 168.8 0 169.6 0 170.4 0 171.2 0 172 0 172.8 0
+		 173.6 0 174.4 0 175.2 0 176 0 176.8 0 177.6 0 178.4 0 179.2 0 180 0.0013091347645968199
+		 180.8 0.0035717182327061892 181.6 0.0055931359529495239 182.4 0.007237680722028017
+		 183.2 0.0090420180931687355 184 0.011233857832849026 184.8 0.011763897724449635 185.6 0.010936383157968521
+		 186.4 0.0149798933416605 187.2 0.017664089798927307 188 0.017798453569412231 188.8 0.01885872520506382
+		 189.6 0.028169255703687668 190.4 0.047589793801307678 191.2 0.086517326533794403
+		 192 0.10513386875391006 192.8 0.10998573899269104 193.6 0.1176624596118927 194.4 0.12119604647159576
+		 195.2 0.12259504944086075 196 0.12396298348903656 196.8 0.12552733719348907 197.6 0.12679336965084076
+		 198.4 0.1337246298789978 199.2 0.14130564033985138;
+	setAttr ".ktv[250:380]" 200 0.14381688833236694 200.8 0.1450217068195343 201.6 0.14660151302814484
+		 202.4 0.14737983047962189 203.2 0.14845496416091919 204 0.14827212691307068 204.8 0.14844247698783875
+		 205.6 0.14867374300956726 206.4 0.14951817691326141 207.2 0.14937330782413483 208 0.14990395307540894
+		 208.8 0.14952316880226135 209.6 0.14900617301464081 210.4 0.14656011760234833 211.2 0.14639657735824585
+		 212 0.14764825999736786 212.8 0.14739230275154114 213.6 0.14617988467216492 214.4 0.14409360289573669
+		 215.2 0.14290079474449158 216 0.13856425881385803 216.8 0.13154827058315277 217.6 0.23737452924251556
+		 218.4 0.2432650625705719 219.2 0.18055778741836548 220 0.1216304823756218 220.8 0.078833550214767456
+		 221.6 0.065344221889972687 222.4 0.058701585978269577 223.2 0.047460183501243591
+		 224 0.040946654975414276 224.8 0.038327619433403015 225.6 0.029445929452776909 226.4 0.025124784559011459
+		 227.2 0.022747142240405083 228 0.024007845669984818 228.8 0.040490325540304184 229.6 0.083905480802059174
+		 230.4 0.15875351428985596 231.2 0.26667287945747375 232 0.47896066308021545 232.8 0.46853408217430115
+		 233.6 0.45529937744140625 234.4 0.47423297166824341 235.2 0.49050506949424744 236 0.49386417865753174
+		 236.8 0.49527376890182495 237.6 0.49067717790603638 238.4 0.46367660164833069 239.2 0.45458477735519409
+		 240 0.43122595548629761 240.8 0.4043610692024231 241.6 0.38615965843200684 242.4 0.34953773021697998
+		 243.2 0.33927199244499207 244 0.33642849326133728 244.8 0.31674847006797791 245.6 0.29767096042633057
+		 246.4 0.26465988159179688 247.2 0.23690919578075409 248 0.20984295010566711 248.8 0.18751637637615204
+		 249.6 0.17049932479858398 250.4 0.17535558342933655 251.2 0.19065089523792267 252 0.19673877954483032
+		 252.8 0.19089463353157043 253.6 0.17146140336990356 254.4 0.10004454106092453 255.2 0.071827657520771027
+		 256 0.054921694099903107 256.8 0.045960374176502228 257.6 0.039869751781225204 258.4 0.035625170916318893
+		 259.2 0.081268846988677979 260 0.10322148352861404 260.8 0.076541975140571594 261.6 0.037646766752004623
+		 262.4 0.015161620453000069 263.2 0.0010786640923470259 264 0 264.8 0 265.6 0 266.4 0
+		 267.2 0 268 0 268.8 0 269.6 0 270.4 0 271.2 0 272 0 272.8 0 273.6 0 274.4 0 275.2 0
+		 276 0 276.8 0 277.6 0 278.4 0 279.2 0 280 0 280.8 0 281.6 0 282.4 0 283.2 0 284 0
+		 284.8 0 285.6 0 286.4 0 287.2 0 288 0 288.8 0 289.6 0 290.4 0 291.2 0 292 0 292.8 0
+		 293.6 0 294.4 0 295.2 0 296 0 296.8 0 297.6 0 298.4 0 299.2 0 300 0 300.8 0 301.6 0
+		 302.4 0 303.2 0 304 0;
+createNode animCurveTU -n "headModel:comboCorrectives_lipStretcherR";
+	rename -uid "52207C60-5C4F-D6DE-1EB1-3AA7AB6806D6";
+	setAttr ".tan" 18;
+	setAttr ".wgt" no;
+	setAttr -s 381 ".ktv";
+	setAttr ".ktv[0:249]"  0 0 0.8 0.008297269232571125 1.6 0.0091982185840606689
+		 2.4 0.010611009784042835 3.2 0.011644174344837666 4 0.012506145052611828 4.8 0.013134668581187725
+		 5.6 0.013376560993492603 6.4 0.013213125057518482 7.2 0.013118109665811062 8 0.013050944544374943
+		 8.8 0.01318850927054882 9.6 0.013240519911050797 10.4 0.013258064165711403 11.2 0.013471134938299656
+		 12 0.014094959013164043 12.8 0.015073760412633419 13.6 0.016423376277089119 14.4 0.01623096875846386
+		 15.2 0.015489200130105019 16 0.014991442672908306 16.8 0.019125012680888176 17.6 0.04101775586605072
+		 18.4 0.056748438626527786 19.2 0.065350405871868134 20 0.071699619293212891 20.8 0.075976677238941193
+		 21.6 0.079537466168403625 22.4 0.08098602294921875 23.2 0.082286164164543152 24 0.083546914160251617
+		 24.8 0.084664382040500641 25.6 0.085605621337890625 26.4 0.085900001227855682 27.2 0.08605530858039856
+		 28 0.086384400725364685 28.8 0.0864715576171875 29.6 0.086262285709381104 30.4 0.086093448102474213
+		 31.2 0.085305601358413696 32 0.057913299649953842 32.8 0.02530376985669136 33.6 0.017676165327429771
+		 34.4 0.015032238326966763 35.2 0.014712667092680931 36 0.014864382334053516 36.8 0.015152090229094028
+		 37.6 0.015780361369252205 38.4 0.016531258821487427 39.2 0.017380595207214355 40 0.018670780584216118
+		 40.8 0.019825790077447891 41.6 0.020862331613898277 42.4 0.02143343910574913 43.2 0.021911824122071266
+		 44 0.022364277392625809 44.8 0.022719090804457664 45.6 0.022906990721821785 46.4 0.022967128083109856
+		 47.2 0.023240974172949791 48 0.023626169189810753 48.8 0.023997290059924126 49.6 0.024423211812973022
+		 50.4 0.024851726368069649 51.2 0.024805838242173195 52 0.024905653670430183 52.8 0.04960380494594574
+		 53.6 0.075002022087574005 54.4 0.081022769212722778 55.2 0.081564024090766907 56 0.085316836833953857
+		 56.8 0.11199291795492172 57.6 0.1297098696231842 58.4 0.13623002171516418 59.2 0.14050233364105225
+		 60 0.14320568740367889 60.8 0.14743691682815552 61.6 0.15042600035667419 62.4 0.15154391527175903
+		 63.2 0.15240712463855743 64 0.15373225510120392 64.8 0.15411567687988281 65.6 0.15435980260372162
+		 66.4 0.15497660636901855 67.2 0.15580014884471893 68 0.15585476160049438 68.8 0.15505741536617279
+		 69.6 0.15356543660163879 70.4 0.15129444003105164 71.2 0.14765153825283051 72 0.14429964125156403
+		 72.8 0.10007902979850769 73.6 0.079431258141994476 74.4 0.10082504153251648 75.2 0.13354781270027161
+		 76 0.092730589210987091 76.8 0.063475556671619415 77.6 0.046520665287971497 78.4 0.040685512125492096
+		 79.2 0.038244176656007767 80 0.037025950849056244 80.8 0.036168992519378662 81.6 0.035027049481868744
+		 82.4 0.032465923577547073 83.2 0.031085776165127754 84 0.030430933460593224 84.8 0.02980569563806057
+		 85.6 0.029105132445693016 86.4 0.028841406106948853 87.2 0.029101461172103882 88 0.029329584911465645
+		 88.8 0.029639653861522675 89.6 0.030020579695701599 90.4 0.030431166291236877 91.2 0.030694164335727692
+		 92 0.030811930075287819 92.8 0.031078584492206573 93.6 0.030394082888960838 94.4 0.010848394595086575
+		 95.2 0 96 0 96.8 0 97.6 0 98.4 0 99.2 0 100 0 100.8 0 101.6 0 102.4 0 103.2 0 104 0
+		 104.8 0 105.6 0 106.4 0 107.2 0 108 0 108.8 0 109.6 0 110.4 0 111.2 0 112 0 112.8 0
+		 113.6 0 114.4 0.00090477580670267344 115.2 0.0063939816318452358 116 0.0089779021218419075
+		 116.8 0.010582016780972481 117.6 0.011952112428843975 118.4 0.013073809444904327
+		 119.2 0.013970180414617062 120 0.014456364326179028 120.8 0.014725256711244583 121.6 0.014917541295289993
+		 122.4 0.015208057127892971 123.2 0.015518570318818092 124 0.015626309439539909 124.8 0.015719152987003326
+		 125.6 0.019683826714754105 126.4 0.03758697584271431 127.2 0.05147644504904747 128 0.062429424375295639
+		 128.8 0.069658607244491577 129.6 0.076174125075340271 130.4 0.080315627157688141
+		 131.2 0.082500427961349487 132 0.084236785769462585 132.8 0.08536866307258606 133.6 0.086592212319374084
+		 134.4 0.087529897689819336 135.2 0.087739899754524231 136 0.087664023041725159 136.8 0.087640002369880676
+		 137.6 0.08773435652256012 138.4 0.087826907634735107 139.2 0.087791159749031067 140 0.087716639041900635
+		 140.8 0.087275847792625427 141.6 0.086825698614120483 142.4 0.08657507598400116 143.2 0.086532160639762878
+		 144 0.086466819047927856 144.8 0.086288884282112122 145.6 0.085971437394618988 146.4 0.085515491664409637
+		 147.2 0.085234664380550385 148 0.08496963232755661 148.8 0.084424383938312531 149.6 0.081955522298812866
+		 150.4 0.074312053620815277 151.2 0.06511283665895462 152 0.05795559287071228 152.8 0.050571426749229431
+		 153.6 0.040938321501016617 154.4 0.036231745034456253 155.2 0.028803031891584396
+		 156 0.022782299667596817 156.8 0.018979238346219063 157.6 0.016956310719251633 158.4 0.015231101773679256
+		 159.2 0.013891732320189476 160 0.012687893584370613 160.8 0.011921507306396961 161.6 0.011032659560441971
+		 162.4 0.010142100043594837 163.2 0.0075715892016887665 164 0.007162636611610651 164.8 0.0079746292904019356
+		 165.6 0.0085403928533196449 166.4 0.0085946079343557358 167.2 0.0083035770803689957
+		 168 0.0081733595579862595 168.8 0.0080767255276441574 169.6 0.0081543521955609322
+		 170.4 0.0079137617722153664 171.2 0 172 0 172.8 0 173.6 0.0023569175973534584 174.4 0.0074682924896478653
+		 175.2 0.009420149028301239 176 0.010537431575357914 176.8 0.011642958968877792 177.6 0.012498785741627216
+		 178.4 0.013332871720194817 179.2 0.014668148010969162 180 0.016035748645663261 180.8 0.017517480999231339
+		 181.6 0.019392911344766617 182.4 0.020932454615831375 183.2 0.022419273853302002
+		 184 0.02471611462533474 184.8 0.024905169382691383 185.6 0.020299047231674194 186.4 0.019959485158324242
+		 187.2 0.02151421457529068 188 0.022957736626267433 188.8 0.033772550523281097 189.6 0.043815985321998596
+		 190.4 0.065641865134239197 191.2 0.1068267822265625 192 0.12693585455417633 192.8 0.13208574056625366
+		 193.6 0.13350130617618561 194.4 0.13351660966873169 195.2 0.13313142955303192 196 0.1334204375743866
+		 196.8 0.13372047245502472 197.6 0.13395203649997711 198.4 0.13908201456069946 199.2 0.14391958713531494;
+	setAttr ".ktv[250:380]" 200 0.14544065296649933 200.8 0.14575879275798798 201.6 0.14888529479503632
+		 202.4 0.15054395794868469 203.2 0.15176887810230255 204 0.15197786688804626 204.8 0.15320503711700439
+		 205.6 0.15410426259040833 206.4 0.15532493591308594 207.2 0.15531933307647705 208 0.15645590424537659
+		 208.8 0.15727499127388 209.6 0.15724031627178192 210.4 0.15666158497333527 211.2 0.1571609228849411
+		 212 0.16102321445941925 212.8 0.16130988299846649 213.6 0.16042880713939667 214.4 0.1589881032705307
+		 215.2 0.15647946298122406 216 0.15037660300731659 216.8 0.14524964988231659 217.6 0.21832339465618134
+		 218.4 0.17585870623588562 219.2 0.13166195154190063 220 0.094275213778018951 220.8 0.067989513278007507
+		 221.6 0.058624662458896637 222.4 0.049110032618045807 223.2 0.037687361240386963
+		 224 0.032086357474327087 224.8 0.030477145686745644 225.6 0.030015980824828148 226.4 0.029850533232092857
+		 227.2 0.030235996469855309 228 0.03843388706445694 228.8 0.047706659883260727 229.6 0.08903484046459198
+		 230.4 0.16087478399276733 231.2 0.27386638522148132 232 0.46573677659034729 232.8 0.41242086887359619
+		 233.6 0.36344224214553833 234.4 0.37363547086715698 235.2 0.40244624018669128 236 0.41339951753616333
+		 236.8 0.4288012683391571 237.6 0.43503221869468689 238.4 0.43095532059669495 239.2 0.42767620086669922
+		 240 0.41656652092933655 240.8 0.39302733540534973 241.6 0.37630796432495117 242.4 0.34886986017227173
+		 243.2 0.33885183930397034 244 0.32876962423324585 244.8 0.30252468585968018 245.6 0.28710764646530151
+		 246.4 0.24422779679298401 247.2 0.22041815519332886 248 0.20373734831809998 248.8 0.18884877860546112
+		 249.6 0.1660892516374588 250.4 0.16105076670646667 251.2 0.16451367735862732 252 0.16689571738243103
+		 252.8 0.15859413146972656 253.6 0.13849544525146484 254.4 0.08641805499792099 255.2 0.058547176420688629
+		 256 0.042590875178575516 256.8 0.034318644553422928 257.6 0.028207605704665184 258.4 0.023411763831973076
+		 259.2 0.054859455674886703 260 0.07229180634021759 260.8 0.060660772025585175 261.6 0.040156546980142593
+		 262.4 0.024934861809015274 263.2 0.012978930026292801 264 0.0080502321943640709 264.8 0.0060767494142055511
+		 265.6 0.0045333690941333771 266.4 0.0029927042778581381 267.2 0.0019544323440641165
+		 268 0.0011257920414209366 268.8 0.00046611492871306837 269.6 5.2885479817632586e-06
+		 270.4 0 271.2 0 272 0 272.8 0 273.6 0 274.4 0 275.2 0 276 0 276.8 0 277.6 0 278.4 0
+		 279.2 0 280 0 280.8 0 281.6 0 282.4 0 283.2 0 284 0 284.8 0 285.6 0 286.4 0 287.2 0
+		 288 0 288.8 0 289.6 0 290.4 0 291.2 0 292 0 292.8 0 293.6 0 294.4 0 295.2 0 296 0
+		 296.8 0 297.6 0 298.4 0 299.2 0 300 0 300.8 0 301.6 0 302.4 0 303.2 0 304 0;
+createNode animCurveTU -n "headModel:comboCorrectives_lipSuckBL";
+	rename -uid "90E60503-4440-C550-92E4-619791A3DC3A";
+	setAttr ".tan" 18;
+	setAttr ".wgt" no;
+	setAttr -s 381 ".ktv";
+	setAttr ".ktv[0:249]"  0 0 0.8 0.10057412832975388 1.6 0.11574696749448776
+		 2.4 0.12237349152565002 3.2 0.12447792291641235 4 0.12421490252017975 4.8 0.12331584095954895
+		 5.6 0.119200699031353 6.4 0.11580976098775864 7.2 0.098855733871459961 8 0.095466881990432739
+		 8.8 0.1084020584821701 9.6 0.11071798950433731 10.4 0.11293675005435944 11.2 0.11121805012226105
+		 12 0.085782550275325775 12.8 0.078936077654361725 13.6 0.029020786285400391 14.4 0
+		 15.2 0 16 0 16.8 0 17.6 0 18.4 0 19.2 0 20 0 20.8 0 21.6 0 22.4 0 23.2 0 24 0 24.8 0
+		 25.6 0 26.4 0 27.2 0 28 0 28.8 0 29.6 0 30.4 0 31.2 0 32 0 32.8 0 33.6 0 34.4 0 35.2 0
+		 36 0 36.8 0 37.6 0 38.4 0 39.2 0 40 0 40.8 0 41.6 0 42.4 0 43.2 0 44 0 44.8 0 45.6 0
+		 46.4 0 47.2 0 48 0 48.8 0 49.6 0 50.4 0 51.2 0 52 0 52.8 0 53.6 0 54.4 0.038388263434171677
+		 55.2 0.053482856601476669 56 0.12286057323217392 56.8 0.15140494704246521 57.6 0.1416628360748291
+		 58.4 0.13838809728622437 59.2 0.14020228385925293 60 0.1416298896074295 60.8 0.1554548442363739
+		 61.6 0.17024408280849457 62.4 0.17529383301734924 63.2 0.18291674554347992 64 0.18976843357086182
+		 64.8 0.1920526921749115 65.6 0.19232718646526337 66.4 0.1915089339017868 67.2 0.19070379436016083
+		 68 0.17778797447681427 68.8 0.17269551753997803 69.6 0.17079801857471466 70.4 0.17037190496921539
+		 71.2 0.16639250516891479 72 0.16553963720798492 72.8 0.15659064054489136 73.6 0.1254374235868454
+		 74.4 0.025881258770823479 75.2 0 76 0 76.8 0 77.6 0 78.4 0 79.2 0.036109119653701782
+		 80 0.039735633879899979 80.8 2.2534921299666166e-05 81.6 0 82.4 0 83.2 0 84 0 84.8 0
+		 85.6 0 86.4 0 87.2 0 88 0 88.8 0 89.6 0 90.4 0 91.2 0 92 0 92.8 0 93.6 0 94.4 0 95.2 0
+		 96 0 96.8 0 97.6 0 98.4 0 99.2 0 100 0 100.8 0 101.6 0 102.4 0 103.2 0 104 0 104.8 0
+		 105.6 0 106.4 0 107.2 0 108 0 108.8 0 109.6 0 110.4 0 111.2 0 112 0 112.8 0 113.6 0
+		 114.4 0 115.2 0 116 0 116.8 0 117.6 0 118.4 0 119.2 0 120 0 120.8 0 121.6 0 122.4 0
+		 123.2 0 124 0 124.8 0 125.6 0 126.4 0 127.2 0 128 0 128.8 0 129.6 0 130.4 0 131.2 0
+		 132 0 132.8 0 133.6 0 134.4 0 135.2 0 136 0 136.8 0 137.6 0 138.4 0 139.2 0 140 0
+		 140.8 0 141.6 0 142.4 0 143.2 0 144 0 144.8 0 145.6 0 146.4 0 147.2 0 148 0 148.8 0
+		 149.6 0 150.4 0 151.2 0 152 0 152.8 0 153.6 0 154.4 0 155.2 0 156 0 156.8 0 157.6 0
+		 158.4 0 159.2 0 160 0 160.8 0 161.6 0 162.4 0 163.2 0 164 0 164.8 0 165.6 0 166.4 0
+		 167.2 0 168 0 168.8 0 169.6 0 170.4 0 171.2 0 172 0 172.8 0 173.6 0 174.4 0 175.2 0
+		 176 0 176.8 0 177.6 0 178.4 0 179.2 0 180 0 180.8 0 181.6 0 182.4 0 183.2 0 184 0
+		 184.8 0 185.6 0 186.4 0.017916971817612648 187.2 0.044587872922420502 188 0.1078471913933754
+		 188.8 0.13267731666564941 189.6 0.1398024708032608 190.4 0.14188455045223236 191.2 0.1364118903875351
+		 192 0.13427047431468964 192.8 0.13434658944606781 193.6 0.13737028837203979 194.4 0.1419704258441925
+		 195.2 0.14475281536579132 196 0.1502092033624649 196.8 0.15868298709392548 197.6 0.16078877449035645
+		 198.4 0.18465046584606171 199.2 0.19612713158130646;
+	setAttr ".ktv[250:380]" 200 0.19791097939014435 200.8 0.19849587976932526 201.6 0.19978736340999603
+		 202.4 0.20842106640338898 203.2 0.21141959726810455 204 0.21371424198150635 204.8 0.21634894609451294
+		 205.6 0.21824684739112854 206.4 0.22235764563083649 207.2 0.22473408281803131 208 0.2251640260219574
+		 208.8 0.22635084390640259 209.6 0.22777308523654938 210.4 0.22717614471912384 211.2 0.22602537274360657
+		 212 0.22460976243019104 212.8 0.22383883595466614 213.6 0.2192254364490509 214.4 0.21748222410678864
+		 215.2 0.2173633873462677 216 0.21129044890403748 216.8 0.17287537455558777 217.6 0.013184612616896629
+		 218.4 0 219.2 0 220 0 220.8 0 221.6 0 222.4 0 223.2 0 224 0 224.8 0 225.6 0.01918422058224678
+		 226.4 0.041776355355978012 227.2 0.092739284038543701 228 0.13727253675460815 228.8 0.16736224293708801
+		 229.6 0.18555623292922974 230.4 0.23662635684013367 231.2 0.25701612234115601 232 0.17673079669475555
+		 232.8 0.12731830775737762 233.6 0.019260447472333908 234.4 0 235.2 0 236 0 236.8 0
+		 237.6 0 238.4 0 239.2 0 240 0 240.8 0 241.6 0 242.4 0 243.2 0 244 0 244.8 0 245.6 0
+		 246.4 0 247.2 0 248 0 248.8 0 249.6 0 250.4 0 251.2 0 252 0 252.8 0 253.6 0 254.4 0
+		 255.2 0 256 0.002913343021646142 256.8 0.015909874811768532 257.6 0.020369820296764374
+		 258.4 0.016903454437851906 259.2 0 260 0 260.8 0 261.6 0 262.4 0 263.2 0 264 0 264.8 0
+		 265.6 0 266.4 0 267.2 0 268 0 268.8 0 269.6 0 270.4 0 271.2 0 272 0 272.8 0 273.6 0
+		 274.4 0 275.2 0 276 0 276.8 0 277.6 0 278.4 0 279.2 0 280 0 280.8 0 281.6 0 282.4 0
+		 283.2 0 284 0 284.8 0 285.6 0 286.4 0 287.2 0 288 0 288.8 0 289.6 0 290.4 0 291.2 0
+		 292 0 292.8 0 293.6 0 294.4 0 295.2 0 296 0 296.8 0 297.6 0 298.4 0 299.2 0 300 0
+		 300.8 0 301.6 0 302.4 0 303.2 0 304 0;
+createNode animCurveTU -n "headModel:comboCorrectives_lipSuckBR";
+	rename -uid "DECBCC34-BE43-63BC-397F-D7A290966BD2";
+	setAttr ".tan" 18;
+	setAttr ".wgt" no;
+	setAttr -s 381 ".ktv";
+	setAttr ".ktv[0:249]"  0 0 0.8 0.10057412832975388 1.6 0.11574696749448776
+		 2.4 0.12237349152565002 3.2 0.12447792291641235 4 0.12421490252017975 4.8 0.12331584095954895
+		 5.6 0.119200699031353 6.4 0.11580976098775864 7.2 0.098855733871459961 8 0.095466881990432739
+		 8.8 0.1084020584821701 9.6 0.11071798950433731 10.4 0.11293675005435944 11.2 0.11121805012226105
+		 12 0.085782550275325775 12.8 0.078936077654361725 13.6 0.029020786285400391 14.4 0
+		 15.2 0 16 0 16.8 0 17.6 0 18.4 0 19.2 0 20 0 20.8 0 21.6 0 22.4 0 23.2 0 24 0 24.8 0
+		 25.6 0 26.4 0 27.2 0 28 0 28.8 0 29.6 0 30.4 0 31.2 0 32 0 32.8 0 33.6 0 34.4 0 35.2 0
+		 36 0 36.8 0 37.6 0 38.4 0 39.2 0 40 0 40.8 0 41.6 0 42.4 0 43.2 0 44 0 44.8 0 45.6 0
+		 46.4 0 47.2 0 48 0 48.8 0 49.6 0 50.4 0 51.2 0 52 0 52.8 0 53.6 0 54.4 0.038388263434171677
+		 55.2 0.053482856601476669 56 0.12286057323217392 56.8 0.15140494704246521 57.6 0.1416628360748291
+		 58.4 0.13838809728622437 59.2 0.14020228385925293 60 0.1416298896074295 60.8 0.1554548442363739
+		 61.6 0.17024408280849457 62.4 0.17529383301734924 63.2 0.18291674554347992 64 0.18976843357086182
+		 64.8 0.1920526921749115 65.6 0.19232718646526337 66.4 0.1915089339017868 67.2 0.19070379436016083
+		 68 0.17778797447681427 68.8 0.17269551753997803 69.6 0.17079801857471466 70.4 0.17037190496921539
+		 71.2 0.16639250516891479 72 0.16553963720798492 72.8 0.15659064054489136 73.6 0.1254374235868454
+		 74.4 0.025881258770823479 75.2 0 76 0 76.8 0 77.6 0 78.4 0 79.2 0.036109119653701782
+		 80 0.039735633879899979 80.8 2.2534921299666166e-05 81.6 0 82.4 0 83.2 0 84 0 84.8 0
+		 85.6 0 86.4 0 87.2 0 88 0 88.8 0 89.6 0 90.4 0 91.2 0 92 0 92.8 0 93.6 0 94.4 0 95.2 0
+		 96 0 96.8 0 97.6 0 98.4 0 99.2 0 100 0 100.8 0 101.6 0 102.4 0 103.2 0 104 0 104.8 0
+		 105.6 0 106.4 0 107.2 0 108 0 108.8 0 109.6 0 110.4 0 111.2 0 112 0 112.8 0 113.6 0
+		 114.4 0 115.2 0 116 0 116.8 0 117.6 0 118.4 0 119.2 0 120 0 120.8 0 121.6 0 122.4 0
+		 123.2 0 124 0 124.8 0 125.6 0 126.4 0 127.2 0 128 0 128.8 0 129.6 0 130.4 0 131.2 0
+		 132 0 132.8 0 133.6 0 134.4 0 135.2 0 136 0 136.8 0 137.6 0 138.4 0 139.2 0 140 0
+		 140.8 0 141.6 0 142.4 0 143.2 0 144 0 144.8 0 145.6 0 146.4 0 147.2 0 148 0 148.8 0
+		 149.6 0 150.4 0 151.2 0 152 0 152.8 0 153.6 0 154.4 0 155.2 0 156 0 156.8 0 157.6 0
+		 158.4 0 159.2 0 160 0 160.8 0 161.6 0 162.4 0 163.2 0 164 0 164.8 0 165.6 0 166.4 0
+		 167.2 0 168 0 168.8 0 169.6 0 170.4 0 171.2 0 172 0 172.8 0 173.6 0 174.4 0 175.2 0
+		 176 0 176.8 0 177.6 0 178.4 0 179.2 0 180 0 180.8 0 181.6 0 182.4 0 183.2 0 184 0
+		 184.8 0 185.6 0 186.4 0.017916971817612648 187.2 0.044587872922420502 188 0.1078471913933754
+		 188.8 0.13267731666564941 189.6 0.1398024708032608 190.4 0.14188455045223236 191.2 0.1364118903875351
+		 192 0.13427047431468964 192.8 0.13434658944606781 193.6 0.13737028837203979 194.4 0.1419704258441925
+		 195.2 0.14475281536579132 196 0.1502092033624649 196.8 0.15868298709392548 197.6 0.16078877449035645
+		 198.4 0.18465046584606171 199.2 0.19612713158130646;
+	setAttr ".ktv[250:380]" 200 0.19791097939014435 200.8 0.19849587976932526 201.6 0.19978736340999603
+		 202.4 0.20842106640338898 203.2 0.21141959726810455 204 0.21371424198150635 204.8 0.21634894609451294
+		 205.6 0.21824684739112854 206.4 0.22235764563083649 207.2 0.22473408281803131 208 0.2251640260219574
+		 208.8 0.22635084390640259 209.6 0.22777308523654938 210.4 0.22717614471912384 211.2 0.22602537274360657
+		 212 0.22460976243019104 212.8 0.22383883595466614 213.6 0.2192254364490509 214.4 0.21748222410678864
+		 215.2 0.2173633873462677 216 0.21129044890403748 216.8 0.17287537455558777 217.6 0.013184612616896629
+		 218.4 0 219.2 0 220 0 220.8 0 221.6 0 222.4 0 223.2 0 224 0 224.8 0 225.6 0.01918422058224678
+		 226.4 0.041776355355978012 227.2 0.092739284038543701 228 0.13727253675460815 228.8 0.16736224293708801
+		 229.6 0.18555623292922974 230.4 0.23662635684013367 231.2 0.25701612234115601 232 0.17673079669475555
+		 232.8 0.12731830775737762 233.6 0.019260447472333908 234.4 0 235.2 0 236 0 236.8 0
+		 237.6 0 238.4 0 239.2 0 240 0 240.8 0 241.6 0 242.4 0 243.2 0 244 0 244.8 0 245.6 0
+		 246.4 0 247.2 0 248 0 248.8 0 249.6 0 250.4 0 251.2 0 252 0 252.8 0 253.6 0 254.4 0
+		 255.2 0 256 0.002913343021646142 256.8 0.015909874811768532 257.6 0.020369820296764374
+		 258.4 0.016903454437851906 259.2 0 260 0 260.8 0 261.6 0 262.4 0 263.2 0 264 0 264.8 0
+		 265.6 0 266.4 0 267.2 0 268 0 268.8 0 269.6 0 270.4 0 271.2 0 272 0 272.8 0 273.6 0
+		 274.4 0 275.2 0 276 0 276.8 0 277.6 0 278.4 0 279.2 0 280 0 280.8 0 281.6 0 282.4 0
+		 283.2 0 284 0 284.8 0 285.6 0 286.4 0 287.2 0 288 0 288.8 0 289.6 0 290.4 0 291.2 0
+		 292 0 292.8 0 293.6 0 294.4 0 295.2 0 296 0 296.8 0 297.6 0 298.4 0 299.2 0 300 0
+		 300.8 0 301.6 0 302.4 0 303.2 0 304 0;
+createNode animCurveTU -n "headModel:comboCorrectives_lipSuckTL";
+	rename -uid "EE23E111-C147-9A7B-BCBA-6E88FA7F824F";
+	setAttr ".tan" 18;
+	setAttr ".wgt" no;
+	setAttr -s 381 ".ktv";
+	setAttr ".ktv[0:249]"  0 0 0.8 0.046249810606241226 1.6 0.061109919100999832
+		 2.4 0.069421499967575073 3.2 0.071897953748703003 4 0.072119995951652527 4.8 0.071708686649799347
+		 5.6 0.070086017251014709 6.4 0.068446621298789978 7.2 0.057631362229585648 8 0.054751127958297729
+		 8.8 0.056333605200052261 9.6 0.057024523615837097 10.4 0.059421278536319733 11.2 0.061190102249383926
+		 12 0.0611693374812603 12.8 0.094132803380489349 13.6 0.06342703104019165 14.4 0.0063507435843348503
+		 15.2 0 16 0 16.8 0 17.6 0 18.4 0 19.2 0 20 0 20.8 0 21.6 0 22.4 0 23.2 0 24 0 24.8 0
+		 25.6 0 26.4 0 27.2 0 28 0 28.8 0 29.6 0 30.4 0 31.2 0 32 0 32.8 0 33.6 0 34.4 0 35.2 0
+		 36 0 36.8 0 37.6 0 38.4 0 39.2 0 40 0 40.8 0 41.6 0 42.4 0 43.2 0 44 0 44.8 0 45.6 0
+		 46.4 0 47.2 0 48 0 48.8 0 49.6 0 50.4 0 51.2 0 52 0 52.8 0 53.6 0.013810562901198864
+		 54.4 0.040912657976150513 55.2 0.063680730760097504 56 0.12161263078451157 56.8 0.16528670489788055
+		 57.6 0.17529276013374329 58.4 0.18352855741977692 59.2 0.1877782940864563 60 0.1891586035490036
+		 60.8 0.18956908583641052 61.6 0.18990352749824524 62.4 0.18988297879695892 63.2 0.18963460624217987
+		 64 0.18938830494880676 64.8 0.18913145363330841 65.6 0.18369658291339874 66.4 0.1793123185634613
+		 67.2 0.17412540316581726 68 0.16765469312667847 68.8 0.1644521951675415 69.6 0.16149775683879852
+		 70.4 0.15949922800064087 71.2 0.15270392596721649 72 0.15088628232479095 72.8 0.14468945562839508
+		 73.6 0.11691819876432419 74.4 0.057920131832361221 75.2 0.014503473415970802 76 0.0029851868748664856
+		 76.8 0.00095110415713861585 77.6 0.0049111996777355671 78.4 0.0082796299830079079
+		 79.2 0.063207335770130157 80 0.050661534070968628 80.8 0.024186385795474052 81.6 0.0056009469553828239
+		 82.4 0 83.2 0 84 0 84.8 0 85.6 0 86.4 0 87.2 0 88 0 88.8 0 89.6 0 90.4 0 91.2 0 92 0
+		 92.8 0 93.6 0 94.4 0 95.2 0 96 0 96.8 0 97.6 0 98.4 0 99.2 0 100 0 100.8 0 101.6 0
+		 102.4 0 103.2 0 104 0 104.8 0 105.6 0 106.4 0 107.2 0 108 0 108.8 0 109.6 0 110.4 0
+		 111.2 0 112 0 112.8 0 113.6 0 114.4 0 115.2 0 116 0 116.8 0 117.6 0 118.4 0 119.2 0
+		 120 0 120.8 0 121.6 0 122.4 0 123.2 0 124 0 124.8 0 125.6 0 126.4 0 127.2 0 128 0
+		 128.8 0 129.6 0 130.4 0 131.2 0 132 0 132.8 0 133.6 0 134.4 0 135.2 0 136 0 136.8 0
+		 137.6 0 138.4 0 139.2 0 140 0 140.8 0 141.6 0 142.4 0 143.2 0 144 0 144.8 0 145.6 0
+		 146.4 0 147.2 0 148 0 148.8 0 149.6 0 150.4 0 151.2 0 152 0 152.8 0 153.6 0 154.4 0
+		 155.2 0 156 0 156.8 0 157.6 0 158.4 0 159.2 0 160 0 160.8 0 161.6 0 162.4 0 163.2 0
+		 164 0 164.8 0 165.6 0 166.4 0 167.2 0 168 0 168.8 0 169.6 0 170.4 0 171.2 0 172 0
+		 172.8 0 173.6 0 174.4 0 175.2 0 176 0 176.8 0 177.6 0 178.4 0 179.2 0 180 0 180.8 0
+		 181.6 0 182.4 0 183.2 0 184 0 184.8 0 185.6 0 186.4 0.035139422863721848 187.2 0.074005864560604095
+		 188 0.11813779920339584 188.8 0.1646626740694046 189.6 0.18959671258926392 190.4 0.20256048440933228
+		 191.2 0.20705406367778778 192 0.21319979429244995 192.8 0.21975846588611603 193.6 0.22620320320129395
+		 194.4 0.22981512546539307 195.2 0.23133775591850281 196 0.23359261453151703 196.8 0.23530270159244537
+		 197.6 0.23542486131191254 198.4 0.24320971965789795 199.2 0.24909764528274536;
+	setAttr ".ktv[250:380]" 200 0.25004342198371887 200.8 0.25017586350440979 201.6 0.25067520141601562
+		 202.4 0.25132110714912415 203.2 0.25431466102600098 204 0.25608643889427185 204.8 0.25684690475463867
+		 205.6 0.25686320662498474 206.4 0.25660228729248047 207.2 0.25694066286087036 208 0.25699004530906677
+		 208.8 0.25657081604003906 209.6 0.25673803687095642 210.4 0.2563231885433197 211.2 0.2557966411113739
+		 212 0.25544449687004089 212.8 0.25526854395866394 213.6 0.25479650497436523 214.4 0.25475591421127319
+		 215.2 0.25492140650749207 216 0.25000500679016113 216.8 0.20672416687011719 217.6 0.078388385474681854
+		 218.4 0.036496870219707489 219.2 0.018434053286910057 220 0.011060846969485283 220.8 1.6556839455006411e-06
+		 221.6 0 222.4 0 223.2 0 224 0 224.8 0.020667314529418945 225.6 0.045821152627468109
+		 226.4 0.066410250961780548 227.2 0.1127033606171608 228 0.1786685436964035 228.8 0.23472023010253906
+		 229.6 0.29869383573532104 230.4 0.36155945062637329 231.2 0.43691733479499817 232 0.45526450872421265
+		 232.8 0.34482994675636292 233.6 0.1679254025220871 234.4 0.18902060389518738 235.2 0.19440117478370667
+		 236 0.19535313546657562 236.8 0.1819474995136261 237.6 0.16040937602519989 238.4 0.13308747112751007
+		 239.2 0.097557634115219116 240 0.052953861653804779 240.8 0.024427782744169235 241.6 0.013333101756870747
+		 242.4 0.0032753720879554749 243.2 8.1142218277818756e-07 244 0 244.8 0 245.6 0 246.4 0
+		 247.2 0 248 0 248.8 0 249.6 0 250.4 0.00055719399824738503 251.2 0.0046248831786215305
+		 252 0.0096973944455385208 252.8 0.011496034450829029 253.6 0.012305258773267269 254.4 0.013826658017933369
+		 255.2 0.017388608306646347 256 0.0266767218708992 256.8 0.034349709749221802 257.6 0.036638602614402771
+		 258.4 0.034387245774269104 259.2 0.00094118498964235187 260 0 260.8 0 261.6 0 262.4 0
+		 263.2 0 264 0 264.8 0 265.6 0 266.4 0 267.2 0 268 0 268.8 0 269.6 0 270.4 0 271.2 0
+		 272 0 272.8 0 273.6 0 274.4 0 275.2 0 276 0 276.8 0 277.6 0 278.4 0 279.2 0 280 0
+		 280.8 0 281.6 0 282.4 0 283.2 0 284 0 284.8 0 285.6 0 286.4 0 287.2 0 288 0 288.8 0
+		 289.6 0 290.4 0 291.2 0 292 0 292.8 0 293.6 0 294.4 0 295.2 0 296 0 296.8 0 297.6 0
+		 298.4 0 299.2 0 300 0 300.8 0 301.6 0 302.4 0 303.2 0 304 0;
+createNode animCurveTU -n "headModel:comboCorrectives_lipSuckTR";
+	rename -uid "D3D2C6B9-7647-1981-DFBC-CAA36138F083";
+	setAttr ".tan" 18;
+	setAttr ".wgt" no;
+	setAttr -s 381 ".ktv";
+	setAttr ".ktv[0:249]"  0 0 0.8 0.046249810606241226 1.6 0.061109919100999832
+		 2.4 0.069421499967575073 3.2 0.071897953748703003 4 0.072119995951652527 4.8 0.071708686649799347
+		 5.6 0.070086017251014709 6.4 0.068446621298789978 7.2 0.057631362229585648 8 0.054751127958297729
+		 8.8 0.056333605200052261 9.6 0.057024523615837097 10.4 0.059421278536319733 11.2 0.061190102249383926
+		 12 0.0611693374812603 12.8 0.094132803380489349 13.6 0.06342703104019165 14.4 0.0063507435843348503
+		 15.2 0 16 0 16.8 0 17.6 0 18.4 0 19.2 0 20 0 20.8 0 21.6 0 22.4 0 23.2 0 24 0 24.8 0
+		 25.6 0 26.4 0 27.2 0 28 0 28.8 0 29.6 0 30.4 0 31.2 0 32 0 32.8 0 33.6 0 34.4 0 35.2 0
+		 36 0 36.8 0 37.6 0 38.4 0 39.2 0 40 0 40.8 0 41.6 0 42.4 0 43.2 0 44 0 44.8 0 45.6 0
+		 46.4 0 47.2 0 48 0 48.8 0 49.6 0 50.4 0 51.2 0 52 0 52.8 0 53.6 0.013810562901198864
+		 54.4 0.040912657976150513 55.2 0.063680730760097504 56 0.12161263078451157 56.8 0.16528670489788055
+		 57.6 0.17529276013374329 58.4 0.18352855741977692 59.2 0.1877782940864563 60 0.1891586035490036
+		 60.8 0.18956908583641052 61.6 0.18990352749824524 62.4 0.18988297879695892 63.2 0.18963460624217987
+		 64 0.18938830494880676 64.8 0.18913145363330841 65.6 0.18369658291339874 66.4 0.1793123185634613
+		 67.2 0.17412540316581726 68 0.16765469312667847 68.8 0.1644521951675415 69.6 0.16149775683879852
+		 70.4 0.15949922800064087 71.2 0.15270392596721649 72 0.15088628232479095 72.8 0.14468945562839508
+		 73.6 0.11691819876432419 74.4 0.057920131832361221 75.2 0.014503473415970802 76 0.0029851868748664856
+		 76.8 0.00095110415713861585 77.6 0.0049111996777355671 78.4 0.0082796299830079079
+		 79.2 0.063207335770130157 80 0.050661534070968628 80.8 0.024186385795474052 81.6 0.0056009469553828239
+		 82.4 0 83.2 0 84 0 84.8 0 85.6 0 86.4 0 87.2 0 88 0 88.8 0 89.6 0 90.4 0 91.2 0 92 0
+		 92.8 0 93.6 0 94.4 0 95.2 0 96 0 96.8 0 97.6 0 98.4 0 99.2 0 100 0 100.8 0 101.6 0
+		 102.4 0 103.2 0 104 0 104.8 0 105.6 0 106.4 0 107.2 0 108 0 108.8 0 109.6 0 110.4 0
+		 111.2 0 112 0 112.8 0 113.6 0 114.4 0 115.2 0 116 0 116.8 0 117.6 0 118.4 0 119.2 0
+		 120 0 120.8 0 121.6 0 122.4 0 123.2 0 124 0 124.8 0 125.6 0 126.4 0 127.2 0 128 0
+		 128.8 0 129.6 0 130.4 0 131.2 0 132 0 132.8 0 133.6 0 134.4 0 135.2 0 136 0 136.8 0
+		 137.6 0 138.4 0 139.2 0 140 0 140.8 0 141.6 0 142.4 0 143.2 0 144 0 144.8 0 145.6 0
+		 146.4 0 147.2 0 148 0 148.8 0 149.6 0 150.4 0 151.2 0 152 0 152.8 0 153.6 0 154.4 0
+		 155.2 0 156 0 156.8 0 157.6 0 158.4 0 159.2 0 160 0 160.8 0 161.6 0 162.4 0 163.2 0
+		 164 0 164.8 0 165.6 0 166.4 0 167.2 0 168 0 168.8 0 169.6 0 170.4 0 171.2 0 172 0
+		 172.8 0 173.6 0 174.4 0 175.2 0 176 0 176.8 0 177.6 0 178.4 0 179.2 0 180 0 180.8 0
+		 181.6 0 182.4 0 183.2 0 184 0 184.8 0 185.6 0 186.4 0.035139422863721848 187.2 0.074005864560604095
+		 188 0.11813779920339584 188.8 0.1646626740694046 189.6 0.18959671258926392 190.4 0.20256048440933228
+		 191.2 0.20705406367778778 192 0.21319979429244995 192.8 0.21975846588611603 193.6 0.22620320320129395
+		 194.4 0.22981512546539307 195.2 0.23133775591850281 196 0.23359261453151703 196.8 0.23530270159244537
+		 197.6 0.23542486131191254 198.4 0.24320971965789795 199.2 0.24909764528274536;
+	setAttr ".ktv[250:380]" 200 0.25004342198371887 200.8 0.25017586350440979 201.6 0.25067520141601562
+		 202.4 0.25132110714912415 203.2 0.25431466102600098 204 0.25608643889427185 204.8 0.25684690475463867
+		 205.6 0.25686320662498474 206.4 0.25660228729248047 207.2 0.25694066286087036 208 0.25699004530906677
+		 208.8 0.25657081604003906 209.6 0.25673803687095642 210.4 0.2563231885433197 211.2 0.2557966411113739
+		 212 0.25544449687004089 212.8 0.25526854395866394 213.6 0.25479650497436523 214.4 0.25475591421127319
+		 215.2 0.25492140650749207 216 0.25000500679016113 216.8 0.20672416687011719 217.6 0.078388385474681854
+		 218.4 0.036496870219707489 219.2 0.018434053286910057 220 0.011060846969485283 220.8 1.6556839455006411e-06
+		 221.6 0 222.4 0 223.2 0 224 0 224.8 0.020667314529418945 225.6 0.045821152627468109
+		 226.4 0.066410250961780548 227.2 0.1127033606171608 228 0.1786685436964035 228.8 0.23472023010253906
+		 229.6 0.29869383573532104 230.4 0.36155945062637329 231.2 0.43691733479499817 232 0.45526450872421265
+		 232.8 0.34482994675636292 233.6 0.1679254025220871 234.4 0.18902060389518738 235.2 0.19440117478370667
+		 236 0.19535313546657562 236.8 0.1819474995136261 237.6 0.16040937602519989 238.4 0.13308747112751007
+		 239.2 0.097557634115219116 240 0.052953861653804779 240.8 0.024427782744169235 241.6 0.013333101756870747
+		 242.4 0.0032753720879554749 243.2 8.1142218277818756e-07 244 0 244.8 0 245.6 0 246.4 0
+		 247.2 0 248 0 248.8 0 249.6 0 250.4 0.00055719399824738503 251.2 0.0046248831786215305
+		 252 0.0096973944455385208 252.8 0.011496034450829029 253.6 0.012305258773267269 254.4 0.013826658017933369
+		 255.2 0.017388608306646347 256 0.0266767218708992 256.8 0.034349709749221802 257.6 0.036638602614402771
+		 258.4 0.034387245774269104 259.2 0.00094118498964235187 260 0 260.8 0 261.6 0 262.4 0
+		 263.2 0 264 0 264.8 0 265.6 0 266.4 0 267.2 0 268 0 268.8 0 269.6 0 270.4 0 271.2 0
+		 272 0 272.8 0 273.6 0 274.4 0 275.2 0 276 0 276.8 0 277.6 0 278.4 0 279.2 0 280 0
+		 280.8 0 281.6 0 282.4 0 283.2 0 284 0 284.8 0 285.6 0 286.4 0 287.2 0 288 0 288.8 0
+		 289.6 0 290.4 0 291.2 0 292 0 292.8 0 293.6 0 294.4 0 295.2 0 296 0 296.8 0 297.6 0
+		 298.4 0 299.2 0 300 0 300.8 0 301.6 0 302.4 0 303.2 0 304 0;
+createNode animCurveTU -n "headModel:comboCorrectives_lipsTowardBL";
+	rename -uid "1B1C45DE-254A-B327-248E-5BA289C816EE";
+	setAttr ".tan" 18;
+	setAttr ".wgt" no;
+	setAttr -s 381 ".ktv";
+	setAttr ".ktv[0:249]"  0 0 0.8 0 1.6 0 2.4 0 3.2 0 4 0 4.8 0 5.6 0 6.4 0
+		 7.2 0 8 0 8.8 0 9.6 0 10.4 0 11.2 0 12 0 12.8 0 13.6 0 14.4 0 15.2 0 16 0 16.8 0
+		 17.6 0 18.4 0 19.2 0 20 0 20.8 0 21.6 0 22.4 0 23.2 0 24 0 24.8 0 25.6 0 26.4 0 27.2 0
+		 28 0 28.8 0 29.6 0 30.4 0 31.2 0 32 0 32.8 0 33.6 0 34.4 0 35.2 0 36 0 36.8 0 37.6 0
+		 38.4 0 39.2 0 40 0 40.8 0 41.6 0 42.4 0 43.2 0 44 0 44.8 0 45.6 0 46.4 0 47.2 0 48 0
+		 48.8 0 49.6 0 50.4 0 51.2 0 52 0 52.8 0.051526542752981186 53.6 0.20634375512599945
+		 54.4 0.36240723729133606 55.2 0.47015076875686646 56 0.61374455690383911 56.8 0.69708788394927979
+		 57.6 0.72718256711959839 58.4 0.73830109834671021 59.2 0.74074018001556396 60 0.73634707927703857
+		 60.8 0.72359102964401245 61.6 0.71103501319885254 62.4 0.69252610206604004 63.2 0.67870634794235229
+		 64 0.66934067010879517 64.8 0.66513323783874512 65.6 0.65254908800125122 66.4 0.64378911256790161
+		 67.2 0.63751238584518433 68 0.62734144926071167 68.8 0.62330925464630127 69.6 0.61859655380249023
+		 70.4 0.61559915542602539 71.2 0.60857307910919189 72 0.60392838716506958 72.8 0.58693337440490723
+		 73.6 0.54665124416351318 74.4 0.44248822331428528 75.2 0.23539957404136658 76 0.068738006055355072
+		 76.8 0.026868682354688644 77.6 0.012236479669809341 78.4 0.0066799996420741081 79.2 0.015760160982608795
+		 80 0.00017524883151054382 80.8 0 81.6 0 82.4 0 83.2 0 84 0 84.8 0 85.6 0 86.4 0 87.2 0
+		 88 0 88.8 0 89.6 0 90.4 0 91.2 0 92 0 92.8 0 93.6 0 94.4 0 95.2 0 96 0 96.8 0 97.6 0
+		 98.4 0 99.2 0 100 0 100.8 0 101.6 0 102.4 0 103.2 0 104 0 104.8 0 105.6 0 106.4 0
+		 107.2 0 108 0 108.8 0 109.6 0 110.4 0 111.2 0 112 0 112.8 0 113.6 0 114.4 0 115.2 0
+		 116 0 116.8 0 117.6 0 118.4 0 119.2 0 120 0 120.8 0 121.6 0 122.4 0 123.2 0 124 0
+		 124.8 0 125.6 0 126.4 0 127.2 0 128 0 128.8 0 129.6 0 130.4 0 131.2 0 132 0 132.8 0
+		 133.6 0 134.4 0 135.2 0 136 0 136.8 0 137.6 0 138.4 0 139.2 0 140 0 140.8 0 141.6 0
+		 142.4 0 143.2 0 144 0 144.8 0 145.6 0 146.4 0 147.2 0 148 0 148.8 0 149.6 0 150.4 0
+		 151.2 0 152 0 152.8 0 153.6 0 154.4 0 155.2 0 156 0 156.8 0 157.6 0 158.4 0 159.2 0
+		 160 0 160.8 0 161.6 0 162.4 0 163.2 0 164 0 164.8 0 165.6 0 166.4 0 167.2 0 168 0
+		 168.8 0 169.6 0 170.4 0 171.2 0 172 0 172.8 0 173.6 0 174.4 0 175.2 0 176 0 176.8 0
+		 177.6 0 178.4 0 179.2 0 180 0 180.8 0 181.6 0 182.4 0 183.2 0 184 0 184.8 0 185.6 0
+		 186.4 0.25917136669158936 187.2 0.48063138127326965 188 0.65513265132904053 188.8 0.73140084743499756
+		 189.6 0.76929318904876709 190.4 0.80358034372329712 191.2 0.82523757219314575 192 0.83564549684524536
+		 192.8 0.83845138549804688 193.6 0.83914810419082642 194.4 0.83902770280838013 195.2 0.83790892362594604
+		 196 0.83685338497161865 196.8 0.83279198408126831 197.6 0.82885116338729858 198.4 0.82542389631271362
+		 199.2 0.82159072160720825;
+	setAttr ".ktv[250:380]" 200 0.81279456615447998 200.8 0.8092542290687561 201.6 0.80728495121002197
+		 202.4 0.80562841892242432 203.2 0.80448800325393677 204 0.80270528793334961 204.8 0.80090814828872681
+		 205.6 0.79727160930633545 206.4 0.79171979427337646 207.2 0.79057198762893677 208 0.78996098041534424
+		 208.8 0.78856134414672852 209.6 0.78749763965606689 210.4 0.78581255674362183 211.2 0.78528517484664917
+		 212 0.78538495302200317 212.8 0.78463441133499146 213.6 0.78391915559768677 214.4 0.78394472599029541
+		 215.2 0.78417015075683594 216 0.78337568044662476 216.8 0.75810849666595459 217.6 0.5792691707611084
+		 218.4 0.27407762408256531 219.2 0.13018989562988281 220 0.057954706251621246 220.8 0
+		 221.6 0 222.4 0.014097945764660835 223.2 0.065318815410137177 224 0.17043291032314301
+		 224.8 0.33490046858787537 225.6 0.44303351640701294 226.4 0.54986977577209473 227.2 0.64510607719421387
+		 228 0.74950891733169556 228.8 0.80268722772598267 229.6 0.85864013433456421 230.4 0.89279806613922119
+		 231.2 0.90310394763946533 232 0.87867379188537598 232.8 0.66209328174591064 233.6 0.21448880434036255
+		 234.4 0.095581904053688049 235.2 0.063210442662239075 236 0.056989256292581558 236.8 0.037553749978542328
+		 237.6 0.011326486244797707 238.4 5.6892578868428245e-05 239.2 0 240 0 240.8 0 241.6 0
+		 242.4 0 243.2 0 244 0 244.8 0 245.6 0 246.4 0 247.2 0 248 0 248.8 0 249.6 0.045113459229469299
+		 250.4 0.15308879315853119 251.2 0.23857612907886505 252 0.35030478239059448 252.8 0.37463018298149109
+		 253.6 0.39048367738723755 254.4 0.39786702394485474 255.2 0.39814662933349609 256 0.39777076244354248
+		 256.8 0.39675110578536987 257.6 0.37496235966682434 258.4 0.30868902802467346 259.2 0.15317341685295105
+		 260 0.067849233746528625 260.8 0.022989643737673759 261.6 0 262.4 0 263.2 0 264 0
+		 264.8 0 265.6 0 266.4 0 267.2 0 268 0 268.8 0 269.6 0 270.4 0 271.2 0 272 0 272.8 0
+		 273.6 0 274.4 0 275.2 0 276 0 276.8 0 277.6 0 278.4 0 279.2 0 280 0 280.8 0 281.6 0
+		 282.4 0 283.2 0 284 0 284.8 0 285.6 0 286.4 0 287.2 0 288 0 288.8 0 289.6 0 290.4 0
+		 291.2 0 292 0 292.8 0 293.6 0 294.4 0 295.2 0 296 0 296.8 0 297.6 0 298.4 0 299.2 0
+		 300 0 300.8 0 301.6 0 302.4 0 303.2 0 304 0;
+createNode animCurveTU -n "headModel:comboCorrectives_lipsTowardBR";
+	rename -uid "6B626796-054F-3904-1F14-3ABCE2CA273D";
+	setAttr ".tan" 18;
+	setAttr ".wgt" no;
+	setAttr -s 381 ".ktv";
+	setAttr ".ktv[0:249]"  0 0 0.8 0 1.6 0 2.4 0 3.2 0 4 0 4.8 0 5.6 0 6.4 0
+		 7.2 0 8 0 8.8 0 9.6 0 10.4 0 11.2 0 12 0 12.8 0 13.6 0 14.4 0 15.2 0 16 0 16.8 0
+		 17.6 0 18.4 0 19.2 0 20 0 20.8 0 21.6 0 22.4 0 23.2 0 24 0 24.8 0 25.6 0 26.4 0 27.2 0
+		 28 0 28.8 0 29.6 0 30.4 0 31.2 0 32 0 32.8 0 33.6 0 34.4 0 35.2 0 36 0 36.8 0 37.6 0
+		 38.4 0 39.2 0 40 0 40.8 0 41.6 0 42.4 0 43.2 0 44 0 44.8 0 45.6 0 46.4 0 47.2 0 48 0
+		 48.8 0 49.6 0 50.4 0 51.2 0 52 0 52.8 0.051526542752981186 53.6 0.20634375512599945
+		 54.4 0.36240723729133606 55.2 0.47015076875686646 56 0.61374455690383911 56.8 0.69708788394927979
+		 57.6 0.72718256711959839 58.4 0.73830109834671021 59.2 0.74074018001556396 60 0.73634707927703857
+		 60.8 0.72359102964401245 61.6 0.71103501319885254 62.4 0.69252610206604004 63.2 0.67870634794235229
+		 64 0.66934067010879517 64.8 0.66513323783874512 65.6 0.65254908800125122 66.4 0.64378911256790161
+		 67.2 0.63751238584518433 68 0.62734144926071167 68.8 0.62330925464630127 69.6 0.61859655380249023
+		 70.4 0.61559915542602539 71.2 0.60857307910919189 72 0.60392838716506958 72.8 0.58693337440490723
+		 73.6 0.54665124416351318 74.4 0.44248822331428528 75.2 0.23539957404136658 76 0.068738006055355072
+		 76.8 0.026868682354688644 77.6 0.012236479669809341 78.4 0.0066799996420741081 79.2 0.015760160982608795
+		 80 0.00017524883151054382 80.8 0 81.6 0 82.4 0 83.2 0 84 0 84.8 0 85.6 0 86.4 0 87.2 0
+		 88 0 88.8 0 89.6 0 90.4 0 91.2 0 92 0 92.8 0 93.6 0 94.4 0 95.2 0 96 0 96.8 0 97.6 0
+		 98.4 0 99.2 0 100 0 100.8 0 101.6 0 102.4 0 103.2 0 104 0 104.8 0 105.6 0 106.4 0
+		 107.2 0 108 0 108.8 0 109.6 0 110.4 0 111.2 0 112 0 112.8 0 113.6 0 114.4 0 115.2 0
+		 116 0 116.8 0 117.6 0 118.4 0 119.2 0 120 0 120.8 0 121.6 0 122.4 0 123.2 0 124 0
+		 124.8 0 125.6 0 126.4 0 127.2 0 128 0 128.8 0 129.6 0 130.4 0 131.2 0 132 0 132.8 0
+		 133.6 0 134.4 0 135.2 0 136 0 136.8 0 137.6 0 138.4 0 139.2 0 140 0 140.8 0 141.6 0
+		 142.4 0 143.2 0 144 0 144.8 0 145.6 0 146.4 0 147.2 0 148 0 148.8 0 149.6 0 150.4 0
+		 151.2 0 152 0 152.8 0 153.6 0 154.4 0 155.2 0 156 0 156.8 0 157.6 0 158.4 0 159.2 0
+		 160 0 160.8 0 161.6 0 162.4 0 163.2 0 164 0 164.8 0 165.6 0 166.4 0 167.2 0 168 0
+		 168.8 0 169.6 0 170.4 0 171.2 0 172 0 172.8 0 173.6 0 174.4 0 175.2 0 176 0 176.8 0
+		 177.6 0 178.4 0 179.2 0 180 0 180.8 0 181.6 0 182.4 0 183.2 0 184 0 184.8 0 185.6 0
+		 186.4 0.25917136669158936 187.2 0.48063138127326965 188 0.65513265132904053 188.8 0.73140084743499756
+		 189.6 0.76929318904876709 190.4 0.80358034372329712 191.2 0.82523757219314575 192 0.83564549684524536
+		 192.8 0.83845138549804688 193.6 0.83914810419082642 194.4 0.83902770280838013 195.2 0.83790892362594604
+		 196 0.83685338497161865 196.8 0.83279198408126831 197.6 0.82885116338729858 198.4 0.82542389631271362
+		 199.2 0.82159072160720825;
+	setAttr ".ktv[250:380]" 200 0.81279456615447998 200.8 0.8092542290687561 201.6 0.80728495121002197
+		 202.4 0.80562841892242432 203.2 0.80448800325393677 204 0.80270528793334961 204.8 0.80090814828872681
+		 205.6 0.79727160930633545 206.4 0.79171979427337646 207.2 0.79057198762893677 208 0.78996098041534424
+		 208.8 0.78856134414672852 209.6 0.78749763965606689 210.4 0.78581255674362183 211.2 0.78528517484664917
+		 212 0.78538495302200317 212.8 0.78463441133499146 213.6 0.78391915559768677 214.4 0.78394472599029541
+		 215.2 0.78417015075683594 216 0.78337568044662476 216.8 0.75810849666595459 217.6 0.5792691707611084
+		 218.4 0.27407762408256531 219.2 0.13018989562988281 220 0.057954706251621246 220.8 0
+		 221.6 0 222.4 0.014097945764660835 223.2 0.065318815410137177 224 0.17043291032314301
+		 224.8 0.33490046858787537 225.6 0.44303351640701294 226.4 0.54986977577209473 227.2 0.64510607719421387
+		 228 0.74950891733169556 228.8 0.80268722772598267 229.6 0.85864013433456421 230.4 0.89279806613922119
+		 231.2 0.90310394763946533 232 0.87867379188537598 232.8 0.66209328174591064 233.6 0.21448880434036255
+		 234.4 0.095581904053688049 235.2 0.063210442662239075 236 0.056989256292581558 236.8 0.037553749978542328
+		 237.6 0.011326486244797707 238.4 5.6892578868428245e-05 239.2 0 240 0 240.8 0 241.6 0
+		 242.4 0 243.2 0 244 0 244.8 0 245.6 0 246.4 0 247.2 0 248 0 248.8 0 249.6 0.045113459229469299
+		 250.4 0.15308879315853119 251.2 0.23857612907886505 252 0.35030478239059448 252.8 0.37463018298149109
+		 253.6 0.39048367738723755 254.4 0.39786702394485474 255.2 0.39814662933349609 256 0.39777076244354248
+		 256.8 0.39675110578536987 257.6 0.37496235966682434 258.4 0.30868902802467346 259.2 0.15317341685295105
+		 260 0.067849233746528625 260.8 0.022989643737673759 261.6 0 262.4 0 263.2 0 264 0
+		 264.8 0 265.6 0 266.4 0 267.2 0 268 0 268.8 0 269.6 0 270.4 0 271.2 0 272 0 272.8 0
+		 273.6 0 274.4 0 275.2 0 276 0 276.8 0 277.6 0 278.4 0 279.2 0 280 0 280.8 0 281.6 0
+		 282.4 0 283.2 0 284 0 284.8 0 285.6 0 286.4 0 287.2 0 288 0 288.8 0 289.6 0 290.4 0
+		 291.2 0 292 0 292.8 0 293.6 0 294.4 0 295.2 0 296 0 296.8 0 297.6 0 298.4 0 299.2 0
+		 300 0 300.8 0 301.6 0 302.4 0 303.2 0 304 0;
+createNode animCurveTU -n "headModel:comboCorrectives_lipsTowardTL";
+	rename -uid "F7B5359F-2944-B12B-34EF-0393F8572244";
+	setAttr ".tan" 18;
+	setAttr ".wgt" no;
+	setAttr -s 381 ".ktv";
+	setAttr ".ktv[0:249]"  0 0 0.8 0 1.6 0 2.4 0 3.2 0 4 0 4.8 0 5.6 0 6.4 0
+		 7.2 0 8 0 8.8 0 9.6 0 10.4 0 11.2 0 12 0 12.8 0 13.6 0 14.4 0 15.2 0 16 0 16.8 0
+		 17.6 0 18.4 0 19.2 0 20 0 20.8 0 21.6 0 22.4 0 23.2 0 24 0 24.8 0 25.6 0 26.4 0 27.2 0
+		 28 0 28.8 0 29.6 0 30.4 0 31.2 0 32 0 32.8 0 33.6 0 34.4 0 35.2 0 36 0 36.8 0 37.6 0
+		 38.4 0 39.2 0 40 0 40.8 0 41.6 0 42.4 0 43.2 0 44 0 44.8 0 45.6 0 46.4 0 47.2 0 48 0
+		 48.8 0 49.6 0 50.4 0 51.2 0 52 0 52.8 0.051526542752981186 53.6 0.20634375512599945
+		 54.4 0.36240723729133606 55.2 0.47015076875686646 56 0.61374455690383911 56.8 0.69708788394927979
+		 57.6 0.72718256711959839 58.4 0.73830109834671021 59.2 0.74074018001556396 60 0.73634707927703857
+		 60.8 0.72359102964401245 61.6 0.71103501319885254 62.4 0.69252610206604004 63.2 0.67870634794235229
+		 64 0.66934067010879517 64.8 0.66513323783874512 65.6 0.65254908800125122 66.4 0.64378911256790161
+		 67.2 0.63751238584518433 68 0.62734144926071167 68.8 0.62330925464630127 69.6 0.61859655380249023
+		 70.4 0.61559915542602539 71.2 0.60857307910919189 72 0.60392838716506958 72.8 0.58693337440490723
+		 73.6 0.54665124416351318 74.4 0.44248822331428528 75.2 0.23539957404136658 76 0.068738006055355072
+		 76.8 0.026868682354688644 77.6 0.012236479669809341 78.4 0.0066799996420741081 79.2 0.015760160982608795
+		 80 0.00017524883151054382 80.8 0 81.6 0 82.4 0 83.2 0 84 0 84.8 0 85.6 0 86.4 0 87.2 0
+		 88 0 88.8 0 89.6 0 90.4 0 91.2 0 92 0 92.8 0 93.6 0 94.4 0 95.2 0 96 0 96.8 0 97.6 0
+		 98.4 0 99.2 0 100 0 100.8 0 101.6 0 102.4 0 103.2 0 104 0 104.8 0 105.6 0 106.4 0
+		 107.2 0 108 0 108.8 0 109.6 0 110.4 0 111.2 0 112 0 112.8 0 113.6 0 114.4 0 115.2 0
+		 116 0 116.8 0 117.6 0 118.4 0 119.2 0 120 0 120.8 0 121.6 0 122.4 0 123.2 0 124 0
+		 124.8 0 125.6 0 126.4 0 127.2 0 128 0 128.8 0 129.6 0 130.4 0 131.2 0 132 0 132.8 0
+		 133.6 0 134.4 0 135.2 0 136 0 136.8 0 137.6 0 138.4 0 139.2 0 140 0 140.8 0 141.6 0
+		 142.4 0 143.2 0 144 0 144.8 0 145.6 0 146.4 0 147.2 0 148 0 148.8 0 149.6 0 150.4 0
+		 151.2 0 152 0 152.8 0 153.6 0 154.4 0 155.2 0 156 0 156.8 0 157.6 0 158.4 0 159.2 0
+		 160 0 160.8 0 161.6 0 162.4 0 163.2 0 164 0 164.8 0 165.6 0 166.4 0 167.2 0 168 0
+		 168.8 0 169.6 0 170.4 0 171.2 0 172 0 172.8 0 173.6 0 174.4 0 175.2 0 176 0 176.8 0
+		 177.6 0 178.4 0 179.2 0 180 0 180.8 0 181.6 0 182.4 0 183.2 0 184 0 184.8 0 185.6 0
+		 186.4 0.25917136669158936 187.2 0.48063138127326965 188 0.65513265132904053 188.8 0.73140084743499756
+		 189.6 0.76929318904876709 190.4 0.80358034372329712 191.2 0.82523757219314575 192 0.83564549684524536
+		 192.8 0.83845138549804688 193.6 0.83914810419082642 194.4 0.83902770280838013 195.2 0.83790892362594604
+		 196 0.83685338497161865 196.8 0.83279198408126831 197.6 0.82885116338729858 198.4 0.82542389631271362
+		 199.2 0.82159072160720825;
+	setAttr ".ktv[250:380]" 200 0.81279456615447998 200.8 0.8092542290687561 201.6 0.80728495121002197
+		 202.4 0.80562841892242432 203.2 0.80448800325393677 204 0.80270528793334961 204.8 0.80090814828872681
+		 205.6 0.79727160930633545 206.4 0.79171979427337646 207.2 0.79057198762893677 208 0.78996098041534424
+		 208.8 0.78856134414672852 209.6 0.78749763965606689 210.4 0.78581255674362183 211.2 0.78528517484664917
+		 212 0.78538495302200317 212.8 0.78463441133499146 213.6 0.78391915559768677 214.4 0.78394472599029541
+		 215.2 0.78417015075683594 216 0.78337568044662476 216.8 0.75810849666595459 217.6 0.5792691707611084
+		 218.4 0.27407762408256531 219.2 0.13018989562988281 220 0.057954706251621246 220.8 0
+		 221.6 0 222.4 0.014097945764660835 223.2 0.065318815410137177 224 0.17043291032314301
+		 224.8 0.33490046858787537 225.6 0.44303351640701294 226.4 0.54986977577209473 227.2 0.64510607719421387
+		 228 0.74950891733169556 228.8 0.80268722772598267 229.6 0.85864013433456421 230.4 0.89279806613922119
+		 231.2 0.90310394763946533 232 0.87867379188537598 232.8 0.66209328174591064 233.6 0.21448880434036255
+		 234.4 0.095581904053688049 235.2 0.063210442662239075 236 0.056989256292581558 236.8 0.037553749978542328
+		 237.6 0.011326486244797707 238.4 5.6892578868428245e-05 239.2 0 240 0 240.8 0 241.6 0
+		 242.4 0 243.2 0 244 0 244.8 0 245.6 0 246.4 0 247.2 0 248 0 248.8 0 249.6 0.045113459229469299
+		 250.4 0.15308879315853119 251.2 0.23857612907886505 252 0.35030478239059448 252.8 0.37463018298149109
+		 253.6 0.39048367738723755 254.4 0.39786702394485474 255.2 0.39814662933349609 256 0.39777076244354248
+		 256.8 0.39675110578536987 257.6 0.37496235966682434 258.4 0.30868902802467346 259.2 0.15317341685295105
+		 260 0.067849233746528625 260.8 0.022989643737673759 261.6 0 262.4 0 263.2 0 264 0
+		 264.8 0 265.6 0 266.4 0 267.2 0 268 0 268.8 0 269.6 0 270.4 0 271.2 0 272 0 272.8 0
+		 273.6 0 274.4 0 275.2 0 276 0 276.8 0 277.6 0 278.4 0 279.2 0 280 0 280.8 0 281.6 0
+		 282.4 0 283.2 0 284 0 284.8 0 285.6 0 286.4 0 287.2 0 288 0 288.8 0 289.6 0 290.4 0
+		 291.2 0 292 0 292.8 0 293.6 0 294.4 0 295.2 0 296 0 296.8 0 297.6 0 298.4 0 299.2 0
+		 300 0 300.8 0 301.6 0 302.4 0 303.2 0 304 0;
+createNode animCurveTU -n "headModel:comboCorrectives_lipsTowardTR";
+	rename -uid "B5DEA240-194E-7A02-4867-FDB154ED0987";
+	setAttr ".tan" 18;
+	setAttr ".wgt" no;
+	setAttr -s 381 ".ktv";
+	setAttr ".ktv[0:249]"  0 0 0.8 0 1.6 0 2.4 0 3.2 0 4 0 4.8 0 5.6 0 6.4 0
+		 7.2 0 8 0 8.8 0 9.6 0 10.4 0 11.2 0 12 0 12.8 0 13.6 0 14.4 0 15.2 0 16 0 16.8 0
+		 17.6 0 18.4 0 19.2 0 20 0 20.8 0 21.6 0 22.4 0 23.2 0 24 0 24.8 0 25.6 0 26.4 0 27.2 0
+		 28 0 28.8 0 29.6 0 30.4 0 31.2 0 32 0 32.8 0 33.6 0 34.4 0 35.2 0 36 0 36.8 0 37.6 0
+		 38.4 0 39.2 0 40 0 40.8 0 41.6 0 42.4 0 43.2 0 44 0 44.8 0 45.6 0 46.4 0 47.2 0 48 0
+		 48.8 0 49.6 0 50.4 0 51.2 0 52 0 52.8 0.051526542752981186 53.6 0.20634375512599945
+		 54.4 0.36240723729133606 55.2 0.47015076875686646 56 0.61374455690383911 56.8 0.69708788394927979
+		 57.6 0.72718256711959839 58.4 0.73830109834671021 59.2 0.74074018001556396 60 0.73634707927703857
+		 60.8 0.72359102964401245 61.6 0.71103501319885254 62.4 0.69252610206604004 63.2 0.67870634794235229
+		 64 0.66934067010879517 64.8 0.66513323783874512 65.6 0.65254908800125122 66.4 0.64378911256790161
+		 67.2 0.63751238584518433 68 0.62734144926071167 68.8 0.62330925464630127 69.6 0.61859655380249023
+		 70.4 0.61559915542602539 71.2 0.60857307910919189 72 0.60392838716506958 72.8 0.58693337440490723
+		 73.6 0.54665124416351318 74.4 0.44248822331428528 75.2 0.23539957404136658 76 0.068738006055355072
+		 76.8 0.026868682354688644 77.6 0.012236479669809341 78.4 0.0066799996420741081 79.2 0.015760160982608795
+		 80 0.00017524883151054382 80.8 0 81.6 0 82.4 0 83.2 0 84 0 84.8 0 85.6 0 86.4 0 87.2 0
+		 88 0 88.8 0 89.6 0 90.4 0 91.2 0 92 0 92.8 0 93.6 0 94.4 0 95.2 0 96 0 96.8 0 97.6 0
+		 98.4 0 99.2 0 100 0 100.8 0 101.6 0 102.4 0 103.2 0 104 0 104.8 0 105.6 0 106.4 0
+		 107.2 0 108 0 108.8 0 109.6 0 110.4 0 111.2 0 112 0 112.8 0 113.6 0 114.4 0 115.2 0
+		 116 0 116.8 0 117.6 0 118.4 0 119.2 0 120 0 120.8 0 121.6 0 122.4 0 123.2 0 124 0
+		 124.8 0 125.6 0 126.4 0 127.2 0 128 0 128.8 0 129.6 0 130.4 0 131.2 0 132 0 132.8 0
+		 133.6 0 134.4 0 135.2 0 136 0 136.8 0 137.6 0 138.4 0 139.2 0 140 0 140.8 0 141.6 0
+		 142.4 0 143.2 0 144 0 144.8 0 145.6 0 146.4 0 147.2 0 148 0 148.8 0 149.6 0 150.4 0
+		 151.2 0 152 0 152.8 0 153.6 0 154.4 0 155.2 0 156 0 156.8 0 157.6 0 158.4 0 159.2 0
+		 160 0 160.8 0 161.6 0 162.4 0 163.2 0 164 0 164.8 0 165.6 0 166.4 0 167.2 0 168 0
+		 168.8 0 169.6 0 170.4 0 171.2 0 172 0 172.8 0 173.6 0 174.4 0 175.2 0 176 0 176.8 0
+		 177.6 0 178.4 0 179.2 0 180 0 180.8 0 181.6 0 182.4 0 183.2 0 184 0 184.8 0 185.6 0
+		 186.4 0.25917136669158936 187.2 0.48063138127326965 188 0.65513265132904053 188.8 0.73140084743499756
+		 189.6 0.76929318904876709 190.4 0.80358034372329712 191.2 0.82523757219314575 192 0.83564549684524536
+		 192.8 0.83845138549804688 193.6 0.83914810419082642 194.4 0.83902770280838013 195.2 0.83790892362594604
+		 196 0.83685338497161865 196.8 0.83279198408126831 197.6 0.82885116338729858 198.4 0.82542389631271362
+		 199.2 0.82159072160720825;
+	setAttr ".ktv[250:380]" 200 0.81279456615447998 200.8 0.8092542290687561 201.6 0.80728495121002197
+		 202.4 0.80562841892242432 203.2 0.80448800325393677 204 0.80270528793334961 204.8 0.80090814828872681
+		 205.6 0.79727160930633545 206.4 0.79171979427337646 207.2 0.79057198762893677 208 0.78996098041534424
+		 208.8 0.78856134414672852 209.6 0.78749763965606689 210.4 0.78581255674362183 211.2 0.78528517484664917
+		 212 0.78538495302200317 212.8 0.78463441133499146 213.6 0.78391915559768677 214.4 0.78394472599029541
+		 215.2 0.78417015075683594 216 0.78337568044662476 216.8 0.75810849666595459 217.6 0.5792691707611084
+		 218.4 0.27407762408256531 219.2 0.13018989562988281 220 0.057954706251621246 220.8 0
+		 221.6 0 222.4 0.014097945764660835 223.2 0.065318815410137177 224 0.17043291032314301
+		 224.8 0.33490046858787537 225.6 0.44303351640701294 226.4 0.54986977577209473 227.2 0.64510607719421387
+		 228 0.74950891733169556 228.8 0.80268722772598267 229.6 0.85864013433456421 230.4 0.89279806613922119
+		 231.2 0.90310394763946533 232 0.87867379188537598 232.8 0.66209328174591064 233.6 0.21448880434036255
+		 234.4 0.095581904053688049 235.2 0.063210442662239075 236 0.056989256292581558 236.8 0.037553749978542328
+		 237.6 0.011326486244797707 238.4 5.6892578868428245e-05 239.2 0 240 0 240.8 0 241.6 0
+		 242.4 0 243.2 0 244 0 244.8 0 245.6 0 246.4 0 247.2 0 248 0 248.8 0 249.6 0.045113459229469299
+		 250.4 0.15308879315853119 251.2 0.23857612907886505 252 0.35030478239059448 252.8 0.37463018298149109
+		 253.6 0.39048367738723755 254.4 0.39786702394485474 255.2 0.39814662933349609 256 0.39777076244354248
+		 256.8 0.39675110578536987 257.6 0.37496235966682434 258.4 0.30868902802467346 259.2 0.15317341685295105
+		 260 0.067849233746528625 260.8 0.022989643737673759 261.6 0 262.4 0 263.2 0 264 0
+		 264.8 0 265.6 0 266.4 0 267.2 0 268 0 268.8 0 269.6 0 270.4 0 271.2 0 272 0 272.8 0
+		 273.6 0 274.4 0 275.2 0 276 0 276.8 0 277.6 0 278.4 0 279.2 0 280 0 280.8 0 281.6 0
+		 282.4 0 283.2 0 284 0 284.8 0 285.6 0 286.4 0 287.2 0 288 0 288.8 0 289.6 0 290.4 0
+		 291.2 0 292 0 292.8 0 293.6 0 294.4 0 295.2 0 296 0 296.8 0 297.6 0 298.4 0 299.2 0
+		 300 0 300.8 0 301.6 0 302.4 0 303.2 0 304 0;
+createNode animCurveTU -n "headModel:comboCorrectives_lowerLipDepressorL";
+	rename -uid "9498243F-5348-2D8B-9C92-798517D720AF";
+	setAttr ".tan" 18;
+	setAttr ".wgt" no;
+	setAttr -s 381 ".ktv";
+	setAttr ".ktv[0:249]"  0 0 0.8 0 1.6 0 2.4 0 3.2 0 4 0 4.8 0 5.6 0 6.4 0
+		 7.2 0 8 0 8.8 0 9.6 0 10.4 0 11.2 0 12 0 12.8 0 13.6 0 14.4 0 15.2 0 16 0 16.8 0
+		 17.6 1.5457202607649378e-05 18.4 0.014386946335434914 19.2 0.022569019347429276 20 0.030641576275229454
+		 20.8 0.034284714609384537 21.6 0.036711003631353378 22.4 0.039927005767822266 23.2 0.042835783213376999
+		 24 0.044484701007604599 24.8 0.047112353146076202 25.6 0.049973662942647934 26.4 0.051201663911342621
+		 27.2 0.052138101309537888 28 0.054722856730222702 28.8 0.056440200656652451 29.6 0.056825701147317886
+		 30.4 0.056540921330451965 31.2 0.053194176405668259 32 0.021812932565808296 32.8 4.3321339035173878e-05
+		 33.6 0 34.4 0 35.2 0 36 0 36.8 0 37.6 0 38.4 0 39.2 0 40 0 40.8 0 41.6 0 42.4 0 43.2 0
+		 44 0 44.8 0 45.6 0 46.4 0 47.2 0 48 0 48.8 0 49.6 0 50.4 0 51.2 0 52 0 52.8 0.043945126235485077
+		 53.6 0.12563914060592651 54.4 0.14321640133857727 55.2 0.14803875982761383 56 0.15295261144638062
+		 56.8 0.18834187090396881 57.6 0.21705858409404755 58.4 0.2266857773065567 59.2 0.22808876633644104
+		 60 0.22829732298851013 60.8 0.22332769632339478 61.6 0.21749666333198547 62.4 0.21084150671958923
+		 63.2 0.20477539300918579 64 0.20129227638244629 64.8 0.19996866583824158 65.6 0.1987135261297226
+		 66.4 0.19747135043144226 67.2 0.1959393322467804 68 0.19540396332740784 68.8 0.19481740891933441
+		 69.6 0.19376693665981293 70.4 0.19218133389949799 71.2 0.190890833735466 72 0.18645709753036499
+		 72.8 0.15067136287689209 73.6 0.1277337372303009 74.4 0.11796019971370697 75.2 0.094191715121269226
+		 76 0.13264182209968567 76.8 0.21315869688987732 77.6 0.19926093518733978 78.4 0.13558119535446167
+		 79.2 0.096881315112113953 80 0.050377722829580307 80.8 0.030440991744399071 81.6 0.011990243569016457
+		 82.4 3.988825119449757e-05 83.2 0 84 0 84.8 0 85.6 0 86.4 0 87.2 0 88 0 88.8 0 89.6 0
+		 90.4 0 91.2 0 92 0 92.8 0 93.6 0 94.4 0.040293920785188675 95.2 0.13766926527023315
+		 96 0.15801435708999634 96.8 0.16468523442745209 97.6 0.17045164108276367 98.4 0.18089951574802399
+		 99.2 0.18734428286552429 100 0.19051980972290039 100.8 0.19309483468532562 101.6 0.19461667537689209
+		 102.4 0.19561555981636047 103.2 0.19586257636547089 104 0.1994139552116394 104.8 0.20133759081363678
+		 105.6 0.20389197766780853 106.4 0.20438587665557861 107.2 0.2042059451341629 108 0.20534315705299377
+		 108.8 0.20684550702571869 109.6 0.20740574598312378 110.4 0.20766997337341309 111.2 0.2083602249622345
+		 112 0.1999971866607666 112.8 0.05089183896780014 113.6 0 114.4 0 115.2 0 116 0 116.8 0
+		 117.6 0 118.4 0 119.2 0 120 0 120.8 0 121.6 0 122.4 0 123.2 0 124 0 124.8 0 125.6 0.088358446955680847
+		 126.4 0.20485022664070129 127.2 0.3373151421546936 128 0.39383602142333984 128.8 0.43558245897293091
+		 129.6 0.46992531418800354 130.4 0.48323863744735718 131.2 0.49070456624031067 132 0.49834525585174561
+		 132.8 0.50061798095703125 133.6 0.50078141689300537 134.4 0.5003359317779541 135.2 0.49914851784706116
+		 136 0.49831512570381165 136.8 0.49779859185218811 137.6 0.49623093008995056 138.4 0.49515312910079956
+		 139.2 0.49425765872001648 140 0.49354472756385803 140.8 0.49255961179733276 141.6 0.49160045385360718
+		 142.4 0.49038505554199219 143.2 0.48856616020202637 144 0.48796358704566956 144.8 0.4875558614730835
+		 145.6 0.48654252290725708 146.4 0.4854738712310791 147.2 0.48457419872283936 148 0.48366782069206238
+		 148.8 0.47998794913291931 149.6 0.46854037046432495 150.4 0.44917470216751099 151.2 0.44079810380935669
+		 152 0.43648585677146912 152.8 0.40612143278121948 153.6 0.34539711475372314 154.4 0.24219329655170441
+		 155.2 0.1168287992477417 156 0.014095188118517399 156.8 0 157.6 0 158.4 0 159.2 0
+		 160 0 160.8 0 161.6 0 162.4 0 163.2 0 164 0 164.8 0 165.6 0 166.4 0 167.2 0 168 0
+		 168.8 0 169.6 0 170.4 0 171.2 0 172 0 172.8 0 173.6 0 174.4 0 175.2 0 176 0 176.8 0
+		 177.6 0 178.4 0 179.2 0 180 0 180.8 0 181.6 0 182.4 0 183.2 0 184 0 184.8 0 185.6 0
+		 186.4 0.059238236397504807 187.2 0.10704734176397324 188 0.12286987155675888 188.8 0.13485811650753021
+		 189.6 0.13917803764343262 190.4 0.14077433943748474 191.2 0.15602640807628632 192 0.17030204832553864
+		 192.8 0.17406958341598511 193.6 0.17602023482322693 194.4 0.17716678977012634 195.2 0.17764477431774139
+		 196 0.17787142097949982 196.8 0.17723959684371948 197.6 0.17658740282058716 198.4 0.170548215508461
+		 199.2 0.16562426090240479;
+	setAttr ".ktv[250:380]" 200 0.1637001633644104 200.8 0.16165181994438171 201.6 0.1588716059923172
+		 202.4 0.15016226470470428 203.2 0.14771762490272522 204 0.14604043960571289 204.8 0.14405772089958191
+		 205.6 0.14254996180534363 206.4 0.1413004994392395 207.2 0.14032730460166931 208 0.14035697281360626
+		 208.8 0.13904550671577454 209.6 0.13769528269767761 210.4 0.13722619414329529 211.2 0.13779979944229126
+		 212 0.13848976790904999 212.8 0.13845027983188629 213.6 0.13889786601066589 214.4 0.13871589303016663
+		 215.2 0.13776800036430359 216 0.1358191967010498 216.8 0.12536978721618652 217.6 0.12537537515163422
+		 218.4 0.10464537143707275 219.2 0.058961998671293259 220 0.019832927733659744 220.8 6.2980916482047178e-06
+		 221.6 0 222.4 0 223.2 0 224 0.016688462346792221 224.8 0.074530951678752899 225.6 0.10702575743198395
+		 226.4 0.13473379611968994 227.2 0.14391994476318359 228 0.14677050709724426 228.8 0.14696958661079407
+		 229.6 0.1472669392824173 230.4 0.15034647285938263 231.2 0.19322226941585541 232 0.37878310680389404
+		 232.8 0.43046924471855164 233.6 0.55418717861175537 234.4 0.64712613821029663 235.2 0.67554467916488647
+		 236 0.68460637331008911 236.8 0.69875627756118774 237.6 0.71401423215866089 238.4 0.71892499923706055
+		 239.2 0.72130495309829712 240 0.72305220365524292 240.8 0.72270494699478149 241.6 0.71979033946990967
+		 242.4 0.7146034836769104 243.2 0.7099495530128479 244 0.70466107130050659 244.8 0.70065790414810181
+		 245.6 0.69562673568725586 246.4 0.66889345645904541 247.2 0.61635076999664307 248 0.51891547441482544
+		 248.8 0.42193847894668579 249.6 0.29909944534301758 250.4 0.20113834738731384 251.2 0.13812464475631714
+		 252 0.12059815973043442 252.8 0.1095096617937088 253.6 0.10189753770828247 254.4 0.099523685872554779
+		 255.2 0.095814459025859833 256 0.091603882610797882 256.8 0.089694254100322723 257.6 0.088669240474700928
+		 258.4 0.088212154805660248 259.2 0.093616031110286713 260 0.093852616846561432 260.8 0.094276838004589081
+		 261.6 0.080022126436233521 262.4 0.059902288019657135 263.2 0.040182746946811676
+		 264 0.012271610088646412 264.8 9.3707720225211233e-05 265.6 0 266.4 0 267.2 0 268 0
+		 268.8 0 269.6 0 270.4 0 271.2 0 272 0 272.8 0 273.6 0 274.4 0 275.2 0 276 0 276.8 0
+		 277.6 0 278.4 0 279.2 0 280 0 280.8 0 281.6 0 282.4 0 283.2 0 284 0 284.8 0 285.6 0
+		 286.4 0 287.2 0 288 0 288.8 0 289.6 0 290.4 0 291.2 0 292 0 292.8 0 293.6 0 294.4 0
+		 295.2 0 296 0 296.8 0 297.6 0 298.4 0 299.2 0 300 0 300.8 0 301.6 0 302.4 0 303.2 0
+		 304 0;
+createNode animCurveTU -n "headModel:comboCorrectives_lowerLipDepressorR";
+	rename -uid "FCEE12EF-ED40-F95C-843A-4FAFAE510508";
+	setAttr ".tan" 18;
+	setAttr ".wgt" no;
+	setAttr -s 381 ".ktv";
+	setAttr ".ktv[0:249]"  0 0 0.8 0 1.6 0 2.4 0 3.2 0 4 0 4.8 0 5.6 0 6.4 0
+		 7.2 0 8 0 8.8 0 9.6 0 10.4 0 11.2 0 12 0 12.8 3.6143887882644776e-06 13.6 0.0088906651362776756
+		 14.4 0.012727091088891029 15.2 0.012471999973058701 16 0.0054993713274598122 16.8 0.0031127817928791046
+		 17.6 0.015991944819688797 18.4 0.033473622053861618 19.2 0.04171452671289444 20 0.050223447382450104
+		 20.8 0.05368085578083992 21.6 0.055700201541185379 22.4 0.057868346571922302 23.2 0.059799335896968842
+		 24 0.061218291521072388 24.8 0.063950687646865845 25.6 0.066223412752151489 26.4 0.067312628030776978
+		 27.2 0.068317316472530365 28 0.070593662559986115 28.8 0.072247222065925598 29.6 0.072778940200805664
+		 30.4 0.072764597833156586 31.2 0.071080856025218964 32 0.040319837629795074 32.8 0.018452584743499756
+		 33.6 0.00010647832823451608 34.4 0 35.2 0 36 0 36.8 0 37.6 0 38.4 0 39.2 0 40 0 40.8 0
+		 41.6 0 42.4 0 43.2 0 44 0 44.8 0 45.6 0 46.4 0 47.2 0 48 0 48.8 0 49.6 0 50.4 0 51.2 0
+		 52 0 52.8 0.025009665638208389 53.6 0.1003536581993103 54.4 0.1148315817117691 55.2 0.11750444024801254
+		 56 0.11843585222959518 56.8 0.13134421408176422 57.6 0.15395757555961609 58.4 0.16191628575325012
+		 59.2 0.16345967352390289 60 0.16394403576850891 60.8 0.16230666637420654 61.6 0.15927256643772125
+		 62.4 0.15587468445301056 63.2 0.15259096026420593 64 0.15064005553722382 64.8 0.14968864619731903
+		 65.6 0.14885568618774414 66.4 0.14835192263126373 67.2 0.14764986932277679 68 0.14778017997741699
+		 68.8 0.14777548611164093 69.6 0.14739486575126648 70.4 0.14662790298461914 71.2 0.14579054713249207
+		 72 0.14379924535751343 72.8 0.11438898742198944 73.6 0.093996614217758179 74.4 0.08601696789264679
+		 75.2 0.080772615969181061 76 0.10733809322118759 76.8 0.17945419251918793 77.6 0.17161573469638824
+		 78.4 0.11901999264955521 79.2 0.089345365762710571 80 0.056107096374034882 80.8 0.042646892368793488
+		 81.6 0.027339566498994827 82.4 0.016819514334201813 83.2 0.0095857465639710426 84 0.0040207579731941223
+		 84.8 4.0766164602246135e-05 85.6 0 86.4 0 87.2 0 88 0 88.8 0 89.6 0 90.4 0 91.2 0
+		 92 0 92.8 0 93.6 0.0097021590918302536 94.4 0.05915793776512146 95.2 0.1478932648897171
+		 96 0.16559013724327087 96.8 0.17072908580303192 97.6 0.17397783696651459 98.4 0.18209393322467804
+		 99.2 0.18956175446510315 100 0.19475695490837097 100.8 0.19727244973182678 101.6 0.1989920437335968
+		 102.4 0.20001490414142609 103.2 0.20030534267425537 104 0.20178323984146118 104.8 0.2032417356967926
+		 105.6 0.20519669353961945 106.4 0.20606239140033722 107.2 0.20666180551052094 108 0.20779505372047424
+		 108.8 0.20888607203960419 109.6 0.20953738689422607 110.4 0.2101576179265976 111.2 0.21064917743206024
+		 112 0.2066468745470047 112.8 0.071394793689250946 113.6 1.2909892575407866e-05 114.4 0
+		 115.2 0 116 0 116.8 0 117.6 0 118.4 0 119.2 0 120 0 120.8 0 121.6 0 122.4 0 123.2 0
+		 124 0 124.8 0 125.6 0.096934057772159576 126.4 0.1983797550201416 127.2 0.32375869154930115
+		 128 0.3770451545715332 128.8 0.41794553399085999 129.6 0.45013719797134399 130.4 0.46277081966400146
+		 131.2 0.46978709101676941 132 0.47662943601608276 132.8 0.47881796956062317 133.6 0.47922840714454651
+		 134.4 0.47909924387931824 135.2 0.47794848680496216 136 0.47713407874107361 136.8 0.47664713859558105
+		 137.6 0.47547319531440735 138.4 0.47478774189949036 139.2 0.47427418828010559 140 0.47388482093811035
+		 140.8 0.4732661247253418 141.6 0.47256699204444885 142.4 0.47146061062812805 143.2 0.46940243244171143
+		 144 0.46848347783088684 144.8 0.46802046895027161 145.6 0.46716678142547607 146.4 0.46620228886604309
+		 147.2 0.46538278460502625 148 0.46453371644020081 148.8 0.46185967326164246 149.6 0.45146700739860535
+		 150.4 0.43685072660446167 151.2 0.42816242575645447 152 0.42369616031646729 152.8 0.40005546808242798
+		 153.6 0.3372647762298584 154.4 0.24083836376667023 155.2 0.12193716317415237 156 0.031065857037901878
+		 156.8 0.0010790468659251928 157.6 0 158.4 0 159.2 0 160 0 160.8 0 161.6 0 162.4 0
+		 163.2 0 164 0 164.8 0 165.6 0 166.4 0 167.2 0 168 0 168.8 0 169.6 0 170.4 0 171.2 0
+		 172 0 172.8 0 173.6 0 174.4 0 175.2 0 176 0 176.8 0 177.6 0 178.4 0 179.2 0 180 0
+		 180.8 0 181.6 0 182.4 0 183.2 0 184 0 184.8 0 185.6 0 186.4 0.036139544099569321
+		 187.2 0.063999570906162262 188 0.076985612511634827 188.8 0.08808792382478714 189.6 0.092355124652385712
+		 190.4 0.094765454530715942 191.2 0.11325453966856003 192 0.12859711050987244 192.8 0.13310694694519043
+		 193.6 0.13493597507476807 194.4 0.1357622891664505 195.2 0.13591380417346954 196 0.13599719107151031
+		 196.8 0.13551768660545349 197.6 0.13501586019992828 198.4 0.13289414346218109 199.2 0.1309618204832077;
+	setAttr ".ktv[250:380]" 200 0.12946589291095734 200.8 0.12697359919548035 201.6 0.12547847628593445
+		 202.4 0.12049099057912827 203.2 0.1185709536075592 204 0.11696673929691315 204.8 0.11529216170310974
+		 205.6 0.11384198814630508 206.4 0.11256828904151917 207.2 0.1113932877779007 208 0.11124798655509949
+		 208.8 0.11077000945806503 209.6 0.10979855805635452 210.4 0.10940080136060715 211.2 0.10984286665916443
+		 212 0.11049839109182358 212.8 0.11055281013250351 213.6 0.11093629896640778 214.4 0.11087018996477127
+		 215.2 0.11018630862236023 216 0.10875468701124191 216.8 0.10076060891151428 217.6 0.10150705277919769
+		 218.4 0.09155707061290741 219.2 0.050363525748252869 220 0.016258865594863892 220.8 1.1362536724845995e-06
+		 221.6 0 222.4 0 223.2 0 224 0.0036352130118757486 224.8 0.044524289667606354 225.6 0.073732413351535797
+		 226.4 0.092602483928203583 227.2 0.098908089101314545 228 0.101400226354599 228.8 0.10286127775907516
+		 229.6 0.11141148954629898 230.4 0.13266272842884064 231.2 0.1893685907125473 232 0.38025704026222229
+		 232.8 0.43100059032440186 233.6 0.55082029104232788 234.4 0.63181221485137939 235.2 0.66810160875320435
+		 236 0.68239450454711914 236.8 0.6991574764251709 237.6 0.71030557155609131 238.4 0.71405118703842163
+		 239.2 0.71556907892227173 240 0.71564787626266479 240.8 0.70739227533340454 241.6 0.69464480876922607
+		 242.4 0.6850893497467041 243.2 0.67992955446243286 244 0.67519587278366089 244.8 0.66993844509124756
+		 245.6 0.6628606915473938 246.4 0.63267862796783447 247.2 0.5891689658164978 248 0.49808290600776672
+		 248.8 0.40164270997047424 249.6 0.28179356455802917 250.4 0.1924673467874527 251.2 0.13318297266960144
+		 252 0.11616367846727371 252.8 0.098219834268093109 253.6 0.087507814168930054 254.4 0.084043264389038086
+		 255.2 0.079744458198547363 256 0.076485030353069305 256.8 0.075050182640552521 257.6 0.074241854250431061
+		 258.4 0.073844306170940399 259.2 0.080165140330791473 260 0.081146694719791412 260.8 0.082476355135440826
+		 261.6 0.080518342554569244 262.4 0.069780945777893066 263.2 0.052867326885461807
+		 264 0.029315866529941559 264.8 0.012402679771184921 265.6 2.6420173526275903e-05
+		 266.4 0 267.2 0 268 0 268.8 0 269.6 0 270.4 0 271.2 0 272 0 272.8 0 273.6 0 274.4 0
+		 275.2 0 276 0 276.8 0 277.6 0 278.4 0 279.2 0 280 0 280.8 0 281.6 0 282.4 0 283.2 0
+		 284 0 284.8 0 285.6 0 286.4 0 287.2 0 288 0 288.8 0 289.6 0 290.4 0 291.2 0 292 0
+		 292.8 0 293.6 0 294.4 0 295.2 0 296 0 296.8 0 297.6 0 298.4 0 299.2 0 300 0 300.8 0
+		 301.6 0 302.4 0 303.2 0 304 0;
+createNode animCurveTU -n "headModel:comboCorrectives_mouthLeft";
+	rename -uid "A459728F-E341-C835-ED4A-7A942B71B99D";
+	setAttr ".tan" 18;
+	setAttr ".wgt" no;
+	setAttr -s 381 ".ktv";
+	setAttr ".ktv[0:249]"  0 0 0.8 0 1.6 0 2.4 0 3.2 0 4 0 4.8 0 5.6 0 6.4 0
+		 7.2 0 8 0 8.8 0 9.6 0 10.4 0 11.2 0 12 0 12.8 0 13.6 0 14.4 0 15.2 0 16 0 16.8 0
+		 17.6 0 18.4 0 19.2 0 20 0 20.8 0 21.6 0 22.4 0 23.2 0 24 0 24.8 0 25.6 0 26.4 0 27.2 0
+		 28 0 28.8 0 29.6 0 30.4 0 31.2 0 32 0 32.8 0 33.6 0 34.4 0 35.2 0 36 0 36.8 0 37.6 0
+		 38.4 0 39.2 0 40 0 40.8 0 41.6 0 42.4 0 43.2 0 44 0 44.8 0 45.6 0 46.4 0 47.2 0 48 0
+		 48.8 0 49.6 0 50.4 0.0017390423454344273 51.2 0.006774301640689373 52 0.0039080684073269367
+		 52.8 0 53.6 0 54.4 0 55.2 0 56 0 56.8 0 57.6 0 58.4 0 59.2 0 60 0 60.8 0 61.6 0 62.4 0
+		 63.2 0 64 0 64.8 0 65.6 0 66.4 0 67.2 0 68 0 68.8 0 69.6 0 70.4 0 71.2 0 72 0 72.8 0
+		 73.6 0 74.4 0 75.2 0 76 0 76.8 0 77.6 0.0064895958639681339 78.4 0.011793579906225204
+		 79.2 0.014201474376022816 80 0.01512633915990591 80.8 0.014639544300734997 81.6 0.013597049750387669
+		 82.4 0.0097769899293780327 83.2 0.0045581795275211334 84 0.0014033820480108261 84.8 2.0563464204315096e-05
+		 85.6 0 86.4 0 87.2 0 88 0 88.8 0 89.6 0 90.4 0 91.2 0 92 0 92.8 0 93.6 0 94.4 0 95.2 0
+		 96 0 96.8 0.0057632802054286003 97.6 0.011740186251699924 98.4 0.015260434709489346
+		 99.2 0.016183851286768913 100 0.015751687809824944 100.8 0.014911942183971405 101.6 0.013674085028469563
+		 102.4 0.012986288405954838 103.2 0.012635248713195324 104 0.012701695784926414 104.8 0.012492758221924305
+		 105.6 0.012200893834233284 106.4 0.011940375901758671 107.2 0.011375313624739647
+		 108 0.01158534362912178 108.8 0.011875981464982033 109.6 0.011836684308946133 110.4 0.011637713760137558
+		 111.2 0.011720119975507259 112 0.011476250365376472 112.8 0.0021399329416453838 113.6 0
+		 114.4 0 115.2 0 116 0 116.8 0 117.6 0 118.4 0 119.2 0 120 0 120.8 0 121.6 0 122.4 0
+		 123.2 0 124 0 124.8 0 125.6 0 126.4 0.0025906977243721485 127.2 0.004701053723692894
+		 128 0.0058389739133417606 128.8 0.0063159302808344364 129.6 0.0061967982910573483
+		 130.4 0.0057106479071080685 131.2 0.0051456708461046219 132 0.0045944051817059517
+		 132.8 0.004170500673353672 133.6 0.0038066490087658167 134.4 0.003501133993268013
+		 135.2 0.0035802472848445177 136 0.003778940299525857 136.8 0.0038900000508874655
+		 137.6 0.003687253687530756 138.4 0.0035453927703201771 139.2 0.0034313409123569727
+		 140 0.0032265735790133476 140.8 0.0029823393560945988 141.6 0.0028478496242314577
+		 142.4 0.0026776164304465055 143.2 0.0026056615170091391 144 0.0026100000832229853
+		 144.8 0.0027851636987179518 145.6 0.00282836495898664 146.4 0.0029384302906692028
+		 147.2 0.0031153468880802393 148 0.003244833555072546 148.8 0.0031826118938624859
+		 149.6 0.0030331162270158529 150.4 0.00273335468955338 151.2 0.0027139193844050169
+		 152 0.0027596945874392986 152.8 0.0026609888300299644 153.6 0.002911499934270978
+		 154.4 0.0027556756976991892 155.2 0.0014406241243705153 156 0 156.8 0 157.6 0 158.4 0
+		 159.2 0 160 0 160.8 0 161.6 0 162.4 0.0069382521323859692 163.2 0.012983924709260464
+		 164 0.014800040051341057 164.8 0.015247438102960587 165.6 0.015047449618577957 166.4 0.014404553920030594
+		 167.2 0.013832991942763329 168 0.012656079605221748 168.8 0.011558600701391697 169.6 0.010715770535171032
+		 170.4 0.013056293129920959 171.2 0.016786361113190651 172 0.019839821383357048 172.8 0.020272264257073402
+		 173.6 0.020078666508197784 174.4 0.018949000164866447 175.2 0.017538586631417274
+		 176 0.016689198091626167 176.8 0.016369974240660667 177.6 0.01594080962240696 178.4 0.016193190589547157
+		 179.2 0.018577393144369125 180 0.019911173731088638 180.8 0.020917616784572601 181.6 0.021781569346785545
+		 182.4 0.022777507081627846 183.2 0.023659670725464821 184 0.024183729663491249 184.8 0.023860536515712738
+		 185.6 0.020899899303913116 186.4 0.00051987828919664025 187.2 0 188 0 188.8 0 189.6 0
+		 190.4 0 191.2 0 192 0 192.8 0 193.6 0 194.4 0 195.2 0 196 0 196.8 0 197.6 0 198.4 0
+		 199.2 0;
+	setAttr ".ktv[250:380]" 200 0 200.8 0 201.6 0 202.4 0 203.2 0 204 0 204.8 0
+		 205.6 0 206.4 0 207.2 0 208 0 208.8 0 209.6 0 210.4 0 211.2 0 212 0 212.8 0 213.6 0
+		 214.4 0 215.2 0 216 0 216.8 0 217.6 0 218.4 0 219.2 0 220 0 220.8 0 221.6 0 222.4 0
+		 223.2 0 224 0 224.8 0 225.6 0 226.4 0 227.2 0 228 0 228.8 0 229.6 0 230.4 0 231.2 0
+		 232 0 232.8 0 233.6 0 234.4 0.0035980991087853909 235.2 0.0096776457503437996 236 0.01178522314876318
+		 236.8 0.012852499261498451 237.6 0.013361225835978985 238.4 0.013164432719349861
+		 239.2 0.012582763098180294 240 0.012199429795145988 240.8 0.011967658996582031 241.6 0.011737932451069355
+		 242.4 0.011405725032091141 243.2 0.010905653238296509 244 0.010479804128408432 244.8 0.0098493993282318115
+		 245.6 0.0097096944227814674 246.4 0.010084478184580803 247.2 0.010553299449384212
+		 248 0.010163445025682449 248.8 0.0067321211099624634 249.6 0.00062924745725467801
+		 250.4 0 251.2 0 252 0 252.8 0 253.6 0 254.4 0 255.2 0 256 0 256.8 0.00093271449441090226
+		 257.6 0.004240719135850668 258.4 0.026172101497650146 259.2 0.028463253751397133
+		 260 0.018759604543447495 260.8 0.016209846362471581 261.6 0.01271968986839056 262.4 0.0084058167412877083
+		 263.2 0.0071207256987690926 264 0.0064794817008078098 264.8 0.0062919850461184978
+		 265.6 0.0059585291892290115 266.4 0.0051993457600474358 267.2 0.0042102700099349022
+		 268 0.0031131189316511154 268.8 0.0020713952835649252 269.6 0.0010906035313382745
+		 270.4 8.0495046859141439e-05 271.2 0 272 0 272.8 0 273.6 0 274.4 0 275.2 0 276 0
+		 276.8 0 277.6 0 278.4 0 279.2 0 280 0 280.8 0 281.6 6.9720255851279944e-05 282.4 0.00011666666978271678
+		 283.2 0.0003723077243193984 284 0.00069319171598181129 284.8 0.00094382313545793295
+		 285.6 0.0012590462574735284 286.4 0.0017943688435479999 287.2 0.002362771425396204
+		 288 0.0028453096747398376 288.8 0.0032979405950754881 289.6 0.0035057931672781706
+		 290.4 0.0035263749305158854 291.2 0.003619916969910264 292 0.0036028535105288029
+		 292.8 0.0037894477136433125 293.6 0.0039653764106333256 294.4 0.0040700002573430538
+		 295.2 0.0040700002573430538 296 0.0040700002573430538 296.8 0.0040700002573430538
+		 297.6 0.0040700002573430538 298.4 0.0040700002573430538 299.2 0.0040700002573430538
+		 300 0.0040700002573430538 300.8 0.0040700002573430538 301.6 0.0040700002573430538
+		 302.4 0.0040700002573430538 303.2 0.0040700002573430538 304 0.0040700002573430538;
+createNode animCurveTU -n "headModel:comboCorrectives_mouthRight";
+	rename -uid "18658906-0945-FD5A-673F-22B730D6C3B1";
+	setAttr ".tan" 18;
+	setAttr ".wgt" no;
+	setAttr -s 381 ".ktv";
+	setAttr ".ktv[0:249]"  0 0 0.8 0 1.6 0 2.4 0 3.2 0 4 0 4.8 0 5.6 0 6.4 0
+		 7.2 0 8 0 8.8 0 9.6 0 10.4 0 11.2 0 12 0 12.8 0 13.6 0 14.4 0 15.2 0 16 0 16.8 0
+		 17.6 0 18.4 0 19.2 0 20 0 20.8 0 21.6 0 22.4 0 23.2 0 24 0 24.8 0 25.6 0 26.4 0 27.2 0
+		 28 0 28.8 0 29.6 0 30.4 0 31.2 0 32 0 32.8 0 33.6 0 34.4 0 35.2 0 36 0 36.8 0 37.6 0
+		 38.4 0 39.2 0 40 0 40.8 0 41.6 0 42.4 0 43.2 0 44 0 44.8 0 45.6 0 46.4 0 47.2 0 48 0
+		 48.8 0 49.6 0 50.4 0 51.2 0 52 0 52.8 0 53.6 0 54.4 0 55.2 0.0027492467779666185
+		 56 0.012716756202280521 56.8 0.016653861850500107 57.6 0.019317837432026863 58.4 0.021845417097210884
+		 59.2 0.023066889494657516 60 0.023656131699681282 60.8 0.023536991328001022 61.6 0.022400986403226852
+		 62.4 0.021864816546440125 63.2 0.021287884563207626 64 0.020521270111203194 64.8 0.019920047372579575
+		 65.6 0.019561046734452248 66.4 0.019580457359552383 67.2 0.019950581714510918 68 0.020693056285381317
+		 68.8 0.021239634603261948 69.6 0.021543143317103386 70.4 0.02210545539855957 71.2 0.022519757971167564
+		 72 0.022065818309783936 72.8 0.020744981244206429 73.6 0.020330827683210373 74.4 0.017027035355567932
+		 75.2 0.010213997215032578 76 8.8936785687110387e-06 76.8 0 77.6 0 78.4 0 79.2 0 80 0
+		 80.8 0 81.6 0 82.4 0 83.2 0 84 0 84.8 0 85.6 0 86.4 0 87.2 0 88 0 88.8 0 89.6 0 90.4 0
+		 91.2 0 92 0 92.8 0 93.6 0 94.4 0 95.2 0 96 0 96.8 0 97.6 0 98.4 0 99.2 0 100 0 100.8 0
+		 101.6 0 102.4 0 103.2 0 104 0 104.8 0 105.6 0 106.4 0 107.2 0 108 0 108.8 0 109.6 0
+		 110.4 0 111.2 0 112 0 112.8 0 113.6 0 114.4 0 115.2 0 116 0 116.8 0 117.6 0 118.4 0
+		 119.2 0 120 0 120.8 0 121.6 0 122.4 0 123.2 0 124 0 124.8 0 125.6 0 126.4 0 127.2 0
+		 128 0 128.8 0 129.6 0 130.4 0 131.2 0 132 0 132.8 0 133.6 0 134.4 0 135.2 0 136 0
+		 136.8 0 137.6 0 138.4 0 139.2 0 140 0 140.8 0 141.6 0 142.4 0 143.2 0 144 0 144.8 0
+		 145.6 0 146.4 0 147.2 0 148 0 148.8 0 149.6 0 150.4 0 151.2 0 152 0 152.8 0 153.6 0
+		 154.4 0 155.2 0 156 0 156.8 0 157.6 0 158.4 0 159.2 0 160 0 160.8 0 161.6 0 162.4 0
+		 163.2 0 164 0 164.8 0 165.6 0 166.4 0 167.2 0 168 0 168.8 0 169.6 0 170.4 0 171.2 0
+		 172 0 172.8 0 173.6 0 174.4 0 175.2 0 176 0 176.8 0 177.6 0 178.4 0 179.2 0 180 0
+		 180.8 0 181.6 0 182.4 0 183.2 0 184 0 184.8 0 185.6 0 186.4 0 187.2 0 188 0.014309258200228214
+		 188.8 0.037983622401952744 189.6 0.042632866650819778 190.4 0.043256483972072601
+		 191.2 0.04282742366194725 192 0.041593249887228012 192.8 0.039770547300577164 193.6 0.030539503321051598
+		 194.4 0.026643836870789528 195.2 0.024751460179686546 196 0.023618852719664574 196.8 0.02234218455851078
+		 197.6 0.021346276625990868 198.4 0.020852314308285713 199.2 0.020711248740553856;
+	setAttr ".ktv[250:380]" 200 0.020582623779773712 200.8 0.020122366026043892
+		 201.6 0.020527174696326256 202.4 0.020863013342022896 203.2 0.020503560081124306
+		 204 0.020386312156915665 204.8 0.020820079371333122 205.6 0.021285608410835266 206.4 0.021214334294199944
+		 207.2 0.021169340237975121 208 0.02143496461212635 208.8 0.021898664534091949 209.6 0.021623585373163223
+		 210.4 0.022471718490123749 211.2 0.023354480043053627 212 0.023790286853909492 212.8 0.024051856249570847
+		 213.6 0.024576293304562569 214.4 0.025488400831818581 215.2 0.026363827288150787
+		 216 0.02705918624997139 216.8 0.027441725134849548 217.6 0.020330000668764114 218.4 0.0086848307400941849
+		 219.2 0.00064321054378524423 220 0 220.8 0 221.6 0 222.4 0 223.2 0 224 0 224.8 0
+		 225.6 0.0060587185434997082 226.4 0.012682936154305935 227.2 0.029756488278508186
+		 228 0.036170210689306259 228.8 0.038577992469072342 229.6 0.039492376148700714 230.4 0.03903522714972496
+		 231.2 0.028739355504512787 232 0.021802950650453568 232.8 0.014353523962199688 233.6 0.00023238806170411408
+		 234.4 0 235.2 0 236 0 236.8 0 237.6 0 238.4 0 239.2 0 240 0 240.8 0 241.6 0 242.4 0
+		 243.2 0 244 0 244.8 0 245.6 0 246.4 0 247.2 0 248 0 248.8 0 249.6 0 250.4 0 251.2 0
+		 252 0 252.8 0 253.6 0 254.4 0 255.2 0 256 0 256.8 0 257.6 0 258.4 0 259.2 0 260 0
+		 260.8 0 261.6 0 262.4 0 263.2 0 264 0 264.8 0 265.6 0 266.4 0 267.2 0 268 0 268.8 0
+		 269.6 0 270.4 0 271.2 0 272 0 272.8 0 273.6 0 274.4 0 275.2 0 276 0 276.8 0 277.6 0
+		 278.4 0 279.2 0 280 0 280.8 0 281.6 0 282.4 0 283.2 0 284 0 284.8 0 285.6 0 286.4 0
+		 287.2 0 288 0 288.8 0 289.6 0 290.4 0 291.2 0 292 0 292.8 0 293.6 0 294.4 0 295.2 0
+		 296 0 296.8 0 297.6 0 298.4 0 299.2 0 300 0 300.8 0 301.6 0 302.4 0 303.2 0 304 0;
+createNode animCurveTU -n "headModel:comboCorrectives_noseWrinklerL";
+	rename -uid "AD3AC62E-4141-5527-3B93-A4AAEE2BCF61";
+	setAttr ".tan" 18;
+	setAttr ".wgt" no;
+	setAttr -s 381 ".ktv";
+	setAttr ".ktv[0:249]"  0 0 0.8 0.003499891608953476 1.6 0.0029821917414665222
+		 2.4 0.0023781582713127136 3.2 0.0017710115062072873 4 0.0013148956932127476 4.8 0.00091919885016977787
+		 5.6 0.00063638779101893306 6.4 0.00037580516072921455 7.2 0.00022516085300594568
+		 8 0.00010916010069195181 8.8 5.2524502081041646e-08 9.6 0 10.4 0 11.2 0 12 0.00020802939252462238
+		 12.8 0.00095048005459830165 13.6 0.0085401786491274834 14.4 0.023260731250047684
+		 15.2 0.030390879139304161 16 0.032553218305110931 16.8 0.032502781599760056 17.6 0.03003726527094841
+		 18.4 0.026521749794483185 19.2 0.024180011823773384 20 0.022624047473073006 20.8 0.021587962284684181
+		 21.6 0.020916234701871872 22.4 0.02047102153301239 23.2 0.020151777192950249 24 0.019929336383938789
+		 24.8 0.019567830488085747 25.6 0.019461624324321747 26.4 0.019439516589045525 27.2 0.019478043541312218
+		 28 0.019694797694683075 28.8 0.019819006323814392 29.6 0.019859999418258667 30.4 0.019792873412370682
+		 31.2 0.019604912027716637 32 0.020063409581780434 32.8 0.032367821782827377 33.6 0.072777971625328064
+		 34.4 0.084023192524909973 35.2 0.067736357450485229 36 0.059278171509504318 36.8 0.053620502352714539
+		 37.6 0.049112681299448013 38.4 0.045301605015993118 39.2 0.041083391755819321 40 0.038856931030750275
+		 40.8 0.037477228790521622 41.6 0.036331620067358017 42.4 0.035550851374864578 43.2 0.034933488816022873
+		 44 0.034274168312549591 44.8 0.033618364483118057 45.6 0.033032029867172241 46.4 0.032662909477949142
+		 47.2 0.032419025897979736 48 0.03208053857088089 48.8 0.031865447759628296 49.6 0.031670220196247101
+		 50.4 0.031361013650894165 51.2 0.028833575546741486 52 0.015548563562333584 52.8 0.0020022196695208549
+		 53.6 0 54.4 0 55.2 0 56 0 56.8 0 57.6 0 58.4 0 59.2 0 60 0 60.8 0 61.6 0 62.4 0 63.2 0
+		 64 0 64.8 0 65.6 0 66.4 0 67.2 0 68 0 68.8 0 69.6 0 70.4 0 71.2 0 72 0 72.8 0 73.6 0
+		 74.4 0 75.2 0 76 0 76.8 0 77.6 0 78.4 0.0011753714643418789 79.2 0.0041292319074273109
+		 80 0.0058417576365172863 80.8 0.0075493515469133854 81.6 0.0088871447369456291 82.4 0.010223787277936935
+		 83.2 0.011355221271514893 84 0.012208920903503895 84.8 0.012942911125719547 85.6 0.013790559023618698
+		 86.4 0.014794410206377506 87.2 0.015696555376052856 88 0.016674768179655075 88.8 0.017759233713150024
+		 89.6 0.018566224724054337 90.4 0.019322913140058517 91.2 0.019953792914748192 92 0.020626910030841827
+		 92.8 0.030991079285740852 93.6 0.12609176337718964 94.4 0.30528408288955688 95.2 0.47982203960418701
+		 96 0.54397529363632202 96.8 0.62333309650421143 97.6 0.64203137159347534 98.4 0.65383267402648926
+		 99.2 0.65702104568481445 100 0.65185767412185669 100.8 0.64983117580413818 101.6 0.64826446771621704
+		 102.4 0.64800643920898438 103.2 0.64857816696166992 104 0.64969426393508911 104.8 0.64992547035217285
+		 105.6 0.65021544694900513 106.4 0.64884805679321289 107.2 0.64742720127105713 108 0.64799970388412476
+		 108.8 0.65021532773971558 109.6 0.6523597240447998 110.4 0.65270155668258667 111.2 0.65102958679199219
+		 112 0.55202782154083252 112.8 0.18358078598976135 113.6 0.081594124436378479 114.4 0.058158766478300095
+		 115.2 0.051883663982152939 116 0.050992392003536224 116.8 0.051242001354694366 117.6 0.051846124231815338
+		 118.4 0.052514642477035522 119.2 0.053642865270376205 120 0.054996363818645477 120.8 0.055908668786287308
+		 121.6 0.056163117289543152 122.4 0.056000601500272751 123.2 0.055978927761316299
+		 124 0.056197449564933777 124.8 0.056779500097036362 125.6 0.057461574673652649 126.4 0.056879304349422455
+		 127.2 0.048269327729940414 128 0.041408844292163849 128.8 0.037802301347255707 129.6 0.035296708345413208
+		 130.4 0.033492431044578552 131.2 0.032212197780609131 132 0.031148634850978851 132.8 0.030410945415496826
+		 133.6 0.029935926198959351 134.4 0.029662525281310081 135.2 0.029700124636292458
+		 136 0.029767988249659538 136.8 0.029868777841329575 137.6 0.029993552714586258 138.4 0.030209215357899666
+		 139.2 0.030527317896485329 140 0.03078841045498848 140.8 0.031126022338867188 141.6 0.031406544148921967
+		 142.4 0.031767938286066055 143.2 0.032055899500846863 144 0.032275453209877014 144.8 0.032394606620073318
+		 145.6 0.032542645931243896 146.4 0.032796073704957962 147.2 0.032925602048635483
+		 148 0.032921034842729568 148.8 0.0330960713326931 149.6 0.03379923477768898 150.4 0.034813720732927322
+		 151.2 0.037813514471054077 152 0.040359433740377426 152.8 0.042784903198480606 153.6 0.047807026654481888
+		 154.4 0.052343744784593582 155.2 0.058245822787284851 156 0.062533766031265259 156.8 0.063693925738334656
+		 157.6 0.06316278874874115 158.4 0.062530443072319031 159.2 0.062109813094139099 160 0.061633799225091934
+		 160.8 0.061298243701457977 161.6 0.061394095420837402 162.4 0.098072417080402374
+		 163.2 0.12239757925271988 164 0.10716798156499863 164.8 0.090623795986175537 165.6 0.081120990216732025
+		 166.4 0.076501153409481049 167.2 0.073675036430358887 168 0.071428641676902771 168.8 0.070006087422370911
+		 169.6 0.068687424063682556 170.4 0.095643632113933563 171.2 0.17612570524215698 172 0.18082089722156525
+		 172.8 0.12557980418205261 173.6 0.091241404414176941 174.4 0.076167173683643341 175.2 0.071491464972496033
+		 176 0.066737323999404907 176.8 0.063779734075069427 177.6 0.060712255537509918 178.4 0.056642662733793259
+		 179.2 0.051654540002346039 180 0.047994267195463181 180.8 0.046063084155321121 181.6 0.042988866567611694
+		 182.4 0.040078844875097275 183.2 0.038480725139379501 184 0.036679502576589584 184.8 0.033102788031101227
+		 185.6 0.022713553160429001 186.4 0.0056928382255136967 187.2 0 188 0 188.8 0 189.6 0
+		 190.4 0 191.2 0 192 0 192.8 0 193.6 0 194.4 0 195.2 0 196 0 196.8 0 197.6 0 198.4 0
+		 199.2 0;
+	setAttr ".ktv[250:380]" 200 0 200.8 0 201.6 0 202.4 0 203.2 0 204 0 204.8 0
+		 205.6 0 206.4 0 207.2 0 208 0 208.8 0 209.6 0 210.4 0 211.2 0 212 0 212.8 0 213.6 0
+		 214.4 0 215.2 0 216 0 216.8 0 217.6 0 218.4 0 219.2 0 220 0 220.8 0 221.6 0 222.4 0
+		 223.2 0 224 0 224.8 0 225.6 0 226.4 0 227.2 0 228 0 228.8 0 229.6 0 230.4 0 231.2 0
+		 232 0 232.8 0 233.6 0 234.4 0 235.2 0 236 0 236.8 0 237.6 0.0025683625135570765 238.4 0.0076611461117863655
+		 239.2 0.010962145403027534 240 0.013697125948965549 240.8 0.015549303963780403 241.6 0.017127931118011475
+		 242.4 0.018682245165109634 243.2 0.02001623623073101 244 0.020940393209457397 244.8 0.021801000460982323
+		 245.6 0.022648388519883156 246.4 0.023008199408650398 247.2 0.022890737280249596
+		 248 0.02261476032435894 248.8 0.0220296960324049 249.6 0.021033747121691704 250.4 0.020257297903299332
+		 251.2 0.019745998084545135 252 0.01982608437538147 252.8 0.020165976136922836 253.6 0.020576877519488335
+		 254.4 0.020715642720460892 255.2 0.020525200292468071 256 0.020097650587558746 256.8 0.019646260887384415
+		 257.6 0.019453693181276321 258.4 0.019738785922527313 259.2 0.027397448197007179
+		 260 0.033818420022726059 260.8 0.03893565759062767 261.6 0.047132242470979691 262.4 0.053149841725826263
+		 263.2 0.060066066682338715 264 0.062886238098144531 264.8 0.06515657901763916 265.6 0.071555577218532562
+		 266.4 0.077079050242900848 267.2 0.080026544630527496 268 0.081414401531219482 268.8 0.082056291401386261
+		 269.6 0.082431644201278687 270.4 0.082818910479545593 271.2 0.083069406449794769
+		 272 0.083183273673057556 272.8 0.083468072116374969 273.6 0.084038190543651581 274.4 0.08482833206653595
+		 275.2 0.085583463311195374 276 0.086597897112369537 276.8 0.087513402104377747 277.6 0.087990626692771912
+		 278.4 0.087851129472255707 279.2 0.088096469640731812 280 0.11707732826471329 280.8 0.13045817613601685
+		 281.6 0.13229602575302124 282.4 0.12484777718782425 283.2 0.11869505047798157 284 0.11605575680732727
+		 284.8 0.11441043019294739 285.6 0.11317028105258942 286.4 0.11205296963453293 287.2 0.11118169873952866
+		 288 0.11038938164710999 288.8 0.10941165685653687 289.6 0.10842528939247131 290.4 0.10730776935815811
+		 291.2 0.10611426830291748 292 0.10530991852283478 292.8 0.10461009293794632 293.6 0.10395711660385132
+		 294.4 0.10367999970912933 295.2 0.10367999970912933 296 0.10367999970912933 296.8 0.10367999970912933
+		 297.6 0.10367999970912933 298.4 0.10367999970912933 299.2 0.10367999970912933 300 0.10367999970912933
+		 300.8 0.10367999970912933 301.6 0.10367999970912933 302.4 0.10367999970912933 303.2 0.10367999970912933
+		 304 0.10367999970912933;
+createNode animCurveTU -n "headModel:comboCorrectives_noseWrinklerR";
+	rename -uid "30C79BE5-DC49-BEB0-6014-B4A3E76416FE";
+	setAttr ".tan" 18;
+	setAttr ".wgt" no;
+	setAttr -s 381 ".ktv";
+	setAttr ".ktv[0:249]"  0 0 0.8 0.002638206584379077 1.6 0.00206141103990376
+		 2.4 0.0014181582955643535 3.2 0.00081101147225126624 4 0.00034557288745418191 4.8 6.1079578017597669e-07
+		 5.6 0 6.4 0 7.2 0 8 0 8.8 0 9.6 0 10.4 0 11.2 0 12 0 12.8 0.00017883999680634588
+		 13.6 0.0089916624128818512 14.4 0.026587409898638725 15.2 0.034674879163503647 16 0.037008188664913177
+		 16.8 0.03702034056186676 17.6 0.034911379218101501 18.4 0.032094791531562805 19.2 0.029910128563642502
+		 20 0.028335444629192352 20.8 0.027239276096224785 21.6 0.02651786245405674 22.4 0.026014674454927444
+		 23.2 0.0256626196205616 24 0.02540077269077301 24.8 0.024987559765577316 25.6 0.024852706119418144
+		 26.4 0.024868069216609001 27.2 0.024986090138554573 28 0.025262568145990372 28.8 0.025438509881496429
+		 29.6 0.025518769398331642 30.4 0.025511724874377251 31.2 0.025373682379722595 32 0.025786001235246658
+		 32.8 0.03325464203953743 33.6 0.06451127678155899 34.4 0.073819607496261597 35.2 0.068320579826831818
+		 36 0.06398492306470871 36.8 0.059800919145345688 37.6 0.055390432476997375 38.4 0.051701411604881287
+		 39.2 0.047349728643894196 40 0.045076929032802582 40.8 0.043668530881404877 41.6 0.042491618543863297
+		 42.4 0.041682079434394836 43.2 0.041063893586397171 44 0.040403973311185837 44.8 0.03972909227013588
+		 45.6 0.03911203145980835 46.4 0.038714345544576645 47.2 0.038408819586038589 48 0.037993174046278
+		 48.8 0.037727262824773788 49.6 0.037416059523820877 50.4 0.036806542426347733 51.2 0.031255196779966354
+		 52 0.017043707892298698 52.8 0.0038856554310768843 53.6 3.7176630485191708e-06 54.4 0
+		 55.2 0 56 0 56.8 0 57.6 0 58.4 0 59.2 0 60 0 60.8 0 61.6 0 62.4 0 63.2 0 64 0 64.8 0
+		 65.6 0 66.4 0 67.2 0 68 0 68.8 0 69.6 0 70.4 0 71.2 0 72 0 72.8 0 73.6 0 74.4 0 75.2 0
+		 76 0 76.8 0 77.6 0 78.4 0.0020870782900601625 79.2 0.0047877077013254166 80 0.0064131957478821278
+		 80.8 0.0084037240594625473 81.6 0.0099004330113530159 82.4 0.011529514566063881 83.2 0.012914125807583332
+		 84 0.013928688131272793 84.8 0.014830378815531731 85.6 0.015874095261096954 86.4 0.017025066539645195
+		 87.2 0.018052287399768829 88 0.019134245812892914 88.8 0.020279191434383392 89.6 0.021106226369738579
+		 90.4 0.02186291292309761 91.2 0.022483792155981064 92 0.023119332268834114 92.8 0.032850183546543121
+		 93.6 0.12776677310466766 94.4 0.30817967653274536 95.2 0.47885441780090332 96 0.53853243589401245
+		 96.8 0.61733698844909668 97.6 0.63589030504226685 98.4 0.64751017093658447 99.2 0.65101701021194458
+		 100 0.64701783657073975 100.8 0.64541089534759521 101.6 0.64396214485168457 102.4 0.64353525638580322
+		 103.2 0.64388036727905273 104 0.64485132694244385 104.8 0.64498555660247803 105.6 0.64525586366653442
+		 106.4 0.642677903175354 107.2 0.6406625509262085 108 0.64123612642288208 108.8 0.6440356969833374
+		 109.6 0.64612233638763428 110.4 0.64626622200012207 111.2 0.64486449956893921 112 0.55001592636108398
+		 112.8 0.18993692100048065 113.6 0.088310405611991882 114.4 0.065033011138439178 115.2 0.058813754469156265
+		 116 0.057922504842281342 116.8 0.058105822652578354 117.6 0.058656509965658188 118.4 0.059215355664491653
+		 119.2 0.060266930609941483 120 0.061453636735677719 120.8 0.062263280153274536 121.6 0.0624551922082901
+		 122.4 0.062240894883871078 123.2 0.062189105898141861 124 0.062398191541433334 124.8 0.062913738191127777
+		 125.6 0.063138037919998169 126.4 0.061553720384836197 127.2 0.053645502775907516
+		 128 0.047611922025680542 128.8 0.044141069054603577 129.6 0.041792146861553192 130.4 0.040108200162649155
+		 131.2 0.038927920162677765 132 0.037957753986120224 132.8 0.037290863692760468 133.6 0.036873754113912582
+		 134.4 0.036649741232395172 135.2 0.036750223487615585 136 0.036902960389852524 136.8 0.037068165838718414
+		 137.6 0.037184357643127441 138.4 0.037408445030450821 139.2 0.037717320024967194
+		 140 0.037960071116685867 140.8 0.038286022841930389 141.6 0.038536544889211655 142.4 0.038907941430807114
+		 143.2 0.039251562207937241 144 0.03958091139793396 144.8 0.039741907268762589 145.6 0.039911825209856033
+		 146.4 0.04019555076956749 147.2 0.040362674742937088 148 0.040408965200185776 148.8 0.040644332766532898
+		 149.6 0.041447822004556656 150.4 0.042519904673099518 151.2 0.046125814318656921
+		 152 0.049253009259700775 152.8 0.052112612873315811 153.6 0.057608526200056076 154.4 0.061654087156057358
+		 155.2 0.067479848861694336 156 0.071984313428401947 156.8 0.073420219123363495 157.6 0.073054589331150055
+		 158.4 0.072520405054092407 159.2 0.072109811007976532 160 0.071594387292861938 160.8 0.07108653336763382
+		 161.6 0.070871621370315552 162.4 0.081571504473686218 163.2 0.095291778445243835
+		 164 0.096823647618293762 164.8 0.090325243771076202 165.6 0.08358803391456604 166.4 0.080037385225296021
+		 167.2 0.077698685228824615 168 0.07595071941614151 168.8 0.074659362435340881 169.6 0.073385544121265411
+		 170.4 0.081273488700389862 171.2 0.15647907555103302 172 0.16147427260875702 172.8 0.11355224996805191
+		 173.6 0.086895488202571869 174.4 0.075384989380836487 175.2 0.071662232279777527
+		 176 0.067188180983066559 176.8 0.06380828469991684 177.6 0.060639191418886185 178.4 0.055929895490407944
+		 179.2 0.049689237028360367 180 0.045754943042993546 180.8 0.043783362954854965 181.6 0.040398415178060532
+		 182.4 0.037390042096376419 183.2 0.035809285938739777 184 0.033923927694559097 184.8 0.030003948137164116
+		 185.6 0.021032905206084251 186.4 0.006616407074034214 187.2 1.73604585143039e-05
+		 188 0 188.8 0 189.6 0 190.4 0 191.2 0 192 0 192.8 0 193.6 0 194.4 0 195.2 0 196 0
+		 196.8 0 197.6 0 198.4 0 199.2 0;
+	setAttr ".ktv[250:380]" 200 0 200.8 0 201.6 0 202.4 0 203.2 0 204 0 204.8 0
+		 205.6 0 206.4 0 207.2 0 208 0 208.8 0 209.6 0 210.4 0 211.2 0 212 0 212.8 0 213.6 0
+		 214.4 0 215.2 0 216 0 216.8 0 217.6 0 218.4 0 219.2 0 220 0 220.8 0 221.6 0 222.4 0
+		 223.2 0 224 0 224.8 0 225.6 0 226.4 0 227.2 0 228 0 228.8 0 229.6 0 230.4 0 231.2 0
+		 232 0 232.8 0 233.6 0 234.4 0 235.2 0 236 0 236.8 0 237.6 0.0025521169882267714 238.4 0.0079730479046702385
+		 239.2 0.01157145481556654 240 0.014579790644347668 240.8 0.016779683530330658 241.6 0.018535517156124115
+		 242.4 0.020587807521224022 243.2 0.022104514762759209 244 0.023097807541489601 244.8 0.024065557867288589
+		 245.6 0.024987779557704926 246.4 0.025348197668790817 247.2 0.02521192841231823 248 0.02499702200293541
+		 248.8 0.024561211466789246 249.6 0.023812675848603249 250.4 0.023426691070199013
+		 251.2 0.023376286029815674 252 0.02396722324192524 252.8 0.024750335142016411 253.6 0.025512214750051498
+		 254.4 0.025926750153303146 255.2 0.02591591514647007 256 0.02559284120798111 256.8 0.025166260078549385
+		 257.6 0.024983692914247513 258.4 0.0252677071839571 259.2 0.03315918892621994 260 0.038944177329540253
+		 260.8 0.043076526373624802 261.6 0.050334934145212173 262.4 0.055344220250844955
+		 263.2 0.06317564845085144 264 0.066333629190921783 264.8 0.069634243845939636 265.6 0.078283131122589111
+		 266.4 0.084772475063800812 267.2 0.088241733610630035 268 0.089834496378898621 268.8 0.09064425528049469
+		 269.6 0.091227449476718903 270.4 0.09182266891002655 271.2 0.092248819768428802 272 0.092587381601333618
+		 272.8 0.092973165214061737 273.6 0.093605577945709229 274.4 0.094425752758979797
+		 275.2 0.095193460583686829 276 0.096069090068340302 276.8 0.096771277487277985 277.6 0.09703083336353302
+		 278.4 0.096695229411125183 279.2 0.096686683595180511 280 0.10722465813159943 280.8 0.11430884897708893
+		 281.6 0.11607476323843002 282.4 0.11594501137733459 283.2 0.11495076864957809 284 0.11387871205806732
+		 284.8 0.1128854900598526 285.6 0.11198081821203232 286.4 0.11106003075838089 287.2 0.1102503165602684
+		 288 0.10945773124694824 288.8 0.10846289247274399 289.6 0.10750103741884232 290.4 0.10642649978399277
+		 291.2 0.1051793172955513 292 0.10431277751922607 292.8 0.10352087020874023 293.6 0.10273686051368713
+		 294.4 0.10238999873399734 295.2 0.10238999873399734 296 0.10238999873399734 296.8 0.10238999873399734
+		 297.6 0.10238999873399734 298.4 0.10238999873399734 299.2 0.10238999873399734 300 0.10238999873399734
+		 300.8 0.10238999873399734 301.6 0.10238999873399734 302.4 0.10238999873399734 303.2 0.10238999873399734
+		 304 0.10238999873399734;
+createNode animCurveTU -n "headModel:comboCorrectives_upperLidRaiserL";
+	rename -uid "ABEDDEAC-D844-3545-C4DB-CB82FB4C9BEE";
+	setAttr ".tan" 18;
+	setAttr ".wgt" no;
+	setAttr -s 381 ".ktv";
+	setAttr ".ktv[0:249]"  0 0 0.8 0 1.6 0 2.4 0 3.2 0 4 0 4.8 0 5.6 0 6.4 0
+		 7.2 0 8 0 8.8 0 9.6 0 10.4 0 11.2 0 12 0 12.8 0 13.6 0 14.4 0 15.2 0 16 0 16.8 0
+		 17.6 0.069884210824966431 18.4 0.19186995923519135 19.2 0.22539408504962921 20 0.23356032371520996
+		 20.8 0.25771653652191162 21.6 0.27354371547698975 22.4 0.27166378498077393 23.2 0.26799750328063965
+		 24 0.26455655694007874 24.8 0.24001768231391907 25.6 0.22612674534320831 26.4 0.18118758499622345
+		 27.2 0.16259485483169556 28 0.15781113505363464 28.8 0.15615023672580719 29.6 0.14018270373344421
+		 30.4 0.13104984164237976 31.2 0.10318680852651596 32 0.0084427827969193459 32.8 0
+		 33.6 0 34.4 0 35.2 0 36 0 36.8 0 37.6 0 38.4 0 39.2 0 40 0.025013687089085579 40.8 0.050640139728784561
+		 41.6 0.058902557939291 42.4 0.061310321092605591 43.2 0.061243273317813873 44 0.059106923639774323
+		 44.8 0.053379271179437637 45.6 0.043309938162565231 46.4 0.03965328261256218 47.2 0.038509126752614975
+		 48 0.038424070924520493 48.8 0.037983633577823639 49.6 0.037013579159975052 50.4 0.037005234509706497
+		 51.2 0.038920924067497253 52 0.1738414466381073 52.8 0.33955705165863037 53.6 0.39876511693000793
+		 54.4 0.43894878029823303 55.2 0.45711648464202881 56 0.522297203540802 56.8 0.58265680074691772
+		 57.6 0.59796500205993652 58.4 0.60176318883895874 59.2 0.60229611396789551 60 0.60252761840820312
+		 60.8 0.60307127237319946 61.6 0.6035124659538269 62.4 0.60121357440948486 63.2 0.59939014911651611
+		 64 0.59603476524353027 64.8 0.59381592273712158 65.6 0.59027212858200073 66.4 0.58650529384613037
+		 67.2 0.58414918184280396 68 0.5835115909576416 68.8 0.58345550298690796 69.6 0.5826532244682312
+		 70.4 0.57775789499282837 71.2 0.57078379392623901 72 0.56249630451202393 72.8 0.51139914989471436
+		 73.6 0.4330001175403595 74.4 0.38984134793281555 75.2 0.36656185984611511 76 0.31774404644966125
+		 76.8 0.28433260321617126 77.6 0.23282122611999512 78.4 0.18138530850410461 79.2 0.10306117683649063
+		 80 0.058869294822216034 80.8 0.046678714454174042 81.6 0.042489200830459595 82.4 0.03948524221777916
+		 83.2 0.037778761237859726 84 0.032904606312513351 84.8 0.033327214419841766 85.6 0.041592340916395187
+		 86.4 0.049056045711040497 87.2 0.0520782470703125 88 0.054110374301671982 88.8 0.061113942414522171
+		 89.6 0.061920791864395142 90.4 0.061937633901834488 91.2 0.06295100599527359 92 0.056665964424610138
+		 92.8 0.015745105221867561 93.6 0 94.4 0 95.2 0 96 0 96.8 0 97.6 0 98.4 0 99.2 0 100 0
+		 100.8 0 101.6 0 102.4 0 103.2 0 104 0 104.8 0 105.6 0 106.4 0 107.2 0 108 0 108.8 0
+		 109.6 0 110.4 0 111.2 0 112 0 112.8 0 113.6 0 114.4 0 115.2 0 116 0 116.8 0 117.6 0
+		 118.4 0 119.2 0 120 0 120.8 0 121.6 0 122.4 0 123.2 0 124 0 124.8 0 125.6 0 126.4 0
+		 127.2 0.126763716340065 128 0.20265692472457886 128.8 0.21948015689849854 129.6 0.22959212958812714
+		 130.4 0.23114520311355591 131.2 0.23122432827949524 132 0.23291714489459991 132.8 0.23487906157970428
+		 133.6 0.23198311030864716 134.4 0.23092150688171387 135.2 0.22943025827407837 136 0.2309061735868454
+		 136.8 0.24705454707145691 137.6 0.26256713271141052 138.4 0.26755210757255554 139.2 0.26643899083137512
+		 140 0.26615318655967712 140.8 0.26257351040840149 141.6 0.26122486591339111 142.4 0.26798278093338013
+		 143.2 0.27483391761779785 144 0.28256955742835999 144.8 0.27904751896858215 145.6 0.27156475186347961
+		 146.4 0.26735326647758484 147.2 0.26033729314804077 148 0.25705710053443909 148.8 0.25846368074417114
+		 149.6 0.25823983550071716 150.4 0.23983524739742279 151.2 0.2168327122926712 152 0.1381182074546814
+		 152.8 0.047146018594503403 153.6 0.00010173492773901671 154.4 0 155.2 0 156 0 156.8 0
+		 157.6 0 158.4 0 159.2 0 160 0 160.8 0 161.6 0 162.4 0 163.2 0 164 0 164.8 0 165.6 0
+		 166.4 0 167.2 0 168 0 168.8 0 169.6 0 170.4 0 171.2 0 172 0 172.8 0 173.6 0 174.4 0
+		 175.2 0 176 0 176.8 0 177.6 0 178.4 0 179.2 0 180 0 180.8 0 181.6 0 182.4 0 183.2 0
+		 184 0 184.8 0 185.6 0 186.4 0 187.2 0.017469897866249084 188 0.15552210807800293
+		 188.8 0.24294440448284149 189.6 0.28012871742248535 190.4 0.3328402042388916 191.2 0.39019730687141418
+		 192 0.42109248042106628 192.8 0.43440896272659302 193.6 0.43979144096374512 194.4 0.44554564356803894
+		 195.2 0.44817298650741577 196 0.44930973649024963 196.8 0.45187091827392578 197.6 0.45283865928649902
+		 198.4 0.4518091082572937 199.2 0.45106059312820435;
+	setAttr ".ktv[250:380]" 200 0.45154491066932678 200.8 0.45196175575256348 201.6 0.45269188284873962
+		 202.4 0.45175066590309143 203.2 0.44978484511375427 204 0.44826468825340271 204.8 0.44726625084877014
+		 205.6 0.44693067669868469 206.4 0.44595271348953247 207.2 0.44358381628990173 208 0.44224712252616882
+		 208.8 0.43652701377868652 209.6 0.43033719062805176 210.4 0.42390623688697815 211.2 0.42375510931015015
+		 212 0.42345514893531799 212.8 0.42233771085739136 213.6 0.42160755395889282 214.4 0.42059546709060669
+		 215.2 0.42629987001419067 216 0.43190416693687439 216.8 0.42955666780471802 217.6 0.42369037866592407
+		 218.4 0.41525667905807495 219.2 0.37188127636909485 220 0.33595243096351624 220.8 0.28721508383750916
+		 221.6 0.23861081898212433 222.4 0.21164023876190186 223.2 0.20053261518478394 224 0.21638253331184387
+		 224.8 0.25740334391593933 225.6 0.27226093411445618 226.4 0.28337842226028442 227.2 0.35279339551925659
+		 228 0.38254743814468384 228.8 0.39981251955032349 229.6 0.46249920129776001 230.4 0.53633272647857666
+		 231.2 0.60721546411514282 232 0.65735781192779541 232.8 0.67021232843399048 233.6 0.67334669828414917
+		 234.4 0.66334885358810425 235.2 0.6498069167137146 236 0.64237302541732788 236.8 0.63625746965408325
+		 237.6 0.62506699562072754 238.4 0.61740589141845703 239.2 0.61170971393585205 240 0.60432261228561401
+		 240.8 0.59980779886245728 241.6 0.59596794843673706 242.4 0.58688491582870483 243.2 0.57491028308868408
+		 244 0.5697556734085083 244.8 0.55717271566390991 245.6 0.54239439964294434 246.4 0.52709120512008667
+		 247.2 0.5178905725479126 248 0.50107187032699585 248.8 0.45691391825675964 249.6 0.39343312382698059
+		 250.4 0.36639297008514404 251.2 0.34995833039283752 252 0.3232332170009613 252.8 0.28265470266342163
+		 253.6 0.24466747045516968 254.4 0.15556207299232483 255.2 0.087645389139652252 256 0.04186737909913063
+		 256.8 0.0053642243146896362 257.6 0 258.4 0 259.2 0 260 0 260.8 0 261.6 0 262.4 0
+		 263.2 0 264 0 264.8 0 265.6 0 266.4 0 267.2 0 268 0 268.8 0 269.6 0 270.4 0 271.2 0
+		 272 0 272.8 0 273.6 0 274.4 0 275.2 0 276 0 276.8 0 277.6 0 278.4 0 279.2 0 280 0
+		 280.8 0 281.6 0 282.4 0 283.2 0 284 0 284.8 0 285.6 0 286.4 0 287.2 0 288 0 288.8 0
+		 289.6 0 290.4 0 291.2 0 292 0 292.8 0 293.6 0 294.4 0 295.2 0 296 0 296.8 0 297.6 0
+		 298.4 0 299.2 0 300 0 300.8 0 301.6 0 302.4 0 303.2 0 304 0;
+createNode animCurveTU -n "headModel:comboCorrectives_upperLidRaiserR";
+	rename -uid "679A4C21-D749-5349-4CA1-7BB282C1FE6A";
+	setAttr ".tan" 18;
+	setAttr ".wgt" no;
+	setAttr -s 381 ".ktv";
+	setAttr ".ktv[0:249]"  0 0 0.8 0 1.6 0 2.4 0 3.2 0 4 0 4.8 0 5.6 0 6.4 0
+		 7.2 0 8 0 8.8 0 9.6 0 10.4 0 11.2 0 12 0 12.8 0 13.6 0 14.4 0 15.2 0 16 0 16.8 0
+		 17.6 0.069991394877433777 18.4 0.19178661704063416 19.2 0.22525404393672943 20 0.23341080546379089
+		 20.8 0.25756654143333435 21.6 0.27338427305221558 22.4 0.27149468660354614 23.2 0.26782834529876709
+		 24 0.26438727974891663 24.8 0.23983767628669739 25.6 0.22593729197978973 26.4 0.18095903098583221
+		 27.2 0.16236485540866852 28 0.15758039057254791 28.8 0.15592023730278015 29.6 0.13997210562229156
+		 30.4 0.13084040582180023 31.2 0.1029668003320694 32 0.0082822646945714951 32.8 0
+		 33.6 0 34.4 0 35.2 0 36 0 36.8 0 37.6 0 38.4 0 39.2 0 40 0.024672422558069229 40.8 0.050328835844993591
+		 41.6 0.058602556586265564 42.4 0.061020318418741226 43.2 0.060943681746721268 44 0.058806926012039185
+		 44.8 0.053070001304149628 45.6 0.042990438640117645 46.4 0.039342567324638367 47.2 0.038199126720428467
+		 48 0.038114074617624283 48.8 0.037673629820346832 49.6 0.036713581532239914 50.4 0.036705233156681061
+		 51.2 0.03866880014538765 52 0.17380052804946899 52.8 0.33955687284469604 53.6 0.3987082839012146
+		 54.4 0.43882924318313599 55.2 0.45696729421615601 56 0.52215665578842163 56.8 0.5825268030166626
+		 57.6 0.59784430265426636 58.4 0.60164320468902588 59.2 0.60218483209609985 60 0.60240763425827026
+		 60.8 0.6029512882232666 61.6 0.60339242219924927 62.4 0.601093590259552 63.2 0.59927022457122803
+		 64 0.59591472148895264 64.8 0.59369730949401855 65.6 0.59015214443206787 66.4 0.58638530969619751
+		 67.2 0.58402913808822632 68 0.58339160680770874 68.8 0.58333545923233032 69.6 0.58253324031829834
+		 70.4 0.57762831449508667 71.2 0.57065379619598389 72 0.5623663067817688 72.8 0.51126009225845337
+		 73.6 0.43284010887145996 74.4 0.38966134190559387 75.2 0.36639112234115601 76 0.31759399175643921
+		 76.8 0.28422102332115173 77.6 0.23274911940097809 78.4 0.18135391175746918 79.2 0.10296589881181717
+		 80 0.058672890067100525 80.8 0.046449419111013412 81.6 0.042250040918588638 82.4 0.039225921034812927
+		 83.2 0.037518762052059174 84 0.032634604722261429 84.8 0.033055823296308517 85.6 0.041312340646982193
+		 86.4 0.048776045441627502 87.2 0.051798246800899506 88 0.053840268403291702 88.8 0.060833945870399475
+		 89.6 0.061649948358535767 90.4 0.061657637357711792 91.2 0.062680363655090332 92 0.056385964155197144
+		 92.8 0.015427965670824051 93.6 0 94.4 0 95.2 0 96 0 96.8 0 97.6 0 98.4 0 99.2 0 100 0
+		 100.8 0 101.6 0 102.4 0 103.2 0 104 0 104.8 0 105.6 0 106.4 0 107.2 0 108 0 108.8 0
+		 109.6 0 110.4 0 111.2 0 112 0 112.8 0 113.6 0 114.4 0 115.2 0 116 0 116.8 0 117.6 0
+		 118.4 0 119.2 0 120 0 120.8 0 121.6 0 122.4 0 123.2 0 124 0 124.8 0 125.6 0 126.4 0
+		 127.2 0.12669126689434052 128 0.20254762470722198 128.8 0.21936015784740448 129.6 0.22946323454380035
+		 130.4 0.2309962660074234 131.2 0.23107433319091797 132 0.23274712264537811 132.8 0.23469908535480499
+		 133.6 0.2317931205034256 134.4 0.23072148859500885 135.2 0.22923025488853455 136 0.23071515560150146
+		 136.8 0.24685452878475189 137.6 0.2623763382434845 138.4 0.26735210418701172 139.2 0.26624900102615356
+		 140 0.26596152782440186 140.8 0.26238328218460083 141.6 0.26102486252784729 142.4 0.2677827775478363
+		 143.2 0.27463391423225403 144 0.28236955404281616 144.8 0.27885618805885315 145.6 0.2713739275932312
+		 146.4 0.26716324687004089 147.2 0.26014727354049683 148 0.25685709714889526 148.8 0.25826367735862732
+		 149.6 0.25803011655807495 150.4 0.23961620032787323 151.2 0.21660393476486206 152 0.13783943653106689
+		 152.8 0.04681086540222168 153.6 9.506082278676331e-05 154.4 0 155.2 0 156 0 156.8 0
+		 157.6 0 158.4 0 159.2 0 160 0 160.8 0 161.6 0 162.4 0 163.2 0 164 0 164.8 0 165.6 0
+		 166.4 0 167.2 0 168 0 168.8 0 169.6 0 170.4 0 171.2 0 172 0 172.8 0 173.6 0 174.4 0
+		 175.2 0 176 0 176.8 0 177.6 0 178.4 0 179.2 0 180 0 180.8 0 181.6 0 182.4 0 183.2 0
+		 184 0 184.8 0 185.6 0 186.4 0 187.2 0.017566904425621033 188 0.15541629493236542
+		 188.8 0.24268980324268341 189.6 0.27987432479858398 190.4 0.33261922001838684 191.2 0.38999512791633606
+		 192 0.42091196775436401 192.8 0.43423894047737122 193.6 0.43963146209716797 194.4 0.44539451599121094
+		 195.2 0.44802170991897583 196 0.44915974140167236 196.8 0.45172092318534851 197.6 0.45269867777824402
+		 198.4 0.45166021585464478 199.2 0.45091089606285095;
+	setAttr ".ktv[250:380]" 200 0.45140489935874939 200.8 0.45182055234909058 201.6 0.45254188776016235
+		 202.4 0.45160070061683655 203.2 0.449634850025177 204 0.44811654090881348 204.8 0.44711622595787048
+		 205.6 0.44678071141242981 206.4 0.44580268859863281 207.2 0.44343385100364685 208 0.44209712743759155
+		 208.8 0.43637698888778687 209.6 0.43018719553947449 210.4 0.42375487089157104 211.2 0.42359510064125061
+		 212 0.42329514026641846 212.8 0.4221777617931366 213.6 0.42144754528999329 214.4 0.42043548822402954
+		 215.2 0.42612987756729126 216 0.43173471093177795 216.8 0.42937812209129333 217.6 0.42350038886070251
+		 218.4 0.41509515047073364 219.2 0.37181767821311951 220 0.33595877885818481 220.8 0.28720510005950928
+		 221.6 0.23857125639915466 222.4 0.21158309280872345 223.2 0.20046301186084747 224 0.21625041961669922
+		 224.8 0.25722429156303406 225.6 0.27205213904380798 226.4 0.28316840529441833 227.2 0.3525833785533905
+		 228 0.38230922818183899 228.8 0.39958199858665466 229.6 0.46229648590087891 230.4 0.53617066144943237
+		 231.2 0.60709124803543091 232 0.65724778175354004 232.8 0.67010384798049927 233.6 0.6732562780380249
+		 234.4 0.66334503889083862 235.2 0.64988625049591064 236 0.64248162508010864 236.8 0.63639622926712036
+		 237.6 0.62523573637008667 238.4 0.61756587028503418 239.2 0.61183279752731323 240 0.60441362857818604
+		 240.8 0.59987169504165649 241.6 0.59600073099136353 242.4 0.58688747882843018 243.2 0.5748705267906189
+		 244 0.56971561908721924 244.8 0.55712270736694336 245.6 0.54234439134597778 246.4 0.52705949544906616
+		 247.2 0.51787054538726807 248 0.50101500749588013 248.8 0.45683515071868896 249.6 0.39328911900520325
+		 250.4 0.36622437834739685 251.2 0.34978705644607544 252 0.32305470108985901 252.8 0.2824479341506958
+		 253.6 0.24445056915283203 254.4 0.15532353520393372 255.2 0.08739539235830307 256 0.041654974222183228
+		 256.8 0.0051442249678075314 257.6 0 258.4 0 259.2 0 260 0 260.8 0 261.6 0 262.4 0
+		 263.2 0 264 0 264.8 0 265.6 0 266.4 0 267.2 0 268 0 268.8 0 269.6 0 270.4 0 271.2 0
+		 272 0 272.8 0 273.6 0 274.4 0 275.2 0 276 0 276.8 0 277.6 0 278.4 0 279.2 0 280 0
+		 280.8 0 281.6 0 282.4 0 283.2 0 284 0 284.8 0 285.6 0 286.4 0 287.2 0 288 0 288.8 0
+		 289.6 0 290.4 0 291.2 0 292 0 292.8 0 293.6 0 294.4 0 295.2 0 296 0 296.8 0 297.6 0
+		 298.4 0 299.2 0 300 0 300.8 0 301.6 0 302.4 0 303.2 0 304 0;
+createNode animCurveTU -n "headModel:comboCorrectives_upperLipRaiserL";
+	rename -uid "44280620-DB45-57BF-4B93-BE99C52FDEAF";
+	setAttr ".tan" 18;
+	setAttr ".wgt" no;
+	setAttr -s 381 ".ktv";
+	setAttr ".ktv[0:249]"  0 0 0.8 0.001440842286683619 1.6 0.0014702603220939636
+		 2.4 0.0014900000533089042 3.2 0.0014893085462972522 4 0.0014606771292164922 4.8 0.0014205110492184758
+		 5.6 0.00139999995008111 6.4 0.0013713395455852151 7.2 0.0013222118141129613 8 0.0012496850686147809
+		 8.8 0.0012199998600408435 9.6 0.0012684400426223874 10.4 0.0013090318534523249 11.2 0.0013683376600965858
+		 12 0.0016311835497617722 12.8 0.0021661999635398388 13.6 0.0033957802224904299 14.4 0.007085856981575489
+		 15.2 0.011776000261306763 16 0.014943984337151051 16.8 0.016712231561541557 17.6 0.017645020037889481
+		 18.4 0.01785636693239212 19.2 0.01787988469004631 20 0.017889067530632019 20.8 0.018054742366075516
+		 21.6 0.018312962725758553 22.4 0.018551774322986603 23.2 0.018752429634332657 24 0.018897127360105515
+		 24.8 0.018758915364742279 25.6 0.018691625446081161 26.4 0.018669517710804939 27.2 0.018630782142281532
+		 28 0.018574459478259087 28.8 0.018511487171053886 29.6 0.018549386411905289 30.4 0.018540000542998314
+		 31.2 0.018538771197199821 32 0.018860150128602982 32.8 0.019863942638039589 33.6 0.024048816412687302
+		 34.4 0.026714704930782318 35.2 0.027379328384995461 36 0.027334596961736679 36.8 0.027088537812232971
+		 37.6 0.026644030585885048 38.4 0.025848204270005226 39.2 0.024905886501073837 40 0.023997200652956963
+		 40.8 0.02320207841694355 41.6 0.022481078281998634 42.4 0.02194349467754364 43.2 0.021499808877706528
+		 44 0.021025333553552628 44.8 0.020530365407466888 45.6 0.020079521462321281 46.4 0.019818605855107307
+		 47.2 0.019649537280201912 48 0.019457245245575905 48.8 0.01923605240881443 49.6 0.019018759950995445
+		 50.4 0.018800962716341019 51.2 0.018053881824016571 52 0.015514673665165901 52.8 0.0097414012998342514
+		 53.6 0.0060064047574996948 54.4 0.0037940933834761381 55.2 0.0022603895049542189
+		 56 0.00087464333046227694 56.8 0 57.6 0 58.4 0 59.2 0 60 0 60.8 0 61.6 0 62.4 0 63.2 0
+		 64 0 64.8 0 65.6 0 66.4 0 67.2 0 68 0 68.8 0 69.6 0 70.4 0 71.2 0 72 0 72.8 0 73.6 0
+		 74.4 0 75.2 0 76 0 76.8 0.00076624838402494788 77.6 0.0021001172717660666 78.4 0.003520329250022769
+		 79.2 0.0047300867736339569 80 0.0056319572031497955 80.8 0.0061459308490157127 81.6 0.0064590936526656151
+		 82.4 0.0067584458738565445 83.2 0.0070985062047839165 84 0.0073895920068025589 84.8 0.0077163293026387691
+		 85.6 0.0080199465155601501 86.4 0.0084416884928941727 87.2 0.0088336337357759476
+		 88 0.0093173841014504433 88.8 0.0098895812407135963 89.6 0.010341423563659191 90.4 0.010698811151087284
+		 91.2 0.010952867567539215 92 0.011198702268302441 92.8 0.012411766685545444 93.6 0.06237514317035675
+		 94.4 0.14252610504627228 95.2 0.24374526739120483 96 0.28140971064567566 96.8 0.3227350115776062
+		 97.6 0.33992293477058411 98.4 0.35262215137481689 99.2 0.35831147432327271 100 0.36012318730354309
+		 100.8 0.36113232374191284 101.6 0.36179688572883606 102.4 0.36284592747688293 103.2 0.36392849683761597
+		 104 0.36514949798583984 104.8 0.3657834529876709 105.6 0.36674308776855469 106.4 0.36673107743263245
+		 107.2 0.3663877546787262 108 0.36704149842262268 108.8 0.36848655343055725 109.6 0.36979317665100098
+		 110.4 0.37020078301429749 111.2 0.37047728896141052 112 0.30448657274246216 112.8 0.099234312772750854
+		 113.6 0.040857464075088501 114.4 0.027010597288608551 115.2 0.023105619475245476
+		 116 0.022471852600574493 116.8 0.022568544372916222 117.6 0.022897800430655479 118.4 0.023286905139684677
+		 119.2 0.02392074279487133 120 0.024682726711034775 120.8 0.025275122374296188 121.6 0.025589615106582642
+		 122.4 0.025748357176780701 123.2 0.025997137650847435 124 0.026313759386539459 124.8 0.027130179107189178
+		 125.6 0.03476233035326004 126.4 0.039580464363098145 127.2 0.040516790002584457 128 0.040446348488330841
+		 128.8 0.040122464299201965 129.6 0.039772398769855499 130.4 0.039501622319221497
+		 131.2 0.039460856467485428 132 0.039578940719366074 132.8 0.039769750088453293 133.6 0.040009867399930954
+		 134.4 0.040342170745134354 135.2 0.040920764207839966 136 0.041571792215108871 136.8 0.042352866381406784
+		 137.6 0.042765490710735321 138.4 0.043306123465299606 139.2 0.044043298810720444
+		 140 0.044703524559736252 140.8 0.045412279665470123 141.6 0.045914206653833389 142.4 0.046357940882444382
+		 143.2 0.046653728932142258 144 0.047044847160577774 144.8 0.047306515276432037 145.6 0.047454275190830231
+		 146.4 0.047695819288492203 147.2 0.047925349324941635 148 0.048027936369180679 148.8 0.048186071217060089
+		 149.6 0.048919804394245148 150.4 0.049378059804439545 151.2 0.050016216933727264
+		 152 0.050837773829698563 152.8 0.05152510479092598 153.6 0.052370082587003708 154.4 0.053290475159883499
+		 155.2 0.054153848439455032 156 0.053117025643587112 156.8 0.043049648404121399 157.6 0.038108278065919876
+		 158.4 0.035951171070337296 159.2 0.034796871244907379 160 0.03368789330124855 160.8 0.03280813992023468
+		 161.6 0.032122313976287842 162.4 0.032463304698467255 163.2 0.033598598092794418
+		 164 0.034350544214248657 164.8 0.034659039229154587 165.6 0.034440197050571442 166.4 0.033979948610067368
+		 167.2 0.033308539539575577 168 0.032431520521640778 168.8 0.031697079539299011 169.6 0.030980121344327927
+		 170.4 0.030890334397554398 171.2 0.032518889755010605 172 0.034146063029766083 172.8 0.034604795277118683
+		 173.6 0.034330151975154877 174.4 0.033546347171068192 175.2 0.03272821381688118 176 0.03175005316734314
+		 176.8 0.030755618587136269 177.6 0.029619421809911728 178.4 0.028331596404314041
+		 179.2 0.026797214522957802 180 0.02544475719332695 180.8 0.024166887626051903 181.6 0.022906363010406494
+		 182.4 0.021651580929756165 183.2 0.020567651838064194 184 0.019399546086788177 184.8 0.018145279958844185
+		 185.6 0.015446636825799942 186.4 0.0090213408693671227 187.2 0.0046275118365883827
+		 188 0.0021776214707642794 188.8 0.00049053691327571869 189.6 0 190.4 0 191.2 0 192 0
+		 192.8 0 193.6 0 194.4 0 195.2 0 196 0 196.8 0 197.6 0 198.4 0 199.2 0;
+	setAttr ".ktv[250:380]" 200 0 200.8 0 201.6 0 202.4 0 203.2 0 204 0 204.8 0
+		 205.6 0 206.4 0 207.2 0 208 0 208.8 0 209.6 0 210.4 0 211.2 0 212 0 212.8 0 213.6 0
+		 214.4 0 215.2 0 216 0 216.8 0 217.6 0 218.4 0 219.2 0 220 0 220.8 0 221.6 0 222.4 0
+		 223.2 0 224 0 224.8 0 225.6 0 226.4 0 227.2 0 228 0 228.8 0 229.6 0 230.4 0 231.2 0
+		 232 0 232.8 0 233.6 0 234.4 0 235.2 0 236 0 236.8 0 237.6 0 238.4 0 239.2 0.0020897816866636276
+		 240 0.0063736378215253353 240.8 0.010328987613320351 241.6 0.013113449327647686 242.4 0.016277352347970009
+		 243.2 0.018092550337314606 244 0.019060391932725906 244.8 0.020071201026439667 245.6 0.02112533338367939
+		 246.4 0.021716166287660599 247.2 0.022015685215592384 248 0.022228334099054337 248.8 0.02263939380645752
+		 249.6 0.02297140471637249 250.4 0.023203043267130852 251.2 0.023137429729104042 252 0.022936442866921425
+		 252.8 0.022612402215600014 253.6 0.021900907158851624 254.4 0.020024370402097702
+		 255.2 0.017293654382228851 256 0.015017431229352951 256.8 0.013317533768713474 257.6 0.011996322311460972
+		 258.4 0.01101197674870491 259.2 0.013348964042961597 260 0.020836379379034042 260.8 0.026675371453166008
+		 261.6 0.028775187209248543 262.4 0.029290979728102684 263.2 0.029408281669020653
+		 264 0.029586248099803925 264.8 0.029980521649122238 265.6 0.031378850340843201 266.4 0.033893536776304245
+		 267.2 0.035694703459739685 268 0.036794304847717285 268.8 0.037470273673534393 269.6 0.037998735904693604
+		 270.4 0.038552675396203995 271.2 0.039084576070308685 272 0.039432819932699203 272.8 0.039772987365722656
+		 273.6 0.040201254189014435 274.4 0.040863502770662308 275.2 0.041583463549613953
+		 276 0.042554117739200592 276.8 0.043559998273849487 277.6 0.044281259179115295 278.4 0.044713225215673447
+		 279.2 0.045311223715543747 280 0.050309333950281143 280.8 0.053198710083961487 281.6 0.054213400930166245
+		 282.4 0.054633334279060364 283.2 0.054737802594900131 284 0.054881628602743149 284.8 0.054978203028440475
+		 285.6 0.055196527391672134 286.4 0.05533609539270401 287.2 0.055565174669027328 288 0.055556606501340866
+		 288.8 0.055492464452981949 289.6 0.055305622518062592 290.4 0.055015500634908676
+		 291.2 0.054525204002857208 292 0.054058518260717392 292.8 0.053603127598762512 293.6 0.053130876272916794
+		 294.4 0.053020000457763672 295.2 0.053020000457763672 296 0.053020000457763672 296.8 0.053020000457763672
+		 297.6 0.053020000457763672 298.4 0.053020000457763672 299.2 0.053020000457763672
+		 300 0.053020000457763672 300.8 0.053020000457763672 301.6 0.053020000457763672 302.4 0.053020000457763672
+		 303.2 0.053020000457763672 304 0.053020000457763672;
+createNode animCurveTU -n "headModel:comboCorrectives_upperLipRaiserR";
+	rename -uid "0D02EBB2-964A-23F3-8602-0387067BE140";
+	setAttr ".tan" 18;
+	setAttr ".wgt" no;
+	setAttr -s 381 ".ktv";
+	setAttr ".ktv[0:249]"  0 0 0.8 0.0029721059836447239 1.6 0.0030607806984335184
+		 2.4 0.0031303819268941879 3.2 0.003160000080242753 4 0.003160000080242753 4.8 0.0031305109150707722
+		 5.6 0.0031299998518079519 6.4 0.0031013395637273788 7.2 0.0030714746098965406 8 0.0030098950956016779
+		 8.8 0.0030097020789980888 9.6 0.0030684403609484434 10.4 0.0031190318986773491 11.2 0.0031583379022777081
+		 12 0.0033727393019944429 12.8 0.0038754800334572792 13.6 0.0049411766231060028 14.4 0.0081592295318841934
+		 15.2 0.012762160040438175 16 0.01581033319234848 16.8 0.017427926883101463 17.6 0.018285017460584641
+		 18.4 0.018505759537220001 19.2 0.01856011338531971 20 0.018598601222038269 20.8 0.018804304301738739
+		 21.6 0.019101880490779877 22.4 0.01934177428483963 23.2 0.019560746848583221 24 0.019716408103704453
+		 24.8 0.019608642905950546 25.6 0.019531624391674995 26.4 0.019519034773111343 27.2 0.019529217854142189
+		 28 0.019502973183989525 28.8 0.019470993429422379 29.6 0.019538156688213348 30.4 0.019588274881243706
+		 31.2 0.019637543708086014 32 0.019959632307291031 32.8 0.020888371393084526 33.6 0.023599447682499886
+		 34.4 0.025392573326826096 35.2 0.025968797504901886 36 0.02615693211555481 36.8 0.026299791410565376
+		 37.6 0.026194488629698753 38.4 0.025718817487359047 39.2 0.025075333192944527 40 0.024439608678221703
+		 40.8 0.023866452276706696 41.6 0.023355813696980476 42.4 0.022969197481870651 43.2 0.022627765312790871
+		 44 0.022276304662227631 44.8 0.021876728162169456 45.6 0.021518021821975708 46.4 0.021336454898118973
+		 47.2 0.02118963934481144 48 0.021035926416516304 48.8 0.020816657692193985 49.6 0.020551679655909538
+		 50.4 0.020198270678520203 51.2 0.019250251352787018 52 0.016019530594348907 52.8 0.010001208633184433
+		 53.6 0.0062164044938981533 54.4 0.0040045725181698799 55.2 0.0024703897070139647
+		 56 0.0011041185352951288 56.8 0 57.6 0 58.4 0 59.2 0 60 0 60.8 0 61.6 0 62.4 0 63.2 0
+		 64 0 64.8 0 65.6 0 66.4 0 67.2 0 68 0 68.8 0 69.6 0 70.4 0 71.2 0 72 0 72.8 0 73.6 0
+		 74.4 0 75.2 0 76 0 76.8 0.0010809913510456681 77.6 0.0023342894855886698 78.4 0.0036531277000904083
+		 79.2 0.0047910283319652081 80 0.005701238289475441 80.8 0.0062445239163935184 81.6 0.0065582543611526489
+		 82.4 0.0068391263484954834 83.2 0.0071984073147177696 84 0.0075195622630417347 84.8 0.0078649362549185753
+		 85.6 0.0081992289051413536 86.4 0.0086517827585339546 87.2 0.0090629225596785545
+		 88 0.0095672793686389923 88.8 0.010139581747353077 89.6 0.010591424070298672 90.4 0.01094881072640419
+		 91.2 0.011221572756767273 92 0.011554664000868797 92.8 0.013158386573195457 93.6 0.063826039433479309
+		 94.4 0.14201653003692627 95.2 0.2366151362657547 96 0.26713192462921143 96.8 0.29958009719848633
+		 97.6 0.31440454721450806 98.4 0.32578358054161072 99.2 0.33231720328330994 100 0.33509168028831482
+		 100.8 0.33726274967193604 101.6 0.33920124173164368 102.4 0.34127518534660339 103.2 0.34282907843589783
+		 104 0.34417358040809631 104.8 0.34495002031326294 105.6 0.34603297710418701 106.4 0.34610691666603088
+		 107.2 0.34593206644058228 108 0.34651520848274231 108.8 0.34771707653999329 109.6 0.34889903664588928
+		 110.4 0.34929925203323364 111.2 0.34967330098152161 112 0.29286375641822815 112.8 0.10484664142131805
+		 113.6 0.04793587327003479 114.4 0.034073062241077423 115.2 0.029632637277245522 116 0.028355451300740242
+		 116.8 0.027867993339896202 117.6 0.027551682665944099 118.4 0.027409879490733147
+		 119.2 0.027589436620473862 120 0.02793181873857975 120.8 0.028150785714387894 121.6 0.028154153376817703
+		 122.4 0.028010448440909386 123.2 0.027999462559819221 124 0.028110403567552567 124.8 0.02876695990562439
+		 125.6 0.034487389028072357 126.4 0.038276512175798416 127.2 0.039188239723443985
+		 128 0.039472244679927826 128.8 0.0395655557513237 129.6 0.039686642587184906 130.4 0.039896260946989059
+		 131.2 0.040312029421329498 132 0.040855415165424347 132.8 0.041399303823709488 133.6 0.041909731924533844
+		 134.4 0.04246685653924942 135.2 0.043240960687398911 136 0.044043749570846558 136.8 0.044931847602128983
+		 137.6 0.045432273298501968 138.4 0.046053033322095871 139.2 0.046852722764015198
+		 140 0.047576885670423508 140.8 0.048332046717405319 141.6 0.0488719642162323 142.4 0.049356669187545776
+		 143.2 0.049748312681913376 144 0.050250299274921417 144.8 0.050563815981149673 145.6 0.050752643495798111
+		 146.4 0.051005810499191284 147.2 0.05124388262629509 148 0.051385868340730667 148.8 0.051612585783004761
+		 149.6 0.052448101341724396 150.4 0.052985202521085739 151.2 0.053663782775402069
+		 152 0.054547160863876343 152.8 0.055273488163948059 153.6 0.056102026253938675 154.4 0.056852150708436966
+		 155.2 0.057513099163770676 156 0.055969372391700745 156.8 0.045511335134506226 157.6 0.040559299290180206
+		 158.4 0.038391172885894775 159.2 0.037228111177682877 160 0.036068625748157501 160.8 0.034997262060642242
+		 161.6 0.034042660146951675 162.4 0.033649079501628876 163.2 0.033743459731340408
+		 164 0.03379315510392189 164.8 0.033654805272817612 165.6 0.03330666571855545 166.4 0.032839946448802948
+		 167.2 0.032195765525102615 168 0.031424801796674728 168.8 0.030773043632507324 169.6 0.030118238180875778
+		 170.4 0.0298813097178936 171.2 0.031201034784317017 172 0.032598972320556641 172.8 0.032716333866119385
+		 173.6 0.032168816775083542 174.4 0.031306345015764236 175.2 0.030531888827681541
+		 176 0.029600052163004875 176.8 0.028614189475774765 177.6 0.027535954490303993 178.4 0.026223724707961082
+		 179.2 0.024562576785683632 180 0.02317594550549984 180.8 0.021887170150876045 181.6 0.020636362954974174
+		 182.4 0.019409196451306343 183.2 0.018373338505625725 184 0.017258809879422188 184.8 0.016054121777415276
+		 185.6 0.01374514028429985 186.4 0.0082054249942302704 187.2 0.0042970362119376659
+		 188 0.0021062658634036779 188.8 0.00050731544615700841 189.6 0 190.4 0 191.2 0 192 0
+		 192.8 0 193.6 0 194.4 0 195.2 0 196 0 196.8 0 197.6 0 198.4 0 199.2 0;
+	setAttr ".ktv[250:380]" 200 0 200.8 0 201.6 0 202.4 0 203.2 0 204 0 204.8 0
+		 205.6 0 206.4 0 207.2 0 208 0 208.8 0 209.6 0 210.4 0 211.2 0 212 0 212.8 0 213.6 0
+		 214.4 0 215.2 0 216 0 216.8 0 217.6 0 218.4 0 219.2 0 220 0 220.8 0 221.6 0 222.4 0
+		 223.2 0 224 0 224.8 0 225.6 0 226.4 0 227.2 0 228 0 228.8 0 229.6 0 230.4 0 231.2 0
+		 232 0 232.8 0 233.6 0 234.4 0 235.2 0 236 0 236.8 0 237.6 1.7222557289642282e-05
+		 238.4 0.0023743074852973223 239.2 0.0055661820806562901 240 0.0097173051908612251
+		 240.8 0.013418417423963547 241.6 0.016175173223018646 242.4 0.019488347694277763
+		 243.2 0.02135230228304863 244 0.02233039028942585 244.8 0.023416848853230476 245.6 0.024485640227794647
+		 246.4 0.025051221251487732 247.2 0.025272844359278679 248 0.025412978604435921 248.8 0.025746665894985199
+		 249.6 0.025943443179130554 250.4 0.026042783632874489 251.2 0.025863619521260262
+		 252 0.025508398190140724 252.8 0.024953462183475494 253.6 0.023962488397955894 254.4 0.020911559462547302
+		 255.2 0.01746813952922821 256 0.01493584830313921 256.8 0.013198628090322018 257.6 0.011866319924592972
+		 258.4 0.010854129679501057 259.2 0.012957237660884857 260 0.020762598142027855 260.8 0.026668792590498924
+		 261.6 0.028843767940998077 262.4 0.029281219467520714 263.2 0.029232019558548927
+		 264 0.029255416244268417 264.8 0.029532432556152344 265.6 0.030733115971088409 266.4 0.033039063215255737
+		 267.2 0.034776162356138229 268 0.035900592803955078 268.8 0.036636661738157272 269.6 0.037224870175123215
+		 270.4 0.037850592285394669 271.2 0.038469281047582626 272 0.038977596908807755 272.8 0.039436850696802139
+		 273.6 0.03993602842092514 274.4 0.040698334574699402 275.2 0.041534535586833954 276 0.042535360902547836
+		 276.8 0.043538514524698257 277.6 0.044271260499954224 278.4 0.044786177575588226
+		 279.2 0.045440036803483963 280 0.047389335930347443 280.8 0.048895742744207382 281.6 0.049752231687307358
+		 282.4 0.050415001809597015 283.2 0.050857912749052048 284 0.051324866712093353 284.8 0.051711238920688629
+		 285.6 0.052160069346427917 286.4 0.052492186427116394 287.2 0.052850350737571716
+		 288 0.052946694195270538 288.8 0.052978765219449997 289.6 0.052908524870872498 290.4 0.052756577730178833
+		 291.2 0.052352685481309891 292 0.051979962736368179 292.8 0.051597736775875092 293.6 0.051152497529983521
+		 294.4 0.051030002534389496 295.2 0.051030002534389496 296 0.051030002534389496 296.8 0.051030002534389496
+		 297.6 0.051030002534389496 298.4 0.051030002534389496 299.2 0.051030002534389496
+		 300 0.051030002534389496 300.8 0.051030002534389496 301.6 0.051030002534389496 302.4 0.051030002534389496
+		 303.2 0.051030002534389496 304 0.051030002534389496;
+createNode lambert -n "headModel:lambert2";
+	rename -uid "7B9EAA53-C942-4330-A398-66A55C550075";
+	setAttr ".dc" 0.20000000298023224;
+	setAttr ".c" -type "float3" 1 0.9989 0.64700001 ;
+createNode shadingEngine -n "headModel:lambert2SG";
+	rename -uid "BC1DA863-9B45-9DEA-50F2-1DA187D14144";
+	setAttr ".ihi" 0;
+	setAttr ".ro" yes;
+createNode materialInfo -n "headModel:materialInfo1";
+	rename -uid "FF599744-BA4E-F09F-5C5D-80B482E7F8A7";
+createNode nodeGraphEditorInfo -n "headModel:hyperShadePrimaryNodeEditorSavedTabsInfo";
+	rename -uid "9FEBB426-A840-49B7-64CB-5187AF57A326";
+	setAttr ".def" no;
+	setAttr ".tgi[0].tn" -type "string" "Untitled_1";
+	setAttr ".tgi[0].vl" -type "double2" -44.047617297323995 -296.42855964955879 ;
+	setAttr ".tgi[0].vh" -type "double2" 446.4285536890946 44.047617297323995 ;
+	setAttr -s 2 ".tgi[0].ni";
+	setAttr ".tgi[0].ni[0].x" -45.714286804199219;
+	setAttr ".tgi[0].ni[0].y" 1.4285714626312256;
+	setAttr ".tgi[0].ni[0].nvs" 1923;
+	setAttr ".tgi[0].ni[1].x" 261.42855834960938;
+	setAttr ".tgi[0].ni[1].y" 1.4285714626312256;
+	setAttr ".tgi[0].ni[1].nvs" 1923;
+createNode blendShape -n "headModel:bls_head";
+	rename -uid "CCE3C240-3043-3DE9-859A-BDA5E2ABF978";
+	addAttr -ci true -h true -sn "aal" -ln "attributeAliasList" -dt "attributeAlias";
+	setAttr ".it[0].itg[0].iti[6000].ipt" -type "pointArray" 1306 0.12095379829406738
+		 -2.8567352294921875 -2.1962146759033203 1 0.11346101760864258 -2.9029388427734375
+		 -2.0931506156921387 1 0.076567173004150391 -1.926849365234375 -1.6479892730712891
+		 1 0.078698396682739258 -2.507659912109375 -1.8937692642211914 1 0.092844963073730469
+		 -2.4090118408203125 -1.9238677024841309 1 0.039740264415740967 -3.581390380859375
+		 -2.1378135681152344 1 0.087132930755615234 -3.4826202392578125 -2.2306680679321289
+		 1 0.084907114505767822 -3.4839324951171875 -2.1614274978637695 1 0.12643146514892578
+		 -3.2659454345703125 -2.1707048416137695 1 0.12662816047668457 -3.27227783203125 -2.2583365440368652
+		 1 0.038093149662017822 -3.5672454833984375 -2.2004799842834473 1 0.12204742431640625
+		 -2.255340576171875 -1.901390552520752 1 0.14519166946411133 -2.5815887451171875 -2.1611456871032715
+		 1 0.14728462696075439 -2.8377532958984375 -2.3671069145202637 1 0.09971320629119873
+		 -3.4876556396484375 -2.3127384185791016 1 0.13066256046295166 -3.3295745849609375
+		 -2.3487710952758789 1 0.045282244682312012 -3.552978515625 -2.286323070526123 1 0.026514291763305664
+		 -2.1456451416015625 -1.6716136932373047 1 0.045435190200805664 -2.04278564453125
+		 -1.6763172149658203 1 0.13669133186340332 -3.3551788330078125 -2.4203872680664062
+		 1 0.11740791797637939 -3.4455413818359375 -2.4219279289245605 1 0.057167798280715942
+		 -3.492584228515625 -2.4053797721862793 1 0.1177704930305481 -3.3173980712890625 -2.5293517112731934
+		 1 0.13442122936248779 -3.2103729248046875 -2.4775838851928711 1 0.060759037733078003
+		 -3.3527679443359375 -2.5244245529174805 1 0.12944817543029785 -3.07379150390625 -2.371617317199707
+		 1 0.14561009407043457 -3.0339202880859375 -2.514523983001709 1 0.11674362421035767
+		 -3.1450347900390625 -2.5828337669372559 1 0.060284733772277832 -3.1809844970703125
+		 -2.5936117172241211 1 -6.631016731262207e-05 -0.017303466796875 0.0035991668701171875
+		 1 -0.00056681036949157715 -0.0193634033203125 -0.0009765625 1 -0.00046512484550476074
+		 -0.02117919921875 -0.00543212890625 1 -4.9114227294921875e-05 -0.0251617431640625
+		 -0.014635086059570312 1 0.00020441412925720215 -0.02874755859375 -0.018412590026855469
+		 1 -0.0012283623218536377 -0.0289459228515625 -0.029677391052246094 1 -0.0016803741455078125
+		 -0.029296875 -0.032990455627441406 1 -0.0024760067462921143 -0.0415191650390625 -0.039906501770019531
+		 1 -0.0027391165494918823 -0.046630859375 -0.04294586181640625 1 -0.00032623112201690674
+		 -0.05767822265625 -0.05621337890625 1 0.0053578317165374756 -0.0616455078125 -0.070005416870117188
+		 1 0.0054342001676559448 -0.0621185302734375 -0.072828292846679688 1 0.0082588940858840942
+		 -0.069671630859375 -0.0777130126953125 1 0.011263787746429443 -0.078643798828125
+		 -0.078801155090332031 1 0.014354944229125977 -0.0941009521484375 -0.080461502075195312
+		 1 0.013414382934570312 -0.1180877685546875 -0.081285476684570312 1 0.008567124605178833
+		 -0.128448486328125 -0.069676399230957031 1 0.0028390884399414062 -0.132354736328125
+		 -0.049348831176757812 1 0.0030640363693237305 -0.1338958740234375 0.027390480041503906
+		 1 0.01029127836227417 -0.138214111328125 0.036714076995849609 1 -0.023708611726760864
+		 -3.5308074951171875 -1.5245804786682129 1 -0.032655298709869385 -3.6999359130859375
+		 -1.5516576766967773 1 -0.0083356797695159912 -3.851837158203125 -1.584165096282959
+		 1 0.0075042545795440674 -3.8955841064453125 -1.6180176734924316 1 0.025326967239379883
+		 -3.9527587890625 -1.6852502822875977 1 0.051202863454818726 -3.9839630126953125 -1.8437151908874512
+		 1 0.061441570520401001 -3.8771209716796875 -1.9295978546142578 1 0.063253492116928101
+		 -3.7951812744140625 -1.9679217338562012 1 0.057795733213424683 -3.714813232421875
+		 -1.9992046356201172 1 0.043879121541976929 -3.60736083984375 -2.0788726806640625
+		 1 -0.00058346986770629883 -0.0180206298828125 0.0027151107788085938 1 -0.0014559626579284668
+		 -0.019989013671875 -0.0024461746215820312 1 -0.0012437701225280762 -0.021881103515625
+		 -0.0070352554321289062 1 -0.00030022859573364258 -0.02593994140625 -0.015082359313964844
+		 1 -0.0001926124095916748 -0.0297698974609375 -0.018222808837890625 1 -0.0019106864929199219
+		 -0.030029296875 -0.028664588928222656 1 -0.0027199983596801758 -0.0283203125 -0.032052993774414062
+		 1 -0.0051897764205932617 -0.041351318359375 -0.037462234497070312 1 -0.0040759444236755371
+		 -0.0490875244140625 -0.040865898132324219 1 5.4657459259033203e-05 -0.0631256103515625
+		 -0.053927421569824219 1 0.0077765583992004395 -0.070037841796875 -0.066119194030761719
+		 1 0.0088816285133361816 -0.071746826171875 -0.070552825927734375 1 0.016351431608200073
+		 -0.08233642578125 -0.079885482788085938 1 0.023364812135696411 -0.0947723388671875
+		 -0.0859527587890625 1 0.03411567211151123 -0.1525421142578125 -0.11484432220458984
+		 1 0.021360099315643311 -0.1714324951171875 -0.11315441131591797 1 0.015223264694213867
+		 -0.1810455322265625 -0.10172271728515625 1 0.0054203271865844727 -0.1795654296875
+		 -0.077899932861328125 1 -0.0033355355262756348 -0.1744842529296875 0.00078582763671875
+		 1 0.010655641555786133 -0.1767730712890625 0.011065483093261719 1 0.008823692798614502
+		 -3.847259521484375 -1.6370325088500977 1 0.045333921909332275 -3.8667755126953125
+		 -1.8018412590026855 1 0.063572585582733154 -3.7467803955078125 -1.8945794105529785
+		 1 0.073740839958190918 -3.6707763671875 -1.9407529830932617 1 0.081678390502929688
+		 -3.59429931640625 -1.9818210601806641 1 0.084083676338195801 -3.4959564208984375
+		 -2.0903816223144531 1 -0.00016021728515625 -0.0194244384765625 -0.00027179718017578125
+		 1 -0.0010634660720825195 -0.020965576171875 -0.0063428878784179688 1 -0.0011736154556274414
+		 -0.022735595703125 -0.010340690612792969 1 -0.00018608570098876953 -0.026611328125
+		 -0.016650199890136719 1 -0.00011724233627319336 -0.02899169921875 -0.019011497497558594
+		 1 -0.0018271803855895996 -0.028900146484375 -0.028881072998046875 1 -0.003563225269317627
+		 -0.0261993408203125 -0.031432151794433594 1 -0.0068405270576477051 -0.040679931640625
+		 -0.035230636596679688 1 -0.005718529224395752 -0.0490875244140625 -0.036584854125976562
+		 1 -0.0011627078056335449 -0.064910888671875 -0.044966697692871094 1 0.010166466236114502
+		 -0.0807952880859375 -0.057698249816894531 1 0.015300989151000977 -0.0923004150390625
+		 -0.068126678466796875 1 0.026537299156188965 -0.108551025390625 -0.083462715148925781
+		 1 0.035371601581573486 -0.1253662109375 -0.096468925476074219 1 0.032644987106323242
+		 -0.2080078125 -0.14283847808837891 1 0.04427039623260498 -0.17767333984375 -0.11621475219726562
+		 1 0.010756373405456543 -0.2427825927734375 -0.15181541442871094 1 -0.0021730661392211914
+		 -0.25689697265625 -0.144500732421875 1 -0.014770984649658203 -0.238037109375 -0.040001392364501953
+		 1 -0.055854320526123047 -0.306243896484375 -0.098265647888183594 1 -0.10410493612289429
+		 -3.3502349853515625 -1.5521388053894043 1 -0.14666390419006348 -3.1732635498046875
+		 -1.5102272033691406 1 -0.05637747049331665 -3.469512939453125 -1.5465073585510254
+		 1 -0.082165837287902832 -3.62103271484375 -1.557032585144043 1 -0.048994719982147217
+		 -3.7545623779296875 -1.5531415939331055 1 -0.021216094493865967 -3.794830322265625
+		 -1.5754337310791016 1 -0.024564146995544434 -3.6701507568359375 -1.5760707855224609
+		 1 -0.062290668487548828 -3.6295013427734375 -1.5222916603088379 1 0.020450949668884277
+		 -3.6701202392578125 -1.727142333984375 1 0.047503829002380371 -3.5494384765625 -1.8289637565612793
+		 1 0.06702423095703125 -3.4714813232421875 -1.8842062950134277 1 0.09125053882598877
+		 -3.3916168212890625 -1.9403624534606934 1 0.12185299396514893 -3.2858123779296875
+		 -2.0848240852355957 1 -0.0021784305572509766 -0.02252197265625 -0.0056867599487304688
+		 1 -0.0039453506469726562 -0.0231475830078125 -0.011932373046875 1 -0.0039861202239990234
+		 -0.0245513916015625 -0.015999794006347656 1 -0.0019885897636413574 -0.0267486572265625
+		 -0.021648406982421875 1 -0.0022584199905395508 -0.0284423828125 -0.027459144592285156
+		 1 -0.0055369138717651367 -0.0287017822265625 -0.030384063720703125 1 -0.0098401308059692383
+		 -0.0403900146484375 -0.032632827758789062 1 -0.0061866044998168945 -0.0467529296875
+		 -0.032558441162109375 1 -0.0054033398628234863 -0.052978515625 -0.034076690673828125
+		 1 -0.0078334808349609375 -0.0508270263671875 -0.035878181457519531 1 0.0017371773719787598
+		 -0.0628814697265625 -0.039164543151855469 1 0.0084714889526367188 -0.0776824951171875
+		 -0.0446624755859375 1 0.018627047538757324 -0.10614013671875 -0.051215171813964844
+		 1 0.0061948299407958984 -0.0797119140625 -0.041781425476074219 1 0.027230381965637207
+		 -0.1273040771484375 -0.068446159362792969 1 0.037949800491333008 -0.153839111328125
+		 -0.093006134033203125 1 0.044059991836547852 -0.2562713623046875 -0.15107345581054688
+		 1 0.044395327568054199 -0.222869873046875 -0.11191844940185547 1 0.01576387882232666
+		 -0.298065185546875 -0.18635082244873047 1 -0.024637818336486816 -0.336669921875 -0.19841480255126953
+		 1 -0.048493623733520508 -0.3538055419921875 -0.19191837310791016 1 -0.015518903732299805
+		 -0.258697509765625 -0.12346267700195312 1 -0.067999005317687988 -0.35833740234375
+		 -0.17181110382080078 1 -0.036176025867462158 -0.2401885986328125 -0.04827880859375
+		 1 -0.089880943298339844 -0.3206787109375 -0.10921669006347656 1 -0.096496701240539551
+		 -0.3727874755859375 -0.15512657165527344 1 -0.14268052577972412 -0.396759033203125
+		 -0.16586494445800781 1 -0.19707834720611572 -2.9550323486328125 -1.4284200668334961
+		 1 -0.19489777088165283 -3.2812042236328125 -1.5083937644958496 1 -0.25834965705871582
+		 -3.0699462890625 -1.446810245513916 1 -0.14194530248641968 -3.4736175537109375 -1.5471305847167969
+		 1 -0.098992228507995605 -3.594482421875 -1.5115413665771484 1 -0.11455631256103516
+		 -3.4061431884765625 -1.4546504020690918 1 -0.15547072887420654 -3.3766632080078125
+		 -1.4544363021850586 1 -0.07697141170501709 -3.4322967529296875 -1.4993500709533691
+		 1 -0.018474936485290527 -3.4174041748046875 -1.6346311569213867 1 0.021871328353881836
+		 -3.300750732421875 -1.7407889366149902 1 0.048934221267700195 -3.2145538330078125
+		 -1.8009486198425293 1 0.079973936080932617 -3.1221923828125 -1.8600525856018066 1 0.11200797557830811
+		 -2.9560546875 -2.0050082206726074 1 -0.0031642913818359375 -0.0263671875 -0.0085687637329101562
+		 1 -0.0057262182235717773 -0.0257110595703125 -0.015215873718261719 1 -0.0063302516937255859
+		 -0.0262908935546875 -0.019234657287597656 1 -0.0036858916282653809 -0.027984619140625
+		 -0.024890899658203125 1 -0.0063612461090087891 -0.0308074951171875 -0.027994155883789062
+		 1 -0.010381221771240234 -0.035400390625 -0.034246444702148438 1 -0.0078510046005249023
+		 -0.0469207763671875 -0.029760360717773438 1 -0.0091432332992553711 -0.0413818359375
+		 -0.033410072326660156 1 -0.0043340921401977539 -0.050384521484375 -0.031415939331054688
+		 1 -0.0029722452163696289 -0.0590057373046875 -0.03105926513671875 1 -0.0048499703407287598
+		 -0.0596771240234375 -0.034829139709472656 1 -0.00025331974029541016 -0.0599517822265625
+		 -0.030416488647460938 1 0.0022385120391845703 -0.0651092529296875 -0.026243209838867188
+		 1 -0.0015655755996704102 -0.060821533203125 -0.035169601440429688 1 0.0037015676498413086
+		 -0.0727081298828125 -0.037204742431640625 1 0.0010599493980407715 -0.0734100341796875
+		 -0.036808967590332031 1 0.0043724775314331055 -0.079071044921875 -0.035022735595703125
+		 1 -0.0019683837890625 -0.0708160400390625 -0.037807464599609375 1 0.029429435729980469
+		 -0.1394195556640625 -0.049669265747070312 1 0.036280035972595215 -0.166900634765625
+		 -0.070208549499511719 1 0.039426088333129883 -0.2298736572265625 -0.088788032531738281
+		 1 0.037093877792358398 -0.1756439208984375 -0.058043479919433594 1 0.029701948165893555
+		 -0.324310302734375 -0.16812229156494141 1 0.029433727264404297 -0.3062286376953125
+		 -0.13617849349975586 1 0.019579172134399414 -0.352874755859375 -0.20067882537841797
+		 1 -0.025948762893676758 -0.4071807861328125 -0.23792648315429688 1 -0.080052852630615234
+		 -0.448638916015625 -0.24879550933837891 1 -0.10950648784637451 -0.463104248046875
+		 -0.24129962921142578 1 -0.13016033172607422 -0.4625244140625 -0.22052240371704102
+		 1 -0.19242310523986816 -0.4800872802734375 -0.22785568237304688 1 -0.18672811985015869
+		 -0.563446044921875 -0.26821517944335938 1 -0.14211440086364746 -0.456695556640625
+		 -0.2259526252746582 1 -0.2146296501159668 -0.6409759521484375 -0.35194587707519531
+		 1 -0.22452354431152344 -2.711212158203125 -1.3293356895446777 1 -0.29826295375823975
+		 -2.84625244140625 -1.363926887512207 1 -0.21697163581848145 -3.1366424560546875 -1.3861565589904785
+		 1 -0.27530944347381592 -2.899200439453125 -1.3206987380981445 1 -0.17488181591033936
+		 -3.1518707275390625 -1.37677001953125 1 -0.14114713668823242 -3.162750244140625 -1.4047560691833496
+		 1 -0.073433399200439453 -3.1327972412109375 -1.5266933441162109 1 -0.016785025596618652
+		 -3.008880615234375 -1.6333584785461426 1 0.014772891998291016 -2.9051666259765625
+		 -1.6878318786621094 1 0.045876979827880859 -2.7920989990234375 -1.7366867065429688
+		 1 0.071142196655273438 -2.587310791015625 -1.8418660163879395 1 -0.0042045116424560547
+		 -0.033172607421875 -0.012228012084960938 1 -0.0079461336135864258 -0.0307769775390625
+		 -0.018738746643066406 1 -0.0087385177612304688 -0.0306549072265625 -0.022866249084472656
+		 1 -0.0097270011901855469 -0.043914794921875 -0.028475761413574219 1 -0.007656097412109375
+		 -0.054351806640625 -0.032627105712890625 1 -0.00058424472808837891 -0.07000732421875
+		 -0.02613067626953125 1 -0.0031411647796630859 -0.0929107666015625 -0.036360740661621094
+		 1 -0.0012853145599365234 -0.067779541015625 -0.025757789611816406 1 -0.0034251213073730469
+		 -0.065216064453125 -0.030631065368652344 1 -0.00062847137451171875 -0.0685272216796875
+		 -0.032276153564453125 1 0.001513361930847168 -0.0623626708984375 -0.030975341796875
+		 1 0.028974175453186035 -0.1517486572265625 -0.0477752685546875 1 0.022275209426879883
+		 -0.1691436767578125 -0.043695926666259766 1 0.021520614624023438 -0.13433837890625
+		 -0.032552719116210938 1 0.02091670036315918 -0.217498779296875 -0.0660400390625 1 0.010066509246826172
+		 -0.271240234375 -0.10329961776733398 1 0.0023956298828125 -0.3788604736328125 -0.18811178207397461
+		 1 -0.013272762298583984 -0.32177734375 -0.151519775390625 1 -0.0027723312377929688
+		 -0.408447265625 -0.21997404098510742 1 -0.020860910415649414 -0.4446868896484375
+		 -0.25105953216552734 1 -0.08603215217590332 -0.5204620361328125 -0.29023075103759766
+		 1 -0.14484047889709473 -0.5670318603515625 -0.29743719100952148 1 -0.17054331302642822
+		 -0.5743408203125 -0.28769779205322266 1 -0.28823566436767578 -0.782073974609375 -0.38372278213500977
+		 1 -0.28257608413696289 -0.8037872314453125 -0.3936457633972168 1 -0.26450514793395996
+		 -0.6627349853515625 -0.35278415679931641 1 -0.25697636604309082 -0.86865234375 -0.47059392929077148
+		 1 -0.32785391807556152 -0.917572021484375 -0.48231983184814453 1 -0.23257780075073242
+		 -2.258087158203125 -1.1334857940673828 1 -0.32695686817169189 -2.39874267578125 -1.1660432815551758
+		 1 -0.37000322341918945 -2.4452972412109375 -1.1776261329650879 1 -0.23927462100982666
+		 -2.8951568603515625 -1.3030195236206055 1 -0.34647083282470703 -2.418304443359375
+		 -1.1558032035827637 1 -0.20745086669921875 -2.895599365234375 -1.3161225318908691
+		 1 -0.1440126895904541 -2.8482513427734375 -1.4117097854614258 1 -0.074824810028076172
+		 -2.7046356201171875 -1.5109944343566895 1 -0.042474031448364258 -2.57672119140625
+		 -1.5567536354064941 1 -0.013662099838256836 -2.4457244873046875 -1.5899820327758789
+		 1 0.014184236526489258 -2.235809326171875 -1.6464200019836426 1 -0.14839982986450195
+		 -1.5776824951171875 -1.2985239028930664 1 -0.17152094841003418 -1.6436614990234375
+		 -1.2763671875 1 -0.13282012939453125 -1.4813995361328125 -1.2863202095031738 1 -0.10293292999267578
+		 -1.3870849609375 -1.2532749176025391 1 -0.0044786930084228516 -0.0447540283203125
+		 -0.0152740478515625 1 -0.010275959968566895 -0.0426177978515625 -0.023011207580566406
+		 1 -0.010393381118774414 -0.0494232177734375 -0.025468826293945312 1 -0.0064433813095092773
+		 -0.0589447021484375 -0.02831268310546875 1 0.0077533721923828125 -0.1195220947265625
+		 -0.039214134216308594 1 0.011468648910522461 -0.153564453125 -0.047323226928710938
+		 1 0.0035040378570556641 -0.196807861328125 -0.071399688720703125 1 -0.011592864990234375
+		 -0.2444000244140625 -0.10499477386474609 1 -0.033752679824829102 -0.2892913818359375
+		 -0.14731073379516602 1 -0.085834741592407227 -0.4297332763671875 -0.26140975952148438
+		 1 -0.10142755508422852 -0.38885498046875 -0.24529790878295898 1 -0.074088335037231445
+		 -0.5121612548828125 -0.29926681518554688 1 -0.0779266357421875 -0.5456695556640625
+		 -0.31806516647338867 1 -0.18739414215087891 -0.72540283203125 -0.42951631546020508
+		 1 -0.22754597663879395 -0.753692626953125 -0.40016651153564453 1 -0.26980733871459961
+		 -0.794097900390625 -0.39352750778198242 1 -0.39722466468811035 -1.0697174072265625
+		 -0.50598812103271484 1 -0.39868044853210449 -1.0546112060546875 -0.50035238265991211
+		 1 -0.39034318923950195 -1.0596923828125 -0.51572513580322266 1 -0.27289962768554688
+		 -0.979278564453125 -0.52025508880615234 1 -0.27596926689147949 -1.2407379150390625
+		 -0.63736438751220703 1 -0.25258040428161621 -1.8191070556640625 -0.92310285568237305
+		 1 -0.33641242980957031 -1.9662322998046875 -0.97265625 1 -0.44822382926940918 -2.0332794189453125
+		 -0.9993443489074707 1 -0.44512629508972168 -1.9899139404296875 -0.966156005859375
+		 1 -0.32745647430419922 -2.388763427734375 -1.1482257843017578 1 -0.43618154525756836
+		 -1.941009521484375 -0.93724346160888672 1 -0.28026676177978516 -2.3039703369140625
+		 -1.1761922836303711 1 -0.21615767478942871 -2.131011962890625 -1.2267813682556152
+		 1 -0.1967933177947998 -1.9971466064453125 -1.2547907829284668 1 -0.18358373641967773
+		 -1.860595703125 -1.2754178047180176 1 -0.34507918357849121 -1.26751708984375 -1.0203800201416016
+		 1 -0.32987689971923828 -1.44207763671875 -0.98539924621582031 1 -0.33359432220458984
+		 -1.193359375 -1.0401382446289062 1 -0.32822704315185547 -1.1028289794921875 -1.0229020118713379
+		 1 -0.29888772964477539 -1.01043701171875 -0.98555088043212891 1 -0.0042731761932373047
+		 -0.061370849609375 -0.017159461975097656 1 -0.0090450048446655273 -0.0614776611328125
+		 -0.023406982421875 1 -0.00010895729064941406 -0.10888671875 -0.035202980041503906
+		 1 -0.0028204917907714844 -0.1421966552734375 -0.050059318542480469 1 -0.014322996139526367
+		 -0.1762847900390625 -0.07649993896484375 1 -0.032384872436523438 -0.2123870849609375
+		 -0.10862350463867188 1 -0.055799245834350586 -0.251495361328125 -0.14597177505493164
+		 1 -0.12018561363220215 -0.339599609375 -0.22617387771606445 1 -0.19897627830505371
+		 -0.5121917724609375 -0.36554384231567383 1 -0.20850563049316406 -0.449249267578125
+		 -0.32583236694335938 1 -0.18862080574035645 -0.56573486328125 -0.39615774154663086
+		 1 -0.17914009094238281 -0.667205810546875 -0.43576622009277344 1 -0.18211698532104492
+		 -0.70489501953125 -0.44026947021484375 1 -0.24378514289855957 -0.8017120361328125
+		 -0.51204490661621094 1 -0.31556177139282227 -0.9454803466796875 -0.56391572952270508
+		 1 -0.3677823543548584 -1.0046844482421875 -0.5203704833984375 1 -0.44473791122436523
+		 -1.2001953125 -0.56663894653320312 1 -0.41762900352478027 -1.1339874267578125 -0.58111953735351562
+		 1 -0.42764377593994141 -1.196075439453125 -0.57991218566894531 1 -0.3434441089630127
+		 -1.0379638671875 -0.53371000289916992 1 -0.34796047210693359 -1.3228607177734375
+		 -0.66457366943359375 1 -0.25773406028747559 -1.6317596435546875 -0.82513618469238281
+		 1 -0.33997035026550293 -1.750030517578125 -0.86979436874389648 1 -0.47716689109802246
+		 -1.72357177734375 -0.83084344863891602 1 -0.40103745460510254 -1.8221435546875 -0.91489982604980469
+		 1 -0.44642210006713867 -1.6132354736328125 -0.80764579772949219 1 -0.35256195068359375
+		 -1.6567230224609375 -0.92759609222412109 1 -0.3363807201385498 -1.5499114990234375
+		 -0.95465755462646484 1 -0.36604499816894531 -1.3111114501953125 -0.89481067657470703
+		 1 -0.38006711006164551 -1.149322509765625 -0.92864465713500977 1 -0.37588214874267578
+		 -1.0704193115234375 -0.93836784362792969 1 -0.3770601749420166 -0.976959228515625
+		 -0.91429376602172852 1 -0.3504939079284668 -0.884765625 -0.87453460693359375 1 -0.0096309185028076172
+		 -0.1074066162109375 -0.034929752349853516 1 -0.018038034439086914 -0.135589599609375
+		 -0.05371856689453125 1 -0.031703472137451172 -0.16412353515625 -0.07669830322265625
+		 1 -0.050696611404418945 -0.1951446533203125 -0.10352611541748047 1 -0.074898004531860352
+		 -0.2302703857421875 -0.13545894622802734 1 -0.13559150695800781 -0.305084228515625
+		 -0.20192289352416992 1 -0.21189785003662109 -0.3934173583984375 -0.28322887420654297
+		 1 -0.25499773025512695 -0.515045166015625 -0.39551258087158203 1 -0.24890422821044922
+		 -0.4478607177734375 -0.34464216232299805 1 -0.25056219100952148 -0.5859375 -0.44304513931274414
+		 1 -0.24724340438842773 -0.648223876953125 -0.47368669509887695 1 -0.2396848201751709
+		 -0.75933837890625 -0.51361799240112305 1 -0.3004448413848877 -0.90374755859375 -0.58343172073364258
+		 1 -0.34422039985656738 -1.0057830810546875 -0.65003871917724609 1 -0.36214113235473633
+		 -1.05712890625 -0.62614965438842773 1 -0.46337580680847168 -1.3532867431640625 -0.68040180206298828
+		 1 -0.40600848197937012 -1.25750732421875 -0.72146844863891602 1 -0.4895167350769043
+		 -1.4222259521484375 -0.68019437789916992 1 -0.47303223609924316 -1.4667510986328125
+		 -0.71369314193725586 1 -0.47652435302734375 -1.822265625 -0.89220190048217773 1 -0.39286208152770996
+		 -1.4843597412109375 -0.83047962188720703 1 -0.37031030654907227 -1.40185546875 -0.86118268966674805
+		 1 -0.38681697845458984 -1.1942291259765625 -0.75243091583251953 1 -0.38164830207824707
+		 -1.1268463134765625 -0.77605295181274414 1 -0.38831019401550293 -0.9841766357421875
+		 -0.77802562713623047 1 -0.38934779167175293 -0.9009246826171875 -0.76500415802001953
+		 1 -0.38966083526611328 -0.8043975830078125 -0.72991752624511719 1 -0.3676600456237793
+		 -0.70904541015625 -0.67718935012817383 1 -0.28580522537231445 -0.5078887939453125
+		 -0.41828012466430664 1 -0.29977273941040039 -0.586822509765625 -0.47522354125976562
+		 1 -0.30124306678771973 -0.6648101806640625 -0.52369213104248047 1 -0.30100655555725098
+		 -0.735076904296875 -0.55310821533203125 1 -0.29436707496643066 -0.855010986328125
+		 -0.59043407440185547 1 -0.33861207962036133 -0.9488372802734375 -0.66037750244140625
+		 1 -0.34236454963684082 -0.8226165771484375 -0.63141822814941406 1 -0.34300589561462402
+		 -0.7468109130859375 -0.60442161560058594 1 -0.34070014953613281 -0.6603546142578125
+		 -0.55814647674560547 1 -0.32197475433349609 -0.5720062255859375 -0.5000147819519043
+		 1 -0.4790492057800293 -1.7765655517578125 -0.86073637008666992 1 -0.4852750301361084
+		 -1.449371337890625 -0.69608020782470703 1 -0.43678593635559082 -1.2135162353515625
+		 -0.57266807556152344 1 0.0033826231956481934 -0.06591796875 -0.0381927490234375 1 0.0047595500946044922
+		 -0.071075439453125 -0.04775238037109375 1 0.0032114386558532715 -0.0717010498046875
+		 -0.058718681335449219 1 0.0043219923973083496 -0.0671844482421875 -0.066761970520019531
+		 1 0.0027032345533370972 -0.05950927734375 -0.0687255859375 1 -0.001860007643699646
+		 -0.0346527099609375 -0.037678718566894531 1 -0.0037885904312133789 -0.0332183837890625
+		 -0.036962509155273438 1 -0.0055311918258666992 -0.033477783203125 -0.036303520202636719
+		 1 -0.0080893039703369141 -0.035064697265625 -0.035550117492675781 1 -0.0088676214218139648
+		 -0.0335845947265625 -0.032050132751464844 1 -0.01126408576965332 -0.0363006591796875
+		 -0.027499198913574219 1 0.0092082023620605469 -0.109405517578125 -0.027960777282714844
+		 1 0.012467384338378906 -0.097900390625 -0.024264335632324219 1 0.0064594745635986328
+		 -0.092498779296875 -0.027788162231445312 1 -0.0061091184616088867 -0.0771636962890625
+		 -0.030344963073730469 1 -0.0028514862060546875 -0.070281982421875 -0.035462379455566406
+		 1 0.0017554759979248047 -0.0546875 -0.031138420104980469 1 -0.0080531835556030273
+		 -0.050750732421875 -0.037949562072753906 1 -0.0013862848281860352 -0.0604705810546875
+		 -0.034008026123046875 1 -0.0012638568878173828 -0.058319091796875 -0.034480094909667969
+		 1 -0.0015685558319091797 -0.0570068359375 -0.035735130310058594 1 -0.00014251470565795898
+		 -0.0546112060546875 -0.041876792907714844 1 -0.0012825727462768555 -0.0518798828125
+		 -0.04711151123046875 1 0.00046628713607788086 -0.0601806640625 -0.032482147216796875
+		 1 -0.25469589233398438 -0.8327484130859375 -0.49611139297485352 1 -0.30108189582824707
+		 -0.8757171630859375 -0.45900297164916992 1 -0.33950018882751465 -0.9163665771484375
+		 -0.44422197341918945 1 -0.34737706184387207 -0.93115234375 -0.4484410285949707 1 -0.34146666526794434
+		 -0.917694091796875 -0.45058822631835938 1 -0.2982715368270874 -0.779266357421875
+		 -0.42060947418212891 1 -0.2370915412902832 -0.7426605224609375 -0.41113090515136719
+		 1 -0.23947691917419434 -2.03607177734375 -1.0326099395751953 1 -0.33335399627685547
+		 -2.1866912841796875 -1.0735163688659668 1 -0.41127538681030273 -2.236480712890625
+		 -1.095116138458252 1 -0.39787459373474121 -2.2034149169921875 -1.0682449340820312
+		 1 -0.38221931457519531 -2.164337158203125 -1.0500302314758301 1 -0.34460186958312988
+		 -2.0562286376953125 -1.044489860534668 1 -0.28954553604125977 -1.8789825439453125
+		 -1.0668606758117676 1 -0.27259230613708496 -1.754791259765625 -1.0932779312133789
+		 1 -0.26353025436401367 -1.6260223388671875 -1.1193475723266602 1 -0.27510285377502441
+		 -1.4275970458984375 -1.1323904991149902 1 -0.25539517402648926 -1.362213134765625
+		 -1.1581802368164062 1 -0.24169111251831055 -1.2724609375 -1.1461677551269531 1 -0.21118545532226562
+		 -1.1777191162109375 -1.1100940704345703 1 -3.4809112548828125e-05 -1.63629150390625
+		 -1.4270691871643066 1 -0.031312942504882812 -1.73602294921875 -1.4606595039367676
+		 1 -0.049048662185668945 -1.8352508544921875 -1.4686031341552734 1 -0.065847158432006836
+		 -1.9134979248046875 -1.4516472816467285 1 -0.093716144561767578 -2.134613037109375
+		 -1.4371156692504883 1 -0.11525917053222656 -2.2680816650390625 -1.4138431549072266
+		 1 -0.14315056800842285 -2.40887451171875 -1.3783273696899414 1 -0.21322011947631836
+		 -2.5685272216796875 -1.2972912788391113 1 -0.26880693435668945 -2.6351318359375 -1.2354354858398438
+		 1 -0.28984034061431885 -2.6551513671875 -1.2372517585754395 1 -0.32467329502105713
+		 -2.669647216796875 -1.2557673454284668 1 -0.31190252304077148 -2.61322021484375 -1.2630066871643066
+		 1 -0.2282099723815918 -2.4662017822265625 -1.2220520973205566 1 -0.17921876907348633
+		 -0.542449951171875 -0.28934431076049805 1 -0.22963094711303711 -0.564544677734375
+		 -0.28765726089477539 1 -0.2364494800567627 -0.664306640625 -0.31930255889892578 1 -0.22390270233154297
+		 -0.68408203125 -0.33875131607055664 1 -0.20593714714050293 -0.678558349609375 -0.34413766860961914
+		 1 -0.15406990051269531 -0.635284423828125 -0.34339284896850586 1 -0.10193872451782227
+		 -0.267547607421875 -0.16891813278198242 1 -0.083890438079833984 -0.2939300537109375
+		 -0.18535232543945312 1 -0.063299179077148438 -0.3364715576171875 -0.19418764114379883
+		 1 -0.04555511474609375 -0.3726806640625 -0.20374345779418945 1 -0.033174514770507812
+		 -0.44598388671875 -0.24194622039794922 1 -0.040029525756835938 -0.481231689453125
+		 -0.26937198638916016 1 -0.085656642913818359 -0.5665130615234375 -0.32887458801269531
+		 1 -0.17414999008178711 -0.345611572265625 -0.23702287673950195 1 -0.16311311721801758
+		 -0.3903656005859375 -0.27004051208496094 1 -0.14802408218383789 -0.4465789794921875
+		 -0.30078887939453125 1 -0.13404750823974609 -0.4932708740234375 -0.32500219345092773
+		 1 -0.12253618240356445 -0.584564208984375 -0.36353206634521484 1 -0.12429404258728027
+		 -0.6175384521484375 -0.37400627136230469 1 -0.0002810060977935791 -0.023345947265625
+		 -0.0099611282348632812 1 -0.00071465969085693359 -0.02410888671875 -0.011289596557617188
+		 1 -0.00073444843292236328 -0.02490234375 -0.013455390930175781 1 -0.0033166408538818359
+		 -0.0258941650390625 -0.019021987915039062 1 -0.0053241848945617676 -0.0271148681640625
+		 -0.022015571594238281 1 -0.0076773166656494141 -0.0304107666015625 -0.025537490844726562
+		 1 -0.009792327880859375 -0.0338287353515625 -0.029841423034667969 1 -0.010676860809326172
+		 -0.039031982421875 -0.031750679016113281 1 -0.01024329662322998 -0.0496826171875
+		 -0.032512664794921875 1 -0.0031365156173706055 -0.0812835693359375 -0.024741172790527344
+		 1 0.010470390319824219 -0.10552978515625 -0.023891448974609375 1 0.031968593597412109
+		 -0.14666748046875 -0.040679931640625 1 0.036226987838745117 -0.1784210205078125 -0.042827606201171875
+		 1 0.033193349838256836 -0.228790283203125 -0.065318107604980469 1 0.024185657501220703
+		 -0.2910003662109375 -0.10907459259033203 1 -0.00037479400634765625 -0.3509063720703125
+		 -0.16096067428588867 1 -0.03499150276184082 -0.4098663330078125 -0.21672916412353516
+		 1 -0.076112747192382812 -0.471649169921875 -0.27769231796264648 1 -0.12454724311828613
+		 -0.5398406982421875 -0.3448939323425293 1 -0.18078923225402832 -0.6184234619140625
+		 -0.41887712478637695 1 -0.24123382568359375 -0.70684814453125 -0.49883651733398438
+		 1 -0.29526305198669434 -0.7978973388671875 -0.57812976837158203 1 -0.33828234672546387
+		 -0.8885955810546875 -0.65325689315795898 1 -0.38299822807312012 -1.060089111328125
+		 -0.7863001823425293 1 -0.37453842163085938 -1.2272796630859375 -0.91854381561279297
+		 1 -0.33544611930847168 -1.3476409912109375 -1.0093870162963867 1 -0.26741194725036621
+		 -1.5140228271484375 -1.1299910545349121 1 -0.17513179779052734 -1.740264892578125
+		 -1.279200553894043 1 -0.075800657272338867 -2.014495849609375 -1.4461750984191895
+		 1 0.0044133663177490234 -2.3383331298828125 -1.6188712120056152 1 0.065119266510009766
+		 -2.6791839599609375 -1.7863311767578125 1 0.1062319278717041 -3.0238494873046875
+		 -1.9246487617492676 1 0.11257922649383545 -3.3226165771484375 -2.0041780471801758
+		 1 0.08499598503112793 -3.5334930419921875 -2.027104377746582 1 0.050074189901351929
+		 -3.65234375 -2.0313425064086914 1 0.01555168628692627 -0.1119232177734375 -0.086202621459960938
+		 1 0.026277840137481689 -0.1585540771484375 -0.11674213409423828 1 0.021619319915771484
+		 -0.2241668701171875 -0.14985179901123047 1 -0.0022062063217163086 -0.3150177001953125
+		 -0.19361400604248047 1 -0.051106572151184082 -0.4283294677734375 -0.24553775787353516
+		 1 -0.11553621292114258 -0.5450897216796875 -0.29545688629150391 1 -0.18400740623474121
+		 -0.659088134765625 -0.34267807006835938 1 -0.2531583309173584 -0.7734375 -0.39225530624389648
+		 1 -0.32576537132263184 -0.896514892578125 -0.44738101959228516 1 -0.38949370384216309
+		 -1.027099609375 -0.50636434555053711 1 -0.43610310554504395 -1.163970947265625 -0.56863546371459961
+		 1 -0.48171377182006836 -1.3872833251953125 -0.67420387268066406 1 -0.46473336219787598
+		 -1.67108154296875 -0.81305694580078125 1 -0.42071056365966797 -1.884124755859375
+		 -0.91958999633789062 1 -0.3654024600982666 -2.113433837890625 -1.0429229736328125
+		 1 -0.30685567855834961 -2.3498687744140625 -1.1607284545898438 1 -0.24691319465637207
+		 -2.6054840087890625 -1.2650432586669922 1 -0.17955470085144043 -2.878509521484375
+		 -1.3653354644775391 1 -0.10888230800628662 -3.1566619873046875 -1.4723892211914062
+		 1 -0.04562842845916748 -3.4386749267578125 -1.5772829055786133 1 0.0041540861129760742
+		 -3.6909027099609375 -1.6598734855651855 1 0.033690214157104492 -3.88482666015625
+		 -1.7237491607666016 1 0.041459560394287109 -3.997894287109375 -1.7730712890625 1 0.013349071145057678
+		 -0.0865936279296875 -0.078528404235839844 1 0.027597546577453613 -0.10626220703125
+		 -0.089362144470214844 1 0.038094222545623779 -0.1402435302734375 -0.10597801208496094
+		 1 0.041248083114624023 -0.195831298828125 -0.13276576995849609 1 0.031901240348815918
+		 -0.2810211181640625 -0.1749725341796875 1 -0.0014195442199707031 -0.382568359375
+		 -0.22480964660644531 1 -0.052995920181274414 -0.4871063232421875 -0.277587890625
+		 1 -0.11760067939758301 -0.6017608642578125 -0.34081840515136719 1 -0.19984316825866699
+		 -0.7337188720703125 -0.4139094352722168 1 -0.27433967590332031 -0.85565185546875
+		 -0.47619009017944336 1 -0.33939933776855469 -0.9786224365234375 -0.53998994827270508
+		 1 -0.38850522041320801 -1.09918212890625 -0.600738525390625 1 -0.4349822998046875
+		 -1.3116302490234375 -0.69521617889404297 1 -0.42054104804992676 -1.5517425537109375
+		 -0.81311988830566406 1 -0.37592077255249023 -1.74859619140625 -0.91684913635253906
+		 1 -0.31632614135742188 -1.9843902587890625 -1.0511884689331055 1 -0.24898791313171387
+		 -2.2364349365234375 -1.2005572319030762 1 -0.17921113967895508 -2.5117645263671875
+		 -1.3350262641906738 1 -0.11027669906616211 -2.796783447265625 -1.4587898254394531
+		 1 -0.044709324836730957 -3.0861663818359375 -1.5776677131652832 1 0.0032966136932373047
+		 -3.3701171875 -1.6862001419067383 1 0.035775899887084961 -3.61968994140625 -1.7771635055541992
+		 1 0.055168211460113525 -3.8163299560546875 -1.8477096557617188 1 0.057383894920349121
+		 -3.9415283203125 -1.8870224952697754 1 -0.0018788278102874756 -0.12945556640625 -0.023546218872070312
+		 1 -0.0053629875183105469 -0.178924560546875 -0.050711631774902344 1 -0.031215131282806396
+		 -0.26043701171875 -0.096689224243164062 1 -0.086895108222961426 -0.3593292236328125
+		 -0.14907169342041016 1 -0.14777660369873047 -0.4532928466796875 -0.19822168350219727
+		 1 -0.20238685607910156 -0.5433197021484375 -0.24809646606445312 1 -0.24924206733703613
+		 -0.6345672607421875 -0.30300378799438477 1 -0.29445886611938477 -0.7480621337890625
+		 -0.37011528015136719 1 -0.33933925628662109 -0.8823394775390625 -0.44329643249511719
+		 1 -0.38124871253967285 -1.02130126953125 -0.51214838027954102 1 -0.41427874565124512
+		 -1.1548004150390625 -0.573822021484375 1 -0.44942307472229004 -1.45111083984375 -0.71788215637207031
+		 1 -0.45895099639892578 -1.8502960205078125 -0.91537046432495117 1 -0.43689656257629395
+		 -2.06256103515625 -1.0237221717834473 1 -0.4144902229309082 -2.260986328125 -1.1157093048095703
+		 1 -0.38876092433929443 -2.4645843505859375 -1.1955928802490234 1 -0.35378313064575195
+		 -2.6797332763671875 -1.2733888626098633 1 -0.3090965747833252 -2.89727783203125 -1.340156078338623
+		 1 -0.2540748119354248 -3.120452880859375 -1.4082245826721191 1 -0.19637966156005859
+		 -3.3474884033203125 -1.4794507026672363 1 -0.13425970077514648 -3.5635833740234375
+		 -1.5366864204406738 1 -0.072413027286529541 -3.7265472412109375 -1.5671720504760742
+		 1 -0.021001666784286499 -3.821685791015625 -1.5826005935668945 1 -0.0057082176208496094
+		 -0.08233642578125 -0.022884368896484375 1 -0.0045615434646606445 -0.0812225341796875
+		 -0.027237892150878906 1 0.0027464628219604492 -0.0756988525390625 -0.030755996704101562
+		 1 -0.0070343017578125 -0.0718231201171875 -0.037499427795410156 1 -0.0084738731384277344
+		 -0.0644989013671875 -0.032460212707519531 1 -0.0057191848754882812 -0.0532073974609375
+		 -0.030649185180664062 1 -0.0045522451400756836 -0.05657958984375 -0.028299331665039062
+		 1 -0.0028313398361206055 -0.0582733154296875 -0.029041290283203125 1 -0.00058257579803466797
+		 -0.06439208984375 -0.028109550476074219 1 0.0089449882507324219 -0.06231689453125
+		 -0.031037330627441406 1 0.003185272216796875 -0.0680999755859375 -0.033404350280761719
+		 1 0.0070371031761169434 -0.0711212158203125 -0.030162811279296875 1 0.0079884529113769531
+		 -0.0700531005859375 -0.037310600280761719 1 0.010184824466705322 -0.07427978515625
+		 -0.045775413513183594 1 0.013798356056213379 -0.0771331787109375 -0.060029029846191406
+		 1 0.012076258659362793 -0.07122802734375 -0.066791534423828125 1 0.0068095028400421143
+		 -0.062744140625 -0.068393707275390625 1 -0.36913108825683594 -0.788421630859375 -0.77207088470458984
+		 1 -0.39345979690551758 -0.8824005126953125 -0.81815862655639648 1 -0.39216351509094238
+		 -0.97747802734375 -0.84688997268676758 1 -0.39322161674499512 -1.0592193603515625
+		 -0.84864139556884766 1 -0.38709664344787598 -1.13665771484375 -0.84774208068847656
+		 1 -0.38222122192382812 -1.2115936279296875 -0.8302302360534668 1 -0.38679337501525879
+		 -1.2892913818359375 -0.80029058456420898 1 -0.40733599662780762 -1.359161376953125
+		 -0.76726293563842773 1 -0.43648552894592285 -1.417388916015625 -0.74539947509765625
+		 1 -0.46401405334472656 -1.465362548828125 -0.73516941070556641 1 -0.48364782333374023
+		 -1.5073089599609375 -0.73389387130737305 1 -0.49278974533081055 -1.5494384765625
+		 -0.74499940872192383 1 -0.4917905330657959 -1.58892822265625 -0.76698207855224609
+		 1 -0.4843599796295166 -1.6243438720703125 -0.79168415069580078 1 -0.4617149829864502
+		 -1.63726806640625 -0.80718135833740234 1 -0.34346342086791992 -1.5257110595703125
+		 -0.76024341583251953 1 -0.26775765419006348 -1.4371337890625 -0.72853755950927734
+		 1 -0.35154294967651367 -0.6397857666015625 -0.5879969596862793 1 -0.37209749221801758
+		 -0.733154296875 -0.64383172988891602 1 -0.37304806709289551 -0.82598876953125 -0.68457269668579102
+		 1 -0.37222552299499512 -0.9062042236328125 -0.70584249496459961 1 -0.36827659606933594
+		 -0.976593017578125 -0.7221989631652832 1 -0.36702203750610352 -1.03955078125 -0.72219991683959961
+		 1 -0.37331485748291016 -1.1021575927734375 -0.7049565315246582 1 -0.39177894592285156
+		 -1.1601409912109375 -0.67777156829833984 1 -0.41987442970275879 -1.2098541259765625
+		 -0.65085077285766602 1 -0.4472956657409668 -1.24822998046875 -0.63247394561767578
+		 1 -0.46649169921875 -1.283447265625 -0.62294149398803711 1 -0.47218847274780273 -1.315582275390625
+		 -0.62445926666259766 1 -0.46786952018737793 -1.3328857421875 -0.63433933258056641
+		 1 -0.45527386665344238 -1.3294677734375 -0.64679527282714844 1 -0.43546128273010254
+		 -1.2933807373046875 -0.64000129699707031 1 -0.34971499443054199 -1.1687774658203125
+		 -0.59148740768432617 1 -0.27608346939086914 -1.0752410888671875 -0.56338119506835938
+		 1 0.01478731632232666 -0.1024169921875 -0.083639144897460938 1 0.024887979030609131
+		 -0.1239471435546875 -0.098602294921875 1 0.028083205223083496 -0.116546630859375
+		 -0.094614982604980469 1 -0.061895608901977539 -0.523162841796875 -0.29795551300048828
+		 1 -0.12520122528076172 -0.628936767578125 -0.36896514892578125 1 -0.0017949044704437256
+		 -0.129669189453125 0.0024127960205078125 1 -0.0099922418594360352 -0.1766815185546875
+		 -0.02613067626953125 1 -0.040879130363464355 -0.252685546875 -0.072012901306152344
+		 1 -0.097464561462402344 -0.345062255859375 -0.12771463394165039 1 -0.15507125854492188
+		 -0.4294281005859375 -0.17935705184936523 1 -0.20761251449584961 -0.5150299072265625
+		 -0.2353205680847168 1 -0.25038802623748779 -0.60015869140625 -0.29252910614013672
+		 1 -0.28880739212036133 -0.7034912109375 -0.35870695114135742 1 -0.32573866844177246
+		 -0.8288726806640625 -0.43062496185302734 1 -0.36320757865905762 -0.9681854248046875
+		 -0.49753379821777344 1 -0.38910961151123047 -1.099273681640625 -0.55494499206542969
+		 1 -0.40102505683898926 -1.232086181640625 -0.61769199371337891 1 -0.40302681922912598
+		 -1.399322509765625 -0.69975709915161133 1 -0.409942626953125 -1.60601806640625 -0.79746055603027344
+		 1 -0.41115474700927734 -1.8284759521484375 -0.90512847900390625 1 -0.40115118026733398
+		 -2.0475006103515625 -1.012509822845459 1 -0.39357388019561768 -2.256561279296875
+		 -1.107818603515625 1 -0.38083279132843018 -2.4567413330078125 -1.1923136711120605
+		 1 -0.35935342311859131 -2.6654815673828125 -1.2785630226135254 1 -0.32828211784362793
+		 -2.8778839111328125 -1.3601827621459961 1 -0.27417480945587158 -3.09747314453125
+		 -1.4361190795898438 1 -0.21129703521728516 -3.32208251953125 -1.5082712173461914
+		 1 -0.14909178018569946 -3.53692626953125 -1.5623903274536133 1 -0.084857344627380371
+		 -3.698150634765625 -1.5833392143249512 1 -0.029713839292526245 -3.7867584228515625
+		 -1.5881600379943848 1 -0.0009257197380065918 -0.020751953125 -0.0030803680419921875
+		 1 -0.0022363066673278809 -0.0218658447265625 -0.0094900131225585938 1 -0.0020422935485839844
+		 -0.0236053466796875 -0.013673782348632812 1 -0.0014347434043884277 -0.0257110595703125
+		 -0.016632080078125 1 -0.00069516897201538086 -0.0265045166015625 -0.018876075744628906
+		 1 -0.00038957595825195312 -0.0278778076171875 -0.020442008972167969 1 -0.00099140405654907227
+		 -0.02850341796875 -0.023436546325683594 1 -0.0010735392570495605 -0.029327392578125
+		 -0.023205757141113281 1 -0.0014874935150146484 -0.0290374755859375 -0.023456573486328125
+		 1 -0.0005175173282623291 -0.0286712646484375 -0.024209976196289062 1 -0.00010900000052060932
+		 -3.5836029052734375 -2.1924128532409668 1 -0.00013600000238511711 -3.6051483154296875
+		 -2.1289410591125488 1 -0.00011999999696854502 -3.6420440673828125 -2.072413444519043
+		 1 -0.00013000000035390258 -3.69140625 -2.0317931175231934 1 -4.5000000682193786e-05
+		 -3.755706787109375 -2.0057187080383301 1 1.9999999949504854e-06 -3.8392486572265625
+		 -1.9761838912963867 1 9.9999999747524271e-07 -3.924896240234375 -1.9391899108886719
+		 1 0 -3.984283447265625 -1.8980550765991211 1 0 -4.01873779296875 -1.8563213348388672
+		 1 0 -4.030609130859375 -1.7947301864624023 1 0 -3.9854583740234375 -1.7030735015869141
+		 1 0 -3.9272613525390625 -1.6341423988342285 1 0 -3.883514404296875 -1.596409797668457
+		 1 0 -3.8528900146484375 -1.5892453193664551 1 0 -3.81585693359375 -1.5910544395446777
+		 1 0 -3.7215728759765625 -1.5487580299377441 1 0 -3.55072021484375 -1.5118098258972168
+		 1 0 -0.128387451171875 0.042252540588378906 1 0 -0.1242828369140625 0.033326148986816406
+		 1 0 -0.116729736328125 0.0087804794311523438 1 0 -0.114776611328125 -0.018813133239746094
+		 1 0 -0.1190338134765625 -0.043610572814941406 1 0 -0.1128387451171875 -0.061003684997558594
+		 1 0 -0.1027679443359375 -0.072018623352050781 1 0 -0.09771728515625 -0.076662063598632812
+		 1 0 -0.092010498046875 -0.076737403869628906 1 0 -0.0849761962890625 -0.074875831604003906
+		 1 0 -0.079345703125 -0.074001312255859375 1 0 -0.073333740234375 -0.075600624084472656
+		 1 0 -0.0658416748046875 -0.076647758483886719 1 0 -0.0590667724609375 -0.073801994323730469
+		 1 0 -0.0579376220703125 -0.072490692138671875 1 0 -0.0579681396484375 -0.0712890625
+		 1 0 -0.05584716796875 -0.068589210510253906 1 0 -0.0558013916015625 -0.055197715759277344
+		 1 0 -0.0506591796875 -0.047649383544921875 1 0 -0.0453643798828125 -0.043450355529785156
+		 1 0 -0.040557861328125 -0.039630889892578125 1 0 -0.036163330078125 -0.038572311401367188
+		 1 0 -0.0297393798828125 -0.033618927001953125 1 0 -0.0288238525390625 -0.030019760131835938
+		 1 0 -0.0283355712890625 -0.024694442749023438 1 0 -0.0286102294921875 -0.01886749267578125
+		 1 0 -0.0249176025390625 -0.014801025390625 1 0 -0.023040771484375 -0.0096712112426757812
+		 1 0 -0.0207672119140625 -0.0046825408935546875 1 0 -0.0188751220703125 -0.00027179718017578125
+		 1 0 -0.016937255859375 0.0041370391845703125 1 -6.6000000515487045e-05 -3.5655059814453125
+		 -2.2798681259155273 1 -3.9999998989515007e-05 -3.5060577392578125 -2.4049935340881348
+		 1 -1.2000000424450263e-05 -3.3683929443359375 -2.5309643745422363 1 1.9999999494757503e-05
+		 -3.203399658203125 -2.6199793815612793 1 -0.12095379829406738 -2.8567352294921875
+		 -2.1962146759033203 1 -0.11346101760864258 -2.9029388427734375 -2.0931506156921387
+		 1 -0.076567173004150391 -1.926849365234375 -1.6479892730712891 1 -0.078698396682739258
+		 -2.507659912109375 -1.8937692642211914 1 -0.092844963073730469 -2.4090118408203125
+		 -1.9238677024841309 1 -0.03976026177406311 -3.581329345703125 -2.1377725601196289
+		 1 -0.087129950523376465 -3.4826202392578125 -2.2306671142578125 1 -0.084903120994567871
+		 -3.483917236328125 -2.1614174842834473 1 -0.12643146514892578 -3.2659454345703125
+		 -2.1707048416137695 1 -0.12662816047668457 -3.27227783203125 -2.2583365440368652
+		 1 -0.038106143474578857 -3.56707763671875 -2.2004342079162598 1 -0.12204742431640625
+		 -2.255340576171875 -1.901390552520752 1 -0.14519166946411133 -2.5815887451171875
+		 -2.1611456871032715 1 -0.14728462696075439 -2.8377532958984375 -2.3671069145202637
+		 1 -0.099716246128082275 -3.4876556396484375 -2.312739372253418 1 -0.13066256046295166
+		 -3.3295745849609375 -2.3487710952758789 1 -0.045294225215911865 -3.5527191162109375
+		 -2.2862353324890137 1 -0.026514291763305664 -2.1456451416015625 -1.6716136932373047
+		 1 -0.045435190200805664 -2.04278564453125 -1.6763172149658203 1 -0.13669228553771973
+		 -3.35516357421875 -2.4203872680664062 1 -0.11744195222854614 -3.445587158203125 -2.4219598770141602
+		 1 -0.057236790657043457 -3.4925537109375 -2.4053854942321777 1 -0.117839515209198
+		 -3.317413330078125 -2.5293774604797363 1 -0.13442230224609375 -3.21038818359375 -2.4775848388671875
+		 1 -0.060783028602600098 -3.3525543212890625 -2.5243573188781738 1 -0.12944817543029785
+		 -3.07379150390625 -2.371617317199707 1 -0.14561104774475098 -3.0339202880859375 -2.5145249366760254
+		 1 -0.11678361892700195 -3.1449737548828125 -2.5827956199645996 1 -0.060288757085800171
+		 -3.18096923828125 -2.5935635566711426 1 6.631016731262207e-05 -0.017303466796875
+		 0.0035991668701171875 1 0.00056681036949157715 -0.0193634033203125 -0.0009765625
+		 1 0.00046512484550476074 -0.02117919921875 -0.00543212890625 1 4.9114227294921875e-05
+		 -0.0251617431640625 -0.014635086059570312 1 -0.00020441412925720215 -0.02874755859375
+		 -0.018412590026855469 1 0.0012283623218536377 -0.0289459228515625 -0.029677391052246094
+		 1 0.0016803741455078125 -0.029296875 -0.032990455627441406 1 0.0024760067462921143
+		 -0.0415191650390625 -0.039906501770019531 1 0.0027391165494918823 -0.046630859375
+		 -0.04294586181640625 1 0.00032623112201690674 -0.05767822265625 -0.05621337890625
+		 1 -0.0053578317165374756 -0.0616455078125 -0.070005416870117188 1 -0.0054342001676559448
+		 -0.0621185302734375 -0.072828292846679688 1 -0.0082588940858840942 -0.069671630859375
+		 -0.0777130126953125 1 -0.011263787746429443 -0.078643798828125 -0.078801155090332031
+		 1 -0.014354944229125977 -0.0941009521484375 -0.080461502075195312 1 -0.013414382934570312
+		 -0.1180877685546875 -0.081285476684570312 1 -0.008567124605178833 -0.128448486328125
+		 -0.069676399230957031 1 -0.0028390884399414062 -0.132354736328125 -0.049348831176757812
+		 1 -0.0030640363693237305 -0.1338958740234375 0.027390480041503906 1 -0.01029127836227417
+		 -0.138214111328125 0.036714076995849609 1 0.023708611726760864 -3.5308074951171875
+		 -1.5245804786682129 1 0.032655298709869385 -3.6999359130859375 -1.5516576766967773
+		 1 0.0083356797695159912 -3.851837158203125 -1.584165096282959 1 -0.0075042545795440674
+		 -3.8955841064453125 -1.6180176734924316 1 -0.025326967239379883 -3.9527587890625
+		 -1.6852502822875977 1 -0.051202863454818726 -3.9839630126953125 -1.8437151908874512
+		 1 -0.061440557241439819 -3.8771209716796875 -1.9295978546142578 1 -0.063249498605728149
+		 -3.7951812744140625 -1.9679207801818848 1 -0.057797729969024658 -3.714813232421875
+		 -1.9992070198059082 1 -0.043920129537582397 -3.60736083984375 -2.078826904296875
+		 1 0.00058346986770629883 -0.0180206298828125 0.0027151107788085938 1 0.0014559626579284668
+		 -0.019989013671875 -0.0024461746215820312 1 0.0012437701225280762 -0.021881103515625
+		 -0.0070352554321289062 1 0.00030022859573364258 -0.02593994140625 -0.015082359313964844
+		 1 0.0001926124095916748 -0.0297698974609375 -0.018222808837890625 1 0.0019106864929199219
+		 -0.030029296875 -0.028664588928222656 1 0.0027199983596801758 -0.0283203125 -0.032052993774414062
+		 1 0.0051897764205932617 -0.041351318359375 -0.037462234497070312 1 0.0040759444236755371
+		 -0.0490875244140625 -0.040865898132324219 1 -5.4657459259033203e-05 -0.0631256103515625
+		 -0.053927421569824219 1 -0.0077765583992004395 -0.070037841796875 -0.066119194030761719
+		 1 -0.0088816285133361816 -0.071746826171875 -0.070552825927734375 1 -0.016351431608200073
+		 -0.08233642578125 -0.079885482788085938 1 -0.023364812135696411 -0.0947723388671875
+		 -0.0859527587890625 1 -0.03411567211151123 -0.1525421142578125 -0.11484432220458984
+		 1 -0.021360099315643311 -0.1714324951171875 -0.11315441131591797 1 -0.015223264694213867
+		 -0.1810455322265625 -0.10172271728515625 1 -0.0054203271865844727 -0.1795654296875
+		 -0.077899932861328125 1 0.0033355355262756348 -0.1744842529296875 0.00078582763671875
+		 1 -0.010655641555786133 -0.1767730712890625 0.011065483093261719 1 -0.008823692798614502
+		 -3.847259521484375 -1.6370325088500977 1 -0.045333921909332275 -3.8667755126953125
+		 -1.8018412590026855 1 -0.063572585582733154 -3.7467803955078125 -1.8945794105529785
+		 1 -0.073739826679229736 -3.6707763671875 -1.9407529830932617 1 -0.081666350364685059
+		 -3.5943145751953125 -1.9818301200866699 1 -0.084070682525634766 -3.4959716796875
+		 -2.0903916358947754 1 0.00016021728515625 -0.0194244384765625 -0.00027179718017578125
+		 1 0.0010634660720825195 -0.020965576171875 -0.0063428878784179688 1 0.0011736154556274414
+		 -0.022735595703125 -0.010340690612792969 1 0.00018608570098876953 -0.026611328125
+		 -0.016650199890136719 1 0.00011724233627319336 -0.02899169921875 -0.019011497497558594
+		 1 0.0018271803855895996 -0.028900146484375 -0.028881072998046875 1 0.003563225269317627
+		 -0.0261993408203125 -0.031432151794433594 1 0.0068405270576477051 -0.040679931640625
+		 -0.035230636596679688 1 0.005718529224395752 -0.0490875244140625 -0.036584854125976562
+		 1 0.0011627078056335449 -0.064910888671875 -0.044966697692871094 1 -0.010166466236114502
+		 -0.0807952880859375 -0.057698249816894531 1 -0.015300989151000977 -0.0923004150390625
+		 -0.068126678466796875 1 -0.026537299156188965 -0.108551025390625 -0.083462715148925781
+		 1 -0.035371601581573486 -0.1253662109375 -0.096468925476074219 1 -0.032644987106323242
+		 -0.2080078125 -0.14283847808837891 1 -0.04427039623260498 -0.17767333984375 -0.11621475219726562
+		 1 -0.010756373405456543 -0.2427825927734375 -0.15181541442871094 1 0.0021730661392211914
+		 -0.25689697265625 -0.144500732421875 1 0.014770984649658203 -0.238037109375 -0.040001392364501953
+		 1 0.055854320526123047 -0.306243896484375 -0.098265647888183594 1 0.10410493612289429
+		 -3.3502349853515625 -1.5521388053894043 1 0.14666390419006348 -3.1732635498046875
+		 -1.5102272033691406 1 0.05637747049331665 -3.469512939453125 -1.5465073585510254
+		 1 0.082165837287902832 -3.62103271484375 -1.557032585144043 1 0.048994719982147217
+		 -3.7545623779296875 -1.5531415939331055 1 0.021216094493865967 -3.794830322265625
+		 -1.5754337310791016 1 0.024564146995544434 -3.6701507568359375 -1.5760707855224609
+		 1 0.062290668487548828 -3.6295013427734375 -1.5222916603088379 1 -0.020450949668884277
+		 -3.6701202392578125 -1.727142333984375 1 -0.047503829002380371 -3.5494384765625 -1.8289637565612793
+		 1 -0.06702423095703125 -3.4714813232421875 -1.8842062950134277 1 -0.09125053882598877
+		 -3.391632080078125 -1.9403634071350098 1 -0.12185299396514893 -3.2858123779296875
+		 -2.0848240852355957 1 0.0021784305572509766 -0.02252197265625 -0.0056867599487304688
+		 1 0.0039453506469726562 -0.0231475830078125 -0.011932373046875 1 0.0039861202239990234
+		 -0.0245513916015625 -0.015999794006347656 1 0.0019885897636413574 -0.0267486572265625
+		 -0.021648406982421875 1 0.0022584199905395508 -0.0284423828125 -0.027459144592285156
+		 1 0.0055369138717651367 -0.0287017822265625 -0.030384063720703125 1 0.0098401308059692383
+		 -0.0403900146484375 -0.032632827758789062 1 0.0061866044998168945 -0.0467529296875
+		 -0.032558441162109375 1 0.0054033398628234863 -0.052978515625 -0.034076690673828125
+		 1 0.0078334808349609375 -0.0508270263671875 -0.035878181457519531 1 -0.0017371773719787598
+		 -0.0628814697265625 -0.039164543151855469 1 -0.0084714889526367188 -0.0776824951171875
+		 -0.0446624755859375 1 -0.018627047538757324 -0.10614013671875 -0.051215171813964844
+		 1 -0.0061948299407958984 -0.0797119140625 -0.041781425476074219 1 -0.027230381965637207
+		 -0.1273040771484375 -0.068446159362792969 1 -0.037949800491333008 -0.153839111328125
+		 -0.093006134033203125 1 -0.044059991836547852 -0.2562713623046875 -0.15107345581054688
+		 1 -0.044395327568054199 -0.222869873046875 -0.11191844940185547 1 -0.01576387882232666
+		 -0.298065185546875 -0.18635082244873047 1 0.024637818336486816 -0.336669921875 -0.19841480255126953
+		 1 0.048493623733520508 -0.3538055419921875 -0.19191837310791016 1 0.015518903732299805
+		 -0.258697509765625 -0.12346267700195312 1 0.067999005317687988 -0.35833740234375
+		 -0.17181110382080078 1 0.036176025867462158 -0.2401885986328125 -0.04827880859375
+		 1 0.089880943298339844 -0.3206787109375 -0.10921669006347656 1 0.096496701240539551
+		 -0.3727874755859375 -0.15512657165527344 1 0.14268052577972412 -0.396759033203125
+		 -0.16586494445800781 1 0.19707834720611572 -2.9550323486328125 -1.4284200668334961
+		 1 0.19489777088165283 -3.2812042236328125 -1.5083937644958496 1 0.25834965705871582
+		 -3.0699462890625 -1.446810245513916 1 0.14194530248641968 -3.4736175537109375 -1.5471305847167969
+		 1 0.098992228507995605 -3.594482421875 -1.5115413665771484 1 0.11455631256103516
+		 -3.4061431884765625 -1.4546504020690918 1 0.15547072887420654 -3.3766632080078125
+		 -1.4544363021850586 1 0.07697141170501709 -3.4322967529296875 -1.4993500709533691
+		 1 0.018474936485290527 -3.4174041748046875 -1.6346311569213867 1 -0.021871328353881836
+		 -3.300750732421875 -1.7407889366149902 1 -0.048934221267700195 -3.2145538330078125
+		 -1.8009486198425293 1 -0.079973936080932617 -3.1221923828125 -1.8600525856018066
+		 1 -0.11200797557830811 -2.9560546875 -2.0050082206726074 1 0.0031642913818359375
+		 -0.0263671875 -0.0085687637329101562 1 0.0057262182235717773 -0.0257110595703125
+		 -0.015215873718261719 1 0.0063302516937255859 -0.0262908935546875 -0.019234657287597656
+		 1 0.0036858916282653809 -0.027984619140625 -0.024890899658203125 1 0.0063612461090087891
+		 -0.0308074951171875 -0.027994155883789062 1 0.010381221771240234 -0.035400390625
+		 -0.034246444702148438 1 0.0078510046005249023 -0.0469207763671875 -0.029760360717773438
+		 1 0.0091432332992553711 -0.0413818359375 -0.033410072326660156 1 0.0043340921401977539
+		 -0.050384521484375 -0.031415939331054688 1 0.0029722452163696289 -0.0590057373046875
+		 -0.03105926513671875 1 0.0048499703407287598 -0.0596771240234375 -0.034829139709472656
+		 1 0.00025331974029541016 -0.0599517822265625 -0.030416488647460938 1 -0.0022385120391845703
+		 -0.0651092529296875 -0.026243209838867188 1 0.0015655755996704102 -0.060821533203125
+		 -0.035169601440429688 1 -0.0037015676498413086 -0.0727081298828125 -0.037204742431640625
+		 1 -0.0010599493980407715 -0.0734100341796875 -0.036808967590332031 1 -0.0043724775314331055
+		 -0.079071044921875 -0.035022735595703125 1 0.0019683837890625 -0.0708160400390625
+		 -0.037807464599609375 1 -0.029429435729980469 -0.1394195556640625 -0.049669265747070312
+		 1 -0.036280035972595215 -0.166900634765625 -0.070208549499511719 1 -0.039426088333129883
+		 -0.2298736572265625 -0.088788032531738281 1 -0.037093877792358398 -0.1756439208984375
+		 -0.058043479919433594 1 -0.029701948165893555 -0.324310302734375 -0.16812229156494141
+		 1 -0.029433727264404297 -0.3062286376953125 -0.13617849349975586 1 -0.019579172134399414
+		 -0.352874755859375 -0.20067882537841797 1 0.025948762893676758 -0.4071807861328125
+		 -0.23792648315429688 1 0.080052852630615234 -0.448638916015625 -0.24879550933837891
+		 1 0.10950648784637451 -0.463104248046875 -0.24129962921142578 1 0.13016033172607422
+		 -0.4625244140625 -0.22052240371704102 1 0.19242310523986816 -0.4800872802734375 -0.22785568237304688
+		 1 0.18672811985015869 -0.563446044921875 -0.26821517944335938 1 0.14211440086364746
+		 -0.456695556640625 -0.2259526252746582 1 0.2146296501159668 -0.6409759521484375 -0.35194587707519531
+		 1 0.22452354431152344 -2.711212158203125 -1.3293356895446777 1 0.29826295375823975
+		 -2.84625244140625 -1.363926887512207 1 0.21697163581848145 -3.1366424560546875 -1.3861565589904785
+		 1 0.27530944347381592 -2.899200439453125 -1.3206987380981445 1 0.17488181591033936
+		 -3.1518707275390625 -1.37677001953125 1 0.14114713668823242 -3.162750244140625 -1.4047560691833496
+		 1 0.073433399200439453 -3.1327972412109375 -1.5266933441162109 1 0.016785025596618652
+		 -3.008880615234375 -1.6333584785461426 1 -0.014772891998291016 -2.9051666259765625
+		 -1.6878318786621094 1 -0.045876979827880859 -2.7920989990234375 -1.7366867065429688
+		 1 -0.071142196655273438 -2.587310791015625 -1.8418660163879395 1 0.0042045116424560547
+		 -0.033172607421875 -0.012228012084960938 1 0.0079461336135864258 -0.0307769775390625
+		 -0.018738746643066406 1 0.0087385177612304688 -0.0306549072265625 -0.022866249084472656
+		 1 0.0097270011901855469 -0.043914794921875 -0.028475761413574219 1 0.007656097412109375
+		 -0.054351806640625 -0.032627105712890625 1 0.00058424472808837891 -0.07000732421875
+		 -0.02613067626953125 1 0.0031411647796630859 -0.0929107666015625 -0.036360740661621094
+		 1 0.0012853145599365234 -0.067779541015625 -0.025757789611816406 1 0.0034251213073730469
+		 -0.065216064453125 -0.030631065368652344 1 0.00062847137451171875 -0.0685272216796875
+		 -0.032276153564453125 1 -0.001513361930847168 -0.0623626708984375 -0.030975341796875
+		 1 -0.028974175453186035 -0.1517486572265625 -0.0477752685546875 1 -0.022275209426879883
+		 -0.1691436767578125 -0.043695926666259766 1 -0.021520614624023438 -0.13433837890625
+		 -0.032552719116210938 1 -0.02091670036315918 -0.217498779296875 -0.0660400390625
+		 1 -0.010066509246826172 -0.271240234375 -0.10329961776733398 1 -0.0023956298828125
+		 -0.3788604736328125 -0.18811178207397461 1 0.013272762298583984 -0.32177734375 -0.151519775390625
+		 1 0.0027723312377929688 -0.408447265625 -0.21997404098510742 1 0.020860910415649414
+		 -0.4446868896484375 -0.25105953216552734 1 0.08603215217590332 -0.5204620361328125
+		 -0.29023075103759766 1 0.14484047889709473 -0.5670318603515625 -0.29743719100952148
+		 1 0.17054331302642822 -0.5743408203125 -0.28769779205322266 1 0.28823566436767578
+		 -0.782073974609375 -0.38372278213500977 1 0.28257608413696289 -0.8037872314453125
+		 -0.3936457633972168 1 0.26450514793395996 -0.6627349853515625 -0.35278415679931641
+		 1 0.25697636604309082 -0.86865234375 -0.47059392929077148 1 0.32785391807556152 -0.917572021484375
+		 -0.48231983184814453 1 0.23257780075073242 -2.258087158203125 -1.1334857940673828
+		 1 0.32695686817169189 -2.39874267578125 -1.1660432815551758 1 0.37000322341918945
+		 -2.4452972412109375 -1.1776261329650879 1 0.23927462100982666 -2.8951568603515625
+		 -1.3030195236206055 1 0.34647083282470703 -2.418304443359375 -1.1558032035827637
+		 1 0.20745086669921875 -2.895599365234375 -1.3161225318908691 1 0.1440126895904541
+		 -2.8482513427734375 -1.4117097854614258 1 0.074824810028076172 -2.7046356201171875
+		 -1.5109944343566895 1 0.042474031448364258 -2.57672119140625 -1.5567536354064941
+		 1 0.013662099838256836 -2.4457244873046875 -1.5899820327758789 1 -0.014184236526489258
+		 -2.235809326171875 -1.6464200019836426 1 0.14839982986450195 -1.5776824951171875
+		 -1.2985239028930664 1 0.17152094841003418 -1.6436614990234375 -1.2763671875 1 0.13282012939453125
+		 -1.4813995361328125 -1.2863202095031738 1 0.10293292999267578 -1.3870849609375 -1.2532749176025391
+		 1 0.0044786930084228516 -0.0447540283203125 -0.0152740478515625 1 0.010275959968566895
+		 -0.0426177978515625 -0.023011207580566406 1 0.010393381118774414 -0.0494232177734375
+		 -0.025468826293945312 1 0.0064433813095092773 -0.0589447021484375 -0.02831268310546875
+		 1 -0.0077533721923828125 -0.1195220947265625 -0.039214134216308594 1 -0.011468648910522461
+		 -0.153564453125 -0.047323226928710938 1 -0.0035040378570556641 -0.196807861328125
+		 -0.071399688720703125 1 0.011592864990234375 -0.2444000244140625 -0.10499477386474609
+		 1 0.033752679824829102 -0.2892913818359375 -0.14731073379516602 1 0.085834741592407227
+		 -0.4297332763671875 -0.26140975952148438 1 0.10142755508422852 -0.38885498046875
+		 -0.24529790878295898 1 0.074088335037231445 -0.5121612548828125 -0.29926681518554688
+		 1 0.0779266357421875 -0.5456695556640625 -0.31806516647338867 1 0.18739414215087891
+		 -0.72540283203125 -0.42951631546020508 1 0.22754597663879395 -0.753692626953125 -0.40016651153564453
+		 1 0.26980733871459961 -0.794097900390625 -0.39352750778198242 1 0.39722466468811035
+		 -1.0697174072265625 -0.50598812103271484 1 0.39868044853210449 -1.0546112060546875
+		 -0.50035238265991211 1 0.39034318923950195 -1.0596923828125 -0.51572513580322266
+		 1 0.27289962768554688 -0.979278564453125 -0.52025508880615234 1 0.27596926689147949
+		 -1.2407379150390625 -0.63736438751220703 1 0.25258040428161621 -1.8191070556640625
+		 -0.92310285568237305 1 0.33641242980957031 -1.9662322998046875 -0.97265625 1 0.44822382926940918
+		 -2.0332794189453125 -0.9993443489074707 1 0.44512629508972168 -1.9899139404296875
+		 -0.966156005859375 1 0.32745647430419922 -2.388763427734375 -1.1482257843017578 1 0.43618154525756836
+		 -1.941009521484375 -0.93724346160888672 1 0.28026676177978516 -2.3039703369140625
+		 -1.1761922836303711 1 0.21615767478942871 -2.131011962890625 -1.2267813682556152
+		 1 0.1967933177947998 -1.9971466064453125 -1.2547907829284668 1 0.18358373641967773
+		 -1.860595703125 -1.2754178047180176 1 0.34507918357849121 -1.26751708984375 -1.0203800201416016
+		 1 0.32987689971923828 -1.44207763671875 -0.98539924621582031 1 0.33359432220458984
+		 -1.193359375 -1.0401382446289062 1 0.32822704315185547 -1.1028289794921875 -1.0229020118713379
+		 1 0.29888772964477539 -1.01043701171875 -0.98555088043212891 1 0.0042731761932373047
+		 -0.061370849609375 -0.017159461975097656 1 0.0090450048446655273 -0.0614776611328125
+		 -0.023406982421875 1 0.00010895729064941406 -0.10888671875 -0.035202980041503906
+		 1 0.0028204917907714844 -0.1421966552734375 -0.050059318542480469 1 0.014322996139526367
+		 -0.1762847900390625 -0.07649993896484375 1 0.032384872436523438 -0.2123870849609375
+		 -0.10862350463867188 1 0.055799245834350586 -0.251495361328125 -0.14597177505493164
+		 1 0.12018561363220215 -0.339599609375 -0.22617387771606445 1 0.19897627830505371
+		 -0.5121917724609375 -0.36554384231567383 1 0.20850563049316406 -0.449249267578125
+		 -0.32583236694335938 1 0.18862080574035645 -0.56573486328125 -0.39615774154663086
+		 1 0.17914009094238281 -0.667205810546875 -0.43576622009277344 1 0.18211698532104492
+		 -0.70489501953125 -0.44026947021484375 1 0.24378514289855957 -0.8017120361328125
+		 -0.51204490661621094 1 0.31556177139282227 -0.9454803466796875 -0.56391572952270508
+		 1 0.3677823543548584 -1.0046844482421875 -0.5203704833984375 1 0.44473791122436523
+		 -1.2001953125 -0.56663894653320312 1 0.41762900352478027 -1.1339874267578125 -0.58111953735351562
+		 1 0.42764377593994141 -1.196075439453125 -0.57991218566894531 1 0.3434441089630127
+		 -1.0379638671875 -0.53371000289916992 1 0.34796047210693359 -1.3228607177734375 -0.66457366943359375
+		 1 0.25773406028747559 -1.6317596435546875 -0.82513618469238281 1 0.33997035026550293
+		 -1.750030517578125 -0.86979436874389648 1 0.47716689109802246 -1.72357177734375 -0.83084344863891602
+		 1 0.40103745460510254 -1.8221435546875 -0.91489982604980469 1 0.44642210006713867
+		 -1.6132354736328125 -0.80764579772949219 1 0.35256195068359375 -1.6567230224609375
+		 -0.92759609222412109 1 0.3363807201385498 -1.5499114990234375 -0.95465755462646484
+		 1 0.36604499816894531 -1.3111114501953125 -0.89481067657470703 1 0.38006711006164551
+		 -1.149322509765625 -0.92864465713500977 1 0.37588214874267578 -1.0704193115234375
+		 -0.93836784362792969 1 0.3770601749420166 -0.976959228515625 -0.91429376602172852
+		 1 0.3504939079284668 -0.884765625 -0.87453460693359375 1 0.0096309185028076172 -0.1074066162109375
+		 -0.034929752349853516 1 0.018038034439086914 -0.135589599609375 -0.05371856689453125
+		 1 0.031703472137451172 -0.16412353515625 -0.07669830322265625 1 0.050696611404418945
+		 -0.1951446533203125 -0.10352611541748047 1 0.074898004531860352 -0.2302703857421875
+		 -0.13545894622802734 1 0.13559150695800781 -0.305084228515625 -0.20192289352416992
+		 1 0.21189785003662109 -0.3934173583984375 -0.28322887420654297 1 0.25499773025512695
+		 -0.515045166015625 -0.39551258087158203 1 0.24890422821044922 -0.4478607177734375
+		 -0.34464216232299805 1 0.25056219100952148 -0.5859375 -0.44304513931274414 1 0.24724340438842773
+		 -0.648223876953125 -0.47368669509887695 1 0.2396848201751709 -0.75933837890625 -0.51361799240112305
+		 1 0.3004448413848877 -0.90374755859375 -0.58343172073364258 1 0.34422039985656738
+		 -1.0057830810546875 -0.65003871917724609 1 0.36214113235473633 -1.05712890625 -0.62614965438842773
+		 1 0.46337580680847168 -1.3532867431640625 -0.68040180206298828 1 0.40600848197937012
+		 -1.25750732421875 -0.72146844863891602 1 0.4895167350769043 -1.4222259521484375 -0.68019437789916992
+		 1 0.47303223609924316 -1.4667510986328125 -0.71369314193725586 1 0.47652435302734375
+		 -1.822265625 -0.89220190048217773 1 0.39286208152770996 -1.4843597412109375 -0.83047962188720703
+		 1 0.37031030654907227 -1.40185546875 -0.86118268966674805 1 0.38681697845458984 -1.1942291259765625
+		 -0.75243091583251953 1 0.38164830207824707 -1.1268463134765625 -0.77605295181274414
+		 1 0.38831019401550293 -0.9841766357421875 -0.77802562713623047 1 0.38934779167175293
+		 -0.9009246826171875 -0.76500415802001953 1 0.38966083526611328 -0.8043975830078125
+		 -0.72991752624511719 1 0.3676600456237793 -0.70904541015625 -0.67718935012817383
+		 1 0.28580522537231445 -0.5078887939453125 -0.41828012466430664 1 0.29977273941040039
+		 -0.586822509765625 -0.47522354125976562 1 0.30124306678771973 -0.6648101806640625
+		 -0.52369213104248047 1 0.30100655555725098 -0.735076904296875 -0.55310821533203125
+		 1 0.29436707496643066 -0.855010986328125 -0.59043407440185547 1 0.33861207962036133
+		 -0.9488372802734375 -0.66037750244140625 1 0.34236454963684082 -0.8226165771484375
+		 -0.63141822814941406 1 0.34300589561462402 -0.7468109130859375 -0.60442161560058594
+		 1 0.34070014953613281 -0.6603546142578125 -0.55814647674560547 1 0.32197475433349609
+		 -0.5720062255859375 -0.5000147819519043 1 0.4790492057800293 -1.7765655517578125
+		 -0.86073637008666992 1 0.4852750301361084 -1.449371337890625 -0.69608020782470703
+		 1 0.43678593635559082 -1.2135162353515625 -0.57266807556152344 1 -0.0033826231956481934
+		 -0.06591796875 -0.0381927490234375 1 -0.0047595500946044922 -0.071075439453125 -0.04775238037109375
+		 1 -0.0032114386558532715 -0.0717010498046875 -0.058718681335449219 1 -0.0043219923973083496
+		 -0.0671844482421875 -0.066761970520019531 1 -0.0027032345533370972 -0.05950927734375
+		 -0.0687255859375 1 0.001860007643699646 -0.0346527099609375 -0.037678718566894531
+		 1 0.0037885904312133789 -0.0332183837890625 -0.036962509155273438 1 0.0055311918258666992
+		 -0.033477783203125 -0.036303520202636719 1 0.0080893039703369141 -0.035064697265625
+		 -0.035550117492675781 1 0.0088676214218139648 -0.0335845947265625 -0.032050132751464844
+		 1 0.01126408576965332 -0.0363006591796875 -0.027499198913574219 1 -0.0092082023620605469
+		 -0.109405517578125 -0.027960777282714844 1 -0.012467384338378906 -0.097900390625
+		 -0.024264335632324219 1 -0.0064594745635986328 -0.092498779296875 -0.027788162231445312
+		 1 0.0061091184616088867 -0.0771636962890625 -0.030344963073730469 1 0.0028514862060546875
+		 -0.070281982421875 -0.035462379455566406 1 -0.0017554759979248047 -0.0546875 -0.031138420104980469
+		 1 0.0080531835556030273 -0.050750732421875 -0.037949562072753906 1 0.0013862848281860352
+		 -0.0604705810546875 -0.034008026123046875 1 0.0012638568878173828 -0.058319091796875
+		 -0.034480094909667969 1 0.0015685558319091797 -0.0570068359375 -0.035735130310058594
+		 1 0.00014251470565795898 -0.0546112060546875 -0.041876792907714844 1 0.0012825727462768555
+		 -0.0518798828125 -0.04711151123046875 1 -0.00046628713607788086 -0.0601806640625
+		 -0.032482147216796875 1 0.25469589233398438 -0.8327484130859375 -0.49611139297485352
+		 1 0.30108189582824707 -0.8757171630859375 -0.45900297164916992 1 0.33950018882751465
+		 -0.9163665771484375 -0.44422197341918945 1 0.34737706184387207 -0.93115234375 -0.4484410285949707
+		 1 0.34146666526794434 -0.917694091796875 -0.45058822631835938 1 0.2982715368270874
+		 -0.779266357421875 -0.42060947418212891 1 0.2370915412902832 -0.7426605224609375
+		 -0.41113090515136719 1 0.23947691917419434 -2.03607177734375 -1.0326099395751953
+		 1 0.33335399627685547 -2.1866912841796875 -1.0735163688659668 1 0.41127538681030273
+		 -2.236480712890625 -1.095116138458252 1 0.39787459373474121 -2.2034149169921875 -1.0682449340820312
+		 1 0.38221931457519531 -2.164337158203125 -1.0500302314758301 1 0.34460186958312988
+		 -2.0562286376953125 -1.044489860534668 1 0.28954553604125977 -1.8789825439453125
+		 -1.0668606758117676 1 0.27259230613708496 -1.754791259765625 -1.0932779312133789
+		 1 0.26353025436401367 -1.6260223388671875 -1.1193475723266602 1 0.27510285377502441
+		 -1.4275970458984375 -1.1323904991149902 1 0.25539517402648926 -1.362213134765625
+		 -1.1581802368164062 1 0.24169111251831055 -1.2724609375 -1.1461677551269531 1 0.21118545532226562
+		 -1.1777191162109375 -1.1100940704345703 1 3.4809112548828125e-05 -1.63629150390625
+		 -1.4270691871643066 1 0.031312942504882812 -1.73602294921875 -1.4606595039367676
+		 1 0.049048662185668945 -1.8352508544921875 -1.4686031341552734 1 0.065847158432006836
+		 -1.9134979248046875 -1.4516472816467285 1 0.093716144561767578 -2.134613037109375
+		 -1.4371156692504883 1 0.11525917053222656 -2.2680816650390625 -1.4138431549072266
+		 1 0.14315056800842285 -2.40887451171875 -1.3783273696899414 1 0.21322011947631836
+		 -2.5685272216796875 -1.2972912788391113 1 0.26880693435668945 -2.6351318359375 -1.2354354858398438
+		 1 0.28984034061431885 -2.6551513671875 -1.2372517585754395 1 0.32467329502105713
+		 -2.669647216796875 -1.2557673454284668 1 0.31190252304077148 -2.61322021484375 -1.2630066871643066
+		 1 0.2282099723815918 -2.4662017822265625 -1.2220520973205566 1 0.17921876907348633
+		 -0.542449951171875 -0.28934431076049805 1 0.22963094711303711 -0.564544677734375
+		 -0.28765726089477539 1 0.2364494800567627 -0.664306640625 -0.31930255889892578 1 0.22390270233154297
+		 -0.68408203125 -0.33875131607055664 1 0.20593714714050293 -0.678558349609375 -0.34413766860961914
+		 1 0.15406990051269531 -0.635284423828125 -0.34339284896850586 1 0.10193872451782227
+		 -0.267547607421875 -0.16891813278198242 1 0.083890438079833984 -0.2939300537109375
+		 -0.18535232543945312 1 0.063299179077148438 -0.3364715576171875 -0.19418764114379883
+		 1 0.04555511474609375 -0.3726806640625 -0.20374345779418945 1 0.033174514770507812
+		 -0.44598388671875 -0.24194622039794922 1 0.040029525756835938 -0.481231689453125
+		 -0.26937198638916016 1 0.085656642913818359 -0.5665130615234375 -0.32887458801269531
+		 1 0.17414999008178711 -0.345611572265625 -0.23702287673950195 1 0.16311311721801758
+		 -0.3903656005859375 -0.27004051208496094 1 0.14802408218383789 -0.4465789794921875
+		 -0.30078887939453125 1 0.13404750823974609 -0.4932708740234375 -0.32500219345092773
+		 1 0.12253618240356445 -0.584564208984375 -0.36353206634521484 1 0.12429404258728027
+		 -0.6175384521484375 -0.37400627136230469 1 0.0002810060977935791 -0.023345947265625
+		 -0.0099611282348632812 1 0.00071465969085693359 -0.02410888671875 -0.011289596557617188
+		 1 0.00073444843292236328 -0.02490234375 -0.013455390930175781 1 0.0033166408538818359
+		 -0.0258941650390625 -0.019021987915039062 1 0.0053241848945617676 -0.0271148681640625
+		 -0.022015571594238281 1 0.0076773166656494141 -0.0304107666015625 -0.025537490844726562
+		 1 0.009792327880859375 -0.0338287353515625 -0.029841423034667969 1 0.010676860809326172
+		 -0.039031982421875 -0.031750679016113281 1 0.01024329662322998 -0.0496826171875 -0.032512664794921875
+		 1 0.0031365156173706055 -0.0812835693359375 -0.024741172790527344 1 -0.010470390319824219
+		 -0.10552978515625 -0.023891448974609375 1 -0.031968593597412109 -0.14666748046875
+		 -0.040679931640625 1 -0.036226987838745117 -0.1784210205078125 -0.042827606201171875
+		 1 -0.033193349838256836 -0.228790283203125 -0.065318107604980469 1 -0.024185657501220703
+		 -0.2910003662109375 -0.10907459259033203 1 0.00037479400634765625 -0.3509063720703125
+		 -0.16096067428588867 1 0.03499150276184082 -0.4098663330078125 -0.21672916412353516
+		 1 0.076112747192382812 -0.471649169921875 -0.27769231796264648 1 0.12454724311828613
+		 -0.5398406982421875 -0.3448939323425293 1 0.18078923225402832 -0.6184234619140625
+		 -0.41887712478637695 1 0.24123382568359375 -0.70684814453125 -0.49883651733398438
+		 1 0.29526305198669434 -0.7978973388671875 -0.57812976837158203 1 0.33828234672546387
+		 -0.8885955810546875 -0.65325689315795898 1 0.38299822807312012 -1.060089111328125
+		 -0.7863001823425293 1 0.37453842163085938 -1.2272796630859375 -0.91854381561279297
+		 1 0.33544611930847168 -1.3476409912109375 -1.0093870162963867 1 0.26741194725036621
+		 -1.5140228271484375 -1.1299910545349121 1 0.17513179779052734 -1.740264892578125
+		 -1.279200553894043 1 0.075800657272338867 -2.014495849609375 -1.4461750984191895
+		 1 -0.0044133663177490234 -2.3383331298828125 -1.6188712120056152 1 -0.065119266510009766
+		 -2.6791839599609375 -1.7863311767578125 1 -0.1062319278717041 -3.0238494873046875
+		 -1.9246487617492676 1 -0.11257922649383545 -3.3226165771484375 -2.0041780471801758
+		 1 -0.084996998310089111 -3.5334930419921875 -2.027092456817627 1 -0.050093203783035278
+		 -3.6523284912109375 -2.0313472747802734 1 -0.01555168628692627 -0.1119232177734375
+		 -0.086202621459960938 1 -0.026277840137481689 -0.1585540771484375 -0.11674213409423828
+		 1 -0.021619319915771484 -0.2241668701171875 -0.14985179901123047 1 0.0022062063217163086
+		 -0.3150177001953125 -0.19361400604248047 1 0.051106572151184082 -0.4283294677734375
+		 -0.24553775787353516 1 0.11553621292114258 -0.5450897216796875 -0.29545688629150391
+		 1 0.18400740623474121 -0.659088134765625 -0.34267807006835938 1 0.2531583309173584
+		 -0.7734375 -0.39225530624389648 1 0.32576537132263184 -0.896514892578125 -0.44738101959228516
+		 1 0.38949370384216309 -1.027099609375 -0.50636434555053711 1 0.43610310554504395
+		 -1.163970947265625 -0.56863546371459961 1 0.48171377182006836 -1.3872833251953125
+		 -0.67420387268066406 1 0.46473336219787598 -1.67108154296875 -0.81305694580078125
+		 1 0.42071056365966797 -1.884124755859375 -0.91958999633789062 1 0.3654024600982666
+		 -2.113433837890625 -1.0429229736328125 1 0.30685567855834961 -2.3498687744140625
+		 -1.1607284545898438 1 0.24691319465637207 -2.6054840087890625 -1.2650432586669922
+		 1 0.17955470085144043 -2.878509521484375 -1.3653354644775391 1 0.10888230800628662
+		 -3.1566619873046875 -1.4723892211914062 1 0.04562842845916748 -3.4386749267578125
+		 -1.5772829055786133 1 -0.0041540861129760742 -3.6909027099609375 -1.6598734855651855
+		 1 -0.033690214157104492 -3.88482666015625 -1.7237491607666016 1 -0.041459560394287109
+		 -3.997894287109375 -1.7730712890625 1 -0.013349071145057678 -0.0865936279296875 -0.078528404235839844
+		 1 -0.027597546577453613 -0.10626220703125 -0.089362144470214844 1 -0.038094222545623779
+		 -0.1402435302734375 -0.10597801208496094 1 -0.041248083114624023 -0.195831298828125
+		 -0.13276576995849609 1 -0.031901240348815918 -0.2810211181640625 -0.1749725341796875
+		 1 0.0014195442199707031 -0.382568359375 -0.22480964660644531 1 0.052995920181274414
+		 -0.4871063232421875 -0.277587890625 1 0.11760067939758301 -0.6017608642578125 -0.34081840515136719
+		 1 0.19984316825866699 -0.7337188720703125 -0.4139094352722168 1 0.27433967590332031
+		 -0.85565185546875 -0.47619009017944336 1 0.33939933776855469 -0.9786224365234375
+		 -0.53998994827270508 1 0.38850522041320801 -1.09918212890625 -0.600738525390625 1 0.4349822998046875
+		 -1.3116302490234375 -0.69521617889404297 1 0.42054104804992676 -1.5517425537109375
+		 -0.81311988830566406 1 0.37592077255249023 -1.74859619140625 -0.91684913635253906
+		 1 0.31632614135742188 -1.9843902587890625 -1.0511884689331055 1 0.24898791313171387
+		 -2.2364349365234375 -1.2005572319030762 1 0.17921113967895508 -2.5117645263671875
+		 -1.3350262641906738 1 0.11027669906616211 -2.796783447265625 -1.4587898254394531
+		 1 0.044709324836730957 -3.0861663818359375 -1.5776677131652832 1 -0.0032966136932373047
+		 -3.3701171875 -1.6862001419067383 1 -0.035775899887084961 -3.61968994140625 -1.7771635055541992
+		 1 -0.055168211460113525 -3.8163299560546875 -1.8477096557617188 1 -0.057383894920349121
+		 -3.9415283203125 -1.8870224952697754 1 0.0018788278102874756 -0.12945556640625 -0.023546218872070312
+		 1 0.0053629875183105469 -0.178924560546875 -0.050711631774902344 1 0.031215131282806396
+		 -0.26043701171875 -0.096689224243164062 1 0.086895108222961426 -0.3593292236328125
+		 -0.14907169342041016 1 0.14777660369873047 -0.4532928466796875 -0.19822168350219727
+		 1 0.20238685607910156 -0.5433197021484375 -0.24809646606445312 1 0.24924206733703613
+		 -0.6345672607421875 -0.30300378799438477 1 0.29445886611938477 -0.7480621337890625
+		 -0.37011528015136719 1 0.33933925628662109 -0.8823394775390625 -0.44329643249511719
+		 1 0.38124871253967285 -1.02130126953125 -0.51214838027954102 1 0.41427874565124512
+		 -1.1548004150390625 -0.573822021484375 1 0.44942307472229004 -1.45111083984375 -0.71788215637207031
+		 1 0.45895099639892578 -1.8502960205078125 -0.91537046432495117 1 0.43689656257629395
+		 -2.06256103515625 -1.0237221717834473 1 0.4144902229309082 -2.260986328125 -1.1157093048095703
+		 1 0.38876092433929443 -2.4645843505859375 -1.1955928802490234 1 0.35378313064575195
+		 -2.6797332763671875 -1.2733888626098633 1 0.3090965747833252 -2.89727783203125 -1.340156078338623
+		 1 0.2540748119354248 -3.120452880859375 -1.4082245826721191 1 0.19637966156005859
+		 -3.3474884033203125 -1.4794507026672363 1 0.13425970077514648 -3.5635833740234375
+		 -1.5366864204406738 1 0.072413027286529541 -3.7265472412109375 -1.5671720504760742
+		 1 0.021001666784286499 -3.821685791015625 -1.5826005935668945 1 0.0057082176208496094
+		 -0.08233642578125 -0.022884368896484375 1 0.0045615434646606445 -0.0812225341796875
+		 -0.027237892150878906 1 -0.0027464628219604492 -0.0756988525390625 -0.030755996704101562
+		 1 0.0070343017578125 -0.0718231201171875 -0.037499427795410156 1 0.0084738731384277344
+		 -0.0644989013671875 -0.032460212707519531 1 0.0057191848754882812 -0.0532073974609375
+		 -0.030649185180664062 1 0.0045522451400756836 -0.05657958984375 -0.028299331665039062
+		 1 0.0028313398361206055 -0.0582733154296875 -0.029041290283203125 1 0.00058257579803466797
+		 -0.06439208984375 -0.028109550476074219 1 -0.0089449882507324219 -0.06231689453125
+		 -0.031037330627441406 1 -0.003185272216796875 -0.0680999755859375 -0.033404350280761719
+		 1 -0.0070371031761169434 -0.0711212158203125 -0.030162811279296875 1 -0.0079884529113769531
+		 -0.0700531005859375 -0.037310600280761719 1 -0.010184824466705322 -0.07427978515625
+		 -0.045775413513183594 1 -0.013798356056213379 -0.0771331787109375 -0.060029029846191406
+		 1 -0.012076258659362793 -0.07122802734375 -0.066791534423828125 1 -0.0068095028400421143
+		 -0.062744140625 -0.068393707275390625 1 0.36913108825683594 -0.788421630859375 -0.77207088470458984
+		 1 0.39345979690551758 -0.8824005126953125 -0.81815862655639648 1 0.39216351509094238
+		 -0.97747802734375 -0.84688997268676758 1 0.39322161674499512 -1.0592193603515625
+		 -0.84864139556884766 1 0.38709664344787598 -1.13665771484375 -0.84774208068847656
+		 1 0.38222122192382812 -1.2115936279296875 -0.8302302360534668 1 0.38679337501525879
+		 -1.2892913818359375 -0.80029058456420898 1 0.40733599662780762 -1.359161376953125
+		 -0.76726293563842773 1 0.43648552894592285 -1.417388916015625 -0.74539947509765625
+		 1 0.46401405334472656 -1.465362548828125 -0.73516941070556641 1 0.48364782333374023
+		 -1.5073089599609375 -0.73389387130737305 1 0.49278974533081055 -1.5494384765625 -0.74499940872192383
+		 1 0.4917905330657959 -1.58892822265625 -0.76698207855224609 1 0.4843599796295166
+		 -1.6243438720703125 -0.79168415069580078 1 0.4617149829864502 -1.63726806640625 -0.80718135833740234
+		 1 0.34346342086791992 -1.5257110595703125 -0.76024341583251953 1 0.26775765419006348
+		 -1.4371337890625 -0.72853755950927734 1 0.35154294967651367 -0.6397857666015625 -0.5879969596862793
+		 1 0.37209749221801758 -0.733154296875 -0.64383172988891602 1 0.37304806709289551
+		 -0.82598876953125 -0.68457269668579102 1 0.37222552299499512 -0.9062042236328125
+		 -0.70584249496459961 1 0.36827659606933594 -0.976593017578125 -0.7221989631652832
+		 1 0.36702203750610352 -1.03955078125 -0.72219991683959961 1 0.37331485748291016 -1.1021575927734375
+		 -0.7049565315246582 1 0.39177894592285156 -1.1601409912109375 -0.67777156829833984
+		 1 0.41987442970275879 -1.2098541259765625 -0.65085077285766602 1 0.4472956657409668
+		 -1.24822998046875 -0.63247394561767578 1 0.46649169921875 -1.283447265625 -0.62294149398803711
+		 1 0.47218847274780273 -1.315582275390625 -0.62445926666259766 1 0.46786952018737793
+		 -1.3328857421875 -0.63433933258056641 1 0.45527386665344238 -1.3294677734375 -0.64679527282714844
+		 1 0.43546128273010254 -1.2933807373046875 -0.64000129699707031 1 0.34971499443054199
+		 -1.1687774658203125 -0.59148740768432617 1 0.27608346939086914 -1.0752410888671875
+		 -0.56338119506835938 1 -0.01478731632232666 -0.1024169921875 -0.083639144897460938
+		 1 -0.024887979030609131 -0.1239471435546875 -0.098602294921875 1 -0.028083205223083496
+		 -0.116546630859375 -0.094614982604980469 1 0.061895608901977539 -0.523162841796875
+		 -0.29795551300048828 1 0.12520122528076172 -0.628936767578125 -0.36896514892578125
+		 1 0.0017949044704437256 -0.129669189453125 0.0024127960205078125 1 0.0099922418594360352
+		 -0.1766815185546875 -0.02613067626953125 1 0.040879130363464355 -0.252685546875 -0.072012901306152344
+		 1 0.097464561462402344 -0.345062255859375 -0.12771463394165039 1 0.15507125854492188
+		 -0.4294281005859375 -0.17935705184936523 1 0.20761251449584961 -0.5150299072265625
+		 -0.2353205680847168 1 0.25038802623748779 -0.60015869140625 -0.29252910614013672
+		 1 0.28880739212036133 -0.7034912109375 -0.35870695114135742 1 0.32573866844177246
+		 -0.8288726806640625 -0.43062496185302734 1 0.36320757865905762 -0.9681854248046875
+		 -0.49753379821777344 1 0.38910961151123047 -1.099273681640625 -0.55494499206542969
+		 1 0.40102505683898926 -1.232086181640625 -0.61769199371337891 1 0.40302681922912598
+		 -1.399322509765625 -0.69975709915161133 1 0.409942626953125 -1.60601806640625 -0.79746055603027344
+		 1 0.41115474700927734 -1.8284759521484375 -0.90512847900390625 1 0.40115118026733398
+		 -2.0475006103515625 -1.012509822845459 1 0.39357388019561768 -2.256561279296875 -1.107818603515625
+		 1 0.38083279132843018 -2.4567413330078125 -1.1923136711120605 1 0.35935342311859131
+		 -2.6654815673828125 -1.2785630226135254 1 0.32828211784362793 -2.8778839111328125
+		 -1.3601827621459961 1 0.27417480945587158 -3.09747314453125 -1.4361190795898438 1 0.21129703521728516
+		 -3.32208251953125 -1.5082712173461914 1 0.14909178018569946 -3.53692626953125 -1.5623903274536133
+		 1 0.084857344627380371 -3.698150634765625 -1.5833392143249512 1 0.029713839292526245
+		 -3.7867584228515625 -1.5881600379943848 1 0.0009257197380065918 -0.020751953125 -0.0030803680419921875
+		 1 0.0022363066673278809 -0.0218658447265625 -0.0094900131225585938 1 0.0020422935485839844
+		 -0.0236053466796875 -0.013673782348632812 1 0.0014347434043884277 -0.0257110595703125
+		 -0.016632080078125 1 0.00069516897201538086 -0.0265045166015625 -0.018876075744628906
+		 1 0.00038957595825195312 -0.0278778076171875 -0.020442008972167969 1 0.00099140405654907227
+		 -0.02850341796875 -0.023436546325683594 1 0.0010735392570495605 -0.029327392578125
+		 -0.023205757141113281 1 0.0014874935150146484 -0.0290374755859375 -0.023456573486328125
+		 1 0.0005175173282623291 -0.0286712646484375 -0.024209976196289062 1 ;
+	setAttr ".it[0].itg[0].iti[6000].ict" -type "componentList" 1 "vtx[0:1305]";
+	setAttr ".mlid" 0;
+	setAttr ".mlpr" 0;
+	setAttr ".pndr[0]"  0;
+	setAttr ".tgdt[0].cid" -type "Int32Array" 1 0 ;
+	setAttr ".aal" -type "attributeAlias" 2 "jawDrop" "weight[0]" ;
+createNode animCurveTU -n "headModel:bls_head_jawDrop";
+	rename -uid "6AC0A98F-2C40-376C-74EC-11A2B7C7EC90";
+	setAttr ".tan" 18;
+	setAttr ".wgt" no;
+	setAttr -s 2 ".ktv[0:1]"  0 0 8 1;
+createNode nodeGraphEditorInfo -n "headModel:MayaNodeEditorSavedTabsInfo";
+	rename -uid "E420C79C-6F45-81CE-E24C-439A771C73E0";
+	setAttr ".pee" yes;
+	setAttr ".def" no;
+	setAttr ".tgi[0].tn" -type "string" "Untitled_1";
+	setAttr ".tgi[0].vl" -type "double2" -370.42123070202808 6996.428293415488 ;
+	setAttr ".tgi[0].vh" -type "double2" 825.18311739331943 7320.2378043579783 ;
+	setAttr -s 47 ".tgi[0].ni";
+	setAttr ".tgi[0].ni[0].x" 212.85714721679688;
+	setAttr ".tgi[0].ni[0].y" 4281.4287109375;
+	setAttr ".tgi[0].ni[0].nvs" 18304;
+	setAttr ".tgi[0].ni[1].x" -2.8571429252624512;
+	setAttr ".tgi[0].ni[1].y" 7110;
+	setAttr ".tgi[0].ni[1].nvs" 18304;
+	setAttr ".tgi[0].ni[2].x" 212.85714721679688;
+	setAttr ".tgi[0].ni[2].y" 9407.142578125;
+	setAttr ".tgi[0].ni[2].nvs" 18304;
+	setAttr ".tgi[0].ni[3].x" 212.85714721679688;
+	setAttr ".tgi[0].ni[3].y" 2901.428466796875;
+	setAttr ".tgi[0].ni[3].nvs" 18304;
+	setAttr ".tgi[0].ni[4].x" 212.85714721679688;
+	setAttr ".tgi[0].ni[4].y" 437.14285278320312;
+	setAttr ".tgi[0].ni[4].nvs" 18304;
+	setAttr ".tgi[0].ni[5].x" 212.85714721679688;
+	setAttr ".tgi[0].ni[5].y" -4984.28564453125;
+	setAttr ".tgi[0].ni[5].nvs" 18304;
+	setAttr ".tgi[0].ni[6].x" 212.85714721679688;
+	setAttr ".tgi[0].ni[6].y" 240;
+	setAttr ".tgi[0].ni[6].nvs" 18304;
+	setAttr ".tgi[0].ni[7].x" 212.85714721679688;
+	setAttr ".tgi[0].ni[7].y" 9505.7138671875;
+	setAttr ".tgi[0].ni[7].nvs" 18304;
+	setAttr ".tgi[0].ni[8].x" 212.85714721679688;
+	setAttr ".tgi[0].ni[8].y" -4787.14306640625;
+	setAttr ".tgi[0].ni[8].nvs" 18304;
+	setAttr ".tgi[0].ni[9].x" 212.85714721679688;
+	setAttr ".tgi[0].ni[9].y" 6450;
+	setAttr ".tgi[0].ni[9].nvs" 18304;
+	setAttr ".tgi[0].ni[10].x" 212.85714721679688;
+	setAttr ".tgi[0].ni[10].y" -2618.571533203125;
+	setAttr ".tgi[0].ni[10].nvs" 18304;
+	setAttr ".tgi[0].ni[11].x" 212.85714721679688;
+	setAttr ".tgi[0].ni[11].y" -6561.4287109375;
+	setAttr ".tgi[0].ni[11].nvs" 18304;
+	setAttr ".tgi[0].ni[12].x" 212.85714721679688;
+	setAttr ".tgi[0].ni[12].y" -1632.857177734375;
+	setAttr ".tgi[0].ni[12].nvs" 18304;
+	setAttr ".tgi[0].ni[13].x" 212.85714721679688;
+	setAttr ".tgi[0].ni[13].y" 2211.428466796875;
+	setAttr ".tgi[0].ni[13].nvs" 18304;
+	setAttr ".tgi[0].ni[14].x" 212.85714721679688;
+	setAttr ".tgi[0].ni[14].y" -9025.7138671875;
+	setAttr ".tgi[0].ni[14].nvs" 18304;
+	setAttr ".tgi[0].ni[15].x" 212.85714721679688;
+	setAttr ".tgi[0].ni[15].y" -5772.85693359375;
+	setAttr ".tgi[0].ni[15].nvs" 18304;
+	setAttr ".tgi[0].ni[16].x" 212.85714721679688;
+	setAttr ".tgi[0].ni[16].y" 9111.4287109375;
+	setAttr ".tgi[0].ni[16].nvs" 18304;
+	setAttr ".tgi[0].ni[17].x" 212.85714721679688;
+	setAttr ".tgi[0].ni[17].y" -7448.5712890625;
+	setAttr ".tgi[0].ni[17].nvs" 18304;
+	setAttr ".tgi[0].ni[18].x" 212.85714721679688;
+	setAttr ".tgi[0].ni[18].y" -1731.4285888671875;
+	setAttr ".tgi[0].ni[18].nvs" 18304;
+	setAttr ".tgi[0].ni[19].x" 212.85714721679688;
+	setAttr ".tgi[0].ni[19].y" -2717.142822265625;
+	setAttr ".tgi[0].ni[19].nvs" 18304;
+	setAttr ".tgi[0].ni[20].x" 212.85714721679688;
+	setAttr ".tgi[0].ni[20].y" 7632.85693359375;
+	setAttr ".tgi[0].ni[20].nvs" 18304;
+	setAttr ".tgi[0].ni[21].x" 212.85714721679688;
+	setAttr ".tgi[0].ni[21].y" 3098.571533203125;
+	setAttr ".tgi[0].ni[21].nvs" 18304;
+	setAttr ".tgi[0].ni[22].x" 212.85714721679688;
+	setAttr ".tgi[0].ni[22].y" 4675.71435546875;
+	setAttr ".tgi[0].ni[22].nvs" 18304;
+	setAttr ".tgi[0].ni[23].x" 212.85714721679688;
+	setAttr ".tgi[0].ni[23].y" -9420;
+	setAttr ".tgi[0].ni[23].nvs" 18304;
+	setAttr ".tgi[0].ni[24].x" 212.85714721679688;
+	setAttr ".tgi[0].ni[24].y" -6364.28564453125;
+	setAttr ".tgi[0].ni[24].nvs" 18304;
+	setAttr ".tgi[0].ni[25].x" 212.85714721679688;
+	setAttr ".tgi[0].ni[25].y" 7238.5712890625;
+	setAttr ".tgi[0].ni[25].nvs" 18304;
+	setAttr ".tgi[0].ni[26].x" -2.8571429252624512;
+	setAttr ".tgi[0].ni[26].y" 7222.85693359375;
+	setAttr ".tgi[0].ni[26].nvs" 18304;
+	setAttr ".tgi[0].ni[27].x" 304.28570556640625;
+	setAttr ".tgi[0].ni[27].y" 7110;
+	setAttr ".tgi[0].ni[27].nvs" 18304;
+	setAttr ".tgi[0].ni[28].x" 212.85714721679688;
+	setAttr ".tgi[0].ni[28].y" 5267.14306640625;
+	setAttr ".tgi[0].ni[28].nvs" 18304;
+	setAttr ".tgi[0].ni[29].x" 212.85714721679688;
+	setAttr ".tgi[0].ni[29].y" -2224.28564453125;
+	setAttr ".tgi[0].ni[29].nvs" 18304;
+	setAttr ".tgi[0].ni[30].x" 212.85714721679688;
+	setAttr ".tgi[0].ni[30].y" -6955.71435546875;
+	setAttr ".tgi[0].ni[30].nvs" 18304;
+	setAttr ".tgi[0].ni[31].x" 304.28570556640625;
+	setAttr ".tgi[0].ni[31].y" 7174.28564453125;
+	setAttr ".tgi[0].ni[31].nvs" 18304;
+	setAttr ".tgi[0].ni[32].x" 212.85714721679688;
+	setAttr ".tgi[0].ni[32].y" -844.28570556640625;
+	setAttr ".tgi[0].ni[32].nvs" 18304;
+	setAttr ".tgi[0].ni[33].x" 212.85714721679688;
+	setAttr ".tgi[0].ni[33].y" -4097.14306640625;
+	setAttr ".tgi[0].ni[33].nvs" 18304;
+	setAttr ".tgi[0].ni[34].x" 212.85714721679688;
+	setAttr ".tgi[0].ni[34].y" -3801.428466796875;
+	setAttr ".tgi[0].ni[34].nvs" 18304;
+	setAttr ".tgi[0].ni[35].x" 212.85714721679688;
+	setAttr ".tgi[0].ni[35].y" -450;
+	setAttr ".tgi[0].ni[35].nvs" 18304;
+	setAttr ".tgi[0].ni[36].x" 212.85714721679688;
+	setAttr ".tgi[0].ni[36].y" -7941.4287109375;
+	setAttr ".tgi[0].ni[36].nvs" 18304;
+	setAttr ".tgi[0].ni[37].x" 212.85714721679688;
+	setAttr ".tgi[0].ni[37].y" 8421.4287109375;
+	setAttr ".tgi[0].ni[37].nvs" 18304;
+	setAttr ".tgi[0].ni[38].x" 212.85714721679688;
+	setAttr ".tgi[0].ni[38].y" 6942.85693359375;
+	setAttr ".tgi[0].ni[38].nvs" 18304;
+	setAttr ".tgi[0].ni[39].x" -2.8571429252624512;
+	setAttr ".tgi[0].ni[39].y" 7124.28564453125;
+	setAttr ".tgi[0].ni[39].nvs" 18304;
+	setAttr ".tgi[0].ni[40].x" 212.85714721679688;
+	setAttr ".tgi[0].ni[40].y" -1238.5714111328125;
+	setAttr ".tgi[0].ni[40].nvs" 18304;
+	setAttr ".tgi[0].ni[41].x" 212.85714721679688;
+	setAttr ".tgi[0].ni[41].y" -8730;
+	setAttr ".tgi[0].ni[41].nvs" 18304;
+	setAttr ".tgi[0].ni[42].x" 212.85714721679688;
+	setAttr ".tgi[0].ni[42].y" 7731.4287109375;
+	setAttr ".tgi[0].ni[42].nvs" 18304;
+	setAttr ".tgi[0].ni[43].x" 212.85714721679688;
+	setAttr ".tgi[0].ni[43].y" 8224.2861328125;
+	setAttr ".tgi[0].ni[43].nvs" 18304;
+	setAttr ".tgi[0].ni[44].x" 212.85714721679688;
+	setAttr ".tgi[0].ni[44].y" 6351.4287109375;
+	setAttr ".tgi[0].ni[44].nvs" 18304;
+	setAttr ".tgi[0].ni[45].x" 212.85714721679688;
+	setAttr ".tgi[0].ni[45].y" 5661.4287109375;
+	setAttr ".tgi[0].ni[45].nvs" 18304;
+	setAttr ".tgi[0].ni[46].x" 212.85714721679688;
+	setAttr ".tgi[0].ni[46].y" -3900;
+	setAttr ".tgi[0].ni[46].nvs" 18304;
+createNode script -n "uiConfigurationScriptNode";
+	rename -uid "759CE174-AD4F-16C6-D31B-CEB41591B935";
+	setAttr ".b" -type "string" "// Maya Mel UI Configuration File.\n// No UI generated in batch mode.\n";
+	setAttr ".st" 3;
+select -ne :time1;
+	setAttr ".o" 1;
+	setAttr ".unw" 1;
+select -ne :hardwareRenderingGlobals;
+	setAttr ".otfna" -type "stringArray" 22 "NURBS Curves" "NURBS Surfaces" "Polygons" "Subdiv Surface" "Particles" "Particle Instance" "Fluids" "Strokes" "Image Planes" "UI" "Lights" "Cameras" "Locators" "Joints" "IK Handles" "Deformers" "Motion Trails" "Components" "Hair Systems" "Follicles" "Misc. UI" "Ornaments"  ;
+	setAttr ".otfva" -type "Int32Array" 22 0 1 1 1 1 1
+		 1 1 1 0 0 0 0 0 0 0 0 0
+		 0 0 0 0 ;
+	setAttr ".fprt" yes;
+	setAttr ".rtfm" 3;
+select -ne :renderPartition;
+	setAttr -s 3 ".st";
+select -ne :renderGlobalsList1;
+select -ne :defaultShaderList1;
+	setAttr -s 7 ".s";
+select -ne :postProcessList1;
+	setAttr -s 2 ".p";
+select -ne :defaultRenderUtilityList1;
+select -ne :defaultRenderingList1;
+select -ne :standardSurface1;
+	setAttr ".bc" -type "float3" 0.40000001 0.40000001 0.40000001 ;
+	setAttr ".sr" 0.5;
+select -ne :openPBR_shader1;
+	setAttr ".bc" -type "float3" 0.40000001 0.40000001 0.40000001 ;
+	setAttr ".sr" 0.5;
+select -ne :initialShadingGroup;
+	setAttr ".ro" yes;
+select -ne :initialParticleSE;
+	setAttr ".ro" yes;
+select -ne :defaultRenderGlobals;
+	addAttr -ci true -h true -sn "dss" -ln "defaultSurfaceShader" -dt "string";
+	setAttr ".dss" -type "string" "openPBR_shader1";
+select -ne :defaultResolution;
+	setAttr ".pa" 1;
+select -ne :defaultColorMgtGlobals;
+	setAttr ".cfe" yes;
+	setAttr ".cfp" -type "string" "<MAYA_RESOURCES>/OCIO-configs/Maya2022-default/config.ocio";
+	setAttr ".vtn" -type "string" "ACES 1.0 SDR-video (sRGB)";
+	setAttr ".vn" -type "string" "ACES 1.0 SDR-video";
+	setAttr ".dn" -type "string" "sRGB";
+	setAttr ".wsn" -type "string" "ACEScg";
+	setAttr ".otn" -type "string" "ACES 1.0 SDR-video (sRGB)";
+	setAttr ".potn" -type "string" "ACES 1.0 SDR-video (sRGB)";
+select -ne :hardwareRenderGlobals;
+	setAttr ".ctrs" 256;
+	setAttr ".btrs" 512;
+connectAttr "headModel:faceShape.w" "bottomLipRegionShape.inMesh";
+connectAttr "headModel:bls_head.og[0]" "headModel:faceShape.i";
+connectAttr "headModel:faceShape.w" "bottomLipLeftRegionShape.inMesh";
+connectAttr "headModel:faceShape.w" "bottomLipRightRegionShape.inMesh";
+connectAttr "headModel:faceShape.w" "mouthLeftRegionShape.inMesh";
+connectAttr "headModel:faceShape.w" "mouthRightRegionShape.inMesh";
+connectAttr "headModel:faceShape.w" "topLipRegionShape.inMesh";
+connectAttr "headModel:faceShape.w" "topLipLeftRegionShape.inMesh";
+connectAttr "headModel:faceShape.w" "topLipRightRegionShape.inMesh";
+relationship "link" ":lightLinker1" ":initialShadingGroup.message" ":defaultLightSet.message";
+relationship "link" ":lightLinker1" ":initialParticleSE.message" ":defaultLightSet.message";
+relationship "link" ":lightLinker1" ":defaultHardwareRenderGlobals.message" ":defaultLightSet.message";
+relationship "link" ":lightLinker1" ":defaultRenderGlobals.message" ":defaultLightSet.message";
+relationship "link" ":lightLinker1" ":defaultRenderGlobals.message" ":initialParticleSE.message";
+relationship "link" ":lightLinker1" ":defaultRenderGlobals.message" ":initialShadingGroup.message";
+relationship "link" ":lightLinker1" ":defaultLightSet.message" ":initialParticleSE.message";
+relationship "link" ":lightLinker1" ":defaultLightSet.message" ":defaultRenderGlobals.message";
+relationship "link" ":lightLinker1" ":initialShadingGroup.message" ":initialParticleSE.message";
+relationship "link" ":lightLinker1" ":defaultLightSet.message" ":initialShadingGroup.message";
+relationship "link" ":lightLinker1" ":initialParticleSE.message" ":initialShadingGroup.message";
+relationship "link" ":lightLinker1" ":initialShadingGroup.message" ":defaultRenderGlobals.message";
+relationship "link" ":lightLinker1" ":initialParticleSE.message" ":defaultRenderGlobals.message";
+relationship "link" ":lightLinker1" ":defaultObjectSet.message" ":defaultLightSet.message";
+relationship "link" ":lightLinker1" "headModel:lambert2SG.message" ":defaultLightSet.message";
+relationship "shadowLink" ":lightLinker1" ":initialShadingGroup.message" ":defaultLightSet.message";
+relationship "shadowLink" ":lightLinker1" ":initialParticleSE.message" ":defaultLightSet.message";
+relationship "shadowLink" ":lightLinker1" ":defaultHardwareRenderGlobals.message" ":defaultLightSet.message";
+relationship "shadowLink" ":lightLinker1" ":initialParticleSE.message" ":initialShadingGroup.message";
+relationship "shadowLink" ":lightLinker1" ":initialShadingGroup.message" ":initialParticleSE.message";
+relationship "shadowLink" ":lightLinker1" ":defaultLightSet.message" ":initialShadingGroup.message";
+relationship "shadowLink" ":lightLinker1" ":defaultLightSet.message" ":initialParticleSE.message";
+relationship "shadowLink" ":lightLinker1" "headModel:lambert2SG.message" ":defaultLightSet.message";
+connectAttr "headModel:bls_head.mlpr" "shapeEditorManager.bspr[0]";
+connectAttr "layerManager.dli[0]" "defaultLayer.id";
+connectAttr "renderLayerManager.rlmi[0]" "defaultRenderLayer.rlid";
+connectAttr "headModel:lambert2.oc" "headModel:lambert2SG.ss";
+connectAttr "headModel:faceShape.iog" "headModel:lambert2SG.dsm" -na;
+connectAttr "headModel:lambert2SG.msg" "headModel:materialInfo1.sg";
+connectAttr "headModel:lambert2.msg" "headModel:materialInfo1.m";
+connectAttr "headModel:lambert2.msg" "headModel:hyperShadePrimaryNodeEditorSavedTabsInfo.tgi[0].ni[0].dn"
+		;
+connectAttr "headModel:lambert2SG.msg" "headModel:hyperShadePrimaryNodeEditorSavedTabsInfo.tgi[0].ni[1].dn"
+		;
+connectAttr "headModel:faceShapeOrig.w" "headModel:bls_head.ip[0].ig";
+connectAttr "headModel:faceShapeOrig.o" "headModel:bls_head.orggeom[0]";
+connectAttr "shapeEditorManager.obsv[0]" "headModel:bls_head.tgdt[0].dpvs";
+connectAttr "headModel:bls_head_jawDrop.o" "headModel:bls_head.w[0]";
+connectAttr "headModel:comboCorrectives_lowerLipDepressorR.msg" "headModel:MayaNodeEditorSavedTabsInfo.tgi[0].ni[0].dn"
+		;
+connectAttr "headModel:lambert2.msg" "headModel:MayaNodeEditorSavedTabsInfo.tgi[0].ni[1].dn"
+		;
+connectAttr "headModel:comboCorrectives_lipCornerDepressorR.msg" "headModel:MayaNodeEditorSavedTabsInfo.tgi[0].ni[2].dn"
+		;
+connectAttr "headModel:comboCorrectives_lipSuckTL.msg" "headModel:MayaNodeEditorSavedTabsInfo.tgi[0].ni[3].dn"
+		;
+connectAttr "headModel:comboCorrectives_lipStretcherL.msg" "headModel:MayaNodeEditorSavedTabsInfo.tgi[0].ni[4].dn"
+		;
+connectAttr "headModel:comboCorrectives_upperLidRaiserR.msg" "headModel:MayaNodeEditorSavedTabsInfo.tgi[0].ni[5].dn"
+		;
+connectAttr "headModel:comboCorrectives_jawThrust.msg" "headModel:MayaNodeEditorSavedTabsInfo.tgi[0].ni[6].dn"
+		;
+connectAttr "headModel:comboCorrectives_lipsTowardBR.msg" "headModel:MayaNodeEditorSavedTabsInfo.tgi[0].ni[7].dn"
+		;
+connectAttr "headModel:comboCorrectives_lipFunnelerTR.msg" "headModel:MayaNodeEditorSavedTabsInfo.tgi[0].ni[8].dn"
+		;
+connectAttr "headModel:comboCorrectives_lipPuckerL.msg" "headModel:MayaNodeEditorSavedTabsInfo.tgi[0].ni[9].dn"
+		;
+connectAttr "headModel:comboCorrectives_lipSuckTR.msg" "headModel:MayaNodeEditorSavedTabsInfo.tgi[0].ni[10].dn"
+		;
+connectAttr "headModel:comboCorrectives_lipFunnelerBR.msg" "headModel:MayaNodeEditorSavedTabsInfo.tgi[0].ni[11].dn"
+		;
+connectAttr "headModel:comboCorrectives_chinRaiserB.msg" "headModel:MayaNodeEditorSavedTabsInfo.tgi[0].ni[12].dn"
+		;
+connectAttr "headModel:comboCorrectives_lipsTowardBL.msg" "headModel:MayaNodeEditorSavedTabsInfo.tgi[0].ni[13].dn"
+		;
+connectAttr "headModel:comboCorrectives_mouthLeft.msg" "headModel:MayaNodeEditorSavedTabsInfo.tgi[0].ni[14].dn"
+		;
+connectAttr "headModel:comboCorrectives_lipFunnelerBL.msg" "headModel:MayaNodeEditorSavedTabsInfo.tgi[0].ni[15].dn"
+		;
+connectAttr "headModel:comboCorrectives_jawSidewaysLeft.msg" "headModel:MayaNodeEditorSavedTabsInfo.tgi[0].ni[16].dn"
+		;
+connectAttr "headModel:comboCorrectives_lipsTowardTR.msg" "headModel:MayaNodeEditorSavedTabsInfo.tgi[0].ni[17].dn"
+		;
+connectAttr "headModel:comboCorrectives_lipsTowardTL.msg" "headModel:MayaNodeEditorSavedTabsInfo.tgi[0].ni[18].dn"
+		;
+connectAttr "headModel:comboCorrectives_lipFunnelerTL.msg" "headModel:MayaNodeEditorSavedTabsInfo.tgi[0].ni[19].dn"
+		;
+connectAttr "headModel:comboCorrectives_mouthRight.msg" "headModel:MayaNodeEditorSavedTabsInfo.tgi[0].ni[20].dn"
+		;
+connectAttr "headModel:comboCorrectives_upperLidRaiserL.msg" "headModel:MayaNodeEditorSavedTabsInfo.tgi[0].ni[21].dn"
+		;
+connectAttr "headModel:comboCorrectives_lipSuckBR.msg" "headModel:MayaNodeEditorSavedTabsInfo.tgi[0].ni[22].dn"
+		;
+connectAttr "headModel:comboCorrectives_noseWrinklerR.msg" "headModel:MayaNodeEditorSavedTabsInfo.tgi[0].ni[23].dn"
+		;
+connectAttr "headModel:comboCorrectives_jawDrop.msg" "headModel:MayaNodeEditorSavedTabsInfo.tgi[0].ni[24].dn"
+		;
+connectAttr "headModel:comboCorrectives_lipCornerDepressorL.msg" "headModel:MayaNodeEditorSavedTabsInfo.tgi[0].ni[25].dn"
+		;
+connectAttr "headModel:faceShapeOrig.msg" "headModel:MayaNodeEditorSavedTabsInfo.tgi[0].ni[26].dn"
+		;
+connectAttr "headModel:lambert2SG.msg" "headModel:MayaNodeEditorSavedTabsInfo.tgi[0].ni[27].dn"
+		;
+connectAttr "headModel:comboCorrectives_lipPuckerR.msg" "headModel:MayaNodeEditorSavedTabsInfo.tgi[0].ni[28].dn"
+		;
+connectAttr "headModel:comboCorrectives_cheekRaiserL.msg" "headModel:MayaNodeEditorSavedTabsInfo.tgi[0].ni[29].dn"
+		;
+connectAttr "headModel:comboCorrectives_lipStretcherR.msg" "headModel:MayaNodeEditorSavedTabsInfo.tgi[0].ni[30].dn"
+		;
+connectAttr "headModel:bls_head.msg" "headModel:MayaNodeEditorSavedTabsInfo.tgi[0].ni[31].dn"
+		;
+connectAttr "headModel:comboCorrectives_dimplerR.msg" "headModel:MayaNodeEditorSavedTabsInfo.tgi[0].ni[32].dn"
+		;
+connectAttr "headModel:comboCorrectives_chinRaiserT.msg" "headModel:MayaNodeEditorSavedTabsInfo.tgi[0].ni[33].dn"
+		;
+connectAttr "headModel:comboCorrectives_upperLipRaiserR.msg" "headModel:MayaNodeEditorSavedTabsInfo.tgi[0].ni[34].dn"
+		;
+connectAttr "headModel:comboCorrectives_dimplerL.msg" "headModel:MayaNodeEditorSavedTabsInfo.tgi[0].ni[35].dn"
+		;
+connectAttr "headModel:comboCorrectives_lipCornerPullerL.msg" "headModel:MayaNodeEditorSavedTabsInfo.tgi[0].ni[36].dn"
+		;
+connectAttr "headModel:comboCorrectives_jawSidewaysRight.msg" "headModel:MayaNodeEditorSavedTabsInfo.tgi[0].ni[37].dn"
+		;
+connectAttr "headModel:comboCorrectives_cheekRaiserR.msg" "headModel:MayaNodeEditorSavedTabsInfo.tgi[0].ni[38].dn"
+		;
+connectAttr "headModel:bls_head_jawDrop.msg" "headModel:MayaNodeEditorSavedTabsInfo.tgi[0].ni[39].dn"
+		;
+connectAttr "headModel:comboCorrectives_lipPressorL.msg" "headModel:MayaNodeEditorSavedTabsInfo.tgi[0].ni[40].dn"
+		;
+connectAttr "headModel:comboCorrectives_lipPressorR.msg" "headModel:MayaNodeEditorSavedTabsInfo.tgi[0].ni[41].dn"
+		;
+connectAttr "headModel:comboCorrectives_lipSuckBL.msg" "headModel:MayaNodeEditorSavedTabsInfo.tgi[0].ni[42].dn"
+		;
+connectAttr "headModel:comboCorrectives_upperLipRaiserL.msg" "headModel:MayaNodeEditorSavedTabsInfo.tgi[0].ni[43].dn"
+		;
+connectAttr "headModel:comboCorrectives_noseWrinklerL.msg" "headModel:MayaNodeEditorSavedTabsInfo.tgi[0].ni[44].dn"
+		;
+connectAttr "headModel:comboCorrectives_lowerLipDepressorL.msg" "headModel:MayaNodeEditorSavedTabsInfo.tgi[0].ni[45].dn"
+		;
+connectAttr "headModel:comboCorrectives_lipCornerPullerR.msg" "headModel:MayaNodeEditorSavedTabsInfo.tgi[0].ni[46].dn"
+		;
+connectAttr "headModel:lambert2SG.pa" ":renderPartition.st" -na;
+connectAttr "headModel:lambert2.msg" ":defaultShaderList1.s" -na;
+connectAttr "headModel:eyeGeo_Eye_003_bump2d1.msg" ":defaultRenderUtilityList1.u"
+		 -na;
+connectAttr "defaultRenderLayer.msg" ":defaultRenderingList1.r" -na;
+connectAttr "headModel:eyeGeo_Eye_003_bump2d1.o" ":lambert1.n";
+// End of MPyLocator_Mesh_Regions.ma

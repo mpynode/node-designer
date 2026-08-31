@@ -1,0 +1,61 @@
+{
+  "accepted": true,
+  "baseline_ms": 0.0152,
+  "best_ms": 0.0016,
+  "created": 1787679895.982213,
+  "ledger": [
+    {
+      "compiled": true,
+      "duration_s": null,
+      "fix_rounds": 0,
+      "hypothesis": "",
+      "index": 0,
+      "ms": 0.0152,
+      "note": "",
+      "outcome": "baseline",
+      "parity": null,
+      "predicted_speedup": null,
+      "risk": "",
+      "slug": null,
+      "speedup": null,
+      "theme": ""
+    },
+    {
+      "compiled": true,
+      "duration_s": 657.612,
+      "fix_rounds": 0,
+      "hypothesis": "at n=120 the arithmetic is irrelevant; the whole 12.4us is per-allocation and per-Maya-call overhead. Six nd::Array allocs plus a 360-double stack plus two growing Maya arrays plus a full MFnNurbsCurve::create per evaluation are all avoidable, because CV count, degree, form and the entire knot vector are compile-time constants for this node and only the CV positions move.",
+      "index": 1,
+      "ms": 0.0027,
+      "note": "",
+      "outcome": "accept",
+      "parity": "pass",
+      "predicted_speedup": 2.5,
+      "risk": "reusing the output data object in place is the one change that could silently freeze the answer, so it was verified directly rather than trusted: CVs are recomputed in full every evaluation and only the container is reused. A standalone check against the Python reference over 5 fresh configs plus 3 RE-PRESENTED earlier configs reported maxerr 0.000e+00 (bit-identical, not merely inside tolerance), zero frozen repeats, and degree/form/knot-count unchanged at 3/kOpen/122.",
+      "slug": "reuse_curve_data_inplace",
+      "speedup": 5.62962962962963,
+      "theme": "the node is a fixed 120-CV generator whose topology never changes, so stop rebuilding the nurbsCurve data object every tick -- fuse the five nd::Array passes into one allocation-free loop and push the new CVs into the data object already on the output plug"
+    },
+    {
+      "compiled": true,
+      "duration_s": 792.534,
+      "fix_rounds": 0,
+      "hypothesis": "at 120 CVs the node is not arithmetic-bound but call-bound: 120 __sincos plus 120 out-of-line MPointArray::operator[] plus a per-tick hasFn/MFnNurbsCurve-construct/numCVs/degree/form re-validation are the whole body, so removing whole CALLS -- not making the math cheaper -- is the lever",
+      "index": 2,
+      "ms": 0.0016,
+      "note": "",
+      "outcome": "accept",
+      "parity": "pass",
+      "predicted_speedup": 2.0,
+      "risk": "cos(P+B)=cP*cB-sP*sB is a ~1-2 ULP rewrite of a single libm sincos, so it is no longer bit-identical to the reference (well inside the 1e-3/1e-4 parity tolerance); and the bound MFnNurbsCurve is re-validated only on MObject identity change, with setCVs failure as the backstop that drops to the full create path",
+      "slug": "cache_turns_circle_bind_fnset",
+      "speedup": 9.5,
+      "theme": "split the helix angle into a turns-only unit-circle table cached across evaluations and a one-sincos time rotation, then stop re-establishing the output curve's identity with a fresh MFnNurbsCurve every tick"
+    }
+  ],
+  "parity_gate": "authored+pointwise",
+  "reason": "accepted (9.50x)",
+  "rounds": 2,
+  "speedup": 9.5,
+  "type_name": "helixCurve"
+}
