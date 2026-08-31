@@ -1,7 +1,7 @@
 # tests/compile/freshness/test_mega_stage1_freshness.py  (pure -- no setUpModule)
 """The checked-in mega stage-1 artifacts must embed the CURRENT nd_runtime.
 
-``compiled_templates/_combined_plugin/build/stages/<type>/1_transpiled.cpp`` is transpiler
+``templates/All Templates Plugin/build/stages/<type>/1_transpiled.cpp`` is transpiler
 output: ``codegen.generate_cpp(spec, for_port=True)`` with the nd runtime
 inlined. Because the runtime is inlined, a runtime fix does NOT reach the
 checked-in artifacts -- they keep whatever nd_runtime was current when the mega
@@ -25,7 +25,7 @@ import unittest
 from tests import _paths
 
 _ROOT = _paths.ROOT
-_STAGES = os.path.join(_ROOT, "compiled_templates", "_combined_plugin", "build",
+_STAGES = os.path.join(_ROOT, "templates", "All Templates Plugin", "build",
                        "stages")
 
 # The NaN-asymmetric helpers every min/max site must route through.

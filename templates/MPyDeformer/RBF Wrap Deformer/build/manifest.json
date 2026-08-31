@@ -5,7 +5,7 @@
   "model": "claude-opus-5[1m]",
   "strict": false,
   "plugin_name": "MPyDeformer_RBF_Wrap_Deformer",
-  "bundle": "compiled_templates/MPyDeformer/RBF Wrap Deformer/MPyDeformer_RBF_Wrap_Deformer.bundle",
+  "bundle": "templates/MPyDeformer/RBF Wrap Deformer/MPyDeformer_RBF_Wrap_Deformer.bundle",
   "created": 1787675713.445135,
   "nodes": [
     {

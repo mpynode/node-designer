@@ -19,17 +19,16 @@ import os, sys, json, time
 
 HARNESS = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(HARNESS))            # project root
-AUDIT_ROOT = os.path.join(ROOT, "compiled_templates")       # audit output root
+MEGA_DEFAULT = os.path.join(ROOT, "templates", "All Templates Plugin")
 
 MODEL = os.environ.get("MPYNODE_PORT_MODEL", "claude-opus-4-8[1m]")
 EFFORT = os.environ.get("MPYNODE_PORT_EFFORT", "high")
 
-OUT_DIR = sys.argv[1] if len(sys.argv) > 1 else os.path.join(AUDIT_ROOT,
-                                                             "_combined_plugin")
+OUT_DIR = sys.argv[1] if len(sys.argv) > 1 else MEGA_DEFAULT
 PLUGIN_NAME = sys.argv[2] if len(sys.argv) > 2 else "mPyMega"
 
 # MPYNODE_MEGA_FROM_ARTIFACTS=1 links the per-template artifacts that already sit
-# in compiled_templates/ instead of re-porting each .mpn. Those artifacts are the
+# in each template's build/ instead of re-porting each .mpn. Those artifacts are the
 # BEST code for every node: the optimizer promotes its accepted winner to
 # build/<type>/<type>.cpp and leaves the ported baseline there when no candidate
 # wins, so the gather needs no selection logic. The default path is unchanged --
@@ -52,9 +51,9 @@ def _artifact_for(entry):
 
     Resolved from the template's own .mpn path
     (``templates/<Family>/<Template>/template.mpn`` ->
-    ``compiled_templates/<Family>/<Template>/build/<type>/<type>.cpp``) rather
-    than from ``native_type``, which carries the mPy BASE type (mPyFile) and not
-    the compiled node type (fileTexture).
+    ``templates/<Family>/<Template>/build/<type>/<type>.cpp``) rather than from
+    ``native_type``, which carries the mPy BASE type (mPyFile) and not the
+    compiled node type (fileTexture).
 
     The type comes from ``build/manifest.json``'s ``nodes[].type_name``, not from
     a listdir of ``build/``: a directory left behind by an earlier build is
@@ -67,9 +66,7 @@ def _artifact_for(entry):
     tdir = os.path.dirname(entry.get("mpn") or "")
     if not tdir:
         return None, None
-    build = os.path.join(ROOT, "compiled_templates",
-                         os.path.basename(os.path.dirname(tdir)),
-                         os.path.basename(tdir), "build")
+    build = os.path.join(tdir, "build")
     try:
         with open(os.path.join(build, "manifest.json")) as fh:
             declared = [n.get("type_name")
@@ -121,8 +118,8 @@ def _assemble_from_artifacts(chosen, out_dir, plugin_name, maya_root):
         rows.append({
             "type_name": c.get("native_type") or c["folder"],
             "base": "", "type_id": None, "build_status": "dropped",
-            "build_reason": "no per-template artifact in compiled_templates/ -- "
-                            "compile that template first",
+            "build_reason": "no per-template artifact in the template's build/ "
+                            "-- compile that template first",
         })
     return {
         "ok": bool(rep.get("ok")) and not missing,

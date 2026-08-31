@@ -5,7 +5,7 @@
   "model": "claude-opus-5[1m]",
   "strict": false,
   "plugin_name": "MPyDeformer_Patch_Relax",
-  "bundle": "compiled_templates/MPyDeformer/Patch Relax/MPyDeformer_Patch_Relax.bundle",
+  "bundle": "templates/MPyDeformer/Patch Relax/MPyDeformer_Patch_Relax.bundle",
   "created": 1787676013.0334148,
   "nodes": [
     {

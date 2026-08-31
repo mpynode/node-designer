@@ -5,7 +5,7 @@
   "model": "claude-opus-5[1m]",
   "strict": false,
   "plugin_name": "MPyLocator_Animated_Text",
-  "bundle": "compiled_templates/MPyLocator/Animated Text/MPyLocator_Animated_Text.bundle",
+  "bundle": "templates/MPyLocator/Animated Text/MPyLocator_Animated_Text.bundle",
   "created": 1787675830.3398552,
   "nodes": [
     {

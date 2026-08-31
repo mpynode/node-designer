@@ -5,7 +5,7 @@
   "model": "claude-opus-5[1m]",
   "strict": false,
   "plugin_name": "MPyFile_Game_Of_Life_Texture",
-  "bundle": "compiled_templates/MPyFile/Game Of Life Texture/MPyFile_Game_Of_Life_Texture.bundle",
+  "bundle": "templates/MPyFile/Game Of Life Texture/MPyFile_Game_Of_Life_Texture.bundle",
   "created": 1787965076.956897,
   "nodes": [
     {

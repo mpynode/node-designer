@@ -304,10 +304,10 @@ map / limits):
 
 * **The checker.** `tools/check_std_includes.py` — dependency-free, importable
   and runnable as a CLI over files or directories:
-  `python3 tools/check_std_includes.py compiled_templates/_combined_plugin/build/source`.
+  `python3 tools/check_std_includes.py "templates/All Templates Plugin/build/source"`.
   `--self-test` re-runs the 5/5 calibration against injected copies in `/tmp`.
   It is calibrated so the known-clean corpus is **silent**: all 42 mega TUs, and
-  all 135 `.cpp` under `compiled_templates/`, report zero
+  all 135 `.cpp` under `templates/`, report zero
   findings. A name absent from its table is `UNMAPPED`, never a failure, and
   `std::pair` / `std::make_pair` / `std::move` are deliberately mapped
   generously — `<map>` / `<string>` / `<vector>` make them complete on every

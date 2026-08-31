@@ -5,7 +5,7 @@
   "model": "claude-opus-5[1m]",
   "strict": false,
   "plugin_name": "MPyDeformer_NURBS_Wave",
-  "bundle": "compiled_templates/MPyDeformer/NURBS Wave/MPyDeformer_NURBS_Wave.bundle",
+  "bundle": "templates/MPyDeformer/NURBS Wave/MPyDeformer_NURBS_Wave.bundle",
   "created": 1787675683.855017,
   "nodes": [
     {

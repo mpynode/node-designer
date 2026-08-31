@@ -9,7 +9,7 @@ For every template (or a filtered subset), in an ISOLATED fresh mayapy per step:
      Two Knots -- get one .ma each; single-demo templates keep <folder>.ma)
   3. clean-reopen each .ma to prove the compiled plugin loads
 
-Writes per-template artifacts under compiled_templates/<folder>/ and a running
+Writes per-template artifacts under _audit/<folder>/ and a running
 master_results.json + master.log at the audit root. Continues past any failure
 and records it. Safe to re-run on a subset: pass folder names as argv.
 
@@ -95,7 +95,11 @@ def demo_specs_for(mpn_path):
 
 
 ROOT = os.path.dirname(os.path.dirname(HARNESS))            # project root
-AUDIT_ROOT = os.path.join(ROOT, "compiled_templates")       # audit output root
+# Audit scratch, NOT templates/. `out_dir` below is AUDIT_ROOT/<folder> where
+# folder is FLAT (MPyBlendShape_Combo_Correctives), so pointing this at
+# templates/ would scatter bogus siblings of the real families through the tree
+# the user is told to browse -- silently, since the gallery ignores them.
+AUDIT_ROOT = os.path.join(ROOT, "_audit")                   # audit output root
 MAYAPY = os.environ.get(
     "MPYNODE_MAYAPY",
     "/Applications/Autodesk/maya2026/Maya.app/Contents/bin/mayapy")

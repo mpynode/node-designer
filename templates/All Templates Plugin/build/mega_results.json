@@ -1,6 +1,6 @@
 {
   "ok": true,
-  "bundle_path": "compiled_templates/_combined_plugin/mPyMega.bundle",
+  "bundle_path": "templates/All Templates Plugin/mPyMega.bundle",
   "seconds": 73.18919396400452,
   "n_input": 37,
   "n_linked": 37,

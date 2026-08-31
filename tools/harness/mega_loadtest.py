@@ -14,16 +14,16 @@ node type AND every command:
   5. run one command end-to-end and see the scene change.
   6. unload cleanly -- deregisterCommand must not strand a name.
 
-    "$MAYAPY" tools/harness/mega_loadtest.py compiled_templates/_combined_plugin
+    "$MAYAPY" tools/harness/mega_loadtest.py "templates/All Templates Plugin"
 """
 import os, sys, json
 
 HARNESS = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(HARNESS))            # project root
-AUDIT_ROOT = os.path.join(ROOT, "compiled_templates")       # audit output root
+AUDIT_ROOT = os.path.join(ROOT, "_audit")                   # audit output root
 sys.path.insert(0, HARNESS)
 
-MEGA_DIR = sys.argv[1] if len(sys.argv) > 1 else "compiled_templates/_combined_plugin"
+MEGA_DIR = sys.argv[1] if len(sys.argv) > 1 else "templates/All Templates Plugin"
 MEGA_DIR = os.path.abspath(MEGA_DIR)
 
 

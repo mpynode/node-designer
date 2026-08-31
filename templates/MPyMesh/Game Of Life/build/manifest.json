@@ -5,7 +5,7 @@
   "model": "claude-opus-5[1m]",
   "strict": false,
   "plugin_name": "MPyMesh_Game_Of_Life",
-  "bundle": "compiled_templates/MPyMesh/Game Of Life/MPyMesh_Game_Of_Life.bundle",
+  "bundle": "templates/MPyMesh/Game Of Life/MPyMesh_Game_Of_Life.bundle",
   "created": 1787676035.879029,
   "nodes": [
     {

@@ -22,7 +22,7 @@ import json
 
 HARNESS = os.path.dirname(os.path.abspath(__file__))
 AUDIT_ROOT = os.path.join(os.path.dirname(os.path.dirname(HARNESS)),
-                          "compiled_templates")             # audit output root
+                          "_audit")                         # audit output root
 DEFAULT = os.path.join(AUDIT_ROOT, "master_results.json")
 
 # Templates that SHOULD drop (correct-by-design; never a fallback candidate),

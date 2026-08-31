@@ -39,7 +39,7 @@ def setUpModule():
 
 _REPO = _paths.ROOT
 _TOOL = os.path.join(_REPO, "tools", "check_std_includes.py")
-_MEGA_SRC = os.path.join(_REPO, "compiled_templates", "_combined_plugin",
+_MEGA_SRC = os.path.join(_REPO, "templates", "All Templates Plugin",
                          "build", "source")
 _COMPILER_DIR = os.path.join(_REPO, "scripts", "mpynode", "native", "compiler")
 

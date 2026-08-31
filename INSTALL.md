@@ -107,15 +107,15 @@ and a build script beside it, so a fresh clone builds its own.
 Every build script takes an optional Maya version:
 
 ```bash
-bash compiled_templates/MPyNode/Ouch/build/build.sh          # newest installed Maya
-bash compiled_templates/MPyNode/Ouch/build/build.sh 2024     # that version
-MAYA=/path/to/maya bash .../build.sh                         # an explicit root
+bash "templates/MPyNode/Ouch/build/build.sh"       # newest installed Maya
+bash "templates/MPyNode/Ouch/build/build.sh" 2024  # that version
+MAYA=/path/to/maya bash .../build.sh               # an explicit root
 ```
 
 Windows is the same, from an *x64 Native Tools Command Prompt for VS*:
 
 ```bat
-compiled_templates\MPyNode\Ouch\build\build.bat 2026
+templates\MPyNode\Ouch\build\build.bat 2026
 ```
 
 Resolution order is **argument, then `MAYA`, then the newest install
@@ -131,7 +131,7 @@ The whole set at once, and the mega demo plug-in:
 tools/build_compiled_templates.sh     # every template tree
 
 # all 37 in one plug-in, installed into the same folder's plugin/
-cd compiled_templates/_combined_plugin && ./build.sh 2026
+cd "templates/All Templates Plugin" && ./build.sh 2026
 ```
 
 These scripts are generated, not hand-written; `tools/regen_build_scripts.py`

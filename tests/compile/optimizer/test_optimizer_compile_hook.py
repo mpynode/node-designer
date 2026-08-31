@@ -142,10 +142,10 @@ _ROOT = _paths.ROOT
 # tree with no built artifacts; the artifact leg below uses the real bytes.
 _REAL_OVERSIZED = (
     ("sineRipple", "mPyDeformer", 361375,
-     "compiled_templates/MPyDeformer/Sine Ripple/build/source/"
+     "templates/MPyDeformer/Sine Ripple/build/source/"
      "sineRipple.cpp"),
     ("dualQuaternionSkin", "mPySkinCluster", 458420,
-     "compiled_templates/MPySkinCluster/Dual Quaternion Skin/build/"
+     "templates/MPySkinCluster/Dual Quaternion Skin/build/"
      "source/dualQuaternionSkin.cpp"),
 )
 
@@ -185,7 +185,7 @@ class TestTheTwoTemplatesThatMotivatedTheGate(unittest.TestCase):
                    for (n, t, _s, rel) in _REAL_OVERSIZED
                    if os.path.exists(os.path.join(_ROOT, rel))]
         if not present:
-            self.skipTest("no built compiled_templates artifacts in this tree")
+            self.skipTest("no built template artifacts in this tree")
         cap = compile_controller._resolve_optimize_max_tokens()
         for name, mpy_type, path in present:
             with self.subTest(node=name):

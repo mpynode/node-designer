@@ -5,7 +5,7 @@
   "model": "claude-opus-5[1m]",
   "strict": false,
   "plugin_name": "MPyMesh_Metaballs",
-  "bundle": "compiled_templates/MPyMesh/Metaballs/MPyMesh_Metaballs.bundle",
+  "bundle": "templates/MPyMesh/Metaballs/MPyMesh_Metaballs.bundle",
   "created": 1787677453.423188,
   "nodes": [
     {

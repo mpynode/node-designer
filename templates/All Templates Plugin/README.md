@@ -47,7 +47,7 @@ plug-in. Point `MAYA_PLUG_IN_PATH` at `plugin/` before launching. From the repo
 root:
 
 ```
-export MAYA_PLUG_IN_PATH="$PWD/compiled_templates/_combined_plugin/plugin:$PWD/plug-ins:$MAYA_PLUG_IN_PATH"
+export MAYA_PLUG_IN_PATH="$PWD/templates/All Templates Plugin/plugin:$PWD/plug-ins:$MAYA_PLUG_IN_PATH"
 export PYTHONPATH="$PWD/scripts:$PYTHONPATH"
 ```
 
@@ -80,6 +80,6 @@ least one live compiled node.
   deliberately NOT ported rather than faked. This is by design and a re-run
   cannot clear it.
 * The mega plugin links the **ported** C++, not the per-template optimizer
-  output. The two-pass AI optimization lives in `compiled_templates/<template>/`
+  output. The two-pass AI optimization lives in `templates/<Family>/<Template>/`
   (see the speedup column in the compile summary); the mega build is the
   co-existence/link artifact, exactly as its harness has always produced it.

@@ -33,7 +33,7 @@ import sys
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, "scripts"))
 
-TREES = ("compiled_templates",)
+TREES = ("templates",)
 
 
 def _iter_build_dirs():

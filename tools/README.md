@@ -53,8 +53,9 @@ silently becomes "unmeasurable" — no error, no failing test.
 tools/build_compiled_templates.sh [--smoke] [--only voxelize]
 ```
 
-Mirrors `templates/` into `compiled_templates/` and compiles each one, farming
-each template out to `build_compiled_templates_worker.py` in its own mayapy.
+Walks `templates/` and compiles each one in place, into a `build/` tree inside
+that template's own folder, farming each out to
+`build_compiled_templates_worker.py` in its own mayapy.
 
 ## Attended probes and gates
 

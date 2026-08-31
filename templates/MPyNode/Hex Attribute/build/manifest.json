@@ -5,7 +5,7 @@
   "model": "claude-opus-5[1m]",
   "strict": false,
   "plugin_name": "MPyNode_Hex_Attribute",
-  "bundle": "compiled_templates/MPyNode/Hex Attribute/MPyNode_Hex_Attribute.bundle",
+  "bundle": "templates/MPyNode/Hex Attribute/MPyNode_Hex_Attribute.bundle",
   "created": 1787683918.99611,
   "nodes": [
     {

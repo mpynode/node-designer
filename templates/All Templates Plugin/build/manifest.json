@@ -5,7 +5,7 @@
   "model": "claude-opus-4-8[1m]",
   "strict": false,
   "plugin_name": "mPyMega",
-  "bundle": "compiled_templates/_combined_plugin/mPyMega.bundle",
+  "bundle": "templates/All Templates Plugin/mPyMega.bundle",
   "created": 1787732515.1489558,
   "nodes": [
     {

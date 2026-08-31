@@ -1,4 +1,4 @@
-"""Refresh compiled_templates/_combined_plugin/build/stages/<type>/1_transpiled.cpp.
+"""Refresh templates/All Templates Plugin/build/stages/<type>/1_transpiled.cpp.
 
 Stage 1 is TRANSPILER output -- ``codegen.generate_cpp(spec, for_port=True)``,
 the exact call ``porter.port_node`` / ``compile_controller`` make for the
@@ -24,7 +24,7 @@ import os
 import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-MEGA = os.path.join(ROOT, "compiled_templates", "_combined_plugin", "build")
+MEGA = os.path.join(ROOT, "templates", "All Templates Plugin", "build")
 MANIFEST = os.path.join(MEGA, "manifest.json")
 STAGES = os.path.join(MEGA, "stages")
 

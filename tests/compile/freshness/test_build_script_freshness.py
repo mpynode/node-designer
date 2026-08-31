@@ -43,7 +43,7 @@ _MIN_SCRIPTS = 110
 # of a node that was renamed to `meshRegionLocator`, and the plugin links only
 # the latter (see the tree's own build.sh).
 _KNOWN_ORPHANS = [
-    "compiled_templates/MPyLocator/Mesh Regions/build/meshRegions/build.sh",
+    "templates/MPyLocator/Mesh Regions/build/meshRegions/build.sh",
 ]
 
 _RESULT = None

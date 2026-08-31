@@ -30,8 +30,10 @@ import unittest
 from tests import _paths
 
 _ROOT = _paths.ROOT
-_CT = os.path.join(_ROOT, "compiled_templates")
 _SRC_TEMPLATES = os.path.join(_ROOT, "templates")
+# The compiled trees now live inside the templates they were generated from, so
+# the walk root and the source root are one and the same.
+_CT = _SRC_TEMPLATES
 
 _BUILD_HASH = re.compile(r"^// build:\s*([0-9a-f]+)", re.M)
 
@@ -79,8 +81,11 @@ def _nodes():
                     rows = json.load(fh).get("nodes") or []
             except (OSError, ValueError):
                 continue
-            has_source = os.path.isdir(
-                os.path.join(_SRC_TEMPLATES, fam, tpl))
+            # Ask for the template.mpn, not the directory: the directory is the
+            # one the walk is standing in, so isdir() is now always True and the
+            # orphan gate would go permanently empty without saying so.
+            has_source = os.path.isfile(
+                os.path.join(_SRC_TEMPLATES, fam, tpl, "template.mpn"))
             for row in rows:
                 ty = row.get("type_name")
                 if not ty:

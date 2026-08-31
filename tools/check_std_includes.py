@@ -28,7 +28,7 @@ Importable as a module (``check_file`` / ``check_text`` / ``check_region`` /
 ``missing_headers``) and runnable as a CLI over files and directories.
 
 Run:
-    python3 tools/check_std_includes.py compiled_templates/_combined_plugin/build/source
+    python3 tools/check_std_includes.py "templates/All Templates Plugin/build/source"
     python3 tools/check_std_includes.py --self-test
 """
 

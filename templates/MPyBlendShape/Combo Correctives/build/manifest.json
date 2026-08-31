@@ -5,7 +5,7 @@
   "model": "claude-opus-5[1m]",
   "strict": false,
   "plugin_name": "MPyBlendShape_Combo_Correctives",
-  "bundle": "/Users/ericvignola/Documents/node-designer2-file/MPyNode/compiled_templates/MPyBlendShape/Combo Correctives/MPyBlendShape_Combo_Correctives.bundle",
+  "bundle": "templates/MPyBlendShape/Combo Correctives/MPyBlendShape_Combo_Correctives.bundle",
   "created": 1788191956.260514,
   "nodes": [
     {

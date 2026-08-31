@@ -71,9 +71,8 @@ and no AI — which is what makes the freshness gates (section 5) possible.
 |---|---|
 | `scripts/` | The only Python root. Put it on `PYTHONPATH`; everything lives in `scripts/mpynode/`. |
 | `plug-ins/` | The two Maya entry points: `mpynode_api1.py` (OpenMaya 1.0 node types) and `mpynode_api2.py` (OpenMaya 2.0). Put this dir on `MAYA_PLUG_IN_PATH`. |
-| `templates/` | 37 shipped gallery templates, `templates/<Type>/<Name>/{template.mpn,description.md}` across all 12 node types. |
-| `compiled_templates/` | Everything compiled, under one roof. 39 per-template C++ build trees (40 node `.cpp` files — `MPyLocator/Mesh Regions` ships two types), plus `_combined_plugin/` (below), which is not a node family. Sources + the full stage lineage are committed; binaries are not. |
-| `compiled_templates/_combined_plugin/` | The multi-node build tree that links every template into one plug-in, plus the turnkey demo around it: `build/` (37 namespaced fragments + the generated `plugin_main.cpp`, and the full stage lineage), 39 `.ma` demo scenes, `reports/`, and `plugin/` — where you build `mPyMega` (37/37 node types + 32 bundled commands). No binary is committed; its `build.sh` / `build.bat` compiles `build/` and installs the result into `plugin/`. The filename must stay `mPyMega.*` — Maya takes the plug-in name from it and the scenes `requires "mPyMega"`. |
+| `templates/` | 37 shipped gallery templates, `templates/<Type>/<Name>/{template.mpn,description.md}` across all 12 node types — **and the compiled C++ for each one, in that same folder**: `<Type>/<Name>/build/` holds the generated sources, the full optimizer stage lineage and a `build.sh`/`build.bat` beside them, so everything for one template is in one place. 39 per-template build trees (40 node `.cpp` files — `MPyLocator/Mesh Regions` ships two types). Sources + stage lineage are committed; binaries are not. |
+| `templates/All Templates Plugin/` | The multi-node build tree that links every template into one plug-in, plus the turnkey demo around it: `build/` (37 namespaced fragments + the generated `plugin_main.cpp`, and the full stage lineage), 39 `.ma` demo scenes, `reports/`, and `plugin/` — where you build `mPyMega` (37/37 node types + 32 bundled commands). No binary is committed; its `build.sh` / `build.bat` compiles `build/` and installs the result into `plugin/`. The filename must stay `mPyMega.*` — Maya takes the plug-in name from it and the scenes `requires "mPyMega"`. |
 | `tests/` | The unit suite, outside the package so shipping `scripts/mpynode/` does not ship the tests. 278 test modules grouped by area: `nodes/`, `ui/`, `authoring/`, `attributes/`, `framework/`, and `compile/` (split into `transpiler/`, `pipeline/`, `nodes/`, `optimizer/`, `freshness/`). Shared bootstrap `_setup.py`, repo anchors `_paths.py`, fixtures in `data/` and `test_assets/`. |
 | `docs/` | All reference material: `index.md` (the API guide), `CHEATSHEET.md` (the authoring quick reference), this file, `PORTING.md` (Windows/Linux finish-and-verify handoff), and `node_types/` (one `.md` per type + `_input_type_contract.md`). Only `index.md` and `node_types/` are reachable from the in-app Help menu — `docs_locator` enumerates exactly those. |
 | `tools/` | Every dev/CI script, and the only place they live — there are no runners at the repo root. The four gate launchers are `run_tests.sh` / `run_tests.bat` (unit suite) and `run_parity_sweep.sh` / `.bat` (compiled parity), plus `build_compiled_templates.sh`, the freshness checkers (`check_stage1_freshness.py`, `check_std_includes.py`, `regen_build_scripts.py`, `regen_mega_transpiled.py`), `parity_sweep/`, and the probes and audits. Most of these are not optional: thirteen are executed or imported by the unit suite, so deleting one turns tests red. `tools/harness/` holds the attended out-of-suite mayapy drivers (see its `README.md`), including `benchmark_node.py`, which the AI optimizer shells out to at runtime. |
@@ -303,8 +302,8 @@ under a pinned seed) and is a **ratchet** over
 `tests/data/stage1_stale_baseline.json`: an artifact *not* in the baseline must
 match fresh codegen, and one *in* the baseline must **still be stale**, so the
 list can only shrink. It is currently **empty** — so all 76 stage-1 artifacts in
-the gated tree (`TREES = ("compiled_templates",)` — the 39 per-template trees
-plus `_combined_plugin`'s 37) must byte-match. Do not quote a count out of the baseline's `_comment`: its "86
+the gated tree (`TREES = ("templates",)` — the 39 per-template trees
+plus `All Templates Plugin`'s 37) must byte-match. Do not quote a count out of the baseline's `_comment`: its "86
 artifacts checked" is a dated 43-template-era measurement. The gate self-protects
 against vacuity: floors on artifact/manifest counts, an assertion the hash seed
 really was 0, an assertion no spec raised, and an **ungated scan driven from the
@@ -332,8 +331,8 @@ rebuild, explicitly *not* edit the test. It also names the orphaned trees (sourc
 template gone, so nothing can regenerate them and gating them would be a
 permanent red); today that list is exactly one,
 `assertEqual(rels, ["MPyFile/File Brightness Contrast"])`. Its reach is narrower
-than it looks: `_nodes()` walks `compiled_templates/<fam>/<tpl>/build`, so the
-family-level `compiled_templates/MPyDeformer/build/` tree (holding
+than it looks: `_nodes()` walks `templates/<fam>/<tpl>/build`, so the
+family-level `templates/MPyDeformer/build/` tree (holding
 `sineRippleDefault`) is never visited — **unpinned**, not pinned. The mega tree
 has its own `tests/compile/freshness/test_mega_stage1_freshness.py`, refreshed with
 `mayapy tools/regen_mega_transpiled.py` (codegen only, no compiler).
@@ -508,7 +507,7 @@ plug-in set — documented in `tools/harness/README.md`.
 `tools/build_compiled_templates.sh` rebuilds the artifact trees: phase A
 (transpile + AI + compile) fanned `--jobs` wide, phase B (optimizer) fanned
 `--opt-jobs` wide with **benchmarks serialised** on a cross-process mutex named
-by `MPYNODE_BENCH_LOCK` (default `compiled_templates/.bench.lock` — that file is
+by `MPYNODE_BENCH_LOCK` (default `_build_state/.bench.lock` — that file is
 the mutex, not leftover state).
 
 ## 8. Extending it

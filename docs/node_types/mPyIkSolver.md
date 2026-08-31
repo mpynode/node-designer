@@ -177,7 +177,7 @@ positions (not hardcoded).
 
 It compiles to the native `twoBoneIK` MPx plugin. The compiled solver reaches the
 goal within `1e-3` and matches the interpreted `mPyIkSolver` to `~1e-15` across a
-target sweep (see `compiled_templates/basics_rigging_two_bone_ik/`):
+target sweep (see `templates/MPyIkSolver/Two Bone IK/`):
 
 | Artifact | What it is |
 |---|---|

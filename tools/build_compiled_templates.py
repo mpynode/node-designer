@@ -1,9 +1,9 @@
-"""Mirror templates/ into compiled_templates/ and compile each template there.
+"""Compile every template in templates/, in place.
 
-Each template.mpn is compiled into a folder whose path mirrors its source folder, so
+Each template.mpn is compiled into a build/ tree inside its own folder, so
     templates/MPyMesh/Voxelize/template.mpn
 lands in
-    compiled_templates/MPyMesh/Voxelize/
+    templates/MPyMesh/Voxelize/build/
 
 TWO PHASES, because they have opposite scheduling needs:
 
@@ -53,8 +53,13 @@ import time
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SRC = os.path.join(ROOT, "templates")
-DST = os.path.join(ROOT, "compiled_templates")
-MANIFEST = os.path.join(DST, "manifest.json")
+# Each template's compiled tree lives inside the template folder it came from,
+# so source and destination are the same root and `os.path.join(DST, rel)`
+# below lands back on the directory the walk already visited.
+DST = SRC
+# The ledger is per-run machine state about the whole tree, not part of any one
+# template, so it stays out of templates/.
+MANIFEST = os.path.join(ROOT, "_build_state", "manifest.json")
 WORKER = os.path.join(ROOT, "tools", "build_compiled_templates_worker.py")
 
 MAYAPY = os.environ.get(
@@ -164,6 +169,7 @@ def _migrate(man):
 
 
 def save_manifest(man):
+    os.makedirs(os.path.dirname(MANIFEST), exist_ok=True)
     tmp = MANIFEST + ".tmp"
     with open(tmp, "w") as fh:
         json.dump(man, fh, indent=2, sort_keys=True, default=str)

@@ -5,7 +5,7 @@
   "model": "claude-opus-5[1m]",
   "strict": false,
   "plugin_name": "basics_MPyFile_File_Brightness_Contrast",
-  "bundle": "compiled_templates/MPyFile/File Brightness Contrast/basics_MPyFile_File_Brightness_Contrast.bundle",
+  "bundle": "templates/MPyFile/File Brightness Contrast/basics_MPyFile_File_Brightness_Contrast.bundle",
   "created": 1787188345.843613,
   "nodes": [
     {

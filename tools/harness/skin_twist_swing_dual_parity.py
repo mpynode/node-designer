@@ -41,7 +41,8 @@ for _p in ("mpynode_api1", "mpynode_api2"):
         mc.loadPlugin(_p, quiet=True)
 
 OUT = (sys.argv[1] if len(sys.argv) > 1
-       else os.path.join(ROOT, "compiled_templates/basics_rigging_twist_swing_skin"))
+       else os.path.join(ROOT, "templates", "MPySkinCluster",
+                         "Twist Swing Skin"))
 COMPILED_TYPE = sys.argv[2] if len(sys.argv) > 2 else "twistSwingSkin"
 
 import mpynode

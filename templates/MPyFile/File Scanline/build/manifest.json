@@ -5,7 +5,7 @@
   "model": "claude-opus-5[1m]",
   "strict": false,
   "plugin_name": "MPyFile_File_Scanline",
-  "bundle": "compiled_templates/MPyFile/File Scanline/MPyFile_File_Scanline.bundle",
+  "bundle": "templates/MPyFile/File Scanline/MPyFile_File_Scanline.bundle",
   "created": 1787962781.843988,
   "nodes": [
     {

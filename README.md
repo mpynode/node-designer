@@ -160,10 +160,10 @@ Browse them in the Designer's **Templates** tab.
 | `mPySkinCluster` | 3 |
 | `mPyBlendShape`, `mPyConstraint`, `mPyIkSolver`, `mPyNurbsCurve`, `mPyNurbsSurface`, `mPyTransform` | 1 each |
 
-`compiled_templates/_combined_plugin/` holds 39 demo scenes — one per demo, not per
+`templates/All Templates Plugin/` holds 39 demo scenes — one per demo, not per
 template — that run against all 37 linked into a single plug-in. No binaries are committed:
 a Maya plug-in is built against one Maya version's devkit, so you build it for your Maya —
-one command, `cd compiled_templates/_combined_plugin && ./build.sh 2026` (`build.bat` on
+one command, `cd "templates/All Templates Plugin" && ./build.sh 2026` (`build.bat` on
 Windows). See [INSTALL.md](INSTALL.md).
 
 ## Documentation

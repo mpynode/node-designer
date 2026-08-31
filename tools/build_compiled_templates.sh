@@ -58,6 +58,6 @@ export MPYNODE_OPT_AGENT_NO_SANDBOX="${MPYNODE_OPT_AGENT_NO_SANDBOX:-1}"
 # Phase B runs many agents at once but only ONE benchmark at a time. The lock
 # itself lives in scripts/; this only names the file every worker shares. Unset
 # it and the lock is a no-op -- which is only safe for a serial run.
-export MPYNODE_BENCH_LOCK="${MPYNODE_BENCH_LOCK:-$PWD/compiled_templates/.bench.lock}"
+export MPYNODE_BENCH_LOCK="${MPYNODE_BENCH_LOCK:-$PWD/_build_state/.bench.lock}"
 
 exec "$MAYAPY" "$TOOLS_DIR/build_compiled_templates.py" "$@"

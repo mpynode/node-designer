@@ -5,7 +5,7 @@
   "model": "claude-opus-5[1m]",
   "strict": false,
   "plugin_name": "MPyMesh_Disk_Mesh_Cache",
-  "bundle": "compiled_templates/MPyMesh/Disk Mesh Cache/MPyMesh_Disk_Mesh_Cache.bundle",
+  "bundle": "templates/MPyMesh/Disk Mesh Cache/MPyMesh_Disk_Mesh_Cache.bundle",
   "created": 1787676007.718208,
   "nodes": [
     {

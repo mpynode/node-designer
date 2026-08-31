@@ -5,7 +5,7 @@
   "model": "claude-opus-5[1m]",
   "strict": false,
   "plugin_name": "MPyLocator_Widget_Showcase",
-  "bundle": "compiled_templates/MPyLocator/Widget Showcase/MPyLocator_Widget_Showcase.bundle",
+  "bundle": "templates/MPyLocator/Widget Showcase/MPyLocator_Widget_Showcase.bundle",
   "created": 1787676080.3483,
   "nodes": [
     {

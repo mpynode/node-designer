@@ -5,7 +5,7 @@
   "model": "claude-opus-5[1m]",
   "strict": false,
   "plugin_name": "MPyTransform_Aim_Between_Matrices",
-  "bundle": "compiled_templates/MPyTransform/Aim Between Matrices/MPyTransform_Aim_Between_Matrices.bundle",
+  "bundle": "templates/MPyTransform/Aim Between Matrices/MPyTransform_Aim_Between_Matrices.bundle",
   "created": 1787680499.982327,
   "nodes": [
     {

@@ -1,4 +1,4 @@
-"""Which templates does the compiled_templates harness actually cover?
+"""Which templates does the compile harness actually cover?
 
 ``run_all.py`` iterates templates.json, not the templates tree. Any template
 missing from the manifest is silently never compiled, so "all green" would be a

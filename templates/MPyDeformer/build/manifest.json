@@ -5,7 +5,7 @@
   "model": "claude-opus-5[1m]",
   "strict": false,
   "plugin_name": "basics_MPyDeformer",
-  "bundle": "compiled_templates/MPyDeformer/basics_MPyDeformer.bundle",
+  "bundle": "templates/MPyDeformer/basics_MPyDeformer.bundle",
   "created": 1787165895.104695,
   "nodes": [
     {

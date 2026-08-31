@@ -5,7 +5,7 @@
   "model": "claude-opus-5[1m]",
   "strict": false,
   "plugin_name": "MPyIkSolver_Two_Bone_IK",
-  "bundle": "compiled_templates/MPyIkSolver/Two Bone IK/MPyIkSolver_Two_Bone_IK.bundle",
+  "bundle": "templates/MPyIkSolver/Two Bone IK/MPyIkSolver_Two_Bone_IK.bundle",
   "created": 1787677017.1827478,
   "nodes": [
     {

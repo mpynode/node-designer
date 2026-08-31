@@ -5,7 +5,7 @@
   "model": "claude-opus-5[1m]",
   "strict": false,
   "plugin_name": "MPyMesh_Mesh_Maze",
-  "bundle": "compiled_templates/MPyMesh/Mesh Maze/MPyMesh_Mesh_Maze.bundle",
+  "bundle": "templates/MPyMesh/Mesh Maze/MPyMesh_Mesh_Maze.bundle",
   "created": 1787677898.5019531,
   "nodes": [
     {

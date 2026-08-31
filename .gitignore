@@ -28,12 +28,14 @@ dist/
 # NO binaries ship. A Maya plug-in is built against one Maya version's devkit
 # and will not load in another, so shipping one would be shipping something
 # most users cannot use. The .cpp sources and the full optimizer step lineage
-# under compiled_templates/**/build/stages/ ARE committed, so every binary is
+# under templates/**/build/stages/ ARE committed, so every binary is
 # reproducible on the user's own machine:
-#   one tree   -- bash <tree>/build/build.sh [maya-version]
-#   all trees  -- tools/build_compiled_templates.sh
-#   mega demo  -- compiled_templates/_combined_plugin/build.sh [maya-version]
-#                 (build.bat on Windows)
+#   one template -- bash "templates/<Family>/<Name>/build/build.sh" [maya-version]
+#   all in one   -- bash "templates/All Templates Plugin/build.sh" [maya-version]
+#                   (build.bat on Windows)
+# tools/build_compiled_templates.sh REGENERATES the C++ from the .mpn sources
+# (transpile + AI assist + optimizer, hours, needs mayapy and the Claude CLI).
+# It is not the way to compile what is already committed.
 *.bundle
 *.so
 *.mll
@@ -43,6 +45,11 @@ dist/
 *.dylib
 
 # ---- Build scratch ---------------------------------------------------------
+# _audit/ is where tools/harness/run_all*.py write per-template audit output.
+# It is deliberately NOT under templates/: those folders are keyed on a FLAT
+# name (MPyBlendShape_Combo_Correctives), so writing them there would scatter
+# fake node families through the tree users are told to browse.
+_audit/
 _optscratch/
 _runner/
 compile.log

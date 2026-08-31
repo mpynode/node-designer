@@ -11,7 +11,7 @@ for every template whose node type actually LINKED into that bundle:
 Templates whose type did NOT link (best-effort drops from the mega build) are
 recorded with the drop reason and skipped -- not silently omitted.
 
-Writes per-template artifacts under compiled_templates/<folder>/ plus
+Writes per-template artifacts under _audit/<folder>/ plus
 mega_master_results.json + mega_master.log at the audit root.
 
 Usage (plain python3):
@@ -26,13 +26,18 @@ import subprocess
 
 HARNESS = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(HARNESS))            # project root
-AUDIT_ROOT = os.path.join(ROOT, "compiled_templates")       # audit output root
+# Audit scratch, NOT templates/ -- `out_dir` below is AUDIT_ROOT/<folder> with a
+# FLAT folder name, which would litter the template tree with fake families.
+AUDIT_ROOT = os.path.join(ROOT, "_audit")                   # audit output root
 MAYAPY = os.environ.get(
     "MPYNODE_MAYAPY",
     "/Applications/Autodesk/maya2026/Maya.app/Contents/bin/mayapy")
 
+# The mega tree is real committed source and lives with the templates; it is not
+# audit output, so it does NOT hang off AUDIT_ROOT.
 MEGA_DIR = os.environ.get("MPYNODE_MEGA_DIR",
-                          os.path.join(AUDIT_ROOT, "_combined_plugin"))
+                          os.path.join(ROOT, "templates",
+                                       "All Templates Plugin"))
 
 # Demo discovery. NOT imported from run_all.py: that module has no __main__
 # guard, so importing it would run a whole per-template audit as a side effect.
@@ -57,10 +62,10 @@ def _mega_info():
     bundle = d.get("bundle_path")
     if bundle and not os.path.isabs(bundle):
         # mega_plugin writes bundle_path relative to the PROJECT ROOT
-        # ("compiled_templates/_combined_plugin/mPyMega.bundle"), not to
-        # MEGA_DIR -- joining it onto MEGA_DIR doubled the path and failed every
-        # build with "mega bundle not found: .../_combined_plugin/
-        # compiled_templates/_combined_plugin/...".
+        # ("templates/All Templates Plugin/mPyMega.bundle"), not to MEGA_DIR --
+        # joining it onto MEGA_DIR doubled the path and failed every build with
+        # "mega bundle not found: .../All Templates Plugin/templates/All
+        # Templates Plugin/...".
         bundle = os.path.join(ROOT, bundle)
     if bundle and not os.path.isfile(bundle):
         raise SystemExit("mega bundle not found: %s" % bundle)

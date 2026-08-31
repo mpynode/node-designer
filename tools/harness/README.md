@@ -37,13 +37,13 @@ Those three are also usable on their own.
 
 ## Combined plug-in — every template in ONE bundle
 
-The counterpart set, for `compiled_templates/_combined_plugin/`. `run_all_mega.py`
+The counterpart set, for `templates/All Templates Plugin/`. `run_all_mega.py`
 assumes the bundle already exists; `mega_plugin.py` is what builds it.
 
 ```bash
-"$MAYAPY" tools/harness/mega_plugin.py compiled_templates/_combined_plugin
+"$MAYAPY" tools/harness/mega_plugin.py "templates/All Templates Plugin"
 python3   tools/harness/run_all_mega.py [folder1 ...]
-"$MAYAPY" tools/harness/mega_loadtest.py compiled_templates/_combined_plugin
+"$MAYAPY" tools/harness/mega_loadtest.py "templates/All Templates Plugin"
 "$MAYAPY" tools/harness/mega_verify.py <bundle> <results_json> <out_dir> <asset_png>
 ```
 
@@ -55,7 +55,7 @@ with the emitter. `build_demo_mega.py` / `reopen_check_mega.py` are the mega
 forms of the two `run_all.py` helpers and are driven by `run_all_mega.py`.
 
 Setting `MPYNODE_MEGA_FROM_ARTIFACTS=1` links the per-template artifacts already
-in `compiled_templates/` instead of re-porting every `.mpn`.
+in `templates/` instead of re-porting every `.mpn`.
 
 ## Benchmark and optimizer
 

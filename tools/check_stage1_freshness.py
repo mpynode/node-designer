@@ -30,7 +30,7 @@ import sys
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Every tree that ships stage-1 artifacts. `_snapshots` is deliberately absent:
 # snapshots are frozen copies and must never be gated.
-TREES = ("compiled_templates",)
+TREES = ("templates",)
 STAGE_FILE = "1_transpiled.cpp"
 BASELINE = os.path.join(ROOT, "tests", "data", "stage1_stale_baseline.json")
 
