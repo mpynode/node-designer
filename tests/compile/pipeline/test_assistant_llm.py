@@ -2193,6 +2193,100 @@ class TestEnumEndToEnd(unittest.TestCase):
         self.assertIn("enum_names", res["error"])
         self.assertEqual(set(mc.ls(type="mPyNode")) - before, set())
 
+
+# ---------------------------------------------------------------------------
+# The prompt described MatrixView purely as "numpy-transparent, do not recast"
+# and never mentioned that it carries the whole MMatrix + MTransformationMatrix
+# surface. A model told only that it behaves like numpy reasonably writes its
+# own matrix->euler in Init -- which is what it did.
+# ---------------------------------------------------------------------------
+
+
+class TestPromptTeachesPromotedTypes(unittest.TestCase):
+    """Both prompts, because they are separate strings: build_system_prompt
+    feeds the HTTP tool-bridge clients and build_payload_system_prompt feeds
+    the CLI providers. A fix applied to one is invisible to the other."""
+
+    def _prompts(self):
+        from mpynode.ui.llm.system_prompt import (build_payload_system_prompt,
+                                                  build_system_prompt)
+
+        return {"tool-bridge": build_system_prompt(),
+                "payload": build_payload_system_prompt()}
+
+    def test_reader_methods_are_named(self):
+        # Named, not merely alluded to: the model cannot invent a method
+        # signature it has never been shown and have it be right.
+        for label, p in self._prompts().items():
+            for m in ("m.translation()", "m.rotation()", "m.scale()",
+                      "m.rotationOrder()"):
+                self.assertIn(m, p, "%s prompt missing %s" % (label, m))
+
+    def test_chainable_matrix_returns_are_named(self):
+        for label, p in self._prompts().items():
+            for m in ("m.inverse()", "m.asRotateMatrix()", "m.det4x4()"):
+                self.assertIn(m, p, "%s prompt missing %s" % (label, m))
+
+    def test_array_view_methods_are_named(self):
+        for label, p in self._prompts().items():
+            self.assertIn("A.translation()", p, label)
+            self.assertIn("A.rotation(axes=N)", p, label)
+
+    def test_rotate_order_indices_match_the_enum(self):
+        # Same 0..5 ordering as a rotateOrder enum plug and as
+        # promoted_types._EULER_ORDERS; a mismatch here silently rotates wrong.
+        for label, p in self._prompts().items():
+            self.assertIn("0=xyz 1=yzx 2=zxy 3=xzy 4=yxz 5=zyx", p, label)
+
+    def test_enum_reads_are_advertised_as_EnumInt(self):
+        for label, p in self._prompts().items():
+            self.assertIn("EnumInt", p, label)
+            self.assertIn(".name()", p, label)
+            self.assertNotIn("enum -> int", p, label)
+
+    def test_the_compile_caveat_is_present(self):
+        # Load-bearing honesty: of MatrixView's 42 public methods the
+        # transpiler lowers exactly one (.asNumpy(), an identity passthrough),
+        # so recommending the rest without this line quietly pushes
+        # matrix-heavy nodes onto the AI-assisted port stage.
+        for label, p in self._prompts().items():
+            self.assertIn("only .asNumpy() lowers to C++", p, label)
+
+    def test_the_names_are_real(self):
+        # Guards the prompt against drift in the other direction: every method
+        # advertised has to still exist on the class.
+        from mpynode._common.plugs import promoted_types as PT
+
+        for m in ("translation", "rotation", "scale", "shear", "inverse",
+                  "transpose", "adjoint", "homogenize", "asRotateMatrix",
+                  "asScaleMatrix", "asMatrixInverse", "det3x3", "det4x4",
+                  "isSingular", "getElement", "rotationOrder",
+                  "reorderRotation", "setTranslation", "setRotation",
+                  "setScale", "setShear", "asNumpy"):
+            self.assertTrue(hasattr(PT.MatrixView, m),
+                            "prompt advertises MatrixView.%s, which is gone" % m)
+        for m in ("translation", "rotation", "scale", "shear"):
+            self.assertTrue(hasattr(PT.MatrixArrayView, m),
+                            "prompt advertises MatrixArrayView.%s, gone" % m)
+
+    def test_only_asnumpy_is_lowered(self):
+        # The caveat above is a claim about the transpiler. Assert it, so the
+        # day someone lowers .rotation() this test fails and the prompt gets
+        # corrected instead of staying pessimistic forever.
+        import io
+        import os
+
+        from tests import _paths
+
+        src = io.open(os.path.join(_paths.ROOT, "scripts", "mpynode",
+                                   "native", "compiler", "py_to_cpp.py"),
+                      encoding="utf-8").read()
+        self.assertIn('"asNumpy"', src)
+        for m in ("translation", "rotationOrder", "asRotateMatrix", "det4x4"):
+            self.assertNotIn('"%s"' % m, src,
+                             "py_to_cpp now lowers .%s -- update the prompt "
+                             "caveat, which says only .asNumpy() lowers" % m)
+
 def setUpModule():
     _setUpModule__assistant_model_order()
     _setUpModule__assistant_multiagent()

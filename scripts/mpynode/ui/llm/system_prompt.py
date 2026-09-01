@@ -90,7 +90,8 @@ float()/int() (write `abs(np.dot(a, b))`, NOT `abs(float(np.dot(a, b)))`;
 `length = np.linalg.norm(v)`, NOT `float(np.linalg.norm(v))`). Reading
 `self.<input>` gives:
     float -> float          int -> int            bool -> bool
-    angle -> float (rad)    time -> float          enum -> int
+    angle -> float (rad)    time -> float
+    enum -> EnumInt (an int; .name() gives the field label)
     string/hex -> str       vector -> numpy (3,)   euler -> numpy (3,) rad
     quaternion -> numpy (4,) [x,y,z,w]   color -> numpy (3,) [r,g,b]
     matrix -> MatrixView ((4,4) row-major, numpy-transparent)
@@ -100,6 +101,30 @@ float()/int() (write `abs(np.dot(a, b))`, NOT `abs(float(np.dot(a, b)))`;
   you truly need a plain float64 copy, call `self.driverMatrix.asNumpy()`. Do NOT
   hand-roll a converter (`_mv_to_np`, `mv._as_floats()`, `list(mv)`, etc.) -- the
   view or `.asNumpy()` is all you need.
+  MatrixView is NOT merely numpy-shaped -- it carries the whole MMatrix +
+  MTransformationMatrix surface, so Maya already computes these for you:
+    m.translation() -> np (3,)          m.scale() / m.shear() -> np (3,)
+    m.rotation() -> np (3,) euler rad   m.rotationOrder() -> int
+    m.rotation(axes=N) -> euler in rotate order N
+                          (0=xyz 1=yzx 2=zxy 3=xzy 4=yxz 5=zyx -- the same
+                           indices as a rotateOrder enum plug)
+    m.inverse() / m.transpose() / m.adjoint() / m.homogenize() -> MatrixView,
+                          so calls chain: m.inverse().translation()
+    m.asRotateMatrix() / m.asScaleMatrix() / m.asMatrixInverse() -> MatrixView
+    m.det3x3() / m.det4x4() / m.isSingular() / m.getElement(r, c)
+    in place, returning self so they chain: m.setTranslation(v),
+                          m.setRotation(e), m.setScale(s), m.setShear(sh),
+                          m.reorderRotation(N)
+  MatrixArrayView does the same across a whole array: A.translation() -> (N,3),
+  A.rotation(axes=N) -> (N,3), A.scale() -> (N,3), A.shear() -> (N,3).
+  USE THEM. Writing your own matrix->euler, decomposition or rotate-order
+  conversion is slower, will not match Maya exactly, and is the single most
+  common thing to get subtly wrong.
+  ONE CAVEAT, and it is real: only .asNumpy() lowers to C++. Every other method
+  above falls through to the AI-assisted port stage instead of the
+  deterministic transpile. For a node you intend to Convert to C++, prefer
+  plain numpy math on the view (m @ v, m[3, :3], np.linalg.inv(m)); for an
+  interpreted node, prefer the methods.
   Writing `self.<output> = value`: assign the matching native type directly
   (scalar for float/int/bool, a 3-list or np (3,) for vector, a 4x4 numpy array
   or MatrixView for matrix). Don't wrap scalars in float()/int(); don't json/str
@@ -316,14 +341,40 @@ dtype+shape); and wrapping a numpy scalar used only in math -- write
 `abs(np.dot(a,b))` not `abs(float(np.dot(a,b)))`, `np.linalg.norm(v)` not
 `float(np.linalg.norm(v))`. Reading `self.<input>` gives:
     float -> float          int -> int            bool -> bool
-    angle -> float (rad)    time -> float          enum -> int
+    angle -> float (rad)    time -> float
+    enum -> EnumInt (an int; .name() gives the field label)
     string/hex -> str       vector -> numpy (3,)   euler -> numpy (3,) rad
     quaternion -> numpy (4,) [x,y,z,w]   color -> numpy (3,) [r,g,b]
     matrix -> MatrixView ((4,4) row-major, numpy-transparent)
     matrix[] (array) -> MatrixArrayView ((N,4,4))
   A MatrixView already behaves like a numpy (4,4) (`m[3,:3]`, `m @ v`,
   `np.linalg.inv(m)` work directly; `.asNumpy()` for a plain (4,4) copy) -- never
-  hand-roll a converter. Writing `self.<output> = value`: assign the matching
+  hand-roll a converter.
+  MatrixView is NOT merely numpy-shaped -- it carries the whole MMatrix +
+  MTransformationMatrix surface, so Maya already computes these for you:
+    m.translation() -> np (3,)          m.scale() / m.shear() -> np (3,)
+    m.rotation() -> np (3,) euler rad   m.rotationOrder() -> int
+    m.rotation(axes=N) -> euler in rotate order N
+                          (0=xyz 1=yzx 2=zxy 3=xzy 4=yxz 5=zyx -- the same
+                           indices as a rotateOrder enum plug)
+    m.inverse() / m.transpose() / m.adjoint() / m.homogenize() -> MatrixView,
+                          so calls chain: m.inverse().translation()
+    m.asRotateMatrix() / m.asScaleMatrix() / m.asMatrixInverse() -> MatrixView
+    m.det3x3() / m.det4x4() / m.isSingular() / m.getElement(r, c)
+    in place, returning self so they chain: m.setTranslation(v),
+                          m.setRotation(e), m.setScale(s), m.setShear(sh),
+                          m.reorderRotation(N)
+  MatrixArrayView does the same across a whole array: A.translation() -> (N,3),
+  A.rotation(axes=N) -> (N,3), A.scale() -> (N,3), A.shear() -> (N,3).
+  USE THEM. Writing your own matrix->euler, decomposition or rotate-order
+  conversion is slower, will not match Maya exactly, and is the single most
+  common thing to get subtly wrong.
+  ONE CAVEAT, and it is real: only .asNumpy() lowers to C++. Every other method
+  above falls through to the AI-assisted port stage instead of the
+  deterministic transpile. For a node you intend to Convert to C++, prefer
+  plain numpy math on the view (m @ v, m[3, :3], np.linalg.inv(m)); for an
+  interpreted node, prefer the methods.
+  Writing `self.<output> = value`: assign the matching
   native type directly (scalar; a 3-list or np (3,) for vector; a 4x4 numpy for
   matrix). NEVER construct om.MMatrix / om.MVector for a plug write or import
   maya.api in an expression. Array outputs are pre-seeded numpy buffers --
