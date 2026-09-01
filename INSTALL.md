@@ -210,3 +210,51 @@ mayapy.
 Prints at mayapy shutdown when `mPyIkSolver` is loaded. An Autodesk
 SWIG-binding bug in `MPxIkSolverNode::doSolve()`'s `MStatus *` return
 slot, cosmetic only.
+
+### AI Assistant: `Claude CLI is not authenticated`
+
+The Claude CLI provider keeps its **own** OAuth store, separate from every
+other Anthropic surface on the machine. Being signed in to the Claude Desktop
+app does not log the CLI in: the desktop app holds its session inside its own
+package storage and leaves `~/.claude/.credentials.json` as a stub whose
+`accessToken` and `refreshToken` are empty strings. The CLI reads that stub,
+sees an expired session, tries to refresh with an empty refresh token, and
+fails locally without ever reaching the network.
+
+Sign the CLI in:
+
+```bash
+claude auth login          # add --sso if the account is enterprise
+```
+
+Confirm it took — you want `"loggedIn": true`:
+
+```bash
+claude auth status
+```
+
+**No Maya restart is needed.** The CLI re-reads the credentials file on every
+launch, so a Maya that is already open picks the login up on the next send.
+
+`claude setup-token` is *not* an equivalent one-step fix, and reaching for it
+first is the usual way to stay stuck: it only **prints** a long-lived token,
+and storing it is a manual step you have to do yourself. If you take that
+route, put the token in `CLAUDE_CODE_OAUTH_TOKEN` — either persistently, which
+needs a Maya restart because a running process cannot see a variable set after
+it launched:
+
+```bat
+setx CLAUDE_CODE_OAUTH_TOKEN "<the token>"
+```
+
+or, for the current Maya session only, from the Script Editor. This works
+because MPyNode passes no `env=` when it spawns the CLI, so the child snapshots
+Maya's environment at spawn time:
+
+```python
+import os; os.environ["CLAUDE_CODE_OAUTH_TOKEN"] = "<the token>"
+```
+
+A CLI that is on `PATH` but logged out fails this way, so `where claude`
+succeeding tells you nothing about authentication — check `claude auth status`
+instead.

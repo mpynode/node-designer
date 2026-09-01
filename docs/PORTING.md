@@ -224,7 +224,12 @@ refactored build pipeline still produces a working `.bundle` at parity.
 6. **AI Assistant**: works out of the box with API keys
    (`ANTHROPIC_API_KEY` etc.). To use a **local CLI provider**, install the CLI
    (`claude` / `gemini`) so it's on `PATH` (`where claude` resolves the `.cmd`);
-   the resolver + UTF-8 pipes + no-window flag are already wired.
+   the resolver + UTF-8 pipes + no-window flag are already wired. On `PATH` is
+   necessary but not sufficient -- the Claude CLI keeps its own OAuth store, so
+   sign it in with `claude auth login` (`--sso` for enterprise) and check
+   `claude auth status` reports `"loggedIn": true`. Being signed in to the
+   Claude Desktop app does NOT log the CLI in; see INSTALL.md's troubleshooting
+   entry for the full symptom.
 
 ## Known caveats / things to check on Windows
 

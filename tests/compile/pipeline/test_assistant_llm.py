@@ -1824,6 +1824,198 @@ class TestBaseCliSendGate(unittest.TestCase):
         self.assertIn("not found", errs[0].lower())
 
 
+
+# ---------------------------------------------------------------------------
+# Auth failure: the CLI reports a logged-out session on STDOUT and still exits
+# 1 with an EMPTY stderr, so reporting the return code alone showed the user
+# "claude exited 1" and nothing about the cure.
+# ---------------------------------------------------------------------------
+
+
+class _FakeProc(object):
+    """Minimal stand-in for the Popen the CLI clients drive."""
+
+    def __init__(self, lines=(), rc=0, stderr=""):
+        import io as _io
+
+        self.stdout = iter(list(lines))
+        self.stderr = _io.StringIO(stderr)
+        self.stdin = None
+        self.returncode = rc
+
+    def wait(self):
+        return self.returncode
+
+    def terminate(self):
+        pass
+
+
+def _auth_stream():
+    """The two events a logged-out ``claude -p`` really emits, trimmed."""
+    import json as _json
+
+    msg = ("Failed to authenticate: OAuth session expired and could not be "
+           "refreshed")
+    return [
+        _json.dumps({"type": "assistant",
+                     "message": {"role": "assistant",
+                                 "content": [{"type": "text", "text": msg}]},
+                     "error": "authentication_failed",
+                     "is_api_error_message": True}),
+        _json.dumps({"type": "result", "subtype": "success", "is_error": True,
+                     "terminal_reason": "api_error", "result": msg}),
+    ]
+
+
+class TestAuthFailureDetection(unittest.TestCase):
+    """``auth_failure`` is pure and keys off the machine-readable code, not
+    prose -- the sentence differs by WHY auth failed (no token on disk vs a
+    rejected one) while the code does not."""
+
+    def test_error_code_on_assistant_event(self):
+        self.assertTrue(cc.auth_failure({"type": "assistant",
+                                         "error": "authentication_failed"}))
+
+    def test_expired_token_code(self):
+        self.assertTrue(cc.auth_failure({"error": "oauth_token_expired"}))
+
+    def test_result_event_no_token_on_disk(self):
+        self.assertTrue(cc.auth_failure({
+            "type": "result", "is_error": True,
+            "result": "Failed to authenticate: OAuth session expired and "
+                      "could not be refreshed"}))
+
+    def test_result_event_rejected_token(self):
+        # Different sentence, same failure -- the case a prose match on
+        # "OAuth session expired" would miss.
+        self.assertTrue(cc.auth_failure({
+            "type": "result", "is_error": True,
+            "result": "Failed to authenticate. API Error: 401 OAuth access "
+                      "token is invalid."}))
+
+    def test_unrelated_error_is_not_auth(self):
+        self.assertFalse(cc.auth_failure({"type": "result", "is_error": True,
+                                          "result": "Compilation failed"}))
+
+    def test_healthy_result(self):
+        self.assertFalse(cc.auth_failure({"type": "result", "is_error": False,
+                                          "result": "done"}))
+
+    def test_non_dict_is_safe(self):
+        self.assertFalse(cc.auth_failure("not a dict"))
+        self.assertFalse(cc.auth_failure(None))
+
+    def test_hint_names_both_recovery_routes(self):
+        # A hint that does not say what to RUN is the bug this replaced.
+        self.assertIn("claude auth login", cc._AUTH_HINT)
+        self.assertIn("claude setup-token", cc._AUTH_HINT)
+        self.assertIn("CLAUDE_CODE_OAUTH_TOKEN", cc._AUTH_HINT)
+
+
+class TestAuthFailureReporting(unittest.TestCase):
+    """End of turn: a logged-out CLI must surface the cure, not the exit code."""
+
+    def _client(self):
+        client = cc.ClaudeCliClient()
+        self.addCleanup(client.deleteLater)
+        return client
+
+    def test_auth_failure_emits_the_hint(self):
+        client = self._client()
+        errs = []
+        client.errorOccurred.connect(errs.append)
+        proc = _FakeProc(_auth_stream(), rc=1, stderr="")
+        with unittest.mock.patch.object(cc.subprocess, "Popen",
+                                        return_value=proc):
+            client._run("hi", [])
+        self.assertEqual(len(errs), 1, errs)
+        self.assertIn("claude auth login", errs[0])
+        self.assertNotIn("exited 1", errs[0])
+
+    def test_non_auth_failure_still_reports_exit_code(self):
+        client = self._client()
+        errs = []
+        client.errorOccurred.connect(errs.append)
+        proc = _FakeProc([], rc=2, stderr="segfault")
+        with unittest.mock.patch.object(cc.subprocess, "Popen",
+                                        return_value=proc):
+            client._run("hi", [])
+        self.assertEqual(len(errs), 1, errs)
+        self.assertIn("exited 2", errs[0])
+        self.assertIn("segfault", errs[0])
+
+    def test_flag_resets_between_turns(self):
+        # A stale flag would mislabel the NEXT unrelated failure as an auth
+        # problem, sending the user to re-login over a segfault.
+        client = self._client()
+        with unittest.mock.patch.object(
+                cc.subprocess, "Popen",
+                return_value=_FakeProc(_auth_stream(), rc=1)):
+            client._run("hi", [])
+        self.assertTrue(client._auth_failed)
+        errs = []
+        client.errorOccurred.connect(errs.append)
+        with unittest.mock.patch.object(
+                cc.subprocess, "Popen",
+                return_value=_FakeProc([], rc=3, stderr="boom")):
+            client._run("hi", [])
+        self.assertFalse(client._auth_failed)
+        self.assertIn("exited 3", errs[0])
+
+
+class TestCliStdinIsDevNull(unittest.TestCase):
+    """stdin=None INHERITS Maya stdin. A GUI Maya has no console, so the agent
+    blocks on a handle that never delivers -- the Claude CLI charges 3s per
+    request for that ("no stdin data received in 3s") before proceeding. Only
+    the image path, which really feeds a stream-json message, gets a PIPE."""
+
+    def _captured_stdin(self, popen_mock):
+        self.assertTrue(popen_mock.called)
+        return popen_mock.call_args[1]["stdin"]
+
+    def test_claude_text_turn_uses_devnull(self):
+        import subprocess as _sp
+
+        client = cc.ClaudeCliClient()
+        self.addCleanup(client.deleteLater)
+        with unittest.mock.patch.object(cc.subprocess, "Popen",
+                                        return_value=_FakeProc()) as po:
+            client._run("hi", [])
+        self.assertIs(self._captured_stdin(po), _sp.DEVNULL)
+
+    def test_claude_image_turn_still_uses_a_pipe(self):
+        import subprocess as _sp
+
+        client = cc.ClaudeCliClient()
+        self.addCleanup(client.deleteLater)
+        images = [{"name": "a.png", "data": "AAAA", "media_type": "image/png"}]
+        with unittest.mock.patch.object(cc.subprocess, "Popen",
+                                        return_value=_FakeProc()) as po:
+            client._run("hi", images)
+        self.assertIs(self._captured_stdin(po), _sp.PIPE)
+
+    def test_shared_cli_base_uses_devnull(self):
+        import subprocess as _sp
+
+        from mpynode.ui.llm import cli_base
+
+        class _Stub(cli_base.BaseCliClient):
+            def _bin(self):
+                return "gemini"
+
+            def _build_cmd(self, prompt, images):
+                return ["gemini", "-p", prompt]
+
+            def _handle_event(self, line):
+                pass
+
+        client = _Stub()
+        self.addCleanup(client.deleteLater)
+        with unittest.mock.patch.object(cli_base.subprocess, "Popen",
+                                        return_value=_FakeProc()) as po:
+            client._run("hi", [])
+        self.assertIs(self._captured_stdin(po), _sp.DEVNULL)
+
 def setUpModule():
     _setUpModule__assistant_model_order()
     _setUpModule__assistant_multiagent()

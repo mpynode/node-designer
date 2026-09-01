@@ -161,6 +161,51 @@ def build_user_message(prompt, images):
 
 
 # ---------------------------------------------------------------------------
+# Authentication failure -- name the fix instead of the exit code.
+# ---------------------------------------------------------------------------
+# A logged-out CLI still exits 1 with an EMPTY stderr: the whole story is on
+# stdout, in the stream-json events. Reporting only the return code turned
+# "you are not logged in" into "claude exited 1", which names neither the
+# cause nor the cure.
+_AUTH_ERROR_CODES = ("authentication_failed", "oauth_token_expired")
+
+# Both routes are real and both were verified: `claude auth login` writes
+# ~/.claude/.credentials.json, while `claude setup-token` only PRINTS a token --
+# storing it is the caller's job. The os.environ line works mid-session because
+# neither client passes env= to Popen, so the child snapshots this process's
+# environment at spawn time; a Maya restart is not needed.
+_AUTH_HINT = (
+    "Claude CLI is not authenticated -- `claude auth status` will say "
+    '"loggedIn": false. Fix it in a terminal, then send again:'
+    "\n    claude auth login"
+    "\nOr mint a long-lived token and hand it to this Maya session (no "
+    "restart needed -- the CLI inherits Maya's environment):"
+    "\n    claude setup-token"
+    "\nthen, in the Script Editor:"
+    '\n    import os; os.environ["CLAUDE_CODE_OAUTH_TOKEN"] = "<the token>"'
+)
+
+
+def auth_failure(event):
+    """True if one parsed stream-json event reports an auth failure. Pure.
+
+    Keys off the CLI's machine-readable ``error`` code, not its prose: the
+    sentence the user sees depends on WHY auth failed ("OAuth session expired
+    and could not be refreshed" with no token on disk, "401 OAuth access token
+    is invalid" with a bad one), while the code is stable across both. The
+    terminal ``result`` event drops the code, so that one is matched on
+    ``is_error`` plus the one word every variant shares.
+    """
+    if not isinstance(event, dict):
+        return False
+    if event.get("error") in _AUTH_ERROR_CODES:
+        return True
+    if event.get("is_error"):
+        return "authenticate" in str(event.get("result") or "").lower()
+    return False
+
+
+# ---------------------------------------------------------------------------
 # Model listing -- ask the CLI, NEVER an API key.
 # ---------------------------------------------------------------------------
 # `claude -p /model` is answered LOCALLY (no network, no key) with:
@@ -582,6 +627,7 @@ class ClaudeCliClient(QObject):
         self._answer_text = ""   # accumulated reply -> payload extraction
         self._ctx = None         # ToolContext captured per turn (GUI thread)
         self._node_name = None   # active node captured per turn (GUI thread)
+        self._auth_failed = False  # set from the stream; reset every turn
 
     def reset(self):
         self._session_id = str(uuid.uuid4())
@@ -642,6 +688,7 @@ class ClaudeCliClient(QObject):
     def _run(self, prompt, images):
         self._emitted_text = False
         self._answer_text = ""
+        self._auth_failed = False
         try:
             from mpynode.native.toolchain import toolchain
 
@@ -659,9 +706,15 @@ class ClaudeCliClient(QObject):
             # Resolve the launcher (Windows .cmd/.exe shims need a full path).
             if cmd:
                 cmd[0] = toolchain.resolve_executable(cmd[0])
+            # DEVNULL, not None: None INHERITS our stdin, and a GUI Maya has
+            # no console, so claude waits on a handle that never delivers and
+            # charges 3s per request ("no stdin data received in 3s") before
+            # proceeding. DEVNULL is an immediate EOF. Only the image path,
+            # which really does feed a stream-json message, gets a PIPE.
             self._proc = subprocess.Popen(
                 cmd,
-                stdin=(subprocess.PIPE if stream_input else None),
+                stdin=(subprocess.PIPE if stream_input
+                       else subprocess.DEVNULL),
                 stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                 bufsize=1, **toolchain.cli_subprocess_kwargs())
             self._started = True
@@ -690,9 +743,12 @@ class ClaudeCliClient(QObject):
                     err = (self._proc.stderr.read() or "")[:600]
                 except Exception:
                     pass
-                self.errorOccurred.emit(
-                    "claude exited %s%s" % (self._proc.returncode,
-                                            (": " + err) if err else ""))
+                if self._auth_failed:
+                    self.errorOccurred.emit(_AUTH_HINT)
+                else:
+                    self.errorOccurred.emit(
+                        "claude exited %s%s" % (self._proc.returncode,
+                                                (": " + err) if err else ""))
             else:
                 # Apply the node payload the agent emitted (main thread).
                 self._finalize()
@@ -720,6 +776,8 @@ class ClaudeCliClient(QObject):
             ev = json.loads(line)
         except Exception:
             return
+        if auth_failure(ev):
+            self._auth_failed = True
         et = ev.get("type")
         if et == "assistant":
             # Sub-agent output carries a parent tool use id. Its interim text

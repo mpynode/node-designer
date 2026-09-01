@@ -134,9 +134,14 @@ class BaseCliClient(QObject):
             if cmd:
                 cmd[0] = toolchain.resolve_executable(cmd[0])
             stdin_data = self._stdin_payload(prompt, images)
+            # DEVNULL, not None: None INHERITS our stdin, and a GUI Maya has no
+            # console, so the agent waits on a handle that never delivers. The
+            # Claude CLI charges 3s for that on every request before giving up
+            # ("no stdin data received in 3s"). DEVNULL is an immediate EOF.
             self._proc = subprocess.Popen(
                 cmd,
-                stdin=(subprocess.PIPE if stdin_data is not None else None),
+                stdin=(subprocess.PIPE if stdin_data is not None
+                       else subprocess.DEVNULL),
                 stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                 bufsize=1, **toolchain.cli_subprocess_kwargs())
             if stdin_data is not None:
