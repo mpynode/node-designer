@@ -55,7 +55,7 @@ from mpynode.native.toolchain import typeid_registry
 from .errors import UnsupportedSpec
 
 
-_MAYA_DEFAULT = toolchain.default_maya_dir()
+_MAYA_DEFAULT = toolchain.preferred_maya_dir()
 
 # Output-folder layout (SINGLE SOURCE OF TRUTH -- compile_controller and the UI
 # import these). A compile leaves ONLY the importable ``<plugin>.bundle`` (and
@@ -824,17 +824,25 @@ def make_build_sh(plugin_name: str, frag_files: List[str],
 
 
 def make_build_bat(plugin_name: str, frag_files: List[str],
-                   needs_qt: bool = False, qt_include: str = None) -> str:
+                   needs_qt: bool = False) -> str:
     """Windows ``cl.exe`` equivalent of :func:`make_build_sh` (reference/debug).
 
     Compiles each fragment + ``plugin_main.cpp`` to ``.obj`` then links one
     ``.mll``. Run from an *x64 Native Tools Command Prompt for VS*. The actual
     programmatic build (:func:`assemble`) drives ``cl`` directly via
     ``native.toolchain``; this is the hand-runnable mirror. ``needs_qt=True``
-    links Maya's Qt import libs (best-effort; only macOS is build-verified);
-    ``qt_include`` (the RESOLVED ``toolchain.qt_include_dir``, only knowable on
-    a Windows host) adds the matching header search path. Default ``None``
-    leaves the script byte-identical to what a macOS host emits today.
+    links Maya's Qt import libs AND emits ``toolchain.qt_resolver_bat``, which
+    finds the Qt headers at RUN time.
+
+    There is deliberately no ``qt_include`` parameter. It used to take the
+    host-RESOLVED ``toolchain.qt_include_dir``, which meant the emitted script
+    only worked when the generating machine was the running machine: this
+    project is developed on macOS, where that resolver returns ``None``, so
+    every hover node shipped a build.bat with no Qt include path and no MSVC Qt
+    flags and died on Windows at ``C1083``. Resolving in the SCRIPT instead is
+    both host-independent and honest about a path that cannot be known until
+    the user runs it -- exactly what ``maya_resolver_bat`` already does for
+    ``%MAYA%``.
     """
     libs = " ".join("%s.lib" % l for l in _LINK_LIBS)
     if needs_qt:
@@ -842,12 +850,11 @@ def make_build_bat(plugin_name: str, frag_files: List[str],
     cxx = ("cl /nologo /std:c++17 /O2 /fp:precise /EHsc /MD /bigobj /utf-8 "
            "/D NT_PLUGIN /D REQUIRE_IOSTREAM /D _BOOL /D WIN32 /D _WINDOWS "
            "/D _CRT_SECURE_NO_WARNINGS")
-    if needs_qt and qt_include:
+    if needs_qt:
         # The MSVC-only flags Qt 6 requires ride along with the include dir, or
         # this hand-runnable mirror dies at C1189/C2338 while the programmatic
         # build (toolchain.qt_compile_flags) succeeds.
-        cxx = cxx + ' %s /I "%s"' % (
-            " ".join(toolchain.qt_msvc_flags()), qt_include)
+        cxx = cxx + ' %s /I "%%QTINC%%"' % " ".join(toolchain.qt_msvc_flags())
     lines = [
         "@echo off",
         "REM Generated combined build for native plugin '%s' (%d nodes)."
@@ -857,7 +864,9 @@ def make_build_bat(plugin_name: str, frag_files: List[str],
         "REM Usage:  build.bat [maya-version]      e.g. build.bat 2026",
         "REM With no argument the newest installed Maya is used; set MAYA to",
         "REM override discovery.",
-    ] + toolchain.maya_resolver_bat("win32") + [
+    ] + toolchain.maya_resolver_bat("win32") + (
+        # Must follow the Maya resolver: the Qt probe reads %MAYA%\include.
+        toolchain.qt_resolver_bat() if needs_qt else []) + [
         'set "HERE=%~dp0"',
         'set "OBJS="',
     ]
@@ -886,6 +895,14 @@ def make_build_bat(plugin_name: str, frag_files: List[str],
     # The link above writes UP to %HERE%..\ (the plugin lives beside build/),
     # so name that exact path -- not %HERE%.
     lines.append('echo Built: %%HERE%%..\\%s.mll' % plugin_name)
+    # `del` above reports errorlevel 1 when an object file is already gone, and
+    # `echo` does NOT reset it -- so a FULLY SUCCESSFUL build exited 1 and every
+    # caller believed it had failed. MEASURED on Windows 2026-09-01: mPyMega.mll
+    # linked (2.7 MB on disk), then the wrapper's `if errorlevel 1` skipped the
+    # install copy and printed BUILD FAILED. Cleanup is best-effort and must not
+    # decide the exit status. build.sh cannot have this bug: a shell script's
+    # status is its last command, which is the echo.
+    lines.append("exit /b 0")
     return "\r\n".join(lines) + "\r\n"
 
 
@@ -940,13 +957,13 @@ def make_single_build_sh(plugin_name: str, node_file: str, libs: List[str],
 
 
 def make_single_build_bat(plugin_name: str, node_file: str, libs: List[str],
-                          *, needs_qt: bool = False, maya: str = None,
-                          qt_include: str = None) -> str:
+                          *, needs_qt: bool = False, maya: str = None) -> str:
     """Windows ``cl.exe`` rebuild for a self-contained single-node plugin
     (one-shot compile + link into ``<plugin_name>.mll``). Run from an *x64 Native
-    Tools Command Prompt for VS*. ``qt_include`` (the RESOLVED
-    ``toolchain.qt_include_dir``) adds the Qt header search path a hover locator
-    needs; ``None`` keeps the script byte-identical to today's macOS output.
+    Tools Command Prompt for VS*. ``needs_qt=True`` emits
+    ``toolchain.qt_resolver_bat`` so a hover locator's Qt header search path is
+    found at RUN time -- see :func:`make_build_bat` for why there is no
+    ``qt_include`` parameter.
 
     ``maya`` is provenance only -- see :func:`make_single_build_sh`. The Maya
     root is resolved at RUN time from the optional version argument.
@@ -958,8 +975,8 @@ def make_single_build_bat(plugin_name: str, node_file: str, libs: List[str],
     # The MSVC-only flags Qt 6 requires ride along with the include dir, or this
     # hand-runnable mirror dies at C1189/C2338 while the programmatic build
     # (toolchain.qt_compile_flags) succeeds.
-    qt_inc = (' %s /I "%s"' % (" ".join(toolchain.qt_msvc_flags()), qt_include)
-              ) if (needs_qt and qt_include) else ""
+    qt_inc = (' %s /I "%%QTINC%%"' % " ".join(toolchain.qt_msvc_flags())
+              ) if needs_qt else ""
     return "\r\n".join([
         "@echo off",
         "REM Rebuild native plugin '%s' from its single source 'source\\%s'."
@@ -971,7 +988,9 @@ def make_single_build_bat(plugin_name: str, node_file: str, libs: List[str],
         "REM With no argument the newest installed Maya is used; set MAYA to",
         "REM override discovery.",
     ] + toolchain.build_provenance(maya, "REM")
-      + toolchain.maya_resolver_bat("win32") + [
+      + toolchain.maya_resolver_bat("win32")
+      + (  # Must follow the Maya resolver: the Qt probe reads %MAYA%\include.
+        toolchain.qt_resolver_bat() if needs_qt else []) + [
         'set "HERE=%~dp0"',
         ('cl /nologo /LD /std:c++17 /O2 /fp:precise /EHsc /MD /bigobj /utf-8 '
          '/D NT_PLUGIN /D REQUIRE_IOSTREAM /D _BOOL /D WIN32 /D _WINDOWS '
@@ -1123,21 +1142,6 @@ def _detect_qt(nodes) -> bool:
         except Exception:
             pass
     return False
-
-
-def _qt_include_for(needs_qt: bool, maya: str):
-    """The Qt header dir to bake into the emitted ``build.bat``, or ``None``.
-
-    Only a Windows HOST can resolve it (the .bat is a cross-platform artifact:
-    a macOS host has no idea where the Windows install keeps its Qt headers),
-    so off Windows this is always ``None`` and the script keeps today's exact
-    bytes. On Windows the gate in :func:`assemble` has already refused the build
-    if this cannot resolve, so the hand-runnable mirror gets the SAME include
-    dir the programmatic build used.
-    """
-    if not (needs_qt and toolchain.is_windows()):
-        return None
-    return toolchain.qt_include_dir(maya)
 
 
 def _prepare_compiler(report: dict, compile_now: bool):
@@ -1432,8 +1436,7 @@ def assemble(
     if not toolchain.is_windows():
         os.chmod(build_sh, 0o755)
     with open(os.path.join(build_dir, "build.bat"), "w", newline="") as fh:
-        fh.write(make_build_bat(plugin_name, frag_files, needs_qt=needs_qt,
-                                qt_include=_qt_include_for(needs_qt, maya)))
+        fh.write(make_build_bat(plugin_name, frag_files, needs_qt=needs_qt))
     out_plugin = os.path.join(out_dir, plugin_name + toolchain.plugin_ext())
     with open(os.path.join(build_dir, "README.txt"), "w") as fh:
         fh.write(make_readme(plugin_name, node_cpp_files, single=False,
@@ -1571,9 +1574,9 @@ def _assemble_single(node, plugin_name, out_dir, reg, report, *, strict, maya,
     if not is_win:
         os.chmod(build_sh, 0o755)
     with open(os.path.join(build_dir, "build.bat"), "w", newline="") as fh:
-        fh.write(make_single_build_bat(plugin_name, node_file, libs, needs_qt=needs_qt,
-                                       maya=(maya if is_win else None),
-                                       qt_include=_qt_include_for(needs_qt, maya)))
+        fh.write(make_single_build_bat(plugin_name, node_file, libs,
+                                       needs_qt=needs_qt,
+                                       maya=(maya if is_win else None)))
     out_plugin = os.path.join(out_dir, plugin_name + toolchain.plugin_ext())
     with open(os.path.join(build_dir, "README.txt"), "w") as fh:
         fh.write(make_readme(plugin_name, [node_file], single=True,

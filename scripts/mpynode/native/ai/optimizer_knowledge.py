@@ -386,6 +386,30 @@ _NONPORTABLE = (
                 r"pmmintrin|smmintrin|avxintrin|unistd|dlfcn)\.?h?\s*>|"
                 r"#\s*include\s*<\s*(?:Accelerate|simd)/[^>]*>"),
      "platform-specific header"),
+    # Windows SAL. sal.h defines ~423 OBJECT-LIKE macros whose names begin with
+    # a double underscore -- __out, __in, __inout, __range and friends -- so one
+    # used as a variable name is not a style question but a preprocessor
+    # collision: `MPoint* __out = &_cv[0];` becomes `MPoint* [SA_annotation] =
+    # ...`, which MSVC reports as C2059 then C2337 "attribute not found" on
+    # every later use, plus a bogus C4467 "ATL attributes are deprecated". clang
+    # has no sal.h at all, so it compiled clean on the host, benchmarked faster
+    # and SHIPPED -- exactly the hole this table exists to close.
+    #
+    # This cannot be a blanket "no __ prefix" rule: __-prefixed temporaries are
+    # the transpiler's own convention (__i appears 12590 times, __L0 12530), so
+    # it names the SAL families only. MEASURED against the installed SDK on
+    # Windows 2026-08-31: of the project's 100 distinct __ identifiers exactly
+    # ONE collided -- __out, in helixCurve. Re-derive the authoritative set with
+    #   grep -hoE '^#define (__[A-Za-z_]\w*)' "<WindowsSdkDir>/shared/sal.h"
+    (re.compile(r"\b__(?:in|out|inout)(?:_\w+)?\b"
+                r"|\b__deref_\w+\b"
+                r"|\b__(?:field|post|pre)_\w+\b"
+                r"|\b__(?:[ebx]?count\w*|cap\w*)\b"
+                r"|\b__(?:range|bound|inner_range|inner_bound|assume_bound)\b"
+                r"|\b__(?:reserved|success|failure|on_failure|override)\b"
+                r"|\b__(?:transfer|typefix|callback|allocator|deallocate)\b"
+                r"|\b__(?:nonvolatile|volatile|specstrings)\b"),
+     "a Windows SAL macro name (sal.h) used as an identifier"),
 )
 
 _PLATFORM_IF_RE = re.compile(

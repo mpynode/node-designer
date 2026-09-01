@@ -563,6 +563,49 @@ class TestMayapy(unittest.TestCase):
             os.path.join("/M", "Maya.app", "Contents", "bin", "mayapy"))
 
 
+class TestPreferredMayaDir(unittest.TestCase):
+    """The in-process default must be an install that EXISTS.
+
+    ``default_maya_dir`` is a pinned constant (maya2026). MEASURED on Windows
+    2026-08-31: on a box with Maya 2022 + 2025 and no 2026, every non-UI caller
+    compiled against a nonexistent devkit and ``bundler.assemble`` dropped EVERY
+    node -- reported only as "dropped", with no reason naming the cause. The
+    generated build scripts never had this bug because they resolve at run time.
+    """
+
+    def test_prefers_the_newest_install_that_exists(self):
+        from mpynode.native.toolchain import toolchain as tc
+
+        fake = [{"label": "Maya2022", "version": "2022", "root": "/A/Maya2022",
+                 "mayapy": "x"},
+                {"label": "Maya2025", "version": "2025", "root": "/A/Maya2025",
+                 "mayapy": "x"}]
+        with unittest.mock.patch.object(tc, "discover_maya_installs",
+                                        return_value=fake):
+            self.assertEqual(tc.preferred_maya_dir("win32"), "/A/Maya2025")
+
+    def test_falls_back_to_the_conventional_constant(self):
+        from mpynode.native.toolchain import toolchain as tc
+
+        with unittest.mock.patch.object(tc, "discover_maya_installs",
+                                        return_value=[]):
+            for os_name in ("win32", "darwin", "linux"):
+                self.assertEqual(tc.preferred_maya_dir(os_name),
+                                 tc.default_maya_dir(os_name))
+
+    def test_the_engine_defaults_use_it(self):
+        """All four modules that carry a _MAYA_DEFAULT must resolve, not pin."""
+        from mpynode.native.compiler import bundler
+        from mpynode.native.toolchain import compile_controller, verify
+        from mpynode.native.ai import porter
+        from mpynode.native.toolchain import toolchain as tc
+
+        want = tc.preferred_maya_dir()
+        for mod in (bundler, compile_controller, verify, porter):
+            self.assertEqual(mod._MAYA_DEFAULT, want,
+                             "%s pins its Maya default" % mod.__name__)
+
+
 class TestVcvarsParsing(unittest.TestCase):
     def test_parse_set_output(self):
         from mpynode.native.toolchain import toolchain as tc
@@ -1338,49 +1381,115 @@ class TestCodegenBuildScripts(unittest.TestCase):
         self.assertFalse(_uncollapsed_percent(body))
         self.assertIn("Qt6Gui.lib", body)
 
+    def _hover_bats(self):
+        """The three hand-runnable .bat mirrors, for a hover-capable node."""
+        from mpynode.native import compiler as codegen
+        from mpynode.native.compiler import bundler
+
+        return (
+            ("porter", codegen.generate_build_bat(_HOVER_SPEC, maya=r"C:\M")),
+            ("multi", bundler.make_build_bat("myBundle", ["frag_a.cpp"],
+                                             needs_qt=True)),
+            ("single", bundler.make_single_build_bat("myBundle", "foo.cpp",
+                                                     ["OpenMaya"],
+                                                     needs_qt=True)),
+        )
+
     def test_every_windows_bat_carries_the_qt_msvc_flags(self):
         """All THREE hand-runnable .bat mirrors must emit the MSVC-only flags
         Qt 6 requires. Round 1 put /Zc:__cplusplus into qt_compile_flags() only,
         so a hover node's SHIPPED build.bat still died at C1189 (then C2338)
         while the programmatic build succeeded. Windows 2026-08-14."""
-        from mpynode.native import compiler as codegen
-        from mpynode.native.compiler import bundler
         from mpynode.native.toolchain import toolchain as tc
 
         want = tc.qt_msvc_flags()
         self.assertIn("/Zc:__cplusplus", want)
         self.assertIn("/permissive-", want)
 
-        with unittest.mock.patch.object(tc, "is_windows", return_value=True), \
-             unittest.mock.patch.object(tc, "qt_include_dir",
-                                        return_value=r"C:\qt"):
-            porter = codegen.generate_build_bat(_HOVER_SPEC, maya=r"C:\M")
-        multi = bundler.make_build_bat("myBundle", ["frag_a.cpp"],
-                                       needs_qt=True, qt_include=r"C:\qt")
-        single = bundler.make_single_build_bat("myBundle", "foo.cpp",
-                                               ["OpenMaya"], needs_qt=True,
-                                               qt_include=r"C:\qt")
-        for label, body in (("porter", porter), ("multi", multi),
-                            ("single", single)):
+        for label, body in self._hover_bats():
             for flag in want:
                 self.assertIn(flag, body,
                               "%s build.bat is missing %s" % (label, flag))
-            self.assertIn(r'/I "C:\qt"', body, label)
+            # The header search path is resolved BY THE SCRIPT, so the recipe
+            # references the variable the resolver sets -- never a baked path.
+            self.assertIn('/I "%QTINC%"', body, label)
+            self.assertIn('set "QTINC=', body, label)
             self.assertFalse(_uncollapsed_percent(body), label)
 
-    def test_bat_qt_msvc_flags_absent_when_qt_is_unresolved(self):
-        """Off Windows (qt_include is None there) the emitted .bat must keep
-        today's exact bytes -- the MSVC-only flags must not leak into the
-        script a macOS host writes."""
+    def test_bat_qt_recipe_does_not_depend_on_the_generating_host(self):
+        """ROUND 3. The .bat is a cross-platform artifact: it is GENERATED on
+        macOS and RUN on Windows. Rounds 1 and 2 baked in the host-resolved
+        qt_include_dir, which is None on macOS, so every hover node shipped a
+        build.bat with no Qt include path and no MSVC Qt flags -- and the test
+        that used to sit here asserted exactly that as correct ("must keep
+        today's exact bytes"). It died on Windows at 'C1083: Cannot open include
+        file: QtCore/QPoint', 14 translation units in. MEASURED 2026-08-31,
+        Maya 2025 + VS 2022.
+
+        A macOS host must now emit BYTE-IDENTICAL Windows scripts."""
+        from mpynode.native.toolchain import toolchain as tc
+
+        on_windows = self._hover_bats()
+        # A macOS host: nothing about the Windows Qt layout is knowable there.
+        with unittest.mock.patch.object(tc, "is_windows", return_value=False), \
+             unittest.mock.patch.object(tc, "is_macos", return_value=True), \
+             unittest.mock.patch.object(tc, "qt_include_dir",
+                                        return_value=None):
+            on_macos = self._hover_bats()
+
+        for (label, win), (_, mac) in zip(on_windows, on_macos):
+            self.assertEqual(win, mac,
+                             "%s build.bat differs by generating host" % label)
+            for flag in tc.qt_msvc_flags():
+                self.assertIn(flag, mac, label)
+            self.assertIn('/I "%QTINC%"', mac, label)
+
+    def test_no_qt_recipe_when_the_node_has_no_hover(self):
+        """The resolver and its flags are scoped to hover nodes: a plain build
+        must not gain a Qt probe it would then fail on."""
         from mpynode.native.compiler import bundler
 
-        for body in (bundler.make_single_build_bat("myBundle", "foo.cpp",
-                                                   ["OpenMaya"],
-                                                   needs_qt=True),
-                     bundler.make_build_bat("myBundle", ["frag_a.cpp"],
-                                            needs_qt=True)):
+        for body in (bundler.make_build_bat("plain", ["frag_a.cpp"]),
+                     bundler.make_single_build_bat("plain", "foo.cpp",
+                                                   ["OpenMaya"])):
+            self.assertNotIn("QTINC", body)
             self.assertNotIn("/permissive-", body)
             self.assertNotIn("/Zc:__cplusplus", body)
+
+    def test_qt_resolver_bat_probes_and_fails_loudly(self):
+        """The resolver must actually PROBE (not just set a variable) and must
+        name the unextracted archive when it finds nothing -- that message is
+        the whole reason a user can act on the failure."""
+        from mpynode.native.toolchain import toolchain as tc
+
+        body = "\r\n".join(tc.qt_resolver_bat())
+        # Same sentinel the Python resolver uses, with WINDOWS separators: a
+        # macOS os.path.join here would emit 'QtGui/QCursor'.
+        self.assertIn(r"QtGui\QCursor", body)
+        self.assertNotIn("QtGui/QCursor", body)
+        self.assertIn(tc.QT_INCLUDE_ENV, body)
+        self.assertIn("for /d %%D in (", body)      # the subdirectory sweep
+        self.assertIn("%%~fD", body)
+        self.assertIn("exit /b 1", body)
+        self.assertIn("-include.zip", body)         # names the archive
+        self.assertFalse(_uncollapsed_percent(body))
+
+    def test_bat_diagnostics_reach_stderr(self):
+        """`1^>^&2` inside a parenthesised if-block is LITERAL TEXT: cmd prints
+        'msg 1>&2' to STDOUT and nothing reaches stderr. MEASURED against the
+        shipped build.bat on Windows 2026-08-31 -- every resolver diagnostic in
+        the project was going to the wrong stream with a visible '1>&2' suffix.
+        Plain `1>&2` redirects correctly."""
+        from mpynode.native.toolchain import toolchain as tc
+
+        bodies = ["\r\n".join(tc.maya_resolver_bat("win32")),
+                  "\r\n".join(tc.qt_resolver_bat())]
+        bodies += [b for _, b in self._hover_bats()]
+        for body in bodies:
+            self.assertNotIn("1^>^&2", body)
+            self.assertIn("1>&2", body)
+            # ^ is not an escape inside double quotes either.
+            self.assertNotIn('"^<', body)
 
     def test_load_test_extension_follows_platform(self):
         from mpynode.native.toolchain import toolchain
@@ -1445,20 +1554,44 @@ class TestBundlerBuildScripts(unittest.TestCase):
         self.assertIn("/utf-8", body)
         self.assertIn("_CRT_SECURE_NO_WARNINGS", body)
 
-    def test_make_build_bat_qt_include_only_when_resolved(self):
+    def test_make_build_bat_cleanup_cannot_fail_the_build(self):
+        """A successful build must exit 0 even if the object sweep hiccups.
+
+        `del %OBJS% 2>nul` returns errorlevel 1 when a file is already gone, and
+        `echo` does not reset it, so the script exited 1 after linking fine.
+        MEASURED on Windows 2026-09-01: mPyMega.mll was on disk at 2.7 MB and
+        the wrapper still printed BUILD FAILED and skipped the install copy.
+        build.sh is immune -- a shell script's status is its last command."""
         from mpynode.native.compiler import bundler
 
-        # Default (None -- e.g. generated on macOS, where a Windows Qt include
-        # dir cannot be resolved): today's exact output, no extra /I.
-        plain = bundler.make_build_bat("myBundle", ["frag_a.cpp"],
-                                       needs_qt=True)
-        self.assertNotIn("QTINC", plain)
-        # Resolved on a Windows host -> the hand-runnable mirror gets the same
-        # include dir the programmatic build uses.
-        got = bundler.make_build_bat("myBundle", ["frag_a.cpp"], needs_qt=True,
-                                     qt_include=r"C:\M\include\qt")
-        self.assertIn(r"C:\M\include\qt", got)
+        body = bundler.make_build_bat("myBundle", ["frag_a.cpp"])
+        lines = [l for l in body.splitlines() if l.strip()]
+        self.assertIn("del %OBJS%", body, "the cleanup sweep went missing")
+        self.assertEqual(
+            lines[-1].strip(), "exit /b 0",
+            "build.bat must end by forcing success; otherwise `del`'s "
+            "errorlevel decides whether a good build looks failed")
+        # The echo must still be the last thing the user SEES.
+        self.assertTrue(lines[-2].startswith("echo Built:"), lines[-2])
+
+    def test_make_build_bat_resolves_qt_in_the_script(self):
+        """``needs_qt`` alone must produce a COMPLETE Windows recipe.
+
+        This test used to assert the opposite -- that a script generated without
+        a host-resolved ``qt_include`` (i.e. every script this macOS-developed
+        project ships) correctly carried no Qt include path. That is precisely
+        the defect: it died on Windows at C1083. There is no ``qt_include``
+        parameter any more; the script resolves %QTINC% itself."""
+        from mpynode.native.compiler import bundler
+
+        got = bundler.make_build_bat("myBundle", ["frag_a.cpp"], needs_qt=True)
+        self.assertIn('set "QTINC=', got)          # the resolver is present
+        self.assertIn('/I "%QTINC%"', got)         # ...and actually used
+        self.assertIn("/Zc:__cplusplus", got)
+        self.assertIn("/permissive-", got)
         self.assertFalse(_uncollapsed_percent(got))
+        # No absolute host path may be baked in.
+        self.assertNotIn(r"C:\M\include\qt", got)
 
     def test_make_build_bat_links_all_objs(self):
         from mpynode.native.compiler import bundler

@@ -4093,16 +4093,16 @@ MStatus HelixCurve::compute(const MPlug& plug, MDataBlock& data) {
             _contig = (nl_n >= 2 && (&_cv[1] == &_cv[0] + 1)) ? 1 : -1;
         }
         if (_contig == 1) {
-            MPoint* __out = &_cv[0];
+            MPoint* __dst = &_cv[0];
             for (int64_t __i = 0; __i < nl_n; ++__i) {
                 const double __cP = _tabCos[(size_t)__i];
                 const double __sP = _tabSin[(size_t)__i];
                 const double __cvv = (__cP * __cB) - (__sP * __sB);
                 const double __sv  = (__sP * __cB) + (__cP * __sB);
-                __out[__i].x = __r * __cvv;
-                __out[__i].y = _tabHalf[(size_t)__i] * __h;
-                __out[__i].z = __r * __sv;
-                __out[__i].w = 1.0;
+                __dst[__i].x = __r * __cvv;
+                __dst[__i].y = _tabHalf[(size_t)__i] * __h;
+                __dst[__i].z = __r * __sv;
+                __dst[__i].w = 1.0;
             }
         } else {
             for (int64_t __i = 0; __i < nl_n; ++__i) {

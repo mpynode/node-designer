@@ -51,7 +51,7 @@ for _mod in (prompt, helpers, llm_client, verify_scripts):
             globals().setdefault(_name, getattr(_mod, _name))
 del _mod, _name
 
-_MAYA_DEFAULT = toolchain.default_maya_dir()
+_MAYA_DEFAULT = toolchain.preferred_maya_dir()
 
 
 # ---------------------------------------------------------------------------

@@ -8,7 +8,7 @@
 This module gates the LOWERING SHAPE and, more importantly, the rejects -- the
 forms that must keep routing to the porter rather than being guessed at. The
 byte-parity evidence (compile the C++, run it, compare against numpy) lives in
-``native/tests/py_to_cpp_test.py`` as the ``gap_raise_*`` / ``gap_none_*`` /
+``tests/compile/native/py_to_cpp_test.py`` as the ``gap_raise_*`` / ``gap_none_*`` /
 ``gap_meshgrid_*`` / ``gap_unique_return_index_*`` fixtures, which is the only
 place that has a compiler.
 """

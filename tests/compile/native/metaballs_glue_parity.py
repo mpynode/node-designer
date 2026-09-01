@@ -23,7 +23,7 @@ arrays of assorted lengths, so the semantic-default tail is exercised per attr)
 and asserts the produced ``(points, counts, indices)`` match EXACTLY. Pure-numpy,
 so it runs without Maya:
 
-    python3 native/tests/metaballs_glue_parity.py
+    python3 tests/compile/native/metaballs_glue_parity.py
 
 Also exposed as a unittest (``MetaballsGlueParityTest``) for the native gate.
 """
@@ -35,8 +35,11 @@ import os
 import numpy as np
 
 _HERE = os.path.dirname(os.path.abspath(__file__))
+# Three levels up from tests/compile/native is the repo root; the helper stays
+# in the package, so descend back through scripts/mpynode to reach it.
 _SDF_PATH = os.path.normpath(
-    os.path.join(_HERE, "..", "..", "_common", "nodes", "mesh", "sdf_dmc.py"))
+    os.path.join(_HERE, "..", "..", "..", "scripts", "mpynode",
+                 "_common", "nodes", "mesh", "sdf_dmc.py"))
 
 
 def _load_sdf():

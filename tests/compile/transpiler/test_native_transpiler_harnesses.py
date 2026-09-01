@@ -2,7 +2,9 @@
 
 The native transpiler ships eleven self-contained oracle/driver harnesses that
 compare the compiler against a numpy (or golden-file) ground truth, most of them
-by compiling real C++ with clang++:
+by compiling real C++ with clang++. They live in the sibling ``native/``
+directory (tests/compile/native/) rather than inside the package: nothing under
+scripts/ imports or invokes them, so only the suite has any reason to carry them.
 
   * native/nd_runtime_test.py  -- nd:: runtime ops vs numpy (Array/reduce/dot...)
   * native/nd_rng_test.py      -- nd::MT19937 bit-identical to numpy RandomState
@@ -44,7 +46,7 @@ import unittest
 from tests import _paths
 
 _HERE = os.path.dirname(os.path.abspath(__file__))
-_NATIVE_DIR = os.path.join(_paths.SCRIPTS, "mpynode", "native", "tests")
+_NATIVE_DIR = os.path.join(_paths.TESTS, "compile", "native")
 
 # Generous ceiling: the compile-heavy harnesses run ~20s each locally; a large
 # multiple guards against a hung clang without letting a real hang wedge the gate.
@@ -172,11 +174,14 @@ class TestHarnessCleansUpItsBinary(unittest.TestCase):
             self.fail("native harness missing: %s" % harness)
 
         with tempfile.TemporaryDirectory() as tmp:
-            # Repo-shaped: the harness derives HERE from its own location and
-            # -I from HERE/../compiler, so it runs verbatim -- no patching.
-            tests_dir = os.path.join(tmp, "tests")
+            # Repo-shaped: the harness derives HERE from its own location, walks
+            # three dirname()s to the root, then descends to the include dir --
+            # so it runs verbatim, no patching. Both legs have to be reproduced:
+            # the first is pure DEPTH (these three names are cosmetic), the
+            # second is spelled out by the harness and must match exactly.
+            tests_dir = os.path.join(tmp, "tests", "compile", "native")
             os.makedirs(tests_dir)
-            os.makedirs(os.path.join(tmp, "compiler"))
+            os.makedirs(os.path.join(tmp, "scripts", "mpynode", "native", "compiler"))
             shutil.copy(harness, tests_dir)
             # Compiles clean, exits nonzero: the binary EXISTS when the harness
             # bails. A stub that failed to compile would leave nothing behind
@@ -200,7 +205,8 @@ class TestHarnessCleansUpItsBinary(unittest.TestCase):
                 os.path.exists(os.path.join(tests_dir, binary)),
                 "%s survived a RED run -- the cleanup in "
                 "%s._compile_and_run is no longer a finally, so a failing run "
-                "strands the executable in native/tests/" % (binary, mod[:-3]))
+                "strands the executable in tests/compile/native/"
+                % (binary, mod[:-3]))
 
 
 if __name__ == "__main__":

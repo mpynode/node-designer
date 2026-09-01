@@ -292,6 +292,77 @@ def qt_include_problem(maya: str,
     )
 
 
+def qt_resolver_bat(_os_name: Optional[str] = None) -> List[str]:
+    """Batch lines that set ``%QTINC%`` to Maya's Qt include root at RUN time.
+
+    The Windows counterpart to :func:`qt_include_dir`, and the reason the three
+    hand-runnable ``build.bat`` mirrors no longer depend on the host that
+    GENERATED them. Baking a host-RESOLVED path into the script could only ever
+    work when the generating machine was also the running machine, and this
+    project is developed on macOS: ``qt_include_dir`` returns ``None`` there, so
+    every hover node shipped a build.bat carrying neither the include path nor
+    the MSVC flags, and died on Windows at ``C1083: Cannot open include file:
+    'QtCore/QPoint'`` -- MEASURED on Windows 2026-08-31 against Maya 2025 + VS
+    2022. Resolving at run time is what :func:`maya_resolver_bat` already does
+    for ``%MAYA%``; this is the same trick for the header search path.
+
+    Resolution order mirrors :func:`qt_include_dir` EXACTLY, so a hand rebuild
+    and the programmatic build cannot disagree about which Qt they compiled
+    against: the ``MPYNODE_QT_INCLUDE`` override, then ``%MAYA%\\include`` and
+    its ``qt``/``Qt`` subdirs, then any other immediate subdirectory (an archive
+    extracted under its own name). ``QtGui\\QCursor`` is the sentinel there and
+    here -- exactly the header the hover service includes. A SET-but-wrong
+    override is a hard stop rather than a silent fall-through, also matching the
+    Python resolver: a typo must not read as "Maya has no Qt headers".
+
+    Emits ``%%D``/``%%~fD`` as its loop variable for the same reason
+    :func:`maya_resolver_bat` does -- ``for /d`` assigns inside the loop and is
+    read only after it, so no delayed expansion is needed.
+    """
+    # NOT os.path.join: this writes a WINDOWS script, and joining on a macOS
+    # host would emit 'QtGui/QCursor'. The separator has to be literal.
+    sentinel = "\\".join(_QT_INCLUDE_SENTINEL)
+    inc = "%MAYA%\\include"
+    return [
+        'set "QTINC=%{0}%"'.format(QT_INCLUDE_ENV),
+        # Hard stop on a bad override, before the cheap probes below can mask it.
+        'if not "%QTINC%"=="" if not exist "%QTINC%\\{0}" ('.format(sentinel),
+        '  echo build.bat: {0} is set to "%QTINC%" but that has no {1} 1>&2'
+        .format(QT_INCLUDE_ENV, sentinel),
+        '  echo   point it at the directory that CONTAINS QtGui\\, or unset it '
+        '1>&2',
+        '  exit /b 1',
+        ')',
+        'if "%QTINC%"=="" if exist "{0}\\{1}" set "QTINC={0}"'
+        .format(inc, sentinel),
+        'if "%QTINC%"=="" if exist "{0}\\qt\\{1}" set "QTINC={0}\\qt"'
+        .format(inc, sentinel),
+        'if "%QTINC%"=="" if exist "{0}\\Qt\\{1}" set "QTINC={0}\\Qt"'
+        .format(inc, sentinel),
+        'if "%QTINC%"=="" (',
+        '  for /d %%D in ("{0}\\*") do ('.format(inc),
+        '    if exist "%%~fD\\{0}" set "QTINC=%%~fD"'.format(sentinel),
+        '  )',
+        ')',
+        'if "%QTINC%"=="" (',
+        '  echo build.bat: this plugin has a hover locator, whose C++ includes '
+        'the Maya 1>&2',
+        '  echo   Qt headers -- but none were found under "{0}". 1>&2'
+        .format(inc),
+        '  echo   The devkit ships them as an UNEXTRACTED archive, e.g. 1>&2',
+        '  echo     "{0}\\qt_6.5.3_vc14-include.zip" 1>&2'.format(inc),
+        '  echo   so they are on no include path until it is extracted. 1>&2',
+        '  echo   Fix: extract it so "<dir>\\{0}" exists, then either 1>&2'
+        .format(sentinel),
+        '  echo     tar -xf "{0}\\qt_*-include.zip" -C "{0}"   ^(in place^), '
+        '1>&2'.format(inc),
+        '  echo   or extract anywhere and set {0}=^<dir^>. 1>&2'
+        .format(QT_INCLUDE_ENV),
+        '  exit /b 1',
+        ')',
+    ]
+
+
 def qt_link_flags(maya: str, os_name: Optional[str] = None) -> List[str]:
     """Flags to LINK a plugin against Maya's Qt + an rpath so it resolves at load.
 
@@ -416,6 +487,31 @@ def discover_maya_installs(os_name: Optional[str] = None,
                        else (0, e["version"])))
 
 
+def preferred_maya_dir(os_name: Optional[str] = None) -> str:
+    """The Maya root a build should target when the caller names none.
+
+    :func:`default_maya_dir` is the platform's CONVENTIONAL path and nothing
+    more -- a constant pinned at one version, so on a machine without that exact
+    version it points at nothing. The generated build scripts never had this
+    problem: :func:`maya_resolver_bat` / :func:`maya_resolver_sh` discover an
+    install at RUN time. The in-process path took the bare constant, and
+    MEASURED on Windows 2026-08-31 that meant ``bundler.assemble`` dropped EVERY
+    node on a box whose Maya installs are 2022 and 2025 while the pinned default
+    ``C:\\Program Files\\Autodesk\\Maya2026`` does not exist -- reported only as
+    "dropped", with no reason naming the missing devkit.
+
+    Prefers the newest install :func:`discover_maya_installs` can actually see
+    (it sorts year versions numerically and LAST), and falls back to the
+    conventional constant, so behaviour on a machine that HAS the pinned version
+    is unchanged. Callers that know better still win: the compile dialog resolves
+    the RUNNING Maya from ``MAYA_LOCATION`` and passes it explicitly.
+    """
+    installs = discover_maya_installs(os_name)
+    if installs:
+        return installs[-1]["root"]
+    return default_maya_dir(os_name)
+
+
 # ---------------------------------------------------------------------------
 # Shell mirrors of discover_maya_installs(), emitted INTO the build scripts
 # ---------------------------------------------------------------------------
@@ -507,9 +603,9 @@ def maya_resolver_bat(os_name: Optional[str] = None) -> List[str]:
         ')',
         'if not exist "%MAYA%\\include\\maya" (',
         '  echo build.bat: no Maya %%_V%% with a devkit under '
-        '"%s" 1^>^&2' % " ".join(maya_install_search_dirs(os_name or "win32")),
-        '  echo   pass a version:  build.bat 2026 1^>^&2',
-        '  echo   or set MAYA:     set "MAYA=C:\\path\\to\\maya" 1^>^&2',
+        '"%s" 1>&2' % " ".join(maya_install_search_dirs(os_name or "win32")),
+        '  echo   pass a version:  build.bat 2026 1>&2',
+        '  echo   or set MAYA:     set "MAYA=C:\\path\\to\\maya" 1>&2',
         '  exit /b 1',
         ')',
     ]
@@ -889,6 +985,38 @@ _COMPILER_LOG_HINTS = (
      "'qt_*-include.tar.gz'). Extract it so "
      "'<dir>/QtGui/QCursor' exists, then set MPYNODE_QT_INCLUDE to <dir> and "
      "recompile."),
+    # The next two are the cl-vs-WINDOWS-SDK mismatch, which is NOT what
+    # diagnose_toolset_mismatch/STL1001 detect: that compares cl's MSVC toolset
+    # against the MSVC STL headers on INCLUDE and says nothing about the Windows
+    # Kits UCRT. MEASURED on Windows 2026-08-31: a VS 2015 x64 Native Tools
+    # prompt (cl 19.00) paired with Windows SDK 10.0.28000.0 -- its own
+    # vcvarsall picks the NEWEST installed SDK -- produced both of these and
+    # matched no hint at all, so the failure dialog stayed cryptic.
+    ("D9002",
+     "The C++ compiler (cl.exe) is too OLD for this build: it does not "
+     "recognise '/std:c++17', a switch that arrived in Visual Studio 2017 "
+     "15.3, so it silently fell back to C++14 and the sources will not "
+     "compile. You are almost certainly in an old 'x64 Native Tools Command "
+     "Prompt' (e.g. VS 2015). Launch the one for VS 2019 or newer -- Maya 2025 "
+     "and 2026 are built with VS 2022 -- or remove the stray old cl.exe from "
+     "PATH."),
+    ("_mm_loadu_si64",
+     "The C++ compiler (cl.exe) is OLDER than the installed Windows SDK. The "
+     "UCRT's own <wchar.h> uses the '_mm_loadu_si64' intrinsic, which MSVC only "
+     "gained in Visual Studio 2019 16.7, so the C runtime headers cannot be "
+     "parsed at all and the error points into wchar.h rather than at your code. "
+     "Note vcvarsall selects the NEWEST installed SDK, so an old prompt plus a "
+     "current SDK always lands here. Launch the 'x64 Native Tools Command "
+     "Prompt' for VS 2019 or newer (VS 2022 for Maya 2025/2026)."),
+    ("C2337",
+     "A variable in the generated C++ collides with a Windows SAL annotation "
+     "macro. sal.h defines ~423 object-like macros whose names start with a "
+     "double underscore -- '__out', '__in', '__inout' and friends -- so "
+     "'MPoint* __out = ...' preprocesses to 'MPoint* [SA_annotation] = ...', "
+     "which MSVC reports as C2337 'attribute not found' plus a bogus C4467 "
+     "'ATL attributes are deprecated'. clang has no sal.h, so this compiles "
+     "cleanly on macOS. Rename the variable (the transpiler's other "
+     "double-underscore temporaries -- __i, __L0, __s0 -- do not collide)."),
 )
 
 

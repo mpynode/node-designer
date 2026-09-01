@@ -43,6 +43,13 @@ dist/
 *.o
 *.obj
 *.dylib
+# MSVC-only link byproducts. `cl /LD` writes <first-obj>.lib + .exp beside the
+# CWD, not the output dir, so building or running the suite from the repo root
+# litters it -- 16 such files after one mega build plus one test run. clang
+# emits neither, which is why this list never needed them. No tracked file in
+# the project ends in .lib or .exp.
+*.lib
+*.exp
 
 # ---- Build scratch ---------------------------------------------------------
 # _audit/ is where tools/harness/run_all*.py write per-template audit output.
@@ -62,6 +69,7 @@ compile.log
 # are specific to one install, so they are never part of what ships.
 /LaunchMaya2026.app/
 /launch_maya2024.sh
+/launch_maya2025.bat
 /userSetup.py
 .bench.lock
 

@@ -13,9 +13,9 @@ if "%MAYA%"=="" (
   )
 )
 if not exist "%MAYA%\include\maya" (
-  echo build.bat: no Maya %_V% with a devkit under "C:\Program Files\Autodesk" 1^>^&2
-  echo   pass a version:  build.bat 2026 1^>^&2
-  echo   or set MAYA:     set "MAYA=C:\path\to\maya" 1^>^&2
+  echo build.bat: no Maya %_V% with a devkit under "C:\Program Files\Autodesk" 1>&2
+  echo   pass a version:  build.bat 2026 1>&2
+  echo   or set MAYA:     set "MAYA=C:\path\to\maya" 1>&2
   exit /b 1
 )
 set "HERE=%~dp0"

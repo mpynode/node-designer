@@ -16,9 +16,11 @@ import subprocess
 import numpy as np
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-# nd_runtime.h lives in native/compiler/; add that dir to -I so the
-# `#include "nd_runtime.h"` in nd_runtime_test.cpp still resolves after the move.
-_INC = os.path.join(os.path.dirname(HERE), "compiler")
+# nd_runtime.h stays in the package at scripts/mpynode/native/compiler/; this
+# harness lives out in the suite, so -I pivots on the repo root (three
+# dirname()s up from tests/compile/native) and descends back into scripts/.
+_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(HERE)))
+_INC = os.path.join(_ROOT, "scripts", "mpynode", "native", "compiler")
 SRC = os.path.join(HERE, "nd_runtime_test.cpp")
 FTOL = dict(rtol=1e-12, atol=1e-12)
 

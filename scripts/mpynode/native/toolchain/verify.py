@@ -24,7 +24,7 @@ import time
 
 from mpynode.native.toolchain import toolchain
 
-_MAYA_DEFAULT = toolchain.default_maya_dir()
+_MAYA_DEFAULT = toolchain.preferred_maya_dir()
 
 
 # ---------------------------------------------------------------------------

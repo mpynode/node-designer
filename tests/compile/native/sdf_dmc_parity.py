@@ -12,8 +12,8 @@ vertex ordering implied by element-wise point comparison) must match EXACTLY.
 
 The helper is pure-numpy, so this runs WITHOUT Maya (fast refactor loop):
 
-    python3 native/tests/sdf_dmc_parity.py capture   # freeze golden (run on ORIGINAL)
-    python3 native/tests/sdf_dmc_parity.py check      # assert current == golden
+    python3 tests/compile/native/sdf_dmc_parity.py capture  # freeze golden (run on ORIGINAL)
+    python3 tests/compile/native/sdf_dmc_parity.py check     # assert current == golden
 
 It is also exposed as a unittest (``SdfDmcParityTest``) for the native gate.
 """
@@ -25,8 +25,11 @@ import os
 import numpy as np
 
 _HERE = os.path.dirname(os.path.abspath(__file__))
+# Three levels up from tests/compile/native is the repo root; the helper stays
+# in the package, so descend back through scripts/mpynode to reach it.
 _SDF_PATH = os.path.normpath(
-    os.path.join(_HERE, "..", "..", "_common", "nodes", "mesh", "sdf_dmc.py"))
+    os.path.join(_HERE, "..", "..", "..", "scripts", "mpynode",
+                 "_common", "nodes", "mesh", "sdf_dmc.py"))
 _GOLDEN = os.path.join(_HERE, "fixtures", "sdf_dmc_golden.npz")
 
 # Points come from linear edge interpolation; a behaviour-preserving refactor may

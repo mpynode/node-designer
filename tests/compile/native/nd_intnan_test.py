@@ -21,7 +21,11 @@ import sys
 import numpy as np
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-_INC = os.path.join(os.path.dirname(HERE), "compiler")
+# nd_runtime.h stays in the package at scripts/mpynode/native/compiler/; this
+# harness lives out in the suite, so -I pivots on the repo root (three
+# dirname()s up from tests/compile/native) and descends back into scripts/.
+_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(HERE)))
+_INC = os.path.join(_ROOT, "scripts", "mpynode", "native", "compiler")
 SRC = os.path.join(HERE, "nd_intnan_test.cpp")
 
 IMIN = int(np.iinfo(np.int64).min)

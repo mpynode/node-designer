@@ -73,7 +73,7 @@ and no AI — which is what makes the freshness gates (section 5) possible.
 | `plug-ins/` | The two Maya entry points: `mpynode_api1.py` (OpenMaya 1.0 node types) and `mpynode_api2.py` (OpenMaya 2.0). Put this dir on `MAYA_PLUG_IN_PATH`. |
 | `templates/` | 37 shipped gallery templates, `templates/<Type>/<Name>/{template.mpn,description.md}` across all 12 node types — **and the compiled C++ for each one, in that same folder**: `<Type>/<Name>/build/` holds the generated sources, the full optimizer stage lineage and a `build.sh`/`build.bat` beside them, so everything for one template is in one place. 39 per-template build trees (40 node `.cpp` files — `MPyLocator/Mesh Regions` ships two types). Sources + stage lineage are committed; binaries are not. |
 | `templates/All Templates Plugin/` | The multi-node build tree that links every template into one plug-in, plus the turnkey demo around it: `build/` (37 namespaced fragments + the generated `plugin_main.cpp`, and the full stage lineage), 39 `.ma` demo scenes, `reports/`, and `plugin/` — where you build `mPyMega` (37/37 node types + 32 bundled commands). No binary is committed; its `build.sh` / `build.bat` compiles `build/` and installs the result into `plugin/`. The filename must stay `mPyMega.*` — Maya takes the plug-in name from it and the scenes `requires "mPyMega"`. |
-| `tests/` | The unit suite, outside the package so shipping `scripts/mpynode/` does not ship the tests. 278 test modules grouped by area: `nodes/`, `ui/`, `authoring/`, `attributes/`, `framework/`, and `compile/` (split into `transpiler/`, `pipeline/`, `nodes/`, `optimizer/`, `freshness/`). Shared bootstrap `_setup.py`, repo anchors `_paths.py`, fixtures in `data/` and `test_assets/`. |
+| `tests/` | The unit suite, outside the package so shipping `scripts/mpynode/` does not ship the tests. 278 test modules grouped by area: `nodes/`, `ui/`, `authoring/`, `attributes/`, `framework/`, and `compile/` (split into `transpiler/`, `pipeline/`, `nodes/`, `optimizer/`, `freshness/`, `native/`). Shared bootstrap `_setup.py`, repo anchors `_paths.py`, fixtures in `data/` and `test_assets/`. `compile/native/` is the odd one out: eleven standalone transpiler oracle harnesses, named `*_test.py` / `*_parity.py` so discovery does **not** collect them — `compile/transpiler/test_native_transpiler_harnesses.py` subprocesses each one and asserts its printed marker. |
 | `docs/` | All reference material: `index.md` (the API guide), `CHEATSHEET.md` (the authoring quick reference), this file, `PORTING.md` (Windows/Linux finish-and-verify handoff), and `node_types/` (one `.md` per type + `_input_type_contract.md`). Only `index.md` and `node_types/` are reachable from the in-app Help menu — `docs_locator` enumerates exactly those. |
 | `tools/` | Every dev/CI script, and the only place they live — there are no runners at the repo root. The four gate launchers are `run_tests.sh` / `run_tests.bat` (unit suite) and `run_parity_sweep.sh` / `.bat` (compiled parity), plus `build_compiled_templates.sh`, the freshness checkers (`check_stage1_freshness.py`, `check_std_includes.py`, `regen_build_scripts.py`, `regen_mega_transpiled.py`), `parity_sweep/`, and the probes and audits. Most of these are not optional: thirteen are executed or imported by the unit suite, so deleting one turns tests red. `tools/harness/` holds the attended out-of-suite mayapy drivers (see its `README.md`), including `benchmark_node.py`, which the AI optimizer shells out to at runtime. |
 | `icons/` | UI icons for the Node Designer. |
@@ -127,7 +127,6 @@ facts are the whole install: `MAYA_PLUG_IN_PATH` contains `plug-ins/` and
 | `ai/` | The assisted half. `porter.py` (stage 2), `optimizer.py` / `optimizer_live.py` / `optimizer_agent.py` / `optimizer_knowledge.py` (stage 3), `prompt.py`, `translation_knowledge.py`, `llm_client.py`, `import_follower.py`, `verify_scripts.py`. |
 | `toolchain/` | `compile_controller.py` (the driver), `toolchain.py` (Maya discovery + compiler argv), `port_cache.py`, `typeid_registry.py`, `stage_report.py`, `verify.py`. |
 | `spec/` | `spec_extractor.py`, `identity.py`, `divergence.py`, `mpn_spec_adapter.py`. |
-| `tests/` | Out-of-suite C++ and parity fixtures (including `.cpp` test files) that the unit suite does not run. |
 
 ### `ui/` sub-areas
 
@@ -466,17 +465,25 @@ were reported as success. With no args they spell out `discover -s tests -t .
 -p "test_*.py"`, because forwarding `"$@"` bare made a bare invocation print
 "Ran 0 tests / OK" — a false green that survives an `^OK` grep.
 
-**Size.** 6,763 `def test_` methods across 278 test modules (290 `.py` under
-`tests/`; the non-test twelve are `_setup.py`, `_paths.py`,
-`_bench_lock_child.py`, `_stub_compiled_plugin.py`, `data/scanline_defs.py` and
-the seven package `__init__.py`). Grouped by area rather than flat: six
-top-level packages, with `compile/` split five further ways.
+**Size.** 6,784 `def test_` methods across 278 test modules (307 `.py` under
+`tests/`; the non-test twenty-nine are `_setup.py`, `_paths.py`,
+`_bench_lock_child.py`, `_stub_compiled_plugin.py`, `data/scanline_defs.py`, the
+thirteen package `__init__.py`, and the eleven `compile/native/` harnesses that
+the transpiler gate subprocesses instead of discovering). Grouped by area rather
+than flat: six top-level packages, with `compile/` split six further ways.
 
 Because a category package sits two levels below the repo root and a
 sub-category three, no test counts `dirname` levels to find the root — they all
 import `tests._paths`. A hand-counted walk that is wrong by one does not raise;
 it resolves nothing and the artifact gates quietly **skip**, which is why the
 suite is verified on its skip count as well as its pass count.
+
+The `compile/native/` harnesses are the one deliberate exception: they count
+three `dirname` levels to the root themselves. They have to. The cleanup gate in
+`test_native_transpiler_harnesses.py` copies a harness into a bare tempdir with
+no `tests` package on `sys.path`, so a `tests._paths` import would die before
+the harness reached the compile it is being tested on — and because that failure
+also exits 1, it would slip past the return-code assertion.
 
 **What the freshness gates protect.** The suite cannot compile C++, so the two
 gates from section 5 are how it keeps checked-in artifacts honest.

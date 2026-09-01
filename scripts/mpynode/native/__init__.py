@@ -12,8 +12,10 @@ organized into subpackages:
                      deterministic transpiler cannot lower.
   * ``toolchain`` -- platform compile/link decisions, port cache, typeid
                      registry, and the compile controller + verifier.
-  * ``tests``     -- subprocess-launched parity/codegen harnesses (imported
-                     lazily; NOT eagerly loaded here).
+
+The parity/codegen harnesses that prove this pipeline are NOT here: they live
+with the suite, in ``tests/compile/native/``. Nothing under ``scripts/`` loads
+them, so there is nothing to import lazily and nothing to ship.
 """
 
 from . import compiler, ai, toolchain, spec  # noqa: F401

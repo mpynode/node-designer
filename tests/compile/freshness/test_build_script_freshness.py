@@ -122,8 +122,14 @@ class TestCommittedBuildScriptsAreFresh(unittest.TestCase):
             % (len(stale), "\n  ".join(stale[:20])))
 
     def test_the_unowned_script_set_has_not_grown(self):
+        # regen_build_scripts builds these from os.path.relpath and then joins
+        # the filename with "/", so on Windows an orphan reads
+        # 'templates\\...\\build/meshRegions/build.sh' -- MIXED separators, and
+        # never equal to the forward-slash literals in _KNOWN_ORPHANS. The set
+        # is what is under test, not the separator the host happens to use.
+        norm = lambda paths: sorted(p.replace("\\", "/") for p in paths)
         self.assertEqual(
-            sorted(_RESULT["orphans"]), sorted(_KNOWN_ORPHANS),
+            norm(_RESULT["orphans"]), norm(_KNOWN_ORPHANS),
             "the set of build scripts with no manifest row behind them "
             "changed. A new one means codegen is being parked in the tree "
             "where nothing can refresh it -- delete the stale scratch dir, or "

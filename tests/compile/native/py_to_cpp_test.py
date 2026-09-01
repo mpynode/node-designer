@@ -24,10 +24,14 @@ import tempfile
 import numpy as np
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-# HERE is .../scripts/mpynode/native/tests -- three dirname()s to reach scripts/.
-# _INC = .../scripts/mpynode/native/compiler (where nd_runtime.h now lives).
-_INC = os.path.join(os.path.dirname(HERE), "compiler")
-_SCRIPTS = os.path.dirname(os.path.dirname(os.path.dirname(HERE)))  # .../scripts
+# HERE is .../tests/compile/native, so three dirname()s reach the REPO ROOT --
+# not scripts/. Both paths below descend from _ROOT explicitly rather than
+# counting: counting three levels to scripts/ from here lands one ABOVE the
+# repo, which is a real directory, so sys.path.insert would succeed and the
+# only symptom would be a confusing `from mpynode...` ImportError later.
+_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(HERE)))
+_INC = os.path.join(_ROOT, "scripts", "mpynode", "native", "compiler")
+_SCRIPTS = os.path.join(_ROOT, "scripts")
 if _SCRIPTS not in sys.path:
     sys.path.insert(0, _SCRIPTS)
 

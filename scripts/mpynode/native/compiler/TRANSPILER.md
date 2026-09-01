@@ -190,14 +190,21 @@ testing it.
 
 ## Harnesses
 
-All four are Maya-free (their own `MVector`/`MPoint` shims) but need numpy, so run
-them under a `mayapy` interpreter. They compile real C++ with `clang++ -std=c++17
--O2 -I <native>` and compare against a numpy oracle.
+All eleven are Maya-free (their own `MVector`/`MPoint` shims) but need numpy, so
+run them under a `mayapy` interpreter. They compile real C++ with `clang++
+-std=c++17 -O2 -I <native>` and compare against a numpy oracle.
+
+They live with the suite, in `tests/compile/native/`, not in the package — the
+compiler never loads them, so only the tests have a reason to carry them. Run
+one directly from the repo root:
 
 ```
-MPYNODE_ROOT=$PWD PYTHONPATH=$PWD/scripts QT_QPA_PLATFORM=offscreen \
-  <mayapy> scripts/mpynode/native/<harness>.py
+MPYNODE_ROOT=$PWD PYTHONPATH=$PWD/scripts:$PWD QT_QPA_PLATFORM=offscreen \
+  <mayapy> tests/compile/native/<harness>.py
 ```
+
+`$PWD` belongs on `PYTHONPATH` alongside `$PWD/scripts`: the two `twist_swing`
+harnesses import their compile helpers as `tests.compile.native.nd_lower_test`.
 
 | Harness | Proves | Success marker |
 |---------|--------|----------------|

@@ -29,7 +29,7 @@ from mpynode.native.compiler.kernels import blessed_transpile
 
 # Reuse the C++ compile+run harness and the rigid DQS fixtures (twist_swing
 # needs rigid joints -- it extracts a rotation quaternion per influence).
-from mpynode.native.tests.nd_lower_test import (
+from tests.compile.native.nd_lower_test import (
     _gen_skin_deform_cpp, _compile_run, _parse_probes, SKIN_DQS)
 
 def _tsw_method(axis):

@@ -52,7 +52,14 @@ PORTABILITY_RULE = (
     "<condition_variable>, <thread>, <array> for std::array, <limits> for "
     "numeric_limits, <sstream>, <cstring>, <cstdint>. Restrict yourself to the "
     "C++17 standard library and the Maya SDK -- no platform-specific or "
-    "third-party headers."
+    "third-party headers. "
+    # Kept deliberately terse: test_std_include_check caps this rule at 900
+    # chars because nd_runtime.h already eats ~60k of the 64k response budget.
+    # The full rationale lives on optimizer_knowledge._NONPORTABLE's SAL entry,
+    # which is what actually ENFORCES this.
+    "RESERVED NAMES: never name a variable after a Windows SAL macro (__in, "
+    "__out, __inout, __range): MSVC expands it into an attribute and fails; "
+    "clang does not. Other __ temps (__i, __L0) are fine."
 )
 
 

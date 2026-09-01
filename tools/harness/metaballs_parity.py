@@ -6,7 +6,7 @@ shape-stream arrays (shapeMatrix/shapeType/radius/...), so this dedicated check
 drives the compiled node directly with a few fully-specified scenes and compares
 the produced mesh (every point component within tol + EXACT face topology) to
 ``mesh_from_shapes`` computed in-process. Because the interpreted node ==
-``mesh_from_shapes`` is already proven byte-for-byte (native/tests/
+``mesh_from_shapes`` is already proven byte-for-byte (tests/compile/native/
 metaballs_glue_parity.py), compiled == reference closes the loop compiled ==
 interpreted.
 

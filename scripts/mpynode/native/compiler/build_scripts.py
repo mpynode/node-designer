@@ -85,22 +85,19 @@ def generate_build_bat(spec: dict, maya=None) -> str:
     # A hover-capable locator also links Maya's Qt import libs (best-effort; only
     # macOS is build-verified). No rpath on Windows -- Qt6*.dll sits next to maya.exe.
     qt_inc = ""
-    if spec.get("needs_hover"):
+    needs_qt = bool(spec.get("needs_hover"))
+    if needs_qt:
         libs = libs + " Qt6Core.lib Qt6Gui.lib Qt6Widgets.lib"
         # Maya's Qt headers are NOT under <maya>/include (the devkit ships them
-        # as an unextracted archive), so a resolved dir has to go on the line.
-        # Only a Windows host can resolve one; elsewhere this stays empty and
-        # the script keeps today's exact bytes.
-        if toolchain.is_windows():
-            # Provenance may be absent; the Qt probe still needs a concrete root.
-            found = toolchain.qt_include_dir(
-                maya or toolchain.default_maya_dir("win32"))
-            if found:
-                # The MSVC-only flags Qt 6 requires must ride along too, or the
-                # hand rebuild dies at C1189/C2338 while the programmatic build
-                # (qt_compile_flags) succeeds. One source of truth.
-                qt_inc = ' %s /I "%s"' % (
-                    " ".join(toolchain.qt_msvc_flags()), found)
+        # as an unextracted archive), so the dir has to go on the line -- but it
+        # is resolved by the SCRIPT (qt_resolver_bat -> %QTINC%), not by this
+        # host. Resolving here meant only a Windows generator could emit a
+        # working recipe, and this project is generated on macOS: the script
+        # shipped with neither the include path nor the MSVC Qt flags and died
+        # at C1083. The MSVC-only flags Qt 6 requires ride along with it, or the
+        # hand rebuild dies at C1189/C2338 while the programmatic build
+        # (qt_compile_flags) succeeds. One source of truth.
+        qt_inc = ' %s /I "%%QTINC%%"' % " ".join(toolchain.qt_msvc_flags())
     return "\r\n".join([
         "@echo off",
         "REM Generated build for native node '%s'." % name,
@@ -110,7 +107,9 @@ def generate_build_bat(spec: dict, maya=None) -> str:
         "REM With no argument the newest installed Maya is used; set MAYA to",
         "REM override discovery.",
     ] + toolchain.build_provenance(maya, "REM")
-      + toolchain.maya_resolver_bat("win32") + [
+      + toolchain.maya_resolver_bat("win32")
+      + (  # Must follow the Maya resolver: the Qt probe reads %MAYA%\include.
+        toolchain.qt_resolver_bat() if needs_qt else []) + [
         'set "HERE=%~dp0"',
         # /fp:precise is MSVC's -ffp-contract=off (mirrors _MSVC_CXXFLAGS): it
         # keeps mul+add from contracting into an FMA.

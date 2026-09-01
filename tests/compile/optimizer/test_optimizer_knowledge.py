@@ -209,6 +209,44 @@ class TestPortabilityGate(unittest.TestCase):
         cand = base.replace("std::cos(x)", "std::cos(x) + 0.0")
         self.assertIsNone(ok.implausible_reason(cand, base))
 
+    # -- Windows SAL macro names used as identifiers -----------------------
+    # helixCurve's promoted optimizer winner declared `MPoint* __out = &_cv[0];`
+    # for a contiguous-write fast path. sal.h makes __out a MACRO, so MSVC saw
+    # `MPoint* [SA_annotation] = ...` -> C2059, then C2337 on every `__out[__i]`.
+    # clang has no sal.h, so it passed the optimizer's compile gate, benchmarked
+    # faster and shipped. MEASURED on Windows 2026-08-31.
+
+    def test_sal_out_identifier_is_rejected(self):
+        cand = _body("    MPoint* __out = &p[0];\n"
+                     "    __out[0].x = x;\n"
+                     "    return std::cos(x);\n")
+        reason = ok.implausible_reason(cand, _PBASE)
+        self.assertIsNotNone(reason, "a SAL macro name must be rejected")
+        self.assertIn("SAL", reason)
+
+    def test_other_sal_directional_names_are_rejected(self):
+        for name in ("__in", "__inout", "__out_opt", "__deref_out",
+                     "__range", "__bound", "__success", "__reserved"):
+            cand = _body("    double %s = x;\n    return %s;\n" % (name, name))
+            self.assertIsNotNone(ok.implausible_reason(cand, _PBASE),
+                                 "%s must be rejected" % name)
+
+    def test_the_transpilers_own_double_underscore_temps_are_accepted(self):
+        """The rule may NOT be "no __ prefix": __-prefixed temporaries are the
+        transpiler's convention (__i appears 12590 times across the templates).
+        Measured against the installed SDK, exactly ONE of the project's 100
+        distinct __ identifiers collides with sal.h -- __out."""
+        cand = _body("    double __L0 = x, __s0 = 0.0;\n"
+                     "    for (int __i = 0; __i < 4; ++__i) __s0 += __L0;\n"
+                     "    double __o = __s0, __n = 1.0, __a = __o / __n;\n"
+                     "    return __a + std::cos(x);\n")
+        self.assertIsNone(ok.implausible_reason(cand, _PBASE))
+
+    def test_sal_name_only_in_a_comment_is_accepted(self):
+        cand = _PBASE.replace(
+            "double f(", "// renamed off __out: sal.h defines it\ndouble f(")
+        self.assertIsNone(ok.implausible_reason(cand, _PBASE))
+
 
 if __name__ == "__main__":
     unittest.main()

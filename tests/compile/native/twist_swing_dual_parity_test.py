@@ -19,7 +19,7 @@ import numpy as np
 
 from mpynode._common.methods import skin_blend
 from mpynode.native.compiler import nd_lower
-from mpynode.native.tests.nd_lower_test import (
+from tests.compile.native.nd_lower_test import (
     _SHIM, _cpp_lit, _mmat_init_list, _compile_run, _parse_probes, SKIN_DQS)
 # Compile the ACTUAL shipped Compute string (SSOT), not a copy.
 from mpynode._demos.twist_swing_skin_source import COMPUTE as _DUAL_COMPUTE

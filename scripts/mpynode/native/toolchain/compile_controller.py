@@ -74,7 +74,7 @@ from mpynode.native.toolchain import typeid_registry
 from mpynode.native.toolchain import verify as _verify_mod
 from mpynode.native.toolchain import stage_report as _stage_report
 
-_MAYA_DEFAULT = toolchain.default_maya_dir()
+_MAYA_DEFAULT = toolchain.preferred_maya_dir()
 
 # manifest.json schema revision (additive fields gate on this for scope B).
 MANIFEST_VERSION = 1

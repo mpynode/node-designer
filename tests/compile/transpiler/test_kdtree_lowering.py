@@ -12,7 +12,7 @@ that was already available (``tools/kdtree_lowering_bench.cpp``).
 
 These assertions are about ROUTING, not arithmetic: that the two spellings reach
 ``nd::kdtree`` / ``nd::take`` at all. The numbers are pinned as real parity
-against scipy and numpy in ``native/tests/py_to_cpp_test.py``, and the tie rule
+against scipy and numpy in ``tests/compile/native/py_to_cpp_test.py``, and the tie rule
 against brute force in ``tools/kdtree_kernel_check.cpp``.
 """
 

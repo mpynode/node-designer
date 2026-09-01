@@ -14,7 +14,7 @@ ONE table (py_to_cpp._ARRAY_OPS) and the tests below pin that:
     the maths and wrong about the default axis is still a wrong answer.
 
 Values are verified separately, against numpy itself, by
-native/tests/py_to_cpp_test.py -- a clean lowering proves nothing about results.
+tests/compile/native/py_to_cpp_test.py -- a clean lowering proves nothing about results.
 """
 
 from __future__ import annotations
