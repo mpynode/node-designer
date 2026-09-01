@@ -158,7 +158,8 @@ def _norm_attr_list(spec) -> list:
             if meta.get("is_array"):
                 item["is_array"] = True
             for k_src, k_dst in (("min_value", "min"), ("max_value", "max"),
-                                 ("default_value", "default")):
+                                 ("default_value", "default"),
+                                 ("enum_names", "enum_names")):
                 if meta.get(k_src) is not None:
                     item[k_dst] = meta[k_src]
             out.append(item)
@@ -171,9 +172,17 @@ def _norm_attr_list(spec) -> list:
                     "type": meta.get("type") or meta.get("attr_type") or "float"}
             if meta.get("is_array"):
                 item["is_array"] = True
-            for k in ("min", "max", "default"):
+            for k in ("min", "max", "default", "enum_names"):
                 if meta.get(k) is not None:
                     item[k] = meta[k]
+            # Anything else the model wrote rides through UNCHANGED, so that
+            # tools.py stays the single place deciding what a key means. This
+            # was a whitelist, and the drop was silent: enum_names never
+            # reached the apply layer, the plug came out as a bare False/True
+            # enum, and the model -- seeing a clean result -- reported success.
+            for k, v in meta.items():
+                if k not in item and k != "attr_type":
+                    item[k] = v
             out.append(item)
     return out
 

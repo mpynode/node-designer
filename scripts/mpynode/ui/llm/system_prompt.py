@@ -111,6 +111,11 @@ float()/int() (write `abs(np.dot(a, b))`, NOT `abs(float(np.dot(a, b)))`;
 ATTRIBUTE TYPES (for add_input / add_output)
   float, int, bool, vector, quaternion, color, euler, matrix, string, hex,
   python, angle, enum, time, mesh, nurbsCurve, nurbsSurface.
+  * "enum": REQUIRES enum_names -- the ordered field labels, index 0 first,
+    because Maya stores the field INDEX. A rotate-order plug is
+    enum_names: ["xyz","yzx","zxy","xzy","yxz","zyx"], which matches
+    transform.rotateOrder 1:1 so the two plugs connect directly. Omitting
+    enum_names is an ERROR, not a default.
   * "hex": a string that transcodes UTF-8<->hex. Write plain text to a hex
     OUTPUT and the plug stores e.g. "48 69" -- exactly what Maya's `type`
     node `textInput` wants. Reading a hex INPUT decodes back to text.
@@ -327,6 +332,11 @@ dtype+shape); and wrapping a numpy scalar used only in math -- write
 ATTRIBUTE TYPES (for inputs / outputs)
   float, int, bool, vector, quaternion, color, euler, matrix, string, hex,
   python, angle, enum, time, mesh, nurbsCurve, nurbsSurface.
+  * "enum": REQUIRES enum_names -- the ordered field labels, index 0 first,
+    because Maya stores the field INDEX. A rotate-order plug is
+    enum_names: ["xyz","yzx","zxy","xzy","yxz","zyx"], which matches
+    transform.rotateOrder 1:1 so the two plugs connect directly. Omitting
+    enum_names is an ERROR, not a default.
   * "hex": a string transcoding UTF-8<->hex -- write plain text to a hex OUTPUT
     and the plug stores e.g. "48 69" (what Maya's `type` node textInput wants).
   * "color": float3 (R/G/B) flagged usedAsColor; reads/writes as numpy (3,).

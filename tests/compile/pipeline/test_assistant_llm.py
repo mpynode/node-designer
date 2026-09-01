@@ -2016,6 +2016,183 @@ class TestCliStdinIsDevNull(unittest.TestCase):
             client._run("hi", [])
         self.assertIs(self._captured_stdin(po), _sp.DEVNULL)
 
+
+# ---------------------------------------------------------------------------
+# enum_names had to survive three layers to reach the plug, and cleared none of
+# them: the tool schema had no slot, payload._norm_attr_list rebuilt each spec
+# from a whitelist, and the apply sites read a whitelist too. The plug came out
+# as the documented bare False/True enum and every result reported success, so
+# the model kept insisting it had set field names it never actually sent.
+# ---------------------------------------------------------------------------
+
+_ROTATE_ORDERS = ["xyz", "yzx", "zxy", "xzy", "yxz", "zyx"]
+
+
+class TestEnumNamesInSchema(unittest.TestCase):
+    """A key the schema does not declare is a key the model cannot send."""
+
+    def test_batched_input_item_declares_it(self):
+        from mpynode.ui.llm import tools as T
+
+        self.assertIn("enum_names", T._INPUT_ITEM["properties"])
+
+    def test_batched_output_item_declares_it(self):
+        from mpynode.ui.llm import tools as T
+
+        self.assertIn("enum_names", T._OUTPUT_ITEM["properties"])
+
+    def test_standalone_add_tools_declare_it(self):
+        from mpynode.ui.llm import tools as T
+
+        seen = {}
+        for spec in T.TOOL_SCHEMAS:
+            if spec["name"] in ("add_input", "add_output"):
+                seen[spec["name"]] = spec["input_schema"]["properties"]
+        self.assertEqual(sorted(seen), ["add_input", "add_output"])
+        for name, props in seen.items():
+            self.assertIn("enum_names", props, name)
+
+    def test_it_is_an_array_of_strings(self):
+        from mpynode.ui.llm import tools as T
+
+        prop = T._INPUT_ITEM["properties"]["enum_names"]
+        self.assertEqual(prop["type"], "array")
+        self.assertEqual(prop["items"]["type"], "string")
+
+
+class TestNormAttrListPreservesEnumNames(unittest.TestCase):
+    """payload._norm_attr_list is on the CLI provider's path -- it ran before
+    the apply layer and stripped the key first."""
+
+    def test_define_node_shaped_list(self):
+        from mpynode.ui.llm import payload as P
+
+        out = P._norm_attr_list([{"name": "rotateOrder", "type": "enum",
+                                  "enum_names": _ROTATE_ORDERS}])
+        self.assertEqual(out[0]["enum_names"], _ROTATE_ORDERS)
+
+    def test_raw_mpn_attr_map(self):
+        from mpynode.ui.llm import payload as P
+
+        out = P._norm_attr_list({"rotateOrder": {"attr_type": "enum",
+                                                 "enum_names": _ROTATE_ORDERS}})
+        self.assertEqual(out[0]["enum_names"], _ROTATE_ORDERS)
+
+    def test_unknown_keys_ride_through(self):
+        # They used to be dropped here, which is why the apply layer never got
+        # the chance to report them.
+        from mpynode.ui.llm import payload as P
+
+        out = P._norm_attr_list([{"name": "a", "type": "float", "bogusKey": 7}])
+        self.assertEqual(out[0]["bogusKey"], 7)
+
+    def test_known_keys_still_normalize(self):
+        from mpynode.ui.llm import payload as P
+
+        out = P._norm_attr_list({"a": {"attr_type": "float", "min_value": 1,
+                                       "max_value": 2, "default_value": 1.5,
+                                       "is_array": True}})
+        self.assertEqual(out[0]["min"], 1)
+        self.assertEqual(out[0]["max"], 2)
+        self.assertEqual(out[0]["default"], 1.5)
+        self.assertTrue(out[0]["is_array"])
+
+
+class TestAttrKwargs(unittest.TestCase):
+    """The single builder all four apply sites now share. Pure."""
+
+    def test_input_mapping(self):
+        from mpynode.ui.llm import tools as T
+
+        got = T.attr_kwargs({"name": "a", "type": "float", "min": 0, "max": 1,
+                             "default": 0.5, "is_array": True}, T._INPUT_EXTRA)
+        self.assertEqual(got, {"min_value": 0, "max_value": 1,
+                               "default_value": 0.5, "is_array": True})
+
+    def test_enum_names_reaches_the_wrapper_kwarg(self):
+        from mpynode.ui.llm import tools as T
+
+        got = T.attr_kwargs({"name": "rotateOrder", "type": "enum",
+                             "enum_names": _ROTATE_ORDERS}, T._INPUT_EXTRA)
+        self.assertEqual(got["enum_names"], _ROTATE_ORDERS)
+
+    def test_outputs_take_enum_names_but_not_limits(self):
+        from mpynode.ui.llm import tools as T
+
+        got = T.attr_kwargs({"name": "o", "type": "enum", "min": 0,
+                             "enum_names": _ROTATE_ORDERS}, T._OUTPUT_EXTRA,
+                            [])
+        self.assertEqual(got["enum_names"], _ROTATE_ORDERS)
+        self.assertNotIn("min_value", got)
+
+    def test_bare_enum_raises(self):
+        from mpynode.ui.llm import tools as T
+
+        with self.assertRaises(ValueError) as cm:
+            T.attr_kwargs({"name": "rotateOrder", "type": "enum"},
+                          T._INPUT_EXTRA)
+        self.assertIn("enum_names", str(cm.exception))
+
+    def test_unknown_key_warns_without_raising(self):
+        from mpynode.ui.llm import tools as T
+
+        warnings = []
+        got = T.attr_kwargs({"name": "a", "type": "float", "bogusKey": 1},
+                            T._INPUT_EXTRA, warnings)
+        self.assertEqual(got, {})
+        self.assertEqual(len(warnings), 1)
+        self.assertIn("bogusKey", warnings[0])
+
+    def test_spec_keys_are_never_warned_about(self):
+        from mpynode.ui.llm import tools as T
+
+        warnings = []
+        T.attr_kwargs({"name": "a", "type": "float", "attr_type": "float",
+                       "node": "n"}, T._INPUT_EXTRA, warnings)
+        self.assertEqual(warnings, [])
+
+    def test_warnings_render_in_the_transcript(self):
+        from mpynode.ui.llm import tools as T
+
+        line = T.compact_result("define_node",
+                                {"node": "n", "added_inputs": ["a"],
+                                 "warnings": ["a: ignored unknown key 'x'"]})
+        self.assertIn("ignored unknown key", line)
+
+
+class TestEnumEndToEnd(unittest.TestCase):
+    """Through the real dispatch spine, which is what both the HTTP tool
+    bridge and the CLI payload path call."""
+
+    def _dispatch(self, inputs, name):
+        from mpynode.ui.llm import tools as T
+
+        return T.dispatch("define_node",
+                          {"node_type": "mPyNode", "name": name,
+                           "inputs": inputs}, T.ToolContext())
+
+    def test_named_enum_matches_mayas_own_rotate_order(self):
+        import maya.cmds as mc
+
+        res = self._dispatch([{"name": "rotateOrder", "type": "enum",
+                               "enum_names": _ROTATE_ORDERS}], "enumOk")
+        self.assertIsNone(res.get("error"), res)
+        node = res.get("created") or res.get("node")
+        self.addCleanup(lambda: mc.objExists(node) and mc.delete(node))
+        self.assertEqual(
+            mc.attributeQuery("rotateOrder", node=node, listEnum=True),
+            ["xyz:yzx:zxy:xzy:yxz:zyx"])
+
+    def test_bare_enum_errors_and_leaves_no_orphan(self):
+        import maya.cmds as mc
+
+        before = set(mc.ls(type="mPyNode"))
+        res = self._dispatch([{"name": "rotateOrder", "type": "enum"}],
+                             "enumBare")
+        self.assertIn("error", res)
+        self.assertIn("enum_names", res["error"])
+        self.assertEqual(set(mc.ls(type="mPyNode")) - before, set())
+
 def setUpModule():
     _setUpModule__assistant_model_order()
     _setUpModule__assistant_multiagent()

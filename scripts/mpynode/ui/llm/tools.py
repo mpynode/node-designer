@@ -29,6 +29,18 @@ _ATTR_TYPES = [
 # Reusable attribute / variable item schemas for the batched ``define_node``.
 _CAMEL = ("camelCase, lowercase first letter (e.g. noiseAmount, driverMatrix); "
           "never snake_case, never a leading capital, never spaces")
+# Enum plugs are the one type whose declaration is incomplete without a
+# second field. Maya stores the field INDEX, so the order here is the contract.
+_ENUM_NAMES_PROP = {
+    "type": "array",
+    "items": {"type": "string"},
+    "description": "REQUIRED when type is 'enum': the ordered field labels, "
+                   "index 0 first. A rotate-order plug is "
+                   "['xyz','yzx','zxy','xzy','yxz','zyx'], which matches "
+                   "transform.rotateOrder 1:1. Omit it and the plug is a "
+                   "meaningless two-field False/True enum.",
+}
+
 _INPUT_ITEM = {
     "type": "object",
     "properties": {
@@ -38,6 +50,7 @@ _INPUT_ITEM = {
         "min": {"type": "number"},
         "max": {"type": "number"},
         "default": {"type": "number"},
+        "enum_names": _ENUM_NAMES_PROP,
     },
     "required": ["name", "type"],
 }
@@ -47,6 +60,7 @@ _OUTPUT_ITEM = {
         "name": {"type": "string", "description": "plug name -- " + _CAMEL},
         "type": {"type": "string", "enum": _ATTR_TYPES},
         "is_array": {"type": "boolean"},
+        "enum_names": _ENUM_NAMES_PROP,
     },
     "required": ["name", "type"],
 }
@@ -231,6 +245,7 @@ TOOL_SCHEMAS: list[dict] = [
                 "min": {"type": "number"},
                 "max": {"type": "number"},
                 "default": {"type": "number"},
+                "enum_names": _ENUM_NAMES_PROP,
             },
             "required": ["name", "type"],
         },
@@ -248,6 +263,7 @@ TOOL_SCHEMAS: list[dict] = [
                 "name": {"type": "string", "description": "plug name -- " + _CAMEL},
                 "type": {"type": "string", "enum": _ATTR_TYPES},
                 "is_array": {"type": "boolean"},
+                "enum_names": _ENUM_NAMES_PROP,
             },
             "required": ["name", "type"],
         },
@@ -504,6 +520,48 @@ def _summarize(v: Any) -> str:
     return r if len(r) <= 200 else r[:200] + "...(truncated)"
 
 
+# LLM attr-spec key -> add_*_attr kwarg. Outputs take no numeric limits, so
+# they get their own map rather than a shared one with holes.
+_INPUT_EXTRA = {"is_array": "is_array", "min": "min_value",
+                "max": "max_value", "default": "default_value",
+                "enum_names": "enum_names"}
+_OUTPUT_EXTRA = {"is_array": "is_array", "enum_names": "enum_names"}
+# Keys that identify the spec rather than configure the plug.
+_SPEC_KEYS = ("name", "type", "attr_type", "node")
+
+
+def attr_kwargs(spec, mapping, warnings=None):
+    """Map one LLM attribute spec onto ``add_*_attr`` kwargs. Pure.
+
+    An enum with no field names is REJECTED here rather than quietly created
+    as False/True. ``add_input_attr`` documents that fallback and .mpn files
+    depend on it, so the wrapper keeps it; but a model that forgot the labels
+    can read this error and fix it inside the same turn, which is strictly
+    better than shipping a plug that looks finished and is not.
+
+    Unrecognised keys are appended to ``warnings`` instead of vanishing. A key
+    dropped in silence is exactly how ``enum_names`` stayed missing: the model
+    sent it, the layers below discarded it, and every result reported success.
+    """
+    if (spec.get("type") or spec.get("attr_type")) == "enum" \
+            and not spec.get("enum_names"):
+        raise ValueError(
+            "attribute %r is an enum with no enum_names. Pass the ordered "
+            'field labels, e.g. enum_names: ["xyz", "yzx", "zxy", "xzy", '
+            '"yxz", "zyx"] for a rotate-order plug.' % (spec.get("name"),))
+    out = {}
+    for key, value in spec.items():
+        if key in mapping:
+            if value is not None:
+                out[mapping[key]] = value
+        elif key not in _SPEC_KEYS and warnings is not None:
+            warnings.append("%s: ignored unknown key %r"
+                            % (spec.get("name") or "?", key))
+    if "is_array" in out:
+        out["is_array"] = bool(out["is_array"])
+    return out
+
+
 def _do(name: str, ctx: ToolContext, fn) -> dict:
     """Run a mutation inside an undo chunk + notify the host."""
     mc.undoInfo(openChunk=True, chunkName="assistant: %s" % name)
@@ -602,17 +660,13 @@ def _dispatch(tool_name: str, args: dict, ctx: ToolContext) -> dict:
         name = _resolve(ctx, args)
 
         def _add():
-            extra = {}
-            if "is_array" in args:
-                extra["is_array"] = bool(args["is_array"])
-            if "min" in args:
-                extra["min_value"] = args["min"]
-            if "max" in args:
-                extra["max_value"] = args["max"]
-            if "default" in args:
-                extra["default_value"] = args["default"]
+            warnings = []
+            extra = attr_kwargs(args, _INPUT_EXTRA, warnings)
             _wrap(name).add_input_attr(args["name"], args["type"], **extra)
-            return {"added_input": args["name"], "type": args["type"]}
+            res = {"added_input": args["name"], "type": args["type"]}
+            if warnings:
+                res["warnings"] = warnings
+            return res
 
         return _do("add_input", ctx, _add)
 
@@ -620,11 +674,13 @@ def _dispatch(tool_name: str, args: dict, ctx: ToolContext) -> dict:
         name = _resolve(ctx, args)
 
         def _add():
-            extra = {}
-            if "is_array" in args:
-                extra["is_array"] = bool(args["is_array"])
+            warnings = []
+            extra = attr_kwargs(args, _OUTPUT_EXTRA, warnings)
             _wrap(name).add_output_attr(args["name"], args["type"], **extra)
-            return {"added_output": args["name"], "type": args["type"]}
+            res = {"added_output": args["name"], "type": args["type"]}
+            if warnings:
+                res["warnings"] = warnings
+            return res
 
         return _do("add_output", ctx, _add)
 
@@ -757,6 +813,7 @@ def _define_node(args: dict, ctx: ToolContext) -> dict:
 
     def _apply():
         created = None
+        warnings = []
         try:
             if not state["node"]:
                 cls = get_spec(node_type).get_wrapper_class()
@@ -770,24 +827,14 @@ def _define_node(args: dict, ctx: ToolContext) -> dict:
 
             added_in = []
             for s in (args.get("inputs") or []):
-                extra = {}
-                if "is_array" in s:
-                    extra["is_array"] = bool(s["is_array"])
-                if "min" in s:
-                    extra["min_value"] = s["min"]
-                if "max" in s:
-                    extra["max_value"] = s["max"]
-                if "default" in s:
-                    extra["default_value"] = s["default"]
-                w.add_input_attr(s["name"], s["type"], **extra)
+                w.add_input_attr(s["name"], s["type"],
+                                 **attr_kwargs(s, _INPUT_EXTRA, warnings))
                 added_in.append(s["name"])
 
             added_out = []
             for s in (args.get("outputs") or []):
-                extra = {}
-                if "is_array" in s:
-                    extra["is_array"] = bool(s["is_array"])
-                w.add_output_attr(s["name"], s["type"], **extra)
+                w.add_output_attr(s["name"], s["type"],
+                                  **attr_kwargs(s, _OUTPUT_EXTRA, warnings))
                 added_out.append(s["name"])
 
             set_vars = []
@@ -826,6 +873,8 @@ def _define_node(args: dict, ctx: ToolContext) -> dict:
         }
         if created:
             result["created"] = created
+        if warnings:
+            result["warnings"] = warnings
         return result
 
     try:
@@ -935,7 +984,10 @@ def compact_result(name: str, result: Any) -> str:
             parts.append("init")
         if result.get("set_methods"):
             parts.append("methods")
-        return "define_node -> " + (", ".join(parts) or "ok")
+        line = "define_node -> " + (", ".join(parts) or "ok")
+        if result.get("warnings"):
+            line += "  [!] " + "; ".join(result["warnings"])
+        return line
     if "created" in result:
         return "created %s" % result["created"]
     if "nodes" in result:  # list_nodes
