@@ -32,13 +32,22 @@ MAYA_XFORM_INCLUDES = (
 )
 
 # Method names that require the bridge. The pure-nd ones -- translation,
-# inverse, transpose, getElement, det3x3, det4x4, asNumpy -- are deliberately
-# ABSENT: they lower through existing nd:: kernels and must not drag Maya
-# headers into a file that would otherwise not need them.
+# inverse, transpose, getElement, asNumpy -- are deliberately ABSENT: they
+# lower through existing nd:: kernels and must not drag Maya headers into a
+# file that would otherwise not need them.
+#
+# det3x3/det4x4 ARE here, though nd::det could nearly do it. MMatrix ships
+# both natively, so delegating is bit-exact rather than 1e-13 close -- and,
+# decisively, it leaves nd_runtime.h untouched. That header is inlined
+# VERBATIM into every generated .cpp that lowers, so extending nd::det to
+# 4x4 would have changed the bytes of 24 of the 38 checked-in stage-1
+# artifacts and forced a multi-hour rebuild of trees that do not use a
+# matrix at all. Nothing shipped calls these methods yet, so routing them
+# here costs zero artifacts.
 XFORM_METHODS = (
     "rotation", "scale", "shear", "rotationOrder",
     "asRotateMatrix", "asScaleMatrix", "asMatrixInverse",
-    "adjoint", "homogenize", "isSingular",
+    "adjoint", "homogenize", "isSingular", "det3x3", "det4x4",
 )
 
 _XFORM_USE_RE = re.compile(r"\.(?:%s)\s*\(" % "|".join(XFORM_METHODS))
@@ -183,6 +192,16 @@ inline nd::Array<double> xf_as_matrix_inverse(const nd::Array<double>& a) {
 
 // MMatrix::isSingular carries Maya's own tolerance; det4x4()==0 is NOT the
 // same predicate, so this goes through Maya rather than being derived.
+// MMatrix::det4x4 / det3x3. det3x3 is the UPPER-LEFT block -- the
+// rotation/scale part -- not the whole matrix.
+inline double xf_det4x4(const nd::Array<double>& a) {
+    return nd_to_mmatrix(a).det4x4();
+}
+
+inline double xf_det3x3(const nd::Array<double>& a) {
+    return nd_to_mmatrix(a).det3x3();
+}
+
 inline bool xf_is_singular(const nd::Array<double>& a) {
     return nd_to_mmatrix(a).isSingular();
 }

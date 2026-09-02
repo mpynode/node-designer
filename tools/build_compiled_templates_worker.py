@@ -357,7 +357,11 @@ def main():
     tmp = args.result_json + ".tmp"
     with open(tmp, "w") as fh:
         json.dump(row, fh, indent=2, sort_keys=True, default=str)
-    os.rename(tmp, args.result_json)
+    # os.replace, NOT os.rename: POSIX rename overwrites, Windows raises
+    # WinError 183 when the destination exists, so the SECOND save of a
+    # run killed the orchestrator. Same call the toolchain's own atomic
+    # writers use (port_cache, verify, typeid_registry).
+    os.replace(tmp, args.result_json)
     print("[worker] %s phase=%s state=%s secs=%s"
           % (args.rel, args.phase, row.get("state"), row.get("secs")))
 

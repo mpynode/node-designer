@@ -17,7 +17,11 @@ set -uo pipefail
 TOOLS_DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$TOOLS_DIR/.."
 
-MAYAPY="/Applications/Autodesk/maya2026/Maya.app/Contents/bin/mayapy"
+# Overridable. This default is a macOS path and was assigned
+# unconditionally, which made the launcher unusable anywhere else: an
+# exported MAYAPY was silently discarded and the run died on a missing
+# interpreter.
+MAYAPY="${MAYAPY:-/Applications/Autodesk/maya2026/Maya.app/Contents/bin/mayapy}"
 export MPYNODE_USE_STUDIO=1 QT_QPA_PLATFORM=offscreen
 export MPYNODE_ROOT="$PWD"
 # numpy/scipy/PIL live outside Maya on some setups. Point

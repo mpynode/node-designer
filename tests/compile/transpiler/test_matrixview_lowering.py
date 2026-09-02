@@ -42,7 +42,13 @@ def _lower(body, args=None):
 
 
 class TestTierAUsesExistingKernels(unittest.TestCase):
-    """No Maya needed -- these route through kernels that already existed."""
+    """No Maya needed -- these route through kernels that already existed.
+
+    Note what is NOT here: det3x3/det4x4. nd::det could nearly do them, but
+    MMatrix ships both natively, and routing them through Maya left
+    nd_runtime.h untouched -- that header is inlined verbatim into every
+    lowering node, so extending it would have restaled 24 of 38 stage-1
+    artifacts for a feature none of them use."""
 
     def test_translation_is_a_row_three_slice(self):
         # Maya's row-vector convention puts the translation in ROW 3.
@@ -53,15 +59,6 @@ class TestTierAUsesExistingKernels(unittest.TestCase):
     def test_inverse_routes_to_nd_inv(self):
         self.assertIn("nd::inv(", _lower("    return m.inverse()\n"))
 
-    def test_det4x4_routes_to_nd_det(self):
-        self.assertIn("nd::det(", _lower("    return m.det4x4()\n"))
-
-    def test_det3x3_takes_the_upper_left_block(self):
-        # NOT the whole matrix -- det3x3 is the rotation/scale block.
-        cpp = _lower("    return m.det3x3()\n")
-        self.assertIn("nd::det(", cpp)
-        self.assertIn("nd::Sl::to(3)", cpp)
-
     def test_get_element_indexes_both_axes(self):
         cpp = _lower("    return m.getElement(1, 2)\n")
         # The index goes through _scalar_int_of, hence the cast.
@@ -71,9 +68,8 @@ class TestTierAUsesExistingKernels(unittest.TestCase):
     def test_tier_a_never_reaches_the_bridge(self):
         for body in ("    return m.translation()\n",
                      "    return m.inverse()\n",
-                     "    return m.det4x4()\n"):
+                     "    return m.getElement(0, 0)\n"):
             self.assertNotIn("ndx::", _lower(body), body)
-
 
 class TestTierCReachesTheBridge(unittest.TestCase):
     """Maya semantics -- delegated rather than re-derived."""
@@ -88,6 +84,10 @@ class TestTierCReachesTheBridge(unittest.TestCase):
         ("m.asScaleMatrix()", "ndx::xf_as_scale_matrix("),
         ("m.asMatrixInverse()", "ndx::xf_as_matrix_inverse("),
         ("m.adjoint()", "ndx::xf_adjoint("),
+        # Via MMatrix, not nd::det -- keeps nd_runtime.h untouched, which
+        # is what kept this change at zero regenerated artifacts.
+        ("m.det4x4()", "ndx::xf_det4x4("),
+        ("m.det3x3()", "ndx::xf_det3x3("),
         ("m.homogenize()", "ndx::xf_homogenize("),
     )
 
@@ -206,5 +206,9 @@ class TestRuntimeStaysMayaFree(unittest.TestCase):
                              "%s reached nd_runtime.h -- the oracle harnesses "
                              "compile it without Maya" % sym)
 
-    def test_the_det_arm_that_backs_det4x4_is_present(self):
-        self.assertIn("nd::det only 1x1..4x4", self._runtime())
+    def test_the_runtime_was_not_extended_for_this(self):
+        # det4x4 goes through MMatrix precisely so nd::det did NOT have to
+        # grow a 4x4 arm. This header is inlined verbatim into every
+        # lowering node, so extending it would have restaled 24 of 38
+        # stage-1 artifacts for a feature none of them use.
+        self.assertIn("nd::det only 1x1..3x3", self._runtime())

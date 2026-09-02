@@ -32,9 +32,19 @@ in the same change. It now reads in the opposite direction, as
 
 | Tier | Methods | What it needs |
 |---|---|---|
-| **A** | `translation`, `transpose`, `inverse`, `getElement`, `det3x3`, `asNumpy` | Nothing new. `translation()` is a row-3 slice, `inverse()` is `nd::inv` (any N), `det3x3()` is `nd::det`. Dispatch wiring only |
-| **B** | `det4x4`, `isSingular` | `nd::det` rejects anything above 3×3 today |
-| **C** | `rotation()`, `rotation(axes=N)`, `scale`, `shear`, `rotationOrder`, `asRotateMatrix`, `asScaleMatrix`, `asMatrixInverse`, `adjoint`, `homogenize` | Maya's own semantics |
+| **A** | `translation`, `transpose`, `inverse`, `getElement`, `asNumpy` | Nothing new. `translation()` is a row-3 slice, `inverse()` is `nd::inv` (any N). Dispatch wiring only |
+| **C** | `rotation()`, `rotation(axes=N)`, `scale`, `shear`, `rotationOrder`, `isSingular`, `det3x3`, `det4x4`, `asRotateMatrix`, `asScaleMatrix`, `asMatrixInverse`, `adjoint`, `homogenize` | Maya's own semantics |
+
+There is no Tier B. It was going to be a 4×4 arm for `nd::det`, and that
+turned out to be both unnecessary and expensive: `MMatrix` ships `det4x4()`
+and `det3x3()` natively, so Tier C gives bit-exact answers instead of
+1.3e-13-close ones — and, decisively, it leaves `nd_runtime.h` untouched.
+That header is inlined **verbatim** into every generated `.cpp` that lowers,
+so extending `nd::det` changed the bytes of **24 of the 38** checked-in
+stage-1 artifacts and would have forced a multi-hour rebuild of trees that
+never touch a matrix. Measured: **0** shipped templates call any MatrixView
+method, so routing them through Maya costs zero regenerated artifacts.
+The lesson generalises — before touching `nd_runtime.h`, count what inlines it.
 
 **Out of scope, and why.** The in-place setters (`setTranslation`,
 `setRotation`, `setScale`, `setShear`, `reorderRotation`) mutate the receiver —

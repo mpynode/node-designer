@@ -2184,15 +2184,14 @@ inline Array<T> diag(const Array<T>& a) {
 // np.linalg.det over the last two (square) dims, batched over leading dims.
 // Closed form for 1x1/2x2/3x3 (numpy uses LU; the two agree to ~1e-13 for
 // well-conditioned inputs, well inside parity tolerance). Always float64;
-// a 2-D input yields a 0-d scalar array. 1x1..4x4; 4x4 is Laplace on the
-// top two rows (a Maya transform matrix is 4x4).
+// a 2-D input yields a 0-d scalar array.
 template <class T>
 inline Array<double> det(const Array<T>& a) {
     int64_t nd = a.ndim();
     if (nd < 2) throw std::runtime_error("nd::det needs >= 2 dims");
     int64_t r = a.shape[nd-2], c = a.shape[nd-1];
     if (r != c) throw std::runtime_error("nd::det last two dims must be square");
-    if (r < 1 || r > 4) throw std::runtime_error("nd::det only 1x1..4x4");
+    if (r < 1 || r > 3) throw std::runtime_error("nd::det only 1x1..3x3");
     Shape batch(a.shape.begin(), a.shape.end() - 2);
     Array<double> out = Array<double>::alloc(batch);   // 0-d when batch empty
     int64_t nb = prod(batch);
@@ -2207,32 +2206,9 @@ inline Array<double> det(const Array<T>& a) {
         double dv;
         if (r == 1) dv = E(0,0);
         else if (r == 2) dv = E(0,0)*E(1,1) - E(0,1)*E(1,0);
-        else if (r == 3) dv = E(0,0)*(E(1,1)*E(2,2) - E(1,2)*E(2,1))
+        else dv = E(0,0)*(E(1,1)*E(2,2) - E(1,2)*E(2,1))
                 - E(0,1)*(E(1,0)*E(2,2) - E(1,2)*E(2,0))
                 + E(0,2)*(E(1,0)*E(2,1) - E(1,1)*E(2,0));
-        else {
-            // 4x4 by Laplace on rows 0-1: the six 2x2 minors of the top two
-            // rows paired with the six of the bottom two. Fixed evaluation
-            // order, so it is bit-reproducible run to run -- which the stage-1
-            // freshness gate depends on. 4x4 matters because a Maya transform
-            // matrix IS 4x4: MatrixView.det4x4() and .isSingular() both land
-            // here. Measured at 1.3e-13 worst relative error against
-            // np.linalg.det over 2000 random matrices, inside the ~1e-12 this
-            // header already documents for nd::inv.
-            double s0 = E(0,0)*E(1,1) - E(1,0)*E(0,1);
-            double s1 = E(0,0)*E(1,2) - E(1,0)*E(0,2);
-            double s2 = E(0,0)*E(1,3) - E(1,0)*E(0,3);
-            double s3 = E(0,1)*E(1,2) - E(1,1)*E(0,2);
-            double s4 = E(0,1)*E(1,3) - E(1,1)*E(0,3);
-            double s5 = E(0,2)*E(1,3) - E(1,2)*E(0,3);
-            double c5 = E(2,2)*E(3,3) - E(3,2)*E(2,3);
-            double c4 = E(2,1)*E(3,3) - E(3,1)*E(2,3);
-            double c3 = E(2,1)*E(3,2) - E(3,1)*E(2,2);
-            double c2 = E(2,0)*E(3,3) - E(3,0)*E(2,3);
-            double c1 = E(2,0)*E(3,2) - E(3,0)*E(2,2);
-            double c0 = E(2,0)*E(3,1) - E(3,0)*E(2,1);
-            dv = s0*c5 - s1*c4 + s2*c3 + s3*c2 - s4*c1 + s5*c0;
-        }
         (*out.data)[(size_t)bi] = dv;
         incr(bidx, batch);
     }

@@ -395,9 +395,9 @@ BLAS/LAPACK); the whole ndarray *method* surface from one table
 **`MatrixView` methods lower too** (v26). A `matrix` input arrives as a
 `MatrixView` carrying the whole `MMatrix` + `MTransformationMatrix` surface;
 fifteen of its methods now have `_ARRAY_OPS` entries. `translation` (a row-3
-slice), `inverse`, `getElement`, `det3x3` (the upper-left block), `det4x4` and
-`transpose` lower to plain `nd::`. The ten needing Maya's own semantics —
-`rotation(axes=N)`, `scale`, `shear`, `rotationOrder`, `isSingular`,
+slice), `inverse`, `getElement` and `transpose` lower to plain `nd::`. The
+twelve needing Maya's own semantics — `rotation(axes=N)`, `scale`, `shear`,
+`rotationOrder`, `isSingular`, `det3x3` (the upper-left block), `det4x4`,
 `asRotateMatrix`, `asScaleMatrix`, `asMatrixInverse`, `adjoint`, `homogenize` —
 route to `ndx::`, a bridge in `kernels/nd_maya_cpp.py` that CALLS
 `MTransformationMatrix` rather than re-deriving its decompositions, so the

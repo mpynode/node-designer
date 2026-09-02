@@ -4916,17 +4916,6 @@ class Transpiler:
         return Val("nd::slice(%s, {nd::Sl::at(%s), nd::Sl::at(%s)})"
                    % (base, r, c), array_t("double", 0))
 
-    def _op_mv_det3(self, recv, args, node):
-        self._need(node, args, 0)
-        # The UPPER-LEFT 3x3 (the rotation/scale block), not the whole matrix.
-        return Val("nd::det(nd::slice(%s, {nd::Sl::to(3), nd::Sl::to(3)}))"
-                   % self._mv_recv(recv, node, "det3x3"), array_t("double", 0))
-
-    def _op_mv_det4(self, recv, args, node):
-        self._need(node, args, 0)
-        return Val("nd::det(%s)" % self._mv_recv(recv, node, "det4x4"),
-                   array_t("double", 0))
-
     # ---- Tier C: Maya semantics via the ndx:: bridge ---------------------
     def _op_mv_rotation(self, recv, args, node):
         base = self._mv_recv(recv, node, "rotation")
@@ -4943,6 +4932,17 @@ class Transpiler:
         self.uses_maya_xform = True
         return Val("ndx::xf_rotation(%s, %s)" % (base, axes),
                    array_t("double", 1))
+
+    def _op_mv_det3(self, recv, args, node):
+        # MMatrix::det3x3 -- the UPPER-LEFT block, not the whole matrix. Via
+        # Maya rather than nd::det so nd_runtime.h stays untouched; see
+        # kernels/nd_maya_cpp.py for why that matters.
+        return self._mv_bridge("xf_det3x3", recv, args, node, "det3x3",
+                               scalar_t("double"))
+
+    def _op_mv_det4(self, recv, args, node):
+        return self._mv_bridge("xf_det4x4", recv, args, node, "det4x4",
+                               scalar_t("double"))
 
     def _op_mv_scale(self, recv, args, node):
         return self._mv_bridge("xf_scale", recv, args, node, "scale",
