@@ -176,6 +176,7 @@ Windows). See [INSTALL.md](INSTALL.md).
 | [INSTALL.md](INSTALL.md) | Install variants, environment variables, troubleshooting |
 | [docs/PORTING.md](docs/PORTING.md) | Per-platform build status and the Windows / Linux recipes |
 | [docs/node_types/](docs/node_types/) | One design note per node type |
+| [docs/notes/](docs/notes/) | Contributor design notes for work that is scoped but not built |
 
 ## License
 
