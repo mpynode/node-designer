@@ -1,0 +1,32 @@
+# Line-ending declaration for shell scripts.
+#
+# This fixes nothing. Every tracked *.sh is ALREADY stored LF and checks out
+# LF, verified byte-exactly (`git cat-file blob HEAD:<path> | tr -dc '\r' |
+# wc -c` reports 0 for all 84, working copies too). Re-adding all of them
+# under this rule produced no blob change.
+#
+# It is here to PIN that, because the correctness currently depends on how
+# each contributor's git happens to be configured. core.autocrlf=true on
+# Windows hands most text files to the working copy as CRLF; these are the
+# files where that would be wrong, and nothing in the repository says so.
+# A CRLF *.sh does not run on macOS or Linux -- the shebang ends in a
+# carriage return, so the kernel looks for an interpreter named "bash\r".
+# That reaches users, not just developers: templates/**/build.sh is the
+# documented way to compile a single template, and macOS is the reference
+# platform.
+#
+# Declared once here, the behaviour no longer depends on a local setting.
+
+*.sh    text eol=lf
+
+# Two omissions, both deliberate and both measured rather than assumed.
+#
+#  * *.bat is NOT declared. Those 40 blobs are stored WITH CRLF, which is
+#    correct for batch files. Adding `*.bat text eol=crlf` normalises them to
+#    LF in the index -- the opposite of the intent -- so the rule that looks
+#    right is the one that does damage. Left alone on purpose.
+#
+#  * `* text=auto` is NOT declared. It would make git reclassify the PNGs,
+#    the .npz archives, the .mayaSwatches blobs and 58 Maya ASCII scenes,
+#    churning the index for no benefit. Git's own binary detection already
+#    handles every one of them correctly.
