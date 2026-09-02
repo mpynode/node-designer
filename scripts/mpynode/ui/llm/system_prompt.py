@@ -120,11 +120,12 @@ float()/int() (write `abs(np.dot(a, b))`, NOT `abs(float(np.dot(a, b)))`;
   USE THEM. Writing your own matrix->euler, decomposition or rotate-order
   conversion is slower, will not match Maya exactly, and is the single most
   common thing to get subtly wrong.
-  ONE CAVEAT, and it is real: only .asNumpy() lowers to C++. Every other method
-  above falls through to the AI-assisted port stage instead of the
-  deterministic transpile. For a node you intend to Convert to C++, prefer
-  plain numpy math on the view (m @ v, m[3, :3], np.linalg.inv(m)); for an
-  interpreted node, prefer the methods.
+  All of the above LOWER to C++ deterministically -- no AI porter -- so they are
+  the right choice for an interpreted node and for one you intend to Convert to
+  C++. The in-place setters (setTranslation/setRotation/setScale/setShear) and
+  the pivot accessors do NOT lower: a compiled compute reads a COPY of the
+  matrix, so mutating it would not mean what it means interpreted. Read, do not
+  mutate.
   Writing `self.<output> = value`: assign the matching native type directly
   (scalar for float/int/bool, a 3-list or np (3,) for vector, a 4x4 numpy array
   or MatrixView for matrix). Don't wrap scalars in float()/int(); don't json/str
@@ -369,11 +370,12 @@ dtype+shape); and wrapping a numpy scalar used only in math -- write
   USE THEM. Writing your own matrix->euler, decomposition or rotate-order
   conversion is slower, will not match Maya exactly, and is the single most
   common thing to get subtly wrong.
-  ONE CAVEAT, and it is real: only .asNumpy() lowers to C++. Every other method
-  above falls through to the AI-assisted port stage instead of the
-  deterministic transpile. For a node you intend to Convert to C++, prefer
-  plain numpy math on the view (m @ v, m[3, :3], np.linalg.inv(m)); for an
-  interpreted node, prefer the methods.
+  All of the above LOWER to C++ deterministically -- no AI porter -- so they are
+  the right choice for an interpreted node and for one you intend to Convert to
+  C++. The in-place setters (setTranslation/setRotation/setScale/setShear) and
+  the pivot accessors do NOT lower: a compiled compute reads a COPY of the
+  matrix, so mutating it would not mean what it means interpreted. Read, do not
+  mutate.
   Writing `self.<output> = value`: assign the matching
   native type directly (scalar; a 3-list or np (3,) for vector; a 4x4 numpy for
   matrix). NEVER construct om.MMatrix / om.MVector for a plug write or import

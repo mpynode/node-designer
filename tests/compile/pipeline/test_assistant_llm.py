@@ -2244,13 +2244,21 @@ class TestPromptTeachesPromotedTypes(unittest.TestCase):
             self.assertIn(".name()", p, label)
             self.assertNotIn("enum -> int", p, label)
 
-    def test_the_compile_caveat_is_present(self):
-        # Load-bearing honesty: of MatrixView's 42 public methods the
-        # transpiler lowers exactly one (.asNumpy(), an identity passthrough),
-        # so recommending the rest without this line quietly pushes
-        # matrix-heavy nodes onto the AI-assisted port stage.
+    def test_the_lowering_status_is_stated(self):
+        # This line was the opposite claim until the methods were lowered: the
+        # prompt used to warn that only .asNumpy() reached C++. It must track
+        # the transpiler, in either direction -- a stale pessimistic caveat
+        # steers the assistant away from calls that now lower perfectly well.
         for label, p in self._prompts().items():
-            self.assertIn("only .asNumpy() lowers to C++", p, label)
+            self.assertIn("LOWER to C++ deterministically", p, label)
+            self.assertNotIn("only .asNumpy() lowers to C++", p, label)
+
+    def test_the_non_lowering_exclusions_are_named(self):
+        # Setters and pivots genuinely do NOT lower -- a compiled compute reads
+        # a COPY, so mutation would not mean what it means interpreted.
+        for label, p in self._prompts().items():
+            self.assertIn("setTranslation", p, label)
+            self.assertIn("do NOT lower", p, label)
 
     def test_the_names_are_real(self):
         # Guards the prompt against drift in the other direction: every method
@@ -2269,10 +2277,11 @@ class TestPromptTeachesPromotedTypes(unittest.TestCase):
             self.assertTrue(hasattr(PT.MatrixArrayView, m),
                             "prompt advertises MatrixArrayView.%s, gone" % m)
 
-    def test_only_asnumpy_is_lowered(self):
-        # The caveat above is a claim about the transpiler. Assert it, so the
-        # day someone lowers .rotation() this test fails and the prompt gets
-        # corrected instead of staying pessimistic forever.
+    def test_the_advertised_methods_actually_lower(self):
+        # The prompt's claim is about the transpiler, so assert it against the
+        # transpiler rather than trusting the sentence. This test previously
+        # asserted the OPPOSITE (that only asNumpy lowered) and failing was how
+        # it forced the prompt to be corrected when the ops landed.
         import io
         import os
 
@@ -2281,11 +2290,30 @@ class TestPromptTeachesPromotedTypes(unittest.TestCase):
         src = io.open(os.path.join(_paths.ROOT, "scripts", "mpynode",
                                    "native", "compiler", "py_to_cpp.py"),
                       encoding="utf-8").read()
-        self.assertIn('"asNumpy"', src)
-        for m in ("translation", "rotationOrder", "asRotateMatrix", "det4x4"):
-            self.assertNotIn('"%s"' % m, src,
-                             "py_to_cpp now lowers .%s -- update the prompt "
-                             "caveat, which says only .asNumpy() lowers" % m)
+        for m in ("asNumpy", "translation", "rotation", "rotationOrder",
+                  "scale", "shear", "inverse", "getElement", "det3x3",
+                  "det4x4", "isSingular", "asRotateMatrix", "asScaleMatrix",
+                  "asMatrixInverse", "adjoint", "homogenize"):
+            self.assertIn('"%s":' % m, src,
+                          "the prompt advertises .%s as lowering, but it has "
+                          "no _ARRAY_OPS entry" % m)
+
+    def test_the_excluded_methods_do_not_lower(self):
+        # Mutators must stay unlowered: see the prompt exclusion above.
+        import io
+        import os
+
+        from tests import _paths
+
+        src = io.open(os.path.join(_paths.ROOT, "scripts", "mpynode",
+                                   "native", "compiler", "py_to_cpp.py"),
+                      encoding="utf-8").read()
+        for m in ("setTranslation", "setRotation", "setScale", "setShear",
+                  "rotatePivot", "scalePivot"):
+            self.assertNotIn('"%s":' % m, src,
+                             "%s lowers now -- a compiled compute mutates a "
+                             "COPY, so decide what that means before "
+                             "advertising it" % m)
 
 def setUpModule():
     _setUpModule__assistant_model_order()

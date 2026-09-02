@@ -271,7 +271,7 @@ hash while *list* order (enum names, array indices) is preserved.
   `~/mpynode/port_cache`, overridable by `MPYNODE_PORT_CACHE`, then a UI
   preference, then `[paths] port_cache` in the ini.
 
-**`PORTER_RECIPE_VERSION` (currently `"24"`) is the manual invalidation knob**;
+**`PORTER_RECIPE_VERSION` (currently `"26"`) is the manual invalidation knob**;
 the ~290 lines above it are a changelog, not a version number — each bump records
 why generated C++ moved for a byte-identical spec. It exists because **a cache
 HIT is a `shutil.copyfile` with codegen skipped entirely**, so an emitter-only,
@@ -391,6 +391,23 @@ reductions; `dot`/`cross`/`matmul`/`@`; `reshape`/`transpose`/`newaxis`/
 explicit `->`, `np.linalg.svd` via tuple-unpack (Jacobi, `(...,3,3)` only — no
 BLAS/LAPACK); the whole ndarray *method* surface from one table
 (`py_to_cpp._ARRAY_OPS`); and deterministic k-d tree lowering (`nd::KDTree`).
+
+**`MatrixView` methods lower too** (v26). A `matrix` input arrives as a
+`MatrixView` carrying the whole `MMatrix` + `MTransformationMatrix` surface;
+fifteen of its methods now have `_ARRAY_OPS` entries. `translation` (a row-3
+slice), `inverse`, `getElement`, `det3x3` (the upper-left block), `det4x4` and
+`transpose` lower to plain `nd::`. The ten needing Maya's own semantics —
+`rotation(axes=N)`, `scale`, `shear`, `rotationOrder`, `isSingular`,
+`asRotateMatrix`, `asScaleMatrix`, `asMatrixInverse`, `adjoint`, `homogenize` —
+route to `ndx::`, a bridge in `kernels/nd_maya_cpp.py` that CALLS
+`MTransformationMatrix` rather than re-deriving its decompositions, so the
+compiled node matches the interpreted one exactly rather than to a tolerance.
+That bridge cannot live in `nd_runtime.h`: the eleven oracle harnesses compile
+that header with no Maya include path. It is emitted only when the spec has a
+matrix input AND names one of those methods, so every other fragment stays
+byte-identical. The in-place setters and pivot accessors are deliberately NOT
+lowered — a compiled compute reads a copy, so mutating it would not mean what
+it means interpreted. See `docs/notes/matrixview-lowering.md`.
 
 Non-numeric IO lowers too — it is *not* a porter fallback.
 `nd_lower._materialise_input` lifts matrix, string/hex, quaternion, float2 and

@@ -2,7 +2,8 @@
 from __future__ import annotations
 
 from mpynode._common.interface.morph_method_interface import LIVE_CPP_VARS
-from mpynode.native.compiler.kernels import file_texture_cpp, nd_io_cpp
+from mpynode.native.compiler.kernels import (file_texture_cpp, nd_io_cpp,
+                                             nd_maya_cpp)
 from .spec_model import (_check, _geo_kind, _spec_has_hex,
                          _spec_has_nurbs_curve, _spec_has_mesh,
                          _spec_has_nurbs_surface, _spec_has_packed,
@@ -442,6 +443,13 @@ def _generate_cpp_impl(spec: dict, for_port: bool = False) -> str:
         for _inc in nd_io_cpp.NDIO_INCLUDES:
             if _inc not in includes:
                 includes.append(_inc)
+    # Maya transform bridge (MatrixView.rotation/scale/shear/...) -- same
+    # gating rule again: added ONLY when the spec has a matrix input AND names
+    # one of those methods, so every other fragment stays byte-identical.
+    if nd_maya_cpp.spec_uses_maya_xform(spec):
+        for _inc in nd_maya_cpp.MAYA_XFORM_INCLUDES:
+            if _inc not in includes:
+                includes.append(_inc)
     for _inc in cmd_out["includes"]:
         if _inc not in includes:
             includes.append(_inc)
@@ -498,6 +506,11 @@ def _generate_cpp_impl(spec: dict, for_port: bool = False) -> str:
         # must follow the runtime. Own include guard -> idempotent in a bundle.
         if nd_io_cpp.spec_uses_ndio(spec):
             lines.append(nd_io_cpp.NDIO_CPP)
+            lines.append("")
+        # ndx:: takes an nd::Array<double> in and out, so like nd_io it must
+        # follow the runtime. Own include guard -> idempotent in a bundle.
+        if nd_maya_cpp.spec_uses_maya_xform(spec):
+            lines.append(nd_maya_cpp.MAYA_XFORM_CPP)
             lines.append("")
         # The blessed bake takes an nd::Array<T> too, so it follows the runtime
         # for the same reason nd_io does.

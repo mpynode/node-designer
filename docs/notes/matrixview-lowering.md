@@ -1,8 +1,12 @@
 # Lowering `MatrixView` to C++ — design note
 
-**Status: not started.** An implementation was begun and deliberately reverted;
-what survives is the design and the measurements behind it. Nothing described
-here is in the tree. Read `native/compiler/TRANSPILER.md` first.
+**Status: implemented at `PORTER_RECIPE_VERSION` 26.** Fifteen methods lower;
+the design below is what shipped. Read `native/compiler/TRANSPILER.md` first.
+
+What is NOT done, and must be before the tree is consistent: the checked-in
+build artifacts have not been regenerated, so the stage-1 freshness gate is red
+until `tools/build_compiled_templates.sh` runs. See "The rebuild debt" below —
+that debt predates this change, and one rebuild settles both.
 
 ## The gap
 
@@ -10,18 +14,19 @@ here is in the tree. Read `native/compiler/TRANSPILER.md` first.
 an expression. It wraps an api2 `MMatrix` plus a parallel
 `MTransformationMatrix` and exposes **42 public methods**.
 
-`py_to_cpp.py` lowers exactly **one** of them — `asNumpy()`, and that as an
-identity passthrough, because the receiver is already the materialised `nd`
-(4,4). Every other method has no entry in `_ARRAY_OPS`, so a compute that calls
-one falls through to the stage-2 AI porter instead of transpiling
-deterministically.
+`py_to_cpp.py` used to lower exactly **one** of them — `asNumpy()`, and that as
+an identity passthrough, because the receiver is already the materialised `nd`
+(4,4). Every other method had no entry in `_ARRAY_OPS`, so a compute that called
+one fell through to the stage-2 AI porter instead of transpiling
+deterministically. Fifteen now lower.
 
-That is why the system prompt (`ui/llm/system_prompt.py`) recommends the
-methods for interpreted nodes but tells the assistant to stay on plain numpy
-math for a node headed to *Convert to C++*. Closing this gap is what would let
-that caveat be deleted — `tests/compile/pipeline/test_assistant_llm.py ::
-test_only_asnumpy_is_lowered` fails deliberately on the day it stops being
-true, forcing the prompt to be corrected rather than left pessimistic.
+The system prompt (`ui/llm/system_prompt.py`) used to tell the assistant to
+stay on plain numpy math for a node headed to *Convert to C++*. That caveat is
+gone, replaced by the setter/pivot exclusion. It did not have to be spotted by
+hand: `test_only_asnumpy_is_lowered` was written to fail on the day the claim
+stopped being true, and it did, which is what forced the prompt to be corrected
+in the same change. It now reads in the opposite direction, as
+`test_the_advertised_methods_actually_lower`.
 
 ## The 42 methods split three ways
 
@@ -36,7 +41,9 @@ true, forcing the prompt to be corrected rather than left pessimistic.
 but a lowered compute materialises a matrix input into an `nd` **copy**, so
 mutating it has no downstream meaning and the interpreted and compiled nodes
 would quietly disagree. The eight pivot accessors carry `balance=` semantics
-that should not be guessed at. Excluding both leaves **16 methods** to wire.
+that should not be guessed at. Excluding both leaves **16 methods** covered,
+of which **15 needed new `_ARRAY_OPS` entries** — `transpose` was already
+handled correctly by the existing numpy array handler on a (4,4).
 
 ## Tier C does not need a reimplementation
 
@@ -127,8 +134,8 @@ already documents for `nd::inv`. Identity, pure-translate and
 
 | Item | Cost |
 |---|---|
-| Transpiler change | Small: 16 `_ARRAY_OPS` entries, 16 `_op_*` handlers, a receiver `rank == 2` guard that rejects with `UnsupportedSpec` rather than emitting wrong code, and the bridge module |
-| `PORTER_RECIPE_VERSION` bump | **Mandatory.** An emitter-only change is invisible to the cache key, so without it every rebuild silently serves the old `.cpp`. Currently `"25"` — note `docs/ARCHITECTURE.md` says `"24"` and is stale |
+| Transpiler change | Done: 15 `_ARRAY_OPS` entries, 15 `_op_*` handlers, the `_mv_recv` rank guard that rejects with `UnsupportedSpec` rather than emitting wrong code, and `kernels/nd_maya_cpp.py` |
+| `PORTER_RECIPE_VERSION` bump | Done, `"25"` → `"26"`. **Mandatory**: an emitter-only change is invisible to the cache key, so without it every rebuild silently serves the old `.cpp`. `docs/ARCHITECTURE.md` said `"24"` and has been corrected |
 | Regenerate the build trees | `tools/build_compiled_templates.sh` — hours, needs mayapy **and** an authenticated Claude CLI |
 | Both freshness gates | re-run |
 | Parity sweep | The shipped fixtures are macOS `.bundle`s; `tools\run_parity_sweep.bat` needs a local fixture rebuild first and remains unproven |

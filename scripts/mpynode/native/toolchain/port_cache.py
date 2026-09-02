@@ -352,7 +352,20 @@ from typing import Optional
 # re-bake. Same bump reason as v24: this is CODEGEN, and a v24 hit is a copyfile
 # with codegen skipped (compile_controller.py:1043), so every compiled
 # blendShape would keep the baked-only deform forever.
-PORTER_RECIPE_VERSION = "25"
+# v26: MatrixView methods now LOWER instead of falling to the AI porter.
+# A matrix input arrives as a MatrixView carrying the whole MMatrix +
+# MTransformationMatrix surface; py_to_cpp previously knew exactly one of its
+# 42 methods (.asNumpy(), an identity passthrough) so anything else -- rotation,
+# scale, shear, rotationOrder, translation, det -- forced a PORT region. Fifteen
+# now lower: the pure-nd ones through existing kernels, the ten needing Maya
+# semantics through a new ndx:: bridge (kernels/nd_maya_cpp.py) that CALLS Maya
+# rather than re-deriving its decompositions, so the compiled node matches the
+# interpreted one exactly instead of to a tolerance. nd::det also gained a 4x4
+# arm. Same bump reason as v24 and v25: this is CODEGEN, and a v25 hit is a
+# copyfile with codegen skipped (compile_controller.py:1043), so every affected
+# node would keep its AI-ported compute forever.
+# Design note: docs/notes/matrixview-lowering.md
+PORTER_RECIPE_VERSION = "26"
 
 # Spec keys excluded from the cache key -- provably irrelevant to the generated
 # C++. A deny-list, NOT an allow-list (design C1).

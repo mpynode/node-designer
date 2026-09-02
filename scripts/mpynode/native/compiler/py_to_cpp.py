@@ -514,6 +514,26 @@ _ARRAY_OPS = {
     "argmin":       ("_op_argmin", "both"),
     "argsort":      ("_op_argsort", "both"),
     "asNumpy":      ("_op_asnumpy", "method"),
+    # ---- MatrixView methods (docs/notes/matrixview-lowering.md) --------
+    # "method" only: numpy has no free spelling of any of these, and a matrix
+    # input is the only thing that produces the MatrixView they live on.
+    # `transpose` is deliberately absent -- the existing numpy handler already
+    # does the right thing on a (4,4).
+    "translation":  ("_op_mv_translation", "method"),
+    "inverse":      ("_op_mv_inverse", "method"),
+    "getElement":   ("_op_mv_get_element", "method"),
+    "det3x3":       ("_op_mv_det3", "method"),
+    "det4x4":       ("_op_mv_det4", "method"),
+    "rotation":     ("_op_mv_rotation", "method"),
+    "scale":        ("_op_mv_scale", "method"),
+    "shear":        ("_op_mv_shear", "method"),
+    "rotationOrder": ("_op_mv_rotation_order", "method"),
+    "isSingular":   ("_op_mv_is_singular", "method"),
+    "asRotateMatrix": ("_op_mv_as_rotate_matrix", "method"),
+    "asScaleMatrix": ("_op_mv_as_scale_matrix", "method"),
+    "asMatrixInverse": ("_op_mv_as_matrix_inverse", "method"),
+    "adjoint":      ("_op_mv_adjoint", "method"),
+    "homogenize":   ("_op_mv_homogenize", "method"),
     # numpy 1.x has no np.astype; numpy 2 added it. Wiring "both" costs nothing
     # and keeps the free spelling from becoming a gap on an upgrade.
     "astype":       ("_op_astype", "both"),
@@ -672,6 +692,11 @@ class Transpiler:
         # Set by any lowering that emits an nd_io call, so the caller knows the
         # generated body needs the nd_io kernel + its per-instance cache members.
         self.uses_ndio = False
+        # Set when a MatrixView method that needs Maya semantics lowers.
+        # The EMITTERS gate on the spec (nd_maya_cpp.spec_uses_maya_xform)
+        # because includes are decided before lowering; this flag is the
+        # transpiler-side record, used by tests to prove the two agree.
+        self.uses_maya_xform = False
         # In the compute-BLOCK path the emitted C++ shares a scope with the node's
         # frame, which reserves names like `env`, `pts`, `n`, `iter`, `block`,
         # `adjStart`. A user local named the same (e.g. the canonical
@@ -4837,6 +4862,123 @@ class Transpiler:
 
     def _op_item(self, recv, args, node):
         return Val("(%s).item()" % recv.code, scalar_t(recv.type.dtype))
+
+    # ==== MatrixView =====================================================
+    # A matrix input arrives as a MatrixView, which carries the whole MMatrix +
+    # MTransformationMatrix surface. Tier A below is pure nd::; the rest route
+    # to the ndx:: bridge, which calls Maya so the compiled node matches the
+    # interpreted one EXACTLY rather than to a tolerance. Design note and the
+    # excluded methods (in-place setters, pivots): docs/notes/.
+
+    def _mv_recv(self, recv, node, what):
+        """C++ for a receiver that must be a (4,4) matrix.
+
+        Rank is all that can be proven statically -- the exact 4x4 is checked at
+        runtime by ndx::nd_to_mmatrix and nd::det, the same way nd::inv already
+        reports a bad shape. Rejecting a wrong RANK here is still worth doing:
+        it turns `self.someVector.rotation()` into a precise UnsupportedSpec at
+        codegen time instead of a throw inside compute.
+        """
+        t = recv.type
+        if not t.is_array() or (t.rank is not None and t.rank != 2):
+            self.fail(node, ".%s() is a MatrixView method and needs a (4,4) "
+                            "receiver; this value is %s" % (
+                                what,
+                                "a rank-%s array" % (t.rank,) if t.is_array()
+                                else "a %s" % t.kind))
+        return recv.code
+
+    def _mv_bridge(self, fn, recv, args, node, what, rtype):
+        self._need(node, args, 0)
+        code = "ndx::%s(%s)" % (fn, self._mv_recv(recv, node, what))
+        self.uses_maya_xform = True
+        return Val(code, rtype)
+
+    # ---- Tier A: existing nd::, no Maya ---------------------------------
+    def _op_mv_translation(self, recv, args, node):
+        self._need(node, args, 0)
+        # Row 3, first three columns -- Maya's row-vector convention puts the
+        # translation in ROW 3, not column 3.
+        return Val("nd::slice(%s, {nd::Sl::at(3), nd::Sl::to(3)})"
+                   % self._mv_recv(recv, node, "translation"),
+                   array_t("double", 1))
+
+    def _op_mv_inverse(self, recv, args, node):
+        self._need(node, args, 0)
+        return Val("nd::inv(%s)" % self._mv_recv(recv, node, "inverse"),
+                   array_t("double", 2))
+
+    def _op_mv_get_element(self, recv, args, node):
+        self._need(node, args, 2)
+        base = self._mv_recv(recv, node, "getElement")
+        r = self._scalar_int_of(self.expr(args[0]), node)
+        c = self._scalar_int_of(self.expr(args[1]), node)
+        return Val("nd::slice(%s, {nd::Sl::at(%s), nd::Sl::at(%s)})"
+                   % (base, r, c), array_t("double", 0))
+
+    def _op_mv_det3(self, recv, args, node):
+        self._need(node, args, 0)
+        # The UPPER-LEFT 3x3 (the rotation/scale block), not the whole matrix.
+        return Val("nd::det(nd::slice(%s, {nd::Sl::to(3), nd::Sl::to(3)}))"
+                   % self._mv_recv(recv, node, "det3x3"), array_t("double", 0))
+
+    def _op_mv_det4(self, recv, args, node):
+        self._need(node, args, 0)
+        return Val("nd::det(%s)" % self._mv_recv(recv, node, "det4x4"),
+                   array_t("double", 0))
+
+    # ---- Tier C: Maya semantics via the ndx:: bridge ---------------------
+    def _op_mv_rotation(self, recv, args, node):
+        base = self._mv_recv(recv, node, "rotation")
+        axnode = self._kw(node, "axes")
+        if axnode is None and len(args) == 1:
+            axnode = args[0]
+        elif len(args) > 1:
+            self.fail(node, ".rotation() takes at most one argument (axes)")
+        # 0-based Maya rotate-order index (0=xyz .. 5=zyx) -- the same numbering
+        # a rotateOrder enum plug uses, and NOT the 1-based enum rotationOrder()
+        # returns. Both are mirrored as-is; see the design note.
+        axes = ("0" if axnode is None
+                else self._scalar_int_of(self.expr(axnode), node))
+        self.uses_maya_xform = True
+        return Val("ndx::xf_rotation(%s, %s)" % (base, axes),
+                   array_t("double", 1))
+
+    def _op_mv_scale(self, recv, args, node):
+        return self._mv_bridge("xf_scale", recv, args, node, "scale",
+                               array_t("double", 1))
+
+    def _op_mv_shear(self, recv, args, node):
+        return self._mv_bridge("xf_shear", recv, args, node, "shear",
+                               array_t("double", 1))
+
+    def _op_mv_rotation_order(self, recv, args, node):
+        return self._mv_bridge("xf_rotation_order", recv, args, node,
+                               "rotationOrder", scalar_t("int64"))
+
+    def _op_mv_is_singular(self, recv, args, node):
+        return self._mv_bridge("xf_is_singular", recv, args, node,
+                               "isSingular", scalar_t("bool"))
+
+    def _op_mv_as_rotate_matrix(self, recv, args, node):
+        return self._mv_bridge("xf_as_rotate_matrix", recv, args, node,
+                               "asRotateMatrix", array_t("double", 2))
+
+    def _op_mv_as_scale_matrix(self, recv, args, node):
+        return self._mv_bridge("xf_as_scale_matrix", recv, args, node,
+                               "asScaleMatrix", array_t("double", 2))
+
+    def _op_mv_as_matrix_inverse(self, recv, args, node):
+        return self._mv_bridge("xf_as_matrix_inverse", recv, args, node,
+                               "asMatrixInverse", array_t("double", 2))
+
+    def _op_mv_adjoint(self, recv, args, node):
+        return self._mv_bridge("xf_adjoint", recv, args, node, "adjoint",
+                               array_t("double", 2))
+
+    def _op_mv_homogenize(self, recv, args, node):
+        return self._mv_bridge("xf_homogenize", recv, args, node, "homogenize",
+                               array_t("double", 2))
 
     def _op_asnumpy(self, recv, args, node):
         # MatrixView.asNumpy() -- the interpreted matrix-input idiom
