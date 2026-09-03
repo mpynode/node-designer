@@ -47,8 +47,18 @@ show_designer()
 
 You do **not** need `cmds.loadPlugin` — the right plug-in loads on demand
 the first time you create a node (verified: creating an `MPyNode` in a
-clean session pulls in `mpynode_api2` by itself). Load them explicitly
-only if you want them present before any node exists:
+clean session pulls in `mpynode_api2` by itself).
+
+**One exception, and it matters if you open v1 scenes.** "On demand" means
+*when you create a node*, which is too late for a scene that already
+contains one. A node-designer v1 scene carries
+`requires -nodeType "mPyNode" "mpynode_plugin.py"`; that filename is v1's
+and this repo does not ship it, so the request fails and every `mPyNode`
+in the file arrives as an **unknown** node — data preserved, nothing
+computing, and the v1 auto-converter cannot see it because it only looks
+at `ls(type="mPyNode")`. Register the type before the open, by any of:
+ticking **Auto load** for `mpynode_api2` in Maya's Plug-in Manager,
+opening the Node Designer window first, or:
 
 ```python
 import maya.cmds as mc
@@ -56,7 +66,66 @@ mc.loadPlugin("mpynode_api1")
 mc.loadPlugin("mpynode_api2")
 ```
 
-## Persistent `userSetup.py` install
+## Persistent install without copying anything (recommended)
+
+Nothing from this repo needs to go into your Maya prefs. Maya reads
+`Maya.env` at startup, so the paths can live there and the repo can stay
+wherever you keep it.
+
+Create or edit `Maya.env` for your Maya version:
+
+| Platform | Path |
+|---|---|
+| Windows | `Documents\maya\<ver>\Maya.env` |
+| macOS | `~/Library/Preferences/Autodesk/maya/<ver>/Maya.env` |
+| Linux | `~/maya/<ver>/Maya.env` |
+
+Windows — use forward slashes or doubled backslashes, and `;` between
+entries:
+
+```
+MPYNODE_ROOT = C:/path/to/MPyNode
+PYTHONPATH = C:/path/to/MPyNode/scripts;%PYTHONPATH%
+MAYA_PLUG_IN_PATH = C:/path/to/MPyNode/plug-ins;%MAYA_PLUG_IN_PATH%
+MPYNODE_USE_STUDIO = 1
+```
+
+macOS / Linux — `:` between entries:
+
+```
+MPYNODE_ROOT = /path/to/MPyNode
+PYTHONPATH = /path/to/MPyNode/scripts:$PYTHONPATH
+MAYA_PLUG_IN_PATH = /path/to/MPyNode/plug-ins:$MAYA_PLUG_IN_PATH
+MPYNODE_USE_STUDIO = 1
+```
+
+Then tick **Auto load** for `mpynode_api2` in
+*Windows ▸ Settings/Preferences ▸ Plug-in Manager*. That is what makes
+`mPyNode` registered at startup rather than on first node creation — see
+the exception above about opening v1 scenes.
+
+Ordinary system environment variables (Windows *Environment Variables*,
+or `~/.profile`) work identically and apply to every Maya version at
+once; `Maya.env` is per-version, which is usually what you want.
+
+There is also `launch_maya2025.bat` / `launch_maya2025.sh` in the repo
+root, which sets the same three variables and launches Maya, if you would
+rather not touch anything persistent at all. Pass no arguments — do not
+hand it a scene file, because that opens during startup before the
+plug-in is registered.
+
+## Optional: the `userSetup.py` in this repo
+
+`Maya.env` sets variables but **cannot run code**. If you need something
+to actually execute at Maya startup — resolving the repo path
+dynamically, loading plug-ins in a specific order, anything conditional —
+the repo root has a `userSetup.py` that does the path setup in Python.
+You do not need it for a normal install, and the `Maya.env` route above
+is preferred precisely because it copies nothing.
+
+If you do want it:
+
+### Copying it into your Maya prefs
 
 For an "always-loaded" install inside a regular Maya session:
 
