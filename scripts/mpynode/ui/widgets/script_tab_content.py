@@ -222,6 +222,19 @@ class NDScriptTabContent(QWidget):
     # lacking the shared tier falls back to Compute, which is always present.
     _shared_tier = "Compute"
 
+    # Nodes this session has already shown an editor for. A node being opened
+    # for the FIRST time lands on Compute regardless of the shared tier: that
+    # is the tier you almost always want when meeting a node, and inheriting
+    # (say) API from whatever you were last doing on a different node makes a
+    # freshly opened node look empty and broken -- which is exactly how a
+    # converted v1 node presented itself.
+    #
+    # Session-scoped, and reopening a closed tab counts as already-seen: if
+    # you deliberately closed an API tab and reopened it, snapping to Compute
+    # would fight you. Keyed off the node UUID, so a rename does not read as
+    # a new node -- see _node_key for why not the MObjectHandle hash.
+    _seen_nodes = set()
+
     def __init__(self, py_node, parent=None):
         super().__init__(parent)
         self._py_node = py_node
@@ -619,11 +632,50 @@ class NDScriptTabContent(QWidget):
                 return i
         return -1
 
+    def _node_key(self):
+        """Session-stable identity for the backing node, for ``_seen_nodes``.
+
+        Prefers the node's UUID, so a rename is still the same node. NOT the
+        MObjectHandle hash that ``__init__`` already resolved, tempting as it
+        is: Maya recycles hash codes once an object is destroyed, so after a
+        File>New a brand new node can inherit a dead one's entry and be
+        treated as already-seen. A UUID is never reused.
+
+        Falls back to the name and then to object identity -- being wrong here
+        only costs one tier choice.
+        """
+        try:
+            from maya import cmds as mc
+
+            uuid = mc.ls(self._py_node.get_name(), uuid=True)
+            if uuid:
+                return ("uuid", str(uuid[0]))
+        except Exception:
+            pass
+        try:
+            name = self._py_node.get_name()
+            if name:
+                return ("name", str(name))
+        except Exception:
+            pass
+        return ("id", id(self._py_node))
+
     def _apply_shared_tier(self) -> None:
         """Show the session-wide shared tier tab if this node has it; otherwise
         fall back to Compute (always present). Programmatic, so it does not
-        update the shared choice (guarded)."""
-        target = self._index_for_tier(NDScriptTabContent._shared_tier)
+        update the shared choice (guarded).
+
+        A node being seen for the first time this session ignores the shared
+        tier and opens on Compute -- see ``_seen_nodes``. The check lives here
+        rather than at the two call sites (``__init__`` and the show event)
+        because those are source-pinned by tests, and because every path that
+        reveals a node's editor for the first time necessarily comes through
+        here.
+        """
+        first_open = self._node_key() not in NDScriptTabContent._seen_nodes
+        NDScriptTabContent._seen_nodes.add(self._node_key())
+        tier = "Compute" if first_open else NDScriptTabContent._shared_tier
+        target = self._index_for_tier(tier)
         if target < 0:
             target = self._index_for_tier("Compute")
         if target < 0 or target == self._inner_tabs.currentIndex():

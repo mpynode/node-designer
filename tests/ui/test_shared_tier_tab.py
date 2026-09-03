@@ -155,3 +155,97 @@ class TestSharedTierBehavioral(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+@unittest.skipIf(_QAPP is None, "no Qt available")
+class TestFirstOpenPrefersCompute(unittest.TestCase):
+    """A node opened for the FIRST time this session lands on Compute, whatever
+    the shared tier is.
+
+    Inheriting the shared tier on a node you have never opened is what made a
+    freshly converted v1 node look broken: the Designer came up on API, which
+    showed a generated ``build()`` stub, while Init and Compute -- the tabs
+    that would have shown the real state -- went unlooked-at. Compute is the
+    tier you want when meeting a node.
+
+    Already-seen nodes keep the old behaviour, so switching tier and then
+    flipping between nodes still works; that is what
+    ``TestSharedTierBehavioral`` covers.
+    """
+
+    def setUp(self):
+        import maya.cmds as mc
+        from mpynode.ui.widgets.script_tab_content import NDScriptTabContent
+
+        self._saved_tier = NDScriptTabContent._shared_tier
+        self._saved_seen = set(NDScriptTabContent._seen_nodes)
+        NDScriptTabContent._shared_tier = "Compute"
+        NDScriptTabContent._seen_nodes.clear()
+        mc.file(new=True, force=True)
+        self._widgets = []
+
+    def tearDown(self):
+        from mpynode.ui.widgets.script_tab_content import NDScriptTabContent
+
+        for w in self._widgets:
+            try:
+                w.deleteLater()
+            except Exception:
+                pass
+        NDScriptTabContent._shared_tier = self._saved_tier
+        NDScriptTabContent._seen_nodes.clear()
+        NDScriptTabContent._seen_nodes.update(self._saved_seen)
+
+    def _content(self, name):
+        from mpynode.ui.widgets.script_tab_content import NDScriptTabContent
+        from mpynode.wrappers.mpy_locator import MPyLocator
+
+        w = NDScriptTabContent(MPyLocator.create(name=name))
+        self._widgets.append(w)
+        return w
+
+    @staticmethod
+    def _tier(w):
+        tabs = w._inner_tabs
+        return tabs.tabText(tabs.currentIndex())
+
+    def test_a_never_seen_node_ignores_the_shared_tier(self):
+        from mpynode.ui.widgets.script_tab_content import NDScriptTabContent
+
+        NDScriptTabContent._shared_tier = "Init"
+        self.assertEqual(self._tier(self._content("firstOpenA")), "Compute")
+
+    def test_the_shared_tier_survives_a_first_open(self):
+        # First-open must not clobber the shared choice, or opening one new
+        # node would reset the tier for every node after it.
+        from mpynode.ui.widgets.script_tab_content import NDScriptTabContent
+
+        NDScriptTabContent._shared_tier = "Init"
+        self._content("firstOpenB")
+        self.assertEqual(NDScriptTabContent._shared_tier, "Init")
+
+    def test_a_second_apply_on_the_same_node_uses_the_shared_tier(self):
+        # Construction marks the node seen, so a later re-sync (switching
+        # document tabs back to it) honours the shared tier again.
+        from mpynode.ui.widgets.script_tab_content import NDScriptTabContent
+
+        w = self._content("firstOpenC")
+        self.assertEqual(self._tier(w), "Compute")
+        NDScriptTabContent._shared_tier = "Init"
+        w._apply_shared_tier()
+        self.assertEqual(self._tier(w), "Init")
+
+    def test_the_node_is_recorded_as_seen(self):
+        from mpynode.ui.widgets.script_tab_content import NDScriptTabContent
+
+        w = self._content("firstOpenD")
+        self.assertIn(w._node_key(), NDScriptTabContent._seen_nodes)
+
+    def test_the_key_is_a_uuid_and_survives_a_rename(self):
+        import maya.cmds as mc
+
+        w = self._content("firstOpenE")
+        before = w._node_key()
+        self.assertEqual(before[0], "uuid")
+        mc.rename("firstOpenE", "firstOpenE_renamed")
+        self.assertEqual(w._node_key(), before)
