@@ -466,3 +466,122 @@ Corpus, convert-on-open, v1 not installed:
 Each remaining failure is now a distinct, named problem rather than a cascade
 from a dead import, and `gameOfLife` in particular moved from
 `NameError: MVector` to `NameError: boardX` — the real, documented limitation.
+
+## Closing the corpus: 5/9 → 8/9 automatically, 9/9 with one hand rewrite
+
+Four more mismatch classes, each found by evaluating a real converted node
+rather than by reading v1's source, and each hiding behind the last.
+
+### 1. The rewrite only ran on Compute
+
+A top-level `def` is partitioned into Init *before* any rewriting happens, so
+a helper that built its own `MVector` kept a name that does not exist under v2.
+`springChainNode`'s `spring()` does exactly that, twice. `_ApiTypeFix` now runs
+over `init_body` as well, with the same instance so the counters cover both.
+
+### 2. `eval('boardX')`
+
+`gameOfLifeNode` really contains:
+
+```python
+test0 = getattr(self, 'boardX') == eval('boardX')
+```
+
+Under v1 the bare name resolved because plugs were locals in the exec
+namespace. No AST pass can see into a string literal, so this needed its own
+rule: when the *entire* string is a declared plug name, rewrite the string to
+`self.<name>`. Never for arbitrary expressions, where `self.` might be wrong.
+
+### 3. `.value` on a unit-wrapped plug
+
+v1 set `DEFAULT_ANGLE = MAngle` and `DEFAULT_TIME = MTime`, so those plugs came
+back wrapped and the number was `.value`. v2 hands the number directly, and the
+resulting `AttributeError: 'float' object has no attribute 'value'` is
+completely opaque until you know that. It cost two scenes — `gameOfLifeNode` on
+a time plug, `ouchNode` on an angle plug.
+
+### 4. Stored buffers of vectors
+
+The biggest one, and the reason `v1_compat.py` is a **module** rather than more
+injected Init source. `springChainNode` keeps velocity and position arrays in
+`_storedVarsData`; `unitSphereCollisionNode` keeps a grid of points. The
+restricted unpickler maps v1's classes to plain lists — right for reading a
+file without v1 installed, wrong to compute with:
+
+```
+float * [0.0, 0.0, 0.0]   TypeError: can't multiply sequence by non-int
+[x, y, z] * MatrixView    TypeError: can't multiply sequence by non-int
+```
+
+Both failed from their **saved data**, not from anything in their expressions.
+Fixing that needs the shim type to survive a pickle round trip, and a class
+defined by `exec`-ing Init source has no importable path — so `V1Vec` moved
+into `_common/io/v1_compat.py`, `convert` coerces stored vectors through
+`coerce_stored`, and the injected Init shim collapsed from ~90 lines to a
+single import.
+
+`V1Vec` is a numpy **subclass** carrying six names, established by walking every
+api call site in all nine scenes rather than guessed at: `length`, `normalize`
+(in place, as Maya's does), `normal`, `distanceTo`, `^` for cross product, and
+`point * matrix` as a homogeneous transform. Every numpy operation works on it
+unchanged, and nothing is seeded into any namespace.
+
+### `ouchNode`: the one that cannot be mechanical
+
+```python
+import pyaudio, threading
+def ouch(sample_rate, sample_data):
+    p = pyaudio.PyAudio()
+    stream = p.open(format=32, channels=1, rate=sample_rate, output=True)
+    stream.write(sample_data)          # BLOCKING, hence the thread
+```
+
+Three problems, none a syntax question: pyaudio is a third-party extension that
+cannot be assumed; `format=32` is `paFloat32`, so the stored sample is **raw**
+32-bit float mono PCM rather than any container format; and the blocking write
+forced a background thread, which is a bad idea in a Maya compute.
+
+Qt removes the last two for free — `QMediaPlayer` is already asynchronous — but
+it plays *files*, so the samples need a header. `v1_compat.wav_from_float32`
+supplies one, converting to 16-bit signed because `wave` cannot write IEEE
+float and a float32 payload under a PCM header decodes as noise. Samples are
+clamped first: v1 fed them straight to the sound card, so nothing guarantees
+they sit in [-1, 1].
+
+The whole Init collapses to one import, and the Compute loses the thread:
+
+```python
+# Init
+from mpynode._common.io.v1_compat import play_pcm
+
+# Compute
+self.color = [0, 1, 0]
+if self.angle < 0.165009870842:
+    self.color = [1, 0, 0]
+    if not self.pain:
+        self.pain = True
+        self.player = play_pcm(self.sample, int(self.sampleRate))
+else:
+    self.pain = False
+```
+
+This is the same shape as the v2 `Ouch` template, which already uses
+`qt_wrapper.make_audio_player` with a content-hash-named temp file; the only
+real difference is that the template stores a complete `.wav` while v1 stored
+raw samples.
+
+pyaudio is **reported, not dropped** — unlike `mpylib` it can legitimately be
+installed — and the report names the replacement so the answer is not a
+scavenger hunt.
+
+**One caveat on the measurement.** `ouchNode` reads CLEAN as converted too, but
+that is a false pass: at the pose saved in the scene `angle` sits right at the
+threshold and the audio branch barely fires, so the dead `import pyaudio` is
+never exercised. The rewrite is what makes the sound work.
+
+### Final corpus
+
+| | count | |
+|---|---|---|
+| Evaluate clean, no hand edits | **8 / 9** | bubbleSort, gameOfLife, quaternionSpine, spline, springChain, textMeshGenerator, textureSwitch, unitSphereCollision |
+| Needs the hand rewrite above | 1 | ouch — pyaudio has no mechanical equivalent |

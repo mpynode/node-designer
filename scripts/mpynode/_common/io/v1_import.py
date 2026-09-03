@@ -418,6 +418,12 @@ _MATRIX_CTORS = {"MMatrix": "asMatrix",
 # Plug types that take exactly three components.
 _VEC3_TYPES = ("vector", "color", "euler")
 
+# Plug types v1 handed back WRAPPED in a unit object rather than as a number:
+# DEFAULT_ANGLE = MAngle and DEFAULT_TIME = MTime in v1's node module. Both
+# expose the number as `.value`. v2 hands the number directly, so the extra
+# hop raises `AttributeError: 'float' object has no attribute 'value'`.
+_UNIT_WRAPPED_TYPES = ("time", "angle")
+
 _VEC3_SHIM = "_v1_vec3"
 
 # Built line-by-line rather than as one literal so the docstring inside it
@@ -471,6 +477,8 @@ class _ApiTypeFix(ast.NodeTransformer):
         self.matrix_fixes = []
         self.vec3_fixes = []
         self.vec_ctor_fixes = []
+        self.eval_fixes = []
+        self.time_fixes = []
 
     def _is_matrix_plug(self, node):
         name = _plug_of(node)
@@ -481,6 +489,27 @@ class _ApiTypeFix(ast.NodeTransformer):
         # Both the qualified `om.MMatrix(...)` and the bare `MMatrix(...)`
         # form, because v1 made those names ambient in the expression
         # namespace and real v1 nodes use both.
+        if (isinstance(node.func, ast.Name)
+                and node.func.id in ("eval", "exec")
+                and len(node.args) == 1
+                and isinstance(node.args[0], ast.Constant)
+                and isinstance(node.args[0].value, str)):
+            # gameOfLifeNode really does `getattr(self, 'boardX') ==
+            # eval('boardX')`. Under v1 the bare name resolved because plugs
+            # were locals in the exec namespace; under v2 it is a NameError
+            # that _Selfify cannot reach, the name being inside a string
+            # literal. Rewriting the STRING is exact, and only done when the
+            # whole thing is a declared plug name -- never for arbitrary
+            # expressions, where `self.` might not be the right prefix.
+            want = node.args[0].value.strip()
+            if want in self.types:
+                self.eval_fixes.append(want)
+                return ast.Call(
+                    func=node.func,
+                    args=[ast.Constant(value="self." + want)],
+                    keywords=node.keywords)
+            return node
+
         if isinstance(node.func, ast.Name):
             ctor = node.func.id
             # Bare == v1-ambient == undefined under v2. `om.MVector(...)` is
@@ -504,6 +533,25 @@ class _ApiTypeFix(ast.NodeTransformer):
             func=ast.Attribute(value=node.args[0], attr=method,
                                ctx=ast.Load()),
             args=[], keywords=[])
+
+    def visit_Attribute(self, node):
+        """``self.<time plug>.value`` -> ``self.<time plug>``.
+
+        v1 handed a ``time`` plug back as an ``MTime`` and an ``angle`` plug
+        as an ``MAngle``, both of which expose the number as ``.value``. v2
+        hands the number directly, so the extra hop raises
+        ``AttributeError: 'float' object has no attribute 'value'`` --
+        gameOfLifeNode hit it on a time plug, ouchNode on an angle plug, and
+        the message is completely opaque until you know v1 wrapped the value.
+        """
+        self.generic_visit(node)
+        if node.attr != "value":
+            return node
+        name = _plug_of(node.value)
+        if name is None or self.types.get(name) not in _UNIT_WRAPPED_TYPES:
+            return node
+        self.time_fixes.append(name)
+        return node.value
 
     def visit_Assign(self, node):
         self.generic_visit(node)
@@ -540,6 +588,15 @@ class _ApiTypeFix(ast.NodeTransformer):
 # import localises the failure to the actual use of MVector, which the report
 # already explains.
 _V1_LIB_ROOTS = ("mpylib",)
+
+# Third-party extensions a v1 expression may import that v2 does not require
+# and cannot assume. NOT dropped -- unlike mpylib these can legitimately be
+# installed -- but reported, with the v2 route named, because the failure is
+# otherwise a bare ModuleNotFoundError with no hint that an answer exists.
+_V1_THIRD_PARTY = {
+    "pyaudio": "v1_compat.play_pcm plays raw PCM through Qt without it, "
+               "asynchronously, so the background thread goes too",
+}
 
 
 def _v1_lib_module(stmt):
@@ -611,29 +668,14 @@ _V1_VEC_CTORS = ("MVector", "MPoint")
 
 _V1_VEC = "_v1_vec"
 
-_V1_VEC_SHIM_SRC = chr(10).join([
-    "import numpy as _v1_np",
-    "",
-    "",
-    "def _v1_vec(*args):",
-    '    """Added by the v1 importer; safe to delete once the maths is tidied.',
-    "",
-    "    Stands in for v1's ambient MVector / MPoint, which v2 does not seed",
-    "    -- api objects being absent from the expression namespace is an",
-    "    explicit design decision, not an omission. Returns numpy, accepts the",
-    "    scalar and single-sequence forms, pads short input with zeros, and",
-    "    DROPS a fourth component: MPoint's w was never written to a",
-    '    three-component plug anyway."""',
-    "    if len(args) == 1:",
-    "        try:",
-    "            args = tuple(args[0])",
-    "        except TypeError:",
-    "            args = (args[0],)",
-    "    vals = [float(a) for a in args[:3]]",
-    "    while len(vals) < 3:",
-    "        vals.append(0.0)",
-    "    return _v1_np.array(vals, dtype=float)",
-])
+# One explicit import, not ~90 lines of injected class source. The type
+# has to live in a real module because stored variables are PICKLED: v1
+# nodes keep buffers of vectors (springChain velocity/position,
+# unitSphereCollision a point grid), and a class defined by exec-ing Init
+# source has no importable path, so its instances cannot round-trip.
+_V1_VEC_SHIM_SRC = (
+    "from mpynode._common.io.v1_compat import v1_vec as _v1_vec"
+)
 
 
 def split_and_selfify(expression, inputs, outputs):
@@ -647,7 +689,8 @@ def split_and_selfify(expression, inputs, outputs):
     report = {"shadowed": [], "globals_in_defs": [], "rewrites": 0,
               "init_stmts": 0, "compute_stmts": 0,
               "matrix_view_fixes": [], "vec3_fixes": [],
-              "vec_ctor_fixes": [], "dead_imports": []}
+              "vec_ctor_fixes": [], "eval_fixes": [], "time_fixes": [],
+              "dead_imports": [], "third_party_imports": []}
     try:
         tree = ast.parse(expression)
     except SyntaxError as exc:
@@ -680,6 +723,14 @@ def split_and_selfify(expression, inputs, outputs):
         else:
             compute_body.append(st)
     report["dead_imports"] = sorted(set(dead))
+    report["third_party_imports"] = sorted(
+        {a.name.split(".")[0] for st in tree.body
+         if isinstance(st, (ast.Import, ast.ImportFrom))
+         for a in st.names
+         if a.name.split(".")[0] in _V1_THIRD_PARTY}
+        | {(st.module or "").split(".")[0] for st in tree.body
+           if isinstance(st, ast.ImportFrom)
+           and (st.module or "").split(".")[0] in _V1_THIRD_PARTY})
 
     xf = _Selfify(names - shadowed, shadowed)
     body = [xf.visit(s) for s in compute_body]
@@ -691,9 +742,18 @@ def split_and_selfify(expression, inputs, outputs):
     types.update(outputs)
     fix = _ApiTypeFix(types)
     body = [fix.visit(s) for s in body]
+
+    # Init too. A top-level def is partitioned into Init before any rewriting
+    # happens, so a helper that builds its own MVector -- springChainNode's
+    # `spring()` does, twice -- kept a name that does not exist under v2.
+    # Deliberately AFTER the compute pass and with the SAME instance, so the
+    # counters cover both halves.
+    init_body = [fix.visit(s) for s in init_body]
     report["matrix_view_fixes"] = list(fix.matrix_fixes)
     report["vec3_fixes"] = sorted(set(fix.vec3_fixes))
     report["vec_ctor_fixes"] = sorted(set(fix.vec_ctor_fixes))
+    report["eval_fixes"] = sorted(set(fix.eval_fixes))
+    report["time_fixes"] = sorted(set(fix.time_fixes))
 
     # The shim goes in Init, whose names are bare globals in Compute -- and
     # only when something actually needs it, so a node that does not gets no
@@ -793,6 +853,7 @@ def _api_object_use(src):
 
 def convert(v1):
     """A v1 node -> the pieces v2 needs, plus a report of what was inexact."""
+    from mpynode._common.io import v1_compat
     init_src, compute_src, report = split_and_selfify(
         v1.expression, v1.inputs, v1.outputs)
 
@@ -809,7 +870,14 @@ def convert(v1):
         "name": v1.name,
         "inputs": dict(v1.inputs),
         "outputs": dict(v1.outputs),
-        "stored_vars": dict(v1.stored_vars),
+        # Demoted v1 vectors become V1Vec so they can be computed with.
+        # The restricted unpickler maps v1's classes to plain lists, which is
+        # right for reading a file without v1 installed and wrong for
+        # arithmetic: `float * [0.0, 0.0, 0.0]` raises, and a list has no
+        # distanceTo and no matrix multiply. springChainNode and
+        # unitSphereCollisionNode failed on exactly that, from their SAVED
+        # buffers rather than from anything in the expression.
+        "stored_vars": v1_compat.coerce_stored(dict(v1.stored_vars)),
         "synthesized_enums": enums,
         "init": init_src,
         "compute": compute_src,

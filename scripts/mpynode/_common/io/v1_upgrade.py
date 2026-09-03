@@ -303,12 +303,24 @@ def summarize(reports, failures):
         if r["globals_in_defs"]:
             bits.append("helper def reads %s as a global -- needs finishing"
                         % ", ".join(r["globals_in_defs"]))
+        if r.get("third_party_imports"):
+            from mpynode._common.io.v1_import import _V1_THIRD_PARTY
+            for mod in r["third_party_imports"]:
+                bits.append("imports %r, which v2 does not require: %s"
+                            % (mod, _V1_THIRD_PARTY.get(mod, "")))
         if r.get("dead_imports"):
             bits.append("DROPPED dead v1-library import(s) [%s] -- v2 does not "
                         "ship mpylib and does not make api objects ambient, so "
                         "those names are now undefined at their use sites; "
                         "replace them with numpy or mpynode.api"
                         % "; ".join(r["dead_imports"]))
+        if r.get("time_fixes"):
+            bits.append("dropped .value off unit-wrapped plug read(s) %s "
+                        "(v1 handed an MTime/MAngle, v2 hands the number)"
+                        % ", ".join(r["time_fixes"]))
+        if r.get("eval_fixes"):
+            bits.append("rewrote eval() of bare plug name(s) %s to self.<name>"
+                        % ", ".join(r["eval_fixes"]))
         if r.get("vec_ctor_fixes"):
             bits.append("rewrote bare %s to numpy (_v1_vec shim added to "
                         "Init; v2 does not seed api objects)"

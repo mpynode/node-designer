@@ -522,18 +522,16 @@ class TestBareVectorConstructors(unittest.TestCase):
         self.assertIn("self.out = _v1_vec(0, 0, 0)", comp)
         self.assertNotIn("_v1_vec3", comp)
 
-    def test_the_shim_lands_in_init_only_when_needed(self):
+    def test_the_shim_import_lands_in_init_only_when_needed(self):
+        # One import line, not ~90 lines of injected class source: the type
+        # lives in a real module so stored vectors can be pickled.
         init, _c, _r = self._conv("out = MVector(1, 2, 3)[0]")
-        self.assertIn("def _v1_vec(*args):", init)
-        self.assertIn("import numpy as _v1_np", init)
+        self.assertIn("v1_compat import v1_vec as _v1_vec", init)
         init2, _c2, _r2 = self._conv("out = 1.0")
         self.assertNotIn("_v1_vec", init2)
 
     def test_the_shim_semantics(self):
-        init, _c, _r = self._conv("out = MVector(1, 2, 3)[0]")
-        ns = {}
-        exec(compile(init, "<init>", "exec"), ns)
-        vec = ns["_v1_vec"]
+        from mpynode._common.io.v1_compat import v1_vec as vec
         self.assertEqual(list(vec(1, 2, 3)), [1.0, 2.0, 3.0])
         # MPoint's w is dropped -- it was never written to a 3-slot plug.
         self.assertEqual(list(vec(1, 2, 3, 1)), [1.0, 2.0, 3.0])
@@ -546,8 +544,242 @@ class TestBareVectorConstructors(unittest.TestCase):
         # The actual reason it is numpy and not a list: splineNode does
         # `self.samples[i] += self.cv[k] * w`, and `list * float` raises
         # TypeError -- which is how springChainNode still fails.
-        init, _c, _r = self._conv("out = MVector(1, 2, 3)[0]")
-        ns = {}
-        exec(compile(init, "<init>", "exec"), ns)
-        got = ns["_v1_vec"](1, 2, 3) * 2.0
-        self.assertEqual(list(got), [2.0, 4.0, 6.0])
+        from mpynode._common.io.v1_compat import v1_vec
+        self.assertEqual(list(v1_vec(1, 2, 3) * 2.0), [2.0, 4.0, 6.0])
+
+
+class TestUnitWrappedPlugReads(unittest.TestCase):
+    """``self.<time/angle plug>.value`` -> the plug read itself.
+
+    v1 set ``DEFAULT_ANGLE = MAngle`` and ``DEFAULT_TIME = MTime``, so those
+    plugs came back wrapped and the number was ``.value``. v2 hands the number
+    directly, and the resulting ``AttributeError: 'float' object has no
+    attribute 'value'`` is completely opaque until you know that. It cost two
+    scenes: gameOfLifeNode on a time plug, ouchNode on an angle plug.
+    """
+
+    def test_a_time_plug_loses_the_value_hop(self):
+        _i, comp, rep = V.split_and_selfify(
+            "out = frame.value * 2", {"frame": "time"}, {"out": "float"})
+        self.assertIn("self.frame * 2", comp)
+        self.assertEqual(rep["time_fixes"], ["frame"])
+
+    def test_an_angle_plug_loses_it_too(self):
+        _i, comp, rep = V.split_and_selfify(
+            "out = angle.value", {"angle": "angle"}, {"out": "float"})
+        self.assertIn("self.angle", comp)
+        self.assertNotIn(".value", comp)
+        self.assertEqual(rep["time_fixes"], ["angle"])
+
+    def test_an_unrelated_dot_value_is_left_alone(self):
+        # Only the declared unit-wrapped plug types, never any `.value`.
+        _i, comp, rep = V.split_and_selfify(
+            "out = thing.value", {}, {"out": "float"})
+        self.assertIn("thing.value", comp)
+        self.assertEqual(rep["time_fixes"], [])
+
+    def test_a_float_plug_keeps_its_value_attribute(self):
+        _i, comp, rep = V.split_and_selfify(
+            "out = f.value", {"f": "float"}, {"out": "float"})
+        self.assertIn("self.f.value", comp)
+        self.assertEqual(rep["time_fixes"], [])
+
+
+class TestEvalOfAPlugName(unittest.TestCase):
+    """``eval('boardX')`` -- v1 introspection with a plug name inside a STRING.
+
+    gameOfLifeNode really contains
+    ``test0 = getattr(self, 'boardX') == eval('boardX')``. Under v1 the bare
+    name resolved because plugs were locals in the exec namespace; an AST pass
+    cannot see into a string literal, so this needs its own rule.
+    """
+
+    def test_the_string_is_rewritten(self):
+        _i, comp, rep = V.split_and_selfify(
+            "out = eval('n')", {"n": "int"}, {"out": "float"})
+        self.assertIn("eval('self.n')", comp)
+        self.assertEqual(rep["eval_fixes"], ["n"])
+
+    def test_a_non_plug_string_is_untouched(self):
+        # `self.` would be wrong here, so it is left to fail visibly.
+        _i, comp, rep = V.split_and_selfify(
+            "out = eval('1 + 1')", {}, {"out": "float"})
+        self.assertIn("eval('1 + 1')", comp)
+        self.assertEqual(rep["eval_fixes"], [])
+
+    def test_a_dynamic_argument_is_untouched(self):
+        _i, comp, rep = V.split_and_selfify(
+            "out = eval(name)", {"n": "int"}, {"out": "float"})
+        self.assertIn("eval(name)", comp)
+        self.assertEqual(rep["eval_fixes"], [])
+
+
+class TestInitHelpersAreRewrittenToo(unittest.TestCase):
+    """A top-level def is partitioned into Init BEFORE any rewriting, so for a
+    while a helper that built its own ``MVector`` kept a name that does not
+    exist under v2. springChainNode's ``spring()`` does exactly that, twice."""
+
+    def test_a_bare_ctor_inside_an_init_def_is_rewritten(self):
+        init, _c, rep = V.split_and_selfify(
+            "def helper():\n    return MVector(0, 0, 0)\n\nout = helper()[0]",
+            {}, {"out": "float"})
+        self.assertIn("_v1_vec(0, 0, 0)", init)
+        self.assertNotIn("MVector", init)
+        self.assertEqual(rep["vec_ctor_fixes"], ["MVector"])
+
+    def test_the_shim_import_is_present_for_an_init_only_fix(self):
+        init, _c, _r = V.split_and_selfify(
+            "def helper():\n    return MVector(0, 0, 0)\n\nout = helper()[0]",
+            {}, {"out": "float"})
+        self.assertIn("v1_compat import v1_vec as _v1_vec", init)
+
+
+class TestThirdPartyImportsAreReported(unittest.TestCase):
+    """pyaudio is not dropped the way mpylib is -- unlike v1's own library it
+    can legitimately be installed -- but it is reported, with the v2 route
+    named, because otherwise the failure is a bare ModuleNotFoundError."""
+
+    def test_pyaudio_is_reported_and_kept(self):
+        init, _c, rep = V.split_and_selfify(
+            "import pyaudio\nout = 1.0", {}, {"out": "float"})
+        self.assertIn("import pyaudio", init)
+        self.assertEqual(rep["third_party_imports"], ["pyaudio"])
+
+    def test_the_report_names_the_v2_route(self):
+        self.assertIn("play_pcm", V._V1_THIRD_PARTY["pyaudio"])
+
+    def test_an_ordinary_import_is_not_reported(self):
+        _i, _c, rep = V.split_and_selfify(
+            "import math\nout = math.pi", {}, {"out": "float"})
+        self.assertEqual(rep["third_party_imports"], [])
+
+
+class TestV1CompatModule(unittest.TestCase):
+    """``_common/io/v1_compat.py`` -- the runtime half of the conversion.
+
+    A real module rather than injected Init source for one concrete reason:
+    stored variables are PICKLED, and v1 nodes keep buffers of vectors
+    (springChain velocity/position, unitSphereCollision a point grid). A class
+    defined by exec-ing Init source has no importable path, so its instances
+    cannot round-trip -- which is why those two scenes failed from their SAVED
+    data rather than from anything in their expressions.
+    """
+
+    def setUp(self):
+        from mpynode._common.io import v1_compat
+        self.C = v1_compat
+
+    def test_it_is_a_numpy_subclass_so_numpy_still_works(self):
+        import numpy
+        v = self.C.v1_vec(1, 2, 3)
+        self.assertIsInstance(v, numpy.ndarray)
+        self.assertEqual(list(v + self.C.v1_vec(1, 1, 1)), [2.0, 3.0, 4.0])
+        self.assertEqual(list(2.0 * v), [2.0, 4.0, 6.0])
+        self.assertEqual(list(v * self.C.v1_vec(2, 2, 2)), [2.0, 4.0, 6.0])
+
+    def test_length_and_the_two_normalise_variants(self):
+        v = self.C.v1_vec(3, 4, 0)
+        self.assertEqual(v.length(), 5.0)
+        # normal() copies; normalize() mutates in place and returns self,
+        # which is what springChainNode relies on.
+        self.assertEqual(list(v.normal()), [0.6, 0.8, 0.0])
+        self.assertEqual(list(v), [3.0, 4.0, 0.0])
+        self.assertEqual(list(v.normalize()), [0.6, 0.8, 0.0])
+        self.assertEqual(list(v), [0.6, 0.8, 0.0])
+
+    def test_a_zero_vector_normalises_without_dividing_by_zero(self):
+        z = self.C.v1_vec(0, 0, 0)
+        self.assertEqual(list(z.normalize()), [0.0, 0.0, 0.0])
+        self.assertEqual(list(z.normal()), [0.0, 0.0, 0.0])
+
+    def test_distance_and_cross(self):
+        self.assertEqual(self.C.v1_vec(0, 0, 0).distanceTo(
+            self.C.v1_vec(1, 2, 2)), 3.0)
+        self.assertEqual(
+            list(self.C.v1_vec(1, 0, 0) ^ self.C.v1_vec(0, 1, 0)),
+            [0.0, 0.0, 1.0])
+
+    def test_point_times_matrix_is_a_homogeneous_transform(self):
+        translate = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 5, 6, 7, 1]
+        self.assertEqual(list(self.C.v1_vec(1, 2, 3) * translate),
+                         [6.0, 8.0, 10.0])
+
+    def test_a_four_component_point_drops_w(self):
+        self.assertEqual(list(self.C.v1_vec(1, 2, 3, 1)), [1.0, 2.0, 3.0])
+
+    def test_no_args_and_short_input(self):
+        self.assertEqual(list(self.C.v1_vec()), [0.0, 0.0, 0.0])
+        self.assertEqual(list(self.C.v1_vec(7)), [7.0, 0.0, 0.0])
+
+    def test_matrix_rows_accepts_a_matrixview_and_refuses_other_things(self):
+        class FakeView:
+            def asMatrix(self):
+                return list(range(16))
+        self.assertEqual(self.C.matrix_rows(FakeView())[0],
+                         [0.0, 1.0, 2.0, 3.0])
+        self.assertIsNone(self.C.matrix_rows([1, 2, 3]))
+        self.assertIsNone(self.C.matrix_rows("nope"))
+        self.assertIsNone(self.C.matrix_rows(4.0))
+
+    def test_stored_vars_are_coerced_recursively(self):
+        got = self.C.coerce_stored(
+            {"buf": [[1, 2, 3], [4, 5, 6, 1]], "n": 7, "s": "x"})
+        self.assertEqual(list(got["buf"][0]), [1.0, 2.0, 3.0])
+        self.assertEqual(list(got["buf"][1]), [4.0, 5.0, 6.0])
+        self.assertTrue(hasattr(got["buf"][0], "distanceTo"))
+        self.assertEqual(got["n"], 7)
+        self.assertEqual(got["s"], "x")
+
+    def test_coercion_leaves_non_vector_lists_alone(self):
+        for value in ([1, 2], [1, 2, 3, 4, 5], ["a", "b", "c"],
+                      [True, False, True]):
+            self.assertEqual(self.C.coerce_stored(value), value)
+
+    def test_a_coerced_vector_survives_a_pickle_round_trip(self):
+        # The whole reason this is a module. Without it springChainNode and
+        # unitSphereCollisionNode compute against plain lists from their
+        # saved buffers and raise on the first multiply.
+        import pickle
+        v = self.C.coerce_stored([1, 2, 3])
+        back = pickle.loads(pickle.dumps(v))
+        self.assertEqual(list(back), [1.0, 2.0, 3.0])
+        self.assertEqual(back.length(), self.C.v1_vec(1, 2, 3).length())
+
+    def test_raw_float32_pcm_gets_a_valid_wav_container(self):
+        # v1 pushed these bytes straight at PyAudio with format=32
+        # (paFloat32). Qt plays files, so they need a header -- and `wave`
+        # cannot write IEEE float, so they become 16-bit signed.
+        import array
+        import io as _io
+        import math
+        import wave
+        n = 512
+        pcm = array.array(
+            "f", (0.5 * math.sin(2 * math.pi * 440 * i / 22050)
+                  for i in range(n))).tobytes()
+        wav = self.C.wav_from_float32(pcm, 22050)
+        self.assertEqual(wav[:4], b"RIFF")
+        self.assertEqual(wav[8:12], b"WAVE")
+        handle = wave.open(_io.BytesIO(wav))
+        self.assertEqual(handle.getnchannels(), 1)
+        self.assertEqual(handle.getsampwidth(), 2)
+        self.assertEqual(handle.getframerate(), 22050)
+        self.assertEqual(handle.getnframes(), n)
+
+    def test_out_of_range_samples_are_clamped_not_wrapped(self):
+        # v1 fed these to the sound card directly, so nothing guarantees they
+        # sit inside [-1, 1]; overflowing int16 turns a loud clip into noise.
+        import array
+        import io as _io
+        import wave
+        pcm = array.array("f", [2.0, -2.0, 0.0]).tobytes()
+        handle = wave.open(_io.BytesIO(self.C.wav_from_float32(pcm, 8000)))
+        frames = array.array("h")
+        frames.frombytes(handle.readframes(3))
+        self.assertEqual(list(frames), [32767, -32767, 0])
+
+    def test_play_pcm_degrades_instead_of_raising(self):
+        # No QtMultimedia, no audio device, junk bytes -- a node that cannot
+        # make a noise must still compute its outputs.
+        self.assertIsNone(self.C.play_pcm(b"", 0))
+        self.assertIsNone(self.C.play_pcm(None, 22050))
