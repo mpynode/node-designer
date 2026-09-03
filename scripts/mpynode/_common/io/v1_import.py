@@ -394,6 +394,199 @@ def _globals_used_in_defs(tree, names):
     return out
 
 
+# ---------------------------------------------------------------------------
+# v1 -> v2 type mismatches the converter can fix outright
+# ---------------------------------------------------------------------------
+#
+# Two of these show up in nearly every non-trivial v1 node, and both are
+# invisible until the node evaluates. Measured on quaternionSpineNode: fixing
+# the first merely reveals the second, and the node runs clean once both are
+# done -- four edit sites in 52 lines.
+#
+#   1. A matrix plug read used to be an ``MMatrix``. In v2 it is a
+#      ``MatrixView``, so ``om.MTransformationMatrix(self.someMatrix)`` raises
+#      ``ValueError: MTransformationMatrix : no matching constructor found``.
+#      MatrixView carries the conversion itself.
+#
+#   2. An ``MPoint`` has FOUR components. v1 accepted one for a 3-component
+#      plug and quietly used x/y/z; v2 hands numpy, which refuses with
+#      ``could not broadcast input array from shape (4,) into shape (3,)``.
+
+_MATRIX_CTORS = {"MMatrix": "asMatrix",
+                 "MTransformationMatrix": "asTransformationMatrix"}
+
+# Plug types that take exactly three components.
+_VEC3_TYPES = ("vector", "color", "euler")
+
+_VEC3_SHIM = "_v1_vec3"
+
+# Built line-by-line rather than as one literal so the docstring inside it
+# needs no quote gymnastics.
+_VEC3_SHIM_SRC = chr(10).join([
+    "def _v1_vec3(v):",
+    '    """Added by the v1 importer; safe to delete once the maths is tidied.',
+    "",
+    "    v1 accepted a 4-component MPoint where a 3-component plug was",
+    "    expected and quietly used x/y/z. v2 hands numpy, which refuses the",
+    "    shape. Anything already 3 long (or not a sequence at all) passes",
+    '    through untouched."""',
+    "    try:",
+    "        seq = list(v)",
+    "    except TypeError:",
+    "        return v",
+    "    return seq[:3] if len(seq) > 3 else v",
+])
+
+
+def _plug_of(node):
+    """The plug name a ``self.``-rooted expression refers to, or None.
+
+    Accepts ``self.<n>`` and ``self.<n>[...]`` alike: an element of a matrix
+    ARRAY plug is a MatrixView exactly as a single matrix plug is, and an
+    element of a vector array takes three components exactly as a single
+    vector plug does.
+    """
+    if isinstance(node, ast.Subscript):
+        node = node.value
+    if (isinstance(node, ast.Attribute)
+            and isinstance(node.value, ast.Name)
+            and node.value.id == "self"):
+        return node.attr
+    return None
+
+
+class _ApiTypeFix(ast.NodeTransformer):
+    """Rewrites the two mismatches above. Runs AFTER :class:`_Selfify`,
+    because it recognises plug access by the ``self.`` prefix that pass
+    installs.
+
+    Both rules are driven by the DECLARED attribute type rather than by
+    inferring what an expression evaluates to -- the declared type is ground
+    truth from ``_inputAttrs`` / ``_outputAttrs``, so neither rule can fire on
+    something that merely looks like a plug.
+    """
+
+    def __init__(self, types):
+        self.types = types
+        self.matrix_fixes = []
+        self.vec3_fixes = []
+
+    def _is_matrix_plug(self, node):
+        name = _plug_of(node)
+        return name is not None and self.types.get(name) == "matrix"
+
+    def visit_Call(self, node):
+        self.generic_visit(node)
+        # Both the qualified `om.MMatrix(...)` and the bare `MMatrix(...)`
+        # form, because v1 made those names ambient in the expression
+        # namespace and real v1 nodes use both.
+        if isinstance(node.func, ast.Name):
+            ctor = node.func.id
+        elif isinstance(node.func, ast.Attribute):
+            ctor = node.func.attr
+        else:
+            return node
+        method = _MATRIX_CTORS.get(ctor)
+        if (method is None or len(node.args) != 1 or node.keywords
+                or not self._is_matrix_plug(node.args[0])):
+            return node
+        self.matrix_fixes.append("%s(%s) -> .%s()"
+                                 % (ctor, _plug_of(node.args[0]), method))
+        return ast.Call(
+            func=ast.Attribute(value=node.args[0], attr=method,
+                               ctx=ast.Load()),
+            args=[], keywords=[])
+
+    def visit_Assign(self, node):
+        self.generic_visit(node)
+        if len(node.targets) != 1:
+            return node
+        name = _plug_of(node.targets[0])
+        if name is None or self.types.get(name) not in _VEC3_TYPES:
+            return node
+        # A 3-element display is already the right shape and is the common
+        # case; wrapping it would be pure noise.
+        if (isinstance(node.value, (ast.List, ast.Tuple))
+                and len(node.value.elts) == 3):
+            return node
+        if (isinstance(node.value, ast.Call)
+                and isinstance(node.value.func, ast.Name)
+                and node.value.func.id == _VEC3_SHIM):
+            return node
+        self.vec3_fixes.append(name)
+        node.value = ast.Call(func=ast.Name(id=_VEC3_SHIM, ctx=ast.Load()),
+                              args=[node.value], keywords=[])
+        return node
+
+
+# v1's own library. It cannot be satisfied under v2 -- and deliberately so:
+# v2 does not make api objects ambient, which was an explicit design decision
+# rather than an omission. Four of the nine upstream examples do
+# ``from mpylib import MVector`` or ``MPoint``.
+#
+# Leaving such an import in place is much worse than dropping it, because Init
+# is ALL-OR-NOTHING: the ModuleNotFoundError aborts the whole Init exec, so
+# every other Init name -- imports, helper defs, the _v1_vec3 shim -- vanishes
+# too, and the error Compute reports is whichever of those names it happens to
+# reach first. That trail points nowhere near the real cause. Dropping the
+# import localises the failure to the actual use of MVector, which the report
+# already explains.
+_V1_LIB_ROOTS = ("mpylib",)
+
+
+def _v1_lib_module(stmt):
+    """The v1-library module a statement imports from, or None."""
+    if isinstance(stmt, ast.ImportFrom):
+        mod = stmt.module or ""
+        return mod if mod.split(".")[0] in _V1_LIB_ROOTS else None
+    if isinstance(stmt, ast.Import):
+        for alias in stmt.names:
+            if alias.name.split(".")[0] in _V1_LIB_ROOTS:
+                return alias.name
+    return None
+
+
+def _strip_v1_lib_import(stmt):
+    """``(kept_stmt_or_None, description)`` for one import statement.
+
+    ``import mpylib, math`` keeps the ``math`` half rather than throwing the
+    line away, so an unrelated import is never collateral damage.
+    """
+    mod = _v1_lib_module(stmt)
+    if mod is None:
+        return stmt, None
+    bound = ", ".join(a.asname or a.name for a in stmt.names)
+    if isinstance(stmt, ast.ImportFrom):
+        return None, "from %s import %s" % (mod, bound)
+    survivors = [a for a in stmt.names
+                 if a.name.split(".")[0] not in _V1_LIB_ROOTS]
+    dead = ", ".join(a.asname or a.name for a in stmt.names
+                     if a.name.split(".")[0] in _V1_LIB_ROOTS)
+    if survivors:
+        stmt.names = survivors
+        return stmt, "import %s" % dead
+    return None, "import %s" % dead
+
+
+def _nested_v1_lib_imports(tree):
+    """v1-library imports inside a def/class, reported but NOT removed.
+
+    One of these fails when its function is CALLED, not during Init, so it
+    does not take the namespace down with it -- and removing it could leave an
+    empty function body. Reporting is enough.
+    """
+    top = set(id(s) for s in tree.body)
+    out = []
+    for node in ast.walk(tree):
+        if id(node) in top:
+            continue
+        if isinstance(node, (ast.Import, ast.ImportFrom)):
+            mod = _v1_lib_module(node)
+            if mod:
+                out.append(mod)
+    return sorted(set(out))
+
+
 def split_and_selfify(expression, inputs, outputs):
     """``(init_src, compute_src, report)`` for one v1 expression.
 
@@ -403,7 +596,9 @@ def split_and_selfify(expression, inputs, outputs):
     where guessing the other way breaks the node.
     """
     report = {"shadowed": [], "globals_in_defs": [], "rewrites": 0,
-              "init_stmts": 0, "compute_stmts": 0}
+              "init_stmts": 0, "compute_stmts": 0,
+              "matrix_view_fixes": [], "vec3_fixes": [],
+              "dead_imports": []}
     try:
         tree = ast.parse(expression)
     except SyntaxError as exc:
@@ -419,16 +614,42 @@ def split_and_selfify(expression, inputs, outputs):
     report["shadowed"] = sorted(shadowed)
     report["globals_in_defs"] = sorted(_globals_used_in_defs(tree, names))
 
+    dead = list(_nested_v1_lib_imports(tree))
+
     init_body, compute_body = [], []
     for st in tree.body:
-        if isinstance(st, (ast.Import, ast.ImportFrom, ast.FunctionDef,
-                           ast.AsyncFunctionDef, ast.ClassDef)):
+        if isinstance(st, (ast.Import, ast.ImportFrom)):
+            kept, dropped = _strip_v1_lib_import(st)
+            if dropped:
+                dead.append(dropped)
+            if kept is not None:
+                init_body.append(kept)
+            continue
+        if isinstance(st, (ast.FunctionDef, ast.AsyncFunctionDef,
+                           ast.ClassDef)):
             init_body.append(st)
         else:
             compute_body.append(st)
+    report["dead_imports"] = sorted(set(dead))
 
     xf = _Selfify(names - shadowed, shadowed)
     body = [xf.visit(s) for s in compute_body]
+
+    # Now that plug access wears a `self.` prefix, the declared types can be
+    # used to repair the two v1/v2 type mismatches outright. Ordering is not
+    # optional: _ApiTypeFix recognises a plug by that prefix.
+    types = dict(inputs)
+    types.update(outputs)
+    fix = _ApiTypeFix(types)
+    body = [fix.visit(s) for s in body]
+    report["matrix_view_fixes"] = list(fix.matrix_fixes)
+    report["vec3_fixes"] = sorted(set(fix.vec3_fixes))
+
+    # The shim goes in Init, whose names are bare globals in Compute -- and
+    # only when something actually needs it, so a node that does not gets no
+    # mystery function to wonder about.
+    if fix.vec3_fixes:
+        init_body = list(ast.parse(_VEC3_SHIM_SRC).body) + init_body
 
     # A shadowed input is left bare -- but it still has to START as the plug
     # value, because v1 pre-populated the namespace and the expression may read

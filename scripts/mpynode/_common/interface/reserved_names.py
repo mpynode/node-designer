@@ -207,6 +207,36 @@ def _add_self_bridge(out):
         )
 
 
+# Physical internal plugs whose names do NOT start with an underscore, so
+# nothing else filters them out. Only one so far: the v1 compatibility carrier
+# declared by ``_api2.helpers.make_legacy_expression_attr`` and added to every
+# mpy type through ``build_internal_attrs``. Before it existed the name was
+# free; now a user attribute called ``expression`` would collide with a real
+# plug and Maya would reject the addAttr with an unhelpful error.
+_INTERNAL_PLUG_NAMES = {
+    "expression": "'expression' is the deprecated v1 compatibility plug, "
+                  "kept so Maya scenes saved with node-designer v1 still "
+                  "load. Pick another name -- the v2 equivalent is the "
+                  "Compute tab.",
+}
+
+
+def _internal_plug_reason(name, node_type):
+    """Reason ``name`` collides with a physical internal plug, or None.
+
+    Checked in ``check_reserved_name`` beside the prefix rule rather than
+    folded into ``reserved_names_for_type``, and for the same reason the
+    prefix rule lives there: this one is a hardcoded literal that needs no
+    imports, whereas the type dict is contractually allowed -- required, in
+    fact -- to come back EMPTY when its imports fail, so that a name it could
+    not verify is never blocked. A rule that cannot fail has no business
+    riding on a fail-open path.
+    """
+    if str(node_type or "") not in _TYPE_TO_WRAPPER:
+        return None
+    return _INTERNAL_PLUG_NAMES.get(name)
+
+
 def reserved_names_for_type(node_type):
     """``{name: reason}`` for every name a user may not take on ``node_type``.
 
@@ -256,6 +286,16 @@ def check_reserved_name(name, node_type=None, node_name=None):
                     "names starting with {!r} are reserved by the "
                     "framework's 'self' bookkeeping".format(prefix)
                 )
+        if node_type is None and node_name is not None:
+            try:
+                import maya.cmds as _mc
+
+                node_type = _mc.nodeType(node_name)
+            except Exception:
+                node_type = None
+        internal = _internal_plug_reason(text, node_type)
+        if internal:
+            return internal
         if node_type is None and node_name is not None:
             reserved = reserved_names_for_node(node_name)
         elif node_type is not None:

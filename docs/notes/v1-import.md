@@ -209,3 +209,204 @@ for them.
 Start with the spine: 13 inputs, 4 outputs, 1 stored var, 179 lines, five
 enums with no labels, and `om` usage throughout. If that one converts and runs,
 the shape is right.
+
+---
+
+# Converting on scene open — the other path
+
+**Status: BUILT.** `_common/io/v1_upgrade.py`, 27 tests in
+`tests/framework/test_v1_upgrade.py`.
+
+The text importer above needs a `.ma`. That rules out `.mb`, references,
+imports and paste, and it asks the user to know their scene contains a v1 node.
+The on-open path asks nothing: v2 registers the same node TYPE name as v1, so
+Maya builds a v2 `mPyNode` and replays v1's `setAttr` calls at it, and the node
+can be converted where it sits.
+
+One plug had to be added for this to be possible at all —
+`_api2.helpers.make_legacy_expression_attr` declares a hidden, unconnectable
+`expression` string so v1's single compute source lands instead of being
+dropped. `is_pending` then gates on *non-empty `expression` + empty
+`_computeSource`*, a state no v2-authored node can be in, which makes the sweep
+idempotent with no marker attribute.
+
+## The trap: a shared plug name is not a shared format
+
+Everything else about the open looked like good news, and that was the problem.
+All 26 user attributes survive — `addAttr` is type-agnostic — and every
+internal plug loads without complaint. The node looks converted. It is not:
+
+| Plug | v1 | v2 | Symptom |
+|---|---|---|---|
+| `_inputAttrs` / `_outputAttrs` | base64+pickle `{name: [type]}` | **plain JSON** `{name: {attr_type, is_array, order}}` | plugs on the node, Attributes tab **empty**, `self.<attr>` unresolved |
+| `_storedVarNames` | base64+pickle `[name, ...]` | **comma-joined string** | every stored variable reads back absent, plus one garbage name in the UI |
+| `_storedVarsData` | base64+pickle `{name: value}` | same | — genuinely compatible |
+
+A payload that survives intact and is then read as nothing is much harder to
+notice than one that failed to load, and both of these shipped past a check
+that read the plug back and found it undamaged. The tests assert through v2's
+own readers (`get_input_attr_map`, `get_variables`) for exactly that reason.
+
+Two details v1's schema simply cannot express, so they come from elsewhere:
+
+* **`is_array`** — a multi is stored as `['matrix']` just like a single. Read
+  from the live plug with `attributeQuery(multi=True)`; the plug is the only
+  witness.
+* **`order`** — taken from the v1 dict, which preserves authoring order, and
+  which is what drives Channel Box ordering.
+
+## The ordering constraint
+
+`stored_var_store.load_and_clear_all()` hydrates `_storedVarsData` into an
+in-memory cache and then **clears the plug**, on the grounds that the cache is
+authoritative for the session. So the upgrade must be sequenced *before* it in
+`_on_scene_opened` and `_on_after_import` — placed after, it reads an empty
+plug and drops every stored variable, silently. Nor can it read the cache
+instead: hydration keys off `_storedVarNames`, which is in v1's format at that
+point, so the values are not in the cache either.
+
+Neither ordering is observable from the outside — both produce a node that
+looks right apart from its missing variables — so it is pinned by a
+source-order assertion in `TestTheCallbackOrdering`.
+
+**`kAfterReference` deliberately does not sweep.** A referenced node's plugs
+are locked, so the rewrite could not be written, and the edit would not belong
+to the referencing scene. Reference a v1 scene and it stays v1; import it, or
+open and re-save it, to convert.
+
+## What still needs a human
+
+Unchanged from the text importer, and the report now names the concrete fix:
+a matrix plug read is a `MatrixView`, so `om.MMatrix(x)` and
+`om.MTransformationMatrix(x)` become `x.asMatrix()` and
+`x.asTransformationMatrix()`. On `quaternionSpineNode.ma` the conversion is
+otherwise complete — 13 inputs, 4 outputs, 1 stored var, 38 rewrites, 6 enums
+relabelled — and what remains is that substitution.
+
+## Standing down when v1 owns the node type
+
+The whole on-open design assumes v1's plug-in is **not** loaded. If it is, the
+feature must do nothing, and getting that wrong is destructive rather than
+merely useless.
+
+Both versions register the node type name `mPyNode`, and whichever plug-in
+gets there first wins. v1 wins easily, because every v1 scene contains
+
+```
+requires -nodeType "mPyNode" "mpynode_plugin.py" "1.0";
+```
+
+which loads v1 **by filename** from the plug-in path — so a v1 install in the
+Maya user directory is pulled in by the scene itself, no autoload preference
+required. v2's registration then fails (`kFailure` from `mpynode_api2.py`),
+and with it every other api2 type, which is the tell:
+
+```
+# Error: RuntimeError: ... mpynode_api2.py line 191: (kFailure): Unexpected Internal Failure
+# Warning: Unknown object type: mPyLocator
+# Warning: Unknown object type: mPyConstraint      ... and four more
+```
+
+The nodes in the scene are then **v1 nodes running v1's compute**, and the v2
+sweep must not touch them. Rewriting `_inputAttrs` into v2's JSON leaves v1
+unable to build its expression locals, and its compute dies with
+`NameError: name 'inputCurve' is not defined`. Observed exactly that way: the
+scene opened and evaluated correctly, then the Designer was launched — which
+imported `mpynode` and installed v2's scene callbacks — and the next open of
+the same scene broke the node.
+
+`is_pending` therefore requires `_computeSource` to **EXIST**, not merely to be
+empty. That is an exact test, because v1 does not declare `_computeSource`
+anywhere in its source tree, so a v1-owned node can never satisfy it. The
+original gate could not tell the two cases apart: its `_get` helper returned
+`""` for "plug absent" and "plug empty" alike.
+
+`find_foreign` reports the stand-down once per session rather than silently,
+because this state is otherwise invisible — v2's plug-in loaded, its node type
+did not, and every Designer panel reads an empty node with nothing to say why.
+
+To use v2, move v1 out of the Maya plug-in and script paths
+(`plug-ins/mpynode_plugin.py`, `plug-ins/_mpynode`, `scripts/mpylib`) and
+restart Maya. Maya will then warn that it cannot find `mpynode_plugin.py` when
+opening a v1 scene, which is harmless: v2 already owns the type by then.
+
+This also revises an earlier assessment recorded during scoping, that the
+`requires` field mismatch was non-blocking. It is non-blocking **only** when
+v1 is not installed.
+
+## The two type mismatches the converter now repairs
+
+Both appear in nearly every non-trivial v1 node, both are invisible until the
+node evaluates, and they **hide behind each other** — fixing the first only
+reveals the second:
+
+| | v1 | v2 | Error |
+|---|---|---|---|
+| Matrix plug read | `MMatrix` | `MatrixView` | `MTransformationMatrix : no matching constructor found` |
+| `MPoint` → 3-component plug | 4 components, `w` silently dropped | numpy | `could not broadcast input array from shape (4,) into shape (3,)` |
+
+`_ApiTypeFix` in `v1_import.py` fixes both, and because `v1_upgrade.convert`
+delegates to `V.convert`, the on-open sweep and `File ▸ Import v1 Node` share
+one implementation.
+
+Both rules are driven by the **declared** attribute type from `_inputAttrs` /
+`_outputAttrs`, never by inferring what an expression evaluates to, so neither
+can fire on something that merely looks like a plug:
+
+* `om.MMatrix(X)` / `om.MTransformationMatrix(X)` — and the bare forms, since
+  v1 made those names ambient — become `X.asMatrix()` /
+  `X.asTransformationMatrix()` **only** when `X` is `self.<n>` or
+  `self.<n>[...]` and `<n>` is declared `matrix`. A helper that returns a real
+  `MMatrix` keeps its constructor.
+* A write to a `vector` / `color` / `euler` plug is wrapped in a `_v1_vec3`
+  shim injected into Init, unless the right-hand side is already a 3-element
+  display.
+
+The shim rather than a table of api return types, because the spine wrote
+`p0 + t0 * n` — MPoint-valued with nothing on the line to infer it from, and
+no table can see through a user helper either.
+
+### Result on the corpus
+
+Nine upstream scenes, through convert-on-open, with v1's `mpylib` importable:
+
+| | before | after |
+|---|---|---|
+| Evaluate clean | 4 | **5** |
+
+`splineNode` went from *needs hand-finishing* to clean on the auto-fix alone,
+and `quaternionSpineNode` converts and runs with **zero** hand edits — 13
+inputs, 4 outputs, 1 stored var, 38 rewrites, 1 matrix fix, 3 vector fixes.
+
+The remaining four are all pre-existing categories the converter already
+reports and cannot fix: a helper reading a plug as a global (`gameOfLife`),
+and v1 api-object arithmetic (`ouch`, `springChain`, `unitSphereCollision`).
+
+### A sharp edge worth knowing
+
+Four of the nine examples do `from mpylib import MVector`. Once v1 is moved
+out of the script path — which v2 requires — that import raises
+`ModuleNotFoundError`, and because Init is all-or-nothing that takes down
+**every** Init name with it. The reported error is then whichever Init name
+Compute reaches first, which since this change is usually `_v1_vec3` — a
+misleading trail that points at the shim instead of at the dead import. The
+converter should drop and report those imports so the failure localises to the
+actual use of `MVector`.
+
+**Fixed.** The converter drops any top-level `mpylib` import and reports it.
+`import mpylib, math` keeps the `math` half, so an unrelated import is never
+collateral damage, and one nested inside a `def` is reported but left alone --
+it fails when that function is called rather than during Init, and removing it
+could leave an empty function body.
+
+The measurable difference on `gameOfLifeNode`, with v1 absent:
+
+| | before | after |
+|---|---|---|
+| `set_init_expression` | `False` | **`True`** |
+| Compute reports | `NameError: name '_v1_vec3' is not defined` | `NameError: name 'MVector' is not defined` |
+
+The node still does not evaluate -- `MVector` has no v2 equivalent unless you
+reach for numpy or `mpynode.api` -- but the error now names the real problem
+instead of the importer's own shim, and the report states outright what was
+dropped and what to replace it with.

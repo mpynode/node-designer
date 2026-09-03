@@ -252,3 +252,207 @@ class TestHandFinishReporting(unittest.TestCase):
         for key in ("shadowed", "globals_in_defs", "synthesized_enums",
                     "api_objects", "needs_hand_finish", "init", "compute"):
             self.assertIn(key, spec, key)
+
+
+class TestApiTypeFixes(unittest.TestCase):
+    """The two v1->v2 type mismatches the converter repairs outright.
+
+    Both were found by evaluating a real converted node rather than by reading
+    v1's source, and they hide behind each other: on
+    ``quaternionSpineNode.ma`` fixing the first only reveals the second, and
+    the node runs clean once both are done. Four edit sites in 52 lines --
+    which is why they are worth automating rather than reporting.
+
+    Both rules key off the DECLARED attribute type, never off inferring what
+    an expression evaluates to, so neither can fire on something that merely
+    looks like a plug read.
+    """
+
+    def _conv(self, src, ins, outs):
+        return V.split_and_selfify(src, ins, outs)
+
+    # -- class 1: a matrix plug read is a MatrixView, not an MMatrix --------
+
+    def test_a_qualified_matrix_ctor_on_a_plug_is_rewritten(self):
+        _i, comp, rep = self._conv("out = om.MTransformationMatrix(m)",
+                                   {"m": "matrix"}, {"out": "matrix"})
+        self.assertIn("self.m.asTransformationMatrix()", comp)
+        self.assertNotIn("MTransformationMatrix(", comp)
+        self.assertEqual(len(rep["matrix_view_fixes"]), 1)
+
+    def test_the_bare_ctor_form_is_rewritten_too(self):
+        # v1 made MMatrix/MPoint/MVector ambient in the expression namespace,
+        # and real v1 nodes use both the bare and the om.-qualified form.
+        _i, comp, _r = self._conv("out = MMatrix(m)",
+                                  {"m": "matrix"}, {"out": "matrix"})
+        self.assertIn("self.m.asMatrix()", comp)
+
+    def test_an_array_element_is_rewritten(self):
+        # An element of a matrix ARRAY plug is a MatrixView just as a single
+        # matrix plug is -- this is the form the spine example actually used.
+        _i, comp, _r = self._conv(
+            "out = om.MTransformationMatrix(m[i])",
+            {"m": "matrix"}, {"out": "matrix"})
+        self.assertIn("self.m[i].asTransformationMatrix()", comp)
+
+    def test_a_non_plug_argument_is_left_alone(self):
+        # A helper returning a real MMatrix must keep its constructor.
+        _i, comp, rep = self._conv(
+            "out = om.MTransformationMatrix(buildMatrix(1))",
+            {}, {"out": "matrix"})
+        self.assertIn("om.MTransformationMatrix(buildMatrix(1))", comp)
+        self.assertEqual(rep["matrix_view_fixes"], [])
+
+    def test_a_plug_of_the_wrong_type_is_left_alone(self):
+        _i, comp, rep = self._conv("out = om.MMatrix(f)",
+                                   {"f": "float"}, {"out": "matrix"})
+        self.assertIn("om.MMatrix(self.f)", comp)
+        self.assertEqual(rep["matrix_view_fixes"], [])
+
+    def test_a_multi_argument_ctor_is_left_alone(self):
+        _i, comp, _r = self._conv("out = om.MMatrix(m, m)",
+                                  {"m": "matrix"}, {"out": "matrix"})
+        self.assertIn("om.MMatrix(self.m, self.m)", comp)
+
+    # -- class 2: an MPoint has four components, a vector plug has three ----
+
+    def test_a_computed_write_to_a_vector_plug_is_wrapped(self):
+        _i, comp, rep = self._conv("out = curve.getPointAtParam(0)",
+                                   {}, {"out": "vector"})
+        self.assertIn("_v1_vec3(curve.getPointAtParam(0))", comp)
+        self.assertEqual(rep["vec3_fixes"], ["out"])
+
+    def test_arithmetic_is_wrapped_even_with_no_api_call_on_the_line(self):
+        # The spine wrote `p0 + t0 * n`, MPoint-valued with nothing on the
+        # line to infer that from. This is why the fix is a shim rather than
+        # a table of api return types.
+        _i, comp, _r = self._conv("out = p0 + t0 * 3",
+                                  {}, {"out": "vector"})
+        self.assertIn("_v1_vec3(p0 + t0 * 3)", comp)
+
+    def test_a_three_element_display_is_not_wrapped(self):
+        # Already the right shape, and by far the common case -- wrapping it
+        # would be pure noise.
+        _i, comp, rep = self._conv("out = [1, 2, 3]", {}, {"out": "vector"})
+        self.assertIn("out = [1, 2, 3]", comp)
+        self.assertNotIn("_v1_vec3", comp)
+        self.assertEqual(rep["vec3_fixes"], [])
+
+    def test_euler_and_colour_plugs_are_covered(self):
+        _i, comp, rep = self._conv("a = f()\nb = g()",
+                                   {}, {"a": "euler", "b": "color"})
+        self.assertIn("_v1_vec3(f())", comp)
+        self.assertIn("_v1_vec3(g())", comp)
+        self.assertEqual(rep["vec3_fixes"], ["a", "b"])
+
+    def test_a_non_vector_plug_is_not_wrapped(self):
+        _i, comp, rep = self._conv("out = f()", {}, {"out": "float"})
+        self.assertNotIn("_v1_vec3", comp)
+        self.assertEqual(rep["vec3_fixes"], [])
+
+    def test_an_array_element_write_is_wrapped(self):
+        _i, comp, _r = self._conv("out[i] = f()", {}, {"out": "vector"})
+        self.assertIn("_v1_vec3(f())", comp)
+
+    # -- the shim ----------------------------------------------------------
+
+    def test_the_shim_lands_in_init_when_needed(self):
+        init, _c, _r = self._conv("out = f()", {}, {"out": "vector"})
+        self.assertIn("def _v1_vec3(v):", init)
+
+    def test_no_shim_when_nothing_needs_it(self):
+        # A node that does not need it gets no mystery function to wonder at.
+        init, _c, _r = self._conv("out = [1, 2, 3]", {}, {"out": "vector"})
+        self.assertNotIn("_v1_vec3", init)
+
+    def test_the_shim_truncates_four_and_passes_three_through(self):
+        init, _c, _r = self._conv("out = f()", {}, {"out": "vector"})
+        ns = {}
+        exec(compile(init, "<init>", "exec"), ns)
+        shim = ns["_v1_vec3"]
+        self.assertEqual(shim([1, 2, 3, 1]), [1, 2, 3])
+        self.assertEqual(shim([1, 2, 3]), [1, 2, 3])
+        self.assertEqual(shim(7.5), 7.5)          # not a sequence at all
+
+    def test_the_pass_is_idempotent(self):
+        # convert() may be re-run on the same source; a double wrap would
+        # still be correct but would look like a bug.
+        _i, comp, _r = self._conv("out = f()", {}, {"out": "vector"})
+        _i2, comp2, _r2 = self._conv(comp.replace("self.", ""), {},
+                                     {"out": "vector"})
+        self.assertEqual(comp2.count("_v1_vec3"), 1)
+
+
+class TestDeadV1LibraryImports(unittest.TestCase):
+    """``from mpylib import MVector`` cannot be satisfied under v2, and must be
+    dropped rather than left to fail.
+
+    Four of the nine upstream examples do this. Leaving the import in place is
+    far worse than removing it, because Init is ALL-OR-NOTHING: the
+    ModuleNotFoundError aborts the whole exec, so every other Init name --
+    unrelated imports, helper defs, the ``_v1_vec3`` shim -- disappears with
+    it, and Compute then reports whichever of those it reaches first. On
+    gameOfLifeNode that surfaced as ``NameError: name '_v1_vec3' is not
+    defined``: a trail pointing at the importer's own shim rather than at the
+    dead import. After the drop the same scene reports
+    ``NameError: name 'MVector' is not defined``, which is the truth.
+    """
+
+    def test_the_import_is_dropped_and_reported(self):
+        init, _c, rep = V.split_and_selfify(
+            "from mpylib import MVector\nout = MVector(1, 2, 3)[0]",
+            {}, {"out": "float"})
+        self.assertNotIn("mpylib", init)
+        self.assertEqual(rep["dead_imports"], ["from mpylib import MVector"])
+
+    def test_a_plain_import_is_dropped(self):
+        init, _c, rep = V.split_and_selfify(
+            "import mpylib\nout = 1.0", {}, {"out": "float"})
+        self.assertNotIn("mpylib", init)
+        self.assertEqual(rep["dead_imports"], ["import mpylib"])
+
+    def test_a_submodule_import_is_dropped(self):
+        _i, _c, rep = V.split_and_selfify(
+            "from mpylib.api import openmaya\nout = 1.0",
+            {}, {"out": "float"})
+        self.assertEqual(rep["dead_imports"],
+                         ["from mpylib.api import openmaya"])
+
+    def test_an_unrelated_import_on_the_same_line_survives(self):
+        # Collateral damage would be worse than the original problem.
+        init, _c, rep = V.split_and_selfify(
+            "import mpylib, math\nout = math.pi", {}, {"out": "float"})
+        self.assertIn("import math", init)
+        self.assertNotIn("mpylib", init)
+        self.assertEqual(rep["dead_imports"], ["import mpylib"])
+
+    def test_other_imports_are_untouched(self):
+        init, _c, rep = V.split_and_selfify(
+            "import random\nfrom bisect import bisect_left as bl\nout = 1.0",
+            {}, {"out": "float"})
+        self.assertIn("import random", init)
+        self.assertIn("bisect_left as bl", init)
+        self.assertEqual(rep["dead_imports"], [])
+
+    def test_the_rest_of_init_still_executes(self):
+        # The whole point. Before the drop this Init raised
+        # ModuleNotFoundError and neither `helper` nor the shim existed.
+        init, _c, _r = V.split_and_selfify(
+            "from mpylib import MVector\nimport math\n"
+            "def helper(x):\n    return x * 2\n\nout = helper(1)",
+            {}, {"out": "vector"})
+        ns = {}
+        exec(compile(init, "<init>", "exec"), ns)
+        self.assertEqual(ns["helper"](3), 6)
+        self.assertIn("math", ns)
+        self.assertIn("_v1_vec3", ns)
+
+    def test_a_nested_import_is_reported_but_left_alone(self):
+        # It fails when the function is CALLED, not during Init, so it does
+        # not poison the namespace -- and removing it could leave an empty
+        # function body. Reporting is enough.
+        init, _c, rep = V.split_and_selfify(
+            "def f():\n    from mpylib import MVector\n    return MVector()\n"
+            "\nout = 1.0", {}, {"out": "float"})
+        self.assertIn("from mpylib import MVector", init)
+        self.assertEqual(rep["dead_imports"], ["mpylib"])

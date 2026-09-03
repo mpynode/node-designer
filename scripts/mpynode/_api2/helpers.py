@@ -79,6 +79,44 @@ def make_expression_attr():
     return obj
 
 
+def make_legacy_expression_attr():
+    """DEPRECATED. Exists solely so a v1 scene can be opened without data loss.
+
+    v1 (``node-designer``) stored its single compute source on a plug literally
+    named ``expression``. v2 stores four source tiers and calls the compute one
+    ``_computeSource``, so a v1 scene's ``setAttr ".expression"`` had nowhere
+    to land -- and because v2 registers the same node TYPE name, Maya builds a
+    v2 node and replays v1's setAttrs at it rather than making an unknown node.
+    The measured result was that the attributes survived and the CODE was
+    silently dropped; saving over the original then lost it for good.
+
+    Declaring the plug gives that value somewhere to arrive. It is not part of
+    v2's authoring surface: hidden, unconnectable, and swept into
+    ``_computeSource`` by ``_common/io/v1_upgrade`` on the next scene-open
+    callback.
+
+    ``storable=True`` on purpose. It would be tidier to make it transient so a
+    converted node never re-saves the legacy payload -- but then a conversion
+    that FAILED would evaporate the moment the user saved, turning a
+    recoverable problem into a permanent one. It is cleared explicitly, and
+    only on success.
+    """
+    str_data = om.MFnStringData()
+    default_obj = str_data.create("")
+    fn = om.MFnTypedAttribute()
+    obj = fn.create("expression", "expression", om.MFnData.kString, default_obj)
+    # Not connectable and not internal: this is an inert carrier, and giving it
+    # setInternalValue handling would make a legacy payload look like an edit.
+    fn.connectable = False
+    fn.readable = True
+    fn.writable = True
+    fn.storable = True
+    fn.keyable = False
+    fn.hidden = True
+    fn.channelBox = False
+    return obj
+
+
 def make_bool_attr(
     long_name: str,
     short_name: str,
@@ -126,6 +164,8 @@ def build_internal_attrs(cls):
     """
     plugs = {
         "_computeSource": make_expression_attr(),
+        # v1 compatibility carrier -- see make_legacy_expression_attr.
+        "legacy_expression": make_legacy_expression_attr(),
         "inputs": make_internal_string_attr("_inputAttrs", "_inputAttrs"),
         "outputs": make_internal_string_attr("_outputAttrs", "_outputAttrs"),
         "stored_vars_list": make_internal_string_attr(

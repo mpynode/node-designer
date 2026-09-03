@@ -372,6 +372,58 @@ def _on_after_reference(_unused_client_data):
     _resolve_pickle_trust(is_import=True)
 
 
+# One-shot latch for the v1-owns-the-type warning below. Static condition;
+# saying it once per session is informative, once per open is noise.
+_V1_CONFLICT_WARNED = False
+
+
+def _upgrade_v1_nodes(nodes=None):
+    """Sweep v1 payloads that arrived with this open/import/reference.
+
+    v2 registers the same node TYPE name as v1, so a v1 scene does not yield
+    unknown nodes -- Maya builds a v2 mPyNode and replays v1's setAttrs at it.
+    The legacy ``expression`` plug catches the one value that used to be
+    dropped; this turns it into a real v2 node.
+
+    Warn-only and never raises: an exception here would abort the rest of the
+    open and take unrelated panels down with it.
+    """
+    try:
+        from mpynode._common.io import v1_upgrade
+    except Exception:
+        return
+
+    # Stand-down case: nodes carrying a v1 payload that v2 does not own,
+    # because a v1 install won the `mPyNode` type registration and v2's
+    # failed. Warn ONCE per session -- it is a static condition, so repeating
+    # it on every open would be noise, but staying silent is worse: every
+    # Designer panel reads an empty node and nothing says why.
+    global _V1_CONFLICT_WARNED
+    try:
+        foreign = v1_upgrade.find_foreign(nodes)
+    except Exception:
+        foreign = []
+    if foreign and not _V1_CONFLICT_WARNED:
+        _V1_CONFLICT_WARNED = True
+        sys.stderr.write(
+            "[v1_upgrade] STANDING DOWN: %d node(s) carry a v1 payload but "
+            "are not owned by v2 (%s). A node-designer v1 install has claimed "
+            "the 'mPyNode' node type, so v2's registration failed and these "
+            "nodes are served by v1. They are left untouched -- converting "
+            "one would break v1's own compute. To use v2, move v1 out of the "
+            "Maya plug-in and script paths (plug-ins/mpynode_plugin.py, "
+            "plug-ins/_mpynode, scripts/mpylib) and restart Maya."
+            % (len(foreign), ", ".join(foreign[:4])) + chr(10))
+
+    try:
+        reports, failures = v1_upgrade.upgrade_scene(nodes)
+    except Exception as _exc:
+        sys.stderr.write("[v1_upgrade] sweep failed: %s" % _exc + chr(10))
+        return
+    for line in v1_upgrade.summarize(reports, failures):
+        sys.stderr.write("[v1_upgrade] %s" % line + chr(10))
+
+
 def _on_scene_opened(_unused_client_data):
     """Walk every JIT-capable node and register its ``_initSource``
     attribute. Backward-compat: also reads legacy ``_jitSource`` attr
@@ -421,6 +473,24 @@ def _on_scene_opened(_unused_client_data):
     except Exception as _exc:
         sys.stderr.write(
             "[init_registry] scene-open class synth failed: %s\n" % _exc)
+
+    # A v1 scene arrives as v2 nodes carrying a legacy payload; convert them
+    # before anyone can save over the original and lose the expression.
+    #
+    # This MUST run before the stored-var hydration below. That pass reads
+    # `_storedVarsData` into the cache and then deliberately CLEARS the plug,
+    # so an upgrade placed after it finds the v1 payload already gone and
+    # silently drops every stored variable. It cannot simply read the cache
+    # instead: hydration keys off `_storedVarNames`, which v1 wrote as a
+    # base64 pickle where v2 expects a comma-joined string, so the v1 values
+    # would not be in the cache either. Converting first means the plugs are
+    # in v2's format by the time hydration looks at them, and the normal path
+    # takes over from there.
+    #
+    # Safe this early: set_init_expression registers the Init namespace itself
+    # (init_registry.set_init_expression -> register_init_source), so the
+    # sweep above having already run is not a problem.
+    _upgrade_v1_nodes()
 
     # Hydrate persistent vars into the store and clear the plug, so the session
     # reads the cache rather than a stale serialized blob.
@@ -485,6 +555,16 @@ def _on_after_import(_unused_client_data):
     mid-import). Stored vars are hydrated FIRST so Init code can read them."""
     # Resolve pickle-trust for the imported data (main thread) BEFORE decode.
     _resolve_pickle_trust(is_import=True)
+
+    # Same reason as the scene-open path: convert v1 payloads BEFORE the
+    # hydration below clears `_storedVarsData`, or their stored variables are
+    # lost. Importing a v1 scene is as common as opening one.
+    #
+    # Deliberately NOT done on kAfterReference: a referenced node's plugs are
+    # locked, so the rewrite could not be written, and the edit would not
+    # belong to this scene anyway. Reference a v1 scene and it stays v1 --
+    # import it, or open and re-save it, to convert.
+    _upgrade_v1_nodes()
     try:
         from mpynode._common.storedvars import stored_var_store as _svs
 
