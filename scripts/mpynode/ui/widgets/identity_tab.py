@@ -40,34 +40,6 @@ QFrame#ndIdCapsule {
 """
 
 
-def _bake_contract_text(native_type: str) -> str:
-    """What a bake does and does not carry, re-flowed for a label.
-
-    Source of truth is ``py_export.BAKE_CONTRACT``, which is the exporter's own
-    statement of its semantics, so this panel cannot drift from what the bake
-    actually does. It was the ``.py``'s first 16 lines until the top of the file
-    became the user's to write; here it is read once, where the rest of the
-    node's export facts already live, instead of skipped on every visit.
-
-    Re-flowed rather than shown verbatim: the text is hard-wrapped to fit a
-    source file, and a label that re-wraps pre-wrapped text reads as ragged.
-    Each blank-line-separated paragraph becomes one line and the label wraps it
-    to whatever width the panel has.
-    """
-    from mpynode._common.io.py_export import BAKE_CONTRACT
-
-    body = BAKE_CONTRACT % {"native_type": native_type or "mPyNode"}
-    paragraphs, current = [], []
-    for line in body.split("\n"):
-        stripped = line.strip()
-        if stripped:
-            current.append(stripped)
-        elif current:
-            paragraphs.append(" ".join(current))
-            current = []
-    if current:
-        paragraphs.append(" ".join(current))
-    return "\n\n".join(paragraphs)
 
 
 class NDIdentityWidget(QWidget):
@@ -116,60 +88,19 @@ class NDIdentityWidget(QWidget):
         class_row.addWidget(self._class_edit)
         root.addLayout(class_row)
 
-        root.addSpacing(4)
-
-        # Python API projection.
-        self._py_header = QLabel("Python API", self)
-        self._py_header.setObjectName("ndIdSection")
-        self._py_code = QLabel("", self)
-        self._py_code.setObjectName("ndIdCode")
-        self._py_code.setContentsMargins(10, 0, 0, 0)
-        self._py_code.setTextInteractionFlags(Qt.TextSelectableByMouse)
-        root.addWidget(self._capsule(self._py_header, self._py_code))
-
-        root.addSpacing(4)
-
-        # Native C++ projection.
-        self._cpp_header = QLabel("Native C++", self)
-        self._cpp_header.setObjectName("ndIdSection")
-        self._cpp_code = QLabel("", self)
-        self._cpp_code.setObjectName("ndIdCode")
-        self._cpp_code.setContentsMargins(10, 0, 0, 0)
-        self._cpp_code.setTextInteractionFlags(Qt.TextSelectableByMouse)
-        root.addWidget(self._capsule(self._cpp_header, self._cpp_code))
-
-        root.addSpacing(4)
-
-        # What a bake does and does not carry. Lives here rather than as 16
-        # folded lines at the top of the API view: it is a fact about the node's
-        # export, which is what this panel is for, and it answers the question
-        # ("where did my stored audio go?") that the folded version hid.
-        self._bake_header = QLabel("What the bake carries", self)
-        self._bake_header.setObjectName("ndIdSection")
-        self._bake_body = QLabel("", self)
-        self._bake_body.setObjectName("ndIdNote")
-        self._bake_body.setContentsMargins(10, 0, 0, 0)
-        self._bake_body.setWordWrap(True)
-        self._bake_body.setTextInteractionFlags(Qt.TextSelectableByMouse)
-        root.addWidget(self._capsule(self._bake_header, self._bake_body))
-
+        # The Python API / Native C++ projections and the "What the bake
+        # carries" note used to render here. They were reference text nobody
+        # re-read after the first time, and they cost more vertical space than
+        # the whole rest of the panel. The panel now earns its place on one
+        # thing only: Class is NOT editable anywhere else -- the Scene tree
+        # shows it in a dimmed, read-only column 1, and that tree's editable
+        # column 0 renames the Maya node, not the class.
         root.addStretch(1)
 
         self.setStyleSheet(_PANEL_STYLE)
 
         # Naming is one interaction: a PascalCase name + Enter.
         self._class_edit.editingFinished.connect(self._commit_class)
-
-    def _capsule(self, header, body):
-        """Box a section's header + body so it owns a visible area."""
-        box = QFrame(self)
-        box.setObjectName("ndIdCapsule")
-        lay = QVBoxLayout(box)
-        lay.setContentsMargins(9, 7, 9, 8)
-        lay.setSpacing(3)
-        lay.addWidget(header)
-        lay.addWidget(body)
-        return box
 
     # --- test / read accessors -----------------------------------------
     def class_name_text(self):
@@ -179,41 +110,11 @@ class NDIdentityWidget(QWidget):
         """The derived camelCase node type (``""`` when class-less)."""
         return self._node_type
 
-    def python_api_text(self):
-        return self._py_code.text()
-
-    def native_cpp_text(self):
-        return self._cpp_code.text()
-
-    def bake_contract_text(self):
-        return self._bake_body.text()
-
     # --- population ----------------------------------------------------
     def setPyNode(self, py_node):
         self._py_node = py_node
         self.refresh()
 
-    def _parent_name(self, native_type):
-        """Root wrapper class name for ``native_type`` (mPyNode -> MPyNode)."""
-        from mpynode._node_registry import get_spec
-
-        try:
-            spec = get_spec(native_type)
-            if spec is not None:
-                root = spec.get_wrapper_class()
-                if isinstance(root, type):
-                    return root.__name__
-        except Exception:
-            pass
-        return native_type
-
-    def _set_code(self, label, text, classless):
-        """Set a projection line's text + toggle the class-less (dim/italic)
-        look via a dynamic property + style repolish."""
-        label.setText(text)
-        label.setProperty("classless", "true" if classless else "false")
-        label.style().unpolish(label)
-        label.style().polish(label)
 
     def _render_empty(self):
         """Blank / neutral render -- used when there is no node AND as the
@@ -223,15 +124,6 @@ class NDIdentityWidget(QWidget):
         self._header.setText("IDENTITY")
         self._pill.setText("")
         self._class_edit.clear()
-        self._set_code(self._py_code, "", True)
-        self._set_code(self._cpp_code, "", True)
-        self._py_header.setText("Python API")
-        self._cpp_header.setText("Native C++")
-        # Hidden rather than blanked: a lone section heading over empty space
-        # reads as a panel that failed to populate.
-        self._bake_body.setText("")
-        self._bake_header.setVisible(False)
-        self._bake_body.setVisible(False)
 
     def refresh(self):
         n = self._py_node
@@ -254,7 +146,6 @@ class NDIdentityWidget(QWidget):
 
         name = n.get_name()
         native_type = mc.nodeType(name)
-        parent = self._parent_name(native_type)
         try:
             pc = n.get_py_class() or ""
         except Exception:
@@ -263,37 +154,14 @@ class NDIdentityWidget(QWidget):
 
         self._header.setText("IDENTITY — %s" % name)
         self._class_edit.setText(short)
-        # Independent of whether a Class is stamped: the export contract is the
-        # same either way, and it is exactly when a node is unfinished that the
-        # user is likeliest to ask what a bake would keep.
-        self._bake_body.setText(_bake_contract_text(native_type))
-        self._bake_header.setVisible(True)
-        self._bake_body.setVisible(True)
 
         if short:
             self._pill.setText("selected")
-            ntype = derive_class_identity(pc, native_type)["node_type_name"]
-            self._node_type = ntype
-            self._py_header.setText("Python API — class %s(%s)"
-                                    % (short, parent))
-            self._set_code(
-                self._py_code,
-                "%s.create()%s%s1" % (short, _ARROW, ntype), False)
-            self._cpp_header.setText("Native C++")
-            self._set_code(
-                self._cpp_code,
-                "mc.createNode('%s')%s%s1" % (ntype, _ARROW, ntype), False)
+            self._node_type = derive_class_identity(
+                pc, native_type)["node_type_name"]
         else:
             self._pill.setText("class-less")
             self._node_type = ""
-            self._py_header.setText("Python API")
-            self._set_code(
-                self._py_code,
-                "Name a Class to get an importable Python API.", True)
-            self._cpp_header.setText("Native C++")
-            self._set_code(
-                self._cpp_code,
-                "Compiles to a native type once a Class is named.", True)
 
     def _commit_class(self):
         n = self._py_node

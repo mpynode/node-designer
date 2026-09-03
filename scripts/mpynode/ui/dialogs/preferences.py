@@ -170,6 +170,39 @@ class NDPreferencesDialog(QDialog):
         ed.addStretch(1)
 
         # ---- New Nodes ---------------------------------------------------
+        # --- Fonts -------------------------------------------------------
+        # The editor size stays on the Editor page beside its family, where it
+        # has always been -- moving it would break the seven tests that drive
+        # _font_size_edit, for no gain. These are the two areas that had no
+        # control at all.
+        fo = self._add_page("Fonts")
+        fonts_grid = QGridLayout()
+        fonts_grid.setVerticalSpacing(4)
+        fonts_grid.setHorizontalSpacing(6)
+        fonts_grid.addWidget(QLabel("AI Assistant size (pt):"), 0, 0)
+        self._assistant_font_size_edit = QLineEdit()
+        self._assistant_font_size_edit.setMaximumWidth(80)
+        self._assistant_font_size_edit.setToolTip(
+            "Transcript and the prompt box. %d-%d." % (
+                preferences.FONT_SIZE_MIN, preferences.FONT_SIZE_MAX))
+        fonts_grid.addWidget(self._assistant_font_size_edit, 0, 1,
+                             alignment=Qt.AlignLeft)
+        fonts_grid.addWidget(QLabel("Panels size (pt):"), 1, 0)
+        self._panel_font_size_edit = QLineEdit()
+        self._panel_font_size_edit.setMaximumWidth(80)
+        self._panel_font_size_edit.setToolTip(
+            "Scene, Attributes, Variables, Framework, Log, Watch and Profile. "
+            "%d-%d." % (preferences.FONT_SIZE_MIN, preferences.FONT_SIZE_MAX))
+        fonts_grid.addWidget(self._panel_font_size_edit, 1, 1,
+                             alignment=Qt.AlignLeft)
+        fo.addLayout(fonts_grid)
+        _fonts_note = QLabel(
+            "Applies immediately — no restart. The code editors have their "
+            "own size (and family) on the Editor page.")
+        _fonts_note.setWordWrap(True)
+        fo.addWidget(_fonts_note)
+        fo.addStretch(1)
+
         nn = self._add_page("New Nodes")
         nn_row = QHBoxLayout()
         nn_row.addWidget(QLabel("New node code tabs:"))
@@ -594,6 +627,12 @@ class NDPreferencesDialog(QDialog):
 
         self._font_size_edit.setText(str(preferences.get_pref("editor_font_size", 10)))
 
+        self._assistant_font_size_edit.setText(
+            str(preferences.get_pref("assistant_font_size", 10)))
+        self._panel_font_size_edit.setText(
+            str(preferences.get_pref("panel_font_size", 10)))
+
+
         # Empty = auto-detect. Show what auto-detect resolves to as placeholder
         # text so a blank field is self-explanatory.
         from mpynode.ui import editor_launch
@@ -921,6 +960,19 @@ class NDPreferencesDialog(QDialog):
             _opt_secs = 2400
         _opt_secs = max(10, min(_opt_secs, 86400))
         preferences.set_pref("optimize_timeout_seconds", _opt_secs)
+        # Clamp rather than refuse: the editor size above hard-blocks Save with
+        # a messagebox, but that idiom is the outlier in this dialog and a font
+        # size is not worth blocking a whole Save over.
+        for _edit, _key in ((self._assistant_font_size_edit, "assistant_font_size"),
+                            (self._panel_font_size_edit, "panel_font_size")):
+            try:
+                _fs = int(_edit.text().strip())
+            except ValueError:
+                _fs = preferences.DEFAULT_PREFS[_key]
+            _fs = max(preferences.FONT_SIZE_MIN,
+                      min(_fs, preferences.FONT_SIZE_MAX))
+            preferences.set_pref(_key, _fs)
+
         try:
             _opt_tok = int(self._optimize_max_tokens_edit.text().strip())
         except ValueError:

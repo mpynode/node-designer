@@ -30,6 +30,7 @@ from mpynode.ui.qt_wrapper import (
     Signal,
 )
 from mpynode.ui.widgets.icons import _HALO_PAD, get_node_type_icon
+from mpynode.ui.widgets.font_prefs import wire_area_font
 
 # Dim color for the node-type column so the name reads as primary.
 _TYPE_COLUMN_BRUSH = QBrush(QColor(150, 150, 150))
@@ -124,7 +125,14 @@ class _CppChipDelegate(QStyledItemDelegate):
             painter.drawRoundedRect(chip, 3, 3)
             f = QFont(option.font)
             f.setBold(filled)
-            f.setPixelSize(9)
+            # Was a hardcoded 9px, which stayed put while the rest of the row
+            # scaled. Derived from the row font so the chip keeps its relative
+            # size at any panel_font_size; floored so it never vanishes.
+            _pt = option.font.pointSize()
+            if _pt > 0:
+                f.setPointSize(max(6, int(round(_pt * 0.75))))
+            else:
+                f.setPixelSize(max(7, int(round(option.font.pixelSize() * 0.75))))
             painter.setFont(f)
             painter.setPen(fg)
             painter.drawText(chip, Qt.AlignCenter, "C++")
@@ -338,6 +346,7 @@ class NDSceneTree(QTreeWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
+        wire_area_font(self, "panel")
         self.setColumnCount(2)
         # The col-0 icon conveys the root type; col 1 shows _pyClass identity.
         self.setHeaderLabels(["Name", "Class"])

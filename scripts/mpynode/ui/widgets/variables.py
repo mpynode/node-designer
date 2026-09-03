@@ -165,7 +165,18 @@ def _value_font():
             _VALUE_FONT = f
         except Exception:
             _VALUE_FONT = False
-    return _VALUE_FONT or None
+    if not _VALUE_FONT:
+        return None
+    # Point size applied per call, NOT baked into the cached font: a per-item
+    # font overrides the view's, so without this the value column would keep
+    # its old size while every other column followed panel_font_size.
+    try:
+        from mpynode.ui.preferences import resolve_font_size
+
+        _VALUE_FONT.setPointSize(resolve_font_size("panel"))
+    except Exception:
+        pass
+    return _VALUE_FONT
 
 
 class NDVariableTreeItem(QTreeWidgetItem):
@@ -218,6 +229,7 @@ from mpynode.ui.widgets.plug_tree_walker import (  # noqa: F401, E402
     collect_plug_tree,
     read_plug_value_text,
 )
+from mpynode.ui.widgets.font_prefs import wire_area_font
 
 
 def _format_slot_value(value, max_len: int = 80) -> str:
@@ -489,6 +501,7 @@ class NDVariablesWidget(QWidget):
         layout.addLayout(btn_row)
 
         self._tree = QTreeWidget(self)
+        wire_area_font(self._tree, "panel", on_change=self._on_panel_font)
         # Shift-click a section header (Persistent / Temporary) to
         # recursively expand or collapse that section's subtree.
         from mpynode.ui.widgets.tree_expand import (
@@ -712,6 +725,14 @@ class NDVariablesWidget(QWidget):
                 unregister_change_listener(self._on_pref_changed)
             except Exception:
                 pass
+
+    def _on_panel_font(self) -> None:
+        """panel_font_size changed: repopulate so the Value column's per-item
+        mono font (which overrides the view font) is rebuilt at the new size."""
+        try:
+            self.refresh()
+        except Exception:
+            pass
 
     def refresh(self):
         prev_node = self._known_node_name

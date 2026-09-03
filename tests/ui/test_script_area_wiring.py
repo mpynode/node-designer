@@ -470,6 +470,12 @@ class TestAGeneratedBlockRoutesToItsAuthoringSurface(unittest.TestCase):
         try:
             w.resize(940, 640)
             w.show()
+            # The Outline now defaults to COLLAPSED, so it has to be opened
+            # before its header has a meaningful position -- collapsed, the
+            # header reports a y of roughly -600. The alignment this test
+            # guards is about the pane being level with the code WHEN SHOWN,
+            # which is exactly what a user sees after dragging it open.
+            w._nav_split.setSizes([700, 236])
             _QAPP.processEvents()
             w.select("api")
             _QAPP.processEvents()

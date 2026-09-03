@@ -44,6 +44,7 @@ from mpynode.ui.qt_wrapper import (
     QVBoxLayout,
     QWidget,
 )
+from mpynode.ui.widgets.font_prefs import wire_area_font
 
 
 # ---------------------------------------------------------------------------
@@ -141,6 +142,7 @@ class NDLoggerWidget(QWidget):
         # Keeps the platform default font. QPlainTextEdit rather than
         # QTextEdit: the cheap choice for plain log output.
         self._editor = QPlainTextEdit(self)
+        wire_area_font(self._editor, "panel")
         self._editor.setReadOnly(True)
         self._editor.setLineWrapMode(QPlainTextEdit.NoWrap)
         self._editor.setMaximumBlockCount(self.MAX_LINES)

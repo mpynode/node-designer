@@ -85,6 +85,9 @@ def _encode_qimage(img, max_edge=_IMG_MAX_EDGE):
 
 
 import re as _re
+import re
+
+from mpynode.ui.widgets.font_prefs import wire_area_font
 
 _MENTION_RE = _re.compile(r"@([A-Za-z_][A-Za-z0-9_]*)")
 _IMAGE_NAME_RE = _re.compile(r"^image\d+$")
@@ -447,7 +450,11 @@ class NDAssistantPanel(QWidget):
             "definition that is applied to the active node (no extra packages).",
             self._settings)
         self._cli_note.setWordWrap(True)
-        self._cli_note.setStyleSheet("color: #888; font-size: 10px;")
+        # Size deliberately NOT in the stylesheet: a stylesheet font-size
+        # beats setFont(), so it would pin this label while the rest of
+        # the panel scaled. Colour only here, size via QFont below.
+        self._cli_note.setStyleSheet("color: #888;")
+        wire_area_font(self._cli_note, "assistant", rel=0.85)
         slay.addWidget(self._cli_note)
 
         # Claude CLI only, default OFF: lets a complex turn spawn Task
@@ -477,6 +484,9 @@ class NDAssistantPanel(QWidget):
         self._splitter.setHandleWidth(6)
 
         self._transcript = QTextEdit(self)
+        wire_area_font(self._transcript, "assistant",
+                       on_change=self._on_assistant_font)
+        self._asst_pt_applied = self._asst_pt()
         self._transcript.setReadOnly(True)
         self._transcript.setMinimumWidth(280)
         self._transcript.setMinimumHeight(120)  # transcript can't collapse
@@ -508,7 +518,8 @@ class NDAssistantPanel(QWidget):
 
         # Local requests/60s (Google has no live-quota API) + session tokens.
         self._usage_label = QLabel("", bottom)
-        self._usage_label.setStyleSheet("color: #666; font-size: 10px;")
+        self._usage_label.setStyleSheet("color: #666;")  # size via QFont
+        wire_area_font(self._usage_label, "assistant", rel=0.85)
         blay.addWidget(self._usage_label)
         self._usage_timer = QTimer(self)
         self._usage_timer.setInterval(1000)
@@ -526,11 +537,14 @@ class NDAssistantPanel(QWidget):
 
         in_row = QHBoxLayout()
         self._input = _ChatInput(self)  # panel ref kept for history recall
+        wire_area_font(self._input, "assistant")
         self._input.setPlaceholderText(
             "Ask the assistant to build or edit a node\u2026  "
             "paste an image, then Ctrl+Enter to send"
         )
-        self._input.setMinimumHeight(48)
+        # Roughly four lines at the default size. Was 48 -- two lines --
+        # which read as an afterthought next to the Send button.
+        self._input.setMinimumHeight(72)
         in_row.addWidget(self._input, 1)
         # One toggle button: "Send" when idle, "Stop" while working. Fills the
         # input height via a vertical Expanding size policy.
@@ -556,7 +570,11 @@ class NDAssistantPanel(QWidget):
         # size unless the user drags the divider.
         self._splitter.setStretchFactor(0, 1)
         self._splitter.setStretchFactor(1, 0)
-        self._splitter.setSizes([1000, 110])
+        # 260 is the tools pane default (Log | Watch | Profile, set in
+        # mpynode_designer as right_split [610, 260]), so the prompt box
+        # comes up the same height as the panel across from it instead of
+        # the crushed two-line strip 110 gave.
+        self._splitter.setSizes([1000, 260])
         root.addWidget(self._splitter, 1)
 
         # Ctrl+Enter to send.
@@ -836,13 +854,89 @@ class NDAssistantPanel(QWidget):
         self._transcript.clear()
         self._append_system("Conversation cleared.")
 
+    # -- font scaling ---------------------------------------------------
+    # The transcript is ONE QTextEdit fed HTML, and eleven call sites author an
+    # inline font-size. Inline CSS becomes an explicit char format on the
+    # inserted characters, which outranks both setFont() and
+    # document().setDefaultFont() -- so without the two helpers below, raising
+    # the assistant font would resize the message bubbles and silently leave
+    # every grey progress line ("apply mPyNode ... compute", "done in 1m 06s")
+    # at its old size.
+    #
+    # Rather than rewrite eleven differently-shaped format strings, the authored
+    # px literals are kept AS RELATIVE INTENT and converted here, in the two
+    # funnels every insertion passes through. Qt's rich-text CSS subset only
+    # honours pt and px for font-size -- em and % silently do nothing -- so the
+    # number is computed in Python.
+    _AUTHORED_BASE_PX = 12      # what the px literals were authored against
+    _SIZE_PX_RE = re.compile(r"font-size:\s*(\d+)px")
+    _SIZE_PT_RE = re.compile(r"font-size:\s*([0-9.]+)pt")
+
+    def _asst_pt(self) -> int:
+        try:
+            from mpynode.ui.preferences import resolve_font_size
+
+            return resolve_font_size("assistant")
+        except Exception:
+            return 10
+
+    def _scale_html(self, html: str) -> str:
+        """Convert authored ``font-size:Npx`` to a pt size relative to the
+        configured assistant size. Floored at 6pt so a small setting cannot
+        make the progress lines illegible."""
+        base = self._asst_pt()
+
+        def _sub(m):
+            rel = int(m.group(1)) / float(self._AUTHORED_BASE_PX)
+            return "font-size:%dpt" % max(6, int(round(base * rel)))
+
+        return self._SIZE_PX_RE.sub(_sub, html)
+
+    def _rescale_existing(self, ratio: float) -> bool:
+        """Multiply every explicit pt size already in the document by ``ratio``.
+
+        Text already inserted keeps its char formats, so a live change has to
+        touch the existing document too. Done proportionally off toHtml() --
+        which round-trips streamed bubbles as well as appended ones -- rather
+        than by replaying a recorded history, which would lose anything the
+        streaming path inserted by cursor.
+
+        Returns False if it declined (mid-stream, or nothing to do).
+        """
+        if self._asst_anchor is not None:
+            return False        # a live bubble is being rewritten; don't fight it
+        if not ratio or abs(ratio - 1.0) < 1e-6:
+            return False
+        try:
+            html = self._transcript.toHtml()
+        except RuntimeError:
+            return False
+
+        def _sub(m):
+            return "font-size:%dpt" % max(6, int(round(float(m.group(1)) * ratio)))
+
+        sb = self._transcript.verticalScrollBar()
+        at_end = sb.value() >= sb.maximum() - 2
+        self._transcript.setHtml(self._SIZE_PT_RE.sub(_sub, html))
+        if at_end:
+            sb.setValue(sb.maximum())
+        return True
+
+    def _on_assistant_font(self) -> None:
+        """assistant_font_size changed: rescale what is already on screen."""
+        new = self._asst_pt()
+        old = getattr(self, "_asst_pt_applied", None)
+        self._asst_pt_applied = new
+        if old:
+            self._rescale_existing(float(new) / float(old))
+
     # -- transcript helpers ---------------------------------------------
 
     def _append(self, html: str):
         # Non-assistant content ends the live bubble, so the next chunk starts
         # a new one and its payload strip is scoped to that bubble's text.
         self._finalize_asst_stream()
-        self._transcript.append(html)
+        self._transcript.append(self._scale_html(html))
         sb = self._transcript.verticalScrollBar()
         sb.setValue(sb.maximum())
 
@@ -867,7 +961,7 @@ class NDAssistantPanel(QWidget):
     def _render_asst_bubble(self, body_html: str) -> None:
         """Insert or replace the current live assistant bubble in place."""
         QTextCursor = self._cursor()
-        html = self._asst_bubble_html(body_html)
+        html = self._scale_html(self._asst_bubble_html(body_html))
         cur = self._transcript.textCursor()
         if self._asst_anchor is None:
             cur.movePosition(QTextCursor.End)

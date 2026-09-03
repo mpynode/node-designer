@@ -80,6 +80,7 @@ from mpynode.ui.widgets.plug_tree_walker import (
     wrapper_property_rows_for,
 )
 from mpynode.ui.widgets.variables import _dir_label, collect_internal_api_rows
+from mpynode.ui.widgets.font_prefs import wire_area_font
 
 
 # Rows sat at the exact glyph height, so a long Authoring Methods group read as
@@ -143,6 +144,7 @@ class NDFrameworkWidget(QWidget):
         layout.setSpacing(2)
 
         self._tree = QTreeWidget(self)
+        wire_area_font(self._tree, "panel")
         # Shift-click any section header to expand/collapse THAT subtree.
         from mpynode.ui.widgets.tree_expand import (
             install_shift_click_expand_all,

@@ -285,7 +285,12 @@ class NDScriptTabContent(QWidget):
         # still wins any tie. Pinned by
         # test_script_area_wiring.test_widest_strip_still_fits_without_scrolling
         self._navigator.setMinimumWidth(208)
-        self._nav_split.setSizes([580, 236])
+        # Outline starts COLLAPSED: it is a jump-to aid, not something to
+        # read continuously, and at rest it was taking a fifth of the code
+        # width. Drag the handle (or widen the pane) to bring it back --
+        # setCollapsible(1, True) above is what makes 0 mean collapsed
+        # rather than clamped to the 208 minimum.
+        self._nav_split.setSizes([816, 0])
         layout.addWidget(self._nav_split, 1)
 
         self._navigator.selectRequested.connect(self.select)

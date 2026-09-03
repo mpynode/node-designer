@@ -55,6 +55,7 @@ from mpynode.ui.qt_wrapper import (
     QWidget,
     Signal,
 )
+from mpynode.ui.widgets.font_prefs import wire_area_font
 
 
 # ===========================================================================
@@ -566,6 +567,8 @@ class NDInputAttrTree(QTreeWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
+        # Covers NDOutputAttrTree too -- it subclasses this.
+        wire_area_font(self, "panel")
         self._py_node = None
         # Suppress itemChanged events while we're rebuilding the tree
         # programmatically (otherwise refresh() triggers spurious renames).

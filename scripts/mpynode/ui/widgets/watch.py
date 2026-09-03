@@ -60,6 +60,7 @@ from mpynode.ui.qt_wrapper import (
     QVBoxLayout,
     QWidget,
 )
+from mpynode.ui.widgets.font_prefs import wire_area_font
 
 
 # Typed-geometry attr kinds that have no displayable scalar/string value.
@@ -750,6 +751,7 @@ class NDWatchWidget(QWidget):
         layout.addLayout(scope_row)
 
         self._tree = QTreeWidget(self)
+        wire_area_font(self._tree, "panel", on_change=self._on_panel_font)
         # Shift-click a section header (Inputs / Outputs / Locals / ...) to
         # recursively expand or collapse that section's subtree.
         from mpynode.ui.widgets.tree_expand import (
@@ -788,6 +790,9 @@ class NDWatchWidget(QWidget):
             self._mono_font = QFont("Courier")
             self._mono_font.setStyleHint(QFont.Monospace)
             self._mono_font.setFixedPitch(True)
+            # A per-item font beats the view font, so this needs the size too.
+            # Re-set on every pref change via _sync_mono_font below.
+            self._sync_mono_font()
         except Exception:
             self._mono_font = None
         layout.addWidget(self._tree)
@@ -895,6 +900,31 @@ class NDWatchWidget(QWidget):
     def setFilter(self, text: str) -> None:
         """Programmatic filter setter (used by tests + scripts)."""
         self._filter_edit.setText(text or "")
+
+    def _sync_mono_font(self) -> None:
+        """Point-size the Value column's mono font from ``panel_font_size``.
+
+        Separate from construction because a per-item font overrides the
+        view's: without re-setting it, the Value column would keep its old
+        size while every other column followed the view.
+        """
+        if getattr(self, "_mono_font", None) is None:
+            return
+        try:
+            from mpynode.ui.preferences import resolve_font_size
+
+            self._mono_font.setPointSize(resolve_font_size("panel"))
+        except Exception:
+            pass
+
+    def _on_panel_font(self) -> None:
+        """panel_font_size changed: re-size the mono font, then repopulate so
+        the per-item fonts are re-applied to existing rows."""
+        self._sync_mono_font()
+        try:
+            self.refresh()
+        except Exception:
+            pass
 
     def refresh(self):
         """Re-read the snapshot from the plug + repopulate the tree."""

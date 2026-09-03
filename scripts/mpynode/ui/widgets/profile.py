@@ -42,6 +42,7 @@ from mpynode.ui.qt_wrapper import (
     QVBoxLayout,
     QWidget,
 )
+from mpynode.ui.widgets.font_prefs import wire_area_font
 
 
 _STAT_KEYS = ("last", "avg", "min", "max", "count")
@@ -167,6 +168,7 @@ class NDProfileWidget(QWidget):
 
         # cProfile drill-down. Header text is rebuilt each refresh.
         self._tree = QTreeWidget(self)
+        wire_area_font(self._tree, "panel")
         self._tree.setColumnCount(5)
         self._tree.setRootIsDecorated(False)
         self._tree.setSortingEnabled(True)

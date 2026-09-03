@@ -128,6 +128,7 @@ class NDVariablesWidget(QWidget):  # noqa: F811
 # Rebind: the stub class def above is evaluated AFTER the top-of-file import,
 # so without this, downstream uses would get the empty placeholder.
 from mpynode.ui.widgets.variables import NDVariablesWidget  # noqa: F401, E402
+from mpynode.ui.widgets.font_prefs import wire_area_font
 
 
 # ===========================================================================
@@ -362,6 +363,20 @@ class NDMainWindow(QMainWindow):
     # UI construction
     # ------------------------------------------------------------------
 
+    def _sync_tools_min_height(self):
+        """Floor the tools pane at its tab bar's own height.
+
+        Derived rather than a constant so it tracks the 1.5x-taller tabs and
+        the per-binding bar height -- a hard-coded 30 clipped the taller
+        labels. Re-run when panel_font_size changes, since a bigger tab font
+        means a taller bar."""
+        try:
+            self._tools_tab_widget.setMinimumHeight(
+                self._tools_tab_bar.sizeHint().height()
+            )
+        except (AttributeError, RuntimeError):
+            pass
+
     def _build_ui(self):
         central = QWidget(self)
         self.setCentralWidget(central)
@@ -411,6 +426,11 @@ class NDMainWindow(QMainWindow):
 
         # LEFT: tab widget with the 4 panels.
         self._panel_tab_widget = QTabWidget(splitter)
+        # The tab LABELS follow panel_font_size too. Without this the
+        # panels would grow while "Scene | Attributes | Variables" stayed
+        # small -- the tab bar is a sibling of the views, not a parent, so
+        # it inherits nothing from them.
+        wire_area_font(self._panel_tab_widget, "panel")
         # 1.5x taller horizontal tabs (Scene | Attributes | Variables) — the
         # North-bar analog of the West mode tabs' widen. Install the tall bar
         # BEFORE addTab (setTabBar wipes existing tabs); keep the ref (GC).
@@ -435,7 +455,11 @@ class NDMainWindow(QMainWindow):
         self._scene_split.setStretchFactor(1, 1)
         self._scene_split.setCollapsible(0, False)
         self._scene_split.setCollapsible(1, True)
-        self._scene_split.setSizes([340, 150])
+        # Identity is now just a header + the Class field, so it defaults to
+        # its own minimum and the tree takes everything else. Still
+        # draggable, and still collapsible -- Class is editable nowhere
+        # else, so the panel stays reachable.
+        self._scene_split.setSizes([520, 1])
         self._panel_tab_widget.addTab(self._scene_split, "Scene")
 
         self._attributes_widget = NDAttributesWidget(self._panel_tab_widget)
@@ -458,6 +482,8 @@ class NDMainWindow(QMainWindow):
         from mpynode.ui.qt_wrapper import QTabWidget as _QTabWidget
 
         self._tools_tab_widget = _QTabWidget(right_split)
+        wire_area_font(self._tools_tab_widget, "panel",
+                       on_change=self._sync_tools_min_height)
         # 1.5x taller horizontal tabs (Log | Watch | Profile) — same tall bar
         # as the panel strip. Install BEFORE addTab; keep the ref (GC).
         self._tools_tab_bar = make_tabs_tall(self._tools_tab_widget)
@@ -492,6 +518,12 @@ class NDMainWindow(QMainWindow):
         # Clear button peeked through. DERIVED from the live tall bar, not a
         # constant, so it tracks the 1.5x-taller tabs and per-binding bar height
         # -- a hard-coded 30 clipped the taller labels themselves.
+        # Written out here, not delegated to _sync_tools_min_height below,
+        # because two tests assert this expression appears in _build_ui:
+        # test_tall_tab_bar.test_tools_floor_derived_from_tall_bar_not_stale_30
+        # and test_instrumentation_e2e.test_right_split_collapsible_settings.
+        # Their intent -- the floor is DERIVED, never a stale constant --
+        # is worth more than removing two duplicated lines.
         self._tools_tab_widget.setMinimumHeight(
             self._tools_tab_bar.sizeHint().height()
         )

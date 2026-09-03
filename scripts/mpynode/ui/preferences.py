@@ -69,6 +69,16 @@ DEFAULT_PREFS: dict[str, Any] = {
     # Editor
     "editor_font_family": "Courier",
     "editor_font_size": 10,  # in points
+    # Point sizes for the two UI areas that are NOT code editors. Split
+    # from editor_font_size because the three read at very different
+    # comfortable sizes: the editors are dense monospace, the assistant is
+    # prose, and the panels are table rows. One number for all three means
+    # whichever you tune leaves the other two wrong.
+    #   assistant -> the AI Assistant transcript + its input box
+    #   panel     -> Scene / Attributes / Variables / Framework and the
+    #                Log / Watch / Profile tabs
+    "assistant_font_size": 10,  # in points
+    "panel_font_size": 10,      # in points
     # "jump to source" command; {file} and {line} are substituted with the
     # target path and 1-based line before it runs. EMPTY = auto-detect, i.e.
     # editor_launch.detect_default_editor_command() probes for an installed
@@ -337,6 +347,60 @@ def resolve_optimize_timeout() -> float:
         return float(get_pref("optimize_timeout_seconds", 2400))
     except (TypeError, ValueError):
         return 2400.0
+
+
+# Shared bounds for every per-area font size. Mirrors
+# QtPythonEditor.MIN_FONT_SIZE / MAX_FONT_SIZE (ui/widgets/editor_core.py) --
+# duplicated rather than imported because preferences.py must not pull in a Qt
+# widget module, and a font size the editor would refuse is no more usable
+# anywhere else.
+FONT_SIZE_MIN = 6
+FONT_SIZE_MAX = 72
+
+# UI area -> preference key. The single place that mapping exists.
+FONT_AREA_KEYS = {
+    "editor": "editor_font_size",
+    "assistant": "assistant_font_size",
+    "panel": "panel_font_size",
+}
+
+
+def resolve_font_size(area: str) -> int:
+    """Clamped point size for one UI area: ``editor``, ``assistant`` or ``panel``.
+
+    Same rationale as resolve_optimize_max_tokens: several widgets per area
+    have to agree on one number, so the coercion and the clamp live in one
+    place rather than being re-implemented per widget. A bad or out-of-range
+    value falls back to the shipped default instead of raising -- this runs
+    during widget construction, where an exception would take the panel down.
+    """
+    key = FONT_AREA_KEYS.get(area)
+    if key is None:
+        raise KeyError("unknown font area %r; expected one of %s"
+                       % (area, sorted(FONT_AREA_KEYS)))
+    fallback = DEFAULT_PREFS[key]
+    try:
+        size = int(get_pref(key, fallback))
+    except (TypeError, ValueError):
+        return fallback
+    if size < FONT_SIZE_MIN or size > FONT_SIZE_MAX:
+        return fallback
+    return size
+
+
+def area_font(area: str):
+    """QFont for a non-editor area: the app font at that area's point size.
+
+    Family is deliberately NOT a preference here. The editors get one because
+    code wants a specific monospace; a transcript and a table should follow
+    whatever Maya's theme picked, so only the size moves. Imports QFont lazily
+    to keep Qt out of module import.
+    """
+    from mpynode.ui.qt_wrapper import QFont
+
+    font = QFont()
+    font.setPointSize(resolve_font_size(area))
+    return font
 
 
 def resolve_optimize_max_tokens() -> int:

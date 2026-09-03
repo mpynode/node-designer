@@ -72,7 +72,7 @@ class TestIdentityTab(unittest.TestCase):
         mc.file(new=True, force=True)
         ensure_plugins_loaded()
 
-    def test_classed_shows_derived_type_and_both_projections(self):
+    def test_classed_derives_the_node_type(self):
         from mpynode.wrappers._mpy_node import MPyNode
         from mpynode.ui.widgets.identity_tab import NDIdentityWidget
 
@@ -82,14 +82,6 @@ class TestIdentityTab(unittest.TestCase):
         w.setPyNode(n)
         self.assertEqual(w.class_name_text(), "Procrustes")
         self.assertEqual(w.node_type_text(), "procrustes")
-        # Python API line ties create() to the camelCase type + index.
-        py = w.python_api_text()
-        self.assertIn("Procrustes.create()", py)
-        self.assertIn("procrustes1", py)
-        # Native C++ line uses the SAME type + index.
-        cpp = w.native_cpp_text()
-        self.assertIn("mc.createNode('procrustes')", cpp)
-        self.assertIn("procrustes1", cpp)
 
     def test_multiword_class_camelcases_the_type(self):
         from mpynode.wrappers._mpy_node import MPyNode
@@ -100,8 +92,6 @@ class TestIdentityTab(unittest.TestCase):
         w = NDIdentityWidget()
         w.setPyNode(n)
         self.assertEqual(w.node_type_text(), "procrustesConstraint")
-        self.assertIn("procrustesConstraint1", w.native_cpp_text())
-        self.assertIn("ProcrustesConstraint.create()", w.python_api_text())
 
     def test_classless_is_empty(self):
         from mpynode.wrappers._mpy_node import MPyNode
@@ -132,7 +122,6 @@ class TestIdentityTab(unittest.TestCase):
         self.assertEqual(n.get_py_class(), "mpynode_user.MyThing")
         self.assertEqual(w.class_name_text(), "MyThing")
         self.assertEqual(w.node_type_text(), "myThing")
-        self.assertIn("myThing1", w.native_cpp_text())
         self.assertEqual(emitted, ["MyThing"])
 
     def test_refresh_survives_deleted_node(self):
@@ -188,73 +177,12 @@ class TestIdentityTab(unittest.TestCase):
         self.assertEqual(w.class_name_text(), "")
 
 
-class TestTheBakeContractIsReadableHere(unittest.TestCase):
-    """The baked .py's 16-line preamble now lives on this panel.
-
-    It used to be readable only by unfolding the top of the API view, which
-    put a paragraph about export semantics in front of the code on every
-    visit -- and still left its actual answer hard to find. The question it
-    settles ("my node has a persistent audio buffer, why is it not in the
-    bake?") is a fact about the export, which is what this panel is for.
-    """
-
-    def setUp(self):
-        import maya.cmds as mc
-
-        mc.file(new=True, force=True)
-        ensure_plugins_loaded()
-
-    def _widget(self):
-        from mpynode.wrappers._mpy_node import MPyNode
-        from mpynode.ui.widgets.identity_tab import NDIdentityWidget
-
-        n = MPyNode.create(name="idbake#")
-        w = NDIdentityWidget()
-        w.setPyNode(n)
-        return n, w
-
-    def test_it_is_the_exporters_own_text_not_a_paraphrase(self):
-        # A second copy would drift from the exporter it describes.
-        from mpynode._common.io.py_export import BAKE_CONTRACT
-        from mpynode.ui.widgets.identity_tab import _bake_contract_text
-
-        text = _bake_contract_text("mPyNode")
-        for phrase in ("ONE-WAY bake", "NOT included", ".mpn export"):
-            self.assertIn(phrase, text)
-            self.assertIn(phrase, BAKE_CONTRACT)
-
-    def test_the_node_type_is_substituted(self):
-        from mpynode.ui.widgets.identity_tab import _bake_contract_text
-
-        self.assertIn("mPyLocator", _bake_contract_text("mPyLocator"))
-        self.assertNotIn("%(native_type)s", _bake_contract_text("mPyMesh"))
-
-    def test_paragraphs_are_reflowed_to_one_line_each(self):
-        # The source is hard-wrapped to fit a .py; a label that re-wraps
-        # pre-wrapped text reads as ragged.
-        from mpynode.ui.widgets.identity_tab import _bake_contract_text
-
-        text = _bake_contract_text("mPyNode")
-        self.assertFalse([ln for ln in text.split("\n")
-                          if ln.startswith("#")])
-        self.assertGreaterEqual(len(text.split("\n\n")), 4)
-        for para in text.split("\n\n"):
-            self.assertNotIn("\n", para, "a paragraph kept its source wrap")
-
-    def test_it_populates_for_a_class_less_node_too(self):
-        # A node with no Class stamped is exactly when the user is likeliest
-        # to be asking what a bake would keep.
-        _n, w = self._widget()
-        self.assertEqual(w.class_name_text(), "")
-        self.assertIn("NOT included", w.bake_contract_text())
-
-    def test_it_hides_rather_than_showing_an_empty_heading(self):
-        from mpynode.ui.widgets.identity_tab import NDIdentityWidget
-
-        w = NDIdentityWidget()
-        w.setPyNode(None)
-        self.assertEqual(w.bake_contract_text(), "")
-        self.assertFalse(w._bake_header.isVisible())
+# TestTheBakeContractIsReadableHere lived here. The panel no longer renders
+# the "What the bake carries" note, the Python API projection or the Native
+# C++ projection -- they were reference text that cost more vertical space
+# than the rest of the panel and were not re-read after the first look. The
+# panel now earns its place on one thing: Class, which is editable nowhere
+# else (the Scene tree shows it read-only in column 1).
 
 
 if __name__ == "__main__":
