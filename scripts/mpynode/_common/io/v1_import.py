@@ -470,6 +470,7 @@ class _ApiTypeFix(ast.NodeTransformer):
         self.types = types
         self.matrix_fixes = []
         self.vec3_fixes = []
+        self.vec_ctor_fixes = []
 
     def _is_matrix_plug(self, node):
         name = _plug_of(node)
@@ -482,6 +483,13 @@ class _ApiTypeFix(ast.NodeTransformer):
         # namespace and real v1 nodes use both.
         if isinstance(node.func, ast.Name):
             ctor = node.func.id
+            # Bare == v1-ambient == undefined under v2. `om.MVector(...)` is
+            # a real api2 call and falls through untouched.
+            if ctor in _V1_VEC_CTORS:
+                self.vec_ctor_fixes.append(ctor)
+                return ast.Call(
+                    func=ast.Name(id=_V1_VEC, ctx=ast.Load()),
+                    args=node.args, keywords=node.keywords)
         elif isinstance(node.func, ast.Attribute):
             ctor = node.func.attr
         else:
@@ -511,7 +519,7 @@ class _ApiTypeFix(ast.NodeTransformer):
             return node
         if (isinstance(node.value, ast.Call)
                 and isinstance(node.value.func, ast.Name)
-                and node.value.func.id == _VEC3_SHIM):
+                and node.value.func.id in (_VEC3_SHIM, _V1_VEC)):
             return node
         self.vec3_fixes.append(name)
         node.value = ast.Call(func=ast.Name(id=_VEC3_SHIM, ctx=ast.Load()),
@@ -587,6 +595,47 @@ def _nested_v1_lib_imports(tree):
     return sorted(set(out))
 
 
+# v1's ambient vector/point constructors. Every BARE (unqualified) call to
+# one of these in the whole upstream corpus takes scalar arguments --
+# MVector(0, 0, 0), MVector(1, 1, 1), MVector(p[0], p[1], 0),
+# MPoint(0, 0, 0, 1), MPoint(x, 0, z, 1) -- so they are plain 3- and
+# 4-component holders, and a numpy array does the same arithmetic.
+#
+# Only the bare form is rewritten. `om.MVector(...)` is a real api2 call that
+# works fine under v2 and is left exactly as written.
+#
+# This does NOT resurrect v1's ambient api objects, which v2 deliberately does
+# not seed: the shim is a visible, deletable function in Init that returns
+# numpy, not a re-export of MVector.
+_V1_VEC_CTORS = ("MVector", "MPoint")
+
+_V1_VEC = "_v1_vec"
+
+_V1_VEC_SHIM_SRC = chr(10).join([
+    "import numpy as _v1_np",
+    "",
+    "",
+    "def _v1_vec(*args):",
+    '    """Added by the v1 importer; safe to delete once the maths is tidied.',
+    "",
+    "    Stands in for v1's ambient MVector / MPoint, which v2 does not seed",
+    "    -- api objects being absent from the expression namespace is an",
+    "    explicit design decision, not an omission. Returns numpy, accepts the",
+    "    scalar and single-sequence forms, pads short input with zeros, and",
+    "    DROPS a fourth component: MPoint's w was never written to a",
+    '    three-component plug anyway."""',
+    "    if len(args) == 1:",
+    "        try:",
+    "            args = tuple(args[0])",
+    "        except TypeError:",
+    "            args = (args[0],)",
+    "    vals = [float(a) for a in args[:3]]",
+    "    while len(vals) < 3:",
+    "        vals.append(0.0)",
+    "    return _v1_np.array(vals, dtype=float)",
+])
+
+
 def split_and_selfify(expression, inputs, outputs):
     """``(init_src, compute_src, report)`` for one v1 expression.
 
@@ -598,7 +647,7 @@ def split_and_selfify(expression, inputs, outputs):
     report = {"shadowed": [], "globals_in_defs": [], "rewrites": 0,
               "init_stmts": 0, "compute_stmts": 0,
               "matrix_view_fixes": [], "vec3_fixes": [],
-              "dead_imports": []}
+              "vec_ctor_fixes": [], "dead_imports": []}
     try:
         tree = ast.parse(expression)
     except SyntaxError as exc:
@@ -644,10 +693,13 @@ def split_and_selfify(expression, inputs, outputs):
     body = [fix.visit(s) for s in body]
     report["matrix_view_fixes"] = list(fix.matrix_fixes)
     report["vec3_fixes"] = sorted(set(fix.vec3_fixes))
+    report["vec_ctor_fixes"] = sorted(set(fix.vec_ctor_fixes))
 
     # The shim goes in Init, whose names are bare globals in Compute -- and
     # only when something actually needs it, so a node that does not gets no
     # mystery function to wonder about.
+    if fix.vec_ctor_fixes:
+        init_body = list(ast.parse(_V1_VEC_SHIM_SRC).body) + init_body
     if fix.vec3_fixes:
         init_body = list(ast.parse(_VEC3_SHIM_SRC).body) + init_body
 

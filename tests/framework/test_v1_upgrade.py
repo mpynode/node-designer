@@ -284,7 +284,9 @@ class TestTheReport(_Base):
     def test_the_summary_names_what_the_user_must_act_on(self):
         node = _make_v1_node(inputs={"mode": "enum", "m": "matrix"},
                              outputs={"out": "float"},
-                             expression="out = MVector(m)[0] if mode else 0.0")
+                             # om.-qualified: a real api2 call, so it is
+                             # reported rather than rewritten.
+                             expression="out = om.MVector(m)[0] if mode else 0.0")
         line = U.summarize(*U.upgrade_scene())[0]
         self.assertIn(node, line)
         self.assertIn("registered", line)

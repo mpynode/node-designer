@@ -410,3 +410,59 @@ The node still does not evaluate -- `MVector` has no v2 equivalent unless you
 reach for numpy or `mpynode.api` -- but the error now names the real problem
 instead of the importer's own shim, and the report states outright what was
 dropped and what to replace it with.
+
+## Bare `MVector` / `MPoint` become numpy
+
+v1 made `MPoint`, `MVector`, `MMatrix`, `MQuaternion` and `MEulerRotation`
+ambient in the expression namespace. v2 does not seed api objects, which is a
+design decision rather than an omission — so once the dead `mpylib` import is
+dropped, a bare `MVector(0, 0, 0)` is simply undefined.
+
+Enumerating every bare call site across the nine upstream examples settled how
+to handle it. All of them are simple scalar constructors:
+
+```
+MVector(0, 0, 0)          gameOfLife, splineNode, springChain
+MVector(1, 1, 1)          gameOfLife
+MVector(p[0], p[1], 0)    gameOfLife
+MPoint(0, 0, 0, 1)        unitSphereCollision
+MPoint(x, 0, z, 1)        unitSphereCollision
+```
+
+They are plain 3- and 4-component holders, so a numpy array does the same
+arithmetic — and numpy is what the rest of v2 hands you anyway. `_ApiTypeFix`
+rewrites them to a `_v1_vec` shim injected into Init, which drops a fourth
+component (`MPoint`'s `w`, never written to a three-component plug regardless).
+
+Three deliberate limits:
+
+* **Only the bare form.** `om.MVector(...)` is a real api2 call that works
+  under v2 and is left exactly as written. All 12 sites in
+  `quaternionSpineNode` are of that kind.
+* **Not `MMatrix`.** There is no mechanical numpy equivalent for a 4×4 with
+  `MTransformationMatrix` semantics, so it keeps its reporting path rather
+  than being guessed at.
+* **numpy, not a list.** `splineNode` does
+  `self.samples[i] += self.cv[k] * w`, and `list * float` raises
+  `TypeError: can't multiply sequence by non-int of type 'float'` — which is
+  how `springChainNode` still fails.
+
+The shim is a visible, deletable function returning numpy, not a re-export of
+`MVector`, so nothing about v2's namespace policy changes.
+
+### Result
+
+`splineNode.ma` now evaluates **clean with v1 absent** — 60 samples of a real
+B-spline, `(0.673, -4.133, 10.841)` through `(6.123, 22.561, 14.198)`. It was
+one of the two scenes the original design note listed as needing hand-finishing.
+
+Corpus, convert-on-open, v1 not installed:
+
+| | count | |
+|---|---|---|
+| Evaluate clean | **5 / 9** | bubbleSort, quaternionSpine, splineNode, textMeshGenerator, textureSwitch |
+| Remaining | 4 | `gameOfLife` — helper reads a plug as a global; `springChain` / `unitSphereCollision` — list and MatrixView arithmetic; `ouch` — `'float' has no attribute 'value'` |
+
+Each remaining failure is now a distinct, named problem rather than a cascade
+from a dead import, and `gameOfLife` in particular moved from
+`NameError: MVector` to `NameError: boardX` — the real, documented limitation.

@@ -309,6 +309,10 @@ def summarize(reports, failures):
                         "those names are now undefined at their use sites; "
                         "replace them with numpy or mpynode.api"
                         % "; ".join(r["dead_imports"]))
+        if r.get("vec_ctor_fixes"):
+            bits.append("rewrote bare %s to numpy (_v1_vec shim added to "
+                        "Init; v2 does not seed api objects)"
+                        % "/".join(r["vec_ctor_fixes"]))
         if r.get("matrix_view_fixes"):
             bits.append("auto-fixed %d MatrixView call(s): %s"
                         % (len(r["matrix_view_fixes"]),

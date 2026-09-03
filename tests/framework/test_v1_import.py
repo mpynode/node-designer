@@ -237,9 +237,21 @@ class TestHandFinishReporting(unittest.TestCase):
         return V.convert(n)
 
     def test_api_object_use_is_flagged(self):
-        spec = self._spec("out = MVector(0, 0, 0)", {}, {"out": "vector"})
-        self.assertEqual(spec["api_objects"], ["MVector"])
+        # MMatrix has no mechanical numpy equivalent, so it is still reported
+        # rather than rewritten -- unlike the vector/point holders.
+        spec = self._spec("out = MMatrix()", {}, {"out": "matrix"})
+        self.assertEqual(spec["api_objects"], ["MMatrix"])
         self.assertTrue(spec["needs_hand_finish"])
+
+    def test_a_rewritten_vector_ctor_is_no_longer_flagged(self):
+        # Reporting something the converter already fixed is noise. Bare
+        # MVector/MPoint become numpy, so they drop out of api_objects --
+        # and with nothing else left, the node stops needing hand-finishing
+        # at all. That is what took splineNode to a clean evaluation.
+        spec = self._spec("out = MVector(0, 0, 0)", {}, {"out": "vector"})
+        self.assertEqual(spec["api_objects"], [])
+        self.assertFalse(spec["needs_hand_finish"])
+        self.assertEqual(spec["vec_ctor_fixes"], ["MVector"])
 
     def test_plain_numeric_code_is_not_flagged(self):
         spec = self._spec("out = a * 2", {"a": "float"}, {"out": "float"})
@@ -456,3 +468,86 @@ class TestDeadV1LibraryImports(unittest.TestCase):
             "\nout = 1.0", {}, {"out": "float"})
         self.assertIn("from mpylib import MVector", init)
         self.assertEqual(rep["dead_imports"], ["mpylib"])
+
+
+class TestBareVectorConstructors(unittest.TestCase):
+    """v1's ambient ``MVector`` / ``MPoint``, rewritten to numpy.
+
+    v2 does not seed api objects into the expression namespace -- an explicit
+    design decision -- so a bare ``MVector(0, 0, 0)`` is simply undefined, and
+    dropping the dead ``from mpylib import MVector`` (see above) exposes that
+    rather than hiding it.
+
+    Every bare call in the nine upstream examples takes scalar arguments:
+    ``MVector(0, 0, 0)``, ``MVector(1, 1, 1)``, ``MVector(p[0], p[1], 0)``,
+    ``MPoint(0, 0, 0, 1)``, ``MPoint(x, 0, z, 1)``. They are plain 3- and
+    4-component holders, so a numpy array does the same arithmetic -- and
+    numpy is what the rest of v2 hands you anyway. The shim is a visible,
+    deletable function in Init, NOT a re-export of MVector.
+    """
+
+    def _conv(self, src, ins=None, outs=None):
+        return V.split_and_selfify(src, ins or {}, outs or {"out": "float"})
+
+    def test_a_bare_mvector_becomes_the_shim(self):
+        _i, comp, rep = self._conv("v = MVector(0, 0, 0)\nout = v[0]")
+        self.assertIn("_v1_vec(0, 0, 0)", comp)
+        self.assertNotIn("MVector", comp)
+        self.assertEqual(rep["vec_ctor_fixes"], ["MVector"])
+
+    def test_a_bare_mpoint_becomes_the_shim(self):
+        _i, comp, rep = self._conv("p = MPoint(x, 0, z, 1)\nout = p[0]")
+        self.assertIn("_v1_vec(x, 0, z, 1)", comp)
+        self.assertEqual(rep["vec_ctor_fixes"], ["MPoint"])
+
+    def test_the_qualified_form_is_left_alone(self):
+        # om.MVector is a real api2 call that works fine under v2.
+        _i, comp, rep = self._conv("v = om.MVector(0, 0, 0)\nout = v[0]")
+        self.assertIn("om.MVector(0, 0, 0)", comp)
+        self.assertNotIn("_v1_vec(", comp)
+        self.assertEqual(rep["vec_ctor_fixes"], [])
+
+    def test_a_bare_matrix_ctor_is_not_swept_up(self):
+        # Only the vector/point holders are mechanically replaceable. MMatrix
+        # keeps its own reporting path rather than being guessed at.
+        _i, comp, rep = self._conv("m = MMatrix()\nout = 1.0")
+        self.assertIn("MMatrix()", comp)
+        self.assertEqual(rep["vec_ctor_fixes"], [])
+
+    def test_no_redundant_vec3_wrap_on_top_of_the_shim(self):
+        # The shim already yields exactly three components; wrapping it in
+        # _v1_vec3 as well would be pure noise.
+        _i, comp, _r = self._conv("out = MVector(0, 0, 0)", {},
+                                  {"out": "vector"})
+        self.assertIn("self.out = _v1_vec(0, 0, 0)", comp)
+        self.assertNotIn("_v1_vec3", comp)
+
+    def test_the_shim_lands_in_init_only_when_needed(self):
+        init, _c, _r = self._conv("out = MVector(1, 2, 3)[0]")
+        self.assertIn("def _v1_vec(*args):", init)
+        self.assertIn("import numpy as _v1_np", init)
+        init2, _c2, _r2 = self._conv("out = 1.0")
+        self.assertNotIn("_v1_vec", init2)
+
+    def test_the_shim_semantics(self):
+        init, _c, _r = self._conv("out = MVector(1, 2, 3)[0]")
+        ns = {}
+        exec(compile(init, "<init>", "exec"), ns)
+        vec = ns["_v1_vec"]
+        self.assertEqual(list(vec(1, 2, 3)), [1.0, 2.0, 3.0])
+        # MPoint's w is dropped -- it was never written to a 3-slot plug.
+        self.assertEqual(list(vec(1, 2, 3, 1)), [1.0, 2.0, 3.0])
+        # Single-sequence form, and short input padded with zeros.
+        self.assertEqual(list(vec([4, 5, 6])), [4.0, 5.0, 6.0])
+        self.assertEqual(list(vec()), [0.0, 0.0, 0.0])
+        self.assertEqual(list(vec(7)), [7.0, 0.0, 0.0])
+
+    def test_the_shim_result_supports_scalar_arithmetic(self):
+        # The actual reason it is numpy and not a list: splineNode does
+        # `self.samples[i] += self.cv[k] * w`, and `list * float` raises
+        # TypeError -- which is how springChainNode still fails.
+        init, _c, _r = self._conv("out = MVector(1, 2, 3)[0]")
+        ns = {}
+        exec(compile(init, "<init>", "exec"), ns)
+        got = ns["_v1_vec"](1, 2, 3) * 2.0
+        self.assertEqual(list(got), [2.0, 4.0, 6.0])
