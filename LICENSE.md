@@ -1,6 +1,6 @@
 
 BSD 3-Clause License:
-Copyright (c)  2026, Gene Hansen, Eric Vignola 
+Copyright (c)  2019-2026, Gene Hansen, Eric Vignola 
 All rights reserved. 
 
 Redistribution and use in source and binary forms, with or without 

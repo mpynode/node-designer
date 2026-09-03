@@ -178,6 +178,24 @@ Windows). See [INSTALL.md](INSTALL.md).
 | [docs/node_types/](docs/node_types/) | One design note per node type |
 | [docs/notes/](docs/notes/) | Contributor design notes for work that is scoped but not built |
 
+## Provenance
+
+MPyNode is the successor to
+[mpynode/node-designer](https://github.com/mpynode/node-designer), created in
+2019 by **Gene Hansen** and **Eric Vignola**. This is a substantially rewritten
+and extended version of that work, and carries the same BSD 3-Clause license.
+
+It is currently developed and maintained by **Eric Vignola**. Gene Hansen is a
+co-author of the original and its copyright is retained accordingly; he is not
+involved in this version, and nothing here should be read as his endorsement of
+it.
+
+**Not a drop-in upgrade.** This version registers `mPyNode` under a different
+`MTypeId` than 1.x, so scenes built with the original will not open under it,
+and the two cannot be loaded in the same Maya session. Stay on the
+[`v1` branch](https://github.com/mpynode/node-designer/tree/v1) if you need the
+original.
+
 ## License
 
-BSD 3-Clause. Copyright (c) 2026, Gene Hansen, Eric Vignola. See [LICENSE.md](LICENSE.md).
+BSD 3-Clause. Copyright (c) 2019-2026, Gene Hansen, Eric Vignola. See [LICENSE.md](LICENSE.md).
