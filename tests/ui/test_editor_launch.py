@@ -1,5 +1,9 @@
 import os
+import shutil
+import sys
 import unittest
+from unittest import mock
+
 from mpynode.ui import editor_launch
 
 
@@ -50,7 +54,9 @@ class TestOpenInEditor(unittest.TestCase):
         self.assertNotIn("{file}", " ".join(argv))
 
     def test_reveal_calls_popen(self):
-        ok, err = editor_launch.reveal_in_file_manager("/a b/c.py")
+        # A REAL path: reveal now refuses a nonexistent one rather than
+        # launching a file manager that lands somewhere arbitrary.
+        ok, err = editor_launch.reveal_in_file_manager(editor_launch.__file__)
         self.assertTrue(ok, err)
         self.assertTrue(self.cap.calls)
 
@@ -113,3 +119,106 @@ class TestOpenInEditor(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestRevealTargetsAFolderCorrectly(unittest.TestCase):
+    """``explorer /select,`` names a CHILD to highlight.
+
+    Handing it a directory therefore does not open that directory: Explorer
+    cannot act on the argument and silently falls back to its default
+    location, which for most people is Documents. It reports nothing, and
+    ``explorer.exe`` exits 1 even on success, so there is no return code to
+    check -- the reveal looked like it worked and went somewhere else.
+
+    Two of the three callers hand this a directory: the template gallery
+    always passes ``TemplateEntry.folder``, and the compile dialog passes its
+    AI output dir whenever there is no report file. Confirmed by running all
+    three candidate commands and watching which window appeared.
+    """
+
+    def setUp(self):
+        import tempfile
+
+        from mpynode.ui import editor_launch
+        self.editor_launch = editor_launch
+        self.calls = []
+
+        self.dir = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, self.dir, True)
+        self.file = os.path.join(self.dir, "thing.mpn")
+        with open(self.file, "w") as fh:
+            fh.write("x")
+
+        real_popen = editor_launch.subprocess.Popen
+
+        def fake(argv, *a, **kw):
+            self.calls.append(list(argv))
+
+            class P:
+                pass
+            return P()
+
+        editor_launch.subprocess.Popen = fake
+        self.addCleanup(setattr, editor_launch.subprocess, "Popen", real_popen)
+
+    def _reveal(self, path, platform="win32", name="nt"):
+        with mock.patch.object(sys, "platform", platform), \
+                mock.patch.object(os, "name", name):
+            return self.editor_launch.reveal_in_file_manager(path)
+
+    # -- Windows -----------------------------------------------------------
+
+    def test_a_directory_is_opened_not_selected(self):
+        ok, err = self._reveal(self.dir)
+        self.assertTrue(ok, err)
+        self.assertEqual(self.calls, [["explorer", self.dir]])
+
+    def test_a_file_is_still_selected(self):
+        # The working case must keep working: /select, highlights the file
+        # inside its folder, which is what "reveal" should mean.
+        ok, err = self._reveal(self.file)
+        self.assertTrue(ok, err)
+        self.assertEqual(self.calls, [["explorer", "/select," + self.file]])
+
+    def test_a_trailing_separator_does_not_break_it(self):
+        # Same silent fallback as the directory case, and just as invisible.
+        ok, err = self._reveal(self.dir + os.sep)
+        self.assertTrue(ok, err)
+        self.assertEqual(self.calls, [["explorer", self.dir]])
+
+    def test_forward_slashes_are_normalised(self):
+        # Explorer cannot parse a forward-slash path either -- and paths reach
+        # this function from env vars and config as often as from os.path.
+        ok, err = self._reveal(self.dir.replace("\\", "/"))
+        self.assertTrue(ok, err)
+        self.assertEqual(self.calls, [["explorer", os.path.normpath(self.dir)]])
+
+    # -- the guard ---------------------------------------------------------
+
+    def test_a_missing_path_is_refused_rather_than_launched(self):
+        # The third route to a wrong window. compile_dialog already shows
+        # `err` in a message box, so refusing is strictly more informative
+        # than opening Documents and returning success.
+        ok, err = self._reveal(os.path.join(self.dir, "nope", "gone.txt"))
+        self.assertFalse(ok)
+        self.assertIn("no such path", err)
+        self.assertEqual(self.calls, [])
+
+    # -- the other platforms are unchanged ---------------------------------
+
+    def test_macos_uses_open_dash_r_for_both_kinds(self):
+        # `open -R` already handles a file and a directory alike.
+        self._reveal(self.dir, platform="darwin", name="posix")
+        self._reveal(self.file, platform="darwin", name="posix")
+        self.assertEqual(self.calls,
+                         [["open", "-R", self.dir], ["open", "-R", self.file]])
+
+    def test_linux_opens_the_containing_folder(self):
+        self._reveal(self.file, platform="linux", name="posix")
+        self.assertEqual(self.calls, [["xdg-open", self.dir]])
+
+    def test_linux_opens_a_directory_target_directly(self):
+        # Previously this took os.path.dirname of a directory, landing one
+        # level too high.
+        self._reveal(self.dir, platform="linux", name="posix")
+        self.assertEqual(self.calls, [["xdg-open", self.dir]])

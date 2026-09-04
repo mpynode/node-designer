@@ -124,16 +124,43 @@ def open_in_editor(path, line):
 
 
 def reveal_in_file_manager(path):
-    """Reveal `path` in the OS file manager. Returns (ok, err). Never raises."""
+    """Reveal `path` in the OS file manager. Returns (ok, err). Never raises.
+
+    Accepts a file OR a directory. That distinction is the whole point on
+    Windows: ``explorer /select,`` names a child to highlight, so handing it a
+    DIRECTORY does not open that directory -- Explorer cannot act on the
+    argument and silently falls back to its default location, which for most
+    people is Documents. It reports nothing, and ``explorer.exe`` exits 1 even
+    on success, so there is no return code to check either. The result was a
+    reveal that looked like it worked and went somewhere else entirely.
+
+    Two of the three callers hand this a directory: the template gallery
+    always passes ``TemplateEntry.folder``, and the compile dialog passes its
+    AI output dir when there is no report file. So a directory gets
+    ``explorer <dir>`` (open it) and only a file gets ``/select,``.
+
+    ``normpath`` first because a trailing separator or a forward slash
+    produces exactly the same silent fallback, and a missing path is refused
+    outright rather than launched -- that is the third route to a wrong
+    window, and the compile dialog already surfaces ``err`` in a message box.
+    """
     from mpynode.native.toolchain import toolchain
     kw = toolchain.no_window_kwargs()
+    target = os.path.normpath(str(path))
+    if not os.path.exists(target):
+        return False, "no such path: %s" % target
     try:
         if sys.platform == "darwin":
-            subprocess.Popen(["open", "-R", str(path)], **kw)
+            # `open -R` already handles both a file and a directory.
+            subprocess.Popen(["open", "-R", target], **kw)
         elif os.name == "nt":
-            subprocess.Popen(["explorer", "/select," + str(path)], **kw)
+            if os.path.isdir(target):
+                subprocess.Popen(["explorer", target], **kw)
+            else:
+                subprocess.Popen(["explorer", "/select," + target], **kw)
         else:
-            subprocess.Popen(["xdg-open", os.path.dirname(str(path)) or "."], **kw)
+            folder = target if os.path.isdir(target) else os.path.dirname(target)
+            subprocess.Popen(["xdg-open", folder or "."], **kw)
     except (OSError, ValueError) as exc:
         return False, str(exc)
     return True, None
