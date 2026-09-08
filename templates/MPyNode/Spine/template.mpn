@@ -103,25 +103,20 @@
     "native_type": "mPyNode",
     "node_name": "spine",
     "output_attrs": {
-      "asss": {
-        "attr_type": "float",
-        "is_array": false,
-        "order": 0
-      },
       "outputRotate": {
         "attr_type": "euler",
         "is_array": true,
-        "order": 1
+        "order": 0
       },
       "outputScale": {
         "attr_type": "vector",
         "is_array": true,
-        "order": 2
+        "order": 1
       },
       "outputTranslate": {
         "attr_type": "vector",
         "is_array": true,
-        "order": 3
+        "order": 2
       }
     },
     "stored_vars": "{\"protocol\":8,\"format\":\"keyed2\",\"codec\":\"zlib\",\"has_pickle\":false,\"data_b64\":\"eJyrrgUAAXUA+Q==\"}"
