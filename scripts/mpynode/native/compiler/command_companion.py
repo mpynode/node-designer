@@ -431,7 +431,7 @@ def emit_companions(nodes, plugin_name: str, out_dir: str) -> List[dict]:
     # Pass 2 -- all nodes validated; now write (no orphans on a later clash).
     out = []
     for type_name, path, src, summary in planned:
-        with open(path, "w") as fh:
+        with open(path, "w", encoding="utf-8") as fh:
             fh.write(src)
         out.append({"type_name": type_name, "path": path, "commands": summary})
     return out

@@ -31,6 +31,26 @@ from tests import _paths
 _ROOT = _paths.ROOT
 _HARNESS = os.path.join(_ROOT, "tools", "harness")
 _TEMPLATES = os.path.join(_ROOT, "templates")
+
+
+def _link_dir(target, link):
+    """Point ``link`` at the directory ``target`` without copying it.
+
+    ``os.symlink`` on Windows needs SeCreateSymbolicLinkPrivilege, which a
+    normal account only has with Developer Mode on; without it the call fails
+    with WinError 1314 and this test errored on every stock Windows machine.
+    An NTFS junction needs no privilege, and ``shutil.rmtree`` (which
+    ``TemporaryDirectory`` uses) removes a junction without recursing into its
+    target -- verified here before relying on it, because the target is the
+    REAL templates tree. Junctions need an absolute target; ``_TEMPLATES`` is.
+    """
+    try:
+        os.symlink(target, link)
+    except OSError as exc:
+        if getattr(exc, "winerror", None) != 1314:
+            raise
+        import _winapi
+        _winapi.CreateJunction(target, link)
 _MANIFEST = os.path.join(_HARNESS, "templates.json")
 _SYNC_TOOL = os.path.join(_ROOT, "tools", "sync_harness_manifest.py")
 _COVERAGE_TOOL = os.path.join(_ROOT, "tools", "list_template_coverage.py")
@@ -97,7 +117,7 @@ class TestTheDriftCheckersActuallyFire(unittest.TestCase):
         os.makedirs(os.path.join(tmp, "tools"))
         shadow_harness = os.path.join(tmp, "tools", "harness")
         os.makedirs(shadow_harness)
-        os.symlink(_TEMPLATES, os.path.join(tmp, "templates"))
+        _link_dir(_TEMPLATES, os.path.join(tmp, "templates"))
         shutil.copy(_SYNC_TOOL, os.path.join(tmp, "tools"))
         shutil.copy(_COVERAGE_TOOL, os.path.join(tmp, "tools"))
         shutil.copy(os.path.join(_HARNESS, "demo_specs.py"), shadow_harness)

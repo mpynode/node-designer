@@ -250,18 +250,18 @@ def port_node(spec: dict, out_dir: str, complete_fn=None,
     # no fix-loop. Still emit the build + verify helpers and return the same shape.
     if codegen.PORT_BEGIN not in inline_skeleton:
         _log("[%s] deterministic compute (verified helpers); compiling..." % name)
-        with open(cpp_path, "w") as f:
+        with open(cpp_path, "w", encoding="utf-8") as f:
             f.write(inline_skeleton)
         ok, log, bundle = compile_cpp(cpp_path, spec, out_dir, maya=maya,
                                       log_cb=log_cb)
         build_name, build_src = codegen.generate_build_script(spec, maya=maya)
         build_path = os.path.join(out_dir, build_name)
-        with open(build_path, "w") as f:
+        with open(build_path, "w", encoding="utf-8") as f:
             f.write(build_src)
         if not toolchain.is_windows():
             os.chmod(build_path, 0o755)
         verify_path = os.path.join(out_dir, "verify_in_maya.py")
-        with open(verify_path, "w") as f:
+        with open(verify_path, "w", encoding="utf-8") as f:
             f.write(_verify_script(spec))
         return {
             "ok": ok, "node": name, "cpp": cpp_path,
@@ -277,7 +277,7 @@ def port_node(spec: dict, out_dir: str, complete_fn=None,
         n_regions = inline_skeleton.count(codegen.PORT_BEGIN)
         _log("[%s] AI assist off; stopping at the deterministic stage "
              "(%d region(s) unported)" % (name, n_regions))
-        with open(cpp_path, "w") as f:
+        with open(cpp_path, "w", encoding="utf-8") as f:
             f.write(inline_skeleton)
         return {
             "ok": False, "node": name, "cpp": cpp_path, "bundle": None,
@@ -319,7 +319,7 @@ def port_node(spec: dict, out_dir: str, complete_fn=None,
     _log("[%s] requesting AI compute body..." % name)
     body = complete_fn(system, user)
     cpp = _splice(skeleton, body)
-    with open(cpp_path, "w") as f:
+    with open(cpp_path, "w", encoding="utf-8") as f:
         f.write(cpp)
 
     _log("[%s] compiling (initial)..." % name)
@@ -339,7 +339,7 @@ def port_node(spec: dict, out_dir: str, complete_fn=None,
         )
         body = complete_fn(system, fix_user)
         cpp = _splice(skeleton, body)
-        with open(cpp_path, "w") as f:
+        with open(cpp_path, "w", encoding="utf-8") as f:
             f.write(cpp)
         ok, log, bundle = compile_cpp(cpp_path, spec, out_dir, maya=maya,
                                        log_cb=log_cb)
@@ -354,7 +354,7 @@ def port_node(spec: dict, out_dir: str, complete_fn=None,
         system, user = build_prompt(spec, inline_skeleton, shared_protos=None)
         body = complete_fn(system, user)
         cpp = _splice(inline_skeleton, body)
-        with open(cpp_path, "w") as f:
+        with open(cpp_path, "w", encoding="utf-8") as f:
             f.write(cpp)
         ok, log, bundle = compile_cpp(cpp_path, spec, out_dir, maya=maya,
                                        log_cb=log_cb)
@@ -370,7 +370,7 @@ def port_node(spec: dict, out_dir: str, complete_fn=None,
             )
             body = complete_fn(system, fix_user)
             cpp = _splice(inline_skeleton, body)
-            with open(cpp_path, "w") as f:
+            with open(cpp_path, "w", encoding="utf-8") as f:
                 f.write(cpp)
             ok, log, bundle = compile_cpp(cpp_path, spec, out_dir, maya=maya,
                                        log_cb=log_cb)
@@ -384,12 +384,12 @@ def port_node(spec: dict, out_dir: str, complete_fn=None,
     # script: build.sh on macOS/Linux, build.bat on Windows).
     build_name, build_src = codegen.generate_build_script(spec, maya=maya)
     build_path = os.path.join(out_dir, build_name)
-    with open(build_path, "w") as f:
+    with open(build_path, "w", encoding="utf-8") as f:
         f.write(build_src)
     if not toolchain.is_windows():
         os.chmod(build_path, 0o755)
     verify_path = os.path.join(out_dir, "verify_in_maya.py")
-    with open(verify_path, "w") as f:
+    with open(verify_path, "w", encoding="utf-8") as f:
         f.write(_verify_script(spec))
 
     return {

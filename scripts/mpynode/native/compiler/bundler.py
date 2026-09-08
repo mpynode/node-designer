@@ -1136,7 +1136,7 @@ def _detect_qt(nodes) -> bool:
     includes the hover locator's ``QtGui/QCursor`` header."""
     for _tn, cp in nodes:
         try:
-            with open(cp) as fh:
+            with open(cp, encoding="utf-8") as fh:
                 if "QtGui/QCursor" in fh.read():
                     return True
         except Exception:
@@ -1309,7 +1309,7 @@ def assemble(
     for type_name, cpp_path in nodes:
         rec = {"name": type_name, "status": "pending", "id": None, "reason": ""}
         try:
-            with open(cpp_path) as fh:
+            with open(cpp_path, encoding="utf-8") as fh:
                 src = fh.read()
             cmd_sources.append((type_name, src))
             # Pre-allocate ids for every MTypeId this file defines so id_for is
@@ -1327,7 +1327,7 @@ def assemble(
 
             frag, info = transform_node_cpp(src, type_name, id_for)
             frag_path = os.path.join(src_dir, _node_cpp_name(info["node_name"]))
-            with open(frag_path, "w") as fh:
+            with open(frag_path, "w", encoding="utf-8") as fh:
                 fh.write(frag)
             rec["id"] = id_map.get(type_name)
             rec["status"] = "transformed"
@@ -1404,7 +1404,7 @@ def assemble(
     shared_path = None
     if shared_blocks:
         shared_path = os.path.join(src_dir, SHARED_HELPERS_FILE)
-        with open(shared_path, "w") as fh:
+        with open(shared_path, "w", encoding="utf-8") as fh:
             fh.write(make_shared_helpers_cpp(shared_blocks))
         report["shared_helpers"] = [b["name"] for b in shared_blocks]
     if shared_path is not None:
@@ -1423,7 +1423,7 @@ def assemble(
 
     # 3) plugin_main (into build/source) + BOTH build scripts + README (into
     #    build/), then link the bundle at the TOP of out_dir.
-    with open(os.path.join(src_dir, "plugin_main.cpp"), "w") as fh:
+    with open(os.path.join(src_dir, "plugin_main.cpp"), "w", encoding="utf-8") as fh:
         fh.write(make_plugin_main(compiled_infos, plugin_name))
     node_cpp_files = [_node_cpp_name(i["node_name"]) for i in compiled_infos]
     build_sh = os.path.join(build_dir, "build.sh")
@@ -1431,14 +1431,14 @@ def assemble(
     # (LF for .sh, CRLF for .bat). Without it a Windows host translates them
     # again -- the .sh becomes CRLF and dies with "$'\r': command not found",
     # the .bat becomes \r\r\n. No-op on macOS (os.linesep is already "\n").
-    with open(build_sh, "w", newline="") as fh:
+    with open(build_sh, "w", newline="", encoding="utf-8") as fh:
         fh.write(make_build_sh(plugin_name, frag_files, needs_qt=needs_qt))
     if not toolchain.is_windows():
         os.chmod(build_sh, 0o755)
-    with open(os.path.join(build_dir, "build.bat"), "w", newline="") as fh:
+    with open(os.path.join(build_dir, "build.bat"), "w", newline="", encoding="utf-8") as fh:
         fh.write(make_build_bat(plugin_name, frag_files, needs_qt=needs_qt))
     out_plugin = os.path.join(out_dir, plugin_name + toolchain.plugin_ext())
-    with open(os.path.join(build_dir, "README.txt"), "w") as fh:
+    with open(os.path.join(build_dir, "README.txt"), "w", encoding="utf-8") as fh:
         fh.write(make_readme(plugin_name, node_cpp_files, single=False,
                              bundle_name=os.path.basename(out_plugin)))
 
@@ -1515,7 +1515,7 @@ def _assemble_single(node, plugin_name, out_dir, reg, report, *, strict, maya,
     rec = {"name": type_name, "status": "pending", "id": None, "reason": ""}
     report["nodes"].append(rec)
     try:
-        with open(cpp_path) as fh:
+        with open(cpp_path, encoding="utf-8") as fh:
             src = fh.read()
     except Exception as exc:
         rec["status"] = "error"
@@ -1550,7 +1550,7 @@ def _assemble_single(node, plugin_name, out_dir, reg, report, *, strict, maya,
     src_dir = source_dir_for(out_dir)
     build_dir = build_dir_for(out_dir)
     os.makedirs(src_dir, exist_ok=True)
-    with open(os.path.join(src_dir, node_file), "w") as fh:
+    with open(os.path.join(src_dir, node_file), "w", encoding="utf-8") as fh:
         fh.write(cpp_text)
     rec["id"] = id_map.get(type_name)
     rec["status"] = "transformed"
@@ -1568,17 +1568,17 @@ def _assemble_single(node, plugin_name, out_dir, reg, report, *, strict, maya,
     build_sh = os.path.join(build_dir, "build.sh")
     # newline="" -- see the note in assemble(): the generators own their line
     # endings, a second translation on a Windows host breaks both scripts.
-    with open(build_sh, "w", newline="") as fh:
+    with open(build_sh, "w", newline="", encoding="utf-8") as fh:
         fh.write(make_single_build_sh(plugin_name, node_file, libs, needs_qt=needs_qt,
                                       maya=(None if is_win else maya)))
     if not is_win:
         os.chmod(build_sh, 0o755)
-    with open(os.path.join(build_dir, "build.bat"), "w", newline="") as fh:
+    with open(os.path.join(build_dir, "build.bat"), "w", newline="", encoding="utf-8") as fh:
         fh.write(make_single_build_bat(plugin_name, node_file, libs,
                                        needs_qt=needs_qt,
                                        maya=(maya if is_win else None)))
     out_plugin = os.path.join(out_dir, plugin_name + toolchain.plugin_ext())
-    with open(os.path.join(build_dir, "README.txt"), "w") as fh:
+    with open(os.path.join(build_dir, "README.txt"), "w", encoding="utf-8") as fh:
         fh.write(make_readme(plugin_name, [node_file], single=True,
                              bundle_name=os.path.basename(out_plugin)))
 

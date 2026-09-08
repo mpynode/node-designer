@@ -153,16 +153,16 @@ def write_plugin(spec: dict, out_dir: str) -> dict:
         "load_test": os.path.join(out_dir, "load_test.py"),
         "node": name,
     }
-    with open(paths["cpp"], "w") as f:
+    with open(paths["cpp"], "w", encoding="utf-8") as f:
         f.write(cpp_src)
     # newline="": generate_build_bat emits its own CRLF and generate_build_sh
     # its own LF. A second translation on a Windows host turns the .bat into
     # \r\r\n and the .sh into CRLF ("$'\r': command not found"). No-op on macOS.
-    with open(paths["build_sh"], "w", newline="") as f:
+    with open(paths["build_sh"], "w", newline="", encoding="utf-8") as f:
         f.write(build_src)
     if not toolchain.is_windows():
         os.chmod(paths["build_sh"], 0o755)
-    with open(paths["load_test"], "w") as f:
+    with open(paths["load_test"], "w", encoding="utf-8") as f:
         f.write(generate_load_test(spec))
     return paths
 

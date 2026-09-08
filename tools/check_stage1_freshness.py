@@ -56,7 +56,7 @@ def _manifests():
                 continue
             path = os.path.join(dirpath, "manifest.json")
             try:
-                with open(path) as fh:
+                with open(path, encoding="utf-8") as fh:
                     man = json.load(fh)
             except (OSError, ValueError):
                 continue
@@ -117,7 +117,7 @@ def collect():
                 continue
             entry["fresh_sha"] = hashlib.sha256(
                 fresh.encode("utf-8")).hexdigest()[:16]
-            with open(art) as fh:
+            with open(art, encoding="utf-8") as fh:
                 shipped = fh.read()
             if shipped == fresh:
                 entry["state"] = "fresh"
@@ -183,13 +183,13 @@ def _write_baseline(result):
     reviewable diff naming every artifact that newly rotted. The test never
     calls this -- a gate that repairs its own baseline is not a gate.
     """
-    with open(BASELINE) as fh:
+    with open(BASELINE, encoding="utf-8") as fh:
         doc = json.load(fh)
     was = set(doc.get("stale") or [])
     now = sorted(rel for rel, row in result["artifacts"].items()
                  if row["state"] == "stale")
     doc["stale"] = now
-    with open(BASELINE, "w") as fh:
+    with open(BASELINE, "w", encoding="utf-8") as fh:
         json.dump(doc, fh, indent=2)
         fh.write("\n")
     print("baseline: %d -> %d  (+%d newly stale, -%d refreshed)"
@@ -218,7 +218,7 @@ def main():
 
     result = collect()
     if json_out:
-        with open(json_out, "w") as fh:
+        with open(json_out, "w", encoding="utf-8") as fh:
             json.dump(result, fh, indent=2, sort_keys=True)
     else:
         _report(result)

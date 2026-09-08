@@ -230,7 +230,7 @@ def bench_lock(label="", log_cb=None, cancelled=None):
         d = os.path.dirname(path)
         if d:
             os.makedirs(d, exist_ok=True)
-        fh = open(path, "a+")
+        fh = open(path, "a+", encoding="utf-8")
     except OSError as exc:
         # A lock we cannot create protects nothing, and pretending otherwise is
         # how two processes end up timing at once while the log says they did not.
@@ -285,7 +285,7 @@ def bench_lock(label="", log_cb=None, cancelled=None):
 def _bench_lock_holder(path):
     """The holder line the current owner wrote, for the timeout message."""
     try:
-        with open(path) as fh:
+        with open(path, encoding="utf-8") as fh:
             return (fh.read(200).strip() or "unknown")
     except OSError:
         return "unknown"
@@ -537,7 +537,7 @@ def make_adapters(spec: dict, out_dir: str, *,
     spec_path = os.path.join(out_dir, "_bench_spec.json")
     try:
         os.makedirs(out_dir, exist_ok=True)
-        with open(spec_path, "w") as fh:
+        with open(spec_path, "w", encoding="utf-8") as fh:
             json.dump(spec, fh)
     except Exception:
         spec_path = None
@@ -737,7 +737,7 @@ def make_adapters(spec: dict, out_dir: str, *,
 
     def compile_fn(cpp_text):
         cpp_path = os.path.join(out_dir, name + ".cpp")
-        with open(cpp_path, "w") as fh:
+        with open(cpp_path, "w", encoding="utf-8") as fh:
             fh.write(cpp_text)
         # optimize=True enforces -O3 -ffp-contract=off on the unix recompile.
         return porter.compile_cpp(cpp_path, spec, out_dir, maya=maya,
@@ -1076,7 +1076,7 @@ def make_version_writer(out_dir, type_name, keep_bundles=False):
         try:
             os.makedirs(d, exist_ok=True)
             path = os.path.join(d, "%02d_no_change.txt" % record.index)
-            with open(path, "w") as fh:
+            with open(path, "w", encoding="utf-8") as fh:
                 fh.write("round %d: no-change -- the candidate was identical "
                          "to the source this round was given, so there is no "
                          ".cpp of its own to keep. See rounds.json.\n"
@@ -1104,7 +1104,7 @@ def make_version_writer(out_dir, type_name, keep_bundles=False):
             stem = "%02d_%s" % (record.index,
                                 _slugify(record.slug, record.outcome))
             path = os.path.join(d, stem + ".cpp")
-            with open(path, "w") as fh:
+            with open(path, "w", encoding="utf-8") as fh:
                 fh.write(cpp_text)
         except OSError:
             return None
@@ -1151,7 +1151,7 @@ def write_rounds_json(out_dir, type_name, result, *, parity_gate=""):
         d = bundler.stage_dir_for(out_dir, type_name)
         os.makedirs(d, exist_ok=True)
         path = os.path.join(d, "rounds.json")
-        with open(path, "w") as fh:
+        with open(path, "w", encoding="utf-8") as fh:
             json.dump(doc, fh, indent=2, sort_keys=True, default=str)
             fh.write("\n")
         return path
@@ -1263,7 +1263,7 @@ def optimize_surviving(nodes, out_dir, *, maya=None, verify_fn=None,
         if status_out is not None:
             status_out[type_name] = node_status
         try:
-            with open(cpp_path) as fh:
+            with open(cpp_path, encoding="utf-8") as fh:
                 baseline = fh.read()
             scratch = os.path.join(bundler.build_dir_for(out_dir),
                                    OPT_SCRATCH_DIRNAME, type_name)
@@ -1312,7 +1312,7 @@ def optimize_surviving(nodes, out_dir, *, maya=None, verify_fn=None,
                     shutil.copy2(cpp_path, cpp_path + ".preopt")
                 except Exception:
                     pass
-                with open(cpp_path, "w") as fh:
+                with open(cpp_path, "w", encoding="utf-8") as fh:
                     fh.write(res.best_cpp)
             results[type_name] = res
         except _OptimizeCancelled:

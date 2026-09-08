@@ -137,7 +137,7 @@ def _make_port_log_cb(progress_cb, node, i, n, log_path):
             _emit(progress_cb, "log", node, "line", line, i, n)
         if log_path:
             try:
-                with open(log_path, "a") as fh:
+                with open(log_path, "a", encoding="utf-8") as fh:
                     fh.write(line if str(line).endswith("\n") else str(line) + "\n")
             except Exception:
                 pass
@@ -483,7 +483,7 @@ def _optimize_skip_reason(cpp_path, spec, *, one_shot=False):
     # outright, so optimizer_knowledge._PLUGIN_ANCHORS carries its tokens and a
     # candidate that drops one is rejected as invalid before a compile is spent.
     try:
-        with open(cpp_path, "r") as fh:
+        with open(cpp_path, "r", encoding="utf-8") as fh:
             text = fh.read()
     except Exception:
         return ""
@@ -568,7 +568,7 @@ def _write_stage(out_dir, type_name, stage, text):
         d = bundler.stage_dir_for(out_dir, type_name)
         os.makedirs(d, exist_ok=True)
         path = os.path.join(d, stage + ".cpp")
-        with open(path, "w") as fh:
+        with open(path, "w", encoding="utf-8") as fh:
             fh.write(text)
         return path
     except OSError:
@@ -829,7 +829,7 @@ def compile_plugin(specs, plugin_name, out_dir, *, strict=True, verify=True,
             cached_assist = False
             if needs_llm:
                 try:
-                    with open(cached) as _fh:
+                    with open(cached, encoding="utf-8") as _fh:
                         # _write_stage swallows OSError and returns None;
                         # announcing regardless would point at a missing file.
                         cached_assist = bool(_write_stage(
@@ -919,7 +919,7 @@ def compile_plugin(specs, plugin_name, out_dir, *, strict=True, verify=True,
         if r.get("ok"):
             # Write the spliced .cpp back to the cache atomically (hit next time).
             try:
-                with open(r["cpp"], "r") as fh:
+                with open(r["cpp"], "r", encoding="utf-8") as fh:
                     cpp_text = fh.read()
                 port_cache.put(key, cpp_text, meta={
                     "recipe": port_cache.PORTER_RECIPE_VERSION,
@@ -995,7 +995,7 @@ def compile_plugin(specs, plugin_name, out_dir, *, strict=True, verify=True,
     honesty = {}
     for (tn, cpp, spec, key, cache_status) in surviving:
         try:
-            with open(cpp, "r") as fh:
+            with open(cpp, "r", encoding="utf-8") as fh:
                 honesty[tn] = _prompt.scan_ported_body(fh.read())
         except OSError:
             honesty[tn] = {"ported": False, "incomplete": [], "io": []}
@@ -1017,7 +1017,7 @@ def compile_plugin(specs, plugin_name, out_dir, *, strict=True, verify=True,
         if spec.get("mpy_type") != "mPyFile":
             continue
         try:
-            with open(cpp, "r") as fh:
+            with open(cpp, "r", encoding="utf-8") as fh:
                 src = fh.read()
             # A port-cache HIT can serve an ALREADY-injected .cpp, for which
             # skip_reason says "override already present". Without this check
@@ -1028,7 +1028,7 @@ def compile_plugin(specs, plugin_name, out_dir, *, strict=True, verify=True,
             if not reason:
                 new = emit_vp2_override.inject_vp2_override(src, spec)
                 if new != src:
-                    with open(cpp, "w") as fh:
+                    with open(cpp, "w", encoding="utf-8") as fh:
                         fh.write(new)
                     _emit(progress_cb, "port", tn, "ok",
                           "VP2 viewport override injected", 0, n_total)
@@ -1101,7 +1101,7 @@ def compile_plugin(specs, plugin_name, out_dir, *, strict=True, verify=True,
                     # Show the ratio even when it FITS: the point is to warn
                     # while there is still headroom, not only once it is gone.
                     try:
-                        with open(cpp, "r") as _fh:
+                        with open(cpp, "r", encoding="utf-8") as _fh:
                             _need = _response_tokens_needed(_fh.read())
                         _emit(progress_cb, "optimize", None, "info",
                               "%s response budget: %d/%d tokens"
@@ -1554,7 +1554,7 @@ def _write_manifest(out_dir, plugin_name, bundle_path, rows, strict, provider,
     os.makedirs(build_dir, exist_ok=True)
     path = os.path.join(build_dir, "manifest.json")
     tmp = "%s.tmp-%d" % (path, os.getpid())
-    with open(tmp, "w") as fh:
+    with open(tmp, "w", encoding="utf-8") as fh:
         # NOT sort_keys: the embedded spec carries attribute DECLARATION ORDER
         # only as its dict INSERTION order (emit_attr iterates spec[kind].items()),
         # and unlike the ``.mpn`` attr map there is no per-meta ``order`` field to

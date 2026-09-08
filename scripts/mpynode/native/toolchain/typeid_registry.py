@@ -153,7 +153,7 @@ class TypeIdRegistry:
             return self._file_pins
         pins: Dict[str, int] = {}
         try:
-            with open(self.path, "r") as fh:
+            with open(self.path, "r", encoding="utf-8") as fh:
                 doc = json.load(fh)
             for nm, hx in (doc.get("map") or {}).items():
                 try:
@@ -268,7 +268,7 @@ class TypeIdRegistry:
             os.makedirs(d, exist_ok=True)
         doc = {"base": _as_hex(self.base), "map": self.export_map()}
         tmp = target + ".tmp-%d" % os.getpid()
-        with open(tmp, "w") as fh:
+        with open(tmp, "w", encoding="utf-8") as fh:
             json.dump(doc, fh, indent=2, sort_keys=True)
             fh.write("\n")
         os.replace(tmp, target)  # atomic on POSIX

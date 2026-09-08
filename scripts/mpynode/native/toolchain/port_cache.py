@@ -489,7 +489,7 @@ def get(key: str) -> Optional[str]:
     if not _complete(key):
         return None
     try:
-        with open(_cpp_path(key), "r") as fh:
+        with open(_cpp_path(key), "r", encoding="utf-8") as fh:
             return fh.read()
     except FileNotFoundError:
         # Raced with a clear()/eviction between the check and the read.
@@ -500,7 +500,7 @@ def _atomic_write(path: str, text: str) -> None:
     """Write ``text`` to ``path`` via a per-pid tmp file + ``os.replace``
     (atomic on POSIX). Mirrors ``typeid_registry._save``."""
     tmp = "%s.tmp-%d" % (path, os.getpid())
-    with open(tmp, "w") as fh:
+    with open(tmp, "w", encoding="utf-8") as fh:
         fh.write(text)
     os.replace(tmp, path)  # atomic on POSIX
 

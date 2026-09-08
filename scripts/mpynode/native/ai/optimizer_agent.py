@@ -185,7 +185,7 @@ def read_round_meta(ws_dir):
     a paragraph, and must never cost the build a measured optimization.
     """
     try:
-        with open(os.path.join(ws_dir, ROUND_JSON)) as fh:
+        with open(os.path.join(ws_dir, ROUND_JSON), encoding="utf-8") as fh:
             data = json.load(fh)
     except Exception:
         return {}
@@ -551,7 +551,7 @@ def build_workspace(spec, ws_dir, cpp_text, *, maya=None, ntype=None,
 
     os.makedirs(ws_dir, exist_ok=True)
     cpp_path = os.path.join(ws_dir, name + ".cpp")
-    with open(cpp_path, "w") as fh:
+    with open(cpp_path, "w", encoding="utf-8") as fh:
         fh.write(cpp_text)
 
     # The SAME build script the shipped node uses -- flat layout, so <name>.cpp
@@ -560,12 +560,12 @@ def build_workspace(spec, ws_dir, cpp_text, *, maya=None, ntype=None,
     # newline="" for the same reason as the bundler's build.sh: the generator
     # already emits LF, and a second translation on a Windows host would make
     # the script CRLF and die with "$'\r': command not found". No-op on macOS.
-    with open(build_path, "w", newline="") as fh:
+    with open(build_path, "w", newline="", encoding="utf-8") as fh:
         fh.write(build_scripts.generate_build_sh(spec, maya=maya))
     _chmod_x(build_path)
 
     bench_path = os.path.join(ws_dir, "bench.sh")
-    with open(bench_path, "w", newline="") as fh:
+    with open(bench_path, "w", newline="", encoding="utf-8") as fh:
         fh.write(_bench_sh(name, ntype, toolchain.mayapy_path(maya), ws_dir,
                            spec_path, bench_array, bench_geo, bench_iters))
     _chmod_x(bench_path)
@@ -594,7 +594,7 @@ def build_workspace(spec, ws_dir, cpp_text, *, maya=None, ntype=None,
         geo=int(bench_geo), verts="{:,}".format(verts),
         array=int(bench_array), iters=int(bench_iters), cpp_path=cpp_path,
         baseline=("%.3f ms" % baseline_ms) if baseline_ms else "run ./bench.sh")
-    with open(os.path.join(ws_dir, "TASK.md"), "w") as fh:
+    with open(os.path.join(ws_dir, "TASK.md"), "w", encoding="utf-8") as fh:
         fh.write(task)
     # The workspace is reused every round. A leftover ROUND.json would be read
     # back as THIS round's account of itself, mislabelling one change with the
@@ -673,7 +673,7 @@ def optimize_with_agent(spec, ws_dir, cpp_text, agent_fn, *, maya=None,
         # late: a completed edit is still worth gating. The external
         # compile+parity+benchmark decides whether it is any good.
         try:
-            with open(cpp_path) as fh:
+            with open(cpp_path, encoding="utf-8") as fh:
                 after = fh.read()
         except Exception:
             after = before

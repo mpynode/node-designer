@@ -545,7 +545,10 @@ def port_cache_dir_pref() -> str:
         return ""
     if is_foreign_os_path(raw):
         return ""
-    return os.path.expanduser(os.path.expandvars(raw.strip()))
+    # normpath: expanduser on Windows hands back the home dir with backslashes
+    # and leaves the user's forward slashes alone, so "~/x/y" came out with
+    # mixed separators and failed a plain endswith() against os.path.join.
+    return os.path.normpath(os.path.expanduser(os.path.expandvars(raw.strip())))
 
 
 # ---------------------------------------------------------------------------

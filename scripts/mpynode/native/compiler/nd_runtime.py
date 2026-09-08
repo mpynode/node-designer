@@ -13,6 +13,7 @@ def _nd_runtime_cpp():
     file's ``#ifndef`` include guard makes the inline idempotent."""
     global _ND_RUNTIME_CPP_CACHE
     if _ND_RUNTIME_CPP_CACHE is None:
-        with open(os.path.join(os.path.dirname(__file__), "nd_runtime.h")) as f:
+        with open(os.path.join(os.path.dirname(__file__), "nd_runtime.h"),
+                  encoding="utf-8") as f:
             _ND_RUNTIME_CPP_CACHE = f.read()
     return _ND_RUNTIME_CPP_CACHE

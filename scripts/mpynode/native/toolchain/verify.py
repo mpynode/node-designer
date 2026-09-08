@@ -2390,7 +2390,7 @@ def _dump_geo_mismatch(dirpath, name, cfg, ci, cc):
             # topo[0] is the face-size list on a mesh but a bare degree int on a
             # curve/surface -- keep both writable.
             topo0 = (comp.get("topo") or (None,))[0]
-            with open(path, "w") as fh:
+            with open(path, "w", encoding="utf-8") as fh:
                 json.dump({"pts": list(comp.get("pts") or []),
                            "topo0": (list(topo0)
                                      if isinstance(topo0, (list, tuple))
@@ -2634,7 +2634,7 @@ def _run_subprocess_verify(bundle_path, rows, *, maya=_MAYA_DEFAULT, runner=None
             "rows": [{"type_name": r["type_name"], "spec": r.get("spec")}
                      for r in rows],
         }
-        with open(payload_path, "w") as fh:
+        with open(payload_path, "w", encoding="utf-8") as fh:
             json.dump(payload, fh, default=str)
 
         scripts_dir, root_dir = _scripts_root()
@@ -2670,7 +2670,7 @@ def _run_subprocess_verify(bundle_path, rows, *, maya=_MAYA_DEFAULT, runner=None
                 rows, "subprocess verify produced no result (the verify "
                       "process may have crashed)")
         try:
-            with open(result_path) as fh:
+            with open(result_path, encoding="utf-8") as fh:
                 res = json.load(fh)
         except Exception as exc:
             return _skip_rows(
@@ -2758,7 +2758,7 @@ def _verify_worker_main():
     out = {}
     payload = {}
     try:
-        with open(payload_path) as fh:
+        with open(payload_path, encoding="utf-8") as fh:
             payload = json.load(fh)
         out = _verify_worker_run(payload)
     except Exception as exc:
@@ -2774,7 +2774,7 @@ def _verify_worker_main():
         # Atomic write (tmp + os.replace) so a timeout/SIGKILL mid-write can't
         # leave the parent a torn file it would misreport as 'unreadable'.
         tmp = "%s.tmp-%d" % (result_path, os.getpid())
-        with open(tmp, "w") as fh:
+        with open(tmp, "w", encoding="utf-8") as fh:
             json.dump(out, fh, default=str)
         os.replace(tmp, result_path)
     except Exception:

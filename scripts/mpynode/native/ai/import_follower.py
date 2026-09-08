@@ -284,7 +284,7 @@ def collect_helper_sources(compute: str, init: str = "", *, max_sources: int = 5
             path = _module_file(modname)
             if path and _is_followable(modname, path, stdlib_dirs):
                 try:
-                    with open(path, "r") as f:
+                    with open(path, "r", encoding="utf-8") as f:
                         text = f.read()
                     tree = ast.parse(text)
                     entry = (text, _top_level_defs(tree), _build_import_map(tree))

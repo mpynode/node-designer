@@ -38,7 +38,7 @@ _STAGE_FILES = (
 
 def _read_json(path):
     try:
-        with open(path) as fh:
+        with open(path, encoding="utf-8") as fh:
             return json.load(fh)
     except Exception:
         return None
@@ -304,7 +304,7 @@ def write_node_report(out_dir, type_name, *, row=None, spec=None):
         d = bundler.stage_dir_for(out_dir, type_name)
         os.makedirs(d, exist_ok=True)
         path = os.path.join(d, "REPORT.md")
-        with open(path, "w") as fh:
+        with open(path, "w", encoding="utf-8") as fh:
             fh.write(node_report_text(out_dir, type_name, row=row, spec=spec))
         return path
     except OSError:
@@ -370,7 +370,7 @@ def write_index_report(out_dir, plugin_name, rows):
     try:
         os.makedirs(out_dir, exist_ok=True)
         path = os.path.join(out_dir, "REPORT.md")
-        with open(path, "w") as fh:
+        with open(path, "w", encoding="utf-8") as fh:
             fh.write(index_report_text(out_dir, plugin_name, rows))
         return path
     except OSError:
