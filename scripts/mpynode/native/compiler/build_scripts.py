@@ -73,9 +73,10 @@ def generate_build_sh(spec: dict, maya=None) -> str:
     return "\n".join(lines)
 
 def generate_build_bat(spec: dict, maya=None) -> str:
-    """Windows ``cl.exe`` build script. Run from an *x64 Native Tools Command
-    Prompt for VS* (so ``cl`` and the toolset env are on PATH), or set up the
-    env yourself. Mirrors ``native.toolchain.compile_to_plugin_cmd`` for MSVC.
+    """Windows ``cl.exe`` build script. Self-bootstraps MSVC via vswhere +
+    vcvarsall x64, so it runs from any cmd.exe; an *x64 Native Tools Command
+    Prompt for VS* is used as-is. Mirrors ``native.toolchain.compile_to_plugin_cmd``
+    for MSVC.
 
     ``maya`` is provenance only; the Maya root is resolved at RUN time from the
     optional version argument (``build.bat 2026``).
@@ -101,12 +102,14 @@ def generate_build_bat(spec: dict, maya=None) -> str:
     return "\r\n".join([
         "@echo off",
         "REM Generated build for native node '%s'." % name,
-        "REM Run from an 'x64 Native Tools Command Prompt for VS'.",
+        "REM Runs from any cmd.exe: MSVC is located via vswhere and vcvarsall x64",
+        "REM is called for you. An 'x64 Native Tools Command Prompt' is used as-is.",
         "REM",
         "REM Usage:  build.bat [maya-version]      e.g. build.bat 2026",
         "REM With no argument the newest installed Maya is used; set MAYA to",
         "REM override discovery.",
     ] + toolchain.build_provenance(maya, "REM")
+      + toolchain.msvc_resolver_bat()
       + toolchain.maya_resolver_bat("win32")
       + (  # Must follow the Maya resolver: the Qt probe reads %MAYA%\include.
         toolchain.qt_resolver_bat() if needs_qt else []) + [

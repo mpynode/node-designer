@@ -828,7 +828,8 @@ def make_build_bat(plugin_name: str, frag_files: List[str],
     """Windows ``cl.exe`` equivalent of :func:`make_build_sh` (reference/debug).
 
     Compiles each fragment + ``plugin_main.cpp`` to ``.obj`` then links one
-    ``.mll``. Run from an *x64 Native Tools Command Prompt for VS*. The actual
+    ``.mll``. Self-bootstraps MSVC via vswhere + vcvarsall x64, so it runs from
+    any cmd.exe. The actual
     programmatic build (:func:`assemble`) drives ``cl`` directly via
     ``native.toolchain``; this is the hand-runnable mirror. ``needs_qt=True``
     links Maya's Qt import libs AND emits ``toolchain.qt_resolver_bat``, which
@@ -859,12 +860,13 @@ def make_build_bat(plugin_name: str, frag_files: List[str],
         "@echo off",
         "REM Generated combined build for native plugin '%s' (%d nodes)."
         % (plugin_name, len(frag_files)),
-        "REM Run from an 'x64 Native Tools Command Prompt for VS'.",
+        "REM Runs from any cmd.exe: MSVC is located via vswhere and vcvarsall x64",
+        "REM is called for you. An 'x64 Native Tools Command Prompt' is used as-is.",
         "REM",
         "REM Usage:  build.bat [maya-version]      e.g. build.bat 2026",
         "REM With no argument the newest installed Maya is used; set MAYA to",
         "REM override discovery.",
-    ] + toolchain.maya_resolver_bat("win32") + (
+    ] + toolchain.msvc_resolver_bat() + toolchain.maya_resolver_bat("win32") + (
         # Must follow the Maya resolver: the Qt probe reads %MAYA%\include.
         toolchain.qt_resolver_bat() if needs_qt else []) + [
         'set "HERE=%~dp0"',
@@ -981,13 +983,14 @@ def make_single_build_bat(plugin_name: str, node_file: str, libs: List[str],
         "@echo off",
         "REM Rebuild native plugin '%s' from its single source 'source\\%s'."
         % (plugin_name, node_file),
-        "REM Edit source\\%s, then run build.bat from an 'x64 Native Tools "
-        "Command Prompt for VS'." % node_file,
+        "REM Edit source\\%s, then run build.bat from any cmd.exe -- it sets up "
+        "MSVC itself." % node_file,
         "REM",
         "REM Usage:  build.bat [maya-version]      e.g. build.bat 2026",
         "REM With no argument the newest installed Maya is used; set MAYA to",
         "REM override discovery.",
     ] + toolchain.build_provenance(maya, "REM")
+      + toolchain.msvc_resolver_bat()
       + toolchain.maya_resolver_bat("win32")
       + (  # Must follow the Maya resolver: the Qt probe reads %MAYA%\include.
         toolchain.qt_resolver_bat() if needs_qt else []) + [
@@ -1051,8 +1054,7 @@ def make_readme(plugin_name: str, node_files: List[str], *, single: bool,
         "Rebuild",
         "-------",
         "  macOS / Linux:  ./build.sh",
-        "  Windows:        build.bat   (from an 'x64 Native Tools Command "
-        "Prompt for VS')",
+        "  Windows:        build.bat   (any cmd.exe -- it locates MSVC via vswhere)",
         "",
         "Both scripts read $MAYA / %MAYA% for the Maya install (defaulting to the",
         "standard location). The rebuilt plugin is written to the PARENT folder",

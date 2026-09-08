@@ -612,6 +612,77 @@ def maya_resolver_bat(os_name: Optional[str] = None) -> List[str]:
     return out
 
 
+def msvc_resolver_bat() -> List[str]:
+    """Batch lines that make ``cl`` the MSVC toolset the build expects.
+
+    The scripts used to assume an *x64 Native Tools Command Prompt* -- REM'd at
+    the top, documented in README.txt, and ignored: run from a plain
+    ``cmd.exe`` they failed with whatever ``cl`` happened to be on PATH. On one
+    machine that was Visual Studio 2015, which predates ``/std:c++17``,
+    ``/permissive-`` and ``/Zc:__cplusplus`` (three ``D9002`` warnings) and,
+    with no ``INCLUDE`` set, could not find ``<cmath>``. Nothing in that
+    output says "wrong prompt".
+
+    So do in batch what :func:`capture_vcvars_env` does in Python: ask
+    ``vswhere`` for the latest install with the C++ tools (the same arguments
+    as :func:`find_vcvarsall`, ``-prerelease`` retried second) and ``call
+    vcvarsall.bat x64``. That PREPENDS the right ``cl`` to PATH, so a stray
+    older one stops winning. Skipped entirely when ``VSCMD_ARG_TGT_ARCH`` is
+    already set -- vcvarsall / VsDevCmd export it -- so a developer prompt is
+    used exactly as it is rather than having vcvarsall run twice.
+
+    Two guards follow, each with the fix in its message: no ``cl`` at all, and
+    the case above -- a ``cl`` on PATH but an empty ``INCLUDE``.
+
+    Batch hazards designed around: ``%ProgramFiles(x86)%`` contains ``)``,
+    which terminates an ``if (...)`` block, so this is flat with ``goto``
+    labels rather than nested; and the loop variable is ``%%D``, the only form
+    the percent-collapse test tolerates -- legal here because the two ``for``
+    loops are sequential, never nested.
+    """
+    vswhere = "%ProgramFiles(x86)%\\Microsoft Visual Studio\\Installer\\vswhere.exe"
+    query = ("-latest -products * -requires "
+             "Microsoft.VisualStudio.Component.VC.Tools.x86.x64 "
+             "-property installationPath")
+    vcvars = "%_VSINST%\\VC\\Auxiliary\\Build\\vcvarsall.bat"
+    return [
+        "REM --- MSVC: set up the compiler environment unless this is already a",
+        "REM     developer prompt (vcvarsall / VsDevCmd export VSCMD_ARG_TGT_ARCH).",
+        'set "_VSWHERE=' + vswhere + '"',
+        'set "_VSINST="',
+        'if not "%VSCMD_ARG_TGT_ARCH%"=="" goto :msvc_ready',
+        'if not exist "%_VSWHERE%" goto :msvc_check',
+        'for /f "usebackq delims=" %%D in (`"%_VSWHERE%" ' + query
+        + '`) do set "_VSINST=%%D"',
+        'if "%_VSINST%"=="" for /f "usebackq delims=" %%D in (`"%_VSWHERE%" '
+        '-prerelease ' + query + '`) do set "_VSINST=%%D"',
+        # vcvarsall -> VsDevCmd shells `vswhere.exe` by BARE name and prints
+        # "'vswhere.exe' is not recognized" to stderr when the Installer dir is
+        # not on PATH. Harmless, but every plain-cmd user would see it and read
+        # it as a failure -- so put that dir on PATH first.
+        'set "PATH=%ProgramFiles(x86)%\Microsoft Visual Studio\Installer;%PATH%"',
+        'if exist "' + vcvars + '" call "' + vcvars + '" x64 >nul',
+        ":msvc_check",
+        "where cl >nul 2>nul",
+        "if errorlevel 1 (",
+        "  echo build.bat: no MSVC compiler ^(cl^) found. Install Visual Studio "
+        "with the 1>&2",
+        '  echo   "Desktop development with C++" workload, or run this from an 1>&2',
+        "  echo   'x64 Native Tools Command Prompt for VS'. 1>&2",
+        "  exit /b 1",
+        ")",
+        'if "%INCLUDE%"=="" (',
+        "  echo build.bat: 'cl' is on PATH but the MSVC environment is not set "
+        "up 1>&2",
+        "  echo   ^(INCLUDE is empty^) -- that cl is probably a stray older "
+        "toolchain. 1>&2",
+        "  echo   Run this from an 'x64 Native Tools Command Prompt for VS'. 1>&2",
+        "  exit /b 1",
+        ")",
+        ":msvc_ready",
+    ]
+
+
 # ---------------------------------------------------------------------------
 # Compiler family
 # ---------------------------------------------------------------------------
