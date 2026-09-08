@@ -1,40 +1,23 @@
-# Composite Stack (compositeTexture)
+# Composite Stack
 
-An `mPyFile` that stacks an ARBITRARY number of images into one texture, so you
-can build a background plus as many decals as you like without authoring a new
-image.
+An `mPyFile` that stacks any number of images into one texture, so you can build a background plus as many decals as you like without authoring a new image.
 
-`layers` is an ARRAY of image paths, composited bottom (`layers[0]`) to top with
-alpha-over at the sampled point, and `opacities` is a matching array of weights.
-Add an element, get a layer -- there is no fixed slot count, and the compiled
-node loops over the runtime array length exactly as the interpreted one does.
+Add an element to `layers` and you get a layer -- there is no fixed slot count.
 
-A layer with no file (or an unreadable one) drops out of the stack on its own:
-every sample passes `missing=(0.0, 0.0, 0.0, 0.0)`, so an empty layer is fully
-transparent rather than the opaque magenta "no image" colour that would cover
-everything beneath it. An `opacities` element is a plain weight on top of that
--- 0 still removes a layer exactly. A layer with no matching opacity element
-defaults to 1.0.
+Every layer goes through this node's own `colorSpace` and pre-filter settings, so the whole stack is filtered consistently.
 
-Drop the `missing=` argument to get the magenta sentinel back. That is often
-what you want while authoring, because it makes a typo'd path impossible to
-miss; transparent failure is quiet by design.
+## Inputs
 
-If the node renders as nothing at all, check that `layers` actually has
-elements: an empty array is an empty stack, and the surface comes out fully
-transparent rather than black.
+* `layers` -- an array of image paths, composited bottom (`layers[0]`) to top with alpha-over. A layer whose file is missing or unreadable drops out of the stack as fully transparent rather than covering everything beneath it.
+* `opacities` -- a matching array of weights. 0 removes a layer exactly. A layer with no matching element defaults to full opacity.
+* `uvCoord` -- the sample position, wired for you by the shading network.
 
-Every layer is loaded by the same framework call the File Simple template
-uses, `self.read_texture(path)`, so all of them go through this node's
-`colorSpace`, `preFilter`, `preFilterKernel` and `preFilterRadius`. That is
-also why this template compiles: the loads lower straight to
-`nd_tex_load_linear`, with no hand-written C++ loader, and the string array
-lifts to a `std::vector<std::string>`.
+## Outputs
 
-The stack is sampled at `uvCoord` and comes out `outColor` / `outAlpha`,
-composited over black (premultiplied), which is what an unlit shader wants.
+* `outColor` and `outAlpha` -- the composited stack over black, which is what an unlit shader wants. Connect them anywhere a file node would go.
 
-**Create + Run demo** builds a plane and an unlit shader, then loads the four
-images shipped beside this template -- `grid_bg.png`, `red_square.png`,
-`green_circle.png`, `blue_triangle.png` -- into the first four array elements at
-full opacity. Four is just what the demo loads; append a fifth and it composites.
+If the surface renders as nothing at all, check that `layers` actually has elements -- an empty array is an empty stack, and comes out fully transparent rather than black. Note that a typo'd path fails the same quiet way, so it is worth checking paths before hunting elsewhere.
+
+## Create + Run demo
+
+Builds a plane and an unlit shader, then loads the four images shipped beside this template -- `grid_bg.png`, `red_square.png`, `green_circle.png`, `blue_triangle.png` -- into the first four elements at full opacity. Four is just what the demo loads; append a fifth and it composites.

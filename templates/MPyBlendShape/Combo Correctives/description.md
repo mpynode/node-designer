@@ -1,15 +1,38 @@
 # Combo + In-Between Correctives
 
-An aliased `mPyBlendShape` -- the `weight[]` multi is aliased to your target names, so the channel box shows `jawDrop` rather than `weight[0]` -- plus the two corrective shapes every face rig needs. You declare them in the target names: `jawDrop` is a main target on its own weight, `jawDrop75` is an in-between of `jawDrop` peaking at 0.75, and `cheekPuffL_jawDrop` is a combo that only comes in as both drivers rise.
+An aliased `mPyBlendShape` with the two corrective shapes every face rig needs. The `weight` multi is aliased to your target names, so the channel box shows `jawDrop` rather than `weight[0]`.
 
-An in-between rides a **cross-blending** hat on its driver: full on its own knot, falling to 0 at the ADJACENT knots. So `jawDrop25`, `jawDrop50` and `jawDrop75` hand off to each other rather than all firing at once, and a lone in-between still spans the driver's whole travel. A combo is the product of its drivers with the last alias keyword squared, which is how this corpus was sculpted.
+You declare correctives in the target NAME -- there is nothing else to set up:
 
-Every target stores its **raw** offsets. A corrective is sculpted as the correction ITSELF -- what to add once its drivers are posed -- so nothing is subtracted at bake time. Dial `jawDrop75` to 1 on its own and you get exactly the shape that was sculpted, unreduced; park `jawDrop` on 0.75 and you get the 75% jaw-drop pose with that same correction laid on top.
+* `jawDrop` -- a main target on its own weight.
+* `jawDrop75` -- an in-between of `jawDrop`, peaking when the driver reaches 0.75.
+* `cheekPuffL_jawDrop` -- a combo, which only comes in as both drivers rise.
 
-There is **no shared weight resolver**. The maths is in this node: **the Init tab holds the rules as three ordinary functions** -- `inbetween_hat`, `combo_blend` and `resolve_morph_weights` -- and the Compute is a four-line summary that calls them. Init transpiles alongside the Compute, so an edited rule still compiles to pure C++. Want a combo that holds up sooner, or without the squared keyword? `combo_blend` is the one function to change.
+In-betweens hand off to each other rather than all firing at once, so `jawDrop25`, `jawDrop50` and `jawDrop75` each peak on their own knot and fall away at their neighbours'. A lone in-between still covers the driver's whole travel.
 
-Correctives are **additive**: a corrective keeps whatever is keyed on its own channel and the derived amount is added on top, so it can be dialled by hand as well as driven. `applyCorrectives` and `applyCombos` switch the derived half off without unhooking anything -- useful for seeing what each layer actually contributes while the drivers are animating.
+Sculpt a corrective as the correction ITSELF -- what to add once its drivers are posed. Nothing is subtracted at bake time, so dialling `jawDrop75` to 1 on its own gives exactly the shape that was sculpted.
 
-**Create + Run demo** builds a real face: a 1306-vertex head and all 167 authored targets -- 52 mains, 31 in-betweens and 84 combos -- with every channel at rest, driven by **381 frames of performance capture on the 52 mains and nothing else**. Press play: every in-between and combo you see fire is derived from those 52 curves on that frame, never keyed. Scrub `jawDrop` and watch the 0.25, 0.50 and 0.75 corrections hand off to each other one at a time; raise `cheekPuffL` with it to fade the `cheekPuffL_jawDrop` combo in. The whole rig ships beside the template as one Maya scene -- head, sculpts and loose animation curves -- so the demo imports it and wires it up rather than rebuilding 167 shapes and setting 16,002 keys, which is the difference between 3 s and 36 s. Each curve is named after the plug it belongs on, so the wiring is a name lookup. The targets sit hidden in a grid behind the head; they stay in the scene because `add_target` holds a live connection to each, even though `rebuild()` has baked the deltas.
+Correctives are additive: whatever you key on a corrective's own channel is kept, and the derived amount is added on top. So a combo can be animated by hand as well as driven.
 
-Compiles to pure C++. The names are decoded once, in Python, into the `shapeSlot` / `interBase` / `interKnot` / `comboOffset` / `comboDriver` integer tables, so nothing character-specific reaches the generated code.
+## Inputs
+
+* `weight` -- one entry per target, aliased to the target's name. This is what you animate.
+* `applyCorrectives` -- switch the derived in-between amounts off without unhooking anything. Useful for seeing what that layer contributes.
+* `applyCombos` -- the same switch for combos.
+* `targetOffset` / `targetComponents` / `targetDeltas` -- the baked shape data. Written by the commands below; not for hand editing.
+* `shapeSlot` / `interBase` / `interKnot` / `comboOffset` / `comboDriver` -- the decoded naming tables that say which target is a main, an in-between or a combo. Also written by the commands.
+* `envelope` -- the standard deformer blend against the undeformed input.
+
+## Outputs
+
+* The deformed mesh, written back through the deformer chain, with mains, in-betweens and combos summed.
+
+## Commands
+
+* `add_targets` -- adds meshes as targets, each weight aliased after its mesh. Defaults to the current selection, which is the usual way to use it: pick the shapes, then run.
+* `load_target_cmd` -- loads ONE shape from a file and adds it as a target. Handles `.ma`, `.mb`, `.obj`, `.fbx`, `.npz` and `.json`, and needs no mesh in the scene.
+* `load_shapes_cmd` -- loads a whole shape cluster from a `.npz` or `.json`, one target per record, each aliased to its stored name. Reports how many names decoded as in-betweens or combos.
+
+## Create + Run demo
+
+Builds a real face: a 1306-vertex head with all 167 authored targets -- 52 mains, 31 in-betweens and 84 combos -- driven by 381 frames of performance capture on the 52 mains and nothing else. Press play, and every in-between and combo you see fire is derived on that frame rather than keyed. Scrub `jawDrop` to watch the 0.25, 0.50 and 0.75 corrections hand off one at a time, then raise `cheekPuffL` alongside it to fade the `cheekPuffL_jawDrop` combo in. The targets sit hidden in a grid behind the head.

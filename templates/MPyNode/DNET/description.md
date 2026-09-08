@@ -1,55 +1,43 @@
 # DNET Spring-Network Solver
 
-A mass-spring network for rigging. Knots carry goal transforms (`matrices[]`);
-links (`index0`/`index1`) are springs with rest lengths (`restLengths`). Each
-frame the solver settles the net, so free knots trail and jiggle behind whatever
-drives them -- soft secondary motion for lips, fleshy pads and membranes.
-Anchored knots (`anchors[i] > 0`) snap to their live goal. Solved parent-space
-positions come out on `positions[]`.
+A mass-spring network for rigging. Knots are points with goal transforms; links are springs between them. Each frame the solver settles the net, so free knots trail and jiggle behind whatever drives them -- soft secondary motion for lips, fleshy pads and membranes.
 
-Every scene here is built from just two authoring commands -- **create_knot** and
-**create_link** -- so the demos are exactly what you would assemble by hand. A
-knot is a GOAL transform (its `worldMatrix` drives `matrices[i]`, an `anchored`
-float drives `anchors[i]`) plus a RESULT child riding `positions[i]`; a link is a
-transform carrying its own per-link `tension`/`push`/`pull` (wired to the matching
-solver slots) with `inheritsTransform` off. With `draw_icon=True` a knot also gets
-an icosahedron: a hidden PROXY shape on the result child worldspace-blendShaped
-onto a visible DUPLICATE on the goal (sized by a `radius` attr), so the visible
-icon deforms onto the solved knot; a link gets a degree-1 line whose two CVs track
-the knots' result children (a `decomposeMatrix` per CV).
+A knot is either anchored, meaning it snaps to its goal transform, or free, meaning the springs decide where it goes. You build a net entirely from the two commands below, so what the demos ship is exactly what you would assemble by hand.
 
-**Create + Run demo** offers three showcases (right-click the template for the
-submenu).
+## Inputs
 
-*Grid Net* anchors the four corners of a 6x8 grid and animates one of them, so
-the net swings between the fixed corners and settles -- play the timeline. It is
-built lightweight (`draw_icon=False`): a goal, a result child and a tiny marker
-sphere, no icosahedron.
+* `matrices` -- one goal transform per knot. Driven by each knot's goal `worldMatrix`.
+* `anchors` -- one weight per knot. Above 0 pins that knot to its goal; 0 lets the springs move it.
+* `index0` / `index1` -- the two knots each link connects, one entry per link.
+* `restLengths` -- the length each link wants to be, one per link. This is what the net settles toward.
+* `tension` -- per-link stiffness. Higher is tighter and snappier.
+* `push` / `pull` -- per-link asymmetry: how hard a link resists being compressed versus stretched. Use them to make a membrane that resists opening but folds easily, or the reverse.
+* `iterations` -- how many solver passes per frame. More is more settled and slower.
+* `tolerance` -- how close is close enough. The solver stops early once the net is moving less than this.
+* `damping` -- how quickly motion bleeds off. Low keeps wobbling, high settles fast.
+* `inverseMatrix` -- the space the results come back in. Wire the parent's `worldInverseMatrix` so the outputs land in that parent's space.
+* `resetBuffer` -- set it to **True** to clear the stored state, after moving the rig or if the net has blown up.
+* `evaluate` -- set it to **False** to freeze the solver where it is, without unhooking anything.
+* `time` -- steps the simulation. Connect it to scene time.
 
-*Layout Net (JSON)* rebuilds a 30-knot / 38-link mouth membrane from a captured
-layout with the full shape scheme (`draw_icon=True`), then rigs it to a skull.
-`skull.ma` is imported and its **jaw** and **cranium** drive the net: a `midway`
-transform, positioned from the jaw and rotated halfway between the two, carries
-the mouth corners; the upper-lip knots follow the cranium and the lower-lip knots
-the jaw, so opening the jaw splits each coincident lip-seam pair.
+## Outputs
 
-*Two Knots (Shapes)* is the minimal net: TWO FREE knots, each tethered to a pair
-of anchors and linked to each other -- six knots, five links, the same shape
-scheme end to end. Drag any anchor and the free knots follow springily, their
-icosahedra deforming onto the solved positions.
+* `positions` -- the solved knot positions, one per knot, in the space set by `inverseMatrix`. Connect each to its result transform.
+* `lengths` -- each link's current length, one per link. Useful for driving a stretch value off how far a spring is from rest.
+* `maxIterations` -- how many passes the last frame actually needed. Watch it to see whether `iterations` is set higher than necessary.
+* `maxForce` -- the largest spring force on the last frame. A spike here is the warning sign before a net blows up.
 
-**Build your own** (Methods tab): run **create_knot** a few times to drop knots
-(each is a goal with an `anchored` weight wired into `matrices[]`/`anchors[]` plus
-a result child on `positions[]`; pass `draw_icon=True` for the icosahedron icon,
-sized by a `radius` attr that defaults to 0.1), then select some spoke knots,
-shift-select a hub last, and run **create_link** to spring them together (each link
-seeds `index0`/`index1`/`restLengths` and carries its own per-link `tension`,
-`push` and `pull` -- the only channels left editable, since the link transform's
-translate/rotate/scale + visibility are locked and hidden; `draw_icon=True` adds
-the line).
+## Commands
 
-Tuning: `iterations` (relaxation cap), `damping` (under-relaxation step),
-`tolerance` (convergence threshold), `tension` (per-link contraction),
-`push`/`pull` (per-link compression / stretch resistance -- one slot per link,
-neutral 1.0), `resetBuffer` (defaults True: re-seed free knots from their live
-goals each eval; set False to carry state and let free knots continue).
+* `create_knot` -- creates one knot: a GOAL transform you place or drive, plus a RESULT child that rides the solved position, wired into the next free slot. Pass `draw_icon=True` and it also gets a visible icosahedron sized by its own `radius` attribute, so you can see the solved point.
+* `create_link` -- springs every selected knot to the LAST-selected one. Select the spokes, shift-select the hub last, then run. Each link gets its own transform carrying its `tension`, `push` and `pull`, so you can tune springs individually.
+
+**Build your own:** run `create_knot` a few times to drop knots, then select some spokes, shift-select a hub last, and run `create_link` to spring them together.
+
+## Create + Run demo
+
+Offers three showcases -- right-click the template for the submenu.
+
+* **Grid Net** anchors the four corners of a 6x8 grid and animates one of them, so the net swings between the fixed corners and settles. Press play.
+* **Layout Net (JSON)** rebuilds a 30-knot, 38-link mouth membrane from a captured layout and rigs it to a skull. The jaw and cranium drive the net: upper-lip knots follow the cranium, lower-lip knots the jaw, so opening the jaw splits each lip-seam pair.
+* **Two Knots (Shapes)** is the minimal net -- two free knots, each tethered to a pair of anchors and linked to each other. Drag any anchor and the free knots follow springily.
