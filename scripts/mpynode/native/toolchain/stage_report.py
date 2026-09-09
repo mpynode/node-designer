@@ -132,6 +132,9 @@ def _bench_sentence(bench):
     if isinstance(sr, (list, tuple)) and len(sr) == 2:
         parts.append("accepts re-timed against the incumbent on geo %s / array "
                      "%s and rejected if slower there" % (sr[0], sr[1]))
+    if bench.get("below_floor"):
+        parts.append("baseline under the noise floor at the largest scene, so "
+                     "every accept had to clear 1.15x on two independent timings")
     line = "; ".join(parts) + "."
     if bench.get("reason"):
         line += " %s." % bench["reason"].rstrip(".")

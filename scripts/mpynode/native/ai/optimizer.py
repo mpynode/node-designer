@@ -255,7 +255,8 @@ def optimize_cpp(baseline_cpp: str, *,
                  history_sink: Optional[Callable[[List[RoundRecord]],
                                                  None]] = None,
                  accept_check_fn: Optional[Callable[[str, str],
-                                                    Optional[str]]] = None
+                                                    Optional[str]]] = None,
+                 resolution_fn: Optional[Callable[[], Optional[float]]] = None
                  ) -> OptimizeResult:
     """Optimize ``baseline_cpp`` under the parity+speed gate. See module docstring.
 
@@ -280,6 +281,14 @@ def optimize_cpp(baseline_cpp: str, *,
     candidate must beat the incumbent by ``confirm_gain`` AND do so again on a
     second, independent ``benchmark_fn`` call; the SLOWER of the two is what is
     recorded. One extra benchmark, only at that size.
+
+    ``resolution_fn() -> ms | None`` lets the benchmark adapter widen that band
+    per node once it has calibrated: the live binding returns ``inf`` for a
+    node whose baseline stayed under the noise floor even at the largest bench
+    scene (5 of the 8 shipped deformer/skin nodes, 5.9-14.1 ms), so EVERY
+    accept for it needs ``confirm_gain`` twice -- measured rather than declared
+    unmeasurable, without letting noise through. ``None`` keeps
+    ``resolution_ms``.
 
     ``validate_fn(candidate, current) -> reason | None`` is an OPTIONAL cheap
     pre-check applied to whatever the model returns, before spending a compile
@@ -447,19 +456,29 @@ def optimize_cpp(baseline_cpp: str, *,
                        fix_rounds=fx, bundle=bundle)
                 continue
             note = ""
-            if ms < best_ms / min_speedup and best_ms < resolution_ms:
+            band = resolution_ms
+            if resolution_fn is not None:
+                try:
+                    widened = resolution_fn()
+                except Exception:
+                    widened = None
+                if widened is not None:
+                    band = float(widened)
+            band_label = ("under the noise floor" if band == float("inf")
+                          else "under %g ms" % band)
+            if ms < best_ms / min_speedup and best_ms < band:
                 # The incumbent is inside the benchmark's own jitter, where
                 # min_speedup alone would accept noise: demand confirm_gain,
                 # and demand it twice, on independent measurements.
                 need = best_ms / confirm_gain
                 if not (ms < need):
                     _log(log_cb, "%sround %d: %.3f ms vs best %.3f ms is inside "
-                         "the noise band below %g ms (needs %.2fx)"
-                         % (tag, i, ms, best_ms, resolution_ms, confirm_gain))
+                         "the noise band (incumbent %s; needs %.2fx)"
+                         % (tag, i, ms, best_ms, band_label, confirm_gain))
                     _round("not-faster", compiled=True, parity=PARITY_PASS,
                            ms=ms, fix_rounds=fx, bundle=bundle,
-                           note="incumbent under %g ms: %.2fx required, "
-                                "measured %.2fx" % (resolution_ms, confirm_gain,
+                           note="incumbent %s: %.2fx required, "
+                                "measured %.2fx" % (band_label, confirm_gain,
                                                     best_ms / ms))
                     continue
                 try:
@@ -478,14 +497,14 @@ def optimize_cpp(baseline_cpp: str, *,
                     _round("not-faster", compiled=True, parity=PARITY_PASS,
                            ms=(ms if ms2 is None else ms2), fix_rounds=fx,
                            bundle=bundle,
-                           note="incumbent under %g ms: second measurement %s "
+                           note="incumbent %s: second measurement %s "
                                 "did not confirm %.3f ms"
-                                % (resolution_ms,
+                                % (band_label,
                                    "unmeasurable" if ms2 is None
                                    else "%.3f ms" % ms2, ms))
                     continue
-                note = ("confirmed twice under %g ms: %.3f / %.3f ms"
-                        % (resolution_ms, ms, ms2))
+                note = ("confirmed twice (incumbent %s): %.3f / %.3f ms"
+                        % (band_label, ms, ms2))
                 ms = max(ms, ms2)
             if ms < best_ms / min_speedup and accept_check_fn is not None:
                 try:

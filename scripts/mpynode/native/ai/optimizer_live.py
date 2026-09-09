@@ -923,16 +923,23 @@ def make_adapters(spec: dict, out_dir: str, *,
                 return ms, geo, arr
             if (geo, arr) == _BENCH_LADDER[-1]:
                 # Still under the floor at the LARGEST scene. Run-to-run noise
-                # (~8% at 0.4 ms, anything at 2 us) would decide every round,
+                # (~8% at 0.4 ms, anything at 2 us) would decide a 1.05x gate,
                 # and it did: 12 of 28 accepted nodes were judged on baselines
-                # of 0.002-4.4 ms, one at "95x" (0.209 -> 0.002 ms). Refuse.
+                # of 0.002-4.4 ms, one at "95x" (0.209 -> 0.002 ms). Refusing
+                # outright, though, threw away every real win on the nodes that
+                # live here (the skins at 5.9-8.2 ms, nurbsWave 13.7, patchRelax
+                # 14.1 -- fuse / raw-points / cache rounds that ARE real). So:
+                # measure, and hand the engine a widened noise band
+                # (resolution_fn -> inf) so every accept for this node must
+                # clear confirm_gain on two independent timings.
+                _bench["below_floor"] = True
                 _bench["reason"] = (
                     "baseline %.3f ms is below the %.0f ms noise floor even at "
-                    "the largest bench scene (geo=%d array=%d); nothing this "
-                    "small can be optimized against measurably"
+                    "the largest bench scene (geo=%d array=%d); measured anyway "
+                    "-- every accept must clear 1.15x on two independent timings"
                     % (ms, _BENCH_FLOOR_MS, geo, arr))
                 _log("[%s] %s" % (ntype, _bench["reason"]))
-                return None, geo, arr
+                return ms, geo, arr
             _log("[%s] bench scene geo=%d array=%d -> %.3f ms; too small to "
                  "optimize against, growing" % (ntype, geo, arr, ms))
         return None, bench_geo, bench_array
@@ -1020,6 +1027,10 @@ def make_adapters(spec: dict, out_dir: str, *,
         "parity_fn": parity_fn or _parity,
         "benchmark_fn": _cancel_guard(benchmark_fn or _benchmark),
         "accept_check_fn": _cancel_guard(_accept_check),
+        # inf once calibration ended under the floor: the engine's double
+        # confirmation then applies to every accept for this node.
+        "resolution_fn": lambda: (float("inf") if _bench.get("below_floor")
+                                  else None),
         # Cheap pre-check so a truncated / prose answer is never compiled, never
         # written over the .cpp, and never fed back into the fix round.
         "validate_fn": optimizer_knowledge.implausible_reason,

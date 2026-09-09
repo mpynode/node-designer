@@ -513,6 +513,23 @@ class TestSubResolutionConfirmation(unittest.TestCase):
         self.assertTrue(res.accepted)                   # 1.0 ms is "big" here
         self.assertEqual(n, 2)
 
+    def test_resolution_fn_widens_the_band_per_node(self):
+        # A node under the noise floor: the adapter answers inf, so a 100 ms
+        # incumbent is inside the band and a 1.11x gain is not enough...
+        res, n = self._run([100.0, 90.0], resolution_fn=lambda: float("inf"))
+        self.assertFalse(res.accepted)
+        self.assertIn("under the noise floor", res.ledger[-1].note)
+        # ...while 1.25x confirmed twice is.
+        res, n = self._run([100.0, 80.0, 82.0], resolution_fn=lambda: float("inf"))
+        self.assertTrue(res.accepted)
+        self.assertAlmostEqual(res.best_ms, 82.0)
+        self.assertEqual(n, 3)
+
+    def test_resolution_fn_none_keeps_resolution_ms(self):
+        res, n = self._run([100.0, 94.0], resolution_fn=lambda: None)
+        self.assertTrue(res.accepted)
+        self.assertEqual(n, 2)
+
 
 class TestAcceptCheck(unittest.TestCase):
     """``accept_check_fn`` is the last gate on a candidate about to be

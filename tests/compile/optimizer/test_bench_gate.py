@@ -73,7 +73,11 @@ class TestEngineRecordsDivergence(unittest.TestCase):
 
 # ----------------------------------------------------------------- floor gate
 class TestNoiseFloorGate(unittest.TestCase):
-    def test_below_floor_at_the_largest_rung_is_unmeasurable(self):
+    def test_below_floor_at_the_largest_rung_is_measured_under_confirmation(self):
+        """Refusing outright threw away every real win on the nodes that live
+        under the floor (the skins at 5.9-8.2 ms). Now: measure at the largest
+        rung, say so, and widen the engine's noise band to the whole node so
+        each accept needs 1.15x on two independent timings."""
         seen, logged, state = [], [], {}
 
         def runner(script, args, prefix, timeout):
@@ -83,12 +87,32 @@ class TestNoiseFloorGate(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             ad = _adapters(tmp, runner, log_cb=logged.append,
                            bench_state_out=state)
-            self.assertIsNone(ad["benchmark_fn"]("/b"))
+            self.assertIsNone(ad["resolution_fn"]())        # not calibrated yet
+            self.assertEqual(ad["benchmark_fn"]("/b"), 0.5)
+            self.assertEqual(ad["resolution_fn"](), float("inf"))
         # It climbed the whole ladder first -- a small rung is not a verdict.
         self.assertEqual(seen[-1], optimizer_live._BENCH_LADDER[-1][0])
-        self.assertIn("noise floor", state.get("reason", ""))
+        self.assertTrue(state.get("below_floor"))
+        self.assertIn("two independent timings", state.get("reason", ""))
         self.assertEqual(state.get("rung"), list(optimizer_live._BENCH_LADDER[-1]))
         self.assertTrue(any("noise floor" in m for m in logged), logged)
+
+    def test_above_the_floor_the_band_is_left_to_the_engine(self):
+        def runner(script, args, prefix, timeout):
+            return ({"ok": True, "median_ms": 40.0}, True, "")
+
+        with tempfile.TemporaryDirectory() as tmp:
+            ad = _adapters(tmp, runner)
+            ad["benchmark_fn"]("/b")
+            self.assertIsNone(ad["resolution_fn"]())
+
+    def test_the_report_says_the_node_was_under_the_floor(self):
+        from mpynode.native.toolchain import stage_report
+        line = stage_report._bench_sentence(
+            {"rung": [400, 20000], "floor_ms": 15.0, "perturbed": ["a (double)"],
+             "fingerprint": "checked (1 plug(s))", "below_floor": True})
+        self.assertIn("under the noise floor", line)
+        self.assertIn("two independent timings", line)
 
     def test_clearing_the_floor_is_still_a_measurement(self):
         state = {}
