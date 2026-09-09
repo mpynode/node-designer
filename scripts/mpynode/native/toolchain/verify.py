@@ -674,6 +674,39 @@ def _seed_packed(cmds, plug, dt, values):
         return False
 
 
+_RANGED_TYPES = frozenset(("double", "float", "int", "long", "short", "angle"))
+
+
+def _clamp_drive(cmds, nodes, attr, t, v):
+    """Clamp a random scalar drive into the attribute's declared [min, max].
+
+    A preset attribute can carry a range (mPyFile's ``preFilterRadius`` has
+    min 0) and ``setAttr`` REFUSES a value outside it -- which, raised from the
+    drive loop, read as "verify could not run" for every texture node. The range
+    is read off the FIRST node that declares one and the SAME clamped value goes
+    to every node, so the two sides still see identical inputs. Types without a
+    scalar range (compounds, matrices, strings) and attrs without limits pass
+    through unchanged."""
+    if t not in _RANGED_TYPES or not isinstance(v, (int, float)):
+        return v
+    lo = hi = None
+    for nd in nodes:
+        try:
+            if cmds.attributeQuery(attr, node=nd, minExists=True):
+                lo = cmds.attributeQuery(attr, node=nd, minimum=True)[0]
+            if cmds.attributeQuery(attr, node=nd, maxExists=True):
+                hi = cmds.attributeQuery(attr, node=nd, maximum=True)[0]
+        except Exception:
+            continue
+        if lo is not None or hi is not None:
+            break
+    if lo is not None and v < lo:
+        v = lo
+    if hi is not None and v > hi:
+        v = hi
+    return v
+
+
 def _drive_array_input(cmds, nodes, attr, t, values):
     """setAttr the multi ELEMENT plugs attr[0..K-1] to ``values`` on every node.
     A connected multi is left to its source (identical on both sides). A packed
@@ -690,7 +723,8 @@ def _drive_array_input(cmds, nodes, attr, t, values):
             _seed_packed(cmds, base, dt, values)
             continue
         for i, ev in enumerate(values):
-            _set_plug(cmds, "%s[%d]" % (base, i), t, ev)
+            _set_plug(cmds, "%s[%d]" % (base, i), t,
+                      _clamp_drive(cmds, nodes, attr, t, ev))
 
 
 def _read_array_output(cmds, node, attr):
@@ -729,6 +763,25 @@ def _native_family_outputs(spec):
     if (spec.get("mpy_type") or "") == "mPyTransform":
         return {"matrix": {"type": "matrix", "native": True}}
     return {}
+
+
+def _unregistered_type(cmds, node, type_name, tol):
+    """A skip row when ``createNode(type_name)`` did not make a ``type_name``.
+
+    Maya makes an ``unknown`` node for a type no loaded plug-in registers, and
+    the drive then dies on "No object matches name: unknown1.brightness" --
+    reported as a harness failure of the NODE. It is a bundle problem: say so."""
+    try:
+        actual = cmds.nodeType(node)
+    except Exception:
+        actual = None
+    if actual == type_name:
+        return None
+    return {"ran": False, "pass": None, "maxerr": None, "tol": tol,
+            "reason": "the loaded bundle does not register node type '%s' "
+                      "(createNode made %s) -- nothing to compare against"
+                      % (type_name, "an '%s' node" % actual if actual else
+                         "nothing")}
 
 
 def _read_outputs(cmds, node, out_meta):
@@ -814,6 +867,7 @@ def _drive_input(cmds, nodes, attr, t, v):
             cmds.currentTime(v)
         except Exception:
             pass
+    v = _clamp_drive(cmds, nodes, attr, t, v)
     for nd in nodes:
         plug = nd + "." + attr
         try:
@@ -854,6 +908,258 @@ def _bench_string_value(t, attr):
     if any(k in low for k in ("file", "path", "dir", "folder", "image", "tex")):
         return None
     return "bench" if t != "hex" else "0"
+
+
+# ---------------------------------------------------------------------------
+# Fixtures for file-reading nodes, and the representative scenes
+# ---------------------------------------------------------------------------
+# A node that reads a file used to be driven with an EMPTY path on both sides
+# ("honest for the geometry, the file branch never exercised") or skipped
+# outright ("reads an image file"). Both sides can read the SAME generated
+# file instead: a band-limited gradient PNG for a texture, a cube sequence for
+# a JSON mesh reader, an .ndio cache for a disk cache. Generated, never shipped:
+# the harness owns no asset and depends on no repo layout.
+
+# The image harness (tools/harness/mpyfile_image_parity.py) gates DG-vs-DG
+# texture parity at this: the compiled node decodes through MImage, the
+# interpreted one through the runtime's reader, and the two differ by a
+# rounding step, never more.
+_TEXTURE_TOL = 1.5 / 255.0
+
+_FIXTURE_FRAMES = 48          # the geo drive samples `time` in [1, 48]
+
+
+def _write_png_rgb(path, w, h, pixel):
+    """Write an 8-bit RGB PNG with ``pixel(u, v) -> (r, g, b)`` in 0..1.
+    Pure Python (zlib + struct): mayapy ships no PIL."""
+    import struct
+    import zlib
+
+    raw = bytearray()
+    for y in range(h):
+        raw.append(0)                           # filter: none
+        vv = 1.0 - (y / (h - 1.0) if h > 1 else 0.0)
+        for x in range(w):
+            uu = x / (w - 1.0) if w > 1 else 0.0
+            r, g, b = pixel(uu, vv)
+            raw += bytes(max(0, min(255, int(round(c * 255.0)))) for c in (r, g, b))
+
+    def chunk(tag, data):
+        body = tag + data
+        return (struct.pack(">I", len(data)) + body
+                + struct.pack(">I", zlib.crc32(body) & 0xffffffff))
+
+    png = (b"\x89PNG\r\n\x1a\n"
+           + chunk(b"IHDR", struct.pack(">IIBBBBB", w, h, 8, 2, 0, 0, 0))
+           + chunk(b"IDAT", zlib.compress(bytes(raw), 9))
+           + chunk(b"IEND", b""))
+    with open(path, "wb") as fh:
+        fh.write(png)
+    return path
+
+
+def _gradient_png(path, phase=0.0, n=64):
+    """A smooth sin gradient -- no frequency a uv sample cannot resolve -- with
+    a phase so several layers differ from each other."""
+    import math
+
+    def pixel(u, vv):
+        return (0.5 + 0.5 * math.sin(2.0 * math.pi * u + phase),
+                0.5 + 0.5 * math.sin(2.0 * math.pi * vv + phase),
+                0.5 + 0.5 * math.sin(math.pi * (u + vv) + phase))
+    return _write_png_rgb(path, n, n, pixel)
+
+
+_CUBE_COUNTS = [4, 4, 4, 4, 4, 4]
+_CUBE_INDICES = [0, 3, 2, 1, 4, 5, 6, 7, 0, 1, 5, 4, 3, 7, 6, 2, 0, 4, 7, 3,
+                 1, 2, 6, 5]
+
+
+def _cube_points(scale):
+    return [[sx * scale, sy * scale, sz * scale]
+            for sz in (-0.5, 0.5) for sy in (-0.5, 0.5) for sx in (-0.5, 0.5)]
+
+
+def _json_mesh_sequence(dirpath, frames=_FIXTURE_FRAMES):
+    """``mesh.####.json`` cubes, one per frame, growing with the frame -- the
+    shape the shipped JSON Mesh Reader fixtures use (points/counts/indices).
+    Returns the ``####`` template ``ndio.frame_path`` expands."""
+    import json as _json
+
+    for f in range(1, frames + 1):
+        doc = {"points": _cube_points(1.0 + 0.05 * f),
+               "counts": _CUBE_COUNTS, "indices": _CUBE_INDICES}
+        with open(os.path.join(dirpath, "mesh.%04d.json" % f), "w") as fh:
+            _json.dump(doc, fh)
+    return os.path.join(dirpath, "mesh.####.json")
+
+
+def _ndio_mesh_cache(path, frames=2):
+    """An ``.ndio`` container with ``points`` (frames, 8, 3), ``counts`` and
+    ``indices`` -- what a disk mesh cache reads (``ndio.read(path, "points")``
+    indexed by frame)."""
+    import numpy as np
+    from mpynode import ndio
+
+    pts = np.array([_cube_points(1.0 + 0.5 * f) for f in range(frames)],
+                   dtype=np.float64)
+    ok = ndio.write(path, points=pts,
+                    counts=np.array(_CUBE_COUNTS, dtype=np.int64),
+                    indices=np.array(_CUBE_INDICES, dtype=np.int64))
+    return path if ok else None
+
+
+_OUTPUT_PATH_TOKENS = frozenset(("bake", "out", "output", "write", "export",
+                                 "save", "dest", "cache_out"))
+
+
+def _is_output_path_name(name):
+    """A string input the node WRITES to (gameOfLifeTex's ``bakePath``) must not
+    be handed an image to read -- the node would overwrite the fixture."""
+    return any(t in _OUTPUT_PATH_TOKENS for t in _name_tokens(name))
+
+
+def parity_fixtures(spec, k=4, dirpath=None):
+    """``{string input: value}`` for every string input the harness can back
+    with a generated file, or ``{}``.
+
+    * an mPyFile's string inputs are image paths: one gradient PNG each, an
+      array gets ``k`` of them with distinct phases (a composite's layers);
+    * elsewhere the compute says what it reads: ``frame_path(`` / ``.json`` ->
+      a JSON cube sequence template, ``ndio.read(`` -> an ``.ndio`` cache.
+
+    Anything else stays as before (left at its default, recorded as peeled).
+    """
+    import tempfile
+
+    inputs = spec.get("inputs") or {}
+    strings = [(nm, bool(m.get("is_array"))) for nm, m in sorted(inputs.items())
+               if isinstance(m, dict) and m.get("type") in _NON_DRIVEABLE_IN
+               and not _is_output_path_name(nm)]
+    if not strings:
+        return {}
+    compute = spec.get("compute") or ""
+    is_texture = (spec.get("mpy_type") or "") == "mPyFile"
+    reads_json = "frame_path(" in compute or ".json" in compute
+    reads_ndio = "ndio.read(" in compute
+    if not (is_texture or reads_json or reads_ndio):
+        return {}
+    dirpath = dirpath or tempfile.mkdtemp(prefix="mpynode-parity-fixtures-")
+    out = {}
+    for nm, is_arr in strings:
+        try:
+            if is_texture:
+                if is_arr:
+                    out[nm] = [_gradient_png(os.path.join(dirpath, "%s_%d.png" % (nm, i)),
+                                             phase=0.7 * i) for i in range(k)]
+                else:
+                    out[nm] = _gradient_png(os.path.join(dirpath, nm + ".png"))
+            elif reads_ndio:
+                p = _ndio_mesh_cache(os.path.join(dirpath, nm + ".ndio"))
+                if p:
+                    out[nm] = p
+            elif reads_json:
+                sub = os.path.join(dirpath, nm)
+                os.makedirs(sub, exist_ok=True)
+                out[nm] = _json_mesh_sequence(sub)
+        except Exception:
+            continue
+    return out
+
+
+def apply_fixtures(cmds, nodes, fixtures):
+    """setAttr every fixture path onto every node; arrays element by element.
+    Never raises: a plug that refuses is left at its default on both sides."""
+    for nm, val in (fixtures or {}).items():
+        for nd in nodes:
+            try:
+                if isinstance(val, (list, tuple)):
+                    for i, p in enumerate(val):
+                        cmds.setAttr("%s.%s[%d]" % (nd, nm, i), p, type="string")
+                else:
+                    cmds.setAttr("%s.%s" % (nd, nm), val, type="string")
+            except Exception:
+                pass
+
+
+def _identity_matrix(tx=0.0, ty=0.0, tz=0.0, sx=1.0, sy=1.0, sz=1.0):
+    # row-major 4x4 as Maya's setAttr(...,type="matrix") expects (translate in
+    # the last row) -- mirrors metaballs_parity._mat so the scene is comparable.
+    return [sx, 0.0, 0.0, 0.0,
+            0.0, sy, 0.0, 0.0,
+            0.0, 0.0, sz, 0.0,
+            tx, ty, tz, 1.0]
+
+
+def _metaclay_scene(res):
+    """A representative metaClay/metaballs workload: cube + smooth sphere -
+    cylinder (all three CSG ops), matching the proven csg_all parity scene, at a
+    caller-chosen grid resolution. Shared by the benchmark (heavy enough to
+    time) and by geo parity (a random shape set yields an EMPTY isosurface, so
+    parity never ran on metaballs)."""
+    mats = [_identity_matrix(0, 0, 0),
+            _identity_matrix(0.6, 0.3, 0),
+            _identity_matrix(0, 0, 0)]
+    stype = [1, 0, 2]          # box, sphere, cylinder
+    add = [1, 1, 0]            # union, union, subtract
+    smooth = [0.0, 0.4, 0.0]
+    rad = [1.0, 0.7, 0.4]
+    hgt = [1.0, 1.0, 2.4]
+    ax = [1, 1, 0]
+    half = [[0.8, 0.8, 0.8], [0.5, 0.5, 0.5], [0.5, 0.5, 0.5]]
+    ops = []
+    for i, m in enumerate(mats):
+        ops.append({"plug": "shapeMatrix[%d]" % i, "kind": "matrix", "value": m})
+    for i in range(len(stype)):
+        ops.append({"plug": "shapeType[%d]" % i, "value": stype[i]})
+        ops.append({"plug": "additive[%d]" % i, "value": add[i]})
+        ops.append({"plug": "smoothing[%d]" % i, "value": smooth[i]})
+        ops.append({"plug": "radius[%d]" % i, "value": rad[i]})
+        ops.append({"plug": "height[%d]" % i, "value": hgt[i]})
+        ops.append({"plug": "axis[%d]" % i, "value": ax[i]})
+        ops.append({"plug": "halfExtents[%d]" % i, "kind": "double3",
+                    "value": half[i]})
+    ops.append({"plug": "resolution", "value": int(res)})
+    ops.append({"plug": "isoValue", "value": 0.1})
+    return ops
+
+
+# Representative scenes, keyed by the TEMPLATE type name a compiled type name
+# starts with (metaballs -> metaballsSw); see builtin_scene_key.
+BUILTIN_SCENES = {
+    "metaClay": _metaclay_scene,
+    "metaballs": _metaclay_scene,
+}
+
+
+def builtin_scene_key(node_type, table=None):
+    """Exact match first, then the LONGEST key ``node_type`` starts with."""
+    table = BUILTIN_SCENES if table is None else table
+    if node_type in table:
+        return node_type
+    low = (node_type or "").lower()
+    cands = [k for k in table if low.startswith(k.lower())]
+    return max(cands, key=len) if cands else None
+
+
+def builtin_scene_ops(node_type, res):
+    key = builtin_scene_key(node_type)
+    return BUILTIN_SCENES[key](res) if key else None
+
+
+def apply_scene_ops(cmds, node, ops):
+    """Apply a scene's setAttr ops (``{"plug", "value", "kind"}``) to ``node``."""
+    for op in ops or []:
+        plug = "%s.%s" % (node, op["plug"])
+        kind = op.get("kind", "scalar")
+        val = op["value"]
+        if kind == "matrix":
+            cmds.setAttr(plug, *[float(x) for x in val], type="matrix")
+        elif kind == "double3":
+            cmds.setAttr(plug, float(val[0]), float(val[1]), float(val[2]),
+                         type="double3")
+        else:
+            cmds.setAttr(plug, val)
 
 
 # Output array kinds a benchmark can give a consumer to, and the stock node
@@ -1767,10 +2073,15 @@ def _verify_one(cmds, bundle_path, spec, maya=_MAYA_DEFAULT, deadline=None):
     # decoded-pixel path goes unexercised. That caveat rides on the row's reason.
     reads_img = spec_extractor.spec_reads_image_file(spec)
     base = spec.get("suggested", {}).get("mpx_base", "MPxNode")
-    if reads_img and base not in codegen._DEFORMER_BASES \
+    # An mPyFile is no longer skipped: parity_fixtures() hands both nodes the
+    # same generated gradient PNG and the compare runs at _TEXTURE_TOL. Only a
+    # non-texture, non-geometry node that reads an image still has no fixture.
+    if reads_img and spec.get("mpy_type") != "mPyFile" \
+            and base not in codegen._DEFORMER_BASES \
             and base != codegen._IKSOLVER_BASE:
         return {"ran": False, "pass": None, "maxerr": None, "tol": None,
-                "reason": "reads an image file (MImage::readFromFile); output "
+                "reason": "reads an image file (MImage::readFromFile) and the "
+                          "harness has no fixture for this family; output "
                           "depends on external file state -- pointwise parity "
                           "skipped (build verified to compile + load)"}
 
@@ -2071,6 +2382,10 @@ def _verify_one(cmds, bundle_path, spec, maya=_MAYA_DEFAULT, deadline=None):
     else:
         w = MPyNode.create(name="orig_" + name)
     orig = w.get_name()
+    if is_texture:
+        # Two decode paths (MImage on the compiled side, the runtime's reader on
+        # the interpreted): the image harness gates DG-vs-DG at 1.5/255.
+        tol = _TEXTURE_TOL
 
     def _is_native(node, attr):
         try:
@@ -2095,6 +2410,9 @@ def _verify_one(cmds, bundle_path, spec, maya=_MAYA_DEFAULT, deadline=None):
         w.set_init_expression(spec["init"])
     w.set_compute_expression(spec["compute"])
     comp = cmds.createNode(name)
+    unregistered = _unregistered_type(cmds, comp, name, tol)
+    if unregistered:
+        return unregistered
     # An array OUTPUT has no elements until something consumes them, and the
     # runtime sizes it from those elements -- so spline / springChain /
     # procrustesTags wrote nothing on either side ("no comparable components")
@@ -2139,8 +2457,14 @@ def _verify_one(cmds, bundle_path, spec, maya=_MAYA_DEFAULT, deadline=None):
     # string inputs (+ any geo input that could not be wired) are left at their
     # default on BOTH nodes (identical state) -- recorded so a PASS is honestly
     # annotated as only-partially-exercised.
+    # A string input the harness can back with a generated file gets one, on
+    # BOTH nodes, before the drive loop (the loop leaves strings alone).
+    fixtures = parity_fixtures(spec, k=K_ARR)
+    apply_fixtures(cmds, (orig, comp), fixtures)
+    fixed = sorted(fixtures)
     peeled = sorted([nm for nm, m in IN_META.items()
-                     if m["type"] in _NON_DRIVEABLE_IN] + geo_unwired)
+                     if m["type"] in _NON_DRIVEABLE_IN and nm not in fixtures]
+                    + geo_unwired)
     maxerr = 0.0
     compared = 0                    # non-vacuous guard: components actually paired
     diverged = 0                   # pairs where BOTH sides blew up (non-finite)
@@ -2311,6 +2635,10 @@ def _verify_one(cmds, bundle_path, spec, maya=_MAYA_DEFAULT, deadline=None):
                     "mid-compute (an input the node rejects, e.g. a negative "
                     "degree) and left stale outputs; those sets were excluded"
                   % raised_drives)
+    if fixed:
+        reason = ((reason + " -- " if reason else "")
+                  + "%d string input(s) driven with generated fixtures: %s"
+                  % (len(fixed), ", ".join(fixed)))
     if peeled:
         reason = ((reason + " -- " if reason else "")
                   + "verified with %d geo/string input(s) left at default "
@@ -2521,7 +2849,7 @@ def _geo_array_value(role, t, cfg):
     return [0, 1, 2, 3]
 
 
-def _drive_geo_inputs(cmds, nodes, inputs, roles, cfg, random):
+def _drive_geo_inputs(cmds, nodes, inputs, roles, cfg, random, fixtures=None):
     """Set identical values on every node in ``nodes`` for input config ``cfg``.
     Scalars prefer their declared default; arrays get a role-seeded valid set;
     ``time`` inputs drive the shared timeline (a time plug may be auto-connected
@@ -2558,6 +2886,8 @@ def _drive_geo_inputs(cmds, nodes, inputs, roles, cfg, random):
                         cmds.setAttr(plug, ev)
             continue
         v = _geo_scalar_value(meta, t, cfg, random, roles.get(nm))
+        if t == "string" and fixtures and nm in fixtures:
+            v = fixtures[nm]      # a generated file both nodes read
         if t == "time":
             cmds.currentTime(v)
             for nd in nodes:
@@ -2751,6 +3081,10 @@ def _verify_geo(cmds, bundle_path, spec, kind, deadline=None):
     if not cmds.pluginInfo(os.path.basename(bundle_path), q=True, loaded=True):
         cmds.loadPlugin(bundle_path)
     random.seed(4242)
+    # Generated files for the string inputs a reader node needs (a JSON cube
+    # sequence, an .ndio cache); {} for everything else -- see parity_fixtures.
+    fixtures = parity_fixtures(spec)
+    scene_ops = builtin_scene_ops(name, 6)
 
     # Rebuild the Python original from the spec (its geo output attr is intrinsic
     # to the mPy* type -- we add only the user INPUT attrs).
@@ -2768,11 +3102,20 @@ def _verify_geo(cmds, bundle_path, spec, kind, deadline=None):
         w.set_init_expression(spec["init"])
     w.set_compute_expression(spec["compute"])
     comp = cmds.createNode(name)
+    unregistered = _unregistered_type(cmds, comp, name, tol)
+    if unregistered:
+        return unregistered
 
     saw_geom = False
     maxerr = 0.0
     for cfg in range(_GEO_CFGS):
-        _drive_geo_inputs(cmds, (interp, comp), inputs, roles, cfg, random)
+        _drive_geo_inputs(cmds, (interp, comp), inputs, roles, cfg, random,
+                          fixtures=fixtures)
+        if scene_ops:
+            # Applied LAST so it wins: a random shape set is an EMPTY isosurface
+            # for an SDF generator (metaballs never had a comparable config).
+            for nd in (interp, comp):
+                apply_scene_ops(cmds, nd, scene_ops)
         ci = _read_geo_components(om2, interp, kind, info)
         cc = _read_geo_components(om2, comp, kind, info)
         if ci is None or cc is None:

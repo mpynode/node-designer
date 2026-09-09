@@ -91,51 +91,11 @@ def _bench_lock(label):
     return optimizer_live.bench_lock(label=label)
 
 
-def _identity_matrix(tx=0.0, ty=0.0, tz=0.0, sx=1.0, sy=1.0, sz=1.0):
-    # row-major 4x4 as Maya's setAttr(...,type="matrix") expects (translate in
-    # the last row) -- mirrors metaballs_parity._mat so the scene is comparable.
-    return [sx, 0.0, 0.0, 0.0,
-            0.0, sy, 0.0, 0.0,
-            0.0, 0.0, sz, 0.0,
-            tx, ty, tz, 1.0]
-
-
-def _metaclay_scene(res):
-    """A representative metaClay/metaballs workload: cube + smooth sphere -
-    cylinder (all three CSG ops), matching the proven csg_all parity scene, at a
-    caller-chosen grid resolution so the compute is heavy enough to time."""
-    mats = [_identity_matrix(0, 0, 0),
-            _identity_matrix(0.6, 0.3, 0),
-            _identity_matrix(0, 0, 0)]
-    stype = [1, 0, 2]          # box, sphere, cylinder
-    add = [1, 1, 0]            # union, union, subtract
-    smooth = [0.0, 0.4, 0.0]
-    rad = [1.0, 0.7, 0.4]
-    hgt = [1.0, 1.0, 2.4]
-    ax = [1, 1, 0]
-    half = [[0.8, 0.8, 0.8], [0.5, 0.5, 0.5], [0.5, 0.5, 0.5]]
-    ops = []
-    for i, m in enumerate(mats):
-        ops.append({"plug": "shapeMatrix[%d]" % i, "kind": "matrix", "value": m})
-    for i in range(len(stype)):
-        ops.append({"plug": "shapeType[%d]" % i, "value": stype[i]})
-        ops.append({"plug": "additive[%d]" % i, "value": add[i]})
-        ops.append({"plug": "smoothing[%d]" % i, "value": smooth[i]})
-        ops.append({"plug": "radius[%d]" % i, "value": rad[i]})
-        ops.append({"plug": "height[%d]" % i, "value": hgt[i]})
-        ops.append({"plug": "axis[%d]" % i, "value": ax[i]})
-        ops.append({"plug": "halfExtents[%d]" % i, "kind": "double3",
-                    "value": half[i]})
-    ops.append({"plug": "resolution", "value": int(res)})
-    ops.append({"plug": "isoValue", "value": 0.1})
-    return ops
-
-
-# Built-in scenes so the harness runs out of the box on the driving example.
-_BUILTIN = {
-    "metaClay": lambda res: _metaclay_scene(res),
-    "metaballs": lambda res: _metaclay_scene(res),
-}
+# The representative scenes live with the parity harness so both consumers
+# (this timing harness and verify._verify_geo) drive the SAME workload; a second
+# copy here drifted from the parity scene once already.
+from mpynode.native.toolchain.verify import (BUILTIN_SCENES as _BUILTIN,  # noqa: E402
+                                              apply_scene_ops as _apply_scene_ops)
 
 
 def _builtin_scene_key(node_type):
@@ -315,19 +275,9 @@ def _fingerprint_outputs(mc, om, node, pulls):
 
 
 def _apply_ops(node, ops):
-    for op in ops:
-        plug = "%s.%s" % (node, op["plug"])
-        val = op["value"]
-        kind = op.get("kind", "scalar")
-        if kind == "matrix":
-            mc.setAttr(plug, *val, type="matrix")
-        elif kind == "double3":
-            mc.setAttr(plug, float(val[0]), float(val[1]), float(val[2]),
-                       type="double3")
-        elif isinstance(val, (list, tuple)):
-            mc.setAttr(plug, *val)
-        else:
-            mc.setAttr(plug, val)
+    """Apply a scene's setAttr ops to ``node`` -- the parity harness's
+    apply_scene_ops, so a scene means the same thing to both consumers."""
+    return _apply_scene_ops(mc, node, ops)
 
 
 def _bake_asset(path, n):

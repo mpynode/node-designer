@@ -599,7 +599,7 @@ class TestParityReadsEveryOutputKind(unittest.TestCase):
         from mpynode.native.toolchain import verify
 
         src = inspect.getsource(verify)
-        i = src.index("comp = cmds.createNode(name)\n    # An array OUTPUT has no elements")
+        i = src.index("# An array OUTPUT has no elements until something consumes them")
         self.assertIn("for _nd in (orig, comp):", src[i:i + 600])
         self.assertIn("bench_size_output_multis(cmds, _nd, spec, K_ARR)", src[i:i + 700])
 
@@ -643,6 +643,220 @@ class TestReferenceErrorsAreNotParitySignals(unittest.TestCase):
 
         self.assertTrue(verify._reference_raised(Cmds(), "n", {"o": {"type": "double"}}))
         self.assertFalse(verify._reference_raised(Quiet(), "n", {"o": {"type": "double"}}))
+
+
+class TestParityFixtures(unittest.TestCase):
+    """File-reading nodes were driven with an EMPTY path (or skipped). Both
+    sides can read the same generated file instead."""
+
+    def test_png_writer_emits_a_valid_8bit_rgb_png(self):
+        import struct
+        import zlib
+        from mpynode.native.toolchain.verify import _write_png_rgb
+
+        with tempfile.TemporaryDirectory() as d:
+            p = _write_png_rgb(os.path.join(d, "g.png"), 5, 3,
+                               lambda u, v: (u, v, 0.5))
+            data = open(p, "rb").read()
+        self.assertTrue(data.startswith(b"\x89PNG\r\n\x1a\n"))
+        w, h, depth, ctype = struct.unpack(">IIBB", data[16:26])
+        self.assertEqual((w, h, depth, ctype), (5, 3, 8, 2))
+        idat_len = struct.unpack(">I", data[33:37])[0]
+        raw = zlib.decompress(data[41:41 + idat_len])
+        self.assertEqual(len(raw), 3 * (1 + 5 * 3))     # h * (filter + w*3)
+
+    def test_texture_inputs_get_gradients_arrays_get_k(self):
+        from mpynode.native.toolchain.verify import parity_fixtures
+
+        spec = {"mpy_type": "mPyFile", "compute": "buf = self.read_texture()",
+                "inputs": {"fileName": {"type": "string"},
+                           "layers": {"type": "string", "is_array": True},
+                           "uvCoord": {"type": "float2"}}}
+        with tempfile.TemporaryDirectory() as d:
+            fx = parity_fixtures(spec, k=3, dirpath=d)
+            self.assertEqual(sorted(fx), ["fileName", "layers"])
+            self.assertTrue(fx["fileName"].endswith(".png"))
+            self.assertEqual(len(fx["layers"]), 3)
+            self.assertTrue(all(os.path.isfile(p) for p in fx["layers"]))
+            # layers differ from each other (distinct phase)
+            self.assertNotEqual(open(fx["layers"][0], "rb").read(),
+                                open(fx["layers"][1], "rb").read())
+
+    def test_json_reader_gets_a_frame_sequence_template(self):
+        import json
+        from mpynode import ndio
+        from mpynode.native.toolchain.verify import (parity_fixtures,
+                                                     _FIXTURE_FRAMES)
+
+        spec = {"mpy_type": "mPyMesh",
+                "compute": "resolved = ndio.frame_path(self.path, self.frame)",
+                "inputs": {"path": {"type": "string"}, "frame": {"type": "time"}}}
+        with tempfile.TemporaryDirectory() as d:
+            fx = parity_fixtures(spec, dirpath=d)
+            self.assertIn("####", fx["path"])
+            f7 = ndio.frame_path(fx["path"], 7)
+            doc = json.load(open(f7))
+            self.assertEqual(len(doc["points"]), 8)
+            self.assertEqual(sum(doc["counts"]), len(doc["indices"]))
+            self.assertTrue(os.path.isfile(ndio.frame_path(fx["path"], _FIXTURE_FRAMES)))
+
+    def test_disk_cache_gets_an_ndio_container(self):
+        from mpynode import ndio
+        from mpynode.native.toolchain.verify import parity_fixtures
+
+        spec = {"mpy_type": "mPyMesh",
+                "compute": 'frames = ndio.read(self.cachePath, "points")',
+                "inputs": {"cachePath": {"type": "string"}, "frame": {"type": "time"}}}
+        with tempfile.TemporaryDirectory() as d:
+            fx = parity_fixtures(spec, dirpath=d)
+            pts = ndio.read(fx["cachePath"], "points")
+            self.assertEqual(tuple(pts.shape), (2, 8, 3))
+            self.assertEqual(len(ndio.read(fx["cachePath"], "counts")), 6)
+
+    def test_an_output_path_is_not_given_an_image_to_read(self):
+        from mpynode.native.toolchain.verify import parity_fixtures
+
+        spec = {"mpy_type": "mPyFile", "compute": "buf = self.read_texture()",
+                "inputs": {"fileName": {"type": "string"},
+                           "bakePath": {"type": "string"},
+                           "outputDir": {"type": "string"}}}
+        with tempfile.TemporaryDirectory() as d:
+            self.assertEqual(sorted(parity_fixtures(spec, dirpath=d)), ["fileName"])
+
+    def test_plain_node_gets_nothing(self):
+        from mpynode.native.toolchain.verify import parity_fixtures
+
+        self.assertEqual(parity_fixtures({"inputs": {"a": {"type": "double"}}}), {})
+        self.assertEqual(parity_fixtures({"inputs": {"s": {"type": "string"}},
+                                          "compute": "self.o = len(self.s)"}), {})
+
+    def test_apply_fixtures_sets_strings_on_every_node(self):
+        from mpynode.native.toolchain.verify import apply_fixtures
+
+        calls = []
+
+        class Cmds:
+            def setAttr(self, plug, *vals, **kw):
+                calls.append((plug, vals, kw.get("type")))
+
+        apply_fixtures(Cmds(), ("a", "b"), {"fileName": "x.png", "layers": ["l0", "l1"]})
+        self.assertIn(("a.fileName", ("x.png",), "string"), calls)
+        self.assertIn(("b.layers[1]", ("l1",), "string"), calls)
+        self.assertEqual(len(calls), 6)
+
+
+class TestBuiltinSceneIsShared(unittest.TestCase):
+    def test_key_and_ops(self):
+        from mpynode.native.toolchain import verify
+
+        self.assertEqual(verify.builtin_scene_key("metaballsSw"), "metaballs")
+        self.assertIsNone(verify.builtin_scene_key("kDTree"))
+        ops = verify.builtin_scene_ops("metaballsCmp", 6)
+        self.assertIn({"plug": "resolution", "value": 6}, ops)
+        self.assertTrue(any(o["plug"] == "shapeMatrix[2]" and o["kind"] == "matrix"
+                            for o in ops))
+        self.assertIsNone(verify.builtin_scene_ops("patchRelax", 6))
+
+    def test_apply_scene_ops_types_each_kind(self):
+        from mpynode.native.toolchain import verify
+
+        calls = []
+
+        class Cmds:
+            def setAttr(self, plug, *vals, **kw):
+                calls.append((plug, len(vals), kw.get("type")))
+
+        verify.apply_scene_ops(Cmds(), "m", [
+            {"plug": "shapeMatrix[0]", "kind": "matrix", "value": [1.0] * 16},
+            {"plug": "halfExtents[0]", "kind": "double3", "value": [1, 2, 3]},
+            {"plug": "resolution", "value": 6}])
+        self.assertEqual(calls, [("m.shapeMatrix[0]", 16, "matrix"),
+                                 ("m.halfExtents[0]", 3, "double3"),
+                                 ("m.resolution", 1, None)])
+
+    def test_benchmark_harness_imports_the_shared_table(self):
+        from tests.compile.optimizer.test_benchmark_harness_scene import _source
+
+        src = _source()
+        self.assertIn("BUILTIN_SCENES as _BUILTIN", src)
+        self.assertNotIn("def _metaclay_scene", src)
+
+    def test_geo_drive_uses_the_fixture_for_a_string_input(self):
+        from mpynode.native.toolchain import verify
+
+        calls = []
+
+        class Cmds:
+            def setAttr(self, plug, *vals, **kw):
+                calls.append((plug, vals, kw.get("type")))
+
+            def currentTime(self, *a, **k):
+                pass
+
+            def listConnections(self, *a, **k):
+                return []
+
+        inputs = {"path": {"type": "string"}}
+        verify._drive_geo_inputs(Cmds(), ("i", "c"), inputs, {}, 1,
+                                 __import__("random").Random(1),
+                                 fixtures={"path": "/tmp/mesh.####.json"})
+        self.assertIn(("i.path", ("/tmp/mesh.####.json",), "string"), calls)
+        self.assertIn(("c.path", ("/tmp/mesh.####.json",), "string"), calls)
+
+
+class TestDrivesRespectDeclaredRanges(unittest.TestCase):
+    """mPyFile's preset preFilterRadius has min 0; the random drive handed it
+    -3.2 and setAttr raised, so every texture node read 'verify could not run'."""
+
+    def _cmds(self, ranges):
+        class Cmds:
+            def attributeQuery(self, attr, node=None, **kw):
+                lo, hi = ranges.get((node, attr), (None, None))
+                if kw.get("minExists"):
+                    return lo is not None
+                if kw.get("maxExists"):
+                    return hi is not None
+                if kw.get("minimum"):
+                    return [lo]
+                if kw.get("maximum"):
+                    return [hi]
+                raise RuntimeError("unexpected query %r" % kw)
+        return Cmds()
+
+    def test_clamps_to_the_first_node_that_declares_a_range(self):
+        from mpynode.native.toolchain.verify import _clamp_drive
+
+        cmds = self._cmds({("orig", "radius"): (0.0, 2.0)})
+        self.assertEqual(_clamp_drive(cmds, ("orig", "comp"), "radius", "float", -3.2), 0.0)
+        self.assertEqual(_clamp_drive(cmds, ("orig", "comp"), "radius", "float", 7.0), 2.0)
+        self.assertEqual(_clamp_drive(cmds, ("orig", "comp"), "radius", "float", 1.5), 1.5)
+        # the compiled node may carry the range too, or not: same answer
+        self.assertEqual(_clamp_drive(cmds, ("comp", "orig"), "radius", "float", -1.0), 0.0)
+
+    def test_unranged_and_non_scalar_pass_through(self):
+        from mpynode.native.toolchain.verify import _clamp_drive
+
+        cmds = self._cmds({})
+        self.assertEqual(_clamp_drive(cmds, ("orig",), "gain", "double", -3.2), -3.2)
+        self.assertEqual(_clamp_drive(cmds, ("orig",), "v", "vector", [-9, 0, 0]), [-9, 0, 0])
+        self.assertEqual(_clamp_drive(cmds, ("orig",), "s", "string", "x"), "x")
+
+    def test_unregistered_type_is_a_named_skip(self):
+        from mpynode.native.toolchain.verify import _unregistered_type
+
+        class Cmds:
+            def nodeType(self, n):
+                return "unknown"
+
+        row = _unregistered_type(Cmds(), "unknown1", "brightContrastTex", 1e-4)
+        self.assertFalse(row["ran"])
+        self.assertIn("does not register node type 'brightContrastTex'", row["reason"])
+
+        class Ok:
+            def nodeType(self, n):
+                return "brightContrastTex"
+
+        self.assertIsNone(_unregistered_type(Ok(), "b1", "brightContrastTex", 1e-4))
 
 
 if __name__ == "__main__":
