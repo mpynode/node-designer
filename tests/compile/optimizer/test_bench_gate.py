@@ -534,5 +534,116 @@ class TestOutputMultisAreSized(unittest.TestCase):
         self.assertIn("multi(s) sized", src)
 
 
+class TestParityReadsEveryOutputKind(unittest.TestCase):
+    """Generic parity used to die on two output kinds -- a string (hexAttribute:
+    float('44 52 ...')) and a declared mesh (rbfWrap: float(None)) -- and to
+    call an mPyTransform 'no scalar outputs to compare'."""
+
+    def test_string_components_equal_iff_identical(self):
+        from mpynode.native.toolchain.verify import _attr_components as ac
+
+        self.assertEqual(ac("abc"), [3.0, 97.0, 98.0, 99.0])
+        self.assertEqual(ac(["ab", 1.5]), [2.0, 97.0, 98.0, 1.5])
+        self.assertNotEqual(ac("abc"), ac("abd"))
+        self.assertNotEqual(ac("ab")[0], ac("abc")[0])   # length leads
+        self.assertEqual(ac([(1, 2.0), 3]), [1.0, 2.0, 3.0])  # numerics unchanged
+
+    def test_declared_geo_output_is_read_through_the_api(self):
+        from mpynode.native.toolchain import verify
+
+        calls = []
+
+        class Cmds:
+            def getAttr(self, plug, **kw):
+                calls.append(plug)
+                return 1.0
+
+        with mock.patch.object(verify, "_geo_output_components",
+                               return_value=[8.0, 1.0, 2.0]) as geo:
+            out = verify._read_outputs(Cmds(), "n", {"outGeo": {"type": "mesh"},
+                                                    "k": {"type": "double"}})
+        geo.assert_called_once_with("n", "outGeo", "mesh")
+        self.assertEqual(out["outGeo"], ([8.0, 1.0, 2.0], None))
+        self.assertEqual(calls, ["n.k"])   # getAttr never asked for the mesh
+
+    def test_geo_components_of_an_empty_plug_is_a_count_of_zero(self):
+        from mpynode.native.toolchain import verify
+
+        with mock.patch.object(verify, "_read_geo_components", return_value=None):
+            with mock.patch.dict("sys.modules", {"maya": mock.MagicMock(),
+                                                 "maya.api": mock.MagicMock(),
+                                                 "maya.api.OpenMaya": mock.MagicMock()}):
+                self.assertEqual(verify._geo_output_components("n", "outGeo", "mesh"),
+                                 [0.0])
+        geo = {"pts": [1.0, 2.0, 3.0, 4.0, 5.0, 6.0], "topo": ((4, 4), (0, 1, 2, 3), ()),
+               "attrs": [0.5]}
+        with mock.patch.object(verify, "_read_geo_components", return_value=geo):
+            with mock.patch.dict("sys.modules", {"maya": mock.MagicMock(),
+                                                 "maya.api": mock.MagicMock(),
+                                                 "maya.api.OpenMaya": mock.MagicMock()}):
+                comps = verify._geo_output_components("n", "outGeo", "mesh")
+        self.assertEqual(comps[0], 2.0)                  # two points
+        self.assertEqual(comps[1:5], [2.0, 8.0, 4.0, 6.0])  # counts / connects sigs
+        self.assertEqual(comps[-1], 0.5)                 # attrs ride along
+
+    def test_transform_family_compares_its_native_matrix(self):
+        from mpynode.native.toolchain.verify import _native_family_outputs as nfo
+
+        self.assertEqual(nfo({"mpy_type": "mPyTransform"}),
+                         {"matrix": {"type": "matrix", "native": True}})
+        self.assertEqual(nfo({"mpy_type": "mPyNode"}), {})
+        self.assertEqual(nfo({}), {})
+
+    def test_scalar_path_sizes_outputs_on_both_nodes(self):
+        import inspect
+        from mpynode.native.toolchain import verify
+
+        src = inspect.getsource(verify)
+        i = src.index("comp = cmds.createNode(name)\n    # An array OUTPUT has no elements")
+        self.assertIn("for _nd in (orig, comp):", src[i:i + 600])
+        self.assertIn("bench_size_output_multis(cmds, _nd, spec, K_ARR)", src[i:i + 700])
+
+
+class TestReferenceErrorsAreNotParitySignals(unittest.TestCase):
+    """spline read as FAIL 1.99: the random drive handed it a negative degree,
+    the interpreted reference raised and kept stale outputs, and the compare
+    measured that against the compiled node's answer."""
+
+    def test_tap_counts_expression_errors_and_passes_the_rest_through(self):
+        import io
+        import sys
+        from mpynode.native.toolchain.verify import _ExpressionErrorTap
+
+        real = sys.stderr
+        buf = io.StringIO()
+        sys.stderr = buf
+        try:
+            with _ExpressionErrorTap() as tap:
+                sys.stderr.write("[mPyNode expression error] boom\n")
+                sys.stderr.write("plain warning\n")
+                sys.stderr.flush()
+            self.assertEqual(tap.hits, 1)
+            self.assertIs(sys.stderr, buf)              # restored
+        finally:
+            sys.stderr = real
+        self.assertIn("plain warning", buf.getvalue())   # nothing swallowed
+
+    def test_reference_raised_reads_the_node_under_the_tap(self):
+        import sys
+        from mpynode.native.toolchain import verify
+
+        class Cmds:
+            def getAttr(self, plug, **kw):
+                sys.stderr.write("[mPyNode expression error] negative dimensions\n")
+                return 1.0
+
+        class Quiet:
+            def getAttr(self, plug, **kw):
+                return 1.0
+
+        self.assertTrue(verify._reference_raised(Cmds(), "n", {"o": {"type": "double"}}))
+        self.assertFalse(verify._reference_raised(Quiet(), "n", {"o": {"type": "double"}}))
+
+
 if __name__ == "__main__":
     unittest.main()

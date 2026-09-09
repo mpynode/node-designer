@@ -212,14 +212,55 @@ def _attr_components(val):
     ``[(x, y, z)]``) -> ``[x, y, z]``; a matrix (flat 16) -> all 16. The old
     code peeled lists down to ``val[0]`` -- comparing only X of a vector and
     only m[0][0] of a matrix -> a port wrong on any other component scored
-    maxerr~=0 and falsely "verified". Raises (caught upstream as a skip) if a
-    leaf isn't numeric (e.g. a string attr the generic harness can't compare)."""
+    maxerr~=0 and falsely "verified".
+
+    A STRING leaf compares as ``[len] + code points``: equal iff identical, and
+    the leading length keeps a longer string from hiding behind zip truncation.
+    hexAttribute's hex-dump output raised here for a year and its parity read
+    "could not run". Raises (caught upstream as a skip) only for a leaf that is
+    neither numeric nor text (``None`` from a typed plug getAttr cannot read --
+    those are routed to the geometry reader before reaching this)."""
+    if isinstance(val, str):
+        return _string_components(val)
     if isinstance(val, (list, tuple)):
         out = []
         for e in val:
             out.extend(_attr_components(e))
         return out
     return [float(val)]
+
+
+def _string_components(s):
+    return [float(len(s))] + [float(ord(c)) for c in s]
+
+
+def _geo_output_components(node, attr, geo_type):
+    """Flat components for a DECLARED geometry output (rbfWrap's ``outGeo:mesh``):
+    a leading point count, a topology signature, then every point (and normal /
+    colour) component -- the same data :func:`_verify_geo` compares for a
+    generator, read through the API because ``getAttr`` cannot read typed data.
+    An empty / null plug yields ``[0.0]`` so empty-vs-built shows as a mismatch
+    rather than as nothing to compare."""
+    import maya.api.OpenMaya as om2
+
+    kind = {"mesh": "mesh", "nurbsCurve": "curve"}.get(geo_type, "surface")
+    try:
+        geo = _read_geo_components(om2, node, kind, {"attr": attr})
+    except Exception:
+        geo = None
+    if not geo:
+        return [0.0]
+    pts = geo.get("pts") or []
+    topo = geo.get("topo") or ()
+    sig = []
+    for part in topo:
+        if isinstance(part, (list, tuple)):
+            sig.append(float(len(part)))
+            sig.append(float(sum(float(x) for x in part
+                                 if isinstance(x, (int, float)))))
+        elif isinstance(part, (int, float)):
+            sig.append(float(part))
+    return [float(len(pts) // 3)] + sig + list(pts) + list(geo.get("attrs") or [])
 
 
 def _components_maxerr(a, b):
@@ -675,6 +716,21 @@ def _read_array_output(cmds, node, attr):
     return comps, len(idxs)
 
 
+def _native_family_outputs(spec):
+    """Outputs a family writes through NATIVE plugs rather than declared ones.
+
+    An mPyTransform's compute sets ``self.local_matrix`` and the result leaves
+    through the transform's own ``matrix`` plug; with no declared outputs the
+    scalar path called that "no scalar outputs to compare" and aimTransform was
+    never checked. The plug exists on both the interpreted reference (built as
+    an mPyTransform) and the compiled MPxTransform, so it is compared like any
+    declared matrix output. Marked ``native`` so the reference builder does not
+    try to add it."""
+    if (spec.get("mpy_type") or "") == "mPyTransform":
+        return {"matrix": {"type": "matrix", "native": True}}
+    return {}
+
+
 def _read_outputs(cmds, node, out_meta):
     """Read EVERY declared output off one node -> ``{attr: (components, count)}``
     (``count`` is None for a non-array plug). The READ half of the scalar parity
@@ -682,7 +738,12 @@ def _read_outputs(cmds, node, out_meta):
     evaluation."""
     out = {}
     for o, m in out_meta.items():
-        if m.get("is_array"):
+        if m.get("type") in _GEO_IN_TYPES and not m.get("is_array"):
+            # A declared geometry output. getAttr prints "The data is not a
+            # numeric or string value" and returns None -- rbfWrap's parity died
+            # on float(None) -- so read it through the API like a generator's.
+            out[o] = (_geo_output_components(node, o, m.get("type")), None)
+        elif m.get("is_array"):
             out[o] = _read_array_output(cmds, node, o)
         else:
             # ALL components (see _attr_components): comparing only [0] silently
@@ -1394,6 +1455,53 @@ def _has_carry_state(spec):
         return False
 
 
+class _ExpressionErrorTap:
+    """Context manager that counts the ``[<type> expression error]`` lines the
+    interpreted runtime prints to stderr (``base_contract.report_error``) while
+    the reference evaluates. Everything else it writes passes straight through.
+    In-process by design: the interpreted node's compute runs in THIS mayapy."""
+
+    def __init__(self):
+        self.hits = 0
+        self._real = None
+
+    def write(self, s):
+        if "expression error" in s:
+            self.hits += 1
+        return self._real.write(s) if self._real is not None else len(s)
+
+    def flush(self):
+        if self._real is not None:
+            self._real.flush()
+
+    def __enter__(self):
+        import sys
+        self._real, sys.stderr = sys.stderr, self
+        return self
+
+    def __exit__(self, *exc):
+        import sys
+        sys.stderr = self._real
+        return False
+
+
+def _reference_raised(cmds, node, out_meta):
+    """Evaluate the INTERPRETED node once and say whether its compute raised.
+
+    The generic drive is random -- a negative ``degree`` for a b-spline, an
+    index past an array -- and on such a set the reference raises mid-compute
+    and leaves whatever it last wrote in its outputs, while the compiled node
+    handles the same input its own way. Comparing those two is comparing a
+    stale buffer to a live one (spline read as FAIL 1.99 that way). Such a set
+    is NOT comparable; the caller excludes it and says so."""
+    with _ExpressionErrorTap() as tap:
+        try:
+            _read_outputs(cmds, node, out_meta)
+        except Exception:
+            return True
+    return tap.hits > 0
+
+
 def _interp_is_idempotent(cmds, node, out_meta, tol):
     """Does the INTERPRETED node answer the same twice for UNCHANGED inputs?
 
@@ -1925,7 +2033,8 @@ def _verify_one(cmds, bundle_path, spec, maya=_MAYA_DEFAULT, deadline=None):
     tol = 1e-4
     from mpynode.wrappers._mpy_node import MPyNode
     IN_META = spec.get("inputs") or {}
-    OUT_META = spec.get("outputs") or {}
+    OUT_META = dict(spec.get("outputs") or {})
+    OUT_META.update(_native_family_outputs(spec))
     INP = {k: v["type"] for k, v in IN_META.items()}
     OUT = {k: v["type"] for k, v in OUT_META.items()}
     ENUM = {k: (v.get("enum_names") or [])
@@ -1950,9 +2059,15 @@ def _verify_one(cmds, bundle_path, spec, maya=_MAYA_DEFAULT, deadline=None):
     # Python original AS an mPyFile; a preset already present on the fresh node is
     # skipped in the add loops below. Genuine USER attrs are still added normally.
     is_texture = spec.get("mpy_type") == "mPyFile"
+    is_transform = spec.get("mpy_type") == "mPyTransform"
     if is_texture:
         from mpynode.wrappers.mpy_file import MPyFile
         w = MPyFile.create(name="orig_" + name)
+    elif is_transform:
+        # The compute writes self.local_matrix, which only a transform-family
+        # node has; a generic mPyNode host would raise on every evaluation.
+        from mpynode.wrappers.mpy_transform import MPyTransform
+        w = MPyTransform.create(name="orig_" + name)
     else:
         w = MPyNode.create(name="orig_" + name)
     orig = w.get_name()
@@ -1964,7 +2079,7 @@ def _verify_one(cmds, bundle_path, spec, maya=_MAYA_DEFAULT, deadline=None):
             return False
 
     for nm, m in IN_META.items():
-        if is_texture and _is_native(orig, nm):
+        if (is_texture or is_transform) and _is_native(orig, nm):
             continue  # native preset (uvCoord/fileName/...) already present
         t = m["type"]
         ia = bool(m.get("is_array"))
@@ -1973,13 +2088,19 @@ def _verify_one(cmds, bundle_path, spec, maya=_MAYA_DEFAULT, deadline=None):
         else:
             w.add_input_attr(nm, t, is_array=ia)
     for nm, m in OUT_META.items():
-        if is_texture and _is_native(orig, nm):
-            continue  # native output (outColor/outAlpha) already present
+        if m.get("native") or (is_texture and _is_native(orig, nm)):
+            continue  # native output (outColor/outAlpha/matrix) already present
         w.add_output_attr(nm, m["type"], is_array=bool(m.get("is_array")))
     if (spec.get("init") or "").strip():
         w.set_init_expression(spec["init"])
     w.set_compute_expression(spec["compute"])
     comp = cmds.createNode(name)
+    # An array OUTPUT has no elements until something consumes them, and the
+    # runtime sizes it from those elements -- so spline / springChain /
+    # procrustesTags wrote nothing on either side ("no comparable components")
+    # and spine compared 0 elements against 4. K_ARR consumers on BOTH nodes.
+    for _nd in (orig, comp):
+        bench_size_output_multis(cmds, _nd, spec, K_ARR)
 
     def smp(t, nm):
         if t == "bool":
@@ -2061,6 +2182,7 @@ def _verify_one(cmds, bundle_path, spec, maya=_MAYA_DEFAULT, deadline=None):
     # 43 templates. See _interp_is_idempotent.
     carry_state = _has_carry_state(spec)
     noncomparable_drives = 0
+    raised_drives = 0
     for _ in range(30):
         drive = {}
         for a, m in IN_META.items():
@@ -2073,6 +2195,11 @@ def _verify_one(cmds, bundle_path, spec, maya=_MAYA_DEFAULT, deadline=None):
             else:
                 drive[a] = (t, False, smp(t, a))
         _apply_drive(cmds, (orig, comp), drive)
+        if _reference_raised(cmds, orig, OUT_META):
+            # The reference could not compute this input set at all; its
+            # outputs are stale. Not a parity signal either way.
+            raised_drives += 1
+            continue
         if carry_state and not _interp_is_idempotent(cmds, orig, OUT_META, tol):
             # The reference moved under its own feet on this input set, so the
             # two sides cannot be lined up here. Excluded, and COUNTED -- a
@@ -2136,11 +2263,32 @@ def _verify_one(cmds, bundle_path, spec, maya=_MAYA_DEFAULT, deadline=None):
                     "valid check -- skipped (authored @maya_test is the parity "
                     "gate)" % (maxerr, _CARRY_DRIFT_MULT, tol),
                     stale_tail)}
+    if carry_state and noncomparable_drives and maxerr > tol:
+        # A stateful node whose reference was non-idempotent on SOME sets and
+        # whose comparable sets still diverged: the two sides were evaluated a
+        # different number of times, so the remaining difference is a
+        # trajectory difference, not a pointwise verdict. springChain flipped
+        # PASS 0.0 / FAIL 0.147 between two identical runs this way. Say the
+        # numbers, refuse the verdict.
+        return {"ran": False, "pass": None, "maxerr": maxerr, "tol": tol,
+                "reason": _with_stale_tail(
+                    "compute carries state; the interpreted reference was "
+                    "non-idempotent on %d of 30 input sets and the %d comparable "
+                    "sets still diverged by %.3g (tol %.3g) -- with the two sides "
+                    "evaluated a different number of times that is a trajectory "
+                    "difference, not a port verdict; pointwise parity "
+                    "inconclusive (authored @maya_test is the parity gate)"
+                    % (noncomparable_drives, 30 - noncomparable_drives
+                       - raised_drives, maxerr, tol),
+                    stale_tail)}
     if compared == 0:
         # Zero comparable components across all configs -- a vacuous check (an
         # array output that never populated, or both sides blew up identically).
         # Skip rather than a false PASS.
-        why = ("the interpreted reference was non-idempotent on every one of "
+        why = ("the interpreted reference raised on every one of the 30 input "
+               "sets (the generic random drive never produced a valid set)"
+               if raised_drives >= 30 else
+               "the interpreted reference was non-idempotent on every one of "
                "the 30 input sets, so none could be lined up"
                if noncomparable_drives >= 30 else
                "both implementations blew up (non-finite) on every comparable "
@@ -2157,6 +2305,12 @@ def _verify_one(cmds, bundle_path, spec, maya=_MAYA_DEFAULT, deadline=None):
                   "its compute 2-3x per dgdirty where the compiled node runs "
                   "once), so those cannot be lined up pointwise"
                   % (30 - noncomparable_drives, noncomparable_drives))
+    if raised_drives:
+        reason = ((reason + " -- " if reason else "")
+                  + "on %d of 30 input sets the interpreted reference raised "
+                    "mid-compute (an input the node rejects, e.g. a negative "
+                    "degree) and left stale outputs; those sets were excluded"
+                  % raised_drives)
     if peeled:
         reason = ((reason + " -- " if reason else "")
                   + "verified with %d geo/string input(s) left at default "
