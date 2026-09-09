@@ -1,4 +1,5 @@
 @echo off
+setlocal
 REM Rebuild native plugin 'MPyFile_File_Scanline' from its single source 'source\scanlineTex.cpp'.
 REM Edit source\scanlineTex.cpp, then run build.bat from any cmd.exe -- it sets up MSVC itself.
 REM

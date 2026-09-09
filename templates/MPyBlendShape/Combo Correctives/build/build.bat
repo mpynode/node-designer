@@ -1,4 +1,5 @@
 @echo off
+setlocal
 REM Rebuild native plugin 'MPyBlendShape_Combo_Correctives' from its single source 'source\comboCorrectives.cpp'.
 REM Edit source\comboCorrectives.cpp, then run build.bat from any cmd.exe -- it sets up MSVC itself.
 REM

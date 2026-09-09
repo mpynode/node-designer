@@ -1,4 +1,5 @@
 @echo off
+setlocal
 REM Generated combined build for native plugin 'mPyMega' (37 nodes).
 REM Runs from any cmd.exe: MSVC is located via vswhere and vcvarsall x64
 REM is called for you. An 'x64 Native Tools Command Prompt' is used as-is.

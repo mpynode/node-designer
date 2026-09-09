@@ -1,4 +1,5 @@
 @echo off
+setlocal
 REM Rebuild native plugin 'MPyNode_Bubble_Sort' from its single source 'source\bubbleSort.cpp'.
 REM Edit source\bubbleSort.cpp, then run build.bat from any cmd.exe -- it sets up MSVC itself.
 REM

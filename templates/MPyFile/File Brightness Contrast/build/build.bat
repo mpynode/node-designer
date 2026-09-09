@@ -1,4 +1,5 @@
 @echo off
+setlocal
 REM Rebuild native plugin 'basics_MPyFile_File_Brightness_Contrast' from its single source 'source\brightContrastTex.cpp'.
 REM Edit source\brightContrastTex.cpp, then run build.bat from any cmd.exe -- it sets up MSVC itself.
 REM

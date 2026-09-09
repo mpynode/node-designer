@@ -1,4 +1,5 @@
 @echo off
+setlocal
 REM Rebuild native plugin 'MPyLocator_Animated_Text' from its single source 'source\animatedText.cpp'.
 REM Edit source\animatedText.cpp, then run build.bat from any cmd.exe -- it sets up MSVC itself.
 REM

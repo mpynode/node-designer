@@ -1831,6 +1831,30 @@ class QtMsvcStdextCompatTests(unittest.TestCase):
             self.assertFalse(os.path.exists(dst))
 
 
+class BatLocalScopeTests(unittest.TestCase):
+    """Every generated .bat opens with setlocal. MEASURED 2026-09-08: without
+    it the inner build\\build.bat overwrote the calling wrapper's HERE through
+    `call`, so templates/All Templates Plugin/build.bat linked mPyMega.mll and
+    then failed its install copy (exit 1, nothing in plugin\\). `exit /b N`
+    still returns N -- it ends the local scope on the way out."""
+
+    def test_every_bat_opens_with_setlocal(self):
+        from mpynode.native import compiler as codegen
+        from mpynode.native.compiler import bundler
+
+        bodies = (
+            ("porter", codegen.generate_build_bat(_HOVER_SPEC, maya=r"C:\M")),
+            ("multi", bundler.make_build_bat("b", ["frag_a.cpp"])),
+            ("single", bundler.make_single_build_bat("b", "foo.cpp",
+                                                     ["OpenMaya"])),
+        )
+        for label, body in bodies:
+            lines = body.split("\r\n")
+            self.assertEqual(lines[0], "@echo off", label)
+            self.assertEqual(lines[1], "setlocal", label)
+            self.assertFalse(_uncollapsed_percent(body), label)
+
+
 if __name__ == "__main__":
     import unittest
     unittest.main()

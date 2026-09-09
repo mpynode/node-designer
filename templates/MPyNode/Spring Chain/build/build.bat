@@ -1,4 +1,5 @@
 @echo off
+setlocal
 REM Rebuild native plugin 'MPyNode_Spring_Chain' from its single source 'source\springChain.cpp'.
 REM Edit source\springChain.cpp, then run build.bat from any cmd.exe -- it sets up MSVC itself.
 REM

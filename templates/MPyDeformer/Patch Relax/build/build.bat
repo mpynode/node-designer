@@ -1,4 +1,5 @@
 @echo off
+setlocal
 REM Rebuild native plugin 'MPyDeformer_Patch_Relax' from its single source 'source\patchRelax.cpp'.
 REM Edit source\patchRelax.cpp, then run build.bat from any cmd.exe -- it sets up MSVC itself.
 REM

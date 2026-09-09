@@ -1,4 +1,5 @@
 @echo off
+setlocal
 REM Rebuild native plugin 'MPyNode_Spline' from its single source 'source\spline.cpp'.
 REM Edit source\spline.cpp, then run build.bat from any cmd.exe -- it sets up MSVC itself.
 REM

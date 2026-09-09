@@ -1,4 +1,5 @@
 @echo off
+setlocal
 REM Rebuild native plugin 'MPyDeformer_RBF_Wrap_Deformer' from its single source 'source\rbfWrapDeformer.cpp'.
 REM Edit source\rbfWrapDeformer.cpp, then run build.bat from any cmd.exe -- it sets up MSVC itself.
 REM

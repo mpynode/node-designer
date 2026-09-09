@@ -1,4 +1,5 @@
 @echo off
+setlocal
 REM Rebuild native plugin 'MPyDeformer_NURBS_Wave' from its single source 'source\nurbsWave.cpp'.
 REM Edit source\nurbsWave.cpp, then run build.bat from any cmd.exe -- it sets up MSVC itself.
 REM

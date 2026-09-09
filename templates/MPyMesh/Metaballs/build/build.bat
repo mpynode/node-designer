@@ -1,4 +1,5 @@
 @echo off
+setlocal
 REM Rebuild native plugin 'MPyMesh_Metaballs' from its single source 'source\metaballs.cpp'.
 REM Edit source\metaballs.cpp, then run build.bat from any cmd.exe -- it sets up MSVC itself.
 REM

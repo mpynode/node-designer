@@ -3,7 +3,8 @@ REM Build mPyMega and install it into plugin\, ready for the scenes beside it.
 REM
 REM Usage:  build.bat [maya-version]      e.g. build.bat 2026
 REM With no argument the newest installed Maya is used; set MAYA to override.
-REM Run from an 'x64 Native Tools Command Prompt for VS' so cl.exe is on PATH.
+REM Runs from any cmd.exe: MSVC is located via vswhere and vcvarsall x64 is
+REM called for you. An 'x64 Native Tools Command Prompt' is used as-is.
 REM
 REM No binary ships with this repo: a Maya plug-in is compiled against one Maya
 REM version's devkit and will not load in another. This compiles the committed

@@ -1,4 +1,5 @@
 @echo off
+setlocal
 REM Rebuild native plugin 'MPySkinCluster_Twist_Swing_Skin' from its single source 'source\twistSwingSkin.cpp'.
 REM Edit source\twistSwingSkin.cpp, then run build.bat from any cmd.exe -- it sets up MSVC itself.
 REM

@@ -1,4 +1,5 @@
 @echo off
+setlocal
 REM Rebuild native plugin 'MPyFile_File_Composite' from its single source 'source\compositeTexture.cpp'.
 REM Edit source\compositeTexture.cpp, then run build.bat from any cmd.exe -- it sets up MSVC itself.
 REM

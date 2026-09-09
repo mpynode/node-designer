@@ -1,4 +1,5 @@
 @echo off
+setlocal
 REM Rebuild native plugin 'MPyLocator_Widget_Showcase' from its single source 'source\widgetShowcase.cpp'.
 REM Edit source\widgetShowcase.cpp, then run build.bat from any cmd.exe -- it sets up MSVC itself.
 REM

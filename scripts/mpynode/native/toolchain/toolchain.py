@@ -671,6 +671,13 @@ def msvc_resolver_bat() -> List[str]:
     already set -- vcvarsall / VsDevCmd export it -- so a developer prompt is
     used exactly as it is rather than having vcvarsall run twice.
 
+    Every generated script opens with ``setlocal``, so what vcvarsall exports
+    (PATH, INCLUDE, LIB) and the script's own variables (HERE, OBJS, MAYA,
+    QTINC, _VSINST) die with it. MEASURED 2026-09-08: without that, the inner
+    ``build\\build.bat`` overwrote the calling wrapper's ``HERE`` through
+    ``call``, so ``templates/All Templates Plugin/build.bat`` linked
+    mPyMega.mll and then failed its install copy with exit 1.
+
     Two guards follow, each with the fix in its message: no ``cl`` at all, and
     the case above -- a ``cl`` on PATH but an empty ``INCLUDE``.
 

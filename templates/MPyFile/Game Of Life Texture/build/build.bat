@@ -1,4 +1,5 @@
 @echo off
+setlocal
 REM Rebuild native plugin 'MPyFile_Game_Of_Life_Texture' from its single source 'source\gameOfLifeTex.cpp'.
 REM Edit source\gameOfLifeTex.cpp, then run build.bat from any cmd.exe -- it sets up MSVC itself.
 REM

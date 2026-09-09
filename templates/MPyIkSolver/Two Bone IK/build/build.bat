@@ -1,4 +1,5 @@
 @echo off
+setlocal
 REM Rebuild native plugin 'MPyIkSolver_Two_Bone_IK' from its single source 'source\twoBoneIK.cpp'.
 REM Edit source\twoBoneIK.cpp, then run build.bat from any cmd.exe -- it sets up MSVC itself.
 REM

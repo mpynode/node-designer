@@ -1,4 +1,5 @@
 @echo off
+setlocal
 REM Rebuild native plugin 'MPyNode_RBF_Wrap' from its single source 'source\rbfWrap.cpp'.
 REM Edit source\rbfWrap.cpp, then run build.bat from any cmd.exe -- it sets up MSVC itself.
 REM

@@ -1,4 +1,5 @@
 @echo off
+setlocal
 REM Rebuild native plugin 'MPyMesh_JSON_Mesh_Reader' from its single source 'source\jsonMeshReader.cpp'.
 REM Edit source\jsonMeshReader.cpp, then run build.bat from any cmd.exe -- it sets up MSVC itself.
 REM

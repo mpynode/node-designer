@@ -1,4 +1,5 @@
 @echo off
+setlocal
 REM Rebuild native plugin 'MPyNurbsSurface_NURBS_Ripple' from its single source 'source\rippleSurf.cpp'.
 REM Edit source\rippleSurf.cpp, then run build.bat from any cmd.exe -- it sets up MSVC itself.
 REM

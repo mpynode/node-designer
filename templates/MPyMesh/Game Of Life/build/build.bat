@@ -1,4 +1,5 @@
 @echo off
+setlocal
 REM Rebuild native plugin 'MPyMesh_Game_Of_Life' from its single source 'source\gameOfLifeMesh.cpp'.
 REM Edit source\gameOfLifeMesh.cpp, then run build.bat from any cmd.exe -- it sets up MSVC itself.
 REM

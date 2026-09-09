@@ -1,4 +1,5 @@
 @echo off
+setlocal
 REM Rebuild native plugin 'MPyLocator_Animated_Selection' from its single source 'source\animatedSelection.cpp'.
 REM Edit source\animatedSelection.cpp, then run build.bat from any cmd.exe -- it sets up MSVC itself.
 REM

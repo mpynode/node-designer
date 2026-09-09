@@ -1,4 +1,5 @@
 @echo off
+setlocal
 REM Rebuild native plugin 'MPyNode_Ouch' from its single source 'source\ouch.cpp'.
 REM Edit source\ouch.cpp, then run build.bat from any cmd.exe -- it sets up MSVC itself.
 REM

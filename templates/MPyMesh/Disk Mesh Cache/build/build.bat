@@ -1,4 +1,5 @@
 @echo off
+setlocal
 REM Rebuild native plugin 'MPyMesh_Disk_Mesh_Cache' from its single source 'source\diskMeshCache.cpp'.
 REM Edit source\diskMeshCache.cpp, then run build.bat from any cmd.exe -- it sets up MSVC itself.
 REM

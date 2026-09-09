@@ -860,6 +860,7 @@ def make_build_bat(plugin_name: str, frag_files: List[str],
                         toolchain.QT_MSVC_COMPAT_HEADER))
     lines = [
         "@echo off",
+        "setlocal",
         "REM Generated combined build for native plugin '%s' (%d nodes)."
         % (plugin_name, len(frag_files)),
         "REM Runs from any cmd.exe: MSVC is located via vswhere and vcvarsall x64",
@@ -984,6 +985,7 @@ def make_single_build_bat(plugin_name: str, node_file: str, libs: List[str],
                  toolchain.QT_MSVC_COMPAT_HEADER)) if needs_qt else ""
     return "\r\n".join([
         "@echo off",
+        "setlocal",
         "REM Rebuild native plugin '%s' from its single source 'source\\%s'."
         % (plugin_name, node_file),
         "REM Edit source\\%s, then run build.bat from any cmd.exe -- it sets up "

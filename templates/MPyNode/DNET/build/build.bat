@@ -1,4 +1,5 @@
 @echo off
+setlocal
 REM Rebuild native plugin 'MPyNode_DNET' from its single source 'source\mPyDnet.cpp'.
 REM Edit source\mPyDnet.cpp, then run build.bat from any cmd.exe -- it sets up MSVC itself.
 REM

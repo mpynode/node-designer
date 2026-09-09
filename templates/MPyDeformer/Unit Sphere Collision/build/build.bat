@@ -1,4 +1,5 @@
 @echo off
+setlocal
 REM Rebuild native plugin 'MPyDeformer_Unit_Sphere_Collision' from its single source 'source\unitSphereCollision.cpp'.
 REM Edit source\unitSphereCollision.cpp, then run build.bat from any cmd.exe -- it sets up MSVC itself.
 REM

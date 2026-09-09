@@ -1,4 +1,5 @@
 @echo off
+setlocal
 REM Rebuild native plugin 'MPyNode_Hex_Attribute' from its single source 'source\hexAttribute.cpp'.
 REM Edit source\hexAttribute.cpp, then run build.bat from any cmd.exe -- it sets up MSVC itself.
 REM

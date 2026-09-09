@@ -1,4 +1,5 @@
 @echo off
+setlocal
 REM Rebuild native plugin 'MPyMesh_Voxelize' from its single source 'source\voxelizeMesh.cpp'.
 REM Edit source\voxelizeMesh.cpp, then run build.bat from any cmd.exe -- it sets up MSVC itself.
 REM

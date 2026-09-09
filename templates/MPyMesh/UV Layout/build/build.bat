@@ -1,4 +1,5 @@
 @echo off
+setlocal
 REM Rebuild native plugin 'MPyMesh_UV_Layout' from its single source 'source\uvLayoutMesh.cpp'.
 REM Edit source\uvLayoutMesh.cpp, then run build.bat from any cmd.exe -- it sets up MSVC itself.
 REM

@@ -1,4 +1,5 @@
 @echo off
+setlocal
 REM Rebuild native plugin 'basics_MPyDeformer' from its single source 'source\sineRippleDefault.cpp'.
 REM Edit source\sineRippleDefault.cpp, then run build.bat from any cmd.exe -- it sets up MSVC itself.
 REM

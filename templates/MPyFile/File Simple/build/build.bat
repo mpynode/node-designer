@@ -1,4 +1,5 @@
 @echo off
+setlocal
 REM Rebuild native plugin 'MPyFile_File_Simple' from its single source 'source\fileTexture.cpp'.
 REM Edit source\fileTexture.cpp, then run build.bat from any cmd.exe -- it sets up MSVC itself.
 REM

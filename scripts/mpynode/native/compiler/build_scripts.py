@@ -103,6 +103,7 @@ def generate_build_bat(spec: dict, maya=None) -> str:
                      toolchain.QT_MSVC_COMPAT_HEADER))
     return "\r\n".join([
         "@echo off",
+        "setlocal",
         "REM Generated build for native node '%s'." % name,
         "REM Runs from any cmd.exe: MSVC is located via vswhere and vcvarsall x64",
         "REM is called for you. An 'x64 Native Tools Command Prompt' is used as-is.",

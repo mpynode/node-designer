@@ -1,4 +1,5 @@
 @echo off
+setlocal
 REM Rebuild native plugin 'MPyConstraint_Procrustes_Tags' from its single source 'source\procrustesTags.cpp'.
 REM Edit source\procrustesTags.cpp, then run build.bat from any cmd.exe -- it sets up MSVC itself.
 REM

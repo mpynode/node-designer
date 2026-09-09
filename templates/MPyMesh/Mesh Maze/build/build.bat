@@ -1,4 +1,5 @@
 @echo off
+setlocal
 REM Rebuild native plugin 'MPyMesh_Mesh_Maze' from its single source 'source\meshMaze.cpp'.
 REM Edit source\meshMaze.cpp, then run build.bat from any cmd.exe -- it sets up MSVC itself.
 REM

@@ -1,4 +1,5 @@
 @echo off
+setlocal
 REM Rebuild native plugin 'MPySkinCluster_Linear_Blend_Skin' from its single source 'source\linearBlendSkin.cpp'.
 REM Edit source\linearBlendSkin.cpp, then run build.bat from any cmd.exe -- it sets up MSVC itself.
 REM

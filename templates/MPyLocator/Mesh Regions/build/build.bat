@@ -1,4 +1,5 @@
 @echo off
+setlocal
 REM Rebuild native plugin 'MPyLocator_Mesh_Regions' from its single source 'source\meshRegionLocator.cpp'.
 REM Edit source\meshRegionLocator.cpp, then run build.bat from any cmd.exe -- it sets up MSVC itself.
 REM

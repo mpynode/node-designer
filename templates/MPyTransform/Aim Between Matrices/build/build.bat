@@ -1,4 +1,5 @@
 @echo off
+setlocal
 REM Rebuild native plugin 'MPyTransform_Aim_Between_Matrices' from its single source 'source\aimTransform.cpp'.
 REM Edit source\aimTransform.cpp, then run build.bat from any cmd.exe -- it sets up MSVC itself.
 REM

@@ -1,4 +1,5 @@
 @echo off
+setlocal
 REM Rebuild native plugin 'MPyNurbsCurve_NURBS_Helix' from its single source 'source\helixCurve.cpp'.
 REM Edit source\helixCurve.cpp, then run build.bat from any cmd.exe -- it sets up MSVC itself.
 REM

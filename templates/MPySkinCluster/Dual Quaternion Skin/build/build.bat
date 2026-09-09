@@ -1,4 +1,5 @@
 @echo off
+setlocal
 REM Rebuild native plugin 'MPySkinCluster_Dual_Quaternion_Skin' from its single source 'source\dualQuaternionSkin.cpp'.
 REM Edit source\dualQuaternionSkin.cpp, then run build.bat from any cmd.exe -- it sets up MSVC itself.
 REM
