@@ -196,6 +196,124 @@ def _geo_emptiness(plug, om):
         return True                  # constructed-but-inaccessible == empty
 
 
+_FP_CAP = 400000   # floats per plug; 40k verts x 3 is 120k
+
+
+def _flatten_values(v, out=None, cap=_FP_CAP):
+    """Nested tuples/lists of numbers -> one flat float list (bools as 0/1).
+    Anything else (a string, None) is skipped; the caller keeps text apart."""
+    out = [] if out is None else out
+    if isinstance(v, bool):
+        out.append(float(v))
+    elif isinstance(v, (int, float)):
+        out.append(float(v))
+    elif isinstance(v, (list, tuple)):
+        for x in v:
+            if len(out) >= cap:
+                break
+            _flatten_values(x, out, cap)
+    return out
+
+
+def _typed_data_values(plug, om):
+    """``(kind, count, values)`` for a plug holding TYPED data (geometry, a
+    numeric array, a matrix, a string) read through the API -- ``getAttr``
+    cannot read those -- or ``None`` when the plug holds plain numerics."""
+    try:
+        data = plug.asMObject()
+    except Exception:
+        return None
+    if data.isNull():
+        return None
+    t = data.apiType()
+    try:
+        if t == om.MFn.kMeshData:
+            pts = om.MFnMesh(data).getPoints()
+            return "mesh", len(pts), _flatten_values([(p.x, p.y, p.z) for p in pts])
+        if t == om.MFn.kNurbsCurveData:
+            pts = om.MFnNurbsCurve(data).cvPositions()
+            return "nurbsCurve", len(pts), _flatten_values([(p.x, p.y, p.z) for p in pts])
+        if t == om.MFn.kNurbsSurfaceData:
+            pts = om.MFnNurbsSurface(data).cvPositions()
+            return "nurbsSurface", len(pts), _flatten_values([(p.x, p.y, p.z) for p in pts])
+        if t == om.MFn.kDoubleArrayData:
+            a = list(om.MFnDoubleArrayData(data).array())
+            return "doubleArray", len(a), _flatten_values(a)
+        if t == om.MFn.kIntArrayData:
+            a = list(om.MFnIntArrayData(data).array())
+            return "intArray", len(a), _flatten_values(a)
+        if t in (om.MFn.kVectorArrayData, om.MFn.kPointArrayData):
+            fn = (om.MFnVectorArrayData if t == om.MFn.kVectorArrayData
+                  else om.MFnPointArrayData)
+            a = fn(data).array()
+            return "vectorArray", len(a), _flatten_values([(p.x, p.y, p.z) for p in a])
+        if t == om.MFn.kMatrixData:
+            m = om.MFnMatrixData(data).matrix()
+            return "matrix", 1, [m.getElement(i, j) for i in range(4) for j in range(4)]
+        if t == om.MFn.kStringData:
+            return "string", 1, om.MFnStringData(data).string()
+    except Exception:
+        return None
+    return None
+
+
+def _fingerprint_outputs(mc, om, node, pulls):
+    """``{attr: {"kind", "count", "values" | "text"}}`` for every output the
+    benchmark pulls -- geometry through the API, plain numerics through getAttr,
+    every element of a multi. Read ONCE after warm-up, outside the timed region.
+    A plug that cannot be read is recorded as ``opaque`` rather than skipped, so
+    two fingerprints always cover the same plugs."""
+    fp = {}
+    for attr, is_arr in pulls:
+        base = "%s.%s" % (node, attr)
+        entry = {"kind": "opaque", "count": 0, "values": []}
+        try:
+            idx = None
+            try:
+                idx = mc.getAttr(base, mi=True)
+            except Exception:
+                idx = None
+            names = (["%s[%d]" % (base, int(i)) for i in idx] if idx
+                     else [base if not is_arr else base + "[0]"])
+            kind, count, values, text = None, 0, [], []
+            for name in names:
+                typed = None
+                try:
+                    sel = om.MSelectionList()
+                    sel.add(name)
+                    typed = _typed_data_values(sel.getPlug(0), om)
+                except Exception:
+                    typed = None
+                if typed is not None:
+                    k, n, vals = typed
+                    kind = kind or k
+                    count += n
+                    if k == "string":
+                        text.append(vals)
+                    else:
+                        values.extend(vals[:max(0, _FP_CAP - len(values))])
+                    continue
+                val = mc.getAttr(name)
+                if isinstance(val, str):
+                    kind = kind or "string"
+                    count += 1
+                    text.append(val)
+                else:
+                    kind = kind or "numeric"
+                    count += 1
+                    _flatten_values(val, values)
+            entry = {"kind": kind or "opaque", "count": count,
+                     "values": values[:_FP_CAP]}
+            if text:
+                entry["text"] = text
+            if len(values) > _FP_CAP:
+                entry["truncated"] = True
+        except Exception:
+            pass
+        fp[attr] = entry
+    return fp
+
+
 def _apply_ops(node, ops):
     for op in ops:
         plug = "%s.%s" % (node, op["plug"])
@@ -312,6 +430,12 @@ def main():
     ap.add_argument("--spec", default=None)
     ap.add_argument("--bench-array", type=int, default=512)
     ap.add_argument("--bench-geo", type=int, default=40)
+    # Every pulled output's values after warm-up, as JSON, so the optimizer can
+    # refuse a candidate that computed something ELSE on the same scene.
+    ap.add_argument("--fingerprint-out", default=None)
+    # A node with nothing to perturb between ticks would be timed on cache hits
+    # (rbfWrap: "6103x"); the harness refuses unless told otherwise.
+    ap.add_argument("--allow-unperturbed", action="store_true")
     # BAKE mode. `compute` times one dgeval; for a TEXTURE node that is a single
     # texel, which is why every mPyFile template benchmarks at ~0.003 ms and every
     # optimizer round comes back "noise-floor-speedup" -- the objective cannot see
@@ -497,6 +621,15 @@ def main():
             except Exception:
                 _perturb = None
         result["perturbed"] = _perturb is not None
+        result["moved"] = list(getattr(_perturb, "moved", None) or [])
+        if args.spec and _perturb is None and not args.allow_unperturbed:
+            result["unperturbed"] = True
+            raise RuntimeError(
+                "nothing to perturb on %s between ticks -- every timed tick "
+                "would re-read identical inputs, so a candidate that caches its "
+                "last answer measures as a cache hit (rbfWrap: 2103 ms -> 0.34 "
+                "ms, '6103x'). Refusing to report a timing; pass "
+                "--allow-unperturbed to override." % args.node_type)
 
         # Everything from here to the last sample is full-rate compute, so it is
         # ONE lock window: warmup left outside it would run during another
@@ -529,6 +662,15 @@ def main():
                     "produces nothing. Supply a representative --scene, or "
                     "grow --bench-geo / --res until the output is non-empty."
                     % (args.node_type, result["scene"]))
+
+            # What the node COMPUTED on this scene, after warm-up: the
+            # optimizer holds every candidate to the baseline's values.
+            if args.fingerprint_out and ik_pull is None:
+                fp = _fingerprint_outputs(mc, om, node, pulls)
+                with open(args.fingerprint_out, "w") as fh:
+                    json.dump(fp, fh)
+                result["fingerprint"] = {"path": args.fingerprint_out,
+                                         "plugs": sorted(fp)}
 
             for _ in range(max(1, args.iters)):
                 if _perturb:

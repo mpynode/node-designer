@@ -65,6 +65,7 @@ _OUTCOME_MARK = {
     "no-change": "rejected: no change to the source",
     "compile-failed": "rejected: did not compile",
     "unmeasurable": "rejected: unmeasurable",
+    "bench-diverged": "rejected: outputs diverge from the baseline on the bench scene",
     "invalid-candidate": "rejected: invalid candidate",
     "error": "rejected: error",
 }
@@ -85,6 +86,20 @@ def _gate_sentence(gate):
                 "candidate that cannot be checked is not a candidate.")
     if not gate:
         return "Parity gate: not recorded."
+    if gate == "authored-only":
+        return (
+            "**Parity gate: authored `@maya_test` only.** The generic pointwise "
+            "compare did not run for this node, so every accepted round below "
+            "was judged by the authored test's own scene -- a behavioural check, "
+            "not a numerical one. The bench-scene fingerprint (when recorded "
+            "below) is the only value-level check these rounds had.")
+    if gate == "not exercised":
+        return ("Parity gate: not exercised -- no candidate reached the parity "
+                "check (the baseline was unmeasurable or no round compiled).")
+    if gate == "pointwise":
+        return ("Parity gate: `pointwise`. Every accepted round was compared "
+                "value-for-value against the interpreted Python; this node has "
+                "no authored `@maya_test`.")
     return (
         "Parity gate: `%s`. Every accepted round was re-checked against the "
         "interpreted Python before it was allowed to win. Where a node's "
@@ -92,6 +107,34 @@ def _gate_sentence(gate):
         "`outputGeometry`, which the scalar harness cannot read -- the authored "
         "`@maya_test` is the ONLY gate, so treat those rows as behavioural "
         "checks rather than numerical ones." % gate)
+
+
+def _bench_sentence(bench):
+    """The scene the timings were taken on. Absent from ledgers written before
+    2026-09-08, and said so: a speedup without its scene is not a measurement."""
+    if not isinstance(bench, dict) or not bench:
+        return ("Bench scene: not recorded (ledger predates the scene record; "
+                "no noise-floor gate, no per-tick perturbation check and no "
+                "output fingerprint applied to these rounds).")
+    rung = bench.get("rung") or [None, None]
+    moved = bench.get("perturbed")
+    parts = ["Bench scene: geo density %s / array length %s" % tuple(
+                 "?" if x is None else x for x in (list(rung) + [None, None])[:2])]
+    if bench.get("floor_ms") is not None:
+        parts.append("noise floor %s ms" % _fmt_num(bench["floor_ms"]))
+    if moved is not None:
+        parts.append("moved per tick: %s" % (", ".join("`%s`" % m for m in moved)
+                                              if moved else "nothing"))
+    if bench.get("fingerprint"):
+        parts.append("outputs %s" % bench["fingerprint"])
+    line = "; ".join(parts) + "."
+    if bench.get("reason"):
+        line += " %s." % bench["reason"].rstrip(".")
+    return line
+
+
+def _fmt_num(v):
+    return ("%g" % v) if isinstance(v, (int, float)) else str(v)
 
 
 def _rounds_table(ledger):
@@ -222,6 +265,8 @@ def node_report_text(out_dir, type_name, *, row=None, spec=None):
     if rounds:
         L += ["## Optimization", ""]
         L.append(_gate_sentence(rounds.get("parity_gate")))
+        L.append("")
+        L.append(_bench_sentence(rounds.get("bench")))
         L.append("")
         L.append("Baseline **%s** -> best **%s** (**%s**)."
                  % (_fmt_ms(rounds.get("baseline_ms")),

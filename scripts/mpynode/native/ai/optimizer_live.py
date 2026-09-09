@@ -28,6 +28,7 @@ stays cheap and Maya-free.
 from __future__ import annotations
 
 import contextlib
+import inspect
 import json
 import os
 import re
@@ -38,7 +39,7 @@ import time
 from typing import Optional
 
 from .optimizer import (ParityVerdict, PARITY_PASS, PARITY_FAIL, PARITY_SKIP,
-                        is_unchanged)
+                        BenchmarkDiverged, is_unchanged)
 
 
 # Where a round physically runs: build/_optscratch/<Type>. Pure lint -- the
@@ -68,6 +69,53 @@ _BENCH_FLOOR_MS = float(os.environ.get("MPYNODE_BENCH_FLOOR_MS", "15") or 15)
 # output was empty: a too-small/degenerate scene, so the ladder should GROW. A
 # bare None means the benchmark FAILED and retrying it would fail six more times.
 _EMPTY_OUTPUT = object()
+
+
+def _spec_uses_rng(spec):
+    """Does this node draw random numbers? Its outputs legitimately differ run
+    to run, so the bench-scene fingerprint must not be compared for it."""
+    try:
+        from mpynode.native.spec import spec_extractor
+        return bool(spec_extractor.spec_uses_rng(spec))
+    except Exception:
+        return False
+
+
+def fingerprints_differ(base, cand, abs_tol=1e-6, rel_tol=1e-6):
+    """Why two bench-scene fingerprints differ, or ``None`` when they agree.
+
+    A fingerprint is ``{plug: {"kind", "count", "values": [floats], "text"}}``
+    as written by ``tools/harness/benchmark_node.py --fingerprint-out``. Two
+    programs that computed the same thing agree on every plug's element count
+    and on every value to within ``abs_tol + rel_tol * |baseline|`` -- loose
+    enough for a re-associated sum or an FMA, tight enough that an early-out
+    (zeros where the baseline wrote geometry) or a dropped element is caught.
+    The first offending plug is named with its worst error so the ledger says
+    WHAT diverged, not just that something did.
+    """
+    if not isinstance(base, dict) or not isinstance(cand, dict):
+        return None
+    for plug in sorted(set(base) | set(cand)):
+        b, c = base.get(plug), cand.get(plug)
+        if b is None or c is None:
+            return "%s: present on one side only" % plug
+        if (b.get("kind"), b.get("count")) != (c.get("kind"), c.get("count")):
+            return "%s: %s[%s] vs %s[%s]" % (plug, b.get("kind"), b.get("count"),
+                                            c.get("kind"), c.get("count"))
+        if b.get("text") != c.get("text"):
+            return "%s: string output differs" % plug
+        bv, cv = b.get("values") or [], c.get("values") or []
+        if len(bv) != len(cv):
+            return "%s: %d values vs %d" % (plug, len(bv), len(cv))
+        worst, at = 0.0, -1
+        for i, (x, y) in enumerate(zip(bv, cv)):
+            err = abs(float(x) - float(y))
+            if err > abs_tol + rel_tol * abs(float(x)) and err > worst:
+                worst, at = err, i
+        if at >= 0:
+            return ("%s: maxerr %.3g at element %d (baseline %.6g, candidate "
+                    "%.6g)" % (plug, worst, at, bv[at], cv[at]))
+    return None
 
 
 def _project_root():
@@ -496,7 +544,8 @@ def make_adapters(spec: dict, out_dir: str, *,
                   agent_ws: Optional[str] = None,
                   provider: Optional[str] = None,
                   status_out=None,
-                  run_step=None) -> dict:
+                  run_step=None,
+                  bench_state_out: Optional[dict] = None) -> dict:
     """Build the five engine adapters for ``spec`` compiling into ``out_dir``.
 
     ``parity_harness`` is a standalone mayapy script that prints ``PARITY_JSON``
@@ -562,7 +611,15 @@ def make_adapters(spec: dict, out_dir: str, *,
     # fallback for providers with no tool-using headless mode, or when the agent
     # itself could not be built.
     _agent_state = {"baseline_ms": None, "geo": None, "array": None,
-                    "round_meta": {}, "history": []}
+                    "round_meta": {}, "history": [],
+                    # The baseline's outputs on the FROZEN bench scene, and the
+                    # last measurement's; compared per candidate (BenchmarkDiverged).
+                    "fingerprint": None, "last_fp": None, "fp_n": 0}
+    # What the benchmark actually did -- rung, floor, what moved per tick,
+    # whether outputs were fingerprint-checked -- for rounds.json / REPORT.md.
+    # ``bench_state_out`` lets the caller keep it past this factory.
+    _bench = bench_state_out if bench_state_out is not None else {}
+    _rng_node = _spec_uses_rng(spec)
     _status = status_out if status_out is not None else {}
     _status.setdefault("rounds", 0)
     _status.setdefault("candidates", 0)
@@ -765,6 +822,15 @@ def make_adapters(spec: dict, out_dir: str, *,
     # returned no measurement, so the optimizer kept the original -- silently.
     def _measure(bundle, geo, arr):
         args = [bundle, ntype, "--iters", bench_iters, "--res", bench_res]
+        # Every pulled output, dumped after warm-up, so a candidate that
+        # computes something ELSE on this scene is caught (see _benchmark).
+        _agent_state["fp_n"] += 1
+        fp_path = os.path.join(out_dir, "_bench_fp_%d.json" % _agent_state["fp_n"])
+        try:
+            os.remove(fp_path)
+        except OSError:
+            pass
+        args += ["--fingerprint-out", fp_path]
         if spec_path:
             args += ["--spec", spec_path,
                      "--bench-array", arr, "--bench-geo", geo]
@@ -792,7 +858,25 @@ def make_adapters(spec: dict, out_dir: str, *,
             # benchmark: the ladder should grow rather than abandon the node.
             if isinstance(data, dict) and data.get("empty_output"):
                 return _EMPTY_OUTPUT
+            # Nothing to move between ticks: the harness refused rather than
+            # time a cache hit. Not a size problem, so the ladder must not grow.
+            if isinstance(data, dict) and data.get("unperturbed"):
+                _bench["reason"] = ("nothing to perturb between ticks -- a "
+                                    "timing would measure a cache hit")
+                _log("[%s] %s" % (ntype, _bench["reason"]))
             return None
+        _bench["perturbed"] = list(data.get("moved") or [])
+        _agent_state["last_fp"] = None
+        try:
+            with open(fp_path, encoding="utf-8") as fh:
+                _agent_state["last_fp"] = json.load(fh)
+        except (OSError, ValueError):
+            pass
+        finally:
+            try:
+                os.remove(fp_path)
+            except OSError:
+                pass
         return float(data["median_ms"])
 
     def _calibrate(bundle):
@@ -820,8 +904,20 @@ def make_adapters(spec: dict, out_dir: str, *,
                 continue
             if ms is None:
                 return None, geo, arr
-            if ms >= _BENCH_FLOOR_MS or (geo, arr) == _BENCH_LADDER[-1]:
+            if ms >= _BENCH_FLOOR_MS:
                 return ms, geo, arr
+            if (geo, arr) == _BENCH_LADDER[-1]:
+                # Still under the floor at the LARGEST scene. Run-to-run noise
+                # (~8% at 0.4 ms, anything at 2 us) would decide every round,
+                # and it did: 12 of 28 accepted nodes were judged on baselines
+                # of 0.002-4.4 ms, one at "95x" (0.209 -> 0.002 ms). Refuse.
+                _bench["reason"] = (
+                    "baseline %.3f ms is below the %.0f ms noise floor even at "
+                    "the largest bench scene (geo=%d array=%d); nothing this "
+                    "small can be optimized against measurably"
+                    % (ms, _BENCH_FLOOR_MS, geo, arr))
+                _log("[%s] %s" % (ntype, _bench["reason"]))
+                return None, geo, arr
             _log("[%s] bench scene geo=%d array=%d -> %.3f ms; too small to "
                  "optimize against, growing" % (ntype, geo, arr, ms))
         return None, bench_geo, bench_array
@@ -830,15 +926,37 @@ def make_adapters(spec: dict, out_dir: str, *,
         if _agent_state["geo"] is None:
             ms, geo, arr = _calibrate(bundle)
             _agent_state["geo"], _agent_state["array"] = geo, arr
+            _bench["rung"] = [geo, arr]
+            _bench["floor_ms"] = _BENCH_FLOOR_MS
             if ms is not None:
                 _log("[%s] bench scene geo=%d array=%d -> %.3f ms baseline"
                      % (ntype, geo, arr, ms))
                 _agent_state["baseline_ms"] = ms
+                # The baseline's outputs on the frozen scene: every candidate
+                # is held to them below.
+                _agent_state["fingerprint"] = _agent_state["last_fp"]
+                if _rng_node:
+                    _bench["fingerprint"] = "skipped (node draws random numbers)"
+                elif _agent_state["fingerprint"] is None:
+                    _bench["fingerprint"] = "unavailable (harness wrote none)"
+                else:
+                    _bench["fingerprint"] = "checked (%d plug(s))" % len(
+                        _agent_state["fingerprint"])
             return ms
         # Past calibration the scene is FROZEN, so an empty output here is not
         # something growing can fix -- it is simply unmeasurable.
         ms = _measure(bundle, _agent_state["geo"], _agent_state["array"])
-        return None if ms is _EMPTY_OUTPUT else ms
+        if ms is _EMPTY_OUTPUT:
+            return None
+        # Same scene, same inputs, same perturbation: the outputs must agree
+        # with the baseline's or the timing compares two different programs.
+        base_fp, cand_fp = _agent_state["fingerprint"], _agent_state["last_fp"]
+        if (ms is not None and not _rng_node and base_fp is not None
+                and cand_fp is not None):
+            why = fingerprints_differ(base_fp, cand_fp)
+            if why:
+                raise BenchmarkDiverged(why)
+        return ms
 
     ad = {
         # Every adapter that WAITS on something cancellable, wrapped so a Cancel
@@ -863,7 +981,29 @@ def make_adapters(spec: dict, out_dir: str, *,
     return ad
 
 
-def parity_fn_from_verify(verify_fn, type_name, spec):
+def parity_gate_label(res):
+    """Name the gate that judged a verify result: ``authored+pointwise`` when
+    both ran, ``authored-only`` when the generic pointwise compare skipped and
+    the authored ``@maya_test`` became the verdict, ``pointwise`` when only the
+    generic compare ran, ``none`` when neither did. Every ledger used to say
+    ``authored+pointwise``; for 34 of 37 nodes pointwise had never run."""
+    if not isinstance(res, dict):
+        return "none"
+    authored = bool((res.get("authored_test") or {}).get("ran"))
+    generic = res.get("generic_ran")
+    if generic is None:
+        # A verify that never merged an authored test: `ran` IS the generic run.
+        generic = bool(res.get("ran")) and not authored
+    if generic and authored:
+        return "authored+pointwise"
+    if authored:
+        return "authored-only"
+    if generic:
+        return "pointwise"
+    return "none"
+
+
+def parity_fn_from_verify(verify_fn, type_name, spec, gate_sink=None):
     """Adapt the pipeline's own parity verify into an engine ``parity_fn``.
 
     ``verify_fn(bundle, rows) -> {type_name: {ran, pass, maxerr, reason}}`` is the
@@ -877,6 +1017,11 @@ def parity_fn_from_verify(verify_fn, type_name, spec):
         rows = [{"type_name": type_name, "spec": spec}]
         res = verify_fn(bundle, rows) or {}
         r = res.get(type_name, {})
+        if gate_sink is not None:
+            try:
+                gate_sink(parity_gate_label(r))
+            except Exception:
+                pass
         if r.get("ran") and r.get("pass") is True:
             return ParityVerdict(PARITY_PASS, maxerr=r.get("maxerr"))
         if r.get("ran") and r.get("pass") is False:
@@ -1115,7 +1260,8 @@ def make_version_writer(out_dir, type_name, keep_bundles=False):
     return _write
 
 
-def write_rounds_json(out_dir, type_name, result, *, parity_gate=""):
+def write_rounds_json(out_dir, type_name, result, *, parity_gate="",
+                      bench=None):
     """The machine-readable ledger behind the node's REPORT.md.
 
     ``parity_gate`` records WHICH gate judged these rounds. That single field is
@@ -1144,6 +1290,9 @@ def write_rounds_json(out_dir, type_name, result, *, parity_gate=""):
         "rounds": getattr(result, "rounds", 0),
         "reason": getattr(result, "reason", ""),
         "parity_gate": parity_gate,
+        # rung / floor_ms / perturbed / fingerprint / reason -- what the timing
+        # below was taken on. A speedup without its scene is not a measurement.
+        "bench": dict(bench or {}),
         "created": time.time(),
         "ledger": rows,
     }
@@ -1268,13 +1417,20 @@ def optimize_surviving(nodes, out_dir, *, maya=None, verify_fn=None,
             scratch = os.path.join(bundler.build_dir_for(out_dir),
                                    OPT_SCRATCH_DIRNAME, type_name)
             os.makedirs(scratch, exist_ok=True)
-            pf = (parity_fn_from_verify(verify_fn, type_name, spec)
+            bench_state = {}
+            pf = (parity_fn_from_verify(
+                      verify_fn, type_name, spec,
+                      gate_sink=lambda g: bench_state.__setitem__("parity_gate", g))
                   if verify_fn is not None else None)
+            # A test-injected factory may predate bench_state_out.
+            extra = ({"bench_state_out": bench_state}
+                     if "bench_state_out" in inspect.signature(make).parameters
+                     else {})
             ad = make(spec, scratch, maya=maya, node_type=type_name,
                       out_plug=out_plug, parity_fn=pf, complete_fn=complete_fn,
                       run_step=run_step, cancel_event=cancel_event,
                       log_cb=compile_log_cb, bench_res=bench_res,
-                      status_out=node_status, provider=provider)
+                      status_out=node_status, provider=provider, **extra)
             # Keep one .cpp per round under build/stages/<Type>/3_optimized/,
             # including the rejects. Durable, unlike the scratch dir this runs in.
             version_cb = make_version_writer(out_dir, type_name,
@@ -1301,9 +1457,14 @@ def optimize_surviving(nodes, out_dir, *, maya=None, verify_fn=None,
                 res = run(baseline, rounds=n_rounds,
                           min_speedup=min_speedup, round_cb=round_cb,
                           label=type_name, log_cb=log_cb, **ad)
-            write_rounds_json(out_dir, type_name, res,
-                              parity_gate=("authored+pointwise" if verify_fn
-                                           else "none"))
+            # The gate is whatever the verify ACTUALLY ran for this node, as
+            # reported through gate_sink; "not exercised" when no candidate
+            # reached the parity check (baseline unmeasurable, every round
+            # failed to compile, ...).
+            gate = bench_state.pop("parity_gate", None) or (
+                "not exercised" if verify_fn else "none")
+            write_rounds_json(out_dir, type_name, res, parity_gate=gate,
+                              bench=bench_state)
             if res.accepted:
                 # Back up the deterministic original BEFORE overwriting, so the
                 # controller can restore it if the accepted candidate later fails

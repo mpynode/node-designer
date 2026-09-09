@@ -183,12 +183,14 @@ class TestParityFn(unittest.TestCase):
 
 class TestBenchmarkFn(unittest.TestCase):
     def test_parses_median_ms(self):
+        # Above the 15 ms noise floor: a baseline under it is unmeasurable now
+        # (see test_bench_gate.TestNoiseFloorGate), by design.
         def runner(script, args, prefix, timeout):
-            return ({"ok": True, "median_ms": 12.5}, True, "")
+            return ({"ok": True, "median_ms": 42.5}, True, "")
 
         with tempfile.TemporaryDirectory() as tmp:
             ad = _adapters(tmp, run_step=runner)
-            self.assertAlmostEqual(ad["benchmark_fn"]("/b"), 12.5)
+            self.assertAlmostEqual(ad["benchmark_fn"]("/b"), 42.5)
 
     def test_none_when_unmeasurable(self):
         def runner(script, args, prefix, timeout):

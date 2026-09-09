@@ -31,6 +31,19 @@ PARITY_FAIL = "fail"
 PARITY_SKIP = "skip"
 
 
+class BenchmarkDiverged(RuntimeError):
+    """Raised by a ``benchmark_fn`` when the candidate's OUTPUTS on the bench
+    scene differ from the baseline's on that same scene.
+
+    Speed is only comparable between two programs that computed the same thing.
+    A candidate that early-outs where the baseline grinds (an inconsistent
+    random scene the authored ``@maya_test`` never sees) is not faster, it is
+    doing less -- spline "3698x" and comboCorrectives "258x" were that. The
+    engine records it as its own outcome (``bench-diverged``) rather than as
+    "unmeasurable", because the difference matters to a reader.
+    """
+
+
 @dataclass
 class ParityVerdict:
     status: str
@@ -213,8 +226,10 @@ def optimize_cpp(baseline_cpp: str, *,
                                                  None]] = None) -> OptimizeResult:
     """Optimize ``baseline_cpp`` under the parity+speed gate. See module docstring.
 
-    Accepts a candidate iff it compiles, parity is PASS, and it is faster than the
-    current best by at least ``min_speedup`` (candidate_ms < best_ms / min_speedup).
+    Accepts a candidate iff it compiles, parity is PASS, its outputs on the bench
+    scene match the baseline's (``benchmark_fn`` raises :class:`BenchmarkDiverged`
+    otherwise), and it is faster than the current best by at least
+    ``min_speedup`` (candidate_ms < best_ms / min_speedup).
     Each round proposes FROM the current best, so accepted rounds compound. On any
     failure the ORIGINAL ``baseline_cpp`` is returned unchanged (honest reject).
 
@@ -341,7 +356,14 @@ def optimize_cpp(baseline_cpp: str, *,
                        compiled=True, parity=verdict.status, fix_rounds=fx,
                        bundle=bundle)
                 continue
-            ms = benchmark_fn(bundle)
+            try:
+                ms = benchmark_fn(bundle)
+            except BenchmarkDiverged as exc:
+                _log(log_cb, "%sround %d: outputs diverge from the baseline on "
+                     "the bench scene -- %s" % (tag, i, exc))
+                _round("bench-diverged", note=str(exc), compiled=True,
+                       parity=PARITY_PASS, fix_rounds=fx, bundle=bundle)
+                continue
             if ms is None:
                 _log(log_cb, "%sround %d: unmeasurable" % (tag, i))
                 _round("unmeasurable", compiled=True, parity=PARITY_PASS,

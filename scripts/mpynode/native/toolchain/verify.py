@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import math
 import os
+import re
 import shutil
 import time
 
@@ -183,6 +184,10 @@ def _merge_authored_test(res, authored):
     ``reason`` so the compile report can surface it."""
     res = dict(res)
     res["authored_test"] = authored
+    # Whether the GENERIC pointwise compare ran, kept apart from the merged
+    # `ran` below -- that one becomes True on the authored test alone, and a
+    # reader (the optimizer's ledger, the report) has to know which it was.
+    res["generic_ran"] = bool(res.get("ran"))
     if authored.get("ran"):
         if res.get("ran"):
             res["pass"] = bool(res.get("pass")) and bool(authored["passed"])
@@ -942,8 +947,116 @@ def bench_make_node(cmds, spec, type_name, density=40):
     return cmds.createNode(type_name)
 
 
+_STATIC_INPUT_TOKENS = frozenset((
+    "rest", "bind", "base", "orig", "original", "ref", "reference", "initial",
+    "init", "bound"))
+
+
+def _name_tokens(name):
+    """camelCase / snake_case pieces of an attribute name, lower-cased."""
+    return [t.lower() for t in
+            re.findall(r"[A-Z]?[a-z]+|[A-Z]+(?![a-z])|\d+", name or "")]
+
+
+def _is_static_input_name(name):
+    """Does this input's NAME say it holds rig-time state -- a rest cage, bind
+    matrices, an original shape -- rather than something that animates?
+
+    ``restCage``, ``bindMatrices``, ``base_mesh``, ``origPoints`` are static;
+    ``deformCage``, ``weight``, ``restore`` are not. Token match, so ``rest``
+    inside ``restore`` does not count. A static input is left alone between
+    benchmark ticks: caching work keyed on it (an inverse of the rest system) is
+    a genuine per-frame win in a rig and stays rewarded; a memo keyed on an
+    ANIMATED input is a cache hit and is not.
+    """
+    return any(t in _STATIC_INPUT_TOKENS for t in _name_tokens(name))
+
+
+def _numeric_mover(cmds, tgt, t):
+    """``fn(k)`` that writes a k-dependent value into numeric plug ``tgt``, or
+    ``None`` when the plug is missing, driven from upstream, or does not move."""
+    try:
+        if not cmds.objExists(tgt):
+            return None
+        if cmds.listConnections(tgt, s=True, d=False):
+            return None  # driven from upstream; writing it would fail
+        cur = cmds.getAttr(tgt)
+    except Exception:
+        return None
+
+    def fn(k, _tgt=tgt, _t=t):
+        if _t == "matrix":
+            # identity with a drifting translation: what an animated target does
+            cmds.setAttr(_tgt, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0,
+                         1e-3 * k, 0, 0, 1, type="matrix")
+        elif _t == "float2":
+            cmds.setAttr(_tgt, 1e-3 * k, 2e-3, type="float2")
+        elif _t == "time":
+            cmds.setAttr(_tgt, float(k))   # one frame per tick, like playback
+        elif _t in ("double3", "float3", "vector", "point", "color", "euler"):
+            cmds.setAttr(_tgt, 1e-3 * k, 2e-3, 3e-3)
+        elif _t == "bool":
+            cmds.setAttr(_tgt, k % 2)
+        elif _t in ("int", "long", "short"):
+            cmds.setAttr(_tgt, k)
+        else:
+            cmds.setAttr(_tgt, 1e-3 * k)
+
+    # PROVE the move. A locked or range-clamped plug sails through setAttr and
+    # would be timed as exactly the cache hit this exists to prevent (measured:
+    # 3 setAttr attempts, 0 values changed).
+    try:
+        fn(1)
+        if cmds.getAttr(tgt) == cur:
+            return None
+    except Exception:
+        return None
+    return fn
+
+
+def _geo_mover(cmds, plug, geo_type):
+    """``(fn, label)`` moving ONE vertex/CV of the shape wired into geometry
+    input ``plug`` by 1e-3 per tick, or ``(None, None)``.
+
+    The shape's output plug is re-evaluated inside ``fn`` -- OUTSIDE the timed
+    region -- so the node's tick pays only for its own compute, not for the
+    upstream mesh rebuild the move triggers.
+    """
+    comp_of = {"mesh": ".vtx[0]", "nurbsCurve": ".cv[0]",
+               "nurbsSurface": ".cv[0][0]"}
+    try:
+        if not cmds.objExists(plug):
+            return None, None
+        srcs = cmds.listConnections(plug, s=True, d=False, p=True) or []
+    except Exception:
+        return None, None
+    if not srcs:
+        return None, None
+    src_plug = srcs[0]
+    shape = src_plug.split(".")[0]
+    comp = shape + comp_of.get(geo_type, ".vtx[0]")
+
+    def fn(k, _comp=comp, _src=src_plug):
+        cmds.move(1e-3, 0.0, 0.0, _comp, r=True)
+        try:
+            cmds.dgeval(_src)
+        except Exception:
+            pass
+
+    try:
+        before = list(cmds.pointPosition(comp, w=True))
+        fn(1)
+        after = list(cmds.pointPosition(comp, w=True))
+    except Exception:
+        return None, None
+    if after == before:
+        return None, None
+    return fn, comp
+
+
 def bench_perturb_fn(cmds, node, spec):
-    """A cheap callable that CHANGES one input value, or ``None``.
+    """A cheap callable that moves the node's ANIMATED inputs between benchmark
+    ticks, or ``None`` when there is nothing to move.
 
     ``dgdirty`` marks plugs dirty but leaves their VALUES identical, so a compute
     that memoizes on input content ("same points and same queries as last call ->
@@ -954,72 +1067,62 @@ def bench_perturb_fn(cmds, node, spec):
     only calls compute() when something genuinely changed.
 
     Measured on the optimized kDTree: 0.169 ms with static inputs vs 1.785 ms
-    with one query point moved -- a 10.6x reporting error.
+    with one query point moved -- a 10.6x reporting error. Then measured again,
+    2026-09-08, on rbfWrap: this function used to move ONE numeric scalar and
+    rbfWrap has only mesh inputs, so nothing moved at all and a candidate that
+    cached the whole solve was accepted at 2103 ms -> 0.34 ms ("6103x").
 
-    So move ONE scalar element between ticks. Deliberately the cheapest possible
-    change: it must invalidate a content cache without altering the size of the
-    workload, and the caller must run it OUTSIDE the timed region. Geometry
-    inputs are never chosen -- rebuilding a 40k-vert shape per tick would cost
-    more than the node does.
+    So now it moves one element of EVERY free numeric input and one vertex/CV
+    of EVERY geometry input (plus a deformer's native input mesh), EXCEPT inputs
+    whose name says rest/bind/base/orig/ref/initial -- see
+    :func:`_is_static_input_name`. That mirrors a rig: the rest cage is static,
+    everything else animates. The callable carries ``.moved``, one label per
+    thing it moves, for the ledger. Every move is proven by reading the value
+    back; a plug that will not move is dropped rather than trusted.
     """
+    # Everything a rig animates. `matrix` (aim targets, parent spaces), `time`
+    # (simulations) and `float2` (a texture's uv) were missing at first, and
+    # aimTransform -- three matrix inputs, nothing else -- was refused as
+    # unperturbable on 2026-09-08.
     numeric = ("double", "float", "int", "long", "short", "bool", "angle",
-               "double3", "float3", "vector", "point", "color", "euler")
-    cands = []
+               "double3", "float3", "vector", "point", "color", "euler",
+               "matrix", "float2", "time")
+    moves = []
     for attr, meta in sorted((spec.get("inputs") or {}).items()):
         if not isinstance(meta, dict):
             continue
         t = meta.get("type")
-        if t not in numeric:
+        is_arr = bool(meta.get("is_array"))
+        if _is_static_input_name(attr):
             continue
-        # An array element is the cheapest thing to move and exists on exactly
-        # the nodes whose arrays make the workload big.
-        cands.append((attr, t, bool(meta.get("is_array"))))
-    cands.sort(key=lambda c: (not c[2],))  # arrays first
+        plug = ("%s.%s[0]" % (node, attr)) if is_arr else ("%s.%s" % (node, attr))
+        if t in numeric:
+            fn = _numeric_mover(cmds, plug, t)
+            if fn is not None:
+                moves.append(("%s%s (%s)" % (attr, "[0]" if is_arr else "", t), fn))
+        elif t in _GEO_IN_TYPES:
+            fn, comp = _geo_mover(cmds, plug, t)
+            if fn is not None:
+                moves.append(("%s <- %s" % (attr, comp), fn))
+    # A deformer's geometry is not a declared input; it animates in every rig.
+    fn, comp = _geo_mover(cmds, "%s.input[0].inputGeometry" % node, "mesh")
+    if fn is not None:
+        moves.append(("input[0].inputGeometry <- %s" % comp, fn))
+    if not moves:
+        return None
 
-    for attr, t, is_arr in cands:
-        tgt = ("%s.%s[0]" % (node, attr)) if is_arr else ("%s.%s" % (node, attr))
-        try:
-            if not cmds.objExists(tgt):
-                continue
-            if cmds.listConnections(tgt, s=True, d=False):
-                continue  # driven from upstream; writing it would fail
-            cur = cmds.getAttr(tgt)
-        except Exception:
-            continue
+    state = {"i": 1}  # the proofs above already applied k=1
 
-        state = {"i": 0}
-
-        def _perturb(_tgt=tgt, _t=t, _state=state):
-            _state["i"] += 1
-            k = _state["i"]
+    def _perturb():
+        state["i"] += 1
+        for _label, fn in moves:
             try:
-                if _t in ("double3", "float3", "vector", "point", "color",
-                          "euler"):
-                    cmds.setAttr(_tgt, 1e-3 * k, 2e-3, 3e-3)
-                elif _t == "bool":
-                    cmds.setAttr(_tgt, k % 2)
-                elif _t in ("int", "long", "short"):
-                    cmds.setAttr(_tgt, k)
-                else:
-                    cmds.setAttr(_tgt, 1e-3 * k)
+                fn(state["i"])
             except Exception:
                 pass
 
-        # PROVE the perturb actually MOVES the value. _perturb swallows its own
-        # setAttr error, so calling it can never raise -- wrapping it in try/except
-        # tested nothing, and a locked or otherwise unwritable plug sailed through
-        # to be timed as exactly the cache hit this function exists to prevent
-        # (measured: 3 setAttr attempts, 0 values changed). Does NOT cover a
-        # range-clamped plug that stops moving on a LATER tick.
-        try:
-            _perturb()
-            if cmds.getAttr(tgt) == cur:
-                continue
-        except Exception:
-            continue
-        return _perturb
-    return None
-
+    _perturb.moved = [label for label, _fn in moves]
+    return _perturb
 
 def bench_ik_rig(cmds, solver_node, n_joints=4, spacing=3.0):
     """Give an mPyIkSolver something to solve, and return a pull callable.

@@ -74,6 +74,17 @@ python    tools/harness/optimize_node.py --source build/source/metaClay.cpp \
 template-specific parity checks an optimizer run can be pointed at with
 `--parity`, for nodes the generic verify can only mark INCONCLUSIVE.
 
+Three honesty rules, all measured into existence on 2026-09-08. The harness
+refuses a node with nothing to perturb between ticks (every tick would re-time
+a cache hit; `--allow-unperturbed` overrides), and it moves one element of
+every animated numeric input plus one vertex of every animated geometry input
+per tick -- inputs named rest/bind/base/orig/ref/initial stay put, so caching
+keyed on a rest cage is still rewarded. Through the optimizer, a baseline
+still below `MPYNODE_BENCH_FLOOR_MS` (15 ms) at the largest scene rung is
+unmeasurable, not a speed target. `--fingerprint-out FILE` dumps every pulled
+output after warm-up so the optimizer can reject a candidate whose outputs
+differ from the baseline's on the same scene (ledger outcome `bench-diverged`).
+
 ## VP2 probes
 
 Headless viewport rendering is fragile, so these escalate from "can this mayapy
