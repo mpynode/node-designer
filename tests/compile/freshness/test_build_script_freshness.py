@@ -42,9 +42,9 @@ _MIN_SCRIPTS = 110
 # The one script no manifest row accounts for: `meshRegions/` is the scratch dir
 # of a node that was renamed to `meshRegionLocator`, and the plugin links only
 # the latter (see the tree's own build.sh).
-_KNOWN_ORPHANS = [
-    "templates/MPyLocator/Mesh Regions/build/meshRegions/build.sh",
-]
+# Empty since 2026-09-09: the meshRegions -> meshRegionLocator rename left one
+# scratch dir behind; it is gone, and a new orphan fails here by name.
+_KNOWN_ORPHANS = []
 
 _RESULT = None
 
