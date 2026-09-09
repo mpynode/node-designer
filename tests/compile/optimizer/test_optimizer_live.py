@@ -357,6 +357,8 @@ class TestRoundsOverride(unittest.TestCase):
     def test_default_is_still_two(self):
         os.environ.pop("MPYNODE_OPT_ROUNDS", None)
         self.assertEqual(optimizer_live._optimize_rounds(2), 2)
+        # The shipped default is the adaptive loop's CAP, 6 (was a fixed 2).
+        self.assertEqual(optimizer_live._optimize_rounds(), 6)
 
     def test_env_overrides(self):
         os.environ["MPYNODE_OPT_ROUNDS"] = "1"

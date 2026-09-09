@@ -171,7 +171,7 @@ class TestOptimizeLedger(unittest.TestCase):
             compile_fn=_compile_ok,
             parity_fn=_parity(PARITY_FAIL),   # rejected -> honest reject
             benchmark_fn=_bench({"BASE": 100.0, "CAND": 10.0}),
-            rounds=3,
+            rounds=3, min_rounds=3,            # fixed count: every round runs
         )
         self.assertFalse(res.accepted)
         self.assertIs(res.best_cpp, "BASE")               # returns the ORIGINAL
@@ -328,20 +328,189 @@ class TestNoChangeCandidate(unittest.TestCase):
         TASK.md tells the agent to revert any edit that did not measure faster,
         so one that tries five things and keeps none returns the file unchanged
         -- an honest round. Aborting there would abandon exactly the hard nodes
-        that are worth another attempt."""
+        that are worth another attempt. Within ``min_rounds`` the adaptive loop
+        therefore never stops on it (here the whole run is guaranteed)."""
         step = {"i": 0}
 
         def optimize_fn(cpp):
             step["i"] += 1
             return cpp if step["i"] < 3 else "FASTER"
 
-        res = self._run(optimize_fn, rounds=3,
+        res = self._run(optimize_fn, rounds=3, min_rounds=3,
                         benchmark_fn=_bench_seq(100.0, 25.0))
 
         self.assertTrue(res.accepted)
         self.assertEqual(res.best_cpp, "FASTER")
         self.assertEqual([r.outcome for r in res.ledger],
                          ["baseline", "no-change", "no-change", "accept"])
+
+
+class TestAdaptiveRounds(unittest.TestCase):
+    """``rounds`` is a MAXIMUM. The loop always runs ``min_rounds``, then goes
+    on only while the last round was accepted with a gain of at least
+    ``continue_gain``; the first reject past the floor ends it. Measured need:
+    20 of 29 shipped nodes accepted both of a fixed 2 rounds (the second worth a
+    median 1.58x), so the count -- not the node -- was ending the work."""
+
+    def _run(self, plan, *, ms, **over):
+        """``plan`` maps the incumbent source to the next candidate; ``ms`` maps
+        a source to its measured time (a parity-fail candidate never reaches
+        the benchmark)."""
+        kw = dict(
+            optimize_fn=lambda cpp: plan[cpp],
+            fix_fn=lambda cpp, errs: cpp,
+            compile_fn=_compile_ok,
+            parity_fn=lambda b: ParityVerdict(
+                PARITY_FAIL if b[2:].startswith("BAD") else PARITY_PASS),
+            benchmark_fn=_bench(ms),
+            rounds=6,
+        )
+        kw.update(over)
+        return optimize_cpp("BASE", **kw)
+
+    def test_stops_after_the_first_reject_past_min_rounds(self):
+        res = self._run({"BASE": "C1", "C1": "BAD2", "BAD2": "C3"},
+                        ms={"BASE": 100.0, "C1": 50.0, "C3": 10.0})
+        self.assertEqual([r.outcome for r in res.ledger],
+                         ["baseline", "accept", "parity-fail"])
+        self.assertEqual(res.rounds, 2)               # rounds RUN, not the cap
+        self.assertEqual(res.max_rounds, 6)
+        self.assertEqual(res.best_cpp, "C1")
+        self.assertIn("round 2 parity-fail", res.stop_reason)
+
+    def test_min_rounds_always_run_even_after_a_reject(self):
+        # Round 1 is a no-change (rejected); the floor of 2 still grants round 2,
+        # which wins, and the loop then continues on merit.
+        plan = {"BASE": "BASE", "C2": "C3", "C3": "C4"}
+        step = {"n": 0}
+
+        def optimize_fn(cpp):
+            step["n"] += 1
+            return "C2" if step["n"] == 2 else plan[cpp]
+
+        res = self._run({}, ms={"BASE": 100.0, "C2": 50.0, "C3": 25.0,
+                                "C4": 24.0},
+                        optimize_fn=optimize_fn)
+        self.assertEqual([r.outcome for r in res.ledger],
+                         ["baseline", "no-change", "accept", "accept",
+                          "not-faster"])
+        self.assertEqual(res.rounds, 4)
+        self.assertIn("round 4 not-faster", res.stop_reason)
+
+    def test_continues_while_gains_hold_and_stops_on_a_small_one(self):
+        res = self._run({"BASE": "C1", "C1": "C2", "C2": "C3", "C3": "C4"},
+                        ms={"BASE": 100.0, "C1": 50.0, "C2": 25.0, "C3": 23.0,
+                            "C4": 1.0})
+        # 100 -> 50 (2x) -> 25 (2x) -> 23 (1.09x: accepted, but below 1.15x, so
+        # no round 4 even though C4 would have been 23x).
+        self.assertEqual([r.outcome for r in res.ledger],
+                         ["baseline", "accept", "accept", "accept"])
+        self.assertEqual(res.best_cpp, "C3")
+        self.assertAlmostEqual(res.best_ms, 23.0)
+        self.assertEqual(res.rounds, 3)
+        self.assertIn("1.09x", res.stop_reason)
+        self.assertIn("1.15x", res.stop_reason)
+
+    def test_the_cap_still_holds(self):
+        res = self._run({"BASE": "C1", "C1": "C2", "C2": "C3", "C3": "C4"},
+                        ms={"BASE": 100.0, "C1": 50.0, "C2": 25.0, "C3": 12.0,
+                            "C4": 6.0}, rounds=3)
+        self.assertEqual(res.rounds, 3)
+        self.assertEqual(res.best_cpp, "C3")
+        self.assertEqual(res.stop_reason, "max rounds (3) reached")
+
+    def test_zero_rounds_measures_the_baseline_only(self):
+        res = self._run({"BASE": "C1"}, ms={"BASE": 100.0, "C1": 1.0}, rounds=0)
+        self.assertFalse(res.accepted)
+        self.assertEqual(res.rounds, 0)
+        self.assertEqual(res.max_rounds, 0)
+        self.assertEqual(len(res.ledger), 1)
+
+    def test_a_fixed_count_is_still_available(self):
+        # min_rounds == rounds reproduces the old behaviour exactly: every round
+        # runs whatever happened before it.
+        res = self._run({"BASE": "BAD1", "BAD1": "BAD2", "BAD2": "BAD3"},
+                        ms={"BASE": 100.0}, rounds=3, min_rounds=3)
+        self.assertEqual(len(res.ledger), 4)
+        self.assertEqual(res.rounds, 3)
+
+    def test_stop_reason_is_recorded_when_the_baseline_fails(self):
+        res = optimize_cpp(
+            "BASE", optimize_fn=lambda cpp: "C", fix_fn=lambda c, e: c,
+            compile_fn=lambda cpp: (False, "boom", ""),
+            parity_fn=_parity(PARITY_PASS), benchmark_fn=lambda b: 1.0,
+            rounds=6)
+        self.assertEqual(res.max_rounds, 6)
+        self.assertIn("did not compile", res.stop_reason)
+
+
+class TestSubResolutionConfirmation(unittest.TestCase):
+    """Below ``resolution_ms`` the incumbent sits inside the harness's own
+    jitter (~8% at 0.4 ms): ``min_speedup`` alone would accept noise. There a
+    candidate must clear ``confirm_gain`` on TWO independent measurements, and
+    the slower of the two is what the ledger keeps."""
+
+    def _run(self, seq, **over):
+        calls = {"n": 0}
+
+        def benchmark_fn(bundle):
+            calls["n"] += 1
+            return seq[calls["n"] - 1]
+
+        kw = dict(
+            optimize_fn=lambda cpp: "CAND",
+            fix_fn=lambda cpp, errs: cpp,
+            compile_fn=_compile_ok,
+            parity_fn=_parity(PARITY_PASS),
+            benchmark_fn=benchmark_fn,
+            rounds=1,
+        )
+        kw.update(over)
+        return optimize_cpp("BASE", **kw), calls["n"]
+
+    def test_a_gain_inside_the_noise_band_is_not_faster(self):
+        # 1.0 -> 0.90 ms is 1.11x: past min_speedup, short of confirm_gain.
+        res, n = self._run([1.0, 0.90])
+        self.assertFalse(res.accepted)
+        self.assertEqual(res.ledger[-1].outcome, "not-faster")
+        self.assertIn("required", res.ledger[-1].note)
+        self.assertEqual(n, 2)                          # no second measurement
+
+    def test_an_unconfirmed_gain_is_not_faster(self):
+        # 0.80 clears 1.15x; the re-measure (0.95) does not.
+        res, n = self._run([1.0, 0.80, 0.95])
+        self.assertFalse(res.accepted)
+        self.assertEqual(res.ledger[-1].outcome, "not-faster")
+        self.assertIn("did not confirm", res.ledger[-1].note)
+        self.assertAlmostEqual(res.ledger[-1].ms, 0.95)
+        self.assertEqual(n, 3)
+
+    def test_a_confirmed_gain_is_accepted_at_the_slower_of_the_two(self):
+        res, n = self._run([1.0, 0.80, 0.82])
+        self.assertTrue(res.accepted)
+        self.assertEqual(res.ledger[-1].outcome, "accept")
+        self.assertAlmostEqual(res.ledger[-1].ms, 0.82)
+        self.assertAlmostEqual(res.best_ms, 0.82)
+        self.assertIn("confirmed twice", res.ledger[-1].note)
+        self.assertEqual(n, 3)
+
+    def test_an_unmeasurable_re_measure_is_not_faster(self):
+        res, n = self._run([1.0, 0.80, None])
+        self.assertFalse(res.accepted)
+        self.assertEqual(res.ledger[-1].outcome, "not-faster")
+        self.assertIn("unmeasurable", res.ledger[-1].note)
+
+    def test_above_the_resolution_floor_one_measurement_suffices(self):
+        # 100 -> 94 ms is 1.064x: past min_speedup, and no confirmation asked.
+        res, n = self._run([100.0, 94.0])
+        self.assertTrue(res.accepted)
+        self.assertEqual(res.ledger[-1].note, "")
+        self.assertEqual(n, 2)
+
+    def test_the_floor_is_a_parameter(self):
+        res, n = self._run([1.0, 0.90], resolution_ms=0.5)
+        self.assertTrue(res.accepted)                   # 1.0 ms is "big" here
+        self.assertEqual(n, 2)
 
 
 if __name__ == "__main__":

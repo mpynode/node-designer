@@ -623,7 +623,7 @@ class TestRoundsSelection(unittest.TestCase):
     def test_a_junk_rounds_value_falls_back_to_the_engine_default(self):
         d = _Dlg()
         d._rounds_combo.setCurrentText("lots")
-        self.assertEqual(d._opts()["optimize_rounds"], 2)
+        self.assertEqual(d._opts()["optimize_rounds"], 6)   # the adaptive cap
 
 
 class TestDialogWiring(unittest.TestCase):

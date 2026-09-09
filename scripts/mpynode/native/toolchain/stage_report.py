@@ -231,6 +231,18 @@ def _predicted_vs_measured(ledger):
     return out
 
 
+def _stop_phrase(rounds):
+    """How the adaptive loop ended, when the ledger says (written from
+    2026-09-09); '' for ledgers from the fixed-count era, which recorded none."""
+    why = (rounds or {}).get("stop_reason")
+    if not why:
+        return ""
+    mx = rounds.get("max_rounds")
+    cap = (" of max %d" % mx) if isinstance(mx, int) and mx > 0 else ""
+    return " -- %d run%s, stopped: %s" % (len(rounds.get("ledger") or []) - 1,
+                                          cap, why)
+
+
 def _stage_summary(stage_dir, row, rounds):
     """The three-line 'what actually ran' table at the top of a node report."""
     incomplete = list((row or {}).get("incomplete") or [])
@@ -251,10 +263,12 @@ def _stage_summary(stage_dir, row, rounds):
     if rounds is None:
         o = "not run"
     elif rounds.get("accepted"):
-        o = "**%s** over %d round(s)" % (_fmt_x(rounds.get("speedup")),
-                                         len(rounds.get("ledger") or []) - 1)
+        o = "**%s** over %d round(s)%s" % (_fmt_x(rounds.get("speedup")),
+                                           len(rounds.get("ledger") or []) - 1,
+                                           _stop_phrase(rounds))
     else:
-        o = "ran, nothing accepted (%s)" % (rounds.get("reason") or "no gain")
+        o = "ran, nothing accepted (%s)%s" % (rounds.get("reason") or "no gain",
+                                              _stop_phrase(rounds))
     _rm = (rounds or {}).get("remeasured")
     if isinstance(_rm, dict) and _rm:
         o += " -- re-measured: %s" % _remeasured_short(_rm)
@@ -328,6 +342,14 @@ def node_report_text(out_dir, type_name, *, row=None, spec=None):
                     _fmt_ms(rounds.get("best_ms")),
                     _fmt_x(rounds.get("speedup"))))
         L.append("")
+        if rounds.get("stop_reason"):
+            mx = rounds.get("max_rounds")
+            L.append("Rounds: **%d** run%s; the loop stopped because %s."
+                     % (len(rounds.get("ledger") or []) - 1,
+                        (" of at most %d" % mx)
+                        if isinstance(mx, int) and mx > 0 else "",
+                        rounds["stop_reason"]))
+            L.append("")
         L += _remeasured_lines(rounds.get("remeasured"))
         ledger = rounds.get("ledger") or []
         L += _rounds_table(ledger)

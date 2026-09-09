@@ -597,13 +597,15 @@ class CompileDialog(QDialog):
         self._rounds_combo = QComboBox(self)
         for n in ("1", "2", "3", "4", "6", "8"):
             self._rounds_combo.addItem(n)
-        self._rounds_combo.setCurrentText("2")
+        self._rounds_combo.setCurrentText("6")
         self._rounds_combo.setToolTip(
-            "How many optimize rounds per node. Each round is one AI attempt "
-            "plus a compile, a parity check and a benchmark.")
+            "At most this many optimize rounds per node. Each round is one AI "
+            "attempt plus a compile, a parity check and a benchmark. The loop "
+            "always runs 2, then continues only while the last round was "
+            "accepted with a gain of at least 1.15x.")
         rounds_row = QHBoxLayout()
         rounds_row.setContentsMargins(0, 0, 0, 0)
-        rounds_row.addWidget(self._dim("rounds"))
+        rounds_row.addWidget(self._dim("max rounds"))
         rounds_row.addWidget(self._rounds_combo)
         rounds_row.addStretch(1)
         grid.addLayout(rounds_row, 2, 1)
@@ -867,7 +869,7 @@ class CompileDialog(QDialog):
         try:
             rounds = int(self._rounds_combo.currentText())
         except (TypeError, ValueError):
-            rounds = 2
+            rounds = 6
         return {
             "ai_assist": self._assist_check.isChecked() or optimize,
             "optimize": optimize,

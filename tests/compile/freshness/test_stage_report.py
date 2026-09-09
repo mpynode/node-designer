@@ -271,5 +271,40 @@ class TestIndexReport(unittest.TestCase):
         self.assertEqual(len(written), 1)  # index only
 
 
+class TestReportSaysHowTheLoopEnded(unittest.TestCase):
+    """The adaptive loop (2026-09-09) records why it stopped; the report says
+    so in the stage table and the Optimization section. Older ledgers carry no
+    ``stop_reason`` and render exactly as before."""
+
+    def _md(self, extra):
+        from mpynode.native.toolchain import stage_report
+        doc = {"accepted": True, "speedup": 4.0, "baseline_ms": 20.0,
+               "best_ms": 5.0, "reason": "accepted (4.00x)",
+               "parity_gate": "authored+pointwise",
+               "ledger": [{"index": 0, "outcome": "baseline", "ms": 20.0},
+                          {"index": 1, "outcome": "accept", "slug": "fuse",
+                           "ms": 8.0, "speedup": 2.5},
+                          {"index": 2, "outcome": "accept", "slug": "thread",
+                           "ms": 5.0, "speedup": 4.0}]}
+        doc.update(extra)
+        with tempfile.TemporaryDirectory() as tmp:
+            _rounds(tmp, "kDTree", doc)
+            return stage_report.node_report_text(tmp, "kDTree")
+
+    def test_stop_reason_and_cap_are_reported(self):
+        md = self._md({"rounds": 2, "max_rounds": 6,
+                       "stop_reason": "round 2 gained 1.60x, below the 1.15x "
+                                      "needed to continue"})
+        self.assertIn("2 run of max 6, stopped: round 2 gained", md)
+        self.assertIn("Rounds: **2** run of at most 6; the loop stopped because "
+                      "round 2 gained", md)
+
+    def test_an_old_ledger_renders_without_the_phrase(self):
+        md = self._md({"rounds": 2})
+        self.assertNotIn("stopped", md)
+        self.assertNotIn("Rounds:", md)
+        self.assertIn("over 2 round(s)", md)
+
+
 if __name__ == "__main__":
     unittest.main()

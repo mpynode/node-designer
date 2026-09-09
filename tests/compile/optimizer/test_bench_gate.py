@@ -264,6 +264,21 @@ class TestRoundsJsonCarriesTheScene(unittest.TestCase):
             with open(p, encoding="utf-8") as fh:
                 self.assertEqual(json.load(fh)["bench"], {})
 
+    def test_how_the_adaptive_loop_ended_is_written(self):
+        from mpynode.native.ai.optimizer import OptimizeResult
+
+        res = OptimizeResult(True, "x", 20.0, 5.0, 4.0, 3, [], "accepted (4.00x)",
+                             max_rounds=6,
+                             stop_reason="round 3 gained 1.08x, below the "
+                                         "1.15x needed to continue")
+        with tempfile.TemporaryDirectory() as tmp:
+            p = optimizer_live.write_rounds_json(tmp, "mPyThing", res)
+            with open(p, encoding="utf-8") as fh:
+                doc = json.load(fh)
+        self.assertEqual(doc["rounds"], 3)
+        self.assertEqual(doc["max_rounds"], 6)
+        self.assertIn("1.08x", doc["stop_reason"])
+
 
 class TestReportSaysWhatTheNumbersAreWorth(unittest.TestCase):
     def _md(self, doc):

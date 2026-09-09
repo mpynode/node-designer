@@ -147,13 +147,17 @@ def _optimize_cli_timeout() -> float:
         return 2400.0
 
 
-def _optimize_rounds(default=2):
-    """How many optimize rounds per node. ``MPYNODE_OPT_ROUNDS`` overrides.
+def _optimize_rounds(default=6):
+    """The MAXIMUM optimize rounds per node. ``MPYNODE_OPT_ROUNDS`` overrides.
 
-    One AGENTIC round is a whole build+measure session (40 min at the default
-    budget), so 2 rounds is ~110 min per node -- fine for a single compile,
-    prohibitive for a model x flag sweep. Kept as an env override rather than a
-    new argument so the shipped call path and its default are untouched. ``0`` is
+    The engine is adaptive (``optimizer.optimize_cpp``): it always runs 2, then
+    continues only while the last round was accepted with a gain of at least
+    1.15x, up to this cap. The cap moved from 2 to 6 on 2026-09-09: under the
+    fixed count 20 of 29 shipped nodes accepted BOTH rounds (the second worth a
+    median 1.58x), so the count, not the node, was ending the work. One AGENTIC
+    round is a whole build+measure session (13-48 min measured), so a node that
+    keeps improving can now take a few hours; one that stalls still stops after
+    2. Kept as an env override so a model x flag sweep can pin it. ``0`` is
     honoured: it measures the baseline and accepts nothing."""
     raw = os.environ.get("MPYNODE_OPT_ROUNDS")
     if raw is None or not str(raw).strip():
@@ -1287,7 +1291,9 @@ def write_rounds_json(out_dir, type_name, result, *, parity_gate="",
         "baseline_ms": getattr(result, "baseline_ms", None),
         "best_ms": getattr(result, "best_ms", None),
         "speedup": getattr(result, "speedup", 1.0),
-        "rounds": getattr(result, "rounds", 0),
+        "rounds": getattr(result, "rounds", 0),          # rounds RUN
+        "max_rounds": getattr(result, "max_rounds", 0),  # the cap they ran under
+        "stop_reason": getattr(result, "stop_reason", ""),
         "reason": getattr(result, "reason", ""),
         "parity_gate": parity_gate,
         # rung / floor_ms / perturbed / fingerprint / reason -- what the timing
@@ -1340,7 +1346,7 @@ def discard_preopt(cpp_paths):
 
 def optimize_surviving(nodes, out_dir, *, maya=None, verify_fn=None,
                        complete_fn=None, run_step=None, cancel_event=None,
-                       log_cb=None, compile_log_cb=None, rounds=2,
+                       log_cb=None, compile_log_cb=None, rounds=6,
                        min_speedup=1.05, bench_res=16,
                        out_plug=None, adapters_factory=None, engine=None,
                        keep_intermediates=False, status_out=None,

@@ -83,6 +83,9 @@ class TestHistorySinkReceivesTheLedger(unittest.TestCase):
             # case the history actually has to fix.
             benchmark_fn=_bench({"BASE": 100.0, "CAND": 100.0}),
             rounds=rounds,
+            # Fixed count: these tests are about the sink, not the adaptive
+            # stop rule, which would otherwise end an all-rejected run at 2.
+            min_rounds=rounds,
             history_sink=sink,
         )
         kw.update(over)
