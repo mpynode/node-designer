@@ -1118,6 +1118,9 @@ def _gen_deform_cpp(ins, rest, env_val, values, body):
                       for p in rest)
     L.append("    std::vector<MPoint> pts = {%s};" % items)
     L.append("    unsigned int n = (unsigned int)pts.size();")
+    # The emitter's raw-float harvest locals (rule 1); null here, so the lowered
+    # body takes the MPointArray path this harness probes.
+    L.append("    const float* _rawIn = 0;")
     L.append("    float env = (float)(%s);" % _cpp_lit(env_val))
     L.append("    (void)env;")
     for d in ins:
@@ -1149,6 +1152,9 @@ def _gen_skin_deform_cpp(rest, env_val, joint_mats, bind_mats, w_dense, body):
                       for p in rest)
     L.append("    std::vector<MPoint> pts = {%s};" % items)
     L.append("    unsigned int n = (unsigned int)pts.size();")
+    # The emitter's raw-float harvest locals (rule 1); null here, so the lowered
+    # body takes the MPointArray path this harness probes.
+    L.append("    const float* _rawIn = 0;")
     L.append("    float env = (float)(%s);" % _cpp_lit(env_val))
     L.append("    std::vector<MMatrix> jointMat = {%s};"
              % ", ".join(_mmat_init_list(m) for m in joint_mats))

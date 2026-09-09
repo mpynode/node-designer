@@ -670,8 +670,10 @@ def main():
     ap.add_argument("--limit", type=int, default=0)
     ap.add_argument("--only", default="",
                     help="comma-separated substrings; keep matching templates")
-    ap.add_argument("--rounds", type=int, default=2,
-                    help="optimize rounds per node (MPYNODE_OPT_ROUNDS)")
+    ap.add_argument("--rounds", type=int, default=6,
+                    help="MAX optimize rounds per node (MPYNODE_OPT_ROUNDS); the "
+                         "engine is adaptive and stops early after a rejected "
+                         "round or a gain under 1.15x, never before 2")
     ap.add_argument("--jobs", type=int, default=8,
                     help="phase A concurrency (each worker is a mayapy)")
     ap.add_argument("--opt-jobs", type=int, default=0,

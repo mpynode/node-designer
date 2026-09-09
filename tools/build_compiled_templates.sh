@@ -48,8 +48,9 @@ export PYTHONHASHSEED=0
 # node wants a brand-new id, and reads of the real one work fine.
 export MPYNODE_PORT_CACHE="${MPYNODE_PORT_CACHE:-$PWD/.mpynode_local/port_cache}"
 
-# 2 optimize rounds per node, per the user's decision.
-export MPYNODE_OPT_ROUNDS="${MPYNODE_OPT_ROUNDS:-2}"
+# At most 6 optimize rounds per node: the engine is adaptive (always 2, then
+# only while the last round was accepted with a gain of at least 1.15x).
+export MPYNODE_OPT_ROUNDS="${MPYNODE_OPT_ROUNDS:-6}"
 
 # Phase B's optimizer runs the Claude CLI AS AN AGENT, and granting it Bash makes
 # the CLI install its own shell sandbox -- which cannot nest inside one we are

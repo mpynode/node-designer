@@ -365,7 +365,18 @@ from typing import Optional
 # copyfile with codegen skipped (compile_controller.py:1043), so every affected
 # node would keep its AI-ported compute forever.
 # Design note: docs/notes/matrixview-lowering.md
-PORTER_RECIPE_VERSION = "26"
+# v27: a LOWERED deform reads its positions off the output mesh's raw float
+# store (MFnMesh::getRawPoints, full-membership mesh only), writes the narrowed
+# result back into that store and refreshes the surface, instead of the
+# MPointArray allPositions/setAllPositions round trip -- bit-identical (the same
+# float<->double casts), and the single most frequent thing the AI optimizer had
+# been doing by hand (8 of 50 accepted shipped rounds). Measured on sineRipple
+# at 160k vertices: 23.3 -> 20.9 ms; MFnMesh::setPoints and setAllPositions as
+# the write did not pay. NURBS and partial-membership deforms keep the
+# MPointArray path. Same bump reason as v24-v26: this is CODEGEN, and a v26 hit
+# is a copyfile with codegen skipped (compile_controller.py:1043), so every
+# compiled deformer would keep the MPointArray round trip forever.
+PORTER_RECIPE_VERSION = "27"
 
 # Spec keys excluded from the cache key -- provably irrelevant to the generated
 # C++. A deny-list, NOT an allow-list (design C1).

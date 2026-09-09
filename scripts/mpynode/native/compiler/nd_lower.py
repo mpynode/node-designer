@@ -2920,17 +2920,30 @@ def _deform_normals_materialise(dst, angle_weighted, space):
 
 
 def _deform_points_materialise(dst):
-    """Emit C++ (indent-1) binding the harvested ``pts`` MPointArray to an
-    (N,3) nd::Array<double> local named ``dst`` (matches the dense (N,3) numpy
-    the interpreted deform's ``getPoints()`` returns)."""
+    """Emit C++ (indent-1) binding the harvested points to an (N,3)
+    nd::Array<double> local named ``dst`` (matches the dense (N,3) numpy the
+    interpreted deform's ``getPoints()`` returns).
+
+    Two sources, decided by the emitter's harvest (emit_deformer
+    ``_raw_harvest_lines``): the output mesh's raw float store ``_rawIn``
+    (widened here -- the same cast MItGeometry::allPositions performs) or,
+    when that path was not available, the ``pts`` MPointArray."""
     return [
         "    nd::Array<double> %s;" % dst,
         "    {",
         "        std::vector<double> _tmp; _tmp.reserve((size_t)n * 3);",
-        "        for (unsigned int _i = 0; _i < n; ++_i) {",
-        "            _tmp.push_back(pts[_i].x);",
-        "            _tmp.push_back(pts[_i].y);",
-        "            _tmp.push_back(pts[_i].z);",
+        "        if (_rawIn) {",
+        "            for (unsigned int _i = 0; _i < n; ++_i) {",
+        "                _tmp.push_back((double)_rawIn[3 * _i]);",
+        "                _tmp.push_back((double)_rawIn[3 * _i + 1]);",
+        "                _tmp.push_back((double)_rawIn[3 * _i + 2]);",
+        "            }",
+        "        } else {",
+        "            for (unsigned int _i = 0; _i < n; ++_i) {",
+        "                _tmp.push_back(pts[_i].x);",
+        "                _tmp.push_back(pts[_i].y);",
+        "                _tmp.push_back(pts[_i].z);",
+        "            }",
         "        }",
         "        %s = nd::from_data<double>(_tmp, {(int64_t)n, 3});" % dst,
         "    }",
@@ -2938,9 +2951,19 @@ def _deform_points_materialise(dst):
 
 
 def _deform_writeback_lines(val):
-    """Writer for ``self.__ndout__``: scatter a produced (M,3) nd value back
-    into the harvested ``pts`` MPointArray. Only min(M, n) points are written
-    (the deform commits exactly the ``n`` harvested slots via setAllPositions)."""
+    """Writer for ``self.__ndout__``: hand a produced (M,3) nd value back to the
+    emitter's commit. Only min(M, n) points are written; the other harvested
+    slots keep their current value (the deform commits exactly ``n`` points).
+
+    Raw path (``_rawIn`` set): the narrowed floats -- ``(float)`` of the double
+    is the narrowing ``setAllPositions`` performs on an MPoint, so the mesh is
+    bit-identical -- go straight back into the mesh's own store the harvest read
+    from (the input was already snapshotted into the (N,3) array above), and
+    emit_deformer's ``_raw_commit_lines`` refreshes the surface. Slots at or
+    past ``_lim`` are simply left as they are. Measured against
+    MFnMesh::setPoints and iter.setAllPositions: the only write that pays (see
+    emit_deformer._raw_harvest_lines). MPointArray path: scatter into ``pts``
+    as before."""
     if not val.type.is_array():
         raise UnsupportedSpec("nd_lower deform: non-array value passed to "
                               "setPoints")
@@ -2950,9 +2973,18 @@ def _deform_writeback_lines(val):
         "    if (_o.offset != 0 || !_o.is_contiguous()) _o = _o.copy();",
         "    int64_t _m = _o.shape.empty() ? 0 : _o.shape[0];",
         "    unsigned int _lim = (_m < (int64_t)n) ? (unsigned int)_m : n;",
-        "    for (unsigned int _i = 0; _i < _lim; ++_i)",
-        "        pts[_i] = MPoint((*_o.data)[_i*3+0], (*_o.data)[_i*3+1], "
+        "    if (_rawIn) {",
+        "        float* _rawOut = const_cast<float*>(_rawIn);",
+        "        for (unsigned int _i = 0; _i < _lim; ++_i) {",
+        "            _rawOut[3 * _i]     = (float)(*_o.data)[_i*3+0];",
+        "            _rawOut[3 * _i + 1] = (float)(*_o.data)[_i*3+1];",
+        "            _rawOut[3 * _i + 2] = (float)(*_o.data)[_i*3+2];",
+        "        }",
+        "    } else {",
+        "        for (unsigned int _i = 0; _i < _lim; ++_i)",
+        "            pts[_i] = MPoint((*_o.data)[_i*3+0], (*_o.data)[_i*3+1], "
         "(*_o.data)[_i*3+2]);",
+        "    }",
         "}",
     ]
 

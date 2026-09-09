@@ -49,6 +49,7 @@ def _gen(rest, env_val, joint, bind, wl_dense, twist_flat, swing_flat,
                          % (_cpp_lit(p[0]), _cpp_lit(p[1]), _cpp_lit(p[2]))
                          for p in rest))
     L.append("    unsigned int n = (unsigned int)pts.size();")
+    L.append("    const float* _rawIn = 0;")
     L.append("    float env = (float)(%s);" % _cpp_lit(env_val))
     L.append("    std::vector<MMatrix> jointMat = {%s};"
              % ", ".join(_mmat_init_list(m) for m in joint))

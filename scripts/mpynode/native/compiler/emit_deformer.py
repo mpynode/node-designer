@@ -384,9 +384,12 @@ def _deform_lines(cls, ins, spec, base, for_port, lowered=None,
     if img_read:
         L += _image_read_lines(ins, embedded=img_embedded)
         L.append("")
-    L.append("    MPointArray pts;")
-    L.append("    iter.allPositions(pts);")
-    L.append("    const unsigned int n = pts.length();")
+    if lowered is not None:
+        L += _raw_harvest_lines()
+    else:
+        L.append("    MPointArray pts;")
+        L.append("    iter.allPositions(pts);")
+        L.append("    const unsigned int n = pts.length();")
     L.append("")
     # Live targets. AFTER the harvest (it sizes the diff against `n`) and BEFORE
     # the lowered body, whose blessed delta call binds the four tables it builds.
@@ -491,7 +494,81 @@ def _deform_lines(cls, ins, spec, base, for_port, lowered=None,
             L.append("    //   | %s" % src_line)
         L.append("    " + PORT_END)
     L.append("")
-    L.append("    iter.setAllPositions(pts);")
+    if lowered is not None:
+        L += _raw_commit_lines()
+    else:
+        L.append("    iter.setAllPositions(pts);")
     L.append("    return MS::kSuccess;")
     L.append("}")
     return L
+
+
+def _raw_harvest_lines():
+    """The geometry harvest of a LOWERED deform (indent-1 C++).
+
+    MItGeometry offers only MPointArray -- double, 4-wide -- for bulk access, so
+    ``allPositions``/``setAllPositions`` cost a 5.1 MB allocation plus a
+    float->double widen and a double->float narrow over a 160k-vertex mesh
+    (measured 535 us of an 890 us deform, sineRipple ledger). For a MESH deformed
+    in full (every vertex is a member, so iterator index i == vertex i) the
+    output mesh's own float xyz store holds exactly the values allPositions would
+    widen, so the lowered body reads it raw (``_rawIn``), writes its narrowed
+    result back into that same store (nd_lower ``_deform_writeback_lines``), and
+    :func:`_raw_commit_lines` tells Maya the surface moved. The casts are the
+    ones the MPointArray round trip performs, so the mesh is bit-identical;
+    4 of the 50 accepted optimizer rounds did exactly this by hand.
+
+    MEASURED 2026-09-09, sineRipple at 159,602 vertices, same scene, outputs
+    identical: MPointArray round trip 23.32 ms; raw read + MFnMesh::setPoints
+    23.21 ms; raw read + iter.setAllPositions 24.26 ms; raw read + in-place
+    write + updateSurface 20.88 ms. Only the in-place write pays.
+
+    Any other geometry (NURBS CVs, a partial deformer set) takes the MPointArray
+    path unchanged: ``_rawIn`` stays null and ``pts`` is filled.
+    ``outputArrayValue`` hands back the datablock's storage without pulling, so
+    there is no re-entry into this compute.
+    """
+    return [
+        "    // --- geometry harvest: raw float fast path (mesh, full membership) ---",
+        "    MPointArray pts;",
+        "    const float* _rawIn = 0;",
+        "    MObject _outMeshObj;",
+        "    unsigned int n = 0;",
+        "    {",
+        "        MStatus _hs;",
+        "        MArrayDataHandle _hOut = block.outputArrayValue("
+        "MPxGeometryFilter::outputGeom, &_hs);",
+        "        if (_hs == MS::kSuccess && _hOut.jumpToElement(multiIndex) == "
+        "MS::kSuccess) {",
+        "            MObject _om = _hOut.outputValue().asMesh();",
+        "            if (!_om.isNull() && _om.hasFn(MFn::kMesh)) {",
+        "                MFnMesh _ofn(_om, &_hs);",
+        "                const int _nv = (_hs == MS::kSuccess) ? _ofn.numVertices() "
+        ": -1;",
+        "                if (_nv > 0 && (unsigned int)_nv == iter.count()) {",
+        "                    const float* _rp = _ofn.getRawPoints(&_hs);",
+        "                    if (_hs == MS::kSuccess && _rp) {",
+        "                        _rawIn = _rp; _outMeshObj = _om; "
+        "n = (unsigned int)_nv;",
+        "                    }",
+        "                }",
+        "            }",
+        "        }",
+        "    }",
+        "    if (!_rawIn) { iter.allPositions(pts); n = pts.length(); }",
+    ]
+
+
+def _raw_commit_lines():
+    """Commit a LOWERED deform's result (indent-1 C++). On the raw path the
+    points already sit in the mesh's own store (the writer put them there), so
+    the commit is ``MFnMesh::updateSurface`` -- the bbox / normal refresh
+    setPoints would have done; otherwise ``iter.setAllPositions(pts)``. See
+    :func:`_raw_harvest_lines`."""
+    return [
+        "    if (_rawIn) {",
+        "        MFnMesh(_outMeshObj).updateSurface();",
+        "    } else {",
+        "        iter.setAllPositions(pts);",
+        "    }",
+    ]
