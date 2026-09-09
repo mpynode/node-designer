@@ -55,6 +55,29 @@
   ],
   "parity_gate": "authored+pointwise",
   "reason": "accepted (2.28x)",
+  "remeasured": {
+    "baseline_ms": 38.7981,
+    "date": "2026-09-08",
+    "diverged": null,
+    "final_ms": 26.1019,
+    "fingerprint": "checked (1 plug(s))",
+    "floor_ms": 15.0,
+    "perturbed": [
+      "end (int)",
+      "inMesh <- pSphereShape1.vtx[0]",
+      "seed (int)",
+      "solutionLength (double)",
+      "start (int)",
+      "wallHeight (double)",
+      "wallThickness (double)"
+    ],
+    "reason": null,
+    "rung": [
+      140,
+      5000
+    ],
+    "speedup": 1.4864090353575792
+  },
   "rounds": 2,
   "speedup": 2.2755547854499545,
   "type_name": "meshMaze"

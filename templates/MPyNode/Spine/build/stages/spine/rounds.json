@@ -55,6 +55,29 @@
   ],
   "parity_gate": "authored+pointwise",
   "reason": "accepted (4.79x)",
+  "remeasured": {
+    "baseline_ms": 17.8939,
+    "date": "2026-09-08",
+    "diverged": null,
+    "final_ms": 13.9784,
+    "fingerprint": "checked (4 plug(s))",
+    "floor_ms": 15.0,
+    "perturbed": [
+      "controlMatrices[0] (matrix)",
+      "inputCurve <- nurbsCircleShape1.cv[0]",
+      "pivot (float)",
+      "samples[0] (float)",
+      "scale (float)",
+      "shift (float)",
+      "stretch (float)"
+    ],
+    "reason": null,
+    "rung": [
+      400,
+      20000
+    ],
+    "speedup": 1.2801107422881015
+  },
   "rounds": 2,
   "speedup": 4.790389895661725,
   "type_name": "spine"

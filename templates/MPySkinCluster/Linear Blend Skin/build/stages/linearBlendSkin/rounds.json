@@ -55,6 +55,23 @@
   ],
   "parity_gate": "authored+pointwise",
   "reason": "accepted (10.22x)",
+  "remeasured": {
+    "baseline_ms": null,
+    "date": "2026-09-08",
+    "diverged": null,
+    "final_ms": null,
+    "fingerprint": null,
+    "floor_ms": 15.0,
+    "perturbed": [
+      "input[0].inputGeometry <- pSphereShape1Orig.vtx[0]"
+    ],
+    "reason": "baseline 7.073 ms is below the 15 ms noise floor even at the largest bench scene (geo=400 array=20000); nothing this small can be optimized against measurably",
+    "rung": [
+      400,
+      20000
+    ],
+    "speedup": null
+  },
   "rounds": 2,
   "speedup": 10.215585307243392,
   "type_name": "linearBlendSkin"

@@ -137,6 +137,58 @@ def _fmt_num(v):
     return ("%g" % v) if isinstance(v, (int, float)) else str(v)
 
 
+def _remeasured_short(rec):
+    """Summary-table phrase for a re-measurement."""
+    if rec.get("diverged"):
+        return "outputs DIVERGE from the baseline"
+    if rec.get("baseline_ms") is None or rec.get("final_ms") is None:
+        return "unmeasurable under the gate"
+    return "**%s** (outputs match)" % _fmt_x(rec.get("speedup"))
+
+
+def _remeasured_lines(rec):
+    """The honest number, printed beside the old one, never over it.
+
+    ``rounds.json["remeasured"]`` is written by tools/harness/rebench_shipped.py:
+    the shipped final and its own pre-optimization baseline compiled again and
+    timed on one calibrated scene under the gated harness (noise floor,
+    animated-input perturbation, output fingerprint)."""
+    if not isinstance(rec, dict) or not rec:
+        return []
+    rung = list(rec.get("rung") or []) + [None, None]
+    scene = "geo density %s / array length %s" % tuple(
+        "?" if x is None else x for x in rung[:2])
+    head = ("**Re-measured %s** under the gated harness (noise floor, "
+            "animated-input perturbation, output fingerprint), %s"
+            % (rec.get("date") or "later", scene))
+    if rec.get("diverged"):
+        body = ("%s: **the shipped file's outputs DIVERGE from its own "
+                "pre-optimization baseline on this scene** -- %s. Its timing "
+                "(%s against the baseline's %s) compares two different programs "
+                "and is not a speedup; revert decision pending."
+                % (head, rec["diverged"], _fmt_ms(rec.get("final_ms")),
+                   _fmt_ms(rec.get("baseline_ms"))))
+    elif rec.get("baseline_ms") is None:
+        body = ("%s: **unmeasurable** -- %s. The speedup above was taken before "
+                "the gate existed and cannot be reproduced under it."
+                % (head, rec.get("reason") or "no reason recorded"))
+    elif rec.get("final_ms") is None:
+        body = ("%s: baseline %s, but the shipped final could not be measured -- "
+                "%s." % (head, _fmt_ms(rec["baseline_ms"]),
+                         rec.get("reason") or "no reason recorded"))
+    else:
+        body = ("%s: baseline %s -> shipped %s (**%s**); outputs match. The "
+                "speedup above was taken before the gate existed; this is the "
+                "number to quote."
+                % (head, _fmt_ms(rec["baseline_ms"]), _fmt_ms(rec["final_ms"]),
+                   _fmt_x(rec.get("speedup"))))
+    moved = rec.get("perturbed")
+    if moved is not None:
+        body += " Moved per tick: %s." % (
+            ", ".join("`%s`" % m for m in moved) if moved else "nothing")
+    return [body, ""]
+
+
 def _rounds_table(ledger):
     lines = ["| # | change | theme | predicted | measured | time | outcome |",
              "|---|---|---|---|---|---|---|"]
@@ -203,6 +255,9 @@ def _stage_summary(stage_dir, row, rounds):
                                          len(rounds.get("ledger") or []) - 1)
     else:
         o = "ran, nothing accepted (%s)" % (rounds.get("reason") or "no gain")
+    _rm = (rounds or {}).get("remeasured")
+    if isinstance(_rm, dict) and _rm:
+        o += " -- re-measured: %s" % _remeasured_short(_rm)
 
     return [
         "| stage | outcome |",
@@ -273,6 +328,7 @@ def node_report_text(out_dir, type_name, *, row=None, spec=None):
                     _fmt_ms(rounds.get("best_ms")),
                     _fmt_x(rounds.get("speedup"))))
         L.append("")
+        L += _remeasured_lines(rounds.get("remeasured"))
         ledger = rounds.get("ledger") or []
         L += _rounds_table(ledger)
         L.append("")

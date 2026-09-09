@@ -1,12 +1,12 @@
 # patchRelax -- compile report
 
-**Source node:** `patchRelax`  ·  **Base:** `MPxDeformerNode`  ·  **Generated:** 2026-08-25 09:40
+**Source node:** `patchRelax`  ·  **Base:** `MPxDeformerNode`  ·  **Generated:** 2026-09-08 20:37
 
 | stage | outcome |
 |---|---|
 | 1 Transpile | deterministic C++, no AI |
 | 2 AI assist | not run (nothing to fill) |
-| 3 AI optimize | **3.16x** over 2 round(s) |
+| 3 AI optimize | **3.16x** over 2 round(s) -- re-measured: unmeasurable under the gate |
 
 ## The Python this was generated from
 
@@ -57,7 +57,11 @@ mesh.setPoints(P + self.envelope * (out - P))
 
 Parity gate: `authored+pointwise`. Every accepted round was re-checked against the interpreted Python before it was allowed to win. Where a node's generic pointwise parity SKIPS -- a deformer writes through the native `outputGeometry`, which the scalar harness cannot read -- the authored `@maya_test` is the ONLY gate, so treat those rows as behavioural checks rather than numerical ones.
 
+Bench scene: not recorded (ledger predates the scene record; no noise-floor gate, no per-tick perturbation check and no output fingerprint applied to these rounds).
+
 Baseline **4.778 ms** -> best **1.514 ms** (**3.16x**).
+
+**Re-measured 2026-09-08** under the gated harness (noise floor, animated-input perturbation, output fingerprint), geo density 400 / array length 20000: **unmeasurable** -- baseline 14.114 ms is below the 15 ms noise floor even at the largest bench scene (geo=400 array=20000); nothing this small can be optimized against measurably. The speedup above was taken before the gate existed and cannot be reproduced under it. Moved per tick: `alpha (double)`, `iterations (int)`, `ringNbrs[0] (int)`, `ringWidth (int)`, `surfaceBlend (double)`, `input[0].inputGeometry <- pSphereShape1Orig.vtx[0]`.
 
 | # | change | theme | predicted | measured | time | outcome |
 |---|---|---|---|---|---|---|

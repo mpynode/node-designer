@@ -55,6 +55,24 @@
   ],
   "parity_gate": "authored+pointwise",
   "reason": "accepted (10166.83x)",
+  "remeasured": {
+    "baseline_ms": 5092.1682,
+    "date": "2026-09-08",
+    "diverged": null,
+    "final_ms": 13.6821,
+    "fingerprint": "checked (1 plug(s))",
+    "floor_ms": 15.0,
+    "perturbed": [
+      "deformCage <- pSphereShape2.vtx[0]",
+      "input[0].inputGeometry <- pSphereShape1Orig.vtx[0]"
+    ],
+    "reason": null,
+    "rung": [
+      40,
+      512
+    ],
+    "speedup": 372.17738505054047
+  },
   "rounds": 2,
   "speedup": 10166.829170383586,
   "type_name": "rbfWrapDeformer"

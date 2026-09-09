@@ -55,6 +55,25 @@
   ],
   "parity_gate": "authored+pointwise",
   "reason": "accepted (258.02x)",
+  "remeasured": {
+    "baseline_ms": 139.993,
+    "date": "2026-09-08",
+    "diverged": null,
+    "final_ms": 0.7639,
+    "fingerprint": "checked (1 plug(s))",
+    "floor_ms": 15.0,
+    "perturbed": [
+      "applyCombos (bool)",
+      "weight[0] (float)",
+      "input[0].inputGeometry <- pSphereShape1Orig.vtx[0]"
+    ],
+    "reason": null,
+    "rung": [
+      90,
+      2000
+    ],
+    "speedup": 183.26089802330148
+  },
   "rounds": 2,
   "speedup": 258.0224168126095,
   "type_name": "comboCorrectives"

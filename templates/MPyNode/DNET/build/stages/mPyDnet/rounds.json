@@ -55,6 +55,34 @@
   ],
   "parity_gate": "authored+pointwise",
   "reason": "accepted (3.77x)",
+  "remeasured": {
+    "baseline_ms": null,
+    "date": "2026-09-08",
+    "diverged": null,
+    "final_ms": null,
+    "fingerprint": null,
+    "floor_ms": 15.0,
+    "perturbed": [
+      "anchors[0] (float)",
+      "damping (float)",
+      "index0[0] (int)",
+      "index1[0] (int)",
+      "inverseMatrix (matrix)",
+      "iterations (int)",
+      "matrices[0] (matrix)",
+      "pull[0] (float)",
+      "push[0] (float)",
+      "tension[0] (float)",
+      "time (time)",
+      "tolerance (float)"
+    ],
+    "reason": "baseline 12.944 ms is below the 15 ms noise floor even at the largest bench scene (geo=400 array=20000); nothing this small can be optimized against measurably",
+    "rung": [
+      400,
+      20000
+    ],
+    "speedup": null
+  },
   "rounds": 2,
   "speedup": 3.77428951199443,
   "type_name": "mPyDnet"

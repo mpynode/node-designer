@@ -1,12 +1,12 @@
 # unitSphereCollision -- compile report
 
-**Source node:** `unitSphereCollision`  ·  **Base:** `MPxDeformerNode`  ·  **Generated:** 2026-08-25 09:55
+**Source node:** `unitSphereCollision`  ·  **Base:** `MPxDeformerNode`  ·  **Generated:** 2026-09-08 20:40
 
 | stage | outcome |
 |---|---|
 | 1 Transpile | emitted, with region(s) the transpiler could not lower |
 | 2 AI assist | ran -- no unresolved regions |
-| 3 AI optimize | **15.90x** over 2 round(s) |
+| 3 AI optimize | **15.90x** over 2 round(s) -- re-measured: **10.23x** (outputs match) |
 
 ## The Python this was generated from
 
@@ -58,7 +58,11 @@ if len(pts):
 
 Parity gate: `authored+pointwise`. Every accepted round was re-checked against the interpreted Python before it was allowed to win. Where a node's generic pointwise parity SKIPS -- a deformer writes through the native `outputGeometry`, which the scalar harness cannot read -- the authored `@maya_test` is the ONLY gate, so treat those rows as behavioural checks rather than numerical ones.
 
+Bench scene: not recorded (ledger predates the scene record; no noise-floor gate, no per-tick perturbation check and no output fingerprint applied to these rounds).
+
 Baseline **26.243 ms** -> best **1.651 ms** (**15.90x**).
+
+**Re-measured 2026-09-08** under the gated harness (noise floor, animated-input perturbation, output fingerprint), geo density 300 / array length 10000: baseline 23.979 ms -> shipped 2.344 ms (**10.23x**); outputs match. The speedup above was taken before the gate existed; this is the number to quote. Moved per tick: `pusher (matrix)`, `input[0].inputGeometry <- pSphereShape1Orig.vtx[0]`.
 
 | # | change | theme | predicted | measured | time | outcome |
 |---|---|---|---|---|---|---|

@@ -1,12 +1,12 @@
 # bubbleSort -- compile report
 
-**Source node:** `bubbleSort`  ·  **Base:** `MPxNode`  ·  **Generated:** 2026-08-25 10:10
+**Source node:** `bubbleSort`  ·  **Base:** `MPxNode`  ·  **Generated:** 2026-09-08 20:43
 
 | stage | outcome |
 |---|---|
 | 1 Transpile | emitted, with region(s) the transpiler could not lower |
 | 2 AI assist | ran -- no unresolved regions |
-| 3 AI optimize | **1.15x** over 2 round(s) |
+| 3 AI optimize | **1.15x** over 2 round(s) -- re-measured: unmeasurable under the gate |
 
 ## The Python this was generated from
 
@@ -60,7 +60,11 @@ self.sort = [lo + t * (hi - lo) for t in self.data]
 
 Parity gate: `authored+pointwise`. Every accepted round was re-checked against the interpreted Python before it was allowed to win. Where a node's generic pointwise parity SKIPS -- a deformer writes through the native `outputGeometry`, which the scalar harness cannot read -- the authored `@maya_test` is the ONLY gate, so treat those rows as behavioural checks rather than numerical ones.
 
+Bench scene: not recorded (ledger predates the scene record; no noise-floor gate, no per-tick perturbation check and no output fingerprint applied to these rounds).
+
 Baseline **0.002 ms** -> best **0.002 ms** (**1.15x**).
+
+**Re-measured 2026-09-08** under the gated harness (noise floor, animated-input perturbation, output fingerprint), geo density 400 / array length 20000: **unmeasurable** -- baseline 0.003 ms is below the 15 ms noise floor even at the largest bench scene (geo=400 array=20000); nothing this small can be optimized against measurably. The speedup above was taken before the gate existed and cannot be reproduced under it. Moved per tick: `maxVal (float)`, `minVal (float)`, `time (time)`.
 
 | # | change | theme | predicted | measured | time | outcome |
 |---|---|---|---|---|---|---|

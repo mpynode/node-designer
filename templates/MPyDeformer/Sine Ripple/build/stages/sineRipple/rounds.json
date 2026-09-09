@@ -55,6 +55,27 @@
   ],
   "parity_gate": "authored+pointwise",
   "reason": "accepted (5.82x)",
+  "remeasured": {
+    "baseline_ms": 15.7655,
+    "date": "2026-09-08",
+    "diverged": null,
+    "final_ms": 5.2911,
+    "fingerprint": "checked (1 plug(s))",
+    "floor_ms": 15.0,
+    "perturbed": [
+      "amplitude (float)",
+      "frequency (float)",
+      "speed (float)",
+      "time (time)",
+      "input[0].inputGeometry <- pSphereShape1Orig.vtx[0]"
+    ],
+    "reason": null,
+    "rung": [
+      300,
+      10000
+    ],
+    "speedup": 2.979626164691652
+  },
   "rounds": 2,
   "speedup": 5.822336236725928,
   "type_name": "sineRipple"

@@ -1,12 +1,12 @@
 # meshMaze -- compile report
 
-**Source node:** `meshMaze`  ·  **Base:** `MPxNode`  ·  **Generated:** 2026-08-25 10:11
+**Source node:** `meshMaze`  ·  **Base:** `MPxNode`  ·  **Generated:** 2026-09-08 20:42
 
 | stage | outcome |
 |---|---|
 | 1 Transpile | emitted, with region(s) the transpiler could not lower |
 | 2 AI assist | ran -- no unresolved regions |
-| 3 AI optimize | **2.28x** over 2 round(s) |
+| 3 AI optimize | **2.28x** over 2 round(s) -- re-measured: **1.49x** (outputs match) |
 
 ## The Python this was generated from
 
@@ -114,7 +114,11 @@ else:
 
 Parity gate: `authored+pointwise`. Every accepted round was re-checked against the interpreted Python before it was allowed to win. Where a node's generic pointwise parity SKIPS -- a deformer writes through the native `outputGeometry`, which the scalar harness cannot read -- the authored `@maya_test` is the ONLY gate, so treat those rows as behavioural checks rather than numerical ones.
 
+Bench scene: not recorded (ledger predates the scene record; no noise-floor gate, no per-tick perturbation check and no output fingerprint applied to these rounds).
+
 Baseline **18.386 ms** -> best **8.080 ms** (**2.28x**).
+
+**Re-measured 2026-09-08** under the gated harness (noise floor, animated-input perturbation, output fingerprint), geo density 140 / array length 5000: baseline 38.798 ms -> shipped 26.102 ms (**1.49x**); outputs match. The speedup above was taken before the gate existed; this is the number to quote. Moved per tick: `end (int)`, `inMesh <- pSphereShape1.vtx[0]`, `seed (int)`, `solutionLength (double)`, `start (int)`, `wallHeight (double)`, `wallThickness (double)`.
 
 | # | change | theme | predicted | measured | time | outcome |
 |---|---|---|---|---|---|---|

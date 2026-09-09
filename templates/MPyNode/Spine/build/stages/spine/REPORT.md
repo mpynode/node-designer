@@ -1,12 +1,12 @@
 # spine -- compile report
 
-**Source node:** `spine`  ·  **Base:** `MPxNode`  ·  **Generated:** 2026-08-25 10:32
+**Source node:** `spine`  ·  **Base:** `MPxNode`  ·  **Generated:** 2026-09-08 20:47
 
 | stage | outcome |
 |---|---|
 | 1 Transpile | emitted, with region(s) the transpiler could not lower |
 | 2 AI assist | ran -- no unresolved regions |
-| 3 AI optimize | **4.79x** over 2 round(s) |
+| 3 AI optimize | **4.79x** over 2 round(s) -- re-measured: **1.28x** (outputs match) |
 
 ## The Python this was generated from
 
@@ -105,7 +105,11 @@ for i in range(len(self.outputTranslate)):
 
 Parity gate: `authored+pointwise`. Every accepted round was re-checked against the interpreted Python before it was allowed to win. Where a node's generic pointwise parity SKIPS -- a deformer writes through the native `outputGeometry`, which the scalar harness cannot read -- the authored `@maya_test` is the ONLY gate, so treat those rows as behavioural checks rather than numerical ones.
 
+Bench scene: not recorded (ledger predates the scene record; no noise-floor gate, no per-tick perturbation check and no output fingerprint applied to these rounds).
+
 Baseline **8.723 ms** -> best **1.821 ms** (**4.79x**).
+
+**Re-measured 2026-09-08** under the gated harness (noise floor, animated-input perturbation, output fingerprint), geo density 400 / array length 20000: baseline 17.894 ms -> shipped 13.978 ms (**1.28x**); outputs match. The speedup above was taken before the gate existed; this is the number to quote. Moved per tick: `controlMatrices[0] (matrix)`, `inputCurve <- nurbsCircleShape1.cv[0]`, `pivot (float)`, `samples[0] (float)`, `scale (float)`, `shift (float)`, `stretch (float)`.
 
 | # | change | theme | predicted | measured | time | outcome |
 |---|---|---|---|---|---|---|

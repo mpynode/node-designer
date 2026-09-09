@@ -55,6 +55,29 @@
   ],
   "parity_gate": "authored+pointwise",
   "reason": "accepted (4.17x)",
+  "remeasured": {
+    "baseline_ms": null,
+    "date": "2026-09-08",
+    "diverged": null,
+    "final_ms": null,
+    "fingerprint": null,
+    "floor_ms": 15.0,
+    "perturbed": [
+      "halfExtents[0] (vector)",
+      "height[0] (double)",
+      "isoValue (double)",
+      "radius[0] (double)",
+      "resolution (int)",
+      "shapeMatrix[0] (matrix)",
+      "smoothing[0] (double)"
+    ],
+    "reason": "baseline 1.591 ms is below the 15 ms noise floor even at the largest bench scene (geo=400 array=20000); nothing this small can be optimized against measurably",
+    "rung": [
+      400,
+      20000
+    ],
+    "speedup": null
+  },
   "rounds": 2,
   "speedup": 4.1706700379266755,
   "type_name": "metaballs"

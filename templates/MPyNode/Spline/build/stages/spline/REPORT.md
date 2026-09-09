@@ -1,12 +1,12 @@
 # spline -- compile report
 
-**Source node:** `spline`  ·  **Base:** `MPxNode`  ·  **Generated:** 2026-08-25 10:32
+**Source node:** `spline`  ·  **Base:** `MPxNode`  ·  **Generated:** 2026-09-08 20:47
 
 | stage | outcome |
 |---|---|
 | 1 Transpile | deterministic C++, no AI |
 | 2 AI assist | not run (nothing to fill) |
-| 3 AI optimize | **3697.75x** over 2 round(s) |
+| 3 AI optimize | **3697.75x** over 2 round(s) -- re-measured: **13571.40x** (outputs match) |
 
 ## The Python this was generated from
 
@@ -45,7 +45,11 @@ if len(self.cv) > 0 and len(self.samples) > 0:
 
 Parity gate: `authored+pointwise`. Every accepted round was re-checked against the interpreted Python before it was allowed to win. Where a node's generic pointwise parity SKIPS -- a deformer writes through the native `outputGeometry`, which the scalar harness cannot read -- the authored `@maya_test` is the ONLY gate, so treat those rows as behavioural checks rather than numerical ones.
 
+Bench scene: not recorded (ledger predates the scene record; no noise-floor gate, no per-tick perturbation check and no output fingerprint applied to these rounds).
+
 Baseline **4.437 ms** -> best **0.001 ms** (**3697.75x**).
+
+**Re-measured 2026-09-08** under the gated harness (noise floor, animated-input perturbation, output fingerprint), geo density 140 / array length 5000: baseline 20.357 ms -> shipped 0.002 ms (**13571.40x**); outputs match. The speedup above was taken before the gate existed; this is the number to quote. Moved per tick: `cv[0] (vector)`, `degree (int)`.
 
 | # | change | theme | predicted | measured | time | outcome |
 |---|---|---|---|---|---|---|

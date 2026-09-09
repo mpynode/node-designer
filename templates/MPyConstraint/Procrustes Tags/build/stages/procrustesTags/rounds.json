@@ -55,6 +55,23 @@
   ],
   "parity_gate": "authored+pointwise",
   "reason": "accepted (4.98x)",
+  "remeasured": {
+    "baseline_ms": null,
+    "date": "2026-09-08",
+    "diverged": null,
+    "final_ms": null,
+    "fingerprint": null,
+    "floor_ms": 15.0,
+    "perturbed": [
+      "mesh <- pSphereShape1.vtx[0]"
+    ],
+    "reason": "baseline 12.437 ms is below the 15 ms noise floor even at the largest bench scene (geo=400 array=20000); nothing this small can be optimized against measurably",
+    "rung": [
+      400,
+      20000
+    ],
+    "speedup": null
+  },
   "rounds": 2,
   "speedup": 4.977312088673363,
   "type_name": "procrustesTags"

@@ -1,12 +1,12 @@
 # helixCurve -- compile report
 
-**Source node:** `helixCurve`  ·  **Base:** `MPxNode`  ·  **Generated:** 2026-08-25 10:44
+**Source node:** `helixCurve`  ·  **Base:** `MPxNode`  ·  **Generated:** 2026-09-08 20:48
 
 | stage | outcome |
 |---|---|
 | 1 Transpile | deterministic C++, no AI |
 | 2 AI assist | not run (nothing to fill) |
-| 3 AI optimize | **9.50x** over 2 round(s) |
+| 3 AI optimize | **9.50x** over 2 round(s) -- re-measured: unmeasurable under the gate |
 
 ## The Python this was generated from
 
@@ -32,7 +32,11 @@ self.outCurve = NurbsCurve(points=cvs, degree=3)
 
 Parity gate: `authored+pointwise`. Every accepted round was re-checked against the interpreted Python before it was allowed to win. Where a node's generic pointwise parity SKIPS -- a deformer writes through the native `outputGeometry`, which the scalar harness cannot read -- the authored `@maya_test` is the ONLY gate, so treat those rows as behavioural checks rather than numerical ones.
 
+Bench scene: not recorded (ledger predates the scene record; no noise-floor gate, no per-tick perturbation check and no output fingerprint applied to these rounds).
+
 Baseline **0.015 ms** -> best **0.002 ms** (**9.50x**).
+
+**Re-measured 2026-09-08** under the gated harness (noise floor, animated-input perturbation, output fingerprint), geo density 400 / array length 20000: **unmeasurable** -- baseline 0.018 ms is below the 15 ms noise floor even at the largest bench scene (geo=400 array=20000); nothing this small can be optimized against measurably. The speedup above was taken before the gate existed and cannot be reproduced under it. Moved per tick: `height (float)`, `radius (float)`, `t (time)`, `turns (float)`.
 
 | # | change | theme | predicted | measured | time | outcome |
 |---|---|---|---|---|---|---|

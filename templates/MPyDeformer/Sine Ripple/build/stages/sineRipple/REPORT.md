@@ -1,12 +1,12 @@
 # sineRipple -- compile report
 
-**Source node:** `sineRipple`  ·  **Base:** `MPxDeformerNode`  ·  **Generated:** 2026-08-25 09:39
+**Source node:** `sineRipple`  ·  **Base:** `MPxDeformerNode`  ·  **Generated:** 2026-09-08 20:39
 
 | stage | outcome |
 |---|---|
 | 1 Transpile | deterministic C++, no AI |
 | 2 AI assist | not run (nothing to fill) |
-| 3 AI optimize | **5.82x** over 2 round(s) |
+| 3 AI optimize | **5.82x** over 2 round(s) -- re-measured: **2.98x** (outputs match) |
 
 ## The Python this was generated from
 
@@ -41,7 +41,11 @@ mesh.setPoints(pts + env * offset)
 
 Parity gate: `authored+pointwise`. Every accepted round was re-checked against the interpreted Python before it was allowed to win. Where a node's generic pointwise parity SKIPS -- a deformer writes through the native `outputGeometry`, which the scalar harness cannot read -- the authored `@maya_test` is the ONLY gate, so treat those rows as behavioural checks rather than numerical ones.
 
+Bench scene: not recorded (ledger predates the scene record; no noise-floor gate, no per-tick perturbation check and no output fingerprint applied to these rounds).
+
 Baseline **9.759 ms** -> best **1.676 ms** (**5.82x**).
+
+**Re-measured 2026-09-08** under the gated harness (noise floor, animated-input perturbation, output fingerprint), geo density 300 / array length 10000: baseline 15.765 ms -> shipped 5.291 ms (**2.98x**); outputs match. The speedup above was taken before the gate existed; this is the number to quote. Moved per tick: `amplitude (float)`, `frequency (float)`, `speed (float)`, `time (time)`, `input[0].inputGeometry <- pSphereShape1Orig.vtx[0]`.
 
 | # | change | theme | predicted | measured | time | outcome |
 |---|---|---|---|---|---|---|

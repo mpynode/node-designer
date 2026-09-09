@@ -1,12 +1,12 @@
 # rbfWrap -- compile report
 
-**Source node:** `rbfWrap`  ·  **Base:** `MPxNode`  ·  **Generated:** 2026-08-25 10:27
+**Source node:** `rbfWrap`  ·  **Base:** `MPxNode`  ·  **Generated:** 2026-09-08 20:46
 
 | stage | outcome |
 |---|---|
 | 1 Transpile | deterministic C++, no AI |
 | 2 AI assist | not run (nothing to fill) |
-| 3 AI optimize | **6102.99x** over 2 round(s) |
+| 3 AI optimize | **6102.99x** over 2 round(s) -- re-measured: **93.29x** (outputs match) |
 
 ## The Python this was generated from
 
@@ -65,7 +65,11 @@ self.outGeo = Mesh(points=warped, counts=counts, indices=indices)
 
 Parity gate: `authored+pointwise`. Every accepted round was re-checked against the interpreted Python before it was allowed to win. Where a node's generic pointwise parity SKIPS -- a deformer writes through the native `outputGeometry`, which the scalar harness cannot read -- the authored `@maya_test` is the ONLY gate, so treat those rows as behavioural checks rather than numerical ones.
 
+Bench scene: not recorded (ledger predates the scene record; no noise-floor gate, no per-tick perturbation check and no output fingerprint applied to these rounds).
+
 Baseline **2103.701 ms** -> best **0.345 ms** (**6102.99x**).
+
+**Re-measured 2026-09-08** under the gated harness (noise floor, animated-input perturbation, output fingerprint), geo density 40 / array length 512: baseline 5394.653 ms -> shipped 57.825 ms (**93.29x**); outputs match. The speedup above was taken before the gate existed; this is the number to quote. Moved per tick: `deformCage <- pSphereShape1.vtx[0]`, `geoToDeform <- pSphereShape2.vtx[0]`.
 
 | # | change | theme | predicted | measured | time | outcome |
 |---|---|---|---|---|---|---|
