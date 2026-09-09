@@ -369,7 +369,26 @@ still wires geometry ONCE and leaves that connection in place for its whole
 drive loop, so a cache keyed on a geometry input reached through THAT path is
 not covered -- earn it with the item-2 fingerprint.
 
-## Already measured slower on Apple Silicon (M4), on a BVH closest-point sweep
+## Patterns that won on shipped nodes (38 of 48 accepted rounds were one of these)
+* Fuse a chain of whole-array `nd::` ops into ONE elementwise loop (same
+  per-element expression, same visit order) -- the most frequent accept.
+* Read/write geometry as raw floats (`getRawPoints`, `setPoints` on a reused
+  buffer) instead of MPointArray copies that widen and narrow every coordinate.
+* Cache derived state on a byte-compare key of the inputs it depends on (rest
+  cage -> inverse; topology -> counts/indices), per-instance, invalidated on DG
+  and EM dirty AND by the key.
+* Cache at the granularity the dependency has: a matrix whose row i depends only
+  on row i of one input is rebuilt ROW-WISE on a miss -- one moved vertex is one
+  row, not Nn x M (rbfWrap: 7.5 -> 2.1 ms at 1562 x 1562).
+* Thread the one embarrassingly parallel per-row map on a persistent per-node
+  pool (rules below); fuse a build into its consumer when the built array is
+  streamed once and never reused -- but MEASURE it at the bench size, because
+  at 1.5k x 1.5k the row cache beat the fused rebuild 2x and at 8k x 8k it lost.
+* Reuse the output mesh object when its topology is byte-identical
+  (`setPoints` in place instead of `MFnMesh::create` each tick), guarded on
+  topology equality and MObject identity.
+
+## Already measured slower on the reference machine (Apple M4), on a BVH closest-point sweep
 Each of these was tried and measured. None is banned -- a different node, data
 shape or CPU can flip any of them -- but proposing one spends your round on a
 coin that has already come up tails, so do it only if you can say why THIS node
@@ -472,8 +491,11 @@ worst case 50% left unwritten. No single-instance test can see this.
 Prefer a dynamic chunk cursor to an equal-block partition (+34-45%). Do NOT ship
 a busy-spin pool -- it wins in isolation and collapses under load.
 
-Payoff and its ceiling, honestly sourced: 10.2x-11.7x measured on a 12P+4E Apple
-M4 for a per-vertex deformer sweep at N=10k-40k, bit-identical to serial. The
+Payoff and its ceiling, honestly sourced: 10.2x-11.7x measured on the REFERENCE
+machine (a 12P+4E Apple M4) for a per-vertex deformer sweep at N=10k-40k,
+bit-identical to serial. That is not necessarily the machine this run is on:
+size the pool from std::thread::hardware_concurrency() and never assume a core
+count or a P/E split -- the bench log tells you what it measured. The
 region runs underneath Maya's own EM pool. Our nodes are classified Serial --
 established via dbpeek, NOT by observing a compute on a non-main thread -- so
 they can be concurrent with other scheduling groups, and with 4-8 deformers

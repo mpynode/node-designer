@@ -123,14 +123,34 @@ H. GUARD + VERBATIM FALLBACK (safety + acceptance). When a fused / raw-pointer f
    stride/offset bug to the byte-identical original instead of a parity failure --
    worst case the fast path is skipped and the original runs. It is the single
    biggest safety + acceptance lever.
+I. PER-ROW DERIVED STATE (large when one input animates piecemeal). A cached
+   matrix whose row i depends only on row i of ONE input (a kernel/basis matrix
+   over points, a per-vertex table) is not all-or-nothing: on a key miss compare
+   that input ROW-WISE against the key that built the cache and rebuild only the
+   rows that differ. One moved vertex then costs one row, not Nn x M; every kept
+   row is the bit-identical output of unchanged inputs. Measured: rbfWrap
+   7.5 ms -> 2.1 ms at 1562 x 1562 with one vertex moving per tick.
+J. FUSE A BUILD INTO ITS CONSUMER when the built array is streamed exactly once
+   and NOT reused across evaluations (a kernel matrix consumed by one matmul):
+   compute each row in registers and consume it at once -- no materialised
+   array, no second pass. Size-dependent: at 8k x 8k this beat storing the
+   matrix; at 1.5k x 1.5k the per-row cache (I) wins 2x. Measure both.
+K. OUTPUT MESH REUSE (Maya side). When the output topology is unchanged
+   (byte-equal counts/indices), `MFnMesh::setPoints` on the mesh object already
+   in the output handle instead of `MFnMeshData::create` + `MFnMesh::create`
+   every tick. Guard on exact topology equality AND on MObject identity; rebuild
+   from scratch on any mismatch. ~200 us of a 750 us tick at 1.5k vertices.
 
 THREADING (one permitted shape, everything else is banned by CORRECTNESS): a
 parallel MAP -- deterministic per-element write into a PRE-SIZED container, each
 element a pure function of its index and read-only inputs, ZERO Maya API in the
 worker, on a persistent per-node pool joined before compute() returns. This is
-usually the LARGEST single win available: 10.2x-11.7x measured on a 12P+4E Apple
-M4 for a per-vertex deformer sweep at N=10k-40k, bit-identical to serial. Two
-measured facts change how you apply it:
+usually the LARGEST single win available: 10.2x-11.7x measured on the REFERENCE
+machine (a 12P+4E Apple M4) for a per-vertex deformer sweep at N=10k-40k,
+bit-identical to serial. That machine is not necessarily the one you are on:
+size the pool from std::thread::hardware_concurrency() at runtime and never
+assume a core count or a P/E-core split. Two measured facts change how you
+apply it:
   * The chunk cursor MUST be a member of the pool, NEVER file-scope. Maya's EM
     evaluates independent nodes concurrently, so two instances of the same
     compiled node can be inside one region at once and each rewinds the other's
@@ -143,7 +163,7 @@ Prefer a dynamic chunk cursor to an equal-block partition (+34-45%). Do NOT ship
 busy-spin pool -- it wins in isolation and collapses under load. Size gate: do not
 open a parallel region for a pass whose serial cost is under ~50 us -- a condvar
 region costs ~4.8 us at 2 threads, ~18.3 us at 8 and ~42.7 us at 16, i.e. it grows
-with thread count (measured on an idle Apple M4; treat as a FLOOR under
+with thread count (measured on the idle reference Apple M4; treat as a FLOOR under
 contention, since the region nests inside Maya's own EM pool).
 
 SCOPE: rewrite only the hot loops / the compute helpers. Do NOT edit the
