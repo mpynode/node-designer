@@ -11,7 +11,8 @@ from __future__ import annotations
 import unittest
 
 from mpynode.native.ai.optimizer import (
-    optimize_cpp, ParityVerdict, PARITY_PASS, PARITY_FAIL, PARITY_SKIP,
+    optimize_cpp, BenchmarkDiverged, ParityVerdict, PARITY_PASS, PARITY_FAIL,
+    PARITY_SKIP,
 )
 
 
@@ -511,6 +512,73 @@ class TestSubResolutionConfirmation(unittest.TestCase):
         res, n = self._run([1.0, 0.90], resolution_ms=0.5)
         self.assertTrue(res.accepted)                   # 1.0 ms is "big" here
         self.assertEqual(n, 2)
+
+
+class TestAcceptCheck(unittest.TestCase):
+    """``accept_check_fn`` is the last gate on a candidate about to be
+    accepted: the live binding re-times it against the incumbent on the
+    smallest bench scene. A reason rejects the round as ``regressed``; a
+    divergence there is ``bench-diverged``; ``None`` lets the accept through."""
+
+    def _run(self, check, **over):
+        kw = dict(
+            optimize_fn=lambda cpp: {"BASE": "C1", "C1": "C2"}[cpp],
+            fix_fn=lambda cpp, errs: cpp,
+            compile_fn=_compile_ok,
+            parity_fn=_parity(PARITY_PASS),
+            benchmark_fn=_bench({"BASE": 100.0, "C1": 50.0, "C2": 20.0}),
+            rounds=1, accept_check_fn=check,
+        )
+        kw.update(over)
+        return optimize_cpp("BASE", **kw)
+
+    def test_a_reason_rejects_the_round_as_regressed(self):
+        seen = []
+
+        def check(cand, best):
+            seen.append((cand, best))
+            return "slower on the small scene: 3.0 ms vs 1.0 ms"
+
+        res = self._run(check)
+        self.assertFalse(res.accepted)
+        self.assertEqual(res.best_cpp, "BASE")
+        self.assertEqual(res.ledger[-1].outcome, "regressed")
+        self.assertIn("small scene", res.ledger[-1].note)
+        self.assertAlmostEqual(res.ledger[-1].ms, 50.0)   # its frozen-scene time
+        self.assertEqual(seen, [("b:C1", "b:BASE")])       # candidate, incumbent
+
+    def test_none_lets_the_accept_through(self):
+        res = self._run(lambda cand, best: None)
+        self.assertTrue(res.accepted)
+        self.assertEqual(res.best_cpp, "C1")
+
+    def test_it_is_not_asked_about_a_candidate_that_was_not_faster(self):
+        seen = []
+        res = self._run(lambda c, b: seen.append((c, b)),
+                        benchmark_fn=_bench({"BASE": 100.0, "C1": 99.0}))
+        self.assertFalse(res.accepted)
+        self.assertEqual(seen, [])
+
+    def test_a_divergence_there_is_bench_diverged(self):
+        def check(cand, best):
+            raise BenchmarkDiverged("on the small scene: out maxerr 1")
+
+        res = self._run(check)
+        self.assertFalse(res.accepted)
+        self.assertEqual(res.ledger[-1].outcome, "bench-diverged")
+        self.assertIn("small scene", res.ledger[-1].note)
+
+    def test_the_incumbent_advances_with_each_accept(self):
+        seen = []
+        res = self._run(lambda c, b: seen.append((c, b)), rounds=2)
+        self.assertEqual(res.best_cpp, "C2")
+        self.assertEqual(seen, [("b:C1", "b:BASE"), ("b:C2", "b:C1")])
+
+    def test_a_regressed_round_ends_the_adaptive_loop(self):
+        res = self._run(lambda c, b: "slower", rounds=6)
+        self.assertEqual([r.outcome for r in res.ledger],
+                         ["baseline", "regressed", "regressed"])
+        self.assertIn("round 2 regressed", res.stop_reason)
 
 
 if __name__ == "__main__":

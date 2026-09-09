@@ -997,5 +997,102 @@ class TestVerifyWorkerEnvironment(unittest.TestCase):
         self.assertTrue(os.path.isdir(g["PROJECT_DIR"]))
 
 
+# ------------------------------------------------------- small-scene hold
+class TestSmallSceneHold(unittest.TestCase):
+    """When calibration climbs past the ladder's first rung, an accepted
+    candidate is re-timed there against the incumbent and rejected if it is
+    clearly slower. rbfWrapDeformer (2026-09-09): the design accepted at geo 90
+    dropped the H cache -- right at 8k vertices, 2x slower at 1.5k."""
+
+    def _runner(self, table, fps=None):
+        """median_ms by (geo, bundle); a fingerprint per bundle at the small
+        rung (default: identical) so the divergence check has data."""
+        calls = []
+
+        def runner(script, args, prefix, timeout):
+            geo, bundle = _geo_of(args), args[0]
+            calls.append((geo, bundle))
+            fp = (fps or {}).get(bundle) or {"out": {"kind": "double",
+                                                     "count": 1,
+                                                     "values": [1.0]}}
+            with open(_fp_path(args), "w") as fh:
+                json.dump(fp, fh)
+            ms = table.get((geo, bundle), table.get(geo))
+            return ({"ok": True, "median_ms": ms, "moved": ["a (double)"]},
+                    True, "")
+
+        runner.calls = calls
+        return runner
+
+    def _climbed(self, tmp, runner, state):
+        # geo 40 is under the floor for every bundle -> the gate froze at 90.
+        # Returns the adapters and how many timings calibration itself spent
+        # (its first rung IS geo 40), so the checks below count only their own.
+        ad = _adapters(tmp, runner, bench_state_out=state)
+        self.assertEqual(ad["benchmark_fn"]("/base"), 40.0)
+        self.assertEqual(state["rung"], [90, 2000])
+        return ad, len(runner.calls)
+
+    def test_nothing_to_check_when_the_scene_did_not_climb(self):
+        runner = self._runner({40: 40.0})
+        with tempfile.TemporaryDirectory() as tmp:
+            ad = _adapters(tmp, runner)
+            ad["benchmark_fn"]("/base")
+            n = len(runner.calls)
+            self.assertIsNone(ad["accept_check_fn"]("/cand", "/base"))
+        self.assertEqual(len(runner.calls), n)            # no extra timing
+
+    def test_a_candidate_clearly_slower_on_the_small_scene_is_rejected(self):
+        runner = self._runner({(40, "/base"): 5.0, (40, "/cand"): 8.0,
+                               90: 40.0})
+        state = {}
+        with tempfile.TemporaryDirectory() as tmp:
+            ad, n0 = self._climbed(tmp, runner, state)
+            why = ad["accept_check_fn"]("/cand", "/base")
+        self.assertIn("slower on the small scene", why)
+        self.assertIn("geo 40", why)
+        self.assertIn("8.000 ms", why)
+        self.assertEqual(state["small_rung"], [40, 512])
+        # Both were timed at the small rung, incumbent then candidate.
+        self.assertEqual(runner.calls[n0:], [(40, "/base"), (40, "/cand")])
+
+    def test_within_the_band_holds(self):
+        runner = self._runner({(40, "/base"): 5.0, (40, "/cand"): 5.3,
+                               90: 40.0})
+        with tempfile.TemporaryDirectory() as tmp:
+            ad, _n0 = self._climbed(tmp, runner, {})
+            self.assertIsNone(ad["accept_check_fn"]("/cand", "/base"))
+
+    def test_the_incumbent_is_timed_once_per_bundle(self):
+        runner = self._runner({(40, "/base"): 5.0, (40, "/c1"): 5.0,
+                               (40, "/c2"): 5.0, 90: 40.0})
+        with tempfile.TemporaryDirectory() as tmp:
+            ad, n0 = self._climbed(tmp, runner, {})
+            ad["accept_check_fn"]("/c1", "/base")
+            ad["accept_check_fn"]("/c2", "/base")
+        self.assertEqual(runner.calls[n0:],
+                         [(40, "/base"), (40, "/c1"), (40, "/c2")])
+
+    def test_a_divergence_on_the_small_scene_raises(self):
+        fps = {"/cand": {"out": {"kind": "double", "count": 1, "values": [2.0]}}}
+        runner = self._runner({(40, "/base"): 5.0, (40, "/cand"): 5.0,
+                               90: 40.0}, fps=fps)
+        with tempfile.TemporaryDirectory() as tmp:
+            ad, _n0 = self._climbed(tmp, runner, {})
+            with self.assertRaises(BenchmarkDiverged) as cm:
+                ad["accept_check_fn"]("/cand", "/base")
+        self.assertIn("small scene", str(cm.exception))
+
+    def test_the_report_names_the_small_rung(self):
+        from mpynode.native.toolchain import stage_report
+        line = stage_report._bench_sentence(
+            {"rung": [90, 2000], "floor_ms": 15.0, "perturbed": [],
+             "fingerprint": "checked (1 plug(s))", "small_rung": [40, 512]})
+        self.assertIn("re-timed against the incumbent on geo 40 / array 512",
+                      line)
+        self.assertEqual(stage_report._outcome_text("regressed"),
+                         "rejected: slower on the small scene")
+
+
 if __name__ == "__main__":
     unittest.main()

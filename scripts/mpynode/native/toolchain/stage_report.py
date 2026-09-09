@@ -67,6 +67,7 @@ _OUTCOME_MARK = {
     "unmeasurable": "rejected: unmeasurable",
     "bench-diverged": "rejected: outputs diverge from the baseline on the bench scene",
     "invalid-candidate": "rejected: invalid candidate",
+    "regressed": "rejected: slower on the small scene",
     "error": "rejected: error",
 }
 
@@ -127,6 +128,10 @@ def _bench_sentence(bench):
                                               if moved else "nothing"))
     if bench.get("fingerprint"):
         parts.append("outputs %s" % bench["fingerprint"])
+    sr = bench.get("small_rung")
+    if isinstance(sr, (list, tuple)) and len(sr) == 2:
+        parts.append("accepts re-timed against the incumbent on geo %s / array "
+                     "%s and rejected if slower there" % (sr[0], sr[1]))
     line = "; ".join(parts) + "."
     if bench.get("reason"):
         line += " %s." % bench["reason"].rstrip(".")

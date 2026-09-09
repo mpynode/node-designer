@@ -253,7 +253,10 @@ def optimize_cpp(baseline_cpp: str, *,
                  round_meta_fn: Optional[Callable[[], dict]] = None,
                  round_cb=None,
                  history_sink: Optional[Callable[[List[RoundRecord]],
-                                                 None]] = None) -> OptimizeResult:
+                                                 None]] = None,
+                 accept_check_fn: Optional[Callable[[str, str],
+                                                    Optional[str]]] = None
+                 ) -> OptimizeResult:
     """Optimize ``baseline_cpp`` under the parity+speed gate. See module docstring.
 
     Accepts a candidate iff it compiles, parity is PASS, its outputs on the bench
@@ -291,6 +294,15 @@ def optimize_cpp(baseline_cpp: str, *,
     rejected or errored -- with the source it produced. Rejected rounds matter
     most: "structure-of-arrays made it 2x slower" is only learnable if the
     attempt was kept. Both are optional and neither can fail a round.
+
+    ``accept_check_fn(candidate_bundle, incumbent_bundle) -> reason | None``
+    is an OPTIONAL last gate on a candidate that has already passed parity and
+    beaten the incumbent on the calibrated scene. The live binding re-times
+    both on the ladder's smallest scene when calibration climbed past it: a
+    design that wins at 8k vertices by dropping a cache can lose 2x at 1.5k
+    (rbfWrapDeformer, 2026-09-09). A reason rejects the round as
+    ``regressed``; a :class:`BenchmarkDiverged` raised from it is recorded as
+    ``bench-diverged``.
 
     ``history_sink(ledger_so_far)`` is called once per round, BEFORE
     ``optimize_fn``, with the rounds already resolved. Without it a round is
@@ -334,6 +346,7 @@ def optimize_cpp(baseline_cpp: str, *,
 
     best_cpp = baseline_cpp
     best_ms = baseline_ms
+    best_bundle = b_bundle
     rounds_run = 0
     stop_reason = ""
     # How the PREVIOUS round ended, for the stop rule: its outcome, and for an
@@ -474,6 +487,21 @@ def optimize_cpp(baseline_cpp: str, *,
                 note = ("confirmed twice under %g ms: %.3f / %.3f ms"
                         % (resolution_ms, ms, ms2))
                 ms = max(ms, ms2)
+            if ms < best_ms / min_speedup and accept_check_fn is not None:
+                try:
+                    why = accept_check_fn(bundle, best_bundle)
+                except BenchmarkDiverged as exc:
+                    _log(log_cb, "%sround %d: outputs diverge from the "
+                         "incumbent -- %s" % (tag, i, exc))
+                    _round("bench-diverged", note=str(exc), compiled=True,
+                           parity=PARITY_PASS, fix_rounds=fx, bundle=bundle)
+                    continue
+                if why:
+                    _log(log_cb, "%sround %d: regressed -- %s" % (tag, i, why))
+                    _round("regressed", note=why, compiled=True,
+                           parity=PARITY_PASS, ms=ms, fix_rounds=fx,
+                           bundle=bundle)
+                    continue
             if ms < best_ms / min_speedup:
                 speedup = baseline_ms / ms
                 gain = best_ms / ms
@@ -482,7 +510,7 @@ def optimize_cpp(baseline_cpp: str, *,
                 _round("accept", compiled=True, parity=PARITY_PASS, ms=ms,
                        speedup=speedup, fix_rounds=fx, bundle=bundle, note=note)
                 ended["gain"] = gain
-                best_cpp, best_ms = cand, ms
+                best_cpp, best_ms, best_bundle = cand, ms, bundle
             else:
                 _log(log_cb, "%sround %d: not faster (%.3f ms vs best %.3f ms)"
                      % (tag, i, ms, best_ms))

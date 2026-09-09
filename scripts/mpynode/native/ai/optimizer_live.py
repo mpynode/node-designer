@@ -65,6 +65,14 @@ _BENCH_LADDER = ((40, 512), (90, 2000), (140, 5000), (200, 10000),
 # Below this the run-to-run noise (~8% at 0.4 ms) swamps any real difference.
 _BENCH_FLOOR_MS = float(os.environ.get("MPYNODE_BENCH_FLOOR_MS", "15") or 15)
 
+# When calibration climbed past the ladder's first rung, an accepted candidate is
+# re-timed there against the incumbent and rejected if it is clearly SLOWER (by
+# more than this factor). A regression guard, not a win requirement: that rung is
+# under the noise floor by construction, so "not slower" is all it can judge.
+# rbfWrapDeformer (2026-09-09): the design accepted at geo 90 dropped the H cache
+# -- right at 8k vertices, 2x slower than the row cache at 1.5k.
+_SMALL_SCENE_REGRESS = 1.10
+
 # _measure returns this -- NOT None -- when the harness refused because every geo
 # output was empty: a too-small/degenerate scene, so the ladder should GROW. A
 # bare None means the benchmark FAILED and retrying it would fail six more times.
@@ -726,7 +734,10 @@ def make_adapters(spec: dict, out_dir: str, *,
                 baseline_ms=_agent_state["baseline_ms"],
                 budget_s=_optimize_cli_timeout(), log_cb=log_cb,
                 meta_out=_agent_state["round_meta"],
-                history=_agent_state["history"])
+                history=_agent_state["history"],
+                # What the gate's own benchmark moves per tick: the fact that
+                # decides what is cacheable, handed over instead of rediscovered.
+                perturbed=_bench.get("perturbed"))
         else:
             system, user = optimizer_knowledge.build_optimize_prompt(
                 cpp_text, spec, bench_hint=bench_hint)
@@ -962,6 +973,42 @@ def make_adapters(spec: dict, out_dir: str, *,
                 raise BenchmarkDiverged(why)
         return ms
 
+    def _accept_check(cand_bundle, best_bundle):
+        """Last gate on a candidate about to be accepted: does it hold on the
+        ladder's SMALLEST scene? Only when calibration climbed past that rung.
+        Returns a reason to reject, ``None`` to accept; raises
+        :class:`BenchmarkDiverged` when the two disagree on that scene."""
+        frozen = (_agent_state["geo"], _agent_state["array"])
+        small = _BENCH_LADDER[0]
+        if frozen[0] is None or tuple(frozen) == tuple(small):
+            return None
+        cache = _agent_state.setdefault("small", {})
+
+        def _at_small(bundle):
+            if bundle not in cache:
+                ms = _measure(bundle, small[0], small[1])
+                cache[bundle] = (ms if isinstance(ms, float) else None,
+                                 _agent_state["last_fp"])
+            return cache[bundle]
+
+        _bench["small_rung"] = [small[0], small[1]]
+        inc_ms, inc_fp = _at_small(best_bundle)
+        cand_ms, cand_fp = _at_small(cand_bundle)
+        if inc_ms is None or cand_ms is None:
+            return None                      # unmeasurable there: no verdict
+        if not _rng_node and inc_fp is not None and cand_fp is not None:
+            why = fingerprints_differ(inc_fp, cand_fp)
+            if why:
+                raise BenchmarkDiverged("on the small scene (geo %d / array %d)"
+                                        ": %s" % (small[0], small[1], why))
+        if cand_ms > inc_ms * _SMALL_SCENE_REGRESS:
+            return ("slower on the small scene (geo %d / array %d): %.3f ms vs "
+                    "the incumbent's %.3f ms" % (small[0], small[1], cand_ms,
+                                                inc_ms))
+        _log("[%s] small scene geo=%d array=%d: %.3f ms vs incumbent %.3f ms"
+             " -- holds" % (ntype, small[0], small[1], cand_ms, inc_ms))
+        return None
+
     ad = {
         # Every adapter that WAITS on something cancellable, wrapped so a Cancel
         # stops the run instead of being recorded as this round's error (see
@@ -972,6 +1019,7 @@ def make_adapters(spec: dict, out_dir: str, *,
         "compile_fn": compile_fn,
         "parity_fn": parity_fn or _parity,
         "benchmark_fn": _cancel_guard(benchmark_fn or _benchmark),
+        "accept_check_fn": _cancel_guard(_accept_check),
         # Cheap pre-check so a truncated / prose answer is never compiled, never
         # written over the .cpp, and never fed back into the fix round.
         "validate_fn": optimizer_knowledge.implausible_reason,
