@@ -765,6 +765,139 @@ def _native_family_outputs(spec):
     return {}
 
 
+def _side_effect_gated_enums(spec):
+    """Enum inputs whose value is handed to a blessed ``NativeSideEffect``
+    method -- ``mode = int(self.skinMode)`` ... ``self.sync_paint(mode)``.
+
+    Such a method is interactive-only and lowers to NOTHING in the compiled
+    node; on the interpreted node it does its job (twistSwingSkin's sync_paint
+    loads a weight set INTO weightList on a paint-mode switch). Randomising the
+    selector therefore makes the two nodes legitimately differ (FAIL 1.18 on a
+    node that matches at 0.0 in Live mode), so the generic drive holds such an
+    enum at its DEFAULT and says so. Detection is textual: the enum's plug is
+    either an argument of the call or assigned to a name that is."""
+    import re as _re
+    compute = spec.get("compute") or ""
+    enums = [nm for nm, m in (spec.get("inputs") or {}).items()
+             if isinstance(m, dict) and m.get("type") == "enum"]
+    if not enums or "self." not in compute:
+        return frozenset()
+    try:
+        from mpynode.native.compiler.kernels.blessed_transpile import (
+            side_effect_method_names)
+        methods = side_effect_method_names(spec)
+    except Exception:
+        methods = frozenset()
+    if not methods:
+        return frozenset()
+    # every argument identifier of every side-effect call
+    args = set()
+    for m in methods:
+        for call in _re.finditer(r"self\.%s\s*\(([^)]*)\)" % _re.escape(m), compute):
+            args.update(_re.findall(r"[A-Za-z_][A-Za-z_0-9.]*", call.group(1)))
+    held = set()
+    for nm in enums:
+        plug = "self." + nm
+        if plug in args:
+            held.add(nm)
+            continue
+        # `mode = int(self.skinMode)` and `mode` is an argument
+        for am in _re.finditer(r"^\s*([A-Za-z_]\w*)\s*=\s*[^\n=]*\bself\.%s\b"
+                               % _re.escape(nm), compute, _re.M):
+            if am.group(1) in args:
+                held.add(nm)
+                break
+    return frozenset(held)
+
+
+def _enum_default(meta, names):
+    """The declared default of an enum input as an index (0 when unknown)."""
+    dv = (meta or {}).get("default_value")
+    if isinstance(dv, bool):
+        return int(dv)
+    if isinstance(dv, (int, float)):
+        return int(dv)
+    if isinstance(dv, str) and names and dv in names:
+        return list(names).index(dv)
+    return 0
+
+
+def _held_enum_note(held, reason=""):
+    if not held:
+        return reason
+    note = ("enum(s) held at default because they select an interpreted-only "
+            "side effect: %s" % ", ".join(sorted(held)))
+    return (reason + " -- " + note) if reason else note
+
+
+def _skin_rig(cmds, tag):
+    """Two identical rest meshes (a cylinder "arm") sharing ONE 3-joint chain,
+    plus the smooth-bind weights and bind matrices a native skinCluster gives
+    that arm -- captured, then the native cluster is unbound so both meshes sit
+    at rest for the custom skin nodes. Mirrors
+    tools/harness/skin_twist_swing_dual_parity.build_and_capture, which proved
+    the twist/swing node on a real arm; this is the generic, asset-free arm.
+
+    Returns ``(mesh_a, mesh_b, joints, elbow, bind, weights)`` where ``bind`` is
+    one flat-16 matrix per joint and ``weights`` is ``nv x len(joints)``."""
+    xf = cmds.polyCylinder(r=0.5, h=6.0, sx=8, sy=6, sz=1, ch=False,
+                           name="skinA_" + tag)[0]
+    cmds.select(clear=True)
+    j0 = cmds.joint(p=(0.0, -3.0, 0.0), name="j0_" + tag)
+    j1 = cmds.joint(p=(0.0, 0.0, 0.0), name="j1_" + tag)
+    j2 = cmds.joint(p=(0.0, 3.0, 0.0), name="j2_" + tag)
+    joints = [j0, j1, j2]
+    sc = cmds.skinCluster(joints + [xf], toSelectedBones=True,
+                          maximumInfluences=2, obeyMaxInfluences=True)[0]
+    infl = list(cmds.skinCluster(sc, q=True, influence=True) or [])
+    order = [infl.index(j) for j in joints]
+    nv = cmds.polyEvaluate(xf, vertex=True)
+    weights = []
+    for vtx in range(nv):
+        w = cmds.skinPercent(sc, "%s.vtx[%d]" % (xf, vtx), q=True, value=True)
+        weights.append([float(w[order[i]]) for i in range(len(joints))])
+    bind = [list(cmds.getAttr("%s.bindPreMatrix[%d]" % (sc, infl.index(j))))
+            for j in joints]
+    cmds.skinCluster(sc, e=True, unbind=True)      # both meshes: exact rest
+    xb = cmds.duplicate(xf, name="skinB_" + tag)[0]
+    return xf, xb, joints, j1, bind, weights
+
+
+def _bind_skin_node(cmds, node, joints, bind, weights):
+    """Wire the shared joints into a custom skin node and paint the stock
+    weights on it -- identical on the interpreted and the compiled node."""
+    for i, jnt in enumerate(joints):
+        cmds.connectAttr(jnt + ".worldMatrix[0]", "%s.matrix[%d]" % (node, i),
+                         force=True)
+        cmds.setAttr("%s.bindPreMatrix[%d]" % (node, i),
+                     *[float(x) for x in bind[i]], type="matrix")
+    for vtx, row in enumerate(weights):
+        for j, wv in enumerate(row):
+            if wv:
+                cmds.setAttr("%s.weightList[%d].weights[%d]" % (node, vtx, j),
+                             float(wv))
+
+
+def _pose_skin_rig(cmds, elbow, random):
+    """Bend the elbow: a pose both skins see through the shared joints."""
+    cmds.setAttr(elbow + ".rotate", random.uniform(-60.0, 60.0),
+                 random.uniform(-30.0, 30.0), random.uniform(-45.0, 45.0),
+                 type="double3")
+
+
+def _skin_weight_values(weights, roll=0):
+    """A declared per-vertex-per-joint weight array (twistWeights /
+    swingWeights) sized N*J from the stock weights: the stock set as-is, or
+    rolled one influence over and renormalised so a second set differs."""
+    J = len(weights[0]) if weights else 0
+    out = []
+    for row in weights:
+        r = list(row[-roll % J:]) + list(row[:-roll % J]) if roll and J else list(row)
+        s = sum(r)
+        out.extend(float(x / s) if s > 1e-9 else float(x) for x in r)
+    return out
+
+
 def _unregistered_type(cmds, node, type_name, tol):
     """A skip row when ``createNode(type_name)`` did not make a ``type_name``.
 
@@ -2133,11 +2266,10 @@ def _verify_one(cmds, bundle_path, spec, maya=_MAYA_DEFAULT, deadline=None):
         # degenerate skins against each other: LBS collapses to zeros (a vacuous
         # "pass") and DQS's qr[0] throws IndexError and crashes Maya. Skip here;
         # tools/harness/skin_*_parity.py is the source of truth.
-        if base == "MPxSkinCluster" or src_type == "mPySkinCluster":
-            return {"ran": False, "pass": None, "maxerr": None, "tol": tol,
-                    "reason": "skinCluster needs a bound rig (wired joints + "
-                              "painted weights); generic point-compare skipped "
-                              "-- see tools/harness/skin_*_parity.py"}
+        # A skinCluster attached with a bare cmds.deformer has no joints and no
+        # weights (J=0): LBS collapses to zeros, DQS crashes on qr[0]. So a skin
+        # gets a bound arm instead of a sphere -- see _skin_rig.
+        is_skin = base == "MPxSkinCluster" or src_type == "mPySkinCluster"
         # A NURBS geometry filter (cvPositions/setCVPositions) only handles NURBS
         # output; the generic drive attaches a polygon SPHERE, on which the
         # interpreted node raises and the pointwise compare is a false fail. Defer
@@ -2161,7 +2293,10 @@ def _verify_one(cmds, bundle_path, spec, maya=_MAYA_DEFAULT, deadline=None):
         def sph(nm):
             return cmds.polySphere(r=1, sx=12, sy=12, ch=False, name=nm)[0]
 
-        sa = sph("origS_" + name)
+        if is_skin:
+            sa, sb, joints, elbow, bind, weights = _skin_rig(cmds, name)
+        else:
+            sa = sph("origS_" + name)
         da = cmds.deformer(sa, type=src_type)[0]
         w = mpynode.wrap_node(da)
         for nm, m in IN_META.items():
@@ -2174,13 +2309,21 @@ def _verify_one(cmds, bundle_path, spec, maya=_MAYA_DEFAULT, deadline=None):
         if (spec.get("init") or "").strip():
             w.set_init_expression(spec["init"])
         w.set_compute_expression(spec["compute"])
-        sb = sph("cmpS_" + name)
+        if not is_skin:
+            sb = sph("cmpS_" + name)
         db = cmds.deformer(sb, type=name)[0]
+        if is_skin:
+            for _nd in (da, db):
+                _bind_skin_node(cmds, _nd, joints, bind, weights)
+
+        held_enums = _side_effect_gated_enums(spec)
 
         def smp(nm, t):
             if t == "bool":
                 return random.choice([0, 1])
             if t == "enum":
+                if nm in held_enums:
+                    return _enum_default(IN_META.get(nm), ENUM.get(nm))
                 return random.randint(0, max(0, len(ENUM.get(nm, [])) - 1))
             if t in ("vector", "euler", "color"):
                 return [random.uniform(0.0, 1.0) for _ in range(3)]
@@ -2206,13 +2349,22 @@ def _verify_one(cmds, bundle_path, spec, maya=_MAYA_DEFAULT, deadline=None):
             env = random.uniform(0, 1)
             cmds.setAttr(da + ".envelope", env)
             cmds.setAttr(db + ".envelope", env)
+            if is_skin:
+                _pose_skin_rig(cmds, elbow, random)
+            weight_arrays = 0
             for a, m in IN_META.items():
                 t = m["type"]
                 if t in _NON_DRIVEABLE_IN or t in _GEO_IN_TYPES:
                     continue  # string/geo input: left at default (identical both)
                 if m.get("is_array"):
-                    vals = _array_values(t, K_ARR, random,
-                                         len(ENUM.get(a, [])) or 2)
+                    if is_skin and "weight" in a.lower() and t in ("double", "float"):
+                        # a declared per-vertex-per-joint weight set (N*J), not
+                        # K_ARR random floats
+                        vals = _skin_weight_values(weights, roll=weight_arrays)
+                        weight_arrays += 1
+                    else:
+                        vals = _array_values(t, K_ARR, random,
+                                             len(ENUM.get(a, [])) or 2)
                     _drive_array_input(cmds, (da, db), a, t, vals)
                 else:
                     _drive_input(cmds, (da, db), a, t, smp(a, t))
@@ -2220,7 +2372,8 @@ def _verify_one(cmds, bundle_path, spec, maya=_MAYA_DEFAULT, deadline=None):
             for i in range(min(len(pa), len(pb))):
                 maxerr = max(maxerr, abs(pa[i] - pb[i]))
         row = {"ran": True, "pass": maxerr <= tol, "maxerr": maxerr,
-               "tol": tol, "reason": _IMAGE_UNEXERCISED_NOTE if reads_img else ""}
+               "tol": tol, "reason": _held_enum_note(
+                   held_enums, _IMAGE_UNEXERCISED_NOTE if reads_img else "")}
         if _timing_enabled():
             # v1 scope: the deformer pair is bound to a fixed 12x12 sphere and its
             # pull marshals every vertex through Python, so a ratio measured here
@@ -2420,12 +2573,16 @@ def _verify_one(cmds, bundle_path, spec, maya=_MAYA_DEFAULT, deadline=None):
     for _nd in (orig, comp):
         bench_size_output_multis(cmds, _nd, spec, K_ARR)
 
+    held_enums = _side_effect_gated_enums(spec)
+
     def smp(t, nm):
         if t == "bool":
             return random.choice([0, 1])
         if t == "int":
             return random.randint(-6, 6)
         if t == "enum":
+            if nm in held_enums:
+                return _enum_default(IN_META.get(nm), ENUM.get(nm))
             return random.randint(0, max(0, len(ENUM.get(nm, [])) - 1))
         if t == "float2":
             # texture uvCoord: sample across a few tiles so u-v wrap/floor is
@@ -2639,6 +2796,7 @@ def _verify_one(cmds, bundle_path, spec, maya=_MAYA_DEFAULT, deadline=None):
         reason = ((reason + " -- " if reason else "")
                   + "%d string input(s) driven with generated fixtures: %s"
                   % (len(fixed), ", ".join(fixed)))
+    reason = _held_enum_note(held_enums, reason)
     if peeled:
         reason = ((reason + " -- " if reason else "")
                   + "verified with %d geo/string input(s) left at default "

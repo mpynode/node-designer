@@ -859,5 +859,93 @@ class TestDrivesRespectDeclaredRanges(unittest.TestCase):
         self.assertIsNone(_unregistered_type(Ok(), "b1", "brightContrastTex", 1e-4))
 
 
+class TestSkinParityHasARig(unittest.TestCase):
+    """A skinCluster attached with a bare deformer() has no joints and no
+    weights; the three skin templates were never compared pointwise."""
+
+    def test_bind_wires_every_joint_and_paints_nonzero_weights(self):
+        from mpynode.native.toolchain.verify import _bind_skin_node
+
+        conns, sets = [], []
+
+        class Cmds:
+            def connectAttr(self, s, d, **kw):
+                conns.append((s, d))
+
+            def setAttr(self, plug, *vals, **kw):
+                sets.append((plug, vals, kw.get("type")))
+
+        ident = [1.0, 0, 0, 0, 0, 1.0, 0, 0, 0, 0, 1.0, 0, 0, 0, 0, 1.0]
+        _bind_skin_node(Cmds(), "sk", ["j0", "j1"], [ident, ident],
+                        [[1.0, 0.0], [0.25, 0.75]])
+        self.assertEqual(conns, [("j0.worldMatrix[0]", "sk.matrix[0]"),
+                                 ("j1.worldMatrix[0]", "sk.matrix[1]")])
+        self.assertIn(("sk.bindPreMatrix[1]", tuple(ident), "matrix"), sets)
+        self.assertIn(("sk.weightList[1].weights[0]", (0.25,), None), sets)
+        self.assertIn(("sk.weightList[1].weights[1]", (0.75,), None), sets)
+        self.assertNotIn("sk.weightList[0].weights[1]", [s[0] for s in sets])  # zero: skipped
+
+    def test_weight_values_flatten_and_roll(self):
+        from mpynode.native.toolchain.verify import _skin_weight_values
+
+        W = [[1.0, 0.0, 0.0], [0.5, 0.5, 0.0]]
+        self.assertEqual(_skin_weight_values(W), [1.0, 0.0, 0.0, 0.5, 0.5, 0.0])
+        rolled = _skin_weight_values(W, roll=1)
+        self.assertEqual(rolled[:3], [0.0, 1.0, 0.0])
+        self.assertAlmostEqual(sum(rolled[3:]), 1.0)
+
+    def test_skin_branch_no_longer_skips(self):
+        import inspect
+        from mpynode.native.toolchain import verify
+
+        src = inspect.getsource(verify)
+        self.assertNotIn("skinCluster needs a bound rig", src)
+        self.assertIn("_skin_rig(cmds, name)", src)
+        self.assertIn("_pose_skin_rig(cmds, elbow, random)", src)
+
+
+class TestSideEffectSelectorsStayAtDefault(unittest.TestCase):
+    """twistSwingSkin's skinMode feeds sync_paint, an interpreted-only blessed
+    side effect that rewrites weightList on a paint-mode switch; randomising it
+    read as FAIL 1.18 on a node that matches at 0.0 in Live mode."""
+
+    _SPEC = {"mpy_type": "mPySkinCluster",
+             "inputs": {"skinMode": {"type": "enum", "default_value": 2,
+                                     "enum_names": ["Paint LBS", "Paint DQS", "Live"]},
+                        "twistAxis": {"type": "enum", "default_value": 0,
+                                      "enum_names": ["X", "Y", "Z"]}},
+             "compute": ("mode = int(self.skinMode)\n"
+                         "self.sync_paint(mode)\n"
+                         "axis = int(self.twistAxis)\n")}
+
+    def test_only_the_selector_of_the_side_effect_is_held(self):
+        from mpynode.native.toolchain import verify
+
+        with mock.patch("mpynode.native.compiler.kernels.blessed_transpile."
+                        "side_effect_method_names", return_value=frozenset({"sync_paint"})):
+            self.assertEqual(verify._side_effect_gated_enums(self._SPEC), {"skinMode"})
+
+    def test_direct_argument_form_and_no_side_effect(self):
+        from mpynode.native.toolchain import verify
+
+        direct = dict(self._SPEC, compute="self.sync_paint(self.skinMode)\n")
+        with mock.patch("mpynode.native.compiler.kernels.blessed_transpile."
+                        "side_effect_method_names", return_value=frozenset({"sync_paint"})):
+            self.assertEqual(verify._side_effect_gated_enums(direct), {"skinMode"})
+        with mock.patch("mpynode.native.compiler.kernels.blessed_transpile."
+                        "side_effect_method_names", return_value=frozenset()):
+            self.assertEqual(verify._side_effect_gated_enums(self._SPEC), frozenset())
+
+    def test_enum_default_and_note(self):
+        from mpynode.native.toolchain.verify import _enum_default, _held_enum_note
+
+        self.assertEqual(_enum_default({"default_value": 2}, ["a", "b", "c"]), 2)
+        self.assertEqual(_enum_default({"default_value": "b"}, ["a", "b", "c"]), 1)
+        self.assertEqual(_enum_default({}, ["a"]), 0)
+        self.assertIn("skinMode", _held_enum_note({"skinMode"}, ""))
+        self.assertEqual(_held_enum_note(set(), "x"), "x")
+        self.assertTrue(_held_enum_note({"m"}, "x").startswith("x -- "))
+
+
 if __name__ == "__main__":
     unittest.main()
