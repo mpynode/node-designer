@@ -1,6 +1,6 @@
 # mPyDnet -- compile report
 
-**Source node:** `dnet`  ·  **Base:** `MPxNode`  ·  **Generated:** 2026-09-08 22:12
+**Source node:** `dnet`  ·  **Base:** `MPxNode`  ·  **Generated:** 2026-09-08 23:28
 
 | stage | outcome |
 |---|---|
@@ -115,9 +115,9 @@ The rounds where the guess and the stopwatch disagreed. These are the transferab
 
 ## Verification
 
-* parity: **pass**  (maxerr 1.3969838619232178e-09, tol 0.0001)
+* parity: **pass**  (maxerr 8.149072527885437e-10, tol 0.0001)
 * compared on 23 of 30 input sets: on 7 the interpreted reference was non-idempotent (it carries state and re-runs its compute 2-3x per dgdirty where the compiled node runs once), so those cannot be lined up pointwise | authored @maya_test: 1/1 passed
-* speed: compiled 4.067 ms vs interpreted 30.663 ms (best of 3, geo 40 / array 512)
+* speed: compiled 6.352 ms vs interpreted 104.658 ms (best of 3, geo 40 / array 512)
 
 ## Files
 

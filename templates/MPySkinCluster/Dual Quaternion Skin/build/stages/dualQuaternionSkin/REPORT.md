@@ -1,6 +1,6 @@
 # dualQuaternionSkin -- compile report
 
-**Source node:** `dualQuaternionSkin`  ·  **Base:** `MPxSkinCluster`  ·  **Generated:** 2026-09-08 20:49
+**Source node:** `dualQuaternionSkin`  ·  **Base:** `MPxSkinCluster`  ·  **Generated:** 2026-09-08 23:29
 
 | stage | outcome |
 |---|---|
@@ -63,8 +63,8 @@ The rounds where the guess and the stopwatch disagreed. These are the transferab
 
 ## Verification
 
-* parity: **pass**
-* skinCluster needs a bound rig (wired joints + painted weights); generic point-compare skipped -- see tools/harness/skin_*_parity.py | authored @maya_test: 1/1 passed
+* parity: **pass**  (maxerr 0.0, tol 0.001)
+* authored @maya_test: 1/1 passed
 
 ## Files
 

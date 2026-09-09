@@ -39,7 +39,9 @@
           "count": 1,
           "passes": 1,
           "reason": ""
-        }
+        },
+        "generic_ran": false,
+        "reverified": "2026-09-08"
       },
       "spec": {
         "schema_version": 1,

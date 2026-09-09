@@ -2372,8 +2372,8 @@ def _verify_one(cmds, bundle_path, spec, maya=_MAYA_DEFAULT, deadline=None):
             for i in range(min(len(pa), len(pb))):
                 maxerr = max(maxerr, abs(pa[i] - pb[i]))
         row = {"ran": True, "pass": maxerr <= tol, "maxerr": maxerr,
-               "tol": tol, "reason": _held_enum_note(
-                   held_enums, _IMAGE_UNEXERCISED_NOTE if reads_img else "")}
+               "tol": tol, "reason": _IMAGE_UNEXERCISED_NOTE if reads_img else ""}
+        row["reason"] = _held_enum_note(held_enums, row["reason"])
         if _timing_enabled():
             # v1 scope: the deformer pair is bound to a fixed 12x12 sphere and its
             # pull marshals every vertex through Python, so a ratio measured here
@@ -3422,13 +3422,29 @@ def _scripts_root():
     return scripts_dir, root_dir
 
 
+def _worker_cwd(env):
+    """Where the verify worker runs: the payload's own (temp) directory.
+
+    ``mayapy -c`` puts the CWD on ``sys.path``, and Maya then executes any
+    ``userSetup.py`` it finds there as ``./userSetup.py`` -- with the repo root
+    as cwd (every tool and harness runs from it) that is the repo's own
+    userSetup.py, which dies on ``__file__`` and ABORTS the rest of the startup
+    chain. MEASURED 2026-09-08: the same fileTexture parity read 0.023 from the
+    worker and 3e-7 in-process, because the aborted chain never activated the
+    site-packages that supply PIL and the interpreted decode fell back to
+    MImage. A neutral cwd keeps the worker's environment the caller's."""
+    payload = (env or {}).get("MPYNODE_VERIFY_PAYLOAD")
+    d = os.path.dirname(payload) if payload else None
+    return d if d and os.path.isdir(d) else None
+
+
 def _default_verify_runner(argv, env, timeout):
     """Spawn the verify worker; returns the process return code. The worker
     writes its result JSON to ``env['MPYNODE_VERIFY_RESULT']`` -- this runner
-    does not parse stdout."""
+    does not parse stdout. Runs in :func:`_worker_cwd`, never the caller's cwd."""
     import subprocess
 
-    proc = subprocess.run(argv, env=env, timeout=timeout,
+    proc = subprocess.run(argv, env=env, timeout=timeout, cwd=_worker_cwd(env),
                           stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     return proc.returncode
 

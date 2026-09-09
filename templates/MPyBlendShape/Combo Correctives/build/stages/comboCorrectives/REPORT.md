@@ -1,6 +1,6 @@
 # comboCorrectives -- compile report
 
-**Source node:** `comboCorrectives`  ·  **Base:** `MPxDeformerNode`  ·  **Generated:** 2026-09-08 20:36
+**Source node:** `comboCorrectives`  ·  **Base:** `MPxDeformerNode`  ·  **Generated:** 2026-09-08 23:23
 
 | stage | outcome |
 |---|---|
@@ -87,8 +87,8 @@ The rounds where the guess and the stopwatch disagreed. These are the transferab
 
 ## Verification
 
-* parity: **pass**
-* verify could not run: Unable to create/find dependency node. | authored @maya_test: 2/2 passed
+* parity: **pass**  (maxerr 0.0, tol 0.001)
+* authored @maya_test: 2/2 passed
 
 ## Files
 

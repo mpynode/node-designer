@@ -1,6 +1,6 @@
 # fileTexture -- compile report
 
-**Source node:** `fileTexture`  ·  **Base:** `MPxNode`  ·  **Generated:** 2026-09-08 20:41
+**Source node:** `fileTexture`  ·  **Base:** `MPxNode`  ·  **Generated:** 2026-09-08 23:38
 
 | stage | outcome |
 |---|---|
@@ -68,8 +68,9 @@ The rounds where the guess and the stopwatch disagreed. These are the transferab
 
 ## Verification
 
-* parity: **pass**
-* reads an image file (MImage::readFromFile); output depends on external file state -- pointwise parity skipped (build verified to compile + load) | authored @maya_test: 1/1 passed
+* parity: **pass**  (maxerr 2.980232238769531e-07, tol 0.0058823529411764705)
+* 1 string input(s) driven with generated fixtures: fileName | authored @maya_test: 1/1 passed
+* speed: compiled 0.017 ms vs interpreted 0.187 ms (best of 3, geo 140 / array 5000)
 
 ## Files
 

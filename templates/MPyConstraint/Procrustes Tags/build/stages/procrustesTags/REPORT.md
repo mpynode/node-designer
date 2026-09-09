@@ -1,6 +1,6 @@
 # procrustesTags -- compile report
 
-**Source node:** `procrustesTags`  ·  **Base:** `MPxNode`  ·  **Generated:** 2026-09-08 22:11
+**Source node:** `procrustesTags`  ·  **Base:** `MPxNode`  ·  **Generated:** 2026-09-08 23:23
 
 | stage | outcome |
 |---|---|
@@ -70,8 +70,9 @@ The rounds where the guess and the stopwatch disagreed. These are the transferab
 
 ## Verification
 
-* parity: **pass**
-* outputs produced no comparable components across the sweep -- pointwise parity skipped (vacuous) | authored @maya_test: 1/1 passed
+* parity: **pass**  (maxerr 0.0, tol 0.0001)
+* verified with 1 geo/string input(s) left at default (unwired, could not be synthesized): clusterTags | authored @maya_test: 1/1 passed
+* speed: compiled 0.262 ms vs interpreted 27.058 ms (best of 3, geo 40 / array 512)
 
 ## Files
 

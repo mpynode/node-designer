@@ -1,6 +1,6 @@
 # gameOfLifeMesh -- compile report
 
-**Source node:** `gameOfLifeMesh`  ·  **Base:** `MPxNode`  ·  **Generated:** 2026-08-25 09:40
+**Source node:** `gameOfLifeMesh`  ·  **Base:** `MPxNode`  ·  **Generated:** 2026-09-08 23:24
 
 | stage | outcome |
 |---|---|
@@ -65,6 +65,8 @@ self.outMesh = Mesh(points=points, counts=counts, indices=indices)
 
 Parity gate: `authored+pointwise`. Every accepted round was re-checked against the interpreted Python before it was allowed to win. Where a node's generic pointwise parity SKIPS -- a deformer writes through the native `outputGeometry`, which the scalar harness cannot read -- the authored `@maya_test` is the ONLY gate, so treat those rows as behavioural checks rather than numerical ones.
 
+Bench scene: not recorded (ledger predates the scene record; no noise-floor gate, no per-tick perturbation check and no output fingerprint applied to these rounds).
+
 Baseline **--** -> best **--** (**1.00x**).
 
 | # | change | theme | predicted | measured | time | outcome |
@@ -73,8 +75,9 @@ Baseline **--** -> best **--** (**1.00x**).
 
 ## Verification
 
-* parity: **pass**
-* verify could not run: 'NoneType' object has no attribute 'add_input_attr' | authored @maya_test: 1/1 passed
+* parity: **pass**  (maxerr 0.0, tol 0.0001)
+* authored @maya_test: 1/1 passed
+* speed: compiled 0.044 ms vs interpreted 0.293 ms (best of 3, geo 140 / array 5000)
 
 ## Files
 

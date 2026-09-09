@@ -1,6 +1,6 @@
 # aimTransform -- compile report
 
-**Source node:** `aimTransform`  ·  **Base:** `MPxTransform`  ·  **Generated:** 2026-09-08 20:51
+**Source node:** `aimTransform`  ·  **Base:** `MPxTransform`  ·  **Generated:** 2026-09-08 23:29
 
 | stage | outcome |
 |---|---|
@@ -63,8 +63,9 @@ The rounds where the guess and the stopwatch disagreed. These are the transferab
 
 ## Verification
 
-* parity: **pass**
-* no scalar outputs to compare -- pointwise parity skipped (vacuous check) | authored @maya_test: 1/1 passed
+* parity: **pass**  (maxerr 0.0, tol 0.0001)
+* authored @maya_test: 1/1 passed
+* speed: compiled 0.018 ms vs interpreted 0.064 ms (best of 3, geo 140 / array 5000)
 
 ## Files
 

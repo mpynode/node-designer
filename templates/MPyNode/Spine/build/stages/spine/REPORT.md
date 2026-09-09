@@ -1,6 +1,6 @@
 # spine -- compile report
 
-**Source node:** `spine`  ·  **Base:** `MPxNode`  ·  **Generated:** 2026-09-08 22:14
+**Source node:** `spine`  ·  **Base:** `MPxNode`  ·  **Generated:** 2026-09-08 23:28
 
 | stage | outcome |
 |---|---|
@@ -125,8 +125,8 @@ The rounds where the guess and the stopwatch disagreed. These are the transferab
 
 ## Verification
 
-* parity: **pass**  (maxerr 0.0, tol 0.0001)
-* array output 'outputRotate' count diverged (Python 0 vs compiled 4) with a wired geometry input -- the interpreted reference could not evaluate the synthesized geometry headlessly (live MFn query); pointwise parity inconclusive -- skipped | authored @maya_test: 1/1 passed
+* parity: **FAIL**  (maxerr 0.04546562905909468, tol 0.0001)
+* authored @maya_test: 1/1 passed
 
 ## Files
 

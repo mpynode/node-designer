@@ -1,6 +1,6 @@
 # springChain -- compile report
 
-**Source node:** `springChain`  ·  **Base:** `MPxNode`  ·  **Generated:** 2026-09-08 22:14
+**Source node:** `springChain`  ·  **Base:** `MPxNode`  ·  **Generated:** 2026-09-08 23:28
 
 | stage | outcome |
 |---|---|
@@ -94,8 +94,8 @@ The rounds where the guess and the stopwatch disagreed. These are the transferab
 
 ## Verification
 
-* parity: **pass**
-* outputs produced no comparable components across the sweep -- pointwise parity skipped (vacuous) | authored @maya_test: 1/1 passed
+* parity: **pass**  (maxerr 0.14652301856921035, tol 0.0001)
+* compute carries state; the interpreted reference was non-idempotent on 13 of 30 input sets and the 17 comparable sets still diverged by 0.147 (tol 0.0001) -- with the two sides evaluated a different number of times that is a trajectory difference, not a port verdict; pointwise parity inconclusive (authored @maya_test is the parity gate) | authored @maya_test: 1/1 passed
 
 ## Files
 

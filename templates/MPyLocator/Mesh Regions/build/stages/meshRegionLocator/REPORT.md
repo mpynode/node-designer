@@ -1,6 +1,6 @@
 # meshRegionLocator -- compile report
 
-**Source node:** `meshRegions`  ·  **Base:** `MPxLocatorNode`  ·  **Generated:** 2026-08-25 09:39
+**Source node:** `meshRegions`  ·  **Base:** `MPxLocatorNode`  ·  **Generated:** 2026-09-08 23:24
 
 | stage | outcome |
 |---|---|
@@ -152,6 +152,8 @@ else:
 ## Optimization
 
 Parity gate: `authored+pointwise`. Every accepted round was re-checked against the interpreted Python before it was allowed to win. Where a node's generic pointwise parity SKIPS -- a deformer writes through the native `outputGeometry`, which the scalar harness cannot read -- the authored `@maya_test` is the ONLY gate, so treat those rows as behavioural checks rather than numerical ones.
+
+Bench scene: not recorded (ledger predates the scene record; no noise-floor gate, no per-tick perturbation check and no output fingerprint applied to these rounds).
 
 Baseline **--** -> best **--** (**1.00x**).
 

@@ -34,12 +34,12 @@
         "reason": "verified with 1 geo/string input(s) left at default (unwired, could not be synthesized): audioFile | authored @maya_test: 1/1 passed",
         "timing": {
           "measured": true,
-          "py_ms": 0.07691700011491776,
-          "cpp_ms": 0.005999929271638393,
+          "py_ms": 0.12949993833899498,
+          "cpp_ms": 0.010799849405884743,
           "n": 3,
           "truncated": false,
           "scene": "geo 140 / array 5000",
-          "ratio": 0.07800524282894816,
+          "ratio": 0.08339656021776418,
           "verdict": "below-floor",
           "rung": [
             140,
@@ -52,7 +52,9 @@
           "count": 1,
           "passes": 1,
           "reason": ""
-        }
+        },
+        "generic_ran": true,
+        "reverified": "2026-09-08"
       },
       "spec": {
         "schema_version": 1,

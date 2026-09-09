@@ -1,6 +1,6 @@
 # metaballs -- compile report
 
-**Source node:** `metaballs`  ·  **Base:** `MPxNode`  ·  **Generated:** 2026-09-08 20:43
+**Source node:** `metaballs`  ·  **Base:** `MPxNode`  ·  **Generated:** 2026-09-08 23:27
 
 | stage | outcome |
 |---|---|
@@ -54,8 +54,9 @@ The rounds where the guess and the stopwatch disagreed. These are the transferab
 
 ## Verification
 
-* parity: **pass**
-* verify could not run: 'NoneType' object has no attribute 'add_input_attr' | authored @maya_test: 1/1 passed
+* parity: **pass**  (maxerr 0.0, tol 0.0001)
+* authored @maya_test: 1/1 passed
+* speed: compiled 350.567 ms vs interpreted 38316.878 ms (best of 2, geo 40 / array 512)
 
 ## Files
 

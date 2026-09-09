@@ -26,12 +26,22 @@
       "verify": {
         "ran": true,
         "pass": true,
-        "maxerr": null,
-        "tol": 0.0,
-        "reason": "verify could not run: could not convert string to float: '44 52 41 47 20 4d 45 20 41 52 4f 55 4e 44 21 0a 58 3a 20 2d 30 2e 34 37 34 31 33 39 0a 59 3a 20 2d 33 2e 39 34 30 30 36 38 0a 5a 3a 20 33 2e 32 38 37 38 30 38 0a' | authored @maya_test: 1/1 passed",
+        "maxerr": 0.0,
+        "tol": 0.0001,
+        "reason": "authored @maya_test: 1/1 passed",
         "timing": {
-          "measured": false,
-          "reason": "not timed -- generic parity did not pass for this node, so there is no trustworthy pair to measure (verify could not run: could not convert string to float: '44 52 41 47 20 4d 45 20 41 52 4f 55 4e 44 21 0a 58 3a 20 2d 30 2e 34 37 34 31 33 39 0a 59 3a 20 2d 33 2e 39 34 30 30 36 38 0a 5a 3a 20 33 2e 32 38 37 38 30 38 0a')"
+          "measured": true,
+          "py_ms": 0.14070002362132072,
+          "cpp_ms": 0.015099998563528061,
+          "n": 3,
+          "truncated": false,
+          "scene": "geo 140 / array 5000",
+          "ratio": 0.10732051192946573,
+          "verdict": "below-floor",
+          "rung": [
+            140,
+            5000
+          ]
         },
         "authored_test": {
           "ran": true,
@@ -39,7 +49,9 @@
           "count": 1,
           "passes": 1,
           "reason": ""
-        }
+        },
+        "generic_ran": true,
+        "reverified": "2026-09-08"
       },
       "spec": {
         "schema_version": 1,

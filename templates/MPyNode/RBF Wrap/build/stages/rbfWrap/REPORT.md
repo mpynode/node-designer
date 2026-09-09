@@ -1,6 +1,6 @@
 # rbfWrap -- compile report
 
-**Source node:** `rbfWrap`  ·  **Base:** `MPxNode`  ·  **Generated:** 2026-09-08 20:46
+**Source node:** `rbfWrap`  ·  **Base:** `MPxNode`  ·  **Generated:** 2026-09-08 23:28
 
 | stage | outcome |
 |---|---|
@@ -86,8 +86,9 @@ The rounds where the guess and the stopwatch disagreed. These are the transferab
 
 ## Verification
 
-* parity: **pass**
-* verify could not run: float() argument must be a string or a real number, not 'NoneType' | authored @maya_test: 1/1 passed
+* parity: **pass**  (maxerr 0.0, tol 0.0001)
+* authored @maya_test: 1/1 passed
+* speed: compiled 63.788 ms vs interpreted 470.771 ms (best of 3, geo 40 / array 512)
 
 ## Files
 

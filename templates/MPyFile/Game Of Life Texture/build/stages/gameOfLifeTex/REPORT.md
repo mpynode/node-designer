@@ -1,6 +1,6 @@
 # gameOfLifeTex -- compile report
 
-**Source node:** `gameOfLifeTex`  ·  **Base:** `MPxNode`  ·  **Generated:** 2026-09-08 20:42
+**Source node:** `gameOfLifeTex`  ·  **Base:** `MPxNode`  ·  **Generated:** 2026-09-08 23:24
 
 | stage | outcome |
 |---|---|
@@ -93,9 +93,9 @@ The rounds where the guess and the stopwatch disagreed. These are the transferab
 
 ## Verification
 
-* parity: **pass**  (maxerr 0.0, tol 0.0001)
+* parity: **pass**  (maxerr 0.0, tol 0.0058823529411764705)
 * verified with 1 geo/string input(s) left at default (unwired, could not be synthesized): bakePath | authored @maya_test: 1/1 passed
-* speed: compiled 0.009 ms vs interpreted 0.133 ms (best of 3, geo 140 / array 5000)
+* speed: compiled 0.021 ms vs interpreted 0.296 ms (best of 3, geo 140 / array 5000)
 
 ## Files
 

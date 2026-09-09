@@ -27,12 +27,22 @@
       "verify": {
         "ran": true,
         "pass": true,
-        "maxerr": null,
-        "tol": 0.0,
-        "reason": "reads an image file (MImage::readFromFile); output depends on external file state -- pointwise parity skipped (build verified to compile + load) | authored @maya_test: 1/1 passed",
+        "maxerr": 2.980232238769531e-07,
+        "tol": 0.0058823529411764705,
+        "reason": "1 string input(s) driven with generated fixtures: fileName | authored @maya_test: 1/1 passed",
         "timing": {
-          "measured": false,
-          "reason": "not timed -- generic parity did not pass for this node, so there is no trustworthy pair to measure (reads an image file (MImage::readFromFile); output depends on external file state -- pointwise parity skipped (build verified to compile + load))"
+          "measured": true,
+          "py_ms": 0.18729991279542446,
+          "cpp_ms": 0.016900012269616127,
+          "n": 3,
+          "truncated": false,
+          "scene": "geo 140 / array 5000",
+          "ratio": 0.09022968573442378,
+          "verdict": "below-floor",
+          "rung": [
+            140,
+            5000
+          ]
         },
         "authored_test": {
           "ran": true,
@@ -40,7 +50,9 @@
           "count": 1,
           "passes": 1,
           "reason": ""
-        }
+        },
+        "generic_ran": true,
+        "reverified": "2026-09-08"
       },
       "spec": {
         "schema_version": 1,

@@ -26,17 +26,17 @@
       "verify": {
         "ran": true,
         "pass": true,
-        "maxerr": 1.3969838619232178e-09,
+        "maxerr": 8.149072527885437e-10,
         "tol": 0.0001,
         "reason": "compared on 23 of 30 input sets: on 7 the interpreted reference was non-idempotent (it carries state and re-runs its compute 2-3x per dgdirty where the compiled node runs once), so those cannot be lined up pointwise | authored @maya_test: 1/1 passed",
         "timing": {
           "measured": true,
-          "py_ms": 30.663082958199084,
-          "cpp_ms": 4.067207919433713,
+          "py_ms": 104.6575999353081,
+          "cpp_ms": 6.351599935442209,
           "n": 3,
           "truncated": false,
           "scene": "geo 40 / array 512",
-          "ratio": 0.1326418457328072,
+          "ratio": 0.06068933301899067,
           "verdict": "ok",
           "rung": [
             40,
@@ -49,7 +49,9 @@
           "count": 1,
           "passes": 1,
           "reason": ""
-        }
+        },
+        "generic_ran": true,
+        "reverified": "2026-09-08"
       },
       "spec": {
         "schema_version": 1,

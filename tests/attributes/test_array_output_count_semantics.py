@@ -333,10 +333,11 @@ class TestAnExcusedShrinkIsNeverSilent(unittest.TestCase):
                 "verify.py:%d returns a reason that never passes through "
                 "_with_stale_tail -- an excused shrink is silent on that path"
                 % n.lineno)
-        self.assertEqual(len(checked), 5,
-                         "expected the 5 post-sweep reason returns "
+        self.assertEqual(len(checked), 6,
+                         "expected the 6 post-sweep reason returns "
                          "(count_mismatch / diverge-ceiling / carry-drift / "
-                         "vacuous / normal), found %r" % (checked,))
+                         "carry-inconclusive / vacuous / normal), found %r"
+                         % (checked,))
 
 
 class TestTheRealFailuresAreUntouched(unittest.TestCase):

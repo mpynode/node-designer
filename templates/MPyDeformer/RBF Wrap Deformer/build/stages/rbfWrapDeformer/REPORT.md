@@ -1,6 +1,6 @@
 # rbfWrapDeformer -- compile report
 
-**Source node:** `rbfWrapDeformer`  ·  **Base:** `MPxDeformerNode`  ·  **Generated:** 2026-09-08 20:39
+**Source node:** `rbfWrapDeformer`  ·  **Base:** `MPxDeformerNode`  ·  **Generated:** 2026-09-08 23:23
 
 | stage | outcome |
 |---|---|
@@ -101,8 +101,8 @@ The rounds where the guess and the stopwatch disagreed. These are the transferab
 
 ## Verification
 
-* parity: **pass**
-* verify could not run: Unable to create/find dependency node. | authored @maya_test: 1/1 passed
+* parity: **pass**  (maxerr 0.0, tol 0.001)
+* authored @maya_test: 1/1 passed
 
 ## Files
 

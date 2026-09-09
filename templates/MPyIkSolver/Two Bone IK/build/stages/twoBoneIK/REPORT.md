@@ -1,6 +1,6 @@
 # twoBoneIK -- compile report
 
-**Source node:** `twoBoneIK`  ·  **Base:** `MPxIkSolverNode`  ·  **Generated:** 2026-08-25 09:56
+**Source node:** `twoBoneIK`  ·  **Base:** `MPxIkSolverNode`  ·  **Generated:** 2026-09-08 23:24
 
 | stage | outcome |
 |---|---|
@@ -100,6 +100,8 @@ if len(joints) >= 3:
 
 Parity gate: `authored+pointwise`. Every accepted round was re-checked against the interpreted Python before it was allowed to win. Where a node's generic pointwise parity SKIPS -- a deformer writes through the native `outputGeometry`, which the scalar harness cannot read -- the authored `@maya_test` is the ONLY gate, so treat those rows as behavioural checks rather than numerical ones.
 
+Bench scene: not recorded (ledger predates the scene record; no noise-floor gate, no per-tick perturbation check and no output fingerprint applied to these rounds).
+
 Baseline **0.006 ms** -> best **0.006 ms** (**1.00x**).
 
 | # | change | theme | predicted | measured | time | outcome |
@@ -122,8 +124,8 @@ The rounds where the guess and the stopwatch disagreed. These are the transferab
 
 ## Verification
 
-* parity: **FAIL**
-* verify could not run: 'NoneType' object has no attribute 'set_init_expression' | authored @maya_test FAILED: test_two_bone_ik: knee barely bends (rotateX=0.00)
+* parity: **FAIL**  (maxerr 2.6645352591003757e-15, tol 0.001)
+* authored @maya_test FAILED: test_two_bone_ik: knee barely bends (rotateX=0.00)
 
 ## Files
 

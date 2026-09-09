@@ -570,18 +570,12 @@ class TestParityReadsEveryOutputKind(unittest.TestCase):
         from mpynode.native.toolchain import verify
 
         with mock.patch.object(verify, "_read_geo_components", return_value=None):
-            with mock.patch.dict("sys.modules", {"maya": mock.MagicMock(),
-                                                 "maya.api": mock.MagicMock(),
-                                                 "maya.api.OpenMaya": mock.MagicMock()}):
-                self.assertEqual(verify._geo_output_components("n", "outGeo", "mesh"),
-                                 [0.0])
+            self.assertEqual(verify._geo_output_components("n", "outGeo", "mesh"),
+                             [0.0])
         geo = {"pts": [1.0, 2.0, 3.0, 4.0, 5.0, 6.0], "topo": ((4, 4), (0, 1, 2, 3), ()),
                "attrs": [0.5]}
         with mock.patch.object(verify, "_read_geo_components", return_value=geo):
-            with mock.patch.dict("sys.modules", {"maya": mock.MagicMock(),
-                                                 "maya.api": mock.MagicMock(),
-                                                 "maya.api.OpenMaya": mock.MagicMock()}):
-                comps = verify._geo_output_components("n", "outGeo", "mesh")
+            comps = verify._geo_output_components("n", "outGeo", "mesh")
         self.assertEqual(comps[0], 2.0)                  # two points
         self.assertEqual(comps[1:5], [2.0, 8.0, 4.0, 6.0])  # counts / connects sigs
         self.assertEqual(comps[-1], 0.5)                 # attrs ride along
@@ -945,6 +939,47 @@ class TestSideEffectSelectorsStayAtDefault(unittest.TestCase):
         self.assertIn("skinMode", _held_enum_note({"skinMode"}, ""))
         self.assertEqual(_held_enum_note(set(), "x"), "x")
         self.assertTrue(_held_enum_note({"m"}, "x").startswith("x -- "))
+
+
+class TestVerifyWorkerEnvironment(unittest.TestCase):
+    """`mayapy -c` puts the cwd on sys.path; at the repo root Maya then runs
+    ./userSetup.py, which died on __file__ and aborted the startup chain, so the
+    worker's environment differed from the caller's (fileTexture parity 0.023
+    in the worker, 3e-7 in-process)."""
+
+    def test_worker_runs_in_the_payload_directory(self):
+        import subprocess
+        from mpynode.native.toolchain import verify
+
+        with tempfile.TemporaryDirectory() as d:
+            payload = os.path.join(d, "payload.json")
+            open(payload, "w").write("{}")
+            env = {"MPYNODE_VERIFY_PAYLOAD": payload}
+            self.assertEqual(verify._worker_cwd(env), d)
+            seen = {}
+
+            def fake_run(argv, **kw):
+                seen.update(kw)
+                return mock.Mock(returncode=0)
+
+            with mock.patch.object(subprocess, "run", fake_run):
+                verify._default_verify_runner(["mayapy", "-c", "x"], env, 10)
+            self.assertEqual(seen.get("cwd"), d)
+        self.assertIsNone(verify._worker_cwd({}))
+
+    def test_repo_usersetup_survives_exec_without___file__(self):
+        from tests import _paths
+
+        path = os.path.join(_paths.ROOT, "userSetup.py")
+        if not os.path.isfile(path):
+            # /userSetup.py is gitignored: a per-machine copy (INSTALL.md), so
+            # this only checks the copy on a machine that has one.
+            self.skipTest("no local userSetup.py at the repo root")
+        src = open(path, encoding="utf-8").read()
+        g = {"__name__": "userSetup_probe"}          # no __file__, like Maya's exec
+        with mock.patch.dict(os.environ, {"MPYNODE_USE_STUDIO": "1"}):
+            exec(compile(src, "./userSetup.py", "exec"), g)
+        self.assertTrue(os.path.isdir(g["PROJECT_DIR"]))
 
 
 if __name__ == "__main__":

@@ -28,12 +28,22 @@
       "verify": {
         "ran": true,
         "pass": true,
-        "maxerr": null,
-        "tol": 0.0,
-        "reason": "verify could not run: 'NoneType' object has no attribute 'add_input_attr' | authored @maya_test: 1/1 passed",
+        "maxerr": 0.0,
+        "tol": 0.0001,
+        "reason": "reads an image file (MImage::readFromFile): the harness drives its path input(s) EMPTY, so geometry parity above is real but the image/texture-colour path is NOT exercised | authored @maya_test: 1/1 passed",
         "timing": {
-          "measured": false,
-          "reason": "not timed -- generic parity did not pass for this node, so there is no trustworthy pair to measure (verify could not run: 'NoneType' object has no attribute 'add_input_attr')"
+          "measured": true,
+          "py_ms": 2290.2032998390496,
+          "cpp_ms": 0.36019994877278805,
+          "n": 3,
+          "truncated": false,
+          "scene": "geo 40 / array 512",
+          "ratio": 0.00015727859129279138,
+          "verdict": "ok",
+          "rung": [
+            40,
+            512
+          ]
         },
         "authored_test": {
           "ran": true,
@@ -41,7 +51,9 @@
           "count": 1,
           "passes": 1,
           "reason": ""
-        }
+        },
+        "generic_ran": true,
+        "reverified": "2026-09-08"
       },
       "spec": {
         "schema_version": 1,

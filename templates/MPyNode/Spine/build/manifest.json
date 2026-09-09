@@ -25,13 +25,13 @@
       "missing_includes": [],
       "verify": {
         "ran": true,
-        "pass": true,
-        "maxerr": 0.0,
+        "pass": false,
+        "maxerr": 0.04546562905909468,
         "tol": 0.0001,
-        "reason": "array output 'outputRotate' count diverged (Python 0 vs compiled 4) with a wired geometry input -- the interpreted reference could not evaluate the synthesized geometry headlessly (live MFn query); pointwise parity inconclusive -- skipped | authored @maya_test: 1/1 passed",
+        "reason": "authored @maya_test: 1/1 passed",
         "timing": {
           "measured": false,
-          "reason": "not timed -- generic parity did not pass for this node, so there is no trustworthy pair to measure (array output 'outputRotate' count diverged (Python 0 vs compiled 4) with a wired geometry input -- the interpreted reference could not evaluate the synthesized geometry headlessly (live MFn query); pointwise parity inconclusive -- skipped)"
+          "reason": "not timed -- generic parity did not pass for this node, so there is no trustworthy pair to measure (skipped)"
         },
         "authored_test": {
           "ran": true,
@@ -39,7 +39,9 @@
           "count": 1,
           "passes": 1,
           "reason": ""
-        }
+        },
+        "generic_ran": true,
+        "reverified": "2026-09-08"
       },
       "spec": {
         "schema_version": 1,

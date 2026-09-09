@@ -1,6 +1,6 @@
 # rippleSurf -- compile report
 
-**Source node:** `rippleSurf`  ·  **Base:** `MPxNode`  ·  **Generated:** 2026-09-08 20:49
+**Source node:** `rippleSurf`  ·  **Base:** `MPxNode`  ·  **Generated:** 2026-09-08 23:29
 
 | stage | outcome |
 |---|---|
@@ -60,8 +60,9 @@ The rounds where the guess and the stopwatch disagreed. These are the transferab
 
 ## Verification
 
-* parity: **pass**
-* verify could not run: 'NoneType' object has no attribute 'add_input_attr' | authored @maya_test: 1/1 passed
+* parity: **pass**  (maxerr 0.0, tol 0.0001)
+* authored @maya_test: 1/1 passed
+* speed: compiled 0.021 ms vs interpreted 0.218 ms (best of 3, geo 140 / array 5000)
 
 ## Files
 

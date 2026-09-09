@@ -1,6 +1,6 @@
 # hexAttribute -- compile report
 
-**Source node:** `hexAttribute`  ·  **Base:** `MPxNode`  ·  **Generated:** 2026-09-08 20:44
+**Source node:** `hexAttribute`  ·  **Base:** `MPxNode`  ·  **Generated:** 2026-09-08 23:28
 
 | stage | outcome |
 |---|---|
@@ -49,8 +49,9 @@ The rounds where the guess and the stopwatch disagreed. These are the transferab
 
 ## Verification
 
-* parity: **pass**
-* verify could not run: could not convert string to float: '44 52 41 47 20 4d 45 20 41 52 4f 55 4e 44 21 0a 58 3a 20 2d 30 2e 34 37 34 31 33 39 0a 59 3a 20 2d 33 2e 39 34 30 30 36 38 0a 5a 3a 20 33 2e 32 38 37 38 30 38 0a' | authored @maya_test: 1/1 passed
+* parity: **pass**  (maxerr 0.0, tol 0.0001)
+* authored @maya_test: 1/1 passed
+* speed: compiled 0.015 ms vs interpreted 0.141 ms (best of 3, geo 140 / array 5000)
 
 ## Files
 

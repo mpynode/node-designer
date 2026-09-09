@@ -1,6 +1,6 @@
 # ouch -- compile report
 
-**Source node:** `ouch`  ·  **Base:** `MPxNode`  ·  **Generated:** 2026-09-08 20:45
+**Source node:** `ouch`  ·  **Base:** `MPxNode`  ·  **Generated:** 2026-09-08 23:28
 
 | stage | outcome |
 |---|---|
@@ -129,7 +129,7 @@ The rounds where the guess and the stopwatch disagreed. These are the transferab
 
 * parity: **pass**  (maxerr 0.0, tol 0.0001)
 * verified with 1 geo/string input(s) left at default (unwired, could not be synthesized): audioFile | authored @maya_test: 1/1 passed
-* speed: compiled 0.006 ms vs interpreted 0.077 ms (best of 3, geo 140 / array 5000)
+* speed: compiled 0.011 ms vs interpreted 0.129 ms (best of 3, geo 140 / array 5000)
 
 ## Files
 

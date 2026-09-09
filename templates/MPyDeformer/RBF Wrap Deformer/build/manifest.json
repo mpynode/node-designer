@@ -26,12 +26,12 @@
       "verify": {
         "ran": true,
         "pass": true,
-        "maxerr": null,
-        "tol": 0.0,
-        "reason": "verify could not run: Unable to create/find dependency node. | authored @maya_test: 1/1 passed",
+        "maxerr": 0.0,
+        "tol": 0.001,
+        "reason": "authored @maya_test: 1/1 passed",
         "timing": {
           "measured": false,
-          "reason": "not timed -- generic parity did not pass for this node, so there is no trustworthy pair to measure (verify could not run: Unable to create/find dependency node.\n)"
+          "reason": "deformer timing not implemented -- the parity pair is bound to a fixed 12x12 sphere and its pull marshals every vertex through Python"
         },
         "authored_test": {
           "ran": true,
@@ -39,7 +39,9 @@
           "count": 1,
           "passes": 1,
           "reason": ""
-        }
+        },
+        "generic_ran": true,
+        "reverified": "2026-09-08"
       },
       "spec": {
         "schema_version": 1,

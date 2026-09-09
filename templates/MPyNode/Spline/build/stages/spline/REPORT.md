@@ -1,6 +1,6 @@
 # spline -- compile report
 
-**Source node:** `spline`  ·  **Base:** `MPxNode`  ·  **Generated:** 2026-09-08 22:14
+**Source node:** `spline`  ·  **Base:** `MPxNode`  ·  **Generated:** 2026-09-08 23:28
 
 | stage | outcome |
 |---|---|
@@ -70,8 +70,9 @@ The rounds where the guess and the stopwatch disagreed. These are the transferab
 
 ## Verification
 
-* parity: **pass**
-* outputs produced no comparable components across the sweep -- pointwise parity skipped (vacuous) | authored @maya_test: 1/1 passed
+* parity: **pass**  (maxerr 0.0, tol 0.0001)
+* on 13 of 30 input sets the interpreted reference raised mid-compute (an input the node rejects, e.g. a negative degree) and left stale outputs; those sets were excluded | authored @maya_test: 1/1 passed
+* speed: compiled 0.084 ms vs interpreted 31.222 ms (best of 3, geo 40 / array 512)
 
 ## Files
 
