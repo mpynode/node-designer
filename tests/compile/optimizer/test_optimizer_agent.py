@@ -100,6 +100,21 @@ class TestBuildWorkspace(_Ws):
         self.assertIn("10000", task)
         self.assertIn("200", task)
 
+    def test_task_states_what_moves_between_ticks(self):
+        # The fact that decides what is cacheable. rbfWrap's 74x round came
+        # from knowing the bench moved ONE vertex of each cage per tick.
+        _p, task = oa.build_workspace(
+            _SPEC, self.ws, _CPP,
+            perturbed=["deformCage <- cageShape.vtx[0]", "weight[0] (float)"])
+        self.assertIn("deformCage <- cageShape.vtx[0]", task)
+        self.assertIn("weight[0] (float)", task)
+        self.assertIn("HOLDS", task)
+        self.assertNotIn("not recorded yet", task)
+
+    def test_task_says_when_the_moved_list_is_unknown(self):
+        _p, task = oa.build_workspace(_SPEC, self.ws, _CPP)
+        self.assertIn("not recorded yet", task)
+
     def test_task_names_the_absolute_path_of_the_file_to_edit(self):
         # The engine keeps its own scratch <name>.cpp in the PARENT directory.
         # Naming the target by bare name once cost a whole run: the agent

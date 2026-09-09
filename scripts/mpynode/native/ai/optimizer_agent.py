@@ -266,7 +266,7 @@ The benchmark drives every input at scale and times the whole `compute()`:
 * typed geometry inputs are a `polySphere(sx=sy={geo})` -- roughly {verts} verts
 * every array input is filled with **{array} elements**
 * one tick = `dgdirty(node)` then pull, median of {iters}
-
+{moved_block}
 Pick the algorithm that wins at THOSE sizes. The right structure for 10 000
 points is not the right one for 100, and the ratio between the two numbers above
 decides whether per-query work or per-input-element work dominates.
@@ -559,11 +559,40 @@ measure.
 """
 
 
+def _moved_block(perturbed):
+    """The workload line that says what the harness CHANGES between ticks.
+
+    The single most useful fact about the workload: work derived only from
+    inputs that hold is a cache hit waiting to be taken, work derived from an
+    input that moves runs every tick, and a whole-buffer key misses on one
+    moved vertex. rbfWrap's 74x round (2026-09-09) came from knowing exactly
+    this; an agent not told it spends its first cycles reading the harness to
+    find out. ``None`` = the gate has not measured yet (say so, do not guess).
+    """
+    if perturbed is None:
+        return ("* what changes between ticks: not recorded yet -- run "
+                "`./bench.sh` once and read its\n  `moved` list before deciding "
+                "what to cache\n")
+    if not perturbed:
+        return ("* between ticks NOTHING moves -- every tick would be a cache "
+                "hit, so the harness\n  refuses to time this scene\n")
+    items = ", ".join("`%s`" % m for m in perturbed)
+    return ("* between ticks the harness MOVES: %s -- every other input HOLDS "
+            "its value.\n  Work derived only from inputs that hold is a cache "
+            "hit waiting to be taken (see\n  Caching below); work derived from "
+            "one that moves runs every tick, and a single\n  moved vertex "
+            "misses a whole-buffer key -- key per row where the dependency is "
+            "per\n  row.\n" % items)
+
+
 def build_workspace(spec, ws_dir, cpp_text, *, maya=None, ntype=None,
                     spec_path=None, bench_array=512, bench_geo=40,
                     bench_iters=9, baseline_ms=None, budget_s=None,
-                    history=None):
-    """Create the agent's workspace and return ``(cpp_path, task_prompt)``."""
+                    history=None, perturbed=None):
+    """Create the agent's workspace and return ``(cpp_path, task_prompt)``.
+
+    ``perturbed`` is the gate's list of what its benchmark moves between ticks
+    (``bench_state["perturbed"]``), rendered into the workload section."""
     from ..compiler import build_scripts
     from ..toolchain import toolchain
 
@@ -612,6 +641,7 @@ def build_workspace(spec, ws_dir, cpp_text, *, maya=None, ntype=None,
         init_block=init_block,
         budget_block=budget_block,
         history_block=render_history_block(history),
+        moved_block=_moved_block(perturbed),
         portability=PORTABILITY_RULE,
         geo=int(bench_geo), verts="{:,}".format(verts),
         array=int(bench_array), iters=int(bench_iters), cpp_path=cpp_path,
@@ -658,7 +688,7 @@ def optimize_with_agent(spec, ws_dir, cpp_text, agent_fn, *, maya=None,
                         ntype=None, spec_path=None, bench_array=512,
                         bench_geo=40, bench_iters=9, baseline_ms=None,
                         budget_s=None, log_cb=None, meta_out=None,
-                        history=None):
+                        history=None, perturbed=None):
     """Run the agent over ``cpp_text`` in ``ws_dir``; return the edited source.
 
     Returns ``cpp_text`` unchanged if the agent failed, left nothing usable, or
@@ -673,7 +703,8 @@ def optimize_with_agent(spec, ws_dir, cpp_text, agent_fn, *, maya=None,
     cpp_path, task = build_workspace(
         spec, ws_dir, cpp_text, maya=maya, ntype=ntype, spec_path=spec_path,
         bench_array=bench_array, bench_geo=bench_geo, bench_iters=bench_iters,
-        baseline_ms=baseline_ms, budget_s=budget_s, history=history)
+        baseline_ms=baseline_ms, budget_s=budget_s, history=history,
+        perturbed=perturbed)
     guarded = _guarded_paths(ws_dir)
     before_digest = _digests(guarded)
     before = cpp_text
