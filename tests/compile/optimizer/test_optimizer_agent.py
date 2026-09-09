@@ -115,6 +115,22 @@ class TestBuildWorkspace(_Ws):
         _p, task = oa.build_workspace(_SPEC, self.ws, _CPP)
         self.assertIn("not recorded yet", task)
 
+    def test_a_texture_node_benches_and_is_told_about_the_bake(self):
+        # The gate times a texture node on a VP2 bake; the agent's bench.sh must
+        # run the SAME action or it optimises a texel nobody scores.
+        _p, task = oa.build_workspace(_SPEC, self.ws, _CPP, bench_mode="bake",
+                                      bake_source=2048)
+        bench = self._read("bench.sh")
+        self.assertIn("--mode bake", bench)
+        self.assertIn("--bake-source 2048", bench)
+        self.assertIn("TEXTURE node", task)
+        self.assertIn("2048x2048", task)
+
+    def test_a_compute_node_benches_without_bake_flags(self):
+        _p, task = oa.build_workspace(_SPEC, self.ws, _CPP)
+        self.assertNotIn("--mode", self._read("bench.sh"))
+        self.assertNotIn("TEXTURE node", task)
+
     def test_task_names_the_absolute_path_of_the_file_to_edit(self):
         # The engine keeps its own scratch <name>.cpp in the PARENT directory.
         # Naming the target by bare name once cost a whole run: the agent

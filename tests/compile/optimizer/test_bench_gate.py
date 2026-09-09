@@ -1112,10 +1112,83 @@ class TestSmallSceneHold(unittest.TestCase):
         line = stage_report._bench_sentence(
             {"rung": [90, 2000], "floor_ms": 15.0, "perturbed": [],
              "fingerprint": "checked (1 plug(s))", "small_rung": [40, 512]})
-        self.assertIn("re-timed against the incumbent on geo 40 / array 512",
-                      line)
+        self.assertIn("re-timed against the incumbent on the smallest scene "
+                      "(geo density 40 / array length 512)", line)
         self.assertEqual(stage_report._outcome_text("regressed"),
                          "rejected: slower on the small scene")
+
+
+# ------------------------------------------------------------ texture bake
+class TestTextureNodesAreTimedOnABake(unittest.TestCase):
+    """Compute mode times one texel of a texture node (4-8 us -- every mPyFile
+    template shipped as a noise-floor accept and came back unmeasurable in every
+    sweep). A texture-classified spec (mpy_type mPyFile) is calibrated on the
+    bake ladder instead: an ogsRender of the node on a plane, source image
+    grown 1024 -> 2048 -> 4096 until the frame clears the floor."""
+
+    _TEX = dict(_SPEC, mpy_type="mPyFile")
+
+    def _tex_adapters(self, tmp, runner, **over):
+        kw = dict(complete_fn=lambda system, user: "x", run_step=runner)
+        kw.update(over)
+        return optimizer_live.make_adapters(self._TEX, tmp, **kw)
+
+    def test_a_texture_node_is_measured_in_bake_mode(self):
+        seen, state = [], {}
+
+        def runner(script, args, prefix, timeout):
+            seen.append(list(args))
+            return ({"ok": True, "median_ms": 40.0}, True, "")
+
+        with tempfile.TemporaryDirectory() as tmp:
+            ad = self._tex_adapters(tmp, runner, bench_state_out=state)
+            self.assertEqual(ad["benchmark_fn"]("/b"), 40.0)
+        a = seen[0]
+        self.assertIn("--mode", a)
+        self.assertEqual(a[a.index("--mode") + 1], "bake")
+        self.assertEqual(int(a[a.index("--bake-source") + 1]), 1024)
+        self.assertEqual(state["rung"], ["bake", 1024])
+
+    def test_the_bake_ladder_grows_the_source_until_the_floor(self):
+        sizes, state = [], {}
+
+        def runner(script, args, prefix, timeout):
+            px = int(args[args.index("--bake-source") + 1])
+            sizes.append(px)
+            return ({"ok": True, "median_ms": 5.0 if px < 4096 else 22.0}, True, "")
+
+        with tempfile.TemporaryDirectory() as tmp:
+            ad = self._tex_adapters(tmp, runner, bench_state_out=state)
+            self.assertEqual(ad["benchmark_fn"]("/b"), 22.0)
+            # the small-scene guard re-times on the ladder's first rung
+            n0 = len(sizes)
+            ad["accept_check_fn"]("/cand", "/b")
+        self.assertEqual(sizes[:3], [1024, 2048, 4096])
+        self.assertEqual(state["rung"], ["bake", 4096])
+        self.assertEqual(sizes[n0:], [1024, 1024])
+        self.assertEqual(state["small_rung"], ["bake", 1024])
+
+    def test_a_compute_node_never_sees_bake_mode(self):
+        seen = []
+
+        def runner(script, args, prefix, timeout):
+            seen.append(list(args))
+            return ({"ok": True, "median_ms": 40.0}, True, "")
+
+        with tempfile.TemporaryDirectory() as tmp:
+            ad = _adapters(tmp, runner)
+            ad["benchmark_fn"]("/b")
+        self.assertNotIn("--mode", seen[0])
+
+    def test_the_report_names_the_bake(self):
+        from mpynode.native.toolchain import stage_report
+        line = stage_report._bench_sentence(
+            {"rung": ["bake", 2048], "floor_ms": 15.0, "perturbed": ["gain (float)"],
+             "fingerprint": "checked (1 plug(s))", "small_rung": ["bake", 1024]})
+        self.assertIn("VP2 bake of a 2048px source image", line)
+        self.assertIn("smallest scene (VP2 bake of a 1024px source image)", line)
+        self.assertEqual(stage_report._rung_text([90, 2000]),
+                         "geo density 90 / array length 2000")
 
 
 if __name__ == "__main__":

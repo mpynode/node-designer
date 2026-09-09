@@ -62,6 +62,18 @@ _BENCHMARK_SCRIPT = os.path.join(_HARNESS_DIR, "benchmark_node.py")
 _BENCH_LADDER = ((40, 512), (90, 2000), (140, 5000), (200, 10000),
                  (300, 10000), (400, 20000))
 
+# TEXTURE nodes (mPyFile) are timed on a VP2 bake of the node on a plane
+# (benchmark_node.py --mode bake), not one texel dgeval: in compute mode every
+# one of them reads 4-8 us, which is why all four shipped as noise-floor accepts
+# and came back "unmeasurable" in every sweep since. The bake grid tracks the
+# SOURCE image, so this ladder grows the source until a frame clears the floor.
+# A rung is ("bake", source_px); the compute ladder's rungs are (geo, array).
+_BAKE_LADDER = (("bake", 1024), ("bake", 2048), ("bake", 4096))
+
+
+def _rung_is_bake(rung):
+    return bool(rung) and rung[0] == "bake"
+
 # Below this the run-to-run noise (~8% at 0.4 ms) swamps any real difference.
 _BENCH_FLOOR_MS = float(os.environ.get("MPYNODE_BENCH_FLOOR_MS", "15") or 15)
 
@@ -632,6 +644,9 @@ def make_adapters(spec: dict, out_dir: str, *,
     # ``bench_state_out`` lets the caller keep it past this factory.
     _bench = bench_state_out if bench_state_out is not None else {}
     _rng_node = _spec_uses_rng(spec)
+    # The same classification verify.py uses for the parity gate.
+    _bake_node = (spec.get("mpy_type") == "mPyFile")
+    _ladder = _BAKE_LADDER if _bake_node else _BENCH_LADDER
     _status = status_out if status_out is not None else {}
     _status.setdefault("rounds", 0)
     _status.setdefault("candidates", 0)
@@ -728,8 +743,15 @@ def make_adapters(spec: dict, out_dir: str, *,
             out = optimizer_agent.optimize_with_agent(
                 spec, agent_ws, cpp_text, agent, maya=maya, ntype=ntype,
                 spec_path=spec_path,
-                bench_array=(_agent_state["array"] or bench_array),
-                bench_geo=(_agent_state["geo"] or bench_geo),
+                # A bake node's frozen rung is ("bake", source_px): the agent's
+                # bench.sh must render the same bake, not time a texel.
+                bench_array=(bench_array if _bake_node
+                             else (_agent_state["array"] or bench_array)),
+                bench_geo=(bench_geo if _bake_node
+                           else (_agent_state["geo"] or bench_geo)),
+                bench_mode=("bake" if _bake_node else "compute"),
+                bake_source=((_agent_state["array"] or _BAKE_LADDER[0][1])
+                             if _bake_node else None),
                 bench_iters=bench_iters,
                 baseline_ms=_agent_state["baseline_ms"],
                 budget_s=_optimize_cli_timeout(), log_cb=log_cb,
@@ -846,7 +868,14 @@ def make_adapters(spec: dict, out_dir: str, *,
         except OSError:
             pass
         args += ["--fingerprint-out", fp_path]
-        if spec_path:
+        if geo == "bake":
+            # A bake rung: the timed action is an ogsRender of the node on a
+            # plane; the scene is still spec-seeded at the default sizes.
+            args += ["--mode", "bake", "--bake-source", arr]
+            if spec_path:
+                args += ["--spec", spec_path,
+                         "--bench-array", bench_array, "--bench-geo", bench_geo]
+        elif spec_path:
             args += ["--spec", spec_path,
                      "--bench-array", arr, "--bench-geo", geo]
         if out_plug:                     # explicit override only
@@ -908,20 +937,20 @@ def make_adapters(spec: dict, out_dir: str, *,
         candidate against a baseline taken at a different scene size would be
         meaningless. Sizes track the external harness's S -> L regimes.
         """
-        for geo, arr in _BENCH_LADDER:
+        for geo, arr in _ladder:
             ms = _measure(bundle, geo, arr)
             if ms is _EMPTY_OUTPUT:
                 # Not a failure -- the scene is too small for this node to
                 # produce anything, so climb. A crash below still aborts at once;
                 # retrying THAT would burn six mayapy launches to fail the same.
-                _log("[%s] bench scene geo=%d array=%d -> output EMPTY; "
+                _log("[%s] bench scene geo=%s array=%s -> output EMPTY; "
                      "growing" % (ntype, geo, arr))
                 continue
             if ms is None:
                 return None, geo, arr
             if ms >= _BENCH_FLOOR_MS:
                 return ms, geo, arr
-            if (geo, arr) == _BENCH_LADDER[-1]:
+            if (geo, arr) == _ladder[-1]:
                 # Still under the floor at the LARGEST scene. Run-to-run noise
                 # (~8% at 0.4 ms, anything at 2 us) would decide a 1.05x gate,
                 # and it did: 12 of 28 accepted nodes were judged on baselines
@@ -935,14 +964,14 @@ def make_adapters(spec: dict, out_dir: str, *,
                 _bench["below_floor"] = True
                 _bench["reason"] = (
                     "baseline %.3f ms is below the %.0f ms noise floor even at "
-                    "the largest bench scene (geo=%d array=%d); measured anyway "
+                    "the largest bench scene (geo=%s array=%s); measured anyway "
                     "-- every accept must clear 1.15x on two independent timings"
                     % (ms, _BENCH_FLOOR_MS, geo, arr))
                 _log("[%s] %s" % (ntype, _bench["reason"]))
                 return ms, geo, arr
-            _log("[%s] bench scene geo=%d array=%d -> %.3f ms; too small to "
+            _log("[%s] bench scene geo=%s array=%s -> %.3f ms; too small to "
                  "optimize against, growing" % (ntype, geo, arr, ms))
-        return None, bench_geo, bench_array
+        return None, _ladder[0][0], _ladder[0][1]
 
     def _benchmark(bundle):
         if _agent_state["geo"] is None:
@@ -951,7 +980,7 @@ def make_adapters(spec: dict, out_dir: str, *,
             _bench["rung"] = [geo, arr]
             _bench["floor_ms"] = _BENCH_FLOOR_MS
             if ms is not None:
-                _log("[%s] bench scene geo=%d array=%d -> %.3f ms baseline"
+                _log("[%s] bench scene geo=%s array=%s -> %.3f ms baseline"
                      % (ntype, geo, arr, ms))
                 _agent_state["baseline_ms"] = ms
                 # The baseline's outputs on the frozen scene: every candidate
@@ -986,7 +1015,7 @@ def make_adapters(spec: dict, out_dir: str, *,
         Returns a reason to reject, ``None`` to accept; raises
         :class:`BenchmarkDiverged` when the two disagree on that scene."""
         frozen = (_agent_state["geo"], _agent_state["array"])
-        small = _BENCH_LADDER[0]
+        small = _ladder[0]
         if frozen[0] is None or tuple(frozen) == tuple(small):
             return None
         cache = _agent_state.setdefault("small", {})
@@ -1006,13 +1035,13 @@ def make_adapters(spec: dict, out_dir: str, *,
         if not _rng_node and inc_fp is not None and cand_fp is not None:
             why = fingerprints_differ(inc_fp, cand_fp)
             if why:
-                raise BenchmarkDiverged("on the small scene (geo %d / array %d)"
+                raise BenchmarkDiverged("on the small scene (geo %s / array %s)"
                                         ": %s" % (small[0], small[1], why))
         if cand_ms > inc_ms * _SMALL_SCENE_REGRESS:
-            return ("slower on the small scene (geo %d / array %d): %.3f ms vs "
+            return ("slower on the small scene (geo %s / array %s): %.3f ms vs "
                     "the incumbent's %.3f ms" % (small[0], small[1], cand_ms,
                                                 inc_ms))
-        _log("[%s] small scene geo=%d array=%d: %.3f ms vs incumbent %.3f ms"
+        _log("[%s] small scene geo=%s array=%s: %.3f ms vs incumbent %.3f ms"
              " -- holds" % (ntype, small[0], small[1], cand_ms, inc_ms))
         return None
 

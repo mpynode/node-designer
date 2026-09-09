@@ -119,8 +119,7 @@ def _bench_sentence(bench):
                 "output fingerprint applied to these rounds).")
     rung = bench.get("rung") or [None, None]
     moved = bench.get("perturbed")
-    parts = ["Bench scene: geo density %s / array length %s" % tuple(
-                 "?" if x is None else x for x in (list(rung) + [None, None])[:2])]
+    parts = ["Bench scene: %s" % _rung_text(rung)]
     if bench.get("floor_ms") is not None:
         parts.append("noise floor %s ms" % _fmt_num(bench["floor_ms"]))
     if moved is not None:
@@ -130,8 +129,8 @@ def _bench_sentence(bench):
         parts.append("outputs %s" % bench["fingerprint"])
     sr = bench.get("small_rung")
     if isinstance(sr, (list, tuple)) and len(sr) == 2:
-        parts.append("accepts re-timed against the incumbent on geo %s / array "
-                     "%s and rejected if slower there" % (sr[0], sr[1]))
+        parts.append("accepts re-timed against the incumbent on the smallest "
+                     "scene (%s) and rejected if slower there" % _rung_text(sr))
     if bench.get("below_floor"):
         parts.append("baseline under the noise floor at the largest scene, so "
                      "every accept had to clear 1.15x on two independent timings")
@@ -143,6 +142,16 @@ def _bench_sentence(bench):
 
 def _fmt_num(v):
     return ("%g" % v) if isinstance(v, (int, float)) else str(v)
+
+
+def _rung_text(rung):
+    """A ladder rung in words. Compute rungs are (geo density, array length);
+    a texture node's rungs are ("bake", source px) -- a VP2 bake of the node."""
+    r = (list(rung) if isinstance(rung, (list, tuple)) else [None, None]) + [None, None]
+    if r[0] == "bake":
+        return "VP2 bake of a %spx source image" % ("?" if r[1] is None else r[1])
+    return "geo density %s / array length %s" % tuple(
+        "?" if x is None else x for x in r[:2])
 
 
 def _remeasured_short(rec):

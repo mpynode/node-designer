@@ -128,16 +128,23 @@ def _agent_bench_lock_env():
 
 
 def _bench_sh(name, ntype, mayapy, ws, spec_path, bench_array, bench_geo,
-              bench_iters):
+              bench_iters, bench_mode="compute", bake_source=None):
     """A single command the agent can run to get one number back.
 
     Builds first (so it can never measure a stale bundle) and runs the benchmark
     in a FRESH mayapy -- Maya cannot reload a plug-in in-process, so measuring
     twice in one session would silently re-measure the first build.
+
+    ``bench_mode="bake"`` (texture nodes) times a VP2 bake of a
+    ``bake_source``-px image instead of one texel dgeval -- the SAME action the
+    gate measures, or the agent would optimise a workload nobody scores.
     """
     root = _project_root()
     args = ['"$HERE/%s.bundle"' % name, ntype,
             "--iters", str(int(bench_iters))]
+    if bench_mode == "bake":
+        args += ["--mode", "bake",
+                 "--bake-source", str(int(bake_source or 1024))]
     if spec_path:
         args += ["--spec", '"%s"' % spec_path,
                  "--bench-array", str(int(bench_array)),
@@ -266,7 +273,7 @@ The benchmark drives every input at scale and times the whole `compute()`:
 * typed geometry inputs are a `polySphere(sx=sy={geo})` -- roughly {verts} verts
 * every array input is filled with **{array} elements**
 * one tick = `dgdirty(node)` then pull, median of {iters}
-{moved_block}
+{bake_block}{moved_block}
 Pick the algorithm that wins at THOSE sizes. The right structure for 10 000
 points is not the right one for 100, and the ratio between the two numbers above
 decides whether per-query work or per-input-element work dominates.
@@ -585,14 +592,28 @@ def _moved_block(perturbed):
             "per\n  row.\n" % items)
 
 
+def _bake_block(bench_mode, bake_source):
+    """The workload line for a TEXTURE node: what is timed is a VP2 bake."""
+    if bench_mode != "bake":
+        return ""
+    px = int(bake_source or 1024)
+    return ("* this is a TEXTURE node: the benchmark renders a VP2 BAKE of the "
+            "node on a plane from a\n  %dx%d source image (`ogsRender`), not one "
+            "texel -- the cost that matters is the\n  per-texel sampling over the "
+            "whole bake grid, not compute()'s single-sample path\n" % (px, px))
+
+
 def build_workspace(spec, ws_dir, cpp_text, *, maya=None, ntype=None,
                     spec_path=None, bench_array=512, bench_geo=40,
                     bench_iters=9, baseline_ms=None, budget_s=None,
-                    history=None, perturbed=None):
+                    history=None, perturbed=None, bench_mode="compute",
+                    bake_source=None):
     """Create the agent's workspace and return ``(cpp_path, task_prompt)``.
 
     ``perturbed`` is the gate's list of what its benchmark moves between ticks
-    (``bench_state["perturbed"]``), rendered into the workload section."""
+    (``bench_state["perturbed"]``), rendered into the workload section.
+    ``bench_mode="bake"`` / ``bake_source`` describe a texture node's bake
+    benchmark; bench.sh and the workload section follow it."""
     from ..compiler import build_scripts
     from ..toolchain import toolchain
 
@@ -618,7 +639,8 @@ def build_workspace(spec, ws_dir, cpp_text, *, maya=None, ntype=None,
     bench_path = os.path.join(ws_dir, "bench.sh")
     with open(bench_path, "w", newline="", encoding="utf-8") as fh:
         fh.write(_bench_sh(name, ntype, toolchain.mayapy_path(maya), ws_dir,
-                           spec_path, bench_array, bench_geo, bench_iters))
+                           spec_path, bench_array, bench_geo, bench_iters,
+                           bench_mode=bench_mode, bake_source=bake_source))
     _chmod_x(bench_path)
 
     init = (spec.get("init") or "").strip()
@@ -642,6 +664,7 @@ def build_workspace(spec, ws_dir, cpp_text, *, maya=None, ntype=None,
         budget_block=budget_block,
         history_block=render_history_block(history),
         moved_block=_moved_block(perturbed),
+        bake_block=_bake_block(bench_mode, bake_source),
         portability=PORTABILITY_RULE,
         geo=int(bench_geo), verts="{:,}".format(verts),
         array=int(bench_array), iters=int(bench_iters), cpp_path=cpp_path,
@@ -688,7 +711,8 @@ def optimize_with_agent(spec, ws_dir, cpp_text, agent_fn, *, maya=None,
                         ntype=None, spec_path=None, bench_array=512,
                         bench_geo=40, bench_iters=9, baseline_ms=None,
                         budget_s=None, log_cb=None, meta_out=None,
-                        history=None, perturbed=None):
+                        history=None, perturbed=None, bench_mode="compute",
+                        bake_source=None):
     """Run the agent over ``cpp_text`` in ``ws_dir``; return the edited source.
 
     Returns ``cpp_text`` unchanged if the agent failed, left nothing usable, or
@@ -704,7 +728,7 @@ def optimize_with_agent(spec, ws_dir, cpp_text, agent_fn, *, maya=None,
         spec, ws_dir, cpp_text, maya=maya, ntype=ntype, spec_path=spec_path,
         bench_array=bench_array, bench_geo=bench_geo, bench_iters=bench_iters,
         baseline_ms=baseline_ms, budget_s=budget_s, history=history,
-        perturbed=perturbed)
+        perturbed=perturbed, bench_mode=bench_mode, bake_source=bake_source)
     guarded = _guarded_paths(ws_dir)
     before_digest = _digests(guarded)
     before = cpp_text
