@@ -800,6 +800,48 @@ _MSVC_CXXFLAGS = ["/nologo", "/std:c++17", "/O2", "/fp:precise",
                   "/EHsc", "/MD", "/bigobj", "/utf-8"]
 
 
+def msvc_link_byproducts(out_plugin: str, one_shot: bool = False) -> List[str]:
+    """Files an MSVC link leaves behind that nothing ever loads.
+
+    LINK writes an import library and an export file for any DLL that exports
+    symbols -- ours export initializePlugin/uninitializePlugin. ``cl`` picks
+    their name itself, ``/implib:<first .obj>.lib``, RELATIVE TO THE CWD: a
+    mega build left ``mPyDnet.lib`` + ``mPyDnet.exp`` beside the template, the
+    programmatic build left the same pair in Maya's working directory, and one
+    suite run left 29 such files at the repo root (MEASURED 2026-09-08). The
+    one-shot ``cl /LD src.cpp`` also drops ``src.obj`` in the CWD.
+
+    :func:`compile_to_plugin_cmd` and :func:`link_plugin_cmd` now pin
+    ``/IMPLIB:<plugin base>.lib`` (LINK names the .exp after the .lib) and the
+    one-shot form pins ``/Fo<plugin base>.obj``; this lists exactly those paths
+    so a caller can remove them after the link. The three ``build.bat``
+    emitters do the same in batch with a trailing ``del``.
+    """
+    base = os.path.splitext(out_plugin)[0]
+    out = [base + ".lib", base + ".exp"]
+    if one_shot:
+        out.append(base + ".obj")
+    return out
+
+
+def remove_msvc_link_byproducts(out_plugin: str,
+                                one_shot: bool = False) -> List[str]:
+    """Delete :func:`msvc_link_byproducts`; returns the paths actually removed.
+
+    Safe everywhere: off MSVC nothing exists to remove, and after a failed link
+    whatever LINK got to write goes too. Best effort -- a locked file is left
+    behind rather than turning a successful build into a failure.
+    """
+    removed = []
+    for p in msvc_link_byproducts(out_plugin, one_shot):
+        try:
+            os.remove(p)
+        except OSError:
+            continue
+        removed.append(p)
+    return removed
+
+
 def compile_to_plugin_cmd(compiler: str, src: str, out_plugin: str, *,
                           include_dir: str, lib_dir: str, libs: List[str],
                           os_name: Optional[str] = None,
@@ -831,11 +873,17 @@ def compile_to_plugin_cmd(compiler: str, src: str, out_plugin: str, *,
         cmd += _msvc_defines(osn, frag=False)
         if qt and maya:
             cmd += qt_compile_flags(maya, osn)
-        cmd += ["/I", include_dir, src, "/link", "/LIBPATH:" + lib_dir]
+        # /Fo and /IMPLIB: see msvc_link_byproducts(). Without them `cl /LD`
+        # drops <src>.obj in the CWD and hands LINK `/implib:<src>.lib` (which
+        # also decides the .exp name) -- CWD again. Both now land beside the
+        # plugin, where remove_msvc_link_byproducts() finds them.
+        base = os.path.splitext(out_plugin)[0]
+        cmd += ["/I", include_dir, src, "/Fo" + base + ".obj",
+                "/link", "/LIBPATH:" + lib_dir]
         cmd += [l + ".lib" for l in libs]
         if qt and maya:
             cmd += qt_link_flags(maya, osn)
-        cmd += ["/OUT:" + out_plugin,
+        cmd += ["/IMPLIB:" + base + ".lib", "/OUT:" + out_plugin,
                 "/EXPORT:initializePlugin", "/EXPORT:uninitializePlugin"]
         return cmd
     # unix family (clang on macOS / gcc on linux). -ffp-contract=off is MANDATORY
@@ -925,7 +973,11 @@ def link_plugin_cmd(compiler: str, objs: List[str], out_plugin: str, *,
         cmd += [l + ".lib" for l in libs]
         if qt and maya:
             cmd += qt_link_flags(maya, osn)
-        cmd += ["/OUT:" + out_plugin,
+        # /IMPLIB: cl would otherwise name it after the FIRST object
+        # (mPyDnet.lib) and LINK writes it, plus the .exp, into the CWD. See
+        # msvc_link_byproducts().
+        cmd += ["/IMPLIB:" + os.path.splitext(out_plugin)[0] + ".lib",
+                "/OUT:" + out_plugin,
                 "/EXPORT:initializePlugin", "/EXPORT:uninitializePlugin"]
         return cmd
     cmd = [compiler, "-std=c++17"]
@@ -1013,6 +1065,31 @@ def find_vcvarsall(_runner=None, _isfile=None) -> Optional[str]:
 _VCVARS_ENV_CACHE: Dict[str, Dict[str, str]] = {}
 
 
+def vs_installer_on_path(env: Optional[Dict[str, str]] = None) -> Dict[str, str]:
+    """A copy of ``env`` (default ``os.environ``) with the Visual Studio
+    Installer directory prepended to PATH.
+
+    ``vcvarsall.bat`` hands off to ``VsDevCmd.bat``, which shells ``vswhere.exe``
+    by BARE name. From a process whose PATH lacks
+    ``%ProgramFiles(x86)%\\Microsoft Visual Studio\\Installer`` -- mayapy, Maya,
+    a plain cmd -- every capture printed "'vswhere.exe' is not recognized as an
+    internal or external command" to stderr. Harmless (vcvarsall falls back to
+    its own install root) but it reads like a failure in the script editor.
+    The generated ``build.bat`` prepends the same directory before it calls
+    vcvarsall (:func:`msvc_resolver_bat`); this is the Python-side twin.
+    Returns an unchanged copy when vswhere cannot be located, and never adds
+    the directory twice.
+    """
+    out = dict(os.environ if env is None else env)
+    vswhere = find_vswhere()
+    if vswhere:
+        inst = os.path.dirname(vswhere)
+        path = out.get("PATH", "")
+        if inst.lower() not in [p.lower() for p in path.split(os.pathsep)]:
+            out["PATH"] = inst + (os.pathsep + path if path else "")
+    return out
+
+
 def capture_vcvars_env(arch: str = "x64", vcvarsall: Optional[str] = None,
                        _runner=None) -> Optional[Dict[str, str]]:
     """Capture the environment ``vcvarsall.bat <arch>`` sets, as a dict.
@@ -1031,8 +1108,8 @@ def capture_vcvars_env(arch: str = "x64", vcvarsall: Optional[str] = None,
     # break the && chaining; the string form is the proven pattern (cf.
     # setuptools' _get_vc_env). ``_runner`` is injected in tests.
     cmd = '"%s" %s && set' % (bat, arch)
-    runner = _runner or (lambda c: subprocess.check_output(c, shell=True,
-                                                           text=True))
+    runner = _runner or (lambda c: subprocess.check_output(
+        c, shell=True, text=True, env=vs_installer_on_path()))
     try:
         out = runner(cmd)
     except Exception:

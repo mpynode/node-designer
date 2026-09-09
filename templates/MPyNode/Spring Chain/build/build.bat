@@ -45,6 +45,8 @@ if not exist "%MAYA%\include\maya" (
   exit /b 1
 )
 set "HERE=%~dp0"
-cl /nologo /LD /std:c++17 /O2 /fp:precise /EHsc /MD /bigobj /utf-8 /D NT_PLUGIN /D REQUIRE_IOSTREAM /D _BOOL /D WIN32 /D _WINDOWS /D _CRT_SECURE_NO_WARNINGS /I "%MAYA%\include" "%HERE%source\springChain.cpp" /link /LIBPATH:"%MAYA%\lib" OpenMaya.lib OpenMayaAnim.lib OpenMayaUI.lib OpenMayaRender.lib Foundation.lib /OUT:"%HERE%..\MPyNode_Spring_Chain.mll" /EXPORT:initializePlugin /EXPORT:uninitializePlugin
+cl /nologo /LD /std:c++17 /O2 /fp:precise /EHsc /MD /bigobj /utf-8 /D NT_PLUGIN /D REQUIRE_IOSTREAM /D _BOOL /D WIN32 /D _WINDOWS /D _CRT_SECURE_NO_WARNINGS /I "%MAYA%\include" "%HERE%source\springChain.cpp" /Fo"%HERE%springChain.obj" /link /LIBPATH:"%MAYA%\lib" OpenMaya.lib OpenMayaAnim.lib OpenMayaUI.lib OpenMayaRender.lib Foundation.lib /IMPLIB:"%HERE%MPyNode_Spring_Chain.lib" /OUT:"%HERE%..\MPyNode_Spring_Chain.mll" /EXPORT:initializePlugin /EXPORT:uninitializePlugin
 if errorlevel 1 exit /b 1
+del "%HERE%springChain.obj" "%HERE%MPyNode_Spring_Chain.lib" "%HERE%MPyNode_Spring_Chain.exp" 2>nul
 echo Built: %HERE%..\MPyNode_Spring_Chain.mll
+exit /b 0

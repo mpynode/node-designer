@@ -45,6 +45,8 @@ if not exist "%MAYA%\include\maya" (
   exit /b 1
 )
 set "HERE=%~dp0"
-cl /nologo /LD /std:c++17 /O2 /fp:precise /EHsc /MD /bigobj /utf-8 /D NT_PLUGIN /D REQUIRE_IOSTREAM /D _BOOL /D WIN32 /D _WINDOWS /D _CRT_SECURE_NO_WARNINGS /I "%MAYA%\include" "%HERE%source\procrustesTags.cpp" /link /LIBPATH:"%MAYA%\lib" OpenMaya.lib OpenMayaAnim.lib OpenMayaUI.lib OpenMayaRender.lib Foundation.lib /OUT:"%HERE%..\MPyConstraint_Procrustes_Tags.mll" /EXPORT:initializePlugin /EXPORT:uninitializePlugin
+cl /nologo /LD /std:c++17 /O2 /fp:precise /EHsc /MD /bigobj /utf-8 /D NT_PLUGIN /D REQUIRE_IOSTREAM /D _BOOL /D WIN32 /D _WINDOWS /D _CRT_SECURE_NO_WARNINGS /I "%MAYA%\include" "%HERE%source\procrustesTags.cpp" /Fo"%HERE%procrustesTags.obj" /link /LIBPATH:"%MAYA%\lib" OpenMaya.lib OpenMayaAnim.lib OpenMayaUI.lib OpenMayaRender.lib Foundation.lib /IMPLIB:"%HERE%MPyConstraint_Procrustes_Tags.lib" /OUT:"%HERE%..\MPyConstraint_Procrustes_Tags.mll" /EXPORT:initializePlugin /EXPORT:uninitializePlugin
 if errorlevel 1 exit /b 1
+del "%HERE%procrustesTags.obj" "%HERE%MPyConstraint_Procrustes_Tags.lib" "%HERE%MPyConstraint_Procrustes_Tags.exp" 2>nul
 echo Built: %HERE%..\MPyConstraint_Procrustes_Tags.mll
+exit /b 0

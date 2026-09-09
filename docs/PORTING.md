@@ -110,6 +110,12 @@ Multi-node bundler: each fragment + `plugin_main.cpp` is compiled `/c` to `.obj`
 (fragments get `/D MNoVersionString /D MNoPluginEntry`), then all `.obj` are
 linked with `cl /nologo /LD ... /link ... /OUT:<plugin>.mll /EXPORT:...`.
 
+Both shapes pin `/IMPLIB:<plugin>.lib` (the one-shot form also
+`/Fo<plugin>.obj`) beside the output and delete them after the link
+(`toolchain.remove_msvc_link_byproducts`; the `build.bat` mirrors `del` the same
+files). Without that `cl` names the import library after the first object and
+LINK writes it, plus the `.exp`, into the current directory.
+
 A hand-runnable `build.bat` is also emitted next to the sources for debugging
 (`codegen.generate_build_bat`, `bundler.make_build_bat`). It runs from any
 `cmd.exe`: the script locates MSVC via `vswhere` and calls `vcvarsall x64`

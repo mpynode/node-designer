@@ -1855,6 +1855,105 @@ class BatLocalScopeTests(unittest.TestCase):
             self.assertFalse(_uncollapsed_percent(body), label)
 
 
+class MsvcLinkByproductTests(unittest.TestCase):
+    """cl /LD names the import library after the FIRST object and LINK writes
+    it -- plus the .exp, plus the one-shot .obj -- into the CWD. MEASURED
+    2026-09-08: mPyDnet.lib/.exp beside the template after a mega build, the
+    same pair in Maya's working directory, 29 such files at the repo root
+    after one suite run. The cmd builders now pin them beside the plugin and
+    the callers delete them."""
+
+    def _one_shot(self):
+        from mpynode.native.toolchain import toolchain as tc
+
+        return tc.compile_to_plugin_cmd(
+            "cl", r"C:\src\foo.cpp", r"C:\out\myPlug.mll",
+            include_dir=r"C:\M\include", lib_dir=r"C:\M\lib",
+            libs=["OpenMaya"], os_name="win32")
+
+    def test_one_shot_pins_obj_and_implib_beside_the_plugin(self):
+        got = self._one_shot()
+        self.assertIn(r"/FoC:\out\myPlug.obj", got)
+        self.assertIn(r"/IMPLIB:C:\out\myPlug.lib", got)
+        # compiler option before /link, linker option after it
+        self.assertLess(got.index(r"/FoC:\out\myPlug.obj"), got.index("/link"))
+        self.assertGreater(got.index(r"/IMPLIB:C:\out\myPlug.lib"),
+                           got.index("/link"))
+
+    def test_multi_link_pins_implib(self):
+        from mpynode.native.toolchain import toolchain as tc
+
+        got = tc.link_plugin_cmd("cl", [r"C:\x\a.obj", r"C:\x\b.obj"],
+                                 r"C:\out\bundle.mll", lib_dir=r"C:\M\lib",
+                                 libs=["OpenMaya"], os_name="win32")
+        self.assertIn(r"/IMPLIB:C:\out\bundle.lib", got)
+        self.assertFalse([a for a in got if a.startswith("/Fo")])
+
+    def test_unix_argv_untouched(self):
+        from mpynode.native.toolchain import toolchain as tc
+
+        got = tc.compile_to_plugin_cmd(
+            "clang++", "foo.cpp", "/out/foo.bundle", include_dir="/M/include",
+            lib_dir="/M/lib", libs=["OpenMaya"], os_name="darwin", arch="arm64")
+        self.assertFalse([a for a in got if a.startswith(("/Fo", "/IMPLIB"))])
+
+    def test_byproducts_named_and_removed(self):
+        from mpynode.native.toolchain import toolchain as tc
+
+        self.assertEqual(tc.msvc_link_byproducts(r"C:\out\p.mll"),
+                         [r"C:\out\p.lib", r"C:\out\p.exp"])
+        self.assertEqual(
+            tc.msvc_link_byproducts(r"C:\out\p.mll", one_shot=True),
+            [r"C:\out\p.lib", r"C:\out\p.exp", r"C:\out\p.obj"])
+        with tempfile.TemporaryDirectory() as d:
+            plug = os.path.join(d, "p.mll")
+            for ext in (".lib", ".exp", ".obj", ".mll"):
+                with open(os.path.join(d, "p" + ext), "w") as fh:
+                    fh.write("x")
+            removed = tc.remove_msvc_link_byproducts(plug, one_shot=True)
+            self.assertEqual(sorted(os.path.basename(r) for r in removed),
+                             ["p.exp", "p.lib", "p.obj"])
+            self.assertEqual(os.listdir(d), ["p.mll"])  # the plugin survives
+            self.assertEqual(tc.remove_msvc_link_byproducts(plug), [])
+
+    def test_every_bat_pins_and_deletes_the_byproducts(self):
+        from mpynode.native import compiler as codegen
+        from mpynode.native.compiler import bundler
+
+        porter = codegen.generate_build_bat(_HOVER_SPEC, maya=r"C:\M")
+        multi = bundler.make_build_bat("myBundle", ["frag_a.cpp"])
+        single = bundler.make_single_build_bat("myBundle", "foo.cpp",
+                                               ["OpenMaya"])
+        for label, body in (("porter", porter), ("multi", multi),
+                            ("single", single)):
+            self.assertIn("/IMPLIB:", body, label)
+            self.assertIn('.exp" 2>nul', body, label)
+            self.assertFalse(_uncollapsed_percent(body), label)
+        # the one-shot scripts also redirect the object file
+        self.assertIn('/Fo"%HERE%gizmoCube.obj"', porter)
+        self.assertIn('/Fo"%HERE%foo.obj"', single)
+        self.assertIn('del "%HERE%foo.obj" "%HERE%myBundle.lib" '
+                      '"%HERE%myBundle.exp" 2>nul', single)
+        self.assertIn('/IMPLIB:"%HERE%myBundle.lib"', multi)
+        self.assertIn('"%HERE%myBundle.lib" "%HERE%myBundle.exp" 2>nul', multi)
+
+    def test_vs_installer_on_path(self):
+        from mpynode.native.toolchain import toolchain as tc
+
+        base = {"PATH": r"C:\one" + os.pathsep + r"C:\two", "X": "1"}
+        with unittest.mock.patch.object(
+                tc, "find_vswhere", return_value=r"C:\VS\Installer\vswhere.exe"):
+            got = tc.vs_installer_on_path(base)
+            self.assertEqual(got["PATH"],
+                             r"C:\VS\Installer" + os.pathsep + base["PATH"])
+            self.assertEqual(got["X"], "1")
+            # already present: never added twice
+            self.assertEqual(tc.vs_installer_on_path(got)["PATH"], got["PATH"])
+        with unittest.mock.patch.object(tc, "find_vswhere", return_value=None):
+            self.assertEqual(tc.vs_installer_on_path(base), base)
+        self.assertEqual(base["PATH"], r"C:\one" + os.pathsep + r"C:\two")
+
+
 if __name__ == "__main__":
     import unittest
     unittest.main()

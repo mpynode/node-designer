@@ -45,6 +45,8 @@ if not exist "%MAYA%\include\maya" (
   exit /b 1
 )
 set "HERE=%~dp0"
-cl /nologo /LD /std:c++17 /O2 /fp:precise /EHsc /MD /bigobj /utf-8 /D NT_PLUGIN /D REQUIRE_IOSTREAM /D _BOOL /D WIN32 /D _WINDOWS /D _CRT_SECURE_NO_WARNINGS /I "%MAYA%\include" "%HERE%source\dualQuaternionSkin.cpp" /link /LIBPATH:"%MAYA%\lib" OpenMaya.lib OpenMayaAnim.lib OpenMayaUI.lib OpenMayaRender.lib Foundation.lib /OUT:"%HERE%..\MPySkinCluster_Dual_Quaternion_Skin.mll" /EXPORT:initializePlugin /EXPORT:uninitializePlugin
+cl /nologo /LD /std:c++17 /O2 /fp:precise /EHsc /MD /bigobj /utf-8 /D NT_PLUGIN /D REQUIRE_IOSTREAM /D _BOOL /D WIN32 /D _WINDOWS /D _CRT_SECURE_NO_WARNINGS /I "%MAYA%\include" "%HERE%source\dualQuaternionSkin.cpp" /Fo"%HERE%dualQuaternionSkin.obj" /link /LIBPATH:"%MAYA%\lib" OpenMaya.lib OpenMayaAnim.lib OpenMayaUI.lib OpenMayaRender.lib Foundation.lib /IMPLIB:"%HERE%MPySkinCluster_Dual_Quaternion_Skin.lib" /OUT:"%HERE%..\MPySkinCluster_Dual_Quaternion_Skin.mll" /EXPORT:initializePlugin /EXPORT:uninitializePlugin
 if errorlevel 1 exit /b 1
+del "%HERE%dualQuaternionSkin.obj" "%HERE%MPySkinCluster_Dual_Quaternion_Skin.lib" "%HERE%MPySkinCluster_Dual_Quaternion_Skin.exp" 2>nul
 echo Built: %HERE%..\MPySkinCluster_Dual_Quaternion_Skin.mll
+exit /b 0

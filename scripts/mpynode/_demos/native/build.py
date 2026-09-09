@@ -59,6 +59,7 @@ def build(out_dir=None):
     )
     sys.stderr.write("COMPILE: " + " ".join(cmd) + "\n")
     rc, _out = toolchain.run_streaming(cmd, log_cb=lambda l: sys.stderr.write(l + "\n"))
+    toolchain.remove_msvc_link_byproducts(bundle, one_shot=True)
     if rc != 0:
         raise SystemExit("compile failed rc=%d" % rc)
 

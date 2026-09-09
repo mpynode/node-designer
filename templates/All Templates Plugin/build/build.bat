@@ -186,8 +186,8 @@ set "OBJS=%OBJS% "%HERE%source\aimTransform.obj""
 cl /nologo /std:c++17 /O2 /fp:precise /EHsc /MD /bigobj /utf-8 /D NT_PLUGIN /D REQUIRE_IOSTREAM /D _BOOL /D WIN32 /D _WINDOWS /D _CRT_SECURE_NO_WARNINGS /Zc:__cplusplus /permissive- /I "%QTINC%" /FI nd_msvc_stdext_compat.h /c "%HERE%source\plugin_main.cpp" /Fo"%HERE%source\plugin_main.obj" /I "%MAYA%\include"
 if errorlevel 1 exit /b 1
 set "OBJS=%OBJS% "%HERE%source\plugin_main.obj""
-cl /nologo /LD %OBJS% /link /LIBPATH:"%MAYA%\lib" OpenMaya.lib OpenMayaAnim.lib OpenMayaUI.lib OpenMayaRender.lib Foundation.lib Qt6Core.lib Qt6Gui.lib Qt6Widgets.lib /OUT:"%HERE%..\mPyMega.mll" /EXPORT:initializePlugin /EXPORT:uninitializePlugin
+cl /nologo /LD %OBJS% /link /LIBPATH:"%MAYA%\lib" OpenMaya.lib OpenMayaAnim.lib OpenMayaUI.lib OpenMayaRender.lib Foundation.lib Qt6Core.lib Qt6Gui.lib Qt6Widgets.lib /IMPLIB:"%HERE%mPyMega.lib" /OUT:"%HERE%..\mPyMega.mll" /EXPORT:initializePlugin /EXPORT:uninitializePlugin
 if errorlevel 1 exit /b 1
-del %OBJS% 2>nul
+del %OBJS% "%HERE%mPyMega.lib" "%HERE%mPyMega.exp" 2>nul
 echo Built: %HERE%..\mPyMega.mll
 exit /b 0

@@ -135,6 +135,7 @@ def compile_cpp(cpp_path: str, spec: dict, out_dir: str,
         # opaque OS "file not found" into an actionable message instead of
         # bubbling a bare [WinError 2] up to the user.
         return False, toolchain.compiler_missing_message(compiler), plugin
+    toolchain.remove_msvc_link_byproducts(plugin, one_shot=True)
     return rc == 0, log, plugin
 
 

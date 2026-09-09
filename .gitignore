@@ -43,11 +43,13 @@ dist/
 *.o
 *.obj
 *.dylib
-# MSVC-only link byproducts. `cl /LD` writes <first-obj>.lib + .exp beside the
-# CWD, not the output dir, so building or running the suite from the repo root
-# litters it -- 16 such files after one mega build plus one test run. clang
-# emits neither, which is why this list never needed them. No tracked file in
-# the project ends in .lib or .exp.
+# MSVC-only link byproducts. `cl /LD` used to write <first-obj>.lib + .exp
+# into the CWD, not the output dir, so building or running the suite from the
+# repo root littered it -- 29 such files after one mega build plus one test
+# run. Since 2026-09-08 the cmd builders and every build.bat pin them beside
+# the plugin (/IMPLIB, /Fo) and delete them after the link; the rule stays
+# for anything built by hand. clang emits neither. No tracked file in the
+# project ends in .lib or .exp.
 *.lib
 *.exp
 

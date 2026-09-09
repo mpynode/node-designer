@@ -889,14 +889,20 @@ def make_build_bat(plugin_name: str, frag_files: List[str],
         '/Fo"%%HERE%%source\\plugin_main.obj" /I "%%MAYA%%\\include"' % cxx)
     lines.append("if errorlevel 1 exit /b 1")
     lines.append('set "OBJS=%OBJS% "%HERE%source\\plugin_main.obj""')
+    # /IMPLIB: without it cl names the import library after the FIRST object
+    # (mPyDnet.lib + mPyDnet.exp) and LINK writes both into the CWD -- whatever
+    # folder the user ran this from. Pin them into build\ and delete them with
+    # the objects: nothing ever loads the import library of a Maya plug-in.
     lines.append(
         'cl /nologo /LD %%OBJS%% /link /LIBPATH:"%%MAYA%%\\lib" %s '
-        '/OUT:"%%HERE%%..\\%s.mll" '
+        '/IMPLIB:"%%HERE%%%s.lib" /OUT:"%%HERE%%..\\%s.mll" '
         '/EXPORT:initializePlugin /EXPORT:uninitializePlugin'
-        % (libs, plugin_name))
+        % (libs, plugin_name, plugin_name))
     lines.append("if errorlevel 1 exit /b 1")
-    # Drop the object files so a hand-rebuild leaves a clean folder.
-    lines.append("del %OBJS% 2>nul")
+    # Drop the object files and the link byproducts so a hand-rebuild leaves a
+    # clean folder.
+    lines.append('del %%OBJS%% "%%HERE%%%s.lib" "%%HERE%%%s.exp" 2>nul'
+                 % (plugin_name, plugin_name))
     # The link above writes UP to %HERE%..\ (the plugin lives beside build/),
     # so name that exact path -- not %HERE%.
     lines.append('echo Built: %%HERE%%..\\%s.mll' % plugin_name)
@@ -983,6 +989,7 @@ def make_single_build_bat(plugin_name: str, node_file: str, libs: List[str],
     qt_inc = (' %s /I "%%QTINC%%" /FI %s'
               % (" ".join(toolchain.qt_msvc_flags()),
                  toolchain.QT_MSVC_COMPAT_HEADER)) if needs_qt else ""
+    stem = os.path.splitext(node_file)[0]
     return "\r\n".join([
         "@echo off",
         "setlocal",
@@ -1003,13 +1010,19 @@ def make_single_build_bat(plugin_name: str, node_file: str, libs: List[str],
         ('cl /nologo /LD /std:c++17 /O2 /fp:precise /EHsc /MD /bigobj /utf-8 '
          '/D NT_PLUGIN /D REQUIRE_IOSTREAM /D _BOOL /D WIN32 /D _WINDOWS '
          '/D _CRT_SECURE_NO_WARNINGS '
-         '/I "%%MAYA%%\\include"%s "%%HERE%%source\\%s" '
+         '/I "%%MAYA%%\\include"%s "%%HERE%%source\\%s" /Fo"%%HERE%%%s.obj" '
          '/link /LIBPATH:"%%MAYA%%\\lib" %s '
-         '/OUT:"%%HERE%%..\\%s.mll" '
+         '/IMPLIB:"%%HERE%%%s.lib" /OUT:"%%HERE%%..\\%s.mll" '
          '/EXPORT:initializePlugin /EXPORT:uninitializePlugin'
-         % (qt_inc, node_file, libstr, plugin_name)),
+         % (qt_inc, node_file, stem, libstr, plugin_name, plugin_name)),
         'if errorlevel 1 exit /b 1',
+        # cl /LD drops <src>.obj, and LINK <first obj>.lib + .exp, in the CWD;
+        # /Fo and /IMPLIB above pin them into build\ so this can remove them.
+        'del "%%HERE%%%s.obj" "%%HERE%%%s.lib" "%%HERE%%%s.exp" 2>nul'
+        % (stem, plugin_name, plugin_name),
         'echo Built: %%HERE%%..\\%s.mll' % plugin_name,
+        # Cleanup is best effort; it must not decide the exit status.
+        "exit /b 0",
         "",
     ])
 
@@ -1477,6 +1490,7 @@ def assemble(
                 lib_dir=toolchain.maya_lib_dir(maya), libs=_LINK_LIBS,
                 qt=needs_qt, maya=maya)
             proc = _run_compile(link_cmd, obj_env, compiler, log_cb=log_cb)
+            toolchain.remove_msvc_link_byproducts(out_plugin)
             if proc.returncode != 0:
                 report["reason"] = "link failed"
                 report["stderr"] = proc.stderr
@@ -1619,6 +1633,7 @@ def _assemble_single(node, plugin_name, out_dir, reg, report, *, strict, maya,
             lib_dir=toolchain.maya_lib_dir(maya), libs=libs,
             arch=toolchain.mac_arch(), qt=needs_qt, maya=maya)
         proc = _run_compile(cmd, tc["obj_env"], tc["compiler"], log_cb=log_cb)
+        toolchain.remove_msvc_link_byproducts(out_plugin, one_shot=True)
     elif toolchain.is_linux():
         # There is no Linux build-script generator: make_single_build_sh emits
         # the macOS recipe (clang++/-D OSMac_/-bundle/lipo). Running it here

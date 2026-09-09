@@ -122,13 +122,19 @@ def generate_build_bat(spec: dict, maya=None) -> str:
         ('cl /nologo /LD /std:c++17 /O2 /fp:precise /EHsc /MD /bigobj /utf-8 '
          '/D NT_PLUGIN /D REQUIRE_IOSTREAM /D _BOOL /D WIN32 /D _WINDOWS '
          '/D _CRT_SECURE_NO_WARNINGS '
-         '/I "%%MAYA%%\\include"%s "%%HERE%%%s.cpp" '
+         '/I "%%MAYA%%\\include"%s "%%HERE%%%s.cpp" /Fo"%%HERE%%%s.obj" '
          '/link /LIBPATH:"%%MAYA%%\\lib" %s '
-         '/OUT:"%%HERE%%%s.mll" '
+         '/IMPLIB:"%%HERE%%%s.lib" /OUT:"%%HERE%%%s.mll" '
          '/EXPORT:initializePlugin /EXPORT:uninitializePlugin'
-         % (qt_inc, name, libs, name)),
+         % (qt_inc, name, name, libs, name, name)),
         'if errorlevel 1 exit /b 1',
+        # cl /LD drops <name>.obj, and LINK <name>.lib + .exp, in the CWD; /Fo
+        # and /IMPLIB above pin them beside the .mll so this can remove them.
+        'del "%%HERE%%%s.obj" "%%HERE%%%s.lib" "%%HERE%%%s.exp" 2>nul'
+        % (name, name, name),
         'echo Built: %%HERE%%%s.mll' % name,
+        # Cleanup is best effort; it must not decide the exit status.
+        "exit /b 0",
         "",
     ])
 
