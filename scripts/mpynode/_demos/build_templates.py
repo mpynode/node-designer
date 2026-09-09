@@ -4335,11 +4335,20 @@ def test_two_bone_ik(self):
 
     tip = mc.xform(ankle, q=True, ws=True, t=True)
     dist = float(np.linalg.norm(np.array(tip) - np.array(goal)))
-    bend = abs(mc.xform(knee, q=True, ro=True)[0])
+    # The bend is the angle between the two bones, from world positions. The
+    # joints' rotate channels read 0.0 here even though the tip has moved, so a
+    # `rotateX` reading measured nothing -- and failed the interpreted node and
+    # the compiled one identically (both put the tip on the goal, 114.8 deg).
+    hip_p = np.array(mc.xform(hip, q=True, ws=True, t=True))
+    knee_p = np.array(mc.xform(knee, q=True, ws=True, t=True))
+    upper, lower = knee_p - hip_p, np.array(tip) - knee_p
+    cosang = float(np.dot(upper, lower)
+                   / (np.linalg.norm(upper) * np.linalg.norm(lower)))
+    bend = float(np.degrees(np.arccos(max(-1.0, min(1.0, cosang)))))
 
     # Tip reaches the goal (chain solved) and the knee is genuinely bent.
     assert_true(dist < 1.0, "tip is %.3f from the goal" % dist)
-    assert_true(bend > 15.0, "knee barely bends (rotateX=%.2f)" % bend)
+    assert_true(bend > 15.0, "knee barely bends (bone angle %.2f deg)" % bend)
 '''
 
 

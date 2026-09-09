@@ -1,6 +1,6 @@
 # twoBoneIK -- compile report
 
-**Source node:** `twoBoneIK`  ·  **Base:** `MPxIkSolverNode`  ·  **Generated:** 2026-09-08 23:24
+**Source node:** `twoBoneIK`  ·  **Base:** `MPxIkSolverNode`  ·  **Generated:** 2026-09-09 08:26
 
 | stage | outcome |
 |---|---|
@@ -124,8 +124,8 @@ The rounds where the guess and the stopwatch disagreed. These are the transferab
 
 ## Verification
 
-* parity: **FAIL**  (maxerr 2.6645352591003757e-15, tol 0.001)
-* authored @maya_test FAILED: test_two_bone_ik: knee barely bends (rotateX=0.00)
+* parity: **pass**  (maxerr 2.6645352591003757e-15, tol 0.001)
+* authored @maya_test: 1/1 passed
 
 ## Files
 
