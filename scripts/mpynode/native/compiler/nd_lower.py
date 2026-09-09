@@ -341,7 +341,7 @@ def _materialise_input(m, dst):
             "            _tmp.push_back(%s[_i].y);" % src,
             "            _tmp.push_back(%s[_i].z);" % src,
             "        }",
-            "        %s = nd::from_data<double>(_tmp, {(int64_t)%s.size(), 3});"
+            "        %s = nd::from_data<double>(std::move(_tmp), {(int64_t)%s.size(), 3});"
             % (dst, src),
             "    }",
         ], array_t("double", 2))
@@ -366,7 +366,7 @@ def _materialise_input(m, dst):
             "            _tmp.push_back((double)%s[_i].y);" % src,
             "            _tmp.push_back((double)%s[_i].z);" % src,
             "        }",
-            "        %s = nd::from_data<double>(_tmp, {(int64_t)%s.size(), 3});"
+            "        %s = nd::from_data<double>(std::move(_tmp), {(int64_t)%s.size(), 3});"
             % (dst, src),
             "    }",
         ], array_t("double", 2))
@@ -391,7 +391,7 @@ def _materialise_input(m, dst):
             "            _tmp.push_back(%s[_i].z);" % src,
             "            _tmp.push_back(%s[_i].w);" % src,
             "        }",
-            "        %s = nd::from_data<double>(_tmp, {(int64_t)%s.size(), 4});"
+            "        %s = nd::from_data<double>(std::move(_tmp), {(int64_t)%s.size(), 4});"
             % (dst, src),
             "    }",
         ], array_t("double", 2))
@@ -413,7 +413,7 @@ def _materialise_input(m, dst):
             "            _tmp.push_back((double)%s[_i].x);" % src,
             "            _tmp.push_back((double)%s[_i].y);" % src,
             "        }",
-            "        %s = nd::from_data<double>(_tmp, {(int64_t)%s.size(), 2});"
+            "        %s = nd::from_data<double>(std::move(_tmp), {(int64_t)%s.size(), 2});"
             % (dst, src),
             "    }",
         ], array_t("double", 2))
@@ -440,7 +440,7 @@ def _materialise_input(m, dst):
             "                for (int _c = 0; _c < 4; ++_c)",
             "                    _tmp.push_back(%s[_i](_r, _c));" % src,
             "        }",
-            "        %s = nd::from_data<double>(_tmp, {(int64_t)%s.size(), 4, 4});"
+            "        %s = nd::from_data<double>(std::move(_tmp), {(int64_t)%s.size(), 4, 4});"
             % (dst, src),
             "    }",
         ], array_t("double", 3))
@@ -1024,7 +1024,7 @@ def _geo_vec3_lines(dst, guard, fill, count):
         "            _gt.push_back(_ga[_gi].x); _gt.push_back(_ga[_gi].y); "
         "_gt.push_back(_ga[_gi].z);",
         "        }",
-        "        %s = nd::from_data<double>(_gt, {(int64_t)%s, 3});" % (dst, count),
+        "        %s = nd::from_data<double>(std::move(_gt), {(int64_t)%s, 3});" % (dst, count),
         "    }",
     ]
 
@@ -1038,7 +1038,7 @@ def _geo_int1_lines(dst, guard, fill, arrname, count):
         "        std::vector<int64_t> _gt((size_t)%s);" % count,
         "        for (unsigned int _gi = 0; _gi < %s; ++_gi) _gt[_gi] = "
         "(int64_t)%s[_gi];" % (count, arrname),
-        "        %s = nd::from_data<int64_t>(_gt, {(int64_t)%s});" % (dst, count),
+        "        %s = nd::from_data<int64_t>(std::move(_gt), {(int64_t)%s});" % (dst, count),
         "    }",
     ]
 
@@ -1052,7 +1052,7 @@ def _geo_dbl1_lines(dst, fill, arrname, count):
         "        std::vector<double> _gt((size_t)%s);" % count,
         "        for (unsigned int _gi = 0; _gi < %s; ++_gi) _gt[_gi] = "
         "%s[_gi];" % (count, arrname),
-        "        %s = nd::from_data<double>(_gt, {(int64_t)%s});" % (dst, count),
+        "        %s = nd::from_data<double>(std::move(_gt), {(int64_t)%s});" % (dst, count),
         "    }",
     ]
 
@@ -1081,7 +1081,7 @@ def _geo_uv_lines(src, guard, dst):
         "                break;",
         "            }",
         "        }",
-        "        %s = nd::from_data<double>(_uv, {_m, 2});" % dst,
+        "        %s = nd::from_data<double>(std::move(_uv), {_m, 2});" % dst,
         "    }",
     ]
 
@@ -1189,7 +1189,7 @@ def _materialise_geo_tag(member, kind, spec, dst):
                 "                }",
             ]
         body += close_ + [
-            "    %s = nd::from_data<double>(_tgt, "
+            "    %s = nd::from_data<double>(std::move(_tgt), "
             "{(int64_t)(_tgt.size() / 3), 3});" % dst]
         return body, array_t("double", 2)
 
@@ -1202,7 +1202,7 @@ def _materialise_geo_tag(member, kind, spec, dst):
                 "++_ti) { _tgt.push_back((int64_t)_tu[_ti]); "
                 "_tgt.push_back((int64_t)_tv[_ti]); }",
             ] + close_ + [
-                "    %s = nd::from_data<int64_t>(_tgt, "
+                "    %s = nd::from_data<int64_t>(std::move(_tgt), "
                 "{(int64_t)(_tgt.size() / 2), 2});" % dst]
             return body, array_t("int64", 2)
         body = ["    nd::Array<int64_t> %s;" % dst,
@@ -1211,7 +1211,7 @@ def _materialise_geo_tag(member, kind, spec, dst):
             "                for (unsigned int _ti = 0; _ti < _tel.length(); "
             "++_ti) _tgt[_ti] = (int64_t)_tel[_ti];",
         ] + close_ + [
-            "    %s = nd::from_data<int64_t>(_tgt, {(int64_t)_tgt.size()});" % dst]
+            "    %s = nd::from_data<int64_t>(std::move(_tgt), {(int64_t)_tgt.size()});" % dst]
         return body, array_t("int64", 1)
 
     raise UnsupportedSpec("nd_lower: geo tag op %r not materialisable" % op)
@@ -1272,7 +1272,7 @@ def _materialise_geo_tag_clusters(member, kind, tags_member, dst):
         "            for (size_t _tk = 0; _tk < _tcr[_tn].size(); ++_tk)",
         "                _tgt[(size_t)((int64_t)_tn * _tw) + _tk] = "
         "_tcr[_tn][_tk];",
-        "        %s = nd::from_data<int64_t>(_tgt, "
+        "        %s = nd::from_data<int64_t>(std::move(_tgt), "
         "{(int64_t)_tcr.size(), _tw});" % dst,
         "    }",
     ]
@@ -1313,7 +1313,7 @@ def _materialise_geo_channel(member, kind, channel, dst):
                 "_gt.push_back((double)_gr[3 * _gi + 1]); "
                 "_gt.push_back((double)_gr[3 * _gi + 2]);",
                 "        }",
-                "        %s = nd::from_data<double>(_gt, {(int64_t)_gn, 3});" % dst,
+                "        %s = nd::from_data<double>(std::move(_gt), {(int64_t)_gn, 3});" % dst,
                 "    }",
             ], array_t("double", 2))
         if channel in ("counts", "indices"):
@@ -1380,9 +1380,9 @@ def _materialise_geo_channel(member, kind, channel, dst):
                 "        }",
                 "        if ((int64_t)_ga.length() == _nu * _nv && _nu > 0 && "
                 "_nv > 0)",
-                "            %s = nd::from_data<double>(_gt, {_nu, _nv, 3});" % dst,
+                "            %s = nd::from_data<double>(std::move(_gt), {_nu, _nv, 3});" % dst,
                 "        else",
-                "            %s = nd::from_data<double>(_gt, "
+                "            %s = nd::from_data<double>(std::move(_gt), "
                 "{(int64_t)_ga.length(), 3});" % dst,
                 "    }",
             ], array_t("double", 3))
@@ -1638,7 +1638,7 @@ def _geo_arr_vec3(v, idx, field, dst):
         "_gt.push_back(%s[_gi].z);" % (ref, ref, ref),
         "            }",
         "        }",
-        "        %s = nd::from_data<double>(_gt, {_n, 3});" % dst,
+        "        %s = nd::from_data<double>(std::move(_gt), {_n, 3});" % dst,
         "    }",
     ]
 
@@ -1656,7 +1656,7 @@ def _geo_arr_int1(v, idx, field, dst):
         "            for (size_t _gi = 0; _gi < %s.size(); ++_gi) _gt[_gi] = "
         "(int64_t)%s[_gi];" % (ref, ref),
         "        }",
-        "        %s = nd::from_data<int64_t>(_gt, {(int64_t)_gt.size()});" % dst,
+        "        %s = nd::from_data<int64_t>(std::move(_gt), {(int64_t)_gt.size()});" % dst,
         "    }",
     ]
 
@@ -1670,7 +1670,7 @@ def _geo_arr_uv(v, idx, dst):
         "    {",
         "        std::vector<double> _gt; int64_t _m = 0;",
         "        if (%s) { _gt = %s.uvs; _m = (int64_t)%s.numUVs; }" % (ok, e, e),
-        "        %s = nd::from_data<double>(_gt, {_m, 2});" % dst,
+        "        %s = nd::from_data<double>(std::move(_gt), {_m, 2});" % dst,
         "    }",
     ]
 
@@ -1684,7 +1684,7 @@ def _geo_arr_dbl1(v, idx, field, dst):
         "    {",
         "        std::vector<double> _gt;",
         "        if (%s) _gt = %s;" % (ok, ref),
-        "        %s = nd::from_data<double>(_gt, {(int64_t)_gt.size()});" % dst,
+        "        %s = nd::from_data<double>(std::move(_gt), {(int64_t)_gt.size()});" % dst,
         "    }",
     ]
 
@@ -1723,9 +1723,9 @@ def _geo_arr_surface_cvs(v, idx, dst):
         "            }",
         "        }",
         "        if (_n == _nu * _nv && _nu > 0 && _nv > 0)",
-        "            %s = nd::from_data<double>(_gt, {_nu, _nv, 3});" % dst,
+        "            %s = nd::from_data<double>(std::move(_gt), {_nu, _nv, 3});" % dst,
         "        else",
-        "            %s = nd::from_data<double>(_gt, {_n, 3});" % dst,
+        "            %s = nd::from_data<double>(std::move(_gt), {_n, 3});" % dst,
         "    }",
     ]
 
@@ -2208,10 +2208,10 @@ def _geo_mpoint_lines(buf, val):
         "    nd::Array<double> _o = (%s);" % _cast_array(val, "double"),
         "    if (_o.offset != 0 || !_o.is_contiguous()) _o = _o.copy();",
         "    int64_t _n = _o.shape.empty() ? 0 : _o.shape[0];",
-        "    %s.clear(); %s.reserve((size_t)_n);" % (buf, buf),
+        "    %s.resize((size_t)_n);" % buf,
         "    for (int64_t _i = 0; _i < _n; ++_i)",
-        "        %s.push_back(MPoint((*_o.data)[_i*3+0], (*_o.data)[_i*3+1], "
-        "(*_o.data)[_i*3+2]));" % buf,
+        "        %s[(size_t)_i] = MPoint((*_o.data)[_i*3+0], (*_o.data)[_i*3+1], "
+        "(*_o.data)[_i*3+2]);" % buf,
         "}",
     ]
 
@@ -2226,9 +2226,9 @@ def _geo_intarr_lines(buf, val):
         "    nd::Array<int64_t> _o = (%s);" % _cast_array(val, "int64"),
         "    if (_o.offset != 0 || !_o.is_contiguous()) _o = _o.copy();",
         "    int64_t _n = _o.size();",
-        "    %s.clear(); %s.reserve((size_t)_n);" % (buf, buf),
+        "    %s.resize((size_t)_n);" % buf,
         "    for (int64_t _i = 0; _i < _n; ++_i) "
-        "%s.push_back((int)(*_o.data)[_i]);" % buf,
+        "%s[(size_t)_i] = (int)(*_o.data)[_i];" % buf,
         "}",
     ]
 
@@ -2309,9 +2309,9 @@ def _geo_doublearr_lines(buf, val):
         "    nd::Array<double> _o = (%s);" % _cast_array(val, "double"),
         "    if (_o.offset != 0 || !_o.is_contiguous()) _o = _o.copy();",
         "    int64_t _n = _o.size();",
-        "    %s.clear(); %s.reserve((size_t)_n);" % (buf, buf),
+        "    %s.resize((size_t)_n);" % buf,
         "    for (int64_t _i = 0; _i < _n; ++_i) "
-        "%s.push_back((*_o.data)[_i]);" % buf,
+        "%s[(size_t)_i] = (*_o.data)[_i];" % buf,
         "}",
     ]
 
@@ -2538,10 +2538,10 @@ def _geo_mpoint_flat_lines(buf, val):
         "    nd::Array<double> _o = (%s);" % _cast_array(val, "double"),
         "    if (_o.offset != 0 || !_o.is_contiguous()) _o = _o.copy();",
         "    int64_t _n = (int64_t)(_o.data ? _o.data->size() / 3 : 0);",
-        "    %s.clear(); %s.reserve((size_t)_n);" % (buf, buf),
+        "    %s.resize((size_t)_n);" % buf,
         "    for (int64_t _i = 0; _i < _n; ++_i)",
-        "        %s.push_back(MPoint((*_o.data)[_i*3+0], (*_o.data)[_i*3+1], "
-        "(*_o.data)[_i*3+2]));" % buf,
+        "        %s[(size_t)_i] = MPoint((*_o.data)[_i*3+0], (*_o.data)[_i*3+1], "
+        "(*_o.data)[_i*3+2]);" % buf,
         "}",
     ]
 
@@ -2913,7 +2913,7 @@ def _deform_normals_materialise(dst, angle_weighted, space):
         "            _tmpn.push_back(_nrm[_i].y);",
         "            _tmpn.push_back(_nrm[_i].z);",
         "        }",
-        "        %s = nd::from_data<double>(_tmpn, "
+        "        %s = nd::from_data<double>(std::move(_tmpn), "
         "{(int64_t)_nrm.length(), 3});" % dst,
         "    }",
     ]
@@ -2945,7 +2945,7 @@ def _deform_points_materialise(dst):
         "                _tmp.push_back(pts[_i].z);",
         "            }",
         "        }",
-        "        %s = nd::from_data<double>(_tmp, {(int64_t)n, 3});" % dst,
+        "        %s = nd::from_data<double>(std::move(_tmp), {(int64_t)n, 3});" % dst,
         "    }",
     ]
 
@@ -3760,7 +3760,7 @@ def _mmatrix_vec_to_nd_lines(src, dst):
         "                for (int _c = 0; _c < 4; ++_c)",
         "                    _tmp.push_back(%s[_i](_r, _c));" % src,
         "        }",
-        "        %s = nd::from_data<double>(_tmp, {(int64_t)%s.size(), 4, 4});"
+        "        %s = nd::from_data<double>(std::move(_tmp), {(int64_t)%s.size(), 4, 4});"
         % (dst, src),
         "    }",
     ]
@@ -3878,7 +3878,7 @@ def lower_deform(ins, spec, base):
         if "weightList" in used:                          # dense (N,J) weights
             dst = env_cpp_name("self.weightList")
             materialise.append(
-                "    nd::Array<double> %s = nd::from_data<double>(skinW, "
+                "    nd::Array<double> %s = nd::from_data<double>(std::move(skinW), "
                 "{skinN, skinJ});" % dst)
             env["self.weightList"] = array_t("double", 2)
 
@@ -4185,7 +4185,7 @@ def _ik_joint_mat_to_nd(src, dst):
         "            for (int _r = 0; _r < 4; ++_r)",
         "                for (int _c = 0; _c < 4; ++_c)",
         "                    _tmp.push_back(%s[_j](_r, _c));" % src,
-        "        %s = nd::from_data<double>(_tmp, {(int64_t)numJoints, 4, 4});"
+        "        %s = nd::from_data<double>(std::move(_tmp), {(int64_t)numJoints, 4, 4});"
         % dst,
         "    }",
     ], array_t("double", 3))
@@ -4203,7 +4203,7 @@ def _ik_joint_vec_to_nd(src, dst):
         "            _tmp.push_back(%s[_j].y);" % src,
         "            _tmp.push_back(%s[_j].z);" % src,
         "        }",
-        "        %s = nd::from_data<double>(_tmp, {(int64_t)numJoints, 3});" % dst,
+        "        %s = nd::from_data<double>(std::move(_tmp), {(int64_t)numJoints, 3});" % dst,
         "    }",
     ], array_t("double", 2))
 

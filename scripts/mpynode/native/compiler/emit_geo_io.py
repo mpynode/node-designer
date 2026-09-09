@@ -115,18 +115,20 @@ static NdMesh nd_read_mesh(const MObject& _o) {
     // (kObject only: any other space would apply a matrix in double).
     const float* _rp = _fn.getRawPoints(NULL);
     unsigned int _nv = (_rp == 0) ? 0 : (unsigned int)_fn.numVertices();
-    g.points.reserve(_nv);
+    g.points.resize(_nv);
     for (unsigned int i = 0; i < _nv; ++i)
-        g.points.push_back(MPoint((double)_rp[3 * i], (double)_rp[3 * i + 1],
-                                  (double)_rp[3 * i + 2]));
+        g.points[i] = MPoint((double)_rp[3 * i], (double)_rp[3 * i + 1],
+                             (double)_rp[3 * i + 2]);
+    // Topology and normals in bulk: MIntArray::get copies the whole array in one
+    // call instead of one operator[] per element.
     MIntArray _gc, _gv; _fn.getVertices(_gc, _gv);
-    g.counts.reserve(_gc.length());
-    for (unsigned int i = 0; i < _gc.length(); ++i) g.counts.push_back(_gc[i]);
-    g.indices.reserve(_gv.length());
-    for (unsigned int i = 0; i < _gv.length(); ++i) g.indices.push_back(_gv[i]);
+    g.counts.resize(_gc.length());
+    if (_gc.length()) _gc.get(g.counts.data());
+    g.indices.resize(_gv.length());
+    if (_gv.length()) _gv.get(g.indices.data());
     MFloatVectorArray _na; _fn.getVertexNormals(false, _na, MSpace::kObject);
-    g.normals.reserve(_na.length());
-    for (unsigned int i = 0; i < _na.length(); ++i) g.normals.push_back(MVector(_na[i]));
+    g.normals.resize(_na.length());
+    for (unsigned int i = 0; i < _na.length(); ++i) g.normals[i] = MVector(_na[i]);
     // UVs of the FIRST non-empty UV set (matches interp Mesh.uvs = uv_sets[0].points).
     MStringArray _sn; _fn.getUVSetNames(_sn);
     for (unsigned int _si = 0; _si < _sn.length(); ++_si) {
@@ -156,9 +158,12 @@ static MObject nd_build_mesh(const NdMesh& g) {
     MStatus _st;
     MFnMeshData _dc;
     MObject _data = _dc.create(&_st);
-    MPointArray _pa; for (size_t i = 0; i < g.points.size(); ++i) _pa.append(g.points[i]);
-    MIntArray _pc; for (size_t i = 0; i < g.counts.size(); ++i) _pc.append(g.counts[i]);
-    MIntArray _ic; for (size_t i = 0; i < g.indices.size(); ++i) _ic.append(g.indices[i]);
+    // Bulk constructors, not one append() per element: a 155k-vertex mesh soup
+    // (meshMaze) is ~740k append calls otherwise -- and its ledger called the
+    // node marshalling-bound.
+    MPointArray _pa; if (!g.points.empty()) _pa = MPointArray(g.points.data(), (unsigned)g.points.size());
+    MIntArray _pc; if (!g.counts.empty()) _pc = MIntArray(g.counts.data(), (unsigned)g.counts.size());
+    MIntArray _ic; if (!g.indices.empty()) _ic = MIntArray(g.indices.data(), (unsigned)g.indices.size());
     long _sumc = 0; bool _ok = !g.points.empty() && !g.counts.empty();
     for (size_t i = 0; i < g.counts.size(); ++i) { if (g.counts[i] < 3) _ok = false; _sumc += g.counts[i]; }
     if ((long)g.indices.size() != _sumc) _ok = false;
@@ -171,8 +176,10 @@ static MObject nd_build_mesh(const NdMesh& g) {
         if (!g.normals.empty()) {
             if (g.normalIndices.empty()) {
                 if (g.normals.size() == g.points.size()) {
-                    MVectorArray _nr; MIntArray _vi;
-                    for (size_t i = 0; i < g.normals.size(); ++i) { _nr.append(g.normals[i]); _vi.append((int)i); }
+                    std::vector<int> _viv(g.normals.size());
+                    for (size_t i = 0; i < _viv.size(); ++i) _viv[i] = (int)i;
+                    MVectorArray _nr(g.normals.data(), (unsigned)g.normals.size());
+                    MIntArray _vi(_viv.data(), (unsigned)_viv.size());
                     _mf.setVertexNormals(_nr, _vi);
                 }
             } else if ((long)g.normalIndices.size() == _sumc) {
@@ -180,15 +187,19 @@ static MObject nd_build_mesh(const NdMesh& g) {
                 for (size_t i = 0; i < g.normalIndices.size(); ++i)
                     if (g.normalIndices[i] < 0 || g.normalIndices[i] >= (int)g.normals.size()) { _nok = false; break; }
                 if (_nok) {
-                    MVectorArray _nr; MIntArray _fi, _vi; int _off = 0;
+                    std::vector<MVector> _nrv; std::vector<int> _fiv, _viv; int _off = 0;
+                    _nrv.reserve((size_t)_sumc); _fiv.reserve((size_t)_sumc); _viv.reserve((size_t)_sumc);
                     for (size_t _f = 0; _f < g.counts.size(); ++_f) {
                         for (int _j = 0; _j < g.counts[_f]; ++_j) {
                             int _fv = _off + _j;
-                            _nr.append(g.normals[(size_t)g.normalIndices[(size_t)_fv]]);
-                            _fi.append((int)_f); _vi.append(g.indices[(size_t)_fv]);
+                            _nrv.push_back(g.normals[(size_t)g.normalIndices[(size_t)_fv]]);
+                            _fiv.push_back((int)_f); _viv.push_back(g.indices[(size_t)_fv]);
                         }
                         _off += g.counts[_f];
                     }
+                    MVectorArray _nr(_nrv.data(), (unsigned)_nrv.size());
+                    MIntArray _fi(_fiv.data(), (unsigned)_fiv.size());
+                    MIntArray _vi(_viv.data(), (unsigned)_viv.size());
                     _mf.setFaceVertexNormals(_nr, _fi, _vi);
                 }
             }
@@ -196,8 +207,10 @@ static MObject nd_build_mesh(const NdMesh& g) {
         if (!g.colors.empty()) {
             if (g.colorIndices.empty()) {
                 if (g.colors.size() == g.points.size()) {
-                    MColorArray _co; MIntArray _vi;
-                    for (size_t i = 0; i < g.colors.size(); ++i) { _co.append(g.colors[i]); _vi.append((int)i); }
+                    std::vector<int> _viv(g.colors.size());
+                    for (size_t i = 0; i < _viv.size(); ++i) _viv[i] = (int)i;
+                    MColorArray _co(g.colors.data(), (unsigned)g.colors.size());
+                    MIntArray _vi(_viv.data(), (unsigned)_viv.size());
                     _mf.setVertexColors(_co, _vi);
                 }
             } else if ((long)g.colorIndices.size() == _sumc) {
@@ -205,15 +218,19 @@ static MObject nd_build_mesh(const NdMesh& g) {
                 for (size_t i = 0; i < g.colorIndices.size(); ++i)
                     if (g.colorIndices[i] < 0 || g.colorIndices[i] >= (int)g.colors.size()) { _cok = false; break; }
                 if (_cok) {
-                    MColorArray _co; MIntArray _fi, _vi; int _off = 0;
+                    std::vector<MColor> _cov; std::vector<int> _fiv, _viv; int _off = 0;
+                    _cov.reserve((size_t)_sumc); _fiv.reserve((size_t)_sumc); _viv.reserve((size_t)_sumc);
                     for (size_t _f = 0; _f < g.counts.size(); ++_f) {
                         for (int _j = 0; _j < g.counts[_f]; ++_j) {
                             int _fv = _off + _j;
-                            _co.append(g.colors[(size_t)g.colorIndices[(size_t)_fv]]);
-                            _fi.append((int)_f); _vi.append(g.indices[(size_t)_fv]);
+                            _cov.push_back(g.colors[(size_t)g.colorIndices[(size_t)_fv]]);
+                            _fiv.push_back((int)_f); _viv.push_back(g.indices[(size_t)_fv]);
                         }
                         _off += g.counts[_f];
                     }
+                    MColorArray _co(_cov.data(), (unsigned)_cov.size());
+                    MIntArray _fi(_fiv.data(), (unsigned)_fiv.size());
+                    MIntArray _vi(_viv.data(), (unsigned)_viv.size());
                     _mf.setFaceVertexColors(_co, _fi, _vi);
                 }
             }
@@ -234,16 +251,18 @@ static MObject nd_build_mesh(const NdMesh& g) {
             for (size_t i = 0; _uok && i < g.uvIds.size(); ++i)
                 if (g.uvIds[i] < 0 || g.uvIds[i] >= (int)_nuv) _uok = false;
             if (_uok) {
-                MFloatArray _su, _sv;
+                // De-interleave into two double runs, then the bulk (double[])
+                // constructors narrow to float exactly as append((float)x) did.
+                std::vector<double> _ud((size_t)_nuv), _vd((size_t)_nuv);
                 for (long i = 0; i < _nuv; ++i) {
-                    _su.append((float)g.uvs[(size_t)(2 * i)]);
-                    _sv.append((float)g.uvs[(size_t)(2 * i + 1)]);
+                    _ud[(size_t)i] = g.uvs[(size_t)(2 * i)];
+                    _vd[(size_t)i] = g.uvs[(size_t)(2 * i + 1)];
                 }
+                MFloatArray _su, _sv;
+                if (_nuv) { _su = MFloatArray(_ud.data(), (unsigned)_nuv); _sv = MFloatArray(_vd.data(), (unsigned)_nuv); }
                 MIntArray _auc, _aui;
-                for (size_t i = 0; i < g.uvCounts.size(); ++i)
-                    _auc.append(g.uvCounts[i]);
-                for (size_t i = 0; i < g.uvIds.size(); ++i)
-                    _aui.append(g.uvIds[i]);
+                if (!g.uvCounts.empty()) _auc = MIntArray(g.uvCounts.data(), (unsigned)g.uvCounts.size());
+                if (!g.uvIds.empty()) _aui = MIntArray(g.uvIds.data(), (unsigned)g.uvIds.size());
                 _mf.setUVs(_su, _sv);
                 _mf.assignUVs(_auc, _aui);
             }
