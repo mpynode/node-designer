@@ -1,6 +1,6 @@
 # mPyDnet -- compile report
 
-**Source node:** `dnet`  ·  **Base:** `MPxNode`  ·  **Generated:** 2026-09-08 20:44
+**Source node:** `dnet`  ·  **Base:** `MPxNode`  ·  **Generated:** 2026-09-08 22:12
 
 | stage | outcome |
 |---|---|
@@ -99,7 +99,7 @@ Bench scene: not recorded (ledger predates the scene record; no noise-floor gate
 
 Baseline **5.963 ms** -> best **1.580 ms** (**3.77x**).
 
-**Re-measured 2026-09-08** under the gated harness (noise floor, animated-input perturbation, output fingerprint), geo density 400 / array length 20000: **unmeasurable** -- baseline 12.944 ms is below the 15 ms noise floor even at the largest bench scene (geo=400 array=20000); nothing this small can be optimized against measurably. The speedup above was taken before the gate existed and cannot be reproduced under it. Moved per tick: `anchors[0] (float)`, `damping (float)`, `index0[0] (int)`, `index1[0] (int)`, `inverseMatrix (matrix)`, `iterations (int)`, `matrices[0] (matrix)`, `pull[0] (float)`, `push[0] (float)`, `tension[0] (float)`, `time (time)`, `tolerance (float)`.
+**Re-measured 2026-09-08** under the gated harness (noise floor, animated-input perturbation, output fingerprint), geo density 400 / array length 20000: **unmeasurable** -- baseline 14.236 ms is below the 15 ms noise floor even at the largest bench scene (geo=400 array=20000); nothing this small can be optimized against measurably. The speedup above was taken before the gate existed and cannot be reproduced under it. Moved per tick: `anchors[0] (float)`, `damping (float)`, `index0[0] (int)`, `index1[0] (int)`, `inverseMatrix (matrix)`, `iterations (int)`, `matrices[0] (matrix)`, `pull[0] (float)`, `push[0] (float)`, `tension[0] (float)`, `time (time)`, `tolerance (float)`.
 
 | # | change | theme | predicted | measured | time | outcome |
 |---|---|---|---|---|---|---|

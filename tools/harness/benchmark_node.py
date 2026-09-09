@@ -496,8 +496,12 @@ def main():
                                            geo_density=args.bench_geo)
             result["driven"] = ["%s:%s(%s)" % r for r in rep["driven"]]
             result["skipped"] = ["%s:%s(%s)" % r for r in rep["skipped"]]
-            result["scene"] = ("spec-seeded: %d driven, %d array, %d skipped"
+            result["sized_outputs"] = ["%s[%d]->%s" % o
+                                       for o in rep.get("outputs", [])]
+            result["scene"] = ("spec-seeded: %d driven, %d array, %d output "
+                               "multi(s) sized, %d skipped"
                                % (len(rep["driven"]), rep["arrays"],
+                                  len(rep.get("outputs", [])),
                                   len(rep["skipped"])))
             pulls = _verify.bench_pull_plugs(spec)
 

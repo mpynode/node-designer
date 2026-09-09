@@ -56,22 +56,21 @@
   "parity_gate": "authored+pointwise",
   "reason": "accepted (3697.75x)",
   "remeasured": {
-    "baseline_ms": 20.3571,
+    "baseline_ms": 87.9938,
     "date": "2026-09-08",
     "diverged": null,
-    "final_ms": 0.0015,
+    "final_ms": 0.026,
     "fingerprint": "checked (1 plug(s))",
     "floor_ms": 15.0,
     "perturbed": [
-      "cv[0] (vector)",
-      "degree (int)"
+      "cv[0] (vector)"
     ],
     "reason": null,
     "rung": [
-      140,
-      5000
+      40,
+      512
     ],
-    "speedup": 13571.4
+    "speedup": 3384.376923076923
   },
   "rounds": 2,
   "speedup": 3697.75,

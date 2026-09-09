@@ -1,6 +1,6 @@
 # springChain -- compile report
 
-**Source node:** `springChain`  ·  **Base:** `MPxNode`  ·  **Generated:** 2026-09-08 20:48
+**Source node:** `springChain`  ·  **Base:** `MPxNode`  ·  **Generated:** 2026-09-08 22:14
 
 | stage | outcome |
 |---|---|
@@ -73,7 +73,7 @@ Bench scene: not recorded (ledger predates the scene record; no noise-floor gate
 
 Baseline **0.002 ms** -> best **0.001 ms** (**1.07x**).
 
-**Re-measured 2026-09-08** under the gated harness (noise floor, animated-input perturbation, output fingerprint), geo density 400 / array length 20000: **unmeasurable** -- baseline 0.002 ms is below the 15 ms noise floor even at the largest bench scene (geo=400 array=20000); nothing this small can be optimized against measurably. The speedup above was taken before the gate existed and cannot be reproduced under it. Moved per tick: `damping (float)`, `driver (vector)`, `gravity (vector)`, `mass (float)`, `maxDistance (float)`, `minDistance (float)`, `tension (float)`, `time (time)`.
+**Re-measured 2026-09-08** under the gated harness (noise floor, animated-input perturbation, output fingerprint), geo density 400 / array length 20000: **unmeasurable** -- baseline 1.462 ms is below the 15 ms noise floor even at the largest bench scene (geo=400 array=20000); nothing this small can be optimized against measurably. The speedup above was taken before the gate existed and cannot be reproduced under it. Moved per tick: `damping (float)`, `driver (vector)`, `gravity (vector)`, `mass (float)`, `maxDistance (float)`, `minDistance (float)`, `tension (float)`, `time (time)`.
 
 | # | change | theme | predicted | measured | time | outcome |
 |---|---|---|---|---|---|---|

@@ -1,12 +1,12 @@
 # spine -- compile report
 
-**Source node:** `spine`  ·  **Base:** `MPxNode`  ·  **Generated:** 2026-09-08 20:47
+**Source node:** `spine`  ·  **Base:** `MPxNode`  ·  **Generated:** 2026-09-08 22:14
 
 | stage | outcome |
 |---|---|
 | 1 Transpile | emitted, with region(s) the transpiler could not lower |
 | 2 AI assist | ran -- no unresolved regions |
-| 3 AI optimize | **4.79x** over 2 round(s) -- re-measured: **1.28x** (outputs match) |
+| 3 AI optimize | **4.79x** over 2 round(s) -- re-measured: **1.13x** (outputs match) |
 
 ## The Python this was generated from
 
@@ -109,7 +109,7 @@ Bench scene: not recorded (ledger predates the scene record; no noise-floor gate
 
 Baseline **8.723 ms** -> best **1.821 ms** (**4.79x**).
 
-**Re-measured 2026-09-08** under the gated harness (noise floor, animated-input perturbation, output fingerprint), geo density 400 / array length 20000: baseline 17.894 ms -> shipped 13.978 ms (**1.28x**); outputs match. The speedup above was taken before the gate existed; this is the number to quote. Moved per tick: `controlMatrices[0] (matrix)`, `inputCurve <- nurbsCircleShape1.cv[0]`, `pivot (float)`, `samples[0] (float)`, `scale (float)`, `shift (float)`, `stretch (float)`.
+**Re-measured 2026-09-08** under the gated harness (noise floor, animated-input perturbation, output fingerprint), geo density 400 / array length 20000: baseline 17.181 ms -> shipped 15.198 ms (**1.13x**); outputs match. The speedup above was taken before the gate existed; this is the number to quote. Moved per tick: `controlMatrices[0] (matrix)`, `inputCurve <- nurbsCircleShape1.cv[0]`, `pivot (float)`, `samples[0] (float)`, `scale (float)`, `shift (float)`, `stretch (float)`.
 
 | # | change | theme | predicted | measured | time | outcome |
 |---|---|---|---|---|---|---|

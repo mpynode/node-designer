@@ -374,6 +374,19 @@ class _FakeCmds:
     def dgeval(self, plug):
         self.evals.append(plug)
 
+    # --- output sizing (bench_size_output_multis) ---
+    def createNode(self, t, **kw):
+        self.created = getattr(self, "created", [])
+        name = "%s%d" % (t, len(self.created) + 1)
+        self.created.append((t, name))
+        return name
+
+    def connectAttr(self, src, dst, **kw):
+        self.connections = getattr(self, "connections", [])
+        if getattr(self, "refuse_dst", None) and dst.startswith(self.refuse_dst):
+            raise RuntimeError("cannot connect")
+        self.connections.append((src, dst))
+
 
 class TestPerturbCoversAnimatedInputs(unittest.TestCase):
     def test_static_names(self):
@@ -462,6 +475,63 @@ class TestPerturbCoversAnimatedInputs(unittest.TestCase):
         cmds = _FakeCmds(conn={"n.restCage": "restShape.worldMesh[0]"},
                          points={"restShape.vtx[0]": [0, 0, 0]})
         self.assertIsNone(verify.bench_perturb_fn(cmds, "n", spec))
+
+
+class TestOutputMultisAreSized(unittest.TestCase):
+    """An output array with no consumer has no elements, so the compute writes
+    nothing: spline computed ONE sample on 20 000 CVs. The bench scene now gives
+    every array output k consumers through a stock sink node."""
+
+    def test_each_array_output_gets_k_typed_consumers(self):
+        from mpynode.native.toolchain import verify
+
+        spec = {"outputs": {"samples": {"type": "vector", "is_array": True},
+                            "lengths": {"type": "float", "is_array": True},
+                            "outMatrix": {"type": "matrix", "is_array": True},
+                            "total": {"type": "double"},
+                            "names": {"type": "string", "is_array": True}}}
+        cmds = _FakeCmds()
+        rep = verify.bench_size_output_multis(cmds, "n", spec, 4)
+        self.assertEqual(sorted(rep["sized"]),
+                         [("lengths", 4, "plusMinusAverage.input1D"),
+                          ("outMatrix", 4, "multMatrix.matrixIn"),
+                          ("samples", 4, "plusMinusAverage.input3D")])
+        self.assertEqual([s[0] for s in rep["skipped"]], ["names"])
+        # one sink per output, k connections each, element i -> element i
+        self.assertEqual(sorted(t for t, _ in cmds.created),
+                         ["multMatrix", "plusMinusAverage", "plusMinusAverage"])
+        self.assertEqual(len(cmds.connections), 12)
+        dst = dict(cmds.connections)["n.samples[3]"]
+        self.assertTrue(dst.endswith(".input3D[3]"), dst)
+        # a scalar output is not an array: untouched
+        self.assertFalse(any("n.total" in s for s, _ in cmds.connections))
+
+    def test_a_refusing_plug_is_recorded_not_fatal(self):
+        from mpynode.native.toolchain import verify
+
+        spec = {"outputs": {"samples": {"type": "vector", "is_array": True}}}
+        cmds = _FakeCmds()
+        cmds.refuse_dst = "plusMinusAverage1.input3D[2]"
+        rep = verify.bench_size_output_multis(cmds, "n", spec, 5)
+        self.assertEqual(rep["sized"], [("samples", 2, "plusMinusAverage.input3D")])
+        self.assertEqual(len(rep["skipped"]), 1)
+        self.assertIn("stopped at 2", rep["skipped"][0][2])
+
+    def test_seed_bench_scene_reports_the_sized_outputs(self):
+        from mpynode.native.toolchain import verify
+
+        spec = {"inputs": {}, "outputs": {"samples": {"type": "vector",
+                                                      "is_array": True}}}
+        cmds = _FakeCmds()
+        rep = verify.seed_bench_scene(cmds, "n", spec, k_array=3)
+        self.assertEqual(rep["outputs"], [("samples", 3, "plusMinusAverage.input3D")])
+
+    def test_harness_records_them(self):
+        from tests.compile.optimizer.test_benchmark_harness_scene import _source
+
+        src = _source()
+        self.assertIn('result["sized_outputs"]', src)
+        self.assertIn("multi(s) sized", src)
 
 
 if __name__ == "__main__":

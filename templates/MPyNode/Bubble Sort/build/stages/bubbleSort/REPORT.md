@@ -1,6 +1,6 @@
 # bubbleSort -- compile report
 
-**Source node:** `bubbleSort`  ·  **Base:** `MPxNode`  ·  **Generated:** 2026-09-08 20:43
+**Source node:** `bubbleSort`  ·  **Base:** `MPxNode`  ·  **Generated:** 2026-09-08 22:12
 
 | stage | outcome |
 |---|---|
@@ -64,7 +64,7 @@ Bench scene: not recorded (ledger predates the scene record; no noise-floor gate
 
 Baseline **0.002 ms** -> best **0.002 ms** (**1.15x**).
 
-**Re-measured 2026-09-08** under the gated harness (noise floor, animated-input perturbation, output fingerprint), geo density 400 / array length 20000: **unmeasurable** -- baseline 0.003 ms is below the 15 ms noise floor even at the largest bench scene (geo=400 array=20000); nothing this small can be optimized against measurably. The speedup above was taken before the gate existed and cannot be reproduced under it. Moved per tick: `maxVal (float)`, `minVal (float)`, `time (time)`.
+**Re-measured 2026-09-08** under the gated harness (noise floor, animated-input perturbation, output fingerprint), geo density 400 / array length 20000: **unmeasurable** -- baseline 0.333 ms is below the 15 ms noise floor even at the largest bench scene (geo=400 array=20000); nothing this small can be optimized against measurably. The speedup above was taken before the gate existed and cannot be reproduced under it. Moved per tick: `maxVal (float)`, `minVal (float)`, `time (time)`.
 
 | # | change | theme | predicted | measured | time | outcome |
 |---|---|---|---|---|---|---|

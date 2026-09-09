@@ -795,6 +795,73 @@ def _bench_string_value(t, attr):
     return "bench" if t != "hex" else "0"
 
 
+# Output array kinds a benchmark can give a consumer to, and the stock node
+# whose multi input accepts them. double3-like outputs (a vector, a point, a
+# colour, an euler triple) fan into plusMinusAverage.input3D; scalars into its
+# input1D; matrices into multMatrix.matrixIn. Anything else is left unsized.
+_OUTPUT_SINKS = {
+    "plusMinusAverage.input3D": ("vector", "point", "color", "euler", "double3",
+                                 "float3"),
+    "plusMinusAverage.input1D": ("double", "float", "int", "long", "short",
+                                 "angle", "bool"),
+    "multMatrix.matrixIn": ("matrix",),
+}
+
+
+def _sink_for(out_type):
+    for sink, kinds in _OUTPUT_SINKS.items():
+        if out_type in kinds:
+            return sink
+    return None
+
+
+def bench_size_output_multis(cmds, node, spec, k):
+    """Give every array OUTPUT of ``node`` ``k`` consumers, so the compute has
+    ``k`` elements to write.
+
+    The runtime sizes an output array from its live plug elements
+    (``len(self.samples)`` is ``numElements()``), and an element only persists
+    while something is connected to it. The benchmark pulls ``attr[0]``, so
+    spline computed ONE sample on 20 000 CVs and its "13571x" was the ratio of
+    two one-sample programs (measured 2026-09-08: 8 sinks -> 8 distinct samples;
+    10 000 connections cost 1.1 s once). One stock sink node per output, typed
+    by :data:`_OUTPUT_SINKS`; the sink is never pulled, so the timed tick pays
+    only for the node's own compute.
+
+    Returns ``{"sized": [(attr, n, sink)], "skipped": [(attr, type, why)]}``.
+    Never raises: a plug that will not connect is recorded and left.
+    """
+    out = {"sized": [], "skipped": []}
+    k = max(0, int(k))
+    for attr, meta in sorted((spec.get("outputs") or {}).items()):
+        if not isinstance(meta, dict) or not meta.get("is_array"):
+            continue
+        t = meta.get("type")
+        sink = _sink_for(t)
+        if sink is None:
+            out["skipped"].append((attr, t, "no stock sink for this type"))
+            continue
+        sink_type, sink_attr = sink.split(".")
+        try:
+            sink_node = cmds.createNode(sink_type)
+        except Exception as exc:
+            out["skipped"].append((attr, t, str(exc)[:80]))
+            continue
+        n = 0
+        for i in range(k):
+            try:
+                cmds.connectAttr("%s.%s[%d]" % (node, attr, i),
+                                 "%s.%s[%d]" % (sink_node, sink_attr, i))
+                n += 1
+            except Exception as exc:
+                out["skipped"].append((attr, t, "stopped at %d: %s"
+                                       % (i, str(exc)[:60])))
+                break
+        if n:
+            out["sized"].append((attr, n, sink))
+    return out
+
+
 def seed_bench_scene(cmds, node, spec, *, k_array=512, geo_density=40,
                      rand=None):
     """Drive EVERY supported input of ``node`` at benchmark scale.
@@ -812,7 +879,7 @@ def seed_bench_scene(cmds, node, spec, *, k_array=512, geo_density=40,
         if isinstance(m, dict) and m.get("enum_names"):
             enum_of[nm] = list(m["enum_names"])
 
-    report = {"driven": [], "skipped": [], "arrays": 0}
+    report = {"driven": [], "skipped": [], "arrays": 0, "outputs": []}
     for attr, meta in sorted((spec.get("inputs") or {}).items()):
         if not isinstance(meta, dict):
             continue
@@ -851,6 +918,10 @@ def seed_bench_scene(cmds, node, spec, *, k_array=512, geo_density=40,
                 report["driven"].append((attr, t, "scalar"))
         except Exception as exc:
             report["skipped"].append((attr, t, str(exc)[:80]))
+    # Outputs too: an array output with no consumer has no elements to write.
+    sized = bench_size_output_multis(cmds, node, spec, k_array)
+    report["outputs"] = list(sized["sized"])
+    report["skipped"].extend(sized["skipped"])
     return report
 
 

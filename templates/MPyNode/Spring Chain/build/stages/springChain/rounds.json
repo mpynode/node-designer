@@ -72,7 +72,7 @@
       "tension (float)",
       "time (time)"
     ],
-    "reason": "baseline 0.002 ms is below the 15 ms noise floor even at the largest bench scene (geo=400 array=20000); nothing this small can be optimized against measurably",
+    "reason": "baseline 1.462 ms is below the 15 ms noise floor even at the largest bench scene (geo=400 array=20000); nothing this small can be optimized against measurably",
     "rung": [
       400,
       20000

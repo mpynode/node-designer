@@ -1,12 +1,12 @@
 # spline -- compile report
 
-**Source node:** `spline`  ·  **Base:** `MPxNode`  ·  **Generated:** 2026-09-08 20:47
+**Source node:** `spline`  ·  **Base:** `MPxNode`  ·  **Generated:** 2026-09-08 22:14
 
 | stage | outcome |
 |---|---|
 | 1 Transpile | deterministic C++, no AI |
 | 2 AI assist | not run (nothing to fill) |
-| 3 AI optimize | **3697.75x** over 2 round(s) -- re-measured: **13571.40x** (outputs match) |
+| 3 AI optimize | **3697.75x** over 2 round(s) -- re-measured: **3384.38x** (outputs match) |
 
 ## The Python this was generated from
 
@@ -49,7 +49,7 @@ Bench scene: not recorded (ledger predates the scene record; no noise-floor gate
 
 Baseline **4.437 ms** -> best **0.001 ms** (**3697.75x**).
 
-**Re-measured 2026-09-08** under the gated harness (noise floor, animated-input perturbation, output fingerprint), geo density 140 / array length 5000: baseline 20.357 ms -> shipped 0.002 ms (**13571.40x**); outputs match. The speedup above was taken before the gate existed; this is the number to quote. Moved per tick: `cv[0] (vector)`, `degree (int)`.
+**Re-measured 2026-09-08** under the gated harness (noise floor, animated-input perturbation, output fingerprint), geo density 40 / array length 512: baseline 87.994 ms -> shipped 0.026 ms (**3384.38x**); outputs match. The speedup above was taken before the gate existed; this is the number to quote. Moved per tick: `cv[0] (vector)`.
 
 | # | change | theme | predicted | measured | time | outcome |
 |---|---|---|---|---|---|---|
