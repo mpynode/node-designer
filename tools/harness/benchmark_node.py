@@ -13,6 +13,10 @@ Usage (standalone mayapy, plug-ins + scripts on the path):
                              [--mode compute|bake] [--bake-source 1024]
 
 ``--mode bake`` times an ogsRender of the node on a plane instead of one dgeval.
+``--copies N`` (compute mode) instantiates N nodes, each seeded and driven like
+the first, and times ONE tick over all of them -- scene throughput, where an
+interpreted node's per-instance overhead and GIL serialisation show and a
+compiled node's do not. ``median_ms`` is then the N-node tick.
 For a TEXTURE node the compute is a single texel (~0.003 ms, pure noise) while
 the VP2 override bakes the whole buffer every frame -- so compute mode makes the
 real cost invisible to the optimizer. See ``_bake_pull``.
@@ -353,6 +357,91 @@ def _bake_pull(node, args, result):
     return _pull
 
 
+def _apply_scene(node, ops, has_spec):
+    """The representative scene's setAttr ops onto ``node``. With a spec, the
+    multis the scene drives are first trimmed to the elements it owns (the
+    generic seeder padded them to k_array junk elements -- see main())."""
+    if has_spec:
+        _owned = {}
+        for op in ops:
+            plug = op.get("plug", "")
+            if "[" in plug and plug.endswith("]"):
+                base, _, idx = plug[:-1].partition("[")
+                try:
+                    _owned[base] = max(_owned.get(base, -1), int(idx))
+                except ValueError:
+                    continue
+        for base, last in _owned.items():
+            try:
+                idxs = mc.getAttr("%s.%s" % (node, base),
+                                  multiIndices=True) or []
+            except Exception:
+                continue
+            for i in idxs:
+                if int(i) > last:
+                    try:
+                        mc.removeMultiInstance(
+                            "%s.%s[%d]" % (node, base, int(i)), b=True)
+                    except Exception:
+                        pass
+    _apply_ops(node, ops)
+
+
+def _resolve_pull_plugs(om, node, pulls):
+    """``(resolved_names, MPlugs)`` for ``pulls`` on ``node`` -- an ARRAY
+    output as ``attr[0]`` (dgeval on the multi ROOT does not recompute in
+    2026), a scalar as itself, falling back to ``[0]``."""
+    def _resolve(plug_name):
+        sel = om.MSelectionList()
+        sel.add(plug_name)
+        return sel.getPlug(0)
+
+    resolved, plugs = [], []
+    for attr, is_arr in pulls:
+        for cand in (["%s.%s[0]" % (node, attr)] if is_arr else
+                     ["%s.%s" % (node, attr),
+                      "%s.%s[0]" % (node, attr)]):
+            try:
+                plugs.append(_resolve(cand))
+                resolved.append(cand)
+                break
+            except Exception:
+                continue
+    return resolved, plugs
+
+
+def _make_copies(args, mc, om, spec, ops, pulls, node, result):
+    """``(nodes, plugs, perturbs)`` for ``--copies``: the first node plus
+    N-1 more created, seeded, scene-driven and resolved exactly like it. Each
+    copy gets its own perturbation so every instance recomputes every tick."""
+    from mpynode.native.toolchain import verify as _verify
+    nodes, all_plugs, perturbs = [node], [], []
+    for _k in range(1, args.copies):
+        if args.spec:
+            nd = _verify.bench_make_node(mc, spec, args.node_type,
+                                         density=args.bench_geo)
+            _verify.seed_bench_scene(mc, nd, spec, k_array=args.bench_array,
+                                     geo_density=args.bench_geo)
+        else:
+            nd = mc.createNode(args.node_type)
+        if ops:
+            _apply_scene(nd, ops, bool(args.spec))
+        nodes.append(nd)
+    for nd in nodes:
+        res, pl = _resolve_pull_plugs(om, nd, pulls)
+        if not pl:
+            raise RuntimeError("copy %s of %s has no pullable output plug"
+                               % (nd, args.node_type))
+        all_plugs.extend(pl)
+        if args.spec:
+            try:
+                perturbs.append(_verify.bench_perturb_fn(mc, nd, spec))
+            except Exception:
+                pass
+    result["copy_nodes"] = list(nodes)
+    return nodes, all_plugs, perturbs
+
+
 def _median(xs):
     s = sorted(xs)
     n = len(s)
@@ -395,12 +484,22 @@ def main():
     ap.add_argument("--mode", choices=("compute", "bake"), default="compute")
     ap.add_argument("--bake-render", type=int, default=64)
     ap.add_argument("--bake-source", type=int, default=1024)
+    # FAN-OUT: N instances of the node, each seeded and driven like the first;
+    # one tick dirties and pulls ALL of them. A scene-throughput number: the
+    # interpreted node pays interpreter overhead per instance and serialises on
+    # the GIL, a compiled one is per-instance cheap -- a difference the
+    # single-node tick cannot show. Compute mode only.
+    ap.add_argument("--copies", type=int, default=1)
     args = ap.parse_args()
+    if args.copies < 1:
+        ap.error("--copies must be >= 1")
+    if args.copies > 1 and args.mode == "bake":
+        ap.error("--copies is a compute-mode option (a bake renders one plane)")
 
     result = {"ok": False, "bundle": args.bundle, "node_type": args.node_type,
               "plug": args.out, "median_ms": None, "iters": args.iters,
               "samples_ms": [], "scene": None, "errors": [],
-              "driven": [], "skipped": [], "pulled": []}
+              "driven": [], "skipped": [], "pulled": [], "copies": args.copies}
     try:
         for p in ("mpynode_api1", "mpynode_api2"):
             if not mc.pluginInfo(p, q=True, loaded=True):
@@ -463,30 +562,7 @@ def main():
         # Trailing elements the scene does not own are removed for the multis it
         # DOES drive, so the node sees exactly the intended workload.
         if ops:
-            if args.spec:
-                _owned = {}
-                for op in ops:
-                    plug = op.get("plug", "")
-                    if "[" in plug and plug.endswith("]"):
-                        base, _, idx = plug[:-1].partition("[")
-                        try:
-                            _owned[base] = max(_owned.get(base, -1), int(idx))
-                        except ValueError:
-                            continue
-                for base, last in _owned.items():
-                    try:
-                        idxs = mc.getAttr("%s.%s" % (node, base),
-                                          multiIndices=True) or []
-                    except Exception:
-                        continue
-                    for i in idxs:
-                        if int(i) > last:
-                            try:
-                                mc.removeMultiInstance(
-                                    "%s.%s[%d]" % (node, base, int(i)), b=True)
-                            except Exception:
-                                pass
-            _apply_ops(node, ops)
+            _apply_scene(node, ops, bool(args.spec))
             if scene_label:
                 result["scene"] = scene_label
 
@@ -510,22 +586,7 @@ def main():
         # metaballs 1682 ms @ res 6 -> 7422 ms @ res 10, matching res^3).
         import maya.api.OpenMaya as om
 
-        def _resolve(plug_name):
-            sel = om.MSelectionList()
-            sel.add(plug_name)
-            return sel.getPlug(0)
-
-        resolved, plugs = [], []
-        for attr, is_arr in pulls:
-            for cand in (["%s.%s[0]" % (node, attr)] if is_arr else
-                         ["%s.%s" % (node, attr),
-                          "%s.%s[0]" % (node, attr)]):
-                try:
-                    plugs.append(_resolve(cand))
-                    resolved.append(cand)
-                    break
-                except Exception:
-                    continue
+        resolved, plugs = _resolve_pull_plugs(om, node, pulls)
 
         # IK solvers have no output plug at all -- doSolve() runs when an
         # ikHandle evaluates -- so rig a chain and pull its tip instead.
@@ -543,11 +604,22 @@ def main():
                                               [p[0] for p in pulls]))
         result["plug"] = ", ".join(resolved)
 
+        # Fan-out: the other N-1 instances. `plugs` (the fingerprint and the
+        # emptiness check) stays the FIRST node's; `tick_plugs` is what a tick
+        # pulls and `tick_nodes` what it dirties.
+        tick_nodes, tick_plugs, copy_perturbs = [node], list(plugs), []
+        if args.copies > 1:
+            if ik_pull is not None:
+                raise RuntimeError("--copies is not supported for an IK solver "
+                                   "(its tick is an ikHandle rig, not a plug)")
+            tick_nodes, tick_plugs, copy_perturbs = _make_copies(
+                args, mc, om, spec, ops, pulls, node, result)
+
         if ik_pull is not None:
             _pull = ik_pull
         else:
             def _pull():
-                for p in plugs:
+                for p in tick_plugs:
                     h = p.asMDataHandle()
                     try:
                         p.destructHandle(h)
@@ -576,6 +648,16 @@ def main():
                 _perturb = None
         result["perturbed"] = _perturb is not None
         result["moved"] = list(getattr(_perturb, "moved", None) or [])
+        if args.copies > 1:
+            # One perturbation per instance (the first node's is copy_perturbs[0]
+            # when a spec drives it), so no copy answers a tick from cache.
+            _all_perturbs = [p for p in copy_perturbs if p] or (
+                [_perturb] if _perturb else [])
+
+            def _perturb_all(_ps=_all_perturbs):
+                for p in _ps:
+                    p()
+            _perturb = _perturb_all if _all_perturbs else None
         if args.spec and _perturb is None and not args.allow_unperturbed:
             result["unperturbed"] = True
             raise RuntimeError(
@@ -596,7 +678,8 @@ def main():
             for _ in range(max(0, args.warmup)):
                 if _perturb:
                     _perturb()
-                mc.dgdirty(node)
+                for _nd in tick_nodes:
+                    mc.dgdirty(_nd)
                 _pull()
 
             # An EMPTY output means this is timing a compute that produces
@@ -629,7 +712,8 @@ def main():
             for _ in range(max(1, args.iters)):
                 if _perturb:
                     _perturb()
-                mc.dgdirty(node)
+                for _nd in tick_nodes:
+                    mc.dgdirty(_nd)
                 t0 = time.perf_counter()
                 _pull()
                 t1 = time.perf_counter()

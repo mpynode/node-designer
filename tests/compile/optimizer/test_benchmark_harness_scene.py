@@ -185,12 +185,13 @@ class TestHarnessWiring(unittest.TestCase):
         # Ordering is the point: seed_bench_scene pads arrays to k_array
         # elements, so a scene applied before it gets padded with junk shapes.
         src = _source()
-        self.assertTrue("seed_bench_scene" in src and "_apply_ops(node, ops)" in src,
+        # main() applies the scene through _apply_scene (which trims the driven
+        # multis, then calls _apply_ops); the copies get the same call.
+        self.assertTrue("seed_bench_scene" in src and "_apply_scene(node, ops" in src,
                         "expected both call sites to exist")
-        # rindex, not index: `def _apply_ops(node, ops):` appears first and is
-        # the definition, not the call.
-        self.assertLess(src.index("seed_bench_scene"),
-                        src.rindex("_apply_ops(node, ops)"),
+        main_at = src.index("def main(")
+        self.assertLess(src.index("seed_bench_scene", main_at),
+                        src.index("_apply_scene(node, ops", main_at),
                         "the representative scene must be applied AFTER seeding")
 
     def test_empty_output_is_reported_and_fatal(self):
