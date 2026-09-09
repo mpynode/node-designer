@@ -10,6 +10,7 @@ import os
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
+import tempfile
 import unittest
 import unittest.mock
 
@@ -426,7 +427,8 @@ class TestQtIncludeResolution(unittest.TestCase):
                                         return_value=r"C:\M\include\qt"):
             self.assertEqual(tc.qt_compile_flags(r"C:\M", os_name="win32"),
                              ["/Zc:__cplusplus", "/permissive-",
-                              "/I", r"C:\M\include\qt"])
+                              "/I", r"C:\M\include\qt",
+                              "/FI", tc.qt_msvc_compat_header_path()])
 
     def test_windows_qt_flags_carry_Zc_cplusplus(self):
         """Qt's qcompilerdetection.h reads __cplusplus, which MSVC leaves at
@@ -1414,6 +1416,10 @@ class TestCodegenBuildScripts(unittest.TestCase):
             # references the variable the resolver sets -- never a baked path.
             self.assertIn('/I "%QTINC%"', body, label)
             self.assertIn('set "QTINC=', body, label)
+            # MSVC 14.51 dropped stdext::checked_array_iterator; the shim is
+            # named BARE so the script stays host-independent (copy ships
+            # beside the sources).
+            self.assertIn("/FI " + tc.QT_MSVC_COMPAT_HEADER, body, label)
             self.assertFalse(_uncollapsed_percent(body), label)
 
     def test_bat_qt_recipe_does_not_depend_on_the_generating_host(self):
@@ -1455,6 +1461,7 @@ class TestCodegenBuildScripts(unittest.TestCase):
             self.assertNotIn("QTINC", body)
             self.assertNotIn("/permissive-", body)
             self.assertNotIn("/Zc:__cplusplus", body)
+            self.assertNotIn("/FI", body)
 
     def test_qt_resolver_bat_probes_and_fails_loudly(self):
         """The resolver must actually PROBE (not just set a variable) and must
@@ -1752,6 +1759,76 @@ class TestParitySweepLaunchers(unittest.TestCase):
 def setUpModule():
     _setUpModule__toolchain()
     _setUpModule__native_build_scripts()
+
+
+class QtMsvcStdextCompatTests(unittest.TestCase):
+    """MSVC 14.51 (VS 2026 18.6) removed stdext::checked_array_iterator; Maya
+    2025's Qt 6.5.3 reaches it from qvarlengtharray.h(379, 890) on every MSVC.
+    MEASURED 2026-09-08: animatedText.cpp died with C3861/C2065 'stdext' and
+    compiled clean once nd_msvc_stdext_compat.h was force-included (/FI)."""
+
+    def test_header_exists_and_is_self_gated(self):
+        from mpynode.native.toolchain import toolchain as tc
+
+        path = tc.qt_msvc_compat_header_path()
+        self.assertTrue(os.path.isfile(path), path)
+        self.assertEqual(os.path.basename(path), tc.QT_MSVC_COMPAT_HEADER)
+        with open(path, encoding="utf-8") as fh:
+            body = fh.read()
+        # 14.50 still ships the class (99 hits in its <iterator>); 14.51 has 0.
+        # A 1950 gate would redefine it on 14.50.
+        self.assertIn("_MSC_VER >= 1951", body)
+        self.assertIn("make_checked_array_iterator", body)
+        self.assertIn("make_unchecked_array_iterator", body)
+        self.assertIn("#pragma once", body)
+
+    def test_windows_qt_compile_flags_force_include_the_header(self):
+        from mpynode.native.toolchain import toolchain as tc
+
+        with unittest.mock.patch.object(tc, "qt_include_dir",
+                                        return_value=r"C:\M\include\qt"):
+            flags = tc.qt_compile_flags(r"C:\M", os_name="win32")
+        i = flags.index("/FI")
+        self.assertEqual(flags[i + 1], tc.qt_msvc_compat_header_path())
+        # macOS / Linux use Qt's own (x) fallback for the macro: not their bug.
+        with unittest.mock.patch.object(tc, "qt_include_dir",
+                                        return_value="/M/include/qt"):
+            self.assertNotIn("/FI", tc.qt_compile_flags("/M", os_name="linux"))
+        self.assertNotIn("/FI", tc.qt_compile_flags("/M", os_name="darwin"))
+
+    def test_compile_cmds_carry_FI_only_for_qt_builds(self):
+        from mpynode.native.toolchain import toolchain as tc
+
+        with unittest.mock.patch.object(tc, "qt_include_dir",
+                                        return_value=r"C:\qt"):
+            obj_qt = tc.compile_object_cmd(
+                "cl", r"C:\x\frag.cpp", r"C:\x\frag.obj",
+                include_dir=r"C:\M\include", frag=True, os_name="win32",
+                qt=True, maya=r"C:\M")
+            plugin_qt = tc.compile_to_plugin_cmd(
+                "cl", r"C:\x\n.cpp", r"C:\x\n.mll",
+                include_dir=r"C:\M\include", lib_dir=r"C:\M\lib",
+                libs=["OpenMaya"], os_name="win32", qt=True, maya=r"C:\M")
+        plain = tc.compile_object_cmd(
+            "cl", r"C:\x\frag.cpp", r"C:\x\frag.obj",
+            include_dir=r"C:\M\include", frag=True, os_name="win32")
+        for cmd in (obj_qt, plugin_qt):
+            self.assertIn("/FI", cmd)
+            self.assertTrue(cmd[cmd.index("/FI") + 1].endswith(
+                tc.QT_MSVC_COMPAT_HEADER), cmd)
+        self.assertNotIn("/FI", plain)
+
+    def test_ship_copies_bytes_for_qt_and_removes_otherwise(self):
+        from mpynode.native.toolchain import toolchain as tc
+
+        with tempfile.TemporaryDirectory() as d:
+            dst = tc.ship_qt_msvc_compat_header(d, True)
+            self.assertEqual(dst, os.path.join(d, tc.QT_MSVC_COMPAT_HEADER))
+            with open(dst, "rb") as a, \
+                 open(tc.qt_msvc_compat_header_path(), "rb") as b:
+                self.assertEqual(a.read(), b.read())
+            self.assertIsNone(tc.ship_qt_msvc_compat_header(d, False))
+            self.assertFalse(os.path.exists(dst))
 
 
 if __name__ == "__main__":

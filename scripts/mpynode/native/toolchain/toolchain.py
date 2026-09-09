@@ -235,6 +235,45 @@ def qt_msvc_flags() -> List[str]:
     return list(_QT_MSVC_FLAGS)
 
 
+# MSVC 14.51 (VS 2026 18.6) removed stdext::checked_array_iterator, which Maya
+# 2025's Qt 6.5.3 reaches unconditionally on MSVC (qcompilerdetection.h ->
+# qvarlengtharray.h lines 379 and 890). MEASURED 2026-09-08: toolset 14.50
+# still ships it (99 hits in its <iterator>), 14.51 has 0; animatedText.cpp
+# died with C3861/C2065 'stdext' and compiled clean (0 warnings, same .obj) with
+# this header force-included. It is self-gated on _MSC_VER >= 1951, so older
+# toolsets are untouched. Same four-emitter rule as _QT_MSVC_FLAGS: the
+# programmatic build force-includes the copy in this package by absolute path;
+# the three .bat mirrors name it BARE (/FI resolves like #include "..."), so
+# every shipped build carries a copy beside its sources and the script stays
+# host-independent. ship_qt_msvc_compat_header() puts that copy in place.
+QT_MSVC_COMPAT_HEADER = "nd_msvc_stdext_compat.h"
+
+
+def qt_msvc_compat_header_path() -> str:
+    """Absolute path of the ``stdext`` compat header shipped in this package."""
+    return os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                        QT_MSVC_COMPAT_HEADER)
+
+
+def ship_qt_msvc_compat_header(dst_dir: str, needs_qt: bool) -> Optional[str]:
+    """Copy the compat header beside the sources in ``dst_dir`` when the build
+    needs Qt; remove a stale copy when it does not.
+
+    Returns the copy's path, or ``None`` when nothing is shipped. Byte copy on
+    purpose: ``tools/regen_build_scripts.py --check`` compares the shipped copy
+    byte-for-byte, and a text-mode round trip on a Windows host would rewrite
+    the line endings.
+    """
+    dst = os.path.join(dst_dir, QT_MSVC_COMPAT_HEADER)
+    if not needs_qt:
+        if os.path.isfile(dst):
+            os.remove(dst)
+        return None
+    os.makedirs(dst_dir, exist_ok=True)
+    shutil.copyfile(qt_msvc_compat_header_path(), dst)
+    return dst
+
+
 def qt_compile_flags(maya: str, os_name: Optional[str] = None) -> List[str]:
     """Flags to COMPILE a translation unit that ``#include``s Maya's Qt headers.
 
@@ -253,7 +292,8 @@ def qt_compile_flags(maya: str, os_name: Optional[str] = None) -> List[str]:
     if is_windows(os_name):
         # Scoped to qt_compile_flags (needs_qt builds only), so nothing without
         # a hover locator changes.
-        return qt_msvc_flags() + ["/I", inc]
+        return qt_msvc_flags() + ["/I", inc,
+                                  "/FI", qt_msvc_compat_header_path()]
     return ["-I", inc]
 
 

@@ -69,6 +69,6 @@ if "%QTINC%"=="" (
   exit /b 1
 )
 set "HERE=%~dp0"
-cl /nologo /LD /std:c++17 /O2 /fp:precise /EHsc /MD /bigobj /utf-8 /D NT_PLUGIN /D REQUIRE_IOSTREAM /D _BOOL /D WIN32 /D _WINDOWS /D _CRT_SECURE_NO_WARNINGS /I "%MAYA%\include" /Zc:__cplusplus /permissive- /I "%QTINC%" "%HERE%source\animatedText.cpp" /link /LIBPATH:"%MAYA%\lib" OpenMaya.lib OpenMayaAnim.lib OpenMayaUI.lib OpenMayaRender.lib Foundation.lib Qt6Core.lib Qt6Gui.lib Qt6Widgets.lib /OUT:"%HERE%..\MPyLocator_Animated_Text.mll" /EXPORT:initializePlugin /EXPORT:uninitializePlugin
+cl /nologo /LD /std:c++17 /O2 /fp:precise /EHsc /MD /bigobj /utf-8 /D NT_PLUGIN /D REQUIRE_IOSTREAM /D _BOOL /D WIN32 /D _WINDOWS /D _CRT_SECURE_NO_WARNINGS /I "%MAYA%\include" /Zc:__cplusplus /permissive- /I "%QTINC%" /FI nd_msvc_stdext_compat.h "%HERE%source\animatedText.cpp" /link /LIBPATH:"%MAYA%\lib" OpenMaya.lib OpenMayaAnim.lib OpenMayaUI.lib OpenMayaRender.lib Foundation.lib Qt6Core.lib Qt6Gui.lib Qt6Widgets.lib /OUT:"%HERE%..\MPyLocator_Animated_Text.mll" /EXPORT:initializePlugin /EXPORT:uninitializePlugin
 if errorlevel 1 exit /b 1
 echo Built: %HERE%..\MPyLocator_Animated_Text.mll

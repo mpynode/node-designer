@@ -1,4 +1,5 @@
-"""Rewrite every committed build.sh / build.bat from today's generators.
+"""Rewrite every committed build.sh / build.bat -- and, for Qt builds, the
+shipped copy of the MSVC stdext compat header -- from today's sources.
 
 The build scripts are CODEGEN output, exactly like ``1_transpiled.cpp``: a
 change to ``bundler.make_*_build_*`` silently leaves 120 checked-in scripts
@@ -100,6 +101,14 @@ def _recorded_inputs(old_sh):
     return frags, node_file, needs_qt, (prov.group(1) if prov else None)
 
 
+def _compat_header_text(toolchain):
+    """The toolchain's stdext compat header, read without newline translation
+    so it compares byte-for-byte like the scripts do."""
+    with open(toolchain.qt_msvc_compat_header_path(), encoding="utf-8",
+              newline="") as fh:
+        return fh.read()
+
+
 def _regen_one(build_dir, man, bundler, build_scripts, toolchain):
     """(rel, {name: (old, new)}) for the scripts this tree already ships."""
     rel = os.path.relpath(build_dir, ROOT)
@@ -139,6 +148,11 @@ def _regen_one(build_dir, man, bundler, build_scripts, toolchain):
         }
     else:
         return rel, {}
+    if needs_qt:
+        # A Windows Qt build.bat force-includes this header by bare name, so a
+        # copy ships beside the sources; it is codegen output like the scripts.
+        gen["source/" + toolchain.QT_MSVC_COMPAT_HEADER] = \
+            _compat_header_text(toolchain)
 
     for fname, new in gen.items():
         path = os.path.join(build_dir, fname)
@@ -169,10 +183,17 @@ def _regen_one(build_dir, man, bundler, build_scripts, toolchain):
             with open(path, encoding="utf-8", newline="") as fh:
                 old = fh.read()
             out["%s/%s" % (row["type_name"], fname)] = (old, new)
+        if row["spec"].get("needs_hover"):
+            path = os.path.join(sub, toolchain.QT_MSVC_COMPAT_HEADER)
+            if os.path.isfile(path):
+                with open(path, encoding="utf-8", newline="") as fh:
+                    old = fh.read()
+                key = "%s/%s" % (row["type_name"], toolchain.QT_MSVC_COMPAT_HEADER)
+                out[key] = (old, _compat_header_text(toolchain))
     return rel, out
 
 
-def _orphans(build_dir, covered):
+def _orphans(build_dir, covered, names):
     """Scripts sitting in this tree that no manifest row accounts for.
 
     A renamed node leaves its old scratch dir behind; the script there is
@@ -183,7 +204,7 @@ def _orphans(build_dir, covered):
     for dirpath, dirnames, filenames in os.walk(build_dir):
         dirnames[:] = [d for d in dirnames if d != "__pycache__"]
         for fname in filenames:
-            if fname not in ("build.sh", "build.bat"):
+            if fname not in names:
                 continue
             rel = os.path.relpath(os.path.join(dirpath, fname),
                                   build_dir).replace(os.sep, "/")
@@ -216,7 +237,9 @@ def main(argv=None):
         rel, scripts = _regen_one(build_dir, man, bundler, build_scripts,
                                   toolchain)
         orphans += ["%s/%s" % (rel, o)
-                    for o in _orphans(build_dir, set(scripts))]
+                    for o in _orphans(build_dir, set(scripts),
+                                      ("build.sh", "build.bat",
+                                       toolchain.QT_MSVC_COMPAT_HEADER))]
         if not scripts:
             skipped += 1
             continue

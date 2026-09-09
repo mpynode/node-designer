@@ -260,6 +260,9 @@ def port_node(spec: dict, out_dir: str, complete_fn=None,
             f.write(build_src)
         if not toolchain.is_windows():
             os.chmod(build_path, 0o755)
+        # The Windows script force-includes this by bare name: keep it beside
+        # the .cpp (toolchain.QT_MSVC_COMPAT_HEADER).
+        toolchain.ship_qt_msvc_compat_header(out_dir, bool(spec.get("needs_hover")))
         verify_path = os.path.join(out_dir, "verify_in_maya.py")
         with open(verify_path, "w", encoding="utf-8") as f:
             f.write(_verify_script(spec))
@@ -388,6 +391,9 @@ def port_node(spec: dict, out_dir: str, complete_fn=None,
         f.write(build_src)
     if not toolchain.is_windows():
         os.chmod(build_path, 0o755)
+    # The Windows script force-includes this by bare name: keep it beside
+    # the .cpp (toolchain.QT_MSVC_COMPAT_HEADER).
+    toolchain.ship_qt_msvc_compat_header(out_dir, bool(spec.get("needs_hover")))
     verify_path = os.path.join(out_dir, "verify_in_maya.py")
     with open(verify_path, "w", encoding="utf-8") as f:
         f.write(_verify_script(spec))

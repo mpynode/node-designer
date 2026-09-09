@@ -98,7 +98,9 @@ def generate_build_bat(spec: dict, maya=None) -> str:
         # at C1083. The MSVC-only flags Qt 6 requires ride along with it, or the
         # hand rebuild dies at C1189/C2338 while the programmatic build
         # (qt_compile_flags) succeeds. One source of truth.
-        qt_inc = ' %s /I "%%QTINC%%"' % " ".join(toolchain.qt_msvc_flags())
+        qt_inc = (' %s /I "%%QTINC%%" /FI %s'
+                  % (" ".join(toolchain.qt_msvc_flags()),
+                     toolchain.QT_MSVC_COMPAT_HEADER))
     return "\r\n".join([
         "@echo off",
         "REM Generated build for native node '%s'." % name,
@@ -165,6 +167,9 @@ def write_plugin(spec: dict, out_dir: str) -> dict:
         f.write(build_src)
     if not toolchain.is_windows():
         os.chmod(paths["build_sh"], 0o755)
+    # A Windows Qt build force-includes toolchain.QT_MSVC_COMPAT_HEADER by BARE
+    # name, so the copy has to sit beside the .cpp for build.bat to find it.
+    toolchain.ship_qt_msvc_compat_header(out_dir, bool(spec.get("needs_hover")))
     with open(paths["load_test"], "w", encoding="utf-8") as f:
         f.write(generate_load_test(spec))
     return paths

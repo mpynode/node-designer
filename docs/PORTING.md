@@ -111,8 +111,12 @@ Multi-node bundler: each fragment + `plugin_main.cpp` is compiled `/c` to `.obj`
 linked with `cl /nologo /LD ... /link ... /OUT:<plugin>.mll /EXPORT:...`.
 
 A hand-runnable `build.bat` is also emitted next to the sources for debugging
-(`codegen.generate_build_bat`, `bundler.make_build_bat`). Run it from an
-**"x64 Native Tools Command Prompt for VS"**.
+(`codegen.generate_build_bat`, `bundler.make_build_bat`). It runs from any
+`cmd.exe`: the script locates MSVC via `vswhere` and calls `vcvarsall x64`
+itself, and an "x64 Native Tools Command Prompt" is used as-is.
+
+Qt (hover) nodes add `/Zc:__cplusplus /permissive- /I <qt include>` and
+`/FI nd_msvc_stdext_compat.h` -- see the MSVC 14.51 caveat below.
 
 ## How the MSVC environment is found (no extra deps)
 
@@ -245,6 +249,16 @@ refactored build pipeline still produces a working `.bundle` at parity.
 * **Maya lib dir.** Assumed `<maya>\lib`. Some devkit layouts put import libs
   under `<maya>\devkit\lib` — if `OpenMaya.lib` isn't in `<maya>\lib`, point
   `maya=` at the devkit root or adjust `toolchain.maya_lib_dir`.
+* **MSVC 14.51 (VS 2026 18.6) and Qt.** That toolset removed
+  `stdext::checked_array_iterator`; Maya 2025's Qt 6.5.3 still reaches it from
+  `qvarlengtharray.h` on every MSVC, so every hover (Qt) node died with C3861
+  `'stdext'`. Windows Qt compiles now force-include
+  `native/toolchain/nd_msvc_stdext_compat.h` (`/FI`), a pass-through gated on
+  `_MSC_VER >= 1951` (14.50 still ships the class, so older toolsets see
+  nothing). The programmatic build names it by absolute path; a shipped
+  `build.bat` names it bare, so a copy travels in `build/source/` beside the
+  `.cpp` -- keep the two together. `tools/regen_build_scripts.py --check`
+  flags a stale copy.
 * **arch** is x64 (`vcvarsall x64`, no `/arch`); Maya is x64-only on Windows.
 * **vcvars caching** is per-process. If you change VS installs mid-session,
   restart Maya (or clear `toolchain._VCVARS_ENV_CACHE`).

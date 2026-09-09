@@ -855,7 +855,9 @@ def make_build_bat(plugin_name: str, frag_files: List[str],
         # The MSVC-only flags Qt 6 requires ride along with the include dir, or
         # this hand-runnable mirror dies at C1189/C2338 while the programmatic
         # build (toolchain.qt_compile_flags) succeeds.
-        cxx = cxx + ' %s /I "%%QTINC%%"' % " ".join(toolchain.qt_msvc_flags())
+        cxx = cxx + (' %s /I "%%QTINC%%" /FI %s'
+                     % (" ".join(toolchain.qt_msvc_flags()),
+                        toolchain.QT_MSVC_COMPAT_HEADER))
     lines = [
         "@echo off",
         "REM Generated combined build for native plugin '%s' (%d nodes)."
@@ -977,8 +979,9 @@ def make_single_build_bat(plugin_name: str, node_file: str, libs: List[str],
     # The MSVC-only flags Qt 6 requires ride along with the include dir, or this
     # hand-runnable mirror dies at C1189/C2338 while the programmatic build
     # (toolchain.qt_compile_flags) succeeds.
-    qt_inc = (' %s /I "%%QTINC%%"' % " ".join(toolchain.qt_msvc_flags())
-              ) if needs_qt else ""
+    qt_inc = (' %s /I "%%QTINC%%" /FI %s'
+              % (" ".join(toolchain.qt_msvc_flags()),
+                 toolchain.QT_MSVC_COMPAT_HEADER)) if needs_qt else ""
     return "\r\n".join([
         "@echo off",
         "REM Rebuild native plugin '%s' from its single source 'source\\%s'."
@@ -1427,6 +1430,10 @@ def assemble(
     #    build/), then link the bundle at the TOP of out_dir.
     with open(os.path.join(src_dir, "plugin_main.cpp"), "w", encoding="utf-8") as fh:
         fh.write(make_plugin_main(compiled_infos, plugin_name))
+    # build.bat force-includes the stdext compat header by BARE name (see
+    # toolchain.QT_MSVC_COMPAT_HEADER), so a Qt build ships a copy beside its
+    # sources; a non-Qt build drops any copy a previous compile left behind.
+    toolchain.ship_qt_msvc_compat_header(src_dir, needs_qt)
     node_cpp_files = [_node_cpp_name(i["node_name"]) for i in compiled_infos]
     build_sh = os.path.join(build_dir, "build.sh")
     # newline="" on BOTH: the generators already emit their own line endings
@@ -1561,6 +1568,8 @@ def _assemble_single(node, plugin_name, out_dir, reg, report, *, strict, maya,
     # prior multi-node compile into the source dir.
     for stale in ("plugin_main.cpp", SHARED_HELPERS_FILE):
         _rm(os.path.join(src_dir, stale))
+    # Beside the source, by bare name -- see the note in assemble().
+    toolchain.ship_qt_msvc_compat_header(src_dir, needs_qt)
 
     libs = list(_LINK_LIBS)
     # The build scripts are cross-platform artifacts, so each gets its OWN
