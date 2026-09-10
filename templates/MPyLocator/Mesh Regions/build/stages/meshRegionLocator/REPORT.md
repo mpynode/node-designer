@@ -1,11 +1,11 @@
 # meshRegionLocator -- compile report
 
-**Source node:** `meshRegions`  ·  **Base:** `MPxLocatorNode`  ·  **Generated:** 2026-09-10 09:54
+**Source node:** `meshRegions`  ·  **Base:** `MPxLocatorNode`  ·  **Generated:** 2026-09-10 12:16
 
 | stage | outcome |
 |---|---|
 | 1 Transpile | emitted, with region(s) the transpiler could not lower |
-| 2 AI assist | ran -- no unresolved regions |
+| 2 AI assist | ran -- 1 region(s) still marked incomplete |
 | 3 AI optimize | ran, nothing accepted (baseline could not be benchmarked) -- 0 run of max 6, stopped: baseline could not be benchmarked |
 
 ## The Python this was generated from
@@ -66,7 +66,7 @@ else:
     selected = bool(self.selected)
     if selected:
         hovered = False          # selected shows only its selected form
-    now = float(_wallclock.time())
+    now = float(self.wallclock)
 
     h_cur, h_e = tween(now, float(getattr(self, "hv_start", 0.0)),
                        float(getattr(self, "hv_from", 0.0)),
@@ -144,6 +144,10 @@ else:
         self.auto_highlight = False
         self.auto_refresh = bool(h_e < 1.0)
 ```
+
+## Unfinished work in the generated C++
+
+* **not translated:** the legacy baked `regions` dict is a STORED PYTHON
 
 ## Optimization
 

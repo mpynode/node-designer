@@ -395,7 +395,15 @@ from typing import Optional
 # cadence (10 cheap nodes dropped to 8.8 fps). The poll now measures every tick,
 # keeps the worst late gap since the last request, and uses a 2-period
 # threshold. Locator-only codegen.
-PORTER_RECIPE_VERSION = "29"
+# v30: locators animate on the WALL CLOCK. The interpreted framework gains
+# self.wallclock (time.time(), epoch seconds) and the scaffold seeds wallClock
+# from system_clock instead of steady_clock-since-load, so both paths share the
+# phase; `self.wallclock` is a context read and a live-clock marker. The idle
+# refresh poll is throttled by MEASUREMENT (VP2 end-of-render notification
+# turns the first render after a request into its cost; wait 2x, never queue
+# behind an unpaid one) -- v28/v29 inferred the cost from tick lateness and
+# misread Maya's ~47 ms cadence. Locator-only codegen.
+PORTER_RECIPE_VERSION = "30"
 
 # Spec keys excluded from the cache key -- provably irrelevant to the generated
 # C++. A deny-list, NOT an allow-list (design C1).

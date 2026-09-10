@@ -382,6 +382,7 @@ def _interpreted(compute, init="", inputs=None):
 
     slf = _Self()
     _seed_inputs(slf, inputs)
+    slf.wallclock = 0.0   # self.wallclock: the compiled probe POD starts at wallClock = 0.0
     ns["self"] = slf
     # The compiled probe's Inputs POD starts at wallClock = 0.0; pin the
     # interpreted clock to the same value so a wall-clock animation is compared

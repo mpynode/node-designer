@@ -297,7 +297,7 @@ class TestCoexistingScratchSlots(unittest.TestCase):
             "mPyMesh": ("time",),
             "mPyNurbsCurve": ("time", "degree", "form", "rational"),
             "mPyNurbsSurface": ("time", "degree_u", "form_v"),
-            "mPyLocator": ("time", "selected", "is_lead", "hovered",
+            "mPyLocator": ("time", "wallclock", "selected", "is_lead", "hovered",
                            "selection_color"),
         }
         for node_type, names in sorted(shadowing.items()):

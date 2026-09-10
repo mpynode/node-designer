@@ -355,9 +355,9 @@ class TestRuntimeLabelList(unittest.TestCase):
 
 
 class TestWallClock(unittest.TestCase):
-    """`time.time()` binds to the scaffold's per-frame wallClock. The origins
-    differ (steady_clock-since-first-call vs epoch), so the compiled gizmo runs
-    the same motion at a different phase -- deliberate, see nd_lower."""
+    """`time.time()` binds to the scaffold's per-frame wallClock -- system_clock
+    epoch seconds since recipe 30, the same origin as the interpreted node, so
+    the compiled gizmo runs the same motion at the same phase."""
 
     _INIT = "import time as _wall\n"
 
@@ -400,6 +400,37 @@ class TestWallClock(unittest.TestCase):
             "self.auto_refresh = True\n"
             "_wall.sleep(1)\n"
             "self.draw = DrawCircle(center=(0.0, 0.0, 0.0), radius=1.0)\n")))
+
+
+class TestWallclockSlot(unittest.TestCase):
+    """``self.wallclock`` is the framework's animation clock (epoch seconds,
+    identical in both paths). It is a draw-context read bound to the same
+    scaffold ``wallClock`` that ``time.time()`` lowers to, and -- like it --
+    needs the live-clock service, which the extractor flags automatically."""
+
+    def _spec_hover(self, compute, hover=True):
+        spec = _spec(compute)
+        spec["needs_hover"] = hover
+        return spec
+
+    def test_self_wallclock_binds_the_wall_clock(self):
+        out = "\n".join(nd_lower.try_lower_locator(self._spec_hover(
+            "self.auto_refresh = True\n"
+            "self.draw = DrawCircle(center=(0.0, 0.0, 0.0),\n"
+            "                       radius=1.0 + self.wallclock)\n")) or [])
+        self.assertIn("(double)(wallClock)", out)
+
+    def test_without_needs_hover_it_rejects(self):
+        self.assertIsNone(nd_lower.try_lower_locator(self._spec_hover(
+            "self.draw = DrawCircle(center=(0.0, 0.0, 0.0),\n"
+            "                       radius=self.wallclock)\n", hover=False)))
+
+    def test_the_extractor_flags_it_as_needing_the_live_clock(self):
+        from mpynode.native.spec.spec_extractor import detect_needs_hover
+        self.assertTrue(detect_needs_hover(
+            "self.draw = DrawCircle(center=(0.0, 0.0, 0.0), radius=self.wallclock)\n"))
+        self.assertFalse(detect_needs_hover(
+            "# self.wallclock only in a comment\nself.draw = None\n"))
 
 
 class TestCppStringLiteral(unittest.TestCase):

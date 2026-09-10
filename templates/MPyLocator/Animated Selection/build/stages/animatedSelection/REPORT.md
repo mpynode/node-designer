@@ -1,6 +1,6 @@
 # animatedSelection -- compile report
 
-**Source node:** `animatedSelection`  ·  **Base:** `MPxLocatorNode`  ·  **Generated:** 2026-09-10 09:54
+**Source node:** `animatedSelection`  ·  **Base:** `MPxLocatorNode`  ·  **Generated:** 2026-09-10 12:12
 
 | stage | outcome |
 |---|---|
@@ -11,13 +11,14 @@
 ## The Python this was generated from
 
 ```python
-# Polygon-shading showcase cube: spins on scene time, "pops" on mouse
-# HOVER (wall-clock elastic tween), and recolours via the `color_mode`
+# Polygon-shading showcase cube: spins on the WALL CLOCK (self.wallclock --
+# seconds since the epoch, never the timeline), "pops" on mouse HOVER (an
+# elastic tween on the same clock), and recolours via the `color_mode`
 # enum. Selection tints the FILL only (highlight_fill) while the wireframe
 # keeps its own colour (highlight_wire=False) -- per-aspect highlighting.
 # Animation state lives in getattr-defaulted vars, so it needs no seeding.
 hovered = bool(self.hovered)
-now = float(_wallclock.time())
+now = float(self.wallclock)
 duration = max(self.popDuration, 1e-3)
 amount = self.popAmount
 
@@ -39,8 +40,8 @@ if hovered != prev:
 
 scale = 1.0 + amount * current_pop
 
-# Spin on scene time at the user-tunable spinSpeed (rad / frame).
-ang = self.time * self.spinSpeed
+# Spin on the wall clock at the user-tunable spinSpeed (radians per second).
+ang = self.wallclock * self.spinSpeed
 spun = ((cube_pts * scale) @ rot_y(ang).T) @ rot_x(ang * 0.6).T
 
 # The four fill modes are named after the buffer key each one drives, so the

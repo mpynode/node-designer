@@ -1,6 +1,6 @@
 # animatedText -- compile report
 
-**Source node:** `animatedText`  ·  **Base:** `MPxLocatorNode`  ·  **Generated:** 2026-09-10 09:54
+**Source node:** `animatedText`  ·  **Base:** `MPxLocatorNode`  ·  **Generated:** 2026-09-10 12:12
 
 | stage | outcome |
 |---|---|
@@ -11,12 +11,15 @@
 ## The Python this was generated from
 
 ```python
-# Animated rainbow text gizmo. The motion is driven by the timeline position
-# (mod `loopFrames`) PLUS a gentle wall-clock drift, so it keeps flowing whether
-# you scrub / play the timeline OR leave it idle -- the locator has no
-# time-input plug, so a still timeline alone would freeze it (this is how the
-# original text gizmo kept moving). auto_refresh keeps it repainting so the
-# wall-clock term stays live.
+# Animated rainbow text gizmo, driven by the WALL CLOCK only. self.wallclock is
+# seconds since the epoch (time.time()) and is identical in the compiled node,
+# so the motion is the same at idle, while scrubbing and in every playback
+# mode: frame rate and scene time units never change its speed. Timeline
+# animation is opt-in -- an expression gets it by reading self.time (or a
+# time plug); this one deliberately does not. `loopDuration` is wall-clock
+# seconds per loop: 1 = one loop per second, 2 = two seconds per loop,
+# -1 = one loop per second in reverse, 0 = frozen. auto_refresh keeps the
+# gizmo repainting between the redraws Maya would otherwise never issue.
 self.auto_refresh = True
 
 raw = getattr(self, "displayText", "")
@@ -25,11 +28,9 @@ chars = list(str(msg))
 n = len(chars)
 idx = np.arange(n, dtype=np.float64)
 
-loop = max(self.loopFrames, 1)
-frame = float(getattr(self, "time", 0.0))
-# timeline position (0..1 per loop) plus a slow wall-clock drift so the gizmo
-# animates even when the timeline is idle (matches the original text gizmo).
-cyc = (frame % loop) / loop + _wall.time() * 0.15
+dur = float(self.loopDuration)
+speed = (1.0 / dur) if dur != 0.0 else 0.0    # loops per wall-clock second
+cyc = self.wallclock * speed                  # loop position; its fraction is the phase
 phase = TWO_PI * cyc
 
 spacing = self.spacing

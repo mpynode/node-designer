@@ -110,8 +110,53 @@ def read_profile_snapshot(node_name: str) -> dict | None:
     return decode_profile_snapshot(text)
 
 
+# Live watch snapshots, keyed by node hash -> (MObjectHandle, vars). A locator's
+# expression runs inside VP2's prepareForDraw, where ``cmds.setAttr`` on the
+# snapshot plug is refused (and swallowed below), so for the whole life of the
+# feature the Watch tab showed a locator's Inputs and stored vars but never its
+# Locals / Framework. The panel now reads this in-memory copy first; the plug
+# write stays as the persisted form and the fallback for DG-computed nodes.
+_WATCH_MEM: dict = {}
+
+
+def _watch_handle(node_obj):
+    """API 2 handle for the in-memory key; None for an API 1 MObject."""
+    try:
+        import maya.api.OpenMaya as om2
+
+        return om2.MObjectHandle(node_obj)
+    except Exception:
+        return None
+
+
+def _read_watch_mem(node_name: str) -> dict | None:
+    if not _WATCH_MEM:
+        return None
+    try:
+        import maya.api.OpenMaya as om2
+
+        sel = om2.MSelectionList()
+        sel.add(node_name)
+        obj = sel.getDependNode(0)
+        rec = _WATCH_MEM.get(om2.MObjectHandle(obj).hashCode())
+        # the hash is recycled across scenes: only a handle still pointing at
+        # THIS node is a hit
+        if rec is not None and rec[0].isValid() and rec[0].object() == obj:
+            return dict(rec[1])
+    except Exception:
+        pass
+    return None
+
+
 def write_watch_vars(node_obj, vars_dict: dict) -> None:
-    """Write the watch vars to the node's _watchVarsData plug."""
+    """Record the watch vars for a node: in memory (always) and on the node's
+    _watchVarsData plug (when the caller's context allows a plug write)."""
+    handle = _watch_handle(node_obj)
+    if handle is not None:
+        try:
+            _WATCH_MEM[handle.hashCode()] = (handle, dict(vars_dict))
+        except Exception:
+            pass
     try:
         from maya import cmds
     except ImportError:
@@ -131,7 +176,11 @@ def write_watch_vars(node_obj, vars_dict: dict) -> None:
 
 
 def read_watch_vars(node_name: str) -> dict | None:
-    """Read the watch vars dict for a node by name."""
+    """Read the watch vars dict for a node by name: the live in-memory
+    snapshot when there is one, else the plug."""
+    mem = _read_watch_mem(node_name)
+    if mem is not None:
+        return mem
     try:
         from maya import cmds
 

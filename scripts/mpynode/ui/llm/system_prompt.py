@@ -196,10 +196,13 @@ mPyLocator DRAWING (write self.draw in Compute -- the ONLY draw surface)
   / self.shapes / self.text do NOT exist. Everything goes through self.draw.
 
 mPyLocator DRAW STATE
-  self.time          -- current frame (a float).
-  self.auto_refresh = True  -- REQUIRED for time-animated drawings (the locator
-                              has no time-input plug, so without this it only
-                              re-evaluates on selection change).
+  self.wallclock     -- seconds since the epoch (time.time()); THE animation clock.
+                        Independent of the timeline, playback mode and scene fps,
+                        and identical in the compiled node. Animate on this.
+  self.time          -- current frame (a float). Reading it opts the drawing INTO
+                        the timeline (it acts as an implicit time-input plug).
+  self.auto_refresh = True  -- REQUIRED for any animated drawing (Maya only
+                              re-evaluates a locator on selection change otherwise).
 
 mPyTransform MATRIX OUTPUT (GATED LOCAL-MATRIX -- Compute drives this transform)
   The node is a single-joint IK solver: publish a desired LOCAL matrix + gates.
@@ -423,8 +426,10 @@ mPyLocator DRAWING -- the ONLY draw surface: compose draw objects into self.draw
   self.shapes / self.text do NOT exist.
 
 mPyLocator DRAW STATE
-  self.time   -- current frame (float).  self.auto_refresh = True is REQUIRED for
-  time-animated drawings (a locator has no time-input plug).
+  self.wallclock -- seconds since the epoch (time.time()): the animation clock,
+  independent of timeline / playback / fps, identical in the compiled node.
+  self.time   -- current frame (float); reading it opts the drawing into the timeline.
+  self.auto_refresh = True is REQUIRED for any animated drawing.
 
 mPyTransform MATRIX OUTPUT (GATED LOCAL-MATRIX) -- publish a desired LOCAL matrix
 + open gates (all default to a no-op = plain transform):

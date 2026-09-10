@@ -6100,20 +6100,22 @@ def _ensure_mpy_plugins():
             mc.loadPlugin(plugin)
 
 
-def _draw_slot(loc, slot, time_value=0.0):
+def _draw_slot(loc, slot, time_value=0.0, wallclock=None):
     """The FIRST buffer of ``slot`` in a locator's ordered draw commands, or
     None if it drew nothing there. The build gates below only ever inspect one
-    item per slot; ``_draw_slots`` answers "which slots drew at all"."""
-    for cmd in loc.evaluate_draw_commands(time_value)["commands"]:
+    item per slot; ``_draw_slots`` answers "which slots drew at all".
+    ``wallclock`` pins ``self.wallclock`` so a wall-clock animation is read at
+    a chosen instant (None samples the real clock)."""
+    for cmd in loc.evaluate_draw_commands(time_value, wallclock=wallclock)["commands"]:
         if cmd["slot"] == slot:
             return cmd["buffer"]
     return None
 
 
-def _draw_slots(loc, time_value=0.0):
+def _draw_slots(loc, time_value=0.0, wallclock=None):
     """The set of slots a locator drew into this frame."""
     return {c["slot"]
-            for c in loc.evaluate_draw_commands(time_value)["commands"]}
+            for c in loc.evaluate_draw_commands(time_value, wallclock=wallclock)["commands"]}
 
 
 # ======================================================================
@@ -6462,7 +6464,6 @@ def build_locator_widget_showcase():
 # 2. mPyLocator Widgets - animated text :: rainbow text, exact loop
 # ======================================================================
 LOC_TEXT_INIT = r'''import numpy as np
-import time as _wall
 from mpynode._common.draw.draw_types import (
     DrawCircle, DrawCurve, DrawPoints, DrawText)
 
@@ -6482,12 +6483,15 @@ def hue2rgb(h):
     return np.stack([r, g, b], axis=1)
 '''
 
-LOC_TEXT_COMPUTE = r'''# Animated rainbow text gizmo. The motion is driven by the timeline position
-# (mod `loopFrames`) PLUS a gentle wall-clock drift, so it keeps flowing whether
-# you scrub / play the timeline OR leave it idle -- the locator has no
-# time-input plug, so a still timeline alone would freeze it (this is how the
-# original text gizmo kept moving). auto_refresh keeps it repainting so the
-# wall-clock term stays live.
+LOC_TEXT_COMPUTE = r'''# Animated rainbow text gizmo, driven by the WALL CLOCK only. self.wallclock is
+# seconds since the epoch (time.time()) and is identical in the compiled node,
+# so the motion is the same at idle, while scrubbing and in every playback
+# mode: frame rate and scene time units never change its speed. Timeline
+# animation is opt-in -- an expression gets it by reading self.time (or a
+# time plug); this one deliberately does not. `loopDuration` is wall-clock
+# seconds per loop: 1 = one loop per second, 2 = two seconds per loop,
+# -1 = one loop per second in reverse, 0 = frozen. auto_refresh keeps the
+# gizmo repainting between the redraws Maya would otherwise never issue.
 self.auto_refresh = True
 
 raw = getattr(self, "displayText", "")
@@ -6496,11 +6500,9 @@ chars = list(str(msg))
 n = len(chars)
 idx = np.arange(n, dtype=np.float64)
 
-loop = max(self.loopFrames, 1)
-frame = float(getattr(self, "time", 0.0))
-# timeline position (0..1 per loop) plus a slow wall-clock drift so the gizmo
-# animates even when the timeline is idle (matches the original text gizmo).
-cyc = (frame % loop) / loop + _wall.time() * 0.15
+dur = float(self.loopDuration)
+speed = (1.0 / dur) if dur != 0.0 else 0.0    # loops per wall-clock second
+cyc = self.wallclock * speed                  # loop position; its fraction is the phase
 phase = TWO_PI * cyc
 
 spacing = self.spacing
@@ -6555,20 +6557,11 @@ self.draw = (DrawText(chars, positions, color=colors, size=sizes)
                           color=hue2rgb(np.array([cyc]))))
 '''
 
-DEMO_LOC_TEXT = '''# Animated Text setup: set a playback range equal to one loop and frame it.
+DEMO_LOC_TEXT = '''# Animated Text setup: frame the gizmo. It animates on the wall clock, so
+# there is no playback range to set -- it moves whether or not you play.
 def demo(self):
     from maya import cmds as mc
     name = self.get_name()
-    try:
-        loop = int(mc.getAttr(name + ".loopFrames"))
-    except Exception:
-        loop = 60
-    try:
-        mc.playbackOptions(minTime=1, maxTime=loop,
-                           animationStartTime=1, animationEndTime=loop)
-        mc.currentTime(1)
-    except Exception:
-        pass
     try:
         for _panel in mc.getPanel(type="modelPanel") or []:
             _cam = mc.modelEditor(_panel, query=True, camera=True)
@@ -6587,8 +6580,9 @@ def test_animated_text(self):
       1. A blank ``displayText`` defaults to "MPyNode!" -> 8 glyphs, one 3D
          position each (that IS the node's default message).
       2. Setting ``displayText`` re-lays exactly those glyphs.
-      3. The gizmo is genuinely animated -- scrubbing the timeline moves the
-         text (matches the builder's live ``animates`` check).
+      3. The gizmo is genuinely animated -- two wall-clock instants lay the
+         text out differently, and the same instant repeats (the clock is
+         injected, so the check is deterministic; the timeline plays no part).
       4. Every advertised draw slot (text / points / lines / shapes) is
          populated this frame.
 
@@ -6605,7 +6599,7 @@ def test_animated_text(self):
 
     name = self.get_name()
 
-    def _cmds(time_value=0.0):
+    def _cmds(wallclock=None):
         # Read the ordered draw commands off the node's PUBLIC MPx surface using
         # the node NAME (not self.evaluate_draw_commands(), a wrapper method
         # absent on the compiled node's _NodeNameProxy) so the SAME test runs on
@@ -6613,7 +6607,7 @@ def test_animated_text(self):
         sel = om2.MSelectionList()
         sel.add(name)
         mpx = om2.MFnDependencyNode(sel.getDependNode(0)).userNode()
-        return (mpx.evaluateDrawItems(time_value) or {}).get("commands") or []
+        return (mpx.evaluateDrawItems(0.0, wallclock=wallclock) or {}).get("commands") or []
 
     def _slot(cmds, slot):
         for cmd in cmds:
@@ -6644,11 +6638,14 @@ def test_animated_text(self):
     assert_equal(list(_slot(cmds2, "text")["strings"]), ["H", "i"],
                  "displayText must drive the glyph layout")
 
-    # 3) Animated: scrubbing the timeline genuinely moves the text.
-    a = _slot(_cmds(0.0), "text")["positions"]
-    b = _slot(_cmds(30.0), "text")["positions"]
+    # 3) Animated on the wall clock: two instants differ, the same instant repeats.
+    a = _slot(_cmds(wallclock=0.0), "text")["positions"]
+    b = _slot(_cmds(wallclock=0.25), "text")["positions"]
+    a2 = _slot(_cmds(wallclock=0.0), "text")["positions"]
     assert_true(not np.allclose(a, b),
-                "scrubbing the timeline must move the animated text")
+                "a quarter second of wall clock must move the animated text")
+    assert_true(np.allclose(a, a2),
+                "the drawing must be a pure function of the wall clock")
 
     # 4) Every advertised draw slot is populated this frame.
     drawn = {c["slot"] for c in cmds2}
@@ -6663,11 +6660,13 @@ LOC_TEXT_DESC = (
     "sparkle points, a line ribbon and a pulsing halo. Good for a rig banner "
     "or a state readout.\n\n"
     "Type your message into `displayText`; blank shows `MPyNode!`. "
-    "`loopFrames` (default 60) is one cycle in frames; `spacing` and "
-    "`waveHeight` set the layout. Selecting the gizmo flashes it white.\n\n"
-    "The motion runs off the timeline plus a slow wall-clock drift, so "
-    "`auto_refresh` keeps it going whether you scrub, play, or sit still. "
-    "**Create + Run demo** sets the playback range to one loop and frames it."
+    "`loopDuration` is wall-clock seconds per loop (default 1; 2 is slower, "
+    "-1 runs in reverse, 0 freezes); `spacing` and `waveHeight` set the "
+    "layout. Selecting the gizmo flashes it white.\n\n"
+    "The motion runs off the wall clock (`self.wallclock`), never the "
+    "timeline: it looks the same at idle, while scrubbing and in every "
+    "playback mode, and the compiled node matches it exactly. "
+    "**Create + Run demo** frames it."
 )
 
 
@@ -6680,7 +6679,7 @@ def build_locator_animated_text():
     w = MPyLocator.create(name="animatedText")
     node = w.get_name()
     w.add_input_attr("displayText", "string")
-    w.add_input_attr("loopFrames", "int", default_value=60, min_value=1)
+    w.add_input_attr("loopDuration", "float", default_value=1.0)
     w.add_input_attr("spacing", "float", default_value=1.3)
     w.add_input_attr("waveHeight", "float", default_value=1.6)
     w.set_init_expression(LOC_TEXT_INIT)
@@ -6706,18 +6705,21 @@ def build_locator_animated_text():
     sizes_ok = (np.issubdtype(_sz.dtype, np.floating)
                 and float(_sz.min()) > 0.0 and float(_sz.max()) < 3.0)
 
-    # Idle-timeline animation: at a CONSTANT frame the wall-clock drift must
-    # still move the gizmo (the bug this fixes -- the original text gizmo kept
-    # animating when the timeline was idle; a frame-only version froze).
+    # Wall-clock animation: with the timeline untouched, two live evaluations a
+    # moment apart must differ (the gizmo never depends on the frame).
     import time as _time
     mc.setAttr(node + ".displayText", "", type="string")
     b0 = _draw_slot(w, "text")
     _time.sleep(0.05)
     b0b = _draw_slot(w, "text")
     idle_animates = not np.allclose(b0["positions"], b0b["positions"])
-    # ...and scrubbing the timeline genuinely differs too.
-    bmid = _draw_slot(w, "text", 30.0)
-    animates = not np.allclose(b0["positions"], bmid["positions"])
+    # ...and the drawing is a pure function of the injected wall clock: two
+    # instants differ, the same instant repeats (the timeline plays no part).
+    b_a = _draw_slot(w, "text", wallclock=0.0)
+    b_b = _draw_slot(w, "text", wallclock=0.25)
+    b_a2 = _draw_slot(w, "text", wallclock=0.0)
+    animates = (not np.allclose(b_a["positions"], b_b["positions"])
+                and np.allclose(b_a["positions"], b_a2["positions"]))
 
     slots_ok = {"text", "points", "lines", "shapes"} <= _draw_slots(w)
 
@@ -6752,7 +6754,6 @@ def build_locator_animated_text():
 # 3. mPyLocator Widgets - animated selection :: hover-pop spinning gizmo
 # ======================================================================
 LOC_SEL_INIT = r'''import math
-import time as _wallclock
 import numpy as np
 from mpynode._common.draw.draw_types import DrawMesh
 
@@ -6813,13 +6814,14 @@ VERTEX_COLORS = vertex_palette()
 FACE_VERTEX_COLORS = face_vertex_palette()
 '''
 
-LOC_SEL_COMPUTE = r'''# Polygon-shading showcase cube: spins on scene time, "pops" on mouse
-# HOVER (wall-clock elastic tween), and recolours via the `color_mode`
+LOC_SEL_COMPUTE = r'''# Polygon-shading showcase cube: spins on the WALL CLOCK (self.wallclock --
+# seconds since the epoch, never the timeline), "pops" on mouse HOVER (an
+# elastic tween on the same clock), and recolours via the `color_mode`
 # enum. Selection tints the FILL only (highlight_fill) while the wireframe
 # keeps its own colour (highlight_wire=False) -- per-aspect highlighting.
 # Animation state lives in getattr-defaulted vars, so it needs no seeding.
 hovered = bool(self.hovered)
-now = float(_wallclock.time())
+now = float(self.wallclock)
 duration = max(self.popDuration, 1e-3)
 amount = self.popAmount
 
@@ -6841,8 +6843,8 @@ if hovered != prev:
 
 scale = 1.0 + amount * current_pop
 
-# Spin on scene time at the user-tunable spinSpeed (rad / frame).
-ang = self.time * self.spinSpeed
+# Spin on the wall clock at the user-tunable spinSpeed (radians per second).
+ang = self.wallclock * self.spinSpeed
 spun = ((cube_pts * scale) @ rot_y(ang).T) @ rot_x(ang * 0.6).T
 
 # The four fill modes are named after the buffer key each one drives, so the
@@ -6874,17 +6876,11 @@ self.auto_highlight = False      # we drive highlighting ourselves
 self.auto_refresh = bool(elapsed < 1.0)
 '''
 
-DEMO_LOC_SEL = '''# Animated Selection setup: playback range for the spin + frame it. The
-# hover pop is interactive (wall-clock), so it plays without playback too.
+DEMO_LOC_SEL = '''# Animated Selection setup: frame the cube. Spin and hover pop both run on
+# the wall clock, so nothing about the timeline needs setting.
 def demo(self):
     from maya import cmds as mc
     name = self.get_name()
-    try:
-        mc.playbackOptions(minTime=1, maxTime=240,
-                           animationStartTime=1, animationEndTime=240)
-        mc.currentTime(1)
-    except Exception:
-        pass
     try:
         for _panel in mc.getPanel(type="modelPanel") or []:
             _cam = mc.modelEditor(_panel, query=True, camera=True)
@@ -6916,9 +6912,9 @@ def test_animated_selection(self):
     name = self.get_name()
     w = MPyLocator(name)
 
-    def _poly(time_value=0.0):
-        """This frame's polygon buffer, or None."""
-        for cmd in w.evaluate_draw_commands(time_value)["commands"]:
+    def _poly(wallclock=None):
+        """This instant's polygon buffer, or None."""
+        for cmd in w.evaluate_draw_commands(0.0, wallclock=wallclock)["commands"]:
             if cmd["slot"] == "polygons":
                 return cmd["buffer"]
         return None
@@ -6927,7 +6923,7 @@ def test_animated_selection(self):
     # the interpreted mPyNode exposes to Python. On a compiled node this is
     # unavailable -> skip (compiled parity is probe-verified).
     try:
-        probe = _poly(30.0)
+        probe = _poly()
     except Exception:
         return
     if probe is None:
@@ -6937,7 +6933,7 @@ def test_animated_selection(self):
     for i, key in enumerate(
             ["face_colors", "vertex_colors", "face_vertex_colors", "colors"]):
         mc.setAttr(name + ".color_mode", i)
-        poly = _poly(30.0)
+        poly = _poly()
         assert_true(poly is not None and key in poly
                     and poly.get("cull_backfaces") is True,
                     "color_mode %d must set %r with cull_backfaces" % (i, key))
@@ -6951,27 +6947,27 @@ def test_animated_selection(self):
     assert_true("wireframe" not in (_poly() or {}),
                 "show_wireframe False must drop the wireframe overlay")
 
-    # 3) spinSpeed actually spins: two different times give different points.
+    # 3) spinSpeed spins on the wall clock: two instants give different points.
     mc.setAttr(name + ".spinSpeed", 0.5)
-    s0 = np.asarray(_poly(0.0)["points"])
-    s1 = np.asarray(_poly(10.0)["points"])
+    s0 = np.asarray(_poly(wallclock=0.0)["points"])
+    s1 = np.asarray(_poly(wallclock=1.0)["points"])
     assert_true(not np.allclose(s0, s1),
-                "spinSpeed should rotate the cube over time")
+                "spinSpeed should rotate the cube as the wall clock advances")
 '''
 
 LOC_SEL_DESC = (
     "# Animated Selection\n\n"
-    "A shaded cube (`mPyLocator`) that spins on the timeline and pops out "
+    "A shaded cube (`mPyLocator`) that spins on the wall clock and pops out "
     "under the mouse. Hover is a real ray-versus-triangle test, not a "
     "bounding box, and the pop runs off the wall clock, so it plays on any "
     "redraw.\n\n"
     "`color_mode` sets the fill: `face` (flat per-face hues), `vertex` (a "
     "gradient across the corners), `face_vertex` (smooth inside a face, hard "
     "seams between) or `uniform` (one translucent colour). `show_wireframe` "
-    "and `wire_width` add an edge overlay. `spinSpeed` (radians per frame), "
+    "and `wire_width` add an edge overlay. `spinSpeed` (radians per wall-clock second), "
     "`popDuration` and `popAmount` tune the motion. Selecting the cube tints "
     "the fill only.\n\n"
-    "**Create + Run demo** sets a playback range and frames it."
+    "**Create + Run demo** frames it."
 )
 
 
@@ -6987,7 +6983,7 @@ def build_locator_animated_selection():
                      enum_names=["face", "vertex", "face_vertex", "uniform"])
     w.add_input_attr("show_wireframe", "bool", default_value=True)
     w.add_input_attr("wire_width", "float", default_value=2.0)
-    w.add_input_attr("spinSpeed", "float", default_value=0.04)
+    w.add_input_attr("spinSpeed", "float", default_value=1.0)
     w.add_input_attr("popDuration", "float", default_value=0.6)
     w.add_input_attr("popAmount", "float", default_value=0.45)
     w.set_init_expression(LOC_SEL_INIT)
@@ -7004,7 +7000,7 @@ def build_locator_animated_selection():
             ("face", "face_colors"), ("vertex", "vertex_colors"),
             ("face_vertex", "face_vertex_colors"), ("uniform", "colors")]):
         mc.setAttr(node + ".color_mode", i)
-        poly = _draw_slot(w, "polygons", 30.0)
+        poly = _draw_slot(w, "polygons")
         ok_i = (poly is not None and key in poly
                 and poly.get("cull_backfaces") is True)
         mode_ok = mode_ok and ok_i
@@ -7019,10 +7015,10 @@ def build_locator_animated_selection():
     wire_off = "wireframe" not in (_draw_slot(w, "polygons") or {})
     wire_ok = wire_on and wire_off
 
-    # spinSpeed actually spins: two frames differ.
+    # spinSpeed actually spins: two wall-clock instants differ.
     mc.setAttr(node + ".spinSpeed", 0.5)
-    s0 = _draw_slot(w, "polygons", 0.0)["points"]
-    s1 = _draw_slot(w, "polygons", 10.0)["points"]
+    s0 = _draw_slot(w, "polygons", wallclock=0.0)["points"]
+    s1 = _draw_slot(w, "polygons", wallclock=1.0)["points"]
     spin_ok = not np.allclose(s0, s1)
 
     has_demo = find_demo(DEMO_LOC_SEL) is not None
@@ -7054,7 +7050,6 @@ def build_locator_animated_selection():
 # 4. mPyLocator Widget - mesh regions :: draw every component-tag patch
 # ======================================================================
 LOC_REGION_INIT = r'''import math
-import time as _wallclock
 import numpy as np
 from mpynode._common.draw.draw_types import DrawMesh
 from mpynode._common.nodes.mesh.mesh_region import extract_region
@@ -7147,7 +7142,7 @@ else:
     selected = bool(self.selected)
     if selected:
         hovered = False          # selected shows only its selected form
-    now = float(_wallclock.time())
+    now = float(self.wallclock)
 
     h_cur, h_e = tween(now, float(getattr(self, "hv_start", 0.0)),
                        float(getattr(self, "hv_from", 0.0)),

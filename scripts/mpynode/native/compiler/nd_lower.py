@@ -4563,6 +4563,9 @@ def try_lower_iksolver(spec):
 # is (c++ expression, kind) with the same shape as _IK_SCALAR_READS.
 _LOC_CONTEXT_READS = {
     "time": ("timeVal", "double"),
+    # self.wallclock: seconds since the epoch, the same clock (and origin) as
+    # Python's time.time() -- the scaffold seeds wallClock from system_clock.
+    "wallclock": ("wallClock", "double"),
     "selected": ("selected", "bool"),
     "is_lead": ("is_lead", "bool"),
     "hovered": ("hovered", "bool"),
@@ -4749,6 +4752,12 @@ def lower_locator(spec):
     declared = (allowed | set(spec.get("inputs") or {})
                 | set(spec.get("outputs") or {}))
     used = _used_self_attrs(source, declared)
+    if "wallclock" in used and not spec.get("needs_hover"):
+        # Same constraint as time.time() above: the live clock is seeded by the
+        # hover service. The real extractor flags `wallclock` as needs_hover, so
+        # this only fires for a hand-built spec.
+        raise UnsupportedSpec("nd_lower locator: self.wallclock needs the live "
+                              "wall clock (needs_hover)")
     extra = used - allowed
     if extra:
         raise UnsupportedSpec("nd_lower locator: reads/writes unsupported self "
@@ -4769,11 +4778,12 @@ def lower_locator(spec):
             lines = ["    %s %s = (%s)(%s);" % (c, dst, c, src)]
             typ = scalar_t("bool" if kind == "bool" else "double")
         elif attr == _LOC_WALLCLOCK_ATTR:
-            # NOTE: _wallClock() is steady_clock measured from the plugin's
-            # first call, while time.time() is epoch seconds. The motion and its
-            # speed are identical; only the PHASE differs from the interpreted
-            # node, which a wall-clock animation does not define. Deliberate --
-            # user decision, 2026-08-05.
+            # time.time() under any import name -> the scaffold's wallClock,
+            # which is system_clock epoch seconds since 2026-09 (recipe 30) --
+            # the same origin as the interpreted node, so a compiled and an
+            # interpreted gizmo side by side share the PHASE, not just the
+            # speed. (Before that it was steady_clock since the plugin's first
+            # call, a deliberate phase difference; superseded by self.wallclock.)
             lines = ["    const double %s = wallClock;" % dst]
             typ = scalar_t("double")
         elif attr.startswith(_LOC_ENUM_NAME_PREFIX):

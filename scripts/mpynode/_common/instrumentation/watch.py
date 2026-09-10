@@ -331,13 +331,23 @@ def encode_watch_vars(vars_dict: dict) -> str:
     never lose the variable from the watch list (only the live binding
     of unpicklable values).
     """
-    safe: dict = {}
-    for k, v in vars_dict.items():
+    def _safe(v):
         try:
             pickle.dumps(v)
-            safe[k] = v
+            return v
         except Exception:
-            safe[k] = repr(v)
+            return repr(v)
+
+    safe: dict = {}
+    for k, v in vars_dict.items():
+        if isinstance(v, dict):
+            # A nested surface (the framework block) is sanitised PER KEY: one
+            # unpicklable slot (a live DrawItem in ``draw``) used to collapse the
+            # whole block into a repr string and the Watch tab's Framework group
+            # came up empty.
+            safe[k] = {kk: _safe(vv) for kk, vv in v.items()}
+        else:
+            safe[k] = _safe(v)
     payload = {
         "protocol": 1,
         "data_b64": base64.b64encode(pickle.dumps(safe, protocol=5)).decode("ascii"),

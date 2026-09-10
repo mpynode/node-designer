@@ -60,8 +60,10 @@ The numpy buffer helpers live in ``_common/draw_buffers.py``.
 from __future__ import annotations
 
 import sys
+import time as _time
 
 import maya.api.OpenMaya as om
+import maya.api.OpenMayaAnim as oma
 import maya.api.OpenMayaRender as omr
 import maya.api.OpenMayaUI as omui
 import numpy as np
@@ -182,6 +184,7 @@ class MPyLocator(omui.MPxLocatorNode):
         is_lead: bool = False,
         selection_color: tuple = (1.0, 1.0, 1.0, 1.0),
         hovered: bool = False,
+        wallclock: float | None = None,
     ) -> dict:
         """Run the user expression and return this frame's ORDERED draw
         commands (empty if the expression drew nothing).
@@ -189,8 +192,13 @@ class MPyLocator(omui.MPxLocatorNode):
         Called by MPyLocatorDrawOverride.prepareForDraw each frame.
         Failures return no commands (no draw output).
 
-        namespace contract: ``time`` is read via ``self.time``; ``self.draw``
-        is the write-only drawing. User expression looks like:
+        namespace contract: ``time`` is read via ``self.time`` (the current
+        frame -- the implicit time plug, so an expression that reads it opts
+        into the timeline); ``self.wallclock`` is seconds since the epoch
+        (``time.time()``), the timeline-independent animation clock every
+        bundled locator animates on, identical in the compiled node. Pass
+        ``wallclock`` to pin it (tests); None samples the real clock.
+        ``self.draw`` is the write-only drawing. User expression looks like:
 
             self.draw = (DrawCircle(radius=2.0, color=ORANGE)
                          + DrawText("hip_ctrl", position=(0, 2, 0)))
@@ -258,6 +266,7 @@ class MPyLocator(omui.MPxLocatorNode):
         _compute_locals = dict(input_values)
         _compute_locals.update({
             "time": TimeFloat(time_value),
+            "wallclock": float(wallclock) if wallclock is not None else _time.time(),
             "selected": bool(selected),
             "is_lead": bool(is_lead),
             "hovered": bool(hovered),
@@ -544,10 +553,14 @@ class MPyLocatorDrawOverride(omr.MPxDrawOverride):
             data = MPyLocatorDrawData()
 
         node_obj = obj_path.node()
-        # Expression context: current time.
+        # Expression context: current frame. MAnimControl lives in
+        # OpenMayaAnim, not OpenMaya -- read through ``om`` it raised
+        # AttributeError into this except and ``self.time`` was ALWAYS 0.0 in
+        # the interpreted locator (the compiled node read the real frame), so
+        # every template's timeline term was silently dead. The fallback stays
+        # for a headless context with no anim control.
         try:
-            time_obj = om.MAnimControl.currentTime()
-            time_value = time_obj.value
+            time_value = oma.MAnimControl.currentTime().value
         except Exception:
             time_value = 0.0
 

@@ -321,18 +321,22 @@ def normalize_attr(meta: dict) -> dict:
 
 
 # Draw-expression flags that require the native locator's C++ hover + idle-refresh
-# machinery, and therefore Qt linkage.
-_HOVER_MARKERS = frozenset(("hovered", "precise_hover", "auto_refresh"))
+# machinery, and therefore Qt linkage. ``wallclock`` is there because the live
+# clock is seeded by that same service: without it the scaffold pins wallClock to
+# 0.0 and a compiled wall-clock animation would sit frozen.
+_HOVER_MARKERS = frozenset(("hovered", "precise_hover", "auto_refresh", "wallclock"))
 
 
 def detect_needs_hover(compute: str, init: str = "") -> bool:
-    """True if a locator draw expression uses passive hover / idle auto-refresh.
+    """True if a locator draw expression uses passive hover / idle auto-refresh /
+    the live wall clock.
 
-    Scans for ``self.hovered`` / ``self.precise_hover`` / ``self.auto_refresh`` in
-    real code (``_self_attr_refs`` skips comments + string literals, so a stray
-    mention doesn't trigger it). Drives ``spec['needs_hover']`` -> the Qt hover
-    service in codegen + Qt linkage in the build. (Residual false-negative:
-    ``getattr(self, 'hovered')`` -- not used by the shipped locators.)
+    Scans for ``self.hovered`` / ``self.precise_hover`` / ``self.auto_refresh`` /
+    ``self.wallclock`` in real code (``_self_attr_refs`` skips comments + string
+    literals, so a stray mention doesn't trigger it). Drives
+    ``spec['needs_hover']`` -> the Qt hover service in codegen + Qt linkage in the
+    build. (Residual false-negative: ``getattr(self, 'hovered')`` -- not used by
+    the shipped locators.)
     """
     refs = _self_attr_refs("%s\n%s" % (compute or "", init or ""))
     return bool(refs & _HOVER_MARKERS)

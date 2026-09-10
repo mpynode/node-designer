@@ -41,7 +41,8 @@ class MPyLocator(MPyNode, MethodsSourceMixin):
 
     # DrawOverride.prepareForDraw callback state.
     INTERNAL_API_SLOTS = (
-        ("time",            "read",  "TimeFloat -- current frame; .fps / .asSeconds()"),
+        ("time",            "read",  "TimeFloat -- current frame; .fps / .asSeconds(). Reading it opts the drawing into the timeline"),
+        ("wallclock",       "read",  "float -- seconds since the epoch (time.time()); the timeline-independent animation clock, identical in the compiled node"),
         ("selected",        "read",  "bool -- viewport selection state"),
         ("is_lead",         "read",  "bool -- True iff this locator is the lead selection"),
         ("hovered",         "read",  "bool -- True while the cursor is over this locator (cursor-ray hover_tracker)"),
@@ -56,7 +57,7 @@ class MPyLocator(MPyNode, MethodsSourceMixin):
     # construction in mpynode/_api2/mpy_locator.py). A real plug WINS on read
     # for these, so a user input/output of the same name COEXISTS with the
     # write slot instead of being shadowed. The draw CONTEXT slots (time /
-    # selected / is_lead / hovered / selection_color) have no backing plug and
+    # wallclock / selected / is_lead / hovered / selection_color) have no backing plug and
     # are NOT scratch, so they stay reserved. tests/authoring/test_reserved_names
     # AST-parses the real call.
     COEXISTING_SCRATCH_SLOTS = (
@@ -102,9 +103,12 @@ class MPyLocator(MPyNode, MethodsSourceMixin):
             raise RuntimeError(f"locator {self._name!r} has no parent transform")
         return parents[0]
 
-    def evaluate_draw_commands(self, time_value: float = 0.0) -> dict:
+    def evaluate_draw_commands(self, time_value: float = 0.0,
+                               wallclock: float | None = None) -> dict:
         """Trigger the locator's expression and return this frame's ORDERED
-        draw commands -- one record per authored item, in authoring order::
+        draw commands -- one record per authored item, in authoring order.
+        ``wallclock`` pins ``self.wallclock`` (None samples ``time.time()``),
+        so a wall-clock animation can be evaluated at a chosen instant::
 
             {
                 "commands": [
@@ -135,7 +139,7 @@ class MPyLocator(MPyNode, MethodsSourceMixin):
         if mpx is None:
             return {"commands": [], "auto_highlight": True,
                     "auto_refresh": False, "precise_hover": False}
-        return mpx.evaluateDrawItems(time_value)
+        return mpx.evaluateDrawItems(time_value, wallclock=wallclock)
 
     def __repr__(self) -> str:
         return f"<{type(self).__name__} {self._name!r}>"

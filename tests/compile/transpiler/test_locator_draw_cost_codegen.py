@@ -132,18 +132,26 @@ class TestThrottledIdleRefresh(unittest.TestCase):
         self.cpp = codegen._generate_locator_cpp(_spec(True))
         self.poll = _fn_body(self.cpp, "static void _poll(float, float, void*) {")
 
-    def test_poll_measures_every_tick_and_keeps_the_worst_late_gap(self):
-        # Maya may run the tick due after a request before OR after the redraw
-        # it triggered; only one of them carries the cost, so every tick is
-        # measured and the worst gap since the last request is what counts.
-        self.assertIn("if (_gap > 2.0 * _period) g_pendingMax = std::max(g_pendingMax, _gap);", self.poll)
-        self.assertNotIn("1.25 * _period", self.poll)   # sat under Maya's ~47 ms cadence
+    def test_cost_is_measured_by_vp2s_end_of_render_notification(self):
+        # Inferring the cost from tick lateness (v28/v29) misread Maya's ~47 ms
+        # tick cadence and missed redraws that ran before the due tick; the
+        # first render to finish after our request now pays for it.
+        self.assertIn("static void _onEndRender(MHWRender::MDrawContext&, void*)", self.cpp)
+        self.assertIn("if (g_costPending) { g_lastRedraw = std::max(0.0, _wallClock() - g_lastDirtyT); g_costPending = false; }",
+                      self.cpp)
+        self.assertIn("addNotification(_onEndRender", self.cpp)
+        self.assertIn("MHWRender::MPassContext::kEndRenderSemantic", self.cpp)
+        self.assertIn("removeNotification(", self.cpp)
+        for stale in ("g_lastTickT", "g_pendingMax", "1.25 * _period", "2.0 * _period"):
+            self.assertNotIn(stale, self.cpp)
 
-    def test_poll_waits_twice_the_measured_redraw_never_less_than_a_period(self):
+    def test_poll_waits_twice_the_measured_cost_and_never_queues(self):
         self.assertIn("const double _wait = std::max(_period, 2.0 * g_lastRedraw);", self.poll)
-        self.assertIn("(_now - g_lastDirtyT) >= _wait", self.poll)
-        # the request applies the pending measurement and starts a fresh one
-        self.assertIn("g_lastRedraw = g_pendingMax; g_pendingMax = 0.0; g_lastDirtyT = _now;", self.poll)
+        self.assertIn("!g_costPending && (g_lastDirtyT < 0.0 || (_now - g_lastDirtyT) >= _wait)", self.poll)
+        self.assertIn("g_lastDirtyT = _now; g_costPending = g_notifOn;", self.poll)
+
+    def test_a_render_that_never_comes_stops_blocking(self):
+        self.assertIn("if (g_costPending && (_now - g_lastDirtyT) > 1.0) g_costPending = false;", self.poll)
 
     def test_dirtying_is_inside_the_gate(self):
         gate = self.poll.index("(_now - g_lastDirtyT) >= _wait")
@@ -166,12 +174,32 @@ class TestNonHoverLocatorSharesTheDrawPath(unittest.TestCase):
             self.assertIn(tok, self.cpp)
 
     def test_no_poll_no_throttle_state(self):
-        for tok in ("g_lastDirtyT", "g_lastRedraw", "g_pendingMax", "static void _poll("):
+        for tok in ("g_lastDirtyT", "g_lastRedraw", "g_costPending", "_onEndRender",
+                    "static void _poll("):
             self.assertNotIn(tok, self.cpp)
 
     def test_helpers_stay_plugin_only(self):
         self.assertLess(self.cpp.index("#ifndef MPYNODE_PROBE"),
                         self.cpp.index("static float _pointPx(float s)"))
+
+
+class TestWallClockSlot(unittest.TestCase):
+    """``self.wallclock`` is seconds since the epoch in BOTH paths: Python's
+    time.time() and the scaffold's system_clock share the origin, so a compiled
+    and an interpreted gizmo side by side sit at the same phase."""
+
+    def setUp(self):
+        self.cpp = codegen._generate_locator_cpp(_spec(True))
+
+    def test_wallclock_is_seeded_from_the_epoch_clock(self):
+        self.assertIn("static double _epochClock()", self.cpp)
+        self.assertIn("system_clock::now().time_since_epoch()", self.cpp)
+        self.assertIn("inp.wallClock = _epochClock();", self.cpp)
+        self.assertNotIn("inp.wallClock = _wallClock();", self.cpp)
+
+    def test_the_service_itself_keeps_the_steady_clock(self):
+        # intervals (throttle, tweens) stay on the monotonic clock
+        self.assertIn("steady_clock::now()", self.cpp)
 
 
 if __name__ == "__main__":

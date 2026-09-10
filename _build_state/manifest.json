@@ -6973,7 +6973,7 @@
           "events": [
             "portability animatedSelection start: ",
             "cache animatedSelection start: ",
-            "cache animatedSelection miss: cache miss 94755574a07b",
+            "cache animatedSelection miss: cache miss 8081e14d2650",
             "port animatedSelection start: porting",
             "stage animatedSelection ok: 1_transpiled",
             "stage animatedSelection ok: 2_assisted",
@@ -6992,7 +6992,7 @@
         },
         "bundle_exists": true,
         "bundle_path": "C:\\Users\\eric.vignola\\Desktop\\MPyNode\\templates\\MPyLocator\\Animated Selection\\MPyLocator_Animated_Selection.mll",
-        "ended": 1789059162.3267672,
+        "ended": 1789067429.6319094,
         "errors": [],
         "log": "C:\\Users\\eric.vignola\\Desktop\\MPyNode\\templates\\MPyLocator\\Animated Selection\\_runner\\phase_a.log",
         "mode": {
@@ -7033,11 +7033,11 @@
         "phase": "a",
         "rel": "MPyLocator\\Animated Selection",
         "rounds": {},
-        "secs": 51.3,
+        "secs": 61.1,
         "smoke": false,
-        "started": 1789059111.0593436,
+        "started": 1789067368.575962,
         "state": "ok",
-        "wall_secs": 56.1
+        "wall_secs": 66.0
       },
       "phase_b": {
         "ai": {
@@ -7053,7 +7053,7 @@
             "portability animatedSelection start: ",
             "cache animatedSelection start: ",
             "stage animatedSelection ok: 1_transpiled",
-            "cache animatedSelection hit: cache hit 94755574a07b",
+            "cache animatedSelection hit: cache hit 8081e14d2650",
             "stage animatedSelection ok: 2_assisted_cached",
             "assemble - start: linking 1 node(s)",
             "assemble - ok: bundle: MPyLocator_Animated_Selection.mll",
@@ -7073,7 +7073,7 @@
         },
         "bundle_exists": true,
         "bundle_path": "C:\\Users\\eric.vignola\\Desktop\\MPyNode\\templates\\MPyLocator\\Animated Selection\\MPyLocator_Animated_Selection.mll",
-        "ended": 1789059264.3162246,
+        "ended": 1789067529.646324,
         "errors": [],
         "log": "C:\\Users\\eric.vignola\\Desktop\\MPyNode\\templates\\MPyLocator\\Animated Selection\\_runner\\phase_b.log",
         "mode": {
@@ -7129,7 +7129,7 @@
             "accepted": false,
             "baseline_ms": null,
             "best_ms": null,
-            "created": 1789059262.512335,
+            "created": 1789067527.9406073,
             "fresh": true,
             "n_rounds": 0,
             "parity_gate": "not exercised",
@@ -7153,9 +7153,9 @@
             "speedup": 1.0
           }
         },
-        "secs": 9.2,
+        "secs": 8.8,
         "smoke": false,
-        "started": 1789059255.138651,
+        "started": 1789067520.8029368,
         "state": "ok",
         "wall_secs": 14.0
       }
@@ -7172,7 +7172,7 @@
           "events": [
             "portability animatedText start: ",
             "cache animatedText start: ",
-            "cache animatedText miss: cache miss 0a78953a28e1",
+            "cache animatedText miss: cache miss bbb9f2d178b9",
             "port animatedText start: porting",
             "stage animatedText ok: 1_transpiled",
             "port animatedText ok: ported (0 fix rounds)",
@@ -7191,7 +7191,7 @@
         },
         "bundle_exists": true,
         "bundle_path": "C:\\Users\\eric.vignola\\Desktop\\MPyNode\\templates\\MPyLocator\\Animated Text\\MPyLocator_Animated_Text.mll",
-        "ended": 1789059118.771522,
+        "ended": 1789067376.1141346,
         "errors": [],
         "log": "C:\\Users\\eric.vignola\\Desktop\\MPyNode\\templates\\MPyLocator\\Animated Text\\_runner\\phase_a.log",
         "mode": {
@@ -7232,9 +7232,9 @@
         "phase": "a",
         "rel": "MPyLocator\\Animated Text",
         "rounds": {},
-        "secs": 7.7,
+        "secs": 7.5,
         "smoke": false,
-        "started": 1789059111.049962,
+        "started": 1789067368.595675,
         "state": "ok",
         "wall_secs": 12.0
       },
@@ -7250,7 +7250,7 @@
             "portability animatedText start: ",
             "cache animatedText start: ",
             "stage animatedText ok: 1_transpiled",
-            "cache animatedText hit: cache hit 0a78953a28e1",
+            "cache animatedText hit: cache hit bbb9f2d178b9",
             "port - skip: no node needed AI assist -- every compute lowered deterministically",
             "assemble - start: linking 1 node(s)",
             "assemble - ok: bundle: MPyLocator_Animated_Text.mll",
@@ -7270,7 +7270,7 @@
         },
         "bundle_exists": true,
         "bundle_path": "C:\\Users\\eric.vignola\\Desktop\\MPyNode\\templates\\MPyLocator\\Animated Text\\MPyLocator_Animated_Text.mll",
-        "ended": 1789059267.013466,
+        "ended": 1789067531.98258,
         "errors": [],
         "log": "C:\\Users\\eric.vignola\\Desktop\\MPyNode\\templates\\MPyLocator\\Animated Text\\_runner\\phase_b.log",
         "mode": {
@@ -7326,7 +7326,7 @@
             "accepted": false,
             "baseline_ms": null,
             "best_ms": null,
-            "created": 1789059263.829895,
+            "created": 1789067529.032298,
             "fresh": true,
             "n_rounds": 0,
             "parity_gate": "not exercised",
@@ -7350,9 +7350,9 @@
             "speedup": 1.0
           }
         },
-        "secs": 11.8,
+        "secs": 11.3,
         "smoke": false,
-        "started": 1789059255.1784284,
+        "started": 1789067520.704986,
         "state": "ok",
         "wall_secs": 16.0
       }
@@ -7371,12 +7371,13 @@
           "events": [
             "portability meshRegionLocator start: ",
             "cache meshRegionLocator start: ",
-            "cache meshRegionLocator miss: cache miss a864cac3b2c9",
+            "cache meshRegionLocator miss: cache miss 045bdfd960e0",
             "port meshRegionLocator start: porting",
             "stage meshRegionLocator ok: 1_transpiled",
             "stage meshRegionLocator ok: 2_assisted",
-            "port meshRegionLocator ok: ported (1 fix rounds)",
+            "port meshRegionLocator ok: ported (0 fix rounds)",
             "assemble - start: linking 1 node(s)",
+            "honesty meshRegionLocator incomplete: the legacy baked `regions` dict is a STORED PYTHON",
             "assemble - ok: bundle: MPyLocator_Mesh_Regions.mll",
             "assemble - ok: bundled command(s): 1 (no companion plug-in)",
             "verify - start: parity check",
@@ -7384,14 +7385,14 @@
             "verify - ok: verify done",
             "done - ok: 1 node(s)"
           ],
-          "n_log_lines": 132,
+          "n_log_lines": 11,
           "n_optimize_events": 0,
           "no_node_needed_llm": false,
           "optimize_events_tail": []
         },
         "bundle_exists": true,
         "bundle_path": "C:\\Users\\eric.vignola\\Desktop\\MPyNode\\templates\\MPyLocator\\Mesh Regions\\MPyLocator_Mesh_Regions.mll",
-        "ended": 1789059250.7907724,
+        "ended": 1789067793.4327466,
         "errors": [],
         "log": "C:\\Users\\eric.vignola\\Desktop\\MPyNode\\templates\\MPyLocator\\Mesh Regions\\_runner\\phase_a.log",
         "mode": {
@@ -7404,7 +7405,9 @@
             "build_reason": "",
             "build_status": "compiled",
             "cache": "miss",
-            "incomplete": [],
+            "incomplete": [
+              "the legacy baked `regions` dict is a STORED PYTHON"
+            ],
             "ported": true,
             "type_name": "meshRegionLocator",
             "verify": {
@@ -7432,11 +7435,11 @@
         "phase": "a",
         "rel": "MPyLocator\\Mesh Regions",
         "rounds": {},
-        "secs": 139.7,
+        "secs": 128.7,
         "smoke": false,
-        "started": 1789059111.094728,
+        "started": 1789067664.694503,
         "state": "ok",
-        "wall_secs": 144.1
+        "wall_secs": 134.1
       },
       "phase_b": {
         "ai": {
@@ -7452,9 +7455,10 @@
             "portability meshRegionLocator start: ",
             "cache meshRegionLocator start: ",
             "stage meshRegionLocator ok: 1_transpiled",
-            "cache meshRegionLocator hit: cache hit a864cac3b2c9",
+            "cache meshRegionLocator hit: cache hit 045bdfd960e0",
             "stage meshRegionLocator ok: 2_assisted_cached",
             "assemble - start: linking 1 node(s)",
+            "honesty meshRegionLocator incomplete: the legacy baked `regions` dict is a STORED PYTHON",
             "assemble - ok: bundle: MPyLocator_Mesh_Regions.mll",
             "assemble - ok: bundled command(s): 1 (no companion plug-in)",
             "verify - start: parity check",
@@ -7473,7 +7477,7 @@
         },
         "bundle_exists": true,
         "bundle_path": "C:\\Users\\eric.vignola\\Desktop\\MPyNode\\templates\\MPyLocator\\Mesh Regions\\MPyLocator_Mesh_Regions.mll",
-        "ended": 1789059279.0040917,
+        "ended": 1789067808.299611,
         "errors": [],
         "log": "C:\\Users\\eric.vignola\\Desktop\\MPyNode\\templates\\MPyLocator\\Mesh Regions\\_runner\\phase_b.log",
         "mode": {
@@ -7486,7 +7490,9 @@
             "build_reason": "",
             "build_status": "compiled",
             "cache": "hit",
-            "incomplete": [],
+            "incomplete": [
+              "the legacy baked `regions` dict is a STORED PYTHON"
+            ],
             "ported": true,
             "type_name": "meshRegionLocator",
             "verify": {
@@ -7529,7 +7535,7 @@
             "accepted": false,
             "baseline_ms": null,
             "best_ms": null,
-            "created": 1789059276.8713884,
+            "created": 1789067806.1993108,
             "fresh": true,
             "n_rounds": 0,
             "parity_gate": "not exercised",
@@ -7553,9 +7559,9 @@
             "speedup": 1.0
           }
         },
-        "secs": 9.9,
+        "secs": 9.5,
         "smoke": false,
-        "started": 1789059269.1387796,
+        "started": 1789067798.8136716,
         "state": "ok",
         "wall_secs": 14.0
       }
@@ -7574,12 +7580,13 @@
           "events": [
             "portability widgetShowcase start: ",
             "cache widgetShowcase start: ",
-            "cache widgetShowcase miss: cache miss 5c103e3a9cee",
+            "cache widgetShowcase miss: cache miss 7fd94cdea43e",
             "port widgetShowcase start: porting",
             "stage widgetShowcase ok: 1_transpiled",
             "stage widgetShowcase ok: 2_assisted",
             "port widgetShowcase ok: ported (0 fix rounds)",
             "assemble - start: linking 1 node(s)",
+            "honesty widgetShowcase incomplete: the optional persistent `presets` dict override (a stored-var",
             "assemble - ok: bundle: MPyLocator_Widget_Showcase.mll",
             "verify - start: parity check",
             "verify widgetShowcase ok: maxerr=None",
@@ -7593,7 +7600,7 @@
         },
         "bundle_exists": true,
         "bundle_path": "C:\\Users\\eric.vignola\\Desktop\\MPyNode\\templates\\MPyLocator\\Widget Showcase\\MPyLocator_Widget_Showcase.mll",
-        "ended": 1789059202.3519778,
+        "ended": 1789067763.996743,
         "errors": [],
         "log": "C:\\Users\\eric.vignola\\Desktop\\MPyNode\\templates\\MPyLocator\\Widget Showcase\\_runner\\phase_a.log",
         "mode": {
@@ -7606,7 +7613,9 @@
             "build_reason": "",
             "build_status": "compiled",
             "cache": "miss",
-            "incomplete": [],
+            "incomplete": [
+              "the optional persistent `presets` dict override (a stored-var"
+            ],
             "ported": true,
             "type_name": "widgetShowcase",
             "verify": {
@@ -7634,11 +7643,11 @@
         "phase": "a",
         "rel": "MPyLocator\\Widget Showcase",
         "rounds": {},
-        "secs": 91.3,
+        "secs": 99.3,
         "smoke": false,
-        "started": 1789059111.0718787,
+        "started": 1789067664.6825006,
         "state": "ok",
-        "wall_secs": 96.1
+        "wall_secs": 104.0
       },
       "phase_b": {
         "ai": {
@@ -7654,9 +7663,10 @@
             "portability widgetShowcase start: ",
             "cache widgetShowcase start: ",
             "stage widgetShowcase ok: 1_transpiled",
-            "cache widgetShowcase hit: cache hit 5c103e3a9cee",
+            "cache widgetShowcase hit: cache hit 7fd94cdea43e",
             "stage widgetShowcase ok: 2_assisted_cached",
             "assemble - start: linking 1 node(s)",
+            "honesty widgetShowcase incomplete: the optional persistent `presets` dict override (a stored-var",
             "assemble - ok: bundle: MPyLocator_Widget_Showcase.mll",
             "verify - start: parity check",
             "verify widgetShowcase ok: maxerr=None",
@@ -7674,7 +7684,7 @@
         },
         "bundle_exists": true,
         "bundle_path": "C:\\Users\\eric.vignola\\Desktop\\MPyNode\\templates\\MPyLocator\\Widget Showcase\\MPyLocator_Widget_Showcase.mll",
-        "ended": 1789059278.348768,
+        "ended": 1789067805.8141816,
         "errors": [],
         "log": "C:\\Users\\eric.vignola\\Desktop\\MPyNode\\templates\\MPyLocator\\Widget Showcase\\_runner\\phase_b.log",
         "mode": {
@@ -7687,7 +7697,9 @@
             "build_reason": "",
             "build_status": "compiled",
             "cache": "hit",
-            "incomplete": [],
+            "incomplete": [
+              "the optional persistent `presets` dict override (a stored-var"
+            ],
             "ported": true,
             "type_name": "widgetShowcase",
             "verify": {
@@ -7730,7 +7742,7 @@
             "accepted": false,
             "baseline_ms": null,
             "best_ms": null,
-            "created": 1789059277.3797016,
+            "created": 1789067804.8956158,
             "fresh": true,
             "n_rounds": 0,
             "parity_gate": "not exercised",
@@ -7754,9 +7766,9 @@
             "speedup": 1.0
           }
         },
-        "secs": 7.5,
+        "secs": 7.0,
         "smoke": false,
-        "started": 1789059270.8921695,
+        "started": 1789067798.7805245,
         "state": "ok",
         "wall_secs": 12.0
       }

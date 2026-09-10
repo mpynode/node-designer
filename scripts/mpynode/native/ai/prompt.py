@@ -168,7 +168,8 @@ markers -- no function signature, no #includes, no markdown fences, no commentar
 
 DRAW STATE in scope (all already declared):
 - double timeVal          -- current frame (self.time; self.time.asSeconds() == timeVal here)
-- double wallClock        -- time.time() (0 for determinism; map time.time() -> wallClock)
+- double wallClock        -- self.wallclock: seconds since the epoch, time.time() (0 in the
+                             deterministic probe; map BOTH self.wallclock and time.time() -> wallClock)
 - bool   selected, is_lead, hovered   -- self.selected / self.is_lead / self.hovered
 - MColor selection_color  -- self.selection_color (r,g,b,a)
 - <Data>& data            -- OUTPUT (data.reset() already called)

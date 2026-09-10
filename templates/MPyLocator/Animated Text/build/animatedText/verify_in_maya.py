@@ -7,7 +7,7 @@ import maya.cmds as cmds
 BUNDLE = os.path.join(os.path.dirname(__file__), 'animatedText.mll')
 NODE_TYPE = 'animatedText'
 SOURCE = 'animatedText'
-INPUTS = {"displayText": "string", "loopFrames": "int", "spacing": "float", "waveHeight": "float"}
+INPUTS = {"displayText": "string", "loopDuration": "float", "spacing": "float", "waveHeight": "float"}
 OUTPUTS = {}
 TOL = 1e-4
 
