@@ -3880,112 +3880,10 @@ struct _NdState {
     double lastFrame {};
 };
 // ===========================================================================
-// Game of Life kernels, scalarised. The ported compute region built every
-// intermediate as an nd::Array (each one 3-4 heap allocations: shared buffer,
-// shape, strides), some 60-80 allocations per texel for a node whose per-texel
-// arithmetic is a floor, two multiplies and one table lookup. The kernels below
-// produce the same bits with no temporaries: the board stays an nd::Array<bool>
-// (the VP2 override reads its shape), everything else is a scalar.
-// ===========================================================================
-
-// _gol_seed: RandomState(seed & 0x7fffffff).random((h, w)) < density, fused.
-// Draw order (C-order fill, word a then word b per double) and the 53-bit
-// arithmetic are exactly nd::MT19937::next_double, so the board is
-// bit-identical to nd::cmp_lt(rng.random(shape), density) -- the draws are just
-// compared as they are produced instead of being stored as an Array<double>.
-//
-// A k x k board reads 2*k*k words of the generator. When that is fewer than
-// the 624 words of a twist, only a PREFIX of the first twist is computed: word
-// kk of a twist depends on seeded words kk, kk+1 and kk+397, or -- past
-// kk = 227 -- on the already-twisted word kk-227, so twisting [0, draws) alone
-// reproduces exactly the first `draws` words of the full twist. The final word
-// (kk = 623) wraps onto the twisted word 0, so the shortcut stops at draws < 624.
-static nd::Array<bool> nd_gol_seed(int64_t h, int64_t w, double density, int64_t seed) {
-    nd::Array<bool> out = nd::Array<bool>::alloc(nd::Shape{h, w});
-    std::vector<bool>& ob = *out.data;
-    const int64_t n     = h * w;
-    const int64_t draws = 2 * n;
-    nd::MT19937 rng;
-    rng.seed((uint32_t)(seed & (int64_t)2147483647));
-    if (draws < (int64_t)nd::MT19937::N) {
-        const int N = nd::MT19937::N;
-        const int M = nd::MT19937::M;
-        const uint32_t UPPER = 0x80000000u, LOWER = 0x7fffffffu;
-        uint32_t* key = rng.key;
-        const int lim  = (int)draws;
-        const int lim1 = (lim < N - M) ? lim : (N - M);
-        int kk = 0;
-        for (; kk < lim1; ++kk) {
-            const uint32_t y = (key[kk] & UPPER) | (key[kk + 1] & LOWER);
-            key[kk] = key[kk + M] ^ (y >> 1) ^ ((y & 1u) ? 0x9908b0dfu : 0u);
-        }
-        for (; kk < lim; ++kk) {
-            const uint32_t y = (key[kk] & UPPER) | (key[kk + 1] & LOWER);
-            key[kk] = key[kk + (M - N)] ^ (y >> 1) ^ ((y & 1u) ? 0x9908b0dfu : 0u);
-        }
-        rng.pos = 0;
-    }
-    for (int64_t i = 0; i < n; ++i) {
-        const uint32_t a = rng.next32() >> 5;   // 27 bits
-        const uint32_t b = rng.next32() >> 6;   // 26 bits
-        const double   x = (a * 67108864.0 + b) / 9007199254740992.0;
-        ob[(size_t)i] = (x < density);
-    }
-    return out;
-}
-
-// _gol_step: one Conway step on a BOUNDED grid, fused. Identical to the sliced
-// numpy sum: a neighbour beyond the border counts as dead (zero padding), and
-// new = (n == 3) | ((b == 1) & (n == 2)).
-static nd::Array<bool> nd_gol_step(const nd::Array<bool>& board) {
-    const int64_t H  = board.shape[0];
-    const int64_t W  = board.shape[1];
-    const int64_t s0 = board.strides[0];
-    const int64_t s1 = board.strides[1];
-    const std::vector<bool>& sb = *board.data;
-    std::vector<unsigned char> b((size_t)(H * W));
-    for (int64_t y = 0; y < H; ++y)
-        for (int64_t x = 0; x < W; ++x)
-            b[(size_t)(y * W + x)] = sb[(size_t)(board.offset + y * s0 + x * s1)] ? 1u : 0u;
-    nd::Array<bool> out = nd::Array<bool>::alloc(nd::Shape{H, W});
-    std::vector<bool>& ob = *out.data;
-    for (int64_t y = 0; y < H; ++y) {
-        const bool up = (y > 0);
-        const bool dn = (y + 1 < H);
-        const unsigned char* r0 = up ? &b[(size_t)((y - 1) * W)] : nullptr;
-        const unsigned char* r1 = &b[(size_t)(y * W)];
-        const unsigned char* r2 = dn ? &b[(size_t)((y + 1) * W)] : nullptr;
-        for (int64_t x = 0; x < W; ++x) {
-            const bool lf = (x > 0);
-            const bool rt = (x + 1 < W);
-            int n = 0;
-            if (up) { if (lf) n += r0[x - 1]; n += r0[x]; if (rt) n += r0[x + 1]; }
-            if (lf) n += r1[x - 1];
-            if (rt) n += r1[x + 1];
-            if (dn) { if (lf) n += r2[x - 1]; n += r2[x]; if (rt) n += r2[x + 1]; }
-            ob[(size_t)(y * W + x)] = (n == 3) || (r1[x] == 1u && n == 2);
-        }
-    }
-    return out;
-}
-
-// _gol_rgba: (H, W) bool -> (H, W, 4) float RGBA for the bake. Bake path only.
-static nd::Array<double> nd_gol_rgba(const nd::Array<bool>& board) {
-    nd::Array<double> alive;
-    nd::Array<double> out;
-    alive = nd::astype<double>(board);
-    out = nd::zeros<double>(nd::Shape{(int64_t)board.shape[(int64_t)0], (int64_t)board.shape[(int64_t)1], (int64_t)4});
-    nd::assign(nd::slice(out, {nd::Sl::mk(false, 0, false, 0, 1), nd::Sl::mk(false, 0, false, 0, 1), nd::Sl::at((int64_t)0)}), alive);
-    nd::assign(nd::slice(out, {nd::Sl::mk(false, 0, false, 0, 1), nd::Sl::mk(false, 0, false, 0, 1), nd::Sl::at((int64_t)1)}), alive);
-    nd::assign(nd::slice(out, {nd::Sl::mk(false, 0, false, 0, 1), nd::Sl::mk(false, 0, false, 0, 1), nd::Sl::at((int64_t)2)}), alive);
-    nd::assign(nd::slice(out, {nd::Sl::mk(false, 0, false, 0, 1), nd::Sl::mk(false, 0, false, 0, 1), nd::Sl::at((int64_t)3)}), (double)((1.0)));
-    return out;
-}
-
-// ===========================================================================
 // nd_texel -- one pixel of the mPyFile buffer. SHARED by compute() (one
 // sample at the surface uv) and the VP2 override bake (the whole grid), so
 // the viewport pixels are the SAME per-texel math as software/Arnold.
+// (Body is the ported compute region, reused verbatim via handle shims.)
 // ===========================================================================
 static void nd_texel(
         double _u,
@@ -3995,70 +3893,159 @@ static void nd_texel(
         float in_aDensity,
         double in_aFrame,
         short in_aReset,
-        const MString& in_aBakePath,
+        MString in_aBakePath,
         _NdState& _ndState,
         std::mutex& _ndStateMutex,
         float& _oR,
         float& _oG,
         float& _oB,
         float& _oA) {
-    // uvCoord is a float2 on the node: both callers hand uv over through that
-    // narrowing, so round through float exactly once, as the port did.
-    const double u = (double)(float)_u;
-    const double v = (double)(float)_v;
+    const float _nd_uv[2] = { (float)_u, (float)_v };
+    const float2& in_aUvCoord = _nd_uv;
+    struct _NdColSh { float &r, &g, &b;
+        void set3Float(float R, float G, float B) { r=R; g=G; b=B; } }
+        h_aOutColor{_oR, _oG, _oB};
+    struct _NdAlpSh { float &a;
+        void setFloat(float A) { a=A; } } h_aOutAlpha{_oA};
+    (void)in_aWidth;
+    (void)in_aHeight;
+    (void)in_aDensity;
+    (void)in_aFrame;
+    (void)in_aReset;
+    (void)in_aBakePath;
 
     // --- persistent per-instance state (see the _NdState member) ---
     std::lock_guard<std::mutex> _ndStateLock(_ndStateMutex);
     _NdState& st = _ndState;
-    const int64_t hh       = ((int64_t)in_aHeight > (int64_t)1) ? (int64_t)in_aHeight : (int64_t)1;
-    const int64_t ww       = ((int64_t)in_aWidth  > (int64_t)1) ? (int64_t)in_aWidth  : (int64_t)1;
-    const double  fr       = (double)in_aFrame;
-    const double  dens     = (double)in_aDensity;
-    const bool    reset_on = ((int64_t)in_aReset == (int64_t)1);
-    const int64_t seed     = reset_on ? (int64_t)fr : (int64_t)0;
-    if (!st.board_isset) {
-        st.board = nd_gol_seed(hh, ww, dens, seed);
+    std::string ndin_self_bakePath = in_aBakePath.asChar();
+    double ndin_self_density = (double)(in_aDensity);
+    double ndin_self_frame = (double)(in_aFrame);
+    int64_t ndin_self_height = (int64_t)(in_aHeight);
+    int64_t ndin_self_reset = (int64_t)(in_aReset);
+    nd::Array<double> ndin_self_uvCoord = nd::from_data<double>({(double)in_aUvCoord[0], (double)in_aUvCoord[1]}, {2});
+    int64_t ndin_self_width = (int64_t)(in_aWidth);
+    int64_t nl_hh = 0;
+    int64_t nl_ww = 0;
+    double nl_fr = 0;
+    double nl_dens = 0;
+    bool nl_reset_on = 0;
+    nd::Array<bool> nl_board;
+    bool nl_shape_bad = 0;
+    bool nl_baked = 0;
+    int64_t nl_h = 0;
+    int64_t nl_w = 0;
+    nd::Array<double> nl_u;
+    nd::Array<double> nl_v;
+    nd::Array<double> nl_uu;
+    nd::Array<double> nl_vv;
+    int64_t nl_cx = 0;
+    int64_t nl_cy = 0;
+    double nl_alive = 0;
+    auto _h__gol_seed_1 = [&](int64_t h, int64_t w, double density, int64_t seed) -> nd::Array<bool> {
+        nd::MT19937 rng;
+        rng.seed((uint32_t)(((int64_t)(seed) & (int64_t)2147483647)));
+        return nd::cmp_lt(rng.random(nd::Shape{(int64_t)(h), (int64_t)(w)}), (double)((double)(density)));
+    };
+    auto _h__gol_step_2 = [&](const nd::Array<bool>& board) -> nd::Array<bool> {
+        nd::Array<int64_t> b;
+        nd::Array<int64_t> pad;
+        nd::Array<int64_t> n;
+        b = nd::astype<int64_t>(board);
+        pad = nd::zeros<int64_t>(nd::Shape{((int64_t)b.shape[(int64_t)0] + (int64_t)2), ((int64_t)b.shape[(int64_t)1] + (int64_t)2)});
+        nd::assign(nd::slice(pad, {nd::Sl::mk(true, (int64_t)1, true, (-((int64_t)1)), 1), nd::Sl::mk(true, (int64_t)1, true, (-((int64_t)1)), 1)}), b);
+        {
+            const nd::Array<int64_t> __L0 = nd::slice(pad, {nd::Sl::mk(false, 0, true, (-((int64_t)2)), 1), nd::Sl::mk(false, 0, true, (-((int64_t)2)), 1)});
+            const nd::Array<int64_t> __L1 = nd::slice(pad, {nd::Sl::mk(false, 0, true, (-((int64_t)2)), 1), nd::Sl::mk(true, (int64_t)1, true, (-((int64_t)1)), 1)});
+            const nd::Array<int64_t> __L2 = nd::slice(pad, {nd::Sl::mk(false, 0, true, (-((int64_t)2)), 1), nd::Sl::mk(true, (int64_t)2, false, 0, 1)});
+            const nd::Array<int64_t> __L3 = nd::slice(pad, {nd::Sl::mk(true, (int64_t)1, true, (-((int64_t)1)), 1), nd::Sl::mk(false, 0, true, (-((int64_t)2)), 1)});
+            const nd::Array<int64_t> __L4 = nd::slice(pad, {nd::Sl::mk(true, (int64_t)1, true, (-((int64_t)1)), 1), nd::Sl::mk(true, (int64_t)2, false, 0, 1)});
+            const nd::Array<int64_t> __L5 = nd::slice(pad, {nd::Sl::mk(true, (int64_t)2, false, 0, 1), nd::Sl::mk(false, 0, true, (-((int64_t)2)), 1)});
+            const nd::Array<int64_t> __L6 = nd::slice(pad, {nd::Sl::mk(true, (int64_t)2, false, 0, 1), nd::Sl::mk(true, (int64_t)1, true, (-((int64_t)1)), 1)});
+            const nd::Array<int64_t> __L7 = nd::slice(pad, {nd::Sl::mk(true, (int64_t)2, false, 0, 1), nd::Sl::mk(true, (int64_t)2, false, 0, 1)});
+            if ( __L1.shape == __L0.shape && __L2.shape == __L0.shape && __L3.shape == __L0.shape && __L4.shape == __L0.shape && __L5.shape == __L0.shape && __L6.shape == __L0.shape && __L7.shape == __L0.shape && __L0.is_contiguous() && __L1.is_contiguous() && __L2.is_contiguous() && __L3.is_contiguous() && __L4.is_contiguous() && __L5.is_contiguous() && __L6.is_contiguous() && __L7.is_contiguous() ) {
+                #if defined(__clang__)
+                #pragma clang fp contract(off)
+                #endif
+                n = nd::Array<int64_t>::alloc(__L0.shape);
+                int64_t* __o = n.data->data();
+                const int64_t __n = n.size();
+                for (int64_t __i = 0; __i < __n; ++__i) {
+                    __o[(size_t)__i] = (int64_t)( ((((((((*__L0.data)[(size_t)__i] + (*__L1.data)[(size_t)__i]) + (*__L2.data)[(size_t)__i]) + (*__L3.data)[(size_t)__i]) + (*__L4.data)[(size_t)__i]) + (*__L5.data)[(size_t)__i]) + (*__L6.data)[(size_t)__i]) + (*__L7.data)[(size_t)__i]) );
+                }
+            } else {
+                n = nd::add(nd::add(nd::add(nd::add(nd::add(nd::add(nd::add(__L0, __L1), __L2), __L3), __L4), __L5), __L6), __L7);
+            }
+        }
+        return nd::bit_or(nd::cmp_eq(n, (int64_t)((int64_t)3)), nd::bit_and(nd::cmp_eq(b, (int64_t)((int64_t)1)), nd::cmp_eq(n, (int64_t)((int64_t)2))));
+    };
+    auto _h__gol_rgba_3 = [&](const nd::Array<bool>& board) -> nd::Array<double> {
+        nd::Array<double> alive;
+        nd::Array<double> out;
+        alive = nd::astype<double>(board);
+        out = nd::zeros<double>(nd::Shape{(int64_t)board.shape[(int64_t)0], (int64_t)board.shape[(int64_t)1], (int64_t)4});
+        nd::assign(nd::slice(out, {nd::Sl::mk(false, 0, false, 0, 1), nd::Sl::mk(false, 0, false, 0, 1), nd::Sl::at((int64_t)0)}), alive);
+        nd::assign(nd::slice(out, {nd::Sl::mk(false, 0, false, 0, 1), nd::Sl::mk(false, 0, false, 0, 1), nd::Sl::at((int64_t)1)}), alive);
+        nd::assign(nd::slice(out, {nd::Sl::mk(false, 0, false, 0, 1), nd::Sl::mk(false, 0, false, 0, 1), nd::Sl::at((int64_t)2)}), alive);
+        nd::assign(nd::slice(out, {nd::Sl::mk(false, 0, false, 0, 1), nd::Sl::mk(false, 0, false, 0, 1), nd::Sl::at((int64_t)3)}), (double)((1.0)));
+        return out;
+    };
+    nl_hh = ((int64_t)(ndin_self_height) > (int64_t)1 ? (int64_t)(ndin_self_height) : (int64_t)1);
+    nl_ww = ((int64_t)(ndin_self_width) > (int64_t)1 ? (int64_t)(ndin_self_width) : (int64_t)1);
+    nl_fr = (double)(ndin_self_frame);
+    nl_dens = (double)(ndin_self_density);
+    nl_reset_on = (((int64_t)(ndin_self_reset) == (int64_t)1));
+    if ((!(st.board_isset))) {
+        st.board = _h__gol_seed_1(nl_hh, nl_ww, nl_dens, (nl_reset_on ? (int64_t)(nl_fr) : (int64_t)0));
         st.board_isset = true;
-        st.lastFrame = fr;
+        st.lastFrame = nl_fr;
         st.lastFrame_isset = true;
-        st.bakedFrame = -1.0;
+        st.bakedFrame = (-((1.0)));
         st.bakedFrame_isset = true;
     }
-    const bool shape_bad = (st.board.shape[0] != hh) || (st.board.shape[1] != ww);
-    if (shape_bad || (fr != st.lastFrame)) {
-        if (reset_on || shape_bad) {
-            st.board = nd_gol_seed(hh, ww, dens, seed);
+    nl_board = st.board;
+    nl_shape_bad = ((((int64_t)((int64_t)nl_board.shape[(int64_t)0]) != nl_hh)) || (((int64_t)((int64_t)nl_board.shape[(int64_t)1]) != nl_ww)));
+    if ((nl_shape_bad || ((nl_fr != st.lastFrame)))) {
+        if ((nl_reset_on || nl_shape_bad)) {
+            nl_board = _h__gol_seed_1(nl_hh, nl_ww, nl_dens, (nl_reset_on ? (int64_t)(nl_fr) : (int64_t)0));
         } else {
-            st.board = nd_gol_step(st.board);
+            nl_board = _h__gol_step_2(nl_board);
         }
+        st.board = nl_board;
         st.board_isset = true;
-        st.lastFrame = fr;
+        st.lastFrame = nl_fr;
         st.lastFrame_isset = true;
     }
-    const nd::Array<bool>& board = st.board;
-    const char* bakeChars = in_aBakePath.asChar();
-    if (bakeChars != nullptr && bakeChars[0] != '\0' && (fr != st.bakedFrame)) {
-        const std::string bakePath(bakeChars);
-        const bool baked = nd_tex_write(bakePath, nd_gol_rgba(board), (int64_t)fr);
-        if (baked) {
-            st.bakedFrame = fr;
+    if (((ndin_self_bakePath != std::string("")) && ((nl_fr != st.bakedFrame)))) {
+        nl_baked = nd_tex_write(ndin_self_bakePath, _h__gol_rgba_3(nl_board), (int64_t)(nl_fr));
+        if (nl_baked) {
+            st.bakedFrame = nl_fr;
             st.bakedFrame_isset = true;
         }
     }
-    const int64_t h   = board.shape[0];
-    const int64_t w   = board.shape[1];
-    const double  uu  = u - std::floor(u);
-    const double  vv  = v - std::floor(v);
-    const int64_t cx0 = (int64_t)(uu * (double)w);
-    const int64_t cx  = (cx0 < (w - (int64_t)1)) ? cx0 : (w - (int64_t)1);
-    const int64_t cy0 = (int64_t)((1.0 - vv) * (double)h);
-    const int64_t cy  = (cy0 < (h - (int64_t)1)) ? cy0 : (h - (int64_t)1);
-    const bool cell = (*board.data)[(size_t)(board.offset + cy * board.strides[0] + cx * board.strides[1])];
-    const float alive = ((double)cell > 0.5) ? 1.0f : 0.0f;
-    _oR = alive;
-    _oG = alive;
-    _oB = alive;
-    _oA = 1.0f;
+    const auto ndunp_1 = (int64_t)((int64_t)nl_board.shape[(int64_t)0]);
+    const auto ndunp_2 = (int64_t)((int64_t)nl_board.shape[(int64_t)1]);
+    nl_h = ndunp_1;
+    nl_w = ndunp_2;
+    nl_u = nd::slice(ndin_self_uvCoord, {nd::Sl::at((int64_t)0)});
+    nl_v = nd::slice(ndin_self_uvCoord, {nd::Sl::at((int64_t)1)});
+    nl_uu = nd::sub(nl_u, nd::floor(nl_u));
+    nl_vv = nd::sub(nl_v, nd::floor(nl_v));
+    const auto cse_3 = (int64_t)((nd::mul(nl_uu, (double)(nl_w))).item());
+    nl_cx = (cse_3 < (nl_w - (int64_t)1) ? cse_3 : (nl_w - (int64_t)1));
+    const auto cse_4 = (int64_t)((nd::mul(nd::sub((double)((1.0)), nl_vv), (double)(nl_h))).item());
+    nl_cy = (cse_4 < (nl_h - (int64_t)1) ? cse_4 : (nl_h - (int64_t)1));
+    nl_alive = ((((double)((double)((nd::slice(nl_board, {nd::Sl::at(nl_cy), nd::Sl::at(nl_cx)})).item())) > (0.5))) ? (1.0) : (0.0));
+    {
+        nd::Array<double> _o = (nd::from_data<double>({nl_alive, nl_alive, nl_alive}, {3}));
+        if (_o.offset != 0 || !_o.is_contiguous()) _o = _o.copy();
+        int64_t _n = _o.size();
+        float _c[3] = {0.0f, 0.0f, 0.0f};
+        for (int64_t _i = 0; _i < _n && _i < 3; ++_i)
+            _c[_i] = (float)(*_o.data)[_i];
+        h_aOutColor.set3Float(_c[0], _c[1], _c[2]);
+    }
+    h_aOutAlpha.setFloat((float)((1.0)));
+    
 }
 
 class GameOfLifeTex : public MPxNode {
@@ -4217,58 +4204,54 @@ public:
                 float r = 0.0f, g = 0.0f, b = 0.0f, a = 0.0f;
                 nd_texel(u, v, _m_in_aWidth, _m_in_aHeight, _m_in_aDensity, _m_in_aFrame, _m_in_aReset, _m_in_aBakePath, _nodePtr->_ndState, _nodePtr->_ndStateMutex, r, g, b, a);
             }
+            // The prime call above has already advanced/reseeded the board for
+            // this frame and done the bakePath write, so every texel below is a
+            // pure lookup. Sample the board buffer DIRECTLY with the same math
+            // nd_texel applies (uv narrowed to float, floor, truncating int cast,
+            // min-clamp, `> 0.5` test) instead of re-entering the generic port --
+            // which locked a mutex, built a std::string and ~10 nd::Array
+            // temporaries per texel -- and instead of spawning min(12, h) threads
+            // per frame for a grid that is w*h cells (the bench drives w = h = k).
+            std::vector<float> baked;
+            unsigned long long _hv = 1469598103934665603ULL;
             {
                 std::lock_guard<std::mutex> _lk(_nodePtr->_ndStateMutex);
-                const auto& _sarr = _nodePtr->_ndState.board;
-                if (_sarr.ndim() == 2 && _sarr.shape[0] > 0 &&
-                        _sarr.shape[1] > 0) {
-                    _h = (unsigned int)_sarr.shape[0];
-                    _w = (unsigned int)_sarr.shape[1];
+                const nd::Array<bool>& _sarr = _nodePtr->_ndState.board;
+                if (!(_sarr.ndim() == 2 && _sarr.shape[0] > 0 && _sarr.shape[1] > 0))
+                    return;
+                _h = (unsigned int)_sarr.shape[0];
+                _w = (unsigned int)_sarr.shape[1];
+                const int64_t bh = _sarr.shape[0];
+                const int64_t bw = _sarr.shape[1];
+                const int64_t s0 = _sarr.strides[0];
+                const int64_t s1 = _sarr.strides[1];
+                const int64_t boff = _sarr.offset;
+                const std::vector<bool>& bdata = *_sarr.data;
+                baked.assign((size_t)_w * _h * 4, 0.0f);
+                for (unsigned int py = 0; py < _h; ++py) {
+                    // nd_texel receives v as double, narrows it to float2, widens back.
+                    const double v  = (double)(float)(1.0 - ((double)py + 0.5) / (double)_h);
+                    const double vv = v - std::floor(v);
+                    int64_t cy = (int64_t)((1.0 - vv) * (double)bh);
+                    if (!(cy < bh - 1)) cy = bh - 1;
+                    float* drow = &baked[(size_t)py * _w * 4];
+                    for (unsigned int x = 0; x < _w; ++x) {
+                        const double u  = (double)(float)(((double)x + 0.5) / (double)_w);
+                        const double uu = u - std::floor(u);
+                        int64_t cx = (int64_t)(uu * (double)bw);
+                        if (!(cx < bw - 1)) cx = bw - 1;
+                        const bool cell = bdata[(size_t)(boff + cy * s0 + cx * s1)];
+                        const double alive = ((double)cell > 0.5) ? 1.0 : 0.0;
+                        const float c = (float)alive;
+                        drow[x*4+0] = c; drow[x*4+1] = c; drow[x*4+2] = c; drow[x*4+3] = 1.0f;
+                        // Content key: FNV-1a over one byte per texel. The RGBA
+                        // texels are a pure function of the cells, so this keys
+                        // the same content at 1/16th of the bytes.
+                        _hv ^= (unsigned long long)(cell ? 1u : 0u);
+                        _hv *= 1099511628211ULL;
+                    }
                 }
             }
-            std::vector<float> baked((size_t)_w * _h * 4);
-            std::atomic<bool> _bakeFailed(false);
-            auto _bakeRows = [&](unsigned int _y0, unsigned int _y1) {
-                try {
-                    std::mutex _ndLocalStateMutex;
-                    for (unsigned int py = _y0; py < _y1; ++py) {
-                        double v = 1.0 - ((double)py + 0.5) / (double)_h;
-                        float* drow = &baked[(size_t)py * _w * 4];
-                        for (unsigned int x = 0; x < _w; ++x) {
-                            double u = ((double)x + 0.5) / (double)_w;
-                            float r = 0.0f, g = 0.0f, b = 0.0f, a = 0.0f;
-                            nd_texel(u, v, _m_in_aWidth, _m_in_aHeight, _m_in_aDensity, _m_in_aFrame, _m_in_aReset, _m_in_aBakePath, _nodePtr->_ndState, _ndLocalStateMutex, r, g, b, a);
-                            drow[x*4+0]=r; drow[x*4+1]=g; drow[x*4+2]=b; drow[x*4+3]=a;
-                        }
-                    }
-                } catch (...) { _bakeFailed.store(true); }
-            };
-            {
-                std::lock_guard<std::mutex> _bakeStateLock(_nodePtr->_ndStateMutex);
-                unsigned int _nthr = std::thread::hardware_concurrency();
-                if (_nthr == 0u) _nthr = 1u;
-                if (_nthr > 12u) _nthr = 12u;
-                if (_nthr > _h) _nthr = (_h > 0u) ? _h : 1u;
-                if (_nthr <= 1u) {
-                    _bakeRows(0u, _h);
-                } else {
-                    const unsigned int _chunk = (_h + _nthr - 1u) / _nthr;
-                    std::vector<std::thread> _bakeThreads;
-                    _bakeThreads.reserve(_nthr - 1u);
-                    for (unsigned int _t = 1u; _t < _nthr; ++_t) {
-                        const unsigned int _y0 = _t * _chunk;
-                        if (_y0 >= _h) break;
-                        const unsigned int _y1 = std::min(_y0 + _chunk, _h);
-                        try {
-                            _bakeThreads.emplace_back(_bakeRows, _y0, _y1);
-                        } catch (...) { _bakeRows(_y0, _y1); }
-                    }
-                    _bakeRows(0u, std::min(_chunk, _h));
-                    for (std::thread& _th : _bakeThreads)
-                        if (_th.joinable()) _th.join();
-                }
-            }
-            if (_bakeFailed.load()) return;
             MHWRender::MTextureDescription desc;
             desc.setToDefault2DTexture();
             desc.fWidth = _w; desc.fHeight = _h; desc.fDepth = 1;
@@ -4291,18 +4274,8 @@ public:
             texName += (double)_m_in_aReset;
             texName += MString("|");
             texName += _m_in_aBakePath;
-            {
-                unsigned long long _hv = 1469598103934665603ULL;
-                const unsigned char* _hb =
-                    (const unsigned char*)baked.data();
-                const size_t _hn = baked.size() * sizeof(float);
-                for (size_t _i = 0; _i < _hn; ++_i) {
-                    _hv ^= (unsigned long long)_hb[_i];
-                    _hv *= 1099511628211ULL;
-                }
-                texName += MString("|c=");
-                texName += (int)(_hv & 0x7FFFFFFFULL);
-            }
+            texName += MString("|c=");
+            texName += (int)(_hv & 0x7FFFFFFFULL);
             MHWRender::MTexture* tex =
                 tmgr->acquireTexture(texName, desc, baked.data(), false);
             if (tex) {
