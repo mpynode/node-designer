@@ -8,25 +8,41 @@ frame change without a time-input plug -- none of those re-evaluate
 the expression. The sphere "doesn't pulse" because the expression
 never re-runs.
 
-This module enables an OPT-IN per-locator 30 fps timer that calls
-``MRenderer.setGeometryDrawDirty(node_obj)`` on every tick. The
-expression then re-runs each tick and the gizmo animates smoothly.
+This module enables an OPT-IN idle-refresh service: ONE shared 30 fps
+timer that calls ``MRenderer.setGeometryDrawDirty(node_obj)`` for every
+enabled locator on each tick it lets through. The expression then re-runs
+and the gizmo animates smoothly.
 
-Crash safety (the user hit a crash on file→new with a naive
+Throttle (measured in a live session, 2026-09):
+
+ An unthrottled request every 33 ms forces a FULL viewport redraw 30x/s
+ while Maya is idle. Ten interpreted Animated Text locators took 93% of
+ the main thread doing nothing; a hundred compiled ones took 98% at 7.8
+ fps, forever. The tick itself is the meter: a timer due every 33 ms
+ arrives LATE by however long the main thread was busy -- with idle
+ redraws the only work, that lateness IS the redraw's cost. The service
+ therefore never asks for the next redraw until ``2 x`` the last redraw's
+ duration has passed (``throttle_decision``), so idle animation stays at
+ or under ~half of the main thread however many locators are enabled,
+ and full 30 fps is kept whenever a redraw is cheaper than a tick. One
+ timer for all nodes (not one per node as before) so N locators produce
+ one dirty pass per tick, not N interleaved ones.
+
+Crash safety (the user hit a crash on file->new with a naive
 implementation -- the timer kept firing on a dangling MObject):
 
- Layer 1: ``MObjectHandle.isValid()`` guard inside every timer
- tick. No-op if the node was deleted (defense-in-depth
+ Layer 1: ``MObjectHandle.isValid()`` guard inside every per-node
+ tick body. No-op if the node was deleted (defense-in-depth
  fallback if the teardown callbacks lag).
- Layer 2: per-node ``kNodeAboutToDelete`` callback tears down THIS
- node's timer when the node itself is deleted.
+ Layer 2: per-node ``kNodeAboutToDelete`` callback drops THIS
+ node's record when the node itself is deleted.
  Layer 3: scene-event ``kBeforeNew`` / ``kBeforeOpen`` /
- ``kMayaExiting`` callbacks tear down ALL timers + their
- per-node callbacks before the scene-wide MObject
+ ``kMayaExiting`` callbacks tear down ALL records + the shared
+ timer + per-node callbacks before the scene-wide MObject
  invalidation pass.
 
 Verified in headless mayapy via the crash repro script: V3 strategy
-(layers 1 + 2 + 3) survives file→new with zero crashes. Layer 3 is
+(layers 1 + 2 + 3) survives file->new with zero crashes. Layer 3 is
 the key -- the scene event fires BEFORE the MObjects dangle, so we
 get clean removeCallback before the danger window.
 
@@ -52,12 +68,15 @@ Public API:
  * ``enable(node_obj)`` -- start auto-refresh for this locator
  * ``disable(node_obj)`` -- stop auto-refresh for this locator
  * ``is_enabled(node_obj)`` -- query state
- * ``active_count()`` -- diagnostic: how many timers are live
+ * ``active_count()`` -- diagnostic: how many locators are enabled
  * ``refresh_stale_parents()`` -- flush all recorded parent transforms once
    (test/diagnostic seam; production flushes happen per node in the tick)
+ * ``throttle_step(state, now)`` -- the pure gate the shared tick applies
 """
 
 from __future__ import annotations
+
+import time
 
 import maya.api.OpenMaya as om
 import maya.api.OpenMayaRender as omr
@@ -67,10 +86,31 @@ import maya.api.OpenMayaRender as omr
 # what playback would deliver if we had a time1 connection.
 _REFRESH_INTERVAL_SEC = 1.0 / 30.0
 
+# The first tick after our own redraw request, when this much later than the
+# period, is read as "the main thread was busy with THAT redraw" (below it is
+# timer jitter, not work). A redraw shorter than a period is invisible here --
+# the tick simply arrives on time -- so a redraw between ~1 and 1.25 periods
+# can still saturate; everything heavier is throttled.
+_LATE_FACTOR = 1.25
 
-# Module state: dict[hash_code, dict(handle, timer_id, removal_cb_id)]
+# Wait this many times the last redraw's duration before requesting the next
+# idle redraw -> idle animation takes at most ~1/_BACKOFF of the main thread.
+_BACKOFF = 2.0
+
+
+# Module state: dict[hash_code, dict(handle, removal_cb_id, parent_handle)]
 # Hash code from MObjectHandle.hashCode() is the stable per-node key.
 _TIMERS: dict[int, dict] = {}
+
+
+def _fresh_throttle_state():
+    """monotonic seconds, None = never; ``armed`` = a redraw request is out and
+    the NEXT tick's lateness measures its cost."""
+    return {"last_tick": None, "last_dirty": None, "last_redraw": 0.0, "armed": False}
+
+
+# The ONE shared timer + throttle clocks.
+_SHARED: dict = dict(timer_id=None, **_fresh_throttle_state())
 
 
 # Scene-event callback IDs (registered once on first enable()).
@@ -80,6 +120,36 @@ _SCENE_CB_IDS: list = []
 # Node-type name whose stale worldMatrix cache the per-tick flush targets when
 # an auto-refresh locator is parented under one (see module docstring).
 _MPYTRANSFORM_TYPENAME = "mPyTransform"
+
+
+# ---- Throttle (pure) ----
+
+
+def throttle_step(state, now, period=_REFRESH_INTERVAL_SEC,
+                  late_factor=_LATE_FACTOR, backoff=_BACKOFF):
+    """One tick of the throttle: should it request an idle redraw now?
+
+    ``state`` is a dict from :func:`_fresh_throttle_state` (mutated in place).
+    The FIRST tick after a request measures that redraw: if it arrived more
+    than ``late_factor x period`` after the previous tick, the gap IS the
+    redraw's duration (the timer could only fire once the main thread was free
+    again); on time means the redraw was cheaper than a tick. Later ticks do
+    not re-measure -- they would only see the idle cadence and forget the
+    cost. The next request waits ``backoff x`` the measured duration, never
+    less than one period, so a cheap redraw keeps the full tick rate and an
+    expensive one takes at most ~1/backoff of the main thread.
+    """
+    gap = (now - state["last_tick"]) if state["last_tick"] is not None else period
+    state["last_tick"] = now
+    if state["armed"]:
+        state["last_redraw"] = gap if gap > late_factor * period else 0.0
+        state["armed"] = False
+    wait = max(period, backoff * state["last_redraw"])
+    if state["last_dirty"] is not None and (now - state["last_dirty"]) < wait:
+        return False
+    state["last_dirty"] = now
+    state["armed"] = True
+    return True
 
 
 # ---- Internal callbacks ----
@@ -152,7 +222,7 @@ def _flush_parent_transform(parent_handle) -> bool:
 
 
 def _timer_tick(handle: "om.MObjectHandle", parent_handle=None, *_unused) -> None:
-    """Fired by MTimerMessage every _REFRESH_INTERVAL_SEC.
+    """Per-node body of a shared tick that the throttle let through.
 
     Defense layer 1: validate the handle is still good. If the node
     was deleted between scheduling and firing, no-op silently. The
@@ -181,37 +251,62 @@ def _timer_tick(handle: "om.MObjectHandle", parent_handle=None, *_unused) -> Non
         pass
 
 
+def _shared_tick(*_unused) -> None:
+    """The ONE MTimerMessage callback: apply the throttle, then run every
+    enabled node's tick body. Never adds or removes callbacks itself."""
+    try:
+        if not throttle_step(_SHARED, time.monotonic()):
+            return
+        for rec in list(_TIMERS.values()):
+            _timer_tick(rec["handle"], rec.get("parent_handle"))
+    except Exception:
+        pass
+
+
+def _ensure_shared_timer() -> None:
+    if _SHARED["timer_id"] is not None:
+        return
+    _SHARED.update(_fresh_throttle_state())
+    _SHARED["timer_id"] = om.MTimerMessage.addTimerCallback(
+        _REFRESH_INTERVAL_SEC, _shared_tick)
+
+
+def _stop_shared_timer() -> None:
+    tid = _SHARED["timer_id"]
+    _SHARED["timer_id"] = None
+    if tid is None:
+        return
+    try:
+        om.MMessage.removeCallback(tid)
+    except Exception:
+        pass
+
+
 def _on_node_pre_removal(hash_code: int, *_unused) -> None:
-    """Per-node pre-removal callback. Tears down THIS node's timer
-    when the node itself is deleted (e.g. user-initiated delete).
+    """Per-node pre-removal callback. Drops THIS node's record when the
+    node itself is deleted (e.g. user-initiated delete); the shared timer
+    stops with the last record.
     """
     rec = _TIMERS.pop(hash_code, None)
     if rec is None:
         return
-    try:
-        om.MMessage.removeCallback(rec["timer_id"])
-    except Exception:
-        pass
     # The removal_cb is firing right now; MMessage releases it on return, so
     # don't remove it manually.
+    if not _TIMERS:
+        _stop_shared_timer()
 
 
 def _on_scene_event(*_unused) -> None:
-    """Scene-event callback. Tears down ALL active timers + their
-    per-node callbacks BEFORE the scene-wide MObject invalidation
-    pass that happens during file→new / file→open.
+    """Scene-event callback. Tears down ALL records, the shared timer and
+    the per-node callbacks BEFORE the scene-wide MObject invalidation
+    pass that happens during file->new / file->open.
 
     This is the critical layer -- it fires while MObjects are still
     valid, so the removeCallback path is safe. Without it, the
     timer would keep firing on dangling MObjects in the window
-    between scene-tear-down and the next timer-callback's
-    isValid() check.
+    between scene-tear-down and the next tick's isValid() check.
     """
     for hash_code, rec in list(_TIMERS.items()):
-        try:
-            om.MMessage.removeCallback(rec["timer_id"])
-        except Exception:
-            pass
         removal_cb_id = rec.get("removal_cb_id")
         if removal_cb_id is not None:
             try:
@@ -219,6 +314,7 @@ def _on_scene_event(*_unused) -> None:
             except Exception:
                 pass
     _TIMERS.clear()
+    _stop_shared_timer()
 
 
 def _ensure_scene_callbacks_registered() -> None:
@@ -243,13 +339,13 @@ def _ensure_scene_callbacks_registered() -> None:
 
 
 def enable(node_obj: "om.MObject") -> None:
-    """Start firing setGeometryDrawDirty(node_obj) every 33 ms.
+    """Start idle redraws for this locator (shared throttled 30 fps timer).
 
     Idempotent: calling enable() on an already-enabled node is a no-op.
     Safe to call from any callback, including the locator's bridge.
 
     Crash-safe: scene-event + per-node teardown callbacks are
-    registered automatically. file→new, file→open, Maya-exit, and
+    registered automatically. file->new, file->open, Maya-exit, and
     per-node delete all clean up cleanly.
     """
     _ensure_scene_callbacks_registered()
@@ -276,39 +372,31 @@ def enable(node_obj: "om.MObject") -> None:
         # with layers 1 + 3 only.
         pass
 
-    # The timer itself.
-    timer_id = om.MTimerMessage.addTimerCallback(
-        _REFRESH_INTERVAL_SEC,
-        lambda *_a: _timer_tick(handle, parent_handle),
-    )
-
     _TIMERS[code] = {
         "handle": handle,
-        "timer_id": timer_id,
         "removal_cb_id": removal_cb_id,
         "parent_handle": parent_handle,
     }
+    _ensure_shared_timer()
 
 
 def disable(node_obj: "om.MObject") -> None:
-    """Stop the auto-refresh timer for this locator. No-op if not
-    currently enabled.
+    """Stop idle redraws for this locator. No-op if not currently enabled;
+    the shared timer stops with the last enabled node.
     """
     handle = om.MObjectHandle(node_obj)
     code = handle.hashCode()
     rec = _TIMERS.pop(code, None)
     if rec is None:
         return
-    try:
-        om.MMessage.removeCallback(rec["timer_id"])
-    except Exception:
-        pass
     removal_cb_id = rec.get("removal_cb_id")
     if removal_cb_id is not None:
         try:
             om.MMessage.removeCallback(removal_cb_id)
         except Exception:
             pass
+    if not _TIMERS:
+        _stop_shared_timer()
 
 
 def is_enabled(node_obj: "om.MObject") -> bool:
@@ -318,18 +406,18 @@ def is_enabled(node_obj: "om.MObject") -> bool:
 
 
 def active_count() -> int:
-    """Diagnostic: how many timers are currently active across all
-    nodes. Useful for leak detection in tests."""
+    """Diagnostic: how many locators are currently enabled (they share one
+    timer). Useful for leak detection in tests."""
     return len(_TIMERS)
 
 
 def refresh_stale_parents() -> int:
     """Flush every recorded parent mPyTransform's worldMatrix cache once --
-    equivalent to one round of all active auto-refresh timers firing their
-    per-node parent flush. Returns the number of parents flushed.
+    equivalent to one shared tick's worth of per-node parent flushes.
+    Returns the number of parents flushed.
 
     Production flushes happen per node inside :func:`_timer_tick`; this is the
-    deterministic seam a headless test drives (no Qt idle loop ticks the timers
+    deterministic seam a headless test drives (no Qt idle loop ticks the timer
     in batch) to exercise the same flush the interactive tick performs."""
     n = 0
     for rec in list(_TIMERS.values()):
@@ -339,8 +427,8 @@ def refresh_stale_parents() -> int:
 
 
 def _reset_all_for_tests() -> None:
-    """Test-only: tear down ALL state (timers, scene callbacks,
-    bookkeeping). Real production code should never call this."""
+    """Test-only: tear down ALL state (records, shared timer, scene
+    callbacks, bookkeeping). Real production code should never call this."""
     _on_scene_event()
     for cb_id in _SCENE_CB_IDS:
         try:

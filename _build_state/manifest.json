@@ -6959,6 +6959,207 @@
         "wall_secs": 126.7
       }
     },
+    "MPyLocator\\Animated Selection": {
+      "phase_a": {
+        "ai": {
+          "assisted_cached": [],
+          "assisted_now": [
+            "animatedSelection"
+          ],
+          "cache_hit": [],
+          "cache_miss": [
+            "animatedSelection"
+          ],
+          "events": [
+            "portability animatedSelection start: ",
+            "cache animatedSelection start: ",
+            "cache animatedSelection miss: cache miss c02326b1376b",
+            "port animatedSelection start: porting",
+            "stage animatedSelection ok: 1_transpiled",
+            "stage animatedSelection ok: 2_assisted",
+            "port animatedSelection ok: ported (0 fix rounds)",
+            "assemble - start: linking 1 node(s)",
+            "assemble - ok: bundle: MPyLocator_Animated_Selection.mll",
+            "verify - start: parity check",
+            "verify animatedSelection ok: maxerr=None",
+            "verify - ok: verify done",
+            "done - ok: 1 node(s)"
+          ],
+          "n_log_lines": 11,
+          "n_optimize_events": 0,
+          "no_node_needed_llm": false,
+          "optimize_events_tail": []
+        },
+        "bundle_exists": true,
+        "bundle_path": "C:\\Users\\eric.vignola\\Desktop\\MPyNode\\templates\\MPyLocator\\Animated Selection\\MPyLocator_Animated_Selection.mll",
+        "ended": 1789022298.831229,
+        "errors": [],
+        "log": "C:\\Users\\eric.vignola\\Desktop\\MPyNode\\templates\\MPyLocator\\Animated Selection\\_runner\\phase_a.log",
+        "mode": {
+          "ai_assist": true,
+          "keep_intermediates": false,
+          "optimize": false
+        },
+        "nodes": [
+          {
+            "build_reason": "",
+            "build_status": "compiled",
+            "cache": "miss",
+            "incomplete": [],
+            "ported": true,
+            "type_name": "animatedSelection",
+            "verify": {
+              "authored_test": {
+                "count": 1,
+                "passed": true,
+                "passes": 1,
+                "ran": true,
+                "reason": ""
+              },
+              "generic_ran": false,
+              "maxerr": null,
+              "pass": true,
+              "ran": true,
+              "reason": "no scalar outputs to compare -- pointwise parity skipped (vacuous check) | authored @maya_test: 1/1 passed",
+              "timing": {
+                "measured": false,
+                "reason": "not timed -- generic parity did not pass for this node, so there is no trustworthy pair to measure (no scalar outputs to compare -- pointwise parity skipped (vacuous check))"
+              },
+              "tol": 0.0001
+            }
+          }
+        ],
+        "optimize_summary": {},
+        "phase": "a",
+        "rel": "MPyLocator\\Animated Selection",
+        "rounds": {},
+        "secs": 48.4,
+        "smoke": false,
+        "started": 1789022250.387235,
+        "state": "ok",
+        "wall_secs": 54.0
+      },
+      "phase_b": {
+        "ai": {
+          "assisted_cached": [
+            "animatedSelection"
+          ],
+          "assisted_now": [],
+          "cache_hit": [
+            "animatedSelection"
+          ],
+          "cache_miss": [],
+          "events": [
+            "portability animatedSelection start: ",
+            "cache animatedSelection start: ",
+            "stage animatedSelection ok: 1_transpiled",
+            "cache animatedSelection hit: cache hit c02326b1376b",
+            "stage animatedSelection ok: 2_assisted_cached",
+            "assemble - start: linking 1 node(s)",
+            "assemble - ok: bundle: MPyLocator_Animated_Selection.mll",
+            "verify - start: parity check",
+            "verify animatedSelection ok: maxerr=None",
+            "verify - ok: verify done",
+            "done - ok: 1 node(s)"
+          ],
+          "n_log_lines": 2,
+          "n_optimize_events": 3,
+          "no_node_needed_llm": false,
+          "optimize_events_tail": [
+            "- info: [animatedSelection] optimizing -- measuring baseline",
+            "- info: [animatedSelection] baseline could not be benchmarked; skipping",
+            "- ok: animatedSelection: kept original (baseline could not be benchmarked)"
+          ]
+        },
+        "bundle_exists": true,
+        "bundle_path": "C:\\Users\\eric.vignola\\Desktop\\MPyNode\\templates\\MPyLocator\\Animated Selection\\MPyLocator_Animated_Selection.mll",
+        "ended": 1789022359.1779838,
+        "errors": [],
+        "log": "C:\\Users\\eric.vignola\\Desktop\\MPyNode\\templates\\MPyLocator\\Animated Selection\\_runner\\phase_b.log",
+        "mode": {
+          "ai_assist": true,
+          "keep_intermediates": true,
+          "optimize": true
+        },
+        "nodes": [
+          {
+            "build_reason": "",
+            "build_status": "compiled",
+            "cache": "hit",
+            "incomplete": [],
+            "ported": true,
+            "type_name": "animatedSelection",
+            "verify": {
+              "authored_test": {
+                "count": 1,
+                "passed": true,
+                "passes": 1,
+                "ran": true,
+                "reason": ""
+              },
+              "generic_ran": false,
+              "maxerr": null,
+              "pass": true,
+              "ran": true,
+              "reason": "no scalar outputs to compare -- pointwise parity skipped (vacuous check) | authored @maya_test: 1/1 passed",
+              "timing": {
+                "measured": false,
+                "reason": "not timed -- generic parity did not pass for this node, so there is no trustworthy pair to measure (no scalar outputs to compare -- pointwise parity skipped (vacuous check))"
+              },
+              "tol": 0.0001
+            }
+          }
+        ],
+        "optimize_summary": {
+          "animatedSelection": {
+            "accepted": false,
+            "ai": {
+              "candidates": 0,
+              "errors": [],
+              "rounds": 0
+            },
+            "reason": "baseline could not be benchmarked",
+            "speedup": 1.0
+          }
+        },
+        "phase": "b",
+        "rel": "MPyLocator\\Animated Selection",
+        "rounds": {
+          "animatedSelection": {
+            "accepted": false,
+            "baseline_ms": null,
+            "best_ms": null,
+            "created": 1789022357.4304202,
+            "fresh": true,
+            "n_rounds": 0,
+            "parity_gate": "not exercised",
+            "path": "C:\\Users\\eric.vignola\\Desktop\\MPyNode\\templates\\MPyLocator\\Animated Selection\\build\\stages\\animatedSelection\\rounds.json",
+            "reason": "baseline could not be benchmarked",
+            "rounds": [
+              {
+                "cpp_same_as_baseline": true,
+                "duration_s": null,
+                "has_hypothesis": false,
+                "has_theme": false,
+                "index": 0,
+                "ms": null,
+                "note": "unmeasurable",
+                "outcome": "baseline",
+                "parity": null,
+                "slug": null,
+                "speedup": null
+              }
+            ],
+            "speedup": 1.0
+          }
+        },
+        "secs": 8.8,
+        "smoke": false,
+        "started": 1789022350.4130754,
+        "state": "ok",
+        "wall_secs": 14.0
+      }
+    },
     "MPyLocator\\Animated Text": {
       "phase_a": {
         "ai": {
@@ -6971,7 +7172,7 @@
           "events": [
             "portability animatedText start: ",
             "cache animatedText start: ",
-            "cache animatedText miss: cache miss 3ca90925ef2d",
+            "cache animatedText miss: cache miss a8288f6eebc9",
             "port animatedText start: porting",
             "stage animatedText ok: 1_transpiled",
             "port animatedText ok: ported (0 fix rounds)",
@@ -6990,7 +7191,7 @@
         },
         "bundle_exists": true,
         "bundle_path": "C:\\Users\\eric.vignola\\Desktop\\MPyNode\\templates\\MPyLocator\\Animated Text\\MPyLocator_Animated_Text.mll",
-        "ended": 1788986394.603594,
+        "ended": 1789022257.6076307,
         "errors": [],
         "log": "C:\\Users\\eric.vignola\\Desktop\\MPyNode\\templates\\MPyLocator\\Animated Text\\_runner\\phase_a.log",
         "mode": {
@@ -7031,11 +7232,11 @@
         "phase": "a",
         "rel": "MPyLocator\\Animated Text",
         "rounds": {},
-        "secs": 8.2,
+        "secs": 7.2,
         "smoke": false,
-        "started": 1788986386.3817658,
+        "started": 1789022250.383235,
         "state": "ok",
-        "wall_secs": 14.1
+        "wall_secs": 12.0
       },
       "phase_b": {
         "ai": {
@@ -7049,7 +7250,7 @@
             "portability animatedText start: ",
             "cache animatedText start: ",
             "stage animatedText ok: 1_transpiled",
-            "cache animatedText hit: cache hit 3ca90925ef2d",
+            "cache animatedText hit: cache hit a8288f6eebc9",
             "port - skip: no node needed AI assist -- every compute lowered deterministically",
             "assemble - start: linking 1 node(s)",
             "assemble - ok: bundle: MPyLocator_Animated_Text.mll",
@@ -7069,7 +7270,7 @@
         },
         "bundle_exists": true,
         "bundle_path": "C:\\Users\\eric.vignola\\Desktop\\MPyNode\\templates\\MPyLocator\\Animated Text\\MPyLocator_Animated_Text.mll",
-        "ended": 1788992642.5238948,
+        "ended": 1789022361.591176,
         "errors": [],
         "log": "C:\\Users\\eric.vignola\\Desktop\\MPyNode\\templates\\MPyLocator\\Animated Text\\_runner\\phase_b.log",
         "mode": {
@@ -7125,7 +7326,7 @@
             "accepted": false,
             "baseline_ms": null,
             "best_ms": null,
-            "created": 1788992639.5707364,
+            "created": 1789022358.6940994,
             "fresh": true,
             "n_rounds": 0,
             "parity_gate": "not exercised",
@@ -7149,11 +7350,421 @@
             "speedup": 1.0
           }
         },
-        "secs": 10.9,
+        "secs": 11.2,
         "smoke": false,
-        "started": 1788992631.6107595,
+        "started": 1789022350.4050643,
         "state": "ok",
         "wall_secs": 16.0
+      }
+    },
+    "MPyLocator\\Mesh Regions": {
+      "phase_a": {
+        "ai": {
+          "assisted_cached": [],
+          "assisted_now": [
+            "meshRegionLocator"
+          ],
+          "cache_hit": [],
+          "cache_miss": [
+            "meshRegionLocator"
+          ],
+          "events": [
+            "portability meshRegionLocator start: ",
+            "cache meshRegionLocator start: ",
+            "cache meshRegionLocator miss: cache miss c64dcbb13a6f",
+            "port meshRegionLocator start: porting",
+            "stage meshRegionLocator ok: 1_transpiled",
+            "stage meshRegionLocator ok: 2_assisted",
+            "port meshRegionLocator ok: ported (0 fix rounds)",
+            "assemble - start: linking 1 node(s)",
+            "honesty meshRegionLocator incomplete: the legacy baked `regions` dict (getattr(self, \"regions\"), a pre-regionTag stored var) is not carried by this scaffold's stored vars; with regionTag unset the region is left blank (the same result as an absent dict).",
+            "assemble - ok: bundle: MPyLocator_Mesh_Regions.mll",
+            "assemble - ok: bundled command(s): 1 (no companion plug-in)",
+            "verify - start: parity check",
+            "verify meshRegionLocator ok: maxerr=None",
+            "verify - ok: verify done",
+            "done - ok: 1 node(s)"
+          ],
+          "n_log_lines": 11,
+          "n_optimize_events": 0,
+          "no_node_needed_llm": false,
+          "optimize_events_tail": []
+        },
+        "bundle_exists": true,
+        "bundle_path": "C:\\Users\\eric.vignola\\Desktop\\MPyNode\\templates\\MPyLocator\\Mesh Regions\\MPyLocator_Mesh_Regions.mll",
+        "ended": 1789022341.1145554,
+        "errors": [],
+        "log": "C:\\Users\\eric.vignola\\Desktop\\MPyNode\\templates\\MPyLocator\\Mesh Regions\\_runner\\phase_a.log",
+        "mode": {
+          "ai_assist": true,
+          "keep_intermediates": false,
+          "optimize": false
+        },
+        "nodes": [
+          {
+            "build_reason": "",
+            "build_status": "compiled",
+            "cache": "miss",
+            "incomplete": [
+              "the legacy baked `regions` dict (getattr(self, \"regions\"), a pre-regionTag stored var) is not carried by this scaffold's stored vars; with regionTag unset the region is left blank (the same result as an absent dict)."
+            ],
+            "ported": true,
+            "type_name": "meshRegionLocator",
+            "verify": {
+              "authored_test": {
+                "count": 1,
+                "passed": true,
+                "passes": 1,
+                "ran": true,
+                "reason": ""
+              },
+              "generic_ran": false,
+              "maxerr": null,
+              "pass": true,
+              "ran": true,
+              "reason": "no scalar outputs to compare -- pointwise parity skipped (vacuous check) | authored @maya_test: 1/1 passed",
+              "timing": {
+                "measured": false,
+                "reason": "not timed -- generic parity did not pass for this node, so there is no trustworthy pair to measure (no scalar outputs to compare -- pointwise parity skipped (vacuous check))"
+              },
+              "tol": 0.0001
+            }
+          }
+        ],
+        "optimize_summary": {},
+        "phase": "a",
+        "rel": "MPyLocator\\Mesh Regions",
+        "rounds": {},
+        "secs": 90.7,
+        "smoke": false,
+        "started": 1789022250.3811402,
+        "state": "ok",
+        "wall_secs": 96.1
+      },
+      "phase_b": {
+        "ai": {
+          "assisted_cached": [
+            "meshRegionLocator"
+          ],
+          "assisted_now": [],
+          "cache_hit": [
+            "meshRegionLocator"
+          ],
+          "cache_miss": [],
+          "events": [
+            "portability meshRegionLocator start: ",
+            "cache meshRegionLocator start: ",
+            "stage meshRegionLocator ok: 1_transpiled",
+            "cache meshRegionLocator hit: cache hit c64dcbb13a6f",
+            "stage meshRegionLocator ok: 2_assisted_cached",
+            "assemble - start: linking 1 node(s)",
+            "honesty meshRegionLocator incomplete: the legacy baked `regions` dict (getattr(self, \"regions\"), a pre-regionTag stored var) is not carried by this scaffold's stored vars; with regionTag unset the region is left blank (the same result as an absent dict).",
+            "assemble - ok: bundle: MPyLocator_Mesh_Regions.mll",
+            "assemble - ok: bundled command(s): 1 (no companion plug-in)",
+            "verify - start: parity check",
+            "verify meshRegionLocator ok: maxerr=None",
+            "verify - ok: verify done",
+            "done - ok: 1 node(s)"
+          ],
+          "n_log_lines": 2,
+          "n_optimize_events": 3,
+          "no_node_needed_llm": false,
+          "optimize_events_tail": [
+            "- info: [meshRegionLocator] optimizing -- measuring baseline",
+            "- info: [meshRegionLocator] baseline could not be benchmarked; skipping",
+            "- ok: meshRegionLocator: kept original (baseline could not be benchmarked)"
+          ]
+        },
+        "bundle_exists": true,
+        "bundle_path": "C:\\Users\\eric.vignola\\Desktop\\MPyNode\\templates\\MPyLocator\\Mesh Regions\\MPyLocator_Mesh_Regions.mll",
+        "ended": 1789022373.7737086,
+        "errors": [],
+        "log": "C:\\Users\\eric.vignola\\Desktop\\MPyNode\\templates\\MPyLocator\\Mesh Regions\\_runner\\phase_b.log",
+        "mode": {
+          "ai_assist": true,
+          "keep_intermediates": true,
+          "optimize": true
+        },
+        "nodes": [
+          {
+            "build_reason": "",
+            "build_status": "compiled",
+            "cache": "hit",
+            "incomplete": [
+              "the legacy baked `regions` dict (getattr(self, \"regions\"), a pre-regionTag stored var) is not carried by this scaffold's stored vars; with regionTag unset the region is left blank (the same result as an absent dict)."
+            ],
+            "ported": true,
+            "type_name": "meshRegionLocator",
+            "verify": {
+              "authored_test": {
+                "count": 1,
+                "passed": true,
+                "passes": 1,
+                "ran": true,
+                "reason": ""
+              },
+              "generic_ran": false,
+              "maxerr": null,
+              "pass": true,
+              "ran": true,
+              "reason": "no scalar outputs to compare -- pointwise parity skipped (vacuous check) | authored @maya_test: 1/1 passed",
+              "timing": {
+                "measured": false,
+                "reason": "not timed -- generic parity did not pass for this node, so there is no trustworthy pair to measure (no scalar outputs to compare -- pointwise parity skipped (vacuous check))"
+              },
+              "tol": 0.0001
+            }
+          }
+        ],
+        "optimize_summary": {
+          "meshRegionLocator": {
+            "accepted": false,
+            "ai": {
+              "candidates": 0,
+              "errors": [],
+              "rounds": 0
+            },
+            "reason": "baseline could not be benchmarked",
+            "speedup": 1.0
+          }
+        },
+        "phase": "b",
+        "rel": "MPyLocator\\Mesh Regions",
+        "rounds": {
+          "meshRegionLocator": {
+            "accepted": false,
+            "baseline_ms": null,
+            "best_ms": null,
+            "created": 1789022371.672295,
+            "fresh": true,
+            "n_rounds": 0,
+            "parity_gate": "not exercised",
+            "path": "C:\\Users\\eric.vignola\\Desktop\\MPyNode\\templates\\MPyLocator\\Mesh Regions\\build\\stages\\meshRegionLocator\\rounds.json",
+            "reason": "baseline could not be benchmarked",
+            "rounds": [
+              {
+                "cpp_same_as_baseline": true,
+                "duration_s": null,
+                "has_hypothesis": false,
+                "has_theme": false,
+                "index": 0,
+                "ms": null,
+                "note": "unmeasurable",
+                "outcome": "baseline",
+                "parity": null,
+                "slug": null,
+                "speedup": null
+              }
+            ],
+            "speedup": 1.0
+          }
+        },
+        "secs": 9.4,
+        "smoke": false,
+        "started": 1789022364.4211109,
+        "state": "ok",
+        "wall_secs": 14.0
+      }
+    },
+    "MPyLocator\\Widget Showcase": {
+      "phase_a": {
+        "ai": {
+          "assisted_cached": [],
+          "assisted_now": [
+            "widgetShowcase"
+          ],
+          "cache_hit": [],
+          "cache_miss": [
+            "widgetShowcase"
+          ],
+          "events": [
+            "portability widgetShowcase start: ",
+            "cache widgetShowcase start: ",
+            "cache widgetShowcase miss: cache miss 22fc49a29b7f",
+            "port widgetShowcase start: porting",
+            "stage widgetShowcase ok: 1_transpiled",
+            "stage widgetShowcase ok: 2_assisted",
+            "port widgetShowcase ok: ported (0 fix rounds)",
+            "assemble - start: linking 1 node(s)",
+            "assemble - ok: bundle: MPyLocator_Widget_Showcase.mll",
+            "verify - start: parity check",
+            "verify widgetShowcase ok: maxerr=None",
+            "verify - ok: verify done",
+            "done - ok: 1 node(s)"
+          ],
+          "n_log_lines": 11,
+          "n_optimize_events": 0,
+          "no_node_needed_llm": false,
+          "optimize_events_tail": []
+        },
+        "bundle_exists": true,
+        "bundle_path": "C:\\Users\\eric.vignola\\Desktop\\MPyNode\\templates\\MPyLocator\\Widget Showcase\\MPyLocator_Widget_Showcase.mll",
+        "ended": 1789022346.093495,
+        "errors": [],
+        "log": "C:\\Users\\eric.vignola\\Desktop\\MPyNode\\templates\\MPyLocator\\Widget Showcase\\_runner\\phase_a.log",
+        "mode": {
+          "ai_assist": true,
+          "keep_intermediates": false,
+          "optimize": false
+        },
+        "nodes": [
+          {
+            "build_reason": "",
+            "build_status": "compiled",
+            "cache": "miss",
+            "incomplete": [],
+            "ported": true,
+            "type_name": "widgetShowcase",
+            "verify": {
+              "authored_test": {
+                "count": 1,
+                "passed": true,
+                "passes": 1,
+                "ran": true,
+                "reason": ""
+              },
+              "generic_ran": false,
+              "maxerr": null,
+              "pass": true,
+              "ran": true,
+              "reason": "no scalar outputs to compare -- pointwise parity skipped (vacuous check) | authored @maya_test: 1/1 passed",
+              "timing": {
+                "measured": false,
+                "reason": "not timed -- generic parity did not pass for this node, so there is no trustworthy pair to measure (no scalar outputs to compare -- pointwise parity skipped (vacuous check))"
+              },
+              "tol": 0.0001
+            }
+          }
+        ],
+        "optimize_summary": {},
+        "phase": "a",
+        "rel": "MPyLocator\\Widget Showcase",
+        "rounds": {},
+        "secs": 95.7,
+        "smoke": false,
+        "started": 1789022250.4003623,
+        "state": "ok",
+        "wall_secs": 100.1
+      },
+      "phase_b": {
+        "ai": {
+          "assisted_cached": [
+            "widgetShowcase"
+          ],
+          "assisted_now": [],
+          "cache_hit": [
+            "widgetShowcase"
+          ],
+          "cache_miss": [],
+          "events": [
+            "portability widgetShowcase start: ",
+            "cache widgetShowcase start: ",
+            "stage widgetShowcase ok: 1_transpiled",
+            "cache widgetShowcase hit: cache hit 22fc49a29b7f",
+            "stage widgetShowcase ok: 2_assisted_cached",
+            "assemble - start: linking 1 node(s)",
+            "assemble - ok: bundle: MPyLocator_Widget_Showcase.mll",
+            "verify - start: parity check",
+            "verify widgetShowcase ok: maxerr=None",
+            "verify - ok: verify done",
+            "done - ok: 1 node(s)"
+          ],
+          "n_log_lines": 2,
+          "n_optimize_events": 3,
+          "no_node_needed_llm": false,
+          "optimize_events_tail": [
+            "- info: [widgetShowcase] optimizing -- measuring baseline",
+            "- info: [widgetShowcase] baseline could not be benchmarked; skipping",
+            "- ok: widgetShowcase: kept original (baseline could not be benchmarked)"
+          ]
+        },
+        "bundle_exists": true,
+        "bundle_path": "C:\\Users\\eric.vignola\\Desktop\\MPyNode\\templates\\MPyLocator\\Widget Showcase\\MPyLocator_Widget_Showcase.mll",
+        "ended": 1789022373.5495284,
+        "errors": [],
+        "log": "C:\\Users\\eric.vignola\\Desktop\\MPyNode\\templates\\MPyLocator\\Widget Showcase\\_runner\\phase_b.log",
+        "mode": {
+          "ai_assist": true,
+          "keep_intermediates": true,
+          "optimize": true
+        },
+        "nodes": [
+          {
+            "build_reason": "",
+            "build_status": "compiled",
+            "cache": "hit",
+            "incomplete": [],
+            "ported": true,
+            "type_name": "widgetShowcase",
+            "verify": {
+              "authored_test": {
+                "count": 1,
+                "passed": true,
+                "passes": 1,
+                "ran": true,
+                "reason": ""
+              },
+              "generic_ran": false,
+              "maxerr": null,
+              "pass": true,
+              "ran": true,
+              "reason": "no scalar outputs to compare -- pointwise parity skipped (vacuous check) | authored @maya_test: 1/1 passed",
+              "timing": {
+                "measured": false,
+                "reason": "not timed -- generic parity did not pass for this node, so there is no trustworthy pair to measure (no scalar outputs to compare -- pointwise parity skipped (vacuous check))"
+              },
+              "tol": 0.0001
+            }
+          }
+        ],
+        "optimize_summary": {
+          "widgetShowcase": {
+            "accepted": false,
+            "ai": {
+              "candidates": 0,
+              "errors": [],
+              "rounds": 0
+            },
+            "reason": "baseline could not be benchmarked",
+            "speedup": 1.0
+          }
+        },
+        "phase": "b",
+        "rel": "MPyLocator\\Widget Showcase",
+        "rounds": {
+          "widgetShowcase": {
+            "accepted": false,
+            "baseline_ms": null,
+            "best_ms": null,
+            "created": 1789022372.5838737,
+            "fresh": true,
+            "n_rounds": 0,
+            "parity_gate": "not exercised",
+            "path": "C:\\Users\\eric.vignola\\Desktop\\MPyNode\\templates\\MPyLocator\\Widget Showcase\\build\\stages\\widgetShowcase\\rounds.json",
+            "reason": "baseline could not be benchmarked",
+            "rounds": [
+              {
+                "cpp_same_as_baseline": true,
+                "duration_s": null,
+                "has_hypothesis": false,
+                "has_theme": false,
+                "index": 0,
+                "ms": null,
+                "note": "unmeasurable",
+                "outcome": "baseline",
+                "parity": null,
+                "slug": null,
+                "speedup": null
+              }
+            ],
+            "speedup": 1.0
+          }
+        },
+        "secs": 7.1,
+        "smoke": false,
+        "started": 1789022366.4127738,
+        "state": "ok",
+        "wall_secs": 12.0
       }
     },
     "MPyMesh/Disk Mesh Cache": {

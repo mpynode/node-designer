@@ -1,8 +1,15 @@
 {
   "accepted": false,
   "baseline_ms": null,
+  "bench": {
+    "floor_ms": 15.0,
+    "rung": [
+      40,
+      512
+    ]
+  },
   "best_ms": null,
-  "created": 1787675814.732094,
+  "created": 1789022357.4304202,
   "ledger": [
     {
       "compiled": true,
@@ -21,9 +28,11 @@
       "theme": ""
     }
   ],
-  "parity_gate": "authored+pointwise",
+  "max_rounds": 6,
+  "parity_gate": "not exercised",
   "reason": "baseline could not be benchmarked",
   "rounds": 0,
   "speedup": 1.0,
+  "stop_reason": "baseline could not be benchmarked",
   "type_name": "animatedSelection"
 }

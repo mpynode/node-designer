@@ -4,7 +4,7 @@ Run in Maya. Loads the .bundle, samples inputs, compares outputs.
 import os, random
 import maya.cmds as cmds
 
-BUNDLE = os.path.join(os.path.dirname(__file__), 'widgetShowcase.bundle')
+BUNDLE = os.path.join(os.path.dirname(__file__), 'widgetShowcase.mll')
 NODE_TYPE = 'widgetShowcase'
 SOURCE = 'widgetShowcase'
 INPUTS = {"preset": "enum"}

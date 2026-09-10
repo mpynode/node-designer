@@ -4,7 +4,7 @@ Run in Maya. Loads the .bundle, samples inputs, compares outputs.
 import os, random
 import maya.cmds as cmds
 
-BUNDLE = os.path.join(os.path.dirname(__file__), 'animatedSelection.bundle')
+BUNDLE = os.path.join(os.path.dirname(__file__), 'animatedSelection.mll')
 NODE_TYPE = 'animatedSelection'
 SOURCE = 'animatedSelection'
 INPUTS = {"color_mode": "enum", "show_wireframe": "bool", "wire_width": "float", "spinSpeed": "float", "popDuration": "float", "popAmount": "float"}

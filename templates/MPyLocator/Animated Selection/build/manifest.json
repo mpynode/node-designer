@@ -1,12 +1,12 @@
 {
   "manifest_version": 1,
-  "porter_recipe_version": "19",
+  "porter_recipe_version": "28",
   "provider": "claude_cli",
-  "model": "claude-opus-5[1m]",
+  "model": "claude-fable-5-1",
   "strict": false,
   "plugin_name": "MPyLocator_Animated_Selection",
-  "bundle": "templates/MPyLocator/Animated Selection/MPyLocator_Animated_Selection.bundle",
-  "created": 1787675816.1617239,
+  "bundle": "C:\\Users\\eric.vignola\\Desktop\\MPyNode\\templates\\MPyLocator\\Animated Selection\\MPyLocator_Animated_Selection.mll",
+  "created": 1789022359.1729712,
   "nodes": [
     {
       "source_node": "animatedSelection",
@@ -14,15 +14,16 @@
       "type_id": "0x000174bc",
       "type_id_source": "derived",
       "base": "MPxLocatorNode",
-      "spec_hash": "d4b2c1b0d39b1e550a78dfe71d4a253042bbe2aa9f402df788f294d45f7e742a",
-      "port_cache_key": "d4b2c1b0d39b1e550a78dfe71d4a253042bbe2aa9f402df788f294d45f7e742a",
-      "cache": "miss",
+      "spec_hash": "c02326b1376b739e830595cb9a505907bba8aee039727efccde510f91628d764",
+      "port_cache_key": "c02326b1376b739e830595cb9a505907bba8aee039727efccde510f91628d764",
+      "cache": "hit",
       "build_status": "compiled",
       "build_reason": "",
       "ported": true,
       "incomplete": [],
       "invented_io": [],
       "missing_includes": [],
+      "vp2_skip": "",
       "verify": {
         "ran": true,
         "pass": true,
@@ -40,8 +41,7 @@
           "passes": 1,
           "reason": ""
         },
-        "generic_ran": false,
-        "reverified": "2026-09-08"
+        "generic_ran": false
       },
       "spec": {
         "schema_version": 1,
@@ -204,7 +204,7 @@
             "source": "def _flatten(value, out=None):\n    \"\"\"Every ``DrawItem`` inside ``value``, in AUTHORING order.\n\n    Accepts a single item, a ``DrawGroup`` (what ``+`` builds), ``None``, or any\n    nesting of lists / tuples / iterators of those. Nesting is FLATTENED rather\n    than rejected: ``[a, [b, c], d]`` is the same drawing as ``a + b + c + d``,\n    so a drawing accumulated by appending to lists needs no ``sum()`` at the\n    end. Only a non-drawable leaf is an error.\"\"\"\n    out = [] if out is None else out\n    if value is None:\n        return out\n    if isinstance(value, DrawGroup):          # before DrawItem: a group is one\n        for it in value._items:\n            _flatten(it, out)\n        return out\n    if isinstance(value, DrawItem):\n        out.append(value)\n        return out\n    # str/bytes iterate into characters and ndarray into rows -- neither is a\n    # nested drawing, so they get the plain \"not a drawable\" error below.\n    if not isinstance(value, (str, bytes, dict, np.ndarray)):\n        try:\n            members = iter(value)\n        except TypeError:\n            members = None\n        if members is not None:\n            for it in members:\n                _flatten(it, out)\n            return out\n    raise TypeError(\n        \"self.draw takes draw items -- DrawCircle(...) + DrawText(...), or a \"\n        \"list of them -- not %s\" % type(value).__name__)"
           }
         ],
-        "methods": "# Animated Selection setup: playback range for the spin + frame it. The\n# hover pop is interactive (wall-clock), so it plays without playback too.\ndef demo(self):\n    from maya import cmds as mc\n    name = self.get_name()\n    try:\n        mc.playbackOptions(minTime=1, maxTime=240,\n                           animationStartTime=1, animationEndTime=240)\n        mc.currentTime(1)\n    except Exception:\n        pass\n    try:\n        mc.viewFit(name)\n    except Exception:\n        pass\n    return name\n\n\n@maya_test(label=\"Animated selection: color modes, wireframe, spin\", digits=3)\ndef test_animated_selection(self):\n    \"\"\"Validate the node's INTENT through its draw buffers (a locator's only\n    output), exactly as the builder's own live gate does: each ``color_mode``\n    drives the matching polygon colour key with backface culling on,\n    ``show_wireframe`` toggles the wireframe overlay, and ``spinSpeed`` genuinely\n    spins the cube over time.\n\n    A COMPILED C++ locator (MPxLocatorNode) exposes no Python\n    ``evaluateDrawItems``, so its draw buffers are not reachable here -- that\n    parity is covered by the dedicated ``-DMPYNODE_PROBE`` numerical buffer\n    comparison. When the buffers cannot be read (compiled node) this test skips\n    cleanly so it never false-fails parity.\"\"\"\n    import numpy as np\n    from maya import cmds as mc\n    from mpynode.wrappers.mpy_locator import MPyLocator\n    from mpynode._common.methods.test_helpers import assert_true\n\n    name = self.get_name()\n    w = MPyLocator(name)\n\n    def _poly(time_value=0.0):\n        \"\"\"This frame's polygon buffer, or None.\"\"\"\n        for cmd in w.evaluate_draw_commands(time_value)[\"commands\"]:\n            if cmd[\"slot\"] == \"polygons\":\n                return cmd[\"buffer\"]\n        return None\n\n    # The output lives in draw commands reached via evaluateDrawItems, which only\n    # the interpreted mPyNode exposes to Python. On a compiled node this is\n    # unavailable -> skip (compiled parity is probe-verified).\n    try:\n        probe = _poly(30.0)\n    except Exception:\n        return\n    if probe is None:\n        return\n\n    # 1) Each color_mode drives the matching polygon colour key (backface-culled).\n    for i, key in enumerate(\n            [\"face_colors\", \"vertex_colors\", \"face_vertex_colors\", \"colors\"]):\n        mc.setAttr(name + \".color_mode\", i)\n        poly = _poly(30.0)\n        assert_true(poly is not None and key in poly\n                    and poly.get(\"cull_backfaces\") is True,\n                    \"color_mode %d must set %r with cull_backfaces\" % (i, key))\n\n    # 2) show_wireframe toggles the wireframe overlay on/off.\n    mc.setAttr(name + \".color_mode\", 0)\n    mc.setAttr(name + \".show_wireframe\", True)\n    assert_true(\"wireframe\" in (_poly() or {}),\n                \"show_wireframe True must add a wireframe overlay\")\n    mc.setAttr(name + \".show_wireframe\", False)\n    assert_true(\"wireframe\" not in (_poly() or {}),\n                \"show_wireframe False must drop the wireframe overlay\")\n\n    # 3) spinSpeed actually spins: two different times give different points.\n    mc.setAttr(name + \".spinSpeed\", 0.5)\n    s0 = np.asarray(_poly(0.0)[\"points\"])\n    s1 = np.asarray(_poly(10.0)[\"points\"])\n    assert_true(not np.allclose(s0, s1),\n                \"spinSpeed should rotate the cube over time\")\n",
+        "methods": "# Animated Selection setup: playback range for the spin + frame it. The\n# hover pop is interactive (wall-clock), so it plays without playback too.\ndef demo(self):\n    from maya import cmds as mc\n    name = self.get_name()\n    try:\n        mc.playbackOptions(minTime=1, maxTime=240,\n                           animationStartTime=1, animationEndTime=240)\n        mc.currentTime(1)\n    except Exception:\n        pass\n    try:\n        for _panel in mc.getPanel(type=\"modelPanel\") or []:\n            _cam = mc.modelEditor(_panel, query=True, camera=True)\n            if _cam:\n                mc.viewFit(_cam, allObjects=True)\n    except Exception:\n        pass\n    return name\n\n\n@maya_test(label=\"Animated selection: color modes, wireframe, spin\", digits=3)\ndef test_animated_selection(self):\n    \"\"\"Validate the node's INTENT through its draw buffers (a locator's only\n    output), exactly as the builder's own live gate does: each ``color_mode``\n    drives the matching polygon colour key with backface culling on,\n    ``show_wireframe`` toggles the wireframe overlay, and ``spinSpeed`` genuinely\n    spins the cube over time.\n\n    A COMPILED C++ locator (MPxLocatorNode) exposes no Python\n    ``evaluateDrawItems``, so its draw buffers are not reachable here -- that\n    parity is covered by the dedicated ``-DMPYNODE_PROBE`` numerical buffer\n    comparison. When the buffers cannot be read (compiled node) this test skips\n    cleanly so it never false-fails parity.\"\"\"\n    import numpy as np\n    from maya import cmds as mc\n    from mpynode.wrappers.mpy_locator import MPyLocator\n    from mpynode._common.methods.test_helpers import assert_true\n\n    name = self.get_name()\n    w = MPyLocator(name)\n\n    def _poly(time_value=0.0):\n        \"\"\"This frame's polygon buffer, or None.\"\"\"\n        for cmd in w.evaluate_draw_commands(time_value)[\"commands\"]:\n            if cmd[\"slot\"] == \"polygons\":\n                return cmd[\"buffer\"]\n        return None\n\n    # The output lives in draw commands reached via evaluateDrawItems, which only\n    # the interpreted mPyNode exposes to Python. On a compiled node this is\n    # unavailable -> skip (compiled parity is probe-verified).\n    try:\n        probe = _poly(30.0)\n    except Exception:\n        return\n    if probe is None:\n        return\n\n    # 1) Each color_mode drives the matching polygon colour key (backface-culled).\n    for i, key in enumerate(\n            [\"face_colors\", \"vertex_colors\", \"face_vertex_colors\", \"colors\"]):\n        mc.setAttr(name + \".color_mode\", i)\n        poly = _poly(30.0)\n        assert_true(poly is not None and key in poly\n                    and poly.get(\"cull_backfaces\") is True,\n                    \"color_mode %d must set %r with cull_backfaces\" % (i, key))\n\n    # 2) show_wireframe toggles the wireframe overlay on/off.\n    mc.setAttr(name + \".color_mode\", 0)\n    mc.setAttr(name + \".show_wireframe\", True)\n    assert_true(\"wireframe\" in (_poly() or {}),\n                \"show_wireframe True must add a wireframe overlay\")\n    mc.setAttr(name + \".show_wireframe\", False)\n    assert_true(\"wireframe\" not in (_poly() or {}),\n                \"show_wireframe False must drop the wireframe overlay\")\n\n    # 3) spinSpeed actually spins: two different times give different points.\n    mc.setAttr(name + \".spinSpeed\", 0.5)\n    s0 = np.asarray(_poly(0.0)[\"points\"])\n    s1 = np.asarray(_poly(10.0)[\"points\"])\n    assert_true(not np.allclose(s0, s1),\n                \"spinSpeed should rotate the cube over time\")\n",
         "commands": [],
         "portability": {
           "portable": true,

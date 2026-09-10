@@ -628,6 +628,25 @@ def local_text_pixel_size(size_obj, pixels_per_object_unit, min_px=6,
     return int(round(px))
 
 
+def point_pixel_size(size):
+    """Whole-pixel point size for ``MUIDrawManager.setPointSize``.
+
+    VP2 draws fat points through a shader whose point size is a parameter and
+    caches the shader instance BY VALUE: every distinct size costs a new
+    instance (~85 us per point measured in a live session), a repeated value is
+    ~free. An expression that sizes points continuously (``5 + 6*|sin(...)|``)
+    therefore paid a full instance per point per frame -- 56% of a locator's
+    draw cost. Rounding to whole pixels bounds the distinct values scene-wide
+    (<= 0.5 px visual change); the compiled emitter rounds identically
+    (``_pointPx``) so both paths draw the same. Never below 1 px.
+    """
+    try:
+        px = int(round(float(size)))
+    except (TypeError, ValueError):
+        return 1.0
+    return float(px if px >= 1 else 1)
+
+
 def project_object_points_to_pixels(points_obj, obj_world_m16, view_proj_m16,
                                     vp_w, vp_h):
     """Project OBJECT-space points to viewport PIXEL coordinates.

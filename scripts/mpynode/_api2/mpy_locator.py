@@ -87,6 +87,7 @@ from mpynode._common.draw.draw_buffers import (
     normalize_color,
     normalize_space,
     pixels_per_world_unit,
+    point_pixel_size,
     project_object_points_to_pixels,
     region_boundary_edges,
     triangle_corner_indices,
@@ -928,7 +929,7 @@ class MPyLocatorDrawOverride(omr.MPxDrawOverride):
                         override if override is not None else cls._mcolor(colors[i])
                     )
                     if sizes_arr is not None:
-                        dm.setPointSize(float(sizes_arr[i]))
+                        dm.setPointSize(point_pixel_size(sizes_arr[i]))
                     try:
                         dm.point2d(om.MPoint(float(px[i, 0]), float(px[i, 1]), 0.0))
                     except Exception:
@@ -941,7 +942,7 @@ class MPyLocatorDrawOverride(omr.MPxDrawOverride):
             else:
                 dm.setColor(cls._mcolor(colors[i]))
             if sizes_arr is not None:
-                dm.setPointSize(float(sizes_arr[i]))
+                dm.setPointSize(point_pixel_size(sizes_arr[i]))
             dm.point(
                 om.MPoint(
                     float(positions[i, 0]),

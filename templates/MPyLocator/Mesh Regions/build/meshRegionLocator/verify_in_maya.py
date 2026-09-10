@@ -4,7 +4,7 @@ Run in Maya. Loads the .bundle, samples inputs, compares outputs.
 import os, random
 import maya.cmds as cmds
 
-BUNDLE = os.path.join(os.path.dirname(__file__), 'meshRegionLocator.bundle')
+BUNDLE = os.path.join(os.path.dirname(__file__), 'meshRegionLocator.mll')
 NODE_TYPE = 'meshRegionLocator'
 SOURCE = 'meshRegions'
 INPUTS = {"inMesh": "mesh", "regionTag": "string", "offset": "float", "hoverOffset": "float", "selectOffset": "float", "hoverDur": "float", "defaultColor": "color", "hoverColor": "color", "selectColor": "color", "outlineColor": "color", "outlineHoverColor": "color", "outlineSelectColor": "color", "alpha": "float"}

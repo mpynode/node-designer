@@ -376,7 +376,20 @@ from typing import Optional
 # MPointArray path. Same bump reason as v24-v26: this is CODEGEN, and a v26 hit
 # is a copyfile with codegen skipped (compile_controller.py:1043), so every
 # compiled deformer would keep the MPointArray round trip forever.
-PORTER_RECIPE_VERSION = "27"
+# v28: locator draw override -- measured in a live session (2026-09) against
+# 100 compiled Animated Text locators. (1) Point sizes are rounded to whole
+# pixels at draw time: VP2 caches its fat-point shader BY size value, so every
+# distinct float size was a new instance (85 us each, 56% of the per-node
+# draw cost). (2) ONE beginDrawable/endDrawable per node instead of one per
+# item (-10%), mirroring the interpreted framework. (3) Text sizes are
+# object-space heights scaled to pixels via pixels-per-object-unit at the
+# node's depth (the framework's local_text_pixel_size); before, the raw 0.3-0.8
+# height was cast to unsigned 0 and every compiled glyph drew at the fallback
+# size. (4) The idle-refresh poll is throttled by its own tick lateness so
+# auto_refresh locators take at most ~half the main thread at idle instead of
+# saturating it (98% at N=100). Locator-only codegen; other families' stage-1
+# text is unchanged but the version is part of every cache key.
+PORTER_RECIPE_VERSION = "28"
 
 # Spec keys excluded from the cache key -- provably irrelevant to the generated
 # C++. A deny-list, NOT an allow-list (design C1).

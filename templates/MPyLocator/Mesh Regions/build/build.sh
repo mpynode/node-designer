@@ -5,7 +5,6 @@
 # Usage:  ./build.sh [maya-version]      e.g. ./build.sh 2026
 # With no argument the newest installed Maya is used; MAYA=<path>
 # overrides discovery.
-# Built against: maya2026
 set -euo pipefail
 _v="${1:-}"
 if [ -n "$_v" ] || [ -z "${MAYA:-}" ]; then
