@@ -1,11 +1,13 @@
 """Maya-FREE: the compile-time ``isinstance()`` fold in py_to_cpp.
 
-``isinstance`` reaches the transpiler from exactly two places in the shipped
-template corpus, both spelled against a ``getattr(self, '<name>', None)``
-default::
+``isinstance`` reaches the transpiler from exactly one place in the shipped
+template corpus, spelled against a ``getattr(self, '<name>', None)`` default::
 
     templates/MPyLocator/Widget Showcase   if not isinstance(presets, dict)
-    templates/MPyLocator/Mesh Regions      if isinstance(_legacy, dict)
+
+(Mesh Regions had a second one, ``if isinstance(_legacy, dict)``, guarding a
+pre-``regionTag`` baked dict; that fallback was retired in 2026-09 -- ``setup``
+migrates the dict into ``regionTag`` -- so the draw reads no stored state.)
 
 A ``None`` binding carries no C++ value at all, so its Python class IS a
 compile-time fact and the call folds to ``false`` -- the existing dead-branch

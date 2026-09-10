@@ -7110,14 +7110,14 @@ LOC_REGION_COMPUTE = r'''# Draw the bound mesh's component-tag region as a colou
 # setup) -- so editing the component tag (add/remove faces) updates the drawn
 # region immediately, and a compiled C++ node resolves the SAME way off its own
 # input handle. self.inMesh is the live world-space MFnMesh (worldMesh[0]) used
-# for the geometry; the tag membership comes from that same input's data. Falls
-# back to a legacy baked `regions` dict for scenes saved before this change.
+# for the geometry; the tag membership comes from that same input's data.
 mesh = self.inMesh
 # The region is chosen purely by NAME via the `regionTag` string input. If the
-# name matches no component tag on the input mesh, the region goes BLANK (a typo
-# or a removed/renamed tag reads as empty). Only when regionTag is unset do we
-# honour a legacy baked `regions` dict (scenes saved before regionTag existed /
-# the build probe).
+# name matches no component tag on the input mesh -- or is unset -- the region
+# goes BLANK (a typo or a removed/renamed tag reads as empty). `setup` names the
+# region, and migrates a pre-regionTag scene's baked `regions` dict into that
+# name, so the draw reads no stored Python state: the interpreted and the
+# compiled node resolve the region the same way.
 _tag = getattr(self, "regionTag", None)
 # ONE read of the input data, shared by the tag membership and the source
 # transform below (both live on the same MFnGeometryData).
@@ -7128,11 +7128,7 @@ if _tag:
     _faces = tag_indices_from_mesh_data(_mdata, _tag)
     if _faces:
         regions = {_tag: _faces}
-    # else: named tag has no match -> leave regions None -> blank (no fallback).
-else:
-    _legacy = getattr(self, "regions", None)
-    if isinstance(_legacy, dict) and _legacy:
-        regions = _legacy
+    # else: named tag has no match -> leave regions None -> blank.
 if mesh is None or not regions:
     self.draw = None
 else:
@@ -7742,8 +7738,25 @@ def setup(self, selection=None, *args, **kwargs):
         cur = mc.getAttr(name + ".regionTag") or ""
     except Exception:
         cur = ""
+    plug_empty = not cur
+    if plug_empty:
+        # A scene saved before `regionTag` existed kept its region in a baked
+        # `regions` stored dict ({tag: face ids}). The draw no longer reads that
+        # dict (a compiled node never could), so its key becomes the name here
+        # and the dict is retired; a name the mesh no longer carries falls
+        # through to the first tag like any fresh bind.
+        try:
+            legacy = (self.get_variables() or {}).get("regions")
+        except Exception:
+            legacy = None
+        if isinstance(legacy, dict) and legacy:
+            cur = next((k for k in sorted(str(k) for k in legacy) if k in regions), "")
+            try:
+                self.remove_variable("regions")
+            except Exception:
+                pass
     tag = cur or tags[0]
-    if not cur:
+    if plug_empty:
         try:
             mc.setAttr(name + ".regionTag", tag, type="string")
         except Exception:
@@ -7829,7 +7842,7 @@ def build_locator_mesh_regions():
     mc.file(new=True, force=True)
     _ensure_mpy_plugins()
     from mpynode._common.node_setups import find_demo, find_setup
-    from mpynode._common.storedvars.stored_vars_api import set_variable
+    from mpynode._common.storedvars.stored_vars_api import get_variables, set_variable
     from mpynode.wrappers.mpy_locator import MPyLocator
 
     w = MPyLocator.create(name="meshRegions")
@@ -7869,7 +7882,7 @@ def build_locator_mesh_regions():
 
     clean_payload = serialize_node(w, include_persistent=False)
 
-    # Synthetic mesh + legacy 'regions' dict -> patch draws; verify the new
+    # Synthetic mesh + an authored component tag -> patch draws; verify the new
     # RGBA colour path (per-node defaultColor + alpha input) end to end.
     sphere = mc.polySphere(sx=20, sy=20, name="probeSphere")[0]
     sphere_shape = mc.listRelatives(sphere, shapes=True, fullPath=True)[0]
@@ -7891,12 +7904,12 @@ def build_locator_mesh_regions():
     _probe_rgb = (0.20, 0.55, 0.90)
     for _ch, _v in zip("RGB", _probe_rgb):
         mc.setAttr("%s.defaultColor%s" % (node, _ch), _v)
-    set_variable(node, "regions",
-                 {"a": list(range(100, 116)), "b": list(range(200, 216))},
-                 persistent=True)
+    # The region is named, never stored: tag a face range on the probe mesh and
+    # point `regionTag` at it (the legacy baked `regions` dict is retired). Maya
+    # silently drops a ONE-letter tag name, so the probe tag is a word.
+    mc.componentTag(sphere_shape + ".f[100:115]", create=True, newTagName="probeRegion")
+    mc.setAttr(node + ".regionTag", "probeRegion", type="string")
     mc.dgdirty(node)
-    # One polygon command PER TAG now, so inspect the first patch (both carry
-    # the same node-wide colour).
     poly = _draw_slot(w, "polygons")
     draw_ok = poly is not None
     if draw_ok:
@@ -8047,6 +8060,29 @@ def build_locator_mesh_regions():
     except Exception as exc:
         test_err = "exc:%r" % exc
 
+    # Migration: a gizmo carrying the pre-regionTag baked `regions` dict and an
+    # EMPTY regionTag must come out of `setup` named after the dict's key that
+    # the mesh still carries, with the dict gone.
+    migrate_ok = False
+    migrate_detail = "n/a"
+    try:
+        from mpynode._common.io.mpn_io import deserialize_node
+        mc.file(new=True, force=True)
+        msph = mc.polySphere(sx=20, sy=20, name="migrateSphere")[0]
+        mshape = mc.listRelatives(msph, shapes=True, fullPath=True)[0]
+        mc.componentTag(mshape + ".f[0:15]", create=True, newTagName="alpha")
+        mc.componentTag(mshape + ".f[16:31]", create=True, newTagName="beta")
+        mnode = deserialize_node(clean_payload, restore_persistent=False)
+        mname = mnode.get_name()
+        set_variable(mname, "regions", {"beta": list(range(16, 32))}, persistent=True)
+        mnode.run_setup(selection=[msph])
+        got = mc.getAttr(mname + ".regionTag") or ""
+        left = "regions" in (get_variables(mname) or {})
+        migrate_ok = (got == "beta" and not left)
+        migrate_detail = "regionTag=%r dict_left=%s" % (got, left)
+    except Exception as exc:
+        migrate_detail = "exc:%r" % exc
+
     # The Class must survive SERIALIZATION, not just sit on the live plug: the
     # bake reads _pyClass off the deserialized node, so a stamp that drops in
     # the payload silently reverts the baked class to the root wrapper name.
@@ -8055,13 +8091,14 @@ def build_locator_mesh_regions():
     ok = (draw_ok and rows_ok and colors_ok and select_ok and defaults_ok
           and outline_ok and zero_ok and has_demo
           and has_setup and per_tag_ok and draw_all_ok and colors_distinct
-          and test_ok and cls_ok)
+          and test_ok and cls_ok and migrate_ok)
     print("[loc_regions] draw=%s rows=%s colors=%s select=%s defaults=%s "
           "outline=%s zero=%s demo=%s setup=%s class=%s | "
-          "per_tag=%s draw_all=%s distinct=%s test=%s(%s) (%s) -> %s"
+          "per_tag=%s draw_all=%s distinct=%s test=%s(%s) migrate=%s(%s) (%s) -> %s"
           % (draw_ok, rows_ok, colors_ok, select_ok, defaults_ok, outline_ok,
              zero_ok, has_demo, has_setup, cls_ok,
              per_tag_ok, draw_all_ok, colors_distinct, test_ok, test_err,
+             migrate_ok, migrate_detail,
              setup_detail, "PASS" if ok else "FAIL"))
     if ok:
         _copy_asset("head.ma", LOC_REGION_DIR)

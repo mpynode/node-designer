@@ -1,11 +1,11 @@
 # meshRegionLocator -- compile report
 
-**Source node:** `meshRegions`  ·  **Base:** `MPxLocatorNode`  ·  **Generated:** 2026-09-10 14:36
+**Source node:** `meshRegions`  ·  **Base:** `MPxLocatorNode`  ·  **Generated:** 2026-09-10 15:06
 
 | stage | outcome |
 |---|---|
 | 1 Transpile | emitted, with region(s) the transpiler could not lower |
-| 2 AI assist | ran -- 1 region(s) still marked incomplete |
+| 2 AI assist | ran -- no unresolved regions |
 | 3 AI optimize | ran, nothing accepted (baseline could not be benchmarked) -- 0 run of max 6, stopped: baseline could not be benchmarked |
 
 ## The Python this was generated from
@@ -17,14 +17,14 @@
 # setup) -- so editing the component tag (add/remove faces) updates the drawn
 # region immediately, and a compiled C++ node resolves the SAME way off its own
 # input handle. self.inMesh is the live world-space MFnMesh (worldMesh[0]) used
-# for the geometry; the tag membership comes from that same input's data. Falls
-# back to a legacy baked `regions` dict for scenes saved before this change.
+# for the geometry; the tag membership comes from that same input's data.
 mesh = self.inMesh
 # The region is chosen purely by NAME via the `regionTag` string input. If the
-# name matches no component tag on the input mesh, the region goes BLANK (a typo
-# or a removed/renamed tag reads as empty). Only when regionTag is unset do we
-# honour a legacy baked `regions` dict (scenes saved before regionTag existed /
-# the build probe).
+# name matches no component tag on the input mesh -- or is unset -- the region
+# goes BLANK (a typo or a removed/renamed tag reads as empty). `setup` names the
+# region, and migrates a pre-regionTag scene's baked `regions` dict into that
+# name, so the draw reads no stored Python state: the interpreted and the
+# compiled node resolve the region the same way.
 _tag = getattr(self, "regionTag", None)
 # ONE read of the input data, shared by the tag membership and the source
 # transform below (both live on the same MFnGeometryData).
@@ -35,11 +35,7 @@ if _tag:
     _faces = tag_indices_from_mesh_data(_mdata, _tag)
     if _faces:
         regions = {_tag: _faces}
-    # else: named tag has no match -> leave regions None -> blank (no fallback).
-else:
-    _legacy = getattr(self, "regions", None)
-    if isinstance(_legacy, dict) and _legacy:
-        regions = _legacy
+    # else: named tag has no match -> leave regions None -> blank.
 if mesh is None or not regions:
     self.draw = None
 else:
@@ -144,10 +140,6 @@ else:
         self.auto_highlight = False
         self.auto_refresh = bool(h_e < 1.0)
 ```
-
-## Unfinished work in the generated C++
-
-* **not translated:** legacy baked `regions` dict (getattr(self, "regions", None)) is a
 
 ## Optimization
 

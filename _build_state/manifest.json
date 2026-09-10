@@ -7371,13 +7371,12 @@
           "events": [
             "portability meshRegionLocator start: ",
             "cache meshRegionLocator start: ",
-            "cache meshRegionLocator miss: cache miss 6f700159ea28",
+            "cache meshRegionLocator miss: cache miss 460024f87238",
             "port meshRegionLocator start: porting",
             "stage meshRegionLocator ok: 1_transpiled",
             "stage meshRegionLocator ok: 2_assisted",
             "port meshRegionLocator ok: ported (0 fix rounds)",
             "assemble - start: linking 1 node(s)",
-            "honesty meshRegionLocator incomplete: legacy baked `regions` dict (getattr(self, \"regions\", None)) is a",
             "assemble - ok: bundle: MPyLocator_Mesh_Regions.mll",
             "assemble - ok: bundled command(s): 1 (no companion plug-in)",
             "verify - start: parity check",
@@ -7392,7 +7391,7 @@
         },
         "bundle_exists": true,
         "bundle_path": "C:\\Users\\eric.vignola\\Desktop\\MPyNode\\templates\\MPyLocator\\Mesh Regions\\MPyLocator_Mesh_Regions.mll",
-        "ended": 1789076126.2206883,
+        "ended": 1789077967.4409492,
         "errors": [],
         "log": "C:\\Users\\eric.vignola\\Desktop\\MPyNode\\templates\\MPyLocator\\Mesh Regions\\_runner\\phase_a.log",
         "mode": {
@@ -7405,9 +7404,7 @@
             "build_reason": "",
             "build_status": "compiled",
             "cache": "miss",
-            "incomplete": [
-              "legacy baked `regions` dict (getattr(self, \"regions\", None)) is a"
-            ],
+            "incomplete": [],
             "ported": true,
             "type_name": "meshRegionLocator",
             "verify": {
@@ -7435,11 +7432,11 @@
         "phase": "a",
         "rel": "MPyLocator\\Mesh Regions",
         "rounds": {},
-        "secs": 80.4,
+        "secs": 81.4,
         "smoke": false,
-        "started": 1789076045.8196225,
+        "started": 1789077886.0515764,
         "state": "ok",
-        "wall_secs": 86.1
+        "wall_secs": 86.0
       },
       "phase_b": {
         "ai": {
@@ -7455,10 +7452,9 @@
             "portability meshRegionLocator start: ",
             "cache meshRegionLocator start: ",
             "stage meshRegionLocator ok: 1_transpiled",
-            "cache meshRegionLocator hit: cache hit 6f700159ea28",
+            "cache meshRegionLocator hit: cache hit 460024f87238",
             "stage meshRegionLocator ok: 2_assisted_cached",
             "assemble - start: linking 1 node(s)",
-            "honesty meshRegionLocator incomplete: legacy baked `regions` dict (getattr(self, \"regions\", None)) is a",
             "assemble - ok: bundle: MPyLocator_Mesh_Regions.mll",
             "assemble - ok: bundled command(s): 1 (no companion plug-in)",
             "verify - start: parity check",
@@ -7477,7 +7473,7 @@
         },
         "bundle_exists": true,
         "bundle_path": "C:\\Users\\eric.vignola\\Desktop\\MPyNode\\templates\\MPyLocator\\Mesh Regions\\MPyLocator_Mesh_Regions.mll",
-        "ended": 1789076178.0595303,
+        "ended": 1789077982.5463922,
         "errors": [],
         "log": "C:\\Users\\eric.vignola\\Desktop\\MPyNode\\templates\\MPyLocator\\Mesh Regions\\_runner\\phase_b.log",
         "mode": {
@@ -7490,9 +7486,7 @@
             "build_reason": "",
             "build_status": "compiled",
             "cache": "hit",
-            "incomplete": [
-              "legacy baked `regions` dict (getattr(self, \"regions\", None)) is a"
-            ],
+            "incomplete": [],
             "ported": true,
             "type_name": "meshRegionLocator",
             "verify": {
@@ -7535,7 +7529,7 @@
             "accepted": false,
             "baseline_ms": null,
             "best_ms": null,
-            "created": 1789076175.865734,
+            "created": 1789077980.2998328,
             "fresh": true,
             "n_rounds": 0,
             "parity_gate": "not exercised",
@@ -7559,11 +7553,11 @@
             "speedup": 1.0
           }
         },
-        "secs": 10.0,
+        "secs": 10.3,
         "smoke": false,
-        "started": 1789076168.0594862,
+        "started": 1789077972.262036,
         "state": "ok",
-        "wall_secs": 14.0
+        "wall_secs": 16.0
       }
     },
     "MPyLocator\\Widget Showcase": {
