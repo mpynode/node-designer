@@ -130,9 +130,21 @@ def _node_name_of(py_node):
 
 
 def _make_interpreted(cmds, payload, n):
+    """N interpreted copies, returned as FULL DAG paths.
+
+    Every copy carries the template's node name (``animatedText``), so the
+    wrapper's short name is ambiguous from the second copy on and Maya refuses
+    it. The new shape is found by set difference on the native type's long
+    names; the wrapper's own name is only the fallback."""
     from mpynode._common.io import mpn_io
-    return [_node_name_of(mpn_io.deserialize_node(payload, skip_selection=True))
-            for _ in range(n)]
+    native = payload.get("native_type") or ""
+    out = []
+    for _ in range(n):
+        before = set(cmds.ls(type=native, long=True) or []) if native else set()
+        py_node = mpn_io.deserialize_node(payload, skip_selection=True)
+        new = (set(cmds.ls(type=native, long=True) or []) - before) if native else set()
+        out.append(sorted(new)[0] if len(new) == 1 else _node_name_of(py_node))
+    return out
 
 
 def _make_compiled(cmds, node_type, n):
