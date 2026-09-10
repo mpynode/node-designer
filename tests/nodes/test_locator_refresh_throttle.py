@@ -62,55 +62,82 @@ class TestThrottleStep(unittest.TestCase):
 
         return draw_refresh.throttle_step(st, now)
 
-    def test_first_tick_fires_and_arms(self):
+    def test_first_tick_fires(self):
         st = self._state()
         self.assertTrue(self._step(st, 10.0))
-        self.assertTrue(st["armed"])
         self.assertEqual(st["last_dirty"], 10.0)
+        self.assertEqual(st["last_redraw"], 0.0)
 
-    def test_cheap_redraws_keep_the_full_tick_rate(self):
-        # redraw cheaper than a tick: every tick arrives on time -> every tick fires
+    def test_mayas_47ms_cadence_is_not_read_as_a_redraw(self):
+        # under any redraw load Maya fires the 33 ms timer every ~47 ms (measured:
+        # 21 ticks/s with ten cheap locators); that must keep the full rate.
         st = self._state()
-        fired = [self._step(st, 10.0 + i * P * 1.001) for i in range(30)]
+        fired = [self._step(st, 10.0 + i * 0.047) for i in range(30)]
         self.assertTrue(all(fired))
         self.assertEqual(st["last_redraw"], 0.0)
 
-    def test_expensive_redraw_is_measured_once_and_waited_out_twice(self):
+    def test_heavy_redraw_when_the_tick_runs_after_it(self):
+        # compiled path ordering: request, redraw (125 ms), then the tick
         st = self._state()
-        self.assertTrue(self._step(st, 0.0))              # request; redraw takes 125 ms
-        self.assertFalse(self._step(st, 0.125))            # first tick after it: late -> measured
+        self.assertTrue(self._step(st, 0.0))
+        # the late tick carries the cost; it may fire once more back-to-back,
+        # but from here on the wait is 2 x 0.125
+        self.assertTrue(self._step(st, 0.125))
         self.assertAlmostEqual(st["last_redraw"], 0.125)
-        self.assertFalse(st["armed"])
-        # idle cadence resumes; the cheap gaps must NOT forget the cost
-        for t in (0.158, 0.191, 0.224):
+        for t in (0.25, 0.283, 0.316, 0.349):
             self.assertFalse(self._step(st, t))
-            self.assertAlmostEqual(st["last_redraw"], 0.125)
-        self.assertTrue(self._step(st, 0.257))             # >= 2 x 0.125 since the request
-        self.assertTrue(st["armed"])
+        self.assertTrue(self._step(st, 0.382))              # 0.257 >= 0.25 since the request
 
-    def test_duty_cycle_stays_near_half_for_a_heavy_scene(self):
-        # simulate: each request costs R on the main thread; the timer can fire
-        # again only once the redraw is done; otherwise ticks come every P.
-        R = 0.125
+    def test_heavy_redraw_when_the_tick_runs_before_it(self):
+        # interpreted path ordering: request, the due tick fires ON TIME (the
+        # redraw has not run yet), THEN the 257 ms redraw delays the next tick.
+        # v28 measured only the first tick and read the scene as cheap (92%).
         st = self._state()
-        t, requests, t_end = 0.0, 0, 10.0
+        self.assertTrue(self._step(st, 0.0))
+        t1 = P * 1.01
+        self.assertTrue(self._step(st, t1))                 # on time -> coalesced request
+        self.assertTrue(self._step(st, t1 + 0.257))         # late 0.257 -> becomes the cost
+        self.assertAlmostEqual(st["last_redraw"], 0.257)
+        t2 = t1 + 0.257
+        for dt in (0.26, 0.293, 0.326, 0.46):
+            self.assertFalse(self._step(st, t2 + dt))       # wait = 0.514 since the request
+        self.assertTrue(self._step(st, t2 + 0.52))
+
+    def _duty(self, R, tick_before_redraw):
+        """Simulate: a request costs R on the main thread; ticks otherwise come
+        every P. ``tick_before_redraw`` models Maya running the due tick before
+        the redraw it triggered."""
+        st = self._state()
+        t, redraws, t_end = 0.0, 0, 10.0
         while t < t_end:
             if self._step(st, t):
-                requests += 1
-                t += R                     # the tick after the redraw
+                redraws += 1
+                if tick_before_redraw:
+                    t += P
+                    self._step(st, t)                       # on-time tick; a fire here coalesces
+                t += R                                      # redraw runs; next tick after it
             else:
                 t += P
-        busy = requests * R / t_end
-        self.assertLess(busy, 0.55)
-        self.assertGreater(busy, 0.35)
+        return redraws * R / t_end
+
+    def test_duty_cycle_stays_near_half_for_a_heavy_scene_either_ordering(self):
+        for order in (False, True):
+            busy = self._duty(0.125, order)
+            self.assertLess(busy, 0.6, "ordering tick_before=%s busy=%.2f" % (order, busy))
+            self.assertGreater(busy, 0.35, "ordering tick_before=%s busy=%.2f" % (order, busy))
+        busy = self._duty(0.257, True)                      # Python N=100
+        self.assertLess(busy, 0.6, "busy=%.2f" % busy)
 
     def test_cost_is_forgotten_when_the_scene_gets_cheap_again(self):
         st = self._state()
         self.assertTrue(self._step(st, 0.0))
-        self.assertFalse(self._step(st, 0.125))            # heavy
-        self.assertTrue(self._step(st, 0.26))              # next request
-        self.assertTrue(self._step(st, 0.26 + P * 1.001))  # on time -> cheap now -> fires
-        self.assertEqual(st["last_redraw"], 0.0)
+        self.assertTrue(self._step(st, 0.125))              # late -> cost 0.125, wait 0.25
+        # the scene got cheap: from here every tick is on cadence (no late gap)
+        for t in (0.16, 0.20, 0.235, 0.27, 0.305, 0.34):
+            self.assertFalse(self._step(st, t))
+        self.assertTrue(self._step(st, 0.38))               # 0.255 >= 0.25; no late tick seen
+        self.assertEqual(st["last_redraw"], 0.0)            # -> cost reset
+        self.assertTrue(self._step(st, 0.38 + P * 1.01))    # full rate again
 
 
 class TestSharedTimer(unittest.TestCase):

@@ -21,12 +21,13 @@ Throttle (measured in a live session, 2026-09):
  fps, forever. The tick itself is the meter: a timer due every 33 ms
  arrives LATE by however long the main thread was busy -- with idle
  redraws the only work, that lateness IS the redraw's cost. The service
- therefore never asks for the next redraw until ``2 x`` the last redraw's
- duration has passed (``throttle_decision``), so idle animation stays at
- or under ~half of the main thread however many locators are enabled,
- and full 30 fps is kept whenever a redraw is cheaper than a tick. One
- timer for all nodes (not one per node as before) so N locators produce
- one dirty pass per tick, not N interleaved ones.
+ remembers the worst late tick since its last request and never asks for
+ the next redraw until ``2 x`` that has passed (``throttle_step``), so
+ idle animation stays at or under ~half of the main thread however many
+ locators are enabled, and the full tick rate is kept whenever no tick
+ runs late (a cheap redraw). One timer for all nodes (not one per node
+ as before) so N locators produce one dirty pass per tick, not N
+ interleaved ones.
 
 Crash safety (the user hit a crash on file->new with a naive
 implementation -- the timer kept firing on a dangling MObject):
@@ -86,12 +87,13 @@ import maya.api.OpenMayaRender as omr
 # what playback would deliver if we had a time1 connection.
 _REFRESH_INTERVAL_SEC = 1.0 / 30.0
 
-# The first tick after our own redraw request, when this much later than the
-# period, is read as "the main thread was busy with THAT redraw" (below it is
-# timer jitter, not work). A redraw shorter than a period is invisible here --
-# the tick simply arrives on time -- so a redraw between ~1 and 1.25 periods
-# can still saturate; everything heavier is throttled.
-_LATE_FACTOR = 1.25
+# A tick this much later than the period is read as "the main thread was busy
+# with a redraw". Below it is Maya's own cadence, not work: under any redraw
+# load the 33 ms timer actually fires every ~47 ms (21 ticks/s measured with
+# ten cheap locators), so a threshold under ~1.5 periods throttles scenes that
+# could run at full rate. Redraws shorter than this stay invisible (the tick
+# arrives on time) and keep the full tick rate.
+_LATE_FACTOR = 2.0
 
 # Wait this many times the last redraw's duration before requesting the next
 # idle redraw -> idle animation takes at most ~1/_BACKOFF of the main thread.
@@ -104,9 +106,10 @@ _TIMERS: dict[int, dict] = {}
 
 
 def _fresh_throttle_state():
-    """monotonic seconds, None = never; ``armed`` = a redraw request is out and
-    the NEXT tick's lateness measures its cost."""
-    return {"last_tick": None, "last_dirty": None, "last_redraw": 0.0, "armed": False}
+    """monotonic seconds, None = never. ``last_redraw`` is the cost applied to
+    the current wait; ``pending_max`` the worst late gap seen since the last
+    request (becomes ``last_redraw`` at the next one)."""
+    return {"last_tick": None, "last_dirty": None, "last_redraw": 0.0, "pending_max": 0.0}
 
 
 # The ONE shared timer + throttle clocks.
@@ -130,25 +133,28 @@ def throttle_step(state, now, period=_REFRESH_INTERVAL_SEC,
     """One tick of the throttle: should it request an idle redraw now?
 
     ``state`` is a dict from :func:`_fresh_throttle_state` (mutated in place).
-    The FIRST tick after a request measures that redraw: if it arrived more
-    than ``late_factor x period`` after the previous tick, the gap IS the
-    redraw's duration (the timer could only fire once the main thread was free
-    again); on time means the redraw was cheaper than a tick. Later ticks do
-    not re-measure -- they would only see the idle cadence and forget the
-    cost. The next request waits ``backoff x`` the measured duration, never
-    less than one period, so a cheap redraw keeps the full tick rate and an
-    expensive one takes at most ~1/backoff of the main thread.
+    A tick that arrives more than ``late_factor x period`` after the previous
+    one was held up by a redraw, and the gap IS that redraw's duration (the
+    timer can only fire once the main thread is free again). Every tick is
+    measured and the WORST late gap since the last request is remembered,
+    because Maya may run the tick due right after a request either before or
+    after the redraw it triggered -- only one of those two ticks carries the
+    cost, and which one is not ours to choose. At the next request that worst
+    gap becomes the redraw cost, and the request after it waits ``backoff x``
+    that long (never less than one period): an expensive redraw takes at most
+    ~1/backoff of the main thread, a cheap one (no late tick seen) resets the
+    cost to zero and keeps the full tick rate.
     """
     gap = (now - state["last_tick"]) if state["last_tick"] is not None else period
     state["last_tick"] = now
-    if state["armed"]:
-        state["last_redraw"] = gap if gap > late_factor * period else 0.0
-        state["armed"] = False
+    if gap > late_factor * period:
+        state["pending_max"] = max(state["pending_max"], gap)
     wait = max(period, backoff * state["last_redraw"])
     if state["last_dirty"] is not None and (now - state["last_dirty"]) < wait:
         return False
+    state["last_redraw"] = state["pending_max"]
+    state["pending_max"] = 0.0
     state["last_dirty"] = now
-    state["armed"] = True
     return True
 
 

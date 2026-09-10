@@ -1,12 +1,12 @@
 {
   "manifest_version": 1,
-  "porter_recipe_version": "28",
+  "porter_recipe_version": "29",
   "provider": "claude_cli",
   "model": "claude-fable-5-1",
   "strict": false,
   "plugin_name": "MPyLocator_Animated_Selection",
   "bundle": "C:\\Users\\eric.vignola\\Desktop\\MPyNode\\templates\\MPyLocator\\Animated Selection\\MPyLocator_Animated_Selection.mll",
-  "created": 1789022359.1729712,
+  "created": 1789059264.3113475,
   "nodes": [
     {
       "source_node": "animatedSelection",
@@ -14,8 +14,8 @@
       "type_id": "0x000174bc",
       "type_id_source": "derived",
       "base": "MPxLocatorNode",
-      "spec_hash": "c02326b1376b739e830595cb9a505907bba8aee039727efccde510f91628d764",
-      "port_cache_key": "c02326b1376b739e830595cb9a505907bba8aee039727efccde510f91628d764",
+      "spec_hash": "94755574a07b3ec99c57e410b6fc723b1a7ef6e464c3a3281c475f363a202e0f",
+      "port_cache_key": "94755574a07b3ec99c57e410b6fc723b1a7ef6e464c3a3281c475f363a202e0f",
       "cache": "hit",
       "build_status": "compiled",
       "build_reason": "",

@@ -1,12 +1,12 @@
 {
   "manifest_version": 1,
-  "porter_recipe_version": "28",
+  "porter_recipe_version": "29",
   "provider": "claude_cli",
   "model": "claude-fable-5-1",
   "strict": false,
   "plugin_name": "MPyLocator_Mesh_Regions",
   "bundle": "C:\\Users\\eric.vignola\\Desktop\\MPyNode\\templates\\MPyLocator\\Mesh Regions\\MPyLocator_Mesh_Regions.mll",
-  "created": 1789022373.770705,
+  "created": 1789059279.0000808,
   "nodes": [
     {
       "source_node": "meshRegions",
@@ -14,15 +14,13 @@
       "type_id": "0x000609ee",
       "type_id_source": "derived",
       "base": "MPxLocatorNode",
-      "spec_hash": "c64dcbb13a6f86b861b9bef1305effe7acaafdda7acea4fba075b44a61a226d4",
-      "port_cache_key": "c64dcbb13a6f86b861b9bef1305effe7acaafdda7acea4fba075b44a61a226d4",
+      "spec_hash": "a864cac3b2c919180daa3f8518aa0eceee87d90a1a089947a8a5b1301c7143b9",
+      "port_cache_key": "a864cac3b2c919180daa3f8518aa0eceee87d90a1a089947a8a5b1301c7143b9",
       "cache": "hit",
       "build_status": "compiled",
       "build_reason": "",
       "ported": true,
-      "incomplete": [
-        "the legacy baked `regions` dict (getattr(self, \"regions\"), a pre-regionTag stored var) is not carried by this scaffold's stored vars; with regionTag unset the region is left blank (the same result as an absent dict)."
-      ],
+      "incomplete": [],
       "invented_io": [],
       "missing_includes": [],
       "vp2_skip": "",

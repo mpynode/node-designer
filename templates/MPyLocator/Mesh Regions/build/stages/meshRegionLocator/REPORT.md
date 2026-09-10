@@ -1,11 +1,11 @@
 # meshRegionLocator -- compile report
 
-**Source node:** `meshRegions`  ·  **Base:** `MPxLocatorNode`  ·  **Generated:** 2026-09-09 23:39
+**Source node:** `meshRegions`  ·  **Base:** `MPxLocatorNode`  ·  **Generated:** 2026-09-10 09:54
 
 | stage | outcome |
 |---|---|
 | 1 Transpile | emitted, with region(s) the transpiler could not lower |
-| 2 AI assist | ran -- 1 region(s) still marked incomplete |
+| 2 AI assist | ran -- no unresolved regions |
 | 3 AI optimize | ran, nothing accepted (baseline could not be benchmarked) -- 0 run of max 6, stopped: baseline could not be benchmarked |
 
 ## The Python this was generated from
@@ -144,10 +144,6 @@ else:
         self.auto_highlight = False
         self.auto_refresh = bool(h_e < 1.0)
 ```
-
-## Unfinished work in the generated C++
-
-* **not translated:** the legacy baked `regions` dict (getattr(self, "regions"), a pre-regionTag stored var) is not carried by this scaffold's stored vars; with regionTag unset the region is left blank (the same result as an absent dict).
 
 ## Optimization
 

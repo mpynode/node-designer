@@ -132,14 +132,18 @@ class TestThrottledIdleRefresh(unittest.TestCase):
         self.cpp = codegen._generate_locator_cpp(_spec(True))
         self.poll = _fn_body(self.cpp, "static void _poll(float, float, void*) {")
 
-    def test_poll_measures_the_redraw_on_the_armed_tick(self):
-        self.assertIn("if (g_armed) { g_lastRedraw = (_gap > 1.25 * _period) ? _gap : 0.0; g_armed = false; }",
-                      self.poll)
+    def test_poll_measures_every_tick_and_keeps_the_worst_late_gap(self):
+        # Maya may run the tick due after a request before OR after the redraw
+        # it triggered; only one of them carries the cost, so every tick is
+        # measured and the worst gap since the last request is what counts.
+        self.assertIn("if (_gap > 2.0 * _period) g_pendingMax = std::max(g_pendingMax, _gap);", self.poll)
+        self.assertNotIn("1.25 * _period", self.poll)   # sat under Maya's ~47 ms cadence
 
     def test_poll_waits_twice_the_measured_redraw_never_less_than_a_period(self):
         self.assertIn("const double _wait = std::max(_period, 2.0 * g_lastRedraw);", self.poll)
         self.assertIn("(_now - g_lastDirtyT) >= _wait", self.poll)
-        self.assertIn("g_lastDirtyT = _now; g_armed = true;", self.poll)
+        # the request applies the pending measurement and starts a fresh one
+        self.assertIn("g_lastRedraw = g_pendingMax; g_pendingMax = 0.0; g_lastDirtyT = _now;", self.poll)
 
     def test_dirtying_is_inside_the_gate(self):
         gate = self.poll.index("(_now - g_lastDirtyT) >= _wait")
@@ -162,7 +166,7 @@ class TestNonHoverLocatorSharesTheDrawPath(unittest.TestCase):
             self.assertIn(tok, self.cpp)
 
     def test_no_poll_no_throttle_state(self):
-        for tok in ("g_lastDirtyT", "g_lastRedraw", "g_armed", "static void _poll("):
+        for tok in ("g_lastDirtyT", "g_lastRedraw", "g_pendingMax", "static void _poll("):
             self.assertNotIn(tok, self.cpp)
 
     def test_helpers_stay_plugin_only(self):

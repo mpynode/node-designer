@@ -389,7 +389,13 @@ from typing import Optional
 # auto_refresh locators take at most ~half the main thread at idle instead of
 # saturating it (98% at N=100). Locator-only codegen; other families' stage-1
 # text is unchanged but the version is part of every cache key.
-PORTER_RECIPE_VERSION = "28"
+# v29: the v28 idle-refresh throttle measured only the first tick after its own
+# request, which Maya may run BEFORE the redraw (Python path: 100 nodes stayed
+# at 92%), and its 1.25-period late threshold sat under Maya's ~47 ms timer
+# cadence (10 cheap nodes dropped to 8.8 fps). The poll now measures every tick,
+# keeps the worst late gap since the last request, and uses a 2-period
+# threshold. Locator-only codegen.
+PORTER_RECIPE_VERSION = "29"
 
 # Spec keys excluded from the cache key -- provably irrelevant to the generated
 # C++. A deny-list, NOT an allow-list (design C1).

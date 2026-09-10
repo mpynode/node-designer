@@ -1,12 +1,12 @@
 {
   "manifest_version": 1,
-  "porter_recipe_version": "28",
+  "porter_recipe_version": "29",
   "provider": "claude_cli",
   "model": "claude-fable-5-1",
   "strict": false,
   "plugin_name": "MPyLocator_Widget_Showcase",
   "bundle": "C:\\Users\\eric.vignola\\Desktop\\MPyNode\\templates\\MPyLocator\\Widget Showcase\\MPyLocator_Widget_Showcase.mll",
-  "created": 1789022373.5445285,
+  "created": 1789059278.343763,
   "nodes": [
     {
       "source_node": "widgetShowcase",
@@ -14,8 +14,8 @@
       "type_id": "0x0001a417",
       "type_id_source": "derived",
       "base": "MPxLocatorNode",
-      "spec_hash": "22fc49a29b7feaa588e089dcd0490f4c0a9c4eacc67256374c109efe32b828e6",
-      "port_cache_key": "22fc49a29b7feaa588e089dcd0490f4c0a9c4eacc67256374c109efe32b828e6",
+      "spec_hash": "5c103e3a9cee9b2de8f0caf88aae297d3e95c2b4cac05198713ea8057a14057b",
+      "port_cache_key": "5c103e3a9cee9b2de8f0caf88aae297d3e95c2b4cac05198713ea8057a14057b",
       "cache": "hit",
       "build_status": "compiled",
       "build_reason": "",

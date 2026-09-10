@@ -197,80 +197,92 @@ static void WidgetShowcase_computeBuffers(const WidgetShowcaseInputs& inp, Widge
     const std::string in_preset_name = (in_preset >= 0 && in_preset < 6) ? _names_in_preset[in_preset] : "";
     (void)in_preset_name;
     // ===== BEGIN PORTED COMPUTE =====
-    // Preset -> active slot set. No persisted `presets` stored var is in scope,
-        // so getattr(self, "presets", None) is None and the Python falls back to
-        // DEFAULT_PRESETS -- reproduced here as the membership tests below.
-        // An unknown preset name yields an empty set (nothing draws).
-        const bool act_everything = (in_preset_name == "everything");
-        const bool act_curves     = act_everything || (in_preset_name == "curves");
-        const bool act_points     = act_everything || (in_preset_name == "points");
-        const bool act_polygons   = act_everything || (in_preset_name == "polygons");
-        const bool act_shapes     = act_everything || (in_preset_name == "shapes");
-        const bool act_text       = act_everything || (in_preset_name == "text");
+    // preset = self.preset.name(); presets = getattr(self, "presets", None)
+        // No persisted `presets` stored var is declared for this node, so the
+        // getattr falls through to DEFAULT_PRESETS exactly as the Python does.
+        bool actCurves = false, actPoints = false, actPolygons = false;
+        bool actShapes = false, actText = false;
+        if (in_preset_name == "everything") {
+            actCurves = true; actPoints = true; actPolygons = true;
+            actShapes = true; actText = true;
+        } else if (in_preset_name == "curves")   { actCurves   = true; }
+        else if (in_preset_name == "points")     { actPoints   = true; }
+        else if (in_preset_name == "polygons")   { actPolygons = true; }
+        else if (in_preset_name == "shapes")     { actShapes   = true; }
+        else if (in_preset_name == "text")       { actText     = true; }
+        // unknown preset -> DEFAULT_PRESETS.get(preset, []) -> nothing active
 
-        data.autoHighlight = false;   // self.auto_highlight = False -- carry our own palette
+        data.autoHighlight = false;   // self.auto_highlight = False (carry our own palette)
 
-        // ---- curves: 3-axis RGB gizmo + diamond outline (DrawLines, 7 segments) ----
-        // Init arrays are float32; reproduce the float32 arithmetic, then widen.
-        if (act_curves) {
-            const float cx = -8.0f;   // COLX["curves"]
+        // ---- curves: 3-axis RGB gizmo + diamond outline (COLX["curves"] = -8) ----
+        if (actCurves) {
+            const float cx = -8.0f;
+            // _axis_starts / _axis_ends / _axis_cols (float32)
             const MPoint axisStart((double)cx, 0.0, 0.0);
-            data.emitLine(axisStart, MPoint((double)(cx + 2.0f), 0.0, 0.0), MColor(1.0f, 0.0f, 0.0f, 1.0f), false);
-            data.emitLine(axisStart, MPoint((double)cx, 2.0, 0.0),          MColor(0.0f, 1.0f, 0.0f, 1.0f), false);
-            data.emitLine(axisStart, MPoint((double)cx, 0.0, 2.0),          MColor(0.0f, 0.0f, 1.0f, 1.0f), false);
-            // _d = [[1,0,0],[0,0,1],[-1,0,0],[0,0,-1]] * 1.6 + [cx, 0, 0]   (float32)
-            const float dx[4] = { 1.0f, 0.0f, -1.0f,  0.0f };
-            const float dz[4] = { 0.0f, 1.0f,  0.0f, -1.0f };
-            MPoint dpt[4];
+            const MPoint axisEnds[3] = {
+                MPoint((double)(cx + 2.0f), 0.0, 0.0),
+                MPoint((double)cx, 2.0, 0.0),
+                MPoint((double)cx, 0.0, 2.0)
+            };
+            const MColor axisCols[3] = {
+                MColor(1.0f, 0.0f, 0.0f, 1.0f),
+                MColor(0.0f, 1.0f, 0.0f, 1.0f),
+                MColor(0.0f, 0.0f, 1.0f, 1.0f)
+            };
+            for (int i = 0; i < 3; ++i) data.emitLine(axisStart, axisEnds[i], axisCols[i], false);
+            // _d = dirs * 1.6 + (cx, 0, 0) in float32; ends = np.roll(_d, -1, axis=0)
+            const float dirs[4][3] = {{1.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 1.0f},
+                                      {-1.0f, 0.0f, 0.0f}, {0.0f, 0.0f, -1.0f}};
+            MPoint d[4];
             for (int i = 0; i < 4; ++i) {
-                const float px = dx[i] * 1.6f + cx;
-                const float pz = dz[i] * 1.6f + 0.0f;
-                dpt[i] = MPoint((double)px, 0.0, (double)pz);
+                const float x = dirs[i][0] * 1.6f + cx;
+                const float y = dirs[i][1] * 1.6f + 0.0f;
+                const float z = dirs[i][2] * 1.6f + 0.0f;
+                d[i] = MPoint((double)x, (double)y, (double)z);
             }
-            // starts = _d, ends = np.roll(_d, -1, axis=0) -> segment i goes d[i] -> d[(i+1)%4]
-            const MColor diamondCol(1.0f, 0.8f, 0.2f, 1.0f);   // np.tile([1.0, 0.8, 0.2], (4, 1)) float32
-            for (int i = 0; i < 4; ++i)
-                data.emitLine(dpt[i], dpt[(i + 1) % 4], diamondCol, false);
+            const MColor diamondCol(1.0f, 0.8f, 0.2f, 1.0f);   // np.tile([1.0, 0.8, 0.2], (4, 1))
+            for (int i = 0; i < 4; ++i) data.emitLine(d[i], d[(i + 1) % 4], diamondCol, false);
         }
 
-        // ---- points: 6x6 rainbow grid with per-point size (DrawPoints) ----
-        if (act_points) {
+        // ---- points: rainbow 6x6 grid with per-point size (COLX["points"] = -4) ----
+        if (actPoints) {
+            // np.linspace(-1.5, 1.5, 6): y = arange(6) * step + start, endpoint pinned
+            double lin[6];
+            for (int i = 0; i < 6; ++i) lin[i] = (double)i * 0.6 + (-1.5);
+            lin[5] = 1.5;
             const int n = 36;
             for (int k = 0; k < n; ++k) {
-                // meshgrid(..., indexing='xy').ravel(): x varies fastest, z slowest
-                const int i = k % 6;
-                const int j = k / 6;
-                // np.linspace(-1.5, 1.5, 6): step 0.6, last sample pinned to stop
-                const double gx = (i == 5) ? 1.5 : (i * 0.6 + (-1.5));
-                const double gz = (j == 5) ? 1.5 : (j * 0.6 + (-1.5));
-                // POINT_POS = stack([gx + COLX["points"], 0, gz]).astype(float32)
-                const float px = (float)(gx + (-4.0));
-                const float pz = (float)gz;
-                const double h = (double)k / 36.0;   // np.arange(n) / float(n)
+                // meshgrid(x, z) indexing='xy' -> gx[i, j] = x[j], gz[i, j] = z[i]; ravel k = i*6 + j
+                const int i = k / 6;
+                const int j = k % 6;
+                const double px = (double)(float)(lin[j] + (-4.0));   // .astype(float32)
+                const double pz = (double)(float)lin[i];
+                const MPoint p(px, 0.0, pz);
+                const double h = (double)k / 36.0;
                 const float r = (float)(0.5 + 0.5 * std::sin(6.2832 * h));
                 const float g = (float)(0.5 + 0.5 * std::sin(6.2832 * h + 2.094));
                 const float b = (float)(0.5 + 0.5 * std::sin(6.2832 * h + 4.189));
-                // POINT_SIZES = (4.0 + 8.0 * ((arange % 6) / 5.0)).astype(float32)
-                const float sz = (float)(4.0 + 8.0 * ((double)(k % 6) / 5.0));
-                data.emitPoint(MPoint((double)px, 0.0, (double)pz), MColor(r, g, b, 1.0f), sz);
+                const float size = (float)(4.0 + 8.0 * ((double)(k % 6) / 5.0));
+                data.emitPoint(p, MColor(r, g, b, 1.0f), size);
             }
         }
 
-        // ---- polygons: shaded cube, per-face colors, full wire overlay (DrawMesh) ----
-        if (act_polygons) {
+        // ---- polygons: shaded cube, per-face hues, full wire overlay (COLX["polygons"] = 0) ----
+        if (actPolygons) {
             DrawPoly& pg = data.emitPoly();
-            const double px = 0.0;   // COLX["polygons"]
+            const double px = 0.0;
             const double cube[8][3] = {
-                {-1.0, -1.0, -1.0}, { 1.0, -1.0, -1.0}, { 1.0,  1.0, -1.0}, {-1.0,  1.0, -1.0},
-                {-1.0, -1.0,  1.0}, { 1.0, -1.0,  1.0}, { 1.0,  1.0,  1.0}, {-1.0,  1.0,  1.0}};
+                {-1.0, -1.0, -1.0}, {1.0, -1.0, -1.0}, {1.0, 1.0, -1.0}, {-1.0, 1.0, -1.0},
+                {-1.0, -1.0, 1.0},  {1.0, -1.0, 1.0},  {1.0, 1.0, 1.0},  {-1.0, 1.0, 1.0}
+            };
             pg.pts.reserve(8);
             for (int i = 0; i < 8; ++i)
                 pg.pts.push_back(MPoint(cube[i][0] + px, cube[i][1] + 0.0, cube[i][2] + 0.0));
-            static const int kPolyIdx[24] = {
-                0, 3, 2, 1,  4, 5, 6, 7,  0, 1, 5, 4,  2, 3, 7, 6,  0, 4, 7, 3,  1, 2, 6, 5};
-            pg.idx.assign(kPolyIdx, kPolyIdx + 24);
+            const int idx[24] = {0, 3, 2, 1, 4, 5, 6, 7, 0, 1, 5, 4,
+                                 2, 3, 7, 6, 0, 4, 7, 3, 1, 2, 6, 5};
+            pg.idx.assign(idx, idx + 24);
             pg.cnt.assign(6, 4);
-            // color=POLY_FACE_COLORS -> "face_colors" (flat per face)
+            // color=POLY_FACE_COLORS -> "face_colors"
             pg.colorMode = 1;
             pg.faceColors.reserve(6);
             pg.faceColors.push_back(MColor(0.90f, 0.20f, 0.25f, 1.0f));
@@ -279,43 +291,43 @@ static void WidgetShowcase_computeBuffers(const WidgetShowcaseInputs& inp, Widge
             pg.faceColors.push_back(MColor(0.30f, 0.80f, 0.35f, 1.0f));
             pg.faceColors.push_back(MColor(0.25f, 0.55f, 0.95f, 1.0f));
             pg.faceColors.push_back(MColor(0.60f, 0.35f, 0.85f, 1.0f));
-            pg.cull             = true;                                  // cull_backfaces=True
-            pg.hasWire          = true;                                  // outline=(0.04, 0.04, 0.06, 1.0)
-            pg.wireColor        = MColor(0.04f, 0.04f, 0.06f, 1.0f);
-            pg.wireWidth        = 2.0;                                   // outline_width=2.0
-            pg.wireBoundaryOnly = false;                                 // outline_boundary_only=False
-            pg.worldSpace       = false;
-            pg.preciseHover     = false;
-            // highlight_fill / highlight_wire not given -> inherit (-1, scaffold default)
+            pg.cull = true;                                   // cull_backfaces=True
+            pg.hasWire = true;                                // outline=(0.04, 0.04, 0.06, 1.0)
+            pg.wireColor = MColor(0.04f, 0.04f, 0.06f, 1.0f);
+            pg.wireWidth = 2.0;                               // outline_width=2.0
+            pg.wireBoundaryOnly = false;                      // outline_boundary_only=False
+            pg.worldSpace = false;
+            pg.preciseHover = false;
+            // highlight_fill / highlight_wire not given -> inherit (-1)
         }
 
-        // ---- shapes: one of each primitive in a row (DrawPrimitive group) ----
-        if (act_shapes) {
-            const double sx = 4.0;   // COLX["shapes"]
+        // ---- shapes: one of each primitive in a row (COLX["shapes"] = 4) ----
+        if (actShapes) {
+            const double sx = 4.0;
             const MVector axisY(0.0, 1.0, 0.0);
-            // SHAPE_CENTERS z: -4, -2, 0, 2, 4 ; SHAPE_COLORS float32
-            data.emitShape(0, MPoint(sx, 0.0, -4.0), 0.8, MVector(0.0, 1.0, 0.0), MColor(0.9f, 0.3f, 0.3f, 1.0f), true);   // sphere
-            data.emitShape(2, MPoint(sx, 0.0, -2.0), 0.8, axisY,                  MColor(0.3f, 0.9f, 0.4f, 1.0f), true);   // box
-            data.emitShape(3, MPoint(sx, 0.0,  0.0), 0.8, axisY,                  MColor(0.3f, 0.5f, 0.9f, 1.0f), true);   // cone
-            data.emitShape(4, MPoint(sx, 0.0,  2.0), 0.8, axisY,                  MColor(0.9f, 0.8f, 0.2f, 1.0f), true);   // cylinder
-            data.emitShape(1, MPoint(sx, 0.0,  4.0), 0.9, axisY,                  MColor(0.8f, 0.4f, 0.9f, 1.0f), false);  // circle
+            // DrawSphere + DrawBox + DrawCone + DrawCylinder + DrawCircle, in that order
+            data.emitShape(0, MPoint(sx, 0.0, -4.0), 0.8, axisY, MColor(0.9f, 0.3f, 0.3f, 1.0f), true);
+            data.emitShape(2, MPoint(sx, 0.0, -2.0), 0.8, axisY, MColor(0.3f, 0.9f, 0.4f, 1.0f), true);
+            data.emitShape(3, MPoint(sx, 0.0,  0.0), 0.8, axisY, MColor(0.3f, 0.5f, 0.9f, 1.0f), true);
+            data.emitShape(4, MPoint(sx, 0.0,  2.0), 0.8, axisY, MColor(0.9f, 0.8f, 0.2f, 1.0f), true);
+            data.emitShape(1, MPoint(sx, 0.0,  4.0), 0.9, axisY, MColor(0.8f, 0.4f, 0.9f, 1.0f), false);
         }
 
-        // ---- text: five labels down the text lane (DrawText) ----
-        if (act_text) {
-            const double tx = 8.0;   // COLX["text"]
-            static const char* kTextStr[5] = {"lines", "points", "polygons", "shapes", "text"};
-            const MColor textCol[5] = {
+        // ---- text: labels (COLX["text"] = 8) ----
+        if (actText) {
+            const double tx = 8.0;
+            const char* strs[5] = {"lines", "points", "polygons", "shapes", "text"};
+            const MColor cols[5] = {
                 MColor(1.0f, 0.8f, 0.2f, 1.0f),
                 MColor(0.4f, 0.9f, 1.0f, 1.0f),
                 MColor(0.9f, 0.5f, 0.9f, 1.0f),
                 MColor(0.5f, 1.0f, 0.6f, 1.0f),
-                MColor(1.0f, 1.0f, 1.0f, 1.0f)};
-            const double textSize = (double)0.6f;   // TEXT_SIZES float32 0.6 -> float64
+                MColor(1.0f, 1.0f, 1.0f, 1.0f)
+            };
+            const double sz = (double)0.6f;   // TEXT_SIZES float32 -> float64
             for (int i = 0; i < 5; ++i) {
-                // TEXT_POS = [[tx, 3.0 - i * 1.3, 0.0]] float32
-                const float py = (float)(3.0 - i * 1.3);
-                data.emitText(MPoint(tx, (double)py, 0.0), MString(kTextStr[i]), textCol[i], textSize);
+                const double y = (double)(float)(3.0 - (double)i * 1.3);   // .astype(float32)
+                data.emitText(MPoint(tx, y, 0.0), MString(strs[i]), cols[i], sz);
             }
         }
     // ===== END PORTED COMPUTE =====
