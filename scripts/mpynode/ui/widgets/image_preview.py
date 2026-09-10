@@ -33,13 +33,14 @@ from mpynode.ui.qt_wrapper import (
     QBuffer,
     QByteArray,
     QColor,
+    QFontMetrics,
     QImage,
     QLabel,
     QMovie,
     QPainter,
     QPixmap,
+    QRect,
     QSize,
-    QStyle,
     QStyleOptionViewItem,
     QStyledItemDelegate,
     Qt,
@@ -57,6 +58,9 @@ AUDIO_CANDIDATE_ROLE = int(Qt.UserRole) + 142  # bool: bytes could be WAV/PCM au
 _MAX_EDGE = 1024
 # Tiny inset so the selection highlight peeks as a thin border.
 _PAD = 2
+# Horizontal + vertical text margin the style leaves around a cell's text
+# (PM_FocusFrameHMargin + 1 on each side); used when measuring wrapped text.
+_TEXT_MARGIN = 4
 
 
 # ---------------------------------------------------------------------------
@@ -1297,7 +1301,8 @@ class ImagePreviewDelegate(QStyledItemDelegate):
     def sizeHint(self, option, index):
         pm = self._image_pixmap(index)
         if pm is None:
-            return super().sizeHint(option, index)
+            return self._wrapped_text_hint(option, index,
+                                           super().sizeHint(option, index))
         w = 0
         try:
             w = int(self._view.columnWidth(self._col))
@@ -1311,15 +1316,36 @@ class ImagePreviewDelegate(QStyledItemDelegate):
         h = max(8, min(h, _MAX_EDGE))
         return QSize(w, h)
 
+    def _wrapped_text_hint(self, option, index, hint):
+        """Row height for a TEXT value that the view word-wraps.
+
+        The tree word-wraps a long value at paint time, but the default hint
+        measures the text UNWRAPPED -- it does not know the column width -- so
+        the row stayed one line tall, the first line was elided and the top of
+        the wrapped second line peeked out beneath it: the "dotted underline"
+        under every long single-line value (a (3,) array repr, a tuple, a
+        DrawGroup). Multi-line numpy reprs were fine only because their
+        newlines are counted. Measure against the actual column width."""
+        text = index.data(Qt.DisplayRole)
+        if not text or self._view is None:
+            return hint
+        try:
+            w = int(self._view.columnWidth(self._col))
+        except Exception:
+            w = 0
+        if w <= 0:
+            return hint
+        opt = QStyleOptionViewItem(option)
+        self.initStyleOption(opt, index)
+        fm = QFontMetrics(opt.font)
+        avail = max(1, w - 2 * _TEXT_MARGIN)
+        flags = int(Qt.TextWordWrap | Qt.AlignLeft | Qt.AlignTop)
+        rect = fm.boundingRect(QRect(0, 0, avail, 0), flags, str(text))
+        h = rect.height() + 2 * _TEXT_MARGIN
+        return QSize(hint.width(), max(hint.height(), h))
+
     # -- paint: Qt rescales the master to the cell each repaint ---------
     def paint(self, painter, option, index):
-        # The style paints a dotted focus rectangle around the CURRENT cell
-        # (State_HasFocus); in a value column that renders as a dashed line
-        # under the clicked value -- read as an artifact, not as focus. The row
-        # highlight already shows the selection, so drop the focus state before
-        # deferring to the default painter. Keyboard navigation is untouched.
-        option = QStyleOptionViewItem(option)
-        option.state &= ~QStyle.State_HasFocus
         pm = self._image_pixmap(index)
         if pm is None:
             super().paint(painter, option, index)
