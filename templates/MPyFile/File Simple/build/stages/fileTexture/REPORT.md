@@ -1,12 +1,12 @@
 # fileTexture -- compile report
 
-**Source node:** `fileTexture`  ·  **Base:** `MPxNode`  ·  **Generated:** 2026-09-09 15:46
+**Source node:** `fileTexture`  ·  **Base:** `MPxNode`  ·  **Generated:** 2026-09-09 19:36
 
 | stage | outcome |
 |---|---|
 | 1 Transpile | deterministic C++, no AI |
 | 2 AI assist | ran -- no unresolved regions |
-| 3 AI optimize | **1.57x** over 2 round(s) -- 2 run of max 6, stopped: round 2 not-faster -- nothing new to compound from |
+| 3 AI optimize | **26.48x** over 2 round(s) -- 2 run of max 6, stopped: round 2 gained 1.08x, below the 1.15x needed to continue |
 
 ## The Python this was generated from
 
@@ -44,33 +44,30 @@ self.outAlpha = a
 
 Parity gate: `authored+pointwise`. Every accepted round was re-checked against the interpreted Python before it was allowed to win. Where a node's generic pointwise parity SKIPS -- a deformer writes through the native `outputGeometry`, which the scalar harness cannot read -- the authored `@maya_test` is the ONLY gate, so treat those rows as behavioural checks rather than numerical ones.
 
-Bench scene: geo density 400 / array length 20000; noise floor 15 ms; moved per tick: `borderColor (color)`, `brightness (float)`, `contrast (float)`, `preFilter (bool)`, `preFilterRadius (float)`, `uvCoord (float2)`; outputs checked (2 plug(s)); accepts re-timed against the incumbent on geo 40 / array 512 and rejected if slower there; baseline under the noise floor at the largest scene, so every accept had to clear 1.15x on two independent timings. baseline 0.004 ms is below the 15 ms noise floor even at the largest bench scene (geo=400 array=20000); measured anyway -- every accept must clear 1.15x on two independent timings.
+Bench scene: VP2 bake of a 1024px source image; noise floor 15 ms; moved per tick: `borderColor (color)`, `brightness (float)`, `contrast (float)`, `preFilter (bool)`, `preFilterRadius (float)`, `uvCoord (float2)`; outputs checked (2 plug(s)).
 
-Baseline **0.004 ms** -> best **0.002 ms** (**1.57x**).
+Baseline **127.935 ms** -> best **4.831 ms** (**26.48x**).
 
-Rounds: **2** run of at most 6; the loop stopped because round 2 not-faster -- nothing new to compound from.
+Rounds: **2** run of at most 6; the loop stopped because round 2 gained 1.08x, below the 1.15x needed to continue.
 
 | # | change | theme | predicted | measured | time | outcome |
 |---|---|---|---|---|---|---|
-| 00 | `--` | -- | -- | 0.004 ms | -- | -- |
-| 01 | `scalar_texel_lazy_inputs` | a one-texel node is all per-access overhead: drop the nd::Array temporaries the port used to carry five numbers, and read only the inputs the current branch can see | 1.60x | 1.57x | 14.0 min | ACCEPTED |
-| 02 | `inline_no_image_texel` | the benchmark leaves fileName empty, so compute() is sixteen Maya API calls around three double multiplies; resolve the plug attribute once and grade the magenta sentinel inline instead of through the 20-argument nd_texel call | 1.05x | 0.002 ms | 11.6 min | rejected: not faster |
+| 00 | `--` | -- | -- | 127.935 ms | -- | -- |
+| 01 | `fused_bake_row_pool` | the VP2 bake paid an MString copy, two nd::Array heap temporaries and a memo probe per texel, then spawned 11 threads and zero-filled 16 MB every tick; resolve the buffer once, bake rows against a column table on a persistent pool into a reused buffer | 6.00x | 24.52x | 14.9 min | ACCEPTED |
+| 02 | `pipeline_bake_upload` | keep one persistent GPU texture per override and upload each baked band with MTexture::update(region) while the pool bakes the next band, so the 16 MB copy overlaps the bake instead of following it | 1.10x | 26.48x | 12.2 min | ACCEPTED |
 
 ### Predicted vs measured
 
 The rounds where the guess and the stopwatch disagreed. These are the transferable part -- a prediction that missed says more about the machine than one that landed.
 
-* `inline_no_image_texel` -- predicted 1.05x, **rejected: not faster**. at 1.9 us per tick the timed region is MPlug.asMDataHandle overhead plus datablock reads/writes, so the only removable work is the four MPlug::operator!=(MObject) attribute resolutions (now one MPlug::attribute() and four MObject compares) and the nd_texel call frame with its dead nd_tex_sample dispatch on a null image
-
-### Rejected rounds
-
-* `inline_no_image_texel` -- rejected: not faster. the benchmark leaves fileName empty, so compute() is sixteen Maya API calls around three double multiplies; resolve the plug attribute once and grade the magenta sentinel inline instead of through the 20-argument nd_texel call
+* `fused_bake_row_pool` -- predicted 6.00x, measured **24.52x**. at 1024x1024 the arithmetic is nothing -- per-texel allocation and per-bake thread creation are the whole cost, so hoisting everything that depends only on u or only on v, and keeping threads and the output buffer alive across bakes, leaves only the 16 MB GPU upload and the render
+* `pipeline_bake_upload` -- predicted 1.10x, measured **26.48x**. profiling the override showed bake ~0.5 ms, acquireTexture ~2.0 ms and ~2.9 ms of ogsRender overhead we cannot touch; swapping acquireTexture for an in-place update() alone was neutral (the cost is the 16 MB copy, not the allocation), so the remaining lever is to hide the bake under the upload by splitting the grid into 4 row bands and uploading band k-1 on the calling thread while workers bake band k
 
 ## Verification
 
 * parity: **pass**  (maxerr 2.980232238769531e-07, tol 0.0058823529411764705)
 * 1 string input(s) driven with generated fixtures: fileName | authored @maya_test: 1/1 passed
-* speed: compiled 0.016 ms vs interpreted 0.184 ms (best of 3, geo 140 / array 5000)
+* speed: compiled 0.017 ms vs interpreted 0.186 ms (best of 3, geo 140 / array 5000)
 
 ## Files
 
@@ -78,7 +75,7 @@ The rounds where the guess and the stopwatch disagreed. These are the transferab
 build/stages/fileTexture/1_transpiled.cpp     deterministic transpile (no AI)
 build/stages/fileTexture/2_assisted.cpp       AI filled the unported region(s)
 build/stages/fileTexture/3_optimized/00_baseline.cpp
-build/stages/fileTexture/3_optimized/01_scalar_texel_lazy_inputs.cpp
-build/stages/fileTexture/3_optimized/02_inline_no_image_texel.cpp
+build/stages/fileTexture/3_optimized/01_fused_bake_row_pool.cpp
+build/stages/fileTexture/3_optimized/02_pipeline_bake_upload.cpp
 build/source/fileTexture.cpp      SHIPPED
 ```

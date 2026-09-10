@@ -1,10 +1,10 @@
 # MPyFile_File_Simple -- compile report
 
-Generated 2026-09-09 15:46
+Generated 2026-09-09 19:36
 
 | node | status | assist | optimize | detail |
 |---|---|---|---|---|
-| `fileTexture` | compiled | -- | **1.57x** | [report](build/stages/fileTexture/REPORT.md) |
+| `fileTexture` | compiled | -- | **26.48x** | [report](build/stages/fileTexture/REPORT.md) |
 
 ## Layout
 

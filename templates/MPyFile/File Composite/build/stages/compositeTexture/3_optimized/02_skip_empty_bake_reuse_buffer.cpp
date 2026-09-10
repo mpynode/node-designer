@@ -60,6 +60,7 @@
 #include <maya/MMessage.h>
 #include <maya/MGlobal.h>
 #include <maya/MStringArray.h>
+#include <maya/MIntArray.h>
 #include <maya/MPlug.h>
 #include <maya/MFn.h>
 #include <string>
@@ -994,33 +995,22 @@ static const float* nd_tex_load_linear(NdTexCache& cache, std::mutex& mtx,
 //
 // Accumulates in double while sampling in float, exactly as the previously
 // inlined loop did, so the numbers do not move.
-//
-// Takes the node's inputs AS READ -- the MString paths and the float
-// opacities -- rather than a std::vector<std::string> plus a double buffer.
-// The port used to marshal into those (vector<string>, a widened copy of the
-// opacities wrapped in an nd::Array, then an MString rebuilt from each
-// std::string for the loader), a dozen heap round-trips to composite ONE
-// texel; at a one-layer stack that marshalling was ~60% of compute(). Every
-// value still goes through the same conversion: the opacity widens
-// float -> double exactly as the vector<double> copy did, and
-// MString -> asChar() -> std::string -> MString -> asChar() is the identity
-// on the bytes the loader keys on.
 static void nd_tex_composite_layers(
-        const std::vector<MString>& paths,
-        const std::vector<float>& ops,
+        const std::vector<std::string>& paths,
+        const double* ops, size_t nOps,
         float u, float v,
         int cs, bool prefilter, int kernel, float radius,
         int wrapU, int wrapV, const float* border, const float* missing,
         NdTexCache& cache, std::mutex& mtx, float* out) {
     double cr = 0.0, cg = 0.0, cb = 0.0, ca = 0.0;
-    const size_t nOps = ops.size();
     for (size_t i = 0; i < paths.size(); ++i) {
         unsigned lw = 0, lh = 0;
-        const float* lin = nd_tex_load_linear(cache, mtx, paths[i], cs,
+        const float* lin = nd_tex_load_linear(cache, mtx,
+                                              MString(paths[i].c_str()), cs,
                                               prefilter, kernel, radius, lw, lh);
         float s[4];
         nd_tex_sample(lin, lw, lh, u, v, wrapU, wrapV, border, missing, s);
-        const double op = (i < nOps) ? (double)ops[i] : 1.0;
+        const double op = (i < nOps) ? ops[i] : 1.0;
         const double a = (double)s[3] * op;
         const double ia = 1.0 - a;
         cr = (double)s[0] * a + cr * ia;
@@ -4760,6 +4750,86 @@ inline KDQuery kd_query_brute(const Array<double>& pts_in,
 // the viewport pixels are the SAME per-texel math as software/Arnold.
 // (Body is the ported compute region, reused verbatim via handle shims.)
 // ===========================================================================
+// ---------------------------------------------------------------------------
+// Pre-resolved layer stack. nd_texel (below) rebuilt, PER TEXEL, a
+// std::vector<std::string> of the layer paths, a heap copy of the 512-element
+// opacities array as an nd::Array<double>, a 2-element nd::Array for the uv,
+// and then probed the string-keyed memo once per layer -- all of it derived
+// from inputs that are constant across a whole bake. The bake resolves the
+// stack ONCE on the calling thread into this flat table and the per-texel
+// kernel below is nd_tex_composite_layers with the lookups already done. Same
+// float u/v narrowing ((float)(double)(float)x == (float)x), same double
+// accumulation, same visit order, same missing = {0,0,0,0}.
+// ---------------------------------------------------------------------------
+struct NdResolvedLayer {
+    const float* lin;
+    unsigned     w, h;
+    double       op;
+};
+
+static void nd_resolve_layers(
+        const std::vector<MString>& in_aLayers,
+        const std::vector<float>& in_aOpacities,
+        short in_aColorSpace,
+        bool in_aPreFilter,
+        short in_aPreFilterKernel,
+        float in_aPreFilterRadius,
+        NdTexCache& _texCache,
+        std::mutex& _texMutex,
+        std::vector<NdResolvedLayer>& out) {
+    out.clear();
+    out.reserve(in_aLayers.size());
+    for (size_t i = 0; i < in_aLayers.size(); ++i) {
+        NdResolvedLayer L;
+        L.w = 0; L.h = 0;
+        L.lin = nd_tex_load_linear(_texCache, _texMutex, in_aLayers[i],
+                                   (int)in_aColorSpace, in_aPreFilter != 0,
+                                   (int)in_aPreFilterKernel, (float)in_aPreFilterRadius,
+                                   L.w, L.h);
+        L.op = (i < in_aOpacities.size()) ? (double)in_aOpacities[i] : 1.0;
+        // A slot that did not load samples as missing = {0,0,0,0}, so with a
+        // FINITE opacity its alpha is 0*op = +-0.0 exactly, ia = 1.0 exactly,
+        // and every accumulator comes through unchanged (at most the sign of
+        // a zero differs, which compares equal). Dropping it here is the same
+        // arithmetic identity the exact-texel fast path in nd_tex_sample uses.
+        // A non-finite opacity stays: 0*inf is NaN and must still poison the
+        // stack exactly as the interpreted twin's does.
+        if (!L.lin && std::isfinite(L.op)) continue;
+        out.push_back(L);
+    }
+}
+
+static inline void nd_texel_resolved(
+        double _u,
+        double _v,
+        const NdResolvedLayer* layers,
+        size_t nLayers,
+        const float* border,
+        int wrapU,
+        int wrapV,
+        float& _oR,
+        float& _oG,
+        float& _oB,
+        float& _oA) {
+    const float u = (float)_u;
+    const float v = (float)_v;
+    static const float missing[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+    double cr = 0.0, cg = 0.0, cb = 0.0, ca = 0.0;
+    for (size_t i = 0; i < nLayers; ++i) {
+        const NdResolvedLayer& L = layers[i];
+        float s[4];
+        nd_tex_sample(L.lin, L.w, L.h, u, v, wrapU, wrapV, border, missing, s);
+        const double op = L.op;
+        const double a = (double)s[3] * op;
+        const double ia = 1.0 - a;
+        cr = (double)s[0] * a + cr * ia;
+        cg = (double)s[1] * a + cg * ia;
+        cb = (double)s[2] * a + cb * ia;
+        ca = a + ca * ia;
+    }
+    _oR = (float)cr; _oG = (float)cg; _oB = (float)cb; _oA = (float)ca;
+}
+
 static void nd_texel(
         double _u,
         double _v,
@@ -4778,29 +4848,59 @@ static void nd_texel(
         float& _oG,
         float& _oB,
         float& _oA) {
-    // ALLOCATION-FREE twin of the ported body: the inputs go to the blessed
-    // composite_layers kernel AS READ. The generic port marshalled them through
-    // std::vector<std::string>, three nd::Array temporaries (each a shared_ptr
-    // + shape/stride vectors), two nd::slice views and a rebuilt MString -- a
-    // dozen heap round-trips to composite ONE texel, ~60% of compute() at a
-    // one-layer stack. The conversions the port applied are all identities:
-    //   * u, v: stored (double)float into an nd::Array, read back (float)item;
-    //     (float)(double)f == f exactly.
-    //   * result: the kernel narrows to float once; the port then widened that
-    //     to double and narrowed again -- (float)(double)f == f.
-    //   * opacity and path: see nd_tex_composite_layers.
-    const float _ms[4] = { 0.0f, 0.0f, 0.0f, 0.0f };  // missing=(0,0,0,0)
-    float _c[4];
-    nd_tex_composite_layers(in_aLayers, in_aOpacities, (float)_u, (float)_v,
-                            (int)in_aColorSpace, in_aPreFilter != 0,
-                            (int)in_aPreFilterKernel, (float)in_aPreFilterRadius,
-                            (int)in_aWrapModeU, (int)in_aWrapModeV,
-                            in_aBorderColor, _ms, _texCache, _texMutex, _c);
-    _oR = _c[0];
-    _oG = _c[1];
-    _oB = _c[2];
-    _oA = _c[3];
+    const float _nd_uv[2] = { (float)_u, (float)_v };
+    const float2& in_aUvCoord = _nd_uv;
+    struct _NdColSh { float &r, &g, &b;
+        void set3Float(float R, float G, float B) { r=R; g=G; b=B; } }
+        h_aOutColor{_oR, _oG, _oB};
+    struct _NdAlpSh { float &a;
+        void setFloat(float A) { a=A; } } h_aOutAlpha{_oA};
+    (void)in_aLayers;
+    (void)in_aOpacities;
+    (void)in_aBorderColor;
+    (void)in_aColorSpace;
+    (void)in_aPreFilter;
+    (void)in_aPreFilterKernel;
+    (void)in_aPreFilterRadius;
+    (void)in_aWrapModeU;
+    (void)in_aWrapModeV;
 
+    std::vector<std::string> ndin_self_layers;
+    ndin_self_layers.reserve(in_aLayers.size());
+    for (size_t _si = 0; _si < in_aLayers.size(); ++_si) {
+        ndin_self_layers.push_back(in_aLayers[_si].asChar());
+    }
+    nd::Array<double> ndin_self_opacities;
+    {
+        std::vector<double> _tmp(in_aOpacities.begin(), in_aOpacities.end());
+        ndin_self_opacities = nd::from_data<double>(_tmp, {(int64_t)_tmp.size()});
+    }
+    nd::Array<double> ndin_self_uvCoord = nd::from_data<double>({(double)in_aUvCoord[0], (double)in_aUvCoord[1]}, {2});
+    double nl_cr = 0;
+    double nl_cg = 0;
+    double nl_cb = 0;
+    double nl_ca = 0;
+    nd::Array<double> cl_1_op = ndin_self_opacities;
+    if (cl_1_op.offset != 0 || !cl_1_op.is_contiguous()) cl_1_op = cl_1_op.copy();
+    float cl_1_bd[3] = { in_aBorderColor[0], in_aBorderColor[1], in_aBorderColor[2] };
+    float cl_1_ms[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+    float cl_1[4];
+    nd_tex_composite_layers(ndin_self_layers, (*cl_1_op.data).data(), (size_t)cl_1_op.size(), (float)((nd::slice(ndin_self_uvCoord, {nd::Sl::at((int64_t)0)})).item()), (float)((nd::slice(ndin_self_uvCoord, {nd::Sl::at((int64_t)1)})).item()), (int)in_aColorSpace, in_aPreFilter != 0, (int)in_aPreFilterKernel, (float)in_aPreFilterRadius, (int)in_aWrapModeU, (int)in_aWrapModeV, cl_1_bd, cl_1_ms, _texCache, _texMutex, cl_1);
+    nl_cr = (double)cl_1[0];
+    nl_cg = (double)cl_1[1];
+    nl_cb = (double)cl_1[2];
+    nl_ca = (double)cl_1[3];
+    {
+        nd::Array<double> _o = (nd::from_data<double>({nl_cr, nl_cg, nl_cb}, {3}));
+        if (_o.offset != 0 || !_o.is_contiguous()) _o = _o.copy();
+        int64_t _n = _o.size();
+        float _c[3] = {0.0f, 0.0f, 0.0f};
+        for (int64_t _i = 0; _i < _n && _i < 3; ++_i)
+            _c[_i] = (float)(*_o.data)[_i];
+        h_aOutColor.set3Float(_c[0], _c[1], _c[2]);
+    }
+    h_aOutAlpha.setFloat((float)(nl_ca));
+    
 }
 
 class CompositeTexture : public MPxNode {
@@ -4928,16 +5028,26 @@ public:
         p = fn.findPlug("opacities", false, &st);
         if (st) {
             _m_in_aOpacities.clear();
-            unsigned int _ne = p.numElements(), _n = 0;
-            for (unsigned int _i = 0; _i < _ne; ++_i) {
-                unsigned int _li = p.elementByPhysicalIndex(_i).logicalIndex();
+            // Only opacities[i] with i < layers.size() can reach the composite
+            // (composite_layers ignores a surplus opacity with no layer, and a
+            // layer with no opacity element defaults to 1.0), so those are the
+            // only elements read: one index query instead of one MPlug per
+            // element over a 512-element multi.
+            const unsigned int _need = (unsigned int)_m_in_aLayers.size();
+            MIntArray _idx;
+            p.getExistingArrayAttributeIndices(_idx);
+            unsigned int _n = 0;
+            std::vector<std::pair<unsigned int, float> > _ov;
+            for (unsigned int _i = 0; _i < _idx.length(); ++_i) {
+                if (_idx[_i] < 0) continue;
+                const unsigned int _li = (unsigned int)_idx[_i];
+                if (_li >= _need) continue;
                 if (_li + 1 > _n) _n = _li + 1;
+                _ov.push_back(std::make_pair(_li, p.elementByLogicalIndex(_li).asFloat()));
             }
             _m_in_aOpacities.resize(_n, 1.0);
-            for (unsigned int _i = 0; _i < _ne; ++_i) {
-                MPlug _e = p.elementByPhysicalIndex(_i);
-                _m_in_aOpacities[_e.logicalIndex()] = _e.asFloat();
-            }
+            for (size_t _i = 0; _i < _ov.size(); ++_i)
+                _m_in_aOpacities[_ov[_i].first] = _ov[_i].second;
         }
         p = fn.findPlug("borderColor", false, &st);
         if (st && p.numChildren() >= 3) {
@@ -4975,7 +5085,19 @@ public:
             texName += MString("|");
             for (size_t _i = 0; _i < _m_in_aLayers.size(); ++_i) { texName += _m_in_aLayers[_i]; texName += MString(","); }
             texName += MString("|");
-            for (size_t _i = 0; _i < _m_in_aOpacities.size(); ++_i) { texName += (double)_m_in_aOpacities[_i]; texName += MString(","); }
+            {
+                // One std::string pass instead of 512 MString += double
+                // round-trips. %.9g is exact for a float, so distinct opacity
+                // vectors still get distinct texture keys.
+                std::string _ops;
+                _ops.reserve(_m_in_aOpacities.size() * 12u);
+                char _nb[32];
+                for (size_t _i = 0; _i < _m_in_aOpacities.size(); ++_i) {
+                    snprintf(_nb, sizeof(_nb), "%.9g,", (double)_m_in_aOpacities[_i]);
+                    _ops += _nb;
+                }
+                texName += MString(_ops.c_str());
+            }
             texName += MString("|");
             texName += (double)_m_in_aBorderColor[0];
             texName += MString(",");
@@ -5005,8 +5127,25 @@ public:
                     }
                 }
                 if (_w == 0 || _h == 0) { _w = 256; _h = 256; }
-                std::vector<float> baked((size_t)_w * _h * 4);
                 std::atomic<bool> _bakeFailed(false);
+                // Resolve the layer stack ONCE, on this thread, before the
+                // rows fan out: the workers then touch only raw buffers.
+                std::vector<NdResolvedLayer> _resolved;
+                nd_resolve_layers(_m_in_aLayers, _m_in_aOpacities, _m_in_aColorSpace, _m_in_aPreFilter, _m_in_aPreFilterKernel, _m_in_aPreFilterRadius, _texCache, _texMutex, _resolved);
+                const NdResolvedLayer* _rl = _resolved.empty() ? nullptr : _resolved.data();
+                const size_t _nrl = _resolved.size();
+                // The bake buffer is a per-override member reused across
+                // bakes: a fresh 1 MB std::vector every tick page-faulted its
+                // way through ~250 us before a single texel was written. The
+                // texel loop writes every element, so it is only re-zeroed
+                // when the stack is empty and the loop is skipped.
+                std::vector<float>& baked = _bakeBuf;
+                {
+                    const size_t _nb = (size_t)_w * _h * 4;
+                    if (baked.size() != _nb) baked.assign(_nb, 0.0f);
+                    else if (_nrl == 0u) std::fill(baked.begin(), baked.end(), 0.0f);
+                }
+                const float _rborder[3] = { _m_in_aBorderColor[0], _m_in_aBorderColor[1], _m_in_aBorderColor[2] };
                 auto _bakeRows = [&](unsigned int _y0, unsigned int _y1) {
                     try {
                         for (unsigned int py = _y0; py < _y1; ++py) {
@@ -5015,7 +5154,7 @@ public:
                             for (unsigned int x = 0; x < _w; ++x) {
                                 double u = (double)x / (double)(_w > 1 ? _w - 1 : 1);
                                 float r = 0.0f, g = 0.0f, b = 0.0f, a = 0.0f;
-                                nd_texel(u, v, _m_in_aLayers, _m_in_aOpacities, _m_in_aBorderColor, _m_in_aColorSpace, _m_in_aPreFilter, _m_in_aPreFilterKernel, _m_in_aPreFilterRadius, (short)1, (short)1, _texCache, _texMutex, r, g, b, a);
+                                nd_texel_resolved(u, v, _rl, _nrl, _rborder, 1, 1, r, g, b, a);
                                 drow[x*4+0]=r; drow[x*4+1]=g; drow[x*4+2]=b; drow[x*4+3]=a;
                             }
                         }
@@ -5026,7 +5165,23 @@ public:
                     if (_nthr == 0u) _nthr = 1u;
                     if (_nthr > 12u) _nthr = 12u;
                     if (_nthr > _h) _nthr = (_h > 0u) ? _h : 1u;
-                    if (_nthr <= 1u) {
+                    // SIZE GATE: a bake whose serial cost is a few hundred
+                    // microseconds (the 256x256 fallback grid over a stack
+                    // of missing layers, ~10 ns/texel) loses more to spawning
+                    // and joining a dozen threads than the split gives back.
+                    // Work = texels x layer samples; below ~2M go serial.
+                    {
+                        const unsigned long long _work =
+                            (unsigned long long)_w * (unsigned long long)_h
+                            * (unsigned long long)(_nrl > 0 ? _nrl : 1);
+                        if (_work < 2000000ull) _nthr = 1u;
+                    }
+                    if (_nrl == 0u) {
+                        // No layer loaded: every texel is the alpha-over of
+                        // NOTHING over black, so cr = cg = cb = ca = 0.0 and
+                        // (float)0.0 is the +0.0f the vector was already
+                        // value-initialised to. Same bytes, no loop.
+                    } else if (_nthr <= 1u) {
                         _bakeRows(0u, _h);
                     } else {
                         const unsigned int _chunk = (_h + _nthr - 1u) / _nthr;
@@ -5077,6 +5232,7 @@ public:
     }
 private:
     MObject _node;
+    std::vector<float> _bakeBuf;   // reused bake grid, sized to the current bake
     std::vector<MString> _m_in_aLayers = std::vector<MString>();
     std::vector<float> _m_in_aOpacities = std::vector<float>();
     float3 _m_in_aBorderColor = {0.0f, 0.0f, 0.0f};
@@ -5530,33 +5686,14 @@ MStatus CompositeTexture::compute(const MPlug& plug, MDataBlock& data) {
     }
     std::vector<float> in_aOpacities;
     {
-        // Only ops[i] for i < layers.size() ever reach the composite: a layer
-        // with no matching element defaults to 1.0 and a surplus element is
-        // ignored (composite_layers). So read just those by LOGICAL index
-        // instead of walking every element -- a 20000-element opacities array
-        // under a one-layer stack is 20000 handle reads for one value. The
-        // linear walk is kept for a deep stack, where the jumps would not win.
         MArrayDataHandle _arr = data.inputArrayValue(aOpacities);
-        const unsigned _n    = _arr.elementCount();
-        const unsigned _need = (unsigned)in_aLayers.size();
-        if (_n > 0u && _need > 0u && (unsigned long long)_need * 4ull < (unsigned long long)_n) {
-            in_aOpacities.assign(_need, 1.0f);
-            for (unsigned _li = 0; _li < _need; ++_li) {
-                if (_arr.jumpToElement(_li) == MS::kSuccess) {
-                    MDataHandle eh = _arr.inputValue();
-                    in_aOpacities[_li] = eh.asFloat();
-                }
-            }
-        } else if (_need > 0u) {
-            for (unsigned _i = 0; _i < _n; ++_i) {
-                unsigned _li = _arr.elementIndex();
-                if (_li < _need) {
-                    if (_li >= in_aOpacities.size()) in_aOpacities.resize(_li + 1, 1.0f);
-                    MDataHandle eh = _arr.inputValue();
-                    in_aOpacities[_li] = eh.asFloat();
-                }
-                _arr.next();
-            }
+        unsigned _n = _arr.elementCount();
+        for (unsigned _i = 0; _i < _n; ++_i) {
+            unsigned _li = _arr.elementIndex();
+            if (_li >= in_aOpacities.size()) in_aOpacities.resize(_li + 1, 1.0);
+            MDataHandle eh = _arr.inputValue();
+            in_aOpacities[_li] = eh.asFloat();
+            _arr.next();
         }
     }
     const float3& in_aBorderColor = data.inputValue(aBorderColor).asFloat3();

@@ -66,6 +66,8 @@
 #include <atomic>
 #include <cstdio>
 #include <cstring>
+#include <condition_variable>
+#include <cstdlib>
 
 // ===== mPyFile verified texture math (ported 1:1 from file_defaults.py) =====
 // nd_tex_* helpers: float32 throughout to match numpy.
@@ -960,10 +962,6 @@ static const float* nd_tex_load_linear(NdTexCache& cache, std::mutex& mtx,
     // a row it is about to ask for again on the next texel.
     static thread_local NdTexMemo memo[8];
     static thread_local unsigned  memoNext = 0u;
-    // No path, no image: the uncached loader below answers (nullptr, 0, 0) for
-    // an empty path whatever the other keys say, so skip the key build, the
-    // memo scan and the negative-cache insert and answer it here.
-    if (path.length() == 0) { outW = 0; outH = 0; return nullptr; }
     const float rq = (radius != 0.0f) ? (nearbyintf(radius * 10.0f) / 10.0f) : 0.0f;
     const char* pc = path.asChar();
     if (!pc) pc = "";
@@ -4753,15 +4751,108 @@ inline KDQuery kd_query_brute(const Array<double>& pts_in,
 // the viewport pixels are the SAME per-texel math as software/Arnold.
 // (Body is the ported compute region, reused verbatim via handle shims.)
 // ===========================================================================
-// One channel of the grade, exactly as the port spelled it:
-//   min(1.0, max(0.0, (c * bright - 0.5) * contrast + 0.5))
-// with the same operand order, in double, and the same two strict compares --
-// a NaN falls through both to 0.0 here as it did in the nested ternary.
-static inline double nd_grade_clamp(double c, double bright, double contrast) {
-    const double t  = (((c * bright) - (0.5)) * contrast) + (0.5);
-    const double lo = (t > (0.0)) ? t : (0.0);
-    return (lo < (1.0)) ? lo : (1.0);
+// Brightness / contrast grade of ONE sample, in double exactly as the ported
+// compute region wrote it:  X = ((c * bright) - 0.5) * contrast + 0.5,
+// then max(0, X) then min(1, .). NaN falls to 0.0 on both the original nested
+// ternary and this form (X > 0 is false -> 0.0; 0.0 < 1.0 -> 0.0).
+static inline float nd_ft_grade(float c, double bright, double contrast) {
+    const double x  = (((((double)c) * bright) - (0.5)) * contrast) + (0.5);
+    const double lo = (x > (0.0)) ? x : (0.0);
+    return (float)((lo < (1.0)) ? lo : (1.0));
 }
+
+// Texel kernel on an ALREADY-RESOLVED linear buffer: no MString, no nd::Array
+// temporaries, no per-texel cache probe. Same float(u)/float(v) narrowing the
+// ported region performed via its float2 shim, same nd_tex_sample, same grade.
+static inline void nd_texel_fast(
+        double _u,
+        double _v,
+        const float* lin, unsigned W, unsigned H,
+        double bright,
+        double contrast,
+        const float border[3],
+        int wrapU,
+        int wrapV,
+        float out[4]) {
+    static const float sm_ms[4] = { 1.0f, 0.0f, 1.0f, 1.0f };
+    float sm[4];
+    nd_tex_sample(lin, W, H, (float)_u, (float)_v, wrapU, wrapV, border, sm_ms, sm);
+    out[0] = nd_ft_grade(sm[0], bright, contrast);
+    out[1] = nd_ft_grade(sm[1], bright, contrast);
+    out[2] = nd_ft_grade(sm[2], bright, contrast);
+    out[3] = sm[3];
+}
+
+// One bake-grid ROW with clamp wrap on both axes (the override's fixed (1,1)),
+// against a column table. Per texel this is nd_tex_sample's exact arithmetic
+// -- same taps, same `+ 0.0f`, same blend order, same strictness on the
+// tx == 0 / ty == 0 fast paths -- with the u-only and v-only work hoisted.
+struct NdFtCol { int x0; int x1; float tx; };
+static void nd_ft_bake_row(double v, const float* lin, unsigned W, unsigned H,
+                           const NdFtCol* cols, unsigned n,
+                           double bright, double contrast, float* drow) {
+    bool voob = false;
+    const float vvraw = nd_tex_apply_wrap((float)v, 1, voob);
+    const float vv    = 1.0f - vvraw;  // Maya V is bottom-up; image V is top-down
+    const float fy    = vv * (float)(H - 1);
+    const int   y0    = (int)fy;
+    const float ty    = fy - (float)y0;
+    const int   y1    = (y0 + 1 < (int)H) ? y0 + 1 : (int)H - 1;
+    const float* row0 = lin + (size_t)y0 * W * 4;
+    const float* row1 = lin + (size_t)y1 * W * 4;
+    float sm[4];
+    if (ty == 0.0f) {
+        for (unsigned x = 0; x < n; ++x, drow += 4) {
+            const int    x0  = cols[x].x0;
+            const float  tx  = cols[x].tx;
+            const float* p00 = row0 + (size_t)x0 * 4;
+            if (tx == 0.0f) {
+                sm[0] = p00[0] + 0.0f; sm[1] = p00[1] + 0.0f;
+                sm[2] = p00[2] + 0.0f; sm[3] = p00[3] + 0.0f;
+            } else {
+                const int    x1  = cols[x].x1;
+                const float* p10 = row0 + (size_t)x1 * 4;
+                const float* p01 = row1 + (size_t)x0 * 4;
+                const float* p11 = row1 + (size_t)x1 * 4;
+                for (int c = 0; c < 4; ++c) {
+                    float top = p00[c] * (1.0f - tx) + p10[c] * tx;
+                    float bot = p01[c] * (1.0f - tx) + p11[c] * tx;
+                    sm[c] = top * (1.0f - ty) + bot * ty;
+                }
+            }
+            drow[0] = nd_ft_grade(sm[0], bright, contrast);
+            drow[1] = nd_ft_grade(sm[1], bright, contrast);
+            drow[2] = nd_ft_grade(sm[2], bright, contrast);
+            drow[3] = sm[3];
+        }
+        return;
+    }
+    for (unsigned x = 0; x < n; ++x, drow += 4) {
+        const int    x0  = cols[x].x0;
+        const float  tx  = cols[x].tx;
+        const float* p00 = row0 + (size_t)x0 * 4;
+        if (tx == 0.0f) {
+            const float* p01e = row1 + (size_t)x0 * 4;
+            for (int c = 0; c < 4; ++c)
+                sm[c] = (p00[c] + 0.0f) * (1.0f - ty) + (p01e[c] + 0.0f) * ty;
+        } else {
+            const int    x1  = cols[x].x1;
+            const float* p10 = row0 + (size_t)x1 * 4;
+            const float* p01 = row1 + (size_t)x0 * 4;
+            const float* p11 = row1 + (size_t)x1 * 4;
+            for (int c = 0; c < 4; ++c) {
+                float top = p00[c] * (1.0f - tx) + p10[c] * tx;
+                float bot = p01[c] * (1.0f - tx) + p11[c] * tx;
+                sm[c] = top * (1.0f - ty) + bot * ty;
+            }
+        }
+        drow[0] = nd_ft_grade(sm[0], bright, contrast);
+        drow[1] = nd_ft_grade(sm[1], bright, contrast);
+        drow[2] = nd_ft_grade(sm[2], bright, contrast);
+        drow[3] = sm[3];
+    }
+}
+
 static void nd_texel(
         double _u,
         double _v,
@@ -4780,37 +4871,14 @@ static void nd_texel(
         float& _oR,
         float& _oG,
         float& _oB,
-        float& _oA,
-        unsigned* _oW = nullptr,   // optional: the sampled image's size, so
-        unsigned* _oH = nullptr) { // compute() need not probe the cache twice
-    // Scalar twin of the ported nd:: body. The port routed uvCoord and the
-    // graded colour through nd::Array (an initializer_list -> vector, a Shape
-    // vector, a strides vector and a make_shared per array, twice, plus two
-    // slice views): ~25 heap round-trips per texel to move five numbers. Every
-    // arithmetic step below is the SAME op in the SAME type and order:
-    //   u  : (float)(double)(float)_u      == (float)_u          (exact widen/narrow)
-    //   rgb: (float)(double graded value)  -- unchanged cast
-    const float _nd_u = (float)_u;
-    const float _nd_v = (float)_v;
-    const double nl_bright = (double)(in_aBrightness);
-    const double nl_contrast = (double)(in_aContrast);
+        float& _oA) {
     unsigned tb_1_w = 0, tb_1_h = 0;
-    // An empty path is (nullptr, 0, 0) by definition -- see the guard at the
-    // top of nd_tex_load_linear -- so the no-image texel never enters the
-    // memo function at all (its thread_local rows carry a per-call init check).
-    const float* tb_1 = (in_aFileName.length() > 0)
-        ? nd_tex_load_linear(_texCache, _texMutex, in_aFileName, (int)in_aColorSpace, in_aPreFilter != 0, (int)in_aPreFilterKernel, (float)in_aPreFilterRadius, tb_1_w, tb_1_h)
-        : nullptr;
-    if (_oW) *_oW = tb_1 ? tb_1_w : 0u;
-    if (_oH) *_oH = tb_1 ? tb_1_h : 0u;
-    const float sm_2_bd[3] = { in_aBorderColor[0], in_aBorderColor[1], in_aBorderColor[2] };
-    static const float sm_2_ms[4] = { 1.0f, 0.0f, 1.0f, 1.0f };
-    float sm_2[4];
-    nd_tex_sample(tb_1, tb_1_w, tb_1_h, _nd_u, _nd_v, (int)in_aWrapModeU, (int)in_aWrapModeV, sm_2_bd, sm_2_ms, sm_2);
-    _oR = (float)nd_grade_clamp((double)sm_2[0], nl_bright, nl_contrast);
-    _oG = (float)nd_grade_clamp((double)sm_2[1], nl_bright, nl_contrast);
-    _oB = (float)nd_grade_clamp((double)sm_2[2], nl_bright, nl_contrast);
-    _oA = (float)((double)sm_2[3]);
+    const float* tb_1 = nd_tex_load_linear(_texCache, _texMutex, in_aFileName, (int)in_aColorSpace, in_aPreFilter != 0, (int)in_aPreFilterKernel, (float)in_aPreFilterRadius, tb_1_w, tb_1_h);
+    const float bd[3] = { in_aBorderColor[0], in_aBorderColor[1], in_aBorderColor[2] };
+    float o[4];
+    nd_texel_fast(_u, _v, tb_1, tb_1_w, tb_1_h, (double)in_aBrightness, (double)in_aContrast,
+                  bd, (int)in_aWrapModeU, (int)in_aWrapModeV, o);
+    _oR = o[0]; _oG = o[1]; _oB = o[2]; _oA = o[3];
 }
 
 class FileTexture : public MPxNode {
@@ -4887,6 +4955,154 @@ namespace {
 const MString kDrawClassification_FileTexture("drawdb/shader/texture/2d/fileTexture");
 const MString kRegistrantId_FileTexture("fileTextureOverride");
 
+// Persistent bake pool, one per override instance. Workers sleep on a condvar
+// between bakes (no busy spin); a bake publishes a job and bumps the generation,
+// every worker plus the caller pull row chunks off the pool's OWN atomic cursor
+// (a member, never file scope: two overrides can bake concurrently), and each
+// row is written only by the thread that claimed it. Row py's value is a pure
+// function of py and read-only inputs, so the chunk split cannot change the
+// answer. Threads are created once, joined and freed in the destructor.
+// MPYNODE_FT_THREADS caps the worker count without a rebuild.
+struct NdFtBakePool {
+    typedef void (*RowFn)(void* ctx, unsigned int py);
+    std::vector<std::thread> threads;
+    std::mutex               mtx;
+    std::condition_variable  cv;
+    std::condition_variable  cvDone;
+    unsigned long long       generation = 0ull;
+    unsigned int             pending    = 0u;   // workers still inside the job
+    bool                     stop       = false;
+    std::atomic<unsigned int> cursor{0u};
+    RowFn                    fn    = nullptr;
+    void*                    ctx   = nullptr;
+    unsigned int             rows  = 0u;
+    unsigned int             chunk = 1u;
+    bool                     started = false;
+
+    static unsigned int env_cap() {
+        const char* e = getenv("MPYNODE_FT_THREADS");
+        if (!e || !*e) return 12u;
+        int v = atoi(e);
+        if (v < 1) v = 1;
+        return (unsigned int)v;
+    }
+    void start() {
+        if (started) return;
+        started = true;
+        unsigned int n = std::thread::hardware_concurrency();
+        if (n == 0u) n = 1u;
+        const unsigned int cap = env_cap();
+        if (n > cap) n = cap;
+        if (n <= 1u) return;
+        try {
+            threads.reserve(n - 1u);
+            for (unsigned int i = 1u; i < n; ++i)
+                threads.emplace_back(&NdFtBakePool::worker, this);
+        } catch (...) { /* run with whatever threads exist */ }
+    }
+    void drain() {
+        unsigned int py;
+        while ((py = cursor.fetch_add(chunk, std::memory_order_relaxed)) < rows) {
+            const unsigned int end = std::min(py + chunk, rows);
+            for (; py < end; ++py) fn(ctx, py);
+        }
+    }
+    void worker() {
+        unsigned long long seen = 0ull;
+        for (;;) {
+            {
+                std::unique_lock<std::mutex> lk(mtx);
+                cv.wait(lk, [&] { return stop || generation != seen; });
+                if (stop) return;
+                seen = generation;
+            }
+            drain();
+            {
+                std::lock_guard<std::mutex> lk(mtx);
+                if (--pending == 0u) cvDone.notify_all();
+            }
+        }
+    }
+    // Publishes fn(ctx, py) for py in [rowBegin, rowEnd) to the workers and
+    // returns AT ONCE, so the caller can do other work (upload the previous
+    // band) while they bake; wait() blocks until the band is complete. With
+    // no workers the band runs serially here before returning.
+    void launch(RowFn f, void* c, unsigned int rowBegin, unsigned int rowEnd,
+                unsigned int rowsPerChunk) {
+        start();
+        fn = f; ctx = c; rows = rowEnd; chunk = rowsPerChunk ? rowsPerChunk : 1u;
+        cursor.store(rowBegin, std::memory_order_relaxed);
+        if (threads.empty()) { drain(); return; }
+        {
+            std::lock_guard<std::mutex> lk(mtx);
+            pending = (unsigned int)threads.size();
+            ++generation;
+        }
+        cv.notify_all();
+    }
+    void wait() {
+        if (threads.empty()) return;
+        std::unique_lock<std::mutex> lk(mtx);
+        cvDone.wait(lk, [&] { return pending == 0u; });
+    }
+    // Runs fn(ctx, py) for every py in [0, nrows) and returns when all are done.
+    void run(RowFn f, void* c, unsigned int nrows, unsigned int rowsPerChunk) {
+        launch(f, c, 0u, nrows, rowsPerChunk);
+        if (threads.empty()) return;
+        drain();
+        wait();
+    }
+    ~NdFtBakePool() {
+        {
+            std::lock_guard<std::mutex> lk(mtx);
+            stop = true;
+        }
+        cv.notify_all();
+        for (std::thread& t : threads)
+            if (t.joinable()) t.join();
+    }
+};
+
+// Read-only snapshot a bake row needs; filled on the calling thread.
+struct NdFtBakeJob {
+    const float*      lin;
+    unsigned int      lw, lh, w;
+    const NdFtCol*    cols;
+    double            bright, contrast, divW, divH;
+    float             bd[3];
+    float*            out;
+    std::atomic<bool>* failed;
+    static void row(void* vp, unsigned int py) {
+        NdFtBakeJob& j = *(NdFtBakeJob*)vp;
+        try {
+            const double v = 1.0 - (double)py / j.divH;
+            float* drow = j.out + (size_t)py * j.w * 4;
+            if (j.lin) {
+                nd_ft_bake_row(v, j.lin, j.lw, j.lh, j.cols, j.w, j.bright, j.contrast, drow);
+                return;
+            }
+            for (unsigned int x = 0; x < j.w; ++x) {
+                const double u = (double)x / j.divW;
+                nd_texel_fast(u, v, j.lin, j.lw, j.lh, j.bright, j.contrast, j.bd, 1, 1, drow + (size_t)x * 4);
+            }
+        } catch (...) { j.failed->store(true); }
+    }
+};
+
+// Byte-compared content key of one bake: every input the bake reads other
+// than the path (which is prepended as text). Zeroed before filling so the
+// padding compares equal.
+struct NdFtTexKeyPod {
+    float bright, contrast, bd[3], radius;
+    short cs, kernel, wu, wv, pf, pad;
+};
+// Monotonic id for the per-override GPU texture's name: never reused, so a
+// re-acquire can never collide with a texture the manager still holds.
+static unsigned long long nd_ft_next_tex_id() {
+    static std::atomic<unsigned long long> n(1ull);
+    return n.fetch_add(1ull, std::memory_order_relaxed);
+}
+
 class FileTextureOverride : public MHWRender::MPxShadingNodeOverride {
 public:
     static MHWRender::MPxShadingNodeOverride* creator(const MObject& obj) {
@@ -4894,7 +5110,14 @@ public:
     }
     FileTextureOverride(const MObject& obj)
         : MHWRender::MPxShadingNodeOverride(obj), _node(obj) {}
-    ~FileTextureOverride() override {}
+    ~FileTextureOverride() override {
+        if (_tex) {
+            MHWRender::MRenderer* r = MHWRender::MRenderer::theRenderer();
+            MHWRender::MTextureManager* tm = r ? r->getTextureManager() : nullptr;
+            if (tm) tm->releaseTexture(_tex);
+            _tex = nullptr;
+        }
+    }
     MHWRender::DrawAPI supportedDrawAPIs() const override {
         return MHWRender::kAllDevices;
     }
@@ -4956,92 +5179,160 @@ public:
         if (!tmgr) return;
         if (mapParam.length()) {
         try {
-            MString texName("fileTextureVP2::");
-            texName += _m_in_aFileName;
-            texName += MString("|");
-            texName += (double)_m_in_aBrightness;
-            texName += MString("|");
-            texName += (double)_m_in_aContrast;
-            texName += MString("|");
-            texName += (double)_m_in_aBorderColor[0];
-            texName += MString(",");
-            texName += (double)_m_in_aBorderColor[1];
-            texName += MString(",");
-            texName += (double)_m_in_aBorderColor[2];
-            texName += MString("|");
-            texName += (double)_m_in_aColorSpace;
-            texName += MString("|");
-            texName += (double)_m_in_aPreFilter;
-            texName += MString("|");
-            texName += (double)_m_in_aPreFilterKernel;
-            texName += MString("|");
-            texName += (double)_m_in_aPreFilterRadius;
-            texName += MString("|");
-            texName += (double)_m_in_aWrapModeU;
-            texName += MString("|");
-            texName += (double)_m_in_aWrapModeV;
-            MHWRender::MTexture* tex = tmgr->findTexture(texName);
+            // Content key over the SAME inputs the old texture-manager name
+            // carried (path + every grade / decode / wrap input), compared
+            // against this override's own last key. A hit skips the bake
+            // exactly as the old findTexture hit did; a miss re-bakes and
+            // uploads INTO the one GPU texture this override owns
+            // (MTexture::update) instead of allocating a fresh 16 MB texture
+            // under a new name and freeing the old one every frame.
+            NdFtTexKeyPod _kp;
+            std::memset(&_kp, 0, sizeof(_kp));
+            _kp.bright   = _m_in_aBrightness;
+            _kp.contrast = _m_in_aContrast;
+            _kp.bd[0]    = _m_in_aBorderColor[0];
+            _kp.bd[1]    = _m_in_aBorderColor[1];
+            _kp.bd[2]    = _m_in_aBorderColor[2];
+            _kp.radius   = _m_in_aPreFilterRadius;
+            _kp.cs       = _m_in_aColorSpace;
+            _kp.kernel   = _m_in_aPreFilterKernel;
+            _kp.wu       = _m_in_aWrapModeU;
+            _kp.wv       = _m_in_aWrapModeV;
+            _kp.pf       = _m_in_aPreFilter ? 1 : 0;
+            const char* _kpc = _m_in_aFileName.asChar();
+            std::string _key(_kpc ? _kpc : "");
+            _key.append((const char*)&_kp, sizeof(_kp));
+            MHWRender::MTexture* tex = (_tex && _key == _texKey) ? _tex : nullptr;
             if (!tex) {
                 unsigned int _w = 0, _h = 0;
-                if (!nd_tex_load_linear(_texCache, _texMutex, _m_in_aFileName, (int)_m_in_aColorSpace, _m_in_aPreFilter != 0, (int)_m_in_aPreFilterKernel, (float)_m_in_aPreFilterRadius, _w, _h)) { _w = 0; _h = 0; }
+                // Resolve the linear buffer ONCE per bake. The old loop re-ran
+                // the (memoised) cache probe, an MString copy and two nd::Array
+                // heap temporaries for every one of the W*H texels; the buffer
+                // pointer is stable for the life of the cache (std::map never
+                // moves a node, entries are never overwritten), so hoisting it
+                // out of the grid is the same value read once.
+                const float* _lin = nd_tex_load_linear(_texCache, _texMutex, _m_in_aFileName, (int)_m_in_aColorSpace, _m_in_aPreFilter != 0, (int)_m_in_aPreFilterKernel, (float)_m_in_aPreFilterRadius, _w, _h);
+                if (!_lin) { _w = 0; _h = 0; }
+                const unsigned int _lw = _w, _lh = _h;  // what the sampler sees
                 if (_w == 0 || _h == 0) { _w = 256; _h = 256; }
-                std::vector<float> baked((size_t)_w * _h * 4);
+                // Persistent per-override scratch: a fresh 16 MB vector per bake
+                // is a zero-fill plus ~4k first-touch page faults, and every
+                // texel is overwritten below anyway. acquireTexture copies the
+                // bytes synchronously, so the buffer is free for the next bake.
+                std::vector<float>& baked = _bakeBuf;
+                baked.resize((size_t)_w * _h * 4);
                 std::atomic<bool> _bakeFailed(false);
-                auto _bakeRows = [&](unsigned int _y0, unsigned int _y1) {
-                    try {
-                        for (unsigned int py = _y0; py < _y1; ++py) {
-                            double v = 1.0 - (double)py / (double)(_h > 1 ? _h - 1 : 1);
-                            float* drow = &baked[(size_t)py * _w * 4];
-                            for (unsigned int x = 0; x < _w; ++x) {
-                                double u = (double)x / (double)(_w > 1 ? _w - 1 : 1);
-                                float r = 0.0f, g = 0.0f, b = 0.0f, a = 0.0f;
-                                nd_texel(u, v, _m_in_aFileName, _m_in_aBrightness, _m_in_aContrast, _m_in_aBorderColor, _m_in_aColorSpace, _m_in_aPreFilter, _m_in_aPreFilterKernel, _m_in_aPreFilterRadius, (short)1, (short)1, _texCache, _texMutex, r, g, b, a);
-                                drow[x*4+0]=r; drow[x*4+1]=g; drow[x*4+2]=b; drow[x*4+3]=a;
-                            }
-                        }
-                    } catch (...) { _bakeFailed.store(true); }
-                };
-                {
-                    unsigned int _nthr = std::thread::hardware_concurrency();
-                    if (_nthr == 0u) _nthr = 1u;
-                    if (_nthr > 12u) _nthr = 12u;
-                    if (_nthr > _h) _nthr = (_h > 0u) ? _h : 1u;
-                    if (_nthr <= 1u) {
-                        _bakeRows(0u, _h);
-                    } else {
-                        const unsigned int _chunk = (_h + _nthr - 1u) / _nthr;
-                        std::vector<std::thread> _bakeThreads;
-                        _bakeThreads.reserve(_nthr - 1u);
-                        for (unsigned int _t = 1u; _t < _nthr; ++_t) {
-                            const unsigned int _y0 = _t * _chunk;
-                            if (_y0 >= _h) break;
-                            const unsigned int _y1 = std::min(_y0 + _chunk, _h);
-                            try {
-                                _bakeThreads.emplace_back(_bakeRows, _y0, _y1);
-                            } catch (...) { _bakeRows(_y0, _y1); }
-                        }
-                        _bakeRows(0u, std::min(_chunk, _h));
-                        for (std::thread& _th : _bakeThreads)
-                            if (_th.joinable()) _th.join();
+                const double _bright   = (double)_m_in_aBrightness;
+                const double _contrast = (double)_m_in_aContrast;
+                const float  _bd[3]    = { _m_in_aBorderColor[0], _m_in_aBorderColor[1], _m_in_aBorderColor[2] };
+                const double _invW     = (double)(_w > 1 ? _w - 1 : 1);
+                const double _invH     = (double)(_h > 1 ? _h - 1 : 1);
+                // Column table: everything nd_tex_sample derives from u alone
+                // (clamp wrap, fx, x0, tx, x1), computed ONCE per column with
+                // the same float ops in the same order, instead of once per
+                // texel. Built on the calling thread before the region opens.
+                std::vector<NdFtCol>& cols = _colTab;
+                if (_lin) {
+                    cols.resize(_w);
+                    for (unsigned int x = 0; x < _w; ++x) {
+                        const double u = (double)x / _invW;
+                        bool uoob = false;
+                        const float uu = nd_tex_apply_wrap((float)u, 1, uoob);
+                        const float fx = uu * (float)(_lw - 1);
+                        const int   x0 = (int)fx;
+                        cols[x].x0 = x0;
+                        cols[x].x1 = (x0 + 1 < (int)_lw) ? x0 + 1 : (int)_lw - 1;
+                        cols[x].tx = fx - (float)x0;
                     }
                 }
-                if (_bakeFailed.load()) return;
-                MHWRender::MTextureDescription desc;
-                desc.setToDefault2DTexture();
-                desc.fWidth = _w; desc.fHeight = _h; desc.fDepth = 1;
-                desc.fBytesPerRow = _w * 4 * 4;
-                desc.fBytesPerSlice = desc.fBytesPerRow * _h;
-                desc.fMipmaps = 1; desc.fArraySlices = 1;
-                desc.fFormat = MHWRender::kR32G32B32A32_FLOAT;
-                desc.fTextureType = MHWRender::kImage2D;
-                desc.fEnvMapType = MHWRender::kEnvNone;
-                tex = tmgr->acquireTexture(
-                    texName, desc, baked.data(), false);
+                NdFtBakeJob _job;
+                _job.lin = _lin; _job.lw = _lw; _job.lh = _lh; _job.w = _w;
+                _job.cols = _lin ? cols.data() : nullptr;
+                _job.bright = _bright; _job.contrast = _contrast;
+                _job.divW = _invW; _job.divH = _invH;
+                _job.bd[0] = _bd[0]; _job.bd[1] = _bd[1]; _job.bd[2] = _bd[2];
+                _job.out = baked.data();
+                _job.failed = &_bakeFailed;
+                // 8 rows per claim: 1024 rows -> 128 claims, enough for a
+                // dynamic split across 12 threads without cursor contention.
+                // Same dimensions: re-upload into the texture this override
+                // already owns. Otherwise (first bake, or the source image
+                // changed size) release it and acquire a fresh one under a
+                // per-override, never-reused name.
+                if (_tex && (_texW != _w || _texH != _h)) {
+                    tmgr->releaseTexture(_tex);
+                    _tex = nullptr;
+                }
+                const unsigned int _rowBytes = _w * 4u * 4u;
+                if (_tex) {
+                    // PIPELINED bake + upload: the grid is baked in K
+                    // horizontal bands; while the workers bake band k the
+                    // calling thread uploads band k-1 into its region of the
+                    // texture, so the 16 MB copy overlaps the bake instead of
+                    // following it. Row py is still written once, by one
+                    // worker, as a pure function of py; only the ORDER of
+                    // upload changes, never a value. Any failed region update
+                    // falls through to a fresh full-buffer acquire below.
+                    const unsigned int K = (_h >= 64u) ? 4u : 1u;
+                    bool okUp = true;
+                    unsigned int prevLo = 0u, prevHi = 0u;
+                    for (unsigned int k = 0; k < K; ++k) {
+                        const unsigned int lo = (unsigned int)((unsigned long long)_h * k / K);
+                        const unsigned int hi = (unsigned int)((unsigned long long)_h * (k + 1u) / K);
+                        _bakePool.launch(&NdFtBakeJob::row, &_job, lo, hi, 8u);
+                        if (k > 0u && okUp) {
+                            MHWRender::MTextureUpdateRegion rg;
+                            rg.fXRangeMin = 0u; rg.fXRangeMax = _w;
+                            rg.fYRangeMin = prevLo; rg.fYRangeMax = prevHi;
+                            rg.fZRangeMin = 0u; rg.fZRangeMax = 1u;
+                            if (_tex->update(baked.data() + (size_t)prevLo * _w * 4u, false,
+                                             _rowBytes, &rg) != MS::kSuccess)
+                                okUp = false;
+                        }
+                        _bakePool.wait();
+                        prevLo = lo; prevHi = hi;
+                    }
+                    if (_bakeFailed.load()) return;
+                    if (okUp) {
+                        MHWRender::MTextureUpdateRegion rg;
+                        rg.fXRangeMin = 0u; rg.fXRangeMax = _w;
+                        rg.fYRangeMin = prevLo; rg.fYRangeMax = prevHi;
+                        rg.fZRangeMin = 0u; rg.fZRangeMax = 1u;
+                        if (_tex->update(baked.data() + (size_t)prevLo * _w * 4u, false,
+                                         _rowBytes, &rg) != MS::kSuccess)
+                            okUp = false;
+                    }
+                    if (!okUp) {
+                        tmgr->releaseTexture(_tex);
+                        _tex = nullptr;
+                    }
+                } else {
+                    _bakePool.run(&NdFtBakeJob::row, &_job, _h, 8u);
+                    if (_bakeFailed.load()) return;
+                }
+                if (!_tex) {
+                    MHWRender::MTextureDescription desc;
+                    desc.setToDefault2DTexture();
+                    desc.fWidth = _w; desc.fHeight = _h; desc.fDepth = 1;
+                    desc.fBytesPerRow = _w * 4 * 4;
+                    desc.fBytesPerSlice = desc.fBytesPerRow * _h;
+                    desc.fMipmaps = 1; desc.fArraySlices = 1;
+                    desc.fFormat = MHWRender::kR32G32B32A32_FLOAT;
+                    desc.fTextureType = MHWRender::kImage2D;
+                    desc.fEnvMapType = MHWRender::kEnvNone;
+                    MString texName("fileTextureVP2::override#");
+                    texName += (double)nd_ft_next_tex_id();
+                    _tex = tmgr->acquireTexture(texName, desc, baked.data(), false);
+                    _texW = _w; _texH = _h;
+                }
+                if (_tex) _texKey = _key;
+                tex = _tex;
             }
             if (tex) {
+                // The override keeps its reference (released in the
+                // destructor); the shader takes its own on setParameter.
                 MHWRender::MTextureAssignment assign; assign.texture = tex;
                 shader.setParameter(mapParam, assign);
-                tmgr->releaseTexture(tex);
             }
         } catch (const std::exception&) { return; }
         }
@@ -5057,6 +5348,12 @@ public:
     }
 private:
     MObject _node;
+    std::vector<float>   _bakeBuf;
+    NdFtBakePool         _bakePool;
+    std::vector<NdFtCol> _colTab;
+    MHWRender::MTexture* _tex  = nullptr;   // owned; released in the destructor
+    std::string          _texKey;           // content key the texture holds
+    unsigned int         _texW = 0u, _texH = 0u;
     MString _m_in_aFileName = MString();
     float _m_in_aBrightness = 0.0f;
     float _m_in_aContrast = 0.0f;
@@ -5491,55 +5788,31 @@ MStatus FileTexture::compute(const MPlug& plug, MDataBlock& data) {
         return MS::kUnknownParameter;
 
     // --- inputs ---
-    const MString& in_aFileName = data.inputValue(aFileName).asString();  // datablock-owned; no copy
+    const MString in_aFileName = data.inputValue(aFileName).asString();
     const float in_aBrightness = data.inputValue(aBrightness).asFloat();
     const float in_aContrast = data.inputValue(aContrast).asFloat();
-    // The remaining inputs only reach the result THROUGH an image: with an
-    // empty path nd_tex_load_linear answers nullptr before it reads the
-    // colour-space / pre-filter keys and nd_tex_sample returns the magenta
-    // sentinel before it reads uv / wrap / border. Neither branch's outputs
-    // depend on them, so they are pulled from the datablock only when a path
-    // is set -- eight MDataBlock lookups that the no-image case paid for
-    // nothing. (Maya's own switch nodes leave unselected inputs unread the
-    // same way; a setAttr on an unread plug still dirties this node's outputs.)
-    const bool _ndHasPath = in_aFileName.length() > 0;
-    float3 in_aBorderColor    = { 0.0f, 0.0f, 0.0f };
-    float2 in_aUvCoord        = { 0.0f, 0.0f };
-    short  in_aColorSpace     = 0;
-    bool   in_aPreFilter      = false;
-    short  in_aPreFilterKernel = 0;
-    float  in_aPreFilterRadius = 0.0f;
-    short  in_aWrapModeU      = 0;
-    short  in_aWrapModeV      = 0;
-    if (_ndHasPath) {
-        const float3& _bc = data.inputValue(aBorderColor).asFloat3();
-        in_aBorderColor[0] = _bc[0]; in_aBorderColor[1] = _bc[1]; in_aBorderColor[2] = _bc[2];
-        in_aColorSpace      = data.inputValue(aColorSpace).asShort();
-        in_aPreFilter       = data.inputValue(aPreFilter).asBool();
-        in_aPreFilterKernel = data.inputValue(aPreFilterKernel).asShort();
-        in_aPreFilterRadius = data.inputValue(aPreFilterRadius).asFloat();
-        const float2& _uv = data.inputValue(aUvCoord).asFloat2();
-        in_aUvCoord[0] = _uv[0]; in_aUvCoord[1] = _uv[1];
-        in_aWrapModeU       = data.inputValue(aWrapModeU).asShort();
-        in_aWrapModeV       = data.inputValue(aWrapModeV).asShort();
-    }
+    const float3& in_aBorderColor = data.inputValue(aBorderColor).asFloat3();
+    const short in_aColorSpace = data.inputValue(aColorSpace).asShort();
+    const bool in_aPreFilter = data.inputValue(aPreFilter).asBool();
+    const short in_aPreFilterKernel = data.inputValue(aPreFilterKernel).asShort();
+    const float in_aPreFilterRadius = data.inputValue(aPreFilterRadius).asFloat();
+    const float2& in_aUvCoord = data.inputValue(aUvCoord).asFloat2();
+    const short in_aWrapModeU = data.inputValue(aWrapModeU).asShort();
+    const short in_aWrapModeV = data.inputValue(aWrapModeV).asShort();
 
     // --- output handles ---
     MDataHandle h_aOutAlpha = data.outputValue(aOutAlpha);
+    h_aOutAlpha.setFloat(0.0f);
     MDataHandle h_aOutColor = data.outputValue(aOutColor);
+    h_aOutColor.set3Float(0.0f, 0.0f, 0.0f);
 
         // ===== texel (shared with the VP2 override bake) =====
-    unsigned _ndPW = 0, _ndPH = 0;   // image size, filled by the same lookup that samples
-    float _oR = 0.0f, _oG = 0.0f, _oB = 0.0f, _oA = 0.0f;
     try {
-    nd_texel((double)in_aUvCoord[0], (double)in_aUvCoord[1], in_aFileName, in_aBrightness, in_aContrast, in_aBorderColor, in_aColorSpace, in_aPreFilter, in_aPreFilterKernel, in_aPreFilterRadius, in_aWrapModeU, in_aWrapModeV, _texCache, _texMutex, _oR, _oG, _oB, _oA, &_ndPW, &_ndPH);
+    float _oR = 0.0f, _oG = 0.0f, _oB = 0.0f, _oA = 0.0f;
+    nd_texel((double)in_aUvCoord[0], (double)in_aUvCoord[1], in_aFileName, in_aBrightness, in_aContrast, in_aBorderColor, in_aColorSpace, in_aPreFilter, in_aPreFilterKernel, in_aPreFilterRadius, in_aWrapModeU, in_aWrapModeV, _texCache, _texMutex, _oR, _oG, _oB, _oA);
     h_aOutColor.set3Float(_oR, _oG, _oB);
     h_aOutAlpha.setFloat(_oA);
     } catch (const std::exception& _ndErr) {
-        // The port zeroed both outputs before sampling; keep that on the only
-        // path where the zero was ever observable.
-        h_aOutAlpha.setFloat(0.0f);
-        h_aOutColor.set3Float(0.0f, 0.0f, 0.0f);
         MGlobal::displayError(MString("fileTexture: ") + _ndErr.what());
         return MS::kFailure;
     }
@@ -5549,7 +5822,7 @@ MStatus FileTexture::compute(const MPlug& plug, MDataBlock& data) {
     h_aOutColor.setClean();
     // --- mPyFile derived outputs (framework-owned, not authored by the compute) ---
     {
-        float _ndA = _oA;   // the value just written to outAlpha, without a handle re-read
+        float _ndA = h_aOutAlpha.asFloat();
         _ndA = (_ndA < 0.0f) ? 0.0f : ((_ndA > 1.0f) ? 1.0f : _ndA);
         const float _ndT = 1.0f - _ndA;
         MDataHandle _hOT = data.outputValue(aOutTransparency);
@@ -5557,9 +5830,11 @@ MStatus FileTexture::compute(const MPlug& plug, MDataBlock& data) {
         _hOT.setClean();
     }
     {
-        // Same (w, h) the texel lookup resolved -- one cache probe per compute,
-        // not two. A missing image reports (0, 0) exactly as before.
-        const float _ndW = (float)_ndPW, _ndH = (float)_ndPH;
+        float _ndW = 0.0f, _ndH = 0.0f;
+        unsigned _ndPW = 0, _ndPH = 0;
+        if (nd_tex_load_linear(_texCache, _texMutex, in_aFileName, (int)in_aColorSpace, in_aPreFilter != 0, (int)in_aPreFilterKernel, (float)in_aPreFilterRadius, _ndPW, _ndPH)) {
+            _ndW = (float)_ndPW; _ndH = (float)_ndPH;
+        }
         MDataHandle _hOS = data.outputValue(aOutSize);
         _hOS.set2Float(_ndW, _ndH);
         _hOS.setClean();

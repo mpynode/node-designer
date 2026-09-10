@@ -6,7 +6,7 @@
   "strict": false,
   "plugin_name": "MPyFile_File_Scanline",
   "bundle": "C:\\Users\\eric.vignola\\Desktop\\MPyNode\\templates\\MPyFile\\File Scanline\\MPyFile_File_Scanline.mll",
-  "created": 1788992596.182175,
+  "created": 1789008529.3034163,
   "nodes": [
     {
       "source_node": "scanlineTex",
@@ -32,12 +32,12 @@
         "reason": "1 string input(s) driven with generated fixtures: fileName | authored @maya_test: 1/1 passed",
         "timing": {
           "measured": true,
-          "py_ms": 0.21210010163486004,
-          "cpp_ms": 0.01740013249218464,
+          "py_ms": 0.2101000864058733,
+          "cpp_ms": 0.01750001683831215,
           "n": 3,
           "truncated": false,
           "scene": "geo 140 / array 5000",
-          "ratio": 0.08203736046359732,
+          "ratio": 0.08329371556994723,
           "verdict": "below-floor",
           "rung": [
             140,

@@ -6,7 +6,7 @@
   "strict": false,
   "plugin_name": "MPyFile_File_Composite",
   "bundle": "C:\\Users\\eric.vignola\\Desktop\\MPyNode\\templates\\MPyFile\\File Composite\\MPyFile_File_Composite.mll",
-  "created": 1788993223.4190798,
+  "created": 1789007981.2945063,
   "nodes": [
     {
       "source_node": "compositeTexture",
@@ -32,12 +32,12 @@
         "reason": "1 string input(s) driven with generated fixtures: layers | authored @maya_test: 1/1 passed",
         "timing": {
           "measured": true,
-          "py_ms": 1.5209000557661057,
-          "cpp_ms": 0.020900042727589607,
+          "py_ms": 1.631199847906828,
+          "cpp_ms": 0.11079991236329079,
           "n": 3,
           "truncated": false,
           "scene": "geo 140 / array 5000",
-          "ratio": 0.013741890960127467,
+          "ratio": 0.06792540626182031,
           "verdict": "below-floor",
           "rung": [
             140,

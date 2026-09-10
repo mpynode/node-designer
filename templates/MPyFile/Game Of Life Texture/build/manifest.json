@@ -6,7 +6,7 @@
   "strict": false,
   "plugin_name": "MPyFile_Game_Of_Life_Texture",
   "bundle": "C:\\Users\\eric.vignola\\Desktop\\MPyNode\\templates\\MPyFile\\Game Of Life Texture\\MPyFile_Game_Of_Life_Texture.mll",
-  "created": 1788994572.9433868,
+  "created": 1789007224.7793767,
   "nodes": [
     {
       "source_node": "gameOfLifeTex",
@@ -32,12 +32,12 @@
         "reason": "verified with 1 geo/string input(s) left at default (unwired, could not be synthesized): bakePath | authored @maya_test: 1/1 passed",
         "timing": {
           "measured": true,
-          "py_ms": 0.46909996308386326,
-          "cpp_ms": 0.029999995604157448,
+          "py_ms": 0.31579984351992607,
+          "cpp_ms": 0.02459995448589325,
           "n": 3,
           "truncated": false,
           "scene": "geo 140 / array 5000",
-          "ratio": 0.0639522446493866,
+          "ratio": 0.07789729789508608,
           "verdict": "below-floor",
           "rung": [
             140,

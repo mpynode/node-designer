@@ -6,7 +6,7 @@
   "strict": false,
   "plugin_name": "MPyFile_File_Simple",
   "bundle": "C:\\Users\\eric.vignola\\Desktop\\MPyNode\\templates\\MPyFile\\File Simple\\MPyFile_File_Simple.mll",
-  "created": 1788994008.225129,
+  "created": 1789007762.569721,
   "nodes": [
     {
       "source_node": "fileTexture",
@@ -32,12 +32,12 @@
         "reason": "1 string input(s) driven with generated fixtures: fileName | authored @maya_test: 1/1 passed",
         "timing": {
           "measured": true,
-          "py_ms": 0.18409988842904568,
-          "cpp_ms": 0.01619989052414894,
+          "py_ms": 0.18620002083480358,
+          "cpp_ms": 0.016600126400589943,
           "n": 3,
           "truncated": false,
           "scene": "geo 140 / array 5000",
-          "ratio": 0.08799511320938457,
+          "ratio": 0.08915211892117646,
           "verdict": "below-floor",
           "rung": [
             140,

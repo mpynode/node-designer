@@ -4719,42 +4719,36 @@
             "done - ok: 1 node(s)"
           ],
           "n_log_lines": 2,
-          "n_optimize_events": 28,
+          "n_optimize_events": 22,
           "no_node_needed_llm": true,
           "optimize_events_tail": [
             "- info: [compositeTexture] optimizing -- measuring baseline",
-            "- info: [compositeTexture] baseline 0.346 ms; up to 6 optimize round(s) (at least 2; stops after a rejected round or a gain under 1.15x)",
+            "- info: [compositeTexture] baseline 24.130 ms; up to 6 optimize round(s) (at least 2; stops after a rejected round or a gain under 1.15x)",
             "- info: [compositeTexture] round 1/6 starting",
-            "- info: [compositeTexture] round 1/6 -- AI working 4m34s",
-            "- info: [optimizer] agent edited compositeTexture.cpp (254433 -> 255513 bytes)",
-            "- info: [compositeTexture] round 1/6 trying: read only the opacity elements the layer stack can use (logical index < layers.size()) instead of walking all 20000 through the Maya array handle (predicted 10.00x, risk: none numerically -- the dense-by-logical-index vector the port built (holes = 1.0) and the c",
-            "- info: [compositeTexture] round 1: ACCEPT 0.004 ms (76.91x vs baseline, 76.91x over the previous best)",
+            "- info: [compositeTexture] round 1/6 -- AI working 4m53s",
+            "- info: [optimizer] agent edited compositeTexture.cpp (254433 -> 259882 bytes)",
+            "- info: [compositeTexture] round 1/6 trying: The VP2 bake resolved the layer stack per texel -- a heap vector of layer paths, a heap copy of the 512 opacities as an nd::Array, a 2-element uv array and a string-keyed memo probe per layer -- so resolve it once per bake into a flat {buffer, size, opacity} tabl",
+            "- info: [compositeTexture] round 1: ACCEPT 3.015 ms (8.00x vs baseline, 8.00x over the previous best)",
             "- info: [compositeTexture] round 2/6 starting",
-            "- info: [compositeTexture] round 2/6 -- AI working 8s",
-            "- info: [compositeTexture] round 2/6 -- AI working 5m08s",
-            "- info: [compositeTexture] round 2/6 -- AI working 10m08s",
-            "- info: [compositeTexture] round 2/6 -- AI working 15m08s",
-            "- info: [optimizer] agent edited compositeTexture.cpp (255513 -> 255030 bytes)",
-            "- info: [compositeTexture] round 2/6 trying: composite the one sampled texel straight from the MString/float inputs instead of marshalling them through std::string vectors, nd::Array temporaries and nd::slice views (predicted 1.40x, risk: the remaining 1.2 us is Maya API handle reads/writes and the harness'",
-            "- info: [compositeTexture] round 2: ACCEPT 0.003 ms (111.65x vs baseline, 1.45x over the previous best)",
+            "- info: [compositeTexture] round 2/6 -- AI working 14s",
+            "- info: [compositeTexture] round 2/6 -- AI working 5m14s",
+            "- info: [optimizer] agent edited compositeTexture.cpp (259882 -> 261273 bytes)",
+            "- info: [compositeTexture] round 2/6 trying: the bench stack has zero loadable layers (layers[0]='bench'), so the whole 256x256 bake was a zero-fill: skip the texel loop when the resolved stack is empty, keep the bake grid in a reused member buffer instead of page-faulting a fresh 1 MB vector each tick, and",
+            "- info: [compositeTexture] round 2: ACCEPT 2.026 ms (11.91x vs baseline, 1.49x over the previous best)",
             "- info: [compositeTexture] round 3/6 starting",
-            "- info: [compositeTexture] round 3/6 -- AI working 3m56s",
-            "- info: [compositeTexture] round 3/6 -- AI working 8m56s",
-            "- info: [optimizer] agent edited compositeTexture.cpp (255030 -> 256763 bytes)",
-            "- info: [compositeTexture] round 3/6 trying: Composite straight off the array handles -- no vector/MString marshalling -- and read uvCoord/wrapMode/borderColor only for a layer that actually loaded. (predicted 1.15x, risk: Reading uvCoord/wrapModeU/wrapModeV/borderColor lazily changes WHICH inputs a compute",
-            "- info: [compositeTexture] round 3: ACCEPT 0.003 ms (138.44x vs baseline, 1.24x over the previous best)",
-            "- info: [compositeTexture] round 4/6 starting",
-            "- info: [compositeTexture] round 4/6 -- AI working 59s",
-            "- info: [compositeTexture] round 4/6 -- AI working 5m59s",
-            "- info: [compositeTexture] round 4/6 trying: compute() is ~0.1 us of a ~2.1 us pull; the rest is Maya plug evaluation + harness overhead, so no edit inside the file can move the number and the file is left byte-identical (predicted 1.02x, risk: none taken: the single candidate (skip trailing MArrayDataHandl",
-            "- info: [compositeTexture] round 4: no change to the source",
-            "- info: [compositeTexture] stopping after round 4: round 4 no-change -- nothing new to compound from",
-            "- ok: compositeTexture: 138.44x faster"
+            "- info: [compositeTexture] round 3/6 -- AI working 42s",
+            "- info: [compositeTexture] round 3/6 -- AI working 5m42s",
+            "- info: [compositeTexture] round 3/6 -- AI working 10m42s",
+            "- info: [optimizer] agent edited compositeTexture.cpp (261273 -> 262521 bytes)",
+            "- info: [compositeTexture] round 3/6 trying: key the VP2 texture cache on what the bake actually reads (the resolved layer stack and grid size) instead of every raw input, so an animated borderColor or an opacity on an empty slot no longer forces a re-bake and GPU upload of byte-identical pixels (predicted ",
+            "- info: [compositeTexture] round 3: not faster (2.081 ms vs best 2.026 ms)",
+            "- info: [compositeTexture] stopping after round 3: round 3 not-faster -- nothing new to compound from",
+            "- ok: compositeTexture: 11.91x faster"
           ]
         },
         "bundle_exists": true,
         "bundle_path": "C:\\Users\\eric.vignola\\Desktop\\MPyNode\\templates\\MPyFile\\File Composite\\MPyFile_File_Composite.mll",
-        "ended": 1788993223.422591,
+        "ended": 1789007981.297507,
         "errors": [],
         "log": "C:\\Users\\eric.vignola\\Desktop\\MPyNode\\templates\\MPyFile\\File Composite\\_runner\\phase_b.log",
         "mode": {
@@ -4784,11 +4778,11 @@
               "ran": true,
               "reason": "1 string input(s) driven with generated fixtures: layers | authored @maya_test: 1/1 passed",
               "timing": {
-                "cpp_ms": 0.020900042727589607,
+                "cpp_ms": 0.11079991236329079,
                 "measured": true,
                 "n": 3,
-                "py_ms": 1.5209000557661057,
-                "ratio": 0.013741890960127467,
+                "py_ms": 1.631199847906828,
+                "ratio": 0.06792540626182031,
                 "rung": [
                   140,
                   5000
@@ -4808,10 +4802,10 @@
               "candidates": 3,
               "errors": [],
               "path": "agent",
-              "rounds": 4
+              "rounds": 3
             },
-            "reason": "accepted (138.44x)",
-            "speedup": 138.44
+            "reason": "accepted (11.91x)",
+            "speedup": 11.912861021969883
           }
         },
         "phase": "b",
@@ -4819,14 +4813,14 @@
         "rounds": {
           "compositeTexture": {
             "accepted": true,
-            "baseline_ms": 0.3461,
-            "best_ms": 0.0025,
-            "created": 1788993220.3920677,
+            "baseline_ms": 24.1295,
+            "best_ms": 2.0255,
+            "created": 1789007977.676351,
             "fresh": true,
-            "n_rounds": 4,
+            "n_rounds": 3,
             "parity_gate": "authored+pointwise",
             "path": "C:\\Users\\eric.vignola\\Desktop\\MPyNode\\templates\\MPyFile\\File Composite\\build\\stages\\compositeTexture\\rounds.json",
-            "reason": "accepted (138.44x)",
+            "reason": "accepted (11.91x)",
             "rounds": [
               {
                 "cpp_same_as_baseline": true,
@@ -4834,7 +4828,7 @@
                 "has_hypothesis": false,
                 "has_theme": false,
                 "index": 0,
-                "ms": 0.3461,
+                "ms": 24.1295,
                 "note": "",
                 "outcome": "baseline",
                 "parity": null,
@@ -4843,65 +4837,52 @@
               },
               {
                 "cpp_same_as_baseline": false,
-                "duration_s": 566.022,
+                "duration_s": 579.27,
                 "has_hypothesis": true,
                 "has_theme": true,
                 "index": 1,
-                "ms": 0.0045,
-                "note": "confirmed twice (incumbent under the noise floor): 0.004 / 0.004 ms",
+                "ms": 3.0149,
+                "note": "",
                 "outcome": "accept",
                 "parity": "pass",
-                "slug": "lazy_opacity_read",
-                "speedup": 76.91111111111113
+                "slug": "resolve_layers_once",
+                "speedup": 8.003416365385254
               },
               {
                 "cpp_same_as_baseline": false,
-                "duration_s": 971.435,
+                "duration_s": 571.241,
                 "has_hypothesis": true,
                 "has_theme": true,
                 "index": 2,
-                "ms": 0.0031,
-                "note": "confirmed twice (incumbent under the noise floor): 0.003 / 0.003 ms",
+                "ms": 2.0255,
+                "note": "",
                 "outcome": "accept",
                 "parity": "pass",
-                "slug": "alloc_free_texel",
-                "speedup": 111.64516129032259
+                "slug": "skip_empty_bake_reuse_buffer",
+                "speedup": 11.912861021969883
               },
               {
                 "cpp_same_as_baseline": false,
-                "duration_s": 777.395,
+                "duration_s": 695.807,
                 "has_hypothesis": true,
                 "has_theme": true,
                 "index": 3,
-                "ms": 0.0025,
-                "note": "confirmed twice (incumbent under the noise floor): 0.002 / 0.003 ms",
-                "outcome": "accept",
+                "ms": 2.0812,
+                "note": "",
+                "outcome": "not-faster",
                 "parity": "pass",
-                "slug": "fuse_handles_lazy_reads",
-                "speedup": 138.44
-              },
-              {
-                "cpp_same_as_baseline": null,
-                "duration_s": 619.61,
-                "has_hypothesis": true,
-                "has_theme": true,
-                "index": 4,
-                "ms": null,
-                "note": "candidate is identical to the current best",
-                "outcome": "no-change",
-                "parity": null,
-                "slug": "noise_floor_no_change",
+                "slug": "exact_bake_key",
                 "speedup": null
               }
             ],
-            "speedup": 138.44
+            "speedup": 11.912861021969883
           }
         },
-        "secs": 2964.5,
+        "secs": 1857.9,
         "smoke": false,
-        "started": 1788990258.963583,
+        "started": 1789006123.410947,
         "state": "ok",
-        "wall_secs": 2968.7
+        "wall_secs": 1862.4
       }
     },
     "MPyFile\\File Scanline": {
@@ -5016,30 +4997,38 @@
             "done - ok: 1 node(s)"
           ],
           "n_log_lines": 2,
-          "n_optimize_events": 16,
+          "n_optimize_events": 24,
           "no_node_needed_llm": true,
           "optimize_events_tail": [
             "- info: [scanlineTex] optimizing -- measuring baseline",
-            "- info: [scanlineTex] baseline 0.009 ms; up to 6 optimize round(s) (at least 2; stops after a rejected round or a gain under 1.15x)",
+            "- info: [scanlineTex] baseline 578.680 ms; up to 6 optimize round(s) (at least 2; stops after a rejected round or a gain under 1.15x)",
             "- info: [scanlineTex] round 1/6 starting",
-            "- info: [scanlineTex] round 1/6 -- AI working 4m34s",
-            "- info: [scanlineTex] round 1/6 -- AI working 9m34s",
-            "- info: [scanlineTex] round 1/6 -- AI working 14m34s",
-            "- info: [optimizer] agent edited scanlineTex.cpp (254645 -> 254784 bytes)",
-            "- info: [scanlineTex] round 1/6 trying: the ported texel body built about a dozen heap-allocating nd::Array<double> temporaries to do scalar arithmetic on one pixel; the same expression on plain doubles, in the same operation order, removes every allocation from compute() (predicted 1.80x, risk: measured on",
-            "- info: [scanlineTex] round 1: ACCEPT 0.003 ms (2.91x vs baseline, 2.91x over the previous best)",
+            "- info: [scanlineTex] round 1/6 -- AI working 4m46s",
+            "- info: [optimizer] agent edited scanlineTex.cpp (254645 -> 255681 bytes)",
+            "- info: [scanlineTex] round 1/6 trying: replace the per-texel nd::Array chain with scalar math, resolve the texture once per bake, compute the sine band once per row (it depends only on v), and reuse the 16 MB bake buffer across bakes (predicted 15.00x, risk: the scan band must be evaluated in exactly the p",
+            "- info: [scanlineTex] round 1: ACCEPT 8.050 ms (71.88x vs baseline, 71.88x over the previous best)",
             "- info: [scanlineTex] round 2/6 starting",
-            "- info: [scanlineTex] round 2/6 -- AI working 3m20s",
-            "- info: [scanlineTex] round 2/6 -- AI working 8m20s",
-            "- info: [scanlineTex] round 2/6 trying: resolve plug.attribute() once and compare MObjects instead of four MPlug-vs-MObject comparisons at the top of compute(); measured as noise, reverted, file left identical to the entry version (predicted 1.04x, risk: The gain is inside the harness noise (run-to-run medi",
-            "- info: [scanlineTex] round 2: no change to the source",
-            "- info: [scanlineTex] stopping after round 2: round 2 no-change -- nothing new to compound from",
-            "- ok: scanlineTex: 2.91x faster"
+            "- info: [scanlineTex] round 2/6 -- AI working 1m19s",
+            "- info: [scanlineTex] round 2/6 -- AI working 6m19s",
+            "- info: [scanlineTex] round 2/6 -- AI working 11m19s",
+            "- info: [optimizer] agent edited scanlineTex.cpp (255681 -> 258837 bytes)",
+            "- info: [scanlineTex] round 2/6 trying: replace the per-bake std::thread spawn/join of 12 workers with a persistent per-override condvar pool and a dynamic 8-row chunk cursor; the bake itself was cheap, creating the threads was the cost (predicted 1.50x, risk: pool wake latency on 23 sleeping threads could ",
+            "- info: [scanlineTex] round 2: ACCEPT 5.898 ms (98.11x vs baseline, 1.36x over the previous best)",
+            "- info: [scanlineTex] round 3/6 starting",
+            "- info: [scanlineTex] round 3/6 -- AI working 3m12s",
+            "- info: [scanlineTex] round 3/6 -- AI working 8m12s",
+            "- info: [scanlineTex] round 3/6 -- AI working 13m12s",
+            "- info: [optimizer] agent edited scanlineTex.cpp (258837 -> 264235 bytes)",
+            "- info: [scanlineTex] round 3/6 trying: hoist the sampler's per-column (u, x0, tx) and per-row (y0, ty) work out of the 1M-texel bake loop as exact identities, so the corner-grid fast path is a gather, three double multiplies and a store (predicted 1.10x, risk: none numerically -- the table statements are t",
+            "- info: [scanlineTex] round 3/6 -- benchmarking 2s",
+            "- info: [scanlineTex] round 3: not faster (6.028 ms vs best 5.898 ms)",
+            "- info: [scanlineTex] stopping after round 3: round 3 not-faster -- nothing new to compound from",
+            "- ok: scanlineTex: 98.11x faster"
           ]
         },
         "bundle_exists": true,
         "bundle_path": "C:\\Users\\eric.vignola\\Desktop\\MPyNode\\templates\\MPyFile\\File Scanline\\MPyFile_File_Scanline.mll",
-        "ended": 1788992596.184175,
+        "ended": 1789008529.3084164,
         "errors": [],
         "log": "C:\\Users\\eric.vignola\\Desktop\\MPyNode\\templates\\MPyFile\\File Scanline\\_runner\\phase_b.log",
         "mode": {
@@ -5069,11 +5058,11 @@
               "ran": true,
               "reason": "1 string input(s) driven with generated fixtures: fileName | authored @maya_test: 1/1 passed",
               "timing": {
-                "cpp_ms": 0.01740013249218464,
+                "cpp_ms": 0.01750001683831215,
                 "measured": true,
                 "n": 3,
-                "py_ms": 0.21210010163486004,
-                "ratio": 0.08203736046359732,
+                "py_ms": 0.2101000864058733,
+                "ratio": 0.08329371556994723,
                 "rung": [
                   140,
                   5000
@@ -5090,13 +5079,13 @@
           "scanlineTex": {
             "accepted": true,
             "ai": {
-              "candidates": 1,
+              "candidates": 3,
               "errors": [],
               "path": "agent",
-              "rounds": 2
+              "rounds": 3
             },
-            "reason": "accepted (2.91x)",
-            "speedup": 2.9062499999999996
+            "reason": "accepted (98.11x)",
+            "speedup": 98.11125428096707
           }
         },
         "phase": "b",
@@ -5104,14 +5093,14 @@
         "rounds": {
           "scanlineTex": {
             "accepted": true,
-            "baseline_ms": 0.0093,
-            "best_ms": 0.0032,
-            "created": 1788992594.715808,
+            "baseline_ms": 578.6798,
+            "best_ms": 5.8982,
+            "created": 1789008527.738827,
             "fresh": true,
-            "n_rounds": 2,
+            "n_rounds": 3,
             "parity_gate": "authored+pointwise",
             "path": "C:\\Users\\eric.vignola\\Desktop\\MPyNode\\templates\\MPyFile\\File Scanline\\build\\stages\\scanlineTex\\rounds.json",
-            "reason": "accepted (2.91x)",
+            "reason": "accepted (98.11x)",
             "rounds": [
               {
                 "cpp_same_as_baseline": true,
@@ -5119,7 +5108,7 @@
                 "has_hypothesis": false,
                 "has_theme": false,
                 "index": 0,
-                "ms": 0.0093,
+                "ms": 578.6798,
                 "note": "",
                 "outcome": "baseline",
                 "parity": null,
@@ -5128,39 +5117,52 @@
               },
               {
                 "cpp_same_as_baseline": false,
-                "duration_s": 974.133,
+                "duration_s": 507.717,
                 "has_hypothesis": true,
                 "has_theme": true,
                 "index": 1,
-                "ms": 0.0032,
-                "note": "confirmed twice (incumbent under the noise floor): 0.003 / 0.003 ms",
+                "ms": 8.0502,
+                "note": "",
                 "outcome": "accept",
                 "parity": "pass",
-                "slug": "scalar_texel",
-                "speedup": 2.9062499999999996
+                "slug": "scalar_texel_row_scan",
+                "speedup": 71.88390350550297
               },
               {
-                "cpp_same_as_baseline": null,
-                "duration_s": 556.411,
+                "cpp_same_as_baseline": false,
+                "duration_s": 786.584,
                 "has_hypothesis": true,
                 "has_theme": true,
                 "index": 2,
-                "ms": null,
-                "note": "candidate is identical to the current best",
-                "outcome": "no-change",
-                "parity": null,
-                "slug": "single_attribute_plug_gate",
+                "ms": 5.8982,
+                "note": "",
+                "outcome": "accept",
+                "parity": "pass",
+                "slug": "persistent_bake_pool",
+                "speedup": 98.11125428096707
+              },
+              {
+                "cpp_same_as_baseline": false,
+                "duration_s": 1095.378,
+                "has_hypothesis": true,
+                "has_theme": true,
+                "index": 3,
+                "ms": 6.0277,
+                "note": "",
+                "outcome": "not-faster",
+                "parity": "pass",
+                "slug": "column_row_sampler_tables",
                 "speedup": null
               }
             ],
-            "speedup": 2.9062499999999996
+            "speedup": 98.11125428096707
           }
         },
-        "secs": 1559.0,
+        "secs": 2405.9,
         "smoke": false,
-        "started": 1788991037.223335,
+        "started": 1789006123.4039485,
         "state": "ok",
-        "wall_secs": 1564.3
+        "wall_secs": 2410.5
       }
     },
     "MPyFile\\File Simple": {
@@ -5279,27 +5281,27 @@
           "no_node_needed_llm": true,
           "optimize_events_tail": [
             "- info: [fileTexture] optimizing -- measuring baseline",
-            "- info: [fileTexture] baseline 0.004 ms; up to 6 optimize round(s) (at least 2; stops after a rejected round or a gain under 1.15x)",
+            "- info: [fileTexture] baseline 127.935 ms; up to 6 optimize round(s) (at least 2; stops after a rejected round or a gain under 1.15x)",
             "- info: [fileTexture] round 1/6 starting",
-            "- info: [fileTexture] round 1/6 -- AI working 4m34s",
-            "- info: [fileTexture] round 1/6 -- AI working 9m34s",
-            "- info: [optimizer] agent edited fileTexture.cpp (252886 -> 253954 bytes)",
-            "- info: [fileTexture] round 1/6 trying: a one-texel node is all per-access overhead: drop the nd::Array temporaries the port used to carry five numbers, and read only the inputs the current branch can see (predicted 1.60x, risk: the whole node is ~3 us and most of that is Maya's DG/plug machinery outside co",
-            "- info: [fileTexture] round 1: ACCEPT 0.002 ms (1.57x vs baseline, 1.57x over the previous best)",
+            "- info: [fileTexture] round 1/6 -- AI working 4m52s",
+            "- info: [fileTexture] round 1/6 -- AI working 9m52s",
+            "- info: [optimizer] agent edited fileTexture.cpp (252886 -> 260379 bytes)",
+            "- info: [fileTexture] round 1/6 trying: the VP2 bake paid an MString copy, two nd::Array heap temporaries and a memo probe per texel, then spawned 11 threads and zero-filled 16 MB every tick; resolve the buffer once, bake rows against a column table on a persistent pool into a reused buffer (predicted 6.00x",
+            "- info: [fileTexture] round 1/6 -- benchmarking 0s",
+            "- info: [fileTexture] round 1: ACCEPT 5.217 ms (24.52x vs baseline, 24.52x over the previous best)",
             "- info: [fileTexture] round 2/6 starting",
-            "- info: [fileTexture] round 2/6 -- AI working 35s",
-            "- info: [fileTexture] round 2/6 -- AI working 5m35s",
-            "- info: [fileTexture] round 2/6 -- AI working 10m35s",
-            "- info: [optimizer] agent edited fileTexture.cpp (253954 -> 254912 bytes)",
-            "- info: [fileTexture] round 2/6 trying: the benchmark leaves fileName empty, so compute() is sixteen Maya API calls around three double multiplies; resolve the plug attribute once and grade the magenta sentinel inline instead of through the 20-argument nd_texel call (predicted 1.05x, risk: unmeasurable: the",
-            "- info: [fileTexture] round 2: not faster (0.002 ms vs best 0.002 ms)",
-            "- info: [fileTexture] stopping after round 2: round 2 not-faster -- nothing new to compound from",
-            "- ok: fileTexture: 1.57x faster"
+            "- info: [fileTexture] round 2/6 -- AI working 4m56s",
+            "- info: [fileTexture] round 2/6 -- AI working 9m56s",
+            "- info: [optimizer] agent edited fileTexture.cpp (260379 -> 265773 bytes)",
+            "- info: [fileTexture] round 2/6 trying: keep one persistent GPU texture per override and upload each baked band with MTexture::update(region) while the pool bakes the next band, so the 16 MB copy overlaps the bake instead of following it (predicted 1.10x, risk: region-update semantics (data pointer = band s",
+            "- info: [fileTexture] round 2: ACCEPT 4.831 ms (26.48x vs baseline, 1.08x over the previous best)",
+            "- info: [fileTexture] stopping after round 2: round 2 gained 1.08x, below the 1.15x needed to continue",
+            "- ok: fileTexture: 26.48x faster"
           ]
         },
         "bundle_exists": true,
         "bundle_path": "C:\\Users\\eric.vignola\\Desktop\\MPyNode\\templates\\MPyFile\\File Simple\\MPyFile_File_Simple.mll",
-        "ended": 1788994008.227634,
+        "ended": 1789007762.572723,
         "errors": [],
         "log": "C:\\Users\\eric.vignola\\Desktop\\MPyNode\\templates\\MPyFile\\File Simple\\_runner\\phase_b.log",
         "mode": {
@@ -5329,11 +5331,11 @@
               "ran": true,
               "reason": "1 string input(s) driven with generated fixtures: fileName | authored @maya_test: 1/1 passed",
               "timing": {
-                "cpp_ms": 0.01619989052414894,
+                "cpp_ms": 0.016600126400589943,
                 "measured": true,
                 "n": 3,
-                "py_ms": 0.18409988842904568,
-                "ratio": 0.08799511320938457,
+                "py_ms": 0.18620002083480358,
+                "ratio": 0.08915211892117646,
                 "rung": [
                   140,
                   5000
@@ -5355,8 +5357,8 @@
               "path": "agent",
               "rounds": 2
             },
-            "reason": "accepted (1.57x)",
-            "speedup": 1.565217391304348
+            "reason": "accepted (26.48x)",
+            "speedup": 26.479840211946847
           }
         },
         "phase": "b",
@@ -5364,14 +5366,14 @@
         "rounds": {
           "fileTexture": {
             "accepted": true,
-            "baseline_ms": 0.0036,
-            "best_ms": 0.0023,
-            "created": 1788994006.5960228,
+            "baseline_ms": 127.9347,
+            "best_ms": 4.8314,
+            "created": 1789007761.203833,
             "fresh": true,
             "n_rounds": 2,
             "parity_gate": "authored+pointwise",
             "path": "C:\\Users\\eric.vignola\\Desktop\\MPyNode\\templates\\MPyFile\\File Simple\\build\\stages\\fileTexture\\rounds.json",
-            "reason": "accepted (1.57x)",
+            "reason": "accepted (26.48x)",
             "rounds": [
               {
                 "cpp_same_as_baseline": true,
@@ -5379,7 +5381,7 @@
                 "has_hypothesis": false,
                 "has_theme": false,
                 "index": 0,
-                "ms": 0.0036,
+                "ms": 127.9347,
                 "note": "",
                 "outcome": "baseline",
                 "parity": null,
@@ -5388,39 +5390,39 @@
               },
               {
                 "cpp_same_as_baseline": false,
-                "duration_s": 838.808,
+                "duration_s": 896.022,
                 "has_hypothesis": true,
                 "has_theme": true,
                 "index": 1,
-                "ms": 0.0023,
-                "note": "confirmed twice (incumbent under the noise floor): 0.002 / 0.002 ms",
+                "ms": 5.2171,
+                "note": "",
                 "outcome": "accept",
                 "parity": "pass",
-                "slug": "scalar_texel_lazy_inputs",
-                "speedup": 1.565217391304348
+                "slug": "fused_bake_row_pool",
+                "speedup": 24.522186655421596
               },
               {
                 "cpp_same_as_baseline": false,
-                "duration_s": 695.751,
+                "duration_s": 732.453,
                 "has_hypothesis": true,
                 "has_theme": true,
                 "index": 2,
-                "ms": 0.0023,
+                "ms": 4.8314,
                 "note": "",
-                "outcome": "not-faster",
+                "outcome": "accept",
                 "parity": "pass",
-                "slug": "inline_no_image_texel",
-                "speedup": null
+                "slug": "pipeline_bake_upload",
+                "speedup": 26.479840211946847
               }
             ],
-            "speedup": 1.565217391304348
+            "speedup": 26.479840211946847
           }
         },
-        "secs": 1562.8,
+        "secs": 1639.2,
         "smoke": false,
-        "started": 1788992445.4271452,
+        "started": 1789006123.4039485,
         "state": "ok",
-        "wall_secs": 1566.5
+        "wall_secs": 1644.3
       }
     },
     "MPyFile\\Game Of Life Texture": {
@@ -5535,32 +5537,29 @@
             "done - ok: 1 node(s)"
           ],
           "n_log_lines": 2,
-          "n_optimize_events": 18,
+          "n_optimize_events": 15,
           "no_node_needed_llm": true,
           "optimize_events_tail": [
             "- info: [gameOfLifeTex] optimizing -- measuring baseline",
-            "- info: [gameOfLifeTex] baseline 0.008 ms; up to 6 optimize round(s) (at least 2; stops after a rejected round or a gain under 1.15x)",
+            "- info: [gameOfLifeTex] baseline 4.711 ms; up to 6 optimize round(s) (at least 2; stops after a rejected round or a gain under 1.15x)",
             "- info: [gameOfLifeTex] round 1/6 starting",
-            "- info: [gameOfLifeTex] round 1/6 -- AI working 4m34s",
-            "- info: [gameOfLifeTex] round 1/6 -- AI working 9m34s",
-            "- info: [gameOfLifeTex] round 1/6 -- AI working 14m34s",
-            "- info: [optimizer] agent edited gameOfLifeTex.cpp (223764 -> 222934 bytes)",
-            "- info: [gameOfLifeTex] round 1/6 trying: Replace the nd::Array temporaries on the per-texel path with scalar math and a fused seed/step kernel, so one texel costs a floor, two multiplies and a table lookup instead of ~70 heap allocations. (predicted 1.50x, risk: Bit-parity of the fused RNG (the partial twi",
-            "- info: [gameOfLifeTex] round 1/6 -- benchmarking 4s",
-            "- info: [gameOfLifeTex] round 1: ACCEPT 0.006 ms (1.25x vs baseline, 1.25x over the previous best)",
+            "- info: [gameOfLifeTex] round 1/6 -- AI working 4m42s",
+            "- info: [optimizer] agent edited gameOfLifeTex.cpp (223764 -> 223594 bytes)",
+            "- info: [gameOfLifeTex] round 1/6 trying: the VP2 bake sampled the board through the generic per-texel port (mutex, std::string, ~10 nd::Array temporaries per texel) and spawned min(12, h) threads per frame; it now reads the board buffer directly, serially, with the same float-narrowed uv -> floor -> trunca",
+            "- info: [gameOfLifeTex] round 1: ACCEPT 1.838 ms (2.56x vs baseline, 2.56x over the previous best)",
             "- info: [gameOfLifeTex] round 2/6 starting",
-            "- info: [gameOfLifeTex] round 2/6 -- AI working 4m56s",
-            "- info: [gameOfLifeTex] round 2/6 -- AI working 9m56s",
-            "- info: [optimizer] agent edited gameOfLifeTex.cpp (222934 -> 227717 bytes)",
-            "- info: [gameOfLifeTex] round 2/6 trying: cache the RandomState(seed) draw stream per instance so a reseed costs one compare per cell instead of a 624-word MT19937 init and twist, and rewrite the board in place instead of reallocating it (predicted 1.50x, risk: the cache is keyed on the seed value alone and",
-            "- info: [gameOfLifeTex] round 2: 0.004 ms not confirmed -- second measurement 0.006 ms",
+            "- info: [gameOfLifeTex] round 2/6 -- AI working 2m08s",
+            "- info: [gameOfLifeTex] round 2/6 -- AI working 7m08s",
+            "- info: [optimizer] agent edited gameOfLifeTex.cpp (223594 -> 219654 bytes)",
+            "- info: [gameOfLifeTex] round 2/6 trying: the bench grid is k x k with k in the tens, so the frame cost is fixed overhead: store the board as a flat byte vector and seed/step/sample it directly, with one mutex acquisition, cached fragment parameter names and sampler state, and MPlug(attr) reads instead of s",
+            "- info: [gameOfLifeTex] round 2: not faster (1.845 ms vs best 1.838 ms)",
             "- info: [gameOfLifeTex] stopping after round 2: round 2 not-faster -- nothing new to compound from",
-            "- ok: gameOfLifeTex: 1.25x faster"
+            "- ok: gameOfLifeTex: 2.56x faster"
           ]
         },
         "bundle_exists": true,
         "bundle_path": "C:\\Users\\eric.vignola\\Desktop\\MPyNode\\templates\\MPyFile\\Game Of Life Texture\\MPyFile_Game_Of_Life_Texture.mll",
-        "ended": 1788994572.9483926,
+        "ended": 1789007224.7813766,
         "errors": [],
         "log": "C:\\Users\\eric.vignola\\Desktop\\MPyNode\\templates\\MPyFile\\Game Of Life Texture\\_runner\\phase_b.log",
         "mode": {
@@ -5590,11 +5589,11 @@
               "ran": true,
               "reason": "verified with 1 geo/string input(s) left at default (unwired, could not be synthesized): bakePath | authored @maya_test: 1/1 passed",
               "timing": {
-                "cpp_ms": 0.029999995604157448,
+                "cpp_ms": 0.02459995448589325,
                 "measured": true,
                 "n": 3,
-                "py_ms": 0.46909996308386326,
-                "ratio": 0.0639522446493866,
+                "py_ms": 0.31579984351992607,
+                "ratio": 0.07789729789508608,
                 "rung": [
                   140,
                   5000
@@ -5616,8 +5615,8 @@
               "path": "agent",
               "rounds": 2
             },
-            "reason": "accepted (1.25x)",
-            "speedup": 1.2459016393442621
+            "reason": "accepted (2.56x)",
+            "speedup": 2.5634760842357296
           }
         },
         "phase": "b",
@@ -5625,14 +5624,14 @@
         "rounds": {
           "gameOfLifeTex": {
             "accepted": true,
-            "baseline_ms": 0.0076,
-            "best_ms": 0.0061,
-            "created": 1788994571.2486515,
+            "baseline_ms": 4.7109,
+            "best_ms": 1.8377,
+            "created": 1789007222.9789095,
             "fresh": true,
             "n_rounds": 2,
             "parity_gate": "authored+pointwise",
             "path": "C:\\Users\\eric.vignola\\Desktop\\MPyNode\\templates\\MPyFile\\Game Of Life Texture\\build\\stages\\gameOfLifeTex\\rounds.json",
-            "reason": "accepted (1.25x)",
+            "reason": "accepted (2.56x)",
             "rounds": [
               {
                 "cpp_same_as_baseline": true,
@@ -5640,7 +5639,7 @@
                 "has_hypothesis": false,
                 "has_theme": false,
                 "index": 0,
-                "ms": 0.0076,
+                "ms": 4.7109,
                 "note": "",
                 "outcome": "baseline",
                 "parity": null,
@@ -5649,39 +5648,39 @@
               },
               {
                 "cpp_same_as_baseline": false,
-                "duration_s": 1178.571,
+                "duration_s": 453.219,
                 "has_hypothesis": true,
                 "has_theme": true,
                 "index": 1,
-                "ms": 0.0061,
-                "note": "confirmed twice (incumbent under the noise floor): 0.004 / 0.006 ms",
+                "ms": 1.8377,
+                "note": "confirmed twice (incumbent under the noise floor): 1.838 / 1.829 ms",
                 "outcome": "accept",
                 "parity": "pass",
-                "slug": "scalar_texel",
-                "speedup": 1.2459016393442621
+                "slug": "direct_board_bake",
+                "speedup": 2.5634760842357296
               },
               {
                 "cpp_same_as_baseline": false,
-                "duration_s": 764.627,
+                "duration_s": 627.113,
                 "has_hypothesis": true,
                 "has_theme": true,
                 "index": 2,
-                "ms": 0.0058,
-                "note": "incumbent under the noise floor: second measurement 0.006 ms did not confirm 0.004 ms",
+                "ms": 1.8445,
+                "note": "",
                 "outcome": "not-faster",
                 "parity": "pass",
-                "slug": "cache_rng_stream",
+                "slug": "flat_board_no_nd_temporaries",
                 "speedup": null
               }
             ],
-            "speedup": 1.2459016393442621
+            "speedup": 2.5634760842357296
           }
         },
-        "secs": 1971.4,
+        "secs": 1101.4,
         "smoke": false,
-        "started": 1788992601.5552566,
+        "started": 1789006123.4059474,
         "state": "ok",
-        "wall_secs": 1976.5
+        "wall_secs": 1106.2
       }
     },
     "MPyIkSolver/Two Bone IK": {

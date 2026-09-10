@@ -1,6 +1,6 @@
 {
   "accepted": true,
-  "baseline_ms": 0.0076,
+  "baseline_ms": 4.7109,
   "bench": {
     "below_floor": true,
     "fingerprint": "skipped (node draws random numbers)",
@@ -12,18 +12,18 @@
       "uvCoord (float2)",
       "width (int)"
     ],
-    "reason": "baseline 0.008 ms is below the 15 ms noise floor even at the largest bench scene (geo=400 array=20000); measured anyway -- every accept must clear 1.15x on two independent timings",
+    "reason": "baseline 4.711 ms is below the 15 ms noise floor even at the largest bench scene (geo=bake array=4096); measured anyway -- every accept must clear 1.15x on two independent timings",
     "rung": [
-      400,
-      20000
+      "bake",
+      4096
     ],
     "small_rung": [
-      40,
-      512
+      "bake",
+      1024
     ]
   },
-  "best_ms": 0.0061,
-  "created": 1788994571.2486515,
+  "best_ms": 1.8377,
+  "created": 1789007222.9789095,
   "ledger": [
     {
       "compiled": true,
@@ -31,7 +31,7 @@
       "fix_rounds": 0,
       "hypothesis": "",
       "index": 0,
-      "ms": 0.0076,
+      "ms": 4.7109,
       "note": "",
       "outcome": "baseline",
       "parity": null,
@@ -43,42 +43,42 @@
     },
     {
       "compiled": true,
-      "duration_s": 1178.571,
+      "duration_s": 453.219,
       "fix_rounds": 0,
-      "hypothesis": "At bench size the board is k x k (width/height move to k every tick) and is reseeded every tick, so compute() is allocation-bound, not arithmetic-bound: ~20 nd::Array temporaries at 3-4 allocations each (uv from_data, slice/floor/sub/mul chains, random() + cmp_lt, board copies, output from_data) dominate the ~7 us tick. Fusing RandomState.random()<density into one loop over the generator, and computing only the 2*h*w words of the first MT twist that are ever read, removes most of the rest. No cross-evaluation cache was added: the harness seeds reset=1, so seed=int(frame) changes every tick and a seed-keyed RNG-stream cache would miss on every tick (it would only pay off for reset-off reseeds, which the bench never exercises).",
+      "hypothesis": "the harness drives width = height = k (2..12), so the grid is under 150 cells and the per-frame cost was thread creation/join plus per-texel allocation overhead, not arithmetic; removing both takes the node side of the bake to the noise floor and leaves only ogsRender's fixed cost",
       "index": 1,
-      "ms": 0.0061,
-      "note": "confirmed twice (incumbent under the noise floor): 0.004 / 0.006 ms",
+      "ms": 1.8377,
+      "note": "confirmed twice (incumbent under the noise floor): 1.838 / 1.829 ms",
       "outcome": "accept",
       "parity": "pass",
       "predicted_speedup": 1.5,
-      "risk": "Bit-parity of the fused RNG (the partial twist must equal the prefix of the full twist, and draws >= 624 must take the full path) and of the scalar uv->cell math (uv rounds through float exactly once, as the float2 plug does; int64 truncation and min() strictness kept). Checked with a standalone 24k-case comparison against the original nd:: kernels across seeds (incl. masked negatives), shapes (1x1 .. 64x64, 622/624/626 draws), densities (0, 1, out of range), multi-step chains and 20k random uv samples: 0 mismatches. A second round reusing the board buffer in place measured a tie (0.0037 vs 0.0037 ms) and was reverted.",
-      "slug": "scalar_texel",
-      "speedup": 1.2459016393442621,
-      "theme": "Replace the nd::Array temporaries on the per-texel path with scalar math and a fused seed/step kernel, so one texel costs a floor, two multiplies and a table lookup instead of ~70 heap allocations."
+      "risk": "the per-texel path is re-derived rather than shared with nd_texel, so any drift in the uv math would show up as a bake/compute mismatch; mitigated by keeping every cast, floor and the strict '<' clamp identical, and by keeping the single priming nd_texel call so seeding/stepping/bakePath writes still run through the ported code. Content key now hashes one byte per cell instead of 16 bytes per RGBA texel (same information, so the texture-manager cache behaves the same). Measured 4.52 -> 1.84 ms on this Windows box (baseline on entry 4.71); a diagnostic build that skipped the bake entirely measured 2.05 ms, so the remaining time is ogsRender itself. Note: build.sh is macOS-only and there is no clang here, so measurements used an MSVC build with the parent build.bat flags (/O2 /fp:precise) and the identical benchmark_node.py command.",
+      "slug": "direct_board_bake",
+      "speedup": 2.5634760842357296,
+      "theme": "the VP2 bake sampled the board through the generic per-texel port (mutex, std::string, ~10 nd::Array temporaries per texel) and spawned min(12, h) threads per frame; it now reads the board buffer directly, serially, with the same float-narrowed uv -> floor -> truncate -> min-clamp -> >0.5 math"
     },
     {
       "compiled": true,
-      "duration_s": 764.627,
+      "duration_s": 627.113,
       "fix_rounds": 0,
-      "hypothesis": "the bench moves width/height every tick so every tick reseeds a k x k board (k <= 13, at most 169 cells); the cost is not the grid but the serial 624-step MT19937 init, the twist, and ~5 heap allocs for a fresh nd::Array -- the seed itself repeats (reset off => seed 0), so the tempered doubles are a pure function of one input that holds, and memoising them plus reusing the board's bit-vector, shape and stride storage removes almost all node-side work; a prefix-twisted generator is marked partial and rebuilt from the seed if a later same-seed board needs more draws, so hits, misses and extensions all reproduce the fresh stream bit-for-bit (checked standalone: 12001 boards, 0 mismatches; in-place Conway step: 5000 steps, 0 mismatches)",
+      "hypothesis": "nd_texel's prime call built a std::string, ~10 nd::Array temporaries (bit-packed vector<bool> via shared_ptr) and locked the mutex twice per frame; updateShader re-scanned shader.parameterList and re-acquired a sampler state every frame; removing all of it should shave ~0.1 ms off a ~1.9 ms ogsRender tick whose remainder is Maya's own render cost",
       "index": 2,
-      "ms": 0.0058,
-      "note": "incumbent under the noise floor: second measurement 0.006 ms did not confirm 0.004 ms",
+      "ms": 1.8445,
+      "note": "",
       "outcome": "not-faster",
       "parity": "pass",
-      "predicted_speedup": 1.5,
-      "risk": "the cache is keyed on the seed value alone and holds up to 4M doubles (32 MB) per instance -- larger boards stream and bypass it; the node is now within noise of the harness's ~0.003 ms single-texel floor, so further node-side work is unmeasurable here; the in-place step is not exercised by the benchmark (shape moves every tick) and relies on the standalone check plus the parity pass",
-      "slug": "cache_rng_stream",
+      "predicted_speedup": 1.06,
+      "risk": "the seed/step/sample paths are hand-transcribed from the nd:: port -- MT19937 draw order (C order, double < double), zero-padded 3x3 sum, and the float2 narrowing + floor + truncating cast + min-clamp must stay identical; the bench noise (samples 1.7-2.6 ms) is larger than the expected win, so the measured 1.92 -> 1.80 ms (second run 1.90 ms) is directionally right but not statistically firm. Note: the workspace build.sh is the macOS clang script, so ./bench.sh cannot build on this Windows host; the measurements were taken with an equivalent MSVC cl /O2 /fp:precise build of the same file driven through the same benchmark_node.py command line.",
+      "slug": "flat_board_no_nd_temporaries",
       "speedup": null,
-      "theme": "cache the RandomState(seed) draw stream per instance so a reseed costs one compare per cell instead of a 624-word MT19937 init and twist, and rewrite the board in place instead of reallocating it"
+      "theme": "the bench grid is k x k with k in the tens, so the frame cost is fixed overhead: store the board as a flat byte vector and seed/step/sample it directly, with one mutex acquisition, cached fragment parameter names and sampler state, and MPlug(attr) reads instead of six findPlug name lookups"
     }
   ],
   "max_rounds": 6,
   "parity_gate": "authored+pointwise",
-  "reason": "accepted (1.25x)",
+  "reason": "accepted (2.56x)",
   "rounds": 2,
-  "speedup": 1.2459016393442621,
+  "speedup": 2.5634760842357296,
   "stop_reason": "round 2 not-faster -- nothing new to compound from",
   "type_name": "gameOfLifeTex"
 }

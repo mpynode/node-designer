@@ -1,8 +1,7 @@
 {
   "accepted": true,
-  "baseline_ms": 0.0093,
+  "baseline_ms": 578.6798,
   "bench": {
-    "below_floor": true,
     "fingerprint": "checked (2 plug(s))",
     "floor_ms": 15.0,
     "perturbed": [
@@ -15,18 +14,13 @@
       "speed (float)",
       "uvCoord (float2)"
     ],
-    "reason": "baseline 0.009 ms is below the 15 ms noise floor even at the largest bench scene (geo=400 array=20000); measured anyway -- every accept must clear 1.15x on two independent timings",
     "rung": [
-      400,
-      20000
-    ],
-    "small_rung": [
-      40,
-      512
+      "bake",
+      1024
     ]
   },
-  "best_ms": 0.0032,
-  "created": 1788992594.715808,
+  "best_ms": 5.8982,
+  "created": 1789008527.738827,
   "ledger": [
     {
       "compiled": true,
@@ -34,7 +28,7 @@
       "fix_rounds": 0,
       "hypothesis": "",
       "index": 0,
-      "ms": 0.0093,
+      "ms": 578.6798,
       "note": "",
       "outcome": "baseline",
       "parity": null,
@@ -46,42 +40,58 @@
     },
     {
       "compiled": true,
-      "duration_s": 974.133,
+      "duration_s": 507.717,
       "fix_rounds": 0,
-      "hypothesis": "at 6 us per evaluation the node is pure per-call overhead: ~24 malloc/free pairs from nd::from_data/slice/sub/floor/mul/add/sin dominate, then two MString copies and a second texture-cache probe for outSize; nd::sin and nd::floor are std::sin/std::floor on double so a scalar rewrite is bit-identical under /fp:precise and -ffp-contract=off",
+      "hypothesis": "the 1M-texel VP2 bake was paying ~8 heap allocations plus a string-compare memo lookup plus a sin() per texel for a result that is a pure function of the row; the remaining bake time was dominated by page-faulting a fresh 16 MB std::vector on the calling thread every bake",
       "index": 1,
-      "ms": 0.0032,
-      "note": "confirmed twice (incumbent under the noise floor): 0.003 / 0.003 ms",
+      "ms": 8.0502,
+      "note": "",
       "outcome": "accept",
       "parity": "pass",
-      "predicted_speedup": 1.8,
-      "risk": "measured on Windows/MSVC via a twin of bench.sh (the generated build.sh is macOS-only and cannot run on this host): 0.0063 ms -> 0.0028 ms (2.2x), bit-exact against the untouched original over 400 seeded random input sets (all wrap modes, prefilter kernels, colour spaces, blank fileName). Diagnostic floors: the same compute with the texel work deleted measures 0.0026 ms and with no input reads 0.0020 ms, so what remains is Maya datablock access and the harness's own pull overhead; the only lever left (skipping reads of inputs that hold via dirty tracking) has no cheap fingerprint backstop and was deliberately not taken. Round 2 (const MString& binding, single cache probe, no redundant pre-zero writes) is inside the noise but consistently 0.1-0.2 us lower.",
-      "slug": "scalar_texel",
-      "speedup": 2.9062499999999996,
-      "theme": "the ported texel body built about a dozen heap-allocating nd::Array<double> temporaries to do scalar arithmetic on one pixel; the same expression on plain doubles, in the same operation order, removes every allocation from compute()"
+      "predicted_speedup": 15.0,
+      "risk": "the scan band must be evaluated in exactly the ported operand order ((vv*bands) - frame*speed) * 2.0 * pi with v rounded to float first, or the double intermediates drift; the bake buffer is now a per-override member so it must never be shared across overrides (it is not)",
+      "slug": "scalar_texel_row_scan",
+      "speedup": 71.88390350550297,
+      "theme": "replace the per-texel nd::Array chain with scalar math, resolve the texture once per bake, compute the sine band once per row (it depends only on v), and reuse the 16 MB bake buffer across bakes"
     },
     {
-      "compiled": null,
-      "duration_s": 556.411,
+      "compiled": true,
+      "duration_s": 786.584,
       "fix_rounds": 0,
-      "hypothesis": "compute() is one texel: 13 inputValue reads, one memoised null-texture probe, one sin, four output writes. The only Maya-API work not needed for the answer was the four-way MPlug::operator!= gate, each call re-resolving the plug's attribute. One MObject fetch plus pointer compares should shave ~100-200 ns off a ~2.5-3 us tick. No algorithmic lever exists: the node is elementwise over ONE sample, the texture cache is already per-instance and keyed on every input it depends on, and the bench leaves fileName blank so the sample path is the null-texture sentinel.",
+      "hypothesis": "instrumented split on the Windows/MSVC box was bake 3-5 ms, acquireTexture ~1.7 ms, ogsRender ~3 ms; 1M texels on 12 threads should take well under 1 ms, so most of the bake number had to be thread creation + equal-block stragglers. Sleeping workers woken by generation counter, caller participating, rows claimed dynamically, should collapse it",
       "index": 2,
-      "ms": null,
-      "note": "candidate is identical to the current best",
-      "outcome": "no-change",
-      "parity": null,
-      "predicted_speedup": 1.04,
-      "risk": "The gain is inside the harness noise (run-to-run medians on the same binary spanned 0.0025-0.0054 ms). Interleaved measurement: original 0.0025 ms; change 0.0029 / 0.0027 / 0.0030 ms -- not lower, so reverted per the keep-if-lower rule. HARNESS NOTE: the workspace build.sh is the macOS clang recipe (looks under /Applications/Autodesk, -arch arm64 -bundle, lipo) and bench.sh's PYTHONPATH/MAYA_PLUG_IN_PATH use ':' separators, so ./bench.sh cannot run on this Windows host; every number above came from an equivalent scratch script that compiles the SAME file with the gate's own MSVC flags (toolchain._MSVC_CXXFLAGS + _msvc_defines, output byte-size 114688 matching the engine's .mll) and runs the SAME benchmark_node.py with the SAME --spec/--bench-array/--bench-geo/--iters arguments. build.sh and bench.sh were not edited.",
-      "slug": "single_attribute_plug_gate",
+      "ms": 5.8982,
+      "note": "",
+      "outcome": "accept",
+      "parity": "pass",
+      "predicted_speedup": 1.5,
+      "risk": "pool wake latency on 23 sleeping threads could eat the gain (measured: bake 4 ms -> 0.65 ms, median 9.44 -> 4.9-5.7 ms with +-0.7 ms run noise). Also tried and reverted: in-place MTexture::update() on a persistent texture (+0.7 ms, GPU sync stall), per-column x0/tx tables + row kernel (bake unchanged at 0.65 ms -- it is memory/wake bound now), worker cap 12 (no gain vs hardware_concurrency=24). Correctness: per-row work is a pure function of the row; the split cannot move a value. Pool cursor is a member, never file-scope; joined in the override destructor; MPYNODE_BAKE_THREADS caps it. Windows note: the generated build.sh/bench.sh are macOS clang scripts and cannot run here, so measurements used a private twin (same cl flags as build.bat, same benchmark_node.py invocation, PYTHONPATH with ';').",
+      "slug": "persistent_bake_pool",
+      "speedup": 98.11125428096707,
+      "theme": "replace the per-bake std::thread spawn/join of 12 workers with a persistent per-override condvar pool and a dynamic 8-row chunk cursor; the bake itself was cheap, creating the threads was the cost"
+    },
+    {
+      "compiled": true,
+      "duration_s": 1095.378,
+      "fix_rounds": 0,
+      "hypothesis": "the bake was ~0.7 ms of a 5.7 ms tick on 24 threads; each texel redid a double division, two clamp wraps, two float->int casts and the tx/ty tests that depend on x or y alone, so tabling them per bake should roughly halve the bake. The upload (MTextureManager::acquireTexture of a 16 MB RGBA32F texture, ~1.7 ms) and the ogsRender pipeline (~3 ms) are outside the node's arithmetic and set the floor",
+      "index": 3,
+      "ms": 6.0277,
+      "note": "",
+      "outcome": "not-faster",
+      "parity": "pass",
+      "predicted_speedup": 1.1,
+      "risk": "none numerically -- the table statements are the sampler's own, in the same float types and order, and the generic branch is the unchanged call; measured 5.65 ms vs 5.67 ms for the untouched file on this machine (24-thread Windows box, MSVC /O2), i.e. inside noise, because the bake is no longer where the tick goes. Also tried and REVERTED: (1) one persistent MTexture per override re-uploaded in place with MTexture::update -- 5.02 ms (1.13x) but update() itself costs the same ~1.7 ms as acquireTexture (the cost is the 16 MB copy, not the GPU allocation) and one of four runs rendered black, so the in-place upload is not reliably visible to the following draw; (2) streaming that upload in 8 row bands via MTextureUpdateRegion while the workers bake the rest -- 2.8 ms bake+upload vs 2.4 ms sequential, region updates carry a per-call cost that ate the overlap. The renders of every kept variant were compared pixel-for-pixel against the original file's render (identical).",
+      "slug": "column_row_sampler_tables",
       "speedup": null,
-      "theme": "resolve plug.attribute() once and compare MObjects instead of four MPlug-vs-MObject comparisons at the top of compute(); measured as noise, reverted, file left identical to the entry version"
+      "theme": "hoist the sampler's per-column (u, x0, tx) and per-row (y0, ty) work out of the 1M-texel bake loop as exact identities, so the corner-grid fast path is a gather, three double multiplies and a store"
     }
   ],
   "max_rounds": 6,
   "parity_gate": "authored+pointwise",
-  "reason": "accepted (2.91x)",
-  "rounds": 2,
-  "speedup": 2.9062499999999996,
-  "stop_reason": "round 2 no-change -- nothing new to compound from",
+  "reason": "accepted (98.11x)",
+  "rounds": 3,
+  "speedup": 98.11125428096707,
+  "stop_reason": "round 3 not-faster -- nothing new to compound from",
   "type_name": "scanlineTex"
 }

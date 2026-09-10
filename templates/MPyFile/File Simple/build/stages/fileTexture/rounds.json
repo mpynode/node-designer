@@ -1,8 +1,7 @@
 {
   "accepted": true,
-  "baseline_ms": 0.0036,
+  "baseline_ms": 127.9347,
   "bench": {
-    "below_floor": true,
     "fingerprint": "checked (2 plug(s))",
     "floor_ms": 15.0,
     "perturbed": [
@@ -13,18 +12,13 @@
       "preFilterRadius (float)",
       "uvCoord (float2)"
     ],
-    "reason": "baseline 0.004 ms is below the 15 ms noise floor even at the largest bench scene (geo=400 array=20000); measured anyway -- every accept must clear 1.15x on two independent timings",
     "rung": [
-      400,
-      20000
-    ],
-    "small_rung": [
-      40,
-      512
+      "bake",
+      1024
     ]
   },
-  "best_ms": 0.0023,
-  "created": 1788994006.5960228,
+  "best_ms": 4.8314,
+  "created": 1789007761.203833,
   "ledger": [
     {
       "compiled": true,
@@ -32,7 +26,7 @@
       "fix_rounds": 0,
       "hypothesis": "",
       "index": 0,
-      "ms": 0.0036,
+      "ms": 127.9347,
       "note": "",
       "outcome": "baseline",
       "parity": null,
@@ -44,42 +38,42 @@
     },
     {
       "compiled": true,
-      "duration_s": 838.808,
+      "duration_s": 896.022,
       "fix_rounds": 0,
-      "hypothesis": "compute() does ~25 heap round-trips per tick building nd::Array views for uvCoord and the graded colour, then probes the texture cache twice and reads eleven datablock inputs; with no image on disk the sample is the magenta sentinel before uv/wrap/border/colour-space/pre-filter are ever consulted, so those eight MDataBlock lookups and the second cache probe are pure overhead on that branch and the arithmetic can stay bit-identical in plain doubles",
+      "hypothesis": "at 1024x1024 the arithmetic is nothing -- per-texel allocation and per-bake thread creation are the whole cost, so hoisting everything that depends only on u or only on v, and keeping threads and the output buffer alive across bakes, leaves only the 16 MB GPU upload and the render",
       "index": 1,
-      "ms": 0.0023,
-      "note": "confirmed twice (incumbent under the noise floor): 0.002 / 0.002 ms",
+      "ms": 5.2171,
+      "note": "",
       "outcome": "accept",
       "parity": "pass",
-      "predicted_speedup": 1.6,
-      "risk": "the whole node is ~3 us and most of that is Maya's DG/plug machinery outside compute(), so the ceiling is low and the bench's 0.1 us resolution makes individual trims unmeasurable; the lazy-read branch is only a win when fileName is empty (the bench case) and must leave the real-image path reading every input exactly as before",
-      "slug": "scalar_texel_lazy_inputs",
-      "speedup": 1.565217391304348,
-      "theme": "a one-texel node is all per-access overhead: drop the nd::Array temporaries the port used to carry five numbers, and read only the inputs the current branch can see"
+      "predicted_speedup": 6.0,
+      "risk": "bit-parity of the row kernel against nd_tex_sample: same taps, same `+ 0.0f`, same blend order, same == 0 strictness, and u/v narrowed to float exactly where the float2 shim did it; verified compute max diff 0.0 and a standalone exhaustive bit-compare of the row kernel and nd_texel_fast against the original per-texel expression (49,807,360 floats over 5 image/grid shapes x 5 brightness/contrast pairs, 0 mismatches). The pool must never be file-scope: cursor, generation and pending are per-override members, workers touch no Maya API, joined in the destructor.",
+      "slug": "fused_bake_row_pool",
+      "speedup": 24.522186655421596,
+      "theme": "the VP2 bake paid an MString copy, two nd::Array heap temporaries and a memo probe per texel, then spawned 11 threads and zero-filled 16 MB every tick; resolve the buffer once, bake rows against a column table on a persistent pool into a reused buffer"
     },
     {
       "compiled": true,
-      "duration_s": 695.751,
+      "duration_s": 732.453,
       "fix_rounds": 0,
-      "hypothesis": "at 1.9 us per tick the timed region is MPlug.asMDataHandle overhead plus datablock reads/writes, so the only removable work is the four MPlug::operator!=(MObject) attribute resolutions (now one MPlug::attribute() and four MObject compares) and the nd_texel call frame with its dead nd_tex_sample dispatch on a null image",
+      "hypothesis": "profiling the override showed bake ~0.5 ms, acquireTexture ~2.0 ms and ~2.9 ms of ogsRender overhead we cannot touch; swapping acquireTexture for an in-place update() alone was neutral (the cost is the 16 MB copy, not the allocation), so the remaining lever is to hide the bake under the upload by splitting the grid into 4 row bands and uploading band k-1 on the calling thread while workers bake band k",
       "index": 2,
-      "ms": 0.0023,
+      "ms": 4.8314,
       "note": "",
-      "outcome": "not-faster",
+      "outcome": "accept",
       "parity": "pass",
-      "predicted_speedup": 1.05,
-      "risk": "unmeasurable: the machine runs five other mayapy processes and an interactive Maya, so the 9-sample median swings 0.0019-0.0038 ms between identical builds; only min / p10 were stable (0.0017-0.0018 / 0.0019 before and after). The inline branch reproduces nd_texel's arithmetic exactly ((double)1.0f, (double)0.0f, (double)1.0f through nd_grade_clamp, alpha (float)(double)1.0f) so parity cannot move. Every other Maya call in compute() -- 3 inputValue, 4 outputValue, 4 setters, 4 setClean -- is required for the plug contract, and splitting outTransparency/outSize into their own compute() would double the texel work for a renderer that pulls both, so it was rejected as benchmark gaming. Measurement note: the workspace bench.sh/build.sh are the macOS clang scripts and fail on this Windows host ('no Maya install with a devkit under /Applications/Autodesk'); timings came from an untouched-scripts mirror that runs the toolchain's exact MSVC command (/O2 /fp:precise /EHsc /MD /std:c++17) into fileTexture.mll and then the same benchmark_node.py invocation with the same --spec/--bench-array/--bench-geo arguments. Official-form 9-sample medians: 0.0022 ms before, 0.0020 ms after.",
-      "slug": "inline_no_image_texel",
-      "speedup": null,
-      "theme": "the benchmark leaves fileName empty, so compute() is sixteen Maya API calls around three double multiplies; resolve the plug attribute once and grade the magenta sentinel inline instead of through the 20-argument nd_texel call"
+      "predicted_speedup": 1.1,
+      "risk": "region-update semantics (data pointer = band start, rowPitch = full row, Y range exclusive) were unverified in the SDK docs, so the 64px render PNG was byte-compared against the previous version (identical); any failed region update falls back to releasing the texture and a full-buffer acquireTexture; measured here on Windows/MSVC via an equivalent local build+bench because build.sh is macOS-only -- 5.43 ms -> 4.61 ms median, ogsRender overhead dominates what remains",
+      "slug": "pipeline_bake_upload",
+      "speedup": 26.479840211946847,
+      "theme": "keep one persistent GPU texture per override and upload each baked band with MTexture::update(region) while the pool bakes the next band, so the 16 MB copy overlaps the bake instead of following it"
     }
   ],
   "max_rounds": 6,
   "parity_gate": "authored+pointwise",
-  "reason": "accepted (1.57x)",
+  "reason": "accepted (26.48x)",
   "rounds": 2,
-  "speedup": 1.565217391304348,
-  "stop_reason": "round 2 not-faster -- nothing new to compound from",
+  "speedup": 26.479840211946847,
+  "stop_reason": "round 2 gained 1.08x, below the 1.15x needed to continue",
   "type_name": "fileTexture"
 }
