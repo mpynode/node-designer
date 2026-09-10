@@ -1,6 +1,6 @@
 # meshRegionLocator -- compile report
 
-**Source node:** `meshRegions`  ·  **Base:** `MPxLocatorNode`  ·  **Generated:** 2026-09-10 12:16
+**Source node:** `meshRegions`  ·  **Base:** `MPxLocatorNode`  ·  **Generated:** 2026-09-10 14:36
 
 | stage | outcome |
 |---|---|
@@ -147,7 +147,7 @@ else:
 
 ## Unfinished work in the generated C++
 
-* **not translated:** the legacy baked `regions` dict is a STORED PYTHON
+* **not translated:** legacy baked `regions` dict (getattr(self, "regions", None)) is a
 
 ## Optimization
 

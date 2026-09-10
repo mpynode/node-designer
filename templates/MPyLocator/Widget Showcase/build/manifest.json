@@ -1,12 +1,12 @@
 {
   "manifest_version": 1,
-  "porter_recipe_version": "30",
+  "porter_recipe_version": "31",
   "provider": "claude_cli",
   "model": "claude-fable-5-1",
   "strict": false,
   "plugin_name": "MPyLocator_Widget_Showcase",
   "bundle": "C:\\Users\\eric.vignola\\Desktop\\MPyNode\\templates\\MPyLocator\\Widget Showcase\\MPyLocator_Widget_Showcase.mll",
-  "created": 1789067805.8106284,
+  "created": 1789076177.465455,
   "nodes": [
     {
       "source_node": "widgetShowcase",
@@ -14,15 +14,13 @@
       "type_id": "0x0001a417",
       "type_id_source": "derived",
       "base": "MPxLocatorNode",
-      "spec_hash": "7fd94cdea43e54094d3dc15b0c03c66e37748c45ebf372e16957f459b75f9f4d",
-      "port_cache_key": "7fd94cdea43e54094d3dc15b0c03c66e37748c45ebf372e16957f459b75f9f4d",
+      "spec_hash": "541801f6a437de0d93656fb9b9d96866c3733e1949e78163ef3f89b7530ddd2f",
+      "port_cache_key": "541801f6a437de0d93656fb9b9d96866c3733e1949e78163ef3f89b7530ddd2f",
       "cache": "hit",
       "build_status": "compiled",
       "build_reason": "",
       "ported": true,
-      "incomplete": [
-        "the optional persistent `presets` dict override (a stored-var"
-      ],
+      "incomplete": [],
       "invented_io": [],
       "missing_includes": [],
       "vp2_skip": "",

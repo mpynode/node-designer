@@ -16,20 +16,21 @@ and the gizmo animates smoothly.
 Throttle (measured in a live session, 2026-09):
 
  An unthrottled request every 33 ms forces a FULL viewport redraw 30x/s
- while Maya is idle. Ten interpreted Animated Text locators took 93% of
+ while Maya sat idle. Ten interpreted Animated Text locators took 93% of
  the main thread doing nothing; a hundred compiled ones took 98% at 7.8
- fps, forever. The cost of a request is MEASURED, not inferred: every
- model panel's post-render message (``MUiMessage``) marks "a render
- finished", and the first one after our request is that request's cost
- -- evaluation, prepareForDraw and draw. The next request waits ``2 x``
- that cost (never less than a tick) and never goes out while one is
- still unpaid, so idle animation takes at most ~half the main thread
- however many locators are enabled, while a cheap redraw keeps the full
- tick rate. Two earlier rules inferred the cost from how late the timer
- tick arrived; they misread Maya's own ~47 ms tick cadence as work and
- missed redraws that ran before the due tick. One timer for all nodes
- (not one per node as before) so N locators produce one dirty pass per
- tick, not N interleaved ones.
+ fps, forever. The meter is the main thread's own CPU clock
+ (``time.thread_time()``): an idle main thread consumes none, so the CPU
+ it consumed since our last request IS what servicing that request cost
+ -- evaluation, prepareForDraw and draw -- with no dependence on when
+ Maya delivers its events. The next request waits ``2 x`` that cost
+ (never less than a tick), so idle animation takes at most ~half the
+ main thread however many locators are enabled, while a cheap redraw
+ keeps the full tick rate. Anything else the user does on the main thread
+ (tumbling, scrubbing) also counts and simply backs the animation off.
+ Earlier meters -- how late the timer tick arrived, and Maya's render
+ messages -- both depended on event ordering and both misread the cost.
+ One timer for all nodes (not one per node as before) so N locators
+ produce one dirty pass per tick, not N interleaved ones.
 
 Crash safety (the user hit a crash on file->new with a naive
 implementation -- the timer kept firing on a dangling MObject):
@@ -74,8 +75,7 @@ Public API:
  * ``active_count()`` -- diagnostic: how many locators are enabled
  * ``refresh_stale_parents()`` -- flush all recorded parent transforms once
    (test/diagnostic seam; production flushes happen per node in the tick)
- * ``throttle_step(state, now, ...)`` / ``note_render_done(state, now)`` --
-   the pure gate the shared tick applies and the render event that feeds it
+ * ``throttle_step(state, now, cpu_now)`` -- the pure gate the shared tick applies
 """
 
 from __future__ import annotations
@@ -84,20 +84,15 @@ import time
 
 import maya.api.OpenMaya as om
 import maya.api.OpenMayaRender as omr
-import maya.api.OpenMayaUI as omui
 
 
 # Tick interval in seconds. 30 fps = 33ms is Maya's standard animation rate --
 # what playback would deliver if we had a time1 connection.
 _REFRESH_INTERVAL_SEC = 1.0 / 30.0
 
-# Wait this many times the last redraw's measured cost before requesting the
-# next idle redraw -> idle animation takes at most ~1/_BACKOFF of the main thread.
+# Wait this many times the CPU the last request cost before requesting the next
+# idle redraw -> idle animation takes at most ~1/_BACKOFF of the main thread.
 _BACKOFF = 2.0
-
-# A request whose render never arrives (every viewport hidden, or a panel that
-# appeared after the callbacks were synced) stops blocking after this long.
-_PENDING_TIMEOUT_SEC = 1.0
 
 
 # Module state: dict[hash_code, dict(handle, removal_cb_id, parent_handle)]
@@ -106,18 +101,14 @@ _TIMERS: dict[int, dict] = {}
 
 
 def _fresh_throttle_state():
-    """monotonic seconds, None = never. ``last_redraw`` is the measured cost of
-    the last request; ``pending`` = a request is out and the next render that
-    finishes pays for it."""
-    return {"last_dirty": None, "last_redraw": 0.0, "pending": False}
+    """``last_dirty``: monotonic seconds of the last request (None = never);
+    ``cpu_at_dirty``: the main thread's CPU clock at that request;
+    ``last_cost``: the CPU seconds the last request turned out to cost."""
+    return {"last_dirty": None, "cpu_at_dirty": 0.0, "last_cost": 0.0}
 
 
 # The ONE shared timer + throttle state.
 _SHARED: dict = dict(timer_id=None, **_fresh_throttle_state())
-
-
-# model panel name -> 3dView post-render callback id (the "render finished" meter)
-_RENDER_CBS: dict[str, int] = {}
 
 
 # Scene-event callback IDs (registered once on first enable()).
@@ -132,41 +123,27 @@ _MPYTRANSFORM_TYPENAME = "mPyTransform"
 # ---- Throttle (pure) ----
 
 
-def throttle_step(state, now, period=_REFRESH_INTERVAL_SEC, backoff=_BACKOFF,
-                  can_measure=True, pending_timeout=_PENDING_TIMEOUT_SEC):
+def throttle_step(state, now, cpu_now, period=_REFRESH_INTERVAL_SEC, backoff=_BACKOFF):
     """One tick of the throttle: should it request an idle redraw now?
 
-    ``state`` is a dict from :func:`_fresh_throttle_state` (mutated in place).
-    A request marks ``last_dirty`` and, when a render meter is available
-    (``can_measure``), goes ``pending`` until :func:`note_render_done` reports
-    the first render after it -- that interval IS the request's cost. Nothing
-    is requested while one is unpaid, and the next request waits
-    ``backoff x`` the last cost, never less than one period: an expensive
-    redraw takes at most ~1/backoff of the main thread, a cheap one keeps the
-    full tick rate. A pending request whose render never comes is released
-    after ``pending_timeout`` so a hidden viewport cannot stall the service.
+    ``state`` is a dict from :func:`_fresh_throttle_state` (mutated in place);
+    ``now`` is a monotonic wall clock, ``cpu_now`` the calling (main) thread's
+    CPU clock. The CPU the thread consumed since the last request is what
+    servicing it cost -- an idle main thread consumes none -- so the next
+    request waits ``backoff x`` that, never less than one period. A cheap
+    redraw keeps the full tick rate; an expensive one takes at most
+    ~1/backoff of the main thread; work the user does meanwhile counts too and
+    backs the animation off.
     """
-    if (state["pending"] and state["last_dirty"] is not None
-            and (now - state["last_dirty"]) > pending_timeout):
-        state["pending"] = False
-    if state["pending"]:
-        return False
-    wait = max(period, backoff * state["last_redraw"])
-    if state["last_dirty"] is not None and (now - state["last_dirty"]) < wait:
-        return False
+    if state["last_dirty"] is not None:
+        spent = max(0.0, cpu_now - state["cpu_at_dirty"])
+        wait = max(period, backoff * spent)
+        if (now - state["last_dirty"]) < wait:
+            return False
+        state["last_cost"] = spent
     state["last_dirty"] = now
-    state["pending"] = bool(can_measure)
+    state["cpu_at_dirty"] = cpu_now
     return True
-
-
-def note_render_done(state, now):
-    """A viewport finished rendering at ``now``: if a request is pending, the
-    time since it was made is its measured cost. Returns True when measured."""
-    if state["pending"] and state["last_dirty"] is not None:
-        state["last_redraw"] = max(0.0, now - state["last_dirty"])
-        state["pending"] = False
-        return True
-    return False
 
 
 # ---- Internal callbacks ----
@@ -268,54 +245,11 @@ def _timer_tick(handle: "om.MObjectHandle", parent_handle=None, *_unused) -> Non
         pass
 
 
-def _on_post_render(*_unused) -> None:
-    """A model panel finished rendering: the render meter."""
-    try:
-        note_render_done(_SHARED, time.monotonic())
-    except Exception:
-        pass
-
-
-def _sync_render_callbacks() -> bool:
-    """Keep one post-render callback per live model panel; True when at least
-    one exists (i.e. request costs can be measured). Batch has no panels."""
-    try:
-        from maya import cmds
-
-        panels = set(cmds.getPanel(type="modelPanel") or [])
-    except Exception:
-        panels = set()
-    for p in list(_RENDER_CBS):
-        if p not in panels:
-            cb = _RENDER_CBS.pop(p)
-            try:
-                om.MMessage.removeCallback(cb)
-            except Exception:
-                pass
-    for p in sorted(panels - set(_RENDER_CBS)):
-        try:
-            _RENDER_CBS[p] = omui.MUiMessage.add3dViewPostRenderMsgCallback(
-                p, _on_post_render)
-        except Exception:
-            pass
-    return bool(_RENDER_CBS)
-
-
-def _drop_render_callbacks() -> None:
-    for p in list(_RENDER_CBS):
-        cb = _RENDER_CBS.pop(p)
-        try:
-            om.MMessage.removeCallback(cb)
-        except Exception:
-            pass
-
-
 def _shared_tick(*_unused) -> None:
     """The ONE MTimerMessage callback: apply the throttle, then run every
-    enabled node's tick body. Never adds or removes timer callbacks itself."""
+    enabled node's tick body. Never adds or removes callbacks itself."""
     try:
-        can_measure = _sync_render_callbacks()
-        if not throttle_step(_SHARED, time.monotonic(), can_measure=can_measure):
+        if not throttle_step(_SHARED, time.monotonic(), time.thread_time()):
             return
         for rec in list(_TIMERS.values()):
             _timer_tick(rec["handle"], rec.get("parent_handle"))
@@ -327,7 +261,6 @@ def _ensure_shared_timer() -> None:
     if _SHARED["timer_id"] is not None:
         return
     _SHARED.update(_fresh_throttle_state())
-    _sync_render_callbacks()
     _SHARED["timer_id"] = om.MTimerMessage.addTimerCallback(
         _REFRESH_INTERVAL_SEC, _shared_tick)
 
@@ -335,7 +268,6 @@ def _ensure_shared_timer() -> None:
 def _stop_shared_timer() -> None:
     tid = _SHARED["timer_id"]
     _SHARED["timer_id"] = None
-    _drop_render_callbacks()
     if tid is None:
         return
     try:
@@ -489,8 +421,8 @@ def refresh_stale_parents() -> int:
 
 
 def _reset_all_for_tests() -> None:
-    """Test-only: tear down ALL state (records, shared timer, render meter,
-    scene callbacks, bookkeeping). Real production code should never call this."""
+    """Test-only: tear down ALL state (records, shared timer, scene
+    callbacks, bookkeeping). Real production code should never call this."""
     _on_scene_event()
     for cb_id in _SCENE_CB_IDS:
         try:

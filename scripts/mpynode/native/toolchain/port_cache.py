@@ -403,7 +403,14 @@ from typing import Optional
 # turns the first render after a request into its cost; wait 2x, never queue
 # behind an unpaid one) -- v28/v29 inferred the cost from tick lateness and
 # misread Maya's ~47 ms cadence. Locator-only codegen.
-PORTER_RECIPE_VERSION = "30"
+# v31: the v30 throttle metered a request by VP2's end-of-render notification,
+# which (like the render messages on the Python side) is delivered on Maya's
+# schedule, not the redraw's: the first "render finished" after a request was
+# the PREVIOUS redraw's, the cost read as ~0 and nothing throttled (compiled
+# N=100 82%). The poll now meters the main thread's own CPU clock
+# (GetThreadTimes / CLOCK_THREAD_CPUTIME_ID): CPU consumed since the last
+# request IS its cost, whatever the event order. Locator-only codegen.
+PORTER_RECIPE_VERSION = "31"
 
 # Spec keys excluded from the cache key -- provably irrelevant to the generated
 # C++. A deny-list, NOT an allow-list (design C1).

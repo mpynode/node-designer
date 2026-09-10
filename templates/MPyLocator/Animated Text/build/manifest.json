@@ -1,12 +1,12 @@
 {
   "manifest_version": 1,
-  "porter_recipe_version": "30",
+  "porter_recipe_version": "31",
   "provider": "claude_cli",
   "model": "claude-fable-5-1",
   "strict": false,
   "plugin_name": "MPyLocator_Animated_Text",
   "bundle": "C:\\Users\\eric.vignola\\Desktop\\MPyNode\\templates\\MPyLocator\\Animated Text\\MPyLocator_Animated_Text.mll",
-  "created": 1789067531.9785802,
+  "created": 1789076233.2419221,
   "nodes": [
     {
       "source_node": "animatedText",
@@ -14,8 +14,8 @@
       "type_id": "0x0004e393",
       "type_id_source": "derived",
       "base": "MPxLocatorNode",
-      "spec_hash": "bbb9f2d178b990ba12399d131153daaa8333b4167fbc381ebfe2a9bcba484fbf",
-      "port_cache_key": "bbb9f2d178b990ba12399d131153daaa8333b4167fbc381ebfe2a9bcba484fbf",
+      "spec_hash": "5ebab535eaa30816cddcdfa01e24b0b5e84a5bd4dd2e744fb3acf950d085ca8a",
+      "port_cache_key": "5ebab535eaa30816cddcdfa01e24b0b5e84a5bd4dd2e744fb3acf950d085ca8a",
       "cache": "hit",
       "build_status": "compiled",
       "build_reason": "",

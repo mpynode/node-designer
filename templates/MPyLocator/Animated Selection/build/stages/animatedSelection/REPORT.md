@@ -1,6 +1,6 @@
 # animatedSelection -- compile report
 
-**Source node:** `animatedSelection`  ·  **Base:** `MPxLocatorNode`  ·  **Generated:** 2026-09-10 12:12
+**Source node:** `animatedSelection`  ·  **Base:** `MPxLocatorNode`  ·  **Generated:** 2026-09-10 14:36
 
 | stage | outcome |
 |---|---|
@@ -70,7 +70,10 @@ if self.show_wireframe:
 
 self.draw = cube
 self.auto_highlight = False      # we drive highlighting ourselves
-self.auto_refresh = bool(elapsed < 1.0)
+# Keep repainting while the pop tween runs AND while the cube spins: on the wall
+# clock nothing else ever redraws it between interactions (a still cube with
+# spinSpeed 0 rests once its tween settles).
+self.auto_refresh = bool(elapsed < 1.0) or float(self.spinSpeed) != 0.0
 ```
 
 ## Optimization

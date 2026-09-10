@@ -6873,7 +6873,10 @@ if self.show_wireframe:
 
 self.draw = cube
 self.auto_highlight = False      # we drive highlighting ourselves
-self.auto_refresh = bool(elapsed < 1.0)
+# Keep repainting while the pop tween runs AND while the cube spins: on the wall
+# clock nothing else ever redraws it between interactions (a still cube with
+# spinSpeed 0 rests once its tween settles).
+self.auto_refresh = bool(elapsed < 1.0) or float(self.spinSpeed) != 0.0
 '''
 
 DEMO_LOC_SEL = '''# Animated Selection setup: frame the cube. Spin and hover pop both run on
@@ -6953,6 +6956,14 @@ def test_animated_selection(self):
     s1 = np.asarray(_poly(wallclock=1.0)["points"])
     assert_true(not np.allclose(s0, s1),
                 "spinSpeed should rotate the cube as the wall clock advances")
+
+    # 4) A spinning cube keeps repainting; a still one rests once its tween is over.
+    mc.setAttr(name + ".spinSpeed", 1.0)
+    assert_true(w.evaluate_draw_commands(0.0, wallclock=5.0)["auto_refresh"] is True,
+                "a spinning cube must request idle redraws")
+    mc.setAttr(name + ".spinSpeed", 0.0)
+    assert_true(w.evaluate_draw_commands(0.0, wallclock=5.0)["auto_refresh"] is False,
+                "a still cube must not request idle redraws")
 '''
 
 LOC_SEL_DESC = (
@@ -7020,6 +7031,12 @@ def build_locator_animated_selection():
     s0 = _draw_slot(w, "polygons", wallclock=0.0)["points"]
     s1 = _draw_slot(w, "polygons", wallclock=1.0)["points"]
     spin_ok = not np.allclose(s0, s1)
+    # ...and a spinning cube asks for idle redraws while a still one rests.
+    mc.setAttr(node + ".spinSpeed", 1.0)
+    refresh_spinning = w.evaluate_draw_commands(0.0, wallclock=5.0)["auto_refresh"] is True
+    mc.setAttr(node + ".spinSpeed", 0.0)
+    refresh_still = w.evaluate_draw_commands(0.0, wallclock=5.0)["auto_refresh"] is False
+    spin_ok = spin_ok and refresh_spinning and refresh_still
 
     has_demo = find_demo(DEMO_LOC_SEL) is not None
 

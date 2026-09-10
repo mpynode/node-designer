@@ -132,26 +132,26 @@ class TestThrottledIdleRefresh(unittest.TestCase):
         self.cpp = codegen._generate_locator_cpp(_spec(True))
         self.poll = _fn_body(self.cpp, "static void _poll(float, float, void*) {")
 
-    def test_cost_is_measured_by_vp2s_end_of_render_notification(self):
-        # Inferring the cost from tick lateness (v28/v29) misread Maya's ~47 ms
-        # tick cadence and missed redraws that ran before the due tick; the
-        # first render to finish after our request now pays for it.
-        self.assertIn("static void _onEndRender(MHWRender::MDrawContext&, void*)", self.cpp)
-        self.assertIn("if (g_costPending) { g_lastRedraw = std::max(0.0, _wallClock() - g_lastDirtyT); g_costPending = false; }",
-                      self.cpp)
-        self.assertIn("addNotification(_onEndRender", self.cpp)
-        self.assertIn("MHWRender::MPassContext::kEndRenderSemantic", self.cpp)
-        self.assertIn("removeNotification(", self.cpp)
-        for stale in ("g_lastTickT", "g_pendingMax", "1.25 * _period", "2.0 * _period"):
+    def test_cost_is_the_main_threads_cpu_since_the_last_request(self):
+        # Tick lateness (v28/v29) misread Maya's ~47 ms tick cadence; VP2's
+        # end-of-render notification (v30) reported the PREVIOUS redraw. The
+        # thread's own CPU clock depends on neither: an idle main thread
+        # consumes none, so CPU since the last request is that request's cost.
+        self.assertIn("static double _threadCpu()", self.cpp)
+        self.assertIn("GetThreadTimes(GetCurrentThread()", self.cpp)
+        self.assertIn("clock_gettime(CLOCK_THREAD_CPUTIME_ID", self.cpp)
+        self.assertIn("#define NOMINMAX", self.cpp)          # windows.h must not shadow std::max
+        self.assertIn("#define NOGDI", self.cpp)             # nor define a DrawText macro
+        for stale in ("g_lastTickT", "g_pendingMax", "_onEndRender", "addNotification",
+                      "g_costPending", "MDrawContext"):
             self.assertNotIn(stale, self.cpp)
 
-    def test_poll_waits_twice_the_measured_cost_and_never_queues(self):
-        self.assertIn("const double _wait = std::max(_period, 2.0 * g_lastRedraw);", self.poll)
-        self.assertIn("!g_costPending && (g_lastDirtyT < 0.0 || (_now - g_lastDirtyT) >= _wait)", self.poll)
-        self.assertIn("g_lastDirtyT = _now; g_costPending = g_notifOn;", self.poll)
-
-    def test_a_render_that_never_comes_stops_blocking(self):
-        self.assertIn("if (g_costPending && (_now - g_lastDirtyT) > 1.0) g_costPending = false;", self.poll)
+    def test_poll_waits_twice_the_cpu_spent_never_less_than_a_period(self):
+        self.assertIn("const double _spent = (g_lastDirtyT < 0.0) ? 0.0 : std::max(0.0, _cpu - g_cpuAtDirty);",
+                      self.poll)
+        self.assertIn("const double _wait = std::max(_period, 2.0 * _spent);", self.poll)
+        self.assertIn("(g_lastDirtyT < 0.0 || (_now - g_lastDirtyT) >= _wait)", self.poll)
+        self.assertIn("g_lastRedraw = _spent; g_lastDirtyT = _now; g_cpuAtDirty = _cpu;", self.poll)
 
     def test_dirtying_is_inside_the_gate(self):
         gate = self.poll.index("(_now - g_lastDirtyT) >= _wait")
@@ -174,8 +174,8 @@ class TestNonHoverLocatorSharesTheDrawPath(unittest.TestCase):
             self.assertIn(tok, self.cpp)
 
     def test_no_poll_no_throttle_state(self):
-        for tok in ("g_lastDirtyT", "g_lastRedraw", "g_costPending", "_onEndRender",
-                    "static void _poll("):
+        for tok in ("g_lastDirtyT", "g_lastRedraw", "g_cpuAtDirty", "_threadCpu",
+                    "GetThreadTimes", "static void _poll("):
             self.assertNotIn(tok, self.cpp)
 
     def test_helpers_stay_plugin_only(self):

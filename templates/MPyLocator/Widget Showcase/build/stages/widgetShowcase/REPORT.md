@@ -1,11 +1,11 @@
 # widgetShowcase -- compile report
 
-**Source node:** `widgetShowcase`  ·  **Base:** `MPxLocatorNode`  ·  **Generated:** 2026-09-10 12:16
+**Source node:** `widgetShowcase`  ·  **Base:** `MPxLocatorNode`  ·  **Generated:** 2026-09-10 14:36
 
 | stage | outcome |
 |---|---|
 | 1 Transpile | emitted, with region(s) the transpiler could not lower |
-| 2 AI assist | ran -- 1 region(s) still marked incomplete |
+| 2 AI assist | ran -- no unresolved regions |
 | 3 AI optimize | ran, nothing accepted (baseline could not be benchmarked) -- 0 run of max 6, stopped: baseline could not be benchmarked |
 
 ## The Python this was generated from
@@ -61,10 +61,6 @@ if "text" in active:
 
 self.draw = items
 ```
-
-## Unfinished work in the generated C++
-
-* **not translated:** the optional persistent `presets` dict override (a stored-var
 
 ## Optimization
 

@@ -1,15 +1,18 @@
 """Interpreted locator side of the 2026-09 draw-cost pass: whole-pixel point
 sizes (``draw_buffers.point_pixel_size``), the shared idle-refresh timer in
-``draw_refresh`` throttled by MEASURED redraw cost, the ``self.wallclock``
-draw-context slot, the ``self.time`` fix, and the in-memory Watch snapshot.
+``draw_refresh`` throttled on the main thread's CPU clock, the
+``self.wallclock`` draw-context slot, the ``self.time`` fix, and the in-memory
+Watch snapshot.
 
 Measured in a live session before the pass: ten interpreted Animated Text
 locators dirtied themselves from ten 30 fps timers and held the main thread at
 93% while Maya sat idle; a hundred compiled ones held it at 98% at 7.8 fps.
-Two throttles that inferred the redraw cost from the timer's lateness misread
-Maya's ~47 ms tick cadence (v28) or missed redraws that ran before the due tick
-(v29). The cost is now the time from a request to the first render that
-finishes after it, and the next request waits twice that.
+Three meters were tried: the timer's own lateness (misread Maya's ~47 ms tick
+cadence), Maya's render messages and VP2's end-of-render notification (both
+delivered on Maya's schedule, so the first "render finished" after a request
+was the previous redraw's). The thread's CPU clock depends on none of that:
+an idle main thread consumes none, so CPU since the last request is that
+request's cost, and the next request waits twice it.
 """
 from __future__ import annotations
 
@@ -52,79 +55,71 @@ class TestPointPixelSize(unittest.TestCase):
 
 
 class TestThrottleStep(unittest.TestCase):
-    """Pure state machine; ticks and render events are simulated with explicit
-    clocks."""
+    """Pure state machine driven by two explicit clocks: wall (monotonic) and
+    the main thread's CPU. Between ticks the thread is idle unless a redraw
+    ran, so CPU only advances by the redraw's cost."""
 
     def _state(self):
         from mpynode._common.draw import draw_refresh
 
         return draw_refresh._fresh_throttle_state()
 
-    def _step(self, st, now, can_measure=True):
+    def _step(self, st, now, cpu):
         from mpynode._common.draw import draw_refresh
 
-        return draw_refresh.throttle_step(st, now, can_measure=can_measure)
+        return draw_refresh.throttle_step(st, now, cpu)
 
-    def _done(self, st, now):
-        from mpynode._common.draw import draw_refresh
-
-        return draw_refresh.note_render_done(st, now)
-
-    def test_first_tick_fires_and_waits_for_its_render(self):
+    def test_first_tick_fires(self):
         st = self._state()
-        self.assertTrue(self._step(st, 10.0))
+        self.assertTrue(self._step(st, 10.0, 100.0))
         self.assertEqual(st["last_dirty"], 10.0)
-        self.assertTrue(st["pending"])
+        self.assertEqual(st["cpu_at_dirty"], 100.0)
 
-    def test_nothing_is_queued_behind_an_unpaid_request(self):
+    def test_cheap_redraws_keep_the_full_tick_rate(self):
+        # each request costs 9 ms of CPU; the tick after it sees 2 x 9 < period
         st = self._state()
-        self.assertTrue(self._step(st, 0.0))
-        for t in (0.033, 0.066, 0.099):
-            self.assertFalse(self._step(st, t))
-
-    def test_render_done_sets_the_cost_and_the_next_request_waits_twice_it(self):
-        st = self._state()
-        self.assertTrue(self._step(st, 0.0))
-        self.assertTrue(self._done(st, 0.125))            # a 125 ms redraw
-        self.assertAlmostEqual(st["last_redraw"], 0.125)
-        self.assertFalse(st["pending"])
-        for t in (0.158, 0.191, 0.224):
-            self.assertFalse(self._step(st, t))           # wait = 0.25 since the request
-        self.assertTrue(self._step(st, 0.257))
-
-    def test_render_done_without_a_pending_request_is_ignored(self):
-        st = self._state()
-        self.assertFalse(self._done(st, 5.0))
-        self.assertEqual(st["last_redraw"], 0.0)
-
-    def test_cheap_renders_keep_the_full_tick_rate(self):
-        st = self._state()
-        fired, t = 0, 10.0
+        t, cpu, fired = 10.0, 100.0, 0
         for _ in range(30):
-            if self._step(st, t):
+            if self._step(st, t, cpu):
                 fired += 1
-                self._done(st, t + 0.005)                 # 5 ms redraw, paid before the next tick
+                cpu += 0.009
             t += P * 1.001
         self.assertEqual(fired, 30)
 
-    def _duty(self, R, T=10.0):
-        """Each request costs R on the main thread: its render finishes R after
-        the request and the next tick comes right after; otherwise ticks come
-        every P. Returns the main-thread fraction spent on idle redraws."""
+    def test_an_expensive_redraw_is_waited_out_twice(self):
         st = self._state()
-        t, redraws = 0.0, 0
+        self.assertTrue(self._step(st, 0.0, 0.0))          # request; the redraw costs 125 ms CPU
+        cpu = 0.125                                         # ...which the thread has spent by the next tick
+        for t in (0.125, 0.158, 0.191, 0.224):
+            self.assertFalse(self._step(st, t, cpu))        # wait = 0.25 since the request
+        self.assertTrue(self._step(st, 0.257, cpu))
+        self.assertAlmostEqual(st["last_cost"], 0.125)
+
+    def test_user_work_on_the_main_thread_also_backs_off(self):
+        # 200 ms of tumbling since the request reads as cost: wait 0.4 s
+        st = self._state()
+        self.assertTrue(self._step(st, 0.0, 0.0))
+        self.assertFalse(self._step(st, 0.30, 0.20))
+        self.assertTrue(self._step(st, 0.41, 0.20))
+
+    def _duty(self, R, T=10.0):
+        """Each request costs R CPU delivered while the thread is busy for R;
+        the next tick comes right after; otherwise ticks come every P with no
+        CPU spent. Returns the main-thread fraction spent on idle redraws."""
+        st = self._state()
+        t, cpu, redraws = 0.0, 0.0, 0
         while t < T:
-            if self._step(st, t):
+            if self._step(st, t, cpu):
                 redraws += 1
                 t += R
-                self._done(st, t)
+                cpu += R
             else:
                 t += P
         return redraws * R / T
 
     def test_duty_cycle_stays_near_half_for_heavy_scenes(self):
-        # 65 ms: compiled N=100 today; 125 ms: compiled N=100 before the point
-        # fix; 257 ms: interpreted N=100. All three defeated the inferred rules.
+        # 65 ms: compiled N=100; 125 ms: compiled N=100 before the point fix;
+        # 257 ms: interpreted N=100. Every earlier meter let one of these through.
         for R in (0.065, 0.125, 0.257):
             busy = self._duty(R)
             self.assertLess(busy, 0.55, "R=%.3f busy=%.2f" % (R, busy))
@@ -132,26 +127,16 @@ class TestThrottleStep(unittest.TestCase):
 
     def test_cost_is_forgotten_when_the_scene_gets_cheap(self):
         st = self._state()
-        self.assertTrue(self._step(st, 0.0))
-        self._done(st, 0.125)                             # heavy
-        self.assertTrue(self._step(st, 0.26))
-        self._done(st, 0.262)                             # cheap now
-        self.assertAlmostEqual(st["last_redraw"], 0.002)
-        self.assertTrue(self._step(st, 0.26 + P * 1.01)) # full rate again
+        self.assertTrue(self._step(st, 0.0, 0.0))
+        self.assertFalse(self._step(st, 0.125, 0.125))      # heavy: wait 0.25
+        self.assertTrue(self._step(st, 0.26, 0.125))        # request; this one is cheap (2 ms)
+        self.assertTrue(self._step(st, 0.26 + P * 1.01, 0.127))
+        self.assertAlmostEqual(st["last_cost"], 0.002)
 
-    def test_a_render_that_never_comes_stops_blocking(self):
+    def test_a_cpu_clock_that_goes_backwards_counts_as_zero(self):
         st = self._state()
-        self.assertTrue(self._step(st, 0.0))
-        self.assertFalse(self._step(st, 0.5))             # still pending
-        self.assertTrue(self._step(st, 1.05))             # released after the 1 s timeout
-
-    def test_without_a_render_meter_it_runs_at_full_rate(self):
-        # batch / no model panel: nothing can be measured, so nothing is pending
-        st = self._state()
-        fired = [self._step(st, 10.0 + i * P * 1.001, can_measure=False)
-                 for i in range(30)]
-        self.assertTrue(all(fired))
-        self.assertFalse(st["pending"])
+        self.assertTrue(self._step(st, 0.0, 5.0))
+        self.assertTrue(self._step(st, P * 1.01, 4.0))      # spent clamps to 0 -> full rate
 
 
 class TestSharedTimer(unittest.TestCase):
@@ -213,12 +198,13 @@ class TestSharedTimer(unittest.TestCase):
             draw_refresh._reset_all_for_tests()
         self.assertEqual(len(seen), 2)
 
-    def test_batch_has_no_render_meter(self):
-        # no model panel in mayapy -> no post-render callback -> full rate, never pending
+    def test_the_tick_meters_the_threads_cpu_clock(self):
+        import inspect
+
         from mpynode._common.draw import draw_refresh
 
-        self.assertFalse(draw_refresh._sync_render_callbacks())
-        self.assertEqual(draw_refresh._RENDER_CBS, {})
+        src = inspect.getsource(draw_refresh._shared_tick)
+        self.assertIn("time.thread_time()", src)
 
     def test_module_stays_qt_free(self):
         import inspect

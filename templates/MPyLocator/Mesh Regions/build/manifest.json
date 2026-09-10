@@ -1,12 +1,12 @@
 {
   "manifest_version": 1,
-  "porter_recipe_version": "30",
+  "porter_recipe_version": "31",
   "provider": "claude_cli",
   "model": "claude-fable-5-1",
   "strict": false,
   "plugin_name": "MPyLocator_Mesh_Regions",
   "bundle": "C:\\Users\\eric.vignola\\Desktop\\MPyNode\\templates\\MPyLocator\\Mesh Regions\\MPyLocator_Mesh_Regions.mll",
-  "created": 1789067808.2950933,
+  "created": 1789076178.05648,
   "nodes": [
     {
       "source_node": "meshRegions",
@@ -14,14 +14,14 @@
       "type_id": "0x000609ee",
       "type_id_source": "derived",
       "base": "MPxLocatorNode",
-      "spec_hash": "045bdfd960e075ffa3b29854dafd827d26ae524ced8a6bef657632ffae83e531",
-      "port_cache_key": "045bdfd960e075ffa3b29854dafd827d26ae524ced8a6bef657632ffae83e531",
+      "spec_hash": "6f700159ea28c5ce593712b9439b61546fc5521afdfcc543b2026dd1b79fba89",
+      "port_cache_key": "6f700159ea28c5ce593712b9439b61546fc5521afdfcc543b2026dd1b79fba89",
       "cache": "hit",
       "build_status": "compiled",
       "build_reason": "",
       "ported": true,
       "incomplete": [
-        "the legacy baked `regions` dict is a STORED PYTHON"
+        "legacy baked `regions` dict (getattr(self, \"regions\", None)) is a"
       ],
       "invented_io": [],
       "missing_includes": [],
