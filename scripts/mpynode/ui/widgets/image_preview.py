@@ -39,6 +39,8 @@ from mpynode.ui.qt_wrapper import (
     QPainter,
     QPixmap,
     QSize,
+    QStyle,
+    QStyleOptionViewItem,
     QStyledItemDelegate,
     Qt,
 )
@@ -1311,6 +1313,13 @@ class ImagePreviewDelegate(QStyledItemDelegate):
 
     # -- paint: Qt rescales the master to the cell each repaint ---------
     def paint(self, painter, option, index):
+        # The style paints a dotted focus rectangle around the CURRENT cell
+        # (State_HasFocus); in a value column that renders as a dashed line
+        # under the clicked value -- read as an artifact, not as focus. The row
+        # highlight already shows the selection, so drop the focus state before
+        # deferring to the default painter. Keyboard navigation is untouched.
+        option = QStyleOptionViewItem(option)
+        option.state &= ~QStyle.State_HasFocus
         pm = self._image_pixmap(index)
         if pm is None:
             super().paint(painter, option, index)

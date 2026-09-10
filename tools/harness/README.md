@@ -85,6 +85,29 @@ unmeasurable, not a speed target. `--fingerprint-out FILE` dumps every pulled
 output after warm-up so the optimizer can reject a candidate whose outputs
 differ from the baseline's on the same scene (ledger outcome `bench-diverged`).
 
+## Live-session measurements (Script Editor, not mayapy)
+
+A locator's cost is its draw override, which no headless benchmark reaches
+(`ogsRender` never executes UI drawables), and the cost that matters for a gizmo
+is "what happens to my scene when I have fifty of these". Two scripts answer
+that inside an interactive Maya; both refuse to run in batch.
+
+| Script | Question |
+|---|---|
+| `viewport_bench.py` | Cost PER redraw: N copies of a node (interpreted from a `.mpn`, compiled from a plug-in, or both), `refresh(force=True)` timed over F frames → ms/refresh, ms/copy. |
+| `idle_probe.py` | Cost AT IDLE: with N copies in the scene and nobody touching Maya, redraws/s and main-thread CPU % over a window; configs for compiled, interpreted (optionally with a patched expression) and Mesh Regions on its head, with an optional cursor sweep for hover-driven gizmos. |
+
+```python
+import viewport_bench, idle_probe          # scripts/ + tools/harness/ on sys.path
+viewport_bench.run(compiled_type="animatedText", plugin=PLUG, copies=(1, 10, 50, 100), frames=60)
+idle_probe.run([idle_probe.compiled_config("cpp", "animatedText", plugin=PLUG)], seconds=10)
+```
+
+Both were written for the 2026-09 locator draw-cost pass (whole-pixel point sizes,
+one drawable batch per node, the CPU-metered idle-refresh throttle) and are how
+its numbers are re-checked. Their Maya-free helpers are unit-tested
+(`tests/compile/optimizer/test_viewport_bench.py`, `test_idle_probe.py`).
+
 ## VP2 probes
 
 Headless viewport rendering is fragile, so these escalate from "can this mayapy
