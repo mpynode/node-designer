@@ -111,13 +111,28 @@ def _place(cmds, node, pos):
         cmds.xform(xform, ws=True, t=pos)
 
 
+def _node_name_of(py_node):
+    """The Maya node name behind an mPyNode wrapper.
+
+    ``deserialize_node`` returns the WRAPPER, whose ``str()`` is a repr
+    (``<MPyLocator 'animatedText'>``) and not a name -- placing by that string
+    raised on the first row and left one locator in the scene. The wrappers
+    expose ``get_name()``; a plain string (the compiled path) passes through."""
+    if isinstance(py_node, str):
+        return py_node
+    for attr in ("get_name", "name", "node"):
+        v = getattr(py_node, attr, None)
+        if callable(v):
+            v = v()
+        if isinstance(v, str) and v:
+            return v
+    raise TypeError("cannot resolve a node name from %r" % (py_node,))
+
+
 def _make_interpreted(cmds, payload, n):
     from mpynode._common.io import mpn_io
-    nodes = []
-    for _ in range(n):
-        py_node = mpn_io.deserialize_node(payload, skip_selection=True)
-        nodes.append(py_node.node if hasattr(py_node, "node") else str(py_node))
-    return nodes
+    return [_node_name_of(mpn_io.deserialize_node(payload, skip_selection=True))
+            for _ in range(n)]
 
 
 def _make_compiled(cmds, node_type, n):
