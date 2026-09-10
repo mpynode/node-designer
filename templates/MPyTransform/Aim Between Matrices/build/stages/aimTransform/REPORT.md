@@ -1,12 +1,12 @@
 # aimTransform -- compile report
 
-**Source node:** `aimTransform`  ·  **Base:** `MPxTransform`  ·  **Generated:** 2026-09-08 23:29
+**Source node:** `aimTransform`  ·  **Base:** `MPxTransform`  ·  **Generated:** 2026-09-09 18:44
 
 | stage | outcome |
 |---|---|
 | 1 Transpile | deterministic C++, no AI |
 | 2 AI assist | not run (nothing to fill) |
-| 3 AI optimize | **4.10x** over 2 round(s) -- re-measured: unmeasurable under the gate |
+| 3 AI optimize | **3.17x** over 3 round(s) -- 3 run of max 6, stopped: round 3 not-faster -- nothing new to compound from |
 
 ## The Python this was generated from
 
@@ -43,36 +43,44 @@ self.apply_scale = True
 
 Parity gate: `authored+pointwise`. Every accepted round was re-checked against the interpreted Python before it was allowed to win. Where a node's generic pointwise parity SKIPS -- a deformer writes through the native `outputGeometry`, which the scalar harness cannot read -- the authored `@maya_test` is the ONLY gate, so treat those rows as behavioural checks rather than numerical ones.
 
-Bench scene: not recorded (ledger predates the scene record; no noise-floor gate, no per-tick perturbation check and no output fingerprint applied to these rounds).
+Bench scene: geo density 400 / array length 20000; noise floor 15 ms; moved per tick: `matrix0 (matrix)`, `matrix1 (matrix)`, `parentWorld (matrix)`; outputs checked (2 plug(s)); accepts re-timed against the incumbent on geo 40 / array 512 and rejected if slower there; baseline under the noise floor at the largest scene, so every accept had to clear 1.15x on two independent timings. baseline 0.013 ms is below the 15 ms noise floor even at the largest bench scene (geo=400 array=20000); measured anyway -- every accept must clear 1.15x on two independent timings.
 
-Baseline **0.008 ms** -> best **0.002 ms** (**4.10x**).
+Baseline **0.013 ms** -> best **0.004 ms** (**3.17x**).
 
-**Re-measured 2026-09-08** under the gated harness (noise floor, animated-input perturbation, output fingerprint), geo density 400 / array length 20000: **unmeasurable** -- baseline 0.013 ms is below the 15 ms noise floor even at the largest bench scene (geo=400 array=20000); nothing this small can be optimized against measurably. The speedup above was taken before the gate existed and cannot be reproduced under it. Moved per tick: `matrix0 (matrix)`, `matrix1 (matrix)`, `parentWorld (matrix)`.
+Rounds: **3** run of at most 6; the loop stopped because round 3 not-faster -- nothing new to compound from.
 
 | # | change | theme | predicted | measured | time | outcome |
 |---|---|---|---|---|---|---|
-| 00 | `--` | -- | -- | 0.008 ms | -- | -- |
-| 01 | `scalarise_and_feed_datablock` | this node is 4x4 scalar math wearing an ndarray costume: replace the nd:: lowering with stack scalars, stop re-reading the three matrix inputs through MPlug when compute() already holds them, and cache inverse(L) on the exact bits of L | 3.00x | 3.73x | 11.0 min | ACCEPTED |
-| 02 | `inplace_array_write` | write the 16 output-array elements in place instead of rebuilding them through an MArrayDataBuilder every tick; the node turned out to be entirely harness-bound, so the change is unmeasurable rather than a win | 1.25x | 4.10x | 10.6 min | ACCEPTED |
+| 00 | `--` | -- | -- | 0.013 ms | -- | -- |
+| 01 | `fused_scalar_kernel` | Replace the nd:: array chain (30-odd heap allocations per evaluate) and three findPlug/getValue/MFnMatrixData round trips with one fused scalar kernel that reads the three matrices straight from the datablock handles compute() already pulls; then write the 16 output elements in place instead of through a rebuilt MArrayDataBuilder. | 3.00x | 1.74x | 18.0 min | ACCEPTED |
+| 02 | `lean_output_walk` | walk the 16 output elements with next() and check the logical index only at the two ends, so each element costs 3 Maya API calls instead of 4 | 1.10x | 3.17x | 10.2 min | ACCEPTED |
+| 03 | `trim_preamble_gate_all` | test the plug before the RTTI cast so the base-class `matrix` pull skips it, and specialise the all-gates-open mix so the three unused base-row normalisations are never computed | 1.04x | 0.004 ms | 13.2 min | rejected: not faster |
 
 ### Predicted vs measured
 
 The rounds where the guess and the stopwatch disagreed. These are the transferable part -- a prediction that missed says more about the machine than one that landed.
 
-* `inplace_array_write` -- predicted 1.25x, measured **4.10x**. This node is ELEMENTWISE and tiny -- the whole numerical job is 4x4 scalar math on three matrix inputs, and the polySphere/20000-element inputs the bench drives are never read by compute(). A previous porter had already collapsed the nd::Array lowering to stack scalars and cached inverse(L). That left exactly one repeated Maya-API cost in the hot path: MArrayDataBuilder + 16 x addElement() (each an index search/insert) + arrH.set() commit, rebuilding an output array whose shape is a fixed 0..15 and never changes. Replacing it with jumpToArrayElement(0) + next() over the existing elements, guarded by elementCount()==16 and a per-element elementIndex() check with a full builder fallback, removes the builder allocation and the 16 searches without touching a single written value.
+* `fused_scalar_kernel` -- predicted 3.00x, measured **1.74x**. This node is ELEMENTWISE with a fixed 4x4 output; the arithmetic is ~200 ns, so the 12 us tick is all per-access overhead: MFnDependencyNode + 3x findPlug by name + 3x MPlug::getValue DG pulls in desiredLocal(), then ~30 shared_ptr/vector allocations for slice/norm/cross/eye/assign/inv/matmul temporaries. Keeping every operation in the same order on registers (sub, acc=acc+x*x norm, dot1d acc+=, cross formula, Gauss-Jordan inv with the 1e-12 pivot guard, matmul2d_fixed acc+=) is bit-identical under -ffp-contract=off / /fp:precise, so the kernel can be a plain function with zero allocations.
+* `lean_output_walk` -- predicted 1.10x, measured **3.17x**. compute() is ~85 Maya API calls and no real arithmetic (three 4x4 reads, one 4x4 inverse, sixteen scalar writes); the 16-element write loop is 64 of those calls, so trimming 14 redundant elementIndex() checks (16 sorted distinct indices with first==0 and last==15 are exactly 0..15) should be the largest removable share. Every input moves every tick, so no derived state survives between evaluations and caching cannot apply.
+* `trim_preamble_gate_all` -- predicted 1.04x, **rejected: not faster**. incumbent under the noise floor: 1.15x required, measured 1.14x
+
+### Rejected rounds
+
+* `trim_preamble_gate_all` -- rejected: not faster. incumbent under the noise floor: 1.15x required, measured 1.14x
 
 ## Verification
 
 * parity: **pass**  (maxerr 0.0, tol 0.0001)
 * authored @maya_test: 1/1 passed
-* speed: compiled 0.018 ms vs interpreted 0.064 ms (best of 3, geo 140 / array 5000)
+* speed: compiled 0.015 ms vs interpreted 0.054 ms (best of 3, geo 140 / array 5000)
 
 ## Files
 
 ```
 build/stages/aimTransform/1_transpiled.cpp     deterministic transpile (no AI)
 build/stages/aimTransform/3_optimized/00_baseline.cpp
-build/stages/aimTransform/3_optimized/01_scalarise_and_feed_datablock.cpp
-build/stages/aimTransform/3_optimized/02_inplace_array_write.cpp
+build/stages/aimTransform/3_optimized/01_fused_scalar_kernel.cpp
+build/stages/aimTransform/3_optimized/02_lean_output_walk.cpp
+build/stages/aimTransform/3_optimized/03_trim_preamble_gate_all.cpp
 build/source/aimTransform.cpp      SHIPPED
 ```

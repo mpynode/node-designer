@@ -1,12 +1,12 @@
 {
   "manifest_version": 1,
-  "porter_recipe_version": "19",
+  "porter_recipe_version": "27",
   "provider": "claude_cli",
-  "model": "claude-opus-5[1m]",
+  "model": "claude-fable-5-1",
   "strict": false,
   "plugin_name": "MPyMesh_Disk_Mesh_Cache",
-  "bundle": "templates/MPyMesh/Disk Mesh Cache/MPyMesh_Disk_Mesh_Cache.bundle",
-  "created": 1787676007.718208,
+  "bundle": "C:\\Users\\eric.vignola\\Desktop\\MPyNode\\templates\\MPyMesh\\Disk Mesh Cache\\MPyMesh_Disk_Mesh_Cache.mll",
+  "created": 1788992674.1371522,
   "nodes": [
     {
       "source_node": "diskMeshCache",
@@ -14,34 +14,25 @@
       "type_id": "0x0005925f",
       "type_id_source": "derived",
       "base": "MPxNode",
-      "spec_hash": "8f2837ea5bd544f178a1492bae329e1213a754c66e0c54fe4f14ec573415906c",
-      "port_cache_key": "8f2837ea5bd544f178a1492bae329e1213a754c66e0c54fe4f14ec573415906c",
-      "cache": "miss",
+      "spec_hash": "d38f976d487ca31981be87bdd393e0e23a15f548501ce4587ad39661ed63e8b2",
+      "port_cache_key": "d38f976d487ca31981be87bdd393e0e23a15f548501ce4587ad39661ed63e8b2",
+      "cache": "hit",
       "build_status": "compiled",
       "build_reason": "",
       "ported": false,
       "incomplete": [],
       "invented_io": [],
       "missing_includes": [],
+      "vp2_skip": "",
       "verify": {
         "ran": true,
         "pass": true,
-        "maxerr": 0.0,
-        "tol": 0.0001,
-        "reason": "authored @maya_test: 1/1 passed",
+        "maxerr": null,
+        "tol": 0.0,
+        "reason": "verify could not run: 'NoneType' object has no attribute 'add_input_attr' | authored @maya_test: 1/1 passed",
         "timing": {
-          "measured": true,
-          "py_ms": 0.30559999868273735,
-          "cpp_ms": 0.12170011177659035,
-          "n": 3,
-          "truncated": false,
-          "scene": "geo 140 / array 5000",
-          "ratio": 0.3982333517708386,
-          "verdict": "below-floor",
-          "rung": [
-            140,
-            5000
-          ]
+          "measured": false,
+          "reason": "not timed -- generic parity did not pass for this node, so there is no trustworthy pair to measure (verify could not run: 'NoneType' object has no attribute 'add_input_attr')"
         },
         "authored_test": {
           "ran": true,
@@ -50,8 +41,7 @@
           "passes": 1,
           "reason": ""
         },
-        "generic_ran": true,
-        "reverified": "2026-09-08"
+        "generic_ran": false
       },
       "spec": {
         "schema_version": 1,
@@ -225,7 +215,7 @@
             "source": "def _face_vertex_enumeration(counts, indices):\n    \"\"\"Return ``(face_ids, vertex_ids)`` MIntArrays enumerating every\n    face-vertex in flat order (face 0's verts, then face 1's, ...). ``vertex\n    _ids[k]`` is the mesh vertex id of the k-th face-vertex; the k-th entry\n    aligns with a per-face-vertex attribute array of length ``sum(counts)``.\"\"\"\n    face_ids = om.MIntArray()\n    vertex_ids = om.MIntArray()\n    off = 0\n    for f, c in enumerate(int(x) for x in counts):\n        for j in range(c):\n            face_ids.append(f)\n            vertex_ids.append(int(indices[off + j]))\n        off += c\n    return face_ids, vertex_ids"
           }
         ],
-        "methods": "# Demo + test for the disk-backed mesh cache. The asset (ripple_cache.ndio)\n# ships beside the template, so the demo locates it relative to the installed\n# mpynode package rather than hard-coding an absolute path.\n\n\ndef _asset_path():\n    \"\"\"Absolute path to the shipped ripple_cache.ndio.\"\"\"\n    import os\n\n    import mpynode\n\n    # .../scripts/mpynode/__init__.py -> up to the repo root, then templates/.\n    root = os.path.dirname(os.path.dirname(os.path.dirname(\n        os.path.abspath(mpynode.__file__))))\n    return os.path.join(root, \"templates\", \"MPyMesh\",\n                        \"Disk Mesh Cache\", \"ripple_cache.ndio\")\n\n\ndef _ensure_time(name):\n    \"\"\"Drive ``frame`` from ``time1``, explicitly.\n\n    The interpreted wrapper auto-wires a ``time`` input on create, but the\n    COMPILED node type does not -- ``createNode('diskMeshCache')`` leaves\n    ``frame`` at 0, so it would show frame 0 forever. Wiring it here is what\n    makes the demo animate and the test valid for BOTH node kinds.\n    \"\"\"\n    from maya import cmds as mc\n\n    if not mc.listConnections(name + \".frame\", source=True, destination=False):\n        mc.connectAttr(\"time1.outTime\", name + \".frame\", force=True)\n\n\n@maya_demo(label=\"Disk Mesh Cache: play a 48-frame cache off disk\")\ndef demo(self):\n    from maya import cmds as mc\n\n    name = self.get_name()\n    mc.setAttr(name + \".cachePath\", _asset_path(), type=\"string\")\n    _ensure_time(name)\n\n    # A render mesh fed by this node, with a shader so it reads in the viewport.\n    xform = mc.createNode(\"transform\", name=\"diskMeshCacheGeo#\", skipSelect=True)\n    shape = mc.createNode(\"mesh\", name=xform + \"Shape\", parent=xform, skipSelect=True)\n    mc.connectAttr(name + \".outMesh\", shape + \".inMesh\", force=True)\n    mc.sets(shape, edit=True, forceElement=\"initialShadingGroup\")\n\n    # The cache is 48 frames long; the node wraps with a modulo, so the range\n    # is a convenience rather than a constraint.\n    mc.playbackOptions(minTime=1, maxTime=48, animationStartTime=1, animationEndTime=48)\n    mc.currentTime(1)\n    mc.dgeval(shape + \".inMesh\")\n\n    try:\n        mc.select(xform)\n        mc.viewFit()\n        mc.select(clear=True)\n    except Exception:\n        pass    # batch / no viewport\n    return xform\n\n\n@maya_test(label=\"Disk Mesh Cache: every frame matches the file\", digits=4)\ndef test_disk_mesh_cache(self):\n    \"\"\"Drive the node through the timeline and compare its output mesh to the\n    arrays read straight out of the cache file.\"\"\"\n    import numpy as np\n    from maya import cmds as mc\n    import maya.api.OpenMaya as om2\n\n    from mpynode import ndio\n\n    name = self.get_name()\n    path = _asset_path()\n    mc.setAttr(name + \".cachePath\", path, type=\"string\")\n    mc.setAttr(name + \".scale\", 1.0)\n    _ensure_time(name)\n\n    render = mc.createNode(\"mesh\", skipSelect=True)\n    mc.connectAttr(name + \".outMesh\", render + \".inMesh\", force=True)\n\n    frames = ndio.read(path, \"points\")\n    counts = ndio.read(path, \"counts\", dtype=np.int64)\n    assert frames.shape[0] > 0, \"cache asset is missing or empty: %s\" % path\n\n    def out_points():\n        mc.dgdirty(name)\n        mc.dgeval(render + \".inMesh\")\n        sl = om2.MSelectionList()\n        sl.add(render)\n        fn = om2.MFnMesh(sl.getDagPath(0))\n        pts = fn.getPoints(om2.MSpace.kObject)\n        return np.array([[p.x, p.y, p.z] for p in pts], dtype=np.float64)\n\n    for f in (1, 12, 47, 50):\n        mc.currentTime(f)\n        got = out_points()\n        exp = frames[f % frames.shape[0]]\n        assert got.shape == exp.shape, (\n            \"frame %d: %r verts, expected %r\" % (f, got.shape, exp.shape))\n        # MFnMesh stores positions as float32, so compare at float32 precision.\n        err = float(np.abs(got - exp.astype(np.float32)).max())\n        assert err < 1e-4, \"frame %d: max vertex error %g\" % (f, err)\n\n    # Face topology comes from the same file and must survive the round trip.\n    mc.currentTime(1)\n    mc.dgeval(render + \".inMesh\")\n    assert mc.polyEvaluate(render, face=True) == int(counts.shape[0]), (\n        \"face count does not match the cache\")\n\n    # A missing file must degrade to an empty mesh, not an error.\n    mc.setAttr(name + \".cachePath\", path + \".nope\", type=\"string\")\n    mc.dgdirty(name)\n    mc.dgeval(render + \".inMesh\")\n    assert mc.polyEvaluate(render, vertex=True) in (0, None), (\n        \"a missing cache file must yield an empty mesh\")\n    mc.setAttr(name + \".cachePath\", path, type=\"string\")\n\n\n\"\"\"Setup source for mPyMesh nodes (self-first instance method).\"\"\"\n\n# Also this node's CREATE command, the way cmds.blendShape both makes the node\n# and wires it. Un-named because this file is shared by every node of the type\n# -- see maya_command.resolve_create_command_names.\n@maya_command(creates=True)\ndef setup(self, *args, **kwargs):\n    from maya import cmds as mc\n    name = self.get_name()\n    # build() owns ``self`` -- never delete it on failure. Only roll back the\n    # render transform/shape this body creates so a partial failure leaves no\n    # *Render / *RenderShape orphan (self is left built-but-unwired); re-raise.\n    created = []\n    conn = None  # (src, dst) we wired; break it before delete so the rollback\n                 # doesn't cascade-delete the upstream ``self``.\n    try:\n        xform = mc.createNode(\"transform\", name=name + \"Render\"); created.append(xform)\n        shape = mc.createNode(\"mesh\", name=name + \"RenderShape\", parent=xform)\n        src, dst = name + \".outMesh\", shape + \".inMesh\"\n        mc.connectAttr(src, dst, force=True); conn = (src, dst)\n        mc.sets(shape, edit=True, forceElement=\"initialShadingGroup\")\n        return name\n    except Exception:\n        if conn:\n            try:\n                mc.disconnectAttr(conn[0], conn[1])\n            except Exception:\n                pass\n        if created:\n            mc.delete([n for n in created if mc.objExists(n)])\n        raise\n",
+        "methods": "# Demo + test for the disk-backed mesh cache. The asset (ripple_cache.ndio)\n# ships beside the template, so the demo locates it relative to the installed\n# mpynode package rather than hard-coding an absolute path.\n\n\ndef _asset_path():\n    \"\"\"Absolute path to the shipped ripple_cache.ndio.\"\"\"\n    import os\n\n    import mpynode\n\n    # .../scripts/mpynode/__init__.py -> up to the repo root, then templates/.\n    root = os.path.dirname(os.path.dirname(os.path.dirname(\n        os.path.abspath(mpynode.__file__))))\n    return os.path.join(root, \"templates\", \"MPyMesh\",\n                        \"Disk Mesh Cache\", \"ripple_cache.ndio\")\n\n\ndef _ensure_time(name):\n    \"\"\"Drive ``frame`` from ``time1``, explicitly.\n\n    The interpreted wrapper auto-wires a ``time`` input on create, but the\n    COMPILED node type does not -- ``createNode('diskMeshCache')`` leaves\n    ``frame`` at 0, so it would show frame 0 forever. Wiring it here is what\n    makes the demo animate and the test valid for BOTH node kinds.\n    \"\"\"\n    from maya import cmds as mc\n\n    if not mc.listConnections(name + \".frame\", source=True, destination=False):\n        mc.connectAttr(\"time1.outTime\", name + \".frame\", force=True)\n\n\n@maya_demo(label=\"Disk Mesh Cache: play a 48-frame cache off disk\")\ndef demo(self):\n    from maya import cmds as mc\n\n    name = self.get_name()\n    mc.setAttr(name + \".cachePath\", _asset_path(), type=\"string\")\n    _ensure_time(name)\n\n    # A render mesh fed by this node, with a shader so it reads in the viewport.\n    xform = mc.createNode(\"transform\", name=\"diskMeshCacheGeo#\", skipSelect=True)\n    shape = mc.createNode(\"mesh\", name=xform + \"Shape\", parent=xform, skipSelect=True)\n    mc.connectAttr(name + \".outMesh\", shape + \".inMesh\", force=True)\n    mc.sets(shape, edit=True, forceElement=\"initialShadingGroup\")\n\n    # The cache is 48 frames long; the node wraps with a modulo, so the range\n    # is a convenience rather than a constraint.\n    mc.playbackOptions(minTime=1, maxTime=48, animationStartTime=1, animationEndTime=48)\n    mc.currentTime(1)\n    mc.dgeval(shape + \".inMesh\")\n\n    try:\n        mc.select(xform)\n        for _panel in mc.getPanel(type=\"modelPanel\") or []:\n            _cam = mc.modelEditor(_panel, query=True, camera=True)\n            if _cam:\n                mc.viewFit(_cam, allObjects=True)\n        mc.select(clear=True)\n    except Exception:\n        pass    # batch / no viewport\n    return xform\n\n\n@maya_test(label=\"Disk Mesh Cache: every frame matches the file\", digits=4)\ndef test_disk_mesh_cache(self):\n    \"\"\"Drive the node through the timeline and compare its output mesh to the\n    arrays read straight out of the cache file.\"\"\"\n    import numpy as np\n    from maya import cmds as mc\n    import maya.api.OpenMaya as om2\n\n    from mpynode import ndio\n\n    name = self.get_name()\n    path = _asset_path()\n    mc.setAttr(name + \".cachePath\", path, type=\"string\")\n    mc.setAttr(name + \".scale\", 1.0)\n    _ensure_time(name)\n\n    render = mc.createNode(\"mesh\", skipSelect=True)\n    mc.connectAttr(name + \".outMesh\", render + \".inMesh\", force=True)\n\n    frames = ndio.read(path, \"points\")\n    counts = ndio.read(path, \"counts\", dtype=np.int64)\n    assert frames.shape[0] > 0, \"cache asset is missing or empty: %s\" % path\n\n    def out_points():\n        mc.dgdirty(name)\n        mc.dgeval(render + \".inMesh\")\n        sl = om2.MSelectionList()\n        sl.add(render)\n        fn = om2.MFnMesh(sl.getDagPath(0))\n        pts = fn.getPoints(om2.MSpace.kObject)\n        return np.array([[p.x, p.y, p.z] for p in pts], dtype=np.float64)\n\n    for f in (1, 12, 47, 50):\n        mc.currentTime(f)\n        got = out_points()\n        exp = frames[f % frames.shape[0]]\n        assert got.shape == exp.shape, (\n            \"frame %d: %r verts, expected %r\" % (f, got.shape, exp.shape))\n        # MFnMesh stores positions as float32, so compare at float32 precision.\n        err = float(np.abs(got - exp.astype(np.float32)).max())\n        assert err < 1e-4, \"frame %d: max vertex error %g\" % (f, err)\n\n    # Face topology comes from the same file and must survive the round trip.\n    mc.currentTime(1)\n    mc.dgeval(render + \".inMesh\")\n    assert mc.polyEvaluate(render, face=True) == int(counts.shape[0]), (\n        \"face count does not match the cache\")\n\n    # A missing file must degrade to an empty mesh, not an error.\n    mc.setAttr(name + \".cachePath\", path + \".nope\", type=\"string\")\n    mc.dgdirty(name)\n    mc.dgeval(render + \".inMesh\")\n    assert mc.polyEvaluate(render, vertex=True) in (0, None), (\n        \"a missing cache file must yield an empty mesh\")\n    mc.setAttr(name + \".cachePath\", path, type=\"string\")\n\n\n\"\"\"Setup source for mPyMesh nodes (self-first instance method).\"\"\"\n\n# Also this node's CREATE command, the way cmds.blendShape both makes the node\n# and wires it. Un-named because this file is shared by every node of the type\n# -- see maya_command.resolve_create_command_names.\n@maya_command(creates=True)\ndef setup(self, *args, **kwargs):\n    from maya import cmds as mc\n    name = self.get_name()\n    # build() owns ``self`` -- never delete it on failure. Only roll back the\n    # render transform/shape this body creates so a partial failure leaves no\n    # *Render / *RenderShape orphan (self is left built-but-unwired); re-raise.\n    created = []\n    conn = None  # (src, dst) we wired; break it before delete so the rollback\n                 # doesn't cascade-delete the upstream ``self``.\n    try:\n        xform = mc.createNode(\"transform\", name=name + \"Render\"); created.append(xform)\n        shape = mc.createNode(\"mesh\", name=name + \"RenderShape\", parent=xform)\n        src, dst = name + \".outMesh\", shape + \".inMesh\"\n        mc.connectAttr(src, dst, force=True); conn = (src, dst)\n        mc.sets(shape, edit=True, forceElement=\"initialShadingGroup\")\n        return name\n    except Exception:\n        if conn:\n            try:\n                mc.disconnectAttr(conn[0], conn[1])\n            except Exception:\n                pass\n        if created:\n            mc.delete([n for n in created if mc.objExists(n)])\n        raise\n",
         "commands": [
           {
             "name": "diskMeshCache",
@@ -237,7 +227,7 @@
             "is_static": false,
             "params": [],
             "body_src": "@maya_command(creates=True)\ndef setup(self, *args, **kwargs):\n    from maya import cmds as mc\n    name = self.get_name()\n    # build() owns ``self`` -- never delete it on failure. Only roll back the\n    # render transform/shape this body creates so a partial failure leaves no\n    # *Render / *RenderShape orphan (self is left built-but-unwired); re-raise.\n    created = []\n    conn = None  # (src, dst) we wired; break it before delete so the rollback\n                 # doesn't cascade-delete the upstream ``self``.\n    try:\n        xform = mc.createNode(\"transform\", name=name + \"Render\"); created.append(xform)\n        shape = mc.createNode(\"mesh\", name=name + \"RenderShape\", parent=xform)\n        src, dst = name + \".outMesh\", shape + \".inMesh\"\n        mc.connectAttr(src, dst, force=True); conn = (src, dst)\n        mc.sets(shape, edit=True, forceElement=\"initialShadingGroup\")\n        return name\n    except Exception:\n        if conn:\n            try:\n                mc.disconnectAttr(conn[0], conn[1])\n            except Exception:\n                pass\n        if created:\n            mc.delete([n for n in created if mc.objExists(n)])\n        raise",
-            "lineno": 125
+            "lineno": 128
           }
         ],
         "portability": {

@@ -1,10 +1,10 @@
 # MPyFile_Game_Of_Life_Texture -- compile report
 
-Generated 2026-08-28 17:57
+Generated 2026-09-09 15:56
 
 | node | status | assist | optimize | detail |
 |---|---|---|---|---|
-| `gameOfLifeTex` | compiled | -- | **1.95x** | [report](build/stages/gameOfLifeTex/REPORT.md) |
+| `gameOfLifeTex` | compiled | -- | **1.25x** | [report](build/stages/gameOfLifeTex/REPORT.md) |
 
 ## Layout
 

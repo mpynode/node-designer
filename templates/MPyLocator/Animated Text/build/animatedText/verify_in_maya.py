@@ -4,7 +4,7 @@ Run in Maya. Loads the .bundle, samples inputs, compares outputs.
 import os, random
 import maya.cmds as cmds
 
-BUNDLE = os.path.join(os.path.dirname(__file__), 'animatedText.bundle')
+BUNDLE = os.path.join(os.path.dirname(__file__), 'animatedText.mll')
 NODE_TYPE = 'animatedText'
 SOURCE = 'animatedText'
 INPUTS = {"displayText": "string", "loopFrames": "int", "spacing": "float", "waveHeight": "float"}

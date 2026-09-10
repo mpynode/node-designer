@@ -4,7 +4,7 @@ Run in Maya. Loads the .bundle, samples inputs, compares outputs.
 import os, random
 import maya.cmds as cmds
 
-BUNDLE = os.path.join(os.path.dirname(__file__), 'rbfWrap.bundle')
+BUNDLE = os.path.join(os.path.dirname(__file__), 'rbfWrap.mll')
 NODE_TYPE = 'rbfWrap'
 SOURCE = 'rbfWrap'
 INPUTS = {"restCage": "mesh", "deformCage": "mesh", "geoToDeform": "mesh"}

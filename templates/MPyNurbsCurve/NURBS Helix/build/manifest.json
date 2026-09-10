@@ -1,12 +1,12 @@
 {
   "manifest_version": 1,
-  "porter_recipe_version": "19",
+  "porter_recipe_version": "27",
   "provider": "claude_cli",
-  "model": "claude-opus-5[1m]",
+  "model": "claude-fable-5-1",
   "strict": false,
   "plugin_name": "MPyNurbsCurve_NURBS_Helix",
-  "bundle": "templates/MPyNurbsCurve/NURBS Helix/MPyNurbsCurve_NURBS_Helix.bundle",
-  "created": 1787679896.801684,
+  "bundle": "C:\\Users\\eric.vignola\\Desktop\\MPyNode\\templates\\MPyNurbsCurve\\NURBS Helix\\MPyNurbsCurve_NURBS_Helix.mll",
+  "created": 1789000341.8299794,
   "nodes": [
     {
       "source_node": "helixCurve",
@@ -14,34 +14,25 @@
       "type_id": "0x00020331",
       "type_id_source": "derived",
       "base": "MPxNode",
-      "spec_hash": "c834491b39ad63af49d86b6a4fe861193e0a7337b92c7ca802210addc89a492d",
-      "port_cache_key": "c834491b39ad63af49d86b6a4fe861193e0a7337b92c7ca802210addc89a492d",
-      "cache": "miss",
+      "spec_hash": "1c7eb14abdb8603c172212d3fe5f122040ff40905f55d5f2c3c7667ffce2bca7",
+      "port_cache_key": "1c7eb14abdb8603c172212d3fe5f122040ff40905f55d5f2c3c7667ffce2bca7",
+      "cache": "hit",
       "build_status": "compiled",
       "build_reason": "",
       "ported": false,
       "incomplete": [],
       "invented_io": [],
       "missing_includes": [],
+      "vp2_skip": "",
       "verify": {
         "ran": true,
         "pass": true,
-        "maxerr": 3.677613769070831e-15,
-        "tol": 0.0001,
-        "reason": "authored @maya_test: 1/1 passed",
+        "maxerr": null,
+        "tol": 0.0,
+        "reason": "verify could not run: 'NoneType' object has no attribute 'add_input_attr' | authored @maya_test: 1/1 passed",
         "timing": {
-          "measured": true,
-          "py_ms": 0.2452000044286251,
-          "cpp_ms": 0.018300022929906845,
-          "n": 3,
-          "truncated": false,
-          "scene": "geo 140 / array 5000",
-          "ratio": 0.07463304485882981,
-          "verdict": "below-floor",
-          "rung": [
-            140,
-            5000
-          ]
+          "measured": false,
+          "reason": "not timed -- generic parity did not pass for this node, so there is no trustworthy pair to measure (verify could not run: 'NoneType' object has no attribute 'add_input_attr')"
         },
         "authored_test": {
           "ran": true,
@@ -50,8 +41,7 @@
           "passes": 1,
           "reason": ""
         },
-        "generic_ran": true,
-        "reverified": "2026-09-08"
+        "generic_ran": false
       },
       "spec": {
         "schema_version": 1,
@@ -200,7 +190,7 @@
             "source": "def _resolve_curve_form(obj):\n    \"\"\"Return ``(form_kind, periodic_bool)``.\n\n    Honors an optional legacy ``form`` attribute (a string\n    ``\"open\"``/``\"closed\"``/``\"periodic\"`` or an int ``MFnNurbsCurve`` form\n    constant) which the ``build_default_output`` shim passes through so the\n    ``closed`` form the periodic-only :class:`NurbsCurve` can't express is not\n    lost. If ``form`` is absent (the dataclass case) it falls back to the\n    ``periodic`` bool. ``periodic_bool`` drives uniform knot generation\n    (clamped vs continuous), so ``closed`` -> ``False`` -> clamped knots,\n    matching the legacy marshaller.\"\"\"\n    form = getattr(obj, \"form\", None)\n    if form is not None:\n        if isinstance(form, str):\n            kind = _CURVE_FORM_BY_NAME.get(form.lower(), om.MFnNurbsCurve.kOpen)\n        elif isinstance(form, int) and not isinstance(form, bool):\n            kind = int(form)\n        else:\n            kind = om.MFnNurbsCurve.kOpen\n        return kind, (kind == om.MFnNurbsCurve.kPeriodic)\n    periodic = bool(getattr(obj, \"periodic\", False))\n    return (om.MFnNurbsCurve.kPeriodic if periodic\n            else om.MFnNurbsCurve.kOpen), periodic"
           }
         ],
-        "methods": "@maya_test(label=\"Helix builds a 120-CV degree-3 curve of the right radius\", digits=4)\ndef test_helix(self):\n    \"\"\"Validate the node's INTENT (same test drives the interpreted node AND its\n    C++ compile -> parity): the generator builds a real 120-CV degree-3\n    nurbsCurve whose X-extent tracks 2*radius. Drives ONLY public plugs + cmds,\n    so it is valid against the compiled node too.\"\"\"\n    from maya import cmds as mc\n    import maya.api.OpenMaya as om2\n    from mpynode._common.methods.test_helpers import assert_true\n\n    name = self.get_name()\n\n    def _set(plug, *vals):\n        for s in (mc.listConnections(plug, s=True, d=False, plugs=True) or []):\n            mc.disconnectAttr(s, plug)\n        mc.setAttr(plug, *vals)\n\n    # Build a real nurbsCurve shape driven by outCurve (idempotent: reuse the\n    # one this node already drives, if any).\n    dst = mc.listConnections(name + \".outCurve\", s=False, d=True, plugs=True) or []\n    shp = None\n    for d in dst:\n        node = d.split(\".\")[0]\n        if mc.nodeType(node) == \"nurbsCurve\":\n            shp = node\n            break\n    if shp is None:\n        xf = mc.createNode(\"transform\", name=\"helixTest#\")\n        shp = mc.createNode(\"nurbsCurve\", name=xf + \"Shape\", parent=xf)\n        mc.connectAttr(name + \".outCurve\", shp + \".create\", force=True)\n\n    _set(name + \".radius\", 2.5)\n    _set(name + \".turns\", 3.0)\n    _set(name + \".height\", 6.0)\n    mc.currentTime(1)\n    mc.dgeval(shp + \".create\")\n\n    spans = mc.getAttr(shp + \".spans\")\n    deg = mc.getAttr(shp + \".degree\")\n    cv_count = spans + deg          # open curve: #CVs = spans + degree\n    assert_true(cv_count == 120, \"expected 120 CVs, got %r\" % cv_count)\n    assert_true(deg == 3, \"expected degree 3, got %r\" % deg)\n\n    sel = om2.MSelectionList(); sel.add(shp)\n    fn = om2.MFnNurbsCurve(sel.getDagPath(0))\n    xs = [p.x for p in fn.cvPositions(om2.MSpace.kObject)]\n    x_extent = max(xs) - min(xs)\n    assert_true(abs(x_extent - 5.0) < 0.5,\n                \"X-extent %.3f should track 2*radius=5.0\" % x_extent)\n\n\n@maya_demo(label=\"Animated Helix Curve\")\ndef demo(self):\n    \"\"\"Build a nurbsCurve shape driven by this generator, tune a wide coil, set a\n    one-loop playback range and press-play-ready timeline. The coil slowly spins\n    because `t` is wired to the timeline.\"\"\"\n    from maya import cmds as mc\n    name = self.get_name()\n\n    xf = mc.createNode(\"transform\", name=\"helixCurve#\")\n    shp = mc.createNode(\"nurbsCurve\", name=xf + \"Shape\", parent=xf)\n    mc.connectAttr(name + \".outCurve\", shp + \".create\", force=True)\n    # `t` auto-connects to time1 on create; re-assert if the apply path dropped it.\n    if not (mc.listConnections(name + \".t\", s=True, d=False) or []):\n        try:\n            mc.connectAttr(\"time1.outTime\", name + \".t\", force=True)\n        except Exception:\n            pass\n\n    mc.setAttr(name + \".radius\", 2.5)\n    mc.setAttr(name + \".turns\", 4.0)\n    mc.setAttr(name + \".height\", 6.0)\n    mc.playbackOptions(min=1, max=120)\n    mc.currentTime(1)\n    mc.select(xf, replace=True)\n    try:\n        mc.viewFit(xf)\n    except Exception:\n        pass\n    return name\n\n\n\"\"\"Setup source for mPyNurbsCurve nodes (self-first instance method).\"\"\"\n\n# Also this node's CREATE command, the way cmds.blendShape both makes the node\n# and wires it. Un-named because this file is shared by every node of the type\n# -- see maya_command.resolve_create_command_names.\n@maya_command(creates=True)\ndef setup(self, *args, **kwargs):\n    from maya import cmds as mc\n    name = self.get_name()\n    # build() owns ``self`` -- never delete it on failure. Only roll back the\n    # render transform/shape this body creates so a partial failure leaves no\n    # orphan; re-raise so build()/the command records built-but-unwired.\n    created = []\n    conn = None  # break any wired connection before delete so the rollback\n                 # doesn't cascade-delete the upstream ``self``.\n    try:\n        xform = mc.createNode(\"transform\", name=name + \"Render\"); created.append(xform)\n        shape = mc.createNode(\"nurbsCurve\", name=name + \"RenderShape\", parent=xform)\n        src, dst = name + \".outCurve\", shape + \".create\"\n        mc.connectAttr(src, dst, force=True); conn = (src, dst)\n        return name\n    except Exception:\n        if conn:\n            try:\n                mc.disconnectAttr(conn[0], conn[1])\n            except Exception:\n                pass\n        if created:\n            mc.delete([n for n in created if mc.objExists(n)])\n        raise\n",
+        "methods": "@maya_test(label=\"Helix builds a 120-CV degree-3 curve of the right radius\", digits=4)\ndef test_helix(self):\n    \"\"\"Validate the node's INTENT (same test drives the interpreted node AND its\n    C++ compile -> parity): the generator builds a real 120-CV degree-3\n    nurbsCurve whose X-extent tracks 2*radius. Drives ONLY public plugs + cmds,\n    so it is valid against the compiled node too.\"\"\"\n    from maya import cmds as mc\n    import maya.api.OpenMaya as om2\n    from mpynode._common.methods.test_helpers import assert_true\n\n    name = self.get_name()\n\n    def _set(plug, *vals):\n        for s in (mc.listConnections(plug, s=True, d=False, plugs=True) or []):\n            mc.disconnectAttr(s, plug)\n        mc.setAttr(plug, *vals)\n\n    # Build a real nurbsCurve shape driven by outCurve (idempotent: reuse the\n    # one this node already drives, if any).\n    dst = mc.listConnections(name + \".outCurve\", s=False, d=True, plugs=True) or []\n    shp = None\n    for d in dst:\n        node = d.split(\".\")[0]\n        if mc.nodeType(node) == \"nurbsCurve\":\n            shp = node\n            break\n    if shp is None:\n        xf = mc.createNode(\"transform\", name=\"helixTest#\")\n        shp = mc.createNode(\"nurbsCurve\", name=xf + \"Shape\", parent=xf)\n        mc.connectAttr(name + \".outCurve\", shp + \".create\", force=True)\n\n    _set(name + \".radius\", 2.5)\n    _set(name + \".turns\", 3.0)\n    _set(name + \".height\", 6.0)\n    mc.currentTime(1)\n    mc.dgeval(shp + \".create\")\n\n    spans = mc.getAttr(shp + \".spans\")\n    deg = mc.getAttr(shp + \".degree\")\n    cv_count = spans + deg          # open curve: #CVs = spans + degree\n    assert_true(cv_count == 120, \"expected 120 CVs, got %r\" % cv_count)\n    assert_true(deg == 3, \"expected degree 3, got %r\" % deg)\n\n    sel = om2.MSelectionList(); sel.add(shp)\n    fn = om2.MFnNurbsCurve(sel.getDagPath(0))\n    xs = [p.x for p in fn.cvPositions(om2.MSpace.kObject)]\n    x_extent = max(xs) - min(xs)\n    assert_true(abs(x_extent - 5.0) < 0.5,\n                \"X-extent %.3f should track 2*radius=5.0\" % x_extent)\n\n\n@maya_demo(label=\"Animated Helix Curve\")\ndef demo(self):\n    \"\"\"Build a nurbsCurve shape driven by this generator, tune a wide coil, set a\n    one-loop playback range and press-play-ready timeline. The coil slowly spins\n    because `t` is wired to the timeline.\"\"\"\n    from maya import cmds as mc\n    name = self.get_name()\n\n    xf = mc.createNode(\"transform\", name=\"helixCurve#\")\n    shp = mc.createNode(\"nurbsCurve\", name=xf + \"Shape\", parent=xf)\n    mc.connectAttr(name + \".outCurve\", shp + \".create\", force=True)\n    # `t` auto-connects to time1 on create; re-assert if the apply path dropped it.\n    if not (mc.listConnections(name + \".t\", s=True, d=False) or []):\n        try:\n            mc.connectAttr(\"time1.outTime\", name + \".t\", force=True)\n        except Exception:\n            pass\n\n    mc.setAttr(name + \".radius\", 2.5)\n    mc.setAttr(name + \".turns\", 4.0)\n    mc.setAttr(name + \".height\", 6.0)\n    mc.playbackOptions(min=1, max=120)\n    mc.currentTime(1)\n    mc.select(xf, replace=True)\n    try:\n        for _panel in mc.getPanel(type=\"modelPanel\") or []:\n            _cam = mc.modelEditor(_panel, query=True, camera=True)\n            if _cam:\n                mc.viewFit(_cam, allObjects=True)\n    except Exception:\n        pass\n    return name\n\n\n\"\"\"Setup source for mPyNurbsCurve nodes (self-first instance method).\"\"\"\n\n# Also this node's CREATE command, the way cmds.blendShape both makes the node\n# and wires it. Un-named because this file is shared by every node of the type\n# -- see maya_command.resolve_create_command_names.\n@maya_command(creates=True)\ndef setup(self, *args, **kwargs):\n    from maya import cmds as mc\n    name = self.get_name()\n    # build() owns ``self`` -- never delete it on failure. Only roll back the\n    # render transform/shape this body creates so a partial failure leaves no\n    # orphan; re-raise so build()/the command records built-but-unwired.\n    created = []\n    conn = None  # break any wired connection before delete so the rollback\n                 # doesn't cascade-delete the upstream ``self``.\n    try:\n        xform = mc.createNode(\"transform\", name=name + \"Render\"); created.append(xform)\n        shape = mc.createNode(\"nurbsCurve\", name=name + \"RenderShape\", parent=xform)\n        src, dst = name + \".outCurve\", shape + \".create\"\n        mc.connectAttr(src, dst, force=True); conn = (src, dst)\n        return name\n    except Exception:\n        if conn:\n            try:\n                mc.disconnectAttr(conn[0], conn[1])\n            except Exception:\n                pass\n        if created:\n            mc.delete([n for n in created if mc.objExists(n)])\n        raise\n",
         "commands": [
           {
             "name": "helixCurve",
@@ -212,7 +202,7 @@
             "is_static": false,
             "params": [],
             "body_src": "@maya_command(creates=True)\ndef setup(self, *args, **kwargs):\n    from maya import cmds as mc\n    name = self.get_name()\n    # build() owns ``self`` -- never delete it on failure. Only roll back the\n    # render transform/shape this body creates so a partial failure leaves no\n    # orphan; re-raise so build()/the command records built-but-unwired.\n    created = []\n    conn = None  # break any wired connection before delete so the rollback\n                 # doesn't cascade-delete the upstream ``self``.\n    try:\n        xform = mc.createNode(\"transform\", name=name + \"Render\"); created.append(xform)\n        shape = mc.createNode(\"nurbsCurve\", name=name + \"RenderShape\", parent=xform)\n        src, dst = name + \".outCurve\", shape + \".create\"\n        mc.connectAttr(src, dst, force=True); conn = (src, dst)\n        return name\n    except Exception:\n        if conn:\n            try:\n                mc.disconnectAttr(conn[0], conn[1])\n            except Exception:\n                pass\n        if created:\n            mc.delete([n for n in created if mc.objExists(n)])\n        raise",
-            "lineno": 89
+            "lineno": 92
           }
         ],
         "portability": {

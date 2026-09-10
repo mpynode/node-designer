@@ -1,10 +1,10 @@
 # MPyNurbsSurface_NURBS_Ripple -- compile report
 
-Generated 2026-08-25 10:43
+Generated 2026-09-09 17:58
 
 | node | status | assist | optimize | detail |
 |---|---|---|---|---|
-| `rippleSurf` | compiled | -- | **2.14x** | [report](build/stages/rippleSurf/REPORT.md) |
+| `rippleSurf` | compiled | -- | **1.98x** | [report](build/stages/rippleSurf/REPORT.md) |
 
 ## Layout
 

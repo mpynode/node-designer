@@ -4,7 +4,7 @@ Run in Maya. Loads the .bundle, samples inputs, compares outputs.
 import os, random
 import maya.cmds as cmds
 
-BUNDLE = os.path.join(os.path.dirname(__file__), 'scanlineTex.bundle')
+BUNDLE = os.path.join(os.path.dirname(__file__), 'scanlineTex.mll')
 NODE_TYPE = 'scanlineTex'
 SOURCE = 'scanlineTex'
 INPUTS = {"bands": "int", "speed": "float", "intensity": "float", "frame": "time", "borderColor": "color", "colorSpace": "enum", "fileName": "string", "preFilter": "bool", "preFilterKernel": "enum", "preFilterRadius": "float", "uvCoord": "float2", "wrapModeU": "enum", "wrapModeV": "enum"}

@@ -1,65 +1,7 @@
 {
   "accepted": true,
-  "baseline_ms": 18.3858,
-  "best_ms": 8.0797,
-  "created": 1787677897.4492202,
-  "ledger": [
-    {
-      "compiled": true,
-      "duration_s": null,
-      "fix_rounds": 0,
-      "hypothesis": "",
-      "index": 0,
-      "ms": 18.3858,
-      "note": "",
-      "outcome": "baseline",
-      "parity": null,
-      "predicted_speedup": null,
-      "risk": "",
-      "slug": null,
-      "speedup": null,
-      "theme": ""
-    },
-    {
-      "compiled": true,
-      "duration_s": 888.155,
-      "fix_rounds": 0,
-      "hypothesis": "the node is neither elementwise nor query-shaped -- it is BUILD-shaped: one O(E log E) sort/unique/adjacency construction feeding a cheap O(V+E) DFS. The benchmark's perturb function picks the alphabetically-first numeric attribute, which is `end`, so inMesh never actually changes across the nine timed ticks and the entire graph build is recomputed for nothing. Caching it should remove ~5.5 of 18.4 ms, and replacing 623k one-at-a-time MPointArray/MIntArray append() calls with the bulk pointer constructors should remove another ~3 ms.",
-      "index": 1,
-      "ms": 9.1224,
-      "note": "",
-      "outcome": "accept",
-      "parity": "pass",
-      "predicted_speedup": 2.4,
-      "risk": "the cache is keyed on (numVertices, numPolygons, numFaceVertices, getRawPoints() pointer, FNV hash of the whole raw point buffer) and is additionally invalidated from setDependentsDirty and preEvaluation. The hooks alone are NOT sufficient and are deliberately not load-bearing: mc.dgdirty(node) marks every plug including inMesh, so wiring the hooks as a hard discard made the cache miss on all nine ticks (measured 15.65 ms, worse than no cache). The fingerprint is checked unconditionally on every compute() and is strictly stronger than the hook signal, so the GEO parity path that rewires a fresh upstream shape per config is covered by the content hash rather than by the DG notification.",
-      "slug": "cache_mesh_topology",
-      "speedup": 2.015456458826624,
-      "theme": "everything the maze derives from inMesh -- points, vertex normals, the deduplicated edge list, the inverse map and the CSR dual graph -- is cached on a per-instance fingerprint, so a tick that only moves a scalar carves and extrudes without rebuilding the graph; the output arrays are also handed to Maya through bulk MPointArray/MIntArray constructors instead of per-element append()"
-    },
-    {
-      "compiled": true,
-      "duration_s": 732.776,
-      "fix_rounds": 0,
-      "hypothesis": "profiling first would show the maze itself is noise; a 19.5k-slab unwelded soup (155,688 verts / 116,766 quads / 467,064 connects) is marshalling-bound, and create's per-polygon duplicate-index validation is pure waste when every quad is vbase+0..7 by construction",
-      "index": 2,
-      "ms": 8.0797,
-      "note": "",
-      "outcome": "accept",
-      "parity": "pass",
-      "predicted_speedup": 1.15,
-      "risk": "setCheckSamePointTwice(false) is only sound because the wall batcher emits four DISTINCT indices per quad; the slow generic path is left with the full validation scan so a hand-fed soup still degrades to an empty mesh rather than a crash",
-      "slug": "skip_same_point_check",
-      "speedup": 2.2755547854499545,
-      "theme": "the node is 85% MFnMesh::create, so the round went into create's own cost -- turning off its same-point-twice scan and filling MFloatPointArray/MIntArray in place instead of staging through std::vector"
-    }
-  ],
-  "parity_gate": "authored+pointwise",
-  "reason": "accepted (2.28x)",
-  "remeasured": {
-    "baseline_ms": 38.7981,
-    "date": "2026-09-08",
-    "diverged": null,
-    "final_ms": 26.1019,
+  "baseline_ms": 30.5207,
+  "bench": {
     "fingerprint": "checked (1 plug(s))",
     "floor_ms": 15.0,
     "perturbed": [
@@ -71,14 +13,104 @@
       "wallHeight (double)",
       "wallThickness (double)"
     ],
-    "reason": null,
     "rung": [
       140,
       5000
     ],
-    "speedup": 1.4864090353575792
+    "small_rung": [
+      40,
+      512
+    ]
   },
-  "rounds": 2,
-  "speedup": 2.2755547854499545,
+  "best_ms": 0.888,
+  "created": 1789002176.9711664,
+  "ledger": [
+    {
+      "compiled": true,
+      "duration_s": null,
+      "fix_rounds": 0,
+      "hypothesis": "",
+      "index": 0,
+      "ms": 30.5207,
+      "note": "",
+      "outcome": "baseline",
+      "parity": null,
+      "predicted_speedup": null,
+      "risk": "",
+      "slug": null,
+      "speedup": null,
+      "theme": ""
+    },
+    {
+      "compiled": true,
+      "duration_s": 1451.565,
+      "fix_rounds": 0,
+      "hypothesis": "profiling showed MFnMesh::create + tearing down the previous 155k-point mesh was ~23 of 30 ms; every other phase (normals 1.9, dual 1.3, walls 1.9, carve 0.6) was small by comparison, so the win had to come from not re-creating the mesh each tick. setPoints(MPointArray) still cost 12 ms because it narrows per point; MFloatPointArray built from one raw float[4] soup dropped it to ~2.6 ms. Only a vertex position moves between ticks, so the dual graph is a full-key cache hit.",
+      "index": 1,
+      "ms": 3.1545,
+      "note": "",
+      "outcome": "accept",
+      "parity": "pass",
+      "predicted_speedup": 4.0,
+      "risk": "in-place update of the datablock mesh is guarded on MObject identity + wall count + numVertices/numPolygons and falls back to a full create; the topology cache is keyed on the complete counts+connectivity bytes (not on DG/EM dirty, which fires every tick for the moved vertex) so a re-wired upstream shape with different topology is a miss by construction. Double->float narrowing of the soup is the same cast MFnMesh applies to an MPoint, so values are bit-identical. Measured 30.52 -> 5.26 ms with timers in, 5.66 ms on the clean build; then writing the soup straight into a persistent MFloatPointArray (contiguity-checked, copy path as fallback) instead of a fresh 2.5 MB Maya array per tick took it to 3.65 ms -- the per-tick large allocation plus its page faults cost ~2 ms, far more than the memcpy. Reading positions/normals straight from their float stores inside the wall loop (no per-tick MVector vectors) finished at 3.56 ms, an 8.6x total. Run-to-run noise is about +/-0.3 ms at this size; two follow-ups were reverted as not faster: hoisting small scratch vectors into members (5.57 vs 5.26 ms) and keeping the getVertices/getVertexNormals MIntArray/MFloatVectorArray targets as members (4.12 vs 3.65 ms).",
+      "slug": "reuse_out_mesh_setpoints",
+      "speedup": 9.675289269297828,
+      "theme": "the slab soup's topology is a pure function of the wall count, so on a repeat count the datablock's own output mesh is updated in place with float setPoints instead of being rebuilt by MFnMesh::create; the topology-derived dual graph is cached per instance on a byte compare of counts+connectivity, vertex normals come from the one bulk float call the Python reference makes, and positions are read off the mesh's raw float store"
+    },
+    {
+      "compiled": true,
+      "duration_s": 1490.401,
+      "fix_rounds": 0,
+      "hypothesis": "setPoints spends its time on per-point accessor calls and internal bookkeeping, not on the 2.5 MB copy, so a direct write into the store plus one updateSurface removes almost all of it (measured: 1700 us -> 30 us); the wall soup is a pure per-wall map so an 8-lane condvar pool takes it from ~430 us to ~90 us; the carve DFS indexes std::vectors while storing unsigned char flags, and char stores may alias the vectors' data pointers, so hoisting raw pointers should cut ~10-20% of its 450 us (measured: ~240 us off the median); the fused live/door/wall-list pass and the LCG mask were expected to be small and were neutral",
+      "index": 2,
+      "ms": 1.9258,
+      "note": "",
+      "outcome": "accept",
+      "parity": "pass",
+      "predicted_speedup": 1.9,
+      "risk": "writing through the const raw pointer bypasses setPoints' invalidation, so updateSurface must be what refreshes normals/bbox downstream (output points verified bit-identical to the baseline via the harness fingerprint on every accepted build); run-to-run noise on this Windows box is bimodal (~1.55 or ~2.0 ms for the same binary, serial builds show the same split at ~1.8 / ~2.4), so single medians are unreliable and every decision used 3+ runs; a per-vertex normal re-query for the moved vertex was tried and rejected -- 700-1500 us cold for 7 vertices and NOT bit-identical to the bulk getVertexNormals (4-7 of 7 differed)",
+      "slug": "raw_store_output",
+      "speedup": 15.84832277495067,
+      "theme": "on the reused output mesh, write the wall soup straight into the mesh's own float store (getRawPoints) and signal with updateSurface instead of staging xyzw and calling setPoints, which was 1.7 of 3.9 ms; then thread the flat wall map on a persistent per-node pool and read the carve's adjacency through raw pointers so the visited/door byte stores stop forcing vector-pointer reloads"
+    },
+    {
+      "compiled": true,
+      "duration_s": 1331.745,
+      "fix_rounds": 0,
+      "hypothesis": "Per-phase timers showed normals 700 us, carve 500 us, wall list 155 us, soup 180 us, input 160 us. Maya's vertex normal is the float32 mean of normalized Newell face normals (unnormalized/area-weighted was 1e-2 off, double precision 5e-5 off, float32 normalized 1.8e-7 off with 20% bit-identical), so two parallel maps over faces then vertices reproduce it inside the 1e-4 parity tolerance. The carve is latency-bound on dependent L2 loads across adj_start, adj_dst and adj_eid, so pairs plus pair-valued candidates cut two dependent loads per step. When every face is reached, the frontier sweep is a no-op and every edge is live, so both are skipped exactly; the candidate collect and wall pass go branchless to kill mispredicts on the random walk.",
+      "index": 3,
+      "ms": 0.888,
+      "note": "confirmed twice (incumbent under 2 ms): 0.888 / 0.836 ms",
+      "outcome": "accept",
+      "parity": "pass",
+      "predicted_speedup": 1.6,
+      "risk": "Own normals are tolerance-parity, not bit-parity: a sliver face whose Newell sum nearly cancels could round differently than Maya's float path and swing that face's normal; measured max delta on the bench sphere (which has 2.6-degree pole triangles) was 1.8e-7. Unreferenced vertices get a zero normal, but only edge vertices are ever read. Vertices with a zero face-normal sum are left at zero rather than NaN.",
+      "slug": "own_vertex_normals",
+      "speedup": 34.37015765765766,
+      "theme": "Replace MFnMesh::getVertexNormals (700 us, 37% of the tick) with the node's own float32 Newell face normals averaged per vertex on the persistent pool, measured to match Maya within 1.8e-7; then interleave the dual-graph adjacency into (dst, eid) pairs so the serial DFS carve touches one cache line per step."
+    },
+    {
+      "compiled": true,
+      "duration_s": 1374.398,
+      "fix_rounds": 0,
+      "hypothesis": "phase timers put the 0.82 ms at: input fetch 235 us (of which MFnMesh::setObject ~45), normals 60-90, carve ~340, soup ~80. One moved vertex dirties ~4 faces / ~9 vertices, so a bit-compare of positions against a snapshot (~15 us) replaces two 19k-element parallel maps; the output mesh is ours and identity-checked, so its function set can stay bound (saves the ~45 us bind); the DFS is latency-bound on adj_start[cur] -> adj[base+k] -> visited[dst], so a fixed-stride adjacency computes base arithmetically and a magic-multiply modulo replaces the mispredicting switch on the candidate count",
+      "index": 4,
+      "ms": 1.1225,
+      "note": "",
+      "outcome": "not-faster",
+      "parity": "pass",
+      "predicted_speedup": 1.25,
+      "risk": "phase timers confirmed bind 47->0.2 us and normals 60-90->16 us; the carve change measured +100 us at first (a [&] lambda capture put state/nvis behind pointers that every unsigned-char store to visited/door could alias) and only ~neutral-to-slightly-better after capturing by value -- the machine turned noisy mid-run (medians of the SAME binary spanned 0.73-1.19 ms), so mid-run end-to-end medians could not resolve either change and the phase timers were the evidence; in a quiet window at the very end the final binary measured 0.649 and 0.650 ms against the 0.82 ms quiet baseline (bench.sh is macOS-only on this Windows host, so timings came from a twin script that runs the toolchain's own MSVC recipe and benchmark_node.py with bench.sh's exact arguments); a stale-normals bug would surface only when positions change under an unchanged topology, which the bench drives every tick",
+      "slug": "incremental_normals",
+      "speedup": null,
+      "theme": "recompute vertex normals only for the faces a moved vertex touches, keep the MFnMesh bound to the reused output mesh across ticks, and take the adj_start hop out of the carve's dependent-load chain"
+    }
+  ],
+  "max_rounds": 6,
+  "parity_gate": "authored+pointwise",
+  "reason": "accepted (34.37x)",
+  "rounds": 4,
+  "speedup": 34.37015765765766,
+  "stop_reason": "round 4 not-faster -- nothing new to compound from",
   "type_name": "meshMaze"
 }

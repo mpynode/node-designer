@@ -1,10 +1,10 @@
 # MPyNode_Spline -- compile report
 
-Generated 2026-08-25 10:32
+Generated 2026-09-09 16:59
 
 | node | status | assist | optimize | detail |
 |---|---|---|---|---|
-| `spline` | compiled | -- | **3697.75x** | [report](build/stages/spline/REPORT.md) |
+| `spline` | compiled | -- | **8507.12x** | [report](build/stages/spline/REPORT.md) |
 
 ## Layout
 

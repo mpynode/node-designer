@@ -1,12 +1,12 @@
 # twoBoneIK -- compile report
 
-**Source node:** `twoBoneIK`  ·  **Base:** `MPxIkSolverNode`  ·  **Generated:** 2026-09-09 08:26
+**Source node:** `twoBoneIK`  ·  **Base:** `MPxIkSolverNode`  ·  **Generated:** 2026-09-09 15:23
 
 | stage | outcome |
 |---|---|
 | 1 Transpile | deterministic C++, no AI |
 | 2 AI assist | not run (nothing to fill) |
-| 3 AI optimize | ran, nothing accepted (no candidate beat the baseline) |
+| 3 AI optimize | ran, nothing accepted (baseline could not be benchmarked) -- 0 run of max 6, stopped: baseline could not be benchmarked |
 
 ## The Python this was generated from
 
@@ -98,41 +98,27 @@ if len(joints) >= 3:
 
 ## Optimization
 
-Parity gate: `authored+pointwise`. Every accepted round was re-checked against the interpreted Python before it was allowed to win. Where a node's generic pointwise parity SKIPS -- a deformer writes through the native `outputGeometry`, which the scalar harness cannot read -- the authored `@maya_test` is the ONLY gate, so treat those rows as behavioural checks rather than numerical ones.
+Parity gate: not exercised -- no candidate reached the parity check (the baseline was unmeasurable or no round compiled).
 
-Bench scene: not recorded (ledger predates the scene record; no noise-floor gate, no per-tick perturbation check and no output fingerprint applied to these rounds).
+Bench scene: geo density 40 / array length 512; noise floor 15 ms. nothing to perturb between ticks -- a timing would measure a cache hit.
 
-Baseline **0.006 ms** -> best **0.006 ms** (**1.00x**).
+Baseline **--** -> best **--** (**1.00x**).
+
+Rounds: **0** run of at most 6; the loop stopped because baseline could not be benchmarked.
 
 | # | change | theme | predicted | measured | time | outcome |
 |---|---|---|---|---|---|---|
-| 00 | `--` | -- | -- | 0.006 ms | -- | -- |
-| 01 | `scalar_solve_cached_attrs` | lower the 3-joint IK solve from nd::Array temporaries to plain doubles and replace the ten per-solve string findPlug() lookups with cached attribute MObjects | 1.60x | -- | 9.2 min | rejected: parity fail |
-| 02 | `scalar_lower_solve` | Hand-lower the nd::Array solve to stack scalars and cache the attribute handles -- then discover by ablation that doSolve() is entirely below the benchmark's noise floor, because the timed region is a Python cmds.getAttr and not the solve. | 1.60x | -- | 11.3 min | rejected: parity fail |
-
-### Predicted vs measured
-
-The rounds where the guess and the stopwatch disagreed. These are the transferable part -- a prediction that missed says more about the machine than one that landed.
-
-* `scalar_solve_cached_attrs` -- predicted 1.60x, **rejected: parity fail**. authored @maya_test FAILED: test_two_bone_ik: knee barely bends (rotateX=0.00)
-* `scalar_lower_solve` -- predicted 1.60x, **rejected: parity fail**. authored @maya_test FAILED: test_two_bone_ik: knee barely bends (rotateX=0.00)
-
-### Rejected rounds
-
-* `scalar_solve_cached_attrs` -- rejected: parity fail. authored @maya_test FAILED: test_two_bone_ik: knee barely bends (rotateX=0.00)
-* `scalar_lower_solve` -- rejected: parity fail. authored @maya_test FAILED: test_two_bone_ik: knee barely bends (rotateX=0.00)
+| 00 | `--` | -- | -- | -- | -- | -- |
 
 ## Verification
 
-* parity: **pass**  (maxerr 2.6645352591003757e-15, tol 0.001)
-* authored @maya_test: 1/1 passed
+* parity: **pass**
+* verify could not run: 'NoneType' object has no attribute 'set_init_expression' | authored @maya_test: 1/1 passed
 
 ## Files
 
 ```
 build/stages/twoBoneIK/1_transpiled.cpp     deterministic transpile (no AI)
 build/stages/twoBoneIK/3_optimized/00_baseline.cpp
-build/stages/twoBoneIK/3_optimized/01_scalar_solve_cached_attrs.cpp
-build/stages/twoBoneIK/3_optimized/02_scalar_lower_solve.cpp
 build/source/twoBoneIK.cpp      SHIPPED
 ```

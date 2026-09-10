@@ -1,12 +1,12 @@
 # twistSwingSkin -- compile report
 
-**Source node:** `twistSwingSkin`  ·  **Base:** `MPxSkinCluster`  ·  **Generated:** 2026-09-08 23:29
+**Source node:** `twistSwingSkin`  ·  **Base:** `MPxSkinCluster`  ·  **Generated:** 2026-09-09 18:24
 
 | stage | outcome |
 |---|---|
 | 1 Transpile | deterministic C++, no AI |
 | 2 AI assist | not run (nothing to fill) |
-| 3 AI optimize | **1.93x** over 2 round(s) -- re-measured: unmeasurable under the gate |
+| 3 AI optimize | **5.01x** over 2 round(s) -- 2 run of max 6, stopped: round 2 not-faster -- nothing new to compound from |
 
 ## The Python this was generated from
 
@@ -69,35 +69,40 @@ mesh.setPoints(rest + float(self.envelope) * (deformed - rest))
 
 Parity gate: `authored+pointwise`. Every accepted round was re-checked against the interpreted Python before it was allowed to win. Where a node's generic pointwise parity SKIPS -- a deformer writes through the native `outputGeometry`, which the scalar harness cannot read -- the authored `@maya_test` is the ONLY gate, so treat those rows as behavioural checks rather than numerical ones.
 
-Bench scene: not recorded (ledger predates the scene record; no noise-floor gate, no per-tick perturbation check and no output fingerprint applied to these rounds).
+Bench scene: geo density 400 / array length 20000; noise floor 15 ms; moved per tick: `swingWeights[0] (double)`, `twistWeights[0] (double)`, `input[0].inputGeometry <- pSphereShape1Orig.vtx[0]`; outputs checked (1 plug(s)); accepts re-timed against the incumbent on geo 40 / array 512 and rejected if slower there; baseline under the noise floor at the largest scene, so every accept had to clear 1.15x on two independent timings. baseline 4.645 ms is below the 15 ms noise floor even at the largest bench scene (geo=400 array=20000); measured anyway -- every accept must clear 1.15x on two independent timings.
 
-Baseline **2.470 ms** -> best **1.282 ms** (**1.93x**).
+Baseline **4.645 ms** -> best **0.927 ms** (**5.01x**).
 
-**Re-measured 2026-09-08** under the gated harness (noise floor, animated-input perturbation, output fingerprint), geo density 400 / array length 20000: **unmeasurable** -- baseline 8.162 ms is below the 15 ms noise floor even at the largest bench scene (geo=400 array=20000); nothing this small can be optimized against measurably. The speedup above was taken before the gate existed and cannot be reproduced under it. Moved per tick: `swingWeights[0] (double)`, `twistWeights[0] (double)`, `input[0].inputGeometry <- pSphereShape1Orig.vtx[0]`.
+Rounds: **2** run of at most 6; the loop stopped because round 2 not-faster -- nothing new to compound from.
 
 | # | change | theme | predicted | measured | time | outcome |
 |---|---|---|---|---|---|---|
-| 00 | `--` | -- | -- | 2.470 ms | -- | -- |
-| 01 | `direct_fill_reused_buffers` | this node is ELEMENTWISE, not QUERY: at 159602 verts the arithmetic is nil and the whole cost is whole-array temporaries, so every per-evaluation malloc + value-init memset + redundant copy was replaced by a direct fill into a size-guarded per-instance scratch buffer | 1.35x | 1.63x | 12.9 min | ACCEPTED |
-| 02 | `cache_weight_arrays` | cache the two 20000-element weight-set plug reads across evaluations, invalidated by setDependentsDirty + preEvaluation + an elementCount/first/last fingerprint | 1.15x | 1.93x | 10.9 min | ACCEPTED |
+| 00 | `--` | -- | -- | 4.645 ms | -- | -- |
+| 01 | `defer_weight_reads_reuse_ptsbuf` | read the two 20000-element weight-set plugs only on the branch that consumes them, fuse linear_blend into one strided loop with no (N,4) concat, and keep the 3n-double rest-point store as a per-instance buffer instead of faulting in a fresh 4 MB block every tick | 2.50x | 5.01x | 13.4 min | ACCEPTED |
+| 02 | `lazy_rest_float_source` | stop widening the 160k rest points to a 3.8 MB double copy every tick; the linear-blend kernel and the envelope blend read the mesh's own float store, and the double copy is built only for the nd-heavy dual-quaternion and generic-broadcast paths | 1.15x | 0.929 ms | 12.7 min | rejected: not faster |
 
 ### Predicted vs measured
 
 The rounds where the guess and the stopwatch disagreed. These are the transferable part -- a prediction that missed says more about the machine than one that landed.
 
-* `cache_weight_arrays` -- predicted 1.15x, measured **1.93x**. profiling showed the deform is pure per-access overhead, not arithmetic: of ~1.24 ms in-node, 0.34 ms is walking 2 x 20000 MArrayDataHandle elements at ~8.5 ns each. Maya re-runs deform() when ANY input goes dirty, and the benchmark's perturb function moves only swingWeights[0], so twistWeights is re-walked identically on every tick. Caching the derived flat buffer per plug should remove roughly half that pass.
+* `defer_weight_reads_reuse_ptsbuf` -- predicted 2.50x, measured **5.01x**. the bench wires no joints (J=0) so every tick is: 40000 MArrayDataHandle element reads whose values are never used, an N*3 push_back widening, an (N,4) homogeneous concat, then a shape-mismatch throw; none of that is numeric work, so removing the reads and the two big allocations should take the node to Maya's own mesh-copy floor
+* `lazy_rest_float_source` -- predicted 1.15x, **rejected: not faster**. incumbent under the noise floor: second measurement 0.929 ms did not confirm 0.757 ms
+
+### Rejected rounds
+
+* `lazy_rest_float_source` -- rejected: not faster. incumbent under the noise floor: second measurement 0.929 ms did not confirm 0.757 ms
 
 ## Verification
 
-* parity: **pass**  (maxerr 0.0, tol 0.001)
-* enum(s) held at default because they select an interpreted-only side effect: skinMode | authored @maya_test: 1/1 passed
+* parity: **pass**
+* verify could not run: Unable to create/find dependency node. | authored @maya_test: 1/1 passed
 
 ## Files
 
 ```
 build/stages/twistSwingSkin/1_transpiled.cpp     deterministic transpile (no AI)
 build/stages/twistSwingSkin/3_optimized/00_baseline.cpp
-build/stages/twistSwingSkin/3_optimized/01_direct_fill_reused_buffers.cpp
-build/stages/twistSwingSkin/3_optimized/02_cache_weight_arrays.cpp
+build/stages/twistSwingSkin/3_optimized/01_defer_weight_reads_reuse_ptsbuf.cpp
+build/stages/twistSwingSkin/3_optimized/02_lazy_rest_float_source.cpp
 build/source/twistSwingSkin.cpp      SHIPPED
 ```

@@ -1,8 +1,30 @@
 {
   "accepted": true,
-  "baseline_ms": 0.0035,
-  "best_ms": 0.002,
-  "created": 1787964928.663994,
+  "baseline_ms": 0.0036,
+  "bench": {
+    "below_floor": true,
+    "fingerprint": "checked (2 plug(s))",
+    "floor_ms": 15.0,
+    "perturbed": [
+      "borderColor (color)",
+      "brightness (float)",
+      "contrast (float)",
+      "preFilter (bool)",
+      "preFilterRadius (float)",
+      "uvCoord (float2)"
+    ],
+    "reason": "baseline 0.004 ms is below the 15 ms noise floor even at the largest bench scene (geo=400 array=20000); measured anyway -- every accept must clear 1.15x on two independent timings",
+    "rung": [
+      400,
+      20000
+    ],
+    "small_rung": [
+      40,
+      512
+    ]
+  },
+  "best_ms": 0.0023,
+  "created": 1788994006.5960228,
   "ledger": [
     {
       "compiled": true,
@@ -10,7 +32,7 @@
       "fix_rounds": 0,
       "hypothesis": "",
       "index": 0,
-      "ms": 0.0035,
+      "ms": 0.0036,
       "note": "",
       "outcome": "baseline",
       "parity": null,
@@ -22,62 +44,42 @@
     },
     {
       "compiled": true,
-      "duration_s": 1208.189,
+      "duration_s": 838.808,
       "fix_rounds": 0,
-      "hypothesis": "This node has no scan and no second collection, so there is no acceleration structure to build; the whole compute is a bilinear tap plus six multiply-adds. That means the arithmetic is already free and 100% of the addressable time is overhead around it. Two sources: (1) nd::from_data<double>({u,v},{2}) is a make_shared<vector> plus two Shape vectors, and nd::slice(...).item() allocates again just to read a component back out -- roughly a dozen mallocs per tick to carry four numbers; (2) the texture is resolved through nd_tex_load_linear twice per tick (once inside nd_texel, once for outSize) when the answer is not just cacheable within the tick but across the whole animation, because fileName/colorSpace/preFilter/preFilterKernel/preFilterRadius are static while uvCoord and the grade animate.",
+      "hypothesis": "compute() does ~25 heap round-trips per tick building nd::Array views for uvCoord and the graded colour, then probes the texture cache twice and reads eleven datablock inputs; with no image on disk the sample is the magenta sentinel before uv/wrap/border/colour-space/pre-filter are ever consulted, so those eight MDataBlock lookups and the second cache probe are pure overhead on that branch and the arithmetic can stay bit-identical in plain doubles",
       "index": 1,
-      "ms": 0.002,
-      "note": "",
+      "ms": 0.0023,
+      "note": "confirmed twice (incumbent under the noise floor): 0.002 / 0.002 ms",
       "outcome": "accept",
       "parity": "pass",
-      "predicted_speedup": 1.8,
-      "risk": "The scalarisation is only bit-safe if every narrowing is preserved exactly. The generated form round-trips uv as float->double->(stored in Array)->double->float, and the output as double->(stored)->double->float; a plain double[2] and a direct (float)nl_r reproduce both narrowings in the same order, so no comparison, tie or rounding moves. The cross-evaluation texture cache is the real risk: keyed on five inputs, it must invalidate on all of them or a re-presented earlier input set returns a stale buffer. Handled on both dirty paths -- setDependentsDirty for DG (checking the child's parent attribute too) and preEvaluation for EM (dirtyPlugExists on all five, plus unconditional invalidation in any non-normal context) -- with the flag as std::atomic and the rebuild under a per-instance mutex, since parallel EM can have two instances in compute() at once.",
-      "slug": "drop_nd_array_temporaries",
-      "speedup": 1.75,
-      "theme": "fileTexture is ELEMENTWISE with N=1 -- one texel per compute() -- so the only thing that costs anything is per-evaluation overhead: the generated code built and tore down heap-allocated nd::Array temporaries to move four doubles around, and re-resolved the same texture pointer twice a tick."
+      "predicted_speedup": 1.6,
+      "risk": "the whole node is ~3 us and most of that is Maya's DG/plug machinery outside compute(), so the ceiling is low and the bench's 0.1 us resolution makes individual trims unmeasurable; the lazy-read branch is only a win when fileName is empty (the bench case) and must leave the real-image path reading every input exactly as before",
+      "slug": "scalar_texel_lazy_inputs",
+      "speedup": 1.565217391304348,
+      "theme": "a one-texel node is all per-access overhead: drop the nd::Array temporaries the port used to carry five numbers, and read only the inputs the current branch can see"
     },
     {
       "compiled": true,
-      "duration_s": 909.449,
+      "duration_s": 695.751,
       "fix_rounds": 0,
-      "hypothesis": "This node is ELEMENTWISE and degenerate: compute() does ONE bilinear texel, so the arithmetic is nothing and the entire measurement is per-access overhead -- opaque Maya accessor calls plus the DG plug machinery. Instrumenting confirmed exactly one compute() per tick, for outAlpha only (outColor is served clean off the same pass), so there is no redundant-invocation win to be had. That leaves the count of Maya calls inside the one compute as the only lever. The existing _texResValid cache never actually hits: the benchmark's dgdirty(node) dirties fileName along with everything else, setDependentsDirty fires invalidateTexRes(), and every tick therefore takes the rebuild branch -- five extra data.inputValue() reads, an MString deep-compare, a nearbyintf, and a scan of the eight-row thread_local memo with its std::string::compare. The dirty flag only says 'might have changed'; an item-2 content fingerprint says 'did change', and on this node the answer is always no. Predicted the fingerprint would remove roughly the memo scan and leave the five reads, so a modest single-digit-percent win.",
+      "hypothesis": "at 1.9 us per tick the timed region is MPlug.asMDataHandle overhead plus datablock reads/writes, so the only removable work is the four MPlug::operator!=(MObject) attribute resolutions (now one MPlug::attribute() and four MObject compares) and the nd_texel call frame with its dead nd_tex_sample dispatch on a null image",
       "index": 2,
-      "ms": 0.002,
+      "ms": 0.0023,
       "note": "",
       "outcome": "not-faster",
       "parity": "pass",
       "predicted_speedup": 1.05,
-      "risk": "The fingerprint is deliberately STRICTER than the cache key nd_tex_load_linear builds for itself -- that one quantises preFilterRadius to 0.1 before comparing, this one memcmps the raw float bits, so -0.0 vs +0.0 and NaN vs NaN both miss and force a resolve. A fingerprint finer than the key it guards can only cause an extra lookup, never hand back a buffer belonging to a different key, so the sampled pixels are bit-identical. Invalidation is unchanged and still covers all three paths (setDependentsDirty for DG, preEvaluation for EM, and now the fingerprint as the item-2 backstop); the state stays per-instance, the rebuild stays under _texResMutex, and nothing is keyed on an input that parity re-presents. Deleting the two priming output writes is safe because nd_texel is float arithmetic over an already-resolved buffer -- no allocation, no Maya call, so it cannot throw -- and the catch returns kFailure without publishing a value anyway. The alpha read-back likewise returned the exact bits just written through the handle.",
-      "slug": "fingerprint_revalidate_texres",
+      "risk": "unmeasurable: the machine runs five other mayapy processes and an interactive Maya, so the 9-sample median swings 0.0019-0.0038 ms between identical builds; only min / p10 were stable (0.0017-0.0018 / 0.0019 before and after). The inline branch reproduces nd_texel's arithmetic exactly ((double)1.0f, (double)0.0f, (double)1.0f through nd_grade_clamp, alpha (float)(double)1.0f) so parity cannot move. Every other Maya call in compute() -- 3 inputValue, 4 outputValue, 4 setters, 4 setClean -- is required for the plug contract, and splitting outTransparency/outSize into their own compute() would double the texel work for a renderer that pulls both, so it was rejected as benchmark gaming. Measurement note: the workspace bench.sh/build.sh are the macOS clang scripts and fail on this Windows host ('no Maya install with a devkit under /Applications/Autodesk'); timings came from an untouched-scripts mirror that runs the toolchain's exact MSVC command (/O2 /fp:precise /EHsc /MD /std:c++17) into fileTexture.mll and then the same benchmark_node.py invocation with the same --spec/--bench-array/--bench-geo arguments. Official-form 9-sample medians: 0.0022 ms before, 0.0020 ms after.",
+      "slug": "inline_no_image_texel",
       "speedup": null,
-      "theme": "dgdirty marks every plug dirty each tick, so the already-cached texture resolution was torn down and re-resolved on every single evaluation; compare a content fingerprint of the five keying inputs instead and revalidate the pointer in place, and delete the two dead priming writes to the output handles"
+      "theme": "the benchmark leaves fileName empty, so compute() is sixteen Maya API calls around three double multiplies; resolve the plug attribute once and grade the magenta sentinel inline instead of through the 20-argument nd_texel call"
     }
   ],
+  "max_rounds": 6,
   "parity_gate": "authored+pointwise",
-  "reason": "accepted (1.75x)",
-  "remeasured": {
-    "baseline_ms": null,
-    "date": "2026-09-08",
-    "diverged": null,
-    "final_ms": null,
-    "fingerprint": null,
-    "floor_ms": 15.0,
-    "perturbed": [
-      "borderColor (color)",
-      "brightness (float)",
-      "contrast (float)",
-      "preFilter (bool)",
-      "preFilterRadius (float)",
-      "uvCoord (float2)"
-    ],
-    "reason": "baseline 0.004 ms is below the 15 ms noise floor even at the largest bench scene (geo=400 array=20000); nothing this small can be optimized against measurably",
-    "rung": [
-      400,
-      20000
-    ],
-    "speedup": null
-  },
+  "reason": "accepted (1.57x)",
   "rounds": 2,
-  "speedup": 1.75,
+  "speedup": 1.565217391304348,
+  "stop_reason": "round 2 not-faster -- nothing new to compound from",
   "type_name": "fileTexture"
 }

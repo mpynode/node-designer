@@ -1,8 +1,29 @@
 {
   "accepted": true,
-  "baseline_ms": 0.0039,
-  "best_ms": 0.002,
-  "created": 1787965074.438741,
+  "baseline_ms": 0.0076,
+  "bench": {
+    "below_floor": true,
+    "fingerprint": "skipped (node draws random numbers)",
+    "floor_ms": 15.0,
+    "perturbed": [
+      "density (float)",
+      "frame (time)",
+      "height (int)",
+      "uvCoord (float2)",
+      "width (int)"
+    ],
+    "reason": "baseline 0.008 ms is below the 15 ms noise floor even at the largest bench scene (geo=400 array=20000); measured anyway -- every accept must clear 1.15x on two independent timings",
+    "rung": [
+      400,
+      20000
+    ],
+    "small_rung": [
+      40,
+      512
+    ]
+  },
+  "best_ms": 0.0061,
+  "created": 1788994571.2486515,
   "ledger": [
     {
       "compiled": true,
@@ -10,7 +31,7 @@
       "fix_rounds": 0,
       "hypothesis": "",
       "index": 0,
-      "ms": 0.0039,
+      "ms": 0.0076,
       "note": "",
       "outcome": "baseline",
       "parity": null,
@@ -22,61 +43,42 @@
     },
     {
       "compiled": true,
-      "duration_s": 956.748,
+      "duration_s": 1178.571,
       "fix_rounds": 0,
-      "hypothesis": "this node is ELEMENTWISE with an output of exactly one texel, so there is no algorithmic exponent to attack -- the benchmark perturbs `density` (the first numeric non-array input in sorted order), which never re-seeds and never steps the board, so every timed tick runs the sampling tail only. That tail was nd::from_data for uvCoord, four default-constructed nd::Array locals, a full nd::Array<bool> copy of the board (two Shape vectors + shared_ptr), two slices, two floors, two subs, two muls, a 2-D slice, and a from_data of the 3-vector output -- each of which allocates a shared_ptr<vector<T>> plus two std::vector<int64_t> Shapes. At ~50 mallocs x ~35 ns that is ~1.7 us of the 3.5 us tick, and all of it computes values that fit in registers.",
+      "hypothesis": "At bench size the board is k x k (width/height move to k every tick) and is reseeded every tick, so compute() is allocation-bound, not arithmetic-bound: ~20 nd::Array temporaries at 3-4 allocations each (uv from_data, slice/floor/sub/mul chains, random() + cmp_lt, board copies, output from_data) dominate the ~7 us tick. Fusing RandomState.random()<density into one loop over the generator, and computing only the 2*h*w words of the first MT twist that are ever read, removes most of the rest. No cross-evaluation cache was added: the harness seeds reset=1, so seed=int(frame) changes every tick and a seed-keyed RNG-stream cache would miss on every tick (it would only pay off for reset-off reseeds, which the bench never exercises).",
       "index": 1,
-      "ms": 0.002,
-      "note": "",
+      "ms": 0.0061,
+      "note": "confirmed twice (incumbent under the noise floor): 0.004 / 0.006 ms",
       "outcome": "accept",
       "parity": "pass",
-      "predicted_speedup": 2.2,
-      "risk": "parity of the sampled cell. Three places had to keep the source's exact spelling: (1) uvCoord reaches the ported body as float2, so the double the VP2 caller passes is still round-tripped through float before the fract, (2) the truncating (int64_t) casts and the STRICT `<` in `cse < w-1 ? cse : w-1` are kept in double, direction and strictness unchanged, since those select an index, and (3) nd::Sl::at was verified to lower to `offset += i * strides[ax]`, which is exactly the flat index used now. `nl_board` became a reference INTO the state rather than an Array copy -- the self-assignment `st.board = _gol_step(st.board)` is safe because the step builds a complete temporary before the move-assign.",
-      "slug": "scalar_texel_no_ndarray",
-      "speedup": 1.95,
-      "theme": "the per-texel sample was built out of ~50 heap-allocating nd::Array temporaries to read ONE bool out of a board that never changes between ticks; replace the whole tail with scalar arithmetic and a direct strided index"
+      "predicted_speedup": 1.5,
+      "risk": "Bit-parity of the fused RNG (the partial twist must equal the prefix of the full twist, and draws >= 624 must take the full path) and of the scalar uv->cell math (uv rounds through float exactly once, as the float2 plug does; int64 truncation and min() strictness kept). Checked with a standalone 24k-case comparison against the original nd:: kernels across seeds (incl. masked negatives), shapes (1x1 .. 64x64, 622/624/626 draws), densities (0, 1, out of range), multi-step chains and 20k random uv samples: 0 mismatches. A second round reusing the board buffer in place measured a tie (0.0037 vs 0.0037 ms) and was reverted.",
+      "slug": "scalar_texel",
+      "speedup": 1.2459016393442621,
+      "theme": "Replace the nd::Array temporaries on the per-texel path with scalar math and a fused seed/step kernel, so one texel costs a floor, two multiplies and a table lookup instead of ~70 heap allocations."
     },
     {
-      "compiled": null,
-      "duration_s": 1115.608,
+      "compiled": true,
+      "duration_s": 764.627,
       "fix_rounds": 0,
-      "hypothesis": "this node is ELEMENTWISE/O(1), not query-shaped: the bench seeds width/height from randint(-6,6) so the board is at most 6x6, bakePath is path-like and left empty so no PNG is ever written, and the perturb closure moves `density` -- which only feeds _gol_seed and so never reseeds while frame and shape hold. Every timed tick therefore hits the do-nothing path, and the only lever is the fixed overhead wrapped around it. Hoisting seed/step/rgba/bake behind noinline calls and gating the whole advance block on one short-circuited guard should shrink nd_texel to the sample itself and cut the prologue, register saves and exception-cleanup paths.",
+      "hypothesis": "the bench moves width/height every tick so every tick reseeds a k x k board (k <= 13, at most 169 cells); the cost is not the grid but the serial 624-step MT19937 init, the twist, and ~5 heap allocs for a fresh nd::Array -- the seed itself repeats (reset off => seed 0), so the tempered doubles are a pure function of one input that holds, and memoising them plus reusing the board's bit-vector, shape and stride storage removes almost all node-side work; a prefix-twisted generator is marked partial and rebuilt from the seed if a later same-seed board needs more draws, so hits, misses and extensions all reproduce the fresh stream bit-for-bit (checked standalone: 12001 boards, 0 mismatches; in-place Conway step: 5000 steps, 0 mismatches)",
       "index": 2,
-      "ms": null,
-      "note": "introduces __attribute__ (1 new) -- the .cpp must also compile with MSVC cl.exe /std:c++17",
-      "outcome": "invalid-candidate",
-      "parity": null,
-      "predicted_speedup": 1.15,
-      "risk": "the guard re-tests the source's own conditions from outside instead of running them inline, so it has to be exactly equivalent, not merely similar: `!board_isset` is tested FIRST and `||` short-circuits, so board.shape[0] is never read before the board exists (the original got that for free by seeding first), and _nd_advance still re-runs all three original blocks with their original guards verbatim, so entering it early is harmless and entering it late is impossible. in_aBakePath.length() is side-effect-free, so evaluating it in the guard rather than at the bake site changes nothing.",
-      "slug": "cold_split_advance",
+      "ms": 0.0058,
+      "note": "incumbent under the noise floor: second measurement 0.006 ms did not confirm 0.004 ms",
+      "outcome": "not-faster",
+      "parity": "pass",
+      "predicted_speedup": 1.5,
+      "risk": "the cache is keyed on the seed value alone and holds up to 4M doubles (32 MB) per instance -- larger boards stream and bypass it; the node is now within noise of the harness's ~0.003 ms single-texel floor, so further node-side work is unmeasurable here; the in-place step is not exercised by the benchmark (shape moves every tick) and relies on the standalone check plus the parity pass",
+      "slug": "cache_rng_stream",
       "speedup": null,
-      "theme": "the per-texel hot path was carrying the seed/step/bake code inline -- clang had folded three cold lambdas into nd_texel, making it 11.5 KB with a huge frame and nd::Array cleanup landing pads, so the sample paid for work it almost never does"
+      "theme": "cache the RandomState(seed) draw stream per instance so a reseed costs one compare per cell instead of a 624-word MT19937 init and twist, and rewrite the board in place instead of reallocating it"
     }
   ],
+  "max_rounds": 6,
   "parity_gate": "authored+pointwise",
-  "reason": "accepted (1.95x)",
-  "remeasured": {
-    "baseline_ms": null,
-    "date": "2026-09-08",
-    "diverged": null,
-    "final_ms": null,
-    "fingerprint": null,
-    "floor_ms": 15.0,
-    "perturbed": [
-      "density (float)",
-      "frame (time)",
-      "height (int)",
-      "uvCoord (float2)",
-      "width (int)"
-    ],
-    "reason": "baseline 0.008 ms is below the 15 ms noise floor even at the largest bench scene (geo=400 array=20000); nothing this small can be optimized against measurably",
-    "rung": [
-      400,
-      20000
-    ],
-    "speedup": null
-  },
+  "reason": "accepted (1.25x)",
   "rounds": 2,
-  "speedup": 1.95,
+  "speedup": 1.2459016393442621,
+  "stop_reason": "round 2 not-faster -- nothing new to compound from",
   "type_name": "gameOfLifeTex"
 }

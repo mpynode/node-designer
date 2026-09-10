@@ -1,12 +1,12 @@
 # gameOfLifeTex -- compile report
 
-**Source node:** `gameOfLifeTex`  ·  **Base:** `MPxNode`  ·  **Generated:** 2026-09-08 23:24
+**Source node:** `gameOfLifeTex`  ·  **Base:** `MPxNode`  ·  **Generated:** 2026-09-09 15:56
 
 | stage | outcome |
 |---|---|
 | 1 Transpile | deterministic C++, no AI |
 | 2 AI assist | ran -- no unresolved regions |
-| 3 AI optimize | **1.95x** over 2 round(s) -- re-measured: unmeasurable under the gate |
+| 3 AI optimize | **1.25x** over 2 round(s) -- 2 run of max 6, stopped: round 2 not-faster -- nothing new to compound from |
 
 ## The Python this was generated from
 
@@ -69,33 +69,33 @@ self.outAlpha = 1.0
 
 Parity gate: `authored+pointwise`. Every accepted round was re-checked against the interpreted Python before it was allowed to win. Where a node's generic pointwise parity SKIPS -- a deformer writes through the native `outputGeometry`, which the scalar harness cannot read -- the authored `@maya_test` is the ONLY gate, so treat those rows as behavioural checks rather than numerical ones.
 
-Bench scene: not recorded (ledger predates the scene record; no noise-floor gate, no per-tick perturbation check and no output fingerprint applied to these rounds).
+Bench scene: geo density 400 / array length 20000; noise floor 15 ms; moved per tick: `density (float)`, `frame (time)`, `height (int)`, `uvCoord (float2)`, `width (int)`; outputs skipped (node draws random numbers); accepts re-timed against the incumbent on geo 40 / array 512 and rejected if slower there; baseline under the noise floor at the largest scene, so every accept had to clear 1.15x on two independent timings. baseline 0.008 ms is below the 15 ms noise floor even at the largest bench scene (geo=400 array=20000); measured anyway -- every accept must clear 1.15x on two independent timings.
 
-Baseline **0.004 ms** -> best **0.002 ms** (**1.95x**).
+Baseline **0.008 ms** -> best **0.006 ms** (**1.25x**).
 
-**Re-measured 2026-09-08** under the gated harness (noise floor, animated-input perturbation, output fingerprint), geo density 400 / array length 20000: **unmeasurable** -- baseline 0.008 ms is below the 15 ms noise floor even at the largest bench scene (geo=400 array=20000); nothing this small can be optimized against measurably. The speedup above was taken before the gate existed and cannot be reproduced under it. Moved per tick: `density (float)`, `frame (time)`, `height (int)`, `uvCoord (float2)`, `width (int)`.
+Rounds: **2** run of at most 6; the loop stopped because round 2 not-faster -- nothing new to compound from.
 
 | # | change | theme | predicted | measured | time | outcome |
 |---|---|---|---|---|---|---|
-| 00 | `--` | -- | -- | 0.004 ms | -- | -- |
-| 01 | `scalar_texel_no_ndarray` | the per-texel sample was built out of ~50 heap-allocating nd::Array temporaries to read ONE bool out of a board that never changes between ticks; replace the whole tail with scalar arithmetic and a direct strided index | 2.20x | 1.95x | 15.9 min | ACCEPTED |
-| 02 | `cold_split_advance` | the per-texel hot path was carrying the seed/step/bake code inline -- clang had folded three cold lambdas into nd_texel, making it 11.5 KB with a huge frame and nd::Array cleanup landing pads, so the sample paid for work it almost never does | 1.15x | -- | 18.6 min | rejected: invalid candidate |
+| 00 | `--` | -- | -- | 0.008 ms | -- | -- |
+| 01 | `scalar_texel` | Replace the nd::Array temporaries on the per-texel path with scalar math and a fused seed/step kernel, so one texel costs a floor, two multiplies and a table lookup instead of ~70 heap allocations. | 1.50x | 1.25x | 19.6 min | ACCEPTED |
+| 02 | `cache_rng_stream` | cache the RandomState(seed) draw stream per instance so a reseed costs one compare per cell instead of a 624-word MT19937 init and twist, and rewrite the board in place instead of reallocating it | 1.50x | 0.006 ms | 12.7 min | rejected: not faster |
 
 ### Predicted vs measured
 
 The rounds where the guess and the stopwatch disagreed. These are the transferable part -- a prediction that missed says more about the machine than one that landed.
 
-* `cold_split_advance` -- predicted 1.15x, **rejected: invalid candidate**. introduces __attribute__ (1 new) -- the .cpp must also compile with MSVC cl.exe /std:c++17
+* `cache_rng_stream` -- predicted 1.50x, **rejected: not faster**. incumbent under the noise floor: second measurement 0.006 ms did not confirm 0.004 ms
 
 ### Rejected rounds
 
-* `cold_split_advance` -- rejected: invalid candidate. introduces __attribute__ (1 new) -- the .cpp must also compile with MSVC cl.exe /std:c++17
+* `cache_rng_stream` -- rejected: not faster. incumbent under the noise floor: second measurement 0.006 ms did not confirm 0.004 ms
 
 ## Verification
 
 * parity: **pass**  (maxerr 0.0, tol 0.0058823529411764705)
 * verified with 1 geo/string input(s) left at default (unwired, could not be synthesized): bakePath | authored @maya_test: 1/1 passed
-* speed: compiled 0.021 ms vs interpreted 0.296 ms (best of 3, geo 140 / array 5000)
+* speed: compiled 0.030 ms vs interpreted 0.469 ms (best of 3, geo 140 / array 5000)
 
 ## Files
 
@@ -103,7 +103,7 @@ The rounds where the guess and the stopwatch disagreed. These are the transferab
 build/stages/gameOfLifeTex/1_transpiled.cpp     deterministic transpile (no AI)
 build/stages/gameOfLifeTex/2_assisted.cpp       AI filled the unported region(s)
 build/stages/gameOfLifeTex/3_optimized/00_baseline.cpp
-build/stages/gameOfLifeTex/3_optimized/01_scalar_texel_no_ndarray.cpp
-build/stages/gameOfLifeTex/3_optimized/02_cold_split_advance.cpp
+build/stages/gameOfLifeTex/3_optimized/01_scalar_texel.cpp
+build/stages/gameOfLifeTex/3_optimized/02_cache_rng_stream.cpp
 build/source/gameOfLifeTex.cpp      SHIPPED
 ```

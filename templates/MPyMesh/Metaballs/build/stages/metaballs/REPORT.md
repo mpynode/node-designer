@@ -1,12 +1,12 @@
 # metaballs -- compile report
 
-**Source node:** `metaballs`  ·  **Base:** `MPxNode`  ·  **Generated:** 2026-09-08 23:27
+**Source node:** `metaballs`  ·  **Base:** `MPxNode`  ·  **Generated:** 2026-09-09 17:37
 
 | stage | outcome |
 |---|---|
 | 1 Transpile | deterministic C++, no AI |
 | 2 AI assist | not run (nothing to fill) |
-| 3 AI optimize | **4.17x** over 2 round(s) -- re-measured: unmeasurable under the gate |
+| 3 AI optimize | **5.13x** over 3 round(s) -- 3 run of max 6, stopped: round 3 no-change -- nothing new to compound from |
 
 ## The Python this was generated from
 
@@ -34,36 +34,41 @@ self.outMesh = Mesh(points=points, counts=counts, indices=indices)
 
 Parity gate: `authored+pointwise`. Every accepted round was re-checked against the interpreted Python before it was allowed to win. Where a node's generic pointwise parity SKIPS -- a deformer writes through the native `outputGeometry`, which the scalar harness cannot read -- the authored `@maya_test` is the ONLY gate, so treat those rows as behavioural checks rather than numerical ones.
 
-Bench scene: not recorded (ledger predates the scene record; no noise-floor gate, no per-tick perturbation check and no output fingerprint applied to these rounds).
+Bench scene: geo density 400 / array length 20000; noise floor 15 ms; moved per tick: `halfExtents[0] (vector)`, `height[0] (double)`, `isoValue (double)`, `radius[0] (double)`, `resolution (int)`, `shapeMatrix[0] (matrix)`, `smoothing[0] (double)`; outputs checked (1 plug(s)); accepts re-timed against the incumbent on geo 40 / array 512 and rejected if slower there; baseline under the noise floor at the largest scene, so every accept had to clear 1.15x on two independent timings. baseline 1.395 ms is below the 15 ms noise floor even at the largest bench scene (geo=400 array=20000); measured anyway -- every accept must clear 1.15x on two independent timings.
 
-Baseline **2.309 ms** -> best **0.554 ms** (**4.17x**).
+Baseline **1.395 ms** -> best **0.272 ms** (**5.13x**).
 
-**Re-measured 2026-09-08** under the gated harness (noise floor, animated-input perturbation, output fingerprint), geo density 400 / array length 20000: **unmeasurable** -- baseline 1.591 ms is below the 15 ms noise floor even at the largest bench scene (geo=400 array=20000); nothing this small can be optimized against measurably. The speedup above was taken before the gate existed and cannot be reproduced under it. Moved per tick: `halfExtents[0] (vector)`, `height[0] (double)`, `isoValue (double)`, `radius[0] (double)`, `resolution (int)`, `shapeMatrix[0] (matrix)`, `smoothing[0] (double)`.
+Rounds: **3** run of at most 6; the loop stopped because round 3 no-change -- nothing new to compound from.
 
 | # | change | theme | predicted | measured | time | outcome |
 |---|---|---|---|---|---|---|
-| 00 | `--` | -- | -- | 2.309 ms | -- | -- |
-| 01 | `fuse_field_raw_dmc_thread` | This node is grid-shaped at a much smaller size than the brief implies -- the harness's builtin metaClay scene overrides the generic seeding, so it is 3 shapes on a 48x35x31 lattice, not 20000 shapes -- so the win is removing whole-array temporaries and strided nd:: accessors, then threading the one pass that clears the 50us floor. | 3.00x | 3.36x | 11.6 min | ACCEPTED |
-| 02 | `direct_mesh_writeback` | the dual-marching-cubes core now writes MPoint/int output buffers in place and the Maya arrays are built with bulk constructors, deleting a packed-float64 round-trip and ~36k per-element append() API calls | 1.20x | 4.17x | 11.0 min | ACCEPTED |
+| 00 | `--` | -- | -- | 1.395 ms | -- | -- |
+| 01 | `fuse_grid_sampler` | collapse the per-shape nd::Array SDF sampling chain and the table-driven dual marching cubes into one raw per-grid-point loop, and stop reading the 20000-element arrays past the shape count that _dense_over truncates them to | 5.00x | 4.16x | 27.0 min | ACCEPTED |
+| 02 | `unit_scale_sampler_fused_dmc` | hoist the per-shape branches out of the grid loop, skip the three divisions when a shape's scale is exactly 1.0, fuse the three dual-marching-cubes passes into one scan, and keep the output buffers' capacity across ticks | 1.25x | 5.13x | 20.9 min | ACCEPTED |
+| 03 | `thread_field_rows_no_gain` | parallelise the SDF field sampler over grid rows on a persistent per-node pool; on this Windows box the wake-up cost exceeded the ~80 us job and the change was reverted, leaving the file unchanged | 1.25x | -- | 20.6 min | rejected: no change to the source |
 
 ### Predicted vs measured
 
 The rounds where the guess and the stopwatch disagreed. These are the transferable part -- a prediction that missed says more about the machine than one that landed.
 
-* `direct_mesh_writeback` -- predicted 1.20x, measured **4.17x**. this node is GRID-shaped, not QUERY-shaped -- 3 shapes over a ~48x35x31 lattice -- and a previous round had already fused the SDF field evaluation and raw-pointered the DMC traversal, so the arithmetic was no longer the cost. What was left was pure marshalling: DMC wrote _pts/_idx, copied them into a packed float64 array, and compute() then sliced/reshaped/astype'd that array back apart into points/counts/indices, touching every vertex and index five times; the result was then handed to Maya one element at a time through MPointArray::append / MIntArray::append. Removing the round-trip and appending in bulk should cost nothing numerically because int32 -> double -> int64 -> int is exact over these ranges and MPoint(x,y,z) is the same triple either way.
+* `unit_scale_sampler_fused_dmc` -- predicted 1.25x, measured **5.13x**. instrumenting compute() showed the bench scene is 3 shapes on a ~27x16x16 grid (not 20000 shapes: the builtin scene trims the multis), with ~0.11 ms in the sampler, ~0.04 ms in DMC and ~0.15 ms in Maya's MFnMesh::create; the sampler is divider-throughput bound (3 div + sqrt per shape-point), so the only exact way to cut it is to not divide when the divisor is exactly 1.0 (x/1.0 == x for every x), which the identity-matrix scene hits on all three shapes; DMC's three passes reload the same field corners three times and grow fresh vectors every tick
+* `thread_field_rows_no_gain` -- predicted 1.25x, **rejected: no change to the source**. candidate is identical to the current best
+
+### Rejected rounds
+
+* `thread_field_rows_no_gain` -- rejected: no change to the source. candidate is identical to the current best
 
 ## Verification
 
-* parity: **pass**  (maxerr 0.0, tol 0.0001)
-* authored @maya_test: 1/1 passed
-* speed: compiled 350.567 ms vs interpreted 38316.878 ms (best of 2, geo 40 / array 512)
+* parity: **pass**
+* verify could not run: 'NoneType' object has no attribute 'add_input_attr' | authored @maya_test: 1/1 passed
 
 ## Files
 
 ```
 build/stages/metaballs/1_transpiled.cpp     deterministic transpile (no AI)
 build/stages/metaballs/3_optimized/00_baseline.cpp
-build/stages/metaballs/3_optimized/01_fuse_field_raw_dmc_thread.cpp
-build/stages/metaballs/3_optimized/02_direct_mesh_writeback.cpp
+build/stages/metaballs/3_optimized/01_fuse_grid_sampler.cpp
+build/stages/metaballs/3_optimized/02_unit_scale_sampler_fused_dmc.cpp
 build/source/metaballs.cpp      SHIPPED
 ```

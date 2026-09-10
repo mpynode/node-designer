@@ -1,8 +1,25 @@
 {
   "accepted": true,
-  "baseline_ms": 73.6654,
-  "best_ms": 0.2855,
-  "created": 1788191954.922037,
+  "baseline_ms": 144.0601,
+  "bench": {
+    "fingerprint": "checked (1 plug(s))",
+    "floor_ms": 15.0,
+    "perturbed": [
+      "applyCombos (bool)",
+      "weight[0] (float)",
+      "input[0].inputGeometry <- pSphereShape1Orig.vtx[0]"
+    ],
+    "rung": [
+      90,
+      2000
+    ],
+    "small_rung": [
+      40,
+      512
+    ]
+  },
+  "best_ms": 0.3475,
+  "created": 1788989764.5113547,
   "ledger": [
     {
       "compiled": true,
@@ -10,7 +27,7 @@
       "fix_rounds": 0,
       "hypothesis": "",
       "index": 0,
-      "ms": 73.6654,
+      "ms": 144.0601,
       "note": "",
       "outcome": "baseline",
       "parity": null,
@@ -22,59 +39,42 @@
     },
     {
       "compiled": true,
-      "duration_s": 860.407,
+      "duration_s": 1156.094,
       "fix_rounds": 0,
-      "hypothesis": "accumulate_deltas spelled every += as nd::add(nd::slice(out,{Sl::at(b)}), s).item(), which builds a shared_ptr-backed Array view AND an allocated result Array for each of the three components of each of ~178k (target, component) pairs -- roughly a million allocations per evaluation, so the arithmetic is invisible next to malloc. Replacing it with out[b] = out[b] + wt*dlt[d] keeps the exact operand order and the exact double add, so it is bit-identical. Secondarily, inbetween_hat rescans all 2000 ibase entries for every one of 2000 targets (4M iterations); its lo/hi are an order-independent max/min over the knots sharing a main, so a per-main sorted knot list plus lower_bound/upper_bound selects the identical doubles in O(log n).",
+      "hypothesis": "at 2000 targets x 2000 rows the node is ELEMENTWISE over the tables, not over the mesh: ~670k scatter iterations each paying two heap allocations dwarf the 8k-vertex mesh work, so removing the allocations should take the node from 144 ms to the low tens of ms; what remains is the serial combo product chain (~670k dependent multiplies) and the random-write scatter, both derived from tables that HOLD between ticks except for the drivers whose weight moved",
       "index": 1,
-      "ms": 0.3238,
+      "ms": 0.3475,
       "note": "",
       "outcome": "accept",
       "parity": "pass",
-      "predicted_speedup": 15.0,
-      "risk": "The scatter rewrite hoists the (3j+2 < nd) guard into the loop bound j < nd/3, which only removes iterations that did nothing -- but it is the kind of clamp that is easy to get off by one, so the bound was derived rather than guessed. The knot index changes a linear max/min into a binary search: it falls back to the literal scan when iknot is shorter than ibase (the scan reads iknot[j] for j < nib, which the index cannot reproduce) or when any knot is NaN (which would make the sorted order meaningless). Ties are safe because max/min over a set is order-independent and both comparisons stayed strict.",
-      "slug": "raw_scatter_deltas",
-      "speedup": 227.50277949351454,
-      "theme": "the delta accumulator was heap-allocating three nd::Array temporaries per vertex-component; a raw-pointer scatter plus a per-main sorted knot index for the in-between rescan took the node from 73.7 ms to 0.35 ms"
+      "predicted_speedup": 10.0,
+      "risk": "the scatter->gather inversion is only bit-identical because every vertex receives its terms in the same (t, j) order as the scatter, so the gather table is filled in that order and never sorted; the combo cache re-multiplies a slice whenever ANY driver weight it reads changed (byte compare against the weights at the last refresh), so an unchanged product is the original serial product, never a re-association; both caches are per-instance, mutex-guarded, and invalidated on setDependentsDirty, preEvaluation and a byte-compare key of the tables they derive from",
+      "slug": "raw_pointer_scatter",
+      "speedup": 414.5614388489209,
+      "theme": "the delta scatter built three nd::Array temporaries per component per row (slice + add + item), so lower the whole deform to raw pointers with the same expression and visit order; then cache the two table-derived structures (per-vertex gather index, per-target combo products) across ticks"
     },
     {
       "compiled": true,
-      "duration_s": 731.584,
+      "duration_s": 1499.944,
       "fix_rounds": 0,
-      "hypothesis": "in-file profiling showed the baked scatter was 0.147 ms of a 0.275 ms compute; only 576 of 8012 vertices are ever written, so the 192 KB zero-init, the 24k-double rest-point snapshot and the 8012-vertex rewrite are all pure overhead, and the clamped per-target [lo,hi) plus the per-row vertex id are derived state that never moves while the weights animate",
+      "hypothesis": "phase timers showed gather 105 us, hat+CSR 40 us, a second MFnMesh construction 18 us; the two 192 KB zero-filled temporaries were suspected first but the fused loop alone still cost 103 us, so the entries themselves are the work -- a deterministic per-vertex map with a member chunk cursor halves it, while caching the hat's lo/hi bounds on the tables and reusing one MFnMesh for getRawPoints+updateSurface remove ~50 us of serial work",
       "index": 2,
-      "ms": 0.2855,
-      "note": "",
-      "outcome": "accept",
+      "ms": 0.3125,
+      "note": "incumbent under 2 ms: second measurement 0.312 ms did not confirm 0.292 ms",
+      "outcome": "not-faster",
       "parity": "pass",
-      "predicted_speedup": 1.35,
-      "risk": "the cache is keyed by an exact memcmp of targetOffset and targetComponents plus the vertex count and delta length, and is additionally cleared from setDependentsDirty and preEvaluation, so a table edit cannot go stale in any evaluation mode; the accumulator itself is rebuilt from the live weights every tick and is never cached",
-      "slug": "compact_slot_scatter_cache",
-      "speedup": 258.0224168126095,
-      "theme": "cache the targetOffset/targetComponents-derived scatter topology per instance, accumulate into a compact 576-slot buffer instead of a 24k-double per-vertex array, and touch only the vertices a delta row actually names"
+      "predicted_speedup": 1.45,
+      "risk": "the bench is shared with other mayapy sessions on this machine so medians swing 0.24-0.37 ms tick to tick; the condvar wake-up of 7 workers is ~half the threaded region (50 us for ~13 us of work per thread), and 4 threads measured no better; MPYNODE_COMBO_THREADS=1 restores the serial path without a rebuild; bench.sh/build.sh are macOS-only and cannot run here, so measurements used the same cl.exe flags as the project's build.bat and the same benchmark_node.py invocation",
+      "slug": "thread_fused_gather",
+      "speedup": null,
+      "theme": "fuse the per-vertex baked-delta gather into the output write and run that one map on a persistent per-node pool; the gather table holds ~170k (target,row) entries at the bench size because random slices overlap, so it was ~100 us of a ~235 us deform, not the 666 entries the row count suggests"
     }
   ],
+  "max_rounds": 6,
   "parity_gate": "authored+pointwise",
-  "reason": "accepted (258.02x)",
-  "remeasured": {
-    "baseline_ms": 139.993,
-    "date": "2026-09-08",
-    "diverged": null,
-    "final_ms": 0.7639,
-    "fingerprint": "checked (1 plug(s))",
-    "floor_ms": 15.0,
-    "perturbed": [
-      "applyCombos (bool)",
-      "weight[0] (float)",
-      "input[0].inputGeometry <- pSphereShape1Orig.vtx[0]"
-    ],
-    "reason": null,
-    "rung": [
-      90,
-      2000
-    ],
-    "speedup": 183.26089802330148
-  },
+  "reason": "accepted (414.56x)",
   "rounds": 2,
-  "speedup": 258.0224168126095,
+  "speedup": 414.5614388489209,
+  "stop_reason": "round 2 not-faster -- nothing new to compound from",
   "type_name": "comboCorrectives"
 }

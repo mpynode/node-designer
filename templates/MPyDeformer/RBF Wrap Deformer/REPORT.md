@@ -1,10 +1,10 @@
 # MPyDeformer_RBF_Wrap_Deformer -- compile report
 
-Generated 2026-08-25 09:35
+Generated 2026-09-09 14:57
 
 | node | status | assist | optimize | detail |
 |---|---|---|---|---|
-| `rbfWrapDeformer` | compiled | -- | **10166.83x** | [report](build/stages/rbfWrapDeformer/REPORT.md) |
+| `rbfWrapDeformer` | compiled | -- | **6616.12x** | [report](build/stages/rbfWrapDeformer/REPORT.md) |
 
 ## Layout
 

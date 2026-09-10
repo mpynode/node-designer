@@ -1,10 +1,10 @@
 # MPySkinCluster_Twist_Swing_Skin -- compile report
 
-Generated 2026-08-25 10:56
+Generated 2026-09-09 18:24
 
 | node | status | assist | optimize | detail |
 |---|---|---|---|---|
-| `twistSwingSkin` | compiled | -- | **1.93x** | [report](build/stages/twistSwingSkin/REPORT.md) |
+| `twistSwingSkin` | compiled | -- | **5.01x** | [report](build/stages/twistSwingSkin/REPORT.md) |
 
 ## Layout
 

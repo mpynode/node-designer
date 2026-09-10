@@ -1,8 +1,27 @@
 {
   "accepted": true,
-  "baseline_ms": 2.4701,
-  "best_ms": 1.2823,
-  "created": 1787680614.518683,
+  "baseline_ms": 4.6454,
+  "bench": {
+    "below_floor": true,
+    "fingerprint": "checked (1 plug(s))",
+    "floor_ms": 15.0,
+    "perturbed": [
+      "swingWeights[0] (double)",
+      "twistWeights[0] (double)",
+      "input[0].inputGeometry <- pSphereShape1Orig.vtx[0]"
+    ],
+    "reason": "baseline 4.645 ms is below the 15 ms noise floor even at the largest bench scene (geo=400 array=20000); measured anyway -- every accept must clear 1.15x on two independent timings",
+    "rung": [
+      400,
+      20000
+    ],
+    "small_rung": [
+      40,
+      512
+    ]
+  },
+  "best_ms": 0.9275,
+  "created": 1789003491.8814778,
   "ledger": [
     {
       "compiled": true,
@@ -10,7 +29,7 @@
       "fix_rounds": 0,
       "hypothesis": "",
       "index": 0,
-      "ms": 2.4701,
+      "ms": 4.6454,
       "note": "",
       "outcome": "baseline",
       "parity": null,
@@ -22,59 +41,42 @@
     },
     {
       "compiled": true,
-      "duration_s": 772.597,
+      "duration_s": 805.06,
       "fix_rounds": 0,
-      "hypothesis": "in-deform profiling (temporary fprintf timers, since removed) showed the four phases at arr=0.40 pts=0.35 nd=0.79 body=0.26 ms out of a 2.36 ms median; the nd phase was push_back into a std::vector followed by nd::from_data, which allocs a ZERO-FILLED 3.8 MB buffer and then copies the vector into it -- three passes over the data to produce one array. Writing straight into the array buffer, and then reusing that buffer across evaluations, removes both the copy and the memset. The same shape applies to nd::concatenate([rest, ones((N,1))]) in linear_blend, which allocs a zero-filled 5.1 MB output plus a separate 1.28 MB ones() buffer to produce what is just [x,y,z,1] per row.",
+      "hypothesis": "the bench wires no joints (J=0) so every tick is: 40000 MArrayDataHandle element reads whose values are never used, an N*3 push_back widening, an (N,4) homogeneous concat, then a shape-mismatch throw; none of that is numeric work, so removing the reads and the two big allocations should take the node to Maya's own mesh-copy floor",
       "index": 1,
-      "ms": 1.5144,
-      "note": "",
+      "ms": 0.9275,
+      "note": "confirmed twice (incumbent under the noise floor): 0.896 / 0.927 ms",
       "outcome": "accept",
       "parity": "pass",
-      "predicted_speedup": 1.35,
-      "risk": "the reused buffers are PURE SCRATCH -- every element is overwritten before it is read and the size is re-checked each evaluation -- so there is no derived state that could go stale and nothing to invalidate in setDependentsDirty/preEvaluation. They are per-instance members (never a static registry), so parallel EM evaluating two instances of this node concurrently cannot make them alias. The MPointArray scratch is clear()ed before allPositions so a failed read cannot surface the previous evaluation's points, which is the one place reuse could have changed an answer. No comparison, tie-break, accumulation order or floating-point type was touched anywhere: pts_h's fast path writes the literal 1.0 and the identical doubles the generic concatenate would have written, and the array-read rewrite reproduces the grow-one-element-at-a-time result exactly (final size == maxIndex+1, absent indices 0.0) by sizing to elementCount() up front and trimming once at the end.",
-      "slug": "direct_fill_reused_buffers",
-      "speedup": 1.6310750132065504,
-      "theme": "this node is ELEMENTWISE, not QUERY: at 159602 verts the arithmetic is nil and the whole cost is whole-array temporaries, so every per-evaluation malloc + value-init memset + redundant copy was replaced by a direct fill into a size-guarded per-instance scratch buffer"
+      "predicted_speedup": 2.5,
+      "risk": "linear_blend rewrite must keep ((1*W)*M)*p per term and j-major/k-minor accumulation to stay bit-identical; the k==3 factor is the literal 1.0 the concat supplied so eliding that multiply is exact. Flattened-size shortcut assumes MArrayDataHandle logical indices ascend (falls back to a full elementIndex scan if jumpToArrayElement fails). Weight-set reads now happen only when skinMode==2 and both sizes equal N*J, which is the only place the Python consumes their values.",
+      "slug": "defer_weight_reads_reuse_ptsbuf",
+      "speedup": 5.008517520215634,
+      "theme": "read the two 20000-element weight-set plugs only on the branch that consumes them, fuse linear_blend into one strided loop with no (N,4) concat, and keep the 3n-double rest-point store as a per-instance buffer instead of faulting in a fresh 4 MB block every tick"
     },
     {
       "compiled": true,
-      "duration_s": 656.488,
+      "duration_s": 759.396,
       "fix_rounds": 0,
-      "hypothesis": "profiling showed the deform is pure per-access overhead, not arithmetic: of ~1.24 ms in-node, 0.34 ms is walking 2 x 20000 MArrayDataHandle elements at ~8.5 ns each. Maya re-runs deform() when ANY input goes dirty, and the benchmark's perturb function moves only swingWeights[0], so twistWeights is re-walked identically on every tick. Caching the derived flat buffer per plug should remove roughly half that pass.",
+      "hypothesis": "on the bench scene no joints are wired, so the weight matrix has 0 rows and every tick ends in nd's broadcast error before the rest copy is ever consumed; that copy (479k float->double writes) is the one pass this node owns on that path, everything else is Maya's input->output mesh copy and iterator setup. Float->double widening is exact, so reading floats in the kernel is bit-identical to reading the copy, and the shape pre-check calls nd::broadcast_shapes itself so an incompatible pair raises the same error nd::sub raised",
       "index": 2,
-      "ms": 1.2823,
-      "note": "",
-      "outcome": "accept",
+      "ms": 0.9292,
+      "note": "incumbent under the noise floor: second measurement 0.929 ms did not confirm 0.757 ms",
+      "outcome": "not-faster",
       "parity": "pass",
       "predicted_speedup": 1.15,
-      "risk": "a stale buffer is a parity failure, not a slow answer, so invalidation is the whole risk. Covered on all three channels the task requires: setDependentsDirty for DG (element plug twistWeights[i] reports attribute() == aTwistWeights), preEvaluation for EM (deliberately unconditional -- it drops BOTH caches on any dirty plug rather than trusting a per-plug dirty query), and an elementCount + first/last-value fingerprint as the backstop. Members are per-instance, never a static registry; the validity flags are std::atomic and the rebuild runs under a per-node mutex, so parallel EM cannot race two instances.",
-      "slug": "cache_weight_arrays",
-      "speedup": 1.9263042969663886,
-      "theme": "cache the two 20000-element weight-set plug reads across evaluations, invalidated by setDependentsDirty + preEvaluation + an elementCount/first/last fingerprint"
+      "risk": "the win is larger than predicted because the copy also re-faulted a 3.8 MB block per tick, not just wrote it. build.sh is macOS-only and cannot run on this Windows host, so the file was compiled with the harness's own MSVC flags (build.bat: /O2 /fp:precise /std:c++17) and timed with the identical benchmark_node.py invocation; the generic lambda (const auto* Rp) is C++14 and builds on both compilers. Behaviour on the real skinning paths (mode 1, live result with seeded weight sets) is unchanged: they materialise the double copy exactly as before",
+      "slug": "lazy_rest_float_source",
+      "speedup": null,
+      "theme": "stop widening the 160k rest points to a 3.8 MB double copy every tick; the linear-blend kernel and the envelope blend read the mesh's own float store, and the double copy is built only for the nd-heavy dual-quaternion and generic-broadcast paths"
     }
   ],
+  "max_rounds": 6,
   "parity_gate": "authored+pointwise",
-  "reason": "accepted (1.93x)",
-  "remeasured": {
-    "baseline_ms": null,
-    "date": "2026-09-08",
-    "diverged": null,
-    "final_ms": null,
-    "fingerprint": null,
-    "floor_ms": 15.0,
-    "perturbed": [
-      "swingWeights[0] (double)",
-      "twistWeights[0] (double)",
-      "input[0].inputGeometry <- pSphereShape1Orig.vtx[0]"
-    ],
-    "reason": "baseline 8.162 ms is below the 15 ms noise floor even at the largest bench scene (geo=400 array=20000); nothing this small can be optimized against measurably",
-    "rung": [
-      400,
-      20000
-    ],
-    "speedup": null
-  },
+  "reason": "accepted (5.01x)",
   "rounds": 2,
-  "speedup": 1.9263042969663886,
+  "speedup": 5.008517520215634,
+  "stop_reason": "round 2 not-faster -- nothing new to compound from",
   "type_name": "twistSwingSkin"
 }

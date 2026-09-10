@@ -1,10 +1,10 @@
 # MPyNode_RBF_Wrap -- compile report
 
-Generated 2026-08-25 10:27
+Generated 2026-09-09 17:43
 
 | node | status | assist | optimize | detail |
 |---|---|---|---|---|
-| `rbfWrap` | compiled | -- | **6102.99x** | [report](build/stages/rbfWrap/REPORT.md) |
+| `rbfWrap` | compiled | -- | **10928.99x** | [report](build/stages/rbfWrap/REPORT.md) |
 
 ## Layout
 

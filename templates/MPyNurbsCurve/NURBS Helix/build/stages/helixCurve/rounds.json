@@ -1,8 +1,28 @@
 {
   "accepted": true,
-  "baseline_ms": 0.0152,
-  "best_ms": 0.0016,
-  "created": 1787679895.982213,
+  "baseline_ms": 0.0184,
+  "bench": {
+    "below_floor": true,
+    "fingerprint": "checked (1 plug(s))",
+    "floor_ms": 15.0,
+    "perturbed": [
+      "height (float)",
+      "radius (float)",
+      "t (time)",
+      "turns (float)"
+    ],
+    "reason": "baseline 0.018 ms is below the 15 ms noise floor even at the largest bench scene (geo=400 array=20000); measured anyway -- every accept must clear 1.15x on two independent timings",
+    "rung": [
+      400,
+      20000
+    ],
+    "small_rung": [
+      40,
+      512
+    ]
+  },
+  "best_ms": 0.0034,
+  "created": 1789000341.0414577,
   "ledger": [
     {
       "compiled": true,
@@ -10,7 +30,7 @@
       "fix_rounds": 0,
       "hypothesis": "",
       "index": 0,
-      "ms": 0.0152,
+      "ms": 0.0184,
       "note": "",
       "outcome": "baseline",
       "parity": null,
@@ -22,60 +42,42 @@
     },
     {
       "compiled": true,
-      "duration_s": 657.612,
+      "duration_s": 629.164,
       "fix_rounds": 0,
-      "hypothesis": "at n=120 the arithmetic is irrelevant; the whole 12.4us is per-allocation and per-Maya-call overhead. Six nd::Array allocs plus a 360-double stack plus two growing Maya arrays plus a full MFnNurbsCurve::create per evaluation are all avoidable, because CV count, degree, form and the entire knot vector are compile-time constants for this node and only the CV positions move.",
+      "hypothesis": "at 120 points the arithmetic is negligible; the 18 us is dominated by MFnNurbsCurveData::create + MFnNurbsCurve::create (allocation, knot validation, internal curve build) and by ~10 shared_ptr<vector> temporaries plus a 122-append MDoubleArray knot rebuild per tick. Fusing the chain removes the temporaries (measured 0.0174 -> 0.0116 ms); writing CVs into the existing output data object removes the curve rebuild (measured 0.0116 -> 0.0033 ms). Every CV is recomputed every tick; only the container is reused, guarded on numCVs/degree/form/numKnots and falling back to create().",
       "index": 1,
-      "ms": 0.0027,
-      "note": "",
+      "ms": 0.0034,
+      "note": "confirmed twice (incumbent under the noise floor): 0.003 / 0.003 ms",
       "outcome": "accept",
       "parity": "pass",
-      "predicted_speedup": 2.5,
-      "risk": "reusing the output data object in place is the one change that could silently freeze the answer, so it was verified directly rather than trusted: CVs are recomputed in full every evaluation and only the container is reused. A standalone check against the Python reference over 5 fresh configs plus 3 RE-PRESENTED earlier configs reported maxerr 0.000e+00 (bit-identical, not merely inside tolerance), zero frozen repeats, and degree/form/knot-count unchanged at 3/kOpen/122.",
-      "slug": "reuse_curve_data_inplace",
-      "speedup": 5.62962962962963,
-      "theme": "the node is a fixed 120-CV generator whose topology never changes, so stop rebuilding the nurbsCurve data object every tick -- fuse the five nd::Array passes into one allocation-free loop and push the new CVs into the data object already on the output plug"
+      "predicted_speedup": 1.6,
+      "risk": "in-place mutation of the output data object: if the downstream shape held the same object without re-pulling it would show stale CVs -- checked bit-exact vs numpy on 6 input sets (incl. a re-presented earlier set) through both the plug and a connected nurbsCurve shape. Measured on Windows/MSVC via a mirror of bench.sh (the shipped build.sh is Mac-only), so the Mac number may differ; clang can additionally fuse the now-adjacent cos/sin into sincos.",
+      "slug": "refill_curve_in_place",
+      "speedup": 5.411764705882353,
+      "theme": "the helix is 120 CVs with fixed topology, so refill the previous tick's kNurbsCurveData with setCVs+updateCurve instead of creating a fresh curve object every evaluation, and fuse the numpy chain into one allocation-free loop over constant u / knot tables built once in the constructor"
     },
     {
       "compiled": true,
-      "duration_s": 792.534,
+      "duration_s": 1317.346,
       "fix_rounds": 0,
-      "hypothesis": "at 120 CVs the node is not arithmetic-bound but call-bound: 120 __sincos plus 120 out-of-line MPointArray::operator[] plus a per-tick hasFn/MFnNurbsCurve-construct/numCVs/degree/form re-validation are the whole body, so removing whole CALLS -- not making the math cheaper -- is the lever",
+      "hypothesis": "At 120 CVs the compute is ~1.9 us of call overhead, not arithmetic: 120 out-of-line MPointArray::set calls (~300 ns) plus a six-call hasFn/ctor/numCVs/degree/form/numKnots re-validation of the same data object every tick (~350 ns) are a third of it, while the exact sincos loop (~300 ns) and setCVs+updateCurve (~450 ns) are the floor the public API allows. Removing whole calls, not cheapening the math, is the lever; every input moves to a fresh value each tick so no input-keyed cache can hit.",
       "index": 2,
-      "ms": 0.0016,
+      "ms": 0.0043,
       "note": "",
-      "outcome": "accept",
+      "outcome": "not-faster",
       "parity": "pass",
-      "predicted_speedup": 2.0,
-      "risk": "cos(P+B)=cP*cB-sP*sB is a ~1-2 ULP rewrite of a single libm sincos, so it is no longer bit-identical to the reference (well inside the 1e-3/1e-4 parity tolerance); and the bound MFnNurbsCurve is re-validated only on MObject identity change, with setCVs failure as the backstop that drops to the full create path",
-      "slug": "cache_turns_circle_bind_fnset",
-      "speedup": 9.5,
-      "theme": "split the helix angle into a turns-only unit-circle table cached across evaluations and a one-sincos time rotation, then stop re-establishing the output curve's identity with a fresh MFnNurbsCurve every tick"
+      "predicted_speedup": 1.3,
+      "risk": "MPointArray contiguity is asserted once at construction (last-first address == 119 * sizeof(MPoint), every element address checked, w == 1.0 after an explicit init) and falls back to per-element set() otherwise; the bound MFnNurbsCurve is re-validated only when the plug hands back a different MObject, with a failed setCVs dropping to the full create path. Official geo parity on the built .mll: maxerr 0.0 (bit-identical). In-compute steady_clock timers (diagnostic build, removed) showed 1.9 -> 1.3 us per tick; the harness median fell 3.0 -> 2.5 us on a quiet run, but five sibling mayapy processes on this machine swing single medians between 2.5 and 5.5 us, so a single driver measurement may not resolve the gain. An interleaved A/B under identical load (handed-in baseline built into a separate directory, runs alternated) read baseline 5.2 / 5.1 / 5.2 us vs optimized 4.3 / 4.2 / 4.1 us, i.e. ~1.22x, matching the quiet pair. Not attempted on purpose: any algebraic restructuring of the 120 sincos (angle-addition tables, rotation recurrence) -- it would trade the current bit-identical result for a 1-100 ULP one to save ~200 ns, which the harness cannot resolve. Windows note: the workspace build.sh/bench.sh are the macOS recipe and cannot run here; measurements used an MSVC twin with the identical harness invocation (same spec, --iters 9, --bench-array 20000, --bench-geo 400).",
+      "slug": "raw_cv_cursor_bind_fnset",
+      "speedup": null,
+      "theme": "Fill the reused CV buffer through a contiguity-proven raw MPoint pointer and keep the output curve's function set bound across evaluations, so one tick makes about ten Maya calls instead of about 135."
     }
   ],
+  "max_rounds": 6,
   "parity_gate": "authored+pointwise",
-  "reason": "accepted (9.50x)",
-  "remeasured": {
-    "baseline_ms": null,
-    "date": "2026-09-08",
-    "diverged": null,
-    "final_ms": null,
-    "fingerprint": null,
-    "floor_ms": 15.0,
-    "perturbed": [
-      "height (float)",
-      "radius (float)",
-      "t (time)",
-      "turns (float)"
-    ],
-    "reason": "baseline 0.018 ms is below the 15 ms noise floor even at the largest bench scene (geo=400 array=20000); nothing this small can be optimized against measurably",
-    "rung": [
-      400,
-      20000
-    ],
-    "speedup": null
-  },
+  "reason": "accepted (5.41x)",
   "rounds": 2,
-  "speedup": 9.5,
+  "speedup": 5.411764705882353,
+  "stop_reason": "round 2 not-faster -- nothing new to compound from",
   "type_name": "helixCurve"
 }

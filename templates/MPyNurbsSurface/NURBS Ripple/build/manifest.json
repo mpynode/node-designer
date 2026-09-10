@@ -1,12 +1,12 @@
 {
   "manifest_version": 1,
-  "porter_recipe_version": "19",
+  "porter_recipe_version": "27",
   "provider": "claude_cli",
-  "model": "claude-opus-5[1m]",
+  "model": "claude-fable-5-1",
   "strict": false,
   "plugin_name": "MPyNurbsSurface_NURBS_Ripple",
-  "bundle": "templates/MPyNurbsSurface/NURBS Ripple/MPyNurbsSurface_NURBS_Ripple.bundle",
-  "created": 1787679835.0625541,
+  "bundle": "C:\\Users\\eric.vignola\\Desktop\\MPyNode\\templates\\MPyNurbsSurface\\NURBS Ripple\\MPyNurbsSurface_NURBS_Ripple.mll",
+  "created": 1789001889.3680396,
   "nodes": [
     {
       "source_node": "rippleSurf",
@@ -14,34 +14,25 @@
       "type_id": "0x0006eaa8",
       "type_id_source": "derived",
       "base": "MPxNode",
-      "spec_hash": "aad3dc254c9a35e826f3f425f311e88317116c8692d31852ba1edcfc4b19a7ad",
-      "port_cache_key": "aad3dc254c9a35e826f3f425f311e88317116c8692d31852ba1edcfc4b19a7ad",
-      "cache": "miss",
+      "spec_hash": "a668d7dcd7e4a5bdcea82cbd23938b083d008c78333ad5554c74e224d4dcf488",
+      "port_cache_key": "a668d7dcd7e4a5bdcea82cbd23938b083d008c78333ad5554c74e224d4dcf488",
+      "cache": "hit",
       "build_status": "compiled",
       "build_reason": "",
       "ported": false,
       "incomplete": [],
       "invented_io": [],
       "missing_includes": [],
+      "vp2_skip": "",
       "verify": {
         "ran": true,
         "pass": true,
-        "maxerr": 0.0,
-        "tol": 0.0001,
-        "reason": "authored @maya_test: 1/1 passed",
+        "maxerr": null,
+        "tol": 0.0,
+        "reason": "verify could not run: 'NoneType' object has no attribute 'add_input_attr' | authored @maya_test: 1/1 passed",
         "timing": {
-          "measured": true,
-          "py_ms": 0.21829991601407528,
-          "cpp_ms": 0.021399930119514465,
-          "n": 3,
-          "truncated": false,
-          "scene": "geo 140 / array 5000",
-          "ratio": 0.09802995122606765,
-          "verdict": "below-floor",
-          "rung": [
-            140,
-            5000
-          ]
+          "measured": false,
+          "reason": "not timed -- generic parity did not pass for this node, so there is no trustworthy pair to measure (verify could not run: 'NoneType' object has no attribute 'add_input_attr')"
         },
         "authored_test": {
           "ran": true,
@@ -50,8 +41,7 @@
           "passes": 1,
           "reason": ""
         },
-        "generic_ran": true,
-        "reverified": "2026-09-08"
+        "generic_ran": false
       },
       "spec": {
         "schema_version": 1,
@@ -210,7 +200,7 @@
             "source": "def _expected_knots(num_cvs, degree):\n    \"\"\"Knot count Maya's ``MFn*::create`` expects: ``num_cvs + degree - 1``\n    for BOTH open and periodic forms (verified against a stock periodic\n    circle: 11 CVs, degree 3 -> 13 knots = 11 + 3 - 1).\"\"\"\n    return num_cvs + degree - 1"
           }
         ],
-        "methods": "@maya_test(label=\"Ripple builds an 8x8 (5-span) surface that is not flat\", digits=4)\ndef test_ripple_surface(self):\n    \"\"\"Validate the node's INTENT (interpreted node AND its C++ compile -> parity):\n    the generator builds a real 5-span x 5-span degree-3 nurbsSurface whose CVs\n    are lifted out of the flat plane (max |Y| > 0). Drives ONLY public plugs +\n    cmds, so it is valid against the compiled node too.\"\"\"\n    from maya import cmds as mc\n    import maya.api.OpenMaya as om2\n    from mpynode._common.methods.test_helpers import assert_true\n\n    name = self.get_name()\n\n    def _set(plug, *vals):\n        for s in (mc.listConnections(plug, s=True, d=False, plugs=True) or []):\n            mc.disconnectAttr(s, plug)\n        mc.setAttr(plug, *vals)\n\n    dst = mc.listConnections(name + \".outSurface\", s=False, d=True, plugs=True) or []\n    shp = None\n    for d in dst:\n        node = d.split(\".\")[0]\n        if mc.nodeType(node) == \"nurbsSurface\":\n            shp = node\n            break\n    if shp is None:\n        xf = mc.createNode(\"transform\", name=\"rippleSurfTest#\")\n        shp = mc.createNode(\"nurbsSurface\", name=xf + \"Shape\", parent=xf)\n        mc.connectAttr(name + \".outSurface\", shp + \".create\", force=True)\n\n    _set(name + \".size\", 6.0)\n    _set(name + \".amplitude\", 1.0)\n    _set(name + \".freq\", 1.2)\n    mc.currentTime(1)\n    mc.dgeval(shp + \".create\")\n\n    spans_u = mc.getAttr(shp + \".spansU\")\n    spans_v = mc.getAttr(shp + \".spansV\")\n    assert_true((spans_u, spans_v) == (5, 5),\n                \"expected (5, 5) spans, got %r\" % ((spans_u, spans_v),))\n\n    sel = om2.MSelectionList(); sel.add(shp)\n    fn = om2.MFnNurbsSurface(sel.getDagPath(0))\n    max_y = max(abs(p.y) for p in fn.cvPositions(om2.MSpace.kObject))\n    assert_true(max_y > 0.05, \"ripple should lift CVs off the plane (maxY %.4f)\" % max_y)\n\n\n@maya_demo(label=\"Animated Ripple Surface\")\ndef demo(self):\n    \"\"\"Build a nurbsSurface shape driven by this generator, tune a visible\n    ripple, set a one-loop playback range. The ripple advances because `t` is\n    wired to the timeline.\"\"\"\n    from maya import cmds as mc\n    name = self.get_name()\n\n    xf = mc.createNode(\"transform\", name=\"rippleSurf#\")\n    shp = mc.createNode(\"nurbsSurface\", name=xf + \"Shape\", parent=xf)\n    mc.connectAttr(name + \".outSurface\", shp + \".create\", force=True)\n    if not (mc.listConnections(name + \".t\", s=True, d=False) or []):\n        try:\n            mc.connectAttr(\"time1.outTime\", name + \".t\", force=True)\n        except Exception:\n            pass\n\n    mc.setAttr(name + \".size\", 6.0)\n    mc.setAttr(name + \".amplitude\", 1.0)\n    mc.setAttr(name + \".freq\", 1.4)\n    mc.playbackOptions(min=1, max=120)\n    mc.currentTime(1)\n    mc.select(xf, replace=True)\n    try:\n        mc.viewFit(xf)\n    except Exception:\n        pass\n    return name\n\n\n\"\"\"Setup source for mPyNurbsSurface nodes (self-first instance method).\"\"\"\n\n# Also this node's CREATE command, the way cmds.blendShape both makes the node\n# and wires it. Un-named because this file is shared by every node of the type\n# -- see maya_command.resolve_create_command_names.\n@maya_command(creates=True)\ndef setup(self, *args, **kwargs):\n    from maya import cmds as mc\n    name = self.get_name()\n    # build() owns ``self`` -- never delete it on failure. Only roll back the\n    # render transform/shape this body creates so a partial failure leaves no\n    # orphan; re-raise so build()/the command records built-but-unwired.\n    created = []\n    conn = None  # break any wired connection before delete so the rollback\n                 # doesn't cascade-delete the upstream ``self``.\n    try:\n        xform = mc.createNode(\"transform\", name=name + \"Render\"); created.append(xform)\n        shape = mc.createNode(\"nurbsSurface\", name=name + \"RenderShape\", parent=xform)\n        src, dst = name + \".outSurface\", shape + \".create\"\n        mc.connectAttr(src, dst, force=True); conn = (src, dst)\n        return name\n    except Exception:\n        if conn:\n            try:\n                mc.disconnectAttr(conn[0], conn[1])\n            except Exception:\n                pass\n        if created:\n            mc.delete([n for n in created if mc.objExists(n)])\n        raise\n",
+        "methods": "@maya_test(label=\"Ripple builds an 8x8 (5-span) surface that is not flat\", digits=4)\ndef test_ripple_surface(self):\n    \"\"\"Validate the node's INTENT (interpreted node AND its C++ compile -> parity):\n    the generator builds a real 5-span x 5-span degree-3 nurbsSurface whose CVs\n    are lifted out of the flat plane (max |Y| > 0). Drives ONLY public plugs +\n    cmds, so it is valid against the compiled node too.\"\"\"\n    from maya import cmds as mc\n    import maya.api.OpenMaya as om2\n    from mpynode._common.methods.test_helpers import assert_true\n\n    name = self.get_name()\n\n    def _set(plug, *vals):\n        for s in (mc.listConnections(plug, s=True, d=False, plugs=True) or []):\n            mc.disconnectAttr(s, plug)\n        mc.setAttr(plug, *vals)\n\n    dst = mc.listConnections(name + \".outSurface\", s=False, d=True, plugs=True) or []\n    shp = None\n    for d in dst:\n        node = d.split(\".\")[0]\n        if mc.nodeType(node) == \"nurbsSurface\":\n            shp = node\n            break\n    if shp is None:\n        xf = mc.createNode(\"transform\", name=\"rippleSurfTest#\")\n        shp = mc.createNode(\"nurbsSurface\", name=xf + \"Shape\", parent=xf)\n        mc.connectAttr(name + \".outSurface\", shp + \".create\", force=True)\n\n    _set(name + \".size\", 6.0)\n    _set(name + \".amplitude\", 1.0)\n    _set(name + \".freq\", 1.2)\n    mc.currentTime(1)\n    mc.dgeval(shp + \".create\")\n\n    spans_u = mc.getAttr(shp + \".spansU\")\n    spans_v = mc.getAttr(shp + \".spansV\")\n    assert_true((spans_u, spans_v) == (5, 5),\n                \"expected (5, 5) spans, got %r\" % ((spans_u, spans_v),))\n\n    sel = om2.MSelectionList(); sel.add(shp)\n    fn = om2.MFnNurbsSurface(sel.getDagPath(0))\n    max_y = max(abs(p.y) for p in fn.cvPositions(om2.MSpace.kObject))\n    assert_true(max_y > 0.05, \"ripple should lift CVs off the plane (maxY %.4f)\" % max_y)\n\n\n@maya_demo(label=\"Animated Ripple Surface\")\ndef demo(self):\n    \"\"\"Build a nurbsSurface shape driven by this generator, tune a visible\n    ripple, set a one-loop playback range. The ripple advances because `t` is\n    wired to the timeline.\"\"\"\n    from maya import cmds as mc\n    name = self.get_name()\n\n    xf = mc.createNode(\"transform\", name=\"rippleSurf#\")\n    shp = mc.createNode(\"nurbsSurface\", name=xf + \"Shape\", parent=xf)\n    mc.connectAttr(name + \".outSurface\", shp + \".create\", force=True)\n    if not (mc.listConnections(name + \".t\", s=True, d=False) or []):\n        try:\n            mc.connectAttr(\"time1.outTime\", name + \".t\", force=True)\n        except Exception:\n            pass\n\n    mc.setAttr(name + \".size\", 6.0)\n    mc.setAttr(name + \".amplitude\", 1.0)\n    mc.setAttr(name + \".freq\", 1.4)\n    mc.playbackOptions(min=1, max=120)\n    mc.currentTime(1)\n    mc.select(xf, replace=True)\n    try:\n        for _panel in mc.getPanel(type=\"modelPanel\") or []:\n            _cam = mc.modelEditor(_panel, query=True, camera=True)\n            if _cam:\n                mc.viewFit(_cam, allObjects=True)\n    except Exception:\n        pass\n    return name\n\n\n\"\"\"Setup source for mPyNurbsSurface nodes (self-first instance method).\"\"\"\n\n# Also this node's CREATE command, the way cmds.blendShape both makes the node\n# and wires it. Un-named because this file is shared by every node of the type\n# -- see maya_command.resolve_create_command_names.\n@maya_command(creates=True)\ndef setup(self, *args, **kwargs):\n    from maya import cmds as mc\n    name = self.get_name()\n    # build() owns ``self`` -- never delete it on failure. Only roll back the\n    # render transform/shape this body creates so a partial failure leaves no\n    # orphan; re-raise so build()/the command records built-but-unwired.\n    created = []\n    conn = None  # break any wired connection before delete so the rollback\n                 # doesn't cascade-delete the upstream ``self``.\n    try:\n        xform = mc.createNode(\"transform\", name=name + \"Render\"); created.append(xform)\n        shape = mc.createNode(\"nurbsSurface\", name=name + \"RenderShape\", parent=xform)\n        src, dst = name + \".outSurface\", shape + \".create\"\n        mc.connectAttr(src, dst, force=True); conn = (src, dst)\n        return name\n    except Exception:\n        if conn:\n            try:\n                mc.disconnectAttr(conn[0], conn[1])\n            except Exception:\n                pass\n        if created:\n            mc.delete([n for n in created if mc.objExists(n)])\n        raise\n",
         "commands": [
           {
             "name": "rippleSurf",
@@ -222,7 +212,7 @@
             "is_static": false,
             "params": [],
             "body_src": "@maya_command(creates=True)\ndef setup(self, *args, **kwargs):\n    from maya import cmds as mc\n    name = self.get_name()\n    # build() owns ``self`` -- never delete it on failure. Only roll back the\n    # render transform/shape this body creates so a partial failure leaves no\n    # orphan; re-raise so build()/the command records built-but-unwired.\n    created = []\n    conn = None  # break any wired connection before delete so the rollback\n                 # doesn't cascade-delete the upstream ``self``.\n    try:\n        xform = mc.createNode(\"transform\", name=name + \"Render\"); created.append(xform)\n        shape = mc.createNode(\"nurbsSurface\", name=name + \"RenderShape\", parent=xform)\n        src, dst = name + \".outSurface\", shape + \".create\"\n        mc.connectAttr(src, dst, force=True); conn = (src, dst)\n        return name\n    except Exception:\n        if conn:\n            try:\n                mc.disconnectAttr(conn[0], conn[1])\n            except Exception:\n                pass\n        if created:\n            mc.delete([n for n in created if mc.objExists(n)])\n        raise",
-            "lineno": 83
+            "lineno": 86
           }
         ],
         "portability": {

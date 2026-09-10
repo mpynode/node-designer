@@ -1,8 +1,25 @@
 {
   "accepted": true,
-  "baseline_ms": 2.8739,
-  "best_ms": 0.5774,
-  "created": 1787675736.919652,
+  "baseline_ms": 10.035,
+  "bench": {
+    "below_floor": true,
+    "fingerprint": "checked (1 plug(s))",
+    "floor_ms": 15.0,
+    "perturbed": [
+      "mesh <- pSphereShape1.vtx[0]"
+    ],
+    "reason": "baseline 10.035 ms is below the 15 ms noise floor even at the largest bench scene (geo=400 array=20000); measured anyway -- every accept must clear 1.15x on two independent timings",
+    "rung": [
+      400,
+      20000
+    ],
+    "small_rung": [
+      40,
+      512
+    ]
+  },
+  "best_ms": 2.031,
+  "created": 1788990252.9916573,
   "ledger": [
     {
       "compiled": true,
@@ -10,7 +27,7 @@
       "fix_rounds": 0,
       "hypothesis": "",
       "index": 0,
-      "ms": 2.8739,
+      "ms": 10.035,
       "note": "",
       "outcome": "baseline",
       "parity": null,
@@ -22,57 +39,58 @@
     },
     {
       "compiled": true,
-      "duration_s": 639.185,
+      "duration_s": 950.078,
       "fix_rounds": 0,
-      "hypothesis": "compute() is pure input marshalling. np.take(vstack([pts, zeros(1,3)]), clusters, axis=0) reads exactly the rows in `clusters`, yet the lowered code built a full float->double table per mesh (push_back + a second copy in from_data), then copied each table AGAIN in vstack just to append one zero row -- four full passes over 3.8 MB apiece to fetch N*L rows. Likewise bindMatrices is clamped to bind[:min(cl.shape[0], bind.shape[0])], so with one clusterTags element exactly one of 20000 matrices survives, but all 20000 were read via inputValue()/asMatrix(). Fuse vstack+take into a direct gather off MFnMesh::getRawPoints (the (double)float cast is exact, so every gathered value is bit-identical), read only the bind prefix the clamp can reach, and get the array's logical length from the last physical element instead of walking all 20000.",
+      "hypothesis": "compute() spent O(V + B) on marshalling for an O(n*w) problem: two (V,3) float->double copies (V=159602) fed a vstack+take that reads n*w rows, and 20000 MMatrix handle reads fed a slice that keeps n rows. The harness seeds a string multi with ONE element, so n=1 here and everything except the two Maya mesh pulls is removable. The gather reproduces take(vstack(pts, zeros(1,3)), cl, 0) exactly: negative index wraps by V+1, index V reads the appended zero row, float->double widening is unchanged.",
       "index": 1,
-      "ms": 0.5774,
-      "note": "",
+      "ms": 2.3498,
+      "note": "confirmed twice (incumbent under the noise floor): 2.228 / 2.350 ms",
       "outcome": "accept",
       "parity": "pass",
-      "predicted_speedup": 3.0,
-      "risk": "np.take wraps a negative index modulo the table height, and the -1 padding relies on that to land on the appended zero row -- so the fused gather must use the PER-TABLE height (_nRest+1 vs _nDef+1) or a rest and deformed mesh with different vertex counts would wrap differently than they used to. The bind-prefix read additionally assumes MArrayDataHandle walks elements in ascending logical-index order (used both to break out of the prefix loop and to take the last physical element as the max index); a sparse array walked out of order would report the wrong length and mis-set the min() clamp.",
-      "slug": "gather_not_marshal",
-      "speedup": 4.977312088673363,
-      "theme": "this node is a GATHER, not a grid: stop materialising two 159k-vertex point tables and 20000 bind matrices when the cluster index block only ever names a handful of rows"
+      "predicted_speedup": 1.7,
+      "risk": "Measured 10.17 -> 1.92 ms (5.3x; the prediction was low because the 20000-element MArrayDataHandle walk was far costlier than assumed). Profiling laps afterwards put ~2.0 ms of the remainder in the two data.inputValue(mesh).asMesh() pulls -- Maya's copy of the shape geometry across the connection, forced every tick by the harness's dgdirty even for the held meshOrig -- ~0.1-0.2 ms in the two MFnMesh constructors and ~60 us in the whole compute body, so no further in-file lever clears the ~0.4 ms launch-to-launch noise. bindRows derives from the last physical element's logical index (ascending store), bounded below by elementCount; dense arrays are identical to the old resize(maxLogical+1) semantics and gaps still read as identity via jumpToElement failure.",
+      "slug": "gather_members_not_meshes",
+      "speedup": 4.270576219252702,
+      "theme": "Read only what the math touches: gather the cluster-member points straight from the two meshes' float stores instead of widening both 160k-vertex meshes to double, and pull only the first min(clusterRows, bindRows) bind matrices by logical index instead of marshalling all 20000."
+    },
+    {
+      "compiled": true,
+      "duration_s": 1266.192,
+      "fix_rounds": 0,
+      "hypothesis": "profiling compute() with steady_clock showed ~1800 of ~2000 us are the two data.inputValue() pulls of upstream worldMesh[0] (a non-cached world-space attribute Maya re-copies on every pull -- getAttr -ca reports False, and a bare dgeval of the plug alone costs 0.45 ms), plus ~85 us of one-time lazy mesh finalisation that fires on the FIRST function-set attach to the freshly tweaked mesh (MItMeshVertex pays it instead of MFnMesh, so it is not avoidable while the vertex count is needed). Of the ~150 us the node itself owns, the nd:: chain was ~40 us of pure allocation and odometer overhead for a single 3x3 problem; a fused kernel with fixed-size stack arrays takes ~2.5 us and is bit-identical (same svd3_core, same left-fold sums over l ascending, same einsum operand order, same 3x3 det formula, same matmul l order).",
+      "index": 2,
+      "ms": 2.031,
+      "note": "confirmed twice (incumbent under the noise floor): 1.896 / 2.031 ms",
+      "outcome": "accept",
+      "parity": "pass",
+      "predicted_speedup": 1.02,
+      "risk": "the gain (~40 us of ~2000 us) is below the run-to-run noise of the upstream worldMesh pulls, which swung the median between 1.99 and 2.93 ms across identical builds while six other mayapy processes shared the machine; parity risk is nil because every floating-point operation and its order is preserved from the nd:: chain, but an accept gate that requires a margin above noise may not see it",
+      "slug": "fuse_kabsch_kernel",
+      "speedup": 4.940915805022156,
+      "theme": "replace the generic nd:: array chain (18 whole-array temporaries, reshape/slice/tile/einsum/svd/det/matmul) with one fused per-cluster Kabsch kernel that calls svd3_core directly and reproduces every accumulation in the same left-fold order"
     },
     {
       "compiled": null,
-      "duration_s": 656.631,
+      "duration_s": 907.594,
       "fix_rounds": 0,
-      "hypothesis": "the node is ELEMENTWISE-shaped but its array inputs are decoys: seed_bench_scene drives a string multi at [0] only, so clusterTags has 1 element and n=1 (a single 3x3 SVD) while bindMatrices' 20000 elements are clamped away by min(cl,bind) and cost 0.1 us to skip. That left the two kMesh inputs as the only thing that could be expensive, and the guess was that a 159602-vert mesh was being DEEP-COPIED into this node's datablock on each dirty pull -- which MFnAttribute::setCached(false) would remove by reading through to the source",
-      "index": 2,
+      "hypothesis": "with one clusterTags element ('bench', no such tag on the sphere) the Kabsch work is one zero-member cluster, so the 2.03 ms tick had to be marshalling or the 20000-element output multi; measured instead: pull(mesh) ~1000 us, pull(meshOrig) ~1000 us, MFnMesh ctor 85 us + 40 us, clusterTags read 3 us, bind count 0.5 us, tag resolve 4 us, kabsch 2.5 us, finalize (builder on the 20000-element connected multi) 2.5 us; the rest-mesh pull cannot be cached because the harness's dgdirty(node) dirties meshOrig every tick and a correctly DG/EM-invalidated cache must drop on that, and MFnMesh::getRawPoints is the only zero-copy point accessor so the two attaches cannot be removed",
+      "index": 3,
       "ms": null,
       "note": "candidate is identical to the current best",
       "outcome": "no-change",
       "parity": null,
-      "predicted_speedup": 2.0,
-      "risk": "setCached(false) hands out a handle that aliases the upstream data rather than a private copy, so getRawPoints() would dangle if the pointer outlived compute(); it does not here, but the same edit on a node that stashed the pointer would read freed geometry",
-      "slug": "profile_upstream_bound_no_win",
+      "predicted_speedup": 1.0,
+      "risk": "a 'no change' round; the only reachable slice is ~130 us of ~2100 us and the sample spread on this machine is 1.7-2.7 ms, so no edit inside this file can be measured. Note: the workspace build.sh is the macOS clang script and fails on this Windows box ('no Maya install under /Applications/Autodesk'), so ./bench.sh cannot run here; the measurements above come from the identical harness invocation (benchmark_node.py --iters 9 --bench-array 20000 --bench-geo 400, same spec) against an MSVC /O2 build of this exact file: median 2.0288 ms, ok=true, no errors, matching the 2.031 ms handed in. The file on disk is byte-identical to the one received.",
+      "slug": "profile_upstream_bound_no_change",
       "speedup": null,
-      "theme": "instrumented the whole compute and found 96% of it is Maya evaluating two upstream worldMesh[0] plugs inside data.inputValue(); nothing inside this file can reach that cost, and both attribute-level knobs that could have (setCached/setStorable) measured as noise, so the round ships the baseline unchanged"
+      "theme": "timed every segment of compute() at the bench scene and found 94% of the tick is Maya evaluating the two non-cached upstream worldMesh[0] plugs inside data.inputValue(), 6% is the one unavoidable MFnMesh attach per mesh, and everything this file can reach is under 15 us combined -- so the round ships the baseline unchanged"
     }
   ],
+  "max_rounds": 6,
   "parity_gate": "authored+pointwise",
-  "reason": "accepted (4.98x)",
-  "remeasured": {
-    "baseline_ms": null,
-    "date": "2026-09-08",
-    "diverged": null,
-    "final_ms": null,
-    "fingerprint": null,
-    "floor_ms": 15.0,
-    "perturbed": [
-      "mesh <- pSphereShape1.vtx[0]"
-    ],
-    "reason": "baseline 13.741 ms is below the 15 ms noise floor even at the largest bench scene (geo=400 array=20000); nothing this small can be optimized against measurably",
-    "rung": [
-      400,
-      20000
-    ],
-    "speedup": null
-  },
-  "rounds": 2,
-  "speedup": 4.977312088673363,
+  "reason": "accepted (4.94x)",
+  "rounds": 3,
+  "speedup": 4.940915805022156,
+  "stop_reason": "round 3 no-change -- nothing new to compound from",
   "type_name": "procrustesTags"
 }

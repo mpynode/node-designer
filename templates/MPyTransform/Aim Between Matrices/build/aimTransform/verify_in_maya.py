@@ -4,7 +4,7 @@ Run in Maya. Loads the .bundle, samples inputs, compares outputs.
 import os, random
 import maya.cmds as cmds
 
-BUNDLE = os.path.join(os.path.dirname(__file__), 'aimTransform.bundle')
+BUNDLE = os.path.join(os.path.dirname(__file__), 'aimTransform.mll')
 NODE_TYPE = 'aimTransform'
 SOURCE = 'aimTransform'
 INPUTS = {"matrix0": "matrix", "matrix1": "matrix", "parentWorld": "matrix"}

@@ -1,8 +1,31 @@
 {
   "accepted": true,
-  "baseline_ms": 2.3093,
-  "best_ms": 0.5537,
-  "created": 1787677451.039432,
+  "baseline_ms": 1.3948,
+  "bench": {
+    "below_floor": true,
+    "fingerprint": "checked (1 plug(s))",
+    "floor_ms": 15.0,
+    "perturbed": [
+      "halfExtents[0] (vector)",
+      "height[0] (double)",
+      "isoValue (double)",
+      "radius[0] (double)",
+      "resolution (int)",
+      "shapeMatrix[0] (matrix)",
+      "smoothing[0] (double)"
+    ],
+    "reason": "baseline 1.395 ms is below the 15 ms noise floor even at the largest bench scene (geo=400 array=20000); measured anyway -- every accept must clear 1.15x on two independent timings",
+    "rung": [
+      400,
+      20000
+    ],
+    "small_rung": [
+      40,
+      512
+    ]
+  },
+  "best_ms": 0.2717,
+  "created": 1789000666.1427684,
   "ledger": [
     {
       "compiled": true,
@@ -10,7 +33,7 @@
       "fix_rounds": 0,
       "hypothesis": "",
       "index": 0,
-      "ms": 2.3093,
+      "ms": 1.3948,
       "note": "",
       "outcome": "baseline",
       "parity": null,
@@ -22,63 +45,58 @@
     },
     {
       "compiled": true,
-      "duration_s": 695.153,
+      "duration_s": 1618.473,
       "fix_rounds": 0,
-      "hypothesis": "The lowered numpy pipeline pays for the grid twice over: it builds a (52080,3) point array via arange/floordiv/mod/take/stack, then per shape runs a generic matmul with a runtime integer div/mod per element and 4-6 more whole-grid temporaries, then a separate full-array CSG pass. Fusing all of that into one scalar loop that issues the identical per-element op sequence should be bit-exact and remove ~15MB of memory traffic and ~30 allocations. The dual-marching-cubes stage then dominates, where every corner read goes through nd::at3 (which reloads a heap std::vector of strides per access) and a 4-element scratch array is heap-allocated inside the innermost loop. Finally the fused field map is a textbook parallel map with a deterministic per-element write, ~500us serial, so a persistent pool should take it near-free.",
+      "hypothesis": "the node is GRID-shaped (n=3 live shapes, resolution 2..13 per tick, 18..1670 verts): the cost was ~25 heap-allocated whole-array temporaries per shape per pass plus bounds-checked nd::at3 table lookups per cube, not the arithmetic; a fused loop with the reference's exact expression order is byte-identical and removes a level of work. Follow-ups in the same round: std::pow(x,2.0)->x*x in the box/cylinder kernels (numpy's **2 is np.square and LLVM folds it, MSVC's CRT pow does not -- 225->78 us on the sampler), and the per-shape decomposition/bounds lifted to scalars (68 us of nd allocations for 3 shapes).",
       "index": 1,
-      "ms": 0.6872,
-      "note": "",
+      "ms": 0.3351,
+      "note": "confirmed twice (incumbent under the noise floor): 0.326 / 0.335 ms",
       "outcome": "accept",
       "parity": "pass",
-      "predicted_speedup": 3.0,
-      "risk": "Bit-exactness is the whole risk, and it is all in operation ORDER, not in tolerance. The rewrite reproduces the exact fold order of every reduction (sum_mul left-folds from 0, reduce_min left-folds from +INFINITY through minimum_elem's NaN-propagating form), keeps std::pow(x,2.0) rather than substituting x*x, keeps the divisor as `scale` rather than the zero-guarded `safe` where the source did, and keeps every tie-resolving comparison at its source type/direction/strictness (v0 < v1 for quad winding, cfg > 0 && cfg < 255, >= iso_value for the corner sign). Threading was kept to the one pass where element p is a pure function of p, so the chunk split cannot reach the answer; the chunk cursor is a pool member, not file-scope, because Maya's EM can have two instances of this node in a region at once.",
-      "slug": "fuse_field_raw_dmc_thread",
-      "speedup": 3.360448195576251,
-      "theme": "This node is grid-shaped at a much smaller size than the brief implies -- the harness's builtin metaClay scene overrides the generic seeding, so it is 3 shapes on a 48x35x31 lattice, not 20000 shapes -- so the win is removing whole-array temporaries and strided nd:: accessors, then threading the one pass that clears the 50us floor."
+      "predicted_speedup": 5.0,
+      "risk": "expression-order drift in the fused kernel (matrix_point accumulator start, smooth-union formula, +-0 through linspace) -- mitigated by keeping every expression verbatim and by a fingerprint A/B of outMesh against the original plug-in (identical values); MSVC pow(x,2) vs x*x could differ by 1 ulp in the OLD build only, the reference build (clang) already computed x*x",
+      "slug": "fuse_grid_sampler",
+      "speedup": 4.162339600119368,
+      "theme": "collapse the per-shape nd::Array SDF sampling chain and the table-driven dual marching cubes into one raw per-grid-point loop, and stop reading the 20000-element arrays past the shape count that _dense_over truncates them to"
     },
     {
       "compiled": true,
-      "duration_s": 660.883,
+      "duration_s": 1255.412,
       "fix_rounds": 0,
-      "hypothesis": "this node is GRID-shaped, not QUERY-shaped -- 3 shapes over a ~48x35x31 lattice -- and a previous round had already fused the SDF field evaluation and raw-pointered the DMC traversal, so the arithmetic was no longer the cost. What was left was pure marshalling: DMC wrote _pts/_idx, copied them into a packed float64 array, and compute() then sliced/reshaped/astype'd that array back apart into points/counts/indices, touching every vertex and index five times; the result was then handed to Maya one element at a time through MPointArray::append / MIntArray::append. Removing the round-trip and appending in bulk should cost nothing numerically because int32 -> double -> int64 -> int is exact over these ranges and MPoint(x,y,z) is the same triple either way.",
+      "hypothesis": "instrumenting compute() showed the bench scene is 3 shapes on a ~27x16x16 grid (not 20000 shapes: the builtin scene trims the multis), with ~0.11 ms in the sampler, ~0.04 ms in DMC and ~0.15 ms in Maya's MFnMesh::create; the sampler is divider-throughput bound (3 div + sqrt per shape-point), so the only exact way to cut it is to not divide when the divisor is exactly 1.0 (x/1.0 == x for every x), which the identity-matrix scene hits on all three shapes; DMC's three passes reload the same field corners three times and grow fresh vectors every tick",
       "index": 2,
-      "ms": 0.5537,
-      "note": "",
+      "ms": 0.2717,
+      "note": "confirmed twice (incumbent under the noise floor): 0.271 / 0.272 ms",
       "outcome": "accept",
       "parity": "pass",
-      "predicted_speedup": 1.2,
-      "risk": "the DMC lambda declared a dead local nd::Array<double> points that shadowed the output vector, so the in-place write silently bound to the wrong object until that declaration was removed -- caught by the compiler, not by a wrong number. The float64 packing was also the only thing forcing indices through int64; writing int straight through keeps the values identical but relies on the vertex count staying inside int32, which the buffer is already sized in.",
-      "slug": "direct_mesh_writeback",
-      "speedup": 4.1706700379266755,
-      "theme": "the dual-marching-cubes core now writes MPoint/int output buffers in place and the Maya arrays are built with bulk constructors, deleting a packed-float64 round-trip and ~36k per-element append() API calls"
+      "predicted_speedup": 1.25,
+      "risk": "the fast path is gated on scale == 1.0 and min|scale| == 1.0 exactly, so a scaled shape takes the original divide path; the fused DMC relies on every quad neighbour offset being <= 0 so its cube index is already assigned in scan order, and vertices are appended in the same scan order as the old counting pass; mb_max/mb_min replace std::isnan(a) with a != a, which is the same predicate for IEEE doubles. The remaining ~0.15 ms is MFnMesh::create for ~800 quads, which no node-side change reaches; the grid size changes every tick (resolution moves) so no grid cache can hit on this bench.",
+      "slug": "unit_scale_sampler_fused_dmc",
+      "speedup": 5.133603238866397,
+      "theme": "hoist the per-shape branches out of the grid loop, skip the three divisions when a shape's scale is exactly 1.0, fuse the three dual-marching-cubes passes into one scan, and keep the output buffers' capacity across ticks"
+    },
+    {
+      "compiled": null,
+      "duration_s": 1235.624,
+      "fix_rounds": 0,
+      "hypothesis": "at the bench's median tick (grid ~24x14x14, 3 shapes) the sampler is ~83 us of a ~241 us compute; a condvar pool with 8 threads should cut it to ~30 us, and a 2-thread pool to ~55 us",
+      "index": 3,
+      "ms": null,
+      "note": "candidate is identical to the current best",
+      "outcome": "no-change",
+      "parity": null,
+      "predicted_speedup": 1.25,
+      "risk": "condvar wake-up latency on Windows is far above the 5-20 us assumed: 8 threads measured 0.3975 ms vs 0.2704 baseline (1.47x SLOWER), 2 threads 0.2755 (neutral). Probes put the remaining cost in MFnMesh::create (108 us, Maya API) and dual marching cubes (32 us). A follow-up rewrite of the NaN-aware min/max as two plain selects was inconclusive under machine noise (A/B interleaved: 0.2504/0.3105 vs 0.2752/0.2684; identical baseline code drifted 0.27 -> 0.36 ms during the run), so nothing was kept. Note: the generated build.sh is macOS-only, so bench.sh cannot run here; measurements used the harness's own porter.compile_cpp + benchmark_node.py with identical arguments.",
+      "slug": "thread_field_rows_no_gain",
+      "speedup": null,
+      "theme": "parallelise the SDF field sampler over grid rows on a persistent per-node pool; on this Windows box the wake-up cost exceeded the ~80 us job and the change was reverted, leaving the file unchanged"
     }
   ],
+  "max_rounds": 6,
   "parity_gate": "authored+pointwise",
-  "reason": "accepted (4.17x)",
-  "remeasured": {
-    "baseline_ms": null,
-    "date": "2026-09-08",
-    "diverged": null,
-    "final_ms": null,
-    "fingerprint": null,
-    "floor_ms": 15.0,
-    "perturbed": [
-      "halfExtents[0] (vector)",
-      "height[0] (double)",
-      "isoValue (double)",
-      "radius[0] (double)",
-      "resolution (int)",
-      "shapeMatrix[0] (matrix)",
-      "smoothing[0] (double)"
-    ],
-    "reason": "baseline 1.591 ms is below the 15 ms noise floor even at the largest bench scene (geo=400 array=20000); nothing this small can be optimized against measurably",
-    "rung": [
-      400,
-      20000
-    ],
-    "speedup": null
-  },
-  "rounds": 2,
-  "speedup": 4.1706700379266755,
+  "reason": "accepted (5.13x)",
+  "rounds": 3,
+  "speedup": 5.133603238866397,
+  "stop_reason": "round 3 no-change -- nothing new to compound from",
   "type_name": "metaballs"
 }

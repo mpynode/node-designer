@@ -1,10 +1,10 @@
 # MPyDeformer_NURBS_Wave -- compile report
 
-Generated 2026-08-25 09:34
+Generated 2026-09-09 15:20
 
 | node | status | assist | optimize | detail |
 |---|---|---|---|---|
-| `nurbsWave` | compiled | -- | **6.03x** | [report](build/stages/nurbsWave/REPORT.md) |
+| `nurbsWave` | compiled | -- | **9.98x** | [report](build/stages/nurbsWave/REPORT.md) |
 
 ## Layout
 

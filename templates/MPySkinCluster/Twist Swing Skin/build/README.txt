@@ -8,7 +8,7 @@ it. The importable plugin lives ONE LEVEL UP, beside this folder, so you
 
 What you'll see
 ---------------
-  ../MPySkinCluster_Twist_Swing_Skin.bundle   <- the plugin you load into Maya (one level up).
+  ../MPySkinCluster_Twist_Swing_Skin.mll   <- the plugin you load into Maya (one level up).
   ../<type>_commands.py   <- companion command plugin(s), if any (also
                              one level up, beside the bundle).
   source/       <- the C++ source for every node that LINKED.
@@ -26,12 +26,12 @@ Source (in source/)
 Rebuild
 -------
   macOS / Linux:  ./build.sh
-  Windows:        build.bat   (from an 'x64 Native Tools Command Prompt for VS')
+  Windows:        build.bat   (any cmd.exe -- it locates MSVC via vswhere)
 
 Both scripts read $MAYA / %MAYA% for the Maya install (defaulting to the
 standard location). The rebuilt plugin is written to the PARENT folder
 (one level up from here) as:
-  ../MPySkinCluster_Twist_Swing_Skin.bundle
+  ../MPySkinCluster_Twist_Swing_Skin.mll
 
 Failed nodes leave breadcrumbs
 ------------------------------

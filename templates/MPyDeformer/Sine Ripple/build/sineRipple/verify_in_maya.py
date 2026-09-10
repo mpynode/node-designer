@@ -7,7 +7,7 @@ envelope/input samples.
 import os, random
 import maya.cmds as cmds
 
-BUNDLE = os.path.join(os.path.dirname(__file__), 'sineRipple.bundle')
+BUNDLE = os.path.join(os.path.dirname(__file__), 'sineRipple.mll')
 NODE_TYPE = 'sineRipple'
 SRC_TYPE = 'mPyDeformer'
 COMPUTE = "# Sine-ripple deformer: each vertex rides a travelling sine wave along its\n# surface normal. The wave's phase advances with distance from the mesh\n# centre and with time, so it animates as the timeline plays.\nmesh = self.outputGeometry[0]            # writable handle for this output mesh\npts = mesh.getPoints()                   # (N, 3) object-space points (numpy)\n\n# True per-vertex normals (object space). The output handle wraps an API-1\n# MFnMesh, so use the in-out MFloatVectorArray form.\nnrm = om.MFloatVectorArray()\nmesh.getVertexNormals(False, nrm, om.MSpace.kObject)\nnormals = np.array([[nrm[i].x, nrm[i].y, nrm[i].z]\n                    for i in range(nrm.length())], dtype=float)\n\namp = self.amplitude\nfreq = self.frequency\nspeed = self.speed\nenv = self.envelope               # built-in deformer envelope (0..1)\n\ncentre = pts.mean(axis=0)\ndist = np.linalg.norm(pts - centre, axis=1)\nphase = 2.0 * np.pi * freq * dist - speed * self.time\noffset = (amp * np.sin(phase))[:, None] * normals\n\nmesh.setPoints(pts + env * offset)\n"

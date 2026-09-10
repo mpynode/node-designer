@@ -1,8 +1,23 @@
 {
   "accepted": true,
-  "baseline_ms": 19.0084,
-  "best_ms": 1.6381,
-  "created": 1787677672.763573,
+  "baseline_ms": 21.3355,
+  "bench": {
+    "fingerprint": "checked (1 plug(s))",
+    "floor_ms": 15.0,
+    "perturbed": [
+      "inMesh <- pSphereShape1.vtx[0]"
+    ],
+    "rung": [
+      300,
+      10000
+    ],
+    "small_rung": [
+      40,
+      512
+    ]
+  },
+  "best_ms": 2.3044,
+  "created": 1788995625.7035818,
   "ledger": [
     {
       "compiled": true,
@@ -10,7 +25,7 @@
       "fix_rounds": 0,
       "hypothesis": "",
       "index": 0,
-      "ms": 19.0084,
+      "ms": 21.3355,
       "note": "",
       "outcome": "baseline",
       "parity": null,
@@ -22,57 +37,42 @@
     },
     {
       "compiled": true,
-      "duration_s": 678.447,
+      "duration_s": 777.131,
       "fix_rounds": 0,
-      "hypothesis": "this node is ELEMENTWISE, not QUERY -- there is no inner scan over a second collection, so there is no acceleration structure to build. The cost is pure per-access API overhead: the port read UVs one id at a time via MFnMesh::getUV(ui, u, v, &setName), which is ~160k out-of-line calls that each re-resolve the UV set BY NAME, and it then copied the 640k-element face-index array four times (uvIds -> ibuf -> indices -> MIntArray -> create). Bulk getUVs plus passing Maya's own uvCounts/uvIds straight to create when the c>=3 filter drops nothing should remove both.",
+      "hypothesis": "the node is O(N) marshalling, not a query: 90k out-of-line getUV(k, &setName) calls and a full 90k-vertex/90k-face MFnMesh::create dominate, while a moved vertex changes neither the UVs nor the UV topology, so the create is skippable every tick once the topology compares equal; UVs are float32 already, so an MFloatPointArray / raw float store write is bit-identical to the double->float narrowing create performs",
       "index": 1,
-      "ms": 12.2403,
+      "ms": 2.642,
       "note": "",
       "outcome": "accept",
       "parity": "pass",
-      "predicted_speedup": 2.0,
-      "risk": "getUVs is all-or-nothing where the original bailed at the first failing id, so a partially-unreadable set now yields an empty mesh instead of a truncated one -- same fail-soft contract the port already documents. The create()-passthrough is gated on a proof that the filter is the identity (every count >= 3 AND counts sum exactly to nIds), which is exactly the predicate the filter loop tests, so the arrays handed to create are bit-identical to the filtered ones. No comparison that selects a winner was touched and no float type was narrowed.",
-      "slug": "bulk_uv_read",
-      "speedup": 1.5529357940573354,
-      "theme": "replace the per-id getUV loop with one getUVs call, then stop round-tripping Maya's UV face lists through three redundant int buffers before handing them back to create()"
+      "predicted_speedup": 5.0,
+      "risk": "in-place reuse depends on hOut.asMesh() still being the object this node created; guarded by MObject validity, numVertices/numPolygons, and a full byte compare of counts+indices against the ones the stored mesh was built from, with any doubt falling back to a full create. The fail-soft set selection (skip empty / unreadable sets, first set unless uvSetName matches) is preserved verbatim.",
+      "slug": "bulk_uvs_inplace_output",
+      "speedup": 8.07551097653293,
+      "theme": "read the UV set with the two bulk MFnMesh calls instead of ~90k per-UV getUV calls, and when the output handle still holds a mesh built from byte-identical UV counts/indices rewrite only its (u, v, 0) positions in place instead of an MFnMesh::create of ~90k vertices"
     },
     {
       "compiled": true,
-      "duration_s": 802.626,
+      "duration_s": 812.965,
       "fix_rounds": 0,
-      "hypothesis": "profiling showed create() at 10-12 ms of a 12.5 ms compute while every other pass summed to 1.2 ms; no constant-factor work on the reads could matter, and copy() of an already-built poly structure is a deep memcpy rather than a topology derivation, so it should be an order of magnitude cheaper",
+      "hypothesis": "a stage timer showed the node's own work was almost all marshalling: getUVs + two MFloatArray::get copies (~300-600 us), two MIntArray::get copies (~300 us) and filter/guard/compare loops (~150 us) around two Maya calls (input pull ~750 us, getAssignedUVs ~700 us) that cannot be avoided soundly; getRawUVs is a pointer into the mesh's (u, v) store (verified byte-equal to getUVs on 90,599 UVs), and MIntArray::operator[] returns a real int& so &arr[0] (contiguity confirmed against &arr[n-1], get() fallback otherwise) is a zero-copy view; keying the derived topology on a memcmp of the RAW counts/ids lets a hit skip the filter and guard loops entirely",
       "index": 2,
-      "ms": 1.6381,
+      "ms": 2.3044,
       "note": "",
       "outcome": "accept",
       "parity": "pass",
-      "predicted_speedup": 4.0,
-      "risk": "the template is an unowned MFnMeshData MObject, so it is guarded by an MObjectHandle isValid/isAlive check and rebuilt if Maya reclaims it; correctness does not depend on any dirty flag because the cache key is recomputed from the live input on every single evaluation",
-      "slug": "cache_topology_template",
-      "speedup": 11.603931383920397,
-      "theme": "MFnMesh::create was 90% of compute, so cache the built mesh as a topology TEMPLATE keyed on an exact content hash of (counts, indices, nPoints) and produce each evaluation's output with MFnMesh::copy plus freshly-read points instead of a fresh create"
+      "predicted_speedup": 1.4,
+      "risk": "getRawUVs layout (interleaved vs planar) -- checked in-run against getUVs, 0 mismatches; MIntArray storage contiguity -- checked per call, falls back to get(); a second experiment, pre-sizing the MIntArrays with setLength instead of clear() so getAssignedUVs could reuse the buffer, measured 1.790 vs 1.711 ms and was reverted; remaining time (~1.45 of ~1.65 ms per tick) is the input mesh pull and getAssignedUVs inside Maya",
+      "slug": "raw_uv_and_int_views",
+      "speedup": 9.258592258288493,
+      "theme": "read the UV set through MFnMesh::getRawUVs and view the getAssignedUVs MIntArrays in place, so the per-tick cost is one memcmp cache key plus the two Maya calls instead of four bulk copies"
     }
   ],
+  "max_rounds": 6,
   "parity_gate": "authored+pointwise",
-  "reason": "accepted (11.60x)",
-  "remeasured": {
-    "baseline_ms": 23.3461,
-    "date": "2026-09-08",
-    "diverged": null,
-    "final_ms": 7.3832,
-    "fingerprint": "checked (1 plug(s))",
-    "floor_ms": 15.0,
-    "perturbed": [
-      "inMesh <- pSphereShape1.vtx[0]"
-    ],
-    "reason": null,
-    "rung": [
-      300,
-      10000
-    ],
-    "speedup": 3.1620571026113335
-  },
+  "reason": "accepted (9.26x)",
   "rounds": 2,
-  "speedup": 11.603931383920397,
+  "speedup": 9.258592258288493,
+  "stop_reason": "round 2 gained 1.15x, below the 1.15x needed to continue",
   "type_name": "uvLayoutMesh"
 }

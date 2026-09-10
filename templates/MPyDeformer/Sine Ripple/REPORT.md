@@ -1,10 +1,10 @@
 # MPyDeformer_Sine_Ripple -- compile report
 
-Generated 2026-08-25 09:39
+Generated 2026-09-09 15:23
 
 | node | status | assist | optimize | detail |
 |---|---|---|---|---|
-| `sineRipple` | compiled | -- | **5.82x** | [report](build/stages/sineRipple/REPORT.md) |
+| `sineRipple` | compiled | -- | **5.55x** | [report](build/stages/sineRipple/REPORT.md) |
 
 ## Layout
 

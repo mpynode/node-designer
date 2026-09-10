@@ -1,12 +1,12 @@
 {
   "manifest_version": 1,
-  "porter_recipe_version": "19",
+  "porter_recipe_version": "27",
   "provider": "claude_cli",
-  "model": "claude-opus-5[1m]",
+  "model": "claude-fable-5-1",
   "strict": false,
   "plugin_name": "MPyMesh_UV_Layout",
-  "bundle": "templates/MPyMesh/UV Layout/MPyMesh_UV_Layout.bundle",
-  "created": 1787677673.668192,
+  "bundle": "C:\\Users\\eric.vignola\\Desktop\\MPyNode\\templates\\MPyMesh\\UV Layout\\MPyMesh_UV_Layout.mll",
+  "created": 1788995626.5698936,
   "nodes": [
     {
       "source_node": "uvLayoutMesh",
@@ -14,34 +14,25 @@
       "type_id": "0x0003d28a",
       "type_id_source": "derived",
       "base": "MPxNode",
-      "spec_hash": "cd2db60f4f8654ab021aeecf6ab0c6ff1b55d1c0a8819ed0a0f45ed2549219d4",
-      "port_cache_key": "cd2db60f4f8654ab021aeecf6ab0c6ff1b55d1c0a8819ed0a0f45ed2549219d4",
-      "cache": "miss",
+      "spec_hash": "206b1480b5d239738f11fc0dba0ef1e0e7e77dc062764b406dde74b286906fcd",
+      "port_cache_key": "206b1480b5d239738f11fc0dba0ef1e0e7e77dc062764b406dde74b286906fcd",
+      "cache": "hit",
       "build_status": "compiled",
       "build_reason": "",
       "ported": true,
       "incomplete": [],
       "invented_io": [],
       "missing_includes": [],
+      "vp2_skip": "",
       "verify": {
         "ran": true,
         "pass": true,
-        "maxerr": 0.0,
-        "tol": 0.0001,
-        "reason": "authored @maya_test: 1/1 passed",
+        "maxerr": null,
+        "tol": 0.0,
+        "reason": "verify could not run: 'NoneType' object has no attribute 'add_input_attr' | authored @maya_test: 1/1 passed",
         "timing": {
-          "measured": true,
-          "py_ms": 34.49460002593696,
-          "cpp_ms": 1.2234998866915703,
-          "n": 3,
-          "truncated": false,
-          "scene": "geo 140 / array 5000",
-          "ratio": 0.035469316524082146,
-          "verdict": "ok",
-          "rung": [
-            140,
-            5000
-          ]
+          "measured": false,
+          "reason": "not timed -- generic parity did not pass for this node, so there is no trustworthy pair to measure (verify could not run: 'NoneType' object has no attribute 'add_input_attr')"
         },
         "authored_test": {
           "ran": true,
@@ -50,8 +41,7 @@
           "passes": 1,
           "reason": ""
         },
-        "generic_ran": true,
-        "reverified": "2026-09-08"
+        "generic_ran": false
       },
       "spec": {
         "schema_version": 1,
@@ -211,7 +201,7 @@
             "source": "def _face_vertex_enumeration(counts, indices):\n    \"\"\"Return ``(face_ids, vertex_ids)`` MIntArrays enumerating every\n    face-vertex in flat order (face 0's verts, then face 1's, ...). ``vertex\n    _ids[k]`` is the mesh vertex id of the k-th face-vertex; the k-th entry\n    aligns with a per-face-vertex attribute array of length ``sum(counts)``.\"\"\"\n    face_ids = om.MIntArray()\n    vertex_ids = om.MIntArray()\n    off = 0\n    for f, c in enumerate(int(x) for x in counts):\n        for j in range(c):\n            face_ids.append(f)\n            vertex_ids.append(int(indices[off + j]))\n        off += c\n    return face_ids, vertex_ids"
           }
         ],
-        "methods": "class SetupError(Exception):\n    \"\"\"The current selection / scene state can't support setup for this node.\n    Message is user-facing (it names what to select).\"\"\"\n\n\ndef _has_shape(node, shape_types):\n    from maya import cmds as mc\n    if mc.nodeType(node) in shape_types:\n        return True\n    for st in shape_types:\n        if mc.listRelatives(node, shapes=True, type=st, noIntermediate=True):\n            return True\n    return False\n\n\ndef _meshes(sel):\n    return [n for n in sel if _has_shape(n, (\"mesh\",))]\n\n\n\n@maya_command(creates=True)\ndef setup(self, selection=None, *args, **kwargs):\n    \"\"\"Select a mesh, then Run setup: wires that mesh's UVs into this node and\n    builds a render mesh that shows the UV layout as geometry in the 3D view.\"\"\"\n    from maya import cmds as mc\n\n    name = self.get_name()\n    order = [o for o in (selection or mc.ls(selection=True) or []) if o != name]\n    meshes = _meshes(order) if order else []\n    if not meshes:\n        raise SetupError(\"Select a mesh, then run setup.\")\n    shape = (mc.ls(meshes[0], long=True) or [meshes[0]])[0]\n    mc.connectAttr(shape + \".worldMesh[0]\", name + \".inMesh\", force=True)\n\n    out = mc.createNode(\"mesh\")\n    out_tr = mc.listRelatives(out, parent=True)[0]\n    out_tr = mc.rename(out_tr, name + \"_uvLayout\")\n    out_shape = mc.listRelatives(out_tr, shapes=True, fullPath=True)[0]\n    mc.connectAttr(name + \".outMesh\", out_shape + \".inMesh\", force=True)\n    try:\n        mc.sets(out_shape, edit=True, forceElement=\"initialShadingGroup\")\n    except Exception:\n        pass\n    return out_tr\n\n\n@maya_demo(label=\"UV layout of a sphere\")\ndef demo(self):\n    \"\"\"Create a poly sphere and show its UV layout as a mesh.\"\"\"\n    from maya import cmds as mc\n\n    sph = mc.polySphere(constructionHistory=False)[0]\n    # The wrapper does NOT expose methods_source funcs as attributes, so\n    # ``self.setup(...)`` would AttributeError; route through the validated\n    # dispatcher (run_setup binds our ``def setup(self, ...)`` and passes\n    # selection=).\n    return self.run_setup([sph])\n\n\n@maya_test(label=\"UV layout: 3D output equals source UVs\", digits=4)\ndef test_uv_layout(self):\n    \"\"\"Validate the node's INTENT (works identically for the interpreted node and\n    its C++ compile, so passing it against the compiled node proves parity):\n\n      1. The output mesh's 3D XY positions equal the source mesh's 2D UV\n         coordinates, with Z == 0 (that IS what the node does).\n      2. Moving the source UVs re-lays the output (the layout tracks the UVs).\n      3. Deleting a source face carries through to the output topology\n         (output face count follows the input).\n    \"\"\"\n    from maya import cmds as mc\n    import maya.api.OpenMaya as om2\n    from mpynode._common.methods.test_helpers import assert_close, assert_equal\n\n    name = self.get_name()\n\n    # Build a source cube, wire its UVs in, and a render mesh to pull the output.\n    cube_t = mc.polyCube(constructionHistory=False)[0]\n    src = (mc.listRelatives(cube_t, shapes=True, fullPath=True) or [cube_t])[0]\n    mc.connectAttr(src + \".worldMesh[0]\", name + \".inMesh\", force=True)\n    render = mc.createNode(\"mesh\")\n    mc.connectAttr(name + \".outMesh\", render + \".inMesh\", force=True)\n\n    def _out_points_and_faces():\n        # Force a clean recompute so this measures COMPUTE correctness, not DG\n        # dirty-propagation. A UV-only source edit does not auto-dirty a\n        # downstream geo node's mesh INPUT (handled separately by auto_dirty's\n        # native coverage), so dgdirty the whole node -- which dirties inMesh so\n        # compute re-pulls fresh mesh data from the source -- then re-pull.\n        mc.dgdirty(name)\n        mc.dgeval(render + \".outMesh\")\n        sl = om2.MSelectionList(); sl.add(render)\n        fn = om2.MFnMesh(sl.getDagPath(0))\n        return [(p.x, p.y, p.z) for p in fn.getPoints()], fn.numPolygons\n\n    def _src_uvs():\n        sl = om2.MSelectionList(); sl.add(src)\n        us, vs = om2.MFnMesh(sl.getDagPath(0)).getUVs()\n        return list(us), list(vs)\n\n    def _assert_layout_matches_uvs():\n        pts, _ = _out_points_and_faces()\n        us, vs = _src_uvs()\n        assert_equal(len(pts), len(us),\n                     \"output verts (%d) must equal UV count (%d)\"\n                     % (len(pts), len(us)))\n        got, expect = [], []\n        for (x, y, z), u, v in zip(pts, us, vs):\n            got.extend([x, y, z]); expect.extend([u, v, 0.0])\n        assert_close(got, expect)\n\n    # 1) 3D XY == source UVs (Z == 0).\n    _assert_layout_matches_uvs()\n\n    # 2) Move the UVs; the layout must follow.\n    mc.polyEditUV(src + \".map[*]\", uValue=0.25, vValue=-0.1, relative=True)\n    _assert_layout_matches_uvs()\n\n    # 3) Delete a source face; the output UV-face topology follows the input.\n    mc.delete(src + \".f[0]\")\n    _, npolys = _out_points_and_faces()\n    sl = om2.MSelectionList(); sl.add(src)\n    assert_equal(npolys, om2.MFnMesh(sl.getDagPath(0)).numPolygons,\n                 \"output face count must follow the source after a face delete\")\n",
+        "methods": "class SetupError(Exception):\n    \"\"\"The current selection / scene state can't support setup for this node.\n    Message is user-facing (it names what to select).\"\"\"\n\n\ndef _has_shape(node, shape_types):\n    from maya import cmds as mc\n    if mc.nodeType(node) in shape_types:\n        return True\n    for st in shape_types:\n        if mc.listRelatives(node, shapes=True, type=st, noIntermediate=True):\n            return True\n    return False\n\n\ndef _meshes(sel):\n    return [n for n in sel if _has_shape(n, (\"mesh\",))]\n\n\n\n@maya_command(creates=True)\ndef setup(self, selection=None, *args, **kwargs):\n    \"\"\"Select a mesh, then Run setup: wires that mesh's UVs into this node and\n    builds a render mesh that shows the UV layout as geometry in the 3D view.\"\"\"\n    from maya import cmds as mc\n\n    name = self.get_name()\n    order = [o for o in (selection or mc.ls(selection=True) or []) if o != name]\n    meshes = _meshes(order) if order else []\n    if not meshes:\n        raise SetupError(\"Select a mesh, then run setup.\")\n    shape = (mc.ls(meshes[0], long=True) or [meshes[0]])[0]\n    mc.connectAttr(shape + \".worldMesh[0]\", name + \".inMesh\", force=True)\n\n    out = mc.createNode(\"mesh\")\n    out_tr = mc.listRelatives(out, parent=True)[0]\n    out_tr = mc.rename(out_tr, name + \"_uvLayout\")\n    out_shape = mc.listRelatives(out_tr, shapes=True, fullPath=True)[0]\n    mc.connectAttr(name + \".outMesh\", out_shape + \".inMesh\", force=True)\n    try:\n        mc.sets(out_shape, edit=True, forceElement=\"initialShadingGroup\")\n    except Exception:\n        pass\n    return out_tr\n\n\n@maya_demo(label=\"UV layout of a sphere\")\ndef demo(self):\n    \"\"\"Create a poly sphere and show its UV layout as a mesh.\"\"\"\n    from maya import cmds as mc\n\n    sph = mc.polySphere(constructionHistory=False)[0]\n    # The wrapper does NOT expose methods_source funcs as attributes, so\n    # ``self.setup(...)`` would AttributeError; route through the validated\n    # dispatcher (run_setup binds our ``def setup(self, ...)`` and passes\n    # selection=).\n    res = self.run_setup([sph])\n    try:\n        for _panel in mc.getPanel(type=\"modelPanel\") or []:\n            _cam = mc.modelEditor(_panel, query=True, camera=True)\n            if _cam:\n                mc.viewFit(_cam, allObjects=True)\n    except Exception:\n        pass\n    return res\n\n\n@maya_test(label=\"UV layout: 3D output equals source UVs\", digits=4)\ndef test_uv_layout(self):\n    \"\"\"Validate the node's INTENT (works identically for the interpreted node and\n    its C++ compile, so passing it against the compiled node proves parity):\n\n      1. The output mesh's 3D XY positions equal the source mesh's 2D UV\n         coordinates, with Z == 0 (that IS what the node does).\n      2. Moving the source UVs re-lays the output (the layout tracks the UVs).\n      3. Deleting a source face carries through to the output topology\n         (output face count follows the input).\n    \"\"\"\n    from maya import cmds as mc\n    import maya.api.OpenMaya as om2\n    from mpynode._common.methods.test_helpers import assert_close, assert_equal\n\n    name = self.get_name()\n\n    # Build a source cube, wire its UVs in, and a render mesh to pull the output.\n    cube_t = mc.polyCube(constructionHistory=False)[0]\n    src = (mc.listRelatives(cube_t, shapes=True, fullPath=True) or [cube_t])[0]\n    mc.connectAttr(src + \".worldMesh[0]\", name + \".inMesh\", force=True)\n    render = mc.createNode(\"mesh\")\n    mc.connectAttr(name + \".outMesh\", render + \".inMesh\", force=True)\n\n    def _out_points_and_faces():\n        # Force a clean recompute so this measures COMPUTE correctness, not DG\n        # dirty-propagation. A UV-only source edit does not auto-dirty a\n        # downstream geo node's mesh INPUT (handled separately by auto_dirty's\n        # native coverage), so dgdirty the whole node -- which dirties inMesh so\n        # compute re-pulls fresh mesh data from the source -- then re-pull.\n        mc.dgdirty(name)\n        mc.dgeval(render + \".outMesh\")\n        sl = om2.MSelectionList(); sl.add(render)\n        fn = om2.MFnMesh(sl.getDagPath(0))\n        return [(p.x, p.y, p.z) for p in fn.getPoints()], fn.numPolygons\n\n    def _src_uvs():\n        sl = om2.MSelectionList(); sl.add(src)\n        us, vs = om2.MFnMesh(sl.getDagPath(0)).getUVs()\n        return list(us), list(vs)\n\n    def _assert_layout_matches_uvs():\n        pts, _ = _out_points_and_faces()\n        us, vs = _src_uvs()\n        assert_equal(len(pts), len(us),\n                     \"output verts (%d) must equal UV count (%d)\"\n                     % (len(pts), len(us)))\n        got, expect = [], []\n        for (x, y, z), u, v in zip(pts, us, vs):\n            got.extend([x, y, z]); expect.extend([u, v, 0.0])\n        assert_close(got, expect)\n\n    # 1) 3D XY == source UVs (Z == 0).\n    _assert_layout_matches_uvs()\n\n    # 2) Move the UVs; the layout must follow.\n    mc.polyEditUV(src + \".map[*]\", uValue=0.25, vValue=-0.1, relative=True)\n    _assert_layout_matches_uvs()\n\n    # 3) Delete a source face; the output UV-face topology follows the input.\n    mc.delete(src + \".f[0]\")\n    _, npolys = _out_points_and_faces()\n    sl = om2.MSelectionList(); sl.add(src)\n    assert_equal(npolys, om2.MFnMesh(sl.getDagPath(0)).numPolygons,\n                 \"output face count must follow the source after a face delete\")\n",
         "commands": [
           {
             "name": "uvLayoutMesh",

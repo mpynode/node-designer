@@ -1,12 +1,12 @@
 # meshMaze -- compile report
 
-**Source node:** `meshMaze`  ·  **Base:** `MPxNode`  ·  **Generated:** 2026-09-08 23:24
+**Source node:** `meshMaze`  ·  **Base:** `MPxNode`  ·  **Generated:** 2026-09-09 18:02
 
 | stage | outcome |
 |---|---|
 | 1 Transpile | emitted, with region(s) the transpiler could not lower |
 | 2 AI assist | ran -- no unresolved regions |
-| 3 AI optimize | **2.28x** over 2 round(s) -- re-measured: **1.49x** (outputs match) |
+| 3 AI optimize | **34.37x** over 4 round(s) -- 4 run of max 6, stopped: round 4 not-faster -- nothing new to compound from |
 
 ## The Python this was generated from
 
@@ -114,29 +114,37 @@ else:
 
 Parity gate: `authored+pointwise`. Every accepted round was re-checked against the interpreted Python before it was allowed to win. Where a node's generic pointwise parity SKIPS -- a deformer writes through the native `outputGeometry`, which the scalar harness cannot read -- the authored `@maya_test` is the ONLY gate, so treat those rows as behavioural checks rather than numerical ones.
 
-Bench scene: not recorded (ledger predates the scene record; no noise-floor gate, no per-tick perturbation check and no output fingerprint applied to these rounds).
+Bench scene: geo density 140 / array length 5000; noise floor 15 ms; moved per tick: `end (int)`, `inMesh <- pSphereShape1.vtx[0]`, `seed (int)`, `solutionLength (double)`, `start (int)`, `wallHeight (double)`, `wallThickness (double)`; outputs checked (1 plug(s)); accepts re-timed against the incumbent on geo 40 / array 512 and rejected if slower there.
 
-Baseline **18.386 ms** -> best **8.080 ms** (**2.28x**).
+Baseline **30.521 ms** -> best **0.888 ms** (**34.37x**).
 
-**Re-measured 2026-09-08** under the gated harness (noise floor, animated-input perturbation, output fingerprint), geo density 140 / array length 5000: baseline 38.798 ms -> shipped 26.102 ms (**1.49x**); outputs match. The speedup above was taken before the gate existed; this is the number to quote. Moved per tick: `end (int)`, `inMesh <- pSphereShape1.vtx[0]`, `seed (int)`, `solutionLength (double)`, `start (int)`, `wallHeight (double)`, `wallThickness (double)`.
+Rounds: **4** run of at most 6; the loop stopped because round 4 not-faster -- nothing new to compound from.
 
 | # | change | theme | predicted | measured | time | outcome |
 |---|---|---|---|---|---|---|
-| 00 | `--` | -- | -- | 18.386 ms | -- | -- |
-| 01 | `cache_mesh_topology` | everything the maze derives from inMesh -- points, vertex normals, the deduplicated edge list, the inverse map and the CSR dual graph -- is cached on a per-instance fingerprint, so a tick that only moves a scalar carves and extrudes without rebuilding the graph; the output arrays are also handed to Maya through bulk MPointArray/MIntArray constructors instead of per-element append() | 2.40x | 2.02x | 14.8 min | ACCEPTED |
-| 02 | `skip_same_point_check` | the node is 85% MFnMesh::create, so the round went into create's own cost -- turning off its same-point-twice scan and filling MFloatPointArray/MIntArray in place instead of staging through std::vector | 1.15x | 2.28x | 12.2 min | ACCEPTED |
+| 00 | `--` | -- | -- | 30.521 ms | -- | -- |
+| 01 | `reuse_out_mesh_setpoints` | the slab soup's topology is a pure function of the wall count, so on a repeat count the datablock's own output mesh is updated in place with float setPoints instead of being rebuilt by MFnMesh::create; the topology-derived dual graph is cached per instance on a byte compare of counts+connectivity, vertex normals come from the one bulk float call the Python reference makes, and positions are read off the mesh's raw float store | 4.00x | 9.68x | 24.2 min | ACCEPTED |
+| 02 | `raw_store_output` | on the reused output mesh, write the wall soup straight into the mesh's own float store (getRawPoints) and signal with updateSurface instead of staging xyzw and calling setPoints, which was 1.7 of 3.9 ms; then thread the flat wall map on a persistent per-node pool and read the carve's adjacency through raw pointers so the visited/door byte stores stop forcing vector-pointer reloads | 1.90x | 15.85x | 24.8 min | ACCEPTED |
+| 03 | `own_vertex_normals` | Replace MFnMesh::getVertexNormals (700 us, 37% of the tick) with the node's own float32 Newell face normals averaged per vertex on the persistent pool, measured to match Maya within 1.8e-7; then interleave the dual-graph adjacency into (dst, eid) pairs so the serial DFS carve touches one cache line per step. | 1.60x | 34.37x | 22.2 min | ACCEPTED |
+| 04 | `incremental_normals` | recompute vertex normals only for the faces a moved vertex touches, keep the MFnMesh bound to the reused output mesh across ticks, and take the adj_start hop out of the carve's dependent-load chain | 1.25x | 1.123 ms | 22.9 min | rejected: not faster |
 
 ### Predicted vs measured
 
 The rounds where the guess and the stopwatch disagreed. These are the transferable part -- a prediction that missed says more about the machine than one that landed.
 
-* `skip_same_point_check` -- predicted 1.15x, measured **2.28x**. profiling first would show the maze itself is noise; a 19.5k-slab unwelded soup (155,688 verts / 116,766 quads / 467,064 connects) is marshalling-bound, and create's per-polygon duplicate-index validation is pure waste when every quad is vbase+0..7 by construction
+* `reuse_out_mesh_setpoints` -- predicted 4.00x, measured **9.68x**. profiling showed MFnMesh::create + tearing down the previous 155k-point mesh was ~23 of 30 ms; every other phase (normals 1.9, dual 1.3, walls 1.9, carve 0.6) was small by comparison, so the win had to come from not re-creating the mesh each tick. setPoints(MPointArray) still cost 12 ms because it narrows per point; MFloatPointArray built from one raw float[4] soup dropped it to ~2.6 ms. Only a vertex position moves between ticks, so the dual graph is a full-key cache hit.
+* `raw_store_output` -- predicted 1.90x, measured **15.85x**. setPoints spends its time on per-point accessor calls and internal bookkeeping, not on the 2.5 MB copy, so a direct write into the store plus one updateSurface removes almost all of it (measured: 1700 us -> 30 us); the wall soup is a pure per-wall map so an 8-lane condvar pool takes it from ~430 us to ~90 us; the carve DFS indexes std::vectors while storing unsigned char flags, and char stores may alias the vectors' data pointers, so hoisting raw pointers should cut ~10-20% of its 450 us (measured: ~240 us off the median); the fused live/door/wall-list pass and the LCG mask were expected to be small and were neutral
+* `own_vertex_normals` -- predicted 1.60x, measured **34.37x**. Per-phase timers showed normals 700 us, carve 500 us, wall list 155 us, soup 180 us, input 160 us. Maya's vertex normal is the float32 mean of normalized Newell face normals (unnormalized/area-weighted was 1e-2 off, double precision 5e-5 off, float32 normalized 1.8e-7 off with 20% bit-identical), so two parallel maps over faces then vertices reproduce it inside the 1e-4 parity tolerance. The carve is latency-bound on dependent L2 loads across adj_start, adj_dst and adj_eid, so pairs plus pair-valued candidates cut two dependent loads per step. When every face is reached, the frontier sweep is a no-op and every edge is live, so both are skipped exactly; the candidate collect and wall pass go branchless to kill mispredicts on the random walk.
+* `incremental_normals` -- predicted 1.25x, **rejected: not faster**. phase timers put the 0.82 ms at: input fetch 235 us (of which MFnMesh::setObject ~45), normals 60-90, carve ~340, soup ~80. One moved vertex dirties ~4 faces / ~9 vertices, so a bit-compare of positions against a snapshot (~15 us) replaces two 19k-element parallel maps; the output mesh is ours and identity-checked, so its function set can stay bound (saves the ~45 us bind); the DFS is latency-bound on adj_start[cur] -> adj[base+k] -> visited[dst], so a fixed-stride adjacency computes base arithmetically and a magic-multiply modulo replaces the mispredicting switch on the candidate count
+
+### Rejected rounds
+
+* `incremental_normals` -- rejected: not faster. recompute vertex normals only for the faces a moved vertex touches, keep the MFnMesh bound to the reused output mesh across ticks, and take the adj_start hop out of the carve's dependent-load chain
 
 ## Verification
 
-* parity: **pass**  (maxerr 0.0, tol 0.0001)
-* authored @maya_test: 1/1 passed
-* speed: compiled 1.558 ms vs interpreted 16.333 ms (best of 3, geo 40 / array 512)
+* parity: **pass**
+* verify could not run: 'NoneType' object has no attribute 'add_input_attr' | authored @maya_test: 1/1 passed
 
 ## Files
 
@@ -144,7 +152,9 @@ The rounds where the guess and the stopwatch disagreed. These are the transferab
 build/stages/meshMaze/1_transpiled.cpp     deterministic transpile (no AI)
 build/stages/meshMaze/2_assisted.cpp       AI filled the unported region(s)
 build/stages/meshMaze/3_optimized/00_baseline.cpp
-build/stages/meshMaze/3_optimized/01_cache_mesh_topology.cpp
-build/stages/meshMaze/3_optimized/02_skip_same_point_check.cpp
+build/stages/meshMaze/3_optimized/01_reuse_out_mesh_setpoints.cpp
+build/stages/meshMaze/3_optimized/02_raw_store_output.cpp
+build/stages/meshMaze/3_optimized/03_own_vertex_normals.cpp
+build/stages/meshMaze/3_optimized/04_incremental_normals.cpp
 build/source/meshMaze.cpp      SHIPPED
 ```

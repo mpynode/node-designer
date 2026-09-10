@@ -1,8 +1,28 @@
 {
   "accepted": true,
-  "baseline_ms": 4.2187,
-  "best_ms": 0.6998,
-  "created": 1787675682.910877,
+  "baseline_ms": 8.3116,
+  "bench": {
+    "below_floor": true,
+    "fingerprint": "checked (1 plug(s))",
+    "floor_ms": 15.0,
+    "perturbed": [
+      "amplitude (float)",
+      "freq (float)",
+      "time (time)",
+      "input[0].inputGeometry <- pSphereShape1Orig.vtx[0]"
+    ],
+    "reason": "baseline 8.312 ms is below the 15 ms noise floor even at the largest bench scene (geo=400 array=20000); measured anyway -- every accept must clear 1.15x on two independent timings",
+    "rung": [
+      400,
+      20000
+    ],
+    "small_rung": [
+      40,
+      512
+    ]
+  },
+  "best_ms": 0.8332,
+  "created": 1788992441.0529034,
   "ledger": [
     {
       "compiled": true,
@@ -10,7 +30,7 @@
       "fix_rounds": 0,
       "hypothesis": "",
       "index": 0,
-      "ms": 4.2187,
+      "ms": 8.3116,
       "note": "",
       "outcome": "baseline",
       "parity": null,
@@ -22,60 +42,74 @@
     },
     {
       "compiled": true,
-      "duration_s": 652.208,
+      "duration_s": 1510.942,
       "fix_rounds": 0,
-      "hypothesis": "This node is ELEMENTWISE, not query-shaped: one sin per vertex over a 159,602-vert polySphere. The arithmetic cannot be the bottleneck, so the cost has to be per-access overhead and whole-array temporaries -- the lowered nd form materialised six of them (a push_back'd std::vector<double>, a from_data copy, a .copy(), two column slices and the sin result) and then paid two more 5 MB gather/scatter copies with a float<->double conversion per element in allPositions/setAllPositions. Removing levels of copying, not making the sin cheaper, is the lever.",
+      "hypothesis": "this node is ELEMENTWISE at 159,602 verts, so per-access overhead and eight n-length temporaries dominate, not the arithmetic; one loop reading x,y and writing x with the identical double expression x + (env*amp)*sin(y*freq + time*0.1) removes every allocation and the widen/narrow of y and z (which the source leaves unchanged, and (float)(double)y == y exactly). Then the remaining ~0.6 ms serial sine pass is a pure per-element map, the one permitted parallel shape.",
       "index": 1,
-      "ms": 1.6736,
-      "note": "",
+      "ms": 3.2908,
+      "note": "confirmed twice (incumbent under the noise floor): 3.291 / 2.986 ms",
       "outcome": "accept",
       "parity": "pass",
       "predicted_speedup": 3.0,
-      "risk": "Writing through a const_cast'd getRawPoints() bypasses MItGeometry, so it is only valid when the deformer set covers every vertex (guarded by nv == iter.count(), with the original MItGeometry path kept as the fallback) and only if the output mesh is a genuine private copy rather than a COW alias of the input -- an alias would silently deform an already-deformed mesh. Also float storage: the kernel widens float->double, does the identical double arithmetic, and stores back through the same single round-to-nearest that setAllPositions would have applied, so it is bit-identical rather than a precision shortcut.",
-      "slug": "raw_points_inplace",
-      "speedup": 2.5207337476099427,
-      "theme": "Fuse the nd expression tree into one loop, then stop round-tripping 160k verts through an MPointArray at all -- deform the output mesh's own float point buffer in place, with a persistent per-node pool mapping over disjoint vertex ranges."
+      "risk": "none numerically: same double expression, same std::sin, same float narrowing of x; y and z are not rewritten because the source copies them unchanged. Operationally the win from the pool is small (~0.1-0.4 ms) and depends on core availability; the env knob turns it off without a rebuild.",
+      "slug": "fuse_raw_sine_loop",
+      "speedup": 2.5257080345204814,
+      "theme": "replace the whole-array nd:: temporaries (harvest to double, copy, slice, mul, add, sin, mul, add, assign, write-back) with one fused pass over the mesh's own float store that touches only x, then run that pass on a persistent 2-lane per-node pool"
     },
     {
       "compiled": true,
-      "duration_s": 662.498,
+      "duration_s": 1305.269,
       "fix_rounds": 0,
-      "hypothesis": "the arithmetic was already a rounding error in the total: a no-op deform() still measured 1.418 ms of a 1.569 ms tick, and aliasing the input mesh to the output with no copy at all measured 0.521 ms, so ~0.90 ms per evaluation is Maya's input->output mesh copy plus iterator construction and NOT the sine; the output data object the datablock already holds has the identical topology every tick, so reusing that shell and streaming src->dst with the wave fused into the same pass removes a whole level of work rather than making the existing work cheaper",
+      "hypothesis": "instrumenting the tick showed deform() itself is only ~0.4 ms of ~2.6 ms: the kernel cannot move the number, but Maya calls compute() BEFORE its internal copy+iterator+deform() pass and that pass is ~1 ms of overhead at 160k verts (an MItGeometry over the handle alone measured 1-2.3 ms); returning kSuccess from compute() after producing the output ourselves removes that level of work while hOut.copy() keeps the same data flow and the same float store the kernel already wrote",
       "index": 2,
-      "ms": 0.6998,
-      "note": "",
+      "ms": 2.6857,
+      "note": "confirmed twice (incumbent under the noise floor): 2.686 / 1.402 ms",
       "outcome": "accept",
       "parity": "pass",
-      "predicted_speedup": 2.0,
-      "risk": "the reused output shell keeps its topology from the previous evaluation, so a freshly wired upstream shape whose vertex/polygon/face-vertex/edge counts all coincide with the old one would get new points on old connectivity, and geo topology is compared exactly; gated on a four-way topology fingerprint plus a coverage flag that only Maya's own MItGeometry can set, so any mismatch falls through to MPxDeformerNode::compute() and re-verifies",
-      "slug": "skip_deformer_mesh_copy",
-      "speedup": 6.028436696198915,
-      "theme": "override compute() so the wave is written straight into the datablock's existing output mesh buffer, instead of letting MPxGeometryFilter deep-copy the 160k-vert input mesh into the output and then hand us an MItGeometry over it"
+      "predicted_speedup": 1.4,
+      "risk": "membership must be decided without MItGeometry: groupId 0 with no object group 0 is treated as full membership (what the geometry filter does), an explicit group is full only if its vertex component isComplete() or has one element per vertex, and everything else -- partial sets, NURBS/other geometry types, any failed handle -- falls back to the base class so deform() still runs exactly as before; scratch fingerprint over 400k output values was byte-identical to the engine-built baseline; note: the workspace build.sh is macOS-only and cannot run on this Windows box, so all measurements here came from a scratch-side reproduction of bench.sh using build.bat's exact MSVC recipe and the same harness arguments (baseline 2.6 ms, floor 2.25 ms with the kernel removed, this change 1.38-1.44 ms across two runs, i.e. ~1.85x -- above the 1.4x predicted, because the internal pass turned out to cost more than the whole deform() it wrapped)",
+      "slug": "direct_compute_path",
+      "speedup": 3.094761142346502,
+      "theme": "answer outputGeometry[i] in compute() itself -- copy the input handle, deform the copy's raw float store, setClean -- so Maya's internal deformer pass (its MItGeometry build and bookkeeping) never runs for a full-membership mesh"
+    },
+    {
+      "compiled": true,
+      "duration_s": 1399.255,
+      "fix_rounds": 0,
+      "hypothesis": "in-compute timers put ~1.0 ms of a 1.35 ms tick in the two input-handle calls; a mayapy probe showed MPxGeometryFilter::inputGeom and the shape's worldMesh are both isCached=false (worldMesh: ~0.55 ms per pull at 160k verts, outMesh: 1 us), so each handle call re-evaluated the world mesh and block.inputValue(childPlug) asks for it exactly once; with the sin kernel then the largest remaining term (~0.3 ms at 2 lanes) more lanes should pay",
+      "index": 3,
+      "ms": 0.8332,
+      "note": "confirmed twice (incumbent under the noise floor): 0.833 / 0.722 ms",
+      "outcome": "accept",
+      "parity": "pass",
+      "predicted_speedup": 2.6,
+      "risk": "numerically none -- the same data still flows through the datablock and the base class still handles partial membership and non-mesh inputs; the lane change trades ~40 us of median for occasional wake/preemption tails, so it stays behind the MPYNODE_NURBSWAVE_THREADS knob",
+      "slug": "single_input_pull",
+      "speedup": 9.975516082573211,
+      "theme": "pull input[i].inputGeometry once through a child-plug inputValue instead of inputArrayValue + element inputValue, which evaluated the shape's uncached worldMesh twice; then re-tune the kernel pool from 2 to 4 lanes now that the fixed overhead is halved"
+    },
+    {
+      "compiled": true,
+      "duration_s": 1102.893,
+      "fix_rounds": 0,
+      "hypothesis": "phase timers put the tick at pull=0.5-0.6 ms (Maya re-evaluating the uncached worldMesh[0], 65-70%), copy=0.003 (COW), membership=0.04, kernel=0.11-0.23 on 4 lanes; the kernel is the only part this file owns that is big enough to move, and a standalone check showed the inlined sin 20% faster than MSVC std::sin (0.46 vs 0.59 ms serial at 160k) with 0 float mismatches over 4 x 160k arguments",
+      "index": 4,
+      "ms": 0.9865,
+      "note": "",
+      "outcome": "not-faster",
+      "parity": "pass",
+      "predicted_speedup": 1.04,
+      "risk": "a different sin implementation could round differently at a float boundary; guarded by the |x| >= 1e5 std::sin fallback and by the float store being the final rounding step (double error ~1e-22 abs is 2^-40 below float resolution here)",
+      "slug": "inline_fdlibm_sin",
+      "speedup": null,
+      "theme": "replace the libm sin call in the per-vertex kernel with an inlined fdlibm-style Cody-Waite reduction + polynomial that rounds to the same float, so the loop body has no call and no data-dependent branch"
     }
   ],
-  "parity_gate": "authored+pointwise",
-  "reason": "accepted (6.03x)",
-  "remeasured": {
-    "baseline_ms": null,
-    "date": "2026-09-08",
-    "diverged": null,
-    "final_ms": null,
-    "fingerprint": null,
-    "floor_ms": 15.0,
-    "perturbed": [
-      "amplitude (float)",
-      "freq (float)",
-      "time (time)",
-      "input[0].inputGeometry <- pSphereShape1Orig.vtx[0]"
-    ],
-    "reason": "baseline 13.724 ms is below the 15 ms noise floor even at the largest bench scene (geo=400 array=20000); nothing this small can be optimized against measurably",
-    "rung": [
-      400,
-      20000
-    ],
-    "speedup": null
-  },
-  "rounds": 2,
-  "speedup": 6.028436696198915,
+  "max_rounds": 6,
+  "parity_gate": "authored-only",
+  "reason": "accepted (9.98x)",
+  "rounds": 4,
+  "speedup": 9.975516082573211,
+  "stop_reason": "round 4 not-faster -- nothing new to compound from",
   "type_name": "nurbsWave"
 }

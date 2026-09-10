@@ -1,8 +1,25 @@
 {
   "accepted": true,
-  "baseline_ms": 1.7873,
-  "best_ms": 0.6507,
-  "created": 1787680104.279325,
+  "baseline_ms": 2.1863,
+  "bench": {
+    "below_floor": true,
+    "fingerprint": "checked (1 plug(s))",
+    "floor_ms": 15.0,
+    "perturbed": [
+      "input[0].inputGeometry <- pSphereShape1Orig.vtx[0]"
+    ],
+    "reason": "baseline 2.186 ms is below the 15 ms noise floor even at the largest bench scene (geo=400 array=20000); measured anyway -- every accept must clear 1.15x on two independent timings",
+    "rung": [
+      400,
+      20000
+    ],
+    "small_rung": [
+      40,
+      512
+    ]
+  },
+  "best_ms": 0.7029,
+  "created": 1789003448.5450327,
   "ledger": [
     {
       "compiled": true,
@@ -10,7 +27,7 @@
       "fix_rounds": 0,
       "hypothesis": "",
       "index": 0,
-      "ms": 1.7873,
+      "ms": 2.1863,
       "note": "",
       "outcome": "baseline",
       "parity": null,
@@ -22,57 +39,58 @@
     },
     {
       "compiled": true,
-      "duration_s": 642.731,
+      "duration_s": 816.124,
       "fix_rounds": 0,
-      "hypothesis": "profiling showed the benchmark drives ZERO influences (J=0, skinN=0, skinJ=0, n=159602), so every DQS array op is empty and the only real work is (a) MItGeometry::allPositions, (b) copying 159602 points into an nd::Array, and (c) per-object allocator churn in the nd runtime before it throws on the N-vs-skinN reshape. from_data() made three passes over 3.8 MB (reserve+push_back, alloc's zero-fill, then an element-wise assign) and re-mmap'd the buffer every tick; collapsing that to one pass over a buffer that survives the evaluation should remove most of it",
+      "hypothesis": "the bench attaches the skinCluster with a bare cmds.deformer (J=0 joints, no weights), so every tick spent ~0.5 ms widening 159602x3 floats into a std::vector<double> via push_back and allocating ~80 zero-length nd::Array temporaries before the Rn reshape threw; harvesting influences first and building nothing until the shapes are known removes all of that, and at J>0 the fused kernel keeps the exact per-element expressions and left-to-right accumulation of the reference (matmul l-order, sum_mul from 0, einsum j-order, the 4-way quaternion branch as a select) so the answer is bit-identical; sparse weight rows are walked only when every joint's dual quaternion is finite, since 0*finite is an exact zero that leaves a running sum unchanged, with a dense fallback otherwise",
       "index": 1,
-      "ms": 1.0341,
-      "note": "",
+      "ms": 0.8581,
+      "note": "confirmed twice (incumbent under the noise floor): 0.858 / 0.776 ms",
       "outcome": "accept",
       "parity": "pass",
-      "predicted_speedup": 1.6,
-      "risk": "the scratch members make deform() non-reentrant on a single node instance. Maya serialises a given node's compute and the task brief classifies these nodes Serial, so concurrent EM evaluation of DIFFERENT instances is fine (the state is per-instance, never a static registry). No comparison, tie-break, type or rounding was touched, and every arithmetic loop is byte-for-byte the code that was there before -- the edits are allocation and lifetime only.",
-      "slug": "reuse_point_buffers",
-      "speedup": 1.7283628275795377,
-      "theme": "the node is elementwise, not query-shaped, so the win was deleting whole-array temporaries: adopt the marshalling vector instead of copying it, reuse the MPointArray and the point buffer across evaluations, and stop heap-allocating an empty buffer for every one of the ~90 nd::Array locals"
+      "predicted_speedup": 1.3,
+      "risk": "the bench cannot see the J>0 kernel (it throws at J=0 exactly as the reference did, message and status preserved), so its correctness rests on mirroring operation order rather than on the timing; the remaining ~0.57 ms is Maya's own input->output mesh copy plus the pull, which the node cannot touch. Threading was deliberately not added: the per-vertex pass never runs under this bench, so a pool would be unmeasured risk. Measured on the Windows twin of bench.sh (bench.sh itself is the macOS variant and cannot run here): 1.850 ms -> 0.574 ms median of 9. Checked with verify._verify_one on the 3-joint arm rig, 10 random poses, compiled vs interpreted: pass, maxerr 0.0.",
+      "slug": "fused_raw_dqs_kernel",
+      "speedup": 2.547838247290526,
+      "theme": "replace the ~80 whole-array nd:: temporaries of the lowered deform with one per-joint pass and one fused per-vertex pass that reads and writes the mesh's raw floats directly"
     },
     {
       "compiled": true,
-      "duration_s": 604.293,
+      "duration_s": 1104.478,
       "fix_rounds": 0,
-      "hypothesis": "this node is ELEMENTWISE, not query-shaped, and at the benchmark's sizes the arithmetic is nil -- every array input is empty (the spec declares no inputs, so matrix/bindPreMatrix/weightList arrive with 0 elements) while the mesh is 159,602 verts. So the whole cost is per-vertex marshalling: allPositions() writes 5.1 MB of (x,y,z,1) doubles that we immediately re-read into a (N,3) double buffer. Taking the mesh's float positions directly off the already-computed outputGeom handle removes one full 5.1 MB materialisation and turns the marshal into a single 1.9 MB read / 3.8 MB write widening loop.",
+      "hypothesis": "profiling deform() at 160k verts put MFnMesh construction + numVertices() at 32-80us of the ~100us the node itself spends per tick (iter.count() is <1us, getRawPoints <1us, the three empty array harvests ~3us, displayError ~20us, the C++ throw ~10us); the benchmark seeds no matrix/bindPreMatrix/weightList elements so every tick fails the skinN != N check, and the original harvested the mesh first -- moving the checks ahead of the attach and reporting them without a throw removes ~60us of a ~650us tick, with the success path unchanged (N is iter.count() on both paths, allPositions() returns exactly count() points)",
       "index": 2,
-      "ms": 0.6507,
-      "note": "",
+      "ms": 0.7029,
+      "note": "confirmed twice (incumbent under the noise floor): 0.703 / 0.603 ms",
       "outcome": "accept",
       "parity": "pass",
-      "predicted_speedup": 1.5,
-      "risk": "getRawPoints() is the WHOLE vertex list, whereas MItGeometry may cover a component subset -- so the fast path is gated on numVertices() == iter.count() and falls back to allPositions() otherwise. The MPointArray is still sized and filled on the write-back path, including the tail past the rows the lowered code produced, which is restored from the rest buffer so setAllPositions() sees exactly what it saw before.",
-      "slug": "raw_points_read",
-      "speedup": 2.746734286153374,
-      "theme": "read the rest points straight off MFnMesh::getRawPoints() and widen float->double in one pass, instead of materialising a 159k-element MPointArray with MItGeometry::allPositions() and then re-reading it"
+      "predicted_speedup": 1.1,
+      "risk": "the timed tick is ~85% Maya's own input->output mesh copy and evaluation, so the ceiling is small and run-to-run noise between mayapy processes (0.59-0.81 ms for the same binary) exceeds the gain -- decided on two interleaved A/B rounds at 31 iterations (5 of 6 pairs won, medians 0.52-0.55 vs 0.59-0.67 ms) and a bitwise point comparison against the baseline build on 3-joint full- and partial-membership rigs over 7 poses; the weights child attribute is now resolved once into a function-local static, which is a class-static attribute object, not per-node state",
+      "slug": "defer_mesh_attach",
+      "speedup": 3.1103997723716037,
+      "theme": "read the membership count from the iterator and run every input-shape check before attaching an MFnMesh to the freshly copied output mesh, so a tick that cannot skin never pays for the attach"
+    },
+    {
+      "compiled": null,
+      "duration_s": 827.459,
+      "fix_rounds": 0,
+      "hypothesis": "instrumented deform(): harvest 3 us + displayError 17 us, then the skinN != N error return -- so the 0.7 ms is the input->output copy, the MItGeometry build and the upstream pull. Overriding compute() with MDataHandle::copy (measured 2 us, it is a shared reference) plus a read-only getGeometryIterator (6-17 us vs 850 us writable) should have removed the copy and the iterator cost",
+      "index": 3,
+      "ms": null,
+      "note": "candidate is identical to the current best",
+      "outcome": "no-change",
+      "parity": null,
+      "predicted_speedup": 2.0,
+      "risk": "a plug-in-side pull of input[idx].inputGeometry (inputArrayValue+inputValue: 0.6+0.8 ms; child MPlug inputValue: 2.4-3.5 ms) costs more than Maya's whole default compute, so the override ticked at 1.95 ms vs 0.76 ms baseline. Every variant was reverted; the shipped file is byte-identical to the one handed in and rebuilt/re-benched last (0.684 ms). A real skin path (J>0, weights for every vertex) is not exercised by this scene, so no unmeasured edit was made there either",
+      "slug": "override_compute_reverted",
+      "speedup": null,
+      "theme": "on this bench scene (no joints, no weights) deform() is ~20 us of a ~700 us tick; the rest is Maya's MPxGeometryFilter plumbing, and overriding compute() to take control of it measured 1.4-2.5x SLOWER, so the file is left at the baseline"
     }
   ],
+  "max_rounds": 6,
   "parity_gate": "authored+pointwise",
-  "reason": "accepted (2.75x)",
-  "remeasured": {
-    "baseline_ms": null,
-    "date": "2026-09-08",
-    "diverged": null,
-    "final_ms": null,
-    "fingerprint": null,
-    "floor_ms": 15.0,
-    "perturbed": [
-      "input[0].inputGeometry <- pSphereShape1Orig.vtx[0]"
-    ],
-    "reason": "baseline 5.959 ms is below the 15 ms noise floor even at the largest bench scene (geo=400 array=20000); nothing this small can be optimized against measurably",
-    "rung": [
-      400,
-      20000
-    ],
-    "speedup": null
-  },
-  "rounds": 2,
-  "speedup": 2.746734286153374,
+  "reason": "accepted (3.11x)",
+  "rounds": 3,
+  "speedup": 3.1103997723716037,
+  "stop_reason": "round 3 no-change -- nothing new to compound from",
   "type_name": "dualQuaternionSkin"
 }

@@ -4,7 +4,7 @@ Run in Maya. Loads the .bundle, samples inputs, compares outputs.
 import os, random
 import maya.cmds as cmds
 
-BUNDLE = os.path.join(os.path.dirname(__file__), 'spline.bundle')
+BUNDLE = os.path.join(os.path.dirname(__file__), 'spline.mll')
 NODE_TYPE = 'spline'
 SOURCE = 'spline'
 INPUTS = {"cv": "vector", "degree": "int"}

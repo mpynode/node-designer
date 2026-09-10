@@ -4,7 +4,7 @@ Run in Maya. Loads the .bundle, samples inputs, compares outputs.
 import os, random
 import maya.cmds as cmds
 
-BUNDLE = os.path.join(os.path.dirname(__file__), 'compositeTexture.bundle')
+BUNDLE = os.path.join(os.path.dirname(__file__), 'compositeTexture.mll')
 NODE_TYPE = 'compositeTexture'
 SOURCE = 'compositeTexture'
 INPUTS = {"layers": "string", "opacities": "float", "borderColor": "color", "colorSpace": "enum", "preFilter": "bool", "preFilterKernel": "enum", "preFilterRadius": "float", "uvCoord": "float2", "wrapModeU": "enum", "wrapModeV": "enum"}

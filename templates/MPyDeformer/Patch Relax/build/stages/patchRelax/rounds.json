@@ -1,8 +1,30 @@
 {
   "accepted": true,
-  "baseline_ms": 4.7782,
-  "best_ms": 1.5144,
-  "created": 1787676010.1307452,
+  "baseline_ms": 7.7901,
+  "bench": {
+    "below_floor": true,
+    "fingerprint": "checked (1 plug(s))",
+    "floor_ms": 15.0,
+    "perturbed": [
+      "alpha (double)",
+      "iterations (int)",
+      "ringNbrs[0] (int)",
+      "ringWidth (int)",
+      "surfaceBlend (double)",
+      "input[0].inputGeometry <- pSphereShape1Orig.vtx[0]"
+    ],
+    "reason": "baseline 7.790 ms is below the 15 ms noise floor even at the largest bench scene (geo=400 array=20000); measured anyway -- every accept must clear 1.15x on two independent timings",
+    "rung": [
+      400,
+      20000
+    ],
+    "small_rung": [
+      40,
+      512
+    ]
+  },
+  "best_ms": 2.4305,
+  "created": 1788988754.2304215,
   "ledger": [
     {
       "compiled": true,
@@ -10,7 +32,7 @@
       "fix_rounds": 0,
       "hypothesis": "",
       "index": 0,
-      "ms": 4.7782,
+      "ms": 7.7901,
       "note": "",
       "outcome": "baseline",
       "parity": null,
@@ -22,62 +44,42 @@
     },
     {
       "compiled": true,
-      "duration_s": 881.325,
+      "duration_s": 794.186,
       "fix_rounds": 0,
-      "hypothesis": "ringNbrs is 20000 elements while the mesh is 159602 verts, so `flat.shape[0] == N * Kw` can never hold and `out` is always literally `P`; the entire 4.78 ms is therefore MArrayDataHandle walking + three full-size double buffers (nd::from_data allocs a zero-init vector and then copies a second one onto it) + MPointArray::operator[] called 320k times across the DSO boundary, none of which is arithmetic",
+      "hypothesis": "at 159,602 verts and 20,000 ring elements the gate `len(flat) == N*Kw` can never pass, so every timed tick paid for a 20k MDataHandle walk, a 160k-vertex rest-mesh input pull (measured ~0.9-1.6 ms by itself), and three (N,3) double temporaries whose result is just P; the source reads restMesh and the ring values only inside the gate, so deferring them is a pure reordering with identical output. Measured on this Windows box: 8.06 -> 3.55 ms (ring probe + no double temporaries) -> 2.52 ms (rest-mesh pull deferred). A 4-wide unroll of the remaining float write-back loop measured slower (2.97 ms) and was reverted; the ~2.3 ms left is Maya's own deformer input->output mesh copy.",
       "index": 1,
-      "ms": 2.2859,
-      "note": "",
+      "ms": 2.4305,
+      "note": "confirmed twice (incumbent under the noise floor): 2.430 / 2.400 ms",
       "outcome": "accept",
       "parity": "pass",
-      "predicted_speedup": 1.3,
-      "risk": "the raw MPoint* base pointer assumes MPointArray stores contiguous {x,y,z,w} doubles, which the Maya API does not document -- guarded at runtime with sizeof(MPoint)==4*sizeof(double), offsetof(x)==0 and &pts[1]-&pts[0]==1, falling back to operator[] if any of them fails; and the lazy restMesh pull means an unread input plug stays dirty, which is legal and matches the Python but is a visible DG behaviour change",
-      "slug": "fuse_marshalling",
-      "speedup": 2.090292663721073,
-      "theme": "at bench scale the ring gate is CLOSED, so patch_relax never runs and the node is pure ELEMENTWISE marshalling -- so delete every whole-array temporary between Maya's MPointArray and the nd::Array, and make each input lazy exactly where the Python makes it lazy"
+      "predicted_speedup": 2.0,
+      "risk": "the O(1) length probe assumes MArrayDataHandle stores elements in ascending logical order (max logical index == last physical element); the gate-fail write-back keeps the exact `p + env*(p - p)` expression in double so -0.0/NaN behaviour matches the original elementwise loop bit for bit",
+      "slug": "lazy_gate_inputs",
+      "speedup": 3.2051429746965647,
+      "theme": "pull the rest mesh and read the 20k ring values only inside the size gate that consumes them, and probe the ring array's length in O(1) instead of walking 20k element handles"
     },
     {
       "compiled": true,
-      "duration_s": 713.221,
+      "duration_s": 833.922,
       "fix_rounds": 0,
-      "hypothesis": "the node is ELEMENTWISE, not QUERY -- the patch_relax gate (flat.shape[0] == N*Kw, 20000 vs 159602) can never open under the bench scene, so nothing algorithmic is running and the whole cost is per-access overhead. An in-deform profile showed 0.62 ms of the 2.10 ms median inside deform() and 0.51 ms of THAT in allPositions (0.35) + setAllPositions (0.16), which build and consume a 5.1 MB MPointArray of doubles that the mesh stores as floats anyway. Reaching the output geometry through block.outputArrayValue(outputGeom) and writing its raw float buffer directly removes both marshalling passes without changing a single arithmetic operation: the blend is still evaluated in double on values that were float-exact to begin with, exactly as MPoint delivered them.",
+      "hypothesis": "the deform body is dominated by the P + env*(P-P) loop widening 480k floats to double and narrowing back; (p-p) is exactly +-0/NaN, env*0 is exactly +-0/NaN, and p + (+-0) is exactly p in either precision, so float loses no bits and runs 4 lanes per op with no cvt; the ring array handle is only observable once Kw > 0, so reading ringWidth first and short-circuiting is the Python's own `and` semantics",
       "index": 2,
-      "ms": 1.5144,
+      "ms": 2.4158,
       "note": "",
-      "outcome": "accept",
+      "outcome": "not-faster",
       "parity": "pass",
-      "predicted_speedup": 1.35,
-      "risk": "writing through a const_cast on MFnMesh::getRawPoints is only safe while the deformer set covers the WHOLE mesh -- a partial set would move vertices MItGeometry never visited -- so the fast path is gated on iter.count() == numVertices() and every failure (no handle, no mesh, partial set) falls back to the untouched MItGeometry path. Skipping setAllPositions also skips its bookkeeping; MFnMesh::updateSurface() as insurance was measured at 1.691 vs 1.528 ms (~10%) and dropped, since updateSurface is a redraw signal for DAG shapes and both the bench and the parity check read points straight out of the buffer.",
-      "slug": "inplace_mesh_floats",
-      "speedup": 3.155176967776017,
-      "theme": "profile first, then delete the MItGeometry double round-trip: deform the output mesh's own float point buffer in place instead of marshalling 159k MPoints out through allPositions and back through setAllPositions"
+      "predicted_speedup": 1.12,
+      "risk": "none numerically (identity proven per IEEE case, -0 -> +0 in both forms); the remaining ~2.2 ms is Maya's own input->output mesh copy plus the upstream tweak evaluation, which an empty deform() diagnostic measured at the same minimum as this candidate, so no further in-deform change can move the number; a compute() override to reuse the previous output mesh was considered and rejected because object-group membership and non-count topology changes cannot be verified cheaply",
+      "slug": "float_passthrough",
+      "speedup": null,
+      "theme": "the bench never passes the ring-size gate (20000 ring ids vs 159602*Kw), so the timed path is the envelope pass-through; evaluate it in float, where this exact expression is bit-identical to the double form, and skip building the 20k-element ring handle when ringWidth <= 0"
     }
   ],
-  "parity_gate": "authored+pointwise",
-  "reason": "accepted (3.16x)",
-  "remeasured": {
-    "baseline_ms": null,
-    "date": "2026-09-08",
-    "diverged": null,
-    "final_ms": null,
-    "fingerprint": null,
-    "floor_ms": 15.0,
-    "perturbed": [
-      "alpha (double)",
-      "iterations (int)",
-      "ringNbrs[0] (int)",
-      "ringWidth (int)",
-      "surfaceBlend (double)",
-      "input[0].inputGeometry <- pSphereShape1Orig.vtx[0]"
-    ],
-    "reason": "baseline 14.114 ms is below the 15 ms noise floor even at the largest bench scene (geo=400 array=20000); nothing this small can be optimized against measurably",
-    "rung": [
-      400,
-      20000
-    ],
-    "speedup": null
-  },
+  "max_rounds": 6,
+  "parity_gate": "authored-only",
+  "reason": "accepted (3.21x)",
   "rounds": 2,
-  "speedup": 3.155176967776017,
+  "speedup": 3.2051429746965647,
+  "stop_reason": "round 2 not-faster -- nothing new to compound from",
   "type_name": "patchRelax"
 }

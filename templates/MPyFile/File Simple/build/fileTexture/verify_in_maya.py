@@ -4,7 +4,7 @@ Run in Maya. Loads the .bundle, samples inputs, compares outputs.
 import os, random
 import maya.cmds as cmds
 
-BUNDLE = os.path.join(os.path.dirname(__file__), 'fileTexture.bundle')
+BUNDLE = os.path.join(os.path.dirname(__file__), 'fileTexture.mll')
 NODE_TYPE = 'fileTexture'
 SOURCE = 'fileTexture'
 INPUTS = {"brightness": "float", "contrast": "float", "borderColor": "color", "colorSpace": "enum", "fileName": "string", "preFilter": "bool", "preFilterKernel": "enum", "preFilterRadius": "float", "uvCoord": "float2", "wrapModeU": "enum", "wrapModeV": "enum"}

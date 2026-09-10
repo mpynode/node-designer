@@ -1,10 +1,10 @@
 # MPyFile_File_Composite -- compile report
 
-Generated 2026-08-28 17:22
+Generated 2026-09-09 15:33
 
 | node | status | assist | optimize | detail |
 |---|---|---|---|---|
-| `compositeTexture` | compiled | -- | **95.23x** | [report](build/stages/compositeTexture/REPORT.md) |
+| `compositeTexture` | compiled | -- | **138.44x** | [report](build/stages/compositeTexture/REPORT.md) |
 
 ## Layout
 

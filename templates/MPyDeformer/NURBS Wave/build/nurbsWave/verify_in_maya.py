@@ -7,7 +7,7 @@ envelope/input samples.
 import os, random
 import maya.cmds as cmds
 
-BUNDLE = os.path.join(os.path.dirname(__file__), 'nurbsWave.bundle')
+BUNDLE = os.path.join(os.path.dirname(__file__), 'nurbsWave.mll')
 NODE_TYPE = 'nurbsWave'
 SRC_TYPE = 'mPyDeformer'
 COMPUTE = "# NURBS wave deformer: push each CV along X (the default nurbsPlane's normal --\n# that plane lies in YZ with X=0) by a travelling sine of its Y coordinate, so a\n# clear wave ripples across the surface. Reads CVs via the NURBS idiom\n# cvPositions()/setCVPositions() (mPyDeformer also accepts mesh\n# getPoints/setPoints). `time` (auto-wired to the timeline) animates the wave;\n# `envelope` (0..1) blends it against rest.\nimport numpy as np\nh = self.outputGeometry[0]\nrest = h.cvPositions()                 # (N, 3) object-space CVs (numpy)\nenv = float(self.envelope)\nout = rest.copy()\nout[:, 0] = out[:, 0] + env * self.amplitude * np.sin(rest[:, 1] * self.freq + self.time * 0.1)\nh.setCVPositions(out)\n"

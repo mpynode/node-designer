@@ -4,7 +4,7 @@ Run in Maya. Loads the .bundle, samples inputs, compares outputs.
 import os, random
 import maya.cmds as cmds
 
-BUNDLE = os.path.join(os.path.dirname(__file__), 'procrustesTags.bundle')
+BUNDLE = os.path.join(os.path.dirname(__file__), 'procrustesTags.mll')
 NODE_TYPE = 'procrustesTags'
 SOURCE = 'procrustesTags'
 INPUTS = {"mesh": "mesh", "meshOrig": "mesh", "clusterTags": "string", "bindMatrices": "matrix"}

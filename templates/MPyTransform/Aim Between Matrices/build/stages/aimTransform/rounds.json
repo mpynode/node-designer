@@ -1,8 +1,27 @@
 {
   "accepted": true,
-  "baseline_ms": 0.0082,
-  "best_ms": 0.002,
-  "created": 1787680499.1251001,
+  "baseline_ms": 0.0127,
+  "bench": {
+    "below_floor": true,
+    "fingerprint": "checked (2 plug(s))",
+    "floor_ms": 15.0,
+    "perturbed": [
+      "matrix0 (matrix)",
+      "matrix1 (matrix)",
+      "parentWorld (matrix)"
+    ],
+    "reason": "baseline 0.013 ms is below the 15 ms noise floor even at the largest bench scene (geo=400 array=20000); measured anyway -- every accept must clear 1.15x on two independent timings",
+    "rung": [
+      400,
+      20000
+    ],
+    "small_rung": [
+      40,
+      512
+    ]
+  },
+  "best_ms": 0.004,
+  "created": 1789004691.6762154,
   "ledger": [
     {
       "compiled": true,
@@ -10,7 +29,7 @@
       "fix_rounds": 0,
       "hypothesis": "",
       "index": 0,
-      "ms": 0.0082,
+      "ms": 0.0127,
       "note": "",
       "outcome": "baseline",
       "parity": null,
@@ -22,59 +41,58 @@
     },
     {
       "compiled": true,
-      "duration_s": 659.292,
+      "duration_s": 1081.839,
       "fix_rounds": 0,
-      "hypothesis": "the node is ELEMENTWISE with an output of exactly 16 doubles -- the arithmetic is nothing, so 100% of the cost is per-access overhead. The nd:: lowering heap-allocates ~20 shared_ptr<vector<double>> Arrays to do 4x4 work; desiredLocal() then re-fetches matrix0/matrix1/parentWorld via findPlug-by-name + MPlug::getValue + MFnMatrixData even though compute() had just pulled all three through the datablock; and nd_gate_mix decomposes a base matrix that its three compile-time-true gates guarantee it will never read. Remove the allocations and the duplicate DG reads and the whole thing collapses onto the DG plumbing floor.",
+      "hypothesis": "This node is ELEMENTWISE with a fixed 4x4 output; the arithmetic is ~200 ns, so the 12 us tick is all per-access overhead: MFnDependencyNode + 3x findPlug by name + 3x MPlug::getValue DG pulls in desiredLocal(), then ~30 shared_ptr/vector allocations for slice/norm/cross/eye/assign/inv/matmul temporaries. Keeping every operation in the same order on registers (sub, acc=acc+x*x norm, dot1d acc+=, cross formula, Gauss-Jordan inv with the 1e-12 pivot guard, matmul2d_fixed acc+=) is bit-identical under -ffp-contract=off / /fp:precise, so the kernel can be a plain function with zero allocations.",
       "index": 1,
-      "ms": 0.0022,
-      "note": "",
+      "ms": 0.0073,
+      "note": "confirmed twice (incumbent under the noise floor): 0.004 / 0.007 ms",
       "outcome": "accept",
       "parity": "pass",
       "predicted_speedup": 3.0,
-      "risk": "every step had to be bit-exact, not merely close. The scalar rewrite replicates nd::norm's ascending acc = acc + x*x fold, nd::dot1d's ascending accumulation, nd::cross's operand order, and nd::inv's Gauss-Jordan partial pivot on the augmented 4x8 -- including its `best < 1e-12` singularity test and its `if (f == 0.0) continue` skip -- operation for operation, all in double. No comparison that selects a pivot or a branch was narrowed, loosened, or reordered. The inverse(L) cache is the one place a stale value could ship: it is keyed on memcmp of all 16 raw doubles of L (bitwise, not tolerance), is a per-instance member under a std::mutex rather than a static registry, and caches only the intermediate inverse -- never the node's output -- so a hit can only return exactly what the recompute would have.",
-      "slug": "scalarise_and_feed_datablock",
-      "speedup": 3.7272727272727275,
-      "theme": "this node is 4x4 scalar math wearing an ndarray costume: replace the nd:: lowering with stack scalars, stop re-reading the three matrix inputs through MPlug when compute() already holds them, and cache inverse(L) on the exact bits of L"
+      "risk": "The datablock handle value must equal what MPlug::getValue returned (same plug, same evaluation) -- and it does, the original already pulled the same handles for the freeze fix. The Gauss-Jordan port must keep nd::inv's exact pivot order, division-by-copied-d and f==0 skip, or a 1-ULP drift appears in inv(P). The in-place write relies on the 16 elements existing in logical order; any deviation falls back to the original builder path.",
+      "slug": "fused_scalar_kernel",
+      "speedup": 1.7397260273972601,
+      "theme": "Replace the nd:: array chain (30-odd heap allocations per evaluate) and three findPlug/getValue/MFnMatrixData round trips with one fused scalar kernel that reads the three matrices straight from the datablock handles compute() already pulls; then write the 16 output elements in place instead of through a rebuilt MArrayDataBuilder."
     },
     {
       "compiled": true,
-      "duration_s": 633.577,
+      "duration_s": 609.251,
       "fix_rounds": 0,
-      "hypothesis": "This node is ELEMENTWISE and tiny -- the whole numerical job is 4x4 scalar math on three matrix inputs, and the polySphere/20000-element inputs the bench drives are never read by compute(). A previous porter had already collapsed the nd::Array lowering to stack scalars and cached inverse(L). That left exactly one repeated Maya-API cost in the hot path: MArrayDataBuilder + 16 x addElement() (each an index search/insert) + arrH.set() commit, rebuilding an output array whose shape is a fixed 0..15 and never changes. Replacing it with jumpToArrayElement(0) + next() over the existing elements, guarded by elementCount()==16 and a per-element elementIndex() check with a full builder fallback, removes the builder allocation and the 16 searches without touching a single written value.",
+      "hypothesis": "compute() is ~85 Maya API calls and no real arithmetic (three 4x4 reads, one 4x4 inverse, sixteen scalar writes); the 16-element write loop is 64 of those calls, so trimming 14 redundant elementIndex() checks (16 sorted distinct indices with first==0 and last==15 are exactly 0..15) should be the largest removable share. Every input moves every tick, so no derived state survives between evaluations and caching cannot apply.",
       "index": 2,
-      "ms": 0.002,
-      "note": "",
+      "ms": 0.004,
+      "note": "confirmed twice (incumbent under the noise floor): 0.004 / 0.004 ms",
       "outcome": "accept",
       "parity": "pass",
-      "predicted_speedup": 1.25,
-      "risk": "The in-place path depends on the output array already holding exactly logical indices 0..15. Guarded two ways -- elementCount()==16 up front and elementIndex()==i before each write -- and any mismatch falls through to the original builder path, which rewrites all 16 regardless. No arithmetic, no comparison, and no written value changed, so parity is structurally unaffected.",
-      "slug": "inplace_array_write",
-      "speedup": 4.1000000000000005,
-      "theme": "write the 16 output-array elements in place instead of rebuilding them through an MArrayDataBuilder every tick; the node turned out to be entirely harness-bound, so the change is unmeasurable rather than a win"
+      "predicted_speedup": 1.1,
+      "risk": "the order guard assumes MArrayDataHandle stores elements sorted by logical index; this array is non-writable, non-storable and only ever built 0..15 by this compute, and the harness fingerprint (all 16 elements + matrix) was byte-identical to the baseline. Measured: neutral -- 0.0037 ms before and after when the process lands on a fast core. Run-to-run the harness is bimodal on this hybrid CPU (0.0037 vs 0.0069-0.0072 ms with tight samples inside each run, even pinned to CPUs 0-7); a diagnostic build that skipped asMatrix/inverse/aim math entirely also measured 0.0069 ms, so the node's own work is below the noise of the pull itself and further compute-side edits cannot be judged at this scene.",
+      "slug": "lean_output_walk",
+      "speedup": 3.175,
+      "theme": "walk the 16 output elements with next() and check the logical index only at the two ends, so each element costs 3 Maya API calls instead of 4"
+    },
+    {
+      "compiled": true,
+      "duration_s": 793.539,
+      "fix_rounds": 0,
+      "hypothesis": "the node is at the harness floor: a no-op compute measured 2.8-3.0 us against a 3.2-4.0 us baseline, so the whole controllable cost is under 1 us (about 0.25 us math, about 0.5 us for the 16 MArrayDataHandle element writes, the rest preamble). Nothing here is query-shaped or cacheable -- every input moves every tick -- so the only bit-identical levers are removing dead work: 3 sqrt + 9 divides on rows nd_gate_mix never reads when every gate is open, an RTTI dynamic_cast + thisMObject() paid on EVERY plug routed through the override (including `matrix`, pulled each tick), and a double[4][4] -> MMatrix copy-construct",
+      "index": 3,
+      "ms": 0.0035,
+      "note": "incumbent under the noise floor: 1.15x required, measured 1.14x",
+      "outcome": "not-faster",
+      "parity": "pass",
+      "predicted_speedup": 1.04,
+      "risk": "gain is inside the +-15% run-to-run noise of a 3 us measurement and cannot clear the 1.15x below-floor gate; measured 3.2-3.3 us vs 3.2-4.0 us baseline on quiet runs (some runs on this machine bimodally jump to ~7 us from background load). Correctness verified bit-identical on all 16 outputs across 9 input sets including the coincident-points and up-vector-switch branches, worldMatrix within 9e-16 of the numpy reference. The workspace bench.sh/build.sh are the macOS recipe and cannot run on this Windows host; measurements were taken through an untouched-harness mirror (same benchmark_node.py invocation and arguments, MSVC /O2 /fp:precise compile as the driver's own gate uses)",
+      "slug": "trim_preamble_gate_all",
+      "speedup": null,
+      "theme": "test the plug before the RTTI cast so the base-class `matrix` pull skips it, and specialise the all-gates-open mix so the three unused base-row normalisations are never computed"
     }
   ],
+  "max_rounds": 6,
   "parity_gate": "authored+pointwise",
-  "reason": "accepted (4.10x)",
-  "remeasured": {
-    "baseline_ms": null,
-    "date": "2026-09-08",
-    "diverged": null,
-    "final_ms": null,
-    "fingerprint": null,
-    "floor_ms": 15.0,
-    "perturbed": [
-      "matrix0 (matrix)",
-      "matrix1 (matrix)",
-      "parentWorld (matrix)"
-    ],
-    "reason": "baseline 0.013 ms is below the 15 ms noise floor even at the largest bench scene (geo=400 array=20000); nothing this small can be optimized against measurably",
-    "rung": [
-      400,
-      20000
-    ],
-    "speedup": null
-  },
-  "rounds": 2,
-  "speedup": 4.1000000000000005,
+  "reason": "accepted (3.17x)",
+  "rounds": 3,
+  "speedup": 3.175,
+  "stop_reason": "round 3 not-faster -- nothing new to compound from",
   "type_name": "aimTransform"
 }

@@ -4,7 +4,7 @@ Run in Maya. Loads the .bundle, samples inputs, compares outputs.
 import os, random
 import maya.cmds as cmds
 
-BUNDLE = os.path.join(os.path.dirname(__file__), 'gameOfLifeTex.bundle')
+BUNDLE = os.path.join(os.path.dirname(__file__), 'gameOfLifeTex.mll')
 NODE_TYPE = 'gameOfLifeTex'
 SOURCE = 'gameOfLifeTex'
 INPUTS = {"width": "int", "height": "int", "density": "float", "frame": "time", "reset": "enum", "bakePath": "string", "uvCoord": "float2"}

@@ -1,10 +1,10 @@
 # MPySkinCluster_Linear_Blend_Skin -- compile report
 
-Generated 2026-08-25 10:51
+Generated 2026-09-09 18:56
 
 | node | status | assist | optimize | detail |
 |---|---|---|---|---|
-| `linearBlendSkin` | compiled | -- | **10.22x** | [report](build/stages/linearBlendSkin/REPORT.md) |
+| `linearBlendSkin` | compiled | -- | **7.47x** | [report](build/stages/linearBlendSkin/REPORT.md) |
 
 ## Layout
 

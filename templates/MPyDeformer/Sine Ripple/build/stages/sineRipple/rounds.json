@@ -1,8 +1,27 @@
 {
   "accepted": true,
-  "baseline_ms": 9.7594,
-  "best_ms": 1.6762,
-  "created": 1787675979.277257,
+  "baseline_ms": 19.4079,
+  "bench": {
+    "fingerprint": "checked (1 plug(s))",
+    "floor_ms": 15.0,
+    "perturbed": [
+      "amplitude (float)",
+      "frequency (float)",
+      "speed (float)",
+      "time (time)",
+      "input[0].inputGeometry <- pSphereShape1Orig.vtx[0]"
+    ],
+    "rung": [
+      400,
+      20000
+    ],
+    "small_rung": [
+      40,
+      512
+    ]
+  },
+  "best_ms": 3.4952,
+  "created": 1788992612.7658403,
   "ledger": [
     {
       "compiled": true,
@@ -10,7 +29,7 @@
       "fix_rounds": 0,
       "hypothesis": "",
       "index": 0,
-      "ms": 9.7594,
+      "ms": 19.4079,
       "note": "",
       "outcome": "baseline",
       "parity": null,
@@ -22,61 +41,58 @@
     },
     {
       "compiled": true,
-      "duration_s": 793.719,
+      "duration_s": 817.471,
       "fix_rounds": 0,
-      "hypothesis": "this node is ELEMENTWISE (O(output), no second collection to scan), so there is no acceleration structure to build -- the levers are whole-array temporaries and per-evaluation work derived from an input that did not change. getVertexNormals re-averages 159602 normals every tick while only amplitude/frequency/speed/time animate, so caching it should dominate. dgdirty(node) re-marks the input geom plug every tick without changing a byte of it, so a setDependentsDirty/preEvaluation flag would invalidate on every evaluation and never hit; the cache has to be earned with the item-2 content fingerprint instead, folded into the centre pass that already holds every coordinate in a register.",
+      "hypothesis": "at 159,602 vertices the node is elementwise, so the cost is ~10 passes of 3.8 MB doubles allocated, written and re-read, not the arithmetic; one fused pass with the same operation order (column-wise sequential mean, acc + x*x fold, sqrt, phase, sin) is bit-identical and removes every temporary. Normals are pulled out of the MFloatVectorArray with one bulk get() instead of 3N operator[] calls.",
       "index": 1,
-      "ms": 2.6308,
+      "ms": 9.6974,
       "note": "",
       "outcome": "accept",
       "parity": "pass",
-      "predicted_speedup": 3.0,
-      "risk": "the fingerprint is the whole correctness argument. Normals are a pure function of (points, topology); every point is hashed BITWISE plus the vertex count and the geometry index, so a fresh upstream shape -- what the GEO parity path rewires per config -- moves points and misses. The residual hole is two meshes with byte-identical positions in identical order but different connectivity, which the harness does not generate. Second risk: the parallel map is a permitted deterministic per-element write, but the centre sum stays SERIAL on purpose -- reassociating a 159602-term reduction drifts ~1 ULP and would pass the tolerance gate while breaking byte parity.",
-      "slug": "cache_normals_skip_geo_pull",
-      "speedup": 3.709670062338452,
-      "theme": "fuse the six whole-array nd:: temporaries into one per-vertex pass, then key a per-node vertex-normal cache on a bitwise fingerprint of the input points so a cache hit never calls outputArrayValue(input) at all"
+      "predicted_speedup": 1.8,
+      "risk": "the mean and the norm must keep nd::'s exact fold order (left-fold from 0, then divide by n; 0 + dx*dx + dy*dy + dz*dz) or the last bit moves; kept verbatim.",
+      "slug": "fuse_ripple_loop",
+      "speedup": 2.001350877554809,
+      "theme": "collapse the ten whole-array nd:: temporaries (mean, sub, norm, phase, sin, mul, newaxis, mul, add, copy) into one per-vertex loop that reads the mesh's raw floats and writes them back in place"
     },
     {
       "compiled": true,
-      "duration_s": 793.308,
+      "duration_s": 899.892,
       "fix_rounds": 0,
-      "hypothesis": "instrumenting deform() showed 890 us of the 2.38 ms compute was mine and 535 us of that was the two MPointArray conversions alone -- allPositions 355 us, setAllPositions 180 us -- so removing both copies should take deform to ~350 us; the transform is bit-exact because the existing path was already float->double->compute->float and getRawPoints just removes the two intermediate double buffers",
+      "hypothesis": "profiling showed getVertexNormals at 4.3 ms plus a 0.7 ms MFloatVectorArray copy while the whole ripple loop was 0.74 ms; a diagnostic round matched Maya's normals to 1.3e-7 (float rounding) with: float32 Newell face normal, normalised, summed UNWEIGHTED per vertex in face order, normalised -- area- and angle-weighted variants were 0.1-0.3 off, so this is the exact algorithm. Topology (CSR faces + vertex->face adjacency) is cached per instance and keyed on numVertices/numPolygons/numFaceVertices/numEdges plus 256 evenly spaced faces' vertex lists re-read each tick via getPolygonVertices; the face pass and the fused vertex-normal+ripple pass run on a persistent per-node condvar pool with a member chunk cursor (MPYNODE_THREADS env cap), the mean stays a serial reduction.",
       "index": 2,
-      "ms": 1.6762,
+      "ms": 3.9138,
       "note": "",
       "outcome": "accept",
       "parity": "pass",
-      "predicted_speedup": 1.3,
-      "risk": "in-place writes through a const_cast'd getRawPoints pointer might not register with Maya (the bench does not check output, so it would look like a huge win and fail parity later); guarded to a mesh whose deform set is the whole vertex list so MItGeometry subsets still take the old path, and verified by hashing output points against a separately-built baseline bundle across 7 configs",
-      "slug": "raw_points_inplace",
-      "speedup": 5.822336236725928,
-      "theme": "deform in place on the output mesh's own packed float array from getRawPoints, instead of round-tripping every vertex through a 5.1 MB MPointArray of doubles via MItGeometry::allPositions/setAllPositions"
+      "predicted_speedup": 2.9,
+      "risk": "the topology cache is keyed on counts + a 256-face connectivity sample rather than a full connects compare: the full compare (getVertices + MIntArray copies + memcmp) MEASURED 2.5 ms/tick and the input geometry is dirty every tick in any rig, so the DG/EM dirty flag (still wired via setDependentsDirty/preEvaluation into _topoSuspect) cannot gate it. A same-count topology edit that misses all 256 sampled faces (e.g. one polyFlipEdge) would leave 2 faces' normals stale until counts change. getRawNormals was tried as a zero-cost source and rejected: it is stale after an upstream vertex move (0.14-0.31 off).",
+      "slug": "own_normals_cached_topo",
+      "speedup": 4.958837957994787,
+      "theme": "replace MFnMesh::getVertexNormals (4.3 of 8.8 ms) with Maya's own normal algorithm computed in-node over a cached topology, threaded and fused into the ripple loop"
+    },
+    {
+      "compiled": true,
+      "duration_s": 1095.184,
+      "fix_rounds": 0,
+      "hypothesis": "deform() was 0.95 ms of a 3.5 ms tick, of which ~0.6 ms was the calling thread running the serial mean and the 256-face topology check while 23 pool threads sat idle; the face pass only needs the cached topology, so a cheap counts-only key lets it start first and the caller joins at finish(). Same arithmetic, same fold order, bit-identical.",
+      "index": 3,
+      "ms": 3.4952,
+      "note": "",
+      "outcome": "accept",
+      "parity": "pass",
+      "predicted_speedup": 1.07,
+      "risk": "session-to-session noise on this Windows box is +-0.5 ms (Maya-side columns swing 1.5x between fresh mayapy sessions), so the tick median is unreliable; the in-node profile shows deform 0.95 -> 0.70 ms in a fast session. Two follow-ups measured and rejected: moving the mean onto a worker as chunk 0 left the caller idle-waiting and the next region slower; chunk 512 vs 2048 was indistinguishable and is kept for the hybrid-core tail. The face job is launched before the sampled check passes, so a stale-topology result is discarded and recomputed after the rebuild; indices stay in bounds because the counts key (nv, nf, nfv, ne) is checked first.",
+      "slug": "overlap_mean_with_faces",
+      "speedup": 5.552729457541772,
+      "theme": "launch the face-normal region on the workers only, and do the caller's serial work (the row-order centre sum and the sampled Maya-API topology check) underneath it instead of before it"
     }
   ],
+  "max_rounds": 6,
   "parity_gate": "authored+pointwise",
-  "reason": "accepted (5.82x)",
-  "remeasured": {
-    "baseline_ms": 15.7655,
-    "date": "2026-09-08",
-    "diverged": null,
-    "final_ms": 5.2911,
-    "fingerprint": "checked (1 plug(s))",
-    "floor_ms": 15.0,
-    "perturbed": [
-      "amplitude (float)",
-      "frequency (float)",
-      "speed (float)",
-      "time (time)",
-      "input[0].inputGeometry <- pSphereShape1Orig.vtx[0]"
-    ],
-    "reason": null,
-    "rung": [
-      300,
-      10000
-    ],
-    "speedup": 2.979626164691652
-  },
-  "rounds": 2,
-  "speedup": 5.822336236725928,
+  "reason": "accepted (5.55x)",
+  "rounds": 3,
+  "speedup": 5.552729457541772,
+  "stop_reason": "round 3 gained 1.12x, below the 1.15x needed to continue",
   "type_name": "sineRipple"
 }

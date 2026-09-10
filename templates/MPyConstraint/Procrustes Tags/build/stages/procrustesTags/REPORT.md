@@ -1,12 +1,12 @@
 # procrustesTags -- compile report
 
-**Source node:** `procrustesTags`  ·  **Base:** `MPxNode`  ·  **Generated:** 2026-09-08 23:23
+**Source node:** `procrustesTags`  ·  **Base:** `MPxNode`  ·  **Generated:** 2026-09-09 14:44
 
 | stage | outcome |
 |---|---|
 | 1 Transpile | deterministic C++, no AI |
 | 2 AI assist | not run (nothing to fill) |
-| 3 AI optimize | **4.98x** over 2 round(s) -- re-measured: unmeasurable under the gate |
+| 3 AI optimize | **4.94x** over 3 round(s) -- 3 run of max 6, stopped: round 3 no-change -- nothing new to compound from |
 
 ## The Python this was generated from
 
@@ -45,40 +45,43 @@ if _ok and cl.shape[0] and rest.shape[0] and deformed.shape[0]:
 
 Parity gate: `authored+pointwise`. Every accepted round was re-checked against the interpreted Python before it was allowed to win. Where a node's generic pointwise parity SKIPS -- a deformer writes through the native `outputGeometry`, which the scalar harness cannot read -- the authored `@maya_test` is the ONLY gate, so treat those rows as behavioural checks rather than numerical ones.
 
-Bench scene: not recorded (ledger predates the scene record; no noise-floor gate, no per-tick perturbation check and no output fingerprint applied to these rounds).
+Bench scene: geo density 400 / array length 20000; noise floor 15 ms; moved per tick: `mesh <- pSphereShape1.vtx[0]`; outputs checked (1 plug(s)); accepts re-timed against the incumbent on geo 40 / array 512 and rejected if slower there; baseline under the noise floor at the largest scene, so every accept had to clear 1.15x on two independent timings. baseline 10.035 ms is below the 15 ms noise floor even at the largest bench scene (geo=400 array=20000); measured anyway -- every accept must clear 1.15x on two independent timings.
 
-Baseline **2.874 ms** -> best **0.577 ms** (**4.98x**).
+Baseline **10.035 ms** -> best **2.031 ms** (**4.94x**).
 
-**Re-measured 2026-09-08** under the gated harness (noise floor, animated-input perturbation, output fingerprint), geo density 400 / array length 20000: **unmeasurable** -- baseline 13.741 ms is below the 15 ms noise floor even at the largest bench scene (geo=400 array=20000); nothing this small can be optimized against measurably. The speedup above was taken before the gate existed and cannot be reproduced under it. Moved per tick: `mesh <- pSphereShape1.vtx[0]`.
+Rounds: **3** run of at most 6; the loop stopped because round 3 no-change -- nothing new to compound from.
 
 | # | change | theme | predicted | measured | time | outcome |
 |---|---|---|---|---|---|---|
-| 00 | `--` | -- | -- | 2.874 ms | -- | -- |
-| 01 | `gather_not_marshal` | this node is a GATHER, not a grid: stop materialising two 159k-vertex point tables and 20000 bind matrices when the cluster index block only ever names a handful of rows | 3.00x | 4.98x | 10.7 min | ACCEPTED |
-| 02 | `profile_upstream_bound_no_win` | instrumented the whole compute and found 96% of it is Maya evaluating two upstream worldMesh[0] plugs inside data.inputValue(); nothing inside this file can reach that cost, and both attribute-level knobs that could have (setCached/setStorable) measured as noise, so the round ships the baseline unchanged | 2.00x | -- | 10.9 min | rejected: no change to the source |
+| 00 | `--` | -- | -- | 10.035 ms | -- | -- |
+| 01 | `gather_members_not_meshes` | Read only what the math touches: gather the cluster-member points straight from the two meshes' float stores instead of widening both 160k-vertex meshes to double, and pull only the first min(clusterRows, bindRows) bind matrices by logical index instead of marshalling all 20000. | 1.70x | 4.27x | 15.8 min | ACCEPTED |
+| 02 | `fuse_kabsch_kernel` | replace the generic nd:: array chain (18 whole-array temporaries, reshape/slice/tile/einsum/svd/det/matmul) with one fused per-cluster Kabsch kernel that calls svd3_core directly and reproduces every accumulation in the same left-fold order | 1.02x | 4.94x | 21.1 min | ACCEPTED |
+| 03 | `profile_upstream_bound_no_change` | timed every segment of compute() at the bench scene and found 94% of the tick is Maya evaluating the two non-cached upstream worldMesh[0] plugs inside data.inputValue(), 6% is the one unavoidable MFnMesh attach per mesh, and everything this file can reach is under 15 us combined -- so the round ships the baseline unchanged | 1.00x | -- | 15.1 min | rejected: no change to the source |
 
 ### Predicted vs measured
 
 The rounds where the guess and the stopwatch disagreed. These are the transferable part -- a prediction that missed says more about the machine than one that landed.
 
-* `gather_not_marshal` -- predicted 3.00x, measured **4.98x**. compute() is pure input marshalling. np.take(vstack([pts, zeros(1,3)]), clusters, axis=0) reads exactly the rows in `clusters`, yet the lowered code built a full float->double table per mesh (push_back + a second copy in from_data), then copied each table AGAIN in vstack just to append one zero row -- four full passes over 3.8 MB apiece to fetch N*L rows. Likewise bindMatrices is clamped to bind[:min(cl.shape[0], bind.shape[0])], so with one clusterTags element exactly one of 20000 matrices survives, but all 20000 were read via inputValue()/asMatrix(). Fuse vstack+take into a direct gather off MFnMesh::getRawPoints (the (double)float cast is exact, so every gathered value is bit-identical), read only the bind prefix the clamp can reach, and get the array's logical length from the last physical element instead of walking all 20000.
-* `profile_upstream_bound_no_win` -- predicted 2.00x, **rejected: no change to the source**. candidate is identical to the current best
+* `gather_members_not_meshes` -- predicted 1.70x, measured **4.27x**. compute() spent O(V + B) on marshalling for an O(n*w) problem: two (V,3) float->double copies (V=159602) fed a vstack+take that reads n*w rows, and 20000 MMatrix handle reads fed a slice that keeps n rows. The harness seeds a string multi with ONE element, so n=1 here and everything except the two Maya mesh pulls is removable. The gather reproduces take(vstack(pts, zeros(1,3)), cl, 0) exactly: negative index wraps by V+1, index V reads the appended zero row, float->double widening is unchanged.
+* `fuse_kabsch_kernel` -- predicted 1.02x, measured **4.94x**. profiling compute() with steady_clock showed ~1800 of ~2000 us are the two data.inputValue() pulls of upstream worldMesh[0] (a non-cached world-space attribute Maya re-copies on every pull -- getAttr -ca reports False, and a bare dgeval of the plug alone costs 0.45 ms), plus ~85 us of one-time lazy mesh finalisation that fires on the FIRST function-set attach to the freshly tweaked mesh (MItMeshVertex pays it instead of MFnMesh, so it is not avoidable while the vertex count is needed). Of the ~150 us the node itself owns, the nd:: chain was ~40 us of pure allocation and odometer overhead for a single 3x3 problem; a fused kernel with fixed-size stack arrays takes ~2.5 us and is bit-identical (same svd3_core, same left-fold sums over l ascending, same einsum operand order, same 3x3 det formula, same matmul l order).
+* `profile_upstream_bound_no_change` -- predicted 1.00x, **rejected: no change to the source**. candidate is identical to the current best
 
 ### Rejected rounds
 
-* `profile_upstream_bound_no_win` -- rejected: no change to the source. candidate is identical to the current best
+* `profile_upstream_bound_no_change` -- rejected: no change to the source. candidate is identical to the current best
 
 ## Verification
 
 * parity: **pass**  (maxerr 0.0, tol 0.0001)
 * verified with 1 geo/string input(s) left at default (unwired, could not be synthesized): clusterTags | authored @maya_test: 1/1 passed
-* speed: compiled 0.262 ms vs interpreted 27.058 ms (best of 3, geo 40 / array 512)
+* speed: compiled 0.257 ms vs interpreted 25.595 ms (best of 3, geo 40 / array 512)
 
 ## Files
 
 ```
 build/stages/procrustesTags/1_transpiled.cpp     deterministic transpile (no AI)
 build/stages/procrustesTags/3_optimized/00_baseline.cpp
-build/stages/procrustesTags/3_optimized/01_gather_not_marshal.cpp
+build/stages/procrustesTags/3_optimized/01_gather_members_not_meshes.cpp
+build/stages/procrustesTags/3_optimized/02_fuse_kabsch_kernel.cpp
 build/source/procrustesTags.cpp      SHIPPED
 ```

@@ -1,10 +1,10 @@
 # MPyNurbsCurve_NURBS_Helix -- compile report
 
-Generated 2026-08-25 10:44
+Generated 2026-09-09 17:32
 
 | node | status | assist | optimize | detail |
 |---|---|---|---|---|
-| `helixCurve` | compiled | -- | **9.50x** | [report](build/stages/helixCurve/REPORT.md) |
+| `helixCurve` | compiled | -- | **5.41x** | [report](build/stages/helixCurve/REPORT.md) |
 
 ## Layout
 

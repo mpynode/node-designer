@@ -1,12 +1,12 @@
 # nurbsWave -- compile report
 
-**Source node:** `nurbsWave`  ·  **Base:** `MPxDeformerNode`  ·  **Generated:** 2026-09-08 23:23
+**Source node:** `nurbsWave`  ·  **Base:** `MPxDeformerNode`  ·  **Generated:** 2026-09-09 15:20
 
 | stage | outcome |
 |---|---|
 | 1 Transpile | deterministic C++, no AI |
 | 2 AI assist | not run (nothing to fill) |
-| 3 AI optimize | **6.03x** over 2 round(s) -- re-measured: unmeasurable under the gate |
+| 3 AI optimize | **9.98x** over 4 round(s) -- 4 run of max 6, stopped: round 4 not-faster -- nothing new to compound from |
 
 ## The Python this was generated from
 
@@ -28,25 +28,33 @@ h.setCVPositions(out)
 
 ## Optimization
 
-Parity gate: `authored+pointwise`. Every accepted round was re-checked against the interpreted Python before it was allowed to win. Where a node's generic pointwise parity SKIPS -- a deformer writes through the native `outputGeometry`, which the scalar harness cannot read -- the authored `@maya_test` is the ONLY gate, so treat those rows as behavioural checks rather than numerical ones.
+**Parity gate: authored `@maya_test` only.** The generic pointwise compare did not run for this node, so every accepted round below was judged by the authored test's own scene -- a behavioural check, not a numerical one. The bench-scene fingerprint (when recorded below) is the only value-level check these rounds had.
 
-Bench scene: not recorded (ledger predates the scene record; no noise-floor gate, no per-tick perturbation check and no output fingerprint applied to these rounds).
+Bench scene: geo density 400 / array length 20000; noise floor 15 ms; moved per tick: `amplitude (float)`, `freq (float)`, `time (time)`, `input[0].inputGeometry <- pSphereShape1Orig.vtx[0]`; outputs checked (1 plug(s)); accepts re-timed against the incumbent on geo 40 / array 512 and rejected if slower there; baseline under the noise floor at the largest scene, so every accept had to clear 1.15x on two independent timings. baseline 8.312 ms is below the 15 ms noise floor even at the largest bench scene (geo=400 array=20000); measured anyway -- every accept must clear 1.15x on two independent timings.
 
-Baseline **4.219 ms** -> best **0.700 ms** (**6.03x**).
+Baseline **8.312 ms** -> best **0.833 ms** (**9.98x**).
 
-**Re-measured 2026-09-08** under the gated harness (noise floor, animated-input perturbation, output fingerprint), geo density 400 / array length 20000: **unmeasurable** -- baseline 13.724 ms is below the 15 ms noise floor even at the largest bench scene (geo=400 array=20000); nothing this small can be optimized against measurably. The speedup above was taken before the gate existed and cannot be reproduced under it. Moved per tick: `amplitude (float)`, `freq (float)`, `time (time)`, `input[0].inputGeometry <- pSphereShape1Orig.vtx[0]`.
+Rounds: **4** run of at most 6; the loop stopped because round 4 not-faster -- nothing new to compound from.
 
 | # | change | theme | predicted | measured | time | outcome |
 |---|---|---|---|---|---|---|
-| 00 | `--` | -- | -- | 4.219 ms | -- | -- |
-| 01 | `raw_points_inplace` | Fuse the nd expression tree into one loop, then stop round-tripping 160k verts through an MPointArray at all -- deform the output mesh's own float point buffer in place, with a persistent per-node pool mapping over disjoint vertex ranges. | 3.00x | 2.52x | 10.9 min | ACCEPTED |
-| 02 | `skip_deformer_mesh_copy` | override compute() so the wave is written straight into the datablock's existing output mesh buffer, instead of letting MPxGeometryFilter deep-copy the 160k-vert input mesh into the output and then hand us an MItGeometry over it | 2.00x | 6.03x | 11.0 min | ACCEPTED |
+| 00 | `--` | -- | -- | 8.312 ms | -- | -- |
+| 01 | `fuse_raw_sine_loop` | replace the whole-array nd:: temporaries (harvest to double, copy, slice, mul, add, sin, mul, add, assign, write-back) with one fused pass over the mesh's own float store that touches only x, then run that pass on a persistent 2-lane per-node pool | 3.00x | 2.53x | 25.2 min | ACCEPTED |
+| 02 | `direct_compute_path` | answer outputGeometry[i] in compute() itself -- copy the input handle, deform the copy's raw float store, setClean -- so Maya's internal deformer pass (its MItGeometry build and bookkeeping) never runs for a full-membership mesh | 1.40x | 3.09x | 21.8 min | ACCEPTED |
+| 03 | `single_input_pull` | pull input[i].inputGeometry once through a child-plug inputValue instead of inputArrayValue + element inputValue, which evaluated the shape's uncached worldMesh twice; then re-tune the kernel pool from 2 to 4 lanes now that the fixed overhead is halved | 2.60x | 9.98x | 23.3 min | ACCEPTED |
+| 04 | `inline_fdlibm_sin` | replace the libm sin call in the per-vertex kernel with an inlined fdlibm-style Cody-Waite reduction + polynomial that rounds to the same float, so the loop body has no call and no data-dependent branch | 1.04x | 0.987 ms | 18.4 min | rejected: not faster |
 
 ### Predicted vs measured
 
 The rounds where the guess and the stopwatch disagreed. These are the transferable part -- a prediction that missed says more about the machine than one that landed.
 
-* `skip_deformer_mesh_copy` -- predicted 2.00x, measured **6.03x**. the arithmetic was already a rounding error in the total: a no-op deform() still measured 1.418 ms of a 1.569 ms tick, and aliasing the input mesh to the output with no copy at all measured 0.521 ms, so ~0.90 ms per evaluation is Maya's input->output mesh copy plus iterator construction and NOT the sine; the output data object the datablock already holds has the identical topology every tick, so reusing that shell and streaming src->dst with the wave fused into the same pass removes a whole level of work rather than making the existing work cheaper
+* `direct_compute_path` -- predicted 1.40x, measured **3.09x**. instrumenting the tick showed deform() itself is only ~0.4 ms of ~2.6 ms: the kernel cannot move the number, but Maya calls compute() BEFORE its internal copy+iterator+deform() pass and that pass is ~1 ms of overhead at 160k verts (an MItGeometry over the handle alone measured 1-2.3 ms); returning kSuccess from compute() after producing the output ourselves removes that level of work while hOut.copy() keeps the same data flow and the same float store the kernel already wrote
+* `single_input_pull` -- predicted 2.60x, measured **9.98x**. in-compute timers put ~1.0 ms of a 1.35 ms tick in the two input-handle calls; a mayapy probe showed MPxGeometryFilter::inputGeom and the shape's worldMesh are both isCached=false (worldMesh: ~0.55 ms per pull at 160k verts, outMesh: 1 us), so each handle call re-evaluated the world mesh and block.inputValue(childPlug) asks for it exactly once; with the sin kernel then the largest remaining term (~0.3 ms at 2 lanes) more lanes should pay
+* `inline_fdlibm_sin` -- predicted 1.04x, **rejected: not faster**. phase timers put the tick at pull=0.5-0.6 ms (Maya re-evaluating the uncached worldMesh[0], 65-70%), copy=0.003 (COW), membership=0.04, kernel=0.11-0.23 on 4 lanes; the kernel is the only part this file owns that is big enough to move, and a standalone check showed the inlined sin 20% faster than MSVC std::sin (0.46 vs 0.59 ms serial at 160k) with 0 float mismatches over 4 x 160k arguments
+
+### Rejected rounds
+
+* `inline_fdlibm_sin` -- rejected: not faster. replace the libm sin call in the per-vertex kernel with an inlined fdlibm-style Cody-Waite reduction + polynomial that rounds to the same float, so the loop body has no call and no data-dependent branch
 
 ## Verification
 
@@ -58,7 +66,9 @@ The rounds where the guess and the stopwatch disagreed. These are the transferab
 ```
 build/stages/nurbsWave/1_transpiled.cpp     deterministic transpile (no AI)
 build/stages/nurbsWave/3_optimized/00_baseline.cpp
-build/stages/nurbsWave/3_optimized/01_raw_points_inplace.cpp
-build/stages/nurbsWave/3_optimized/02_skip_deformer_mesh_copy.cpp
+build/stages/nurbsWave/3_optimized/01_fuse_raw_sine_loop.cpp
+build/stages/nurbsWave/3_optimized/02_direct_compute_path.cpp
+build/stages/nurbsWave/3_optimized/03_single_input_pull.cpp
+build/stages/nurbsWave/3_optimized/04_inline_fdlibm_sin.cpp
 build/source/nurbsWave.cpp      SHIPPED
 ```

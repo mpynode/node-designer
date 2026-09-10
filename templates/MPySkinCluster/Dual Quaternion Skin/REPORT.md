@@ -1,10 +1,10 @@
 # MPySkinCluster_Dual_Quaternion_Skin -- compile report
 
-Generated 2026-08-25 10:48
+Generated 2026-09-09 18:24
 
 | node | status | assist | optimize | detail |
 |---|---|---|---|---|
-| `dualQuaternionSkin` | compiled | -- | **2.75x** | [report](build/stages/dualQuaternionSkin/REPORT.md) |
+| `dualQuaternionSkin` | compiled | -- | **3.11x** | [report](build/stages/dualQuaternionSkin/REPORT.md) |
 
 ## Layout
 

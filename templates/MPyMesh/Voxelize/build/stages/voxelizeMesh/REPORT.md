@@ -1,12 +1,12 @@
 # voxelizeMesh -- compile report
 
-**Source node:** `voxelizeMesh`  ·  **Base:** `MPxNode`  ·  **Generated:** 2026-09-08 23:28
+**Source node:** `voxelizeMesh`  ·  **Base:** `MPxNode`  ·  **Generated:** 2026-09-09 15:56
 
 | stage | outcome |
 |---|---|
 | 1 Transpile | emitted, with region(s) the transpiler could not lower |
 | 2 AI assist | ran -- 1 region(s) still marked incomplete |
-| 3 AI optimize | ran, nothing accepted (baseline could not be benchmarked) |
+| 3 AI optimize | ran, nothing accepted (baseline could not be benchmarked) -- 0 run of max 6, stopped: baseline could not be benchmarked |
 
 ## The Python this was generated from
 
@@ -97,15 +97,17 @@ else:
 
 ## Unfinished work in the generated C++
 
-* **not translated:** _vox_resolve_path's RELATIVE-path resolution (walking the
+* **not translated:** _vox_resolve_path resolves a RELATIVE textureFile by
 
 ## Optimization
 
-Parity gate: `authored+pointwise`. Every accepted round was re-checked against the interpreted Python before it was allowed to win. Where a node's generic pointwise parity SKIPS -- a deformer writes through the native `outputGeometry`, which the scalar harness cannot read -- the authored `@maya_test` is the ONLY gate, so treat those rows as behavioural checks rather than numerical ones.
+Parity gate: not exercised -- no candidate reached the parity check (the baseline was unmeasurable or no round compiled).
 
-Bench scene: not recorded (ledger predates the scene record; no noise-floor gate, no per-tick perturbation check and no output fingerprint applied to these rounds).
+Bench scene: geo density 40 / array length 512; noise floor 15 ms.
 
 Baseline **--** -> best **--** (**1.00x**).
+
+Rounds: **0** run of at most 6; the loop stopped because baseline could not be benchmarked.
 
 | # | change | theme | predicted | measured | time | outcome |
 |---|---|---|---|---|---|---|
@@ -113,9 +115,8 @@ Baseline **--** -> best **--** (**1.00x**).
 
 ## Verification
 
-* parity: **pass**  (maxerr 0.0, tol 0.0001)
-* reads an image file (MImage::readFromFile): the harness drives its path input(s) EMPTY, so geometry parity above is real but the image/texture-colour path is NOT exercised | authored @maya_test: 1/1 passed
-* speed: compiled 0.360 ms vs interpreted 2290.203 ms (best of 3, geo 40 / array 512)
+* parity: **pass**
+* verify could not run: 'NoneType' object has no attribute 'add_input_attr' | authored @maya_test: 1/1 passed
 
 ## Files
 

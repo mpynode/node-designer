@@ -1,10 +1,10 @@
 # MPyFile_File_Scanline -- compile report
 
-Generated 2026-08-28 17:19
+Generated 2026-09-09 15:23
 
 | node | status | assist | optimize | detail |
 |---|---|---|---|---|
-| `scanlineTex` | compiled | -- | **1.95x** | [report](build/stages/scanlineTex/REPORT.md) |
+| `scanlineTex` | compiled | -- | **2.91x** | [report](build/stages/scanlineTex/REPORT.md) |
 
 ## Layout
 

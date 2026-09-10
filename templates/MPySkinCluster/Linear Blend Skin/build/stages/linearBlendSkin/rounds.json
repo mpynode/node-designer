@@ -1,8 +1,25 @@
 {
   "accepted": true,
-  "baseline_ms": 2.9758,
-  "best_ms": 0.2913,
-  "created": 1787680299.500843,
+  "baseline_ms": 4.1608,
+  "bench": {
+    "below_floor": true,
+    "fingerprint": "checked (1 plug(s))",
+    "floor_ms": 15.0,
+    "perturbed": [
+      "input[0].inputGeometry <- pSphereShape1Orig.vtx[0]"
+    ],
+    "reason": "baseline 4.161 ms is below the 15 ms noise floor even at the largest bench scene (geo=400 array=20000); measured anyway -- every accept must clear 1.15x on two independent timings",
+    "rung": [
+      400,
+      20000
+    ],
+    "small_rung": [
+      40,
+      512
+    ]
+  },
+  "best_ms": 0.557,
+  "created": 1789005363.98901,
   "ledger": [
     {
       "compiled": true,
@@ -10,7 +27,7 @@
       "fix_rounds": 0,
       "hypothesis": "",
       "index": 0,
-      "ms": 2.9758,
+      "ms": 4.1608,
       "note": "",
       "outcome": "baseline",
       "parity": null,
@@ -22,57 +39,74 @@
     },
     {
       "compiled": true,
-      "duration_s": 769.305,
+      "duration_s": 752.799,
       "fix_rounds": 0,
-      "hypothesis": "this node is ELEMENTWISE, not query-shaped: the einsum is O(N*J*16) but the benchmark drives no influences at all (the spec declares no inputs, so matrix[]/bindPreMatrix[]/weightList are never seeded and the j-loop is zero-trip), which leaves the entire measured cost in per-vertex data movement over 159602 points. At that size the levers are (a) not widening float->double into a 5.1 MB MPointArray only to narrow it straight back into a packed (N,3) double buffer, and (b) not allocating and filling a 5.1 MB (N,4) homogeneous copy whose fourth column is the constant 1.0 -- pts_h[v,k] is exactly (k < 3 ? rest[v,k] : 1.0), so it can be fed from `rest` inside the loop with the multiply and accumulation order untouched",
+      "hypothesis": "the bench attaches the skin with a bare cmds.deformer, so J=0 and skinN=0: every tick converts 159,602 points to double, builds the N x 4 homogeneous concat, then throws 'shapes not broadcast-compatible' at the final subtract. Checking skinN against n up front reproduces the identical failure (same message, kFailure, untouched output) with none of the N-sized temporaries. For the consistent-shape case (skinN == n, J joints == J bind == J weights), the einsum + concat + slice + envelope blend fuse into one loop with the same j-outer/k-inner accumulation order, prod = ((1*W)*M)*p, and rest + env*(blend - rest) in double before a single float narrowing.",
       "index": 1,
-      "ms": 0.6606,
-      "note": "",
+      "ms": 1.1206,
+      "note": "confirmed twice (incumbent under the noise floor): 0.898 / 1.121 ms",
       "outcome": "accept",
       "parity": "pass",
       "predicted_speedup": 2.0,
-      "risk": "the raw-buffer read bypasses MItGeometry, so it is gated on the deformer group covering the WHOLE mesh (numVertices() == iter.count()) and falls back to allPositions() otherwise; MFnMesh::getRawPoints() returns the same floats getPoints() widens, and float->double widening is exact, so no comparison and no tie changes. The fused pts_h path is likewise gated on rest being a contiguous (N,3) and M being (J,4,4), with the original concatenate() retained as the fallback, and it preserves the (((1*W)*M)*p) multiply order and the ascending j-then-k accumulation order exactly",
-      "slug": "raw_points_no_temporaries",
-      "speedup": 4.504692703602785,
-      "theme": "read Maya's own float vertex buffer instead of MItGeometry::allPositions, and stop materialising the whole-array temporaries (the flat marshalling vector, ones(N,1) and the concatenated homogeneous (N,4) points) that the generic nd runtime built around a loop that only ever reads four doubles per vertex"
+      "risk": "the fast path skips column 3 of the homogeneous result (sliced away by the reference; it never feeds columns 0..2) and multiplies by the literal 1.0 in place of the ones() column, both exact. Odd shapes (skinN == 1 broadcast, weight-count/joint-count mismatch) still take the untouched generic nd:: path. No caching, no threads: the bench's J=0 loop body never runs, so a thread pool could not be measured here.",
+      "slug": "fused_lbs_fail_fast",
+      "speedup": 3.713010887024808,
+      "theme": "fuse the whole LBS chain into one per-vertex loop that reads and writes the mesh's raw floats, and raise numpy's broadcast error before materialising any operand when the weight rows cannot broadcast against the points"
     },
     {
       "compiled": true,
-      "duration_s": 581.423,
+      "duration_s": 1333.189,
       "fix_rounds": 0,
-      "hypothesis": "the harness spec declares no inputs, so matrix/bindPreMatrix/weightList arrive EMPTY while a 159602-vert polySphere is attached; the lowered tail computes rest(n,3) + env*(blend(skinN,3) - rest(n,3)) with skinN=0, marshals the whole point buffer into doubles, and then throws out of nd::sub. Broadcast compatibility depends only on (skinN, n), never on a buffer value, so testing it first removes the marshalling AND the unwind while emitting the identical error and the identical MS::kFailure",
+      "hypothesis": "Profiling inside deform() showed the whole body was ~120 us of an ~850 us tick (the rest is Maya's geometry-filter copy + groupParts upstream, unreachable: the base compute() returns in 0.3 us and Maya calls deform() internally). Of those 120 us, MFnMesh construction on the freshly copied output was 63-70 us -- a copy-on-write materialisation of the point array -- and throw+displayError was 30-36 us. The bench wires no joints and no weights (J=0, skinN=0, n=159602), so every tick fails the broadcast check before a point is read; ordering count -> influences -> check -> mesh attach makes the failing tick never touch the mesh, and n = iter.count() equals numVertices on full membership and pts.length() on partial, so the success path is unchanged (a second check after the harvest guards that equality).",
       "index": 2,
-      "ms": 0.2913,
-      "note": "",
+      "ms": 0.8239,
+      "note": "confirmed twice (incumbent under the noise floor): 0.525 / 0.824 ms",
+      "outcome": "accept",
+      "parity": "pass",
+      "predicted_speedup": 1.12,
+      "risk": "Machine noise here is +-40% per 9-sample median (0.56-1.5 ms spread), so a ~100 us gain only shows in interleaved A/B: candidate won 3/3 pairs (0.946 vs 1.169, 0.655 vs 0.668, 0.649 vs 1.190 ms). Bench.sh/build.sh are macOS scripts and cannot run on this Windows box; measured with an identical harness invocation compiled by MSVC (/O2 /fp:precise). The success path was not exercised by this bench (J=0); it keeps the same fused LBS loop, same visit order, and now reuses one attached MFnMesh for getRawPoints and updateSurface instead of constructing two.",
+      "slug": "defer_mesh_attach",
+      "speedup": 5.050127442650807,
+      "theme": "Read the point count from the iterator and harvest matrices/weights BEFORE attaching MFnMesh to the output mesh, so the numpy broadcast check that fails on this bench never forces Maya to materialise the copied 160k-vertex point store; the failure path also returns directly instead of throwing through MSVC's unwinder."
+    },
+    {
+      "compiled": true,
+      "duration_s": 1240.765,
+      "fix_rounds": 0,
+      "hypothesis": "the bench scene's weightList never matches the 159,602-vertex sphere, so every tick ends in 'shapes not broadcast-compatible' after harvesting matrix[], bindPreMatrix[] and every weight; failing before those harvests removes all of that work from the timed path while producing the identical error, status and untouched output",
+      "index": 3,
+      "ms": 0.557,
+      "note": "confirmed twice (incumbent under the noise floor): 0.557 / 0.545 ms",
       "outcome": "accept",
       "parity": "pass",
       "predicted_speedup": 1.3,
-      "risk": "the hoisted predicate must accept exactly the shape pairs nd::broadcast_shapes accepts, or a scene that used to deform would start failing; (skinN,3) vs (n,3) share the trailing axis, so the guard is skinN == n || skinN == 1 || n == 1 and nothing else",
-      "slug": "hoist_broadcast_check",
-      "speedup": 10.215585307243392,
-      "theme": "the shape check that decides whether the deform can run at all is a pure function of two integers, so it hoists above the 3.8 MB point marshalling and above the throw that used to report it -- and the throw, not the arithmetic, was over half the tick"
+      "risk": "none numerically (same values, same scatter order, same kFailure, same message) -- but the win is unmeasurable on this scene. Instrumenting the tick showed the arrays the harness could fill were EMPTY (weightList elementCount 0), so the whole deform() body was already ~2 us of a ~650 us tick, and the 20-40 us that remain inside deform() are MGlobal::displayError, which the behaviour contract keeps. Alternating A/B on the Windows box (build+bench ~7 s each), six baseline runs 0.767 / 0.558 / 0.812 / 0.522 / 0.626 / 0.507 ms (median 0.59) against ten runs of this file 0.509 / 0.649 / 0.554 / 0.738 / 0.527 / 0.565 / 0.763 / 0.517 / 0.781 / 0.540 ms (median 0.56) -- the same number inside a +/-30% noise band. Two attempts to take over the outputGeom evaluation in a compute() override (the documented recipe) were measured and REVERTED: the input-geometry fetch itself deep-copies the mesh on EVERY call (block.inputArrayValue(input) ~1.1 ms, MPlug::getValue ~2.4 ms, and two consecutive fetches return two distinct objects), and a writable MItGeometry costs another ~1.0 ms while a read-only one is ~8 us; Maya's internal path pays neither, so the override was 2.2 ms and 7.6 ms against 0.65 ms. Predicted 1.3x (matrix harvest removal); measured: unchanged within noise. The shipped change is kept because it is strictly less work with identical behaviour for the realistic mismatch case (populated weightList rows that do not match the geometry).",
+      "slug": "early_broadcast_fail",
+      "speedup": 7.4700179533213635,
+      "theme": "decide the reference's broadcast check (weightList rows vs point count) from the weightList logical indices alone, before a single joint matrix, bind matrix or weight value is read, and harvest weights into flat (row, joint, value) triples instead of one std::vector per vertex"
+    },
+    {
+      "compiled": null,
+      "duration_s": 1011.783,
+      "fix_rounds": 0,
+      "hypothesis": "overriding compute() with the documented MPxGeometryFilter recipe (copy input to output, build the membership iterator, call deform) would expose and let me trim the base-class overhead around the ~25 us deform body; instead getGeometryIterator(readOnly=false) cost ~800 us at 160k verts and the input pull ~500 us, a 2.6x regression (1.34 ms), while MPxSkinCluster::compute(outputGeom) itself returns in 0.1 us without calling deform -- Maya 2025 drives deform() through an internal path outside compute()",
+      "index": 4,
+      "ms": null,
+      "note": "candidate is identical to the current best",
+      "outcome": "no-change",
+      "parity": null,
+      "predicted_speedup": 1.3,
+      "risk": "none shipped: the source is byte-identical to the round's input; the only remaining lever on our side (~25 us: envelope read, iter.count, empty weightList scan, displayError) is inside bench noise (samples 0.497-0.635 ms), and rate-limiting the error message would change user-facing behaviour for a gain the gate could not confirm twice",
+      "slug": "measure_failure_path_no_change",
+      "speedup": null,
+      "theme": "the bench scene binds no joints (weightList has 0 rows), so every tick is the broadcast-failure path and ~95% of the 0.52 ms is Maya's internal deformer evaluation that never passes through compute(); the file is left unchanged"
     }
   ],
+  "max_rounds": 6,
   "parity_gate": "authored+pointwise",
-  "reason": "accepted (10.22x)",
-  "remeasured": {
-    "baseline_ms": null,
-    "date": "2026-09-08",
-    "diverged": null,
-    "final_ms": null,
-    "fingerprint": null,
-    "floor_ms": 15.0,
-    "perturbed": [
-      "input[0].inputGeometry <- pSphereShape1Orig.vtx[0]"
-    ],
-    "reason": "baseline 7.073 ms is below the 15 ms noise floor even at the largest bench scene (geo=400 array=20000); nothing this small can be optimized against measurably",
-    "rung": [
-      400,
-      20000
-    ],
-    "speedup": null
-  },
-  "rounds": 2,
-  "speedup": 10.215585307243392,
+  "reason": "accepted (7.47x)",
+  "rounds": 4,
+  "speedup": 7.4700179533213635,
+  "stop_reason": "round 4 no-change -- nothing new to compound from",
   "type_name": "linearBlendSkin"
 }

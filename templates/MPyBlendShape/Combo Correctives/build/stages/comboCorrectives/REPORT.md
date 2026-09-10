@@ -1,12 +1,12 @@
 # comboCorrectives -- compile report
 
-**Source node:** `comboCorrectives`  ·  **Base:** `MPxDeformerNode`  ·  **Generated:** 2026-09-08 23:23
+**Source node:** `comboCorrectives`  ·  **Base:** `MPxDeformerNode`  ·  **Generated:** 2026-09-09 14:36
 
 | stage | outcome |
 |---|---|
 | 1 Transpile | deterministic C++, no AI |
 | 2 AI assist | not run (nothing to fill) |
-| 3 AI optimize | **258.02x** over 2 round(s) -- re-measured: **183.26x** (outputs match) |
+| 3 AI optimize | **414.56x** over 2 round(s) -- 2 run of max 6, stopped: round 2 not-faster -- nothing new to compound from |
 
 ## The Python this was generated from
 
@@ -50,7 +50,9 @@
 # offsets straight off its CONNECTED mesh, so sculpting one reaches the deform
 # as you drag. A target with no connection falls back to its baked deltas, which
 # is what makes deleting a target leave the shape driving. Switch `liveTargets`
-# off to pin the deform to the baked tables. Compiled nodes are baked-only.
+# off to pin the deform to the baked tables. Compiled nodes follow their targets
+# too -- they read every CONNECTED one, where interpreted skips the slots that
+# resolve to zero weight, so the result matches and only the cost differs.
 
 mesh = self.outputGeometry[0]
 base = mesh.getPoints()
@@ -66,36 +68,40 @@ mesh.setPoints(base + self.envelope * self.morphs.deltas(base, w))
 
 Parity gate: `authored+pointwise`. Every accepted round was re-checked against the interpreted Python before it was allowed to win. Where a node's generic pointwise parity SKIPS -- a deformer writes through the native `outputGeometry`, which the scalar harness cannot read -- the authored `@maya_test` is the ONLY gate, so treat those rows as behavioural checks rather than numerical ones.
 
-Bench scene: not recorded (ledger predates the scene record; no noise-floor gate, no per-tick perturbation check and no output fingerprint applied to these rounds).
+Bench scene: geo density 90 / array length 2000; noise floor 15 ms; moved per tick: `applyCombos (bool)`, `weight[0] (float)`, `input[0].inputGeometry <- pSphereShape1Orig.vtx[0]`; outputs checked (1 plug(s)); accepts re-timed against the incumbent on geo 40 / array 512 and rejected if slower there.
 
-Baseline **73.665 ms** -> best **0.285 ms** (**258.02x**).
+Baseline **144.060 ms** -> best **0.347 ms** (**414.56x**).
 
-**Re-measured 2026-09-08** under the gated harness (noise floor, animated-input perturbation, output fingerprint), geo density 90 / array length 2000: baseline 139.993 ms -> shipped 0.764 ms (**183.26x**); outputs match. The speedup above was taken before the gate existed; this is the number to quote. Moved per tick: `applyCombos (bool)`, `weight[0] (float)`, `input[0].inputGeometry <- pSphereShape1Orig.vtx[0]`.
+Rounds: **2** run of at most 6; the loop stopped because round 2 not-faster -- nothing new to compound from.
 
 | # | change | theme | predicted | measured | time | outcome |
 |---|---|---|---|---|---|---|
-| 00 | `--` | -- | -- | 73.665 ms | -- | -- |
-| 01 | `raw_scatter_deltas` | the delta accumulator was heap-allocating three nd::Array temporaries per vertex-component; a raw-pointer scatter plus a per-main sorted knot index for the in-between rescan took the node from 73.7 ms to 0.35 ms | 15.00x | 227.50x | 14.3 min | ACCEPTED |
-| 02 | `compact_slot_scatter_cache` | cache the targetOffset/targetComponents-derived scatter topology per instance, accumulate into a compact 576-slot buffer instead of a 24k-double per-vertex array, and touch only the vertices a delta row actually names | 1.35x | 258.02x | 12.2 min | ACCEPTED |
+| 00 | `--` | -- | -- | 144.060 ms | -- | -- |
+| 01 | `raw_pointer_scatter` | the delta scatter built three nd::Array temporaries per component per row (slice + add + item), so lower the whole deform to raw pointers with the same expression and visit order; then cache the two table-derived structures (per-vertex gather index, per-target combo products) across ticks | 10.00x | 414.56x | 19.3 min | ACCEPTED |
+| 02 | `thread_fused_gather` | fuse the per-vertex baked-delta gather into the output write and run that one map on a persistent per-node pool; the gather table holds ~170k (target,row) entries at the bench size because random slices overlap, so it was ~100 us of a ~235 us deform, not the 666 entries the row count suggests | 1.45x | 0.312 ms | 25.0 min | rejected: not faster |
 
 ### Predicted vs measured
 
 The rounds where the guess and the stopwatch disagreed. These are the transferable part -- a prediction that missed says more about the machine than one that landed.
 
-* `raw_scatter_deltas` -- predicted 15.00x, measured **227.50x**. accumulate_deltas spelled every += as nd::add(nd::slice(out,{Sl::at(b)}), s).item(), which builds a shared_ptr-backed Array view AND an allocated result Array for each of the three components of each of ~178k (target, component) pairs -- roughly a million allocations per evaluation, so the arithmetic is invisible next to malloc. Replacing it with out[b] = out[b] + wt*dlt[d] keeps the exact operand order and the exact double add, so it is bit-identical. Secondarily, inbetween_hat rescans all 2000 ibase entries for every one of 2000 targets (4M iterations); its lo/hi are an order-independent max/min over the knots sharing a main, so a per-main sorted knot list plus lower_bound/upper_bound selects the identical doubles in O(log n).
-* `compact_slot_scatter_cache` -- predicted 1.35x, measured **258.02x**. in-file profiling showed the baked scatter was 0.147 ms of a 0.275 ms compute; only 576 of 8012 vertices are ever written, so the 192 KB zero-init, the 24k-double rest-point snapshot and the 8012-vertex rewrite are all pure overhead, and the clamped per-target [lo,hi) plus the per-row vertex id are derived state that never moves while the weights animate
+* `raw_pointer_scatter` -- predicted 10.00x, measured **414.56x**. at 2000 targets x 2000 rows the node is ELEMENTWISE over the tables, not over the mesh: ~670k scatter iterations each paying two heap allocations dwarf the 8k-vertex mesh work, so removing the allocations should take the node from 144 ms to the low tens of ms; what remains is the serial combo product chain (~670k dependent multiplies) and the random-write scatter, both derived from tables that HOLD between ticks except for the drivers whose weight moved
+* `thread_fused_gather` -- predicted 1.45x, **rejected: not faster**. incumbent under 2 ms: second measurement 0.312 ms did not confirm 0.292 ms
+
+### Rejected rounds
+
+* `thread_fused_gather` -- rejected: not faster. incumbent under 2 ms: second measurement 0.312 ms did not confirm 0.292 ms
 
 ## Verification
 
-* parity: **pass**  (maxerr 0.0, tol 0.001)
-* authored @maya_test: 2/2 passed
+* parity: **pass**
+* verify could not run: Unable to create/find dependency node. | authored @maya_test: 2/2 passed
 
 ## Files
 
 ```
 build/stages/comboCorrectives/1_transpiled.cpp     deterministic transpile (no AI)
 build/stages/comboCorrectives/3_optimized/00_baseline.cpp
-build/stages/comboCorrectives/3_optimized/01_raw_scatter_deltas.cpp
-build/stages/comboCorrectives/3_optimized/02_compact_slot_scatter_cache.cpp
+build/stages/comboCorrectives/3_optimized/01_raw_pointer_scatter.cpp
+build/stages/comboCorrectives/3_optimized/02_thread_fused_gather.cpp
 build/source/comboCorrectives.cpp      SHIPPED
 ```

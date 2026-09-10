@@ -1,10 +1,10 @@
 # MPyMesh_Metaballs -- compile report
 
-Generated 2026-08-25 10:04
+Generated 2026-09-09 17:37
 
 | node | status | assist | optimize | detail |
 |---|---|---|---|---|
-| `metaballs` | compiled | -- | **4.17x** | [report](build/stages/metaballs/REPORT.md) |
+| `metaballs` | compiled | -- | **5.13x** | [report](build/stages/metaballs/REPORT.md) |
 
 ## Layout
 

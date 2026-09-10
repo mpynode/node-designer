@@ -1,10 +1,10 @@
 # MPyMesh_UV_Layout -- compile report
 
-Generated 2026-08-25 10:07
+Generated 2026-09-09 16:13
 
 | node | status | assist | optimize | detail |
 |---|---|---|---|---|
-| `uvLayoutMesh` | compiled | filled | **11.60x** | [report](build/stages/uvLayoutMesh/REPORT.md) |
+| `uvLayoutMesh` | compiled | filled | **9.26x** | [report](build/stages/uvLayoutMesh/REPORT.md) |
 
 ## Layout
 
