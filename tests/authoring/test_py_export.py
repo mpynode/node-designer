@@ -1363,6 +1363,133 @@ class TestRegionMap(unittest.TestCase):
         self.assertEqual(call[comp["open_col"]:], "exp)")
 
 
+class TestPersistentValuesInTheBake(unittest.TestCase):
+    """``include_values`` bakes a held value as a literal or a keyed2 blob --
+    never pickle -- and a None stays a declaration. Off by default, so a bake
+    that did not ask is byte-identical to what it always was."""
+
+    def _node(self, name="vals#"):
+        from mpynode import MPyNode
+
+        mc.file(new=True, force=True)
+        n = MPyNode.create(name=name)
+        n.add_input_attr("a", "float")
+        n.add_output_attr("out", "float")
+        n.set_compute_expression("self.out = self.a")
+        return n
+
+    def _gen(self, n, **kw):
+        from mpynode._common.io import py_export
+
+        return py_export.generate_node_script_with_regions(
+            n, class_name="Rebuilt", **kw)
+
+    @staticmethod
+    def _vars(regions):
+        return [r for r in regions if r["kind"] == "vars"][0]
+
+    def test_default_is_declarations_only_and_unchanged(self):
+        n = self._node()
+        n.add_variable("board", persistent=True)
+        n.set_variable("board", [1, 2, 3])
+        src, regions = self._gen(n)
+        self.assertIn("node.add_variable('board', persistent=True)", src)
+        self.assertNotIn("set_variable(", src)
+        self.assertNotIn("_stored_value", src)
+        self.assertNotIn("values", self._vars(regions))
+
+    def test_a_literal_value_is_set_and_a_none_is_declared(self):
+        n = self._node()
+        n.add_variable("board", persistent=True)
+        n.set_variable("board", [1, 2, 3])
+        n.add_variable("empty", persistent=True)
+        src, regions = self._gen(n, include_values=True)
+        lines = src.split("\n")
+        self.assertIn("        node.set_variable('board', [1, 2, 3], persistent=True)", lines)
+        self.assertIn("        node.add_variable('empty', persistent=True)", lines)
+        self.assertNotIn("_stored_value", src)         # no blob, no helper
+        vars_r = self._vars(regions)
+        (entry,) = vars_r["values"]
+        self.assertEqual(entry["name"], "board")
+        self.assertEqual(entry["summary"], "list · 3 items")
+        line = lines[vars_r["start"] + entry["offset"]]
+        self.assertTrue(line.startswith("        node.set_variable('board', "))
+        self.assertEqual(line[entry["open_col"]:], "[1, 2, 3], persistent=True)")
+
+    def test_an_array_goes_out_as_a_blob_with_the_helper_and_decodes(self):
+        import numpy as np
+
+        n = self._node()
+        n.add_variable("weights", persistent=True)
+        arr = np.arange(6, dtype="float64").reshape(3, 2)
+        n.set_variable("weights", arr)
+        src, regions = self._gen(n, include_values=True)
+        lines = src.split("\n")
+        helper = [r for r in regions if r["kind"] == "helpers"]
+        self.assertEqual(len(helper), 1)
+        decl = [r for r in regions if r["kind"] == "class_decl"][0]
+        self.assertLess(helper[0]["end"], decl["start"], "helper above the class")
+        self.assertFalse(helper[0]["editable"])
+        (entry,) = self._vars(regions)["values"]
+        self.assertEqual(entry["summary"], "ndarray (3, 2) float64 · 48 B")
+        value_line = lines[self._vars(regions)["start"] + entry["offset"]]
+        self.assertIn("_stored_value(", value_line)
+        # The helper really decodes what the line carries -- and the blob it
+        # carries needs no pickle to do so.
+        import ast
+
+        from mpynode._common.io import serialization
+
+        call = value_line.strip()[len("node.set_variable('weights', "):]
+        blob = ast.literal_eval(call[len("_stored_value("):call.index(")")])
+        self.assertFalse(serialization.blob_has_pickle(blob))
+        ns = {}
+        exec("\n".join(lines[helper[0]["start"]:helper[0]["end"] + 1]), ns)
+        np.testing.assert_array_equal(ns["_stored_value"](blob), arr)
+
+    def test_a_value_that_needs_pickle_stays_a_declaration(self):
+        class Opaque:
+            pass
+
+        n = self._node()
+        n.add_variable("thing", persistent=True)
+        n.set_variable("thing", Opaque())
+        src, regions = self._gen(n, include_values=True)
+        self.assertIn("node.add_variable('thing', persistent=True)", src)
+        self.assertIn("not bakeable without pickle", src)
+        self.assertNotIn("set_variable('thing'", src)
+        self.assertNotIn("_stored_value", src)
+        self.assertNotIn("values", self._vars(regions))
+
+    def test_numpy_scalars_are_blobs_not_literals(self):
+        # ``repr(np.float64(1.5))`` reads back as a plain float; the dtype
+        # would be lost, so it is not a literal.
+        import numpy as np
+
+        from mpynode._common.io import py_export
+
+        self.assertIsNone(py_export._literal_repr(np.float64(1.5)))
+        self.assertEqual(py_export._literal_repr(1.5), "1.5")
+        self.assertEqual(py_export._literal_repr({"a": (1, "x")}), "{'a': (1, 'x')}")
+        self.assertIsNone(py_export._literal_repr(float("nan")))
+        self.assertIsNone(py_export._literal_repr("x" * 500))
+
+    def test_summaries_read_like_a_label(self):
+        import numpy as np
+
+        from mpynode._common.io import py_export as pe
+
+        self.assertEqual(pe.summarize_value(np.zeros((3,), "float64")),
+                         "ndarray (3,) float64 · 24 B")
+        self.assertEqual(pe.summarize_value(b"\x89PNG\r\n\x1a\n" + b"0" * 2040),
+                         "png image · 2.0 KB")
+        self.assertEqual(pe.summarize_value(b"RIFF1234WAVEfmt "), "wav audio · 16 B")
+        self.assertEqual(pe.summarize_value("hello"), "str · 5 chars")
+        self.assertEqual(pe.summarize_value({"a": 1, "b": 2}), "dict · 2 keys")
+        self.assertEqual(pe.summarize_value(3), "int 3")
+        self.assertEqual(pe.summarize_value(True), "True")
+
+
 class TestTheFileHeaderIsTheUsers(unittest.TestCase):
     """The top of a baked .py.
 

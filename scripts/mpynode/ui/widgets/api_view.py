@@ -138,7 +138,7 @@ _GAP_REGION = {"kind": "gap", "label": None}
 # refresh -- exactly the staleness the refusal exists to prevent.
 _GENERATED_KINDS = (
     "metadata", "imports", "class_decl", "build_signature",
-    "attrs_in", "attrs_out", "expr_header", "vars", "return",
+    "attrs_in", "attrs_out", "expr_header", "vars", "helpers", "return",
     "method_warning", "gap",
 )
 # Generated kinds that sit ABOVE the user's header zone instead of below it.
@@ -189,6 +189,10 @@ class NDApiView(QtPythonEditor):
         # the region index, so a rail that moved under typing above it is
         # still found.
         self._placeholders = {}
+        # block number of each ``set_variable`` line -> its value entry (name /
+        # open_col / summary, from the exporter): the data itself is never on
+        # screen, the summary is painted over it.
+        self._value_placeholders = {}
         # (region, QTextCursor) for EVERY region. Ints would go stale on the
         # first keystroke; Qt maintains cursors.
         self._region_cursors = []
@@ -250,8 +254,11 @@ class NDApiView(QtPythonEditor):
 
                 # DIRECTLY, never through resolve_bake_class_name -- that one
                 # PROMPTS and STAMPS _pyClass on the node. Merely looking at
-                # this tab must not mutate anything.
-                src, regions = generate_node_script_with_regions(self._py_node)
+                # this tab must not mutate anything. WITH the persistent
+                # values: this view shows the node as it IS -- each value as a
+                # managed placeholder -- while the bake itself asks.
+                src, regions = generate_node_script_with_regions(
+                    self._py_node, include_values=True)
             except Exception as exc:  # noqa: BLE001
                 src = "# The bake could not be generated:\n# %s: %s" % (
                     type(exc).__name__, exc)
@@ -562,21 +569,28 @@ class NDApiView(QtPythonEditor):
     def _index_regions(self) -> None:
         self._block_region = {}
         self._placeholders = {}
+        self._value_placeholders = {}
         if not self._region_cursors:
             for r in self._regions:
                 for ln in range(r["start"], r["end"] + 1):
                     self._block_region[ln] = r
-                if self._is_placeholder(r):
-                    self._placeholders[self._rail_of(r)] = r
+                self._index_placeholders(r, r["start"])
             self._fill_gaps()
             return
         for r, cursor in self._region_cursors:
             first, last = self._live_span(cursor)
             for ln in range(first, last + 1):
                 self._block_region[ln] = r
-            if self._is_placeholder(r):
-                self._placeholders[first + int(r.get("call_offset") or 0)] = r
+            self._index_placeholders(r, first)
         self._fill_gaps()
+
+    def _index_placeholders(self, region, first: int) -> None:
+        """Record what is painted over ``region``'s lines, given its CURRENT
+        first line: the expression call line, or each ``set_variable`` value."""
+        if self._is_placeholder(region):
+            self._placeholders[first + int(region.get("call_offset") or 0)] = region
+        for entry in region.get("values") or ():
+            self._value_placeholders[first + int(entry.get("offset") or 0)] = entry
 
     def _fill_gaps(self) -> None:
         """Give every unclaimed line BETWEEN regions the gap sentinel.
@@ -1109,9 +1123,17 @@ class NDApiView(QtPythonEditor):
         if self._placeholders.get(n) is region:
             self._paint_placeholder(painter, region, n, top, height, char_w,
                                     right)
+        entry = self._value_placeholders.get(n)
+        if entry is not None and region.get("kind") == "vars":
+            # The value itself is never on screen: a summary of it stands
+            # where the literal or the blob sits in the bake.
+            self._paint_placeholder(
+                painter, region, n, top, height, char_w, right,
+                label="‹ %s ›, persistent=True)" % entry.get("summary", "value"),
+                open_col=int(entry.get("open_col") or 0))
 
     def _paint_placeholder(self, painter, region, block_no, top, height,
-                           char_w, right):
+                           char_w, right, label=None, open_col=None):
         """Reduce the rail to one readable line: the call, the count, the
         closing paren -- ``node.set_compute_expression(‹ 2 lines ›)``.
 
@@ -1128,10 +1150,12 @@ class NDApiView(QtPythonEditor):
         it sat straight ON TOP of the code whenever the rail was long enough
         to reach.
         """
-        open_col = region.get("open_col")
+        if open_col is None:
+            open_col = region.get("open_col")
         if open_col is None:
             open_col = region.get("body_col") or 0
-        label = "%s)" % self._placeholder_label(region)
+        if label is None:
+            label = "%s)" % self._placeholder_label(region)
         x = int(self.contentOffset().x()) + int(open_col * char_w)
         width = max(0, right - x)
         if width <= 0:
@@ -1173,9 +1197,9 @@ class NDApiView(QtPythonEditor):
         # buys nothing. The highlight above is the whole response.
         #
         # Variables and attributes still DO navigate, and the difference is not
-        # arbitrary: their content is not in this buffer at all. The bake
-        # declares a persistent variable and never carries its data, so there
-        # is nothing here to stay and look at.
+        # arbitrary: their content is not in this buffer at all. A persistent
+        # variable's value is painted over with a summary, never shown, so
+        # there is nothing here to stay and look at.
         if region["kind"] == "vars":
             name = _var_name_on(cursor.block().text())
             if name:
@@ -1349,9 +1373,13 @@ def _strip_trailing_blanks(text: str) -> str:
 
 
 def _var_name_on(text: str):
-    """``node.add_variable('board', persistent=True)`` -> ``board``."""
+    """``node.add_variable('board', persistent=True)`` -> ``board``; likewise
+    ``node.set_variable('board', ..., persistent=True)`` (a value line)."""
     marker = "add_variable("
     i = text.find(marker)
+    if i < 0:
+        marker = "set_variable("
+        i = text.find(marker)
     if i < 0:
         return None
     rest = text[i + len(marker):].lstrip()

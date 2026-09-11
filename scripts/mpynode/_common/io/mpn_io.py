@@ -48,7 +48,8 @@ def _ordered_attr_items(attr_map: dict):
 # ---- Capture ----
 
 
-def serialize_node(py_node, include_persistent: bool = True) -> dict:
+def serialize_node(py_node, include_persistent: bool = True,
+                   include_values: bool = True) -> dict:
     """Build a self-contained payload describing the given mPyNode.
 
     ``include_persistent`` (default ``True``) controls whether the node's
@@ -56,7 +57,12 @@ def serialize_node(py_node, include_persistent: bool = True) -> dict:
     ``include_persistent=False`` the payload carries only the node's
     DEFINITIONS (compute/init/attrs/metadata) and ``stored_vars`` stays ``{}``
     -- a "vanilla" template with no baked data. Default ``True`` keeps existing
-    callers byte-identical."""
+    callers byte-identical.
+
+    ``include_values=False`` (the Node Designer's "Declarations only") keeps
+    every persistent NAME and drops the data: ``stored_vars`` maps each to
+    ``None``, so the restored node has its variables declared and empty, the
+    way one created through the API starts."""
     name = py_node.get_name()
     native_type = mc.nodeType(name)
     payload: dict[str, Any] = {
@@ -84,6 +90,12 @@ def serialize_node(py_node, include_persistent: bool = True) -> dict:
             payload["stored_vars"] = dict(py_node.get_variables() or {})
         except Exception:
             pass
+        if not include_values:
+            try:
+                names = list(py_node.get_variable_names() or [])
+            except Exception:
+                names = []
+            payload["stored_vars"] = {n: None for n in names}
         # Record which stored vars are persistent (the .mpn's analog of the
         # _storedVarNames plug). Values stay in stored_vars -- the native spec
         # extractor needs the full set; only the persistence TAGS were missing,

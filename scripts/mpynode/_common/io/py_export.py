@@ -17,10 +17,14 @@ is no class-method equivalent), so those stay as ``set_*_expression(...)``
 strings.
 Use the ``.mpn`` export for a full round-trip.
 
-Stored variables are RE-DECLARED only (``add_variable(name, persistent=...)``);
-their runtime values (NumPy arrays, dicts, images, ...) are not source code, so
-they are intentionally NOT embedded -- use ``.mpn`` to carry data. This keeps
-the script readable and free of the pickle/RCE surface.
+Stored variables are RE-DECLARED (``add_variable(name, persistent=True)``)
+unless the bake is asked for their values (``include_values=True`` -- the Node
+Designer's Include / Declarations only prompt): then each held value goes out
+as ``node.set_variable(name, <literal>, persistent=True)`` when it is a short
+self-evident Python literal, else as ``_stored_value("<keyed2 blob>")`` -- the
+same JSON + zlib + base64 codec the ``.mpn`` uses, NEVER pickle (a value that
+would need it stays a declaration, with a comment). A None value is always a
+declaration, so an API-created node starts the way the author left it.
 
 Pure + Qt-free (mirrors ``mpn_io.serialize_node``), so it is unit-testable
 headless and shared by the File-menu bake and the Copy-baked-script action.
@@ -121,10 +125,10 @@ BAKE_CONTRACT = (
     "editable Methods-tab text. Re-importing this script into the Node Designer\n"
     "will NOT repopulate the Methods tab.\n"
     "\n"
-    "Use the .mpn export for a full round-trip (and to carry stored variable\n"
-    "DATA: persistent variables here are re-DECLARED with a neutral default\n"
-    "only -- their runtime values, NumPy arrays/dicts/images/..., are not\n"
-    "source code and are NOT included).\n"
+    "Use the .mpn export for a full round-trip. Persistent variables here are\n"
+    "re-DECLARED with a neutral default unless the bake was asked to Include\n"
+    "their values, in which case each is set to a Python literal or to a\n"
+    "_stored_value(...) blob (JSON + zlib + base64, never pickle).\n"
 )
 
 
@@ -139,6 +143,7 @@ _DEFAULT_GAP = {
     "imports": 0,          # the header carries its own trailing blank
     "imports_hoisted": 0,  # runs straight on from the imports above it
     "module_segment": 2,
+    "helpers": 2,          # the _stored_value decoder, when a value is a blob
     "class_decl": 2,
     "build_signature": 1,
     "attrs_in": 1,
@@ -326,6 +331,168 @@ def _accumulator_lines(var: str, s: str, indent: str) -> list:
         op = "=" if j == 0 else "+="
         out.append("%s%s %s %r" % (indent, var, op, seg))
     return out
+
+
+# ---------------------------------------------------------------------------
+# Persistent VALUES, when the bake is asked for them
+# ---------------------------------------------------------------------------
+_LITERAL_MAX = 200
+
+# Emitted once, at module scope, when at least one value goes out as a blob.
+_STORED_VALUE_HELPER = (
+    "def _stored_value(blob):\n"
+    '    """One persistent value the Node Designer baked with this node, in its\n'
+    "    own keyed2 codec (JSON + zlib + base64 -- never pickle), decoded on\n"
+    '    rebuild."""\n'
+    "    from mpynode._common.io.serialization import decode_stored_vars\n"
+    "\n"
+    "    return next(iter(decode_stored_vars(blob, trusted=False).values()))"
+)
+
+
+def _is_literal_value(value, depth: int = 0) -> bool:
+    """bool / int / finite float / str / None and lists, tuples and dicts of
+    those, a few levels deep. NumPy scalars are excluded on purpose: their
+    ``repr`` reads back as a plain float and the dtype would be lost."""
+    import math
+
+    if depth > 4:
+        return False
+    if type(value).__module__ == "numpy":
+        return False
+    if value is None or isinstance(value, (bool, int, str)):
+        return True
+    if isinstance(value, float):
+        return math.isfinite(value)
+    if isinstance(value, (list, tuple)):
+        return all(_is_literal_value(x, depth + 1) for x in value)
+    if isinstance(value, dict):
+        return all(isinstance(k, str) and _is_literal_value(v, depth + 1)
+                   for k, v in value.items())
+    return False
+
+
+def _literal_repr(value):
+    """``repr(value)`` when it is a short, self-evident literal that evaluates
+    back to an equal value (under ``_LITERAL_MAX`` characters), else ``None``
+    -- the value goes out as a blob."""
+    import ast
+
+    if not _is_literal_value(value):
+        return None
+    text = repr(value)
+    if len(text) > _LITERAL_MAX:
+        return None
+    try:
+        if ast.literal_eval(text) != value:
+            return None
+    except Exception:
+        return None
+    return text
+
+
+def _value_blob(name, value):
+    """The keyed2 string carrying ONE value, or ``None`` when encoding it
+    would need pickle (or fails outright): the bake never embeds pickle."""
+    from mpynode._common.io import serialization
+
+    try:
+        blob, dropped = serialization.encode_stored_vars_resilient({name: value})
+    except Exception:
+        return None
+    if dropped or serialization.blob_has_pickle(blob):
+        return None
+    return blob
+
+
+def _fmt_bytes(n: int) -> str:
+    n = int(n)
+    if n < 1024:
+        return "%d B" % n
+    if n < 1024 * 1024:
+        return "%.1f KB" % (n / 1024.0)
+    return "%.1f MB" % (n / (1024.0 * 1024.0))
+
+
+def _sniff_media(head: bytes):
+    if head.startswith(b"\x89PNG\r\n\x1a\n"):
+        return "png image"
+    if head[:3] == b"\xff\xd8\xff":
+        return "jpeg image"
+    if head[:6] in (b"GIF87a", b"GIF89a"):
+        return "gif image"
+    if head[:2] == b"BM":
+        return "bmp image"
+    if head[:4] == b"RIFF" and head[8:12] == b"WEBP":
+        return "webp image"
+    if head[:4] == b"RIFF" and head[8:12] == b"WAVE":
+        return "wav audio"
+    return None
+
+
+def summarize_value(value) -> str:
+    """One line about a persistent value for a reader who will not see it --
+    what the API view paints in place of the data: kind, shape or length,
+    size. ``ndarray (3,) float64 · 96 B``, ``png image · 12.4 KB``,
+    ``str · 42 chars``, ``dict · 4 keys``, ``int 3``."""
+    try:
+        import numpy as np
+    except Exception:  # noqa: BLE001
+        np = None
+    if np is not None and isinstance(value, np.ndarray):
+        return "ndarray %s %s · %s" % (
+            tuple(value.shape), value.dtype, _fmt_bytes(value.nbytes))
+    if np is not None and isinstance(value, np.generic):
+        return "numpy %s %r" % (value.dtype, value.item())
+    if isinstance(value, (bytes, bytearray)):
+        kind = _sniff_media(bytes(value[:16])) or "bytes"
+        return "%s · %s" % (kind, _fmt_bytes(len(value)))
+    if isinstance(value, bool) or value is None:
+        return repr(value)
+    if isinstance(value, (int, float)):
+        return "%s %r" % (type(value).__name__, value)
+    if isinstance(value, str):
+        return "str · %d chars" % len(value)
+    if isinstance(value, (list, tuple)):
+        return "%s · %d items" % (type(value).__name__, len(value))
+    if isinstance(value, dict):
+        return "dict · %d keys" % len(value)
+    return type(value).__name__
+
+
+def _prepare_variable_lines(var_names, values):
+    """The lines of the persistent-variables block and the placeholder entries
+    the API view paints over the ones that carry a value.
+
+    Returns ``(lines, entries, blob_used)``. ``lines`` are the block WITHOUT
+    its leading comment; each entry is ``{name, offset, open_col, summary}``
+    where ``offset`` counts from the comment line (offset 0). A None value --
+    or no values at all -- is a plain declaration, exactly what the bake has
+    always emitted.
+    """
+    lines = []
+    entries = []
+    blob_used = False
+    for vn in var_names:
+        value = values.get(vn) if values else None
+        if value is None:
+            lines.append("        node.add_variable(%r, persistent=True)" % vn)
+            continue
+        head = "        node.set_variable(%r, " % vn
+        arg = _literal_repr(value)
+        if arg is None:
+            blob = _value_blob(vn, value)
+            if blob is None:
+                lines.append("        # %s: value not bakeable without pickle "
+                             "-- carry it with the .mpn" % vn)
+                lines.append("        node.add_variable(%r, persistent=True)" % vn)
+                continue
+            arg = "_stored_value(%r)" % blob
+            blob_used = True
+        lines.append("%s%s, persistent=True)" % (head, arg))
+        entries.append({"name": vn, "offset": len(lines), "open_col": len(head),
+                        "summary": summarize_value(value)})
+    return lines, entries, blob_used
 
 
 def _body_line_count(src: str) -> int:
@@ -669,7 +836,8 @@ def _all_method_defs(methods_src: str):
     return out
 
 
-def generate_node_script_with_regions(py_node, *, class_name: str | None = None):
+def generate_node_script_with_regions(py_node, *, class_name: str | None = None,
+                                      include_values: bool = False):
     """Return ``(source, regions)``.
 
     ``source`` is exactly what :func:`generate_node_script` returns. ``regions``
@@ -688,7 +856,10 @@ def generate_node_script_with_regions(py_node, *, class_name: str | None = None)
     ``label``     a display name (tier, member, segment), or None
 
     Expression regions additionally carry ``body_col`` / ``open_col`` /
-    ``call_offset`` / ``body_lines`` -- see :func:`_emit_set_expression`.
+    ``call_offset`` / ``body_lines`` -- see :func:`_emit_set_expression`. With
+    ``include_values`` the ``vars`` region carries ``values``: one
+    ``{name, offset, open_col, summary}`` per ``set_variable`` line, what the
+    API view paints over the data (see :func:`_prepare_variable_lines`).
 
     The map is built by the SAME pass that builds the text, so the two cannot
     disagree. A parallel walker would have to duplicate the emission ORDER,
@@ -752,6 +923,11 @@ def generate_node_script_with_regions(py_node, *, class_name: str | None = None)
     if hasattr(py_node, "get_osl_expression"):
         osl_src = _safe(py_node.get_osl_expression, "")
     var_names = _safe(py_node.get_variable_names, [])
+    # Persistent VALUES ride along only when asked (the Include prompt). Prepared
+    # here, before the imports, because a blob needs the _stored_value helper
+    # emitted at module scope above the class.
+    var_values = _safe(py_node.get_variables, {}) if include_values else {}
+    var_lines, var_entries, blob_used = _prepare_variable_lines(var_names, var_values)
     # Methods tier -- only on wrappers exposing get_methods_source.
     methods_src: str = ""
     if hasattr(py_node, "get_methods_source"):
@@ -916,6 +1092,13 @@ def generate_node_script_with_regions(py_node, *, class_name: str | None = None)
                  symbol_kind=seg["kind"],
                  src_line=seg["lineno"],
                  src_lines=seg["src"].count("\n") + 1)
+    if blob_used:
+        # The decoder for the baked blobs -- module scope, above the class, so
+        # build() can call it. Generated: it is the same six lines every time.
+        gap("helpers")
+        _i = len(L)
+        L.append(_STORED_VALUE_HELPER)
+        mark("helpers", _i, label="_stored_value")
     gap("class_decl")
     _i = len(L)
     L.append("class %s(%s):" % (class_name, base_name))
@@ -988,17 +1171,25 @@ def generate_node_script_with_regions(py_node, *, class_name: str | None = None)
                  call_offset=info.get("call_offset", 0),
                  body_lines=info.get("body_lines"))
 
-    # --- persistent variables (declarations only) ---
+    # --- persistent variables (declarations; values when asked) ---
     if var_names:
         gap("vars")
         _i = len(L)
-        L.append(
-            "        # --- persistent variables (declarations only; "
-            "data not included) ---"
-        )
-        for vn in var_names:
-            L.append("        node.add_variable(%r, persistent=True)" % vn)
-        mark("vars", _i, label="Variables", count=len(var_names))
+        if var_entries:
+            L.append(
+                "        # --- persistent variables (values baked in; "
+                "None stays a declaration) ---"
+            )
+        else:
+            L.append(
+                "        # --- persistent variables (declarations only; "
+                "data not included) ---"
+            )
+        L.extend(var_lines)
+        extra = {"count": len(var_names)}
+        if var_entries:
+            extra["values"] = var_entries
+        mark("vars", _i, label="Variables", **extra)
 
     # One-way bake: set_methods_source is deliberately NOT called -- the defs go
     # out as real Python instead (see the module docstring).
@@ -1151,6 +1342,10 @@ def generate_node_script_with_regions(py_node, *, class_name: str | None = None)
     return "\n".join(L), regions
 
 
-def generate_node_script(py_node, *, class_name: str | None = None) -> str:
-    """Return a standalone ``.py`` module string that rebuilds ``py_node``."""
-    return generate_node_script_with_regions(py_node, class_name=class_name)[0]
+def generate_node_script(py_node, *, class_name: str | None = None,
+                         include_values: bool = False) -> str:
+    """Return a standalone ``.py`` module string that rebuilds ``py_node``.
+    ``include_values`` bakes the persistent variables' values in (see the
+    module docstring); by default they are declared only."""
+    return generate_node_script_with_regions(
+        py_node, class_name=class_name, include_values=include_values)[0]

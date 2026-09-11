@@ -572,6 +572,9 @@ class _FakeNode:
     def get_variables(self):
         return dict(self._vars)
 
+    def get_variable_names(self):
+        return list(self._vars)
+
     def get_compute_expression(self):
         return "out = x"
 
@@ -604,6 +607,19 @@ class TestSerializeIncludePersistent(unittest.TestCase):
         with mock.patch.object(mpn_io.mc, "nodeType", return_value="mPyNode"):
             payload = mpn_io.serialize_node(node)
         self.assertEqual(payload["stored_vars"], {"x": 5})
+
+    def test_include_values_false_keeps_the_declarations_and_drops_the_data(self):
+        # The Node Designer's "Declarations only": the restored node has its
+        # persistent variables declared and None, the way an API-created node
+        # starts -- NOT the include_persistent=False shape, which loses the
+        # names too.
+        from mpynode._common.io import mpn_io
+
+        node = _FakeNode("foo", {"x": 5, "y": [1, 2]})
+        with mock.patch.object(mpn_io.mc, "nodeType", return_value="mPyNode"):
+            payload = mpn_io.serialize_node(node, include_values=False)
+        self.assertEqual(payload["stored_vars"], {"x": None, "y": None})
+        self.assertEqual(sorted(payload["persistent_vars"]), ["x", "y"])
 
 
 class TestDeserializeRestorePersistent(unittest.TestCase):

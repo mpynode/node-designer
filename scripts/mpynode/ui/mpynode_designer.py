@@ -2211,17 +2211,78 @@ class NDMainWindow(QMainWindow):
             return
         self._export_node_as_mpn(self._current_node)
 
+    @staticmethod
+    def _persistent_values_held(py_node):
+        """``[(name, value)]`` for every persistent variable holding a non-None
+        value -- the data an export can carry or leave behind."""
+        try:
+            names = list(py_node.get_variable_names() or [])
+            data = py_node.get_variables() or {}
+        except Exception:
+            return []
+        return [(n, data[n]) for n in names if data.get(n) is not None]
+
+    def _ask_persistent_values(self, py_node, target: str):
+        """Include the node's persistent VALUES in a ``target`` export (".mpn"
+        or ".py")? ``True`` / ``False`` (declarations only) / ``None`` (cancel).
+
+        Asked only when a persistent variable holds a value; a node with none
+        has nothing to decide. Include is the default button: the data is
+        part of what the author built. Declarations only writes the variables
+        with no value (None) -- how a node created through the API starts,
+        which is the point of it for a template.
+        """
+        held = self._persistent_values_held(py_node)
+        if not held:
+            return True
+        from mpynode._common.io.py_export import summarize_value
+        from mpynode.ui.qt_wrapper import QMessageBox
+
+        try:
+            name = py_node.get_name()
+        except Exception:
+            name = "This node"
+        lines = ["%s: %s" % (n, summarize_value(v)) for n, v in held[:8]]
+        if len(held) > 8:
+            lines.append("... and %d more" % (len(held) - 8))
+        box = QMessageBox(self)
+        box.setIcon(QMessageBox.Question)
+        box.setWindowTitle("Persistent Data")
+        box.setText(
+            "%s carries %d persistent value%s. Include the data in the %s?\n\n%s"
+            % (name, len(held), "" if len(held) == 1 else "s", target,
+               "\n".join(lines)))
+        box.setInformativeText(
+            "Declarations only writes the variables with no value (None), the "
+            "way a node created through the API starts.")
+        inc_btn = box.addButton("Include", QMessageBox.AcceptRole)
+        decl_btn = box.addButton("Declarations only", QMessageBox.DestructiveRole)
+        box.addButton(QMessageBox.Cancel)
+        box.setDefaultButton(inc_btn)
+        box.exec_()
+        clicked = box.clickedButton()
+        if clicked is inc_btn:
+            return True
+        if clicked is decl_btn:
+            return False
+        return None
+
     def _export_node_as_mpn(self, py_node) -> None:
         """Shared export helper used by File menu + scene-tree right-click.
 
         Uses the OS-native save dialog. Compression is chosen by the
         ``mpn_export_max_compression`` preference: OFF -> zlib (fast
-        default), ON -> lzma (smaller file, slower).
+        default), ON -> lzma (smaller file, slower). A node holding persistent
+        values is asked first whether the data travels (Include, the default)
+        or only the declarations do.
         """
         from mpynode._common.io.mpn_io import save_mpn, serialize_node
         from mpynode.ui import preferences
         from mpynode.ui.qt_wrapper import QFileDialog, QMessageBox
 
+        include_values = self._ask_persistent_values(py_node, ".mpn")
+        if include_values is None:
+            return
         try:
             default_name = py_node.get_name() + ".mpn"
         except Exception:
@@ -2247,7 +2308,7 @@ class NDMainWindow(QMainWindow):
         except Exception:
             pass
         try:
-            payload = serialize_node(py_node)
+            payload = serialize_node(py_node, include_values=include_values)
             save_mpn(payload, path, compression=compression)
         except Exception as exc:
             QMessageBox.warning(self, "Export Failed", str(exc))
@@ -2283,6 +2344,9 @@ class NDMainWindow(QMainWindow):
         )
         if class_name is None:
             return  # untagged + cancelled -> abort the bake
+        include_values = self._ask_persistent_values(py_node, ".py")
+        if include_values is None:
+            return
         default_name = class_name[:1].lower() + class_name[1:] + ".py"
         path, _filter = QFileDialog.getSaveFileName(
             self,
@@ -2293,7 +2357,8 @@ class NDMainWindow(QMainWindow):
         if not path:
             return
         try:
-            src = py_export.generate_node_script(py_node, class_name=class_name)
+            src = py_export.generate_node_script(
+                py_node, class_name=class_name, include_values=include_values)
             with open(path, "w") as f:
                 f.write(src)
         except Exception as exc:
@@ -2325,8 +2390,12 @@ class NDMainWindow(QMainWindow):
         )
         if class_name is None:
             return  # untagged + cancelled -> abort
+        include_values = self._ask_persistent_values(py_node, ".py")
+        if include_values is None:
+            return
         try:
-            src = py_export.generate_node_script(py_node, class_name=class_name)
+            src = py_export.generate_node_script(
+                py_node, class_name=class_name, include_values=include_values)
         except Exception as exc:
             QMessageBox.warning(self, "Copy Failed", str(exc))
             return

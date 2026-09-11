@@ -1223,6 +1223,94 @@ class TestGoToReachesTheTab(unittest.TestCase):
 
 
 @unittest.skipUnless(_qapp_available(), "Qt unavailable")
+class TestPersistentValuesAreManagedPlaceholders(unittest.TestCase):
+    """The API view shows the node as it IS: a persistent variable holding a
+    value renders as ``node.set_variable('board', ‹ list · 3 items ›,
+    persistent=True)`` -- managed, never expandable, the data never on screen
+    -- and a None value as the plain declaration. Right-click: Go to Variables
+    · name."""
+
+    def _node(self):
+        from mpynode import MPyNode
+
+        mc.file(new=True, force=True)
+        n = MPyNode.create(name="apiVals")
+        n.add_input_attr("a", "float")
+        n.add_output_attr("out", "float")
+        n.set_compute_expression("self.out = self.a")
+        n.add_variable("board", persistent=True)
+        n.set_variable("board", [1, 2, 3])
+        n.add_variable("empty", persistent=True)
+        return n
+
+    def _view(self, n):
+        from mpynode.ui.widgets.api_view import NDApiView
+
+        v = NDApiView(n)
+        v.resize(1000, 700)
+        v.show()
+        _QAPP.processEvents()
+        return v
+
+    def test_a_held_value_is_a_set_variable_placeholder(self):
+        v = self._view(self._node())
+        try:
+            self.assertIn("node.set_variable('board', [1, 2, 3], persistent=True)",
+                          v.source())
+            self.assertIn("node.add_variable('empty', persistent=True)", v.source())
+            vars_r = [r for r in v.regions() if r["kind"] == "vars"][0]
+            (entry,) = vars_r["values"]
+            line_no = vars_r["start"] + entry["offset"]
+            self.assertIs(v._value_placeholders.get(line_no), entry)
+            v.repaint()
+            _QAPP.processEvents()
+            self.assertIn(line_no, v._marker_rects, "no placeholder painted")
+            # Managed: refuses edits, no expand.
+            self.assertFalse(v._is_editable(vars_r))
+            self.assertFalse(hasattr(v, "toggleFoldAt"))
+        finally:
+            v.deleteLater()
+
+    def test_go_to_and_click_name_the_variable_on_a_value_line(self):
+        from mpynode.ui.widgets.api_view import _var_name_on
+
+        v = self._view(self._node())
+        try:
+            vars_r = [r for r in v.regions() if r["kind"] == "vars"][0]
+            (entry,) = vars_r["values"]
+            text = v.document().findBlockByNumber(
+                vars_r["start"] + entry["offset"]).text()
+            self.assertEqual(_var_name_on(text), "board")
+            seen = []
+            v.variableActivated.connect(seen.append)
+            label, fire = v._go_to_target(vars_r, text)
+            self.assertEqual(label, "Go to Variables · board")
+            fire()
+            self.assertEqual(seen, ["board"])
+        finally:
+            v.deleteLater()
+
+    def test_a_blob_value_brings_a_generated_helper(self):
+        import numpy as np
+
+        from mpynode.ui.widgets.api_view import _GENERATED_KINDS
+
+        n = self._node()
+        n.set_variable("board", np.arange(3.0))
+        v = self._view(n)
+        try:
+            helper = [r for r in v.regions() if r["kind"] == "helpers"][0]
+            self.assertIn("helpers", _GENERATED_KINDS)
+            self.assertFalse(v._is_editable(helper))
+            for ln in range(helper["start"], helper["end"] + 1):
+                self.assertTrue(v._marks_generated(helper, ln))
+            (entry,) = [r for r in v.regions() if r["kind"] == "vars"][0]["values"]
+            self.assertEqual(entry["summary"], "ndarray (3,) float64 · 24 B")
+        finally:
+            v.deleteLater()
+
+
+@unittest.skipUnless(_qapp_available(), "Qt unavailable")
 class TestAClickGoesWhereTheThingIsAuthored(unittest.TestCase):
     """A generated block is a read-only rendering of something the user edits
     somewhere else. Clicking it goes THERE.
