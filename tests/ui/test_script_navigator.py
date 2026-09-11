@@ -133,8 +133,8 @@ class TestScriptNavigator(unittest.TestCase):
         try:
             delegate = nav._tree.itemDelegate()
             self.assertIsNotNone(delegate)
-            seen = []
-            opt = QStyleOptionViewItem()
+            seen      = []
+            opt       = QStyleOptionViewItem()
             opt.state = QStyle.State_Enabled | QStyle.State_HasFocus
             # Column 1 of a section row: the empty Kind cell the square
             # appeared in.
@@ -177,7 +177,7 @@ class TestScriptNavigator(unittest.TestCase):
 
         mc.file(new=True, force=True)
         node = MPyFile.create(name="navFile")
-        nav = self._nav(node)
+        nav  = self._nav(node)
         try:
             rows = dict((n, d) for n, _m, d in nav.rowsUnder("EXPRESSIONS"))
             for tier in ("Init", "Compute", "Viewport", "OSL"):
@@ -193,9 +193,9 @@ class TestScriptNavigator(unittest.TestCase):
         try:
             names = self._names(nav, "MODULE SCOPE")
             self.assertIn("SetupError", names)
-            self.assertIn("MAX_TRIES", names)
-            self.assertIn("helper", names)
-            self.assertIn("imports", names)
+            self.assertIn("MAX_TRIES",  names)
+            self.assertIn("helper",     names)
+            self.assertIn("imports",    names)
         finally:
             nav.deleteLater()
 
@@ -237,8 +237,8 @@ class TestScriptNavigator(unittest.TestCase):
     def test_members_split_into_role_sections(self):
         nav = self._nav(self._locator())
         try:
-            self.assertIn("setup", self._names(nav, "SETUP"))
-            self.assertIn("demo", self._names(nav, "DEMOS"))
+            self.assertIn("setup",      self._names(nav, "SETUP"))
+            self.assertIn("demo",       self._names(nav, "DEMOS"))
             self.assertIn("test_thing", self._names(nav, "TESTS"))
         finally:
             nav.deleteLater()
@@ -276,7 +276,7 @@ class TestScriptNavigator(unittest.TestCase):
         from mpynode._common.io import py_export
 
         node = self._locator()
-        nav = self._nav(node)
+        nav  = self._nav(node)
         try:
             src = py_export.generate_node_script(node).split("\n")
             for key in nav.keysUnder("MODULE SCOPE"):
@@ -294,12 +294,12 @@ class TestScriptNavigator(unittest.TestCase):
         # Stage 2 splices edits back by this number; a wrong one writes into
         # the wrong def.
         node = self._locator()
-        nav = self._nav(node)
+        nav  = self._nav(node)
         msrc = (node.get_methods_source() or "").split("\n")
         try:
             for key in nav.keysUnder("SETUP") + nav.keysUnder("TESTS"):
                 region = nav.regionForKey(key)
-                line = region.get("src_line")
+                line   = region.get("src_line")
                 self.assertTrue(line, key)
                 window = "\n".join(msrc[line - 1:line + 2])
                 self.assertIn(key.split(".", 1)[1], window)
@@ -531,7 +531,7 @@ class TestNavigatorInTheScriptTab(unittest.TestCase):
 
         mc.file(new=True, force=True)
         node = MPyFile.create(name="navOsl")
-        w = NDScriptTabContent(node)
+        w    = NDScriptTabContent(node)
         try:
             self.assertTrue(w.select("tier.osl"))
             self.assertEqual(self._tab(w), "OSL")
@@ -692,7 +692,7 @@ class TestNavigatorInTheScriptTab(unittest.TestCase):
         try:
             for key in w._navigator.keysUnder("MODULE SCOPE"):
                 region = w._navigator.regionForKey(key)
-                found = w._api_view.regionAt(region["start"])
+                found  = w._api_view.regionAt(region["start"])
                 self.assertIsNotNone(found, key)
         finally:
             w.deleteLater()
@@ -827,7 +827,7 @@ class TestNavigatorRhythm(unittest.TestCase):
     def test_sections_stand_off_from_their_rows(self):
         nav = self._nav()
         try:
-            tree = nav._tree
+            tree    = nav._tree
             section = tree.topLevelItem(0)
             self.assertGreater(
                 tree.visualItemRect(section).height(),
@@ -838,9 +838,9 @@ class TestNavigatorRhythm(unittest.TestCase):
     def test_every_row_is_the_same_height(self):
         nav = self._nav()
         try:
-            tree = nav._tree
+            tree    = nav._tree
             heights = set()
-            locked = 0
+            locked  = 0
             for i in range(tree.topLevelItemCount()):
                 top = tree.topLevelItem(i)
                 for j in range(top.childCount()):
@@ -858,8 +858,8 @@ class TestNavigatorRhythm(unittest.TestCase):
     def test_line_counts_are_spelled_out_and_agree_on_number(self):
         from mpynode.ui.widgets.script_navigator import _lines
 
-        self.assertEqual(_lines(1), "1 line")
-        self.assertEqual(_lines(0), "0 lines")
+        self.assertEqual(_lines(1),   "1 line")
+        self.assertEqual(_lines(0),   "0 lines")
         self.assertEqual(_lines(132), "132 lines")
 
     def test_no_row_still_says_ln(self):

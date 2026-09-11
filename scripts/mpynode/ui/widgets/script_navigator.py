@@ -80,7 +80,7 @@ _MEMBER_SECTIONS = (
 # same font as the rest of the label. The word beside it ("managed" / "class" /
 # "generated") is what actually carries the meaning.
 _LOCK = "▪"
-_RUN = "▶"
+_RUN  = "▶"
 # Breathing room above a section header, and the floor every row is pinned to so
 # no glyph in any column can stretch one.
 _SECTION_PAD = 6
@@ -134,7 +134,7 @@ class _Offer:
     __slots__ = ("name", "template")
 
     def __init__(self, template):
-        self.name = template.name
+        self.name     = template.name
         self.template = template
 
 
@@ -164,8 +164,8 @@ class NDScriptNavigator(QWidget):
         # attributes, not class ones -- a mutable class attribute here is the
         # same session-wide bleed _shared_tier has.
         self._user_sized = False
-        self._fitting = False
-        layout = QVBoxLayout(self)
+        self._fitting    = False
+        layout           = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
 
@@ -175,7 +175,7 @@ class NDScriptNavigator(QWidget):
         # code rather than with the tabs. Nothing here can measure that strip;
         # only the thing that owns it can.
         self._title_bar = QWidget(self)
-        title_row = QHBoxLayout(self._title_bar)
+        title_row       = QHBoxLayout(self._title_bar)
         title_row.setContentsMargins(6, 0, 6, 0)
         title_row.setSpacing(6)
         self._title_label = QLabel(PANEL_TITLE, self._title_bar)
@@ -256,8 +256,8 @@ class NDScriptNavigator(QWidget):
     # phrase. Capped BOTH absolutely and as a share of the pane: absolute caps
     # alone still starved the names at a realistic width (at J3's 236px
     # preferred, a 90 + 120 pair left Symbol on its 60px floor).
-    _KIND_CAP = 90
-    _META_CAP = 120
+    _KIND_CAP     = 90
+    _META_CAP     = 120
     _SYMBOL_FLOOR = 60
     _SYMBOL_SHARE = 0.45
 
@@ -272,7 +272,7 @@ class NDScriptNavigator(QWidget):
         if width <= 0:
             return
         reserved = max(self._SYMBOL_FLOOR, int(width * self._SYMBOL_SHARE))
-        spare = max(0, width - reserved)
+        spare    = max(0, width - reserved)
         kind = min(self._tree.sizeHintForColumn(_COL_KIND) + 8,
                    self._KIND_CAP, int(spare * 0.45))
         meta = min(self._tree.sizeHintForColumn(_COL_META) + 8,
@@ -378,9 +378,9 @@ class NDScriptNavigator(QWidget):
         # about their node.
         section = self._section("EXPRESSIONS", "")
         for label, probe in TIER_PROBES:
-            has = hasattr(self._py_node, probe)
+            has     = hasattr(self._py_node, probe)
             regions = by_kind.get("expr_%s" % label.lower()) or []
-            region = regions[0] if regions else None
+            region  = regions[0] if regions else None
             if not has:
                 # The one thing a tab strip cannot say: this node has no such
                 # tier, and here is why.
@@ -457,8 +457,8 @@ class NDScriptNavigator(QWidget):
                     "resolve their globals.")
 
     def _build_class(self, by_kind) -> None:
-        decl = (by_kind.get("class_decl") or [None])[0]
-        title = "CLASS" if decl is None else "CLASS · %s" % decl["label"]
+        decl    = (by_kind.get("class_decl") or [None])[0]
+        title   = "CLASS" if decl is None else "CLASS · %s" % decl["label"]
         section = self._section(title, "")
         if decl is not None:
             base = decl.get("base") or ""
@@ -492,7 +492,7 @@ class NDScriptNavigator(QWidget):
         """SETUP / COMMANDS / DEMOS / TESTS get their own sections, each row
         carrying the run affordance the Methods outline used to own. Plain
         methods stay under CLASS MEMBERS."""
-        members = [r for r in regions if r["kind"] == "method_member"]
+        members  = [r for r in regions if r["kind"] == "method_member"]
         warnings = [r for r in regions if r["kind"] == "method_warning"]
         for role, title in _MEMBER_SECTIONS:
             rows = [r for r in members if r.get("symbol_kind") == role]
@@ -571,7 +571,7 @@ class NDScriptNavigator(QWidget):
             from mpynode._common.methods.outline_model import build_outline
 
             native = getattr(self._py_node, "NATIVE_TYPE", None)
-            src = ""
+            src    = ""
             if hasattr(self._py_node, "get_methods_source"):
                 src = self._py_node.get_methods_source() or ""
             items = build_outline(src, native) or []
@@ -588,7 +588,7 @@ class NDScriptNavigator(QWidget):
         except Exception:  # noqa: BLE001
             names = []
         vars_region = ((by_kind or {}).get("vars") or [None])[0]
-        var_lines = (vars_region or {}).get("var_lines") or {}
+        var_lines   = (vars_region or {}).get("var_lines") or {}
         for name in names:
             row = self._row(section, name, "persistent", "")
             row.setData(_COL_SYMBOL, Qt.UserRole, "var.%s" % name)
@@ -627,7 +627,7 @@ class NDScriptNavigator(QWidget):
     def _where(region) -> str:
         """Both line numbers, because they disagree and both matter: the baked
         one is what the API view shows, the Methods one is what you edit."""
-        text = "baked line %d" % (region["start"] + 1)
+        text     = "baked line %d" % (region["start"] + 1)
         src_line = region.get("src_line")
         if src_line:
             text += " · Methods line %d" % src_line
@@ -671,8 +671,8 @@ class NDScriptNavigator(QWidget):
         run_kind = payload.get("run_kind") if hasattr(payload, "get") else None
         if not run_kind:
             return
-        menu = QMenu(self._tree)
-        act = menu.addAction("Run")
+        menu  = QMenu(self._tree)
+        act   = menu.addAction("Run")
         exec_ = getattr(menu, "exec_", None) or menu.exec
         if exec_(self._tree.viewport().mapToGlobal(pos)) is act:
             self.runRequested.emit(
@@ -688,11 +688,11 @@ class NDScriptNavigator(QWidget):
         source = (getattr(oit.template, "source", "") or "").strip("\n")
         if not source:
             return
-        menu = QMenu(self._tree)
+        menu       = QMenu(self._tree)
         insert_act = menu.addAction("Insert into Script")
-        copy_act = menu.addAction("Copy Template")
-        exec_ = getattr(menu, "exec_", None) or menu.exec
-        chosen = exec_(self._tree.viewport().mapToGlobal(pos))
+        copy_act   = menu.addAction("Copy Template")
+        exec_      = getattr(menu, "exec_", None) or menu.exec
+        chosen     = exec_(self._tree.viewport().mapToGlobal(pos))
         if chosen is insert_act:
             self.insertTemplateRequested.emit(source)
         elif chosen is copy_act:
@@ -769,7 +769,7 @@ class NDScriptNavigator(QWidget):
         for i in range(self._tree.topLevelItemCount()):
             top = self._tree.topLevelItem(i)
             for j in range(top.childCount()):
-                child = top.child(j)
+                child  = top.child(j)
                 stored = child.data(_COL_SYMBOL, Qt.UserRole + 1)
                 if not isinstance(stored, dict):
                     continue

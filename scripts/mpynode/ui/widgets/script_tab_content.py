@@ -798,7 +798,7 @@ class NDScriptTabContent(QWidget):
         if len(sizes) < 2 or sizes[1] > 0:
             return
         total = sum(sizes) or self.width()
-        want = max(236, self._navigator.minimumWidth())
+        want  = max(236, self._navigator.minimumWidth())
         split.setSizes([max(1, total - want), want])
 
     def select(self, key: str) -> bool:

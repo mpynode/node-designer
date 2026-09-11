@@ -1507,7 +1507,7 @@ class TestPersistentValuesInTheBake(unittest.TestCase):
         for include in (False, True):
             src, regions = self._gen(n, include_values=include)
             vars_r = self._vars(regions)
-            lines = src.split("\n")
+            lines  = src.split("\n")
             self.assertEqual(set(vars_r["var_lines"]), {"board", "empty"})
             for name, offset in vars_r["var_lines"].items():
                 self.assertIn("'%s'" % name, lines[vars_r["start"] + offset])

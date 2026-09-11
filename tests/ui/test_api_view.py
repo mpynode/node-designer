@@ -1137,7 +1137,7 @@ class TestBodiesNeverOpenHere(unittest.TestCase):
 
         _node, v = self._view()
         try:
-            rail = self._rail(v)
+            rail   = self._rail(v)
             before = v._rail_of(rail)
             self.assertTrue(v._marks_generated(rail, before))
             doc = v.document()
@@ -1425,7 +1425,7 @@ class TestTheModuleZoneIsYours(unittest.TestCase):
             pos = v.document().findBlockByNumber(zone["start"]).position()
             self.assertTrue(v._allows(pos, pos), "typing at the zone's first char")
             # The gaps INSIDE build() are still the bake's.
-            header = [r for r in v.regions() if r["kind"] == "expr_header"][0]
+            header  = [r for r in v.regions() if r["kind"] == "expr_header"][0]
             gap_pos = v.document().findBlockByNumber(header["start"] - 1).position()
             self.assertFalse(v._allows(gap_pos, gap_pos))
         finally:
@@ -1619,7 +1619,7 @@ class TestAClickGoesWhereTheThingIsAuthored(unittest.TestCase):
         v.attributesActivated.connect(attrs_seen.append)
         try:
             vars_r = [r for r in v.regions() if r["kind"] == "vars"][0]
-            attrs = [r for r in v.regions() if r["kind"] == "attrs_in"][0]
+            attrs  = [r for r in v.regions() if r["kind"] == "attrs_in"][0]
             self._click(v, self._mid_of(v, vars_r["start"] + 1))
             self._click(v, self._mid_of(v, attrs["start"] + 1))
             self.assertEqual([r["kind"] for r in regions], ["vars", "attrs_in"])
@@ -1638,7 +1638,7 @@ class TestAClickGoesWhereTheThingIsAuthored(unittest.TestCase):
         v.attributesActivated.connect(attrs_seen.append)
         try:
             vars_r = [r for r in v.regions() if r["kind"] == "vars"][0]
-            line = v.document().findBlockByNumber(vars_r["start"] + 1).text()
+            line   = v.document().findBlockByNumber(vars_r["start"] + 1).text()
             text, fire = v._go_to_target(vars_r, line)
             self.assertEqual(text, "Go to Variables · board")
             fire()

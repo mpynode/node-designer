@@ -1166,9 +1166,9 @@ def generate_node_script_with_regions(py_node, *, class_name: str | None = None,
     gap("class_decl")
     if not module_code_emitted and len(L) > _zone_i:
         mark("module_zone", _zone_i, editable=True,
-             owner     = "set_methods_source",
-             label     = "module scope",
-             src_line  = _module_insert_line(methods_src, header_lines),
+             owner    = "set_methods_source",
+             label    = "module scope",
+             src_line = _module_insert_line(methods_src, header_lines),
              src_lines = 0)
     _i = len(L)
     L.append("class %s(%s):" % (class_name, base_name))

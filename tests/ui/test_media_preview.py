@@ -106,7 +106,7 @@ class TestAudioDetection(unittest.TestCase):
         from mpynode.ui.widgets.image_preview import _looks_like_wav_bytes
 
         self.assertFalse(_looks_like_wav_bytes(_PNG_BYTES))
-        self.assertFalse(_looks_like_wav_bytes(b"\x80" * 100))   # raw PCM
+        self.assertFalse(_looks_like_wav_bytes(b"\x80" * 100))    # raw PCM
         self.assertFalse(_looks_like_wav_bytes(b"RIFF1234WEBP"))  # webp, not wav
         self.assertFalse(_looks_like_wav_bytes(b"abc"))           # too short
         self.assertFalse(_looks_like_wav_bytes("not bytes"))
@@ -169,10 +169,10 @@ class TestAudioDecode(unittest.TestCase):
 
         # 2 stereo frames: L/R int16 little-endian.
         frames = np.array([[10000, -10000], [0, 0]], dtype="<i2").tobytes()
-        wav = _make_wav(frames, rate=44100, sampwidth=2, nch=2)
+        wav    = _make_wav(frames, rate=44100, sampwidth=2, nch=2)
         samples, rate = decode_audio(wav)
         self.assertEqual(rate, 44100)
-        self.assertEqual(samples.shape[0], 2)         # mono mix, 2 frames
+        self.assertEqual(samples.shape[0], 2)                     # mono mix, 2 frames
         self.assertAlmostEqual(float(samples[0]), 0.0, places=2)  # L+R cancel
 
     def test_waveform_envelope(self):
@@ -203,10 +203,10 @@ class TestWavSynthesis(unittest.TestCase):
         pcm = bytes([0, 64, 128, 192, 255])
         out = synthesize_wav_bytes(pcm, rate=22050)
         with wave.open(io.BytesIO(out), "rb") as w:
-            self.assertEqual(w.getnchannels(), 1)
-            self.assertEqual(w.getsampwidth(), 1)
-            self.assertEqual(w.getframerate(), 22050)
-            self.assertEqual(w.getnframes(), len(pcm))
+            self.assertEqual(w.getnchannels(),       1)
+            self.assertEqual(w.getsampwidth(),       1)
+            self.assertEqual(w.getframerate(),       22050)
+            self.assertEqual(w.getnframes(),         len(pcm))
             self.assertEqual(w.readframes(len(pcm)), pcm)
 
     def test_synthesize_passes_through_real_wav(self):
@@ -223,24 +223,24 @@ class TestWavSynthesis(unittest.TestCase):
 # Synthetic compressed-audio blobs: magic bytes only. The content need not
 # decode; what matters is container recognition and that a compressed blob
 # never falls through to the uint8 raw-PCM path.
-_MP3_ID3 = b"ID3\x04\x00\x00\x00\x00\x00\x00" + b"\x00" * 64 + b"\xff\xfb\x90\x00"
+_MP3_ID3  = b"ID3\x04\x00\x00\x00\x00\x00\x00" + b"\x00" * 64 + b"\xff\xfb\x90\x00"
 _MP3_SYNC = b"\xff\xfb\x90\x00" + b"\x00" * 64
-_OGG = b"OggS\x00\x02" + b"\x00" * 64
-_FLAC = b"fLaC\x00\x00\x00\x22" + b"\x00" * 64
-_AIFF = b"FORM\x00\x00\x00\x20AIFF" + b"\x00" * 32
-_M4A = b"\x00\x00\x00\x18ftypM4A \x00\x00\x00\x00" + b"\x00" * 32
+_OGG      = b"OggS\x00\x02" + b"\x00" * 64
+_FLAC     = b"fLaC\x00\x00\x00\x22" + b"\x00" * 64
+_AIFF     = b"FORM\x00\x00\x00\x20AIFF" + b"\x00" * 32
+_M4A      = b"\x00\x00\x00\x18ftypM4A \x00\x00\x00\x00" + b"\x00" * 32
 
 
 class TestCompressedAudioDetection(unittest.TestCase):
     def test_container_kind_recognizes_compressed_formats(self):
         from mpynode.ui.widgets.image_preview import _audio_container_kind
 
-        self.assertEqual(_audio_container_kind(_MP3_ID3), "MP3")
+        self.assertEqual(_audio_container_kind(_MP3_ID3),  "MP3")
         self.assertEqual(_audio_container_kind(_MP3_SYNC), "MP3")
-        self.assertEqual(_audio_container_kind(_OGG), "OGG")
-        self.assertEqual(_audio_container_kind(_FLAC), "FLAC")
-        self.assertEqual(_audio_container_kind(_AIFF), "AIFF")
-        self.assertEqual(_audio_container_kind(_M4A), "M4A")
+        self.assertEqual(_audio_container_kind(_OGG),      "OGG")
+        self.assertEqual(_audio_container_kind(_FLAC),     "FLAC")
+        self.assertEqual(_audio_container_kind(_AIFF),     "AIFF")
+        self.assertEqual(_audio_container_kind(_M4A),      "M4A")
         # WAV is still recognized (as its own kind), raw PCM is not a container
         self.assertEqual(_audio_container_kind(_make_wav(bytes([1, 2, 3]))), "WAV")
         self.assertIsNone(_audio_container_kind(b"\x80\x80\x81" * 10))
@@ -308,7 +308,7 @@ class TestWaveformRender(unittest.TestCase):
         from mpynode.ui.widgets.image_preview import render_waveform_pixmap
 
         wav = _make_wav(bytes(list(range(256)) * 4), rate=22050)
-        pm = render_waveform_pixmap(wav, 200, 60)
+        pm  = render_waveform_pixmap(wav, 200, 60)
         self.assertIsNotNone(pm)
         self.assertFalse(pm.isNull())
         self.assertEqual(pm.width(), 200)
@@ -318,7 +318,7 @@ class TestWaveformRender(unittest.TestCase):
         from mpynode.ui.widgets.image_preview import render_waveform_pixmap
 
         pcm = bytes(list(range(256)) * 8)
-        pm = render_waveform_pixmap(pcm, 128, 32)
+        pm  = render_waveform_pixmap(pcm, 128, 32)
         self.assertIsNotNone(pm)
         self.assertFalse(pm.isNull())
 
@@ -469,10 +469,10 @@ class TestViewModeWiring(unittest.TestCase):
         tree, item = self._item()
         ip.attach_value(item, 1, pcm_str, "pcm")
         self.assertTrue(ip.is_audio_item(item, 1))
-        self.assertFalse(ip.is_showing_waveform(item, 1))    # manual opt-in
-        self.assertTrue(ip.toggle_waveform_view(item, 1))    # -> waveform
+        self.assertFalse(ip.is_showing_waveform(item, 1))   # manual opt-in
+        self.assertTrue(ip.toggle_waveform_view(item, 1))   # -> waveform
         self.assertTrue(ip.is_showing_waveform(item, 1))
-        self.assertFalse(ip.toggle_waveform_view(item, 1))   # -> source
+        self.assertFalse(ip.toggle_waveform_view(item, 1))  # -> source
 
     def test_wav_as_str_auto_defaults_to_waveform_when_pref_on(self):
         # a legacy WAV stored as a bytes-as-str auto-renders just like WAV bytes.
@@ -609,10 +609,10 @@ class TestDelegateTextSuppression(unittest.TestCase):
         ip.attach_value(item, 1, _GIF_BYTES, "gif")
         ip.set_image_view(item, 1, True)
         preferences.set_pref("variables_animate_gif", True)
-        ip.refresh_media_widget(tree, item, 1, None)   # installs MediaCell
-        self.assertIsNotNone(tree.itemWidget(item, 1))  # guard: overlay present
+        ip.refresh_media_widget(tree, item, 1, None)              # installs MediaCell
+        self.assertIsNotNone(tree.itemWidget(item, 1))            # guard: overlay present
         delegate = ip.ImagePreviewDelegate(tree, 1)
-        index = tree.indexFromItem(item, 1)
+        index    = tree.indexFromItem(item, 1)
         return delegate, index
 
     def test_media_row_blanks_display_text(self):
@@ -646,11 +646,11 @@ class TestDelegateTextSuppression(unittest.TestCase):
         item.setText(1, "<PIL.JpegImagePlugin.JpegImageFile ...>")  # the repr
         pm = QPixmap(32, 24)
         pm.fill(Qt.red)
-        item.setData(1, ip.PREVIEW_ROLE, pm)        # static master pixmap
-        item.setData(1, ip.SHOW_IMAGE_ROLE, True)   # IMAGE view, delegate-painted
-        self.assertIsNone(tree.itemWidget(item, 1))   # static -> no overlay widget
+        item.setData(1, ip.PREVIEW_ROLE, pm)         # static master pixmap
+        item.setData(1, ip.SHOW_IMAGE_ROLE, True)    # IMAGE view, delegate-painted
+        self.assertIsNone(tree.itemWidget(item, 1))  # static -> no overlay widget
         delegate = ip.ImagePreviewDelegate(tree, 1)
-        index = tree.indexFromItem(item, 1)
+        index    = tree.indexFromItem(item, 1)
         self.assertIsNotNone(delegate._image_pixmap(index))  # guard: pixmap present
         opt = QStyleOptionViewItem()
         delegate.initStyleOption(opt, index)
@@ -676,9 +676,9 @@ class _FakePlayer:
     lifecycle can be exercised with no QtMultimedia / audio device."""
 
     def __init__(self):
-        self.stopped = 0
-        self.deleted = 0
-        self.played = 0
+        self.stopped  = 0
+        self.deleted  = 0
+        self.played   = 0
         self.position = None
 
     def setPosition(self, ms):
@@ -737,7 +737,7 @@ class TestPlaybackGracefulDegradation(unittest.TestCase):
     def test_make_audio_player_none_when_multimedia_absent(self):
         from mpynode.ui import qt_wrapper
 
-        orig = qt_wrapper.HAS_QT_MULTIMEDIA
+        orig                         = qt_wrapper.HAS_QT_MULTIMEDIA
         qt_wrapper.HAS_QT_MULTIMEDIA = False
         try:
             self.assertIsNone(qt_wrapper.make_audio_player("/tmp/none.wav"))
@@ -753,7 +753,7 @@ class TestPlaybackGracefulDegradation(unittest.TestCase):
         def _boom(*a, **k):
             raise RuntimeError("no audio backend")
 
-        orig = qt_wrapper.QMediaPlayer
+        orig                    = qt_wrapper.QMediaPlayer
         qt_wrapper.QMediaPlayer = _boom
         try:
             self.assertIsNone(qt_wrapper.make_audio_player("/tmp/none.wav"))
@@ -783,16 +783,16 @@ class TestPlaybackGracefulDegradation(unittest.TestCase):
             def fromLocalFile(p):
                 raise RuntimeError("url fail after player built")
 
-        orig_qmp = qt_wrapper.QMediaPlayer
-        orig_url = qt_wrapper.QUrl
+        orig_qmp                = qt_wrapper.QMediaPlayer
+        orig_url                = qt_wrapper.QUrl
         qt_wrapper.QMediaPlayer = _FakeQMP
-        qt_wrapper.QUrl = _FakeQUrl
+        qt_wrapper.QUrl         = _FakeQUrl
         try:
             self.assertIsNone(qt_wrapper.make_audio_player("/tmp/none.wav"))
             self.assertEqual(len(deleted), 1)   # half-built player released
         finally:
             qt_wrapper.QMediaPlayer = orig_qmp
-            qt_wrapper.QUrl = orig_url
+            qt_wrapper.QUrl         = orig_url
 
     def test_play_noop_and_no_temp_leak_when_backend_fails(self):
         from mpynode.ui import qt_wrapper
@@ -805,14 +805,14 @@ class TestPlaybackGracefulDegradation(unittest.TestCase):
             raise RuntimeError("no audio backend")
 
         before = _wave_temps()
-        orig = qt_wrapper.QMediaPlayer
+        orig   = qt_wrapper.QMediaPlayer
         qt_wrapper.QMediaPlayer = _boom
         wp = ip.WaveformPlayer(None)
         try:
             wp.play(_make_wav(bytes([0, 128, 255]) * 50), 22050, 0.0)  # no raise
             self.assertIsNone(wp._player)
             self.assertIsNone(wp._tmp_path)
-            self.assertEqual(_wave_temps() - before, set())   # no leaked temp
+            self.assertEqual(_wave_temps() - before, set())            # no leaked temp
         finally:
             qt_wrapper.QMediaPlayer = orig
             wp.dispose()
@@ -834,7 +834,7 @@ class TestPlayerLifecycle(unittest.TestCase):
             made.append((p, path))
             return p
 
-        orig = qt_wrapper.make_audio_player
+        orig                         = qt_wrapper.make_audio_player
         qt_wrapper.make_audio_player = _fake
         self.addCleanup(setattr, qt_wrapper, "make_audio_player", orig)
         wp = ip.WaveformPlayer(None)
@@ -857,14 +857,14 @@ class TestPlayerLifecycle(unittest.TestCase):
         old = made[0][0]
         wp.play(_make_wav(bytes([10, 90, 200]) * 40), 22050, 0.0)  # new sig
         self.assertEqual(len(made), 2)
-        self.assertGreaterEqual(old.deleted, 1)      # superseded -> released
+        self.assertGreaterEqual(old.deleted, 1)                    # superseded -> released
         self.assertIsNot(wp._player, old)
         wp.dispose()
 
     def test_dispose_releases_player_and_temp(self):
         wp, made = self._played_wp(_make_wav(bytes([0, 128, 255]) * 40))
         player = made[0][0]
-        tmp = wp._tmp_path
+        tmp    = wp._tmp_path
         self.assertTrue(tmp and os.path.exists(tmp))
         wp.dispose()
         self.assertGreaterEqual(player.stopped, 1)
@@ -911,10 +911,10 @@ class TestMediaCleanupHelper(unittest.TestCase):
         cell = tree.itemWidget(item, 1)
         self.assertIsInstance(cell, ip.MediaCell)
         self.assertEqual(cell._mode, "movie")
-        self.assertIsNotNone(cell._movie)             # running
+        self.assertIsNotNone(cell._movie)            # running
         ip.cleanup_media_widgets(tree)
-        self.assertIsNone(cell._movie)                # stopped via cleanup()
-        self.assertIsNone(tree.itemWidget(item, 1))   # widget removed
+        self.assertIsNone(cell._movie)               # stopped via cleanup()
+        self.assertIsNone(tree.itemWidget(item, 1))  # widget removed
 
     def test_helper_walks_subtree_root(self):
         from mpynode.ui.qt_wrapper import QTreeWidgetItem
@@ -941,8 +941,8 @@ class TestValueSigInterior(unittest.TestCase):
 
         head = b"\x00" * 16
         tail = b"\xff" * 16
-        a = head + (b"\x01" * 100) + tail
-        b = head + (b"\x02" * 100) + tail   # same len, same head/tail
+        a    = head + (b"\x01" * 100) + tail
+        b    = head + (b"\x02" * 100) + tail   # same len, same head/tail
         self.assertNotEqual(_value_sig(a), _value_sig(b))
 
     def test_stable_for_same_bytes(self):
@@ -961,7 +961,7 @@ class TestDecodeBitDepths(unittest.TestCase):
         from mpynode.ui.widgets.image_preview import decode_audio
 
         frames = _pack_int24_le([0x7FFFFF, -0x800000, 0, 0x400000])
-        wav = _make_wav(frames, rate=22050, sampwidth=3, nch=1)
+        wav    = _make_wav(frames, rate=22050, sampwidth=3, nch=1)
         samples, rate = decode_audio(wav)
         self.assertEqual(rate, 22050)
         self.assertGreater(samples.size, 0)
@@ -977,7 +977,7 @@ class TestDecodeBitDepths(unittest.TestCase):
         from mpynode.ui.widgets.image_preview import decode_audio
 
         frames = struct.pack("<4h", 0, 32767, -32768, 16384)
-        wav = _make_wav(frames, rate=8000, sampwidth=2, nch=1)
+        wav    = _make_wav(frames, rate=8000, sampwidth=2, nch=1)
         samples, rate = decode_audio(wav)
         self.assertEqual(rate, 8000)
         self.assertAlmostEqual(float(samples.max()), 1.0, places=2)
@@ -1164,9 +1164,9 @@ class TestLegacyPcmStr(unittest.TestCase):
         # a short blob is never audio, and a large printable str is text.
         from mpynode.ui.widgets.image_preview import _looks_like_binary_str
 
-        self.assertFalse(_looks_like_binary_str("\x80\x81\x82"))   # too short
-        self.assertTrue(_looks_like_binary_str("\x80" * 64))       # large binary
-        self.assertFalse(_looks_like_binary_str("a" * 64))         # large text
+        self.assertFalse(_looks_like_binary_str("\x80\x81\x82"))  # too short
+        self.assertTrue(_looks_like_binary_str("\x80" * 64))      # large binary
+        self.assertFalse(_looks_like_binary_str("a" * 64))        # large text
 
     @unittest.skipIf(np is None, "numpy unavailable")
     def test_decode_binary_str_matches_bytes(self):
@@ -1189,9 +1189,9 @@ class TestLegacyPcmStr(unittest.TestCase):
         out = synthesize_wav_bytes(pcm.decode("latin-1"), rate=22050)
         self.assertEqual(bytes(out[:4]), b"RIFF")
         with wave.open(io.BytesIO(out), "rb") as w:
-            self.assertEqual(w.getnchannels(), 1)
-            self.assertEqual(w.getsampwidth(), 1)
-            self.assertEqual(w.getnframes(), len(pcm))
+            self.assertEqual(w.getnchannels(),       1)
+            self.assertEqual(w.getsampwidth(),       1)
+            self.assertEqual(w.getnframes(),         len(pcm))
             self.assertEqual(w.readframes(len(pcm)), pcm)
 
     def test_value_sig_binary_str_matches_bytes(self):

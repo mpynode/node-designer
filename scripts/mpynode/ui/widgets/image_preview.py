@@ -51,11 +51,11 @@ from mpynode.ui.qt_wrapper import (
 )
 
 # Private item-data roles.
-PREVIEW_ROLE = int(Qt.UserRole) + 137      # master QPixmap (lazy)
-SHOW_IMAGE_ROLE = int(Qt.UserRole) + 138   # bool: render as image vs text
-PREVIEWABLE_ROLE = int(Qt.UserRole) + 139  # "pil" / "bytes" / "uint8"
-RAW_VALUE_ROLE = int(Qt.UserRole) + 140    # the original value (lazy build)
-SHOW_WAVEFORM_ROLE = int(Qt.UserRole) + 141   # bool: render bytes as a waveform
+PREVIEW_ROLE         = int(Qt.UserRole) + 137  # master QPixmap (lazy)
+SHOW_IMAGE_ROLE      = int(Qt.UserRole) + 138  # bool: render as image vs text
+PREVIEWABLE_ROLE     = int(Qt.UserRole) + 139  # "pil" / "bytes" / "uint8"
+RAW_VALUE_ROLE       = int(Qt.UserRole) + 140  # the original value (lazy build)
+SHOW_WAVEFORM_ROLE   = int(Qt.UserRole) + 141  # bool: render bytes as a waveform
 AUDIO_CANDIDATE_ROLE = int(Qt.UserRole) + 142  # bool: bytes could be WAV/PCM audio
 
 # Clamp so an extreme aspect / column width can't make a giant row.
@@ -484,10 +484,10 @@ def decode_audio(value, default_rate: int = _DEFAULT_PCM_RATE):
             import wave
 
             with wave.open(io.BytesIO(b), "rb") as w:
-                nch = w.getnchannels()
-                sw = w.getsampwidth()
+                nch  = w.getnchannels()
+                sw   = w.getsampwidth()
                 rate = w.getframerate()
-                raw = w.readframes(w.getnframes())
+                raw  = w.readframes(w.getnframes())
             if sw == 1:  # unsigned 8-bit
                 a = (np.frombuffer(raw, dtype=np.uint8).astype(np.float32)
                      - 128.0) / 128.0
@@ -496,12 +496,12 @@ def decode_audio(value, default_rate: int = _DEFAULT_PCM_RATE):
                 a = (np.frombuffer(raw[:usable], dtype="<i2")
                      .astype(np.float32) / 32768.0)
             elif sw == 3:  # signed little-endian 24-bit
-                u = np.frombuffer(raw, dtype=np.uint8)
+                u      = np.frombuffer(raw, dtype=np.uint8)
                 usable = (u.size // 3) * 3
-                u = u[:usable].reshape(-1, 3).astype(np.int32)
-                val = u[:, 0] | (u[:, 1] << 8) | (u[:, 2] << 16)
-                val = np.where(val >= (1 << 23), val - (1 << 24), val)
-                a = val.astype(np.float32) / float(1 << 23)
+                u      = u[:usable].reshape(-1, 3).astype(np.int32)
+                val    = u[:, 0] | (u[:, 1] << 8) | (u[:, 2] << 16)
+                val    = np.where(val >= (1 << 23), val - (1 << 24), val)
+                a      = val.astype(np.float32) / float(1 << 23)
             elif sw == 4:
                 usable = (len(raw) // 4) * 4
                 a = (np.frombuffer(raw[:usable], dtype="<i4")
@@ -511,7 +511,7 @@ def decode_audio(value, default_rate: int = _DEFAULT_PCM_RATE):
                      - 128.0) / 128.0
             if nch > 1 and a.size:
                 usable = (a.size // nch) * nch
-                a = a[:usable].reshape(-1, nch).mean(axis=1)
+                a      = a[:usable].reshape(-1, nch).mean(axis=1)
             return a.astype(np.float32), int(rate)
         # Compressed containers go through QAudioDecoder. On failure / a
         # missing codec that returns an EMPTY array (a clean blank strip),
@@ -562,13 +562,13 @@ def _decode_compressed_audio(b, kind, default_rate):
                  .astype(np.float32) / 2147483648.0)
         elif sf == "float32":
             usable = (len(pcm) // 4) * 4
-            a = np.frombuffer(pcm[:usable], dtype="<f4").astype(np.float32)
+            a      = np.frombuffer(pcm[:usable], dtype="<f4").astype(np.float32)
         else:
             return np.zeros(0, dtype=np.float32), int(rate or default_rate)
         ch = int(ch or 1)
         if ch > 1 and a.size:
             usable = (a.size // ch) * ch
-            a = a[:usable].reshape(-1, ch).mean(axis=1)
+            a      = a[:usable].reshape(-1, ch).mean(axis=1)
         return a.astype(np.float32), int(rate or default_rate)
     except Exception:
         return np.zeros(0, dtype=np.float32), int(rate or default_rate)
@@ -587,14 +587,14 @@ def waveform_envelope(samples, n_cols: int):
     if n == 0 or n_cols <= 0:
         empty = np.zeros(0, dtype=np.float32)
         return empty, empty
-    cols = min(int(n_cols), n)
+    cols  = min(int(n_cols), n)
     edges = np.linspace(0, n, cols + 1).astype(int)
-    mins = np.empty(cols, dtype=np.float32)
-    maxs = np.empty(cols, dtype=np.float32)
+    mins  = np.empty(cols, dtype=np.float32)
+    maxs  = np.empty(cols, dtype=np.float32)
     for i in range(cols):
-        a = edges[i]
-        b = max(edges[i] + 1, edges[i + 1])
-        chunk = s[a:b]
+        a       = edges[i]
+        b       = max(edges[i] + 1, edges[i + 1])
+        chunk   = s[a:b]
         mins[i] = float(chunk.min())
         maxs[i] = float(chunk.max())
     return mins, maxs
@@ -604,9 +604,9 @@ def waveform_envelope(samples, n_cols: int):
 # paint time. Wide:short, so the row is a strip rather than a block.
 _WAVE_SRC_W = 512
 _WAVE_SRC_H = 128
-_WAVE_BG = (43, 43, 43)        # Maya dark-theme cell background
-_WAVE_FG = (120, 190, 240)     # soft blue trace
-_WAVE_MID = (90, 90, 90)       # center (zero) line
+_WAVE_BG    = (43, 43, 43)     # Maya dark-theme cell background
+_WAVE_FG    = (120, 190, 240)  # soft blue trace
+_WAVE_MID   = (90, 90, 90)     # center (zero) line
 
 
 def render_waveform_pixmap(value, width: int = _WAVE_SRC_W,
@@ -615,9 +615,9 @@ def render_waveform_pixmap(value, width: int = _WAVE_SRC_W,
     """Render an audio byte blob to a waveform ``QPixmap`` (peak-to-peak
     envelope drawn with QPainter). Never mutates the source value; returns a
     blank-but-valid pixmap if the audio can't be decoded."""
-    width = max(1, int(width))
+    width  = max(1, int(width))
     height = max(1, int(height))
-    pm = QPixmap(width, height)
+    pm     = QPixmap(width, height)
     pm.fill(QColor(*_WAVE_BG))
     try:
         samples, _rate = decode_audio(value, default_rate)
@@ -633,8 +633,8 @@ def render_waveform_pixmap(value, width: int = _WAVE_SRC_W,
                 cols = len(mins)
                 for x in range(cols):
                     # Clamp to [-1, 1], then map to pixel rows (y grows down).
-                    hi = max(-1.0, min(1.0, float(maxs[x])))
-                    lo = max(-1.0, min(1.0, float(mins[x])))
+                    hi    = max(-1.0, min(1.0, float(maxs[x])))
+                    lo    = max(-1.0, min(1.0, float(mins[x])))
                     y_top = int(round(mid - hi * mid))
                     y_bot = int(round(mid - lo * mid))
                     if y_top == y_bot:
@@ -679,9 +679,9 @@ def _playable_audio_file(value, rate: int = _DEFAULT_PCM_RATE):
     its real extension so QMediaPlayer picks the right native decoder -- MP3 in
     particular only plays when the temp file is named ``.mp3``, not ``.wav``.
     Headerless raw PCM is wrapped into a minimal WAV."""
-    b = _as_audio_bytes(value)
+    b    = _as_audio_bytes(value)
     kind = _audio_container_kind(b) if b is not None else None
-    ext = _AUDIO_EXT.get(kind)
+    ext  = _AUDIO_EXT.get(kind)
     if ext and b is not None:
         return ext, b
     return ".wav", synthesize_wav_bytes(value, rate)
@@ -722,7 +722,7 @@ def attach_value(item, col, value, source_text: str):
         item.setToolTip(col, "Video bytes \u2014 no inline player. %d bytes."
                         % len(value))
         return None
-    kind = previewable_kind(value)
+    kind  = previewable_kind(value)
     audio = is_audio_candidate(value)
     if kind is None and not audio:
         return None
@@ -734,8 +734,8 @@ def attach_value(item, col, value, source_text: str):
     if kind == "pil":
         pm = make_preview_pixmap(value)
         if pm is not None:
-            item.setData(col, PREVIEW_ROLE, pm)
-            item.setData(col, SHOW_IMAGE_ROLE, True)
+            item.setData(col, PREVIEW_ROLE,       pm)
+            item.setData(col, SHOW_IMAGE_ROLE,    True)
             item.setData(col, SHOW_WAVEFORM_ROLE, False)
             item.setToolTip(col, image_caption(value))
             return kind
@@ -801,7 +801,7 @@ def set_image_view(item, col, show_image: bool):
         return None
     if show_image:
         value = item.data(col, RAW_VALUE_ROLE)
-        pm = make_preview_pixmap(value)
+        pm    = make_preview_pixmap(value)
         if pm is None:
             item.setData(col, SHOW_IMAGE_ROLE, False)
             return False
@@ -844,12 +844,12 @@ def set_waveform_view(item, col, show_waveform: bool):
         return None
     if show_waveform:
         value = item.data(col, RAW_VALUE_ROLE)
-        pm = render_waveform_pixmap(value)
+        pm    = render_waveform_pixmap(value)
         if pm is None or pm.isNull():
             item.setData(col, SHOW_WAVEFORM_ROLE, False)
             return False
-        item.setData(col, PREVIEW_ROLE, pm)
-        item.setData(col, SHOW_IMAGE_ROLE, False)
+        item.setData(col, PREVIEW_ROLE,       pm)
+        item.setData(col, SHOW_IMAGE_ROLE,    False)
         item.setData(col, SHOW_WAVEFORM_ROLE, True)
         try:
             item.setToolTip(col, _wave_caption(value))
@@ -872,9 +872,9 @@ def toggle_waveform_view(item, col):
 def _wave_caption(value) -> str:
     """Tooltip for a waveform cell."""
     try:
-        b = _as_audio_bytes(value) or b""
-        dur = audio_duration_ms(value) / 1000.0
-        n = len(b)
+        b    = _as_audio_bytes(value) or b""
+        dur  = audio_duration_ms(value) / 1000.0
+        n    = len(b)
         kind = _audio_container_kind(b) or "PCM"
         return ("%s audio  %.2fs  (%d bytes)\nClick to play, drag to scrub"
                 % (kind, dur, n))
@@ -924,15 +924,15 @@ class MediaCell(QLabel):
     def __init__(self, mode: str, parent=None):
         super().__init__(parent)
         self.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
-        self._mode = mode
-        self._sig = None          # _value_sig of the bytes currently shown
-        self._movie = None        # QMovie (movie mode) + GC anchor
-        self._buffer = None       # QBuffer feeding the movie (GC anchor)
-        self._bytes = None        # QByteArray backing the buffer (GC anchor)
-        self._source = None       # waveform QPixmap (waveform mode)
-        self._value = None        # raw audio bytes (waveform mode)
-        self._rate = _DEFAULT_PCM_RATE
-        self._player = None       # shared WaveformPlayer (waveform mode)
+        self._mode     = mode
+        self._sig      = None  # _value_sig of the bytes currently shown
+        self._movie    = None  # QMovie (movie mode) + GC anchor
+        self._buffer   = None  # QBuffer feeding the movie (GC anchor)
+        self._bytes    = None  # QByteArray backing the buffer (GC anchor)
+        self._source   = None  # waveform QPixmap (waveform mode)
+        self._value    = None  # raw audio bytes (waveform mode)
+        self._rate     = _DEFAULT_PCM_RATE
+        self._player   = None  # shared WaveformPlayer (waveform mode)
         self._dragging = False
 
     # -- movie mode -----------------------------------------------------
@@ -944,7 +944,7 @@ class MediaCell(QLabel):
             # last) stops first, before its buffer. Python-ref-only objects
             # could instead free the buffer while the movie timer still reads
             # it -- a use-after-free crash at GC / interpreter shutdown.
-            self._bytes = QByteArray(bytes(data))
+            self._bytes  = QByteArray(bytes(data))
             self._buffer = QBuffer(self._bytes)
             self._buffer.setParent(self)
             self._buffer.open(QBuffer.ReadOnly)
@@ -993,14 +993,14 @@ class MediaCell(QLabel):
             except Exception:
                 pass
         self._buffer = None
-        self._bytes = None
+        self._bytes  = None
 
     # -- waveform mode --------------------------------------------------
     def set_waveform(self, pixmap, value, player, rate: int = _DEFAULT_PCM_RATE):
         self._source = pixmap
-        self._value = value
+        self._value  = value
         self._player = player
-        self._rate = rate
+        self._rate   = rate
         try:
             self.setToolTip(_wave_caption(value))
         except Exception:
@@ -1079,10 +1079,10 @@ class WaveformPlayer:
     safe no-op when QtMultimedia is unavailable."""
 
     def __init__(self, parent=None):
-        self._parent = parent
-        self._player = None
-        self._tmp_path = None
-        self._cur_sig = None
+        self._parent      = parent
+        self._player      = None
+        self._tmp_path    = None
+        self._cur_sig     = None
         self._duration_ms = 0
 
     def _ensure_source(self, value, rate) -> bool:
@@ -1120,9 +1120,9 @@ class WaveformPlayer:
             except Exception:
                 pass
             return False
-        self._tmp_path = path
-        self._player = player
-        self._cur_sig = sig
+        self._tmp_path    = path
+        self._player      = player
+        self._cur_sig     = sig
         self._duration_ms = audio_duration_ms(value, rate)
         return True
 
@@ -1205,7 +1205,7 @@ def refresh_media_widget(view, item, col, player=None) -> None:
     GIF doesn't restart and a waveform isn't re-decoded every tick. Never
     raises -- it must not break a tab's row build."""
     try:
-        want = _media_mode_for(item, col)
+        want     = _media_mode_for(item, col)
         existing = view.itemWidget(item, col)
         if want is None:
             if existing is not None:
@@ -1214,7 +1214,7 @@ def refresh_media_widget(view, item, col, player=None) -> None:
                 view.removeItemWidget(item, col)
             return
         value = item.data(col, RAW_VALUE_ROLE)
-        sig = _value_sig(value)
+        sig   = _value_sig(value)
         if (isinstance(existing, MediaCell) and existing._mode == want
                 and existing._sig == sig):
             return  # already correct -- no rebuild
@@ -1227,7 +1227,7 @@ def refresh_media_widget(view, item, col, player=None) -> None:
                     existing.cleanup()
                     view.removeItemWidget(item, col)
                 return
-        cell = MediaCell(want, view)
+        cell      = MediaCell(want, view)
         cell._sig = sig
         if want == "movie":
             cell.set_movie_bytes(data)
@@ -1294,7 +1294,7 @@ class ImagePreviewDelegate(QStyledItemDelegate):
     def __init__(self, view, value_col: int, parent=None):
         super().__init__(parent or view)
         self._view = view
-        self._col = int(value_col)
+        self._col  = int(value_col)
         try:
             view.header().sectionResized.connect(self._on_section_resized)
         except Exception:
@@ -1404,11 +1404,11 @@ class ImagePreviewDelegate(QStyledItemDelegate):
             return hint
         opt = QStyleOptionViewItem(option)
         self.initStyleOption(opt, index)
-        fm = QFontMetrics(opt.font)
+        fm    = QFontMetrics(opt.font)
         avail = max(1, w - 2 * _TEXT_MARGIN)
         flags = int(Qt.TextWordWrap | Qt.AlignLeft | Qt.AlignTop)
-        rect = fm.boundingRect(QRect(0, 0, avail, 0), flags, str(text))
-        h = rect.height() + 2 * _TEXT_MARGIN
+        rect  = fm.boundingRect(QRect(0, 0, avail, 0), flags, str(text))
+        h     = rect.height() + 2 * _TEXT_MARGIN
         return QSize(hint.width(), max(hint.height(), h))
 
     # -- paint: Qt rescales the master to the cell each repaint ---------
@@ -1424,7 +1424,7 @@ class ImagePreviewDelegate(QStyledItemDelegate):
             return
         # Background / selection first; the image then covers the cell.
         super().paint(painter, option, index)
-        r = option.rect
+        r       = option.rect
         avail_w = max(1, r.width() - 2 * _PAD)
         avail_h = max(1, r.height() - 2 * _PAD)
         scaled = pm.scaled(
