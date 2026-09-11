@@ -163,16 +163,15 @@ DEFAULT_PREFS: dict[str, Any] = {
     # Editor. The family is per platform -- see default_editor_font_family().
     "editor_font_family": default_editor_font_family(),
     "editor_font_size":   10,  # in points
-    # Point sizes for the two UI areas that are NOT code editors. Split
-    # from editor_font_size because the three read at very different
-    # comfortable sizes: the editors are dense monospace, the assistant is
-    # prose, and the panels are table rows. One number for all three means
-    # whichever you tune leaves the other two wrong.
-    #   assistant -> the AI Assistant transcript + its input box
-    #   panel     -> Scene / Attributes / Variables / Framework and the
-    #                Log / Watch / Profile tabs
-    "assistant_font_size": 10,  # in points
-    "panel_font_size":     10,  # in points
+    # The ONE font for everything that is not a code editor: panels, trees,
+    # tab bars, the identity strip and the AI Assistant. Family "" = Maya's
+    # own UI font. This was two sizes (assistant + panel) once; they drifted
+    # to 20 and 15 while the icons, chips and tab bars beside them stayed
+    # put. Now every non-editor surface follows one number, the Scene tab's
+    # disc / halo / chips size from it (scene_tree.ui_metrics), and the size
+    # is capped at UI_FONT_SIZE_MAX.
+    "ui_font_family": "",
+    "ui_font_size":   10,  # in points
     # "jump to source" command; {file} and {line} are substituted with the
     # target path and 1-based line before it runs. EMPTY = auto-detect, i.e.
     # editor_launch.detect_default_editor_command() probes for an installed
@@ -441,12 +440,27 @@ def resolve_optimize_timeout() -> float:
 # anywhere else.
 FONT_SIZE_MIN = 6
 FONT_SIZE_MAX = 72
+# The UI font has a lower ceiling than the editor: a 72pt tree row is not a
+# panel anyone can use, and 15 / 20 typed into the old per-area boxes is what
+# made every panel outgrow its icons. 24pt is still 2.4x the default.
+UI_FONT_SIZE_MAX = 24
+# What the Preferences family combo shows for "" -- follow Maya's own font.
+UI_FONT_DEFAULT_LABEL = "Maya default"
 
-# UI area -> preference key. The single place that mapping exists.
+# UI area -> SIZE preference key. The single place that mapping exists.
+# "panel" and "assistant" are the historical names of the two halves of the
+# UI font; they stay as aliases so the wired widgets need not be renamed.
 FONT_AREA_KEYS = {
     "editor":    "editor_font_size",
-    "assistant": "assistant_font_size",
-    "panel":     "panel_font_size",
+    "ui":        "ui_font_size",
+    "panel":     "ui_font_size",
+    "assistant": "ui_font_size",
+}
+# Size key -> the FAMILY key that travels with it. A widget wired to an area
+# re-applies its font when either changes (font_prefs.wire_area_font).
+FONT_FAMILY_KEYS = {
+    "editor_font_size": "editor_font_family",
+    "ui_font_size":     "ui_font_family",
 }
 
 
@@ -468,22 +482,38 @@ def resolve_font_size(area: str) -> int:
         size = int(get_pref(key, fallback))
     except (TypeError, ValueError):
         return fallback
-    if size < FONT_SIZE_MIN or size > FONT_SIZE_MAX:
+    ceiling = UI_FONT_SIZE_MAX if key == "ui_font_size" else FONT_SIZE_MAX
+    if size < FONT_SIZE_MIN or size > ceiling:
         return fallback
     return size
 
 
-def area_font(area: str):
-    """QFont for a non-editor area: the app font at that area's point size.
+def resolve_ui_font_family() -> str:
+    """The UI font family to apply: the saved one when this machine has it,
+    else ``""`` -- meaning "leave the app (Maya) family alone"."""
+    try:
+        fam = str(get_pref("ui_font_family", "") or "").strip()
+    except Exception:
+        return ""
+    if not fam:
+        return ""
+    installed = installed_font_families()
+    if installed and fam not in installed:
+        return ""
+    return fam
 
-    Family is deliberately NOT a preference here. The editors get one because
-    code wants a specific monospace; a transcript and a table should follow
-    whatever Maya's theme picked, so only the size moves. Imports QFont lazily
-    to keep Qt out of module import.
-    """
+
+def area_font(area: str):
+    """QFont for a non-editor area: the UI family (Maya's own unless a saved
+    one is installed here) at that area's point size. Imports QFont lazily to
+    keep Qt out of module import."""
     from mpynode.ui.qt_wrapper import QFont
 
     font = QFont()
+    if FONT_AREA_KEYS.get(area) == "ui_font_size":
+        fam = resolve_ui_font_family()
+        if fam:
+            font.setFamily(fam)
     font.setPointSize(resolve_font_size(area))
     return font
 

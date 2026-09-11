@@ -165,33 +165,42 @@ class NDPreferencesDialog(QDialog):
         # ---- New Nodes ---------------------------------------------------
         # --- Fonts -------------------------------------------------------
         # The editor size stays on the Editor page beside its family, where it
-        # has always been -- moving it would break the seven tests that drive
-        # _font_size_edit, for no gain. These are the two areas that had no
-        # control at all.
+        # has always been. Everything ELSE -- panels, trees, tab bars, the
+        # identity strip, the AI Assistant -- follows one UI font, family and
+        # size, from this page. (Two separate sizes lived here once; they
+        # drifted to 20 and 15 while the icons and tab bars beside them stayed
+        # put.)
         fo         = self._add_page("Fonts")
         fonts_grid = QGridLayout()
         fonts_grid.setVerticalSpacing(4)
         fonts_grid.setHorizontalSpacing(6)
-        fonts_grid.addWidget(QLabel("AI Assistant size (pt):"), 0, 0)
-        self._assistant_font_size_edit = QLineEdit()
-        self._assistant_font_size_edit.setMaximumWidth(80)
-        self._assistant_font_size_edit.setToolTip(
-            "Transcript and the prompt box. %d-%d." % (
-                preferences.FONT_SIZE_MIN, preferences.FONT_SIZE_MAX))
-        fonts_grid.addWidget(self._assistant_font_size_edit, 0, 1,
+        fonts_grid.addWidget(QLabel("UI font family:"), 0, 0)
+        self._ui_font_family_combo = QComboBox()
+        # "Maya default" first: the empty preference, i.e. follow Maya's own
+        # UI font. Then every family this machine can render -- not only
+        # fixed-pitch ones; a panel is prose and table rows, not code.
+        self._ui_font_family_combo.addItem(preferences.UI_FONT_DEFAULT_LABEL)
+        for fam in preferences.installed_font_families():
+            self._ui_font_family_combo.addItem(fam)
+        self._ui_font_family_combo.setToolTip(
+            "Panels, trees, tab bars, the identity strip and the AI "
+            "Assistant. '%s' follows Maya's own UI font."
+            % preferences.UI_FONT_DEFAULT_LABEL)
+        fonts_grid.addWidget(self._ui_font_family_combo, 0, 1)
+        fonts_grid.addWidget(QLabel("UI font size (pt):"), 1, 0)
+        self._ui_font_size_edit = QLineEdit()
+        self._ui_font_size_edit.setMaximumWidth(80)
+        self._ui_font_size_edit.setToolTip(
+            "%d-%d. The Scene tab's type discs and C++ / pause chips scale "
+            "with it." % (preferences.FONT_SIZE_MIN,
+                          preferences.UI_FONT_SIZE_MAX))
+        fonts_grid.addWidget(self._ui_font_size_edit, 1, 1,
                              alignment=Qt.AlignLeft)
-        fonts_grid.addWidget(QLabel("Panels size (pt):"), 1, 0)
-        self._panel_font_size_edit = QLineEdit()
-        self._panel_font_size_edit.setMaximumWidth(80)
-        self._panel_font_size_edit.setToolTip(
-            "Scene, Attributes, Variables, Framework, Log, Watch and Profile. "
-            "%d-%d." % (preferences.FONT_SIZE_MIN, preferences.FONT_SIZE_MAX))
-        fonts_grid.addWidget(self._panel_font_size_edit, 1, 1,
-                             alignment=Qt.AlignLeft)
+        fonts_grid.setColumnStretch(1, 1)
         fo.addLayout(fonts_grid)
         _fonts_note = QLabel(
             "Applies immediately — no restart. The code editors have their "
-            "own size (and family) on the Editor page.")
+            "own family and size on the Editor page.")
         _fonts_note.setWordWrap(True)
         fo.addWidget(_fonts_note)
         fo.addStretch(1)
@@ -614,10 +623,10 @@ class NDPreferencesDialog(QDialog):
 
         self._font_size_edit.setText(str(preferences.get_pref("editor_font_size", 10)))
 
-        self._assistant_font_size_edit.setText(
-            str(preferences.get_pref("assistant_font_size", 10)))
-        self._panel_font_size_edit.setText(
-            str(preferences.get_pref("panel_font_size", 10)))
+        _ui_fam = preferences.resolve_ui_font_family()
+        _ui_idx = self._ui_font_family_combo.findText(_ui_fam) if _ui_fam else 0
+        self._ui_font_family_combo.setCurrentIndex(max(0, _ui_idx))
+        self._ui_font_size_edit.setText(str(preferences.resolve_font_size("ui")))
 
 
         # Empty = auto-detect. Show what auto-detect resolves to as placeholder
@@ -946,16 +955,20 @@ class NDPreferencesDialog(QDialog):
         preferences.set_pref("optimize_timeout_seconds", _opt_secs)
         # Clamp rather than refuse: the editor size above hard-blocks Save with
         # a messagebox, but that idiom is the outlier in this dialog and a font
-        # size is not worth blocking a whole Save over.
-        for _edit, _key in ((self._assistant_font_size_edit, "assistant_font_size"),
-                            (self._panel_font_size_edit, "panel_font_size")):
-            try:
-                _fs = int(_edit.text().strip())
-            except ValueError:
-                _fs = preferences.DEFAULT_PREFS[_key]
-            _fs = max(preferences.FONT_SIZE_MIN,
-                      min(_fs, preferences.FONT_SIZE_MAX))
-            preferences.set_pref(_key, _fs)
+        # size is not worth blocking a whole Save over. The UI ceiling is the
+        # lower UI_FONT_SIZE_MAX -- see preferences.py.
+        try:
+            _fs = int(self._ui_font_size_edit.text().strip())
+        except ValueError:
+            _fs = preferences.DEFAULT_PREFS["ui_font_size"]
+        _fs  = max(preferences.FONT_SIZE_MIN,
+                   min(_fs, preferences.UI_FONT_SIZE_MAX))
+        _fam = self._ui_font_family_combo.currentText().strip()
+        if (self._ui_font_family_combo.currentIndex() <= 0
+                or _fam == preferences.UI_FONT_DEFAULT_LABEL):
+            _fam = ""
+        preferences.set_pref("ui_font_family", _fam)
+        preferences.set_pref("ui_font_size", _fs)
 
         try:
             _opt_tok = int(self._optimize_max_tokens_edit.text().strip())

@@ -57,16 +57,18 @@ def wire_area_font(widget, area: str, on_change=None, rel: float = 1.0) -> None:
     Best-effort throughout: a UI that cannot subscribe should still open with
     the right font rather than refuse to build.
     """
-    from mpynode.ui.preferences import FONT_AREA_KEYS
+    from mpynode.ui.preferences import FONT_AREA_KEYS, FONT_FAMILY_KEYS
 
-    key = FONT_AREA_KEYS[area]
+    key  = FONT_AREA_KEYS[area]
+    keys = (key, FONT_FAMILY_KEYS.get(key))
     apply_area_font(widget, area, rel)
 
-    def _listener(changed_key, _value, _key=key, _w=widget, _cb=on_change,
+    def _listener(changed_key, _value, _keys=keys, _w=widget, _cb=on_change,
                   _rel=rel):
-        # Only this area's key. A panel must not reflow because the editor
-        # font moved -- that was the whole point of splitting them.
-        if changed_key != _key:
+        # Only this area's size key and its family key. A panel must not
+        # reflow because the editor font moved -- that was the whole point of
+        # keeping the editor apart.
+        if changed_key not in _keys:
             return
         try:
             apply_area_font(_w, area, _rel)

@@ -1,8 +1,9 @@
-"""Per-area font sizes: the resolver, the wiring helper, and the transcript.
+"""The UI font: the resolver, the wiring helper, and the transcript.
 
-Three UI areas read three separate point sizes -- ``editor``, ``assistant`` and
-``panel``. The interesting cases are not "does setFont work" but the three
-places a naive implementation silently does nothing:
+Two fonts: ``editor`` (its own family + size, untouched here) and ``ui`` --
+one family + size for every non-editor surface, which the historical areas
+``panel`` and ``assistant`` alias. The interesting cases are not "does setFont
+work" but the three places a naive implementation silently does nothing:
 
   * a per-item font (Variables/Watch value columns) overrides the view font, so
     it needs the size applied too;
@@ -50,46 +51,84 @@ class TestResolveFontSize(unittest.TestCase):
 
     def test_every_area_has_a_key(self):
         self.assertEqual(sorted(self.P.FONT_AREA_KEYS),
-                         ["assistant", "editor", "panel"])
+                         ["assistant", "editor", "panel", "ui"])
         for key in self.P.FONT_AREA_KEYS.values():
             self.assertIn(key, self.P.DEFAULT_PREFS, key)
+        # panel and assistant are the two halves of the ONE UI font.
+        self.assertEqual(self.P.FONT_AREA_KEYS["panel"], "ui_font_size")
+        self.assertEqual(self.P.FONT_AREA_KEYS["assistant"], "ui_font_size")
 
     def test_bounds_are_accepted(self):
-        for size in (self.P.FONT_SIZE_MIN, 14, self.P.FONT_SIZE_MAX):
-            self.P.set_pref("panel_font_size", size)
+        for size in (self.P.FONT_SIZE_MIN, 14, self.P.UI_FONT_SIZE_MAX):
+            self.P.set_pref("ui_font_size", size)
             self.assertEqual(self.P.resolve_font_size("panel"), size)
+        # The editor keeps the wide range.
+        self.P.set_pref("editor_font_size", self.P.FONT_SIZE_MAX)
+        self.assertEqual(self.P.resolve_font_size("editor"), self.P.FONT_SIZE_MAX)
 
     def test_out_of_range_falls_back_to_the_default(self):
-        default = self.P.DEFAULT_PREFS["panel_font_size"]
-        for size in (0, self.P.FONT_SIZE_MIN - 1, self.P.FONT_SIZE_MAX + 1, 9999):
-            self.P.set_pref("panel_font_size", size)
+        default = self.P.DEFAULT_PREFS["ui_font_size"]
+        for size in (0, self.P.FONT_SIZE_MIN - 1, self.P.UI_FONT_SIZE_MAX + 1,
+                     self.P.FONT_SIZE_MAX, 9999):
+            self.P.set_pref("ui_font_size", size)
             self.assertEqual(self.P.resolve_font_size("panel"), default, size)
 
     def test_garbage_falls_back_rather_than_raising(self):
         # This runs during widget construction; an exception would take the
         # whole panel down.
-        default = self.P.DEFAULT_PREFS["panel_font_size"]
+        default = self.P.DEFAULT_PREFS["ui_font_size"]
         for junk in ("not a number", None, [], {}):
-            self.P.set_pref("panel_font_size", junk)
+            self.P.set_pref("ui_font_size", junk)
             self.assertEqual(self.P.resolve_font_size("panel"), default, junk)
 
     def test_a_numeric_string_is_accepted(self):
         # The dialog stores an int, but a hand-edited preferences.json is a
         # supported way in.
-        self.P.set_pref("panel_font_size", "18")
+        self.P.set_pref("ui_font_size", "18")
         self.assertEqual(self.P.resolve_font_size("panel"), 18)
 
     def test_unknown_area_raises(self):
         with self.assertRaises(KeyError):
             self.P.resolve_font_size("sidebar")
 
-    def test_the_areas_are_independent(self):
+    def test_the_editor_is_independent_and_the_ui_is_one(self):
         self.P.set_pref("editor_font_size", 20)
-        self.P.set_pref("assistant_font_size", 12)
-        self.P.set_pref("panel_font_size", 8)
+        self.P.set_pref("ui_font_size", 8)
         self.assertEqual(
-            [self.P.resolve_font_size(a) for a in ("editor", "assistant", "panel")],
-            [20, 12, 8])
+            [self.P.resolve_font_size(a) for a in ("editor", "ui", "assistant", "panel")],
+            [20, 8, 8, 8])
+
+    def test_the_retired_per_area_sizes_change_nothing(self):
+        # A preferences.json from before the merge still carries these. They
+        # are exactly the values that ran away (15 / 20 while icons stayed
+        # 16 px), so they must not be read.
+        default = self.P.DEFAULT_PREFS["ui_font_size"]
+        # set_pref persists to the test home's file and _reset_for_tests
+        # re-reads it, so pin the UI size before planting the stale keys.
+        self.P.set_pref("ui_font_size", default)
+        self.P.set_pref("panel_font_size", 15)
+        self.P.set_pref("assistant_font_size", 20)
+        self.assertEqual(self.P.resolve_font_size("panel"), default)
+        self.assertEqual(self.P.resolve_font_size("assistant"), default)
+
+    def test_the_family_is_maya_unless_installed(self):
+        from mpynode.ui.qt_wrapper import QFont
+
+        self.P.set_pref("ui_font_family", "")
+        self.assertEqual(self.P.resolve_ui_font_family(), "")
+        self.assertEqual(self.P.area_font("panel").family(), QFont().family())
+        self.P.set_pref("ui_font_family", "No Such Family 1234")
+        installed = self.P.installed_font_families()
+        if not installed:
+            # No font database under this platform plug-in: a saved family
+            # is passed through unchecked (Qt substitutes), which is all that
+            # can be asserted here.
+            self.assertEqual(self.P.resolve_ui_font_family(), "No Such Family 1234")
+            return
+        self.assertEqual(self.P.resolve_ui_font_family(), "")
+        self.P.set_pref("ui_font_family", installed[0])
+        self.assertEqual(self.P.resolve_ui_font_family(), installed[0])
+        self.assertEqual(self.P.area_font("assistant").family(), installed[0])
 
 
 class TestWireAreaFont(unittest.TestCase):
@@ -112,7 +151,7 @@ class TestWireAreaFont(unittest.TestCase):
     def test_font_is_applied_at_wire_time(self):
         from mpynode.ui.widgets.font_prefs import wire_area_font
 
-        self.P.set_pref("panel_font_size", 19)
+        self.P.set_pref("ui_font_size", 19)
         w = self._widget()
         wire_area_font(w, "panel")
         self.assertEqual(w.font().pointSize(), 19)
@@ -122,25 +161,36 @@ class TestWireAreaFont(unittest.TestCase):
 
         w = self._widget()
         wire_area_font(w, "panel")
-        self.P.set_pref("panel_font_size", 22)
+        self.P.set_pref("ui_font_size", 22)
         self.assertEqual(w.font().pointSize(), 22)
+
+    def test_the_family_follows_a_later_change(self):
+        from mpynode.ui.widgets.font_prefs import wire_area_font
+
+        installed = self.P.installed_font_families()
+        if not installed:
+            self.skipTest("no font database under this platform plug-in")
+        w = self._widget()
+        wire_area_font(w, "assistant")
+        self.P.set_pref("ui_font_family", installed[-1])
+        self.assertEqual(w.font().family(), installed[-1])
 
     def test_another_areas_key_is_ignored(self):
         # The whole point of splitting the areas: raising the editor font must
         # not reflow the panels.
         from mpynode.ui.widgets.font_prefs import wire_area_font
 
-        self.P.set_pref("panel_font_size", 11)
+        self.P.set_pref("ui_font_size", 11)
         w = self._widget()
         wire_area_font(w, "panel")
         self.P.set_pref("editor_font_size", 30)
-        self.P.set_pref("assistant_font_size", 30)
+        self.P.set_pref("editor_font_family", "Courier New")
         self.assertEqual(w.font().pointSize(), 11)
 
     def test_rel_scales_below_its_area(self):
         from mpynode.ui.widgets.font_prefs import wire_area_font
 
-        self.P.set_pref("assistant_font_size", 20)
+        self.P.set_pref("ui_font_size", 20)
         w = self._widget()
         wire_area_font(w, "assistant", rel=0.85)
         self.assertEqual(w.font().pointSize(), 17)
@@ -149,7 +199,7 @@ class TestWireAreaFont(unittest.TestCase):
         # A subordinate caption must never become illegible.
         from mpynode.ui.widgets.font_prefs import wire_area_font
 
-        self.P.set_pref("assistant_font_size", self.P.FONT_SIZE_MIN)
+        self.P.set_pref("ui_font_size", self.P.FONT_SIZE_MIN)
         w = self._widget()
         wire_area_font(w, "assistant", rel=0.5)
         self.assertEqual(w.font().pointSize(), self.P.FONT_SIZE_MIN)
@@ -160,7 +210,7 @@ class TestWireAreaFont(unittest.TestCase):
         seen = []
         w = self._widget()
         wire_area_font(w, "panel", on_change=lambda: seen.append(1))
-        self.P.set_pref("panel_font_size", 15)
+        self.P.set_pref("ui_font_size", 15)
         self.assertEqual(len(seen), 1)
         self.P.set_pref("editor_font_size", 15)
         self.assertEqual(len(seen), 1, "fired on another area's key")
@@ -239,7 +289,7 @@ class TestRescaleExisting(unittest.TestCase):
         self.A = assistant_panel.NDAssistantPanel
         preferences._reset_for_tests()
         self.addCleanup(preferences._reset_for_tests)
-        preferences.set_pref("assistant_font_size", 10)
+        preferences.set_pref("ui_font_size", 10)
 
     def _fake(self):
         from mpynode.ui.qt_wrapper import QTextEdit
@@ -345,6 +395,22 @@ class TestWiringIsPresent(unittest.TestCase):
                 calls, at_least,
                 "%s wires %d widget(s), expected at least %d"
                 % (mod, calls, at_least))
+
+    def test_the_tab_bars_follow_the_ui_font(self):
+        # The Init | Compute | API bar and the Workspace | Templates bar are
+        # siblings of the wired views, not children, so each is wired itself.
+        # The editors under the script bar are NOT: they own their font.
+        import io
+        import os
+
+        from tests import _paths
+
+        src = io.open(os.path.join(_paths.ROOT, "scripts", "mpynode", "ui",
+                                   "mpynode_designer.py"),
+                      encoding="utf-8").read()
+        self.assertIn('wire_area_font(self._script_tab_widget.tabBar(), "panel")', src)
+        self.assertIn('wire_area_font(self._mode_tab_bar, "panel")', src)
+        self.assertNotIn('wire_area_font(self._script_tab_widget, "panel")', src)
 
     def test_the_editors_are_left_alone(self):
         # editor_core owns a family pref and a Ctrl+wheel zoom this helper has

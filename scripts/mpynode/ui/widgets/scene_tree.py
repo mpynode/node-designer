@@ -47,6 +47,52 @@ _CPP_CONVERTED  = 2  # a hidden compiled C++ sibling is driving downstream
 _PAUSED_ROLE    = Qt.UserRole + 18
 
 
+def ui_metrics(font) -> dict:
+    """Pixel sizes for everything the Scene tab draws BESIDE its text, from the
+    font's line height, so they stay in proportion at any UI font size.
+
+    Calibrated on the historical 10pt row (a 17 px line): 16 px disc, 3 px
+    halo, 14 px chip, ~26 px chip width, 6 px gutter and margin, 14 px name
+    gutter -- so the default renders as it always did, and a 15pt row scales
+    every one of them by the same ~1.5 instead of leaving 16 px icons beside
+    25 px text. Pure: a test can pin it without a view.
+    """
+    fm    = QFontMetrics(font)
+    small = QFont(font)
+    small.setBold(True)
+    if small.pointSize() > 0:
+        small.setPointSize(max(6, int(round(small.pointSize() * 0.75))))
+    else:
+        small.setPixelSize(max(7, int(round(small.pixelSize() * 0.75))))
+    try:
+        glyph_w = QFontMetrics(small).horizontalAdvance("C++")
+    except AttributeError:  # Qt < 5.11
+        glyph_w = QFontMetrics(small).width("C++")
+    return _metrics_for(fm.height(), glyph_w, fm.averageCharWidth())
+
+
+def _metrics_for(line, glyph_w, avg_char_w) -> dict:
+    """The numeric core of :func:`ui_metrics`: ``line`` = the row font's line
+    height, ``glyph_w`` = the advance of "C++" in the chip font, ``avg_char_w``
+    = the row font's average character width, all px. Kept apart from Qt so
+    the 17 / 18 / 7 calibration row can be pinned on any platform."""
+    line   = max(10, int(line))
+    disc   = max(12, int(round(line * 16.0 / 17.0)))
+    chip_h = max(10, int(round(line * 14.0 / 17.0)))
+    gap    = max(4, int(round(line * 6.0 / 17.0)))
+    return {
+        "line":     line,
+        "disc":     disc,
+        "pad":      max(2, int(round(disc / 5.0))),
+        "chip_h":   chip_h,
+        "chip_w":   max(20, int(glyph_w) + 8),
+        "pause_w":  chip_h,
+        "gutter":   gap,
+        "margin":   gap,
+        "name_pad": max(8, int(round(avg_char_w * 2))),
+    }
+
+
 class _CppChipDelegate(QStyledItemDelegate):
     """Draws a small ``C++`` chip at the RIGHT edge of the Class column.
 
@@ -77,21 +123,35 @@ class _CppChipDelegate(QStyledItemDelegate):
     the C++ chip drawn at the item's edge came back clipped.
     """
 
-    CHIP_W   = 26                        # px of the C++ chip body
-    PAUSE_W  = 14                        # px of the pause chip body
-    GUTTER   = 6                         # px between chips, and between the text and the chips
-    MARGIN   = 6                         # px kept clear at the viewport's right edge
-    RESERVED = CHIP_W + GUTTER + MARGIN  # charged to EVERY row
-    CHIP_H   = 14
+    # Every pixel size comes from ui_metrics(row font); nothing here is a
+    # constant, so the chips follow the UI font the way the text does.
 
-    @classmethod
-    def reserved_for(cls, paused: bool) -> int:
-        """Px kept clear of class text on a row: the fixed reserve, plus the
-        pause chip and its gutter on a paused row only."""
-        return cls.RESERVED + (cls.PAUSE_W + cls.GUTTER if paused else 0)
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self._m_key = None
+        self._m     = None
 
-    @classmethod
-    def chip_rects(cls, rect, viewport_width, chipped, paused):
+    def _metrics(self, font) -> dict:
+        """ui_metrics for ``font``, cached on the font key: paint runs per row
+        and the metrics only change when the UI font does."""
+        try:
+            key = font.key()
+        except Exception:
+            key = None
+        if self._m is None or key != self._m_key:
+            self._m     = ui_metrics(font)
+            self._m_key = key
+        return self._m
+
+    @staticmethod
+    def reserved_for(paused: bool, m: dict) -> int:
+        """Px kept clear of class text on a row: the C++ chip's reserve on
+        every row, plus the pause chip and its gutter on a paused row only."""
+        base = m["chip_w"] + m["gutter"] + m["margin"]
+        return base + (m["pause_w"] + m["gutter"] if paused else 0)
+
+    @staticmethod
+    def chip_rects(rect, viewport_width, chipped, paused, m: dict):
         """Where the chips go: ``{"cpp": QRect | None, "pause": QRect | None}``.
 
         Right-aligned to the visible viewport (``viewport_width``, 0 = unknown),
@@ -100,14 +160,14 @@ class _CppChipDelegate(QStyledItemDelegate):
         right = rect.right()
         if viewport_width:
             right = min(right, int(viewport_width) - 1)
-        right -= cls.MARGIN
-        top = rect.top() + max(1, (rect.height() - cls.CHIP_H) // 2)
+        right -= m["margin"]
+        top = rect.top() + max(1, (rect.height() - m["chip_h"]) // 2)
         out = {"cpp": None, "pause": None}
         if chipped:
-            out["cpp"] = QRect(right - cls.CHIP_W + 1, top, cls.CHIP_W, cls.CHIP_H)
-            right -= cls.CHIP_W + cls.GUTTER
+            out["cpp"] = QRect(right - m["chip_w"] + 1, top, m["chip_w"], m["chip_h"])
+            right -= m["chip_w"] + m["gutter"]
         if paused:
-            out["pause"] = QRect(right - cls.PAUSE_W + 1, top, cls.PAUSE_W, cls.CHIP_H)
+            out["pause"] = QRect(right - m["pause_w"] + 1, top, m["pause_w"], m["chip_h"])
         return out
 
     _BG         = QColor(0x39, 0x48, 0x4D)
@@ -126,6 +186,7 @@ class _CppChipDelegate(QStyledItemDelegate):
         paused = bool(index.data(_PAUSED_ROLE))
         opt    = QStyleOptionViewItem(option)
         self.initStyleOption(opt, index)
+        m = self._metrics(option.font)
 
         # Draw at FULL width and elide by hand: a shortened rect also shortens
         # the SELECTION HIGHLIGHT, leaving a dark notch beside the chip.
@@ -140,7 +201,7 @@ class _CppChipDelegate(QStyledItemDelegate):
             tr = style.subElementRect(QStyle.SE_ItemViewItemText, opt, widget)
             opt.text = QFontMetrics(opt.font).elidedText(
                 opt.text, Qt.ElideRight,
-                max(0, tr.width() - self.reserved_for(paused)))
+                max(0, tr.width() - self.reserved_for(paused, m)))
         if style is None:
             super().paint(painter, opt, index)
         else:
@@ -155,7 +216,7 @@ class _CppChipDelegate(QStyledItemDelegate):
             vp_w = widget.viewport().width() if widget is not None else 0
         except Exception:
             vp_w = 0
-        rects = self.chip_rects(QRect(option.rect), vp_w, bool(state), paused)
+        rects = self.chip_rects(QRect(option.rect), vp_w, bool(state), paused, m)
         painter.save()
         try:
             painter.setRenderHint(QPainter.Antialiasing, True)
@@ -193,7 +254,7 @@ class _CppChipDelegate(QStyledItemDelegate):
                 fg = self._FG_SEL if selected else self._FG
                 painter.setPen(Qt.NoPen)
                 painter.setBrush(QBrush(fg))
-                bar_w = 2
+                bar_w = max(2, pause.width() // 7)
                 bar_h = pause.height() - 6
                 x0    = pause.left() + (pause.width() - (2 * bar_w + 2)) // 2
                 y0    = pause.top() + 3
@@ -204,7 +265,8 @@ class _CppChipDelegate(QStyledItemDelegate):
 
     def sizeHint(self, option, index):
         s = super().sizeHint(option, index)
-        return QSize(s.width() + self.RESERVED, s.height())
+        m = self._metrics(option.font)
+        return QSize(s.width() + self.reserved_for(False, m), s.height())
 
 
 class _NamePadDelegate(QStyledItemDelegate):
@@ -213,11 +275,15 @@ class _NamePadDelegate(QStyledItemDelegate):
     Name column is ``ResizeToContents``, so the extra width becomes trailing
     empty space); painting + the inline-rename editor inherit the default."""
 
-    PAD = 14  # px of breathing room between the longest name and the Class col
+    @staticmethod
+    def pad_for(font) -> int:
+        """Px of breathing room between the longest name and the Class column:
+        two average characters of the row font (14 px at the 10pt default)."""
+        return ui_metrics(font)["name_pad"]
 
     def sizeHint(self, option, index):
         s = super().sizeHint(option, index)
-        return QSize(s.width() + self.PAD, s.height())
+        return QSize(s.width() + self.pad_for(option.font), s.height())
 
 
 class NDSceneTreeItem(QTreeWidgetItem):
@@ -281,8 +347,13 @@ class NDSceneTreeItem(QTreeWidgetItem):
         # Padded on EVERY row, ringed or not, so the discs keep one size and
         # centre and only the ring appears/vanishes. The ring is exclusive to
         # CONVERTED -- the node whose evaluation actually moved.
+        tree = self.treeWidget()
+        try:
+            disc, pad = tree.icon_metrics()
+        except Exception:
+            disc, pad = 16, _HALO_PAD
         self.setIcon(0, get_node_type_icon(
-            self.native_type, pad=_HALO_PAD, ring=self.is_converted))
+            self.native_type, size=disc, pad=pad, ring=self.is_converted))
         # Does the node evaluate at all? Convert to C++ suspends the idle
         # Python node (nodeState Has No Effect / Blocking); a user may too.
         # Read here, with the rest of the row's state, so the pause chip and
@@ -434,7 +505,10 @@ class NDSceneTree(QTreeWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        wire_area_font(self, "panel")
+        # The UI font, and on a change: re-derive the disc / halo / chip sizes
+        # and re-icon every row, so the icons grow with the text instead of
+        # staying 16 px beside 25 px rows.
+        wire_area_font(self, "panel", on_change=self._on_ui_font)
         self.setColumnCount(2)
         # The col-0 icon conveys the root type; col 1 shows _pyClass identity.
         self.setHeaderLabels(["Name", "Class"])
@@ -454,7 +528,7 @@ class NDSceneTree(QTreeWidget):
         # by the halo pad or Qt scales the padded pixmap back down and the ring
         # is lost; the DISC inside is still 16px, so the pill reads as before.
         self.setItemDelegateForColumn(1, _CppChipDelegate(self))
-        self.setIconSize(QSize(16 + 2 * _HALO_PAD, 16 + 2 * _HALO_PAD))
+        self._apply_icon_metrics()
         # Click a header to sort; click again to flip asc/desc.
         self.setSortingEnabled(True)
         self.sortByColumn(0, Qt.AscendingOrder)
@@ -467,6 +541,35 @@ class NDSceneTree(QTreeWidget):
         self.itemDoubleClicked.connect(self._on_item_double_clicked)
         self.itemChanged.connect(self._on_item_changed)
         self.setContextMenuPolicy(Qt.DefaultContextMenu)
+
+    def icon_metrics(self) -> tuple:
+        """``(disc, pad)`` in px for this tree's rows, off the current font."""
+        m = ui_metrics(self.font())
+        return m["disc"], m["pad"]
+
+    def _apply_icon_metrics(self) -> None:
+        # The icon size must include the halo pad or Qt scales the padded
+        # pixmap back down and the ring is lost; the DISC inside stays the
+        # metric size, so the pill reads the same at every font size.
+        disc, pad = self.icon_metrics()
+        self.setIconSize(QSize(disc + 2 * pad, disc + 2 * pad))
+
+    def _on_ui_font(self) -> None:
+        """The UI font changed: new icon size, every row re-iconed, rows
+        re-laid out. The delegates re-derive their metrics on the next paint."""
+        self._apply_icon_metrics()
+        self._suppress_item_changed = True
+        try:
+            for i in range(self.topLevelItemCount()):
+                item = self.topLevelItem(i)
+                if isinstance(item, NDSceneTreeItem):
+                    item._refresh_label()
+        finally:
+            self._suppress_item_changed = False
+        try:
+            self.doItemsLayout()
+        except Exception:
+            pass
 
     def refresh(self) -> None:
         """Re-query the scene and rebuild the tree."""

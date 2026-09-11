@@ -400,6 +400,9 @@ class NDMainWindow(QMainWindow):
         # drop the tabSizeHint override and revert the width).
         self._mode_tab_bar = _WideTabBar(self._mode_tabs)
         self._mode_tabs.setTabBar(self._mode_tab_bar)
+        # The Workspace | Templates labels follow the UI font like every other
+        # tab bar; the pages under them keep their own wiring.
+        wire_area_font(self._mode_tab_bar, "panel")
         self._mode_tabs.setMovable(False)
         self._mode_tabs.setTabsClosable(False)
         # Vertical tabs down the LEFT edge (West). As a horizontal bar this mode
@@ -478,6 +481,10 @@ class NDMainWindow(QMainWindow):
         self._right_split = right_split
 
         self._script_tab_widget = NDScriptTabWidget(right_split)
+        # Only the BAR (Init | Compute | API ...) follows the UI font. The
+        # editors under it own their font (family + size + Ctrl+wheel zoom)
+        # and must not inherit this one.
+        wire_area_font(self._script_tab_widget.tabBar(), "panel")
 
         from mpynode.ui.qt_wrapper import QTabWidget as _QTabWidget
 

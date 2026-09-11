@@ -88,12 +88,19 @@ class TestPausedChip(unittest.TestCase):
     def setUp(self):
         mc.file(new=True, force=True)
         ensure_plugins_loaded()
+        self._trees = []
+        self.addCleanup(self._trees.clear)
 
     def _item(self, name):
         from mpynode.ui.widgets.scene_tree import NDSceneTree
 
         t = NDSceneTree()
         t.refresh()
+        # The tree OWNS its items. Let it die on return and the item wrapper
+        # dangles -- QTreeWidgetItem is no QObject, so PySide cannot invalidate
+        # it -- and every read below is on freed memory (heap corruption that
+        # surfaced two modules later in a discovery run). Keep it for the test.
+        self._trees.append(t)
         item = t.findItem(name)
         self.assertIsNotNone(item)
         return item
@@ -135,30 +142,82 @@ class TestPausedChip(unittest.TestCase):
         self.assertNotIn("paused", item.toolTip(1))
 
     def test_chips_are_laid_out_inside_the_viewport(self):
-        from mpynode.ui.qt_wrapper import QRect
-        from mpynode.ui.widgets.scene_tree import _CppChipDelegate as D
+        from mpynode.ui.qt_wrapper import QFont, QRect
+        from mpynode.ui.widgets.scene_tree import _CppChipDelegate as D, ui_metrics
 
+        m = ui_metrics(QFont())
         # The item rect runs 40 px past the visible viewport (a stretched last
         # section under a frame / scrollbar): every chip must still end left
         # of the viewport edge, with the margin kept clear.
         rect  = QRect(300, 0, 540, 20)          # right() == 839
-        rects = D.chip_rects(rect, 800, chipped=True, paused=True)
-        self.assertEqual(rects["cpp"].right(), 800 - 1 - D.MARGIN)
-        self.assertEqual(rects["cpp"].width(), D.CHIP_W)
-        self.assertEqual(rects["cpp"].left() - rects["pause"].right() - 1, D.GUTTER)
-        self.assertEqual(rects["pause"].width(), D.PAUSE_W)
+        rects = D.chip_rects(rect, 800, True, True, m)
+        self.assertEqual(rects["cpp"].right(), 800 - 1 - m["margin"])
+        self.assertEqual(rects["cpp"].width(), m["chip_w"])
+        self.assertEqual(rects["cpp"].left() - rects["pause"].right() - 1, m["gutter"])
+        self.assertEqual(rects["pause"].width(), m["pause_w"])
         # No viewport known: bounded by the item rect itself.
-        only_cpp = D.chip_rects(rect, 0, chipped=True, paused=False)
-        self.assertEqual(only_cpp["cpp"].right(), rect.right() - D.MARGIN)
+        only_cpp = D.chip_rects(rect, 0, True, False, m)
+        self.assertEqual(only_cpp["cpp"].right(), rect.right() - m["margin"])
         self.assertIsNone(only_cpp["pause"])
         # A paused, unconverted node: the pause chip takes the C++ chip's slot.
-        only_pause = D.chip_rects(rect, 800, chipped=False, paused=True)
+        only_pause = D.chip_rects(rect, 800, False, True, m)
         self.assertIsNone(only_pause["cpp"])
-        self.assertEqual(only_pause["pause"].right(), 800 - 1 - D.MARGIN)
+        self.assertEqual(only_pause["pause"].right(), 800 - 1 - m["margin"])
         # Every row keeps the C++ chip's room clear; a paused row also its own.
-        self.assertEqual(D.RESERVED,            D.CHIP_W + D.GUTTER + D.MARGIN)
-        self.assertEqual(D.reserved_for(False), D.RESERVED)
-        self.assertEqual(D.reserved_for(True),  D.RESERVED + D.PAUSE_W + D.GUTTER)
+        base = m["chip_w"] + m["gutter"] + m["margin"]
+        self.assertEqual(D.reserved_for(False, m), base)
+        self.assertEqual(D.reserved_for(True, m), base + m["pause_w"] + m["gutter"])
+
+    def test_the_metrics_are_todays_look_at_10pt_and_scale_with_the_font(self):
+        from mpynode.ui.qt_wrapper import QFont
+        from mpynode.ui.widgets.scene_tree import _metrics_for, ui_metrics
+
+        # The calibration row: 10pt Segoe UI (17 px line), "C++" bold at
+        # 7.5pt (18 px), a 7 px average character -- the historical constants
+        # come back exactly. Numeric on purpose: the offscreen test platform
+        # has no fonts, so a real QFont here measures tofu.
+        m10 = _metrics_for(17, 18, 7)
+        self.assertEqual(
+            (m10["disc"], m10["pad"], m10["chip_h"], m10["chip_w"],
+             m10["pause_w"], m10["gutter"], m10["margin"], m10["name_pad"]),
+            (16, 3, 14, 26, 14, 6, 6, 14))
+        # A 15pt row (25 px line, 27 px glyph, 10 px char): everything grows
+        # in proportion, nothing stays put beside the bigger text.
+        m15 = _metrics_for(25, 27, 10)
+        for k in ("disc", "chip_h", "chip_w", "pause_w", "line", "name_pad", "gutter"):
+            self.assertGreaterEqual(m15[k], m10[k] * 1.3, k)
+        # Off a real font, whatever this platform has: consistent with its own
+        # line height, and never below the floors.
+        f = QFont()
+        f.setPointSize(10)
+        m = ui_metrics(f)
+        self.assertEqual(m["disc"], max(12, int(round(m["line"] * 16.0 / 17.0))))
+        self.assertEqual(m["pause_w"], m["chip_h"])
+        self.assertGreaterEqual(m["chip_w"], 20)
+
+    def test_the_tree_re_icons_its_rows_when_the_ui_font_changes(self):
+        from mpynode import MPyNode
+        from mpynode.ui import preferences as P
+        from mpynode.ui.qt_wrapper import QSize
+        from mpynode.ui.widgets.scene_tree import ui_metrics
+
+        P._reset_for_tests()
+        self.addCleanup(P._reset_for_tests)
+        P.set_pref("ui_font_size", 10)
+        MPyNode.create(name="scaleProbe1")
+        item = self._item("scaleProbe1")
+        tree = item.treeWidget()
+        small_icon = tree.iconSize().width()
+        m10 = ui_metrics(tree.font())
+        self.assertEqual(small_icon, m10["disc"] + 2 * m10["pad"])
+        self.assertEqual(item.icon(0).actualSize(QSize(256, 256)).width(), small_icon)
+        P.set_pref("ui_font_size", 15)               # live, no rebuild
+        m15 = ui_metrics(tree.font())
+        self.assertEqual(tree.font().pointSize(), 15)
+        self.assertEqual(tree.iconSize().width(), m15["disc"] + 2 * m15["pad"])
+        self.assertGreaterEqual(tree.iconSize().width(), small_icon * 1.3)
+        self.assertEqual(item.icon(0).actualSize(QSize(256, 256)).width(),
+                         tree.iconSize().width())
 
 
 class TestNameColumnSpacing(unittest.TestCase):
@@ -190,11 +249,13 @@ class TestNameColumnSpacing(unittest.TestCase):
         idx  = t.indexFromItem(item, 0)
         opt  = QStyleOptionViewItem()
         base = QStyledItemDelegate(t)
-        # Same option + same index -> the only difference is the added gutter.
+        # Same option + same index -> the only difference is the added gutter,
+        # which is two average characters of the row font.
         self.assertEqual(
             d.sizeHint(opt, idx).width(),
-            base.sizeHint(opt, idx).width() + _NamePadDelegate.PAD,
+            base.sizeHint(opt, idx).width() + _NamePadDelegate.pad_for(opt.font),
         )
+        self.assertGreaterEqual(_NamePadDelegate.pad_for(opt.font), 8)
 
 
 class TestSubclassActionsAndSignals(unittest.TestCase):
