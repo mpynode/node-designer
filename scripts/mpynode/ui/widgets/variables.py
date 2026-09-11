@@ -158,9 +158,10 @@ def _value_font():
     global _VALUE_FONT
     if _VALUE_FONT is None:
         try:
+            from mpynode.ui import preferences
             from mpynode.ui.qt_wrapper import QFont
 
-            f = QFont("Courier")
+            f = QFont(preferences.default_editor_font_family())
             f.setStyleHint(QFont.Monospace)
             _VALUE_FONT = f
         except Exception:

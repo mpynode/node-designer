@@ -80,7 +80,8 @@ class TestPreferencesModule(unittest.TestCase):
     def test_get_pref_returns_default_when_no_file(self):
         from mpynode.ui import preferences
 
-        self.assertEqual(preferences.get_pref("editor_font_family"), "Courier")
+        self.assertEqual(preferences.get_pref("editor_font_family"),
+                         preferences.default_editor_font_family())
         self.assertEqual(preferences.get_pref("editor_font_size"), 10)
         self.assertTrue(preferences.get_pref("addattr_time_auto_connect"))
         self.assertFalse(preferences.get_pref("connect_dialog_show_all_default"))
@@ -127,7 +128,8 @@ class TestPreferencesModule(unittest.TestCase):
         preferences._reset_for_tests()
 
         # Should NOT raise; should serve defaults.
-        self.assertEqual(preferences.get_pref("editor_font_family"), "Courier")
+        self.assertEqual(preferences.get_pref("editor_font_family"),
+                         preferences.default_editor_font_family())
 
     def test_missing_keys_in_file_filled_from_defaults(self):
         """Old prefs file missing newer keys \u2014 those keys should still
@@ -143,7 +145,8 @@ class TestPreferencesModule(unittest.TestCase):
         # Saved value comes back.
         self.assertEqual(preferences.get_pref("editor_font_size"), 16)
         # Missing key falls back to default.
-        self.assertEqual(preferences.get_pref("editor_font_family"), "Courier")
+        self.assertEqual(preferences.get_pref("editor_font_family"),
+                         preferences.default_editor_font_family())
 
     def test_reset_to_defaults(self):
         from mpynode.ui import preferences

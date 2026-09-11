@@ -25,6 +25,7 @@ from __future__ import annotations
 
 import json
 import os
+import sys
 import threading
 from typing import Any, Callable
 
@@ -61,13 +62,106 @@ def _default_template_search_paths() -> list[str]:
 
 
 # ---------------------------------------------------------------------------
+# Editor font: the platform's own monospace, and only fonts the machine has
+# ---------------------------------------------------------------------------
+def default_editor_font_family(platform: str | None = None) -> str:
+    """The editor's shipped monospace family for this OS: Consolas on Windows,
+    Monaco on macOS, DejaVu Sans Mono elsewhere -- a font each platform ships,
+    so the default never names one the machine cannot render. ("Courier", the
+    old default everywhere, is only a raster alias on Windows.) ``platform``
+    stands in for ``sys.platform`` in tests."""
+    p = (platform or sys.platform).lower()
+    if p.startswith("win"):
+        return "Consolas"
+    if p == "darwin":
+        return "Monaco"
+    return "DejaVu Sans Mono"
+
+
+# Family lists are computed once per session: the Preferences dialog is the
+# only reader, and Qt classifies hundreds of families on the first call.
+_FAMILY_CACHE: dict[str, list[str]] = {}
+
+
+def _font_db():
+    """``(families, is_fixed_pitch)`` callables off the running Qt, or ``None``
+    when there is no GUI application to ask (mayapy after standalone init has
+    a bare QCoreApplication; the font database needs a QGuiApplication and
+    complains loudly otherwise). Qt 6 made QFontDatabase static; Qt 5 wants an
+    instance -- both shapes are called the same way."""
+    try:
+        from mpynode.ui.qt_wrapper import QT_BINDING
+
+        if QT_BINDING == "PySide6":
+            from PySide6.QtGui import QFontDatabase, QGuiApplication
+        else:
+            from PySide2.QtGui import QFontDatabase, QGuiApplication
+    except Exception:
+        return None
+    try:
+        app = QGuiApplication.instance()
+        if app is None or not isinstance(app, QGuiApplication):
+            return None
+        db = QFontDatabase if QT_BINDING == "PySide6" else QFontDatabase()
+        return db.families, db.isFixedPitch
+    except Exception:
+        return None
+
+
+def installed_font_families() -> list[str]:
+    """Every family the running Qt can render, sorted; ``[]`` without a GUI."""
+    if "all" not in _FAMILY_CACHE:
+        db = _font_db()
+        fams: list[str] = []
+        if db is not None:
+            try:
+                fams = sorted({str(f) for f in db[0]()})
+            except Exception:
+                fams = []
+        _FAMILY_CACHE["all"] = fams
+    return list(_FAMILY_CACHE["all"])
+
+
+def installed_monospace_families() -> list[str]:
+    """The fixed-pitch subset of :func:`installed_font_families` -- what the
+    Preferences font list offers, so a choice can never name a font the machine
+    does not have. Every installed family when Qt classifies none as fixed
+    pitch; ``[]`` without a GUI."""
+    if "mono" not in _FAMILY_CACHE:
+        db = _font_db()
+        mono: list[str] = []
+        if db is not None:
+            for fam in installed_font_families():
+                try:
+                    if db[1](fam):
+                        mono.append(fam)
+                except Exception:
+                    pass
+        _FAMILY_CACHE["mono"] = mono or installed_font_families()
+    return list(_FAMILY_CACHE["mono"])
+
+
+def resolve_editor_font_family(family: str | None) -> str:
+    """``family`` when this machine has it (or Qt cannot tell), else the
+    platform default: a preference saved on another machine must not leave the
+    editor on a font that does not exist here."""
+    fam = (family or "").strip()
+    if not fam:
+        return default_editor_font_family()
+    installed = installed_font_families()
+    if installed and fam not in installed:
+        return default_editor_font_family()
+    return fam
+
+
+# ---------------------------------------------------------------------------
 # Defaults
 # ---------------------------------------------------------------------------
 # All known preference keys + their default values. ``get_pref(key)``
 # falls back to this dict when the key isn't in the user's file.
 DEFAULT_PREFS: dict[str, Any] = {
-    # Editor
-    "editor_font_family": "Courier",
+    # Editor. The family is per platform -- see default_editor_font_family().
+    "editor_font_family": default_editor_font_family(),
     "editor_font_size":   10,  # in points
     # Point sizes for the two UI areas that are NOT code editors. Split
     # from editor_font_size because the three read at very different
@@ -558,7 +652,7 @@ def editor_font():
     """
     from mpynode.ui.qt_wrapper import QFont
 
-    font = QFont(get_pref("editor_font_family", "Courier"))
+    font = QFont(resolve_editor_font_family(get_pref("editor_font_family")))
     try:
         font.setPointSize(int(get_pref("editor_font_size", 10)))
     except Exception:

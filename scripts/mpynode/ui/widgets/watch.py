@@ -785,9 +785,10 @@ class NDWatchWidget(QWidget):
         # Cache a monospace font for the Value column so columns inside
         # numpy array reprs visually align.
         try:
+            from mpynode.ui import preferences
             from mpynode.ui.qt_wrapper import QFont
 
-            self._mono_font = QFont("Courier")
+            self._mono_font = QFont(preferences.default_editor_font_family())
             self._mono_font.setStyleHint(QFont.Monospace)
             self._mono_font.setFixedPitch(True)
             # A per-item font beats the view font, so this needs the size too.

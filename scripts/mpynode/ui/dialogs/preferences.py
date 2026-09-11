@@ -68,19 +68,6 @@ def _writable_label(path: str) -> str:
         return "NO"
 
 
-# Common monospace fonts that ship with macOS / Windows / Linux.
-_MONOSPACE_FAMILIES = (
-    "Courier",
-    "Courier New",
-    "Menlo",
-    "Monaco",
-    "Consolas",
-    "DejaVu Sans Mono",
-    "Liberation Mono",
-    "Source Code Pro",
-)
-
-
 # Known editors -> open-in-editor command template. A preset fills the command
 # line edit; "Custom..." leaves it for hand-editing.
 _EDITOR_PRESETS = [
@@ -139,9 +126,15 @@ class NDPreferencesDialog(QDialog):
         editor_grid.setHorizontalSpacing(6)
         editor_grid.addWidget(QLabel("Font family:"), 0, 0)
         self._font_family_combo = QComboBox()
-        self._font_family_combo.setEditable(True)
-        for fam in _MONOSPACE_FAMILIES:
+        # Installed fixed-pitch families only. The list used to be eight
+        # hard-coded names, half of which no given machine has, and the combo
+        # accepted anything typed -- so a saved family could name a font Qt
+        # then silently substituted. Non-editable: what is offered exists.
+        for fam in preferences.installed_monospace_families():
             self._font_family_combo.addItem(fam)
+        if self._font_family_combo.count() == 0:  # headless: no font database
+            self._font_family_combo.addItem(
+                preferences.default_editor_font_family())
         editor_grid.addWidget(self._font_family_combo, 0, 1)
         editor_grid.addWidget(QLabel("Font size (pt):"), 1, 0)
         self._font_size_edit = QLineEdit()
@@ -617,13 +610,16 @@ class NDPreferencesDialog(QDialog):
 
     def _load_into_widgets(self) -> None:
         """Populate widgets from current preferences."""
-        family = preferences.get_pref("editor_font_family", "Courier")
-        # If family isn't in our list, the editable combo accepts arbitrary.
+        family = preferences.resolve_editor_font_family(
+            preferences.get_pref("editor_font_family"))
         idx = self._font_family_combo.findText(family)
-        if idx >= 0:
-            self._font_family_combo.setCurrentIndex(idx)
-        else:
-            self._font_family_combo.setEditText(family)
+        if idx < 0:
+            # The resolved family is installed but Qt did not classify it as
+            # fixed pitch (or there is no font database): offer it anyway
+            # rather than showing a font the user did not choose.
+            self._font_family_combo.addItem(family)
+            idx = self._font_family_combo.findText(family)
+        self._font_family_combo.setCurrentIndex(idx)
 
         self._font_size_edit.setText(str(preferences.get_pref("editor_font_size", 10)))
 
@@ -909,7 +905,8 @@ class NDPreferencesDialog(QDialog):
         # Persist via set_pref so listeners fire.
         preferences.set_pref(
             "editor_font_family",
-            self._font_family_combo.currentText().strip() or "Courier",
+            self._font_family_combo.currentText().strip()
+            or preferences.default_editor_font_family(),
         )
         preferences.set_pref("editor_font_size", size)
         preferences.set_pref(

@@ -244,13 +244,26 @@ class QtLineNumberArea(QWidget):
         self._txt_editor.lineNumberAreaPaintEvent(event)
 
 
+def _default_font_family() -> str:
+    """The platform's shipped monospace (Consolas / Monaco / DejaVu Sans Mono),
+    through the preferences module so the editor's last-resort font is the one
+    the Preferences dialog defaults to. Best-effort, like every other
+    preferences import in this module."""
+    try:
+        from mpynode.ui.preferences import default_editor_font_family
+
+        return default_editor_font_family()
+    except Exception:
+        return "Courier New"
+
+
 class QtPythonEditor(QPlainTextEdit):
     """QPlainTextEdit + line numbers + syntax highlighting + Ctrl+wheel font zoom."""
 
     HIGHLIGHT_COLOR = Qt.lightGray
     HIGHLIGHTER_CLASS = QtPythonHighlighter
 
-    DEFAULT_FONT_FAMILY = "Courier"
+    DEFAULT_FONT_FAMILY = _default_font_family()
     DEFAULT_FONT_SIZE = 10
     MIN_FONT_SIZE = 6
     MAX_FONT_SIZE = 72
