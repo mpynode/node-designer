@@ -149,7 +149,7 @@ class TestScriptAreaWiring(unittest.TestCase):
         loc, w = self._build()
         try:
             labels = self._labels(w)
-            api = w._inner_tabs.widget(labels.index("API"))
+            api    = w._inner_tabs.widget(labels.index("API"))
             self.assertIsInstance(api, NDApiView)
             self.assertIs(api, w._api_view)
             self.assertEqual(api.toPlainText(),
@@ -285,7 +285,7 @@ class TestScriptAreaWiring(unittest.TestCase):
 
         mc.file(new=True, force=True)
         node = MPyFile.create(name="scAreaWide")
-        w = NDScriptTabContent(node)
+        w    = NDScriptTabContent(node)
         try:
             w.resize(580, 400)          # the shipped default centre width
             w.show()
@@ -293,7 +293,7 @@ class TestScriptAreaWiring(unittest.TestCase):
             labels = self._labels(w)
             self.assertEqual(
                 labels, ["Init", "Compute", "Viewport", "OSL", "API"])
-            bar = w._inner_tab_bar
+            bar   = w._inner_tab_bar
             total = sum(bar.tabRect(i).width() for i in range(bar.count()))
             self.assertGreater(total, 0)
             self.assertLessEqual(
@@ -315,12 +315,12 @@ class TestScriptAreaWiring(unittest.TestCase):
 
         mc.file(new=True, force=True)
         node = MPyFile.create(name="scAreaEqual")
-        w = NDScriptTabContent(node)
+        w    = NDScriptTabContent(node)
         try:
             w.resize(900, 400)
             w.show()
             _QAPP.processEvents()
-            bar = w._inner_tab_bar
+            bar    = w._inner_tab_bar
             widths = [bar.tabRect(i).width() for i in range(bar.count())]
             self.assertEqual(len(widths), 5)
             self.assertEqual(
@@ -343,7 +343,7 @@ class TestScriptAreaWiring(unittest.TestCase):
         try:
             member = [r for r in w._api_view.regions()
                       if r["kind"] == "method_member"][0]
-            block = w._api_view.document().findBlockByNumber(member["end"])
+            block  = w._api_view.document().findBlockByNumber(member["end"])
             cursor = w._api_view.textCursor()
             cursor.setPosition(block.position() + len(block.text()))
             w._api_view.setTextCursor(cursor)
@@ -479,7 +479,7 @@ class TestAGeneratedBlockRoutesToItsAuthoringSurface(unittest.TestCase):
             def top(widget):
                 return widget.mapToGlobal(widget.rect().topLeft()).y()
 
-            code = top(w._api_view.viewport())
+            code   = top(w._api_view.viewport())
             header = top(w._navigator._tree.header())
             self.assertLessEqual(
                 abs(header - code), 2,

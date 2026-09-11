@@ -91,7 +91,7 @@ class TestApiView(unittest.TestCase):
         try:
             self.assertGreater(v.hiddenLineCount(), 15,
                                "the 20-line init body should be folded away")
-            doc = v.document()
+            doc  = v.document()
             init = [r for r in v.regions() if r["kind"] == "expr_init"][0]
             # the rail line stays visible -- it carries the managed call AND
             # the user's first body line, which the exporter puts on one line
@@ -150,9 +150,9 @@ class TestApiView(unittest.TestCase):
     def test_opening_the_view_does_not_stamp_py_class(self):
         # resolve_bake_class_name() prompts and calls set_py_class(); the view
         # must call the generator directly instead.
-        n = self._node()
+        n      = self._node()
         before = n.get_py_class()
-        v = self._view(n)
+        v      = self._view(n)
         try:
             v.refresh()
             self.assertEqual(n.get_py_class(), before)
@@ -162,8 +162,8 @@ class TestApiView(unittest.TestCase):
     def test_edit_guard_refuses_generated_spans(self):
         # setReadOnly is whole-widget, so the managed spans are protected by
         # refusing the keystroke. A leak here corrupts the bake contract.
-        n = self._node()
-        v = self._view(n)
+        n        = self._node()
+        v        = self._view(n)
         refusals = []
         v.editRefused.connect(refusals.append)
         try:
@@ -226,7 +226,7 @@ class TestApiView(unittest.TestCase):
         n = self._node()
         n.set_methods_source("def setup(self):\n    return 1\n")
         before = n.get_methods_source()
-        v = self._view(n)
+        v      = self._view(n)
         try:
             self.assertFalse(v.hasUnsavedChanges())
             v.markSaved()
@@ -273,7 +273,7 @@ class TestApiView(unittest.TestCase):
 
     @staticmethod
     def _caret_on(view, line, end_of_line=False):
-        block = view.document().findBlockByNumber(int(line))
+        block  = view.document().findBlockByNumber(int(line))
         cursor = view.textCursor()
         cursor.setPosition(
             block.position() + (len(block.text()) if end_of_line else 0))
@@ -309,9 +309,9 @@ class TestApiView(unittest.TestCase):
         n = self._node()
         v = self._view(n)
         try:
-            init = [r for r in v.regions() if r["kind"] == "expr_init"][0]
+            init        = [r for r in v.regions() if r["kind"] == "expr_init"][0]
             hidden_line = init["start"] + 1
-            cur = v.textCursor()
+            cur         = v.textCursor()
             cur.setPosition(
                 v.document().findBlockByNumber(hidden_line).position())
             v.setTextCursor(cur)
@@ -335,7 +335,7 @@ class TestApiView(unittest.TestCase):
         try:
             comp = [r for r in v.regions() if r["kind"] == "expr_compute"][0]
             self.assertFalse(comp["inline"])
-            doc = v.document()
+            doc  = v.document()
             rail = v._rail_of(comp)
             self.assertEqual(rail, comp["end"])
             for ln in range(comp["start"], comp["end"] + 1):
@@ -439,8 +439,8 @@ class TestManagedMarkAndScrolling(unittest.TestCase):
     def test_the_gutter_claims_room_for_the_bar(self):
         from mpynode.ui.widgets.editor_core import QtPythonEditor
 
-        n = self._node()
-        v = self._view(n)
+        n     = self._node()
+        v     = self._view(n)
         plain = QtPythonEditor()
         try:
             self.assertGreater(v.lineNumberAreaWidth(),
@@ -485,7 +485,7 @@ class TestManagedMarkAndScrolling(unittest.TestCase):
         n = self._node()
         v = self._view(n)
         try:
-            rail = [r for r in v.regions() if r["kind"] == "expr_init"][0]
+            rail   = [r for r in v.regions() if r["kind"] == "expr_init"][0]
             hidden = rail["start"] + 1
             v._restore_position((hidden, 0, 0, 0))
             self.assertTrue(v.textCursor().block().isVisible())
@@ -542,7 +542,7 @@ class TestContextMenuIsGuardedToo(unittest.TestCase):
     def _point_on(self, view, block_no, col=2):
         from mpynode.ui.qt_wrapper import QTextCursor
 
-        block = view.document().findBlockByNumber(block_no)
+        block  = view.document().findBlockByNumber(block_no)
         cursor = QTextCursor(block)
         cursor.setPosition(block.position() + min(col, len(block.text())))
         point = view.cursorRect(cursor).center()
@@ -579,10 +579,10 @@ class TestContextMenuIsGuardedToo(unittest.TestCase):
         n = self._node()
         v = self._view(n)
         try:
-            mine = [r for r in v.regions() if v._is_editable(r)][0]
-            point = self._point_on(v, mine["start"] + 2, 6)
-            decl = [r for r in v.regions() if r["kind"] == "class_decl"][0]
-            block = v.document().findBlockByNumber(decl["start"])
+            mine   = [r for r in v.regions() if v._is_editable(r)][0]
+            point  = self._point_on(v, mine["start"] + 2, 6)
+            decl   = [r for r in v.regions() if r["kind"] == "class_decl"][0]
+            block  = v.document().findBlockByNumber(decl["start"])
             cursor = v.textCursor()
             cursor.setPosition(block.position())
             cursor.setPosition(block.position() + len(block.text()),
@@ -596,8 +596,8 @@ class TestContextMenuIsGuardedToo(unittest.TestCase):
     def test_load_from_file_is_offered_normally_but_not_here(self):
         from mpynode.ui.widgets.editor_core import QtPythonEditor
 
-        n = self._node()
-        v = self._view(n)
+        n     = self._node()
+        v     = self._view(n)
         plain = QtPythonEditor()
         try:
             self.assertTrue(plain._offers_file_load())
@@ -624,12 +624,12 @@ class TestContextMenuIsGuardedToo(unittest.TestCase):
         n = self._node()
         v = self._view(n)
         try:
-            cursors = len(v._region_cursors)
-            folded = v.hiddenLineCount()
+            cursors  = len(v._region_cursors)
+            folded   = v.hiddenLineCount()
             baseline = v._methods_from_document()
             v.setPlainText(v.toPlainText())
-            self.assertEqual(len(v._region_cursors), cursors)
-            self.assertEqual(v.hiddenLineCount(), folded)
+            self.assertEqual(len(v._region_cursors),     cursors)
+            self.assertEqual(v.hiddenLineCount(),        folded)
             self.assertEqual(v._methods_from_document(), baseline)
         finally:
             v.deleteLater()
@@ -696,9 +696,9 @@ class TestManagedBlocksAreSolid(unittest.TestCase):
         n = self._node()
         v = self._view(n)
         try:
-            src = v.source().split("\n")
-            first = next(i for i, t in enumerate(src) if "--- inputs ---" in t)
-            last = next(i for i, t in enumerate(src) if "--- outputs ---" in t)
+            src    = v.source().split("\n")
+            first  = next(i for i, t in enumerate(src) if "--- inputs ---" in t)
+            last   = next(i for i, t in enumerate(src) if "--- outputs ---" in t)
             blanks = [i for i in range(first, last) if not src[i].strip()]
             self.assertTrue(blanks, "expected a separator inside build()")
             for i in blanks:
@@ -839,9 +839,9 @@ class TestTheEditGuardBoundary(unittest.TestCase):
         return node, view
 
     def _span(self, view, region):
-        doc = view.document()
+        doc   = view.document()
         first = doc.findBlockByNumber(region["start"])
-        last = doc.findBlockByNumber(view._claim_end(region))
+        last  = doc.findBlockByNumber(view._claim_end(region))
         return first.position(), last.position() + len(last.text())
 
     def _first_editable(self, view):
@@ -933,7 +933,7 @@ class TestGapsFollowTheirNeighbour(unittest.TestCase):
     def test_no_gap_between_two_editable_regions_reads_as_managed(self):
         _node, v = self._view()
         try:
-            regions = sorted(v.regions(), key=lambda r: r["start"])
+            regions   = sorted(v.regions(), key=lambda r: r["start"])
             offenders = []
             for a, b in zip(regions, regions[1:]):
                 if not (v._is_editable(a) and v._is_editable(b)):
@@ -966,8 +966,8 @@ class TestGapsFollowTheirNeighbour(unittest.TestCase):
         _node, v = self._view()
         try:
             imports = [r for r in v.regions() if r["kind"] == "imports"][0]
-            after = imports["end"] + 1
-            region = v.regionAt(after)
+            after   = imports["end"] + 1
+            region  = v.regionAt(after)
             self.assertIsNotNone(region)
             self.assertFalse(v.source().split("\n")[after].strip())
             self.assertTrue(v._marks_generated(region, after))
@@ -978,7 +978,7 @@ class TestGapsFollowTheirNeighbour(unittest.TestCase):
     def test_the_gap_before_the_class_belongs_to_your_last_function(self):
         _node, v = self._view()
         try:
-            decl = [r for r in v.regions() if r["kind"] == "class_decl"][0]
+            decl   = [r for r in v.regions() if r["kind"] == "class_decl"][0]
             before = decl["start"] - 1
             region = v.regionAt(before)
             self.assertIsNotNone(region)
@@ -1005,8 +1005,8 @@ class TestGapsFollowTheirNeighbour(unittest.TestCase):
         from mpynode.ui.widgets.api_view import _strip_trailing_blanks
 
         self.assertEqual(_strip_trailing_blanks("a\n\nb\n\n\n"), "a\n\nb")
-        self.assertEqual(_strip_trailing_blanks("a"), "a")
-        self.assertEqual(_strip_trailing_blanks("\n\n"), "")
+        self.assertEqual(_strip_trailing_blanks("a"),            "a")
+        self.assertEqual(_strip_trailing_blanks("\n\n"),         "")
 
 
 @unittest.skipUnless(_qapp_available(), "Qt unavailable")
@@ -1078,7 +1078,7 @@ class TestBodiesNeverOpenHere(unittest.TestCase):
         v.resize(1000, 700)
         try:
             header = [r for r in v.regions() if r["kind"] == "header"][0]
-            doc = v.document()
+            doc    = v.document()
             for ln in range(header["start"], header["end"] + 1):
                 self.assertTrue(doc.findBlockByNumber(ln).isVisible(), ln)
             self.assertNotIn(header["start"], v._placeholders)
@@ -1190,8 +1190,8 @@ class TestBodiesNeverOpenHere(unittest.TestCase):
         _node, v = self._view()
         try:
             self._repaint(v)
-            rail = self._rail(v)
-            drawn = v.document().findBlockByNumber(rail["start"]).text()
+            rail    = self._rail(v)
+            drawn   = v.document().findBlockByNumber(rail["start"]).text()
             visible = drawn[:rail["open_col"]]
             self.assertNotIn("'", visible)
             self.assertNotIn('"', visible)
@@ -1211,7 +1211,7 @@ class TestGoToReachesTheTab(unittest.TestCase):
         loc.set_init_expression("a = 1\n")
         w = NDScriptTabContent(loc)
         try:
-            tabs = w._inner_tabs
+            tabs   = w._inner_tabs
             labels = [tabs.tabText(i) for i in range(tabs.count())]
             tabs.setCurrentIndex(labels.index("API"))
             w._api_view.tierActivated.emit("Init")
@@ -1486,7 +1486,7 @@ class TestYouCanMakeRoomAroundAManagedBlock(unittest.TestCase):
         return Qt
 
     def _caret(self, view, block_no, col=0):
-        block = view.document().findBlockByNumber(block_no)
+        block  = view.document().findBlockByNumber(block_no)
         cursor = view.textCursor()
         cursor.setPosition(block.position() + col)
         view.setTextCursor(cursor)
@@ -1556,7 +1556,7 @@ class TestYouCanMakeRoomAroundAManagedBlock(unittest.TestCase):
             self.assertEqual(v.toPlainText().split("\n")[0], "# gone soon")
             from mpynode.ui.qt_wrapper import QTextCursor
 
-            limit = v._top_limit()
+            limit  = v._top_limit()
             cursor = v.textCursor()
             cursor.setPosition(0)
             cursor.setPosition(limit, QTextCursor.KeepAnchor)
@@ -1580,7 +1580,7 @@ class TestYouCanMakeRoomAroundAManagedBlock(unittest.TestCase):
             self.assertEqual(v.toPlainText().split("\n")[at - 1], "")
             self._caret(v, at)
             self._key(v, self._Qt.Key_Return, "\n")
-            at = self._line_of(v, "# --- outputs ---")
+            at    = self._line_of(v, "# --- outputs ---")
             lines = v.toPlainText().split("\n")
             self.assertEqual([lines[at - 2], lines[at - 1]], ["", ""])
             self.assertEqual(v._spacing_from_document().get("attrs_out"), 2)
@@ -1594,7 +1594,7 @@ class TestYouCanMakeRoomAroundAManagedBlock(unittest.TestCase):
                 at = self._line_of(v, "# --- outputs ---")
                 self._caret(v, at)
                 self._key(v, self._Qt.Key_Backspace)
-            at = self._line_of(v, "# --- outputs ---")
+            at    = self._line_of(v, "# --- outputs ---")
             above = v.toPlainText().split("\n")[at - 1]
             self.assertIn("add_input_attr", above,
                           "the two blocks should be touching")
@@ -1642,7 +1642,7 @@ class TestYouCanMakeRoomAroundAManagedBlock(unittest.TestCase):
             v.markSaved()
             self.assertEqual(node.get_api_gap_spacing(), {"attrs_out": 2})
             v.refresh()
-            at = self._line_of(v, "# --- outputs ---")
+            at    = self._line_of(v, "# --- outputs ---")
             lines = v.toPlainText().split("\n")
             self.assertEqual([lines[at - 2], lines[at - 1]], ["", ""])
             self.assertFalse(v.hasUnsavedChanges())
@@ -1679,7 +1679,7 @@ class TestTheMetadataBannerAndTheHeaderZone(unittest.TestCase):
     """
 
     META = {"authors": ["Ada L"], "copyright": "(c) 2026 Studio"}
-    SRC = '"""My own header."""\n\n\ndef helper():\n    return 1\n'
+    SRC  = '"""My own header."""\n\n\ndef helper():\n    return 1\n'
 
     def _node(self, meta, src=None, name="apiBanner"):
         from mpynode import MPyNode

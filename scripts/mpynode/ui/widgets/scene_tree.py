@@ -39,9 +39,9 @@ _TYPE_COLUMN_BRUSH = QBrush(QColor(150, 150, 150))
 # reads it straight off the model index. THREE states, mirroring the menu's
 # compile-then-convert flow; marking only the last left compiling invisible.
 _CPP_BADGE_ROLE = Qt.UserRole + 17
-_CPP_NONE = 0       # no compiled C++ type available for this node's Class
-_CPP_COMPILED = 1   # compiled type loaded, but this Python node is still driving
-_CPP_CONVERTED = 2  # a hidden compiled C++ sibling is driving downstream
+_CPP_NONE       = 0  # no compiled C++ type available for this node's Class
+_CPP_COMPILED   = 1  # compiled type loaded, but this Python node is still driving
+_CPP_CONVERTED  = 2  # a hidden compiled C++ sibling is driving downstream
 
 
 class _CppChipDelegate(QStyledItemDelegate):
@@ -63,24 +63,24 @@ class _CppChipDelegate(QStyledItemDelegate):
     the compile -> convert progression reads as a single scale.
     """
 
-    CHIP_W = 26        # px of chip body
-    GUTTER = 4         # px between the elided class text and the chip
+    CHIP_W   = 26  # px of chip body
+    GUTTER   = 4   # px between the elided class text and the chip
     RESERVED = CHIP_W + GUTTER
 
-    _BG = QColor(0x39, 0x48, 0x4D)
-    _FG = QColor(0x93, 0xC3, 0xCD)
-    _BORDER = QColor(0x46, 0x59, 0x5F)
-    _BG_SEL = QColor(0x3C, 0x5C, 0x72)
-    _FG_SEL = QColor(0xE2, 0xF4, 0xFA)
+    _BG         = QColor(0x39, 0x48, 0x4D)
+    _FG         = QColor(0x93, 0xC3, 0xCD)
+    _BORDER     = QColor(0x46, 0x59, 0x5F)
+    _BG_SEL     = QColor(0x3C, 0x5C, 0x72)
+    _FG_SEL     = QColor(0xE2, 0xF4, 0xFA)
     _BORDER_SEL = QColor(0x5B, 0x7F, 0x97)
     # Outline weight: no fill and a dimmer glyph, so a compiled-but-idle node
     # can't be mistaken for a live one.
-    _FG_DIM = QColor(0x6F, 0x8B, 0x93)
+    _FG_DIM     = QColor(0x6F, 0x8B, 0x93)
     _FG_DIM_SEL = QColor(0xB9, 0xD6, 0xE0)
 
     def paint(self, painter, option, index):
         state = index.data(_CPP_BADGE_ROLE) or _CPP_NONE
-        opt = QStyleOptionViewItem(option)
+        opt   = QStyleOptionViewItem(option)
         self.initStyleOption(opt, index)
 
         # Draw at FULL width and elide by hand: a shortened rect also shortens
@@ -88,7 +88,7 @@ class _CppChipDelegate(QStyledItemDelegate):
         # super().paint() re-runs initStyleOption and would discard an edited
         # opt.text, so draw through the style directly -- same CE_ItemViewItem.
         widget = self.parent() or getattr(option, "widget", None)
-        style = widget.style() if widget is not None else None
+        style  = widget.style() if widget is not None else None
         if opt.text and style is not None:
             # Ask the style where the text goes rather than guess its margins,
             # then keep RESERVED px clear. Done on EVERY row, chipped or not,
@@ -103,9 +103,9 @@ class _CppChipDelegate(QStyledItemDelegate):
 
         if not state:
             return
-        filled = state == _CPP_CONVERTED
+        filled   = state == _CPP_CONVERTED
         selected = bool(option.state & QStyle.State_Selected)
-        r = QRect(option.rect)
+        r        = QRect(option.rect)
         chip = QRect(
             r.right() - self.CHIP_W - 2,
             r.top() + max(1, (r.height() - 14) // 2),
@@ -172,10 +172,10 @@ class NDSceneTreeItem(QTreeWidgetItem):
 
     def __init__(self, parent, name: str, native_type: str):
         super().__init__(parent)
-        self.node_name = name
-        self.native_type = native_type
+        self.node_name    = name
+        self.native_type  = native_type
         self.is_converted = False
-        self.cpp_state = _CPP_NONE
+        self.cpp_state    = _CPP_NONE
         # col 0 = name (inline-editable), col 1 = dimmed class tag.
         self.setFlags(self.flags() | Qt.ItemIsEditable)
         self.setForeground(1, _TYPE_COLUMN_BRUSH)
@@ -303,17 +303,17 @@ class NDSceneTree(QTreeWidget):
     the open editor tab.
     """
 
-    nodeSelected = Signal(str, str)
-    exportNodeRequested = Signal(str, str)
+    nodeSelected              = Signal(str, str)
+    exportNodeRequested       = Signal(str, str)
     exportNodeScriptRequested = Signal(str, str)
-    copyNodeScriptRequested = Signal(str, str)
-    deleteNodeRequested = Signal(str, str)
-    nodeRenamed = Signal(str, str)
+    copyNodeScriptRequested   = Signal(str, str)
+    deleteNodeRequested       = Signal(str, str)
+    nodeRenamed               = Signal(str, str)
     # "Info…" -> NDMainWindow opens the per-node metadata dialog.
     nodeInfoRequested = Signal(str, str)
     # "Duplicate" / "Duplicate + Inputs" -> NDMainWindow deep-copies the node
     # (incl. independent persistent data); "+ Inputs" also re-wires its inputs.
-    duplicateNodeRequested = Signal(str, str)
+    duplicateNodeRequested       = Signal(str, str)
     duplicateWithInputsRequested = Signal(str, str)
     # "Run setup" -> NDMainWindow runs this node's own ``setup()`` against the
     # current Maya selection, in one undo chunk.
@@ -532,29 +532,29 @@ class NDSceneTree(QTreeWidget):
             info_act = QAction("Info…", menu)
             info_act.triggered.connect(
                 lambda checked=False,
-                n=first.node_name,
-                t=first.native_type: self.nodeInfoRequested.emit(n, t)
+                n = first.node_name,
+                t = first.native_type: self.nodeInfoRequested.emit(n, t)
             )
             menu.addAction(info_act)
             export_act = QAction("Export to.mpn\u2026", menu)
             export_act.triggered.connect(
                 lambda checked=False,
-                n=first.node_name,
-                t=first.native_type: self.exportNodeRequested.emit(n, t)
+                n = first.node_name,
+                t = first.native_type: self.exportNodeRequested.emit(n, t)
             )
             menu.addAction(export_act)
             export_py_act = QAction("Bake Node to .py File\u2026", menu)
             export_py_act.triggered.connect(
                 lambda checked=False,
-                n=first.node_name,
-                t=first.native_type: self.exportNodeScriptRequested.emit(n, t)
+                n = first.node_name,
+                t = first.native_type: self.exportNodeScriptRequested.emit(n, t)
             )
             menu.addAction(export_py_act)
             copy_py_act = QAction("Bake Node to Clipboard", menu)
             copy_py_act.triggered.connect(
                 lambda checked=False,
-                n=first.node_name,
-                t=first.native_type: self.copyNodeScriptRequested.emit(n, t)
+                n = first.node_name,
+                t = first.native_type: self.copyNodeScriptRequested.emit(n, t)
             )
             menu.addAction(copy_py_act)
 
@@ -576,8 +576,8 @@ class NDSceneTree(QTreeWidget):
             )
             name_act.triggered.connect(
                 lambda checked=False,
-                n=first.node_name,
-                t=first.native_type: self.nameClassRequested.emit(n, t)
+                n = first.node_name,
+                t = first.native_type: self.nameClassRequested.emit(n, t)
             )
             menu.addAction(name_act)
             if _classed:
@@ -588,8 +588,8 @@ class NDSceneTree(QTreeWidget):
                 )
                 fork_act.triggered.connect(
                     lambda checked=False,
-                    n=first.node_name,
-                    t=first.native_type: self.reclassifyRequested.emit(n, t)
+                    n = first.node_name,
+                    t = first.native_type: self.reclassifyRequested.emit(n, t)
                 )
                 menu.addAction(fork_act)
 
@@ -599,8 +599,8 @@ class NDSceneTree(QTreeWidget):
             dup_act = QAction("Duplicate", menu)
             dup_act.triggered.connect(
                 lambda checked=False,
-                n=first.node_name,
-                t=first.native_type: self.duplicateNodeRequested.emit(n, t)
+                n = first.node_name,
+                t = first.native_type: self.duplicateNodeRequested.emit(n, t)
             )
             menu.addAction(dup_act)
             dup_inputs_act = QAction("Duplicate + Inputs", menu)
@@ -609,8 +609,8 @@ class NDSceneTree(QTreeWidget):
             )
             dup_inputs_act.triggered.connect(
                 lambda checked=False,
-                n=first.node_name,
-                t=first.native_type: self.duplicateWithInputsRequested.emit(n, t)
+                n = first.node_name,
+                t = first.native_type: self.duplicateWithInputsRequested.emit(n, t)
             )
             menu.addAction(dup_inputs_act)
 
@@ -648,8 +648,8 @@ class NDSceneTree(QTreeWidget):
                 )
                 compile_act.triggered.connect(
                     lambda checked=False,
-                    n=first.node_name,
-                    t=first.native_type: self.compileNodeRequested.emit(n, t)
+                    n = first.node_name,
+                    t = first.native_type: self.compileNodeRequested.emit(n, t)
                 )
             menu.addAction(compile_act)
 
@@ -673,8 +673,8 @@ class NDSceneTree(QTreeWidget):
                     "from this Python node again")
                 revert_act.triggered.connect(
                     lambda checked=False,
-                    n=first.node_name,
-                    t=first.native_type:
+                    n = first.node_name,
+                    t = first.native_type:
                     self.revertToPyRequested.emit(n, t)
                 )
                 menu.addAction(revert_act)
@@ -687,8 +687,8 @@ class NDSceneTree(QTreeWidget):
                         "Python node stays as the source)")
                     convert_act.triggered.connect(
                         lambda checked=False,
-                        n=first.node_name,
-                        t=first.native_type:
+                        n = first.node_name,
+                        t = first.native_type:
                         self.convertToCppRequested.emit(n, t)
                     )
                 else:
@@ -712,8 +712,8 @@ class NDSceneTree(QTreeWidget):
                 )
                 run_setup_act.triggered.connect(
                     lambda checked=False,
-                    n=first.node_name,
-                    t=first.native_type: self.runSetupRequested.emit(n, t)
+                    n = first.node_name,
+                    t = first.native_type: self.runSetupRequested.emit(n, t)
                 )
                 menu.addAction(run_setup_act)
 
@@ -734,9 +734,9 @@ class NDSceneTree(QTreeWidget):
                 )
                 run_demo_act.triggered.connect(
                     lambda checked=False,
-                    n=first.node_name,
-                    t=first.native_type,
-                    dn=demos[0].func_name:
+                    n  = first.node_name,
+                    t  = first.native_type,
+                    dn = demos[0].func_name:
                     self.runDemoRequested.emit(n, t, dn)
                 )
                 menu.addAction(run_demo_act)
@@ -747,9 +747,9 @@ class NDSceneTree(QTreeWidget):
                     a = QAction(spec.label, demo_menu)
                     a.triggered.connect(
                         lambda checked=False,
-                        n=first.node_name,
-                        t=first.native_type,
-                        dn=spec.func_name:
+                        n  = first.node_name,
+                        t  = first.native_type,
+                        dn = spec.func_name:
                         self.runDemoRequested.emit(n, t, dn)
                     )
                     demo_menu.addAction(a)
@@ -759,8 +759,8 @@ class NDSceneTree(QTreeWidget):
             delete_act = QAction("Delete Node", menu)
             delete_act.triggered.connect(
                 lambda checked=False,
-                n=first.node_name,
-                t=first.native_type: self.deleteNodeRequested.emit(n, t)
+                n = first.node_name,
+                t = first.native_type: self.deleteNodeRequested.emit(n, t)
             )
             menu.addAction(delete_act)
 

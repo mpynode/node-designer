@@ -63,15 +63,15 @@ def serialize_node(py_node, include_persistent: bool = True,
     every persistent NAME and drops the data: ``stored_vars`` maps each to
     ``None``, so the restored node has its variables declared and empty, the
     way one created through the API starts."""
-    name = py_node.get_name()
+    name        = py_node.get_name()
     native_type = mc.nodeType(name)
     payload: dict[str, Any] = {
-        "native_type": native_type,
-        "node_name": name,
-        "expression": "",
-        "input_attrs": {},
+        "native_type":  native_type,
+        "node_name":    name,
+        "expression":   "",
+        "input_attrs":  {},
         "output_attrs": {},
-        "stored_vars": {},
+        "stored_vars":  {},
     }
     try:
         payload["expression"] = py_node.get_compute_expression() or ""
@@ -179,10 +179,10 @@ _SOURCE_TIERS = (
     ("methods_source", "get_methods_source"),
 )
 _SOURCE_TIER_SETTERS = {
-    "init_source": "set_init_expression",
+    "init_source":     "set_init_expression",
     "viewport_source": "set_viewport_expression",
-    "osl_source": "set_osl_expression",
-    "methods_source": "set_methods_source",
+    "osl_source":      "set_osl_expression",
+    "methods_source":  "set_methods_source",
 }
 
 
@@ -199,7 +199,7 @@ def save_mpn(payload: dict, path: str, compression: str = "zlib") -> None:
     """
     from mpynode._common.io import serialization
 
-    data = dict(payload)
+    data   = dict(payload)
     stored = dict(data.get("stored_vars") or {})
     data["stored_vars"], _dropped = serialization.encode_stored_vars_resilient(
         stored, compression=compression
@@ -256,7 +256,7 @@ def load_mpn(path: str, return_failures: bool = False, trusted=None, prompt_fn=N
     from mpynode._common.io import serialization
 
     data = _read_envelope_data(path)
-    sv = data.get("stored_vars")
+    sv   = data.get("stored_vars")
     failures: dict = {}
     if isinstance(sv, str):
         if trusted is None:
@@ -366,7 +366,7 @@ def deserialize_node(
     try:
         from mpynode._node_registry import get_spec
 
-        spec = get_spec(native_type)
+        spec        = get_spec(native_type)
         plugin_name = spec.plugin_name if spec else None
     except Exception:
         pass
@@ -432,12 +432,12 @@ def apply_payload_to_node(
         # Restore input attrs (in authored add-order, not the .mpn's alphabetical
         # key order, so the rebuilt plugs / Channel Box match the original).
         for attr_name, meta in _ordered_attr_items(payload.get("input_attrs")):
-            attr_type = meta.get("attr_type", "float")
-            is_array = bool(meta.get("is_array", False))
+            attr_type  = meta.get("attr_type", "float")
+            is_array   = bool(meta.get("is_array", False))
             enum_names = meta.get("enum_names")
             limits = {
-                "min_value": meta.get("min_value"),
-                "max_value": meta.get("max_value"),
+                "min_value":     meta.get("min_value"),
+                "max_value":     meta.get("max_value"),
                 "default_value": meta.get("default_value"),
             }
             # sparse is array-only; absent => dense (the default read). Restore the
@@ -470,12 +470,12 @@ def apply_payload_to_node(
 
         # Restore output attrs (authored add-order; see input note above).
         for attr_name, meta in _ordered_attr_items(payload.get("output_attrs")):
-            attr_type = meta.get("attr_type", "float")
-            is_array = bool(meta.get("is_array", False))
+            attr_type  = meta.get("attr_type", "float")
+            is_array   = bool(meta.get("is_array", False))
             enum_names = meta.get("enum_names")
             limits = {
-                "min_value": meta.get("min_value"),
-                "max_value": meta.get("max_value"),
+                "min_value":     meta.get("min_value"),
+                "max_value":     meta.get("max_value"),
                 "default_value": meta.get("default_value"),
             }
             try:
@@ -542,12 +542,12 @@ def apply_payload_to_node(
                 "node type does not support this tier (no %s)" % setter
             )
             continue
-        ok = True
+        ok     = True
         reason = None
         try:
             ok = fn(val)
         except Exception as exc:
-            ok = False
+            ok     = False
             reason = str(exc)
         if ok is False:
             # F12: setter returned False (no exception) -- e.g. text was

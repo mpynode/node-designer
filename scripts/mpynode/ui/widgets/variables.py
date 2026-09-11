@@ -193,8 +193,8 @@ class NDVariableTreeItem(QTreeWidgetItem):
 
     def __init__(self, parent, var_name: str, value):
         super().__init__(parent)
-        self.var_name = var_name
-        self.var_value = value
+        self.var_name    = var_name
+        self.var_value   = value
         self.is_internal = False
         # Session-only rows (store key not in the persistent registry) are
         # display-only + muted; editing would otherwise auto-register them.
@@ -269,13 +269,13 @@ def _format_slot_value(value, max_len: int = 80) -> str:
         pass
     # list / tuple: show length + first 3 items.
     if isinstance(value, (list, tuple)):
-        n = len(value)
+        n   = len(value)
         cls = type(value).__name__
         if n == 0:
             return f"{cls}[0]"
-        head = ", ".join(repr(x) for x in value[:3])
+        head   = ", ".join(repr(x) for x in value[:3])
         suffix = ",..." if n > 3 else ""
-        text = f"{cls}[{n}]: {head}{suffix}"
+        text   = f"{cls}[{n}]: {head}{suffix}"
         if len(text) > max_len:
             text = text[: max_len - 3] + "..."
         return text
@@ -449,9 +449,9 @@ class NDPlugRowItem(QTreeWidgetItem):
 
     def __init__(self, parent, plug_name: str, direction: str, value_text: str):
         super().__init__(parent)
-        self.plug_name = plug_name
-        self.direction = direction
-        self.value_text = value_text
+        self.plug_name   = plug_name
+        self.direction   = direction
+        self.value_text  = value_text
         self.is_internal = True  # treated as read-only by the widget
         self.setFlags(self.DISPLAY_FLAGS)
         self.setText(0, plug_name)
@@ -486,7 +486,7 @@ class NDVariablesWidget(QWidget):
         layout.addWidget(self._header)
 
         # + / - only act on User entries; Internal entries are schema-only.
-        btn_row = QHBoxLayout()
+        btn_row       = QHBoxLayout()
         self._add_btn = QPushButton("+", self)
         self._add_btn.setFixedWidth(32)
         self._add_btn.setToolTip("Add a stored variable (User)")
@@ -517,7 +517,7 @@ class NDVariablesWidget(QWidget):
         except Exception:
             pass
         # Drop-highlight state (mirrors NDInputAttrTree).
-        self._drop_highlight_item = None
+        self._drop_highlight_item       = None
         self._drop_highlight_prev_brush = None
         # New-var flash: the self.X var set + node from the last refresh, so
         # a var that just appeared can be selected, scrolled to and flashed.
@@ -603,9 +603,9 @@ class NDVariablesWidget(QWidget):
 
         # Reused across refreshes: children are cleared but the headers stay,
         # so expanded state survives.
-        self._internal_section: QTreeWidgetItem | None = None
+        self._internal_section:   QTreeWidgetItem | None = None
         self._persistent_section: QTreeWidgetItem | None = None
-        self._temporary_section: QTreeWidgetItem | None = None
+        self._temporary_section:  QTreeWidgetItem | None = None
 
         self._add_btn.clicked.connect(self._on_add_clicked)
         self._del_btn.clicked.connect(self._on_remove_clicked)
@@ -626,7 +626,7 @@ class NDVariablesWidget(QWidget):
     def setPyNode(self, py_node):
         # New node -> remembered per-variable image choices no longer apply.
         if py_node is not self._py_node:
-            self._image_view_modes = {}
+            self._image_view_modes    = {}
             self._waveform_view_modes = {}
             # Release the player + temp .wav but KEEP the wrapper object --
             # dispose() leaves it reusable, and any surviving reused cell
@@ -648,7 +648,7 @@ class NDVariablesWidget(QWidget):
         def _walk(parent):
             for i in range(parent.childCount()):
                 child = parent.child(i)
-                vn = getattr(child, "var_name", None)
+                vn    = getattr(child, "var_name", None)
                 if (
                     vn is not None
                     and vn in self._image_view_modes
@@ -680,12 +680,12 @@ class NDVariablesWidget(QWidget):
         freshly-built rows. Walks all section rows. Pure-cosmetic + guarded so
         it can never break the build."""
         wave_pref = render_waveform_pref_on()
-        player = self._ensure_waveform_player() if wave_pref else None
+        player    = self._ensure_waveform_player() if wave_pref else None
 
         def _walk(parent):
             for i in range(parent.childCount()):
                 child = parent.child(i)
-                vn = getattr(child, "var_name", None)
+                vn    = getattr(child, "var_name", None)
                 if (wave_pref and vn is not None
                         and self._waveform_view_modes.get(vn)
                         and is_audio_item(child, 2)):
@@ -736,18 +736,18 @@ class NDVariablesWidget(QWidget):
             pass
 
     def refresh(self):
-        prev_node = self._known_node_name
-        prev_names = self._known_var_names
-        new_names = set()
+        prev_node        = self._known_node_name
+        prev_names       = self._known_var_names
+        new_names        = set()
         self._refreshing = True
         try:
             # clear() leaves item widgets alive on the viewport with their
             # timers running, so stop animated-GIF movies first.
             cleanup_media_widgets(self._tree)
             self._tree.clear()
-            self._internal_section = None
+            self._internal_section   = None
             self._persistent_section = None
-            self._temporary_section = None
+            self._temporary_section  = None
             if self._py_node is None:
                 self._header.setText("(no node selected)")
                 self._set_buttons_enabled(False)
@@ -920,7 +920,7 @@ class NDVariablesWidget(QWidget):
             placeholder.setFirstColumnSpanned(True)
             return
         for name in names:
-            item = NDVariableTreeItem(parent, name, data.get(name))
+            item            = NDVariableTreeItem(parent, name, data.get(name))
             item.is_session = False
             item.setFlags(
                 Qt.ItemIsEnabled | Qt.ItemIsSelectable | Qt.ItemIsEditable
@@ -946,7 +946,7 @@ class NDVariablesWidget(QWidget):
             return
         muted = QBrush(QColor(150, 150, 150, 150))
         for name in names:
-            item = NDVariableTreeItem(parent, name, data[name])
+            item            = NDVariableTreeItem(parent, name, data[name])
             item.is_session = True
             # A temporary var's value is owned by the expression, and an
             # inline edit would auto-register it.
@@ -1031,7 +1031,7 @@ class NDVariablesWidget(QWidget):
                 item.setBackground(0, QBrush())
         except Exception:
             pass
-        self._drop_highlight_item = None
+        self._drop_highlight_item       = None
         self._drop_highlight_prev_brush = None
 
     # ------------------------------------------------------------------
@@ -1042,7 +1042,7 @@ class NDVariablesWidget(QWidget):
         if self._py_node is None:
             return
         existing = set(self._current_var_names())
-        result = self._prompt_new_var()
+        result   = self._prompt_new_var()
         if result is None:
             return
         name, persistent = result
@@ -1086,7 +1086,7 @@ class NDVariablesWidget(QWidget):
         lay.addWidget(persist_check)
         btn_row = QHBoxLayout()
         btn_row.addStretch(1)
-        ok_btn = QPushButton("OK", dlg)
+        ok_btn     = QPushButton("OK", dlg)
         cancel_btn = QPushButton("Cancel", dlg)
         ok_btn.setDefault(True)
         btn_row.addWidget(ok_btn)
@@ -1261,7 +1261,7 @@ class NDVariablesWidget(QWidget):
         load_act = menu.addAction("Load media…")
         menu.addSeparator()
         if item.is_session:
-            toggle_act = menu.addAction("Make Persistent (save with scene)")
+            toggle_act    = menu.addAction("Make Persistent (save with scene)")
             toggle_target = True
         else:
             toggle_act = menu.addAction(
@@ -1273,8 +1273,8 @@ class NDVariablesWidget(QWidget):
             "Delete Variable" + ("s" if len(targets) > 1 else "")
         )
 
-        gpos = self._tree.viewport().mapToGlobal(pos)
-        run = getattr(menu, "exec_", None) or menu.exec
+        gpos   = self._tree.viewport().mapToGlobal(pos)
+        run    = getattr(menu, "exec_", None) or menu.exec
         chosen = run(gpos)
         if chosen is img_act and img_act is not None:
             # toggle_value_mode writes data/tooltip on col 2 and each write
@@ -1348,7 +1348,7 @@ class NDVariablesWidget(QWidget):
         persistent = not item.is_session
         if persistent and len(data) > _MEDIA_PERSIST_WARN_BYTES:
             name = path.replace("\\", "/").rsplit("/", 1)[-1]
-            mb = len(data) / (1024.0 * 1024.0)
+            mb   = len(data) / (1024.0 * 1024.0)
             ret = QMessageBox.question(
                 self,
                 "Large persistent media",

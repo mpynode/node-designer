@@ -181,7 +181,7 @@ class NDApiView(QtPythonEditor):
         super().__init__(parent)
         self._py_node = py_node
         self._regions = []
-        self._source = ""
+        self._source  = ""
         # block number -> region, for hit-testing and painting
         self._block_region = {}
         # block number of each expression rail -> its region, for the
@@ -200,12 +200,12 @@ class NDApiView(QtPythonEditor):
         # row. Not a click target -- a left click on a rail belongs to the
         # tier -- but the painter records it so a test can prove the
         # placeholder clears the line's own text instead of printing over it.
-        self._marker_rects = {}
+        self._marker_rects       = {}
         self._last_saved_methods = None
         # Baseline for the blank-line spacing, same contract as the Methods
         # baseline above: re-read on every load so a re-bake is not "dirty".
         self._last_saved_spacing = {}
-        self._loading = False
+        self._loading            = False
         # A drag-and-drop can both insert at the drop point AND delete at the
         # source, which is two guarded ranges rather than one. The surface it
         # replaces never accepted drops, so refusing them regresses nothing.
@@ -263,13 +263,13 @@ class NDApiView(QtPythonEditor):
                 src = "# The bake could not be generated:\n# %s: %s" % (
                     type(exc).__name__, exc)
                 regions = []
-        self._source = src
+        self._source  = src
         self._regions = regions
         # This runs on EVERY return to the tab, so without a save/restore the
         # caret goes home to line 1 each time -- setPlainText resets both the
         # caret and the scroll. The tier editors keep their place because they
         # are buffers that are never reloaded; this one is a projection.
-        where = self._capture_position()
+        where         = self._capture_position()
         self._loading = True
         try:
             self.setPlainText(src)
@@ -302,9 +302,9 @@ class NDApiView(QtPythonEditor):
         if not where:
             return
         block_no, col, vscroll, hscroll = where
-        doc = self.document()
+        doc      = self.document()
         block_no = max(0, min(int(block_no), doc.blockCount() - 1))
-        block = doc.findBlockByNumber(block_no)
+        block    = doc.findBlockByNumber(block_no)
         # A block that is now folded away would park the caret somewhere
         # invisible; walk forward to the first block the user can actually see.
         probe = block
@@ -440,7 +440,7 @@ class NDApiView(QtPythonEditor):
                 continue   # handled below, off the DOCUMENT, so that a header
                            # the user has only just started also lands
             src_line = region.get("src_line")
-            span = region.get("src_lines")
+            span     = region.get("src_lines")
             if not src_line or not span:
                 continue
             edits.append((src_line, span, self._region_text(region, cursor)))
@@ -452,14 +452,14 @@ class NDApiView(QtPythonEditor):
         header = next((r for r in self._regions
                        if r["kind"] == "header"), None)
         n_header = int((header or {}).get("src_lines") or 0)
-        top = self._top_text()
+        top      = self._top_text()
         if top or n_header:
             edits.append((1, n_header, top))
         # LAST first, so an earlier splice cannot invalidate a later index.
         for src_line, span, text in sorted(edits, reverse=True):
             # "" is NO lines, not one empty line -- deleting the whole header
             # has to close the hole rather than leave a blank at the top.
-            replacement = text.split("\n") if text else []
+            replacement                             = text.split("\n") if text else []
             lines[src_line - 1:src_line - 1 + span] = replacement
         return "\n".join(lines)
 
@@ -486,7 +486,7 @@ class NDApiView(QtPythonEditor):
             return text
         if not region.get("indent"):
             return _strip_trailing_blanks(text)
-        rows = text.split("\n")
+        rows   = text.split("\n")
         widths = [len(r) - len(r.lstrip(" ")) for r in rows if r.strip()]
         # Cap at the indent the bake ADDED so a deeper body keeps its shape,
         # and take the smallest actual indent so a user who dedented is not
@@ -507,12 +507,12 @@ class NDApiView(QtPythonEditor):
         wrong -- for the paint markers, for the fold counts, and for the
         write-back spans. Qt maintains a cursor across edits; ints it does not.
         """
-        doc = self.document()
+        doc                  = self.document()
         self._region_cursors = []
         for r in self._regions:
             first = doc.findBlockByNumber(r["start"])
-            end = self._claim_end(r)
-            last = doc.findBlockByNumber(end)
+            end   = self._claim_end(r)
+            last  = doc.findBlockByNumber(end)
             if not first.isValid() or not last.isValid():
                 continue
             cursor = QTextCursor(doc)
@@ -538,8 +538,8 @@ class NDApiView(QtPythonEditor):
         end = int(region["end"])
         if not self._is_editable(region):
             return end
-        doc = self.document()
-        nxt = self._next_region_start(region)
+        doc   = self.document()
+        nxt   = self._next_region_start(region)
         limit = (nxt - 1) if nxt is not None else (doc.blockCount() - 1)
         probe = end + 1
         while probe <= limit:
@@ -567,8 +567,8 @@ class NDApiView(QtPythonEditor):
                 doc.findBlock(cursor.selectionEnd()).blockNumber())
 
     def _index_regions(self) -> None:
-        self._block_region = {}
-        self._placeholders = {}
+        self._block_region       = {}
+        self._placeholders       = {}
         self._value_placeholders = {}
         if not self._region_cursors:
             for r in self._regions:
@@ -675,7 +675,7 @@ class NDApiView(QtPythonEditor):
         """Arrow keys walk INTO folded blocks -- Qt does not skip them. Nudge
         the caret back out to the nearest visible block."""
         cursor = self.textCursor()
-        block = cursor.block()
+        block  = cursor.block()
         if block.isVisible():
             return
         probe = block
@@ -737,7 +737,7 @@ class NDApiView(QtPythonEditor):
         is "the header zone does not exist", and the save reads an empty zone
         as an instruction to delete the header.
         """
-        doc = self.document()
+        doc  = self.document()
         best = None
         for region, cursor in self._region_cursors or ():
             if self._is_editable(region) or region.get("kind") in _ABOVE_TOP_ZONE:
@@ -945,8 +945,8 @@ class NDApiView(QtPythonEditor):
 
     def insertFromMimeData(self, source):
         cursor = self.textCursor()
-        lo = cursor.selectionStart() if cursor.hasSelection() else cursor.position()
-        hi = cursor.selectionEnd() if cursor.hasSelection() else cursor.position()
+        lo     = cursor.selectionStart() if cursor.hasSelection() else cursor.position()
+        hi     = cursor.selectionEnd() if cursor.hasSelection() else cursor.position()
         if not self._allows(lo, hi, False, False):
             self._refuse()
             return
@@ -955,8 +955,8 @@ class NDApiView(QtPythonEditor):
 
     def _refuse(self) -> None:
         region = self._block_region.get(self.textCursor().block().blockNumber())
-        owner = (region or {}).get("label")
-        kind = (region or {}).get("kind") or ""
+        owner  = (region or {}).get("label")
+        kind   = (region or {}).get("kind") or ""
         if kind.startswith("expr_") and owner:
             message = "Generated — edit this in the %s tab" % owner
         elif kind in ("attrs_in", "attrs_out"):
@@ -995,16 +995,16 @@ class NDApiView(QtPythonEditor):
         # event.rect()), so a stale entry here would keep a click target alive
         # under a marker that is no longer drawn.
         self._marker_rects = {}
-        fm = self.fontMetrics()
+        fm                 = self.fontMetrics()
         try:
             char_w = fm.horizontalAdvance("9")
         except AttributeError:
             char_w = fm.width("9")
         height = fm.height()
-        right = self.viewport().width()
+        right  = self.viewport().width()
 
-        limit = self.viewport().height()
-        block = self.firstVisibleBlock()
+        limit  = self.viewport().height()
+        block  = self.firstVisibleBlock()
         top = self.blockBoundingGeometry(block).translated(
             self.contentOffset()).top()
         bottom = top + self.blockBoundingRect(block).height()
@@ -1018,7 +1018,7 @@ class NDApiView(QtPythonEditor):
             block = block.next()
             if not block.isValid():
                 break
-            top = bottom
+            top    = bottom
             bottom = top + self.blockBoundingRect(block).height()
 
     def _marks_generated(self, region, block_no) -> bool:
@@ -1073,7 +1073,7 @@ class NDApiView(QtPythonEditor):
                 block = block.next()
                 if not block.isValid():
                     break
-                top = bottom
+                top    = bottom
                 bottom = top + self.blockBoundingRect(block).height()
         finally:
             painter.end()
@@ -1104,7 +1104,7 @@ class NDApiView(QtPythonEditor):
 
     def _paint_one(self, painter, block, region, top, height, char_w, right):
         kind = region["kind"]
-        n = block.blockNumber()
+        n    = block.blockNumber()
         if kind in _GENERATED_KINDS:
             # FULL viewport width, so the wash is identical at every horizontal
             # scroll offset and cannot leave a seam.
@@ -1156,7 +1156,7 @@ class NDApiView(QtPythonEditor):
             open_col = region.get("body_col") or 0
         if label is None:
             label = "%s)" % self._placeholder_label(region)
-        x = int(self.contentOffset().x()) + int(open_col * char_w)
+        x     = int(self.contentOffset().x()) + int(open_col * char_w)
         width = max(0, right - x)
         if width <= 0:
             return
@@ -1269,7 +1269,7 @@ class NDApiView(QtPythonEditor):
         the host routes exactly as it routes that signal from a click."""
         if not isinstance(region, dict):
             return None
-        kind = region.get("kind") or ""
+        kind  = region.get("kind") or ""
         label = region.get("label") or ""
         if self._is_placeholder(region) and label:
             return ("Go to %s" % label,
@@ -1297,7 +1297,7 @@ class NDApiView(QtPythonEditor):
         # (The expand/collapse items lived here until the bodies stopped
         # opening at all.)
         goto_act = None
-        block = self.cursorForPosition(event.pos()).block()
+        block    = self.cursorForPosition(event.pos()).block()
         target = self._go_to_target(
             self._block_region.get(block.blockNumber()), block.text())
         if target is not None:
@@ -1307,7 +1307,7 @@ class NDApiView(QtPythonEditor):
         redo_act = menu.addAction("Redo")
         menu.addSeparator()
         copy_act = menu.addAction("Copy")
-        all_act = menu.addAction("Select All")
+        all_act  = menu.addAction("Select All")
         menu.addSeparator()
         save_act = menu.addAction("Save To File...")
         undo_act.setEnabled(self.document().isUndoAvailable())
@@ -1376,17 +1376,17 @@ def _var_name_on(text: str):
     """``node.add_variable('board', persistent=True)`` -> ``board``; likewise
     ``node.set_variable('board', ..., persistent=True)`` (a value line)."""
     marker = "add_variable("
-    i = text.find(marker)
+    i      = text.find(marker)
     if i < 0:
         marker = "set_variable("
-        i = text.find(marker)
+        i      = text.find(marker)
     if i < 0:
         return None
     rest = text[i + len(marker):].lstrip()
     if not rest or rest[0] not in "'\"":
         return None
     quote = rest[0]
-    j = rest.find(quote, 1)
+    j     = rest.find(quote, 1)
     if j < 0:
         return None
     return rest[1:j]

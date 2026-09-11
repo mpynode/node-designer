@@ -138,25 +138,25 @@ BAKE_CONTRACT = (
 # is stored on the node. This table is the fallback, so a node with no stored
 # spacing bakes byte-for-byte what it baked before the feature existed.
 _DEFAULT_GAP = {
-    "metadata": 0,         # the very top of the file, above the user's header
-    "header": 0,           # the top of the file
-    "imports": 0,          # the header carries its own trailing blank
+    "metadata":        0,  # the very top of the file, above the user's header
+    "header":          0,  # the top of the file
+    "imports":         0,  # the header carries its own trailing blank
     "imports_hoisted": 0,  # runs straight on from the imports above it
-    "module_segment": 2,
-    "helpers": 2,          # the _stored_value decoder, when a value is a blob
-    "class_decl": 2,
+    "module_segment":  2,
+    "helpers":         2,  # the _stored_value decoder, when a value is a blob
+    "class_decl":      2,
     "build_signature": 1,
-    "attrs_in": 1,
-    "attrs_out": 1,
-    "expr_header": 1,
-    "expr_init": 0,        # the tiers pack tight under their own header
-    "expr_compute": 0,
-    "expr_viewport": 0,
-    "expr_osl": 0,
-    "vars": 1,
-    "return": 1,
-    "method_member": 1,
-    "method_warning": 1,
+    "attrs_in":        1,
+    "attrs_out":       1,
+    "expr_header":     1,
+    "expr_init":       0,  # the tiers pack tight under their own header
+    "expr_compute":    0,
+    "expr_viewport":   0,
+    "expr_osl":        0,
+    "vars":            1,
+    "return":          1,
+    "method_member":   1,
+    "method_warning":  1,
 }
 
 # Kinds that appear MORE THAN ONCE in a bake. Keying their spacing on the kind
@@ -206,7 +206,7 @@ def _leading_header_block(methods_src: str):
     # decorated def does not leave its @ lines looking like header comments.
     first = len(lines) + 1
     if tree.body:
-        stmt = tree.body[0]
+        stmt  = tree.body[0]
         first = _stmt_line(stmt)
     end = 0
     for i in range(min(first - 1, len(lines))):
@@ -229,9 +229,9 @@ def _leading_header_block(methods_src: str):
     # the REGION now spans those blanks, so a line of room the user opens up at
     # the top of the file splices back into the Methods source and survives the
     # next bake. A trimmed header cannot express "leave me some space here".
-    rest = tree.body[1:] if _is_docstring(tree.body[0]) else tree.body
+    rest      = tree.body[1:] if _is_docstring(tree.body[0]) else tree.body
     code_line = _stmt_line(rest[0]) if rest else len(lines) + 1
-    limit = min(code_line - 1, len(lines))
+    limit     = min(code_line - 1, len(lines))
     while end < limit and not lines[end].strip():
         end += 1
     return "\n".join(lines[:end]), end
@@ -314,9 +314,9 @@ def _accumulator_lines(var: str, s: str, indent: str) -> list:
     part but the last carries a trailing ``\\n``; a final empty part (i.e. ``s``
     ended in a newline) is already covered by the previous line's ``\\n``.
     """
-    s = s or ""
+    s     = s or ""
     parts = s.split("\n")
-    segs = []
+    segs  = []
     for i, p in enumerate(parts):
         if i == len(parts) - 1:
             if p == "":
@@ -470,8 +470,8 @@ def _prepare_variable_lines(var_names, values):
     or no values at all -- is a plain declaration, exactly what the bake has
     always emitted.
     """
-    lines = []
-    entries = []
+    lines     = []
+    entries   = []
     blob_used = False
     for vn in var_names:
         value = values.get(vn) if values else None
@@ -479,7 +479,7 @@ def _prepare_variable_lines(var_names, values):
             lines.append("        node.add_variable(%r, persistent=True)" % vn)
             continue
         head = "        node.set_variable(%r, " % vn
-        arg = _literal_repr(value)
+        arg  = _literal_repr(value)
         if arg is None:
             blob = _value_blob(vn, value)
             if blob is None:
@@ -487,7 +487,7 @@ def _prepare_variable_lines(var_names, values):
                              "-- carry it with the .mpn" % vn)
                 lines.append("        node.add_variable(%r, persistent=True)" % vn)
                 continue
-            arg = "_stored_value(%r)" % blob
+            arg       = "_stored_value(%r)" % blob
             blob_used = True
         lines.append("%s%s, persistent=True)" % (head, arg))
         entries.append({"name": vn, "offset": len(lines), "open_col": len(head),
@@ -528,7 +528,7 @@ def _emit_set_expression(lines: list, method: str, src: str, indent: str = "    
     own line count -- together they are what the API view paints as
     ``node.<method>(‹ N lines ›)`` over the call line.
     """
-    lit = _expr_literal(src)
+    lit        = _expr_literal(src)
     body_lines = _body_line_count(src)
     if lit is None:
         acc = _accumulator_lines("exp", src, indent)
@@ -550,10 +550,10 @@ def _emit_set_expression(lines: list, method: str, src: str, indent: str = "    
         # A folded rail covers from HERE rather than from body_col, so the
         # reader is not left looking at a bare ''' and the first
         # character of a body that is not being displayed.
-        "open_col": open_col,
-        "body_col": open_col + (len(lit) - len(src) - 3),
+        "open_col":    open_col,
+        "body_col":    open_col + (len(lit) - len(src) - 3),
         "call_offset": 0,
-        "body_lines": body_lines,
+        "body_lines":  body_lines,
     }
 
 
@@ -610,7 +610,7 @@ def _top_level_import_lines(methods_src: str):
     except (SyntaxError, ValueError):
         return []
     seen = set()
-    out = []
+    out  = []
     for stmt in tree.body:
         if not isinstance(stmt, (ast.Import, ast.ImportFrom)):
             continue
@@ -867,7 +867,7 @@ def generate_node_script_with_regions(py_node, *, class_name: str | None = None,
     """
     wrapper_cls = type(py_node)
     native_type = getattr(wrapper_cls, "NATIVE_TYPE", "mPyNode")
-    uses_mesh = hasattr(wrapper_cls, "create_on")  # deformer-family creator
+    uses_mesh   = hasattr(wrapper_cls, "create_on")  # deformer-family creator
 
     # ALWAYS the registry ROOT wrapper, never the live logical subclass: a user
     # subclass isn't exported at ``mpynode`` top level so ``from mpynode import
@@ -875,7 +875,7 @@ def generate_node_script_with_regions(py_node, *, class_name: str | None = None,
     # ``base_cls`` shadows ``base_name``'s lifecycle exactly, so the shadow guard
     # below always probes the class the baked ``class X(<base_name>)`` inherits.
     base_name = wrapper_cls.__name__
-    base_cls = wrapper_cls
+    base_cls  = wrapper_cls
     try:
         from mpynode._node_registry import get_spec
 
@@ -884,7 +884,7 @@ def generate_node_script_with_regions(py_node, *, class_name: str | None = None,
             root_cls = spec.get_wrapper_class()
             if isinstance(root_cls, type):
                 base_name = root_cls.__name__
-                base_cls = root_cls
+                base_cls  = root_cls
     except Exception:
         pass
 
@@ -908,10 +908,10 @@ def generate_node_script_with_regions(py_node, *, class_name: str | None = None,
         except Exception:
             return default
 
-    input_attrs: dict = _safe(py_node.get_input_attr_map, {})
-    output_attrs: dict = _safe(py_node.get_output_attr_map, {})
-    init_src: str = _safe(py_node.get_init_expression, "")
-    compute_src: str = _safe(py_node.get_compute_expression, "")
+    input_attrs:  dict = _safe(py_node.get_input_attr_map,     {})
+    output_attrs: dict = _safe(py_node.get_output_attr_map,    {})
+    init_src:     str = _safe(py_node.get_init_expression,    "")
+    compute_src:  str = _safe(py_node.get_compute_expression, "")
     # Viewport exists only on some types (e.g. mPyFile, via ViewportSourceMixin).
     # Emit only when supported, else the rebuild AttributeErrors on a mPyNode.
     viewport_src: str = ""
@@ -960,7 +960,7 @@ def generate_node_script_with_regions(py_node, *, class_name: str | None = None,
     # Per-node blank-line overrides. Empty for every node that has never had a
     # boundary moved by hand, which is what keeps the default bake unchanged.
     gap_spacing = {}
-    _get_gaps = getattr(py_node, "get_api_gap_spacing", None)
+    _get_gaps   = getattr(py_node, "get_api_gap_spacing", None)
     if _get_gaps is not None:
         try:
             gap_spacing = _get_gaps() or {}
@@ -1087,10 +1087,10 @@ def generate_node_script_with_regions(py_node, *, class_name: str | None = None,
             _i = len(L)
             L.append(seg["src"])
             mark("module_segment", _i, editable=True,
-                 owner="set_methods_source",
-                 label=seg["name"],
-                 symbol_kind=seg["kind"],
-                 src_line=seg["lineno"],
+                 owner       = "set_methods_source",
+                 label       = seg["name"],
+                 symbol_kind = seg["kind"],
+                 src_line    = seg["lineno"],
                  src_lines=seg["src"].count("\n") + 1)
     if blob_used:
         # The decoder for the baked blobs -- module scope, above the class, so
@@ -1160,15 +1160,15 @@ def generate_node_script_with_regions(py_node, *, class_name: str | None = None,
             if not src:
                 continue
             gap("expr_%s" % tier.lower())
-            _i = len(L)
+            _i   = len(L)
             info = _emit_set_expression(L, setter, src)
             # The escaped (accumulator) form is repr'd line-by-line, so it is
             # NOT editable in place the way an inline triple-quoted body is.
             mark("expr_%s" % tier.lower(), _i, editable=info["inline"],
                  owner=setter, label=tier,
                  body_col=info["body_col"], open_col=info.get("open_col"),
-                 inline=info["inline"],
-                 call_offset=info.get("call_offset", 0),
+                 inline      = info["inline"],
+                 call_offset = info.get("call_offset", 0),
                  body_lines=info.get("body_lines"))
 
     # --- persistent variables (declarations; values when asked) ---
@@ -1300,12 +1300,12 @@ def generate_node_script_with_regions(py_node, *, class_name: str | None = None,
         # read as ``class`` beside a real ``class SetupError``. Name it for what
         # it is; the classifier keeps its own vocabulary for the bake.
         mark("method_member", _i, editable=True, owner="set_methods_source",
-             label=func_name,
-             symbol_kind=role or ("method" if kind == "class" else kind),
+             label       = func_name,
+             symbol_kind = role or ("method" if kind == "class" else kind),
              run_kind=role, run_name=run_name, run_params=run_params,
-             src_line=d.get("lineno"),
-             src_lines=body.count("\n") + 1,
-             indent=4,
+             src_line  = d.get("lineno"),
+             src_lines = body.count("\n") + 1,
+             indent    = 4,
              # The region mark is taken BEFORE this line is appended, so a
              # synthesized @classmethod is INSIDE the region but has no
              # counterpart in the Methods source. An edit spliced back without
@@ -1318,7 +1318,7 @@ def generate_node_script_with_regions(py_node, *, class_name: str | None = None,
     # while emitting, because L entries are multi-line and a line number is
     # not knowable until every entry exists.
     offs = []
-    pos = 0
+    pos  = 0
     for chunk in L:
         offs.append(pos)
         pos += chunk.count("\n") + 1
@@ -1328,12 +1328,12 @@ def generate_node_script_with_regions(py_node, *, class_name: str | None = None,
         if i1 <= i0:
             continue
         region = {
-            "kind": kind,
-            "start": offs[i0],
-            "end": offs[i1 - 1] + L[i1 - 1].count("\n"),
+            "kind":     kind,
+            "start":    offs[i0],
+            "end":      offs[i1 - 1] + L[i1 - 1].count("\n"),
             "editable": editable,
-            "owner": owner,
-            "label": label,
+            "owner":    owner,
+            "label":    label,
         }
         if extra:
             region.update(extra)

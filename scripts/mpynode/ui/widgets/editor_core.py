@@ -62,7 +62,7 @@ class _FindLineEdit(QLineEdit):
         self._find_bar = find_bar
 
     def keyPressEvent(self, event):
-        key = event.key()
+        key  = event.key()
         mods = event.modifiers()
         if key in (Qt.Key_Return, Qt.Key_Enter):
             if mods & Qt.ShiftModifier:
@@ -179,12 +179,12 @@ class _EditorFindBar(QWidget):
         if not self.isVisible():
             return
         self.adjustSize()
-        cr = self._editor.contentsRect()
+        cr     = self._editor.contentsRect()
         margin = 4
-        sb = self._editor.verticalScrollBar()
-        sb_w = sb.width() if (sb is not None and sb.isVisible()) else 0
-        x = cr.right() - self.width() - sb_w - margin
-        y = cr.top() + margin
+        sb     = self._editor.verticalScrollBar()
+        sb_w   = sb.width() if (sb is not None and sb.isVisible()) else 0
+        x      = cr.right() - self.width() - sb_w - margin
+        y      = cr.top() + margin
         self.move(max(cr.left(), x), y)
 
     # -- internal ------------------------------------------------------
@@ -260,13 +260,13 @@ def _default_font_family() -> str:
 class QtPythonEditor(QPlainTextEdit):
     """QPlainTextEdit + line numbers + syntax highlighting + Ctrl+wheel font zoom."""
 
-    HIGHLIGHT_COLOR = Qt.lightGray
+    HIGHLIGHT_COLOR   = Qt.lightGray
     HIGHLIGHTER_CLASS = QtPythonHighlighter
 
-    DEFAULT_FONT_FAMILY = _default_font_family()
-    DEFAULT_FONT_SIZE = 10
-    MIN_FONT_SIZE = 6
-    MAX_FONT_SIZE = 72
+    DEFAULT_FONT_FAMILY    = _default_font_family()
+    DEFAULT_FONT_SIZE      = 10
+    MIN_FONT_SIZE          = 6
+    MAX_FONT_SIZE          = 72
     DEFAULT_LINE_WRAP_MODE = QPlainTextEdit.NoWrap
 
     TAB_STOP = 4
@@ -274,16 +274,16 @@ class QtPythonEditor(QPlainTextEdit):
     def __init__(self, parent=None):
         super().__init__(parent)
 
-        self._highlighter = self.HIGHLIGHTER_CLASS(self.document())
+        self._highlighter        = self.HIGHLIGHTER_CLASS(self.document())
         self._line_number_widget = QtLineNumberArea(self)
         self.setLineWrapMode(self.DEFAULT_LINE_WRAP_MODE)
 
         self._font_size = self.DEFAULT_FONT_SIZE
-        self._font = self._build_default_font()
+        self._font      = self._build_default_font()
 
         # Lazy-built on the first completion, so editor construction stays
         # cheap and Qt-free where QCompleter isn't importable.
-        self._completer = None
+        self._completer        = None
         self._completion_words = []
 
         self._initTextAttrs()
@@ -291,7 +291,7 @@ class QtPythonEditor(QPlainTextEdit):
         self._wire_pref_listener()
 
         # Ctrl/Cmd+F find bar (lazily constructed on first use).
-        self._find_bar = None
+        self._find_bar              = None
         self._find_extra_selections = []
         self._install_find_shortcuts()
         self._install_comment_shortcut()
@@ -322,8 +322,8 @@ class QtPythonEditor(QPlainTextEdit):
         """Return the URL under the given viewport position, or None."""
         try:
             cursor = self.cursorForPosition(pos)
-            line = cursor.block().text()
-            col = cursor.positionInBlock()
+            line   = cursor.block().text()
+            col    = cursor.positionInBlock()
         except Exception:
             return None
         for m in self._URL_RE.finditer(line):
@@ -393,7 +393,7 @@ class QtPythonEditor(QPlainTextEdit):
         try:
             from mpynode.ui.preferences import editor_font, get_pref
 
-            self._font = editor_font()
+            self._font      = editor_font()
             self._font_size = int(get_pref("editor_font_size"))
         except Exception:
             # No preferences module: keep the default font built above.
@@ -420,7 +420,7 @@ class QtPythonEditor(QPlainTextEdit):
         try:
             from mpynode.ui.preferences import editor_font, get_pref
 
-            self._font = editor_font()
+            self._font      = editor_font()
             self._font_size = int(get_pref("editor_font_size"))
             self.setFont(self._font)
             self._apply_tab_stop()
@@ -472,9 +472,9 @@ class QtPythonEditor(QPlainTextEdit):
 
     def lineNumberAreaWidth(self):
         digits = 1
-        count = max(1, self.blockCount())
+        count  = max(1, self.blockCount())
         while count >= 10:
-            count //= 10
+            count  //= 10
             digits += 1
         try:
             char_width = self.fontMetrics().horizontalAdvance("9")
@@ -499,11 +499,11 @@ class QtPythonEditor(QPlainTextEdit):
         painter = QPainter(self._line_number_widget)
         painter.fillRect(event.rect(), Qt.lightGray)
 
-        block = self.firstVisibleBlock()
+        block        = self.firstVisibleBlock()
         block_number = block.blockNumber()
-        top = self.blockBoundingGeometry(block).translated(self.contentOffset()).top()
-        bottom = top + self.blockBoundingRect(block).height()
-        height = self.fontMetrics().height()
+        top          = self.blockBoundingGeometry(block).translated(self.contentOffset()).top()
+        bottom       = top + self.blockBoundingRect(block).height()
+        height       = self.fontMetrics().height()
 
         while block.isValid() and (top <= event.rect().bottom()):
             if block.isVisible() and (bottom >= event.rect().top()):
@@ -517,8 +517,8 @@ class QtPythonEditor(QPlainTextEdit):
                     int(Qt.AlignRight),
                     number,
                 )
-            block = block.next()
-            top = bottom
+            block  = block.next()
+            top    = bottom
             bottom = top + self.blockBoundingRect(block).height()
             block_number += 1
 
@@ -549,7 +549,7 @@ class QtPythonEditor(QPlainTextEdit):
     def highlightCurrentLine(self):
         extra_selections = []
         if not self.isReadOnly():
-            selection = QTextEdit.ExtraSelection()
+            selection  = QTextEdit.ExtraSelection()
             line_color = QColor(self.HIGHLIGHT_COLOR).lighter(160)
             selection.format.setBackground(line_color)
             selection.format.setProperty(QTextFormat.FullWidthSelection, True)
@@ -611,7 +611,7 @@ class QtPythonEditor(QPlainTextEdit):
     def showFindBar(self) -> None:
         """Open the find bar, seeding it with the current single-line
         selection (if any) so "select word -> Cmd+F" pre-fills."""
-        bar = self._ensure_find_bar()
+        bar  = self._ensure_find_bar()
         seed = self.textCursor().selectedText()
         # QTextCursor.selectedText() uses U+2029 as the line separator;
         # only seed for single-line selections.
@@ -643,7 +643,7 @@ class QtPythonEditor(QPlainTextEdit):
 
     def find_step(
         self,
-        text: str,
+        text:     str,
         backward: bool = False,
         case: bool = False,
         from_cursor_start: bool = False,
@@ -685,8 +685,8 @@ class QtPythonEditor(QPlainTextEdit):
         _QTextDocument, QTextCursor = _qt_gui_textdoc()
         selections = []
         if text:
-            flags = self._find_flags(False, case)
-            doc = self.document()
+            flags  = self._find_flags(False, case)
+            doc    = self.document()
             cursor = QTextCursor(doc)
             while True:
                 cursor = doc.find(text, cursor, flags)
@@ -710,13 +710,13 @@ class QtPythonEditor(QPlainTextEdit):
         if not text:
             return (0, 0)
         _QTextDocument, QTextCursor = _qt_gui_textdoc()
-        flags = self._find_flags(False, case)
-        doc = self.document()
+        flags     = self._find_flags(False, case)
+        doc       = self.document()
         sel_start = self.textCursor().selectionStart()
-        sel_end = self.textCursor().selectionEnd()
-        total = 0
-        index = 0
-        cursor = QTextCursor(doc)
+        sel_end   = self.textCursor().selectionEnd()
+        total     = 0
+        index     = 0
+        cursor    = QTextCursor(doc)
         while True:
             cursor = doc.find(text, cursor, flags)
             if cursor.isNull():
@@ -750,10 +750,10 @@ class QtPythonEditor(QPlainTextEdit):
         except Exception:
             from PySide2.QtGui import QTextCursor
 
-        cursor = self.textCursor()
-        text = self.toPlainText()
+        cursor    = self.textCursor()
+        text      = self.toPlainText()
         sel_start = cursor.selectionStart()
-        sel_end = cursor.selectionEnd()
+        sel_end   = cursor.selectionEnd()
         new_text, ns, ne = transform(text, sel_start, sel_end)
         if new_text == text:
             return
@@ -822,9 +822,9 @@ class QtPythonEditor(QPlainTextEdit):
                 from PySide2.QtGui import QTextCursor
             except Exception:
                 return ""
-        cursor = self.textCursor()
+        cursor     = self.textCursor()
         block_text = cursor.block().text()
-        pos = cursor.positionInBlock()
+        pos        = cursor.positionInBlock()
         if pos <= 0:
             return ""
         start = pos
@@ -869,15 +869,15 @@ class QtPythonEditor(QPlainTextEdit):
             # prior click.
             lineno = col = None
             try:
-                tc = self.cursorForPosition(event.pos())
+                tc     = self.cursorForPosition(event.pos())
                 lineno = tc.blockNumber() + 1
-                col = tc.columnNumber()
+                col    = tc.columnNumber()
             except Exception:
                 lineno = col = None
 
             # Actions that depend on the token under the cursor: Rename, and
             # Make / Promote to Persistent Variable.
-            rename_act = None
+            rename_act  = None
             persist_act = None
             if lineno is not None:
                 try:
@@ -892,7 +892,7 @@ class QtPythonEditor(QPlainTextEdit):
                             if kind == "name"
                             else "Rename 'self.{}'...".format(word)
                         )
-                        rename_act = menu.addAction(label)
+                        rename_act         = menu.addAction(label)
                         self._rename_click = (lineno, col)
                 except Exception:
                     rename_act = None
@@ -928,7 +928,7 @@ class QtPythonEditor(QPlainTextEdit):
             if self._offers_file_load():
                 load_act = menu.addAction("Load From File...")
             save_act = menu.addAction("Save To File...")
-            chosen = menu.exec_(event.globalPos())
+            chosen   = menu.exec_(event.globalPos())
             if rename_act is not None and chosen is rename_act:
                 try:
                     from mpynode.ui.widgets.rename_var import run_rename
@@ -1085,8 +1085,8 @@ class QtPythonEditor(QPlainTextEdit):
                 # the two trips Python's "inconsistent use of tabs" error
                 # even though the code looks aligned.
                 cursor = self.textCursor()
-                col = cursor.positionInBlock()
-                n = self.TAB_STOP - (col % self.TAB_STOP)
+                col    = cursor.positionInBlock()
+                n      = self.TAB_STOP - (col % self.TAB_STOP)
                 cursor.insertText(" " * n)
                 event.accept()
                 return
@@ -1132,9 +1132,9 @@ def _selected_line_range(text, sel_start, sel_end):
     trailing line (so selecting through the newline of line N doesn\'t
     drag in line N+1) -- unless the selection is a zero-width caret.
     """
-    lines = text.split("\n")
+    lines  = text.split("\n")
     starts = []
-    pos = 0
+    pos    = 0
     for ln in lines:
         starts.append(pos)
         pos += len(ln) + 1  # + newline
@@ -1149,7 +1149,7 @@ def _selected_line_range(text, sel_start, sel_end):
         return idx
 
     first = line_of(sel_start)
-    last = line_of(sel_end)
+    last  = line_of(sel_end)
     if sel_end > sel_start and last > first and sel_end == starts[last]:
         last -= 1
     return first, last, lines, starts
@@ -1159,12 +1159,12 @@ def _span_after(lines, first, last):
     """Recompute the (start, end) selection covering the full affected
     lines after an edit."""
     starts = []
-    pos = 0
+    pos    = 0
     for ln in lines:
         starts.append(pos)
         pos += len(ln) + 1
     new_start = starts[first]
-    new_end = starts[last] + len(lines[last])
+    new_end   = starts[last] + len(lines[last])
     return new_start, new_end
 
 
@@ -1209,7 +1209,7 @@ def toggle_comment(text, sel_start, sel_end, token="#"):
     ``(new_text, new_sel_start, new_sel_end)``.
     """
     first, last, lines, _starts = _selected_line_range(text, sel_start, sel_end)
-    idxs = list(range(first, last + 1))
+    idxs     = list(range(first, last + 1))
     nonblank = [i for i in idxs if lines[i].strip() != ""]
     if not nonblank:
         return text, sel_start, sel_end
@@ -1220,8 +1220,8 @@ def toggle_comment(text, sel_start, sel_end, token="#"):
     all_commented = all(lines[i].lstrip().startswith(token) for i in nonblank)
     if all_commented:
         for i in nonblank:
-            ln = lines[i]
-            w = leading_ws(ln)
+            ln   = lines[i]
+            w    = leading_ws(ln)
             rest = ln[w:]
             if rest.startswith(token):
                 rest = rest[len(token):]
@@ -1230,9 +1230,9 @@ def toggle_comment(text, sel_start, sel_end, token="#"):
                 lines[i] = ln[:w] + rest
     else:
         min_indent = min(leading_ws(lines[i]) for i in nonblank)
-        prefix = token + " "
+        prefix     = token + " "
         for i in nonblank:
-            ln = lines[i]
+            ln       = lines[i]
             lines[i] = ln[:min_indent] + prefix + ln[min_indent:]
     new_text = "\n".join(lines)
     ns, ne = _span_after(lines, first, last)

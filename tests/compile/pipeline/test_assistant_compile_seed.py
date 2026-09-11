@@ -47,11 +47,11 @@ class TestSeedCompileContext(unittest.TestCase):
         from mpynode.ui.llm import compile_bridge
 
         result = {
-            "ok": True,
+            "ok":          True,
             "plugin_name": "myPlugin",
             "nodes": [{
-                "source_node": "dropNode1",
-                "type_name": "dropNode",
+                "source_node":  "dropNode1",
+                "type_name":    "dropNode",
                 "build_status": "dropped",
                 "build_reason": "port: needs <map>",
                 "verify": {"ran": False, "pass": None, "maxerr": None,
@@ -68,7 +68,7 @@ class TestSeedCompileContext(unittest.TestCase):
 
         p = self._panel()
         try:
-            h = self._handoff()
+            h        = self._handoff()
             expected = compile_bridge.starter_prompt(h)
             returned = p.seed_compile_context(h)
             self.assertEqual(returned, expected)
@@ -93,7 +93,7 @@ class TestSeedCompileContext(unittest.TestCase):
         p = self._panel()
         try:
             fail_text = p.seed_compile_context(self._handoff("failure"))
-            opt_text = p.seed_compile_context(self._handoff("optimize"))
+            opt_text  = p.seed_compile_context(self._handoff("optimize"))
             self.assertNotEqual(fail_text, opt_text)
         finally:
             p.deleteLater()

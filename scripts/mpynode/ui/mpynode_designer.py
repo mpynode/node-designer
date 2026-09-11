@@ -208,7 +208,7 @@ def _dropped_summary(dropped, limit=15):
     for d in dropped:
         sys.stderr.write("[NDMainWindow] dropped connection: %s\n" % d)
     shown = dropped[:limit]
-    text = "\n".join(shown)
+    text  = "\n".join(shown)
     if len(dropped) > limit:
         text += ("\n... and %d more (full list in the Script Editor)"
                  % (len(dropped) - limit))
@@ -223,7 +223,7 @@ class NDMainWindow(QMainWindow):
     Registers Maya scene callbacks for live refresh.
     """
 
-    WINDOW_TITLE = "Node Designer 2.0"
+    WINDOW_TITLE       = "Node Designer 2.0"
     WINDOW_OBJECT_NAME = "NodeDesigner2MainWindow"
 
     def __init__(self, parent=None):
@@ -291,8 +291,8 @@ class NDMainWindow(QMainWindow):
         # (deepest = under the cursor) delivery, keyed by event timestamp.
         self._last_middle_click_ts = None
         # Set in _build_ui; defaulted here so early/failed construction is safe.
-        self._mode_tabs = None
-        self._gallery_panel = None
+        self._mode_tabs       = None
+        self._gallery_panel   = None
         self._assistant_panel = None
         # Assistant pane width, remembered for re-showing it after the user has
         # dragged it closed in the Workspace splitter.
@@ -444,8 +444,8 @@ class NDMainWindow(QMainWindow):
         # Refresh lives on the tree's right-click context menu.
         from mpynode.ui.widgets.identity_tab import NDIdentityWidget
 
-        self._scene_split = QSplitter(Qt.Vertical, self._panel_tab_widget)
-        self._scene_tree = NDSceneTree(self._scene_split)
+        self._scene_split     = QSplitter(Qt.Vertical, self._panel_tab_widget)
+        self._scene_tree      = NDSceneTree(self._scene_split)
         self._identity_widget = NDIdentityWidget(self._scene_split)
         self._scene_split.addWidget(self._scene_tree)
         self._scene_split.addWidget(self._identity_widget)
@@ -474,7 +474,7 @@ class NDMainWindow(QMainWindow):
         self._panel_tab_widget.addTab(self._framework_widget, "Framework")
 
         # RIGHT: vertical split between editor (top) and tools (bottom).
-        right_split = QSplitter(Qt.Vertical, splitter)
+        right_split       = QSplitter(Qt.Vertical, splitter)
         self._right_split = right_split
 
         self._script_tab_widget = NDScriptTabWidget(right_split)
@@ -544,8 +544,8 @@ class NDMainWindow(QMainWindow):
 
             self._assistant_panel = NDAssistantPanel(
                 splitter,
-                get_current_node=self._current_node_name,
-                on_nodes_changed=self._on_assistant_changed,
+                get_current_node = self._current_node_name,
+                on_nodes_changed = self._on_assistant_changed,
             )
             splitter.addWidget(self._assistant_panel)
         except Exception as _exc:
@@ -815,7 +815,7 @@ class NDMainWindow(QMainWindow):
         for i in range(n):
             try:
                 tab = self._script_tab_widget.widget(i)
-                py = tab.getMPyNode() if hasattr(tab, "getMPyNode") else None
+                py  = tab.getMPyNode() if hasattr(tab, "getMPyNode") else None
                 if py is None:
                     continue
                 try:
@@ -1464,7 +1464,7 @@ class NDMainWindow(QMainWindow):
             return
         # Stateful warn: live in-memory vars do NOT transfer to the compiled node.
         try:
-            node = wrap_node(node_name, native_type)
+            node     = wrap_node(node_name, native_type)
             stateful = bool(node.get_variables()) if node is not None else False
         except Exception:
             stateful = False
@@ -1483,7 +1483,7 @@ class NDMainWindow(QMainWindow):
         except Exception:
             pass
         try:
-            cmd = build_convert_to_cpp_command(node_name, native_type)
+            cmd          = build_convert_to_cpp_command(node_name, native_type)
             created_name = run_undoable(cmd)
         except Exception as exc:
             import sys
@@ -1654,7 +1654,7 @@ class NDMainWindow(QMainWindow):
         if self._current_node is None:
             return
         try:
-            name = self._current_node.get_name()
+            name        = self._current_node.get_name()
             native_type = mc.nodeType(name)
         except Exception:
             return
@@ -1704,7 +1704,7 @@ class NDMainWindow(QMainWindow):
         editor to ask and the panel keeps its default scope."""
         try:
             editor = self._script_tab_widget.currentWidget()
-            tier = editor.currentTier() if editor is not None else ""
+            tier   = editor.currentTier() if editor is not None else ""
         except Exception:
             return
         if tier:
@@ -1746,7 +1746,7 @@ class NDMainWindow(QMainWindow):
         menubar = self.menuBar()
 
         # File menu
-        file_menu = menubar.addMenu("File")
+        file_menu    = menubar.addMenu("File")
         prefs_action = QAction("Preferences…", self)
         prefs_action.triggered.connect(
             lambda checked=False: self._show_preferences_placeholder()
@@ -1800,7 +1800,7 @@ class NDMainWindow(QMainWindow):
                 new_node_menu.addSeparator()
                 continue
             spec = REGISTRY[native_type]
-            act = QAction(native_type, new_node_menu)
+            act  = QAction(native_type, new_node_menu)
             act.setIcon(get_node_type_icon(native_type))
             act.setToolTip(spec.description or native_type)
             # Carry the node type for the right-click options handler.
@@ -1862,7 +1862,7 @@ class NDMainWindow(QMainWindow):
         node_menu.addAction(compile_action)
 
         # Help menu
-        help_menu = menubar.addMenu("Help")
+        help_menu    = menubar.addMenu("Help")
         about_action = QAction("About Node Designer…", self)
         about_action.triggered.connect(lambda checked=False: show_about_dialog(self))
         help_menu.addAction(about_action)
@@ -1887,11 +1887,11 @@ class NDMainWindow(QMainWindow):
     def _build_toolbar(self) -> None:
         self._toolbar = NDToolBar(
             self,
-            on_new_node=self.addNewNodeEvent,
-            on_save_node=self.saveCurrentNode,
-            on_save_all=self.saveAllNodes,
-            on_compile=self._on_compile_toolbar,
-            on_new_from_template=self._on_new_from_template,
+            on_new_node          = self.addNewNodeEvent,
+            on_save_node         = self.saveCurrentNode,
+            on_save_all          = self.saveAllNodes,
+            on_compile           = self._on_compile_toolbar,
+            on_new_from_template = self._on_new_from_template,
         )
         self.addToolBar(Qt.TopToolBarArea, self._toolbar)
 
@@ -2163,8 +2163,8 @@ class NDMainWindow(QMainWindow):
         try:
             payload, sv_failures = load_mpn(
                 path,
-                return_failures=True,
-                prompt_fn=make_trust_prompt(allow_always=True, subject=".mpn template"),
+                return_failures = True,
+                prompt_fn       = make_trust_prompt(allow_always=True, subject=".mpn template"),
             )
         except Exception as exc:
             QMessageBox.warning(self, "Import Failed", str(exc))
@@ -2182,7 +2182,7 @@ class NDMainWindow(QMainWindow):
 
             try:
                 native_type = mc.nodeType(new_name)
-                py_node = wrap_node(new_name, native_type)
+                py_node     = wrap_node(new_name, native_type)
                 self._script_tab_widget.addOrRaiseTab(py_node)
             except Exception:
                 pass
@@ -2217,7 +2217,7 @@ class NDMainWindow(QMainWindow):
         value -- the data an export can carry or leave behind."""
         try:
             names = list(py_node.get_variable_names() or [])
-            data = py_node.get_variables() or {}
+            data  = py_node.get_variables() or {}
         except Exception:
             return []
         return [(n, data[n]) for n in names if data.get(n) is not None]
@@ -2255,7 +2255,7 @@ class NDMainWindow(QMainWindow):
         box.setInformativeText(
             "Declarations only writes the variables with no value (None), the "
             "way a node created through the API starts.")
-        inc_btn = box.addButton("Include", QMessageBox.AcceptRole)
+        inc_btn  = box.addButton("Include", QMessageBox.AcceptRole)
         decl_btn = box.addButton("Declarations only", QMessageBox.DestructiveRole)
         box.addButton(QMessageBox.Cancel)
         box.setDefaultButton(inc_btn)
@@ -2512,8 +2512,8 @@ class NDMainWindow(QMainWindow):
         if ts is not None and ts == self._last_middle_click_ts:
             return
         self._last_middle_click_ts = ts
-        gp = _event_global_pos(event)
-        name = _middle_click_node_from_widget(obj, self, gp)
+        gp                         = _event_global_pos(event)
+        name                       = _middle_click_node_from_widget(obj, self, gp)
         if not name and self._current_node is not None:
             try:
                 name = self._current_node.get_name()
@@ -2557,8 +2557,8 @@ class NDMainWindow(QMainWindow):
         self._menu_add_attr_dlg = NDAddAttrDialog(
             self,
             self._current_node,
-            initial_direction="input",
-            on_attr_added=_on_attr_added,
+            initial_direction = "input",
+            on_attr_added     = _on_attr_added,
         )
         self._menu_add_attr_dlg.show()
         self._menu_add_attr_dlg.raise_()
@@ -2635,7 +2635,7 @@ class NDMainWindow(QMainWindow):
             remove_callback,
         )
 
-        target_names = set(open_node_names or [])
+        target_names  = set(open_node_names or [])
         current_names = set(self._node_attr_callbacks.keys())
 
         # Drop callbacks for tabs that closed (attr + connection).
@@ -2859,8 +2859,8 @@ class NDMainWindow(QMainWindow):
         cannot trigger a re-entrant compute the way the Watch refresh could."""
         try:
             with self._stored_vars_lock:
-                changed = self._stored_vars_changed_hashes
-                self._stored_vars_changed_hashes = set()
+                changed                           = self._stored_vars_changed_hashes
+                self._stored_vars_changed_hashes  = set()
                 self._stored_vars_refresh_pending = False
         except Exception:
             return
@@ -3121,9 +3121,9 @@ class NDMainWindow(QMainWindow):
         try:
             from mpynode.ui.preferences import set_pref
 
-            set_pref("layout_main_splitter", list(self._main_splitter.sizes()))
+            set_pref("layout_main_splitter",  list(self._main_splitter.sizes()))
             set_pref("layout_right_splitter", list(self._right_split.sizes()))
-            set_pref("layout_mode_tab", int(self._mode_tabs.currentIndex()))
+            set_pref("layout_mode_tab",       int(self._mode_tabs.currentIndex()))
             geo = self.geometry()
             set_pref(
                 "layout_window_geometry",

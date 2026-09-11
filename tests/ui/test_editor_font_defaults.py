@@ -42,7 +42,7 @@ def setUpModule():
 
 
 _FAKE_FAMILIES = ["Zebra Sans", "Consolas", "Arial", "Courier New", "Monaco"]
-_FAKE_MONO = {"Consolas", "Courier New", "Monaco"}
+_FAKE_MONO     = {"Consolas", "Courier New", "Monaco"}
 
 
 def _fake_db():
@@ -120,8 +120,8 @@ class TestInstalledFamilies(unittest.TestCase):
         # "Qt cannot tell" must never override a choice -- the offscreen
         # platform and a headless mayapy both land here.
         with _FakeFontDatabase(lambda: None) as p:
-            self.assertEqual(p.installed_font_families(), [])
-            self.assertEqual(p.installed_monospace_families(), [])
+            self.assertEqual(p.installed_font_families(),           [])
+            self.assertEqual(p.installed_monospace_families(),      [])
             self.assertEqual(p.resolve_editor_font_family("Menlo"), "Menlo")
             self.assertEqual(p.resolve_editor_font_family(""),
                              p.default_editor_font_family())
@@ -134,7 +134,7 @@ class TestInstalledFamilies(unittest.TestCase):
         preferences._FAMILY_CACHE.clear()
         try:
             installed = preferences.installed_font_families()
-            mono = preferences.installed_monospace_families()
+            mono      = preferences.installed_monospace_families()
             self.assertTrue(set(mono) <= set(installed))
             self.assertEqual(installed, sorted(installed))
             self.assertEqual(mono, sorted(mono))
@@ -167,7 +167,7 @@ class TestDialogFontList(unittest.TestCase):
     def test_a_saved_family_the_machine_lacks_loads_as_the_default(self):
         with _FakeFontDatabase() as p:
             saved = p.get_pref("editor_font_family")
-            dlg = self._dialog()
+            dlg   = self._dialog()
             try:
                 p.set_pref("editor_font_family", "No Such Font 123")
                 dlg._load_into_widgets()
@@ -182,7 +182,7 @@ class TestDialogFontList(unittest.TestCase):
         # user's own saved choice must show as what it is, not as a substitute.
         with _FakeFontDatabase() as p:
             saved = p.get_pref("editor_font_family")
-            dlg = self._dialog()
+            dlg   = self._dialog()
             try:
                 p.set_pref("editor_font_family", "Arial")
                 dlg._load_into_widgets()

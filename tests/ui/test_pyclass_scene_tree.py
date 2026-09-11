@@ -53,7 +53,7 @@ class TestSceneTreeHeadersAndTag(unittest.TestCase):
     def test_headers_are_name_and_class(self):
         from mpynode.ui.widgets.scene_tree import NDSceneTree
 
-        t = NDSceneTree()
+        t   = NDSceneTree()
         hdr = t.headerItem()
         self.assertEqual(hdr.text(0), "Name")
         self.assertEqual(hdr.text(1), "Class")
@@ -62,7 +62,7 @@ class TestSceneTreeHeadersAndTag(unittest.TestCase):
         from mpynode import MPyNode
 
         MPyNode.create(name="treePlain1")
-        t = self._tree()
+        t    = self._tree()
         item = t.findItem("treePlain1")
         self.assertIsNotNone(item)
         # Option A: a class-less node reads ``Parent()``.
@@ -73,7 +73,7 @@ class TestSceneTreeHeadersAndTag(unittest.TestCase):
 
         n = MPyNode.create(name="treeSub1")
         n.set_py_class("mpynode_user.BlackWhiteFile")
-        t = self._tree()
+        t    = self._tree()
         item = t.findItem("treeSub1")
         self.assertIsNotNone(item)
         # Option A: a classed node reads ``Class(Parent)``.
@@ -106,8 +106,8 @@ class TestNameColumnSpacing(unittest.TestCase):
         self.assertIsNotNone(item)
         d = t.itemDelegateForColumn(0)
         self.assertIsInstance(d, _NamePadDelegate)
-        idx = t.indexFromItem(item, 0)
-        opt = QStyleOptionViewItem()
+        idx  = t.indexFromItem(item, 0)
+        opt  = QStyleOptionViewItem()
         base = QStyledItemDelegate(t)
         # Same option + same index -> the only difference is the added gutter.
         self.assertEqual(
@@ -190,7 +190,7 @@ class TestNameRenameForkHandlers(unittest.TestCase):
         ensure_plugins_loaded()
 
     def _win(self, answer):
-        w = type(self)._window
+        w                        = type(self)._window
         w._prompt_for_class_name = lambda *a, **k: answer
         return w
 
@@ -215,7 +215,7 @@ class TestNameRenameForkHandlers(unittest.TestCase):
         # a is classed -> "Rename Class" cascades to every Foo instance.
         self._win("Bar")._on_name_class_requested(a.get_name(), "mPyNode")
         self.assertEqual(a.get_py_class(), "mpynode_user.Bar")
-        self.assertEqual(b.get_py_class(), "mpynode_user.Bar")   # cascaded
+        self.assertEqual(b.get_py_class(), "mpynode_user.Bar")    # cascaded
         self.assertEqual(c.get_py_class(), "mpynode_user.Other")  # untouched
 
     def test_fork_stamps_only_self(self):
@@ -267,8 +267,8 @@ class TestNameRenameForkHandlers(unittest.TestCase):
             self._win("Bar")._on_name_class_requested(a.get_name(), "mPyNode")
             self._win("")._on_name_class_requested(a.get_name(), "mPyNode")
         seen = [c.args[0] for c in refreshed.call_args_list]
-        self.assertEqual(seen.count(a.get_name()), 3)   # name, rename, clear
-        self.assertIn(b.get_name(), seen)                # cascaded rename
+        self.assertEqual(seen.count(a.get_name()), 3)  # name, rename, clear
+        self.assertIn(b.get_name(), seen)              # cascaded rename
 
 
 class TestConvertToCppMenu(unittest.TestCase):
@@ -283,7 +283,7 @@ class TestConvertToCppMenu(unittest.TestCase):
         from mpynode.ui.widgets import scene_tree
 
         src = inspect.getsource(scene_tree.NDSceneTree._build_context_menu)
-        self.assertIn("Convert Node to C++", src)
+        self.assertIn("Convert Node to C++",   src)
         self.assertIn("convertToCppRequested", src)
         self.assertIn("is_convertible_to_cpp", src)
 
@@ -297,8 +297,8 @@ class TestConvertToCppMenu(unittest.TestCase):
         src = inspect.getsource(scene_tree.NDSceneTree._build_context_menu)
         # A converted node offers "Revert Node to Python" (gated on is_converted).
         self.assertIn("Revert Node to Python", src)
-        self.assertIn("revertToPyRequested", src)
-        self.assertIn("is_converted", src)
+        self.assertIn("revertToPyRequested",   src)
+        self.assertIn("is_converted",          src)
 
 
 class TestConvertToCppWiring(unittest.TestCase):
@@ -348,7 +348,7 @@ class TestConvertToCppHandler(unittest.TestCase):
         n.set_py_class("mpynode_user.StubCompiled")  # -> "stubCompiled" (plugin)
         # Stub the informational dialog so a dropped-connection / cycle report
         # can never block the headless run.
-        orig = qt_wrapper.QMessageBox.information
+        orig                               = qt_wrapper.QMessageBox.information
         qt_wrapper.QMessageBox.information = staticmethod(lambda *a, **k: None)
         try:
             self._window._on_convert_to_cpp_requested("hcvt", "mPyNode")
@@ -370,7 +370,7 @@ class TestConvertToCppHandler(unittest.TestCase):
         n = MPyNode.create(name="htab")
         n.set_py_class("mpynode_user.StubCompiled")
         calls = []
-        stw = self._window._script_tab_widget
+        stw   = self._window._script_tab_widget
         stw.closeTabForNode = lambda *a, **k: calls.append(a)
         orig = qt_wrapper.QMessageBox.information
         qt_wrapper.QMessageBox.information = staticmethod(lambda *a, **k: None)
@@ -405,7 +405,7 @@ class TestConvertToCppHandler(unittest.TestCase):
 
         n = MPyNode.create(name=name)
         n.set_py_class("mpynode_user.StubCompiled")
-        orig = qt_wrapper.QMessageBox.information
+        orig                               = qt_wrapper.QMessageBox.information
         qt_wrapper.QMessageBox.information = staticmethod(lambda *a, **k: None)
         try:
             self._window._on_convert_to_cpp_requested(name, "mPyNode")
@@ -418,7 +418,7 @@ class TestConvertToCppHandler(unittest.TestCase):
 
         mc.createNode("network", name="plainDG")
         calls = []
-        orig = qt_wrapper.QMessageBox.warning
+        orig  = qt_wrapper.QMessageBox.warning
         qt_wrapper.QMessageBox.warning = staticmethod(
             lambda *a, **k: calls.append(a) or qt_wrapper.QMessageBox.Yes)
         try:
@@ -433,7 +433,7 @@ class TestConvertToCppHandler(unittest.TestCase):
 
         mc.createNode("transform", name="lonely")
         calls = []
-        orig = qt_wrapper.QMessageBox.warning
+        orig  = qt_wrapper.QMessageBox.warning
         qt_wrapper.QMessageBox.warning = staticmethod(
             lambda *a, **k: calls.append(a) or qt_wrapper.QMessageBox.Yes)
         try:
@@ -488,7 +488,7 @@ class TestConvertToCppHandler(unittest.TestCase):
         self._convert("hrev")
         cpp = linked_compiled_node("hrev")
         self.assertTrue(mc.objExists(cpp))
-        orig = qt_wrapper.QMessageBox.information
+        orig                               = qt_wrapper.QMessageBox.information
         qt_wrapper.QMessageBox.information = staticmethod(lambda *a, **k: None)
         try:
             self._window._on_revert_to_py_requested("hrev", "mPyNode")

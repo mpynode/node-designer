@@ -60,7 +60,7 @@ class TestOptionA(unittest.TestCase):
         from mpynode.ui.widgets.scene_tree import NDSceneTreeItem
 
         mc.file(new=True, force=True)
-        n = MPyNode.create(name="optAless#")  # class-less
+        n    = MPyNode.create(name="optAless#")  # class-less
         item = NDSceneTreeItem(None, n.get_name(), "mPyNode")
         self.assertEqual(item.text(1), "MPyNode()")
 
@@ -119,10 +119,10 @@ class TestIdentityTab(unittest.TestCase):
         w.classChanged.connect(lambda s: emitted.append(s))
         w._class_edit.setText("MyThing")
         w._commit_class()
-        self.assertEqual(n.get_py_class(), "mpynode_user.MyThing")
+        self.assertEqual(n.get_py_class(),    "mpynode_user.MyThing")
         self.assertEqual(w.class_name_text(), "MyThing")
-        self.assertEqual(w.node_type_text(), "myThing")
-        self.assertEqual(emitted, ["MyThing"])
+        self.assertEqual(w.node_type_text(),  "myThing")
+        self.assertEqual(emitted,             ["MyThing"])
 
     def test_refresh_survives_deleted_node(self):
         """If the backing node is gone (deleted / externally renamed),
@@ -138,8 +138,8 @@ class TestIdentityTab(unittest.TestCase):
         w = NDIdentityWidget()
         w.setPyNode(n)
         self.assertEqual(w.class_name_text(), "Ghosty")
-        mc.delete(n.get_name())          # backing node now dead
-        w.refresh()                      # must not raise
+        mc.delete(n.get_name())  # backing node now dead
+        w.refresh()              # must not raise
         self.assertEqual(w.node_type_text(), "")
         self.assertEqual(w.class_name_text(), "")
 
@@ -158,8 +158,8 @@ class TestIdentityTab(unittest.TestCase):
         self.assertEqual(w.class_name_text(), "Keeper")
         emitted = []
         w.classChanged.connect(lambda s: emitted.append(s))
-        w._commit_class()                # simulate focus-out, no edit
-        self.assertEqual(emitted, [])    # no redundant re-emit
+        w._commit_class()              # simulate focus-out, no edit
+        self.assertEqual(emitted, [])  # no redundant re-emit
         self.assertEqual(n.get_py_class(), "mpynode_user.Keeper")
 
     def test_invalid_class_name_rejected(self):
@@ -205,8 +205,8 @@ class TestClearingTheClass(unittest.TestCase):
         w._commit_class()
         self.assertFalse(n.get_py_class())
         self.assertEqual(w.class_name_text(), "")
-        self.assertEqual(w.node_type_text(), "")
-        self.assertEqual(emitted, [""])
+        self.assertEqual(w.node_type_text(),  "")
+        self.assertEqual(emitted,             [""])
 
     def test_blank_on_a_classless_node_is_a_no_op(self):
         from mpynode.wrappers._mpy_node import MPyNode

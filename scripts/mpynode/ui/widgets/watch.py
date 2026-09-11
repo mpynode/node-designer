@@ -71,8 +71,8 @@ _NON_DISPLAYABLE_TYPES = frozenset({"mesh", "nurbsCurve", "nurbsSurface"})
 #: attr_type -> the wrapper class a user sees for it, so a geometry plug labels
 #: itself the SAME way the object does everywhere else (``Mesh("pCubeShape1")``).
 _GEO_LABEL_CLASS = {
-    "mesh": "Mesh",
-    "nurbsCurve": "NurbsCurve",
+    "mesh":         "Mesh",
+    "nurbsCurve":   "NurbsCurve",
     "nurbsSurface": "NurbsSurface",
 }
 
@@ -89,7 +89,7 @@ def _geometry_label(node_name: str, attr: str, atype: str) -> str:
     there is genuinely no shape to name then.
     """
     placeholder = "<%s>" % (atype or "geometry")
-    cls = _GEO_LABEL_CLASS.get(atype)
+    cls         = _GEO_LABEL_CLASS.get(atype)
     if cls is None:
         return placeholder
     try:
@@ -116,7 +116,7 @@ def _geometry_multi_label(node_name: str, attr: str, atype: str):
     Falls back to the bare ``<mesh[]>`` placeholder if nothing is connected.
     """
     placeholder = "<%s[]>" % atype
-    cls = _GEO_LABEL_CLASS.get(atype)
+    cls         = _GEO_LABEL_CLASS.get(atype)
     if cls is None:
         return placeholder
     try:
@@ -126,11 +126,11 @@ def _geometry_multi_label(node_name: str, attr: str, atype: str):
 
         _sel = _om.MSelectionList()
         _sel.add(node_name + "." + attr)
-        parent = _sel.getPlug(0)
+        parent  = _sel.getPlug(0)
         indices = list(parent.getExistingArrayAttributeIndices())
-        labels = []
+        labels  = []
         for idx in indices:
-            src = _source_node_name(parent.elementByLogicalIndex(idx))
+            src  = _source_node_name(parent.elementByLogicalIndex(idx))
             text = '%s("%s")' % (cls, src) if src else placeholder
             labels.append(WatchLabel(text, cls))
     except Exception:
@@ -180,7 +180,7 @@ def read_multi_plug_values(node_name: str, attr: str, meta: dict):
 
         _sel = _om.MSelectionList()
         _sel.add(node_name + "." + attr)
-        _plug = _sel.getPlug(0)
+        _plug   = _sel.getPlug(0)
         indices = list(_plug.getExistingArrayAttributeIndices())
     except Exception:
         try:
@@ -188,7 +188,7 @@ def read_multi_plug_values(node_name: str, attr: str, meta: dict):
         except Exception:
             indices = []
     elem_meta = {"attr_type": atype, "is_array": False}
-    by_idx = {}
+    by_idx    = {}
     for idx in indices:
         try:
             ev = mc.getAttr("%s.%s[%d]" % (node_name, attr, idx))
@@ -206,7 +206,7 @@ def read_multi_plug_values(node_name: str, attr: str, meta: dict):
             from mpynode._api2.helpers import array_gap_default
 
             attr_obj = _plug.attribute() if _plug is not None else None
-            default = array_gap_default(attr_obj, atype)
+            default  = array_gap_default(attr_obj, atype)
         except Exception:
             default = 0.0
         vals = [by_idx.get(i, default) for i in range(max(by_idx) + 1)]
@@ -332,7 +332,7 @@ def apply_filter(vars_dict: dict, filter_text: str) -> dict:
     if not pat:
         return dict(vars_dict)
     has_glob = any(c in pat for c in ("*", "?", "["))
-    out = {}
+    out      = {}
     for name, value in vars_dict.items():
         if has_glob:
             if fnmatch.fnmatchcase(name, pat):
@@ -418,7 +418,7 @@ def _format_value(value, max_lines: int = 12, max_chars_per_line: int = 200) -> 
             try:
                 from mpynode.ui import preferences
 
-                suppress = bool(preferences.get_pref("watch_suppress_scientific", True))
+                suppress      = bool(preferences.get_pref("watch_suppress_scientific", True))
                 threshold_inf = bool(preferences.get_pref("watch_threshold_inf", False))
                 round_enabled = bool(
                     preferences.get_pref("display_round_enabled", True)
@@ -431,10 +431,10 @@ def _format_value(value, max_lines: int = 12, max_chars_per_line: int = 200) -> 
                     round_digits = 8
                 round_digits = max(0, min(round_digits, 17))
             except Exception:
-                suppress = True
+                suppress      = True
                 threshold_inf = False
                 round_enabled = True
-                round_digits = 8
+                round_digits  = 8
 
             kwargs = {
                 "separator": ", ",
@@ -445,7 +445,7 @@ def _format_value(value, max_lines: int = 12, max_chars_per_line: int = 200) -> 
             }
             if not round_enabled:
                 # Minimal digits that uniquely represent each float.
-                kwargs["floatmode"] = "unique"
+                kwargs["floatmode"]      = "unique"
                 kwargs["suppress_small"] = bool(suppress)
             elif suppress:
                 # ``suppress_small`` only kills scientific notation near
@@ -454,7 +454,7 @@ def _format_value(value, max_lines: int = 12, max_chars_per_line: int = 200) -> 
                 # formatter uses fixed-point for human-scale numbers and
                 # falls back to scientific only past ~20 chars, so garbage
                 # / uninitialized doubles can't produce 100+ char rows.
-                _prec = kwargs["precision"]
+                _prec      = kwargs["precision"]
                 _max_chars = max(20, _prec + 14)
 
                 def _smart_float(x, _p=_prec, _cap=_max_chars):
@@ -470,7 +470,7 @@ def _format_value(value, max_lines: int = 12, max_chars_per_line: int = 200) -> 
                 kwargs["threshold"] = _np.inf
                 # Opting into full arrays must also drop the widget-side
                 # line/char caps, or we silently re-truncate.
-                max_lines = 10**9
+                max_lines          = 10**9
                 max_chars_per_line = 10**9
             else:
                 # Cap elements so a 10000-row array doesn't blow up the
@@ -517,7 +517,7 @@ def _format_value(value, max_lines: int = 12, max_chars_per_line: int = 200) -> 
     # Then cap total line count.
     if len(capped) > max_lines:
         omitted = len(capped) - max_lines
-        capped = capped[:max_lines] + [f"\u2026 ({omitted} more lines)"]
+        capped  = capped[:max_lines] + [f"\u2026 ({omitted} more lines)"]
     # Append the summarized-array change tag to the LAST retained line (a
     # same-line suffix -- never a new line, so the max_lines cap is unchanged).
     if tag and capped:
@@ -547,8 +547,8 @@ def _format_type(value) -> str:
                 return "numpy.ndarray[%s]" % value.dtype
         except Exception:
             pass
-        t = type(value)
-        mod = getattr(t, "__module__", "")
+        t    = type(value)
+        mod  = getattr(t, "__module__", "")
         name = t.__name__
         # torch tensors expose a dtype too (torch.float32 -> "float32").
         if mod == "torch" and name == "Tensor":
@@ -657,7 +657,7 @@ def decode_io_value_cached(cache: dict, attr: str, raw, attr_type):
     prev = cache.get(attr)
     if prev is not None and prev[0] == raw:
         return prev[1]
-    decoded = decode_io_value(raw, attr_type)
+    decoded     = decode_io_value(raw, attr_type)
     cache[attr] = (raw, decoded)
     return decoded
 
@@ -667,16 +667,16 @@ class NDWatchWidget(QWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self._py_node = None
+        self._py_node    = None
         self._refreshing = False
         # Cached unfiltered snapshot so retyping the filter needs no plug
         # round-trip. ``_cached_vars`` = expression locals (instrumentation
         # snapshot); ``_cached_stored`` = the live in-memory store.
-        self._cached_vars: dict = {}
-        self._cached_stored: dict = {}
+        self._cached_vars:       dict = {}
+        self._cached_stored:     dict = {}
         self._cached_registered: set = set()
         # Live user input / output plug values (read each refresh).
-        self._cached_inputs: dict = {}
+        self._cached_inputs:  dict = {}
         self._cached_outputs: dict = {}
         # The wrapper's self.X framework surface, carried inside the watch
         # snapshot under WATCH_FRAMEWORK_KEY (so it needs Enable Watch).
@@ -686,7 +686,7 @@ class NDWatchWidget(QWidget):
         self._py_decode_cache: dict = {}
         # Live-poll suspension (set while a Save / F5 is in flight so timer
         # ticks don't force extra computes during the save's dirty windows).
-        self._live_suspended = False
+        self._live_suspended  = False
         self._live_was_active = False
         # Per-variable "show as image" choice from the right-click toggle.
         # Survives refreshes so a chosen image never reverts to its source
@@ -704,13 +704,13 @@ class NDWatchWidget(QWidget):
         self._header = QLabel("(no node selected)", self)
         layout.addWidget(self._header)
 
-        btn_row = QHBoxLayout()
+        btn_row        = QHBoxLayout()
         self._watch_cb = QCheckBox("Enable Watch", self)
         self._watch_cb.setToolTip(
             "Capture every variable in scope after each user compute. "
             "Heavyweight \u2014 turn off when not actively debugging."
         )
-        filter_label = QLabel("Filter:", self)
+        filter_label      = QLabel("Filter:", self)
         self._filter_edit = QLineEdit(self)
         self._filter_edit.setPlaceholderText("name, glob (target_*), or substring")
         self._filter_edit.setToolTip(
@@ -727,12 +727,12 @@ class NDWatchWidget(QWidget):
         # Persistent are read live from the in-memory store each refresh.
         scope_row = QHBoxLayout()
         scope_row.addWidget(QLabel("Show:", self))
-        self._show_inputs_cb = QCheckBox("Inputs", self)
-        self._show_outputs_cb = QCheckBox("Outputs", self)
-        self._show_framework_cb = QCheckBox("Framework", self)
-        self._show_locals_cb = QCheckBox("Locals", self)
-        self._show_temp_cb = QCheckBox("Temporary", self)
-        self._show_persist_cb = QCheckBox("Persistent", self)
+        self._show_inputs_cb    = QCheckBox("Inputs",     self)
+        self._show_outputs_cb   = QCheckBox("Outputs",    self)
+        self._show_framework_cb = QCheckBox("Framework",  self)
+        self._show_locals_cb    = QCheckBox("Locals",     self)
+        self._show_temp_cb      = QCheckBox("Temporary",  self)
+        self._show_persist_cb   = QCheckBox("Persistent", self)
         self._show_framework_cb.setToolTip(
             "The wrapper's self.X surface (a locator's draw / auto_refresh, a "
             "mesh's points / counts / indices, an IK solver's joints).\n"
@@ -839,7 +839,7 @@ class NDWatchWidget(QWidget):
     def setPyNode(self, py_node):
         # New node -> the remembered image choices no longer apply.
         if py_node is not self._py_node:
-            self._image_view_modes = {}
+            self._image_view_modes    = {}
             self._waveform_view_modes = {}
             # Release the player + temp .wav but KEEP the wrapper object --
             # dispose() leaves it reusable, and any surviving reused cell
@@ -943,12 +943,12 @@ class NDWatchWidget(QWidget):
                 cleanup_media_widgets(self._tree)
                 self._tree.clear()
                 self._header.setText("(no node selected)")
-                self._cached_vars = {}
-                self._cached_stored = {}
+                self._cached_vars       = {}
+                self._cached_stored     = {}
                 self._cached_registered = set()
-                self._cached_inputs = {}
-                self._cached_outputs = {}
-                self._cached_framework = {}
+                self._cached_inputs     = {}
+                self._cached_outputs    = {}
+                self._cached_framework  = {}
                 # Uncheck the toggle too. Done while ``_refreshing`` is
                 # True so the toggle handler no-ops.
                 self._watch_cb.setChecked(False)
@@ -967,7 +967,7 @@ class NDWatchWidget(QWidget):
                     f"Watch: {self._py_node.get_name()} (not supported "
                     "for this node type)"
                 )
-                self._cached_vars = {}
+                self._cached_vars      = {}
                 self._cached_framework = {}
                 self._watch_cb.setChecked(False)
                 self._set_controls_enabled(False)
@@ -982,17 +982,17 @@ class NDWatchWidget(QWidget):
             # they are cheap live plug reads, not instrumented captures. Only
             # Locals / Temporary / Persistent need Enable Watch, so read them
             # BEFORE the enable gate.
-            self._cached_inputs = self._read_io_values("get_input_attr_map")
+            self._cached_inputs  = self._read_io_values("get_input_attr_map")
             self._cached_outputs = self._read_io_values("get_output_attr_map")
 
             # Capture OFF hides Locals AND stored-var rows, but Inputs /
             # Outputs above still render.
             if not _enabled:
                 self._stop_live_timer()
-                self._cached_vars = {}
-                self._cached_stored = {}
+                self._cached_vars       = {}
+                self._cached_stored     = {}
                 self._cached_registered = set()
-                self._cached_framework = {}
+                self._cached_framework  = {}
                 self._populate_tree()
                 return
 
@@ -1019,11 +1019,11 @@ class NDWatchWidget(QWidget):
                     get_variables,
                 )
 
-                _nm = self._py_node.get_name()
-                self._cached_stored = _cap_watch_dict(get_variables(_nm) or {})
+                _nm                     = self._py_node.get_name()
+                self._cached_stored     = _cap_watch_dict(get_variables(_nm) or {})
                 self._cached_registered = set(get_variable_names(_nm))
             except Exception:
-                self._cached_stored = {}
+                self._cached_stored     = {}
                 self._cached_registered = set()
 
             self._populate_tree()
@@ -1058,8 +1058,8 @@ class NDWatchWidget(QWidget):
                 get_variables,
             )
 
-            name = self._py_node.get_name()
-            self._cached_stored = _cap_watch_dict(get_variables(name) or {})
+            name                    = self._py_node.get_name()
+            self._cached_stored     = _cap_watch_dict(get_variables(name) or {})
             self._cached_registered = set(get_variable_names(name))
             self._populate_tree()
         except Exception:
@@ -1228,12 +1228,12 @@ class NDWatchWidget(QWidget):
             groups.append(("Persistent", apply_filter(persist, filt)))
 
         # Only non-empty selected groups get a header.
-        wanted = [(label, data) for label, data in groups if data]
+        wanted        = [(label, data) for label, data in groups if data]
         wanted_labels = {label for label, _ in wanted}
 
         existing_headers = {}
         for i in range(self._tree.topLevelItemCount()):
-            h = self._tree.topLevelItem(i)
+            h                           = self._tree.topLevelItem(i)
             existing_headers[h.text(0)] = h
 
         # Drop headers whose group is now empty / hidden.
@@ -1265,7 +1265,7 @@ class NDWatchWidget(QWidget):
         updating values in place and adding / removing rows as needed."""
         existing = {}
         for i in range(header.childCount()):
-            c = header.child(i)
+            c                   = header.child(i)
             existing[c.text(0)] = c
 
         for name in list(existing.keys()):
@@ -1277,7 +1277,7 @@ class NDWatchWidget(QWidget):
         # Add / update the rest in sorted order.
         for pos, name in enumerate(sorted(data.keys())):
             value = data[name]
-            item = existing.get(name)
+            item  = existing.get(name)
             if item is None:
                 item = QTreeWidgetItem()
                 item.setText(0, name)
@@ -1374,8 +1374,8 @@ class NDWatchWidget(QWidget):
             return
         from mpynode.ui.qt_wrapper import QMenu
 
-        menu = QMenu(self._tree)
-        img_act = None
+        menu     = QMenu(self._tree)
+        img_act  = None
         wave_act = None
         if is_img:
             img_lbl = (
@@ -1388,8 +1388,8 @@ class NDWatchWidget(QWidget):
                 else "Show as Waveform"
             )
             wave_act = menu.addAction(wave_lbl)
-        gpos = self._tree.viewport().mapToGlobal(pos)
-        run = getattr(menu, "exec_", None) or menu.exec
+        gpos   = self._tree.viewport().mapToGlobal(pos)
+        run    = getattr(menu, "exec_", None) or menu.exec
         chosen = run(gpos)
         if img_act is not None and chosen is img_act:
             new_state = toggle_value_mode(item, 1)

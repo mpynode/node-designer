@@ -69,15 +69,15 @@ class TestMpnRoundTrip(unittest.TestCase):
     def test_serialize_captures_everything(self):
         from mpynode._common.io.mpn_io import serialize_node
 
-        n = self._make_full_node()
+        n       = self._make_full_node()
         payload = serialize_node(n)
 
         self.assertEqual(payload["native_type"], "mPyNode")
         self.assertEqual(payload["expression"], "out = vec * alpha")
         self.assertIn("alpha", payload["input_attrs"])
-        self.assertIn("vec", payload["input_attrs"])
-        self.assertIn("mode", payload["input_attrs"])
-        self.assertIn("out", payload["output_attrs"])
+        self.assertIn("vec",   payload["input_attrs"])
+        self.assertIn("mode",  payload["input_attrs"])
+        self.assertIn("out",   payload["output_attrs"])
         self.assertEqual(payload["input_attrs"]["alpha"].get("ui_color"), "#ff0000")
         self.assertEqual(payload["input_attrs"]["vec"].get("ui_color"), "#00ffff")
         self.assertEqual(
@@ -90,9 +90,9 @@ class TestMpnRoundTrip(unittest.TestCase):
     def _roundtrip(self, compression, fname):
         from mpynode._common.io.mpn_io import load_mpn, save_mpn, serialize_node
 
-        n = self._make_full_node()
+        n       = self._make_full_node()
         payload = serialize_node(n)
-        path = os.path.join(self._tmpdir, fname)
+        path    = os.path.join(self._tmpdir, fname)
         save_mpn(payload, path, compression=compression)
         return load_mpn(path), payload
 
@@ -117,7 +117,7 @@ class TestMpnRoundTrip(unittest.TestCase):
             self.skipTest("numpy unavailable")
         from mpynode._common.io.mpn_io import load_mpn, save_mpn, serialize_node
 
-        n = self._make_full_node(name="np_node")
+        n   = self._make_full_node(name="np_node")
         arr = np.arange(12, dtype=np.float64).reshape(3, 4)
         n.set_variable("mat", arr)
         path = os.path.join(self._tmpdir, "np.mpn")
@@ -141,7 +141,7 @@ class TestMpnRoundTrip(unittest.TestCase):
                 zlib.compress(pickle.dumps(inner, protocol=5), 6)
             ).decode("ascii"),
         })
-        env = {"version": 2, "data": {"native_type": "mPyNode", "stored_vars": sv}}
+        env  = {"version": 2, "data": {"native_type": "mPyNode", "stored_vars": sv}}
         path = os.path.join(self._tmpdir, "partial.mpn")
         with open(path, "w") as f:
             json.dump(env, f)
@@ -192,7 +192,7 @@ class TestMpnRoundTrip(unittest.TestCase):
             serialize_node,
         )
 
-        src = self._make_full_node(name="orig")
+        src  = self._make_full_node(name="orig")
         path = os.path.join(self._tmpdir, "rt.mpn")
         save_mpn(serialize_node(src), path)
 
@@ -204,9 +204,9 @@ class TestMpnRoundTrip(unittest.TestCase):
         self.assertEqual(new_node.get_name(), "reborn")
         self.assertEqual(new_node.get_compute_expression(), "out = vec * alpha")
         self.assertIn("alpha", new_node.get_input_attr_map())
-        self.assertIn("vec", new_node.get_input_attr_map())
-        self.assertIn("mode", new_node.get_input_attr_map())
-        self.assertIn("out", new_node.get_output_attr_map())
+        self.assertIn("vec",   new_node.get_input_attr_map())
+        self.assertIn("mode",  new_node.get_input_attr_map())
+        self.assertIn("out",   new_node.get_output_attr_map())
         self.assertEqual(new_node.get_input_attr_color("alpha"), "#ff0000")
         self.assertEqual(new_node.get_input_attr_color("vec"), "#00ffff")
         self.assertEqual(
@@ -254,7 +254,7 @@ class TestMpnSourceTiers(unittest.TestCase):
         from mpynode._common.io.mpn_io import serialize_node
         from mpynode.wrappers._mpy_node import MPyNode
 
-        n = MPyNode.create(name="bare")
+        n       = MPyNode.create(name="bare")
         payload = serialize_node(n)
         # no init/methods tier set -> no key (payload stays minimal)
         self.assertNotIn("init_source", payload)
@@ -328,11 +328,11 @@ class TestMpnSourceTiers(unittest.TestCase):
         from mpynode._common.io.mpn_io import deserialize_node
 
         payload = {
-            "native_type": "mPyNode",
-            "expression": "",
-            "input_attrs": {},
+            "native_type":  "mPyNode",
+            "expression":   "",
+            "input_attrs":  {},
             "output_attrs": {},
-            "stored_vars": {},
+            "stored_vars":  {},
         }
         result = deserialize_node(payload, name="defaultcontract")
         self.assertFalse(
@@ -360,12 +360,12 @@ class TestMpnSourceTiers(unittest.TestCase):
             "or test against a deliberately-limited wrapper")
         setter = _SOURCE_TIER_SETTERS[tier]
         payload = {
-            "native_type": "mPyNode",
-            "expression": "",
-            "input_attrs": {},
+            "native_type":  "mPyNode",
+            "expression":   "",
+            "input_attrs":  {},
             "output_attrs": {},
-            "stored_vars": {},
-            tier: "some non-empty tier source\n",
+            "stored_vars":  {},
+            tier:           "some non-empty tier source\n",
         }
         node, fails = deserialize_node(
             payload, name="missingtier", return_failures=True)
@@ -387,11 +387,11 @@ class TestImportNodeCommand(unittest.TestCase):
         from mpynode._base.commands import _ImportNodeCommand, run_undoable
 
         payload = {
-            "native_type": "mPyNode",
-            "expression": "out = 1",
-            "input_attrs": {"a": {"attr_type": "float", "is_array": False}},
+            "native_type":  "mPyNode",
+            "expression":   "out = 1",
+            "input_attrs":  {"a": {"attr_type": "float", "is_array": False}},
             "output_attrs": {"out": {"attr_type": "float", "is_array": False}},
-            "stored_vars": {},
+            "stored_vars":  {},
         }
         cmd = _ImportNodeCommand(payload, name="imp")
         run_undoable(cmd)
@@ -402,11 +402,11 @@ class TestImportNodeCommand(unittest.TestCase):
         from mpynode._base.commands import _ImportNodeCommand, run_undoable
 
         payload = {
-            "native_type": "mPyNode",
-            "expression": "",
-            "input_attrs": {},
+            "native_type":  "mPyNode",
+            "expression":   "",
+            "input_attrs":  {},
             "output_attrs": {},
-            "stored_vars": {},
+            "stored_vars":  {},
         }
         cmd = _ImportNodeCommand(payload, name="undoable_imp")
         run_undoable(cmd)
@@ -420,11 +420,11 @@ class TestImportNodeCommand(unittest.TestCase):
         from mpynode._base.commands import _ImportNodeCommand, run_undoable
 
         payload = {
-            "native_type": "mPyLocator",  # has set_methods_source
-            "expression": "",
-            "input_attrs": {},
-            "output_attrs": {},
-            "stored_vars": {},
+            "native_type":    "mPyLocator",           # has set_methods_source
+            "expression":     "",
+            "input_attrs":    {},
+            "output_attrs":   {},
+            "stored_vars":    {},
             "methods_source": "def f(:\n    pass\n",  # SyntaxError
         }
         cmd = _ImportNodeCommand(payload, name="cmd_badmeth")
@@ -531,8 +531,8 @@ class TestExportCompressionPref(unittest.TestCase):
         from mpynode.ui.mpynode_designer import NDMainWindow
 
         src = inspect.getsource(NDMainWindow._export_node_as_mpn)
-        self.assertIn("getSaveFileName", src)            # native dialog
-        self.assertNotIn("DontUseNativeDialog", src)     # NOT a custom dialog
+        self.assertIn("getSaveFileName", src)             # native dialog
+        self.assertNotIn("DontUseNativeDialog", src)      # NOT a custom dialog
         self.assertIn("mpn_export_max_compression", src)  # reads the pref
 
     def test_prefs_dialog_exposes_export_checkbox(self):
@@ -634,7 +634,7 @@ class TestDeserializeRestorePersistent(unittest.TestCase):
         from mpynode._common.storedvars.stored_vars_api import set_variable
 
         src = MPyNode.create(name="persist_src")
-        nm = src.get_name()
+        nm  = src.get_name()
         set_variable(nm, "v", 7, persistent=True)
         payload = mpn_io.serialize_node(src)
         self.assertEqual(payload["stored_vars"].get("v"), 7)
@@ -652,7 +652,7 @@ class TestDeserializeRestorePersistent(unittest.TestCase):
         from mpynode._common.io import mpn_io
 
         payload = self._round_trip_payload()
-        on = mpn_io.deserialize_node(payload, name="persist_on")
+        on      = mpn_io.deserialize_node(payload, name="persist_on")
         self.assertEqual((on.get_variables() or {}).get("v"), 7)
 
     def test_round_trip_preserves_non_persistent(self):
@@ -665,7 +665,7 @@ class TestDeserializeRestorePersistent(unittest.TestCase):
         from mpynode._common.storedvars.stored_vars_api import set_variable
 
         src = MPyNode.create(name="persist_roundtrip_src")
-        nm = src.get_name()
+        nm  = src.get_name()
         set_variable(nm, "keep", 1, persistent=True)
         set_variable(nm, "scratch", 2, persistent=False)
         payload = mpn_io.serialize_node(src)
@@ -768,7 +768,7 @@ class TestLoadMpnHeader(unittest.TestCase):
             raise AssertionError(
                 "load_mpn_header decoded stored_vars -- pickle path reached")
 
-        original = serialization.decode_stored_vars_detailed
+        original                                  = serialization.decode_stored_vars_detailed
         serialization.decode_stored_vars_detailed = _boom
         try:
             data = mpn_io.load_mpn_header(path)

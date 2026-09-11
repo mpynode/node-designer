@@ -52,7 +52,7 @@ class TestPreferencesModule(unittest.TestCase):
     def setUp(self):
         from mpynode.ui import preferences
 
-        self._tmpdir = tempfile.mkdtemp(prefix="ndprefs_test_")
+        self._tmpdir    = tempfile.mkdtemp(prefix="ndprefs_test_")
         self._patch_dir = mock.patch.object(preferences, "PREFS_DIR", self._tmpdir)
         self._patch_path = mock.patch.object(
             preferences,
@@ -106,8 +106,8 @@ class TestPreferencesModule(unittest.TestCase):
         """Set, reset cache, get \u2014 should pick up the on-disk value."""
         from mpynode.ui import preferences
 
-        preferences.set_pref("editor_font_family", "Menlo")
-        preferences.set_pref("editor_font_size", 12)
+        preferences.set_pref("editor_font_family",        "Menlo")
+        preferences.set_pref("editor_font_size",          12)
         preferences.set_pref("addattr_time_auto_connect", False)
 
         # Simulate process restart \u2014 wipe cache.
@@ -168,8 +168,8 @@ class TestPreferencesModule(unittest.TestCase):
             events.append((key, value))
 
         preferences.register_change_listener(cb)
-        preferences.set_pref("editor_font_size", 18)
-        preferences.set_pref("editor_font_size", 18)  # no change \u2014 no fire
+        preferences.set_pref("editor_font_size",   18)
+        preferences.set_pref("editor_font_size",   18)  # no change \u2014 no fire
         preferences.set_pref("editor_font_family", "Menlo")
 
         self.assertEqual(
@@ -903,7 +903,7 @@ class TestLocationsPage(unittest.TestCase):
         self.assertIn("Locations", labels)
 
     def test_the_table_names_every_resolved_location(self):
-        dlg = self._dlg()
+        dlg  = self._dlg()
         tree = dlg._locations_tree
         names = [tree.topLevelItem(i).text(0)
                  for i in range(tree.topLevelItemCount())]
@@ -914,7 +914,7 @@ class TestLocationsPage(unittest.TestCase):
     def test_every_row_carries_a_real_resolved_path(self):
         from mpynode._common import home
 
-        dlg = self._dlg()
+        dlg  = self._dlg()
         tree = dlg._locations_tree
         by_name = {tree.topLevelItem(i).text(0): tree.topLevelItem(i)
                    for i in range(tree.topLevelItemCount())}

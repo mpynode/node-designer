@@ -62,8 +62,8 @@ def _verify_line(verify):
         if reason:
             return "verify: did not run (%s)" % reason
         return "verify: did not run"
-    ok = verify.get("pass")
-    tag = "PASS" if ok else ("FAIL" if ok is False else "unknown")
+    ok    = verify.get("pass")
+    tag   = "PASS" if ok else ("FAIL" if ok is False else "unknown")
     parts = ["verify: %s" % tag]
     parts.append("maxerr=%s" % _fmt_num(verify.get("maxerr")))
     parts.append("tol=%s" % _fmt_num(verify.get("tol")))
@@ -77,30 +77,30 @@ def _verify_line(verify):
 # row selection / summarisation
 # --------------------------------------------------------------------------- #
 def _row_summary(row):
-    row = row or {}
+    row    = row or {}
     verify = row.get("verify") or {}
-    spec = row.get("spec") or {}
-    port = spec.get("portability") or {}
+    spec   = row.get("spec") or {}
+    port   = spec.get("portability") or {}
     return {
-        "source_node": row.get("source_node"),
-        "type_name": row.get("type_name"),
+        "source_node":  row.get("source_node"),
+        "type_name":    row.get("type_name"),
         "build_status": row.get("build_status"),
         "build_reason": row.get("build_reason") or "",
         "verify": {
-            "ran": verify.get("ran"),
-            "pass": verify.get("pass"),
+            "ran":    verify.get("ran"),
+            "pass":   verify.get("pass"),
             "maxerr": verify.get("maxerr"),
-            "tol": verify.get("tol"),
+            "tol":    verify.get("tol"),
             "reason": verify.get("reason") or "",
             "timing": verify.get("timing") or {},
         },
         "blockers": list(port.get("blockers") or []),
         # The gap, what the AI port did about it, and whether anything checked
         # -- the assistant needs all three to answer usefully.
-        "unported": list(port.get("unported") or []),
-        "incomplete": list(row.get("incomplete") or []),
+        "unported":    list(port.get("unported") or []),
+        "incomplete":  list(row.get("incomplete") or []),
         "invented_io": list(row.get("invented_io") or []),
-        "ported": bool(row.get("ported")),
+        "ported":      bool(row.get("ported")),
     }
 
 
@@ -162,24 +162,24 @@ def classify(result):
     failed to build, diverged from the Python reference, shipped incomplete, or
     is an unverified AI port (i.e. there is something worth an AI conversation
     about)."""
-    result = result or {}
-    rows = result.get("nodes") or []
-    built = [r for r in rows if _is_built(r)]
-    dropped = [r for r in rows if _is_unbuilt(r)]
-    diverged = [r for r in rows if _is_diverged(r)]
+    result     = result or {}
+    rows       = result.get("nodes") or []
+    built      = [r for r in rows if _is_built(r)]
+    dropped    = [r for r in rows if _is_unbuilt(r)]
+    diverged   = [r for r in rows if _is_diverged(r)]
     incomplete = [r for r in rows if _is_incomplete(r)]
-    unchecked = [r for r in rows if _is_unchecked_port(r)]
+    unchecked  = [r for r in rows if _is_unchecked_port(r)]
     verified_ok = [r for r in built
                    if (r.get("verify") or {}).get("pass") is True]
     return {
-        "n_total": len(rows),
-        "built": built,
-        "dropped": dropped,
-        "diverged": diverged,
-        "incomplete": incomplete,
-        "unchecked": unchecked,
+        "n_total":     len(rows),
+        "built":       built,
+        "dropped":     dropped,
+        "diverged":    diverged,
+        "incomplete":  incomplete,
+        "unchecked":   unchecked,
         "verified_ok": verified_ok,
-        "needs_ai": bool(dropped or diverged or incomplete or unchecked),
+        "needs_ai":    bool(dropped or diverged or incomplete or unchecked),
     }
 
 
@@ -194,10 +194,10 @@ def verify_summary_lines(result):
     carrying build status + the verify verdict (pass/fail/maxerr/tol or the
     'did not run' reason). This makes verify a first-class, persistent part of
     the summary instead of a transient progress line."""
-    rows = (result or {}).get("nodes") or []
+    rows  = (result or {}).get("nodes") or []
     lines = []
     for r in rows:
-        name = r.get("type_name") or "?"
+        name   = r.get("type_name") or "?"
         status = r.get("build_status") or "?"
         # `build_status` must keep saying "compiled" (it gates
         # verify/companions/cleanup upstream), but "compiled" alone reads as
@@ -233,9 +233,9 @@ def build_handoff(result, options=None, log_tail=None, kind="failure"):
 
     Returns a plain dict (JSON-safe) -- no Qt, no Maya objects.
     """
-    result = result or {}
+    result  = result or {}
     options = options or {}
-    rows = result.get("nodes") or []
+    rows    = result.get("nodes") or []
 
     if kind == "optimize":
         picked_rows = [r for r in rows if _is_built(r)]
@@ -244,7 +244,7 @@ def build_handoff(result, options=None, log_tail=None, kind="failure"):
 
     summaries = [_row_summary(r) for r in picked_rows]
 
-    primary = None
+    primary   = None
     for s in summaries:
         if s.get("source_node"):
             primary = s["source_node"]
@@ -301,7 +301,7 @@ def build_osl_handoff(reason, node_name=None, compute=None, suggestions=None):
 
 def _format_osl_report(handoff):
     lines = ["[Compile report]", "intent: convert this node's compute to OSL"]
-    node = handoff.get("primary_source_node")
+    node  = handoff.get("primary_source_node")
     if node:
         lines.append("node: %s" % node)
     reason = (handoff.get("reason") or "").strip()
@@ -325,10 +325,10 @@ def format_report_block(handoff):
     gets dropped into the assistant conversation so the model (and the user) can
     see exactly what compiled, what diverged, and what blocked lowering."""
     handoff = handoff or {}
-    kind = handoff.get("kind", "failure")
+    kind    = handoff.get("kind", "failure")
     if kind == "osl":
         return _format_osl_report(handoff)
-    lines = ["[Compile report]"]
+    lines  = ["[Compile report]"]
 
     plugin = handoff.get("plugin_name")
     if plugin:
@@ -344,7 +344,7 @@ def format_report_block(handoff):
         lines.append("nodes: (none flagged)")
     for s in rows:
         name = s.get("type_name") or "?"
-        src = s.get("source_node")
+        src  = s.get("source_node")
         head = "- %s" % name
         if src and src != name:
             head += " (from %s)" % src
@@ -429,8 +429,8 @@ def failure_shape(handoff):
 
 
 _FAILURE_INTENT = {
-    "unbuilt": "get it compiling / on-par",
-    "diverged": "close a MEASURED divergence from the Python reference",
+    "unbuilt":    "get it compiling / on-par",
+    "diverged":   "close a MEASURED divergence from the Python reference",
     "incomplete": "finish the parts the port could not translate",
     "unverified": "explain an AI port that compiled but could not be verified",
 }
@@ -439,10 +439,10 @@ _FAILURE_INTENT = {
 def starter_prompt(handoff):
     """A pre-filled first user turn for the assistant, embedding the report."""
     handoff = handoff or {}
-    kind = handoff.get("kind", "failure")
-    report = format_report_block(handoff)
+    kind    = handoff.get("kind", "failure")
+    report  = format_report_block(handoff)
     primary = handoff.get("primary_source_node")
-    subj = ("`%s`" % primary) if primary else "these nodes"
+    subj    = ("`%s`" % primary) if primary else "these nodes"
     shape, shape_row = _shape_and_row(handoff)
     if kind not in ("osl", "optimize") and shape_row:
         # Name the node the ask DESCRIBES, not the first flagged row.

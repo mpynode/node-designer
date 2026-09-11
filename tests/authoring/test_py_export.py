@@ -54,7 +54,7 @@ class TestGenerateNodeScript(unittest.TestCase):
         n.add_output_attr("outFloat", "float")
         n.set_compute_expression("self.outFloat = self.inFloat")
         src = self._gen(n)
-        ast.parse(src)  # raises SyntaxError if codegen is malformed
+        ast.parse(src)                    # raises SyntaxError if codegen is malformed
         self.assertIn("class RebuiltNode(MPyNode):", src)
         self.assertIn("def build(cls", src)
         self.assertNotIn("def ls(", src)  # ls is inherited, not emitted
@@ -68,7 +68,7 @@ class TestGenerateNodeScript(unittest.TestCase):
         n.add_output_attr("outFloat", "float")
         n.set_compute_expression("self.outFloat = self.inFloat")
 
-        cls = _build_cls(self._gen(n), "RebuiltNode")
+        cls     = _build_cls(self._gen(n), "RebuiltNode")
         rebuilt = cls.build(name="rebuiltBasic#")
 
         self.assertIsInstance(rebuilt, cls)
@@ -90,7 +90,7 @@ class TestGenerateNodeScript(unittest.TestCase):
         n.set_input_attr_color("amp", "#ff0000")
         n.add_output_attr("result", "vector")
 
-        cls = _build_cls(self._gen(n), "RebuiltNode")
+        cls     = _build_cls(self._gen(n), "RebuiltNode")
         rebuilt = cls.build(name="rebuiltRich#")
 
         # Full attr-map equality proves type/array/enum/limits/color all survived.
@@ -106,7 +106,7 @@ class TestGenerateNodeScript(unittest.TestCase):
         n.add_input_attr("dense", "float", is_array=True)  # default dense
         n.add_input_attr("packed", "float", is_array=True, sparse=True)
 
-        cls = _build_cls(self._gen(n, "RebuiltSparse"), "RebuiltSparse")
+        cls     = _build_cls(self._gen(n, "RebuiltSparse"), "RebuiltSparse")
         rebuilt = cls.build(name="rebuiltSparse#")
 
         self.assertEqual(rebuilt.get_input_attr_map(), n.get_input_attr_map())
@@ -125,7 +125,7 @@ class TestGenerateNodeScript(unittest.TestCase):
         n.set_init_expression("import numpy as np\nK = 3")
         n.set_compute_expression("self.out = float(K)")
 
-        cls = _build_cls(self._gen(n), "RebuiltNode")
+        cls     = _build_cls(self._gen(n), "RebuiltNode")
         rebuilt = cls.build(name="rebuiltInit#")
         self.assertEqual(rebuilt.get_init_expression(), n.get_init_expression())
         self.assertEqual(
@@ -149,7 +149,7 @@ class TestGenerateNodeScript(unittest.TestCase):
         self.assertIn("\nimport math\n", src)  # init really spans lines
 
         cls = _build_cls(src, "RebuiltNode")
-        rb = cls.build(name="rbMulti#")
+        rb  = cls.build(name="rbMulti#")
         self.assertEqual(rb.get_init_expression(), n.get_init_expression())
         self.assertEqual(rb.get_compute_expression(), n.get_compute_expression())
 
@@ -165,12 +165,12 @@ class TestGenerateNodeScript(unittest.TestCase):
         n.set_init_expression(init)
         n.set_compute_expression("self.out = float(K)")
         src = self._gen(n)
-        self.assertIn('set_init_expression(r"""', src)   # raw block, not repr
+        self.assertIn('set_init_expression(r"""', src)  # raw block, not repr
         self.assertNotIn("set_init_expression('", src)
-        self.assertIn("\nPAT = re.compile", src)         # spans lines
+        self.assertIn("\nPAT = re.compile", src)        # spans lines
 
         cls = _build_cls(src, "RebuiltNode")
-        rb = cls.build(name="rbBs#")
+        rb  = cls.build(name="rbBs#")
         self.assertEqual(rb.get_init_expression(), n.get_init_expression())
 
     def test_viewport_expression_roundtrips(self):
@@ -184,7 +184,7 @@ class TestGenerateNodeScript(unittest.TestCase):
         self.assertIn('set_viewport_expression("""', src)
 
         cls = _build_cls(src, "RebuiltFile")
-        rb = cls.build(name="rbPipe#")
+        rb  = cls.build(name="rbPipe#")
         self.assertEqual(
             rb.get_viewport_expression(), f.get_viewport_expression()
         )
@@ -212,7 +212,7 @@ class TestGenerateNodeScript(unittest.TestCase):
         self.assertIn('set_osl_expression("""', src)
 
         cls = _build_cls(src, "RebuiltOsl")
-        rb = cls.build(name="rbOsl#")
+        rb  = cls.build(name="rbOsl#")
         self.assertEqual(rb.get_osl_expression(), f.get_osl_expression())
 
     def test_no_osl_call_for_node_without_osl(self):
@@ -236,17 +236,17 @@ class TestGenerateNodeScript(unittest.TestCase):
 
         src = self._gen(n)
         # Declared...
-        self.assertIn("payload", src)
-        self.assertIn("add_variable", src)
+        self.assertIn("payload",         src)
+        self.assertIn("add_variable",    src)
         self.assertIn("persistent=True", src)
         # ...but the DATA is not packed (no pickle/base64, no array contents).
         self.assertNotIn("314159", src)
         self.assertNotIn("base64", src.lower())
         self.assertNotIn("array(", src)
 
-        cls = _build_cls(src, "RebuiltNode")
+        cls     = _build_cls(src, "RebuiltNode")
         rebuilt = cls.build(name="rebuiltVar#")
-        self.assertIn("payload", rebuilt.get_variable_names())  # re-declared
+        self.assertIn("payload", rebuilt.get_variable_names())     # re-declared
         self.assertTrue(rebuilt.is_variable_persistent("payload"))
         self.assertIsNone(rebuilt.get_variables().get("payload"))  # data NOT carried
 
@@ -270,7 +270,7 @@ class TestGenerateNodeScript(unittest.TestCase):
         from mpynode import MPyDeformer
 
         mesh = mc.polySphere(name="defTarget#")[0]
-        d = MPyDeformer.create_on(mesh)
+        d    = MPyDeformer.create_on(mesh)
         d.add_output_attr("out", "float")
 
         src = self._gen(d, class_name="MyDeformer")
@@ -281,8 +281,8 @@ class TestGenerateNodeScript(unittest.TestCase):
         self.assertIn("create_on(mesh", src)
 
         # And it actually rebuilds when given a mesh.
-        mesh2 = mc.polySphere(name="defTarget2#")[0]
-        cls = _build_cls(src, "MyDeformer")
+        mesh2   = mc.polySphere(name="defTarget2#")[0]
+        cls     = _build_cls(src, "MyDeformer")
         rebuilt = cls.build(mesh2, name="rebuiltDef#")
         self.assertIsInstance(rebuilt, cls)
         self.assertEqual(rebuilt.get_output_attr_map(), d.get_output_attr_map())
@@ -301,7 +301,7 @@ class TestGenerateNodeScript(unittest.TestCase):
         n.add_output_attr("outFloat", "float")
         n.set_compute_expression("self.outFloat = self.inFloat")
 
-        src = self._gen(n, class_name="FromFile")
+        src  = self._gen(n, class_name="FromFile")
         path = os.path.join(tempfile.mkdtemp(), "exported_node.py")
         # Explicit UTF-8: the generated source carries non-ASCII (U+25B8),
         # and Windows defaults text mode to cp1252, which cannot encode it.
@@ -310,7 +310,7 @@ class TestGenerateNodeScript(unittest.TestCase):
             f.write(src)
 
         spec = importlib.util.spec_from_file_location("exported_node", path)
-        mod = importlib.util.module_from_spec(spec)
+        mod  = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(mod)
         rebuilt = mod.FromFile.build(name="fromFile#")
         self.assertIsInstance(rebuilt, mod.FromFile)
@@ -330,7 +330,7 @@ class TestGenerateNodeScript(unittest.TestCase):
         src = py_export.generate_node_script(n)  # no class_name -> derive it
         ast.parse(src)  # must still be valid Python
         # find the generated class name from the source
-        tree = ast.parse(src)
+        tree      = ast.parse(src)
         classdefs = [c for c in ast.walk(tree) if isinstance(c, ast.ClassDef)]
         self.assertEqual(len(classdefs), 1)
         self.assertTrue(classdefs[0].name.isidentifier())
@@ -354,12 +354,12 @@ class TestGenerateNodeScript(unittest.TestCase):
         n.set_compute_expression("self.out = float(K)")
 
         src = self._gen(n)
-        self.assertIn("set_init_expression('''", src)        # switched to '''
-        self.assertNotIn("set_init_expression(exp)", src)    # not accumulator
-        self.assertNotIn('set_init_expression("""', src)     # not colliding """
+        self.assertIn("set_init_expression('''", src)      # switched to '''
+        self.assertNotIn("set_init_expression(exp)", src)  # not accumulator
+        self.assertNotIn('set_init_expression("""', src)   # not colliding """
 
         cls = _build_cls(src, "RebuiltNode")
-        rb = cls.build(name="rbDoc#")
+        rb  = cls.build(name="rbDoc#")
         self.assertEqual(rb.get_init_expression(), n.get_init_expression())
         self.assertEqual(
             rb.get_compute_expression(), n.get_compute_expression()
@@ -384,7 +384,7 @@ class TestGenerateNodeScript(unittest.TestCase):
         self.assertNotIn("set_compute_expression(exp)", src)
 
         cls = _build_cls(src, "RebuiltNode")
-        rb = cls.build(name="rbTrailq#")
+        rb  = cls.build(name="rbTrailq#")
         self.assertEqual(
             rb.get_compute_expression(), n.get_compute_expression()
         )
@@ -405,7 +405,7 @@ class TestGenerateNodeScript(unittest.TestCase):
         self.assertNotIn("set_init_expression(exp)", src)
 
         cls = _build_cls(src, "RebuiltNode")
-        rb = cls.build(name="rbTsq#")
+        rb  = cls.build(name="rbTsq#")
         self.assertEqual(rb.get_init_expression(), n.get_init_expression())
 
     def test_trailing_single_quote_keeps_double_triple_quote(self):
@@ -420,7 +420,7 @@ class TestGenerateNodeScript(unittest.TestCase):
         src = self._gen(n)
         self.assertIn('set_compute_expression("""', src)
         cls = _build_cls(src, "RebuiltNode")
-        rb = cls.build(name="rbTrails#")
+        rb  = cls.build(name="rbTrails#")
         self.assertEqual(
             rb.get_compute_expression(), n.get_compute_expression()
         )
@@ -442,7 +442,7 @@ class TestGenerateNodeScript(unittest.TestCase):
         self.assertIn("exp += ", src)
 
         cls = _build_cls(src, "RebuiltNode")
-        rb = cls.build(name="rbBoth#")
+        rb  = cls.build(name="rbBoth#")
         self.assertEqual(rb.get_init_expression(), n.get_init_expression())
 
     def test_docstring_with_backslash_uses_raw_single_triple_quote(self):
@@ -458,7 +458,7 @@ class TestGenerateNodeScript(unittest.TestCase):
         src = self._gen(n)
         self.assertIn("set_init_expression(r'''", src)       # raw + single triple
         cls = _build_cls(src, "RebuiltNode")
-        rb = cls.build(name="rbRawDoc#")
+        rb  = cls.build(name="rbRawDoc#")
         self.assertEqual(rb.get_init_expression(), n.get_init_expression())
 
     def test_viewport_docstring_uses_single_triple_quote_and_roundtrips(self):
@@ -478,7 +478,7 @@ class TestGenerateNodeScript(unittest.TestCase):
         self.assertIn("set_viewport_expression('''", src)
 
         cls = _build_cls(src, "RebuiltFile")
-        rb = cls.build(name="rbPipeDoc#")
+        rb  = cls.build(name="rbPipeDoc#")
         self.assertEqual(
             rb.get_viewport_expression(), f.get_viewport_expression()
         )
@@ -517,7 +517,7 @@ class TestGenerateNodeScript(unittest.TestCase):
                 src = self._gen(n, class_name="Cr")
                 self.assertIn("set_init_expression(exp)", src)  # accumulator
                 cls = _build_cls(src, "Cr")
-                rb = cls.build(name="rbcr_%s#" % label)
+                rb  = cls.build(name="rbcr_%s#" % label)
                 self.assertEqual(rb.get_init_expression(), stored)
 
     def test_methods_are_baked_not_emitted_as_source(self):
@@ -543,7 +543,7 @@ class TestGenerateNodeScript(unittest.TestCase):
         self.assertIn("def set_region(self, indices=None):", gen)
 
         cls = _build_cls(gen, "RebuiltLoc")
-        rb = cls.build(name="rbLoc#")
+        rb  = cls.build(name="rbLoc#")
         self.assertEqual(rb.set_region(indices=[1, 2, 3]), [1, 2, 3])
 
     def test_ambient_decorators_are_imported_by_the_bake(self):
@@ -580,7 +580,7 @@ class TestGenerateNodeScript(unittest.TestCase):
                 "bake must supply the ambient %s import" % dec,
             )
         cls = _build_cls(gen, "RebuiltAmb")   # execs: NameError if any is missing
-        rb = cls.build(name="rbAmb#")
+        rb  = cls.build(name="rbAmb#")
         self.assertEqual(rb.test_thing(), 3)
 
     def test_methods_emitted_as_real_members(self):
@@ -605,7 +605,7 @@ class TestGenerateNodeScript(unittest.TestCase):
         self.assertIn("@maya_command(name='setMeshRegion')", gen)
 
         cls = _build_cls(gen, "RebuiltLoc2")
-        rb = cls.build(name="rbLoc2#")
+        rb  = cls.build(name="rbLoc2#")
         # callable directly on the instance
         self.assertTrue(callable(getattr(rb, "set_region", None)))
         self.assertEqual(rb.set_region(indices=[1, 2, 3]), [1, 2, 3])
@@ -643,7 +643,7 @@ class TestGenerateNodeScript(unittest.TestCase):
         # generated source.
         self.assertIn("\nimport maya.cmds as cmds\n", gen)
         cls = _build_cls(gen, "RebuiltLocImp")
-        rb = cls.build(name="rbLocImp#")
+        rb  = cls.build(name="rbLocImp#")
         # Calling the real-member command must NOT NameError on `cmds`.
         result = rb.list_transforms()
         self.assertIsInstance(result, list)
@@ -663,7 +663,7 @@ class TestGenerateNodeScript(unittest.TestCase):
         )
         loc = MPyLocator.create(name="mLocMarkerImp#")
         loc.set_methods_source(src_methods)
-        gen = self._gen(loc, class_name="RebuiltMarkerImp")
+        gen    = self._gen(loc, class_name="RebuiltMarkerImp")
         marker = "from mpynode._common.methods.maya_command import maya_command"
         # Real top-level import lines start at column 0, so require a newline
         # either side of the match. Exactly one such line must exist.
@@ -692,7 +692,7 @@ class TestGenerateNodeScript(unittest.TestCase):
         self.assertIn("@maya_command(name='setMeshRegion')", gen)
 
         cls = _build_cls(gen, "RebuiltAmbient")
-        rb = cls.build(name="rbAmbient#")
+        rb  = cls.build(name="rbAmbient#")
         self.assertEqual(rb.set_region(indices=[1, 2, 3]), [1, 2, 3])
 
     def test_plain_helper_def_is_emitted_alongside_command(self):
@@ -718,7 +718,7 @@ class TestGenerateNodeScript(unittest.TestCase):
         self.assertIn("def _double(self, n):", gen)
         self.assertIn("def scale(self, n=0):", gen)
         cls = _build_cls(gen, "RebuiltLocHelper")
-        rb = cls.build(name="rbLocHelper#")
+        rb  = cls.build(name="rbLocHelper#")
         self.assertEqual(rb.scale(n=3), 6)
 
     def test_reserved_name_helper_is_skipped_with_warning_comment(self):
@@ -748,7 +748,7 @@ class TestGenerateNodeScript(unittest.TestCase):
         self.assertIn("# WARNING", gen)
         self.assertIn("'build'", gen)  # warning names the offender
         cls = _build_cls(gen, "RebuiltLocReserved")
-        rb = cls.build(name="rbLocReserved#")
+        rb  = cls.build(name="rbLocReserved#")
         self.assertEqual(rb.normal(), 1)
 
     def test_base_wrapper_method_shadow_is_skipped_with_warning_comment(self):
@@ -776,7 +776,7 @@ class TestGenerateNodeScript(unittest.TestCase):
         # No class-member override -- flush-left hits are the payload string.
         self.assertEqual(gen.count("    def load_target("), 0)
         self.assertIn("# WARNING", gen)
-        self.assertIn("'load_target'", gen)       # warning names the offender
+        self.assertIn("'load_target'", gen)              # warning names the offender
         self.assertIn("MPyBlendShape.load_target", gen)  # ...and what it hid
         # A non-colliding sibling still bakes normally.
         self.assertIn("    def untaken(self):", gen)
@@ -870,7 +870,7 @@ class TestGenerateNodeScript(unittest.TestCase):
         self.assertIn("# WARNING", gen)
         self.assertIn("'helper'", gen)
         cls = _build_cls(gen, "RebuiltLocDup")
-        rb = cls.build(name="rbLocDup#")
+        rb  = cls.build(name="rbLocDup#")
         # FIRST def wins (1) -- the dedupe must drop the LATER duplicate.
         self.assertEqual(rb.caller(), 1)
 
@@ -894,7 +894,7 @@ class TestGenerateNodeScript(unittest.TestCase):
         self.assertIn("\ndef _area(r):", gen)
         self.assertNotIn("    def _area(r):", gen)
         cls = _build_cls(gen, "RebuiltFreeFn")
-        rb = cls.build(name="rbFreeFn#")
+        rb  = cls.build(name="rbFreeFn#")
         self.assertEqual(rb.circle_area(r=2), 12)
 
     def test_module_level_constant_is_hoisted(self):
@@ -917,7 +917,7 @@ class TestGenerateNodeScript(unittest.TestCase):
         gen = self._gen(loc, class_name="RebuiltConst")
         self.assertIn("\nPREFIX = 'rgn_'", gen)  # module scope (column 0)
         cls = _build_cls(gen, "RebuiltConst")
-        rb = cls.build(name="rbConst#")
+        rb  = cls.build(name="rbConst#")
         self.assertEqual(rb.make_id(i=2), "rgn_2")
 
     def test_staticmethod_stays_on_class_not_module(self):
@@ -940,7 +940,7 @@ class TestGenerateNodeScript(unittest.TestCase):
         self.assertIn("    def helper(n):", gen)   # indented (class scope)
         self.assertNotIn("\ndef helper(n):", gen)  # NOT hoisted to module scope
         cls = _build_cls(gen, "RebuiltStatic")
-        rb = cls.build(name="rbStatic#")
+        rb  = cls.build(name="rbStatic#")
         self.assertEqual(rb.util(n=4), 5)
 
     def test_the_one_way_bake_is_documented_but_not_in_the_file(self):
@@ -987,9 +987,9 @@ class TestGenerateNodeScript(unittest.TestCase):
                 n.add_output_attr("out", "float")
                 n.set_init_expression(case)
                 stored = n.get_init_expression()  # what Maya actually persisted
-                src = self._gen(n, class_name="Adv%d" % i)
-                cls = _build_cls(src, "Adv%d" % i)
-                rb = cls.build(name="rbAdv%d#" % i)
+                src    = self._gen(n, class_name="Adv%d" % i)
+                cls    = _build_cls(src, "Adv%d" % i)
+                rb     = cls.build(name="rbAdv%d#" % i)
                 self.assertEqual(rb.get_init_expression(), stored)
 
 
@@ -1061,7 +1061,7 @@ class TestDemoHookExport(unittest.TestCase):
         self.assertIn("def demo(self):", gen)
 
         cls = _build_cls(gen, "RebuiltDemo")
-        rb = cls.build(name="rbDemo#")
+        rb  = cls.build(name="rbDemo#")
         # Baked demo runs without NameError, returns self, and built the scene.
         self.assertIs(rb.demo(), rb)
         self.assertTrue(mc.objExists(rb.get_name() + "_plane"))
@@ -1108,7 +1108,7 @@ class TestDemoHookExport(unittest.TestCase):
         self.assertNotIn("    def _shared_helper(x):", gen)
 
         cls = _build_cls(gen, "RebuiltBoth")
-        rb = cls.build(name="rbBoth#")
+        rb  = cls.build(name="rbBoth#")
         # both hooks bake as real instance methods resolving the module helper
         self.assertEqual(rb.demo(), 2)
         self.assertEqual(rb.setup(), 4)
@@ -1228,9 +1228,9 @@ class TestRegionMap(unittest.TestCase):
         n.set_init_expression("import math\nx = math.pi\n")
         src, regions = self._gen(n)
         lines = src.split("\n")
-        r = self._region(regions, "expr_init")
-        head = lines[r["start"]]
-        col = r["body_col"]
+        r     = self._region(regions, "expr_init")
+        head  = lines[r["start"]]
+        col   = r["body_col"]
         self.assertTrue(head[:col].endswith('"""'), head[:col])
         self.assertTrue(head[col:].startswith("import math"), head[col:])
 
@@ -1242,8 +1242,8 @@ class TestRegionMap(unittest.TestCase):
         n.set_init_expression("import re\np = re.compile('\\\\d+')\n")
         src, regions = self._gen(n)
         lines = src.split("\n")
-        r = self._region(regions, "expr_init")
-        head = lines[r["start"]]
+        r     = self._region(regions, "expr_init")
+        head  = lines[r["start"]]
         self.assertIn('(r"""', head)
         col = r["body_col"]
         self.assertTrue(head[:col].endswith('r"""'), head[:col])
@@ -1256,8 +1256,8 @@ class TestRegionMap(unittest.TestCase):
         n.set_init_expression('def f():\n    """doc"""\n    return 1\n')
         src, regions = self._gen(n)
         lines = src.split("\n")
-        r = self._region(regions, "expr_init")
-        head = lines[r["start"]]
+        r     = self._region(regions, "expr_init")
+        head  = lines[r["start"]]
         self.assertIn("('''", head)
         col = r["body_col"]
         self.assertTrue(head[:col].endswith("'''"), head[:col])
@@ -1280,7 +1280,7 @@ class TestRegionMap(unittest.TestCase):
         n = self._node("member#")
         n.set_methods_source("def helper(self):\n    return 7\n")
         src, regions = self._gen(n)
-        lines = src.split("\n")
+        lines   = src.split("\n")
         members = [r for r in regions if r["kind"] == "method_member"]
         self.assertTrue(members)
         r = members[0]
@@ -1304,7 +1304,7 @@ class TestRegionMap(unittest.TestCase):
         n = self._node("anchors#")
         src, regions = self._gen(n)
         lines = src.split("\n")
-        cd = self._region(regions, "class_decl")
+        cd    = self._region(regions, "class_decl")
         self.assertEqual(lines[cd["start"]],
                          "class RebuiltRegions(MPyNode):")
         self.assertEqual(cd["label"], "RebuiltRegions")
@@ -1355,7 +1355,7 @@ class TestRegionMap(unittest.TestCase):
         comp = self._region(regions, "expr_compute")
         self.assertFalse(comp["inline"])
         self.assertEqual(comp["body_lines"], 2)
-        lines = src.split("\n")
+        lines   = src.split("\n")
         call_no = comp["start"] + comp["call_offset"]
         self.assertEqual(call_no, comp["end"])
         call = lines[call_no]
@@ -1396,7 +1396,7 @@ class TestPersistentValuesInTheBake(unittest.TestCase):
         self.assertIn("node.add_variable('board', persistent=True)", src)
         self.assertNotIn("set_variable(", src)
         self.assertNotIn("_stored_value", src)
-        self.assertNotIn("values", self._vars(regions))
+        self.assertNotIn("values",        self._vars(regions))
 
     def test_a_literal_value_is_set_and_a_none_is_declared(self):
         n = self._node()
@@ -1424,7 +1424,7 @@ class TestPersistentValuesInTheBake(unittest.TestCase):
         arr = np.arange(6, dtype="float64").reshape(3, 2)
         n.set_variable("weights", arr)
         src, regions = self._gen(n, include_values=True)
-        lines = src.split("\n")
+        lines  = src.split("\n")
         helper = [r for r in regions if r["kind"] == "helpers"]
         self.assertEqual(len(helper), 1)
         decl = [r for r in regions if r["kind"] == "class_decl"][0]
@@ -1551,7 +1551,7 @@ class TestTheFileHeaderIsTheUsers(unittest.TestCase):
     def test_the_header_is_above_the_imports(self):
         src, regions = self._gen("# My node.\n\nimport math\n")
         lines = src.split("\n")
-        r = self._header(regions)
+        r     = self._header(regions)
         imports = next(i for i, ln in enumerate(lines)
                        if ln.startswith("from mpynode import"))
         self.assertEqual(r["start"], 0)
@@ -1561,7 +1561,7 @@ class TestTheFileHeaderIsTheUsers(unittest.TestCase):
         src, regions = self._gen('"""My node.\n\nSecond paragraph.\n"""\n\n'
                                  "import math\n")
         lines = src.split("\n")
-        r = self._header(regions)
+        r     = self._header(regions)
         self.assertEqual(r["start"], 0)
         self.assertEqual(lines[0], '"""My node.')
         # ...and exactly once. It used to be re-emitted as a module segment
@@ -1575,8 +1575,8 @@ class TestTheFileHeaderIsTheUsers(unittest.TestCase):
                                   "def helper(x):\n    return x\n")
         r = self._header(regions)
         self.assertTrue(r["editable"])
-        self.assertEqual(r["owner"], "set_methods_source")
-        self.assertEqual(r["src_line"], 1)
+        self.assertEqual(r["owner"],     "set_methods_source")
+        self.assertEqual(r["src_line"],  1)
         self.assertEqual(r["src_lines"], 3)   # two comments + the blank
 
     def test_a_header_free_source_keeps_its_first_function(self):
@@ -1613,14 +1613,14 @@ class TestNodeInfoMetadataBanner(unittest.TestCase):
         ensure_plugins_loaded()
         from mpynode._common.lifecycle import metadata_registry as md
 
-        self._md = md
-        self._saved = md.prefs_defaults
-        self._saved_flag = md.bake_header_enabled
+        self._md          = md
+        self._saved       = md.prefs_defaults
+        self._saved_flag  = md.bake_header_enabled
         md.prefs_defaults = lambda: dict(self.prefs)
-        self.prefs = {}
+        self.prefs        = {}
 
     def tearDown(self):
-        self._md.prefs_defaults = self._saved
+        self._md.prefs_defaults      = self._saved
         self._md.bake_header_enabled = self._saved_flag
 
     def _gen(self, meta, methods_src=None, name="meta#"):
@@ -1666,7 +1666,7 @@ class TestNodeInfoMetadataBanner(unittest.TestCase):
                         src.index('"""My own header."""'))
         # ...separated by exactly one blank line.
         lines = src.split("\n")
-        at = lines.index('"""My own header."""')
+        at    = lines.index('"""My own header."""')
         self.assertEqual(lines[at - 1], "")
         self.assertEqual(lines[at - 2], "# " + "=" * 73)
         # Both regions exist and each still owns its own half.
@@ -1690,7 +1690,7 @@ class TestNodeInfoMetadataBanner(unittest.TestCase):
         would report a 1-line override, and the next bake would emit the blank
         a second time. The file would grow by a line per round trip."""
         src, regions = self._gen(self.META, self.SRC)
-        r = self._banner(regions)
+        r     = self._banner(regions)
         lines = src.split("\n")
         self.assertEqual(lines[r["end"]], "")
         self.assertEqual(lines[r["end"] + 1], '"""My own header."""')
@@ -1749,7 +1749,7 @@ class TestNodeInfoMetadataBanner(unittest.TestCase):
     def test_the_preference_beats_a_studio_default_too(self):
         # With the merge left outside the gate, a global default license
         # would keep producing a banner and the switch would look broken.
-        self.prefs = {"license": "(c) Studio Default"}
+        self.prefs                   = {"license": "(c) Studio Default"}
         self._md.bake_header_enabled = lambda default=True: False
         try:
             src, _ = self._gen(None, self.SRC)

@@ -52,7 +52,7 @@ class NDIdentityWidget(QWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self._py_node = None
+        self._py_node   = None
         self._node_type = ""  # derived camelCase type
 
         self.setObjectName("ndIdentityPanel")
@@ -147,7 +147,7 @@ class NDIdentityWidget(QWidget):
         import maya.cmds as mc
         from mpynode.native.spec.identity import derive_class_identity
 
-        name = n.get_name()
+        name        = n.get_name()
         native_type = mc.nodeType(name)
         try:
             pc = n.get_py_class() or ""

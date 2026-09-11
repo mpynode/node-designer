@@ -115,12 +115,12 @@ class NDPreferencesDialog(QDialog):
         self._category_list.setSpacing(1)
         body.addWidget(self._category_list)
         self._pages_host = QWidget(self)
-        self._pages = QStackedLayout(self._pages_host)
+        self._pages      = QStackedLayout(self._pages_host)
         body.addWidget(self._pages_host, stretch=1)
         outer.addLayout(body, stretch=1)
 
         # ---- Editor ------------------------------------------------------
-        ed = self._add_page("Editor")
+        ed          = self._add_page("Editor")
         editor_grid = QGridLayout()
         editor_grid.setVerticalSpacing(4)
         editor_grid.setHorizontalSpacing(6)
@@ -168,7 +168,7 @@ class NDPreferencesDialog(QDialog):
         # has always been -- moving it would break the seven tests that drive
         # _font_size_edit, for no gain. These are the two areas that had no
         # control at all.
-        fo = self._add_page("Fonts")
+        fo         = self._add_page("Fonts")
         fonts_grid = QGridLayout()
         fonts_grid.setVerticalSpacing(4)
         fonts_grid.setHorizontalSpacing(6)
@@ -196,7 +196,7 @@ class NDPreferencesDialog(QDialog):
         fo.addWidget(_fonts_note)
         fo.addStretch(1)
 
-        nn = self._add_page("New Nodes")
+        nn     = self._add_page("New Nodes")
         nn_row = QHBoxLayout()
         nn_row.addWidget(QLabel("New node code tabs:"))
         self._new_node_mode_combo = QComboBox()
@@ -220,7 +220,7 @@ class NDPreferencesDialog(QDialog):
         nn.addLayout(nn_row)
         # Template search paths -- roots scanned by "New from Template...".
         nn.addWidget(QLabel("Template search paths:"))
-        paths_row = QHBoxLayout()
+        paths_row                 = QHBoxLayout()
         self._template_paths_list = QListWidget()
         self._template_paths_list.setToolTip(
             "Folders scanned (recursively) by 'New from Template...' for "
@@ -228,8 +228,8 @@ class NDPreferencesDialog(QDialog):
             "shared studio roots here."
         )
         paths_row.addWidget(self._template_paths_list, stretch=1)
-        paths_btns = QVBoxLayout()
-        self._template_paths_add_btn = QPushButton("Add...")
+        paths_btns                      = QVBoxLayout()
+        self._template_paths_add_btn    = QPushButton("Add...")
         self._template_paths_remove_btn = QPushButton("Remove")
         paths_btns.addWidget(self._template_paths_add_btn)
         paths_btns.addWidget(self._template_paths_remove_btn)
@@ -239,7 +239,7 @@ class NDPreferencesDialog(QDialog):
         nn.addStretch(1)
 
         # ---- Node Designer -----------------------------------------------
-        nd = self._add_page("Node Designer")
+        nd      = self._add_page("Node Designer")
         tab_row = QHBoxLayout()
         tab_row.addWidget(QLabel("Selected tab emphasis:"))
         self._script_tab_style_combo = QComboBox()
@@ -265,7 +265,7 @@ class NDPreferencesDialog(QDialog):
         nd.addStretch(1)
 
         # ---- AI Optimization ---------------------------------------------
-        ai = self._add_page("AI Optimization")
+        ai                           = self._add_page("AI Optimization")
         self._optimize_timeout_check = QCheckBox("Cap each AI optimize call")
         self._optimize_timeout_check.setToolTip(
             "Bounds ONE model call -- a single agent session, or one whole-file "
@@ -526,7 +526,7 @@ class NDPreferencesDialog(QDialog):
         loc.addWidget(self._locations_tree, stretch=1)
 
         loc.addWidget(QLabel("Port cache:"))
-        pc_row = QHBoxLayout()
+        pc_row                = QHBoxLayout()
         self._port_cache_edit = QLineEdit()
         self._port_cache_edit.setPlaceholderText(
             "(blank -- use the studio / built-in default)")
@@ -542,7 +542,7 @@ class NDPreferencesDialog(QDialog):
         )
         pc_row.addWidget(self._port_cache_edit, stretch=1)
         self._port_cache_browse_btn = QPushButton("Browse...")
-        self._port_cache_reset_btn = QPushButton("Reset")
+        self._port_cache_reset_btn  = QPushButton("Reset")
         pc_row.addWidget(self._port_cache_browse_btn)
         pc_row.addWidget(self._port_cache_reset_btn)
         loc.addLayout(pc_row)
@@ -573,7 +573,7 @@ class NDPreferencesDialog(QDialog):
         # ------------------------------------------------------------------
         # Buttons row
         # ------------------------------------------------------------------
-        btn_row = QHBoxLayout()
+        btn_row         = QHBoxLayout()
         self._reset_btn = QPushButton("Reset Defaults", self)
         btn_row.addWidget(self._reset_btn)
         btn_row.addStretch(1)
@@ -590,7 +590,7 @@ class NDPreferencesDialog(QDialog):
         caller to populate."""
         self._category_list.addItem(title)
         page = QWidget()
-        lay = QVBoxLayout(page)
+        lay  = QVBoxLayout(page)
         lay.setContentsMargins(4, 0, 4, 4)
         lay.setSpacing(8)
         header = QLabel(title, page)
@@ -661,7 +661,7 @@ class NDPreferencesDialog(QDialog):
             bool(preferences.get_pref("connect_dialog_hide_pivots_default", True))
         )
         cur_sort = preferences.get_pref("connect_dialog_sort_mode_default", "selection")
-        cur_idx = 0
+        cur_idx  = 0
         for i, (_label, value) in enumerate(self._SORT_MODE_OPTIONS):
             if value == cur_sort:
                 cur_idx = i
@@ -669,7 +669,7 @@ class NDPreferencesDialog(QDialog):
         self._sort_mode_combo.setCurrentIndex(cur_idx)
 
         cur_tab_style = preferences.script_tab_style()
-        tab_idx = 0
+        tab_idx       = 0
         for i, (_label, value) in enumerate(self._SCRIPT_TAB_STYLE_OPTIONS):
             if value == cur_tab_style:
                 tab_idx = i
@@ -731,7 +731,7 @@ class NDPreferencesDialog(QDialog):
         # carry it in ABOVE the license text rather than orphaning it. Saving
         # writes only the merged key, so this self-heals on the first save.
         _license = str(preferences.get_pref("metadata_default_license", "") or "")
-        _legacy = str(preferences.get_pref("metadata_default_copyright", "") or "")
+        _legacy  = str(preferences.get_pref("metadata_default_copyright", "") or "")
         if _legacy.strip():
             _license = ("%s\n%s" % (_legacy.rstrip(), _license) if _license
                         else _legacy.rstrip())
@@ -804,7 +804,7 @@ class NDPreferencesDialog(QDialog):
         """Say when the field is being IGNORED, and why. Cheap enough to run on
         every keystroke -- no filesystem access."""
         env_override = os.environ.get("MPYNODE_PORT_CACHE")
-        raw = self._port_cache_edit.text().strip()
+        raw          = self._port_cache_edit.text().strip()
         if env_override:
             self._port_cache_edit.setEnabled(False)
             self._port_cache_browse_btn.setEnabled(False)
@@ -902,7 +902,7 @@ class NDPreferencesDialog(QDialog):
             "external_editor_command",
             self._external_editor_edit.text().strip(),
         )
-        nn_idx = max(0, self._new_node_mode_combo.currentIndex())
+        nn_idx   = max(0, self._new_node_mode_combo.currentIndex())
         nn_value = self._NEW_NODE_MODE_OPTIONS[nn_idx][1]
         preferences.set_pref("new_node_mode", nn_value)
         preferences.set_pref(
@@ -925,7 +925,7 @@ class NDPreferencesDialog(QDialog):
             "connect_dialog_hide_pivots_default",
             self._hide_pivots_check.isChecked(),
         )
-        sort_idx = max(0, self._sort_mode_combo.currentIndex())
+        sort_idx   = max(0, self._sort_mode_combo.currentIndex())
         sort_value = self._SORT_MODE_OPTIONS[sort_idx][1]
         preferences.set_pref("connect_dialog_sort_mode_default", sort_value)
 

@@ -183,12 +183,12 @@ QTabBar::tab:selected {
 """
 
 _OUTER_BAR_STYLES = {
-    "underline": _TAB_STYLE_UNDERLINE,
-    "gray": _TAB_STYLE_GRAY,
+    "underline":  _TAB_STYLE_UNDERLINE,
+    "gray":       _TAB_STYLE_GRAY,
     "top_accent": _TAB_STYLE_TOP_ACCENT,
-    "fill": _TAB_STYLE_FILL,
-    "classic": _TAB_STYLE_CLASSIC,
-    "boxed": _TAB_STYLE_BOXED,
+    "fill":       _TAB_STYLE_FILL,
+    "classic":    _TAB_STYLE_CLASSIC,
+    "boxed":      _TAB_STYLE_BOXED,
 }
 
 
@@ -287,8 +287,8 @@ class NDScriptTabContent(QWidget):
         self._nav_split.addWidget(self._navigator)
         self._nav_split.setStretchFactor(0, 1)
         self._nav_split.setStretchFactor(1, 0)
-        self._nav_split.setCollapsible(0, False)   # the code never disappears
-        self._nav_split.setCollapsible(1, True)    # the navigator may
+        self._nav_split.setCollapsible(0, False)  # the code never disappears
+        self._nav_split.setCollapsible(1, True)   # the navigator may
         # J3's budget: 236 preferred, 208 floor. It had to be cut to 180 while
         # the strip still carried a Methods segment -- at the shipped 580px
         # centre pane, mPyFile's SIX segments needed 393px and a wider
@@ -316,7 +316,7 @@ class NDScriptTabContent(QWidget):
         # The API view is built LAST, so initialise its handle FIRST: an inner
         # editor can emit dirtyStateChanged during its own construction, and
         # the dirty/save/refresh aggregates must already be safe.
-        self._api_view = None
+        self._api_view              = None
         self._output_builder_editor = None  # back-compat aggregate hook
 
         # Guard so a PROGRAMMATIC tier switch isn't mistaken for a user click
@@ -363,7 +363,7 @@ class NDScriptTabContent(QWidget):
             # so the dirty/save/refresh aggregate is unchanged.
             osl_tab = self._osl_editor
             if hasattr(py_node, "convert_compute_to_osl"):
-                osl_tab = QWidget(self._inner_tabs)
+                osl_tab    = QWidget(self._inner_tabs)
                 osl_layout = QVBoxLayout(osl_tab)
                 osl_layout.setContentsMargins(0, 0, 0, 0)
                 osl_layout.setSpacing(2)
@@ -687,7 +687,7 @@ class NDScriptTabContent(QWidget):
         """
         first_open = self._node_key() not in NDScriptTabContent._seen_nodes
         NDScriptTabContent._seen_nodes.add(self._node_key())
-        tier = "Compute" if first_open else NDScriptTabContent._shared_tier
+        tier   = "Compute" if first_open else NDScriptTabContent._shared_tier
         target = self._index_for_tier(tier)
         if target < 0:
             target = self._index_for_tier("Compute")
@@ -801,7 +801,7 @@ class NDScriptTabContent(QWidget):
         )
 
         node_name = self._py_node.get_name()
-        ntype = self._py_node.NATIVE_TYPE
+        ntype     = self._py_node.NATIVE_TYPE
         if run_kind == "command":
             # A parameterised command still asks for its arguments, exactly as
             # the Methods outline's Run did.

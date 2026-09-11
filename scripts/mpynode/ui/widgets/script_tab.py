@@ -108,7 +108,7 @@ class NDEditorTabBar(QTabBar):
 
     def mouseReleaseEvent(self, event):
         if self._pending_close >= 0 and event.button() == Qt.LeftButton:
-            idx = self._pending_close
+            idx                 = self._pending_close
             self._pending_close = -1
             # Drag-off cancels, matching normal push-button behaviour.
             if self._close_index_at(event.pos()) == idx:
@@ -130,7 +130,7 @@ class NDEditorTabBar(QTabBar):
             idx = self.tabAt(self.mapFromGlobal(global_pos))
             if idx < 0:
                 return None
-            owner = self.parentWidget()
+            owner  = self.parentWidget()
             getter = getattr(owner, "nodeNameForIndex", None)
             if callable(getter):
                 return getter(idx)
@@ -258,15 +258,15 @@ class NDScriptTabWidget(QTabWidget):
     # Aggregated from each tab's tier strip: the active tier's NAME. The
     # Framework panel shows only the surface that tier can reach, so it must
     # follow the strip.
-    tierChanged = Signal(str)
+    tierChanged  = Signal(str)
 
     DIRTY_MARKER = " *"
 
     # Embossed background watermark (shown only when no tabs are open).
-    _WATERMARK_ICON = "mpynode_hr.png"
-    _WATERMARK_SCALE = 0.55  # fraction of the empty area's shorter side
+    _WATERMARK_ICON          = "mpynode_hr.png"
+    _WATERMARK_SCALE         = 0.55  # fraction of the empty area's shorter side
     _WATERMARK_HILIGHT_ALPHA = 0.05
-    _WATERMARK_SHADOW_ALPHA = 0.06
+    _WATERMARK_SHADOW_ALPHA  = 0.06
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -277,7 +277,7 @@ class NDScriptTabWidget(QTabWidget):
         self.setTabsClosable(True)
         self.tabCloseRequested.connect(self._on_tab_close_requested)
         self.currentChanged.connect(self._on_current_changed)
-        self._wm_base: QPixmap | None = None
+        self._wm_base:  QPixmap | None = None
         self._wm_cache: dict[int, tuple[QPixmap, QPixmap]] = {}
         # CALLBACK_MANAGER tokens for the before-duplicate hook below.
         self._scene_cb_tokens: list = []
@@ -361,7 +361,7 @@ class NDScriptTabWidget(QTabWidget):
     def _watermark_base(self) -> QPixmap:
         """Load (once) the source logo pixmap, or an empty pixmap if absent."""
         if self._wm_base is None:
-            path = icon_path(self._WATERMARK_ICON)
+            path          = icon_path(self._WATERMARK_ICON)
             self._wm_base = QPixmap(path) if os.path.exists(path) else QPixmap()
         return self._wm_base
 
@@ -402,8 +402,8 @@ class NDScriptTabWidget(QTabWidget):
         # Only when the editor area is empty (no node open).
         if self.count() > 0:
             return
-        area = self.rect()
-        side = int(min(area.width(), area.height()) * self._WATERMARK_SCALE)
+        area   = self.rect()
+        side   = int(min(area.width(), area.height()) * self._WATERMARK_SCALE)
         layers = self._watermark_layers(side)
         if layers is None:
             return
@@ -441,7 +441,7 @@ class NDScriptTabWidget(QTabWidget):
             return -1
         target_name = py_node.get_name()
         for i in range(self.count()):
-            tab = self.widget(i)
+            tab      = self.widget(i)
             tab_node = tab.getMPyNode() if hasattr(tab, "getMPyNode") else None
             if tab_node is not None and tab_node.get_name() == target_name:
                 return i
@@ -467,7 +467,7 @@ class NDScriptTabWidget(QTabWidget):
         ``NDScriptTabContent.refreshIdentityViews``). Returns the tab count."""
         n = 0
         for tab in self.getAllTabs():
-            fn = getattr(tab, "refreshIdentityViews", None)
+            fn   = getattr(tab, "refreshIdentityViews", None)
             node = tab.getMPyNode() if hasattr(tab, "getMPyNode") else None
             if fn is None or node is None:
                 continue
@@ -491,7 +491,7 @@ class NDScriptTabWidget(QTabWidget):
         """
         if idx < 0 or idx >= self.count():
             return None
-        tab = self.widget(idx)
+        tab  = self.widget(idx)
         node = tab.getMPyNode() if hasattr(tab, "getMPyNode") else None
         if node is None:
             return None
@@ -502,7 +502,7 @@ class NDScriptTabWidget(QTabWidget):
 
     def closeTabForNode(self, name: str) -> bool:
         for i in range(self.count()):
-            tab = self.widget(i)
+            tab      = self.widget(i)
             tab_node = tab.getMPyNode() if hasattr(tab, "getMPyNode") else None
             if tab_node is not None and tab_node.get_name() == name:
                 self.removeTab(i)
@@ -552,7 +552,7 @@ class NDScriptTabWidget(QTabWidget):
             if tab is None:
                 continue
             checker = getattr(tab, "isBackingNodeAlive", None)
-            alive = None
+            alive   = None
             if callable(checker):
                 try:
                     alive = checker()
@@ -596,7 +596,7 @@ class NDScriptTabWidget(QTabWidget):
 
     def renameTabForNode(self, old_name: str, new_name: str) -> bool:
         for i in range(self.count()):
-            tab = self.widget(i)
+            tab      = self.widget(i)
             tab_node = tab.getMPyNode() if hasattr(tab, "getMPyNode") else None
             # EITHER name: the signal fires AFTER cmds.rename, and a wrapper
             # tracks its MObject, so get_name() already reports ``new_name``.
@@ -693,7 +693,7 @@ class NDScriptTabWidget(QTabWidget):
         py_node = tab.getMPyNode()
         if py_node is None:
             return False
-        new_text = tab.getText()
+        new_text  = tab.getText()
         node_name = ""
         try:
             node_name = py_node.get_name()
@@ -819,9 +819,9 @@ class NDScriptTabWidget(QTabWidget):
 
         Returns one of: QMessageBox.Save, QMessageBox.Discard, QMessageBox.Cancel.
         """
-        py_node = tab.getMPyNode()
+        py_node   = tab.getMPyNode()
         node_name = py_node.get_name() if py_node else "(unknown)"
-        msg = QMessageBox(self)
+        msg       = QMessageBox(self)
         msg.setWindowTitle("Unsaved Changes")
         msg.setText(f"The expression for '{node_name}' has unsaved changes.")
         msg.setInformativeText("Save before closing the tab?")
@@ -847,7 +847,7 @@ class NDScriptTabWidget(QTabWidget):
         from mpynode.ui.widgets.script_tab_content import NDScriptTabContent
 
         editor = NDScriptTabContent(py_node, parent=self)
-        idx = self.addTab(editor, py_node.get_name())
+        idx    = self.addTab(editor, py_node.get_name())
         # Wire dirty-state change to update the tab title's `*` marker.
         editor.dirtyStateChanged.connect(
             lambda dirty, e=editor: self._update_tab_dirty_marker(e, dirty)
