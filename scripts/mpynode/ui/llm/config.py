@@ -143,20 +143,6 @@ def set_effort(provider: str, level: str) -> None:
         _set_pref("assistant_effort_%s" % provider, level)
 
 
-# Multi-agent ("ultracode") orchestration: opt-in, default OFF, claude_cli only.
-# When on, a Claude-CLI turn may spawn Task sub-agents to reason in parallel;
-# they cannot apply anything (the main agent's JSON payload is the only
-# transport). Always False for other providers, whatever the stored pref says.
-def multiagent_enabled(provider: str) -> bool:
-    if provider != "claude_cli":
-        return False
-    return bool(_pref("assistant_multiagent_%s" % provider, False))
-
-
-def set_multiagent(provider: str, on: bool) -> None:
-    _set_pref("assistant_multiagent_%s" % provider, bool(on))
-
-
 def effort_budget(level: str) -> int:
     """Thinking-token budget for an effort level (0 = off/unknown)."""
     return EFFORT_BUDGETS.get((level or "").lower(), 0)

@@ -155,9 +155,10 @@ _CLI_BINS = {
 # The compile porter emits C++ ONLY and has NO mpynode MCP tools wired, so
 # "ultracode" here buys max-reasoning + optional Task decomposition of a hard
 # self-contained math port, with a directive that the FINAL message is the C++
-# body and nothing else. Mirrors ui.llm.claude_cli_client: the literal 'ultracode'
-# keyword goes in the prompt BODY, behaviour rides --append-system-prompt, and
-# Task + ToolSearch are the only built-ins un-denied.
+# body and nothing else. The literal 'ultracode' keyword (a Claude Code session
+# keyword) goes in the prompt BODY, behaviour rides --append-system-prompt, and
+# Task + ToolSearch are the only built-ins un-denied. Experimental and env-gated
+# (see _porter_orchestrate); the interactive assistant has no multi-agent mode.
 _PORT_ULTRACODE_PREFIX = "ultracode\n\nTASK:\n"
 _PORT_ORCHESTRATE_KEEP = ("Task", "ToolSearch")
 _PORT_ORCHESTRATE_DIRECTIVE = (
@@ -176,7 +177,7 @@ def _port_orchestrate_disallowed() -> str:
 
     Every other built-in in ``_CLI_DENY`` stays denied, so un-denying Task can
     never also open Bash/Read/Write/etc -- the porter stays a pure text task with
-    no codebase/scene access, exactly like the interactive orchestration floor."""
+    no codebase/scene access."""
     out = []
     for t in _CLI_DENY.split(","):
         t = t.strip()
@@ -188,15 +189,15 @@ def _port_orchestrate_disallowed() -> str:
 def _porter_orchestrate() -> bool:
     """Should the porter run in "ultracode" multi-agent mode? (claude_cli only.)
 
-    Controlled EXPLICITLY by the ``MPYNODE_PORT_ULTRACODE`` env var (default OFF).
-    It deliberately does NOT follow the interactive assistant's multi-agent toggle
-    (``config.multiagent_enabled``): a 2026-07-16 e2e showed the Task fan-out at
-    effort=max is impractically slow for a hard port (procrustes_single TIMED OUT
-    at the 1800s ceiling in ONE round -- a net regression vs the non-orchestrate
-    path, which completes its fix rounds), so enabling it for chat must never
-    silently make native compiles 30-min-slow. The always-on wins (stream-json CoT
-    capture + effort + the prose guard) apply regardless of this flag; orchestrate
-    is the experimental, opt-in extra. Never raises."""
+    Controlled EXPLICITLY by the ``MPYNODE_PORT_ULTRACODE`` env var (default OFF);
+    there is no preference or UI for it. A 2026-07-16 e2e showed the Task fan-out
+    at effort=max is impractically slow for a hard port (procrustes_single TIMED
+    OUT at the 1800s ceiling in ONE round -- a net regression vs the
+    non-orchestrate path, which completes its fix rounds); that measurement is
+    also why the interactive assistant's multi-agent toggle was removed
+    (2026-09). The always-on wins (stream-json CoT capture + effort + the prose
+    guard) apply regardless of this flag; orchestrate is the experimental,
+    opt-in extra. Never raises."""
     env = os.environ.get("MPYNODE_PORT_ULTRACODE", "")
     return env.strip().lower() not in ("", "0", "false", "no", "off")
 

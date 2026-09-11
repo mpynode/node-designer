@@ -92,10 +92,6 @@ try:
     _cfg.set_provider("claude_cli")
     _cfg.set_model("claude_cli", MODEL)
     _cfg.set_effort("claude_cli", EFFORT)
-    try:
-        _cfg.set_multiagent("claude_cli", True)  # ultracode requested
-    except Exception as exc:
-        L("note: set_multiagent unavailable: %r" % exc)
     # Porter "ultracode" (Task fan-out) is OPT-IN and default OFF: an e2e showed it
     # is impractically slow for a hard port (procrustes_single timed out at 1800s
     # in one round). The high-value "ultracode-quality" bits -- max reasoning +

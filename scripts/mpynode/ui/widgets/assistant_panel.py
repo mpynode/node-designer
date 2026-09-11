@@ -13,7 +13,6 @@ from __future__ import annotations
 import time
 
 from mpynode.ui.qt_wrapper import (
-    QCheckBox,
     QColor,
     QComboBox,
     QFont,
@@ -456,21 +455,6 @@ class NDAssistantPanel(QWidget):
         self._cli_note.setStyleSheet("color: #888;")
         wire_area_font(self._cli_note, "assistant", rel=0.85)
         slay.addWidget(self._cli_note)
-
-        # Claude CLI only, default OFF: lets a complex turn spawn Task
-        # sub-agents, slower and costlier than one lean call.
-        self._multiagent_check = QCheckBox("Multi-Agent (ultracode)",
-                                           self._settings)
-        self._multiagent_check.setToolTip(
-            "Run this turn in 'ultracode' multi-agent mode: the assistant may "
-            "spawn cooperating sub-agents for a complex request (equivalent to "
-            "prefixing your prompt with the 'ultracode' keyword). Much slower "
-            "and costlier than a normal turn. Best for review, investigation "
-            "and cross-file questions; NOT for asking it to write node code — "
-            "on the optimizer the same mode measured WORSE for every opus "
-            "model (-13% to -52% geomean speedup).")
-        self._multiagent_check.toggled.connect(self._on_multiagent_changed)
-        slay.addWidget(self._multiagent_check)
 
         self._settings.setVisible(False)
         root.addWidget(self._settings)
@@ -1183,8 +1167,6 @@ class NDAssistantPanel(QWidget):
         is_api = provider in _llm_config.API_PROVIDERS
         self._api_section.setVisible(is_api)
         self._cli_note.setVisible(not is_api)
-        # Claude CLI is the only provider with a sub-agent mode.
-        self._multiagent_check.setVisible(provider == "claude_cli")
         self._refresh_models_btn.setEnabled(True)
         self._refresh_models_btn.setToolTip(
             "Fetch the models available to this API key" if is_api else
@@ -1215,21 +1197,8 @@ class NDAssistantPanel(QWidget):
         self._apply_provider_visibility(provider)
         self._load_effort(provider)   # all providers
         self._load_model(provider)    # all providers (CLI uses --model too)
-        self._load_multiagent(provider)
         if provider in _llm_config.API_PROVIDERS:
             self._load_key(provider)
-
-    def _load_multiagent(self, provider: str):
-        # Reflect the stored multi-agent flag without firing the toggled handler.
-        self._multiagent_check.blockSignals(True)
-        try:
-            self._multiagent_check.setChecked(
-                _llm_config.multiagent_enabled(provider))
-        finally:
-            self._multiagent_check.blockSignals(False)
-
-    def _on_multiagent_changed(self, checked: bool):
-        _llm_config.set_multiagent(self._current_provider(), bool(checked))
 
     def _load_key(self, provider: str):
         try:

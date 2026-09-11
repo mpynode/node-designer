@@ -184,11 +184,6 @@ DEFAULT_PREFS: dict[str, Any] = {
     # port-cache key and the byte-identical guarantee above still holds. SHIPS
     # ON: a script that leaves the building should carry its license.
     "metadata_bake_header": True,
-    # AI Assistant (Claude CLI): opt-in multi-agent / "ultracode" orchestration
-    # for a single turn (the main agent spawns Task sub-agents). SHIPS OFF --
-    # several times slower/costlier than the lean single-call default, and only
-    # worth it for genuinely complex node builds.
-    "assistant_multiagent_claude_cli": False,
     # Window layout, persisted on close. All default to None (0 for the mode)
     # so a first run falls back to the hard-coded sizes / Workspace mode. Lists
     # of ints, validated on restore by mpynode_designer._coerce_int_list.

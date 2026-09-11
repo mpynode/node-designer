@@ -1,4 +1,4 @@
-"""Assistant/LLM: config (models, effort), panel layout, multi-agent, node-targeting, methods tool
+"""Assistant/LLM: config (models, effort), panel layout, CLI deny list, node-targeting, methods tool
 
 Consolidated from: test_assistant_cli_models.py, test_cli_effort_values.py, test_assistant_model_order.py, test_assistant_multiagent.py, test_assistant_node_targeting.py, test_assistant_methods_tool.py.
 """
@@ -933,6 +933,10 @@ class TestModelBetweenReasoningAndApiKey(unittest.TestCase):
 
 
 # ===================== from test_assistant_multiagent.py =====================
+# The "Multi-Agent (ultracode)" mode these pinned was removed on 2026-09-10: its
+# one measurement was a net regression and the keyword it relied on is
+# deployment-specific. What remains is what it must NOT have loosened -- the
+# lean deny list and the nested-text filter -- plus pins that it stays gone.
 import json
 import os
 
@@ -947,7 +951,7 @@ except Exception:
     except Exception:
         _QApplication = None
 if _QApplication is not None:
-    _QAPP = _QApplication.instance() or _QApplication(["mayapy-multiagent-test"])
+    _QAPP = _QApplication.instance() or _QApplication(["mayapy-cli-client-test"])
 
 import unittest
 
@@ -956,7 +960,7 @@ from mpynode.ui.llm import claude_cli_client as cc
 from tests._setup import standalone_init
 
 
-def _setUpModule__assistant_multiagent():
+def _setUpModule__assistant_cli_client():
     standalone_init()
 
 
@@ -967,61 +971,26 @@ def _deny_set(cmd):
     return set(cmd[cmd.index("--disallowedTools") + 1].split(","))
 
 
-class TestMultiagentConfig(unittest.TestCase):
-    def _store(self):
-        store = {}
-        orig_p, orig_s = cfg._pref, cfg._set_pref
-        cfg._pref = lambda k, d=None: store.get(k, d)
-        cfg._set_pref = lambda k, v: store.__setitem__(k, v)
-        self.addCleanup(lambda: (setattr(cfg, "_pref", orig_p),
-                                 setattr(cfg, "_set_pref", orig_s)))
-        return store
-
-    def test_default_off(self):
-        self._store()
-        self.assertFalse(cfg.multiagent_enabled("claude_cli"))
-
-    def test_set_get_round_trip(self):
-        self._store()
-        cfg.set_multiagent("claude_cli", True)
-        self.assertTrue(cfg.multiagent_enabled("claude_cli"))
-        cfg.set_multiagent("claude_cli", False)
-        self.assertFalse(cfg.multiagent_enabled("claude_cli"))
-
-    def test_non_cli_provider_never_enabled(self):
-        self._store()
-        cfg.set_multiagent("anthropic", True)
-        self.assertFalse(cfg.multiagent_enabled("anthropic"))
-
-    def test_pref_default_ships_false(self):
-        from mpynode.ui import preferences
-
-        self.assertIn("assistant_multiagent_claude_cli", preferences.DEFAULT_PREFS)
-        self.assertIs(preferences.DEFAULT_PREFS["assistant_multiagent_claude_cli"],
-                      False)
-
-
-class TestBuildCmdOrchestrate(unittest.TestCase):
+class TestBuildCmdDenyList(unittest.TestCase):
     def test_default_denies_task_and_toolsearch(self):
-        # current lean behavior unchanged when not orchestrating
+        # The lean deny list: no sub-agents, no deferred tool loading.
         cmd = cc.build_cmd("claude", "p", "sid", False)
         deny = _deny_set(cmd)
         self.assertIn("Task", deny)
         self.assertIn("ToolSearch", deny)
 
-    def test_orchestrate_undenies_task_and_toolsearch(self):
-        cmd = cc.build_cmd("claude", "p", "sid", False,
-                           orchestrate=True)
-        deny = _deny_set(cmd)
-        self.assertNotIn("Task", deny)
-        self.assertNotIn("ToolSearch", deny)
+    def test_no_multi_agent_mode_remains(self):
+        # Removed 2026-09-10 -- see the block comment above. Nothing may
+        # un-deny Task/ToolSearch, prefix the keyword, or store the flag.
+        import inspect
 
-    def test_orchestrate_still_denies_other_builtins(self):
-        cmd = cc.build_cmd("claude", "p", "sid", False,
-                           orchestrate=True)
-        deny = _deny_set(cmd)
-        for t in ("Bash", "Read", "Edit", "Write", "WebFetch", "Skill"):
-            self.assertIn(t, deny, "%s must stay denied even when orchestrating" % t)
+        from mpynode.ui import preferences
+
+        self.assertNotIn("orchestrate", inspect.signature(cc.build_cmd).parameters)
+        self.assertFalse(hasattr(cc, "orchestration_prompt"))
+        self.assertFalse(hasattr(cfg, "multiagent_enabled"))
+        self.assertFalse(hasattr(cfg, "set_multiagent"))
+        self.assertNotIn("assistant_multiagent_claude_cli", preferences.DEFAULT_PREFS)
 
     def test_build_cmd_has_no_mcp_flags(self):
         # The payload transport carries no MCP config -- the argv must not add
@@ -1031,75 +1000,9 @@ class TestBuildCmdOrchestrate(unittest.TestCase):
         self.assertNotIn("--allowedTools", cmd)
         self.assertFalse(any("mcp__mpynode" in str(a) for a in cmd))
 
-    def test_orchestrate_argv_is_default_when_off(self):
-        a = cc.build_cmd("claude", "p", "sid", False)
-        b = cc.build_cmd("claude", "p", "sid", False,
-                         orchestrate=False)
-        self.assertEqual(a, b)
-
-    def _set_env(self, **kv):
-        saved = {k: os.environ.get(k) for k in kv}
-
-        def restore():
-            for k, old in saved.items():
-                if old is None:
-                    os.environ.pop(k, None)
-                else:
-                    os.environ[k] = old
-
-        self.addCleanup(restore)
-        for k, v in kv.items():
-            if v is None:
-                os.environ.pop(k, None)
-            else:
-                os.environ[k] = v
-
-    def test_orchestrate_floor_present_with_empty_env_override(self):
-        # MEDIUM: an empty CLAUDE_DISALLOWED_TOOLS must NOT strip the dangerous
-        # built-ins out from under orchestration -- the floor is mandatory.
-        self._set_env(CLAUDE_DISALLOWED_TOOLS="")
-        cmd = cc.build_cmd("claude", "p", "sid", False,
-                           orchestrate=True)
-        deny = _deny_set(cmd)
-        self.assertIn("Bash", deny)
-        self.assertNotIn("Task", deny)
-        self.assertNotIn("ToolSearch", deny)
-
-    def test_orchestrate_floor_present_when_lean_disabled(self):
-        # LOW: CLAUDE_LEAN=0 must not drop the orchestration deny floor while the
-        # ultracode prefix is still injected.
-        self._set_env(CLAUDE_LEAN="0")
-        cmd = cc.build_cmd("claude", "p", "sid", False,
-                           orchestrate=True)
-        deny = _deny_set(cmd)
-        self.assertIn("Bash", deny)
-        self.assertNotIn("Task", deny)
-
-    def test_orchestrate_strips_whitespace_in_env_override(self):
-        # LOW: whitespaced env entries must still be recognised so Task/ToolSearch
-        # are genuinely un-denied (not left denied as ' Task ').
-        self._set_env(CLAUDE_DISALLOWED_TOOLS="Bash, Task ,ToolSearch")
-        cmd = cc.build_cmd("claude", "p", "sid", False,
-                           orchestrate=True)
-        stripped = {t.strip() for t in _deny_set(cmd)}
-        self.assertIn("Bash", stripped)
-        self.assertNotIn("Task", stripped)
-        self.assertNotIn("ToolSearch", stripped)
-
-
-class TestOrchestrationPrompt(unittest.TestCase):
-    def test_prefixes_ultracode_keyword(self):
-        out = cc.orchestration_prompt("build a noise deformer")
-        self.assertIn("ultracode", out)
-        self.assertIn("build a noise deformer", out)
-
-    def test_keeps_original_prompt_verbatim_at_end(self):
-        out = cc.orchestration_prompt("XYZ_ORIGINAL")
-        self.assertTrue(out.rstrip().endswith("XYZ_ORIGINAL"))
-
 
 @unittest.skipIf(_QAPP is None, "no Qt available")
-class TestHandleEventSubAgents(unittest.TestCase):
+class TestHandleEventNestedText(unittest.TestCase):
     def _client_capture(self):
         client = cc.ClaudeCliClient()
         cap = {"text": [], "tool": [], "done": []}
@@ -1108,24 +1011,10 @@ class TestHandleEventSubAgents(unittest.TestCase):
         client.toolFinished.connect(cap["done"].append)
         return client, cap
 
-    def test_task_started_shows_subagent_tool_line(self):
-        client, cap = self._client_capture()
-        client._handle_event(json.dumps({
-            "type": "system", "subtype": "task_started",
-            "description": "Build mesh part", "subagent_type": "general-purpose"}))
-        self.assertTrue(any("sub-agent" in s.lower() and "Build mesh part" in s
-                            for s in cap["tool"]))
-
-    def test_task_notification_completed_shows_done_line(self):
-        client, cap = self._client_capture()
-        client._handle_event(json.dumps({
-            "type": "system", "subtype": "task_notification",
-            "status": "completed", "summary": "Build mesh part"}))
-        self.assertTrue(any("Build mesh part" in s for s in cap["done"]))
-
     def test_subagent_text_not_emitted_as_main_bubble(self):
-        # A sub-agent's interim chatter is NOT the main answer (the top-level
-        # agent emits the node payload), so it must not bubble to the panel.
+        # Text nested under a tool use (parent_tool_use_id set) is interim
+        # chatter, NOT the main answer (the top-level agent emits the node
+        # payload), so it must not bubble to the panel.
         client, cap = self._client_capture()
         client._handle_event(json.dumps({
             "type": "assistant", "parent_tool_use_id": "tu1",
@@ -1142,57 +1031,14 @@ class TestHandleEventSubAgents(unittest.TestCase):
 
 
 @unittest.skipIf(_QAPP is None, "no Qt available")
-class TestPanelMultiagentCheckbox(unittest.TestCase):
-    def _panel(self):
+class TestPanelHasNoMultiagentCheckbox(unittest.TestCase):
+    def test_panel_has_no_multiagent_checkbox(self):
         from mpynode.ui.widgets.assistant_panel import NDAssistantPanel
 
-        return NDAssistantPanel()
-
-    def test_panel_has_multiagent_checkbox(self):
-        from mpynode.ui.qt_wrapper import QCheckBox
-
-        p = self._panel()
+        p = NDAssistantPanel()
         try:
-            self.assertIsInstance(p._multiagent_check, QCheckBox)
-        finally:
-            p.deleteLater()
-
-    def test_checkbox_label_marks_ultracode(self):
-        # The toggle injects the literal 'ultracode' keyword, so the label must
-        # name it (it IS the ultracode mechanism, not a lookalike).
-        p = self._panel()
-        try:
-            self.assertIn("ultracode", p._multiagent_check.text().lower())
-        finally:
-            p.deleteLater()
-
-    def test_checkbox_visible_only_for_claude_cli(self):
-        p = self._panel()
-        try:
-            p._apply_provider_visibility("claude_cli")
-            self.assertFalse(p._multiagent_check.isHidden())
-            p._apply_provider_visibility("anthropic")
-            self.assertTrue(p._multiagent_check.isHidden())
-        finally:
-            p.deleteLater()
-
-    def test_toggling_persists_to_config(self):
-        # Drive AND assert through the panel's OWN config module: in the
-        # standalone env mpynode can be imported under two paths, so the test's
-        # `cfg` and the panel's `_llm_config` may be distinct objects.
-        import mpynode.ui.widgets.assistant_panel as pm
-
-        pcfg = pm._llm_config
-        old = pcfg.multiagent_enabled("claude_cli")
-        self.addCleanup(lambda: pcfg.set_multiagent("claude_cli", bool(old)))
-        p = self._panel()
-        try:
-            p._provider_combo.setCurrentIndex(
-                p._provider_combo.findData("claude_cli"))
-            p._multiagent_check.setChecked(True)
-            self.assertTrue(pcfg.multiagent_enabled("claude_cli"))
-            p._multiagent_check.setChecked(False)
-            self.assertFalse(pcfg.multiagent_enabled("claude_cli"))
+            self.assertFalse(hasattr(p, "_multiagent_check"))
+            p._apply_provider_visibility("claude_cli")   # no dangling reference
         finally:
             p.deleteLater()
 
@@ -2317,7 +2163,7 @@ class TestPromptTeachesPromotedTypes(unittest.TestCase):
 
 def setUpModule():
     _setUpModule__assistant_model_order()
-    _setUpModule__assistant_multiagent()
+    _setUpModule__assistant_cli_client()
     _setUpModule__assistant_node_targeting()
     _setUpModule__assistant_methods_tool()
 

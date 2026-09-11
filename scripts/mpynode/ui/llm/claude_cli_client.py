@@ -49,50 +49,12 @@ _LEAN_DIRECTIVE = (
 # Built-in Claude Code tools to deny so it can't go exploring.
 _DISALLOWED_TOOLS = ("Bash,Read,Edit,Write,Glob,Grep,WebFetch,WebSearch,Task,"
                      "TodoWrite,NotebookEdit,ToolSearch,Skill,AskUserQuestion")
-
-# Multi-agent / "ultracode" mode (opt-in, default OFF). The main agent may spawn
-# Task sub-agents for independent parts, but its FINAL answer MUST still be the
-# single JSON node payload -- a sub-agent cannot apply changes. This un-denies
-# Task + ToolSearch; every other built-in stays denied.
-_ORCHESTRATE_DIRECTIVE = (
-    "You build Autodesk Maya mPy nodes by replying with ONE JSON node payload "
-    "(schema in the prompt). This is a COMPLEX task -- you MAY use the Task tool "
-    "to reason about independent parts in parallel, but YOUR final answer (the "
-    "main agent's) MUST be the single fenced ```json node payload; sub-agents "
-    "cannot apply anything. Do NOT read files, run shell commands, or invoke "
-    "skills to explore. In expressions, inputs read via self.<name> are ALREADY "
-    "native Python -- do NOT recast; put imports + helper defs in \"init\"; name "
-    "plugs camelCase, stored variables snake_case. Finish with the ```json "
-    "payload + a 1-3 sentence summary."
-)
-
-# Only the literal 'ultracode' keyword goes in the prompt BODY (a Claude Code
-# *session* keyword); _ORCHESTRATE_DIRECTIVE rides --append-system-prompt.
-_ULTRACODE_PREFIX = "ultracode\n\nTASK:\n"
-
-# The only two built-ins the multi-agent path un-denies (Task spawns sub-agents;
-# ToolSearch lets them load deferred tool schemas if they reason with tools).
-_ORCHESTRATE_KEEP = ("Task", "ToolSearch")
-
-
-def orchestration_prompt(prompt):
-    """Prefix the user prompt with the 'ultracode' keyword (pure -- unit-testable).
-    Used only when multi-agent mode is on."""
-    return _ULTRACODE_PREFIX + (prompt or "")
-
-
-def _orchestrate_disallowed():
-    """Mandatory deny floor for orchestration: EVERY built-in except Task +
-    ToolSearch, UNION any CLAUDE_DISALLOWED_TOOLS additions (whitespace-tolerant,
-    de-duplicated). Enforced regardless of CLAUDE_LEAN so opening Task can never
-    also re-open Bash/Read/Write/etc."""
-    extra = os.environ.get("CLAUDE_DISALLOWED_TOOLS", "")
-    out = []
-    for t in (_DISALLOWED_TOOLS + "," + extra).split(","):
-        t = t.strip()
-        if t and t not in _ORCHESTRATE_KEEP and t not in out:
-            out.append(t)
-    return ",".join(out)
+# Task and ToolSearch stay denied: the opt-in "Multi-Agent (ultracode)" mode that
+# un-denied them for sub-agent fan-out was removed (2026-09). Its one measurement
+# was a net regression (a port timed out at the 1800 s ceiling in one round) and
+# the 'ultracode' keyword it relied on is a deployment-specific session keyword
+# -- inert text where the CLI does not know it. The porter keeps an env-gated
+# experiment (native/ai/llm_client.py, MPYNODE_PORT_ULTRACODE, default off).
 
 
 def _lean():
@@ -108,12 +70,7 @@ def _bare_flags():
     return flags
 
 
-def _lean_flags(orchestrate=False):
-    # Orchestration is its OWN posture, enforced INDEPENDENT of CLAUDE_LEAN: a
-    # mandatory deny floor (dangerous built-ins) + the orchestration directive.
-    if orchestrate:
-        return (["--disallowedTools", _orchestrate_disallowed(),
-                 "--append-system-prompt", _ORCHESTRATE_DIRECTIVE] + _bare_flags())
+def _lean_flags():
     if not _lean():
         return []
     disallowed = os.environ.get("CLAUDE_DISALLOWED_TOOLS", _DISALLOWED_TOOLS)
@@ -122,21 +79,20 @@ def _lean_flags(orchestrate=False):
 
 
 def build_cmd(bin_path, prompt, session_id, resume, stream_input=False,
-              effort=None, model=None, orchestrate=False):
+              effort=None, model=None):
     """Construct the `claude` argv (pure -- unit-testable).
 
     ``stream_input=True`` omits the positional prompt and reads a stream-json
     user message from stdin instead -- the way to attach images to ``-p``.
     ``effort`` (low/medium/high...) maps to ``--effort``; ``model`` maps to
-    ``--model``. ``orchestrate=True`` un-denies Task + ToolSearch for multi-agent
-    mode. No MCP flags -- the node payload is parsed from the reply.
+    ``--model``. No MCP flags -- the node payload is parsed from the reply.
     """
     cmd = [bin_path, "-p"]
     if stream_input:
         cmd += ["--input-format", "stream-json"]
     else:
         cmd += [prompt]
-    cmd += ["--output-format", "stream-json", "--verbose"] + _lean_flags(orchestrate)
+    cmd += ["--output-format", "stream-json", "--verbose"] + _lean_flags()
     if model:
         cmd += ["--model", model]
     if effort and effort != "off":
@@ -693,16 +649,10 @@ class ClaudeCliClient(QObject):
             from mpynode.native.toolchain import toolchain
 
             stream_input = bool(images)
-            orchestrate = _config.multiagent_enabled("claude_cli")
-            if orchestrate:
-                # Into the prompt itself so it applies to BOTH the positional
-                # -p prompt and the stream-json (image) message fed on stdin.
-                prompt = orchestration_prompt(prompt)
             cmd = build_cmd(_CLAUDE_BIN, prompt, self._session_id,
                             self._started, stream_input=stream_input,
                             effort=_config.get_effort("claude_cli"),
-                            model=_config.get_model("claude_cli"),
-                            orchestrate=orchestrate)
+                            model=_config.get_model("claude_cli"))
             # Resolve the launcher (Windows .cmd/.exe shims need a full path).
             if cmd:
                 cmd[0] = toolchain.resolve_executable(cmd[0])
@@ -780,8 +730,10 @@ class ClaudeCliClient(QObject):
             self._auth_failed = True
         et = ev.get("type")
         if et == "assistant":
-            # Sub-agent output carries a parent tool use id. Its interim text
-            # is NOT the main answer (the top-level agent emits the payload).
+            # Output nested under a tool use (parent_tool_use_id) is interim
+            # text, NOT the main answer: only the top-level agent emits the
+            # payload. Kept although sub-agents are denied -- it is what makes
+            # any nested chatter harmless.
             is_sub = ev.get("parent_tool_use_id") is not None
             msg = ev.get("message", {}) or {}
             for b in (msg.get("content") or []):
@@ -800,14 +752,6 @@ class ClaudeCliClient(QObject):
             tot = (u.get("input_tokens") or 0) + (u.get("output_tokens") or 0)
             if tot:
                 self.tokensUsed.emit(int(tot))
-        elif et == "system":
-            # Multi-agent lifecycle events (sub-agent spawn / completion) so the
-            # panel shows progress instead of a long silent hang.
-            sub = ev.get("subtype")
-            if sub == "task_started":
-                self.toolStarted.emit("sub-agent: %s" % (ev.get("description") or "task"))
-            elif sub == "task_notification" and ev.get("status") == "completed":
-                self.toolFinished.emit("sub-agent: %s" % (ev.get("summary") or "done"))
         elif et == "result":
             # Only surface the aggregated result if no streamed text appeared.
             r = ev.get("result")
