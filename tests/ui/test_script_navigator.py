@@ -654,6 +654,38 @@ class TestNavigatorInTheScriptTab(unittest.TestCase):
         finally:
             w.deleteLater()
 
+    def test_saving_module_code_refreshes_the_outline(self):
+        # The API view re-bakes on save; the Outline must follow, or the new
+        # MODULE SCOPE row is missing and a click on a moved rail matches no row.
+        from PySide6.QtGui import QKeyEvent
+        from PySide6.QtCore import QEvent
+        from mpynode.ui.qt_wrapper import Qt
+
+        from mpynode.wrappers.mpy_locator import MPyLocator
+        from mpynode.ui.widgets.script_tab_content import NDScriptTabContent
+
+        mc.file(new=True, force=True)
+        loc = MPyLocator.create(name="navSaveZone")
+        loc.set_init_expression("import math\n")
+        w = NDScriptTabContent(loc)
+        try:
+            v = w._api_view
+            self.assertNotIn("MODULE SCOPE", w._navigator.sectionTitles())
+            zone = [r for r in v.regions() if r["kind"] == "module_zone"][0]
+            cur = v.textCursor()
+            cur.setPosition(v.document().findBlockByNumber(zone["start"]).position())
+            v.setTextCursor(cur)
+            for ch in "LIMIT = 4":
+                v.keyPressEvent(QKeyEvent(QEvent.KeyPress, Qt.Key_A, Qt.NoModifier, ch))
+            w.markSaved()
+            self.assertIn("MODULE SCOPE", w._navigator.sectionTitles())
+            seg = [r for r in v.regions() if r["kind"] == "module_segment"][0]
+            self.assertEqual(w._navigator.keyForRegion(seg), "module.LIMIT")
+            rail = [r for r in v.regions() if r["kind"] == "expr_init"][0]
+            self.assertEqual(w._navigator.keyForRegion(rail), "tier.init")
+        finally:
+            w.deleteLater()
+
     def test_blessed_insert_appends_to_the_methods_source(self):
         loc, w = self._build()
         try:

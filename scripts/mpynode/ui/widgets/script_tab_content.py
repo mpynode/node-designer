@@ -596,6 +596,12 @@ class NDScriptTabContent(QWidget):
         # rather than being overwritten wholesale.
         if self._api_view is not None:
             self._api_view.markSaved()
+            # The API view re-baked itself on save; the Outline still described
+            # the previous bake -- a function typed into the module zone had no
+            # MODULE SCOPE row, and a click on a moved rail matched no row, so
+            # nothing highlighted and a railed-away pane stayed shut.
+            if self._navigator is not None:
+                self._navigator.refresh(self._api_view.regions())
 
     def refresh(self) -> None:
         self._expr_editor.refresh()
