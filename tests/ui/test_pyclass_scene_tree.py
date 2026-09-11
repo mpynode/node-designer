@@ -80,6 +80,87 @@ class TestSceneTreeHeadersAndTag(unittest.TestCase):
         self.assertEqual(item.text(1), "BlackWhiteFile(MPyNode)")
 
 
+class TestPausedChip(unittest.TestCase):
+    """A node that does not evaluate (nodeState Has No Effect / Blocking --
+    Convert to C++ sets it, a user may too) carries the pause chip; both chips
+    are laid out against the viewport so neither can be clipped."""
+
+    def setUp(self):
+        mc.file(new=True, force=True)
+        ensure_plugins_loaded()
+
+    def _item(self, name):
+        from mpynode.ui.widgets.scene_tree import NDSceneTree
+
+        t = NDSceneTree()
+        t.refresh()
+        item = t.findItem(name)
+        self.assertIsNotNone(item)
+        return item
+
+    def test_a_hand_suspended_node_is_marked_paused_with_the_reason(self):
+        from mpynode import MPyNode
+        from mpynode.ui.widgets.scene_tree import _PAUSED_ROLE
+
+        n = MPyNode.create(name="pausedProbe1")
+        self.assertFalse(self._item("pausedProbe1").data(1, _PAUSED_ROLE))
+        mc.setAttr(n.get_name() + ".nodeState", 2)
+        item = self._item("pausedProbe1")
+        self.assertTrue(item.data(1, _PAUSED_ROLE))
+        self.assertIn("Not evaluating", item.toolTip(1))
+        self.assertIn("Blocking", item.toolTip(1))
+        mc.setAttr(n.get_name() + ".nodeState", 0)
+        item = self._item("pausedProbe1")
+        self.assertFalse(item.data(1, _PAUSED_ROLE))
+        self.assertEqual(item.toolTip(1), "")
+
+    def test_a_converted_node_is_paused_and_says_so(self):
+        from mpynode import MPyNode
+        from mpynode._base.commands import (
+            build_convert_to_cpp_command, build_revert_to_py_command, run_undoable)
+        from mpynode.ui.widgets.scene_tree import (
+            _CPP_BADGE_ROLE, _CPP_CONVERTED, _PAUSED_ROLE)
+
+        ensure_stub_compiled_plugin()
+        n = MPyNode.create(name="pausedCvt")
+        n.set_py_class("mpynode_user.StubCompiled")
+        run_undoable(build_convert_to_cpp_command("pausedCvt", "mPyNode"))
+        item = self._item("pausedCvt")
+        self.assertEqual(item.data(1, _CPP_BADGE_ROLE), _CPP_CONVERTED)
+        self.assertTrue(item.data(1, _PAUSED_ROLE))
+        self.assertIn("paused (nodeState Blocking)", item.toolTip(1))
+        run_undoable(build_revert_to_py_command("pausedCvt", "mPyNode"))
+        item = self._item("pausedCvt")
+        self.assertFalse(item.data(1, _PAUSED_ROLE))
+        self.assertNotIn("paused", item.toolTip(1))
+
+    def test_chips_are_laid_out_inside_the_viewport(self):
+        from mpynode.ui.qt_wrapper import QRect
+        from mpynode.ui.widgets.scene_tree import _CppChipDelegate as D
+
+        # The item rect runs 40 px past the visible viewport (a stretched last
+        # section under a frame / scrollbar): every chip must still end left
+        # of the viewport edge, with the margin kept clear.
+        rect  = QRect(300, 0, 540, 20)          # right() == 839
+        rects = D.chip_rects(rect, 800, chipped=True, paused=True)
+        self.assertEqual(rects["cpp"].right(), 800 - 1 - D.MARGIN)
+        self.assertEqual(rects["cpp"].width(), D.CHIP_W)
+        self.assertEqual(rects["cpp"].left() - rects["pause"].right() - 1, D.GUTTER)
+        self.assertEqual(rects["pause"].width(), D.PAUSE_W)
+        # No viewport known: bounded by the item rect itself.
+        only_cpp = D.chip_rects(rect, 0, chipped=True, paused=False)
+        self.assertEqual(only_cpp["cpp"].right(), rect.right() - D.MARGIN)
+        self.assertIsNone(only_cpp["pause"])
+        # A paused, unconverted node: the pause chip takes the C++ chip's slot.
+        only_pause = D.chip_rects(rect, 800, chipped=False, paused=True)
+        self.assertIsNone(only_pause["cpp"])
+        self.assertEqual(only_pause["pause"].right(), 800 - 1 - D.MARGIN)
+        # Every row keeps the C++ chip's room clear; a paused row also its own.
+        self.assertEqual(D.RESERVED, D.CHIP_W + D.GUTTER + D.MARGIN)
+        self.assertEqual(D.reserved_for(False), D.RESERVED)
+        self.assertEqual(D.reserved_for(True), D.RESERVED + D.PAUSE_W + D.GUTTER)
+
+
 class TestNameColumnSpacing(unittest.TestCase):
     """The Name column carries a small trailing gutter so the widest node name
     keeps a readable gap from the Class column (the column is

@@ -42,6 +42,9 @@ _CPP_BADGE_ROLE = Qt.UserRole + 17
 _CPP_NONE       = 0  # no compiled C++ type available for this node's Class
 _CPP_COMPILED   = 1  # compiled type loaded, but this Python node is still driving
 _CPP_CONVERTED  = 2  # a hidden compiled C++ sibling is driving downstream
+# True when the node does NOT evaluate: nodeState is Has No Effect / Blocking,
+# set by Convert to C++ (which suspends the idle Python node) or by hand.
+_PAUSED_ROLE    = Qt.UserRole + 18
 
 
 class _CppChipDelegate(QStyledItemDelegate):
@@ -61,11 +64,51 @@ class _CppChipDelegate(QStyledItemDelegate):
     and OUTLINE + regular for a merely compiled one (the type is loaded, Python
     still drives). One mark at two weights, rather than two unrelated badges, so
     the compile -> convert progression reads as a single scale.
+
+    A second, smaller PAUSE chip (two bars) sits left of it whenever the node
+    does not evaluate -- ``nodeState`` Has No Effect / Blocking, which Convert
+    to C++ sets on the idle Python node and a user may set by hand. A
+    converted row therefore shows both: C++ drives, Python is paused. Its
+    width is charged only to the rows that carry it (a paused row is rare;
+    taking 20 px off every row's class text for it was not worth the fixed x).
+
+    Both chips are laid out against the VIEWPORT's right edge, not the item
+    rect's: the stretched last section can run past the visible viewport, and
+    the C++ chip drawn at the item's edge came back clipped.
     """
 
-    CHIP_W   = 26  # px of chip body
-    GUTTER   = 4   # px between the elided class text and the chip
-    RESERVED = CHIP_W + GUTTER
+    CHIP_W   = 26  # px of the C++ chip body
+    PAUSE_W  = 14  # px of the pause chip body
+    GUTTER   = 6   # px between chips, and between the text and the chips
+    MARGIN   = 6   # px kept clear at the viewport's right edge
+    RESERVED = CHIP_W + GUTTER + MARGIN  # charged to EVERY row
+    CHIP_H   = 14
+
+    @classmethod
+    def reserved_for(cls, paused: bool) -> int:
+        """Px kept clear of class text on a row: the fixed reserve, plus the
+        pause chip and its gutter on a paused row only."""
+        return cls.RESERVED + (cls.PAUSE_W + cls.GUTTER if paused else 0)
+
+    @classmethod
+    def chip_rects(cls, rect, viewport_width, chipped, paused):
+        """Where the chips go: ``{"cpp": QRect | None, "pause": QRect | None}``.
+
+        Right-aligned to the visible viewport (``viewport_width``, 0 = unknown),
+        never past the item rect, so a stretched last section cannot push a chip
+        off screen. Pure, so a test can pin it without painting."""
+        right = rect.right()
+        if viewport_width:
+            right = min(right, int(viewport_width) - 1)
+        right -= cls.MARGIN
+        top = rect.top() + max(1, (rect.height() - cls.CHIP_H) // 2)
+        out = {"cpp": None, "pause": None}
+        if chipped:
+            out["cpp"] = QRect(right - cls.CHIP_W + 1, top, cls.CHIP_W, cls.CHIP_H)
+            right -= cls.CHIP_W + cls.GUTTER
+        if paused:
+            out["pause"] = QRect(right - cls.PAUSE_W + 1, top, cls.PAUSE_W, cls.CHIP_H)
+        return out
 
     _BG         = QColor(0x39, 0x48, 0x4D)
     _FG         = QColor(0x93, 0xC3, 0xCD)
@@ -79,8 +122,9 @@ class _CppChipDelegate(QStyledItemDelegate):
     _FG_DIM_SEL = QColor(0xB9, 0xD6, 0xE0)
 
     def paint(self, painter, option, index):
-        state = index.data(_CPP_BADGE_ROLE) or _CPP_NONE
-        opt   = QStyleOptionViewItem(option)
+        state  = index.data(_CPP_BADGE_ROLE) or _CPP_NONE
+        paused = bool(index.data(_PAUSED_ROLE))
+        opt    = QStyleOptionViewItem(option)
         self.initStyleOption(opt, index)
 
         # Draw at FULL width and elide by hand: a shortened rect also shortens
@@ -95,47 +139,66 @@ class _CppChipDelegate(QStyledItemDelegate):
             # so the column elides to one width.
             tr = style.subElementRect(QStyle.SE_ItemViewItemText, opt, widget)
             opt.text = QFontMetrics(opt.font).elidedText(
-                opt.text, Qt.ElideRight, max(0, tr.width() - self.RESERVED))
+                opt.text, Qt.ElideRight,
+                max(0, tr.width() - self.reserved_for(paused)))
         if style is None:
             super().paint(painter, opt, index)
         else:
             style.drawControl(QStyle.CE_ItemViewItem, opt, painter, widget)
 
-        if not state:
+        if not state and not paused:
             return
         filled   = state == _CPP_CONVERTED
         selected = bool(option.state & QStyle.State_Selected)
-        r        = QRect(option.rect)
-        chip = QRect(
-            r.right() - self.CHIP_W - 2,
-            r.top() + max(1, (r.height() - 14) // 2),
-            self.CHIP_W,
-            14,
-        )
+        vp_w     = 0
+        try:
+            vp_w = widget.viewport().width() if widget is not None else 0
+        except Exception:
+            vp_w = 0
+        rects = self.chip_rects(QRect(option.rect), vp_w, bool(state), paused)
         painter.save()
         try:
             painter.setRenderHint(QPainter.Antialiasing, True)
-            painter.setPen(self._BORDER_SEL if selected else self._BORDER)
-            if filled:
-                painter.setBrush(QBrush(self._BG_SEL if selected else self._BG))
-                fg = self._FG_SEL if selected else self._FG
-            else:
+            chip = rects["cpp"]
+            if chip is not None:
+                painter.setPen(self._BORDER_SEL if selected else self._BORDER)
+                if filled:
+                    painter.setBrush(QBrush(self._BG_SEL if selected else self._BG))
+                    fg = self._FG_SEL if selected else self._FG
+                else:
+                    painter.setBrush(Qt.NoBrush)
+                    fg = self._FG_DIM_SEL if selected else self._FG_DIM
+                painter.drawRoundedRect(chip, 3, 3)
+                f = QFont(option.font)
+                f.setBold(filled)
+                # Was a hardcoded 9px, which stayed put while the rest of the
+                # row scaled. Derived from the row font so the chip keeps its
+                # relative size at any panel_font_size; floored so it never
+                # vanishes.
+                _pt = option.font.pointSize()
+                if _pt > 0:
+                    f.setPointSize(max(6, int(round(_pt * 0.75))))
+                else:
+                    f.setPixelSize(max(7, int(round(option.font.pixelSize() * 0.75))))
+                painter.setFont(f)
+                painter.setPen(fg)
+                painter.drawText(chip, Qt.AlignCenter, "C++")
+            pause = rects["pause"]
+            if pause is not None:
+                # Two bars, DRAWN rather than a glyph: no font carries U+23F8
+                # reliably at 9 px, and a tofu box would say nothing.
+                painter.setPen(self._BORDER_SEL if selected else self._BORDER)
                 painter.setBrush(Qt.NoBrush)
-                fg = self._FG_DIM_SEL if selected else self._FG_DIM
-            painter.drawRoundedRect(chip, 3, 3)
-            f = QFont(option.font)
-            f.setBold(filled)
-            # Was a hardcoded 9px, which stayed put while the rest of the row
-            # scaled. Derived from the row font so the chip keeps its relative
-            # size at any panel_font_size; floored so it never vanishes.
-            _pt = option.font.pointSize()
-            if _pt > 0:
-                f.setPointSize(max(6, int(round(_pt * 0.75))))
-            else:
-                f.setPixelSize(max(7, int(round(option.font.pixelSize() * 0.75))))
-            painter.setFont(f)
-            painter.setPen(fg)
-            painter.drawText(chip, Qt.AlignCenter, "C++")
+                painter.drawRoundedRect(pause, 3, 3)
+                fg = self._FG_SEL if selected else self._FG
+                painter.setPen(Qt.NoPen)
+                painter.setBrush(QBrush(fg))
+                bar_w = 2
+                bar_h = pause.height() - 6
+                x0    = pause.left() + (pause.width() - (2 * bar_w + 2)) // 2
+                y0    = pause.top() + 3
+                painter.drawRect(QRect(x0, y0, bar_w, bar_h))
+                painter.drawRect(QRect(x0 + bar_w + 2, y0, bar_w, bar_h))
         finally:
             painter.restore()
 
@@ -175,6 +238,7 @@ class NDSceneTreeItem(QTreeWidgetItem):
         self.node_name    = name
         self.native_type  = native_type
         self.is_converted = False
+        self.is_paused    = False
         self.cpp_state    = _CPP_NONE
         # col 0 = name (inline-editable), col 1 = dimmed class tag.
         self.setFlags(self.flags() | Qt.ItemIsEditable)
@@ -219,12 +283,31 @@ class NDSceneTreeItem(QTreeWidgetItem):
         # CONVERTED -- the node whose evaluation actually moved.
         self.setIcon(0, get_node_type_icon(
             self.native_type, pad=_HALO_PAD, ring=self.is_converted))
+        # Does the node evaluate at all? Convert to C++ suspends the idle
+        # Python node (nodeState Has No Effect / Blocking); a user may too.
+        # Read here, with the rest of the row's state, so the pause chip and
+        # the tooltip can never disagree with the node.
+        state_name = "Normal"
+        try:
+            st = int(mc.getAttr(self.node_name + ".nodeState"))
+            self.is_paused = st != 0
+            state_name = {0: "Normal", 1: "Has No Effect",
+                          2: "Blocking"}.get(st, str(st))
+        except Exception:
+            self.is_paused = False
         if self.cpp_state == _CPP_CONVERTED:
+            if self.is_paused:
+                python_line = ("this Python node is paused (nodeState %s) and "
+                               "kept as the source." % state_name)
+            else:
+                python_line = ("this Python node still evaluates (nodeState "
+                               "Normal) and is kept as the source.")
             tip = (
                 "Converted to C++.\n"
                 "A hidden compiled C++ sibling is driving downstream "
-                "connections; this Python node is idle and kept as the source.\n"
+                "connections; %s\n"
                 "Right-click → Revert to Python to drive from Python again."
+                % python_line
             )
         elif self.cpp_state == _CPP_COMPILED:
             tip = (
@@ -235,6 +318,10 @@ class NDSceneTreeItem(QTreeWidgetItem):
             )
         else:
             tip = ""
+        if self.is_paused and self.cpp_state != _CPP_CONVERTED:
+            paused_line = ("Not evaluating: nodeState is %s (set by hand; "
+                           "Normal resumes)." % state_name)
+            tip = paused_line + ("\n\n" + tip if tip else "")
         for col in (0, 1):
             self.setToolTip(col, tip)
 
@@ -271,6 +358,7 @@ class NDSceneTreeItem(QTreeWidgetItem):
         # than only at construction -- a rename must not strand the badge.
         self._refresh_compiled_state()
         self.setData(1, _CPP_BADGE_ROLE, self.cpp_state)
+        self.setData(1, _PAUSED_ROLE, self.is_paused)
 
     def setNodeName(self, new_name: str) -> None:
         self.node_name = new_name
