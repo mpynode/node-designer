@@ -566,7 +566,8 @@ class TestContextMenuIsGuardedToo(unittest.TestCase):
         n = self._node()
         v = self._view(n)
         try:
-            mine = [r for r in v.regions() if v._is_editable(r)][0]
+            mine = [r for r in v.regions()
+                    if v._is_editable(r) and r["kind"] != "module_zone"][0]
             body = mine["start"] + 2
             self.assertTrue(
                 v._menu_may_mutate(self._Ev(self._point_on(v, body, 6))))
@@ -1340,6 +1341,166 @@ class TestPersistentValuesAreManagedPlaceholders(unittest.TestCase):
                 self.assertTrue(v._marks_generated(helper, ln))
             (entry,) = [r for r in v.regions() if r["kind"] == "vars"][0]["values"]
             self.assertEqual(entry["summary"], "ndarray (3,) float64 · 24 B")
+        finally:
+            v.deleteLater()
+
+
+@unittest.skipUnless(_qapp_available(), "Qt unavailable")
+class TestTheModuleZoneIsYours(unittest.TestCase):
+    """The blank lines between the imports and ``class`` on a node with no
+    module-scope code yet. Return could open them and nothing could be typed
+    into them -- "a gap holds no text in the node's data model". Now they are
+    the module zone: what is typed there is inserted into the Methods source
+    after its imports and re-bakes as module_segment regions, so the space is
+    editable the way everything else that is yours is.
+    """
+
+    def _view(self, name="apiZone", methods=None):
+        from mpynode.wrappers.mpy_locator import MPyLocator
+        from mpynode.ui.widgets.api_view import NDApiView
+
+        mc.file(new=True, force=True)
+        node = MPyLocator.create(name=name)
+        node.set_init_expression("import math\n")
+        if methods is not None:
+            node.set_methods_source(methods)
+        view = NDApiView(node)
+        view.resize(1000, 700)
+        return node, view
+
+    def _zone(self, view):
+        hits = [r for r in view.regions() if r["kind"] == "module_zone"]
+        return hits[0] if hits else None
+
+    def _caret(self, view, block_no, col=0):
+        block  = view.document().findBlockByNumber(block_no)
+        cursor = view.textCursor()
+        cursor.setPosition(block.position() + col)
+        view.setTextCursor(cursor)
+
+    def _type(self, view, text):
+        # Through keyPressEvent, the way a user types: that is the path that
+        # runs the edit guard and re-indexes the regions after each key.
+        try:
+            from PySide6.QtGui import QKeyEvent
+            from PySide6.QtCore import QEvent
+        except ImportError:
+            from PySide2.QtGui import QKeyEvent
+            from PySide2.QtCore import QEvent
+        from mpynode.ui.qt_wrapper import Qt
+
+        for ch in text:
+            if ch == "\n":
+                view.keyPressEvent(QKeyEvent(QEvent.KeyPress, Qt.Key_Return,
+                                             Qt.NoModifier, "\r"))
+            else:
+                view.keyPressEvent(QKeyEvent(QEvent.KeyPress, Qt.Key_A,
+                                             Qt.NoModifier, ch))
+
+    def test_the_zone_sits_between_the_imports_and_the_class(self):
+        _node, v = self._view()
+        try:
+            zone = self._zone(v)
+            self.assertIsNotNone(zone, "no module zone on a plain node")
+            imports = [r for r in v.regions() if r["kind"] == "imports"][0]
+            decl    = [r for r in v.regions() if r["kind"] == "class_decl"][0]
+            self.assertEqual(zone["start"], imports["end"] + 1)
+            self.assertEqual(zone["end"], decl["start"] - 1)
+            lines = v.source().split("\n")
+            for ln in range(zone["start"], zone["end"] + 1):
+                self.assertEqual(lines[ln].strip(), "")
+            self.assertEqual(zone["src_line"], 1)     # empty Methods source
+            self.assertEqual(zone["src_lines"], 0)
+        finally:
+            v.deleteLater()
+
+    def test_the_zone_is_editable_and_unwashed(self):
+        _node, v = self._view()
+        try:
+            zone = self._zone(v)
+            self.assertTrue(v._is_editable(zone))
+            for ln in range(zone["start"], zone["end"] + 1):
+                self.assertFalse(v._marks_generated(zone, ln), ln)
+                self.assertIs(v.regionAt(ln), zone)
+            pos = v.document().findBlockByNumber(zone["start"]).position()
+            self.assertTrue(v._allows(pos, pos), "typing at the zone's first char")
+            # The gaps INSIDE build() are still the bake's.
+            header = [r for r in v.regions() if r["kind"] == "expr_header"][0]
+            gap_pos = v.document().findBlockByNumber(header["start"] - 1).position()
+            self.assertFalse(v._allows(gap_pos, gap_pos))
+        finally:
+            v.deleteLater()
+
+    def test_an_untouched_zone_is_not_dirty_and_saves_nothing(self):
+        node, v = self._view()
+        try:
+            self.assertFalse(v.hasUnsavedChanges())
+            self.assertEqual(v._methods_from_document(), node.get_methods_source() or "")
+            self.assertNotIn("class_decl", v._spacing_from_document())
+        finally:
+            v.deleteLater()
+
+    def test_code_typed_in_the_zone_lands_after_the_imports_and_rebakes(self):
+        node, v = self._view()
+        try:
+            zone = self._zone(v)
+            self._caret(v, zone["start"])
+            self._type(v, "CONST = 3")
+            self.assertTrue(v.hasUnsavedChanges())
+            v.markSaved()
+            src = node.get_methods_source() or ""
+            self.assertTrue(src.startswith("CONST = 3"), src)
+            self.assertEqual(src.count("CONST = 3"), 1)
+            # Saving re-bakes, so the view is clean and describes the node --
+            # NOT dirty because the insertion would be applied a second time.
+            self.assertFalse(v.hasUnsavedChanges())
+            kinds = [r["kind"] for r in v.regions()]
+            self.assertIn("module_segment", kinds)
+            self.assertNotIn("module_zone", kinds, "code above the class now owns the gap")
+            seg = [r for r in v.regions() if r["kind"] == "module_segment"][0]
+            self.assertEqual(seg["label"], "CONST")
+            self.assertIn("CONST = 3", v.source().split("\n")[seg["start"]])
+            # The user's own function stays editable after the round trip.
+            self.assertTrue(v._is_editable(seg))
+        finally:
+            v.deleteLater()
+
+    def test_the_insertion_follows_existing_imports_and_header(self):
+        # A Methods source that has imports and a header but no other module
+        # code: the zone exists, and typed code goes BELOW the imports.
+        methods = '"""Header."""\nimport os\n\n\ndef setup(self):\n    return 1\n'
+        node, v = self._view(name="apiZoneImports", methods=methods)
+        try:
+            zone = self._zone(v)
+            self.assertIsNotNone(zone)
+            self.assertEqual(zone["src_line"], 3)   # after the docstring + import
+            self._caret(v, zone["start"])
+            self._type(v, "LIMIT = 4")
+            v.markSaved()
+            self.assertFalse(v.hasUnsavedChanges())
+            lines = (node.get_methods_source() or "").split("\n")
+            self.assertEqual(lines[:4], ['"""Header."""', "import os", "LIMIT = 4", ""])
+            self.assertIn("def setup(self):", lines)
+        finally:
+            v.deleteLater()
+
+    def test_blank_lines_typed_in_the_zone_are_not_code_and_not_spacing(self):
+        node, v = self._view()
+        try:
+            zone = self._zone(v)
+            self._caret(v, zone["start"])
+            self._type(v, "\n\n")
+            self.assertFalse(v.hasUnsavedChanges(),
+                             "blank lines in the zone are neither code nor a stored count")
+            self.assertNotIn("class_decl", v._spacing_from_document())
+        finally:
+            v.deleteLater()
+
+    def test_a_node_with_module_code_gets_no_zone(self):
+        _node, v = self._view(name="apiZoneNone",
+                              methods="def helper(x):\n    return x\n")
+        try:
+            self.assertIsNone(self._zone(v))
         finally:
             v.deleteLater()
 

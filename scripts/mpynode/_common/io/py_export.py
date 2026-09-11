@@ -175,6 +175,25 @@ def gap_key(kind: str, label=None) -> str:
     return kind
 
 
+def _module_insert_line(methods_src: str, header_lines: int = 0) -> int:
+    """The 1-based Methods-source line where NEW module-level code belongs:
+    right after the file header and the top-level imports, so a function typed
+    into the API view's module zone re-bakes exactly where it was typed --
+    below the hoisted imports, above the class. ``1`` for an empty source."""
+    src = methods_src or ""
+    if not src.strip():
+        return 1
+    last = int(header_lines or 0)
+    try:
+        tree = ast.parse(src)
+    except (SyntaxError, ValueError):
+        return max(1, last + 1)
+    for stmt in tree.body:
+        if isinstance(stmt, (ast.Import, ast.ImportFrom)):
+            last = max(last, int(getattr(stmt, "end_lineno", stmt.lineno)))
+    return max(1, last + 1)
+
+
 def _leading_header_block(methods_src: str):
     """``(text, n_lines)`` for the header the user wrote at the top of their
     Methods source, or ``("", 0)``.
@@ -229,7 +248,10 @@ def _leading_header_block(methods_src: str):
     # the REGION now spans those blanks, so a line of room the user opens up at
     # the top of the file splices back into the Methods source and survives the
     # next bake. A trimmed header cannot express "leave me some space here".
-    rest      = tree.body[1:] if _is_docstring(tree.body[0]) else tree.body
+    # A comments-only source (a header just typed into the API view's top
+    # zone and saved) has NO statements: nothing to index, nothing to absorb.
+    rest      = (tree.body[1:] if tree.body and _is_docstring(tree.body[0])
+                 else tree.body)
     code_line = _stmt_line(rest[0]) if rest else len(lines) + 1
     limit     = min(code_line - 1, len(lines))
     while end < limit and not lines[end].strip():
@@ -880,6 +902,13 @@ def generate_node_script_with_regions(py_node, *, class_name: str | None = None,
     ``owner``     the setter the text round-trips through, or None
     ``label``     a display name (tier, member, segment), or None
 
+    On a node whose Methods source has NO module-scope code, the blank lines
+    between the imports and ``class`` are marked ``module_zone``: editable,
+    ``src_lines=0`` -- an INSERTION point at ``src_line`` (see
+    :func:`_module_insert_line`) rather than a slice. Text the user writes
+    there is spliced into the Methods source after its imports and comes back
+    as ``module_segment`` regions on the next bake.
+
     Expression regions additionally carry ``body_col`` / ``open_col`` /
     ``call_offset`` / ``body_lines`` -- see :func:`_emit_set_expression`. With
     ``include_values`` the ``vars`` region carries ``values``: one
@@ -1091,6 +1120,7 @@ def generate_node_script_with_regions(py_node, *, class_name: str | None = None,
     mark("imports", _i)
     # Hoist the Methods source's module-level context so baked members resolve
     # their globals: imports first, then free functions + module constants.
+    module_code_emitted = False
     if methods_src:
         gap("imports_hoisted")
         _i = len(L)
@@ -1118,6 +1148,7 @@ def generate_node_script_with_regions(py_node, *, class_name: str | None = None,
                  symbol_kind = seg["kind"],
                  src_line    = seg["lineno"],
                  src_lines=seg["src"].count("\n") + 1)
+            module_code_emitted = True
     if blob_used:
         # The decoder for the baked blobs -- module scope, above the class, so
         # build() can call it. Generated: it is the same six lines every time.
@@ -1125,7 +1156,20 @@ def generate_node_script_with_regions(py_node, *, class_name: str | None = None,
         _i = len(L)
         L.append(_STORED_VALUE_HELPER)
         mark("helpers", _i, label="_stored_value")
+    # The blank lines above ``class``. With module-scope code above them they
+    # follow the user's last segment (the API view claims a region's trailing
+    # blanks for it); with none they used to be nobody's -- Return could open
+    # them, nothing could be typed into them. Now they are the MODULE ZONE:
+    # editable, and what is written there is inserted into the Methods source
+    # after its imports (src_lines=0 -> an insertion, not a slice).
+    _zone_i = len(L)
     gap("class_decl")
+    if not module_code_emitted and len(L) > _zone_i:
+        mark("module_zone", _zone_i, editable=True,
+             owner     = "set_methods_source",
+             label     = "module scope",
+             src_line  = _module_insert_line(methods_src, header_lines),
+             src_lines = 0)
     _i = len(L)
     L.append("class %s(%s):" % (class_name, base_name))
     mark("class_decl", _i, label=class_name, base=base_name)

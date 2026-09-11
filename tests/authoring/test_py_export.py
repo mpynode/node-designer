@@ -1513,6 +1513,68 @@ class TestPersistentValuesInTheBake(unittest.TestCase):
                 self.assertIn("'%s'" % name, lines[vars_r["start"] + offset])
 
 
+class TestTheModuleZone(unittest.TestCase):
+    """The gap before ``class`` is marked as the user's insertion point when the
+    Methods source has no module-scope code; the insertion line follows the
+    header and the imports."""
+
+    def _node(self, name="zone#", methods=None):
+        from mpynode import MPyNode
+
+        mc.file(new=True, force=True)
+        n = MPyNode.create(name=name)
+        n.add_output_attr("out", "float")
+        n.set_compute_expression("self.out = 1.0")
+        if methods is not None:
+            n.set_methods_source(methods)
+        return n
+
+    def _regions(self, n):
+        from mpynode._common.io import py_export
+
+        return py_export.generate_node_script_with_regions(n, class_name="Z")
+
+    def test_plain_node_marks_the_gap_before_the_class(self):
+        src, regions = self._regions(self._node())
+        zone = [r for r in regions if r["kind"] == "module_zone"][0]
+        decl = [r for r in regions if r["kind"] == "class_decl"][0]
+        self.assertTrue(zone["editable"])
+        self.assertEqual(zone["owner"], "set_methods_source")
+        self.assertEqual((zone["src_line"], zone["src_lines"]), (1, 0))
+        self.assertEqual(zone["end"], decl["start"] - 1)
+        lines = src.split("\n")
+        self.assertTrue(all(not lines[i].strip()
+                            for i in range(zone["start"], zone["end"] + 1)))
+
+    def test_module_code_replaces_the_zone(self):
+        _src, regions = self._regions(
+            self._node("zoned#", methods="CONST = 1\n\n\ndef f(self):\n    return CONST\n"))
+        kinds = [r["kind"] for r in regions]
+        self.assertIn("module_segment", kinds)
+        self.assertNotIn("module_zone", kinds)
+
+    def test_a_comment_only_methods_source_bakes(self):
+        # What saving a header typed into the empty top of the API view
+        # produces: comments, no statement. _leading_header_block indexed
+        # tree.body[0] and raised; the view then showed "The bake could not
+        # be generated" right after its own save.
+        src, regions = self._regions(self._node("cmt#", methods="# mine\n"))
+        kinds = [r["kind"] for r in regions]
+        self.assertIn("header", kinds)
+        self.assertIn("module_zone", kinds)
+        self.assertEqual(src.split("\n")[0], "# mine")
+
+    def test_insert_line_follows_header_and_imports(self):
+        from mpynode._common.io import py_export as pe
+
+        self.assertEqual(pe._module_insert_line(""), 1)
+        self.assertEqual(pe._module_insert_line("def f(self):\n    pass\n"), 1)
+        self.assertEqual(pe._module_insert_line("import os\nimport sys\n\ndef f(self):\n    pass\n"), 3)
+        self.assertEqual(pe._module_insert_line(
+            "# hdr\n# more\nfrom x import (\n    y,\n)\n", header_lines=2), 6)
+        self.assertEqual(pe._module_insert_line("def f(:\n"), 1)   # unparsable
+
+
 class TestTheFileHeaderIsTheUsers(unittest.TestCase):
     """The top of a baked .py.
 

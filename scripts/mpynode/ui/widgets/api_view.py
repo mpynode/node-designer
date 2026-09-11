@@ -75,6 +75,16 @@ implementation detail:
   consulted by ``py_export._DEFAULT_GAP``. It has to be on the NODE rather than
   in this widget because ``refresh()`` re-bakes the buffer on every return to
   the tab, and spacing held here would not survive a tab switch.
+* the blank lines between the imports and ``class`` are the MODULE ZONE when
+  the Methods source has no module-scope code yet (``module_zone`` region,
+  ``src_lines=0``): yours to type into. What you write there is INSERTED into
+  the Methods source after its imports (``src_line``) on save and re-bakes as
+  ordinary ``module_segment`` regions, at which point the zone is gone and the
+  segments' own trailing blanks take over. Its cursor is anchored on the
+  newline BEFORE it so the first character is strictly inside -- an insert at
+  a region's exact anchor lands outside it, which is why the header zone is
+  positional; here the anchor trick is enough because a newline always
+  precedes the zone.
 """
 
 from __future__ import annotations
@@ -369,14 +379,19 @@ class NDApiView(QtPythonEditor):
             from mpynode._common.io.py_export import _DEFAULT_GAP, gap_key
         except Exception:  # noqa: BLE001
             return {}
-        doc = self.document()
-        out = {}
+        doc      = self.document()
+        out      = {}
+        has_zone = any(r.get("kind") == "module_zone" for r in self._regions)
         for region, cursor in self._region_cursors or ():
             kind = region["kind"]
             if kind == "imports":
                 # The blanks above the imports are the tail of the header,
                 # which round-trips as Methods text. Counting them here too
                 # would emit every one of them twice on the next bake.
+                continue
+            if kind == "class_decl" and has_zone:
+                # The blank lines above the class are the module zone's --
+                # text the user may write into, not a count to store.
                 continue
             first = doc.findBlock(cursor.selectionStart()).blockNumber()
             count, probe = 0, first - 1
@@ -418,8 +433,13 @@ class NDApiView(QtPythonEditor):
 
             sys.stderr.write("[NDApiView] set_methods_source failed: %s\n" % exc)
             return
-        self._last_saved_methods = text
-        self.dirtyStateChanged.emit(False)
+        # Re-bake against the source just written. The regions still described
+        # the PREVIOUS bake, so an INSERTION -- the module zone, a header typed
+        # into an empty top -- would be applied a second time by the next
+        # _methods_from_document, and the view read as dirty right after its
+        # own save. A forced refresh brings regions, cursors and both baselines
+        # back in step with the node, and keeps the caret where it was.
+        self.refresh(force=True)
 
     def _methods_from_document(self):
         """The Methods source implied by the document's editable regions, or
@@ -441,7 +461,17 @@ class NDApiView(QtPythonEditor):
                            # the user has only just started also lands
             src_line = region.get("src_line")
             span     = region.get("src_lines")
-            if not src_line or not span:
+            if not src_line:
+                continue
+            if region.get("kind") == "module_zone":
+                # An INSERTION at src_line (span 0): only when something was
+                # written, and followed by one blank line so the new code and
+                # whatever came next in the Methods source stay apart.
+                text = self._region_text(region, cursor)
+                if text:
+                    edits.append((src_line, 0, text + "\n"))
+                continue
+            if not span:
                 continue
             edits.append((src_line, span, self._region_text(region, cursor)))
         # The file header, as lines 1..N of the Methods source. Taken from the
@@ -475,6 +505,11 @@ class NDApiView(QtPythonEditor):
         grow a blank line per save, forever.
         """
         text = cursor.selectedText().replace(_PARA_SEP, "\n")
+        if region.get("kind") == "module_zone":
+            # The selection starts on the newline the cursor is anchored on,
+            # and the user may have typed below a blank line or two: neither
+            # belongs in the Methods source.
+            return _strip_trailing_blanks(text.lstrip("\n"))
         if region.get("synth_classmethod"):
             head, _sep, rest = text.partition("\n")
             if head.strip() == "@classmethod":
@@ -516,7 +551,16 @@ class NDApiView(QtPythonEditor):
             if not first.isValid() or not last.isValid():
                 continue
             cursor = QTextCursor(doc)
-            cursor.setPosition(first.position())
+            if r.get("kind") == "module_zone" and first.previous().isValid():
+                # Anchor on the newline BEFORE the zone. An insert at a
+                # region's exact anchor lands outside it (see _allows), and
+                # the zone's first character is exactly where the caret goes
+                # when the user clicks its blank line. Anchored one character
+                # earlier, that spot is strictly inside.
+                prev = first.previous()
+                cursor.setPosition(prev.position() + len(prev.text()))
+            else:
+                cursor.setPosition(first.position())
             cursor.setPosition(last.position() + len(last.text()),
                                QTextCursor.KeepAnchor)
             self._region_cursors.append((r, cursor))
@@ -614,6 +658,9 @@ class NDApiView(QtPythonEditor):
         named slice. The tier expressions are editable too, but in their own
         tabs -- each writes a different plug, and here each is one placeholder
         line."""
+        if region.get("kind") == "module_zone":
+            # An insertion point: src_lines is 0 by design.
+            return bool(region.get("editable") and region.get("src_line"))
         return bool(region.get("editable")
                     and region.get("owner") == "set_methods_source"
                     and region.get("src_line")
