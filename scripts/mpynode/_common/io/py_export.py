@@ -328,6 +328,20 @@ def _accumulator_lines(var: str, s: str, indent: str) -> list:
     return out
 
 
+def _body_line_count(src: str) -> int:
+    """How many lines the user's expression has -- what the API view prints as
+    ``‹ N lines ›``. The EDITOR's count, not the literal's: a trailing newline
+    closes the last line rather than opening an empty one, and the closing
+    delimiter's own line is nobody's."""
+    s = src or ""
+    if not s:
+        return 0
+    parts = s.split("\n")
+    if parts[-1] == "":
+        parts.pop()
+    return max(1, len(parts))
+
+
 def _emit_set_expression(lines: list, method: str, src: str, indent: str = "        "):
     """Append the source that calls ``node.<method>(<src>)``.
 
@@ -342,12 +356,22 @@ def _emit_set_expression(lines: list, method: str, src: str, indent: str = "    
     FIRST emitted line at which the user's own text starts: the opening
     delimiter and the user's first body line share one physical line, so a
     viewer that marks whole lines as generated cannot be honest here without it.
+    ``call_offset`` is which emitted line carries the CALL (0 inline; after the
+    accumulator statements in the escaped form) and ``body_lines`` the user's
+    own line count -- together they are what the API view paints as
+    ``node.<method>(‹ N lines ›)`` over the call line.
     """
     lit = _expr_literal(src)
+    body_lines = _body_line_count(src)
     if lit is None:
-        lines.extend(_accumulator_lines("exp", src, indent))
+        acc = _accumulator_lines("exp", src, indent)
+        lines.extend(acc)
         lines.append("%snode.%s(exp)" % (indent, method))
-        return {"inline": False, "body_col": None, "open_col": None}
+        # No rail shared with the body: the CALL is the last line, after the
+        # accumulator statements, and ``open_col`` is where its argument starts.
+        return {"inline": False, "body_col": None,
+                "open_col": len(indent) + len("node.%s(" % method),
+                "call_offset": len(acc), "body_lines": body_lines}
     lines.append("%snode.%s(%s)" % (indent, method, lit))
     # ``lit`` is <prefix><q3><src><q3>, and the prefix is an ``r`` whenever the
     # text holds a backslash -- so measure the opener off the literal rather
@@ -361,6 +385,8 @@ def _emit_set_expression(lines: list, method: str, src: str, indent: str = "    
         # character of a body that is not being displayed.
         "open_col": open_col,
         "body_col": open_col + (len(lit) - len(src) - 3),
+        "call_offset": 0,
+        "body_lines": body_lines,
     }
 
 
@@ -661,8 +687,8 @@ def generate_node_script_with_regions(py_node, *, class_name: str | None = None)
     ``owner``     the setter the text round-trips through, or None
     ``label``     a display name (tier, member, segment), or None
 
-    Expression regions additionally carry ``body_col`` -- see
-    :func:`_emit_set_expression`.
+    Expression regions additionally carry ``body_col`` / ``open_col`` /
+    ``call_offset`` / ``body_lines`` -- see :func:`_emit_set_expression`.
 
     The map is built by the SAME pass that builds the text, so the two cannot
     disagree. A parallel walker would have to duplicate the emission ORDER,
@@ -958,7 +984,9 @@ def generate_node_script_with_regions(py_node, *, class_name: str | None = None)
             mark("expr_%s" % tier.lower(), _i, editable=info["inline"],
                  owner=setter, label=tier,
                  body_col=info["body_col"], open_col=info.get("open_col"),
-                 inline=info["inline"])
+                 inline=info["inline"],
+                 call_offset=info.get("call_offset", 0),
+                 body_lines=info.get("body_lines"))
 
     # --- persistent variables (declarations only) ---
     if var_names:

@@ -1,8 +1,8 @@
 """NDApiView -- the Script tab's "API" surface: the node as it bakes.
 
-Shows the node exactly as ``File > Bake Node to .py`` would emit it, with the
-expression bodies FOLDED away, every generated line marked, and a click on any
-generated zone routed back to the tab that owns it.
+Shows the node exactly as ``File > Bake Node to .py`` would emit it, with each
+expression body reduced to its call and a line count, every generated line
+marked, and a right-click on any generated zone offering the tab that owns it.
 
 Three things make this cheap rather than a second editor:
 
@@ -14,15 +14,20 @@ Three things make this cheap rather than a second editor:
   invisible blocks, the line numbers stay TRUE baked line numbers and simply run
   non-contiguously across a fold (287 -> 419). No gutter subclass.
 
-WHAT IS DELIBERATELY NOT DRAWN THE WAY THE MOCKUP DREW IT
-The mockups show an expression as a managed rail with the body on the lines
-below it. The real exporter does not emit that: ``_emit_set_expression`` appends
-one string, so ``node.set_init_expression(\"\"\"import math`` is ONE physical
-line -- the opening delimiter and the user's first body line share it. Rather
-than fake a split (which would make the gutter stop being the bake's gutter,
-off by one on every tier), the rail line stays whole: it is span-washed up to
-``body_col`` to show which half the Node Designer owns, and the lines BELOW it
-are what fold. The folded count is drawn at the end of the rail.
+WHAT AN EXPRESSION LOOKS LIKE HERE
+``node.set_compute_expression(‹ 2 lines ›)`` -- one line per tier, always. The
+exporter emits the body inline, so ``node.set_init_expression(\"\"\"import math``
+is ONE physical line: the call and the user's first body line share it. The
+view hides every other line of the region and PAINTS OVER the rail from the
+opening paren, so the delimiter, the first body line and the closer are never
+on screen; the escaped (accumulator) form hides its ``exp = ...`` lines under
+its call line the same way. The count is the body's own line count
+(``body_lines``, recorded by the exporter) -- not the number of hidden blocks,
+which under-counted a two-line compute as one and left a one-line body fully
+visible, looking editable. Nothing expands: the body is authored in its own
+tab, and right-click > Go to <tier> is the way there. The gutter still shows
+TRUE baked line numbers, running non-contiguously across the hidden lines
+(287 -> 419). No gutter subclass.
 
 EDITABLE WHERE IT IS YOURS, READ-ONLY WHERE IT IS GENERATED
 The Methods source is edited HERE, in the file it bakes into -- indented inside
@@ -157,6 +162,11 @@ class NDApiView(QtPythonEditor):
     # already follow: a click on generated code goes to where that thing is
     # actually authored, not to a read-only rendering of it.
     attributesActivated = Signal(str)
+    # Right-click > "Go to <tier>" on an expression line; carries the tier
+    # label (Init / Compute / Viewport / OSL) so the host can raise that tab.
+    # Right-click ONLY: a left click on a rail highlights and stays put (see
+    # mousePressEvent) -- the tier is already on screen under it.
+    tierActivated = Signal(str)
     # Aggregate dirty state, same contract as the other Script-tab editors.
     dirtyStateChanged = Signal(bool)
     # A keystroke was refused because it landed on a generated span.
@@ -174,21 +184,18 @@ class NDApiView(QtPythonEditor):
         self._source = ""
         # block number -> region, for hit-testing and painting
         self._block_region = {}
-        # block number of each foldable rail -> number of lines hidden under it
-        self._fold_counts = {}
-        # region -> lines hidden, keyed by identity so a shifted start does not
-        # orphan the count while the user types above it
-        self._fold_hidden = {}
+        # block number of each expression rail -> its region, for the
+        # placeholder painted over the rail (``‹ N lines ›)``). Rebuilt with
+        # the region index, so a rail that moved under typing above it is
+        # still found.
+        self._placeholders = {}
         # (region, QTextCursor) for EVERY region. Ints would go stale on the
         # first keystroke; Qt maintains cursors.
         self._region_cursors = []
-        # Folds the user has opened by hand, keyed so the choice survives the
-        # re-bake that happens on every return to this tab.
-        self._unfolded = set()
-        # block number -> (x0, x1, y0, y1) of the fold marker drawn on that
-        # row. No longer a click target -- a left click on a rail belongs to
-        # the tier -- but the painter records it so a test can prove the
-        # marker clears the line's own text instead of printing over it.
+        # block number -> (x0, x1, y0, y1) of the placeholder drawn on that
+        # row. Not a click target -- a left click on a rail belongs to the
+        # tier -- but the painter records it so a test can prove the
+        # placeholder clears the line's own text instead of printing over it.
         self._marker_rects = {}
         self._last_saved_methods = None
         # Baseline for the blank-line spacing, same contract as the Methods
@@ -221,7 +228,7 @@ class NDApiView(QtPythonEditor):
         self.refresh()
 
     def refresh(self, force: bool = False) -> None:
-        """Re-bake and re-fold. Cheap enough to call on tab activation.
+        """Re-bake and re-hide the bodies. Cheap enough to call on tab activation.
 
         REFUSES to run while there are unsaved edits: the bake is a projection
         of the node, so re-running it would silently discard whatever the user
@@ -263,10 +270,10 @@ class NDApiView(QtPythonEditor):
             self._loading = False
         self._build_region_cursors()
         self._index_regions()
-        # setPlainText drops every block's visibility flag, so the fold has to
-        # be re-applied after ANY load -- not just the first.
-        self._apply_folds()
-        # AFTER the fold: a restored caret must not land on a hidden block.
+        # setPlainText drops every block's visibility flag, so the bodies have
+        # to be re-hidden after ANY load -- not just the first.
+        self._hide_bodies()
+        # AFTER hiding: a restored caret must not land on a hidden block.
         self._restore_position(where)
         self._last_saved_methods = self._methods_from_document()
         self._last_saved_spacing = self._spacing_from_document()
@@ -554,20 +561,21 @@ class NDApiView(QtPythonEditor):
 
     def _index_regions(self) -> None:
         self._block_region = {}
-        self._fold_counts = {}
+        self._placeholders = {}
         if not self._region_cursors:
             for r in self._regions:
                 for ln in range(r["start"], r["end"] + 1):
                     self._block_region[ln] = r
+                if self._is_placeholder(r):
+                    self._placeholders[self._rail_of(r)] = r
             self._fill_gaps()
             return
         for r, cursor in self._region_cursors:
             first, last = self._live_span(cursor)
             for ln in range(first, last + 1):
                 self._block_region[ln] = r
-            hidden = self._fold_hidden.get(id(r))
-            if hidden:
-                self._fold_counts[first] = hidden
+            if self._is_placeholder(r):
+                self._placeholders[first + int(r.get("call_offset") or 0)] = r
         self._fill_gaps()
 
     def _fill_gaps(self) -> None:
@@ -590,87 +598,64 @@ class NDApiView(QtPythonEditor):
     def _is_editable(self, region) -> bool:
         """A region the USER owns: their Methods source, spliceable back by a
         named slice. The tier expressions are editable too, but in their own
-        tabs -- each writes a different plug, and here they are folded shut."""
+        tabs -- each writes a different plug, and here each is one placeholder
+        line."""
         return bool(region.get("editable")
                     and region.get("owner") == "set_methods_source"
                     and region.get("src_line")
                     and region.get("src_lines"))
 
-    def _foldable(self):
-        """Regions whose body should be hidden: the inline expression bodies,
-        and the bake's own preamble.
+    @staticmethod
+    def _is_placeholder(region) -> bool:
+        """An expression tier: shown as ONE line, its call, whatever form the
+        exporter chose -- inline triple-quoted or the escaped accumulator."""
+        kind = region.get("kind") or ""
+        return kind.startswith("expr_") and kind != "expr_header"
 
-        The escaped (accumulator) form is repr'd line-by-line and carries no
-        rail to fold under, so it is left fully visible rather than collapsed
-        into something that cannot be clicked back open.
-
-        The bake's generated preamble used to fold here too. There is no
-        preamble any more -- the top of the file is the user's own header --
-        so the expression bodies are the only thing left to fold.
-        """
+    def _placeholder_regions(self):
+        """Every region shown as one placeholder line. The body is authored in
+        its own tab; here it is a managed call with a line count, and nothing
+        opens it. (Expand/collapse lived here until 2026-09: a one-line body
+        had nothing below its rail to fold and so showed in full, looking
+        editable, and the count under-counted a two-line compute as one.)"""
         for r in self._regions:
-            if (r["kind"].startswith("expr_")
-                    and r["kind"] != "expr_header"
-                    and r.get("inline")
-                    and r["end"] > r["start"]):
+            if self._is_placeholder(r):
                 yield r
 
     @staticmethod
-    def _fold_key(region):
-        """Survives a re-bake, unlike ``id()``: the unfold a user asked for
-        should still be in force when they come back to the tab."""
-        return (region["kind"], region["start"])
+    def _rail_of(region) -> int:
+        """The one line of a placeholder region that stays visible: the CALL.
+        An inline body opens on the call line; the escaped form builds ``exp``
+        first and calls last (``call_offset``, from the exporter)."""
+        return int(region["start"]) + int(region.get("call_offset") or 0)
 
+    @staticmethod
+    def _placeholder_label(region) -> str:
+        """``‹ 2 lines ›`` -- the body's OWN line count, as the editor counts
+        it, recorded by the exporter as ``body_lines``. Never the number of
+        hidden blocks: the first body line shares the call line and the
+        closing delimiter has a line of its own, so blocks miscount."""
+        n = int(region.get("body_lines") or 0)
+        if n <= 0:
+            n = int(region["end"]) - int(region["start"]) + 1
+        return "‹ %d line%s ›" % (n, "" if n == 1 else "s")
 
-    def _apply_folds(self) -> None:
-        """Hide every foldable body the user has not expanded.
+    def _hide_bodies(self) -> None:
+        """Hide every line of every placeholder region except its call line.
 
-        IDEMPOTENT: it sets visibility True as well as False, so a re-run after
-        a toggle genuinely re-opens what was closed. The first version only
-        ever hid, which made an unfold impossible to express.
+        IDEMPOTENT: it sets visibility True on the rail as well as False on
+        the rest, so a re-run after a load that reset every flag lands in the
+        same state.
         """
         doc = self.document()
-        self._fold_hidden = {}
-        for r in self._foldable():
-            expanded = self._fold_key(r) in self._unfolded
-            hidden = 0
-            for ln in range(r["start"] + 1, r["end"] + 1):
+        for r in self._placeholder_regions():
+            rail = self._rail_of(r)
+            for ln in range(r["start"], r["end"] + 1):
                 block = doc.findBlockByNumber(ln)
                 if block.isValid():
-                    block.setVisible(expanded)
-                    hidden += 0 if expanded else 1
-            if hidden:
-                # Keyed by IDENTITY, not by start line: typing above a fold
-                # moves its rail, and a count keyed on the old line number
-                # would either vanish or land on someone else's row.
-                self._fold_hidden[id(r)] = hidden
-                self._fold_counts[r["start"]] = hidden
+                    block.setVisible(ln == rail)
         doc.markContentsDirty(0, max(0, doc.characterCount() - 1))
         self.viewport().update()
-
-    def toggleFoldAt(self, block_no: int) -> bool:
-        """Expand or collapse the fold whose rail is ``block_no``.
-
-        Reached from the RIGHT-CLICK menu, not from a click on the marker: a
-        left click on an expression rail belongs to the tier it names, and
-        spending it on a fold is what made ``‹ 80 lines ›`` refuse to take the
-        user to their own Compute code.
-        """
-        for r in self._foldable():
-            if r["start"] != block_no:
-                continue
-            key = self._fold_key(r)
-            if key in self._unfolded:
-                self._unfolded.discard(key)
-            else:
-                self._unfolded.add(key)
-            # Folds FIRST: _index_regions rebuilds _fold_counts from
-            # _fold_hidden, which _apply_folds is what writes.
-            self._apply_folds()
-            self._index_regions()
-            self.viewport().update()
-            return True
-        return False
 
     def _skip_hidden_blocks(self) -> None:
         """Arrow keys walk INTO folded blocks -- Qt does not skip them. Nudge
@@ -1121,54 +1106,44 @@ class NDApiView(QtPythonEditor):
                 int(self.contentOffset().x()), int(top),
                 int(region["body_col"] * char_w), int(height),
                 self._wash(_TINT_ALPHA_SPLIT))
-        folded = self._fold_counts.get(n)
-        if folded:
-            self._paint_fold_marker(painter, region, n, folded, top, height,
-                                    char_w, right, block)
+        if self._placeholders.get(n) is region:
+            self._paint_placeholder(painter, region, n, top, height, char_w,
+                                    right)
 
-    def _paint_fold_marker(self, painter, region, block_no, folded, top,
-                           height, char_w, right, block):
-        """Collapse the rail to one readable line: the call, the marker, the
-        closing paren.
+    def _paint_placeholder(self, painter, region, block_no, top, height,
+                           char_w, right):
+        """Reduce the rail to one readable line: the call, the count, the
+        closing paren -- ``node.set_compute_expression(‹ 2 lines ›)``.
 
         COVERED FROM ``open_col``, NOT ``body_col``. body_col is where the
         user's text starts, i.e. just PAST the opening delimiter -- so covering
         from there left the delimiter and the body's first character on screen
-        next to a marker saying the body is not shown, and the closer had to be
+        next to a count saying the body is not shown, and the closer had to be
         guessed. It guessed ``\"\"\"``, which is wrong every time the exporter
         picked ``\'\'\'`` to dodge a quote collision, and read as a mismatched
         pair. Covering the whole argument means neither the delimiter nor its
         closer is drawn at all, and there is nothing left to get wrong.
 
-        The marker is also not right-aligned at the viewport edge; that put it
-        straight ON TOP of the code whenever the rail was long enough to reach.
+        Left-aligned at that column, not at the viewport edge; right-aligned
+        it sat straight ON TOP of the code whenever the rail was long enough
+        to reach.
         """
-        label = "‹ %d lines ›" % folded
         open_col = region.get("open_col")
         if open_col is None:
-            open_col = region.get("body_col")
-        rail = bool(open_col) and block_no == region["start"]
-        if rail:
-            label = "%s)" % label
-            x = int(self.contentOffset().x()) + int(open_col * char_w)
-        else:
-            # No rail to replace (the preamble). Sit just PAST the end of the
-            # line's own text -- right-aligning it at the viewport edge is what
-            # printed it on top of line 1, which is 68 characters long.
-            x = (int(self.contentOffset().x())
-                 + int((len(block.text()) + 2) * char_w))
+            open_col = region.get("body_col") or 0
+        label = "%s)" % self._placeholder_label(region)
+        x = int(self.contentOffset().x()) + int(open_col * char_w)
         width = max(0, right - x)
         if width <= 0:
             return
-        if rail:
-            painter.fillRect(x, int(top), width, int(height),
-                             self.palette().color(QPalette.Base))
-            painter.fillRect(x, int(top), width, int(height),
-                             self._wash(_TINT_ALPHA))
+        painter.fillRect(x, int(top), width, int(height),
+                         self.palette().color(QPalette.Base))
+        painter.fillRect(x, int(top), width, int(height),
+                         self._wash(_TINT_ALPHA))
         painter.setPen(QColor("#8a8a8a"))
         painter.drawText(x, int(top), width, int(height),
                          int(Qt.AlignLeft | Qt.AlignVCenter), label)
-        # Remember where it landed so a click on it can toggle the fold.
+        # Recorded for the tests that prove it clears the line's own text.
         self._marker_rects[block_no] = (
             x, x + int(len(label) * char_w), int(top), int(top + height))
 
@@ -1180,8 +1155,8 @@ class NDApiView(QtPythonEditor):
         # NOTHING is intercepted here. The marker used to swallow the click to
         # toggle its fold, which meant the one gesture the user actually wanted
         # -- "take me to the Compute code this is standing in for" -- was the
-        # one gesture ``‹ 80 lines ›`` refused. The whole rail, marker
-        # included, now routes to the tier. Expanding lives on right-click.
+        # one gesture ``‹ 80 lines ›`` refused. The whole rail, placeholder
+        # included, now routes to the tier. Going there lives on right-click.
         super().mousePressEvent(event)
         cursor = self.cursorForPosition(event.pos())
         region = self._block_region.get(cursor.block().blockNumber())
@@ -1227,9 +1202,9 @@ class NDApiView(QtPythonEditor):
         """Re-derive the region cursors after ANY external replacement.
 
         Rename and Promote both apply their rewrite with
-        ``rename_var._set_editor_text`` -> ``setPlainText``. That clears every
-        fold and collapses the maintained cursors, so without this the next
-        save would splice the wrong slices. Both rewrite IN PLACE and keep the
+        ``rename_var._set_editor_text`` -> ``setPlainText``. That un-hides
+        every body and collapses the maintained cursors, so without this the
+        next save would splice the wrong slices. Both rewrite IN PLACE and keep the
         line count, so the region line numbers still hold and simply rebuilding
         against them restores the invariant -- and Promote keeps working here,
         which is the point.
@@ -1242,7 +1217,7 @@ class NDApiView(QtPythonEditor):
             return
         self._build_region_cursors()
         self._index_regions()
-        self._apply_folds()
+        self._hide_bodies()
         self.dirtyStateChanged.emit(self.hasUnsavedChanges())
 
     def _menu_may_mutate(self, event) -> bool:
@@ -1263,20 +1238,25 @@ class NDApiView(QtPythonEditor):
             return False
         return True
 
-    def _fold_region_at(self, point):
-        """The foldable region under ``point``, or None.
-
-        Matches on CONTAINMENT rather than on the rail line, so right-clicking
-        anywhere in an expanded body offers to shut it again -- the user should
-        not have to find the one line that opened it.
-        """
-        cursor = self.cursorForPosition(point)
-        region = self._block_region.get(cursor.block().blockNumber())
-        if region is None:
+    def _go_to_target(self, region, line_text=""):
+        """``(menu text, fire)`` for the tab that AUTHORS ``region``'s line, or
+        ``None`` for generated text nothing authors (the class line, the
+        imports, ``return node``). ``fire`` emits the matching signal, which
+        the host routes exactly as it routes that signal from a click."""
+        if not isinstance(region, dict):
             return None
-        for r in self._foldable():
-            if r is region:
-                return r
+        kind = region.get("kind") or ""
+        label = region.get("label") or ""
+        if self._is_placeholder(region) and label:
+            return ("Go to %s" % label,
+                    lambda: self.tierActivated.emit(label))
+        if kind == "vars":
+            name = _var_name_on(line_text or "") or ""
+            return ("Go to Variables" + (" · %s" % name if name else ""),
+                    lambda: self.variableActivated.emit(name))
+        if kind in ("attrs_in", "attrs_out") and label:
+            return ("Go to %s" % label,
+                    lambda: self.attributesActivated.emit(label))
         return None
 
     def contextMenuEvent(self, event):
@@ -1288,13 +1268,16 @@ class NDApiView(QtPythonEditor):
         from mpynode.ui.qt_wrapper import QMenu
 
         menu = QMenu(self)
-        # The ONLY route to a fold now that the marker teleports instead.
-        fold_act = None
-        foldable = self._fold_region_at(event.pos())
-        if foldable is not None:
-            expanded = self._fold_key(foldable) in self._unfolded
-            fold_act = menu.addAction(
-                "Collapse Body" if expanded else "Expand Body")
+        # On a generated line the one thing worth offering is the way to where
+        # that line is AUTHORED: the tier tab, Variables, Attributes.
+        # (The expand/collapse items lived here until the bodies stopped
+        # opening at all.)
+        goto_act = None
+        block = self.cursorForPosition(event.pos()).block()
+        target = self._go_to_target(
+            self._block_region.get(block.blockNumber()), block.text())
+        if target is not None:
+            goto_act = menu.addAction(target[0])
             menu.addSeparator()
         undo_act = menu.addAction("Undo")
         redo_act = menu.addAction("Redo")
@@ -1309,8 +1292,8 @@ class NDApiView(QtPythonEditor):
         chosen = menu.exec_(event.globalPos())
         if chosen is None:
             return
-        if fold_act is not None and chosen is fold_act:
-            self.toggleFoldAt(foldable["start"])
+        if goto_act is not None and chosen is goto_act:
+            target[1]()
         elif chosen is undo_act:
             self.undo()
         elif chosen is redo_act:

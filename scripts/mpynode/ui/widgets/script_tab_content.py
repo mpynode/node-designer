@@ -423,12 +423,13 @@ class NDScriptTabContent(QWidget):
         # the Methods regions, refused everywhere else.
         self._api_view = NDApiView(py_node, parent=self._inner_tabs)
         self._inner_tabs.addTab(self._api_view, "API")
-        # NO tierActivated hookup. Clicking a folded expression rail used to
-        # raise that tier's tab; it is gone, by request. The tier is already on
-        # screen where you clicked, so being thrown to another tab cost the
-        # place you were reading and returned nothing. The navigator highlight
-        # (regionActivated, below) is the whole response, which also makes
-        # every managed block behave the same way.
+        # Right-click > "Go to <tier>" raises that tab. A LEFT click does not:
+        # it used to, and was retracted -- the tier is already on screen where
+        # you clicked, so being thrown to another tab cost the place you were
+        # reading. The navigator highlight (regionActivated, below) answers
+        # the click; the menu answers "take me there".
+        self._api_view.tierActivated.connect(
+            lambda label: self.select("tier.%s" % str(label).lower()))
         self._api_view.variableActivated.connect(self.revealVariableRequested)
         self._api_view.attributesActivated.connect(
             self.revealAttributesRequested)

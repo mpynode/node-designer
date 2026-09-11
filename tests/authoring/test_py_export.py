@@ -1328,6 +1328,40 @@ class TestRegionMap(unittest.TestCase):
         blob = "\n".join(src.split("\n")[r["start"]:r["end"] + 1])
         self.assertIn("node.add_variable('board', persistent=True)", blob)
 
+    def test_expression_regions_carry_the_bodys_line_count_and_call_line(self):
+        # What the API view prints as ``‹ N lines ›`` and the line it paints
+        # it on. The count is the editor's: a trailing newline closes the last
+        # line rather than opening an empty one.
+        n = self._node("exprmeta#")
+        n.set_init_expression("import numpy as np")
+        n.set_compute_expression("pts = self.a\nself.out = pts")
+        _src, regions = self._gen(n)
+        init = self._region(regions, "expr_init")
+        comp = self._region(regions, "expr_compute")
+        self.assertEqual((init["body_lines"], init["call_offset"]), (1, 0))
+        self.assertEqual((comp["body_lines"], comp["call_offset"]), (2, 0))
+        self.assertEqual(init["start"], init["end"])   # one physical line
+        self.assertTrue(init["inline"] and comp["inline"])
+        n.set_init_expression("a = 1\nb = 2\n")
+        _src, regions = self._gen(n)
+        self.assertEqual(self._region(regions, "expr_init")["body_lines"], 2)
+
+    def test_escaped_expression_names_its_call_line(self):
+        # A carriage return forces the accumulator form: ``exp = ...`` lines,
+        # then the call. call_offset points at the call; open_col at its paren.
+        n = self._node("expresc#")
+        n.set_compute_expression("a = 1\r\nb = 2\n")
+        src, regions = self._gen(n)
+        comp = self._region(regions, "expr_compute")
+        self.assertFalse(comp["inline"])
+        self.assertEqual(comp["body_lines"], 2)
+        lines = src.split("\n")
+        call_no = comp["start"] + comp["call_offset"]
+        self.assertEqual(call_no, comp["end"])
+        call = lines[call_no]
+        self.assertEqual(call.strip(), "node.set_compute_expression(exp)")
+        self.assertEqual(call[comp["open_col"]:], "exp)")
+
 
 class TestTheFileHeaderIsTheUsers(unittest.TestCase):
     """The top of a baked .py.

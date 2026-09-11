@@ -321,10 +321,11 @@ class TestApiView(unittest.TestCase):
         finally:
             v.deleteLater()
 
-    def test_escaped_expression_is_left_unfolded(self):
-        # A carriage return forces the repr'd accumulator form, which has no
-        # single rail to fold under; collapsing it would hide it behind
-        # nothing clickable.
+    def test_escaped_expression_collapses_onto_its_call_line(self):
+        # A carriage return forces the repr'd accumulator form: ``exp = ...``
+        # lines, then ``node.set_compute_expression(exp)``. It used to stay
+        # fully visible for want of a rail; now the CALL line is the rail and
+        # the accumulator lines hide under it.
         from mpynode import MPyNode
 
         mc.file(new=True, force=True)
@@ -335,8 +336,13 @@ class TestApiView(unittest.TestCase):
             comp = [r for r in v.regions() if r["kind"] == "expr_compute"][0]
             self.assertFalse(comp["inline"])
             doc = v.document()
+            rail = v._rail_of(comp)
+            self.assertEqual(rail, comp["end"])
             for ln in range(comp["start"], comp["end"] + 1):
-                self.assertTrue(doc.findBlockByNumber(ln).isVisible())
+                self.assertEqual(doc.findBlockByNumber(ln).isVisible(),
+                                 ln == rail, ln)
+            self.assertIs(v._placeholders.get(rail), comp)
+            self.assertEqual(v._placeholder_label(comp), "‹ 2 lines ›")
         finally:
             v.deleteLater()
 
@@ -772,27 +778,28 @@ class TestOneSignalNotTwo(unittest.TestCase):
         finally:
             v.deleteLater()
 
-    def test_the_fold_marker_sits_where_the_body_was(self):
-        # Drawn right-aligned at the viewport edge it landed ON TOP of the
-        # code whenever the rail line was long enough to reach.
+    def test_the_placeholder_sits_where_the_body_was(self):
+        # Drawn from open_col and left-aligned there. Right-aligned at the
+        # viewport edge it landed ON TOP of the code whenever the rail line
+        # was long enough to reach.
         import inspect
 
         from mpynode.ui.widgets.api_view import NDApiView
 
-        src = inspect.getsource(NDApiView._paint_fold_marker)
-        self.assertIn("body_col", src)
+        src = inspect.getsource(NDApiView._paint_placeholder)
+        self.assertIn("open_col", src)
         self.assertIn("AlignLeft", src)
 
-    def test_the_rail_still_carries_a_fold_count(self):
-        # The count is drawn, not clicked: the marker teleports to the tier
-        # like the rest of the rail, and the fold moved to the context menu.
+    def test_every_expression_rail_carries_a_placeholder(self):
+        # Drawn, not clicked: the rail routes to the tier like the rest of
+        # the line, and "Go to" lives in the context menu.
         v = self._view()
         try:
-            rail = [r for r in v.regions()
-                    if r.get("body_col") and r["kind"].startswith("expr_")]
-            self.assertTrue(rail)
-            for r in rail:
-                self.assertTrue(v._fold_counts.get(r["start"]))
+            rails = [r for r in v.regions()
+                     if r.get("body_col") and r["kind"].startswith("expr_")]
+            self.assertTrue(rails)
+            for r in rails:
+                self.assertIs(v._placeholders.get(v._rail_of(r)), r)
         finally:
             v.deleteLater()
 
@@ -1003,26 +1010,28 @@ class TestGapsFollowTheirNeighbour(unittest.TestCase):
 
 
 @unittest.skipUnless(_qapp_available(), "Qt unavailable")
-class TestFoldsAndWhatOpensThem(unittest.TestCase):
-    """One fold, one contract.
+class TestBodiesNeverOpenHere(unittest.TestCase):
+    """Every expression tier is ONE line here, always.
 
-    An EXPRESSION body opens -- but from the context menu, because the LEFT
-    click on its rail belongs to the tier it names. Spending that click on a
-    fold is what made ``‹ 80 lines ›`` refuse to take the user to their own
-    Compute code.
-
-    Nothing ELSE folds. The generated preamble used to, which meant the file
-    opened on documentation with a numbering hole in it; that text is on the
-    Identity tab and the top of the file is the user's own now.
+    ``node.set_init_expression(‹ 4 lines ›)``: the body is authored in its own
+    tab, so this view hides it entirely -- including the first body line, which
+    the exporter puts on the call line, and including one-line bodies, which
+    used to have nothing below the rail to fold and so showed in full, looking
+    editable. Nothing expands; right-click > Go to <tier> is the way in. The
+    count is the body's own line count, not the number of hidden blocks, which
+    under-counted a two-line compute as ``‹ 1 lines ›``.
     """
 
-    def _view(self, name="apiFold"):
+    def _view(self, name="apiFold", init="# Init\na = 1\nb = 2\nc = 3\n",
+              compute=None):
         from mpynode.wrappers.mpy_locator import MPyLocator
         from mpynode.ui.widgets.api_view import NDApiView
 
         mc.file(new=True, force=True)
         node = MPyLocator.create(name=name)
-        node.set_init_expression("# Init\na = 1\nb = 2\nc = 3\n")
+        node.set_init_expression(init)
+        if compute is not None:
+            node.set_compute_expression(compute)
         view = NDApiView(node)
         view.resize(1000, 700)
         view.show()
@@ -1035,30 +1044,29 @@ class TestFoldsAndWhatOpensThem(unittest.TestCase):
         view.repaint()
         _QAPP.processEvents()
 
-    def _rail(self, view):
-        return [r for r in view.regions() if r["kind"] == "expr_init"][0]
+    def _rail(self, view, kind="expr_init"):
+        return [r for r in view.regions() if r["kind"] == kind][0]
 
-    # -- nothing but an expression body ------------------------------------
+    # -- what is hidden ---------------------------------------------------
 
-    def test_only_expression_bodies_are_folded_on_arrival(self):
+    def test_only_expression_bodies_are_hidden_on_arrival(self):
         _node, v = self._view()
         try:
             doc = v.document()
-            hidden = [i for i in range(doc.blockCount())
-                      if not doc.findBlockByNumber(i).isVisible()]
-            self.assertTrue(hidden, "the init body should still fold")
-            rails = [r for r in v.regions()
-                     if r["kind"].startswith("expr_") and r["end"] > r["start"]]
+            hidden = {i for i in range(doc.blockCount())
+                      if not doc.findBlockByNumber(i).isVisible()}
+            self.assertTrue(hidden, "the init body should be hidden")
             covered = set()
-            for r in rails:
-                covered.update(range(r["start"] + 1, r["end"] + 1))
-            self.assertFalse(set(hidden) - covered,
-                             "something other than an expression body folded")
+            for r in v._placeholder_regions():
+                covered.update(ln for ln in range(r["start"], r["end"] + 1)
+                               if ln != v._rail_of(r))
+            self.assertEqual(hidden, covered,
+                             "something other than an expression body hid")
         finally:
             v.deleteLater()
 
-    def test_the_users_own_header_is_never_folded(self):
-        # It is THEIR text at the top of THEIR file. Folding it would repeat
+    def test_the_users_own_header_is_never_hidden(self):
+        # It is THEIR text at the top of THEIR file. Hiding it would repeat
         # the preamble mistake with the one block that is not generated.
         from mpynode.wrappers.mpy_locator import MPyLocator
         from mpynode.ui.widgets.api_view import NDApiView
@@ -1073,85 +1081,99 @@ class TestFoldsAndWhatOpensThem(unittest.TestCase):
             doc = v.document()
             for ln in range(header["start"], header["end"] + 1):
                 self.assertTrue(doc.findBlockByNumber(ln).isVisible(), ln)
-            self.assertFalse(v.toggleFoldAt(header["start"]))
+            self.assertNotIn(header["start"], v._placeholders)
         finally:
             v.deleteLater()
 
-    # -- an expression body ----------------------------------------------
-
-    def test_an_expression_body_toggles_from_the_menu(self):
-        _node, v = self._view()
+    def test_a_one_line_body_is_a_placeholder_too(self):
+        _node, v = self._view(init="import numpy as np")
         try:
-            rail = self._rail(v)
-            doc = v.document()
-            body = range(rail["start"] + 1, rail["end"] + 1)
-            self.assertTrue(
-                all(not doc.findBlockByNumber(i).isVisible() for i in body))
-            self.assertTrue(v.toggleFoldAt(rail["start"]))
-            self.assertTrue(
-                all(doc.findBlockByNumber(i).isVisible() for i in body))
-            self.assertTrue(v.toggleFoldAt(rail["start"]))
-            self.assertTrue(
-                all(not doc.findBlockByNumber(i).isVisible() for i in body))
+            init = self._rail(v)
+            self.assertEqual(init["start"], init["end"])
+            self.assertIs(v._placeholders.get(v._rail_of(init)), init)
+            self.assertEqual(v._placeholder_label(init), "‹ 1 line ›")
+            self._repaint(v)
+            self.assertIn(init["start"], v._marker_rects)
         finally:
             v.deleteLater()
 
-    def test_the_menu_reaches_the_fold_from_a_body_line_too(self):
-        # Collapse has to be findable from wherever the user is READING, not
-        # only from the one line that opened the body.
-        _node, v = self._view()
+    def test_the_count_is_the_bodys_line_count(self):
+        _node, v = self._view(
+            init="\n".join("a%d = %d" % (i, i) for i in range(20)) + "\n",
+            compute="pts = self.inPosition\nself.out = pts")
         try:
-            rail = self._rail(v)
-            v.toggleFoldAt(rail["start"])
-            _QAPP.processEvents()
-            block = v.document().findBlockByNumber(rail["start"] + 2)
-            geo = v.blockBoundingGeometry(block).translated(v.contentOffset())
-            point = _QPoint(8, int(geo.top() + geo.height() / 2))
-            found = v._fold_region_at(point)
-            self.assertIsNotNone(found)
-            self.assertEqual(found["kind"], "expr_init")
+            self.assertEqual(v._placeholder_label(self._rail(v)),
+                             "‹ 20 lines ›")
+            self.assertEqual(v._placeholder_label(self._rail(v, "expr_compute")),
+                             "‹ 2 lines ›")
         finally:
             v.deleteLater()
 
-    def test_an_open_fold_survives_the_rebake(self):
-        # refresh() runs on every return to the tab; an unfold that did not
-        # survive it would snap shut behind the user's back.
+    def test_the_hidden_bodies_survive_the_rebake(self):
+        # refresh() runs on every return to the tab, and setPlainText clears
+        # every visibility flag.
         _node, v = self._view()
         try:
-            rail = self._rail(v)
-            v.toggleFoldAt(rail["start"])
+            before = v.hiddenLineCount()
+            self.assertGreater(before, 0)
             v.refresh(force=True)
-            self.assertTrue(
-                v.document().findBlockByNumber(rail["start"] + 1).isVisible())
+            self.assertEqual(v.hiddenLineCount(), before)
         finally:
             v.deleteLater()
 
-    def test_toggling_a_line_that_is_not_a_rail_does_nothing(self):
+    # -- nothing opens ----------------------------------------------------
+
+    def test_nothing_expands(self):
+        import inspect
+
+        from mpynode.ui.widgets.api_view import NDApiView
+
         _node, v = self._view()
         try:
-            self.assertFalse(v.toggleFoldAt(10 ** 6))
+            self.assertFalse(hasattr(v, "toggleFoldAt"))
+            src = inspect.getsource(NDApiView.contextMenuEvent)
+            self.assertNotIn("Expand Body", src)
+            self.assertNotIn("Collapse Body", src)
         finally:
             v.deleteLater()
 
-    def test_the_rail_marker_covers_the_opening_delimiter_too(self):
+    def test_go_to_names_the_tab_that_authors_the_line(self):
+        _node, v = self._view(compute="x = 1\n")
+        try:
+            seen = []
+            v.tierActivated.connect(seen.append)
+            text, fire = v._go_to_target(self._rail(v), "")
+            self.assertEqual(text, "Go to Init")
+            fire()
+            self.assertEqual(seen, ["Init"])
+            text, _fire = v._go_to_target(self._rail(v, "expr_compute"), "")
+            self.assertEqual(text, "Go to Compute")
+            decl = [r for r in v.regions() if r["kind"] == "class_decl"][0]
+            self.assertIsNone(v._go_to_target(decl, ""))
+        finally:
+            v.deleteLater()
+
+    # -- the placeholder --------------------------------------------------
+
+    def test_the_placeholder_covers_the_opening_delimiter_too(self):
         # It starts at open_col -- where the call's argument begins -- NOT at
         # body_col, which is three columns further right, past the opening
         # delimiter. Anchored at body_col the reader was left looking at a
-        # bare triple quote and the first character of a body the marker says
+        # bare triple quote and the first character of a body the count says
         # is not being shown.
         _node, v = self._view()
         try:
             self._repaint(v)
             rail = self._rail(v)
             rect = v._marker_rects.get(rail["start"])
-            self.assertIsNotNone(rect, "no marker was drawn on the rail")
+            self.assertIsNotNone(rect, "no placeholder was drawn on the rail")
             metrics = v.fontMetrics()
             try:
                 char_w = metrics.horizontalAdvance("9")
             except AttributeError:
                 char_w = metrics.width("9")
             # The gap between the two IS the delimiter, and it is what the
-            # marker now swallows.
+            # placeholder swallows.
             self.assertEqual(rail["body_col"] - rail["open_col"], 3)
             open_at = (int(v.contentOffset().x())
                        + int(rail["open_col"] * char_w))
@@ -1159,7 +1181,7 @@ class TestFoldsAndWhatOpensThem(unittest.TestCase):
         finally:
             v.deleteLater()
 
-    def test_the_folded_rail_shows_no_quotes_at_all(self):
+    def test_the_rail_shows_no_quotes_at_all(self):
         # The rail used to open on a triple-SINGLE quote and close on a
         # triple-DOUBLE one, because the closer was hardcoded while the opener
         # is whichever of the two the exporter picked to dodge a collision in
@@ -1177,17 +1199,27 @@ class TestFoldsAndWhatOpensThem(unittest.TestCase):
         finally:
             v.deleteLater()
 
-    def test_an_opened_fold_leaves_no_stale_marker(self):
-        _node, v = self._view()
+
+@unittest.skipUnless(_qapp_available(), "Qt unavailable")
+class TestGoToReachesTheTab(unittest.TestCase):
+    def test_tier_activation_switches_the_strip(self):
+        from mpynode.wrappers.mpy_locator import MPyLocator
+        from mpynode.ui.widgets.script_tab_content import NDScriptTabContent
+
+        mc.file(new=True, force=True)
+        loc = MPyLocator.create(name="apiGoTo")
+        loc.set_init_expression("a = 1\n")
+        w = NDScriptTabContent(loc)
         try:
-            rail = self._rail(v)
-            self._repaint(v)
-            self.assertIn(rail["start"], v._marker_rects)
-            v.toggleFoldAt(rail["start"])
-            self._repaint(v)
-            self.assertNotIn(rail["start"], v._marker_rects)
+            tabs = w._inner_tabs
+            labels = [tabs.tabText(i) for i in range(tabs.count())]
+            tabs.setCurrentIndex(labels.index("API"))
+            w._api_view.tierActivated.emit("Init")
+            self.assertEqual(tabs.tabText(tabs.currentIndex()), "Init")
+            w._api_view.tierActivated.emit("Compute")
+            self.assertEqual(tabs.tabText(tabs.currentIndex()), "Compute")
         finally:
-            v.deleteLater()
+            w.deleteLater()
 
 
 @unittest.skipUnless(_qapp_available(), "Qt unavailable")
@@ -1272,12 +1304,18 @@ class TestAClickGoesWhereTheThingIsAuthored(unittest.TestCase):
         finally:
             v.deleteLater()
 
-    def test_the_view_no_longer_offers_a_tier_signal_at_all(self):
-        # Not merely unwired -- removed, so nothing can quietly reconnect it
-        # and bring the teleport back.
+    def test_a_left_click_never_emits_the_tier_signal(self):
+        # The signal exists again for the right-click "Go to <tier>" menu
+        # (2026-09), but a LEFT click on a rail still only highlights: the
+        # teleport that cost the reader their place stays retracted.
         _node, v = self._view()
+        seen = []
+        v.tierActivated.connect(seen.append)
         try:
-            self.assertFalse(hasattr(v, "tierActivated"))
+            rail = [r for r in v.regions()
+                    if r["kind"] == "expr_compute"][0]["start"]
+            self._click(v, self._mid_of(v, rail))
+            self.assertEqual(seen, [])
         finally:
             v.deleteLater()
 
