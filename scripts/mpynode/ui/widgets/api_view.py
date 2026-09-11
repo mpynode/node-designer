@@ -393,7 +393,7 @@ class NDApiView(QtPythonEditor):
                 # The blank lines above the class are the module zone's --
                 # text the user may write into, not a count to store.
                 continue
-            first = doc.findBlock(cursor.selectionStart()).blockNumber()
+            first = self._live_span(cursor, region)[0]
             count, probe = 0, first - 1
             while probe >= 0 and self._is_gap_line(probe):
                 count += 1
@@ -604,11 +604,22 @@ class NDApiView(QtPythonEditor):
                 best = other["start"]
         return best
 
-    def _live_span(self, cursor):
-        """``(first_block, last_block)`` for a region, as it stands NOW."""
-        doc = self.document()
-        return (doc.findBlock(cursor.selectionStart()).blockNumber(),
-                doc.findBlock(cursor.selectionEnd()).blockNumber())
+    def _live_span(self, cursor, region=None):
+        """``(first_block, last_block)`` for a region, as it stands NOW.
+
+        The module zone's cursor is anchored on the newline that ENDS the line
+        above it (see _build_region_cursors), so the anchor's own block is not
+        the zone's -- it is the imports' last line. Counted as the zone's it
+        lost its managed wash and offered the editable menu on a line nothing
+        can edit (the ``import maya.cmds as mc`` report). ONE place decides,
+        and every reader of a span goes through it.
+        """
+        doc   = self.document()
+        first = doc.findBlock(cursor.selectionStart()).blockNumber()
+        last  = doc.findBlock(cursor.selectionEnd()).blockNumber()
+        if region is not None and region.get("kind") == "module_zone":
+            first += 1
+        return first, last
 
     def _index_regions(self) -> None:
         self._block_region       = {}
@@ -622,7 +633,7 @@ class NDApiView(QtPythonEditor):
             self._fill_gaps()
             return
         for r, cursor in self._region_cursors:
-            first, last = self._live_span(cursor)
+            first, last = self._live_span(cursor, r)
             for ln in range(first, last + 1):
                 self._block_region[ln] = r
             self._index_placeholders(r, first)
@@ -759,7 +770,7 @@ class NDApiView(QtPythonEditor):
         for region, cursor in self._region_cursors or ():
             if region.get("kind") not in _ABOVE_TOP_ZONE:
                 continue
-            _first, last = self._live_span(cursor)
+            _first, last = self._live_span(cursor, region)
             block = doc.findBlockByNumber(last + 1)
             return block.position() if block.isValid() else 0
         for region in self._regions:
@@ -789,7 +800,7 @@ class NDApiView(QtPythonEditor):
         for region, cursor in self._region_cursors or ():
             if self._is_editable(region) or region.get("kind") in _ABOVE_TOP_ZONE:
                 continue
-            first = doc.findBlock(cursor.selectionStart()).blockNumber()
+            first = self._live_span(cursor, region)[0]
             if best is None or first < best:
                 best = first
         if best is None:
@@ -819,8 +830,7 @@ class NDApiView(QtPythonEditor):
     def _region_first_line(self, region) -> int:
         for other, cursor in self._region_cursors or ():
             if other is region:
-                return self.document().findBlock(
-                    cursor.selectionStart()).blockNumber()
+                return self._live_span(cursor, other)[0]
         return region["start"]
 
     def _is_gap_line(self, block_no: int) -> bool:

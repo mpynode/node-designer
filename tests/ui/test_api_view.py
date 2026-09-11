@@ -1424,6 +1424,21 @@ class TestTheModuleZoneIsYours(unittest.TestCase):
                 self.assertIs(v.regionAt(ln), zone)
             pos = v.document().findBlockByNumber(zone["start"]).position()
             self.assertTrue(v._allows(pos, pos), "typing at the zone's first char")
+            # The line ABOVE the zone -- the imports' last -- is still the
+            # imports': generated, washed, read-only menu, and Return at its
+            # start refused (only the imports' HEAD opens room above them).
+            # The zone's cursor is anchored on that line's newline, and the
+            # anchor's block was once counted as the zone's.
+            above   = zone["start"] - 1
+            imports = [r for r in v.regions() if r["kind"] == "imports"][0]
+            self.assertIs(v.regionAt(above), imports)
+            self.assertTrue(v._marks_generated(imports, above))
+            self.assertFalse(v._is_editable(v.regionAt(above)))
+            head = v.document().findBlockByNumber(above).position()
+            self.assertFalse(v._allows(head, head, False, True),
+                             "Return between two import lines must be refused")
+            self.assertFalse(v._starts_block(above))
+            self.assertEqual(v._region_first_line(zone), zone["start"])
             # The gaps INSIDE build() are still the bake's.
             header  = [r for r in v.regions() if r["kind"] == "expr_header"][0]
             gap_pos = v.document().findBlockByNumber(header["start"] - 1).position()
