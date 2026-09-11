@@ -7,7 +7,8 @@ navigator emits the key; :class:`NDScriptTabContent` owns the one implementation
 
     EXPRESSIONS   Init / Compute / [Viewport] / [OSL] -- greyed when the wrapper
                   has no setter, which a tab strip structurally cannot say
-    MODULE        hoisted imports, free functions, module classes + constants
+    MODULE SCOPE  hoisted imports, free functions, module classes + constants
+                  from the Methods source -- only when there are any
     CLASS · name  the managed skeleton -- class decl, build(), Inputs, Variables
     SETUP/DEMOS/  the members that DO something, each with a run affordance
     TESTS/COMMANDS
@@ -424,15 +425,22 @@ class NDScriptNavigator(QWidget):
         self._total_label.setText(_lines(total) if total else "")
 
     def _build_module(self, regions) -> None:
+        """Your Methods source's MODULE-scope code as it lands in the baked
+        .py: hoisted imports, free functions, constants, helper classes.
+
+        Absent when there is none. It used to show a "(no module scope)" row
+        on every plain node -- a stated zero was meant to read less broken
+        than an empty header, but a section named for a concept the node does
+        not use read as noise nobody could explain."""
         rows = [r for r in regions if r["kind"] in _MODULE_KINDS]
         if not rows:
-            # GOL has none; an empty header reads as broken, a stated zero
-            # does not.
-            section = self._section("MODULE", "module scope")
-            empty = self._row(section, "(no module scope)", "", "0 segments")
-            empty.setDisabled(True)
             return
-        section = self._section("MODULE", "module scope")
+        section = self._section("MODULE SCOPE", "from Methods")
+        section.setToolTip(
+            _COL_SYMBOL,
+            "Free functions, constants and imports written in your Methods "
+            "source, hoisted to module scope in the baked .py so the class "
+            "members can resolve them.")
         for r in rows:
             name = r.get("label") or r["kind"]
             kind = r.get("symbol_kind") or ""

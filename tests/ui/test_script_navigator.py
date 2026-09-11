@@ -84,13 +84,13 @@ class TestScriptNavigator(unittest.TestCase):
         try:
             titles = nav.sectionTitles()
             # EXPRESSIONS then CLASS: the two you reach for get the top of the
-            # pane. MODULE is reference, and sits below.
+            # pane. MODULE SCOPE is reference, and sits below.
             self.assertEqual(titles[0], "EXPRESSIONS")
             self.assertTrue(titles[1].startswith("CLASS · "), titles)
             self.assertLess(titles.index("EXPRESSIONS"),
-                            titles.index("MODULE"))
-            self.assertLess(titles.index(titles[1]), titles.index("MODULE"))
-            self.assertIn("MODULE", titles)
+                            titles.index("MODULE SCOPE"))
+            self.assertLess(titles.index(titles[1]), titles.index("MODULE SCOPE"))
+            self.assertIn("MODULE SCOPE", titles)
             self.assertIn("VARIABLES", titles)
         finally:
             nav.deleteLater()
@@ -191,11 +191,35 @@ class TestScriptNavigator(unittest.TestCase):
         # region map does not have that hole.
         nav = self._nav(self._locator())
         try:
-            names = self._names(nav, "MODULE")
+            names = self._names(nav, "MODULE SCOPE")
             self.assertIn("SetupError", names)
             self.assertIn("MAX_TRIES", names)
             self.assertIn("helper", names)
             self.assertIn("imports", names)
+        finally:
+            nav.deleteLater()
+
+    def test_no_module_scope_section_on_a_plain_node(self):
+        # A node whose Methods source has no module-scope code gets no
+        # section at all. It used to show "(no module scope) 0 segments",
+        # which named a concept the node does not use.
+        nav = self._nav(self._locator(methods=""))
+        try:
+            self.assertNotIn("MODULE SCOPE", nav.sectionTitles())
+            self.assertNotIn("MODULE", nav.sectionTitles())
+        finally:
+            nav.deleteLater()
+
+    def test_module_scope_section_explains_itself(self):
+        nav = self._nav(self._locator())
+        try:
+            titles = nav.sectionTitles()
+            self.assertIn("MODULE SCOPE", titles)
+            top = [nav._tree.topLevelItem(i)
+                   for i in range(nav._tree.topLevelItemCount())
+                   if nav._tree.topLevelItem(i).text(0) == "MODULE SCOPE"][0]
+            self.assertIn("Methods", top.toolTip(0))
+            self.assertIn("module scope", top.toolTip(0))
         finally:
             nav.deleteLater()
 
@@ -206,7 +230,7 @@ class TestScriptNavigator(unittest.TestCase):
         nav = self._nav(self._locator())
         try:
             self.assertNotIn(
-                "class SetupError(Exception):", self._names(nav, "MODULE"))
+                "class SetupError(Exception):", self._names(nav, "MODULE SCOPE"))
         finally:
             nav.deleteLater()
 
@@ -255,7 +279,7 @@ class TestScriptNavigator(unittest.TestCase):
         nav = self._nav(node)
         try:
             src = py_export.generate_node_script(node).split("\n")
-            for key in nav.keysUnder("MODULE"):
+            for key in nav.keysUnder("MODULE SCOPE"):
                 region = nav.regionForKey(key)
                 self.assertIsNotNone(region, key)
                 name = key.split(".", 1)[1]
@@ -518,7 +542,7 @@ class TestNavigatorInTheScriptTab(unittest.TestCase):
     def test_symbol_row_opens_the_api_view_at_that_line(self):
         loc, w = self._build()
         try:
-            keys = w._navigator.keysUnder("MODULE")
+            keys = w._navigator.keysUnder("MODULE SCOPE")
             self.assertTrue(keys)
             region = w._navigator.regionForKey(keys[-1])
             w._navigator.selectRequested.emit(keys[-1])
@@ -666,7 +690,7 @@ class TestNavigatorInTheScriptTab(unittest.TestCase):
     def test_navigator_and_api_view_agree(self):
         loc, w = self._build()
         try:
-            for key in w._navigator.keysUnder("MODULE"):
+            for key in w._navigator.keysUnder("MODULE SCOPE"):
                 region = w._navigator.regionForKey(key)
                 found = w._api_view.regionAt(region["start"])
                 self.assertIsNotNone(found, key)
