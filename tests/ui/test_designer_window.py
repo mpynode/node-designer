@@ -44,10 +44,10 @@ class TestReopenAutoSelect(unittest.TestCase):
         # The stale-tab prune delegates to the tab widget's pruneStaleTabs()
         # (MObjectHandle liveness), not an inline removeTab(i) loop. What
         # matters here is the ordering: auto-select AFTER the prune.
-        prune_marker = "pruneStaleTabs()"
+        prune_marker      = "pruneStaleTabs()"
         autoselect_marker = "_auto_select_first_node()"
-        prune_idx = src.find(prune_marker)
-        auto_idx = src.find(autoselect_marker)
+        prune_idx         = src.find(prune_marker)
+        auto_idx          = src.find(autoselect_marker)
         self.assertGreaterEqual(
             prune_idx,
             0,
@@ -73,9 +73,9 @@ class TestReopenAutoSelect(unittest.TestCase):
         scene\'s stale tree snapshot."""
         from mpynode.ui import mpynode_designer
 
-        src = inspect.getsource(mpynode_designer.NDMainWindow._handle_reopen)
+        src         = inspect.getsource(mpynode_designer.NDMainWindow._handle_reopen)
         refresh_idx = src.find("self._scene_tree.refresh()")
-        auto_idx = src.find("_auto_select_first_node()")
+        auto_idx    = src.find("_auto_select_first_node()")
         self.assertGreaterEqual(
             refresh_idx,
             0,
@@ -290,8 +290,8 @@ class TestScriptTabModuleShape(unittest.TestCase):
 
         src = inspect.getsource(NDScriptTabWidget._saveTab)
         self.assertIn("_SetExpressionCommand", src)
-        self.assertIn("run_undoable", src)
-        self.assertIn("markSaved", src)
+        self.assertIn("run_undoable",          src)
+        self.assertIn("markSaved",             src)
 
     def test_close_request_checks_dirty(self):
         import inspect
@@ -319,8 +319,8 @@ class TestToolbarModuleShape(unittest.TestCase):
 
         src = inspect.getsource(NDToolBar._build_buttons)
         self.assertIn("REGISTRY", src)
-        self.assertIn("New", src)
-        self.assertIn("Save", src)
+        self.assertIn("New",      src)
+        self.assertIn("Save",     src)
         self.assertIn("Save All", src)
 
     def test_toolbar_context_menu_is_noop(self):
@@ -360,8 +360,8 @@ class TestDesignerPhase16Wiring(unittest.TestCase):
         # the create is undoable and ends by opening the node's tab.
         src = inspect.getsource(NDMainWindow.addNewNodeEvent)
         self.assertIn("_new_node_command", src)
-        self.assertIn("run_undoable", src)
-        self.assertIn("_post_create", src)
+        self.assertIn("run_undoable",      src)
+        self.assertIn("_post_create",      src)
 
         # The tab gets opened + raised in the factored-out tail.
         post_src = inspect.getsource(NDMainWindow._post_create)
@@ -391,10 +391,10 @@ class TestDesignerPhase16Wiring(unittest.TestCase):
         from mpynode.ui.mpynode_designer import NDMainWindow
 
         src = inspect.getsource(NDMainWindow._build_toolbar)
-        self.assertIn("NDToolBar", src)
-        self.assertIn("on_new_node", src)
+        self.assertIn("NDToolBar",    src)
+        self.assertIn("on_new_node",  src)
         self.assertIn("on_save_node", src)
-        self.assertIn("on_save_all", src)
+        self.assertIn("on_save_all",  src)
 
 
 @unittest.skipUnless(_qt_available(), "Qt unavailable")
@@ -504,18 +504,18 @@ class TestAttrColorRegistry(unittest.TestCase):
         original mpynode_designer.py)."""
         from mpynode.ui.widgets.icons import ATTR_TYPE_COLORS
 
-        self.assertEqual(ATTR_TYPE_COLORS["int"], (0, 128, 1))
-        self.assertEqual(ATTR_TYPE_COLORS["float"], (80, 230, 80))
-        self.assertEqual(ATTR_TYPE_COLORS["vector"], (80, 230, 80))
-        self.assertEqual(ATTR_TYPE_COLORS["angle"], (128, 230, 230))
-        self.assertEqual(ATTR_TYPE_COLORS["bool"], (221, 135, 36))
-        self.assertEqual(ATTR_TYPE_COLORS["matrix"], (128, 170, 170))
-        self.assertEqual(ATTR_TYPE_COLORS["mesh"], (230, 1, 230))
-        self.assertEqual(ATTR_TYPE_COLORS["nurbsCurve"], (128, 230, 230))
+        self.assertEqual(ATTR_TYPE_COLORS["int"],          (0, 128, 1))
+        self.assertEqual(ATTR_TYPE_COLORS["float"],        (80, 230, 80))
+        self.assertEqual(ATTR_TYPE_COLORS["vector"],       (80, 230, 80))
+        self.assertEqual(ATTR_TYPE_COLORS["angle"],        (128, 230, 230))
+        self.assertEqual(ATTR_TYPE_COLORS["bool"],         (221, 135, 36))
+        self.assertEqual(ATTR_TYPE_COLORS["matrix"],       (128, 170, 170))
+        self.assertEqual(ATTR_TYPE_COLORS["mesh"],         (230, 1, 230))
+        self.assertEqual(ATTR_TYPE_COLORS["nurbsCurve"],   (128, 230, 230))
         self.assertEqual(ATTR_TYPE_COLORS["nurbsSurface"], (128, 128, 128))
-        self.assertEqual(ATTR_TYPE_COLORS["string"], (255, 218, 76))
-        self.assertEqual(ATTR_TYPE_COLORS["python"], (255, 218, 76))
-        self.assertEqual(ATTR_TYPE_COLORS["enum"], (146, 101, 49))
+        self.assertEqual(ATTR_TYPE_COLORS["string"],       (255, 218, 76))
+        self.assertEqual(ATTR_TYPE_COLORS["python"],       (255, 218, 76))
+        self.assertEqual(ATTR_TYPE_COLORS["enum"],         (146, 101, 49))
 
 
 # ===========================================================================
@@ -641,9 +641,9 @@ class TestDirectionRadioBugFix(unittest.TestCase):
         from mpynode.ui.dialogs.add_attr import NDAddAttrDialog
 
         src = inspect.getsource(NDAddAttrDialog._build_ui)
-        self.assertIn("QButtonGroup(self)", src)
-        self.assertIn("setExclusive(True)", src)
-        self.assertIn("addButton(self._input_radio)", src)
+        self.assertIn("QButtonGroup(self)",            src)
+        self.assertIn("setExclusive(True)",            src)
+        self.assertIn("addButton(self._input_radio)",  src)
         self.assertIn("addButton(self._output_radio)", src)
 
     def test_signal_handler_uses_buttongroup_signal(self):
@@ -748,12 +748,12 @@ class TestShowDesignerSingleton(unittest.TestCase):
         src = inspect.getsource(dm.show_designer)
         # NDMainWindow must be constructed AFTER the findChild lookup and its
         # early-return on hit.
-        find_idx = src.find("findChild")
+        find_idx   = src.find("findChild")
         return_idx = src.find("return existing")
-        ctor_idx = src.find("NDMainWindow(parent=parent)")
-        self.assertGreater(find_idx, -1)
+        ctor_idx   = src.find("NDMainWindow(parent=parent)")
+        self.assertGreater(find_idx,   -1)
         self.assertGreater(return_idx, -1)
-        self.assertGreater(ctor_idx, -1)
+        self.assertGreater(ctor_idx,   -1)
         self.assertLess(find_idx, return_idx)
         self.assertLess(return_idx, ctor_idx)
 
@@ -781,7 +781,7 @@ class TestNDMainWindowHardSingleton(unittest.TestCase):
 
         src = inspect.getsource(NDMainWindow.__init__)
         # Must call findChild before super().__init__ to catch the bypass.
-        find_idx = src.find("findChild")
+        find_idx  = src.find("findChild")
         super_idx = src.find("super().__init__")
         self.assertGreater(find_idx, -1, "must use findChild for singleton check")
         self.assertGreater(super_idx, -1)
@@ -895,9 +895,9 @@ class TestReopenAfterSceneChange(unittest.TestCase):
                 # (None). Reversed so pop indices stay valid.
                 pruned = []
                 for i in reversed(range(self.count())):
-                    tab = self._tabs[i][1]
+                    tab     = self._tabs[i][1]
                     checker = getattr(tab, "isBackingNodeAlive", None)
-                    alive = checker() if callable(checker) else None
+                    alive   = checker() if callable(checker) else None
                     if alive is not False:
                         continue
                     try:
@@ -966,15 +966,15 @@ class TestReopenAfterSceneChange(unittest.TestCase):
         class _StandIn:
             pass
 
-        s = _StandIn()
-        s._scene_callback_ids = []
-        s._node_attr_callbacks = {}
+        s                            = _StandIn()
+        s._scene_callback_ids        = []
+        s._node_attr_callbacks       = {}
         s._node_connection_callbacks = {}
-        s._current_node = None
-        s._script_tab_widget = _FakeTabWidget()
-        s._scene_tree = _FakeSceneTree()
+        s._current_node              = None
+        s._script_tab_widget         = _FakeTabWidget()
+        s._scene_tree                = _FakeSceneTree()
 
-        s._registered = 0
+        s._registered        = 0
         s._set_current_calls = []
 
         def _fake_register():
@@ -1019,7 +1019,7 @@ class TestReopenAfterSceneChange(unittest.TestCase):
 
     def test_reopen_re_registers_scene_callbacks_when_torn_down(self):
         """If callbacks were torn down (closeEvent), reopen registers them."""
-        s = self._make_stand_in()
+        s                     = self._make_stand_in()
         s._scene_callback_ids = []  # simulate torn-down state
         s._handle_reopen()
         self.assertEqual(s._registered, 1)
@@ -1039,7 +1039,7 @@ class TestReopenAfterSceneChange(unittest.TestCase):
         """closeEvent drops the stored-var store listener; reopen must
         re-subscribe it or the Storage panel stops auto-refreshing on stored-var
         changes for the rest of the session."""
-        s = self._make_stand_in()
+        s                       = self._make_stand_in()
         s._stored_vars_listener = None  # simulate closeEvent teardown
         s._handle_reopen()
         self.assertEqual(
@@ -1049,14 +1049,14 @@ class TestReopenAfterSceneChange(unittest.TestCase):
     def test_reopen_skips_stored_var_resubscribe_when_alive(self):
         """If the listener is still alive (no close happened), don't re-subscribe
         (the add is idempotent, but the guard keeps intent clear + avoids churn)."""
-        s = self._make_stand_in()
+        s                       = self._make_stand_in()
         s._stored_vars_listener = object()  # still subscribed
         s._handle_reopen()
         self.assertEqual(s._stored_var_registers, 0)
 
     def test_reopen_skips_re_register_when_callbacks_alive(self):
         """If callbacks are still alive (no close happened), don't double-register."""
-        s = self._make_stand_in()
+        s                     = self._make_stand_in()
         s._scene_callback_ids = [99]  # already registered
         s._handle_reopen()
         self.assertEqual(s._registered, 0)
@@ -1106,7 +1106,7 @@ class TestReopenAfterSceneChange(unittest.TestCase):
 
     def test_reopen_always_refreshes_scene_tree(self):
         """Reopen should always re-query the Scene tree."""
-        s = self._make_stand_in()
+        s      = self._make_stand_in()
         before = s._scene_tree.refresh_count
         s._handle_reopen()
         self.assertEqual(s._scene_tree.refresh_count, before + 1)
@@ -1311,8 +1311,8 @@ class TestSceneTreeSingleSelect(unittest.TestCase):
         from mpynode.ui.widgets.scene_tree import NDSceneTree
 
         src = inspect.getsource(NDSceneTree._build_context_menu)
-        self.assertNotIn("compileNodesRequested", src)   # old plural signal gone
-        self.assertNotIn("native plugin", src)           # old action label gone
+        self.assertNotIn("compileNodesRequested", src)  # old plural signal gone
+        self.assertNotIn("native plugin", src)          # old action label gone
 
     def test_other_signals_and_menu_actions_intact(self):
         """Guard against over-deletion: every NON-compile feature stays."""
@@ -1323,10 +1323,10 @@ class TestSceneTreeSingleSelect(unittest.TestCase):
             self.assertTrue(hasattr(NDSceneTree, sig),
                             "scene-tree signal %s must survive" % sig)
         src = inspect.getsource(NDSceneTree._build_context_menu)
-        self.assertIn("Rename Node", src)
+        self.assertIn("Rename Node",          src)
         self.assertIn("Select Node in Scene", src)
-        self.assertIn("Export to", src)
-        self.assertIn("Delete Node", src)
+        self.assertIn("Export to",            src)
+        self.assertIn("Delete Node",          src)
 
 
 class TestDesignerCompileWiring(unittest.TestCase):
