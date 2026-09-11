@@ -1191,5 +1191,25 @@ class TestTextureNodesAreTimedOnABake(unittest.TestCase):
                          "geo density 90 / array length 2000")
 
 
+# ------------------------------------------------------- harness preflight
+class TestBenchmarkHarnessPreflight(unittest.TestCase):
+    """Every timing above shells out to tools/harness/benchmark_node.py. A
+    checkout without tools/ has no perturbation, floor or fingerprint at all;
+    the compile controller asks this helper before the optimize step so the
+    cause is named once, not as N "kept original" rows."""
+
+    def test_present_in_this_tree(self):
+        self.assertIsNone(optimizer_live.benchmark_harness_problem())
+
+    def test_missing_names_the_path_and_what_is_lost(self):
+        bogus = os.path.join(tempfile.gettempdir(), "no_such_dir",
+                             "benchmark_node.py")
+        with mock.patch.object(optimizer_live, "_BENCHMARK_SCRIPT", bogus):
+            why = optimizer_live.benchmark_harness_problem()
+        self.assertIn(bogus, why)
+        for needle in ("perturbation", "noise floor", "fingerprint"):
+            self.assertIn(needle, why)
+
+
 if __name__ == "__main__":
     unittest.main()

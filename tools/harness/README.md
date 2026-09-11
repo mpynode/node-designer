@@ -62,7 +62,9 @@ in `templates/` instead of re-porting every `.mpn`.
 `benchmark_node.py` is the only file here that shipped code depends on: the AI
 optimizer shells out to it at runtime (`native/ai/optimizer_live.py`,
 `optimizer_agent.py` — both hold its path in `_BENCHMARK_SCRIPT`). Moving or
-renaming it silently turns every optimization "unmeasurable", with no error.
+renaming it is caught by the compile preflight
+(`optimizer_live.benchmark_harness_problem`): AI optimize is refused up front
+with the path named, and the deterministic build still ships.
 
 ```bash
 "$MAYAPY" tools/harness/benchmark_node.py <bundle> <node_type> [--out outMesh]

@@ -1302,6 +1302,35 @@ class TestOptimizeSummaryCarriesHowTheLoopEnded(unittest.TestCase):
                          (0, 0, ""))
 
 
+class TestOptimizePreflightNeedsTheBenchmarkHarness(unittest.TestCase):
+    """Every optimize timing shells out to tools/harness/benchmark_node.py --
+    the input perturbation, the noise floor and the output fingerprint all live
+    there. A checkout shipped without tools/ used to surface as N "kept original
+    (baseline could not be benchmarked)" rows. Now the step is refused up front,
+    once, naming the path, and the deterministic build still ships."""
+
+    def test_missing_harness_skips_optimize_and_names_the_cause(self):
+        from mpynode.native.ai import optimizer_live
+
+        why = ("tools/harness/benchmark_node.py not found at /nowhere/"
+               "benchmark_node.py -- the gated benchmark cannot run")
+        surviving = unittest.mock.Mock(return_value={})
+        with unittest.mock.patch.object(optimizer_live,
+                                        "benchmark_harness_problem",
+                                        return_value=why):
+            result = _compile_with_optimize_result(None, surviving=surviving)
+        surviving.assert_not_called()
+        status = result["optimize"]["__status__"]
+        self.assertIn("benchmark harness is missing", status)
+        self.assertIn("/nowhere/benchmark_node.py", status)
+        self.assertTrue(any("benchmark harness" in str(e)
+                            for e in result["errors"]), result["errors"])
+        node = next(n for n in result["nodes"]
+                    if n["type_name"] == "cubicCurveSampler")
+        self.assertEqual(node["build_status"], "compiled",
+                         "the deterministic build must still ship")
+
+
 # ===================== from test_file_read_support.py =====================
 import os
 

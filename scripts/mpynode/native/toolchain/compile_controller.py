@@ -1070,9 +1070,18 @@ def compile_plugin(specs, plugin_name, out_dir, *, strict=True, verify=True,
     opt_ai_status = {}
     ai_never_ran = ""
     if optimize and not _cancelled(cancel_event):
-        prov = porter.check_provider(provider, model)
+        # Two preflights, one failure shape (emit fail + __status__ + error,
+        # and the deterministic build still links). The ruler first: without
+        # tools/harness/benchmark_node.py nothing the AI proposed could be
+        # timed, and every node would come back "kept original" for a reason
+        # that names no cause; there is no point probing the provider then.
+        harness_problem = optimizer_live.benchmark_harness_problem()
+        prov = ({"ok": False, "problems": [harness_problem]} if harness_problem
+                else porter.check_provider(provider, model))
         if not prov.get("ok"):
             reason = _preflight_message(
+                "AI optimize was requested but the benchmark harness is missing."
+                if harness_problem else
                 "AI optimize was requested but the provider is not reachable.",
                 prov.get("problems"))
             _emit(progress_cb, "optimize", None, "fail", reason, 0, n_total)

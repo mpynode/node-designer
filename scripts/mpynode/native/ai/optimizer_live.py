@@ -52,6 +52,23 @@ _HARNESS_DIR = os.path.normpath(os.path.join(
     "tools", "harness"))
 _BENCHMARK_SCRIPT = os.path.join(_HARNESS_DIR, "benchmark_node.py")
 
+
+def benchmark_harness_problem():
+    """Why the gated benchmark cannot run, or ``None`` when it can.
+
+    Every optimize timing shells out to ``_BENCHMARK_SCRIPT`` -- the input
+    perturbation between ticks, the noise-floor ladder and the output
+    fingerprint all live there (``_measure``). A checkout shipped without
+    ``tools/`` has none of it, and used to surface only as N "kept original
+    (baseline could not be benchmarked)" rows. The compile controller asks this
+    before starting the optimize step so the cause is named once instead."""
+    if os.path.isfile(_BENCHMARK_SCRIPT):
+        return None
+    return ("tools/harness/benchmark_node.py not found at %s -- the gated "
+            "benchmark (input perturbation between ticks, noise floor, output "
+            "fingerprint) cannot run, so no candidate could be measured"
+            % _BENCHMARK_SCRIPT)
+
 # Bench-scene ladder: (geo_density, array_len). A measurement dominated by fixed
 # DG/marshalling cost cannot reveal an algorithmic win, so the scene grows until
 # the node's own work dominates. Sizes mirror real rig regimes (density 40 is
