@@ -791,12 +791,14 @@ class NDMainWindow(QMainWindow):
             )
         except Exception:
             pass
-        # An Identity-tab (re)name must re-render the scene-tree Option A label.
+        # An Identity-tab name / rename / clear must re-render everything that
+        # prints the Class: the scene-tree Option A label, the Outline and the
+        # API view (the Identity panel itself already shows it).
         try:
             self._identity_widget.classChanged.connect(
-                lambda _name: self._scene_tree.refresh_node_class_tag(
-                    self._current_node.get_name()
-                    if self._current_node else None))
+                lambda _name: self._refresh_class_views(
+                    [self._current_node.get_name()]
+                    if self._current_node else []))
         except Exception:
             pass
 
@@ -1201,7 +1203,10 @@ class NDMainWindow(QMainWindow):
     def _prompt_for_class_name(self, py_node, *, default: str = "") -> str | None:
         """Ask the user for a Class name (PascalCase). Loops on an invalid
         identifier; WARNS (but allows) a leading-lowercase name. Returns the
-        name, or ``None`` if the user cancelled.
+        name, ``None`` if the user cancelled, or ``""`` when a CLASSED node
+        (``default`` non-empty) was confirmed blank -- the caller reads that as
+        "clear the Class". A blank on a class-less node is a cancel: there is
+        nothing to clear.
 
         Used as the bake ``prompt_fn`` and by "Name Class…" / "Rename Class" /
         "Reclassify". The class name is an IDENTITY choice -- it is never
@@ -1220,6 +1225,8 @@ class NDMainWindow(QMainWindow):
             if not ok:
                 return None
             entered = (entered or "").strip()
+            if not entered:
+                return "" if default else None
             if not is_valid_class_name(entered):
                 QMessageBox.warning(
                     self,
@@ -1308,15 +1315,53 @@ class NDMainWindow(QMainWindow):
         finally:
             if opened:
                 mc.undoInfo(closeChunk=True)
-        for n in targets:
-            self._scene_tree.refresh_node_class_tag(n)
-        # Keep the Identity panel in sync if it is showing an affected node.
+        self._refresh_class_views(targets)
+
+    def _clear_class_name(self, node_name: str, native_type: str) -> None:
+        """Unstamp ``class_path`` from ONE node -- a blank confirmed in the
+        Rename Class prompt (the Identity field does the same through
+        ``classChanged``). Other instances of the Class are untouched, the
+        Reclassify scope; naming the node again undoes it."""
+        from mpynode._node_registry import wrap_node
+
+        try:
+            py_node = wrap_node(node_name, native_type)
+        except Exception:
+            py_node = None
+        if py_node is None:
+            return
+        try:
+            py_node.clear_py_class()
+        except Exception:
+            return
+        self._refresh_class_views([node_name])
+
+    def _refresh_class_views(self, names) -> None:
+        """Re-render everything that prints a Class for ``names``: the Scene
+        tree tag, the Identity panel (when it shows one of them) and any open
+        Outline / API view. The last two used to re-bake only when their tab
+        came forward, so a rename showed there one tab-click late -- and a
+        clear not at all."""
+        names = [n for n in (names or []) if n]
+        for n in names:
+            try:
+                self._scene_tree.refresh_node_class_tag(n)
+            except Exception:
+                pass
         try:
             if (self._current_node is not None
-                    and self._current_node.get_name() in targets):
+                    and self._current_node.get_name() in names):
                 self._identity_widget.setPyNode(self._current_node)
         except Exception:
             pass
+        tabs = getattr(self, "_script_tab_widget", None)
+        if tabs is None:
+            return
+        for n in names:
+            try:
+                tabs.refreshIdentityViewsForNode(n)
+            except Exception:
+                pass
 
     def _on_compile_dialog_classes_stamped(self, names) -> None:
         """#68: the compile dialog's class-less gate stamped a canonical Class
@@ -1329,17 +1374,7 @@ class NDMainWindow(QMainWindow):
             names = []
         if not names:
             return
-        for n in names:
-            try:
-                self._scene_tree.refresh_node_class_tag(n)
-            except Exception:
-                pass
-        try:
-            if (self._current_node is not None
-                    and self._current_node.get_name() in names):
-                self._identity_widget.setPyNode(self._current_node)
-        except Exception:
-            pass
+        self._refresh_class_views(names)
 
     def _on_name_class_requested(
         self, node_name: str, native_type: str
@@ -1347,8 +1382,9 @@ class NDMainWindow(QMainWindow):
         """Scene-tree "Name Class…" (class-less) / "Rename Class" (classed):
         prompt for a Class name and apply it. A class-less node is simply named
         (this node only); a classed node's rename cascades to every scene
-        instance of the Class. Synthesizes the in-memory ``mpynode_user.<Name>``
-        class and stamps the canonical ``class_path``; refreshes the tags."""
+        instance of the Class; a classed node confirmed BLANK is cleared (this
+        node only). Synthesizes the in-memory ``mpynode_user.<Name>`` class and
+        stamps the canonical ``class_path``; refreshes every Class view."""
         from mpynode._node_registry import wrap_node
 
         try:
@@ -1365,7 +1401,10 @@ class NDMainWindow(QMainWindow):
         except Exception:
             current = ""
         name = self._prompt_for_class_name(py_node, default=current)
+        if name is None:
+            return
         if not name:
+            self._clear_class_name(node_name, native_type)
             return
         # A classed node -> Rename (cascade); a class-less node -> Name (self).
         self._apply_class_name(

@@ -185,5 +185,58 @@ class TestIdentityTab(unittest.TestCase):
 # else (the Scene tree shows it read-only in column 1).
 
 
+class TestClearingTheClass(unittest.TestCase):
+    """Blank + Enter unstamps THIS node. There used to be no way back to
+    class-less from any UI: the field ignored a blank, the prompt read it as
+    Cancel, and the scene tree's comment called the omission deliberate."""
+
+    def test_blank_clears_a_classed_node_and_emits(self):
+        from mpynode.wrappers._mpy_node import MPyNode
+        from mpynode.ui.widgets.identity_tab import NDIdentityWidget
+
+        n = MPyNode.create(name="idclear#")
+        n.set_py_class("mpynode_user.Doomed")
+        w = NDIdentityWidget()
+        w.setPyNode(n)
+        self.assertEqual(w.class_name_text(), "Doomed")
+        emitted = []
+        w.classChanged.connect(lambda s: emitted.append(s))
+        w._class_edit.setText("")
+        w._commit_class()
+        self.assertFalse(n.get_py_class())
+        self.assertEqual(w.class_name_text(), "")
+        self.assertEqual(w.node_type_text(), "")
+        self.assertEqual(emitted, [""])
+
+    def test_blank_on_a_classless_node_is_a_no_op(self):
+        from mpynode.wrappers._mpy_node import MPyNode
+        from mpynode.ui.widgets.identity_tab import NDIdentityWidget
+
+        n = MPyNode.create(name="idblank#")
+        w = NDIdentityWidget()
+        w.setPyNode(n)
+        emitted = []
+        w.classChanged.connect(lambda s: emitted.append(s))
+        w._class_edit.setText("")
+        w._commit_class()          # focus-out on an empty field, nothing to do
+        self.assertEqual(emitted, [])
+        self.assertFalse(n.get_py_class())
+
+    def test_clearing_one_instance_leaves_its_siblings_classed(self):
+        from mpynode.wrappers._mpy_node import MPyNode
+        from mpynode.ui.widgets.identity_tab import NDIdentityWidget
+
+        a = MPyNode.create(name="idsibA#")
+        b = MPyNode.create(name="idsibB#")
+        a.set_py_class("mpynode_user.Shared")
+        b.set_py_class("mpynode_user.Shared")
+        w = NDIdentityWidget()
+        w.setPyNode(a)
+        w._class_edit.setText("")
+        w._commit_class()
+        self.assertFalse(a.get_py_class())
+        self.assertEqual(b.get_py_class(), "mpynode_user.Shared")
+
+
 if __name__ == "__main__":
     unittest.main()

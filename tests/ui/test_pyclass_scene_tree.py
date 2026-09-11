@@ -229,6 +229,47 @@ class TestNameRenameForkHandlers(unittest.TestCase):
         self.assertEqual(a.get_py_class(), "mpynode_user.Forked")  # forked away
         self.assertEqual(b.get_py_class(), "mpynode_user.Foo")     # sibling kept
 
+    def test_blank_rename_clears_only_this_instance(self):
+        # The prompt returns "" for a classed node confirmed blank; the handler
+        # clears THIS node (the Reclassify scope), never the cascade.
+        from mpynode import MPyNode
+
+        a = MPyNode.create(name="clrA#")
+        b = MPyNode.create(name="clrB#")
+        a.set_py_class("mpynode_user.Foo")
+        b.set_py_class("mpynode_user.Foo")
+        self._win("")._on_name_class_requested(a.get_name(), "mPyNode")
+        self.assertFalse(a.get_py_class())
+        self.assertEqual(b.get_py_class(), "mpynode_user.Foo")
+
+    def test_cancel_is_still_a_no_op(self):
+        from mpynode import MPyNode
+
+        a = MPyNode.create(name="cancA#")
+        a.set_py_class("mpynode_user.Foo")
+        self._win(None)._on_name_class_requested(a.get_name(), "mPyNode")
+        self.assertEqual(a.get_py_class(), "mpynode_user.Foo")
+
+    def test_every_class_change_refreshes_the_open_views(self):
+        # Name, cascade rename and clear all route through _refresh_class_views,
+        # which re-bakes the open Outline / API view for each affected node.
+        from unittest import mock
+
+        from mpynode import MPyNode
+
+        a = MPyNode.create(name="rvA#")
+        b = MPyNode.create(name="rvB#")
+        w = type(self)._window
+        with mock.patch.object(w._script_tab_widget, "refreshIdentityViewsForNode",
+                               return_value=0) as refreshed:
+            self._win("Foo")._on_name_class_requested(a.get_name(), "mPyNode")
+            b.set_py_class("mpynode_user.Foo")
+            self._win("Bar")._on_name_class_requested(a.get_name(), "mPyNode")
+            self._win("")._on_name_class_requested(a.get_name(), "mPyNode")
+        seen = [c.args[0] for c in refreshed.call_args_list]
+        self.assertEqual(seen.count(a.get_name()), 3)   # name, rename, clear
+        self.assertIn(b.get_name(), seen)                # cascaded rename
+
 
 class TestConvertToCppMenu(unittest.TestCase):
     """The scene tree exposes a convertToCppRequested signal and a "Convert Node

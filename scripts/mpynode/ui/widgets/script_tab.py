@@ -461,6 +461,25 @@ class NDScriptTabWidget(QTabWidget):
     def getAllTabs(self) -> list:
         return [self.widget(i) for i in range(self.count())]
 
+    def refreshIdentityViewsForNode(self, node_name: str) -> int:
+        """Re-bake the API view and Outline of every open tab for ``node_name``
+        -- its Class changed -- leaving the expression editors alone (see
+        ``NDScriptTabContent.refreshIdentityViews``). Returns the tab count."""
+        n = 0
+        for tab in self.getAllTabs():
+            fn = getattr(tab, "refreshIdentityViews", None)
+            node = tab.getMPyNode() if hasattr(tab, "getMPyNode") else None
+            if fn is None or node is None:
+                continue
+            try:
+                if node.get_name() != node_name:
+                    continue
+                fn()
+                n += 1
+            except Exception:
+                pass
+        return n
+
     def nodeNameForIndex(self, idx: int):
         """Name of the mPyNode owning tab ``idx`` (or None).
 

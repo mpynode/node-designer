@@ -560,7 +560,8 @@ class NDSceneTree(QTreeWidget):
 
             # Class-less -> "Name Class…". Classed -> "Rename Class" (cascades
             # to every instance) plus "Reclassify" (this instance only).
-            # Clearing a subclass is deliberately absent -- forking covers it.
+            # Clearing: confirm the Rename Class prompt BLANK, or blank the
+            # Identity field -- this instance only, like Reclassify.
             from mpynode.wrappers._mpy_node import _read_py_class
 
             menu.addSeparator()
@@ -568,7 +569,8 @@ class NDSceneTree(QTreeWidget):
             name_act = QAction(
                 "Rename Class" if _classed else "Name Class…", menu)
             name_act.setToolTip(
-                "Rename this Class (re-stamps every scene instance of it)"
+                "Rename this Class (re-stamps every scene instance of it); "
+                "confirm blank to clear this node's Class"
                 if _classed else
                 "Name this node's Class (its Class identity + baked class name)"
             )

@@ -11,7 +11,9 @@ else is derived and read-only:
 * class-less is a valid first-class state: the field reads empty and naming is
   gated at Compile/Bake. Typing a PascalCase name + Enter synthesizes the
   in-memory ``mpynode_user.<Name>`` class, stamps the node, and emits
-  ``classChanged`` so the rest of the UI (scene tree) re-renders.
+  ``classChanged`` so the rest of the UI (scene tree, Outline, API view)
+  re-renders. Blanking the field + Enter clears the Class again -- this node
+  only -- and emits ``classChanged("")``.
 
 Importing the module stays Qt-only (method-local maya/wrapper imports),
 so it is safe to import headless / before standalone init.
@@ -83,7 +85,8 @@ class NDIdentityWidget(QWidget):
         self._class_edit = QLineEdit(self)
         self._class_edit.setObjectName("ndIdClassEdit")
         self._class_edit.setPlaceholderText(
-            "Type a Class name (PascalCase) + Enter to name this node")
+            "Type a Class name (PascalCase) + Enter to name this node; "
+            "blank + Enter clears it")
         class_row.addWidget(class_lbl)
         class_row.addWidget(self._class_edit)
         root.addLayout(class_row)
@@ -168,8 +171,6 @@ class NDIdentityWidget(QWidget):
         if n is None:
             return
         new = self._class_edit.text().strip()
-        if not new:
-            return
         # editingFinished ALSO fires on focus-out, so short-circuit an
         # unchanged name: clicking through the field must not re-synthesize,
         # re-stamp and re-emit classChanged for a redundant tree re-render.
@@ -178,6 +179,19 @@ class NDIdentityWidget(QWidget):
         except Exception:
             cur = ""
         if new == cur:
+            return
+        if not new:
+            # Blank + Enter on a classed node: clear THIS node's Class. Other
+            # instances of it keep theirs (the Reclassify scope), and naming
+            # it again undoes this. There used to be no way back to class-less
+            # from any UI.
+            try:
+                n.clear_py_class()
+            except Exception:
+                self.refresh()
+                return
+            self.refresh()
+            self.classChanged.emit("")
             return
         from mpynode._common.io.py_export import is_pascal_class_name
 

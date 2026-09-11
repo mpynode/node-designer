@@ -617,6 +617,18 @@ class NDScriptTabContent(QWidget):
     # Internal
     # ------------------------------------------------------------------
 
+    def refreshIdentityViews(self) -> None:
+        """Re-bake the two views that print the Class -- the API view and the
+        Outline -- and nothing else. ``refresh()`` also re-pulls every
+        expression editor, which resets their dirty baselines and would throw
+        away typed-but-unsaved code; a Class change must not cost that. (The
+        API view keeps unsaved Methods edits across its own refresh.)"""
+        if self._api_view is None:
+            return
+        self._api_view.refresh()
+        if self._navigator is not None:
+            self._navigator.refresh(self._api_view.regions())
+
     def _on_inner_dirty_changed(self, _is_dirty_inner: bool) -> None:
         # Aggregate dirty state across the inner editors.
         self.dirtyStateChanged.emit(self.hasUnsavedChanges())
