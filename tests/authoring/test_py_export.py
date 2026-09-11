@@ -1488,6 +1488,15 @@ class TestPersistentValuesInTheBake(unittest.TestCase):
         self.assertEqual(pe.summarize_value({"a": 1, "b": 2}), "dict · 2 keys")
         self.assertEqual(pe.summarize_value(3), "int 3")
         self.assertEqual(pe.summarize_value(True), "True")
+        # Audio and video containers are named, the same way the Variables tab
+        # names them, so the API placeholder reads "mp4 video \u00b7 1.5 KB".
+        self.assertEqual(
+            pe.summarize_value(b"\x00\x00\x00\x18ftypisom" + b"\x00" * 1524),
+            "mp4 video \u00b7 1.5 KB")
+        self.assertEqual(pe.summarize_value(b"ID3\x04\x00" + b"\x00" * 27),
+                         "mp3 audio \u00b7 32 B")
+        self.assertEqual(pe.summarize_value(b"\x00\x00\x00\x18ftypM4A " + b"\x00" * 4),
+                         "m4a audio \u00b7 16 B")
 
     def test_every_variable_line_is_addressable(self):
         # The Outline's variable rows locate their own line in the bake.

@@ -65,6 +65,22 @@ _GIF_BYTES = (
     b"\x00\x00\x02\x02D\x01\x00;"
 )
 _PNG_BYTES = b"\x89PNG\r\n\x1a\n" + b"\x00" * 32
+# An ISO base-media (mp4) header: size, ``ftyp``, an isom brand, padding.
+_MP4_BYTES = b"\x00\x00\x00\x18ftypisom\x00\x00\x02\x00" + b"\x00" * 1500
+
+
+def _real_png_bytes(w: int = 4, h: int = 3) -> bytes:
+    """A PNG Qt can decode (the fixture above is a header only)."""
+    from mpynode.ui.qt_wrapper import QBuffer, QByteArray, QImage
+
+    img = QImage(w, h, QImage.Format_RGB32)
+    img.fill(0xFFFF0000)
+    ba  = QByteArray()
+    buf = QBuffer(ba)
+    buf.open(QBuffer.WriteOnly)
+    img.save(buf, "PNG")
+    buf.close()
+    return bytes(ba.data())
 
 
 def _make_animated_gif_file():
@@ -105,6 +121,8 @@ class TestAudioDetection(unittest.TestCase):
         # an image byte blob does NOT (it has "Show as Image" instead)
         self.assertFalse(is_audio_candidate(_PNG_BYTES))
         self.assertFalse(is_audio_candidate(_GIF_BYTES))
+        # nor a video container (it gets a caption, no waveform toggle)
+        self.assertFalse(is_audio_candidate(_MP4_BYTES))
         # non-bytes never
         self.assertFalse(is_audio_candidate("string"))
         self.assertFalse(is_audio_candidate(42))
@@ -393,6 +411,54 @@ class TestViewModeWiring(unittest.TestCase):
         ip.attach_value(item, 1, _GIF_BYTES, "gif")
         self.assertTrue(ip.is_previewable_item(item, 1))
         self.assertFalse(ip.is_audio_item(item, 1))
+
+    def test_image_bytes_default_to_the_picture(self):
+        # The magic number is not ambiguous: a PNG blob (say, a persistent
+        # variable loaded from an .mpn) shows as the picture, the way a PIL
+        # image does. It used to default to SOURCE -- a byte dump.
+        from mpynode.ui.widgets import image_preview as ip
+
+        tree, item = self._item()
+        png = _real_png_bytes()
+        self.assertEqual(ip.previewable_kind(png), "bytes")
+        ip.attach_value(item, 1, png, "b'...'")
+        self.assertTrue(ip.is_showing_image(item, 1))
+        pm = item.data(1, ip.PREVIEW_ROLE)
+        self.assertIsNotNone(pm)
+        self.assertFalse(pm.isNull())
+        # The toggle still goes back to source and is honoured.
+        self.assertFalse(ip.toggle_value_mode(item, 1))
+        self.assertFalse(ip.is_showing_image(item, 1))
+
+    def test_undecodable_image_bytes_fall_back_to_source(self):
+        # A header with nothing behind it: previewable by signature, but Qt
+        # cannot decode it, so the honest view is the bytes.
+        from mpynode.ui.widgets import image_preview as ip
+
+        tree, item = self._item()
+        ip.attach_value(item, 1, _PNG_BYTES, "b'...'")
+        self.assertTrue(ip.is_previewable_item(item, 1))
+        self.assertFalse(ip.is_showing_image(item, 1))
+
+    def test_video_bytes_show_a_caption_not_a_dump(self):
+        from mpynode.ui.widgets import image_preview as ip
+
+        self.assertEqual(ip._video_container_kind(_MP4_BYTES), "mp4")
+        self.assertEqual(ip._video_container_kind(
+            b"\x00\x00\x00\x14ftypqt  " + b"\x00" * 8), "mov")
+        self.assertEqual(ip._video_container_kind(
+            b"\x1a\x45\xdf\xa3" + b"\x00" * 12), "webm")
+        self.assertIsNone(ip._video_container_kind(_PNG_BYTES))
+        # An audio-only M4A brand is audio, not video.
+        self.assertIsNone(ip._video_container_kind(
+            b"\x00\x00\x00\x18ftypM4A " + b"\x00" * 8))
+        tree, item = self._item()
+        ip.attach_value(item, 1, _MP4_BYTES, repr(_MP4_BYTES))
+        self.assertTrue(item.text(1).startswith("mp4 video \u00b7 "))
+        self.assertIn("KB", item.text(1))
+        self.assertFalse(ip.is_previewable_item(item, 1))
+        self.assertFalse(ip.is_audio_item(item, 1))
+        self.assertIn("no inline player", item.toolTip(1))
 
     def test_legacy_pcm_str_manual_waveform_toggle(self):
         # legacy bytes-as-str raw PCM behaves like raw-PCM bytes.

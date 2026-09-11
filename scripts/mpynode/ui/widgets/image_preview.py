@@ -4,17 +4,21 @@ A stored variable that holds an image can be shown as a thumbnail in the
 Value column instead of a text repr. Three value kinds are recognised:
 
   * ``PIL.Image.Image``                -> defaults to IMAGE view
-  * an image ``bytes``/``bytearray``   -> defaults to SOURCE view
+  * an image ``bytes``/``bytearray``   -> defaults to IMAGE view
     blob (PNG/JPEG/GIF/BMP/TIFF/WEBP, sniffed by magic bytes; decoded
     natively by Qt -- no PIL needed)
   * a ``uint8`` numpy array shaped      -> defaults to SOURCE view
     ``(H,W)`` / ``(H,W,1|3|4)``
 
-Ambiguous kinds (bytes / uint8 array -- might be data, might be a
-picture) default to SOURCE and expose a right-click "Show as Image"
-toggle; a real PIL image defaults to IMAGE. The per-row mode lives in
-:data:`SHOW_IMAGE_ROLE`; the (lazily built) master pixmap in
-:data:`PREVIEW_ROLE`.
+A uint8 array is genuinely ambiguous (data or picture) and so defaults to
+SOURCE with a right-click "Show as Image" toggle. Image BYTES are not: the
+magic number says what they are, so they default to IMAGE like a PIL image
+(they used to default to SOURCE, which showed a persistent PNG loaded from
+an .mpn as a byte dump). The toggle is offered either way and remembered
+per variable. A VIDEO container (mp4/mov/webm/avi/flv) is recognised too --
+there is no inline player, so its cell reads ``mp4 video · 1.2 MB`` instead
+of a byte dump. The per-row mode lives in :data:`SHOW_IMAGE_ROLE`; the
+(lazily built) master pixmap in :data:`PREVIEW_ROLE`.
 
 Sizing: the thumbnail fits the value column at its ACTUAL aspect ratio
 -- width == column width, height == width * (imgH/imgW) -- so the row is
@@ -211,6 +215,53 @@ def gif_movie_bytes(value):
     return None
 
 
+# Video containers we can NAME but not play inline. ``ftyp`` brands that are
+# video (an audio-only M4A/M4B/M4P brand is audio -- see
+# _audio_container_kind); EBML is webm/mkv; RIFF....AVI ; FLV\x01.
+_VIDEO_FTYP_BRANDS = (b"isom", b"iso2", b"mp41", b"mp42", b"avc1", b"mp71",
+                      b"MSNV", b"M4V ", b"qt  ", b"3gp4", b"3gp5")
+
+
+def _video_container_kind(value):
+    """``"mp4"`` / ``"mov"`` / ``"webm"`` / ``"avi"`` / ``"flv"`` from a
+    leading magic-byte sniff, or None. Named so the Variables and Watch tabs
+    can say what the blob is instead of dumping it; nothing renders it."""
+    if not isinstance(value, (bytes, bytearray)):
+        return None
+    if len(value) < 12:
+        return None
+    head = bytes(value[:12])
+    if head[4:8] == b"ftyp":
+        brand = head[8:12]
+        if brand == b"qt  ":
+            return "mov"
+        if brand in _VIDEO_FTYP_BRANDS:
+            return "mp4"
+        return None
+    if head[:4] == b"\x1a\x45\xdf\xa3":
+        return "webm"
+    if head[:4] == b"RIFF" and head[8:12] == b"AVI ":
+        return "avi"
+    if head[:4] == b"FLV\x01":
+        return "flv"
+    return None
+
+
+def video_caption(value) -> str:
+    """``mp4 video · 1.2 MB`` for a recognised video blob, else ``""``."""
+    kind = _video_container_kind(value)
+    if kind is None:
+        return ""
+    n = len(value)
+    if n < 1024:
+        size = "%d B" % n
+    elif n < 1024 * 1024:
+        size = "%.1f KB" % (n / 1024.0)
+    else:
+        size = "%.1f MB" % (n / (1024.0 * 1024.0))
+    return "%s video \u00b7 %s" % (kind, size)
+
+
 def _looks_like_wav_bytes(value) -> bool:
     """Cheap magic-byte sniff for a RIFF/WAVE container. Mirrors the WEBP
     branch in :func:`_looks_like_image_bytes` -- a WAV is ``RIFF....WAVE``."""
@@ -312,8 +363,9 @@ def is_audio_candidate(value) -> bool:
         return False
     if _looks_like_wav_bytes(b):
         return True
-    # Unknown non-image bytes could be raw PCM.
-    return not _looks_like_image_bytes(b)
+    # Unknown non-image, non-video bytes could be raw PCM.
+    return (not _looks_like_image_bytes(b)
+            and _video_container_kind(b) is None)
 
 
 def image_caption(value) -> str:
@@ -662,6 +714,14 @@ def attach_value(item, col, value, source_text: str):
     image view + toggle; a PIL image additionally builds its pixmap now
     and defaults to IMAGE view. Returns the kind or ``None``."""
     item.setText(col, source_text)
+    caption = video_caption(value)
+    if caption:
+        # A video blob: named, never dumped, never rendered (no inline player).
+        item.setText(col, caption)
+        item.setData(col, RAW_VALUE_ROLE, value)
+        item.setToolTip(col, "Video bytes \u2014 no inline player. %d bytes."
+                        % len(value))
+        return None
     kind = previewable_kind(value)
     audio = is_audio_candidate(value)
     if kind is None and not audio:
@@ -678,6 +738,13 @@ def attach_value(item, col, value, source_text: str):
             item.setData(col, SHOW_IMAGE_ROLE, True)
             item.setData(col, SHOW_WAVEFORM_ROLE, False)
             item.setToolTip(col, image_caption(value))
+            return kind
+    if kind == "bytes":
+        # The magic number says PNG/JPEG/GIF/...: show the picture, the way a
+        # PIL image is shown. Falls through to SOURCE only when Qt cannot
+        # decode the blob after all (a truncated file, an unsupported
+        # sub-format), where the byte dump is the honest view.
+        if set_image_view(item, col, True):
             return kind
     # A recognized container auto-renders as a waveform when the pref is on,
     # mirroring how a PIL image auto-shows as IMAGE. Headerless raw PCM has no

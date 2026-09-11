@@ -427,6 +427,25 @@ def _sniff_media(head: bytes):
         return "webp image"
     if head[:4] == b"RIFF" and head[8:12] == b"WAVE":
         return "wav audio"
+    if head[:3] == b"ID3" or (len(head) > 1 and head[0] == 0xFF
+                              and (head[1] & 0xE0) == 0xE0):
+        return "mp3 audio"
+    if head[:4] == b"OggS":
+        return "ogg audio"
+    if head[:4] == b"fLaC":
+        return "flac audio"
+    if head[:4] == b"FORM" and head[8:12] in (b"AIFF", b"AIFC"):
+        return "aiff audio"
+    if head[4:8] == b"ftyp":
+        if head[8:12] in (b"M4A ", b"M4B ", b"M4P "):
+            return "m4a audio"
+        return "mov video" if head[8:12] == b"qt  " else "mp4 video"
+    if head[:4] == b"\x1a\x45\xdf\xa3":
+        return "webm video"
+    if head[:4] == b"RIFF" and head[8:12] == b"AVI ":
+        return "avi video"
+    if head[:4] == b"FLV\x01":
+        return "flv video"
     return None
 
 
