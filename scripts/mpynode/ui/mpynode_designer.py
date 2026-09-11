@@ -3154,6 +3154,27 @@ class NDMainWindow(QMainWindow):
 _designer_instance: NDMainWindow | None = None
 
 
+def _ensure_on_screen(win) -> None:
+    """Move ``win`` onto the primary screen when no screen shows any of it --
+    a window parked on a monitor that has since been unplugged is as lost to
+    the user as a minimized one. The size is kept; only the position moves.
+    Best-effort: a failure here must never keep the window from showing."""
+    try:
+        try:
+            from PySide6.QtGui import QGuiApplication
+        except ImportError:
+            from PySide2.QtGui import QGuiApplication
+        screens = QGuiApplication.screens()
+        frame   = win.frameGeometry()
+        if not screens or any(s.availableGeometry().intersects(frame)
+                              for s in screens):
+            return
+        target = QGuiApplication.primaryScreen().availableGeometry()
+        win.move(target.left() + 40, target.top() + 40)
+    except Exception:
+        pass
+
+
 def show_designer() -> NDMainWindow:
     """Launch (or raise) the Node Designer window. See README for details.
 
@@ -3182,7 +3203,15 @@ def show_designer() -> NDMainWindow:
         if existing is not None:
             try:
                 _designer_instance = existing
+                # Minimized is where a "lost" window usually is: on Windows a
+                # child window shrinks to a title-bar stub at the bottom of
+                # Maya, and re-calling show() on it changes nothing, so the
+                # shelf button looked dead. showNormal() brings back the
+                # pre-minimize position and size.
+                if existing.isMinimized():
+                    existing.showNormal()
                 existing.show()
+                _ensure_on_screen(existing)
                 existing.raise_()
                 existing.activateWindow()
                 # A re-shown widget may be stale: the scene can change while
@@ -3201,6 +3230,7 @@ def show_designer() -> NDMainWindow:
     # No live instance found anywhere — construct, cache, show.
     _designer_instance = NDMainWindow(parent=parent)
     _designer_instance.show()
+    _ensure_on_screen(_designer_instance)  # a restored geometry may be off-screen
     _designer_instance.raise_()
     _designer_instance.activateWindow()
     return _designer_instance

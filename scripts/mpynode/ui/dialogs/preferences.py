@@ -126,15 +126,24 @@ class NDPreferencesDialog(QDialog):
         editor_grid.setHorizontalSpacing(6)
         editor_grid.addWidget(QLabel("Font family:"), 0, 0)
         self._font_family_combo = QComboBox()
-        # Installed fixed-pitch families only. The list used to be eight
-        # hard-coded names, half of which no given machine has, and the combo
-        # accepted anything typed -- so a saved family could name a font Qt
-        # then silently substituted. Non-editable: what is offered exists.
+        # "Maya default" first, as on the Fonts page. For the editor it is the
+        # EMPTY preference: the platform's own monospace -- Consolas on
+        # Windows, Monaco on macOS (preferences.default_editor_font_family),
+        # which stays the shipped default. Then installed fixed-pitch families
+        # only. The list used to be eight hard-coded names, half of which no
+        # given machine has, and the combo accepted anything typed -- so a
+        # saved family could name a font Qt then silently substituted.
+        # Non-editable: what is offered exists.
+        self._font_family_combo.addItem(preferences.UI_FONT_DEFAULT_LABEL)
         for fam in preferences.installed_monospace_families():
             self._font_family_combo.addItem(fam)
-        if self._font_family_combo.count() == 0:  # headless: no font database
+        if self._font_family_combo.count() == 1:  # headless: no font database
             self._font_family_combo.addItem(
                 preferences.default_editor_font_family())
+        self._font_family_combo.setToolTip(
+            "'%s' is the platform's own monospace: %s here."
+            % (preferences.UI_FONT_DEFAULT_LABEL,
+               preferences.default_editor_font_family()))
         editor_grid.addWidget(self._font_family_combo, 0, 1)
         editor_grid.addWidget(QLabel("Font size (pt):"), 1, 0)
         self._font_size_edit = QLineEdit()
@@ -150,14 +159,20 @@ class NDPreferencesDialog(QDialog):
             "1-based line number. Leave blank to auto-detect an installed "
             "editor (Cursor / VS Code / VSCodium / Sublime / PyCharm)."
         )
-        editor_grid.addWidget(self._external_editor_edit, 2, 1)
         self._external_editor_presets = QComboBox()
         for label, _cmd in _EDITOR_PRESETS:
             self._external_editor_presets.addItem(label)
         self._external_editor_presets.setToolTip(
             "Pick a known editor to fill in the command above."
         )
-        editor_grid.addWidget(self._external_editor_presets, 2, 2)
+        # Two columns, like the Fonts page: the command edit takes column 1
+        # and its presets get their own row under it. A third column for the
+        # presets squeezed the family combo above to ~120 px (its popup
+        # truncated the family names) and clipped the labels in column 0.
+        editor_grid.addWidget(self._external_editor_edit, 2, 1)
+        editor_grid.addWidget(QLabel("Preset:"), 3, 0)
+        editor_grid.addWidget(self._external_editor_presets, 3, 1,
+                              alignment=Qt.AlignLeft)
         editor_grid.setColumnStretch(1, 1)
         ed.addLayout(editor_grid)
         ed.addStretch(1)
@@ -610,15 +625,21 @@ class NDPreferencesDialog(QDialog):
 
     def _load_into_widgets(self) -> None:
         """Populate widgets from current preferences."""
-        family = preferences.resolve_editor_font_family(
-            preferences.get_pref("editor_font_family"))
-        idx = self._font_family_combo.findText(family)
-        if idx < 0:
-            # The resolved family is installed but Qt did not classify it as
-            # fixed pitch (or there is no font database): offer it anyway
-            # rather than showing a font the user did not choose.
-            self._font_family_combo.addItem(family)
+        saved  = preferences.get_pref("editor_font_family")
+        saved  = saved.strip() if isinstance(saved, str) else ""
+        family = preferences.resolve_editor_font_family(saved)
+        if not saved:
+            # The empty preference IS "Maya default" (index 0): the platform
+            # monospace, whatever this machine calls it.
+            idx = 0
+        else:
             idx = self._font_family_combo.findText(family)
+            if idx < 0:
+                # The resolved family is installed but Qt did not classify it
+                # as fixed pitch (or there is no font database): offer it
+                # anyway rather than showing a font the user did not choose.
+                self._font_family_combo.addItem(family)
+                idx = self._font_family_combo.findText(family)
         self._font_family_combo.setCurrentIndex(idx)
 
         self._font_size_edit.setText(str(preferences.get_pref("editor_font_size", 10)))
@@ -901,11 +922,11 @@ class NDPreferencesDialog(QDialog):
             return
 
         # Persist via set_pref so listeners fire.
-        preferences.set_pref(
-            "editor_font_family",
-            self._font_family_combo.currentText().strip()
-            or preferences.default_editor_font_family(),
-        )
+        _efam = self._font_family_combo.currentText().strip()
+        if (self._font_family_combo.currentIndex() <= 0
+                or _efam == preferences.UI_FONT_DEFAULT_LABEL):
+            _efam = ""  # "Maya default": Consolas / Monaco / DejaVu by platform
+        preferences.set_pref("editor_font_family", _efam)
         preferences.set_pref("editor_font_size", size)
         preferences.set_pref(
             "external_editor_command",

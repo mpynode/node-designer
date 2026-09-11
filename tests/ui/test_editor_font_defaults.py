@@ -152,6 +152,34 @@ class TestDialogFontList(unittest.TestCase):
     def _offered(self, combo):
         return [combo.itemText(i) for i in range(combo.count())]
 
+    def test_maya_default_saves_the_empty_family_and_reads_back(self):
+        # Index 0 is the empty preference: the platform's own monospace
+        # (Consolas / Monaco), which stays the shipped default. An explicit
+        # pick still saves the family itself.
+        with _FakeFontDatabase() as p:
+            dlg = self._dialog()
+            try:
+                dlg._load_into_widgets()
+                dlg._font_family_combo.setCurrentIndex(0)
+                dlg._on_save_clicked()
+                self.assertEqual(p.get_pref("editor_font_family"), "")
+                self.assertEqual(p.resolve_editor_font_family(""),
+                                 p.default_editor_font_family())
+                self.assertEqual(p.editor_font().family(),
+                                 p.default_editor_font_family())
+                dlg._load_into_widgets()
+                self.assertEqual(dlg._font_family_combo.currentIndex(), 0)
+                self.assertEqual(dlg._font_family_combo.currentText(),
+                                 p.UI_FONT_DEFAULT_LABEL)
+                dlg._font_family_combo.setCurrentIndex(
+                    dlg._font_family_combo.findText("Courier New"))
+                dlg._on_save_clicked()
+                self.assertEqual(p.get_pref("editor_font_family"), "Courier New")
+                dlg._load_into_widgets()
+                self.assertEqual(dlg._font_family_combo.currentText(), "Courier New")
+            finally:
+                dlg.deleteLater()
+
     def test_offers_installed_fixed_pitch_fonts_only_and_is_not_editable(self):
         with _FakeFontDatabase() as p:
             dlg = self._dialog()
@@ -159,7 +187,8 @@ class TestDialogFontList(unittest.TestCase):
                 combo = dlg._font_family_combo
                 self.assertFalse(combo.isEditable())
                 self.assertEqual(self._offered(combo),
-                                 ["Consolas", "Courier New", "Monaco"])
+                                 [p.UI_FONT_DEFAULT_LABEL,
+                                  "Consolas", "Courier New", "Monaco"])
             finally:
                 dlg.deleteLater()
             del p

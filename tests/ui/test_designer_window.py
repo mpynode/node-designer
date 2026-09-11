@@ -672,6 +672,52 @@ class TestDirectionRadioBugFix(unittest.TestCase):
 
 
 # ===========================================================================
+class TestShowDesignerRestoresAMinimizedWindow(unittest.TestCase):
+    """The shelf button calls show_designer(). A minimized Node Designer is a
+    title-bar stub at the bottom of Maya that nobody finds, and re-calling
+    show() on it changed nothing -- the button looked dead. The existing
+    window is now un-minimized (Qt restores its pre-minimize geometry), moved
+    on screen if no screen shows it, raised and activated; a new one is built
+    only when none exists."""
+
+    def test_second_call_unminimizes_the_same_window(self):
+        from unittest import mock
+
+        from mpynode.ui import mpynode_designer as dm
+        from mpynode.ui.qt_wrapper import QMainWindow
+
+        try:
+            from PySide6.QtGui import QGuiApplication
+        except ImportError:
+            from PySide2.QtGui import QGuiApplication
+
+        parent = QMainWindow()
+        self.addCleanup(parent.deleteLater)
+        with mock.patch.object(dm, "maya_main_window", lambda: parent):
+            win = dm.show_designer()
+            try:
+                self.assertIs(win.parent(), parent)
+                win.showMinimized()
+                self.assertTrue(win.isMinimized())
+                again = dm.show_designer()
+                self.assertIs(again, win, "a second window was built")
+                self.assertFalse(win.isMinimized())
+                self.assertTrue(win.isVisible())
+                # Parked off every screen: brought back onto the primary one,
+                # size untouched.
+                size = win.size()
+                win.move(20000, 20000)
+                dm.show_designer()
+                avail = QGuiApplication.primaryScreen().availableGeometry()
+                self.assertTrue(avail.intersects(win.frameGeometry()),
+                                win.frameGeometry())
+                self.assertEqual(win.size(), size)
+            finally:
+                win.close()
+                win.deleteLater()
+                dm._designer_instance = None
+
+
 # Bulletproof singleton: show_designer must use findChild as the source
 # of truth (catches stale cache, direct-construction bypass, module reload).
 # ===========================================================================
