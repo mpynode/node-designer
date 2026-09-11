@@ -111,9 +111,9 @@ def resolve_bake_class_name(py_node, prompt_fn) -> str | None:
 # header: it is no longer emitted into the script. It was 16 of the 33 lines of
 # a plain node's bake -- half the file, above the user's own code, on every
 # node, saying the same thing every time -- and the top of the script belongs
-# to whoever is writing it. The Identity tab renders this instead (see
-# ``ui/widgets/identity_tab.py``), which is where facts about the node's export
-# live and where it can be read once rather than skipped forever.
+# to whoever is writing it. The Identity panel (``ui/widgets/identity_tab.py``,
+# no longer docked in the designer) rendered this instead; the string stays the
+# one place these facts about a node's export are written down.
 BAKE_CONTRACT = (
     "Rebuilds this %(native_type)s node's structure + expressions from scratch.\n"
     "\n"

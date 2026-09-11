@@ -2,7 +2,7 @@
 
 Layout:
   Splitter:
-    LEFT: QTabWidget [Scene | Identity | Attributes | Variables | Framework]
+    LEFT: QTabWidget [Scene | Attributes | Variables | Framework]
     RIGHT: NDScriptTabWidget (one tab per opened mPy* node)
 
 Selection cascade:
@@ -441,29 +441,14 @@ class NDMainWindow(QMainWindow):
         self._panel_tab_widget.setMovable(False)
         self._panel_tab_widget.setTabsClosable(False)
 
-        # Scene tab: scene tree (top) over the Identity panel (bottom), split by
-        # a draggable splitter, so editing a node's Class keeps the tree and the
-        # node's siblings in view (Identity used to be its own left-hand tab).
-        # Refresh lives on the tree's right-click context menu.
-        from mpynode.ui.widgets.identity_tab import NDIdentityWidget
-
-        self._scene_split     = QSplitter(Qt.Vertical, self._panel_tab_widget)
-        self._scene_tree      = NDSceneTree(self._scene_split)
-        self._identity_widget = NDIdentityWidget(self._scene_split)
-        self._scene_split.addWidget(self._scene_tree)
-        self._scene_split.addWidget(self._identity_widget)
-        # The tree is the primary surface and never collapses; the identity
-        # panel MAY be dragged shut by users who never rename Classes.
-        self._scene_split.setStretchFactor(0, 3)
-        self._scene_split.setStretchFactor(1, 1)
-        self._scene_split.setCollapsible(0, False)
-        self._scene_split.setCollapsible(1, True)
-        # Identity is now just a header + the Class field, so it defaults to
-        # its own minimum and the tree takes everything else. Still
-        # draggable, and still collapsible -- Class is editable nowhere
-        # else, so the panel stays reachable.
-        self._scene_split.setSizes([520, 1])
-        self._panel_tab_widget.addTab(self._scene_split, "Scene")
+        # Scene tab: the scene tree alone. The Identity strip that sat under
+        # it (an "IDENTITY" header + the Class field) is gone: Name Class /
+        # Rename Class / Reclassify live on the tree's right-click menu, and
+        # the strip's header was the one text that did not follow the UI
+        # font. The widget itself stays in ui/widgets/identity_tab.py,
+        # undocked. Refresh lives on the tree's right-click context menu.
+        self._scene_tree = NDSceneTree(self._panel_tab_widget)
+        self._panel_tab_widget.addTab(self._scene_tree, "Scene")
 
         self._attributes_widget = NDAttributesWidget(self._panel_tab_widget)
         self._panel_tab_widget.addTab(self._attributes_widget, "Attributes")
@@ -798,16 +783,6 @@ class NDMainWindow(QMainWindow):
             )
         except Exception:
             pass
-        # An Identity-tab name / rename / clear must re-render everything that
-        # prints the Class: the scene-tree Option A label, the Outline and the
-        # API view (the Identity panel itself already shows it).
-        try:
-            self._identity_widget.classChanged.connect(
-                lambda _name: self._refresh_class_views(
-                    [self._current_node.get_name()]
-                    if self._current_node else []))
-        except Exception:
-            pass
 
     def _on_attr_color_changed(self, node_name: str) -> None:
         """Walk the open script tabs + refresh the
@@ -882,23 +857,6 @@ class NDMainWindow(QMainWindow):
             # so any newly-written self.X vars are already in the store.
             try:
                 self._variables_widget.refresh()
-            except Exception:
-                pass
-
-        # #68: keep the Identity panel's Class in sync when the saved tab
-        # belongs to the node it is showing -- a save may have stamped/changed
-        # the canonical Class. Mirrors the Variables re-sync above.
-        try:
-            cur_iw = self._identity_widget._py_node
-        except Exception:
-            cur_iw = None
-        if (
-            cur_iw is not None
-            and py_node is not None
-            and (cur_iw.get_name() == py_node.get_name())
-        ):
-            try:
-                self._identity_widget.setPyNode(py_node)
             except Exception:
                 pass
 
@@ -1345,8 +1303,7 @@ class NDMainWindow(QMainWindow):
 
     def _refresh_class_views(self, names) -> None:
         """Re-render everything that prints a Class for ``names``: the Scene
-        tree tag, the Identity panel (when it shows one of them) and any open
-        Outline / API view. The last two used to re-bake only when their tab
+        tree tag and any open Outline / API view. The last two used to re-bake only when their tab
         came forward, so a rename showed there one tab-click late -- and a
         clear not at all."""
         names = [n for n in (names or []) if n]
@@ -1355,12 +1312,6 @@ class NDMainWindow(QMainWindow):
                 self._scene_tree.refresh_node_class_tag(n)
             except Exception:
                 pass
-        try:
-            if (self._current_node is not None
-                    and self._current_node.get_name() in names):
-                self._identity_widget.setPyNode(self._current_node)
-        except Exception:
-            pass
         tabs = getattr(self, "_script_tab_widget", None)
         if tabs is None:
             return
@@ -1689,7 +1640,6 @@ class NDMainWindow(QMainWindow):
         # track the active node so the Node menu actions
         # (Select Node, Add Attribute) know what to operate on.
         self._current_node = py_node
-        self._identity_widget.setPyNode(py_node)
         self._attributes_widget.refresh(py_node)
         self._framework_widget.setPyNode(py_node)
         # Switching DOCUMENT tabs does not re-emit tierChanged (the strip did
