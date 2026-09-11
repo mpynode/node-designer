@@ -50,7 +50,7 @@ class TestTimeChangeCallbacksSkipSuspendedNodes(unittest.TestCase):
     def _touched(self, module, node):
         """The ``.envelope`` writes the callback issued, as a set of plugs."""
         real_set_attr = mc.setAttr
-        calls = []
+        calls         = []
 
         def spy(*args, **kwargs):
             calls.append(args[0] if args else None)
@@ -66,7 +66,7 @@ class TestTimeChangeCallbacksSkipSuspendedNodes(unittest.TestCase):
         for mod_name, node_type in self._FAMILIES:
             module = importlib.import_module(mod_name)
             sphere = mc.polySphere(sx=6, sy=6)[0]
-            node = mc.deformer(sphere, type=node_type)[0]
+            node   = mc.deformer(sphere, type=node_type)[0]
             with self.subTest(node_type=node_type):
                 self.assertIn(node + ".envelope", self._touched(module, node),
                               "a live %s must be touched" % node_type)

@@ -49,7 +49,7 @@ def _array_value(plug, typ):
 
     sel = om2.MSelectionList()
     sel.add(plug)
-    p = sel.getPlug(0)
+    p      = sel.getPlug(0)
     handle = p.asMDataHandle()
     try:
         return [list(m) for m in om2.MFnMatrixArrayData(handle.data()).array()]
@@ -223,7 +223,7 @@ def copy_aliases(src, dst):
     """
     import maya.cmds as mc
 
-    flat = mc.aliasAttr(src, query=True) or []
+    flat    = mc.aliasAttr(src, query=True) or []
     dropped = []
     for i in range(0, len(flat) - 1, 2):
         alias, plug = flat[i], flat[i + 1]
@@ -261,7 +261,7 @@ def rewire(src, dst):
         local, remote = conns[i], conns[i + 1]
         if "." not in local:
             continue
-        attr = local.split(".", 1)[1]
+        attr     = local.split(".", 1)[1]
         newlocal = dst + "." + attr
         try:
             is_src = mc.isConnected(local, remote)
@@ -379,9 +379,9 @@ def _transfer_edges(src, dst, incoming, skip_remote=None):
                 continue
         elif not _is_movable_output(local, remote):
             continue
-        attr = local.split(".", 1)[1]
+        attr     = local.split(".", 1)[1]
         newlocal = dst + "." + attr
-        base = attr.split(".")[0].split("[")[0]
+        base     = attr.split(".")[0].split("[")[0]
         desc = ("%s -> %s" % (remote, local)) if incoming else (
             "%s -> %s" % (local, remote))
         try:
@@ -475,7 +475,7 @@ def _opm_relay(node):
         if not drivers:
             return None
         relay = drivers[0]
-        ups = mc.listConnections(relay, source=True, destination=False) or []
+        ups   = mc.listConnections(relay, source=True, destination=False) or []
         downs = mc.listConnections(relay, source=False, destination=True) or []
         if not ups or not downs:
             return None
@@ -665,7 +665,7 @@ def attach_compiled(src, compiled_type):
 
     _freeze_live_state(src)
     is_locator = bool(mc.objectType(src, isAType="locator"))
-    is_dag = bool(mc.objectType(src, isAType="dagNode"))
+    is_dag     = bool(mc.objectType(src, isAType="dagNode"))
     if is_dag:
         parent = (mc.listRelatives(src, parent=True, fullPath=True)
                   or [None])[0]
@@ -745,7 +745,7 @@ def detach_compiled(cpp, py):
         pass
     # Resolve BEFORE the delete -- afterwards the relay is unreachable (and
     # orphaned, which is exactly the leak this removes).
-    relay = _opm_relay(cpp)
+    relay   = _opm_relay(cpp)
     dropped = move_outputs(cpp, py) if moves_outputs(py) else []
     _restore_lod(py)    # restores lodVisibility + removes the snapshot (locators)
     _restore_state(py)  # restores nodeState + removes the snapshot (every convert)

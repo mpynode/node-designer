@@ -53,19 +53,19 @@ _STATIC_TRIGGERS = frozenset((
 
 class MPySkinCluster(ommpx.MPxSkinCluster):
     NODE_NAME = "mPySkinCluster"
-    NODE_ID = om.MTypeId(0x0013571B)
+    NODE_ID   = om.MTypeId(0x0013571B)
 
     # per-node-type plug-tree spec.
-    INPUT_GEOMETRY_PLUG = "input[multi_index].inputGeometry"
-    OUTPUT_GEOMETRY_PLUG = "outputGeometry[multi_index]"
+    INPUT_GEOMETRY_PLUG             = "input[multi_index].inputGeometry"
+    OUTPUT_GEOMETRY_PLUG            = "outputGeometry[multi_index]"
     OUTPUT_GEOMETRY_PLUG_SHORT_NAME = "outputGeometry"
 
-    _expression_attr = None
-    _input_attrs_attr = None
-    _output_attrs_attr = None
+    _expression_attr       = None
+    _input_attrs_attr      = None
+    _output_attrs_attr     = None
     _stored_vars_list_attr = None
     _stored_vars_data_attr = None
-    _debug_mode_attr = None
+    _debug_mode_attr       = None
 
     def __init__(self):
         super().__init__()
@@ -78,13 +78,13 @@ class MPySkinCluster(ommpx.MPxSkinCluster):
 
     @staticmethod
     def node_initializer():
-        plugs = helpers.build_internal_attrs(MPySkinCluster)
-        MPySkinCluster._expression_attr = plugs["_computeSource"]
-        MPySkinCluster._input_attrs_attr = plugs["inputs"]
-        MPySkinCluster._output_attrs_attr = plugs["outputs"]
+        plugs                                 = helpers.build_internal_attrs(MPySkinCluster)
+        MPySkinCluster._expression_attr       = plugs["_computeSource"]
+        MPySkinCluster._input_attrs_attr      = plugs["inputs"]
+        MPySkinCluster._output_attrs_attr     = plugs["outputs"]
         MPySkinCluster._stored_vars_list_attr = plugs["stored_vars_list"]
         MPySkinCluster._stored_vars_data_attr = plugs["stored_vars_data"]
-        MPySkinCluster._debug_mode_attr = plugs["debug_mode"]
+        MPySkinCluster._debug_mode_attr       = plugs["debug_mode"]
 
         # matrix[] / bindPreMatrix[] declarations.
         #
@@ -94,7 +94,7 @@ class MPySkinCluster(ommpx.MPxSkinCluster):
         # raises a duplicate-name error the try/except swallows on purpose.
         # Retained for the DEFENSIVE kDeformerNode fallback: a plain deformer
         # base does NOT provide them, and joint wiring needs matrix[].
-        m_attr = om.MFnMatrixAttribute()
+        m_attr      = om.MFnMatrixAttribute()
         matrix_attr = m_attr.create("matrix", "matrix", om.MFnMatrixAttribute.kFloat)
         m_attr.setArray(True)
         m_attr.setKeyable(False)
@@ -136,7 +136,7 @@ class MPySkinCluster(ommpx.MPxSkinCluster):
         try:
             attr = plug.attribute()
             if attr == MPySkinCluster._expression_attr:
-                data = om.MFnStringData(data_handle.data())
+                data           = om.MFnStringData(data_handle.data())
                 self._expr_str = data.string()
                 from mpynode._common.compute.expression import safe_compile_expression
 
@@ -147,8 +147,8 @@ class MPySkinCluster(ommpx.MPxSkinCluster):
                     pass
                 code = safe_compile_expression(
                     self._expr_str,
-                    node_name=node_name,
-                    filename="<mpyskincluster-expression>",
+                    node_name = node_name,
+                    filename  = "<mpyskincluster-expression>",
                 )
                 if code is not None:
                     self._expr_code = code
@@ -173,9 +173,9 @@ class MPySkinCluster(ommpx.MPxSkinCluster):
             return
 
         try:
-            output_attr = ommpx.cvar.MPxGeometryFilter_outputGeom
-            node_obj = self.thisMObject()
-            fn_node = om.MFnDependencyNode(node_obj)
+            output_attr       = ommpx.cvar.MPxGeometryFilter_outputGeom
+            node_obj          = self.thisMObject()
+            fn_node           = om.MFnDependencyNode(node_obj)
             output_array_plug = fn_node.findPlug(output_attr, True)
             for i in range(output_array_plug.numElements()):
                 element_plug = output_array_plug.elementByPhysicalIndex(i)

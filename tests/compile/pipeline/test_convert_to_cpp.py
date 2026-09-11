@@ -154,8 +154,8 @@ class TestConvertCommand(unittest.TestCase):
     def _make_src(self):
         from mpynode import MPyNode
         n = MPyNode.create(name="cvt")
-        n.add_input_attr("inA", "float")   # connection-driven input
-        n.add_input_attr("inB", "float")   # plain-value input
+        n.add_input_attr("inA", "float")             # connection-driven input
+        n.add_input_attr("inB", "float")             # plain-value input
         n.add_output_attr("outC", "float")
         mc.setAttr("cvt.inB", 5.0)
         n.set_py_class("mpynode_user.StubCompiled")  # -> "stubCompiled"
@@ -243,8 +243,8 @@ class TestRevertCommand(unittest.TestCase):
 
         result = run_undoable(build_revert_to_py_command("rv", "mPyNode"))
         self.assertEqual(result, "rv")
-        self.assertFalse(mc.objExists(cpp))           # cpp deleted
-        self.assertFalse(is_converted("rv"))          # link gone
+        self.assertFalse(mc.objExists(cpp))   # cpp deleted
+        self.assertFalse(is_converted("rv"))  # link gone
         self.assertFalse(
             mc.attributeQuery("mpyCompiledLink", node="rv", exists=True))
         self.assertTrue(mc.isConnected("rv.outC", down + ".i"))  # output back
@@ -270,7 +270,7 @@ class TestNoteCycleBaseline(unittest.TestCase):
         from unittest import mock
         from mpynode._base import commands
 
-        cmd = commands._ConvertToCppCommand("n", "mPyNode")
+        cmd            = commands._ConvertToCppCommand("n", "mPyNode")
         cmd._pre_cycle = True  # a cycle already ran through the node pre-convert
         with mock.patch.object(commands.cmds, "cycleCheck",
                                return_value=["n.x"]):
@@ -281,7 +281,7 @@ class TestNoteCycleBaseline(unittest.TestCase):
         from unittest import mock
         from mpynode._base import commands
 
-        cmd = commands._ConvertToCppCommand("n", "mPyNode")
+        cmd            = commands._ConvertToCppCommand("n", "mPyNode")
         cmd._pre_cycle = False  # no cycle before the convert
         with mock.patch.object(commands.cmds, "cycleCheck",
                                return_value=["n.x"]):
@@ -308,7 +308,7 @@ class TestHiddenContract(unittest.TestCase):
         n = MPyNode.create(name="hc")
         n.set_py_class("mpynode_user.StubCompiled")
         run_undoable(build_convert_to_cpp_command("hc", "mPyNode"))
-        cpp = linked_compiled_node("hc")
+        cpp      = linked_compiled_node("hc")
         cpp_type = mc.nodeType(cpp)
 
         # The compiled type is not registered -> not resolvable / wrappable.

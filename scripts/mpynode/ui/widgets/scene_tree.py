@@ -77,10 +77,10 @@ class _CppChipDelegate(QStyledItemDelegate):
     the C++ chip drawn at the item's edge came back clipped.
     """
 
-    CHIP_W   = 26  # px of the C++ chip body
-    PAUSE_W  = 14  # px of the pause chip body
-    GUTTER   = 6   # px between chips, and between the text and the chips
-    MARGIN   = 6   # px kept clear at the viewport's right edge
+    CHIP_W   = 26                        # px of the C++ chip body
+    PAUSE_W  = 14                        # px of the pause chip body
+    GUTTER   = 6                         # px between chips, and between the text and the chips
+    MARGIN   = 6                         # px kept clear at the viewport's right edge
     RESERVED = CHIP_W + GUTTER + MARGIN  # charged to EVERY row
     CHIP_H   = 14
 
@@ -289,7 +289,7 @@ class NDSceneTreeItem(QTreeWidgetItem):
         # the tooltip can never disagree with the node.
         state_name = "Normal"
         try:
-            st = int(mc.getAttr(self.node_name + ".nodeState"))
+            st             = int(mc.getAttr(self.node_name + ".nodeState"))
             self.is_paused = st != 0
             state_name = {0: "Normal", 1: "Has No Effect",
                           2: "Blocking"}.get(st, str(st))

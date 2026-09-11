@@ -23,7 +23,7 @@ try:  # QApplication must exist before any QWidget/QMenu is constructed.
     except Exception:
         from PySide2.QtWidgets import QApplication
     _app = QApplication.instance() or QApplication([])
-    _QT = True
+    _QT  = True
 except Exception:  # pragma: no cover - Qt missing
     _QT = False
 
@@ -43,10 +43,10 @@ class _FakeAction:
     """Stand-in for a QAction so the pure release-decision needs no widget."""
 
     def __init__(self, enabled=True, separator=False, submenu=None, data=None):
-        self._enabled = enabled
-        self._sep = separator
-        self._menu = submenu
-        self._data = data
+        self._enabled        = enabled
+        self._sep            = separator
+        self._menu           = submenu
+        self._data           = data
         self.triggered_count = 0
 
     def isEnabled(self):
@@ -100,7 +100,7 @@ class TestOptionsMenu(unittest.TestCase):
     def test_vanilla_and_header_always_present(self):
         from mpynode.ui.widgets.menus import build_new_node_options_menu
 
-        menu = build_new_node_options_menu(None, "mPyNode", lambda nt, m: None)
+        menu  = build_new_node_options_menu(None, "mPyNode", lambda nt, m: None)
         texts = [a.text().lower() for a in menu.actions()]
         self.assertTrue(any("vanilla" in t for t in texts), texts)
         self.assertTrue(any("header" in t for t in texts), texts)
@@ -111,7 +111,7 @@ class TestOptionsMenu(unittest.TestCase):
         from mpynode.ui.widgets.menus import build_new_node_options_menu
 
         for nt in ("mPyNode", "mPyDeformer", "mPyIkSolver"):
-            menu = build_new_node_options_menu(None, nt, lambda *a: None)
+            menu  = build_new_node_options_menu(None, nt, lambda *a: None)
             texts = [a.text().lower() for a in menu.actions()]
             self.assertFalse(
                 any("template" in t for t in texts),
@@ -199,11 +199,11 @@ class TestWiring(unittest.TestCase):
             mpynode_designer.NDMainWindow._create_from_template
         )
         self.assertIn("_TemplateCreateCommand", src)
-        self.assertIn("_ImportNodeCommand", src)
-        self.assertIn("seed_setup", src)
-        self.assertIn("restore_persistent", src)
-        self.assertIn("run_undoable", src)
-        self.assertIn("_post_create", src)
+        self.assertIn("_ImportNodeCommand",     src)
+        self.assertIn("seed_setup",             src)
+        self.assertIn("restore_persistent",     src)
+        self.assertIn("run_undoable",           src)
+        self.assertIn("_post_create",           src)
 
     def test_designer_wires_reveal_and_select(self):
         from mpynode.ui import mpynode_designer
@@ -234,7 +234,7 @@ class TestAutoAttachOption(unittest.TestCase):
     def test_option_items_carry_mode_data(self):
         from mpynode.ui.widgets.menus import build_new_node_options_menu
 
-        menu = build_new_node_options_menu(None, "mPyNode", lambda *a: None)
+        menu  = build_new_node_options_menu(None, "mPyNode", lambda *a: None)
         datas = {a.data() for a in menu.actions()}
         self.assertIn("none", datas)
         self.assertIn("headers", datas)
@@ -255,7 +255,7 @@ class TestAutoAttachOption(unittest.TestCase):
     def test_options_menu_supports_attach_flag(self):
         from mpynode.ui.widgets.menus import build_new_node_options_menu
 
-        m_wire = build_new_node_options_menu(None, "mPyDeformer", lambda *a: None)
+        m_wire  = build_new_node_options_menu(None, "mPyDeformer", lambda *a: None)
         m_plain = build_new_node_options_menu(None, "mPyNode", lambda *a: None)
         self.assertTrue(m_wire._supports_attach)
         self.assertFalse(m_plain._supports_attach)

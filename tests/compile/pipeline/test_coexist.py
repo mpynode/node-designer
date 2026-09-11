@@ -28,8 +28,8 @@ def _abc_net(name=None):
     output -- the same logical attr NAMES as the stub compiled node, so the
     reroute (which connects ``remote -> cpp.<sameAttr>``) transfers."""
     n = mc.createNode("network", name=name) if name else mc.createNode("network")
-    mc.addAttr(n, ln="inA", at="double")
-    mc.addAttr(n, ln="inB", at="double")
+    mc.addAttr(n, ln="inA",  at="double")
+    mc.addAttr(n, ln="inB",  at="double")
     mc.addAttr(n, ln="outC", at="double")
     return n
 
@@ -45,8 +45,8 @@ class TestAttachCompiledDG(unittest.TestCase):
         src = _abc_net("cx")
         up = mc.createNode("network"); mc.addAttr(up, ln="o", at="double")
         down = mc.createNode("network"); mc.addAttr(down, ln="i", at="double")
-        mc.connectAttr(up + ".o", src + ".inA")   # input (to duplicate)
-        mc.setAttr(src + ".inB", 5.0)             # static (to snapshot)
+        mc.connectAttr(up + ".o", src + ".inA")     # input (to duplicate)
+        mc.setAttr(src + ".inB", 5.0)               # static (to snapshot)
         mc.connectAttr(src + ".outC", down + ".i")  # output (to move)
 
         cpp, dropped = attach_compiled(src, "stubCompiled")
@@ -117,7 +117,7 @@ class TestDetachCompiledDG(unittest.TestCase):
 
         dropped = detach_compiled(cpp, src)
 
-        self.assertFalse(mc.objExists(cpp))                     # cpp deleted
+        self.assertFalse(mc.objExists(cpp))                          # cpp deleted
         self.assertTrue(mc.isConnected(src + ".outC", down + ".i"))  # output back
         self.assertFalse(                                       # link attr removed
             mc.attributeQuery("mpyCompiledLink", node=src, exists=True))
@@ -159,15 +159,15 @@ class TestLocatorCoexist(unittest.TestCase):
 
     def _loc(self):
         loc = mc.createNode("locator")  # returns the shape; auto-parents a xform
-        mc.addAttr(loc, ln="inA", at="double")
-        mc.addAttr(loc, ln="inB", at="double")
+        mc.addAttr(loc, ln="inA",  at="double")
+        mc.addAttr(loc, ln="inB",  at="double")
         mc.addAttr(loc, ln="outC", at="double")
         return loc
 
     def test_attach_parents_under_same_transform_and_hides(self):
         from mpynode._base.node_swap import attach_compiled
 
-        loc = self._loc()
+        loc    = self._loc()
         parent = mc.listRelatives(loc, parent=True, fullPath=True)[0]
         cpp, _ = attach_compiled(loc, "stubCompiledLocator")
         # C++ locator lives under the SAME transform (co-located gizmo) ...
@@ -184,13 +184,13 @@ class TestLocatorCoexist(unittest.TestCase):
     def test_detach_restores_lod_and_deletes_only_the_cpp_shape(self):
         from mpynode._base.node_swap import attach_compiled, detach_compiled
 
-        loc = self._loc()
+        loc    = self._loc()
         parent = mc.listRelatives(loc, parent=True, fullPath=True)[0]
         cpp, _ = attach_compiled(loc, "stubCompiledLocator")
         detach_compiled(cpp, loc)
-        self.assertFalse(mc.objExists(cpp))          # only the cpp shape deleted
-        self.assertTrue(mc.objExists(loc))           # python shape survives
-        self.assertTrue(mc.objExists(parent))        # shared transform survives
+        self.assertFalse(mc.objExists(cpp))                      # only the cpp shape deleted
+        self.assertTrue(mc.objExists(loc))                       # python shape survives
+        self.assertTrue(mc.objExists(parent))                    # shared transform survives
         self.assertEqual(mc.getAttr(loc + ".lodVisibility"), 1)  # restored
         self.assertFalse(
             mc.attributeQuery("mpyPreConvertLodVis", node=loc, exists=True))
@@ -315,7 +315,7 @@ class TestTransformCoexist(unittest.TestCase):
 
     def _rigged_transform(self):
         grp = mc.createNode("transform", name="rigRoot")
-        xf = mc.createNode("mPyTransform", name="pyXf", parent=grp)
+        xf  = mc.createNode("mPyTransform", name="pyXf", parent=grp)
         mc.createNode("transform", name="kidA", parent=xf)
         sink = mc.createNode("network"); mc.addAttr(sink, ln="m", at="matrix")
         mc.connectAttr(xf + ".worldMatrix[0]", sink + ".m", force=True)

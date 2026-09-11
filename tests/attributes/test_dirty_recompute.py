@@ -49,7 +49,7 @@ class TestExpressionEditReevaluatesDeformer(unittest.TestCase):
         from mpynode.wrappers.mpy_deformer import MPyDeformer
 
         plane = mc.polyPlane(name="p", w=2, h=2, sx=4, sy=4)[0]
-        d = MPyDeformer.create_on(plane)
+        d     = MPyDeformer.create_on(plane)
 
         d.set_compute_expression(
             "mesh = self.outputGeometry[0]\n"
@@ -85,7 +85,7 @@ class TestSuspendedDirtyGate(unittest.TestCase):
         from mpynode.wrappers.mpy_deformer import MPyDeformer
 
         plane = mc.polyPlane(sx=2, sy=2)[0]
-        w = MPyDeformer.create_on(plane, name=name)
+        w     = MPyDeformer.create_on(plane, name=name)
         w.add_input_attr("amount", "float")
         w.set_compute_expression("pass")
         return w
@@ -212,8 +212,8 @@ class TestDeclareUserAffectsDirtiesArrayElements(unittest.TestCase):
 
         sel = om.MSelectionList()
         sel.add(name)
-        mobj = sel.getDependNode(0)
-        fn = om.MFnDependencyNode(mobj)
+        mobj     = sel.getDependNode(0)
+        fn       = om.MFnDependencyNode(mobj)
         drv_plug = fn.findPlug("drv", False)
 
         affected = om.MPlugArray()
@@ -225,7 +225,7 @@ class TestDeclareUserAffectsDirtiesArrayElements(unittest.TestCase):
             ApiNode._output_attrs_attr,
         )
         names = [affected[i].partialName(useLongNames=True) for i in range(len(affected))]
-        self.assertTrue(any(n == "outArr" for n in names), names)
+        self.assertTrue(any(n == "outArr" for n in names),    names)
         self.assertTrue(any("outArr[0]" in n for n in names), names)
         self.assertTrue(any("outArr[1]" in n for n in names), names)
 
@@ -262,7 +262,7 @@ class TestDeclareUserAffectsExpressionTrigger(unittest.TestCase):
 
         fn, mobj = self._make_node()
         expr_plug = fn.findPlug(ApiNode._expression_attr, False)
-        affected = om.MPlugArray()
+        affected  = om.MPlugArray()
         dirty_affects.declare_user_affects(
             mobj,
             expr_plug,
@@ -285,7 +285,7 @@ class TestDeclareUserAffectsExpressionTrigger(unittest.TestCase):
 
         fn, mobj = self._make_node()
         expr_plug = fn.findPlug(ApiNode._expression_attr, False)
-        affected = om.MPlugArray()
+        affected  = om.MPlugArray()
         dirty_affects.declare_user_affects(
             mobj,
             expr_plug,
@@ -328,7 +328,7 @@ class TestDeclareUserAffectsExtraTriggers(unittest.TestCase):
         from mpynode._common.plugs import dirty_affects
 
         fn, mobj = self._make_constraint()
-        tt_plug = fn.findPlug(ApiC._targetTranslate_attr, False)
+        tt_plug  = fn.findPlug(ApiC._targetTranslate_attr, False)
         affected = om.MPlugArray()
         dirty_affects.declare_user_affects(
             mobj,
@@ -351,7 +351,7 @@ class TestDeclareUserAffectsExtraTriggers(unittest.TestCase):
         from mpynode._common.plugs import dirty_affects
 
         fn, mobj = self._make_constraint()
-        tt_plug = fn.findPlug(ApiC._targetTranslate_attr, False)
+        tt_plug  = fn.findPlug(ApiC._targetTranslate_attr, False)
         affected = om.MPlugArray()
         dirty_affects.declare_user_affects(
             mobj,
@@ -389,8 +389,8 @@ class TestDeclareUserAffectsExtraOutputs(unittest.TestCase):
         # Deliberately NO user output attr -- only the native extra_outputs.
         sel = om.MSelectionList()
         sel.add(f.get_name())
-        mobj = sel.getDependNode(0)
-        fn = om.MFnDependencyNode(mobj)
+        mobj     = sel.getDependNode(0)
+        fn       = om.MFnDependencyNode(mobj)
         drv_plug = fn.findPlug("drv", False)
 
         affected = om.MPlugArray()
@@ -436,11 +436,11 @@ class TestDeclareUserAffectsCompoundChildTriggers(unittest.TestCase):
         sel = om.MSelectionList()
         sel.add(node.get_name())
         mobj = sel.getDependNode(0)
-        fn = om.MFnDependencyNode(mobj)
+        fn   = om.MFnDependencyNode(mobj)
         # The X child of the "vec" compound input (robust to exact naming).
         child_plug = fn.findPlug("vec", False).child(0)
 
-        affected = om.MPlugArray()
+        affected   = om.MPlugArray()
         dirty_affects.declare_user_affects(
             mobj,
             child_plug,
@@ -467,19 +467,19 @@ class TestDeclareUserAffectsCompoundChildTriggers(unittest.TestCase):
         c.add_output_attr("out", "vector")
         sel = om.MSelectionList()
         sel.add(c.get_name())
-        mobj = sel.getDependNode(0)
-        fn = om.MFnDependencyNode(mobj)
+        mobj       = sel.getDependNode(0)
+        fn         = om.MFnDependencyNode(mobj)
         child_plug = fn.findPlug(ApiC._targetTranslate_attr, False).child(0)
 
-        affected = om.MPlugArray()
+        affected   = om.MPlugArray()
         dirty_affects.declare_user_affects(
             mobj,
             child_plug,
             affected,
             ApiC._input_attrs_attr,
             ApiC._output_attrs_attr,
-            expression_attr=ApiC._expression_attr,
-            extra_trigger_names=_PRESET_INPUT_NAMES,
+            expression_attr     = ApiC._expression_attr,
+            extra_trigger_names = _PRESET_INPUT_NAMES,
         )
         names = [
             affected[i].partialName(useLongNames=True) for i in range(len(affected))
@@ -497,7 +497,7 @@ class TestDeclareUserAffectsCompoundChildTriggers(unittest.TestCase):
         node.set_compute_expression("self.s = self.vec[0] + self.vec[1] + self.vec[2]")
         name = node.get_name()
 
-        loc = mc.spaceLocator()[0]
+        loc  = mc.spaceLocator()[0]
         mc.connectAttr(name + ".s", loc + ".tx", force=True)
 
         mc.setAttr(name + ".vec", 1.0, 0.0, 0.0, type="double3")

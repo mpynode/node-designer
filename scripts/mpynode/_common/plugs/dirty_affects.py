@@ -187,15 +187,15 @@ def _io_names(node_mobject, in_attr, out_attr):
         key = None
     if key is not None and key in _io_cache:
         return _io_cache[key]
-    in_names: frozenset = frozenset()
+    in_names:  frozenset = frozenset()
     out_names: tuple = ()
     try:
-        fn = om.MFnDependencyNode(node_mobject)
-        in_str = fn.findPlug(in_attr, True).asString()
-        out_str = fn.findPlug(out_attr, True).asString()
-        in_map = serialization.decode_attr_map(in_str) if in_str else {}
-        out_map = serialization.decode_attr_map(out_str) if out_str else {}
-        in_names = frozenset(in_map.keys())
+        fn        = om.MFnDependencyNode(node_mobject)
+        in_str    = fn.findPlug(in_attr, True).asString()
+        out_str   = fn.findPlug(out_attr, True).asString()
+        in_map    = serialization.decode_attr_map(in_str) if in_str else {}
+        out_map   = serialization.decode_attr_map(out_str) if out_str else {}
+        in_names  = frozenset(in_map.keys())
         out_names = tuple(out_map.keys())
     except Exception:
         pass
@@ -314,13 +314,13 @@ def declare_user_affects_api1(node_mobject, plug, affected_plugs, in_attr, out_a
     try:
         fn = om1.MFnDependencyNode(node_mobject)
         try:
-            in_str = fn.findPlug(in_attr, True).asString()
+            in_str  = fn.findPlug(in_attr, True).asString()
             out_str = fn.findPlug(out_attr, True).asString()
         except Exception:
             return
-        in_map = serialization.decode_attr_map(in_str) if in_str else {}
-        out_map = serialization.decode_attr_map(out_str) if out_str else {}
-        in_names = set(in_map.keys())
+        in_map    = serialization.decode_attr_map(in_str) if in_str else {}
+        out_map   = serialization.decode_attr_map(out_str) if out_str else {}
+        in_names  = set(in_map.keys())
         out_names = list(out_map.keys())
         if not in_names or not out_names:
             return

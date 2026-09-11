@@ -81,18 +81,18 @@ _STATIC_TRIGGERS = frozenset((
 
 class MPyBlendShape(ommpx.MPxDeformerNode):
     NODE_NAME = "mPyBlendShape"
-    NODE_ID = om.MTypeId(0x0013571C)
+    NODE_ID   = om.MTypeId(0x0013571C)
 
-    INPUT_GEOMETRY_PLUG = "input[multi_index].inputGeometry"
-    OUTPUT_GEOMETRY_PLUG = "outputGeometry[multi_index]"
+    INPUT_GEOMETRY_PLUG             = "input[multi_index].inputGeometry"
+    OUTPUT_GEOMETRY_PLUG            = "outputGeometry[multi_index]"
     OUTPUT_GEOMETRY_PLUG_SHORT_NAME = "outputGeometry"
 
-    _expression_attr = None
-    _input_attrs_attr = None
-    _output_attrs_attr = None
+    _expression_attr       = None
+    _input_attrs_attr      = None
+    _output_attrs_attr     = None
     _stored_vars_list_attr = None
     _stored_vars_data_attr = None
-    _debug_mode_attr = None
+    _debug_mode_attr       = None
 
     def __init__(self):
         super().__init__()
@@ -105,13 +105,13 @@ class MPyBlendShape(ommpx.MPxDeformerNode):
 
     @staticmethod
     def node_initializer():
-        plugs = helpers.build_internal_attrs(MPyBlendShape)
-        MPyBlendShape._expression_attr = plugs["_computeSource"]
-        MPyBlendShape._input_attrs_attr = plugs["inputs"]
-        MPyBlendShape._output_attrs_attr = plugs["outputs"]
+        plugs                                = helpers.build_internal_attrs(MPyBlendShape)
+        MPyBlendShape._expression_attr       = plugs["_computeSource"]
+        MPyBlendShape._input_attrs_attr      = plugs["inputs"]
+        MPyBlendShape._output_attrs_attr     = plugs["outputs"]
         MPyBlendShape._stored_vars_list_attr = plugs["stored_vars_list"]
         MPyBlendShape._stored_vars_data_attr = plugs["stored_vars_data"]
-        MPyBlendShape._debug_mode_attr = plugs["debug_mode"]
+        MPyBlendShape._debug_mode_attr       = plugs["debug_mode"]
 
         # MPxDeformerNode does NOT provide blendShape target plugs -- the
         # native ``inputTarget[].inputTargetGroup[]...`` tree only exists on
@@ -187,7 +187,7 @@ class MPyBlendShape(ommpx.MPxDeformerNode):
         try:
             attr = plug.attribute()
             if attr == MPyBlendShape._expression_attr:
-                data = om.MFnStringData(data_handle.data())
+                data           = om.MFnStringData(data_handle.data())
                 self._expr_str = data.string()
                 from mpynode._common.compute.expression import safe_compile_expression
 
@@ -198,8 +198,8 @@ class MPyBlendShape(ommpx.MPxDeformerNode):
                     pass
                 code = safe_compile_expression(
                     self._expr_str,
-                    node_name=node_name,
-                    filename="<mpyblendshape-expression>",
+                    node_name = node_name,
+                    filename  = "<mpyblendshape-expression>",
                 )
                 if code is not None:
                     self._expr_code = code
@@ -223,9 +223,9 @@ class MPyBlendShape(ommpx.MPxDeformerNode):
             return
 
         try:
-            output_attr = ommpx.cvar.MPxGeometryFilter_outputGeom
-            node_obj = self.thisMObject()
-            fn_node = om.MFnDependencyNode(node_obj)
+            output_attr       = ommpx.cvar.MPxGeometryFilter_outputGeom
+            node_obj          = self.thisMObject()
+            fn_node           = om.MFnDependencyNode(node_obj)
             output_array_plug = fn_node.findPlug(output_attr, True)
             for i in range(output_array_plug.numElements()):
                 element_plug = output_array_plug.elementByPhysicalIndex(i)

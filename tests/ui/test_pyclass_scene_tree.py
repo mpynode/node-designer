@@ -156,9 +156,9 @@ class TestPausedChip(unittest.TestCase):
         self.assertIsNone(only_pause["cpp"])
         self.assertEqual(only_pause["pause"].right(), 800 - 1 - D.MARGIN)
         # Every row keeps the C++ chip's room clear; a paused row also its own.
-        self.assertEqual(D.RESERVED, D.CHIP_W + D.GUTTER + D.MARGIN)
+        self.assertEqual(D.RESERVED,            D.CHIP_W + D.GUTTER + D.MARGIN)
         self.assertEqual(D.reserved_for(False), D.RESERVED)
-        self.assertEqual(D.reserved_for(True), D.RESERVED + D.PAUSE_W + D.GUTTER)
+        self.assertEqual(D.reserved_for(True),  D.RESERVED + D.PAUSE_W + D.GUTTER)
 
 
 class TestNameColumnSpacing(unittest.TestCase):

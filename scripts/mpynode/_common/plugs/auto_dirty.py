@@ -208,12 +208,12 @@ def touch_translateX(node_name: str) -> None:
     try:
         import maya.api.OpenMaya as om2
 
-        ch = free_translate_channel(node_name)
+        ch  = free_translate_channel(node_name)
         sel = om2.MSelectionList()
         sel.add(node_name)
         node_obj = sel.getDependNode(0)
-        dep = om2.MFnDependencyNode(node_obj)
-        plug = om2.MPlug(node_obj, dep.attribute(ch))
+        dep      = om2.MFnDependencyNode(node_obj)
+        plug     = om2.MPlug(node_obj, dep.attribute(ch))
         plug.setDouble(plug.asDouble())
     except Exception:
         pass
@@ -262,11 +262,11 @@ def touch_dgdirty_only(node_name: str) -> None:
 # worldMatrix, all by native DG propagation. ``touch_translateX`` (a spurious TRS
 # write) was the flush hack this architecture removes.
 TOUCH_BY_TYPE: dict = {
-    "mPyDeformer": touch_envelope,
-    "mPySkinCluster": touch_envelope,
-    "mPyBlendShape": touch_envelope,
-    "mPyMesh": touch_outMesh,
-    "mPyNurbsCurve": touch_outCurve,
+    "mPyDeformer":     touch_envelope,
+    "mPySkinCluster":  touch_envelope,
+    "mPyBlendShape":   touch_envelope,
+    "mPyMesh":         touch_outMesh,
+    "mPyNurbsCurve":   touch_outCurve,
     "mPyNurbsSurface": touch_outSurface,
 }
 
@@ -471,9 +471,9 @@ def _install_dest_callback(node_obj: om.MObject) -> None:
         except Exception:
             return
         try:
-            fn = om.MFnDependencyNode(node_obj)
+            fn        = om.MFnDependencyNode(node_obj)
             node_name = _live_node_name(node_obj)
-            ia_str = fn.findPlug("_inputAttrs", True).asString()
+            ia_str    = fn.findPlug("_inputAttrs", True).asString()
             if not ia_str:
                 return
             user_inputs = set(serialization.decode_attr_map(ia_str).keys())
@@ -560,7 +560,7 @@ def _install_source_callback(source_node_obj: om.MObject, dest_node_obj: om.MObj
         #     which doesn't tick mid drag -- mesh updates only on mouse RELEASE.
         # So gate on the actual crash context: sync only on the main thread and
         # outside file I/O; defer otherwise, which is where the crash lives.
-        on_main = threading.current_thread() is threading.main_thread()
+        on_main    = threading.current_thread() is threading.main_thread()
         in_file_io = False
         try:
             in_file_io = om.MFileIO.isReadingFile() or om.MFileIO.isOpeningFile()
@@ -572,8 +572,8 @@ def _install_source_callback(source_node_obj: om.MObject, dest_node_obj: om.MObj
             _dispatch_dirty_deferred(current_name)
 
     try:
-        cb_id = om.MNodeMessage.addNodeDirtyPlugCallback(source_node_obj, _cb)
-        token = CALLBACK_MANAGER.register(cb_id, om.MMessage.removeCallback)
+        cb_id                  = om.MNodeMessage.addNodeDirtyPlugCallback(source_node_obj, _cb)
+        token                  = CALLBACK_MANAGER.register(cb_id, om.MMessage.removeCallback)
         _source_callbacks[key] = (cb_id, token)
     except Exception as exc:
         sys.stderr.write(f"[auto_dirty] source callback install failed: {exc}\n")
@@ -757,8 +757,8 @@ def install_for_type(type_name: str, touch=None, owner: str = OWNER_SHARED) -> i
             if not made:
                 return
             try:
-                dest_node_obj = dest_plug.node()
-                fn = om.MFnDependencyNode(dest_node_obj)
+                dest_node_obj  = dest_plug.node()
+                fn             = om.MFnDependencyNode(dest_node_obj)
                 dest_node_name = fn.name()
                 from maya import cmds
 
@@ -863,7 +863,7 @@ def reset_install_state() -> None:
         keys -> ``refresh_for_node`` short-circuits and never re-installs.
     """
     global _scene_change_clear_installed, _native_discovery_sweep_installed
-    _scene_change_clear_installed = False
+    _scene_change_clear_installed     = False
     _native_discovery_sweep_installed = False
     _connection_callbacks_installed.clear()
     _dest_callbacks.clear()
@@ -906,8 +906,8 @@ _BUILTIN_MPY_GEO_TYPES = frozenset(
 
 # mpy_type (from a build manifest) -> output flush.
 _TOUCH_BY_MPY_TYPE = {
-    "mPyMesh": touch_outMesh,
-    "mPyNurbsCurve": touch_outCurve,
+    "mPyMesh":         touch_outMesh,
+    "mPyNurbsCurve":   touch_outCurve,
     "mPyNurbsSurface": touch_outSurface,
 }
 
@@ -1069,8 +1069,8 @@ def install_for_native_type(type_name, touch, owner: str = OWNER_SHARED,
             if not made:
                 return
             try:
-                dest_node_obj = dest_plug.node()
-                fn = om.MFnDependencyNode(dest_node_obj)
+                dest_node_obj  = dest_plug.node()
+                fn             = om.MFnDependencyNode(dest_node_obj)
                 dest_node_name = fn.name()
                 from maya import cmds
 
@@ -1168,9 +1168,9 @@ def install_native_geo_coverage_from_manifest(manifest_path: str,
             data = json.load(fh)
         for node in data.get("nodes", []) or []:
             type_name = node.get("type_name")
-            spec = node.get("spec") or {}
-            mpy_type = spec.get("mpy_type") or node.get("mpy_type")
-            touch = _TOUCH_BY_MPY_TYPE.get(mpy_type)
+            spec      = node.get("spec") or {}
+            mpy_type  = spec.get("mpy_type") or node.get("mpy_type")
+            touch     = _TOUCH_BY_MPY_TYPE.get(mpy_type)
             if type_name and touch is not None:
                 install_for_native_type(type_name, touch=touch, owner=owner,
                                         defer=False)
