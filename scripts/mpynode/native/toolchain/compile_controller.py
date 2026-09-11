@@ -91,12 +91,12 @@ def _emit(progress_cb, stage, node, status, detail="", i=0, n=0):
         return
     try:
         progress_cb({
-            "stage": stage,
-            "node": node,
+            "stage":  stage,
+            "node":   node,
             "status": status,
             "detail": detail,
-            "i": i,
-            "n": n,
+            "i":      i,
+            "n":      n,
         })
     except Exception:
         # A misbehaving UI callback must never break the build.
@@ -213,7 +213,7 @@ def _type_name_for(spec):
     bundler pair, and the manifest all agree on ONE name.
     """
     suggested = (spec or {}).get("suggested", {}) or {}
-    raw = suggested.get("node_type_name")
+    raw       = suggested.get("node_type_name")
     porter.apply_type_name(spec, raw)
     return spec["suggested"]["node_type_name"]
 
@@ -373,7 +373,7 @@ def compile_plugin_multi(specs, plugin_name, out_dir, targets, *,
     """
     import copy as _copy
 
-    n = len(targets)
+    n       = len(targets)
     results = []
     # maya/verify_fn are set per-version below; never let a caller's value collide.
     base_opts = dict(options)
@@ -397,7 +397,7 @@ def compile_plugin_multi(specs, plugin_name, out_dir, targets, *,
             cancelled = True
             break
         label = target.get("label") or str(target.get("root"))
-        root = target.get("root")
+        root  = target.get("root")
         _emit(progress_cb, "version", label, "start",
               "Compiling %s (%d/%d)" % (label, i + 1, n), i, n)
         sub_out = os.path.join(out_dir, label)
@@ -500,7 +500,7 @@ def _optimize_skip_reason(cpp_path, spec, *, one_shot=False):
         return "shared followed-import helper (cross-node dedup)"
     if one_shot:
         needed = _response_tokens_needed(text)
-        cap = _resolve_optimize_max_tokens()
+        cap    = _resolve_optimize_max_tokens()
         if needed > cap:
             return ("too large for a whole-file rewrite -- needs ~%d response "
                     "tokens and the cap is %d. This run has no tool-using "
@@ -623,7 +623,7 @@ def compile_plugin(specs, plugin_name, out_dir, *, strict=True, verify=True,
     Returns ``{ok, bundle_path, manifest_path, plugin_name, nodes:[rows],
     errors:[...], strict}``.
     """
-    n_total = len(specs)
+    n_total   = len(specs)
     ai_assist = _resolve_ai_assist(ai_assist, optimize)
     provider, model = _resolve_provider_model(provider, model)
     # Start each run with a clean translate-once helper cache so the run is
@@ -705,9 +705,9 @@ def compile_plugin(specs, plugin_name, out_dir, *, strict=True, verify=True,
     surviving = []  # list of (type_name, cpp_path, spec, key, cache_status)
     # Did ANY node in this run need the LLM? Accumulated from the per-node
     # _node_needs_llm below and reported ONCE after the loop.
-    any_needs_llm = False
-    seen_type_names = set()  # enforce unique native type names across the build
-    kept_spec_by_type = {}  # type_name -> first spec kept for it (divergence cmp)
+    any_needs_llm     = False
+    seen_type_names   = set()  # enforce unique native type names across the build
+    kept_spec_by_type = {}     # type_name -> first spec kept for it (divergence cmp)
     for idx, spec in enumerate(specs, start=1):
         if _cancelled(cancel_event):
             _emit(progress_cb, "port", None, "abort",
@@ -770,7 +770,7 @@ def compile_plugin(specs, plugin_name, out_dir, *, strict=True, verify=True,
 
         # (b) portability gate -- BEFORE codegen/LLM.
         _emit(progress_cb, "portability", type_name, "start", "", idx, n_total)
-        port = spec.get("portability") or {}
+        port     = spec.get("portability") or {}
         blockers = list(port.get("blockers") or [])
         if port.get("portable") is False or blockers:
             reason = "not portable: " + ("; ".join(blockers) or "blocked")
@@ -795,7 +795,7 @@ def compile_plugin(specs, plugin_name, out_dir, *, strict=True, verify=True,
         node_out_dir = os.path.join(bundler.build_dir_for(out_dir), type_name)
         os.makedirs(node_out_dir, exist_ok=True)
         cpp_dst = os.path.join(node_out_dir, type_name + ".cpp")
-        key = port_cache.cache_key(spec, provider=provider, model=model)
+        key     = port_cache.cache_key(spec, provider=provider, model=model)
 
         def _stage_cb(stage, text, _tn=type_name, _i=idx):
             _write_stage(out_dir, _tn, stage, text)
@@ -806,7 +806,7 @@ def compile_plugin(specs, plugin_name, out_dir, *, strict=True, verify=True,
 
         # Does finishing this node require the AI? Answers both the cache
         # question below and the preflight one further down.
-        needs_llm = _node_needs_llm(spec)
+        needs_llm     = _node_needs_llm(spec)
         any_needs_llm = any_needs_llm or needs_llm
 
         # (c) cache lookup. A cached .cpp for an LLM-bound node IS AI-authored, so
@@ -814,7 +814,7 @@ def compile_plugin(specs, plugin_name, out_dir, *, strict=True, verify=True,
         # rather than hitting and having to explain the provenance.
         _emit(progress_cb, "cache", type_name, "start", "", idx, n_total)
         use_cache = reuse_cache and (ai_assist or not needs_llm)
-        cached = port_cache.get_path(key) if use_cache else None
+        cached    = port_cache.get_path(key) if use_cache else None
         if cached:
             # HIT: copy the cached .cpp into the node out-dir; no LLM, no codegen.
             shutil.copyfile(cached, cpp_dst)
@@ -931,11 +931,11 @@ def compile_plugin(specs, plugin_name, out_dir, *, strict=True, verify=True,
                 with open(r["cpp"], "r", encoding="utf-8") as fh:
                     cpp_text = fh.read()
                 port_cache.put(key, cpp_text, meta={
-                    "recipe": port_cache.PORTER_RECIPE_VERSION,
-                    "provider": provider,
-                    "model": model,
+                    "recipe":    port_cache.PORTER_RECIPE_VERSION,
+                    "provider":  provider,
+                    "model":     model,
                     "type_name": type_name,
-                    "source": spec.get("source_node"),
+                    "source":    spec.get("source_node"),
                 })
             except Exception as exc:
                 # A cache-write failure must not fail the build -- but it must
@@ -952,8 +952,8 @@ def compile_plugin(specs, plugin_name, out_dir, *, strict=True, verify=True,
             surviving.append((type_name, cpp_path, spec, key, "miss"))
         else:
             log_text = r.get("compiler_log") or ""
-            tail = log_text.strip().splitlines()
-            reason = "port failed to compile: %s" % (tail[-1] if tail else "?")
+            tail     = log_text.strip().splitlines()
+            reason   = "port failed to compile: %s" % (tail[-1] if tail else "?")
             # Turn a cryptic compiler error (e.g. STL1001) into a plain-English
             # next step appended to the failure.
             hint = toolchain.diagnose_compiler_log(log_text)
@@ -1062,13 +1062,13 @@ def compile_plugin(specs, plugin_name, out_dir, *, strict=True, verify=True,
     # optimize_summary surfaces the per-node outcome to the UI (#64) instead of a
     # transient log line; always defined so the attach below is safe when off.
     optimize_summary = {}
-    any_accepted = False
+    any_accepted     = False
     # Per-node record of what the AI actually DID (see optimizer_live), and the
     # run-level verdict derived from it below. A provider that dies at startup
     # every round used to reach here as a normal "kept original" -- or worse, as
     # an accept on byte-identical source that benchmark noise scored 1.15x.
     opt_ai_status = {}
-    ai_never_ran = ""
+    ai_never_ran  = ""
     if optimize and not _cancelled(cancel_event):
         # Two preflights, one failure shape (emit fail + __status__ + error,
         # and the deterministic build still links). The ruler first: without
@@ -1139,8 +1139,8 @@ def compile_plugin(specs, plugin_name, out_dir, *, strict=True, verify=True,
                     opt_nodes, out_dir, maya=maya,
                     verify_fn=opt_verify, complete_fn=complete_fn,
                     cancel_event=cancel_event, provider=provider,
-                    keep_intermediates=keep_intermediates,
-                    status_out=opt_ai_status,
+                    keep_intermediates = keep_intermediates,
+                    status_out         = opt_ai_status,
                     log_cb=lambda m: _emit(progress_cb, "optimize", None, "info",
                                            m, 0, n_total),
                     compile_log_cb=lambda m: (
@@ -1159,8 +1159,8 @@ def compile_plugin(specs, plugin_name, out_dir, *, strict=True, verify=True,
                     # prints the line it always did.
                     optimize_summary[tn] = {
                         "accepted": acc, "speedup": spd, "reason": rsn,
-                        "rounds": _opt_int(getattr(r, "rounds", 0)),
-                        "max_rounds": _opt_int(getattr(r, "max_rounds", 0)),
+                        "rounds":      _opt_int(getattr(r, "rounds", 0)),
+                        "max_rounds":  _opt_int(getattr(r, "max_rounds", 0)),
                         "stop_reason": str(getattr(r, "stop_reason", "") or ""),
                         "ai": opt_ai_status.get(tn, {})}
                     if acc:
@@ -1239,7 +1239,7 @@ def compile_plugin(specs, plugin_name, out_dir, *, strict=True, verify=True,
 
     # Followed-import helpers that were hoisted into the one shared C++ unit
     # (translate-once / dedup). Surfaced on the result for the GUI/manifest.
-    asm_shared = report.get("shared_helpers") or []
+    asm_shared    = report.get("shared_helpers") or []
     asm_conflicts = report.get("shared_helper_conflicts") or []
 
     # A derived id is a hash, so two nodes in one bundle can (rarely) want the same
@@ -1262,21 +1262,21 @@ def compile_plugin(specs, plugin_name, out_dir, *, strict=True, verify=True,
         scan = honesty.get(tn) or {"ported": False, "incomplete": [], "io": []}
         rows.append({
             "source_node": spec.get("source_node"),
-            "type_name": tn,
-            "type_id": rec.get("id"),
+            "type_name":   tn,
+            "type_id":     rec.get("id"),
             # pinned / pin-file / derived, with a "+probed" suffix when a hash
             # clash in this bundle pushed it forward -- so a collision is visible
             # in the manifest instead of silently absorbed.
             "type_id_source": reg.sources.get(tn, ""),
-            "base": spec.get("suggested", {}).get("mpx_base", "MPxNode"),
-            "spec_hash": key,
+            "base":           spec.get("suggested", {}).get("mpx_base", "MPxNode"),
+            "spec_hash":      key,
             "port_cache_key": key,
-            "cache": cache_status,
-            "build_status": rec.get("status", "unknown"),
-            "build_reason": rec.get("reason", ""),
-            "ported": scan["ported"],
-            "incomplete": scan["incomplete"],
-            "invented_io": scan["io"],
+            "cache":          cache_status,
+            "build_status":   rec.get("status", "unknown"),
+            "build_reason":   rec.get("reason", ""),
+            "ported":         scan["ported"],
+            "incomplete":     scan["incomplete"],
+            "invented_io":    scan["io"],
             # scan's OPTIONAL 4th key (absent when empty -- hence ``.get``):
             # std facilities the PORT region uses with no include for them,
             # i.e. what libc++ accepted on this machine and the MSVC STL will
@@ -1304,7 +1304,7 @@ def compile_plugin(specs, plugin_name, out_dir, *, strict=True, verify=True,
     # Honest success (#62): the linker returning ok is not enough -- the artifact
     # must exist on disk. os.path.exists handles a file OR dir bundle.
     bundle_exists = bool(bundle_path) and os.path.exists(bundle_path)
-    build_ok = bool(report.get("ok") and bundle_exists)
+    build_ok      = bool(report.get("ok") and bundle_exists)
 
     # #66: an AI-optimized candidate can compile + parity-pass in isolation yet
     # still fail the FINAL multi-node link. Fall back to the deterministic .cpp
@@ -1325,20 +1325,20 @@ def compile_plugin(specs, plugin_name, out_dir, *, strict=True, verify=True,
                 asm_nodes, plugin_name, out_dir, strict=strict, registry=reg,
                 maya=maya, compile_now=True,
                 log_cb=_make_log_cb(progress_cb, None, 0, n_total))
-            bundle_path = report.get("bundle")
+            bundle_path   = report.get("bundle")
             bundle_exists = bool(bundle_path) and os.path.exists(bundle_path)
-            build_ok = bool(report.get("ok") and bundle_exists)
+            build_ok      = bool(report.get("ok") and bundle_exists)
             # The rows above reflect the FIRST (failed) report; refresh them from
             # the deterministic re-assemble so a node that now ships is not left
             # marked compile-failed and dropped from verify/companions (#66).
-            asm_shared = report.get("shared_helpers") or []
+            asm_shared    = report.get("shared_helpers") or []
             asm_conflicts = report.get("shared_helper_conflicts") or []
             asm_by_name = {arec["name"]: arec
                            for arec in report.get("nodes", [])}
             for row in rows:
                 arec = asm_by_name.get(row["type_name"])
                 if arec is not None:
-                    row["type_id"] = arec.get("id")
+                    row["type_id"]      = arec.get("id")
                     row["build_status"] = arec.get("status", "unknown")
                     row["build_reason"] = arec.get("reason", "")
 
@@ -1409,9 +1409,9 @@ def compile_plugin(specs, plugin_name, out_dir, *, strict=True, verify=True,
             # Nothing is written any more, so the report is built from the specs
             # instead; the dialog still lists every command the bundle registers.
             by_type = {tn: spec for (tn, spec) in cmd_nodes}
-            n_cmds = 0
+            n_cmds  = 0
             for r in rows:
-                spec = by_type.get(r["type_name"])
+                spec     = by_type.get(r["type_name"])
                 cmds_for = (spec or {}).get("commands") or []
                 if not cmds_for:
                     continue
@@ -1441,7 +1441,7 @@ def compile_plugin(specs, plugin_name, out_dir, *, strict=True, verify=True,
         for r in rows:
             if r["type_name"] in (vres or {}):
                 r["verify"] = vres[r["type_name"]]
-                v = r["verify"]
+                v           = r["verify"]
                 if v.get("ran") and v.get("pass") is False:
                     _emit(progress_cb, "verify", r["type_name"], "fail",
                           "maxerr=%s" % v.get("maxerr"), 0, n_total)
@@ -1496,7 +1496,7 @@ def _clean_working_subdirs(out_dir, rows, clean_scratch=True):
     """
     if not clean_scratch:
         return
-    out_abs = os.path.abspath(out_dir)
+    out_abs   = os.path.abspath(out_dir)
     build_dir = bundler.build_dir_for(out_dir)
     scratch_root = os.path.join(build_dir,
                                 optimizer_live.OPT_SCRATCH_DIRNAME)
@@ -1529,21 +1529,21 @@ def _clean_working_subdirs(out_dir, rows, clean_scratch=True):
 def _drop_row(spec, type_name, stage, reason, provider, model):
     """A manifest row for a node dropped before/at port (no type_id/build)."""
     return {
-        "source_node": spec.get("source_node"),
-        "type_name": type_name,
-        "type_id": None,
+        "source_node":    spec.get("source_node"),
+        "type_name":      type_name,
+        "type_id":        None,
         "type_id_source": "",
-        "base": spec.get("suggested", {}).get("mpx_base", "MPxNode"),
-        "spec_hash": port_cache.cache_key(spec, provider=provider, model=model),
+        "base":           spec.get("suggested", {}).get("mpx_base", "MPxNode"),
+        "spec_hash":      port_cache.cache_key(spec, provider=provider, model=model),
         "port_cache_key": port_cache.cache_key(spec, provider=provider,
                                                 model=model),
-        "cache": None,
+        "cache":        None,
         "build_status": "dropped",
         "build_reason": "%s: %s" % (stage, reason),
         # Uniform row shape: nothing was ported, so nothing to admit to.
-        "ported": False,
-        "incomplete": [],
-        "invented_io": [],
+        "ported":           False,
+        "incomplete":       [],
+        "invented_io":      [],
         "missing_includes": [],
         "verify": {"ran": False, "pass": None, "maxerr": None, "tol": None,
                    "reason": ""},
@@ -1579,7 +1579,7 @@ def _write_manifest(out_dir, plugin_name, bundle_path, rows, strict, provider,
     build_dir = bundler.build_dir_for(out_dir)
     os.makedirs(build_dir, exist_ok=True)
     path = os.path.join(build_dir, "manifest.json")
-    tmp = "%s.tmp-%d" % (path, os.getpid())
+    tmp  = "%s.tmp-%d" % (path, os.getpid())
     with open(tmp, "w", encoding="utf-8") as fh:
         # NOT sort_keys: the embedded spec carries attribute DECLARATION ORDER
         # only as its dict INSERTION order (emit_attr iterates spec[kind].items()),
@@ -1615,21 +1615,21 @@ def _result(ok, bundle_path, manifest_path, plugin_name, rows, errors, strict,
         # strict-failed build is when a human most needs to read what happened.
         # A report failure is never a build failure.
         try:
-            written = _stage_report.write_reports(out_dir, plugin_name, rows)
+            written     = _stage_report.write_reports(out_dir, plugin_name, rows)
             report_path = written[-1] if written else None
         except Exception:
             report_path = None
     _emit(progress_cb, "done", None, "ok" if ok else "fail",
           "%d node(s)" % len(rows), 0, len(rows))
     return {
-        "ok": ok,
-        "bundle_path": bundle_path,
+        "ok":            ok,
+        "bundle_path":   bundle_path,
         "manifest_path": manifest_path,
-        "report_path": report_path,
-        "plugin_name": plugin_name,
-        "nodes": rows,
-        "errors": errors,
-        "strict": strict,
+        "report_path":   report_path,
+        "plugin_name":   plugin_name,
+        "nodes":         rows,
+        "errors":        errors,
+        "strict":        strict,
     }
 
 
@@ -1656,10 +1656,10 @@ class CompileController:
 
     def __init__(self, *, progress_cb=None):
         self._progress_cb = progress_cb
-        self._cancel = threading.Event()
-        self._thread = None
-        self._busy = False
-        self._result = None
+        self._cancel      = threading.Event()
+        self._thread      = None
+        self._busy        = False
+        self._result      = None
 
     def is_busy(self):
         return self._busy
@@ -1689,7 +1689,7 @@ class CompileController:
             raise RuntimeError("CompileController is already running")
         self._cancel.clear()
         self._result = None
-        self._busy = True
+        self._busy   = True
         opts.pop("cancel_event", None)
         opts.pop("progress_cb", None)
 
@@ -1744,7 +1744,7 @@ class CompileController:
             raise RuntimeError("CompileController is already running")
         self._cancel.clear()
         self._result = None
-        self._busy = True
+        self._busy   = True
         opts.pop("cancel_event", None)
         opts.pop("progress_cb", None)
 

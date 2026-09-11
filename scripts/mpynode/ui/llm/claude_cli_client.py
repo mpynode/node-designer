@@ -24,7 +24,7 @@ from mpynode.ui.qt_wrapper import QObject, Signal
 from mpynode.ui.llm import config as _config
 from mpynode.native.toolchain import toolchain
 
-PROVIDER = "claude_cli"
+PROVIDER    = "claude_cli"
 _CLAUDE_BIN = os.environ.get("CLAUDE_BIN", "claude")
 
 # Keep Claude Code a THIN payload-emitter. By default it behaves like a full
@@ -172,11 +172,11 @@ def auth_failure(event):
 # This is the ONLY list guaranteed to match what THIS install will run. The
 # Anthropic HTTP list describes a different backend: a gateway build rejects ids
 # it returns (`claude-opus-4-1-20250805` is in /v1/models, the CLI refuses it).
-_AVAIL_RE = re.compile(r"Available:\s*(.+)", re.IGNORECASE)
+_AVAIL_RE   = re.compile(r"Available:\s*(.+)", re.IGNORECASE)
 _CURRENT_RE = re.compile(r"Current model:\s*(.+?)\s*$", re.IGNORECASE | re.MULTILINE)
 # Prose escape hatch closing the sentence -- not a model name.
 _TRAILER_RE = re.compile(r",?\s*or a full model ID\.?\s*$", re.IGNORECASE)
-_TOKEN_RE = re.compile(r"[A-Za-z0-9._\-\[\]]+")
+_TOKEN_RE   = re.compile(r"[A-Za-z0-9._\-\[\]]+")
 
 
 def parse_model_listing(text):
@@ -187,7 +187,7 @@ def parse_model_listing(text):
     ``([], "")`` so the caller falls back rather than offering junk.
     """
     current = ""
-    m = _CURRENT_RE.search(text or "")
+    m       = _CURRENT_RE.search(text or "")
     if m:
         current = m.group(1).strip()
     names = []
@@ -250,15 +250,15 @@ def alias_listing(bin_path=None, timeout=60.0):
 # each row's tooltip, so this is where a floating entry declares itself.
 _ALIAS_DISPLAY = ("floating alias -- NOT version-pinned; re-points to a new "
                   "model on release day")
-_SET_RE = re.compile(r"Set model to\s+(.+?)\s+for this session", re.IGNORECASE)
-_NOTFOUND_RE = re.compile(r"Model\s+'.*?'\s+not found", re.IGNORECASE)
+_SET_RE        = re.compile(r"Set model to\s+(.+?)\s+for this session", re.IGNORECASE)
+_NOTFOUND_RE   = re.compile(r"Model\s+'.*?'\s+not found", re.IGNORECASE)
 _RESTRICTED_RE = re.compile(r"API error:\s*(?:403|401)\b", re.IGNORECASE)
 # Model ids the CLI could know about. Anchored on the vendor prefix + a digit so
 # doc/filename noise ("claude-fable-5.md") and internal suffixes ("-v1") drop.
-_CAND_RE = re.compile(rb"claude-(?:opus|sonnet|haiku|fable)-[0-9][A-Za-z0-9._-]*")
-_CAND_OK = re.compile(r"^claude-[a-z]+-[0-9][A-Za-z0-9-]*$")
-_SCAN_CHUNK = 8 << 20
-_MIN_BIN = 2 << 20
+_CAND_RE        = re.compile(rb"claude-(?:opus|sonnet|haiku|fable)-[0-9][A-Za-z0-9._-]*")
+_CAND_OK        = re.compile(r"^claude-[a-z]+-[0-9][A-Za-z0-9-]*$")
+_SCAN_CHUNK     = 8 << 20
+_MIN_BIN        = 2 << 20
 _MAX_SCAN_FILES = 6
 
 
@@ -331,8 +331,8 @@ def _scan_files(binp):
     """
     out = []
     try:
-        real = os.path.realpath(binp)
-        d = os.path.dirname(real)
+        real  = os.path.realpath(binp)
+        d     = os.path.dirname(real)
         roots = [d, os.path.dirname(d)]
         roots += [os.path.join(roots[1], n) for n in sorted(os.listdir(roots[1]))
                   if os.path.isdir(os.path.join(roots[1], n))]
@@ -389,7 +389,7 @@ def candidate_model_ids(bin_path=None):
     return sorted(m for m in found if _CAND_OK.match(m))
 
 
-_NUM_RE = re.compile(r"(\d+)")
+_NUM_RE   = re.compile(r"(\d+)")
 _DATED_RE = re.compile(r"^(.*)-(20\d{6})$")
 
 
@@ -426,8 +426,8 @@ def order_models(ids, wide=()):
     Sorting is purely lexical/numeric -- there is no capability table, so an
     install we have never seen still orders sanely. Pure.
     """
-    wide = set(wide or ())
-    ids = [m for m in (ids or ()) if m]
+    wide  = set(wide or ())
+    ids   = [m for m in (ids or ()) if m]
     known = set(ids)
     # A trailing YYYYMMDD is a BUILD STAMP of the id in front of it, not a
     # version component: claude-sonnet-4-20250514 *is* "Sonnet 4", so letting
@@ -442,7 +442,7 @@ def order_models(ids, wide=()):
         else:
             roots.append(mid)
 
-    out = []
+    out  = []
     seen = set()
     for mid in sorted(roots, key=_nat_key, reverse=True):
         if mid in seen:
@@ -555,39 +555,39 @@ def list_models(bin_path=None, timeout=90.0, extra_candidates=(),
         if label and label != displays.get(base):
             displays[twin] = label
     keep_wide = [m for m in displays if m.endswith("[1m]")]
-    bases = [m for m in displays if not m.endswith("[1m]")]
+    bases     = [m for m in displays if not m.endswith("[1m]")]
     return order_models(bases, keep_wide), current, displays
 
 
 class ClaudeCliClient(QObject):
-    assistantText = Signal(str)
-    toolStarted = Signal(str)
-    toolFinished = Signal(str)
-    turnFinished = Signal()
-    notice = Signal(str)
-    thinking = Signal(str)  # thinking trace (when effort > off)
+    assistantText  = Signal(str)
+    toolStarted    = Signal(str)
+    toolFinished   = Signal(str)
+    turnFinished   = Signal()
+    notice         = Signal(str)
+    thinking       = Signal(str)                      # thinking trace (when effort > off)
     retryScheduled = Signal(int, int, int, int, str)  # interface compat (unused)
-    tokensUsed = Signal(int)
-    errorOccurred = Signal(str)
-    busyChanged = Signal(bool)
+    tokensUsed     = Signal(int)
+    errorOccurred  = Signal(str)
+    busyChanged    = Signal(bool)
 
     def __init__(self, ctx_provider=None, parent=None):
         super().__init__(parent)
         self._ctx_provider = ctx_provider
-        self._busy = False
-        self._cancel = threading.Event()
-        self._proc = None
-        self._session_id = str(uuid.uuid4())
-        self._started = False  # session created? -> use --resume next time
+        self._busy         = False
+        self._cancel       = threading.Event()
+        self._proc         = None
+        self._session_id   = str(uuid.uuid4())
+        self._started      = False  # session created? -> use --resume next time
         self._emitted_text = False
-        self._answer_text = ""   # accumulated reply -> payload extraction
-        self._ctx = None         # ToolContext captured per turn (GUI thread)
-        self._node_name = None   # active node captured per turn (GUI thread)
-        self._auth_failed = False  # set from the stream; reset every turn
+        self._answer_text  = ""     # accumulated reply -> payload extraction
+        self._ctx          = None   # ToolContext captured per turn (GUI thread)
+        self._node_name    = None   # active node captured per turn (GUI thread)
+        self._auth_failed  = False  # set from the stream; reset every turn
 
     def reset(self):
         self._session_id = str(uuid.uuid4())
-        self._started = False
+        self._started    = False
 
     def is_busy(self):
         return self._busy
@@ -622,7 +622,7 @@ class ClaudeCliClient(QObject):
             return
         # Capture the active node + a ToolContext on the GUI thread (Maya-safe),
         # then compose the payload-mode prompt (serializes the active node).
-        self._ctx = self._ctx_provider() if callable(self._ctx_provider) else None
+        self._ctx       = self._ctx_provider() if callable(self._ctx_provider) else None
         self._node_name = getattr(self._ctx, "working_node", None)
         try:
             from mpynode.ui.llm import payload as _payload
@@ -643,8 +643,8 @@ class ClaudeCliClient(QObject):
 
     def _run(self, prompt, images):
         self._emitted_text = False
-        self._answer_text = ""
-        self._auth_failed = False
+        self._answer_text  = ""
+        self._auth_failed  = False
         try:
             from mpynode.native.toolchain import toolchain
 
@@ -735,7 +735,7 @@ class ClaudeCliClient(QObject):
             # payload. Kept although sub-agents are denied -- it is what makes
             # any nested chatter harmless.
             is_sub = ev.get("parent_tool_use_id") is not None
-            msg = ev.get("message", {}) or {}
+            msg    = ev.get("message", {}) or {}
             for b in (msg.get("content") or []):
                 bt = b.get("type")
                 if bt == "text" and b.get("text"):
@@ -748,7 +748,7 @@ class ClaudeCliClient(QObject):
                     th = b.get("thinking") or b.get("text")
                     if th:
                         self.thinking.emit(th)
-            u = msg.get("usage") or {}
+            u   = msg.get("usage") or {}
             tot = (u.get("input_tokens") or 0) + (u.get("output_tokens") or 0)
             if tot:
                 self.tokensUsed.emit(int(tot))

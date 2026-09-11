@@ -62,12 +62,12 @@ _ELLIPSIS = "…"
 # Braille spinner frames: a QTimer cycles these every _SPIN_INTERVAL_MS while a
 # compile runs, so the UI reads as alive even when one step (LLM port / clang++
 # link) runs long with no sub-progress. qt_wrapper does not re-export QMovie.
-_SPIN_FRAMES = "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"
+_SPIN_FRAMES      = "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"
 _SPIN_INTERVAL_MS = 110
 
 # Collapsible-log toggle labels: "▸" = collapsed, "▾" = expanded.
 _LOG_LABEL_COLLAPSED = "Log ▸"
-_LOG_LABEL_EXPANDED = "Log ▾"
+_LOG_LABEL_EXPANDED  = "Log ▾"
 
 
 def _log_toggle_text(shown: bool) -> str:
@@ -78,7 +78,7 @@ def _log_toggle_text(shown: bool) -> str:
 # Hard wrap width for the log pane + the one indent step the log already uses
 # for a sub-line ("  [AI-optimize] ..."). 80 fits the dialog's default width at
 # the pane's 10pt monospace, above the 56/60 column rules the summary draws.
-_LOG_WRAP_COLS = 80
+_LOG_WRAP_COLS   = 80
 _LOG_WRAP_INDENT = "  "
 
 
@@ -111,13 +111,13 @@ def _wrap_log_line(text) -> str:
 #   * Node Type= the DERIVED compiled type the bundle registers (camelCase of
 #                the Class when classed; the instance-derived type when
 #                class-less), NOT the base native type.
-_COL_CHECK = 0
-_COL_NODE = 1      # "Node Name"
-_COL_CLASS = 2     # canonical Class in Option-A notation
-_COL_SOURCE = 3    # "Scene" or "External .mpn"
-_COL_PERSIST = 4   # "Data" -- per-node "bake persistent data" checkbox
-_COL_TYPE = 5      # "Node Type" -- the derived compiled type (mc.createNode(...))
-_COL_STATUS = 6
+_COL_CHECK   = 0
+_COL_NODE    = 1  # "Node Name"
+_COL_CLASS   = 2  # canonical Class in Option-A notation
+_COL_SOURCE  = 3  # "Scene" or "External .mpn"
+_COL_PERSIST = 4  # "Data" -- per-node "bake persistent data" checkbox
+_COL_TYPE    = 5  # "Node Type" -- the derived compiled type (mc.createNode(...))
+_COL_STATUS  = 6
 
 # Column count + header labels kept next to the indices so they never drift.
 _COL_COUNT = 7
@@ -254,7 +254,7 @@ def _generated_sources(out_dir, rows):
         return []
     from mpynode.native.compiler import bundler
     src_dir = bundler.source_dir_for(out_dir)
-    found = []
+    found   = []
     for row in rows or []:
         type_name = (row or {}).get("type_name")
         if not type_name:
@@ -290,8 +290,8 @@ def _rounds_clause(info):
     why = (info or {}).get("stop_reason")
     if not why:
         return ""
-    n = int(info.get("rounds") or 0)
-    mx = int(info.get("max_rounds") or 0)
+    n   = int(info.get("rounds") or 0)
+    mx  = int(info.get("max_rounds") or 0)
     ran = "%d round%s" % (n, "" if n == 1 else "s")
     cap = (" of max %d" % mx) if mx > 0 else ""
     return " -- %s%s, stopped: %s" % (ran, cap, why)
@@ -392,7 +392,7 @@ def _resolve_maya_dir():
         return None
     # Tolerate a trailing path separator before matching the app-bundle suffix,
     # else the install root is wrong and the pre-flight probes the wrong Maya.
-    loc = loc.rstrip("/\\")
+    loc    = loc.rstrip("/\\")
     suffix = "/Maya.app/Contents"
     if loc.endswith(suffix):
         loc = loc[: -len(suffix)]
@@ -470,7 +470,7 @@ class CompileDialog(QDialog):
         # checked node NAMES = the bundle. Seeded here BEFORE _build_ui so the
         # plugin-name default can reflect a single-node scene.
         self._scene_nodes = sorted(_scene_mpy_nodes())
-        self._checked = set()
+        self._checked     = set()
         # Scene NODE names whose diverged-code loss the user explicitly accepted
         # ("Compile first variant only"). Per-node, NOT a global flag, so
         # acknowledging one Class's divergence never mutes an UNRELATED type's
@@ -502,16 +502,16 @@ class CompileDialog(QDialog):
         # extracted (progress events are keyed by the sanitized type_name).
         self._row_by_type = {}
         self._bundle_path = None
-        self._busy = False
+        self._busy        = False
 
         # Spinner + collapsible-log state. ``_status_msg`` is the canonical
         # status text; the spinner (when running) renders it with a leading
         # animated frame. ``_log_shown`` tracks the collapsible log pane.
-        self._status_msg = ""
+        self._status_msg   = ""
         self._spin_running = False
-        self._spin_i = 0
-        self._spin_timer = None  # created in _build_ui
-        self._log_shown = False
+        self._spin_i       = 0
+        self._spin_timer   = None  # created in _build_ui
+        self._log_shown    = False
         # Monotonic origin of the current run (set in _set_busy(True)); drives
         # the elapsed timer. None while idle -> the spinner shows no timer.
         self._run_start = None
@@ -553,7 +553,7 @@ class CompileDialog(QDialog):
         box = QVBoxLayout()
         box.setSpacing(2)
         head = QLabel("Pipeline", self)
-        f = head.font()
+        f    = head.font()
         f.setBold(True)
         head.setFont(f)
         box.addWidget(head)
@@ -683,7 +683,7 @@ class CompileDialog(QDialog):
         row.setSpacing(14)
         self._rail_labels = {}
         for key, _title in self._RAIL_STEPS:
-            lab = QLabel("", self)
+            lab                    = QLabel("", self)
             self._rail_labels[key] = lab
             row.addWidget(lab)
         row.addStretch(1)
@@ -697,7 +697,7 @@ class CompileDialog(QDialog):
     def _rail_reset(self, pipe):
         """Start a run from a clean rail. A tick left over from the previous
         compile is a lie about this one."""
-        pipe = pipe or {}
+        pipe             = pipe or {}
         self._rail_state = {k: "pending" for k, _t in self._RAIL_STEPS}
         if not pipe.get("ai_assist", True):
             self._rail_state["assist"] = "off"
@@ -893,12 +893,12 @@ class CompileDialog(QDialog):
         except (TypeError, ValueError):
             rounds = 6
         return {
-            "ai_assist": self._assist_check.isChecked() or optimize,
-            "optimize": optimize,
-            "optimize_rounds": rounds,
+            "ai_assist":          self._assist_check.isChecked() or optimize,
+            "optimize":           optimize,
+            "optimize_rounds":    rounds,
             "keep_intermediates": self._keep_intermediates_check.isChecked(),
-            "clean_scratch": self._clean_scratch_check.isChecked(),
-            "run_tests": self._run_tests_check.isChecked() or optimize,
+            "clean_scratch":      self._clean_scratch_check.isChecked(),
+            "run_tests":          self._run_tests_check.isChecked() or optimize,
         }
 
     def _build_ui(self) -> None:
@@ -952,7 +952,7 @@ class CompileDialog(QDialog):
             # are user-resizable (drag the header divider); Source + Data hug
             # their content; Status stretches to fill the rest.
             header.setSectionResizeMode(_COL_CHECK, QHeaderView.ResizeToContents)
-            header.setSectionResizeMode(_COL_NODE, QHeaderView.Interactive)
+            header.setSectionResizeMode(_COL_NODE,  QHeaderView.Interactive)
             header.setSectionResizeMode(_COL_CLASS, QHeaderView.Interactive)
             header.setSectionResizeMode(_COL_SOURCE,
                                         QHeaderView.ResizeToContents)
@@ -974,7 +974,7 @@ class CompileDialog(QDialog):
         outer.addWidget(self._table, stretch=1)
 
         # --- selection helpers -------------------------------------------
-        edit_row = QHBoxLayout()
+        edit_row             = QHBoxLayout()
         self._select_all_btn = QPushButton("Select All", self)
         self._select_all_btn.setToolTip("Check every node in the scene")
         self._select_none_btn = QPushButton("Select None", self)
@@ -1043,7 +1043,7 @@ class CompileDialog(QDialog):
         # build a plugin per version into out_dir/<label>/. If discovery finds
         # nothing the row is omitted and the compile targets the running Maya.
         self._maya_targets = []
-        self._maya_checks = {}
+        self._maya_checks  = {}
         try:
             from mpynode.native.toolchain import toolchain
 
@@ -1063,12 +1063,12 @@ class CompileDialog(QDialog):
             # Scrollable, height-capped list so 5+ installed versions scroll
             # instead of widening the dialog. The Select All / None + Log toggle
             # buttons stack to its RIGHT, sized to sit flush with the list.
-            ver_row = QHBoxLayout()
+            ver_row    = QHBoxLayout()
             ver_scroll = QScrollArea(self)
             ver_scroll.setWidgetResizable(True)
             ver_scroll.setMaximumHeight(_VER_LIST_MAX_H)
             ver_host = QWidget(ver_scroll)
-            ver_col = QVBoxLayout(ver_host)
+            ver_col  = QVBoxLayout(ver_host)
             ver_col.setContentsMargins(4, 2, 4, 2)
             ver_col.setSpacing(2)
             for t in self._maya_targets:
@@ -1085,7 +1085,7 @@ class CompileDialog(QDialog):
             ver_row.addWidget(ver_scroll, stretch=1)
             # Right-hand button column: Select All / None (the "compile all
             # versions" affordance) + the live-log toggle, top-aligned.
-            ver_btn_col = QVBoxLayout()
+            ver_btn_col       = QVBoxLayout()
             self._ver_all_btn = QPushButton("Select All", self)
             self._ver_all_btn.setToolTip("Check every Maya version")
             self._ver_none_btn = QPushButton("Select None", self)
@@ -1108,7 +1108,7 @@ class CompileDialog(QDialog):
         # braille spinner prefixes this honest phase line, and a collapsible log
         # pane below streams the raw compiler output. The Log toggle lives in the
         # version button column, or on the status row when no installs exist.
-        status_row = QHBoxLayout()
+        status_row         = QHBoxLayout()
         self._status_label = QLabel("", self)
         status_row.addWidget(self._status_label, stretch=1)
         if not self._maya_targets:
@@ -1153,7 +1153,7 @@ class CompileDialog(QDialog):
         # appears after a finish with one row per flagged node -- "Green-light"
         # accepts that node's C++ as-is, un-green-lit means "keep iterating" and
         # it rides into the "Fix with AI" hand-off.
-        self._greenlight_box = QWidget(self)
+        self._greenlight_box    = QWidget(self)
         self._greenlight_layout = QVBoxLayout(self._greenlight_box)
         self._greenlight_layout.setContentsMargins(0, 0, 0, 0)
         self._greenlight_layout.setSpacing(2)
@@ -1205,7 +1205,7 @@ class CompileDialog(QDialog):
         self._last_report_path = None
         # Stashed by _on_finished so the AI button (a separate click) can rebuild
         # the hand-off from the last result without re-running the compile.
-        self._last_ai_result = None
+        self._last_ai_result  = None
         self._last_ai_out_dir = None
         # Name the Compile button after what it will actually run, now that both
         # the pipeline checkboxes and the button itself exist.
@@ -1309,8 +1309,8 @@ class CompileDialog(QDialog):
             from mpynode.ui.llm import config
 
             provider = config.get_provider()
-            model = config.get_model(provider)
-            label = config.PROVIDER_LABELS.get(provider, provider)
+            model    = config.get_model(provider)
+            label    = config.PROVIDER_LABELS.get(provider, provider)
         except Exception:
             return "Porter: (provider unavailable)"
         model_txt = (" / %s" % model) if model else ""
@@ -1354,14 +1354,14 @@ class CompileDialog(QDialog):
         """
         if self._busy:
             return
-        self._checked = set()
+        self._checked     = set()
         self._row_by_type = {}
         # External .mpn rows are an in-session add; a fresh open starts clean
         # (the Refresh *button* goes through _refresh_table and keeps them).
         self._file_rows = {}
         # Per-node persistent choices + detection cache are also in-session.
         self._persistent_unchecked = set()
-        self._has_persistent = {}
+        self._has_persistent       = {}
         self._refresh_table()
 
     def preselect_node(self, name) -> None:
@@ -1399,10 +1399,10 @@ class CompileDialog(QDialog):
         # nodes. Their checks survive a rescan because they are in ``names``.
         file_rows = sorted(
             (name, val[1]) for name, val in self._file_rows.items())
-        nodes = nodes + file_rows
+        nodes             = nodes + file_rows
         self._scene_nodes = nodes
-        names = {n for (n, _t) in nodes}
-        self._checked = {n for n in self._checked if n in names}
+        names             = {n for (n, _t) in nodes}
+        self._checked     = {n for n in self._checked if n in names}
         # Prune stale per-node persistent unchecks (mirroring _checked): a later
         # node reusing the name would inherit it and silently lose stored vars.
         self._persistent_unchecked = {n for n in self._persistent_unchecked
@@ -1473,7 +1473,7 @@ class CompileDialog(QDialog):
         so building/rebuilding a cell never spuriously fires the handler --
         which is why no suppress flag is needed."""
         container = QWidget(self._table)
-        lay = QHBoxLayout(container)
+        lay       = QHBoxLayout(container)
         lay.setContentsMargins(0, 0, 0, 0)
         lay.setSpacing(0)
         cb = QCheckBox(container)
@@ -1494,8 +1494,8 @@ class CompileDialog(QDialog):
         self._table.setCellWidget(
             row, _COL_CHECK,
             self._make_check_cell(name, _COL_CHECK, row, checked, True))
-        self._set_cell(row, _COL_NODE, name)
-        self._set_cell(row, _COL_CLASS, self._row_class_label(name, native_type))
+        self._set_cell(row, _COL_NODE,   name)
+        self._set_cell(row, _COL_CLASS,  self._row_class_label(name, native_type))
         self._set_cell(row, _COL_SOURCE, self._source_label(name))
         self._render_persistent_cell(row, name)
         # Node Type = the DERIVED compiled type (what the bundle registers /
@@ -1530,7 +1530,7 @@ class CompileDialog(QDialog):
     def _row_class_label(self, name: str, native_type: str) -> str:
         """Option-A Class notation for a row: ``Class(Parent)`` classed,
         ``Parent()`` class-less -- the same notation the scene tree shows."""
-        short = self._row_class_short(name)
+        short  = self._row_class_short(name)
         parent = _parent_wrapper_name(native_type)
         return "%s(%s)" % (short, parent) if short else "%s()" % parent
 
@@ -1565,7 +1565,7 @@ class CompileDialog(QDialog):
             return col
         try:
             base = self._table.palette().color(QPalette.Base)
-            hl = base.lighter(135)
+            hl   = base.lighter(135)
             # On a near-black base, lighter() barely moves -- lift additively so
             # the highlight is always visible but still gentle.
             if hl.value() - base.value() < 12:
@@ -1604,7 +1604,7 @@ class CompileDialog(QDialog):
         row (the text cells AND the two centered-checkbox cell widgets) so the
         bundle set is obvious at a glance."""
         normal = QBrush()
-        bg = QBrush(self._checked_row_color()) if checked else QBrush()
+        bg     = QBrush(self._checked_row_color()) if checked else QBrush()
         for col in (_COL_NODE, _COL_CLASS, _COL_SOURCE, _COL_TYPE, _COL_STATUS):
             item = self._table.item(row, col)
             if item is not None:
@@ -1682,7 +1682,7 @@ class CompileDialog(QDialog):
             try:
                 import mpynode
 
-                w = mpynode.wrap_node(name)
+                w   = mpynode.wrap_node(name)
                 has = bool(w is not None and (w.get_variables() or {}))
             except Exception:
                 has = False
@@ -1817,7 +1817,7 @@ class CompileDialog(QDialog):
         node or another file row (names key ``_checked`` / ``_row_by_type``, so a
         clash would silently merge two rows). Appends `` (2)``, `` (3)``…."""
         existing = {n for (n, _t) in self._scene_nodes} | set(self._file_rows)
-        name = base or "imported"
+        name     = base or "imported"
         if name not in existing:
             return name
         i = 2
@@ -1839,15 +1839,15 @@ class CompileDialog(QDialog):
         explicit persistent uncheck FOLLOWS its row and can never attach to an
         unrelated node that later takes the freed name (a silent data-loss
         class). Idempotent: a non-colliding set is returned unchanged."""
-        used = set(scene_names)
-        new_rows = {}
+        used        = set(scene_names)
+        new_rows    = {}
         new_checked = set(checked)
         new_persist = set(persistent_unchecked)
         for fname, val in file_rows.items():
             name = fname
             if name in used:
                 base = name
-                i = 2
+                i    = 2
                 name = "%s (%d)" % (base, i)
                 while name in used:
                     i += 1
@@ -1880,8 +1880,8 @@ class CompileDialog(QDialog):
         # Gate the (RCE-capable) pickle decode behind a per-file trust prompt --
         # never force trusted=True from the UI. One prompt instance handles all
         # picked files, so its "always" choice persists across them.
-        prompt = _mpn_trust_prompt()
-        added = []
+        prompt  = _mpn_trust_prompt()
+        added   = []
         skipped = []
         # Dedup by IDENTITY = the sanitized native ``node_type_name`` the bundle
         # keys on (what _dedup_specs_by_type collapses). A node already in
@@ -1902,7 +1902,7 @@ class CompileDialog(QDialog):
             base = (data.get("node_name") or data.get("source_name")
                     or os.path.splitext(os.path.basename(path))[0])
             try:
-                spec = mpn_spec_adapter.spec_from_mpn_payload(data)
+                spec      = mpn_spec_adapter.spec_from_mpn_payload(data)
                 node_type = (spec.get("suggested") or {}).get("node_type_name")
             except Exception as exc:
                 # Loaded but not adaptable to a compile spec (corrupted /
@@ -1915,12 +1915,12 @@ class CompileDialog(QDialog):
             if node_type and node_type in existing_ids:
                 skipped.append((base, path))
                 continue
-            name = self._unique_row_name(base)
+            name           = self._unique_row_name(base)
             has_persistent = bool(data.get("stored_vars"))
             # The .mpn's ACTUAL Class short name (empty when class-less), so the
             # Class column reads faithfully instead of reverse-engineering one
             # from the node type -- which would mislabel a class-less .mpn.
-            class_path = data.get("class_path") or data.get("py_class") or ""
+            class_path  = data.get("class_path") or data.get("py_class") or ""
             class_short = class_path.rpartition(".")[2] if class_path else ""
             self._file_rows[name] = (path, native_type, has_persistent,
                                      node_type, class_short)
@@ -1954,7 +1954,7 @@ class CompileDialog(QDialog):
         progress key; later rows with a duplicate type are dropped (their spec
         is deduped away by ``_dedup_specs_by_type``) so they get a terminal
         'skipped' label instead of a stuck 'queued'."""
-        row_by_type = {}
+        row_by_type  = {}
         dropped_rows = []
         for (row, type_name) in entries:
             if type_name in row_by_type:
@@ -1978,10 +1978,10 @@ class CompileDialog(QDialog):
         ``source_node`` and still show the type name."""
         from mpynode.native.spec.divergence import specs_are_identical
 
-        kept_by_type = {}
-        unique = []
+        kept_by_type      = {}
+        unique            = []
         identical_dropped = []
-        diverged_dropped = []
+        diverged_dropped  = []
         for spec in specs:
             tn = (spec.get("suggested") or {}).get("node_type_name")
             if tn in kept_by_type:
@@ -2071,7 +2071,7 @@ class CompileDialog(QDialog):
                  for entry in plan for f in entry["forks"] for n in f["nodes"]]
         if not forks:
             return 0
-        count = 0
+        count  = 0
         opened = False
         try:
             if len(forks) > 1:
@@ -2096,9 +2096,9 @@ class CompileDialog(QDialog):
         ``"representative"`` / ``"cancel"``. Isolated so tests can stub it."""
         lines = []
         for class_path, parts in diverged.items():
-            short = class_path.rpartition(".")[2] or class_path
+            short    = class_path.rpartition(".")[2] or class_path
             variants = len(parts)
-            insts = sum(len(v) for v in parts.values())
+            insts    = sum(len(v) for v in parts.values())
             lines.append("  • %s — %d instances in %d different code variants"
                          % (short, insts, variants))
         box = QMessageBox(self)
@@ -2158,7 +2158,7 @@ class CompileDialog(QDialog):
 
         if not to_stamp:
             return 0
-        count = 0
+        count  = 0
         opened = False
         try:
             if len(to_stamp) > 1:
@@ -2195,7 +2195,7 @@ class CompileDialog(QDialog):
         from mpynode._common.io.py_export import is_pascal_class_name
         from mpynode.wrappers._mpy_node import _read_py_class
 
-        to_stamp = []   # (name, native_type, class_name)
+        to_stamp   = []  # (name, native_type, class_name)
         to_exclude = []  # names
         for (name, native_type) in checked:
             if name in self._file_rows:
@@ -2219,7 +2219,7 @@ class CompileDialog(QDialog):
                 continue
             to_stamp.append((name, native_type, entered))
 
-        named = 0
+        named         = 0
         stamped_names = []
         if to_stamp:
             self._apply_classless_names(to_stamp)
@@ -2259,7 +2259,7 @@ class CompileDialog(QDialog):
         from mpynode.native.spec.divergence import plan_forks
 
         self._acknowledged_diverged_nodes = set()
-        diverged = self._divergence_report(checked)
+        diverged                          = self._divergence_report(checked)
         if not diverged:
             return True
         choice = self._prompt_divergence_choice(diverged)
@@ -2280,9 +2280,9 @@ class CompileDialog(QDialog):
         # Fork: assign each extra variant its own Class, then proceed. After
         # this the previously-diverged instances extract to DISTINCT types.
         nt_by_name = {n: t for (n, t) in checked}
-        plan = plan_forks(diverged, taken_names=self._scene_class_names())
-        expected = sum(len(f["nodes"]) for entry in plan for f in entry["forks"])
-        applied = self._apply_fork_plan(plan, nt_by_name)
+        plan       = plan_forks(diverged, taken_names=self._scene_class_names())
+        expected   = sum(len(f["nodes"]) for entry in plan for f in entry["forks"])
+        applied    = self._apply_fork_plan(plan, nt_by_name)
         if applied != expected:
             # A fork target name clashed with a different-base Class (or the node
             # failed to wrap). Do NOT fall through to a lossy compile -- stop and
@@ -2350,7 +2350,7 @@ class CompileDialog(QDialog):
         # A fresh run supersedes any prior AI hand-off offer -- including the
         # per-node green-lights, which are consent for THAT build's C++ only.
         self._ai_btn.setVisible(False)
-        self._last_ai_result = None
+        self._last_ai_result  = None
         self._last_ai_out_dir = None
         self._reset_greenlights()
 
@@ -2415,7 +2415,7 @@ class CompileDialog(QDialog):
         #     go stale (a node may gain stored vars out-of-band). Drop it and
         #     re-read live so the confirm reflects the current scene.
         self._has_persistent = {}
-        baking = self._nodes_baking_persistent(checked)
+        baking               = self._nodes_baking_persistent(checked)
         if baking and not self._confirm_bake_persistent(baking):
             return  # user declined the bake
 
@@ -2435,7 +2435,7 @@ class CompileDialog(QDialog):
                 "Could not check for diverged Class instances:\n%s" % exc)
 
         # --- extract specs on the main thread (Maya is live here) --------
-        specs = []
+        specs             = []
         self._row_by_type = {}
         try:
             from mpynode.native.ai import porter
@@ -2452,7 +2452,7 @@ class CompileDialog(QDialog):
         # Global "Ignore persistent data" overrides every per-node choice. Read
         # once here so each spec below is stamped consistently.
         global_ignore = self._global_ignore_persistent()
-        entries = []  # (row, type_name) per checked node, in compile order
+        entries       = []  # (row, type_name) per checked node, in compile order
         for (node_name, _native_type) in checked:
             row = row_by_name.get(node_name, 0)
             try:
@@ -2540,7 +2540,7 @@ class CompileDialog(QDialog):
         # Opt-in AI C++ optimizer (default OFF): threaded into the engine's (c.6)
         # post-port step; a rewrite ships only if it still passes parity AND is
         # measurably faster, else the original .cpp is kept.
-        optimize = pipe["optimize"]
+        optimize  = pipe["optimize"]
         ai_assist = pipe["ai_assist"]
         # Post-build sweep of the working dirs (object files, per-node port
         # scratch, the optimizer's _optscratch). build/source + build/stages are
@@ -2612,20 +2612,20 @@ class CompileDialog(QDialog):
             else:
                 # The one checked version, else the Maya we are ACTUALLY running
                 # in, so the bundle ABI matches and the verify mayapy exists.
-                maya_dir = targets[0]["root"] if targets else _resolve_maya_dir()
+                maya_dir                = targets[0]["root"] if targets else _resolve_maya_dir()
                 self._build_target_root = maya_dir
-                maya_kw = {"maya": maya_dir} if maya_dir else {}
+                maya_kw                 = {"maya": maya_dir} if maya_dir else {}
                 self._set_status_msg("Compiling %d node(s)…" % len(specs))
                 self._controller.start(specs, plugin_name, out_dir,
                                        strict=strict, verify=True,
                                        verify_fn=subprocess_verify_fn(
                                            run_authored_tests=run_tests,
                                            **maya_kw),
-                                       bake_persistent=bake_persistent,
-                                       optimize=optimize,
-                                       ai_assist=ai_assist,
-                                       clean_scratch=clean_scratch,
-                                       keep_intermediates=keep_intermediates,
+                                       bake_persistent    = bake_persistent,
+                                       optimize           = optimize,
+                                       ai_assist          = ai_assist,
+                                       clean_scratch      = clean_scratch,
+                                       keep_intermediates = keep_intermediates,
                                        **maya_kw)
         except RuntimeError as exc:
             # A run is already in progress (shouldn't happen — _busy guards).
@@ -2735,7 +2735,7 @@ class CompileDialog(QDialog):
 
     def _start_spinner(self) -> None:
         self._spin_running = True
-        self._spin_i = 0
+        self._spin_i       = 0
         self._render_status()
         if self._spin_timer is not None:
             self._spin_timer.start(_SPIN_INTERVAL_MS)
@@ -2767,7 +2767,7 @@ class CompileDialog(QDialog):
         Node Designer log widget so the compile log is clearable too (#70)."""
         from mpynode.ui.qt_wrapper import QAction, QMenu
 
-        menu = QMenu(self._log_view)
+        menu         = QMenu(self._log_view)
         clear_action = QAction("Clear", menu)
         clear_action.triggered.connect(self._clear_log)
         menu.addAction(clear_action)
@@ -2822,12 +2822,12 @@ class CompileDialog(QDialog):
         """GUI-thread handler for one progress event (and the terminal 'done')."""
         if not isinstance(event, dict):
             return
-        stage = event.get("stage")
-        node = event.get("node")
+        stage  = event.get("stage")
+        node   = event.get("node")
         status = event.get("status")
         detail = event.get("detail") or ""
-        i = event.get("i") or 0
-        n = event.get("n") or 0
+        i      = event.get("i") or 0
+        n      = event.get("n") or 0
 
         # Live compiler/linker output streams to the log pane ONLY -- never the
         # status line/table (it would thrash the phase summary line by line).
@@ -3017,12 +3017,12 @@ class CompileDialog(QDialog):
             self._on_finished_multi(result, elapsed_str)
             return
 
-        ok = bool(result.get("ok"))
-        bundle_path = result.get("bundle_path")
+        ok            = bool(result.get("ok"))
+        bundle_path   = result.get("bundle_path")
         manifest_path = result.get("manifest_path")
-        plugin_name = result.get("plugin_name")
-        errors = result.get("errors") or []
-        rows = result.get("nodes") or []
+        plugin_name   = result.get("plugin_name")
+        errors        = result.get("errors") or []
+        rows          = result.get("nodes") or []
 
         # Before the ok/fail split: a run whose bundle failed to link is exactly
         # when "which nodes got faster, and by how much" is worth reading.
@@ -3053,7 +3053,7 @@ class CompileDialog(QDialog):
             # rather than a transient progress line. It never hard-blocks.
             from mpynode.ui.llm import compile_bridge
 
-            node_lines = compile_bridge.verify_summary_lines(result)
+            node_lines    = compile_bridge.verify_summary_lines(result)
             command_lines = _companion_command_lines(result)
             companion_paths = [rec.get("path")
                                for rec in (result.get("companions") or [])
@@ -3075,7 +3075,7 @@ class CompileDialog(QDialog):
                 self._append_log(
                     "AI optimize FAILED: %s -- the plugin LINKED and can be "
                     "loaded; it just ships the un-optimized C++." % ai_failed)
-            in_clause = (" in %s" % elapsed_str) if elapsed_str else ""
+            in_clause   = (" in %s" % elapsed_str) if elapsed_str else ""
             warn_clause = (" (%d warning(s))" % len(errors)) if errors else ""
             self._set_status_msg(
                 "Built %s%s (%d node(s))%s."
@@ -3142,7 +3142,7 @@ class CompileDialog(QDialog):
             want = compile_bridge.needs_ai(result)
         except Exception:
             want = False
-        self._last_ai_result = result if want else None
+        self._last_ai_result  = result if want else None
         self._last_ai_out_dir = out_dir if want else None
         self._rebuild_greenlight_rows(result if want else None)
         self._refresh_ai_button()
@@ -3182,10 +3182,10 @@ class CompileDialog(QDialog):
         return out
 
     _GREENLIGHT_WHY = {
-        "dropped": "did not build",
-        "diverged": "built, but its output DIVERGED from the Python",
+        "dropped":    "did not build",
+        "diverged":   "built, but its output DIVERGED from the Python",
         "incomplete": "built, but the C++ marks work it could not translate",
-        "unchecked": "AI-ported, and nothing verified it",
+        "unchecked":  "AI-ported, and nothing verified it",
     }
 
     def _reset_greenlights(self) -> None:
@@ -3209,7 +3209,7 @@ class CompileDialog(QDialog):
         self._greenlight_btns = {}
         while self._greenlight_layout.count():
             item = self._greenlight_layout.takeAt(0)
-            w = item.widget()
+            w    = item.widget()
             if w is not None:
                 w.setParent(None)
                 w.deleteLater()
@@ -3235,7 +3235,7 @@ class CompileDialog(QDialog):
                 lambda on, k=key: self._on_greenlight_toggled(k, on))
             line.addWidget(btn)
             self._greenlight_btns[key] = btn
-            holder = QWidget(self._greenlight_box)
+            holder                     = QWidget(self._greenlight_box)
             holder.setLayout(line)
             self._greenlight_layout.addWidget(holder)
         self._greenlight_box.setVisible(bool(self._greenlight_btns))
@@ -3287,7 +3287,7 @@ class CompileDialog(QDialog):
         version (its output folder, or its failure), and an offer to load the
         build matching the RUNNING Maya (the only one this session can load)."""
         results = result.get("results") or []
-        ok = bool(result.get("ok"))
+        ok      = bool(result.get("ok"))
 
         def _sub_built(sub):
             # Honest per-version success (#59): ok AND the bundle exists on disk.
@@ -3300,7 +3300,7 @@ class CompileDialog(QDialog):
             return bool((sub.get("ok") or sub.get("ai_optimize_failed"))
                         and p and os.path.exists(p))
 
-        n_ok = sum(1 for r in results if _sub_built(r.get("result") or {}))
+        n_ok      = sum(1 for r in results if _sub_built(r.get("result") or {}))
         in_clause = (" in %s" % elapsed_str) if elapsed_str else ""
         ai_failed = [r.get("label") for r in results
                      if (r.get("result") or {}).get("ai_optimize_failed")
@@ -3314,7 +3314,7 @@ class CompileDialog(QDialog):
             head += " -- AI optimize FAILED: %s" % ", ".join(ai_failed)
         self._append_log("%s%s" % (head, in_clause))
         for r in results:
-            sub = r.get("result") or {}
+            sub   = r.get("result") or {}
             label = r.get("label")
             if _sub_built(sub):
                 why = str(sub.get("ai_optimize_failed") or "")
@@ -3456,7 +3456,7 @@ class CompileDialog(QDialog):
         try:
             from mpynode._common.plugs import auto_dirty
 
-            out_dir = os.path.dirname(bundle_path)
+            out_dir  = os.path.dirname(bundle_path)
             manifest = os.path.join(out_dir, "build", "manifest.json")
             auto_dirty.install_native_geo_coverage_from_manifest(manifest)
             auto_dirty.install_native_geo_coverage()

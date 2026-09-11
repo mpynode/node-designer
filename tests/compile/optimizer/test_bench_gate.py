@@ -159,17 +159,17 @@ class TestFingerprintsDiffer(unittest.TestCase):
         self.assertIsNone(d(self._fp([1.0, 1e6]), self._fp([1.0 + 5e-7, 1e6 + 0.5])))
 
     def test_value_count_kind_and_text_differences_are_named(self):
-        d = optimizer_live.fingerprints_differ
+        d   = optimizer_live.fingerprints_differ
         why = d(self._fp([1.0, 2.0, 3.0]), self._fp([1.0, 2.0, 9.0]))
         self.assertIn("out", why)
         self.assertIn("maxerr", why)
         self.assertIn("element 2", why)
         self.assertIn("[2] vs numeric[1]", d(self._fp([1.0, 2.0]), self._fp([1.0])))
-        two = {"out": {"kind": "numeric", "count": 2, "values": [1.0, 2.0]}}
+        two   = {"out": {"kind": "numeric", "count": 2, "values": [1.0, 2.0]}}
         short = {"out": {"kind": "numeric", "count": 2, "values": [1.0]}}
-        self.assertIn("values", d(two, short))
-        self.assertIn("mesh", d(self._fp([1.0], kind="mesh"), self._fp([1.0])))
-        self.assertIn("string", d(self._fp([], text=["a"]), self._fp([], text=["b"])))
+        self.assertIn("values",        d(two, short))
+        self.assertIn("mesh",          d(self._fp([1.0], kind="mesh"), self._fp([1.0])))
+        self.assertIn("string",        d(self._fp([], text=["a"]), self._fp([], text=["b"])))
         self.assertIn("one side only", d(self._fp([1.0]), {}))
 
     def test_non_dicts_never_diverge(self):
@@ -191,8 +191,8 @@ class TestCandidateIsHeldToTheBaselineOutputs(unittest.TestCase):
         return runner
 
     def test_diverging_candidate_raises_matching_candidate_measures(self):
-        base = {"out": {"kind": "numeric", "count": 1, "values": [4.0]}}
-        bad = {"out": {"kind": "numeric", "count": 1, "values": [0.0]}}
+        base  = {"out": {"kind": "numeric", "count": 1, "values": [4.0]}}
+        bad   = {"out": {"kind": "numeric", "count": 1, "values": [0.0]}}
         state = {}
         with tempfile.TemporaryDirectory() as tmp:
             ad = _adapters(tmp, self._runner([base, bad, base]),
@@ -207,8 +207,8 @@ class TestCandidateIsHeldToTheBaselineOutputs(unittest.TestCase):
                         state)
 
     def test_rng_nodes_are_not_compared(self):
-        base = {"out": {"kind": "numeric", "count": 1, "values": [4.0]}}
-        bad = {"out": {"kind": "numeric", "count": 1, "values": [0.0]}}
+        base  = {"out": {"kind": "numeric", "count": 1, "values": [4.0]}}
+        bad   = {"out": {"kind": "numeric", "count": 1, "values": [0.0]}}
         state = {}
         with tempfile.TemporaryDirectory() as tmp, \
              mock.patch.object(optimizer_live, "_spec_uses_rng",
@@ -234,7 +234,7 @@ class TestCandidateIsHeldToTheBaselineOutputs(unittest.TestCase):
 class TestParityGateLabel(unittest.TestCase):
     def test_labels_follow_what_actually_ran(self):
         lab = optimizer_live.parity_gate_label
-        at = {"ran": True, "passed": True}
+        at  = {"ran": True, "passed": True}
         self.assertEqual(lab({"ran": True, "generic_ran": True,
                               "authored_test": at}), "authored+pointwise")
         self.assertEqual(lab({"ran": True, "generic_ran": False,
@@ -292,8 +292,8 @@ class TestRoundsJsonCarriesTheScene(unittest.TestCase):
         from mpynode.native.ai.optimizer import OptimizeResult
 
         res = OptimizeResult(True, "x", 20.0, 5.0, 4.0, 3, [], "accepted (4.00x)",
-                             max_rounds=6,
-                             stop_reason="round 3 gained 1.08x, below the "
+                             max_rounds  = 6,
+                             stop_reason = "round 3 gained 1.08x, below the "
                                          "1.15x needed to continue")
         with tempfile.TemporaryDirectory() as tmp:
             p = optimizer_live.write_rounds_json(tmp, "mPyThing", res)
@@ -383,8 +383,8 @@ class _FakeCmds:
     positions in ``points``."""
 
     def __init__(self, attrs=None, conn=None, points=None):
-        self.attrs = dict(attrs or {})
-        self.conn = dict(conn or {})
+        self.attrs  = dict(attrs or {})
+        self.conn   = dict(conn or {})
         self.points = {k: list(v) for k, v in (points or {}).items()}
         self.moves, self.evals = [], []
 
@@ -416,7 +416,7 @@ class _FakeCmds:
     # --- output sizing (bench_size_output_multis) ---
     def createNode(self, t, **kw):
         self.created = getattr(self, "created", [])
-        name = "%s%d" % (t, len(self.created) + 1)
+        name         = "%s%d" % (t, len(self.created) + 1)
         self.created.append((t, name))
         return name
 
@@ -466,16 +466,16 @@ class TestPerturbCoversAnimatedInputs(unittest.TestCase):
         from mpynode.native.toolchain import verify
 
         spec = {"inputs": {"weight": {"type": "float", "is_array": True},
-                           "gain": {"type": "double"},
+                           "gain":       {"type": "double"},
                            "restLength": {"type": "double"},
                            "driven": {"type": "double"}}}
         cmds = _FakeCmds(attrs={"n.weight[0]": 0.5, "n.gain": 1.0,
                                 "n.restLength": 2.0, "n.driven": 3.0},
                          conn={"n.driven": "anim.output"})
         fn = verify.bench_perturb_fn(cmds, "n", spec)
-        self.assertEqual(sorted(fn.moved), ["gain (double)", "weight[0] (float)"])
-        self.assertEqual(cmds.attrs["n.restLength"], 2.0)   # static: untouched
-        self.assertEqual(cmds.attrs["n.driven"], 3.0)       # upstream-driven
+        self.assertEqual(sorted(fn.moved),           ["gain (double)", "weight[0] (float)"])
+        self.assertEqual(cmds.attrs["n.restLength"], 2.0)  # static: untouched
+        self.assertEqual(cmds.attrs["n.driven"],     3.0)  # upstream-driven
         before = cmds.attrs["n.gain"]
         fn()
         self.assertNotEqual(cmds.attrs["n.gain"], before)
@@ -484,7 +484,7 @@ class TestPerturbCoversAnimatedInputs(unittest.TestCase):
         from mpynode.native.toolchain import verify
 
         spec = {"inputs": {"matrix0": {"type": "matrix"},
-                           "time": {"type": "time"},
+                           "time":    {"type": "time"},
                            "uvCoord": {"type": "float2"},
                            "mode": {"type": "enum"}}}
         ident = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]
@@ -493,7 +493,7 @@ class TestPerturbCoversAnimatedInputs(unittest.TestCase):
         fn = verify.bench_perturb_fn(cmds, "n", spec)
         self.assertEqual(sorted(fn.moved),
                          ["matrix0 (matrix)", "time (time)", "uvCoord (float2)"])
-        self.assertEqual(cmds.attrs["n.mode"], 0)   # enums change behaviour: left
+        self.assertEqual(cmds.attrs["n.mode"], 0)    # enums change behaviour: left
         self.assertEqual(cmds.attrs["n.time"], 1.0)  # one frame per tick
         fn()
         self.assertEqual(cmds.attrs["n.time"], 2.0)
@@ -525,12 +525,12 @@ class TestOutputMultisAreSized(unittest.TestCase):
         from mpynode.native.toolchain import verify
 
         spec = {"outputs": {"samples": {"type": "vector", "is_array": True},
-                            "lengths": {"type": "float", "is_array": True},
+                            "lengths":   {"type": "float", "is_array": True},
                             "outMatrix": {"type": "matrix", "is_array": True},
-                            "total": {"type": "double"},
+                            "total":     {"type": "double"},
                             "names": {"type": "string", "is_array": True}}}
         cmds = _FakeCmds()
-        rep = verify.bench_size_output_multis(cmds, "n", spec, 4)
+        rep  = verify.bench_size_output_multis(cmds, "n", spec, 4)
         self.assertEqual(sorted(rep["sized"]),
                          [("lengths", 4, "plusMinusAverage.input1D"),
                           ("outMatrix", 4, "multMatrix.matrixIn"),
@@ -548,10 +548,10 @@ class TestOutputMultisAreSized(unittest.TestCase):
     def test_a_refusing_plug_is_recorded_not_fatal(self):
         from mpynode.native.toolchain import verify
 
-        spec = {"outputs": {"samples": {"type": "vector", "is_array": True}}}
-        cmds = _FakeCmds()
+        spec            = {"outputs": {"samples": {"type": "vector", "is_array": True}}}
+        cmds            = _FakeCmds()
         cmds.refuse_dst = "plusMinusAverage1.input3D[2]"
-        rep = verify.bench_size_output_multis(cmds, "n", spec, 5)
+        rep             = verify.bench_size_output_multis(cmds, "n", spec, 5)
         self.assertEqual(rep["sized"], [("samples", 2, "plusMinusAverage.input3D")])
         self.assertEqual(len(rep["skipped"]), 1)
         self.assertIn("stopped at 2", rep["skipped"][0][2])
@@ -562,7 +562,7 @@ class TestOutputMultisAreSized(unittest.TestCase):
         spec = {"inputs": {}, "outputs": {"samples": {"type": "vector",
                                                       "is_array": True}}}
         cmds = _FakeCmds()
-        rep = verify.seed_bench_scene(cmds, "n", spec, k_array=3)
+        rep  = verify.seed_bench_scene(cmds, "n", spec, k_array=3)
         self.assertEqual(rep["outputs"], [("samples", 3, "plusMinusAverage.input3D")])
 
     def test_harness_records_them(self):
@@ -584,7 +584,7 @@ class TestParityReadsEveryOutputKind(unittest.TestCase):
         self.assertEqual(ac("abc"), [3.0, 97.0, 98.0, 99.0])
         self.assertEqual(ac(["ab", 1.5]), [2.0, 97.0, 98.0, 1.5])
         self.assertNotEqual(ac("abc"), ac("abd"))
-        self.assertNotEqual(ac("ab")[0], ac("abc")[0])   # length leads
+        self.assertNotEqual(ac("ab")[0], ac("abc")[0])        # length leads
         self.assertEqual(ac([(1, 2.0), 3]), [1.0, 2.0, 3.0])  # numerics unchanged
 
     def test_declared_geo_output_is_read_through_the_api(self):
@@ -615,9 +615,9 @@ class TestParityReadsEveryOutputKind(unittest.TestCase):
                "attrs": [0.5]}
         with mock.patch.object(verify, "_read_geo_components", return_value=geo):
             comps = verify._geo_output_components("n", "outGeo", "mesh")
-        self.assertEqual(comps[0], 2.0)                  # two points
+        self.assertEqual(comps[0],   2.0)                   # two points
         self.assertEqual(comps[1:5], [2.0, 8.0, 4.0, 6.0])  # counts / connects sigs
-        self.assertEqual(comps[-1], 0.5)                 # attrs ride along
+        self.assertEqual(comps[-1],  0.5)                   # attrs ride along
 
     def test_transform_family_compares_its_native_matrix(self):
         from mpynode.native.toolchain.verify import _native_family_outputs as nfo
@@ -632,7 +632,7 @@ class TestParityReadsEveryOutputKind(unittest.TestCase):
         from mpynode.native.toolchain import verify
 
         src = inspect.getsource(verify)
-        i = src.index("# An array OUTPUT has no elements until something consumes them")
+        i   = src.index("# An array OUTPUT has no elements until something consumes them")
         self.assertIn("for _nd in (orig, comp):", src[i:i + 600])
         self.assertIn("bench_size_output_multis(cmds, _nd, spec, K_ARR)", src[i:i + 700])
 
@@ -647,8 +647,8 @@ class TestReferenceErrorsAreNotParitySignals(unittest.TestCase):
         import sys
         from mpynode.native.toolchain.verify import _ExpressionErrorTap
 
-        real = sys.stderr
-        buf = io.StringIO()
+        real       = sys.stderr
+        buf        = io.StringIO()
         sys.stderr = buf
         try:
             with _ExpressionErrorTap() as tap:
@@ -695,7 +695,7 @@ class TestParityFixtures(unittest.TestCase):
         w, h, depth, ctype = struct.unpack(">IIBB", data[16:26])
         self.assertEqual((w, h, depth, ctype), (5, 3, 8, 2))
         idat_len = struct.unpack(">I", data[33:37])[0]
-        raw = zlib.decompress(data[41:41 + idat_len])
+        raw      = zlib.decompress(data[41:41 + idat_len])
         self.assertEqual(len(raw), 3 * (1 + 5 * 3))     # h * (filter + w*3)
 
     def test_texture_inputs_get_gradients_arrays_get_k(self):
@@ -727,7 +727,7 @@ class TestParityFixtures(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d:
             fx = parity_fixtures(spec, dirpath=d)
             self.assertIn("####", fx["path"])
-            f7 = ndio.frame_path(fx["path"], 7)
+            f7  = ndio.frame_path(fx["path"], 7)
             doc = json.load(open(f7))
             self.assertEqual(len(doc["points"]), 8)
             self.assertEqual(sum(doc["counts"]), len(doc["indices"]))
@@ -741,7 +741,7 @@ class TestParityFixtures(unittest.TestCase):
                 "compute": 'frames = ndio.read(self.cachePath, "points")',
                 "inputs": {"cachePath": {"type": "string"}, "frame": {"type": "time"}}}
         with tempfile.TemporaryDirectory() as d:
-            fx = parity_fixtures(spec, dirpath=d)
+            fx  = parity_fixtures(spec, dirpath=d)
             pts = ndio.read(fx["cachePath"], "points")
             self.assertEqual(tuple(pts.shape), (2, 8, 3))
             self.assertEqual(len(ndio.read(fx["cachePath"], "counts")), 6)
@@ -861,8 +861,8 @@ class TestDrivesRespectDeclaredRanges(unittest.TestCase):
 
         cmds = self._cmds({("orig", "radius"): (0.0, 2.0)})
         self.assertEqual(_clamp_drive(cmds, ("orig", "comp"), "radius", "float", -3.2), 0.0)
-        self.assertEqual(_clamp_drive(cmds, ("orig", "comp"), "radius", "float", 7.0), 2.0)
-        self.assertEqual(_clamp_drive(cmds, ("orig", "comp"), "radius", "float", 1.5), 1.5)
+        self.assertEqual(_clamp_drive(cmds, ("orig", "comp"), "radius", "float", 7.0),  2.0)
+        self.assertEqual(_clamp_drive(cmds, ("orig", "comp"), "radius", "float", 1.5),  1.5)
         # the compiled node may carry the range too, or not: same answer
         self.assertEqual(_clamp_drive(cmds, ("comp", "orig"), "radius", "float", -1.0), 0.0)
 
@@ -870,9 +870,9 @@ class TestDrivesRespectDeclaredRanges(unittest.TestCase):
         from mpynode.native.toolchain.verify import _clamp_drive
 
         cmds = self._cmds({})
-        self.assertEqual(_clamp_drive(cmds, ("orig",), "gain", "double", -3.2), -3.2)
+        self.assertEqual(_clamp_drive(cmds, ("orig",), "gain", "double", -3.2),    -3.2)
         self.assertEqual(_clamp_drive(cmds, ("orig",), "v", "vector", [-9, 0, 0]), [-9, 0, 0])
-        self.assertEqual(_clamp_drive(cmds, ("orig",), "s", "string", "x"), "x")
+        self.assertEqual(_clamp_drive(cmds, ("orig",), "s", "string", "x"),        "x")
 
     def test_unregistered_type_is_a_named_skip(self):
         from mpynode.native.toolchain.verify import _unregistered_type
@@ -914,8 +914,8 @@ class TestSkinParityHasARig(unittest.TestCase):
         self.assertEqual(conns, [("j0.worldMatrix[0]", "sk.matrix[0]"),
                                  ("j1.worldMatrix[0]", "sk.matrix[1]")])
         self.assertIn(("sk.bindPreMatrix[1]", tuple(ident), "matrix"), sets)
-        self.assertIn(("sk.weightList[1].weights[0]", (0.25,), None), sets)
-        self.assertIn(("sk.weightList[1].weights[1]", (0.75,), None), sets)
+        self.assertIn(("sk.weightList[1].weights[0]", (0.25,), None),  sets)
+        self.assertIn(("sk.weightList[1].weights[1]", (0.75,), None),  sets)
         self.assertNotIn("sk.weightList[0].weights[1]", [s[0] for s in sets])  # zero: skipped
 
     def test_weight_values_flatten_and_roll(self):
@@ -1015,7 +1015,7 @@ class TestVerifyWorkerEnvironment(unittest.TestCase):
             # this only checks the copy on a machine that has one.
             self.skipTest("no local userSetup.py at the repo root")
         src = open(path, encoding="utf-8").read()
-        g = {"__name__": "userSetup_probe"}          # no __file__, like Maya's exec
+        g   = {"__name__": "userSetup_probe"}          # no __file__, like Maya's exec
         with mock.patch.dict(os.environ, {"MPYNODE_USE_STUDIO": "1"}):
             exec(compile(src, "./userSetup.py", "exec"), g)
         self.assertTrue(os.path.isdir(g["PROJECT_DIR"]))
@@ -1163,9 +1163,9 @@ class TestTextureNodesAreTimedOnABake(unittest.TestCase):
             # the small-scene guard re-times on the ladder's first rung
             n0 = len(sizes)
             ad["accept_check_fn"]("/cand", "/b")
-        self.assertEqual(sizes[:3], [1024, 2048, 4096])
-        self.assertEqual(state["rung"], ["bake", 4096])
-        self.assertEqual(sizes[n0:], [1024, 1024])
+        self.assertEqual(sizes[:3],           [1024, 2048, 4096])
+        self.assertEqual(state["rung"],       ["bake", 4096])
+        self.assertEqual(sizes[n0:],          [1024, 1024])
         self.assertEqual(state["small_rung"], ["bake", 1024])
 
     def test_a_compute_node_never_sees_bake_mode(self):

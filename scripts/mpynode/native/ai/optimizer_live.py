@@ -175,7 +175,7 @@ def _optimize_cli_timeout() -> float:
     preference) means UNBOUNDED -> ``float("inf")``: no wall-clock kill, only
     user Cancel stops the call (a liveness heartbeat proves it is working)."""
     raw = os.environ.get("MPYNODE_OPT_TIMEOUT", "2400")
-    s = (raw or "").strip().lower()
+    s   = (raw or "").strip().lower()
     if s in ("", "0", "off", "none", "inf", "unbounded", "-1"):
         return float("inf")
     try:
@@ -232,10 +232,10 @@ def _history_enabled():
 # nothing (bench_lock() returns before it touches the filesystem) and no existing
 # serial usage can change behaviour.
 
-BENCH_LOCK_ENV = "MPYNODE_BENCH_LOCK"
-BENCH_LOCK_TIMEOUT_ENV = "MPYNODE_BENCH_LOCK_TIMEOUT"
+BENCH_LOCK_ENV              = "MPYNODE_BENCH_LOCK"
+BENCH_LOCK_TIMEOUT_ENV      = "MPYNODE_BENCH_LOCK_TIMEOUT"
 _BENCH_LOCK_DEFAULT_TIMEOUT = 1800.0
-_BENCH_LOCK_POLL = 0.25
+_BENCH_LOCK_POLL            = 0.25
 
 
 class BenchLockTimeout(RuntimeError):
@@ -327,10 +327,10 @@ def bench_lock(label="", log_cb=None, cancelled=None):
             "cannot open the benchmark lockfile %r: %s. Point %s at a writable "
             "path (or unset it to disable benchmark serialization)."
             % (path, exc, BENCH_LOCK_ENV))
-    timeout = _bench_lock_timeout()
+    timeout  = _bench_lock_timeout()
     deadline = None if timeout == float("inf") else time.time() + timeout
-    t0 = time.time()
-    waited = False
+    t0       = time.time()
+    waited   = False
     try:
         while True:
             try:
@@ -385,7 +385,7 @@ def _base_env(out_dir):
     compiled bundle's dir on MAYA_PLUG_IN_PATH, offscreen Qt. Mirrors the
     conventions in ``tools/harness/run_all.py``."""
     root = _project_root()
-    e = dict(os.environ)
+    e    = dict(os.environ)
     # This process ALREADY holds the flock around the whole child (see
     # bench_lock), and an flock belongs to the open file description -- a child
     # told to take it too would wait on its own parent until the lock timeout
@@ -394,7 +394,7 @@ def _base_env(out_dir):
     # and the agent window in optimizer_agent closes before the engine measures)
     # -- but the cost of being wrong is that deadlock, so scrub it.
     e.pop("MPYNODE_BENCH_LOCK_CHILD", None)
-    e["MPYNODE_ROOT"] = root
+    e["MPYNODE_ROOT"]       = root
     e["MPYNODE_USE_STUDIO"] = "1"
     e["PYTHONPATH"] = os.path.join(root, "scripts") + os.pathsep + e.get(
         "PYTHONPATH", "")
@@ -450,7 +450,7 @@ def _run_step_cancellable(cmd, out_dir, timeout, cancel_event, _popen=None):
         # writes >64KB can't deadlock on a full pipe while we poll for cancel.
         try:
             pump["out"] = proc.communicate()[0]
-            pump["rc"] = proc.returncode
+            pump["rc"]  = proc.returncode
         except Exception as exc:  # pragma: no cover - defensive
             pump["exc"] = exc
 
@@ -498,8 +498,8 @@ def _make_run_step(mayapy, out_dir, timeout, cancel_event=None):
         try:
             if cancel_event is None:
                 p = subprocess.run(cmd, cwd=_project_root(),
-                                   env=_base_env(out_dir),
-                                   stdout=subprocess.PIPE,
+                                   env    = _base_env(out_dir),
+                                   stdout = subprocess.PIPE,
                                    stderr=subprocess.STDOUT, timeout=tmo)
                 out, rc = p.stdout.decode("utf-8", "replace"), p.returncode
             else:
@@ -565,27 +565,27 @@ def _cancel_guard(fn):
 
 
 def make_adapters(spec: dict, out_dir: str, *,
-                  maya: Optional[str] = None,
-                  cancel_event=None,
-                  log_cb=None,
-                  node_type: Optional[str] = None,
-                  out_plug: Optional[str] = None,
+                  maya:           Optional[str] = None,
+                  cancel_event                  = None,
+                  log_cb                        = None,
+                  node_type:      Optional[str] = None,
+                  out_plug:       Optional[str] = None,
                   parity_harness: Optional[str] = None,
-                  parity_fn=None,
-                  benchmark_fn=None,
-                  bench_hint: Optional[str] = None,
-                  bench_iters: int = 9,
-                  bench_res: int = 16,
-                  bench_array: int = 512,
-                  bench_geo: int = 40,
-                  bench_scene: Optional[str] = None,
-                  timeout: int = 1800,
-                  complete_fn=None,
-                  agent_fn=None,
-                  agent_ws: Optional[str] = None,
-                  provider: Optional[str] = None,
-                  status_out=None,
-                  run_step=None,
+                  parity_fn                     = None,
+                  benchmark_fn                  = None,
+                  bench_hint:     Optional[str] = None,
+                  bench_iters:    int           = 9,
+                  bench_res:      int           = 16,
+                  bench_array:    int           = 512,
+                  bench_geo:      int           = 40,
+                  bench_scene:    Optional[str] = None,
+                  timeout:        int           = 1800,
+                  complete_fn                   = None,
+                  agent_fn                      = None,
+                  agent_ws:       Optional[str] = None,
+                  provider:       Optional[str] = None,
+                  status_out                    = None,
+                  run_step                      = None,
                   bench_state_out: Optional[dict] = None) -> dict:
     """Build the five engine adapters for ``spec`` compiling into ``out_dir``.
 
@@ -616,9 +616,9 @@ def make_adapters(spec: dict, out_dir: str, *,
     from .llm_client import make_cli_complete_fn
     from ..toolchain import toolchain
 
-    name = spec["suggested"]["node_type_name"]
-    ntype = node_type or name
-    maya = maya or toolchain.default_maya_dir()
+    name     = spec["suggested"]["node_type_name"]
+    ntype    = node_type or name
+    maya     = maya or toolchain.default_maya_dir()
     agent_ws = agent_ws or os.path.join(out_dir, "_optagent")
 
     # Written BEFORE the adapters are built: both the engine's own benchmark and
@@ -659,15 +659,15 @@ def make_adapters(spec: dict, out_dir: str, *,
     # What the benchmark actually did -- rung, floor, what moved per tick,
     # whether outputs were fingerprint-checked -- for rounds.json / REPORT.md.
     # ``bench_state_out`` lets the caller keep it past this factory.
-    _bench = bench_state_out if bench_state_out is not None else {}
+    _bench    = bench_state_out if bench_state_out is not None else {}
     _rng_node = _spec_uses_rng(spec)
     # The same classification verify.py uses for the parity gate.
     _bake_node = (spec.get("mpy_type") == "mPyFile")
-    _ladder = _BAKE_LADDER if _bake_node else _BENCH_LADDER
-    _status = status_out if status_out is not None else {}
-    _status.setdefault("rounds", 0)
+    _ladder    = _BAKE_LADDER if _bake_node else _BENCH_LADDER
+    _status    = status_out if status_out is not None else {}
+    _status.setdefault("rounds",     0)
     _status.setdefault("candidates", 0)
-    _status.setdefault("errors", [])
+    _status.setdefault("errors",     [])
 
     def _log(msg):
         if log_cb is not None:
@@ -734,7 +734,7 @@ def make_adapters(spec: dict, out_dir: str, *,
         # answers for one provider while the round runs another is no gate.
         chk = check_agent(provider)
         if not chk.get("ok"):
-            why = "; ".join(chk.get("problems") or []) or "unavailable"
+            why             = "; ".join(chk.get("problems") or []) or "unavailable"
             _status["path"] = "one-shot (no agent: %s)" % why
             _log("[%s] no tool-using agent: %s. Falling back to one-shot "
                  "whole-file rewrite." % (ntype, why))
@@ -750,7 +750,7 @@ def make_adapters(spec: dict, out_dir: str, *,
         # Cleared per round: the engine reads it back through round_meta_fn
         # immediately after this returns, and a stale entry would label this
         # round's candidate with the previous round's theme.
-        _agent_state["round_meta"] = {}
+        _agent_state["round_meta"]  = {}
         _agent_state["round_error"] = None
         _status["rounds"] += 1
         agent = _make_agent()
@@ -769,11 +769,11 @@ def make_adapters(spec: dict, out_dir: str, *,
                 bench_mode=("bake" if _bake_node else "compute"),
                 bake_source=((_agent_state["array"] or _BAKE_LADDER[0][1])
                              if _bake_node else None),
-                bench_iters=bench_iters,
-                baseline_ms=_agent_state["baseline_ms"],
+                bench_iters = bench_iters,
+                baseline_ms = _agent_state["baseline_ms"],
                 budget_s=_optimize_cli_timeout(), log_cb=log_cb,
-                meta_out=_agent_state["round_meta"],
-                history=_agent_state["history"],
+                meta_out = _agent_state["round_meta"],
+                history  = _agent_state["history"],
                 # What the gate's own benchmark moves per tick: the fact that
                 # decides what is cacheable, handed over instead of rediscovered.
                 perturbed=_bench.get("perturbed"))
@@ -926,7 +926,7 @@ def make_adapters(spec: dict, out_dir: str, *,
                                     "timing would measure a cache hit")
                 _log("[%s] %s" % (ntype, _bench["reason"]))
             return None
-        _bench["perturbed"] = list(data.get("moved") or [])
+        _bench["perturbed"]     = list(data.get("moved") or [])
         _agent_state["last_fp"] = None
         try:
             with open(fp_path, encoding="utf-8") as fh:
@@ -994,7 +994,7 @@ def make_adapters(spec: dict, out_dir: str, *,
         if _agent_state["geo"] is None:
             ms, geo, arr = _calibrate(bundle)
             _agent_state["geo"], _agent_state["array"] = geo, arr
-            _bench["rung"] = [geo, arr]
+            _bench["rung"]     = [geo, arr]
             _bench["floor_ms"] = _BENCH_FLOOR_MS
             if ms is not None:
                 _log("[%s] bench scene geo=%s array=%s -> %.3f ms baseline"
@@ -1032,7 +1032,7 @@ def make_adapters(spec: dict, out_dir: str, *,
         Returns a reason to reject, ``None`` to accept; raises
         :class:`BenchmarkDiverged` when the two disagree on that scene."""
         frozen = (_agent_state["geo"], _agent_state["array"])
-        small = _ladder[0]
+        small  = _ladder[0]
         if frozen[0] is None or tuple(frozen) == tuple(small):
             return None
         cache = _agent_state.setdefault("small", {})
@@ -1067,11 +1067,11 @@ def make_adapters(spec: dict, out_dir: str, *,
         # stops the run instead of being recorded as this round's error (see
         # _cancel_guard): the two model calls, and the benchmark -- which waits
         # on the cross-process bench_lock when it is enabled.
-        "optimize_fn": _cancel_guard(optimize_fn),
-        "fix_fn": _cancel_guard(fix_fn),
-        "compile_fn": compile_fn,
-        "parity_fn": parity_fn or _parity,
-        "benchmark_fn": _cancel_guard(benchmark_fn or _benchmark),
+        "optimize_fn":     _cancel_guard(optimize_fn),
+        "fix_fn":          _cancel_guard(fix_fn),
+        "compile_fn":      compile_fn,
+        "parity_fn":       parity_fn or _parity,
+        "benchmark_fn":    _cancel_guard(benchmark_fn or _benchmark),
         "accept_check_fn": _cancel_guard(_accept_check),
         # inf once calibration ended under the floor: the engine's double
         # confirmation then applies to every accept for this node.
@@ -1079,9 +1079,9 @@ def make_adapters(spec: dict, out_dir: str, *,
                                   else None),
         # Cheap pre-check so a truncated / prose answer is never compiled, never
         # written over the .cpp, and never fed back into the fix round.
-        "validate_fn": optimizer_knowledge.implausible_reason,
+        "validate_fn":   optimizer_knowledge.implausible_reason,
         "round_meta_fn": round_meta_fn,
-        "round_cb": round_cb,
+        "round_cb":      round_cb,
     }
     # Withheld unless asked for: with the sink absent the engine never calls it,
     # `history` stays [], and every round renders the same prompt it does today.
@@ -1099,7 +1099,7 @@ def parity_gate_label(res):
     if not isinstance(res, dict):
         return "none"
     authored = bool((res.get("authored_test") or {}).get("ran"))
-    generic = res.get("generic_ran")
+    generic  = res.get("generic_ran")
     if generic is None:
         # A verify that never merged an authored test: `ran` IS the generic run.
         generic = bool(res.get("ran")) and not authored
@@ -1124,8 +1124,8 @@ def parity_fn_from_verify(verify_fn, type_name, spec, gate_sink=None):
 
     def _parity(bundle):
         rows = [{"type_name": type_name, "spec": spec}]
-        res = verify_fn(bundle, rows) or {}
-        r = res.get(type_name, {})
+        res  = verify_fn(bundle, rows) or {}
+        r    = res.get(type_name, {})
         if gate_sink is not None:
             try:
                 gate_sink(parity_gate_label(r))
@@ -1175,12 +1175,12 @@ class _Heartbeat:
     Stops on ``__exit__``; no-op when ``log_cb`` is None."""
 
     def __init__(self, log_cb, label, interval=300.0):
-        self._log_cb = log_cb
-        self._tag = ("[%s] " % label) if label else ""
+        self._log_cb   = log_cb
+        self._tag      = ("[%s] " % label) if label else ""
         self._interval = interval
-        self._stop = threading.Event()
-        self._thread = None
-        self._round = "baseline"
+        self._stop     = threading.Event()
+        self._thread   = None
+        self._round    = "baseline"
         # (phase text, phase start) as ONE attribute, so the ticking thread can
         # never pair a freshly-set phase with the previous phase's clock.
         self._phase = ("baseline -- measuring", time.time())
@@ -1391,21 +1391,21 @@ def write_rounds_json(out_dir, type_name, result, *, parity_gate="",
             "duration_s": r.duration_s, "note": r.note,
         })
     doc = {
-        "type_name": type_name,
-        "accepted": bool(getattr(result, "accepted", False)),
+        "type_name":   type_name,
+        "accepted":    bool(getattr(result, "accepted", False)),
         "baseline_ms": getattr(result, "baseline_ms", None),
-        "best_ms": getattr(result, "best_ms", None),
-        "speedup": getattr(result, "speedup", 1.0),
-        "rounds": getattr(result, "rounds", 0),          # rounds RUN
-        "max_rounds": getattr(result, "max_rounds", 0),  # the cap they ran under
+        "best_ms":     getattr(result, "best_ms", None),
+        "speedup":     getattr(result, "speedup", 1.0),
+        "rounds":      getattr(result, "rounds", 0),      # rounds RUN
+        "max_rounds":  getattr(result, "max_rounds", 0),  # the cap they ran under
         "stop_reason": getattr(result, "stop_reason", ""),
-        "reason": getattr(result, "reason", ""),
+        "reason":      getattr(result, "reason", ""),
         "parity_gate": parity_gate,
         # rung / floor_ms / perturbed / fingerprint / reason -- what the timing
         # below was taken on. A speedup without its scene is not a measurement.
-        "bench": dict(bench or {}),
+        "bench":   dict(bench or {}),
         "created": time.time(),
-        "ledger": rows,
+        "ledger":  rows,
     }
     try:
         d = bundler.stage_dir_for(out_dir, type_name)
@@ -1501,8 +1501,8 @@ def optimize_surviving(nodes, out_dir, *, maya=None, verify_fn=None,
     from mpynode.native.compiler import bundler
 
     from .optimizer import optimize_cpp
-    make = adapters_factory or make_adapters
-    run = engine or optimize_cpp
+    make    = adapters_factory or make_adapters
+    run     = engine or optimize_cpp
     results = {}
 
     def _note(msg):
@@ -1552,7 +1552,7 @@ def optimize_surviving(nodes, out_dir, *, maya=None, verify_fn=None,
             # version_cb can, and _emit_round swallows the whole callback anyway.
             state_cb = ad.pop("round_cb", None)
             n_rounds = _optimize_rounds(rounds)
-            hb = _Heartbeat(log_cb, type_name)
+            hb       = _Heartbeat(log_cb, type_name)
             _wrap_phases(ad, hb)
 
             def round_cb(record, cpp_text):

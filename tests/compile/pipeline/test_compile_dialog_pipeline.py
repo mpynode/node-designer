@@ -35,7 +35,7 @@ class _Check:
     def __init__(self, checked=False):
         self._checked = checked
         self._enabled = True
-        self.tip = ""
+        self.tip      = ""
 
     def isChecked(self):
         return self._checked
@@ -55,7 +55,7 @@ class _Check:
 
 class _Combo:
     def __init__(self, text="2"):
-        self._text = text
+        self._text    = text
         self._enabled = True
 
     def currentText(self):
@@ -77,14 +77,14 @@ class _Dlg:
     def __init__(self):
         from mpynode.ui.dialogs.compile_dialog import CompileDialog
 
-        self._assist_check = _Check(True)
-        self._optimize_check = _Check(False)
-        self._run_tests_check = _Check(False)
-        self._rounds_combo = _Combo("2")
+        self._assist_check             = _Check(True)
+        self._optimize_check           = _Check(False)
+        self._run_tests_check          = _Check(False)
+        self._rounds_combo             = _Combo("2")
         self._keep_intermediates_check = _Check(False)
-        self._clean_scratch_check = _Check(True)
-        self._sync = CompileDialog._sync_pipeline_gates.__get__(self)
-        self._opts = CompileDialog._pipeline_options.__get__(self)
+        self._clean_scratch_check      = _Check(True)
+        self._sync                     = CompileDialog._sync_pipeline_gates.__get__(self)
+        self._opts                     = CompileDialog._pipeline_options.__get__(self)
         # The gate also renames the Compile button ("Compile with AI" only while
         # stage 2 is armed). No button on the stand-in -> the real method's
         # not-yet-built guard runs, same as during _build_ui.
@@ -161,9 +161,9 @@ class _Label:
     """Enough QLabel for the rail."""
 
     def __init__(self):
-        self.text = ""
-        self.style = ""
-        self.tip = ""
+        self.text    = ""
+        self.style   = ""
+        self.tip     = ""
         self.visible = None
 
     def setText(self, t):
@@ -189,7 +189,7 @@ class _RailDlg:
                       "_RAIL_COLOR"):
             setattr(self, const, getattr(CompileDialog, const))
         self._rail_labels = {k: _Label() for k, _t in self._RAIL_STEPS}
-        self._rail_state = {}
+        self._rail_state  = {}
         self._rail_detail = _Label()
         for name in ("_rail_reset", "_rail_set", "_rail_apply", "_rail_render"):
             setattr(self, name, getattr(CompileDialog, name).__get__(self))
@@ -320,22 +320,22 @@ class TestPipelineRail(unittest.TestCase):
 
         d = _RailDlg()
         d._rail_reset({"ai_assist": True, "optimize": False})
-        d._rail_apply("stage", "ok", "1_transpiled")
-        d._rail_apply("port", "fail", "clang error")
-        d._rail_apply("port", "skip", "no node needed AI assist")
+        d._rail_apply("stage", "ok",   "1_transpiled")
+        d._rail_apply("port",  "fail", "clang error")
+        d._rail_apply("port",  "skip", "no node needed AI assist")
         self.assertEqual(d.state("assist"), "fail")
 
     def test_a_stage_nothing_reached_ends_as_did_not_run_not_pending(self):
         """At the end, "pending" is unreadable: it looks like the run stopped
         early. Nothing reached it, and that is what it should say."""
-        self.d._rail_apply("stage", "ok", "1_transpiled")
+        self.d._rail_apply("stage",    "ok", "1_transpiled")
         self.d._rail_apply("assemble", "ok", "")
-        self.d._rail_apply("done", "ok", "")
+        self.d._rail_apply("done",     "ok", "")
 
         self.assertEqual(self.d.state("transpile"), "done")
-        self.assertEqual(self.d.state("bundle"), "done")
-        self.assertEqual(self.d.state("assist"), "skip")
-        self.assertEqual(self.d.state("verify"), "skip")
+        self.assertEqual(self.d.state("bundle"),    "done")
+        self.assertEqual(self.d.state("assist"),    "skip")
+        self.assertEqual(self.d.state("verify"),    "skip")
 
     def test_finishing_does_not_disturb_a_declined_stage(self):
         d = _RailDlg()
@@ -409,8 +409,8 @@ class TestPerNodeSpeedup(unittest.TestCase):
         class _D:
             pass
 
-        d = _D()
-        d._table = _Table()
+        d              = _D()
+        d._table       = _Table()
         d._row_by_type = {}
         for i, name in enumerate(rows):
             d._row_by_type[name] = i
@@ -458,7 +458,7 @@ class TestPerNodeSpeedup(unittest.TestCase):
         self.assertEqual(self._status(d), "verified")
 
     def test_stamping_twice_does_not_double_the_suffix(self):
-        d = self._dlg()
+        d   = self._dlg()
         rec = {"optimize": {"kDTree": {"accepted": True, "speedup": 4.68}}}
         d._stamp_optimize_results(rec)
         d._stamp_optimize_results(rec)
@@ -532,14 +532,14 @@ class TestRailWiring(unittest.TestCase):
         return inspect.getsource(compile_dialog)
 
     def test_progress_events_reach_the_rail(self):
-        src = self._source()
+        src  = self._source()
         main = src.split("def _on_progress_main", 1)[1].split("\n    @", 1)[0]
         self.assertIn("_rail_apply(", main)
 
     def test_a_run_starts_from_a_clean_rail(self):
         """Left over from the previous compile, a green tick is a lie about
         this one."""
-        src = self._source()
+        src        = self._source()
         compile_fn = src.split("def _on_compile", 1)[1].split("\n    def ", 1)[0]
         self.assertIn("_rail_reset(pipe)", compile_fn)
 
@@ -634,18 +634,26 @@ class TestDialogWiring(unittest.TestCase):
 
         return inspect.getsource(compile_dialog)
 
+    @staticmethod
+    def _passes(src, name):
+        # ``name=name`` keyword pass-throughs, however the call is columnised
+        # (``name = name,`` once a keyword block is aligned).
+        import re
+
+        return len(re.findall(r"\b%s\s*=\s*%s\b" % (name, name), src))
+
     def test_the_gate_reaches_the_engine(self):
         src = self._source()
-        self.assertTrue("ai_assist=ai_assist" in src,
+        self.assertTrue(self._passes(src, "ai_assist"),
                         "the dialog never passes ai_assist to the controller")
-        self.assertEqual(src.count("ai_assist=ai_assist"), 2,
+        self.assertEqual(self._passes(src, "ai_assist"), 2,
                          "both the single and multi-version paths must pass it")
 
     def test_the_cleanup_choice_reaches_the_engine(self):
         """Off must mean off: the engine deletes the working dirs, so a dialog
         that reads the checkbox but never sends it is silently a no-op."""
         src = self._source()
-        self.assertEqual(src.count("clean_scratch=clean_scratch"), 2,
+        self.assertEqual(self._passes(src, "clean_scratch"), 2,
                          "both the single and multi-version paths must pass it")
 
     def test_the_old_single_optimize_checkbox_is_gone(self):
@@ -661,7 +669,7 @@ class TestDialogWiring(unittest.TestCase):
     def test_busy_toggling_reasserts_the_gates(self):
         """_set_busy re-enables every widget; without a re-sync, finishing a run
         hands back an editable 'AI assist' box while optimize is still on."""
-        src = self._source()
+        src  = self._source()
         busy = src.split("def _set_busy", 1)[1].split("\n    def ", 1)[0]
         self.assertIn("_sync_pipeline_gates()", busy)
 
@@ -709,7 +717,7 @@ class TestOptimizeSummaryLinesSayHowTheLoopEnded(unittest.TestCase):
 
         from mpynode.ui.dialogs import compile_dialog
 
-        src = inspect.getsource(compile_dialog.CompileDialog._build_pipeline_ui)
+        src     = inspect.getsource(compile_dialog.CompileDialog._build_pipeline_ui)
         caption = src.split("rounds_row.addWidget(self._rounds_combo)", 1)[1]
         self.assertIn("adaptive", caption)
         self.assertIn("1.15x", caption)

@@ -25,13 +25,13 @@ def _portable_spec(name="cubicCurveSampler"):
     """A minimal portable spec the engine accepts up to the port step."""
     return {
         "source_node": name,
-        "mpy_type": "mPyNode",
+        "mpy_type":    "mPyNode",
         "suggested": {"node_type_name": name, "class_name": name[:1].upper() + name[1:],
                       "mpx_base": "MPxNode", "type_id": "0x0013a1c0"},
-        "inputs": {"a": {"type": "double"}},
-        "outputs": {"out": {"type": "double"}},
-        "compute": "out = a * 2.0",
-        "init": "",
+        "inputs":      {"a": {"type": "double"}},
+        "outputs":     {"out": {"type": "double"}},
+        "compute":     "out = a * 2.0",
+        "init":        "",
         "portability": {"portable": True, "blockers": []},
     }
 
@@ -197,7 +197,7 @@ class TestCompileCppMissingCompiler(unittest.TestCase):
     def test_compile_cpp_streams_via_log_cb(self):
         from mpynode.native.ai import porter
 
-        spec = _portable_spec()
+        spec  = _portable_spec()
         lines = []
 
         def fake_stream(cmd, *, env=None, log_cb=None, **k):
@@ -256,7 +256,7 @@ class TestCompileCppMissingCompiler(unittest.TestCase):
                                             _spy):
                 ok, log, plugin = porter.compile_cpp(cpp, spec, d, compiler="cl")
         self.assertFalse(ok)
-        self.assertIn("STL1001", log)
+        self.assertIn("STL1001",     log)
         self.assertIn("14.44.35207", log)
         self.assertIn("14.51.36231", log)
 
@@ -266,9 +266,9 @@ class TestCompileCppMissingCompiler(unittest.TestCase):
         spec = _portable_spec()
         root = (r"C:\Program Files\Microsoft Visual Studio\18\Community\VC"
                 r"\Tools\MSVC\14.51.36231")
-        good_cl = root + r"\bin\Hostx64\x64\cl.exe"
+        good_cl  = root + r"\bin\Hostx64\x64\cl.exe"
         good_inc = root + r"\include"
-        lines = []
+        lines    = []
 
         def fake_stream(cmd, *, env=None, log_cb=None, **k):
             if log_cb:
@@ -323,9 +323,9 @@ class TestPortNodeStepLogging(unittest.TestCase):
         joined = "\n".join(lines).lower()
         # The user wants to SEE the porter is doing multi-step work before the
         # compile: skeleton -> AI compute body -> compile.
-        self.assertIn("skeleton", joined)
+        self.assertIn("skeleton",     joined)
         self.assertIn("compute body", joined)
-        self.assertIn("compil", joined)  # "compiling ..."
+        self.assertIn("compil",       joined)  # "compiling ..."
 
 
 # ---------------------------------------------------------------------------
@@ -408,8 +408,8 @@ class TestBundlerCompileLaunchDecode(unittest.TestCase):
         seen = {}
 
         def _fake(cmd, *, env=None, log_cb=None, **k):
-            seen["cmd"] = cmd
-            seen["env"] = env
+            seen["cmd"]    = cmd
+            seen["env"]    = env
             seen["log_cb"] = log_cb
             return 0, "compiled ok\n"
 
@@ -424,9 +424,9 @@ class TestBundlerCompileLaunchDecode(unittest.TestCase):
                                         {"PATH": "/x"}, "clang++",
                                         log_cb=sink_fn)
         self.assertEqual(proc.returncode, 0)
-        self.assertEqual(proc.stderr, "compiled ok\n")
-        self.assertEqual(seen["cmd"], ["clang++", "-c", "x.cpp"])
-        self.assertEqual(seen["env"], {"PATH": "/x"})
+        self.assertEqual(proc.stderr,     "compiled ok\n")
+        self.assertEqual(seen["cmd"],     ["clang++", "-c", "x.cpp"])
+        self.assertEqual(seen["env"],     {"PATH": "/x"})
         # log_cb must be forwarded so the dialog can stream the output.
         self.assertIs(seen["log_cb"], sink_fn)
 
@@ -447,9 +447,9 @@ class TestCompilePluginPreflight(unittest.TestCase):
         from mpynode.native.ai import porter
         from mpynode.native.compiler import bundler
 
-        port_calls = []
+        port_calls     = []
         assemble_calls = []
-        events = []
+        events         = []
 
         def fake_check_toolchain(maya, *a, **k):
             return {"ok": toolchain_ok,
@@ -562,7 +562,7 @@ class TestCompilePluginPreflight(unittest.TestCase):
     def test_a_run_where_any_node_needed_the_ai_makes_no_such_claim(self):
         from mpynode.native import compiler as codegen
         skeleton = "x\n%s\n%s\n" % (codegen.PORT_BEGIN, codegen.PORT_END)
-        n = {"i": 0}
+        n        = {"i": 0}
 
         def half_deterministic(spec, **k):
             n["i"] += 1
@@ -588,7 +588,7 @@ class TestCompilePluginPreflight(unittest.TestCase):
         seen = {}
 
         def fake_optimize_surviving(nodes, out_dir, **kw):
-            seen["log_cb"] = kw.get("log_cb")
+            seen["log_cb"]         = kw.get("log_cb")
             seen["compile_log_cb"] = kw.get("compile_log_cb")
             return {}
 
@@ -769,7 +769,7 @@ class TestCompilePluginNameGuards(unittest.TestCase):
         from mpynode.native.ai import porter
         from mpynode.native.compiler import bundler
 
-        port_calls = []
+        port_calls     = []
         assemble_calls = []
 
         def fake_check_toolchain(maya, *a, **k):
@@ -834,8 +834,8 @@ class TestCompilePluginNameGuards(unittest.TestCase):
     def _diverged():
         """Two specs sharing ONE type name but with DIFFERENT compute code --
         the Duplicate-then-edit divergence the guard must catch."""
-        a = _portable_spec("dupNode")
-        b = _portable_spec("dupNode")
+        a            = _portable_spec("dupNode")
+        b            = _portable_spec("dupNode")
         b["compute"] = "out = a * 3.0"  # edited sibling
         return [a, b]
 
@@ -972,7 +972,7 @@ class TestCompilePluginLogStreaming(unittest.TestCase):
 
         def fake_assemble(nodes, plugin_name, out_dir, log_cb=None, **k):
             seen["asm_log_cb"] = log_cb
-            bundle = _touch_bundle(out_dir, plugin_name)
+            bundle             = _touch_bundle(out_dir, plugin_name)
             return {"ok": True,
                     "bundle": bundle,
                     "nodes": [{"name": n, "id": 1, "status": "compiled",
@@ -1098,7 +1098,7 @@ class TestAssembleSingleStaleBundlePreserved(unittest.TestCase):
         from mpynode.native.toolchain.typeid_registry import TypeIdRegistry
 
         with tempfile.TemporaryDirectory() as d:
-            ext = bundler.toolchain.plugin_ext()
+            ext   = bundler.toolchain.plugin_ext()
             stale = os.path.join(d, "smokePlug" + ext)
             with open(stale, "w") as fh:
                 fh.write("PRIOR-GOOD-BUNDLE")
@@ -1133,8 +1133,8 @@ class TestOptimizeFallbackRefreshesRows(unittest.TestCase):
     class _OptRes:
         def __init__(self, accepted, speedup, reason):
             self.accepted = accepted
-            self.speedup = speedup
-            self.reason = reason
+            self.speedup  = speedup
+            self.reason   = reason
 
     def test_fallback_marks_node_compiled_not_failed(self):
         from mpynode.native.toolchain import compile_controller as cc
@@ -1279,8 +1279,8 @@ class TestOptimizeSummaryCarriesHowTheLoopEnded(unittest.TestCase):
     class _OptRes:
         def __init__(self, accepted, speedup, reason, **more):
             self.accepted = accepted
-            self.speedup = speedup
-            self.reason = reason
+            self.speedup  = speedup
+            self.reason   = reason
             for k, v in more.items():
                 setattr(self, k, v)
 
@@ -1441,10 +1441,10 @@ class TestGeometryMultiAndAliasBlockers(unittest.TestCase):
     """
 
     BS_INPUTS = {
-        "weight": {"attr_type": "float", "is_array": True},
-        "targetOffset": {"attr_type": "int", "is_array": True},
+        "weight":           {"attr_type": "float", "is_array": True},
+        "targetOffset":     {"attr_type": "int", "is_array": True},
         "targetComponents": {"attr_type": "int", "is_array": True},
-        "targetDeltas": {"attr_type": "double", "is_array": True},
+        "targetDeltas":     {"attr_type": "double", "is_array": True},
     }
 
     def _assess(self, compute, inputs=None):
@@ -1472,9 +1472,9 @@ class TestGeometryMultiAndAliasBlockers(unittest.TestCase):
     def test_a_user_declared_mesh_multi_is_reported_the_same_way(self):
         """The rule is derived from the inputs map, not a hardcoded name, so a
         user's own mesh array gets the same treatment."""
-        ins = dict(self.BS_INPUTS)
+        ins             = dict(self.BS_INPUTS)
         ins["myMeshes"] = {"attr_type": "mesh", "is_array": True}
-        r = self._assess("m = self.myMeshes[k]\n", inputs=ins)
+        r               = self._assess("m = self.myMeshes[k]\n", inputs=ins)
         self.assertTrue(r["portable"], r["blockers"])
         self.assertTrue(any("myMeshes" in u for u in r["unported"]),
                         r["unported"])
@@ -1552,7 +1552,7 @@ class TestImageReadCodegen(unittest.TestCase):
             "class _Tint(object):\n"
             "    gain = 2.0\n"
             "self.outColor = [self.uIn * _Tint.gain, self.uIn, self.uIn]\n")
-        spec = spec_extractor.extract_spec(w.get_name())
+        spec                                = spec_extractor.extract_spec(w.get_name())
         spec["suggested"]["node_type_name"] = "texTestNode"
         if reads:
             spec["suggested"]["reads_image_file"] = True
@@ -1564,9 +1564,9 @@ class TestImageReadCodegen(unittest.TestCase):
         from mpynode.native import compiler as codegen
         cpp = codegen.generate_cpp(self._spec(reads=True), for_port=True)
         self.assertIn("maya/MImage.h", cpp)
-        self.assertIn("readFromFile", cpp)            # the decode is emitted...
+        self.assertIn("readFromFile", cpp)                  # the decode is emitted...
         self.assertIn("nd_img_load_raw(_imgRawCache", cpp)  # ...but CACHED (not per-compute)
-        self.assertIn("in_aFileName", cpp)            # path comes from the fileName input
+        self.assertIn("in_aFileName", cpp)                  # path comes from the fileName input
         self.assertIn("_imgPixels", cpp)
         self.assertIn("getSize", cpp)
         # PERF guard: the decode must NOT run inside compute() (per sample).
@@ -1636,10 +1636,10 @@ def _closest_point_spec(mpy_type, *, flag=True):
         "suggested": {"node_type_name": "closestPtNode",
                       "class_name": "ClosestPtNode", "type_id": "0x00070001",
                       "mpx_base": "MPxNode"},
-        "compute": _CLOSEST_POINT_COMPUTE,
-        "init": "",
-        "inputs": {"inMesh": {"type": "mesh"}},
-        "outputs": {"outValue": {"type": "double"}},
+        "compute":     _CLOSEST_POINT_COMPUTE,
+        "init":        "",
+        "inputs":      {"inMesh": {"type": "mesh"}},
+        "outputs":     {"outValue": {"type": "double"}},
         "portability": {"portable": True, "blockers": []},
     }
     if flag:
@@ -1700,8 +1700,8 @@ class TestMeshIntersectorInclude(unittest.TestCase):
         # MIntArray, so it needs no companions -- and the gate must not perturb
         # the rest of the list (order included) for the flagged node either.
         for mpy_type in ("mPyMesh", "mPyNode"):
-            off = self._includes(self._cpp(mpy_type, flag=False))
-            on = self._includes(self._cpp(mpy_type, flag=True))
+            off   = self._includes(self._cpp(mpy_type, flag=False))
+            on    = self._includes(self._cpp(mpy_type, flag=True))
             added = [i for i in on if i not in off]
             self.assertEqual(["#include <maya/MMeshIntersector.h>"], added,
                              mpy_type)
@@ -1773,8 +1773,8 @@ _IMG_SPEC = {
     "suggested": {"node_type_name": "texSrcNode", "mpx_base": "MPxNode",
                   "reads_image_file": True},
     "compute": "self.outColor = [0.5, 0.5, 0.5]",
-    "init": "from PIL import Image",
-    "inputs": {"fileName": {"type": "string"}},
+    "init":    "from PIL import Image",
+    "inputs":  {"fileName": {"type": "string"}},
     "outputs": {"outColor": {"type": "vector"}},
 }
 
@@ -1804,9 +1804,9 @@ class TestVerifySkipsImageRead(unittest.TestCase):
         (the file-read skip is the more specific, user-meaningful one)."""
         from mpynode.native.toolchain import verify as cc
 
-        spec = dict(_IMG_SPEC)
+        spec            = dict(_IMG_SPEC)
         spec["outputs"] = {"outColor": {"type": "vector", "is_array": True}}
-        res = cc._verify_one(object(), "/some/tex.bundle", spec)
+        res             = cc._verify_one(object(), "/some/tex.bundle", spec)
         self.assertFalse(res["ran"])
         self.assertIn("image file", res["reason"].lower())
 
@@ -1855,10 +1855,10 @@ def _setUpModule__rng_support():
 
 _RNG_SPEC = {
     "suggested": {"node_type_name": "noiseNode", "mpx_base": "MPxNode"},
-    "compute": "self.out = float(np.random.random())",
-    "init": "import numpy as np",
-    "inputs": {},
-    "outputs": {"out": {"type": "float"}},
+    "compute":   "self.out = float(np.random.random())",
+    "init":      "import numpy as np",
+    "inputs":    {},
+    "outputs":   {"out": {"type": "float"}},
 }
 
 
@@ -1993,9 +1993,9 @@ _LOWERED_RNG_SPEC = {
     "compute": ("rng = np.random.RandomState(12345)\n"
                 "v = rng.random(4)\n"
                 "self.out = float(v[0] + v[1] + v[2] + v[3]) + self.bias\n"),
-    "init": "import numpy as np",
-    "inputs": {"bias": {"type": "double"}},
-    "outputs": {"out": {"type": "double"}},
+    "init":        "import numpy as np",
+    "inputs":      {"bias": {"type": "double"}},
+    "outputs":     {"out": {"type": "double"}},
     "portability": {"portable": True, "blockers": []},
 }
 
@@ -2006,10 +2006,10 @@ _LOWERED_RNG_SPEC = {
 _PORTED_RNG_SPEC = {
     "suggested": {"node_type_name": "noisePorted", "class_name": "NoisePorted",
                   "mpx_base": "MPxNode", "type_id": "0x0013a1c2"},
-    "compute": "self.out = float(np.random.random())",
-    "init": "import numpy as np",
-    "inputs": {},
-    "outputs": {"out": {"type": "float"}},
+    "compute":     "self.out = float(np.random.random())",
+    "init":        "import numpy as np",
+    "inputs":      {},
+    "outputs":     {"out": {"type": "float"}},
     "portability": {"portable": True, "blockers": []},
 }
 
@@ -2067,10 +2067,10 @@ def _setUpModule__verify_array_and_error():
 # A spec shaped like cubicCurveSampler: vector ARRAY in + vector ARRAY out.
 _ARRAY_SPEC = {
     "suggested": {"node_type_name": "cubicCurveSampler", "mpx_base": "MPxNode"},
-    "compute": "self.outSamples[:] = self.controlPoints",
-    "init": "import numpy as np",
-    "inputs": {"controlPoints": {"type": "vector", "is_array": True}},
-    "outputs": {"outSamples": {"type": "vector", "is_array": True}},
+    "compute":   "self.outSamples[:] = self.controlPoints",
+    "init":      "import numpy as np",
+    "inputs":    {"controlPoints": {"type": "vector", "is_array": True}},
+    "outputs":   {"outSamples": {"type": "vector", "is_array": True}},
 }
 
 
@@ -2106,7 +2106,7 @@ class TestVerifyOneArrayNodesNowRun(unittest.TestCase):
         spec = {
             "suggested": {"node_type_name": "n", "mpx_base": "MPxNode"},
             "compute": "self.outSamples[:] = self.a", "init": "",
-            "inputs": {"a": {"type": "float"}},
+            "inputs":  {"a": {"type": "float"}},
             "outputs": {"outSamples": {"type": "vector", "is_array": True}},
         }
         with self.assertRaises(AssertionError):
@@ -2122,7 +2122,7 @@ class TestVerifyOneArrayNodesNowRun(unittest.TestCase):
         spec = {
             "suggested": {"node_type_name": "n", "mpx_base": "MPxNode"},
             "compute": "pass", "init": "",
-            "inputs": {"a": {"type": "float"}},
+            "inputs":  {"a": {"type": "float"}},
             "outputs": {},
         }
         res = cc._verify_one(_BoomCmds(), "/some/x.bundle", spec)
@@ -2139,7 +2139,7 @@ class TestVerifyOneArrayNodesNowRun(unittest.TestCase):
         spec = {
             "suggested": {"node_type_name": "n", "mpx_base": "MPxNode"},
             "compute": "self.out = self.a + 1", "init": "",
-            "inputs": {"a": {"type": "float"}},
+            "inputs":  {"a": {"type": "float"}},
             "outputs": {"out": {"type": "float"}},
         }
         with self.assertRaises(AssertionError):
@@ -2209,11 +2209,11 @@ class TestVerifyArrayHelpers(unittest.TestCase):
                 return self._reads[min(self._i, len(self._reads) - 1)]
 
             def dgdirty(self, node):
-                self._i += 1
+                self._i      += 1
                 self.dirtied += 1
 
         out_meta = {"out": {"is_array": False}}
-        steady = _FakeCmds([1.0, 1.0])
+        steady   = _FakeCmds([1.0, 1.0])
         self.assertTrue(v._interp_is_idempotent(steady, "n", out_meta, 1e-4))
         self.assertEqual(steady.dirtied, 1)     # it really did force a recompute
         # a reference that moves under its own feet is NOT comparable
@@ -2232,8 +2232,8 @@ class TestVerifyArrayHelpers(unittest.TestCase):
                      "inputs": {"a": {}}, "outputs": {"out": {}}}
         self.assertTrue(v._has_carry_state(stateful))
         self.assertFalse(v._has_carry_state(stateless))
-        self.assertFalse(v._has_carry_state({}))            # no source -> no claim
-        self.assertFalse(v._has_carry_state({"compute": "def ("}))   # unparseable
+        self.assertFalse(v._has_carry_state({}))                    # no source -> no claim
+        self.assertFalse(v._has_carry_state({"compute": "def ("}))  # unparseable
 
     def test_carry_state_drift_needs_both_state_and_a_tight_bound(self):
         # The structural precondition is the point: _DIVERGE_CEIL's magnitude-only
@@ -2276,7 +2276,7 @@ class TestVerifyDriveInputsAndTexSkip(unittest.TestCase):
     parity while only float2/uvCoord is peeled."""
 
     def _rec(self, connected=()):
-        calls = {"setAttr": [], "currentTime": []}
+        calls     = {"setAttr": [], "currentTime": []}
         connected = set(connected)
 
         class _Cmds:
@@ -2311,8 +2311,8 @@ class TestVerifyDriveInputsAndTexSkip(unittest.TestCase):
         cmds, calls = self._rec(connected={"comp.a"})
         v._drive_input(cmds, ("orig", "comp"), "a", "float", 1.5)
         plugs = [c[0] for c in calls["setAttr"]]
-        self.assertIn("orig.a", plugs)       # unconnected -> driven
-        self.assertNotIn("comp.a", plugs)    # connected -> left to its source
+        self.assertIn("orig.a", plugs)     # unconnected -> driven
+        self.assertNotIn("comp.a", plugs)  # connected -> left to its source
 
     def test_drive_input_time_drives_timeline_and_unconnected_side(self):
         from mpynode.native.toolchain import verify as v
@@ -2321,8 +2321,8 @@ class TestVerifyDriveInputsAndTexSkip(unittest.TestCase):
         v._drive_input(cmds, ("orig", "comp"), "t", "time", 12.0)
         self.assertEqual(calls["currentTime"], [12.0])   # both driven via timeline
         plugs = [c[0] for c in calls["setAttr"]]
-        self.assertNotIn("orig.t", plugs)                # connected: no setAttr
-        self.assertIn("comp.t", plugs)                   # unconnected: setAttr too
+        self.assertNotIn("orig.t", plugs)  # connected: no setAttr
+        self.assertIn("comp.t", plugs)     # unconnected: setAttr too
 
     def test_color_output_falls_through_tex_gate(self):
         # color is no longer tex-skipped -> reaches the real harness (touches
@@ -2331,7 +2331,7 @@ class TestVerifyDriveInputsAndTexSkip(unittest.TestCase):
         spec = {
             "suggested": {"node_type_name": "n", "mpx_base": "MPxNode"},
             "compute": "self.outColor = self.k", "init": "",
-            "inputs": {"k": {"type": "float"}},
+            "inputs":  {"k": {"type": "float"}},
             "outputs": {"outColor": {"type": "color"}},
         }
         with self.assertRaises(AssertionError):
@@ -2344,7 +2344,7 @@ class TestVerifyDriveInputsAndTexSkip(unittest.TestCase):
         spec = {
             "suggested": {"node_type_name": "n", "mpx_base": "MPxNode"},
             "compute": "self.out = self.uv[0]", "init": "",
-            "inputs": {"uv": {"type": "float2"}},
+            "inputs":  {"uv": {"type": "float2"}},
             "outputs": {"out": {"type": "float"}},
         }
         res = v._verify_one(_BoomCmds(), "/x.bundle", spec)
@@ -2377,11 +2377,11 @@ class TestVerifyDriveInputsAndTexSkip(unittest.TestCase):
         from mpynode.native.toolchain import verify as v
         spec = {
             "suggested": {"node_type_name": "procTexture", "mpx_base": "MPxNode"},
-            "mpy_type": "mPyFile",
+            "mpy_type":  "mPyFile",
             "compute": ("u, v = self.uvCoord\n"
                         "self.outColor = (u, v, u * v)\n"
                         "self.outAlpha = 1.0\n"),
-            "init": "import numpy as np\n",
+            "init":   "import numpy as np\n",
             "inputs": {"uvCoord": {"type": "float2"}},
             "outputs": {"outColor": {"type": "color"},
                         "outAlpha": {"type": "float"}},
@@ -2398,7 +2398,7 @@ class TestVerifyDriveInputsAndTexSkip(unittest.TestCase):
 # instead of reaching the real geo parity harness.
 _GEO_MESH_SPEC = {
     "suggested": {"node_type_name": "gmesh", "mpx_base": "MPxNode"},
-    "mpy_type": "mPyMesh",
+    "mpy_type":  "mPyMesh",
     "compute": (
         "import numpy as np\n"
         "from mpynode._api2.mpy_mesh import build_default_output\n"
@@ -2410,12 +2410,12 @@ _GEO_MESH_SPEC = {
     ),
     "init": "",
     "inputs": {
-        "vin": {"type": "vector", "is_array": True},
+        "vin":   {"type": "vector", "is_array": True},
         "scale": {"type": "double", "default_value": 2.0},
-        "cin": {"type": "int", "is_array": True},
-        "iin": {"type": "int", "is_array": True},
+        "cin":   {"type": "int", "is_array": True},
+        "iin":   {"type": "int", "is_array": True},
     },
-    "outputs": {},
+    "outputs":     {},
     "portability": {"portable": True, "blockers": []},
 }
 
@@ -2474,13 +2474,13 @@ class TestGeoSeedingConsistency(unittest.TestCase):
             "self.outSurface = build_default_output("
             "self.cvs, self.num_cvs_u, self.num_cvs_v)\n")
         self.assertEqual(roles.get("cvsIn"), "cvs")
-        self.assertEqual(roles.get("nu"), "numU")
-        self.assertEqual(roles.get("nv"), "numV")
+        self.assertEqual(roles.get("nu"),    "numU")
+        self.assertEqual(roles.get("nv"),    "numV")
 
     def test_cvs_seed_is_a_full_grid(self):
         from mpynode.native.toolchain import verify as cc
         vals = cc._geo_array_value("cvs", "vector", 0)
-        dim = cc._GEO_SURF_DIM
+        dim  = cc._GEO_SURF_DIM
         # A dim x dim CV grid: enough for a degree-3 curve AND a dim x dim
         # surface (numU*numV == len(cvs)); every element an [x,y,z] triple.
         self.assertEqual(len(vals), dim * dim)
@@ -2498,7 +2498,7 @@ class TestGeoSeedingConsistency(unittest.TestCase):
     def test_numuv_scalar_driven_to_grid_dim_every_config(self):
         from mpynode.native.toolchain import verify as cc
         meta = {"type": "int"}
-        dim = cc._GEO_SURF_DIM
+        dim  = cc._GEO_SURF_DIM
         for cfg in range(cc._GEO_CFGS):
             self.assertEqual(
                 cc._geo_scalar_value(meta, "int", cfg, self._rng(), role="numU"),
@@ -2528,14 +2528,14 @@ class TestVerifyScriptHonesty(unittest.TestCase):
         spec = {
             "suggested": {"node_type_name": "n", "mpx_base": "MPxNode"},
             "compute": "self.out = self.a", "init": "",
-            "inputs": {"a": {"type": "vector"}},
+            "inputs":  {"a": {"type": "vector"}},
             "outputs": {"out": {"type": "vector"}},
         }
         s = porter._verify_script(spec)
-        self.assertIn("_flat(", s)                 # full flatten, every component
-        self.assertNotIn("cv = cv[0]", s)          # the old first-element peel
+        self.assertIn("_flat(", s)           # full flatten, every component
+        self.assertNotIn("cv = cv[0]", s)    # the old first-element peel
         self.assertNotIn("sv = sv[0]", s)
-        self.assertIn("component count", s)        # length-mismatch guard
+        self.assertIn("component count", s)  # length-mismatch guard
 
     def test_scalar_verify_script_guards_vacuous_pass(self):
         from mpynode.native.ai import porter
@@ -2545,8 +2545,8 @@ class TestVerifyScriptHonesty(unittest.TestCase):
             "inputs": {"a": {"type": "float"}}, "outputs": {},
         }
         s = porter._verify_script(spec)
-        self.assertIn("no outputs to compare", s)      # empty-OUTPUTS guard
-        self.assertIn("no comparable outputs", s)      # nothing-compared guard
+        self.assertIn("no outputs to compare", s)  # empty-OUTPUTS guard
+        self.assertIn("no comparable outputs", s)  # nothing-compared guard
 
 
 class TestDefaultVerifyReclassifiesExceptions(unittest.TestCase):
@@ -2559,8 +2559,8 @@ class TestDefaultVerifyReclassifiesExceptions(unittest.TestCase):
         # Make pluginInfo report the bundle already loaded so _default_verify
         # SKIPS loadPlugin and reaches the per-row try, then force _verify_one to
         # raise (simulating ANY harness error, e.g. setAttr on a multi).
-        orig_pi = mcmds.pluginInfo
-        orig_v1 = cc._verify_one
+        orig_pi          = mcmds.pluginInfo
+        orig_v1          = cc._verify_one
         mcmds.pluginInfo = lambda *a, **k: True
         cc._verify_one = lambda *a, **k: (_ for _ in ()).throw(
             RuntimeError("setAttr: ... is a multi"))
@@ -2568,7 +2568,7 @@ class TestDefaultVerifyReclassifiesExceptions(unittest.TestCase):
             out = cc._default_verify("/x.bundle", rows)
         finally:
             mcmds.pluginInfo = orig_pi
-            cc._verify_one = orig_v1
+            cc._verify_one   = orig_v1
 
         r = out["n"]
         # The decisive assertion: an exception must NOT become a parity FAILURE
@@ -2646,8 +2646,8 @@ def _setUpModule__compile_from_mpn():
 def _spec_with_vars():
     return {
         "schema_version": 1,
-        "source_node": "x",
-        "mpy_type": "mPyNode",
+        "source_node":    "x",
+        "mpy_type":       "mPyNode",
         "suggested": {"node_type_name": "x", "class_name": "X",
                       "type_id": "0x00070000", "mpx_base": "MPxNode"},
         "inputs": {}, "outputs": {},
@@ -2672,7 +2672,7 @@ class TestBakePersistent(unittest.TestCase):
         from mpynode.native.toolchain import compile_controller as cc
 
         specs = [_spec_with_vars()]
-        tmp = tempfile.mkdtemp()
+        tmp   = tempfile.mkdtemp()
         # Force preflight to fail -> compile_plugin returns right AFTER the strip,
         # with no compiler/AI needed. The strip mutates the specs list in place.
         with mock.patch.object(cc.toolchain, "check_toolchain",
@@ -2687,7 +2687,7 @@ class TestBakePersistent(unittest.TestCase):
         from mpynode.native.toolchain import compile_controller as cc
 
         specs = [_spec_with_vars()]
-        tmp = tempfile.mkdtemp()
+        tmp   = tempfile.mkdtemp()
         with mock.patch.object(cc.toolchain, "check_toolchain",
                                return_value={"ok": False,
                                              "problems": ["no compiler (test)"]}):
@@ -2699,11 +2699,11 @@ class TestBakePersistent(unittest.TestCase):
     def test_stripping_changes_cache_key(self):
         from mpynode.native.toolchain import compile_controller as cc
 
-        with_vars = _spec_with_vars()
-        without = copy.deepcopy(with_vars)
+        with_vars            = _spec_with_vars()
+        without              = copy.deepcopy(with_vars)
         without["variables"] = {}
-        k1 = cc.port_cache.cache_key(with_vars, provider="p", model="m")
-        k2 = cc.port_cache.cache_key(without, provider="p", model="m")
+        k1                   = cc.port_cache.cache_key(with_vars, provider="p", model="m")
+        k2                   = cc.port_cache.cache_key(without, provider="p", model="m")
         self.assertNotEqual(k1, k2)
 
 
@@ -2715,7 +2715,7 @@ class TestPortCacheCommandKeying(unittest.TestCase):
     byte-identically, so a setup/demo-only edit never costs an LLM re-port."""
 
     def _base_spec(self, base):
-        s = _spec_with_vars()
+        s                          = _spec_with_vars()
         s["suggested"]["mpx_base"] = base
         return s
 
@@ -2725,11 +2725,11 @@ class TestPortCacheCommandKeying(unittest.TestCase):
         # silently, because the build still succeeded.
         from mpynode.native.toolchain import port_cache
 
-        a = self._base_spec("MPxNode")
-        a["methods"] = '@maya_command("foo")\ndef foo(self):\n    return 1\n'
+        a             = self._base_spec("MPxNode")
+        a["methods"]  = '@maya_command("foo")\ndef foo(self):\n    return 1\n'
         a["commands"] = [{"name": "foo"}]
-        b = copy.deepcopy(a)
-        b["methods"] = '@maya_command("foo")\ndef foo(self):\n    return 2\n'
+        b             = copy.deepcopy(a)
+        b["methods"]  = '@maya_command("foo")\ndef foo(self):\n    return 2\n'
         self.assertNotEqual(
             port_cache.cache_key(a, provider="p", model="m"),
             port_cache.cache_key(b, provider="p", model="m"),
@@ -2738,9 +2738,9 @@ class TestPortCacheCommandKeying(unittest.TestCase):
     def test_adding_a_command_busts_key_for_non_locator(self):
         from mpynode.native.toolchain import port_cache
 
-        a = self._base_spec("MPxNode")
-        b = copy.deepcopy(a)
-        b["methods"] = '@maya_command("foo")\ndef foo(self):\n    return 1\n'
+        a             = self._base_spec("MPxNode")
+        b             = copy.deepcopy(a)
+        b["methods"]  = '@maya_command("foo")\ndef foo(self):\n    return 1\n'
         b["commands"] = [{"name": "foo"}]
         self.assertNotEqual(
             port_cache.cache_key(a, provider="p", model="m"),
@@ -2754,7 +2754,7 @@ class TestPortCacheCommandKeying(unittest.TestCase):
         a["methods"] = ('@maya_command("createMeshRegion")\n'
                         'def f(cls):\n    return cls\n')
         a["commands"] = [{"name": "createMeshRegion"}]
-        b = copy.deepcopy(a)
+        b             = copy.deepcopy(a)
         b["commands"] = [{"name": "setMeshRegion"}]
         self.assertNotEqual(
             port_cache.cache_key(a, provider="p", model="m"),
@@ -2767,11 +2767,11 @@ class TestPortCacheCommandKeying(unittest.TestCase):
         # (setup/demo hooks live there) -- otherwise every such edit re-ports.
         from mpynode.native.toolchain import port_cache
 
-        a = self._base_spec("MPxNode")
-        a["methods"] = "def setup(self):\n    return 1\n"
+        a             = self._base_spec("MPxNode")
+        a["methods"]  = "def setup(self):\n    return 1\n"
         a["commands"] = []
-        b = copy.deepcopy(a)
-        b["methods"] = "def setup(self):\n    return 2\n"
+        b             = copy.deepcopy(a)
+        b["methods"]  = "def setup(self):\n    return 2\n"
         self.assertEqual(
             port_cache.cache_key(a, provider="p", model="m"),
             port_cache.cache_key(b, provider="p", model="m"),
@@ -2795,9 +2795,9 @@ class TestCompileFromMpnPaths(unittest.TestCase):
         captured = {}
 
         def fake_compile(specs, plugin_name, out_dir, **kw):
-            captured["specs"] = specs
+            captured["specs"]  = specs
             captured["plugin"] = plugin_name
-            captured["kw"] = kw
+            captured["kw"]     = kw
             return {"ok": True}
 
         with mock.patch.object(mpn_io, "load_mpn",
@@ -2809,9 +2809,9 @@ class TestCompileFromMpnPaths(unittest.TestCase):
 
         self.assertTrue(res["ok"])
         self.assertEqual(len(captured["specs"]), 2)
-        self.assertEqual(captured["specs"][0], {"spec_for": "a.mpn"})
-        self.assertEqual(captured["specs"][1], {"spec_for": "b.mpn"})
-        self.assertEqual(captured["plugin"], "plug")
+        self.assertEqual(captured["specs"][0],   {"spec_for": "a.mpn"})
+        self.assertEqual(captured["specs"][1],   {"spec_for": "b.mpn"})
+        self.assertEqual(captured["plugin"],     "plug")
 
     def test_path_tuple_sets_per_spec_bake_persistent(self):
         # A ``(path, bake)`` tuple flags that one .mpn's persistent data per-file;
@@ -2922,7 +2922,7 @@ class TestCompileFromMpnPaths(unittest.TestCase):
 
         from mpynode.native.toolchain import compile_controller as cc
 
-        tree = ast.parse(inspect.getsource(cc))
+        tree      = ast.parse(inspect.getsource(cc))
         offenders = []
         for node in tree.body:  # module top-level only
             if isinstance(node, ast.Import):
@@ -2949,7 +2949,7 @@ class TestApplyPersistentPolicy(unittest.TestCase):
     def test_per_spec_false_overrides_global_true(self):
         from mpynode.native.toolchain import compile_controller as cc
 
-        specs = self._two_specs()
+        specs                       = self._two_specs()
         specs[0]["bake_persistent"] = False
         cc._apply_persistent_policy(specs, True)  # global would keep
         self.assertEqual(specs[0]["variables"], {})
@@ -2958,7 +2958,7 @@ class TestApplyPersistentPolicy(unittest.TestCase):
     def test_per_spec_true_overrides_global_false(self):
         from mpynode.native.toolchain import compile_controller as cc
 
-        specs = self._two_specs()
+        specs                       = self._two_specs()
         specs[0]["bake_persistent"] = True
         cc._apply_persistent_policy(specs, False)  # global would strip
         self.assertNotEqual(specs[0]["variables"], {})
@@ -2967,7 +2967,7 @@ class TestApplyPersistentPolicy(unittest.TestCase):
     def test_key_is_popped(self):
         from mpynode.native.toolchain import compile_controller as cc
 
-        specs = self._two_specs()
+        specs                       = self._two_specs()
         specs[0]["bake_persistent"] = True
         cc._apply_persistent_policy(specs, True)
         self.assertNotIn("bake_persistent", specs[0])
@@ -3014,9 +3014,9 @@ def _repo_root() -> str:
     raise RuntimeError("repo root (containing scripts/mpynode) not found")
 
 
-_ROOT = _repo_root()
+_ROOT      = _repo_root()
 _SWEEP_DIR = os.path.join(_ROOT, "tools", "parity_sweep")
-_RUNNER = os.path.join(_SWEEP_DIR, "run_parity_sweep.py")
+_RUNNER    = os.path.join(_SWEEP_DIR, "run_parity_sweep.py")
 
 _EXPECTED_TYPES = [
     "mPyNode", "mPyConstraint", "mPyFile",
@@ -3028,7 +3028,7 @@ _EXPECTED_TYPES = [
 
 def _load_runner():
     spec = importlib.util.spec_from_file_location("_parity_runner", _RUNNER)
-    mod = importlib.util.module_from_spec(spec)
+    mod  = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
     return mod
 
@@ -3063,13 +3063,13 @@ class TestParitySweepWiring(unittest.TestCase):
         passing = {
             "locator_json": 'PARITY_RESULT {"pass": true, "maxerr": 1.8e-07, '
                             '"components_compared": 504}',
-            "node": "COMPONENTS: 125\nMAXERR: 0.0\nRESULT: PASS",
+            "node":       "COMPONENTS: 125\nMAXERR: 0.0\nRESULT: PASS",
             "constraint": "RESULT PASS samples 25 components 75 "
                           "maxerr 8.8e-16 fails 0",
             "file": "RESULT pass1=True pass2=True overall=True "
                     "overall_maxerr=6.4e-06 total_comps=180",
-            "curve": "RESULT|PASS|maxerr=0|samples=8|components=192",
-            "surface": "RESULT samples=8 components=600 maxerr=0.0\nPARITY PASS",
+            "curve":    "RESULT|PASS|maxerr=0|samples=8|components=192",
+            "surface":  "RESULT samples=8 components=600 maxerr=0.0\nPARITY PASS",
             "deformer": "RESULT samples=14 components=5628 maxerr=0.0\n"
                         "VERIFY PASS",
             "blend": "RESULT_LINE PASS maxerr=7.6e-06 samples=14 "
@@ -3081,7 +3081,7 @@ class TestParitySweepWiring(unittest.TestCase):
             self.assertIs(mod._parse(out)["pass"], True, name)
 
     def test_parser_is_discriminating_not_rubber_stamp(self):
-        mod = _load_runner()
+        mod  = _load_runner()
         fail = "RESULT samples=8 components=72 maxerr=9.9 tol=1e-4\nPARITY FAIL"
         self.assertIs(mod._parse(fail)["pass"], False)
         # Unparseable output must be UNKNOWN (None), never a silent pass.
@@ -3093,9 +3093,9 @@ class TestParitySweepWiring(unittest.TestCase):
 #   MPYNODE_RUN_PARITY_SWEEP=1  (and maya2026 present)
 # ---------------------------------------------------------------------------
 _MAYA2026 = "/Applications/Autodesk/maya2026"
-_MAYAPY = os.path.join(_MAYA2026, "Maya.app", "Contents", "bin", "mayapy")
+_MAYAPY   = os.path.join(_MAYA2026, "Maya.app", "Contents", "bin", "mayapy")
 _HAS_MAYA = os.path.isfile(_MAYAPY)
-_OPT_IN = os.environ.get("MPYNODE_RUN_PARITY_SWEEP") == "1"
+_OPT_IN   = os.environ.get("MPYNODE_RUN_PARITY_SWEEP") == "1"
 
 
 @unittest.skipUnless(
@@ -3154,7 +3154,7 @@ class TestDiscoverMayaInstalls(unittest.TestCase):
         # Devkit-only (no mayapy) -> excluded.
         _make_maya_tree(tmp, "maya2020", mayapy=False)
 
-        found = toolchain.discover_maya_installs(search_dirs=[tmp])
+        found  = toolchain.discover_maya_installs(search_dirs=[tmp])
         labels = [e["label"] for e in found]
         self.assertEqual(labels, ["maya2024", "maya2026"])
         for e in found:
@@ -3182,7 +3182,7 @@ class TestDiscoverMayaInstalls(unittest.TestCase):
         _make_maya_tree(tmp, "maya2024")
         _make_maya_tree(tmp, "maya2026")
         _make_maya_tree(tmp, "mayaDev")  # no 4-digit year
-        found = toolchain.discover_maya_installs(search_dirs=[tmp])
+        found  = toolchain.discover_maya_installs(search_dirs=[tmp])
         labels = [e["label"] for e in found]
         self.assertIn("mayaDev", labels)
         # The last entry (the _default_checked_labels "highest") is a real year.
@@ -3233,11 +3233,11 @@ class TestCompilePluginMulti(unittest.TestCase):
                  _target("maya2026", "/m/2026")])
 
         self.assertTrue(res["ok"])
-        self.assertEqual(len(res["results"]), 2)
-        self.assertEqual(calls[0]["out_dir"], os.path.join("/out", "maya2024"))
-        self.assertEqual(calls[0]["maya"], "/m/2024")
-        self.assertEqual(calls[1]["out_dir"], os.path.join("/out", "maya2026"))
-        self.assertEqual(calls[1]["maya"], "/m/2026")
+        self.assertEqual(len(res["results"]),        2)
+        self.assertEqual(calls[0]["out_dir"],        os.path.join("/out", "maya2024"))
+        self.assertEqual(calls[0]["maya"],           "/m/2024")
+        self.assertEqual(calls[1]["out_dir"],        os.path.join("/out", "maya2026"))
+        self.assertEqual(calls[1]["maya"],           "/m/2026")
         self.assertEqual(res["results"][0]["label"], "maya2024")
         self.assertEqual(res["results"][0]["out_dir"],
                          os.path.join("/out", "maya2024"))
@@ -3372,7 +3372,7 @@ class TestCompilePluginMulti(unittest.TestCase):
         import threading
 
         cancel = threading.Event()
-        calls = []
+        calls  = []
 
         def fake_compile(specs, name, out_dir, **kw):
             calls.append(kw.get("maya"))
@@ -3426,7 +3426,7 @@ class TestCompilePluginMulti(unittest.TestCase):
         # per-version failure -> labelled error aggregated at top level
         def fake_compile(specs, name, out_dir, **kw):
             ok = "2026" in (kw.get("maya") or "")
-            r = _ok_result(ok)
+            r  = _ok_result(ok)
             if not ok:
                 r["errors"] = ["boom"]
             return r
@@ -3444,7 +3444,7 @@ class TestCompilePluginMulti(unittest.TestCase):
         import inspect
         from mpynode.native.toolchain import compile_controller as cc
 
-        tree = ast.parse(inspect.getsource(cc))
+        tree      = ast.parse(inspect.getsource(cc))
         offenders = []
         for node in tree.body:
             if isinstance(node, ast.Import):
@@ -3466,7 +3466,7 @@ class TestStartMulti(unittest.TestCase):
 
         def fake_multi(specs, name, out_dir, targets, **kw):
             captured["targets"] = targets
-            captured["kw"] = kw
+            captured["kw"]      = kw
             return {"ok": True, "multi": True, "results": []}
 
         ctrl = cc.CompileController(progress_cb=lambda e: None)

@@ -69,8 +69,8 @@ def _encode_qimage(img, max_edge=_IMG_MAX_EDGE):
                 img = img.scaledToWidth(max_edge, Qt.SmoothTransformation)
             else:
                 img = img.scaledToHeight(max_edge, Qt.SmoothTransformation)
-        ba = QByteArray()
-        buf = QBuffer(ba)
+        ba   = QByteArray()
+        buf  = QBuffer(ba)
         mode = getattr(QIODevice, "WriteOnly", None)
         if mode is None:  # PySide6 scoped enums
             mode = QIODevice.OpenModeFlag.WriteOnly
@@ -88,7 +88,7 @@ import re
 
 from mpynode.ui.widgets.font_prefs import wire_area_font
 
-_MENTION_RE = _re.compile(r"@([A-Za-z_][A-Za-z0-9_]*)")
+_MENTION_RE    = _re.compile(r"@([A-Za-z_][A-Za-z0-9_]*)")
 _IMAGE_NAME_RE = _re.compile(r"^image\d+$")
 
 
@@ -154,7 +154,7 @@ class _ImageChip(QPushButton):
 
     def __init__(self, text, image, parent=None):
         super().__init__(text, parent)
-        self._image = image
+        self._image   = image
         self._preview = None
         self.setToolTip("Hover to preview \u00b7 click to remove")
 
@@ -182,11 +182,11 @@ class _ChatInput(QPlainTextEdit):
 
     def __init__(self, panel):
         super().__init__(panel)
-        self._panel = panel
-        self._completer = None
-        self._hl = _MentionHighlighter(self.document())  # color @mentions
+        self._panel         = panel
+        self._completer     = None
+        self._hl            = _MentionHighlighter(self.document())  # color @mentions
         self._hover_preview = None
-        self._hover_name = None
+        self._hover_name    = None
         self.setMouseTracking(True)  # for @image hover previews
 
     def _mention_at_pos(self, pos):
@@ -206,7 +206,7 @@ class _ChatInput(QPlainTextEdit):
         super().mouseMoveEvent(event)
         try:
             name = self._mention_at_pos(self.cursorForPosition(event.pos()).position())
-            img = self._panel._image_by_name(name) if name else None
+            img  = self._panel._image_by_name(name) if name else None
             if img is None:
                 self._hide_hover()
             elif name != self._hover_name:
@@ -217,7 +217,7 @@ class _ChatInput(QPlainTextEdit):
                     popup.move(gp.x() + 12, gp.y() - popup.height() - 10)
                     popup.show()
                     self._hover_preview = popup
-                    self._hover_name = name
+                    self._hover_name    = name
         except Exception:
             self._hide_hover()
 
@@ -248,9 +248,9 @@ class _ChatInput(QPlainTextEdit):
 
     def _at_token(self):
         """The @-token under the cursor: (partial, at_pos, cursor_pos) or Nones."""
-        pos = self.textCursor().position()
+        pos  = self.textCursor().position()
         text = self.toPlainText()
-        i = pos - 1
+        i    = pos - 1
         while i >= 0 and (text[i].isalnum() or text[i] == "_"):
             i -= 1
         if i >= 0 and text[i] == "@":
@@ -303,8 +303,8 @@ class _ChatInput(QPlainTextEdit):
                 event.ignore()
                 return
         popup_visible = comp is not None and comp.popup().isVisible()
-        key = event.key()
-        cur = self.textCursor()
+        key           = event.key()
+        cur           = self.textCursor()
         if not popup_visible and key == Qt.Key_Up and cur.blockNumber() == 0:
             if self._panel._history_prev():
                 return
@@ -333,29 +333,29 @@ class NDAssistantPanel(QWidget):
     """
 
     # Emitted from worker threads (queued to the GUI thread).
-    _testFinished = Signal(bool, str)
+    _testFinished  = Signal(bool, str)
     _modelsFetched = Signal(list, str)  # models, provider
 
     def __init__(self, parent=None, get_current_node=None, on_nodes_changed=None):
         super().__init__(parent)
-        self._get_current_node = get_current_node
-        self._host_on_changed = on_nodes_changed
-        self._working_node_name = None  # captured on GUI thread per send
-        self._history = []  # sent prompts, oldest first
-        self._hist_idx = 0  # cursor into _history (== len => fresh draft)
-        self._pending_images = []  # QImages pasted, awaiting send
-        self._session_tokens = 0  # cumulative tokens this session
-        self._loading_settings = False  # guard combo edits while populating
-        self._model_cache = {}  # provider -> fetched model list (kept until refresh)
-        self._cli_current_model = ""  # claude CLI's active model, from /model
-        self._cli_model_displays = {}  # model id -> display name, from /model <id>
-        self._turn_start = None  # monotonic time the current turn began
+        self._get_current_node   = get_current_node
+        self._host_on_changed    = on_nodes_changed
+        self._working_node_name  = None   # captured on GUI thread per send
+        self._history            = []     # sent prompts, oldest first
+        self._hist_idx           = 0      # cursor into _history (== len => fresh draft)
+        self._pending_images     = []     # QImages pasted, awaiting send
+        self._session_tokens     = 0      # cumulative tokens this session
+        self._loading_settings   = False  # guard combo edits while populating
+        self._model_cache        = {}     # provider -> fetched model list (kept until refresh)
+        self._cli_current_model  = ""     # claude CLI's active model, from /model
+        self._cli_model_displays = {}     # model id -> display name, from /model <id>
+        self._turn_start         = None   # monotonic time the current turn began
         # The reply streams in chunks and, for the CLI providers, carries a
         # fenced .mpn payload we must NOT show in chat. Buffer the turn's
         # chunks and re-render ONE bubble with the payload stripped. The
         # bubble is finalized (anchor cleared) whenever other content is
         # appended, so the next chunk starts a fresh one.
-        self._asst_buf = ""       # accumulated raw assistant text for this bubble
+        self._asst_buf    = ""    # accumulated raw assistant text for this bubble
         self._asst_anchor = None  # doc position where the live bubble starts
 
         self._build_ui()
@@ -373,7 +373,7 @@ class NDAssistantPanel(QWidget):
         root.setSpacing(4)
 
         header = QHBoxLayout()
-        title = QLabel("<b>AI Assistant</b>", self)
+        title  = QLabel("<b>AI Assistant</b>", self)
         header.addWidget(title)
         header.addStretch(1)
         self._settings_btn = QPushButton("\u2699", self)  # gear
@@ -389,7 +389,7 @@ class NDAssistantPanel(QWidget):
 
         # Settings (hidden by default): provider + API key + model, per-provider.
         self._settings = QWidget(self)
-        slay = QVBoxLayout(self._settings)
+        slay           = QVBoxLayout(self._settings)
         slay.setContentsMargins(0, 0, 0, 0)
         slay.addWidget(QLabel("Provider:", self._settings))
         self._provider_combo = QComboBox(self._settings)
@@ -428,7 +428,7 @@ class NDAssistantPanel(QWidget):
 
         # API key + Test connection -- HTTP providers only (hidden for Claude CLI).
         self._api_section = QWidget(self._settings)
-        alay = QVBoxLayout(self._api_section)
+        alay              = QVBoxLayout(self._api_section)
         alay.setContentsMargins(0, 0, 0, 0)
         alay.addWidget(QLabel("API key:", self._api_section))
         self._key_edit = QLineEdit(self._api_section)
@@ -478,22 +478,22 @@ class NDAssistantPanel(QWidget):
 
         # Animated "working" indicator (self-contained; no QProgressBar dep).
         self._spin_frames = "\u280b\u2819\u2839\u2838\u283c\u2834\u2826\u2827\u2807\u280f"
-        self._spin_i = 0
-        self._status_msg = ""
-        self._spin_timer = QTimer(self)
+        self._spin_i      = 0
+        self._status_msg  = ""
+        self._spin_timer  = QTimer(self)
         self._spin_timer.setInterval(110)
         self._spin_timer.timeout.connect(self._tick_spinner)
 
         # Live rate-limit countdown (updates the status text once per second).
-        self._retry_left = 0
+        self._retry_left  = 0
         self._retry_label = "Rate limited"
-        self._retry_info = ""
+        self._retry_info  = ""
         self._retry_timer = QTimer(self)
         self._retry_timer.setInterval(1000)
         self._retry_timer.timeout.connect(self._tick_retry)
 
         bottom = QWidget(self._splitter)
-        blay = QVBoxLayout(bottom)
+        blay   = QVBoxLayout(bottom)
         blay.setContentsMargins(0, 0, 0, 0)
         blay.setSpacing(4)
         self._status = QLabel("", bottom)
@@ -511,7 +511,7 @@ class NDAssistantPanel(QWidget):
         self._usage_timer.start()
 
         # Attachments strip (chips for pasted images); hidden when empty.
-        self._attach_box = QWidget(bottom)
+        self._attach_box    = QWidget(bottom)
         self._attach_layout = QHBoxLayout(self._attach_box)
         self._attach_layout.setContentsMargins(0, 0, 0, 0)
         self._attach_layout.setSpacing(4)
@@ -519,7 +519,7 @@ class NDAssistantPanel(QWidget):
         self._attach_box.setVisible(False)
         blay.addWidget(self._attach_box)
 
-        in_row = QHBoxLayout()
+        in_row      = QHBoxLayout()
         self._input = _ChatInput(self)  # panel ref kept for history recall
         wire_area_font(self._input, "assistant")
         self._input.setPlaceholderText(
@@ -595,8 +595,8 @@ class NDAssistantPanel(QWidget):
         from mpynode.ui.llm.tools import ToolContext
 
         return ToolContext(
-            working_node=self._working_node_name,
-            on_nodes_changed=self._notify_changed,
+            working_node     = self._working_node_name,
+            on_nodes_changed = self._notify_changed,
         )
 
     def _capture_working_node(self):
@@ -664,7 +664,7 @@ class NDAssistantPanel(QWidget):
                 from PySide2.QtGui import QImage
 
             data = source.imageData()
-            img = data if isinstance(data, QImage) else QImage(data)
+            img  = data if isinstance(data, QImage) else QImage(data)
             if img is None or img.isNull():
                 return False
             self._pending_images.append(img)
@@ -682,7 +682,7 @@ class NDAssistantPanel(QWidget):
         # Clear existing chip widgets (keep the trailing stretch).
         while self._attach_layout.count() > 1:
             item = self._attach_layout.takeAt(0)
-            w = item.widget()
+            w    = item.widget()
             if w is not None:
                 w.setParent(None)
                 w.deleteLater()
@@ -853,8 +853,8 @@ class NDAssistantPanel(QWidget):
     # honours pt and px for font-size -- em and % silently do nothing -- so the
     # number is computed in Python.
     _AUTHORED_BASE_PX = 12      # what the px literals were authored against
-    _SIZE_PX_RE = re.compile(r"font-size:\s*(\d+)px")
-    _SIZE_PT_RE = re.compile(r"font-size:\s*([0-9.]+)pt")
+    _SIZE_PX_RE       = re.compile(r"font-size:\s*(\d+)px")
+    _SIZE_PT_RE       = re.compile(r"font-size:\s*([0-9.]+)pt")
 
     def _asst_pt(self) -> int:
         try:
@@ -899,7 +899,7 @@ class NDAssistantPanel(QWidget):
         def _sub(m):
             return "font-size:%dpt" % max(6, int(round(float(m.group(1)) * ratio)))
 
-        sb = self._transcript.verticalScrollBar()
+        sb     = self._transcript.verticalScrollBar()
         at_end = sb.value() >= sb.maximum() - 2
         self._transcript.setHtml(self._SIZE_PT_RE.sub(_sub, html))
         if at_end:
@@ -908,8 +908,8 @@ class NDAssistantPanel(QWidget):
 
     def _on_assistant_font(self) -> None:
         """assistant_font_size changed: rescale what is already on screen."""
-        new = self._asst_pt()
-        old = getattr(self, "_asst_pt_applied", None)
+        new                   = self._asst_pt()
+        old                   = getattr(self, "_asst_pt_applied", None)
         self._asst_pt_applied = new
         if old:
             self._rescale_existing(float(new) / float(old))
@@ -928,7 +928,7 @@ class NDAssistantPanel(QWidget):
         """Close the current live assistant bubble (leave it in place); the next
         assistant chunk begins a fresh bubble."""
         self._asst_anchor = None
-        self._asst_buf = ""
+        self._asst_buf    = ""
 
     def _cursor(self):
         try:
@@ -945,8 +945,8 @@ class NDAssistantPanel(QWidget):
     def _render_asst_bubble(self, body_html: str) -> None:
         """Insert or replace the current live assistant bubble in place."""
         QTextCursor = self._cursor()
-        html = self._scale_html(self._asst_bubble_html(body_html))
-        cur = self._transcript.textCursor()
+        html        = self._scale_html(self._asst_bubble_html(body_html))
+        cur         = self._transcript.textCursor()
         if self._asst_anchor is None:
             cur.movePosition(QTextCursor.End)
             self._asst_anchor = cur.position()
@@ -1022,7 +1022,7 @@ class NDAssistantPanel(QWidget):
             return  # real prose already shown
         had_payload = _payload.extract_payload(self._asst_buf) is not None
         QTextCursor = self._cursor()
-        cur = self._transcript.textCursor()
+        cur         = self._transcript.textCursor()
         cur.setPosition(self._asst_anchor)
         cur.movePosition(QTextCursor.End, QTextCursor.KeepAnchor)
         cur.removeSelectedText()
@@ -1074,7 +1074,7 @@ class NDAssistantPanel(QWidget):
         if busy:
             self._turn_start = time.monotonic()
             self._status_msg = "Working\u2026"
-            self._spin_i = 0
+            self._spin_i     = 0
             self._spin_timer.start()
             self._tick_spinner()
         else:
@@ -1101,7 +1101,7 @@ class NDAssistantPanel(QWidget):
         self._finalize_asst_bubble_if_empty()
         # How long the work took; also signals the agent is waiting.
         if self._turn_start is not None:
-            elapsed = time.monotonic() - self._turn_start
+            elapsed          = time.monotonic() - self._turn_start
             self._turn_start = None
             self._append(
                 '<div style="color:#666;font-size:10px;margin-left:8px;">'
@@ -1118,10 +1118,10 @@ class NDAssistantPanel(QWidget):
     # -- live rate-limit countdown --------------------------------------
 
     def _on_retry_scheduled(self, code, seconds, attempt, max_retries, detail=""):
-        self._retry_left = max(0, int(seconds))
-        base = "Rate limited" if code == 429 else "Service busy"
+        self._retry_left  = max(0, int(seconds))
+        base              = "Rate limited" if code == 429 else "Service busy"
         self._retry_label = base + ((" \u00b7 %s" % detail) if detail else "")
-        self._retry_info = "(%d/%d)" % (attempt, max_retries)
+        self._retry_info  = "(%d/%d)" % (attempt, max_retries)
         # One transcript record per retry, then start the countdown.
         self._append('<div style="color:#dca54c;font-size:11px;">'
                      '\u23f3 %s \u2014 retrying in %ds %s</div>'
@@ -1195,8 +1195,8 @@ class NDAssistantPanel(QWidget):
 
     def _refresh_provider_fields(self, provider: str):
         self._apply_provider_visibility(provider)
-        self._load_effort(provider)   # all providers
-        self._load_model(provider)    # all providers (CLI uses --model too)
+        self._load_effort(provider)  # all providers
+        self._load_model(provider)   # all providers (CLI uses --model too)
         if provider in _llm_config.API_PROVIDERS:
             self._load_key(provider)
 
@@ -1215,7 +1215,7 @@ class NDAssistantPanel(QWidget):
                 "Anthropic API key (or set ANTHROPIC_API_KEY)")
 
     def _load_model(self, provider: str):
-        saved = _llm_config.get_model(provider)  # saved, or default ('' for CLI)
+        saved                  = _llm_config.get_model(provider)  # saved, or default ('' for CLI)
         self._loading_settings = True
         try:
             self._model_edit.clear()
@@ -1273,8 +1273,8 @@ class NDAssistantPanel(QWidget):
         self._save_key()
         self._save_model()
         provider = self._current_provider()
-        key = _llm_config.get_api_key(provider)
-        model = _llm_config.get_model(provider)
+        key      = _llm_config.get_api_key(provider)
+        model    = _llm_config.get_model(provider)
         if not key:
             self._append_error(
                 "No API key for %s \u2014 enter one above (or set the env var)."
@@ -1405,7 +1405,7 @@ class NDAssistantPanel(QWidget):
             extra_candidates=self._api_model_candidates())
         # Read back on the main thread in _on_models_fetched. Written BEFORE
         # the queued signal; the queue crossing is the barrier.
-        self._cli_current_model = current
+        self._cli_current_model  = current
         self._cli_model_displays = displays or {}
         return models
 
@@ -1478,7 +1478,7 @@ class NDAssistantPanel(QWidget):
         # Persist so the next launch still lists real, live-fetched ids, even
         # with no key or offline.
         _llm_config.set_cached_models(provider, models)
-        current = self._model_edit.currentText()
+        current                = self._model_edit.currentText()
         self._loading_settings = True
         try:
             self._model_edit.clear()

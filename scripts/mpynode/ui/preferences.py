@@ -37,7 +37,7 @@ from typing import Any, Callable
 from mpynode._common import home as _home
 
 PREFS_PATH = _home.preferences_path()
-PREFS_DIR = os.path.dirname(PREFS_PATH)
+PREFS_DIR  = os.path.dirname(PREFS_PATH)
 
 
 def _default_template_search_paths() -> list[str]:
@@ -68,7 +68,7 @@ def _default_template_search_paths() -> list[str]:
 DEFAULT_PREFS: dict[str, Any] = {
     # Editor
     "editor_font_family": "Courier",
-    "editor_font_size": 10,  # in points
+    "editor_font_size":   10,  # in points
     # Point sizes for the two UI areas that are NOT code editors. Split
     # from editor_font_size because the three read at very different
     # comfortable sizes: the editors are dense monospace, the assistant is
@@ -78,7 +78,7 @@ DEFAULT_PREFS: dict[str, Any] = {
     #   panel     -> Scene / Attributes / Variables / Framework and the
     #                Log / Watch / Profile tabs
     "assistant_font_size": 10,  # in points
-    "panel_font_size": 10,      # in points
+    "panel_font_size":     10,  # in points
     # "jump to source" command; {file} and {line} are substituted with the
     # target path and 1-based line before it runs. EMPTY = auto-detect, i.e.
     # editor_launch.detect_default_editor_command() probes for an installed
@@ -134,7 +134,7 @@ DEFAULT_PREFS: dict[str, Any] = {
     # Watch + Variables tabs: ON rounds numpy array values to
     # ``display_round_digits``; OFF shows full float precision.
     "display_round_enabled": True,
-    "display_round_digits": 8,
+    "display_round_digits":  8,
     # A stored PIL image renders as a square thumbnail in the Value column.
     # This is the fixed SOURCE size (px) it is built at; Qt then scales it to
     # the live column width. Bigger = crisper when the column is wide.
@@ -267,7 +267,7 @@ def _save() -> None:
         except OSError:
             pass                     # not owner / unusual fs -- keep going
         tmp = "%s.tmp-%d" % (PREFS_PATH, os.getpid())
-        fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+        fd  = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
         with os.fdopen(fd, "w") as f:
             json.dump(_cache, f, indent=2, sort_keys=True)
         os.replace(tmp, PREFS_PATH)  # atomic; preserves the 0600 of `tmp`
@@ -304,8 +304,8 @@ def get_pref(key: str, default: Any = None) -> Any:
 def set_pref(key: str, value: Any) -> None:
     """Set + persist + notify listeners. Listener exceptions are swallowed."""
     _ensure_loaded()
-    old = _cache.get(key)  # type: ignore[union-attr]
-    _cache[key] = value  # type: ignore[index]
+    old         = _cache.get(key)  # type: ignore[union-attr]
+    _cache[key] = value            # type: ignore[index]
     _save()
     if old!= value:
         for cb in list(_listeners):
@@ -354,9 +354,9 @@ FONT_SIZE_MAX = 72
 
 # UI area -> preference key. The single place that mapping exists.
 FONT_AREA_KEYS = {
-    "editor": "editor_font_size",
+    "editor":    "editor_font_size",
     "assistant": "assistant_font_size",
-    "panel": "panel_font_size",
+    "panel":     "panel_font_size",
 }
 
 

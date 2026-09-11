@@ -38,9 +38,9 @@ class TestClaudeCliModelCandidates(unittest.TestCase):
         # gemini_cli / codex_cli still fetch via their own key path; API
         # providers use their list endpoints.
         self.assertEqual(cfg.cli_model_candidates("gemini_cli"), [])
-        self.assertEqual(cfg.cli_model_candidates("codex_cli"), [])
-        self.assertEqual(cfg.cli_model_candidates("anthropic"), [])
-        self.assertEqual(cfg.cli_model_candidates("gemini"), [])
+        self.assertEqual(cfg.cli_model_candidates("codex_cli"),  [])
+        self.assertEqual(cfg.cli_model_candidates("anthropic"),  [])
+        self.assertEqual(cfg.cli_model_candidates("gemini"),     [])
 
     def test_returns_independent_copies(self):
         # The panel mutates the returned list when populating the combo; it must
@@ -205,11 +205,11 @@ class TestClaudeCliFullIdDiscovery(unittest.TestCase):
         # `/model <id>[1m]` reports a DIFFERENT display name than the bare id.
         cli = self._cli()
         labels = {
-            "claude-opus-5": "Opus 5",
-            "claude-opus-5[1m]": "Opus 5 (1M context)",  # differs -> KEPT
-            "claude-sonnet-5": "Sonnet 5",
-            "claude-sonnet-5[1m]": "Sonnet 5",           # same -> dropped
-            "claude-haiku-4-5": "Haiku 4.5",             # twin 400s -> dropped
+            "claude-opus-5":       "Opus 5",
+            "claude-opus-5[1m]":   "Opus 5 (1M context)",  # differs -> KEPT
+            "claude-sonnet-5":     "Sonnet 5",
+            "claude-sonnet-5[1m]": "Sonnet 5",             # same -> dropped
+            "claude-haiku-4-5":    "Haiku 4.5",            # twin 400s -> dropped
         }
         with unittest.mock.patch.object(cli, "_resolve", lambda *_a: "/bin/claude"), \
              unittest.mock.patch.object(
@@ -306,7 +306,7 @@ class TestClaudeCliFullIdDiscovery(unittest.TestCase):
         # An Anthropic key may supply extra guesses, but the HTTP API is a
         # DIFFERENT BACKEND -- claude-opus-4-1-20250805 is in /v1/models and the
         # CLI rejects it. Nothing bypasses the oracle.
-        cli = self._cli()
+        cli  = self._cli()
         seen = []
 
         def _probe(m, *a, **k):
@@ -348,7 +348,7 @@ class TestClaudeCliAliasFallback(unittest.TestCase):
         return cli
 
     def _list(self, cands, probe=None, aliases=("opus", "sonnet")):
-        cli = self._cli()
+        cli   = self._cli()
         probe = probe or (lambda m, *a, **k: ("valid", m.upper()))
         with unittest.mock.patch.object(cli, "_resolve", lambda *_a: "/bin/claude"), \
              unittest.mock.patch.object(
@@ -460,7 +460,7 @@ class TestClaudeCliScanIsClaudeRelated(unittest.TestCase):
         # large, entirely unrelated binaries.
         import os
 
-        cli = self._cli()
+        cli  = self._cli()
         root = self._tmproot()
         shim = self._mk(os.path.join(root, "bin", "claude.exe"), 392 << 10)
         for n in ("gslides.exe", "gsheets.exe", "gmail.exe", "gmux.exe"):
@@ -475,14 +475,14 @@ class TestClaudeCliScanIsClaudeRelated(unittest.TestCase):
         # name says nothing ("tpai").
         import os
 
-        cli = self._cli()
+        cli  = self._cli()
         root = self._tmproot()
         tree = os.path.join(root, "claude_code")
-        shim = self._mk(os.path.join(tree, "os", "claude"), 1 << 10)
-        big = self._mk(os.path.join(tree, "native", "claude"), 4 << 20)
-        tpai = self._mk(os.path.join(tree, "bin", "tpai"), 3 << 20)
+        shim = self._mk(os.path.join(tree, "os", "claude"),     1 << 10)
+        big  = self._mk(os.path.join(tree, "native", "claude"), 4 << 20)
+        tpai = self._mk(os.path.join(tree, "bin", "tpai"),      3 << 20)
 
-        got = cli._scan_files(shim)
+        got  = cli._scan_files(shim)
         self.assertIn(big, got)
         self.assertIn(tpai, got, "a claude_code/ neighbour must still be scanned")
 
@@ -495,7 +495,7 @@ class TestClaudeCliScanIsClaudeRelated(unittest.TestCase):
         """
         import os
 
-        cli = self._cli()
+        cli  = self._cli()
         binp = cli._resolve()
         if not binp:
             self.skipTest("no claude CLI on this machine")
@@ -519,7 +519,7 @@ class TestClaudeCliComboRendering(unittest.TestCase):
     def test_every_row_is_a_real_model(self):
         # A separator row would make count() disagree with the model count and
         # is meaningless now that there is only one kind of entry.
-        p = self._panel()
+        p                     = self._panel()
         p._cli_model_displays = {"claude-opus-5": "Opus 5"}
         p._model_edit.clear()
         models = ["claude-opus-5", "claude-opus-5[1m]", "claude-haiku-4-5"]
@@ -531,7 +531,7 @@ class TestClaudeCliComboRendering(unittest.TestCase):
     def test_display_name_becomes_a_tooltip(self):
         from mpynode.ui.qt_wrapper import Qt
 
-        p = self._panel()
+        p                     = self._panel()
         p._cli_model_displays = {"claude-opus-4-20250514": "Opus 4"}
         p._model_edit.clear()
         p._populate_cli_models(["claude-opus-4", "claude-opus-4-20250514"])
@@ -777,7 +777,7 @@ class TestPorterStreamJsonAndHygiene(unittest.TestCase):
             '{"type":"text","text":"shader s(output color outColor=color(0)){}"}]}}',
         ])
         logs = []
-        out = lc._parse_stream_json(sj, log_cb=logs.append)
+        out  = lc._parse_stream_json(sj, log_cb=logs.append)
         self.assertEqual(out, "shader s(output color outColor=color(0)){}")
         blob = "\n".join(logs)
         # the emerging shader is visible in the feed
@@ -795,7 +795,7 @@ class TestPorterStreamJsonAndHygiene(unittest.TestCase):
             '{"type":"result","result":"IGNORED_FALLBACK"}',
         ])
         logs = []
-        out = lc._parse_stream_json(sj, log_cb=logs.append)
+        out  = lc._parse_stream_json(sj, log_cb=logs.append)
         self.assertEqual(out, "double y = 3.0;")
         self.assertTrue(any("reasoning" in m for m in logs))
         # the aggregated 'result' is a fallback only, never appended to the answer
@@ -828,7 +828,7 @@ class TestPorterStreamJsonAndHygiene(unittest.TestCase):
         self.assertTrue(lc._ascii_typography("x = a − b;").isascii())
 
     def test_extract_body_fence(self):
-        pr = self._pr()
+        pr  = self._pr()
         raw = "Sure, here it is:\n```cpp\nint x = 2;\n```\nHope that helps."
         self.assertEqual(pr._extract_body(raw), "int x = 2;")
 
@@ -848,7 +848,7 @@ class TestPorterStreamJsonAndHygiene(unittest.TestCase):
         self.assertEqual(pr._extract_body(code), code)
 
     def test_porter_orchestrate_env_override(self):
-        lc = self._lc()
+        lc  = self._lc()
         old = os.environ.get("MPYNODE_PORT_ULTRACODE")
         try:
             os.environ["MPYNODE_PORT_ULTRACODE"] = "1"
@@ -917,13 +917,13 @@ class TestModelBetweenReasoningAndApiKey(unittest.TestCase):
     def test_model_is_between_reasoning_and_api_key(self):
         panel = self._panel()
         try:
-            slay = panel._settings.layout()
+            slay        = panel._settings.layout()
             i_reasoning = _vpos(slay, panel._effort_combo)
-            i_model = _vpos(slay, panel._model_edit)
-            i_api = _vpos(slay, panel._api_section)
+            i_model     = _vpos(slay, panel._model_edit)
+            i_api       = _vpos(slay, panel._api_section)
             self.assertNotEqual(i_reasoning, -1, "Reasoning combo not in layout")
-            self.assertNotEqual(i_model, -1, "Model combo not in layout")
-            self.assertNotEqual(i_api, -1, "API-key section not in layout")
+            self.assertNotEqual(i_model,     -1, "Model combo not in layout")
+            self.assertNotEqual(i_api,       -1, "API-key section not in layout")
             self.assertLess(i_reasoning, i_model,
                             "Model must come AFTER Reasoning")
             self.assertLess(i_model, i_api,
@@ -974,7 +974,7 @@ def _deny_set(cmd):
 class TestBuildCmdDenyList(unittest.TestCase):
     def test_default_denies_task_and_toolsearch(self):
         # The lean deny list: no sub-agents, no deferred tool loading.
-        cmd = cc.build_cmd("claude", "p", "sid", False)
+        cmd  = cc.build_cmd("claude", "p", "sid", False)
         deny = _deny_set(cmd)
         self.assertIn("Task", deny)
         self.assertIn("ToolSearch", deny)
@@ -1005,7 +1005,7 @@ class TestBuildCmdDenyList(unittest.TestCase):
 class TestHandleEventNestedText(unittest.TestCase):
     def _client_capture(self):
         client = cc.ClaudeCliClient()
-        cap = {"text": [], "tool": [], "done": []}
+        cap    = {"text": [], "tool": [], "done": []}
         client.assistantText.connect(cap["text"].append)
         client.toolStarted.connect(cap["tool"].append)
         client.toolFinished.connect(cap["done"].append)
@@ -1081,8 +1081,8 @@ class TestListNodesTool(unittest.TestCase):
         self.assertIn("list_nodes", self.T.VALID_TOOLS)
 
     def test_lists_scene_mpy_nodes_with_type(self):
-        a = mc.createNode("mPyNode", name="alpha#")
-        b = mc.createNode("mPyLocator", name="beta#")
+        a   = mc.createNode("mPyNode", name="alpha#")
+        b   = mc.createNode("mPyLocator", name="beta#")
         ctx = self.T.ToolContext()
         res = self.T.dispatch("list_nodes", {}, ctx)
         self.assertNotIn("error", res, "dispatch errored: %r" % res)
@@ -1094,8 +1094,8 @@ class TestListNodesTool(unittest.TestCase):
     def test_excludes_non_mpy_nodes(self):
         mc.createNode("mPyNode", name="onlyMpy#")
         plain = mc.createNode("transform", name="plainXform#")
-        ctx = self.T.ToolContext()
-        res = self.T.dispatch("list_nodes", {}, ctx)
+        ctx   = self.T.ToolContext()
+        res   = self.T.dispatch("list_nodes", {}, ctx)
         names = {n["name"] for n in res.get("nodes", [])}
         self.assertNotIn(plain, names)
 
@@ -1103,7 +1103,7 @@ class TestListNodesTool(unittest.TestCase):
         """cmds.ls(type=X) on an UNLOADED type prints 'Unknown object type: X'
         to the Script Editor (cf. _common/time_utils.py). list_nodes must
         pre-filter against allNodeTypes() and never query an unloaded type."""
-        T = self.T
+        T     = self.T
         calls = []
         real_ls, real_ant = T.mc.ls, T.mc.allNodeTypes
 
@@ -1113,7 +1113,7 @@ class TestListNodesTool(unittest.TestCase):
                 return []
             return real_ls(*a, **k)
 
-        T.mc.ls = fake_ls
+        T.mc.ls           = fake_ls
         T.mc.allNodeTypes = lambda: ["mPyNode"]  # pretend only mPyNode is loaded
         try:
             res = T.dispatch("list_nodes", {}, T.ToolContext())
@@ -1127,7 +1127,7 @@ class TestListNodesTool(unittest.TestCase):
         """The API providers steer via the tool DESCRIPTION for the prefer-edit /
         no-probe behavior, so lock the list_nodes description text."""
         ln = next(s for s in self.T.TOOL_SCHEMAS if s["name"] == "list_nodes")
-        d = ln["description"].lower()
+        d  = ln["description"].lower()
         self.assertIn("prefer editing", d)
         self.assertIn("probe", d)
 
@@ -1179,7 +1179,7 @@ class TestPayloadExtract(unittest.TestCase):
         # native_type + expression + input_attrs map (serialize_node shape).
         args = self.P.to_define_args({
             "native_type": "mPyNode",
-            "expression": "self.o = self.a",
+            "expression":  "self.o = self.a",
             "input_attrs": {"a": {"attr_type": "float", "order": 0}},
         }, None)
         self.assertEqual(args.get("node_type"), "mPyNode")
@@ -1192,7 +1192,7 @@ class TestPayloadExtract(unittest.TestCase):
                                  "inputs": [{"name": "a", "type": "float"}],
                                  "compute": "x"})
         self.assertIn("mPyNode", s)
-        self.assertIn("1 in", s)
+        self.assertIn("1 in",    s)
         self.assertIn("compute", s)
 
 
@@ -1208,8 +1208,8 @@ class TestPayloadApply(unittest.TestCase):
         ctx = self.T.ToolContext()
         res = self.P.apply_payload(None, {
             "node_type": "mPyNode",
-            "inputs": [{"name": "amount", "type": "float"}],
-            "compute": "self.amount",
+            "inputs":    [{"name": "amount", "type": "float"}],
+            "compute":   "self.amount",
         }, ctx)
         self.assertNotIn("error", res, "apply errored: %r" % res)
         node = res.get("node")
@@ -1220,12 +1220,12 @@ class TestPayloadApply(unittest.TestCase):
     def test_apply_edits_active_node_additively(self):
         mc.file(new=True, force=True)
         node = mc.createNode("mPyNode", name="existing#")
-        ctx = self.T.ToolContext(working_node=node)
+        ctx  = self.T.ToolContext(working_node=node)
         # Re-declares the (not-yet-present) attr; re-listing an existing one on a
         # later edit must not abort (idempotent add).
         res = self.P.apply_payload(node, {
-            "node": node,
-            "inputs": [{"name": "blend", "type": "float"}],
+            "node":    node,
+            "inputs":  [{"name": "blend", "type": "float"}],
             "compute": "self.blend",
         }, ctx)
         self.assertNotIn("error", res)
@@ -1238,7 +1238,7 @@ class TestPayloadApply(unittest.TestCase):
             "compute": "self.blend + self.gain",
         }, ctx)
         self.assertNotIn("error", res2, "additive re-edit errored: %r" % res2)
-        w = __import__("mpynode").wrap_node(node)
+        w   = __import__("mpynode").wrap_node(node)
         ins = w.get_input_attr_map() or {}
         self.assertIn("blend", ins)
         self.assertIn("gain", ins)
@@ -1249,7 +1249,7 @@ class TestPayloadApply(unittest.TestCase):
         ctx = self.T.ToolContext()
         res = self.P.apply_payload(None, {
             "node_type": "mPyNode",
-            "compute": "import maya.cmds as cmds\ncmds.file(new=True, force=True)",
+            "compute":   "import maya.cmds as cmds\ncmds.file(new=True, force=True)",
         }, ctx)
         self.assertIn("error", res)
 
@@ -1259,7 +1259,7 @@ class TestClaudeCliReporting(unittest.TestCase):
     def _client_capture(self):
         from mpynode.ui.llm import claude_cli_client as cc
         client = cc.ClaudeCliClient()
-        cap = {"started": [], "finished": [], "text": []}
+        cap    = {"started": [], "finished": [], "text": []}
         client.toolStarted.connect(cap["started"].append)
         client.toolFinished.connect(cap["finished"].append)
         client.assistantText.connect(cap["text"].append)
@@ -1314,9 +1314,9 @@ class TestNoFreshNodeGuidance(unittest.TestCase):
         # active node vs. build a new one), not tool descriptions.
         from mpynode.ui.llm.system_prompt import build_payload_system_prompt
         sp = build_payload_system_prompt().lower()
-        self.assertIn("edit", sp)
+        self.assertIn("edit",      sp)
         self.assertIn("node_type", sp)
-        self.assertIn('"node"', sp)
+        self.assertIn('"node"',    sp)
 
 
 @unittest.skipIf(_QAPP is None, "no Qt available")
@@ -1420,7 +1420,7 @@ class TestSetMethodsSourceDispatch(unittest.TestCase):
 
     def test_dispatch_round_trips_and_lists_commands(self):
         node = self._node()
-        ctx = self.T.ToolContext(working_node=node)
+        ctx  = self.T.ToolContext(working_node=node)
         res = self.T.dispatch("set_methods_source",
                               {"source": _METHODS_SRC}, ctx)
         self.assertNotIn("error", res, "dispatch errored: %r" % res)
@@ -1436,7 +1436,7 @@ class TestSetMethodsSourceDispatch(unittest.TestCase):
         scene-mutating call (mc.connectAttr) must be ACCEPTED -- not refused like
         a per-frame Compute/Init expression."""
         node = self._node()
-        ctx = self.T.ToolContext(working_node=node)
+        ctx  = self.T.ToolContext(working_node=node)
         res = self.T.dispatch("set_methods_source",
                               {"source": _METHODS_SRC}, ctx)
         self.assertNotIn("error", res, "methods must allow connectAttr: %r" % res)
@@ -1447,7 +1447,7 @@ class TestSetMethodsSourceDispatch(unittest.TestCase):
         by the Compute tool's per-frame scene-corruption guard, proving Methods
         are deliberately exempt rather than the guard being globally weakened."""
         node = self._node()
-        ctx = self.T.ToolContext(working_node=node)
+        ctx  = self.T.ToolContext(working_node=node)
         bad = ('import maya.cmds as mc\n'
                'mc.connectAttr("a.t", "b.t", force=True)\n')
         res = self.T.dispatch("set_compute_expression", {"source": bad}, ctx)
@@ -1457,7 +1457,7 @@ class TestSetMethodsSourceDispatch(unittest.TestCase):
 
     def test_syntax_error_is_rejected(self):
         node = self._node()
-        ctx = self.T.ToolContext(working_node=node)
+        ctx  = self.T.ToolContext(working_node=node)
         res = self.T.dispatch("set_methods_source",
                               {"source": "def broken(:\n  pass\n"}, ctx)
         self.assertIn("error", res)
@@ -1466,7 +1466,7 @@ class TestSetMethodsSourceDispatch(unittest.TestCase):
 
     def test_get_node_surfaces_methods(self):
         node = self._node()
-        ctx = self.T.ToolContext(working_node=node)
+        ctx  = self.T.ToolContext(working_node=node)
         self.T.dispatch("set_methods_source", {"source": _METHODS_SRC}, ctx)
         info = self.T.dispatch("get_node", {"node": node}, ctx)
         self.assertIn("methods_source", info)
@@ -1500,8 +1500,8 @@ class TestSystemPromptTeachesMethods(unittest.TestCase):
     def test_system_prompt_mentions_methods_decorator_and_tool(self):
         from mpynode.ui.llm.system_prompt import build_system_prompt
         sp = build_system_prompt().lower()
-        self.assertIn("method", sp)
-        self.assertIn("maya_command", sp)
+        self.assertIn("method",             sp)
+        self.assertIn("maya_command",       sp)
         self.assertIn("set_methods_source", sp)
 
 
@@ -1513,9 +1513,9 @@ class TestPayloadPromptTeachesMethods(unittest.TestCase):
     def test_payload_prompt_mentions_methods_and_decorator(self):
         from mpynode.ui.llm.system_prompt import build_payload_system_prompt
         sp = build_payload_system_prompt().lower()
-        self.assertIn("method", sp)
+        self.assertIn("method",       sp)
         self.assertIn("maya_command", sp)
-        self.assertIn('"methods"', sp)  # the payload field the model fills
+        self.assertIn('"methods"',    sp)  # the payload field the model fills
 
 
 class TestMethodsToolAvailableToApiProviders(unittest.TestCase):
@@ -1542,7 +1542,7 @@ class TestStripPayloadForDisplay(unittest.TestCase):
         return payload
 
     def test_payload_only_reply_becomes_empty(self):
-        p = self._s()
+        p   = self._s()
         txt = '```json\n{"native_type":"mPyMesh","expression":"x=1"}\n```'
         self.assertEqual(p.strip_payload_for_display(txt), "")
         self.assertIsNotNone(p.extract_payload(txt))  # still applied
@@ -1556,17 +1556,17 @@ class TestStripPayloadForDisplay(unittest.TestCase):
         self.assertNotIn("```", out)
 
     def test_prose_only_is_untouched(self):
-        p = self._s()
+        p   = self._s()
         txt = "I need more detail before I can build that node."
         self.assertEqual(p.strip_payload_for_display(txt), txt)
 
     def test_non_payload_code_fence_is_kept(self):
-        p = self._s()
+        p   = self._s()
         txt = "Use:\n```python\nprint(1)\n```\nThanks."
         self.assertEqual(p.strip_payload_for_display(txt), txt)
 
     def test_bare_unfenced_payload_becomes_empty(self):
-        p = self._s()
+        p   = self._s()
         txt = '{"native_type":"mPyNode","expression":"z=3"}'
         self.assertEqual(p.strip_payload_for_display(txt), "")
 
@@ -1684,9 +1684,9 @@ class _FakeProc(object):
     def __init__(self, lines=(), rc=0, stderr=""):
         import io as _io
 
-        self.stdout = iter(list(lines))
-        self.stderr = _io.StringIO(stderr)
-        self.stdin = None
+        self.stdout     = iter(list(lines))
+        self.stderr     = _io.StringIO(stderr)
+        self.stdin      = None
         self.returncode = rc
 
     def wait(self):
@@ -1753,8 +1753,8 @@ class TestAuthFailureDetection(unittest.TestCase):
 
     def test_hint_names_both_recovery_routes(self):
         # A hint that does not say what to RUN is the bug this replaced.
-        self.assertIn("claude auth login", cc._AUTH_HINT)
-        self.assertIn("claude setup-token", cc._AUTH_HINT)
+        self.assertIn("claude auth login",       cc._AUTH_HINT)
+        self.assertIn("claude setup-token",      cc._AUTH_HINT)
         self.assertIn("CLAUDE_CODE_OAUTH_TOKEN", cc._AUTH_HINT)
 
 
@@ -1768,7 +1768,7 @@ class TestAuthFailureReporting(unittest.TestCase):
 
     def test_auth_failure_emits_the_hint(self):
         client = self._client()
-        errs = []
+        errs   = []
         client.errorOccurred.connect(errs.append)
         proc = _FakeProc(_auth_stream(), rc=1, stderr="")
         with unittest.mock.patch.object(cc.subprocess, "Popen",
@@ -1780,7 +1780,7 @@ class TestAuthFailureReporting(unittest.TestCase):
 
     def test_non_auth_failure_still_reports_exit_code(self):
         client = self._client()
-        errs = []
+        errs   = []
         client.errorOccurred.connect(errs.append)
         proc = _FakeProc([], rc=2, stderr="segfault")
         with unittest.mock.patch.object(cc.subprocess, "Popen",
@@ -1938,8 +1938,8 @@ class TestNormAttrListPreservesEnumNames(unittest.TestCase):
         out = P._norm_attr_list({"a": {"attr_type": "float", "min_value": 1,
                                        "max_value": 2, "default_value": 1.5,
                                        "is_array": True}})
-        self.assertEqual(out[0]["min"], 1)
-        self.assertEqual(out[0]["max"], 2)
+        self.assertEqual(out[0]["min"],     1)
+        self.assertEqual(out[0]["max"],     2)
         self.assertEqual(out[0]["default"], 1.5)
         self.assertTrue(out[0]["is_array"])
 

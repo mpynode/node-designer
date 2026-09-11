@@ -16,10 +16,10 @@ import json
 import time
 import traceback
 
-MPN_PATH = sys.argv[1]
-OUT_DIR = sys.argv[2]
+MPN_PATH    = sys.argv[1]
+OUT_DIR     = sys.argv[2]
 PLUGIN_NAME = sys.argv[3]
-DEMO_LABEL = sys.argv[4] if len(sys.argv) > 4 else PLUGIN_NAME
+DEMO_LABEL  = sys.argv[4] if len(sys.argv) > 4 else PLUGIN_NAME
 
 MODEL = os.environ.get("MPYNODE_PORT_MODEL", "claude-opus-4-8[1m]")
 # Porter effort default = 'high' (overridable via MPYNODE_PORT_EFFORT).
@@ -35,12 +35,12 @@ MODEL = os.environ.get("MPYNODE_PORT_MODEL", "claude-opus-4-8[1m]")
 # default match actual practice + stop under-reporting portability. 'max' remains
 # available as an explicit escalation (MPYNODE_PORT_EFFORT=max, ideally paired
 # with a larger MPYNODE_PORT_TIMEOUT) when a node fails to port at 'high'.
-EFFORT = os.environ.get("MPYNODE_PORT_EFFORT", "high")
+EFFORT    = os.environ.get("MPYNODE_PORT_EFFORT", "high")
 MAYA_ROOT = os.environ.get("MPYNODE_MAYA_ROOT", "/Applications/Autodesk/maya2026")
 
 os.makedirs(OUT_DIR, exist_ok=True)
 LOG_PATH = os.path.join(OUT_DIR, "compile.log")
-_logf = open(LOG_PATH, "w")
+_logf    = open(LOG_PATH, "w")
 
 
 def L(msg=""):
@@ -55,18 +55,18 @@ def _hr(title):
 
 
 summary = {
-    "demo": DEMO_LABEL,
-    "mpn": MPN_PATH,
-    "plugin": PLUGIN_NAME,
-    "out_dir": OUT_DIR,
-    "ok": False,
-    "bundle_path": None,
+    "demo":          DEMO_LABEL,
+    "mpn":           MPN_PATH,
+    "plugin":        PLUGIN_NAME,
+    "out_dir":       OUT_DIR,
+    "ok":            False,
+    "bundle_path":   None,
     "manifest_path": None,
-    "companions": [],
-    "nodes": [],
-    "ai_ported": False,
-    "errors": [],
-    "seconds": None,
+    "companions":    [],
+    "nodes":         [],
+    "ai_ported":     False,
+    "errors":        [],
+    "seconds":       None,
 }
 
 try:
@@ -116,23 +116,23 @@ try:
     # Reliable porter markers (native/ai/porter.py): the deterministic path logs
     # "deterministic compute (verified helpers)"; the AI path logs "requesting AI
     # compute body" and "compile failed; AI fix round N/M".
-    AI_MARK = "requesting ai compute body"
+    AI_MARK  = "requesting ai compute body"
     DET_MARK = "deterministic compute (verified helpers)"
     FIX_MARK = "ai fix round"
-    seen = {"ai": False, "det": False, "fix": 0}
+    seen     = {"ai": False, "det": False, "fix": 0}
 
     def progress_cb(ev):
         try:
             events.append(ev)
-            stage = ev.get("stage")
+            stage  = ev.get("stage")
             status = ev.get("status")
-            node = ev.get("node")
+            node   = ev.get("node")
             detail = ev.get("detail", "")
             if stage == "log":
                 L("    | %s" % detail)
             else:
                 idx = ev.get("i")
-                n = ev.get("n")
+                n   = ev.get("n")
                 pos = ("[%s/%s] " % (idx, n)) if n else ""
                 L(">>> %s%s : %s%s%s" % (
                     pos, stage, status,
@@ -164,27 +164,27 @@ try:
         [MPN_PATH],
         PLUGIN_NAME,
         OUT_DIR,
-        trusted=True,
-        provider="claude_cli",
-        model=MODEL,
-        maya=MAYA_ROOT,
-        strict=True,
-        verify=True,
-        verify_fn=_verify_fn,
-        progress_cb=progress_cb,
-        reuse_cache=False,   # audit: force a real build, no cached .cpp reuse
-        bake_persistent=True,
+        trusted         = True,
+        provider        = "claude_cli",
+        model           = MODEL,
+        maya            = MAYA_ROOT,
+        strict          = True,
+        verify          = True,
+        verify_fn       = _verify_fn,
+        progress_cb     = progress_cb,
+        reuse_cache     = False,   # audit: force a real build, no cached .cpp reuse
+        bake_persistent = True,
     )
-    dt = time.time() - t0
-    summary["seconds"] = round(dt, 1)
-    summary["ai_ported"] = bool(seen["ai"])
+    dt                       = time.time() - t0
+    summary["seconds"]       = round(dt, 1)
+    summary["ai_ported"]     = bool(seen["ai"])
     summary["deterministic"] = bool(seen["det"])
     summary["ai_fix_rounds"] = seen["fix"]
 
     # ---- Per-node result -------------------------------------------------
     _hr("PER-NODE RESULT")
-    summary["ok"] = bool(result.get("ok"))
-    summary["bundle_path"] = result.get("bundle_path")
+    summary["ok"]            = bool(result.get("ok"))
+    summary["bundle_path"]   = result.get("bundle_path")
     summary["manifest_path"] = result.get("manifest_path")
     for comp in (result.get("companions") or []):
         cp = comp.get("path") if isinstance(comp, dict) else comp
@@ -193,17 +193,17 @@ try:
     for row in (result.get("nodes") or []):
         tn = row.get("type_name")
         bs = row.get("build_status")
-        v = row.get("verify") or {}
+        v  = row.get("verify") or {}
         fr = row.get("fix_rounds")
         node_rec = {
-            "type_name": tn,
-            "build_status": bs,
-            "verify_ran": v.get("ran"),
-            "verify_pass": v.get("pass"),
+            "type_name":     tn,
+            "build_status":  bs,
+            "verify_ran":    v.get("ran"),
+            "verify_pass":   v.get("pass"),
             "verify_maxerr": v.get("maxerr"),
-            "verify_tol": v.get("tol"),
+            "verify_tol":    v.get("tol"),
             "verify_reason": v.get("reason"),
-            "fix_rounds": fr,
+            "fix_rounds":    fr,
         }
         summary["nodes"].append(node_rec)
         L("node          : %s" % tn)

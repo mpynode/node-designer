@@ -42,19 +42,19 @@ def _cli_timeout() -> float:
 # struggles to scrub. ONLY this fixed set is transliterated to ASCII; every other
 # non-ASCII byte is left untouched, so real strings are never corrupted.
 _TYPO_ASCII = {
-    "—": "-",   # — em dash
-    "–": "-",   # – en dash
-    "−": "-",   # − minus sign
-    "→": "->",  # → rightwards arrow
-    "“": '"',   # “ left double quote
-    "”": '"',   # ” right double quote
-    "‘": "'",   # ‘ left single quote
-    "’": "'",   # ’ right single quote
+    "—": "-",    # — em dash
+    "–": "-",    # – en dash
+    "−": "-",    # − minus sign
+    "→": "->",   # → rightwards arrow
+    "“": '"',    # “ left double quote
+    "”": '"',    # ” right double quote
+    "‘": "'",    # ‘ left single quote
+    "’": "'",    # ’ right single quote
     "…": "...",  # … horizontal ellipsis
-    " ": " ",   # non-breaking space
-    "‑": "-",   # ‑ non-breaking hyphen
-    "⁄": "/",   # ⁄ fraction slash
-    "×": "*",   # × multiplication sign
+    " ": " ",    # non-breaking space
+    "‑": "-",    # ‑ non-breaking hyphen
+    "⁄": "/",    # ⁄ fraction slash
+    "×": "*",    # × multiplication sign
 }
 
 
@@ -109,7 +109,7 @@ class AgentUnavailable(RuntimeError):
 
 def _http_json(url, payload, headers, timeout=120.0, cancel_event=None):
     data = json.dumps(payload).encode("utf-8")
-    req = urllib.request.Request(url, data=data, method="POST")
+    req  = urllib.request.Request(url, data=data, method="POST")
     for k, v in headers.items():
         req.add_header(k, v)
 
@@ -146,7 +146,7 @@ _CLI_PERMISSION_MODE = "acceptEdits"
 _CLI_BINS = {
     "claude_cli": ("CLAUDE_BIN", "claude"),
     "gemini_cli": ("GEMINI_BIN", "gemini"),
-    "codex_cli": ("CODEX_BIN", "codex"),
+    "codex_cli":  ("CODEX_BIN", "codex"),
 }
 
 # ---------------------------------------------------------------------------
@@ -271,7 +271,7 @@ def _cli_env(provider, max_tokens):
     """
     if provider != "claude_cli" or not max_tokens:
         return None
-    env = dict(os.environ)
+    env                         = dict(os.environ)
     env[_CLAUDE_MAX_OUTPUT_ENV] = str(int(max_tokens))
     return env
 
@@ -337,7 +337,7 @@ def _parse_stream_json(text: str, log_cb=None):
             except Exception:
                 pass
 
-    answer_parts = []
+    answer_parts    = []
     result_fallback = None
     for ln in lines:
         try:
@@ -525,7 +525,7 @@ def _complete_cli(provider: str, model: str, system: str, user: str,
     log) while only the final answer is returned; multi-agent "ultracode" mode is
     enabled when ``_porter_orchestrate()`` says so.
     """
-    binp = _resolve_cli_bin(provider)
+    binp   = _resolve_cli_bin(provider)
     prompt = system + "\n\n" + user
     cmd, stdin_text = _build_cli(
         provider, binp, model, _config.get_effort(provider), prompt,
@@ -550,7 +550,7 @@ def _complete(system: str, user: str, max_tokens=None, timeout=None,
     ``make_cli_complete_fn``, which runs the killable ``_run_cli_proc`` itself.
     """
     provider = _config.get_provider()
-    model = _config.get_model(provider)
+    model    = _config.get_model(provider)
     if provider in _config.CLI_PROVIDERS:
         return _complete_cli(provider, model, system, user)
     key = _config.get_api_key(provider)
@@ -576,8 +576,8 @@ def _complete(system: str, user: str, max_tokens=None, timeout=None,
         url = "https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent" % model
         payload = {
             "systemInstruction": {"parts": [{"text": system}]},
-            "contents": [{"role": "user", "parts": [{"text": user}]}],
-            "generationConfig": {"maxOutputTokens": cap},
+            "contents":          [{"role": "user", "parts": [{"text": user}]}],
+            "generationConfig":  {"maxOutputTokens": cap},
         }
         resp = _http_json(url, payload, {"content-type": "application/json",
                                          "x-goog-api-key": key},
@@ -588,7 +588,7 @@ def _complete(system: str, user: str, max_tokens=None, timeout=None,
     # anthropic
     payload = {
         "model": model, "max_tokens": cap,
-        "system": system,
+        "system":   system,
         "messages": [{"role": "user", "content": user}],
     }
     resp = _http_json("https://api.anthropic.com/v1/messages", payload,
@@ -678,7 +678,7 @@ def check_agent(provider: str = None) -> dict:
     ``check_provider`` would block the porter -- which never shells out -- on a
     constraint that does not apply to it. NEVER raises.
     """
-    chk = check_provider(provider)
+    chk      = check_provider(provider)
     provider = chk.get("provider")
     problems = list(chk.get("problems") or [])
     if chk.get("ok") and provider != "claude_cli":
@@ -711,8 +711,8 @@ def make_cli_agent_fn(cwd, cancel_event=None, log_cb=None, timeout=None):
     def agent_fn(prompt: str) -> str:
         if _cancelled():
             raise PortCancelled()
-        binp = _resolve_cli_bin("claude_cli")
-        model = _config.get_model("claude_cli")
+        binp   = _resolve_cli_bin("claude_cli")
+        model  = _config.get_model("claude_cli")
         effort = _config.get_effort("claude_cli")
         cmd = [binp, "-p", "--output-format", "stream-json", "--verbose",
                "--allowedTools", _OPT_AGENT_ALLOW,
@@ -787,9 +787,9 @@ def make_cli_complete_fn(cancel_event=None, log_cb=None, timeout=None,
         if _cancelled():
             raise PortCancelled()
         provider = _config.get_provider()
-        model = _config.get_model(provider)
+        model    = _config.get_model(provider)
         if provider in _config.CLI_PROVIDERS:
-            binp = _resolve_cli_bin(provider)
+            binp   = _resolve_cli_bin(provider)
             prompt = system + "\n\n" + user
             cmd, stdin_text = _build_cli(
                 provider, binp, model, _config.get_effort(provider), prompt,
@@ -822,7 +822,7 @@ def check_provider(provider: str = None, model: str = None) -> dict:
     sends the first prompt, not to validate the key against the service.
     """
     problems = []
-    kind = "api"
+    kind     = "api"
     try:
         if provider is None:
             provider = _config.get_provider()
@@ -834,7 +834,7 @@ def check_provider(provider: str = None, model: str = None) -> dict:
                 problems.append(str(exc))
         else:
             kind = "api"
-            key = ""
+            key  = ""
             try:
                 key = _config.get_api_key(provider)
             except Exception as exc:

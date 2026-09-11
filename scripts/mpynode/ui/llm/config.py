@@ -23,32 +23,32 @@ DEFAULT_PROVIDER = "anthropic"
 # Defaults; editable in the panel because model ids drift. CLI providers have
 # no default -- blank means "use the CLI's own".
 DEFAULT_MODELS = {
-    "anthropic": "claude-sonnet-4-5",
-    "gemini": "gemini-2.5-flash",
-    "openai": "gpt-4o",
+    "anthropic":  "claude-sonnet-4-5",
+    "gemini":     "gemini-2.5-flash",
+    "openai":     "gpt-4o",
     "claude_cli": "",
     "gemini_cli": "",
-    "codex_cli": "",
+    "codex_cli":  "",
 }
 
 # Environment-variable fallbacks for the key (checked in order). CLI providers
 # need no key (they use the CLI's own machine login).
 _ENV_KEYS = {
-    "anthropic": ("ANTHROPIC_API_KEY",),
-    "gemini": ("GEMINI_API_KEY", "GOOGLE_API_KEY"),
-    "openai": ("OPENAI_API_KEY",),
+    "anthropic":  ("ANTHROPIC_API_KEY",),
+    "gemini":     ("GEMINI_API_KEY", "GOOGLE_API_KEY"),
+    "openai":     ("OPENAI_API_KEY",),
     "claude_cli": (),
     "gemini_cli": (),
-    "codex_cli": (),
+    "codex_cli":  (),
 }
 
 PROVIDER_LABELS = {
-    "anthropic": "Claude (Anthropic API)",
-    "gemini": "Gemini (Google API)",
-    "openai": "ChatGPT (OpenAI API)",
+    "anthropic":  "Claude (Anthropic API)",
+    "gemini":     "Gemini (Google API)",
+    "openai":     "ChatGPT (OpenAI API)",
     "claude_cli": "Claude CLI",
     "gemini_cli": "Gemini CLI (experimental)",
-    "codex_cli": "Codex CLI (experimental)",
+    "codex_cli":  "Codex CLI (experimental)",
 }
 
 # Providers that use an API key + model in the panel (vs. the local CLIs).
@@ -175,13 +175,13 @@ def _quota_detail(body):
 
     try:
         data = __import__("json").loads(body or "{}")
-        err = data.get("error", {}) if isinstance(data, dict) else {}
-        msg = err.get("message", "") if isinstance(err, dict) else ""
+        err  = data.get("error", {}) if isinstance(data, dict) else {}
+        msg  = err.get("message", "") if isinstance(err, dict) else ""
         for d in (err.get("details") or []):
             if "QuotaFailure" in str(d.get("@type", "")):
                 for v in (d.get("violations") or []):
                     metric = str(v.get("quotaMetric", "") or v.get("quotaId", ""))
-                    val = v.get("quotaValue")
+                    val    = v.get("quotaValue")
                     per_min = any(k in metric for k in
                                  ("PerMinute", "per_minute", "free_tier_requests"))
                     if val:
@@ -271,7 +271,7 @@ def request_with_retry(do_request, on_retry=None, max_retries=5, should_cancel=N
                 pass
             if code not in _RETRYABLE or attempt >= max_retries:
                 raise RuntimeError("HTTP %s: %s" % (code, body[:500]))
-            delay = _retry_after_seconds(exc, body, attempt)
+            delay  = _retry_after_seconds(exc, body, attempt)
             detail = _quota_detail(body) if code == 429 else ""
             attempt += 1
             if callable(on_retry):
