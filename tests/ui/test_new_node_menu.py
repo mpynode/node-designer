@@ -334,8 +334,10 @@ class TestNewFromTemplateAction(unittest.TestCase):
         from mpynode.ui import mpynode_designer
 
         src = inspect.getsource(mpynode_designer)
-        # The NDToolBar(...) construction must forward the gallery hook.
-        self.assertIn("on_new_from_template=self._on_new_from_template", src)
+        # The NDToolBar(...) construction must forward the gallery hook. The
+        # keyword block is columnised, so the spacing around '=' is free.
+        self.assertRegex(
+            src, r"on_new_from_template\s*=\s*self\._on_new_from_template")
 
 
 if __name__ == "__main__":
