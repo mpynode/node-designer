@@ -281,11 +281,28 @@ def _companion_command_lines(result):
     return lines
 
 
+def _rounds_clause(info):
+    """How the adaptive optimize loop ended for one node, as a clause for its
+    summary line: `` -- 3 rounds of max 6, stopped: round 3 not-faster ...``.
+    Empty when the record carries no stop reason (a skipped node, a result from
+    before the engine recorded one), so that line renders as it always did.
+    The wording is REPORT.md's (``stage_report._stop_phrase``)."""
+    why = (info or {}).get("stop_reason")
+    if not why:
+        return ""
+    n = int(info.get("rounds") or 0)
+    mx = int(info.get("max_rounds") or 0)
+    ran = "%d round%s" % (n, "" if n == 1 else "s")
+    cap = (" of max %d" % mx) if mx > 0 else ""
+    return " -- %s%s, stopped: %s" % (ran, cap, why)
+
+
 def _optimize_summary_lines(result):
     """The AI optimizer's report as human log lines (#64): per-node accepted /
-    kept / skipped + reason, plus any provider-skip / hard-error / deterministic
-    fallback status. Empty when the optimizer did not run. Reads the
-    ``result['optimize']`` map the compile controller attaches."""
+    kept / skipped + reason -- each trailed by how the adaptive loop ended when
+    the record says (``_rounds_clause``) -- plus any provider-skip / hard-error
+    / deterministic fallback status. Empty when the optimizer did not run.
+    Reads the ``result['optimize']`` map the compile controller attaches."""
     opt = (result or {}).get("optimize") or {}
     if not opt:
         return []
@@ -298,10 +315,10 @@ def _optimize_summary_lines(result):
         if not isinstance(info, dict):
             continue
         if info.get("accepted"):
-            lines.append("  %s: %.2fx faster" % (tn, info.get("speedup", 1.0)))
+            line = "  %s: %.2fx faster" % (tn, info.get("speedup", 1.0))
         else:
-            lines.append("  %s: kept original (%s)"
-                         % (tn, info.get("reason", "")))
+            line = "  %s: kept original (%s)" % (tn, info.get("reason", ""))
+        lines.append(line + _rounds_clause(info))
     if opt.get("__error__"):
         lines.append("  ERROR (non-fatal): %s" % opt["__error__"])
     if opt.get("__fallback__"):
@@ -607,6 +624,11 @@ class CompileDialog(QDialog):
         rounds_row.setContentsMargins(0, 0, 0, 0)
         rounds_row.addWidget(self._dim("max rounds"))
         rounds_row.addWidget(self._rounds_combo)
+        # The rule the combo caps, in the caption column like row 0's. It was
+        # stated only in the combo's tooltip, so the step read as a fixed count.
+        rounds_row.addWidget(self._dim(
+            "adaptive \u00b7 always 2 rounds, then only while the last gained "
+            "\u2265 1.15x"))
         rounds_row.addStretch(1)
         grid.addLayout(rounds_row, 2, 1)
 

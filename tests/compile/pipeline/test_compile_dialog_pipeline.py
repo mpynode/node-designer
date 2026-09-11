@@ -666,5 +666,54 @@ class TestDialogWiring(unittest.TestCase):
         self.assertIn("_sync_pipeline_gates()", busy)
 
 
+class TestOptimizeSummaryLinesSayHowTheLoopEnded(unittest.TestCase):
+    """The end-of-run "AI optimization:" block printed only "Nx faster" / "kept
+    original (reason)". The adaptive loop's rounds RUN, cap and stop reason were
+    recorded (rounds.json, REPORT.md) but never shown here; now they trail the
+    line in REPORT.md's own words, and a record without them is unchanged."""
+
+    def _last(self, info):
+        from mpynode.ui.dialogs.compile_dialog import _optimize_summary_lines
+
+        return _optimize_summary_lines({"optimize": {"kDTree": info}})[-1]
+
+    def test_accepted_line_carries_rounds_cap_and_stop_reason(self):
+        line = self._last({"accepted": True, "speedup": 2.31,
+                           "reason": "accepted (2.31x)", "rounds": 3,
+                           "max_rounds": 6,
+                           "stop_reason": "round 3 not-faster -- 1.02x"})
+        self.assertEqual(line, "  kDTree: 2.31x faster -- 3 rounds of max 6, "
+                               "stopped: round 3 not-faster -- 1.02x")
+
+    def test_kept_line_carries_them_too_and_one_round_is_singular(self):
+        line = self._last({"accepted": False, "speedup": 1.0,
+                           "reason": "no candidate beat the baseline",
+                           "rounds": 1, "max_rounds": 1,
+                           "stop_reason": "max rounds (1) reached"})
+        self.assertEqual(line, "  kDTree: kept original (no candidate beat the "
+                               "baseline) -- 1 round of max 1, stopped: max "
+                               "rounds (1) reached")
+
+    def test_a_record_without_a_stop_reason_renders_as_before(self):
+        self.assertEqual(
+            self._last({"accepted": True, "speedup": 2.0, "reason": ""}),
+            "  kDTree: 2.00x faster")
+        self.assertEqual(
+            self._last({"accepted": False, "reason": "skipped: VP2 override"}),
+            "  kDTree: kept original (skipped: VP2 override)")
+
+    def test_the_pipeline_caption_states_the_adaptive_rule(self):
+        """The rule lived only in the combo's tooltip, so the step read as a
+        fixed count of rounds."""
+        import inspect
+
+        from mpynode.ui.dialogs import compile_dialog
+
+        src = inspect.getsource(compile_dialog.CompileDialog._build_pipeline_ui)
+        caption = src.split("rounds_row.addWidget(self._rounds_combo)", 1)[1]
+        self.assertIn("adaptive", caption)
+        self.assertIn("1.15x", caption)
+
+
 if __name__ == "__main__":
     unittest.main()

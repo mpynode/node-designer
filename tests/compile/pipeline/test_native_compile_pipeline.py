@@ -1209,6 +1209,99 @@ class TestOptimizeFallbackRefreshesRows(unittest.TestCase):
         self.assertEqual(node["type_id"], 7)
 
 
+def _compile_with_optimize_result(opt_result, surviving=None):
+    """Run compile_plugin with every external step faked and the AI optimizer
+    returning ``{"cubicCurveSampler": opt_result}``; return the result dict.
+    ``surviving`` replaces that stand-in optimizer with a caller's own mock (to
+    assert it was never reached). The fakes are
+    TestOptimizeFallbackRefreshesRows's, with one ok assemble."""
+    if surviving is None:
+        surviving = unittest.mock.Mock(
+            return_value={"cubicCurveSampler": opt_result})
+    from mpynode.native.toolchain import compile_controller as cc
+    from mpynode.native.toolchain import toolchain
+    from mpynode.native.ai import porter
+    from mpynode.native.ai import optimizer_live
+    from mpynode.native.compiler import bundler
+    from mpynode.native.toolchain.typeid_registry import TypeIdRegistry
+
+    def fake_check_toolchain(maya, *a, **k):
+        return {"ok": True, "problems": [], "compiler": "x",
+                "compiler_path": None}
+
+    def fake_check_provider(provider=None, model=None):
+        return {"ok": True, "problems": [], "provider": provider, "kind": "api"}
+
+    def fake_port_node(spec, out_dir, **k):
+        cpp = os.path.join(out_dir, spec["suggested"]["node_type_name"] + ".cpp")
+        with open(cpp, "w") as fh:
+            fh.write("// ported\n")
+        return {"ok": True, "cpp": cpp, "fix_rounds": 0}
+
+    with tempfile.TemporaryDirectory() as d:
+        bundle = os.path.join(d, "myPlugin.bundle")
+        with open(bundle, "w") as fh:
+            fh.write("")
+        ok_report = {
+            "ok": True, "bundle": bundle, "shared_helpers": [], "dropped": [],
+            "nodes": [{"name": "cubicCurveSampler", "status": "compiled",
+                       "reason": "", "id": 7}]}
+        reg = TypeIdRegistry(path=os.path.join(d, "reg.json"))
+        with unittest.mock.patch.object(toolchain, "check_toolchain",
+                                        fake_check_toolchain), \
+             unittest.mock.patch.object(porter, "check_provider",
+                                        fake_check_provider), \
+             unittest.mock.patch.object(porter, "port_node", fake_port_node), \
+             unittest.mock.patch.object(cc, "_optimize_skip_reason",
+                                        return_value=""), \
+             unittest.mock.patch.object(optimizer_live, "optimize_surviving",
+                                        surviving), \
+             unittest.mock.patch.object(optimizer_live, "rollback_preopt",
+                                        return_value=[]), \
+             unittest.mock.patch.object(optimizer_live, "discard_preopt",
+                                        return_value=[]), \
+             unittest.mock.patch.object(bundler, "assemble",
+                                        return_value=ok_report):
+            return cc.compile_plugin(
+                [_portable_spec()], "myPlugin", d, strict=True,
+                verify=False, reuse_cache=False, optimize=True,
+                complete_fn=lambda s, u: "out = a*2.0;",
+                provider="anthropic", model="m", registry=reg)
+
+
+class TestOptimizeSummaryCarriesHowTheLoopEnded(unittest.TestCase):
+    """The dialog's end-of-run summary said only "Nx faster" / "kept original
+    (reason)": the controller dropped the rounds RUN, the cap and the engine's
+    stop reason, although the engine has recorded all three since the adaptive
+    loop (2026-09-09) and REPORT.md prints them. They ride the per-node record
+    now; a result without them (a fake, an older engine) reads 0 / ""."""
+
+    class _OptRes:
+        def __init__(self, accepted, speedup, reason, **more):
+            self.accepted = accepted
+            self.speedup = speedup
+            self.reason = reason
+            for k, v in more.items():
+                setattr(self, k, v)
+
+    def test_rounds_cap_and_stop_reason_pass_through(self):
+        result = _compile_with_optimize_result(self._OptRes(
+            True, 2.31, "accepted (2.31x)", rounds=3, max_rounds=6,
+            stop_reason="round 3 not-faster -- 1.02x"))
+        rec = result["optimize"]["cubicCurveSampler"]
+        self.assertTrue(rec["accepted"])
+        self.assertEqual((rec["rounds"], rec["max_rounds"]), (3, 6))
+        self.assertEqual(rec["stop_reason"], "round 3 not-faster -- 1.02x")
+
+    def test_a_result_without_them_reads_zero_and_empty(self):
+        result = _compile_with_optimize_result(self._OptRes(
+            False, 1.0, "no candidate beat the baseline"))
+        rec = result["optimize"]["cubicCurveSampler"]
+        self.assertFalse(rec["accepted"])
+        self.assertEqual((rec["rounds"], rec["max_rounds"], rec["stop_reason"]),
+                         (0, 0, ""))
+
+
 # ===================== from test_file_read_support.py =====================
 import os
 

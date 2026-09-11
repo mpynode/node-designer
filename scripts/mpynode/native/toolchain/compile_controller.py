@@ -162,6 +162,15 @@ def _preflight_message(headline, problems):
     return "\n".join(lines)
 
 
+def _opt_int(value):
+    """An OptimizeResult count as an int; 0 for anything that is not one (a
+    test fake's attribute, None from an engine that recorded none)."""
+    try:
+        return int(value or 0)
+    except (TypeError, ValueError):
+        return 0
+
+
 def _node_needs_llm(spec):
     """True if porting this spec will actually invoke the LLM -- i.e. codegen
     emits an AI PORT region rather than the full compute.
@@ -1134,9 +1143,17 @@ def compile_plugin(specs, plugin_name, out_dir, *, strict=True, verify=True,
                     spd = getattr(r, "speedup", 1.0)
                     spd = float(spd) if spd is not None else 1.0
                     rsn = getattr(r, "reason", "")
-                    optimize_summary[tn] = {"accepted": acc, "speedup": spd,
-                                            "reason": rsn,
-                                            "ai": opt_ai_status.get(tn, {})}
+                    # How the adaptive loop ended -- rounds RUN, the cap, why it
+                    # stopped -- so the dialog's summary can say it. The engine
+                    # has recorded all three since 2026-09-09; a result without
+                    # them (a fake, an older engine) reads 0 / "" and the dialog
+                    # prints the line it always did.
+                    optimize_summary[tn] = {
+                        "accepted": acc, "speedup": spd, "reason": rsn,
+                        "rounds": _opt_int(getattr(r, "rounds", 0)),
+                        "max_rounds": _opt_int(getattr(r, "max_rounds", 0)),
+                        "stop_reason": str(getattr(r, "stop_reason", "") or ""),
+                        "ai": opt_ai_status.get(tn, {})}
                     if acc:
                         any_accepted = True
                         _emit(progress_cb, "optimize", None, "ok",
