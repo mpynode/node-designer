@@ -205,10 +205,10 @@ class TestPausedChip(unittest.TestCase):
         self.addCleanup(P._reset_for_tests)
         P.set_pref("ui_font_size", 10)
         MPyNode.create(name="scaleProbe1")
-        item = self._item("scaleProbe1")
-        tree = item.treeWidget()
+        item       = self._item("scaleProbe1")
+        tree       = item.treeWidget()
         small_icon = tree.iconSize().width()
-        m10 = ui_metrics(tree.font())
+        m10        = ui_metrics(tree.font())
         self.assertEqual(small_icon, m10["disc"] + 2 * m10["pad"])
         self.assertEqual(item.icon(0).actualSize(QSize(256, 256)).width(), small_icon)
         P.set_pref("ui_font_size", 15)               # live, no rebuild

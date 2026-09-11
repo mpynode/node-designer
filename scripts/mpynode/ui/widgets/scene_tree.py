@@ -79,7 +79,7 @@ def _metrics_for(line, glyph_w, avg_char_w) -> dict:
     line   = max(10, int(line))
     disc   = max(12, int(round(line * 16.0 / 17.0)))
     chip_h = max(10, int(round(line * 14.0 / 17.0)))
-    gap    = max(4, int(round(line * 6.0 / 17.0)))
+    gap    = max(4,  int(round(line * 6.0 / 17.0)))
     return {
         "line":     line,
         "disc":     disc,

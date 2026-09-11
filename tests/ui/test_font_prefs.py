@@ -105,8 +105,8 @@ class TestResolveFontSize(unittest.TestCase):
         default = self.P.DEFAULT_PREFS["ui_font_size"]
         # set_pref persists to the test home's file and _reset_for_tests
         # re-reads it, so pin the UI size before planting the stale keys.
-        self.P.set_pref("ui_font_size", default)
-        self.P.set_pref("panel_font_size", 15)
+        self.P.set_pref("ui_font_size",        default)
+        self.P.set_pref("panel_font_size",     15)
         self.P.set_pref("assistant_font_size", 20)
         self.assertEqual(self.P.resolve_font_size("panel"), default)
         self.assertEqual(self.P.resolve_font_size("assistant"), default)
@@ -208,7 +208,7 @@ class TestWireAreaFont(unittest.TestCase):
         from mpynode.ui.widgets.font_prefs import wire_area_font
 
         seen = []
-        w = self._widget()
+        w    = self._widget()
         wire_area_font(w, "panel", on_change=lambda: seen.append(1))
         self.P.set_pref("ui_font_size", 15)
         self.assertEqual(len(seen), 1)
@@ -232,9 +232,9 @@ class TestTranscriptScaling(unittest.TestCase):
 
     def _scale(self, html, pt):
         fake = types.SimpleNamespace(
-            _AUTHORED_BASE_PX=self.A._AUTHORED_BASE_PX,
-            _SIZE_PX_RE=self.A._SIZE_PX_RE,
-            _asst_pt=lambda: pt,
+            _AUTHORED_BASE_PX = self.A._AUTHORED_BASE_PX,
+            _SIZE_PX_RE       = self.A._SIZE_PX_RE,
+            _asst_pt          = lambda: pt,
         )
         return self.A._scale_html(fake, html)
 
@@ -251,7 +251,7 @@ class TestTranscriptScaling(unittest.TestCase):
 
     def test_the_visual_hierarchy_survives(self):
         # 11px (tool lines) must stay above 10px (timings) above 7px (spacer).
-        out = self._scale("a font-size:11px b font-size:10px c font-size:7px", 20)
+        out   = self._scale("a font-size:11px b font-size:10px c font-size:7px", 20)
         sizes = [int(s) for s in __import__("re").findall(r"font-size:(\d+)pt", out)]
         self.assertEqual(sizes, sorted(sizes, reverse=True), out)
         self.assertEqual(len(set(sizes)), 3, "tiers collapsed together")
@@ -298,14 +298,14 @@ class TestRescaleExisting(unittest.TestCase):
 
         class _Fake:
             _AUTHORED_BASE_PX = A._AUTHORED_BASE_PX
-            _SIZE_PX_RE = A._SIZE_PX_RE
-            _SIZE_PT_RE = A._SIZE_PT_RE
-            _asst_pt = A._asst_pt
-            _scale_html = A._scale_html
+            _SIZE_PX_RE       = A._SIZE_PX_RE
+            _SIZE_PT_RE       = A._SIZE_PT_RE
+            _asst_pt          = A._asst_pt
+            _scale_html       = A._scale_html
             _rescale_existing = A._rescale_existing
 
-        f = _Fake()
-        f._transcript = QTextEdit()
+        f              = _Fake()
+        f._transcript  = QTextEdit()
         f._asst_anchor = None
         self.addCleanup(f._transcript.deleteLater)
         # What the panel really appends: a bubble, a tool line, a timing line.
@@ -329,7 +329,7 @@ class TestRescaleExisting(unittest.TestCase):
         # font is wired to the same preference, so it is already correct and
         # must not be double-scaled; here the stand-in leaves it at the Qt
         # default, which is why it shows up as an extra size.
-        f = self._fake()
+        f      = self._fake()
         before = self._sizes(f)
         self.assertTrue(before, "no explicit pt sizes survived the append")
         # 11px and 10px against a 12px authoring base, at 10pt -> 9pt and 8pt.
@@ -347,13 +347,13 @@ class TestRescaleExisting(unittest.TestCase):
         f._rescale_existing(2.0)
         text = f._transcript.toPlainText()
         self.assertIn("build me a node", text)
-        self.assertIn("apply mPyNode", text)
-        self.assertIn("done in 1m 06s", text)
+        self.assertIn("apply mPyNode",   text)
+        self.assertIn("done in 1m 06s",  text)
 
     def test_it_declines_mid_stream(self):
         # A live assistant bubble is being rewritten by cursor; replacing the
         # whole document under it would strand the anchor.
-        f = self._fake()
+        f              = self._fake()
         f._asst_anchor = 5
         self.assertFalse(f._rescale_existing(2.0))
 
@@ -369,14 +369,14 @@ class TestWiringIsPresent(unittest.TestCase):
     so assert the call sites rather than trusting they were all done."""
 
     WIRED = {
-        "assistant_panel.py": 4,   # transcript, input, and two small labels
-        "attributes.py": 1,        # covers NDOutputAttrTree by inheritance
-        "framework_tab.py": 1,
-        "logger.py": 1,
-        "profile.py": 1,
-        "scene_tree.py": 1,
-        "variables.py": 1,
-        "watch.py": 1,
+        "assistant_panel.py": 4,  # transcript, input, and two small labels
+        "attributes.py":      1,  # covers NDOutputAttrTree by inheritance
+        "framework_tab.py":   1,
+        "logger.py":          1,
+        "profile.py":         1,
+        "scene_tree.py":      1,
+        "variables.py":       1,
+        "watch.py":           1,
     }
 
     def test_each_module_wires_its_widget(self):
