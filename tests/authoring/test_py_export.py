@@ -1489,6 +1489,20 @@ class TestPersistentValuesInTheBake(unittest.TestCase):
         self.assertEqual(pe.summarize_value(3), "int 3")
         self.assertEqual(pe.summarize_value(True), "True")
 
+    def test_every_variable_line_is_addressable(self):
+        # The Outline's variable rows locate their own line in the bake.
+        n = self._node()
+        n.add_variable("board", persistent=True)
+        n.set_variable("board", [1, 2, 3])
+        n.add_variable("empty", persistent=True)
+        for include in (False, True):
+            src, regions = self._gen(n, include_values=include)
+            vars_r = self._vars(regions)
+            lines = src.split("\n")
+            self.assertEqual(set(vars_r["var_lines"]), {"board", "empty"})
+            for name, offset in vars_r["var_lines"].items():
+                self.assertIn("'%s'" % name, lines[vars_r["start"] + offset])
+
 
 class TestTheFileHeaderIsTheUsers(unittest.TestCase):
     """The top of a baked .py.

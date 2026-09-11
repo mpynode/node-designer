@@ -306,6 +306,7 @@ class NDScriptTabContent(QWidget):
         self._nav_split.setSizes([816, 0])
         layout.addWidget(self._nav_split, 1)
 
+        self._navigator.locateRequested.connect(self.locate)
         self._navigator.selectRequested.connect(self.select)
         self._navigator.variableActivated.connect(
             self.revealVariableRequested)
@@ -739,6 +740,7 @@ class NDScriptTabContent(QWidget):
         key = self._navigator.keyForRegion(region)
         if key:
             self._navigator.setCurrentKey(key)
+            self._reveal_navigator()
 
     @staticmethod
     def _key_for_tab(label: str) -> str:
@@ -758,14 +760,58 @@ class NDScriptTabContent(QWidget):
                 return i
         return -1
 
-    def select(self, key: str) -> bool:
-        """Show ``key``. THE navigation entry point -- the tab strip, the
-        navigator table and the API view's managed zones all route here, so
-        there is no 'now also update the other widget' line to forget.
+    def locate(self, key: str) -> bool:
+        """SHOW where ``key`` lives in the baked file: raise the API tab and
+        put the caret on the region's first line. The Outline's single click.
 
-        Keys: ``api``, ``tier.<name>``, and ``module.*`` / ``member.*`` /
-        ``class.*``, which live only in the baked file and therefore resolve to
-        the API view scrolled to their region.
+        Never switches to an authoring tab -- that is :meth:`select`
+        (double-click, Enter, the API view's right-click Go to). Single =
+        locate, double = go edit, in both directions.
+        """
+        if not key or self._api_view is None or self._navigator is None:
+            return False
+        region = self._navigator.regionForKey(key)
+        if not isinstance(region, dict):
+            # An EMPTY tier bakes no line, so there is nothing to locate; the
+            # one useful answer is its tab, where the text will be written.
+            if key.startswith("tier."):
+                return self.select(key)
+            return False
+        index = self._index_for_tier("API")
+        if index < 0:
+            return False
+        self._inner_tabs.setCurrentIndex(index)
+        self._api_view.goToLine(int(region["start"]))
+        # Raising the API tab cleared the highlight (the strip has no row of
+        # its own); put it back on the row that was clicked.
+        self._navigator.setCurrentKey(key)
+        return True
+
+    def _reveal_navigator(self) -> None:
+        """Open the Outline pane if it is railed away (0 px). A click on a
+        generated line answers with a highlighted row, and a row nobody can
+        see answers nothing."""
+        split = getattr(self, "_nav_split", None)
+        if split is None or self._navigator is None:
+            return
+        sizes = split.sizes()
+        if len(sizes) < 2 or sizes[1] > 0:
+            return
+        total = sum(sizes) or self.width()
+        want = max(236, self._navigator.minimumWidth())
+        split.setSizes([max(1, total - want), want])
+
+    def select(self, key: str) -> bool:
+        """Open ``key``'s authoring surface. THE navigation entry point for
+        "go edit" -- the Outline's double-click / Enter and the API view's
+        right-click Go to route here, so there is no 'now also update the
+        other widget' line to forget.
+
+        Keys: ``api``; ``tier.<name>`` (that tab); ``var.<name>`` (the
+        Variables tab, where the data lives); ``class.attrs_in`` /
+        ``class.attrs_out`` (the Attributes tab); and ``module.*`` /
+        ``member.*`` / the other ``class.*``, which live only in the baked file
+        and therefore resolve to the API view scrolled to their region.
         """
         if not key:
             return False
@@ -774,6 +820,13 @@ class NDScriptTabContent(QWidget):
             if index < 0:
                 return False
             self._inner_tabs.setCurrentIndex(index)
+            return True
+        if key.startswith("var."):
+            self.revealVariableRequested.emit(key[4:])
+            return True
+        if key in ("class.attrs_in", "class.attrs_out"):
+            self.revealAttributesRequested.emit(
+                "Inputs" if key.endswith("_in") else "Outputs")
             return True
         index = self._index_for_tier("API")
         if index < 0 or self._api_view is None:

@@ -1030,7 +1030,11 @@ class NDApiView(QtPythonEditor):
         """
         if region["kind"] in _GENERATED_KINDS:
             return True
-        return bool(region.get("body_col") and block_no == region["start"])
+        # The expression rail: matched on its LIVE line, never the bake's.
+        # Return on a blank line above the class moves every rail down, and a
+        # compare against region["start"] fell off the moved rail -- the call
+        # text lost its wash while the placeholder stayed.
+        return self._placeholders.get(block_no) is region
 
     # ------------------------------------------------------------------
     # The gutter half of the managed mark
@@ -1186,31 +1190,14 @@ class NDApiView(QtPythonEditor):
         region = self._block_region.get(cursor.block().blockNumber())
         if region is None:
             return
-        # Always: light up whatever row of the navigator names this region, so
-        # clicking the outputs block in the code shows you where "Outputs"
-        # lives in the table. Highlight only -- the host does NOT navigate,
-        # because you are already looking at the thing you clicked.
+        # ONE answer for every generated line: the region, for the host to
+        # LOCATE -- it lights the Outline row that names it, opening the pane
+        # if it was railed away. Nothing navigates on a left click. Clicking a
+        # rail used to raise its tier's tab and was retracted (it cost the
+        # reader their place); variables and attributes kept opening their
+        # tabs, which left two rules where one would do (2026-09). The
+        # right-click menu's Go to is the one way to an authoring tab.
         self.regionActivated.emit(region)
-        # NO tier signal. Clicking an expression rail used to raise that tier's
-        # tab, and the user retracted it: the tier is already on screen, folded,
-        # so being yanked to another tab costs the place you were reading and
-        # buys nothing. The highlight above is the whole response.
-        #
-        # Variables and attributes still DO navigate, and the difference is not
-        # arbitrary: their content is not in this buffer at all. A persistent
-        # variable's value is painted over with a summary, never shown, so
-        # there is nothing here to stay and look at.
-        if region["kind"] == "vars":
-            name = _var_name_on(cursor.block().text())
-            if name:
-                self.variableActivated.emit(name)
-            else:
-                # The block's comment line names no variable, but the block
-                # still means "variables" -- go there anyway rather than
-                # swallowing the click.
-                self.variableActivated.emit("")
-        elif region["kind"] in ("attrs_in", "attrs_out") and region.get("label"):
-            self.attributesActivated.emit(region["label"])
 
     # ------------------------------------------------------------------
     # The context menu, which does NOT go through the keystroke guard

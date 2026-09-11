@@ -140,10 +140,14 @@ class _Offer:
 class NDScriptNavigator(QWidget):
     """Read-only outline of the node, driven by the bake's region map."""
 
-    # A row was activated -- show its target. The ONE navigation signal;
+    # A row was CLICKED -- show where it lives: NDScriptTabContent.locate()
+    # raises the API view at the row's line. A single click never leaves the
+    # baked file (single = locate, double / Enter = go edit).
+    locateRequested = Signal(str)
+    # A row was ACTIVATED (double-click / Enter) -- open its authoring tab.
     # NDScriptTabContent.select() is the one implementation.
     selectRequested = Signal(str)
-    # A persistent-variable row was activated -- reveal it on the left, where
+    # A persistent-variable row was ACTIVATED -- reveal it on the left, where
     # the DATA lives. Separate because its target is not in this pane's stack.
     variableActivated = Signal(str)
     # A runnable member's run affordance was chosen: (run_kind, run_name).
@@ -204,6 +208,7 @@ class NDScriptNavigator(QWidget):
         self._tree.setContextMenuPolicy(Qt.CustomContextMenu)
         self._tree.customContextMenuRequested.connect(self._on_menu)
         self._tree.itemClicked.connect(self._on_item_clicked)
+        self._tree.itemActivated.connect(self._on_item_activated)
 
         header = self._tree.header()
         # MEASURED default: stretchLastSection is True and the header is hidden,
@@ -320,7 +325,7 @@ class NDScriptNavigator(QWidget):
         self._build_members(regions)
         self._build_module(regions)
         self._build_blessed()
-        self._build_variables()
+        self._build_variables(by_kind)
         self._set_total(regions)
         self._tree.expandAll()
         self._fit_symbol_column()
@@ -568,19 +573,32 @@ class NDScriptNavigator(QWidget):
             pass
         return out
 
-    def _build_variables(self) -> None:
+    def _build_variables(self, by_kind=None) -> None:
         section = self._section("VARIABLES", "declared on the node")
         try:
             names = list(self._py_node.get_variable_names() or [])
         except Exception:  # noqa: BLE001
             names = []
+        vars_region = ((by_kind or {}).get("vars") or [None])[0]
+        var_lines = (vars_region or {}).get("var_lines") or {}
         for name in names:
             row = self._row(section, name, "persistent", "")
             row.setData(_COL_SYMBOL, Qt.UserRole, "var.%s" % name)
+            offset = var_lines.get(name)
+            if vars_region is not None and offset is not None:
+                # Its OWN line in the bake, so a click locates it the way a
+                # member row locates its def. keyForRegion matches on (kind,
+                # start, end); a one-line span inside the vars block is this
+                # variable's alone, so a click on the whole block still lands
+                # on the CLASS > Variables row, not here.
+                line = int(vars_region["start"]) + int(offset)
+                row.setData(_COL_SYMBOL, Qt.UserRole + 1,
+                            {"kind": "vars", "start": line, "end": line,
+                             "label": name, "editable": False, "owner": None})
             row.setToolTip(
                 _COL_SYMBOL,
-                "Declared on the node; the bake re-declares it but never "
-                "embeds its data. Click to see the value on the Variables tab.")
+                "Declared on the node. Click: its line in the API view. "
+                "Double-click: the Variables tab, where the value lives.")
         if not names:
             # Honest rather than blank: the bake gates the block on
             # `if var_names:`, so a node with none emits nothing at all, and an
@@ -610,6 +628,19 @@ class NDScriptNavigator(QWidget):
     # -- activation --------------------------------------------------------
 
     def _on_item_clicked(self, item, _column) -> None:
+        """Single click: LOCATE -- the host scrolls the API view to the row's
+        line and stays there. Every row, the tiers and the variables included;
+        this pane is the map of the baked file, and a click on the map shows
+        the place, it does not leave the map."""
+        key = item.data(_COL_SYMBOL, Qt.UserRole)
+        if not key:
+            return
+        self.locateRequested.emit(key)
+
+    def _on_item_activated(self, item, _column) -> None:
+        """Double-click / Enter: GO EDIT -- the tier tab, the Variables tab
+        (where the data lives), the Attributes tab; a member or module row has
+        no other home than the baked file, so it scrolls there like a click."""
         key = item.data(_COL_SYMBOL, Qt.UserRole)
         if not key:
             return

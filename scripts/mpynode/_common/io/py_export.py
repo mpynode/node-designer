@@ -464,19 +464,23 @@ def _prepare_variable_lines(var_names, values):
     """The lines of the persistent-variables block and the placeholder entries
     the API view paints over the ones that carry a value.
 
-    Returns ``(lines, entries, blob_used)``. ``lines`` are the block WITHOUT
-    its leading comment; each entry is ``{name, offset, open_col, summary}``
-    where ``offset`` counts from the comment line (offset 0). A None value --
-    or no values at all -- is a plain declaration, exactly what the bake has
-    always emitted.
+    Returns ``(lines, entries, blob_used, var_lines)``. ``lines`` are the
+    block WITHOUT its leading comment; each entry is ``{name, offset, open_col,
+    summary}`` where ``offset`` counts from the comment line (offset 0);
+    ``var_lines`` maps EVERY variable to the offset of its own line, value or
+    declaration, so the Outline's rows can locate it. A None value -- or no
+    values at all -- is a plain declaration, exactly what the bake has always
+    emitted.
     """
     lines     = []
     entries   = []
+    var_lines = {}
     blob_used = False
     for vn in var_names:
         value = values.get(vn) if values else None
         if value is None:
             lines.append("        node.add_variable(%r, persistent=True)" % vn)
+            var_lines[vn] = len(lines)
             continue
         head = "        node.set_variable(%r, " % vn
         arg  = _literal_repr(value)
@@ -486,13 +490,15 @@ def _prepare_variable_lines(var_names, values):
                 lines.append("        # %s: value not bakeable without pickle "
                              "-- carry it with the .mpn" % vn)
                 lines.append("        node.add_variable(%r, persistent=True)" % vn)
+                var_lines[vn] = len(lines)
                 continue
             arg       = "_stored_value(%r)" % blob
             blob_used = True
         lines.append("%s%s, persistent=True)" % (head, arg))
+        var_lines[vn] = len(lines)
         entries.append({"name": vn, "offset": len(lines), "open_col": len(head),
                         "summary": summarize_value(value)})
-    return lines, entries, blob_used
+    return lines, entries, blob_used, var_lines
 
 
 def _body_line_count(src: str) -> int:
@@ -927,7 +933,8 @@ def generate_node_script_with_regions(py_node, *, class_name: str | None = None,
     # here, before the imports, because a blob needs the _stored_value helper
     # emitted at module scope above the class.
     var_values = _safe(py_node.get_variables, {}) if include_values else {}
-    var_lines, var_entries, blob_used = _prepare_variable_lines(var_names, var_values)
+    var_lines, var_entries, blob_used, var_offsets = _prepare_variable_lines(
+        var_names, var_values)
     # Methods tier -- only on wrappers exposing get_methods_source.
     methods_src: str = ""
     if hasattr(py_node, "get_methods_source"):
@@ -1186,7 +1193,7 @@ def generate_node_script_with_regions(py_node, *, class_name: str | None = None,
                 "data not included) ---"
             )
         L.extend(var_lines)
-        extra = {"count": len(var_names)}
+        extra = {"count": len(var_names), "var_lines": var_offsets}
         if var_entries:
             extra["values"] = var_entries
         mark("vars", _i, label="Variables", **extra)

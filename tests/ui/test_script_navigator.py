@@ -539,6 +539,97 @@ class TestNavigatorInTheScriptTab(unittest.TestCase):
         finally:
             w.deleteLater()
 
+    # -- single = locate, double / Enter = go edit (2026-09) -----------------
+
+    def _build_with_var(self):
+        loc, w = self._build()
+        loc.add_variable("board", persistent=True)
+        w.refreshIdentityViews()          # re-bake the API view + the Outline
+        return loc, w
+
+    def test_single_click_locates_in_the_api_view_and_keeps_the_tab(self):
+        loc, w = self._build()
+        loc.set_init_expression("import math\n")
+        w.refreshIdentityViews()
+        try:
+            w._inner_tabs.setCurrentIndex(w._index_for_tier("Compute"))
+            rail = w._navigator.regionForKey("tier.init")
+            self.assertIsNotNone(rail)
+            self.assertTrue(w.locate("tier.init"))
+            self.assertEqual(self._tab(w), "API")
+            self.assertEqual(w._api_view.textCursor().block().blockNumber(),
+                             rail["start"])
+            self.assertEqual(w._navigator.currentKey(), "tier.init")
+            # The row's click emits locateRequested, never selectRequested.
+            located, opened = [], []
+            w._navigator.locateRequested.connect(located.append)
+            w._navigator.selectRequested.connect(opened.append)
+            w._navigator._on_item_clicked(
+                w._navigator._item_for_key("tier.init"), 0)
+            self.assertEqual((located, opened), (["tier.init"], []))
+            self.assertEqual(self._tab(w), "API")
+        finally:
+            w.deleteLater()
+
+    def test_an_empty_tier_has_no_line_so_its_click_opens_the_tab(self):
+        # The one exception to single = locate: nothing in the bake to show.
+        loc, w = self._build()
+        try:
+            self.assertIsNone(w._navigator.regionForKey("tier.init"))
+            self.assertTrue(w.locate("tier.init"))
+            self.assertEqual(self._tab(w), "Init")
+        finally:
+            w.deleteLater()
+
+    def test_activation_opens_the_authoring_tab(self):
+        loc, w = self._build_with_var()
+        try:
+            w._navigator._on_item_activated(
+                w._navigator._item_for_key("tier.init"), 0)
+            self.assertEqual(self._tab(w), "Init")
+            seen = []
+            w.revealVariableRequested.connect(seen.append)
+            w._navigator._on_item_activated(
+                w._navigator._item_for_key("var.board"), 0)
+            self.assertEqual(seen, ["board"])
+            attrs = []
+            w.revealAttributesRequested.connect(attrs.append)
+            self.assertTrue(w.select("class.attrs_in"))
+            self.assertEqual(attrs, ["Inputs"])
+        finally:
+            w.deleteLater()
+
+    def test_a_variable_row_resolves_to_its_own_line(self):
+        loc, w = self._build_with_var()
+        try:
+            region = w._navigator.regionForKey("var.board")
+            self.assertIsNotNone(region, "the variable row carries no line")
+            line = w._api_view.source().split("\n")[region["start"]]
+            self.assertIn("'board'", line)
+            self.assertTrue(w.locate("var.board"))
+            self.assertEqual(self._tab(w), "API")
+            self.assertEqual(w._api_view.textCursor().block().blockNumber(),
+                             region["start"])
+        finally:
+            w.deleteLater()
+
+    def test_a_click_on_a_generated_line_opens_a_railed_outline(self):
+        loc, w = self._build()
+        w.resize(1000, 600)
+        w.show()
+        _QAPP.processEvents()
+        try:
+            total = sum(w._nav_split.sizes())
+            w._nav_split.setSizes([total, 0])
+            self.assertEqual(w._nav_split.sizes()[1], 0)
+            decl = [r for r in w._api_view.regions()
+                    if r["kind"] == "class_decl"][0]
+            w._api_view.regionActivated.emit(decl)
+            self.assertGreater(w._nav_split.sizes()[1], 0)
+            self.assertEqual(w._navigator.currentKey(), "class.decl")
+        finally:
+            w.deleteLater()
+
     def test_blessed_insert_appends_to_the_methods_source(self):
         loc, w = self._build()
         try:

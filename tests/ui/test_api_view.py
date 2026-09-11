@@ -1121,6 +1121,40 @@ class TestBodiesNeverOpenHere(unittest.TestCase):
         finally:
             v.deleteLater()
 
+    def test_the_rail_keeps_its_managed_mark_after_lines_are_added_above(self):
+        # Return on a blank line above the class pushes every rail down. The
+        # mark used to compare against the BAKE's line number and so fell off
+        # the moved rail: the call text lost its wash while the placeholder
+        # stayed (the averagePosition_broken.mpn report).
+        try:
+            from PySide6.QtGui import QKeyEvent
+            from PySide6.QtCore import QEvent
+        except Exception:
+            from PySide2.QtGui import QKeyEvent
+            from PySide2.QtCore import QEvent
+        from mpynode.ui.qt_wrapper import Qt as _Qt
+
+        _node, v = self._view()
+        try:
+            rail = self._rail(v)
+            before = v._rail_of(rail)
+            self.assertTrue(v._marks_generated(rail, before))
+            doc = v.document()
+            blank = [i for i in range(rail["start"])
+                     if not doc.findBlockByNumber(i).text().strip()][0]
+            cur = v.textCursor()
+            cur.setPosition(doc.findBlockByNumber(blank).position())
+            v.setTextCursor(cur)
+            for _ in range(3):
+                v.keyPressEvent(QKeyEvent(QEvent.KeyPress, _Qt.Key_Return,
+                                          _Qt.NoModifier, "\r"))
+            live = [b for b, r in v._placeholders.items() if r is rail][0]
+            self.assertEqual(live, before + 3)
+            self.assertTrue(v._marks_generated(rail, live))
+            self.assertFalse(v._marks_generated(rail, before))
+        finally:
+            v.deleteLater()
+
     # -- nothing opens ----------------------------------------------------
 
     def test_nothing_expands(self):
@@ -1313,7 +1347,10 @@ class TestPersistentValuesAreManagedPlaceholders(unittest.TestCase):
 @unittest.skipUnless(_qapp_available(), "Qt unavailable")
 class TestAClickGoesWhereTheThingIsAuthored(unittest.TestCase):
     """A generated block is a read-only rendering of something the user edits
-    somewhere else. Clicking it goes THERE.
+    somewhere else. Clicking it LOCATES it: the view reports the region and
+    the host lights the Outline row (opening the pane if it was railed away).
+    Nothing navigates on a left click; the right-click Go to does (2026-09:
+    single = locate, double / right-click = go edit).
 
     The regression this pins: the fold marker used to swallow the click, so
     ``‹ 80 lines ›`` -- the one part of the rail a user would aim at to reach
@@ -1407,34 +1444,49 @@ class TestAClickGoesWhereTheThingIsAuthored(unittest.TestCase):
         finally:
             v.deleteLater()
 
-    def test_an_attribute_block_routes_to_the_attributes_tab(self):
-        for kind, label in (("attrs_in", "Inputs"), ("attrs_out", "Outputs")):
-            _node, v = self._view()
-            seen = []
-            v.attributesActivated.connect(seen.append)
-            try:
-                region = [r for r in v.regions() if r["kind"] == kind][0]
-                self._click(v, self._mid_of(v, region["start"] + 1))
-                self.assertEqual(seen, [label])
-            finally:
-                v.deleteLater()
-
-    def test_the_variables_block_routes_even_off_its_comment_line(self):
-        # The comment line names no variable. It still means "variables", so
-        # swallowing the click there would make the block feel half-dead.
+    def test_a_left_click_locates_variables_and_attributes_too(self):
+        # They used to open their tabs on a click while an expression did not;
+        # now every generated line answers the same way -- the region, for the
+        # host to highlight -- and the right-click Go to is the way there.
         _node, v = self._view()
         _node.set_variable("board", [1, 2, 3], persistent=True)
         v.refresh(force=True)
         _QAPP.processEvents()
-        seen = []
-        v.variableActivated.connect(seen.append)
+        regions, vars_seen, attrs_seen = [], [], []
+        v.regionActivated.connect(regions.append)
+        v.variableActivated.connect(vars_seen.append)
+        v.attributesActivated.connect(attrs_seen.append)
         try:
-            region = [r for r in v.regions() if r["kind"] == "vars"][0]
-            self._click(v, self._mid_of(v, region["start"]))
-            self.assertEqual(seen, [""])
-            del seen[:]
-            self._click(v, self._mid_of(v, region["start"] + 1))
-            self.assertEqual(seen, ["board"])
+            vars_r = [r for r in v.regions() if r["kind"] == "vars"][0]
+            attrs = [r for r in v.regions() if r["kind"] == "attrs_in"][0]
+            self._click(v, self._mid_of(v, vars_r["start"] + 1))
+            self._click(v, self._mid_of(v, attrs["start"] + 1))
+            self.assertEqual([r["kind"] for r in regions], ["vars", "attrs_in"])
+            self.assertEqual(vars_seen, [])
+            self.assertEqual(attrs_seen, [])
+        finally:
+            v.deleteLater()
+
+    def test_go_to_still_reaches_variables_and_attributes(self):
+        _node, v = self._view()
+        _node.set_variable("board", [1, 2, 3], persistent=True)
+        v.refresh(force=True)
+        _QAPP.processEvents()
+        vars_seen, attrs_seen = [], []
+        v.variableActivated.connect(vars_seen.append)
+        v.attributesActivated.connect(attrs_seen.append)
+        try:
+            vars_r = [r for r in v.regions() if r["kind"] == "vars"][0]
+            line = v.document().findBlockByNumber(vars_r["start"] + 1).text()
+            text, fire = v._go_to_target(vars_r, line)
+            self.assertEqual(text, "Go to Variables · board")
+            fire()
+            attrs = [r for r in v.regions() if r["kind"] == "attrs_in"][0]
+            text, fire = v._go_to_target(attrs, "")
+            self.assertEqual(text, "Go to Inputs")
+            fire()
+            self.assertEqual(vars_seen, ["board"])
+            self.assertEqual(attrs_seen, ["Inputs"])
         finally:
             v.deleteLater()
 
