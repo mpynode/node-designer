@@ -3,7 +3,7 @@
 Proves the assistant panel exposes a PUBLIC entry point that turns a native
 compile hand-off (from ui.llm.compile_bridge) into a pre-filled starter prompt in
 the input box, WITHOUT sending it (the first compile always requires a human
-press). autosend defaults False.
+press).
 
 Follows the QApplication-first ordering the other Qt tests use: the app must
 exist before maya.standalone.initialize, else QWidget construction crashes.
@@ -70,7 +70,7 @@ class TestSeedCompileContext(unittest.TestCase):
         try:
             h = self._handoff()
             expected = compile_bridge.starter_prompt(h)
-            returned = p.seed_compile_context(h)  # autosend defaults False
+            returned = p.seed_compile_context(h)
             self.assertEqual(returned, expected)
             self.assertEqual(p._input.toPlainText(), expected)
             # nothing was sent: the report block is embedded in the draft

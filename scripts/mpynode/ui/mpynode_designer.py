@@ -1066,26 +1066,21 @@ class NDMainWindow(QMainWindow):
 
     def _route_compile_handoff(self, handoff) -> None:
         """Seed the assistant panel with a compile hand-off from the compile
-        dialog's "Fix with AI" button. Reveals the panel and pre-fills the
-        starter prompt; whether it sends immediately follows the
-        ``auto_recompile`` preference (else the user reviews and presses send --
-        the first compile always requires a human press)."""
+        dialog's "Fix with AI" button: reveal the panel and pre-fill the
+        starter prompt. The user reviews it and presses send -- always. (An
+        ``auto_recompile`` preference used to send it unread; removed 2026-09:
+        it never re-ran a compile, which is what its name and tooltip
+        promised, and skipping the review bought nothing.)"""
         panel = getattr(self, "_assistant_panel", None)
         if panel is None:
             return
-        try:
-            from mpynode.ui import preferences
-
-            autosend = bool(preferences.get_pref("auto_recompile", False))
-        except Exception:
-            autosend = False
         try:
             panel.setVisible(True)
             panel.raise_()
         except Exception:
             pass
         try:
-            panel.seed_compile_context(handoff, autosend=autosend)
+            panel.seed_compile_context(handoff)
         except Exception as exc:  # never let a hand-off crash the designer
             import sys
 

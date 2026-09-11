@@ -291,10 +291,6 @@ DEFAULT_PREFS: dict[str, Any] = {
     # of VALID_SCRIPT_TAB_STYLES (see script_tab_style()). Read live by
     # script_tab_content.py; changing it updates open editors with no restart.
     "script_tab_style": "boxed",
-    # Compile-with-AI: auto-run the assistant's follow-up recompiles without a
-    # fresh human press. The FIRST compile ALWAYS requires one; this governs
-    # only the AI's iterations. OFF so the user stays in the loop by default.
-    "auto_recompile": False,
     # AI C++ optimizer wall-clock budget for ONE rewrite/fix model call. The
     # 600s/2400s numbers are arbitrary, so the user can DISABLE the timeout
     # entirely: the call then runs unbounded (only Cancel stops it) with a

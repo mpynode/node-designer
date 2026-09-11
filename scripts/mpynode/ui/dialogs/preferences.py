@@ -262,15 +262,6 @@ class NDPreferencesDialog(QDialog):
         )
         tab_row.addWidget(self._script_tab_style_combo, stretch=1)
         nd.addLayout(tab_row)
-        self._auto_recompile_check = QCheckBox(
-            "Auto-recompile during Compile with AI")
-        self._auto_recompile_check.setToolTip(
-            "When the AI assistant is helping compile a node, let it re-run the "
-            "next compile automatically as it iterates, without a fresh press. "
-            "The FIRST compile always needs a human press; this only governs the "
-            "AI's follow-up recompiles. Off = confirm each recompile."
-        )
-        nd.addWidget(self._auto_recompile_check)
         nd.addStretch(1)
 
         # ---- AI Optimization ---------------------------------------------
@@ -684,8 +675,6 @@ class NDPreferencesDialog(QDialog):
                 tab_idx = i
                 break
         self._script_tab_style_combo.setCurrentIndex(tab_idx)
-        self._auto_recompile_check.setChecked(
-            bool(preferences.get_pref("auto_recompile", False)))
         self._optimize_timeout_check.setChecked(
             bool(preferences.get_pref("optimize_timeout_enabled", True)))
         self._optimize_timeout_edit.setText(
@@ -945,8 +934,6 @@ class NDPreferencesDialog(QDialog):
             "script_tab_style",
             self._SCRIPT_TAB_STYLE_OPTIONS[tab_style_idx][1],
         )
-        preferences.set_pref(
-            "auto_recompile", self._auto_recompile_check.isChecked())
         preferences.set_pref(
             "optimize_timeout_enabled",
             self._optimize_timeout_check.isChecked(),

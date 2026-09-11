@@ -268,13 +268,9 @@ class TestScriptAreaWiring(unittest.TestCase):
             dlg._on_save_clicked()
             self.assertEqual(preferences.get_pref("script_tab_style"), "classic")
 
-            # auto-recompile checkbox loads + saves too
-            preferences.set_pref("auto_recompile", True)
-            dlg._load_into_widgets()
-            self.assertTrue(dlg._auto_recompile_check.isChecked())
-            dlg._auto_recompile_check.setChecked(False)
-            dlg._on_save_clicked()
-            self.assertFalse(preferences.get_pref("auto_recompile"))
+            # The "Auto-recompile during Compile with AI" checkbox is gone
+            # (2026-09): the Node Designer page ends with the tab-style combo.
+            self.assertFalse(hasattr(dlg, "_auto_recompile_check"))
         finally:
             dlg.deleteLater()
 

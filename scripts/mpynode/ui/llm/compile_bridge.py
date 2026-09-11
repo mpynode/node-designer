@@ -152,7 +152,7 @@ def _wants_attention(row):
 # --------------------------------------------------------------------------- #
 def classify(result):
     """Bucket a compile result's rows so callers (the compile dialog, the
-    orchestrator, the auto-recompile loop) share ONE definition of what
+    orchestrator) share ONE definition of what
     happened. Pure; JSON-safe lists of the original row dicts.
 
     Returns:

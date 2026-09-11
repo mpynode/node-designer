@@ -812,25 +812,19 @@ class NDAssistantPanel(QWidget):
         except Exception:
             pass
 
-    def seed_compile_context(self, handoff, autosend=False):
+    def seed_compile_context(self, handoff):
         """Public entry point for the "Compile with AI" concierge (WS2).
 
         Pre-fill the input with a starter prompt built from a native-compile
-        hand-off (see ``ui.llm.compile_bridge.build_handoff``), so the user can
-        review/edit before sending -- or, with ``autosend=True`` (used by the
-        auto-recompile loop), send it immediately. Returns the text placed in
-        the input. Never raises on a malformed hand-off: it degrades to whatever
-        text ``compile_bridge`` produces.
-
-        The first compile always requires a human press; this only SEEDS the
-        conversation. Whether the assistant then iterates without further presses
-        is governed by the ``auto_recompile`` preference at the call site."""
+        hand-off (see ``ui.llm.compile_bridge.build_handoff``) so the user can
+        review/edit before pressing send. Returns the text placed in the input.
+        Never raises on a malformed hand-off: it degrades to whatever text
+        ``compile_bridge`` produces. It only SEEDS the conversation: nothing is
+        sent, and nothing recompiles, without a human press."""
         from mpynode.ui.llm import compile_bridge
 
         text = compile_bridge.starter_prompt(handoff)
         self._set_input(text)
-        if autosend:
-            self._on_send()
         return text
 
     def _on_clear(self):

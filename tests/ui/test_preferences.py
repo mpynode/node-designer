@@ -304,18 +304,12 @@ class TestPreferencesModule(unittest.TestCase):
         self.assertEqual(preferences.script_tab_style(),
                          preferences.DEFAULT_SCRIPT_TAB_STYLE)
 
-    def test_auto_recompile_default_false(self):
+    def test_auto_recompile_is_gone(self):
+        # Removed 2026-09: it never re-ran a compile (its name and tooltip
+        # promised one); it only sent the Fix-with-AI prompt unread.
         from mpynode.ui import preferences
 
-        self.assertFalse(preferences.get_pref("auto_recompile"))
-
-    def test_auto_recompile_round_trips(self):
-        from mpynode.ui import preferences
-
-        preferences.set_pref("auto_recompile", True)
-        self.assertTrue(preferences.get_pref("auto_recompile"))
-        preferences.set_pref("auto_recompile", False)
-        self.assertFalse(preferences.get_pref("auto_recompile"))
+        self.assertNotIn("auto_recompile", preferences.DEFAULT_PREFS)
 
     def test_script_tab_style_keys_match_stylesheet_map(self):
         """The validated pref values and the stylesheet map keys must agree, or
