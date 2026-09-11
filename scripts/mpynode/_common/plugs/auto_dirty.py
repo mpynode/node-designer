@@ -393,6 +393,18 @@ def _dispatch_dirty_now(dest_node_name: str) -> None:
             ntype = _cmds_nt.nodeType(dest_node_name)
         except Exception:
             ntype = None
+        # A SUSPENDED destination -- nodeState Has No Effect / Blocking, which
+        # Convert to C++ sets on the idle Python node and a user may set by
+        # hand -- does not evaluate, so there is nothing to flush. Dirtying it
+        # anyway was the converted Combo Correctives node's remaining per-frame
+        # cost: 42 dispatches a frame in Parallel, each re-dirtying the whole
+        # node (~8,900 setDependentsDirty calls a frame) for zero deforms. The
+        # source callbacks stay installed, so un-suspending resumes at once.
+        try:
+            if _cmds_nt.getAttr(dest_node_name + ".nodeState"):
+                return
+        except Exception:
+            pass
         try:
             from maya import cmds
 
@@ -516,7 +528,20 @@ def _install_source_callback(source_node_obj: om.MObject, dest_node_obj: om.MObj
     if dest_uuid is not None and key in _source_callbacks:
         return  # already installed
 
+    # Taken while the destination is known to exist. Its ``isValid()`` is the
+    # only safe question to ask about the destination at fire time: the source
+    # keeps this callback after the destination is deleted (nothing removes
+    # it), and with undo off the node is gone for real -- the first source
+    # dirty after `delete` then took mayapy down in MFnDependencyNode::name
+    # (access violation) resolving the stale MObject's name.
+    dest_handle = om.MObjectHandle(dest_node_obj)
+
     def _cb(_src_node, _plug, _client):
+        try:
+            if not dest_handle.isValid():
+                return
+        except Exception:
+            return
         # Resolve dest NAME at fire time, as a UNIQUE DAG path: an ambiguous
         # short name (duplicated rig) would route the flush to the harmful
         # ``translateX`` fallback. See :func:`_live_node_name`.
