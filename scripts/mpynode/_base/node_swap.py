@@ -576,6 +576,70 @@ def _restore_lod(py):
         pass
 
 
+def _snapshot_state(py):
+    """Idle-safety for EVERY converted node: snapshot ``py.nodeState`` into a
+    hidden ``mpyPreConvertNodeState`` attr, then SUSPEND the node -- Has No
+    Effect for a deformer (Maya refuses Blocking on a geometryFilter), Blocking
+    otherwise (``commands._eval_block_state``).
+
+    Moving the output wiring is not enough. The Evaluation Manager evaluates a
+    node whose inputs animate whether or not anything reads its outputs:
+    measured on the Combo Correctives demo (1306 verts, 167 targets), the
+    converted mPyBlendShape still deformed 8 frames of 8 in Parallel mode --
+    the same 142 ms/frame as before the convert -- while DG mode showed 0.
+    Playback runs under the EM, so the convert bought nothing until the node
+    was suspended.
+
+    Returns ``True`` when suspended, ``False`` when ``nodeState`` is not
+    settable (connected / locked): then NO snapshot is written (there is
+    nothing to restore) so the caller can report that the idle node still
+    evaluates instead of leaving a misleading snapshot behind."""
+    import maya.cmds as mc
+    from mpynode._base.commands import _eval_block_state
+
+    plug = py + ".nodeState"
+    try:
+        cur = mc.getAttr(plug)
+    except Exception:
+        return False
+    if not mc.getAttr(plug, settable=True):
+        return False
+    if not mc.attributeQuery("mpyPreConvertNodeState", node=py, exists=True):
+        mc.addAttr(py, longName="mpyPreConvertNodeState", attributeType="long",
+                   hidden=True)
+    try:
+        mc.setAttr(py + ".mpyPreConvertNodeState", int(cur))
+        mc.setAttr(plug, _eval_block_state(py))
+    except Exception:
+        if mc.attributeQuery("mpyPreConvertNodeState", node=py, exists=True):
+            try:
+                mc.deleteAttr(py + ".mpyPreConvertNodeState")
+            except Exception:
+                pass
+        return False
+    return True
+
+
+def _restore_state(py):
+    """Restore ``py.nodeState`` from ``mpyPreConvertNodeState`` (if present) and
+    remove the snapshot attr. No-op when the attr is absent: a transform's
+    inputs-only convert never suspends, and a convert made before suspension
+    existed left the node at whatever state it had."""
+    import maya.cmds as mc
+
+    if not mc.attributeQuery("mpyPreConvertNodeState", node=py, exists=True):
+        return
+    try:
+        mc.setAttr(py + ".nodeState",
+                   int(mc.getAttr(py + ".mpyPreConvertNodeState")))
+    except Exception:
+        pass
+    try:
+        mc.deleteAttr(py + ".mpyPreConvertNodeState")
+    except Exception:
+        pass
+
+
 def attach_compiled(src, compiled_type):
     """Coexist-convert ``src`` (interpreted) to a hidden ``compiled_type`` C++
     sibling WITHOUT deleting ``src``. Snapshots static values, DUPLICATES the
@@ -591,7 +655,12 @@ def attach_compiled(src, compiled_type):
 
     A DAG TRANSFORM gets an INPUTS-ONLY convert -- the outputs are deliberately
     left driving downstream, because its children follow parentage rather than an
-    edge (see :func:`moves_outputs`). Returns ``(cpp_name, dropped)``."""
+    edge (see :func:`moves_outputs`).
+
+    Every node whose outputs DID move is then SUSPENDED (``nodeState``: Has No
+    Effect for a deformer, Blocking otherwise; snapshotted for exact revert),
+    because the Evaluation Manager keeps evaluating an idle node whose inputs
+    animate -- see :func:`_snapshot_state`. Returns ``(cpp_name, dropped)``."""
     import maya.cmds as mc
 
     _freeze_live_state(src)
@@ -617,6 +686,14 @@ def attach_compiled(src, compiled_type):
             dropped.append(
                 src + ".lodVisibility (not settable -- idle Python locator "
                 "still draws; hide it manually)")
+    if moves_outputs(src):
+        # Disconnected outputs do NOT idle the node under the Evaluation
+        # Manager (see _snapshot_state). A transform keeps driving its
+        # children through parentage, so its inputs-only convert stays live.
+        if not _snapshot_state(src):
+            dropped.append(
+                src + ".nodeState (not settable -- the idle Python node still "
+                "evaluates; set it to Has No Effect / Blocking by hand)")
     try:
         mc.lockNode(cpp, lock=True)
     except Exception:
@@ -670,7 +747,8 @@ def detach_compiled(cpp, py):
     # orphaned, which is exactly the leak this removes).
     relay = _opm_relay(cpp)
     dropped = move_outputs(cpp, py) if moves_outputs(py) else []
-    _restore_lod(py)  # restores lodVisibility + removes the snapshot (locators)
+    _restore_lod(py)    # restores lodVisibility + removes the snapshot (locators)
+    _restore_state(py)  # restores nodeState + removes the snapshot (every convert)
     if mc.attributeQuery("mpyCompiledLink", node=py, exists=True):
         try:
             mc.deleteAttr(py + ".mpyCompiledLink")

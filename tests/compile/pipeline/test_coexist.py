@@ -67,6 +67,37 @@ class TestAttachCompiledDG(unittest.TestCase):
         # cpp is locked against casual deletion.
         self.assertEqual(mc.lockNode(cpp, q=True, lock=True), [True])
         self.assertEqual(dropped, [])
+        # ... and the idle Python node is SUSPENDED (Blocking: not a
+        # deformer), with its prior state snapshotted for the revert.
+        self.assertEqual(mc.getAttr(src + ".nodeState"), 2)
+        self.assertEqual(mc.getAttr(src + ".mpyPreConvertNodeState"), 0)
+
+    def test_detach_restores_the_state_the_node_had_before(self):
+        # A node the user had ALREADY set to Has No Effect comes back as such,
+        # not as Normal: the snapshot is what makes the revert exact.
+        from mpynode._base.node_swap import attach_compiled, detach_compiled
+
+        src = _abc_net("cxs")
+        mc.setAttr(src + ".nodeState", 1)
+        cpp, _dropped = attach_compiled(src, "stubCompiled")
+        self.assertEqual(mc.getAttr(src + ".nodeState"), 2)
+        detach_compiled(cpp, src)
+        self.assertEqual(mc.getAttr(src + ".nodeState"), 1)
+        self.assertFalse(
+            mc.attributeQuery("mpyPreConvertNodeState", node=src, exists=True))
+
+    def test_attach_reports_when_node_state_is_not_settable(self):
+        # Connected nodeState: nothing can be set, nothing is snapshotted, and
+        # the caller is TOLD the idle node still evaluates.
+        from mpynode._base.node_swap import attach_compiled
+
+        src = _abc_net("cxn")
+        drv = mc.createNode("network"); mc.addAttr(drv, ln="st", at="short")
+        mc.connectAttr(drv + ".st", src + ".nodeState")
+        _cpp, dropped = attach_compiled(src, "stubCompiled")
+        self.assertTrue(any(".nodeState" in d for d in dropped), dropped)
+        self.assertFalse(
+            mc.attributeQuery("mpyPreConvertNodeState", node=src, exists=True))
 
 
 class TestDetachCompiledDG(unittest.TestCase):
@@ -243,6 +274,11 @@ class TestAttachCompiledDeformer(unittest.TestCase):
         self.assertEqual(
             [mc.getAttr("%s.weightList[0].weights[%d]" % (cpp, i))
              for i in (0, 3, 7)], [0.25, 0.25, 0.25])
+        # ... and the idle Python deformer is suspended with Has No Effect --
+        # Maya refuses Blocking on a geometryFilter -- so the Evaluation
+        # Manager stops deforming it every frame.
+        self.assertEqual(mc.getAttr(src + ".nodeState"), 1)
+        self.assertEqual(mc.getAttr(cpp + ".nodeState"), 0)
 
     def test_detach_restores_the_python_deformer_in_the_chain(self):
         from mpynode._base.node_swap import attach_compiled, detach_compiled
@@ -256,6 +292,9 @@ class TestAttachCompiledDeformer(unittest.TestCase):
         self.assertEqual(
             mc.listConnections(src + ".outputGeometry", plugs=True,
                                d=True, s=False), downstream)
+        self.assertEqual(mc.getAttr(src + ".nodeState"), 0, "revert un-suspends")
+        self.assertFalse(
+            mc.attributeQuery("mpyPreConvertNodeState", node=src, exists=True))
 
 
 class TestTransformCoexist(unittest.TestCase):
@@ -297,6 +336,11 @@ class TestTransformCoexist(unittest.TestCase):
         cpp, dropped = attach_compiled(xf, "mPyTransform")
 
         self.assertEqual(dropped, [])
+        # Inputs-only: the transform keeps driving its children, so it is NOT
+        # suspended and nothing is snapshotted.
+        self.assertEqual(mc.getAttr(xf + ".nodeState"), 0)
+        self.assertFalse(
+            mc.attributeQuery("mpyPreConvertNodeState", node=xf, exists=True))
         self.assertEqual(mc.listRelatives(cpp, parent=True), ["rigRoot"],
                          "the sibling belongs beside the node it mirrors")
         # input duplicated onto the sibling, source keeps it ...

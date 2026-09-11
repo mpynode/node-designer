@@ -354,14 +354,18 @@ class TestChunkUndo(unittest.TestCase):
         up, down = self._make()
         run_undoable(build_convert_to_cpp_command("cu", "mPyNode"))
         cpp = linked_compiled_node("cu")
+        self.assertEqual(mc.getAttr("cu.nodeState"), 2, "converted -> Blocking")
         mc.undo()
-        # cpp gone, link gone, outputs BACK on the Python node.
+        # cpp gone, link gone, outputs BACK on the Python node, state back.
         self.assertFalse(mc.objExists(cpp))
         self.assertFalse(is_converted("cu"))
         self.assertFalse(
             mc.attributeQuery("mpyCompiledLink", node="cu", exists=True))
         self.assertTrue(mc.isConnected("cu.outC", down + ".i"))
         self.assertTrue(mc.isConnected(up + ".o", "cu.inA"))
+        self.assertEqual(mc.getAttr("cu.nodeState"), 0)
+        self.assertFalse(
+            mc.attributeQuery("mpyPreConvertNodeState", node="cu", exists=True))
 
     def test_revert_undo_restores_converted(self):
         from mpynode._base.commands import (

@@ -240,6 +240,12 @@ def _on_time_change(_unused_client_data):
 
         for node in cmds.ls(type=MPySkinCluster.NODE_NAME) or []:
             try:
+                # A suspended node -- converted to C++, or Has No Effect /
+                # Blocking by hand -- has nothing to re-evaluate; touching it
+                # only re-dirties a node the Evaluation Manager would then
+                # evaluate for nothing.
+                if cmds.getAttr(node + ".nodeState"):
+                    continue
                 env = cmds.getAttr(node + ".envelope")
                 cmds.setAttr(node + ".envelope", env)
             except Exception:
