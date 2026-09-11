@@ -37,6 +37,18 @@ import maya.OpenMayaMPx as ommpx
 from mpynode._api1 import helpers
 from mpynode._common.compute.compute import run_generic_compute
 from mpynode._common.compute.expression import compile_expression
+from mpynode._common.plugs import dirty_affects as _dirty_affects
+
+
+# The non-user plugs whose change re-dirties the output. User inputs come off
+# _inputAttrs through dirty_affects.api1_dirty_gate, cached on the instance.
+_STATIC_TRIGGERS = frozenset((
+    "_computeSource", "envelope", "_storedVarsData", "_inputAttrs",
+    "_outputAttrs", "matrix", "bindPreMatrix", "weightList",
+    # A weightList[v].weights[j] child edit (Component Editor /
+    # Paint Skin Weights) reports the attr name 'weights'.
+    "weights",
+))
 
 
 class MPySkinCluster(ommpx.MPxSkinCluster):
@@ -147,37 +159,17 @@ class MPySkinCluster(ommpx.MPxSkinCluster):
     def setDependentsDirty(self, plug, affected_plugs):
         """Mark outputGeom dirty whenever user-driven inputs change."""
         try:
-            attr_obj = plug.attribute()
-            attr_fn = om.MFnAttribute(attr_obj)
-            plug_name = attr_fn.name()
+            plug_name = om.MFnAttribute(plug.attribute()).name()
         except Exception:
             return
-
-        triggers = {
-            "_computeSource",
-            "envelope",
-            "_storedVarsData",
-            "_inputAttrs",
-            "_outputAttrs",
-            "matrix",
-            "bindPreMatrix",
-            "weightList",
-            # A weightList[v].weights[j] child edit (Component Editor /
-            # Paint Skin Weights) reports the attr name 'weights'.
-            "weights",
-        }
-        # Memoized on the raw _inputAttrs string: Maya re-enters this override
-        # several times per plug write and the json decode was re-run every
-        # time. Falls back to the static literals above on any failure, exactly
-        # as the inline decode did.
-        try:
-            from mpynode._common.plugs import dirty_affects as _dirty_affects
-
-            triggers.update(
-                _dirty_affects.api1_user_input_names(self.thisMObject()))
-        except Exception:
-            pass
-        if plug_name not in triggers:
+        # The hot path: ~3,800 calls a frame on the Combo Correctives demo. A
+        # SUSPENDED node (nodeState Has No Effect / Blocking -- Convert to C++
+        # sets it, a user may too) forwards nothing; a live one gets its user
+        # input names off the instance cache. No plug is read here.
+        user_inputs = _dirty_affects.api1_dirty_gate(self, plug_name)
+        if user_inputs is None:
+            return
+        if plug_name not in _STATIC_TRIGGERS and plug_name not in user_inputs:
             return
 
         try:

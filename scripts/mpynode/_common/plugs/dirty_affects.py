@@ -62,6 +62,72 @@ def invalidate_all() -> None:
 _api1_trigger_memo: dict = {}
 
 
+# Cached on the node INSTANCE (``node._mpy_dirty_gate``) as
+# {"suspended": bool, "names": frozenset}. DROPPED, not updated, when the
+# nodeState / _inputAttrs plug passes through, so the next call re-reads the
+# committed value rather than whatever the plug holds mid-set.
+_GATE_ATTR = "_mpy_dirty_gate"
+
+
+def _api1_node_suspended(node_mobject) -> bool:
+    """``nodeState`` != Normal, read off the static ``MPxNode::state`` attribute
+    (API 1.0). Never raises; an unreadable state reads as live."""
+    try:
+        import maya.OpenMaya as om1
+        import maya.OpenMayaMPx as ommpx
+
+        return om1.MPlug(node_mobject, ommpx.cvar.MPxNode_state).asShort() != 0
+    except Exception:
+        return False
+
+
+def api1_dirty_gate(node, plug_name: str):
+    """The cheap front of an api1 deformer's ``setDependentsDirty``.
+
+    Returns ``None`` when the node is SUSPENDED (``nodeState`` Has No Effect /
+    Blocking -- Convert to C++ sets it on the idle Python node, a user may set
+    it by hand): a node that does not evaluate has no user-input dirtiness to
+    forward, so the override returns at once. Otherwise returns the frozenset
+    of user input names off ``_inputAttrs``.
+
+    Both facts are cached ON THE NODE INSTANCE, so the hot path reads no plug
+    at all. Maya passes the ``nodeState`` and ``_inputAttrs`` plugs through
+    this very override when they change (measured: a ``setAttr`` on either
+    arrives here under that name), and that is when the cache is dropped -- to
+    be rebuilt on the next call, once the new value is committed. An instance
+    attribute dies with its node, so a reused MObject hash cannot hand a new
+    node a stale set, which is the staleness that kept
+    :func:`api1_user_input_names` re-reading the plug on every call.
+
+    Why it matters: on the Combo Correctives demo (1306 verts, 167 targets)
+    the three overrides ran ~3,800 times a frame in DG mode and ~8,900 in
+    Parallel, at ~21 us each -- ~100 ms/frame on a converted node that did
+    ZERO deforms, and ~45 of the 79 ms/frame of the live Python node. Through
+    the gate a call costs about a microsecond.
+    """
+    if plug_name == "nodeState" or plug_name == "_inputAttrs":
+        try:
+            setattr(node, _GATE_ATTR, None)
+        except Exception:
+            pass
+        return frozenset()
+    cache = getattr(node, _GATE_ATTR, None)
+    if cache is None:
+        try:
+            mobject = node.thisMObject()
+            cache = {"suspended": _api1_node_suspended(mobject),
+                     "names": frozenset(api1_user_input_names(mobject))}
+        except Exception:
+            cache = {"suspended": False, "names": frozenset()}
+        try:
+            setattr(node, _GATE_ATTR, cache)
+        except Exception:
+            pass
+    if cache["suspended"]:
+        return None
+    return cache["names"]
+
+
 def api1_user_input_names(node_mobject) -> tuple:
     """User INPUT names off an api1 node's ``_inputAttrs``, memoized.
 
@@ -83,6 +149,12 @@ def api1_user_input_names(node_mobject) -> tuple:
 
     Returns ``()`` on any failure, so a caller's trigger set degrades to its
     static literals exactly as it did when the decode was inline.
+
+    The three overrides no longer call this per re-entry: they go through
+    :func:`api1_dirty_gate`, which caches the names on the node INSTANCE and
+    only comes back here when Maya has passed the ``_inputAttrs`` plug through
+    the override -- so the per-call plug read this memo still pays is now paid
+    once per edit of the map, not once per dirty propagation.
     """
     import maya.OpenMaya as om1
     try:

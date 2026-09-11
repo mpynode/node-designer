@@ -16,6 +16,7 @@ mpy_skin_cluster already had it.
 from __future__ import annotations
 
 import unittest
+from unittest import mock
 
 import maya.cmds as mc
 
@@ -68,6 +69,115 @@ class TestExpressionEditReevaluatesDeformer(unittest.TestCase):
         )
         # Must re-evaluate to the new value, not the stale cached 5.0.
         self.assertAlmostEqual(self._vtx_y(plane), 10.0, places=3)
+
+
+class TestSuspendedDirtyGate(unittest.TestCase):
+    """``dirty_affects.api1_dirty_gate``: a suspended deformer forwards no
+    dirtiness and reads no plug on the hot path; un-suspending resumes; the
+    cached user-input names follow ``_inputAttrs``. Measured need: ~3,800 calls
+    a frame on a converted mPyBlendShape, ~21 us each, with zero deforms."""
+
+    def setUp(self):
+        mc.file(new=True, force=True)
+        ensure_plugins_loaded()
+
+    def _deformer(self, name="gateProbe"):
+        from mpynode.wrappers.mpy_deformer import MPyDeformer
+
+        plane = mc.polyPlane(sx=2, sy=2)[0]
+        w = MPyDeformer.create_on(plane, name=name)
+        w.add_input_attr("amount", "float")
+        w.set_compute_expression("pass")
+        return w
+
+    @staticmethod
+    def _stand_in(w):
+        """Carries only what the gate touches: ``thisMObject()`` and an
+        instance dict for the cache."""
+        import maya.OpenMaya as om1
+
+        sel = om1.MSelectionList()
+        sel.add(w.get_name())
+        mob = om1.MObject()
+        sel.getDependNode(0, mob)
+
+        class _Node:
+            def thisMObject(self):
+                return mob
+
+        return _Node()
+
+    def test_a_live_node_reports_its_user_inputs_off_the_cache(self):
+        from mpynode._common.plugs import dirty_affects as da
+
+        w    = self._deformer()
+        node = self._stand_in(w)
+        self.assertIn("amount", da.api1_dirty_gate(node, "amount"))
+        # Second call: served off the instance -- no plug is read.
+        boom = AssertionError("plug read on the hot path")
+        with mock.patch.object(da, "api1_user_input_names", side_effect=boom), \
+             mock.patch.object(da, "_api1_node_suspended", side_effect=boom):
+            self.assertIn("amount", da.api1_dirty_gate(node, "amount"))
+            self.assertIn("amount", da.api1_dirty_gate(node, "envelope"))
+
+    def test_a_suspended_node_forwards_nothing_until_resumed(self):
+        from mpynode._common.plugs import dirty_affects as da
+
+        w    = self._deformer()
+        node = self._stand_in(w)
+        self.assertIsNotNone(da.api1_dirty_gate(node, "amount"))
+        mc.setAttr(w.get_name() + ".nodeState", 1)          # Has No Effect
+        # Maya passes the nodeState plug through the override: the cache drops.
+        self.assertEqual(da.api1_dirty_gate(node, "nodeState"), frozenset())
+        self.assertIsNone(da.api1_dirty_gate(node, "amount"), "suspended -> None")
+        mc.setAttr(w.get_name() + ".nodeState", 0)
+        da.api1_dirty_gate(node, "nodeState")
+        self.assertIn("amount", da.api1_dirty_gate(node, "amount"))
+
+    def test_the_cached_names_follow_input_attrs(self):
+        from mpynode._common.plugs import dirty_affects as da
+
+        w    = self._deformer()
+        node = self._stand_in(w)
+        self.assertNotIn("extra", da.api1_dirty_gate(node, "amount"))
+        w.add_input_attr("extra", "float")
+        # add_input_attr rewrote _inputAttrs; Maya passes that plug through.
+        self.assertEqual(da.api1_dirty_gate(node, "_inputAttrs"), frozenset())
+        self.assertIn("extra", da.api1_dirty_gate(node, "amount"))
+
+    def test_the_real_override_forwards_nothing_while_suspended(self):
+        # End to end on the real node: with nodeState = Has No Effect a
+        # user-input write must add no output plug through Python, and a new
+        # user input declared while live must dirty the output at once.
+        import mpynode._api1.mpy_deformer as df
+
+        w     = self._deformer()
+        name  = w.get_name()
+        added = []
+        real  = df.MPyDeformer.setDependentsDirty
+
+        def spy(self, plug, affected):
+            before = affected.length()
+            real(self, plug, affected)
+            added.append(affected.length() - before)
+
+        with mock.patch.object(df.MPyDeformer, "setDependentsDirty", spy):
+            mc.setAttr(name + ".amount", 1.0)
+            live = sum(added)
+            added.clear()
+            mc.setAttr(name + ".nodeState", 1)
+            added.clear()
+            mc.setAttr(name + ".amount", 2.0)
+            suspended = sum(added)
+            added.clear()
+            mc.setAttr(name + ".nodeState", 0)
+            w.add_input_attr("extra", "float")
+            added.clear()
+            mc.setAttr(name + ".extra", 1.0)
+            resumed = sum(added)
+        self.assertGreater(live, 0, "a live deformer forwards user-input dirtiness")
+        self.assertEqual(suspended, 0, "a suspended deformer forwards nothing")
+        self.assertGreater(resumed, 0, "resumed, and the new input is a trigger")
 
 
 class TestDeclareUserAffectsDirtiesArrayElements(unittest.TestCase):
