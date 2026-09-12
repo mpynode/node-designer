@@ -18,4 +18,4 @@ The warp runs in OBJECT space while the cages are read in WORLD space, so freeze
 
 ## Create + Run demo
 
-Wraps a sphere inside a lightly subdivided cube cage and flexes the cage with a keyed bend -- press play to watch the sphere follow.
+Imports the shipped head and its 25-point cage (`rbf_demo.ma`, beside this template), wraps the head and wires the cage in. The cage carries a keyed `bs_smile` blend shape over frames 0-30 -- press play to watch the head smile with the cage.

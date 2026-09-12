@@ -13229,49 +13229,83 @@ def test_wrap_affine(self):
 
 @maya_demo(label="Wrap a Sphere in a Cube Cage")
 def demo(self):
-    """Attach this wrap to a sphere frozen at the origin, cage it in a lightly
-    subdivided cube, and flex a duplicate of that cube with a keyed bend. Press
-    play: the thin-plate spline carries the sphere along with the cage."""
+    """Wrap the shipped head in its smiling cage. ``rbf_demo.ma``, beside this
+    template, carries ``mesh`` -- a 1306-vertex head, frozen at the origin --
+    and ``cage``, a 25-point cage around it whose ``bs_smile`` blend shape is
+    keyed 0 -> 1 over frames 0-30. The demo imports it, wraps the head with
+    this deformer, takes a copy of the cage at rest for ``restCage`` and wires
+    the animated cage into ``deformCage``. Press play: the head smiles with
+    the cage."""
+    import os
     from maya import cmds as mc
     name = self.get_name()
 
-    # Deformed geometry: a sphere frozen at the world origin (the compute is
+    # The scene is a sibling of this template -- resolved the way the gallery
+    # resolves templates/, so a bundled install finds it too. If it is missing
+    # the demo does nothing rather than half-building a rig.
+    scene = None
+    try:
+        from mpynode._common.util.template_gallery import _bundled_templates_root
+        root = _bundled_templates_root()
+        if root:
+            p = os.path.join(root, "MPyDeformer", "RBF Wrap Deformer",
+                             "rbf_demo.ma")
+            if os.path.isfile(p):
+                scene = p
+    except Exception:
+        scene = None
+    if not scene:
+        return name
+
+    # IMPORT, never open: a demo must not throw away the scene it runs in. The
+    # imported nodes come back by name, so a clash rename (mesh1) is harmless.
+    new = mc.file(scene, i=True, type="mayaAscii", ignoreVersion=True,
+                  returnNewNodes=True, options="v=0;") or []
+    new_t = [n for n in new if mc.objExists(n) and mc.nodeType(n) == "transform"]
+
+    def _pick(prefix):
+        for n in new_t:
+            if n.split("|")[-1].split(":")[-1].startswith(prefix):
+                return n
+        return None
+
+    head, cage = _pick("mesh"), _pick("cage")
+    if head is None or cage is None:
+        return name
+    head_s = mc.listRelatives(head, shapes=True, noIntermediate=True, f=True)[0]
+    cage_s = mc.listRelatives(cage, shapes=True, noIntermediate=True, f=True)[0]
+
+    # The head sits frozen at the world origin in the file (the compute is
     # OBJECT space while the cages are read in WORLD space).
-    sphere = mc.polySphere(r=2.0, sx=24, sy=24, name="wrapDefTarget#")[0]
-    mc.makeIdentity(sphere, apply=True, t=True, r=True, s=True)
-    if name not in (mc.listHistory(sphere) or []):
-        mc.deformer(name, e=True, g=sphere)
+    if name not in (mc.listHistory(head) or []):
+        mc.deformer(name, e=True, g=head)
 
-    # Rest cage: a lightly subdivided cube around the sphere, frozen so its
-    # worldMesh IS its rest.
-    restC = mc.polyCube(w=6, h=6, d=6, sx=2, sy=2, sz=2,
-                        name="wrapDefRestCage#", ch=False)[0]
-    mc.makeIdentity(restC, apply=True, t=True, r=True, s=True)
-    restS = mc.listRelatives(restC, s=True, f=True)[0]
+    # Rest cage: the cage exactly as it stands at frame 0, where the smile is
+    # keyed to 0 -- a static copy, no history, so its worldMesh IS the rest.
+    mc.currentTime(0)
+    rest = mc.duplicate(cage, name="wrapRestCage#")[0]
+    mc.delete(rest, constructionHistory=True)
+    for s in mc.listRelatives(rest, shapes=True, f=True) or []:
+        if mc.getAttr(s + ".intermediateObject"):
+            mc.delete(s)
+    rest_s = mc.listRelatives(rest, shapes=True, noIntermediate=True, f=True)[0]
 
-    # Deform cage: same topology, bent by a keyed nonLinear bend.
-    defC = mc.duplicate(restC, name="wrapDefDeformCage#")[0]
-    defS = mc.listRelatives(defC, s=True, f=True)[0]
-    bend_node, bend_handle = mc.nonLinear(defC, type="bend")[:2]
-    mc.setAttr(bend_handle + ".rotateZ", 90.0)
-    for f, cv in ((1, 0.0), (60, 70.0), (120, 0.0)):
-        mc.setKeyframe(bend_node + ".curvature", t=f, v=cv)
-
-    mc.connectAttr(restS + ".worldMesh[0]", name + ".restCage", f=True)
-    mc.connectAttr(defS + ".worldMesh[0]", name + ".deformCage", f=True)
+    mc.connectAttr(rest_s + ".worldMesh[0]", name + ".restCage", f=True)
+    mc.connectAttr(cage_s + ".worldMesh[0]", name + ".deformCage", f=True)
     mc.setAttr(name + ".envelope", 1.0)
 
-    # Cosmetics: hide the rest cage, show the deform cage as a wireframe control.
+    # Cosmetics: hide the rest cage, show the animated cage as a wireframe
+    # control over the head.
     try:
-        mc.setAttr(restC + ".visibility", False)
-        mc.setAttr(defS + ".overrideEnabled", True)
-        mc.setAttr(defS + ".overrideShading", False)
+        mc.setAttr(rest + ".visibility", False)
+        mc.setAttr(cage_s + ".overrideEnabled", True)
+        mc.setAttr(cage_s + ".overrideShading", False)
     except Exception:
         pass
 
-    mc.playbackOptions(min=1, max=120)
-    mc.currentTime(60)
-    mc.select(sphere, replace=True)
+    mc.playbackOptions(min=0, max=30, ast=0, aet=30)
+    mc.currentTime(30)
+    mc.select(head, replace=True)
     try:
         for _panel in mc.getPanel(type="modelPanel") or []:
             _cam = mc.modelEditor(_panel, query=True, camera=True)
@@ -13300,9 +13334,11 @@ RBF_WRAP_DEF_DESC = (
     "never collapses your geometry onto the origin.\n\n"
     "The warp runs in OBJECT space while the cages are read in WORLD space, "
     "so freeze the deformed mesh at the world origin.\n\n"
-    "**Create + Run demo** wraps a sphere inside a lightly subdivided cube "
-    "cage and flexes the cage with a keyed bend -- press play to watch the "
-    "sphere follow the cage. Compiles to pure C++.\n"
+    "**Create + Run demo** imports the shipped head and its 25-point cage "
+    "(`rbf_demo.ma`, beside this template), wraps the head and wires the "
+    "cage in. The cage carries a keyed `bs_smile` blend shape over frames "
+    "0-30, so press play to watch the head smile with the cage. Compiles to "
+    "pure C++.\n"
 )
 
 
@@ -13388,8 +13424,12 @@ def build_rbf_wrap_deformer():
     from mpynode._common.io.mpn_io import deserialize_node
     from mpynode._common.node_setups import find_demo
 
-    # --- demo check: the authored "Create + Run demo" fabricates the sphere +
-    #     cages and warps on a FRESH deserialized node. ---
+    # The demo imports this from beside the template, so it has to be in place
+    # BEFORE the roundtrip runs it -- otherwise the demo bails and demo_ok fails.
+    assets_ok = _copy_asset("rbf_demo.ma", RBF_WRAP_DEF_DIR) is not None
+
+    # --- demo check: the authored "Create + Run demo" imports the head + cage
+    #     and wraps on a FRESH deserialized node. ---
     demo_ok = False
     demo_err = "n/a"
     try:
@@ -13397,11 +13437,14 @@ def build_rbf_wrap_deformer():
         tnode = deserialize_node(clean_payload, restore_persistent=False)
         tnm = tnode.get_name()
         run_node_demo(tnode)
-        sph_t = (mc.ls("wrapDefTarget*", type="transform") or [None])[0]
-        in_hist = sph_t is not None and tnm in (mc.listHistory(sph_t) or [])
+        head_t = (mc.ls("mesh*", type="transform") or [None])[0]
+        in_hist = head_t is not None and tnm in (mc.listHistory(head_t) or [])
+        cages_ok = bool(
+            mc.listConnections(tnm + ".restCage", s=True, d=False)
+            and mc.listConnections(tnm + ".deformCage", s=True, d=False))
         warped = False
-        if sph_t is not None:
-            shp = mc.listRelatives(sph_t, shapes=True, ni=True, f=True)[0]
+        if head_t is not None:
+            shp = mc.listRelatives(head_t, shapes=True, ni=True, f=True)[0]
 
             def _pts(frame):
                 mc.currentTime(frame)
@@ -13413,11 +13456,12 @@ def build_rbf_wrap_deformer():
                 return np.array([[p.x, p.y, p.z]
                                  for p in fn.getPoints(om2.MSpace.kObject)])
 
-            p1, p60 = _pts(1), _pts(60)
-            warped = (p1.shape == p60.shape
-                      and float(np.abs(p1 - p60).max()) > 0.05)
-        demo_ok = bool(in_hist and warped)
-        demo_err = "sphere=%s in_hist=%s warped=%s" % (sph_t, in_hist, warped)
+            p0, p30 = _pts(0), _pts(30)
+            warped = (p0.shape == p30.shape
+                      and float(np.abs(p0 - p30).max()) > 0.05)
+        demo_ok = bool(in_hist and cages_ok and warped)
+        demo_err = ("head=%s in_hist=%s cages=%s warped=%s"
+                    % (head_t, in_hist, cages_ok, warped))
     except Exception as exc:
         demo_err = "exc:%r" % exc
 
@@ -13436,12 +13480,12 @@ def build_rbf_wrap_deformer():
     has_demo = find_demo(RBF_WRAP_DEF_METHODS) is not None
     payload_ok = clean_payload.get("native_type") == "mPyDeformer"
     ok = bool(compute_ok and demo_ok and test_ok and has_demo and payload_ok
-              and virgin_ok and mismatch_ok and cls_ok)
+              and virgin_ok and mismatch_ok and cls_ok and assets_ok)
     print("[rbf_wrap_deformer] ident=%s affine=%s env=%s virgin=%s mismatch=%s "
-          "cls=%s demo=%s(%s) test=%s(%s) has_demo=%s payload=%s -> %s"
+          "cls=%s assets=%s demo=%s(%s) test=%s(%s) has_demo=%s payload=%s -> %s"
           % (ident_ok, affine_ok, env_scales, virgin_ok, mismatch_ok, cls_ok,
-             demo_ok, demo_err, test_ok, test_err, has_demo, payload_ok,
-             "PASS" if ok else "FAIL"))
+             assets_ok, demo_ok, demo_err, test_ok, test_err, has_demo,
+             payload_ok, "PASS" if ok else "FAIL"))
     if ok:
         _write_template_to(RBF_WRAP_DEF_DIR, clean_payload, RBF_WRAP_DEF_DESC)
     return ok
