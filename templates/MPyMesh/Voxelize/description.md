@@ -28,4 +28,4 @@ Each voxel takes its colour from the first of these that is available:
 
 ## Create + Run demo
 
-Voxelizes a sphere so you can drag `voxelSize` and watch the shell rebuild live.
+Voxelizes the shipped head (`head.ma`, the Mesh Regions face, jaw-drop and all). Scrub the timeline and the shell re-voxelizes the moving jaw; drag `voxelSize` and watch it rebuild live.

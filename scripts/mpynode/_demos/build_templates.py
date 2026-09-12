@@ -3472,12 +3472,42 @@ def setup(self, selection=None, *args, **kwargs):
 
 @maya_demo(label="Voxelize a sphere")
 def demo(self):
-    """Create a poly sphere and rebuild it as a voxel shell."""
+    """Import the shipped head -- ``head.ma`` beside this template, the same
+    1306-vertex face the Mesh Regions locator demo uses, jaw-drop blend shape
+    and all -- and rebuild it as a voxel shell. Scrub the timeline and the
+    shell re-voxelizes the moving jaw; drag `voxelSize` for a coarser or finer
+    shell."""
+    import os
     from maya import cmds as mc
 
-    sph = mc.polySphere(constructionHistory=False, radius=5)[0]
-    res = self.run_setup([sph])
-    mc.setAttr(self.get_name() + ".voxelSize", 1.0)
+    # The head is a sibling of this template -- resolved the way the gallery
+    # resolves templates/, so a bundled install finds it too. If it is missing
+    # the demo does nothing rather than half-building a scene.
+    head = None
+    try:
+        from mpynode._common.util.template_gallery import _bundled_templates_root
+        root = _bundled_templates_root()
+        if root:
+            cand = os.path.join(root, "MPyMesh", "Voxelize", "head.ma")
+            if os.path.isfile(cand):
+                head = cand
+    except Exception:
+        head = None
+    if not head:
+        return None
+
+    # IMPORT, never open: a demo must not throw away the scene it runs in.
+    new_nodes = mc.file(head, i=True, returnNewNodes=True,
+                        namespace="headModel") or []
+    faces = [n for n in new_nodes
+             if mc.nodeType(n) == "mesh"
+             and not mc.getAttr(n + ".intermediateObject")]
+    if not faces:
+        return None
+    face = mc.listRelatives(faces[0], parent=True, fullPath=True)[0]
+    res = self.run_setup([face])
+    # The face is ~10 units tall: 0.5 gives a shell that still reads as a face.
+    mc.setAttr(self.get_name() + ".voxelSize", 0.5)
     try:
         for _panel in mc.getPanel(type="modelPanel") or []:
             _cam = mc.modelEditor(_panel, query=True, camera=True)
@@ -3640,8 +3670,9 @@ VOXELIZE_DESC = (
     "a single query runs. The sweep is cubic in `1/voxelSize`, so halving "
     "`voxelSize` costs eight times as much; the brake aborts immediately with "
     "the real count rather than stalling Maya. Set it to 0 to disable.\n\n"
-    "**Create + Run demo** voxelizes a sphere so you can drag `voxelSize` and "
-    "watch the shell rebuild live."
+    "**Create + Run demo** voxelizes the shipped head (`head.ma`, the Mesh "
+    "Regions face, jaw-drop and all). Scrub the timeline and the shell "
+    "re-voxelizes the moving jaw; drag `voxelSize` and watch it rebuild live."
 )
 
 
@@ -3906,6 +3937,33 @@ def build_voxelize_mesh():
 
     has_demo = find_demo(VOXELIZE_METHODS) is not None
 
+    # The demo imports this from beside the template, so it has to be in place
+    # BEFORE the demo runs -- otherwise the demo bails and demo_ok fails.
+    assets_ok = _copy_asset("head.ma", VOXELIZE_DIR) is not None
+
+    # Actually RUN the demo on a fresh node so a broken demo body (or a missing
+    # head.ma) fails the BUILD here, not later in the user's session: the head
+    # came in under its namespace and the voxel shell has faces.
+    demo_ok = False
+    try:
+        mc.file(new=True, force=True)
+        from mpynode._common.io.mpn_io import deserialize_node
+
+        dnode = deserialize_node(clean_payload, name="voxelizeDemoCheck")
+        dnode.run_demo()
+        # The head is whatever feeds inMesh -- by shape name, not namespace:
+        # Maya suffixes the namespace (headModel1) when it already exists.
+        src     = mc.listConnections(dnode.get_name() + ".inMesh",
+                                     s=True, d=False, shapes=True) or []
+        head_ok = bool(src) and src[0].split("|")[-1].split(":")[-1].startswith("face")
+        shell   = mc.listConnections(dnode.get_name() + ".outMesh",
+                                     s=False, d=True, shapes=True) or []
+        n_faces = int(mc.polyEvaluate(shell[0], face=True)) if shell else 0
+        demo_ok = head_ok and n_faces > 0
+        print("[voxelize] demo: head=%s shell faces=%d" % (head_ok, n_faces))
+    except Exception as exc:
+        print("[voxelize] demo run FAILED: %r" % exc)
+
     # Run the authored @maya_test on a FRESH deserialized node.
     test_ok = False
     try:
@@ -3920,15 +3978,16 @@ def build_voxelize_mesh():
     except Exception as exc:
         print("[voxelize] @maya_test run ERRORED: %r" % exc)
 
-    ok = helpers_ok and live_ok and tex_ok and empty_ok and has_demo and test_ok
+    ok = (helpers_ok and live_ok and tex_ok and empty_ok and has_demo
+          and assets_ok and demo_ok and test_ok)
     print("[voxelize] helpers=%s(grid=%s win=%s cube=%s) "
           "live=%s(whole=%s align=%s hollow=%s coarse=%s anchor=%s brake=%s "
           "rec=%s) tex=%s(fn=%s rel=%s solid=%s uv=%s fallback=%s) "
-          "empty=%s demo=%s test=%s -> %s"
+          "empty=%s demo=%s assets=%s demo_run=%s test=%s -> %s"
           % (helpers_ok, grid_ok, win_ok, cube_ok, live_ok, whole_ok, align_ok,
              hollow_ok, coarse_ok, anchor_ok, brake_ok, recover_ok, tex_ok,
              tex_fn_ok, rel_ok, tex_solid_ok, tex_uv_ok, fallback_ok, empty_ok,
-             has_demo, test_ok,
+             has_demo, assets_ok, demo_ok, test_ok,
              "PASS" if ok else "FAIL"))
     if ok:
         _write_template_to(VOXELIZE_DIR, clean_payload, VOXELIZE_DESC)
@@ -15389,18 +15448,45 @@ def setup(self, selection=None, *args, **kwargs):
 
 @maya_demo(label="Maze on a sphere")
 def demo(self):
-    """Wrap a maze around a poly sphere. A sphere shows off what the walls
-    stand along -- they radiate out on the vertex normals -- and its poles are
-    triangle fans, so the demo also proves mixed valence needs no special
-    handling. Drag `seed` for a different maze, `start` / `end` to move the
-    entrance and exit."""
+    """Wrap a maze around the shipped head -- ``head.ma`` beside this template,
+    the same 1306-vertex face the Mesh Regions locator demo uses, jaw-drop
+    blend shape and all. The walls stand along the vertex normals, so the maze
+    follows the face's curvature, and the mixed valence around the eyes and
+    mouth needs no special handling. Scrub the timeline and the maze rebuilds
+    on the moving jaw; drag `seed` for a different maze, `start` / `end` to
+    move the entrance and exit."""
+    import os
     from maya import cmds as mc
 
-    sph = mc.polySphere(constructionHistory=False, radius=5, sx=24, sy=16)[0]
+    # The head is a sibling of this template -- resolved the way the gallery
+    # resolves templates/, so a bundled install finds it too. If it is missing
+    # the demo does nothing rather than half-building a scene.
+    head = None
+    try:
+        from mpynode._common.util.template_gallery import _bundled_templates_root
+        root = _bundled_templates_root()
+        if root:
+            cand = os.path.join(root, "MPyMesh", "Mesh Maze", "head.ma")
+            if os.path.isfile(cand):
+                head = cand
+    except Exception:
+        head = None
+    if not head:
+        return None
+
+    # IMPORT, never open: a demo must not throw away the scene it runs in.
+    new_nodes = mc.file(head, i=True, returnNewNodes=True,
+                        namespace="headModel") or []
+    faces = [n for n in new_nodes
+             if mc.nodeType(n) == "mesh"
+             and not mc.getAttr(n + ".intermediateObject")]
+    if not faces:
+        return None
+    face = mc.listRelatives(faces[0], parent=True, fullPath=True)[0]
     # The wrapper does NOT expose methods_source funcs as attributes, so
     # ``self.setup(...)`` would AttributeError; route through the validated
     # dispatcher (run_setup binds our ``def setup(self, ...)``).
-    res = self.run_setup([sph])
+    res = self.run_setup([face])
     name = self.get_name()
     mc.setAttr(name + ".wallHeight", 0.6)
     mc.setAttr(name + ".wallThickness", 0.12)
@@ -15777,8 +15863,9 @@ MAZE_DESC = (
     "count of them is fixed by the surface's topology, not by the algorithm. "
     "And triangles are dead-end magnets, so a tri-heavy mesh gives a stubbier "
     "maze than a quad one.\n\n"
-    "**Create + Run demo** wraps a maze around a poly sphere. Drag `seed` and "
-    "watch it rebuild."
+    "**Create + Run demo** wraps a maze around the shipped head (`head.ma`, "
+    "the Mesh Regions face, jaw-drop and all). Scrub the timeline and the "
+    "maze rebuilds on the moving jaw; drag `seed` and watch it rebuild."
 )
 
 
@@ -16054,8 +16141,13 @@ def build_mesh_maze():
 
     has_demo = find_demo(MAZE_METHODS) is not None
 
-    # Actually RUN the demo on a fresh node so a broken demo body fails the
-    # BUILD here, not later in the user's session.
+    # The demo imports this from beside the template, so it has to be in place
+    # BEFORE the demo runs -- otherwise the demo bails and demo_ok fails.
+    assets_ok = _copy_asset("head.ma", MAZE_DIR) is not None
+
+    # Actually RUN the demo on a fresh node so a broken demo body (or a missing
+    # head.ma) fails the BUILD here, not later in the user's session: the head
+    # came in under its namespace and the walls mesh has faces.
     demo_ok = False
     try:
         mc.file(new=True, force=True)
@@ -16063,7 +16155,16 @@ def build_mesh_maze():
 
         dnode = deserialize_node(clean_payload, name="mazeDemoCheck")
         dnode.run_demo()
-        demo_ok = len(mc.ls(type="mesh") or []) >= 2
+        # The head is whatever feeds inMesh -- by shape name, not namespace:
+        # Maya suffixes the namespace (headModel1) when it already exists.
+        src     = mc.listConnections(dnode.get_name() + ".inMesh",
+                                     s=True, d=False, shapes=True) or []
+        head_ok = bool(src) and src[0].split("|")[-1].split(":")[-1].startswith("face")
+        walls   = mc.listConnections(dnode.get_name() + ".outMesh",
+                                     s=False, d=True, shapes=True) or []
+        n_faces = int(mc.polyEvaluate(walls[0], face=True)) if walls else 0
+        demo_ok = head_ok and n_faces > 0
+        print("[mesh_maze] demo: head=%s wall faces=%d" % (head_ok, n_faces))
     except Exception as exc:
         print("[mesh_maze] demo run FAILED: %r" % exc)
 
@@ -16081,15 +16182,16 @@ def build_mesh_maze():
     except Exception as exc:
         print("[mesh_maze] @maya_test run ERRORED: %r" % exc)
 
-    ok = helpers_ok and live_ok and empty_ok and has_demo and demo_ok and test_ok
+    ok = (helpers_ok and live_ok and empty_ok and has_demo and assets_ok
+          and demo_ok and test_ok)
     print("[mesh_maze] helpers=%s(edge=%s dual=%s nonman=%s carve=%s seed=%s "
           "wall=%s) live=%s(euler=%s seed=%s index=%s size=%s normal=%s "
           "bare=%s cut=%s) "
-          "empty=%s demo=%s demo_run=%s test=%s -> %s"
+          "empty=%s demo=%s assets=%s demo_run=%s test=%s -> %s"
           % (helpers_ok, edge_ok, dual_ok, nonman_ok, carve_ok, seed_ok,
              wall_ok, live_ok, euler_ok, seed_live_ok, index_ok, size_ok,
-             normal_ok, bare_ok, cut_ok, empty_ok, has_demo, demo_ok, test_ok,
-             "PASS" if ok else "FAIL"))
+             normal_ok, bare_ok, cut_ok, empty_ok, has_demo, assets_ok, demo_ok,
+             test_ok, "PASS" if ok else "FAIL"))
     if ok:
         _write_template_to(MAZE_DIR, clean_payload, MAZE_DESC)
     return ok

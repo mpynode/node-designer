@@ -32,4 +32,4 @@ Two things that look like bugs and are not. **Unreachable patches are left bare*
 
 ## Create + Run demo
 
-Wraps a maze around a poly sphere. Drag `seed` and watch it rebuild.
+Wraps a maze around the shipped head (`head.ma`, the Mesh Regions face, jaw-drop and all). Scrub the timeline and the maze rebuilds on the moving jaw; drag `seed` and watch it rebuild.
