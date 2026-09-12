@@ -205,7 +205,7 @@ MAZE_DIR = "MPyMesh/Mesh Maze"
 # Two mPyMesh templates that read their geometry off DISK through `ndio`, which
 # the C++ transpiler lowers onto the nd_io kernel; they differ in LAYOUT (see the
 # disk-mesh section below).
-DISK_MESH_CACHE_DIR = "MPyMesh/Disk Mesh Cache"
+DISK_MESH_CACHE_DIR  = "MPyMesh/Disk Mesh Cache"
 JSON_MESH_READER_DIR = "MPyMesh/JSON Mesh Reader"
 
 # The four mPyLocator widget templates. Folder names are shown verbatim in the
@@ -251,8 +251,8 @@ AIM_DIR = "MPyTransform/Aim Between Matrices"
 # mPySkinCluster templates -- the SAME native_type ("mPySkinCluster", a genuine
 # MPxSkinCluster), differing only in Compute (linear-blend, dual-quaternion,
 # twist/swing dual-weights).
-SKIN_LBS_DIR = "MPySkinCluster/Linear Blend Skin"
-SKIN_DQS_DIR = "MPySkinCluster/Dual Quaternion Skin"
+SKIN_LBS_DIR        = "MPySkinCluster/Linear Blend Skin"
+SKIN_DQS_DIR        = "MPySkinCluster/Dual Quaternion Skin"
 SKIN_TWISTSWING_DIR = "MPySkinCluster/Twist Swing Skin"
 
 # RBF thin-plate wrap -- a base mPyNode with THREE mesh INPUTS + one mesh OUTPUT
@@ -350,7 +350,7 @@ def _write_template(payload, native_type, description, root=None):
         os.makedirs(folder, exist_ok=True)
         out = payload
         if node_name:
-            out = dict(payload)
+            out              = dict(payload)
             out["node_name"] = node_name
         save_mpn(out, os.path.join(folder, "template.mpn"))
         with open(os.path.join(folder, "description.md"), "w") as f:
@@ -562,7 +562,7 @@ def build_deformer():
     d = MPyDeformer.create_on(plane, name="sineRipple")
     d.add_input_attr("amplitude", "float", default_value=0.4)
     d.add_input_attr("frequency", "float", default_value=0.6)
-    d.add_input_attr("speed", "float", default_value=0.1)
+    d.add_input_attr("speed",     "float", default_value=0.1)
     d.add_input_attr("time", "time")
     d.set_init_expression(DEF_INIT)
     d.set_compute_expression(DEF_COMPUTE)
@@ -583,28 +583,28 @@ def build_deformer():
         fn = om.MFnMesh(sel.getDagPath(0))
         return np.array([[p.x, p.y, p.z] for p in fn.getPoints(om.MSpace.kObject)])
 
-    rest = pts_at(1, amp=0.0, env=1.0)
-    f1 = pts_at(1, amp=0.4, env=1.0)
-    f12 = pts_at(12, amp=0.4, env=1.0)
-    half = pts_at(1, amp=0.4, env=0.5)
-    moved = float(np.abs(f1 - rest).max())
-    animated = float(np.abs(f1 - f12).max())
-    env_scales = np.allclose(half - rest, 0.5 * (f1 - rest), atol=1e-4)
+    rest         = pts_at(1,  amp=0.0, env=1.0)
+    f1           = pts_at(1,  amp=0.4, env=1.0)
+    f12          = pts_at(12, amp=0.4, env=1.0)
+    half         = pts_at(1,  amp=0.4, env=0.5)
+    moved        = float(np.abs(f1 - rest).max())
+    animated     = float(np.abs(f1 - f12).max())
+    env_scales   = np.allclose(half - rest, 0.5 * (f1 - rest), atol=1e-4)
     amp0_is_rest = np.allclose(rest, pts_at(1, amp=0.0, env=1.0), atol=1e-9)
-    compute_ok = moved > 0.05 and animated > 0.01 and env_scales and amp0_is_rest
+    compute_ok   = moved > 0.05 and animated > 0.01 and env_scales and amp0_is_rest
 
     # --- demo check: the authored "Create + Run demo" fabricates a rippled
     #     plane on a FRESH deserialized node (mirrors what a user clicks). ---
     _stamp_class(d, "SineRipple", "mPyDeformer")
     clean_payload = serialize_node(d, include_persistent=False)
-    demo_ok = False
-    demo_err = "n/a"
+    demo_ok       = False
+    demo_err      = "n/a"
     try:
         mc.file(new=True, force=True)
         from mpynode._common.io.mpn_io import deserialize_node
         from mpynode._common.methods.methods_registry import run_node_demo
         tnode = deserialize_node(clean_payload, restore_persistent=False)
-        tnm = tnode.get_name()
+        tnm   = tnode.get_name()
         run_node_demo(tnode)
         plane_t = (mc.ls("rippleTarget*", type="transform") or [None])[0]
         in_hist = plane_t is not None and tnm in (mc.listHistory(plane_t) or [])
@@ -616,25 +616,25 @@ def build_deformer():
             mc.getAttr(shp + ".outMesh")
             sel = om.MSelectionList()
             sel.add(plane_t)
-            fn = om.MFnMesh(sel.getDagPath(0))
-            ys = [p.y for p in fn.getPoints(om.MSpace.kObject)]
+            fn      = om.MFnMesh(sel.getDagPath(0))
+            ys      = [p.y for p in fn.getPoints(om.MSpace.kObject)]
             rippled = (max(ys) - min(ys)) > 0.05
-        demo_ok = bool(in_hist and rippled)
+        demo_ok  = bool(in_hist and rippled)
         demo_err = "plane=%s in_hist=%s rippled=%s" % (plane_t, in_hist, rippled)
     except Exception as exc:
         demo_err = "exc:%r" % exc
 
     # --- authored @maya_test check: run it on a FRESH deserialized node so a
     #     broken validation body fails the BUILD here rather than shipping. ---
-    test_ok = False
+    test_ok  = False
     test_err = "n/a"
     try:
         mc.file(new=True, force=True)
         from mpynode._common.io.mpn_io import deserialize_node
 
-        tnode = deserialize_node(clean_payload, restore_persistent=False)
-        tres = tnode.run_test()
-        test_ok = bool(tres.get("passed"))
+        tnode    = deserialize_node(clean_payload, restore_persistent=False)
+        tres     = tnode.run_test()
+        test_ok  = bool(tres.get("passed"))
         test_err = tres.get("error") or "ok"
     except Exception as exc:
         test_err = "exc:%r" % exc
@@ -946,37 +946,37 @@ def build_unit_sphere_collision_deformer():
     # Collider A: a sphere centred 2 units above the plane, world radius 4.
     # Collider B: the same sphere moved far away (to prove the dent BAKES).
     s, ty = 4.0, 2.0
-    A = [s, 0, 0, 0, 0, s, 0, 0, 0, 0, s, 0, 0.0, ty, 0, 1]
-    B = [s, 0, 0, 0, 0, s, 0, 0, 0, 0, s, 0, 100.0, ty, 0, 1]
+    A      = [s, 0, 0, 0, 0, s, 0, 0, 0, 0, s, 0, 0.0, ty, 0, 1]
+    B      = [s, 0, 0, 0, 0, s, 0, 0, 0, 0, s, 0, 100.0, ty, 0, 1]
     centre = np.array([0.0, ty, 0.0])
 
     # 1. Collider A, envelope 1 -> push verts onto the sphere.
     mc.setAttr(nm + ".pusher", *A, type="matrix")
     mc.setAttr(nm + ".envelope", 1.0)
-    full = points()
-    disp = np.linalg.norm(full - rest, axis=1)
-    moved = disp > 1e-4
+    full    = points()
+    disp    = np.linalg.norm(full - rest, axis=1)
+    moved   = disp > 1e-4
     n_moved = int(moved.sum())
     on_sphere = bool(n_moved and np.allclose(
         np.linalg.norm((full[moved] - centre) / s, axis=1), 1.0, atol=1e-3))
 
     # 2. Move the collider far away -> the dent must STAY (accumulation / bake).
     mc.setAttr(nm + ".pusher", *B, type="matrix")
-    baked = points()
+    baked    = points()
     baked_ok = bool(n_moved and np.allclose(baked, full, atol=1e-4))
 
     # 3. Envelope scales the DISPLAYED displacement against rest.
     mc.setAttr(nm + ".envelope", 0.5)
-    half = points()
+    half       = points()
     env_scales = bool(np.allclose(half - rest, 0.5 * (full - rest), atol=1e-3))
 
     # 4. Envelope 0 -> displayed rest (the baked buffer is retained underneath).
     mc.setAttr(nm + ".envelope", 0.0)
-    off = points()
+    off          = points()
     rest_display = bool(np.allclose(off, rest, atol=1e-4))
 
     # A far corner vertex is outside the collider and must be untouched.
-    corner = int(np.argmax(np.linalg.norm(rest[:, [0, 2]], axis=1)))
+    corner       = int(np.argmax(np.linalg.norm(rest[:, [0, 2]], axis=1)))
     corner_fixed = bool(disp[corner] < 1e-4)
 
     compute_ok = (n_moved > 0 and on_sphere and baked_ok and env_scales
@@ -986,19 +986,19 @@ def build_unit_sphere_collision_deformer():
     #     plane and dents it on a FRESH deserialized node. ---
     _stamp_class(d, "UnitSphereCollision", "mPyDeformer")
     clean_payload = serialize_node(d, include_persistent=False)
-    demo_ok = False
-    demo_err = "n/a"
+    demo_ok       = False
+    demo_err      = "n/a"
     try:
         mc.file(new=True, force=True)
         from mpynode._common.io.mpn_io import deserialize_node
         from mpynode._common.methods.methods_registry import run_node_demo
         tnode = deserialize_node(clean_payload, restore_persistent=False)
-        tnm = tnode.get_name()
+        tnm   = tnode.get_name()
         run_node_demo(tnode)
-        plane_t = (mc.ls("collisionTarget*", type="transform") or [None])[0]
+        plane_t    = (mc.ls("collisionTarget*", type="transform") or [None])[0]
         collider_t = (mc.ls("collider*", type="transform") or [None])[0]
-        in_hist = plane_t is not None and tnm in (mc.listHistory(plane_t) or [])
-        dented = False
+        in_hist    = plane_t is not None and tnm in (mc.listHistory(plane_t) or [])
+        dented     = False
         if plane_t is not None:
             mc.currentTime(30)
             mc.dgdirty(tnm + ".outputGeometry")
@@ -1006,8 +1006,8 @@ def build_unit_sphere_collision_deformer():
             mc.getAttr(shp + ".outMesh")
             sel = om.MSelectionList()
             sel.add(plane_t)
-            fn = om.MFnMesh(sel.getDagPath(0))
-            ys = [p.y for p in fn.getPoints(om.MSpace.kObject)]
+            fn     = om.MFnMesh(sel.getDagPath(0))
+            ys     = [p.y for p in fn.getPoints(om.MSpace.kObject)]
             dented = (max(ys) - min(ys)) > 0.05
         demo_ok = bool(collider_t and in_hist and dented)
         demo_err = "collider=%s in_hist=%s dented=%s" % (
@@ -1016,15 +1016,15 @@ def build_unit_sphere_collision_deformer():
         demo_err = "exc:%r" % exc
 
     # --- authored @maya_test check on a FRESH deserialized node. ---
-    test_ok = False
+    test_ok  = False
     test_err = "n/a"
     try:
         mc.file(new=True, force=True)
         from mpynode._common.io.mpn_io import deserialize_node
 
-        tnode = deserialize_node(clean_payload, restore_persistent=False)
-        tres = tnode.run_test()
-        test_ok = bool(tres.get("passed"))
+        tnode    = deserialize_node(clean_payload, restore_persistent=False)
+        tres     = tnode.run_test()
+        test_ok  = bool(tres.get("passed"))
         test_err = tres.get("error") or "ok"
     except Exception as exc:
         test_err = "exc:%r" % exc
@@ -1353,8 +1353,8 @@ shader fileSimple(
 
 def _write_test_image(path, rows):
     """Write an HxW RGBA image where row r is filled with grey value rows[r]."""
-    h = len(rows)
-    w = 8
+    h   = len(rows)
+    w   = 8
     buf = bytearray()
     for r in range(h):
         val = rows[r]
@@ -1384,7 +1384,7 @@ def _verify_file_orientation(testimg):
     # Preset defaults: colorSpace 0 (sRGB), preFilter off.
     from mpynode._common.methods import file_texture_ops as _tex
     arr = _tex.load_linear_pixels(testimg, 0, False, 0, 1.0)  # top-down
-    h = arr.shape[0]
+    h   = arr.shape[0]
 
     def tmpl(v):
         py = min(h - 1, int((1.0 - (v - np.floor(v))) * h))
@@ -1448,10 +1448,10 @@ def _verify_file_viewport(testimg, init_src=FILE_INIT, view_src=FILE_VIEW):
             return None
 
     class _FakeSelf:
-        fileName = testimg
-        shader = _FakeShader()
+        fileName        = testimg
+        shader          = _FakeShader()
         texture_manager = _FakeTM()
-        state_manager = _FakeSM()
+        state_manager   = _FakeSM()
 
         def read_texture(self):
             """Stand in for the SelfProxy blessed method the real Viewport
@@ -1459,9 +1459,9 @@ def _verify_file_viewport(testimg, init_src=FILE_INIT, view_src=FILE_VIEW):
             from mpynode._common.methods import file_texture_ops as _tex
             return _tex.load_linear_pixels(self.fileName, 0, False, 0, 1.0)
 
-    self_obj = _FakeSelf()
+    self_obj            = _FakeSelf()
     self_obj.brightness = bright
-    self_obj.contrast = contrast
+    self_obj.contrast   = contrast
 
     ns = {}
     exec(init_src, ns)
@@ -1484,15 +1484,15 @@ def _verify_file_viewport(testimg, init_src=FILE_INIT, view_src=FILE_VIEW):
     rgb += 0.5
     np.clip(rgb, 0.0, 1.0, out=rgb)
 
-    maxerr = float(np.abs(got[..., :3] - exp[..., :3]).max())
-    fmt_ok = captured["fmt"] == omr.MRenderer.kR32G32B32A32_FLOAT
+    maxerr    = float(np.abs(got[..., :3] - exp[..., :3]).max())
+    fmt_ok    = captured["fmt"] == omr.MRenderer.kR32G32B32A32_FLOAT
     fields_ok = captured["bpr"] == captured["w"] * 4 * 4
     orient_ok = bool(np.allclose(got, exp))       # uploaded top-down == buffer
 
     # Graceful headless degradation: no texture manager -> no raise/upload.
     captured.clear()
     self_obj.texture_manager = None
-    ns2 = {}
+    ns2                      = {}
     exec(init_src, ns2)
     ns2["self"] = self_obj
     try:
@@ -1983,17 +1983,17 @@ def _verify_gol_viewport():
             return None
 
     class _FakeSelf(object):
-        width = 5
-        height = 5
-        density = 0.5
-        reset = 1
-        frame = 3.0
-        shader = _FakeShader()
+        width           = 5
+        height          = 5
+        density         = 0.5
+        reset           = 1
+        frame           = 3.0
+        shader          = _FakeShader()
         texture_manager = _FakeTM()
-        state_manager = _FakeSM()
+        state_manager   = _FakeSM()
 
     self_obj = _FakeSelf()
-    ns = {}
+    ns       = {}
     exec(GOL_INIT, ns)
     ns["self"] = self_obj
     try:
@@ -2005,16 +2005,16 @@ def _verify_gol_viewport():
 
     got = np.frombuffer(captured["bytes"], dtype=np.float32).reshape(
         captured["h"], captured["w"], 4)
-    exp = ns["_gol_rgba"](ns["_gol_seed"](5, 5, 0.5, seed=3))
-    fmt_ok = captured["fmt"] == omr.MRenderer.kR32G32B32A32_FLOAT
+    exp       = ns["_gol_rgba"](ns["_gol_seed"](5, 5, 0.5, seed=3))
+    fmt_ok    = captured["fmt"] == omr.MRenderer.kR32G32B32A32_FLOAT
     fields_ok = captured["bpr"] == captured["w"] * 4 * 4
     parity_ok = bool(np.allclose(got, exp))
 
     # Headless degradation: no texture manager -> no raise / no upload.
     captured.clear()
     self_obj.texture_manager = None
-    self_obj.board = None                          # force a fresh advance
-    ns2 = {}
+    self_obj.board           = None                          # force a fresh advance
+    ns2                      = {}
     exec(GOL_INIT, ns2)
     ns2["self"] = self_obj
     try:
@@ -2099,16 +2099,16 @@ def build_game_of_life_file():
 
     # Bounded, no wrap: a blinker (3 in a row) is period-2; a lone corner cell
     # dies (no wrap means it never gets the 3 neighbours wrap would supply).
-    blink = np.zeros((5, 5), dtype=bool)
+    blink         = np.zeros((5, 5), dtype=bool)
     blink[2, 1:4] = True
     blinker_ok = (np.array_equal(stepf(stepf(blink)), blink)
                   and not np.array_equal(stepf(blink), blink))
-    corner = np.zeros((5, 5), dtype=bool)
+    corner       = np.zeros((5, 5), dtype=bool)
     corner[0, 0] = True
-    corner_dies = not stepf(corner).any()
-    big = seedf(200, 200, 0.5, seed=1)
-    density_ok = abs(float(big.mean()) - 0.5) < 0.02
-    sim_ok = blinker_ok and corner_dies and density_ok
+    corner_dies  = not stepf(corner).any()
+    big          = seedf(200, 200, 0.5, seed=1)
+    density_ok   = abs(float(big.mean()) - 0.5) < 0.02
+    sim_ok       = blinker_ok and corner_dies and density_ok
 
     # Bake round-trip: read the PNG back top-down and it equals the board. Goes
     # through the BLESSED write_texture -- the exact code the node's Compute runs
@@ -2116,7 +2116,7 @@ def build_game_of_life_file():
     from mpynode._common.methods.file_methods import write_texture
 
     bpath = "/tmp/_gol_gate.png"
-    bd = seedf(7, 11, 0.5, seed=2)
+    bd    = seedf(7, 11, 0.5, seed=2)
     # Gate the FRAME-STAMPED form, because that is the one Compute calls: the
     # bake must land on the numbered sibling and leave `bpath` alone. A new name
     # per frame is what makes an Arnold render animate (its texture cache is
@@ -2136,10 +2136,10 @@ def build_game_of_life_file():
                and np.array_equal(rarr[..., 0] > 127, bd))
 
     # --- end-to-end Compute on the live node ---
-    mc.setAttr(nm + ".width", 5)
-    mc.setAttr(nm + ".height", 5)
+    mc.setAttr(nm + ".width",   5)
+    mc.setAttr(nm + ".height",  5)
     mc.setAttr(nm + ".density", 0.5)
-    mc.setAttr(nm + ".reset", 1)
+    mc.setAttr(nm + ".reset",   1)
     mc.currentTime(5)
     exp = seedf(5, 5, 0.5, seed=5)
 
@@ -2171,8 +2171,8 @@ def build_game_of_life_file():
         mc.file(new=True, force=True)
         from mpynode._common.io.mpn_io import deserialize_node
 
-        tnode = deserialize_node(clean_payload, name="golTestCheck")
-        tres = tnode.run_test()
+        tnode   = deserialize_node(clean_payload, name="golTestCheck")
+        tres    = tnode.run_test()
         test_ok = bool(tres.get("passed"))
         if not test_ok:
             print("[gol_file] @maya_test FAILED: %s" % tres.get("error"))
@@ -2463,8 +2463,8 @@ def _verify_gol_mesh_geometry(self_obj, seedf):
 
     # The compute builds the buffers as plain LOCALS and hands them to the Mesh
     # ctor, so read them back out of the exec namespace, not off `self`.
-    pts = np.asarray(ns["points"], dtype=np.float64)
-    counts = np.asarray(ns["counts"], dtype=np.int64)
+    pts     = np.asarray(ns["points"],  dtype=np.float64)
+    counts  = np.asarray(ns["counts"],  dtype=np.int64)
     indices = np.asarray(ns["indices"], dtype=np.int64)
 
     shape_ok = (pts.shape == (8 * alive, 3)
@@ -2479,11 +2479,11 @@ def _verify_gol_mesh_geometry(self_obj, seedf):
     # cubes share identical topology, so checking cube 0's 6 faces is enough.
     normals_ok = True
     if alive > 0:
-        cube = pts[:8]                          # cube 0's 8 corners (ids 0..7)
+        cube   = pts[:8]                          # cube 0's 8 corners (ids 0..7)
         centre = cube.mean(axis=0)
         for f in indices[:24].reshape(6, 4):
             poly = cube[f]
-            nrm = np.zeros(3)
+            nrm  = np.zeros(3)
             for k in range(4):
                 a, b = poly[k], poly[(k + 1) % 4]
                 nrm[0] += (a[1] - b[1]) * (a[2] + b[2])
@@ -2551,41 +2551,41 @@ def build_game_of_life_mesh():
 
     # Bounded, no wrap: a blinker (3 in a row) is period-2; a lone corner cell
     # dies (no wrap never supplies the 3 neighbours it would need to survive).
-    blink = np.zeros((5, 5), dtype=bool)
+    blink         = np.zeros((5, 5), dtype=bool)
     blink[2, 1:4] = True
     blinker_ok = (np.array_equal(stepf(stepf(blink)), blink)
                   and not np.array_equal(stepf(blink), blink))
-    corner = np.zeros((5, 5), dtype=bool)
+    corner       = np.zeros((5, 5), dtype=bool)
     corner[0, 0] = True
-    corner_dies = not stepf(corner).any()
-    big = seedf(200, 200, 0.5, seed=1)
-    density_ok = abs(float(big.mean()) - 0.5) < 0.02
-    sim_ok = blinker_ok and corner_dies and density_ok
+    corner_dies  = not stepf(corner).any()
+    big          = seedf(200, 200, 0.5, seed=1)
+    density_ok   = abs(float(big.mean()) - 0.5) < 0.02
+    sim_ok       = blinker_ok and corner_dies and density_ok
 
     # --- geometry checks (exec Compute against a fake self, both board states)
     class _FakeSelf(object):
-        boardX = 5
-        boardY = 5
+        boardX        = 5
+        boardY        = 5
         randomSamples = 13
-        frame = 1.0
-        resetBoard = 1
-        cellSize = 0.9
-        outMesh = None
+        frame         = 1.0
+        resetBoard    = 1
+        cellSize      = 0.9
+        outMesh       = None
 
     reset_self = _FakeSelf()
     geom_reset_ok, geom_reset_err = _verify_gol_mesh_geometry(reset_self, seedf)
 
-    evolve_self = _FakeSelf()
-    evolve_self.frame = 3.0
+    evolve_self            = _FakeSelf()
+    evolve_self.frame      = 3.0
     evolve_self.resetBoard = 0
     geom_evolve_ok, geom_evolve_err = _verify_gol_mesh_geometry(
         evolve_self, seedf)
 
     # An all-dead board must yield an empty (but valid) mesh, not a raise.
-    empty_self = _FakeSelf()
+    empty_self               = _FakeSelf()
     empty_self.randomSamples = 0
-    empty_self.resetBoard = 0
-    empty_self.frame = 1.0
+    empty_self.resetBoard    = 0
+    empty_self.frame         = 1.0
     geom_empty_ok, geom_empty_err = _verify_gol_mesh_geometry(
         empty_self, seedf)
 
@@ -2598,10 +2598,10 @@ def build_game_of_life_mesh():
     #     that MFnMesh refuses to wrap -- handled below regardless). ---
     shape = mc.createNode("mesh", name="golMeshRenderShape")
     mc.connectAttr(nm + ".outMesh", shape + ".inMesh", force=True)
-    mc.setAttr(nm + ".boardX", 5)
-    mc.setAttr(nm + ".boardY", 5)
+    mc.setAttr(nm + ".boardX",     5)
+    mc.setAttr(nm + ".boardY",     5)
     mc.setAttr(nm + ".resetBoard", 1)
-    mc.setAttr(nm + ".cellSize", 0.9)
+    mc.setAttr(nm + ".cellSize",   0.9)
 
     def live_verts():
         mc.dgeval(shape + ".outMesh")
@@ -2629,9 +2629,9 @@ def build_game_of_life_mesh():
     mc.setAttr(nm + ".randomSamples", 6)
     sample_ok = live_verts() == 8 * alive_reset(6, 7)
 
-    live_ok = live1_ok and live7_ok and sample_ok
+    live_ok   = live1_ok and live7_ok and sample_ok
 
-    has_demo = find_demo(DEMO_GOL_MESH) is not None
+    has_demo  = find_demo(DEMO_GOL_MESH) is not None
 
     # Run the authored @maya_test on a FRESH deserialized node.
     test_ok = False
@@ -2639,8 +2639,8 @@ def build_game_of_life_mesh():
         mc.file(new=True, force=True)
         from mpynode._common.io.mpn_io import deserialize_node
 
-        tnode = deserialize_node(clean_payload, name="golTestCheck")
-        tres = tnode.run_test()
+        tnode   = deserialize_node(clean_payload, name="golTestCheck")
+        tres    = tnode.run_test()
         test_ok = bool(tres.get("passed"))
         if not test_ok:
             print("[gol_mesh] @maya_test FAILED: %s" % tres.get("error"))
@@ -2837,7 +2837,7 @@ def build_uv_layout_mesh():
     clean_payload = serialize_node(n, include_persistent=False)
 
     # --- live end-to-end: wire a cube's UVs in, read the UV-layout mesh out.
-    cube_t = mc.polyCube(constructionHistory=False)[0]
+    cube_t     = mc.polyCube(constructionHistory=False)[0]
     cube_shape = mc.listRelatives(cube_t, shapes=True, fullPath=True)[0]
     mc.connectAttr(cube_shape + ".worldMesh[0]", nm + ".inMesh", force=True)
     render = mc.createNode("mesh", name="uvLayoutRenderShape")
@@ -2866,11 +2866,11 @@ def build_uv_layout_mesh():
     exec(UV_LAYOUT_INIT, empty_ns)
 
     class _EmptySelf(object):
-        inMesh = Mesh()          # value mesh -> no uv_sets
+        inMesh    = Mesh()          # value mesh -> no uv_sets
         uvSetName = ""
-        outMesh = None
+        outMesh   = None
 
-    es = _EmptySelf()
+    es               = _EmptySelf()
     empty_ns["self"] = es
     try:
         exec(compile(UV_LAYOUT_COMPUTE, "uv_layout_compute", "exec"), empty_ns)
@@ -2902,8 +2902,8 @@ def build_uv_layout_mesh():
         mc.file(new=True, force=True)
         from mpynode._common.io.mpn_io import deserialize_node
 
-        tnode = deserialize_node(clean_payload, name="uvTestCheck")
-        tres = tnode.run_test()
+        tnode   = deserialize_node(clean_payload, name="uvTestCheck")
+        tres    = tnode.run_test()
         test_ok = bool(tres.get("passed"))
         if not test_ok:
             print("[uv_layout] @maya_test FAILED: %s" % tres.get("error"))
@@ -3674,7 +3674,7 @@ def build_voxelize_mesh():
     exec(VOXELIZE_INIT, ns)
     grid_fn = ns["_vox_grid"]
     winners = ns["_vox_winners"]
-    cubes = ns["_vox_cubes"]
+    cubes   = ns["_vox_cubes"]
 
     # The lattice must be WORLD-anchored with a cube CORNER on the origin:
     # centres land on (i + 0.5) * vs, so a box straddling the origin yields
@@ -3758,13 +3758,13 @@ def build_voxelize_mesh():
 
     # Coarser voxels -> no more cubes.
     mc.setAttr(nm + ".voxelSize", 2.0)
-    cv = live_counts()[0]
+    cv        = live_counts()[0]
     coarse_ok = 0 < cv <= av
 
     # WORLD-anchored, not mesh-anchored: nudge the SOURCE by a fraction of a
     # voxel and the cubes must STILL sit on the same world lattice. A lattice
     # anchored to the mesh minimum would drift with the mesh and fail here.
-    mc.setAttr(nm + ".voxelSize", 0.5)
+    mc.setAttr(nm + ".voxelSize",      0.5)
     mc.setAttr(cube_t + ".translateX", 0.13)
     mc.setAttr(cube_t + ".translateY", -0.07)
     vp2 = voxel_points()
@@ -3794,7 +3794,7 @@ def build_voxelize_mesh():
         buf = bytes(bytearray(
             [ch for t in texels for ch in (t[0], t[1], t[2], 255)]))
         path = os.path.join(tempfile.gettempdir(), fname)
-        im = om.MImage()
+        im   = om.MImage()
         im.create(w, h, 4, om.MImage.kByte)
         im.setPixels(buf, w, h)
         im.writeToFile(path, "png")
@@ -3822,17 +3822,17 @@ def build_voxelize_mesh():
     # Pure-function: the sampler resolves each texel centre of the 2x2 to its
     # authored colour, and the exact image centre to their mean -- which only
     # holds if the filtering really is bilinear across all four.
-    read_img = ns["_vox_read_image"]
+    read_img   = ns["_vox_read_image"]
     sample_tex = ns["_vox_sample_texture"]
-    img = read_img(quad_png)
-    got = set()
-    mid_ok = False
+    img        = read_img(quad_png)
+    got        = set()
+    mid_ok     = False
     if img is not None:
         centres = np.array([[0.25, 0.25], [0.75, 0.25],
                             [0.25, 0.75], [0.75, 0.75]])
         got = set(tuple(float(v) for v in np.round(c, 4))
                   for c in sample_tex(img, centres))
-        mid = sample_tex(img, np.array([[0.5, 0.5]]))[0]
+        mid  = sample_tex(img, np.array([[0.5, 0.5]]))[0]
         wrap = sample_tex(img, np.array([[1.25, 0.25], [0.25, 0.25]]))
         mid_ok = (np.allclose(mid, [0.5, 0.5, 0.5], atol=1e-4)
                   and np.allclose(wrap[0], wrap[1], atol=1e-9))
@@ -3888,14 +3888,14 @@ def build_voxelize_mesh():
     exec(VOXELIZE_INIT, empty_ns)
 
     class _EmptySelf(object):
-        inMesh = None
-        voxelSize = 0.25
-        maxVoxels = 20000
-        textureFile = ""
+        inMesh       = None
+        voxelSize    = 0.25
+        maxVoxels    = 20000
+        textureFile  = ""
         defaultColor = (0.8, 0.8, 0.8)
-        outMesh = None
+        outMesh      = None
 
-    es = _EmptySelf()
+    es               = _EmptySelf()
     empty_ns["self"] = es
     try:
         exec(compile(VOXELIZE_COMPUTE, "voxelize_compute", "exec"), empty_ns)
@@ -3912,8 +3912,8 @@ def build_voxelize_mesh():
         mc.file(new=True, force=True)
         from mpynode._common.io.mpn_io import deserialize_node
 
-        tnode = deserialize_node(clean_payload, name="voxelizeTestCheck")
-        tres = tnode.run_test()
+        tnode   = deserialize_node(clean_payload, name="voxelizeTestCheck")
+        tres    = tnode.run_test()
         test_ok = bool(tres.get("passed"))
         if not test_ok:
             print("[voxelize] @maya_test FAILED: %s" % tres.get("error"))
@@ -3972,12 +3972,12 @@ def _metaballs_probe_field(arr, points):
     from mpynode._common.nodes.mesh import sdf_dmc
 
     mats = arr["matrices"]
-    st = arr["shape_types"]
-    add = arr["additive"]
-    sm = arr["smoothing"]
-    rad = arr["radius"]
-    hgt = arr["height"]
-    ax = arr["axis"]
+    st   = arr["shape_types"]
+    add  = arr["additive"]
+    sm   = arr["smoothing"]
+    rad  = arr["radius"]
+    hgt  = arr["height"]
+    ax   = arr["axis"]
     half = arr["half_extents"]
     combined = sdf_dmc.sample_shape(
         mats[0], st[0], rad[0], hgt[0], ax[0], half[0], points)
@@ -4046,7 +4046,7 @@ def build_metaballs():
     from mpynode._common.nodes.mesh import sdf_dmc
     from mpynode.wrappers.mpy_mesh import MPyMesh
 
-    ok = False
+    ok     = False
     detail = ""
     try:
         g = MPyMesh.create(name="metaballs")
@@ -4082,9 +4082,9 @@ def build_metaballs():
 
         # Probe a point inside the sphere but OUTSIDE the cube and OUTSIDE the
         # cylinder: the smooth-union sphere must add solid there (field < 0).
-        sph = np.array([[1.3, -1.65, 0.0]], dtype=np.float64)
+        sph        = np.array([[1.3, -1.65, 0.0]], dtype=np.float64)
         sphere_val = float(_metaballs_probe_field(arr, sph)[0])
-        sphere_ok = sphere_val < 0.0
+        sphere_ok  = sphere_val < 0.0
 
         # --- live demo: deserialize the shipped payload, run the demo, and
         #     verify the stream + flags + a real, carved render mesh. ---
@@ -4093,21 +4093,21 @@ def build_metaballs():
             if not mc.pluginInfo(plugin, q=True, loaded=True):
                 mc.loadPlugin(plugin)
         tnode = deserialize_node(clean_payload, restore_persistent=False)
-        tnm = tnode.get_name()
+        tnm   = tnode.get_name()
         from mpynode._common.methods.methods_registry import run_node_demo
         run_node_demo(tnode)
 
         n_shapes = mc.getAttr(tnm + ".shapeMatrix", size=True)
-        types = [mc.getAttr("%s.shapeType[%d]" % (tnm, i)) for i in range(26, 29)]
-        adds = [mc.getAttr("%s.additive[%d]" % (tnm, i)) for i in range(26, 29)]
-        sm27 = mc.getAttr("%s.smoothing[27]" % tnm)
+        types    = [mc.getAttr("%s.shapeType[%d]" % (tnm, i)) for i in range(26, 29)]
+        adds     = [mc.getAttr("%s.additive[%d]" % (tnm, i)) for i in range(26, 29)]
+        sm27     = mc.getAttr("%s.smoothing[27]" % tnm)
         # 26 text boxes + cube(1) sphere(0) cylinder(2); cube/sphere additive,
         # cylinder subtracted; the sphere carries the metaball smoothing.
         flags_ok = (n_shapes == 29 and types == [1, 0, 2]
                     and adds == [1, 1, 0] and sm27 > 0.0)
 
         text_grp = mc.ls(tnm + "Text", long=True) or []
-        shp_grp = mc.ls(tnm + "Shapes", long=True) or []
+        shp_grp  = mc.ls(tnm + "Shapes", long=True) or []
         groups_ok = (
             bool(text_grp)
             and len(mc.listRelatives(text_grp[0], children=True,
@@ -4135,22 +4135,22 @@ def build_metaballs():
             mc.setAttr(tnm + ".additive[28]", 1)
             v_filled = _verts()
             mc.setAttr(tnm + ".additive[28]", 0)
-        render_ok = v_carved > 0 and v_filled > 0 and v_carved != v_filled
+        render_ok  = v_carved > 0 and v_filled > 0 and v_carved != v_filled
 
-        has_demo = find_demo(methods_src) is not None
+        has_demo   = find_demo(methods_src) is not None
         payload_ok = clean_payload.get("native_type") == "mPyMesh"
 
         # --- authored @maya_test check on a FRESH deserialized node. ---
-        test_ok = False
+        test_ok  = False
         test_err = "n/a"
         try:
             mc.file(new=True, force=True)
             for plugin in ("mpynode_api1", "mpynode_api2"):
                 if not mc.pluginInfo(plugin, q=True, loaded=True):
                     mc.loadPlugin(plugin)
-            ttnode = deserialize_node(clean_payload, restore_persistent=False)
-            tres = ttnode.run_test()
-            test_ok = bool(tres.get("passed"))
+            ttnode   = deserialize_node(clean_payload, restore_persistent=False)
+            tres     = ttnode.run_test()
+            test_ok  = bool(tres.get("passed"))
             test_err = tres.get("error") or "ok"
         except Exception as texc:
             test_err = "exc:%r" % texc
@@ -4357,9 +4357,9 @@ def build_ik():
     from mpynode.wrappers.mpy_iksolver import MPyIkSolver
 
     mc.select(clear=True)
-    hip = mc.joint(name="hipJ", position=(0, 5, 0))
-    knee = mc.joint(name="kneeJ", position=(0, 0, 0))
-    ankle = mc.joint(name="ankleJ", position=(0, -5, 0))
+    hip    = mc.joint(name="hipJ",   position=(0, 5, 0))
+    knee   = mc.joint(name="kneeJ",  position=(0, 0, 0))
+    ankle  = mc.joint(name="ankleJ", position=(0, -5, 0))
     solver = MPyIkSolver.create(name="twoBoneIK")
     solver.set_init_expression(IK_INIT)
     solver.set_compute_expression(IK_COMPUTE)
@@ -4381,7 +4381,7 @@ def build_ik():
     krot_near, _ = solve((0, -4.7, 0))               # genuinely near-extension
     krot_far, _ = solve((0, -20, 0))                 # out of reach -> clamp
     bend_close = abs(krot_close[0])
-    bend_near = abs(krot_near[0])
+    bend_near  = abs(krot_near[0])
     dist_close = float(np.linalg.norm(np.array(tip_close) - np.array([3, 1, 2])))
     compute_ok = (bend_close > 15.0 and bend_near < bend_close
                   and dist_close < 1.0 and abs(krot_far[0]) < 5.0)
@@ -4390,8 +4390,8 @@ def build_ik():
     #     a FRESH deserialized solver and the knee bends toward the goal. ---
     _stamp_class(solver, "TwoBoneIK", "mPyIkSolver")
     clean_payload = serialize_node(solver, include_persistent=False)
-    demo_ok = False
-    demo_err = "n/a"
+    demo_ok       = False
+    demo_err      = "n/a"
     try:
         mc.file(new=True, force=True)
         from mpynode._common.io.mpn_io import deserialize_node
@@ -4400,7 +4400,7 @@ def build_ik():
         run_node_demo(tnode)
         d_knee = (mc.ls("ikKnee*", type="joint") or [None])[0]
         d_goal = (mc.ls("ikGoal*", type="transform") or [None])[0]
-        d_hip = (mc.ls("ikHip*", type="joint") or [None])[0]
+        d_hip  = (mc.ls("ikHip*", type="joint") or [None])[0]
         chain_ok = bool(d_hip and d_knee
                         and d_knee in (mc.listRelatives(d_hip, ad=True) or []))
         bent = None
@@ -4411,21 +4411,21 @@ def build_ik():
             bent = None
         # Gate on structure (the numeric solve is already covered by compute_ok);
         # the bend value is informational (IK solve in headless can vary).
-        demo_ok = bool(d_goal and chain_ok)
+        demo_ok  = bool(d_goal and chain_ok)
         demo_err = "goal=%s chain=%s bend=%s" % (d_goal, chain_ok, bent)
     except Exception as exc:
         demo_err = "exc:%r" % exc
 
     # --- authored @maya_test check on a FRESH deserialized node. ---
-    test_ok = False
+    test_ok  = False
     test_err = "n/a"
     try:
         mc.file(new=True, force=True)
         from mpynode._common.io.mpn_io import deserialize_node
 
-        tnode = deserialize_node(clean_payload, restore_persistent=False)
-        tres = tnode.run_test()
-        test_ok = bool(tres.get("passed"))
+        tnode    = deserialize_node(clean_payload, restore_persistent=False)
+        tres     = tnode.run_test()
+        test_ok  = bool(tres.get("passed"))
         test_err = tres.get("error") or "ok"
     except Exception as exc:
         test_err = "exc:%r" % exc
@@ -4449,7 +4449,7 @@ def build_ik():
         verdict = ("PASS (headless: solve+@maya_test SKIPPED, no viewport)"
                    if ok else "FAIL")
     else:
-        ok = compute_ok and demo_ok and test_ok
+        ok      = compute_ok and demo_ok and test_ok
         verdict = "PASS" if ok else "FAIL"
     print("[ik] bend_close=%.2f bend_near=%.2f far_bend=%.2f dist_close=%.3f "
           "demo=%s(%s) test=%s(%s) has_test=%s headless=%s -> %s"
@@ -4536,7 +4536,7 @@ def _copy_asset(fname, rel_dir, dest_name=None):
 # did and lowers deterministically, so the Compute and Viewport tiers ARE the
 # shared FILE_COMPUTE / FILE_VIEW with no substitution at all.
 FILE_SIMPLE_COMPUTE = FILE_COMPUTE
-FILE_SIMPLE_VIEW = FILE_VIEW
+FILE_SIMPLE_VIEW    = FILE_VIEW
 
 
 DEMO_FILE_SIMPLE = '''# Full setup for the simple file texture: create a sphere + an unlit surfaceShader,
@@ -4737,8 +4737,8 @@ def _verify_file_embed(testimg, grid_path):
         """Stands in for the SelfProxy at the mPyFile preset DEFAULTS. It has no
         get_init_helper, so file_methods._helper falls back to file_texture_ops
         -- the same entry point _framework_read_texture uses."""
-        colorSpace = 0
-        preFilter = False
+        colorSpace      = 0
+        preFilter       = False
         preFilterKernel = 0
         preFilterRadius = 1.0
 
@@ -4747,8 +4747,8 @@ def _verify_file_embed(testimg, grid_path):
     s_none = _S(); s_none.fileName = ""; s_none.embeddedImage = None
 
     embed = file_methods.read_texture(s_embed)
-    disk = file_methods.read_texture(s_disk)
-    nada = file_methods.read_texture(s_none)
+    disk  = file_methods.read_texture(s_disk)
+    nada  = file_methods.read_texture(s_none)
     # An explicit path is "read THIS file" -- no fallback, even though s_embed
     # carries bytes. File Composite relies on a blank layer path giving None.
     explicit = file_methods.read_texture(s_embed, "")
@@ -4768,7 +4768,7 @@ def build_file_simple():
     from mpynode._common.storedvars.stored_vars_api import set_variable
     from mpynode.wrappers.mpy_file import MPyFile
 
-    rows = [r * 30 for r in range(8)]
+    rows    = [r * 30 for r in range(8)]
     testimg = "/tmp/_tpl_simple_gradient.png"
     w, h = _write_test_image(testimg, rows)
     grid = os.path.join(ASSETS_DIR, "test_grid.png")
@@ -4790,32 +4790,32 @@ def build_file_simple():
     mc.setAttr(nm + ".fileName", testimg, type="string")
 
     def out_color(u, v, bright=1.0, contrast=1.0):
-        mc.setAttr(nm + ".uCoord", u)
-        mc.setAttr(nm + ".vCoord", v)
+        mc.setAttr(nm + ".uCoord",     u)
+        mc.setAttr(nm + ".vCoord",     v)
         mc.setAttr(nm + ".brightness", bright)
-        mc.setAttr(nm + ".contrast", contrast)
+        mc.setAttr(nm + ".contrast",   contrast)
         mc.dgdirty(nm + ".outColor")
         return mc.getAttr(nm + ".outColor")[0]
 
     def _lin(s):
         return s / 12.92 if s <= 0.04045 else ((s + 0.055) / 1.055) ** 2.4
-    top = out_color(0.5, 0.99)[0]
-    bottom = out_color(0.5, 0.01)[0]
-    top_ok = abs(top - _lin(rows[h - 1] / 255.0)) < 0.05
+    top       = out_color(0.5, 0.99)[0]
+    bottom    = out_color(0.5, 0.01)[0]
+    top_ok    = abs(top - _lin(rows[h - 1] / 255.0)) < 0.05
     bottom_ok = abs(bottom - _lin(rows[0] / 255.0)) < 0.05
     rows_reached = len({
         round(out_color(0.5, (r + 0.5) / h)[0], 3) for r in range(h)})
     sampling_ok = top_ok and bottom_ok and rows_reached >= h - 1
 
-    mid = out_color(0.5, 0.5, 1.0, 1.0)
-    g = mid[0]
-    b2 = out_color(0.5, 0.5, 2.0, 1.0)
-    bright_ok = abs(b2[0] - min(1.0, g * 2.0)) < 0.02
+    mid         = out_color(0.5, 0.5, 1.0, 1.0)
+    g           = mid[0]
+    b2          = out_color(0.5, 0.5, 2.0, 1.0)
+    bright_ok   = abs(b2[0] - min(1.0, g * 2.0)) < 0.02
 
     # Missing file + no embed -> magenta.
     mc.setAttr(nm + ".fileName", "", type="string")
     mc.dgdirty(nm + ".outColor")
-    miss = mc.getAttr(nm + ".outColor")[0]
+    miss    = mc.getAttr(nm + ".outColor")[0]
     miss_ok = np.allclose(miss, (1.0, 0.0, 1.0), atol=1e-4)
 
     # Embedded fallback on the LIVE node: blank fileName + baked embeddedImage
@@ -4825,7 +4825,7 @@ def build_file_simple():
     mc.setAttr(nm + ".brightness", 1.0)
     mc.setAttr(nm + ".contrast", 1.0)
     mc.dgdirty(nm + ".outColor")
-    emb = mc.getAttr(nm + ".outColor")[0]
+    emb           = mc.getAttr(nm + ".outColor")[0]
     embed_live_ok = not np.allclose(emb, (1.0, 0.0, 1.0), atol=1e-4)
     mc.setAttr(nm + ".fileName", testimg, type="string")
 
@@ -4837,15 +4837,15 @@ def build_file_simple():
     has_demo = find_demo(DEMO_FILE_SIMPLE) is not None
 
     # --- authored @maya_test check on a FRESH deserialized node. ---
-    test_ok = False
+    test_ok  = False
     test_err = "n/a"
     try:
         mc.file(new=True, force=True)
         from mpynode._common.io.mpn_io import deserialize_node
 
-        tnode = deserialize_node(clean_payload, restore_persistent=False)
-        tres = tnode.run_test()
-        test_ok = bool(tres.get("passed"))
+        tnode    = deserialize_node(clean_payload, restore_persistent=False)
+        tres     = tnode.run_test()
+        test_ok  = bool(tres.get("passed"))
         test_err = tres.get("error") or "ok"
     except Exception as exc:
         test_err = "exc:%r" % exc
@@ -5214,29 +5214,29 @@ def _verify_scanline_compute(testimg):
         def sample_texture(self, buf, su, sv):
             return _framework_sample(buf, su, sv)
 
-    s = _S()
-    s.fileName = testimg
+    s               = _S()
+    s.fileName      = testimg
     s.embeddedImage = None
-    s.uvCoord = (u, v)
-    s.bands = bands
-    s.speed = speed
-    s.intensity = intensity
-    s.frame = t
-    ns["self"] = s
+    s.uvCoord       = (u, v)
+    s.bands         = bands
+    s.speed         = speed
+    s.intensity     = intensity
+    s.frame         = t
+    ns["self"]      = s
     try:
         exec(compile(FILE_SCAN_COMPUTE, "scan_compute", "exec"), ns)
     except Exception as exc:
         return False, "exec:%r" % exc
     got = s.outColor
 
-    vv = v - np.floor(v)
+    vv  = v - np.floor(v)
     r, g, b, a = _framework_sample(img, u, v)
-    sfac = 0.5 + 0.5 * float(np.sin((vv * bands - t * speed) * 2.0 * np.pi))
-    scan = (1.0 - intensity) + intensity * sfac
-    exp = (r * scan, g * scan, b * scan)
-    err = max(abs(got[i] - exp[i]) for i in range(3))
+    sfac      = 0.5 + 0.5 * float(np.sin((vv * bands - t * speed) * 2.0 * np.pi))
+    scan      = (1.0 - intensity) + intensity * sfac
+    exp       = (r * scan, g * scan, b * scan)
+    err       = max(abs(got[i] - exp[i]) for i in range(3))
     modulates = abs(scan - 1.0) > 1e-3
-    ok = err < 1e-5 and modulates
+    ok        = err < 1e-5 and modulates
     return ok, "err=%.1e scan=%.3f" % (err, scan)
 
 
@@ -5273,19 +5273,19 @@ def _verify_scanline_viewport(testimg):
             return None
 
     class _FakeSelf(object):
-        fileName = testimg
-        shader = _FakeShader()
+        fileName        = testimg
+        shader          = _FakeShader()
         texture_manager = _FakeTM()
-        state_manager = _FakeSM()
+        state_manager   = _FakeSM()
 
         def read_texture(self, path=None):
             return _framework_read_texture(path or self.fileName)
 
-    self_obj = _FakeSelf()
-    self_obj.bands = bands
-    self_obj.speed = speed
+    self_obj           = _FakeSelf()
+    self_obj.bands     = bands
+    self_obj.speed     = speed
     self_obj.intensity = intensity
-    self_obj.frame = t
+    self_obj.frame     = t
 
     ns = {}
     exec(FILE_INIT, ns)
@@ -5302,7 +5302,7 @@ def _verify_scanline_viewport(testimg):
     img = _framework_read_texture(testimg)
     exp = img.astype(np.float32, copy=True)
     h, w = exp.shape[0], exp.shape[1]
-    py = np.arange(h, dtype=np.float32)
+    py   = np.arange(h, dtype=np.float32)
     vrow = 1.0 - py / float(max(h - 1, 1))
     srow = 0.5 + 0.5 * np.sin((vrow * bands - t * speed) * 2.0 * np.pi)
     scan = ((1.0 - intensity) + intensity * srow).astype(np.float32)
@@ -5311,13 +5311,13 @@ def _verify_scanline_viewport(testimg):
     exp[..., 2] *= scan[:, None]
     np.clip(exp[..., :3], 0.0, 1.0, out=exp[..., :3])
 
-    maxerr = float(np.abs(got[..., :3] - exp[..., :3]).max())
-    fmt_ok = captured["fmt"] == omr.MRenderer.kR32G32B32A32_FLOAT
+    maxerr    = float(np.abs(got[..., :3] - exp[..., :3]).max())
+    fmt_ok    = captured["fmt"] == omr.MRenderer.kR32G32B32A32_FLOAT
     fields_ok = captured["bpr"] == captured["w"] * 4 * 4
 
     captured.clear()
     self_obj.texture_manager = None
-    ns2 = {}
+    ns2                      = {}
     exec(FILE_INIT, ns2)
     ns2["self"] = self_obj
     try:
@@ -5353,7 +5353,7 @@ def build_file_scanline():
     from mpynode._common.node_setups import find_demo
     from mpynode.wrappers.mpy_file import MPyFile
 
-    rows = [r * 30 for r in range(8)]
+    rows    = [r * 30 for r in range(8)]
     testimg = "/tmp/_tpl_scanline_gradient.png"
     w, h = _write_test_image(testimg, rows)
     grid = os.path.join(ASSETS_DIR, "test_grid.png")
@@ -5375,8 +5375,8 @@ def build_file_scanline():
     clean_payload = serialize_node(f, include_persistent=False)
 
     mc.setAttr(nm + ".fileName", testimg, type="string")
-    mc.setAttr(nm + ".bands", 12)
-    mc.setAttr(nm + ".speed", 0.1)
+    mc.setAttr(nm + ".bands",     12)
+    mc.setAttr(nm + ".speed",     0.1)
     mc.setAttr(nm + ".intensity", 0.6)
 
     def sample(u, v, t):
@@ -5409,15 +5409,15 @@ def build_file_scanline():
     has_demo = find_demo(DEMO_FILE_SCAN) is not None
 
     # Run the authored @maya_test on a FRESH deserialized node.
-    test_ok = False
+    test_ok  = False
     test_err = "n/a"
     try:
         mc.file(new=True, force=True)
         from mpynode._common.io.mpn_io import deserialize_node
 
-        tnode = deserialize_node(clean_payload, name="scanlineTestCheck")
-        tres = tnode.run_test()
-        test_ok = bool(tres.get("passed"))
+        tnode    = deserialize_node(clean_payload, name="scanlineTestCheck")
+        tres     = tnode.run_test()
+        test_ok  = bool(tres.get("passed"))
         test_err = tres.get("error") or "ok"
     except Exception as exc:
         test_err = "exc:%r" % exc
@@ -5900,9 +5900,9 @@ def _verify_composite_viewport(paths):
             return None
 
     class _FakeSelf(object):
-        shader = _FakeShader()
+        shader          = _FakeShader()
         texture_manager = _FakeTM()
-        state_manager = _FakeSM()
+        state_manager   = _FakeSM()
 
         def read_texture(self, path=None):
             return _framework_read_texture(
@@ -5910,7 +5910,7 @@ def _verify_composite_viewport(paths):
 
     self_obj = _FakeSelf()
     # The layers/opacities ARRAYS, all enabled -- the stack the demo builds.
-    self_obj.layers = list(paths)
+    self_obj.layers    = list(paths)
     self_obj.opacities = [1.0] * len(paths)
 
     ns = {}
@@ -5925,14 +5925,14 @@ def _verify_composite_viewport(paths):
 
     got = np.frombuffer(captured["bytes"], dtype=np.float32).reshape(
         captured["h"], captured["w"], 4)
-    exp = ns["_composite_layers"](self_obj)
-    maxerr = float(np.abs(got - exp).max())
-    fmt_ok = captured["fmt"] == omr.MRenderer.kR32G32B32A32_FLOAT
+    exp       = ns["_composite_layers"](self_obj)
+    maxerr    = float(np.abs(got - exp).max())
+    fmt_ok    = captured["fmt"] == omr.MRenderer.kR32G32B32A32_FLOAT
     fields_ok = captured["bpr"] == captured["w"] * 4 * 4
 
     captured.clear()
     self_obj.texture_manager = None
-    ns2 = {}
+    ns2                      = {}
     exec(FILE_COMPOSITE_INIT, ns2)
     ns2["self"] = self_obj
     try:
@@ -5959,7 +5959,7 @@ def build_file_composite():
     stack = [os.path.join(assets, n) for n in
              ("grid_bg.png", "red_square.png", "green_circle.png",
               "blue_triangle.png")]
-    missing = os.path.join(assets, "_no_such.png")
+    missing   = os.path.join(assets, "_no_such.png")
     assets_ok = all(os.path.isfile(p) for p in stack)
     if not assets_ok:
         print("[file_composite] assets=%s -> FAIL" % assets_ok)
@@ -6010,7 +6010,7 @@ def build_file_composite():
 
     # The layers actually land: the sampled texels are not one flat colour.
     set_stack(stack)
-    four = [sample(u, v) for u, v in grid]
+    four       = [sample(u, v) for u, v in grid]
     layered_ok = len({tuple(round(c, 4) for c in s) for s in four}) > 1
 
     # Stacking ORDER matters: the top layer must change the result somewhere.
@@ -6056,15 +6056,15 @@ def build_file_composite():
     has_demo = find_demo(DEMO_FILE_COMPOSITE) is not None
 
     # Run the authored @maya_test on a FRESH deserialized node.
-    test_ok = False
+    test_ok  = False
     test_err = "n/a"
     try:
         mc.file(new=True, force=True)
         from mpynode._common.io.mpn_io import deserialize_node
 
-        tnode = deserialize_node(clean_payload, restore_persistent=False)
-        tres = tnode.run_test()
-        test_ok = bool(tres.get("passed"))
+        tnode    = deserialize_node(clean_payload, restore_persistent=False)
+        tres     = tnode.run_test()
+        test_ok  = bool(tres.get("passed"))
         test_err = tres.get("error") or "ok"
     except Exception as exc:
         test_err = "exc:%r" % exc
@@ -6386,7 +6386,7 @@ def build_locator_widget_showcase():
     from mpynode._common.storedvars.stored_vars_api import set_variable
     from mpynode.wrappers.mpy_locator import MPyLocator
 
-    w = MPyLocator.create(name="widgetShowcase")
+    w    = MPyLocator.create(name="widgetShowcase")
     node = w.get_name()
     w.add_input_attr("preset", "enum",
                      enum_names=["everything", "curves", "points",
@@ -6419,11 +6419,11 @@ def build_locator_widget_showcase():
 
     # Each preset lights up exactly its slots (and nothing stale).
     preset_ok = True
-    detail = []
+    detail    = []
     for i, pname in enumerate(enum_order):
         mc.setAttr(node + ".preset", i)
-        on = _draw_slots(w)
-        ok_i = on == expected[pname]
+        on        = _draw_slots(w)
+        ok_i      = on == expected[pname]
         preset_ok = preset_ok and ok_i
         if not ok_i:
             detail.append("%s:%s" % (pname, on))
@@ -6442,8 +6442,8 @@ def build_locator_widget_showcase():
         _ensure_mpy_plugins()
         from mpynode._common.io.mpn_io import deserialize_node
 
-        tnode = deserialize_node(clean_payload, name="widgetShowcaseTestCheck")
-        tres = tnode.run_test()
+        tnode   = deserialize_node(clean_payload, name="widgetShowcaseTestCheck")
+        tres    = tnode.run_test()
         test_ok = bool(tres.get("passed"))
         if not test_ok:
             print("[loc_showcase] @maya_test FAILED: %s" % tres.get("error"))
@@ -6676,12 +6676,12 @@ def build_locator_animated_text():
     from mpynode._common.node_setups import find_demo
     from mpynode.wrappers.mpy_locator import MPyLocator
 
-    w = MPyLocator.create(name="animatedText")
+    w    = MPyLocator.create(name="animatedText")
     node = w.get_name()
     w.add_input_attr("displayText", "string")
     w.add_input_attr("loopDuration", "float", default_value=1.0)
-    w.add_input_attr("spacing", "float", default_value=1.3)
-    w.add_input_attr("waveHeight", "float", default_value=1.6)
+    w.add_input_attr("spacing",      "float", default_value=1.3)
+    w.add_input_attr("waveHeight",   "float", default_value=1.6)
     w.set_init_expression(LOC_TEXT_INIT)
     w.set_compute_expression(LOC_TEXT_COMPUTE)
     w.set_methods_source(DEMO_LOC_TEXT)
@@ -6697,7 +6697,7 @@ def build_locator_animated_text():
 
     # Override message.
     mc.setAttr(node + ".displayText", "Hi", type="string")
-    buf2 = _draw_slot(w, "text")
+    buf2        = _draw_slot(w, "text")
     override_ok = buf2 is not None and buf2["strings"] == ["H", "i"]
     # Local-space text: sizes are now OBJECT-space heights (floats, ~0.3-0.8
     # world units), auto-scaled to pixels by the draw override at render time.
@@ -6711,12 +6711,12 @@ def build_locator_animated_text():
     mc.setAttr(node + ".displayText", "", type="string")
     b0 = _draw_slot(w, "text")
     _time.sleep(0.05)
-    b0b = _draw_slot(w, "text")
+    b0b           = _draw_slot(w, "text")
     idle_animates = not np.allclose(b0["positions"], b0b["positions"])
     # ...and the drawing is a pure function of the injected wall clock: two
     # instants differ, the same instant repeats (the timeline plays no part).
-    b_a = _draw_slot(w, "text", wallclock=0.0)
-    b_b = _draw_slot(w, "text", wallclock=0.25)
+    b_a  = _draw_slot(w, "text", wallclock=0.0)
+    b_b  = _draw_slot(w, "text", wallclock=0.25)
     b_a2 = _draw_slot(w, "text", wallclock=0.0)
     animates = (not np.allclose(b_a["positions"], b_b["positions"])
                 and np.allclose(b_a["positions"], b_a2["positions"]))
@@ -6731,8 +6731,8 @@ def build_locator_animated_text():
         mc.file(new=True, force=True)
         from mpynode._common.io.mpn_io import deserialize_node
 
-        tnode = deserialize_node(clean_payload, name="animTextTestCheck")
-        tres = tnode.run_test()
+        tnode   = deserialize_node(clean_payload, name="animTextTestCheck")
+        tres    = tnode.run_test()
         test_ok = bool(tres.get("passed"))
         if not test_ok:
             print("[loc_text] @maya_test FAILED: %s" % tres.get("error"))
@@ -6988,15 +6988,15 @@ def build_locator_animated_selection():
     from mpynode._common.node_setups import find_demo
     from mpynode.wrappers.mpy_locator import MPyLocator
 
-    w = MPyLocator.create(name="animatedSelection")
+    w    = MPyLocator.create(name="animatedSelection")
     node = w.get_name()
     w.add_input_attr("color_mode", "enum",
                      enum_names=["face", "vertex", "face_vertex", "uniform"])
-    w.add_input_attr("show_wireframe", "bool", default_value=True)
-    w.add_input_attr("wire_width", "float", default_value=2.0)
-    w.add_input_attr("spinSpeed", "float", default_value=1.0)
-    w.add_input_attr("popDuration", "float", default_value=0.6)
-    w.add_input_attr("popAmount", "float", default_value=0.45)
+    w.add_input_attr("show_wireframe", "bool",  default_value=True)
+    w.add_input_attr("wire_width",     "float", default_value=2.0)
+    w.add_input_attr("spinSpeed",      "float", default_value=1.0)
+    w.add_input_attr("popDuration",    "float", default_value=0.6)
+    w.add_input_attr("popAmount",      "float", default_value=0.45)
     w.set_init_expression(LOC_SEL_INIT)
     w.set_compute_expression(LOC_SEL_COMPUTE)
     w.set_methods_source(DEMO_LOC_SEL)
@@ -7005,7 +7005,7 @@ def build_locator_animated_selection():
     clean_payload = serialize_node(w, include_persistent=False)
 
     # Each color_mode drives the matching polygon colour key.
-    mode_ok = True
+    mode_ok     = True
     mode_detail = []
     for i, (mode, key) in enumerate([
             ("face", "face_colors"), ("vertex", "vertex_colors"),
@@ -7024,19 +7024,19 @@ def build_locator_animated_selection():
     wire_on = "wireframe" in (_draw_slot(w, "polygons") or {})
     mc.setAttr(node + ".show_wireframe", False)
     wire_off = "wireframe" not in (_draw_slot(w, "polygons") or {})
-    wire_ok = wire_on and wire_off
+    wire_ok  = wire_on and wire_off
 
     # spinSpeed actually spins: two wall-clock instants differ.
     mc.setAttr(node + ".spinSpeed", 0.5)
-    s0 = _draw_slot(w, "polygons", wallclock=0.0)["points"]
-    s1 = _draw_slot(w, "polygons", wallclock=1.0)["points"]
+    s0      = _draw_slot(w, "polygons", wallclock=0.0)["points"]
+    s1      = _draw_slot(w, "polygons", wallclock=1.0)["points"]
     spin_ok = not np.allclose(s0, s1)
     # ...and a spinning cube asks for idle redraws while a still one rests.
     mc.setAttr(node + ".spinSpeed", 1.0)
     refresh_spinning = w.evaluate_draw_commands(0.0, wallclock=5.0)["auto_refresh"] is True
     mc.setAttr(node + ".spinSpeed", 0.0)
     refresh_still = w.evaluate_draw_commands(0.0, wallclock=5.0)["auto_refresh"] is False
-    spin_ok = spin_ok and refresh_spinning and refresh_still
+    spin_ok       = spin_ok and refresh_spinning and refresh_still
 
     has_demo = find_demo(DEMO_LOC_SEL) is not None
 
@@ -7046,8 +7046,8 @@ def build_locator_animated_selection():
         mc.file(new=True, force=True)
         from mpynode._common.io.mpn_io import deserialize_node
 
-        tnode = deserialize_node(clean_payload, restore_persistent=False)
-        tres = tnode.run_test()
+        tnode   = deserialize_node(clean_payload, restore_persistent=False)
+        tres    = tnode.run_test()
         test_ok = bool(tres.get("passed"))
         if not test_ok:
             print("[loc_selection] @maya_test FAILED: %s" % tres.get("error"))
@@ -7829,7 +7829,7 @@ def _parse_component_tag_regions(shape):
     ships instead of a hand-kept copy that can drift out of sync with it."""
     import ast
     src = DEMO_LOC_REGION
-    ns = {}
+    ns  = {}
     for _n in ast.parse(src).body:
         if (isinstance(_n, ast.FunctionDef)
                 and _n.name == "get_component_tag_faces"):
@@ -7845,7 +7845,7 @@ def build_locator_mesh_regions():
     from mpynode._common.storedvars.stored_vars_api import get_variables, set_variable
     from mpynode.wrappers.mpy_locator import MPyLocator
 
-    w = MPyLocator.create(name="meshRegions")
+    w    = MPyLocator.create(name="meshRegions")
     node = w.get_name()
     # Canonical Class identity: without a stamped ``_pyClass`` the bake falls
     # back to the ROOT wrapper name (MPyLocator), so every baked mesh-region
@@ -7855,17 +7855,17 @@ def build_locator_mesh_regions():
     w.set_py_class(dotted_path("MeshRegionLocator"))
     w.add_input_attr("inMesh", "mesh")
     w.add_input_attr("regionTag", "string")
-    w.add_input_attr("offset", "float", default_value=0.1)
-    w.add_input_attr("hoverOffset", "float", default_value=0.25)
+    w.add_input_attr("offset",       "float", default_value=0.1)
+    w.add_input_attr("hoverOffset",  "float", default_value=0.25)
     w.add_input_attr("selectOffset", "float", default_value=0.5)
-    w.add_input_attr("hoverDur", "float", default_value=0.35)
+    w.add_input_attr("hoverDur",     "float", default_value=0.35)
     # Each colour carries a real attr DEFAULT (these were hard-coded fallbacks
     # in the compute, applied whenever a colour read all-zero -- which made pure
     # black the one unreachable value). With the default on the attr, a
     # raw-created node already looks right AND a dialled (0,0,0) draws black.
     w.add_input_attr("defaultColor", "color", default_value=(0.25, 0.50, 0.95))
-    w.add_input_attr("hoverColor", "color", default_value=(1.00, 0.82, 0.15))
-    w.add_input_attr("selectColor", "color", default_value=(0.30, 0.85, 0.90))
+    w.add_input_attr("hoverColor",   "color", default_value=(1.00, 0.82, 0.15))
+    w.add_input_attr("selectColor",  "color", default_value=(0.30, 0.85, 0.90))
     # The outline is a per-state colour too; all three default to the dark edge
     # that used to be the fixed WIRE_COLOR, so a fresh node looks unchanged.
     w.add_input_attr("outlineColor", "color", default_value=(0.02, 0.02, 0.04))
@@ -7884,7 +7884,7 @@ def build_locator_mesh_regions():
 
     # Synthetic mesh + an authored component tag -> patch draws; verify the new
     # RGBA colour path (per-node defaultColor + alpha input) end to end.
-    sphere = mc.polySphere(sx=20, sy=20, name="probeSphere")[0]
+    sphere       = mc.polySphere(sx=20, sy=20, name="probeSphere")[0]
     sphere_shape = mc.listRelatives(sphere, shapes=True, fullPath=True)[0]
     mc.connectAttr(sphere_shape + ".worldMesh[0]", node + ".inMesh", force=True)
     # A raw-created node must already carry the seeded colour DEFAULTS, since
@@ -7910,11 +7910,11 @@ def build_locator_mesh_regions():
     mc.componentTag(sphere_shape + ".f[100:115]", create=True, newTagName="probeRegion")
     mc.setAttr(node + ".regionTag", "probeRegion", type="string")
     mc.dgdirty(node)
-    poly = _draw_slot(w, "polygons")
+    poly    = _draw_slot(w, "polygons")
     draw_ok = poly is not None
     if draw_ok:
-        fcol = np.asarray(poly["face_colors"])
-        cnt = np.asarray(poly["counts"])
+        fcol    = np.asarray(poly["face_colors"])
+        cnt     = np.asarray(poly["counts"])
         rows_ok = fcol.shape[0] == cnt.shape[0]      # one colour per face
         # RGBA rows carrying the node's defaultColor + the alpha input (0.8).
         colors_ok = (
@@ -7948,7 +7948,7 @@ def build_locator_mesh_regions():
         _pr = np.asarray(
             _first_poly(_mpx.evaluateDrawItems(0.0, selected=False))["points"])
         _psel = _first_poly(_mpx.evaluateDrawItems(0.0, selected=True))
-        _fcs = np.asarray(_psel["face_colors"])
+        _fcs  = np.asarray(_psel["face_colors"])
         _disp = np.linalg.norm(np.asarray(_psel["points"]) - _pr, axis=1)
         select_ok = bool(
             np.allclose(_fcs[:, :3], (0.30, 0.85, 0.90), atol=1e-3)   # selectColor
@@ -8000,26 +8000,26 @@ def build_locator_mesh_regions():
     from mpynode._common.io.mpn_io import deserialize_node
     from mpynode._node_registry import wrap_node
 
-    per_tag_ok = draw_all_ok = colors_distinct = False
+    per_tag_ok   = draw_all_ok = colors_distinct = False
     setup_detail = "no-file"
-    head = os.path.join(ASSETS_DIR, "head.ma")
+    head         = os.path.join(ASSETS_DIR, "head.ma")
     if os.path.isfile(head):
         _copy_asset("head.ma", LOC_REGION_DIR)
         mc.file(new=True, force=True)
         try:
             tnode = deserialize_node(clean_payload, restore_persistent=False)
             run_node_demo(tnode)
-            locs = sorted(mc.ls(type="mPyLocator", long=True) or [])
-            heads = mc.ls("headModel:*", type="mesh", long=True) or []
-            n_tags = len(_parse_component_tag_regions(heads[0])) if heads else 0
-            per_tag_ok = (n_tags >= 2 and len(locs) == n_tags)
-            node_cols = []
+            locs        = sorted(mc.ls(type="mPyLocator", long=True) or [])
+            heads       = mc.ls("headModel:*", type="mesh", long=True) or []
+            n_tags      = len(_parse_component_tag_regions(heads[0])) if heads else 0
+            per_tag_ok  = (n_tags >= 2 and len(locs) == n_tags)
+            node_cols   = []
             draw_all_ok = bool(locs)
             for loc in locs:
                 if not (mc.listConnections(loc + ".inMesh", source=True,
                                            destination=False) or []):
                     draw_all_ok = False
-                lw = wrap_node(loc)
+                lw   = wrap_node(loc)
                 poly = _draw_slot(lw, "polygons") if lw else None
                 if poly is None:
                     draw_all_ok = False
@@ -8036,11 +8036,11 @@ def build_locator_mesh_regions():
         except Exception as exc:
             setup_detail = "exc:%r" % exc
 
-    has_demo = find_demo(methods_src) is not None
+    has_demo  = find_demo(methods_src) is not None
     has_setup = find_setup(methods_src) is not None
 
     # Run the authored @maya_test on a FRESH deserialized node.
-    test_ok = False
+    test_ok  = False
     test_err = "n/a"
     try:
         mc.file(new=True, force=True)
@@ -8054,8 +8054,8 @@ def build_locator_mesh_regions():
         if not all(np.allclose(mc.getAttr("%s.%s" % (_tn, _a))[0], _want,
                                atol=1e-6) for _a, _want in _WANT_COLS):
             defaults_ok = False
-        tres = tnode.run_test()
-        test_ok = bool(tres.get("passed"))
+        tres     = tnode.run_test()
+        test_ok  = bool(tres.get("passed"))
         test_err = tres.get("error") or "ok"
     except Exception as exc:
         test_err = "exc:%r" % exc
@@ -8063,12 +8063,12 @@ def build_locator_mesh_regions():
     # Migration: a gizmo carrying the pre-regionTag baked `regions` dict and an
     # EMPTY regionTag must come out of `setup` named after the dict's key that
     # the mesh still carries, with the dict gone.
-    migrate_ok = False
+    migrate_ok     = False
     migrate_detail = "n/a"
     try:
         from mpynode._common.io.mpn_io import deserialize_node
         mc.file(new=True, force=True)
-        msph = mc.polySphere(sx=20, sy=20, name="migrateSphere")[0]
+        msph   = mc.polySphere(sx=20, sy=20, name="migrateSphere")[0]
         mshape = mc.listRelatives(msph, shapes=True, fullPath=True)[0]
         mc.componentTag(mshape + ".f[0:15]", create=True, newTagName="alpha")
         mc.componentTag(mshape + ".f[16:31]", create=True, newTagName="beta")
@@ -8076,9 +8076,9 @@ def build_locator_mesh_regions():
         mname = mnode.get_name()
         set_variable(mname, "regions", {"beta": list(range(16, 32))}, persistent=True)
         mnode.run_setup(selection=[msph])
-        got = mc.getAttr(mname + ".regionTag") or ""
-        left = "regions" in (get_variables(mname) or {})
-        migrate_ok = (got == "beta" and not left)
+        got            = mc.getAttr(mname + ".regionTag") or ""
+        left           = "regions" in (get_variables(mname) or {})
+        migrate_ok     = (got == "beta" and not left)
         migrate_detail = "regionTag=%r dict_left=%s" % (got, left)
     except Exception as exc:
         migrate_detail = "exc:%r" % exc
@@ -8582,13 +8582,13 @@ def build_procrustes_tags():
     from mpynode._common.methods.methods_registry import run_node_demo
     from mpynode._common.io.mpn_io import deserialize_node
 
-    ok = False
+    ok     = False
     detail = "n/a"
     try:
         mc.file(new=True, force=True)
         _ensure_mpy_plugins()
         tnode = deserialize_node(clean_payload, restore_persistent=False)
-        node = tnode.get_name()
+        node  = tnode.get_name()
         run_node_demo(tnode)
         cubes = sorted(c for c in (mc.ls("tagRiveted*", long=True) or [])
                        if mc.nodeType(c) == "transform")
@@ -8601,7 +8601,7 @@ def build_procrustes_tags():
         tube_shape = (mc.listRelatives("twistTube", shapes=True,
                                        type="mesh", noIntermediate=True,
                                        fullPath=True) or [None])[0]
-        n_tags = len(tag_names(tube_shape)) if tube_shape else 0
+        n_tags  = len(tag_names(tube_shape)) if tube_shape else 0
         tags_ok = n_tags >= 5
 
         wired = all(bool(mc.listConnections(
@@ -8628,19 +8628,19 @@ def build_procrustes_tags():
                 moved = False
 
         # --- authored @maya_test check on a FRESH deserialized node. ---
-        test_ok = False
+        test_ok  = False
         test_err = "n/a"
         try:
             mc.file(new=True, force=True)
             _ensure_mpy_plugins()
-            ttnode = deserialize_node(clean_payload, restore_persistent=False)
-            tres = ttnode.run_test()
-            test_ok = bool(tres.get("passed"))
+            ttnode   = deserialize_node(clean_payload, restore_persistent=False)
+            tres     = ttnode.run_test()
+            test_ok  = bool(tres.get("passed"))
             test_err = tres.get("error") or "ok"
         except Exception as _texc:
             test_err = "exc:%r" % _texc
 
-        has_demo = find_demo(methods_src) is not None
+        has_demo  = find_demo(methods_src) is not None
         has_setup = find_setup(methods_src) is not None
         ok = bool(n_ok and tags_ok and wired and bind_ok and moved
                   and has_demo and has_setup and test_ok)
@@ -8919,8 +8919,8 @@ def build_aim_between_matrices():
     from mpynode._common.node_setups import find_demo
 
     node = MPyTransform.create(name="aimTransform", skip_selection=True)
-    node.add_input_attr("matrix0", "matrix")
-    node.add_input_attr("matrix1", "matrix")
+    node.add_input_attr("matrix0",     "matrix")
+    node.add_input_attr("matrix1",     "matrix")
     node.add_input_attr("parentWorld", "matrix")
     node.set_init_expression(AIM_TRANSFORM_INIT)
     node.set_compute_expression(AIM_TRANSFORM_COMPUTE)
@@ -8935,20 +8935,20 @@ def build_aim_between_matrices():
     def _v(*xyz):
         return np.array(xyz, dtype=float)
 
-    ok = False
+    ok     = False
     detail = "n/a"
     try:
         mc.file(new=True, force=True)
         _ensure_mpy_plugins()
         tnode = deserialize_node(clean_payload, restore_persistent=False)
-        nm = tnode.get_name()
+        nm    = tnode.get_name()
         run_node_demo(tnode)
 
         # Origins of the two connected matrix inputs (demo-position-agnostic).
-        m0 = mc.getAttr(nm + ".matrix0")
-        m1 = mc.getAttr(nm + ".matrix1")
-        p0 = _v(m0[12], m0[13], m0[14])
-        p1 = _v(m1[12], m1[13], m1[14])
+        m0  = mc.getAttr(nm + ".matrix0")
+        m1  = mc.getAttr(nm + ".matrix1")
+        p0  = _v(m0[12], m0[13], m0[14])
+        p1  = _v(m1[12], m1[13], m1[14])
         mid = 0.5 * (p0 + p1)
         fwd = (p1 - p0) / (np.linalg.norm(p1 - p0) + 1e-12)
 
@@ -8962,7 +8962,7 @@ def build_aim_between_matrices():
         origin = mtx[3, :3]
 
         mid_ok = float(np.linalg.norm(origin - mid)) < 1e-4
-        x_ok = float(np.linalg.norm(row_x - fwd)) < 1e-4
+        x_ok   = float(np.linalg.norm(row_x - fwd)) < 1e-4
         # Orthonormal, right-handed, no scale.
         orthonormal_ok = (
             abs(np.linalg.norm(row_x) - 1.0) < 1e-5
@@ -8987,7 +8987,7 @@ def build_aim_between_matrices():
         mc.setAttr(tip + ".translateX", 1.0)
         tw = np.array(mc.getAttr(tip + ".worldMatrix[0]"),
                       dtype=float).reshape(4, 4)
-        tip_ok = float(np.linalg.norm(tw[3, :3] - (mid + fwd))) < 1e-4
+        tip_ok   = float(np.linalg.norm(tw[3, :3] - (mid + fwd))) < 1e-4
 
         has_demo = find_demo(DEMO_AIM) is not None
         payload_ok = (clean_payload.get("native_type") == "mPyTransform"
@@ -8996,14 +8996,14 @@ def build_aim_between_matrices():
                       and not clean_payload.get("stored_vars"))
 
         # --- authored @maya_test check on a FRESH deserialized node. ---
-        test_ok = False
+        test_ok  = False
         test_err = "n/a"
         try:
             mc.file(new=True, force=True)
             _ensure_mpy_plugins()
-            ttnode = deserialize_node(clean_payload, restore_persistent=False)
-            tres = ttnode.run_test()
-            test_ok = bool(tres.get("passed"))
+            ttnode   = deserialize_node(clean_payload, restore_persistent=False)
+            tres     = ttnode.run_test()
+            test_ok  = bool(tres.get("passed"))
             test_err = tres.get("error") or "ok"
         except Exception as texc:
             test_err = "exc:%r" % texc
@@ -9834,19 +9834,19 @@ def build_dnet():
     # Inputs -- names / types / defaults / order match the source dnet .mpn
     # (bugs/dnet_code.mpn) 1:1 so this template IS that solver's node. Order index
     # in the trailing comment is the .mpn attribute `order`.
-    node.add_input_attr("matrices", "matrix", is_array=True)                 # 0
-    node.add_input_attr("anchors", "float", is_array=True)                   # 1
-    node.add_input_attr("index0", "int", is_array=True)                      # 2
-    node.add_input_attr("index1", "int", is_array=True)                      # 3
-    node.add_input_attr("restLengths", "float", is_array=True, default_value=1.0)   # 4
+    node.add_input_attr("matrices", "matrix", is_array=True)                       # 0
+    node.add_input_attr("anchors",  "float",  is_array=True)                       # 1
+    node.add_input_attr("index0",   "int",    is_array=True)                       # 2
+    node.add_input_attr("index1",   "int",    is_array=True)                       # 3
+    node.add_input_attr("restLengths", "float", is_array=True, default_value=1.0)  # 4
     # PER-LINK tension: create_link wires each link curve's own tension attr to a
     # tension[e] slot, so this is an array (a scalar plug takes only ONE incoming
     # connection). Unset/unconnected links read the 0.0 default (no contraction).
-    node.add_input_attr("tension", "float", is_array=True, default_value=0.0)       # 5
-    node.add_input_attr("iterations", "int", default_value=100, min_value=1)        # 6
-    node.add_input_attr("tolerance", "float", default_value=0.001)                  # 7
-    node.add_input_attr("damping", "float", default_value=0.1)                      # 8
-    node.add_input_attr("inverseMatrix", "matrix")                                  # 9
+    node.add_input_attr("tension", "float", is_array=True, default_value=0.0)  # 5
+    node.add_input_attr("iterations", "int", default_value=100, min_value=1)   # 6
+    node.add_input_attr("tolerance", "float", default_value=0.001)             # 7
+    node.add_input_attr("damping", "float", default_value=0.1)                 # 8
+    node.add_input_attr("inverseMatrix", "matrix")                             # 9
     # resetBuffer defaults TRUE: every eval re-seeds free knots from their live
     # goal matrices and relaxes (a deterministic, history-free solve). Set it
     # False to make free knots CONTINUE from the previous frame (momentum-like).
@@ -9860,8 +9860,8 @@ def build_dnet():
     # push / pull attr to a push[e] / pull[e] slot, so these are arrays too.
     # Unset/unconnected links read the 1.0 default (neutral compression / stretch
     # resistance -- identical to the former scalar-knob behaviour).
-    node.add_input_attr("push", "float", is_array=True, default_value=1.0)          # 12
-    node.add_input_attr("pull", "float", is_array=True, default_value=1.0)          # 13
+    node.add_input_attr("push", "float", is_array=True, default_value=1.0)  # 12
+    node.add_input_attr("pull", "float", is_array=True, default_value=1.0)  # 13
     # time is NOT one of the .mpn's 14 solver inputs; it is a template convenience
     # so the demos can wire time1.outTime -> .time and animate on playback (the
     # solver body ignores it).
@@ -9871,10 +9871,10 @@ def build_dnet():
     # (goal-local displacement, == the old `driven`) fed to each knot's child
     # transform; `lengths` the per-link solved lengths; `maxIterations` the
     # iteration count reached; `maxForce` the final max displacement.
-    node.add_output_attr("positions", "vector", is_array=True)              # 0
-    node.add_output_attr("lengths", "float", is_array=True, default_value=0.0)      # 1
-    node.add_output_attr("maxIterations", "int", default_value=0)                   # 2
-    node.add_output_attr("maxForce", "float", default_value=0.0)                    # 3
+    node.add_output_attr("positions", "vector", is_array=True)                  # 0
+    node.add_output_attr("lengths", "float", is_array=True, default_value=0.0)  # 1
+    node.add_output_attr("maxIterations", "int", default_value=0)               # 2
+    node.add_output_attr("maxForce", "float", default_value=0.0)                # 3
 
     node.set_init_expression(DNET_INIT)
     node.set_compute_expression(DNET_COMPUTE)
@@ -9897,7 +9897,7 @@ def build_dnet():
     from mpynode._common.io.mpn_io import deserialize_node
 
     rows, cols = 6, 8
-    n = rows * cols
+    n       = rows * cols
     corners = [0, cols - 1, (rows - 1) * cols, n - 1]
     interior = [r * cols + c for r in range(1, rows - 1)
                 for c in range(1, cols - 1)]
@@ -9905,7 +9905,7 @@ def build_dnet():
     def mag(v):
         return (v[0] ** 2 + v[1] ** 2 + v[2] ** 2) ** 0.5
 
-    ok = False
+    ok     = False
     detail = "n/a"
     try:
         # ================= Demo 1: Grid Net (lightweight helpers) ============
@@ -9915,7 +9915,7 @@ def build_dnet():
         mc.file(new=True, force=True)
         _ensure_mpy_plugins()
         tnode = deserialize_node(clean_payload, restore_persistent=False)
-        nm = tnode.get_name()
+        nm    = tnode.get_name()
         run_node_demo(tnode)
 
         def driven_at(frame):
@@ -9925,8 +9925,8 @@ def build_dnet():
 
         size_ok = (mc.getAttr(nm + ".positions", size=True) == n
                    and mc.getAttr(nm + ".index0", size=True) == 82)
-        d1 = driven_at(1)      # rest grid (spacing == rest length) -> ~0
-        d24 = driven_at(24)    # corner pulled out of plane -> net deformed
+        d1      = driven_at(1)   # rest grid (spacing == rest length) -> ~0
+        d24     = driven_at(24)  # corner pulled out of plane -> net deformed
         rest_ok = max(mag(v) for v in d1) < 1e-2
         corners_ok = (max(mag(d1[i]) for i in corners) < 1e-3
                       and max(mag(d24[i]) for i in corners) < 1e-3)
@@ -9943,7 +9943,7 @@ def build_dnet():
         mc.file(new=True, force=True)
         _ensure_mpy_plugins()
         lnode = deserialize_node(clean_payload, restore_persistent=False)
-        lnm = lnode.get_name()
+        lnm   = lnode.get_name()
         run_node_demo(lnode, "demo_layout")
 
         layout_size_ok = (mc.getAttr(lnm + ".positions", size=True) == 30
@@ -9958,8 +9958,8 @@ def build_dnet():
             return (mc.listConnections(lnm + "." + attr, source=True,
                                        destination=False, plugs=True) or [])
         tension_plugs = slot_plugs("tension")
-        push_plugs = slot_plugs("push")
-        pull_plugs = slot_plugs("pull")
+        push_plugs    = slot_plugs("push")
+        pull_plugs    = slot_plugs("pull")
         wire_ok = (len(goal_nodes) == 30
                    and len(tension_plugs) == 38
                    and len(push_plugs) == 38 and len(pull_plugs) == 38
@@ -9967,9 +9967,9 @@ def build_dnet():
                    and all(p.split(".", 1)[1] == "push" for p in push_plugs)
                    and all(p.split(".", 1)[1] == "pull" for p in pull_plugs))
         # Shape scheme present, OLD gizmo/aim scheme gone.
-        n_blend = len(mc.ls(type="blendShape") or [])
+        n_blend   = len(mc.ls(type="blendShape") or [])
         no_gizmos = not (mc.ls(type="mPyLocator") or [])
-        no_aims = not (mc.ls(type="mPyTransform") or [])
+        no_aims   = not (mc.ls(type="mPyTransform") or [])
         # 38 link transforms, each inheritsTransform OFF, each with a line curve.
         link_nodes = sorted(set(p.rsplit(".", 1)[0] for p in tension_plugs))
         inh_off = all(mc.getAttr(l + ".inheritsTransform") == 0
@@ -9995,7 +9995,7 @@ def build_dnet():
                 return set()
 
         n_parentC = len(mc.ls(type="parentConstraint") or [])
-        n_pointC = len(mc.ls(type="pointConstraint") or [])
+        n_pointC  = len(mc.ls(type="pointConstraint") or [])
         n_orientC = len(mc.ls(type="orientConstraint") or [])
         # Geometry-derived assignment: corners (4,5,12,13) -> midway;
         # upper-lip-side (e.g. 0) -> cranium; lower-lip-side (e.g. 6) -> jaw.
@@ -10059,7 +10059,7 @@ def build_dnet():
         mc.file(new=True, force=True)
         _ensure_mpy_plugins()
         snode = deserialize_node(clean_payload, restore_persistent=False)
-        snm = snode.get_name()
+        snm   = snode.get_name()
         run_node_demo(snode, "demo_two_knots")
 
         shapes_size_ok = (mc.getAttr(snm + ".positions", size=True) == 6
@@ -10075,10 +10075,10 @@ def build_dnet():
         # 5 link transforms drive tension via their own `tension` attr.
         stension_plugs = (mc.listConnections(snm + ".tension", source=True,
                                              destination=False, plugs=True) or [])
-        stx_ok = all(p.split(".", 1)[1] == "tension" for p in stension_plugs)
+        stx_ok      = all(p.split(".", 1)[1] == "tension" for p in stension_plugs)
         slink_nodes = sorted(set(p.rsplit(".", 1)[0] for p in stension_plugs))
         # Each link parents exactly ONE degree-1 curve spanning its two knots.
-        curves_ok = True
+        curves_ok      = True
         curve_spans_ok = True
         for l in slink_nodes:
             cs = mc.listRelatives(l, shapes=True, type="nurbsCurve",
@@ -10103,7 +10103,7 @@ def build_dnet():
                           and all(abs(mc.getAttr(snm + ".anchors[%d]" % i))
                                   < 1e-6 for i in (0, 1)))
         no_locators = not (mc.ls(type="mPyLocator") or [])
-        no_stf = not (mc.ls(type="mPyTransform") or [])
+        no_stf      = not (mc.ls(type="mPyTransform") or [])
         shapes_links_ok = (len(sgoals) == 6 and len(schildren) == 6
                            and n_bs == 6 and len(slink_nodes) == 5
                            and len(stension_plugs) == 5 and stx_ok
@@ -10135,8 +10135,8 @@ def build_dnet():
             sg2 = (mc.listConnections(snm + ".matrices[2]", source=True,
                                       destination=False) or [None])[0]
             mc.move(8.0, 5.0, 3.0, sg2, relative=True)    # drag anchor 2 far
-            s_after = sdriven_mag(0)                      # hub 0 follows -> grows
-            s_pinned = sdriven_mag(2)                     # anchor 2 pinned -> ~0
+            s_after  = sdriven_mag(0)  # hub 0 follows -> grows
+            s_pinned = sdriven_mag(2)  # anchor 2 pinned -> ~0
         finally:
             log_bus.unsubscribe(_ssink)
         shapes_no_err = not _ssink.errors
@@ -10144,14 +10144,14 @@ def build_dnet():
                         and shapes_no_err)
 
         # --- authored @maya_test check on a FRESH deserialized node. ---
-        test_ok = False
+        test_ok  = False
         test_err = "n/a"
         try:
             mc.file(new=True, force=True)
             _ensure_mpy_plugins()
-            ttnode = deserialize_node(clean_payload, restore_persistent=False)
-            tres = ttnode.run_test()
-            test_ok = bool(tres.get("passed"))
+            ttnode   = deserialize_node(clean_payload, restore_persistent=False)
+            tres     = ttnode.run_test()
+            test_ok  = bool(tres.get("passed"))
             test_err = tres.get("error") or "ok"
         except Exception as texc:
             test_err = "exc:%r" % texc
@@ -10485,16 +10485,16 @@ def build_skin_lbs():
     mc.select(clear=True)
 
     rest = _mesh_object_pts(cyl_shape)                    # (N, 3), no eval
-    nvv = rest.shape[0]
-    ys = rest[:, 1]
+    nvv  = rest.shape[0]
+    ys   = rest[:, 1]
     lo, hi = float(ys.min()), float(ys.max())
-    span = (hi - lo) or 1.0
-    t = np.clip((ys - lo) / span, 0.0, 1.0)
-    Wm = np.zeros((nvv, 2), dtype=np.float64)
+    span     = (hi - lo) or 1.0
+    t        = np.clip((ys - lo) / span, 0.0, 1.0)
+    Wm       = np.zeros((nvv, 2), dtype=np.float64)
     Wm[:, 0] = 1.0 - t
     Wm[:, 1] = t
 
-    sc = MPySkinCluster.create(mesh=cyl, joints=[j0, j1], name="linearBlendSkin")
+    sc   = MPySkinCluster.create(mesh=cyl, joints=[j0, j1], name="linearBlendSkin")
     node = sc.get_name()
     for v in range(nvv):
         sc.set_vertex_weight(v, 0, float(Wm[v, 0]))
@@ -10506,31 +10506,31 @@ def build_skin_lbs():
     mc.setAttr(j1 + ".rotateZ", 55.0)
     mc.dgdirty(node + ".outputGeometry")
     mc.getAttr(cyl_shape + ".outMesh")
-    deformed = _mesh_object_pts(cyl_shape)
+    deformed   = _mesh_object_pts(cyl_shape)
 
-    joint0 = np.array(mc.getAttr(j0 + ".worldMatrix[0]")).reshape(4, 4)
-    joint1 = np.array(mc.getAttr(j1 + ".worldMatrix[0]")).reshape(4, 4)
-    bind0 = np.array(mc.getAttr(node + ".bindPreMatrix[0]")).reshape(4, 4)
-    bind1 = np.array(mc.getAttr(node + ".bindPreMatrix[1]")).reshape(4, 4)
-    M = np.stack([bind0 @ joint0, bind1 @ joint1])
-    pts_h = np.concatenate([rest, np.ones((nvv, 1))], axis=1)
-    oracle = np.einsum("vj,jkc,vk->vc", Wm, M, pts_h)[:, :3]
+    joint0     = np.array(mc.getAttr(j0 + ".worldMatrix[0]")).reshape(4, 4)
+    joint1     = np.array(mc.getAttr(j1 + ".worldMatrix[0]")).reshape(4, 4)
+    bind0      = np.array(mc.getAttr(node + ".bindPreMatrix[0]")).reshape(4, 4)
+    bind1      = np.array(mc.getAttr(node + ".bindPreMatrix[1]")).reshape(4, 4)
+    M          = np.stack([bind0 @ joint0, bind1 @ joint1])
+    pts_h      = np.concatenate([rest, np.ones((nvv, 1))], axis=1)
+    oracle     = np.einsum("vj,jkc,vk->vc", Wm, M, pts_h)[:, :3]
 
-    moved = float(np.abs(deformed - rest).max())
-    parity = float(np.abs(deformed - oracle).max())
+    moved      = float(np.abs(deformed - rest).max())
+    parity     = float(np.abs(deformed - oracle).max())
     compute_ok = moved > 0.1 and parity < 1e-4
 
     # --- demo check: "Create + Run demo" on a FRESH deserialized node -------
     _stamp_class(sc, "LinearBlendSkin", "mPySkinCluster")
     clean_payload = serialize_node(sc, include_persistent=False)
-    demo_ok = False
-    demo_err = "n/a"
+    demo_ok       = False
+    demo_err      = "n/a"
     try:
         mc.file(new=True, force=True)
         from mpynode._common.io.mpn_io import deserialize_node
         from mpynode._common.methods.methods_registry import run_node_demo
         tnode = deserialize_node(clean_payload, restore_persistent=False)
-        tnm = tnode.get_name()
+        tnm   = tnode.get_name()
         run_node_demo(tnode)
         target = None
         for m in (mc.ls(type="mesh", long=True) or []):
@@ -10550,23 +10550,23 @@ def build_skin_lbs():
             mc.setAttr(tnm + ".envelope", 1.0)
             mc.dgdirty(tnm + ".outputGeometry")
             mc.getAttr(target + ".outMesh")
-            def_p = _mesh_object_pts(target)
+            def_p   = _mesh_object_pts(target)
             deforms = float(np.abs(def_p - rest_p).max()) > 0.5
-        demo_ok = bool(in_hist and deforms)
+        demo_ok  = bool(in_hist and deforms)
         demo_err = "mesh=%s in_hist=%s deforms=%s" % (target, in_hist, deforms)
     except Exception as exc:
         demo_err = "exc:%r" % exc
 
     # --- authored @maya_test check on a FRESH deserialized node. ---
-    test_ok = False
+    test_ok  = False
     test_err = "n/a"
     try:
         mc.file(new=True, force=True)
         from mpynode._common.io.mpn_io import deserialize_node
 
-        tnode = deserialize_node(clean_payload, restore_persistent=False)
-        tres = tnode.run_test()
-        test_ok = bool(tres.get("passed"))
+        tnode    = deserialize_node(clean_payload, restore_persistent=False)
+        tres     = tnode.run_test()
+        test_ok  = bool(tres.get("passed"))
         test_err = tres.get("error") or "ok"
     except Exception as exc:
         test_err = "exc:%r" % exc
@@ -10627,13 +10627,13 @@ def build_skin_dqs():
     mc.select(clear=True)
 
     rest = _mesh_object_pts(cyl_shape)
-    nvv = rest.shape[0]
-    ys = rest[:, 1]
+    nvv  = rest.shape[0]
+    ys   = rest[:, 1]
     lo, hi = float(ys.min()), float(ys.max())
     span = (hi - lo) or 1.0
-    t = np.clip((ys - lo) / span, 0.0, 1.0)
+    t    = np.clip((ys - lo) / span, 0.0, 1.0)
 
-    sc = MPySkinCluster.create(mesh=cyl, joints=[j0, j1], name="dualQuaternionSkin")
+    sc   = MPySkinCluster.create(mesh=cyl, joints=[j0, j1], name="dualQuaternionSkin")
     node = sc.get_name()
     for v in range(nvv):
         sc.set_vertex_weight(v, 0, float(1.0 - t[v]))
@@ -10654,22 +10654,22 @@ def build_skin_dqs():
     # Restore the DQS compute for serialization.
     sc.set_compute_expression(dqs.DEFAULT_COMPUTE_SOURCE)
 
-    moved = float(np.abs(dqs_pts - rest).max())
-    finite = bool(np.isfinite(dqs_pts).all())
+    moved      = float(np.abs(dqs_pts - rest).max())
+    finite     = bool(np.isfinite(dqs_pts).all())
     divergence = float(np.abs(dqs_pts - lbs_pts).max())
     compute_ok = moved > 0.1 and finite and divergence > 1e-3
 
     # --- demo check: "Create + Run demo" on a FRESH deserialized node --------
     _stamp_class(sc, "DualQuaternionSkin", "mPySkinCluster")
     clean_payload = serialize_node(sc, include_persistent=False)
-    demo_ok = False
-    demo_err = "n/a"
+    demo_ok       = False
+    demo_err      = "n/a"
     try:
         mc.file(new=True, force=True)
         from mpynode._common.io.mpn_io import deserialize_node
         from mpynode._common.methods.methods_registry import run_node_demo
         tnode = deserialize_node(clean_payload, restore_persistent=False)
-        tnm = tnode.get_name()
+        tnm   = tnode.get_name()
         run_node_demo(tnode)
         target = None
         for m in (mc.ls(type="mesh", long=True) or []):
@@ -10688,23 +10688,23 @@ def build_skin_dqs():
             mc.setAttr(tnm + ".envelope", 1.0)
             mc.dgdirty(tnm + ".outputGeometry")
             mc.getAttr(target + ".outMesh")
-            def_p = _mesh_object_pts(target)
+            def_p   = _mesh_object_pts(target)
             deforms = float(np.abs(def_p - rest_p).max()) > 0.5
-        demo_ok = bool(in_hist and deforms)
+        demo_ok  = bool(in_hist and deforms)
         demo_err = "mesh=%s in_hist=%s deforms=%s" % (target, in_hist, deforms)
     except Exception as exc:
         demo_err = "exc:%r" % exc
 
     # --- authored @maya_test check on a FRESH deserialized node. ---
-    test_ok = False
+    test_ok  = False
     test_err = "n/a"
     try:
         mc.file(new=True, force=True)
         from mpynode._common.io.mpn_io import deserialize_node
 
-        tnode = deserialize_node(clean_payload, restore_persistent=False)
-        tres = tnode.run_test()
-        test_ok = bool(tres.get("passed"))
+        tnode    = deserialize_node(clean_payload, restore_persistent=False)
+        tres     = tnode.run_test()
+        test_ok  = bool(tres.get("passed"))
         test_err = tres.get("error") or "ok"
     except Exception as exc:
         test_err = "exc:%r" % exc
@@ -10726,10 +10726,10 @@ def build_skin_dqs():
 # painted sets are declared `double is_array=True` INPUT plugs (flattened N*J),
 # so each node keeps its own weights and the deformer COMPILES to byte-parity.
 # ---------------------------------------------------------------------------
-SKIN_TWISTSWING_INIT = _tsw_src.INIT
+SKIN_TWISTSWING_INIT    = _tsw_src.INIT
 SKIN_TWISTSWING_COMPUTE = _tsw_src.COMPUTE
 SKIN_TWISTSWING_METHODS = _tsw_src.METHODS
-SKIN_TWISTSWING_DESC = _tsw_src.DESC
+SKIN_TWISTSWING_DESC    = _tsw_src.DESC
 
 
 def build_skin_twist_swing():
@@ -10764,16 +10764,16 @@ def build_skin_twist_swing():
     mc.select(clear=True)
 
     rest = _mesh_object_pts(cyl_shape)
-    nvv = rest.shape[0]
-    ys = rest[:, 1]
+    nvv  = rest.shape[0]
+    ys   = rest[:, 1]
     lo, hi = float(ys.min()), float(ys.max())
-    span = (hi - lo) or 1.0
-    t = np.clip((ys - lo) / span, 0.0, 1.0)
+    span    = (hi - lo) or 1.0
+    t       = np.clip((ys - lo) / span, 0.0, 1.0)
     twist_w = np.stack([1.0 - t, t], axis=1)
-    ts = np.clip((t - 0.5) * 2.5 + 0.5, 0.0, 1.0)      # sharper falloff
+    ts      = np.clip((t - 0.5) * 2.5 + 0.5, 0.0, 1.0)      # sharper falloff
     swing_w = np.stack([1.0 - ts, ts], axis=1)
 
-    sc = MPySkinCluster.create(mesh=cyl, joints=[j0, j1], name="twistSwingSkin")
+    sc   = MPySkinCluster.create(mesh=cyl, joints=[j0, j1], name="twistSwingSkin")
     node = sc.get_name()
     for v in range(nvv):
         sc.set_vertex_weight(v, 0, float(twist_w[v, 0]))
@@ -10796,8 +10796,8 @@ def build_skin_twist_swing():
     sc.set_methods_source(SKIN_TWISTSWING_METHODS)
     mc.setAttr(node + ".skinMode", 2)
 
-    mc.setAttr(j1 + ".rotateX", 80.0)
-    mc.setAttr(j1 + ".rotateZ", 55.0)
+    mc.setAttr(j1 + ".rotateX",    80.0)
+    mc.setAttr(j1 + ".rotateZ",    55.0)
 
     def _eval_pts():
         # Toggle the envelope (a real plug) to force the deformer to actually
@@ -10818,10 +10818,10 @@ def build_skin_twist_swing():
     _seed_plug(node, "swingWeights", swing_w)
     diff_pts = _eval_pts()
 
-    moved = float(np.abs(diff_pts - rest).max())
-    finite = bool(np.isfinite(diff_pts).all())
+    moved        = float(np.abs(diff_pts - rest).max())
+    finite       = bool(np.isfinite(diff_pts).all())
     swing_effect = float(np.abs(diff_pts - same_pts).max())
-    compute_ok = moved > 0.1 and finite and swing_effect > 1e-3
+    compute_ok   = moved > 0.1 and finite and swing_effect > 1e-3
 
     # --- skinMode paint modes: each mode previews its OWN algorithm + weights ----
     #     0 Paint LBS -> linear_blend(swing); 1 Paint DQS -> dual_quaternion(twist);
@@ -10837,16 +10837,16 @@ def build_skin_twist_swing():
         mc.setAttr(node + ".skinMode", m)
         return _eval_pts()
 
-    lin_pts = _mode_pts(0)     # Paint LBS: loads swing->weightList, linear_blend
-    dq_pts = _mode_pts(1)      # Paint DQS: loads twist->weightList, dual_quaternion
-    tsw_pts = _mode_pts(2)     # Live Result: twist_swing_dual(twist, swing)
+    lin_pts = _mode_pts(0)  # Paint LBS: loads swing->weightList, linear_blend
+    dq_pts  = _mode_pts(1)  # Paint DQS: loads twist->weightList, dual_quaternion
+    tsw_pts = _mode_pts(2)  # Live Result: twist_swing_dual(twist, swing)
     mc.setAttr(node + ".skinMode", 2)                  # restore default
-    lin_oracle = _sb.linear_blend(rest, swing_w, joint_m, bind_m)
-    dq_oracle = _sb.dual_quaternion(rest, twist_w, joint_m, bind_m)
-    tsw_oracle = _sb.twist_swing_dual(rest, twist_w, swing_w, joint_m, bind_m, 0)
-    mode_lin_ok = float(np.abs(lin_pts - lin_oracle).max()) < 1e-4   # Linear<-swing
-    mode_dq_ok = float(np.abs(dq_pts - dq_oracle).max()) < 1e-4      # DQS<-twist
-    mode_tsw_ok = float(np.abs(tsw_pts - tsw_oracle).max()) < 1e-4   # Live<-both
+    lin_oracle  = _sb.linear_blend(rest, swing_w, joint_m, bind_m)
+    dq_oracle   = _sb.dual_quaternion(rest, twist_w, joint_m, bind_m)
+    tsw_oracle  = _sb.twist_swing_dual(rest, twist_w, swing_w, joint_m, bind_m, 0)
+    mode_lin_ok = float(np.abs(lin_pts - lin_oracle).max()) < 1e-4  # Linear<-swing
+    mode_dq_ok  = float(np.abs(dq_pts - dq_oracle).max()) < 1e-4    # DQS<-twist
+    mode_tsw_ok = float(np.abs(tsw_pts - tsw_oracle).max()) < 1e-4  # Live<-both
     modes_distinct = (float(np.abs(lin_pts - dq_pts).max()) > 1e-3
                       and float(np.abs(tsw_pts - lin_pts).max()) > 1e-3
                       and float(np.abs(tsw_pts - dq_pts).max()) > 1e-3)
@@ -10873,7 +10873,7 @@ def build_skin_twist_swing():
         return W
 
     paint_ok = False
-    cmd_err = "n/a"
+    cmd_err  = "n/a"
     try:
         # reset both plugs to the known sets, settle the latch on Live, then walk
         # the interactive workflow.
@@ -10893,7 +10893,7 @@ def build_skin_twist_swing():
         # eval banks it into the swingWeights PLUG (paint reaches the plug/deform).
         mc.setAttr(node + ".skinMode", 0)
         _eval_pts()
-        tp = np.clip((t - 0.3) * 1.5, 0.0, 1.0)
+        tp    = np.clip((t - 0.3) * 1.5, 0.0, 1.0)
         paint = np.stack([1.0 - tp, tp], axis=1)
         for v in range(nvv):
             mc.setAttr("%s.weightList[%d].weights[0]" % (node, v), float(paint[v, 0]))
@@ -10909,7 +10909,7 @@ def build_skin_twist_swing():
         roundtrip_ok = bool(np.allclose(_dense_wl(node), paint, atol=1e-6))
         mc.setAttr(node + ".skinMode", 2)                   # restore default
         paint_ok = bool(load_ok and bank_ok and roundtrip_ok)
-        cmd_err = "load=%s bank=%s roundtrip=%s" % (load_ok, bank_ok, roundtrip_ok)
+        cmd_err  = "load=%s bank=%s roundtrip=%s" % (load_ok, bank_ok, roundtrip_ok)
     except Exception as exc:
         cmd_err = "exc:%r" % exc
 
@@ -10938,15 +10938,15 @@ def build_skin_twist_swing():
     _clear_plug(node, "swingWeights")
     _stamp_class(sc, "TwistSwingSkin", "mPySkinCluster")
     clean_payload = serialize_node(sc, include_persistent=False)
-    demo_ok = False
-    demo_err = "n/a"
+    demo_ok       = False
+    demo_err      = "n/a"
     try:
         mc.file(new=True, force=True)
         from mpynode._common.io.mpn_io import deserialize_node
         from mpynode._common.methods.methods_registry import run_node_demo
         tnode = deserialize_node(clean_payload, restore_persistent=False)
         run_node_demo(tnode)
-        tnm = tnode.get_name()
+        tnm    = tnode.get_name()
         target = None
         for m in (mc.ls(type="mesh", long=True) or []):
             if mc.getAttr(m + ".intermediateObject"):
@@ -10964,12 +10964,12 @@ def build_skin_twist_swing():
             mc.setAttr(tnm + ".envelope", 1.0)
             mc.dgdirty(tnm + ".outputGeometry")
             mc.getAttr(target + ".outMesh")
-            def_p = _mesh_object_pts(target)
+            def_p   = _mesh_object_pts(target)
             deforms = float(np.abs(def_p - rest_p).max()) > 0.5
         # The demo must have used the bundled ARM (442 verts, not the fallback
         # cylinder) and seeded the two weight-set PLUGS from the JSON files:
         # twistWeights == DQS.json, swingWeights == LBS.json.
-        arm_ok = target is not None and mc.polyEvaluate(target, vertex=True) == 442
+        arm_ok     = target is not None and mc.polyEvaluate(target, vertex=True) == 442
         weights_ok = False
         try:
             import json as _json
@@ -10994,15 +10994,15 @@ def build_skin_twist_swing():
         demo_err = "exc:%r" % exc
 
     # --- authored @maya_test check on a FRESH deserialized node. ---
-    test_ok = False
+    test_ok  = False
     test_err = "n/a"
     try:
         mc.file(new=True, force=True)
         from mpynode._common.io.mpn_io import deserialize_node
 
-        tnode = deserialize_node(clean_payload, restore_persistent=False)
-        tres = tnode.run_test()
-        test_ok = bool(tres.get("passed"))
+        tnode    = deserialize_node(clean_payload, restore_persistent=False)
+        tres     = tnode.run_test()
+        test_ok  = bool(tres.get("passed"))
         test_err = tres.get("error") or "ok"
     except Exception as exc:
         test_err = "exc:%r" % exc
@@ -11155,7 +11155,7 @@ def build_nurbs_curve_helix():
     g = MPyNurbsCurve.create(name="helixCurve")
     g.add_input_attr("radius", "float", default_value=2.0)
     g.add_input_attr("height", "float", default_value=6.0)
-    g.add_input_attr("turns", "float", default_value=3.0)
+    g.add_input_attr("turns",  "float", default_value=3.0)
     g.add_input_attr("t", "time")
     g.set_init_expression(NURBS_CURVE_INIT)
     g.set_compute_expression(NURBS_CURVE_COMPUTE)
@@ -11167,7 +11167,7 @@ def build_nurbs_curve_helix():
         # consumer cascades and removes the orphaned generator DG node too. The
         # node-only serialize below captures just `g`, so leftover scene nodes are
         # harmless (the demo gate resets the scene with file(new=True)).
-        xf = mc.createNode("transform")
+        xf  = mc.createNode("transform")
         shp = mc.createNode("nurbsCurve", parent=xf)
         mc.connectAttr(nm + ".outCurve", shp + ".create", force=True)
         mc.currentTime(1)
@@ -11180,42 +11180,42 @@ def build_nurbs_curve_helix():
     clean_payload = serialize_node(g, include_persistent=False)
 
     # --- live demo on a FRESH deserialized node (mirrors the gallery click). ---
-    demo_ok = False
+    demo_ok  = False
     demo_err = "n/a"
     try:
         mc.file(new=True, force=True)
         tnode = deserialize_node(clean_payload, restore_persistent=False)
-        tnm = tnode.get_name()
+        tnm   = tnode.get_name()
         run_node_demo(tnode)
         curve_t = (mc.ls("helixCurve*", type="transform") or [None])[0]
-        wired = False
-        cvc = 0
+        wired   = False
+        cvc     = 0
         if curve_t is not None:
             shp = (mc.listRelatives(curve_t, shapes=True) or [None])[0]
             if shp and mc.nodeType(shp) == "nurbsCurve":
                 wired = tnm in (mc.listHistory(shp) or [])
                 mc.dgeval(shp + ".create")
                 cvc = mc.getAttr(shp + ".spans") + mc.getAttr(shp + ".degree")
-        demo_ok = bool(wired and cvc == 120)
+        demo_ok  = bool(wired and cvc == 120)
         demo_err = "curve=%s wired=%s cvs=%s" % (curve_t, wired, cvc)
     except Exception as exc:
         demo_err = "exc:%r" % exc
 
     # --- authored @maya_test on a FRESH deserialized node. ---
-    test_ok = False
+    test_ok  = False
     test_err = "n/a"
     try:
         mc.file(new=True, force=True)
-        tnode = deserialize_node(clean_payload, restore_persistent=False)
-        tres = tnode.run_test()
-        test_ok = bool(tres.get("passed"))
+        tnode    = deserialize_node(clean_payload, restore_persistent=False)
+        tres     = tnode.run_test()
+        test_ok  = bool(tres.get("passed"))
         test_err = tres.get("error") or "ok"
     except Exception as exc:
         test_err = "exc:%r" % exc
 
-    has_demo = find_demo(NURBS_CURVE_METHODS) is not None
+    has_demo   = find_demo(NURBS_CURVE_METHODS) is not None
     payload_ok = clean_payload.get("native_type") == "mPyNurbsCurve"
-    ok = bool(compute_ok and demo_ok and test_ok and has_demo and payload_ok)
+    ok         = bool(compute_ok and demo_ok and test_ok and has_demo and payload_ok)
     print("[nurbs_curve] compute=%s demo=%s(%s) test=%s(%s) has_demo=%s "
           "payload=%s -> %s"
           % (compute_ok, demo_ok, demo_err, test_ok, test_err, has_demo,
@@ -11356,9 +11356,9 @@ def build_nurbs_surface_ripple():
     from mpynode._common.node_setups import find_demo
 
     g = MPyNurbsSurface.create(name="rippleSurf")
-    g.add_input_attr("size", "float", default_value=6.0)
+    g.add_input_attr("size",      "float", default_value=6.0)
     g.add_input_attr("amplitude", "float", default_value=1.0)
-    g.add_input_attr("freq", "float", default_value=1.2)
+    g.add_input_attr("freq",      "float", default_value=1.2)
     g.add_input_attr("t", "time")
     g.set_init_expression(NURBS_SURF_INIT)
     g.set_compute_expression(NURBS_SURF_COMPUTE)
@@ -11368,7 +11368,7 @@ def build_nurbs_surface_ripple():
     def _surf_spans():
         # See the curve builder: do NOT delete the render shape (it would cascade
         # and delete the orphaned generator).
-        xf = mc.createNode("transform")
+        xf  = mc.createNode("transform")
         shp = mc.createNode("nurbsSurface", parent=xf)
         mc.connectAttr(nm + ".outSurface", shp + ".create", force=True)
         mc.currentTime(1)
@@ -11380,41 +11380,41 @@ def build_nurbs_surface_ripple():
     _stamp_class(g, "RippleSurf", "mPyNurbsSurface")
     clean_payload = serialize_node(g, include_persistent=False)
 
-    demo_ok = False
+    demo_ok  = False
     demo_err = "n/a"
     try:
         mc.file(new=True, force=True)
         tnode = deserialize_node(clean_payload, restore_persistent=False)
-        tnm = tnode.get_name()
+        tnm   = tnode.get_name()
         run_node_demo(tnode)
         surf_t = (mc.ls("rippleSurf*", type="transform") or [None])[0]
-        wired = False
-        spans = (0, 0)
+        wired  = False
+        spans  = (0, 0)
         if surf_t is not None:
             shp = (mc.listRelatives(surf_t, shapes=True) or [None])[0]
             if shp and mc.nodeType(shp) == "nurbsSurface":
                 wired = tnm in (mc.listHistory(shp) or [])
                 mc.dgeval(shp + ".create")
                 spans = (mc.getAttr(shp + ".spansU"), mc.getAttr(shp + ".spansV"))
-        demo_ok = bool(wired and spans == (5, 5))
+        demo_ok  = bool(wired and spans == (5, 5))
         demo_err = "surf=%s wired=%s spans=%s" % (surf_t, wired, spans)
     except Exception as exc:
         demo_err = "exc:%r" % exc
 
-    test_ok = False
+    test_ok  = False
     test_err = "n/a"
     try:
         mc.file(new=True, force=True)
-        tnode = deserialize_node(clean_payload, restore_persistent=False)
-        tres = tnode.run_test()
-        test_ok = bool(tres.get("passed"))
+        tnode    = deserialize_node(clean_payload, restore_persistent=False)
+        tres     = tnode.run_test()
+        test_ok  = bool(tres.get("passed"))
         test_err = tres.get("error") or "ok"
     except Exception as exc:
         test_err = "exc:%r" % exc
 
-    has_demo = find_demo(NURBS_SURF_METHODS) is not None
+    has_demo   = find_demo(NURBS_SURF_METHODS) is not None
     payload_ok = clean_payload.get("native_type") == "mPyNurbsSurface"
-    ok = bool(compute_ok and demo_ok and test_ok and has_demo and payload_ok)
+    ok         = bool(compute_ok and demo_ok and test_ok and has_demo and payload_ok)
     print("[nurbs_surface] compute=%s demo=%s(%s) test=%s(%s) has_demo=%s "
           "payload=%s -> %s"
           % (compute_ok, demo_ok, demo_err, test_ok, test_err, has_demo,
@@ -11584,53 +11584,53 @@ def build_deformer_nurbs_wave():
         return np.array([[p.x, p.y, p.z]
                          for p in fn.cvPositions(om.MSpace.kObject)])
 
-    rest = cvs(0.0, 1.0)
-    deformed = cvs(0.6, 1.0)
-    env_off = cvs(0.6, 0.0)
-    moved = float(np.abs(deformed - rest).max())
-    env0_is_rest = np.allclose(env_off, rest, atol=1e-9)
-    compute_ok = moved > 0.05 and env0_is_rest
+    rest          = cvs(0.0, 1.0)
+    deformed      = cvs(0.6, 1.0)
+    env_off       = cvs(0.6, 0.0)
+    moved         = float(np.abs(deformed - rest).max())
+    env0_is_rest  = np.allclose(env_off, rest, atol=1e-9)
+    compute_ok    = moved > 0.05 and env0_is_rest
 
     clean_payload = serialize_node(gf, include_persistent=False)
 
-    demo_ok = False
+    demo_ok  = False
     demo_err = "n/a"
     try:
         mc.file(new=True, force=True)
         tnode = deserialize_node(clean_payload, restore_persistent=False)
-        tnm = tnode.get_name()
+        tnm   = tnode.get_name()
         run_node_demo(tnode)
         plane_t = (mc.ls("nurbsWaveTarget*", type="transform") or [None])[0]
         in_hist = plane_t is not None and tnm in (mc.listHistory(plane_t) or [])
-        waved = False
+        waved   = False
         if plane_t is not None:
             shp = mc.listRelatives(plane_t, shapes=True, ni=True, f=True)[0]
             mc.currentTime(6)
             mc.dgdirty(tnm + ".outputGeometry")
             mc.dgeval(shp + ".worldSpace")
             sel = om.MSelectionList(); sel.add(shp)
-            fn = om.MFnNurbsSurface(sel.getDagPath(0))
-            ys = [p.y for p in fn.cvPositions(om.MSpace.kObject)]
+            fn    = om.MFnNurbsSurface(sel.getDagPath(0))
+            ys    = [p.y for p in fn.cvPositions(om.MSpace.kObject)]
             waved = (max(ys) - min(ys)) > 0.05
-        demo_ok = bool(in_hist and waved)
+        demo_ok  = bool(in_hist and waved)
         demo_err = "plane=%s in_hist=%s waved=%s" % (plane_t, in_hist, waved)
     except Exception as exc:
         demo_err = "exc:%r" % exc
 
-    test_ok = False
+    test_ok  = False
     test_err = "n/a"
     try:
         mc.file(new=True, force=True)
-        tnode = deserialize_node(clean_payload, restore_persistent=False)
-        tres = tnode.run_test()
-        test_ok = bool(tres.get("passed"))
+        tnode    = deserialize_node(clean_payload, restore_persistent=False)
+        tres     = tnode.run_test()
+        test_ok  = bool(tres.get("passed"))
         test_err = tres.get("error") or "ok"
     except Exception as exc:
         test_err = "exc:%r" % exc
 
-    has_demo = find_demo(GF_NURBS_METHODS) is not None
+    has_demo   = find_demo(GF_NURBS_METHODS) is not None
     payload_ok = clean_payload.get("native_type") == "mPyDeformer"
-    ok = bool(compute_ok and demo_ok and test_ok and has_demo and payload_ok)
+    ok         = bool(compute_ok and demo_ok and test_ok and has_demo and payload_ok)
     print("[deformer_nurbs_wave] moved=%.4f env0_rest=%s demo=%s(%s) test=%s(%s) "
           "has_demo=%s payload=%s -> %s"
           % (moved, env0_is_rest, demo_ok, demo_err, test_ok, test_err,
@@ -12435,9 +12435,9 @@ def _blend_shape_roundtrip(payload, methods_src, check):
     test_ok, test_err = False, "n/a"
     try:
         mc.file(new=True, force=True)
-        tnode = deserialize_node(payload, restore_persistent=False)
-        tres = tnode.run_test()
-        test_ok = bool(tres.get("passed"))
+        tnode    = deserialize_node(payload, restore_persistent=False)
+        tres     = tnode.run_test()
+        test_ok  = bool(tres.get("passed"))
         test_err = tres.get("error") or "ok"
     except Exception as exc:
         test_err = "exc:%r" % exc
@@ -12473,7 +12473,7 @@ def build_combo_correctives():
 
     # The correctives carry a Z bulge that no linear combination of the mains
     # can reach -- otherwise "the corrective works" would be unfalsifiable.
-    brow = sculpt("ccBrow", 1.0, 1.6, 1.0)
+    brow  = sculpt("ccBrow", 1.0, 1.6, 1.0)
     mouth = sculpt("ccMouth", 1.6, 1.0, 1.0)
 
     # The two CORRECTIVES are authored the way real corrective sculpts are, and
@@ -12503,16 +12503,16 @@ def build_combo_correctives():
                      om.MSpace.kObject)
 
     base_pts = _pts(base)
-    d_brow = _pts(brow) - base_pts
-    d_mouth = _pts(mouth) - base_pts
+    d_brow   = _pts(brow) - base_pts
+    d_mouth  = _pts(mouth) - base_pts
 
     # Pose the in-between must produce when browUp sits on its 0.50 knot.
-    brow50 = sculpt("ccBrow50", 1.0, 1.3, 1.35)
+    brow50      = sculpt("ccBrow50", 1.0, 1.3, 1.35)
     pose_brow50 = _pts(brow50).copy()
     _set_pts(brow50, pose_brow50 - 0.5 * d_brow)
 
     # Pose the combo must produce with both drivers at 1.
-    combo = sculpt("ccCombo", 1.6, 1.6, 1.4)
+    combo      = sculpt("ccCombo", 1.6, 1.6, 1.4)
     pose_combo = _pts(combo).copy()
     _set_pts(combo, pose_combo - d_brow - d_mouth)
 
@@ -12538,10 +12538,10 @@ def build_combo_correctives():
     bs.set_methods_source(COMBO_METHODS)
     nm = bs.get_name()
 
-    bs.add_target(brow, "browUp")
+    bs.add_target(brow,   "browUp")
     bs.add_target(brow50, "browUp50")
-    bs.add_target(mouth, "mouthOpen")
-    bs.add_target(combo, "browUp_mouthOpen")
+    bs.add_target(mouth,  "mouthOpen")
+    bs.add_target(combo,  "browUp_mouthOpen")
     bs.rebuild()
 
     # The names ALONE must have produced the right structure.
@@ -12563,11 +12563,11 @@ def build_combo_correctives():
         return _mesh_object_pts(
             mc.listRelatives(node, shapes=True, ni=True, f=True)[0])
 
-    rest = at(0.0, 0.0)
-    brow_full = at(1.0, 0.0)
-    brow_knot = at(0.5, 0.0)
+    rest       = at(0.0, 0.0)
+    brow_full  = at(1.0, 0.0)
+    brow_knot  = at(0.5, 0.0)
     mouth_full = at(0.0, 1.0)
-    both_full = at(1.0, 1.0)
+    both_full  = at(1.0, 1.0)
 
     # Every authored pose must be reproduced EXACTLY. This is the whole
     # corrective contract in four lines: the mains at their endpoints, the
@@ -12605,15 +12605,15 @@ def build_combo_correctives():
     compute_ok = bool(decode_ok and exact_ok and alone_ok and inter_bulges
                       and combo_adds and hand_set_ok)
 
-    rep = _blend_shape_portability(nm)
-    portable_ok = bool(rep["portable"])
+    rep           = _blend_shape_portability(nm)
+    portable_ok   = bool(rep["portable"])
 
     clean_payload = serialize_node(bs, include_persistent=False)
 
     def _check(tnode):
-        tnm = tnode.get_name()
-        al = list(tnode.aliases if hasattr(tnode, "aliases") else [])
-        base_t = (mc.ls("comboBase*", type="transform") or [None])[0]
+        tnm     = tnode.get_name()
+        al      = list(tnode.aliases if hasattr(tnode, "aliases") else [])
+        base_t  = (mc.ls("comboBase*", type="transform") or [None])[0]
         in_hist = base_t is not None and tnm in (mc.listHistory(base_t) or [])
 
         # The corpus is 52 mains + 31 in-betweens + 84 combos and the NAMES are
@@ -12661,16 +12661,16 @@ def build_combo_correctives():
         bulged = False
         if base_t is not None and "jawDrop" in al and "jawDrop75" in al:
             shp = mc.listRelatives(base_t, shapes=True, ni=True, f=True)[0]
-            di = al.index("jawDrop")
+            di  = al.index("jawDrop")
 
             def _at(v):
-                ws = [0.0] * len(al)
+                ws     = [0.0] * len(al)
                 ws[di] = v
                 return _blend_shape_deform(tnm, shp, ws)
 
-            r = _at(0.0)
-            f = _at(1.0)
-            k = _at(0.75)
+            r      = _at(0.0)
+            f      = _at(1.0)
+            k      = _at(0.75)
             bulged = float(np.abs(k - (0.25 * r + 0.75 * f)).max()) > 1e-4
 
         ok = bool(in_hist and bulged and decode_ok and anim_ok)
@@ -12692,7 +12692,7 @@ def build_combo_correctives():
         clean_payload, COMBO_METHODS, _check)
 
     payload_ok = clean_payload.get("native_type") == "mPyBlendShape"
-    cls_ok = clean_payload.get("class_path") == dotted_path("ComboCorrectives")
+    cls_ok     = clean_payload.get("class_path") == dotted_path("ComboCorrectives")
     ok = bool(compute_ok and portable_ok and demo_ok and test_ok and has_demo
               and payload_ok and cls_ok and assets_ok)
     print("[combo_correctives] decode=%s exact=%s alone=%s inbetween=%s "
@@ -13003,8 +13003,8 @@ def build_rbf_wrap():
     import maya.api.OpenMaya as om2
 
     w = MPyNode.create(name="rbfWrap")
-    w.add_input_attr("restCage", "mesh")
-    w.add_input_attr("deformCage", "mesh")
+    w.add_input_attr("restCage",    "mesh")
+    w.add_input_attr("deformCage",  "mesh")
     w.add_input_attr("geoToDeform", "mesh")
     w.add_output_attr("outGeo", "mesh")
     w.set_init_expression(RBF_WRAP_INIT)
@@ -13030,14 +13030,14 @@ def build_rbf_wrap():
         return np.array([[p.x, p.y, p.z]
                          for p in fn.getPoints(om2.MSpace.kObject)])
 
-    ok = False
+    ok     = False
     detail = "n/a"
     try:
         mc.file(new=True, force=True)
         _ensure_mpy_plugins()
         tnode = deserialize_node(clean_payload, restore_persistent=False)
         run_node_demo(tnode)
-        p1 = _render_pts(1)
+        p1  = _render_pts(1)
         p60 = _render_pts(60)
         if p1 is None or p60 is None:
             detail = "no wrapResultShape produced"
@@ -13045,20 +13045,20 @@ def build_rbf_wrap():
             nverts = int(p1.shape[0])
             animated = (float(np.abs(p1 - p60).max())
                         if p1.shape == p60.shape else -1.0)
-            ok = bool(nverts > 0 and animated > 0.05)
+            ok     = bool(nverts > 0 and animated > 0.05)
             detail = "verts=%d animated=%.4f" % (nverts, animated)
     except Exception as exc:
         detail = "exc:%r" % exc
 
     # --- authored @maya_test check on a FRESH deserialized node (parity bar). ---
-    test_ok = False
+    test_ok  = False
     test_err = "n/a"
     try:
         mc.file(new=True, force=True)
         _ensure_mpy_plugins()
-        tnode = deserialize_node(clean_payload, restore_persistent=False)
-        tres = tnode.run_test()
-        test_ok = bool(tres.get("passed"))
+        tnode    = deserialize_node(clean_payload, restore_persistent=False)
+        tres     = tnode.run_test()
+        test_ok  = bool(tres.get("passed"))
         test_err = tres.get("error") or "ok"
     except Exception as exc:
         test_err = "exc:%r" % exc
@@ -13355,7 +13355,7 @@ def build_rbf_wrap_deformer():
     mc.makeIdentity(sphere, apply=True, t=True, r=True, s=True)
 
     d_name = mc.deformer(sphere, type="mPyDeformer", name="rbfWrapDeformer")[0]
-    d = MPyDeformer(d_name)
+    d      = MPyDeformer(d_name)
     # Canonical Class identity (same treatment as NurbsWave): mPyDeformer is a
     # root wrapper, so synthesize + stamp mpynode_user.RbfWrapDeformer.
     synthesize("RbfWrapDeformer", "mPyDeformer")
@@ -13384,27 +13384,27 @@ def build_rbf_wrap_deformer():
     # connected -- Maya retains the last mesh in the datablock after a disconnect,
     # so unwiring later would not reproduce the M == 0 state.
     virgin_off = points(0.0)
-    virgin_on = points(1.0)
-    virgin_ok = bool(np.allclose(virgin_on, virgin_off, atol=1e-6))
+    virgin_on  = points(1.0)
+    virgin_ok  = bool(np.allclose(virgin_on, virgin_off, atol=1e-6))
 
     # Rest cage + an identical deform cage wired into the node.
     restC = mc.polyCube(w=6, h=6, d=6, sx=2, sy=2, sz=2,
                         name="wrapDefRestCage", ch=False)[0]
     restS = mc.listRelatives(restC, s=True, f=True)[0]
-    defC = mc.duplicate(restC, name="wrapDefDeformCage")[0]
-    defS = mc.listRelatives(defC, s=True, f=True)[0]
+    defC  = mc.duplicate(restC, name="wrapDefDeformCage")[0]
+    defS  = mc.listRelatives(defC, s=True, f=True)[0]
     mc.connectAttr(restS + ".worldMesh[0]", nm + ".restCage", force=True)
     mc.connectAttr(defS + ".worldMesh[0]", nm + ".deformCage", force=True)
 
-    rest = points(0.0)                       # envelope 0 -> undeformed input
-    ident = points(1.0)                      # cages identical -> unchanged
+    rest     = points(0.0)  # envelope 0 -> undeformed input
+    ident    = points(1.0)  # cages identical -> unchanged
     ident_ok = bool(np.allclose(ident, rest, atol=1e-6))
 
     mc.move(0.0, 2.0, 0.0, defC + ".vtx[*]", r=True)   # affine cage motion
     moved = points(1.0)
     affine_ok = bool(np.allclose(moved - rest, np.array([0.0, 2.0, 0.0]),
                                  atol=1e-6))
-    half = points(0.5)
+    half       = points(0.5)
     env_scales = bool(np.allclose(half - rest, 0.5 * (moved - rest), atol=1e-6))
 
     # hasCage gate, mismatched topology: cages whose point counts disagree must
@@ -13416,9 +13416,9 @@ def build_rbf_wrap_deformer():
     mismatch_ok = bool(np.allclose(points(1.0), rest, atol=1e-6))
     mc.connectAttr(defS + ".worldMesh[0]", nm + ".deformCage", force=True)
 
-    compute_ok = ident_ok and affine_ok and env_scales
+    compute_ok    = ident_ok and affine_ok and env_scales
     clean_payload = serialize_node(d, include_persistent=False)
-    cls_ok = clean_payload.get("class_path") == dotted_path("RbfWrapDeformer")
+    cls_ok        = clean_payload.get("class_path") == dotted_path("RbfWrapDeformer")
 
     from mpynode._common.methods.methods_registry import run_node_demo
     from mpynode._common.io.mpn_io import deserialize_node
@@ -13430,14 +13430,14 @@ def build_rbf_wrap_deformer():
 
     # --- demo check: the authored "Create + Run demo" imports the head + cage
     #     and wraps on a FRESH deserialized node. ---
-    demo_ok = False
+    demo_ok  = False
     demo_err = "n/a"
     try:
         mc.file(new=True, force=True)
         tnode = deserialize_node(clean_payload, restore_persistent=False)
-        tnm = tnode.get_name()
+        tnm   = tnode.get_name()
         run_node_demo(tnode)
-        head_t = (mc.ls("mesh*", type="transform") or [None])[0]
+        head_t  = (mc.ls("mesh*", type="transform") or [None])[0]
         in_hist = head_t is not None and tnm in (mc.listHistory(head_t) or [])
         cages_ok = bool(
             mc.listConnections(tnm + ".restCage", s=True, d=False)
@@ -13466,18 +13466,18 @@ def build_rbf_wrap_deformer():
         demo_err = "exc:%r" % exc
 
     # --- authored @maya_test check on a FRESH deserialized node (parity bar). ---
-    test_ok = False
+    test_ok  = False
     test_err = "n/a"
     try:
         mc.file(new=True, force=True)
-        tnode = deserialize_node(clean_payload, restore_persistent=False)
-        tres = tnode.run_test()
-        test_ok = bool(tres.get("passed"))
+        tnode    = deserialize_node(clean_payload, restore_persistent=False)
+        tres     = tnode.run_test()
+        test_ok  = bool(tres.get("passed"))
         test_err = tres.get("error") or "ok"
     except Exception as exc:
         test_err = "exc:%r" % exc
 
-    has_demo = find_demo(RBF_WRAP_DEF_METHODS) is not None
+    has_demo   = find_demo(RBF_WRAP_DEF_METHODS) is not None
     payload_ok = clean_payload.get("native_type") == "mPyDeformer"
     ok = bool(compute_ok and demo_ok and test_ok and has_demo and payload_ok
               and virgin_ok and mismatch_ok and cls_ok and assets_ok)
@@ -14054,7 +14054,7 @@ def build_patch_relax():
     mc.makeIdentity(sphere, apply=True, t=True, r=True, s=True)
 
     d_name = mc.deformer(sphere, type="mPyDeformer", name="patchRelax")[0]
-    d = MPyDeformer(d_name)
+    d      = MPyDeformer(d_name)
     synthesize("PatchRelax", "mPyDeformer")
     d.set_py_class(dotted_path("PatchRelax"))
     d.add_input_attr("restMesh", "mesh")
@@ -14062,8 +14062,8 @@ def build_patch_relax():
     # Rebuild Rings command, so the compute lowers deterministically.
     d.add_input_attr("ringNbrs", "int", is_array=True)
     d.add_input_attr("ringWidth", "int")
-    d.add_input_attr("iterations", "int", default_value=20)
-    d.add_input_attr("alpha", "double", default_value=1.0)
+    d.add_input_attr("iterations",   "int",    default_value=20)
+    d.add_input_attr("alpha",        "double", default_value=1.0)
     d.add_input_attr("surfaceBlend", "double", default_value=0.0)
     d.set_init_expression(PATCH_RELAX_INIT)
     d.set_compute_expression(PATCH_RELAX_COMPUTE)
@@ -14086,8 +14086,8 @@ def build_patch_relax():
     # Pass-through gate, never configured: envelope 1 with no rest mesh and no
     # rings must equal envelope 0. Must run BEFORE anything is wired.
     virgin_off = points(0.0)
-    virgin_on = points(1.0)
-    virgin_ok = bool(np.allclose(virgin_on, virgin_off, atol=1e-6))
+    virgin_on  = points(1.0)
+    virgin_ok  = bool(np.allclose(virgin_on, virgin_off, atol=1e-6))
 
     # Rest reference + a bunched target: squash the sphere so its rows crowd.
     rest_tf = mc.polySphere(r=2.0, sx=16, sy=16, name="patchRelaxRest")[0]
@@ -14098,9 +14098,9 @@ def build_patch_relax():
     # Rings not yet built -> still a pass-through even with a rest mesh wired.
     unbuilt_ok = bool(np.allclose(points(1.0), points(0.0), atol=1e-6))
 
-    moving = d.call_command("patchRelaxRebuildRings")
-    width = int(mc.getAttr(nm + ".ringWidth"))
-    rings_ok = bool(width > 0 and moving == len(virgin_off))
+    moving     = d.call_command("patchRelaxRebuildRings")
+    width      = int(mc.getAttr(nm + ".ringWidth"))
+    rings_ok   = bool(width > 0 and moving == len(virgin_off))
 
     # Bunch the incoming mesh by squashing the sphere's own points, so the relax
     # has real distortion to undo (a squash BEFORE this deformer in the chain).
@@ -14115,13 +14115,13 @@ def build_patch_relax():
     except Exception:
         pass
 
-    mc.setAttr(nm + ".iterations", 20)
-    mc.setAttr(nm + ".alpha", 1.0)
+    mc.setAttr(nm + ".iterations",   20)
+    mc.setAttr(nm + ".alpha",        1.0)
     mc.setAttr(nm + ".surfaceBlend", 0.0)
 
-    src = points(0.0)
+    src     = points(0.0)
     relaxed = points(1.0)
-    half = points(0.5)
+    half    = points(0.5)
 
     sel = om2.MSelectionList()
     sel.add(rest_sh)
@@ -14134,14 +14134,14 @@ def build_patch_relax():
                       dtype=np.int64).reshape(-1, width)
 
     def edge_error(x):
-        n = x.shape[0]
-        m = ring >= 0
+        n   = x.shape[0]
+        m   = ring >= 0
         idx = np.where(m, ring, n)
-        xp = np.concatenate([x, np.zeros((1, 3))], 0)
-        rp = np.concatenate([rest_pts, np.zeros((1, 3))], 0)
-        ed = np.take(xp, idx, 0) - x[:, None, :]
-        er = np.take(rp, idx, 0) - rest_pts[:, None, :]
-        dd = np.sqrt((ed * ed).sum(-1)) - np.sqrt((er * er).sum(-1))
+        xp  = np.concatenate([x, np.zeros((1, 3))], 0)
+        rp  = np.concatenate([rest_pts, np.zeros((1, 3))], 0)
+        ed  = np.take(xp, idx, 0) - x[:, None, :]
+        er  = np.take(rp, idx, 0) - rest_pts[:, None, :]
+        dd  = np.sqrt((ed * ed).sum(-1)) - np.sqrt((er * er).sum(-1))
         return float((np.abs(dd) * m).sum() / max(m.sum(), 1))
 
     before, after = edge_error(src), edge_error(relaxed)
@@ -14149,9 +14149,9 @@ def build_patch_relax():
     # envelope must interpolate linearly between the input and the relaxed pose.
     env_ok = bool(np.allclose(half - src, 0.5 * (relaxed - src), atol=1e-6))
 
-    compute_ok = relax_ok and env_ok
+    compute_ok    = relax_ok and env_ok
     clean_payload = serialize_node(d, include_persistent=False)
-    cls_ok = clean_payload.get("class_path") == dotted_path("PatchRelax")
+    cls_ok        = clean_payload.get("class_path") == dotted_path("PatchRelax")
 
     from mpynode._common.methods.methods_registry import (
         run_node_demo, run_node_setup)
@@ -14159,16 +14159,16 @@ def build_patch_relax():
     from mpynode._common.node_setups import find_demo, find_setup
 
     # --- demo check on a FRESH deserialized node ---
-    demo_ok = False
+    demo_ok  = False
     demo_err = "n/a"
     try:
         mc.file(new=True, force=True)
         tnode = deserialize_node(clean_payload, restore_persistent=False)
-        tnm = tnode.get_name()
+        tnm   = tnode.get_name()
         run_node_demo(tnode)
-        tgt = (mc.ls("patchRelaxTarget*", type="transform") or [None])[0]
+        tgt     = (mc.ls("patchRelaxTarget*", type="transform") or [None])[0]
         in_hist = tgt is not None and tnm in (mc.listHistory(tgt) or [])
-        seeded = int(mc.getAttr(tnm + ".ringWidth")) > 0
+        seeded  = int(mc.getAttr(tnm + ".ringWidth")) > 0
         relaxes = False
         if tgt is not None:
             shp = mc.listRelatives(tgt, shapes=True, ni=True, f=True)[0]
@@ -14194,18 +14194,18 @@ def build_patch_relax():
         demo_err = "exc:%r" % exc
 
     # --- authored @maya_test on a FRESH deserialized node (parity bar) ---
-    test_ok = False
+    test_ok  = False
     test_err = "n/a"
     try:
         mc.file(new=True, force=True)
-        tnode = deserialize_node(clean_payload, restore_persistent=False)
-        tres = tnode.run_test()
-        test_ok = bool(tres.get("passed"))
+        tnode    = deserialize_node(clean_payload, restore_persistent=False)
+        tres     = tnode.run_test()
+        test_ok  = bool(tres.get("passed"))
         test_err = tres.get("error") or "ok"
     except Exception as exc:
         test_err = "exc:%r" % exc
 
-    has_demo = find_demo(PATCH_RELAX_METHODS) is not None
+    has_demo  = find_demo(PATCH_RELAX_METHODS) is not None
     has_setup = find_setup(PATCH_RELAX_METHODS) is not None
 
     # --- THE regression gate: the USER's path, not the demo's -------------
@@ -14215,7 +14215,7 @@ def build_patch_relax():
     # it, and click Run Setup -- and asserts the result actually moves. It also
     # goes through run_node_setup rather than calling setup() directly, so the
     # `selection=` kwarg the dispatcher passes is covered too.
-    setup_ok = False
+    setup_ok  = False
     setup_err = "n/a"
     try:
         mc.file(new=True, force=True)
@@ -14227,7 +14227,7 @@ def build_patch_relax():
         mc.setAttr(u_sq + ".factor", -0.6)
 
         unode = deserialize_node(clean_payload, restore_persistent=False)
-        unm = unode.get_name()
+        unm   = unode.get_name()
         # No reorder here, deliberately: the squash already exists, so
         # mc.deformer APPENDS the relax after it and the relax sees the squashed
         # mesh. That is also the user's real flow (add the deformer to a mesh
@@ -14800,7 +14800,7 @@ def build_disk_mesh_cache():
     from mpynode._common.node_setups import find_demo
     from mpynode.wrappers.mpy_mesh import MPyMesh
 
-    ok = False
+    ok     = False
     detail = ""
     try:
         g = MPyMesh.create(name="diskMeshCache")
@@ -14813,16 +14813,16 @@ def build_disk_mesh_cache():
 
         _stamp_class(g, "DiskMeshCache", "mPyMesh")
         clean_payload = serialize_node(g, include_persistent=False)
-        payload_ok = clean_payload.get("native_type") == "mPyMesh"
-        has_demo = find_demo(DISK_MESH_CACHE_METHODS) is not None
+        payload_ok    = clean_payload.get("native_type") == "mPyMesh"
+        has_demo      = find_demo(DISK_MESH_CACHE_METHODS) is not None
 
         # The asset ships beside the template; without it the demo/test are
         # meaningless, so a missing or non-round-tripping cache FAILS the build.
         from mpynode import ndio
         asset = os.path.join(TPL, "MPyMesh", "Disk Mesh Cache",
                              "ripple_cache.ndio")
-        frames = ndio.read(asset, "points")
-        counts = ndio.read(asset, "counts", dtype=np.int64)
+        frames  = ndio.read(asset, "points")
+        counts  = ndio.read(asset, "counts", dtype=np.int64)
         indices = ndio.read(asset, "indices", dtype=np.int64)
         asset_ok = (frames.ndim == 3 and frames.shape[0] > 1
                     and counts.size > 0 and indices.size > 0
@@ -14845,7 +14845,7 @@ def build_disk_mesh_cache():
                                      {}, {})
         portable_ok = bool(rep["portable"]) and not rep["unported"]
 
-        test_ok = False
+        test_ok  = False
         test_err = "n/a"
         try:
             mc.file(new=True, force=True)
@@ -14853,9 +14853,9 @@ def build_disk_mesh_cache():
                 if not mc.pluginInfo(plugin, q=True, loaded=True):
                     mc.loadPlugin(plugin)
             from mpynode._common.io.mpn_io import deserialize_node
-            ttnode = deserialize_node(clean_payload, restore_persistent=False)
-            tres = ttnode.run_test()
-            test_ok = bool(tres.get("passed"))
+            ttnode   = deserialize_node(clean_payload, restore_persistent=False)
+            tres     = ttnode.run_test()
+            test_ok  = bool(tres.get("passed"))
             test_err = tres.get("error") or "ok"
         except Exception as texc:
             test_err = "exc:%r" % (texc,)
@@ -14897,8 +14897,8 @@ def build_json_mesh_reader():
     from mpynode._common.node_setups import find_demo
     from mpynode.wrappers.mpy_mesh import MPyMesh
 
-    ok = False
-    detail = ""
+    ok            = False
+    detail        = ""
     clean_payload = None
     try:
         g = MPyMesh.create(name="jsonMeshReader")
@@ -14910,8 +14910,8 @@ def build_json_mesh_reader():
 
         _stamp_class(g, "JsonMeshReader", "mPyMesh")
         clean_payload = serialize_node(g, include_persistent=False)
-        payload_ok = clean_payload.get("native_type") == "mPyMesh"
-        has_demo = find_demo(JSON_MESH_READER_METHODS) is not None
+        payload_ok    = clean_payload.get("native_type") == "mPyMesh"
+        has_demo      = find_demo(JSON_MESH_READER_METHODS) is not None
         # No stored vars by construction -- that is the bug this template had.
         novars_ok = not (clean_payload.get("variables") or {})
 
@@ -14945,9 +14945,9 @@ def build_json_mesh_reader():
         portable_ok = bool(rep["portable"]) and not rep["unported"]
 
         # --- RUN IT: demo on one fresh node, authored test on another. ---
-        demo_ok = False
+        demo_ok  = False
         demo_err = "n/a"
-        test_ok = False
+        test_ok  = False
         test_err = "n/a"
         try:
             from mpynode._common.io.mpn_io import deserialize_node
@@ -14968,7 +14968,7 @@ def build_json_mesh_reader():
                 mc.currentTime(fr)
                 mc.dgeval(shp[0] + ".inMesh")
                 seen.append(mc.polyEvaluate(shp[0], v=True))
-            demo_ok = (len(shp) == 1 and seen == [8, 40, 192])
+            demo_ok  = (len(shp) == 1 and seen == [8, 40, 192])
             demo_err = "verts@1/5/24=%r" % (seen,)
         except Exception as dexc:
             demo_err = "exc:%r" % (dexc,)
@@ -14980,9 +14980,9 @@ def build_json_mesh_reader():
             for plugin in ("mpynode_api1", "mpynode_api2"):
                 if not mc.pluginInfo(plugin, q=True, loaded=True):
                     mc.loadPlugin(plugin)
-            ttnode = deserialize_node(clean_payload, restore_persistent=False)
-            tres = ttnode.run_test()
-            test_ok = bool(tres.get("passed"))
+            ttnode   = deserialize_node(clean_payload, restore_persistent=False)
+            tres     = ttnode.run_test()
+            test_ok  = bool(tres.get("passed"))
             test_err = tres.get("error") or "ok"
         except Exception as texc:
             test_err = "exc:%r" % (texc,)
@@ -15813,13 +15813,13 @@ def build_mesh_maze():
     ns = {}
     exec(MAZE_INIT, ns)
     edges_fn = ns["_maze_edges"]
-    dual_fn = ns["_maze_dual"]
+    dual_fn  = ns["_maze_dual"]
     carve_fn = ns["_maze_carve"]
     walls_fn = ns["_maze_walls"]
 
     # Two quads sharing edge (1, 2), plus a DEGENERATE face whose first two
     # verts are the same vertex: that self-edge must not survive keying.
-    q_counts = np.array([4, 4, 3], dtype=np.int64)
+    q_counts  = np.array([4, 4, 3], dtype=np.int64)
     q_indices = np.array([0, 1, 2, 3, 1, 4, 5, 2, 6, 6, 7], dtype=np.int64)
     key, fvf = edges_fn(q_counts, q_indices, 8)
     # 4 + 4 + 3 face-vertex edges, minus the one self-edge (6, 6).
@@ -15836,7 +15836,7 @@ def build_mesh_maze():
 
     # A NON-MANIFOLD edge (3 incident faces) must be kept out of the dual
     # rather than unpacked as a pair -- three triangles sharing edge (0, 1).
-    nm_counts = np.array([3, 3, 3], dtype=np.int64)
+    nm_counts  = np.array([3, 3, 3], dtype=np.int64)
     nm_indices = np.array([0, 1, 2, 0, 1, 3, 0, 1, 4], dtype=np.int64)
     nk, nf2 = edges_fn(nm_counts, nm_indices, 5)
     _u, _i, nei, _as, ndeg, _ad, _ae = dual_fn(nk, nf2, 3)
@@ -15845,10 +15845,10 @@ def build_mesh_maze():
     # The carve on a 4-cell PATH graph 0-1-2-3 with a detached cell 4: the
     # tree must span the reachable four and never touch the fifth, and the
     # depth gate must push the solution the long way round.
-    p_start = np.array([0, 1, 3, 5, 6], dtype=np.int64)
-    p_deg = np.array([1, 2, 2, 1, 0], dtype=np.int64)
-    p_dst = np.array([1, 0, 2, 1, 3, 2], dtype=np.int64)
-    p_eid = np.array([0, 0, 1, 1, 2, 2], dtype=np.int64)
+    p_start = np.array([0, 1, 3, 5, 6],    dtype=np.int64)
+    p_deg   = np.array([1, 2, 2, 1, 0],    dtype=np.int64)
+    p_dst   = np.array([1, 0, 2, 1, 3, 2], dtype=np.int64)
+    p_eid   = np.array([0, 0, 1, 1, 2, 2], dtype=np.int64)
     vis, door, sol = carve_fn(5, p_start, p_deg, p_dst, p_eid, 3, 0, 3, 0, 0)
     carve_ok = (vis.tolist() == [True, True, True, True, False]
                 and int(door.sum()) == 3 and sol == 4)
@@ -15856,7 +15856,7 @@ def build_mesh_maze():
     # Determinism in `seed`, and a different seed really is a different maze.
     # A 3x3 grid of quads has enough freedom for the two to diverge.
     g_counts = np.full(9, 4, dtype=np.int64)
-    g_idx = []
+    g_idx    = []
     for gy in range(3):
         for gx in range(3):
             v0 = gy * 4 + gx
@@ -15880,7 +15880,7 @@ def build_mesh_maze():
     span = wp.max(axis=0) - wp.min(axis=0)
     # Each quad must wind OUTWARD -- its normal has to point away from the
     # slab centre, or the walls render inside-out.
-    ctr = wp.mean(axis=0)
+    ctr     = wp.mean(axis=0)
     wind_ok = True
     for qi in wi.reshape(6, 4):
         v = wp[qi]
@@ -15957,8 +15957,8 @@ def build_mesh_maze():
     m3 = live_points()
     mc.setAttr(nm + ".start", -7000)      # ditto on the other side -> 0
     m4 = live_points()
-    mc.setAttr(nm + ".start", 0)
-    mc.setAttr(nm + ".end", -1)
+    mc.setAttr(nm + ".start",          0)
+    mc.setAttr(nm + ".end",            -1)
     mc.setAttr(nm + ".solutionLength", 0.35)
     index_ok = (m1.shape == m2.shape and np.array_equal(m1, m2)
                 and m5.shape == m1.shape and not np.array_equal(m1, m5)
@@ -15979,7 +15979,7 @@ def build_mesh_maze():
     # sphere the normals are radial, so every slab's top ring must sit exactly
     # one wallHeight FURTHER OUT than its base ring. A +Y extrusion instead
     # pushes the southern walls INWARDS, giving a rise near -H.
-    sph = mc.polySphere(constructionHistory=False, radius=5, sx=24, sy=16)[0]
+    sph     = mc.polySphere(constructionHistory=False, radius=5, sx=24, sy=16)[0]
     s_shape = mc.listRelatives(sph, shapes=True, fullPath=True)[0]
     mc.connectAttr(s_shape + ".worldMesh[0]", nm + ".inMesh", force=True)
     mc.setAttr(nm + ".wallHeight", 0.5)
@@ -15995,8 +15995,8 @@ def build_mesh_maze():
     # `start` to the other island must move the maze there rather than raise.
     far = mc.polyPlane(w=4, h=4, sx=3, sy=3, constructionHistory=False)[0]
     mc.setAttr(far + ".translateX", 40)
-    near = mc.polyPlane(w=4, h=4, sx=3, sy=3, constructionHistory=False)[0]
-    both = mc.polyUnite(near, far, constructionHistory=False)[0]
+    near    = mc.polyPlane(w=4, h=4, sx=3, sy=3, constructionHistory=False)[0]
+    both    = mc.polyUnite(near, far, constructionHistory=False)[0]
     b_shape = mc.listRelatives(both, shapes=True, fullPath=True)[0]
     mc.connectAttr(b_shape + ".worldMesh[0]", nm + ".inMesh", force=True)
     isl_a = live_points()
@@ -16013,7 +16013,7 @@ def build_mesh_maze():
     # through `end`, and the gate refuses `end` while the stack is shallow. The
     # strip is a disk too -- V=42 E=61 F=20 -> 61 - 20 + 1 = 42 walls -- so one
     # integer catches a single stranded face anywhere in it.
-    strip = mc.polyPlane(w=2, h=20, sx=1, sy=20, constructionHistory=False)[0]
+    strip   = mc.polyPlane(w=2, h=20, sx=1, sy=20, constructionHistory=False)[0]
     t_shape = mc.listRelatives(strip, shapes=True, fullPath=True)[0]
     mc.connectAttr(t_shape + ".worldMesh[0]", nm + ".inMesh", force=True)
     cut_ok = True
@@ -16034,16 +16034,16 @@ def build_mesh_maze():
     exec(MAZE_INIT, empty_ns)
 
     class _EmptySelf(object):
-        inMesh = None
-        start = 0
-        end = -1
-        seed = 0
+        inMesh         = None
+        start          = 0
+        end            = -1
+        seed           = 0
         solutionLength = 0.35
-        wallHeight = 0.25
-        wallThickness = 0.05
-        outMesh = None
+        wallHeight     = 0.25
+        wallThickness  = 0.05
+        outMesh        = None
 
-    es = _EmptySelf()
+    es               = _EmptySelf()
     empty_ns["self"] = es
     try:
         exec(compile(MAZE_COMPUTE, "maze_compute", "exec"), empty_ns)
@@ -16073,8 +16073,8 @@ def build_mesh_maze():
         mc.file(new=True, force=True)
         from mpynode._common.io.mpn_io import deserialize_node
 
-        tnode = deserialize_node(clean_payload, name="mazeTestCheck")
-        tres = tnode.run_test()
+        tnode   = deserialize_node(clean_payload, name="mazeTestCheck")
+        tres    = tnode.run_test()
         test_ok = bool(tres.get("passed"))
         if not test_ok:
             print("[mesh_maze] @maya_test FAILED: %s" % tres.get("error"))
@@ -16097,11 +16097,11 @@ def build_mesh_maze():
 
 def main():
     results = {
-        "mPyDeformer": build_deformer(),
-        "nurbsCurveHelix": build_nurbs_curve_helix(),
+        "mPyDeformer":        build_deformer(),
+        "nurbsCurveHelix":    build_nurbs_curve_helix(),
         "nurbsSurfaceRipple": build_nurbs_surface_ripple(),
-        "deformerNurbsWave": build_deformer_nurbs_wave(),
-        "comboCorrectives": build_combo_correctives(),
+        "deformerNurbsWave":  build_deformer_nurbs_wave(),
+        "comboCorrectives":   build_combo_correctives(),
         # No "mPyFile": build_file() -- the Basic Texture template it wrote was
         # measurably identical to File Simple (same output at every flat texel;
         # they parted only on the single blended texel at a cell edge, because
