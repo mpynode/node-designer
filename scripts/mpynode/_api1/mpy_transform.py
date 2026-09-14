@@ -147,7 +147,7 @@ def _read_double3(cmds, node_name, attr_name, default):
 
 def _read_compound_via_plug(plug_proxy, name, default):
     """Pull a Double3 compound plug as ``(3,) float64``
-    numpy via ``PlugProxy.<name>.as_numpy()`` (the
+    numpy via ``PlugProxy.<name>.asNumpy()`` (the
     CompoundPlugProxy numpy bridge). Falls back to a 3-vector of
     ``default`` on any access failure.
 
@@ -156,8 +156,8 @@ def _read_compound_via_plug(plug_proxy, name, default):
     EM-unsafety, no MEL dispatch cost."""
     try:
         sub = getattr(plug_proxy, name)
-        if hasattr(sub, "as_numpy"):
-            arr = sub.as_numpy()
+        if hasattr(sub, "asNumpy"):
+            arr = sub.asNumpy()
             if arr.shape == (3,):
                 return arr
         # Some plugs may already be a numpy array.

@@ -34,7 +34,7 @@ workaround.
 
 The five preset inputs are **always available** via `self.X` (no
 `add_input_attr` needed) and are **read-only**. They are read plug-side through
-`PlugProxy.as_numpy()` — the same path `self.X` uses — **not** via `cmds.getAttr`
+`PlugProxy.asNumpy()` — the same path `self.X` uses — **not** via `cmds.getAttr`
 (a DG-re-entry anti-pattern that was removed) and not via `data_block.inputValue`.
 Because the preset plugs are created by the node initializer (not in the user's
 `_inputAttrs` JSON), they are reached as `self.targetTranslate` etc. — the same

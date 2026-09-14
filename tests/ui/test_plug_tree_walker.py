@@ -606,7 +606,7 @@ class TestConstraintComputeHasNoCmdsGetAttr(unittest.TestCase):
             _CMDS_GETATTR_CALL.search(src),
             "MPyConstraint.compute must NOT call "
             "cmds.getAttr(...) -- use PlugProxy + "
-            "CompoundPlugProxy.as_numpy() instead.",
+            "CompoundPlugProxy.asNumpy() instead.",
         )
 
     def test_compute_uses_plug_proxy(self):

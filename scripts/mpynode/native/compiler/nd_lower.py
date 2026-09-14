@@ -421,7 +421,7 @@ def _materialise_input(m, dst):
     if _is_matrix_scalar(meta):
         # MMatrix -> nd (4,4) row-major. numpy M[i,j] == MMatrix m(i,j) (Maya
         # row-vector convention; translate in row 3), matching the interpreted
-        # node's as_numpy() and the transform matrix-input binding.
+        # node's asNumpy() and the transform matrix-input binding.
         elems = ", ".join("%s(%d, %d)" % (src, r, c)
                           for r in range(4) for c in range(4))
         return (["    nd::Array<double> %s = nd::from_data<double>("

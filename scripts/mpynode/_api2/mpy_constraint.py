@@ -40,7 +40,7 @@ _PRESET_INPUT_NAMES = frozenset(
 
 def _read_double3_via_plug(plug_proxy, name):
     """Pull a Double3 plug as ``(3,) float64`` numpy via
-    ``PlugProxy.<name>.as_numpy()``. Replaces
+    ``PlugProxy.<name>.asNumpy()``. Replaces
     the ``cmds.getAttr`` based reads previously inside
     ``MPyConstraint.compute``. Falls back to a zero 3-vector on any
     access failure."""
@@ -48,8 +48,8 @@ def _read_double3_via_plug(plug_proxy, name):
 
     try:
         sub = getattr(plug_proxy, name)
-        if hasattr(sub, "as_numpy"):
-            arr = sub.as_numpy()
+        if hasattr(sub, "asNumpy"):
+            arr = sub.asNumpy()
             if arr.shape == (3,):
                 return arr
         if hasattr(sub, "shape") and getattr(sub, "shape", None) == (3,):
@@ -313,7 +313,7 @@ class MPyConstraint(MPyNode):
         import numpy as _np
 
         # The preset inputs ride through PlugProxy + CompoundPlugProxy
-        # .as_numpy() -- the same path ``self.X`` uses -- pre-populated as
+        # .asNumpy() -- the same path ``self.X`` uses -- pre-populated as
         # compute_locals slots so the "numerical -> numpy" contract holds. They
         # used to be read via ``cmds.getAttr``, the DG-re-entry anti-pattern
         # already eliminated from the PlugProxy read path.

@@ -305,7 +305,7 @@ class TestConstraintKeepInventory(unittest.TestCase):
     convenience numpy reads (per the J.0 design lock revision).
 
     updated the SHAPE of the reads (cmds.getAttr -> PlugProxy
-    + CompoundPlugProxy.as_numpy()) but the SLOTS the user sees via
+    + CompoundPlugProxy.asNumpy()) but the SLOTS the user sees via
     self.X still exist. This test greps for the slot KEYS and the
     compute_locals plumbing -- not the specific
     ``preset_internals["X"] = cmds.getAttr(...)`` syntax which is gone.

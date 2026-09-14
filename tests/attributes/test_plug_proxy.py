@@ -700,7 +700,7 @@ class TestLiveMatrixRead(unittest.TestCase):
 
 
 class TestCompoundAsNumpy(unittest.TestCase):
-    """CompoundPlugProxy.as_numpy() collapses Double3-style
+    """CompoundPlugProxy.asNumpy() collapses Double3-style
     compound plugs into a flat (N,) numpy array. np.asarray(...) works
     via __array__."""
 
@@ -714,11 +714,11 @@ class TestCompoundAsNumpy(unittest.TestCase):
         self.deformer.add_input_attr("amplitude", "vector")
         mc.setAttr(self.deformer.get_name() + ".amplitude", 1.5, 2.5, 3.5, type="double3")
 
-    def test_as_numpy_returns_3_floats(self):
+    def test_asNumpy_returns_3_floats(self):
         from mpynode._common.plugs.plug_proxy import make_node_proxy_for_name
 
         proxy = make_node_proxy_for_name(self.deformer.get_name())
-        arr = proxy.amplitude.as_numpy()
+        arr = proxy.amplitude.asNumpy()
         self.assertEqual(arr.shape, (3,))
         np.testing.assert_array_almost_equal(arr, [1.5, 2.5, 3.5], decimal=4)
 
@@ -762,7 +762,7 @@ class TestNoCmdsGetAttrInDemo(unittest.TestCase):
             re.search(r"cmds\.getAttr\s*\(", expr_block),
             "K.2: demo expression must NOT call cmds.getAttr(...) (the "
             "anti-pattern). Use self.<attr>.asNumpy() / "
-            ".as_numpy() instead.",
+            ".asNumpy() instead.",
         )
 
 

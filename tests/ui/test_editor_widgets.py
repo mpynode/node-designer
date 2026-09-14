@@ -464,8 +464,8 @@ class TestVocabularyBuilder(unittest.TestCase):
         texts = [c.text for c in vocab]
         # driverMatrixA reports kTypedAttribute, not kMatrixAttribute, so the
         # type-method table misses it. amplitude is a Double3 ->
-        # kAttribute3Double -> as_numpy() is suggested.
-        self.assertIn("self.amplitude.as_numpy()", texts)
+        # kAttribute3Double -> asNumpy() is suggested.
+        self.assertIn("self.amplitude.asNumpy()", texts)
 
     def test_expression_scope_includes_handle_methods_for_outputGeometry(self):
         from mpynode.ui.widgets.autocomplete import build_vocabulary

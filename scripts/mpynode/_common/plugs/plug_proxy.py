@@ -308,7 +308,7 @@ class CompoundPlugProxy:
             f"compound plug {_plug_name(self._plug)!r} has no child named {name!r}"
         )
 
-    def as_numpy(self):
+    def asNumpy(self):
         """Collapse a compound numeric plug (e.g. Double3
         ``translate``, ``amplitude``, ``restTranslate``) into a flat
         ``(N,) float64`` numpy array.
@@ -353,10 +353,10 @@ class CompoundPlugProxy:
 
     def __array__(self, dtype=None):
         """Numpy interop: ``np.asarray(self)`` works seamlessly via
-        ``as_numpy()`` so user code like
+        ``asNumpy()`` so user code like
         ``np.asarray(self.amplitude, dtype=np.float64)`` does the
-        right thing without an explicit ``.as_numpy()`` call."""
-        arr = self.as_numpy()
+        right thing without an explicit ``.asNumpy()`` call."""
+        arr = self.asNumpy()
         if dtype is not None:
             return arr.astype(dtype)
         return arr
@@ -364,7 +364,7 @@ class CompoundPlugProxy:
     def __iter__(self):
         """Iteration over the flat numpy form. Lets
         ``[float(v) for v in self.amplitude]`` work."""
-        return iter(self.as_numpy())
+        return iter(self.asNumpy())
 
     def __len__(self):
         try:
@@ -375,7 +375,7 @@ class CompoundPlugProxy:
     def __getitem__(self, idx):
         """Index access: ``self.amplitude[0]`` returns child 0's value
         (NOT a CompoundPlugProxy of a child). Equivalent to
-        ``self.as_numpy()[idx]`` but only resolves the one child
+        ``self.asNumpy()[idx]`` but only resolves the one child
         we asked for."""
         try:
             child_plug = self._plug.child(int(idx))

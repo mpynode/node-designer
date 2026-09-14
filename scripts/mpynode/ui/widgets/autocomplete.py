@@ -73,16 +73,16 @@ _TYPE_METHODS = {
         ("scale()", "method", "MVector scale component"),
     ],
     "kAttribute3Double": [
-        ("as_numpy()", "method", "(3,) float64 numpy"),
+        ("asNumpy()", "method", "(3,) float64 numpy"),
     ],
     "kAttribute3Float": [
-        ("as_numpy()", "method", "(3,) float64 numpy"),
+        ("asNumpy()", "method", "(3,) float64 numpy"),
     ],
     "kAttribute2Double": [
-        ("as_numpy()", "method", "(2,) float64 numpy"),
+        ("asNumpy()", "method", "(2,) float64 numpy"),
     ],
     "kAttribute2Float": [
-        ("as_numpy()", "method", "(2,) float64 numpy"),
+        ("asNumpy()", "method", "(2,) float64 numpy"),
     ],
 }
 
