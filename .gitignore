@@ -83,3 +83,7 @@ Thumbs.db
 desktop.ini
 *~
 *.swp
+
+# ---- Maya ----------------------------------------------------------------
+# Hypershade swatch cache Maya drops beside a scene or texture it previewed.
+.mayaSwatches/
