@@ -893,16 +893,17 @@ def make_build_bat(plugin_name: str, frag_files: List[str],
     # (mPyDnet.lib + mPyDnet.exp) and LINK writes both into the CWD -- whatever
     # folder the user ran this from. Pin them into build\ and delete them with
     # the objects: nothing ever loads the import library of a Maya plug-in.
+    pre, out_args, post = toolchain.link_via_temp_bat(
+        plugin_name, "%HERE%..\\" + plugin_name + ".mll")
+    lines.extend(pre)
     lines.append(
-        'cl /nologo /LD %%OBJS%% /link /LIBPATH:"%%MAYA%%\\lib" %s '
-        '/IMPLIB:"%%HERE%%%s.lib" /OUT:"%%HERE%%..\\%s.mll" '
+        'cl /nologo /LD %%OBJS%% /link /LIBPATH:"%%MAYA%%\\lib" %s %s '
         '/EXPORT:initializePlugin /EXPORT:uninitializePlugin'
-        % (libs, plugin_name, plugin_name))
-    lines.append("if errorlevel 1 exit /b 1")
-    # Drop the object files and the link byproducts so a hand-rebuild leaves a
-    # clean folder.
-    lines.append('del %%OBJS%% "%%HERE%%%s.lib" "%%HERE%%%s.exp" 2>nul'
-                 % (plugin_name, plugin_name))
+        % (libs, out_args))
+    lines.extend(post)
+    # Drop the object files so a hand-rebuild leaves a clean folder (the link
+    # byproducts went with the temp folder).
+    lines.append('del %OBJS% 2>nul')
     # The link above writes UP to %HERE%..\ (the plugin lives beside build/),
     # so name that exact path -- not %HERE%.
     lines.append('echo Built: %%HERE%%..\\%s.mll' % plugin_name)
@@ -990,6 +991,8 @@ def make_single_build_bat(plugin_name: str, node_file: str, libs: List[str],
               % (" ".join(toolchain.qt_msvc_flags()),
                  toolchain.QT_MSVC_COMPAT_HEADER)) if needs_qt else ""
     stem = os.path.splitext(node_file)[0]
+    pre, out_args, post = toolchain.link_via_temp_bat(
+        plugin_name, "%HERE%..\\" + plugin_name + ".mll")
     return "\r\n".join([
         "@echo off",
         "setlocal",
@@ -1007,19 +1010,18 @@ def make_single_build_bat(plugin_name: str, node_file: str, libs: List[str],
       + (  # Must follow the Maya resolver: the Qt probe reads %MAYA%\include.
         toolchain.qt_resolver_bat() if needs_qt else []) + [
         'set "HERE=%~dp0"',
+        *pre,
         ('cl /nologo /LD /std:c++17 /O2 /fp:precise /EHsc /MD /bigobj /utf-8 '
          '/D NT_PLUGIN /D REQUIRE_IOSTREAM /D _BOOL /D WIN32 /D _WINDOWS '
          '/D _CRT_SECURE_NO_WARNINGS '
          '/I "%%MAYA%%\\include"%s "%%HERE%%source\\%s" /Fo"%%HERE%%%s.obj" '
-         '/link /LIBPATH:"%%MAYA%%\\lib" %s '
-         '/IMPLIB:"%%HERE%%%s.lib" /OUT:"%%HERE%%..\\%s.mll" '
+         '/link /LIBPATH:"%%MAYA%%\\lib" %s %s '
          '/EXPORT:initializePlugin /EXPORT:uninitializePlugin'
-         % (qt_inc, node_file, stem, libstr, plugin_name, plugin_name)),
-        'if errorlevel 1 exit /b 1',
-        # cl /LD drops <src>.obj, and LINK <first obj>.lib + .exp, in the CWD;
-        # /Fo and /IMPLIB above pin them into build\ so this can remove them.
-        'del "%%HERE%%%s.obj" "%%HERE%%%s.lib" "%%HERE%%%s.exp" 2>nul'
-        % (stem, plugin_name, plugin_name),
+         % (qt_inc, node_file, stem, libstr, out_args)),
+        *post,
+        # cl /LD drops <src>.obj in the CWD; /Fo above pins it into build\ so
+        # this can remove it (the link byproducts went with the temp folder).
+        'del "%%HERE%%%s.obj" 2>nul' % stem,
         'echo Built: %%HERE%%..\\%s.mll' % plugin_name,
         # Cleanup is best effort; it must not decide the exit status.
         "exit /b 0",

@@ -32,7 +32,7 @@ import re
 import shutil
 import subprocess
 import sys
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 
 
 # ---------------------------------------------------------------------------
@@ -168,6 +168,40 @@ QT_INCLUDE_ENV = "MPYNODE_QT_INCLUDE"
 _QT_INCLUDE_SENTINEL = ("QtGui", "QCursor")
 
 
+def qt_user_cache_dir(inc: str, names, has_qt) -> Optional[str]:
+    """The per-user extraction of the devkit's Qt header zip, made on demand.
+
+    Windows only in practice: the devkit ships ``qt_<ver>-include.zip`` beside
+    the Maya headers, and ``<maya>\\include`` is not writable without elevation
+    (MEASURED 2026-09-14: 'Permission denied'), so the archive is extracted
+    ONCE into ``%LOCALAPPDATA%\\mpynode\\qt_include\\<archive stem>`` -- the same
+    folder the generated ``build.bat`` extracts into and searches, so both
+    resolvers see one Qt. ``names`` is the listing of ``inc`` (already fetched by
+    the caller), ``has_qt`` the sentinel test. Never raises: any failure --
+    no ``LOCALAPPDATA``, an unreadable archive, a fake listing under test --
+    reads as "not found", exactly as before this cache existed.
+    """
+    base = os.environ.get("LOCALAPPDATA")
+    if not base:
+        return None
+    for name in names:
+        low = name.lower()
+        if not (low.startswith("qt_") and low.endswith("-include.zip")):
+            continue
+        cache = os.path.join(base, "mpynode", "qt_include", name[:-4])
+        if has_qt(cache):
+            return cache
+        try:
+            import zipfile
+            with zipfile.ZipFile(os.path.join(inc, name)) as zf:
+                zf.extractall(cache)
+        except Exception:
+            continue
+        if has_qt(cache):
+            return cache
+    return None
+
+
 def qt_include_dir(maya: str, _isfile=None, _listdir=None) -> Optional[str]:
     """Directory to put on the header search path so ``#include <QtGui/QCursor>``
     resolves on Linux/Windows, or ``None`` if none can be found.
@@ -203,6 +237,13 @@ def qt_include_dir(maya: str, _isfile=None, _listdir=None) -> Optional[str]:
         cand = os.path.join(inc, name)
         if _has_qt(cand):
             return cand
+    # Last: the per-user extraction of the devkit's zip that the generated
+    # build.bat also makes and searches (qt_resolver_bat) -- kept in step here so
+    # a hand rebuild and the programmatic build cannot disagree about which Qt
+    # they compiled against.
+    cached = qt_user_cache_dir(inc, names, _has_qt)
+    if cached:
+        return cached
     return None
 
 
@@ -384,6 +425,36 @@ def qt_resolver_bat(_os_name: Optional[str] = None) -> List[str]:
         '    if exist "%%~fD\\{0}" set "QTINC=%%~fD"'.format(sentinel),
         '  )',
         ')',
+        # The devkit ships the Qt headers as an unextracted zip beside the Maya
+        # headers, and <maya>\include is not writable without elevation, so the
+        # in-place extraction the old message suggested could never work for a
+        # normal user (MEASURED 2026-09-14: 'Permission denied'). Extract ONCE
+        # into a per-user cache instead and search there. Windows' own tar
+        # (System32, bsdtar since Windows 10 1803) reads zips; the tar Git puts
+        # on PATH is GNU tar and does NOT, hence the explicit path. PowerShell's
+        # Expand-Archive is the fallback. %%D is the loop variable here too,
+        # read only after its loop (see the docstring).
+        'set "_QTZIP="',
+        'set "_QTCACHE="',
+        'if "%QTINC%"=="" (',
+        '  for %%D in ("{0}\\qt_*-include.zip") do set "_QTZIP=%%~fD"'.format(inc),
+        ')',
+        'if "%QTINC%"=="" if not "%_QTZIP%"=="" (',
+        '  for %%D in ("%_QTZIP%") do set "_QTCACHE=%LOCALAPPDATA%\\mpynode\\qt_include\\%%~nD"',
+        ')',
+        'if "%QTINC%"=="" if not "%_QTCACHE%"=="" (',
+        '  if not exist "%_QTCACHE%\\{0}" ('.format(sentinel),
+        '    echo build.bat: extracting the devkit Qt headers once into "%_QTCACHE%" ...',
+        '    if not exist "%_QTCACHE%" mkdir "%_QTCACHE%"',
+        '    if exist "%SystemRoot%\\System32\\tar.exe" (',
+        '      "%SystemRoot%\\System32\\tar.exe" -xf "%_QTZIP%" -C "%_QTCACHE%"',
+        '    ) else (',
+        '      powershell -NoProfile -ExecutionPolicy Bypass -Command '
+        '"Expand-Archive -LiteralPath \'%_QTZIP%\' -DestinationPath \'%_QTCACHE%\' -Force"',
+        '    )',
+        '  )',
+        '  if exist "%_QTCACHE%\\{0}" set "QTINC=%_QTCACHE%"'.format(sentinel),
+        ')',
         'if "%QTINC%"=="" (',
         '  echo build.bat: this plugin has a hover locator, whose C++ includes '
         'the Maya 1>&2',
@@ -391,16 +462,52 @@ def qt_resolver_bat(_os_name: Optional[str] = None) -> List[str]:
         .format(inc),
         '  echo   The devkit ships them as an UNEXTRACTED archive, e.g. 1>&2',
         '  echo     "{0}\\qt_6.5.3_vc14-include.zip" 1>&2'.format(inc),
-        '  echo   so they are on no include path until it is extracted. 1>&2',
-        '  echo   Fix: extract it so "<dir>\\{0}" exists, then either 1>&2'
+        '  echo   which this script extracts by itself into 1>&2',
+        '  echo     "%LOCALAPPDATA%\\mpynode\\qt_include\\<archive name>" 1>&2',
+        '  echo   so either that archive is missing or the extraction failed. 1>&2',
+        '  echo   Fix: extract it anywhere so "<dir>\\{0}" exists, then 1>&2'
         .format(sentinel),
-        '  echo     tar -xf "{0}\\qt_*-include.zip" -C "{0}"   ^(in place^), '
-        '1>&2'.format(inc),
-        '  echo   or extract anywhere and set {0}=^<dir^>. 1>&2'
-        .format(QT_INCLUDE_ENV),
+        '  echo     set {0}=^<dir^> 1>&2'.format(QT_INCLUDE_ENV),
         '  exit /b 1',
         ')',
     ]
+
+
+def link_via_temp_bat(plugin_name: str, dest: str) -> Tuple[List[str], str, List[str]]:
+    """Batch lines to link a plug-in in a LOCAL temp folder and copy the result
+    to ``dest`` (a batch expression such as ``%HERE%..\\foo.mll``).
+
+    Returns ``(before, out_args, after)``: ``before`` makes the temp folder,
+    ``out_args`` is the ``/IMPLIB:... /OUT:...`` pair to splice into the link
+    line, ``after`` checks the link status, copies the plug-in into place and
+    removes the folder -- import library and export file with it, since nothing
+    ever loads a Maya plug-in's import library.
+
+    Why not link in place: the MSVC linker memory-maps its outputs, and on a
+    cloud-synced folder (a Google Drive stream, OneDrive) that write never
+    completes -- the linker sits on a zero-byte output forever and cannot even
+    be killed. MEASURED 2026-09-14, twice, on a Drive-hosted checkout, while the
+    same link finished in under a second on C:. A plain copy is fine on such a
+    folder, and the object files, which cl writes normally, always were. Shared
+    by the three hand-runnable build.bat mirrors so they cannot drift.
+    """
+    before = [
+        "REM Link in a local temp folder, then copy the plug-in into place: the",
+        "REM MSVC linker memory-maps its outputs, and on a cloud-synced folder",
+        "REM (Google Drive, OneDrive) that write hangs forever. A copy is fine.",
+        'set "LINKTMP=%TEMP%\\mpynode_link_%RANDOM%_%RANDOM%"',
+        'if exist "%LINKTMP%" rd /s /q "%LINKTMP%"',
+        'mkdir "%LINKTMP%"',
+    ]
+    out_args = ('/IMPLIB:"%LINKTMP%\\{0}.lib" /OUT:"%LINKTMP%\\{0}.mll"'
+                .format(plugin_name))
+    after = [
+        "if errorlevel 1 exit /b 1",
+        'copy /Y "%LINKTMP%\\{0}.mll" "{1}" >nul'.format(plugin_name, dest),
+        "if errorlevel 1 exit /b 1",
+        'rd /s /q "%LINKTMP%" 2>nul',
+    ]
+    return before, out_args, after
 
 
 def qt_link_flags(maya: str, os_name: Optional[str] = None) -> List[str]:

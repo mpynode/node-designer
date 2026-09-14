@@ -1274,7 +1274,8 @@ _HOVER_SPEC = {"suggested": {"node_type_name": "gizmoCube",
 # leaked an uncollapsed escape into the output, which is what these guards are
 # for. Paired with test_bat_resolver_emits_a_real_for_loop below, so stripping
 # can never hide a resolver that stopped being emitted.
-_BAT_FOR_VAR_RE = re.compile(r"%%(?:~f)?D\b")
+# A for-loop variable, with or without a ~f / ~n / ~nx style modifier.
+_BAT_FOR_VAR_RE = re.compile(r"%%(?:~[fdpnxsatz]+)?[A-Za-z]\b")
 
 
 def _uncollapsed_percent(body):
@@ -1480,6 +1481,38 @@ class TestCodegenBuildScripts(unittest.TestCase):
         self.assertIn("exit /b 1", body)
         self.assertIn("-include.zip", body)         # names the archive
         self.assertFalse(_uncollapsed_percent(body))
+        # ...and extracts it by itself into a per-user cache: Windows' own
+        # bsdtar by explicit path (Git's GNU tar cannot read zips), with
+        # PowerShell as the fallback. Never into <maya>\include, which is
+        # not writable without elevation.
+        self.assertIn(r"%SystemRoot%\System32\tar.exe", body)
+        self.assertIn("Expand-Archive", body)
+        self.assertIn(r"%LOCALAPPDATA%\mpynode\qt_include", body)
+        self.assertNotIn("tar -xf", body.replace('tar.exe" -xf', ''))
+
+    def test_qt_user_cache_dir_mirrors_the_bat_and_never_raises(self):
+        """The Python resolver looks in the SAME per-user cache the generated
+        build.bat extracts into, extracts the zip itself when the cache is
+        empty, and reads every failure as 'not found' rather than raising."""
+        import os
+        from mpynode.native.toolchain import toolchain as tc
+
+        inc = r"C:\M\include"
+        zips = ["qt_6.5.3_vc14-include.zip"]
+        with unittest.mock.patch.dict(os.environ, {"LOCALAPPDATA": r"C:\U\Local"}):
+            cache = os.path.join(r"C:\U\Local", "mpynode", "qt_include",
+                                 "qt_6.5.3_vc14-include")
+            # The cache already holds the sentinel: found, nothing extracted.
+            self.assertEqual(tc.qt_user_cache_dir(inc, zips, lambda d: d == cache),
+                             cache)
+            # No archive in the devkit listing: nothing to extract.
+            self.assertIsNone(tc.qt_user_cache_dir(inc, ["maya", "Qt"],
+                                                   lambda d: False))
+            # An archive that cannot be opened (no such file): None, no raise.
+            self.assertIsNone(tc.qt_user_cache_dir(inc, zips, lambda d: False))
+        with unittest.mock.patch.dict(os.environ, {}, clear=False):
+            os.environ.pop("LOCALAPPDATA", None)
+            self.assertIsNone(tc.qt_user_cache_dir(inc, zips, lambda d: True))
 
     def test_bat_diagnostics_reach_stderr(self):
         """`1^>^&2` inside a parenthesised if-block is LITERAL TEXT: cmd prints
@@ -1543,7 +1576,10 @@ class TestBundlerBuildScripts(unittest.TestCase):
         # The link writes %HERE%..\<name>.mll (the bundle lives one level up,
         # beside build/); the echo used to claim %HERE%<name>.mll.
         body = bundler.make_build_bat("myBundle", ["frag_a.cpp"])
-        self.assertIn('/OUT:"%HERE%..\\myBundle.mll"', body)
+        # The link lands in a local temp folder (a cloud-synced checkout hangs
+        # the linker) and is COPIED to %HERE%..\<name>.mll, which the echo names.
+        self.assertIn('/OUT:"%LINKTMP%\\myBundle.mll"', body)
+        self.assertIn('copy /Y "%LINKTMP%\\myBundle.mll" "%HERE%..\\myBundle.mll"', body)
         self.assertIn("echo Built: %HERE%..\\myBundle.mll", body)
 
     def test_make_build_bat_mirrors_the_msvc_charset_and_crt_flags(self):
@@ -1924,18 +1960,26 @@ class MsvcLinkByproductTests(unittest.TestCase):
         multi = bundler.make_build_bat("myBundle", ["frag_a.cpp"])
         single = bundler.make_single_build_bat("myBundle", "foo.cpp",
                                                ["OpenMaya"])
+        # The link byproducts (.lib / .exp) are pinned into the LOCAL temp
+        # folder the link runs in, and go away with it: linking in place hangs
+        # the MSVC linker on a cloud-synced checkout (toolchain.link_via_temp_bat).
         for label, body in (("porter", porter), ("multi", multi),
                             ("single", single)):
-            self.assertIn("/IMPLIB:", body, label)
-            self.assertIn('.exp" 2>nul', body, label)
+            self.assertIn('/IMPLIB:"%LINKTMP%\\', body, label)
+            self.assertIn('/OUT:"%LINKTMP%\\', body, label)
+            self.assertIn('rd /s /q "%LINKTMP%" 2>nul', body, label)
+            self.assertNotIn('/OUT:"%HERE%', body, label)
             self.assertFalse(_uncollapsed_percent(body), label)
-        # the one-shot scripts also redirect the object file
+        # the one-shot scripts also redirect the object file, and still delete it
         self.assertIn('/Fo"%HERE%gizmoCube.obj"', porter)
+        self.assertIn('del "%HERE%gizmoCube.obj" 2>nul', porter)
         self.assertIn('/Fo"%HERE%foo.obj"', single)
-        self.assertIn('del "%HERE%foo.obj" "%HERE%myBundle.lib" '
-                      '"%HERE%myBundle.exp" 2>nul', single)
-        self.assertIn('/IMPLIB:"%HERE%myBundle.lib"', multi)
-        self.assertIn('"%HERE%myBundle.lib" "%HERE%myBundle.exp" 2>nul', multi)
+        self.assertIn('del "%HERE%foo.obj" 2>nul', single)
+        self.assertIn('del %OBJS% 2>nul', multi)
+        # ...and the plug-in is copied to where the old in-place link put it
+        self.assertIn('copy /Y "%LINKTMP%\\gizmoCube.mll" "%HERE%gizmoCube.mll"', porter)
+        self.assertIn('copy /Y "%LINKTMP%\\myBundle.mll" "%HERE%..\\myBundle.mll"', single)
+        self.assertIn('copy /Y "%LINKTMP%\\myBundle.mll" "%HERE%..\\myBundle.mll"', multi)
 
     def test_vs_installer_on_path(self):
         from mpynode.native.toolchain import toolchain as tc

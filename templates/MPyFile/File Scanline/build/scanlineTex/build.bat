@@ -46,8 +46,17 @@ if not exist "%MAYA%\include\maya" (
   exit /b 1
 )
 set "HERE=%~dp0"
-cl /nologo /LD /std:c++17 /O2 /fp:precise /EHsc /MD /bigobj /utf-8 /D NT_PLUGIN /D REQUIRE_IOSTREAM /D _BOOL /D WIN32 /D _WINDOWS /D _CRT_SECURE_NO_WARNINGS /I "%MAYA%\include" "%HERE%scanlineTex.cpp" /Fo"%HERE%scanlineTex.obj" /link /LIBPATH:"%MAYA%\lib" OpenMaya.lib Foundation.lib OpenMayaRender.lib /IMPLIB:"%HERE%scanlineTex.lib" /OUT:"%HERE%scanlineTex.mll" /EXPORT:initializePlugin /EXPORT:uninitializePlugin
+REM Link in a local temp folder, then copy the plug-in into place: the
+REM MSVC linker memory-maps its outputs, and on a cloud-synced folder
+REM (Google Drive, OneDrive) that write hangs forever. A copy is fine.
+set "LINKTMP=%TEMP%\mpynode_link_%RANDOM%_%RANDOM%"
+if exist "%LINKTMP%" rd /s /q "%LINKTMP%"
+mkdir "%LINKTMP%"
+cl /nologo /LD /std:c++17 /O2 /fp:precise /EHsc /MD /bigobj /utf-8 /D NT_PLUGIN /D REQUIRE_IOSTREAM /D _BOOL /D WIN32 /D _WINDOWS /D _CRT_SECURE_NO_WARNINGS /I "%MAYA%\include" "%HERE%scanlineTex.cpp" /Fo"%HERE%scanlineTex.obj" /link /LIBPATH:"%MAYA%\lib" OpenMaya.lib Foundation.lib OpenMayaRender.lib /IMPLIB:"%LINKTMP%\scanlineTex.lib" /OUT:"%LINKTMP%\scanlineTex.mll" /EXPORT:initializePlugin /EXPORT:uninitializePlugin
 if errorlevel 1 exit /b 1
-del "%HERE%scanlineTex.obj" "%HERE%scanlineTex.lib" "%HERE%scanlineTex.exp" 2>nul
+copy /Y "%LINKTMP%\scanlineTex.mll" "%HERE%scanlineTex.mll" >nul
+if errorlevel 1 exit /b 1
+rd /s /q "%LINKTMP%" 2>nul
+del "%HERE%scanlineTex.obj" 2>nul
 echo Built: %HERE%scanlineTex.mll
 exit /b 0

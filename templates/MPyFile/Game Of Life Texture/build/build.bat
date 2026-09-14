@@ -45,8 +45,17 @@ if not exist "%MAYA%\include\maya" (
   exit /b 1
 )
 set "HERE=%~dp0"
-cl /nologo /LD /std:c++17 /O2 /fp:precise /EHsc /MD /bigobj /utf-8 /D NT_PLUGIN /D REQUIRE_IOSTREAM /D _BOOL /D WIN32 /D _WINDOWS /D _CRT_SECURE_NO_WARNINGS /I "%MAYA%\include" "%HERE%source\gameOfLifeTex.cpp" /Fo"%HERE%gameOfLifeTex.obj" /link /LIBPATH:"%MAYA%\lib" OpenMaya.lib OpenMayaAnim.lib OpenMayaUI.lib OpenMayaRender.lib Foundation.lib /IMPLIB:"%HERE%MPyFile_Game_Of_Life_Texture.lib" /OUT:"%HERE%..\MPyFile_Game_Of_Life_Texture.mll" /EXPORT:initializePlugin /EXPORT:uninitializePlugin
+REM Link in a local temp folder, then copy the plug-in into place: the
+REM MSVC linker memory-maps its outputs, and on a cloud-synced folder
+REM (Google Drive, OneDrive) that write hangs forever. A copy is fine.
+set "LINKTMP=%TEMP%\mpynode_link_%RANDOM%_%RANDOM%"
+if exist "%LINKTMP%" rd /s /q "%LINKTMP%"
+mkdir "%LINKTMP%"
+cl /nologo /LD /std:c++17 /O2 /fp:precise /EHsc /MD /bigobj /utf-8 /D NT_PLUGIN /D REQUIRE_IOSTREAM /D _BOOL /D WIN32 /D _WINDOWS /D _CRT_SECURE_NO_WARNINGS /I "%MAYA%\include" "%HERE%source\gameOfLifeTex.cpp" /Fo"%HERE%gameOfLifeTex.obj" /link /LIBPATH:"%MAYA%\lib" OpenMaya.lib OpenMayaAnim.lib OpenMayaUI.lib OpenMayaRender.lib Foundation.lib /IMPLIB:"%LINKTMP%\MPyFile_Game_Of_Life_Texture.lib" /OUT:"%LINKTMP%\MPyFile_Game_Of_Life_Texture.mll" /EXPORT:initializePlugin /EXPORT:uninitializePlugin
 if errorlevel 1 exit /b 1
-del "%HERE%gameOfLifeTex.obj" "%HERE%MPyFile_Game_Of_Life_Texture.lib" "%HERE%MPyFile_Game_Of_Life_Texture.exp" 2>nul
+copy /Y "%LINKTMP%\MPyFile_Game_Of_Life_Texture.mll" "%HERE%..\MPyFile_Game_Of_Life_Texture.mll" >nul
+if errorlevel 1 exit /b 1
+rd /s /q "%LINKTMP%" 2>nul
+del "%HERE%gameOfLifeTex.obj" 2>nul
 echo Built: %HERE%..\MPyFile_Game_Of_Life_Texture.mll
 exit /b 0

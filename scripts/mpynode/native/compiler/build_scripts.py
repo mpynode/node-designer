@@ -101,6 +101,7 @@ def generate_build_bat(spec: dict, maya=None) -> str:
         qt_inc = (' %s /I "%%QTINC%%" /FI %s'
                   % (" ".join(toolchain.qt_msvc_flags()),
                      toolchain.QT_MSVC_COMPAT_HEADER))
+    pre, out_args, post = toolchain.link_via_temp_bat(name, "%HERE%" + name + ".mll")
     return "\r\n".join([
         "@echo off",
         "setlocal",
@@ -117,21 +118,20 @@ def generate_build_bat(spec: dict, maya=None) -> str:
       + (  # Must follow the Maya resolver: the Qt probe reads %MAYA%\include.
         toolchain.qt_resolver_bat() if needs_qt else []) + [
         'set "HERE=%~dp0"',
+        *pre,
         # /fp:precise is MSVC's -ffp-contract=off (mirrors _MSVC_CXXFLAGS): it
         # keeps mul+add from contracting into an FMA.
         ('cl /nologo /LD /std:c++17 /O2 /fp:precise /EHsc /MD /bigobj /utf-8 '
          '/D NT_PLUGIN /D REQUIRE_IOSTREAM /D _BOOL /D WIN32 /D _WINDOWS '
          '/D _CRT_SECURE_NO_WARNINGS '
          '/I "%%MAYA%%\\include"%s "%%HERE%%%s.cpp" /Fo"%%HERE%%%s.obj" '
-         '/link /LIBPATH:"%%MAYA%%\\lib" %s '
-         '/IMPLIB:"%%HERE%%%s.lib" /OUT:"%%HERE%%%s.mll" '
+         '/link /LIBPATH:"%%MAYA%%\\lib" %s %s '
          '/EXPORT:initializePlugin /EXPORT:uninitializePlugin'
-         % (qt_inc, name, name, libs, name, name)),
-        'if errorlevel 1 exit /b 1',
-        # cl /LD drops <name>.obj, and LINK <name>.lib + .exp, in the CWD; /Fo
-        # and /IMPLIB above pin them beside the .mll so this can remove them.
-        'del "%%HERE%%%s.obj" "%%HERE%%%s.lib" "%%HERE%%%s.exp" 2>nul'
-        % (name, name, name),
+         % (qt_inc, name, name, libs, out_args)),
+        *post,
+        # cl /LD drops <name>.obj in the CWD; /Fo above pins it beside the
+        # script so this can remove it (link byproducts went with the temp folder).
+        'del "%%HERE%%%s.obj" 2>nul' % name,
         'echo Built: %%HERE%%%s.mll' % name,
         # Cleanup is best effort; it must not decide the exit status.
         "exit /b 0",

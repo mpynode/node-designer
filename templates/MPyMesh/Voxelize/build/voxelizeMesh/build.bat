@@ -46,8 +46,17 @@ if not exist "%MAYA%\include\maya" (
   exit /b 1
 )
 set "HERE=%~dp0"
-cl /nologo /LD /std:c++17 /O2 /fp:precise /EHsc /MD /bigobj /utf-8 /D NT_PLUGIN /D REQUIRE_IOSTREAM /D _BOOL /D WIN32 /D _WINDOWS /D _CRT_SECURE_NO_WARNINGS /I "%MAYA%\include" "%HERE%voxelizeMesh.cpp" /Fo"%HERE%voxelizeMesh.obj" /link /LIBPATH:"%MAYA%\lib" OpenMaya.lib Foundation.lib /IMPLIB:"%HERE%voxelizeMesh.lib" /OUT:"%HERE%voxelizeMesh.mll" /EXPORT:initializePlugin /EXPORT:uninitializePlugin
+REM Link in a local temp folder, then copy the plug-in into place: the
+REM MSVC linker memory-maps its outputs, and on a cloud-synced folder
+REM (Google Drive, OneDrive) that write hangs forever. A copy is fine.
+set "LINKTMP=%TEMP%\mpynode_link_%RANDOM%_%RANDOM%"
+if exist "%LINKTMP%" rd /s /q "%LINKTMP%"
+mkdir "%LINKTMP%"
+cl /nologo /LD /std:c++17 /O2 /fp:precise /EHsc /MD /bigobj /utf-8 /D NT_PLUGIN /D REQUIRE_IOSTREAM /D _BOOL /D WIN32 /D _WINDOWS /D _CRT_SECURE_NO_WARNINGS /I "%MAYA%\include" "%HERE%voxelizeMesh.cpp" /Fo"%HERE%voxelizeMesh.obj" /link /LIBPATH:"%MAYA%\lib" OpenMaya.lib Foundation.lib /IMPLIB:"%LINKTMP%\voxelizeMesh.lib" /OUT:"%LINKTMP%\voxelizeMesh.mll" /EXPORT:initializePlugin /EXPORT:uninitializePlugin
 if errorlevel 1 exit /b 1
-del "%HERE%voxelizeMesh.obj" "%HERE%voxelizeMesh.lib" "%HERE%voxelizeMesh.exp" 2>nul
+copy /Y "%LINKTMP%\voxelizeMesh.mll" "%HERE%voxelizeMesh.mll" >nul
+if errorlevel 1 exit /b 1
+rd /s /q "%LINKTMP%" 2>nul
+del "%HERE%voxelizeMesh.obj" 2>nul
 echo Built: %HERE%voxelizeMesh.mll
 exit /b 0
