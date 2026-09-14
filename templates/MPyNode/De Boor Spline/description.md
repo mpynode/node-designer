@@ -1,6 +1,6 @@
-# Spline
+# De Boor Spline
 
-Evaluates a b-spline through control points. Put the positions in `cv`, set the degree, and evenly spaced points along the curve come back out. No Maya curve is created, so there is no shape to manage.
+Evaluates a B-spline through control points with De Boor's algorithm. Put the positions in `cv`, set the degree, and evenly spaced points along the curve come back out. No Maya curve is created, so there is no shape to manage.
 
 ## Inputs
 

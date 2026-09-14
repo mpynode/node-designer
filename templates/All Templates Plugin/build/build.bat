@@ -1,6 +1,6 @@
 @echo off
 setlocal
-REM Generated combined build for native plugin 'mPyMega' (37 nodes).
+REM Generated combined build for native plugin 'mPyMega' (36 nodes).
 REM Runs from any cmd.exe: MSVC is located via vswhere and vcvarsall x64
 REM is called for you. An 'x64 Native Tools Command Prompt' is used as-is.
 REM
@@ -153,9 +153,6 @@ set "OBJS=%OBJS% "%HERE%source\hexAttribute.obj""
 cl /nologo /std:c++17 /O2 /fp:precise /EHsc /MD /bigobj /utf-8 /D NT_PLUGIN /D REQUIRE_IOSTREAM /D _BOOL /D WIN32 /D _WINDOWS /D _CRT_SECURE_NO_WARNINGS /Zc:__cplusplus /permissive- /I "%QTINC%" /FI nd_msvc_stdext_compat.h /D MNoVersionString /D MNoPluginEntry /c "%HERE%source\ouch.cpp" /Fo"%HERE%source\ouch.obj" /I "%MAYA%\include"
 if errorlevel 1 exit /b 1
 set "OBJS=%OBJS% "%HERE%source\ouch.obj""
-cl /nologo /std:c++17 /O2 /fp:precise /EHsc /MD /bigobj /utf-8 /D NT_PLUGIN /D REQUIRE_IOSTREAM /D _BOOL /D WIN32 /D _WINDOWS /D _CRT_SECURE_NO_WARNINGS /Zc:__cplusplus /permissive- /I "%QTINC%" /FI nd_msvc_stdext_compat.h /D MNoVersionString /D MNoPluginEntry /c "%HERE%source\rbfWrap.cpp" /Fo"%HERE%source\rbfWrap.obj" /I "%MAYA%\include"
-if errorlevel 1 exit /b 1
-set "OBJS=%OBJS% "%HERE%source\rbfWrap.obj""
 cl /nologo /std:c++17 /O2 /fp:precise /EHsc /MD /bigobj /utf-8 /D NT_PLUGIN /D REQUIRE_IOSTREAM /D _BOOL /D WIN32 /D _WINDOWS /D _CRT_SECURE_NO_WARNINGS /Zc:__cplusplus /permissive- /I "%QTINC%" /FI nd_msvc_stdext_compat.h /D MNoVersionString /D MNoPluginEntry /c "%HERE%source\spine.cpp" /Fo"%HERE%source\spine.obj" /I "%MAYA%\include"
 if errorlevel 1 exit /b 1
 set "OBJS=%OBJS% "%HERE%source\spine.obj""

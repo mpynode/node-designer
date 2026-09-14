@@ -111,13 +111,6 @@ def _fixtures_for(mc, source):
         # Mesh (>= 3 verts) first, then the transform(s) to rivet to it.
         return [mc.polySphere(name="e2eProcMesh", constructionHistory=False)[0],
                 mc.createNode("transform", name="e2eProcRivet")]
-    if source == "rbfWrap":
-        # REST cage, DEFORM cage (a duplicate -- identical topology), GEOMETRY.
-        rest = mc.polyCube(name="e2eRbfRest", constructionHistory=False)[0]
-        deform = mc.duplicate(rest, name="e2eRbfDeform")[0]
-        mc.setAttr(deform + ".translateY", 1.0)
-        geo = mc.polySphere(name="e2eRbfGeo", constructionHistory=False)[0]
-        return [rest, deform, geo]
     if source in ("patchRelax", "uvLayoutMesh"):
         return [mc.polySphere(name="e2e_" + source,
                               constructionHistory=False)[0]]

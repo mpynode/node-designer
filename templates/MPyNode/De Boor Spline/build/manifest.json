@@ -4,8 +4,8 @@
   "provider": "claude_cli",
   "model": "claude-fable-5-1",
   "strict": false,
-  "plugin_name": "MPyNode_Spline",
-  "bundle": "C:\\Users\\eric.vignola\\Desktop\\MPyNode\\templates\\MPyNode\\Spline\\MPyNode_Spline.mll",
+  "plugin_name": "MPyNode_De_Boor_Spline",
+  "bundle": "C:\\Users\\eric.vignola\\Desktop\\MPyNode\\templates\\MPyNode\\De Boor Spline\\MPyNode_De_Boor_Spline.mll",
   "created": 1788998364.077722,
   "nodes": [
     {

@@ -6,7 +6,7 @@
 #
 # No binary ships with this repo: a Maya plug-in is compiled against one Maya
 # version's devkit and will not load in another. This compiles the committed
-# C++ under build/ beside this script (37 node types + 32 bundled commands,
+# C++ under build/ beside this script (36 node types + 32 bundled commands,
 # namespaced per node and linked through one generated plugin_main.cpp) and
 # drops the result next to the demo scenes.
 set -euo pipefail

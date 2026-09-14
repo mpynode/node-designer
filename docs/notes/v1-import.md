@@ -190,7 +190,7 @@ Upstream ships **8 example scenes**, and six of them have v2 template twins:
 | v1 example | v2 template |
 |---|---|
 | `bubbleSortNode.ma` | `MPyNode/Bubble Sort` |
-| `splineNode.ma` | `MPyNode/Spline` |
+| `splineNode.ma` | `MPyNode/De Boor Spline` |
 | `springChainNode.ma` | `MPyNode/Spring Chain` |
 | `unitSphereCollisionNode.ma` | `MPyDeformer/Unit Sphere Collision` |
 | `ouchNode.ma` | `MPyNode/Ouch` |

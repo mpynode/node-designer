@@ -1,6 +1,6 @@
 @echo off
 setlocal
-REM Rebuild native plugin 'MPyNode_Spline' from its single source 'source\spline.cpp'.
+REM Rebuild native plugin 'MPyNode_De_Boor_Spline' from its single source 'source\spline.cpp'.
 REM Edit source\spline.cpp, then run build.bat from any cmd.exe -- it sets up MSVC itself.
 REM
 REM Usage:  build.bat [maya-version]      e.g. build.bat 2026
@@ -45,8 +45,8 @@ if not exist "%MAYA%\include\maya" (
   exit /b 1
 )
 set "HERE=%~dp0"
-cl /nologo /LD /std:c++17 /O2 /fp:precise /EHsc /MD /bigobj /utf-8 /D NT_PLUGIN /D REQUIRE_IOSTREAM /D _BOOL /D WIN32 /D _WINDOWS /D _CRT_SECURE_NO_WARNINGS /I "%MAYA%\include" "%HERE%source\spline.cpp" /Fo"%HERE%spline.obj" /link /LIBPATH:"%MAYA%\lib" OpenMaya.lib OpenMayaAnim.lib OpenMayaUI.lib OpenMayaRender.lib Foundation.lib /IMPLIB:"%HERE%MPyNode_Spline.lib" /OUT:"%HERE%..\MPyNode_Spline.mll" /EXPORT:initializePlugin /EXPORT:uninitializePlugin
+cl /nologo /LD /std:c++17 /O2 /fp:precise /EHsc /MD /bigobj /utf-8 /D NT_PLUGIN /D REQUIRE_IOSTREAM /D _BOOL /D WIN32 /D _WINDOWS /D _CRT_SECURE_NO_WARNINGS /I "%MAYA%\include" "%HERE%source\spline.cpp" /Fo"%HERE%spline.obj" /link /LIBPATH:"%MAYA%\lib" OpenMaya.lib OpenMayaAnim.lib OpenMayaUI.lib OpenMayaRender.lib Foundation.lib /IMPLIB:"%HERE%MPyNode_De_Boor_Spline.lib" /OUT:"%HERE%..\MPyNode_De_Boor_Spline.mll" /EXPORT:initializePlugin /EXPORT:uninitializePlugin
 if errorlevel 1 exit /b 1
-del "%HERE%spline.obj" "%HERE%MPyNode_Spline.lib" "%HERE%MPyNode_Spline.exp" 2>nul
-echo Built: %HERE%..\MPyNode_Spline.mll
+del "%HERE%spline.obj" "%HERE%MPyNode_De_Boor_Spline.lib" "%HERE%MPyNode_De_Boor_Spline.exp" 2>nul
+echo Built: %HERE%..\MPyNode_De_Boor_Spline.mll
 exit /b 0

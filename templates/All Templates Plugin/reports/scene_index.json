@@ -348,18 +348,6 @@
     "bytes": 88547
   },
   {
-    "scene": "MPyNode_RBF_Wrap.ma",
-    "template": "MPyNode_RBF_Wrap",
-    "native_type": "mPyNode",
-    "compiled_type": "rbfWrap",
-    "demo_func": "demo",
-    "demo_label": "Wrap an Arm with a Cage",
-    "status": "ok",
-    "reopen_compiled_nodes": 1,
-    "reopen_unknown_nodes": 0,
-    "bytes": 93985
-  },
-  {
     "scene": "MPyNode_Spine.ma",
     "template": "MPyNode_Spine",
     "native_type": "mPyNode",
@@ -372,8 +360,8 @@
     "bytes": 14059
   },
   {
-    "scene": "MPyNode_Spline.ma",
-    "template": "MPyNode_Spline",
+    "scene": "MPyNode_De_Boor_Spline.ma",
+    "template": "MPyNode_De_Boor_Spline",
     "native_type": "mPyNode",
     "compiled_type": "spline",
     "demo_func": "demo",

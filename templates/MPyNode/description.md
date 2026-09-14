@@ -20,7 +20,7 @@ The general-purpose node. A plain `MPxNode` (API 2.0) whose `compute()` runs the
 
 * `MPyNode.create(name)` for a bare node, `MPyNode.build(name, setup=True)` to also seed and run its `setup()`, `MPyNode("existing")` or `wrap_node("existing")` to wrap a node already in the scene.
 * `add_input_attr(name, attr_type, ...)` and `add_output_attr(name, attr_type, ...)`, then `set_compute_expression(source)`.
-* Eight shipped templates, from a bubble sort and a spring chain to a spline solver and the DNET rig.
+* Seven shipped templates, from a bubble sort and a spring chain to a De Boor spline and the DNET rig.
 
 ## Common to all node types
 

@@ -30,9 +30,8 @@ MPyNode/Bubble Sort                            ok           66.3   1395.0    1.1
 MPyNode/DNET                                   ok          177.0   1499.4    3.77x  
 MPyNode/Hex Attribute                          ok          582.1   1850.3   13.67x  b:noise-floor-speedup
 MPyNode/Ouch                                   degraded     34.2    965.5    1.20x  a:port-incomplete,b:noise-floor-speedup
-MPyNode/RBF Wrap                               ok            8.1   1206.3 6102.99x  a:ai-not-needed
 MPyNode/Spine                                  ok          140.8   1477.4    4.79x  
-MPyNode/Spline                                 ok            8.1   1333.1 3697.75x  a:ai-not-needed
+MPyNode/De Boor Spline                         ok            8.1   1333.1 3697.75x  a:ai-not-needed
 MPyNode/Spring Chain                           ok           62.4   1023.7    1.07x  b:noise-floor-speedup
 MPyNurbsCurve/NURBS Helix                      ok            8.1   1477.7    9.50x  a:ai-not-needed,b:noise-floor-speedup
 MPyNurbsSurface/NURBS Ripple                   ok            8.1   1379.3    2.14x  a:ai-not-needed,b:noise-floor-speedup
@@ -103,9 +102,8 @@ FLAGGED ROWS  (BLOCKING = the phase did not do its job)
   MPyNode/Ouch  [degraded]
       a:port-incomplete            BLOCKING a node recorded ND_PORT_INCOMPLETE -- it compiled, but a feature of the Python was NOT ported and does nothing at runtime; see the 'incomplete' list in that template's phase_a.json. A re-run cannot clear this
       b:noise-floor-speedup        advisory claimed 1.20x, but the 0.000 ms saved off a 0.0012 ms baseline is inside the benchmark's own noise (max(0.4 ms, 8% of the baseline))
-  MPyNode/RBF Wrap  [ok]
       a:ai-not-needed              advisory every compute lowered deterministically -- no LLM needed
-  MPyNode/Spline  [ok]
+  MPyNode/De Boor Spline  [ok]
       a:ai-not-needed              advisory every compute lowered deterministically -- no LLM needed
   MPyNode/Spring Chain  [ok]
       b:noise-floor-speedup        advisory claimed 1.07x, but the 0.000 ms saved off a 0.0015 ms baseline is inside the benchmark's own noise (max(0.4 ms, 8% of the baseline))

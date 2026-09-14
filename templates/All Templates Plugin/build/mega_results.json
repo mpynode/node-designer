@@ -2,8 +2,8 @@
   "ok": true,
   "bundle_path": "C:\\Users\\eric.vignola\\Desktop\\MPyNode\\templates\\All Templates Plugin\\mPyMega.mll",
   "seconds": 48.629080057144165,
-  "n_input": 37,
-  "n_linked": 37,
+  "n_input": 36,
+  "n_linked": 36,
   "linked": [
     "mPyDnet",
     "comboCorrectives",
@@ -32,7 +32,6 @@
     "bubbleSort",
     "hexAttribute",
     "ouch",
-    "rbfWrap",
     "spine",
     "spline",
     "springChain",

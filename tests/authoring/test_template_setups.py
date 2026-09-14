@@ -843,7 +843,7 @@ class MpynodeExampleSetupsTest(unittest.TestCase):
                            "riders not spread up the Y-axis spine")
 
     def test_spline_builds_controls_and_samples(self):
-        name = _create_with_demo("MPyNode/Spline")
+        name = _create_with_demo("MPyNode/De Boor Spline")
         self.assertTrue(mc.objExists(name + "_controls"))
         self.assertEqual(len(mc.listConnections(
             name + ".cv", source=True, destination=False) or []), 5)

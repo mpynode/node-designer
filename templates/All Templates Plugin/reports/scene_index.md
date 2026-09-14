@@ -31,9 +31,8 @@
 | `MPyNode_DNET__demo_two_knots.ma` | MPyNode_DNET | `mPyDnet` | Two Knots (Shapes) | 1 / 0 |
 | `MPyNode_Hex_Attribute.ma` | MPyNode_Hex_Attribute | `hexAttribute` | Run demo | 1 / 0 |
 | `MPyNode_Ouch.ma` | MPyNode_Ouch | `ouch` | Run demo | 1 / 0 |
-| `MPyNode_RBF_Wrap.ma` | MPyNode_RBF_Wrap | `rbfWrap` | Wrap an Arm with a Cage | 1 / 0 |
 | `MPyNode_Spine.ma` | MPyNode_Spine | `spine` | Spine From Four Controls | 1 / 0 |
-| `MPyNode_Spline.ma` | MPyNode_Spline | `spline` | Run demo | 1 / 0 |
+| `MPyNode_De_Boor_Spline.ma` | MPyNode_De_Boor_Spline | `spline` | Run demo | 1 / 0 |
 | `MPyNode_Spring_Chain.ma` | MPyNode_Spring_Chain | `springChain` | Run demo | 1 / 0 |
 | `MPyNurbsCurve_NURBS_Helix.ma` | MPyNurbsCurve_NURBS_Helix | `helixCurve` | Animated Helix Curve | 1 / 0 |
 | `MPyNurbsSurface_NURBS_Ripple.ma` | MPyNurbsSurface_NURBS_Ripple | `rippleSurf` | Animated Ripple Surface | 1 / 0 |

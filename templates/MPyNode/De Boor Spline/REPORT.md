@@ -1,4 +1,4 @@
-# MPyNode_Spline -- compile report
+# MPyNode_De_Boor_Spline -- compile report
 
 Generated 2026-09-09 16:59
 

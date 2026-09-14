@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Rebuild native plugin 'MPyNode_Spline' from its single source 'source/spline.cpp'.
-# Edit source/spline.cpp, then run ./build.sh to produce MPyNode_Spline.bundle (one level up).
+# Rebuild native plugin 'MPyNode_De_Boor_Spline' from its single source 'source/spline.cpp'.
+# Edit source/spline.cpp, then run ./build.sh to produce MPyNode_De_Boor_Spline.bundle (one level up).
 #
 # Usage:  ./build.sh [maya-version]      e.g. ./build.sh 2026
 # With no argument the newest installed Maya is used; MAYA=<path>
@@ -32,6 +32,6 @@ clang++ -std=c++17 -O3 -ffp-contract=off -arch arm64 -bundle \
   -I"$MAYA/include" \
   -L"$MAYA/Maya.app/Contents/MacOS" \
   -lOpenMaya -lOpenMayaAnim -lOpenMayaUI -lOpenMayaRender -lFoundation \
-  -o "$HERE/../MPyNode_Spline.bundle" "$HERE/source/spline.cpp"
-echo "Built: $HERE/../MPyNode_Spline.bundle"
-lipo -info "$HERE/../MPyNode_Spline.bundle"
+  -o "$HERE/../MPyNode_De_Boor_Spline.bundle" "$HERE/source/spline.cpp"
+echo "Built: $HERE/../MPyNode_De_Boor_Spline.bundle"
+lipo -info "$HERE/../MPyNode_De_Boor_Spline.bundle"

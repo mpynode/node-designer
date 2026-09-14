@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Generated combined build for native plugin 'mPyMega' (37 nodes).
+# Generated combined build for native plugin 'mPyMega' (36 nodes).
 #
 # Usage:  ./build.sh [maya-version]      e.g. ./build.sh 2026
 # With no argument the newest installed Maya is used; MAYA=<path>
@@ -83,8 +83,6 @@ OBJS+=("$HERE/source/bubbleSort.o")
 OBJS+=("$HERE/source/hexAttribute.o")
 "${CXX[@]}" -D MNoVersionString -D MNoPluginEntry -c "$HERE/source/ouch.cpp" -o "$HERE/source/ouch.o"
 OBJS+=("$HERE/source/ouch.o")
-"${CXX[@]}" -D MNoVersionString -D MNoPluginEntry -c "$HERE/source/rbfWrap.cpp" -o "$HERE/source/rbfWrap.o"
-OBJS+=("$HERE/source/rbfWrap.o")
 "${CXX[@]}" -D MNoVersionString -D MNoPluginEntry -c "$HERE/source/spine.cpp" -o "$HERE/source/spine.o"
 OBJS+=("$HERE/source/spine.o")
 "${CXX[@]}" -D MNoVersionString -D MNoPluginEntry -c "$HERE/source/spline.cpp" -o "$HERE/source/spline.o"

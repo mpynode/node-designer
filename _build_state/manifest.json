@@ -11913,243 +11913,6 @@
         "wall_secs": 965.5
       }
     },
-    "MPyNode/RBF Wrap": {
-      "phase_a": {
-        "ai": {
-          "assisted_cached": [],
-          "assisted_now": [],
-          "cache_hit": [],
-          "cache_miss": [
-            "rbfWrap"
-          ],
-          "events": [
-            "portability rbfWrap start: ",
-            "cache rbfWrap start: ",
-            "cache rbfWrap miss: cache miss 3ecd0d81183f",
-            "port rbfWrap start: porting",
-            "stage rbfWrap ok: 1_transpiled",
-            "port rbfWrap ok: ported (0 fix rounds)",
-            "port - skip: no node needed AI assist -- every compute lowered deterministically",
-            "assemble - start: linking 1 node(s)",
-            "assemble - ok: bundle: MPyNode_RBF_Wrap.bundle",
-            "assemble - ok: bundled command(s): 1 (no companion plug-in)",
-            "verify - start: parity check",
-            "verify rbfWrap ok: maxerr=None",
-            "verify - ok: verify done",
-            "done - ok: 1 node(s)"
-          ],
-          "n_log_lines": 4,
-          "n_optimize_events": 0,
-          "no_node_needed_llm": true,
-          "optimize_events_tail": []
-        },
-        "bundle_exists": true,
-        "bundle_path": "compiled_templates/MPyNode/RBF Wrap/MPyNode_RBF_Wrap.bundle",
-        "ended": 1787674058.180264,
-        "errors": [],
-        "log": "compiled_templates/MPyNode/RBF Wrap/_runner/phase_a.log",
-        "mode": {
-          "ai_assist": true,
-          "keep_intermediates": false,
-          "optimize": false
-        },
-        "nodes": [
-          {
-            "build_reason": "",
-            "build_status": "compiled",
-            "cache": "miss",
-            "incomplete": [],
-            "ported": false,
-            "type_name": "rbfWrap",
-            "verify": {
-              "authored_test": {
-                "count": 1,
-                "passed": true,
-                "passes": 1,
-                "ran": true,
-                "reason": ""
-              },
-              "maxerr": null,
-              "pass": true,
-              "ran": true,
-              "reason": "verify could not run: float() argument must be a string or a real number, not 'NoneType' | authored @maya_test: 1/1 passed",
-              "timing": {
-                "measured": false,
-                "reason": "not timed -- generic parity did not pass for this node, so there is no trustworthy pair to measure (verify could not run: float() argument must be a string or a real number, not 'NoneType')"
-              },
-              "tol": 0.0
-            }
-          }
-        ],
-        "optimize_summary": {},
-        "phase": "a",
-        "rel": "MPyNode/RBF Wrap",
-        "rounds": {},
-        "secs": 4.9,
-        "smoke": false,
-        "started": 1787674053.31618,
-        "state": "ok",
-        "wall_secs": 8.1
-      },
-      "phase_b": {
-        "ai": {
-          "assisted_cached": [],
-          "assisted_now": [],
-          "cache_hit": [],
-          "cache_miss": [
-            "rbfWrap"
-          ],
-          "events": [
-            "portability rbfWrap start: ",
-            "cache rbfWrap start: ",
-            "cache rbfWrap miss: cache miss 3ecd0d81183f",
-            "port rbfWrap start: porting",
-            "stage rbfWrap ok: 1_transpiled",
-            "port rbfWrap ok: ported (0 fix rounds)",
-            "port - skip: no node needed AI assist -- every compute lowered deterministically",
-            "assemble - start: linking 1 node(s)",
-            "assemble - ok: bundle: MPyNode_RBF_Wrap.bundle",
-            "assemble - ok: bundled command(s): 1 (no companion plug-in)",
-            "verify - start: parity check",
-            "verify rbfWrap ok: maxerr=None",
-            "verify - ok: verify done",
-            "done - ok: 1 node(s)"
-          ],
-          "n_log_lines": 4,
-          "n_optimize_events": 14,
-          "no_node_needed_llm": true,
-          "optimize_events_tail": [
-            "- info: [rbfWrap] optimizing -- measuring baseline",
-            "- info: [rbfWrap] baseline 2103.701 ms; up to 2 optimize round(s)",
-            "- info: [rbfWrap] round 1/2 starting",
-            "- info: [rbfWrap] round 1/2 -- AI working 4m29s",
-            "- info: [rbfWrap] round 1/2 -- AI working 9m29s",
-            "- info: [optimizer] agent edited rbfWrap.cpp (391018 -> 398276 bytes)",
-            "- info: [rbfWrap] round 1/2 trying: cache the three rest-cage-derived structures (inv(A), H, W) on the node instance behind an exact byte-compare of the raw point buffers, so a re-evaluation whose geometry did not actually change skips the 1566x1566 Gauss-Jordan inverse entirely; then read the 19.6 MB H ope",
-            "- info: [rbfWrap] round 1: ACCEPT 1.125 ms (1870.79x vs baseline)",
-            "- info: [rbfWrap] round 2/2 starting",
-            "- info: [rbfWrap] round 2/2 -- AI working 4m06s",
-            "- info: [optimizer] agent edited rbfWrap.cpp (398276 -> 405821 bytes)",
-            "- info: [rbfWrap] round 2/2 trying: profile first, then thread the one pass that owns 75% of the tick -- the (Nn,M+4)@(M+4,3) evaluation matmul -- as a persistent-pool per-row map, and make everything the cache already covers lazy (predicted 2.50x, risk: chunk boundaries must not change the answer -- they c",
-            "- info: [rbfWrap] round 2: ACCEPT 0.345 ms (6102.99x vs baseline)",
-            "- ok: rbfWrap: 6102.99x faster"
-          ]
-        },
-        "bundle_exists": true,
-        "bundle_path": "compiled_templates/MPyNode/RBF Wrap/MPyNode_RBF_Wrap.bundle",
-        "ended": 1787678827.829984,
-        "errors": [],
-        "log": "compiled_templates/MPyNode/RBF Wrap/_runner/phase_b.log",
-        "mode": {
-          "ai_assist": true,
-          "keep_intermediates": true,
-          "optimize": true
-        },
-        "nodes": [
-          {
-            "build_reason": "",
-            "build_status": "compiled",
-            "cache": "miss",
-            "incomplete": [],
-            "ported": false,
-            "type_name": "rbfWrap",
-            "verify": {
-              "authored_test": {
-                "count": 1,
-                "passed": true,
-                "passes": 1,
-                "ran": true,
-                "reason": ""
-              },
-              "maxerr": null,
-              "pass": true,
-              "ran": true,
-              "reason": "verify could not run: float() argument must be a string or a real number, not 'NoneType' | authored @maya_test: 1/1 passed",
-              "timing": {
-                "measured": false,
-                "reason": "not timed -- generic parity did not pass for this node, so there is no trustworthy pair to measure (verify could not run: float() argument must be a string or a real number, not 'NoneType')"
-              },
-              "tol": 0.0
-            }
-          }
-        ],
-        "optimize_summary": {
-          "rbfWrap": {
-            "accepted": true,
-            "ai": {
-              "candidates": 2,
-              "errors": [],
-              "path": "agent",
-              "rounds": 2
-            },
-            "reason": "accepted (6102.99x)",
-            "speedup": 6102.991586887148
-          }
-        },
-        "phase": "b",
-        "rel": "MPyNode/RBF Wrap",
-        "rounds": {
-          "rbfWrap": {
-            "accepted": true,
-            "baseline_ms": 2103.7012,
-            "best_ms": 0.3447,
-            "created": 1787678825.464788,
-            "fresh": true,
-            "n_rounds": 2,
-            "parity_gate": "authored+pointwise",
-            "path": "compiled_templates/MPyNode/RBF Wrap/build/stages/rbfWrap/rounds.json",
-            "reason": "accepted (6102.99x)",
-            "rounds": [
-              {
-                "cpp_same_as_baseline": true,
-                "duration_s": null,
-                "has_hypothesis": false,
-                "has_theme": false,
-                "index": 0,
-                "ms": 2103.7012,
-                "note": "",
-                "outcome": "baseline",
-                "parity": null,
-                "slug": null,
-                "speedup": null
-              },
-              {
-                "cpp_same_as_baseline": false,
-                "duration_s": 622.566,
-                "has_hypothesis": true,
-                "has_theme": true,
-                "index": 1,
-                "ms": 1.1245,
-                "note": "",
-                "outcome": "accept",
-                "parity": "pass",
-                "slug": "cache_inverse_and_kernel",
-                "speedup": 1870.7880835927078
-              },
-              {
-                "cpp_same_as_baseline": false,
-                "duration_s": 544.978,
-                "has_hypothesis": true,
-                "has_theme": true,
-                "index": 2,
-                "ms": 0.3447,
-                "note": "",
-                "outcome": "accept",
-                "parity": "pass",
-                "slug": "thread_eval_matmul",
-                "speedup": 6102.991586887148
-              }
-            ],
-            "speedup": 6102.991586887148
-          }
-        },
-        "secs": 1202.8,
-        "smoke": false,
-        "started": 1787677625.026824,
-        "state": "ok",
-        "wall_secs": 1206.3
-      }
-    },
     "MPyNode/Spine": {
       "phase_a": {
         "ai": {
@@ -12392,7 +12155,7 @@
         "wall_secs": 1477.4
       }
     },
-    "MPyNode/Spline": {
+    "MPyNode/De Boor Spline": {
       "phase_a": {
         "ai": {
           "assisted_cached": [],
@@ -12410,7 +12173,7 @@
             "port spline ok: ported (0 fix rounds)",
             "port - skip: no node needed AI assist -- every compute lowered deterministically",
             "assemble - start: linking 1 node(s)",
-            "assemble - ok: bundle: MPyNode_Spline.bundle",
+            "assemble - ok: bundle: MPyNode_De_Boor_Spline.bundle",
             "verify - start: parity check",
             "verify spline ok: maxerr=None",
             "verify - ok: verify done",
@@ -12422,10 +12185,10 @@
           "optimize_events_tail": []
         },
         "bundle_exists": true,
-        "bundle_path": "compiled_templates/MPyNode/Spline/MPyNode_Spline.bundle",
+        "bundle_path": "compiled_templates/MPyNode/De Boor Spline/MPyNode_De_Boor_Spline.bundle",
         "ended": 1787674065.600066,
         "errors": [],
-        "log": "compiled_templates/MPyNode/Spline/_runner/phase_a.log",
+        "log": "compiled_templates/MPyNode/De Boor Spline/_runner/phase_a.log",
         "mode": {
           "ai_assist": true,
           "keep_intermediates": false,
@@ -12461,7 +12224,7 @@
         ],
         "optimize_summary": {},
         "phase": "a",
-        "rel": "MPyNode/Spline",
+        "rel": "MPyNode/De Boor Spline",
         "rounds": {},
         "secs": 4.0,
         "smoke": false,
@@ -12486,7 +12249,7 @@
             "port spline ok: ported (0 fix rounds)",
             "port - skip: no node needed AI assist -- every compute lowered deterministically",
             "assemble - start: linking 1 node(s)",
-            "assemble - ok: bundle: MPyNode_Spline.bundle",
+            "assemble - ok: bundle: MPyNode_De_Boor_Spline.bundle",
             "verify - start: parity check",
             "verify spline ok: maxerr=None",
             "verify - ok: verify done",
@@ -12518,10 +12281,10 @@
           ]
         },
         "bundle_exists": true,
-        "bundle_path": "compiled_templates/MPyNode/Spline/MPyNode_Spline.bundle",
+        "bundle_path": "compiled_templates/MPyNode/De Boor Spline/MPyNode_De_Boor_Spline.bundle",
         "ended": 1787679155.6629262,
         "errors": [],
-        "log": "compiled_templates/MPyNode/Spline/_runner/phase_b.log",
+        "log": "compiled_templates/MPyNode/De Boor Spline/_runner/phase_b.log",
         "mode": {
           "ai_assist": true,
           "keep_intermediates": true,
@@ -12569,7 +12332,7 @@
           }
         },
         "phase": "b",
-        "rel": "MPyNode/Spline",
+        "rel": "MPyNode/De Boor Spline",
         "rounds": {
           "spline": {
             "accepted": true,
@@ -12579,7 +12342,7 @@
             "fresh": true,
             "n_rounds": 2,
             "parity_gate": "authored+pointwise",
-            "path": "compiled_templates/MPyNode/Spline/build/stages/spline/rounds.json",
+            "path": "compiled_templates/MPyNode/De Boor Spline/build/stages/spline/rounds.json",
             "reason": "accepted (3697.75x)",
             "rounds": [
               {
@@ -12873,310 +12636,7 @@
         "wall_secs": 1023.7
       }
     },
-    "MPyNode\\RBF Wrap": {
-      "phase_a": {
-        "ai": {
-          "assisted_cached": [],
-          "assisted_now": [],
-          "cache_hit": [],
-          "cache_miss": [
-            "rbfWrap"
-          ],
-          "events": [
-            "portability rbfWrap start: ",
-            "cache rbfWrap start: ",
-            "cache rbfWrap miss: cache miss 86d941bde667",
-            "port rbfWrap start: porting",
-            "stage rbfWrap ok: 1_transpiled",
-            "port rbfWrap ok: ported (0 fix rounds)",
-            "port - skip: no node needed AI assist -- every compute lowered deterministically",
-            "assemble - start: linking 1 node(s)",
-            "assemble - ok: bundle: MPyNode_RBF_Wrap.mll",
-            "assemble - ok: bundled command(s): 1 (no companion plug-in)",
-            "verify - start: parity check",
-            "verify rbfWrap ok: maxerr=0.0",
-            "verify - ok: verify done",
-            "done - ok: 1 node(s)"
-          ],
-          "n_log_lines": 9,
-          "n_optimize_events": 0,
-          "no_node_needed_llm": true,
-          "optimize_events_tail": []
-        },
-        "bundle_exists": true,
-        "bundle_path": "C:\\Users\\eric.vignola\\Desktop\\MPyNode\\templates\\MPyNode\\RBF Wrap\\MPyNode_RBF_Wrap.mll",
-        "ended": 1788986431.6304755,
-        "errors": [],
-        "log": "C:\\Users\\eric.vignola\\Desktop\\MPyNode\\templates\\MPyNode\\RBF Wrap\\_runner\\phase_a.log",
-        "mode": {
-          "ai_assist": true,
-          "keep_intermediates": false,
-          "optimize": false
-        },
-        "nodes": [
-          {
-            "build_reason": "",
-            "build_status": "compiled",
-            "cache": "miss",
-            "incomplete": [],
-            "ported": false,
-            "type_name": "rbfWrap",
-            "verify": {
-              "authored_test": {
-                "count": 1,
-                "passed": true,
-                "passes": 1,
-                "ran": true,
-                "reason": ""
-              },
-              "generic_ran": true,
-              "maxerr": 0.0,
-              "pass": true,
-              "ran": true,
-              "reason": "authored @maya_test: 1/1 passed",
-              "timing": {
-                "cpp_ms": 5152.984499931335,
-                "measured": true,
-                "n": 3,
-                "py_ms": 511.2677998840809,
-                "ratio": 10.078836377138684,
-                "rung": [
-                  40,
-                  512
-                ],
-                "scene": "geo 40 / array 512",
-                "truncated": false,
-                "verdict": "much-slower"
-              },
-              "tol": 0.0001
-            }
-          }
-        ],
-        "optimize_summary": {},
-        "phase": "a",
-        "rel": "MPyNode\\RBF Wrap",
-        "rounds": {},
-        "secs": 29.1,
-        "smoke": false,
-        "started": 1788986402.5775168,
-        "state": "ok",
-        "wall_secs": 34.2
-      },
-      "phase_b": {
-        "ai": {
-          "assisted_cached": [],
-          "assisted_now": [],
-          "cache_hit": [
-            "rbfWrap"
-          ],
-          "cache_miss": [],
-          "events": [
-            "portability rbfWrap start: ",
-            "cache rbfWrap start: ",
-            "stage rbfWrap ok: 1_transpiled",
-            "cache rbfWrap hit: cache hit 86d941bde667",
-            "port - skip: no node needed AI assist -- every compute lowered deterministically",
-            "assemble - start: linking 1 node(s)",
-            "assemble - ok: bundle: MPyNode_RBF_Wrap.mll",
-            "assemble - ok: bundled command(s): 1 (no companion plug-in)",
-            "verify - start: parity check",
-            "verify rbfWrap ok: maxerr=0.0",
-            "verify - ok: verify done",
-            "done - ok: 1 node(s)"
-          ],
-          "n_log_lines": 2,
-          "n_optimize_events": 34,
-          "no_node_needed_llm": true,
-          "optimize_events_tail": [
-            "- info: [rbfWrap] optimizing -- measuring baseline",
-            "- info: [rbfWrap] baseline 5213.128 ms; up to 6 optimize round(s) (at least 2; stops after a rejected round or a gain under 1.15x)",
-            "- info: [rbfWrap] round 1/6 starting",
-            "- info: [rbfWrap] round 1/6 -- AI working 3m51s",
-            "- info: [rbfWrap] round 1/6 -- AI working 8m51s",
-            "- info: [rbfWrap] round 1/6 -- AI working 13m51s",
-            "- info: [optimizer] agent edited rbfWrap.cpp (394245 -> 405001 bytes)",
-            "- info: [rbfWrap] round 1/6 trying: inv(A) depends only on restCage, which holds between ticks, so cache it per instance on a byte key of the rest points; then cache the Nn x M kernel row-wise on each P row and run the two remaining 7.3M-MAC row loops on a persistent pool (predicted 60.00x, risk: a cache ke",
-            "- info: [rbfWrap] round 1: ACCEPT 0.992 ms (5256.76x vs baseline, 5256.76x over the previous best)",
-            "- info: [rbfWrap] round 2/6 starting",
-            "- info: [rbfWrap] round 2/6 -- AI working 4m09s",
-            "- info: [rbfWrap] round 2/6 -- AI working 9m09s",
-            "- info: [rbfWrap] round 2/6 -- AI working 14m09s",
-            "- info: [optimizer] agent edited rbfWrap.cpp (405001 -> 409584 bytes)",
-            "- info: [rbfWrap] round 2/6 trying: W = Ainv @ T is accumulated in descending order with the partial sum checkpointed every 64 terms, so one moved cage vertex replays a 64-column strip of Ainv instead of streaming the whole 20 MB inverse every tick. (predicted 1.60x, risk: Descending accumulation is a diffe",
-            "- info: [rbfWrap] round 2: ACCEPT 0.816 ms (6392.55x vs baseline, 1.22x over the previous best)",
-            "- info: [rbfWrap] round 3/6 starting",
-            "- info: [rbfWrap] round 3/6 -- AI working 2m26s",
-            "- info: [rbfWrap] round 3/6 -- AI working 7m26s",
-            "- info: [rbfWrap] round 3/6 -- AI working 12m26s",
-            "- info: [rbfWrap] round 3/6 -- AI working 17m26s",
-            "- info: [optimizer] agent edited rbfWrap.cpp (409584 -> 415960 bytes)",
-            "- info: [rbfWrap] round 3/6 trying: Profile every per-tick phase in Maya, then remove the latency each one was paying for nothing: the W replay now streams contiguous rows of a transposed inverse, the row pool is woken at compute() entry so its OS wake-up overlaps the serial phases, and the output-mesh reus",
-            "- info: [rbfWrap] round 3: ACCEPT 0.477 ms (10928.99x vs baseline, 1.71x over the previous best)",
-            "- info: [rbfWrap] round 4/6 starting",
-            "- info: [rbfWrap] round 4/6 -- AI working 2m58s",
-            "- info: [rbfWrap] round 4/6 -- AI working 7m58s",
-            "- info: [rbfWrap] round 4/6 -- AI working 12m58s",
-            "- info: [rbfWrap] round 4/6 -- AI working 17m58s",
-            "- info: [optimizer] agent edited rbfWrap.cpp (415960 -> 416828 bytes)",
-            "- info: [rbfWrap] round 4/6 trying: Keep one MFnMesh bound to the reused output mesh across evaluations, because MFnMesh::setObject on a mesh data object costs ~50 us per tick -- more than setPoints itself -- and the identity check already proves the binding is current. (predicted 1.25x, risk: Bench medians",
-            "- info: [rbfWrap] round 4: not faster (0.501 ms vs best 0.477 ms)",
-            "- info: [rbfWrap] stopping after round 4: round 4 not-faster -- nothing new to compound from",
-            "- ok: rbfWrap: 10928.99x faster"
-          ]
-        },
-        "bundle_exists": true,
-        "bundle_path": "C:\\Users\\eric.vignola\\Desktop\\MPyNode\\templates\\MPyNode\\RBF Wrap\\MPyNode_RBF_Wrap.mll",
-        "ended": 1789000995.6633463,
-        "errors": [],
-        "log": "C:\\Users\\eric.vignola\\Desktop\\MPyNode\\templates\\MPyNode\\RBF Wrap\\_runner\\phase_b.log",
-        "mode": {
-          "ai_assist": true,
-          "keep_intermediates": true,
-          "optimize": true
-        },
-        "nodes": [
-          {
-            "build_reason": "",
-            "build_status": "compiled",
-            "cache": "hit",
-            "incomplete": [],
-            "ported": false,
-            "type_name": "rbfWrap",
-            "verify": {
-              "authored_test": {
-                "count": 1,
-                "passed": true,
-                "passes": 1,
-                "ran": true,
-                "reason": ""
-              },
-              "generic_ran": true,
-              "maxerr": 0.0,
-              "pass": true,
-              "ran": true,
-              "reason": "authored @maya_test: 1/1 passed",
-              "timing": {
-                "cpp_ms": 1.6743000596761703,
-                "measured": true,
-                "n": 3,
-                "py_ms": 461.00620017386973,
-                "ratio": 0.003631838485132529,
-                "rung": [
-                  40,
-                  512
-                ],
-                "scene": "geo 40 / array 512",
-                "truncated": false,
-                "verdict": "ok"
-              },
-              "tol": 0.0001
-            }
-          }
-        ],
-        "optimize_summary": {
-          "rbfWrap": {
-            "accepted": true,
-            "ai": {
-              "candidates": 4,
-              "errors": [],
-              "path": "agent",
-              "rounds": 4
-            },
-            "reason": "accepted (10928.99x)",
-            "speedup": 10928.989517819706
-          }
-        },
-        "phase": "b",
-        "rel": "MPyNode\\RBF Wrap",
-        "rounds": {
-          "rbfWrap": {
-            "accepted": true,
-            "baseline_ms": 5213.128,
-            "best_ms": 0.477,
-            "created": 1789000986.3362968,
-            "fresh": true,
-            "n_rounds": 4,
-            "parity_gate": "authored+pointwise",
-            "path": "C:\\Users\\eric.vignola\\Desktop\\MPyNode\\templates\\MPyNode\\RBF Wrap\\build\\stages\\rbfWrap\\rounds.json",
-            "reason": "accepted (10928.99x)",
-            "rounds": [
-              {
-                "cpp_same_as_baseline": true,
-                "duration_s": null,
-                "has_hypothesis": false,
-                "has_theme": false,
-                "index": 0,
-                "ms": 5213.128,
-                "note": "",
-                "outcome": "baseline",
-                "parity": null,
-                "slug": null,
-                "speedup": null
-              },
-              {
-                "cpp_same_as_baseline": false,
-                "duration_s": 882.178,
-                "has_hypothesis": true,
-                "has_theme": true,
-                "index": 1,
-                "ms": 0.9917,
-                "note": "",
-                "outcome": "accept",
-                "parity": "pass",
-                "slug": "cache_rest_inverse",
-                "speedup": 5256.759100534436
-              },
-              {
-                "cpp_same_as_baseline": false,
-                "duration_s": 1002.655,
-                "has_hypothesis": true,
-                "has_theme": true,
-                "index": 2,
-                "ms": 0.8155,
-                "note": "confirmed twice (incumbent under 2 ms): 0.816 / 0.749 ms",
-                "outcome": "accept",
-                "parity": "pass",
-                "slug": "checkpointed_w_cache",
-                "speedup": 6392.554261189454
-              },
-              {
-                "cpp_same_as_baseline": false,
-                "duration_s": 1168.094,
-                "has_hypothesis": true,
-                "has_theme": true,
-                "index": 3,
-                "ms": 0.477,
-                "note": "confirmed twice (incumbent under 2 ms): 0.477 / 0.453 ms",
-                "outcome": "accept",
-                "parity": "pass",
-                "slug": "prewake_pool_stream_replay",
-                "speedup": 10928.989517819706
-              },
-              {
-                "cpp_same_as_baseline": false,
-                "duration_s": 1352.093,
-                "has_hypothesis": true,
-                "has_theme": true,
-                "index": 4,
-                "ms": 0.5007,
-                "note": "",
-                "outcome": "not-faster",
-                "parity": "pass",
-                "slug": "persistent_output_fnset",
-                "speedup": null
-              }
-            ],
-            "speedup": 10928.989517819706
-          }
-        },
-        "secs": 4484.3,
-        "smoke": false,
-        "started": 1788996511.3421075,
-        "state": "ok",
-        "wall_secs": 4488.9
-      }
-    },
-    "MPyNode\\Spline": {
+    "MPyNode\\De Boor Spline": {
       "phase_a": {
         "ai": {
           "assisted_cached": [],
@@ -13194,7 +12654,7 @@
             "port spline ok: ported (0 fix rounds)",
             "port - skip: no node needed AI assist -- every compute lowered deterministically",
             "assemble - start: linking 1 node(s)",
-            "assemble - ok: bundle: MPyNode_Spline.mll",
+            "assemble - ok: bundle: MPyNode_De_Boor_Spline.mll",
             "verify - start: parity check",
             "verify spline ok: maxerr=0.0",
             "verify - ok: verify done",
@@ -13206,10 +12666,10 @@
           "optimize_events_tail": []
         },
         "bundle_exists": true,
-        "bundle_path": "C:\\Users\\eric.vignola\\Desktop\\MPyNode\\templates\\MPyNode\\Spline\\MPyNode_Spline.mll",
+        "bundle_path": "C:\\Users\\eric.vignola\\Desktop\\MPyNode\\templates\\MPyNode\\De Boor Spline\\MPyNode_De_Boor_Spline.mll",
         "ended": 1788986408.7605696,
         "errors": [],
-        "log": "C:\\Users\\eric.vignola\\Desktop\\MPyNode\\templates\\MPyNode\\Spline\\_runner\\phase_a.log",
+        "log": "C:\\Users\\eric.vignola\\Desktop\\MPyNode\\templates\\MPyNode\\De Boor Spline\\_runner\\phase_a.log",
         "mode": {
           "ai_assist": true,
           "keep_intermediates": false,
@@ -13256,7 +12716,7 @@
         ],
         "optimize_summary": {},
         "phase": "a",
-        "rel": "MPyNode\\Spline",
+        "rel": "MPyNode\\De Boor Spline",
         "rounds": {},
         "secs": 4.2,
         "smoke": false,
@@ -13279,7 +12739,7 @@
             "cache spline hit: cache hit ca8c25611a2f",
             "port - skip: no node needed AI assist -- every compute lowered deterministically",
             "assemble - start: linking 1 node(s)",
-            "assemble - ok: bundle: MPyNode_Spline.mll",
+            "assemble - ok: bundle: MPyNode_De_Boor_Spline.mll",
             "verify - start: parity check",
             "verify spline ok: maxerr=0.0",
             "verify - ok: verify done",
@@ -13310,10 +12770,10 @@
           ]
         },
         "bundle_exists": true,
-        "bundle_path": "C:\\Users\\eric.vignola\\Desktop\\MPyNode\\templates\\MPyNode\\Spline\\MPyNode_Spline.mll",
+        "bundle_path": "C:\\Users\\eric.vignola\\Desktop\\MPyNode\\templates\\MPyNode\\De Boor Spline\\MPyNode_De_Boor_Spline.mll",
         "ended": 1788998364.0812292,
         "errors": [],
-        "log": "C:\\Users\\eric.vignola\\Desktop\\MPyNode\\templates\\MPyNode\\Spline\\_runner\\phase_b.log",
+        "log": "C:\\Users\\eric.vignola\\Desktop\\MPyNode\\templates\\MPyNode\\De Boor Spline\\_runner\\phase_b.log",
         "mode": {
           "ai_assist": true,
           "keep_intermediates": true,
@@ -13372,7 +12832,7 @@
           }
         },
         "phase": "b",
-        "rel": "MPyNode\\Spline",
+        "rel": "MPyNode\\De Boor Spline",
         "rounds": {
           "spline": {
             "accepted": true,
@@ -13382,7 +12842,7 @@
             "fresh": true,
             "n_rounds": 2,
             "parity_gate": "authored+pointwise",
-            "path": "C:\\Users\\eric.vignola\\Desktop\\MPyNode\\templates\\MPyNode\\Spline\\build\\stages\\spline\\rounds.json",
+            "path": "C:\\Users\\eric.vignola\\Desktop\\MPyNode\\templates\\MPyNode\\De Boor Spline\\build\\stages\\spline\\rounds.json",
             "reason": "accepted (8507.12x)",
             "rounds": [
               {

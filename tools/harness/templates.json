@@ -243,15 +243,6 @@
     "n_demos": 1
   },
   {
-    "mpn": "templates/MPyNode/RBF Wrap/template.mpn",
-    "folder": "MPyNode_RBF_Wrap",
-    "plugin": "MPyNode_RBF_Wrap_plugin",
-    "native_type": "mPyNode",
-    "node_name": "rbfWrap",
-    "demo_label": "Wrap an Arm with a Cage",
-    "n_demos": 1
-  },
-  {
     "mpn": "templates/MPyNode/Spine/template.mpn",
     "folder": "MPyNode_Spine",
     "plugin": "MPyNode_Spine_plugin",
@@ -261,9 +252,9 @@
     "n_demos": 1
   },
   {
-    "mpn": "templates/MPyNode/Spline/template.mpn",
-    "folder": "MPyNode_Spline",
-    "plugin": "MPyNode_Spline_plugin",
+    "mpn": "templates/MPyNode/De Boor Spline/template.mpn",
+    "folder": "MPyNode_De_Boor_Spline",
+    "plugin": "MPyNode_De_Boor_Spline_plugin",
     "native_type": "mPyNode",
     "node_name": "spline",
     "demo_label": "Run demo",

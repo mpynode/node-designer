@@ -508,7 +508,7 @@ class BundledMpynodeExamplesTest(unittest.TestCase):
 
     _EXAMPLES = (
         "Bubble Sort", "Hex Attribute", "Ouch", "Spine",
-        "Spline", "Spring Chain",
+        "De Boor Spline", "Spring Chain",
     )
 
     def _by_label(self):

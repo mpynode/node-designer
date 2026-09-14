@@ -1,5 +1,5 @@
 //Maya ASCII 2026 scene
-//Name: MPyNode_Spline.ma
+//Name: MPyNode_De_Boor_Spline.ma
 //Last modified: Tue, Aug 25, 2026 12:21:42 PM
 //Codeset: UTF-8
 requires maya "2026";
@@ -650,4 +650,4 @@ connectAttr "splineSample21Shape.iog" ":initialShadingGroup.dsm" -na;
 connectAttr "splineSample22Shape.iog" ":initialShadingGroup.dsm" -na;
 connectAttr "splineSample23Shape.iog" ":initialShadingGroup.dsm" -na;
 connectAttr "splineSample24Shape.iog" ":initialShadingGroup.dsm" -na;
-// End of MPyNode_Spline.ma
+// End of MPyNode_De_Boor_Spline.ma

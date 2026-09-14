@@ -48,7 +48,6 @@ Source (in source/)
   source/bubbleSort.cpp
   source/hexAttribute.cpp
   source/ouch.cpp
-  source/rbfWrap.cpp
   source/spine.cpp
   source/spline.cpp
   source/springChain.cpp

@@ -1,4 +1,4 @@
-MPyNode compiled plugin: MPyNode_Spline
+MPyNode compiled plugin: MPyNode_De_Boor_Spline
 =======================================
 
 This 'build/' folder holds everything the compiler produced EXCEPT the
@@ -8,7 +8,7 @@ it. The importable plugin lives ONE LEVEL UP, beside this folder, so you
 
 What you'll see
 ---------------
-  ../MPyNode_Spline.mll   <- the plugin you load into Maya (one level up).
+  ../MPyNode_De_Boor_Spline.mll   <- the plugin you load into Maya (one level up).
   ../<type>_commands.py   <- companion command plugin(s), if any (also
                              one level up, beside the bundle).
   source/       <- the C++ source for every node that LINKED.
@@ -31,7 +31,7 @@ Rebuild
 Both scripts read $MAYA / %MAYA% for the Maya install (defaulting to the
 standard location). The rebuilt plugin is written to the PARENT folder
 (one level up from here) as:
-  ../MPyNode_Spline.mll
+  ../MPyNode_De_Boor_Spline.mll
 
 Failed nodes leave breadcrumbs
 ------------------------------

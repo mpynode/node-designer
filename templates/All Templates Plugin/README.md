@@ -3,14 +3,14 @@
 One native plugin holding **every** template node type, plus one Maya scene per
 demo, each already swapped over to the compiled node.
 
-* `build/` -- the C++ this compiles: 37 namespaced node fragments plus the
+* `build/` -- the C++ this compiles: 36 namespaced node fragments plus the
   generated `plugin_main.cpp` that registers them, and the full per-node stage
   lineage under `stages/`.
 * `scenes/` -- 39 scenes, one per `@maya_demo`. Templates with several
   demos get one scene each (DNET has three: `demo`, `demo_layout`,
   `demo_two_knots`).
 * `reports/` -- the evidence behind them.
-* `plugin/` -- where you build `mPyMega` (37/37 node types, 32 bundled
+* `plugin/` -- where you build `mPyMega` (36/36 node types, 32 bundled
   `@maya_command`s, zero drops). **Empty in a fresh clone**: see below.
 
 ## Build the plug-in first
@@ -30,7 +30,7 @@ Windows, from an *x64 Native Tools Command Prompt for VS*:
 build.bat 2026
 ```
 
-It compiles `build/` (37 node types + 32 bundled commands, each namespaced and
+It compiles `build/` (36 node types + 32 bundled commands, each namespaced and
 linked through one generated `plugin_main.cpp`) and installs the result into
 `plugin/`, creating that folder if it does not exist yet.
 

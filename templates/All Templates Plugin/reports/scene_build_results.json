@@ -1299,51 +1299,6 @@
   "multi_demo": false
  },
  {
-  "folder": "MPyNode_RBF_Wrap",
-  "mpn": "templates/MPyNode/RBF Wrap/template.mpn",
-  "native_type": "mPyNode",
-  "source_name": "rbfWrap",
-  "demo_label": "Wrap an Arm with a Cage",
-  "compiled_type": "rbfWrap",
-  "status": "ok",
-  "demos": [
-   {
-    "func_name": "demo",
-    "label": "Wrap an Arm with a Cage",
-    "ma_basename": "MPyNode_RBF_Wrap",
-    "build": {
-     "demo": "demo",
-     "mpn": "templates/MPyNode/RBF Wrap/template.mpn",
-     "built": true,
-     "ma": "compiled_templates/MPyNode_RBF_Wrap/MPyNode_RBF_Wrap.ma",
-     "ma_basename": "MPyNode_RBF_Wrap",
-     "compiled_type": "rbfWrap",
-     "swapped": true,
-     "eval_ok": true,
-     "aux_interpreted": [],
-     "errors": [],
-     "notes": [],
-     "via": "mega",
-     "companions": [],
-     "compiled_node": "rbfWrap"
-    },
-    "reopen": {
-     "ma": "compiled_templates/MPyNode_RBF_Wrap/MPyNode_RBF_Wrap.ma",
-     "reopened": true,
-     "compiled_type": "rbfWrap",
-     "compiled_nodes": 1,
-     "mesh_verts": 1452,
-     "unknown_nodes": 0,
-     "unknown_plugins": [],
-     "errors": []
-    },
-    "status": "ok"
-   }
-  ],
-  "issues": [],
-  "multi_demo": false
- },
- {
   "folder": "MPyNode_Spine",
   "mpn": "templates/MPyNode/Spine/template.mpn",
   "native_type": "mPyNode",
@@ -1389,8 +1344,8 @@
   "multi_demo": false
  },
  {
-  "folder": "MPyNode_Spline",
-  "mpn": "templates/MPyNode/Spline/template.mpn",
+  "folder": "MPyNode_De_Boor_Spline",
+  "mpn": "templates/MPyNode/De Boor Spline/template.mpn",
   "native_type": "mPyNode",
   "source_name": "spline",
   "demo_label": "Run demo",
@@ -1400,13 +1355,13 @@
    {
     "func_name": "demo",
     "label": "Run demo",
-    "ma_basename": "MPyNode_Spline",
+    "ma_basename": "MPyNode_De_Boor_Spline",
     "build": {
      "demo": "demo",
-     "mpn": "templates/MPyNode/Spline/template.mpn",
+     "mpn": "templates/MPyNode/De Boor Spline/template.mpn",
      "built": true,
-     "ma": "compiled_templates/MPyNode_Spline/MPyNode_Spline.ma",
-     "ma_basename": "MPyNode_Spline",
+     "ma": "compiled_templates/MPyNode_De_Boor_Spline/MPyNode_De_Boor_Spline.ma",
+     "ma_basename": "MPyNode_De_Boor_Spline",
      "compiled_type": "spline",
      "swapped": true,
      "eval_ok": true,
@@ -1418,7 +1373,7 @@
      "compiled_node": "spline"
     },
     "reopen": {
-     "ma": "compiled_templates/MPyNode_Spline/MPyNode_Spline.ma",
+     "ma": "compiled_templates/MPyNode_De_Boor_Spline/MPyNode_De_Boor_Spline.ma",
      "reopened": true,
      "compiled_type": "spline",
      "compiled_nodes": 1,
