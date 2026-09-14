@@ -2,7 +2,7 @@
 
 Rebuilds a mesh as a hollow voxel shell (an `mPyMesh`), one cube per occupied cell. Use it for a chunky, blocky version of a model that stays live. The cubes are not welded.
 
-Occupancy is found by closest point rather than by binning the source geometry, so the result does not depend on how finely the source happens to be tessellated -- a two-triangle wall voxelizes as solidly as a dense mesh. The lattice is anchored in world space, so the voxels do not swim when the source moves or deforms.
+Occupancy is exact: every triangle is rasterised into the lattice with a separating-axis overlap test, so a cell is filled if and only if the surface passes through it. The result does not depend on how finely the source happens to be tessellated -- a two-triangle wall voxelizes as solidly as a dense mesh -- and the work grows with the surface area in cells, not with the volume of the bounding box. The lattice is anchored in world space, so the voxels do not swim when the source moves or deforms.
 
 Each voxel takes its colour from the first of these that is available:
 
@@ -13,8 +13,8 @@ Each voxel takes its colour from the first of these that is available:
 ## Inputs
 
 * `inMesh` -- the source mesh. Connect its `worldMesh`.
-* `voxelSize` -- the cell size, in world units. This is the main dial. Halving it costs roughly eight times as much.
-* `maxVoxels` -- a safety brake, checked before any work is done, so an over-fine setting aborts immediately with the real count rather than stalling Maya. Set it to 0 to disable.
+* `voxelSize` -- the cell size, in world units. This is the main dial. Halving it costs roughly four times as much.
+* `maxVoxels` -- a safety brake on an upper bound of the voxel count (the smaller of the grid-cell count and the number of triangle/cell candidate pairs), checked before any heavy work, so an over-fine setting aborts immediately rather than stalling Maya. Set it to 0 to disable.
 * `textureFile` -- an image to colour the voxels from. Takes an absolute path, or one relative to the template search root, which is what `setup` seeds. Clear it to fall through to vertex colours.
 * `defaultColor` -- the colour used when there is no texture and no vertex colour.
 

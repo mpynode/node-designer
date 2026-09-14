@@ -328,6 +328,132 @@ def _template_path(native_type):
     return os.path.join(TPL, *rel.split("/"), "template.mpn")
 
 
+# Per-template authorship metadata, stamped into every shipped template.mpn by
+# the two writers below (payload['metadata']; mpn_io restores it through
+# set_metadata when the template is created). Keyed by the rel dir under
+# templates/. One entry per shipped template; the gallery shows authors and
+# version under the preview, the Node Info dialog shows all four fields.
+# The full license texts the metadata carries (the Node Info dialog shows
+# them and the compiled plug-in embeds them in its banner). The table below
+# names one of these per template.
+TEMPLATE_LICENSES = {
+    'MIT': (
+        'Copyright 2026 Eric Vignola\n'
+        '\n'
+        'Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:\n'
+        '\n'
+        'The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.\n'
+        '\n'
+        'THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.\n'
+    ),
+    'BSD-3-Clause': (
+        'Copyright 2026 Eric Vignola\n'
+        '\n'
+        'Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:\n'
+        '\n'
+        '1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.\n'
+        '\n'
+        '2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.\n'
+        '\n'
+        '3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.\n'
+        '\n'
+        'THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.\n'
+    ),
+}
+
+TEMPLATE_AUTHORS = ['Eric Vignola']
+TEMPLATE_VERSION = '1.0.0'
+TEMPLATE_METADATA = {
+    'MPyBlendShape/Combo Correctives': ('MIT',
+     'An aliased blendShape with combo and in-between corrective shapes decoded from the target names.'),
+    'MPyConstraint/Procrustes Tags': ('MIT',
+     'Rivets transforms to named component-tag patches of a deforming mesh.'),
+    'MPyDeformer/NURBS Wave': ('MIT',
+     'Rolls a sine wave up a NURBS surface or mesh as time plays.'),
+    'MPyDeformer/Patch Relax': ('MIT',
+     'Spreads bunched and pinched polygons back into an even layout without shrinking.'),
+    'MPyDeformer/RBF Wrap Deformer': ('MIT',
+     'Wraps geometry to a low-resolution cage with a thin-plate-spline warp.'),
+    'MPyDeformer/Sine Ripple': ('MIT',
+     'Pushes vertices along their normals with a sine ripple that travels with time.'),
+    'MPyDeformer/Unit Sphere Collision': ('MIT',
+     'Pushes vertices out of a collider sphere and keeps the dent after it moves on.'),
+    'MPyFile/File Composite': ('MIT',
+     'A file texture that stacks any number of images into one composite.'),
+    'MPyFile/File Scanline': ('MIT',
+     'A file texture with an animated scan band rolling over it.'),
+    'MPyFile/File Simple': ('MIT',
+     'A file texture with brightness and contrast that behaves like a stock Maya file node.'),
+    'MPyFile/Game Of Life Texture': ('MIT',
+     "Conway's Game of Life running as a live texture, one step per frame."),
+    'MPyIkSolver/Two Bone IK': ('MIT',
+     'Analytic two-bone IK for a three-joint chain driven by a standard ikHandle.'),
+    'MPyLocator/Animated Selection': ('MIT',
+     'A shaded cube gizmo that spins on the wall clock and pops out under the mouse.'),
+    'MPyLocator/Animated Text': ('MIT',
+     'A viewport text banner riding a sine wave with a scrolling rainbow and sparkles.'),
+    'MPyLocator/Mesh Regions': ('MIT',
+     'Highlights a component-tagged region of a mesh as a hoverable, clickable patch.'),
+    'MPyLocator/Widget Showcase': ('MIT',
+     'Draws one of every locator primitive: lines, points, polygons, shapes and text.'),
+    'MPyMesh/Disk Mesh Cache': ('MIT',
+     'Plays a cached deforming mesh with fixed topology off disk.'),
+    'MPyMesh/Game Of Life': ('MIT',
+     "Conway's Game of Life as one procedural mesh, a cube per live cell."),
+    'MPyMesh/JSON Mesh Reader': ('MIT',
+     'Plays a mesh off disk, one JSON file per frame, with topology free to change.'),
+    'MPyMesh/Mesh Maze': ('MIT',
+     'Turns any mesh into a maze and outputs its walls as geometry.'),
+    'MPyMesh/Metaballs': ('MIT',
+     'Builds one watertight mesh from blended and cut spheres, boxes and cylinders.'),
+    'MPyMesh/UV Layout': ('MIT',
+     "Shows a mesh's UV layout as flat geometry in the 3D view."),
+    'MPyMesh/Voxelize': ('MIT',
+     'Rebuilds a mesh as a hollow shell of voxel cubes, coloured from a texture or vertex colours.'),
+    'MPyNode/Bubble Sort': ('MIT',
+     'A visual bubble sort that advances one pass per evaluation.'),
+    'MPyNode/DNET': ('BSD-3-Clause',
+     'A mass-spring network solver for soft secondary motion in rigs.'),
+    'MPyNode/De Boor Spline': ('MIT',
+     'Evaluates a B-spline through control points and returns evenly spaced samples.'),
+    'MPyNode/Hex Attribute': ('MIT',
+     'Turns live values into the hex string a Maya type node wants for extruded text.'),
+    'MPyNode/Ouch': ('MIT',
+     'Watches a joint angle and flags a colour plus an audio clip when it overextends.'),
+    'MPyNode/Spine': ('MIT',
+     'Drives a joint chain along a NURBS curve from a set of control matrices.'),
+    'MPyNode/Spring Chain': ('MIT',
+     'A spring-and-mass chain solver for tails, ropes and jiggle.'),
+    'MPyNurbsCurve/NURBS Helix': ('MIT',
+     'Generates a helix curve that spins as the timeline plays.'),
+    'MPyNurbsSurface/NURBS Ripple': ('MIT',
+     'Generates a rippling NURBS surface animated by time.'),
+    'MPySkinCluster/Dual Quaternion Skin': ('MIT',
+     'A skinCluster doing dual quaternion skinning in Python.'),
+    'MPySkinCluster/Linear Blend Skin': ('MIT',
+     'A skinCluster doing classic linear blend skinning in Python.'),
+    'MPySkinCluster/Twist Swing Skin': ('MIT',
+     'A skinCluster with separately painted twist and swing weight sets.'),
+    'MPyTransform/Aim Between Matrices': ('MIT',
+     'A transform that sits between two matrices and aims from one toward the other.'),
+}
+
+
+def _with_metadata(rel, payload):
+    """``payload`` with the template's authorship metadata stamped in (a copy;
+    the payload itself is untouched). A rel with no table entry ships as-is."""
+    entry = TEMPLATE_METADATA.get(rel)
+    if entry is None:
+        return payload
+    out = dict(payload)
+    out["metadata"] = {
+        "authors": list(TEMPLATE_AUTHORS),
+        "version": TEMPLATE_VERSION,
+        "license": TEMPLATE_LICENSES[entry[0]].rstrip(),
+        "description": entry[1],
+    }
+    return out
+
 def _write_template(payload, native_type, description, root=None):
     """Write a node-only template to <root>/<category>/<name>/template.mpn
     and author a sibling description.md. Keeps the behavioral-gate caller's
@@ -343,9 +469,9 @@ def _write_template(payload, native_type, description, root=None):
     for rel, node_name in rels:
         folder = os.path.join(base, *rel.split("/"))
         os.makedirs(folder, exist_ok=True)
-        out = payload
+        out = _with_metadata(rel, payload)
         if node_name:
-            out              = dict(payload)
+            out              = dict(out)
             out["node_name"] = node_name
         save_mpn(out, os.path.join(folder, "template.mpn"))
         with open(os.path.join(folder, "description.md"), "w") as f:
@@ -377,7 +503,7 @@ def _write_template_to(rel, payload, description, root=None):
     the type->dir lookup. No mirrors."""
     folder = os.path.join(root if root is not None else TPL, *rel.split("/"))
     os.makedirs(folder, exist_ok=True)
-    save_mpn(payload, os.path.join(folder, "template.mpn"))
+    save_mpn(_with_metadata(rel, payload), os.path.join(folder, "template.mpn"))
     with open(os.path.join(folder, "description.md"), "w") as f:
         f.write(description.rstrip() + "\n")
 
@@ -2249,8 +2375,6 @@ MESH_GOL_COMPUTE = '''# Conway's Game of Life as a single procedural mesh: build
 # `resetBoard` reseeds `randomSamples` cells each frame. Adjacent cubes are NOT
 # welded (overlapping faces/verts are intentional); `cellSize` (< 1) leaves a
 # visible gap between neighbouring cells.
-import numpy as np
-from mpynode._api2.geometry import Mesh
 
 bx = max(1, self.boardX)
 by = max(1, self.boardY)
@@ -2664,8 +2788,6 @@ UV_LAYOUT_COMPUTE = '''# Output the input mesh's UV layout as a flat 2D mesh: ea
 # UV layout -- handy for inspecting/visualising UVs as geometry. Choose a UV set
 # by name with `uvSetName` (blank = the first/default set, e.g. "map1"); a mesh
 # with no UVs (or an unconnected input) yields an empty (but valid) mesh.
-import numpy as np
-from mpynode._api2.geometry import Mesh
 
 src = getattr(self, "inMesh", None)
 sets = src.uv_sets if src is not None else []
@@ -3098,22 +3220,266 @@ def test_metaballs(self):
 # build gate asserts the two spellings match.
 VOXELIZE_SAMPLE_TEX = "MPyFile/File Simple/test_grid.png"
 
-VOXELIZE_INIT = '''import os, ctypes
+VOXELIZE_INIT = '''# Voxelize -- Init tab.
+#
+# Section A is the geometry core: exact conservative (26-separating) triangle
+# rasterisation into the WORLD-anchored lattice. It uses only constructs the
+# deterministic transpiler lowers: gather by int array, np.take/np.nonzero,
+# np.where(3-arg), cumsum / searchsorted / arange ragged expansion (no ragged
+# np.repeat), hand-written cross products (np.cross on (N,3) throws at runtime
+# in nd::), stable argsort + np.unique(return_index=True), np.tile / scalar
+# np.repeat, literal lookup tables inside helpers, single-value returns.
+#
+# Section B is the colour chain: texture read + sampling and the UV collapse.
+# It reads uv_sets / colors / an image, which are outside the deterministic
+# read surface, so the C++ port carries it as ported code.
+import os, ctypes
 import numpy as np
 import maya.api.OpenMaya as om
 from mpynode._api2.geometry import Mesh
 
-# Per-node cache so a texture is read from disk once, not on every compute().
 _VOX_IMG_CACHE = {}
 _VOX_TPL_ROOTS = []
 
 
+# ============================ A. geometry core ==============================
+
+
+def _vox_tris(counts, indices):
+    """Fan-triangulate every face into (T,3) vertex ids: triangle k of face f
+    is (v0, v(k+1), v(k+2)). Faces with < 3 vertices contribute nothing.
+    Ragged expansion by cumsum + searchsorted (ragged np.repeat does not lower)."""
+    ntri = np.maximum(counts - 2, 0)
+    T = int(ntri.sum())
+    csum = np.cumsum(ntri)
+    tstart = csum - ntri
+    tid = np.arange(T)
+    face = np.searchsorted(csum, tid, side="right")
+    k = tid - tstart[face]
+    foff = (np.cumsum(counts) - counts)[face]
+    i0 = indices[foff]
+    i1 = indices[foff + k + 1]
+    i2 = indices[foff + k + 2]
+    return np.stack([i0, i1, i2], axis=1)
+
+
+def _vox_tri_bounds(pts, tv, vs):
+    """(T,6) int64: columns 0..2 = lowest cell index of the triangle's bbox
+    per axis, 3..5 = highest. floor(x/vs) on BOTH ends is the half-open
+    convention (cell i spans [i*vs,(i+1)*vs)): a vertex exactly on a lattice
+    plane belongs to the cell above it, the one floor() snapping picks."""
+    a = pts[tv[:, 0]]
+    b = pts[tv[:, 1]]
+    c = pts[tv[:, 2]]
+    lo = np.floor(np.minimum(np.minimum(a, b), c) / vs).astype(np.int64)
+    hi = np.floor(np.maximum(np.maximum(a, b), c) / vs).astype(np.int64)
+    return np.concatenate([lo, hi], axis=1)
+
+
+def _vox_candidates(bounds, per_tri):
+    """(M,4) int64 rows [tri, ix, iy, iz]: every cell of every triangle's cell
+    range, triangle-major then odometer order (x slowest, z fastest). This
+    order is the tie-break order of the winner pick, so never reorder it."""
+    M = int(per_tri.sum())
+    csum = np.cumsum(per_tri)
+    cid = np.arange(M)
+    tri = np.searchsorted(csum, cid, side="right")
+    local = cid - (csum - per_tri)[tri]
+    lo = bounds[:, 0:3]
+    span = bounds[:, 3:6] - lo + 1
+    sp = span[tri]
+    lt = lo[tri]
+    iz = local % sp[:, 2]
+    iy = (local // sp[:, 2]) % sp[:, 1]
+    ix = local // (sp[:, 2] * sp[:, 1])
+    return np.stack([tri, lt[:, 0] + ix, lt[:, 1] + iy, lt[:, 2] + iz], axis=1)
+
+
+def _vox_plane_keep(pts, tv, cand, vs, tol):
+    """(M,) bool: NOT separated by the triangle-plane axis. The cheapest SAT
+    axis, run first on every candidate so the nine edge axes only see the
+    survivors. h is the cube half-size enlarged by `tol` so a triangle lying
+    exactly on a cube face (equality in exact arithmetic) is robustly IN
+    instead of a floating-point coin flip. A numerically zero-area triangle
+    (|n|_1 <= 1e-12 * longest edge^2) has a garbage normal, so it is passed
+    through here and left to the edge axes, which bound it correctly."""
+    h = 0.5 * vs + tol
+    tri = cand[:, 0]
+    ctr = (cand[:, 1:4].astype(np.float64) + 0.5) * vs
+    tt = tv[tri]
+    a = pts[tt[:, 0]] - ctr
+    b = pts[tt[:, 1]] - ctr
+    c = pts[tt[:, 2]] - ctr
+    f0 = b - a
+    f1 = c - b
+    f2 = a - c
+    nx = f0[:, 1] * f1[:, 2] - f0[:, 2] * f1[:, 1]
+    ny = f0[:, 2] * f1[:, 0] - f0[:, 0] * f1[:, 2]
+    nz = f0[:, 0] * f1[:, 1] - f0[:, 1] * f1[:, 0]
+    d = nx * a[:, 0] + ny * a[:, 1] + nz * a[:, 2]
+    n1 = np.abs(nx) + np.abs(ny) + np.abs(nz)
+    l2 = np.maximum(np.maximum((f0 * f0).sum(axis=1), (f1 * f1).sum(axis=1)),
+                    (f2 * f2).sum(axis=1))
+    degenerate = n1 <= 1e-12 * l2
+    return (np.abs(d) <= h * n1) | degenerate
+
+
+def _vox_axis_sep(fj, fl, aj, al, bj, bl, cj, cl, h):
+    """One Akenine-Moller edge x box-axis test. For edge f and box axis ax
+    with (j, l) = (ax+1, ax+2) mod 3 the axis is e_ax x f: a (centred) vertex
+    projects to f_j*v_l - f_l*v_j, the box to [-r, r] with
+    r = h*(|f_j|+|f_l|). True where the axis SEPARATES triangle and box."""
+    p0 = fj * al - fl * aj
+    p1 = fj * bl - fl * bj
+    p2 = fj * cl - fl * cj
+    r = h * (np.abs(fj) + np.abs(fl))
+    pmin = np.minimum(np.minimum(p0, p1), p2)
+    pmax = np.maximum(np.maximum(p0, p1), p2)
+    return (pmin > r) | (pmax < -r)
+
+
+def _vox_edge_keep(pts, tv, cand, vs, tol):
+    """(M,) bool: does triangle cand[:,0] overlap the closed cube of cell
+    cand[:,1:4]? The nine edge x box-axis axes of the separating-axis test
+    (the plane axis ran in _vox_plane_keep; the three box-face axes are
+    implied by the candidate ranges, which already overlap per axis).
+    Closed comparisons + the same `tol` enlargement: touching counts, so the
+    kept set is the conservative / 26-separating shell."""
+    h = 0.5 * vs + tol
+    tri = cand[:, 0]
+    ctr = (cand[:, 1:4].astype(np.float64) + 0.5) * vs
+    tt = tv[tri]
+    a = pts[tt[:, 0]] - ctr
+    b = pts[tt[:, 1]] - ctr
+    c = pts[tt[:, 2]] - ctr
+    f0 = b - a
+    f1 = c - b
+    f2 = a - c
+    ax0 = a[:, 0]
+    ax1 = a[:, 1]
+    ax2 = a[:, 2]
+    bx0 = b[:, 0]
+    bx1 = b[:, 1]
+    bx2 = b[:, 2]
+    cx0 = c[:, 0]
+    cx1 = c[:, 1]
+    cx2 = c[:, 2]
+    sep = _vox_axis_sep(f0[:, 1], f0[:, 2], ax1, ax2, bx1, bx2, cx1, cx2, h)
+    sep = sep | _vox_axis_sep(f0[:, 2], f0[:, 0], ax2, ax0, bx2, bx0, cx2, cx0, h)
+    sep = sep | _vox_axis_sep(f0[:, 0], f0[:, 1], ax0, ax1, bx0, bx1, cx0, cx1, h)
+    sep = sep | _vox_axis_sep(f1[:, 1], f1[:, 2], ax1, ax2, bx1, bx2, cx1, cx2, h)
+    sep = sep | _vox_axis_sep(f1[:, 2], f1[:, 0], ax2, ax0, bx2, bx0, cx2, cx0, h)
+    sep = sep | _vox_axis_sep(f1[:, 0], f1[:, 1], ax0, ax1, bx0, bx1, cx0, cx1, h)
+    sep = sep | _vox_axis_sep(f2[:, 1], f2[:, 2], ax1, ax2, bx1, bx2, cx1, cx2, h)
+    sep = sep | _vox_axis_sep(f2[:, 2], f2[:, 0], ax2, ax0, bx2, bx0, cx2, cx0, h)
+    sep = sep | _vox_axis_sep(f2[:, 0], f2[:, 1], ax0, ax1, bx0, bx1, cx0, cx1, h)
+    return ~sep
+
+
+def _vox_bary_closest(p, a, b, c):
+    """(M,3) barycentric weights (wa, wb, wc) of the closest point on triangle
+    (a, b, c) to p -- Ericson, Real-Time Collision Detection 5.1.5 -- as a
+    last-write-wins np.where chain in REVERSE priority (interior, BC, AC, C,
+    AB, B, A) so the result equals the sequential if/else cascade. Divisions
+    are guarded; degenerate triangles fall through to an edge or vertex."""
+    ab = b - a
+    ac = c - a
+    ap = p - a
+    d1 = (ab * ap).sum(axis=1)
+    d2 = (ac * ap).sum(axis=1)
+    bp = p - b
+    d3 = (ab * bp).sum(axis=1)
+    d4 = (ac * bp).sum(axis=1)
+    cp = p - c
+    d5 = (ab * cp).sum(axis=1)
+    d6 = (ac * cp).sum(axis=1)
+    va = d3 * d6 - d5 * d4
+    vb = d5 * d2 - d1 * d6
+    vc = d1 * d4 - d3 * d2
+    den = va + vb + vc
+    den = np.where(den == 0.0, 1.0, den)
+    wb = vb / den
+    wc = vc / den
+    wa = 1.0 - wb - wc
+    # edge BC region
+    e1 = d4 - d3
+    e2 = d5 - d6
+    es = e1 + e2
+    es = np.where(es == 0.0, 1.0, es)
+    t = e1 / es
+    m = (va <= 0.0) & (e1 >= 0.0) & (e2 >= 0.0)
+    wa = np.where(m, 0.0, wa)
+    wb = np.where(m, 1.0 - t, wb)
+    wc = np.where(m, t, wc)
+    # edge AC region
+    es = d2 - d6
+    es = np.where(es == 0.0, 1.0, es)
+    t = d2 / es
+    m = (vb <= 0.0) & (d2 >= 0.0) & (d6 <= 0.0)
+    wa = np.where(m, 1.0 - t, wa)
+    wb = np.where(m, 0.0, wb)
+    wc = np.where(m, t, wc)
+    # vertex C region
+    m = (d6 >= 0.0) & (d5 <= d6)
+    wa = np.where(m, 0.0, wa)
+    wb = np.where(m, 0.0, wb)
+    wc = np.where(m, 1.0, wc)
+    # edge AB region
+    es = d1 - d3
+    es = np.where(es == 0.0, 1.0, es)
+    t = d1 / es
+    m = (vc <= 0.0) & (d1 >= 0.0) & (d3 <= 0.0)
+    wa = np.where(m, 1.0 - t, wa)
+    wb = np.where(m, t, wb)
+    wc = np.where(m, 0.0, wc)
+    # vertex B region
+    m = (d3 >= 0.0) & (d4 <= d3)
+    wa = np.where(m, 0.0, wa)
+    wb = np.where(m, 1.0, wb)
+    wc = np.where(m, 0.0, wc)
+    # vertex A region (highest priority)
+    m = (d1 <= 0.0) & (d2 <= 0.0)
+    wa = np.where(m, 1.0, wa)
+    wb = np.where(m, 0.0, wb)
+    wc = np.where(m, 0.0, wc)
+    return np.stack([wa, wb, wc], axis=1)
+
+
+def _vox_pick(cell, dist2, base, span):
+    """One winner per cell: the pair whose closest surface point is nearest the
+    cell centre; ties -> the lowest pair index (triangle order, then odometer
+    order), deterministic in numpy and in the stable_sort-backed C++ runtime.
+    The 3-D cell index is packed into one int64 key by multiplication."""
+    rel = cell - base
+    key = (rel[:, 0] * span[1] + rel[:, 1]) * span[2] + rel[:, 2]
+    order = np.argsort(dist2, kind="stable")
+    ukey, first = np.unique(key[order], return_index=True)
+    return order[first]
+
+
+def _vox_cube_points(centers, half):
+    """8 corner points per centre, (8m,3). Cubes are NOT welded."""
+    m = int(centers.shape[0])
+    corners = np.array([
+        [-1.0, -1.0, -1.0], [1.0, -1.0, -1.0], [1.0, 1.0, -1.0], [-1.0, 1.0, -1.0],
+        [-1.0, -1.0, 1.0], [1.0, -1.0, 1.0], [1.0, 1.0, 1.0], [-1.0, 1.0, 1.0],
+    ], dtype=np.float64) * half
+    return np.repeat(centers, 8, axis=0) + np.tile(corners, (m, 1))
+
+
+def _vox_cube_indices(m):
+    """6 outward quads per cube, (24m,) int64, into _vox_cube_points' corners."""
+    faces = np.array([0, 3, 2, 1, 4, 5, 6, 7, 0, 1, 5, 4,
+                      3, 7, 6, 2, 0, 4, 7, 3, 1, 2, 6, 5], dtype=np.int64)
+    return np.repeat(8 * np.arange(m), 24) + np.tile(faces, m)
+
+
+
+# ============================ B. colour chain ===============================
+# Unchanged from the shipped Init (interpreted only; not on the deterministic
+# read surface). Kept verbatim so the colour semantics do not move.
+
 def _vox_template_roots():
-    """Template search roots, resolved once. Reuses mpynode's own resolver so a
-    RELATIVE textureFile keeps working wherever the templates are installed: it
-    honours the template_search_paths preference, then $MPYNODE_ROOT/templates.
-    Pure filesystem work -- no scene state, no DG -- so it is safe from
-    compute()."""
     if not _VOX_TPL_ROOTS:
         try:
             from mpynode._common.util.template_gallery import (
@@ -3125,32 +3491,22 @@ def _vox_template_roots():
 
 
 def _vox_resolve_path(path):
-    """Absolute path -> used as-is. RELATIVE path -> tried under each template
-    search root, so the shipped sample texture resolves on any install.
-    Returns None when nothing readable turns up."""
     if os.path.isabs(path):
         return path if os.path.isfile(path) else None
     for root in _vox_template_roots():
-        cand = os.path.join(root, *path.split("/"))   # POSIX-authored -> Windows
+        cand = os.path.join(root, *path.split("/"))
         if os.path.isfile(cand):
             return cand
     return path if os.path.isfile(path) else None
 
 
 def _vox_srgb_to_linear(rgb):
-    """sRGB-encoded -> scene-linear (vectorized piecewise EOTF), so voxels
-    shade at the same brightness a standard Maya `file` node would give."""
     low = rgb / 12.92
     high = np.power((rgb + 0.055) / 1.055, 2.4)
     return np.where(rgb <= 0.04045, low, high).astype(np.float32)
 
 
 def _vox_read_image(path):
-    """Read an image into an ``(H, W, 4)`` float32 array in SCENE-LINEAR [0,1]
-    using Maya's built-in MImage (no PIL needed). The path may be absolute or
-    relative to a template search root. Returns None for a blank path or
-    anything unreadable -- that None is what makes the colour chain fall back
-    to vertex colours."""
     key = (path or "").strip()
     if not key:
         return None
@@ -3158,18 +3514,16 @@ def _vox_read_image(path):
         return _VOX_IMG_CACHE[key]
     resolved = _vox_resolve_path(key)
     if resolved is None:
-        return None                    # uncached: the file may appear later
+        return None
     arr = None
     try:
         img = om.MImage()
         img.readFromFile(resolved)
         w, h = img.getSize()
-        raw = ctypes.string_at(img.pixels(), w * h * 4)        # RGBA uint8
+        raw = ctypes.string_at(img.pixels(), w * h * 4)
         f = (np.frombuffer(raw, dtype=np.uint8)
                .astype(np.float32).reshape(h, w, 4) / 255.0)
         f[..., :3] = _vox_srgb_to_linear(f[..., :3])
-        # MImage rows are stored BOTTOM-UP; flip to TOP-DOWN so the sampler
-        # below matches the mPyFile template and Maya's own file node.
         arr = np.ascontiguousarray(f[::-1])
     except Exception:
         arr = None
@@ -3178,14 +3532,8 @@ def _vox_read_image(path):
 
 
 def _vox_sample_texture(img, uv):
-    """Bilinear-filtered RGB lookup for an ``(N, 2)`` block of UVs -> (N, 3).
-
-    Bilinear rather than nearest because one voxel stands in for a whole patch
-    of surface, so the blended texel is the better representative colour. V is
-    flipped: Maya's V runs bottom-up while the buffer is top-down.
-    """
     h, w = img.shape[0], img.shape[1]
-    uu = uv[:, 0] - np.floor(uv[:, 0])                # wrap into [0,1)
+    uu = uv[:, 0] - np.floor(uv[:, 0])
     vv = uv[:, 1] - np.floor(uv[:, 1])
     x = uu * w - 0.5
     y = (1.0 - vv) * h - 0.5
@@ -3202,98 +3550,7 @@ def _vox_sample_texture(img, uv):
     return (top * (1.0 - fy) + bot * fy).astype(np.float64)
 
 
-def _vox_grid(lo, hi, vs):
-    """Voxel CENTRES of every cell the bounding box touches.
-
-    The lattice is WORLD-anchored: cell ``i`` spans ``[i*vs, (i+1)*vs)``, so a
-    cube CORNER sits exactly on the origin and the lattice does NOT drift when
-    the mesh moves or deforms (anchoring to the mesh minimum would make the
-    voxels swim). The bounding box comes from the points rather than the MFn
-    ``boundingBox`` property: an MFnMesh minted from geometry DATA has no DAG
-    node, so that property raises "Object does not exist".
-    """
-    i0 = np.floor(np.asarray(lo, dtype=np.float64) / vs).astype(np.int64)
-    i1 = np.floor(np.asarray(hi, dtype=np.float64) / vs).astype(np.int64)
-    axes = [np.arange(i0[d], i1[d] + 1, dtype=np.int64) for d in range(3)]
-    gi = np.stack(np.meshgrid(axes[0], axes[1], axes[2], indexing="ij"), axis=-1).reshape(-1, 3)
-    return (gi.astype(np.float64) + 0.5) * vs
-
-
-def _vox_closest(mesh_obj, grid):
-    """Closest point on the mesh for every grid point.
-
-    ``MMeshIntersector`` is spatially accelerated -- measured ~170k queries/s,
-    about 13x faster than ``MFnMesh.getClosestPoint`` for the identical answer.
-    It needs a mesh MObject, which ``Mesh.to_mobject()`` hands over zero-copy
-    for an attached input (``fn.object()`` returns kInvalid, so that is the only
-    route). Returns samples, face ids, triangle ids and barycentric (u, v).
-    """
-    isect = om.MMeshIntersector()
-    isect.create(mesh_obj)
-    n = int(grid.shape[0])
-    samples = np.empty((n, 3), dtype=np.float64)
-    faces = np.empty(n, dtype=np.int64)
-    tris = np.empty(n, dtype=np.int64)
-    bary = np.empty((n, 2), dtype=np.float64)
-    for k in range(n):
-        r = isect.getClosestPoint(om.MPoint(grid[k, 0], grid[k, 1], grid[k, 2]))
-        p = r.point
-        samples[k, 0] = p.x
-        samples[k, 1] = p.y
-        samples[k, 2] = p.z
-        faces[k] = r.face
-        tris[k] = r.triangle
-        b = r.barycentricCoords
-        bary[k, 0] = b[0]
-        bary[k, 1] = b[1]
-    return samples, faces, tris, bary
-
-
-def _vox_winners(samples, grid, vs):
-    """Snap every sample to its voxel cell and drop duplicates, keeping the
-    sample CLOSEST to its own grid point. Returns ``(cells, win)`` -- the
-    occupied cell indices and the sample index that won each one, so the winner
-    also supplies that cube's colour.
-
-    The 3D cell index is packed into ONE int64 key so the dedupe is a plain 1-D
-    ``np.unique`` (``axis=0`` on a 2-D array is a far heavier primitive). Cell
-    indices go negative, hence the shift by ``base``.
-    """
-    cell = np.floor(samples / vs).astype(np.int64)
-    base = cell.min(axis=0)
-    span = cell.max(axis=0) - base + 1
-    rel = cell - base
-    key = (rel[:, 0] * span[1] + rel[:, 1]) * span[2] + rel[:, 2]
-    order = np.argsort(((samples - grid) ** 2).sum(axis=1), kind="stable")
-    _, first = np.unique(key[order], return_index=True)
-    win = order[first]
-    return cell[win], win
-
-
-def _vox_corner_weights(mesh, faces, tris, bary):
-    """Hit-triangle vertex ids plus barycentric weights, so ANY per-vertex
-    attribute interpolates exactly at the closest point.
-
-    Maya's ``MPointOnMesh.barycentricCoords`` is ``(u, v)`` for the FIRST TWO
-    triangle vertices; the third weight is ``1-u-v``. Verified by reconstructing
-    the hit point from the weights -- 5e-07 max error, where the other ordering
-    is off by 0.73. ``getTriangles()`` gives the whole triangulation at once, so
-    (face, triangle) -> vertex ids is a vectorized table lookup rather than a
-    per-query ``getPolygonTriangleVertices`` call.
-    """
-    tc, tv = mesh.fn.getTriangles()
-    tc = np.asarray(tc, dtype=np.int64)
-    tv = np.asarray(tv, dtype=np.int64).reshape(-1, 3)
-    toff = np.cumsum(tc) - tc
-    u = bary[:, 0]
-    v = bary[:, 1]
-    return tv[toff[faces] + tris], np.stack([u, v, 1.0 - u - v], axis=1)
-
-
 def _vox_uv_stream(mesh):
-    """The mesh's first UV set as ``(uv_points, uv_indices)``, or
-    ``(None, None)`` when it carries no usable UVs. ``uv_indices`` runs in
-    lockstep with ``Mesh.indices`` -- both are addressed by FACE-VERTEX."""
     sets = getattr(mesh, "uv_sets", None) or []
     if not sets:
         return None, None
@@ -3305,14 +3562,6 @@ def _vox_uv_stream(mesh):
 
 
 def _vox_vertex_uvs(mesh, num_points):
-    """``(N, 2)`` per-vertex UV, or None when the mesh carries no UV set.
-
-    UVs are per-FACE-VERTEX, so a vertex on a seam owns several. One scatter
-    collapses the stream to vertex -> uv; at a seam the last write wins, which
-    is invisible at voxel resolution. The caller blends these three at a time
-    with the hit triangle's barycentric weights, which puts the texture lookup
-    at the EXACT closest point.
-    """
     uv_pts, uidx = _vox_uv_stream(mesh)
     if uv_pts is None:
         return None
@@ -3322,109 +3571,122 @@ def _vox_vertex_uvs(mesh, num_points):
     if n:
         out[vidx[:n]] = uv_pts[uidx[:n]]
     return out
-
-
-def _vox_cubes(centers, half):
-    """The game_of_life cube batcher: 8 verts + 6 outward quads per centre,
-    emitted in one vectorized shot. Adjacent cubes are NOT welded."""
-    m = int(centers.shape[0])
-    corners = np.array([
-        [-1, -1, -1], [1, -1, -1], [1, 1, -1], [-1, 1, -1],
-        [-1, -1, 1], [1, -1, 1], [1, 1, 1], [-1, 1, 1],
-    ], dtype=np.float64) * half
-    points = (centers[:, None, :] + corners[None, :, :]).reshape(-1, 3)
-    faces = np.array([
-        [0, 3, 2, 1], [4, 5, 6, 7], [0, 1, 5, 4],
-        [3, 7, 6, 2], [0, 4, 7, 3], [1, 2, 6, 5],
-    ], dtype=np.int32)
-    base = (8 * np.arange(m, dtype=np.int32))[:, None, None]
-    indices = (base + faces[None, :, :]).reshape(-1)
-    counts = np.full(6 * m, 4, dtype=np.int32)
-    return points, counts, indices
 '''
 
-VOXELIZE_COMPUTE = '''# Rebuild the incoming mesh as a voxel SHELL, by CLOSEST POINT rather than by
-# binning the source geometry -- so the result never depends on how finely the
-# source happens to be tessellated.
+VOXELIZE_COMPUTE = '''# Rebuild the incoming mesh as a voxel SHELL by RASTERISING its triangles into
+# a WORLD-anchored lattice (cell i spans [i*voxelSize, (i+1)*voxelSize), so a
+# cube corner sits exactly on the origin and the voxels never swim).
 #
-#   1. Take the source bounding box and lay a WORLD-anchored lattice over it:
-#      cell `i` spans [i*voxelSize, (i+1)*voxelSize), so a cube CORNER sits
-#      exactly on the origin. The lattice is fixed in world space, so voxels do
-#      not swim when the mesh moves or deforms.
-#   2. Build the dense 3D point cloud of every cell CENTRE in that box and ask
-#      the mesh for the closest surface point to each one.
-#   3. Snap every returned sample to the cell that contains it and drop the
-#      duplicates, keeping the sample CLOSEST to its own grid point. Those cells
-#      are the voxels; each winner also supplies its cube's colour.
+#   1. Fan-triangulate the faces (pure index arithmetic, no Maya call).
+#   2. For every triangle enumerate the lattice cells its bounding box touches
+#      (a ragged expansion, cumsum + searchsorted) -- the CANDIDATE pairs.
+#   3. Keep a pair iff the triangle really overlaps the cell's cube: the exact
+#      separating-axis test (Akenine-Moller), plane axis first, then the nine
+#      edge axes. The kept cells are EXACTLY the cells the surface passes
+#      through -- the conservative / 26-separating shell, independent of how
+#      finely the source is tessellated (a two-triangle wall voxelises solidly).
+#   4. One deterministic winner per cell: the pair whose closest point on its
+#      triangle is nearest the cell centre (ties -> lowest pair index). The
+#      winner's barycentrics put the colour lookup at that surface point.
 #
-# The grid is O(K^3) while the shell is O(K^2), so most queries are "wasted" --
-# but they are not: an interior grid point regularly claims a cell that no
-# nearer point reaches, and pruning the query set to a band around the surface
-# was measured to silently lose cells. MMeshIntersector runs ~170k queries/s,
-# which keeps the dense sweep well inside interactive range.
+# Work is O(candidate pairs) ~ triangles x (edge / voxelSize + 1)^3, never the
+# K^3 grid. maxVoxels brakes on min(grid cells, candidate pairs) -- an upper
+# bound on the voxel count that is never larger than the old grid count -- in
+# O(triangles), BEFORE any pair is materialised.
 #
-# Colour is taken at the WINNING sample and falls down a chain: `textureFile`
-# sampled at the exact closest point's UV, else the source's vertex colours,
-# else `defaultColor`. A blank or unreadable path just drops to the next link --
-# it is never an error.
-import numpy as np
-import maya.api.OpenMaya as om
-from mpynode._api2.geometry import Mesh
+# Colour is taken at the winner's closest point and falls down a chain:
+# `textureFile` sampled at that point's UV, else the source's vertex colours,
+# else `defaultColor`. A blank or unreadable path drops to the next link.
 
-src = getattr(self, "inMesh", None)
-pts = None if src is None else getattr(src, "points", None)
-pts = None if pts is None else np.asarray(pts, dtype=np.float64)
-nfaces = 0 if src is None else int(np.asarray(src.counts).size)
+# Interpreted-only prologue: a never-connected inMesh is None and an
+# unattached Mesh() has None arrays. (The C++ port is handed empty arrays for
+# a null mesh, so it has no `is None` test to make.)
+src = self.inMesh
+pts = np.zeros((0, 3), dtype=np.float64)
+cnt = np.zeros(0, dtype=np.int64)
+idx = np.zeros(0, dtype=np.int64)
+if src is not None and src.points is not None and src.counts is not None and src.indices is not None:
+    pts = np.asarray(src.points, dtype=np.float64)
+    cnt = np.asarray(src.counts, dtype=np.int64)
+    idx = np.asarray(src.indices, dtype=np.int64)
+vs = max(1e-6, float(self.voxelSize))
+cap = int(self.maxVoxels)
+h = 0.5 * vs
 
-if pts is None or pts.shape[0] == 0 or nfaces == 0:
-    # No input, an empty one, or a point cloud with no surface to project onto
-    # -> an empty but VALID mesh, never a raise.
-    self.outMesh = Mesh()
-else:
-    vsize = max(1e-6, float(self.voxelSize))
-    grid = _vox_grid(pts.min(axis=0), pts.max(axis=0), vsize)
-    n = int(grid.shape[0])
+# --- O(T): triangles, per-triangle cell ranges, brake ----------------------
+tv = _vox_tris(cnt, idx)                                  # (T,3) vertex ids
+T = int(tv.shape[0])
+bounds = _vox_tri_bounds(pts, tv, vs)                     # (T,6) lo | hi cells
+span_t = bounds[:, 3:6] - bounds[:, 0:3] + 1
+per_tri = span_t[:, 0] * span_t[:, 1] * span_t[:, 2]     # cells per triangle
+M = int(per_tri.sum())                                    # candidate pairs
+base = np.zeros(3, dtype=np.int64)
+span = np.ones(3, dtype=np.int64)
+ngrid = 0
+tol = 1e-9 * vs
+if T > 0:
+    base = bounds[:, 0:3].min(axis=0)
+    span = bounds[:, 3:6].max(axis=0) - base + 1
+    ngrid = int(span[0] * span[1] * span[2])              # the old K^3 count
+    ext = float(np.maximum(base + span, 0 - base).max()) * vs
+    tol = 1e-9 * vs + 1e-13 * ext                         # robust touching
+# Brake BEFORE the expansion: every voxel is one grid cell and at least one
+# candidate pair, so min(ngrid, M) bounds the count; it is never above the
+# old grid count, so no scene that computed before aborts now.
+bound = min(ngrid, M)
+if cap > 0 and bound > cap:
+    raise ValueError("voxelize: voxel bound exceeds maxVoxels -- raise voxelSize or maxVoxels")
 
-    # Brake on the GRID, before a single query runs -- the sweep is cubic in
-    # 1/voxelSize, so halving it costs 8x. Checking here aborts instantly
-    # instead of after a long stall.
-    cap = int(self.maxVoxels)
-    if cap > 0 and n > cap:
-        raise ValueError(
-            "voxelize: %d grid points at voxelSize=%g exceeds maxVoxels=%d. "
-            "Raise voxelSize (or maxVoxels) -- the sweep is cubic in "
-            "1/voxelSize." % (n, vsize, cap))
+# --- O(M): exact overlap, plane axis first ---------------------------------
+cand = _vox_candidates(bounds, per_tri)                   # (M,4) tri,ix,iy,iz
+k1, = np.nonzero(_vox_plane_keep(pts, tv, cand, vs, tol))
+cand = np.take(cand, k1, axis=0)
+k2, = np.nonzero(_vox_edge_keep(pts, tv, cand, vs, tol))
+cand = np.take(cand, k2, axis=0)                          # (P,4) overlapping
+tri = cand[:, 0]
+cell = cand[:, 1:4]
+ctr = (cell.astype(np.float64) + 0.5) * vs
 
-    samples, faces, tris, bary = _vox_closest(src.to_mobject(), grid)
-    cells, win = _vox_winners(samples, grid, vsize)
-    m = int(cells.shape[0])
-    centers = (cells.astype(np.float64) + 0.5) * vsize
+# --- winner per cell + surface point ---------------------------------------
+tt = tv[tri]                                              # (P,3) corner ids
+a = pts[tt[:, 0]]
+b = pts[tt[:, 1]]
+c = pts[tt[:, 2]]
+w = _vox_bary_closest(ctr, a, b, c)                       # (P,3) weights
+q = a * w[:, 0:1] + b * w[:, 1:2] + c * w[:, 2:3]         # closest points
+dq = q - ctr
+dist2 = (dq * dq).sum(axis=1)
+win = _vox_pick(cell, dist2, base, span)                  # (S,) pair index
+cells = cell[win]
+corner = tt[win]
+wgt = w[win]
+m = int(cells.shape[0])
+centers = (cells.astype(np.float64) + 0.5) * vs
 
-    # The hit triangle + weights let ANY per-vertex attribute be read exactly at
-    # the winning closest point. Only the winners are interpolated, not all n.
-    corner, w = _vox_corner_weights(src, faces[win], tris[win], bary[win])
+# --- one colour per cube: texture -> vertex colour -> defaultColor ---------
+# (interpreted chain: uv_sets / colors / image reads are not lowerable, so the
+# C++ port carries this block as ported code, exactly as it does today)
+col = np.zeros((m, 3)) + np.asarray(self.defaultColor, dtype=np.float64)[:3]
+got = False
+tex = _vox_read_image(self.textureFile)
+if tex is not None and src is not None:
+    uvv = _vox_vertex_uvs(src, pts.shape[0])
+    if uvv is not None:
+        col = _vox_sample_texture(tex, (uvv[corner] * wgt[:, :, None]).sum(1))
+        got = True
+if not got and src is not None:
+    vcol = getattr(src, "colors", None)
+    if vcol is not None:
+        vcol = np.asarray(vcol, dtype=np.float64)
+        if vcol.shape[0] == pts.shape[0]:
+            col = (vcol[corner] * wgt[:, :, None]).sum(1)[:, :3]
 
-    # --- one colour per cube: texture -> vertex colour -> defaultColor -----
-    col = None
-    tex = _vox_read_image(self.textureFile)
-    if tex is not None:
-        uvv = _vox_vertex_uvs(src, pts.shape[0])
-        if uvv is not None:
-            col = _vox_sample_texture(tex, (uvv[corner] * w[:, :, None]).sum(1))
-    if col is None:
-        vcol = getattr(src, "colors", None)
-        vcol = None if vcol is None else np.asarray(vcol, dtype=np.float64)
-        if vcol is not None and vcol.shape[0] == pts.shape[0]:
-            col = (vcol[corner] * w[:, :, None]).sum(1)[:, :3]
-    if col is None:
-        base_col = np.asarray(self.defaultColor, dtype=np.float64).reshape(1, -1)
-        col = np.repeat(base_col[:, :3], m, axis=0)
-
-    points, counts, indices = _vox_cubes(centers, 0.5 * vsize)
-    # Per-vertex colours (no color_indices): 8 verts per cube all share its
-    # colour, which is 1/3 the MColor churn of the per-face-vertex form.
-    self.outMesh = Mesh(points=points, counts=counts, indices=indices,
-                        colors=np.repeat(col, 8, axis=0))
+# --- cubes -----------------------------------------------------------------
+points = _vox_cube_points(centers, h)
+counts = np.full(6 * m, 4, dtype=np.int64)
+indices = _vox_cube_indices(m)
+self.outMesh = Mesh(points=points, counts=counts, indices=indices,
+                    colors=np.repeat(col, 8, axis=0))
 '''
 
 VOXELIZE_METHODS = VANILLA_SETUP_ERROR + VANILLA_MESHES + '''
@@ -3626,20 +3888,24 @@ VOXELIZE_DESC = (
     "Rebuilds a mesh as a hollow **voxel shell** (an `mPyMesh`) on `outMesh`, "
     "one cube per occupied cell. Use it for a chunky, blocky version of a "
     "model that stays live. The cubes are **not** welded.\n\n"
-    "Occupancy is found by **closest point**, not by binning the source "
-    "geometry, so the result does not depend on how finely the source happens "
-    "to be tessellated -- a two-triangle wall voxelizes as solidly as a dense "
+    "Occupancy is **exact**: every triangle is rasterised into the lattice, so "
+    "a cell is filled if and only if the surface passes through it, and the "
+    "result does not depend on how finely the source happens to be "
+    "tessellated -- a two-triangle wall voxelizes as solidly as a dense "
     "mesh:\n\n"
     "1. Lay a **world-anchored** lattice over the source bounding box. Cell "
     "`i` spans `[i*voxelSize, (i+1)*voxelSize)`, so a cube **corner** sits "
     "exactly on the origin. Because the lattice is fixed in world space and "
     "not tied to the mesh's own minimum, the voxels do not swim when the "
     "source moves or deforms.\n"
-    "2. Build the dense 3D cloud of every cell **centre** in that box and ask "
-    "the mesh for the closest surface point to each.\n"
-    "3. Snap each returned sample to the cell containing it and drop the "
-    "duplicates, keeping the sample **closest to its own grid point**. Those "
-    "cells are the voxels, and each winner supplies its cube's colour.\n\n"
+    "2. For every triangle, enumerate the cells its bounding box touches and "
+    "keep the ones its cube really overlaps (a separating-axis test, plane "
+    "first, then the nine edge axes). The kept cells are the voxels -- the "
+    "conservative shell -- and the work grows with the surface area in "
+    "cells, not with the volume of the bounding box.\n"
+    "3. One winner per cell: the pair whose closest point on its triangle is "
+    "nearest the cell centre. That surface point supplies the cube's "
+    "colour.\n\n"
     "Colour resolves down a chain, and each link is a *fallback*, never an "
     "error:\n\n"
     "1. **`textureFile`** sampled bilinearly at the UV of the exact closest "
@@ -3657,14 +3923,16 @@ VOXELIZE_DESC = (
     "the chain. `setup` also switches **`displayColors`** on for the render "
     "mesh it builds, since a new mesh does not draw its colour set until you "
     "do.\n\n"
-    "Attributes are interpolated with the hit triangle's barycentric weights, "
-    "so the lookup sits on the true closest point rather than on a nearby "
+    "Attributes are interpolated with the winning triangle's barycentric "
+    "weights, so the lookup sits on a true surface point rather than on a nearby "
     "sample. UVs are collapsed to one per vertex first, so on a UV seam one "
     "of the several is kept -- invisible at voxel resolution.\n\n"
-    "`maxVoxels` is a safety brake, and it is checked on the **grid** before "
-    "a single query runs. The sweep is cubic in `1/voxelSize`, so halving "
-    "`voxelSize` costs eight times as much; the brake aborts immediately with "
-    "the real count rather than stalling Maya. Set it to 0 to disable.\n\n"
+    "`maxVoxels` is a safety brake on an **upper bound** of the voxel count "
+    "(the smaller of the grid-cell count and the number of triangle/cell "
+    "candidate pairs), checked before any heavy work, so an over-fine "
+    "`voxelSize` aborts immediately rather than stalling Maya. Halving "
+    "`voxelSize` costs roughly four times as much. Set it to 0 to "
+    "disable.\n\n"
     "**Create + Run demo** voxelizes the shipped head (`head.ma`, the Mesh "
     "Regions face, jaw-drop and all). Scrub the timeline and the shell "
     "re-voxelizes the moving jaw; drag `voxelSize` and watch it rebuild live."
@@ -3681,11 +3949,11 @@ def build_voxelize_mesh():
     # the one knob that matters (voxelSize), then the safety brake and the
     # colour chain.
     n.add_input_attr("inMesh", "mesh")
-    n.add_input_attr("voxelSize", "double", default_value=0.25,
+    n.add_input_attr("voxelSize", "double", default_value=0.2,
                      min_value=0.0)
-    n.add_input_attr("maxVoxels", "int", default_value=20000, min_value=0)
+    n.add_input_attr("maxVoxels", "int", default_value=500000, min_value=0)
     n.add_input_attr("textureFile", "string")
-    n.add_input_attr("defaultColor", "color")
+    n.add_input_attr("defaultColor", "color", default_value=(0.3, 0.3, 0.3))
     n.set_init_expression(VOXELIZE_INIT)
     n.set_compute_expression(VOXELIZE_COMPUTE)
     n.set_methods_source(VOXELIZE_METHODS)
@@ -4247,8 +4515,6 @@ IK_COMPUTE = r'''# 2-bone analytic IK (law of cosines) producing per-joint WORLD
 # NOTE: this minimal solver's bend plane comes from the pole vector if present,
 # else the rest knee direction (stable, avoids knee-pop). Add a dedicated pole
 # input + reference axis for production rigs.
-import math
-import numpy as np
 
 joints = self.joints
 if len(joints) >= 3:
@@ -9111,7 +9377,6 @@ DNET_COMPUTE = r'''# DNET spring-network relaxation -- the source dnet .mpn's Co
 # network whose arrays are already full (the .mpn's own scenes) this is a no-op and
 # the Solver sees exactly what it did there.
 
-import numpy as np
 
 # `previous` is the solver carry-over state. In the source .mpn it is a persistent
 # stored var (returns None until first solved); as a vanilla template it starts as
@@ -11090,7 +11355,6 @@ NURBS_CURVE_COMPUTE = r'''# Procedural HELIX generator. Builds the (N, 3) CV pos
 # the coil so it animates on playback. NurbsCurve marshals the CVs ->
 # kNurbsCurveData; the native compile reproduces that build step, so this lowers
 # to pure C++.
-import numpy as np
 n = 120
 u = np.linspace(0.0, 1.0, n)
 ang = u * self.turns * 2.0 * np.pi + self.t * 0.05
@@ -11296,7 +11560,6 @@ NURBS_SURF_COMPUTE = r'''# Procedural RIPPLE SURFACE generator. Builds an 8x8 CV
 # the ripple phase so it animates on playback. Hands the flat (nu*nv, 3) CV form
 # to the NurbsSurface constructor with num_u/num_v (row-major). LOWERS to pure
 # C++ (emit_geo).
-import numpy as np
 nu = 8
 nv = 8
 u = np.linspace(0.0, self.size, nu)
@@ -11495,7 +11758,6 @@ GF_NURBS_COMPUTE = r'''# NURBS wave deformer: push each CV along X (the default 
 # cvPositions()/setCVPositions() (mPyDeformer also accepts mesh
 # getPoints/setPoints). `time` (auto-wired to the timeline) animates the wave;
 # `envelope` (0..1) blends it against rest.
-import numpy as np
 h = self.outputGeometry[0]
 rest = h.cvPositions()                 # (N, 3) object-space CVs (numpy)
 env = float(self.envelope)
@@ -13983,6 +14245,7 @@ DISK_MESH_CACHE_INIT = r'''# Nothing to set up. Every array this node needs come
 import numpy as np
 
 from mpynode import ndio
+from mpynode._api2.geometry import Mesh
 '''
 
 DISK_MESH_CACHE_COMPUTE = r'''# Play a cached deforming mesh straight off disk.
@@ -14001,10 +14264,7 @@ DISK_MESH_CACHE_COMPUTE = r'''# Play a cached deforming mesh straight off disk.
 # A missing or malformed file yields EMPTY arrays rather than an exception,
 # which is why the `n < 1` guard below is the only error handling needed: the
 # node shows no geometry instead of going into an error state.
-import numpy as np
 
-from mpynode import ndio
-from mpynode._api2.geometry import Mesh
 
 frames = ndio.read(self.cachePath, "points")
 counts = ndio.read(self.cachePath, "counts", dtype=np.int64)
@@ -14218,6 +14478,7 @@ JSON_MESH_READER_INIT = r'''# Nothing to set up. Every array this node needs com
 import numpy as np
 
 from mpynode import ndio
+from mpynode._api2.geometry import Mesh
 '''
 
 JSON_MESH_READER_COMPUTE = r'''# Stream a mesh off disk, ONE JSON FILE PER FRAME -- and compile.
@@ -14237,10 +14498,7 @@ JSON_MESH_READER_COMPUTE = r'''# Stream a mesh off disk, ONE JSON FILE PER FRAME
 # implementations, so re-evaluating a frame already in hand does no file IO. A
 # missing or malformed file yields EMPTY arrays instead of raising, which is why
 # the guard below is the only error handling this node needs.
-import numpy as np
 
-from mpynode import ndio
-from mpynode._api2.geometry import Mesh
 
 resolved = ndio.frame_path(self.path, self.frame)
 
@@ -14971,8 +15229,6 @@ MAZE_COMPUTE = '''# Build a maze on the incoming mesh and output its WALLS as ge
 # fragment the dual on real geometry, and a bare patch is a far better answer
 # than a red node. Bad `start` / `end` indices, degenerate faces and
 # non-manifold edges degrade the same way. Nothing here ever raises.
-import numpy as np
-from mpynode._api2.geometry import Mesh
 
 src = getattr(self, "inMesh", None)
 pts = None if src is None else getattr(src, "points", None)
