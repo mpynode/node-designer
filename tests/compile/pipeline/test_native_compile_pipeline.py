@@ -1734,23 +1734,38 @@ class TestMeshClosestPointGuidance(unittest.TestCase):
         self.assertNotIn("CLOSEST POINT ON A MESH", guide)
 
 
-class TestVoxelizeTemplateSeesItsClosestPointQuery(unittest.TestCase):
-    """End-to-end on the node that motivated this: the shipped voxelize
-    template's whole algorithm is an MMeshIntersector sweep, and it does not
-    lower, so it goes to the AI porter. Its portability report used to name only
-    the image read -- the query itself was invisible."""
+class TestClosestPointSweepTemplateIsSeen(unittest.TestCase):
+    """End-to-end on a template-shaped payload whose whole algorithm is an
+    MMeshIntersector sweep -- the shape the shipped voxelize template had until
+    it moved to triangle rasterisation. Such a node does not lower, so it goes
+    to the AI porter, and its portability report used to name only the image
+    read: the query itself was invisible. The shipped template's attribute set
+    is borrowed so the adapter sees a realistic node; only the sources are the
+    sweep."""
+
+    _SWEEP_INIT = (
+        "import numpy as np\n"
+        "import maya.api.OpenMaya as om\n"
+        "from mpynode._api2.geometry import Mesh\n")
+    _SWEEP_COMPUTE = (
+        "isect = om.MMeshIntersector()\n"
+        "isect.create(self.inMesh.to_mobject())\n"
+        "hit = isect.getClosestPoint(om.MPoint(0.0, 0.0, 0.0))\n"
+        "self.outMesh = Mesh()\n")
 
     def _spec(self):
         import os
         from mpynode._common.io import mpn_io
         from mpynode.native.spec import mpn_spec_adapter
 
-        path = os.path.join(os.environ["MPYNODE_ROOT"], "templates", 
+        path = os.path.join(os.environ["MPYNODE_ROOT"], "templates",
                             "MPyMesh", "Voxelize", "template.mpn")
         if not os.path.isfile(path):
             self.skipTest("voxelize template not installed: %s" % path)
-        return mpn_spec_adapter.spec_from_mpn_payload(
-            mpn_io.load_mpn(path, trusted=True))
+        payload = dict(mpn_io.load_mpn(path, trusted=True))
+        payload["init_source"] = self._SWEEP_INIT
+        payload["expression"] = self._SWEEP_COMPUTE
+        return mpn_spec_adapter.spec_from_mpn_payload(payload)
 
     def test_report_names_the_query_and_the_spec_carries_the_flag(self):
         spec = self._spec()

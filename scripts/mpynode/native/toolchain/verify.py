@@ -33,6 +33,27 @@ _MAYA_DEFAULT = toolchain.preferred_maya_dir()
 # ---------------------------------------------------------------------------
 
 
+def _load_python_plugins(cmds):
+    """Register the mpynode Python node types (``mpynode_api1`` /
+    ``mpynode_api2``) in this Maya session, quietly and idempotently.
+
+    The per-family parity checks rebuild the Python ORIGINAL with
+    ``createNode(<mPy type>)`` -- mPyMesh, mPyDeformer, mPyIkSolver, ... -- and
+    in the Node Designer those types are always registered. The headless build
+    worker only initialises ``maya.standalone``, so there the type was unknown
+    and every such family reported "verify could not run" ('NoneType' has no
+    add_input_attr / Unable to create dependency node) while only the families
+    that create their twin through a wrapper (which loads the plug-in itself)
+    ever ran the generic check. Never raises: a load failure surfaces as the
+    same per-node verify reason it always did."""
+    for p in ("mpynode_api1", "mpynode_api2"):
+        try:
+            if not cmds.pluginInfo(p, q=True, loaded=True):
+                cmds.loadPlugin(p, quiet=True)
+        except Exception:
+            pass
+
+
 def _default_verify(bundle_path, rows, maya=_MAYA_DEFAULT,
                     run_authored_tests=True):
     """Load the bundle and parity-check each surviving node vs its Python original.
@@ -64,6 +85,8 @@ def _default_verify(bundle_path, rows, maya=_MAYA_DEFAULT,
             }
         return out
 
+    # The Python originals need their node types registered (see the helper).
+    _load_python_plugins(cmds)
     base = os.path.basename(bundle_path)
     try:
         if not cmds.pluginInfo(base, q=True, loaded=True):
@@ -1257,11 +1280,28 @@ def _metaclay_scene(res):
     return ops
 
 
+def _voxelize_scene(res):
+    """A representative voxelizer workload on the seeded bench sphere (radius
+    1): a cell size of ``1/res`` puts ``2*res`` cells across the sphere, and the
+    brake sits far above any count this scene can reach. Without this the
+    generic seeder hands the node a random cell size and a random ``maxVoxels``
+    (it drew 0.002 and 2), the brake fires on every tick, the output is empty
+    and the node is recorded as unmeasurable. The brake is a large number rather
+    than 0 (off) because the per-tick perturbation nudges every scalar input,
+    and a nudge off 0 lands on a cap of one or two voxels -- the same empty
+    output by another route."""
+    return [
+        {"plug": "voxelSize", "value": 1.0 / float(max(4, int(res))), "hold": True},
+        {"plug": "maxVoxels", "value": 50000000, "hold": True},
+    ]
+
+
 # Representative scenes, keyed by the TEMPLATE type name a compiled type name
 # starts with (metaballs -> metaballsSw); see builtin_scene_key.
 BUILTIN_SCENES = {
     "metaClay": _metaclay_scene,
     "metaballs": _metaclay_scene,
+    "voxelizeMesh": _voxelize_scene,
 }
 
 
@@ -1278,6 +1318,18 @@ def builtin_scene_key(node_type, table=None):
 def builtin_scene_ops(node_type, res):
     key = builtin_scene_key(node_type)
     return BUILTIN_SCENES[key](res) if key else None
+
+
+def scene_hold(ops):
+    """The inputs a representative scene marks ``"hold": True``: its own
+    settings (a cell size, a brake) that the per-tick perturbation must leave
+    alone, because moving them rewrites the workload instead of animating it.
+    Returns the base attribute names, multi index stripped."""
+    out = set()
+    for op in ops or []:
+        if op.get("hold"):
+            out.add(str(op.get("plug", "")).partition("[")[0])
+    return frozenset(out)
 
 
 def apply_scene_ops(cmds, node, ops):
@@ -1625,7 +1677,7 @@ def _geo_mover(cmds, plug, geo_type):
     return fn, comp
 
 
-def bench_perturb_fn(cmds, node, spec):
+def bench_perturb_fn(cmds, node, spec, hold=()):
     """A cheap callable that moves the node's ANIMATED inputs between benchmark
     ticks, or ``None`` when there is nothing to move.
 
@@ -1664,7 +1716,10 @@ def bench_perturb_fn(cmds, node, spec):
             continue
         t = meta.get("type")
         is_arr = bool(meta.get("is_array"))
-        if _is_static_input_name(attr):
+        # A rest/bind-style name, or a plug the representative scene holds
+        # (see scene_hold): the workload's own setting, not something that
+        # animates between ticks.
+        if _is_static_input_name(attr) or attr in hold:
             continue
         plug = ("%s.%s[0]" % (node, attr)) if is_arr else ("%s.%s" % (node, attr))
         if t in numeric:
@@ -3577,12 +3632,7 @@ def _verify_worker_run(payload, init_maya=True, verify_impl=None):
             pass
         try:
             import maya.cmds as _cmds
-            for p in ("mpynode_api1", "mpynode_api2"):
-                try:
-                    if not _cmds.pluginInfo(p, q=True, loaded=True):
-                        _cmds.loadPlugin(p, quiet=True)
-                except Exception:
-                    pass
+            _load_python_plugins(_cmds)
         except Exception:
             pass
     impl = verify_impl or _default_verify

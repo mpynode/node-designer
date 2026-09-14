@@ -724,7 +724,11 @@ def make_cli_agent_fn(cwd, cancel_event=None, log_cb=None, timeout=None):
         # FAILS ("sandbox_apply: Operation not permitted") when the compile is
         # already inside another sandbox -- sandboxes do not nest. Opt-in escape
         # hatch, default OFF: Node Designer launched from Maya is not nested.
-        if _truthy(os.environ.get("MPYNODE_OPT_AGENT_NO_SANDBOX")):
+        # The flag exists only in the macOS CLI; the Windows CLI rejects it
+        # ("unknown option") and every optimize round dies before it starts,
+        # so it is only ever passed on macOS.
+        if (_truthy(os.environ.get("MPYNODE_OPT_AGENT_NO_SANDBOX"))
+                and sys.platform == "darwin"):
             cmd.append("--dangerously-disable-osx-sandbox")
         if _porter_orchestrate():
             # The optimizer's OWN directive -- see _OPT_ULTRACODE_DIRECTIVE for

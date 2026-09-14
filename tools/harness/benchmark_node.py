@@ -435,7 +435,8 @@ def _make_copies(args, mc, om, spec, ops, pulls, node, result):
         all_plugs.extend(pl)
         if args.spec:
             try:
-                perturbs.append(_verify.bench_perturb_fn(mc, nd, spec))
+                perturbs.append(_verify.bench_perturb_fn(
+                    mc, nd, spec, hold=_verify.scene_hold(ops)))
             except Exception:
                 pass
     result["copy_nodes"] = list(nodes)
@@ -643,7 +644,8 @@ def main():
         _perturb = None
         if args.spec:
             try:
-                _perturb = _verify.bench_perturb_fn(mc, node, spec)
+                _perturb = _verify.bench_perturb_fn(
+                    mc, node, spec, hold=_verify.scene_hold(ops))
             except Exception:
                 _perturb = None
         result["perturbed"] = _perturb is not None
