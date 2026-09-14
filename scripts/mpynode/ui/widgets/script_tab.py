@@ -8,14 +8,10 @@ zoom).
 
 from __future__ import annotations
 
-import os
-
 from mpynode._base.commands import _SetExpressionCommand, run_undoable
 from mpynode.ui.qt_wrapper import (
-    QColor,
     QMessageBox,
     QPainter,
-    QPixmap,
     Qt,
     QTabBar,
     QTabWidget,
@@ -24,7 +20,7 @@ from mpynode.ui.qt_wrapper import (
     QWidget,
     Signal,
 )
-from mpynode.ui.widgets.icons import icon_path
+from mpynode.ui.widgets.logo_relief import paint_relief
 from mpynode.ui.widgets.script_editor import NDScriptEditor
 from mpynode.ui.widgets.tall_tab_bar import taller
 
@@ -262,12 +258,6 @@ class NDScriptTabWidget(QTabWidget):
 
     DIRTY_MARKER = " *"
 
-    # Embossed background watermark (shown only when no tabs are open).
-    _WATERMARK_ICON          = "mpynode_hr.png"
-    _WATERMARK_SCALE         = 0.55  # fraction of the empty area's shorter side
-    _WATERMARK_HILIGHT_ALPHA = 0.05
-    _WATERMARK_SHADOW_ALPHA  = 0.06
-
     def __init__(self, parent=None):
         super().__init__(parent)
         # NDEditorTabBar gives a reliable close button on a movable bar.
@@ -277,8 +267,6 @@ class NDScriptTabWidget(QTabWidget):
         self.setTabsClosable(True)
         self.tabCloseRequested.connect(self._on_tab_close_requested)
         self.currentChanged.connect(self._on_current_changed)
-        self._wm_base:  QPixmap | None = None
-        self._wm_cache: dict[int, tuple[QPixmap, QPixmap]] = {}
         # CALLBACK_MANAGER tokens for the before-duplicate hook below.
         self._scene_cb_tokens: list = []
         self._attachSceneCallbacks()
@@ -355,70 +343,19 @@ class NDScriptTabWidget(QTabWidget):
         return self.saveAllTabs(quiet=True)
 
     # ------------------------------------------------------------------
-    # Empty-state watermark (subtle embossed mPyNode logo)
+    # Empty-state relief (the embossed mPyNode logo)
     # ------------------------------------------------------------------
-
-    def _watermark_base(self) -> QPixmap:
-        """Load (once) the source logo pixmap, or an empty pixmap if absent."""
-        if self._wm_base is None:
-            path          = icon_path(self._WATERMARK_ICON)
-            self._wm_base = QPixmap(path) if os.path.exists(path) else QPixmap()
-        return self._wm_base
-
-    @staticmethod
-    def _tint(pix: QPixmap, color: QColor) -> QPixmap:
-        """Return a solid-color silhouette of ``pix`` (keeps its alpha shape)."""
-        out = QPixmap(pix.size())
-        out.fill(Qt.transparent)
-        p = QPainter(out)
-        try:
-            p.drawPixmap(0, 0, pix)
-            p.setCompositionMode(QPainter.CompositionMode_SourceIn)
-            p.fillRect(out.rect(), color)
-        finally:
-            p.end()
-        return out
-
-    def _watermark_layers(self, side: int) -> tuple[QPixmap, QPixmap] | None:
-        """Return (light, dark) scaled silhouettes for the emboss, cached
-        per target size."""
-        base = self._watermark_base()
-        if base.isNull() or side <= 0:
-            return None
-        cached = self._wm_cache.get(side)
-        if cached is None:
-            scaled = base.scaled(
-                side, side, Qt.KeepAspectRatio, Qt.SmoothTransformation
-            )
-            cached = (
-                self._tint(scaled, QColor(255, 255, 255)),
-                self._tint(scaled, QColor(0, 0, 0)),
-            )
-            self._wm_cache[side] = cached
-        return cached
 
     def paintEvent(self, event):
         super().paintEvent(event)
-        # Only when the editor area is empty (no node open).
+        # Only when the editor area is empty (no node open). The template
+        # gallery paints the same relief for a row without a preview; both
+        # go through logo_relief.paint_relief, so they cannot drift apart.
         if self.count() > 0:
             return
-        area   = self.rect()
-        side   = int(min(area.width(), area.height()) * self._WATERMARK_SCALE)
-        layers = self._watermark_layers(side)
-        if layers is None:
-            return
-        light, dark = layers
-        cx = area.center().x() - light.width() // 2
-        cy = area.center().y() - light.height() // 2
-        # Two offset silhouettes read as a relief pressed into the panel gray.
-        d = max(1, side // 180)
         p = QPainter(self)
         try:
-            p.setRenderHint(QPainter.SmoothPixmapTransform, True)
-            p.setOpacity(self._WATERMARK_SHADOW_ALPHA)
-            p.drawPixmap(cx + d, cy + d, dark)
-            p.setOpacity(self._WATERMARK_HILIGHT_ALPHA)
-            p.drawPixmap(cx - d, cy - d, light)
+            paint_relief(p, self.rect())
         finally:
             p.end()
 

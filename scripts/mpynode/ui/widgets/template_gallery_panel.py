@@ -31,7 +31,6 @@ from mpynode.ui.qt_wrapper import (
     HAS_QT_MULTIMEDIA,
     QColor,
     QDesktopServices,
-    QFont,
     QLabel,
     QLineEdit,
     QMenu,
@@ -53,7 +52,7 @@ from mpynode.ui.qt_wrapper import (
     QWidget,
     start_video_preview,
 )
-from mpynode.ui.widgets.icons import icon_path
+from mpynode.ui.widgets.logo_relief import paint_relief, relief_layers
 
 def _coerce_int_list(value, n):
     """Return ``value`` as a list of exactly ``n`` ints, or None if it is not a
@@ -77,14 +76,6 @@ _ENTRY_ROLE = Qt.UserRole + 1
 # cramped. Same idiom as the outline pane's script_navigator._row_height().
 _ROW_PAD = 6
 
-_NO_PREVIEW_ICON = "mpynode_hr.png"
-_NO_PREVIEW_TEXT = "no preview"
-_NO_PREVIEW_COLOR = (150, 150, 150)  # soft gray
-# No-preview watermark; mirrors the empty-state relief in script_tab.py.
-_NO_PREVIEW_SCALE = 0.55
-_NO_PREVIEW_HILITE_ALPHA = 0.05
-_NO_PREVIEW_SHADOW_ALPHA = 0.06
-
 # Splitter separator: inset from the ends, so the divider reads as a divider.
 _SEPARATOR_COLOR = (90, 90, 90)
 _SEPARATOR_INSET = 24
@@ -92,8 +83,11 @@ _SEPARATOR_INSET = 24
 
 class _PreviewLabel(QLabel):
     """Preview that re-fits its image/gif on every resize (so it tracks the
-    splitter divider), and renders a branded 'no preview' frame when a
-    template ships no preview file."""
+    splitter divider). A row that ships no preview file gets the empty
+    script editor's relief instead -- the embossed mPyNode logo, painted by
+    the very same ``logo_relief.paint_relief`` -- with the row's ``label``
+    (a node class such as ``MPyLocator``) set quietly beneath it, or the
+    bare logo when no label is given."""
 
     def __init__(self, parent=None):
         super(_PreviewLabel, self).__init__(parent)
@@ -102,13 +96,13 @@ class _PreviewLabel(QLabel):
         self._mode = None      # None | "image" | "movie" | "none"
         self._source = None    # original QPixmap (image mode)
         self._movie = None     # QMovie (movie mode) + GC ref
-        self._icon_src = None  # cached no-preview icon
-        self._wm_cache = {}    # cached emboss layers, keyed by side
+        self._label = None     # caption under the logo (none mode)
 
     def clear_preview(self):
         self._stop_movie()
         self._mode = None
         self._source = None
+        self._label = None
         self.clear()
 
     def show_image(self, pixmap):
@@ -123,9 +117,11 @@ class _PreviewLabel(QLabel):
         movie.start()
         self._render()
 
-    def show_no_preview(self):
+    def show_no_preview(self, label=None):
+        """Draw the logo relief, captioned beneath with ``label`` when given."""
         self._stop_movie()
         self._mode, self._source = "none", None
+        self._label = (str(label).strip() or None) if label else None
         self._render()
 
     def resizeEvent(self, event):
@@ -165,36 +161,10 @@ class _PreviewLabel(QLabel):
         except Exception:
             return None
 
-    def _tint(self, pix, color):
-        # Solid-color silhouette of ``pix`` keeping its alpha shape.
-        out = QPixmap(pix.size())
-        out.fill(Qt.transparent)
-        p = QPainter(out)
-        try:
-            p.drawPixmap(0, 0, pix)
-            p.setCompositionMode(QPainter.CompositionMode_SourceIn)
-            p.fillRect(out.rect(), color)
-        finally:
-            p.end()
-        return out
-
     def _watermark_layers(self, side):
-        # (light, dark) scaled silhouettes for the emboss, cached per size.
-        if self._icon_src is None:
-            p = icon_path(_NO_PREVIEW_ICON)
-            self._icon_src = QPixmap(p) if os.path.exists(p) else QPixmap()
-        if self._icon_src.isNull() or side <= 0:
-            return None
-        cached = self._wm_cache.get(side)
-        if cached is None:
-            scaled = self._icon_src.scaled(
-                side, side, Qt.KeepAspectRatio, Qt.SmoothTransformation)
-            cached = (
-                self._tint(scaled, QColor(255, 255, 255)),
-                self._tint(scaled, QColor(0, 0, 0)),
-            )
-            self._wm_cache[side] = cached
-        return cached
+        # (light, dark) silhouettes of the logo at ``side`` px, from the
+        # cache logo_relief shares with the script editor.
+        return relief_layers(side)
 
     def _no_preview_pixmap(self, size):
         if size.width() <= 0 or size.height() <= 0:
@@ -203,25 +173,12 @@ class _PreviewLabel(QLabel):
         canvas.fill(Qt.transparent)
         painter = QPainter(canvas)
         try:
-            # Embossed logo: highlight up-left, shadow down-right.
-            side = int(min(size.width(), size.height()) * _NO_PREVIEW_SCALE)
-            layers = self._watermark_layers(side)
-            if layers is not None:
-                light, dark = layers
-                cx = (size.width() - light.width()) // 2
-                cy = (size.height() - light.height()) // 2
-                d = max(1, side // 180)
-                painter.setRenderHint(QPainter.SmoothPixmapTransform, True)
-                painter.setOpacity(_NO_PREVIEW_SHADOW_ALPHA)
-                painter.drawPixmap(cx + d, cy + d, dark)
-                painter.setOpacity(_NO_PREVIEW_HILITE_ALPHA)
-                painter.drawPixmap(cx - d, cy - d, light)
-                painter.setOpacity(1.0)
-            painter.setPen(QColor(*_NO_PREVIEW_COLOR))
-            font = QFont()
-            font.setPixelSize(max(12, int(size.height() * 0.08)))
-            painter.setFont(font)
-            painter.drawText(canvas.rect(), Qt.AlignCenter, _NO_PREVIEW_TEXT)
+            # The editor's empty-state relief on a transparent canvas, so
+            # the panel shows through exactly as it does behind the script
+            # area; the caption sits beneath the logo, never across it.
+            paint_relief(
+                painter, canvas.rect(), caption=self._label,
+                caption_color=self.palette().color(QPalette.WindowText))
         finally:
             painter.end()
         return canvas
@@ -656,9 +613,11 @@ class NDTemplateGalleryPanel(QWidget):
                 if not pix.isNull():
                     self.preview_label.show_image(pix)
                     shown = True
-        # Buildable nodes only: a description-only category stays image-blank.
-        if not shown and native_type is not None:
-            self.preview_label.show_no_preview()
+        # No preview file: the logo relief stands in, captioned with the node
+        # class -- a category's own name, or the category a template sits in.
+        # A pure container with no landing page at all stayed blank above.
+        if not shown and (native_type is not None or dp):
+            self.preview_label.show_no_preview(self._placeholder_word(entry))
 
         # Description.
         if dp:
@@ -686,6 +645,31 @@ class NDTemplateGalleryPanel(QWidget):
                 if meta.get("version"):
                     bits.append("v%s" % meta["version"])
             self.meta_label.setText("  •  ".join(str(b) for b in bits))
+
+    def _placeholder_word(self, entry):
+        """The caption drawn over the logo when ``entry`` has no preview image.
+
+        A category is captioned with its own name (the folder is the node
+        class: ``MPyLocator``). A template is captioned with the category it
+        sits in, so every template of a class shares one word; a template
+        directly under a search root has no such category and falls back to
+        its native type. ``None`` when nothing sensible is known, which leaves
+        the relief bare, exactly as the empty script editor shows it."""
+        native_type = getattr(entry, "native_type", None)
+        label = getattr(entry, "label", None)
+        if native_type is None:
+            return label or None
+        item = self.tree.currentItem()
+        parent = item.parent() if item is not None else None
+        # ``parent.parent() is None`` means ``parent`` is a search ROOT row
+        # ("templates"), which is a location, not a node class.
+        if parent is not None and parent.parent() is not None:
+            node = parent.data(0, _ENTRY_ROLE)
+            if getattr(node, "native_type", None) is None:
+                cat = getattr(node, "label", None)
+                if cat:
+                    return cat
+        return native_type
 
     def _style_description(self):
         """Restyle the just-loaded description.
