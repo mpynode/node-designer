@@ -291,5 +291,222 @@ class TestPorterRecipeVersionBumped(unittest.TestCase):
                             "entries miss and rebuild")
 
 
+class TestGeoScalarOutputGate(unittest.TestCase):
+    """Scalar OUTPUT attrs on a geometry GENERATOR (Mesh Maze's int
+    ``solutionSteps`` was the first). Until 2026-09-14 ``emit_geo`` read the
+    spec's INPUTS only and silently dropped every output: ``_check`` does not
+    reject them for the geometry families, so the node compiled with the plug
+    simply missing, the porter honestly wrote ND_PORT_INCOMPLETE and the authored
+    test died on ``No object matches name: meshMaze1.solutionSteps``. Same shape
+    as the locator input gate above: represent it fully, or fail LOUD."""
+
+    _INT_OUT = {"solutionSteps": {"type": "int", "is_array": False,
+                                  "default_value": 0}}
+
+    def _spec(self, outputs, inputs=None):
+        spec = _geo_spec(inputs or {"start": {"type": "int", "is_array": False}})
+        spec["outputs"] = outputs
+        return spec
+
+    def test_scalar_output_is_declared_created_wired_and_handled(self):
+        from mpynode.native import compiler as codegen
+        cpp = codegen.generate_cpp(self._spec(self._INT_OUT), for_port=True)
+        for needle in (
+            "static MObject aSolutionSteps;",
+            "MObject Geo1::aSolutionSteps;",
+            'aSolutionSteps = nAttr.create("solutionSteps", "solutionSteps", '
+            "MFnNumericData::kInt, 0);",
+            "addAttribute(aSolutionSteps);",
+            "attributeAffects(aStart, aSolutionSteps);",
+            "MDataHandle h_aSolutionSteps = data.outputValue(aSolutionSteps);",
+            "h_aSolutionSteps.setInt(<int>)",       # the porter's setter hint
+            "h_aSolutionSteps.setClean();",
+        ):
+            self.assertIn(needle, cpp, needle)
+
+    def test_compute_gate_also_answers_the_scalar_plug(self):
+        from mpynode.native import compiler as codegen
+        cpp = codegen.generate_cpp(self._spec(self._INT_OUT))
+        self.assertIn("if (plug != aOutMesh && plug != aSolutionSteps) "
+                      "return MS::kUnknownParameter;", cpp)
+
+    def test_handle_is_declared_before_the_port_region_and_cleaned_after(self):
+        from mpynode.native import compiler as codegen
+        from mpynode.native.compiler.spec_model import PORT_BEGIN, PORT_END
+        cpp = codegen.generate_cpp(self._spec(self._INT_OUT), for_port=True)
+        i_handle = cpp.index("MDataHandle h_aSolutionSteps")
+        i_begin, i_end = cpp.index(PORT_BEGIN), cpp.index(PORT_END)
+        i_clean = cpp.index("h_aSolutionSteps.setClean();")
+        self.assertLess(i_handle, i_begin, "handle must exist before the ported body")
+        self.assertLess(i_end, i_clean, "setClean must follow the ported body")
+
+    def test_no_outputs_emits_no_output_machinery(self):
+        # The 36 generators without a scalar output must stay byte-identical;
+        # this pins the no-output shape the freshness suite then measures.
+        from mpynode.native import compiler as codegen
+        cpp = codegen.generate_cpp(self._spec({}))
+        self.assertNotIn("MDataHandle h_", cpp)
+        self.assertNotIn("scalar output handles", cpp)
+        self.assertIn("if (plug != aOutMesh) return MS::kUnknownParameter;", cpp)
+        self.assertEqual(cpp.count("attributeAffects("), 1)   # aStart -> aOutMesh
+
+    def test_compound_hex_and_array_outputs_are_rejected_loudly(self):
+        from mpynode.native import compiler as codegen
+        for plug, meta in (("tint", {"type": "color", "is_array": False}),
+                           ("blob", {"type": "hex", "is_array": False}),
+                           ("many", {"type": "double", "is_array": True})):
+            with self.assertRaises(codegen.UnsupportedSpec) as cm:
+                codegen.generate_cpp(self._spec({plug: meta}))
+            self.assertIn(plug, str(cm.exception), plug)
+
+    def test_geo_prompt_names_the_scalar_outputs(self):
+        from mpynode.native.ai import prompt
+        plain = prompt._geo_system("mesh")
+        self.assertNotIn("scalar OUTPUT", plain)
+        rich = prompt._geo_system(
+            "mesh", [("solutionSteps", "h_aSolutionSteps.setInt(<int>)")])
+        self.assertIn("- self.solutionSteps -> h_aSolutionSteps.setInt(<int>)", rich)
+        self.assertIn("never emit ND_PORT_INCOMPLETE", rich)
+
+
+class TestColorInputDefault(unittest.TestCase):
+    """A colour INPUT's recorded default must reach the compiled node.
+
+    ``nAttr.createColor`` takes no default and ``_create_lines`` never set one,
+    so every compiled colour input came up black where the Python node carried
+    its ``default_value``. Mesh Maze's authored test asserts on exactly those
+    defaults and read (0,0,0) off the compiled node while the Python passed;
+    Voxelize's defaultColor and Mesh Regions' six colours were wrong the same
+    way (measured 2026-09-14). Emitted only for a non-zero default, so a node
+    without one stays byte-identical -- the same silent-drop shape as the gates
+    above, caught by a test that happened to assert on a default."""
+
+    def test_non_zero_default_is_set_with_float_literals(self):
+        from mpynode.native import compiler as codegen
+        cpp = codegen.generate_cpp(_geo_spec(
+            {"wallColor": {"type": "color", "is_array": False,
+                           "default_value": [0.2, 0.55, 0.2]}}))
+        self.assertIn('aWallColor = nAttr.createColor("wallColor", "wallColor");', cpp)
+        self.assertIn("nAttr.setDefault(0.2f, 0.55f, 0.2f);", cpp)
+
+    def test_zero_or_absent_default_emits_nothing_extra(self):
+        from mpynode.native import compiler as codegen
+        for meta in ({"type": "color", "is_array": False},
+                     {"type": "color", "is_array": False, "default_value": [0, 0, 0]},
+                     {"type": "color", "is_array": False, "default_value": "junk"}):
+            cpp = codegen.generate_cpp(_geo_spec({"tint": meta}))
+            self.assertNotIn("setDefault(", cpp, repr(meta))
+
+    def test_default_follows_createColor_before_the_flags(self):
+        from mpynode.native import compiler as codegen
+        cpp = codegen.generate_cpp(_geo_spec(
+            {"tint": {"type": "color", "is_array": False,
+                      "default_value": [1.0, 0.9, 0.1]}}))
+        i_create = cpp.index('nAttr.createColor("tint", "tint");')
+        i_default = cpp.index("nAttr.setDefault(1.0f, 0.9f, 0.1f);")
+        i_flag = cpp.index("nAttr.setStorable(true);", i_create)
+        self.assertLess(i_create, i_default)
+        self.assertLess(i_default, i_flag,
+                        "setDefault must apply to the attr just created, before "
+                        "the flag lines that follow it")
+
+    def test_color_output_gets_no_default(self):
+        # An output is computed every evaluation; a default is meaningless there
+        # and must not be emitted even when the spec records one.
+        from mpynode.native import compiler as codegen
+        spec = {
+            "schema_version": 1, "source_node": "n1", "mpy_type": "mPyNode",
+            "suggested": {"node_type_name": "n1", "class_name": "N1",
+                          "type_id": "0x00070125", "mpx_base": "MPxNode",
+                          "note": "", "heaviness": "hard"},
+            "inputs": {"k": {"type": "double", "is_array": False}},
+            "outputs": {"tint": {"type": "color", "is_array": False,
+                                 "default_value": [1.0, 0.0, 0.0]}},
+            "variables": {}, "compute": "self.tint = (self.k, 0.0, 0.0)\n",
+            "init": "", "affects": "all",
+            "portability": {"portable": True, "blockers": []},
+        }
+        cpp = codegen.generate_cpp(spec, for_port=True)
+        self.assertIn('nAttr.createColor("tint", "tint");', cpp)
+        self.assertNotIn("setDefault(", cpp)
+
+
+class TestGeoQuaternionInclude(unittest.TestCase):
+    """A quaternion input on a geometry generator is read through MQuaternion;
+    the geometry include list never carried its header (the generic scaffold
+    gets it from emit_attr._INCLUDES), so the node failed to compile with C2027
+    'use of undefined type MQuaternion'. Compiled-surface audit, 2026-09-14."""
+
+    def test_quaternion_input_pulls_in_the_header(self):
+        from mpynode.native import compiler as codegen
+        cpp = codegen.generate_cpp(_geo_spec(
+            {"q": {"type": "quaternion", "is_array": False}}))
+        self.assertIn("#include <maya/MQuaternion.h>", cpp)
+
+    def test_generator_without_quaternion_is_unchanged(self):
+        from mpynode.native import compiler as codegen
+        cpp = codegen.generate_cpp(_geo_spec(
+            {"start": {"type": "int", "is_array": False}}))
+        self.assertNotIn("MQuaternion.h", cpp)
+
+
+class TestDefaultValueContract(unittest.TestCase):
+    """Which attr types honour a recorded ``default_value`` is a PARITY
+    contract: the compiled node must do exactly what the interpreted node does
+    (``wrappers._mpy_node.add_input_attr``), measured on a live node 2026-09-14:
+
+        honoured : float double int bool enum angle(RADIANS) color(inputs)
+        ignored  : vector euler float2 quaternion string time
+
+    Honouring a default the Python side ignores would make the two nodes
+    disagree on a fresh scene -- exactly what ``time`` did (compiled 2.0 vs
+    Python 0.0). The 'ignored' set is a framework gap the .mpn can still record
+    a value into; until add_input_attr applies them, codegen must not either.
+    Update BOTH sides together if that contract ever changes."""
+
+    HONOURED = {
+        "float": (1.5, "1.5"), "double": (2.5, "2.5"), "int": (7, ", 7);"),
+        "bool": (True, "true"), "enum": (1, '"p", 1);'),
+        "angle": (0.5, "kAngle, 0.5);"),
+        "color": ([0.2, 0.55, 0.2], "setDefault(0.2f, 0.55f, 0.2f);"),
+    }
+    # distinctive literals that must NOT appear anywhere in initialize()
+    IGNORED = {
+        "vector": ([1.25, 2.5, 3.75], ("1.25", "3.75")),
+        "euler": ([0.11, 0.22, 0.33], ("0.11", "0.22", "0.33")),
+        "float2": ([0.125, 0.875], ("0.125", "0.875")),
+        "quaternion": ([0.11, 0.22, 0.33, 0.44], ("0.11", "0.22", "0.44")),
+        "string": ("zzhelloqq", ("zzhelloqq",)),
+        "time": (2.75, ("2.75",)),
+    }
+
+    def _init_block(self, t, dv):
+        from mpynode.native import compiler as codegen
+        meta = {"type": t, "is_array": False, "default_value": dv}
+        if t == "enum":
+            meta["enum_names"] = ["a", "b", "c"]
+        cpp = codegen.generate_cpp(_geo_spec({"p": meta}))
+        return cpp[cpp.index("::initialize() {"):cpp.index("    addAttribute(")]
+
+    def test_honoured_types_emit_the_recorded_default(self):
+        for t, (dv, lit) in self.HONOURED.items():
+            self.assertIn(lit, self._init_block(t, dv), "%s must honour %r" % (t, dv))
+
+    def test_ignored_types_emit_no_default(self):
+        for t, (dv, lits) in self.IGNORED.items():
+            blk = self._init_block(t, dv)
+            for lit in lits:
+                self.assertNotIn(lit, blk,
+                                 "%s: the interpreted node ignores default_value; "
+                                 "codegen must not honour it (%s found)" % (t, lit))
+
+    def test_the_two_sets_cover_every_supported_type(self):
+        from mpynode.native import compiler as codegen
+        covered = set(self.HONOURED) | set(self.IGNORED)
+        no_default_concept = {"matrix", "hex", "mesh", "nurbsCurve", "nurbsSurface"}
+        self.assertEqual(set(codegen._SUPPORTED) - no_default_concept, covered,
+                         "a supported type is missing from the default contract")
+
+
 if __name__ == "__main__":
     unittest.main()

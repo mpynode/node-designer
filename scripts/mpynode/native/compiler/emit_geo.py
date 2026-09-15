@@ -5,8 +5,9 @@ from .spec_model import (PORT_BEGIN, PORT_END, _GEO_INFO, _spec_has_hex,
                          LOWERED_GUARD_INCLUDE, MESH_INTERSECTOR_INCLUDE,
                          lowered_guard)
 from .emit_attr import (_array_read_lines, _create_lines, _image_read_hint_lines,
-                        _image_read_lines, _members, _pick_path_input,
-                        _read_line, PACKED_INCLUDES)
+                        _image_read_lines, _members, _out_handle_default,
+                        _out_setclean, _pick_path_input, _read_line,
+                        _setter_hint, PACKED_INCLUDES)
 from .emit_hex import _HEX_CPP
 from .nd_runtime import _nd_runtime_cpp
 from mpynode.native.compiler.kernels import nd_io_cpp, file_texture_cpp
@@ -32,6 +33,18 @@ _GEO_INCLUDES_KIND = {
     "curve": ["maya/MFnNurbsCurve.h", "maya/MFnNurbsCurveData.h"],
     "surface": ["maya/MFnNurbsSurface.h", "maya/MFnNurbsSurfaceData.h"],
 }
+
+# Scalar OUTPUT attr types a geometry GENERATOR may declare beside its geometry
+# output -- exactly the kinds emit_attr creates, seeds (_out_handle_default) and
+# hints (_setter_hint) the same way for the generic MPxNode path, so the two
+# families cannot drift. Compound outputs (vector/euler/color/quaternion/float2)
+# need the per-child attributeAffects wiring node_scaffold does for downstream
+# child connections, hex needs the nd_hex_encode write path, and arrays have no
+# geo write path at all: none of those is half-wired here, they are refused by
+# name (see _generate_geo_cpp) -- the fail-LOUD convention of the locator and
+# iksolver input gates.
+_GEO_SCALAR_OUT_TYPES = frozenset(
+    ("float", "double", "int", "bool", "enum", "matrix", "string", "angle", "time"))
 
 def _geo_build_lines(kind, info):
     """C++ that turns the filled buffers into the geo data MObject `newData`.
@@ -222,8 +235,33 @@ def _generate_geo_cpp(spec: dict, kind: str, for_port: bool = False) -> str:
     out_attr = info["attr"]
     out_member = "a" + out_attr[:1].upper() + out_attr[1:]
 
-    # User inputs only (the geo output is synthesized here, not from the spec).
+    # User inputs (the geometry output itself is synthesized here, not from the
+    # spec) ...
     in_members = [m for m in _members(spec) if m["kind"] == "inputs"]
+    # ... plus any scalar OUTPUT attrs declared beside it -- Mesh Maze's int
+    # `solutionSteps` was the first. Until 2026-09-14 this emitter took inputs
+    # only and the spec's outputs were dropped on the floor: _check deliberately
+    # does not reject them for the geometry families, so the node compiled with
+    # the plug simply missing, the porter honestly wrote ND_PORT_INCOMPLETE
+    # ("this generated node declares no such output attribute, so there is
+    # nowhere to write it") and the authored test died on `No object matches
+    # name: meshMaze1.solutionSteps`. Every emission keyed on this list below is
+    # a no-op when it is empty, so the 36 generators without one stay
+    # byte-identical.
+    out_members = [m for m in _members(spec) if m["kind"] == "outputs"]
+    _bad_outs = [m for m in out_members
+                 if m["meta"]["type"] not in _GEO_SCALAR_OUT_TYPES
+                 or m["meta"].get("is_array")]
+    if _bad_outs:
+        from mpynode.native.compiler.errors import UnsupportedSpec
+        raise UnsupportedSpec(
+            "%s: a %s generator can carry scalar OUTPUT attrs of type %s only; "
+            "these are not supported beside the geometry output:\n  %s\n"
+            "Declare the value on an mPyNode instead, or extend emit_geo."
+            % (type_name, kind, "/".join(sorted(_GEO_SCALAR_OUT_TYPES)),
+               "\n  ".join("%s (%s%s)" % (m["plug"], m["meta"]["type"],
+                                        "[]" if m["meta"].get("is_array") else "")
+                           for m in _bad_outs)))
 
     # Deterministic numpy->C++ lowering of the geometry math. If the WHOLE
     # compute lowers (supported input types + constructs, and the required
@@ -234,6 +272,14 @@ def _generate_geo_cpp(spec: dict, kind: str, for_port: bool = False) -> str:
     # Lazy import breaks the codegen<->nd_lower cycle.
     from mpynode.native.compiler import nd_lower
     geo_lowered = nd_lower.try_lower_geo_compute(in_members, kind, spec)
+    if out_members and geo_lowered is not None:
+        # The lowering fills the geometry buffers and knows nothing of scalar
+        # outputs: it would leave every h_<member> at its seeded default --
+        # silently wrong, the one thing this pipeline refuses to ship. None ->
+        # the AI-porter PORT region, where the setter hints below make each
+        # output explicit. (Teaching nd_lower `self.<out> = expr` would lift
+        # this; no shipped generator with a scalar output lowers today.)
+        geo_lowered = None
     nd_io_cpp.reject_unlowered_io(spec, geo_lowered, "geometry node")
 
     # ---- companion commands (Methods tab @maya_command defs) ----------------
@@ -249,6 +295,14 @@ def _generate_geo_cpp(spec: dict, kind: str, for_port: bool = False) -> str:
             % (type_name, "\n  ".join(cmd_out["errors"])))
 
     includes = list(_GEO_INCLUDES_BASE) + _GEO_INCLUDES_KIND[kind]
+    # A quaternion attr is read through MQuaternion, whose header the geometry
+    # base list never carried: the generic scaffold gets it from
+    # emit_attr._INCLUDES, this path did not, so a quaternion INPUT on any
+    # generator failed to compile with C2027 'use of undefined type MQuaternion'.
+    # Found by the compiled-surface audit 2026-09-14 (no shipped generator
+    # declares one). Gated, so every other generator's includes are unchanged.
+    if any(m["meta"]["type"] == "quaternion" for m in in_members + out_members):
+        includes.append("maya/MQuaternion.h")
     # A SINGLE geo INPUT is read by emit_attr._read_line as `MFn<Kind> in_<m>`,
     # and emit_geo_io.kinds_in_spec deliberately skips it (it needs no Nd<Kind>
     # struct), so its MFn* header is requested here. Keying only on the
@@ -402,6 +456,8 @@ def _generate_geo_cpp(spec: dict, kind: str, for_port: bool = False) -> str:
     for m in in_members:
         L.append("    static MObject %s;" % m["member"])
     L.append("    static MObject %s;" % out_member)
+    for m in out_members:
+        L.append("    static MObject %s;" % m["member"])
     # Per-instance file-IO document cache + lock.
     if nd_io_cpp.spec_uses_ndio(spec):
         L.append(nd_io_cpp.NDIO_MEMBERS.rstrip("\n"))
@@ -414,6 +470,8 @@ def _generate_geo_cpp(spec: dict, kind: str, for_port: bool = False) -> str:
     for m in in_members:
         L.append("MObject %s::%s;" % (cls, m["member"]))
     L.append("MObject %s::%s;" % (cls, out_member))
+    for m in out_members:
+        L.append("MObject %s::%s;" % (cls, m["member"]))
     L.append("")
     # initialize()
     L.append("MStatus %s::initialize() {" % cls)
@@ -430,13 +488,24 @@ def _generate_geo_cpp(spec: dict, kind: str, for_port: bool = False) -> str:
              % (out_member, out_attr, info["short"], info["data"]))
     L.append("    tAttr.setWritable(false);")
     L.append("    tAttr.setStorable(false);")
+    # Scalar outputs: same creator + flags (writable/storable false) as the
+    # generic MPxNode path gives its outputs, via the shared _create_lines.
+    for m in out_members:
+        L += _create_lines(m)
     L.append("")
     for m in in_members:
         L.append("    addAttribute(%s);" % m["member"])
     L.append("    addAttribute(%s);" % out_member)
+    for m in out_members:
+        L.append("    addAttribute(%s);" % m["member"])
     L.append("")
     for m in in_members:
         L.append("    attributeAffects(%s, %s);" % (m["member"], out_member))
+    # Every input drives every scalar output too: compute() fills them all in
+    # the one pass, so a pull on any output must see every input dirty it.
+    for o in out_members:
+        for m in in_members:
+            L.append("    attributeAffects(%s, %s);" % (m["member"], o["member"]))
     L.append("    return MS::kSuccess;")
     L.append("}")
     L.append("")
@@ -450,7 +519,11 @@ def _generate_geo_cpp(spec: dict, kind: str, for_port: bool = False) -> str:
         L.append("")
     # compute()
     L.append("MStatus %s::compute(const MPlug& plug, MDataBlock& data) {" % cls)
-    L.append("    if (plug != %s) return MS::kUnknownParameter;" % out_member)
+    # A pull on the geometry OR on any scalar output runs the one compute pass;
+    # each handle is marked clean below, so the other plugs are satisfied too.
+    _gate = ["plug != %s" % out_member] + ["plug != %s" % m["member"]
+                                            for m in out_members]
+    L.append("    if (%s) return MS::kUnknownParameter;" % " && ".join(_gate))
     L.append("")
     L.append("    // --- inputs ---")
     for m in in_members:
@@ -491,6 +564,18 @@ def _generate_geo_cpp(spec: dict, kind: str, for_port: bool = False) -> str:
         L.append("    int periodicU = 0, periodicV = 0;  // 0 = open, 1 = periodic")
         L.append("    std::vector<double> knotsU, knotsV; // optional; empty = uniform")
     L.append("")
+    if out_members:
+        # Declared BEFORE the PORT region so the ported body (or a hand edit)
+        # writes through them; seeded with a neutral default so a body that
+        # forgets one still leaves a valid value, and marked clean after the
+        # geometry build below. The hint is the same text the geo porter prompt
+        # carries, so Fable and a human reader see one story.
+        L.append("    // --- scalar output handles: write each with the setter shown; "
+                 "the scaffold marks them clean ---")
+        for m in out_members:
+            L += _out_handle_default(m)
+            L.append("    //   self.%s -> %s" % (m["plug"], _setter_hint(m)))
+        L.append("")
     if geo_lowered is not None:
         # Deterministic buffer-fill (no PORT region). Inputs are already read
         # into in_<member>; nd_lower materialises them, runs the transpiled
@@ -514,12 +599,20 @@ def _generate_geo_cpp(spec: dict, kind: str, for_port: bool = False) -> str:
                 L.append("    //   self.cvs (Nu*Nv,3) U-major -> cvs.push_back(MPoint(x,y,z))")
                 L.append("    //   self.num_cvs_u / self.num_cvs_v -> numU / numV")
                 L.append("    //   self.degree_u / self.degree_v (opt) -> degreeU / degreeV")
+            if out_members:
+                L.append("    // Scalar OUTPUT attrs (handles declared above; write each exactly once):")
+                for m in out_members:
+                    L.append("    //   self.%s -> %s" % (m["plug"], _setter_hint(m)))
             L.append("    // Reproduce numpy with plain loops/std::sin/cos. Match CV/vertex ORDER.")
             L.append("    // Original Python compute (translate faithfully):")
             for src_line in (spec.get("compute") or "").splitlines():
                 L.append("    //   | %s" % src_line)
         else:
             L.append("    // TODO: fill the geometry buffers from the Python compute below.")
+            if out_members:
+                L.append("    // Scalar OUTPUT attrs (handles declared above; write each exactly once):")
+                for m in out_members:
+                    L.append("    //   self.%s -> %s" % (m["plug"], _setter_hint(m)))
             for src_line in (spec.get("compute") or "").splitlines():
                 L.append("    //   | %s" % src_line)
         L.append("    " + PORT_END)
@@ -529,6 +622,8 @@ def _generate_geo_cpp(spec: dict, kind: str, for_port: bool = False) -> str:
     L.append("    MDataHandle hOut = data.outputValue(%s, &gstat);" % out_member)
     L.append("    hOut.setMObject(newData);")
     L.append("    hOut.setClean();")
+    for m in out_members:
+        L.append(_out_setclean(m))
     L.append("    data.setClean(plug);")
     L.append("    return MS::kSuccess;")
     L.append("}")

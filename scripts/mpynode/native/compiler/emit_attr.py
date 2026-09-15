@@ -123,6 +123,19 @@ def _bool_default(meta):
         return "false"
     return "true" if v else "false"
 
+def _color_default(meta):
+    """The recorded RGB default of a colour attr as three floats, or ``None``
+    when absent, malformed, or all-zero -- black is what ``createColor`` already
+    gives, so emitting nothing keeps such a node byte-identical."""
+    v = meta.get("default_value")
+    if not isinstance(v, (list, tuple)) or len(v) < 3:
+        return None
+    try:
+        rgb = tuple(float(x) for x in v[:3])
+    except Exception:
+        return None
+    return rgb if any(rgb) else None
+
 def _create_lines(m):
     """C++ lines that create + flag one attribute in initialize()."""
     plug, mem, meta = m["plug"], m["member"], m["meta"]
@@ -217,11 +230,35 @@ def _create_lines(m):
         # createColor sets usedAsColor and auto-creates R/G/B children, so the
         # attr binds to material.color + Arnold like a stock file node's outColor.
         L.append("    %s = nAttr.createColor(%s, %s);" % (mem, a, a))
+        # createColor takes no default and, until 2026-09-14, none was ever
+        # set: every compiled node with a colour INPUT came up (0,0,0) where
+        # the Python node carried its recorded default. Mesh Maze's authored
+        # test asserts on those defaults (walls wallColor, tiles solutionColor)
+        # and read black off the compiled node while the Python passed;
+        # Voxelize's defaultColor and Mesh Regions' six colours were wrong the
+        # same way. Emitted only for a NON-ZERO recorded default (black is what
+        # createColor gives anyway), so every other node stays byte-identical.
+        # Float literals select the (float,float,float) overload the k3Float
+        # attr createColor makes expects; double literals would bind k3Double.
+        _cdv = _color_default(meta)
+        if _cdv and not is_out:
+            L.append("    nAttr.setDefault(%s);"
+                     % ", ".join("%rf" % c for c in _cdv))
         L += _flags("nAttr", is_out)
     elif t in ("angle", "time"):
         unit = "kAngle" if t == "angle" else "kTime"
+        # angle: the recorded default is honoured, in RADIANS, on both sides --
+        # the MFnUnitAttribute default is internal units here, and the
+        # interpreted node's `cmds.addAttr -dv` on a doubleAngle is radians
+        # too (0.5 -> 28.648 deg measured on both, 2026-09-14). time: the
+        # interpreted node passes NO default for a time attr (add_input_attr
+        # forwards default_value for float/double/int/angle only, and a scalar
+        # time plug is auto-connected to time1 anyway), so a recorded time
+        # default is ignored here as well -- honouring it read 2.0 where the
+        # Python node read 0.0. No shipped template records one; byte-identical.
+        dflt = _num_default(meta, float, "0.0") if t == "angle" else "0.0"
         L.append("    %s = uAttr.create(%s, %s, MFnUnitAttribute::%s, %s);"
-                  % (mem, a, a, unit, _num_default(meta, float, "0.0")))
+                  % (mem, a, a, unit, dflt))
         L += _flags("uAttr", is_out)
     elif t == "matrix":
         L.append("    %s = mAttr.create(%s, %s, MFnMatrixAttribute::kDouble);"

@@ -410,7 +410,35 @@ from typing import Optional
 # N=100 82%). The poll now meters the main thread's own CPU clock
 # (GetThreadTimes / CLOCK_THREAD_CPUTIME_ID): CPU consumed since the last
 # request IS its cost, whatever the event order. Locator-only codegen.
-PORTER_RECIPE_VERSION = "31"
+# v32: geometry generators (mPyMesh / mPyNurbsCurve / mPyNurbsSurface) gain
+# scalar OUTPUT attrs beside the geometry output. emit_geo read the spec's
+# inputs only and dropped every output on the floor; _check never rejected them
+# for those families, so Mesh Maze's new int `solutionSteps` compiled with the
+# plug simply missing, the porter honestly wrote ND_PORT_INCOMPLETE and the
+# authored test failed on `No object matches name: meshMaze1.solutionSteps`.
+# The skeleton now declares/creates/wires each one, hands the porter a seeded
+# `h_<member>` handle plus its setter hint (the geo prompt names them too), and
+# refuses compound/hex/array outputs by name. Generators WITHOUT a scalar output
+# emit byte-identical C++ -- geometry-with-scalar-outputs codegen only.
+# Also v32: emit_attr._create_lines never gave a `color` INPUT its recorded
+# default_value (createColor takes none), so every compiled colour input came
+# up black where the Python node carried its default -- Mesh Maze's authored
+# test read (0,0,0) for wallColor/solutionColor while the Python passed;
+# Voxelize's defaultColor and Mesh Regions' six colours were wrong the same way.
+# `nAttr.setDefault(r,g,b)` now follows createColor for a non-zero default;
+# zero/absent stays byte-identical. Affects exactly Mesh Maze, Voxelize and
+# Mesh Regions (every other template's colour inputs are none) -- 2026-09-14.
+# v33: the compiled attribute-surface audit (all 12 families x every type,
+# 1,942 loaded-node checks) closed two more emitter gaps, both of which change
+# the deterministic SKELETON and so must miss any v32-era cache entry: (1) a
+# `time` INPUT no longer bakes its recorded default -- the interpreted node's
+# add_input_attr never applies one (it auto-connects time1 instead), so a
+# compiled 2.0 disagreed with the Python 0.0; (2) a `quaternion` INPUT on a
+# geometry generator now pulls maya/MQuaternion.h (it read as C2027 before).
+# The skeleton is fused into the cached .cpp (bundler only rewrites the
+# MTypeId), so a colour/time/quaternion codegen change is invisible without a
+# version bump -- 2026-09-14.
+PORTER_RECIPE_VERSION = "33"
 
 # Spec keys excluded from the cache key -- provably irrelevant to the generated
 # C++. A deny-list, NOT an allow-list (design C1).

@@ -287,11 +287,27 @@ _GEO_BUFFERS_DOC = {
 }
 
 
-def _geo_system(kind):
+def _geo_system(kind, scalar_outs=()):
+    """``scalar_outs`` is ``[(plug, setter_hint)]`` for the scalar OUTPUT attrs a
+    generator declares beside its geometry output (emit_attr._setter_hint, the
+    same text the scaffold comments carry). Empty for a generator without any, so
+    its prompt is byte-identical to before they existed. Without this the model
+    had no way to know the handles were there: Mesh Maze's porter, told only
+    about the geometry buffers, correctly wrote ND_PORT_INCOMPLETE for
+    `solutionSteps`."""
     geo_word = {"mesh": "polygon mesh (kMesh)",
                 "curve": "NURBS curve (kNurbsCurve)",
                 "surface": "NURBS surface (kNurbsSurface)"}[kind]
-    return (_SYSTEM_GEO_HEAD % geo_word) + _GEO_BUFFERS_DOC[kind] + _SYSTEM_GEO_TAIL
+    doc = _GEO_BUFFERS_DOC[kind]
+    if scalar_outs:
+        doc += (
+            "\n\nThe node ALSO declares scalar OUTPUT attrs. Each already has an "
+            "MDataHandle in scope, seeded with a neutral default; write it exactly "
+            "once with the setter shown (the scaffold marks it clean afterwards). "
+            "These are declared plugs, not missing features -- never emit "
+            "ND_PORT_INCOMPLETE for them:\n"
+            + "\n".join("- self.%s -> %s" % (plug, hint) for plug, hint in scalar_outs))
+    return (_SYSTEM_GEO_HEAD % geo_word) + doc + _SYSTEM_GEO_TAIL
 
 
 _SYSTEM_TRANSFORM = """\
@@ -478,7 +494,12 @@ def build_prompt(spec: dict, skeleton: str, shared_protos=None) -> tuple:
     base = spec.get("suggested", {}).get("mpx_base", "MPxNode")
     gk = codegen._geo_kind(spec)
     if gk:
-        system = _geo_system(gk)
+        # Lazy import: emit_attr sits under the compiler package prompt.py
+        # already depends on, but keep the module-level surface unchanged.
+        from mpynode.native.compiler.emit_attr import _members, _setter_hint
+        scalar_outs = [(m["plug"], _setter_hint(m))
+                       for m in _members(spec) if m["kind"] == "outputs"]
+        system = _geo_system(gk, scalar_outs)
     elif base == codegen._TRANSFORM_BASE:
         system = _SYSTEM_TRANSFORM
     elif base == codegen._LOCATOR_BASE:
