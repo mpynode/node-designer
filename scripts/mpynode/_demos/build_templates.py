@@ -15038,7 +15038,13 @@ def _maze_dual(key, fv_face, n_faces):
 def _maze_carve(n_faces, adj_start, deg, adj_dst, adj_eid, n_edges,
                 start, end, min_len, seed):
     """Randomized DFS (recursive backtracker) over the dual, seeded at
-    ``start``. Returns ``(visited, door, sol_len)``.
+    ``start``. Returns ``(visited, door, sol_len, parent)``.
+
+    ``parent[f]`` is the face the tree entered ``f`` from (-1 for ``start`` and
+    for every face it never reached). The doors are ONE tree rooted at
+    ``start`` -- the frontier re-seeds below hang their branches off faces
+    already in it -- so walking ``parent`` back from ``end`` is the solution,
+    and recording it costs nothing extra.
 
     The doors span the component REACHABLE FROM ``start`` and nothing else. The
     textbook re-seed loop is here; its raise on a disconnected dual is not. An
@@ -15062,6 +15068,7 @@ def _maze_carve(n_faces, adj_start, deg, adj_dst, adj_eid, n_edges,
     """
     visited = np.zeros(n_faces, dtype=np.bool_)
     door = np.zeros(n_edges, dtype=np.bool_)
+    parent = np.full(n_faces, -1, dtype=np.int64)
     stack = np.zeros(n_faces, dtype=np.int64)
     depth = np.zeros(n_faces, dtype=np.int64)
     cand = np.zeros((int(deg.max()) + 1) if n_faces > 0 else 1, dtype=np.int64)
@@ -15097,6 +15104,7 @@ def _maze_carve(n_faces, adj_start, deg, adj_dst, adj_eid, n_edges,
         nb = int(adj_dst[slot])
         door[int(adj_eid[slot])] = True
         visited[nb] = True
+        parent[nb] = cur
         stack[sp] = nb
         sp += 1
         depth[nb] = sp
@@ -15123,6 +15131,7 @@ def _maze_carve(n_faces, adj_start, deg, adj_dst, adj_eid, n_edges,
         if best >= 0:
             door[int(adj_eid[best])] = True
             visited[end] = True
+            parent[end] = int(adj_dst[best])
             sol_len = best_d + 1
 
     # The gate also STRANDS faces that are perfectly reachable. If every route
@@ -15153,6 +15162,7 @@ def _maze_carve(n_faces, adj_start, deg, adj_dst, adj_eid, n_edges,
         door[int(adj_eid[seed_slot])] = True
         root = int(adj_dst[seed_slot])
         visited[root] = True
+        parent[root] = scan
         stack[0] = root
         sp = 1
         while sp > 0:
@@ -15172,9 +15182,10 @@ def _maze_carve(n_faces, adj_start, deg, adj_dst, adj_eid, n_edges,
             nb = int(adj_dst[slot])
             door[int(adj_eid[slot])] = True
             visited[nb] = True
+            parent[nb] = cur
             stack[sp] = nb
             sp += 1
-    return visited, door, sol_len
+    return visited, door, sol_len, parent
 
 
 def _maze_walls(points, normals, va, vb, height, half):
@@ -15208,6 +15219,68 @@ def _maze_walls(points, normals, va, vb, height, half):
     base = (8 * np.arange(m, dtype=np.int64))[:, None, None]
     return (pts, np.full(6 * m, 4, dtype=np.int64),
             (base + quads[None, :, :]).reshape(-1))
+
+
+def _maze_solution(parent, visited, start, end):
+    """The start -> end path through the doors as face ids, ``start`` first.
+
+    The doors are one tree rooted at ``start``, so the path is unique: walk
+    ``parent`` back from ``end`` and reverse. An ``end`` the carve never reached
+    (another island of the dual) gives an EMPTY path, never a raise, and the
+    caller draws nothing for it. The walk is bounded by the face count, so a
+    corrupt chain cannot spin forever either.
+    """
+    n = int(parent.shape[0])
+    back = np.zeros(n, dtype=np.int64)
+    if n == 0 or not bool(visited[end]):
+        return np.zeros(0, dtype=np.int64)
+    k = 0
+    cur = int(end)
+    while cur >= 0 and k < n:
+        back[k] = cur
+        k += 1
+        if cur == start:
+            break
+        cur = int(parent[cur])
+    if k == 0 or int(back[k - 1]) != start:
+        return np.zeros(0, dtype=np.int64)
+    return np.take(back, (k - 1) - np.arange(k, dtype=np.int64))
+
+
+def _maze_tiles(points, normals, counts, indices, faces, lift, inset):
+    """One floor tile per listed face: the face's own polygon, shrunk ``inset``
+    towards its centre so it lies BETWEEN the wall slabs, and floated ``lift``
+    along the vertex normals so it does not z-fight the floor. Ragged faces
+    (tris beside quads) ride the same offset/cumsum bookkeeping ``_maze_edges``
+    uses; nothing here loops in Python. The centroid comes off a cumulative sum
+    of the gathered positions -- a segment sum with no per-face reduction.
+
+    Returns ``(points, counts, indices)`` for the tiles alone, indices local to
+    the returned points, winding as the source face winds.
+    """
+    m = int(faces.shape[0])
+    if m == 0:
+        return (np.zeros((0, 3), dtype=np.float64),
+                np.zeros(0, dtype=np.int64), np.zeros(0, dtype=np.int64))
+    offs = np.cumsum(counts) - counts
+    cnt = counts[faces]
+    tot = int(cnt.sum())
+    tile_of = np.repeat(np.arange(m, dtype=np.int64), cnt)
+    first = np.cumsum(cnt) - cnt
+    slot = np.arange(tot, dtype=np.int64) - first[tile_of]
+    vid = indices[offs[faces][tile_of] + slot]
+    p = points[vid]
+    cs = np.concatenate([np.zeros((1, 3), dtype=np.float64),
+                         np.stack([np.cumsum(p[:, 0]), np.cumsum(p[:, 1]),
+                                   np.cumsum(p[:, 2])], axis=1)], axis=0)
+    ctr = (cs[first + cnt] - cs[first]) / cnt[:, None].astype(np.float64)
+    d = ctr[tile_of] - p
+    dist = np.sqrt((d * d).sum(axis=1))
+    # Never more than 45% of the way in: a tile must shrink, not turn inside
+    # out, on a face narrower than the walls standing on it.
+    s = np.minimum(inset / np.maximum(dist, 1e-12), 0.45)
+    p = p + d * s[:, None] + normals[vid] * lift
+    return p, cnt, np.arange(tot, dtype=np.int64)
 '''
 
 MAZE_COMPUTE = '''# Build a maze on the incoming mesh and output its WALLS as geometry.
@@ -15244,6 +15317,7 @@ if (pts is None or counts is None or indices is None
     # No input, an empty one, or a point cloud with no faces to use as cells
     # -> an empty but VALID mesh, never a raise.
     self.outMesh = Mesh()
+    self.solutionSteps = 0
 else:
     n_verts = int(pts.shape[0])
     n_faces = int(counts.shape[0])
@@ -15280,9 +15354,17 @@ else:
     # no output for it and the walls do not depend on it. It is returned
     # because the build gate and the authored test assert on it.
     want = int(float(self.solutionLength) * float(n_faces))
-    visited, door, sol_len = _maze_carve(
+    visited, door, sol_len, parent = _maze_carve(
         n_faces, adj_start, deg, adj_dst, adj_eid, int(ei.shape[0]),
         start, end, want, int(self.seed))
+
+    # The solution is free: the doors are a tree rooted at `start`, so walking
+    # `parent` back from `end` IS the one path between them. `solutionSteps`
+    # reports its length -- 0 when `end` was never reached -- so `solutionStep`
+    # can be keyed exactly from the entrance (0) to the exit (n).
+    path = _maze_solution(parent, visited, start, end)
+    n_steps = max(int(path.shape[0]) - 1, 0)
+    self.solutionSteps = n_steps
 
     # An edge is LIVE when any face it touches was reached. Doors are carved
     # out of the live set; everything else in it -- the interior edges the tree
@@ -15295,16 +15377,45 @@ else:
     is_door[ei[door]] = True
     wall = np.nonzero(live & ~is_door)[0]
 
-    if int(wall.shape[0]) == 0:
-        self.outMesh = Mesh()
-    else:
+    h = float(self.wallHeight)
+    half = 0.5 * float(self.wallThickness)
+    wp = np.zeros((0, 3), dtype=np.float64)
+    wc = np.zeros(0, dtype=np.int64)
+    wi = np.zeros(0, dtype=np.int64)
+    if int(wall.shape[0]) > 0:
         k = uniq[wall]
         va = k // np.int64(n_verts)
         vb = k - va * np.int64(n_verts)
-        wp, wc, wi = _maze_walls(pts, nrm, va, vb,
-                                 float(self.wallHeight),
-                                 0.5 * float(self.wallThickness))
-        self.outMesh = Mesh(points=wp, counts=wc, indices=wi)
+        wp, wc, wi = _maze_walls(pts, nrm, va, vb, h, half)
+
+    # The solution tiles: path faces 0..`solutionStep` (clamped at the exit),
+    # each inset half a wall thickness so it lies BETWEEN the slabs and floated
+    # a tenth of the wall height so it does not z-fight the floor. Switched
+    # off, or no path at all, draws nothing -- never an error.
+    tp = np.zeros((0, 3), dtype=np.float64)
+    tc = np.zeros(0, dtype=np.int64)
+    ti = np.zeros(0, dtype=np.int64)
+    if bool(self.drawSolution) and int(path.shape[0]) > 0:
+        upto = min(max(int(self.solutionStep), 0), n_steps) + 1
+        tp, tc, ti = _maze_tiles(pts, nrm, counts, indices, path[:upto],
+                                 0.1 * h, half)
+
+    if int(wc.shape[0]) + int(tc.shape[0]) == 0:
+        self.outMesh = Mesh()
+    else:
+        # One vertex colour per point: walls in `wallColor`, tiles in
+        # `solutionColor`. The render mesh shows them once displayColors is on,
+        # which `setup` does.
+        wall_col = np.asarray(self.wallColor, dtype=np.float64)[:3]
+        path_col = np.asarray(self.solutionColor, dtype=np.float64)[:3]
+        col = np.concatenate([
+            np.zeros((int(wp.shape[0]), 3), dtype=np.float64) + wall_col[None, :],
+            np.zeros((int(tp.shape[0]), 3), dtype=np.float64) + path_col[None, :]],
+            axis=0)
+        self.outMesh = Mesh(points=np.concatenate([wp, tp], axis=0),
+                            counts=np.concatenate([wc, tc]),
+                            indices=np.concatenate([wi, ti + np.int64(wp.shape[0])]),
+                            colors=col)
 '''
 
 MAZE_METHODS = VANILLA_SETUP_ERROR + VANILLA_MESHES + '''
@@ -15332,6 +15443,9 @@ def setup(self, selection=None, *args, **kwargs):
         mc.sets(out_shape, edit=True, forceElement="initialShadingGroup")
     except Exception:
         pass
+    # The walls and the solution tiles are told apart by VERTEX COLOUR, and a
+    # freshly created mesh does not draw its colour set until this is on.
+    mc.setAttr(out_shape + ".displayColors", True)
     return out_tr
 
 
@@ -15343,7 +15457,9 @@ def demo(self):
     follows the face's curvature, and the mixed valence around the eyes and
     mouth needs no special handling. Scrub the timeline and the maze rebuilds
     on the moving jaw; drag `seed` for a different maze, `start` / `end` to
-    move the entrance and exit."""
+    move the entrance and exit. The solution is switched on and `solutionStep`
+    keyed one cell per frame from the entrance to the exit, so playing the
+    timeline draws the yellow path out through the maze."""
     import os
     from maya import cmds as mc
 
@@ -15379,6 +15495,25 @@ def demo(self):
     name = self.get_name()
     mc.setAttr(name + ".wallHeight", 0.6)
     mc.setAttr(name + ".wallThickness", 0.12)
+    # Show the solution too: key `solutionStep` one cell per frame from the
+    # entrance (0) to the exit (`solutionSteps`), and make sure the playback
+    # range reaches the exit. A maze whose exit is unreachable reports 0 steps
+    # and gets no keys -- there is nothing to draw.
+    mc.setAttr(name + ".drawSolution", True)
+    mc.setAttr(name + ".solutionStep", 0)
+    steps = int(mc.getAttr(name + ".solutionSteps") or 0)
+    if steps > 0:
+        mc.setKeyframe(name + ".solutionStep", time=1, value=0,
+                       inTangentType="linear", outTangentType="linear")
+        mc.setKeyframe(name + ".solutionStep", time=1 + steps, value=steps,
+                       inTangentType="linear", outTangentType="linear")
+        try:
+            if float(mc.playbackOptions(query=True, maxTime=True)) < 1 + steps:
+                mc.playbackOptions(maxTime=1 + steps)
+            if float(mc.playbackOptions(query=True, animationEndTime=True)) < 1 + steps:
+                mc.playbackOptions(animationEndTime=1 + steps)
+        except Exception:
+            pass
     try:
         for _panel in mc.getPanel(type="modelPanel") or []:
             _cam = mc.modelEditor(_panel, query=True, camera=True)
@@ -15411,6 +15546,10 @@ def test_mesh_maze(self):
          no geometry at all, and the node does not raise.
       9. Walls extrude along the VERTEX NORMALS -- checked on a sphere, since
          on a flat plane a hardcoded up-axis would look identical.
+     10. The solution: `solutionSteps` is the door-path length, tiles appear
+         only with `drawSolution` on -- one per step, clamped at the exit,
+         coloured `solutionColor` against `wallColor` walls -- and an `end`
+         on another island draws nothing and reports 0.
 
     Proxy-safe: the node is driven purely through `self.get_name()` and `cmds`.
     The maze is never re-derived here -- the door set is recovered from the
@@ -15705,56 +15844,95 @@ def test_mesh_maze(self):
             assert_true(reach3 == total3 == 20,
                         "the strip's dual must be one PATH of 20 (%d/%d)" % (reach3, total3))
     _set(name + ".solutionLength", 0.35)
+
+    # --- 10: the solution -- one tile per step, clamped at the exit --------
+    # `solutionSteps` must equal the door-path length the BFS in _check
+    # measures; tiles appear only with `drawSolution` on and never touch the
+    # slab count; the colours are the two inputs; and an `end` on another
+    # island draws nothing and reports 0 -- never an error.
+    def _polys():
+        mc.dgdirty(name)
+        mc.dgeval(render + ".outMesh")
+        return int(mc.polyEvaluate(render, face=True) or 0)
+
+    steps_len, _, _ = _check(p_shape, 0, -1, "solution")
+    steps = int(mc.getAttr(name + ".solutionSteps"))
+    assert_true(steps == steps_len and steps >= 1,
+                "solutionSteps must be the door-path length (%d vs %d)"
+                % (steps, steps_len))
+    base_nf = _polys()
+    _set(name + ".drawSolution", True)
+    _set(name + ".solutionStep", 0)
+    assert_true(_polys() == base_nf + 1,
+                "step 0 must draw the entrance tile alone")
+    _set(name + ".solutionStep", 3)
+    assert_true(_polys() == base_nf + 4, "step 3 must draw four tiles")
+    _set(name + ".solutionStep", steps + 500)
+    assert_true(_polys() == base_nf + steps + 1,
+                "a step past the exit must clamp to the whole path")
+    last = int(mc.polyEvaluate(render, vertex=True)) - 1
+    wall_rgb = mc.polyColorPerVertex(render + ".vtx[0]", q=True, rgb=True)
+    tile_rgb = mc.polyColorPerVertex(render + ".vtx[%d]" % last, q=True, rgb=True)
+    assert_true(abs(wall_rgb[1] - 0.55) < 0.02 and abs(wall_rgb[0] - 0.2) < 0.02
+                and abs(tile_rgb[0] - 1.0) < 0.02 and abs(tile_rgb[2] - 0.1) < 0.02,
+                "walls must take wallColor and tiles solutionColor (got %s / %s)"
+                % (wall_rgb, tile_rgb))
+    _set(name + ".drawSolution", False)
+    assert_true(_polys() == base_nf, "drawSolution off must draw no tiles")
+    # The split planes again: face 12 is on the far island, unreachable from 0.
+    _wire(b_shape)
+    _set(name + ".start", 0)
+    _set(name + ".end", 12)
+    _set(name + ".drawSolution", True)
+    _set(name + ".solutionStep", 5)
+    assert_true(int(mc.getAttr(name + ".solutionSteps")) == 0
+                and _polys() == 16 * 6,
+                "an unreachable end must report 0 steps and draw no tiles")
+    _set(name + ".drawSolution", False)
+    _set(name + ".solutionStep", 0)
+    _set(name + ".end", -1)
 '''
 
 MAZE_DESC = (
-    "# Mesh Maze\n\n"
-    "Turns any mesh into a **maze**, and outputs the maze's **walls** as an "
-    "`mPyMesh` on `outMesh`. The source mesh is the floor; the walls stand on "
-    "its edges, extruded along the **vertex normals**, so a maze on a sphere "
-    "wraps around it properly instead of shearing through it.\n\n"
-    "The whole thing is one idea: **a maze on a mesh is a spanning tree of "
-    "that mesh's dual graph.**\n\n"
+    "# Mesh Maze\n"
+    "\n"
+    "Turns any mesh into a maze and outputs the maze's walls as an `mPyMesh`. The source mesh is the floor; the walls stand on its edges, extruded along the vertex normals, so a maze on a sphere wraps around it properly instead of shearing through it.\n"
+    "\n"
+    "The mapping is simply:\n"
+    "\n"
     "| Maze | Mesh |\n"
     "|---|---|\n"
     "| Cell | Face |\n"
-    "| Door | Interior edge the tree walked through |\n"
-    "| Wall | Every other edge |\n\n"
-    "Because the doors form a *tree*, three things come for free: every cell "
-    "is reachable, there is exactly **one** path between any two cells, and "
-    "`start` -> `end` is always solvable -- no validation pass needed. None of "
-    "it depends on face valence, so mixed triangles and quads just work.\n\n"
-    "- `start` / `end` -- the **face ids** the maze runs between. A negative "
-    "id counts back from the end, so the default **`end = -1` is the last "
-    "face**. An id that is still out of range is clamped rather than "
-    "rejected.\n"
-    "- `seed` -- which maze you get. Same seed, same maze, every time.\n"
-    "- `solutionLength` -- how deep the carve must be before it is allowed to "
-    "reach `end`, as a fraction of the face count. It is what stops a maze "
-    "from parking the exit three cells from the entrance. It matters most "
-    "when `start` and `end` are **close together**; when they are already far "
-    "apart the maze is long anyway and the setting does little. Worth knowing: "
-    "`end` reaches the maze *only* through this gate, so at a low setting the "
-    "gate never fires and moving `end` can leave the layout completely "
-    "unchanged.\n"
-    "- `wallHeight` / `wallThickness` -- the size of each wall slab, in world "
-    "units. They are absolute, so dial them to your mesh's scale.\n\n"
-    "**Unreachable patches are left bare.** If the mesh's dual graph is in "
-    "more than one piece -- which is what unwelded vertices, bowties and "
-    "T-junctions produce, and they are near-universal on imported geometry -- "
-    "only the piece containing `start` gets a maze. The rest gets no walls at "
-    "all, which reads at a glance as *that region is not connected* rather "
-    "than failing. Bad face ids, degenerate faces and non-manifold edges "
-    "degrade the same way: this node does not error out.\n\n"
-    "A couple of honest limits. Wall slabs are **not welded** to each other. "
-    "On a mesh with holes or a handle (a torus, say) you get a few detached "
-    "closed wall loops floating in the maze -- still a perfect maze, and the "
-    "count of them is fixed by the surface's topology, not by the algorithm. "
-    "And triangles are dead-end magnets, so a tri-heavy mesh gives a stubbier "
-    "maze than a quad one.\n\n"
-    "**Create + Run demo** wraps a maze around the shipped head (`head.ma`, "
-    "the Mesh Regions face, jaw-drop and all). Scrub the timeline and the "
-    "maze rebuilds on the moving jaw; drag `seed` and watch it rebuild."
+    "| Door | An interior edge the maze walked through |\n"
+    "| Wall | Every other edge |\n"
+    "\n"
+    "Because the doors never form a loop, every cell is reachable, there is exactly one path between any two cells, and `start` to `end` is always solvable. Mixed triangles and quads both work.\n"
+    "\n"
+    "## Inputs\n"
+    "\n"
+    "* `inMesh` -- the source mesh, used as the floor. Connect its `worldMesh`.\n"
+    "* `start` / `end` -- the face ids the maze runs between. A negative id counts back from the end, so the default `end = -1` is the last face. An out-of-range id is clamped rather than rejected.\n"
+    "* `seed` -- which maze you get. Same seed, same maze, every time.\n"
+    "* `solutionLength` -- how far the maze must wander before it is allowed to reach `end`, as a fraction of the face count. It stops the exit landing three cells from the entrance. It matters most when `start` and `end` are close together. Worth knowing: `end` only joins the maze through this gate, so at a low setting moving `end` can leave the layout unchanged.\n"
+    "* `wallHeight` / `wallThickness` -- the size of each wall slab, in world units. Absolute, so dial them to your mesh's scale.\n"
+    "* `drawSolution` -- draw the `start` to `end` path as tiles on the floor. Off by default.\n"
+    "* `solutionStep` -- how much of the path to show: `0` is the entrance tile alone and `n` is the whole path, where `n` is the number of steps reported on `solutionSteps`. Keyframe it from `0` to `n` and the path draws itself out one cell per unit; a value past the exit clamps there.\n"
+    "* `wallColor` / `solutionColor` -- vertex colours for the wall slabs (flat green) and the path tiles (yellow). `setup` turns `displayColors` on for the render mesh so they show.\n"
+    "\n"
+    "## Outputs\n"
+    "\n"
+    "* `outMesh` -- the wall geometry, plus the solution tiles when they are on. Slabs are not welded to each other. Each tile is its face's own polygon, inset half a wall thickness so it sits between the walls and floated a tenth of the wall height above the floor.\n"
+    "* `solutionSteps` -- the number of steps from `start` to `end` through the doors, which is what to key `solutionStep` up to. `0` when `end` cannot be reached, in which case no tiles are drawn.\n"
+    "\n"
+    "## Commands\n"
+    "\n"
+    "* `setup` -- select a mesh, then run: it wires that mesh in, builds the render mesh for the walls standing on it and switches its `displayColors` on. Offered as **Run setup on selection**.\n"
+    "\n"
+    "Two things that look like bugs and are not. **Unreachable patches are left bare** -- if the mesh is in more than one connected piece, which unwelded vertices and T-junctions on imported geometry routinely cause, only the piece containing `start` gets a maze. Bad face ids and non-manifold edges degrade the same quiet way rather than erroring. And on a mesh with a hole or a handle, a torus say, you get a few detached closed wall loops floating in the maze. Triangles are dead-end magnets, so a tri-heavy mesh gives a stubbier maze than a quad one.\n"
+    "\n"
+    "## Create + Run demo\n"
+    "\n"
+    "Wraps a maze around the shipped head (`head.ma`, the Mesh Regions face, jaw-drop and all), switches the solution on and keys `solutionStep` one cell per frame from the entrance to the exit. Play the timeline and the yellow path draws itself through the maze while the jaw moves; drag `seed` and watch the maze rebuild.\n"
 )
 
 
@@ -15776,6 +15954,14 @@ def build_mesh_maze():
                      min_value=0.0)
     n.add_input_attr("wallThickness", "double", default_value=0.05,
                      min_value=0.0)
+    # The solution: off by default, then the step to draw up to (0 = the
+    # entrance tile alone), and the two vertex colours that tell tiles from
+    # walls. `solutionSteps` reports how far `solutionStep` can go.
+    n.add_input_attr("drawSolution", "bool", default_value=False)
+    n.add_input_attr("solutionStep", "int", default_value=0, min_value=0)
+    n.add_input_attr("wallColor", "color", default_value=(0.2, 0.55, 0.2))
+    n.add_input_attr("solutionColor", "color", default_value=(1.0, 0.9, 0.1))
+    n.add_output_attr("solutionSteps", "int", default_value=0)
     n.set_init_expression(MAZE_INIT)
     n.set_compute_expression(MAZE_COMPUTE)
     n.set_methods_source(MAZE_METHODS)
@@ -15825,9 +16011,28 @@ def build_mesh_maze():
     p_deg   = np.array([1, 2, 2, 1, 0],    dtype=np.int64)
     p_dst   = np.array([1, 0, 2, 1, 3, 2], dtype=np.int64)
     p_eid   = np.array([0, 0, 1, 1, 2, 2], dtype=np.int64)
-    vis, door, sol = carve_fn(5, p_start, p_deg, p_dst, p_eid, 3, 0, 3, 0, 0)
+    vis, door, sol, par = carve_fn(5, p_start, p_deg, p_dst, p_eid, 3, 0, 3, 0, 0)
     carve_ok = (vis.tolist() == [True, True, True, True, False]
                 and int(door.sum()) == 3 and sol == 4)
+    # The recorded tree walks straight back down the path graph; an unreached
+    # cell gives an EMPTY solution, and start == end a one-cell one.
+    sol_fn = ns["_maze_solution"]
+    path_ok = (sol_fn(par, vis, 0, 3).tolist() == [0, 1, 2, 3]
+               and sol_fn(par, vis, 0, 4).tolist() == []
+               and sol_fn(par, vis, 0, 0).tolist() == [0])
+    # The tile batcher on one 2x2 quad: four points floated `lift` up the +Y
+    # normals and pulled in towards the centre, one count of 4.
+    tiles_fn = ns["_maze_tiles"]
+    tp, tc, ti = tiles_fn(np.array([[0.0, 0.0, 0.0], [2.0, 0.0, 0.0],
+                                    [2.0, 0.0, 2.0], [0.0, 0.0, 2.0]]),
+                          np.array([[0.0, 1.0, 0.0]] * 4),
+                          np.array([4], dtype=np.int64),
+                          np.array([0, 1, 2, 3], dtype=np.int64),
+                          np.array([0], dtype=np.int64), 0.1, 0.25)
+    tile_ok = (tp.shape == (4, 3) and tc.tolist() == [4] and ti.tolist() == [0, 1, 2, 3]
+               and np.allclose(tp[:, 1], 0.1)
+               and float(tp[:, 0].min()) > 0.1 and float(tp[:, 0].max()) < 1.9
+               and float(tp[:, 2].min()) > 0.1 and float(tp[:, 2].max()) < 1.9)
 
     # Determinism in `seed`, and a different seed really is a different maze.
     # A 3x3 grid of quads has enough freedom for the two to diverge.
@@ -15868,7 +16073,7 @@ def build_mesh_maze():
                and np.allclose(span, [2.0, 0.5, 0.1]))
 
     helpers_ok = (edge_ok and dual_ok and nonman_ok and carve_ok and seed_ok
-                  and wall_ok)
+                  and wall_ok and path_ok and tile_ok)
 
     # --- live end-to-end: a 10x10 plane is a disk, so the wall count is
     #     pinned exactly by Euler -- E - F + 1 with F - 1 doors. ------------
@@ -15907,6 +16112,21 @@ def build_mesh_maze():
     # punched through the boundary -- one integer pins both.
     lv, lf = live_counts()
     euler_ok = (lv == 121 * 8 and lf == 121 * 6)
+
+    # The solution tiles ride on top of that exact count: with `drawSolution`
+    # on and the step past the exit the face count grows by solutionSteps + 1,
+    # at step 2 by three, and switched off it is untouched.
+    mc.setAttr(nm + ".drawSolution", True)
+    mc.setAttr(nm + ".solutionStep", 100000)
+    n_steps = int(mc.getAttr(nm + ".solutionSteps"))
+    _sv, sf_all = live_counts()
+    mc.setAttr(nm + ".solutionStep", 2)
+    _sv2, sf_two = live_counts()
+    mc.setAttr(nm + ".drawSolution", False)
+    mc.setAttr(nm + ".solutionStep", 0)
+    _sv3, sf_off = live_counts()
+    solution_ok = (n_steps >= 1 and sf_all == 121 * 6 + n_steps + 1
+                   and sf_two == 121 * 6 + 3 and sf_off == 121 * 6)
 
     # Same seed -> byte-identical maze; a different seed -> a different one.
     a = live_points()
@@ -16003,7 +16223,7 @@ def build_mesh_maze():
     mc.setAttr(nm + ".solutionLength", 0.35)
 
     live_ok = (euler_ok and seed_live_ok and index_ok and size_ok
-               and normal_ok and bare_ok and cut_ok)
+               and normal_ok and bare_ok and cut_ok and solution_ok)
 
     # An unconnected / value mesh input must yield an empty mesh, not a crash.
     empty_ns = {}
@@ -16017,7 +16237,12 @@ def build_mesh_maze():
         solutionLength = 0.35
         wallHeight     = 0.25
         wallThickness  = 0.05
+        drawSolution   = False
+        solutionStep   = 0
+        wallColor      = (0.2, 0.55, 0.2)
+        solutionColor  = (1.0, 0.9, 0.1)
         outMesh        = None
+        solutionSteps  = 0
 
     es               = _EmptySelf()
     empty_ns["self"] = es
@@ -16074,13 +16299,14 @@ def build_mesh_maze():
     ok = (helpers_ok and live_ok and empty_ok and has_demo and assets_ok
           and demo_ok and test_ok)
     print("[mesh_maze] helpers=%s(edge=%s dual=%s nonman=%s carve=%s seed=%s "
-          "wall=%s) live=%s(euler=%s seed=%s index=%s size=%s normal=%s "
-          "bare=%s cut=%s) "
+          "wall=%s path=%s tile=%s) live=%s(euler=%s seed=%s index=%s size=%s "
+          "normal=%s bare=%s cut=%s solution=%s) "
           "empty=%s demo=%s assets=%s demo_run=%s test=%s -> %s"
           % (helpers_ok, edge_ok, dual_ok, nonman_ok, carve_ok, seed_ok,
-             wall_ok, live_ok, euler_ok, seed_live_ok, index_ok, size_ok,
-             normal_ok, bare_ok, cut_ok, empty_ok, has_demo, assets_ok, demo_ok,
-             test_ok, "PASS" if ok else "FAIL"))
+             wall_ok, path_ok, tile_ok, live_ok, euler_ok, seed_live_ok,
+             index_ok, size_ok, normal_ok, bare_ok, cut_ok, solution_ok,
+             empty_ok, has_demo, assets_ok, demo_ok, test_ok,
+             "PASS" if ok else "FAIL"))
     if ok:
         _write_template_to(MAZE_DIR, clean_payload, MAZE_DESC)
     return ok
