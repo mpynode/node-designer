@@ -67,12 +67,13 @@ compile.log
 *.orig
 
 # ---- Local launchers / machine state ---------------------------------------
-# Developer-machine conveniences and per-run state, specific to one install.
-# userSetup.py and launch_maya2025.bat/.sh are NOT in this list on purpose:
-# README.md and INSTALL.md tell the user to copy / run them, they resolve the
-# repo from their own location, and they ship.
+# Developer-machine conveniences and per-run state. They are useful locally but
+# are specific to one install, so they are never part of what ships. (The repo
+# root userSetup.py is NOT one of these: README.md tells the user to copy it.)
 /LaunchMaya2026.app/
 /launch_maya2024.sh
+/launch_maya2025.bat
+/launch_maya2025.sh
 .bench.lock
 
 # ---- OS / editor junk ------------------------------------------------------

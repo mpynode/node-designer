@@ -108,10 +108,11 @@ Ordinary system environment variables (Windows *Environment Variables*,
 or `~/.profile`) work identically and apply to every Maya version at
 once; `Maya.env` is per-version, which is usually what you want.
 
-There is also `launch_maya2025.bat` / `launch_maya2025.sh` in the repo
-root, which sets the same three variables and launches Maya, if you would
-rather not touch anything persistent at all. Pass no arguments — do not
-hand it a scene file, because that opens during startup before the
+If you would rather not touch anything persistent at all, a small
+launcher script that sets the same three variables and then starts Maya
+does the job; `.gitignore` already leaves room for a local
+`launch_maya<version>.bat` / `.sh` in the repo root. Pass it no arguments —
+do not hand it a scene file, because that opens during startup before the
 plug-in is registered.
 
 ## Optional: the `userSetup.py` in this repo
