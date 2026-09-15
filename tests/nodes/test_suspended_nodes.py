@@ -158,5 +158,114 @@ class TestAutoDirtyLeavesSuspendedNodesAlone(unittest.TestCase):
         self.assertEqual(dispatched, [])
 
 
+class TestApi2SuspendedNodesDoNotRunTheirExpression(unittest.TestCase):
+    """Convert to C++ suspends the Python node (``nodeState`` Blocking) and
+    moves its outputs, but under the Evaluation Manager a USER OUTPUT that an
+    animated input dirties is evaluated whether or not anything reads it. Mesh
+    Maze's int ``solutionSteps`` kept its converted Python node running the
+    whole expression every frame until BOTH animated inputs were unplugged,
+    while Voxelize -- no user output -- idled at once (2026-09-14). The api2
+    gate closes that for every maya.api family: a suspended node forwards no
+    dirtiness and its ``compute()`` returns before the expression, and lifting
+    the suspension resumes at once."""
+
+    _FAMILIES = (
+        ("mpynode.wrappers._mpy_node", "MPyNode"),
+        ("mpynode.wrappers.mpy_mesh", "MPyMesh"),
+    )
+    _EXPR = chr(10).join((
+        "import builtins as _b",
+        "_b._mpyTestRuns = getattr(_b, '_mpyTestRuns', 0) + 1",
+        "self.n = int(self.k) + 1",
+    ))
+
+    def setUp(self):
+        mc.file(new=True, force=True)
+        self._mode = (mc.evaluationManager(q=True, mode=True) or ["off"])[0]
+        mc.evaluationManager(mode="parallel")
+
+    def tearDown(self):
+        mc.evaluationManager(
+            mode=self._mode if self._mode in ("off", "serial", "parallel") else "off")
+
+    @staticmethod
+    def _runs():
+        import builtins
+        return getattr(builtins, "_mpyTestRuns", 0)
+
+    def _build(self, module, cls_name, name):
+        import importlib
+        w = getattr(importlib.import_module(module), cls_name).create(name=name)
+        w.add_input_attr("k", "int")
+        w.add_output_attr("n", "int")
+        w.set_compute_expression(self._EXPR)
+        node = w.get_name()
+        mc.setKeyframe(node + ".k", t=1, v=0)
+        mc.setKeyframe(node + ".k", t=10, v=9)
+        return node
+
+    def _step(self, lo, hi):
+        for t in range(lo, hi + 1):
+            mc.currentTime(t, update=True)
+
+    def test_a_suspended_node_stops_running_and_resumes_when_lifted(self):
+        for module, cls_name in self._FAMILIES:
+            with self.subTest(family=cls_name):
+                mc.file(new=True, force=True)
+                node = self._build(module, cls_name, "susp" + cls_name)
+                before = self._runs()
+                self._step(1, 5)
+                self.assertGreater(self._runs(), before,
+                                   "%s: the live node must run its expression" % cls_name)
+                self.assertEqual(mc.getAttr(node + ".n"), 5)
+
+                mc.setAttr(node + ".nodeState", 2)           # Blocking, as the convert sets
+                mid = self._runs()
+                self._step(6, 10)
+                self.assertEqual(self._runs(), mid,
+                                 "%s: a suspended node must not run its expression "
+                                 "under the Evaluation Manager" % cls_name)
+                self.assertEqual(mc.getAttr(node + ".n"), 5,
+                                 "%s: a suspended node leaves its output as it was" % cls_name)
+
+                mc.setAttr(node + ".nodeState", 0)
+                self._step(1, 10)
+                self.assertGreater(self._runs(), mid,
+                                   "%s: lifting the suspension resumes evaluation" % cls_name)
+                self.assertEqual(mc.getAttr(node + ".n"), 10)
+
+    def test_the_gate_caches_and_drops_on_the_nodestate_plug(self):
+        import maya.api.OpenMaya as om
+        from mpynode._common.plugs import dirty_affects
+
+        node = self._build(*self._FAMILIES[1], name="gateProbe")
+        sel = om.MSelectionList()
+        sel.add(node)
+        mobj = sel.getDependNode(0)
+
+        class _Node(object):
+            def thisMObject(self):
+                return mobj
+
+        class _Plug(object):
+            def __init__(self, name):
+                self._n = name
+
+            def partialName(self, useLongNames=False):
+                return self._n
+
+        n = _Node()
+        self.assertFalse(dirty_affects.api2_dirty_gate(n, _Plug("k")))
+        mc.setAttr(node + ".nodeState", 2)
+        # Cached: the hot path reads no plug until nodeState passes through.
+        self.assertFalse(dirty_affects.api2_dirty_gate(n, _Plug("k")))
+        self.assertFalse(dirty_affects.api2_dirty_gate(n, _Plug("nodeState")))
+        self.assertTrue(dirty_affects.api2_dirty_gate(n, _Plug("k")))
+        mc.setAttr(node + ".nodeState", 0)
+        dirty_affects.api2_dirty_gate(n, _Plug("nodeState"))
+        self.assertFalse(dirty_affects.api2_dirty_gate(n, _Plug("k")))
+        self.assertTrue(dirty_affects.api2_node_suspended(mobj) is False)
+
+
 if __name__ == "__main__":
     unittest.main()

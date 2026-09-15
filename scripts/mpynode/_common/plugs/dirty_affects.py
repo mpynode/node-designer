@@ -344,3 +344,89 @@ def declare_user_affects_api1(node_mobject, plug, affected_plugs, in_attr, out_a
                 pass
     except Exception:
         pass
+
+
+# ---------------------------------------------------------------------------
+# API 2.0 suspension gate -- the twin of ``api1_dirty_gate`` for the MPy* nodes
+# registered through maya.api (mPyNode, mPyMesh, mPyConstraint, mPyFile,
+# mPyLocator, mPyNurbsCurve, mPyNurbsSurface). ``MPxNode.state`` is API 1.0
+# only, so the plug is found by name.
+# ---------------------------------------------------------------------------
+_STATE_ATTR_CACHE = "_mpy_state_attr"
+
+
+def api2_node_suspended(node_mobject) -> bool:
+    """``nodeState`` != Normal for an API 2.0 node. Never raises; an unreadable
+    state reads as live."""
+    try:
+        return (om.MFnDependencyNode(node_mobject)
+                .findPlug("nodeState", False).asShort() != 0)
+    except Exception:
+        return False
+
+
+def api2_dirty_gate(node, plug) -> bool:
+    """The cheap front of an API 2.0 node's ``setDependentsDirty``.
+
+    Returns ``True`` when the node is SUSPENDED (``nodeState`` Has No Effect /
+    Blocking -- Convert to C++ sets it on the idle Python node, a user may set
+    it by hand): a node that does not evaluate has no dirtiness to forward, so
+    the override returns at once and the Evaluation Manager never schedules its
+    user outputs. Without this the EM evaluated every user output an animated
+    input dirtied, whether or not anything read it: Mesh Maze's converted
+    Python node kept running its whole expression (60 ms) every frame for its
+    int ``solutionSteps`` until BOTH its animated inputs were unplugged, while
+    Voxelize -- no user output -- idled at once.
+
+    The fact is cached ON THE NODE INSTANCE, so the hot path reads no plug.
+    Maya passes the ``nodeState`` and ``_inputAttrs`` plugs through the
+    override when they change; that is when the cache is dropped, to be rebuilt
+    on the next call once the new value is committed.
+    """
+    try:
+        pname = plug.partialName(useLongNames=True)
+    except Exception:
+        pname = ""
+    if pname == "nodeState" or pname == "_inputAttrs":
+        try:
+            setattr(node, _GATE_ATTR, None)
+        except Exception:
+            pass
+        return False
+    cache = getattr(node, _GATE_ATTR, None)
+    if cache is None:
+        try:
+            cache = {"suspended": api2_node_suspended(node.thisMObject())}
+        except Exception:
+            cache = {"suspended": False}
+        try:
+            setattr(node, _GATE_ATTR, cache)
+        except Exception:
+            pass
+    return bool(cache.get("suspended"))
+
+
+def api2_suspended_in_block(node, data_block) -> bool:
+    """``nodeState`` != Normal read off the DATA BLOCK inside ``compute()`` --
+    the one read the Evaluation Manager allows on a worker thread. The
+    attribute handle is cached on the node's class (``nodeState`` is a static
+    MPxNode attribute, one per type). Never raises; unreadable reads as live.
+
+    Belt and braces with :func:`api2_dirty_gate`: a node suspended BY HAND
+    while its outputs are still wired is still asked to compute by whatever
+    reads them, and Blocking means "not evaluated"."""
+    cls = type(node)
+    attr = getattr(cls, _STATE_ATTR_CACHE, None)
+    if attr is None:
+        try:
+            attr = om.MFnDependencyNode(node.thisMObject()).attribute("nodeState")
+        except Exception:
+            return False
+        try:
+            setattr(cls, _STATE_ATTR_CACHE, attr)
+        except Exception:
+            pass
+    try:
+        return data_block.inputValue(attr).asShort() != 0
+    except Exception:
+        return False

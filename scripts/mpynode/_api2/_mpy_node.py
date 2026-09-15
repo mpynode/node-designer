@@ -144,6 +144,14 @@ class MPyNode(om.MPxNode):
         """
         from mpynode._common.plugs import dirty_affects
 
+        # A SUSPENDED node (nodeState Has No Effect / Blocking -- Convert to
+        # C++ sets it on the idle Python node, a user may too) forwards
+        # nothing. The Evaluation Manager evaluates every user output an
+        # animated input dirties whether or not anything reads it -- a full
+        # expression run per frame on a node meant to be idle (Mesh Maze's
+        # int solutionSteps after Convert to C++, measured 2026-09-14).
+        if dirty_affects.api2_dirty_gate(self, plug):
+            return None
         dirty_affects.declare_user_affects(
             self.thisMObject(),
             plug,
@@ -184,6 +192,13 @@ class MPyNode(om.MPxNode):
                 return
         except Exception:
             pass
+        # Suspended (nodeState != Normal): not evaluated. The plug stays
+        # dirty so un-suspending recomputes it -- the API 1.0 deformers'
+        # contract. Read off the data block: safe on an EM worker thread.
+        from mpynode._common.plugs import dirty_affects as _dirty_affects
+
+        if _dirty_affects.api2_suspended_in_block(self, data_block):
+            return
 
         # Identify the OUTPUT being requested.
         try:

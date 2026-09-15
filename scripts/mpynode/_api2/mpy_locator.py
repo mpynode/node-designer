@@ -471,6 +471,16 @@ class MPyLocator(omui.MPxLocatorNode):
         Everything is wrapped in try/except so a redraw hiccup (e.g. no VP2 in a
         batch session) can never crash dirty propagation.
         """
+        from mpynode._common.plugs import dirty_affects
+
+        # A SUSPENDED node (nodeState Has No Effect / Blocking -- Convert to
+        # C++ sets it on the idle Python node, a user may too) forwards
+        # nothing. The Evaluation Manager evaluates every user output an
+        # animated input dirties whether or not anything reads it -- a full
+        # expression run per frame on a node meant to be idle (Mesh Maze's
+        # int solutionSteps after Convert to C++, measured 2026-09-14).
+        if dirty_affects.api2_dirty_gate(self, plug):
+            return
         try:
             if self._is_draw_dirty_trigger(plug):
                 omr.MRenderer.setGeometryDrawDirty(self.thisMObject())
