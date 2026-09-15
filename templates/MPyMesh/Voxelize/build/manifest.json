@@ -1,12 +1,12 @@
 {
   "manifest_version": 1,
-  "porter_recipe_version": "31",
+  "porter_recipe_version": "33",
   "provider": "claude_cli",
-  "model": "",
+  "model": "claude-fable-5-1",
   "strict": false,
   "plugin_name": "MPyMesh_Voxelize",
   "bundle": "C:\\Users\\eric.vignola\\mpynode_build\\MPyNode\\templates\\MPyMesh\\Voxelize\\MPyMesh_Voxelize.mll",
-  "created": 1789399140.482475,
+  "created": 1789438336.9187248,
   "nodes": [
     {
       "source_node": "voxelizeMesh",
@@ -14,8 +14,8 @@
       "type_id": "0x00078ac6",
       "type_id_source": "derived",
       "base": "MPxNode",
-      "spec_hash": "893861ba8c48bae070453244329962a2592b4e082784a87bfd5a9185e169ae61",
-      "port_cache_key": "893861ba8c48bae070453244329962a2592b4e082784a87bfd5a9185e169ae61",
+      "spec_hash": "f1fa5981ac1865a6fac6c671b0a0d53abe9c434cdd66efe512958d6be7b9e32b",
+      "port_cache_key": "f1fa5981ac1865a6fac6c671b0a0d53abe9c434cdd66efe512958d6be7b9e32b",
       "cache": "hit",
       "build_status": "compiled",
       "build_reason": "",
@@ -27,12 +27,22 @@
       "verify": {
         "ran": true,
         "pass": true,
-        "maxerr": null,
-        "tol": 0.0,
-        "reason": "verify could not run: 'NoneType' object has no attribute 'add_input_attr' | authored @maya_test: 1/1 passed",
+        "maxerr": 0.0,
+        "tol": 0.0001,
+        "reason": "reads an image file (MImage::readFromFile): the harness drives its path input(s) EMPTY, so geometry parity above is real but the image/texture-colour path is NOT exercised | authored @maya_test: 1/1 passed",
         "timing": {
-          "measured": false,
-          "reason": "not timed -- generic parity did not pass for this node, so there is no trustworthy pair to measure (verify could not run: 'NoneType' object has no attribute 'add_input_attr')"
+          "measured": true,
+          "py_ms": 52.57080000592396,
+          "cpp_ms": 2.9504999984055758,
+          "n": 3,
+          "truncated": false,
+          "scene": "geo 140 / array 5000",
+          "ratio": 0.05612431231925513,
+          "verdict": "ok",
+          "rung": [
+            140,
+            5000
+          ]
         },
         "authored_test": {
           "ran": true,
@@ -41,7 +51,7 @@
           "passes": 1,
           "reason": ""
         },
-        "generic_ran": false
+        "generic_ran": true
       },
       "spec": {
         "schema_version": 1,

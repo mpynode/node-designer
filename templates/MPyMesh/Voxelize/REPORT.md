@@ -1,10 +1,10 @@
 # MPyMesh_Voxelize -- compile report
 
-Generated 2026-09-14 08:19
+Generated 2026-09-14 19:12
 
 | node | status | assist | optimize | detail |
 |---|---|---|---|---|
-| `voxelizeMesh` | compiled | filled | **4.21x** | [report](build/stages/voxelizeMesh/REPORT.md) |
+| `voxelizeMesh` | compiled | filled | **23.57x** | [report](build/stages/voxelizeMesh/REPORT.md) |
 
 ## Layout
 

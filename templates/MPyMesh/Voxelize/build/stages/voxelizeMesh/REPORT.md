@@ -1,12 +1,12 @@
 # voxelizeMesh -- compile report
 
-**Source node:** `voxelizeMesh`  ·  **Base:** `MPxNode`  ·  **Generated:** 2026-09-14 08:19
+**Source node:** `voxelizeMesh`  ·  **Base:** `MPxNode`  ·  **Generated:** 2026-09-14 19:12
 
 | stage | outcome |
 |---|---|
 | 1 Transpile | emitted, with region(s) the transpiler could not lower |
 | 2 AI assist | ran -- no unresolved regions |
-| 3 AI optimize | **4.21x** over 2 round(s) -- 2 run of max 8, stopped: round 2 no-change -- nothing new to compound from |
+| 3 AI optimize | **23.57x** over 2 round(s) -- 2 run of max 6, stopped: round 2 no-change -- nothing new to compound from |
 
 ## The Python this was generated from
 
@@ -133,31 +133,31 @@ Parity gate: `authored+pointwise`. Every accepted round was re-checked against t
 
 Bench scene: geo density 40 / array length 512; noise floor 15 ms; moved per tick: `defaultColor (color)`, `inMesh <- pSphereShape1.vtx[0]`; outputs checked (1 plug(s)).
 
-Baseline **46.463 ms** -> best **11.049 ms** (**4.21x**).
+Baseline **36.463 ms** -> best **1.547 ms** (**23.57x**).
 
-Rounds: **2** run of at most 8; the loop stopped because round 2 no-change -- nothing new to compound from.
+Rounds: **2** run of at most 6; the loop stopped because round 2 no-change -- nothing new to compound from.
 
 | # | change | theme | predicted | measured | time | outcome |
 |---|---|---|---|---|---|---|
-| 00 | `--` | -- | -- | 46.463 ms | -- | -- |
-| 01 | `direct_colorset_write` | the node was bound by Maya mesh-output calls, not voxel math: write the colour set directly in setVertexColors' exact layout instead of calling setVertexColors (48.1 -> 24.9 ms), rewrite points + colours IN PLACE into the node's own output mesh when its topology is byte-identical instead of MFnMesh::create each tick (-> 12.1 ms), and replace the O(P log P) winner sort with a dense one-pass best-per-cell pick plus reused scratch buffers (-> 10.0 ms) | 1.80x | 4.21x | 22.0 min | ACCEPTED |
-| 02 | `float4_output_and_row_sat_cache` | write cube corners and face-vertex colours straight into float4 buffers keyed on the cube count (no MPoint/MColor/topology vectors, no topology byte-compare), cache each triangle's SAT survivors across evaluations so only the triangles touching the moved vertex are re-tested (overwritten in place when their survivor count holds), and reuse one MColorArray for the in-place colour upload | 2.20x | -- | 20.5 min | rejected: no change to the source |
+| 00 | `--` | -- | -- | 36.463 ms | -- | -- |
+| 01 | `reuse_outmesh_percube_colors` | Update the output cube-soup mesh in place (setPoints plus a one-colour-per-cube table assigned to face-vertices) instead of MFnMesh::create + setVertexColors every tick, behind a row-wise triangle cache and a sort-free per-cell pick. | 12.00x | 23.57x | 19.8 min | ACCEPTED |
+| 02 | `--` | -- | -- | -- | 3 s | rejected: no change to the source |
 
 ### Predicted vs measured
 
 The rounds where the guess and the stopwatch disagreed. These are the transferable part -- a prediction that missed says more about the machine than one that landed.
 
-* `direct_colorset_write` -- predicted 1.80x, measured **4.21x**. a section profile at the bench size (T=3120 tris, M=32.6k candidate pairs, P=19.2k overlaps, m=4780 cubes -> 38k verts, 115k face-vertices) showed all geometry math ~5 ms while setVertexColors took ~30 ms and MFnMesh::create ~8.5 ms. setVertexColors stores ONE colour per face-vertex (numColors = 24m, RGBA, unclamped, colorSet1 current), so createColorSetWithNameDataMesh + setColors(face-vertex table) + assignColors(0..n-1) reproduces it in two bulk calls. Between ticks only defaultColor and vtx[0] move, the voxel count (hence counts/indices) does not change, so the previous output data object (checked by MObject identity, byte-compared counts/indices, and O(1) vertex/face/face-vertex/colour counts) can be updated with setPoints + setColors. The winner pick is a per-cell argmin with lowest-index tie-break; a strict-< pass in pair order over a dense key array gives exactly the stable sort's first-per-key, in ascending key order
-* `float4_output_and_row_sat_cache` -- predicted 2.20x, **rejected: no change to the source**. candidate is identical to the current best
+* `reuse_outmesh_percube_colors` -- predicted 12.00x, measured **23.57x**. A stage profile put setVertexColors at ~30 ms and MFnMesh::create at ~8 ms of the 36 ms while all geometry math was ~5 ms, so the win is the marshalling: reuse the identity-checked mesh object the plug already holds (topology is a pure function of the cube count) and collapse the colour set from 38k per-vertex entries to one entry per cube, which getFaceVertexColors resolves identically.
 
 ### Rejected rounds
 
-* `float4_output_and_row_sat_cache` -- rejected: no change to the source. candidate is identical to the current best
+* `?` -- rejected: no change to the source. candidate is identical to the current best
 
 ## Verification
 
-* parity: **pass**
-* verify could not run: 'NoneType' object has no attribute 'add_input_attr' | authored @maya_test: 1/1 passed
+* parity: **pass**  (maxerr 0.0, tol 0.0001)
+* reads an image file (MImage::readFromFile): the harness drives its path input(s) EMPTY, so geometry parity above is real but the image/texture-colour path is NOT exercised | authored @maya_test: 1/1 passed
+* speed: compiled 2.950 ms vs interpreted 52.571 ms (best of 3, geo 140 / array 5000)
 
 ## Files
 
@@ -165,6 +165,6 @@ The rounds where the guess and the stopwatch disagreed. These are the transferab
 build/stages/voxelizeMesh/1_transpiled.cpp     deterministic transpile (no AI)
 build/stages/voxelizeMesh/2_assisted.cpp       AI filled the unported region(s)
 build/stages/voxelizeMesh/3_optimized/00_baseline.cpp
-build/stages/voxelizeMesh/3_optimized/01_direct_colorset_write.cpp
+build/stages/voxelizeMesh/3_optimized/01_reuse_outmesh_percube_colors.cpp
 build/source/voxelizeMesh.cpp      SHIPPED
 ```

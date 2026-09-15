@@ -1,10 +1,10 @@
 # MPyMesh_Mesh_Maze -- compile report
 
-Generated 2026-09-09 18:02
+Generated 2026-09-14 17:51
 
 | node | status | assist | optimize | detail |
 |---|---|---|---|---|
-| `meshMaze` | compiled | filled | **34.37x** | [report](build/stages/meshMaze/REPORT.md) |
+| `meshMaze` | compiled | filled | **33.81x** | [report](build/stages/meshMaze/REPORT.md) |
 
 ## Layout
 

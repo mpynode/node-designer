@@ -338,33 +338,9 @@ static void mm_wall_kernel(void* vctx, size_t lo, size_t hi) {
     }
 }
 
-// Phase markers used while profiling this node (MESHMAZE_PROF=1 dumps the
-// per-phase deltas of every compute to stderr); a cheap flag test otherwise.
-struct MMProf {
-    const char* name[40];
-    std::chrono::steady_clock::time_point t[40];
-    int n = 0;
-    void mark(const char* nm) {
-        if (n < 40) { name[n] = nm; t[n] = std::chrono::steady_clock::now(); ++n; }
-    }
-    void dump() const {
-        if (n < 2) return;
-        char buf[2048]; int len = 0;
-        len += std::snprintf(buf + len, sizeof(buf) - (size_t)len, "[meshMaze prof] total=%.1fus",
-                             std::chrono::duration<double, std::micro>(t[n - 1] - t[0]).count());
-        for (int i = 1; i < n && len < (int)sizeof(buf) - 64; ++i)
-            len += std::snprintf(buf + len, sizeof(buf) - (size_t)len, " %s=%.1f", name[i],
-                                 std::chrono::duration<double, std::micro>(t[i] - t[i - 1]).count());
-        std::fprintf(stderr, "%s\n", buf);
-        std::fflush(stderr);
-    }
-};
-static bool mm_prof_on() {
-    static int on = -1;
-    if (on < 0) { const char* e = std::getenv("MESHMAZE_PROF"); on = (e && std::atoi(e) > 0) ? 1 : 0; }
-    return on == 1;
-}
-#define MM_PROF_MARK(name) do { if (_prof_on) _prof.mark(#name); } while (0)
+// Phase markers used while profiling this node; compiled to nothing in the
+// shipped build.
+#define MM_PROF_MARK(name) ((void)0)
 
 class MeshMaze : public MPxNode {
 public:
@@ -411,15 +387,6 @@ private:
     static const int kMaxTmpl = 2;
     TopoTemplate _tmpl[kMaxTmpl];
     int          _nTmpl = 0;
-    // The datablock's OWN output mesh object, rewritten in place while its
-    // topology key (nWall, tileCounts) holds: guarded on MObject identity (the
-    // handle recorded right after the last setMObject) so a replaced or dead
-    // object falls back to the template / full-build paths.
-    bool             _outValid = false;
-    MObjectHandle    _outHandle;
-    size_t           _outNWall = 0;
-    std::vector<int> _outTileCounts;
-    MString          _outColorSet;
     // Persistent per-tick buffers (sized once, rewritten every tick).
     std::vector<MFloatPoint> _ptBuf;
     std::vector<MColor>      _colBuf;
@@ -1585,7 +1552,6 @@ public:
 
 MStatus MeshMaze::compute(const MPlug& plug, MDataBlock& data) {
     if (plug != aOutMesh && plug != aSolutionSteps) return MS::kUnknownParameter;
-    MMProf _prof; const bool _prof_on = mm_prof_on();
     MM_PROF_MARK(t_start);
 
     // --- inputs ---
@@ -2100,41 +2066,9 @@ MStatus MeshMaze::compute(const MPlug& plug, MDataBlock& data) {
         // already assigned, that this node owns.  Write this tick's points and
         // colours into it and hand it to the datablock (Maya copies on set;
         // the object stays ours -- verified by mutating it after the set).
-        // Records the datablock's own copy after a setMObject so the next tick
-        // can rewrite it IN PLACE (no copy) while the topology key holds.
-        auto recordOut = [&](const MString& cs) {
-            MObject stored = hOut.asMesh();
-            _outValid = (!stored.isNull()) && cs.length() > 0;
-            if (_outValid) {
-                _outHandle = MObjectHandle(stored);
-                _outNWall = nWall; _outTileCounts = tileCounts; _outColorSet = cs;
-            }
-        };
-        // IN-PLACE hit: the datablock still holds the very object we recorded
-        // last tick (identity + alive) and the topology key is unchanged, so
-        // write this tick's points and palette straight into it; no setMObject
-        // and no copy.
-        if (_outValid) {
-            MObject curObj = hOut.asMesh();
-            if (!curObj.isNull() && _outHandle.isValid() && _outHandle.isAlive() &&
-                curObj == _outHandle.object() && _outNWall == nWall && _outTileCounts == tileCounts) {
-                MStatus st;
-                MFnMesh tf(curObj, &st);
-                if (st == MS::kSuccess && tf.numVertices() == (int)nPts &&
-                    tf.numPolygons() == (int)nPolys) {
-                    const bool okp = tf.setPoints(_pa, MSpace::kObject) == MS::kSuccess;
-                    MM_PROF_MARK(t_setpts);
-                    const bool okc = okp && tf.setColors(_pal, &_outColorSet) == MS::kSuccess;
-                    MM_PROF_MARK(t_setcol);
-                    if (okc) hit = true;
-                }
-            }
-            if (!hit) _outValid = false;
-        }
         int ti = -1;
-        if (!hit)
-            for (int t = 0; t < _nTmpl; ++t)
-                if (_tmpl[t].nWall == nWall && _tmpl[t].tileCounts == tileCounts) { ti = t; break; }
+        for (int t = 0; t < _nTmpl; ++t)
+            if (_tmpl[t].nWall == nWall && _tmpl[t].tileCounts == tileCounts) { ti = t; break; }
         if (ti >= 0) {
             TopoTemplate& T = _tmpl[ti];
             if (T.handle.isValid() && T.handle.isAlive() && !T.mesh.isNull()) {
@@ -2151,7 +2085,6 @@ MStatus MeshMaze::compute(const MPlug& plug, MDataBlock& data) {
                         hOut.setMObject(T.mesh);
                         MM_PROF_MARK(t_set);
                         hit = true;
-                        recordOut(T.colorSet);
                     }
                 }
             }
@@ -2265,7 +2198,6 @@ MStatus MeshMaze::compute(const MPlug& plug, MDataBlock& data) {
     h_aSolutionSteps.setClean();
     data.setClean(plug);
     MM_PROF_MARK(t_end);
-    if (_prof_on) _prof.dump();
     return MS::kSuccess;
 }
 

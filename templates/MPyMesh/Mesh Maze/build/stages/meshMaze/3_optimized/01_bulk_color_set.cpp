@@ -69,302 +69,15 @@
 #include <limits>
 #include <atomic>
 #include <mutex>
-#include <cstddef>
-#include <utility>
 #include <maya/MFloatVector.h>
 #include <maya/MFloatVectorArray.h>
 #include <maya/MFloatPoint.h>
 #include <maya/MFloatPointArray.h>
 #include <maya/MObjectHandle.h>
-#include <thread>
-#include <condition_variable>
-#include <cstdlib>
 
-// ---------------------------------------------------------------------------
-// Persistent worker pool for the ONE embarrassingly parallel pass of this node
-// (the wall slabs): a parallel MAP with a deterministic per-element write.
-// Workers pull half-open chunk ranges off a cursor that is a MEMBER of the pool
-// (Maya's EM can evaluate two instances of this node at once, so a file-scope
-// cursor would be shared), block on a condition variable between jobs (never
-// spin), and are joined in the destructor.  The calling thread works too and
-// run() does not return before every chunk has been processed, so no worker
-// touches anything after compute() returns.  MESHMAZE_THREADS caps the worker
-// count (0 = serial) without a rebuild.
-class MMPool {
-public:
-    typedef void (*Fn)(void* ctx, size_t lo, size_t hi);
-    MMPool() {}
-    ~MMPool() {
-        {
-            std::lock_guard<std::mutex> lk(_m);
-            _quit = true;
-        }
-        _cvWork.notify_all();
-        for (size_t i = 0; i < _threads.size(); ++i)
-            if (_threads[i].joinable()) _threads[i].join();
-    }
-    MMPool(const MMPool&) = delete;
-    MMPool& operator=(const MMPool&) = delete;
-    // Workers + the calling thread.  Starts the workers lazily.
-    int participants() { ensureStarted(); return _nWorkers + 1; }
-    // fn(ctx, lo, hi) over [0, n) in chunks; element i is written by exactly one
-    // call, so the split cannot change the answer.
-    void run(size_t n, size_t chunk, Fn fn, void* ctx) { launch(n, chunk, fn, ctx); join(); }
-    // Asynchronous half of run(): hand the job to the workers and return at
-    // once, so the caller can do OTHER work meanwhile (a Maya API call that
-    // needs none of the job's results).  One job may be outstanding at a time;
-    // join() completes it.  With no workers the job simply runs inline here.
-    void launch(size_t n, size_t chunk, Fn fn, void* ctx) {
-        ensureStarted();
-        join();
-        if (n == 0) return;
-        if (_nWorkers == 0) { fn(ctx, 0, n); return; }
-        if (chunk == 0) chunk = 1;
-        {
-            std::lock_guard<std::mutex> lk(_m);
-            _fn = fn; _ctx = ctx; _n = n; _chunk = chunk;
-            _cursor.store(0, std::memory_order_relaxed);
-            _pending = _nWorkers;
-            ++_gen;
-        }
-        _active = true;
-        _cvWork.notify_all();
-    }
-    // Finish the outstanding job: the caller drains any leftover chunks, then
-    // waits until every worker has acknowledged the job.  No-op when idle.
-    void join() {
-        if (!_active) return;
-        _active = false;
-        drain(_fn, _ctx, _n, _chunk);
-        std::unique_lock<std::mutex> lk(_m);
-        _cvDone.wait(lk, [this] { return _pending == 0; });
-    }
-private:
-    void drain(Fn fn, void* ctx, size_t n, size_t chunk) {
-        for (;;) {
-            const size_t lo = _cursor.fetch_add(chunk, std::memory_order_relaxed);
-            if (lo >= n) break;
-            const size_t hi = (n - lo < chunk) ? n : lo + chunk;
-            fn(ctx, lo, hi);
-        }
-    }
-    void ensureStarted() {
-        if (_started) return;
-        _started = true;
-        const unsigned hw = std::thread::hardware_concurrency();
-        int want = (hw > 1) ? (int)hw - 1 : 0;
-        if (want > 8) want = 8;
-        if (const char* e = std::getenv("MESHMAZE_THREADS")) {
-            want = std::atoi(e);
-            if (want < 0) want = 0;
-            if (want > 64) want = 64;
-        }
-        _threads.reserve((size_t)want);
-        for (int i = 0; i < want; ++i) {
-            try {
-                _threads.emplace_back([this] { workerLoop(); });
-            } catch (...) {
-                break;              // fewer workers, never a failed compute
-            }
-        }
-        _nWorkers = (int)_threads.size();
-    }
-    void workerLoop() {
-        unsigned long long seen = 0;
-        for (;;) {
-            Fn fn; void* ctx; size_t n, chunk;
-            {
-                std::unique_lock<std::mutex> lk(_m);
-                _cvWork.wait(lk, [this, seen] { return _quit || _gen != seen; });
-                if (_quit) return;
-                seen = _gen; fn = _fn; ctx = _ctx; n = _n; chunk = _chunk;
-            }
-            drain(fn, ctx, n, chunk);
-            {
-                std::lock_guard<std::mutex> lk(_m);
-                if (--_pending == 0) _cvDone.notify_all();
-            }
-        }
-    }
-    std::vector<std::thread>  _threads;
-    std::mutex                _m;
-    std::condition_variable   _cvWork, _cvDone;
-    std::atomic<size_t>       _cursor{0};
-    unsigned long long        _gen = 0;
-    Fn                        _fn = nullptr;
-    void*                     _ctx = nullptr;
-    size_t                    _n = 0, _chunk = 0;
-    int                       _pending = 0;
-    int                       _nWorkers = 0;
-    bool                      _started = false;
-    bool                      _quit = false;
-    bool                      _active = false;    // a launch() awaiting join()
-};
-
-// One persistent worker for ONE asynchronous serial task at a time (the carve):
-// waking a single thread with notify_one costs the caller a few microseconds
-// where waking the whole pool for one job costs tens.  Same discipline as the
-// pool: no spinning, joined before compute() returns, freed in the destructor,
-// and MESHMAZE_THREADS=0 (or a failed thread start) runs the task inline.
-class MMSolo {
-public:
-    typedef void (*Fn)(void* ctx, size_t lo, size_t hi);
-    MMSolo() {}
-    ~MMSolo() {
-        {
-            std::lock_guard<std::mutex> lk(_m);
-            _quit = true;
-        }
-        _cv.notify_all();
-        if (_t.joinable()) _t.join();
-    }
-    MMSolo(const MMSolo&) = delete;
-    MMSolo& operator=(const MMSolo&) = delete;
-    void launch(Fn fn, void* ctx) {
-        ensureStarted();
-        join();
-        if (!_ok) { fn(ctx, 0, 1); return; }
-        {
-            std::lock_guard<std::mutex> lk(_m);
-            _fn = fn; _ctx = ctx; _job = true; _done = false;
-        }
-        _active = true;
-        _cv.notify_one();
-    }
-    void join() {
-        if (!_active) return;
-        _active = false;
-        std::unique_lock<std::mutex> lk(_m);
-        _cvDone.wait(lk, [this] { return _done; });
-    }
-private:
-    void ensureStarted() {
-        if (_started) return;
-        _started = true;
-        bool allow = std::thread::hardware_concurrency() > 1;
-        if (const char* e = std::getenv("MESHMAZE_THREADS")) allow = std::atoi(e) > 0;
-        if (!allow) return;
-        try {
-            _t = std::thread([this] { loop(); });
-            _ok = true;
-        } catch (...) {
-            _ok = false;
-        }
-    }
-    void loop() {
-        for (;;) {
-            Fn fn; void* ctx;
-            {
-                std::unique_lock<std::mutex> lk(_m);
-                _cv.wait(lk, [this] { return _quit || _job; });
-                if (_quit) return;
-                _job = false; fn = _fn; ctx = _ctx;
-            }
-            fn(ctx, 0, 1);
-            {
-                std::lock_guard<std::mutex> lk(_m);
-                _done = true;
-            }
-            _cvDone.notify_all();
-        }
-    }
-    std::thread             _t;
-    std::mutex              _m;
-    std::condition_variable _cv, _cvDone;
-    Fn                      _fn = nullptr;
-    void*                   _ctx = nullptr;
-    bool _job = false, _done = true, _quit = false;
-    bool _started = false, _ok = false, _active = false;
-};
-
-// One extruded slab per wall edge (8 points: the base ring straddling the
-// edge, then the ring raised along the two ends' vertex normals).  Pure
-// function of the wall index and read-only inputs; writes exactly the 8 points
-// of wall w, so it is the body of the parallel map above.
-struct MMWallCtx {
-    const int* wallIdx;
-    const int* uLo;
-    const int* uHi;
-    const float* pf;        // points, 3 floats per vertex (Maya's float channel)
-    const float* nf;        // vertex normals, 3 floats per vertex
-    double halfT, wallH;
-    float* out;             // 4 floats per point (x, y, z, 1), 8 points per wall
-};
-static void mm_wall_kernel(void* vctx, size_t lo, size_t hi) {
-    const MMWallCtx& c = *static_cast<const MMWallCtx*>(vctx);
-    const double halfT = c.halfT, wallH = c.wallH;
-    const float* pf = c.pf;
-    const float* nf = c.nf;
-    for (size_t w = lo; w < hi; ++w) {
-        const int s  = c.wallIdx[w];
-        const int va = c.uLo[s];          // key // n_verts
-        const int vb = c.uHi[s];          // key -  va * n_verts
-        // The Python's float64 points/normals are exactly Maya's floats
-        // widened, so widening at the read is the same value.
-        const double pax = (double)pf[3 * va + 0], pay = (double)pf[3 * va + 1], paz = (double)pf[3 * va + 2];
-        const double pbx = (double)pf[3 * vb + 0], pby = (double)pf[3 * vb + 1], pbz = (double)pf[3 * vb + 2];
-        const double nax = (double)nf[3 * va + 0], nay = (double)nf[3 * va + 1], naz = (double)nf[3 * va + 2];
-        const double nbx = (double)nf[3 * vb + 0], nby = (double)nf[3 * vb + 1], nbz = (double)nf[3 * vb + 2];
-        const double ex = pbx - pax, ey = pby - pay, ez = pbz - paz;
-        // cross(edge, normal) taken PER END, so a wall standing on a curved
-        // edge leans with the surface instead of shearing through it.
-        double tax = ey * naz - ez * nay;
-        double tay = ez * nax - ex * naz;
-        double taz = ex * nay - ey * nax;
-        double tbx = ey * nbz - ez * nby;
-        double tby = ez * nbx - ex * nbz;
-        double tbz = ex * nby - ey * nbx;
-        double la = std::sqrt(tax * tax + tay * tay + taz * taz);
-        double lb = std::sqrt(tbx * tbx + tby * tby + tbz * tbz);
-        if (la < 1e-12) la = 1e-12;   // the clamp on the normalize: a normal
-        if (lb < 1e-12) lb = 1e-12;   // parallel to its edge gives a flat
-        tax /= la; tay /= la; taz /= la;   // degenerate slab, never a NaN
-        tbx /= lb; tby /= lb; tbz /= lb;
-        const double r0x = pax - tax * halfT, r0y = pay - tay * halfT, r0z = paz - taz * halfT;
-        const double r1x = pax + tax * halfT, r1y = pay + tay * halfT, r1z = paz + taz * halfT;
-        const double r2x = pbx + tbx * halfT, r2y = pby + tby * halfT, r2z = pbz + tbz * halfT;
-        const double r3x = pbx - tbx * halfT, r3y = pby - tby * halfT, r3z = pbz - tbz * halfT;
-        const double uax = nax * wallH, uay = nay * wallH, uaz = naz * wallH;
-        const double ubx = nbx * wallH, uby = nby * wallH, ubz = nbz * wallH;
-        float* q = c.out + 32 * w;
-        q[0]  = (float)r0x;         q[1]  = (float)r0y;         q[2]  = (float)r0z;         q[3]  = 1.0f;
-        q[4]  = (float)r1x;         q[5]  = (float)r1y;         q[6]  = (float)r1z;         q[7]  = 1.0f;
-        q[8]  = (float)r2x;         q[9]  = (float)r2y;         q[10] = (float)r2z;         q[11] = 1.0f;
-        q[12] = (float)r3x;         q[13] = (float)r3y;         q[14] = (float)r3z;         q[15] = 1.0f;
-        q[16] = (float)(r0x + uax); q[17] = (float)(r0y + uay); q[18] = (float)(r0z + uaz); q[19] = 1.0f;
-        q[20] = (float)(r1x + uax); q[21] = (float)(r1y + uay); q[22] = (float)(r1z + uaz); q[23] = 1.0f;
-        q[24] = (float)(r2x + ubx); q[25] = (float)(r2y + uby); q[26] = (float)(r2z + ubz); q[27] = 1.0f;
-        q[28] = (float)(r3x + ubx); q[29] = (float)(r3y + uby); q[30] = (float)(r3z + ubz); q[31] = 1.0f;
-    }
-}
-
-// Phase markers used while profiling this node (MESHMAZE_PROF=1 dumps the
-// per-phase deltas of every compute to stderr); a cheap flag test otherwise.
-struct MMProf {
-    const char* name[40];
-    std::chrono::steady_clock::time_point t[40];
-    int n = 0;
-    void mark(const char* nm) {
-        if (n < 40) { name[n] = nm; t[n] = std::chrono::steady_clock::now(); ++n; }
-    }
-    void dump() const {
-        if (n < 2) return;
-        char buf[2048]; int len = 0;
-        len += std::snprintf(buf + len, sizeof(buf) - (size_t)len, "[meshMaze prof] total=%.1fus",
-                             std::chrono::duration<double, std::micro>(t[n - 1] - t[0]).count());
-        for (int i = 1; i < n && len < (int)sizeof(buf) - 64; ++i)
-            len += std::snprintf(buf + len, sizeof(buf) - (size_t)len, " %s=%.1f", name[i],
-                                 std::chrono::duration<double, std::micro>(t[i] - t[i - 1]).count());
-        std::fprintf(stderr, "%s\n", buf);
-        std::fflush(stderr);
-    }
-};
-static bool mm_prof_on() {
-    static int on = -1;
-    if (on < 0) { const char* e = std::getenv("MESHMAZE_PROF"); on = (e && std::atoi(e) > 0) ? 1 : 0; }
-    return on == 1;
-}
-#define MM_PROF_MARK(name) do { if (_prof_on) _prof.mark(#name); } while (0)
+// Phase markers used while profiling this node; compiled to nothing in the
+// shipped build.
+#define MM_PROF_MARK(name) ((void)0)
 
 class MeshMaze : public MPxNode {
 public:
@@ -388,243 +101,15 @@ public:
     static MObject aOutMesh;
     static MObject aSolutionSteps;
 private:
-    // Topology TEMPLATES (per instance, bounded).  The output topology of this
-    // node is a pure function of two small facts -- the wall count and the
-    // list of tile face sizes -- so the same topology recurs tick after tick
-    // while the POINTS and COLOURS change every tick.  MFnMesh::create plus the
-    // colour-set assignment on a 64k-vertex soup costs ~20 ms; writing new
-    // points and colours into an already-built mesh of that topology and
-    // handing it to the datablock costs a fraction of that.  Each template is a
-    // kMeshData object this node OWNS: MDataHandle::setMObject copies the data
-    // into the datablock (verified: mutating the object after the set leaves
-    // the datablock's copy untouched, and the object outlives its replacement),
-    // so the same object is rewritten and re-set every tick.  The key fully
-    // determines the topology, so a template can never go stale.  At most
-    // kMaxTmpl are ever built; a miss with a full cache simply rebuilds.
-    struct TopoTemplate {
-        size_t           nWall = 0;
-        std::vector<int> tileCounts;
-        MObject          mesh;
-        MObjectHandle    handle;
-        MString          colorSet;
-    };
-    static const int kMaxTmpl = 2;
-    TopoTemplate _tmpl[kMaxTmpl];
-    int          _nTmpl = 0;
-    // The datablock's OWN output mesh object, rewritten in place while its
-    // topology key (nWall, tileCounts) holds: guarded on MObject identity (the
-    // handle recorded right after the last setMObject) so a replaced or dead
-    // object falls back to the template / full-build paths.
-    bool             _outValid = false;
-    MObjectHandle    _outHandle;
-    size_t           _outNWall = 0;
-    std::vector<int> _outTileCounts;
-    MString          _outColorSet;
-    // Persistent per-tick buffers (sized once, rewritten every tick).
-    std::vector<MFloatPoint> _ptBuf;
-    std::vector<MColor>      _colBuf;
-    std::vector<int>         _cntScratch;
-    std::vector<int>         _connScratch;
-
-    // Topology-derived state (per instance).  Everything _maze_edges and
-    // _maze_dual compute depends only on (n_verts, counts, indices); those bytes
-    // are compared IN FULL every tick, so this can never be stale, and the
-    // whole derivation is skipped while the topology holds.
-    struct TopoCache {
-        bool             valid = false;
-        int              n_verts = 0;
-        int              maxDeg = 0;
-        std::vector<int> fCount, fConn, fOff;
-        std::vector<int> eFace, inv;          // per face-vertex edge
-        std::vector<int> uLo, uHi;            // per unique edge
-        std::vector<int> eiSlot;              // per dual arc (interior edge)
-        std::vector<int> deg, adjStart, adjDst, adjEid;   // CSR dual graph
-        std::vector<int> uStart, uFace;       // incident faces per unique edge (CSR)
-        std::vector<int> uArc;                // unique edge -> dual arc, or -1
-    };
-    TopoCache _topo;
-    // Per-tick carve scratch (persistent, resized in place every tick).
-    std::vector<unsigned char> _visited, _door;
-    std::vector<int>           _parent, _dfsStack, _depth, _cand, _wallIdx;
-    // Output points are written straight into this persistent array when its
-    // storage is contiguous (checked every tick), else into _ptBuf and copied.
-    MFloatPointArray _paBuf;
-    MMPool           _pool;     // the wall map
-    MMSolo           _solo;     // the carve task
-    // Per-tick input snapshots (persistent): points / vertex normals as Maya's
-    // floats (3 per vertex), and the face counts / connectivity arrays.
-    std::vector<float> _pf, _nf;
-    MIntArray          _srcVCount, _srcVList;
+    // Output-mesh reuse state (per instance).  When the topology computed this
+    // tick is byte-identical to the mesh already sitting in the datablock --
+    // and that object is the very one this node built -- the points and
+    // colours are rewritten in place instead of allocating a new mesh.
+    std::vector<int> _lastCounts;
+    std::vector<int> _lastIndices;
+    MObjectHandle    _lastOut;
+    MString          _lastColorSet;
 };
-
-// The Python's `(state >> 33) % nc` for the candidate count: the two-, and
-// four-way cases are the same value by a mask (unsigned), everything else
-// takes the general modulo.
-static inline int ndlcg_pick(unsigned long long state, int nc) {
-    const unsigned long long hi = state >> 33;
-    switch (nc) {
-        case 1:  return 0;
-        case 2:  return (int)(hi & 1ULL);
-        case 4:  return (int)(hi & 3ULL);
-        default: return (int)(hi % (unsigned long long)nc);
-    }
-}
-
-static const unsigned long long kLCG_A = 6364136223846793005ULL;
-static const unsigned long long kLCG_C = 1442695040888963407ULL;
-static const unsigned long long kLCG_M = 0x7FFFFFFFFFFFFFFFULL;
-
-// _maze_carve plus the wall listing as ONE deterministic task.  It reads the
-// topology cache (immutable for the rest of compute) and the scalar inputs,
-// writes only the per-node scratch vectors it is handed, and touches no Maya
-// API -- so it runs on a pool worker while the calling thread is inside
-// MFnMesh::getVertexNormals, whose result it does not need.  Serial code,
-// identical whichever thread executes it.
-struct MMCarveCtx {
-    int n_faces, nD, nU, maxDeg, startF, endF;
-    long long minLen;
-    unsigned long long state0;      // LCG state after the Python's two seeding steps
-    const int *adjStart, *deg, *adjDst, *adjEid, *uStart, *uFace, *uArc;
-    std::vector<unsigned char> *visited, *door;
-    std::vector<int> *parent, *dfsStack, *depth, *cand, *wallIdx;
-};
-
-static void mm_carve_task(void* vctx, size_t, size_t) {
-    MMCarveCtx& c = *static_cast<MMCarveCtx*>(vctx);
-    const int n_faces = c.n_faces, startF = c.startF, endF = c.endF;
-    const long long minLen = c.minLen;
-    const int* adjStart = c.adjStart;
-    const int* deg      = c.deg;
-    const int* adjDst   = c.adjDst;
-    const int* adjEid   = c.adjEid;
-    // Persistent scratch: sized in place, so after the first tick none of
-    // these allocates.
-    std::vector<unsigned char>& visited  = *c.visited;  visited.assign((size_t)n_faces, 0);
-    std::vector<unsigned char>& door     = *c.door;     door.assign((size_t)(c.nD > 0 ? c.nD : 1), 0);
-    std::vector<int>&          parent   = *c.parent;   parent.assign((size_t)n_faces, -1);
-    std::vector<int>&          dfsStack = *c.dfsStack; dfsStack.resize((size_t)n_faces);
-    std::vector<int>&          depth    = *c.depth;    depth.assign((size_t)n_faces, 0);
-    std::vector<int>&          cand     = *c.cand;     cand.resize((size_t)(c.maxDeg + 1));
-    int nVis = 0;   // faces reached so far (the frontier sweep is a no-op at n_faces)
-
-    // The Python's explicit 64-bit LCG written as masked integer arithmetic,
-    // NOT a std:: engine: multiply-add-mask is bit-identical on either side,
-    // so this node builds the same maze as the interpreted one.
-    unsigned long long state = c.state0;
-
-    dfsStack[0] = startF;
-    visited[(size_t)startF] = 1; ++nVis;
-    depth[(size_t)startF] = 1;
-    int sp = 1;
-    while (sp > 0) {
-        const int cur  = dfsStack[(size_t)(sp - 1)];
-        const int base = adjStart[cur];
-        const int dc   = deg[cur];
-        int nc = 0;
-        for (int k = 0; k < dc; ++k) {
-            const int nb = adjDst[base + k];
-            if (visited[(size_t)nb]) continue;
-            if (nb == endF && (long long)sp < minLen) continue;
-            cand[(size_t)nc] = base + k;
-            ++nc;
-        }
-        if (nc == 0) { --sp; continue; }
-        state = (state * kLCG_A + kLCG_C) & kLCG_M;
-        const int slot = cand[(size_t)ndlcg_pick(state, nc)];
-        const int nb = adjDst[slot];
-        door[(size_t)adjEid[slot]] = 1;
-        visited[(size_t)nb] = 1; ++nVis;
-        parent[(size_t)nb] = cur;
-        dfsStack[(size_t)sp] = nb;
-        ++sp;
-        depth[(size_t)nb] = sp;
-    }
-
-    // The depth gate can DEADLOCK `end` out of the tree.  Splice it onto
-    // whichever visited neighbour sits DEEPEST in the finished tree, as a
-    // leaf, so the tree stays a tree and the solution stays long.
-    if (!visited[(size_t)endF]) {
-        int best = -1;
-        long long bestD = 0;
-        const int base = adjStart[endF];
-        const int dc   = deg[endF];
-        for (int k = 0; k < dc; ++k) {
-            const int nb = adjDst[base + k];
-            if (visited[(size_t)nb] && depth[(size_t)nb] > bestD) {
-                bestD = depth[(size_t)nb];
-                best  = base + k;
-            }
-        }
-        if (best >= 0) {
-            door[(size_t)adjEid[best]] = 1;
-            visited[(size_t)endF] = 1; ++nVis;
-            parent[(size_t)endF] = adjDst[best];
-        }
-    }
-
-    // The gate also STRANDS perfectly reachable regions behind `end`.  Sweep
-    // the frontier and carve on with the same randomized walk but NO gate.
-    // This runs AFTER the splice on purpose.  With every face already reached
-    // the sweep finds no frontier and does nothing, so it is skipped.
-    int scan = 0;
-    while (nVis < n_faces && scan < n_faces) {
-        if (!visited[(size_t)scan]) { ++scan; continue; }
-        const int base = adjStart[scan];
-        const int dc   = deg[scan];
-        int seedSlot = -1;
-        for (int k = 0; k < dc; ++k) {
-            if (!visited[(size_t)adjDst[base + k]]) { seedSlot = base + k; break; }
-        }
-        if (seedSlot < 0) { ++scan; continue; }
-        door[(size_t)adjEid[seedSlot]] = 1;
-        const int root = adjDst[seedSlot];
-        visited[(size_t)root] = 1; ++nVis;
-        parent[(size_t)root] = scan;
-        dfsStack[0] = root;
-        sp = 1;
-        while (sp > 0) {
-            const int cur   = dfsStack[(size_t)(sp - 1)];
-            const int cbase = adjStart[cur];
-            const int dcur  = deg[cur];
-            int nc = 0;
-            for (int k = 0; k < dcur; ++k) {
-                if (visited[(size_t)adjDst[cbase + k]]) continue;
-                cand[(size_t)nc] = cbase + k;
-                ++nc;
-            }
-            if (nc == 0) { --sp; continue; }
-            state = (state * kLCG_A + kLCG_C) & kLCG_M;
-            const int slot = cand[(size_t)ndlcg_pick(state, nc)];
-            const int nb = adjDst[slot];
-            door[(size_t)adjEid[slot]] = 1;
-            visited[(size_t)nb] = 1; ++nVis;
-            parent[(size_t)nb] = cur;
-            dfsStack[(size_t)sp] = nb;
-            ++sp;
-        }
-    }
-
-    // ---- live edges, doors, walls -----------------------------------------
-    // An edge is LIVE when any face it touches was reached.  Doors are carved
-    // out of the live set; everything else in it is a wall.  An edge touching
-    // only unreached faces is in neither, which is what leaves an unreachable
-    // patch bare.  One sequential pass over the unique edges in ascending
-    // order (the np.nonzero order) lists the walls.
-    std::vector<int>& wallIdx = *c.wallIdx;
-    wallIdx.clear();
-    const int* uStart = c.uStart;
-    const int* uFace  = c.uFace;
-    const int* uArc   = c.uArc;
-    for (int s = 0; s < c.nU; ++s) {
-        const int a = uArc[s];
-        if (a >= 0 && door[(size_t)a]) continue;
-        const int t1 = uStart[s + 1];
-        bool lv = false;
-        for (int t = uStart[s]; t < t1; ++t)
-            if (visited[(size_t)uFace[t]]) { lv = true; break; }
-        if (lv) wallIdx.push_back(s);
-    }
-}
 
 MTypeId MeshMaze::id(0x000733b8);
 MObject MeshMaze::aInMesh;
@@ -1585,13 +1070,10 @@ public:
 
 MStatus MeshMaze::compute(const MPlug& plug, MDataBlock& data) {
     if (plug != aOutMesh && plug != aSolutionSteps) return MS::kUnknownParameter;
-    MMProf _prof; const bool _prof_on = mm_prof_on();
-    MM_PROF_MARK(t_start);
 
     // --- inputs ---
     MObject in_aInMesh_obj = data.inputValue(aInMesh).asMesh();
     MFnMesh in_aInMesh(in_aInMesh_obj);
-    MM_PROF_MARK(t_in0);
     const int in_aStart = data.inputValue(aStart).asInt();
     const int in_aEnd = data.inputValue(aEnd).asInt();
     const int in_aSeed = data.inputValue(aSeed).asInt();
@@ -1604,15 +1086,13 @@ MStatus MeshMaze::compute(const MPlug& plug, MDataBlock& data) {
     const float3& in_aSolutionColor = data.inputValue(aSolutionColor).asFloat3();
 
     // --- geometry buffers (fill below) ---
-    // Points and colours land in the persistent _ptBuf / _colBuf members; the
-    // topology is described by (nWall, tileCounts) and only materialised on a
-    // template miss.
-    // (_paBuf / _ptBuf are sized in place by the geometry pass; an invalid input
-    // leaves them empty.)
-    bool direct = false;    // points live in _paBuf (true) or _ptBuf (false)
-    size_t nWall = 0;
-    size_t nWallPts = 0;
-    std::vector<int> tileCounts;
+    std::vector<MPoint> points;  // vertex positions
+    std::vector<int>    counts;  // per-face vertex counts
+    std::vector<int>    indices; // flat face-vertex indices
+    std::vector<MVector> normals;       // optional; empty = smooth
+    std::vector<int>     normalIndices; // optional face-vertex map
+    std::vector<MColor>  colors;        // optional; empty = no set
+    std::vector<int>     colorIndices;  // optional face-vertex map
 
     // --- scalar output handles: write each with the setter shown; the scaffold marks them clean ---
     MDataHandle h_aSolutionSteps = data.outputValue(aSolutionSteps);
@@ -1634,27 +1114,17 @@ MStatus MeshMaze::compute(const MPlug& plug, MDataBlock& data) {
     int out_solutionSteps = 0;
 
     bool srcOK = (!in_aInMesh_obj.isNull()) && in_aInMesh_obj.hasFn(MFn::kMesh);
-    const float* rawPts = nullptr;
-    int n_verts = 0;
-    MIntArray&  srcVCount = _srcVCount;
-    MIntArray&  srcVList  = _srcVList;
-    if (srcOK) {
-        MStatus ps;
-        rawPts  = in_aInMesh.getRawPoints(&ps);
-        n_verts = in_aInMesh.numVertices();
-        if (ps != MS::kSuccess || rawPts == nullptr) srcOK = false;
-    }
-    MM_PROF_MARK(t_in1);
+    MPointArray srcPts;
+    MIntArray   srcVCount;
+    MIntArray   srcVList;
+    if (srcOK && in_aInMesh.getPoints(srcPts) != MS::kSuccess) srcOK = false;
     if (srcOK && in_aInMesh.getVertices(srcVCount, srcVList) != MS::kSuccess) srcOK = false;
     MM_PROF_MARK(t_in);
 
-    if (!srcOK) n_verts = 0;
+    const int n_verts = srcOK ? (int)srcPts.length() : 0;
     const int n_faces = srcOK ? (int)srcVCount.length() : 0;
-    // Face counts in bulk (one copy, reused as the topology key below).
-    _cntScratch.resize((size_t)n_faces);
-    if (n_faces > 0) srcVCount.get(_cntScratch.data());
     long long sum_counts = 0;
-    for (int f = 0; f < n_faces; ++f) sum_counts += (long long)_cntScratch[(size_t)f];
+    for (int f = 0; f < n_faces; ++f) sum_counts += (long long)srcVCount[(unsigned)f];
 
     // No input, an empty one, or a point cloud with no faces to use as cells
     // -> the buffers stay empty and the scaffold ships an empty VALID mesh.
@@ -1663,175 +1133,151 @@ MStatus MeshMaze::compute(const MPlug& plug, MDataBlock& data) {
 
         const long long n_fv = (long long)srcVList.length();
 
-        // ---- topology-derived state (per instance cache) --------------------
-        // Everything _maze_edges / _maze_dual derive depends ONLY on (n_verts,
-        // counts, indices).  Those bytes are read in bulk and compared in full
-        // against the cached copy every tick -- the key IS the whole dependency,
-        // so a hit cannot be stale -- and a miss rebuilds all of it below.
-        _connScratch.resize((size_t)n_fv);
-        if (n_fv > 0) srcVList.get(_connScratch.data());
-        const bool topoHit = _topo.valid && _topo.n_verts == n_verts &&
-            _topo.fCount.size() == (size_t)n_faces && _topo.fConn.size() == (size_t)n_fv &&
-            std::memcmp(_topo.fCount.data(), _cntScratch.data(), (size_t)n_faces * sizeof(int)) == 0 &&
-            (n_fv == 0 ||
-             std::memcmp(_topo.fConn.data(), _connScratch.data(), (size_t)n_fv * sizeof(int)) == 0);
-        if (!topoHit) {
-            TopoCache& C = _topo;
-            C.valid = false;
-            C.n_verts = n_verts;
-            C.fCount.swap(_cntScratch);
-            C.fConn.swap(_connScratch);
-            const std::vector<int>& fCount = C.fCount;
-            const std::vector<int>& fConn  = C.fConn;
+        // ---- local copies of the topology (one bulk pass each) ----
+        std::vector<int> fCount((size_t)n_faces);
+        for (int f = 0; f < n_faces; ++f) fCount[(size_t)f] = srcVCount[(unsigned)f];
+        std::vector<int> fConn((size_t)n_fv);
+        for (long long t = 0; t < n_fv; ++t) fConn[(size_t)t] = srcVList[(unsigned)t];
 
-            // face start offsets: cumsum(counts) - counts
-            C.fOff.assign((size_t)n_faces, 0);
-            {
-                int acc = 0;
-                for (int f = 0; f < n_faces; ++f) { C.fOff[(size_t)f] = acc; acc += fCount[(size_t)f]; }
-            }
-            const std::vector<int>& fOff = C.fOff;
-
-            // ---- _maze_edges -------------------------------------------------
-            // Every face-vertex edge as (lo, hi, face).  Edges whose two ends are
-            // the SAME vertex are dropped: a degenerate face produces those and
-            // they would key as a self loop in the dual.
-            std::vector<int> eLo, eHi;
-            C.eFace.clear();
-            eLo.reserve((size_t)n_fv); eHi.reserve((size_t)n_fv); C.eFace.reserve((size_t)n_fv);
-            for (int f = 0; f < n_faces; ++f) {
-                const int c   = fCount[(size_t)f];
-                const int off = fOff[(size_t)f];
-                for (int j = 0; j < c; ++j) {
-                    const int a = fConn[(size_t)(off + j)];
-                    const int b = fConn[(size_t)(off + ((j + 1) % c))];
-                    if (a == b) continue;
-                    eLo.push_back(a < b ? a : b);
-                    eHi.push_back(a < b ? b : a);
-                    C.eFace.push_back(f);
-                }
-            }
-            const long long nE = (long long)eLo.size();
-            const std::vector<int>& eFace = C.eFace;
-
-            // ---- np.unique(key, return_inverse=True, return_counts=True) ------
-            // The key is lo * n_verts + hi, so ASCENDING (lo, hi) IS the ascending
-            // key order np.unique yields.  Two STABLE counting sorts (by hi, then
-            // by lo) produce it in O(nE + n_verts) -- same work class as numpy's
-            // sort, and stable, so each group's members stay in original order
-            // (that is the stable argsort the dual relies on).
-            std::vector<int> ordA((size_t)nE), ordB((size_t)nE);
-            {
-                std::vector<int> bucket((size_t)n_verts + 1, 0);
-                for (long long t = 0; t < nE; ++t) bucket[(size_t)eHi[(size_t)t]]++;
-                int acc = 0;
-                for (int v = 0; v < n_verts; ++v) { const int c = bucket[(size_t)v]; bucket[(size_t)v] = acc; acc += c; }
-                for (long long t = 0; t < nE; ++t) ordA[(size_t)(bucket[(size_t)eHi[(size_t)t]]++)] = (int)t;
-                for (int v = 0; v <= n_verts; ++v) bucket[(size_t)v] = 0;
-                for (long long t = 0; t < nE; ++t) bucket[(size_t)eLo[(size_t)t]]++;
-                acc = 0;
-                for (int v = 0; v < n_verts; ++v) { const int c = bucket[(size_t)v]; bucket[(size_t)v] = acc; acc += c; }
-                for (long long t = 0; t < nE; ++t) {
-                    const int j = ordA[(size_t)t];
-                    ordB[(size_t)(bucket[(size_t)eLo[(size_t)j]]++)] = j;
-                }
-            }
-
-            C.inv.assign((size_t)nE, 0);
-            C.uLo.clear(); C.uHi.clear();
-            std::vector<int> uCnt, uFirst0, uFirst1;
-            for (long long t = 0; t < nE; ++t) {
-                const int j = ordB[(size_t)t];
-                if (C.uLo.empty() || eLo[(size_t)j] != C.uLo.back() || eHi[(size_t)j] != C.uHi.back()) {
-                    C.uLo.push_back(eLo[(size_t)j]);
-                    C.uHi.push_back(eHi[(size_t)j]);
-                    uCnt.push_back(0);
-                    uFirst0.push_back(-1);
-                    uFirst1.push_back(-1);
-                }
-                const int s = (int)C.uLo.size() - 1;
-                C.inv[(size_t)j] = s;
-                if (uCnt[(size_t)s] == 0)      uFirst0[(size_t)s] = j;
-                else if (uCnt[(size_t)s] == 1) uFirst1[(size_t)s] = j;
-                uCnt[(size_t)s] += 1;
-            }
-            const int nU = (int)C.uLo.size();
-
-            // ---- _maze_dual ---------------------------------------------------
-            // An interior edge has exactly two incident face-vertex edges from two
-            // DIFFERENT faces.  Three or more is non-manifold and stays OUT of the
-            // adjacency on purpose: it remains a wall candidate but can never
-            // become a door.
-            C.eiSlot.clear();
-            std::vector<int> dualA, dualB;
-            for (int s = 0; s < nU; ++s) {
-                if (uCnt[(size_t)s] != 2) continue;
-                const int fa = eFace[(size_t)uFirst0[(size_t)s]];
-                const int fb = eFace[(size_t)uFirst1[(size_t)s]];
-                if (fa == fb) continue;             // a face folded onto its own edge
-                C.eiSlot.push_back(s); dualA.push_back(fa); dualB.push_back(fb);
-            }
-            const int nD = (int)C.eiSlot.size();
-
-            // CSR neighbour lists.  The counting scatter below reproduces numpy's
-            // STABLE argsort of the source array exactly: for each face, every arc
-            // where it is "fa" in edge order first, then every arc where it is
-            // "fb" -- which is the candidate order the RNG indexes into.
-            C.deg.assign((size_t)n_faces, 0);
-            for (int k = 0; k < nD; ++k) { C.deg[(size_t)dualA[(size_t)k]]++; C.deg[(size_t)dualB[(size_t)k]]++; }
-            C.adjStart.assign((size_t)n_faces, 0);
-            {
-                int acc = 0;
-                for (int f = 0; f < n_faces; ++f) { C.adjStart[(size_t)f] = acc; acc += C.deg[(size_t)f]; }
-            }
-            C.adjDst.assign((size_t)(2 * nD), 0);
-            C.adjEid.assign((size_t)(2 * nD), 0);
-            {
-                std::vector<int> fillPos(C.adjStart);
-                for (int k = 0; k < nD; ++k) {
-                    const int s = fillPos[(size_t)dualA[(size_t)k]]++;
-                    C.adjDst[(size_t)s] = dualB[(size_t)k]; C.adjEid[(size_t)s] = k;
-                }
-                for (int k = 0; k < nD; ++k) {
-                    const int s = fillPos[(size_t)dualB[(size_t)k]]++;
-                    C.adjDst[(size_t)s] = dualA[(size_t)k]; C.adjEid[(size_t)s] = k;
-                }
-            }
-            C.maxDeg = 0;
-            for (int f = 0; f < n_faces; ++f) if (C.deg[(size_t)f] > C.maxDeg) C.maxDeg = C.deg[(size_t)f];
-
-            // Incident faces per unique edge, CSR in the (stable) sorted order
-            // -- ordB is already grouped by slot, so it is that order verbatim
-            // -- and the dual arc each unique edge became (-1: not interior).
-            C.uStart.assign((size_t)nU + 1, 0);
-            for (int s = 0; s < nU; ++s) C.uStart[(size_t)s + 1] = C.uStart[(size_t)s] + uCnt[(size_t)s];
-            C.uFace.assign((size_t)nE, 0);
-            for (long long t = 0; t < nE; ++t) C.uFace[(size_t)t] = eFace[(size_t)ordB[(size_t)t]];
-            C.uArc.assign((size_t)nU, -1);
-            for (int k = 0; k < nD; ++k) C.uArc[(size_t)C.eiSlot[(size_t)k]] = k;
-            C.valid = true;
+        std::vector<double> Px((size_t)n_verts), Py((size_t)n_verts), Pz((size_t)n_verts);
+        for (int i = 0; i < n_verts; ++i) {
+            const MPoint& q = srcPts[(unsigned)i];
+            Px[(size_t)i] = q.x; Py[(size_t)i] = q.y; Pz[(size_t)i] = q.z;
         }
-        const std::vector<int>& fCount   = _topo.fCount;
-        const std::vector<int>& fConn    = _topo.fConn;
-        const std::vector<int>& fOff     = _topo.fOff;
-        const std::vector<int>& eFace    = _topo.eFace;
-        const std::vector<int>& inv      = _topo.inv;
-        const std::vector<int>& uLo      = _topo.uLo;
-        const std::vector<int>& uHi      = _topo.uHi;
-        const std::vector<int>& eiSlot   = _topo.eiSlot;
-        const std::vector<int>& deg      = _topo.deg;
-        const std::vector<int>& adjStart = _topo.adjStart;
-        const std::vector<int>& adjDst   = _topo.adjDst;
-        const std::vector<int>& adjEid   = _topo.adjEid;
-        const std::vector<int>& uStart   = _topo.uStart;
-        const std::vector<int>& uFace    = _topo.uFace;
-        const std::vector<int>& uArc     = _topo.uArc;
-        const int nU = (int)uLo.size();
-        const int nD = (int)eiSlot.size();
-        const int maxDeg = _topo.maxDeg;
-        (void)eFace; (void)inv;
-        MM_PROF_MARK(t_topo);
 
+        // Vertex normals are what the walls stand up along.  A mesh that cannot
+        // supply them falls back to +Y so the node still emits geometry.  The
+        // values are rounded through float because the Python reads the mesh's
+        // float vertex-normal channel before widening it to float64.
+        std::vector<double> Nx((size_t)n_verts, 0.0);
+        std::vector<double> Ny((size_t)n_verts, 1.0);
+        std::vector<double> Nz((size_t)n_verts, 0.0);
+        {
+            // The SAME bulk call the Python makes (getVertexNormals(False,
+            // kObject) -> float32 -> float64), in one shot instead of one
+            // MFnMesh::getVertexNormal per vertex.
+            MFloatVectorArray fnrm;
+            if (in_aInMesh.getVertexNormals(false, fnrm, MSpace::kObject) == MS::kSuccess &&
+                (int)fnrm.length() == n_verts) {
+                for (int i = 0; i < n_verts; ++i) {
+                    const MFloatVector& nv = fnrm[(unsigned)i];
+                    Nx[(size_t)i] = (double)nv.x;
+                    Ny[(size_t)i] = (double)nv.y;
+                    Nz[(size_t)i] = (double)nv.z;
+                }
+            }
+        }
+        MM_PROF_MARK(t_norm);
+
+        // face start offsets: cumsum(counts) - counts
+        std::vector<int> fOff((size_t)n_faces);
+        {
+            int acc = 0;
+            for (int f = 0; f < n_faces; ++f) { fOff[(size_t)f] = acc; acc += fCount[(size_t)f]; }
+        }
+
+        // ---- _maze_edges -------------------------------------------------
+        // Every face-vertex edge as (lo, hi, face).  Edges whose two ends are
+        // the SAME vertex are dropped: a degenerate face produces those and
+        // they would key as a self loop in the dual.
+        std::vector<int> eLo, eHi, eFace;
+        eLo.reserve((size_t)n_fv); eHi.reserve((size_t)n_fv); eFace.reserve((size_t)n_fv);
+        for (int f = 0; f < n_faces; ++f) {
+            const int c   = fCount[(size_t)f];
+            const int off = fOff[(size_t)f];
+            for (int j = 0; j < c; ++j) {
+                const int a = fConn[(size_t)(off + j)];
+                const int b = fConn[(size_t)(off + ((j + 1) % c))];
+                if (a == b) continue;
+                eLo.push_back(a < b ? a : b);
+                eHi.push_back(a < b ? b : a);
+                eFace.push_back(f);
+            }
+        }
+        const long long nE = (long long)eLo.size();
+
+        // ---- np.unique(key, return_inverse=True, return_counts=True) ------
+        // The key is lo * n_verts + hi, so ASCENDING (lo, hi) IS the ascending
+        // key order np.unique yields.  Two STABLE counting sorts (by hi, then
+        // by lo) produce it in O(nE + n_verts) -- same work class as numpy's
+        // sort, and stable, so each group's members stay in original order
+        // (that is the stable argsort the dual relies on).
+        std::vector<int> ordA((size_t)nE), ordB((size_t)nE);
+        {
+            std::vector<int> bucket((size_t)n_verts + 1, 0);
+            for (long long t = 0; t < nE; ++t) bucket[(size_t)eHi[(size_t)t]]++;
+            int acc = 0;
+            for (int v = 0; v < n_verts; ++v) { const int c = bucket[(size_t)v]; bucket[(size_t)v] = acc; acc += c; }
+            for (long long t = 0; t < nE; ++t) ordA[(size_t)(bucket[(size_t)eHi[(size_t)t]]++)] = (int)t;
+            for (int v = 0; v <= n_verts; ++v) bucket[(size_t)v] = 0;
+            for (long long t = 0; t < nE; ++t) bucket[(size_t)eLo[(size_t)t]]++;
+            acc = 0;
+            for (int v = 0; v < n_verts; ++v) { const int c = bucket[(size_t)v]; bucket[(size_t)v] = acc; acc += c; }
+            for (long long t = 0; t < nE; ++t) {
+                const int j = ordA[(size_t)t];
+                ordB[(size_t)(bucket[(size_t)eLo[(size_t)j]]++)] = j;
+            }
+        }
+
+        std::vector<int> inv((size_t)nE, 0);
+        std::vector<int> uLo, uHi, uCnt, uFirst0, uFirst1;
+        for (long long t = 0; t < nE; ++t) {
+            const int j = ordB[(size_t)t];
+            if (uLo.empty() || eLo[(size_t)j] != uLo.back() || eHi[(size_t)j] != uHi.back()) {
+                uLo.push_back(eLo[(size_t)j]);
+                uHi.push_back(eHi[(size_t)j]);
+                uCnt.push_back(0);
+                uFirst0.push_back(-1);
+                uFirst1.push_back(-1);
+            }
+            const int s = (int)uLo.size() - 1;
+            inv[(size_t)j] = s;
+            if (uCnt[(size_t)s] == 0)      uFirst0[(size_t)s] = j;
+            else if (uCnt[(size_t)s] == 1) uFirst1[(size_t)s] = j;
+            uCnt[(size_t)s] += 1;
+        }
+        const int nU = (int)uLo.size();
+
+        // ---- _maze_dual ---------------------------------------------------
+        // An interior edge has exactly two incident face-vertex edges from two
+        // DIFFERENT faces.  Three or more is non-manifold and stays OUT of the
+        // adjacency on purpose: it remains a wall candidate but can never
+        // become a door.
+        std::vector<int> eiSlot, dualA, dualB;
+        for (int s = 0; s < nU; ++s) {
+            if (uCnt[(size_t)s] != 2) continue;
+            const int fa = eFace[(size_t)uFirst0[(size_t)s]];
+            const int fb = eFace[(size_t)uFirst1[(size_t)s]];
+            if (fa == fb) continue;             // a face folded onto its own edge
+            eiSlot.push_back(s); dualA.push_back(fa); dualB.push_back(fb);
+        }
+        const int nD = (int)eiSlot.size();
+
+        // CSR neighbour lists.  The counting scatter below reproduces numpy's
+        // STABLE argsort of the source array exactly: for each face, every arc
+        // where it is "fa" in edge order first, then every arc where it is
+        // "fb" -- which is the candidate order the RNG indexes into.
+        std::vector<int> deg((size_t)n_faces, 0);
+        for (int k = 0; k < nD; ++k) { deg[(size_t)dualA[(size_t)k]]++; deg[(size_t)dualB[(size_t)k]]++; }
+        std::vector<int> adjStart((size_t)n_faces, 0);
+        {
+            int acc = 0;
+            for (int f = 0; f < n_faces; ++f) { adjStart[(size_t)f] = acc; acc += deg[(size_t)f]; }
+        }
+        std::vector<int> adjDst((size_t)(2 * nD), 0), adjEid((size_t)(2 * nD), 0);
+        {
+            std::vector<int> fillPos(adjStart);
+            for (int k = 0; k < nD; ++k) {
+                const int s = fillPos[(size_t)dualA[(size_t)k]]++;
+                adjDst[(size_t)s] = dualB[(size_t)k]; adjEid[(size_t)s] = k;
+            }
+            for (int k = 0; k < nD; ++k) {
+                const int s = fillPos[(size_t)dualB[(size_t)k]]++;
+                adjDst[(size_t)s] = dualA[(size_t)k]; adjEid[(size_t)s] = k;
+            }
+        }
+
+        MM_PROF_MARK(t_dual);
         // ---- start / end: a NEGATIVE index counts back from the end, then
         // anything still out of range is CLAMPED (never a red node).
         long long sv = (long long)in_aStart;
@@ -1855,73 +1301,116 @@ MStatus MeshMaze::compute(const MPlug& plug, MDataBlock& data) {
             else                      minLen = (long long)want;
         }
 
-        // ---- _maze_carve + wall listing: ONE deterministic task, launched on
-        // the pool now and joined below, so it overlaps the vertex-normal call
-        // (a Maya API call the carve does not depend on) on this thread.
+        // ---- _maze_carve: randomized DFS (recursive backtracker) ----------
         // sol_len is not carried: the Python returns it for its build gate and
         // test only, and nothing downstream reads it.
-        MMCarveCtx cctx;
-        cctx.n_faces = n_faces; cctx.nD = nD; cctx.nU = nU; cctx.maxDeg = maxDeg;
-        cctx.startF = startF; cctx.endF = endF; cctx.minLen = minLen;
-        {
-            // The Python's explicit 64-bit LCG written as masked integer
-            // arithmetic, NOT a std:: engine: multiply-add-mask is bit-identical
-            // on either side, so this node builds the same maze as the
-            // interpreted one.
-            unsigned long long state =
-                (((unsigned long long)(long long)in_aSeed) * NDLCG_A + NDLCG_C) & NDLCG_M;
+        std::vector<unsigned char> visited((size_t)n_faces, 0);
+        std::vector<unsigned char> door((size_t)(nD > 0 ? nD : 1), 0);
+        std::vector<int>           parent((size_t)n_faces, -1);
+        std::vector<int>           dfsStack((size_t)n_faces, 0);
+        std::vector<long long>     depth((size_t)n_faces, 0);
+        int maxDeg = 0;
+        for (int f = 0; f < n_faces; ++f) if (deg[(size_t)f] > maxDeg) maxDeg = deg[(size_t)f];
+        std::vector<int> cand((size_t)(maxDeg + 1), 0);
+
+        // The Python's explicit 64-bit LCG written as masked integer
+        // arithmetic, NOT a std:: engine: multiply-add-mask is bit-identical on
+        // either side, so this node builds the same maze as the interpreted one.
+        unsigned long long state =
+            (((unsigned long long)(long long)in_aSeed) * NDLCG_A + NDLCG_C) & NDLCG_M;
+        state = (state * NDLCG_A + NDLCG_C) & NDLCG_M;
+
+        dfsStack[0] = startF;
+        visited[(size_t)startF] = 1;
+        depth[(size_t)startF] = 1;
+        int sp = 1;
+        while (sp > 0) {
+            const int cur  = dfsStack[(size_t)(sp - 1)];
+            const int base = adjStart[(size_t)cur];
+            const int dc   = deg[(size_t)cur];
+            int nc = 0;
+            for (int k = 0; k < dc; ++k) {
+                const int nb = adjDst[(size_t)(base + k)];
+                if (visited[(size_t)nb]) continue;
+                if (nb == endF && (long long)sp < minLen) continue;
+                cand[(size_t)nc] = base + k;
+                ++nc;
+            }
+            if (nc == 0) { --sp; continue; }
             state = (state * NDLCG_A + NDLCG_C) & NDLCG_M;
-            cctx.state0 = state;
+            const int slot = cand[(size_t)((state >> 33) % (unsigned long long)nc)];
+            const int nb = adjDst[(size_t)slot];
+            door[(size_t)adjEid[(size_t)slot]] = 1;
+            visited[(size_t)nb] = 1;
+            parent[(size_t)nb] = cur;
+            dfsStack[(size_t)sp] = nb;
+            ++sp;
+            depth[(size_t)nb] = (long long)sp;
         }
-        cctx.adjStart = adjStart.data(); cctx.deg = deg.data();
-        cctx.adjDst = adjDst.data();     cctx.adjEid = adjEid.data();
-        cctx.uStart = uStart.data();     cctx.uFace = uFace.data(); cctx.uArc = uArc.data();
-        cctx.visited = &_visited; cctx.door = &_door; cctx.parent = &_parent;
-        cctx.dfsStack = &_dfsStack; cctx.depth = &_depth; cctx.cand = &_cand;
-        cctx.wallIdx = &_wallIdx;
-        _solo.launch(mm_carve_task, &cctx);
 
-        // ---- positions: Maya stores vertices as float; the Python's float64
-        // points are exactly those floats widened, so snapshot the raw channel
-        // (the kernels widen at the read -- the same value).
-        std::vector<float>& pf = _pf;
-        pf.resize((size_t)3 * (size_t)n_verts);
-        std::memcpy(pf.data(), rawPts, sizeof(float) * 3 * (size_t)n_verts);
-        MM_PROF_MARK(t_pos);
-
-        // Vertex normals are what the walls stand up along.  A mesh that cannot
-        // supply them falls back to +Y so the node still emits geometry.  The
-        // values are rounded through float because the Python reads the mesh's
-        // float vertex-normal channel before widening it to float64.
-        std::vector<float>& nf = _nf;
-        {
-            // The SAME bulk call the Python makes (getVertexNormals(False,
-            // kObject) -> float32 -> float64), in one shot instead of one
-            // MFnMesh::getVertexNormal per vertex.
-            MFloatVectorArray fnrm;
-            nf.resize((size_t)3 * (size_t)n_verts);
-            if (in_aInMesh.getVertexNormals(false, fnrm, MSpace::kObject) == MS::kSuccess &&
-                (int)fnrm.length() == n_verts) {
-                for (int i = 0; i < n_verts; ++i) {
-                    const MFloatVector& nv = fnrm[(unsigned)i];
-                    nf[(size_t)(3 * i + 0)] = nv.x;
-                    nf[(size_t)(3 * i + 1)] = nv.y;
-                    nf[(size_t)(3 * i + 2)] = nv.z;
-                }
-            } else {
-                for (int i = 0; i < n_verts; ++i) {
-                    nf[(size_t)(3 * i + 0)] = 0.0f;
-                    nf[(size_t)(3 * i + 1)] = 1.0f;
-                    nf[(size_t)(3 * i + 2)] = 0.0f;
+        // The depth gate can DEADLOCK `end` out of the tree.  Splice it onto
+        // whichever visited neighbour sits DEEPEST in the finished tree, as a
+        // leaf, so the tree stays a tree and the solution stays long.
+        if (!visited[(size_t)endF]) {
+            int best = -1;
+            long long bestD = 0;
+            const int base = adjStart[(size_t)endF];
+            const int dc   = deg[(size_t)endF];
+            for (int k = 0; k < dc; ++k) {
+                const int nb = adjDst[(size_t)(base + k)];
+                if (visited[(size_t)nb] && depth[(size_t)nb] > bestD) {
+                    bestD = depth[(size_t)nb];
+                    best  = base + k;
                 }
             }
+            if (best >= 0) {
+                door[(size_t)adjEid[(size_t)best]] = 1;
+                visited[(size_t)endF] = 1;
+                parent[(size_t)endF] = adjDst[(size_t)best];
+            }
         }
-        MM_PROF_MARK(t_dual);
 
-        // The carve's results are needed from here on.
-        _solo.join();
-        const std::vector<unsigned char>& visited = _visited;
-        const std::vector<int>&           parent  = _parent;
+        // The gate also STRANDS perfectly reachable regions behind `end`.
+        // Sweep the frontier and carve on with the same randomized walk but NO
+        // gate.  This runs AFTER the splice on purpose.
+        int scan = 0;
+        while (scan < n_faces) {
+            if (!visited[(size_t)scan]) { ++scan; continue; }
+            const int base = adjStart[(size_t)scan];
+            const int dc   = deg[(size_t)scan];
+            int seedSlot = -1;
+            for (int k = 0; k < dc; ++k) {
+                if (!visited[(size_t)adjDst[(size_t)(base + k)]]) { seedSlot = base + k; break; }
+            }
+            if (seedSlot < 0) { ++scan; continue; }
+            door[(size_t)adjEid[(size_t)seedSlot]] = 1;
+            const int root = adjDst[(size_t)seedSlot];
+            visited[(size_t)root] = 1;
+            parent[(size_t)root] = scan;
+            dfsStack[0] = root;
+            sp = 1;
+            while (sp > 0) {
+                const int cur   = dfsStack[(size_t)(sp - 1)];
+                const int cbase = adjStart[(size_t)cur];
+                const int dcur  = deg[(size_t)cur];
+                int nc = 0;
+                for (int k = 0; k < dcur; ++k) {
+                    if (visited[(size_t)adjDst[(size_t)(cbase + k)]]) continue;
+                    cand[(size_t)nc] = cbase + k;
+                    ++nc;
+                }
+                if (nc == 0) { --sp; continue; }
+                state = (state * NDLCG_A + NDLCG_C) & NDLCG_M;
+                const int slot = cand[(size_t)((state >> 33) % (unsigned long long)nc)];
+                const int nb = adjDst[(size_t)slot];
+                door[(size_t)adjEid[(size_t)slot]] = 1;
+                visited[(size_t)nb] = 1;
+                parent[(size_t)nb] = cur;
+                dfsStack[(size_t)sp] = nb;
+                ++sp;
+            }
+        }
+
         MM_PROF_MARK(t_carve);
         // ---- _maze_solution: walk `parent` back from `end`, then reverse ---
         std::vector<int> path;
@@ -1943,102 +1432,121 @@ MStatus MeshMaze::compute(const MPlug& plug, MDataBlock& data) {
         }
         out_solutionSteps = path.empty() ? 0 : (int)path.size() - 1;
 
-        // ---- walls: listed by the carve task (ascending unique-edge order).
-        const std::vector<int>& wallIdx = _wallIdx;
-        const size_t wallCount = wallIdx.size();
-        MM_PROF_MARK(t_live);
+        // ---- live edges, doors, walls -------------------------------------
+        // An edge is LIVE when any face it touches was reached.  Doors are
+        // carved out of the live set; everything else in it is a wall.  An edge
+        // touching only unreached faces is in neither, which is what leaves an
+        // unreachable patch bare.
+        std::vector<unsigned char> live((size_t)nU, 0);
+        for (long long t = 0; t < nE; ++t)
+            if (visited[(size_t)eFace[(size_t)t]]) live[(size_t)inv[(size_t)t]] = 1;
+        std::vector<unsigned char> isDoor((size_t)nU, 0);
+        for (int k = 0; k < nD; ++k)
+            if (door[(size_t)k]) isDoor[(size_t)eiSlot[(size_t)k]] = 1;
+        std::vector<int> wallSlot;
+        for (int s = 0; s < nU; ++s)
+            if (live[(size_t)s] && !isDoor[(size_t)s]) wallSlot.push_back(s);
 
         // ---- _maze_walls: one extruded slab per wall edge (8 pts, 6 quads) -
-        // and _maze_tiles: path faces 0..solutionStep, inset and floated.
-        // The POINTS go straight into the persistent float buffer that is
-        // handed to Maya (Maya stores vertices as float; (float)x here is the
-        // same round-to-nearest cast MFnMesh applies to an MPoint).  The
-        // TOPOLOGY is a pure function of (wall count, tile face sizes), so it is
-        // only materialised on a template miss -- see the output section.
         const double wallH = in_aWallHeight;
         const double halfT = 0.5 * in_aWallThickness;
-        nWall = wallCount;
+        const size_t nWall = wallSlot.size();
+        const int quadTable[6][4] = {
+            {0, 3, 2, 1}, {4, 5, 6, 7}, {0, 1, 5, 4},
+            {1, 2, 6, 5}, {2, 3, 7, 6}, {3, 0, 4, 7}
+        };
+        points.reserve(8 * nWall);
+        counts.reserve(6 * nWall);
+        indices.reserve(24 * nWall);
+        for (size_t w = 0; w < nWall; ++w) {
+            const int s  = wallSlot[w];
+            const int va = uLo[(size_t)s];          // key // n_verts
+            const int vb = uHi[(size_t)s];          // key -  va * n_verts
+            const double pax = Px[(size_t)va], pay = Py[(size_t)va], paz = Pz[(size_t)va];
+            const double pbx = Px[(size_t)vb], pby = Py[(size_t)vb], pbz = Pz[(size_t)vb];
+            const double nax = Nx[(size_t)va], nay = Ny[(size_t)va], naz = Nz[(size_t)va];
+            const double nbx = Nx[(size_t)vb], nby = Ny[(size_t)vb], nbz = Nz[(size_t)vb];
+            const double ex = pbx - pax, ey = pby - pay, ez = pbz - paz;
+            // cross(edge, normal) taken PER END, so a wall standing on a curved
+            // edge leans with the surface instead of shearing through it.
+            double tax = ey * naz - ez * nay;
+            double tay = ez * nax - ex * naz;
+            double taz = ex * nay - ey * nax;
+            double tbx = ey * nbz - ez * nby;
+            double tby = ez * nbx - ex * nbz;
+            double tbz = ex * nby - ey * nbx;
+            double la = std::sqrt(tax * tax + tay * tay + taz * taz);
+            double lb = std::sqrt(tbx * tbx + tby * tby + tbz * tbz);
+            if (la < 1e-12) la = 1e-12;   // the clamp on the normalize: a normal
+            if (lb < 1e-12) lb = 1e-12;   // parallel to its edge gives a flat
+            tax /= la; tay /= la; taz /= la;   // degenerate slab, never a NaN
+            tbx /= lb; tby /= lb; tbz /= lb;
+            const double r0x = pax - tax * halfT, r0y = pay - tay * halfT, r0z = paz - taz * halfT;
+            const double r1x = pax + tax * halfT, r1y = pay + tay * halfT, r1z = paz + taz * halfT;
+            const double r2x = pbx + tbx * halfT, r2y = pby + tby * halfT, r2z = pbz + tbz * halfT;
+            const double r3x = pbx - tbx * halfT, r3y = pby - tby * halfT, r3z = pbz - tbz * halfT;
+            const double uax = nax * wallH, uay = nay * wallH, uaz = naz * wallH;
+            const double ubx = nbx * wallH, uby = nby * wallH, ubz = nbz * wallH;
+            points.push_back(MPoint(r0x, r0y, r0z));
+            points.push_back(MPoint(r1x, r1y, r1z));
+            points.push_back(MPoint(r2x, r2y, r2z));
+            points.push_back(MPoint(r3x, r3y, r3z));
+            points.push_back(MPoint(r0x + uax, r0y + uay, r0z + uaz));
+            points.push_back(MPoint(r1x + uax, r1y + uay, r1z + uaz));
+            points.push_back(MPoint(r2x + ubx, r2y + uby, r2z + ubz));
+            points.push_back(MPoint(r3x + ubx, r3y + uby, r3z + ubz));
+            const int base8 = (int)(8 * w);
+            for (int q = 0; q < 6; ++q) {
+                counts.push_back(4);
+                indices.push_back(base8 + quadTable[q][0]);
+                indices.push_back(base8 + quadTable[q][1]);
+                indices.push_back(base8 + quadTable[q][2]);
+                indices.push_back(base8 + quadTable[q][3]);
+            }
+        }
 
-        long long tot = 0;
-        std::vector<int> tVid;
-        std::vector<int> tFirst;
+        // ---- _maze_tiles: path faces 0..solutionStep, inset and floated ----
+        const size_t nWallPts = points.size();
         if (in_aDrawSolution && !path.empty()) {
             long long up = (long long)in_aSolutionStep;
             if (up < 0) up = 0;
             if (up > (long long)out_solutionSteps) up = (long long)out_solutionSteps;
             const int upto = (int)up + 1;
-            tileCounts.resize((size_t)upto);
-            tFirst.resize((size_t)upto);
-            for (int i = 0; i < upto; ++i) {
-                tileCounts[(size_t)i] = fCount[(size_t)path[(size_t)i]];
-                tFirst[(size_t)i]     = (int)tot;
-                tot += (long long)tileCounts[(size_t)i];
-            }
-            tVid.resize((size_t)tot);
-            long long t = 0;
-            for (int i = 0; i < upto; ++i) {
-                const int f   = path[(size_t)i];
-                const int off = fOff[(size_t)f];
-                const int c   = tileCounts[(size_t)i];
-                for (int j = 0; j < c; ++j) tVid[(size_t)(t++)] = fConn[(size_t)(off + j)];
-            }
-        }
 
-        nWallPts = 8 * nWall;
-        const size_t nPtsAll = nWallPts + (size_t)tot;
-        // Output points: straight into the persistent MFloatPointArray when its
-        // storage is contiguous (element addresses checked every tick), else
-        // into _ptBuf, which the output section copies.  Either way `outF` is
-        // 4 floats per point (x, y, z, w = 1).
-        float* outF = nullptr;
-        _paBuf.setLength((unsigned)nPtsAll);
-        if (nPtsAll > 0 && _paBuf.length() == (unsigned)nPtsAll) {
-            MFloatPoint* p0 = &_paBuf[0];
-            direct = (nPtsAll == 1) ||
-                     ((&_paBuf[1] - p0) == 1 &&
-                      (&_paBuf[(unsigned)nPtsAll - 1] - p0) == (std::ptrdiff_t)(nPtsAll - 1));
-            if (direct) outF = reinterpret_cast<float*>(p0);
-        }
-        if (!direct) {
-            _ptBuf.resize(nPtsAll);
-            outF = reinterpret_cast<float*>(_ptBuf.data());
-        }
-        // Walls in ascending unique-edge order (np.nonzero order): a parallel
-        // map, wall w writing only its own 8 points.  Small counts stay serial
-        // (a region costs more than it saves under ~50 us of work).
-        {
-            MMWallCtx ctx;
-            ctx.wallIdx = wallIdx.data();
-            ctx.uLo = uLo.data(); ctx.uHi = uHi.data();
-            ctx.pf = pf.data(); ctx.nf = nf.data();
-            ctx.halfT = halfT; ctx.wallH = wallH;
-            ctx.out = outF;
-            if (nWall < 1024) {
-                mm_wall_kernel(&ctx, 0, nWall);
-            } else {
-                size_t chunk = nWall / (size_t)(8 * _pool.participants());
-                if (chunk < 64) chunk = 64;
-                _pool.run(nWall, chunk, mm_wall_kernel, &ctx);
+            std::vector<int> tCnt((size_t)upto), tFirst((size_t)upto);
+            long long tot = 0;
+            for (int i = 0; i < upto; ++i) {
+                tCnt[(size_t)i]   = fCount[(size_t)path[(size_t)i]];
+                tFirst[(size_t)i] = (int)tot;
+                tot += (long long)tCnt[(size_t)i];
             }
-        }
-        MM_PROF_MARK(t_walls);
-
-        if (tot > 0) {
+            std::vector<int> tVid((size_t)tot);
+            {
+                long long t = 0;
+                for (int i = 0; i < upto; ++i) {
+                    const int f   = path[(size_t)i];
+                    const int off = fOff[(size_t)f];
+                    const int c   = tCnt[(size_t)i];
+                    for (int j = 0; j < c; ++j) tVid[(size_t)(t++)] = fConn[(size_t)(off + j)];
+                }
+            }
             // The centroid comes off an INCLUSIVE running sum of the gathered
             // positions (a segment sum), exactly as np.cumsum computes it.
             std::vector<double> csx((size_t)tot + 1), csy((size_t)tot + 1), csz((size_t)tot + 1);
             csx[0] = 0.0; csy[0] = 0.0; csz[0] = 0.0;
             for (long long t = 0; t < tot; ++t) {
                 const int v = tVid[(size_t)t];
-                csx[(size_t)(t + 1)] = csx[(size_t)t] + (double)pf[(size_t)(3 * v + 0)];
-                csy[(size_t)(t + 1)] = csy[(size_t)t] + (double)pf[(size_t)(3 * v + 1)];
-                csz[(size_t)(t + 1)] = csz[(size_t)t] + (double)pf[(size_t)(3 * v + 2)];
+                csx[(size_t)(t + 1)] = csx[(size_t)t] + Px[(size_t)v];
+                csy[(size_t)(t + 1)] = csy[(size_t)t] + Py[(size_t)v];
+                csz[(size_t)(t + 1)] = csz[(size_t)t] + Pz[(size_t)v];
             }
+
+            points.reserve(points.size() + (size_t)tot);
+            counts.reserve(counts.size() + (size_t)upto);
+            indices.reserve(indices.size() + (size_t)tot);
             const double lift = 0.1 * wallH;
-            float* T = outF + 4 * nWallPts;
-            const int upto = (int)tileCounts.size();
             for (int i = 0; i < upto; ++i) {
-                const int c   = tileCounts[(size_t)i];
+                const int c   = tCnt[(size_t)i];
                 const int fst = tFirst[(size_t)i];
                 const double dcf = (double)c;
                 const double ctx = (csx[(size_t)(fst + c)] - csx[(size_t)fst]) / dcf;
@@ -2046,9 +1554,7 @@ MStatus MeshMaze::compute(const MPlug& plug, MDataBlock& data) {
                 const double ctz = (csz[(size_t)(fst + c)] - csz[(size_t)fst]) / dcf;
                 for (int j = 0; j < c; ++j) {
                     const int v = tVid[(size_t)(fst + j)];
-                    const double qx = (double)pf[(size_t)(3 * v + 0)];
-                    const double qy = (double)pf[(size_t)(3 * v + 1)];
-                    const double qz = (double)pf[(size_t)(3 * v + 2)];
+                    const double qx = Px[(size_t)v], qy = Py[(size_t)v], qz = Pz[(size_t)v];
                     const double dx = ctx - qx, dy = cty - qy, dz = ctz - qz;
                     double dist = std::sqrt(dx * dx + dy * dy + dz * dz);
                     if (dist < 1e-12) dist = 1e-12;
@@ -2056,23 +1562,24 @@ MStatus MeshMaze::compute(const MPlug& plug, MDataBlock& data) {
                     // not turn inside out, on a face narrower than its walls.
                     double sc = halfT / dist;
                     if (sc > 0.45) sc = 0.45;
-                    float* o = T + 4 * (size_t)(fst + j);
-                    o[0] = (float)((qx + dx * sc) + (double)nf[(size_t)(3 * v + 0)] * lift);
-                    o[1] = (float)((qy + dy * sc) + (double)nf[(size_t)(3 * v + 1)] * lift);
-                    o[2] = (float)((qz + dz * sc) + (double)nf[(size_t)(3 * v + 2)] * lift);
-                    o[3] = 1.0f;
+                    points.push_back(MPoint((qx + dx * sc) + Nx[(size_t)v] * lift,
+                                            (qy + dy * sc) + Ny[(size_t)v] * lift,
+                                            (qz + dz * sc) + Nz[(size_t)v] * lift));
                 }
+                counts.push_back(c);
             }
+            for (long long t = 0; t < tot; ++t) indices.push_back((int)nWallPts + (int)t);
         }
 
         // ---- one vertex colour per point: walls in wallColor, tiles in
-        // solutionColor.  Materialised as a TWO-entry palette in the output
-        // section (colour 0 = walls, colour 1 = tiles, assigned per face-vertex
-        // when the topology template is built): the per-face-vertex colours
-        // are identical, and rewriting a 2-entry palette per tick is free.
-    } else {
-        _ptBuf.clear();
-        _paBuf.setLength(0);
+        // solutionColor (the render mesh shows them once displayColors is on).
+        if (!points.empty()) {
+            const float wr = in_aWallColor[0], wg = in_aWallColor[1], wb = in_aWallColor[2];
+            const float sr = in_aSolutionColor[0], sg = in_aSolutionColor[1], sb = in_aSolutionColor[2];
+            colors.reserve(points.size());
+            for (size_t i = 0; i < nWallPts; ++i) colors.push_back(MColor(wr, wg, wb));
+            for (size_t i = nWallPts; i < points.size(); ++i) colors.push_back(MColor(sr, sg, sb));
+        }
     }
 
     h_aSolutionSteps.setInt(out_solutionSteps);
@@ -2081,191 +1588,176 @@ MStatus MeshMaze::compute(const MPlug& plug, MDataBlock& data) {
 
     // --- build the mesh data + write output ---
     MStatus gstat;
+    MObject newData;
     MDataHandle hOut = data.outputValue(aOutMesh, &gstat);
-    const size_t nPts   = direct ? (size_t)_paBuf.length() : _ptBuf.size();
-    const size_t nPolys = 6 * nWall + tileCounts.size();
-    bool hit = false;
-    if (nPts > 0) {
-        MFloatPointArray _paTmp;
-        if (!direct) _paTmp = MFloatPointArray(_ptBuf.data(), (unsigned)nPts);
-        MFloatPointArray& _pa = direct ? _paBuf : _paTmp;
-        // Two-entry palette: colour 0 = wallColor (every wall face-vertex),
-        // colour 1 = solutionColor (every tile face-vertex).
-        MColorArray _pal;
-        _pal.append(MColor(in_aWallColor[0], in_aWallColor[1], in_aWallColor[2]));
-        _pal.append(MColor(in_aSolutionColor[0], in_aSolutionColor[1], in_aSolutionColor[2]));
-        MM_PROF_MARK(t_arr);
-
-        // TEMPLATE hit: a mesh of exactly this topology, with its colour set
-        // already assigned, that this node owns.  Write this tick's points and
-        // colours into it and hand it to the datablock (Maya copies on set;
-        // the object stays ours -- verified by mutating it after the set).
-        // Records the datablock's own copy after a setMObject so the next tick
-        // can rewrite it IN PLACE (no copy) while the topology key holds.
-        auto recordOut = [&](const MString& cs) {
-            MObject stored = hOut.asMesh();
-            _outValid = (!stored.isNull()) && cs.length() > 0;
-            if (_outValid) {
-                _outHandle = MObjectHandle(stored);
-                _outNWall = nWall; _outTileCounts = tileCounts; _outColorSet = cs;
+    bool reused = false;
+    // Bulk constructors, not one append() per element (meshMaze: a
+    // 155k-vertex soup was ~740k append calls, and marshalling-bound).
+    MPointArray _pa;
+    if (!points.empty()) _pa = MPointArray(points.data(), (unsigned)points.size());
+    MIntArray _pc;
+    if (!counts.empty()) _pc = MIntArray(counts.data(), (unsigned)counts.size());
+    MIntArray _ic;
+    if (!indices.empty()) _ic = MIntArray(indices.data(), (unsigned)indices.size());
+    // Topology guards mirror geometry.build_mesh_data: a violated
+    // invariant ships an EMPTY mesh (never an out-of-bounds crash).
+    long _sumc = 0; bool _topoOK = !points.empty() && !counts.empty();
+    for (size_t i = 0; i < counts.size(); ++i) {
+        if (counts[i] < 3) _topoOK = false;
+        _sumc += counts[i];
+    }
+    if ((long)indices.size() != _sumc) _topoOK = false;
+    if (_topoOK)
+        for (size_t i = 0; i < indices.size(); ++i)
+            if (indices[i] < 0 || indices[i] >= (int)points.size()) {
+                _topoOK = false; break;
             }
-        };
-        // IN-PLACE hit: the datablock still holds the very object we recorded
-        // last tick (identity + alive) and the topology key is unchanged, so
-        // write this tick's points and palette straight into it; no setMObject
-        // and no copy.
-        if (_outValid) {
-            MObject curObj = hOut.asMesh();
-            if (!curObj.isNull() && _outHandle.isValid() && _outHandle.isAlive() &&
-                curObj == _outHandle.object() && _outNWall == nWall && _outTileCounts == tileCounts) {
-                MStatus st;
-                MFnMesh tf(curObj, &st);
-                if (st == MS::kSuccess && tf.numVertices() == (int)nPts &&
-                    tf.numPolygons() == (int)nPolys) {
-                    const bool okp = tf.setPoints(_pa, MSpace::kObject) == MS::kSuccess;
-                    MM_PROF_MARK(t_setpts);
-                    const bool okc = okp && tf.setColors(_pal, &_outColorSet) == MS::kSuccess;
-                    MM_PROF_MARK(t_setcol);
-                    if (okc) hit = true;
+    // Reuse the output mesh object IN PLACE when the topology computed this tick
+    // is byte-identical to the mesh already in the datablock and that object is
+    // the very one this node built (MObject identity).  Every point and colour
+    // is still rewritten; only the identical topology allocation is skipped.
+    if (_topoOK && !colors.empty() && colors.size() == points.size() && colorIndices.empty() &&
+        _lastColorSet.length() > 0 && _lastOut.isValid() && _lastOut.isAlive() &&
+        _lastCounts.size() == counts.size() && _lastIndices.size() == indices.size() &&
+        std::memcmp(_lastCounts.data(), counts.data(), counts.size() * sizeof(int)) == 0 &&
+        std::memcmp(_lastIndices.data(), indices.data(), indices.size() * sizeof(int)) == 0) {
+        MObject prevObj = hOut.asMesh();
+        if (!prevObj.isNull() && prevObj == _lastOut.object()) {
+            MStatus fst;
+            MFnMesh prevFn(prevObj, &fst);
+            if (fst == MS::kSuccess && prevFn.numVertices() == (int)points.size() &&
+                prevFn.numPolygons() == (int)counts.size()) {
+                MColorArray _col(colors.data(), (unsigned)colors.size());
+                if (prevFn.setPoints(_pa, MSpace::kObject) == MS::kSuccess &&
+                    prevFn.setColors(_col, &_lastColorSet) == MS::kSuccess) {
+                    reused = true;
+                    newData = prevObj;
                 }
-            }
-            if (!hit) _outValid = false;
-        }
-        int ti = -1;
-        if (!hit)
-            for (int t = 0; t < _nTmpl; ++t)
-                if (_tmpl[t].nWall == nWall && _tmpl[t].tileCounts == tileCounts) { ti = t; break; }
-        if (ti >= 0) {
-            TopoTemplate& T = _tmpl[ti];
-            if (T.handle.isValid() && T.handle.isAlive() && !T.mesh.isNull()) {
-                MStatus st;
-                MFnMesh tf(T.mesh, &st);
-                if (st == MS::kSuccess && tf.numVertices() == (int)nPts &&
-                    tf.numPolygons() == (int)nPolys) {
-                    const bool okp = tf.setPoints(_pa, MSpace::kObject) == MS::kSuccess;
-                    MM_PROF_MARK(t_setpts);
-                    MM_PROF_MARK(t_setpts2);
-                    const bool okc = okp && tf.setColors(_pal, &T.colorSet) == MS::kSuccess;
-                    MM_PROF_MARK(t_setcol);
-                    if (okc) {
-                        hOut.setMObject(T.mesh);
-                        MM_PROF_MARK(t_set);
-                        hit = true;
-                        recordOut(T.colorSet);
-                    }
-                }
-            }
-            if (!hit) {
-                // Unusable template: drop it (order does not matter).
-                _tmpl[ti] = TopoTemplate();
-                if (ti != _nTmpl - 1) std::swap(_tmpl[ti], _tmpl[_nTmpl - 1]);
-                --_nTmpl;
             }
         }
-
-        if (!hit) {
-            // Full build.  Topology from (nWall, tileCounts): 8 points and 6
-            // quads per slab, then one polygon per tile over the trailing points.
-            std::vector<int> counts((size_t)nPolys);
-            std::vector<int> indices(24 * nWall + (nPts - nWallPts));
-            {
-                const int quadTable[6][4] = {
-                    {0, 3, 2, 1}, {4, 5, 6, 7}, {0, 1, 5, 4},
-                    {1, 2, 6, 5}, {2, 3, 7, 6}, {3, 0, 4, 7}
-                };
-                for (size_t w = 0; w < nWall; ++w) {
-                    const int base8 = (int)(8 * w);
-                    int* ip = indices.data() + 24 * w;
-                    for (int q = 0; q < 6; ++q) {
-                        counts[6 * w + (size_t)q] = 4;
-                        ip[4 * q + 0] = base8 + quadTable[q][0];
-                        ip[4 * q + 1] = base8 + quadTable[q][1];
-                        ip[4 * q + 2] = base8 + quadTable[q][2];
-                        ip[4 * q + 3] = base8 + quadTable[q][3];
-                    }
+    }
+    if (!reused) {
+        _lastOut = MObjectHandle();
+        _lastColorSet = MString();
+        _lastCounts.clear();
+        _lastIndices.clear();
+        MFnMeshData dataCreator;
+        newData = dataCreator.create(&gstat);
+    }
+    MM_PROF_MARK(t_create);
+    if (!reused && _topoOK) {
+        MFnMesh geoFn;
+        geoFn.create((int)points.size(), (int)counts.size(),
+                     _pa, _pc, _ic, newData, &gstat);
+        MM_PROF_MARK(t_create);
+        // --- optional per-vertex / per-face-vertex normals ---
+        // (mirror _apply_mesh_normals: skip the channel on any size/
+        //  range mismatch rather than indexing out of bounds).
+        if (!normals.empty()) {
+            if (normalIndices.empty()) {
+                if (normals.size() == points.size()) {
+                    std::vector<int> _vidv(normals.size());
+                    for (size_t i = 0; i < _vidv.size(); ++i) _vidv[i] = (int)i;
+                    MVectorArray _nrm(normals.data(), (unsigned)normals.size());
+                    MIntArray _vids(_vidv.data(), (unsigned)_vidv.size());
+                    geoFn.setVertexNormals(_nrm, _vids);
                 }
-                for (size_t i = 0; i < tileCounts.size(); ++i) counts[6 * nWall + i] = tileCounts[i];
-                for (size_t t = 0; t < nPts - nWallPts; ++t) indices[24 * nWall + t] = (int)nWallPts + (int)t;
+            } else if ((long)normalIndices.size() == _sumc) {
+                bool _ok = true;
+                for (size_t i = 0; i < normalIndices.size(); ++i)
+                    if (normalIndices[i] < 0 ||
+                        normalIndices[i] >= (int)normals.size()) {
+                        _ok = false; break;
+                    }
+                if (_ok) {
+                    std::vector<MVector> _nrv; std::vector<int> _fidv, _vidv; int _off = 0;
+                    _nrv.reserve((size_t)_sumc); _fidv.reserve((size_t)_sumc); _vidv.reserve((size_t)_sumc);
+                    for (size_t _f = 0; _f < counts.size(); ++_f) {
+                        for (int _j = 0; _j < counts[_f]; ++_j) {
+                            int _fv = _off + _j;
+                            _nrv.push_back(normals[(size_t)normalIndices[(size_t)_fv]]);
+                            _fidv.push_back((int)_f);
+                            _vidv.push_back(indices[(size_t)_fv]);
+                        }
+                        _off += counts[_f];
+                    }
+                    MVectorArray _nrm(_nrv.data(), (unsigned)_nrv.size());
+                    MIntArray _fids(_fidv.data(), (unsigned)_fidv.size());
+                    MIntArray _vids(_vidv.data(), (unsigned)_vidv.size());
+                    geoFn.setFaceVertexNormals(_nrm, _fids, _vids);
+                }
             }
-            // Topology guards mirror geometry.build_mesh_data: a violated
-            // invariant ships an EMPTY mesh (never an out-of-bounds crash).
-            long _sumc = 0; bool _topoOK = !counts.empty();
-            for (size_t i = 0; i < counts.size(); ++i) {
-                if (counts[i] < 3) _topoOK = false;
-                _sumc += counts[i];
-            }
-            if ((long)indices.size() != _sumc) _topoOK = false;
-            if (_topoOK)
-                for (size_t i = 0; i < indices.size(); ++i)
-                    if (indices[i] < 0 || indices[i] >= (int)nPts) { _topoOK = false; break; }
-
-            MFnMeshData dataCreator;
-            MObject newData = dataCreator.create(&gstat);
-            MString csName;
-            if (_topoOK) {
-                MIntArray _pc(counts.data(), (unsigned)counts.size());
-                MIntArray _ic(indices.data(), (unsigned)indices.size());
-                MFnMesh geoFn;
-                geoFn.create((int)nPts, (int)nPolys, _pa, _pc, _ic, newData, &gstat);
-                MM_PROF_MARK(t_create);
-                // One colour per vertex, every face-vertex assigned the id of its
-                // vertex.  Same per-vertex colours as setVertexColors (which
-                // auto-creates "colorSet1") but as three array calls instead of
-                // one lookup per vertex.
-                bool fastOK = false;
-                {
-                    MStatus cst;
-                    const MString csWant("colorSet1");
-                    MString cs = geoFn.createColorSetWithNameDataMesh(csWant, false, MFnMesh::kRGBA, &cst);
-                    if (cst == MS::kSuccess && cs.length() > 0) {
-                        // Colour id per face-vertex: 0 for the 24*nWall wall
-                        // face-vertices, 1 for every tile face-vertex.
-                        std::vector<int> cid(indices.size(), 1);
-                        std::fill(cid.begin(), cid.begin() + (std::ptrdiff_t)(24 * nWall), 0);
-                        MIntArray _cid(cid.data(), (unsigned)cid.size());
-                        if (geoFn.setColors(_pal, &cs) == MS::kSuccess &&
-                            geoFn.assignColors(_cid, &cs) == MS::kSuccess) {
-                            geoFn.setCurrentColorSetName(cs);
-                            csName = cs;
-                            fastOK = true;
+        }
+        // --- optional per-vertex / per-face-vertex colors ---
+        if (!colors.empty()) {
+            if (colorIndices.empty()) {
+                if (colors.size() == points.size()) {
+                    // Bulk path: one colour per vertex, every face-vertex assigned
+                    // the id of its vertex.  Same per-vertex colours as
+                    // setVertexColors (which auto-creates "colorSet1") but as
+                    // three array calls instead of one lookup per vertex.
+                    bool fastOK = false;
+                    {
+                        MStatus cst;
+                        const MString csWant("colorSet1");
+                        MString csName = geoFn.createColorSetWithNameDataMesh(csWant, false, MFnMesh::kRGBA, &cst);
+                        if (cst == MS::kSuccess && csName.length() > 0) {
+                            MColorArray _col(colors.data(), (unsigned)colors.size());
+                            MIntArray _cids(indices.data(), (unsigned)indices.size());
+                            if (geoFn.setColors(_col, &csName) == MS::kSuccess &&
+                                geoFn.assignColors(_cids, &csName) == MS::kSuccess) {
+                                geoFn.setCurrentColorSetName(csName);
+                                _lastColorSet = csName;
+                                fastOK = true;
+                            }
                         }
                     }
+                    if (!fastOK) {
+                        std::vector<int> _vidv(colors.size());
+                        for (size_t i = 0; i < _vidv.size(); ++i) _vidv[i] = (int)i;
+                        MColorArray _col(colors.data(), (unsigned)colors.size());
+                        MIntArray _vids(_vidv.data(), (unsigned)_vidv.size());
+                        geoFn.setVertexColors(_col, _vids);
+                    }
                 }
-                if (!fastOK) {
-                    std::vector<int> _vidv(nPts);
-                    for (size_t i = 0; i < _vidv.size(); ++i) _vidv[i] = (int)i;
+            } else if ((long)colorIndices.size() == _sumc) {
+                bool _ok = true;
+                for (size_t i = 0; i < colorIndices.size(); ++i)
+                    if (colorIndices[i] < 0 ||
+                        colorIndices[i] >= (int)colors.size()) {
+                        _ok = false; break;
+                    }
+                if (_ok) {
+                    std::vector<MColor> _colv; std::vector<int> _fidv, _vidv; int _off = 0;
+                    _colv.reserve((size_t)_sumc); _fidv.reserve((size_t)_sumc); _vidv.reserve((size_t)_sumc);
+                    for (size_t _f = 0; _f < counts.size(); ++_f) {
+                        for (int _j = 0; _j < counts[_f]; ++_j) {
+                            int _fv = _off + _j;
+                            _colv.push_back(colors[(size_t)colorIndices[(size_t)_fv]]);
+                            _fidv.push_back((int)_f);
+                            _vidv.push_back(indices[(size_t)_fv]);
+                        }
+                        _off += counts[_f];
+                    }
+                    MColorArray _col(_colv.data(), (unsigned)_colv.size());
+                    MIntArray _fids(_fidv.data(), (unsigned)_fidv.size());
                     MIntArray _vids(_vidv.data(), (unsigned)_vidv.size());
-                    _colBuf.assign(nPts, _pal[1]);
-                    std::fill(_colBuf.begin(), _colBuf.begin() + (std::ptrdiff_t)nWallPts, _pal[0]);
-                    MColorArray _col(_colBuf.data(), (unsigned)nPts);
-                    geoFn.setVertexColors(_col, _vids);
+                    geoFn.setFaceVertexColors(_col, _fids, _vids);
                 }
-                MM_PROF_MARK(t_col);
-            }
-            hOut.setMObject(newData);
-            MM_PROF_MARK(t_set);
-            // Keep this mesh as a TEMPLATE of its topology (bounded: at most
-            // kMaxTmpl per instance; a miss with a full cache just rebuilds).
-            if (_topoOK && csName.length() > 0 && _nTmpl < kMaxTmpl) {
-                TopoTemplate& T = _tmpl[_nTmpl++];
-                T.nWall      = nWall;
-                T.tileCounts = tileCounts;
-                T.mesh       = newData;
-                T.handle     = MObjectHandle(newData);
-                T.colorSet   = csName;
             }
         }
-    } else {
-        // No input, an empty one, or nothing to draw -> an empty but VALID mesh.
-        MFnMeshData dataCreator;
-        MObject newData = dataCreator.create(&gstat);
-        hOut.setMObject(newData);
     }
+    if (!reused && _topoOK && _lastColorSet.length() > 0) {
+        // Remember what is now in the datablock so the next tick can reuse it.
+        _lastCounts  = counts;
+        _lastIndices = indices;
+        _lastOut     = MObjectHandle(newData);
+    }
+    MM_PROF_MARK(t_col);
+    if (!reused) hOut.setMObject(newData);
     hOut.setClean();
     h_aSolutionSteps.setClean();
     data.setClean(plug);
-    MM_PROF_MARK(t_end);
-    if (_prof_on) _prof.dump();
     return MS::kSuccess;
 }
 
