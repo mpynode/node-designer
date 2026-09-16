@@ -253,7 +253,7 @@ def bench_lock_path():
     ``MPYNODE_BENCH_LOCK`` unset / ``0`` / ``off`` -> off (the default).
     ``1``/``on`` -> a shared file in the system temp dir. Anything else is taken
     as the path itself, so a fleet can point every worker at one location.
-    The default deliberately avoids the MPyNode home: that is ``~/mpynode``,
+    The default deliberately avoids the MPyNode home: that is ``~/.mpynode``,
     which is EPERM on this machine, and a lock we cannot create is a lock that
     silently protects nothing.
     """

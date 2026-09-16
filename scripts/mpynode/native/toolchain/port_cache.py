@@ -9,7 +9,7 @@ it namespaced), so a node ported once is reused across plugins *and* sessions.
 
 This module is deliberately **Qt-free, Maya-free, stdlib-only** so the whole
 engine stays headlessly testable. It is the per-user cache in the same location
-family as ``typeid_registry`` (``~/mpynode/port_cache``).
+family as ``typeid_registry`` (``~/.mpynode/port_cache``).
 
 Design contract (incl. the design-review C1 + C2 fixes):
 

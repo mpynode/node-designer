@@ -80,15 +80,15 @@ and no AI — which is what makes the freshness gates (section 5) possible.
 | `README.md`, `INSTALL.md`, `LICENSE.md` | The only docs at the root, and only because each is an entry point: the landing page, the two-env-var install, and the licence. Everything longer-form lives in `docs/`. `README.md` and `LICENSE.md` are additionally load-bearing — `docs_locator._repo_root_doc()` resolves them relative to the parent of `docs/` for the About dialog and the Help menu, so they cannot move. |
 | `userSetup.py` | **Copy** (never symlink — `PROJECT_DIR` uses `abspath`, which does not follow links) into a Maya prefs `scripts/` dir, then set `MPYNODE_PROJECT_DIR`. Sets both paths, purges foreign `mpynode.*` modules from `sys.modules`. Skipped when `MPYNODE_USE_STUDIO=1`. |
 | *(no runners at the root)* | The two gates' four launchers all live in `tools/`: `run_tests.{sh,bat}` and `run_parity_sweep.{sh,bat}`. They used to be split — the `.sh` unit runner in `tools/`, the other three at the root — which put `tools/run_tests.sh` and a bare `run_tests.bat` side by side in README's install check. |
-| `_snapshots/`, `_snapshots.7z`, `.mpynode_local/` | Gitignored, machine-local. `_snapshots/` is ~39 GB of dated working copies; `.mpynode_local/` redirects the runtime data home (port cache, prefs, TypeId registry) when `~/mpynode` is unwritable. |
+| `_snapshots/`, `_snapshots.7z`, `.mpynode_local/` | Gitignored, machine-local. `_snapshots/` is ~39 GB of dated working copies; `.mpynode_local/` redirects the runtime data home (port cache, prefs, TypeId registry) when `~/.mpynode` is unwritable. |
 
 There is **no `.mod` file, no pip package and no installer**. Two environment
 facts are the whole install: `MAYA_PLUG_IN_PATH` contains `plug-ins/` and
 `sys.path` contains `scripts/`; plug-ins auto-load on first `create()` via
 `_common/lifecycle/plugin_loader.py`. Everything MPyNode writes for a user
 (`preferences.json`, `typeid_registry.json`, `trusted.json`, `port_cache/`,
-`compiled/`) lives under one visible data home, resolved `MPYNODE_HOME` env ->
-`scripts/mpynode/mpynode.ini` `[paths]` -> default `~/mpynode`
+`compiled/`) lives under one data home, resolved `MPYNODE_HOME` env ->
+`scripts/mpynode/mpynode.ini` `[paths]` -> default `~/.mpynode`
 (`_common/home.py`, `_common/bootstrap.py`).
 
 ## 3. `scripts/mpynode` package map
@@ -268,7 +268,7 @@ hash while *list* order (enum names, array indices) is preserved.
 - Writes are atomic and the **sidecar is the completeness gate**: `.cpp` first,
   `<hash>.json` last, each via `*.tmp-<pid>` + `os.replace`, so a port cancelled
   mid-write leaves a lone `.cpp` that reads as a MISS. Location:
-  `~/mpynode/port_cache`, overridable by `MPYNODE_PORT_CACHE`, then a UI
+  `~/.mpynode/port_cache`, overridable by `MPYNODE_PORT_CACHE`, then a UI
   preference, then `[paths] port_cache` in the ini.
 
 **`PORTER_RECIPE_VERSION` (currently `"26"`) is the manual invalidation knob**;

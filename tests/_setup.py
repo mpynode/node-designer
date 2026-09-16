@@ -21,8 +21,7 @@ def standalone_init() -> None:
     import maya.standalone
 
     # Point the per-user data home at a throwaway dir so tests never read/write
-    # the real ~/mpynode (or ~/.mpynode) and the legacy->new migration is a
-    # guaranteed no-op under tests (it only ever touches the DEFAULT home).
+    # the real ~/.mpynode.
     # setdefault so an outer MPYNODE_HOME (CI) still wins.
     import os
     import tempfile

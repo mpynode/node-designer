@@ -18,7 +18,7 @@ Trust model:
   * importing a file can only REDUCE trust (a declined import poisons the
     session's file-literal pickle, fail-closed);
   * ``MPYNODE_TRUST_PICKLE=1`` trusts everything (headless / render farm);
-  * "Always" decisions persist to ``~/mpynode/trusted.json`` (per file or per
+  * "Always" decisions persist to ``~/.mpynode/trusted.json`` (per file or per
     folder), overridable via ``MPYNODE_TRUST_STORE`` (tests).
 
 Pure Python + stdlib. No Maya / Qt imports — the prompt is an INJECTED callable

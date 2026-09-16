@@ -1290,10 +1290,10 @@ class CompileDialog(QDialog):
         return _default_plugin_name(self._scene_nodes)
 
     def _default_out_dir(self) -> str:
-        """Default output folder: ``~/mpynode/compiled/<pluginName>``.
+        """Default output folder: ``~/.mpynode/compiled/<pluginName>``.
 
-        A per-user, always-writable location in the same VISIBLE family as the
-        port cache / typeid registry (``~/mpynode``, override MPYNODE_HOME; see
+        A per-user, always-writable location in the same family as the
+        port cache / typeid registry (``~/.mpynode``, override MPYNODE_HOME; see
         mpynode._common.home). The user can override via Browse.
         """
         from mpynode._common import home

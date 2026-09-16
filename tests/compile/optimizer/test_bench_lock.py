@@ -133,13 +133,13 @@ class TestTheLockIsOffByDefault(unittest.TestCase):
             self.assertLess(time.time() - t0, 1.0)
 
     def test_on_resolves_to_a_writable_shared_path(self):
-        # NOT the MPyNode home: ~/mpynode is EPERM here, and a lock that cannot
+        # NOT the MPyNode home: ~/.mpynode is EPERM here, and a lock that cannot
         # be created is a lock that silently protects nothing.
         with _Env(MPYNODE_BENCH_LOCK="1"):
             p = optimizer_live.bench_lock_path()
         self.assertTrue(p)
         self.assertTrue(os.path.isdir(os.path.dirname(p)))
-        self.assertNotIn(os.path.join(os.path.expanduser("~"), "mpynode"), p)
+        self.assertNotIn(os.path.join(os.path.expanduser("~"), ".mpynode"), p)
 
     def test_any_other_value_is_taken_as_the_path(self):
         with _Env(MPYNODE_BENCH_LOCK="/tmp/some/where/bench.lock"):

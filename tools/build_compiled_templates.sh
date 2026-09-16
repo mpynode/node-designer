@@ -39,7 +39,7 @@ export MPYNODE_MAYAPY="$MAYAPY"
 # and the port cache misses every node on every rebuild.
 export PYTHONHASHSEED=0
 
-# The default port cache lives under ~/mpynode/, which is unwritable on this
+# The default port cache lives under ~/.mpynode/, which is unwritable on this
 # machine: every put() EPERMs, compile_controller swallows it, and phase B then
 # misses the entry phase A was supposed to have warmed -- so an AI-ported node
 # re-ports from scratch and can hit the porter's 600s timeout. Same redirect

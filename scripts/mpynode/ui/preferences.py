@@ -1,6 +1,6 @@
 """Preferences module \u2014 JSON-backed user preferences.
 
-Lazy-loaded from ``~/mpynode/preferences.json`` on first access. Defaults
+Lazy-loaded from ``~/.mpynode/preferences.json`` on first access. Defaults
 are baked in so the file doesn't need to exist for the app to work.
 
 Public API:
@@ -32,8 +32,8 @@ from typing import Any, Callable
 # ---------------------------------------------------------------------------
 # Storage location \u2014 cross-platform user prefs dir.
 # Keeping it Maya-version-agnostic so prefs survive Maya upgrades. Lives under
-# the shared, VISIBLE per-user home (``~/mpynode``, override MPYNODE_HOME) so
-# nothing is hidden from a first-time user (see mpynode._common.home).
+# the shared per-user home (``~/.mpynode``, override MPYNODE_HOME; see
+# mpynode._common.home).
 # ---------------------------------------------------------------------------
 from mpynode._common import home as _home
 

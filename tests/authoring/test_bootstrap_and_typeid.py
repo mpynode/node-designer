@@ -73,7 +73,7 @@ class TestBootstrapFile(unittest.TestCase):
         with _Env(MPYNODE_CONFIG=None, MPYNODE_HOME=None):
             self.assertIsNone(bootstrap.path("home"))
             self.assertEqual(home.home_dir(),
-                             os.path.join(os.path.expanduser("~"), "mpynode"))
+                             os.path.join(os.path.expanduser("~"), ".mpynode"))
 
     def test_ini_redirects_the_home(self):
         with tempfile.TemporaryDirectory() as d:
@@ -132,14 +132,14 @@ class TestBootstrapFile(unittest.TestCase):
             ini = _write_ini(d, "this is not ini at all ][\n")
             with _Env(MPYNODE_CONFIG=ini, MPYNODE_HOME=None):
                 self.assertEqual(home.home_dir(),
-                                 os.path.join(os.path.expanduser("~"), "mpynode"))
+                                 os.path.join(os.path.expanduser("~"), ".mpynode"))
 
     def test_blank_value_reads_as_unset(self):
         with tempfile.TemporaryDirectory() as d:
             ini = _write_ini(d, "[paths]\nhome =\n")
             with _Env(MPYNODE_CONFIG=ini, MPYNODE_HOME=None):
                 self.assertEqual(home.home_dir(),
-                                 os.path.join(os.path.expanduser("~"), "mpynode"))
+                                 os.path.join(os.path.expanduser("~"), ".mpynode"))
 
     def test_typeid_base_is_configurable(self):
         with tempfile.TemporaryDirectory() as d:

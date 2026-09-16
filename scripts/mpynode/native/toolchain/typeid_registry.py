@@ -79,10 +79,9 @@ def default_registry_path() -> str:
     """Path of the OPTIONAL pin file, overridable via ``MPYNODE_TYPEID_REGISTRY``
     or ``[paths] typeid_pins``. The file does not have to exist.
 
-    ``ensure_home()`` rather than ``home_dir()``: it runs the one-time COPY of the
-    legacy hidden ``~/.mpynode``, so a returning user's already-shipped ids are
-    found here rather than abandoned. Same return value, guarded by home's
-    ``_ensured`` flag so repeat calls stay cheap.
+    ``ensure_home()`` rather than ``home_dir()``: it creates ``~/.mpynode`` on
+    first use, so the pin file has a directory to land in. Same return value,
+    guarded by home's ``_ensured`` flag so repeat calls stay cheap.
     """
     override = os.environ.get(_ENV_PATH)
     if override:

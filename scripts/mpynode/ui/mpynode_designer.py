@@ -230,9 +230,8 @@ class NDMainWindow(QMainWindow):
         # Plugins must be loaded BEFORE the scene tree's first refresh.
         _ensure_plugins_loaded()
 
-        # Ensure the per-user data home exists, migrating a legacy hidden
-        # ~/.mpynode into the visible ~/mpynode ONCE (no-op when MPYNODE_HOME is
-        # set). Here, the canonical entry point, before prefs / compiles read it.
+        # Ensure the per-user data home (~/.mpynode, or MPYNODE_HOME) exists.
+        # Here, the canonical entry point, before prefs / compiles read it.
         try:
             from mpynode._common import home
 
@@ -926,7 +925,7 @@ class NDMainWindow(QMainWindow):
         already-built ``.bundle`` and make it resident in THIS session.
 
         A compiled node type only exists while its plug-in is loaded, and nothing
-        puts ``~/mpynode/compiled`` on ``MAYA_PLUG_IN_PATH`` -- so after a Maya
+        puts ``~/.mpynode/compiled`` on ``MAYA_PLUG_IN_PATH`` -- so after a Maya
         restart, or after declining the post-compile "Load it into Maya now?"
         prompt, the type is simply gone and "Convert Node to C++" is greyed out.
         Without this entry the only way back is to compile the node again.

@@ -18,7 +18,7 @@ Resolution order for every value, most specific first:
 
   1. the environment variable (``MPYNODE_HOME``, ``MPYNODE_PORT_CACHE``, ...)
   2. ``mpynode.ini``
-  3. the built-in default (``~/mpynode/...``)
+  3. the built-in default (``~/.mpynode/...``)
 
 Env stays on top so tests, CI and one-off harness scripts keep working exactly
 as before; a missing or unreadable ini means every value falls through to the

@@ -499,7 +499,7 @@ class NDSceneTree(QTreeWidget):
     compileNodeRequested = Signal(str, str)
     # "Load Compiled Plug-in…" -> NDMainWindow browses for an already-built
     # .bundle and makes it resident. Compiled types are SESSION-scoped (nothing
-    # puts ~/mpynode/compiled on MAYA_PLUG_IN_PATH), so without this the only
+    # puts ~/.mpynode/compiled on MAYA_PLUG_IN_PATH), so without this the only
     # way back to an earlier build is to compile it all over again.
     loadCompiledPluginRequested = Signal()
 

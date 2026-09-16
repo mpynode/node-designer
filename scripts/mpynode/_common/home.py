@@ -1,10 +1,10 @@
 """Central per-user MPyNode data home.
 
 Everything MPyNode writes for a user -- preferences, the port cache, the global
-type-id registry, and default compiled-plugin output -- lives under ONE VISIBLE
-directory so nothing is hidden from a first-time user::
+type-id registry, and default compiled-plugin output -- lives under ONE
+directory::
 
-    ~/mpynode/                 (the default -- NOT hidden, no leading dot)
+    ~/.mpynode/                (the default)
       preferences.json
       typeid_registry.json
       trusted.json
@@ -27,11 +27,6 @@ So a studio can relocate just the compile output, or the whole home, by editing
 ONE file that ships next to the code, while env vars keep overriding everything
 for tests and one-off harness runs.
 
-Historically this lived in the HIDDEN ``~/.mpynode``; on first use of the DEFAULT
-home we COPY that legacy dir across (never move) so a returning user keeps their
-type-id pins -- ``.mb`` scenes bake those MTypeIds -- while the old hidden dir
-stays put as a backup.
-
 Maya-/Qt-free and import-cheap so every writer (``ui.preferences``,
 ``toolchain.port_cache``, ``toolchain.typeid_registry``, the compile dialog) can
 share it.
@@ -40,19 +35,16 @@ share it.
 from __future__ import annotations
 
 import os
-import shutil
 import sys
-from typing import Optional
 
 from mpynode._common import bootstrap
 
 HOME_ENV = "MPYNODE_HOME"
 
-_DEFAULT_DIRNAME = "mpynode"
-_LEGACY_DIRNAME  = ".mpynode"
+_DEFAULT_DIRNAME = ".mpynode"
 
-# One-time guard so ensure_home()'s migration + makedirs run at most once per
-# process (path resolution stays cheap thereafter).
+# One-time guard so ensure_home()'s makedirs runs at most once per process
+# (path resolution stays cheap thereafter).
 _ensured = False
 
 
@@ -60,14 +52,9 @@ def _default_home() -> str:
     return os.path.join(os.path.expanduser("~"), _DEFAULT_DIRNAME)
 
 
-def legacy_home_dir() -> str:
-    """The old HIDDEN home (``~/.mpynode``) we migrate away from."""
-    return os.path.join(os.path.expanduser("~"), _LEGACY_DIRNAME)
-
-
 def home_dir() -> str:
     """The MPyNode data home: ``MPYNODE_HOME``, else ``[paths] home`` from the
-    install's ``mpynode.ini``, else the visible ``~/mpynode``. A PURE path -- no
+    install's ``mpynode.ini``, else ``~/.mpynode``. A PURE path -- no
     filesystem side effects."""
     return (os.environ.get(HOME_ENV)
             or bootstrap.path("home")
@@ -145,42 +132,15 @@ def compiled_dir() -> str:
     return _under_home("compiled", "MPYNODE_COMPILED", "compiled")
 
 
-def migrate_legacy_home() -> Optional[str]:
-    """One-time COPY of the legacy hidden ``~/.mpynode`` into the new visible
-    ``~/mpynode``. Returns the new path if it copied, else ``None``.
-
-    Only ever touches the DEFAULT home: an explicit ``MPYNODE_HOME`` override
-    manages its own directory (and keeps tests isolated). Never overwrites an
-    existing new home, and COPIES (leaving the old dir as a backup) so the
-    type-id registry -- baked into saved scenes as MTypeIds -- survives verbatim.
-    Best-effort: any copy failure returns ``None`` and leaves the legacy dir the
-    single source of truth (no half state to reason about).
-    """
-    if os.environ.get(HOME_ENV):
-        return None
-    new = _default_home()
-    old = legacy_home_dir()
-    if os.path.isdir(new):
-        return None          # already have a home -> never clobber it
-    if not os.path.isdir(old):
-        return None          # fresh install -> nothing to migrate
-    try:
-        shutil.copytree(old, new)
-    except Exception:
-        return None
-    return new
-
-
 def ensure_home() -> str:
-    """Return the home dir, running the one-time legacy migration + ``makedirs``
-    on first call (guarded so repeated calls are cheap). Call this at real
-    entry points (plugin/designer startup, a headless compile) so a returning
-    user's data is migrated before the first read/allocate."""
+    """Return the home dir, running ``makedirs`` on first call (guarded so
+    repeated calls are cheap). Call this at real entry points (plugin/designer
+    startup, a headless compile) so the home exists before the first
+    read/allocate."""
     global _ensured
     d = home_dir()
     if _ensured:
         return d
-    migrate_legacy_home()
     try:
         os.makedirs(d, exist_ok=True)
     except Exception as exc:  # noqa: BLE001
@@ -199,7 +159,7 @@ def ensure_home() -> str:
 
 
 def _reset_for_tests() -> None:
-    """Clear the one-time guard so tests can re-exercise ensure_home()/migration
-    with a fresh ``$HOME``/``MPYNODE_HOME``."""
+    """Clear the one-time guard so tests can re-exercise ensure_home() with a
+    fresh ``$HOME``/``MPYNODE_HOME``."""
     global _ensured
     _ensured = False
