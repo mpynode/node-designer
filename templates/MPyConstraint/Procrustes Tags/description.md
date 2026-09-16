@@ -1,8 +1,8 @@
-# Procrustes Rivet (Tags)
+# Procrustes Constraint (via component tags)
 
-A many-rivet `mPyConstraint` where each rivet picks its patch of mesh by NAME instead of by vertex index. Membership comes from component tags authored on the mesh, so the mesh stays the single source of truth -- edit a tag's vertices and the rivet follows, with nothing to re-sync on the node.
+A Procrustes constraint infers a rigid transformation matrix from the motion of a defined cluster of points.
 
-Rename a tag in the Channel Box or Attribute Editor and that rivet retargets on the next evaluation.
+Each component tag in this example is used to constrain a cube to the topology's surface.
 
 ## Inputs
 

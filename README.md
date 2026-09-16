@@ -1,111 +1,75 @@
-# MPyNode
+# Node Designer
+A Universal Python node for Autodesk's Maya. 
 
-**Write real Maya nodes in Python. Compile them to C++ when you need speed.**
+Node Designer simplifies the technical overhead required by MPxNode, allowing users to easily develop nodes with Maya's Python API. As a Python node, it exposes the plugin's compute block in the form of an expression, with input/output plugs dynamically populated.
 
-MPyNode registers 12 genuine Maya node types — deformers, skinClusters, IK solvers,
-transforms, locators, shading nodes, mesh/curve/surface generators. You declare inputs and
-outputs at runtime, write the node's evaluation body in Python stored on the node itself,
-and Maya's dependency graph carries the result.
+New in version 2.0: 
+- 12 genuine Maya node types to achieve complex tasks such as custom deformers and geometry generators.
+- AI Assistance to write and compile C++ plugins! 
 
-When the prototype is done, one dialog turns that node into a real distributable C++
-plug-in whose compute contains no Python at all.
+**Coming from 1.x?** Scenes built with Node Designer 1.x open directly: each node is upgraded in place when the scene loads, and the Script Editor lists what changed. Code that imported `mpylib` has to be ported to numpy or `mpynode.api`. Take the 1.x plug-in and `mpylib` off Maya's paths first, since both versions register the `mPyNode` node type and only one can load per session.
 
-## Why technical artists like it
+## Authors
+* **Gene Hansen**  (gene.hansen@gmail.com)
+* **Eric Vignola** (eric.vignola@gmail.com)
 
-- **12 real node types** — not expressions bolted onto a transform. `mPySkinCluster` is a
-  true `skinCluster`, so Paint Skin Weights and the Component Editor accept it.
-- **Runtime attributes that behave like compiled ones** — 19 wire types, any of them an
-  array, with dirty propagation synthesized for you.
-- **The Node Designer** — a Qt authoring window with Init / Compute / API editors, a live
-  variable Watch, a cProfile tab and a log.
-- **Python → C++ compile** — a deterministic transpiler does the translation; an LLM is
-  only asked to fill what it could not lower. Most nodes need no AI at all.
-- **37 ready-made templates** covering all 12 node types, each with a runnable demo.
-- **Persistent state** — stored variables that save with the scene, plus `.mpn` round-trip
-  export and a one-way bake to plain `.py`.
+Found this useful? [Buy us a coffee :)](https://buymeacoffee.com/ericvignola) ☕
 
-## Requirements
-
-| Requirement | Notes |
-|---|---|
-| Maya | 2024 and 2026 are tested. PySide2 (≤ 2025) and PySide6 (2026+) are both handled. Primary target: **2026** |
-| Python | Maya's bundled Python 3 — 3.10 on Maya 2024, 3.11 on Maya 2026 |
-| NumPy | **Required** — `import mpynode` alone survives without it, but creating a node and opening the Node Designer both fail. Maya 2026 bundles it; Maya 2024 does not, so install it into that interpreter |
-| To compile to C++ | A C++ toolchain (Xcode Command Line Tools / Visual Studio "Desktop development with C++" / `g++`) and a Maya devkit |
-
-Any Maya install that has both a devkit and a `mayapy` is detected automatically and
-offered as a compile target — there is no fixed version list.
-
-| Platform | Plug-in | Compiler | Status |
-|---|---|---|---|
-| macOS | `.bundle` | `clang++` | Reference platform, parity-verified |
-| Windows | `.mll` | `cl` | Builds, links, loads and passes the unit suite on a Windows host. The shipped parity fixtures are macOS-only, so rebuild locally before sweeping |
-| Linux | `.so` | `g++` | **Not supported.** `toolchain.py` carries the flags but nothing drives them, so a compile stops with a clear message instead of failing in the compiler. Interpreted nodes work fine — see [docs/PORTING.md](docs/PORTING.md) |
 
 ## Install
 
-There is no installer. Two paths must be visible to Maya: `plug-ins/` and `scripts/`.
-
 1. **Put the repo anywhere on disk.** All paths below are relative to the repo root.
 
-2. **Copy the repo's `userSetup.py` into your Maya user scripts folder**, then point it
+2. **Set the two paths** before launching Maya:
+
+
+   ```bash
+   # macos
+   export MAYA_PLUG_IN_PATH="$PWD/plug-ins:$MAYA_PLUG_IN_PATH"
+   export PYTHONPATH="$PWD/scripts:$PYTHONPATH"
+   ```
+   ```bat
+   rem windows
+   set MAYA_PLUG_IN_PATH=%cd%\plug-ins;%MAYA_PLUG_IN_PATH%
+   set PYTHONPATH=%cd%\scripts;%PYTHONPATH%
+   ```
+
+3. **Or copy the repo's `userSetup.py` into your Maya user scripts folder**, then point it
    back at the repo with `MPYNODE_PROJECT_DIR`:
 
    ```bash
+   # macos
    cp userSetup.py ~/Library/Preferences/Autodesk/maya/2026/scripts/   # macOS
    cp userSetup.py ~/maya/2026/scripts/                                # Linux
    export MPYNODE_PROJECT_DIR="$PWD"
    ```
 
    ```bat
-   REM Windows, from the repo root
+   rem windows
    copy userSetup.py "%USERPROFILE%\Documents\maya\2026\scripts\"
    set MPYNODE_PROJECT_DIR=%CD%
    ```
 
    Already have a `userSetup.py`? Append this repo's contents to it instead.
 
-   Do **not** symlink it. `userSetup.py` locates the repo from its own file path without
-   following links, so a symlink makes it look inside your Maya scripts folder, find no
-   `plug-ins/`, and skip setup.
-
-3. **Or skip step 2 entirely** and set the two paths yourself before launching Maya:
-
-   ```bash
-   export MAYA_PLUG_IN_PATH="$PWD/plug-ins:$MAYA_PLUG_IN_PATH"
-   export PYTHONPATH="$PWD/scripts:$PYTHONPATH"
-   ```
-
-4. **Start Maya.** You should see:
-
-   ```text
-   [userSetup] node-designer2 paths set up: <your repo path>
-   ```
-
-5. **Optional — add a shelf button:**
+4. **Optional — add a shelf button:**
 
    ```python
    from mpynode.ui import shelf
    shelf.install_shelf_button()
    ```
 
-You never need `cmds.loadPlugin`. The right plug-in loads on demand the first time you
-create a node. Preferences and caches live in one visible folder, `~/mpynode`, which you
-can relocate with `MPYNODE_HOME`.
-
-To verify the install, run the test suite (about 6,700 tests):
-
-```bash
-tools/run_tests.sh          # macOS (Linux: set MAYAPY=/usr/autodesk/maya2026/bin/mayapy)
-```
-
-```bat
-tools\run_tests.bat         REM Windows
-```
-
 ## Quick start
 
-The smallest node that does something. Paste into Maya's Script Editor:
+**Launch Node Designer**
+
+```python
+from mpynode.ui.mpynode_designer import show_designer
+show_designer()
+```
+And start building new nodes, or browse any of the provided templates.
+
+**Or use the API**
 
 ```python
 from mpynode import MPyNode
@@ -119,52 +83,27 @@ self.sum = self.a + self.b
 """)
 ```
 
-Inputs are read as `self.<name>`; assigning `self.<name>` on a declared output publishes
-it downstream. Set `.a` and `.b` in the Channel Box and watch `.sum` follow.
-
-Then open the authoring window:
-
-```python
-from mpynode.ui.mpynode_designer import show_designer
-show_designer()
-```
-
-The **Templates** tab has 37 working nodes you can create and run immediately — start
-there.
 
 ## How it works
 
 Each node stores its Python as text on a plug, so the source travels with the scene and
 there is nothing to import or deploy. Attributes you add at runtime cannot use Maya's
 `attributeAffects` (that is class-init-time only), so MPyNode installs DG callbacks that
-reproduce the same dirty propagation automatically. Compiling walks the node's Python AST
+reproduce the same dirty propagation automatically. 
+
+Compiling walks the node's Python AST
 and lowers it directly to C++, falling back to an LLM only for constructs it cannot
-translate deterministically. You can then optionally re-run the compiled node against the
-Python original in a throwaway `mayapy`; the result is recorded per node in
-`manifest.json` and does not block the build.
+translate deterministically. You can then opt-in for further LLM assisted optimization passes,
+which adaptively attempt to optimize the C++ code's performance. 
 
 Full detail in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ## Templates
 
-37 templates in `templates/`, at least one for every node type, each with a runnable demo.
+36 templates in `templates/`, at least one for every node type, each with a runnable demo.
 Browse them in the Designer's **Templates** tab.
 
-| Node type | Templates |
-|---|---|
-| `mPyNode` | 8 |
-| `mPyMesh` | 7 |
-| `mPyDeformer` | 5 |
-| `mPyFile` | 4 |
-| `mPyLocator` | 4 |
-| `mPySkinCluster` | 3 |
-| `mPyBlendShape`, `mPyConstraint`, `mPyIkSolver`, `mPyNurbsCurve`, `mPyNurbsSurface`, `mPyTransform` | 1 each |
-
-`templates/All Templates Plugin/` holds 39 demo scenes — one per demo, not per
-template — that run against all 37 linked into a single plug-in. No binaries are committed:
-a Maya plug-in is built against one Maya version's devkit, so you build it for your Maya —
-one command, `cd "templates/All Templates Plugin" && ./build.sh 2026` (`build.bat` on
-Windows). See [INSTALL.md](INSTALL.md).
+Source code for each template is provided. To compile them yourself — see [INSTALL.md](INSTALL.md).
 
 ## Documentation
 
@@ -178,24 +117,34 @@ Windows). See [INSTALL.md](INSTALL.md).
 | [docs/node_types/](docs/node_types/) | One design note per node type |
 | [docs/notes/](docs/notes/) | Contributor design notes for work that is scoped but not built |
 
-## Provenance
-
-MPyNode is the successor to
-[mpynode/node-designer](https://github.com/mpynode/node-designer), created in
-2019 by **Gene Hansen** and **Eric Vignola**. This is a substantially rewritten
-and extended version of that work, and carries the same BSD 3-Clause license.
-
-It is currently developed and maintained by **Eric Vignola**. Gene Hansen is a
-co-author of the original and its copyright is retained accordingly; he is not
-involved in this version, and nothing here should be read as his endorsement of
-it.
-
-**Not a drop-in upgrade.** This version registers `mPyNode` under a different
-`MTypeId` than 1.x, so scenes built with the original will not open under it,
-and the two cannot be loaded in the same Maya session. Stay on the
-[`v1` branch](https://github.com/mpynode/node-designer/tree/v1) if you need the
-original.
 
 ## License
+BSD 3-Clause License:
+Copyright (c)  2019-2026, Gene Hansen, Eric Vignola 
+All rights reserved. 
 
-BSD 3-Clause. Copyright (c) 2019-2026, Gene Hansen, Eric Vignola. See [LICENSE.md](LICENSE.md).
+Redistribution and use in source and binary forms, with or without 
+modification, are permitted provided that the following conditions are met:
+
+
+1. Redistributions of source code must retain the above copyright notice, 
+   this list of conditions and the following disclaimer.
+   
+2. Redistributions in binary form must reproduce the above copyright notice, 
+   this list of conditions and the following disclaimer in the documentation 
+   and/or other materials provided with the distribution.
+   
+3. Neither the name of copyright holders nor the names of its 
+   contributors may be used to endorse or promote products derived from 
+   this software without specific prior written permission.
+   
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE 
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE 
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL 
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR 
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER 
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, 
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE 
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
