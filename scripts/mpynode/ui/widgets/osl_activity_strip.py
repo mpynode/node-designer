@@ -31,11 +31,11 @@ from mpynode.ui.qt_wrapper import (
 )
 
 # Braille spinner; matches assistant_panel / compile_dialog.
-_SPIN_FRAMES = "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"
+_SPIN_FRAMES      = "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"
 _SPIN_INTERVAL_MS = 110
 
 _LOG_COLLAPSED = "Log ▸"
-_LOG_EXPANDED = "Log ▾"
+_LOG_EXPANDED  = "Log ▾"
 
 
 def _fmt(seconds: float) -> str:
@@ -51,27 +51,27 @@ class NDOslActivityStrip(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self._running = False
-        self._spin_i = 0
-        self._t0 = 0.0
-        self._stage = ""
+        self._spin_i  = 0
+        self._t0      = 0.0
+        self._stage   = ""
 
-        self._timer = QTimer(self)
+        self._timer   = QTimer(self)
         self._timer.setInterval(_SPIN_INTERVAL_MS)
         self._timer.timeout.connect(self._tick)
 
         row = QHBoxLayout()
         row.setContentsMargins(0, 0, 0, 0)
         row.setSpacing(6)
-        self._status = QLabel("", self)
+        self._status     = QLabel("", self)
         self._log_toggle = QPushButton(_LOG_COLLAPSED, self)
         self._log_toggle.setCheckable(True)
         self._log_toggle.setFlat(True)
         self._log_toggle.toggled.connect(self._on_log_toggled)
         self._stop_btn = QPushButton("Stop", self)
         self._stop_btn.clicked.connect(self.request_stop)
-        row.addWidget(self._status, 1)
+        row.addWidget(self._status,     1)
         row.addWidget(self._log_toggle, 0)
-        row.addWidget(self._stop_btn, 0)
+        row.addWidget(self._stop_btn,   0)
 
         self._log = QPlainTextEdit(self)
         self._log.setReadOnly(True)
@@ -96,7 +96,7 @@ class NDOslActivityStrip(QWidget):
         """Idle state: no spinner, no error, log collapsed, whole strip hidden."""
         self._running = False
         self._timer.stop()
-        self._t0 = 0.0  # so a finish with no preceding start() reports 0:00
+        self._t0    = 0.0  # so a finish with no preceding start() reports 0:00
         self._stage = ""
         self._status.setText("")
         self._set_error_style(False)
@@ -112,9 +112,9 @@ class NDOslActivityStrip(QWidget):
     def start(self, stage: str = "Translating with AI…") -> None:
         """Begin: show the strip, start the spinner + elapsed timer, reveal Stop."""
         self._running = True
-        self._spin_i = 0
-        self._t0 = time.monotonic()
-        self._stage = stage
+        self._spin_i  = 0
+        self._t0      = time.monotonic()
+        self._stage   = stage
         self._set_error_style(False)
         self._log.clear()
         self._stop_btn.setVisible(True)

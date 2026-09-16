@@ -8,11 +8,11 @@ from mpynode._common.interface.api_methods import (
 class TestMethodSpec(unittest.TestCase):
     def test_fields(self):
         m = MethodSpec(
-            name="read_texture",
-            sig="read_texture() -> ndarray(H, W, 4) float32",
-            doc="Load + linearize + prefilter; cached.",
-            runtime="mpynode._common.methods.file_methods:read_texture",
-            lower=CppKernel("nd_tex_load_linear"),
+            name    = "read_texture",
+            sig     = "read_texture() -> ndarray(H, W, 4) float32",
+            doc     = "Load + linearize + prefilter; cached.",
+            runtime = "mpynode._common.methods.file_methods:read_texture",
+            lower   = CppKernel("nd_tex_load_linear"),
         )
         self.assertEqual(m.name, "read_texture")
         self.assertEqual(m.lower.kernel, "nd_tex_load_linear")

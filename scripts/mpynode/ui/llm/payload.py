@@ -111,14 +111,14 @@ def strip_payload_for_display(text: str) -> str:
     untouched)."""
     if not text:
         return text
-    out = []
-    last = 0
+    out     = []
+    last    = 0
     removed = False
     for m in _FENCE_RE.finditer(text):
         obj = _try_json_object(m.group(1))
         if _looks_like_payload(obj):
             out.append(text[last:m.start()])
-            last = m.end()
+            last    = m.end()
             removed = True
     out.append(text[last:])
     result = "".join(out)
@@ -268,11 +268,11 @@ def payload_osl(payload: dict):
 
 def summary_line(payload: dict) -> str:
     """Short human label for the toolStarted line, e.g. ``apply mPyNode 2 in``."""
-    p = payload or {}
+    p      = payload or {}
     target = p.get("node") or p.get("node_type") or p.get("native_type") or "node"
-    bits = [str(target)]
-    n_in = len(_norm_attr_list(_first_present(p, "inputs", "input_attrs")))
-    n_out = len(_norm_attr_list(_first_present(p, "outputs", "output_attrs")))
+    bits   = [str(target)]
+    n_in   = len(_norm_attr_list(_first_present(p, "inputs", "input_attrs")))
+    n_out  = len(_norm_attr_list(_first_present(p, "outputs", "output_attrs")))
     if n_in:
         bits.append("%d in" % n_in)
     if n_out:
@@ -334,7 +334,7 @@ def node_context_block(node_name: str | None) -> str:
             w = mpynode.wrap_node(node_name)
             if w is not None:
                 serialized = mpn_io.serialize_node(w, include_persistent=False)
-                disp = _serialized_to_display_payload(serialized, node_name)
+                disp       = _serialized_to_display_payload(serialized, node_name)
                 return (
                     "ACTIVE NODE -- the user is currently editing `%s` (type "
                     "`%s`). Its current definition, in the payload schema:\n"
@@ -383,7 +383,7 @@ def build_prompt(user_text: str, node_name: str | None = None) -> str:
     from mpynode.ui.llm import system_prompt
 
     parts = [system_prompt.build_payload_system_prompt()]
-    ctx = node_context_block(node_name)
+    ctx   = node_context_block(node_name)
     if ctx:
         parts.append(ctx)
     parts.append("USER REQUEST:\n" + (user_text or ""))
@@ -400,7 +400,7 @@ def _existing_attr_names(target: str):
     """(input_names, output_names) already on ``target`` -- so a full-definition
     edit payload can skip re-adding them (add_input_attr on an existing name
     would abort the whole define_node)."""
-    ins: set = set()
+    ins:  set = set()
     outs: set = set()
     try:
         import mpynode
@@ -455,7 +455,7 @@ def apply_payload(node_name: str | None, payload: dict, ctx) -> dict:
     osl = payload_osl(payload)
     tgt = result.get("node")
     if osl and tgt:
-        r2 = tools.dispatch("set_osl_expression", {"node": tgt, "source": osl}, ctx)
+        r2                = tools.dispatch("set_osl_expression", {"node": tgt, "source": osl}, ctx)
         result["set_osl"] = isinstance(r2, dict) and "error" not in r2
     return result
 

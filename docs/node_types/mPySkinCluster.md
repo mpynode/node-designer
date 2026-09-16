@@ -158,13 +158,13 @@ cyl = mc.polyCylinder(name="skinnedCyl", radius=1.0, height=6.0,
 cyl_shape = mc.listRelatives(cyl, shapes=True, fullPath=True)[0]
 mc.select(clear=True)
 j_base = mc.joint(name="jBase", position=(0.0, -3.0, 0.0))
-j_mid = mc.joint(name="jMid", position=(0.0, 0.0, 0.0))
+j_mid  = mc.joint(name="jMid", position=(0.0, 0.0, 0.0))
 mc.select(clear=True)
 
 # Rest positions -> height-linear (N, 2) weights (col 0 = base, col 1 = mid).
 sel = om.MSelectionList(); sel.add(cyl_shape)
-rest = np.asarray(om.MFnMesh(sel.getDagPath(0)).getPoints(om.MSpace.kObject))[:, :3]
-t = np.clip((rest[:, 1] + 3.0) / 6.0, 0.0, 1.0)
+rest    = np.asarray(om.MFnMesh(sel.getDagPath(0)).getPoints(om.MSpace.kObject))[:, :3]
+t       = np.clip((rest[:, 1] + 3.0) / 6.0, 0.0, 1.0)
 weights = np.zeros((rest.shape[0], 2), dtype=np.float64)
 weights[:, 0], weights[:, 1] = 1.0 - t, t
 
@@ -203,7 +203,7 @@ sc.set_compute_expression(
 # Pose the mid joint -> the top half (weighted to jMid) bends. Force eval + read back.
 mc.setAttr(j_mid + ".rotateZ", 60.0)
 mc.getAttr(cyl_shape + ".outMesh")  # pull the deformer
-top = int(np.argmax(rest[:, 1]))    # a vertex fully weighted to the rotated joint
+top   = int(np.argmax(rest[:, 1]))    # a vertex fully weighted to the rotated joint
 moved = np.asarray(om.MFnMesh(sel.getDagPath(0)).getPoints(om.MSpace.kObject))[:, :3]
 delta = float(np.linalg.norm(moved[top] - rest[top]))
 assert delta > 0.1, "top vertex should move when jMid rotates, got delta=%f" % delta

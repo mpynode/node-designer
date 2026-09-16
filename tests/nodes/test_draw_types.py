@@ -74,8 +74,8 @@ class TestScalarFriendly(unittest.TestCase):
         c = np.zeros((5, 3))
         b = _buf(DrawSphere(center=c, radius=np.arange(5.0)))
         self.assertEqual(b["centers"].shape, (5, 3))
-        self.assertEqual(len(b["kinds"]), 5)
-        self.assertEqual(b["kinds"][0], "sphere")
+        self.assertEqual(len(b["kinds"]),    5)
+        self.assertEqual(b["kinds"][0],      "sphere")
 
     def test_every_primitive_reports_its_native_kind(self):
         for cls, kind in ((DrawSphere, "sphere"), (DrawBox, "box"),
@@ -100,21 +100,21 @@ class TestPolyline(unittest.TestCase):
         b = _buf(DrawCurve(pts))
         self.assertEqual(b["starts"].shape, (3, 3))
         np.testing.assert_allclose(b["starts"][0], [0, 0, 0])
-        np.testing.assert_allclose(b["ends"][0], [1, 0, 0])
-        np.testing.assert_allclose(b["ends"][-1], [3, 0, 0])
+        np.testing.assert_allclose(b["ends"][0],   [1, 0, 0])
+        np.testing.assert_allclose(b["ends"][-1],  [3, 0, 0])
 
     def test_closed_curve_adds_the_wrap_segment(self):
         pts = np.array([[0, 0, 0], [1, 0, 0], [1, 1, 0]], dtype=np.float64)
-        b = _buf(DrawCurve(pts, closed=True))
+        b   = _buf(DrawCurve(pts, closed=True))
         self.assertEqual(b["starts"].shape, (3, 3))
         np.testing.assert_allclose(b["ends"][-1], [0, 0, 0])
 
     def test_per_vertex_colors_are_trimmed_to_the_segment_count(self):
         """N points -> N-1 segments but N colours. Untrimmed, the renderer's
         length check rejects the buffer and nothing draws."""
-        pts = np.zeros((5, 3))
+        pts  = np.zeros((5, 3))
         cols = np.tile([1.0, 0.0, 0.0, 1.0], (5, 1))
-        b = _buf(DrawCurve(pts, color=cols))
+        b    = _buf(DrawCurve(pts, color=cols))
         self.assertEqual(b["starts"].shape[0], 4)
         self.assertEqual(b["colors"].shape[0], 4)
 
@@ -147,7 +147,7 @@ class TestPolygonPatches(unittest.TestCase):
     def test_two_patches_are_two_commands_in_order(self):
         """Patches are NOT merged: each keeps its own buffer, drawn in the
         order it was authored."""
-        g = DrawMesh(*_quad_arrays(0.0)) + DrawMesh(*_quad_arrays(5.0))
+        g    = DrawMesh(*_quad_arrays(0.0)) + DrawMesh(*_quad_arrays(5.0))
         cmds = to_commands(g)
         self.assertEqual([c["slot"] for c in cmds], ["polygons", "polygons"])
         for c in cmds:
@@ -157,7 +157,7 @@ class TestPolygonPatches(unittest.TestCase):
         np.testing.assert_allclose(cmds[1]["buffer"]["points"][0], [5, 0, 0])
 
     def test_sum_keeps_authoring_order(self):
-        g = sum([DrawMesh(*_quad_arrays(float(i))) for i in range(3)])
+        g    = sum([DrawMesh(*_quad_arrays(float(i))) for i in range(3)])
         cmds = to_commands(g)
         self.assertEqual(len(cmds), 3)
         np.testing.assert_allclose(
@@ -213,13 +213,13 @@ class TestPolygonFillModes(unittest.TestCase):
 
     def test_vertex_colors_are_one_row_per_point(self):
         vc = np.tile((0, 1, 0), (4, 1))
-        b = _buf(DrawMesh(*_quad_arrays(), vertex_colors=vc))
+        b  = _buf(DrawMesh(*_quad_arrays(), vertex_colors=vc))
         self.assertEqual(b["vertex_colors"].shape, (4, 4))
         self.assertNotIn("face_colors", b)
 
     def test_face_vertex_colors_are_one_row_per_corner(self):
         fvc = np.tile((0, 0, 1), (4, 1))
-        b = _buf(DrawMesh(*_quad_arrays(), face_vertex_colors=fvc))
+        b   = _buf(DrawMesh(*_quad_arrays(), face_vertex_colors=fvc))
         self.assertEqual(b["face_vertex_colors"].shape, (4, 4))
 
     def test_no_fill_still_defaults_to_face_colors(self):
@@ -429,7 +429,7 @@ class TestChainableTransforms(unittest.TestCase):
         np.testing.assert_allclose(b["radii"], [2])
 
     def test_transforms_apply_through_a_group(self):
-        g = (DrawCircle(center=(0, 0, 0)) + DrawText("a", position=(0, 0, 0)))
+        g    = (DrawCircle(center=(0, 0, 0)) + DrawText("a", position=(0, 0, 0)))
         cmds = to_commands(g.translated(0, 3, 0))
         np.testing.assert_allclose(cmds[0]["buffer"]["centers"][0], [0, 3, 0])
         np.testing.assert_allclose(cmds[1]["buffer"]["positions"][0], [0, 3, 0])
@@ -472,11 +472,11 @@ class TestCommandShape(unittest.TestCase):
                             DrawCircle(),
                             DrawText("a")])
         want = {
-            "lines": {"starts", "ends", "colors"},
-            "points": {"positions", "colors", "sizes"},
+            "lines":    {"starts", "ends", "colors"},
+            "points":   {"positions", "colors", "sizes"},
             "polygons": {"points", "indices", "counts"},
-            "shapes": {"kinds", "centers", "radii", "axes", "filled"},
-            "text": {"positions", "strings", "colors", "sizes"},
+            "shapes":   {"kinds", "centers", "radii", "axes", "filled"},
+            "text":     {"positions", "strings", "colors", "sizes"},
         }
         self.assertEqual([c["slot"] for c in cmds], list(want))
         for cmd in cmds:
@@ -529,9 +529,9 @@ class TestDrawSlotOnARealNode(unittest.TestCase):
             "              + DrawCurve(pts)\n"
             "              + DrawText('hip_ctrl', position=(0, 2, 0)))\n")
         cmds = out["commands"]
-        self.assertEqual([c["slot"] for c in cmds], ["shapes", "lines", "text"])
+        self.assertEqual([c["slot"] for c in cmds],         ["shapes", "lines", "text"])
         self.assertEqual(cmds[1]["buffer"]["starts"].shape, (3, 3))
-        self.assertEqual(cmds[2]["buffer"]["strings"], ["hip_ctrl"])
+        self.assertEqual(cmds[2]["buffer"]["strings"],      ["hip_ctrl"])
 
     def test_a_list_of_items_is_a_valid_drawing(self):
         out = self._loc(
@@ -697,8 +697,8 @@ class TestPrimitiveAsMesh(unittest.TestCase):
 
     def test_array_of_primitives_merges_into_one_mesh(self):
         centers = np.array([[0.0, 0.0, 0.0], [10.0, 0.0, 0.0]])
-        one = DrawBox(center=centers[:1], radius=1.0).as_mesh()
-        two = DrawBox(center=centers, radius=1.0).as_mesh()
+        one     = DrawBox(center=centers[:1], radius=1.0).as_mesh()
+        two     = DrawBox(center=centers, radius=1.0).as_mesh()
         self.assertEqual(two.points.shape[0], 2 * one.points.shape[0])
         self.assertEqual(len(two.counts), 2 * len(one.counts))
         # the second shell is rebased, not aliased onto the first
@@ -729,7 +729,7 @@ class TestPrimitiveAsMesh(unittest.TestCase):
         solid must not be inside-out."""
         for prim in (DrawBox(radius=2.0), DrawSphere(radius=2.0),
                      DrawCone(radius=2.0), DrawCylinder(radius=2.0)):
-            m = prim.as_mesh()
+            m      = prim.as_mesh()
             inside = m.points.mean(axis=0)      # convex -> the mean is interior
             for face in self._faces(m):
                 n = np.cross(face[1] - face[0], face[2] - face[0])
@@ -741,7 +741,7 @@ class TestPrimitiveAsMesh(unittest.TestCase):
         # read the FACE (index order), not the raw point array -- the winding
         # lives in the indices.
         face = self._faces(DrawCircle(radius=2.0, axis=(0.0, 1.0, 0.0)).as_mesh())[0]
-        n = np.cross(face[1] - face[0], face[2] - face[0])
+        n    = np.cross(face[1] - face[0], face[2] - face[0])
         self.assertGreater(float(np.dot(n, [0.0, 1.0, 0.0])), 0.0)
 
     def test_every_face_is_a_valid_polygon(self):

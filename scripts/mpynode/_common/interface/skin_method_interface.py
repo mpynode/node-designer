@@ -27,29 +27,29 @@ from mpynode._common.interface.api_methods import (
 
 INTERNAL_API_METHODS = (
     MethodSpec(
-        name="linear_blend",
-        sig="linear_blend(rest, weights, joint, bind) -> ndarray(N, 3)",
+        name = "linear_blend",
+        sig  = "linear_blend(rest, weights, joint, bind) -> ndarray(N, 3)",
         doc=("Linear blend skinning of the rest points using the weights / joint "
              "matrices / bind-pre matrices you pass (typically self.weightList, "
              "self.matrix, self.bindPreMatrix). Returns deformed points (apply "
              "the envelope in your Compute)."),
-        runtime="mpynode._common.methods.skin_methods:linear_blend",
-        lower=Transpile("mpynode._common.methods.skin_blend:linear_blend"),
+        runtime = "mpynode._common.methods.skin_methods:linear_blend",
+        lower   = Transpile("mpynode._common.methods.skin_blend:linear_blend"),
     ),
     MethodSpec(
-        name="dual_quaternion",
-        sig="dual_quaternion(rest, weights, joint, bind) -> ndarray(N, 3)",
+        name = "dual_quaternion",
+        sig  = "dual_quaternion(rest, weights, joint, bind) -> ndarray(N, 3)",
         doc=("Dual quaternion skinning of the rest points using the weights / "
              "joint matrices / bind-pre matrices you pass (typically "
              "self.weightList, self.matrix, self.bindPreMatrix). Volume-preserving "
              "under bends. Returns deformed points (apply the envelope in your "
              "Compute)."),
-        runtime="mpynode._common.methods.skin_methods:dual_quaternion",
-        lower=Transpile("mpynode._common.methods.skin_blend:dual_quaternion"),
+        runtime = "mpynode._common.methods.skin_methods:dual_quaternion",
+        lower   = Transpile("mpynode._common.methods.skin_blend:dual_quaternion"),
     ),
     MethodSpec(
-        name="twist_swing",
-        sig="twist_swing(rest, weights, joint, bind, twist_axis) -> ndarray(N, 3)",
+        name = "twist_swing",
+        sig  = "twist_swing(rest, weights, joint, bind, twist_axis) -> ndarray(N, 3)",
         doc=("Twist/swing skinning: dual quaternion for the TWIST about a "
              "selectable bone-local axis (twist_axis: 0=X default, 1=Y, 2=Z), "
              "linear blend for the remaining SWING (bend). Pass the same operands "
@@ -58,8 +58,8 @@ INTERNAL_API_METHODS = (
              "Volume-preserving twist without the LBS \"candy-wrapper\", "
              "clean/cheap LBS bend. Returns deformed points (apply the envelope "
              "in your Compute)."),
-        runtime="mpynode._common.methods.skin_methods:twist_swing",
-        lower=Transpile("mpynode._common.methods.skin_blend:twist_swing"),
+        runtime = "mpynode._common.methods.skin_methods:twist_swing",
+        lower   = Transpile("mpynode._common.methods.skin_blend:twist_swing"),
     ),
     MethodSpec(
         name="twist_swing_dual",
@@ -73,12 +73,12 @@ INTERNAL_API_METHODS = (
              "carry independently-painted twist vs bend weights (see the "
              "twist_swing_skin template). Returns deformed points "
              "(apply the envelope in your Compute)."),
-        runtime="mpynode._common.methods.skin_methods:twist_swing_dual",
-        lower=Transpile("mpynode._common.methods.skin_blend:twist_swing_dual"),
+        runtime = "mpynode._common.methods.skin_methods:twist_swing_dual",
+        lower   = Transpile("mpynode._common.methods.skin_blend:twist_swing_dual"),
     ),
     MethodSpec(
-        name="update_weights",
-        sig="update_weights(weights) -> None",
+        name = "update_weights",
+        sig  = "update_weights(weights) -> None",
         doc=("Write a dense (N, J) weight array INTO this skinCluster's "
              "weightList plug so Maya's Paint Skin Weights / Component Editor "
              "shows + edits it. Generic + side-effecting: pass ANY weight buffer "
@@ -100,8 +100,8 @@ INTERNAL_API_METHODS = (
         reads=(),
     ),
     MethodSpec(
-        name="sync_paint",
-        sig="sync_paint(mode) -> None",
+        name = "sync_paint",
+        sig  = "sync_paint(mode) -> None",
         doc=("Interactive paint machinery for the two-weight-set twist/swing skin: "
              "on entering a paint mode (skinMode 0/1) load that set's plug into "
              "weightList so Paint Skin Weights shows it; on a settled paint eval "

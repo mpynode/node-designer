@@ -40,10 +40,10 @@ from mpynode._common.nodes.mesh.sdf_dmc import (
 def _compose(translate, rotate_deg, scale, rotate_order=0):
     """Build a Maya-style row-vector worldMatrix: M3 = diag(scale) @ R3,
     last row = translate. Mirrors how the node's matrix input is built."""
-    R = euler_to_matrix(np.radians(np.asarray(rotate_deg, float)), rotate_order)
-    M = np.eye(4)
+    R         = euler_to_matrix(np.radians(np.asarray(rotate_deg, float)), rotate_order)
+    M         = np.eye(4)
     M[:3, :3] = np.diag(np.asarray(scale, float)) @ R[:3, :3]
-    M[3, :3] = np.asarray(translate, float)
+    M[3, :3]  = np.asarray(translate, float)
     return M
 
 
@@ -59,7 +59,7 @@ class TestEvaluators(unittest.TestCase):
         )
 
     def test_box_known(self):
-        z = np.array([0.0])
+        z    = np.array([0.0])
         half = np.array([1.0, 1.0, 1.0])
         # centre: inside distance = -1
         self.assertAlmostEqual(float(eval_box(z, z, z, half)), -1.0)
@@ -114,10 +114,10 @@ class TestCSG(unittest.TestCase):
         )
 
     def test_smooth_union_formula(self):
-        a = np.array([0.3])
-        b = np.array([0.1])
-        k = 0.2
-        h = np.clip(0.5 + 0.5 * (b - a) / k, 0.0, 1.0)
+        a      = np.array([0.3])
+        b      = np.array([0.1])
+        k      = 0.2
+        h      = np.clip(0.5 + 0.5 * (b - a) / k, 0.0, 1.0)
         expect = b * (1 - h) + a * h - k * h * (1 - h)
         np.testing.assert_allclose(sdf_smooth_union(a, b, k), expect)
 
@@ -142,25 +142,25 @@ class TestTransforms(unittest.TestCase):
         self.assertAlmostEqual(float(np.linalg.det(R)), 1.0, places=10)
 
     def test_affine_inverse_rigid(self):
-        R = euler_to_matrix(np.radians(np.array([10.0, 20.0, 30.0])), 0)
-        rigid = R.copy()
+        R            = euler_to_matrix(np.radians(np.array([10.0, 20.0, 30.0])), 0)
+        rigid        = R.copy()
         rigid[3, :3] = [1.0, -2.0, 3.0]
-        inv = affine_inverse(rigid)
+        inv          = affine_inverse(rigid)
         np.testing.assert_allclose(rigid @ inv, np.eye(4), atol=1e-10)
 
     def test_matrix_point_rowvector(self):
-        M = np.eye(4)
+        M         = np.eye(4)
         M[:3, :3] = np.diag([2.0, 3.0, 4.0])
-        M[3, :3] = [1.0, 1.0, 1.0]
-        pts = np.array([[1.0, 1.0, 1.0]])
-        out = matrix_point(pts, M)
+        M[3, :3]  = [1.0, 1.0, 1.0]
+        pts       = np.array([[1.0, 1.0, 1.0]])
+        out       = matrix_point(pts, M)
         np.testing.assert_allclose(out, np.array([[3.0, 4.0, 5.0]]))
 
     def test_decompose_roundtrip(self):
-        t = np.array([1.2, -0.15, 0.8])
+        t   = np.array([1.2, -0.15, 0.8])
         rot = [8.0, -37.0, 0.0]
-        s = np.array([1.0, 0.3, 1.2])
-        M = _compose(t, rot, s)
+        s   = np.array([1.0, 0.3, 1.2])
+        M   = _compose(t, rot, s)
         translate, R3, scale = decompose_matrix(M)
         np.testing.assert_allclose(translate, t, atol=1e-12)
         np.testing.assert_allclose(scale, s, atol=1e-12)
@@ -170,24 +170,24 @@ class TestTransforms(unittest.TestCase):
 
 class TestSampleAndBounds(unittest.TestCase):
     def test_sample_identity_sphere(self):
-        M = np.eye(4)
+        M   = np.eye(4)
         pts = np.array([[2.0, 0.0, 0.0], [0.0, 0.0, 0.0], [1.0, 0.0, 0.0]])
-        d = sample_shape(M, SPHERE, 1.0, 1.0, 1, np.array([0.5, 0.5, 0.5]), pts)
+        d   = sample_shape(M, SPHERE, 1.0, 1.0, 1, np.array([0.5, 0.5, 0.5]), pts)
         np.testing.assert_allclose(d, np.array([1.0, -1.0, 0.0]), atol=1e-12)
 
     def test_sample_translated_sphere(self):
-        M = np.eye(4)
+        M        = np.eye(4)
         M[3, :3] = [5.0, 0.0, 0.0]
-        pts = np.array([[5.0, 0.0, 0.0]])
-        d = sample_shape(M, SPHERE, 2.0, 1.0, 1, np.array([0.5, 0.5, 0.5]), pts)
+        pts      = np.array([[5.0, 0.0, 0.0]])
+        d        = sample_shape(M, SPHERE, 2.0, 1.0, 1, np.array([0.5, 0.5, 0.5]), pts)
         self.assertAlmostEqual(float(d[0]), -2.0, places=10)
 
     def test_sample_uniform_scaled_sphere(self):
         # uniform scale 2 on a unit sphere => radius-2 sphere, exact
-        M = np.eye(4)
+        M         = np.eye(4)
         M[:3, :3] = np.diag([2.0, 2.0, 2.0])
-        pts = np.array([[2.0, 0.0, 0.0]])
-        d = sample_shape(M, SPHERE, 1.0, 1.0, 1, np.array([0.5, 0.5, 0.5]), pts)
+        pts       = np.array([[2.0, 0.0, 0.0]])
+        d         = sample_shape(M, SPHERE, 1.0, 1.0, 1, np.array([0.5, 0.5, 0.5]), pts)
         self.assertAlmostEqual(float(d[0]), 0.0, places=10)
 
     def test_bbox_axis_aligned_box(self):
@@ -237,8 +237,8 @@ class TestDualMarchingCubes(unittest.TestCase):
         self.assertEqual(int(counts.sum()), indices.shape[0])
         # validity: indices contiguous 0..P-1, all used
         uniq = np.unique(indices)
-        self.assertEqual(uniq[0], 0)
-        self.assertEqual(uniq[-1], points.shape[0] - 1)
+        self.assertEqual(uniq[0],   0)
+        self.assertEqual(uniq[-1],  points.shape[0] - 1)
         self.assertEqual(uniq.size, points.shape[0])
         # every dual vertex sits near the unit sphere
         radii = np.linalg.norm(points, axis=1)

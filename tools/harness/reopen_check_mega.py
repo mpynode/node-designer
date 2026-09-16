@@ -14,7 +14,7 @@ import sys
 import json
 import traceback
 
-MA = sys.argv[1]
+MA    = sys.argv[1]
 CTYPE = sys.argv[2]
 
 res = {"ma": MA, "reopened": False, "compiled_type": CTYPE,

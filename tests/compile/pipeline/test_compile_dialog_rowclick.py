@@ -46,10 +46,10 @@ class TestRowClickTogglesCompile(unittest.TestCase):
         from mpynode.ui.dialogs.compile_dialog import CompileDialog, _COL_NODE
 
         MPyNode.create(name="rowClick1")
-        dlg = CompileDialog()
-        row = 0
+        dlg  = CompileDialog()
+        row  = 0
         name = dlg._scene_nodes[row][0]  # _scene_nodes holds (name, type) tuples
-        cb = dlg._compile_checkbox(row)
+        cb   = dlg._compile_checkbox(row)
         self.assertIsNotNone(cb)
         # Unchecked by default -> not in the bundle set.
         self.assertFalse(cb.isChecked())
@@ -69,8 +69,8 @@ class TestRowClickTogglesCompile(unittest.TestCase):
             CompileDialog, _COL_CHECK, _COL_PERSIST)
 
         MPyNode.create(name="rowClick2")
-        dlg = CompileDialog()
-        cb = dlg._compile_checkbox(0)
+        dlg    = CompileDialog()
+        cb     = dlg._compile_checkbox(0)
         before = cb.isChecked()
         # The row handler ignores the two checkbox-widget columns (those clicks
         # are handled by the checkboxes themselves -> no double toggle).

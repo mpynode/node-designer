@@ -134,8 +134,8 @@ class MPyLocator(MPyNode, MethodsSourceMixin):
         sel = om.MSelectionList()
         sel.add(self._name)
         node_obj = sel.getDependNode(0)
-        fn = om.MFnDependencyNode(node_obj)
-        mpx = fn.userNode()
+        fn       = om.MFnDependencyNode(node_obj)
+        mpx      = fn.userNode()
         if mpx is None:
             return {"commands": [], "auto_highlight": True,
                     "auto_refresh": False, "precise_hover": False}

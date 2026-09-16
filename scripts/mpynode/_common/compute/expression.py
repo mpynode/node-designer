@@ -46,9 +46,9 @@ def compile_expression(source: str, filename: str = "<mpynode-expression>"):
 
 
 def safe_compile_expression(
-    source: str,
+    source:    str,
     node_name: str = "",
-    filename: str = "<mpynode-expression>",
+    filename:  str = "<mpynode-expression>",
 ):
     """Compile a user expression and surface any ``SyntaxError`` to the
     Maya script editor / Output Window via ``MGlobal.displayWarning`` AND
@@ -114,8 +114,8 @@ def safe_compile_expression(
 
 
 def build_exec_namespace(
-    extras: dict | None = None,
-    cmds_module=None,  # kept for back-compat; ignored as
+    extras:     dict | None = None,
+    cmds_module             = None,  # kept for back-compat; ignored as
 ) -> dict:
     """Build the namespace for user expression exec.
 
@@ -136,12 +136,12 @@ def build_exec_namespace(
 
 def exec_with_profile_watch(
     code,
-    namespace: dict,
-    log_event_name: str = "<mpynode-exec>",
-    on_error=None,
+    namespace:      dict,
+    log_event_name: str  = "<mpynode-exec>",
+    on_error             = None,
     *,
-    node_obj=None,
-    compute_ctx: dict = None,
+    node_obj             = None,
+    compute_ctx:    dict = None,
 ) -> bool:
     """Execute a compiled expression. Returns True on success.
 
@@ -264,7 +264,7 @@ def exec_with_profile_watch(
             return True
         except Exception:
             tb_lines = traceback.format_exception(*sys.exc_info())
-            msg = f"[{log_event_name}] expression error:\n{''.join(tb_lines)}"
+            msg      = f"[{log_event_name}] expression error:\n{''.join(tb_lines)}"
             if on_error is not None:
                 try:
                     on_error(msg)

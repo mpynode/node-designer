@@ -18,9 +18,9 @@ node type AND every command:
 """
 import os, sys, json
 
-HARNESS = os.path.dirname(os.path.abspath(__file__))
-ROOT = os.path.dirname(os.path.dirname(HARNESS))            # project root
-AUDIT_ROOT = os.path.join(ROOT, "_audit")                   # audit output root
+HARNESS    = os.path.dirname(os.path.abspath(__file__))
+ROOT       = os.path.dirname(os.path.dirname(HARNESS))  # project root
+AUDIT_ROOT = os.path.join(ROOT, "_audit")               # audit output root
 sys.path.insert(0, HARNESS)
 
 MEGA_DIR = sys.argv[1] if len(sys.argv) > 1 else "templates/All Templates Plugin"
@@ -100,7 +100,7 @@ def _fixtures_for(mc, source):
     if source == "meshRegions":
         # Needs a mesh that ALREADY carries a component tag to bind a region to.
         from mpynode._common.nodes.mesh.component_tags import create_tag
-        tr = mc.polyCube(name="e2eRegionMesh", constructionHistory=False)[0]
+        tr    = mc.polyCube(name="e2eRegionMesh", constructionHistory=False)[0]
         shape = (mc.listRelatives(tr, shapes=True, fullPath=True) or [None])[0]
         # create_tag returns "" (not an error) when the name is already taken.
         if not shape or not create_tag(shape, "e2eRegion", [0, 1, 2, 3]):
@@ -123,10 +123,10 @@ def main():
     import maya.cmds as mc
 
     # Source/scripts/manifest live under build/; only the bundle sits on top.
-    manifest = json.load(open(os.path.join(MEGA_DIR, "build", "manifest.json")))
+    manifest    = json.load(open(os.path.join(MEGA_DIR, "build", "manifest.json")))
     plugin_name = manifest.get("plugin_name") or "mPyMega"
-    built = [n for n in manifest.get("nodes", []) if n.get("type_id")]
-    node_types = [n["type_name"] for n in built]
+    built       = [n for n in manifest.get("nodes", []) if n.get("type_id")]
+    node_types  = [n["type_name"] for n in built]
     # source node -> COMPILED type name. The two differ (dnet -> mPyDnet,
     # meshRegions -> meshRegionLocator) and a creates=True setup is named after
     # the TYPE, so the mapping -- not just the key set -- is what's needed.
@@ -194,7 +194,7 @@ def main():
     ran = False
     if "metaballs" in reg and "addSphere" in got:
         node = mc.createNode("metaballs")
-        xf = mc.createNode("transform", name="megaProbeSphere")
+        xf   = mc.createNode("transform", name="megaProbeSphere")
         mc.addSphere(node, transform=xf, radius=1.5, smoothing=0.5)
         wired = mc.listConnections(node + ".shapeMatrix", source=True,
                                    destination=False) or []
@@ -209,7 +209,7 @@ def main():
                       if (n.get("source_node") or "") == "dnet"), None)
     if dnet_type and dnet_type in reg and "dnetCreateKnot" in got:
         try:
-            dn = mc.createNode(dnet_type)
+            dn     = mc.createNode(dnet_type)
             before = set(mc.ls(type="transform"))
             mc.dnetCreateKnot(dn)
             new = sorted(set(mc.ls(type="transform")) - before)

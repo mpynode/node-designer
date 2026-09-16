@@ -54,7 +54,7 @@ class TestPermissionModeOnThePorterArgv(unittest.TestCase):
                                   lambda p: "max"), \
                 mock.patch.object(llm_client, "_run_cli_proc", fake_run):
             llm_client.make_cli_agent_fn("/tmp")("P")
-        agent_cmd = seen["cmd"]
+        agent_cmd  = seen["cmd"]
         agent_mode = agent_cmd[agent_cmd.index("--permission-mode") + 1]
         self.assertEqual(porter_mode, agent_mode)
 
@@ -84,7 +84,7 @@ class TestTheResponseCeilingReachesTheCli(unittest.TestCase):
 
         def fake_run(cmd, stdin_text, binp, **kw):
             seen["cmd"] = list(cmd)
-            seen["kw"] = dict(kw)
+            seen["kw"]  = dict(kw)
             return "X;"
 
         with mock.patch.object(llm_client._config, "get_provider",
@@ -101,7 +101,7 @@ class TestTheResponseCeilingReachesTheCli(unittest.TestCase):
 
     def test_claude_cli_child_is_given_the_configured_ceiling(self):
         seen = self._capture("claude_cli", timeout=2400.0, max_tokens=64000)
-        env = seen["kw"].get("env")
+        env  = seen["kw"].get("env")
         self.assertIsNotNone(
             env, "the CLI child got no env, so the ceiling was dropped")
         self.assertEqual(env.get("CLAUDE_CODE_MAX_OUTPUT_TOKENS"), "64000")
@@ -111,7 +111,7 @@ class TestTheResponseCeilingReachesTheCli(unittest.TestCase):
         import os
 
         seen = self._capture("claude_cli", max_tokens=64000)
-        env = seen["kw"]["env"]
+        env  = seen["kw"]["env"]
         for k in os.environ:
             self.assertIn(k, env, "child env dropped %s" % k)
 

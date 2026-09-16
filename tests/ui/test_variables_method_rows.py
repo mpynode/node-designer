@@ -31,12 +31,12 @@ class TestMethodRowsData(unittest.TestCase):
         # Ask 1: Dir column shows the direction as a plain word (READ / WRITE /
         # READWRITE / METHOD); legacy directionless -> neutral "".
         self.assertEqual(variables._dir_label("method"), "METHOD")
-        self.assertEqual(variables._dir_label("read"), "READ")
-        self.assertEqual(variables._dir_label(""), "")
+        self.assertEqual(variables._dir_label("read"),   "READ")
+        self.assertEqual(variables._dir_label(""),       "")
 
     def test_method_rows_present_with_signature(self):
-        node = MPyFile.create(name="varFile#")
-        rows = variables.collect_internal_api_rows(node._name)
+        node    = MPyFile.create(name="varFile#")
+        rows    = variables.collect_internal_api_rows(node._name)
         by_name = {name: (d, val) for (name, d, val) in rows}
         self.assertIn("read_texture", by_name)
         d, val = by_name["read_texture"]
@@ -46,8 +46,8 @@ class TestMethodRowsData(unittest.TestCase):
     def test_slots_still_render(self):
         # mPyFile has INTERNAL_API_SLOTS bridge handles; ensure they still appear
         # and are NOT tagged "method".
-        node = MPyFile.create(name="varFile2#")
-        rows = variables.collect_internal_api_rows(node._name)
+        node         = MPyFile.create(name="varFile2#")
+        rows         = variables.collect_internal_api_rows(node._name)
         method_names = {name for (name, d, v) in rows if d == "method"}
         self.assertEqual(method_names,
                          {"read_texture", "sample_texture", "composite_layers",
@@ -81,8 +81,8 @@ class TestSlotlessMethodRows(unittest.TestCase):
         self.assertEqual(tuple(MPySkinCluster.INTERNAL_API_SLOTS), ())
 
     def test_skin_methods_present_with_signature(self):
-        sc = self._skin("msrSkin#")
-        rows = variables.collect_internal_api_rows(sc.get_name())
+        sc      = self._skin("msrSkin#")
+        rows    = variables.collect_internal_api_rows(sc.get_name())
         by_name = {name: (d, val) for (name, d, val) in rows}
         for meth in ("linear_blend", "dual_quaternion",
                      "twist_swing"):

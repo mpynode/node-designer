@@ -126,32 +126,32 @@ def fan_triangulate(points, indices, counts):
 
     Faces with < 3 verts are skipped silently.
     """
-    points = np.asarray(points, dtype=np.float32)
+    points  = np.asarray(points,  dtype=np.float32)
     indices = np.asarray(indices, dtype=np.int64)
-    counts = np.asarray(counts, dtype=np.int64)
+    counts  = np.asarray(counts,  dtype=np.int64)
     if counts.size == 0:
         return np.zeros((0, 3), dtype=np.float32)
 
     # Fully vectorized fan triangulation (no per-face Python loop).
     # Face f of size c contributes (c-2) triangles: (0, j+1, j+2) for
     # j in 0..c-3, indexing into that face's slice of ``indices``.
-    face_off = np.cumsum(counts) - counts          # start offset into indices/face
-    tpf = np.maximum(counts - 2, 0)                 # triangles per face (0 if c < 3)
-    total = int(tpf.sum())
+    face_off = np.cumsum(counts) - counts  # start offset into indices/face
+    tpf      = np.maximum(counts - 2, 0)   # triangles per face (0 if c < 3)
+    total    = int(tpf.sum())
     if total == 0:
         return np.zeros((0, 3), dtype=np.float32)
 
-    face_of_tri = np.repeat(np.arange(counts.size), tpf)        # (T,)
-    tri_start = np.cumsum(tpf) - tpf                            # global tri start/face
-    j = np.arange(total) - tri_start[face_of_tri]              # 0-based tri within face
-    base = face_off[face_of_tri]                               # anchor offset into indices
+    face_of_tri = np.repeat(np.arange(counts.size), tpf)     # (T,)
+    tri_start   = np.cumsum(tpf) - tpf                       # global tri start/face
+    j           = np.arange(total) - tri_start[face_of_tri]  # 0-based tri within face
+    base        = face_off[face_of_tri]                      # anchor offset into indices
 
     a = indices[base]            # anchor (corner 0) of each triangle's face
     b = indices[base + j + 1]
     c = indices[base + j + 2]
 
     # Interleave [a, b, c] per triangle to match the (T*3, 3) flat layout.
-    out = np.empty((total * 3, 3), dtype=np.float32)
+    out       = np.empty((total * 3, 3), dtype=np.float32)
     out[0::3] = points[a]
     out[1::3] = points[b]
     out[2::3] = points[c]
@@ -167,7 +167,7 @@ def expand_face_colors_to_triangles(face_colors, counts):
     triangle gets 3 copies of the face's color.
     """
     face_colors = np.asarray(face_colors, dtype=np.float32)
-    counts = np.asarray(counts, dtype=np.int64)
+    counts      = np.asarray(counts, dtype=np.int64)
     if face_colors.shape[0]!= counts.shape[0]:
         raise ValueError(
             f"expand_face_colors_to_triangles: face_colors has "
@@ -200,13 +200,13 @@ def build_edge_point_pairs(points, indices, counts):
 
     This is the wireframe path used when ``polygons["colors"]`` is None.
     """
-    points = np.asarray(points, dtype=np.float32)
+    points  = np.asarray(points,  dtype=np.float32)
     indices = np.asarray(indices, dtype=np.int64)
-    counts = np.asarray(counts, dtype=np.int64)
+    counts  = np.asarray(counts,  dtype=np.int64)
 
-    starts = []
-    ends = []
-    cursor = 0
+    starts  = []
+    ends    = []
+    cursor  = 0
     for face_size in counts:
         face_size = int(face_size)
         if face_size < 2:
@@ -271,9 +271,9 @@ def cull_backfaces_by_view(points, indices, counts, view_pos):
     empty arrays. Never raises -- a fully-culled mesh returns
     zero-length arrays (caller short-circuits on ``counts.shape[0]``).
     """
-    pts = np.asarray(points, dtype=np.float64)
+    pts  = np.asarray(points,  dtype=np.float64)
     idxs = np.asarray(indices, dtype=np.int64)
-    cnts = np.asarray(counts, dtype=np.int64)
+    cnts = np.asarray(counts,  dtype=np.int64)
     view = np.asarray(view_pos, dtype=np.float64).reshape(3)
 
     if pts.ndim != 2 or pts.shape[1] != 3:
@@ -289,7 +289,7 @@ def cull_backfaces_by_view(points, indices, counts, view_pos):
 
     # Walk faces, compute centroid + normal, classify.
     keep_face = np.zeros((cnts.shape[0],), dtype=bool)
-    cursor = 0
+    cursor    = 0
     for fi, c in enumerate(cnts):
         c_int = int(c)
         if c_int < 3:
@@ -301,9 +301,9 @@ def cull_backfaces_by_view(points, indices, counts, view_pos):
         if face.shape[0] < 3:
             keep_face[fi] = True
             continue
-        v0 = pts[face[0]]
-        v1 = pts[face[1]]
-        v2 = pts[face[2]]
+        v0     = pts[face[0]]
+        v1     = pts[face[1]]
+        v2     = pts[face[2]]
         normal = np.cross(v1 - v0, v2 - v0)
         # Centroid = mean of face verts (better than v0 for accuracy
         # on long/narrow N-gons).
@@ -318,9 +318,9 @@ def cull_backfaces_by_view(points, indices, counts, view_pos):
         )
 
     # Reassemble the kept faces' index ranges.
-    starts = np.concatenate([[0], np.cumsum(cnts[:-1])])
+    starts              = np.concatenate([[0], np.cumsum(cnts[:-1])])
     kept_indices_chunks = []
-    kept_counts = []
+    kept_counts         = []
     for fi in range(cnts.shape[0]):
         if not keep_face[fi]:
             continue
@@ -346,9 +346,9 @@ def cull_backfaces_mask(points, indices, counts, view_pos):
     color data so it stays aligned with the culled mesh. Robust: returns
     an all-True mask on malformed input (so nothing is wrongly dropped).
     """
-    pts = np.asarray(points, dtype=np.float64)
+    pts  = np.asarray(points,  dtype=np.float64)
     idxs = np.asarray(indices, dtype=np.int64)
-    cnts = np.asarray(counts, dtype=np.int64)
+    cnts = np.asarray(counts,  dtype=np.int64)
     if cnts.ndim != 1:
         return np.zeros((0,), dtype=bool)
     if pts.ndim != 2 or pts.shape[1] != 3 or idxs.ndim != 1:
@@ -358,7 +358,7 @@ def cull_backfaces_mask(points, indices, counts, view_pos):
     except Exception:
         return np.ones((cnts.shape[0],), dtype=bool)
 
-    keep = np.zeros((cnts.shape[0],), dtype=bool)
+    keep   = np.zeros((cnts.shape[0],), dtype=bool)
     cursor = 0
     for fi, c in enumerate(cnts):
         c_int = int(c)
@@ -371,10 +371,10 @@ def cull_backfaces_mask(points, indices, counts, view_pos):
         if face.shape[0] < 3:
             keep[fi] = True
             continue
-        v0 = pts[face[0]]
-        v1 = pts[face[1]]
-        v2 = pts[face[2]]
-        normal = np.cross(v1 - v0, v2 - v0)
+        v0       = pts[face[0]]
+        v1       = pts[face[1]]
+        v2       = pts[face[2]]
+        normal   = np.cross(v1 - v0, v2 - v0)
         centroid = pts[face].mean(axis=0)
         if np.dot(normal, view - centroid) > 0.0:
             keep[fi] = True
@@ -390,15 +390,15 @@ def apply_face_mask(indices, counts, keep_mask):
     (e.g. ``face_vertex_colors``) so it stays aligned with the culled
     mesh; subset per-face data directly with ``keep_mask``.
     """
-    indices = np.asarray(indices, dtype=np.int64)
-    counts = np.asarray(counts, dtype=np.int64)
+    indices   = np.asarray(indices,   dtype=np.int64)
+    counts    = np.asarray(counts,    dtype=np.int64)
     keep_mask = np.asarray(keep_mask, dtype=bool)
-    z = np.zeros((0,), dtype=np.int64)
+    z         = np.zeros((0,), dtype=np.int64)
     if counts.shape[0] == 0 or not keep_mask.any():
         return z, z, z
-    starts = np.concatenate([[0], np.cumsum(counts[:-1])]).astype(np.int64)
+    starts        = np.concatenate([[0], np.cumsum(counts[:-1])]).astype(np.int64)
     corner_chunks = []
-    kept_counts = []
+    kept_counts   = []
     for fi in range(counts.shape[0]):
         if not keep_mask[fi]:
             continue
@@ -423,10 +423,10 @@ def triangle_corner_indices(indices, counts):
     Returns ``(point_idx, facecorner_idx)``, each ``(T*3,)`` int64.
     """
     indices = np.asarray(indices, dtype=np.int64)
-    counts = np.asarray(counts, dtype=np.int64)
-    pt_idx = []
-    fc_idx = []
-    cursor = 0
+    counts  = np.asarray(counts, dtype=np.int64)
+    pt_idx  = []
+    fc_idx  = []
+    cursor  = 0
     for face_size in counts:
         face_size = int(face_size)
         if face_size < 3:
@@ -450,7 +450,7 @@ def edge_face_indices(counts):
     """Parallel to :func:`build_edge_point_pairs`: for each emitted edge,
     the index of the face it belongs to. Returns ``(E,)`` int64."""
     counts = np.asarray(counts, dtype=np.int64)
-    out = []
+    out    = []
     for f, face_size in enumerate(counts):
         face_size = int(face_size)
         if face_size < 2:
@@ -479,26 +479,26 @@ def region_boundary_edges(indices, counts):
     on any (remapped) connectivity and is winding-independent.
     """
     indices = np.asarray(indices, dtype=np.int64)
-    counts = np.asarray(counts, dtype=np.int64)
-    empty = (np.zeros((0, 2), dtype=np.int64), np.zeros((0,), dtype=np.int64))
+    counts  = np.asarray(counts, dtype=np.int64)
+    empty   = (np.zeros((0, 2), dtype=np.int64), np.zeros((0,), dtype=np.int64))
     if indices.size == 0 or counts.size == 0:
         return empty
 
-    starts = np.cumsum(counts) - counts                 # per-face start in indices
-    total = int(counts.sum())
-    face_of = np.repeat(np.arange(counts.shape[0]), counts)   # (total,) owning face
-    within = np.arange(total) - starts[face_of]         # corner index within its face
-    nxt = within + 1
-    wrap = nxt >= counts[face_of]                        # last corner wraps to first
+    starts  = np.cumsum(counts) - counts                     # per-face start in indices
+    total   = int(counts.sum())
+    face_of = np.repeat(np.arange(counts.shape[0]), counts)  # (total,) owning face
+    within  = np.arange(total) - starts[face_of]             # corner index within its face
+    nxt     = within + 1
+    wrap    = nxt >= counts[face_of]                         # last corner wraps to first
     nxt_pos = np.where(wrap, starts[face_of], starts[face_of] + nxt)
 
     a = indices
     b = indices[nxt_pos]
     # Canonicalize each edge as (min, max) so shared edges match regardless
     # of the two faces' winding; drop degenerate (a == b) edges.
-    edges = np.sort(np.stack([a, b], axis=1), axis=1)
-    keep = edges[:, 0] != edges[:, 1]
-    edges = edges[keep]
+    edges     = np.sort(np.stack([a, b], axis=1), axis=1)
+    keep      = edges[:, 0] != edges[:, 1]
+    edges     = edges[keep]
     edge_face = face_of[keep]
     if edges.shape[0] == 0:
         return empty
@@ -560,10 +560,10 @@ def matrix_uniform_scale(m16):
     non-uniform scale when sizing a billboarded (screen-aligned) glyph.
     Returns 1.0 on degenerate/zero input.
     """
-    m = [float(x) for x in m16]
-    sx = (m[0] * m[0] + m[1] * m[1] + m[2] * m[2]) ** 0.5
-    sy = (m[4] * m[4] + m[5] * m[5] + m[6] * m[6]) ** 0.5
-    sz = (m[8] * m[8] + m[9] * m[9] + m[10] * m[10]) ** 0.5
+    m    = [float(x) for x in m16]
+    sx   = (m[0] * m[0] + m[1] * m[1] + m[2] * m[2]) ** 0.5
+    sy   = (m[4] * m[4] + m[5] * m[5] + m[6] * m[6]) ** 0.5
+    sz   = (m[8] * m[8] + m[9] * m[9] + m[10] * m[10]) ** 0.5
     prod = sx * sy * sz
     if prod <= 0.0:
         return 1.0
@@ -669,22 +669,22 @@ def project_object_points_to_pixels(points_obj, obj_world_m16, view_proj_m16,
             np.zeros((0, 2), dtype=np.float64),
             np.zeros((0,), dtype=bool),
         )
-    n = pts.shape[0]
+    n   = pts.shape[0]
     obj = np.asarray(obj_world_m16, dtype=np.float64).reshape(4, 4)
-    vp = np.asarray(view_proj_m16, dtype=np.float64).reshape(4, 4)
+    vp  = np.asarray(view_proj_m16, dtype=np.float64).reshape(4, 4)
     # object -> clip as one row-vector matrix (v_row @ obj @ vp).
-    mvp = obj @ vp
-    homog = np.empty((n, 4), dtype=np.float64)
-    homog[:, :3] = pts
-    homog[:, 3] = 1.0
-    clip = homog @ mvp
-    w = clip[:, 3]
-    valid = w > 1e-9
-    safe_w = np.where(valid, w, 1.0)
-    ndc_x = clip[:, 0] / safe_w
-    ndc_y = clip[:, 1] / safe_w
-    pixels = np.empty((n, 2), dtype=np.float64)
-    pixels[:, 0] = (ndc_x * 0.5 + 0.5) * float(vp_w)
-    pixels[:, 1] = (ndc_y * 0.5 + 0.5) * float(vp_h)
+    mvp            = obj @ vp
+    homog          = np.empty((n, 4), dtype=np.float64)
+    homog[:, :3]   = pts
+    homog[:, 3]    = 1.0
+    clip           = homog @ mvp
+    w              = clip[:, 3]
+    valid          = w > 1e-9
+    safe_w         = np.where(valid, w, 1.0)
+    ndc_x          = clip[:, 0] / safe_w
+    ndc_y          = clip[:, 1] / safe_w
+    pixels         = np.empty((n, 2), dtype=np.float64)
+    pixels[:, 0]   = (ndc_x * 0.5 + 0.5) * float(vp_w)
+    pixels[:, 1]   = (ndc_y * 0.5 + 0.5) * float(vp_h)
     pixels[~valid] = 0.0
     return pixels, valid

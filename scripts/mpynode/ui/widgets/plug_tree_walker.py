@@ -101,17 +101,17 @@ except Exception:  # pragma: no cover - osl_registry always importable
 
 
 class RowSpec(NamedTuple):
-    direction: str          # "INPUT" / "OUTPUT" / "INTERNAL"
-    plug_path: str          # e.g. "input[0].inputGeometry"
-    short_name: str         # e.g. "inputGeometry"
-    parent_path: str        # e.g. "input[0]" or ""
-    depth: int              # 0 / 1 / 2...
-    is_array: bool
-    is_compound: bool
-    is_user_added: bool
+    direction:       str  # "INPUT" / "OUTPUT" / "INTERNAL"
+    plug_path:       str  # e.g. "input[0].inputGeometry"
+    short_name:      str  # e.g. "inputGeometry"
+    parent_path:     str  # e.g. "input[0]" or ""
+    depth:           int  # 0 / 1 / 2...
+    is_array:        bool
+    is_compound:     bool
+    is_user_added:   bool
     is_internal_api: bool
-    attr_type: str          # best-effort, "" if unknown
-    value_text: str         # display-only
+    attr_type:       str  # best-effort, "" if unknown
+    value_text:      str  # display-only
 
 
 # ===========================================================================
@@ -214,20 +214,20 @@ def _decode_user_added(node_name) -> set:
 # INTERNAL_API_SLOTS as a class attr. Module-level so the same map drives both
 # the slot-set lookup AND the wrapper-instance constructor.
 _TYPE_TO_WRAPPER = {
-    "mPyDeformer": ("mpynode.wrappers.mpy_deformer", "MPyDeformer"),
+    "mPyDeformer":    ("mpynode.wrappers.mpy_deformer", "MPyDeformer"),
     "mPySkinCluster": ("mpynode.wrappers.mpy_skin_cluster", "MPySkinCluster"),
-    "mPyBlendShape": ("mpynode.wrappers.mpy_blend_shape", "MPyBlendShape"),
-    "mPyTransform": ("mpynode.wrappers.mpy_transform", "MPyTransform"),
-    "mPyMesh": ("mpynode.wrappers.mpy_mesh", "MPyMesh"),
+    "mPyBlendShape":  ("mpynode.wrappers.mpy_blend_shape", "MPyBlendShape"),
+    "mPyTransform":   ("mpynode.wrappers.mpy_transform", "MPyTransform"),
+    "mPyMesh":        ("mpynode.wrappers.mpy_mesh", "MPyMesh"),
     # NOT the _api2/ MPxNode classes: those take no __init__ args (so a
     # node-name string can't construct them) and carry no
     # INTERNAL_API_SLOTS / wrapper-mixin API.
     "mPyNurbsCurve":   ("mpynode.wrappers.mpy_nurbs_curve", "MPyNurbsCurve"),
     "mPyNurbsSurface": ("mpynode.wrappers.mpy_nurbs_surface", "MPyNurbsSurface"),
-    "mPyNode": ("mpynode.wrappers._mpy_node", "MPyNode"),
-    "mPyLocator": ("mpynode.wrappers.mpy_locator", "MPyLocator"),
-    "mPyConstraint": ("mpynode.wrappers.mpy_constraint", "MPyConstraint"),
-    "mPyIkSolver": ("mpynode.wrappers.mpy_iksolver", "MPyIkSolver"),
+    "mPyNode":         ("mpynode.wrappers._mpy_node", "MPyNode"),
+    "mPyLocator":      ("mpynode.wrappers.mpy_locator", "MPyLocator"),
+    "mPyConstraint":   ("mpynode.wrappers.mpy_constraint", "MPyConstraint"),
+    "mPyIkSolver":     ("mpynode.wrappers.mpy_iksolver", "MPyIkSolver"),
     # mPyFile is NOT plug-only: its Viewport tab injects non-plug bridge
     # handles (self.shader / time / texture_manager / ...) from
     # MPyFile.INTERNAL_API_SLOTS. Without this entry _wrapper_class_for
@@ -291,7 +291,7 @@ def _normalize_internal_api_slot_specs(raw):
             out.append((entry, "", ""))
             continue
         try:
-            name = entry[0]
+            name      = entry[0]
             direction = entry[1] if len(entry) > 1 else ""
             type_hint = entry[2] if len(entry) > 2 else ""
             out.append((str(name), str(direction), str(type_hint)))
@@ -372,7 +372,7 @@ def authoring_method_rows_for(node_name):
         # getattr_static: never triggers a descriptor, so a property that reads
         # an unconnected plug cannot raise out of a UI refresh.
         raw = inspect.getattr_static(cls, name, None)
-        fn = raw.__func__ if isinstance(raw, (staticmethod, classmethod)) else raw
+        fn  = raw.__func__ if isinstance(raw, (staticmethod, classmethod)) else raw
         if not inspect.isfunction(fn):
             continue
         try:
@@ -448,11 +448,11 @@ def wrapper_property_rows_for(node_name):
 #   OSL       not Python at all -- a shader-source string output. NO Python
 #             surface applies, so the panel shows nothing rather than a list
 #             of things that cannot be called from a shader.
-_TIER_INIT = "Init"
-_TIER_COMPUTE = "Compute"
+_TIER_INIT     = "Init"
+_TIER_COMPUTE  = "Compute"
 _TIER_VIEWPORT = "Viewport"
-_TIER_OSL = "OSL"
-_TIER_API = "API"
+_TIER_OSL      = "OSL"
+_TIER_API      = "API"
 
 _TIER_SCOPES = {
     _TIER_INIT: {
@@ -664,7 +664,7 @@ def _walk_attribute(
 
     direction = _classify_direction(attr_mob, name, internal_api_slots)
 
-    is_array = False
+    is_array  = False
     try:
         is_array = bool(om.MFnAttribute(attr_mob).isArray())
     except Exception:
@@ -672,15 +672,15 @@ def _walk_attribute(
 
     # kCompoundAttribute and kNumericAttribute k3 etc. both have iterable
     # child attrs.
-    n_children = 0
+    n_children  = 0
     is_compound = False
     try:
         if attr_mob.hasFn(om.MFn.kCompoundAttribute):
             is_compound = True
-            n_children = om.MFnCompoundAttribute(attr_mob).numChildren()
+            n_children  = om.MFnCompoundAttribute(attr_mob).numChildren()
     except Exception:
         is_compound = False
-        n_children = 0
+        n_children  = 0
     # k2/k3/k4 short tuples look numeric but have compound-like child
     # accessors, so display them as compound when they have components.
     try:
@@ -690,23 +690,23 @@ def _walk_attribute(
                 nc = fn_num.numChildren() if hasattr(fn_num, "numChildren") else 0
                 if nc > 0:
                     is_compound = True
-                    n_children = max(n_children, nc)
+                    n_children  = max(n_children, nc)
             except Exception:
                 pass
     except Exception:
         pass
 
     rows.append(RowSpec(
-        direction=direction,
-        plug_path=plug_path,
-        short_name=name,
-        parent_path=parent_path,
-        depth=depth,
-        is_array=is_array,
-        is_compound=is_compound,
-        is_user_added=(name in user_added_names),
-        is_internal_api=(name in internal_api_slots),
-        attr_type=_attr_type_label(attr_mob),
+        direction       = direction,
+        plug_path       = plug_path,
+        short_name      = name,
+        parent_path     = parent_path,
+        depth           = depth,
+        is_array        = is_array,
+        is_compound     = is_compound,
+        is_user_added   = (name in user_added_names),
+        is_internal_api = (name in internal_api_slots),
+        attr_type       = _attr_type_label(attr_mob),
         # NEVER read a multi PARENT: cmds.getAttr on one UNCONDITIONALLY
         # forces a recompute of an output multi (element reads respect the
         # clean cache, the parent read does not) and can't stringify it
@@ -732,9 +732,9 @@ def _walk_attribute(
             _walk_attribute(
                 node_mob, child_attr, node_name,
                 user_added_names, internal_api_slots,
-                parent_path=plug_path,
-                depth=depth + 1,
-                rows=rows,
+                parent_path = plug_path,
+                depth       = depth + 1,
+                rows        = rows,
             )
 
     # Surface EVERY populated array element: an index counts as populated if
@@ -770,17 +770,17 @@ def _walk_attribute(
             try:
                 if is_compound and n_children > 0:
                     rows.append(RowSpec(
-                        direction=direction,
-                        plug_path=elem_path,
-                        short_name="[{}]".format(idx),
-                        parent_path=plug_path,
-                        depth=depth + 1,
-                        is_array=False,
-                        is_compound=True,
-                        is_user_added=(name in user_added_names),
-                        is_internal_api=False,
-                        attr_type=_attr_type_label(attr_mob),
-                        value_text=_read_value_text(node_name, elem_path),
+                        direction       = direction,
+                        plug_path       = elem_path,
+                        short_name      = "[{}]".format(idx),
+                        parent_path     = plug_path,
+                        depth           = depth + 1,
+                        is_array        = False,
+                        is_compound     = True,
+                        is_user_added   = (name in user_added_names),
+                        is_internal_api = False,
+                        attr_type       = _attr_type_label(attr_mob),
+                        value_text      = _read_value_text(node_name, elem_path),
                     ))
                     for i in range(n_children):
                         try:
@@ -794,23 +794,23 @@ def _walk_attribute(
                         _walk_attribute(
                             node_mob, child_attr, node_name,
                             user_added_names, internal_api_slots,
-                            parent_path=elem_path,
-                            depth=depth + 2,
-                            rows=rows,
+                            parent_path = elem_path,
+                            depth       = depth + 2,
+                            rows        = rows,
                         )
                 else:
                     rows.append(RowSpec(
-                        direction=direction,
-                        plug_path=elem_path,
-                        short_name="[{}]".format(idx),
-                        parent_path=plug_path,
-                        depth=depth + 1,
-                        is_array=False,
-                        is_compound=False,
-                        is_user_added=(name in user_added_names),
-                        is_internal_api=False,
-                        attr_type=_attr_type_label(attr_mob),
-                        value_text=_read_value_text(node_name, elem_path),
+                        direction       = direction,
+                        plug_path       = elem_path,
+                        short_name      = "[{}]".format(idx),
+                        parent_path     = plug_path,
+                        depth           = depth + 1,
+                        is_array        = False,
+                        is_compound     = False,
+                        is_user_added   = (name in user_added_names),
+                        is_internal_api = False,
+                        attr_type       = _attr_type_label(attr_mob),
+                        value_text      = _read_value_text(node_name, elem_path),
                     ))
             except Exception:
                 pass
@@ -838,11 +838,11 @@ def walk_plug_tree(node_name) -> List[RowSpec]:
     except Exception:
         return []
 
-    user_added = _decode_user_added(node_name)
+    user_added         = _decode_user_added(node_name)
     internal_api_slots = _internal_api_slots_for(node_name)
 
     try:
-        fn = om.MFnDependencyNode(node_mob)
+        fn      = om.MFnDependencyNode(node_mob)
         n_attrs = fn.attributeCount()
     except Exception:
         return []
@@ -860,7 +860,7 @@ def walk_plug_tree(node_name) -> List[RowSpec]:
         # Compound children are surfaced by the recursive walk; without
         # de-dupe both parent and children appear at the top level.
         try:
-            attr_fn = om.MFnAttribute(attr_mob)
+            attr_fn     = om.MFnAttribute(attr_mob)
             parent_attr = attr_fn.parent()
             if not parent_attr.isNull():
                 # Child of a compound; the parent walk will surface it.
@@ -873,9 +873,9 @@ def walk_plug_tree(node_name) -> List[RowSpec]:
         _walk_attribute(
             node_mob, attr_mob, node_name,
             user_added, internal_api_slots,
-            parent_path="",
-            depth=0,
-            rows=rows,
+            parent_path = "",
+            depth       = 0,
+            rows        = rows,
         )
     return rows
 
@@ -898,7 +898,7 @@ class TreeNode(object):
     __slots__ = ("row", "children")
 
     def __init__(self, row):
-        self.row = row
+        self.row      = row
         self.children = []
 
     def __repr__(self):
@@ -921,12 +921,12 @@ def treeify(rows):
 
     Returns ``list[TreeNode]`` (top-level entries in walker order).
     """
-    by_path = {}
+    by_path   = {}
     top_level = []
     for row in rows:
-        node = TreeNode(row)
+        node                   = TreeNode(row)
         by_path[row.plug_path] = node
-        parent = by_path.get(row.parent_path) if row.parent_path else None
+        parent                 = by_path.get(row.parent_path) if row.parent_path else None
         if parent is None:
             top_level.append(node)
         else:
@@ -1044,7 +1044,7 @@ def collect_plug_rows(node_name):
             connected = bool(mc.connectionInfo(full, isDestination=True))
         except Exception:
             connected = False
-        direction = "IN" if writable or connected else "OUT"
+        direction  = "IN" if writable or connected else "OUT"
         value_text = read_plug_value_text(full, connected)
         rows.append((short, direction, value_text))
 

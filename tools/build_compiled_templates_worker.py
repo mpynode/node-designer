@@ -95,7 +95,7 @@ def _round_cpps(stage_dir, since=None):
     a file written since then beats any older one whatever its slug. Without
     ``since`` the newest file wins, which is still never worse than alphabetical.
     """
-    d = os.path.join(stage_dir, "3_optimized")
+    d   = os.path.join(stage_dir, "3_optimized")
     out = {}
     if not os.path.isdir(d):
         return out
@@ -112,7 +112,7 @@ def _round_cpps(stage_dir, since=None):
         except OSError:
             continue
         rank = (since is not None and mtime >= since, mtime)
-        idx = int(head)
+        idx  = int(head)
         if idx not in best or rank > best[idx][0]:
             best[idx] = (rank, path)
     for idx in best:
@@ -133,7 +133,7 @@ def _collect_rounds(out_dir, since):
             continue
         for type_name in sorted(os.listdir(root)):
             stage_dir = os.path.join(root, type_name)
-            path = os.path.join(stage_dir, "rounds.json")
+            path      = os.path.join(stage_dir, "rounds.json")
             if not os.path.isfile(path):
                 continue
             try:
@@ -142,27 +142,27 @@ def _collect_rounds(out_dir, since):
             except (ValueError, OSError):
                 continue
             created = float(doc.get("created") or 0.0)
-            prev = found.get(type_name)
+            prev    = found.get(type_name)
             if prev is not None and prev["created"] >= created:
                 continue
-            cpps = _round_cpps(stage_dir, since)
+            cpps     = _round_cpps(stage_dir, since)
             base_md5 = _md5(cpps.get(0))
-            rounds = []
+            rounds   = []
             for r in (doc.get("ledger") or []):
                 idx = r.get("index")
                 cpp = cpps.get(idx)
                 rounds.append({
-                    "index": idx,
-                    "outcome": r.get("outcome"),
+                    "index":      idx,
+                    "outcome":    r.get("outcome"),
                     "duration_s": r.get("duration_s"),
-                    "ms": r.get("ms"),
-                    "speedup": r.get("speedup"),
-                    "parity": r.get("parity"),
-                    "slug": r.get("slug"),
-                    "note": r.get("note"),
+                    "ms":         r.get("ms"),
+                    "speedup":    r.get("speedup"),
+                    "parity":     r.get("parity"),
+                    "slug":       r.get("slug"),
+                    "note":       r.get("note"),
                     # An agent session that ran fills these in. Empty across
                     # every round is what "no agent ran" looks like on disk.
-                    "has_theme": bool((r.get("theme") or "").strip()),
+                    "has_theme":      bool((r.get("theme") or "").strip()),
                     "has_hypothesis": bool((r.get("hypothesis") or "").strip()),
                     # The decisive one: a round whose .cpp is byte-identical to
                     # the baseline changed NOTHING, whatever it claims.
@@ -171,17 +171,17 @@ def _collect_rounds(out_dir, since):
                         else _md5(cpp) == base_md5),
                 })
             found[type_name] = {
-                "created": created,
-                "fresh": created >= since,
-                "path": path,
-                "accepted": bool(doc.get("accepted")),
+                "created":     created,
+                "fresh":       created >= since,
+                "path":        path,
+                "accepted":    bool(doc.get("accepted")),
                 "baseline_ms": doc.get("baseline_ms"),
-                "best_ms": doc.get("best_ms"),
-                "speedup": doc.get("speedup"),
-                "reason": doc.get("reason"),
+                "best_ms":     doc.get("best_ms"),
+                "speedup":     doc.get("speedup"),
+                "reason":      doc.get("reason"),
                 "parity_gate": doc.get("parity_gate"),
-                "n_rounds": doc.get("rounds"),
-                "rounds": rounds,
+                "n_rounds":    doc.get("rounds"),
+                "rounds":      rounds,
             }
     return found
 
@@ -190,20 +190,20 @@ class _Facts(object):
     """A ``progress_cb`` that keeps only what the manifest has to prove."""
 
     def __init__(self):
-        self.assisted_now = []
-        self.assisted_cached = []
-        self.cache_hit = []
-        self.cache_miss = []
+        self.assisted_now       = []
+        self.assisted_cached    = []
+        self.cache_hit          = []
+        self.cache_miss         = []
         self.no_node_needed_llm = False
-        self.events = []
-        self.n_log_lines = 0
-        self.opt_events = collections.deque(maxlen=MAX_OPT_EVENTS)
-        self.n_opt_events = 0
+        self.events             = []
+        self.n_log_lines        = 0
+        self.opt_events         = collections.deque(maxlen=MAX_OPT_EVENTS)
+        self.n_opt_events       = 0
 
     def __call__(self, ev):
-        stage = ev.get("stage")
+        stage  = ev.get("stage")
         status = ev.get("status")
-        node = ev.get("node")
+        node   = ev.get("node")
         detail = str(ev.get("detail") or "")
         if stage == "log":
             self.n_log_lines += 1
@@ -248,13 +248,13 @@ def _slim_nodes(result):
     out = []
     for row in (result.get("nodes") or []):
         out.append({
-            "type_name": row.get("type_name"),
-            "cache": row.get("cache"),
+            "type_name":    row.get("type_name"),
+            "cache":        row.get("cache"),
             "build_status": row.get("build_status"),
             "build_reason": str(row.get("build_reason") or "")[:400],
-            "ported": row.get("ported"),
-            "incomplete": row.get("incomplete") or [],
-            "verify": row.get("verify") or {},
+            "ported":       row.get("ported"),
+            "incomplete":   row.get("incomplete") or [],
+            "verify":       row.get("verify") or {},
         })
     return out
 
@@ -262,7 +262,7 @@ def _slim_nodes(result):
 def run(rel, mpn_path, out_dir, phase, smoke, clear_stages=False):
     from mpynode.native.toolchain import compile_controller as cc
 
-    optimize = (phase == "b") and not smoke
+    optimize  = (phase == "b") and not smoke
     ai_assist = not smoke
     mode = {"optimize": optimize, "ai_assist": ai_assist,
             "keep_intermediates": optimize}
@@ -273,7 +273,7 @@ def run(rel, mpn_path, out_dir, phase, smoke, clear_stages=False):
         clear_round_cpps(out_dir)
 
     facts = _Facts()
-    t0 = time.time()
+    t0    = time.time()
     result = cc.compile_from_mpn_paths(
         # Flatten BOTH separators, not os.sep: callers hand `rel` over in POSIX
         # form (run_qt_verify.py passes rel.replace(os.sep, "/")), so on Windows
@@ -289,32 +289,32 @@ def run(rel, mpn_path, out_dir, phase, smoke, clear_stages=False):
         [mpn_path], (rel.replace("\\", "_").replace("/", "_")
                      .replace("-", "_").replace(" ", "_")),
         out_dir,
-        trusted=True,
-        optimize=optimize,
-        ai_assist=ai_assist,
-        keep_intermediates=optimize,
-        strict=False,
-        verify=True,
-        clean_scratch=False,
-        progress_cb=facts,
+        trusted            = True,
+        optimize           = optimize,
+        ai_assist          = ai_assist,
+        keep_intermediates = optimize,
+        strict             = False,
+        verify             = True,
+        clean_scratch      = False,
+        progress_cb        = facts,
     )
     secs = round(time.time() - t0, 1)
 
     row = {
-        "rel": rel,
-        "phase": phase,
-        "smoke": bool(smoke),
-        "mode": mode,
-        "state": "ok" if result.get("ok") else "fail",
-        "secs": secs,
-        "started": t0,
-        "ended": time.time(),
-        "errors": [str(e)[:600] for e in (result.get("errors") or [])],
+        "rel":         rel,
+        "phase":       phase,
+        "smoke":       bool(smoke),
+        "mode":        mode,
+        "state":       "ok" if result.get("ok") else "fail",
+        "secs":        secs,
+        "started":     t0,
+        "ended":       time.time(),
+        "errors":      [str(e)[:600] for e in (result.get("errors") or [])],
         "bundle_path": result.get("bundle_path"),
         "bundle_exists": bool(result.get("bundle_path")
                               and os.path.exists(result["bundle_path"])),
         "nodes": _slim_nodes(result),
-        "ai": facts.as_dict(),
+        "ai":    facts.as_dict(),
         # {} when the optimizer never ran; may carry __status__/__error__.
         "optimize_summary": result.get("optimize") or {},
         # Only ledgers written during THIS phase count as proof.
@@ -350,7 +350,7 @@ def main():
                      "ai_assist": not args.smoke,
                      "keep_intermediates": args.phase == "b" and not args.smoke},
             "errors": ["%s: %s" % (type(exc).__name__, exc)],
-            "trace": traceback.format_exc()[-4000:],
+            "trace":  traceback.format_exc()[-4000:],
             "nodes": [], "ai": {}, "optimize_summary": {}, "rounds": {},
         }
 

@@ -48,7 +48,7 @@ class TestSelfProxyClassShape(unittest.TestCase):
     def test_constructor_accepts_compute_locals(self):
         from mpynode._common.compute.self_proxy import SelfProxy
 
-        sig = inspect.signature(SelfProxy.__init__)
+        sig    = inspect.signature(SelfProxy.__init__)
         params = list(sig.parameters)
         self.assertEqual(params[1], "mobject")
         self.assertIn("compute_locals", params)
@@ -116,7 +116,7 @@ def _new_node():
     """Make a throwaway mPyNode for plug-tree tests; return the
     MObject the proxy needs."""
     ensure_plugins_loaded()
-    n = mc.createNode("mPyNode")
+    n   = mc.createNode("mPyNode")
     sel = om.MSelectionList()
     sel.add(n)
     obj = om.MObject()
@@ -147,8 +147,8 @@ class TestComputeLocalsRead(unittest.TestCase):
         _, obj = _new_node()
         sp = SelfProxy(
             obj,
-            init_bindings={"X": "from_init"},
-            compute_locals={"X": "from_compute_local"},
+            init_bindings  = {"X": "from_init"},
+            compute_locals = {"X": "from_compute_local"},
         )
         self.assertEqual(sp.X, "from_compute_local")
 
@@ -165,7 +165,7 @@ class TestComputeLocalsWrite(unittest.TestCase):
         )
         # User expression-style write:
         sp.output_matrix = np.eye(4) * 3.5
-        out = sp.get_compute_locals()
+        out              = sp.get_compute_locals()
         self.assertIn("output_matrix", out)
         self.assertTrue(np.allclose(out["output_matrix"], np.eye(4) * 3.5))
 
@@ -174,8 +174,8 @@ class TestComputeLocalsWrite(unittest.TestCase):
 
         mc.file(new=True, force=True)
         _, obj = _new_node()
-        arr = np.zeros((4, 4))
-        sp = SelfProxy(obj, compute_locals={"output_matrix": arr})
+        arr                    = np.zeros((4, 4))
+        sp                     = SelfProxy(obj, compute_locals={"output_matrix": arr})
         sp.output_matrix[0, 0] = 9.0
         self.assertEqual(sp.get_compute_locals()["output_matrix"][0, 0], 9.0)
 
@@ -186,7 +186,7 @@ class TestComputeLocalsWrite(unittest.TestCase):
 
         mc.file(new=True, force=True)
         _, obj = _new_node()
-        sp = SelfProxy(obj, compute_locals={})
+        sp               = SelfProxy(obj, compute_locals={})
         sp.brand_new_var = 42
         self.assertEqual(sp.get_user_storage().get("brand_new_var"), 42)
         self.assertNotIn("brand_new_var", sp.get_compute_locals())
@@ -211,8 +211,8 @@ class TestHarvestSnapshot(unittest.TestCase):
 
         mc.file(new=True, force=True)
         _, obj = _new_node()
-        sp = SelfProxy(obj, compute_locals={"foo": 1})
-        snap = sp.get_compute_locals()
+        sp          = SelfProxy(obj, compute_locals={"foo": 1})
+        snap        = sp.get_compute_locals()
         snap["foo"] = 999
         snap["new"] = "added"
         self.assertEqual(sp.get_compute_locals().get("foo"), 1)
@@ -231,7 +231,7 @@ class TestPlugTakesPrecedenceForRealPlug(unittest.TestCase):
         n, obj = _new_node()
         # ``message`` is a real plug on every node. We register it as
         # a compute_local so writes route there.
-        sp = SelfProxy(obj, compute_locals={"message": "scratch"})
+        sp         = SelfProxy(obj, compute_locals={"message": "scratch"})
         sp.message = "overwritten"
         self.assertEqual(sp.get_compute_locals()["message"], "overwritten")
 
@@ -415,8 +415,8 @@ class TestOutputScratchReadPrecedence(unittest.TestCase):
         n, obj = _node_with_string_attr("text", "WORLD")
         sp = SelfProxy(
             obj,
-            compute_locals={"text": None},        # draw-buffer scratch slot
-            output_scratch_keys={"text"},         # declared write-only output
+            compute_locals      = {"text": None},  # draw-buffer scratch slot
+            output_scratch_keys = {"text"},        # declared write-only output
         )
         self.assertEqual(sp.text, "WORLD")
 
@@ -428,8 +428,8 @@ class TestOutputScratchReadPrecedence(unittest.TestCase):
         n, obj = _node_with_string_attr("text", "WORLD")
         sp = SelfProxy(
             obj,
-            compute_locals={"text": None},
-            output_scratch_keys={"text"},
+            compute_locals      = {"text": None},
+            output_scratch_keys = {"text"},
         )
         sp.text = {"strings": ["A", "B"]}
         self.assertEqual(sp.get_compute_locals()["text"], {"strings": ["A", "B"]})
@@ -441,15 +441,15 @@ class TestOutputScratchReadPrecedence(unittest.TestCase):
         scratch value (None until the user assigns it)."""
         from mpynode._common.compute.self_proxy import SelfProxy
 
-        n = mc.createNode("mPyNode")
+        n   = mc.createNode("mPyNode")
         sel = om.MSelectionList()
         sel.add(n)
         obj = om.MObject()
         sel.getDependNode(0, obj)
         sp = SelfProxy(
             obj,
-            compute_locals={"lines": None},
-            output_scratch_keys={"lines"},
+            compute_locals      = {"lines": None},
+            output_scratch_keys = {"lines"},
         )
         self.assertIsNone(sp.lines)
         sp.lines = {"starts": [1]}
@@ -542,11 +542,11 @@ class TestGeometryGeneratorScratchKeys(unittest.TestCase):
         import mpynode._common.compute.self_proxy as SP
 
         captured = {}
-        orig = SP.SelfProxy
+        orig     = SP.SelfProxy
 
         def _spy(*args, **kwargs):
             captured["osk"] = set(kwargs.get("output_scratch_keys") or ())
-            captured["cl"] = set((kwargs.get("compute_locals") or {}).keys())
+            captured["cl"]  = set((kwargs.get("compute_locals") or {}).keys())
             return orig(*args, **kwargs)
 
         SP.SelfProxy = _spy
@@ -765,7 +765,7 @@ class TestApi1MObjectPassThrough(unittest.TestCase):
         mc.file(new=True, force=True)
         node = mc.createNode("transform", name="api2Test")
         sel2 = om2.MSelectionList(); sel2.add(node)
-        mob2 = sel2.getDependNode(0)
+        mob2   = sel2.getDependNode(0)
         result = _ensure_api1_mobject(mob2)
         self.assertIsInstance(result, om1.MObject,
             "api2 MObject must be bridged to an api1 MObject")

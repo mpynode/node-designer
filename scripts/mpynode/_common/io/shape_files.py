@@ -112,15 +112,15 @@ def _as_f64(val, width):
 
 def read_mesh(path):
     """``{name, points (V,3), counts (F,), indices (C,)}`` from a mesh file."""
-    doc = load_document(path)
+    doc  = load_document(path)
     kind = document_kind(doc)
     if kind != "mesh":
         raise ValueError("%s: expected a MESH file (points/counts/indices); "
                          "found %s" % (path, kind or "no recognised schema"))
     return {
-        "name": _as_str(doc.get("name", "")),
-        "points": _as_f64(doc["points"], 3),
-        "counts": np.asarray(doc["counts"], dtype=np.int64).reshape(-1),
+        "name":    _as_str(doc.get("name", "")),
+        "points":  _as_f64(doc["points"], 3),
+        "counts":  np.asarray(doc["counts"], dtype=np.int64).reshape(-1),
         "indices": np.asarray(doc["indices"], dtype=np.int64).reshape(-1),
     }
 
@@ -132,7 +132,7 @@ def read_shapes(path):
     weight index and an alias, and dropping it would shift every later index.
     Measured on a real 297-shape set, 88 of them are empty.
     """
-    doc = load_document(path)
+    doc  = load_document(path)
     kind = document_kind(doc)
     if kind != "shapes":
         raise ValueError("%s: expected a SHAPES file (index_k/offsets); found %s"
@@ -161,6 +161,6 @@ def dense_offsets(record, n_verts):
     out = np.zeros((int(n_verts), 3), dtype=np.float64)
     idx = record["indices"]
     if idx.size:
-        keep = (idx >= 0) & (idx < int(n_verts))
+        keep           = (idx >= 0) & (idx < int(n_verts))
         out[idx[keep]] = record["offsets"][keep]
     return out

@@ -133,8 +133,8 @@ class TestExpandFaceColorsToTriangles(unittest.TestCase):
         from mpynode._common.draw.draw_buffers import expand_face_colors_to_triangles
 
         face_colors = np.array([[1, 0, 0, 1]], dtype=np.float32)
-        counts = np.array([4], dtype=np.int64)
-        out = expand_face_colors_to_triangles(face_colors, counts)
+        counts      = np.array([4], dtype=np.int64)
+        out         = expand_face_colors_to_triangles(face_colors, counts)
         # quad = 2 tris = 6 vertex colors, all = (1,0,0,1)
         self.assertEqual(out.shape, (6, 4))
         for i in range(6):
@@ -238,11 +238,11 @@ class TestPixelsPerWorldUnit(unittest.TestCase):
         (w == 1). Row-major, row-vector convention (clip = p_row @ M)."""
         sy = 1.0 / half_h
         # M[i*4+j]; row-vector: clip_y = y * M[1*4+1]; clip_w = M[3*4+3]=1
-        m = [0.0] * 16
-        m[0] = 1.0            # x -> clip x (unused)
-        m[5] = sy             # y -> clip y
-        m[10] = 1.0           # z -> clip z (unused)
-        m[15] = 1.0           # w = 1 (ortho)
+        m     = [0.0] * 16
+        m[0]  = 1.0  # x -> clip x (unused)
+        m[5]  = sy   # y -> clip y
+        m[10] = 1.0  # z -> clip z (unused)
+        m[15] = 1.0  # w = 1 (ortho)
         return m
 
     def test_ortho_pixels_per_unit(self):
@@ -261,8 +261,8 @@ class TestPixelsPerWorldUnit(unittest.TestCase):
         from mpynode._common.draw.draw_buffers import pixels_per_world_unit
 
         # Perspective-ish matrix that maps to negative w -> behind camera.
-        m = [0.0] * 16
-        m[5] = 1.0
+        m     = [0.0] * 16
+        m[5]  = 1.0
         m[11] = -1.0   # w = -z
         m[15] = 0.0
         ppw = pixels_per_world_unit(
@@ -288,16 +288,16 @@ class TestLocalTextPixelSize(unittest.TestCase):
         from mpynode._common.draw.draw_buffers import local_text_pixel_size
 
         near = local_text_pixel_size(1.0, 60.0)
-        far = local_text_pixel_size(1.0, 15.0)
+        far  = local_text_pixel_size(1.0, 15.0)
         self.assertGreater(near, far)
 
 
 class TestProjectObjectPointsToPixels(unittest.TestCase):
     def _ortho_full(self, half_w, half_h, vp_w, vp_h):
         """world->clip ortho: NDC_x = x/half_w, NDC_y = y/half_h, w=1."""
-        m = [0.0] * 16
-        m[0] = 1.0 / half_w
-        m[5] = 1.0 / half_h
+        m     = [0.0] * 16
+        m[0]  = 1.0 / half_w
+        m[5]  = 1.0 / half_h
         m[10] = 1.0
         m[15] = 1.0
         return m
@@ -306,7 +306,7 @@ class TestProjectObjectPointsToPixels(unittest.TestCase):
         from mpynode._common.draw.draw_buffers import project_object_points_to_pixels
 
         ident = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]
-        vp = self._ortho_full(5.0, 5.0, 800.0, 600.0)
+        vp    = self._ortho_full(5.0, 5.0, 800.0, 600.0)
         px, valid = project_object_points_to_pixels(
             [[0.0, 0.0, 0.0]], ident, vp, 800.0, 600.0
         )
@@ -320,7 +320,7 @@ class TestProjectObjectPointsToPixels(unittest.TestCase):
 
         # object matrix translates +half_w in X -> lands at right edge.
         obj = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 5.0, 0.0, 0.0, 1]
-        vp = self._ortho_full(5.0, 5.0, 800.0, 600.0)
+        vp  = self._ortho_full(5.0, 5.0, 800.0, 600.0)
         px, valid = project_object_points_to_pixels(
             [[0.0, 0.0, 0.0]], obj, vp, 800.0, 600.0
         )
@@ -359,9 +359,9 @@ class TestLocatorRoundTrip(unittest.TestCase):
             "    np.array([[0,0,0],[1,1,1]], dtype=np.float32),\n"
             "    np.array([[1,0,0],[0,1,0]], dtype=np.float32),\n"
             "    color=np.array([[1,0,0],[0,1,0]], dtype=np.float32))\n")
-        self.assertEqual([c["slot"] for c in cmds], ["lines"])
+        self.assertEqual([c["slot"] for c in cmds],         ["lines"])
         self.assertEqual(cmds[0]["buffer"]["starts"].shape, (2, 3))
-        self.assertEqual(cmds[0]["buffer"]["ends"].shape, (2, 3))
+        self.assertEqual(cmds[0]["buffer"]["ends"].shape,   (2, 3))
 
     def test_polygons_obj_style_round_trip(self):
         cmds = self._cmds(
@@ -454,7 +454,7 @@ class TestLocatorRecipe(unittest.TestCase):
         from mpynode._common.util.recipes import get_recipe
 
         recipe = get_recipe("mPyLocator")
-        names = {e.name for e in recipe.outputs}
+        names  = {e.name for e in recipe.outputs}
         self.assertNotIn("draw_items", names)
         for slot in ("lines", "points", "polygons", "shapes", "text"):
             self.assertNotIn(slot, names)
@@ -604,9 +604,9 @@ class TestExpressionReadsState(unittest.TestCase):
         sel = om.MSelectionList()
         sel.add(loc.get_name())
         node_obj = sel.getDependNode(0)
-        fn = om.MFnDependencyNode(node_obj)
-        mpx = fn.userNode()
-        out = mpx.evaluateDrawItems(time_value=0.0, selected=True)
+        fn       = om.MFnDependencyNode(node_obj)
+        mpx      = fn.userNode()
+        out      = mpx.evaluateDrawItems(time_value=0.0, selected=True)
         # selected=True -> n=1.
         self.assertEqual(out["commands"][0]["buffer"]["positions"].shape,
                          (1, 3))
@@ -629,12 +629,12 @@ class TestExpressionReadsState(unittest.TestCase):
         sel = om.MSelectionList()
         sel.add(loc.get_name())
         node_obj = sel.getDependNode(0)
-        fn = om.MFnDependencyNode(node_obj)
-        mpx = fn.userNode()
+        fn       = om.MFnDependencyNode(node_obj)
+        mpx      = fn.userNode()
         out = mpx.evaluateDrawItems(
-            time_value=0.0,
-            selected=True,
-            selection_color=(0.5, 0.8, 0.2, 1.0),
+            time_value      = 0.0,
+            selected        = True,
+            selection_color = (0.5, 0.8, 0.2, 1.0),
         )
         np.testing.assert_allclose(
             out["commands"][0]["buffer"]["colors"][0][:3],
@@ -787,7 +787,7 @@ class TestTimerTickFlushOrder(unittest.TestCase):
         sel = om.MSelectionList()
         sel.add(loc.get_name())
         node_obj = sel.getDependNode(0)
-        handle = om.MObjectHandle(node_obj)
+        handle   = om.MObjectHandle(node_obj)
         # Any valid handle: the flush itself is stubbed to just record order.
         parent_handle = om.MObjectHandle(node_obj)
 
@@ -805,14 +805,14 @@ class TestTimerTickFlushOrder(unittest.TestCase):
             calls.append("flush")
             return True
 
-        real_omr = draw_refresh.omr
-        real_flush = draw_refresh._flush_parent_transform
-        draw_refresh.omr = _FakeOmr
+        real_omr                             = draw_refresh.omr
+        real_flush                           = draw_refresh._flush_parent_transform
+        draw_refresh.omr                     = _FakeOmr
         draw_refresh._flush_parent_transform = _fake_flush
         try:
             draw_refresh._timer_tick(handle, parent_handle)
         finally:
-            draw_refresh.omr = real_omr
+            draw_refresh.omr                     = real_omr
             draw_refresh._flush_parent_transform = real_flush
 
         self.assertEqual(
@@ -1069,8 +1069,8 @@ class TestLocatorInputDirtyRedraw(unittest.TestCase):
         sel = om.MSelectionList()
         sel.add(loc.get_name())
         mobj = sel.getDependNode(0)
-        fn = om.MFnDependencyNode(mobj)
-        mpx = fn.userNode()
+        fn   = om.MFnDependencyNode(mobj)
+        mpx  = fn.userNode()
 
         self.assertTrue(mpx._is_draw_dirty_trigger(fn.findPlug("positionMatrix", True)),
                         "a user matrix INPUT must be a redraw trigger")
@@ -1109,8 +1109,8 @@ class TestLocatorInputDirtyRedraw(unittest.TestCase):
         # Force dirty propagation to the locator input -> real setDependentsDirty.
         mc.dgdirty(loc.get_name() + ".positionMatrix")
 
-        db = loc.evaluate_draw_commands(0.0)
-        buf = db["commands"][0]["buffer"]
+        db     = loc.evaluate_draw_commands(0.0)
+        buf    = db["commands"][0]["buffer"]
         center = np.asarray(buf["centers"], dtype=float).reshape(-1, 3)[0]
         self.assertAlmostEqual(float(center[0]), 7.0, places=5,
                                msg="draw expression did not read the fresh input")
@@ -1198,9 +1198,9 @@ class TestMPyLocatorDrawBuffers(unittest.TestCase):
             "                      color=(1, 0, 0))\n"
         )
         cmds = loc.evaluate_draw_commands()["commands"]
-        self.assertEqual([c["slot"] for c in cmds], ["lines"])
+        self.assertEqual([c["slot"] for c in cmds],         ["lines"])
         self.assertEqual(cmds[0]["buffer"]["starts"].shape, (1, 3))
-        self.assertEqual(cmds[0]["buffer"]["ends"].shape, (1, 3))
+        self.assertEqual(cmds[0]["buffer"]["ends"].shape,   (1, 3))
 
     def test_evaluate_draw_commands_with_time(self):
         from mpynode.wrappers.mpy_locator import MPyLocator
@@ -1321,7 +1321,7 @@ class TestCullBackfacesByView(unittest.TestCase):
         self.assertEqual(new_cnt.shape[0], 3)
         # the three kept faces must be the +X / +Y / +Z ones.
         kept_face_verts = []
-        cursor = 0
+        cursor          = 0
         for c in new_cnt:
             kept_face_verts.append(set(new_idx[cursor:cursor + c].tolist()))
             cursor += int(c)
@@ -1353,9 +1353,9 @@ class TestCullBackfacesByView(unittest.TestCase):
         triangle sees nothing (every face\'s view vector is
         perpendicular to its normal -> classified as back)."""
         # A single triangle on z=0 with CCW winding viewed from +Z.
-        points = np.array([[0, 0, 0], [1, 0, 0], [0, 1, 0]], dtype=np.float64)
+        points  = np.array([[0, 0, 0], [1, 0, 0], [0, 1, 0]], dtype=np.float64)
         indices = np.array([0, 1, 2], dtype=np.int64)
-        counts = np.array([3], dtype=np.int64)
+        counts  = np.array([3], dtype=np.int64)
         # Camera below the plane -> the +Z-winding triangle is
         # back-facing.
         view_pos = (0.0, 0.0, -5.0)
@@ -1422,7 +1422,7 @@ class TestLocatorDuplicateNameCollision(unittest.TestCase):
         sel = om.MSelectionList()
         sel.add(shape_path)
         node_obj = sel.getDependNode(0)
-        mpx = om.MFnDependencyNode(node_obj).userNode()
+        mpx      = om.MFnDependencyNode(node_obj).userNode()
         return mpx.evaluateDrawItems(time_value=0.0)
 
     def _active(self, out):
@@ -1441,7 +1441,7 @@ class TestLocatorDuplicateNameCollision(unittest.TestCase):
         hashCode, so it survives the rename.
         """
         orig_shape = loc.get_name()
-        xform = mc.listRelatives(orig_shape, parent=True, fullPath=True)[0]
+        xform      = mc.listRelatives(orig_shape, parent=True, fullPath=True)[0]
         mc.rename(xform, base + "Rig")
         xform = mc.ls(base + "Rig", long=True)[0]
         shape = mc.listRelatives(xform, shapes=True, fullPath=True)[0]
@@ -1450,7 +1450,7 @@ class TestLocatorDuplicateNameCollision(unittest.TestCase):
 
     def _duplicate_and_assert_collision(self, orig_shape):
         transform = mc.listRelatives(orig_shape, parent=True, fullPath=True)[0]
-        dup_tf = mc.duplicate(transform)[0]
+        dup_tf    = mc.duplicate(transform)[0]
         dup_shape = mc.listRelatives(dup_tf, shapes=True, fullPath=True)[0]
         # Precondition: the duplicate shares the original's short name, which
         # is what makes name-based resolution ambiguous.
@@ -1482,7 +1482,7 @@ class TestLocatorDuplicateNameCollision(unittest.TestCase):
         self.assertIn("points", self._active(self._draw(orig_shape)))
 
         dup_shape = self._duplicate_and_assert_collision(orig_shape)
-        cmds = self._draw(dup_shape)["commands"]
+        cmds      = self._draw(dup_shape)["commands"]
         self.assertEqual(
             [c["slot"] for c in cmds], ["points"],
             "duplicated locator must resolve its Init-namespace global "

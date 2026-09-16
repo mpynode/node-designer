@@ -17,20 +17,20 @@ def _setUpModule__command_codegen():
 
 def _cmd(name, func_name=None, params=None, undoable=True):
     return {
-        "name": name,
+        "name":      name,
         "func_name": func_name or name,
-        "undoable": undoable,
-        "params": params or [],
-        "body_src": "",
-        "lineno": 1,
+        "undoable":  undoable,
+        "params":    params or [],
+        "body_src":  "",
+        "lineno":    1,
     }
 
 
 _CTX = {
     "node_type_name": "meshRegion",
-    "node_cls": "MeshRegionLoc",
-    "mesh_plug": "inMesh",
-    "region_attr": "regionFaces",
+    "node_cls":       "MeshRegionLoc",
+    "mesh_plug":      "inMesh",
+    "region_attr":    "regionFaces",
 }
 
 
@@ -75,8 +75,8 @@ class TestEmitCommands(unittest.TestCase):
 
     def test_no_commands_is_inert(self):
         out = self._emit([])
-        self.assertEqual(out["classes"], "")
-        self.assertEqual(out["register"], [])
+        self.assertEqual(out["classes"],    "")
+        self.assertEqual(out["register"],   [])
         self.assertEqual(out["deregister"], [])
         self.assertFalse(out["needs_region_attr"])
 
@@ -91,14 +91,14 @@ class TestEmitCommands(unittest.TestCase):
         self.assertEqual(out["unsupported"], [])
 
     def test_register_lines_use_newSyntax_creator(self):
-        out = self._emit([_cmd("createMeshRegion")])
+        out    = self._emit([_cmd("createMeshRegion")])
         joined = "\n".join(out["register"])
         self.assertIn('registerCommand("createMeshRegion", '
                       'CreateMeshRegionCmd::creator, '
                       'CreateMeshRegionCmd::newSyntax)', joined)
 
     def test_deregister_lines_match_command_names(self):
-        out = self._emit([_cmd("createMeshRegion"), _cmd("setMeshRegion")])
+        out    = self._emit([_cmd("createMeshRegion"), _cmd("setMeshRegion")])
         joined = "\n".join(out["deregister"])
         self.assertIn('deregisterCommand("createMeshRegion")', joined)
         self.assertIn('deregisterCommand("setMeshRegion")', joined)
@@ -125,8 +125,8 @@ class TestEmitCommands(unittest.TestCase):
         out = self._emit([_cmd("setMeshRegion")])
         cls = out["classes"]
         self.assertIn("static MSyntax newSyntax()", cls)
-        self.assertIn('addFlag("-i", "-indices"', cls)
-        self.assertIn('makeFlagMultiUse("-i")', cls)
+        self.assertIn('addFlag("-i", "-indices"',   cls)
+        self.assertIn('makeFlagMultiUse("-i")',     cls)
 
     def test_set_region_is_undoable_and_writes_region_attr(self):
         out = self._emit([_cmd("setMeshRegion")])
@@ -148,12 +148,12 @@ class TestEmitCommands(unittest.TestCase):
         # MDagModifier/MDGModifier ACCUMULATE ops, so a createNode/connect
         # issued in redoIt() duplicates the node on undo-then-redo. Author
         # once in doIt(); redoIt() only replays _dagMod.doIt()/_dgMod.doIt().
-        out = self._emit([_cmd("createMeshRegion")])
-        cls = out["classes"]
-        i_do = cls.index("MStatus doIt(")
-        i_redo = cls.index("MStatus redoIt()")
-        i_undo = cls.index("MStatus undoIt()")
-        do_body = cls[i_do:i_redo]
+        out       = self._emit([_cmd("createMeshRegion")])
+        cls       = out["classes"]
+        i_do      = cls.index("MStatus doIt(")
+        i_redo    = cls.index("MStatus redoIt()")
+        i_undo    = cls.index("MStatus undoIt()")
+        do_body   = cls[i_do:i_redo]
         redo_body = cls[i_redo:i_undo]
         self.assertIn("createNode(", do_body)       # node authored in doIt
         self.assertNotIn("createNode(", redo_body)  # NOT re-issued on redo
@@ -167,17 +167,17 @@ class TestEmitCommands(unittest.TestCase):
         self.assertFalse(out2["needs_region_attr"])
 
     def test_includes_command_headers(self):
-        out = self._emit([_cmd("createMeshRegion")])
+        out  = self._emit([_cmd("createMeshRegion")])
         incs = " ".join(out["includes"])
-        self.assertIn("MPxCommand.h", incs)
+        self.assertIn("MPxCommand.h",   incs)
         self.assertIn("MArgDatabase.h", incs)
-        self.assertIn("MSyntax.h", incs)
+        self.assertIn("MSyntax.h",      incs)
 
     def test_includes_are_self_contained(self):
         # Templates use MFn::k* enums, std::vector and size_t, so the include
         # set must stand alone: a command node with no mesh input never pulls
         # in the locator's STL/mesh headers.
-        out = self._emit([_cmd("createMeshRegion")])
+        out  = self._emit([_cmd("createMeshRegion")])
         incs = out["includes"]
         self.assertIn("maya/MFn.h", incs)
         # bare STL headers: the templates use std::vector<int> and size_t.
@@ -197,10 +197,10 @@ class TestEmitCommands(unittest.TestCase):
     def test_resolve_iterates_all_child_shapes(self):
         # search every child shape for one of OUR type, not just the first
         # (extendToShape).
-        out = self._emit([_cmd("setMeshRegion")])
-        cls = out["classes"]
-        i0 = cls.index("static MObject _resolveOurNode")
-        i1 = cls.index("class ", i0)  # the first command class after the helpers
+        out  = self._emit([_cmd("setMeshRegion")])
+        cls  = out["classes"]
+        i0   = cls.index("static MObject _resolveOurNode")
+        i1   = cls.index("class ", i0)  # the first command class after the helpers
         body = cls[i0:i1]
         self.assertIn("childCount()", body)
         self.assertIn(".child(", body)
@@ -215,7 +215,7 @@ def _loc_spec_with_commands(commands):
         "suggested": {"node_type_name": "meshRegion", "class_name": "MeshRegion",
                       "type_id": "0x00070abc", "mpx_base": "MPxLocatorNode",
                       "note": "", "heaviness": "hard"},
-        "inputs": {"inMesh": {"type": "mesh", "is_array": False}},
+        "inputs":  {"inMesh": {"type": "mesh", "is_array": False}},
         "outputs": {},
         "variables": {}, "compute": "self.polygons = None\n", "init": "",
         "affects": "all", "portability": {"portable": True, "blockers": []},
@@ -238,18 +238,18 @@ class TestLocatorCommandWiring(unittest.TestCase):
         self.assertIn("class SetMeshRegionCmd : public MPxCommand", cpp)
         # inside the plugin scaffold guard (not in the probe / common region)
         scaffold = cpp.index("#ifndef MPYNODE_PROBE  // ===== plugin scaffold")
-        endif = cpp.index("#endif  // !MPYNODE_PROBE")
-        pos = cpp.index("class CreateMeshRegionCmd")
+        endif    = cpp.index("#endif  // !MPYNODE_PROBE")
+        pos      = cpp.index("class CreateMeshRegionCmd")
         self.assertTrue(scaffold < pos < endif)
 
     def test_register_and_deregister_in_plugin_hooks(self):
         cpp = self._gen([_cmd("createMeshRegion"), _cmd("setMeshRegion")])
-        self.assertIn('registerCommand("createMeshRegion"', cpp)
-        self.assertIn('registerCommand("setMeshRegion"', cpp)
+        self.assertIn('registerCommand("createMeshRegion"',    cpp)
+        self.assertIn('registerCommand("setMeshRegion"',       cpp)
         self.assertIn('deregisterCommand("createMeshRegion")', cpp)
-        self.assertIn('deregisterCommand("setMeshRegion")', cpp)
+        self.assertIn('deregisterCommand("setMeshRegion")',    cpp)
         # registration lives inside initializePlugin (before its closing brace)
-        init = cpp.index("MStatus initializePlugin(MObject obj)")
+        init   = cpp.index("MStatus initializePlugin(MObject obj)")
         uninit = cpp.index("MStatus uninitializePlugin(MObject obj)")
         self.assertLess(init, cpp.index('registerCommand("createMeshRegion"'))
         self.assertLess(cpp.index('registerCommand("createMeshRegion"'), uninit)
@@ -282,9 +282,9 @@ class TestLocatorCommandWiring(unittest.TestCase):
         # a locator spec with no commands must gain no command machinery:
         # protects existing locators from a byte change.
         cpp = self._gen([])
-        self.assertNotIn("MPxCommand", cpp)
+        self.assertNotIn("MPxCommand",      cpp)
         self.assertNotIn("registerCommand", cpp)
-        self.assertNotIn("regionFaces", cpp)
+        self.assertNotIn("regionFaces",     cpp)
 
     def test_missing_commands_key_is_safe(self):
         from mpynode.native import compiler as codegen
@@ -340,9 +340,9 @@ self.draw = None
 def _loc_spec_with_tween(compute=None):
     """Shaped like the shipped meshRegions: a hover-driven locator whose tween
     state is implicit (never declared in spec["variables"])."""
-    spec = _loc_spec_with_commands([])
-    spec["inputs"] = {"offset": {"type": "float", "is_array": False}}
-    spec["compute"] = _TWEEN_COMPUTE if compute is None else compute
+    spec                = _loc_spec_with_commands([])
+    spec["inputs"]      = {"offset": {"type": "float", "is_array": False}}
+    spec["compute"]     = _TWEEN_COMPUTE if compute is None else compute
     spec["needs_hover"] = True
     return spec
 
@@ -435,9 +435,9 @@ class TestStoredVarRoundTripIsEmitted(unittest.TestCase):
 
     def test_the_seed_and_the_commit_both_emit(self):
         cpp = self._gen()
-        self.assertIn("inp.sv_hv_start = _tw.hv_start;", cpp)
+        self.assertIn("inp.sv_hv_start = _tw.hv_start;",   cpp)
         self.assertIn("_tw.hv_start = data->sv_hv_start;", cpp)
-        self.assertIn("data.sv_hv_start = hv_start;", cpp)
+        self.assertIn("data.sv_hv_start = hv_start;",      cpp)
 
     def test_the_locals_are_seeded_from_the_conduit_not_a_constant(self):
         # the whole defect was reads collapsing to a hard-coded 0.0
@@ -477,14 +477,14 @@ def _loc_spec_every_input():
     """A locator spec carrying one input of every kind the emitter handles."""
     spec = _loc_spec_with_commands([])
     spec["inputs"] = {
-        "inMesh": {"type": "mesh", "is_array": False},
-        "offset": {"type": "float", "is_array": False},
-        "steps": {"type": "int", "is_array": False},
+        "inMesh":  {"type": "mesh", "is_array": False},
+        "offset":  {"type": "float", "is_array": False},
+        "steps":   {"type": "int", "is_array": False},
         "enabled": {"type": "bool", "is_array": False},
         "mode": {"type": "enum", "is_array": False,
                  "enum_names": ["a", "b"]},
         "regionTag": {"type": "string", "is_array": False},
-        "tint": {"type": "color", "is_array": False},
+        "tint":      {"type": "color", "is_array": False},
     }
     return spec
 
@@ -506,7 +506,7 @@ class TestEveryInputMarksTheDrawDirty(unittest.TestCase):
     def _create_block(self, cpp, attr):
         """The emitted lines from this attr's create() up to its addAttribute."""
         start = cpp.index('"%s", "%s"' % (attr, attr))
-        end = cpp.index("addAttribute(", start)
+        end   = cpp.index("addAttribute(", start)
         return cpp[start:end]
 
     def test_float_input_affects_appearance(self):
@@ -634,20 +634,20 @@ class TestBundlerCarriesCommands(unittest.TestCase):
 
     def test_command_class_wrapped_in_node_namespace(self):
         frag, info = self._frag()
-        ns = info["ns"]
-        i_ns = frag.index("namespace %s {" % ns)
+        ns    = info["ns"]
+        i_ns  = frag.index("namespace %s {" % ns)
         i_end = frag.index("}  // namespace %s" % ns)
         self.assertTrue(i_ns < frag.index("class CreateMeshRegionCmd") < i_end)
         self.assertTrue(i_ns < frag.index("_writeRegionFaces") < i_end)
 
     def test_register_carried_into_hook_with_using_namespace(self):
         frag, info = self._frag()
-        ns = info["ns"]
-        i_end = frag.index("}  // namespace %s" % ns)
+        ns     = info["ns"]
+        i_end  = frag.index("}  // namespace %s" % ns)
         i_hook = frag.index("register_%s" % info["class"])
-        i_reg = frag.index('registerCommand("createMeshRegion"')
-        self.assertGreater(i_reg, i_end)     # outside the class namespace
-        self.assertGreater(i_reg, i_hook)    # inside the register hook
+        i_reg  = frag.index('registerCommand("createMeshRegion"')
+        self.assertGreater(i_reg, i_end)   # outside the class namespace
+        self.assertGreater(i_reg, i_hook)  # inside the register hook
         self.assertIn("using namespace %s;" % ns, frag[i_hook:])
 
     def test_deregister_carried(self):
@@ -690,8 +690,8 @@ class TestFindCommandClashes(unittest.TestCase):
     def test_clash_across_two_nodes(self):
         from mpynode.native.compiler import bundler
 
-        a = 'plugin.registerCommand("doThing", A::creator);'
-        b = 'plugin.registerCommand("doThing", B::creator);'
+        a       = 'plugin.registerCommand("doThing", A::creator);'
+        b       = 'plugin.registerCommand("doThing", B::creator);'
         clashes = bundler.find_command_clashes([("nodeA", a), ("nodeB", b)])
         self.assertIn("doThing", clashes)
         self.assertEqual(sorted(clashes["doThing"]), ["nodeA", "nodeB"])
@@ -956,7 +956,7 @@ class TestDetectCommands(unittest.TestCase):
             "def make(self, indices=None):\n"
             "    return indices\n"
         )
-        cmds = detect_commands(src)
+        cmds  = detect_commands(src)
         names = sorted(c["name"] for c in cmds)
         self.assertEqual(names, ["createMeshRegion", "setRegion"])
 
@@ -972,7 +972,7 @@ class TestDetectCommands(unittest.TestCase):
         self.assertEqual(c["name"], "setMeshRegion")
         self.assertEqual(c["func_name"], "set_region_ids")
         self.assertTrue(c["undoable"])
-        self.assertEqual(c["params"], ["indices"])  # 'self' excluded
+        self.assertEqual(c["params"], ["indices"])     # 'self' excluded
         self.assertIn("def set_region_ids", c["body_src"])
         self.assertIn("@maya_command", c["body_src"])  # decorator preserved
 

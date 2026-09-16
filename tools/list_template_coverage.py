@@ -12,8 +12,8 @@ from __future__ import annotations
 import os
 import sys
 
-_HERE = os.path.dirname(os.path.abspath(__file__))
-_ROOT = os.path.dirname(_HERE)
+_HERE    = os.path.dirname(os.path.abspath(__file__))
+_ROOT    = os.path.dirname(_HERE)
 _HARNESS = os.path.join(_ROOT, "tools", "harness")
 sys.path.insert(0, _HARNESS)
 
@@ -32,15 +32,15 @@ def on_disk():
 def main():
     from demo_specs import load_templates
 
-    rows = load_templates(_HARNESS, _ROOT)
+    rows    = load_templates(_HARNESS, _ROOT)
     covered = {r["mpn"].replace("\\", "/") for r in rows}
-    disk = {p.replace("\\", "/") for p in on_disk()}
+    disk    = {p.replace("\\", "/") for p in on_disk()}
 
     print("templates on disk   : %d" % len(disk))
     print("templates in manifest: %d" % len(covered))
 
     missing = sorted(disk - covered)
-    extra = sorted(covered - disk)
+    extra   = sorted(covered - disk)
     print("\n=== on disk but NOT compiled by the harness (%d) ===" % len(missing))
     for m in missing:
         print("  %s" % m)

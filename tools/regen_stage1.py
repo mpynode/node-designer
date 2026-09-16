@@ -27,8 +27,8 @@ import json
 import os
 import sys
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-TREES = ("templates",)
+ROOT       = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+TREES      = ("templates",)
 STAGE_FILE = "1_transpiled.cpp"
 
 
@@ -72,7 +72,7 @@ def main(argv=None):
         build = os.path.dirname(mf)
         label = os.path.relpath(build, ROOT).replace(os.sep, "/")
         for row in man.get("nodes") or []:
-            ty = row.get("type_name")
+            ty   = row.get("type_name")
             spec = row.get("spec")
             if not ty or not isinstance(spec, dict) or (only and ty not in only):
                 continue

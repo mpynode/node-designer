@@ -132,9 +132,9 @@ def _pin_first_with_separator(items, pinned_title):
     Mirrors ``_node_registry.iter_new_node_menu_entries`` (which yields the
     pinned type, then ``None``, then the rest). If nothing matches, the items
     are returned unchanged with NO leading separator."""
-    pl = pinned_title.lower()
+    pl     = pinned_title.lower()
     pinned = [it for it in items if it[0].lower() == pl]
-    rest = [it for it in items if it[0].lower() != pl]
+    rest   = [it for it in items if it[0].lower() != pl]
     if not pinned:
         return list(rest)
     return pinned + [None] + rest
@@ -176,7 +176,7 @@ def resolve_doc_link(current_doc_path: str, href: str):
         return ("anchor", frag)
 
     base_dir = os.path.dirname(os.path.abspath(current_doc_path))
-    target = os.path.normpath(os.path.join(base_dir, path_part))
+    target   = os.path.normpath(os.path.join(base_dir, path_part))
 
     if os.path.isdir(target):
         idx = os.path.join(target, "index.md")

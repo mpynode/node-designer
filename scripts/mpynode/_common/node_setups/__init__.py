@@ -35,7 +35,7 @@ from mpynode._common.methods.maya_command import (
     detect_tests,
 )
 
-_SETUP_EXT = ".py"
+_SETUP_EXT     = ".py"
 _SETUP_DIRNAME = "node_setups"
 
 
@@ -198,9 +198,9 @@ def split_type_default(source: Optional[str]):
         return src, []
 
     # Keyed by the def's own lineno, so two same-named defs cannot collide.
-    by_line = {c["lineno"]: c for c in detect_commands(src, tree=tree)}
-    lines = src.splitlines()
-    drop = set()
+    by_line   = {c["lineno"]: c for c in detect_commands(src, tree=tree)}
+    lines     = src.splitlines()
+    drop      = set()
     templates = []
     for node in tree.body:
         if not isinstance(node, ast.FunctionDef):
@@ -214,11 +214,11 @@ def split_type_default(source: Optional[str]):
         end = getattr(node, "end_lineno", None) or node.lineno
         drop.update(range(start, end))
         templates.append(CommandTemplate(
-            name=cmd["name"],
-            func_name=cmd["func_name"],
-            params=tuple(cmd.get("params") or ()),
-            doc=ast.get_docstring(node) or "",
-            source="\n".join(lines[start:end]),
+            name      = cmd["name"],
+            func_name = cmd["func_name"],
+            params    = tuple(cmd.get("params") or ()),
+            doc       = ast.get_docstring(node) or "",
+            source    = "\n".join(lines[start:end]),
         ))
 
     if not drop:
@@ -320,7 +320,7 @@ def merge_type_default(methods_source: Optional[str], native_type: str,
     if not type_src:
         return methods_source or ""
     type_src = split_type_default(type_src)[0]
-    cur = methods_source or ""
+    cur      = methods_source or ""
     if find_setup(cur) is not None:
         return cur
     if not type_src.strip():
@@ -350,7 +350,7 @@ def find_demos(source):
     if not source or not source.strip():
         return []
     specs = []
-    seen = set()
+    seen  = set()
     for d in detect_demos(source):
         fn = d["func_name"]
         if fn in seen:
@@ -415,7 +415,7 @@ def find_tests(source):
     if not source or not source.strip():
         return []
     specs = []
-    seen = set()
+    seen  = set()
     for d in detect_tests(source):
         fn = d["func_name"]
         if fn in seen:

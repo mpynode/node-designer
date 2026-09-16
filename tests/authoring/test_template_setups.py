@@ -48,7 +48,7 @@ def _create_with_setup(rel, selection):
     mc.select(clear=True)
     if selection:
         mc.select(selection, replace=True)
-    cmd = _TemplateCreateCommand(payload, native_type, run_setup=True)
+    cmd  = _TemplateCreateCommand(payload, native_type, run_setup=True)
     name = run_undoable(cmd) or cmd.created_name
     if cmd.tier_failures.get("setup"):
         raise AssertionError("setup failed: %s" % cmd.tier_failures["setup"])
@@ -60,7 +60,7 @@ def _create_with_demo(rel):
     showcase scene, so there is NO selection. Returns the created node name."""
     payload, native_type = _payload(rel)
     mc.select(clear=True)
-    cmd = _TemplateCreateCommand(payload, native_type, run_demo=True)
+    cmd  = _TemplateCreateCommand(payload, native_type, run_demo=True)
     name = run_undoable(cmd) or cmd.created_name
     if cmd.tier_failures.get("demo"):
         raise AssertionError("demo failed: %s" % cmd.tier_failures["demo"])
@@ -110,7 +110,7 @@ class MpynodeExampleSetupsTest(unittest.TestCase):
             parents.add(p[0] if p else None)
         self.assertEqual(sorted(xs), [float(i) for i in range(100)])  # 1 unit apart
         self.assertEqual(len(parents), 1, "all cubes under one group")
-        self.assertEqual(mc.getAttr(name + ".reset"), 2)             # Auto
+        self.assertEqual(mc.getAttr(name + ".reset"), 2)              # Auto
         self.assertAlmostEqual(mc.getAttr(name + ".maxVal"), 100.0)
 
     def test_bubble_sort_demo_forces_reset_auto_and_maxval_off_default(self):
@@ -123,8 +123,8 @@ class MpynodeExampleSetupsTest(unittest.TestCase):
         payload, _ = _payload("MPyNode/Bubble Sort")
         node = deserialize_node(payload, restore_persistent=False)
         name = node.get_name()
-        mc.setAttr(name + ".reset", 0)        # away from default Auto(2)
-        mc.setAttr(name + ".maxVal", 10.0)    # away from default 100
+        mc.setAttr(name + ".reset", 0)      # away from default Auto(2)
+        mc.setAttr(name + ".maxVal", 10.0)  # away from default 100
         run_node_demo(node)
         self.assertEqual(mc.getAttr(name + ".reset"), 2)
         self.assertAlmostEqual(mc.getAttr(name + ".maxVal"), 100.0)
@@ -136,7 +136,7 @@ class MpynodeExampleSetupsTest(unittest.TestCase):
         # The demo fabricates 1 group + 100 cubes (a large blast radius); one
         # undo of the gallery command must remove the node AND every cube.
         before = set(mc.ls(type="transform"))
-        name = _create_with_demo("MPyNode/Bubble Sort")
+        name   = _create_with_demo("MPyNode/Bubble Sort")
         driven = mc.listConnections(
             name + ".sort", source=False, destination=True) or []
         self.assertEqual(len(set(driven)), 100)
@@ -175,16 +175,16 @@ class MpynodeExampleSetupsTest(unittest.TestCase):
             for t in (1, 2, 3, 4, 5, 6)
         }
 
-        name = _create_with_demo("MPyMesh/Game Of Life")
+        name  = _create_with_demo("MPyMesh/Game Of Life")
         shape = name + "RenderShape"
         self.assertTrue(mc.objExists(shape), "demo should build a render mesh")
         self.assertTrue(_driven_by(shape + ".inMesh", name, "outMesh"),
                         "render mesh not fed by outMesh")
         # the demo seeds a lively 20x20 board and leaves resetBoard off
-        self.assertEqual(mc.getAttr(name + ".boardX"), 20)
-        self.assertEqual(mc.getAttr(name + ".boardY"), 20)
+        self.assertEqual(mc.getAttr(name + ".boardX"),        20)
+        self.assertEqual(mc.getAttr(name + ".boardY"),        20)
         self.assertEqual(mc.getAttr(name + ".randomSamples"), 120)
-        self.assertEqual(mc.getAttr(name + ".resetBoard"), 0)
+        self.assertEqual(mc.getAttr(name + ".resetBoard"),    0)
         self.assertTrue(_incoming(name + ".frame"), "frame not wired to time")
 
         def mesh_counts(t):
@@ -245,7 +245,7 @@ class MpynodeExampleSetupsTest(unittest.TestCase):
         from mpynode._common.util import log_bus
 
         name = _create_with_demo("MPyMesh/Voxelize")
-        tr = name + "_voxels"
+        tr   = name + "_voxels"
         self.assertTrue(mc.objExists(tr), "demo should build a voxel mesh")
         shape = mc.listRelatives(tr, shapes=True, fullPath=True)[0]
         self.assertTrue(_driven_by(shape + ".inMesh", name, "outMesh"),
@@ -433,7 +433,7 @@ class MpynodeExampleSetupsTest(unittest.TestCase):
         sink = _Sink()
         log_bus.subscribe(sink)
         try:
-            name = _create_with_demo("MPyMesh/Metaballs")
+            name  = _create_with_demo("MPyMesh/Metaballs")
             shape = name + "RenderShape"
             self.assertTrue(mc.objExists(shape),
                             "demo should build a render mesh")
@@ -494,7 +494,7 @@ class MpynodeExampleSetupsTest(unittest.TestCase):
         # the cylinder along Y (9918 verts saved -> 10066 reopened).
         import tempfile
 
-        name = _create_with_demo("MPyMesh/Metaballs")
+        name  = _create_with_demo("MPyMesh/Metaballs")
         shape = name + "RenderShape"
 
         def verts():
@@ -549,9 +549,9 @@ class MpynodeExampleSetupsTest(unittest.TestCase):
             pts = np.asarray(poly["points"], dtype=float)[:, :3]
             self.assertGreater(pts.shape[0], 0, "%s has no region points" % loc)
             centroid = pts.mean(axis=0)
-            tf = mc.listRelatives(loc, parent=True, fullPath=True)[0]
-            tf_pos = np.array(mc.xform(tf, q=True, ws=True, t=True), dtype=float)
-            diag = float(np.linalg.norm(pts.max(axis=0) - pts.min(axis=0)))
+            tf       = mc.listRelatives(loc, parent=True, fullPath=True)[0]
+            tf_pos   = np.array(mc.xform(tf, q=True, ws=True, t=True), dtype=float)
+            diag     = float(np.linalg.norm(pts.max(axis=0) - pts.min(axis=0)))
             self.assertLess(
                 float(np.linalg.norm(tf_pos - centroid)), 0.25 * diag + 1e-3,
                 "%s not positioned at its region centroid (tf=%r centroid=%r)"
@@ -578,7 +578,7 @@ class MpynodeExampleSetupsTest(unittest.TestCase):
         # therefore differ.
         import time
         name = _create_with_demo("MPyLocator/Animated Text")
-        w = wrap_node(name, "mPyLocator")
+        w    = wrap_node(name, "mPyLocator")
         self.assertIsNotNone(w, "could not wrap %s" % name)
         a = np.asarray(_draw_buf(w, "text")["positions"])
         time.sleep(0.06)
@@ -603,7 +603,7 @@ class MpynodeExampleSetupsTest(unittest.TestCase):
                         "inPosition should be driven by a transform's "
                         "translate (the drag parent): %r" % drag_attr)
         drag = drag_attr.split(".")[0]
-        out = mc.getAttr(name + ".output")
+        out  = mc.getAttr(name + ".output")
         self.assertTrue(out and all(len(tok) == 2 for tok in out.split()),
                         "output is not a space-separated hex string: %r" % out)
         # The output is declared a `hex` attr: the expression writes plain text
@@ -647,7 +647,7 @@ class MpynodeExampleSetupsTest(unittest.TestCase):
         self.assertTrue(mc.listConnections(name + ".color", source=False,
                                            destination=True),
                         "color output drives no shader")
-        elbow = ang[0].split(".")[0]
+        elbow      = ang[0].split(".")[0]
         elbow_attr = ang[0]
         # the demo reuses the bundled SKINNED arm (joint elbow + a skinCluster),
         # not a bare cube.
@@ -719,7 +719,7 @@ class MpynodeExampleSetupsTest(unittest.TestCase):
         import tempfile
         import wave as _wave
         new_wav = os.path.join(tempfile.gettempdir(), "ouch_test_swap.wav")
-        _w = _wave.open(new_wav, "wb")
+        _w      = _wave.open(new_wav, "wb")
         _w.setnchannels(1)
         _w.setsampwidth(1)
         _w.setframerate(22050)
@@ -922,7 +922,7 @@ class UnitSphereCollisionSetupTest(unittest.TestCase):
     def test_setup_wires_seeds_persistent_buffer_and_bakes(self):
         plane = mc.polyPlane(w=16, h=12, sx=16, sy=12, name="target")[0]
         shape = mc.listRelatives(plane, shapes=True)[0]
-        rest = self._raw_points(shape)  # plane not yet deformed -> raw rest
+        rest  = self._raw_points(shape)  # plane not yet deformed -> raw rest
 
         collider = mc.spaceLocator(name="collider")[0]
         mc.setAttr(collider + ".translate", 0, 2, 0)
@@ -945,7 +945,7 @@ class UnitSphereCollisionSetupTest(unittest.TestCase):
 
         # 3. collision + bake: collider is over the plane -> a dent forms; move it
         #    far away -> the dent must STAY (accumulated in the persistent buffer).
-        full = self._points(shape, name)
+        full  = self._points(shape, name)
         moved = np.linalg.norm(full - rest, axis=1) > 1e-4
         self.assertGreater(int(moved.sum()), 0, "collider produced no dent")
 
@@ -993,16 +993,16 @@ class ProcrustesConstraintSetupsTest(unittest.TestCase):
         import sys
         payload, native_type = _payload("MPyConstraint/Procrustes Tags")
         mc.select(clear=True)
-        cmd = _TemplateCreateCommand(payload, native_type)  # no demo, no setup
-        node = run_undoable(cmd) or cmd.created_name
-        tube = mc.polyCylinder()[0]
+        cmd    = _TemplateCreateCommand(payload, native_type)  # no demo, no setup
+        node   = run_undoable(cmd) or cmd.created_name
+        tube   = mc.polyCylinder()[0]
         tshape = mc.listRelatives(tube, shapes=True, fullPath=True)[0]
         mc.connectAttr(tshape + ".worldMesh[0]", node + ".mesh", force=True)
         # force outMatrix[0] to be pulled -> the constraint computes
         dm = mc.createNode("decomposeMatrix")
         mc.connectAttr(node + ".outMatrix[0]", dm + ".inputMatrix", force=True)
-        cap = io.StringIO()
-        old = sys.stderr
+        cap        = io.StringIO()
+        old        = sys.stderr
         sys.stderr = cap
         try:
             mc.dgdirty(node)
@@ -1034,7 +1034,7 @@ class ProcrustesConstraintSetupsTest(unittest.TestCase):
             self.assertIsNotNone(dm, "%s not driven by a decomposeMatrix" % cube)
             self.assertTrue(_driven_by(dm + ".inputMatrix", name, "outMatrix"),
                             "%s.inputMatrix not fed by %s.outMatrix" % (dm, name))
-            p1 = self._world_t(cube, 1, name)
+            p1  = self._world_t(cube, 1, name)
             p45 = self._world_t(cube, 45, name)
             self.assertGreater(float(np.linalg.norm(p45 - p1)), 0.05,
                                "%s did not ride the deforming tube" % cube)
@@ -1060,7 +1060,7 @@ class ProcrustesConstraintSetupsTest(unittest.TestCase):
             "bind offsets must not ride a stored var -- those ship empty")
 
         name = _create_with_demo("MPyConstraint/Procrustes Tags")
-        idx = mc.getAttr(name + ".bindMatrices", multiIndices=True) or []
+        idx  = mc.getAttr(name + ".bindMatrices", multiIndices=True) or []
         self.assertEqual(len(idx), 4,
                          "demo must seed one bind offset per rivet on the PLUG")
         self.assertNotIn(
@@ -1088,7 +1088,7 @@ class ProcrustesConstraintSetupsTest(unittest.TestCase):
         # caller believed it had re-authored a tag it had not touched.
         from mpynode._common.nodes.mesh.component_tags import (
             create_tag, resolve_tag_indices)
-        cube = mc.polyCube(constructionHistory=False, name="tagContract")[0]
+        cube  = mc.polyCube(constructionHistory=False, name="tagContract")[0]
         shape = mc.listRelatives(cube, shapes=True, fullPath=True)[0]
 
         self.assertEqual(create_tag(shape, "tA", [0, 1]), "tA")
@@ -1219,7 +1219,7 @@ class ProcrustesConstraintSetupsTest(unittest.TestCase):
                 return np.array(mc.xform(cube, q=True, ws=True, t=True),
                                 dtype=float)
 
-            p1 = _ws(1)
+            p1       = _ws(1)
             deformed = [_ws(f) for f in (20, 40, 60)]
             # NOT stuck at the origin on any deformed frame (the bug signature)
             for f, p in zip((20, 40, 60), deformed):

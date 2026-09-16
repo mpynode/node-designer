@@ -86,7 +86,7 @@ class MPyMesh(MPyNode):
 
     # Attributes-tab allowlist (framework OFF): the generated mesh output.
     USEFUL_INHERITED_PLUGS = frozenset({"outMesh"})
-    NATIVE_TYPE = _POLY_TYPE_NAME
+    NATIVE_TYPE            = _POLY_TYPE_NAME
 
     @classmethod
     def create(cls, name: str = None,

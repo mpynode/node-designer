@@ -51,11 +51,11 @@ class MFnMeshHandle(object):
     def __init__(self, mfn_mesh, mobject, plug_name="", plug_index=0):
         # __dict__ writes via object.__setattr__ to avoid recursion --
         # see __setattr__ below for the user-facing forwarding rule.
-        object.__setattr__(self, "_mfn", mfn_mesh)
-        object.__setattr__(self, "_mpyn_mobject", mobject)
-        object.__setattr__(self, "_mpyn_plug_name", plug_name)
+        object.__setattr__(self, "_mfn",             mfn_mesh)
+        object.__setattr__(self, "_mpyn_mobject",    mobject)
+        object.__setattr__(self, "_mpyn_plug_name",  plug_name)
         object.__setattr__(self, "_mpyn_plug_index", int(plug_index))
-        object.__setattr__(self, "_mpyn_touched", False)
+        object.__setattr__(self, "_mpyn_touched",    False)
 
     # ---- Numpy-friendly geometry I/O ----
 
@@ -89,7 +89,7 @@ class MFnMeshHandle(object):
         if space is None:
             space = om.MSpace.kObject
         cached = object.__getattribute__(self, "__dict__").get("_mpyn_point_buf")
-        pa = coerce_to_point_array(value, out=cached)
+        pa     = coerce_to_point_array(value, out=cached)
         if pa is not cached:
             object.__setattr__(self, "_mpyn_point_buf", pa)
         self._mfn.setPoints(pa, space)
@@ -125,7 +125,7 @@ class MFnMeshHandle(object):
         cached = object.__getattribute__(self, "__dict__").get("_mpyn_topo")
         if cached is None:
             counts = om.MIntArray()
-            conn = om.MIntArray()
+            conn   = om.MIntArray()
             self._mfn.getVertices(counts, conn)
             c = np.fromiter((counts[i] for i in range(counts.length())),
                             dtype=np.int64, count=counts.length())
@@ -223,7 +223,7 @@ def allocate_writable_mesh_from_source(src_mobject):
     the input geometry.
     """
     fresh_data = om.MFnMeshData().create()
-    fresh_mfn = om.MFnMesh()
+    fresh_mfn  = om.MFnMesh()
     if src_mobject is not None and not src_mobject.isNull():
         fresh_mfn.copy(src_mobject, fresh_data)
     else:
@@ -240,10 +240,10 @@ def allocate_empty_mesh():
     """Allocate a fresh, empty MFnMesh on a new MObject. For generators
     (mPyMesh) where the user builds topology from scratch."""
     fresh_data = om.MFnMeshData().create()
-    fresh_mfn = om.MFnMesh()
-    empty_pts = om.MPointArray()
-    empty_cnt = om.MIntArray()
-    empty_idx = om.MIntArray()
+    fresh_mfn  = om.MFnMesh()
+    empty_pts  = om.MPointArray()
+    empty_cnt  = om.MIntArray()
+    empty_idx  = om.MIntArray()
     fresh_mfn.create(0, 0, empty_pts, empty_cnt, empty_idx, fresh_data)
     return fresh_mfn, fresh_data
 
@@ -257,11 +257,11 @@ class MFnNurbsCurveHandle(object):
     """
 
     def __init__(self, mfn_curve, mobject, plug_name="", plug_index=0):
-        object.__setattr__(self, "_mfn", mfn_curve)
-        object.__setattr__(self, "_mpyn_mobject", mobject)
-        object.__setattr__(self, "_mpyn_plug_name", plug_name)
+        object.__setattr__(self, "_mfn",             mfn_curve)
+        object.__setattr__(self, "_mpyn_mobject",    mobject)
+        object.__setattr__(self, "_mpyn_plug_name",  plug_name)
         object.__setattr__(self, "_mpyn_plug_index", int(plug_index))
-        object.__setattr__(self, "_mpyn_touched", False)
+        object.__setattr__(self, "_mpyn_touched",    False)
 
     def cvPositions(self, space=None):
         """Return CV positions as ``(N, 3) float64`` numpy."""
@@ -346,11 +346,11 @@ class MFnNurbsSurfaceHandle(object):
     """
 
     def __init__(self, mfn_surface, mobject, plug_name="", plug_index=0):
-        object.__setattr__(self, "_mfn", mfn_surface)
-        object.__setattr__(self, "_mpyn_mobject", mobject)
-        object.__setattr__(self, "_mpyn_plug_name", plug_name)
+        object.__setattr__(self, "_mfn",             mfn_surface)
+        object.__setattr__(self, "_mpyn_mobject",    mobject)
+        object.__setattr__(self, "_mpyn_plug_name",  plug_name)
         object.__setattr__(self, "_mpyn_plug_index", int(plug_index))
-        object.__setattr__(self, "_mpyn_touched", False)
+        object.__setattr__(self, "_mpyn_touched",    False)
 
     def cvPositions(self, space=None):
         if space is None:
@@ -440,11 +440,11 @@ class MFnLatticeHandle(object):
     """
 
     def __init__(self, mfn_lattice, mobject, plug_name="", plug_index=0):
-        object.__setattr__(self, "_mfn", mfn_lattice)
-        object.__setattr__(self, "_mpyn_mobject", mobject)
-        object.__setattr__(self, "_mpyn_plug_name", plug_name)
+        object.__setattr__(self, "_mfn",             mfn_lattice)
+        object.__setattr__(self, "_mpyn_mobject",    mobject)
+        object.__setattr__(self, "_mpyn_plug_name",  plug_name)
         object.__setattr__(self, "_mpyn_plug_index", int(plug_index))
-        object.__setattr__(self, "_mpyn_touched", False)
+        object.__setattr__(self, "_mpyn_touched",    False)
 
     def getPoints(self):
         """Return all lattice points as ``(S*T*U, 3) float64`` numpy."""
@@ -528,7 +528,7 @@ def allocate_writable_curve_from_source(src_mobject):
     """Deep-copy a source NURBS curve MObject into a fresh
     MFnNurbsCurveData / MObject. Returns ``(MFnNurbsCurve, fresh_mobject)``."""
     fresh_data = om.MFnNurbsCurveData().create()
-    fresh_mfn = om.MFnNurbsCurve()
+    fresh_mfn  = om.MFnNurbsCurve()
     if src_mobject is not None and not src_mobject.isNull():
         fresh_mfn.copy(src_mobject, fresh_data)
     return fresh_mfn, fresh_data
@@ -538,7 +538,7 @@ def allocate_writable_surface_from_source(src_mobject):
     """Deep-copy a source NURBS surface MObject into a fresh
     MFnNurbsSurfaceData / MObject."""
     fresh_data = om.MFnNurbsSurfaceData().create()
-    fresh_mfn = om.MFnNurbsSurface()
+    fresh_mfn  = om.MFnNurbsSurface()
     if src_mobject is not None and not src_mobject.isNull():
         fresh_mfn.copy(src_mobject, fresh_data)
     return fresh_mfn, fresh_data
@@ -561,7 +561,7 @@ def allocate_writable_lattice_from_source(src_mobject):
     if not hasattr(oma, "MFnLatticeData"):
         return None, None
     fresh_data = oma.MFnLatticeData().create()
-    fresh_mfn = oma.MFnLattice()
+    fresh_mfn  = oma.MFnLattice()
     if src_mobject is not None and not src_mobject.isNull():
         try:
             fresh_mfn.copy(src_mobject, fresh_data)

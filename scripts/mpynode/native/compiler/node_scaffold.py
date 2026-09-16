@@ -87,13 +87,13 @@ def _reject_unbound_deform_reads(ins, spec, base):
     end: an unbindable read makes ``lower_deform`` raise, ``try_lower_deform``
     swallows it, codegen keeps the PORT region, and the build reports success
     while the shipped node ignores the read entirely."""
-    src = "%s\n%s" % (spec.get("compute") or "", spec.get("init") or "")
-    refs = _self_attr_refs(src)
+    src          = "%s\n%s" % (spec.get("compute") or "", spec.get("init") or "")
+    refs         = _self_attr_refs(src)
     method_reads = _called_method_reads(spec)
     if not refs and not method_reads:
         return
     declared = {i["plug"] for i in ins}
-    bound = set(_DEFORM_BOUND_READS)
+    bound    = set(_DEFORM_BOUND_READS)
     if base == "MPxSkinCluster":
         bound |= _SKIN_BOUND_READS
     # A blessed method call (``self.linear_blend(...)``) tokenizes as a
@@ -162,7 +162,7 @@ def _apply_metadata(cpp: str, spec: dict) -> str:
     hash are still emitted (every compile carries an identifier)."""
     from mpynode._common.lifecycle import metadata_registry as md
 
-    meta = spec.get("metadata") or {}
+    meta   = spec.get("metadata") or {}
     vendor = _cpp_escape(md.vendor_string(meta))
     # Sanitize '+' out of the embedded version so the build-hash suffix stays the
     # single unambiguous trailing "+<hash12>" (a user version like "2.0+rc1"
@@ -170,7 +170,7 @@ def _apply_metadata(cpp: str, spec: dict) -> str:
     version = _cpp_escape(md.version_string(meta)).replace("+", "-")
     new_init = ('    MFnPlugin plugin(obj, "%s", "%s+%s", "Any");'
                 % (vendor, version, md.BUILD_HASH_PLACEHOLDER))
-    cpp = cpp.replace(_MFNPLUGIN_INIT_DEFAULT, new_init)
+    cpp    = cpp.replace(_MFNPLUGIN_INIT_DEFAULT, new_init)
     banner = "\n".join(md.banner_lines(meta)) + "\n\n"
     stamped, _h = md.stamp_build_hash(banner + cpp)
     return stamped
@@ -183,12 +183,12 @@ def generate_cpp(spec: dict, for_port: bool = False) -> str:
 
 def _generate_cpp_impl(spec: dict, for_port: bool = False) -> str:
     _check(spec)
-    sg = spec["suggested"]
-    cls = sg["class_name"]
+    sg        = spec["suggested"]
+    cls       = sg["class_name"]
     type_name = sg["node_type_name"]
-    type_id = sg["type_id"]
-    base = sg.get("mpx_base", "MPxNode")
-    gk = _geo_kind(spec)
+    type_id   = sg["type_id"]
+    base      = sg.get("mpx_base", "MPxNode")
+    gk        = _geo_kind(spec)
     if gk:
         return _generate_geo_cpp(spec, gk, for_port)
     if base == _TRANSFORM_BASE:
@@ -198,7 +198,7 @@ def _generate_cpp_impl(spec: dict, for_port: bool = False) -> str:
     if base == _IKSOLVER_BASE:
         return _generate_iksolver_cpp(spec, for_port)
     is_deformer = base in _DEFORMER_BASES
-    members = _members(spec)
+    members     = _members(spec)
     # Texture/file node: declare `fileName` FIRST among inputs. Maya 2026's CPU
     # swatch generator (2dTextureSwatchGen) uses the node's first input plug as a
     # "what kind of texture" hint; if it isn't fileName the Hypershade swatches
@@ -212,7 +212,7 @@ def _generate_cpp_impl(spec: dict, for_port: bool = False) -> str:
             _fn = _pick_path_input([m for m in members if m["kind"] == "inputs"])
         if _fn is not None:
             members = [_fn] + [m for m in members if m is not _fn]
-    ins = [m for m in members if m["kind"] == "inputs"]
+    ins  = [m for m in members if m["kind"] == "inputs"]
     outs = [m for m in members if m["kind"] == "outputs"]
     # mPyFile BASE plugs the spec never captured (uvFilterSize, the sampler
     # presets, outTransparency/outSize, _timeIn, osl). Deliberately NOT merged
@@ -229,7 +229,7 @@ def _generate_cpp_impl(spec: dict, for_port: bool = False) -> str:
     # Deterministic numpy->C++ lowering (generic compute() path only; deformers
     # harvest geometry via deform()). Decide up front so the nd:: runtime header
     # can be inlined above the class when the whole compute lowers to pure C++.
-    nd_lowered = None
+    nd_lowered     = None
     deform_lowered = None
     # Class-body declarations the lowered compute depends on: the per-instance
     # persistent-state members (`_NdState _ndState` + its mutex) that its `st`
@@ -248,7 +248,7 @@ def _generate_cpp_impl(spec: dict, for_port: bool = False) -> str:
         nd_io_cpp.reject_unlowered_io(spec, deform_lowered, "deformer")
     else:
         from mpynode.native.compiler import nd_lower
-        nd_lowered = nd_lower.try_lower_compute(ins, outs, spec)
+        nd_lowered     = nd_lower.try_lower_compute(ins, outs, spec)
         nd_state_decls = list(getattr(nd_lowered, "state_decls", ()) or ())
         nd_io_cpp.reject_unlowered_io(spec, nd_lowered, "node")
 
@@ -287,7 +287,7 @@ def _generate_cpp_impl(spec: dict, for_port: bool = False) -> str:
     # Multi-file composite: a reads_image_file node whose path input is a string
     # ARRAY builds a decode-once composite (nd_img_composite) instead of the
     # single-file raw cache, exposed through the same _imgPixels interface.
-    _path_in = _pick_path_input(ins) if raw_img_cache else None
+    _path_in            = _pick_path_input(ins) if raw_img_cache else None
     composite_img_cache = bool(_path_in and _path_in["meta"].get("is_array"))
     if composite_img_cache:
         raw_img_cache = False   # composite REPLACES the single-file raw cache
@@ -672,8 +672,8 @@ def _generate_cpp_impl(spec: dict, for_port: bool = False) -> str:
                                  & _called_method_reads(spec)))
         lines += _deform_lines(cls, ins, spec, base, for_port,
                                lowered=deform_lowered, img_read=img_read,
-                               img_embedded=bool(embedded_b64),
-                               base_extra=base_extra,
+                               img_embedded = bool(embedded_b64),
+                               base_extra   = base_extra,
                                live_targets=live_targets)
         lines.append("")
         lines += _setdirty_lines(cls, ins, base, base_extra)

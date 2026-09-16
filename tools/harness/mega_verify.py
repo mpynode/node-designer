@@ -14,10 +14,10 @@ import os
 import shutil
 import sys
 
-BUNDLE = sys.argv[1]
+BUNDLE  = sys.argv[1]
 RESULTS = sys.argv[2]
-OUT = sys.argv[3]
-ASSET = sys.argv[4] if len(sys.argv) > 4 else None
+OUT     = sys.argv[3]
+ASSET   = sys.argv[4] if len(sys.argv) > 4 else None
 os.makedirs(OUT, exist_ok=True)
 
 TEXTURE_TYPES = {"fileTexture", "scanlineTex", "basicTexture", "gameOfLifeTex"}
@@ -35,9 +35,9 @@ def _stats(path):
     from PIL import Image
     if not path or not os.path.isfile(path):
         return {"exists": False}
-    im = Image.open(path).convert("RGB")
-    px = list(im.getdata())
-    lum = [0.299 * r + 0.587 * g + 0.114 * b for (r, g, b) in px]
+    im    = Image.open(path).convert("RGB")
+    px    = list(im.getdata())
+    lum   = [0.299 * r + 0.587 * g + 0.114 * b for (r, g, b) in px]
     plane = [v for v in lum if v > 0.5]
     pmn, pmx = (min(plane), max(plane)) if plane else (0.0, 0.0)
     return {"plane_min": round(pmn, 2), "plane_max": round(pmx, 2),
@@ -49,8 +49,8 @@ def _render_texture(ntype):
     mc.file(new=True, force=True)
     mc.directionalLight(name="key")
     plane = mc.polyPlane(name="texPlane", w=10, h=10, sx=1, sy=1)[0]
-    sh = mc.shadingNode("surfaceShader", asShader=True, name="ss")
-    sg = mc.sets(renderable=True, noSurfaceShader=True, empty=True, name="ssSG")
+    sh    = mc.shadingNode("surfaceShader", asShader=True, name="ss")
+    sg    = mc.sets(renderable=True, noSurfaceShader=True, empty=True, name="ssSG")
     mc.connectAttr(sh + ".outColor", sg + ".surfaceShader", force=True)
     tex = mc.createNode(ntype, name="probeTex")
     if ntype in FILE_FED and ASSET and os.path.isfile(ASSET):
@@ -73,7 +73,7 @@ def _render_texture(ntype):
     dst = os.path.join(OUT, ntype + "_vp2.png")
     if r and os.path.isfile(r):
         shutil.copy(r, dst)
-    out["stats"] = _stats(dst)
+    out["stats"]    = _stats(dst)
     out["textured"] = bool(out["stats"].get("textured"))
     return out
 
@@ -91,7 +91,7 @@ try:
             res["notes"].append("plugin %s: %s" % (p, e))
 
     from mpynode._base.plugins import load_or_reload_native_plugin
-    lr = load_or_reload_native_plugin(BUNDLE)
+    lr            = load_or_reload_native_plugin(BUNDLE)
     res["loaded"] = bool(lr.get("loaded"))
     if not lr.get("loaded"):
         res["load_error"] = lr.get("error")
@@ -116,7 +116,7 @@ try:
     for t in sorted(set(linked) - TEXTURE_TYPES):
         mc.file(new=True, force=True)
         try:
-            n = mc.createNode(t)
+            n                = mc.createNode(t)
             res["create"][t] = bool(n)
         except Exception as e:
             res["create"][t] = "ERR: " + str(e)[:80]

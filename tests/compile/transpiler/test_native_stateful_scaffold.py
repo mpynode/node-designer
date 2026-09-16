@@ -53,7 +53,7 @@ def _accum_spec():
     w.add_input_attr("inValue", "double")
     w.add_output_attr("out", "double")
     w.set_compute_expression(_ACCUM_COMPUTE)
-    spec = spec_extractor.extract_spec(w.get_name())
+    spec                                = spec_extractor.extract_spec(w.get_name())
     spec["suggested"]["node_type_name"] = "accumNative"
     return spec
 
@@ -81,7 +81,7 @@ def _arr_accum_spec():
     w.add_input_attr("inArray", "double", is_array=True)
     w.add_output_attr("outArray", "double", is_array=True)
     w.set_compute_expression(_ARR_ACCUM_COMPUTE)
-    spec = spec_extractor.extract_spec(w.get_name())
+    spec                                = spec_extractor.extract_spec(w.get_name())
     spec["suggested"]["node_type_name"] = "arrAccNative"
     return spec
 
@@ -103,9 +103,9 @@ class TestTranspilerStatefulLowering(unittest.TestCase):
     def test_hasattr_read_write_lower(self):
         res, written, _ = self._lower(_ACCUM_COMPUTE, {"acc"})
         body = "\n".join(res.body_lines)
-        self.assertIn("st.acc_isset", body)          # hasattr(self,'acc')
-        self.assertIn("st.acc = ", body)             # write
-        self.assertIn("st.acc_isset = true;", body)  # write flags set
+        self.assertIn("st.acc_isset", body)              # hasattr(self,'acc')
+        self.assertIn("st.acc = ", body)                 # write
+        self.assertIn("st.acc_isset = true;", body)      # write flags set
         self.assertIn("ndout_self_out = st.acc;", body)  # read feeds the output
         # member type discovered as a scalar double from the first write.
         self.assertIn("acc", res.state_members)
@@ -193,9 +193,9 @@ class TestNdLowerStatePreamble(unittest.TestCase):
         # Default initialisers are load-bearing: the node's `<cls>() {}` ctor
         # names no member, so an uninitialised `bool acc_isset` would be an
         # INDETERMINATE first-run test.
-        self.assertIn("bool acc_isset = false;", decls)
-        self.assertIn("double acc {};", decls)
-        self.assertIn("_NdState _ndState;", decls)      # per-INSTANCE, not static
+        self.assertIn("bool acc_isset = false;",   decls)
+        self.assertIn("double acc {};",            decls)
+        self.assertIn("_NdState _ndState;",        decls)      # per-INSTANCE, not static
         self.assertIn("std::mutex _ndStateMutex;", decls)
         self.assertNotIn("static", decls)
 
@@ -242,8 +242,8 @@ class TestAccumulatorCodegenDeterministic(unittest.TestCase):
         from mpynode.native import compiler as codegen
 
         spec = _accum_spec()
-        cls = spec["suggested"]["class_name"]
-        cpp = codegen.generate_cpp(spec, for_port=True)
+        cls  = spec["suggested"]["class_name"]
+        cpp  = codegen.generate_cpp(spec, for_port=True)
         defn = cpp.index("MStatus %s::compute(" % cls)
         self.assertLess(cpp.index("struct _NdState"), defn)
         self.assertLess(cpp.index("    _NdState _ndState;"), defn)
@@ -279,7 +279,7 @@ class TestAccumulatorMultiEvalCompiled(unittest.TestCase):
 
         import maya.cmds as cmds
 
-        spec = _accum_spec()
+        spec    = _accum_spec()
         out_dir = tempfile.mkdtemp(prefix="accum_scaffold_")
         res = compile_controller.compile_plugin(
             [spec], "accumScaffoldTest", out_dir, strict=True, verify=False)
@@ -289,7 +289,7 @@ class TestAccumulatorMultiEvalCompiled(unittest.TestCase):
 
         cmds.file(new=True, force=True)
         cmds.loadPlugin(res["bundle_path"])
-        n = cmds.createNode("accumNative")
+        n       = cmds.createNode("accumNative")
         running = 0.0
         for v in (1.0, 2.0, 3.0, 10.0, -5.0, 0.25):
             cmds.setAttr(n + ".inValue", v)
@@ -321,9 +321,9 @@ class TestStateIsPerInstanceCompiled(unittest.TestCase):
 
         if _running_maya_root() is None:
             self.skipTest("no Maya devkit headers on this host")
-        spec = _accum_spec()
+        spec                                = _accum_spec()
         spec["suggested"]["node_type_name"] = "accumPerInstNative"
-        out_dir = tempfile.mkdtemp(prefix="accum_perinst_")
+        out_dir                             = tempfile.mkdtemp(prefix="accum_perinst_")
         res = compile_controller.compile_plugin(
             [spec], "accumPerInstTest", out_dir, strict=True, verify=False)
         if not res.get("ok"):
@@ -337,8 +337,8 @@ class TestStateIsPerInstanceCompiled(unittest.TestCase):
         cmds = self._load()
 
         # (a) two instances driven alternately keep separate running sums.
-        a = cmds.createNode("accumPerInstNative")
-        b = cmds.createNode("accumPerInstNative")
+        a  = cmds.createNode("accumPerInstNative")
+        b  = cmds.createNode("accumPerInstNative")
         ra = rb = 0.0
         for va, vb in ((1.0, 100.0), (2.0, 200.0), (3.0, 300.0)):
             cmds.setAttr(a + ".inValue", va)
@@ -386,9 +386,9 @@ class TestArrayStateDeterministicAndCompiled(unittest.TestCase):
         self.assertTrue((spec.get("portability") or {}).get("portable"),
                         spec.get("portability"))
         cpp = codegen.generate_cpp(spec, for_port=True)
-        self.assertNotIn(codegen.PORT_BEGIN, cpp)     # deterministic, no porter
+        self.assertNotIn(codegen.PORT_BEGIN, cpp)  # deterministic, no porter
         self.assertIn("struct _NdState", cpp)
-        self.assertIn("nd::Array", cpp)               # array-typed state member
+        self.assertIn("nd::Array", cpp)            # array-typed state member
 
     def test_compiled_array_accumulates_over_many_evals(self):
         from mpynode.native.toolchain import compile_controller
@@ -398,7 +398,7 @@ class TestArrayStateDeterministicAndCompiled(unittest.TestCase):
 
         import maya.cmds as cmds
 
-        spec = _arr_accum_spec()
+        spec    = _arr_accum_spec()
         out_dir = tempfile.mkdtemp(prefix="arracc_scaffold_")
         res = compile_controller.compile_plugin(
             [spec], "arrAccScaffoldTest", out_dir, strict=True, verify=False)
@@ -408,12 +408,12 @@ class TestArrayStateDeterministicAndCompiled(unittest.TestCase):
 
         cmds.file(new=True, force=True)
         cmds.loadPlugin(res["bundle_path"])
-        n = cmds.createNode("arrAccNative")
+        n       = cmds.createNode("arrAccNative")
         running = [0.0, 0.0, 0.0]
         for vec in ([1.0, 2.0, 3.0], [10.0, 20.0, 30.0], [-1.0, -2.0, -3.0]):
             for i, v in enumerate(vec):
                 cmds.setAttr("%s.inArray[%d]" % (n, i), v)
-            got = [cmds.getAttr("%s.outArray[%d]" % (n, i)) for i in range(3)]
+            got     = [cmds.getAttr("%s.outArray[%d]" % (n, i)) for i in range(3)]
             running = [running[i] + vec[i] for i in range(3)]
             for i in range(3):
                 self.assertAlmostEqual(
@@ -463,8 +463,8 @@ class TestPorterStatePersistenceGuidance(unittest.TestCase):
         stateful = {
             "compute": "if not hasattr(self, 'rest'):\n    self.rest = self.a\n"
                        "self.out = self.a - self.rest\n",
-            "init": "",
-            "inputs": {"a": {"type": "double"}},
+            "init":    "",
+            "inputs":  {"a": {"type": "double"}},
             "outputs": {"out": {"type": "double"}},
         }
         self.assertEqual(tk._persistent_state_names(stateful), {"rest"})
@@ -476,8 +476,8 @@ class TestPorterStatePersistenceGuidance(unittest.TestCase):
     _STATEFUL = {
         "compute": "if not hasattr(self, 'rest'):\n    self.rest = self.a\n"
                    "self.out = self.a - self.rest\n",
-        "init": "",
-        "inputs": {"a": {"type": "double"}},
+        "init":    "",
+        "inputs":  {"a": {"type": "double"}},
         "outputs": {"out": {"type": "double"}},
     }
 
@@ -549,8 +549,8 @@ class TestPorterStatePersistenceGuidance(unittest.TestCase):
             "compute": "if not hasattr(self, 'solver'):\n"
                        "    self.solver = Solver(self.a)\n"
                        "self.out = self.solver.step(self.a)\n",
-            "init": "",
-            "inputs": {"a": {"type": "double"}},
+            "init":    "",
+            "inputs":  {"a": {"type": "double"}},
             "outputs": {"out": {"type": "double"}},
         }
         guide = tk.guide_for_spec(stateful)
@@ -599,9 +599,9 @@ class TestMultiEvalVerifyCatchesFlattening(unittest.TestCase):
 
         if _running_maya_root() is None:
             self.skipTest("no Maya devkit headers on this host")
-        spec = _accum_spec()
+        spec                                = _accum_spec()
         spec["suggested"]["node_type_name"] = type_name
-        out_dir = tempfile.mkdtemp(prefix="accstate_")
+        out_dir                             = tempfile.mkdtemp(prefix="accstate_")
         res = compile_controller.compile_plugin(
             [spec], "accStateTest_" + type_name, out_dir, strict=True,
             verify=False)

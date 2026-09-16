@@ -40,7 +40,7 @@ def plan(root=ROOT, only=None):
     for tree in TREES:
         pattern = os.path.join(root, tree, "*", "*", "build", "manifest.json")
         for mf in sorted(glob.glob(pattern)):
-            build_dir = os.path.dirname(mf)
+            build_dir    = os.path.dirname(mf)
             template_dir = os.path.dirname(build_dir)
             try:
                 with open(mf, encoding="utf-8") as fh:
@@ -118,7 +118,7 @@ def reverify_one(item, maya, scratch, verify_fn, log):
     finished ``verify`` block. Never raises."""
     from mpynode.native.ai import porter
 
-    ty = item["type_name"]
+    ty  = item["type_name"]
     out = os.path.join(scratch, ty)
     os.makedirs(out, exist_ok=True)
     t0 = time.time()
@@ -148,8 +148,8 @@ def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("--only", default="", help="comma-separated type names")
     ap.add_argument("--dry-run", action="store_true")
-    ap.add_argument("--maya", default=None)
-    ap.add_argument("--json", default=None)
+    ap.add_argument("--maya",    default=None)
+    ap.add_argument("--json",    default=None)
     ap.add_argument("--scratch", default=None)
     args = ap.parse_args(argv)
 
@@ -167,8 +167,8 @@ def main(argv=None):
         return 0
 
     from mpynode.native.toolchain import toolchain, verify
-    maya = args.maya or os.environ.get("MAYA_LOCATION") or toolchain.default_maya_dir()
-    scratch = args.scratch or tempfile.mkdtemp(prefix="mpynode-reverify-")
+    maya      = args.maya or os.environ.get("MAYA_LOCATION") or toolchain.default_maya_dir()
+    scratch   = args.scratch or tempfile.mkdtemp(prefix="mpynode-reverify-")
     verify_fn = verify.subprocess_verify_fn(maya=maya, timeout=900)
     print("maya: %s\nscratch: %s" % (maya, scratch))
 
@@ -193,7 +193,7 @@ def main(argv=None):
 
     print("\n%-22s %-6s %-20s %s" % ("node", "old", "gate", "re-verified"))
     for r in summary:
-        o = r["old"]
+        o   = r["old"]
         old = ("PASS" if o.get("pass") else "FAIL") if o.get("ran") else "SKIP"
         if "could not run" in (o.get("reason") or ""):
             old = "ERR"

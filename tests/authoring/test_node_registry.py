@@ -77,7 +77,7 @@ class TestNodeRegistryCompleteness(unittest.TestCase):
         )
         for native in self.PHASE_H_NATIVE_TYPES:
             spec = REGISTRY[native]
-            cls = spec.get_wrapper_class()
+            cls  = spec.get_wrapper_class()
             for method in REQUIRED_METHODS:
                 self.assertTrue(
                     hasattr(cls, method),
@@ -95,7 +95,7 @@ class TestNodeRegistryCompleteness(unittest.TestCase):
         from mpynode._node_registry import REGISTRY
 
         EXPECTED = {
-            "mPyNurbsCurve": "mpynode.wrappers.mpy_nurbs_curve",
+            "mPyNurbsCurve":   "mpynode.wrappers.mpy_nurbs_curve",
             "mPyNurbsSurface": "mpynode.wrappers.mpy_nurbs_surface",
         }
         for native, expected_module in EXPECTED.items():
@@ -147,12 +147,12 @@ class TestFactoryWrap(unittest.TestCase):
 
         cases = {
             "mPySkinCluster": MPySkinCluster,
-            "mPyConstraint": MPyConstraint,
-            "mPyTransform": MPyTransform,
+            "mPyConstraint":  MPyConstraint,
+            "mPyTransform":   MPyTransform,
         }
         for ntype, wcls in cases.items():
             node = mc.createNode(ntype)
-            w = MPyNode(node)
+            w    = MPyNode(node)
             self.assertIs(type(w), wcls, "%s -> %s" % (ntype, type(w).__name__))
             self.assertIsInstance(w, MPyNode)
             self.assertEqual(w.get_name(), node)
@@ -384,7 +384,7 @@ class TestMPyNodeExpression(unittest.TestCase):
 
         mc.setAttr(n.get_name() + ".scale", 5.0)
         ws = mc.xform(cube, q=True, ws=True, t=True)
-        self.assertAlmostEqual(ws[0], 5.0, places=4)
+        self.assertAlmostEqual(ws[0], 5.0,  places=4)
         self.assertAlmostEqual(ws[1], 10.0, places=4)
         self.assertAlmostEqual(ws[2], 15.0, places=4)
 
@@ -482,7 +482,7 @@ class TestSerializationRoundTrip(unittest.TestCase):
         from mpynode._common.io.serialization import decode_attr_map, encode_attr_map
 
         data = {
-            "myFloat": {"attr_type": "float", "is_array": False},
+            "myFloat":  {"attr_type": "float", "is_array": False},
             "myVecArr": {"attr_type": "vector", "is_array": True},
         }
         encoded = encode_attr_map(data)
@@ -514,7 +514,7 @@ class TestSerializationRoundTrip(unittest.TestCase):
         from mpynode._common.io.serialization import decode_stored_vars, encode_stored_vars
 
         vars_dict = {"counter": 5, "history": [1, 2, 3], "name": "test"}
-        encoded = encode_stored_vars(vars_dict)
+        encoded   = encode_stored_vars(vars_dict)
         self.assertEqual(decode_stored_vars(encoded), vars_dict)
 
 
@@ -575,7 +575,7 @@ class TestExpressionCompile(unittest.TestCase):
         from mpynode._common.compute.expression import safe_compile_expression
 
         old_stderr = sys.stderr
-        buf = io.StringIO()
+        buf        = io.StringIO()
         sys.stderr = buf
         try:
             safe_compile_expression("p = M[:-,3,:3].mean(axis=0)", node_name="logged")
@@ -657,14 +657,14 @@ class TestRecipeRegistry(unittest.TestCase):
             native_type="testNode",
             inputs=[
                 HydrationInputEntry(
-                    name="real",
-                    source_plug="real",
-                    kind="float",
+                    name        = "real",
+                    source_plug = "real",
+                    kind        = "float",
                 ),
                 HydrationInputEntry(
-                    name="synthetic",
-                    source_plug="",  # synthetic marker
-                    kind="vector",
+                    name        = "synthetic",
+                    source_plug = "",  # synthetic marker
+                    kind        = "vector",
                 ),
             ],
         )

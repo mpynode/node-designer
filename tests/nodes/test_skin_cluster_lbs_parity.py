@@ -48,7 +48,7 @@ class TestVectorizedDefaultMatchesDemo(unittest.TestCase):
         plane = mc.polyPlane(name="pP", w=4, h=4, sx=3, sy=3, axis=(0, 0, 1))[0]
 
         from mpynode.wrappers.mpy_skin_cluster import MPySkinCluster
-        sc = MPySkinCluster.create(plane, joints=[j1, j2], name="parSkin")
+        sc   = MPySkinCluster.create(plane, joints=[j1, j2], name="parSkin")
         node = sc.get_name()
 
         n = mc.polyEvaluate(plane, vertex=True)
@@ -85,7 +85,7 @@ class TestVectorizedDefaultMatchesDemo(unittest.TestCase):
         plane, sc = self._build_full_painted_skin()
 
         demo_pts = self._deformed_points(plane, sc, builder.COMPUTE_SOURCE)
-        new_pts = self._deformed_points(plane, sc, scd.DEFAULT_COMPUTE_SOURCE)
+        new_pts  = self._deformed_points(plane, sc, scd.DEFAULT_COMPUTE_SOURCE)
 
         # non-trivial deform: the posed result must differ from the flat rest.
         self.assertGreater(float(np.abs(demo_pts - demo_pts.mean(0)).max()), 0.1)

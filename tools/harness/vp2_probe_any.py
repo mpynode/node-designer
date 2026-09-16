@@ -10,10 +10,10 @@ import os
 import shutil
 import sys
 
-BUNDLE = sys.argv[1]
+BUNDLE    = sys.argv[1]
 NODE_TYPE = sys.argv[2]
-OUT = sys.argv[3]
-ASSET = sys.argv[4] if len(sys.argv) > 4 else None
+OUT       = sys.argv[3]
+ASSET     = sys.argv[4] if len(sys.argv) > 4 else None
 os.makedirs(OUT, exist_ok=True)
 res = {"ok": False, "node_type": NODE_TYPE, "notes": []}
 
@@ -26,9 +26,9 @@ def _stats(path):
     from PIL import Image
     if not path or not os.path.isfile(path):
         return {"exists": False}
-    im = Image.open(path).convert("RGB")
-    px = list(im.getdata())
-    lum = [0.299*r + 0.587*g + 0.114*b for (r, g, b) in px]
+    im    = Image.open(path).convert("RGB")
+    px    = list(im.getdata())
+    lum   = [0.299*r + 0.587*g + 0.114*b for (r, g, b) in px]
     plane = [v for v in lum if v > 0.5]
     pmn, pmx = (min(plane), max(plane)) if plane else (0.0, 0.0)
     return {"plane_min": pmn, "plane_max": pmx, "plane_range": pmx - pmn,
@@ -43,7 +43,7 @@ try:
         except Exception as e:
             res["notes"].append("plugin %s: %s" % (p, e))
     from mpynode._base.plugins import load_or_reload_native_plugin
-    lr = load_or_reload_native_plugin(BUNDLE)
+    lr            = load_or_reload_native_plugin(BUNDLE)
     res["loaded"] = bool(lr.get("loaded"))
     if not lr.get("loaded"):
         res["load_error"] = lr.get("error")
@@ -53,8 +53,8 @@ try:
         mc.file(new=True, force=True)
         mc.directionalLight(name="key")
         plane = mc.polyPlane(name="texPlane", w=10, h=10, sx=1, sy=1)[0]
-        sh = mc.shadingNode("surfaceShader", asShader=True, name="ss")
-        sg = mc.sets(renderable=True, noSurfaceShader=True, empty=True, name="ssSG")
+        sh    = mc.shadingNode("surfaceShader", asShader=True, name="ss")
+        sg    = mc.sets(renderable=True, noSurfaceShader=True, empty=True, name="ssSG")
         mc.connectAttr(sh + ".outColor", sg + ".surfaceShader", force=True)
         tex = mc.createNode(NODE_TYPE, name="probeTex")
         if ASSET and os.path.isfile(ASSET):
@@ -78,7 +78,7 @@ try:
         if r and os.path.isfile(r):
             shutil.copy(r, dst)
         res["stats"] = _stats(dst)
-        res["ok"] = bool(res["stats"].get("textured"))
+        res["ok"]    = bool(res["stats"].get("textured"))
 except Exception:
     import traceback
     res["error"] = traceback.format_exc()

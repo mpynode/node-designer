@@ -17,7 +17,7 @@ _TOOL = os.path.join(_paths.ROOT, "tools", "harness", "reverify_shipped.py")
 
 def _tool():
     spec = importlib.util.spec_from_file_location("reverify_shipped", _TOOL)
-    mod = importlib.util.module_from_spec(spec)
+    mod  = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
     return mod
 
@@ -48,8 +48,8 @@ class TestPlan(unittest.TestCase):
         self.assertEqual(skipped, [])
         self.assertEqual(len(items), 1)
         it = items[0]
-        self.assertEqual(it["type_name"], "thing")
-        self.assertEqual(it["row_index"], 0)
+        self.assertEqual(it["type_name"],     "thing")
+        self.assertEqual(it["row_index"],     0)
         self.assertEqual(it["manifest_path"], mf)
         self.assertIn("could not run", it["old_verify"]["reason"])
 
@@ -90,7 +90,7 @@ class TestBlockAndManifest(unittest.TestCase):
                    "reason": "", "generic_ran": True, "reverified": "2026-09-08"}
             t.write_block(items[0], new)
             after = open(mf, encoding="utf-8").read()
-            doc = json.loads(after)
+            doc   = json.loads(after)
         self.assertEqual(doc["nodes"][0]["verify"], new)
         self.assertEqual(list(doc.keys()), ["manifest_version", "plugin_name", "nodes", "strict"])
         self.assertTrue(after.endswith("}\n"))

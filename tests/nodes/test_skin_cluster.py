@@ -52,7 +52,7 @@ class TestSkinClusterDirtyPropagation(unittest.TestCase):
         ``weights[0]`` value -- so a weight edit maps directly to a
         visible position change."""
         plane = mc.polyPlane(name="sP", w=2, h=2, sx=4, sy=4)[0]
-        sc = mc.deformer(plane, type="mPySkinCluster")[0]
+        sc    = mc.deformer(plane, type="mPySkinCluster")[0]
         mc.setAttr(sc + ".weightList[0].weights[0]", 0.0)
         mc.setAttr(
             sc + "._computeSource",
@@ -90,7 +90,7 @@ class TestSkinClusterDirtyPropagation(unittest.TestCase):
         the output. Nothing but setDependentsDirty covers _computeSource, so
         this fails if the override is a no-op (the bound-method bug)."""
         plane = mc.polyPlane(name="cP", w=2, h=2, sx=4, sy=4)[0]
-        sc = mc.deformer(plane, type="mPySkinCluster")[0]
+        sc    = mc.deformer(plane, type="mPySkinCluster")[0]
 
         # First eval with a no-op expression -> output == input (rest).
         mc.setAttr(sc + "._computeSource", "pass", type="string")
@@ -124,7 +124,7 @@ class TestCustomLBSDemoWeightList(unittest.TestCase):
     def _build_demo_no_save(self):
         import mpynode._demos.build_mPySkinCluster_customLBS as builder
 
-        self._saved = builder.save_demo
+        self._saved       = builder.save_demo
         builder.save_demo = lambda *a, **k: None  # don't overwrite the shipped .ma
         try:
             builder.build()
@@ -161,7 +161,7 @@ class TestCustomLBSDemoWeightList(unittest.TestCase):
         self.assertAlmostEqual(mc.getAttr(node + ".weightList[0].weights[1]"), 0.0, places=4)
 
         shape = mc.listRelatives("skinnedCylinder", shapes=True, fullPath=True)[0]
-        n = mc.polyEvaluate(shape, vertex=True)
+        n     = mc.polyEvaluate(shape, vertex=True)
 
         def top_centroid_x():
             # Mean x of the top ring: ~0 at rest (ring is centered on the Y
@@ -198,8 +198,8 @@ class TestSkinClusterIsRealSkinCluster(unittest.TestCase):
         ensure_plugins_loaded()
 
     def test_lineage_is_real_skincluster(self):
-        plane = mc.polyPlane(name="rP")[0]
-        sc = mc.deformer(plane, type="mPySkinCluster")[0]
+        plane     = mc.polyPlane(name="rP")[0]
+        sc        = mc.deformer(plane, type="mPySkinCluster")[0]
         inherited = mc.nodeType(sc, inherited=True)
         self.assertIn("skinCluster", inherited)
         self.assertIn("geometryFilter", inherited)
@@ -212,7 +212,7 @@ class TestSkinClusterIsRealSkinCluster(unittest.TestCase):
         plane = mc.polyPlane(name="rP", w=2, h=2, sx=4, sy=4)[0]
 
         from mpynode.wrappers.mpy_skin_cluster import MPySkinCluster
-        sc = MPySkinCluster.create(plane, joints=[j1, j2], name="realSkin")
+        sc   = MPySkinCluster.create(plane, joints=[j1, j2], name="realSkin")
         node = sc.get_name()
 
         # MFnSkinCluster recognises it + lists the influences.
@@ -220,7 +220,7 @@ class TestSkinClusterIsRealSkinCluster(unittest.TestCase):
         sel.add(node)
         mobj = om.MObject()
         sel.getDependNode(0, mobj)
-        fn = oma.MFnSkinCluster(mobj)
+        fn   = oma.MFnSkinCluster(mobj)
         infs = om.MDagPathArray()
         fn.influenceObjects(infs)
         names = sorted(infs[i].partialPathName() for i in range(infs.length()))

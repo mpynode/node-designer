@@ -52,7 +52,7 @@ import sys
 import time
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SRC = os.path.join(ROOT, "templates")
+SRC  = os.path.join(ROOT, "templates")
 # Each template's compiled tree lives inside the template folder it came from,
 # so source and destination are the same root and `os.path.join(DST, rel)`
 # below lands back on the directory the walk already visited.
@@ -60,7 +60,7 @@ DST = SRC
 # The ledger is per-run machine state about the whole tree, not part of any one
 # template, so it stays out of templates/.
 MANIFEST = os.path.join(ROOT, "_build_state", "manifest.json")
-WORKER = os.path.join(ROOT, "tools", "build_compiled_templates_worker.py")
+WORKER   = os.path.join(ROOT, "tools", "build_compiled_templates_worker.py")
 
 MAYAPY = os.environ.get(
     "MPYNODE_MAYAPY",
@@ -80,7 +80,7 @@ FAST_ROUND_S = 60.0
 # over a ~0.4 ms fixed whole-evaluation cost no rewrite can remove. A speedup is
 # noise when the time SAVED clears neither.
 NOISE_FLOOR_MS = 0.4
-NOISE_FRAC = 0.08
+NOISE_FRAC     = 0.08
 
 # Phase B is NOT one process per job. Each optimizer agent shells out to its own
 # mayapy for every build / bench / parity check, and the CLI agent driving it is
@@ -103,8 +103,8 @@ OPT_JOB_CORES = 4
 # report, the MACHINE is what failed -- not the template.
 OOM_FREE_MB = 64.0
 
-_CRASH_RE = re.compile(r"Writing crash report in (\S.*?\.crash)")
-_FREE_RE = re.compile(r"([0-9.]+)\s*Mb\s+Free (Memory|Swap)")
+_CRASH_RE   = re.compile(r"Writing crash report in (\S.*?\.crash)")
+_FREE_RE    = re.compile(r"([0-9.]+)\s*Mb\s+Free (Memory|Swap)")
 
 
 def opt_jobs_budget(mem_bytes=None, cores=None):
@@ -289,8 +289,8 @@ def phase_a_flags(entry):
     # clean while shipping a feature that silently does nothing.
     if any((n or {}).get("incomplete") for n in (entry.get("nodes") or [])):
         flags.append("port-incomplete")
-    ai = entry.get("ai") or {}
-    fresh = ai.get("assisted_now") or []
+    ai     = entry.get("ai") or {}
+    fresh  = ai.get("assisted_now") or []
     cached = ai.get("assisted_cached") or []
     if not fresh and not cached and not ai.get("no_node_needed_llm"):
         # Neither "the AI wrote this", nor "the cache had the AI's earlier
@@ -403,8 +403,8 @@ def phase_b_flags(entry, fast_s, noise_ms):
 
 def row_verdict(row, phases, fast_s, noise_ms):
     """(state, flags) for a template from its recorded phase entries."""
-    flags = []
-    failed = False
+    flags   = []
+    failed  = False
     missing = False
     for phase in phases:
         entry = row.get("phase_" + phase)
@@ -459,9 +459,9 @@ def _runner_dir(rel):
 
 def spawn(rel, mpn_path, phase, smoke, force=False):
     """Start one worker. Returns (proc, result_json, log_path, t0)."""
-    rdir = _runner_dir(rel)
+    rdir        = _runner_dir(rel)
     result_json = os.path.join(rdir, "phase_%s.json" % phase)
-    log_path = os.path.join(rdir, "phase_%s.log" % phase)
+    log_path    = os.path.join(rdir, "phase_%s.log" % phase)
     if os.path.exists(result_json):
         # Stale result from a previous attempt must not be read as this one's.
         os.remove(result_json)
@@ -475,8 +475,8 @@ def spawn(rel, mpn_path, phase, smoke, force=False):
     # holds two runs, which is how a round gets attributed to the wrong file.
     if force and phase == "b" and not smoke:
         cmd.append("--clear-stages")
-    log = open(log_path, "w")
-    proc = subprocess.Popen(cmd, cwd=ROOT, stdout=log, stderr=subprocess.STDOUT)
+    log          = open(log_path, "w")
+    proc         = subprocess.Popen(cmd, cwd=ROOT, stdout=log, stderr=subprocess.STDOUT)
     proc._log_fh = log
     return proc, result_json, log_path, time.time()
 
@@ -546,7 +546,7 @@ def harvest(rel, phase, proc, result_json, log_path, t0):
                  "log_tail": tail, "nodes": [], "ai": {},
                  "optimize_summary": {}, "rounds": {}}
     entry["wall_secs"] = round(time.time() - t0, 1)
-    entry["log"] = log_path
+    entry["log"]       = log_path
     return entry
 
 
@@ -560,7 +560,7 @@ def run_phase(phase, jobs, todo, man, smoke, fast_s, noise_ms, force=False):
     sys.stdout.flush()
     pending = list(todo)
     running = []
-    done = 0
+    done    = 0
     while pending or running:
         while pending and len(running) < jobs:
             rel, mpn_path = pending.pop(0)
@@ -573,8 +573,8 @@ def run_phase(phase, jobs, todo, man, smoke, fast_s, noise_ms, force=False):
             if proc.poll() is None:
                 still.append((rel, proc, result_json, log_path, t0))
                 continue
-            entry = harvest(rel, phase, proc, result_json, log_path, t0)
-            row = man["rows"].setdefault(rel, {})
+            entry                 = harvest(rel, phase, proc, result_json, log_path, t0)
+            row                   = man["rows"].setdefault(rel, {})
             row["phase_" + phase] = entry
             save_manifest(man)
             done += 1
@@ -614,14 +614,14 @@ def summarise(man, rels, phases, fast_s, noise_ms):
     print("=" * 96)
     print("%-46s %-9s %7s %8s %8s  %s"
           % ("template", "state", "A secs", "B secs", "speedup", "flags"))
-    counts = {}
+    counts  = {}
     suspect = []
     for rel in rels:
         row = man["rows"].get(rel) or {}
         state, flags = row_verdict(row, phases, fast_s, noise_ms)
         counts[state] = counts.get(state, 0) + 1
-        a = row.get("phase_a") or {}
-        b = row.get("phase_b") or {}
+        a             = row.get("phase_a") or {}
+        b             = row.get("phase_b") or {}
         spd, base, saved = _best(b)
         print("%-46s %-9s %7s %8s %8s  %s"
               % (rel[:46], state, a.get("wall_secs", "-"),
@@ -694,7 +694,7 @@ def main():
     # NOT args.jobs: phase A is one mayapy per job, phase B is a process tree per
     # job. Inheriting --jobs is what put 8 optimizer agents on a machine that
     # could not hold 4 (see OPT_JOB_GB).
-    budget = opt_jobs_budget()
+    budget   = opt_jobs_budget()
     opt_jobs = args.opt_jobs or budget
     if opt_jobs > budget:
         print("WARNING: --opt-jobs %d is over this machine's phase-B budget of "
@@ -708,13 +708,13 @@ def main():
 
     templates = find_templates()
     if args.only:
-        pats = [p.strip() for p in args.only.split(",") if p.strip()]
+        pats      = [p.strip() for p in args.only.split(",") if p.strip()]
         templates = [t for t in templates if any(p in t[0] for p in pats)]
     if args.limit:
         templates = templates[:args.limit]
     rels = [rel for rel, _ in templates]
 
-    man = load_manifest()
+    man  = load_manifest()
     if args.summary_only:
         summarise(man, rels, phases, args.fast_round_s, args.noise_floor_ms)
         return

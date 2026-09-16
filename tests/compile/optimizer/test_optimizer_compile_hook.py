@@ -39,7 +39,7 @@ class TestOptimizeSkipReason(unittest.TestCase):
     def test_mpyfile_is_not_skipped(self):
         with tempfile.TemporaryDirectory() as tmp:
             cpp = self._cpp(tmp, "int x=1;")
-            r = compile_controller._optimize_skip_reason(cpp, {"mpy_type": "mPyFile"})
+            r   = compile_controller._optimize_skip_reason(cpp, {"mpy_type": "mPyFile"})
             self.assertFalse(
                 r, "mPyFile is optimizable: the override is spliced before the "
                    "optimizer and guarded by _PLUGIN_ANCHORS (got %r)" % r)
@@ -64,7 +64,7 @@ class TestOptimizeSkipReason(unittest.TestCase):
     def test_plain_mesh_node_is_optimizable(self):
         with tempfile.TemporaryDirectory() as tmp:
             cpp = self._cpp(tmp, "int compute(){return 42;}")
-            r = compile_controller._optimize_skip_reason(cpp, {"mpy_type": "mPyMesh"})
+            r   = compile_controller._optimize_skip_reason(cpp, {"mpy_type": "mPyMesh"})
             self.assertEqual(r, "")
 
     def test_oversized_tu_skipped_on_the_one_shot_path(self):
@@ -93,7 +93,7 @@ class TestOptimizeSkipReason(unittest.TestCase):
         """The skip gate and the per-node readout must quote the SAME number --
         a readout that disagrees with the gate is worse than none."""
         text = "double x=1.0;\n" * 24000
-        n = compile_controller._response_tokens_needed(text)
+        n    = compile_controller._response_tokens_needed(text)
         self.assertEqual(n, int(len(text) / 3.5 * 1.25))
         with tempfile.TemporaryDirectory() as tmp:
             cpp = self._cpp(tmp, text)
@@ -175,8 +175,8 @@ class TestTheTwoTemplatesThatMotivatedTheGate(unittest.TestCase):
                     r = compile_controller._optimize_skip_reason(
                         p, {"mpy_type": mpy_type}, one_shot=True)
                     self.assertIn("whole-file rewrite", r)
-                    self.assertIn(str(need), r)
-                    self.assertIn(str(cap), r)
+                    self.assertIn(str(need),            r)
+                    self.assertIn(str(cap),             r)
 
     def test_the_shipped_cpp_of_both_is_refused_up_front(self):
         """The same claim against the REAL artifacts, so a codegen change that
@@ -211,13 +211,13 @@ class TestOversizedNodeNeverReachesTheOptimizer(unittest.TestCase):
     def _spec(self, name="sineRipple"):
         return {
             "source_node": name,
-            "mpy_type": "mPyDeformer",
+            "mpy_type":    "mPyDeformer",
             "suggested": {"node_type_name": name, "class_name": "SineRipple",
                           "mpx_base": "MPxNode", "type_id": "0x0013a1c1"},
-            "inputs": {"a": {"type": "double"}},
-            "outputs": {"out": {"type": "double"}},
-            "compute": "out = a * 2.0",
-            "init": "",
+            "inputs":      {"a": {"type": "double"}},
+            "outputs":     {"out": {"type": "double"}},
+            "compute":     "out = a * 2.0",
+            "init":        "",
             "portability": {"portable": True, "blockers": []},
         }
 
@@ -357,9 +357,9 @@ class TestCompileHookOptIn(unittest.TestCase):
         # The (c.6) call into the optimizer must be reachable ONLY under the flag,
         # so a default build cannot spawn it. Assert the source guards the call.
         src = inspect.getsource(compile_controller.compile_plugin)
-        self.assertIn("optimize_surviving", src)          # the hook is wired
-        self.assertIn("if optimize", src)                 # ...behind the flag
-        self.assertIn("_optimize_skip_reason", src)       # ...and filters unsafe nodes
+        self.assertIn("optimize_surviving",    src)  # the hook is wired
+        self.assertIn("if optimize",           src)  # ...behind the flag
+        self.assertIn("_optimize_skip_reason", src)  # ...and filters unsafe nodes
 
     def test_optimizer_verify_does_not_disable_authored_tests(self):
         # A node whose pointwise parity SKIPS (a deformer declares no outputs)

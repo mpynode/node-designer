@@ -139,9 +139,9 @@ def _face_vertex_enumeration(counts, indices):
     face-vertex in flat order (face 0's verts, then face 1's, ...). ``vertex
     _ids[k]`` is the mesh vertex id of the k-th face-vertex; the k-th entry
     aligns with a per-face-vertex attribute array of length ``sum(counts)``."""
-    face_ids = om.MIntArray()
+    face_ids   = om.MIntArray()
     vertex_ids = om.MIntArray()
-    off = 0
+    off        = 0
     for f, c in enumerate(int(x) for x in counts):
         for j in range(c):
             face_ids.append(f)
@@ -156,7 +156,7 @@ def _apply_mesh_normals(mfn, n_points, counts, indices, normals, normal_indices)
     if nrm is None:
         return
     total_fv = int(np.sum(counts))
-    idx = _as_int_1d(normal_indices)
+    idx      = _as_int_1d(normal_indices)
     try:
         if idx is None:
             # Per-vertex: one normal per mesh vertex.
@@ -197,7 +197,7 @@ def _apply_mesh_colors(mfn, n_points, counts, indices, colors, color_indices):
     if col is None:
         return
     total_fv = int(np.sum(counts))
-    cidx = _as_int_1d(color_indices)
+    cidx     = _as_int_1d(color_indices)
     # Normalise to RGBA (alpha 1.0 for RGB input).
     if col.shape[1] == 3:
         col = np.concatenate([col, np.ones((col.shape[0], 1),
@@ -225,7 +225,7 @@ def _apply_mesh_colors(mfn, n_points, counts, indices, colors, color_indices):
                 _log(f"[{_MESH_TAG}] color_indices out of range; skipped")
                 return
             expanded = col[cidx]
-            carr = om.MColorArray([_mcolor(c) for c in expanded])
+            carr     = om.MColorArray([_mcolor(c) for c in expanded])
             face_ids, vertex_ids = _face_vertex_enumeration(counts, indices)
             mfn.setFaceVertexColors(carr, face_ids, vertex_ids)
     except Exception as exc:
@@ -263,9 +263,9 @@ def _apply_mesh_uvs(mfn, counts, uv_sets):
 
     uv = sets[0]
     try:
-        pts = np.asarray(uv.points, dtype=np.float64)
-        ucounts = np.asarray(uv.counts, dtype=np.int64)
-        uidx = np.asarray(uv.indices, dtype=np.int64)
+        pts     = np.asarray(uv.points,  dtype=np.float64)
+        ucounts = np.asarray(uv.counts,  dtype=np.int64)
+        uidx    = np.asarray(uv.indices, dtype=np.int64)
     except Exception as exc:
         _log(f"[{_MESH_TAG}] UV set is not array-like: {exc}; skipped")
         return
@@ -307,9 +307,9 @@ def build_mesh_data(obj):
     """
     data_obj = om.MFnMeshData().create()
 
-    points = _as_points(getattr(obj, "points", None), _MESH_TAG)
-    counts = _as_int_1d(getattr(obj, "counts", None))
-    indices = _as_int_1d(getattr(obj, "indices", None))
+    points   = _as_points(getattr(obj, "points", None), _MESH_TAG)
+    counts   = _as_int_1d(getattr(obj, "counts", None))
+    indices  = _as_int_1d(getattr(obj, "indices", None))
 
     if points is None or counts is None or indices is None:
         return data_obj
@@ -356,7 +356,7 @@ def build_mesh_data(obj):
 # NURBS curve
 # ===========================================================================
 
-_CURVE_TAG = "mPyNurbsCurve"
+_CURVE_TAG     = "mPyNurbsCurve"
 _VALID_DEGREES = (1, 2, 3, 5, 7)
 
 
@@ -368,8 +368,8 @@ def _expected_knots(num_cvs, degree):
 
 
 _CURVE_FORM_BY_NAME = {
-    "open": om.MFnNurbsCurve.kOpen,
-    "closed": om.MFnNurbsCurve.kClosed,
+    "open":     om.MFnNurbsCurve.kOpen,
+    "closed":   om.MFnNurbsCurve.kClosed,
     "periodic": om.MFnNurbsCurve.kPeriodic,
 }
 
@@ -513,8 +513,8 @@ def _coerce_surface_cvs(cvs, num_u, num_v):
 
 
 _SURFACE_FORM_BY_NAME = {
-    "open": om.MFnNurbsSurface.kOpen,
-    "closed": om.MFnNurbsSurface.kClosed,
+    "open":     om.MFnNurbsSurface.kOpen,
+    "closed":   om.MFnNurbsSurface.kClosed,
     "periodic": om.MFnNurbsSurface.kPeriodic,
 }
 
@@ -598,7 +598,7 @@ def build_surface_data(obj):
     try:
         pts_array = om.MPointArray([om.MPoint(float(p[0]), float(p[1]),
                                               float(p[2])) for p in cvs])
-        ku = om.MDoubleArray([float(k) for k in knots_u])
+        ku  = om.MDoubleArray([float(k) for k in knots_u])
         kvv = om.MDoubleArray([float(k) for k in knots_v])
         om.MFnNurbsSurface().create(pts_array, ku, kvv, degree_u, degree_v,
                                     form_u, form_v, False, data_obj)
@@ -744,9 +744,9 @@ class UVSet:
         pts3 = np.zeros((int(pts2.shape[0]), 3), dtype=np.float64)
         if pts2.shape[0]:
             pts3[:, :2] = pts2
-        keep_counts = []
+        keep_counts  = []
         keep_indices = []
-        off = 0
+        off          = 0
         for c in self.counts.tolist():
             c = int(c)
             if c >= 3:
@@ -800,29 +800,29 @@ def _points_within(points, other_points, tolerance):
     tol = float(tolerance)
     # A zero tolerance (exact coincidence) still needs a positive grid step;
     # identical coordinates floor into the identical cell at any step.
-    step = tol if tol > 0.0 else 1e-12
-    origin = other_points.min(axis=0)
-    q_cells = np.floor((points - origin) / step).astype(np.int64)
-    t_keys = _cell_keys(np.floor((other_points - origin) / step).astype(np.int64))
-    order = np.argsort(t_keys, kind="stable")
+    step        = tol if tol > 0.0 else 1e-12
+    origin      = other_points.min(axis=0)
+    q_cells     = np.floor((points - origin) / step).astype(np.int64)
+    t_keys      = _cell_keys(np.floor((other_points - origin) / step).astype(np.int64))
+    order       = np.argsort(t_keys, kind="stable")
     sorted_keys = t_keys[order]
 
     hit = np.zeros(n, dtype=bool)
     for offset in _CELL_NEIGHBOURS:
         keys = _cell_keys(q_cells + offset)
-        lo = np.searchsorted(sorted_keys, keys, side="left")
-        run = np.searchsorted(sorted_keys, keys, side="right") - lo
+        lo   = np.searchsorted(sorted_keys, keys, side="left")
+        run  = np.searchsorted(sorted_keys, keys, side="right") - lo
         rows = np.flatnonzero(run > 0)
         if rows.size == 0:
             continue
         lens = run[rows]
         # Ragged gather: expand each query's run of candidates into a flat pair
         # list, then keep the pairs that are really inside the tolerance.
-        total = int(lens.sum())
-        q_idx = np.repeat(rows, lens)
+        total      = int(lens.sum())
+        q_idx      = np.repeat(rows, lens)
         within_run = np.arange(total) - np.repeat(np.cumsum(lens) - lens, lens)
-        t_idx = order[np.repeat(lo[rows], lens) + within_run]
-        d = points[q_idx] - other_points[t_idx]
+        t_idx      = order[np.repeat(lo[rows], lens) + within_run]
+        d          = points[q_idx] - other_points[t_idx]
         hit[q_idx[np.sqrt((d * d).sum(axis=1)) <= tol]] = True
     return np.flatnonzero(hit).astype(np.int64)
 
@@ -860,10 +860,10 @@ class Mesh:
                  normals=None, normal_indices=None,
                  colors=None, color_indices=None):
         self._attached = False
-        self._data = None          # retained api2 geometry DATA MObject
-        self._fn = None            # cached MFnMesh (attached mode)
-        self._tags = None          # cached component_tags dict
-        self._uv_sets = None       # cached list[UVSet] (attached mode)
+        self._data     = None  # retained api2 geometry DATA MObject
+        self._fn       = None  # cached MFnMesh (attached mode)
+        self._tags     = None  # cached component_tags dict
+        self._uv_sets  = None  # cached list[UVSet] (attached mode)
 
         # Construction niceties, INTERPRETED mode only -- attached mode bypasses
         # __init__ via _attach, and a compiled compute rewrites geo constructors
@@ -879,17 +879,17 @@ class Mesh:
         elif points is not None:
             points = np.asarray(points, dtype=np.float64)
             if points.ndim == 2 and points.shape[1] == 2:
-                pad = np.zeros((points.shape[0], 3), dtype=np.float64)
+                pad        = np.zeros((points.shape[0], 3), dtype=np.float64)
                 pad[:, :2] = points
-                points = pad
+                points     = pad
 
-        self._points = None if points is None else np.asarray(points, dtype=np.float64)
-        self._counts = None if counts is None else np.asarray(counts, dtype=np.int64)
-        self._indices = None if indices is None else np.asarray(indices, dtype=np.int64)
-        self._normals = None if normals is None else np.asarray(normals, dtype=np.float64)
+        self._points        = None if points is None else np.asarray(points, dtype=np.float64)
+        self._counts        = None if counts is None else np.asarray(counts, dtype=np.int64)
+        self._indices       = None if indices is None else np.asarray(indices, dtype=np.int64)
+        self._normals       = None if normals is None else np.asarray(normals, dtype=np.float64)
         self.normal_indices = normal_indices
-        self._colors = None if colors is None else np.asarray(colors, dtype=np.float64)
-        self.color_indices = color_indices
+        self._colors        = None if colors is None else np.asarray(colors, dtype=np.float64)
+        self.color_indices  = color_indices
 
     @classmethod
     def _attach(cls, data_mobject, source_plug=None):
@@ -900,21 +900,21 @@ class Mesh:
         upstream shape's name off it lazily so the mesh reprs as
         ``Mesh("pCubeShape1")``. It is never used to re-resolve DATA.
         """
-        m = cls.__new__(cls)
-        m._attached = True
-        m._data = data_mobject
-        m._fn = None
-        m._tags = None
-        m._uv_sets = None
-        m._points = None
-        m._counts = None
-        m._indices = None
-        m._normals = None
+        m                = cls.__new__(cls)
+        m._attached      = True
+        m._data          = data_mobject
+        m._fn            = None
+        m._tags          = None
+        m._uv_sets       = None
+        m._points        = None
+        m._counts        = None
+        m._indices       = None
+        m._normals       = None
         m.normal_indices = None
-        m._colors = None
-        m.color_indices = None
-        m._src_plug = source_plug
-        m._name = None
+        m._colors        = None
+        m.color_indices  = None
+        m._src_plug      = source_plug
+        m._name          = None
         return m
 
     @property
@@ -930,7 +930,7 @@ class Mesh:
         """
         nm = self.__dict__.get("_name")
         if nm is None:
-            nm = _source_node_name(self.__dict__.get("_src_plug"))
+            nm                     = _source_node_name(self.__dict__.get("_src_plug"))
             self.__dict__["_name"] = nm
         return nm
 
@@ -942,7 +942,7 @@ class Mesh:
         if f is None:
             d = self.__dict__.get("_data")
             if d is not None and not d.isNull():
-                f = om.MFnMesh(d)
+                f                    = om.MFnMesh(d)
                 self.__dict__["_fn"] = f
         return f
 
@@ -986,15 +986,15 @@ class Mesh:
         except Exception:
             pass
         self._attached = False
-        self._data = None
-        self._fn = None
+        self._data     = None
+        self._fn       = None
 
     def _ensure_topo(self):
         if self.__dict__.get("_counts") is None and self.__dict__.get("_attached"):
             f = self.fn
             if f is not None:
                 c, conn = f.getVertices()
-                self._counts = np.asarray(c, dtype=np.int64)
+                self._counts  = np.asarray(c, dtype=np.int64)
                 self._indices = np.asarray(conn, dtype=np.int64)
 
     @property
@@ -1003,7 +1003,7 @@ class Mesh:
         if v is None and self.__dict__.get("_attached"):
             f = self.fn
             if f is not None:
-                v = np.asarray(f.getPoints(om.MSpace.kObject))[:, :3].astype(np.float64)
+                v            = np.asarray(f.getPoints(om.MSpace.kObject))[:, :3].astype(np.float64)
                 self._points = v
         return v
 
@@ -1039,8 +1039,8 @@ class Mesh:
             f = self.fn
             if f is not None:
                 try:
-                    nrm = f.getVertexNormals(False, om.MSpace.kObject)
-                    v = np.asarray(nrm)[:, :3].astype(np.float64)
+                    nrm           = f.getVertexNormals(False, om.MSpace.kObject)
+                    v             = np.asarray(nrm)[:, :3].astype(np.float64)
                     self._normals = v
                 except Exception:
                     v = None
@@ -1058,7 +1058,7 @@ class Mesh:
             f = self.fn
             if f is not None:
                 try:
-                    v = np.asarray(f.getVertexColors()).astype(np.float64)
+                    v            = np.asarray(f.getVertexColors()).astype(np.float64)
                     self._colors = v
                 except Exception:
                     v = None
@@ -1135,12 +1135,12 @@ class Mesh:
     def contains_vertices(self, vertices, contained=True):
         """Face indices touching ``vertices``. ``contained`` requires EVERY
         corner of the face to be in the set; otherwise ANY corner matches."""
-        counts = self.counts
+        counts  = self.counts
         indices = self.indices
         if counts is None or indices is None:
             return np.zeros(0, dtype=np.int64)
-        verts = np.unique(np.asarray(vertices, dtype=np.int64).ravel())
-        nf = int(counts.size)
+        verts          = np.unique(np.asarray(vertices, dtype=np.int64).ravel())
+        nf             = int(counts.size)
         face_of_corner = np.repeat(np.arange(nf, dtype=np.int64), counts)
         hits = np.bincount(face_of_corner,
                            weights=np.isin(indices, verts).astype(np.float64),
@@ -1155,27 +1155,27 @@ class Mesh:
         ``exclude=True`` keeps everything EXCEPT the listed faces. Derived
         channels (normals / colors) and component tags are dropped: vertices are
         renumbered and faces are a subset, so the originals no longer apply."""
-        counts = self.counts
+        counts  = self.counts
         indices = self.indices
-        points = self.points
+        points  = self.points
         if counts is None or indices is None:
             return Mesh()
-        nf = int(counts.size)
+        nf   = int(counts.size)
         want = np.asarray(faces, dtype=np.int64).ravel()
         mask = np.zeros(nf, dtype=bool)
         mask[want[(want >= 0) & (want < nf)]] = True
         if exclude:
             mask = ~mask
         face_of_corner = np.repeat(np.arange(nf, dtype=np.int64), counts)
-        stream = indices[mask[face_of_corner]]
-        m = Mesh()
-        m._counts = counts[mask].astype(np.int64)
+        stream         = indices[mask[face_of_corner]]
+        m              = Mesh()
+        m._counts      = counts[mask].astype(np.int64)
         if stream.size == 0 or points is None:
-            m._points = np.zeros((0, 3), dtype=np.float64)
+            m._points  = np.zeros((0, 3), dtype=np.float64)
             m._indices = np.zeros(0, dtype=np.int64)
             return m
         used, remap = np.unique(stream, return_inverse=True)
-        m._points = np.array(points[used], dtype=np.float64)
+        m._points  = np.array(points[used], dtype=np.float64)
         m._indices = remap.astype(np.int64)
         return m
 
@@ -1202,7 +1202,7 @@ class Mesh:
                 "no component tag %r on this mesh; available: %s"
                 % (tag, sorted(self.component_tags) or "(none)"))
         kind = info["type"]
-        idx = info["indices"]
+        idx  = info["indices"]
         if kind == "face":
             return self.from_faces(idx, exclude=exclude)
         if kind == "vertex":
@@ -1271,18 +1271,18 @@ class Mesh:
     def copy(self):
         """A DETACHED value copy (severs the .fn link). Edit its channels and
         assign to an output plug -- no imports required."""
-        m = Mesh()
-        p = self.points
-        m._points = None if p is None else np.array(p, dtype=np.float64)
-        c = self.counts
-        m._counts = None if c is None else np.array(c, dtype=np.int64)
-        i = self.indices
+        m          = Mesh()
+        p          = self.points
+        m._points  = None if p is None else np.array(p, dtype=np.float64)
+        c          = self.counts
+        m._counts  = None if c is None else np.array(c, dtype=np.int64)
+        i          = self.indices
         m._indices = None if i is None else np.array(i, dtype=np.int64)
-        n = self.normals
+        n          = self.normals
         if n is not None:
             m._normals = np.array(n, dtype=np.float64)
         m.normal_indices = self.normal_indices
-        col = self.colors
+        col              = self.colors
         if col is not None:
             m._colors = np.array(col, dtype=np.float64)
         m.color_indices = self.color_indices
@@ -1324,17 +1324,17 @@ class Mesh:
     def to_json(self):
         """A plain-JSON dict of every channel -- no numpy, no Maya handles."""
         return {
-            "type": "Mesh",
-            "name": self.name,
-            "points": _jlist(self.points),
-            "counts": _jlist(self.counts),
-            "indices": _jlist(self.indices),
-            "normals": _jlist(self.normals),
+            "type":           "Mesh",
+            "name":           self.name,
+            "points":         _jlist(self.points),
+            "counts":         _jlist(self.counts),
+            "indices":        _jlist(self.indices),
+            "normals":        _jlist(self.normals),
             "normal_indices": _jlist(self.normal_indices),
-            "colors": _jlist(self.colors),
-            "color_indices": _jlist(self.color_indices),
+            "colors":         _jlist(self.colors),
+            "color_indices":  _jlist(self.color_indices),
             "component_tags": _jtags(self.component_tags),
-            "uv_sets": [u.to_json() for u in self.uv_sets],
+            "uv_sets":        [u.to_json() for u in self.uv_sets],
         }
 
     @classmethod
@@ -1343,14 +1343,14 @@ class Mesh:
         if isinstance(payload, (str, bytes)):
             payload = _json.loads(payload)
         m = cls(points=payload.get("points"), counts=payload.get("counts"),
-                indices=payload.get("indices"),
-                normals=payload.get("normals"),
-                normal_indices=payload.get("normal_indices"),
-                colors=payload.get("colors"),
+                indices        = payload.get("indices"),
+                normals        = payload.get("normals"),
+                normal_indices = payload.get("normal_indices"),
+                colors         = payload.get("colors"),
                 color_indices=payload.get("color_indices"))
-        m._tags = _tags_from_json(payload.get("component_tags"))
+        m._tags    = _tags_from_json(payload.get("component_tags"))
         m._uv_sets = [UVSet.from_json(u) for u in (payload.get("uv_sets") or [])]
-        m._name = payload.get("name")
+        m._name    = payload.get("name")
         return m
 
     # ----- arithmetic -----
@@ -1380,8 +1380,8 @@ class Mesh:
         if op is None or oc is None or oi is None:
             return
         if sp is None or sc is None or si is None:
-            self._points = np.array(op, dtype=np.float64)
-            self._counts = np.array(oc, dtype=np.int64)
+            self._points  = np.array(op, dtype=np.float64)
+            self._counts  = np.array(oc, dtype=np.int64)
             self._indices = np.array(oi, dtype=np.int64)
         else:
             self._indices = np.concatenate(
@@ -1390,10 +1390,10 @@ class Mesh:
             self._points = np.concatenate(
                 [sp, np.asarray(op, dtype=np.float64)])
         # Derived channels no longer line up with the combined topology.
-        self._normals = None
+        self._normals       = None
         self.normal_indices = None
-        self._colors = None
-        self.color_indices = None
+        self._colors        = None
+        self.color_indices  = None
         # UVs are per-face-vertex, so the appended faces have no UV entries and
         # the set's counts no longer match the face list. Explicitly [] ("read,
         # none") rather than None ("not read"): _cow_detach above already
@@ -1428,7 +1428,7 @@ class Mesh:
         elif _looks_like_morph(other):
             self._iadd_morph(other, 1.0)
         else:
-            pts = self._points_for_edit()
+            pts          = self._points_for_edit()
             self._points = pts + np.asarray(other, dtype=np.float64)
         return self
 
@@ -1455,7 +1455,7 @@ class Mesh:
         Derived channels, component tags and UV sets are dropped: faces are a
         subset and the vertices are renumbered, so none of them still apply."""
         self._cow_detach()
-        points = self.__dict__.get("_points")
+        points       = self.__dict__.get("_points")
         other_points = other.points
         if points is None or other_points is None:
             return
@@ -1468,16 +1468,16 @@ class Mesh:
             points, np.asarray(other_points, dtype=np.float64), tolerance)
         if matched.size == 0:
             return
-        new = self.from_vertices(matched, contained=True, exclude=True)
-        self._points = new._points
-        self._counts = new._counts
-        self._indices = new._indices
-        self._normals = None
+        new                 = self.from_vertices(matched, contained=True, exclude=True)
+        self._points        = new._points
+        self._counts        = new._counts
+        self._indices       = new._indices
+        self._normals       = None
         self.normal_indices = None
-        self._colors = None
-        self.color_indices = None
-        self._tags = {}
-        self._uv_sets = None
+        self._colors        = None
+        self.color_indices  = None
+        self._tags          = {}
+        self._uv_sets       = None
 
     def __isub__(self, other):
         if isinstance(other, Mesh):
@@ -1485,7 +1485,7 @@ class Mesh:
         elif _looks_like_morph(other):
             self._iadd_morph(other, -1.0)
         else:
-            pts = self._points_for_edit()
+            pts          = self._points_for_edit()
             self._points = pts - np.asarray(other, dtype=np.float64)
         return self
 
@@ -1497,7 +1497,7 @@ class Mesh:
             raise TypeError(
                 "Mesh * Mesh and Mesh * Morph are undefined; multiply by a "
                 "scalar or a (3,) vector to scale the point field")
-        pts = self._points_for_edit()
+        pts          = self._points_for_edit()
         self._points = pts * np.asarray(other, dtype=np.float64)
         return self
 
@@ -1520,7 +1520,7 @@ class Mesh:
         if nm:
             return 'Mesh("%s")' % nm
         mode = "attached" if self.__dict__.get("_attached") else "value"
-        p = self.__dict__.get("_points")
+        p    = self.__dict__.get("_points")
         if p is None:
             n = "lazy" if self.__dict__.get("_attached") else 0
         else:
@@ -1552,29 +1552,29 @@ class NurbsCurve:
 
     def __init__(self, points=None, degree=3, periodic=False, kv=None):
         self._attached = False
-        self._data = None          # retained api2 geometry DATA MObject
-        self._fn = None            # cached MFnNurbsCurve (attached mode)
-        self._tags = None          # cached component_tags dict
-        self._points = None if points is None else np.asarray(points, dtype=np.float64)
-        self._degree = int(degree) if degree is not None else 3
+        self._data     = None  # retained api2 geometry DATA MObject
+        self._fn       = None  # cached MFnNurbsCurve (attached mode)
+        self._tags     = None  # cached component_tags dict
+        self._points   = None if points is None else np.asarray(points, dtype=np.float64)
+        self._degree   = int(degree) if degree is not None else 3
         self._periodic = bool(periodic)
-        self._knots = None if kv is None else np.asarray(kv, dtype=np.float64)
-        self._form = None          # value mode derives form from periodic
+        self._knots    = None if kv is None else np.asarray(kv, dtype=np.float64)
+        self._form     = None  # value mode derives form from periodic
 
     @classmethod
     def _attach(cls, data_mobject, source_plug=None):
-        c = cls.__new__(cls)
+        c           = cls.__new__(cls)
         c._attached = True
-        c._data = data_mobject
-        c._fn = None
-        c._tags = None
-        c._points = None
-        c._degree = None
+        c._data     = data_mobject
+        c._fn       = None
+        c._tags     = None
+        c._points   = None
+        c._degree   = None
         c._periodic = None
-        c._knots = None
-        c._form = None
+        c._knots    = None
+        c._form     = None
         c._src_plug = source_plug
-        c._name = None
+        c._name     = None
         return c
 
     @property
@@ -1583,7 +1583,7 @@ class NurbsCurve:
         Lazy + cached -- see :func:`_source_node_name`."""
         nm = self.__dict__.get("_name")
         if nm is None:
-            nm = _source_node_name(self.__dict__.get("_src_plug"))
+            nm                     = _source_node_name(self.__dict__.get("_src_plug"))
             self.__dict__["_name"] = nm
         return nm
 
@@ -1595,7 +1595,7 @@ class NurbsCurve:
         if f is None:
             d = self.__dict__.get("_data")
             if d is not None and not d.isNull():
-                f = om.MFnNurbsCurve(d)
+                f                    = om.MFnNurbsCurve(d)
                 self.__dict__["_fn"] = f
         return f
 
@@ -1617,8 +1617,8 @@ class NurbsCurve:
         except Exception:
             pass
         self._attached = False
-        self._data = None
-        self._fn = None
+        self._data     = None
+        self._fn       = None
 
     # ----- lazy numpy read surface -----
     @property
@@ -1652,7 +1652,7 @@ class NurbsCurve:
         if v is None and self.__dict__.get("_attached"):
             f = self.fn
             if f is not None:
-                v = int(f.degree)
+                v            = int(f.degree)
                 self._degree = v
         return v
 
@@ -1667,7 +1667,7 @@ class NurbsCurve:
         if v is None and self.__dict__.get("_attached"):
             f = self.fn
             if f is not None:
-                v = int(f.form)
+                v          = int(f.form)
                 self._form = v
         return v
 
@@ -1696,7 +1696,7 @@ class NurbsCurve:
         if v is None and self.__dict__.get("_attached"):
             f = self.fn
             if f is not None:
-                v = np.asarray(f.knots(), dtype=np.float64)
+                v           = np.asarray(f.knots(), dtype=np.float64)
                 self._knots = v
         return v
 
@@ -1753,14 +1753,14 @@ class NurbsCurve:
     def copy(self):
         """A DETACHED value copy (severs the .fn link). Edit its channels and
         assign to an output plug -- no imports required."""
-        c = NurbsCurve()
-        p = self.points
-        c._points = None if p is None else np.array(p, dtype=np.float64)
-        c._degree = self.degree
-        c._form = self.form
+        c           = NurbsCurve()
+        p           = self.points
+        c._points   = None if p is None else np.array(p, dtype=np.float64)
+        c._degree   = self.degree
+        c._form     = self.form
         c._periodic = self.periodic
-        k = self.knots
-        c._knots = None if k is None else np.array(k, dtype=np.float64)
+        k           = self.knots
+        c._knots    = None if k is None else np.array(k, dtype=np.float64)
         try:
             c._tags = {kk: dict(vv) for kk, vv in self.component_tags.items()}
         except Exception:
@@ -1775,13 +1775,13 @@ class NurbsCurve:
     def to_json(self):
         """A plain-JSON dict of every channel -- no numpy, no Maya handles."""
         return {
-            "type": "NurbsCurve",
-            "name": self.name,
-            "points": _jlist(self.points),
-            "degree": None if self.degree is None else int(self.degree),
-            "form": self.form,
-            "periodic": bool(self.periodic),
-            "knots": _jlist(self.knots),
+            "type":           "NurbsCurve",
+            "name":           self.name,
+            "points":         _jlist(self.points),
+            "degree":         None if self.degree is None else int(self.degree),
+            "form":           self.form,
+            "periodic":       bool(self.periodic),
+            "knots":          _jlist(self.knots),
             "component_tags": _jtags(self.component_tags),
         }
 
@@ -1791,8 +1791,8 @@ class NurbsCurve:
         if isinstance(payload, (str, bytes)):
             payload = _json.loads(payload)
         c = cls(points=payload.get("points"),
-                degree=payload.get("degree") or 3,
-                periodic=bool(payload.get("periodic")),
+                degree   = payload.get("degree") or 3,
+                periodic = bool(payload.get("periodic")),
                 kv=payload.get("knots"))
         c._form = payload.get("form")
         c._tags = _tags_from_json(payload.get("component_tags"))
@@ -1857,8 +1857,8 @@ class NurbsCurve:
         if nm:
             return 'NurbsCurve("%s")' % nm
         mode = "attached" if self.__dict__.get("_attached") else "value"
-        p = self.__dict__.get("_points")
-        n = ("lazy" if self.__dict__.get("_attached") else 0) if p is None else len(p)
+        p    = self.__dict__.get("_points")
+        n    = ("lazy" if self.__dict__.get("_attached") else 0) if p is None else len(p)
         return "<NurbsCurve %s cvs=%s>" % (mode, n)
 
 
@@ -1884,42 +1884,42 @@ class NurbsSurface:
     def __init__(self, points=None, degree_u=3, degree_v=3,
                  periodic_u=False, periodic_v=False,
                  kv_u=None, kv_v=None, num_u=None, num_v=None):
-        self._attached = False
-        self._data = None
-        self._fn = None
-        self._tags = None
-        self._points = None if points is None else np.asarray(points, dtype=np.float64)
-        self._degree_u = int(degree_u) if degree_u is not None else 3
-        self._degree_v = int(degree_v) if degree_v is not None else 3
+        self._attached   = False
+        self._data       = None
+        self._fn         = None
+        self._tags       = None
+        self._points     = None if points is None else np.asarray(points, dtype=np.float64)
+        self._degree_u   = int(degree_u) if degree_u is not None else 3
+        self._degree_v   = int(degree_v) if degree_v is not None else 3
         self._periodic_u = bool(periodic_u)
         self._periodic_v = bool(periodic_v)
-        self._knots_u = None if kv_u is None else np.asarray(kv_u, dtype=np.float64)
-        self._knots_v = None if kv_v is None else np.asarray(kv_v, dtype=np.float64)
-        self._num_u = num_u
-        self._num_v = num_v
-        self._form_u = None
-        self._form_v = None
+        self._knots_u    = None if kv_u is None else np.asarray(kv_u, dtype=np.float64)
+        self._knots_v    = None if kv_v is None else np.asarray(kv_v, dtype=np.float64)
+        self._num_u      = num_u
+        self._num_v      = num_v
+        self._form_u     = None
+        self._form_v     = None
 
     @classmethod
     def _attach(cls, data_mobject, source_plug=None):
-        s = cls.__new__(cls)
-        s._attached = True
-        s._data = data_mobject
-        s._fn = None
-        s._tags = None
-        s._points = None
-        s._degree_u = None
-        s._degree_v = None
+        s             = cls.__new__(cls)
+        s._attached   = True
+        s._data       = data_mobject
+        s._fn         = None
+        s._tags       = None
+        s._points     = None
+        s._degree_u   = None
+        s._degree_v   = None
         s._periodic_u = None
         s._periodic_v = None
-        s._knots_u = None
-        s._knots_v = None
-        s._num_u = None
-        s._num_v = None
-        s._form_u = None
-        s._form_v = None
-        s._src_plug = source_plug
-        s._name = None
+        s._knots_u    = None
+        s._knots_v    = None
+        s._num_u      = None
+        s._num_v      = None
+        s._form_u     = None
+        s._form_v     = None
+        s._src_plug   = source_plug
+        s._name       = None
         return s
 
     @property
@@ -1928,7 +1928,7 @@ class NurbsSurface:
         Lazy + cached -- see :func:`_source_node_name`."""
         nm = self.__dict__.get("_name")
         if nm is None:
-            nm = _source_node_name(self.__dict__.get("_src_plug"))
+            nm                     = _source_node_name(self.__dict__.get("_src_plug"))
             self.__dict__["_name"] = nm
         return nm
 
@@ -1940,7 +1940,7 @@ class NurbsSurface:
         if f is None:
             d = self.__dict__.get("_data")
             if d is not None and not d.isNull():
-                f = om.MFnNurbsSurface(d)
+                f                    = om.MFnNurbsSurface(d)
                 self.__dict__["_fn"] = f
         return f
 
@@ -1966,8 +1966,8 @@ class NurbsSurface:
         except Exception:
             pass
         self._attached = False
-        self._data = None
-        self._fn = None
+        self._data     = None
+        self._fn       = None
 
     # ----- lazy numpy read surface -----
     @property
@@ -1976,7 +1976,7 @@ class NurbsSurface:
         if v is None and self.__dict__.get("_attached"):
             f = self.fn
             if f is not None:
-                v = int(f.numCVsInU)
+                v           = int(f.numCVsInU)
                 self._num_u = v
         return v
 
@@ -1991,7 +1991,7 @@ class NurbsSurface:
         if v is None and self.__dict__.get("_attached"):
             f = self.fn
             if f is not None:
-                v = int(f.numCVsInV)
+                v           = int(f.numCVsInV)
                 self._num_v = v
         return v
 
@@ -2035,7 +2035,7 @@ class NurbsSurface:
         if v is None and self.__dict__.get("_attached"):
             f = self.fn
             if f is not None:
-                v = cast(getattr(f, fn_attr))
+                v                         = cast(getattr(f, fn_attr))
                 self.__dict__[cache_name] = v
         return v
 
@@ -2107,7 +2107,7 @@ class NurbsSurface:
         if v is None and self.__dict__.get("_attached"):
             f = self.fn
             if f is not None:
-                v = np.asarray(f.knotsInU(), dtype=np.float64)
+                v             = np.asarray(f.knotsInU(), dtype=np.float64)
                 self._knots_u = v
         return v
 
@@ -2122,7 +2122,7 @@ class NurbsSurface:
         if v is None and self.__dict__.get("_attached"):
             f = self.fn
             if f is not None:
-                v = np.asarray(f.knotsInV(), dtype=np.float64)
+                v             = np.asarray(f.knotsInV(), dtype=np.float64)
                 self._knots_v = v
         return v
 
@@ -2191,21 +2191,21 @@ class NurbsSurface:
 
     def copy(self):
         """A DETACHED value copy (severs the .fn link)."""
-        s = NurbsSurface()
-        p = self.points
-        s._points = None if p is None else np.array(p, dtype=np.float64)
-        s._degree_u = self.degree_u
-        s._degree_v = self.degree_v
-        s._form_u = self.form_u
-        s._form_v = self.form_v
+        s             = NurbsSurface()
+        p             = self.points
+        s._points     = None if p is None else np.array(p, dtype=np.float64)
+        s._degree_u   = self.degree_u
+        s._degree_v   = self.degree_v
+        s._form_u     = self.form_u
+        s._form_v     = self.form_v
         s._periodic_u = self.periodic_u
         s._periodic_v = self.periodic_v
-        ku = self.knots_u
-        s._knots_u = None if ku is None else np.array(ku, dtype=np.float64)
-        kvv = self.knots_v
-        s._knots_v = None if kvv is None else np.array(kvv, dtype=np.float64)
-        s._num_u = self.num_u
-        s._num_v = self.num_v
+        ku            = self.knots_u
+        s._knots_u    = None if ku is None else np.array(ku, dtype=np.float64)
+        kvv           = self.knots_v
+        s._knots_v    = None if kvv is None else np.array(kvv, dtype=np.float64)
+        s._num_u      = self.num_u
+        s._num_v      = self.num_v
         try:
             s._tags = {kk: dict(vv) for kk, vv in self.component_tags.items()}
         except Exception:
@@ -2220,19 +2220,19 @@ class NurbsSurface:
     def to_json(self):
         """A plain-JSON dict of every channel -- no numpy, no Maya handles."""
         return {
-            "type": "NurbsSurface",
-            "name": self.name,
-            "points": _jlist(self.points),
-            "degree_u": None if self.degree_u is None else int(self.degree_u),
-            "degree_v": None if self.degree_v is None else int(self.degree_v),
-            "form_u": self.form_u,
-            "form_v": self.form_v,
-            "periodic_u": bool(self.periodic_u),
-            "periodic_v": bool(self.periodic_v),
-            "knots_u": _jlist(self.knots_u),
-            "knots_v": _jlist(self.knots_v),
-            "num_u": None if self.num_u is None else int(self.num_u),
-            "num_v": None if self.num_v is None else int(self.num_v),
+            "type":           "NurbsSurface",
+            "name":           self.name,
+            "points":         _jlist(self.points),
+            "degree_u":       None if self.degree_u is None else int(self.degree_u),
+            "degree_v":       None if self.degree_v is None else int(self.degree_v),
+            "form_u":         self.form_u,
+            "form_v":         self.form_v,
+            "periodic_u":     bool(self.periodic_u),
+            "periodic_v":     bool(self.periodic_v),
+            "knots_u":        _jlist(self.knots_u),
+            "knots_v":        _jlist(self.knots_v),
+            "num_u":          None if self.num_u is None else int(self.num_u),
+            "num_v":          None if self.num_v is None else int(self.num_v),
             "component_tags": _jtags(self.component_tags),
         }
 
@@ -2243,15 +2243,15 @@ class NurbsSurface:
             payload = _json.loads(payload)
         s = cls(points=payload.get("points"),
                 num_u=payload.get("num_u"), num_v=payload.get("num_v"),
-                degree_u=payload.get("degree_u") or 3,
-                degree_v=payload.get("degree_v") or 3,
-                periodic_u=bool(payload.get("periodic_u")),
-                periodic_v=bool(payload.get("periodic_v")),
+                degree_u   = payload.get("degree_u") or 3,
+                degree_v   = payload.get("degree_v") or 3,
+                periodic_u = bool(payload.get("periodic_u")),
+                periodic_v = bool(payload.get("periodic_v")),
                 kv_u=payload.get("knots_u"), kv_v=payload.get("knots_v"))
         s._form_u = payload.get("form_u")
         s._form_v = payload.get("form_v")
-        s._tags = _tags_from_json(payload.get("component_tags"))
-        s._name = payload.get("name")
+        s._tags   = _tags_from_json(payload.get("component_tags"))
+        s._name   = payload.get("name")
         return s
 
     def to_mobject(self):
@@ -2266,7 +2266,7 @@ class NurbsSurface:
         if nm:
             return 'NurbsSurface("%s")' % nm
         mode = "attached" if self.__dict__.get("_attached") else "value"
-        p = self.__dict__.get("_points")
+        p    = self.__dict__.get("_points")
         if p is None:
             n = "lazy" if self.__dict__.get("_attached") else 0
         else:
@@ -2281,8 +2281,8 @@ class NurbsSurface:
 # ===========================================================================
 
 _REQUIRED = {
-    "mesh": ("points", "counts", "indices"),
-    "curve": ("points",),
+    "mesh":    ("points", "counts", "indices"),
+    "curve":   ("points",),
     "surface": ("points",),
 }
 
@@ -2332,7 +2332,7 @@ def _detached_state(obj):
     state.pop("_data", None)
     state.pop("_fn", None)
     state["_attached"] = False
-    state["_name"] = obj.name          # keep the source-shape label for display
+    state["_name"]     = obj.name          # keep the source-shape label for display
     return state
 
 

@@ -30,7 +30,7 @@ from typing import Any, Dict
 
 __all__ = ["GapSpacingMixin", "coerce", "is_empty", "MAX_GAP"]
 
-_PLUG = "_apiGapSpacing"
+_PLUG   = "_apiGapSpacing"
 
 # A ceiling, so a stuck key or a malformed file cannot push the class
 # declaration a thousand lines down a buffer the user then has to scroll back.

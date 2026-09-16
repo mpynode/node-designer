@@ -45,8 +45,8 @@ from typing import List, NamedTuple
 
 
 class Completion(NamedTuple):
-    text: str
-    kind: str
+    text:    str
+    kind:    str
     tooltip: str
 
 
@@ -218,10 +218,10 @@ def _plug_completions(node_name):
         # The literal text typed after ``self.``. For nested rows (e.g.
         # ``amplitude.amplitudeX``) the FULL path is what the SelfProxy /
         # PlugProxy resolver expects.
-        path = r.plug_path
-        kind = "plug" + ("-user" if r.is_user_added else "")
-        suffix = "[0]" if r.is_array else ""
-        text = "self.{}{}".format(path, suffix)
+        path    = r.plug_path
+        kind    = "plug" + ("-user" if r.is_user_added else "")
+        suffix  = "[0]" if r.is_array else ""
+        text    = "self.{}{}".format(path, suffix)
         tooltip = "{} ({})".format(path, r.attr_type or "plug")
         out.append(Completion(text, kind, tooltip))
 
@@ -372,7 +372,7 @@ def make_completer(parent, words):
         except Exception:
             return None
     completer = QCompleter(parent)
-    model = QStringListModel(list(words), completer)
+    model     = QStringListModel(list(words), completer)
     completer.setModel(model)
     completer.setCaseSensitivity(_Qt.CaseInsensitive)
     completer.setCompletionMode(QCompleter.PopupCompletion)

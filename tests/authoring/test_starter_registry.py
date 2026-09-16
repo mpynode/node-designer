@@ -83,8 +83,8 @@ class TestSeederUsesStarter(unittest.TestCase):
 
     def test_skincluster_seeds_lbs_compute_and_numpy_init(self):
         from mpynode._node_registry import wrap_node
-        name = self._create("mPySkinCluster")
-        node = wrap_node(name, "mPySkinCluster")
+        name    = self._create("mPySkinCluster")
+        node    = wrap_node(name, "mPySkinCluster")
         compute = node.get_compute_expression() or ""
         self.assertIn(
             "self.linear_blend(rest, self.weightList, self.matrix, "
@@ -102,8 +102,8 @@ class TestSeederUsesStarter(unittest.TestCase):
     def test_unregistered_type_gets_generic_header_not_starter(self):
         from mpynode._node_registry import wrap_node
         from mpynode._common.lifecycle.compute_header import make_compute_header
-        name = self._create("mPyNode")
-        node = wrap_node(name, "mPyNode")
+        name    = self._create("mPyNode")
+        node    = wrap_node(name, "mPyNode")
         compute = node.get_compute_expression() or ""
         # No starter leaked into a non-registered type; it got the header verbatim.
         self.assertNotIn("self.weightList", compute)
@@ -115,8 +115,8 @@ class TestSeederUsesStarter(unittest.TestCase):
         # left untouched when the seeder runs.
         from mpynode._base.commands import _seed_headers
         from mpynode._node_registry import wrap_node
-        name = mc.createNode("mPySkinCluster")
-        node = wrap_node(name, "mPySkinCluster")
+        name   = mc.createNode("mPySkinCluster")
+        node   = wrap_node(name, "mPySkinCluster")
         custom = "# my custom code\nmesh = self.outputGeometry[0]\n"
         node.set_compute_expression(custom)
         _seed_headers(name, "mPySkinCluster")

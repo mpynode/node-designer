@@ -19,11 +19,11 @@ Design notes:
 from __future__ import annotations
 
 # Canonical tier identifiers (match the source tiers the seeder walks).
-TIER_INIT = "init"
-TIER_COMPUTE = "compute"
+TIER_INIT     = "init"
+TIER_COMPUTE  = "compute"
 TIER_VIEWPORT = "viewport"
-TIER_OSL = "osl"
-TIER_METHODS = "methods"
+TIER_OSL      = "osl"
+TIER_METHODS  = "methods"
 
 
 def _build_registry() -> dict:
@@ -34,12 +34,12 @@ def _build_registry() -> dict:
 
     return {
         "mPyFile": {
-            TIER_INIT: file_defaults.DEFAULT_INIT_SOURCE,
-            TIER_COMPUTE: file_defaults.DEFAULT_COMPUTE_SOURCE,
+            TIER_INIT:     file_defaults.DEFAULT_INIT_SOURCE,
+            TIER_COMPUTE:  file_defaults.DEFAULT_COMPUTE_SOURCE,
             TIER_VIEWPORT: file_defaults.DEFAULT_VIEWPORT_SOURCE,
         },
         "mPySkinCluster": {
-            TIER_INIT: skin_cluster_defaults.DEFAULT_INIT_SOURCE,
+            TIER_INIT:    skin_cluster_defaults.DEFAULT_INIT_SOURCE,
             TIER_COMPUTE: skin_cluster_defaults.DEFAULT_COMPUTE_SOURCE,
         },
     }

@@ -37,7 +37,7 @@ class TestMPyTransformBasics(unittest.TestCase):
         self.assertEqual(mc.nodeType(n), "mPyTransform")
 
     def test_node_inherits_transform(self):
-        n = mc.createNode("mPyTransform", name="t1")
+        n         = mc.createNode("mPyTransform", name="t1")
         inherited = mc.nodeType(n, inherited=True) or []
         self.assertIn("transform", inherited)
         self.assertIn("dagNode", inherited)
@@ -231,11 +231,11 @@ class TestMPyTransformExpression(unittest.TestCase):
             "import numpy as np\nself.matrix = np.eye(4)\n",
             type="string",
         )
-        buf = io.StringIO()
+        buf          = io.StringIO()
         saved_stderr = sys.stderr
-        sys.stderr = buf
+        sys.stderr   = buf
         try:
-            m = mc.getAttr(n + ".matrix")
+            m  = mc.getAttr(n + ".matrix")
             wm = mc.getAttr(n + ".worldMatrix[0]")
         finally:
             sys.stderr = saved_stderr
@@ -352,7 +352,7 @@ class TestMPyTransformWrapper(unittest.TestCase):
     def test_set_get_expression_roundtrip(self):
         from mpynode.wrappers.mpy_transform import MPyTransform
 
-        t = MPyTransform.create(name="wrap2")
+        t   = MPyTransform.create(name="wrap2")
         src = "self.local_matrix = None"
         t.set_compute_expression(src)
         self.assertEqual(t.get_compute_expression(), src)
@@ -565,7 +565,7 @@ class TestF4PolyExpressionStillWorks(unittest.TestCase):
         sel.getDependNode(0, node)
         plug = om.MFnDependencyNode(node).findPlug("outMesh", True)
         data = plug.asMObject()
-        mfn = om.MFnMesh(data)
+        mfn  = om.MFnMesh(data)
         self.assertEqual(int(mfn.numVertices()), 4)
         self.assertEqual(int(mfn.numPolygons()), 1)
 
@@ -651,8 +651,8 @@ class TestMatrixInputDirtiesMatrixOutputs(unittest.TestCase):
         )
         node = aim.get_name()
 
-        l0 = mc.spaceLocator(name="src0")[0]
-        l1 = mc.spaceLocator(name="src1")[0]
+        l0   = mc.spaceLocator(name="src0")[0]
+        l1   = mc.spaceLocator(name="src1")[0]
         mc.setAttr(l0 + ".translate", 0.0, 0.0, 0.0, type="double3")
         mc.setAttr(l1 + ".translate", 10.0, 0.0, 0.0, type="double3")
         mc.connectAttr(l0 + ".worldMatrix[0]", node + ".matrix0", force=True)
@@ -718,11 +718,11 @@ class TestFlushFreeMatrixInputTracking(unittest.TestCase):
         NO time connection -- its worldMatrix + child gizmo track the knot
         midpoint across a scrubbed timeline, with NO per-frame flush callback."""
         node = self._make_aim("aimTrack")
-        l0 = mc.spaceLocator(name="knot0")[0]
-        l1 = mc.spaceLocator(name="knot1")[0]
-        mc.setKeyframe(l0 + ".translateX", time=0, value=0.0)
+        l0   = mc.spaceLocator(name="knot0")[0]
+        l1   = mc.spaceLocator(name="knot1")[0]
+        mc.setKeyframe(l0 + ".translateX", time=0,  value=0.0)
         mc.setKeyframe(l0 + ".translateX", time=30, value=6.0)
-        mc.setKeyframe(l1 + ".translateX", time=0, value=10.0)
+        mc.setKeyframe(l1 + ".translateX", time=0,  value=10.0)
         mc.setKeyframe(l1 + ".translateX", time=30, value=30.0)
         mc.connectAttr(l0 + ".worldMatrix[0]", node + ".matrix0", force=True)
         mc.connectAttr(l1 + ".worldMatrix[0]", node + ".matrix1", force=True)
@@ -773,7 +773,7 @@ class TestFlushFreeMatrixInputTracking(unittest.TestCase):
         # Aim-like case: translateX drives something downstream (as tension does)
         # -> must skip to the next free channel, translateY.
         aim = mc.createNode("mPyTransform", name="aimXform")
-        md = mc.createNode("multiplyDivide", name="tensionSink")
+        md  = mc.createNode("multiplyDivide", name="tensionSink")
         mc.connectAttr(aim + ".translateX", md + ".input1X", force=True)
         self.assertEqual(free_translate_channel(aim), "translateY",
                          "translateX is a connection SOURCE (feeds the solver) "

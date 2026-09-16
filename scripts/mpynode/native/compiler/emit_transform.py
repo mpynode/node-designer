@@ -80,7 +80,7 @@ _BUILTIN_TRIGGER_NAMES = (
 )
 
 # Hidden double[16] array output carrying the desired offsetParentMatrix.
-_OPM_FLAT_ATTR = "_outLocalFlat"
+_OPM_FLAT_ATTR       = "_outLocalFlat"
 _OPM_FLAT_ATTR_SHORT = "_olf"
 
 # Gate-mix helper for the gated dual-matrix contract: take rotation / translate /
@@ -525,14 +525,14 @@ def _generate_transform_cpp(spec: dict, for_port: bool = False) -> str:
     PORT markers, inside ``desiredLocal``) is AI-filled when the compute does not
     deterministically lower.
     """
-    sg = spec["suggested"]
-    cls = sg["class_name"]
-    mcls = cls + "Matrix"
+    sg        = spec["suggested"]
+    cls       = sg["class_name"]
+    mcls      = cls + "Matrix"
     type_name = sg["node_type_name"]
-    type_id = sg["type_id"]
+    type_id   = sg["type_id"]
     matrix_id = _matrix_type_id(type_id)
 
-    matrix_inputs = _transform_matrix_inputs(spec)
+    matrix_inputs  = _transform_matrix_inputs(spec)
     generic_inputs = _transform_generic_inputs(spec)
 
     # Deterministic numpy->C++ lowering of the expression math. If the whole

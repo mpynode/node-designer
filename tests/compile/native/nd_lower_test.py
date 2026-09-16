@@ -33,8 +33,8 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 # counting: counting three levels to scripts/ from here lands one ABOVE the
 # repo, which is a real directory, so sys.path.insert would succeed and the
 # only symptom would be a confusing `from mpynode...` ImportError later.
-_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(HERE)))
-_INC = os.path.join(_ROOT, "scripts", "mpynode", "native", "compiler")
+_ROOT    = os.path.dirname(os.path.dirname(os.path.dirname(HERE)))
+_INC     = os.path.join(_ROOT, "scripts", "mpynode", "native", "compiler")
 _SCRIPTS = os.path.join(_ROOT, "scripts")
 if _SCRIPTS not in sys.path:
     sys.path.insert(0, _SCRIPTS)
@@ -73,8 +73,8 @@ def _cpp_lit(v):
 
 def _decl_input(d, value):
     """C++ declaring the Maya input local in_<member> seeded to `value`."""
-    m = d["member"]
-    t = d["meta"]["type"]
+    m   = d["member"]
+    t   = d["meta"]["type"]
     src = "in_" + m
     if not d["meta"]["is_array"]:
         if t in _VEC:
@@ -118,9 +118,9 @@ def _decl_output(d):
 
 
 def _print_output(d):
-    m = d["member"]
+    m    = d["member"]
     plug = d["plug"]
-    t = d["meta"]["type"]
+    t    = d["meta"]["type"]
     if not d["meta"]["is_array"]:
         if t in _VEC or t == "color":
             return ('    printf("PROBE %s 3 : %%.17g %%.17g %%.17g\\n", '
@@ -273,8 +273,8 @@ def _parse_probes(text):
         t = line.split()
         if len(t) < 3 or t[0] != "PROBE":
             continue
-        plug = t[1]
-        colon = t.index(":")
+        plug      = t[1]
+        colon     = t.index(":")
         got[plug] = np.array([float(x) for x in t[colon + 1:]], dtype=np.float64)
     return got
 
@@ -821,7 +821,7 @@ def _strip_imports(source):
     """Blank top-level import statements (numpy is provided in the oracle
     namespace; helper imports are unused after the build line is stripped)."""
     import ast as _ast
-    tree = _ast.parse(source)
+    tree  = _ast.parse(source)
     strip = []
     for st in tree.body:
         if isinstance(st, (_ast.Import, _ast.ImportFrom)):
@@ -1179,21 +1179,21 @@ def _skin_deform_oracle(rest, env_val, joint_mats, bind_mats, w_dense, source):
     """Run the skin compute on numpy: self.weightList/matrix/bindPreMatrix are the
     dense arrays (np.asarray is identity on them), self.envelope the float, and
     self.outputGeometry[0] the getPoints/setPoints mesh proxy."""
-    obj = _Self()
-    proxy = _MeshProxy(rest)
+    obj                = _Self()
+    proxy              = _MeshProxy(rest)
     obj.outputGeometry = [proxy]
     # envelope is a FLOAT plug (read via asFloat in both the compiled deform() and
     # the interpreted node), so mimic float32 precision -- otherwise a non-exact
     # value like 0.4 diverges from the compiled `float env` at ~1e-8.
-    obj.envelope = float(np.float32(env_val))
-    obj.weightList = np.asarray(w_dense, dtype=np.float64)
-    obj.matrix = np.asarray(joint_mats, dtype=np.float64).reshape(-1, 4, 4)
+    obj.envelope      = float(np.float32(env_val))
+    obj.weightList    = np.asarray(w_dense, dtype=np.float64)
+    obj.matrix        = np.asarray(joint_mats, dtype=np.float64).reshape(-1, 4, 4)
     obj.bindPreMatrix = np.asarray(bind_mats, dtype=np.float64).reshape(-1, 4, 4)
     exec(_strip_imports("import numpy as np\n" + source), {"np": np, "self": obj})
     rest_arr = np.asarray(rest, dtype=np.float64).reshape(-1, 3)
-    result = rest_arr.copy()
+    result   = rest_arr.copy()
     if proxy._out is not None:
-        lim = min(proxy._out.shape[0], rest_arr.shape[0])
+        lim          = min(proxy._out.shape[0], rest_arr.shape[0])
         result[:lim] = proxy._out[:lim]
     return result.ravel()
 
@@ -1222,10 +1222,10 @@ class _MeshProxy:
 
 
 def _deform_oracle(ins, rest, env_val, values, source):
-    obj = _Self()
-    proxy = _MeshProxy(rest)
+    obj                = _Self()
+    proxy              = _MeshProxy(rest)
     obj.outputGeometry = [proxy]
-    obj.envelope = float(env_val)
+    obj.envelope       = float(env_val)
     for d in ins:
         t = d["meta"]["type"]
         v = values[d["plug"]]
@@ -1250,11 +1250,11 @@ def _deform_oracle(ins, rest, env_val, values, source):
     exec(_strip_imports(source), {"np": np, "self": obj})
     # scatter min(M, n): the C++ writeback commits only the first n rows.
     rest_arr = np.asarray(rest, dtype=np.float64).reshape(-1, 3)
-    n = rest_arr.shape[0]
-    result = rest_arr.copy()
-    out = proxy._out
+    n        = rest_arr.shape[0]
+    result   = rest_arr.copy()
+    out      = proxy._out
     if out is not None:
-        lim = min(out.shape[0], n)
+        lim          = min(out.shape[0], n)
         result[:lim] = out[:lim]
     return result.ravel()
 
@@ -1588,24 +1588,24 @@ def _transform_oracle(inputs, source):
         setattr(obj, plug, _MatrixView(mat))
     # This node's own live channels -- seeded to the SAME values the C++ scaffold
     # declares t / r / sc / shr / ro with (rotate is RADIANS, rotate_order 0-based).
-    obj.translate = np.array(_XF_T, np.float64)
-    obj.rotate = np.array(_XF_R, np.float64)
-    obj.scale = np.array(_XF_SC, np.float64)
-    obj.shear = np.array(_XF_SHR, np.float64)
+    obj.translate    = np.array(_XF_T,   np.float64)
+    obj.rotate       = np.array(_XF_R,   np.float64)
+    obj.scale        = np.array(_XF_SC,  np.float64)
+    obj.shear        = np.array(_XF_SHR, np.float64)
     obj.rotate_order = _XF_RO
     obj.local_matrix = None
     # Gates default TRUE (mirrors emit_transform's desiredLocal scaffold).
-    obj.apply_rotate = True
+    obj.apply_rotate    = True
     obj.apply_translate = True
-    obj.apply_scale = True
+    obj.apply_scale     = True
     exec(_strip_imports("import numpy as np\n" + source), {"np": np, "self": obj})
     return {
         "local_set": obj.local_matrix is not None,
         "local_matrix": (np.asarray(obj.local_matrix, np.float64).ravel()
                          if obj.local_matrix is not None else None),
-        "apply_rotate": bool(obj.apply_rotate),
+        "apply_rotate":    bool(obj.apply_rotate),
         "apply_translate": bool(obj.apply_translate),
-        "apply_scale": bool(obj.apply_scale),
+        "apply_scale":     bool(obj.apply_scale),
     }
 
 
@@ -1620,11 +1620,11 @@ _PW = [[2.0, 0.0, 0.0, 0.0], [0.0, 1.0, 0.0, 0.0],
 # so a positive read test can assert self.translate / rotate / scale / shear /
 # rotate_order parity (the oracle seeds the SAME values). rotate is RADIANS; ro
 # is the 0-based enum int (matching the .rotateOrder plug).
-_XF_T = (1.0, 2.0, 3.0)
-_XF_R = (0.1, 0.2, 0.3)
-_XF_SC = (2.0, 3.0, 4.0)
+_XF_T   = (1.0, 2.0, 3.0)
+_XF_R   = (0.1, 0.2, 0.3)
+_XF_SC  = (2.0, 3.0, 4.0)
 _XF_SHR = (0.5, 0.0, 0.0)
-_XF_RO = 2
+_XF_RO  = 2
 
 # (name, inputs{plug:4x4}, source)
 TRANS = [
@@ -1771,9 +1771,9 @@ def _check_external_helper_units(fails):
     ins = [_descr("x", "double", True, "input"),
            _descr("y", "double", True, "input"),
            _descr("z", "double", True, "input")]
-    outs = [_descr("out", "double", True, "output")]
+    outs    = [_descr("out", "double", True, "output")]
     compute = "self.out = eval_sphere(self.x, self.y, self.z, 2.0)\n"
-    unit = {"module": "m.sdf", "name": "eval_sphere", "source": eval_sphere}
+    unit    = {"module": "m.sdf", "name": "eval_sphere", "source": eval_sphere}
 
     if nd_lower.try_lower_compute(ins, outs, {"compute": compute}) is not None:
         fails.append("HELPER UNITS: bare call lowered WITHOUT a helper source "
@@ -1904,9 +1904,9 @@ def _check_output_buffer_contract(fails):
                   [-1.0, -2.0, -3.0]]}, (N, 3)),
     ]
     for kind, ins_s, out_plug, source, values, seed_shape in fixtures:
-        ins = [_descr(p, t, a, "input") for (p, t, a) in ins_s]
+        ins      = [_descr(p, t, a, "input") for (p, t, a) in ins_s]
         out_type = "vector" if kind == "vec" else "double"
-        outd = _descr(out_plug, out_type, True, "output")
+        outd     = _descr(out_plug, out_type, True, "output")
         try:
             body = nd_lower.lower_compute(ins, [outd], source)
         except Exception as e:
@@ -1915,7 +1915,7 @@ def _check_output_buffer_contract(fails):
         # Hand-built main(): input + output decls, the `data` stub sized to N and
         # the member symbol (aOut/aPts) the count line references, then the body.
         member = _member(out_plug)
-        L = [_SHIM, _OUTBUF_DATA_SHIM, "int main() {"]
+        L      = [_SHIM, _OUTBUF_DATA_SHIM, "int main() {"]
         for d in ins:
             L.append(_decl_input(d, values[d["plug"]]))
         L.append(_decl_output(outd))
@@ -2033,7 +2033,7 @@ def _check_transform_matrix_inputs(fails):
         fails.append("XF-MTX aim: %s" % err)
         return
     probes = _parse_probes(out)
-    exp = _transform_oracle(inputs, _AIM_COMPUTE)
+    exp    = _transform_oracle(inputs, _AIM_COMPUTE)
 
     # The aim publishes a LOCAL matrix (world @ inv(parent)) with rotate+translate.
     if not exp["local_set"]:
@@ -2064,7 +2064,7 @@ def main():
     _check_transform_matrix_inputs(fails)
     n_ok = 0
     for name, ins_s, outs_s, source, values in POS:
-        ins = [_descr(p, t, a, "input") for (p, t, a) in ins_s]
+        ins  = [_descr(p, t, a, "input") for (p, t, a) in ins_s]
         outs = [_descr(p, t, a, "output") for (p, t, a) in outs_s]
         try:
             body = nd_lower.lower_compute(ins, outs, source)
@@ -2078,11 +2078,11 @@ def main():
             continue
         got = _parse_probes(out)
         exp = _oracle(ins, outs, values, source)
-        ok = True
+        ok  = True
         for d in outs:
             plug = d["plug"]
-            g = got.get(plug)
-            e = exp[plug]
+            g    = got.get(plug)
+            e    = exp[plug]
             if g is None or g.shape != e.shape:
                 fails.append("%s.%s: shape %s != %s"
                              % (name, plug, None if g is None else g.shape,
@@ -2101,10 +2101,10 @@ def main():
 
     n_rej = 0
     for name, ins_s, outs_s, source in REJ:
-        ins = [_descr(p, t, a, "input") for (p, t, a) in ins_s]
+        ins  = [_descr(p, t, a, "input") for (p, t, a) in ins_s]
         outs = [_descr(p, t, a, "output") for (p, t, a) in outs_s]
         spec = {"compute": source}
-        res = nd_lower.try_lower_compute(ins, outs, spec)
+        res  = nd_lower.try_lower_compute(ins, outs, spec)
         if res is not None:
             fails.append("REJECT %s: expected None, got %d lines"
                          % (name, len(res)))
@@ -2114,7 +2114,7 @@ def main():
     # ----- inline-helper fixtures (INIT-tier free functions) -----
     n_help = 0
     for name, ins_s, outs_s, init, source, values in HELP:
-        ins = [_descr(p, t, a, "input") for (p, t, a) in ins_s]
+        ins  = [_descr(p, t, a, "input") for (p, t, a) in ins_s]
         outs = [_descr(p, t, a, "output") for (p, t, a) in outs_s]
         try:
             body = nd_lower.lower_compute(ins, outs, source, init)
@@ -2128,11 +2128,11 @@ def main():
             continue
         got = _parse_probes(out)
         exp = _oracle(ins, outs, values, source, init)
-        ok = True
+        ok  = True
         for d in outs:
             plug = d["plug"]
-            g = got.get(plug)
-            e = exp[plug]
+            g    = got.get(plug)
+            e    = exp[plug]
             if g is None or g.shape != e.shape:
                 fails.append("HELP %s.%s: shape %s != %s"
                              % (name, plug, None if g is None else g.shape,
@@ -2149,7 +2149,7 @@ def main():
 
     n_help_rej = 0
     for name, ins_s, outs_s, init, source in HELP_REJ:
-        ins = [_descr(p, t, a, "input") for (p, t, a) in ins_s]
+        ins  = [_descr(p, t, a, "input") for (p, t, a) in ins_s]
         outs = [_descr(p, t, a, "output") for (p, t, a) in outs_s]
         res = nd_lower.try_lower_compute(ins, outs,
                                          {"compute": source, "init": init})
@@ -2175,7 +2175,7 @@ def main():
             continue
         got = _parse_probes(out)
         exp = _geo_oracle(ins, kind, values, source)
-        ok = True
+        ok  = True
         for buf, e in exp.items():
             g = got.get(buf)
             if g is None or g.shape != e.shape:
@@ -2218,7 +2218,7 @@ def main():
             continue
         got = _parse_probes(out)
         exp = _geo_oracle(ins, kind, values, source, init)
-        ok = True
+        ok  = True
         for buf, e in exp.items():
             g = got.get(buf)
             if g is None or g.shape != e.shape:
@@ -2238,7 +2238,7 @@ def main():
     # ----- deformer fixtures (getPoints/setPoints in-place mutate) -----
     n_def = 0
     for name, rest, env_val, ins_s, source, values in DEF:
-        ins = [_descr(p, t, a, "input") for (p, t, a) in ins_s]
+        ins  = [_descr(p, t, a, "input") for (p, t, a) in ins_s]
         spec = {"compute": source}
         try:
             body = nd_lower.lower_deform(ins, spec, "MPxDeformerNode")
@@ -2384,8 +2384,8 @@ def main():
             fails.append("XF %s: %s" % (name, err))
             continue
         probes = _parse_probes(out)
-        exp = _transform_oracle(inputs, source)
-        ok = True
+        exp    = _transform_oracle(inputs, source)
+        ok     = True
         # Flags must match exactly.
         flags = probes.get("flags")
         exp_flags = [int(exp["local_set"]),

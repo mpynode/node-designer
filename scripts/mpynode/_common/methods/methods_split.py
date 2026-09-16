@@ -40,7 +40,7 @@ def split_methods_source(source: str) -> tuple:
 
     lines = source.splitlines(keepends=True)
     functions_parts: list = []
-    methods_parts: list = []
+    methods_parts:   list = []
     cursor = 0  # 0-based index of the next unconsumed line
     # A statement-less source (pure comments / blank lines -- e.g. the seeded
     # new-node Methods header) has no funcdefs to classify. Route it to the
@@ -49,8 +49,8 @@ def split_methods_source(source: str) -> tuple:
     # round-trip byte-identical either way.
     last_bucket = methods_parts if not tree.body else functions_parts
     for stmt in tree.body:
-        end = stmt.end_lineno  # 1-based, inclusive
-        chunk = "".join(lines[cursor:end])
+        end    = stmt.end_lineno  # 1-based, inclusive
+        chunk  = "".join(lines[cursor:end])
         cursor = end
         if isinstance(stmt, ast.FunctionDef) and \
                 _classify_funcdef(stmt)[0] == "class":

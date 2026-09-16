@@ -33,7 +33,7 @@ class TestBakeStamp(unittest.TestCase):
     def test_prompt_stamps_mpynode_user_not_main(self):
         from mpynode.wrappers._mpy_node import MPyNode
         from mpynode._common.io.py_export import resolve_bake_class_name
-        n = MPyNode.create(name="bakeStamp#")
+        n   = MPyNode.create(name="bakeStamp#")
         got = resolve_bake_class_name(n, prompt_fn=lambda: "Widget")
         self.assertEqual(got, "Widget")
         self.assertEqual(n.get_py_class(), "mpynode_user.Widget")
@@ -99,7 +99,7 @@ class TestSpecParity(unittest.TestCase):
         n.set_py_class("mpynode_user.ParityClass")
         n.set_compute_expression("out = x")
 
-        live = spec_extractor.extract_spec(n.get_name())
+        live    = spec_extractor.extract_spec(n.get_name())
         payload = serialize_node(n)
         frommpn = mpn_spec_adapter.spec_from_mpn_payload(payload)
         self.assertEqual(live["suggested"]["node_type_name"], "parityClass")
@@ -127,8 +127,8 @@ class TestPorterApplyTypeName(unittest.TestCase):
                               "type_id": "0x00070001", "mpx_base": "MPxNode"}}
         porter.apply_type_name(spec, "myThing")
         self.assertEqual(spec["suggested"]["node_type_name"], "myThing")
-        self.assertEqual(spec["suggested"]["class_name"], "MyThing")
-        self.assertEqual(spec["suggested"]["type_id"], "0x00070001")  # preserved
+        self.assertEqual(spec["suggested"]["class_name"],     "MyThing")
+        self.assertEqual(spec["suggested"]["type_id"],        "0x00070001")  # preserved
 
     def test_falsy_is_noop(self):
         from mpynode.native.ai import porter

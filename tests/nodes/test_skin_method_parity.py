@@ -92,7 +92,7 @@ class TestSkinMethodParity(unittest.TestCase):
         plane = mc.polyPlane(name="mP", w=4, h=4, sx=3, sy=3, axis=(0, 0, 1))[0]
         from mpynode.wrappers.mpy_skin_cluster import MPySkinCluster
         sc = MPySkinCluster.create(plane, joints=[j1, j2], name=name)
-        n = mc.polyEvaluate(plane, vertex=True)
+        n  = mc.polyEvaluate(plane, vertex=True)
         sc.set_init_expression("import numpy as np\n")
         ys = [mc.xform("%s.vtx[%d]" % (plane, v), q=True, os=True, t=True)[1]
               for v in range(n)]

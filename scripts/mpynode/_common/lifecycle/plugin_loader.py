@@ -24,19 +24,19 @@ import maya.cmds as mc
 # Map a custom node type name -> the plug-in file that registers it.
 _NODE_TYPE_TO_PLUGIN: dict = {
     # mPyNode plug-in (api2)
-    "mPyNode": "mpynode_api2.py",
-    "mPyConstraint": "mpynode_api2.py",
-    "mPyLocator": "mpynode_api2.py",
-    "mPyMesh": "mpynode_api2.py",
-    "mPyFile": "mpynode_api2.py",
-    "mPyNurbsCurve": "mpynode_api2.py",
+    "mPyNode":         "mpynode_api2.py",
+    "mPyConstraint":   "mpynode_api2.py",
+    "mPyLocator":      "mpynode_api2.py",
+    "mPyMesh":         "mpynode_api2.py",
+    "mPyFile":         "mpynode_api2.py",
+    "mPyNurbsCurve":   "mpynode_api2.py",
     "mPyNurbsSurface": "mpynode_api2.py",
     # Other plug-in (api1)
-    "mPyIkSolver": "mpynode_api1.py",
-    "mPyDeformer": "mpynode_api1.py",
-    "mPyTransform": "mpynode_api1.py",
+    "mPyIkSolver":    "mpynode_api1.py",
+    "mPyDeformer":    "mpynode_api1.py",
+    "mPyTransform":   "mpynode_api1.py",
     "mPySkinCluster": "mpynode_api1.py",
-    "mPyBlendShape": "mpynode_api1.py",
+    "mPyBlendShape":  "mpynode_api1.py",
 }
 
 

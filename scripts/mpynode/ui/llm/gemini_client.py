@@ -26,19 +26,19 @@ from mpynode.ui.llm import config as _config
 from mpynode.ui.llm import tools as _tools
 from mpynode.ui.llm.system_prompt import build_system_prompt
 
-PROVIDER = "gemini"
+PROVIDER  = "gemini"
 _API_BASE = "https://generativelanguage.googleapis.com/v1beta/models"
 # Generous so a big define_node payload isn't truncated mid-call.
 _MAX_TOKENS = 8192
 
 # JSON-schema type -> Gemini Schema type (the proto enum is upper-case).
 _TYPE_MAP = {
-    "object": "OBJECT",
-    "string": "STRING",
-    "number": "NUMBER",
+    "object":  "OBJECT",
+    "string":  "STRING",
+    "number":  "NUMBER",
     "integer": "INTEGER",
     "boolean": "BOOLEAN",
-    "array": "ARRAY",
+    "array":   "ARRAY",
 }
 
 
@@ -62,9 +62,9 @@ def _to_gemini_schema(s: dict) -> dict:
     JSON) becomes a STRING carrying JSON text (``tools._coerce_value`` parses
     it back on dispatch).
     """
-    s = s if isinstance(s, dict) else {}
+    s     = s if isinstance(s, dict) else {}
     typed = "type" in s
-    t = s.get("type") or "string"
+    t     = s.get("type") or "string"
     out: dict = {"type": _TYPE_MAP.get(t, "STRING")}
 
     desc = s.get("description")
@@ -77,7 +77,7 @@ def _to_gemini_schema(s: dict) -> dict:
         out["enum"] = list(s["enum"])
 
     if out["type"] == "OBJECT":
-        props = s.get("properties") or {}
+        props             = s.get("properties") or {}
         out["properties"] = {k: _to_gemini_schema(v) for k, v in props.items()}
         if s.get("required"):
             out["required"] = list(s["required"])
@@ -90,7 +90,7 @@ def build_gemini_tools() -> list[dict]:
     """Translate ``tools.TOOL_SCHEMAS`` into Gemini ``tools`` form."""
     decls = []
     for t in _tools.TOOL_SCHEMAS:
-        decl = {"name": t["name"], "description": t.get("description", "")}
+        decl   = {"name": t["name"], "description": t.get("description", "")}
         params = _to_gemini_schema(t.get("input_schema") or {})
         # A function with no parameters must omit ``parameters`` entirely.
         if params.get("properties"):
@@ -100,7 +100,7 @@ def build_gemini_tools() -> list[dict]:
 
 
 def _post(payload, api_key, model, on_retry=None, should_cancel=None, timeout=120.0):
-    url = "%s/%s:generateContent" % (_API_BASE, model)
+    url  = "%s/%s:generateContent" % (_API_BASE, model)
     data = json.dumps(payload).encode("utf-8")
 
     def _once():
@@ -144,7 +144,7 @@ def describe_model(api_key, model, timeout=20.0):
 def _http_error_msg(exc):
     try:
         data = json.loads(exc.read().decode("utf-8", "replace"))
-        err = data.get("error", {})
+        err  = data.get("error", {})
         return err.get("message") if isinstance(err, dict) else str(err)
     except Exception:
         return getattr(exc, "reason", "request failed")
@@ -208,22 +208,22 @@ class GeminiClient(QObject):
       * ``busyChanged(bool)``    -- True while a turn is in flight.
     """
 
-    assistantText = Signal(str)
-    toolStarted = Signal(str)
-    toolFinished = Signal(str)
-    turnFinished = Signal()
-    notice = Signal(str)
-    thinking = Signal(str)  # thinking trace (when effort > off)
+    assistantText  = Signal(str)
+    toolStarted    = Signal(str)
+    toolFinished   = Signal(str)
+    turnFinished   = Signal()
+    notice         = Signal(str)
+    thinking       = Signal(str)                      # thinking trace (when effort > off)
     retryScheduled = Signal(int, int, int, int, str)  # code, secs, attempt, max, detail
-    tokensUsed = Signal(int)  # tokens consumed by one response
-    errorOccurred = Signal(str)
-    busyChanged = Signal(bool)
+    tokensUsed     = Signal(int)                      # tokens consumed by one response
+    errorOccurred  = Signal(str)
+    busyChanged    = Signal(bool)
 
     def __init__(self, ctx_provider, parent=None):
         super().__init__(parent)
         self._ctx_provider = ctx_provider
         self._contents: list[dict] = []  # Gemini conversation history
-        self._busy = False
+        self._busy   = False
         self._cancel = threading.Event()
 
     def reset(self):
@@ -269,13 +269,13 @@ class GeminiClient(QObject):
     def _run_turn(self, api_key: str, model: str):
         try:
             system_text = build_system_prompt()
-            gem_tools = build_gemini_tools()
-            ctx = self._ctx_provider()
+            gem_tools   = build_gemini_tools()
+            ctx         = self._ctx_provider()
             # Thinking budget from the per-provider effort setting. Off = omit
             # (use the model's default) to avoid erroring on models that can't
             # disable thinking.
             gen_config = {"maxOutputTokens": _MAX_TOKENS}
-            budget = _config.effort_budget(_config.get_effort(PROVIDER))
+            budget     = _config.effort_budget(_config.get_effort(PROVIDER))
             if budget > 0:
                 gen_config["thinkingConfig"] = {"thinkingBudget": budget,
                                                 "includeThoughts": True}
@@ -286,9 +286,9 @@ class GeminiClient(QObject):
                     break
                 payload = {
                     "systemInstruction": {"parts": [{"text": system_text}]},
-                    "contents": self._contents,
-                    "tools": gem_tools,
-                    "generationConfig": gen_config,
+                    "contents":          self._contents,
+                    "tools":             gem_tools,
+                    "generationConfig":  gen_config,
                 }
                 try:
                     resp = _post(payload, api_key, model, on_retry=self._on_retry,
@@ -309,19 +309,19 @@ class GeminiClient(QObject):
 
                 cands = resp.get("candidates") or []
                 if not cands:
-                    pf = resp.get("promptFeedback") or {}
+                    pf      = resp.get("promptFeedback") or {}
                     blocked = pf.get("blockReason")
                     self.errorOccurred.emit(
                         "Empty response%s." % (" (blocked: %s)" % blocked if blocked else "")
                     )
                     break
 
-                cand = cands[0]
+                cand  = cands[0]
                 parts = (cand.get("content") or {}).get("parts") or []
                 # Record the model turn verbatim so tool context is preserved.
                 self._contents.append({"role": "model", "parts": parts})
 
-                func_calls = []
+                func_calls   = []
                 emitted_text = False
                 for p in parts:
                     txt = p.get("text")
@@ -342,9 +342,9 @@ class GeminiClient(QObject):
                         # Candidate came back empty -- don't fail silently. Most
                         # often a SAFETY/RECITATION block (e.g. a flagged image)
                         # or MAX_TOKENS; surface the reason so it's actionable.
-                        sr = (cand.get("safetyRatings") or [])
+                        sr      = (cand.get("safetyRatings") or [])
                         blocked = [r.get("category") for r in sr if r.get("blocked")]
-                        detail = "finishReason=%s" % (reason or "unspecified")
+                        detail  = "finishReason=%s" % (reason or "unspecified")
                         if blocked:
                             detail += ", blocked: %s" % ", ".join(blocked)
                         self.errorOccurred.emit(
@@ -363,10 +363,10 @@ class GeminiClient(QObject):
 
                 # Execute each call on the MAIN thread, return functionResponses.
                 resp_parts = []
-                n_err = 0
+                n_err      = 0
                 for fc in func_calls:
-                    name = fc.get("name", "")
-                    args = fc.get("args") or {}
+                    name    = fc.get("name", "")
+                    args    = fc.get("args") or {}
                     display = _tools.resolve_tool_name(name) or name
                     self.toolStarted.emit(_tools.tool_summary(display, args))
                     result = self._run_tool_main_thread(name, args, ctx)
@@ -376,7 +376,7 @@ class GeminiClient(QObject):
                     resp_obj = result if isinstance(result, dict) else {"result": result}
                     resp_parts.append({
                         "functionResponse": {
-                            "name": name,
+                            "name":     name,
                             "response": _json_safe(resp_obj),
                         }
                     })

@@ -25,15 +25,15 @@ def setUpModule():
 
 # generator node type -> the attr its compute fills.
 _GENERATORS = {
-    "mPyMesh": "mesh",
-    "mPyNurbsCurve": "curve",
+    "mPyMesh":         "mesh",
+    "mPyNurbsCurve":   "curve",
     "mPyNurbsSurface": "surface",
 }
 
 # geo INPUT attr type -> (C++ function set, its header)
 _GEO_INPUTS = {
-    "mesh": ("MFnMesh", "maya/MFnMesh.h"),
-    "nurbsCurve": ("MFnNurbsCurve", "maya/MFnNurbsCurve.h"),
+    "mesh":         ("MFnMesh", "maya/MFnMesh.h"),
+    "nurbsCurve":   ("MFnNurbsCurve", "maya/MFnNurbsCurve.h"),
     "nurbsSurface": ("MFnNurbsSurface", "maya/MFnNurbsSurface.h"),
 }
 

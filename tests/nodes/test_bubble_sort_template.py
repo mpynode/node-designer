@@ -50,8 +50,8 @@ class TestBubbleSortTemplateContent(unittest.TestCase):
 
     def test_expression_is_live_lerp_and_auto(self):
         expr = _load_payload()["expression"]
-        self.assertIn("lo + t * (hi - lo)", expr)   # live lerp at output time
-        self.assertIn("reset == 2", expr)            # Auto continuous loop
+        self.assertIn("lo + t * (hi - lo)", expr)  # live lerp at output time
+        self.assertIn("reset == 2", expr)          # Auto continuous loop
 
 
 class TestBubbleSortBehavior(unittest.TestCase):
@@ -107,9 +107,9 @@ class TestBubbleSortBehavior(unittest.TestCase):
         self.assertEqual(vals, sorted(vals))
         mc.setAttr(self.name + ".maxVal", 50.0)               # rescale DOWN from 100
         rescaled = self._eval()
-        self.assertEqual(rescaled, sorted(rescaled))          # NOT re-sorted
-        self.assertLessEqual(max(rescaled), 50.0 + 1e-6)      # new ceiling
-        self.assertLess(max(rescaled), max(vals))             # actually rescaled
+        self.assertEqual(rescaled, sorted(rescaled))      # NOT re-sorted
+        self.assertLessEqual(max(rescaled), 50.0 + 1e-6)  # new ceiling
+        self.assertLess(max(rescaled), max(vals))         # actually rescaled
         self.assertGreaterEqual(min(rescaled), 1.0 - 1e-6)
 
     def test_auto_reshuffles_after_completion(self):

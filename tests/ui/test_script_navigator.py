@@ -672,7 +672,7 @@ class TestNavigatorInTheScriptTab(unittest.TestCase):
             v = w._api_view
             self.assertNotIn("MODULE SCOPE", w._navigator.sectionTitles())
             zone = [r for r in v.regions() if r["kind"] == "module_zone"][0]
-            cur = v.textCursor()
+            cur  = v.textCursor()
             cur.setPosition(v.document().findBlockByNumber(zone["start"]).position())
             v.setTextCursor(cur)
             for ch in "LIMIT = 4":

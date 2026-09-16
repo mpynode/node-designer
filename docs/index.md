@@ -239,9 +239,9 @@ d.delete_input_attr(name)
 d.delete_output_attr(name)
 d.rename_input_attr(old, new)
 d.rename_output_attr(old, new)
-d.get_input_attr_map()    # {name: type, ...}
+d.get_input_attr_map()      # {name: type, ...}
 d.get_output_attr_map()
-d.list_valid_input_types() # list of supported attr_type strings
+d.list_valid_input_types()  # list of supported attr_type strings
 ```
 
 ### Supported `attr_type` values
@@ -551,7 +551,7 @@ from mpynode import MPySkinCluster
 import numpy as np, maya.cmds as mc
 
 cyl = mc.polyCylinder(h=4, sx=20, sy=10, axis=(1, 0, 0))[0]
-j1 = mc.joint(name="j1")
+j1  = mc.joint(name="j1")
 mc.select(clear=True)
 j2 = mc.joint(name="j2", p=(2, 0, 0))
 
@@ -599,7 +599,7 @@ from mpynode import MPyBlendShape
 import maya.cmds as mc
 
 base = mc.polySphere(name="base")[0]
-bs = MPyBlendShape.create(mesh=base, name="myBlend")
+bs   = MPyBlendShape.create(mesh=base, name="myBlend")
 bs.set_compute_expression("""
 import numpy as np
 mesh = self.outputGeometry[0]
@@ -638,9 +638,9 @@ mesh.setPoints(base + self.envelope * self.morphs.deltas(base, w))
 """)
 bs.add_target(targetA, "browUp")
 bs.add_target(targetB, "mouthOpen")
-bs.rebuild()                            # bake deltas + decode names
+bs.rebuild()                                # bake deltas + decode names
 
-mc.setAttr(bs.get_name() + ".browUp", 1.0)      # by ALIAS, like Maya
+mc.setAttr(bs.get_name() + ".browUp", 1.0)  # by ALIAS, like Maya
 mc.setAttr(bs.get_name() + ".mouthOpen", 0.5)
 
 bs.morphs["browUp"]                     # authoring-side: by name, or .find("brow")
@@ -804,9 +804,9 @@ Reading back:
 from mpynode._api2.geometry import geometry_from_json
 from mpynode._common.draw.draw_types import draw_from_json
 
-mesh = pickle.loads(blob)              # or geometry_from_json(text)
-self.outMesh = mesh                    # still assignable to an output plug
-self.draw = draw_from_json(saved_text) # a whole drawing, in authoring order
+mesh         = pickle.loads(blob)          # or geometry_from_json(text)
+self.outMesh = mesh                        # still assignable to an output plug
+self.draw    = draw_from_json(saved_text)  # a whole drawing, in authoring order
 ```
 
 An **attached** wrapper holds a live geometry DATA `MObject` and an `MFn*`

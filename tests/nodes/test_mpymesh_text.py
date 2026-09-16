@@ -51,9 +51,9 @@ class TestSDFTextField(unittest.TestCase):
             resolution=12, iso_value=0.0, **arr)
         self.assertEqual(pts.shape[0], _EXPECTED_POINTS)
         uniq = np.unique(idx)
-        self.assertEqual(uniq.size, pts.shape[0])
-        self.assertEqual(uniq[0], 0)
-        self.assertEqual(uniq[-1], pts.shape[0] - 1)
+        self.assertEqual(uniq.size,         pts.shape[0])
+        self.assertEqual(uniq[0],           0)
+        self.assertEqual(uniq[-1],          pts.shape[0] - 1)
         self.assertEqual(int(counts.sum()), idx.shape[0])
         # Spans the expected centred width (~9 units across 7 letters).
         width = pts[:, 0].max() - pts[:, 0].min()

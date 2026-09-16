@@ -23,8 +23,8 @@ import tempfile
 import unittest
 from tests import _paths
 
-HERE = os.path.dirname(os.path.abspath(__file__))
-ROOT = _paths.ROOT
+HERE    = os.path.dirname(os.path.abspath(__file__))
+ROOT    = _paths.ROOT
 SCRIPTS = os.path.join(ROOT, "scripts")
 if SCRIPTS not in sys.path:
     sys.path.insert(0, SCRIPTS)
@@ -154,9 +154,9 @@ class TestHexTranscodeParity(unittest.TestCase):
         from mpynode.native import compiler as codegen
 
         core = codegen._HEX_CORE_CPP
-        d = tempfile.mkdtemp(prefix="ndhex_")
-        cpp = os.path.join(d, "harness.cpp")
-        exe = os.path.join(d, "harness")
+        d    = tempfile.mkdtemp(prefix="ndhex_")
+        cpp  = os.path.join(d, "harness.cpp")
+        exe  = os.path.join(d, "harness")
         with open(cpp, "w") as fh:
             fh.write(_harness_src(core))
 
@@ -175,7 +175,7 @@ class TestHexTranscodeParity(unittest.TestCase):
             got[int(k)] = v
 
         expected = {}
-        idx = 0
+        idx      = 0
         for b in _ENC_VECTORS:
             expected[idx] = py_encode(b)
             idx += 1

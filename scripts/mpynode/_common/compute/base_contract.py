@@ -53,7 +53,7 @@ def broadcast_compute_error(type_label: str, message: str, *, declared_names=())
     from mpynode._common.lifecycle import scene_state as scene_io
 
     declared = set(declared_names or ())
-    miss = scene_io.extract_missing_name(message)
+    miss     = scene_io.extract_missing_name(message)
     spurious = scene_io.is_missing_plug_error(message) and (
         (miss is not None and miss in declared)
         or scene_io.should_defer_transient()

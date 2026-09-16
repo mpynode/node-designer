@@ -47,11 +47,11 @@ import shutil
 import sys
 
 BUNDLE = sys.argv[1]
-MPN = sys.argv[2]
-CTYPE = sys.argv[3]
-OUT = sys.argv[4]
-_pos = [a for a in sys.argv[5:] if not a.startswith("--")]
-GRID = int(_pos[0]) if _pos else 64
+MPN    = sys.argv[2]
+CTYPE  = sys.argv[3]
+OUT    = sys.argv[4]
+_pos   = [a for a in sys.argv[5:] if not a.startswith("--")]
+GRID   = int(_pos[0]) if _pos else 64
 
 # A template.mpn carries no fileName (the artist picks one), so a deserialized
 # node reads no image and every channel comes back as the magenta
@@ -184,10 +184,10 @@ def _diff(a_path, b_path, *, max_tol=None, mean_tol=None, p99_tol=None,
     for x, y in zip(pa, pb):
         ds.extend(abs(c - d) for c, d in zip(x, y))
     ds.sort()
-    n = len(ds)
-    mx = ds[-1] / 255.0
+    n    = len(ds)
+    mx   = ds[-1] / 255.0
     mean = (sum(ds) / 255.0) / max(1, n)
-    p99 = ds[min(n - 1, int(0.99 * n))] / 255.0
+    p99  = ds[min(n - 1, int(0.99 * n))] / 255.0
     out = {"max": round(mx, 5), "mean": round(mean, 6), "p99": round(p99, 5),
            "px": ia.size[0] * ia.size[1],
            "gated_on": [k for k, v in (("max", max_tol), ("mean", mean_tol),
@@ -210,7 +210,7 @@ def _bake_dg(node, path):
     rows = []
     for j in range(GRID):
         # Row 0 is v=1 so the baked image is oriented like the rendered plane.
-        v = 1.0 - (j + 0.5) / GRID
+        v   = 1.0 - (j + 0.5) / GRID
         row = []
         for i in range(GRID):
             u = (i + 0.5) / GRID
@@ -265,7 +265,7 @@ try:
             mc.loadPlugin(p, quiet=True)
     from mpynode._base.plugins import load_or_reload_native_plugin
     from mpynode._base import node_swap
-    lr = load_or_reload_native_plugin(BUNDLE)
+    lr                   = load_or_reload_native_plugin(BUNDLE)
     res["bundle_loaded"] = bool(lr.get("loaded"))
     if not lr.get("loaded"):
         raise RuntimeError("bundle load failed: %s" % lr.get("error"))
@@ -282,13 +282,13 @@ try:
     from mpynode._common.io.mpn_io import deserialize_node
     tnode = deserialize_node(mpn_io.load_mpn(MPN, trusted=True),
                              restore_persistent=False)
-    name = tnode.get_name()
+    name                    = tnode.get_name()
     res["interpreted_node"] = name
     res["interpreted_type"] = mc.nodeType(name)
 
     if not ASSET:
         ASSET = _make_gradient(os.path.join(OUT, "_parity_gradient.png"))
-    res["asset"] = ASSET
+    res["asset"]        = ASSET
     res["asset_exists"] = os.path.isfile(ASSET)
     for cand in ("fileName", "fileTextureName"):
         if mc.attributeQuery(cand, node=name, exists=True):
@@ -328,7 +328,7 @@ try:
                 res["notes"].append("layer set %s[%d]: %s" % (a, k, exc))
         if not ok_n:
             continue  # a typed multi that is not a string array
-        res["array_asset_attr"] = a
+        res["array_asset_attr"]  = a
         res["array_asset_count"] = ok_n
         break
 
@@ -343,7 +343,7 @@ try:
     res["images"]["dg_interp"] = _bake_dg(name, os.path.join(OUT, "dg_interp.png"))
 
     comp, dropped = node_swap.swap_node(name, CTYPE)
-    res["compiled_node"] = comp
+    res["compiled_node"]       = comp
     res["dropped_connections"] = dropped
     mc.currentTime(1)
     mc.dgdirty(comp)
@@ -353,7 +353,7 @@ try:
     res["images"]["dg_compiled"] = _bake_dg(comp,
                                             os.path.join(OUT, "dg_compiled.png"))
 
-    im = res["images"]
+    im   = res["images"]
     half = max(8, GRID // 2)
     res["compare"]["compute_parity"] = _diff(
         im["dg_interp"], im["dg_compiled"], max_tol=TOL_DG_MAX)
@@ -381,11 +381,11 @@ try:
     # SPATIAL (does the image vary across pixels?), never per-channel: magenta is
     # (255, 0, 255), so a channel-range test scores it a perfect 255.
     _sz, _px = _load_rgb(im["dg_compiled"])
-    _lum = [0.299 * r + 0.587 * g + 0.114 * b for (r, g, b) in _px]
-    _rng = max(_lum) - min(_lum)
+    _lum                             = [0.299 * r + 0.587 * g + 0.114 * b for (r, g, b) in _px]
+    _rng                             = max(_lum) - min(_lum)
     res["compiled_dg_spatial_range"] = round(_rng, 2)
     res["compiled_dg_unique_colors"] = len(set(_px))
-    res["is_magenta_sentinel"] = all(p == (255, 0, 255) for p in _px)
+    res["is_magenta_sentinel"]       = all(p == (255, 0, 255) for p in _px)
     # >= 2 colours, not > 4: Game Of Life is a black/white automaton, so two
     # colours over a real spatial pattern is genuine signal, not a flat frame.
     res["has_signal"] = _rng > 8.0 and len(set(_px)) >= 2

@@ -43,7 +43,7 @@ def _gen(rest, env_val, joint, bind, wl_dense, twist_flat, swing_flat,
     the declared plug inputs (in_twistWeights/in_swingWeights flat, in_skinMode/
     in_twistAxis), running the lowered body, probing the mutated points."""
     wd = np.asarray(wl_dense, dtype=np.float64)
-    L = [_SHIM, "int main() {"]
+    L  = [_SHIM, "int main() {"]
     L.append("    std::vector<MPoint> pts = {%s};"
              % ", ".join("MPoint(%s, %s, %s)"
                          % (_cpp_lit(p[0]), _cpp_lit(p[1]), _cpp_lit(p[2]))
@@ -77,9 +77,9 @@ def _gen(rest, env_val, joint, bind, wl_dense, twist_flat, swing_flat,
 def _oracle(rest, env_val, joint, bind, wl_dense, twist_dense, swing_dense,
             mode, axis, have_sets=True):
     rest_a = np.asarray(rest, dtype=np.float64).reshape(-1, 3)
-    J = np.asarray(joint, dtype=np.float64).reshape(-1, 4, 4)
-    B = np.asarray(bind, dtype=np.float64).reshape(-1, 4, 4)
-    env = float(np.float32(env_val))          # deform() reads envelope as float32
+    J      = np.asarray(joint, dtype=np.float64).reshape(-1, 4, 4)
+    B      = np.asarray(bind, dtype=np.float64).reshape(-1, 4, 4)
+    env    = float(np.float32(env_val))          # deform() reads envelope as float32
     if mode == 0:
         deformed = skin_blend.linear_blend(rest_a, np.asarray(wl_dense), J, B)
     elif mode == 1:
@@ -102,7 +102,7 @@ class TestTwistSwingDualParity(unittest.TestCase):
             twist_d = wd.copy()
             swing_d = np.roll(wd, 1, axis=1)
             swing_d = swing_d / swing_d.sum(axis=1, keepdims=True)
-            body = nd_lower.lower_deform(_INS, _SPEC, "MPxSkinCluster")
+            body    = nd_lower.lower_deform(_INS, _SPEC, "MPxSkinCluster")
             self.assertTrue(body, "%s: empty lowered body" % name)
             for mode in (0, 1, 2):
                 for axis in ((0,) if mode != 2 else (0, 1, 2)):

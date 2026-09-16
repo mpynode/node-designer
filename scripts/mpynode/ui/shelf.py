@@ -25,11 +25,11 @@ import maya.cmds as mc
 from mpynode.ui.widgets.icons import icon_path
 
 DEFAULT_BUTTON_LABEL = "ND2"
-DEFAULT_TOOLTIP = "Open Node Designer 2"
+DEFAULT_TOOLTIP      = "Open Node Designer 2"
 # Bundled 32x32 icon; fall back to a Maya stock one so the button still
 # installs if it's ever missing.
 _MPYNODE_ICON = icon_path("mpynode.png")
-DEFAULT_ICON = _MPYNODE_ICON if os.path.exists(_MPYNODE_ICON) else "pythonFamily.png"
+DEFAULT_ICON  = _MPYNODE_ICON if os.path.exists(_MPYNODE_ICON) else "pythonFamily.png"
 
 # Module-level constant so tests can verify the click command.
 SHELF_BUTTON_COMMAND = (
@@ -48,9 +48,9 @@ def get_top_shelf() -> str | None:
 
 def install_shelf_button(
     parent_shelf: str | None = None,
-    label: str = DEFAULT_BUTTON_LABEL,
-    tooltip: str = DEFAULT_TOOLTIP,
-    icon: str = DEFAULT_ICON,
+    label:        str        = DEFAULT_BUTTON_LABEL,
+    tooltip:      str        = DEFAULT_TOOLTIP,
+    icon:         str        = DEFAULT_ICON,
 ) -> str | None:
     """Install a shelf button on the given (or active) shelf.
 
@@ -63,12 +63,12 @@ def install_shelf_button(
         return None
     try:
         btn = mc.shelfButton(
-            parent=parent_shelf,
-            label=label,
-            annotation=tooltip,
-            image=icon,
-            command=SHELF_BUTTON_COMMAND,
-            sourceType="python",
+            parent     = parent_shelf,
+            label      = label,
+            annotation = tooltip,
+            image      = icon,
+            command    = SHELF_BUTTON_COMMAND,
+            sourceType = "python",
         )
         return btn
     except Exception:

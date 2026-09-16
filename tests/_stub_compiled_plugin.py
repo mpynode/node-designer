@@ -34,18 +34,18 @@ def _add_abc(node_cls):
     Names are deliberately NOT single letters: a ``locator`` shape already ships
     a built-in attr with short name ``c`` (``center``), so an output ``c`` would
     collide ("Object already exists") on ``stubCompiledLocator``."""
-    n_attr = om.MFnNumericAttribute()
-    a = n_attr.create("inA", "inA", om.MFnNumericData.kFloat, 0.0)
+    n_attr          = om.MFnNumericAttribute()
+    a               = n_attr.create("inA", "inA", om.MFnNumericData.kFloat, 0.0)
     n_attr.writable = True
     n_attr.storable = True
-    n_attr.keyable = True
+    n_attr.keyable  = True
     node_cls.addAttribute(a)
-    b = n_attr.create("inB", "inB", om.MFnNumericData.kFloat, 0.0)
+    b               = n_attr.create("inB", "inB", om.MFnNumericData.kFloat, 0.0)
     n_attr.writable = True
     n_attr.storable = True
-    n_attr.keyable = True
+    n_attr.keyable  = True
     node_cls.addAttribute(b)
-    c = n_attr.create("outC", "outC", om.MFnNumericData.kFloat, 0.0)
+    c               = n_attr.create("outC", "outC", om.MFnNumericData.kFloat, 0.0)
     n_attr.writable = False
     n_attr.storable = False
     n_attr.readable = True
@@ -56,7 +56,7 @@ def _add_abc(node_cls):
 
 class _StubCompiledNode(om.MPxNode):
     kTypeName = "stubCompiled"
-    kTypeId = om.MTypeId(0x0007FE30)
+    kTypeId   = om.MTypeId(0x0007FE30)
 
     @staticmethod
     def creator():
@@ -69,7 +69,7 @@ class _StubCompiledNode(om.MPxNode):
 
 class _StubCompiledLocatorNode(omui.MPxLocatorNode):
     kTypeName = "stubCompiledLocator"
-    kTypeId = om.MTypeId(0x0007FE31)
+    kTypeId   = om.MTypeId(0x0007FE31)
 
     @staticmethod
     def creator():

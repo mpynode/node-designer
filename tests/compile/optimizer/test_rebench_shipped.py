@@ -18,7 +18,7 @@ _TOOL = os.path.join(_paths.ROOT, "tools", "harness", "rebench_shipped.py")
 
 def _tool():
     spec = importlib.util.spec_from_file_location("rebench_shipped", _TOOL)
-    mod = importlib.util.module_from_spec(spec)
+    mod  = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
     return mod
 
@@ -68,8 +68,8 @@ class TestPlan(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             _fake_tree(tmp, with_final=False)
             items, skipped = t.plan(root=tmp)
-        self.assertEqual(items, [])
-        self.assertEqual(len(skipped), 1)
+        self.assertEqual(items,         [])
+        self.assertEqual(len(skipped),  1)
         self.assertEqual(skipped[0][0], "thing")
         self.assertIn("thing.cpp", skipped[0][1])
 
@@ -96,7 +96,7 @@ class TestRecord(unittest.TestCase):
         self.assertIn("35.", t.short(rec))
 
     def test_divergence_and_unmeasurable_are_kept_apart(self):
-        t = _tool()
+        t   = _tool()
         div = t.make_record({}, 10.0, 0.1, "out: maxerr 1 at element 0")
         self.assertIsNone(div["speedup"] is None or None)  # speedup still computed
         self.assertTrue(t.short(div).startswith("DIVERGED"))

@@ -96,8 +96,8 @@ def load_node_setups(root):
             ("mpynode._common.methods", os.path.join(pkg, "_common", "methods"))):
         if name in sys.modules:
             continue
-        stub = types.ModuleType(name)
-        stub.__path__ = [path]
+        stub              = types.ModuleType(name)
+        stub.__path__     = [path]
         sys.modules[name] = stub
     try:
         return importlib.import_module("mpynode._common.node_setups")
@@ -261,8 +261,8 @@ def _referenced_names(node, candidates):
 def _reach(roots, bindings):
     """Fixpoint closure over ``roots``. Returns (ordered names, parent map)."""
     parent = {}
-    order = []
-    stack = []
+    order  = []
+    stack  = []
     for name in roots:
         if name in bindings and name not in parent:
             parent[name] = None
@@ -293,8 +293,8 @@ def _chain(name, parent):
 def _source_of(src_lines, node):
     """The offending statement text, collapsed to one line."""
     start = node.lineno - 1
-    end = getattr(node, "end_lineno", node.lineno)
-    text = " ".join(l.strip() for l in src_lines[start:end])
+    end   = getattr(node, "end_lineno", node.lineno)
+    text  = " ".join(l.strip() for l in src_lines[start:end])
     return " ".join(text.split())
 
 
@@ -317,11 +317,11 @@ def scan_source(src, seed_offset=None):
         tree = ast.parse(src)
     except (SyntaxError, ValueError) as exc:
         result["status"] = "ERROR"
-        result["error"] = "%s: %s" % (type(exc).__name__, exc)
+        result["error"]  = "%s: %s" % (type(exc).__name__, exc)
         return result
 
     src_lines = src.splitlines()
-    bindings = _top_level_bindings(tree)
+    bindings  = _top_level_bindings(tree)
 
     def origin_of(lineno):
         """('template'|'seeded', line number within that origin's own file)."""
@@ -357,7 +357,7 @@ def scan_source(src, seed_offset=None):
             out.append({"where": "module-scope", "root": root,
                         "lineno": node.lineno, "origin": where,
                         "origin_lineno": own_line,
-                        "text": _source_of(src_lines, node),
+                        "text":          _source_of(src_lines, node),
                         "chain": chain})
         return out
 
@@ -384,10 +384,10 @@ def scan_source(src, seed_offset=None):
                 hits.append({"where": "def %s" % name, "root": root,
                              "lineno": node.lineno, "origin": where,
                              "origin_lineno": own_line,
-                             "text": _source_of(src_lines, node),
+                             "text":          _source_of(src_lines, node),
                              "chain": _chain(name, parent)})
     hits.sort(key=lambda h: h["lineno"])
-    result["hits"] = hits
+    result["hits"]   = hits
     result["status"] = "DIRTY" if hits else "CLEAN"
     return result
 
@@ -421,7 +421,7 @@ def main(argv=None):
                     help="print dirty templates and the summary only")
     args = ap.parse_args(argv)
 
-    root = args.root or default_root()
+    root           = args.root or default_root()
     templates_root = os.path.join(root, "templates")
     if not os.path.isdir(templates_root):
         sys.stderr.write("no templates dir at %s\n" % templates_root)
@@ -442,7 +442,7 @@ def main(argv=None):
 
     clean, dirty, skipped, errors = [], [], [], []
     seeded_dirty = []
-    latent = []
+    latent       = []
 
     def print_hits(hits, seed_file):
         for h in hits:
@@ -466,16 +466,16 @@ def main(argv=None):
             errors.append(rel)
             print("=== %s\n    ERROR reading .mpn: %s" % (rel, exc))
             continue
-        data = payload.get("data", payload)
+        data        = payload.get("data", payload)
         native_type = data.get("native_type") or ""
-        own_src = data.get("methods_source") or ""
+        own_src     = data.get("methods_source") or ""
 
         # THE merge, exactly as mpn_spec_adapter.spec_from_mpn_payload does it
         # (and as MPyNode._populate_methods_source does at node-create time).
         merged = node_setups.merge_type_default(own_src, native_type,
                                                 root=setups_root)
         seed_offset = None
-        seed_file = None
+        seed_file   = None
         if merged != own_src:
             type_src = node_setups.setup_source_for_type(native_type,
                                                          root=setups_root) or ""
@@ -485,7 +485,7 @@ def main(argv=None):
             seed_file = os.path.join("_common", "node_setups",
                                      native_type + ".py")
 
-        res = scan_source(merged, seed_offset=seed_offset)
+        res    = scan_source(merged, seed_offset=seed_offset)
         status = res["status"]
 
         if status == "ERROR":

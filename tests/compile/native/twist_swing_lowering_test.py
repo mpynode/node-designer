@@ -65,11 +65,11 @@ _BRANCH_SPEC = {"mpy_type": "mPySkinCluster", "compute": _BRANCH_COMPUTE}
 
 
 def _tsw_oracle(rest, env_val, joint_mats, bind_mats, w_dense, twist_axis=0):
-    rest_a = np.asarray(rest, dtype=np.float64).reshape(-1, 3)
-    J = np.asarray(joint_mats, dtype=np.float64).reshape(-1, 4, 4)
-    B = np.asarray(bind_mats, dtype=np.float64).reshape(-1, 4, 4)
-    W = np.asarray(w_dense, dtype=np.float64)
-    env = float(np.float32(env_val))   # deform() reads envelope as float32
+    rest_a   = np.asarray(rest, dtype=np.float64).reshape(-1, 3)
+    J        = np.asarray(joint_mats, dtype=np.float64).reshape(-1, 4, 4)
+    B        = np.asarray(bind_mats, dtype=np.float64).reshape(-1, 4, 4)
+    W        = np.asarray(w_dense, dtype=np.float64)
+    env      = float(np.float32(env_val))   # deform() reads envelope as float32
     deformed = skin_blend.twist_swing(rest_a, W, J, B, twist_axis)
     return (rest_a + env * (deformed - rest_a)).ravel()
 
@@ -108,17 +108,17 @@ class TestTwistSwingDeterministicLowering(unittest.TestCase):
                          {"linear_blend", "dual_quaternion", "twist_swing"})
         srcs = blessed_transpile.transpile_helper_sources(_BRANCH_SPEC)
         env = {"rest": array_t("double", 2),
-               "self.weightList": array_t("double", 2),
-               "self.matrix": array_t("double", 3),
+               "self.weightList":    array_t("double", 2),
+               "self.matrix":        array_t("double", 3),
                "self.bindPreMatrix": array_t("double", 3),
-               "self.skinMode": scalar_t("int64"),
+               "self.skinMode":      scalar_t("int64"),
                "self.twistAxis": scalar_t("int64")}
         writers = {"self.result": lambda v: ["(void)(%s);" % v.code]}
         res, written, helper_lines = py_to_cpp.transpile_compute_block(
             _BRANCH_COMPUTE, dict(env), writers, srcs,
             blessed=blessed, blessed_unpack=blessed_unpack)
         body = "\n".join(res.body_lines)
-        hl = "\n".join(helper_lines)
+        hl   = "\n".join(helper_lines)
         self.assertIn("if (", body)
         self.assertIn("} else {", body)
         for h in ("_h_twist_swing", "_h_linear_blend", "_h_dual_quaternion"):

@@ -41,7 +41,7 @@ _BASELINE_CPP = "void f(){ return; }"
 
 class _Env:
     def __init__(self, **kw):
-        self._kw = kw
+        self._kw  = kw
         self._old = {}
 
     def __enter__(self):
@@ -208,7 +208,7 @@ class TestTheRunLevelVerdict(unittest.TestCase):
 
         def fake_optimize_surviving(nodes, out_dir, **kw):
             self._opt_kw = dict(kw)
-            out = kw.get("status_out")
+            out          = kw.get("status_out")
             if out is not None:
                 out.update(status or {})
             return results or {}
@@ -418,9 +418,9 @@ class TestTheGateAndTheRunAskAboutOneProvider(unittest.TestCase):
         def _chk(provider=None):
             asked.append(provider)
             prov = provider or prefs
-            ok = (prov == "claude_cli")
+            ok   = (prov == "claude_cli")
             return {"ok": ok, "provider": prov,
-                    "kind": "cli" if prov.endswith("_cli") else "api",
+                    "kind":     "cli" if prov.endswith("_cli") else "api",
                     "problems": [] if ok else
                     ["%r has no headless tool-using mode" % prov]}
 
@@ -497,12 +497,12 @@ class TestTheGateAndTheRunAskAboutOneProvider(unittest.TestCase):
     def test_with_no_override_both_sides_still_resolve_prefs(self):
         gate_asked, run_asked = [], []
         one_shot = self._gate_one_shot(None, "cli", "claude_cli", gate_asked)
-        path = self._path_taken(None, "claude_cli", run_asked)
+        path     = self._path_taken(None, "claude_cli", run_asked)
 
         self.assertFalse(one_shot)
-        self.assertEqual(path, "agent")
+        self.assertEqual(path,       "agent")
         self.assertEqual(gate_asked, [None])
-        self.assertEqual(run_asked, [None])
+        self.assertEqual(run_asked,  [None])
 
 
 class TestAgentUnavailableIsTyped(unittest.TestCase):

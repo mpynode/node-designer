@@ -151,7 +151,7 @@ class TestReservedCollisionScan(unittest.TestCase):
         _make_mesh_with_attr(_MESH_COLLIDING_NAME)
         mc.file(modified=False)
 
-        seen = []
+        seen     = []
         real_get = mc.getAttr
 
         def _spy(*args, **kwargs):

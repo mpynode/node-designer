@@ -71,14 +71,14 @@ def is_linux(os_name: Optional[str] = None) -> bool:
 # File-name conventions
 # ---------------------------------------------------------------------------
 
-_PLUGIN_EXT = {"darwin": ".bundle", "win32": ".mll", "linux": ".so"}
-_OBJECT_EXT = {"darwin": ".o", "win32": ".obj", "linux": ".o"}
-_MAYA_DEFINE = {"darwin": "OSMac_", "win32": "NT_PLUGIN", "linux": "LINUX"}
+_PLUGIN_EXT       = {"darwin": ".bundle", "win32": ".mll", "linux": ".so"}
+_OBJECT_EXT       = {"darwin": ".o", "win32": ".obj", "linux": ".o"}
+_MAYA_DEFINE      = {"darwin": "OSMac_", "win32": "NT_PLUGIN", "linux": "LINUX"}
 _DEFAULT_COMPILER = {"darwin": "clang++", "win32": "cl", "linux": "g++"}
 _DEFAULT_MAYA = {
     "darwin": "/Applications/Autodesk/maya2026",
-    "win32": r"C:\Program Files\Autodesk\Maya2026",
-    "linux": "/usr/autodesk/maya2026",
+    "win32":  r"C:\Program Files\Autodesk\Maya2026",
+    "linux":  "/usr/autodesk/maya2026",
 }
 
 
@@ -216,7 +216,7 @@ def qt_include_dir(maya: str, _isfile=None, _listdir=None) -> Optional[str]:
     override is reported as unresolved instead of producing a C1083 later.
     ``_isfile`` / ``_listdir`` are injectable for tests.
     """
-    isfile = _isfile or os.path.isfile
+    isfile  = _isfile or os.path.isfile
     listdir = _listdir or (lambda d: os.listdir(d) if os.path.isdir(d) else [])
 
     def _has_qt(d):
@@ -403,7 +403,7 @@ def qt_resolver_bat(_os_name: Optional[str] = None) -> List[str]:
     # NOT os.path.join: this writes a WINDOWS script, and joining on a macOS
     # host would emit 'QtGui/QCursor'. The separator has to be literal.
     sentinel = "\\".join(_QT_INCLUDE_SENTINEL)
-    inc = "%MAYA%\\include"
+    inc      = "%MAYA%\\include"
     return [
         'set "QTINC=%{0}%"'.format(QT_INCLUDE_ENV),
         # Hard stop on a bad override, before the cheap probes below can mask it.
@@ -570,8 +570,8 @@ def mayapy_path(maya: str, os_name: Optional[str] = None) -> str:
 
 _MAYA_SEARCH_DIRS = {
     "darwin": ["/Applications/Autodesk"],
-    "win32": [r"C:\Program Files\Autodesk"],
-    "linux": ["/usr/autodesk"],
+    "win32":  [r"C:\Program Files\Autodesk"],
+    "linux":  ["/usr/autodesk"],
 }
 
 
@@ -605,7 +605,7 @@ def discover_maya_installs(os_name: Optional[str] = None,
     """
     import glob
 
-    dirs = search_dirs if search_dirs is not None else maya_install_search_dirs(os_name)
+    dirs  = search_dirs if search_dirs is not None else maya_install_search_dirs(os_name)
     found = {}
     for parent in dirs:
         for d in glob.glob(os.path.join(parent, "[Mm]aya*")):
@@ -620,10 +620,10 @@ def discover_maya_installs(os_name: Optional[str] = None,
                 continue
             label = os.path.basename(d.rstrip("/\\"))
             found[os.path.abspath(d)] = {
-                "label": label,
+                "label":   label,
                 "version": _maya_version_label(label),
-                "root": d,
-                "mayapy": mp,
+                "root":    d,
+                "mayapy":  mp,
             }
     # Sort so year installs order NUMERICALLY and come LAST, with custom-named
     # installs before them -- ``[-1]`` is then always the newest real Maya, never
@@ -925,7 +925,7 @@ def msvc_link_byproducts(out_plugin: str, one_shot: bool = False) -> List[str]:
     emitters do the same in batch with a trailing ``del``.
     """
     base = os.path.splitext(out_plugin)[0]
-    out = [base + ".lib", base + ".exp"]
+    out  = [base + ".lib", base + ".exp"]
     if one_shot:
         out.append(base + ".obj")
     return out
@@ -951,10 +951,10 @@ def remove_msvc_link_byproducts(out_plugin: str,
 
 def compile_to_plugin_cmd(compiler: str, src: str, out_plugin: str, *,
                           include_dir: str, lib_dir: str, libs: List[str],
-                          os_name: Optional[str] = None,
-                          arch: Optional[str] = None,
-                          qt: bool = False,
-                          optimize: bool = False,
+                          os_name:  Optional[str] = None,
+                          arch:     Optional[str] = None,
+                          qt:       bool          = False,
+                          optimize: bool          = False,
                           maya: Optional[str] = None) -> List[str]:
     """One-shot *compile + link* of a single ``.cpp`` into a Maya plugin.
 
@@ -1023,8 +1023,8 @@ def compile_to_plugin_cmd(compiler: str, src: str, out_plugin: str, *,
 def compile_object_cmd(compiler: str, src: str, obj: str, *,
                        include_dir: str, frag: bool = True,
                        os_name: Optional[str] = None,
-                       arch: Optional[str] = None,
-                       qt: bool = False,
+                       arch:    Optional[str] = None,
+                       qt:      bool          = False,
                        maya: Optional[str] = None) -> List[str]:
     """Compile one ``.cpp`` to an object file (``-c`` / ``/c``).
 
@@ -1064,8 +1064,8 @@ def compile_object_cmd(compiler: str, src: str, obj: str, *,
 def link_plugin_cmd(compiler: str, objs: List[str], out_plugin: str, *,
                     lib_dir: str, libs: List[str],
                     os_name: Optional[str] = None,
-                    arch: Optional[str] = None,
-                    qt: bool = False,
+                    arch:    Optional[str] = None,
+                    qt:      bool          = False,
                     maya: Optional[str] = None) -> List[str]:
     """Link object files into the final Maya plugin (multi-node bundler).
 
@@ -1187,7 +1187,7 @@ def vs_installer_on_path(env: Optional[Dict[str, str]] = None) -> Dict[str, str]
     Returns an unchanged copy when vswhere cannot be located, and never adds
     the directory twice.
     """
-    out = dict(os.environ if env is None else env)
+    out     = dict(os.environ if env is None else env)
     vswhere = find_vswhere()
     if vswhere:
         inst = os.path.dirname(vswhere)
@@ -1379,7 +1379,7 @@ def diagnose_toolset_mismatch(cl_path: Optional[str],
     compiler's toolset IS among the INCLUDE toolsets they are consistent and the
     result is ``None``.
     """
-    cl_ver = msvc_toolset_from_path(cl_path)
+    cl_ver   = msvc_toolset_from_path(cl_path)
     inc_vers = msvc_toolsets_from_include(include)
     if not cl_ver or not inc_vers:
         return None
@@ -1495,7 +1495,7 @@ def run_streaming(cmd, *, env=None, log_cb=None, os_name=None, _popen=None):
                  env=env, text=True, encoding="utf-8", errors="replace",
                  **no_window_kwargs(os_name))
     chunks = []
-    out = getattr(proc, "stdout", None)
+    out    = getattr(proc, "stdout", None)
     if out is not None:
         for line in out:
             chunks.append(line)
@@ -1543,8 +1543,8 @@ def msvc_cl_from_toolset(build_env_dict: Optional[Dict[str, str]],
     if not root:
         return None
     isfile = _isfile or os.path.isfile
-    host = host or arch
-    cand = "%s\\bin\\Host%s\\%s\\cl.exe" % (root.rstrip("\\/"), host, arch)
+    host   = host or arch
+    cand   = "%s\\bin\\Host%s\\%s\\cl.exe" % (root.rstrip("\\/"), host, arch)
     return cand if isfile(cand) else None
 
 
@@ -1592,7 +1592,7 @@ def resolve_compiler(compiler: str, build_env_dict: Optional[Dict[str, str]] = N
         return exact
     # 3) last resort: resolve cl off the captured PATH.
     which = _which or shutil.which
-    path = (build_env_dict or {}).get("PATH")
+    path  = (build_env_dict or {}).get("PATH")
     return which(compiler, path=path)
 
 
@@ -1635,10 +1635,10 @@ def check_toolchain(maya: str, compiler: Optional[str] = None,
     the result. Every system probe is injectable so the whole platform matrix is
     testable from any host.
     """
-    osn = current_os(os_name)
+    osn      = current_os(os_name)
     compiler = compiler or default_compiler(os_name)
-    isdir = _isdir or os.path.isdir
-    problems: List[str] = []
+    isdir    = _isdir or os.path.isdir
+    problems:      List[str] = []
     compiler_path: Optional[str] = None
 
     # --- Maya devkit (headers + libs) -------------------------------------
@@ -1660,7 +1660,7 @@ def check_toolchain(maya: str, compiler: Optional[str] = None,
     # --- compiler / build environment -------------------------------------
     try:
         if compiler_family(compiler) == "msvc":
-            find = _find_vcvarsall or find_vcvarsall
+            find   = _find_vcvarsall or find_vcvarsall
             vcvars = find()
             if not vcvars:
                 problems.append(
@@ -1670,7 +1670,7 @@ def check_toolchain(maya: str, compiler: Optional[str] = None,
                     "Studio'. Download: "
                     "https://visualstudio.microsoft.com/downloads/")
             else:
-                cap = _capture_vcvars or (lambda: capture_vcvars_env())
+                cap  = _capture_vcvars or (lambda: capture_vcvars_env())
                 benv = cap()
                 if not benv:
                     problems.append(
@@ -1688,7 +1688,7 @@ def check_toolchain(maya: str, compiler: Optional[str] = None,
                             % (compiler_missing_message(compiler, os_name),
                                vcvars, compiler))
         else:
-            which = _which or shutil.which
+            which         = _which or shutil.which
             compiler_path = which(compiler)
             if not compiler_path:
                 problems.append(compiler_missing_message(compiler, os_name))
@@ -1696,8 +1696,8 @@ def check_toolchain(maya: str, compiler: Optional[str] = None,
         problems.append("Could not check the C++ compiler: %s" % exc)
 
     return {
-        "ok": not problems,
-        "problems": problems,
-        "compiler": compiler,
+        "ok":            not problems,
+        "problems":      problems,
+        "compiler":      compiler,
         "compiler_path": compiler_path,
     }

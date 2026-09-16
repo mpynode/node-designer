@@ -65,7 +65,7 @@ def node_content_hash(py_node):
         _get("get_compute_expression"),
         list((_get("get_input_attr_map", {}) or {}).keys()),
         list((_get("get_output_attr_map", {}) or {}).keys()),
-        init=_get("get_init_expression"),
-        methods=_get("get_methods_source"),
-        persistent_names=list(_get("get_variable_names", []) or []),
+        init             = _get("get_init_expression"),
+        methods          = _get("get_methods_source"),
+        persistent_names = list(_get("get_variable_names", []) or []),
     )

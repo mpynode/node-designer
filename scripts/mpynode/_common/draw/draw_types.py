@@ -73,7 +73,7 @@ def _points(value, what="points"):
     if a.ndim == 2 and a.shape[1] == 3:
         return a
     if a.ndim == 2 and a.shape[1] == 2:          # 2D convenience, pad z=0
-        pad = np.zeros((a.shape[0], 3), dtype=np.float64)
+        pad        = np.zeros((a.shape[0], 3), dtype=np.float64)
         pad[:, :2] = a
         return pad
     raise ValueError("%s: expected (N,3), got %s" % (what, (a.shape,)))
@@ -136,8 +136,8 @@ class DrawItem:
     and the chainable transform/restyle methods (each returns a NEW item, so a
     drawing you built once can be reused at several transforms)."""
 
-    _SLOT = None                 # which draw buffer this flushes into
-    _POINT_FIELDS = ()           # attributes holding (N,3) arrays
+    _SLOT         = None  # which draw buffer this flushes into
+    _POINT_FIELDS = ()    # attributes holding (N,3) arrays
 
     # numpy must defer to __radd__ instead of broadcasting us into an array
     __array_ufunc__ = None
@@ -170,13 +170,13 @@ class DrawItem:
 
     def colored(self, color):
         """A copy drawn in ``color`` (RGB or RGBA, uniform or per-element)."""
-        out = self._mutated()
+        out        = self._mutated()
         out._color = color
         return out
 
     def in_space(self, space):
         """A copy drawn in ``"local"`` (object space) or ``"screen"`` (pixels)."""
-        out = self._mutated()
+        out        = self._mutated()
         out._space = normalize_space(space)
         return out
 
@@ -194,7 +194,7 @@ class DrawItem:
     def scaled(self, factor):
         """A copy scaled about the origin. Subclasses also scale their radii /
         glyph sizes so a scaled drawing stays proportional."""
-        s = float(factor)
+        s   = float(factor)
         out = self._mutated()
         for f in self._POINT_FIELDS:
             setattr(out, f, getattr(self, f) * s)
@@ -244,27 +244,27 @@ class DrawGroup(DrawItem):
         return iter(self._items)
 
     def _mutated(self):
-        out = _copy.copy(self)
+        out        = _copy.copy(self)
         out._items = list(self._items)
         return out
 
     def colored(self, color):
-        out = self._mutated()
+        out        = self._mutated()
         out._items = [i.colored(color) for i in self._items]
         return out
 
     def in_space(self, space):
-        out = self._mutated()
+        out        = self._mutated()
         out._items = [i.in_space(space) for i in self._items]
         return out
 
     def translated(self, x, y=None, z=None):
-        out = self._mutated()
+        out        = self._mutated()
         out._items = [i.translated(x, y, z) for i in self._items]
         return out
 
     def scaled(self, factor):
-        out = self._mutated()
+        out        = self._mutated()
         out._items = [i.scaled(factor) for i in self._items]
         return out
 
@@ -281,9 +281,9 @@ class DrawPrimitive(DrawItem):
     one primitive is one call -- ``DrawCircle(center=(0,0,0), radius=2)`` --
     while arrays still emit N of them in a single call."""
 
-    _SLOT = "shapes"
+    _SLOT         = "shapes"
     _POINT_FIELDS = ("centers",)
-    KIND = None
+    KIND          = None
 
     def __init__(self, center=(0.0, 0.0, 0.0), radius=1.0,
                  axis=(0.0, 1.0, 0.0), color=None, filled=False,
@@ -291,9 +291,9 @@ class DrawPrimitive(DrawItem):
         DrawItem.__init__(self, color=color, space=space,
                           screen_space=screen_space)
         self.centers = _points(center, "center")
-        n = self.centers.shape[0]
-        self.radii = _scalars(radius, n, 1.0, "radius")
-        self.axes = _points(axis, "axis")
+        n            = self.centers.shape[0]
+        self.radii   = _scalars(radius, n, 1.0, "radius")
+        self.axes    = _points(axis, "axis")
         if self.axes.shape[0] == 1 and n > 1:
             self.axes = np.repeat(self.axes, n, axis=0)
         if self.axes.shape[0] != n:
@@ -302,7 +302,7 @@ class DrawPrimitive(DrawItem):
         self.filled = _flags(filled, n, False)
 
     def scaled(self, factor):
-        out = DrawItem.scaled(self, factor)
+        out       = DrawItem.scaled(self, factor)
         out.radii = self.radii * float(factor)
         return out
 
@@ -339,7 +339,7 @@ class DrawPrimitive(DrawItem):
         indices rebased.
         """
         tess = _TESSELLATE[self.KIND]
-        seg = max(3, int(segments))
+        seg  = max(3, int(segments))
         pts, counts, indices, faces_per = [], [], [], []
         voff = 0
         for i in range(self.centers.shape[0]):
@@ -402,9 +402,9 @@ def _axis_frame(axis):
     plane a ring is swept in, with ``u x v == w`` so the sweep is
     counter-clockwise about ``w``. A zero-length axis falls back to the
     ``DrawPrimitive`` default ``+Y``."""
-    w = np.asarray(axis, dtype=np.float64).ravel()
-    n = float(np.linalg.norm(w))
-    w = np.array([0.0, 1.0, 0.0]) if n < 1e-12 else w / n
+    w      = np.asarray(axis, dtype=np.float64).ravel()
+    n      = float(np.linalg.norm(w))
+    w      = np.array([0.0, 1.0, 0.0]) if n < 1e-12 else w / n
     helper = np.zeros(3)
     helper[int(np.argmin(np.abs(w)))] = 1.0     # least parallel world axis
     u = np.cross(helper, w)
@@ -431,12 +431,12 @@ def _tess_circle(center, radius, axis, segments):
 def _tess_cylinder(center, radius, axis, segments):
     """dm.cylinder(CENTER, axis, radius, height=2*radius, 16): centred."""
     u, v, w = _axis_frame(axis)
-    c = np.asarray(center, dtype=np.float64)
+    c      = np.asarray(center, dtype=np.float64)
     bottom = _ring(c - radius * w, u, v, radius, segments)
-    top = _ring(c + radius * w, u, v, radius, segments)
-    j = np.arange(segments, dtype=np.int64)
-    k = (j + 1) % segments
-    side = np.stack([j, k, k + segments, j + segments], axis=1).ravel()
+    top    = _ring(c + radius * w, u, v, radius, segments)
+    j      = np.arange(segments, dtype=np.int64)
+    k      = (j + 1) % segments
+    side   = np.stack([j, k, k + segments, j + segments], axis=1).ravel()
     return (np.concatenate([bottom, top]),
             np.concatenate([[segments, segments],
                             np.full(segments, 4)]).astype(np.int64),
@@ -446,11 +446,11 @@ def _tess_cylinder(center, radius, axis, segments):
 def _tess_cone(center, radius, axis, segments):
     """dm.cone(BASE, axis, radius, height=2*radius): base ring + apex."""
     u, v, w = _axis_frame(axis)
-    c = np.asarray(center, dtype=np.float64)
-    base = _ring(c, u, v, radius, segments)
-    apex = (c + 2.0 * radius * w).reshape(1, 3)
-    j = np.arange(segments, dtype=np.int64)
-    k = (j + 1) % segments
+    c     = np.asarray(center, dtype=np.float64)
+    base  = _ring(c, u, v, radius, segments)
+    apex  = (c + 2.0 * radius * w).reshape(1, 3)
+    j     = np.arange(segments, dtype=np.int64)
+    k     = (j + 1) % segments
     sides = np.stack([j, k, np.full(segments, segments)], axis=1).ravel()
     return (np.concatenate([base, apex]),
             np.concatenate([[segments], np.full(segments, 3)]).astype(np.int64),
@@ -461,17 +461,17 @@ def _tess_sphere(center, radius, _axis, segments):
     """dm.sphere(center, radius): a UV sphere. ``dm.sphere`` takes NO axis, so
     neither does this -- the poles are the frame's own ``+/-Y``."""
     u, v, w = _axis_frame((0.0, 1.0, 0.0))
-    c = np.asarray(center, dtype=np.float64)
+    c      = np.asarray(center, dtype=np.float64)
     stacks = max(2, segments // 2)
-    phi = np.linspace(0.0, np.pi, stacks + 1)[1:-1]      # interior rings only
+    phi    = np.linspace(0.0, np.pi, stacks + 1)[1:-1]      # interior rings only
     rings = [_ring(c + radius * np.cos(p) * w, u, v,
                    radius * np.sin(p), segments) for p in phi]
     n_rings = len(rings)
     pts = np.concatenate([(c + radius * w).reshape(1, 3)] + rings
                          + [(c - radius * w).reshape(1, 3)])
     south = 1 + n_rings * segments
-    j = np.arange(segments, dtype=np.int64)
-    k = (j + 1) % segments
+    j     = np.arange(segments, dtype=np.int64)
+    k     = (j + 1) % segments
     idx = [np.stack([np.zeros(segments, dtype=np.int64), 1 + j, 1 + k],
                     axis=1).ravel()]
     counts = [np.full(segments, 3, dtype=np.int64)]
@@ -489,9 +489,9 @@ def _tess_sphere(center, radius, _axis, segments):
 def _tess_box(center, radius, axis, _segments):
     """dm.box(center, up=axis, right=+X, radius, radius, radius): ``radius`` is
     the HALF extent along each frame axis."""
-    up = np.asarray(axis, dtype=np.float64).ravel()
-    n = float(np.linalg.norm(up))
-    up = np.array([0.0, 1.0, 0.0]) if n < 1e-12 else up / n
+    up    = np.asarray(axis, dtype=np.float64).ravel()
+    n     = float(np.linalg.norm(up))
+    up    = np.array([0.0, 1.0, 0.0]) if n < 1e-12 else up / n
     right = np.array([1.0, 0.0, 0.0])            # the side vector the draw passes
     right = right - float(np.dot(right, up)) * up
     if float(np.linalg.norm(right)) < 1e-9:      # axis IS +/-X -> pick another
@@ -503,7 +503,7 @@ def _tess_box(center, radius, axis, _segments):
                       [-1.0, -1.0, 1.0], [1.0, -1.0, 1.0],
                       [1.0, 1.0, 1.0], [-1.0, 1.0, 1.0]])
     basis = np.stack([right, up, np.cross(right, up)])   # right / up / front
-    pts = np.asarray(center, dtype=np.float64) + radius * (signs @ basis)
+    pts   = np.asarray(center, dtype=np.float64) + radius * (signs @ basis)
     faces = np.array([[0, 3, 2, 1], [4, 5, 6, 7],        # -front / +front
                       [0, 1, 5, 4], [3, 7, 6, 2],        # -up    / +up
                       [0, 4, 7, 3], [1, 2, 6, 5]],       # -right / +right
@@ -512,11 +512,11 @@ def _tess_box(center, radius, axis, _segments):
 
 
 _TESSELLATE = {
-    "sphere": _tess_sphere,
-    "box": _tess_box,
-    "cone": _tess_cone,
+    "sphere":   _tess_sphere,
+    "box":      _tess_box,
+    "cone":     _tess_cone,
     "cylinder": _tess_cylinder,
-    "circle": _tess_circle,
+    "circle":   _tess_circle,
 }
 
 
@@ -527,14 +527,14 @@ def _flush_shapes(items):
         kinds.extend([i.KIND] * i.centers.shape[0])
         filled.extend(i.filled)
     return {
-        "kinds": kinds,
+        "kinds":   kinds,
         "centers": np.concatenate([i.centers for i in items]).astype(np.float32),
-        "radii": np.concatenate([i.radii for i in items]).astype(np.float32),
-        "axes": np.concatenate([i.axes for i in items]).astype(np.float32),
+        "radii":   np.concatenate([i.radii for i in items]).astype(np.float32),
+        "axes":    np.concatenate([i.axes for i in items]).astype(np.float32),
         "colors": np.concatenate(
             [normalize_color(i._color, i.centers.shape[0]) for i in items]),
         "filled": filled,
-        "space": _merge_space(items, "shapes"),
+        "space":  _merge_space(items, "shapes"),
     } if n_tot else None
 
 
@@ -546,7 +546,7 @@ class DrawLines(DrawItem):
     from other nodes' worldMatrices, say) and must land there regardless of this
     locator's own transform -- see ``DrawMesh`` for the same opt-in."""
 
-    _SLOT = "lines"
+    _SLOT         = "lines"
     _POINT_FIELDS = ("starts", "ends")
 
     def __init__(self, starts, ends, color=None, world_space=False,
@@ -554,7 +554,7 @@ class DrawLines(DrawItem):
         DrawItem.__init__(self, color=color, space=space,
                           screen_space=screen_space)
         self.starts = _points(starts, "starts")
-        self.ends = _points(ends, "ends")
+        self.ends   = _points(ends, "ends")
         if self.starts.shape != self.ends.shape:
             raise ValueError("starts %s and ends %s must match"
                              % (self.starts.shape, self.ends.shape))
@@ -572,15 +572,15 @@ class DrawCurve(DrawItem):
     hull, not the curve, so drawing them would be quietly wrong. Sample the
     curve and pass the samples."""
 
-    _SLOT = "lines"
+    _SLOT         = "lines"
     _POINT_FIELDS = ("points",)
 
     def __init__(self, points, color=None, closed=False, world_space=False,
                  space="local", screen_space=False):
         DrawItem.__init__(self, color=color, space=space,
                           screen_space=screen_space)
-        self.points = _points(points, "points")
-        self.closed = bool(closed)
+        self.points      = _points(points, "points")
+        self.closed      = bool(closed)
         self.world_space = bool(world_space)
 
     def _segments(self):
@@ -623,11 +623,11 @@ def _flush_lines(items):
     if not starts:
         return None
     return {
-        "starts": np.concatenate(starts).astype(np.float32),
-        "ends": np.concatenate(ends).astype(np.float32),
-        "colors": np.concatenate(colors),
+        "starts":      np.concatenate(starts).astype(np.float32),
+        "ends":        np.concatenate(ends).astype(np.float32),
+        "colors":      np.concatenate(colors),
         "world_space": bool(items[0].world_space),
-        "space": _merge_space(items, "lines"),
+        "space":       _merge_space(items, "lines"),
     }
 
 
@@ -635,7 +635,7 @@ def _flush_lines(items):
 class DrawPoints(DrawItem):
     """Screen-space dots. ``size`` is in PIXELS in both spaces."""
 
-    _SLOT = "points"
+    _SLOT         = "points"
     _POINT_FIELDS = ("positions",)
 
     def __init__(self, positions, color=None, size=4.0, space="local",
@@ -643,7 +643,7 @@ class DrawPoints(DrawItem):
         DrawItem.__init__(self, color=color, space=space,
                           screen_space=screen_space)
         self.positions = _points(positions, "positions")
-        self.sizes = _scalars(size, self.positions.shape[0], 4.0, "size")
+        self.sizes     = _scalars(size, self.positions.shape[0], 4.0, "size")
 
 
 def _flush_points(items):
@@ -668,7 +668,7 @@ class DrawText(DrawItem):
     plain Python (``DrawText("frame " + str(f))``) so the operator keeps one
     meaning across every draw type."""
 
-    _SLOT = "text"
+    _SLOT         = "text"
     _POINT_FIELDS = ("positions",)
 
     def __init__(self, text, position=(0.0, 0.0, 0.0), color=None, size=0.5,
@@ -676,8 +676,8 @@ class DrawText(DrawItem):
         DrawItem.__init__(self, color=color, space=space,
                           screen_space=screen_space)
         self.positions = _points(position, "position")
-        n = self.positions.shape[0]
-        self.strings = _strings(text, n)
+        n              = self.positions.shape[0]
+        self.strings   = _strings(text, n)
         if len(self.strings) != n:
             if n == 1 and len(self.strings) > 1:
                 # one anchor, many labels is almost certainly a mistake
@@ -689,7 +689,7 @@ class DrawText(DrawItem):
         self.sizes = _scalars(size, n, 0.5, "size")
 
     def scaled(self, factor):
-        out = DrawItem.scaled(self, factor)
+        out       = DrawItem.scaled(self, factor)
         out.sizes = self.sizes * float(factor)
         return out
 
@@ -747,7 +747,7 @@ class DrawMesh(DrawItem):
     than one is an error rather than a silent precedence pick -- the renderer
     would warn and choose for you."""
 
-    _SLOT = "polygons"
+    _SLOT         = "polygons"
     _POINT_FIELDS = ("points",)
 
     #: fill kwarg -> buffer key, in the renderer's own precedence order.
@@ -776,15 +776,15 @@ class DrawMesh(DrawItem):
                     ".indices) or the three arrays explicitly")
         if points is None or counts is None or indices is None:
             raise ValueError("DrawMesh: points, counts and indices are required")
-        self.points = _points(points, "points")
-        self.counts = np.asarray(counts, dtype=np.int64).ravel()
+        self.points  = _points(points, "points")
+        self.counts  = np.asarray(counts, dtype=np.int64).ravel()
         self.indices = np.asarray(indices, dtype=np.int64).ravel()
         if int(self.counts.sum()) != self.indices.size:
             raise ValueError(
                 "counts sum to %d but there are %d indices"
                 % (int(self.counts.sum()), self.indices.size))
-        self.uniform_color = uniform_color
-        self.vertex_colors = vertex_colors
+        self.uniform_color      = uniform_color
+        self.vertex_colors      = vertex_colors
         self.face_vertex_colors = face_vertex_colors
         given = [name for name, value in (
             ("color", color),
@@ -797,14 +797,14 @@ class DrawMesh(DrawItem):
                 "DrawMesh: pass ONE fill mode, got %s -- they are mutually "
                 "exclusive (the renderer would warn and pick by precedence)"
                 % (sorted(given),))
-        self.outline = outline
-        self.outline_width = float(outline_width)
+        self.outline               = outline
+        self.outline_width         = float(outline_width)
         self.outline_boundary_only = bool(outline_boundary_only)
-        self.world_space = bool(world_space)
-        self.precise_hover = bool(precise_hover)
-        self.cull_backfaces = bool(cull_backfaces)
-        self.highlight_fill = highlight_fill
-        self.highlight_wire = highlight_wire
+        self.world_space           = bool(world_space)
+        self.precise_hover         = bool(precise_hover)
+        self.cull_backfaces        = bool(cull_backfaces)
+        self.highlight_fill        = highlight_fill
+        self.highlight_wire        = highlight_wire
 
     def _fill_mode(self):
         """``(kwarg, buffer_key)`` for the fill this item carries, or None."""
@@ -815,9 +815,9 @@ class DrawMesh(DrawItem):
 
     def outlined(self, color, width=2.0, boundary_only=True):
         """A copy with a wireframe outline."""
-        out = self._mutated()
-        out.outline = color
-        out.outline_width = float(width)
+        out                       = self._mutated()
+        out.outline               = color
+        out.outline_width         = float(width)
         out.outline_boundary_only = bool(boundary_only)
         return out
 
@@ -835,11 +835,11 @@ def _flush_polygons(items):
         voff += i.points.shape[0]
     head = items[0]
     buf = {
-        "points": np.concatenate(pts).astype(np.float32),
-        "indices": np.concatenate(idx).astype(np.int32),
-        "counts": np.concatenate(cnt).astype(np.int32),
+        "points":      np.concatenate(pts).astype(np.float32),
+        "indices":     np.concatenate(idx).astype(np.int32),
+        "counts":      np.concatenate(cnt).astype(np.int32),
         "world_space": bool(head.world_space),
-        "space": _merge_space(items, "polygons"),
+        "space":       _merge_space(items, "polygons"),
     }
 
     # Fill colour. Every merged item that HAS a fill must agree on the mode --
@@ -881,8 +881,8 @@ def _flush_polygons(items):
                         if i.uniform_color is not None)
 
     if head.outline is not None:
-        buf["wireframe"] = head.outline
-        buf["wireframe_width"] = head.outline_width
+        buf["wireframe"]               = head.outline
+        buf["wireframe_width"]         = head.outline_width
         buf["wireframe_boundary_only"] = head.outline_boundary_only
     if head.cull_backfaces:
         buf["cull_backfaces"] = True
@@ -902,11 +902,11 @@ def _flush_polygons(items):
 
 # ---- flush -> ordered draw commands ----
 _FLUSH = {
-    "lines": _flush_lines,
-    "points": _flush_points,
+    "lines":    _flush_lines,
+    "points":   _flush_points,
     "polygons": _flush_polygons,
-    "shapes": _flush_shapes,
-    "text": _flush_text,
+    "shapes":   _flush_shapes,
+    "text":     _flush_text,
 }
 
 
@@ -1010,7 +1010,7 @@ def draw_from_json(payload):
     if isinstance(payload, list):
         return [draw_from_json(p) for p in payload]
     kind = payload.get("type")
-    cls = globals().get(kind)
+    cls  = globals().get(kind)
     if not (isinstance(cls, type) and issubclass(cls, DrawItem)):
         raise ValueError("draw_from_json: unknown draw type %r" % (kind,))
     # Bypass __init__: the state dict is already coerced/validated (it came out

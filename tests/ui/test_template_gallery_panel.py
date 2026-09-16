@@ -10,7 +10,7 @@ try:  # QApplication must exist before any QWidget is constructed.
     except Exception:
         from PySide2.QtWidgets import QApplication
     _app = QApplication.instance() or QApplication([])
-    _QT = True
+    _QT  = True
 except Exception:  # pragma: no cover - Qt missing
     _QT = False
 
@@ -45,27 +45,27 @@ class TestPanelShell(unittest.TestCase):
 class _Cat:
     def __init__(self, label, children, preview_path=None,
                  description_path=None):
-        self.label = label
-        self.children = children
-        self.preview_path = preview_path
+        self.label            = label
+        self.children         = children
+        self.preview_path     = preview_path
         self.description_path = description_path
 
 
 class _Entry:
     def __init__(self, label, native_type, mpn_path="x.mpn",
                  preview_path=None, description_path=None, children=()):
-        self.label = label
-        self.native_type = native_type
-        self.mpn_path = mpn_path
-        self.preview_path = preview_path
+        self.label            = label
+        self.native_type      = native_type
+        self.mpn_path         = mpn_path
+        self.preview_path     = preview_path
         self.description_path = description_path
-        self.children = children
+        self.children         = children
 
 
 def _fake_scan():
-    leaf_ok = _Entry("Sine Ripple", "mPyDeformer")
+    leaf_ok  = _Entry("Sine Ripple", "mPyDeformer")
     leaf_bad = _Entry("Broken One", None)
-    cat = _Cat("Deformers", [leaf_ok, leaf_bad])
+    cat      = _Cat("Deformers", [leaf_ok, leaf_bad])
     root_cat = _Cat("templates", [cat])
     return [("templates", "/tmp/templates", root_cat)]
 
@@ -80,7 +80,7 @@ class TestTree(unittest.TestCase):
 
     def test_tree_has_root_category_leaves(self):
         panel = self._panel()
-        root = panel.tree.topLevelItem(0)
+        root  = panel.tree.topLevelItem(0)
         self.assertEqual(root.text(0), "templates")
         cat = root.child(0)
         self.assertEqual(cat.text(0), "Deformers")
@@ -91,7 +91,7 @@ class TestTree(unittest.TestCase):
 
     def test_none_native_type_leaf_disabled(self):
         panel = self._panel()
-        bad = panel.tree.topLevelItem(0).child(0).child(1)
+        bad   = panel.tree.topLevelItem(0).child(0).child(1)
         self.assertFalse(bad.flags() & Qt.ItemIsEnabled)
         panel.deleteLater()
 
@@ -106,11 +106,11 @@ class TestSelection(unittest.TestCase):
 
     def test_leaf_menu_has_create(self):
         import mpynode._common.io.mpn_io as mpn_io
-        orig = mpn_io.load_mpn_header
+        orig                   = mpn_io.load_mpn_header
         mpn_io.load_mpn_header = lambda p: {"metadata": {"version": "1.0"}}
         try:
             panel = self._panel(_fake_scan)
-            leaf = panel.tree.topLevelItem(0).child(0).child(0)
+            leaf  = panel.tree.topLevelItem(0).child(0).child(0)
             panel.tree.setCurrentItem(leaf)
             self.assertIn("mPyDeformer", panel.meta_label.text())
             menu = panel._build_tree_menu(panel._selected_entry())
@@ -125,7 +125,7 @@ class TestSelection(unittest.TestCase):
         a menu now -- the reveal action is offered for every row (the fake
         category here has no path on disk, so reveal is present-but-disabled)."""
         panel = self._panel(_fake_scan)
-        cat = panel.tree.topLevelItem(0).child(0)
+        cat   = panel.tree.topLevelItem(0).child(0)
         panel.tree.setCurrentItem(cat)
         menu = panel._build_tree_menu(panel._selected_entry())
         self.assertIsNotNone(menu)
@@ -135,10 +135,10 @@ class TestSelection(unittest.TestCase):
     def test_png_preview_uses_qpixmap_path(self):
         import mpynode._common.io.mpn_io as mpn_io
         import mpynode.ui.widgets.template_gallery_panel as mod
-        orig_hdr = mpn_io.load_mpn_header
+        orig_hdr               = mpn_io.load_mpn_header
         mpn_io.load_mpn_header = lambda p: {}
-        calls = []
-        orig_px = mod.QPixmap
+        calls                  = []
+        orig_px                = mod.QPixmap
 
         class _SpyPixmap(orig_px):
             def __init__(self, *a, **k):
@@ -149,15 +149,15 @@ class TestSelection(unittest.TestCase):
         mod.QPixmap = _SpyPixmap
         try:
             entry = _Entry("Has PNG", "mPyDeformer", preview_path="/tmp/p.png")
-            scan = lambda: [("templates", "/tmp", _Cat("templates", [entry]))]
+            scan  = lambda: [("templates", "/tmp", _Cat("templates", [entry]))]
             panel = self._panel(scan)
-            leaf = panel.tree.topLevelItem(0).child(0)
+            leaf  = panel.tree.topLevelItem(0).child(0)
             panel.tree.setCurrentItem(leaf)
             self.assertIn("/tmp/p.png", calls)
             panel.deleteLater()
         finally:
             mpn_io.load_mpn_header = orig_hdr
-            mod.QPixmap = orig_px
+            mod.QPixmap            = orig_px
 
 
 @unittest.skipUnless(_QT, "Qt unavailable")
@@ -171,15 +171,15 @@ class TestRunSetupGate(unittest.TestCase):
         from mpynode.ui.widgets.template_gallery_panel import (
             NDTemplateGalleryPanel,
         )
-        orig_gate = node_setups.type_has_setup
-        orig_hdr = mpn_io.load_mpn_header
+        orig_gate                  = node_setups.type_has_setup
+        orig_hdr                   = mpn_io.load_mpn_header
         node_setups.type_has_setup = lambda nt: True
         mpn_io.load_mpn_header = lambda p: {
             "methods_source":
                 "def setup(self, *a, **k):\n    return self.get_name()\n"}
         try:
             panel = NDTemplateGalleryPanel(parent=None, scan=_fake_scan)
-            leaf = panel.tree.topLevelItem(0).child(0).child(0)
+            leaf  = panel.tree.topLevelItem(0).child(0).child(0)
             panel.tree.setCurrentItem(leaf)
             labels = [a.text() for a in
                       panel._build_tree_menu(panel._selected_entry()).actions()]
@@ -188,7 +188,7 @@ class TestRunSetupGate(unittest.TestCase):
             panel.deleteLater()
         finally:
             node_setups.type_has_setup = orig_gate
-            mpn_io.load_mpn_header = orig_hdr
+            mpn_io.load_mpn_header     = orig_hdr
 
 
 @unittest.skipUnless(_QT, "Qt unavailable")
@@ -198,11 +198,11 @@ class TestRunDemoGate(unittest.TestCase):
         from mpynode.ui.widgets.template_gallery_panel import (
             NDTemplateGalleryPanel,
         )
-        orig_hdr = mpn_io.load_mpn_header
+        orig_hdr               = mpn_io.load_mpn_header
         mpn_io.load_mpn_header = lambda p: {}
         try:
             panel = NDTemplateGalleryPanel(parent=None, scan=_fake_scan)
-            leaf = panel.tree.topLevelItem(0).child(0).child(0)
+            leaf  = panel.tree.topLevelItem(0).child(0).child(0)
             panel.tree.setCurrentItem(leaf)
             acts = {a.text(): a for a in
                     panel._build_tree_menu(panel._selected_entry()).actions()}
@@ -223,7 +223,7 @@ class TestRunDemoGate(unittest.TestCase):
             "methods_source": "def demo(self):\n    return self.get_name()\n"}
         try:
             panel = NDTemplateGalleryPanel(parent=None, scan=_fake_scan)
-            leaf = panel.tree.topLevelItem(0).child(0).child(0)
+            leaf  = panel.tree.topLevelItem(0).child(0).child(0)
             panel.tree.setCurrentItem(leaf)
             acts = {a.text(): a for a in
                     panel._build_tree_menu(panel._selected_entry()).actions()}
@@ -239,13 +239,13 @@ class TestRunDemoGate(unittest.TestCase):
         from mpynode.ui.widgets.template_gallery_panel import (
             NDTemplateGalleryPanel,
         )
-        orig_gate = node_setups.type_has_setup
-        orig_hdr = mpn_io.load_mpn_header
+        orig_gate                  = node_setups.type_has_setup
+        orig_hdr                   = mpn_io.load_mpn_header
         node_setups.type_has_setup = lambda nt: True
-        mpn_io.load_mpn_header = lambda p: {}
+        mpn_io.load_mpn_header     = lambda p: {}
         try:
             panel = NDTemplateGalleryPanel(parent=None, scan=_fake_scan)
-            leaf = panel.tree.topLevelItem(0).child(0).child(0)
+            leaf  = panel.tree.topLevelItem(0).child(0).child(0)
             panel.tree.setCurrentItem(leaf)
             acts = {a.text(): a for a in
                     panel._build_tree_menu(panel._selected_entry()).actions()}
@@ -253,7 +253,7 @@ class TestRunDemoGate(unittest.TestCase):
             panel.deleteLater()
         finally:
             node_setups.type_has_setup = orig_gate
-            mpn_io.load_mpn_header = orig_hdr
+            mpn_io.load_mpn_header     = orig_hdr
 
 
 @unittest.skipUnless(_QT, "Qt unavailable")
@@ -267,10 +267,10 @@ class TestFilter(unittest.TestCase):
         from mpynode.ui.widgets.template_gallery_panel import (
             NDTemplateGalleryPanel,
         )
-        panel = NDTemplateGalleryPanel(parent=None, scan=self._scan)
+        panel   = NDTemplateGalleryPanel(parent=None, scan=self._scan)
         all_cat = panel.tree.topLevelItem(0).child(0)
-        sine = all_cat.child(0)
-        ik = all_cat.child(1)
+        sine    = all_cat.child(0)
+        ik      = all_cat.child(1)
         panel.filter_edit.setText("ripple")
         self.assertFalse(sine.isHidden())
         self.assertTrue(ik.isHidden())
@@ -286,14 +286,14 @@ class TestCreate(unittest.TestCase):
         from mpynode.ui.widgets.template_gallery_panel import (
             NDTemplateGalleryPanel,
         )
-        orig_load = mpn_io.load_mpn
-        orig_hdr = mpn_io.load_mpn_header
-        mpn_io.load_mpn = lambda p, **k: {"native_type": "mPyDeformer", "loaded": p}
+        orig_load              = mpn_io.load_mpn
+        orig_hdr               = mpn_io.load_mpn_header
+        mpn_io.load_mpn        = lambda p, **k: {"native_type": "mPyDeformer", "loaded": p}
         mpn_io.load_mpn_header = lambda p: {}
-        captured = []
+        captured               = []
         try:
             entry = _Entry("Sine Ripple", "mPyDeformer", mpn_path="/tmp/t.mpn")
-            scan = lambda: [("templates", "/tmp", _Cat("templates", [entry]))]
+            scan  = lambda: [("templates", "/tmp", _Cat("templates", [entry]))]
             panel = NDTemplateGalleryPanel(
                 parent=None, on_create=lambda *a: captured.append(a), scan=scan
             )
@@ -309,7 +309,7 @@ class TestCreate(unittest.TestCase):
             self.assertIsNone(demo_name)
             panel.deleteLater()
         finally:
-            mpn_io.load_mpn = orig_load
+            mpn_io.load_mpn        = orig_load
             mpn_io.load_mpn_header = orig_hdr
 
     def test_create_run_demo_sets_only_demo_flag(self):
@@ -317,14 +317,14 @@ class TestCreate(unittest.TestCase):
         from mpynode.ui.widgets.template_gallery_panel import (
             NDTemplateGalleryPanel,
         )
-        orig_load = mpn_io.load_mpn
-        orig_hdr = mpn_io.load_mpn_header
-        mpn_io.load_mpn = lambda p, **k: {"native_type": "mPyDeformer", "loaded": p}
+        orig_load              = mpn_io.load_mpn
+        orig_hdr               = mpn_io.load_mpn_header
+        mpn_io.load_mpn        = lambda p, **k: {"native_type": "mPyDeformer", "loaded": p}
         mpn_io.load_mpn_header = lambda p: {}
-        captured = []
+        captured               = []
         try:
             entry = _Entry("Sine Ripple", "mPyDeformer", mpn_path="/tmp/t.mpn")
-            scan = lambda: [("templates", "/tmp", _Cat("templates", [entry]))]
+            scan  = lambda: [("templates", "/tmp", _Cat("templates", [entry]))]
             panel = NDTemplateGalleryPanel(
                 parent=None, on_create=lambda *a: captured.append(a), scan=scan
             )
@@ -338,7 +338,7 @@ class TestCreate(unittest.TestCase):
             self.assertTrue(run_demo)
             panel.deleteLater()
         finally:
-            mpn_io.load_mpn = orig_load
+            mpn_io.load_mpn        = orig_load
             mpn_io.load_mpn_header = orig_hdr
 
     def test_create_does_not_close_panel(self):
@@ -347,24 +347,24 @@ class TestCreate(unittest.TestCase):
         from mpynode.ui.widgets.template_gallery_panel import (
             NDTemplateGalleryPanel,
         )
-        orig_load = mpn_io.load_mpn
-        orig_hdr = mpn_io.load_mpn_header
-        mpn_io.load_mpn = lambda p, **k: {"native_type": "mPyDeformer", "loaded": p}
+        orig_load              = mpn_io.load_mpn
+        orig_hdr               = mpn_io.load_mpn_header
+        mpn_io.load_mpn        = lambda p, **k: {"native_type": "mPyDeformer", "loaded": p}
         mpn_io.load_mpn_header = lambda p: {}
         try:
             entry = _Entry("Sine Ripple", "mPyDeformer", mpn_path="/tmp/t.mpn")
-            scan = lambda: [("templates", "/tmp", _Cat("templates", [entry]))]
+            scan  = lambda: [("templates", "/tmp", _Cat("templates", [entry]))]
             panel = NDTemplateGalleryPanel(
                 parent=None, on_create=lambda *a: None, scan=scan)
-            closed = []
+            closed      = []
             panel.close = lambda *a, **k: closed.append(1)
-            leaf = panel.tree.topLevelItem(0).child(0)
+            leaf        = panel.tree.topLevelItem(0).child(0)
             panel.tree.setCurrentItem(leaf)
             panel._do_create(False)
             self.assertEqual(closed, [])
             panel.deleteLater()
         finally:
-            mpn_io.load_mpn = orig_load
+            mpn_io.load_mpn        = orig_load
             mpn_io.load_mpn_header = orig_hdr
 
 
@@ -375,7 +375,7 @@ class TestRightPaneSplitter(unittest.TestCase):
         from mpynode.ui.widgets.template_gallery_panel import (
             NDTemplateGalleryPanel,
         )
-        panel = NDTemplateGalleryPanel(parent=None, scan=lambda: [])
+        panel     = NDTemplateGalleryPanel(parent=None, scan=lambda: [])
         splitters = panel.findChildren(QSplitter)
         self.assertTrue(
             any(s.orientation() == Qt.Vertical for s in splitters),
@@ -393,7 +393,7 @@ class TestGallerySplitterPersistence(unittest.TestCase):
         """Point the lazily-imported get_pref/set_pref at an in-memory dict and
         return a restore() callback."""
         import mpynode.ui.preferences as prefs
-        orig = (prefs.get_pref, prefs.set_pref)
+        orig           = (prefs.get_pref, prefs.set_pref)
         prefs.get_pref = lambda k, d=None: store.get(k, d)
         prefs.set_pref = lambda k, v: store.__setitem__(k, v)
 
@@ -408,9 +408,9 @@ class TestGallerySplitterPersistence(unittest.TestCase):
         return NDTemplateGalleryPanel(parent=None, scan=lambda: [])
 
     def test_save_layout_writes_current_sizes(self):
-        store = {}
+        store   = {}
         restore = self._patched_prefs(store)
-        panel = None
+        panel   = None
         try:
             panel = self._panel()
             panel.resize(800, 500)
@@ -439,11 +439,11 @@ class TestGallerySplitterPersistence(unittest.TestCase):
         # (right_split defaults to [360,240]), so if restore takes effect the
         # orderings flip.
         store = {
-            "layout_gallery_splitter": [700, 100],
+            "layout_gallery_splitter":       [700, 100],
             "layout_gallery_right_splitter": [100, 500],
         }
         restore = self._patched_prefs(store)
-        panel = None
+        panel   = None
         try:
             panel = self._panel()
             panel.resize(800, 640)
@@ -463,11 +463,11 @@ class TestGallerySplitterPersistence(unittest.TestCase):
         # so its splitters report Qt's non-zero placeholder sizes (NOT [0,0]).
         # save_layout must skip on _ever_shown, not on the sizes() sum.
         store = {
-            "layout_gallery_splitter": [700, 300],
+            "layout_gallery_splitter":       [700, 300],
             "layout_gallery_right_splitter": [400, 200],
         }
         restore = self._patched_prefs(store)
-        panel = None
+        panel   = None
         try:
             panel = self._panel()  # built (restore ran) but never show()n
             self.assertFalse(panel._ever_shown)
@@ -485,9 +485,9 @@ class TestGallerySplitterPersistence(unittest.TestCase):
 
     def test_shown_gallery_marks_ever_shown_and_saves(self):
         # Complement: once actually shown, the panel saves its real sizes.
-        store = {}
+        store   = {}
         restore = self._patched_prefs(store)
-        panel = None
+        panel   = None
         try:
             panel = self._panel()
             panel.resize(800, 500)
@@ -523,7 +523,7 @@ class TestPreviewLabel(unittest.TestCase):
 
     def test_no_preview_emboss_layers_render(self):
         from mpynode.ui.widgets.template_gallery_panel import _PreviewLabel
-        lbl = _PreviewLabel()
+        lbl    = _PreviewLabel()
         layers = lbl._watermark_layers(120)
         self.assertIsNotNone(layers)
         light, dark = layers
@@ -592,17 +592,17 @@ class TestVideoPreview(unittest.TestCase):
     def test_mp4_routes_to_video_widget(self):
         import mpynode._common.io.mpn_io as mpn_io
         import mpynode.ui.widgets.template_gallery_panel as mod
-        orig_hdr = mpn_io.load_mpn_header
-        orig_start = mod.start_video_preview
-        orig_has = mod.HAS_QT_MULTIMEDIA
-        mpn_io.load_mpn_header = lambda p: {}
-        calls = []
-        sentinel = object()
+        orig_hdr                = mpn_io.load_mpn_header
+        orig_start              = mod.start_video_preview
+        orig_has                = mod.HAS_QT_MULTIMEDIA
+        mpn_io.load_mpn_header  = lambda p: {}
+        calls                   = []
+        sentinel                = object()
         mod.start_video_preview = lambda path, w: (calls.append(path), sentinel)[1]
-        mod.HAS_QT_MULTIMEDIA = True
+        mod.HAS_QT_MULTIMEDIA   = True
         try:
             entry = _Entry("Clip", "mPyDeformer", preview_path="/tmp/p.mp4")
-            scan = lambda: [("templates", "/tmp", _Cat("templates", [entry]))]
+            scan  = lambda: [("templates", "/tmp", _Cat("templates", [entry]))]
             panel = mod.NDTemplateGalleryPanel(parent=None, scan=scan)
             if panel.video_widget is None:
                 self.skipTest("QVideoWidget unavailable in this build")
@@ -613,20 +613,20 @@ class TestVideoPreview(unittest.TestCase):
             self.assertIs(panel._player, sentinel)
             panel.deleteLater()
         finally:
-            mpn_io.load_mpn_header = orig_hdr
+            mpn_io.load_mpn_header  = orig_hdr
             mod.start_video_preview = orig_start
-            mod.HAS_QT_MULTIMEDIA = orig_has
+            mod.HAS_QT_MULTIMEDIA   = orig_has
 
     def test_mp4_without_multimedia_falls_back_to_no_preview(self):
         import mpynode._common.io.mpn_io as mpn_io
         import mpynode.ui.widgets.template_gallery_panel as mod
-        orig_hdr = mpn_io.load_mpn_header
-        orig_has = mod.HAS_QT_MULTIMEDIA
+        orig_hdr               = mpn_io.load_mpn_header
+        orig_has               = mod.HAS_QT_MULTIMEDIA
         mpn_io.load_mpn_header = lambda p: {}
-        mod.HAS_QT_MULTIMEDIA = False
+        mod.HAS_QT_MULTIMEDIA  = False
         try:
             entry = _Entry("Clip", "mPyDeformer", preview_path="/tmp/p.mp4")
-            scan = lambda: [("templates", "/tmp", _Cat("templates", [entry]))]
+            scan  = lambda: [("templates", "/tmp", _Cat("templates", [entry]))]
             panel = mod.NDTemplateGalleryPanel(parent=None, scan=scan)
             self.assertIsNone(panel.video_widget)
             leaf = panel.tree.topLevelItem(0).child(0)
@@ -636,7 +636,7 @@ class TestVideoPreview(unittest.TestCase):
             panel.deleteLater()
         finally:
             mpn_io.load_mpn_header = orig_hdr
-            mod.HAS_QT_MULTIMEDIA = orig_has
+            mod.HAS_QT_MULTIMEDIA  = orig_has
 
 
 @unittest.skipUnless(_QT, "Qt unavailable")
@@ -648,7 +648,7 @@ class TestSplitterHandles(unittest.TestCase):
             _SeparatorSplitter,
         )
         panel = NDTemplateGalleryPanel(parent=None, scan=lambda: [])
-        seps = panel.findChildren(_SeparatorSplitter)
+        seps  = panel.findChildren(_SeparatorSplitter)
         self.assertGreaterEqual(len(seps), 2)
         for s in seps:
             self.assertGreater(s.handleWidth(), 6)
@@ -692,8 +692,8 @@ class TestButtons(unittest.TestCase):
         from mpynode.ui.widgets.template_gallery_panel import (
             NDTemplateGalleryPanel,
         )
-        panel = NDTemplateGalleryPanel(parent=None, scan=_fake_scan)
-        cat = panel.tree.topLevelItem(0).child(0)
+        panel   = NDTemplateGalleryPanel(parent=None, scan=_fake_scan)
+        cat     = panel.tree.topLevelItem(0).child(0)
         leaf_ok = cat.child(0)
         panel.tree.setCurrentItem(leaf_ok)
         self.assertTrue(panel.create_btn.isEnabled())
@@ -715,7 +715,7 @@ class TestRefresh(unittest.TestCase):
             return []
 
         panel = NDTemplateGalleryPanel(parent=None, scan=scan)
-        n = len(calls)  # __init__ already scanned once
+        n     = len(calls)  # __init__ already scanned once
         self.assertGreaterEqual(n, 1)
         panel.refresh_btn.click()
         self.assertEqual(len(calls), n + 1)
@@ -728,7 +728,7 @@ class TestStopVideo(unittest.TestCase):
         from mpynode.ui.widgets.template_gallery_panel import (
             NDTemplateGalleryPanel,
         )
-        panel = NDTemplateGalleryPanel(parent=None, scan=lambda: [])
+        panel   = NDTemplateGalleryPanel(parent=None, scan=lambda: [])
         stopped = []
 
         class _P:
@@ -747,10 +747,10 @@ class TestCategoryPreview(unittest.TestCase):
     def test_category_with_assets_renders(self):
         import mpynode._common.io.mpn_io as mpn_io
         import mpynode.ui.widgets.template_gallery_panel as mod
-        orig_hdr = mpn_io.load_mpn_header
+        orig_hdr               = mpn_io.load_mpn_header
         mpn_io.load_mpn_header = lambda p: {}
-        calls = []
-        orig_px = mod.QPixmap
+        calls                  = []
+        orig_px                = mod.QPixmap
 
         class _SpyPixmap(orig_px):
             def __init__(self, *a, **k):
@@ -760,10 +760,10 @@ class TestCategoryPreview(unittest.TestCase):
 
         mod.QPixmap = _SpyPixmap
         try:
-            leaf = _Entry("File", "mPyFile")
-            cat = _Cat("Textures", [leaf], preview_path="/tmp/c.png")
-            scan = lambda: [("templates", "/tmp", _Cat("templates", [cat]))]
-            panel = mod.NDTemplateGalleryPanel(parent=None, scan=scan)
+            leaf     = _Entry("File", "mPyFile")
+            cat      = _Cat("Textures", [leaf], preview_path="/tmp/c.png")
+            scan     = lambda: [("templates", "/tmp", _Cat("templates", [cat]))]
+            panel    = mod.NDTemplateGalleryPanel(parent=None, scan=scan)
             cat_item = panel.tree.topLevelItem(0).child(0)
             panel.tree.setCurrentItem(cat_item)
             self.assertIn("/tmp/c.png", calls)
@@ -771,16 +771,16 @@ class TestCategoryPreview(unittest.TestCase):
             panel.deleteLater()
         finally:
             mpn_io.load_mpn_header = orig_hdr
-            mod.QPixmap = orig_px
+            mod.QPixmap            = orig_px
 
     def test_bare_category_stays_blank(self):
         from mpynode.ui.widgets.template_gallery_panel import (
             NDTemplateGalleryPanel,
         )
-        leaf = _Entry("File", "mPyFile")
-        cat = _Cat("Plain", [leaf])
-        scan = lambda: [("templates", "/tmp", _Cat("templates", [cat]))]
-        panel = NDTemplateGalleryPanel(parent=None, scan=scan)
+        leaf     = _Entry("File", "mPyFile")
+        cat      = _Cat("Plain", [leaf])
+        scan     = lambda: [("templates", "/tmp", _Cat("templates", [cat]))]
+        panel    = NDTemplateGalleryPanel(parent=None, scan=scan)
         cat_item = panel.tree.topLevelItem(0).child(0)
         panel.tree.setCurrentItem(cat_item)
         self.assertIsNone(panel.preview_label._mode)
@@ -795,13 +795,13 @@ class TestHybridNode(unittest.TestCase):
         from mpynode.ui.widgets.template_gallery_panel import (
             NDTemplateGalleryPanel,
         )
-        orig = mpn_io.load_mpn_header
+        orig                   = mpn_io.load_mpn_header
         mpn_io.load_mpn_header = lambda p: {}
         try:
-            child = _Entry("Advanced", "mPyDeformer")
-            base = _Entry("Sine Base", "mPyDeformer", children=[child])
-            scan = lambda: [("templates", "/tmp", _Cat("templates", [base]))]
-            panel = NDTemplateGalleryPanel(parent=None, scan=scan)
+            child  = _Entry("Advanced", "mPyDeformer")
+            base   = _Entry("Sine Base", "mPyDeformer", children=[child])
+            scan   = lambda: [("templates", "/tmp", _Cat("templates", [base]))]
+            panel  = NDTemplateGalleryPanel(parent=None, scan=scan)
             hybrid = panel.tree.topLevelItem(0).child(0)
             self.assertIn("Sine Base", hybrid.text(0))
             self.assertEqual(hybrid.childCount(), 1)
@@ -817,8 +817,8 @@ class TestHybridNode(unittest.TestCase):
 
 def _collapse_scan():
     """A root with two collapsible category children, each holding one leaf."""
-    basics = _Cat("basics", [_Entry("sine_ripple", "mPyDeformer")])
-    advanced = _Cat("advanced", [_Entry("dnet", "mPyNode")])
+    basics   = _Cat("basics",    [_Entry("sine_ripple", "mPyDeformer")])
+    advanced = _Cat("advanced",  [_Entry("dnet", "mPyNode")])
     root_cat = _Cat("templates", [basics, advanced])
     return [("templates", "/tmp/templates", root_cat)]
 
@@ -858,9 +858,9 @@ class TestGalleryStartsCollapsed(unittest.TestCase):
 
     def test_root_expanded_categories_collapsed(self):
         panel = self._panel()
-        root = panel.tree.topLevelItem(0)
+        root  = panel.tree.topLevelItem(0)
         self.assertTrue(root.isExpanded(), "search-root should be expanded")
-        basics = root.child(0)
+        basics   = root.child(0)
         advanced = root.child(1)
         self.assertEqual(basics.text(0), "basics")
         self.assertEqual(advanced.text(0), "advanced")
@@ -883,12 +883,12 @@ class TestGalleryShiftClickExpandAll(unittest.TestCase):
         return NDTemplateGalleryPanel(parent=None, scan=_deep_scan)
 
     def _nodes(self, panel):
-        root = panel.tree.topLevelItem(0)   # templates (search-root)
-        basics = root.child(0)              # basics       (category)
-        advanced = root.child(1)            # advanced     (category)
-        b_def = basics.child(0)             # basics/MPyDeformer (sub-category)
-        b_file = basics.child(1)            # basics/MPyFile     (sub-category)
-        a_dnet = advanced.child(0)          # advanced/dnet      (sub-category)
+        root     = panel.tree.topLevelItem(0)  # templates (search-root)
+        basics   = root.child(0)               # basics       (category)
+        advanced = root.child(1)               # advanced     (category)
+        b_def    = basics.child(0)             # basics/MPyDeformer (sub-category)
+        b_file   = basics.child(1)             # basics/MPyFile     (sub-category)
+        a_dnet   = advanced.child(0)           # advanced/dnet      (sub-category)
         return root, basics, advanced, b_def, b_file, a_dnet
 
     def test_shift_expand_is_recursive_within_subtree_only(self):
@@ -959,7 +959,7 @@ class TestGalleryShiftClickExpandAll(unittest.TestCase):
         rect = tree.visualItemRect(item)
         if rect.isNull() or rect.width() == 0 or rect.height() == 0:
             self.skipTest("no item geometry available headless")
-        pt = rect.center()
+        pt   = rect.center()
         mods = Qt.ShiftModifier if shift else Qt.NoModifier
         if qt_wrapper.QT_BINDING == "PySide6":
             from PySide6.QtCore import QEvent, QPointF
@@ -1014,18 +1014,18 @@ class TestGalleryFilterRevealsMatches(unittest.TestCase):
 
     def test_filter_expands_ancestors_of_match(self):
         panel = self._panel()
-        root = panel.tree.topLevelItem(0)
+        root  = panel.tree.topLevelItem(0)
         basics, advanced = root.child(0), root.child(1)
         self.assertFalse(basics.isExpanded())  # collapsed by default
 
-        panel._apply_filter("ripple")  # matches basics/sine_ripple only
+        panel._apply_filter("ripple")          # matches basics/sine_ripple only
         self.assertTrue(basics.isExpanded(),
                         "the matching category must be expanded so it shows")
         self.assertFalse(basics.isHidden())
         self.assertFalse(basics.child(0).isHidden())  # the match leaf
         self.assertTrue(advanced.isHidden())          # no match -> hidden
 
-        panel._apply_filter("")  # clear -> restore default
+        panel._apply_filter("")                       # clear -> restore default
         self.assertTrue(root.isExpanded())
         self.assertFalse(basics.isExpanded(), "cleared filter re-collapses cats")
         self.assertFalse(advanced.isExpanded())
@@ -1035,7 +1035,7 @@ class TestGalleryFilterRevealsMatches(unittest.TestCase):
 
     def test_filter_with_no_match_hides_all_categories(self):
         panel = self._panel()
-        root = panel.tree.topLevelItem(0)
+        root  = panel.tree.topLevelItem(0)
         panel._apply_filter("zzz_no_such_template")
         for i in range(root.childCount()):
             self.assertTrue(root.child(i).isHidden())
@@ -1077,18 +1077,18 @@ class TestRevealInFileManager(unittest.TestCase):
         entry = _Entry("Sine Ripple", "mPyDeformer",
                        mpn_path=os.path.join(folder, "template.mpn"))
         entry.folder = folder
-        panel = self._panel(lambda: [])
-        act = self._find(panel._build_tree_menu(entry), self._label())
+        panel        = self._panel(lambda: [])
+        act          = self._find(panel._build_tree_menu(entry), self._label())
         self.assertIsNotNone(act, "template rows must offer a reveal action")
         self.assertTrue(act.isEnabled())
         panel.deleteLater()
 
     def test_category_gets_a_menu_even_with_no_create_action(self):
-        folder = self._tmpdir()
-        cat = _Cat("Deformers", [])
+        folder       = self._tmpdir()
+        cat          = _Cat("Deformers", [])
         cat.abs_path = folder
-        panel = self._panel(lambda: [])
-        menu = panel._build_tree_menu(cat)
+        panel        = self._panel(lambda: [])
+        menu         = panel._build_tree_menu(cat)
         self.assertIsNotNone(
             menu, "a category used to return None -- it now reveals")
         self.assertIsNone(self._find(menu, "Create"),
@@ -1102,8 +1102,8 @@ class TestRevealInFileManager(unittest.TestCase):
         entry = _Entry("Ghost", "mPyNode",
                        mpn_path="/nonexistent/ghost/template.mpn")
         entry.folder = "/nonexistent/ghost"
-        panel = self._panel(lambda: [])
-        act = self._find(panel._build_tree_menu(entry), self._label())
+        panel        = self._panel(lambda: [])
+        act          = self._find(panel._build_tree_menu(entry), self._label())
         self.assertIsNotNone(act, "the action is shown, explaining why")
         self.assertFalse(act.isEnabled())
         panel.deleteLater()
@@ -1116,8 +1116,8 @@ class TestRevealInFileManager(unittest.TestCase):
                        mpn_path=os.path.join(folder, "template.mpn"))
         entry.folder = folder
 
-        seen = []
-        orig = tgp.reveal_in_file_manager
+        seen                       = []
+        orig                       = tgp.reveal_in_file_manager
         tgp.reveal_in_file_manager = lambda p: seen.append(p) or (True, None)
         self.addCleanup(setattr, tgp, "reveal_in_file_manager", orig)
 
@@ -1129,8 +1129,8 @@ class TestRevealInFileManager(unittest.TestCase):
         panel.deleteLater()
 
     def test_category_falls_back_to_abs_path_not_a_missing_folder(self):
-        folder = self._tmpdir()
-        cat = _Cat("Deformers", [])
+        folder       = self._tmpdir()
+        cat          = _Cat("Deformers", [])
         cat.abs_path = folder
         from mpynode.ui.widgets.template_gallery_panel import (
             NDTemplateGalleryPanel,

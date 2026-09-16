@@ -28,10 +28,10 @@ from mpynode._common.io import trust
 
 
 def make_internal_string_attr(
-    long_name: str,
+    long_name:  str,
     short_name: str,
-    default: str = "",
-    storable: bool = True,
+    default:    str  = "",
+    storable:   bool = True,
 ):
     """Build an internal hidden string attribute. Returns the MObject.
 
@@ -40,17 +40,17 @@ def make_internal_string_attr(
     transient last-frame snapshot doesn't pollute saved scene files
     AND reopened scenes start fresh (no stale data from a prior session).
     """
-    str_data = om.MFnStringData()
-    default_obj = str_data.create(default)
-    fn = om.MFnTypedAttribute()
-    obj = fn.create(long_name, short_name, om.MFnData.kString, default_obj)
+    str_data       = om.MFnStringData()
+    default_obj    = str_data.create(default)
+    fn             = om.MFnTypedAttribute()
+    obj            = fn.create(long_name, short_name, om.MFnData.kString, default_obj)
     fn.connectable = False
-    fn.readable = False
-    fn.writable = True
-    fn.storable = bool(storable)
-    fn.internal = True
-    fn.keyable = False
-    fn.hidden = True
+    fn.readable    = False
+    fn.writable    = True
+    fn.storable    = bool(storable)
+    fn.internal    = True
+    fn.keyable     = False
+    fn.hidden      = True
     return obj
 
 
@@ -65,17 +65,17 @@ def make_expression_attr():
     interpret as a file path during swatch generation -- a possible
     cause of the mPyFile Hypershade Browser swatches degrading to
     a single-sample render."""
-    str_data = om.MFnStringData()
-    default_obj = str_data.create("")
-    fn = om.MFnTypedAttribute()
-    obj = fn.create("_computeSource", "_computeSource", om.MFnData.kString, default_obj)
+    str_data       = om.MFnStringData()
+    default_obj    = str_data.create("")
+    fn             = om.MFnTypedAttribute()
+    obj            = fn.create("_computeSource", "_computeSource", om.MFnData.kString, default_obj)
     fn.connectable = True
-    fn.readable = True
-    fn.writable = True
-    fn.storable = True
-    fn.internal = True
-    fn.keyable = True
-    fn.hidden = True
+    fn.readable    = True
+    fn.writable    = True
+    fn.storable    = True
+    fn.internal    = True
+    fn.keyable     = True
+    fn.hidden      = True
     return obj
 
 
@@ -101,27 +101,27 @@ def make_legacy_expression_attr():
     recoverable problem into a permanent one. It is cleared explicitly, and
     only on success.
     """
-    str_data = om.MFnStringData()
+    str_data    = om.MFnStringData()
     default_obj = str_data.create("")
-    fn = om.MFnTypedAttribute()
-    obj = fn.create("expression", "expression", om.MFnData.kString, default_obj)
+    fn          = om.MFnTypedAttribute()
+    obj         = fn.create("expression", "expression", om.MFnData.kString, default_obj)
     # Not connectable and not internal: this is an inert carrier, and giving it
     # setInternalValue handling would make a legacy payload look like an edit.
     fn.connectable = False
-    fn.readable = True
-    fn.writable = True
-    fn.storable = True
-    fn.keyable = False
-    fn.hidden = True
-    fn.channelBox = False
+    fn.readable    = True
+    fn.writable    = True
+    fn.storable    = True
+    fn.keyable     = False
+    fn.hidden      = True
+    fn.channelBox  = False
     return obj
 
 
 def make_bool_attr(
-    long_name: str,
+    long_name:  str,
     short_name: str,
-    default: bool = False,
-    storable: bool = True,
+    default:    bool = False,
+    storable:   bool = True,
 ):
     """Build a hidden framework-toggle bool attribute.
 
@@ -138,14 +138,14 @@ def make_bool_attr(
     profile / watch toggles -- avoids ever shipping a scene with the
     profiler accidentally left on).
     """
-    fn = om.MFnNumericAttribute()
-    obj = fn.create(long_name, short_name, om.MFnNumericData.kBoolean, default)
+    fn             = om.MFnNumericAttribute()
+    obj            = fn.create(long_name, short_name, om.MFnNumericData.kBoolean, default)
     fn.connectable = False
-    fn.storable = bool(storable)
-    fn.keyable = False
+    fn.storable    = bool(storable)
+    fn.keyable     = False
     # Hide from Attribute Editor + Channel Box. The framework UI
     # reaches these via cmds.setAttr/getAttr which ignore visibility.
-    fn.hidden = True
+    fn.hidden     = True
     fn.channelBox = False
     return obj
 
@@ -166,8 +166,8 @@ def build_internal_attrs(cls):
         "_computeSource": make_expression_attr(),
         # v1 compatibility carrier -- see make_legacy_expression_attr.
         "legacy_expression": make_legacy_expression_attr(),
-        "inputs": make_internal_string_attr("_inputAttrs", "_inputAttrs"),
-        "outputs": make_internal_string_attr("_outputAttrs", "_outputAttrs"),
+        "inputs":            make_internal_string_attr("_inputAttrs", "_inputAttrs"),
+        "outputs":           make_internal_string_attr("_outputAttrs", "_outputAttrs"),
         "stored_vars_list": make_internal_string_attr(
             "_storedVarNames", "_storedVarNames"
         ),
@@ -239,10 +239,10 @@ def ensure_expr_code(node_mpx, expr_attr):
 
 # Mapping from our wire-type strings to (MFn class, MFn type constant, default).
 SUPPORTED_TYPES: dict[str, tuple] = {
-    "float": (om.MFnNumericAttribute, om.MFnNumericData.kFloat, 0.0),
+    "float":  (om.MFnNumericAttribute, om.MFnNumericData.kFloat, 0.0),
     "double": (om.MFnNumericAttribute, om.MFnNumericData.kDouble, 0.0),
-    "int": (om.MFnNumericAttribute, om.MFnNumericData.kInt, 0),
-    "bool": (om.MFnNumericAttribute, om.MFnNumericData.kBoolean, False),
+    "int":    (om.MFnNumericAttribute, om.MFnNumericData.kInt, 0),
+    "bool":   (om.MFnNumericAttribute, om.MFnNumericData.kBoolean, False),
     "vector": (None, None, None),  # special — handled below
     "matrix": (None, None, None),  # special — handled below
     "string": (None, None, None),  # special — handled below
@@ -254,7 +254,7 @@ SUPPORTED_TYPES: dict[str, tuple] = {
 # same wire types (the cmds path and this API path build the same plug).
 _PACKED_DATA_KIND: dict[str, tuple] = {
     "double": (om.MFnDoubleArrayData, om.MFnData.kDoubleArray),
-    "int": (om.MFnIntArrayData, om.MFnData.kIntArray),
+    "int":    (om.MFnIntArrayData, om.MFnData.kIntArray),
 }
 
 
@@ -283,27 +283,27 @@ def make_dynamic_user_attr(long_name: str, attr_type: str, is_array: bool = Fals
                 f"packed is not available for attr_type {attr_type!r}"
             )
         data_cls, data_kind = kind
-        fn = om.MFnTypedAttribute()
+        fn  = om.MFnTypedAttribute()
         obj = fn.create(long_name, short, data_kind, data_cls().create())
         # A packed array is one plug: storable and readable/writable like any
         # typed attr, but never keyable (an array has no channel-box value) and
         # never ``array=True`` -- that would make a MULTI OF ARRAYS.
-        fn.storable = True
-        fn.keyable = False
+        fn.storable    = True
+        fn.keyable     = False
         fn.connectable = True
-        fn.readable = True
-        fn.writable = True
+        fn.readable    = True
+        fn.writable    = True
         return obj
 
     if attr_type in ("float", "double", "int", "bool"):
         cls_, kind, default = SUPPORTED_TYPES[attr_type]
-        fn = cls_()
+        fn  = cls_()
         obj = fn.create(long_name, short, kind, default)
     elif attr_type == "vector":
-        fn = om.MFnNumericAttribute()
+        fn  = om.MFnNumericAttribute()
         obj = fn.createPoint(long_name, short)
     elif attr_type == "matrix":
-        fn = om.MFnMatrixAttribute()
+        fn  = om.MFnMatrixAttribute()
         obj = fn.create(long_name, short, om.MFnMatrixAttribute.kDouble)
         # MFnMatrixAttribute.create() leaves the default uninitialized and Maya
         # zero-fills it, so unconnected plugs read as a zero matrix (degenerate
@@ -316,22 +316,22 @@ def make_dynamic_user_attr(long_name: str, attr_type: str, is_array: bool = Fals
             except Exception:
                 pass
     elif attr_type == "string":
-        str_data = om.MFnStringData()
+        str_data    = om.MFnStringData()
         default_obj = str_data.create("")
-        fn = om.MFnTypedAttribute()
-        obj = fn.create(long_name, short, om.MFnData.kString, default_obj)
+        fn          = om.MFnTypedAttribute()
+        obj         = fn.create(long_name, short, om.MFnData.kString, default_obj)
     else:
         raise ValueError(f"unsupported attr_type {attr_type!r}")
 
     # Common flags
-    fn.storable = True
-    fn.keyable = True
+    fn.storable    = True
+    fn.keyable     = True
     fn.connectable = True
-    fn.readable = True
-    fn.writable = True
+    fn.readable    = True
+    fn.writable    = True
 
     if is_array:
-        fn.array = True
+        fn.array                = True
         fn.usesArrayDataBuilder = True
 
     return obj
@@ -534,9 +534,9 @@ def read_plug_value(plug: om.MPlug, attr_type: str, data_block=None) -> Any:
 
         try:
             mobj = plug.asMObject()
-            mfn = om.MFnMatrixData(mobj)
-            m = mfn.matrix()
-            out = np.zeros((4, 4), dtype=np.float64)
+            mfn  = om.MFnMatrixData(mobj)
+            m    = mfn.matrix()
+            out  = np.zeros((4, 4), dtype=np.float64)
             for r in range(4):
                 for c in range(4):
                     out[r, c] = m.getElement(r, c)
@@ -705,7 +705,7 @@ def _write_value_to_handle(
                 f"accepted forms: MMatrix, MTransformationMatrix, "
                 f"flat 16-iterable, 4x4 array, 3x3 array."
             )
-        m = om.MMatrix(arr.flatten().tolist())
+        m       = om.MMatrix(arr.flatten().tolist())
         mat_obj = om.MFnMatrixData().create(m)
         handle.setMObject(mat_obj)
     elif attr_type == "string":
@@ -723,7 +723,7 @@ def write_plug_value(
     parent plug silently no-ops (Maya's ``data_block.outputValue`` on a
     multi parent doesn't write anything).
     """
-    handle = data_block.outputValue(plug)
+    handle      = data_block.outputValue(plug)
     child_attrs = None
     if attr_type == "quaternion":
         child_attrs = [plug.child(i).attribute() for i in range(4)]
@@ -756,10 +756,10 @@ def _outgoing_source_indices(out_plug) -> list:
 
 def write_multi_plug_value(
     data_block: om.MDataBlock,
-    attr_obj: om.MObject,
-    attr_type: str,
-    values: Any,
-    out_plug=None,
+    attr_obj:   om.MObject,
+    attr_type:  str,
+    values:     Any,
+    out_plug                  = None,
 ) -> None:
     """Write an iterable of values into a Maya MULTI (array) output plug.
 
@@ -865,10 +865,10 @@ def write_multi_plug_value(
 
     child_attrs = None
     if attr_type == "quaternion":
-        cfn = om.MFnCompoundAttribute(attr_obj)
+        cfn         = om.MFnCompoundAttribute(attr_obj)
         child_attrs = [cfn.child(i) for i in range(4)]
     array_handle = data_block.outputArrayValue(attr_obj)
-    builder = array_handle.builder()
+    builder      = array_handle.builder()
     for logical_idx, value in zip(dest_indices, seq):
         elem_handle = builder.addElement(logical_idx)
         _write_value_to_handle(elem_handle, attr_type, value, child_attrs)
@@ -978,8 +978,8 @@ def _read_multi(plug, attr_obj, attr_type, sparse, read_elem):
     if sparse or n == 0:
         return [read_elem(plug.elementByPhysicalIndex(i)) for i in range(n)]
     elems = [plug.elementByPhysicalIndex(i) for i in range(n)]
-    span = max(e.logicalIndex() for e in elems) + 1
-    out = [array_gap_default(attr_obj, attr_type) for _ in range(span)]
+    span  = max(e.logicalIndex() for e in elems) + 1
+    out   = [array_gap_default(attr_obj, attr_type) for _ in range(span)]
     for e in elems:
         out[e.logicalIndex()] = read_elem(e)
     return out
@@ -1038,7 +1038,7 @@ def read_user_inputs_dict(
     out: dict = {}
     for name, meta in attr_map.items():
         attr_type = meta.get("attr_type", "float")
-        is_array = bool(meta.get("is_array", False))
+        is_array  = bool(meta.get("is_array", False))
         try:
             plug = fn_node.findPlug(name, True)
         except RuntimeError:
@@ -1062,7 +1062,7 @@ def read_user_inputs_dict(
                     pass
             continue
 
-        sparse = bool(meta.get("sparse", False))
+        sparse   = bool(meta.get("sparse", False))
         attr_obj = plug.attribute()
 
         # A packed input is ONE typed-array plug, not a multi. Every multi API
@@ -1333,8 +1333,8 @@ def _cast_datablock_multi(values, attr_type):
 
 def read_user_inputs_dict_from_datablock(
     data_block: om.MDataBlock,
-    node_obj: om.MObject,
-    attr_map: dict,
+    node_obj:   om.MObject,
+    attr_map:   dict,
 ) -> dict:
     """Thread-safe, DENSE variant of :func:`read_user_inputs_dict`.
 
@@ -1363,7 +1363,7 @@ def read_user_inputs_dict_from_datablock(
     fn_node = om.MFnDependencyNode(node_obj)
     for name, meta in attr_map.items():
         attr_type = meta.get("attr_type", "float")
-        is_array = bool(meta.get("is_array", False))
+        is_array  = bool(meta.get("is_array", False))
         try:
             attr_obj = fn_node.attribute(name)
         except RuntimeError:
@@ -1405,7 +1405,7 @@ def read_user_inputs_dict_from_datablock(
         # ARRAY (multi) input -- inputArrayValue is the thread-safe multi
         # accessor. Build a DENSE list scattered to logical indices, then cast.
         sparse = bool(meta.get("sparse", False))
-        gap = array_gap_default(attr_obj, attr_type)
+        gap    = array_gap_default(attr_obj, attr_type)
         try:
             arr = data_block.inputArrayValue(attr_obj)
         except Exception:
@@ -1418,7 +1418,7 @@ def read_user_inputs_dict_from_datablock(
             try:
                 lidx = arr.elementLogicalIndex()
                 elem = arr.inputValue()
-                val = _read_handle_value(elem, attr_type, attr_obj)
+                val  = _read_handle_value(elem, attr_type, attr_obj)
                 pairs.append((lidx, gap if val is None else val))
             except Exception:
                 pass
@@ -1426,7 +1426,7 @@ def read_user_inputs_dict_from_datablock(
         if sparse:
             values = [v for _lidx, v in pairs]
         elif pairs:
-            span = max(lidx for lidx, _v in pairs) + 1
+            span   = max(lidx for lidx, _v in pairs) + 1
             values = [gap for _ in range(span)]
             for lidx, v in pairs:
                 values[lidx] = v
@@ -1462,7 +1462,7 @@ def write_user_outputs(data_block, node_obj, output_map, locals_out, skip=()):
         if value is None:
             continue
         try:
-            attr = fn_node.findPlug(out_attr_name, True).attribute()
+            attr      = fn_node.findPlug(out_attr_name, True).attribute()
             attr_type = meta.get("attr_type", "float")
             if bool(meta.get("is_array", False)):
                 write_multi_plug_value(data_block, attr, attr_type, value)

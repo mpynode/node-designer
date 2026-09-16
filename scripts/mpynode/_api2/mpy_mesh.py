@@ -124,7 +124,7 @@ def build_default_output(points, counts, indices, colors=None, normals=None):
     ).to_mobject()
 
 
-_build_mesh_data_object = build_default_output  # legacy internal-name alias
+_build_mesh_data_object        = build_default_output  # legacy internal-name alias
 _build_mesh_data_object_public = build_default_output  # alt alias
 
 
@@ -155,26 +155,26 @@ def _looks_like_mesh_data(obj) -> bool:
 
 class MPyMesh(om.MPxNode):
     NODE_NAME = "mPyMesh"
-    NODE_ID = om.MTypeId(0x00135719)
+    NODE_ID   = om.MTypeId(0x00135719)
 
     # No INTERNAL_VARS schema: the expression reaches plug-tree state through
     # ``self.X``, and the bridge populates the write-back slots (points /
     # counts / indices / ...) by name.
 
     # Per-class MObject slots (filled by initializer).
-    _expression_attr = om.MObject.kNullObj
-    _input_attrs_attr = om.MObject.kNullObj
-    _output_attrs_attr = om.MObject.kNullObj
-    _stored_vars_list_attr = om.MObject.kNullObj
-    _stored_vars_data_attr = om.MObject.kNullObj
-    _debug_mode_attr = om.MObject.kNullObj
-    _profile_enabled_attr = om.MObject.kNullObj
-    _deep_profile_enabled_attr = om.MObject.kNullObj
-    _watch_enabled_attr = om.MObject.kNullObj
+    _expression_attr            = om.MObject.kNullObj
+    _input_attrs_attr           = om.MObject.kNullObj
+    _output_attrs_attr          = om.MObject.kNullObj
+    _stored_vars_list_attr      = om.MObject.kNullObj
+    _stored_vars_data_attr      = om.MObject.kNullObj
+    _debug_mode_attr            = om.MObject.kNullObj
+    _profile_enabled_attr       = om.MObject.kNullObj
+    _deep_profile_enabled_attr  = om.MObject.kNullObj
+    _watch_enabled_attr         = om.MObject.kNullObj
     _profile_snapshot_data_attr = om.MObject.kNullObj
-    _watch_vars_data_attr = om.MObject.kNullObj
-    _time_in_attr = om.MObject.kNullObj
-    _out_mesh_attr = om.MObject.kNullObj
+    _watch_vars_data_attr       = om.MObject.kNullObj
+    _time_in_attr               = om.MObject.kNullObj
+    _out_mesh_attr              = om.MObject.kNullObj
 
     def __init__(self):
         super().__init__()
@@ -195,18 +195,18 @@ class MPyMesh(om.MPxNode):
 
     @staticmethod
     def initializer():
-        plugs = helpers.build_internal_attrs(MPyMesh)
-        MPyMesh._expression_attr = plugs["_computeSource"]
-        MPyMesh._input_attrs_attr = plugs["inputs"]
-        MPyMesh._output_attrs_attr = plugs["outputs"]
-        MPyMesh._stored_vars_list_attr = plugs["stored_vars_list"]
-        MPyMesh._stored_vars_data_attr = plugs["stored_vars_data"]
-        MPyMesh._debug_mode_attr = plugs["debug_mode"]
-        MPyMesh._profile_enabled_attr = plugs["profile_enabled"]
-        MPyMesh._deep_profile_enabled_attr = plugs["deep_profile_enabled"]
-        MPyMesh._watch_enabled_attr = plugs["watch_enabled"]
+        plugs                               = helpers.build_internal_attrs(MPyMesh)
+        MPyMesh._expression_attr            = plugs["_computeSource"]
+        MPyMesh._input_attrs_attr           = plugs["inputs"]
+        MPyMesh._output_attrs_attr          = plugs["outputs"]
+        MPyMesh._stored_vars_list_attr      = plugs["stored_vars_list"]
+        MPyMesh._stored_vars_data_attr      = plugs["stored_vars_data"]
+        MPyMesh._debug_mode_attr            = plugs["debug_mode"]
+        MPyMesh._profile_enabled_attr       = plugs["profile_enabled"]
+        MPyMesh._deep_profile_enabled_attr  = plugs["deep_profile_enabled"]
+        MPyMesh._watch_enabled_attr         = plugs["watch_enabled"]
         MPyMesh._profile_snapshot_data_attr = plugs["profile_snapshot_data"]
-        MPyMesh._watch_vars_data_attr = plugs["watch_vars_data"]
+        MPyMesh._watch_vars_data_attr       = plugs["watch_vars_data"]
 
         # Hidden time input. Wrapper auto-connects time1.outTime to it.
         time_fn = om.MFnUnitAttribute()
@@ -214,20 +214,20 @@ class MPyMesh(om.MPxNode):
             "_timeIn", "_tin", om.MFnUnitAttribute.kTime, 0.0
         )
         time_fn.storable = True
-        time_fn.keyable = False
+        time_fn.keyable  = False
         time_fn.readable = False
         time_fn.writable = True
-        time_fn.hidden = True
+        time_fn.hidden   = True
         MPyMesh.addAttribute(MPyMesh._time_in_attr)
 
         # Output mesh plug -- the canonical mesh-data output for a Maya
         # polygon generator (matches polyCube.outMesh etc.).
-        mesh_fn = om.MFnTypedAttribute()
+        mesh_fn                = om.MFnTypedAttribute()
         MPyMesh._out_mesh_attr = mesh_fn.create("outMesh", "om", om.MFnData.kMesh)
-        mesh_fn.storable = False
-        mesh_fn.writable = False
-        mesh_fn.readable = True
-        mesh_fn.hidden = False
+        mesh_fn.storable       = False
+        mesh_fn.writable       = False
+        mesh_fn.readable       = True
+        mesh_fn.hidden         = False
         MPyMesh.addAttribute(MPyMesh._out_mesh_attr)
 
         for src in (
@@ -250,17 +250,17 @@ class MPyMesh(om.MPxNode):
         try:
             attr = plug.attribute()
             if attr == MPyMesh._expression_attr:
-                new_src = data_handle.asString()
+                new_src        = data_handle.asString()
                 self._expr_str = new_src
-                node_name = ""
+                node_name      = ""
                 try:
                     node_name = om.MFnDependencyNode(self.thisMObject()).name()
                 except Exception:
                     pass
                 code = safe_compile_expression(
                     new_src,
-                    node_name=node_name,
-                    filename="<mpypoly-expression>",
+                    node_name = node_name,
+                    filename  = "<mpypoly-expression>",
                 )
                 if code is not None:
                     self._expr_code = code
@@ -276,7 +276,7 @@ class MPyMesh(om.MPxNode):
                 import maya.api.OpenMaya as _om2
                 import maya.OpenMaya as _om1
                 name = _om2.MFnDependencyNode(self.thisMObject()).name()
-                sel = _om1.MSelectionList()
+                sel  = _om1.MSelectionList()
                 sel.add(name)
                 m = _om1.MObject()
                 sel.getDependNode(0, m)
@@ -366,13 +366,13 @@ class MPyMesh(om.MPxNode):
             mesh_data = geometry.build_mesh_data(user_mesh)
         else:
             mesh_data = geometry.Mesh(
-                points=result["points"],
-                counts=result["counts"],
-                indices=result["indices"],
-                normals=result.get("normals"),
-                normal_indices=result.get("normal_indices"),
-                colors=result.get("colors"),
-                color_indices=result.get("color_indices"),
+                points         = result["points"],
+                counts         = result["counts"],
+                indices        = result["indices"],
+                normals        = result.get("normals"),
+                normal_indices = result.get("normal_indices"),
+                colors         = result.get("colors"),
+                color_indices  = result.get("color_indices"),
             ).to_mobject()
 
         try:
@@ -403,23 +403,23 @@ class MPyMesh(om.MPxNode):
         color_indices). On error, returns empty mesh defaults.
         """
         _EMPTY = {
-            "points": None,
-            "counts": None,
-            "indices": None,
-            "colors": None,
-            "color_indices": None,
-            "normals": None,
+            "points":         None,
+            "counts":         None,
+            "indices":        None,
+            "colors":         None,
+            "color_indices":  None,
+            "normals":        None,
             "normal_indices": None,
         }
         if self._expr_code is None:
             return dict(_EMPTY)
 
         node_obj = self.thisMObject()
-        fn_node = om.MFnDependencyNode(node_obj)
+        fn_node  = om.MFnDependencyNode(node_obj)
 
         stored_vars = {}
         try:
-            sv_str = fn_node.findPlug(MPyMesh._stored_vars_data_attr, True).asString()
+            sv_str      = fn_node.findPlug(MPyMesh._stored_vars_data_attr, True).asString()
             stored_vars = _svstore.load_for_compute(node_obj, sv_str)
         except Exception:
             stored_vars = {}
@@ -452,13 +452,13 @@ class MPyMesh(om.MPxNode):
         )
         _compute_locals = dict(input_values)
         _compute_locals.update({
-            "time": TimeFloat(time_value),
-            "points": None,
-            "counts": None,
-            "indices": None,
-            "colors": None,
-            "color_indices": None,
-            "normals": None,
+            "time":           TimeFloat(time_value),
+            "points":         None,
+            "counts":         None,
+            "indices":        None,
+            "colors":         None,
+            "color_indices":  None,
+            "normals":        None,
             "normal_indices": None,
             # (merged-compute) -- pre-populate outMesh slot.
             "outMesh": None,
@@ -469,7 +469,7 @@ class MPyMesh(om.MPxNode):
         # default (C5): a scalar, or a PRE-SIZED ``(N, ...)`` buffer for an
         # array output so ``self.<out>[i] = v`` works in place.
         try:
-            _uo = fn_node.findPlug(MPyMesh._output_attrs_attr, True).asString()
+            _uo           = fn_node.findPlug(MPyMesh._output_attrs_attr, True).asString()
             _user_out_map = serialization.decode_attr_map(_uo) if _uo else {}
         except Exception:
             _user_out_map = {}
@@ -478,9 +478,9 @@ class MPyMesh(om.MPxNode):
             _compute_locals.setdefault(_out_name, _out_seed)
         self_proxy = SelfProxy(
             node_obj_for_proxy,
-            datablock=data_block,
-            user_storage=stored_vars,
-            compute_locals=_compute_locals,
+            datablock      = data_block,
+            user_storage   = stored_vars,
+            compute_locals = _compute_locals,
             # The mesh buffers are WRITE-only slots, marked output-scratch so a
             # user-added INPUT of the same name (a ``colors`` vector input) is
             # READABLE via ``self.<name>`` (a real plug wins on read) while
@@ -503,7 +503,7 @@ class MPyMesh(om.MPxNode):
 
         namespace = {
             "__builtins__": _builtins,
-            "self": self_proxy,
+            "self":         self_proxy,
         }
 
         # Sync compiled code with the _computeSource plug so a DUPLICATED
@@ -518,9 +518,9 @@ class MPyMesh(om.MPxNode):
         ok = exec_with_profile_watch(
             self._expr_code,
             namespace,
-            log_event_name="<mpypoly-expression>",
-            on_error=_on_err,
-            node_obj=node_obj,
+            log_event_name = "<mpypoly-expression>",
+            on_error       = _on_err,
+            node_obj       = node_obj,
         )
         if not ok:
             if captured:
@@ -549,23 +549,23 @@ class MPyMesh(om.MPxNode):
 
         # harvest from compute_locals snapshot.
         locals_out = self_proxy.get_compute_locals()
-        points = _to_points_array(locals_out.get("points"))
-        counts = _to_int_array(locals_out.get("counts"), "counts")
-        indices = _to_int_array(locals_out.get("indices"), "indices")
+        points     = _to_points_array(locals_out.get("points"))
+        counts     = _to_int_array(locals_out.get("counts"), "counts")
+        indices    = _to_int_array(locals_out.get("indices"), "indices")
 
         return {
-            "points": points,
-            "counts": counts,
-            "indices": indices,
-            "colors": locals_out.get("colors"),
-            "color_indices": locals_out.get("color_indices"),
-            "normals": locals_out.get("normals"),
+            "points":         points,
+            "counts":         counts,
+            "indices":        indices,
+            "colors":         locals_out.get("colors"),
+            "color_indices":  locals_out.get("color_indices"),
+            "normals":        locals_out.get("normals"),
             "normal_indices": locals_out.get("normal_indices"),
             # (merged-compute) mesh output channel.
             "outMesh": locals_out.get("outMesh"),
             # Expose for compute()'s write_user_outputs (USER output commit).
             "locals_out": locals_out,
-            "namespace": namespace,
+            "namespace":  namespace,
         }
 
 

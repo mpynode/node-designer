@@ -69,7 +69,7 @@ class TestNodeCallbacksHelpers(unittest.TestCase):
         )
         from mpynode.wrappers._mpy_node import MPyNode
 
-        n = MPyNode.create(name="cb2")
+        n     = MPyNode.create(name="cb2")
         fired = []
 
         cb_id = install_node_attr_callback(n.get_name(), lambda p: fired.append(p.name()))
@@ -122,7 +122,7 @@ class TestNodeCallbacksHelpers(unittest.TestCase):
         )
         from mpynode.wrappers._mpy_node import MPyNode
 
-        n = MPyNode.create(name="cb4")
+        n     = MPyNode.create(name="cb4")
         fired = []
 
         cb_id = install_node_attr_callback(n.get_name(), lambda p: fired.append(p.name()))
@@ -176,7 +176,7 @@ class TestScriptTabSignal(unittest.TestCase):
             "_on_tab_close_requested",
         ):
             method = getattr(NDScriptTabWidget, method_name)
-            src = inspect.getsource(method)
+            src    = inspect.getsource(method)
             self.assertIn(
                 "tabsChanged.emit",
                 src,
@@ -300,14 +300,14 @@ class TestE2EIntegration(unittest.TestCase):
         class _StandIn:
             pass
 
-        s = _StandIn()
-        s._node_attr_callbacks = {}
+        s                            = _StandIn()
+        s._node_attr_callbacks       = {}
         s._node_connection_callbacks = {}
-        s._current_node = None
-        s._editor_refresh_calls = []
-        s._attrs_refresh_calls = []
-        s._storage_refresh_calls = []
-        s._solver_refresh_calls = []
+        s._current_node              = None
+        s._editor_refresh_calls      = []
+        s._attrs_refresh_calls       = []
+        s._storage_refresh_calls     = []
+        s._solver_refresh_calls      = []
 
         # Bind only the unbound methods the integration path uses.
         s._reconcile_node_attr_callbacks = (
@@ -426,7 +426,7 @@ class TestE2EIntegration(unittest.TestCase):
         """Callbacks for one node don't fire for another."""
         from mpynode.wrappers._mpy_node import MPyNode
 
-        s = self._make_stand_in()
+        s  = self._make_stand_in()
         n1 = MPyNode.create(name="iso_a")
         n2 = MPyNode.create(name="iso_b")
         s._reconcile_node_attr_callbacks([n1.get_name(), n2.get_name()])

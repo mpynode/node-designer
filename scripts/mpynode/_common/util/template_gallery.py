@@ -51,28 +51,28 @@ from typing import List, NamedTuple, Optional, Tuple
 log = logging.getLogger(__name__)
 
 _TEMPLATE_FILENAME = "template.mpn"
-_PREVIEW_NAMES = ("preview.mp4", "preview.gif", "preview.png", "preview.jpg")
-_DESCRIPTION_NAME = "description.md"
-_MANIFEST_NAME = "gallery.json"  # optional per-folder manifest (see module doc)
+_PREVIEW_NAMES     = ("preview.mp4", "preview.gif", "preview.png", "preview.jpg")
+_DESCRIPTION_NAME  = "description.md"
+_MANIFEST_NAME     = "gallery.json"  # optional per-folder manifest (see module doc)
 
 
 # --- immutable tree node kinds -------------------------------------------
 
 class TemplateEntry(NamedTuple):
-    label: str
-    folder: str
-    mpn_path: str
-    preview_path: Optional[str]
+    label:            str
+    folder:           str
+    mpn_path:         str
+    preview_path:     Optional[str]
     description_path: Optional[str]
-    native_type: Optional[str]
-    children: tuple = ()  # nested variant templates (hybrid folders)
+    native_type:      Optional[str]
+    children:         tuple = ()  # nested variant templates (hybrid folders)
 
 
 class TemplateCategory(NamedTuple):
-    label: str
-    abs_path: str
-    children: tuple  # tuple[TemplateCategory | TemplateEntry, ...]
-    preview_path: Optional[str] = None
+    label:            str
+    abs_path:         str
+    children:         tuple  # tuple[TemplateCategory | TemplateEntry, ...]
+    preview_path:     Optional[str] = None
     description_path: Optional[str] = None
 
 
@@ -182,7 +182,7 @@ def _apply_order(children: list, manifest: dict) -> list:
     for c in children:
         by_label.setdefault(getattr(c, "label", None), c)
     ordered = []
-    seen = set()
+    seen    = set()
     for name in order:
         if not isinstance(name, str):
             continue  # labels are always folder-basename strings; a non-string
@@ -206,7 +206,7 @@ def _read_native_type(mpn_path: str) -> Optional[str]:
     try:
         from mpynode._common.io import mpn_io
         data = mpn_io.load_mpn_header(mpn_path)
-        nt = data.get("native_type")
+        nt   = data.get("native_type")
         if not nt:
             log.warning("template %r: missing native_type", mpn_path)
             return None
@@ -223,13 +223,13 @@ def _make_entry(folder: str, children: tuple = (),
     if mpn_path is None:
         mpn_path = os.path.join(folder, _TEMPLATE_FILENAME)
     return TemplateEntry(
-        label=display_label(os.path.basename(folder.rstrip(os.sep))),
-        folder=folder,
-        mpn_path=mpn_path,
-        preview_path=_resolve_preview(folder, manifest),
-        description_path=_resolve_description(folder, manifest),
-        native_type=_read_native_type(mpn_path),
-        children=tuple(children),
+        label            = display_label(os.path.basename(folder.rstrip(os.sep))),
+        folder           = folder,
+        mpn_path         = mpn_path,
+        preview_path     = _resolve_preview(folder, manifest),
+        description_path = _resolve_description(folder, manifest),
+        native_type      = _read_native_type(mpn_path),
+        children         = tuple(children),
     )
 
 
@@ -269,11 +269,11 @@ def _scan_dir(folder: str) -> object:
     if not children:
         return None  # no template.mpn anywhere below -> not a gallery folder
     return TemplateCategory(
-        label=display_label(os.path.basename(folder.rstrip(os.sep))),
-        abs_path=os.path.abspath(folder),
-        children=tuple(children),
-        preview_path=_resolve_preview(folder, manifest),
-        description_path=_resolve_description(folder, manifest),
+        label            = display_label(os.path.basename(folder.rstrip(os.sep))),
+        abs_path         = os.path.abspath(folder),
+        children         = tuple(children),
+        preview_path     = _resolve_preview(folder, manifest),
+        description_path = _resolve_description(folder, manifest),
     )
 
 
@@ -285,7 +285,7 @@ def scan_root(root: str) -> TemplateCategory:
     A ``gallery.json`` manifest at ``root`` may reorder the top-level categories
     (e.g. ``basics`` before ``advanced``) and/or override the root's landing-page
     preview / description."""
-    root = os.path.abspath(root)
+    root     = os.path.abspath(root)
     manifest = read_manifest(root) if os.path.isdir(root) else {}
     children = []
     if os.path.isdir(root):
@@ -297,11 +297,11 @@ def scan_root(root: str) -> TemplateCategory:
                     children.append(child)
     children = _apply_order(children, manifest)
     return TemplateCategory(
-        label=display_label(os.path.basename(root.rstrip(os.sep))),
-        abs_path=root,
-        children=tuple(children),
-        preview_path=_resolve_preview(root, manifest),
-        description_path=_resolve_description(root, manifest),
+        label            = display_label(os.path.basename(root.rstrip(os.sep))),
+        abs_path         = root,
+        children         = tuple(children),
+        preview_path     = _resolve_preview(root, manifest),
+        description_path = _resolve_description(root, manifest),
     )
 
 

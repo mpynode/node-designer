@@ -66,11 +66,11 @@ class TestBlessedTexTranspile(unittest.TestCase):
         self.assertEqual(cpp.count("= (double)"), 4)
         # the load wired the mPyFile presets from their in_<member> locals,
         # byte-mirroring the interpreted adapter + full-parity glue.
-        self.assertIn("in_aFileName", cpp)
+        self.assertIn("in_aFileName",        cpp)
         self.assertIn("(int)in_aColorSpace", cpp)
-        self.assertIn("in_aPreFilter != 0", cpp)
-        self.assertIn("(int)in_aWrapModeU", cpp)
-        self.assertIn("in_aBorderColor[0]", cpp)
+        self.assertIn("in_aPreFilter != 0",  cpp)
+        self.assertIn("(int)in_aWrapModeU",  cpp)
+        self.assertIn("in_aBorderColor[0]",  cpp)
 
     def test_missing_colorspace_member_rejects(self):
         # parity-or-reject: a captured surface missing colorSpace cannot lower

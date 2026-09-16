@@ -67,7 +67,7 @@ class TestPointsWithin(unittest.TestCase):
             self.skipTest("scipy not available")
         from mpynode._api2.geometry import _points_within
         rng = np.random.default_rng(7)
-        a = rng.normal(scale=2.0, size=(400, 3))
+        a   = rng.normal(scale=2.0, size=(400, 3))
         b = np.concatenate([a[:150] + rng.normal(scale=1e-4, size=(150, 3)),
                             rng.normal(scale=2.0, size=(250, 3))])
         for tol in (1e-6, 1e-4, 1e-3, 0.25):
@@ -85,7 +85,7 @@ class TestPointsWithin(unittest.TestCase):
 
     def test_empty_sides_match_nothing(self):
         from mpynode._api2.geometry import _points_within
-        a = np.zeros((3, 3))
+        a     = np.zeros((3, 3))
         empty = np.zeros((0, 3))
         self.assertEqual(_points_within(a, empty, 1.0).size, 0)
         self.assertEqual(_points_within(empty, a, 1.0).size, 0)
@@ -107,7 +107,7 @@ class TestMeshDifference(unittest.TestCase):
         np.testing.assert_array_equal(out.counts, [4])
 
     def test_identical_meshes_subtract_to_empty(self):
-        a = _quad(0.0)
+        a   = _quad(0.0)
         out = a - _quad(0.0)
         self.assertEqual(out.counts.size, 0)
         self.assertEqual(out.points.shape[0], 0)
@@ -123,16 +123,16 @@ class TestMeshDifference(unittest.TestCase):
         np.testing.assert_array_equal(out.counts, [4])
 
     def test_only_the_fully_matched_face_is_removed(self):
-        a = _quad(0.0) + _quad(5.0)
+        a   = _quad(0.0) + _quad(5.0)
         out = a - _quad(5.0)
         np.testing.assert_array_equal(out.counts, [4])
         np.testing.assert_allclose(out.points, _quad(0.0).points)
 
     def test_tolerance_is_fuzzy_within_1e6_and_exact_beyond_it(self):
-        near = _quad(0.0)
+        near         = _quad(0.0)
         near._points = near.points + 4e-7           # inside the 1e-6 default
         self.assertEqual((_quad(0.0) - near).counts.size, 0)
-        far = _quad(0.0)
+        far         = _quad(0.0)
         far._points = far.points + 4e-5             # outside it
         np.testing.assert_array_equal((_quad(0.0) - far).counts, [4])
 
@@ -148,16 +148,16 @@ class TestMeshDifference(unittest.TestCase):
         self.assertEqual(a.counts.size, 0)
 
     def test_difference_drops_derived_channels(self):
-        a = _quad(0.0) + _quad(5.0)
+        a         = _quad(0.0) + _quad(5.0)
         a.normals = np.tile([0.0, 0.0, 1.0], (8, 1))
-        out = a - _quad(5.0)
+        out       = a - _quad(5.0)
         self.assertIsNone(out.normals)
         self.assertEqual(out.component_tags, {})
 
     def test_a_points_only_mesh_is_left_alone(self):
         """No topology -> no faces to remove; the point bucket must survive."""
         from mpynode._api2.geometry import Mesh
-        a = Mesh(points=np.zeros((4, 3)))
+        a   = Mesh(points=np.zeros((4, 3)))
         out = a - _quad(0.0)
         self.assertEqual(out.points.shape, (4, 3))
 

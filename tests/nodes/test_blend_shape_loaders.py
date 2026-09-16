@@ -42,12 +42,12 @@ def _write_pair(directory, stem, records):
     """``records`` as both containers. Returns ``(npz_path, json_path)``."""
     flat, nested = {}, {}
     for k, rec in enumerate(records):
-        flat["index_%d/name" % k] = rec["name"]
+        flat["index_%d/name" % k]    = rec["name"]
         flat["index_%d/indices" % k] = np.asarray(rec["indices"], dtype=np.int64)
         flat["index_%d/offsets" % k] = np.asarray(rec["offsets"],
                                                   dtype=np.float64)
         nested["index_%d" % k] = {
-            "name": rec["name"],
+            "name":    rec["name"],
             "indices": [int(i) for i in rec["indices"]],
             "offsets": [[float(x) for x in row] for row in rec["offsets"]],
         }
@@ -177,7 +177,7 @@ def _base_rig(node_name, verts=None):
 
     mc.file(new=True, force=True)
     base = mc.polyPlane(name=node_name + "Base", sx=1, sy=1, ch=False)[0]
-    bs = MPyBlendShape.create(mesh=base, name=node_name)
+    bs   = MPyBlendShape.create(mesh=base, name=node_name)
     return bs, base, bs._base_points()
 
 
@@ -240,7 +240,7 @@ class TestLoadShapes(_TmpDir):
         never made.
         """
         bs, _base, pts = _base_rig("loadInterBS")
-        main = [[0.0, 4.0, 0.0]]
+        main  = [[0.0, 4.0, 0.0]]
         inter = [[0.0, 3.0, 0.0]]
         npz, _ = _write_pair(self.tmp, "inter", [
             {"name": "browUp", "indices": [0], "offsets": main},
@@ -248,7 +248,7 @@ class TestLoadShapes(_TmpDir):
 
         out = bs.load_shapes(npz)
         self.assertEqual(out["inter"], 1)
-        ofs = bs._read_multi("targetOffset", int)
+        ofs    = bs._read_multi("targetOffset", int)
         deltas = bs._read_multi("targetDeltas", float)
         stored = deltas[3 * ofs[1]:3 * ofs[2]]
         np.testing.assert_allclose(stored, [0.0, 3.0, 0.0], atol=1e-9)
@@ -263,7 +263,7 @@ class TestLoadShapes(_TmpDir):
 
         out = bs.load_shapes(npz)
         self.assertEqual(out["combo"], 1)
-        ofs = bs._read_multi("targetOffset", int)
+        ofs    = bs._read_multi("targetOffset", int)
         deltas = bs._read_multi("targetDeltas", float)
         stored = deltas[3 * ofs[2]:3 * ofs[3]]
         np.testing.assert_allclose(stored, [1.0, 2.0, 3.0], atol=1e-9)
@@ -367,7 +367,7 @@ class TestAddTargetFromOffsets(_TmpDir):
         from mpynode._api2.morph import Morph
 
         bs, _base, _pts = _base_rig("morphAddBS")
-        m = Morph(name="corrective", offsets=[[0.0, 7.0, 0.0]], indices=[2])
+        m   = Morph(name="corrective", offsets=[[0.0, 7.0, 0.0]], indices=[2])
 
         idx = bs.add_target_from_offsets(m)
 
@@ -558,7 +558,7 @@ class TestFactoryCommands(_TmpDir):
         for ntype in ("mPyDeformer", "mPyMesh", "mPySkinCluster",
                       "mPyIkSolver", "mPyNurbsCurve", "mPyNurbsSurface"):
             merged = node_setups.merge_type_default("", ntype)
-            names = {c["name"] for c in detect_commands(merged) if c["creates"]}
+            names  = {c["name"] for c in detect_commands(merged) if c["creates"]}
             self.assertTrue(names, "%s lost its create command" % ntype)
             self.assertEqual(
                 [], node_setups.command_templates_for_type(ntype),

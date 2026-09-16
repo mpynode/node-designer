@@ -18,8 +18,8 @@ class TestPluginLoaderCoverage(unittest.TestCase):
 
     def test_every_registry_type_has_a_plugin_mapping(self):
         registry_types = set(_node_registry.all_native_types())
-        mapped_types = set(plugin_loader._NODE_TYPE_TO_PLUGIN)
-        missing = sorted(registry_types - mapped_types)
+        mapped_types   = set(plugin_loader._NODE_TYPE_TO_PLUGIN)
+        missing        = sorted(registry_types - mapped_types)
         self.assertEqual(
             missing, [],
             "node types in the registry with no auto-load mapping "

@@ -36,14 +36,14 @@ import json
 import time
 import traceback
 
-MPN = sys.argv[1]
-OUT = sys.argv[2]
+MPN    = sys.argv[1]
+OUT    = sys.argv[2]
 PLUGIN = sys.argv[3]
 # demo selection: func_name or label; "", "-", or the plugin name => first demo.
-_demo_arg = sys.argv[4] if len(sys.argv) > 4 else ""
-DEMO = None if _demo_arg in ("", "-", PLUGIN) else _demo_arg
+_demo_arg   = sys.argv[4] if len(sys.argv) > 4 else ""
+DEMO        = None if _demo_arg in ("", "-", PLUGIN) else _demo_arg
 MA_BASENAME = sys.argv[5] if len(sys.argv) > 5 else os.path.basename(OUT)
-MAYA_ROOT = os.environ.get("MPYNODE_MAYA_ROOT", "/Applications/Autodesk/maya2026")
+MAYA_ROOT   = os.environ.get("MPYNODE_MAYA_ROOT", "/Applications/Autodesk/maya2026")
 
 LOG = os.path.join(OUT, "build.log")
 _lf = open(LOG, "w")
@@ -68,11 +68,11 @@ try:
     L("time (start): %s" % time.strftime("%Y-%m-%d %H:%M:%S"))
 
     manifest = json.load(open(os.path.join(OUT, "build", "manifest.json")))
-    bundle = manifest.get("bundle")
+    bundle   = manifest.get("bundle")
     if bundle and not os.path.isabs(bundle):
         bundle = os.path.join(OUT, bundle)
-    nodes = manifest.get("nodes") or []
-    compiled_type = nodes[0].get("type_name") if nodes else None
+    nodes                = manifest.get("nodes") or []
+    compiled_type        = nodes[0].get("type_name") if nodes else None
     res["compiled_type"] = compiled_type
     L("bundle       : %s" % bundle)
     L("compiled type: %s" % compiled_type)
@@ -116,7 +116,7 @@ try:
     from mpynode._common.io.mpn_io import deserialize_node
     from mpynode._common.methods.methods_registry import run_node_demo
 
-    payload = mpn_io.load_mpn(MPN, trusted=True)
+    payload     = mpn_io.load_mpn(MPN, trusted=True)
     native_type = payload.get("native_type")
     L("native type  : %s" % native_type)
 
@@ -138,7 +138,7 @@ try:
         L(traceback.format_exc())
 
     # tname may have been renamed by the demo; re-resolve the template node.
-    after = set(mc.ls(type=native_type) or [])
+    after      = set(mc.ls(type=native_type) or [])
     tname_full = None
     for n in (mc.ls(tname, long=True) or []):
         tname_full = n
@@ -164,7 +164,7 @@ try:
     L(">>> swapping template node %s -> compiled type %s"
       % (tname_full, compiled_type))
     comp, _dropped = node_swap.swap_node(tname_full, compiled_type)
-    res["swapped"] = True
+    res["swapped"]       = True
     res["compiled_node"] = comp
     L("    swapped -> %s" % comp)
 
@@ -195,7 +195,7 @@ try:
     try:
         mc.file(rename=ma)
         mc.file(save=True, type="mayaAscii", force=True)
-        res["ma"] = ma
+        res["ma"]    = ma
         res["built"] = True
         L(">>> saved scene: %s" % ma)
     except Exception as exc:

@@ -50,10 +50,10 @@ class TestHistorySinkIsOptional(unittest.TestCase):
             "BASE",
             optimize_fn=lambda cpp: "CAND",
             fix_fn=lambda cpp, errs: cpp,
-            compile_fn=_compile_ok,
-            parity_fn=_parity(PARITY_PASS),
-            benchmark_fn=_bench({"BASE": 100.0, "CAND": 40.0}),
-            rounds=1,
+            compile_fn   = _compile_ok,
+            parity_fn    = _parity(PARITY_PASS),
+            benchmark_fn = _bench({"BASE": 100.0, "CAND": 40.0}),
+            rounds       = 1,
         )
         self.assertTrue(res.accepted)
 
@@ -63,11 +63,11 @@ class TestHistorySinkIsOptional(unittest.TestCase):
             "BASE",
             optimize_fn=lambda cpp: "CAND",
             fix_fn=lambda cpp, errs: cpp,
-            compile_fn=_compile_ok,
-            parity_fn=_parity(PARITY_PASS),
-            benchmark_fn=_bench({"BASE": 100.0, "CAND": 40.0}),
-            rounds=2,
-            history_sink=None,
+            compile_fn   = _compile_ok,
+            parity_fn    = _parity(PARITY_PASS),
+            benchmark_fn = _bench({"BASE": 100.0, "CAND": 40.0}),
+            rounds       = 2,
+            history_sink = None,
         )
         self.assertEqual(res.rounds, 2)
 
@@ -77,22 +77,22 @@ class TestHistorySinkReceivesTheLedger(unittest.TestCase):
         kw = dict(
             optimize_fn=lambda cpp: "CAND",
             fix_fn=lambda cpp, errs: cpp,
-            compile_fn=_compile_ok,
-            parity_fn=_parity(PARITY_PASS),
+            compile_fn = _compile_ok,
+            parity_fn  = _parity(PARITY_PASS),
             # CAND never beats BASE -> every round is rejected, which is the
             # case the history actually has to fix.
-            benchmark_fn=_bench({"BASE": 100.0, "CAND": 100.0}),
-            rounds=rounds,
+            benchmark_fn = _bench({"BASE": 100.0, "CAND": 100.0}),
+            rounds       = rounds,
             # Fixed count: these tests are about the sink, not the adaptive
             # stop rule, which would otherwise end an all-rejected run at 2.
-            min_rounds=rounds,
-            history_sink=sink,
+            min_rounds   = rounds,
+            history_sink = sink,
         )
         kw.update(over)
         return optimize_cpp("BASE", **kw)
 
     def test_it_is_called_once_per_round_before_the_proposal(self):
-        seen = []
+        seen  = []
         order = []
 
         def sink(history):
@@ -123,7 +123,7 @@ class TestHistorySinkReceivesTheLedger(unittest.TestCase):
 
         self.assertEqual([r.index for r in seen[1]], [0, 1])
         self.assertEqual([r.index for r in seen[2]], [0, 1, 2])
-        self.assertEqual(seen[2][1].outcome, "not-faster")
+        self.assertEqual(seen[2][1].outcome,         "not-faster")
 
     def test_the_rejected_theme_survives_into_the_next_round(self):
         """The whole point: "structure-of-arrays was 2x slower" is only worth
@@ -136,9 +136,9 @@ class TestHistorySinkReceivesTheLedger(unittest.TestCase):
                   round_meta_fn=lambda: meta)
 
         prior = seen[1][1]
-        self.assertEqual(prior.theme, "structure-of-arrays")
+        self.assertEqual(prior.theme,             "structure-of-arrays")
         self.assertEqual(prior.predicted_speedup, 2.0)
-        self.assertEqual(prior.outcome, "not-faster")
+        self.assertEqual(prior.outcome,           "not-faster")
         self.assertAlmostEqual(prior.ms, 100.0)
 
     def test_a_failing_sink_never_costs_a_round(self):
@@ -175,11 +175,11 @@ class TestFailedRoundsAreInTheHistoryToo(unittest.TestCase):
             "BASE",
             optimize_fn=lambda cpp: "CAND",
             fix_fn=lambda cpp, errs: cpp,
-            compile_fn=_compile_ok,
-            parity_fn=_parity(PARITY_FAIL),
-            benchmark_fn=_bench({"BASE": 100.0, "CAND": 10.0}),
-            rounds=2,
-            history_sink=lambda h: seen.append(list(h)),
+            compile_fn   = _compile_ok,
+            parity_fn    = _parity(PARITY_FAIL),
+            benchmark_fn = _bench({"BASE": 100.0, "CAND": 10.0}),
+            rounds       = 2,
+            history_sink = lambda h: seen.append(list(h)),
         )
         self.assertEqual(seen[1][1].outcome, "parity-fail")
 
@@ -189,11 +189,11 @@ class TestFailedRoundsAreInTheHistoryToo(unittest.TestCase):
             "BASE",
             optimize_fn=lambda cpp: "CAND",
             fix_fn=lambda cpp, errs: cpp,
-            compile_fn=lambda cpp: (cpp == "BASE", "boom", "b:" + cpp),
-            parity_fn=_parity(PARITY_PASS),
-            benchmark_fn=_bench({"BASE": 100.0}),
-            rounds=2,
-            history_sink=lambda h: seen.append(list(h)),
+            compile_fn   = lambda cpp: (cpp == "BASE", "boom", "b:" + cpp),
+            parity_fn    = _parity(PARITY_PASS),
+            benchmark_fn = _bench({"BASE": 100.0}),
+            rounds       = 2,
+            history_sink = lambda h: seen.append(list(h)),
         )
         self.assertEqual(seen[1][1].outcome, "compile-failed")
 
@@ -329,17 +329,17 @@ class TestTheLiveWiringActuallyCarriesIt(unittest.TestCase):
         import os
         from mpynode.native.ai import llm_client, optimizer_agent
         from mpynode.ui.llm import config as cfg
-        self._saved_env = os.environ.get("MPYNODE_OPT_HISTORY")
-        self._agent_mod = optimizer_agent
-        self._llm = llm_client
-        self._cfg = cfg
-        self._orig_owa = optimizer_agent.optimize_with_agent
-        self._orig_mkagent = llm_client.make_cli_agent_fn
+        self._saved_env     = os.environ.get("MPYNODE_OPT_HISTORY")
+        self._agent_mod     = optimizer_agent
+        self._llm           = llm_client
+        self._cfg           = cfg
+        self._orig_owa      = optimizer_agent.optimize_with_agent
+        self._orig_mkagent  = llm_client.make_cli_agent_fn
         self._orig_provider = cfg.get_provider
-        self._orig_check = llm_client.check_agent
+        self._orig_check    = llm_client.check_agent
         # A provider with a tool-using headless mode, and an agent that does
         # nothing -- the round's OUTPUT is irrelevant here, only what it is TOLD.
-        cfg.get_provider = lambda: "claude_cli"
+        cfg.get_provider             = lambda: "claude_cli"
         llm_client.make_cli_agent_fn = lambda ws, **kw: (lambda prompt: "")
         # ...and a host whose sandbox the agent can install. The real pre-flight
         # probes THIS machine, so without the stub the arm under test depends on
@@ -351,9 +351,9 @@ class TestTheLiveWiringActuallyCarriesIt(unittest.TestCase):
     def tearDown(self):
         import os
         self._agent_mod.optimize_with_agent = self._orig_owa
-        self._llm.make_cli_agent_fn = self._orig_mkagent
-        self._cfg.get_provider = self._orig_provider
-        self._llm.check_agent = self._orig_check
+        self._llm.make_cli_agent_fn         = self._orig_mkagent
+        self._cfg.get_provider              = self._orig_provider
+        self._llm.check_agent               = self._orig_check
         if self._saved_env is None:
             os.environ.pop("MPYNODE_OPT_HISTORY", None)
         else:
@@ -457,7 +457,7 @@ class TestTheOneShotFallbackGetsItToo(unittest.TestCase):
             parity_fn=lambda b: ParityVerdict(PARITY_PASS),
             benchmark_fn=lambda b: 100.0)
         ad["compile_fn"] = _compile_ok
-        sink = ad.get("history_sink")
+        sink             = ad.get("history_sink")
         if sink is not None:
             def spy(ledger):
                 ledgers.append(list(ledger or []))

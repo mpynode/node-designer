@@ -127,7 +127,7 @@ class NDAddAttrDialog(QDialog):
         parent,
         py_node,
         initial_direction: str = "input",
-        on_attr_added=None,
+        on_attr_added          = None,
     ):
         super().__init__(parent)
         self.setWindowTitle(f"Add Attribute: {py_node.get_name()}")
@@ -136,8 +136,8 @@ class NDAddAttrDialog(QDialog):
         self.setModal(False)
         self.resize(420, 360)
 
-        self._py_node = py_node
-        self._direction = initial_direction
+        self._py_node       = py_node
+        self._direction     = initial_direction
         self._on_attr_added = on_attr_added
 
         self._build_ui()
@@ -161,7 +161,7 @@ class NDAddAttrDialog(QDialog):
         self._stack.setContentsMargins(0, 0, 0, 0)
         self._sub_frames: dict[str, QWidget] = {}
         for t in ALL_ATTR_TYPES:
-            frame = self._make_subframe(t)
+            frame               = self._make_subframe(t)
             self._sub_frames[t] = frame
             self._stack.addWidget(frame)
 
@@ -169,8 +169,8 @@ class NDAddAttrDialog(QDialog):
         # both radios can never end up unchecked together.
         direction_row = QHBoxLayout()
         direction_row.addWidget(QLabel("Direction:", self))
-        self._input_radio = QRadioButton("Input", self)
-        self._output_radio = QRadioButton("Output", self)
+        self._input_radio     = QRadioButton("Input", self)
+        self._output_radio    = QRadioButton("Output", self)
         self._direction_group = QButtonGroup(self)
         self._direction_group.setExclusive(True)
         self._direction_group.addButton(self._input_radio)
@@ -237,7 +237,7 @@ class NDAddAttrDialog(QDialog):
             else "list_valid_output_types"
         )
         list_func = getattr(self._py_node, list_method, None)
-        allowed = None
+        allowed   = None
         if callable(list_func):
             try:
                 allowed = list_func()
@@ -303,7 +303,7 @@ class NDAddAttrDialog(QDialog):
             return self._make_time_subframe()
         # vector / matrix / string / euler / python /
         # mesh / nurbsCurve / nurbsSurface — blank
-        w = QWidget(self)
+        w      = QWidget(self)
         layout = QVBoxLayout(w)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(QLabel(f"({attr_type} — no extra configuration)", w))
@@ -316,7 +316,7 @@ class NDAddAttrDialog(QDialog):
         Default ON since 99.9% of use cases want the time1.outTime
         connection. User can opt out by unchecking.
         """
-        w = QWidget(self)
+        w     = QWidget(self)
         outer = QVBoxLayout(w)
         outer.setContentsMargins(0, 0, 0, 0)
         outer.setSpacing(4)
@@ -349,7 +349,7 @@ class NDAddAttrDialog(QDialog):
         # A trailing stretch packs the rows at the top with the same tight
         # spacing as the Direction/Name/Type grid. Without it the QStackedLayout
         # fills the container and the grid spreads slack over its 3 rows.
-        w = QWidget(self)
+        w     = QWidget(self)
         outer = QVBoxLayout(w)
         outer.setSpacing(0)
         outer.setContentsMargins(0, 0, 0, 0)
@@ -358,47 +358,47 @@ class NDAddAttrDialog(QDialog):
         grid.setVerticalSpacing(4)
         grid.setHorizontalSpacing(6)
         grid.setContentsMargins(0, 0, 0, 0)
-        grid.addWidget(QLabel("Min:", w), 0, 0)
-        grid.addWidget(QLabel("Max:", w), 1, 0)
+        grid.addWidget(QLabel("Min:", w),     0, 0)
+        grid.addWidget(QLabel("Max:", w),     1, 0)
         grid.addWidget(QLabel("Default:", w), 2, 0)
-        min_edit = QLineEdit(w)
-        max_edit = QLineEdit(w)
+        min_edit     = QLineEdit(w)
+        max_edit     = QLineEdit(w)
         default_edit = QLineEdit(w)
         if is_int:
             default_edit.setText("0")
         else:
             default_edit.setText("0.0")
-        grid.addWidget(min_edit, 0, 1)
-        grid.addWidget(max_edit, 1, 1)
+        grid.addWidget(min_edit,     0, 1)
+        grid.addWidget(max_edit,     1, 1)
         grid.addWidget(default_edit, 2, 1)
 
         outer.addLayout(grid)
         outer.addStretch(1)  # absorb extra vertical space
 
-        w._min_edit = min_edit
-        w._max_edit = max_edit
+        w._min_edit     = min_edit
+        w._max_edit     = max_edit
         w._default_edit = default_edit
-        w._is_int = is_int
+        w._is_int       = is_int
         return w
 
     def _make_bool_subframe(self) -> QWidget:
-        w = QWidget(self)
+        w      = QWidget(self)
         layout = QHBoxLayout(w)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(QLabel("Default:", w))
-        true_radio = QRadioButton("True", w)
+        true_radio  = QRadioButton("True", w)
         false_radio = QRadioButton("False", w)
         false_radio.setChecked(True)
         layout.addWidget(true_radio)
         layout.addWidget(false_radio)
         layout.addStretch(1)
-        w._true_radio = true_radio
+        w._true_radio  = true_radio
         w._false_radio = false_radio
         return w
 
     def _make_enum_subframe(self) -> QWidget:
         # +/- list editor pre-populated with False/True; items edit inline.
-        w = QWidget(self)
+        w     = QWidget(self)
         outer = QVBoxLayout(w)
         outer.setContentsMargins(0, 0, 0, 0)
         outer.setSpacing(4)
@@ -409,7 +409,7 @@ class NDAddAttrDialog(QDialog):
             item.setFlags(Qt.ItemIsEnabled | Qt.ItemIsSelectable | Qt.ItemIsEditable)
             list_widget.addItem(item)
         outer.addWidget(list_widget, stretch=1)
-        btn_row = QHBoxLayout()
+        btn_row  = QHBoxLayout()
         plus_btn = QPushButton("+", w)
         plus_btn.setFixedWidth(32)
         plus_btn.setToolTip("Add a new enum value")
@@ -480,14 +480,14 @@ class NDAddAttrDialog(QDialog):
             return
 
         attr_type = self._type_combo.currentText()
-        is_array = self._array_check.isChecked()
+        is_array  = self._array_check.isChecked()
 
         # Per-type extras (enum gets enum_names; time gets auto_connect_time;
         # numeric gets min/max/default; others stay default).
-        enum_names = None
+        enum_names        = None
         auto_connect_time = True  # default — only consulted for time inputs
-        min_value = max_value = default_value = None
-        sub = self._sub_frames.get(attr_type)
+        min_value         = max_value = default_value = None
+        sub               = self._sub_frames.get(attr_type)
         if sub is not None and hasattr(sub, "_list_widget"):
             entries = [
                 sub._list_widget.item(i).text().strip()
@@ -519,8 +519,8 @@ class NDAddAttrDialog(QDialog):
                     raise ValueError(f"{field} must be a number (got {text!r}).")
 
             try:
-                min_value = _parse(sub._min_edit.text(), "Min")
-                max_value = _parse(sub._max_edit.text(), "Max")
+                min_value     = _parse(sub._min_edit.text(),     "Min")
+                max_value     = _parse(sub._max_edit.text(),     "Max")
                 default_value = _parse(sub._default_edit.text(), "Default")
             except ValueError as exc:
                 QMessageBox.warning(self, "Invalid Value", str(exc))
@@ -549,11 +549,11 @@ class NDAddAttrDialog(QDialog):
                         name,
                         attr_type,
                         is_array,
-                        enum_names=enum_names,
-                        auto_connect_time=auto_connect_time,
-                        min_value=min_value,
-                        max_value=max_value,
-                        default_value=default_value,
+                        enum_names        = enum_names,
+                        auto_connect_time = auto_connect_time,
+                        min_value         = min_value,
+                        max_value         = max_value,
+                        default_value     = default_value,
                     )
                 )
             else:
@@ -565,10 +565,10 @@ class NDAddAttrDialog(QDialog):
                         name,
                         attr_type,
                         is_array,
-                        enum_names=enum_names,
-                        min_value=min_value,
-                        max_value=max_value,
-                        default_value=default_value,
+                        enum_names    = enum_names,
+                        min_value     = min_value,
+                        max_value     = max_value,
+                        default_value = default_value,
                     )
                 )
         except Exception as exc:

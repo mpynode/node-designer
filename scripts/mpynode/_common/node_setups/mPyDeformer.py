@@ -29,7 +29,7 @@ def setup(self, *args, **kwargs):
     def _deformables(sel):
         """The entries carrying deformable geometry (directly or as a shape)."""
         kinds = ("mesh", "nurbsSurface", "nurbsCurve", "lattice")
-        out = []
+        out   = []
         for n in sel:
             if mc.nodeType(n) in kinds:
                 out.append(n)

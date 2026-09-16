@@ -20,12 +20,12 @@ from __future__ import annotations
 
 import math
 
-CAP = 1.40     # cap height
-XH = 0.95      # lowercase x-height
-DESC = -0.55   # descender bottom
-THICK = 0.22   # stroke thickness
-DEPTH = 0.50   # extrusion depth (Z)
-ADVANCE = 1.35  # per-letter horizontal advance (cell 1.0 + gap 0.35)
+CAP     = 1.40   # cap height
+XH      = 0.95   # lowercase x-height
+DESC    = -0.55  # descender bottom
+THICK   = 0.22   # stroke thickness
+DEPTH   = 0.50   # extrusion depth (Z)
+ADVANCE = 1.35   # per-letter horizontal advance (cell 1.0 + gap 0.35)
 
 
 # Glyphs only for the letters in "MPyNode".
@@ -76,12 +76,12 @@ GLYPHS = {
 def _stroke_box(x0, y0, x1, y1):
     """Turn a segment into a box: centre, length (extended by THICK so joins
     overlap), thickness, angle (deg about Z)."""
-    cx = (x0 + x1) * 0.5
-    cy = (y0 + y1) * 0.5
-    dx = x1 - x0
-    dy = y1 - y0
+    cx     = (x0 + x1) * 0.5
+    cy     = (y0 + y1) * 0.5
+    dx     = x1 - x0
+    dy     = y1 - y0
     length = math.hypot(dx, dy) + THICK
-    angle = math.degrees(math.atan2(dy, dx))
+    angle  = math.degrees(math.atan2(dy, dx))
     return dict(cx=cx, cy=cy, length=length, thick=THICK, angle=angle,
                 depth=DEPTH)
 
@@ -90,8 +90,8 @@ def word_strokes(text="MPyNode"):
     """Return the ordered list of world boxes for ``text`` (centred on X)."""
     letters = [c for c in text if c in GLYPHS]
     total_w = ADVANCE * (len(letters) - 1) + 1.0 if letters else 0.0
-    x_off = -total_w * 0.5
-    boxes = []
+    x_off   = -total_w * 0.5
+    boxes   = []
     for i, ch in enumerate(letters):
         ox = x_off + i * ADVANCE
         for (x0, y0, x1, y1) in GLYPHS[ch]:

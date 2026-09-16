@@ -271,7 +271,7 @@ class TestAddAttrDialogPhase18_7(unittest.TestCase):
 
         self.assertIn("angle", ALL_ATTR_TYPES)
         self.assertIn("euler", ALL_ATTR_TYPES)
-        self.assertIn("enum", ALL_ATTR_TYPES)
+        self.assertIn("enum",  ALL_ATTR_TYPES)
 
     def test_subframe_router_routes_angle_to_numeric(self):
         import inspect
@@ -289,10 +289,10 @@ class TestAddAttrDialogPhase18_7(unittest.TestCase):
 
         src = inspect.getsource(NDAddAttrDialog._make_enum_subframe)
         self.assertIn("QListWidgetItem", src)
-        self.assertIn("ItemIsEditable", src)
-        self.assertIn('"False"', src)
-        self.assertIn('"True"', src)
-        self.assertIn('"+"', src)
+        self.assertIn("ItemIsEditable",  src)
+        self.assertIn('"False"',         src)
+        self.assertIn('"True"',          src)
+        self.assertIn('"+"',             src)
 
     def test_enum_subframe_plus_button_focuses_for_inline_edit(self):
         import inspect
@@ -519,7 +519,7 @@ class TestMultiOutputWrite(unittest.TestCase):
         import pickle
 
         for i in range(3):
-            raw = mc.getAttr(f"{n.get_name()}.out[{i}]")
+            raw     = mc.getAttr(f"{n.get_name()}.out[{i}]")
             decoded = pickle.loads(base64.b64decode(raw.encode("ascii")))
             self.assertEqual(decoded, {"index": i, "doubled": i * 2})
 
@@ -535,7 +535,7 @@ class TestMultiOutputWrite(unittest.TestCase):
         for i in range(3):
             s = mc.polySphere(r=1.0 + i, sx=4, sy=4, ch=False, name="gmIn%d" % i)[0]
             srcs.append(mc.listRelatives(s, s=True, f=True)[0])
-        w = MPyNode.create(name="gmMultiWriter")
+        w    = MPyNode.create(name="gmMultiWriter")
         node = w.get_name()
         w.add_input_attr("inMeshes", "mesh", is_array=True)
         w.add_output_attr("outMeshes", "mesh", is_array=True)
@@ -727,11 +727,11 @@ class TestTypedGeometryInputs(unittest.TestCase):
 
         cube_xform = mc.polyCube(name="cubeM", constructionHistory=False)[0]
         cube_shape = mc.listRelatives(cube_xform, shapes=True)[0]
-        n = MPyNode.create(name="meshprobe")
+        n          = MPyNode.create(name="meshprobe")
         n.add_input_attr("inMesh", "mesh")
         n.add_output_attr("type_name", "string")
-        n.add_output_attr("nverts", "int")
-        n.add_output_attr("npoints", "int")
+        n.add_output_attr("nverts",    "int")
+        n.add_output_attr("npoints",   "int")
         n.set_compute_expression(
             "self.type_name = type(self.inMesh).__name__\n"
             "self.nverts = self.inMesh.numVertices if self.inMesh is not None else -1\n"
@@ -741,15 +741,15 @@ class TestTypedGeometryInputs(unittest.TestCase):
         self.assertEqual(mc.getAttr(n.get_name() + ".nverts"), -1)
         mc.connectAttr(cube_shape + ".outMesh", n.get_name() + ".inMesh", force=True)
         self.assertEqual(mc.getAttr(n.get_name() + ".type_name"), "Mesh")
-        self.assertEqual(mc.getAttr(n.get_name() + ".nverts"), 8)   # delegation
-        self.assertEqual(mc.getAttr(n.get_name() + ".npoints"), 8)  # numpy surface
+        self.assertEqual(mc.getAttr(n.get_name() + ".nverts"),    8)  # delegation
+        self.assertEqual(mc.getAttr(n.get_name() + ".npoints"),   8)  # numpy surface
 
     def test_nurbsCurve_input_returns_NurbsCurve_wrapper(self):
         from mpynode.wrappers._mpy_node import MPyNode
 
         curve_xform = mc.curve(d=1, p=[(0, 0, 0), (1, 0, 0), (2, 0, 0)])
         curve_shape = mc.listRelatives(curve_xform, shapes=True)[0]
-        n = MPyNode.create(name="curveprobe")
+        n           = MPyNode.create(name="curveprobe")
         n.add_input_attr("inCurve", "nurbsCurve")
         n.add_output_attr("type_name", "string")
         n.add_output_attr("ncvs", "int")
@@ -766,7 +766,7 @@ class TestTypedGeometryInputs(unittest.TestCase):
 
         surf_xform, _ = mc.nurbsPlane(name="surfP")
         surf_shape = mc.listRelatives(surf_xform, shapes=True)[0]
-        n = MPyNode.create(name="surfprobe")
+        n          = MPyNode.create(name="surfprobe")
         n.add_input_attr("inSurf", "nurbsSurface")
         n.add_output_attr("type_name", "string")
         n.add_output_attr("ncvsU", "int")
@@ -796,9 +796,9 @@ class TestTypedGeometryInputs(unittest.TestCase):
         import numpy as np
         from mpynode.wrappers._mpy_node import MPyNode
 
-        sph = mc.polySphere(r=1.0, sx=6, sy=6, ch=False, name="geoOutSrc")[0]
+        sph  = mc.polySphere(r=1.0, sx=6, sy=6, ch=False, name="geoOutSrc")[0]
         sshp = mc.listRelatives(sph, s=True, f=True)[0]
-        n = MPyNode.create(name="meshout")
+        n    = MPyNode.create(name="meshout")
         n.add_input_attr("inMesh", "mesh")
         n.add_output_attr("outMesh", "mesh")
         n.set_compute_expression(
@@ -807,7 +807,7 @@ class TestTypedGeometryInputs(unittest.TestCase):
             "    out = m.copy(); out.points = out.points * 3.0; self.outMesh = out\n"
         )
         mc.connectAttr(sshp + ".worldMesh[0]", n.get_name() + ".inMesh", force=True)
-        dep = om.MFnDependencyNode(om.MSelectionList().add(n.get_name()).getDependNode(0))
+        dep  = om.MFnDependencyNode(om.MSelectionList().add(n.get_name()).getDependNode(0))
         outm = dep.findPlug("outMesh", False).asMObject()
         self.assertFalse(outm.isNull())
         src_mobj = (om.MFnDependencyNode(om.MSelectionList().add(sshp).getDependNode(0))
@@ -864,7 +864,7 @@ class TestDialogShapePhase18_8(unittest.TestCase):
         n.add_input_attr("mats_in", "matrix", is_array=True)
         n.add_output_attr("mats_out", "matrix", is_array=True)
 
-        in_meta = n.get_input_attr_map()["mats_in"]
+        in_meta  = n.get_input_attr_map()["mats_in"]
         out_meta = n.get_output_attr_map()["mats_out"]
         self.assertTrue(in_meta["is_array"])
         self.assertTrue(out_meta["is_array"])
@@ -891,8 +891,8 @@ class TestDialogShapePhase18_8(unittest.TestCase):
         src = inspect.getsource(read_plug_value)
         for t in ('"python"', '"mesh"', '"nurbsCurve"', '"nurbsSurface"'):
             self.assertIn(t, src)
-        self.assertIn("MFnMesh", src)
-        self.assertIn("MFnNurbsCurve", src)
+        self.assertIn("MFnMesh",         src)
+        self.assertIn("MFnNurbsCurve",   src)
         self.assertIn("MFnNurbsSurface", src)
 
     def test_write_plug_value_handles_python(self):
@@ -904,8 +904,8 @@ class TestDialogShapePhase18_8(unittest.TestCase):
         from mpynode._api2.helpers import _write_value_to_handle
 
         src = inspect.getsource(_write_value_to_handle)
-        self.assertIn('"python"', src)
-        self.assertIn("pickle.dumps", src)
+        self.assertIn('"python"',         src)
+        self.assertIn("pickle.dumps",     src)
         self.assertIn("base64.b64encode", src)
 
 
@@ -1108,8 +1108,8 @@ class TestAddCommandAutoConnectTime(unittest.TestCase):
                 "bareTime",
                 "time",
                 False,
-                enum_names=None,
-                auto_connect_time=False,
+                enum_names        = None,
+                auto_connect_time = False,
             )
         )
         sources = (
@@ -1137,8 +1137,8 @@ class TestDialogShapePhase18_9(unittest.TestCase):
 
         src = inspect.getsource(NDAddAttrDialog._make_time_subframe)
         self.assertIn("Auto-connect to time1", src)
-        self.assertIn("setChecked(True)", src)
-        self.assertIn("_auto_connect_check", src)
+        self.assertIn("setChecked(True)",      src)
+        self.assertIn("_auto_connect_check",   src)
 
     def test_subframe_router_routes_time(self):
         import inspect
@@ -1441,9 +1441,9 @@ class TestColorInputDefaultValue(unittest.TestCase):
         from mpynode._common.io.mpn_io import serialize_node
         from mpynode._node_registry import wrap_node
 
-        nm = self._node("c_ser", default_value=(0.25, 0.5, 0.95))
+        nm      = self._node("c_ser", default_value=(0.25, 0.5, 0.95))
         payload = serialize_node(wrap_node(nm), include_persistent=False)
-        meta = payload["input_attrs"]["tint"]
+        meta    = payload["input_attrs"]["tint"]
         self.assertIn("default_value", meta)
         self.assertEqual([round(v, 6) for v in meta["default_value"]],
                          [0.25, 0.5, 0.95])
@@ -1454,7 +1454,7 @@ class TestColorInputDefaultValue(unittest.TestCase):
         from mpynode._common.io.mpn_io import serialize_node
         from mpynode._node_registry import wrap_node
 
-        nm = self._node("c_ser_none")
+        nm      = self._node("c_ser_none")
         payload = serialize_node(wrap_node(nm), include_persistent=False)
         self.assertNotIn("default_value", payload["input_attrs"]["tint"])
 
@@ -1466,12 +1466,12 @@ class TestColorInputDefaultValue(unittest.TestCase):
         from mpynode._common.io.mpn_io import deserialize_node, serialize_node
         from mpynode._node_registry import wrap_node
 
-        nm = self._node("c_rt", default_value=(0.25, 0.5, 0.95))
+        nm      = self._node("c_rt", default_value=(0.25, 0.5, 0.95))
         payload = serialize_node(wrap_node(nm), include_persistent=False)
         mc.file(new=True, force=True)
         ensure_plugins_loaded()
         back = deserialize_node(payload, restore_persistent=False)
-        bn = back.get_name()
+        bn   = back.get_name()
         self.assertEqual(
             [round(mc.addAttr(bn + ".tint" + a, q=True, defaultValue=True), 6)
              for a in "RGB"], [0.25, 0.5, 0.95])
@@ -1538,7 +1538,7 @@ class TestColorDefaultReachesTheSpec(unittest.TestCase):
         w.add_input_attr("plain", "color")
         w.set_compute_expression("self.draw = None\n")
         spec = spec_extractor.extract_spec(w.get_name())
-        dv = spec["inputs"]["plain"].get("default_value")
+        dv   = spec["inputs"]["plain"].get("default_value")
         self.assertIn(dv, (None, [0.0, 0.0, 0.0]))
 
     def test_non_colour_compounds_are_still_skipped(self):
@@ -1654,7 +1654,7 @@ class TestAttrTypeGrouping(unittest.TestCase):
         dlg = NDAddAttrDialog(None, _Fake(), "input")
         try:
             combo = dlg._type_combo
-            n = combo.count()
+            n     = combo.count()
             # no separators, no background colour: every item is a plain
             # selectable type, in family-group order.
             seps = [
@@ -1707,7 +1707,7 @@ class TestAttrTypeGrouping(unittest.TestCase):
         saved = add_attr._LAST_SELECTED_TYPE
         try:
             add_attr._LAST_SELECTED_TYPE = None
-            dlg1 = NDAddAttrDialog(None, _Fake(), "input")
+            dlg1                         = NDAddAttrDialog(None, _Fake(), "input")
             try:
                 i = dlg1._type_combo.findText("matrix")
                 self.assertGreaterEqual(i, 0)

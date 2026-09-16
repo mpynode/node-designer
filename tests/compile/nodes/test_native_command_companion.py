@@ -65,8 +65,8 @@ class TestGenerateText(unittest.TestCase):
 
     def test_emits_api2_plugin_scaffold(self):
         src = self._gen()
-        self.assertIn("maya_useNewAPI", src)
-        self.assertIn("def initializePlugin", src)
+        self.assertIn("maya_useNewAPI",         src)
+        self.assertIn("def initializePlugin",   src)
         self.assertIn("def uninitializePlugin", src)
         # binds to the COMPILED type name, not a hard-coded mpy type.
         self.assertIn("zzCompiledType", src)
@@ -126,7 +126,7 @@ class TestGenerateGuards(unittest.TestCase):
     def test_initializeplugin_rolls_back_on_failure(self):
         # the generated initializePlugin guards registration with try/except,
         # so a mid-loop failure can't leak half-registered commands.
-        src = self._gen(_METHODS)
+        src  = self._gen(_METHODS)
         init = src[src.index("def initializePlugin"):]
         self.assertIn("try", init)
         self.assertIn("except", init)
@@ -278,7 +278,7 @@ class TestControllerWiring(unittest.TestCase):
             "schema_version": 1, "source_node": "addNode1", "mpy_type": "mPyNode",
             "suggested": {"node_type_name": "addNode1", "class_name": "AddNode1",
                           "type_id": "0x00070140", "mpx_base": "MPxNode"},
-            "inputs": {"a": {"type": "float", "is_array": False}},
+            "inputs":  {"a": {"type": "float", "is_array": False}},
             "outputs": {"b": {"type": "float", "is_array": False}},
             "variables": {}, "compute": "b = a\n", "init": "",
             "affects": "all", "portability": {"portable": True, "blockers": []},
@@ -330,7 +330,7 @@ class TestControllerWiring(unittest.TestCase):
             "suggested": {"node_type_name": "plainNode",
                           "class_name": "PlainNode",
                           "type_id": "0x00070141", "mpx_base": "MPxNode"},
-            "inputs": {"a": {"type": "float", "is_array": False}},
+            "inputs":  {"a": {"type": "float", "is_array": False}},
             "outputs": {"b": {"type": "float", "is_array": False}},
             "variables": {}, "compute": "b = a\n", "init": "",
             "affects": "all", "portability": {"portable": True, "blockers": []},
@@ -386,9 +386,9 @@ class _CompanionPluginFixture:
 
         _CompanionPluginFixture._counter += 1
         plugin = "zzCompanion%d" % _CompanionPluginFixture._counter
-        src = generate_companion_plugin(plugin, node_type, methods)
+        src    = generate_companion_plugin(plugin, node_type, methods)
         tmpdir = tempfile.mkdtemp(prefix="mpyn_companion_")
-        path = os.path.join(tmpdir, plugin + ".py")
+        path   = os.path.join(tmpdir, plugin + ".py")
         with open(path, "w") as fh:
             fh.write(src)
         mc.loadPlugin(path, quiet=True)
@@ -431,7 +431,7 @@ class TestCompanionRuntime(_CompanionPluginFixture, unittest.TestCase):
         host = mc.createNode("mPyNode", name="theSelectedHost")
         mc.select(host)
         result = mc.companionReadName()
-        name = result[0] if isinstance(result, (list, tuple)) else result
+        name   = result[0] if isinstance(result, (list, tuple)) else result
         self.assertEqual(name, host)
 
     def test_instance_command_accepts_explicit_object_arg(self):
@@ -439,7 +439,7 @@ class TestCompanionRuntime(_CompanionPluginFixture, unittest.TestCase):
         host = mc.createNode("mPyNode", name="theArgHost")
         mc.select(clear=True)
         result = mc.companionReadName(host)
-        name = result[0] if isinstance(result, (list, tuple)) else result
+        name   = result[0] if isinstance(result, (list, tuple)) else result
         self.assertEqual(name, host)
 
     def test_instance_command_errors_with_no_target(self):

@@ -48,7 +48,7 @@ def _build_plane_points(rows: int, cols: int):
     xs = np.linspace(-1.0, 1.0, cols)
     ys = np.linspace(-1.0, 1.0, rows)
     gx, gy = np.meshgrid(xs, ys, indexing="ij")
-    out = np.zeros((rows * cols, 3), dtype=np.float64)
+    out       = np.zeros((rows * cols, 3), dtype=np.float64)
     out[:, 0] = gx.flatten()
     out[:, 1] = gy.flatten()
     return out
@@ -82,7 +82,7 @@ class TestHandleBufferReuse(unittest.TestCase):
         import numpy as np
 
         handle = _make_test_handle()
-        pts = _build_plane_points(16, 16)
+        pts    = _build_plane_points(16, 16)
         # First call materializes the cached buffer.
         handle.setPoints(pts)
         first = object.__getattribute__(handle, "__dict__").get("_mpyn_point_buf")
@@ -96,8 +96,8 @@ class TestHandleBufferReuse(unittest.TestCase):
 
     def test_buffer_invalidated_when_shape_changes(self):
         handle = _make_test_handle()
-        small = _build_plane_points(8, 8)
-        big = _build_plane_points(16, 16)
+        small  = _build_plane_points(8, 8)
+        big    = _build_plane_points(16, 16)
         handle.setPoints(small)
         first = object.__getattribute__(handle, "__dict__").get("_mpyn_point_buf")
         handle.setPoints(big)
@@ -117,7 +117,7 @@ class TestSetPointsPerf(unittest.TestCase):
     optimization is on probation until proven robust)."""
 
     N_TICKS = 50
-    PLANE = (64, 64)  # 4096 verts
+    PLANE   = (64, 64)  # 4096 verts
 
     def test_cached_at_least_10pct_faster(self):
         import numpy as np
@@ -136,7 +136,7 @@ class TestSetPointsPerf(unittest.TestCase):
 
         # Cached: reuse the buffer.
         cache = None
-        t0 = time.perf_counter()
+        t0    = time.perf_counter()
         for _ in range(self.N_TICKS):
             cache = numpy_to_points_array(pts, out=cache)
         cached = time.perf_counter() - t0

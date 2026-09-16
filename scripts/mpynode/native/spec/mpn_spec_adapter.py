@@ -49,11 +49,11 @@ def spec_from_mpn_payload(payload: dict) -> dict:
     if not isinstance(payload, dict):
         raise ValueError("payload must be a dict")
 
-    name = payload.get("node_name") or ""
+    name       = payload.get("node_name") or ""
     class_path = payload.get("class_path") or ""
-    mpy_type = payload.get("native_type") or ""
+    mpy_type   = payload.get("native_type") or ""
 
-    raw_in = payload.get("input_attrs") or {}
+    raw_in  = payload.get("input_attrs") or {}
     raw_out = payload.get("output_attrs") or {}
 
     # mPyFile texture interface (uvCoord/outColor/outAlpha/fileName): registered
@@ -69,7 +69,7 @@ def spec_from_mpn_payload(payload: dict) -> dict:
             mpy_type, payload.get("expression") or "",
             payload.get("init_source") or "", raw_in, raw_out)
         if _pin or _pout:
-            raw_in = dict(raw_in)
+            raw_in  = dict(raw_in)
             raw_out = dict(raw_out)
             for _k, _v in _pin.items():
                 raw_in.setdefault(_k, _v)
@@ -84,27 +84,27 @@ def spec_from_mpn_payload(payload: dict) -> dict:
     def _ord(items):
         return sorted(items, key=lambda kv: (kv[1].get("order", 1_000_000), kv[0]))
 
-    inputs = {n: normalize_attr(m) for n, m in _ord(raw_in.items())}
+    inputs  = {n: normalize_attr(m) for n, m in _ord(raw_in.items())}
     outputs = {n: normalize_attr(m) for n, m in _ord(raw_out.items())}
 
     variables = {k: _summarize_var(v)
                  for k, v in (payload.get("stored_vars") or {}).items()}
 
     compute = payload.get("expression") or ""
-    init = payload.get("init_source") or ""
+    init    = payload.get("init_source") or ""
 
     # Followed-import helpers: a pure static parse of compute/init (no live node).
     # Added ONLY when non-empty so a helperless node keeps a byte-identical spec.
-    external_helpers = ""
+    external_helpers      = ""
     external_helper_units = []
     try:
         from mpynode.native.ai import import_follower
 
-        _hres = import_follower.collect_helper_sources(compute, init)
-        external_helpers = import_follower.render_for_prompt(_hres)
+        _hres                 = import_follower.collect_helper_sources(compute, init)
+        external_helpers      = import_follower.render_for_prompt(_hres)
         external_helper_units = _hres.get("sources") or []
     except Exception:
-        external_helpers = ""
+        external_helpers      = ""
         external_helper_units = []
 
     from mpynode.native.spec.identity import derive_class_identity
@@ -113,15 +113,15 @@ def spec_from_mpn_payload(payload: dict) -> dict:
     # fallback to the instance name for a class-less / un-migrated payload.
     spec = {
         "schema_version": SCHEMA_VERSION,
-        "source_node": name,
-        "mpy_type": mpy_type,
-        "suggested": derive_class_identity(class_path or name, mpy_type),
-        "inputs": inputs,
-        "outputs": outputs,
-        "variables": variables,
-        "compute": compute,
-        "init": init,
-        "affects": "all",
+        "source_node":    name,
+        "mpy_type":       mpy_type,
+        "suggested":      derive_class_identity(class_path or name, mpy_type),
+        "inputs":         inputs,
+        "outputs":        outputs,
+        "variables":      variables,
+        "compute":        compute,
+        "init":           init,
+        "affects":        "all",
     }
     if external_helpers:
         spec["external_helpers"] = external_helpers

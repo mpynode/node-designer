@@ -52,7 +52,7 @@ class NDOslEditor(QtPythonEditor):
     # Terminal outcomes -- exactly ONE fires per run. Failures carry the
     # message inline; there is no modal dialog.
     convertSucceeded = Signal()
-    convertFailed = Signal(str)
+    convertFailed    = Signal(str)
     convertCancelled = Signal()
     # On a HARD OSL limit, a compile_bridge hand-off dict the host can route to
     # the assistant. Emitted ALONGSIDE convertFailed, so hosts that don't wire
@@ -64,7 +64,7 @@ class NDOslEditor(QtPythonEditor):
         self._py_node = py_node
         self._last_saved_text: str = ""
         self._suppress_change_signal = False
-        self._ai_busy = False  # guards against re-entrant AI fallback runs
+        self._ai_busy                = False  # guards against re-entrant AI fallback runs
         # Set per AI-fallback run so a Stop button can cancel it (the transport
         # polls this and raises PortCancelled). None when no run is in flight.
         self._cancel_event = None
@@ -189,10 +189,10 @@ class NDOslEditor(QtPythonEditor):
         try:
             from mpynode._common.osl.osl_registry import _osl_identifier
 
-            getc = getattr(node, "get_compute_expression", None)
-            geti = getattr(node, "get_init_expression", None)
+            getc    = getattr(node, "get_compute_expression", None)
+            geti    = getattr(node, "get_init_expression", None)
             compute = (getc() or "") if callable(getc) else ""
-            init = (geti() or "") if callable(geti) else ""
+            init    = (geti() or "") if callable(geti) else ""
             name = getattr(node, "_name", "") or (
                 node.get_name() if hasattr(node, "get_name") else "")
             shader = _osl_identifier(name)
@@ -209,9 +209,9 @@ class NDOslEditor(QtPythonEditor):
         try:
             from mpynode._common.osl.osl_convert import assess_osl_tractability
 
-            gim = getattr(node, "get_input_attr_map", None)
-            gom = getattr(node, "get_output_attr_map", None)
-            in_attrs = gim() if callable(gim) else None
+            gim       = getattr(node, "get_input_attr_map", None)
+            gom       = getattr(node, "get_output_attr_map", None)
+            in_attrs  = gim() if callable(gim) else None
             out_attrs = gom() if callable(gom) else None
             tractable, reason = assess_osl_tractability(
                 compute, init, input_attrs=in_attrs, output_attrs=out_attrs)
@@ -246,15 +246,15 @@ class NDOslEditor(QtPythonEditor):
 
         import threading
 
-        self._ai_busy = True
-        self._cancel_event = threading.Event()
+        self._ai_busy             = True
+        self._cancel_event        = threading.Event()
         self._cancel_holder["ev"] = self._cancel_event  # arm the teardown hook
         self.convertBusyChanged.emit(True)
 
         threading.Thread(
-            target=self._run_ai_convert,
-            args=(compute, init, shader),
-            daemon=True,
+            target = self._run_ai_convert,
+            args   = (compute, init, shader),
+            daemon = True,
         ).start()
         return True
 
@@ -276,8 +276,8 @@ class NDOslEditor(QtPythonEditor):
                 cancel_event=self._cancel_event, log_cb=_log_cb)
             osl = ai_convert_compute_to_osl(
                 compute, init, shader, complete_fn,
-                validate_fn=self._validate_osl_main_thread,
-                log_cb=_log_cb,
+                validate_fn = self._validate_osl_main_thread,
+                log_cb      = _log_cb,
             )
         except Exception as exc:
             err = exc
@@ -326,8 +326,8 @@ class NDOslEditor(QtPythonEditor):
         / failed). The prior ``.osl`` is left untouched on cancel or failure."""
         cancelled = (self._cancel_event is not None
                      and self._cancel_event.is_set())
-        self._ai_busy = False
-        self._cancel_event = None
+        self._ai_busy             = False
+        self._cancel_event        = None
         self._cancel_holder["ev"] = None  # disarm the teardown hook
         self.convertBusyChanged.emit(False)
 

@@ -65,7 +65,7 @@ from mpynode.native.compiler.errors import UnsupportedSpec
 # CANONICAL module origins. Dispatch is on the origin a name RESOLVES to, never
 # on how it is spelled -- see _parse_import_bindings / canonical_dotted.
 _CANON_NUMPY = "numpy"
-_CANON_MATH = "math"
+_CANON_MATH  = "math"
 # `from mpynode import ndio` -- named ARRAY file IO. The Python half is
 # mpynode/ndio.py; the C++ half is compiler/kernels/nd_io_cpp.py. Both must
 # agree, including the degrade-to-EMPTY rule for a missing/malformed file.
@@ -140,7 +140,7 @@ def _parse_import_bindings(sources):
                         bindings[a.asname] = a.name
                     else:
                         # `import a.b.c` binds the ROOT name `a`, not `a.b.c`.
-                        root = a.name.split(".", 1)[0]
+                        root           = a.name.split(".", 1)[0]
                         bindings[root] = root
             elif isinstance(n, ast.ImportFrom):
                 if n.level:            # relative: no resolvable absolute origin
@@ -182,7 +182,7 @@ def _parse_import_bindings(sources):
 def dotted_name(node):
     """Resolve a (possibly dotted) name expression to 'a.b.c' or None."""
     parts = []
-    cur = node
+    cur   = node
     while isinstance(cur, ast.Attribute):
         parts.append(cur.attr)
         cur = cur.value
@@ -249,7 +249,7 @@ def env_cpp_name(dotted):
 
 # dtype lattice: higher wins in numeric promotion.
 _DTYPE_RANK = {"bool": 0, "int64": 1, "double": 2}
-_CTYPE = {"bool": "bool", "int64": "int64_t", "double": "double"}
+_CTYPE      = {"bool": "bool", "int64": "int64_t", "double": "double"}
 
 # A generated C++ operand string is "trivial" -- free to duplicate inline -- when
 # it holds no function/method call: a bare name, literal, cast, member access, or
@@ -337,10 +337,10 @@ class CppType:
     __slots__ = ("kind", "dtype", "rank", "code", "handle")
 
     def __init__(self, kind, dtype="double", rank=None, code=None, handle=None):
-        self.kind = kind
-        self.dtype = dtype
-        self.rank = rank
-        self.code = code
+        self.kind   = kind
+        self.dtype  = dtype
+        self.rank   = rank
+        self.code   = code
         self.handle = handle
 
     def is_scalar(self):
@@ -405,8 +405,8 @@ def kdtree_t():
 # INVERTED allowlist -- so adding a kind to some and missing others failed OPEN,
 # silently lowering nonsense. Each constant mirrors ONE pre-existing spelling
 # exactly, plus 'kdtree'; kept as three so this stays strictly additive.
-_VALUELESS_KINDS = ("shape", "rng", "kdtree")
-_OPAQUE_KINDS = ("shape", "rng", "texbuf", "kdtree")
+_VALUELESS_KINDS   = ("shape", "rng", "kdtree")
+_OPAQUE_KINDS      = ("shape", "rng", "texbuf", "kdtree")
 _NON_NUMERIC_KINDS = _OPAQUE_KINDS + ("str", "strv")
 
 
@@ -432,7 +432,7 @@ class Val:
     def __init__(self, code, typ, raw=None, fuse=None):
         self.code = code
         self.type = typ
-        self.raw = raw
+        self.raw  = raw
         self.fuse = fuse
 
 
@@ -451,19 +451,19 @@ class FuseNode:
     __slots__ = ("kind", "val", "emit", "children")
 
     def __init__(self, kind, val=None, emit=None, children=None):
-        self.kind = kind
-        self.val = val
-        self.emit = emit
+        self.kind     = kind
+        self.val      = val
+        self.emit     = emit
         self.children = children if children is not None else []
 
 
 class TranspileResult:
     def __init__(self, arg_names, decl_lines, body_lines, returns):
-        self.arg_names = arg_names
-        self.decl_lines = decl_lines      # hoisted declarations (indent 1)
-        self.body_lines = body_lines      # statement body (indent 1)
-        self.returns = returns            # list[CppType] observed at `return`
-        self.state_members = {}           # persistent self-var name -> CppType
+        self.arg_names     = arg_names
+        self.decl_lines    = decl_lines  # hoisted declarations (indent 1)
+        self.body_lines    = body_lines  # statement body (indent 1)
+        self.returns       = returns     # list[CppType] observed at `return`
+        self.state_members = {}          # persistent self-var name -> CppType
 
     def all_lines(self):
         return list(self.decl_lines) + list(self.body_lines)
@@ -506,34 +506,34 @@ def _static_int(node):
 # entries rather than a shared one: np.sort copies where a.sort() mutates, and
 # np.resize repeats where a.resize() zero-fills.
 _ARRAY_OPS = {
-    "all":          ("_op_all", "both"),
-    "amax":         ("_op_max", "free"),
-    "amin":         ("_op_min", "free"),
-    "any":          ("_op_any", "both"),
-    "argmax":       ("_op_argmax", "both"),
-    "argmin":       ("_op_argmin", "both"),
-    "argsort":      ("_op_argsort", "both"),
-    "asNumpy":      ("_op_asnumpy", "method"),
+    "all":     ("_op_all", "both"),
+    "amax":    ("_op_max", "free"),
+    "amin":    ("_op_min", "free"),
+    "any":     ("_op_any", "both"),
+    "argmax":  ("_op_argmax", "both"),
+    "argmin":  ("_op_argmin", "both"),
+    "argsort": ("_op_argsort", "both"),
+    "asNumpy": ("_op_asnumpy", "method"),
     # ---- MatrixView methods (docs/notes/matrixview-lowering.md) --------
     # "method" only: numpy has no free spelling of any of these, and a matrix
     # input is the only thing that produces the MatrixView they live on.
     # `transpose` is deliberately absent -- the existing numpy handler already
     # does the right thing on a (4,4).
-    "translation":  ("_op_mv_translation", "method"),
-    "inverse":      ("_op_mv_inverse", "method"),
-    "getElement":   ("_op_mv_get_element", "method"),
-    "det3x3":       ("_op_mv_det3", "method"),
-    "det4x4":       ("_op_mv_det4", "method"),
-    "rotation":     ("_op_mv_rotation", "method"),
-    "scale":        ("_op_mv_scale", "method"),
-    "shear":        ("_op_mv_shear", "method"),
-    "rotationOrder": ("_op_mv_rotation_order", "method"),
-    "isSingular":   ("_op_mv_is_singular", "method"),
-    "asRotateMatrix": ("_op_mv_as_rotate_matrix", "method"),
-    "asScaleMatrix": ("_op_mv_as_scale_matrix", "method"),
+    "translation":     ("_op_mv_translation", "method"),
+    "inverse":         ("_op_mv_inverse", "method"),
+    "getElement":      ("_op_mv_get_element", "method"),
+    "det3x3":          ("_op_mv_det3", "method"),
+    "det4x4":          ("_op_mv_det4", "method"),
+    "rotation":        ("_op_mv_rotation", "method"),
+    "scale":           ("_op_mv_scale", "method"),
+    "shear":           ("_op_mv_shear", "method"),
+    "rotationOrder":   ("_op_mv_rotation_order", "method"),
+    "isSingular":      ("_op_mv_is_singular", "method"),
+    "asRotateMatrix":  ("_op_mv_as_rotate_matrix", "method"),
+    "asScaleMatrix":   ("_op_mv_as_scale_matrix", "method"),
     "asMatrixInverse": ("_op_mv_as_matrix_inverse", "method"),
-    "adjoint":      ("_op_mv_adjoint", "method"),
-    "homogenize":   ("_op_mv_homogenize", "method"),
+    "adjoint":         ("_op_mv_adjoint", "method"),
+    "homogenize":      ("_op_mv_homogenize", "method"),
     # numpy 1.x has no np.astype; numpy 2 added it. Wiring "both" costs nothing
     # and keeps the free spelling from becoming a gap on an upgrade.
     "astype":       ("_op_astype", "both"),
@@ -613,14 +613,14 @@ _ARRAY_OP_REJECTS = {
     "newbyteorder": "it reinterprets the buffer in a NON-native byte order, and "
                     "the runtime has only native-order arrays, so the values "
                     "themselves would differ",
-    "dump": "it pickles to a file; there is no Python object model in C++",
-    "dumps": "it pickles to bytes; there is no Python object model in C++",
+    "dump":    "it pickles to a file; there is no Python object model in C++",
+    "dumps":   "it pickles to bytes; there is no Python object model in C++",
     "tobytes": "there is no bytes carrier, and its consumers (struct.unpack, "
                "slicing) are outside the subset -- use a.tofile(path)",
     "tostring": "there is no bytes carrier -- use a.tofile(path)",
     "getfield": "structured/record dtypes; the runtime dtype set is scalar-only",
     "setfield": "structured/record dtypes; the runtime dtype set is scalar-only",
-    "tolist": "it returns a Python list, where + CONCATENATES and * REPEATS; "
+    "tolist":   "it returns a Python list, where + CONCATENATES and * REPEATS; "
               "lowering it to the array would silently turn "
               "a.tolist() + b.tolist() into elementwise addition",
 }
@@ -655,10 +655,10 @@ class Transpiler:
         # VALUE position it still fails (no Val), and a bare call to any OTHER
         # method still honest-rejects.
         self.side_effect_methods = set(side_effect_methods or [])
-        self.return_handler = return_handler or self._default_return
+        self.return_handler      = return_handler or self._default_return
         # output_writers: dotted-name ('self.<attr>') -> callable(Val)->list[str]
         # used by the compute-BLOCK path to lower `self.<out> = expr` writes.
-        self.output_writers = dict(output_writers or {})
+        self.output_writers  = dict(output_writers or {})
         self.written_outputs = set()
         # Persistent stateful self-vars: undeclared self.<name> ASSIGNED in the
         # compute/init that must SURVIVE between compute() calls (a latched rest
@@ -667,7 +667,7 @@ class Transpiler:
         # `hasattr(self,'<name>')` to `st.<name>_isset`. state_members is
         # discovered here (from the first assignment) so the caller can declare
         # the struct with the right member types.
-        self.state_vars = set(state_vars or [])
+        self.state_vars    = set(state_vars or [])
         self.state_members = {}
         # helper_ctx: shared _HelperCtx for lowering inline INIT-tier `def`
         # helpers into C++ lambdas (None -> a bare-name call is unknown -> reject).
@@ -684,11 +684,11 @@ class Transpiler:
         # lambda signature, so they must be excluded from hoisted _decl_lines
         # even when reassigned in the body (else the decl would shadow the param).
         self._param_names = set()
-        self.decls = {}          # name -> CppType (hoisted, first-seen order)
-        self.body = []
-        self.returns = []
-        self.indent = 1
-        self._tmp = 0
+        self.decls        = {}          # name -> CppType (hoisted, first-seen order)
+        self.body         = []
+        self.returns      = []
+        self.indent       = 1
+        self._tmp         = 0
         # Set by any lowering that emits an nd_io call, so the caller knows the
         # generated body needs the nd_io kernel + its per-instance cache members.
         self.uses_ndio = False
@@ -724,7 +724,7 @@ class Transpiler:
 
     # ---- public entry -------------------------------------------------------
     def run(self, func_def):
-        arg_names = [a.arg for a in func_def.args.args]
+        arg_names         = [a.arg for a in func_def.args.args]
         self._param_names = set(arg_names)
         # Seed decls with each param's declared type so a reassignment (e.g.
         # `h = max(1, int(h))`) type-checks against it. _decl_lines skips params,
@@ -881,7 +881,7 @@ class Transpiler:
         fargs = self._pos_args(call)
         self._need(call, fargs, 3)
         recv = self._stmt_mutable_target(call, fargs, "np.add.at")
-        idx = self.expr(fargs[1])
+        idx  = self.expr(fargs[1])
         if not idx.type.is_array():
             self.fail(call, "np.add.at needs an index ARRAY")
         self.emit("nd::add_at(%s, %s, %s);"
@@ -932,7 +932,7 @@ class Transpiler:
 
     def _stmt_put(self, recv, args, node):
         self._need(node, args, 2)
-        ind = self.expr(args[0])
+        ind  = self.expr(args[0])
         vals = self.expr(args[1])
         self.emit("nd::put_inplace(%s, %s, %s);"
                   % (recv.code, self._to_array_dtype(ind, "int64"),
@@ -943,7 +943,7 @@ class Transpiler:
         self._need(node, args, 2)
         if len(args) != 2:
             self.fail(node, "a.itemset(flat_index, value) is the only lowered form")
-        ind = self.expr(args[0])
+        ind  = self.expr(args[0])
         vals = self.expr(args[1])
         self.emit("nd::put_inplace(%s, %s, %s);"
                   % (recv.code, self._to_array_dtype(ind, "int64"),
@@ -1232,7 +1232,7 @@ class Transpiler:
         prev = self.decls.get(name)
         if prev is None:
             self.decls[name] = typ
-            self.env[name] = typ
+            self.env[name]   = typ
             return
         if prev.kind != typ.kind or prev.dtype != typ.dtype:
             self.fail(node, "variable %r reassigned to a different C++ type "
@@ -1240,7 +1240,7 @@ class Transpiler:
         # keep the widest known rank
         if prev.rank is None and typ.rank is not None:
             self.decls[name].rank = typ.rank
-            self.env[name].rank = typ.rank
+            self.env[name].rank   = typ.rank
 
     def _assign_unpack(self, target, value_node, node):
         for elt in target.elts:
@@ -1412,7 +1412,7 @@ class Transpiler:
                          "nd::meshgrid_y(%s, %s)" % (cs[0], cs[1])]
         else:
             rank = 3
-            n = ["(%s).size()" % c for c in cs]
+            n    = ["(%s).size()" % c for c in cs]
             # 'xy' swaps the FIRST TWO axes only; the third is untouched.
             dims = (n[0], n[1], n[2]) if ij else (n[1], n[0], n[2])
             axes = (0, 1, 2) if ij else (1, 0, 2)
@@ -1488,7 +1488,7 @@ class Transpiler:
         if not base.type.is_array():
             self.fail(node, "slice-assign target is not an array")
         rhs = self.expr(value_node)
-        dt = base.type.dtype
+        dt  = base.type.dtype
         # Raw ref-write fast path: a FULL all-integer index into a plain array
         # local yields an lvalue element -- write straight through nd::atN_ref
         # (no per-access view allocation), bit-identical to nd::assign on the
@@ -1695,7 +1695,7 @@ class Transpiler:
         if not elts:
             self.fail(node, "empty tuple/list literal")
         vals = [self.expr(e) for e in elts]
-        dt = "bool"
+        dt   = "bool"
         for v in vals:
             if v.type.kind in _OPAQUE_KINDS:
                 self.fail(node, "tuple/list element is a %s pseudo-value"
@@ -1742,7 +1742,7 @@ class Transpiler:
             if v.type.is_scalar():
                 return Val("(-(%s))" % v.code, v.type)
             if v.type.is_array():
-                r = Val("nd::negate(%s)" % v.code, v.type)
+                r  = Val("nd::negate(%s)" % v.code, v.type)
                 fv = self._fuse_operand(v)
                 if fv is not None and v.type.dtype != "bool" \
                         and v.type.rank is not None:
@@ -1769,7 +1769,7 @@ class Transpiler:
         self.fail(node, "unary operator")
 
     def ex_BoolOp(self, node):
-        op = "&&" if isinstance(node.op, ast.And) else "||"
+        op    = "&&" if isinstance(node.op, ast.And) else "||"
         parts = [self._as_bool(self.expr(v), node) for v in node.values]
         return Val("(" + (" %s " % op).join(parts) + ")", scalar_t("bool"))
 
@@ -1807,7 +1807,7 @@ class Transpiler:
             l, r = operands[0], operands[1]
             if l.type.kind in _VALUELESS_KINDS or r.type.kind in _VALUELESS_KINDS:
                 self.fail(node, "comparison on shape/rng object")
-            dt = _promote(l.type.dtype, r.type.dtype)
+            dt   = _promote(l.type.dtype, r.type.dtype)
             rank = self._binop_rank(l, r)
             return self._cmp_array(self._CMP_FN[type(node.ops[0])], l, r, dt, rank)
         # all-scalar: fold into a single boolean && chain.
@@ -1865,8 +1865,8 @@ class Transpiler:
         # and a plain ternary SELECTS one branch -- it never needs np.where's
         # elementwise blend.
         cond = self._as_bool(self.expr(node.test), node)
-        a = self.expr(node.body)
-        b = self.expr(node.orelse)
+        a    = self.expr(node.body)
+        b    = self.expr(node.orelse)
         if a.type.kind == "str" and b.type.kind == "str":
             # Both branches are std::string, so the ternary is well-typed and
             # selects one whole string -- no promotion involved.
@@ -1997,8 +1997,8 @@ class Transpiler:
     def _bitop(self, node):
         name, cop = self._BITOP[type(node.op)]
         fn = {"and": "bit_and", "or": "bit_or", "xor": "bit_xor"}[name]
-        l = self.expr(node.left)
-        r = self.expr(node.right)
+        l  = self.expr(node.left)
+        r  = self.expr(node.right)
         if l.type.kind in _VALUELESS_KINDS or r.type.kind in _VALUELESS_KINDS:
             self.fail(node, "bitwise op on shape/rng object")
         dt = _promote(l.type.dtype, r.type.dtype)
@@ -2026,14 +2026,14 @@ class Transpiler:
              "Max": "maximum", "Min": "minimum", "Mod": "mod",
              "FloorDiv": "floordiv", "Pow": "power"}
     # ops with (Array,T)/(T,Array) scalar overloads in nd_runtime.h
-    _SCALAR_OVERLOAD = {"add", "sub", "mul"}          # both sides
-    _SCALAR_OVERLOAD_R = {"power"}                     # (Array, T) only
+    _SCALAR_OVERLOAD   = {"add", "sub", "mul"}  # both sides
+    _SCALAR_OVERLOAD_R = {"power"}              # (Array, T) only
 
     def _array_binop(self, kind, l, r, node):
         # Emit the nd:: array op, then (Phase-2) attach a fusion tree when both
         # operands are fusable. ``.fuse`` is inert metadata: only assignment
         # sinks read it; every other consumer uses ``.code`` unchanged.
-        v = self._array_binop_impl(kind, l, r, node)
+        v  = self._array_binop_impl(kind, l, r, node)
         fz = self._binop_fuse(kind, l, r, v)
         if fz is not None:
             v.fuse = fz
@@ -2048,8 +2048,8 @@ class Transpiler:
             self.fail(node, "texture handle from read_texture() may only be "
                             "passed to sample_texture()")
         if kind == "Div":
-            ld = self._to_array_dtype(l, "double") if l.type.is_array() else None
-            rd = self._to_array_dtype(r, "double") if r.type.is_array() else None
+            ld   = self._to_array_dtype(l, "double") if l.type.is_array() else None
+            rd   = self._to_array_dtype(r, "double") if r.type.is_array() else None
             rank = self._binop_rank(l, r)
             if l.type.is_array() and r.type.is_array():
                 return Val("nd::divide(%s, %s)" % (ld, rd), array_t("double", rank))
@@ -2062,8 +2062,8 @@ class Transpiler:
         dt = _promote(l.type.dtype, r.type.dtype)
         if kind == "Pow" and dt not in ("double", "int64"):
             dt = "int64"
-        fn = self._NDFN[kind]
-        rank = self._binop_rank(l, r)
+        fn       = self._NDFN[kind]
+        rank     = self._binop_rank(l, r)
         both_arr = l.type.is_array() and r.type.is_array()
         if both_arr:
             return Val("nd::%s(%s, %s)"
@@ -2292,8 +2292,8 @@ class Transpiler:
             return fn.emit([build(ch) for ch in fn.children])
         body = build(root)
 
-        To = _CTYPE[val.type.dtype]
-        L0 = arr_names[arr_order[0].code]
+        To   = _CTYPE[val.type.dtype]
+        L0   = arr_names[arr_order[0].code]
         self.emit("{")
         self.indent += 1
         for v in arr_order:
@@ -2378,11 +2378,11 @@ class Transpiler:
         # Sizing source: a matmul gives (A.rows, B.cols); else a rank-2 arr leaf.
         if mm_order:
             alloc_shape = "{ __mmA0.shape[0], __mmB0.shape[1] }"
-            size_N = "__mmB0.shape[1]"
+            size_N      = "__mmB0.shape[1]"
         else:
-            L0 = arr_names[arr_order[0].code]
+            L0          = arr_names[arr_order[0].code]
             alloc_shape = "%s.shape" % L0
-            size_N = "%s.shape[1]" % L0
+            size_N      = "%s.shape[1]" % L0
         # Guard (fall back if any is false at runtime).
         terms = []
         for i in range(len(mm_order)):
@@ -2479,9 +2479,9 @@ class Transpiler:
         if val.fuse is None or not val.type.is_array() \
                 or val.type.rank is None or val.type.dtype == "bool":
             return None
-        tmpkey = self._new_tmp(prefix)
+        tmpkey             = self._new_tmp(prefix)
         self.decls[tmpkey] = val.type
-        cpp = self._cpp_local(tmpkey)
+        cpp                = self._cpp_local(tmpkey)
         if self._emit_fused(cpp, val, node):
             return cpp
         self.decls.pop(tmpkey, None)   # declined -> drop the unused declaration
@@ -2497,7 +2497,7 @@ class Transpiler:
     def _matmul(self, l, r, node):
         if not (l.type.is_array() and r.type.is_array()):
             self.fail(node, "matmul requires two arrays")
-        dt = _promote(l.type.dtype, r.type.dtype)
+        dt   = _promote(l.type.dtype, r.type.dtype)
         rank = None
         if l.type.rank is not None and r.type.rank is not None:
             if l.type.rank == 1 and r.type.rank == 1:
@@ -2510,7 +2510,7 @@ class Transpiler:
                 rank = max(l.type.rank, r.type.rank)
         la = self._to_array_dtype(l, dt)
         ra = self._to_array_dtype(r, dt)
-        v = Val("nd::matmul(%s, %s)" % (la, ra), array_t(dt, rank))
+        v  = Val("nd::matmul(%s, %s)" % (la, ra), array_t(dt, rank))
         # Phase-2 (Inc2): a 2-D @ 2-D matmul is a fusion PRODUCER. When it feeds
         # an elementwise op, _emit_fused expands each output element as an inline
         # dot product inside the consumer loop -- erasing the (m,N) temp. `.code`
@@ -2535,7 +2535,7 @@ class Transpiler:
             # A fully integer-indexed subscript carries a raw scalar form
             # (nd::atN) -- use it to avoid allocating a per-access nd:: view.
             base = v.raw if v.raw is not None else "(%s).item()" % v.code
-            src = v.type.dtype
+            src  = v.type.dtype
         else:
             base, src = v.code, v.type.dtype
         if src == dt:
@@ -2614,8 +2614,8 @@ class Transpiler:
         idxs = self._all_integer_index_exprs(node, base.type)
         if idxs is not None:
             specs = ", ".join("nd::Sl::at(%s)" % x for x in idxs)
-            code = "nd::slice(%s, {%s})" % (base.code, specs)
-            raw = "nd::at%d(%s, %s)" % (len(idxs), base.code, ", ".join(idxs))
+            code  = "nd::slice(%s, {%s})" % (base.code, specs)
+            raw   = "nd::at%d(%s, %s)" % (len(idxs), base.code, ", ".join(idxs))
             return Val(code, array_t(base.type.dtype, 0), raw=raw)
         # a[idx] where idx is an integer ARRAY -- numpy fancy indexing on axis 0,
         # and the single most common way to spell a gather (`pts[indices]` after
@@ -2697,7 +2697,7 @@ class Transpiler:
 
     def _const_or_scalar_index(self, sl):
         node = sl.value if isinstance(sl, ast.Index) else sl
-        v = self.expr(node)
+        v    = self.expr(node)
         return self._scalar_int_of(v, node)
 
     def _index_elts(self, sl):
@@ -2721,10 +2721,10 @@ class Transpiler:
                 self.fail(subscript, "Ellipsis mixed with np.newaxis (SP-5)")
             specs, rank, _ = self._build_slice_ellipsis(subscript, elts, base_type)
             return specs, rank, []
-        specs = []
+        specs       = []
         newaxis_pos = []
-        out_pos = 0
-        n_index = 0
+        out_pos     = 0
+        n_index     = 0
         for e in elts:
             if self._is_newaxis(e):
                 newaxis_pos.append(out_pos)
@@ -2781,11 +2781,11 @@ class Transpiler:
     def _one_slice(self, e, ctx):
         """-> (C++ Sl expr, is_integer_index)."""
         if isinstance(e, ast.Slice):
-            hs = e.lower is not None
-            he = e.upper is not None
+            hs    = e.lower is not None
+            he    = e.upper is not None
             start = self._int_arg(e.lower) if hs else "0"
-            stop = self._int_arg(e.upper) if he else "0"
-            step = self._int_arg(e.step) if e.step is not None else "1"
+            stop  = self._int_arg(e.upper) if he else "0"
+            step  = self._int_arg(e.step) if e.step is not None else "1"
             return ("nd::Sl::mk(%s, %s, %s, %s, %s)"
                     % ("true" if hs else "false", start,
                        "true" if he else "false", stop, step), False)
@@ -3019,9 +3019,9 @@ class Transpiler:
         _HelperCtx in callee-before-caller order and captured by reference so
         nested helpers resolve. Recursion / mutual recursion / *args / **kwargs /
         keyword-only / positional-only / decorated helpers are rejected."""
-        ctx = self.helpers
+        ctx  = self.helpers
         fdef = ctx.defs[name]
-        a = fdef.args
+        a    = fdef.args
         if (a.vararg or a.kwarg or a.kwonlyargs
                 or getattr(a, "posonlyargs", None)):
             self.fail(node, "helper %r uses *args/**kwargs/kw-only/pos-only "
@@ -3100,7 +3100,7 @@ class Transpiler:
         # miss the in-progress key and be misread as polymorphic recursion.
         sig = tuple((t.kind, t.dtype, t.rank if t.kind == "array" else None)
                     for t in arg_types)
-        key = (name, sig)
+        key      = (name, sig)
         argcodes = ", ".join(v.code for v in arg_vals)
         if key in ctx.in_progress:
             # A call to a helper whose body is still being transpiled. Only a
@@ -3141,7 +3141,7 @@ class Transpiler:
         finally:
             ctx.emit_stack.pop()
             ctx.in_progress.discard(key)
-        ret_type = self._unify_returns(fdef, res.returns)
+        ret_type  = self._unify_returns(fdef, res.returns)
         mono_name = ctx.fresh(name)
         # read-only array params -> const& (calling convention only; byte-exact).
         written = _written_names(fdef)
@@ -3155,7 +3155,7 @@ class Transpiler:
         block += ["    " + ln for ln in res.body_lines]
         block.append("    };")
         ctx.lines += block
-        memo = (mono_name, ret_type)
+        memo               = (mono_name, ret_type)
         ctx.generated[key] = memo
         return memo
 
@@ -3170,7 +3170,7 @@ class Transpiler:
         dtype until it stops growing (at most bool->int64->double, so it
         converges in <=3 steps). This keeps a pure-int recurrence (factorial) at
         int64 while promoting a mixed int/float recurrence to double."""
-        ctx = self.helpers
+        ctx       = self.helpers
         mono_name = ctx.fresh(name)
         # statically split base-case returns (no self-call) from recursive ones.
         ret_nodes = [n for n in ast.walk(fdef) if isinstance(n, ast.Return)]
@@ -3178,9 +3178,9 @@ class Transpiler:
                              if n.value is not None
                              and not _contains_call_to(n.value, name))
 
-        seed = CppType("scalar", "bool", 0)   # lattice bottom
+        seed     = CppType("scalar", "bool", 0)   # lattice bottom
         ret_type = None
-        res = None
+        res      = None
         for _ in range(4):
             recorded = []       # (return-node-id, CppType) in emission order
             sub_env = {p: CppType(t.kind, t.dtype, t.rank, t.code)
@@ -3219,7 +3219,7 @@ class Transpiler:
             if ret_type is not None and new_dtype == ret_type.dtype:
                 break
             ret_type = CppType("scalar", new_dtype, 0)
-            seed = ret_type
+            seed     = ret_type
         else:
             self.fail(fdef, "recursive helper %r return type did not converge"
                       % name)
@@ -3242,7 +3242,7 @@ class Transpiler:
         block += ["    " + ln for ln in res.body_lines]
         block.append("    };")
         ctx.lines += block
-        memo = (mono_name, ret_type)
+        memo               = (mono_name, ret_type)
         ctx.generated[key] = memo
         return memo
 
@@ -3253,9 +3253,9 @@ class Transpiler:
         if not returns:
             self.fail(fdef, "helper %r has no value-returning `return`"
                       % fdef.name)
-        kind = returns[0].kind
+        kind  = returns[0].kind
         dtype = returns[0].dtype
-        rank = returns[0].rank
+        rank  = returns[0].rank
         for t in returns[1:]:
             if t.kind != kind:
                 self.fail(fdef, "helper %r returns mixed kinds (%s vs %s)"
@@ -3289,7 +3289,7 @@ class Transpiler:
         # Keyed on the CANONICAL origin, so np.float64 / numpy.float64 /
         # `from numpy import float64` are one entry rather than three spellings.
         name = self._canon(node)
-        _np = _CANON_NUMPY + "."
+        _np  = _CANON_NUMPY + "."
         table = {
             "int": "int64", "int64": "int64", "int32": "int64",
             _np + "intp": "int64", _np + "int_": "int64",
@@ -3313,7 +3313,7 @@ class Transpiler:
         for _w in ("8", "16", "32", "64"):
             for _p in (_np, ""):
                 table[_p + "uint" + _w] = "int64"
-                table[_p + "int" + _w] = "int64"
+                table[_p + "int" + _w]  = "int64"
         table[_np + "uint"] = "int64"
         # dtype="int32": ndio.py's own docstring advertises the STRING spelling
         # (ndio.py:28), but _canon returns None for a string constant -- it is
@@ -3337,7 +3337,7 @@ class Transpiler:
             name = node.value
         else:
             name = self._canon(node)
-            _np = _CANON_NUMPY + "."
+            _np  = _CANON_NUMPY + "."
             if name is not None and name.startswith(_np):
                 name = name[len(_np):]
         if name in _NDIO_RAW:
@@ -3356,7 +3356,7 @@ class Transpiler:
         return v.code
 
     def _call_ndio(self, fn, node):
-        args = self._pos_args(node)
+        args           = self._pos_args(node)
         self.uses_ndio = True
         if fn == "read":
             self._need(node, args, 1)
@@ -3388,7 +3388,7 @@ class Transpiler:
         if fn == "write_raw":
             self._need(node, args, 2)
             path = self._str_arg(args[0], node, "ndio.write_raw path")
-            src = self.expr(args[1])
+            src  = self.expr(args[1])
             if not src.type.is_array():
                 self.fail(node, "ndio.write_raw of a non-array")
             return Val("nd_io_write_raw(%s, %s)" % (path, src.code),
@@ -3412,7 +3412,7 @@ class Transpiler:
                     self.fail(node, "ndio.write %r is not an array" % kw.arg)
                 packed.append((kw.arg, v.code))
             out = self._new_tmp("ndio_ok")
-            wr = self._new_tmp("ndio_w")
+            wr  = self._new_tmp("ndio_w")
             self.emit("bool %s = false;" % out)
             self.emit("{")
             self.emit("    NdIoWriter %s;" % wr)
@@ -3431,7 +3431,7 @@ class Transpiler:
             if len(args) > 2:
                 self.fail(node, "ndio.frame_path(template, frame)")
             tmpl = self._str_arg(args[0], node, "ndio.frame_path template")
-            fr = self.expr(args[1])
+            fr   = self.expr(args[1])
             if not fr.type.is_scalar():
                 self.fail(node, "ndio.frame_path frame must be a number")
             return Val("nd_io_frame_path(%s, (double)(%s))" % (tmpl, fr.code),
@@ -3457,7 +3457,7 @@ class Transpiler:
                     self.fail(node, "np.fromfile(%s=...) is not lowered" % bad)
             if len(args) > 2:
                 self.fail(node, "np.fromfile(path, dtype=...)")
-            path = self._str_arg(args[0], node, "np.fromfile path")
+            path  = self._str_arg(args[0], node, "np.fromfile path")
             dnode = self._kw(node, "dtype")
             if dnode is None and len(args) == 2:
                 dnode = args[1]
@@ -3472,7 +3472,7 @@ class Transpiler:
         if fn == "save":
             self._need(node, args, 2)
             path = self._str_arg(args[0], node, "np.save path")
-            src = self.expr(args[1])
+            src  = self.expr(args[1])
             if not src.type.is_array():
                 self.fail(node, "np.save of a non-array")
             self.uses_ndio = True
@@ -3481,15 +3481,15 @@ class Transpiler:
         # constructors ------------------------------------------------------
         if fn in ("zeros", "ones", "empty"):
             self._need(node, args, 1)
-            dt = self._kw_dtype(node) or "double"
-            shp = self._shape_arg(args[0])
+            dt    = self._kw_dtype(node) or "double"
+            shp   = self._shape_arg(args[0])
             maker = {"zeros": "zeros", "ones": "ones", "empty": "zeros"}[fn]
             return Val("nd::%s<%s>(%s)" % (maker, _CTYPE[dt], shp),
                        array_t(dt, self._shape_rank(args[0])))
         if fn == "full":
             self._need(node, args, 2)
             fill = self.expr(args[1])
-            dt = self._kw_dtype(node) or fill.type.dtype
+            dt   = self._kw_dtype(node) or fill.type.dtype
             return Val("nd::full<%s>(%s, (%s)(%s))"
                        % (_CTYPE[dt], self._shape_arg(args[0]), _CTYPE[dt],
                           self._cast_scalar(fill, dt)),
@@ -3506,9 +3506,9 @@ class Transpiler:
                        array_t(dt, src.type.rank))
         if fn == "full_like":
             self._need(node, args, 2)
-            src = self.expr(args[0])
+            src  = self.expr(args[0])
             fill = self.expr(args[1])
-            dt = self._kw_dtype(node) or src.type.dtype
+            dt   = self._kw_dtype(node) or src.type.dtype
             return Val("nd::full<%s>(%s.shape, (%s)(%s))"
                        % (_CTYPE[dt], src.code, _CTYPE[dt],
                           self._cast_scalar(fill, dt)), array_t(dt, src.type.rank))
@@ -3521,7 +3521,7 @@ class Transpiler:
             if not (2 <= len(args) <= 3):
                 self.fail(node, "linspace(start, stop[, num])")
             num = self._int_arg(args[2]) if len(args) == 3 else "50"
-            ep = self._kw(node, "endpoint")
+            ep  = self._kw(node, "endpoint")
             eps = "true"
             if ep is not None:
                 eps = self._as_bool(self.expr(ep), node)
@@ -3537,7 +3537,7 @@ class Transpiler:
             ax = self._kw(node, "axis") or (args[1] if len(args) > 1 else None)
             if ax is None:
                 self.fail(node, "expand_dims needs axis")
-            src = self.expr(args[0])
+            src  = self.expr(args[0])
             rank = None if src.type.rank is None else src.type.rank + 1
             return Val("nd::newaxis(%s, %s)"
                        % (self._to_any_array(src, node), self._int_arg(ax)),
@@ -3711,8 +3711,8 @@ class Transpiler:
         if fn == "isclose":
             self._need(node, args, 2)
             a, b = self.expr(args[0]), self.expr(args[1])
-            ra = a.type.rank if a.type.is_array() else 0
-            rb = b.type.rank if b.type.is_array() else 0
+            ra   = a.type.rank if a.type.is_array() else 0
+            rb   = b.type.rank if b.type.is_array() else 0
             rank = None if (ra is None or rb is None) else max(ra, rb)
             return Val("nd::isclose(%s, %s, %s, %s)"
                        % (self._to_array_dtype(a, "double"),
@@ -3741,7 +3741,7 @@ class Transpiler:
                 self.fail(node, "np.nan_to_num(copy=...) is not lowered "
                                 "(the lowered form is always a copy)")
             parts = [self._to_array_dtype(a, "double")]
-            big = "1.7976931348623157e308"
+            big   = "1.7976931348623157e308"
             for kw, dflt in (("nan", "0.0"), ("posinf", big),
                              ("neginf", "-" + big)):
                 k = self._kw(node, kw)
@@ -3773,7 +3773,7 @@ class Transpiler:
             # np.isin keeps a's shape; np.in1d is the FLATTENED spelling, so it
             # is 1-D even when a is not -- they are not interchangeable.
             rank = a.type.rank if fn == "isin" else 1
-            src = ac if fn == "isin" else "nd::ravel(%s)" % ac
+            src  = ac if fn == "isin" else "nd::ravel(%s)" % ac
             return Val("nd::isin(%s, %s)" % (src, bc), array_t("bool", rank))
         if fn == "bincount":
             self._need(node, args, 1)
@@ -3793,7 +3793,7 @@ class Transpiler:
             a = self.expr(args[0])
             if not a.type.is_array():
                 self.fail(node, "np.ascontiguousarray of a non-array")
-            dt = self._kw_dtype(node) or a.type.dtype
+            dt   = self._kw_dtype(node) or a.type.dtype
             rank = a.type.rank if a.type.rank else 1
             return Val("nd::ascontiguousarray(%s)" % self._to_array_dtype(a, dt),
                        array_t(dt, rank))
@@ -3906,7 +3906,7 @@ class Transpiler:
             for v in rvals[1:]:
                 dt = _promote(dt, v.type.dtype)
             ranks = [v.type.rank for v in rvals]
-            rank = None if any(x is None for x in ranks) else max(2, max(ranks))
+            rank  = None if any(x is None for x in ranks) else max(2, max(ranks))
             vec = "std::vector<nd::Array<%s>>{%s}" % (
                 _CTYPE[dt], ", ".join(self._to_array_dtype(v, dt) for v in rvals))
             return Val("nd::vstack(%s)" % vec, array_t(dt, rank))
@@ -3922,7 +3922,7 @@ class Transpiler:
                             "valid as a statement, not as an expression")
         # explicit P1/P2 rejects with a helpful pointer
         deferred = {
-            "argwhere": "SP-5",
+            "argwhere":    "SP-5",
             "linalg.pinv": "the AI porter (nd::svd is 3x3-only, so there is no "
                            "general pseudo-inverse to build on)",
         }
@@ -3957,8 +3957,8 @@ class Transpiler:
             self.fail(node, "np.%s with an axis needs a statically known rank"
                       % fn)
         rank = 1 if flat else a.type.rank
-        axc = "0" if flat else self._int_arg(ax)
-        src = "nd::ravel(%s)" % a.code if flat else a.code
+        axc  = "0" if flat else self._int_arg(ax)
+        src  = "nd::ravel(%s)" % a.code if flat else a.code
 
         if fn == "append":
             b = self.expr(args[1])
@@ -3973,13 +3973,13 @@ class Transpiler:
             return Val("nd::concatenate(%s, %s)" % (vec, axc),
                        array_t(dt, rank))
 
-        obj = self.expr(args[1])
+        obj  = self.expr(args[1])
         objc = self._to_array_dtype(obj, "int64")
         if fn == "delete":
             return Val("nd::delete_axis(%s, %s, %s)" % (src, objc, axc),
                        array_t(a.type.dtype, rank))
         vals = self.expr(args[2])
-        vc = self._to_array_dtype(vals, a.type.dtype)
+        vc   = self._to_array_dtype(vals, a.type.dtype)
         if flat and vals.type.is_array():
             vc = "nd::ravel(%s)" % vc
         return Val("nd::insert_axis(%s, %s, %s, %s)" % (src, objc, vc, axc),
@@ -4011,7 +4011,7 @@ class Transpiler:
             if not (isinstance(mode, ast.Constant) and mode.value == "constant"):
                 self.fail(node, "np.pad only lowers mode='constant'")
         rank = a.type.rank
-        pw = args[1]
+        pw   = args[1]
 
         def _pair(el):
             if isinstance(el, (ast.Tuple, ast.List)):
@@ -4092,7 +4092,7 @@ class Transpiler:
         b = self.expr(args[2])
         if a.type.kind in _VALUELESS_KINDS or b.type.kind in _VALUELESS_KINDS:
             self.fail(node, "np.where on shape/rng object")
-        dt = _promote(a.type.dtype, b.type.dtype)
+        dt    = _promote(a.type.dtype, b.type.dtype)
         ranks = [cond.type.rank]
         if a.type.is_array():
             ranks.append(a.type.rank)
@@ -4142,12 +4142,12 @@ class Transpiler:
             return None
         fcl = self._fuse_operand_for(cl, rank)
         fcr = self._fuse_operand_for(cr, rank)
-        fa = self._fuse_operand_for(a, rank)
-        fb = self._fuse_operand_for(b, rank)
+        fa  = self._fuse_operand_for(a,  rank)
+        fb  = self._fuse_operand_for(b,  rank)
         if None in (fcl, fcr, fa, fb):
             return None
         cmp_op = self._CMP_MAP[type(cond_ast.ops[0])]
-        cdt = _promote(cl.type.dtype, cr.type.dtype)
+        cdt    = _promote(cl.type.dtype, cr.type.dtype)
 
         def emit(vs, _op=cmp_op, _cdt=cdt, _dt=dt):
             c_l, c_r, v_a, v_b = vs
@@ -4176,9 +4176,9 @@ class Transpiler:
         for v in vals[1:]:
             dt = _promote(dt, v.type.dtype)
         ranks = [v.type.rank for v in vals]
-        rank = None if any(x is None for x in ranks) else max(ranks)
+        rank  = None if any(x is None for x in ranks) else max(ranks)
         elems = ", ".join(self._to_array_dtype(v, dt) for v in vals)
-        vec = "std::vector<nd::Array<%s>>{%s}" % (_CTYPE[dt], elems)
+        vec   = "std::vector<nd::Array<%s>>{%s}" % (_CTYPE[dt], elems)
         return dt, vec, rank
 
     def _np_tile(self, args, node):
@@ -4193,7 +4193,7 @@ class Transpiler:
             nreps = len(reps.elts)
         else:
             repcode = "nd::Shape{%s}" % self._int_arg(reps)
-            nreps = 1
+            nreps   = 1
         rank = (None if src.type.rank is None
                 else max(src.type.rank, nreps))
         return Val("nd::tile(%s, %s)" % (src.code, repcode),
@@ -4205,7 +4205,7 @@ class Transpiler:
         if not src.type.is_array():
             self.fail(node, "np.roll of a non-array")
         shift = self._int_arg(args[1])
-        axis = self._kw(node, "axis")
+        axis  = self._kw(node, "axis")
         if axis is None and len(args) > 2:
             axis = args[2]
         if axis is None or (isinstance(axis, ast.Constant) and axis.value is None):
@@ -4224,7 +4224,7 @@ class Transpiler:
         return self._cast_scalar(v, "double")
 
     def _np_arange(self, args, node):
-        dt = self._kw_dtype(node)
+        dt   = self._kw_dtype(node)
         vals = [self.expr(a) for a in args]
         if not vals or len(vals) > 3:
             self.fail(node, "arange(stop) / arange(start, stop[, step])")
@@ -4260,13 +4260,13 @@ class Transpiler:
                 for v in flat:
                     dt = _promote(dt, v.type.dtype)
             items = ", ".join(self._cast_scalar(v, dt) for v in flat)
-            dims = ", ".join(str(d) for d in shape)
+            dims  = ", ".join(str(d) for d in shape)
             return Val("nd::from_data<%s>({%s}, {%s})"
                        % (_CTYPE[dt], items, dims), array_t(dt, len(shape)))
         flat, shape = self._literal_nested(inner, node)
-        dt = self._kw_dtype(node) or self._literal_dtype(flat)
+        dt    = self._kw_dtype(node) or self._literal_dtype(flat)
         items = ", ".join(self._literal_item(x, dt) for x in flat)
-        dims = ", ".join(str(d) for d in shape)
+        dims  = ", ".join(str(d) for d in shape)
         return Val("nd::from_data<%s>({%s}, {%s})" % (_CTYPE[dt], items, dims),
                    array_t(dt, len(shape)))
 
@@ -4354,7 +4354,7 @@ class Transpiler:
         # length-1 axis (numpy (N,1)), so a silent drop would misalign every
         # downstream broadcast. Mirrors _reduction: rank is unknown when keepdims
         # is present (True keeps rank, False drops n_axes).
-        keep = self._kw(node, "keepdims")
+        keep  = self._kw(node, "keepdims")
         keeps = "false"
         if keep is not None:
             keeps = self._as_bool(self.expr(keep), node)
@@ -4389,7 +4389,7 @@ class Transpiler:
             dt = _promote(dt, o.type.dtype)
         lhs, rhs = subs.split("->", 1)
         out_labels = rhs.replace(" ", "")
-        terms = [term.replace(" ", "") for term in lhs.split(",")]
+        terms      = [term.replace(" ", "") for term in lhs.split(",")]
         # Specialized per-subscript contraction loop -- byte-identical to
         # nd::einsum (same output/sum odometer nesting, operand order, and real
         # offset+stride reads via atN) -- when every term is a plain index list
@@ -4421,7 +4421,7 @@ class Transpiler:
         if len(terms) != len(ops) or not out_labels:
             return None
         first_occ = {}
-        order = []
+        order     = []
         for t, term in enumerate(terms):
             if len(set(term)) != len(term):          # diagonal (repeated label)
                 return None
@@ -4435,9 +4435,9 @@ class Transpiler:
         if any(lab not in first_occ for lab in out_labels):
             return None
         sum_labels = [lab for lab in order if lab not in out_labels]
-        T = _CTYPE[dt]
-        uid = self._new_tmp("es")
-        op_names = ["%s_op%d" % (uid, t) for t in range(len(ops))]
+        T          = _CTYPE[dt]
+        uid        = self._new_tmp("es")
+        op_names   = ["%s_op%d" % (uid, t) for t in range(len(ops))]
 
         def var(lab):
             return "%s_%s" % (uid, lab)
@@ -4678,9 +4678,9 @@ class Transpiler:
             if kv < 1:
                 self.fail(node, "tree.query needs k >= 1")
             k = kv
-        base = x.type.rank - 1          # (N, D) -> N rows; (D,) -> single point
+        base  = x.type.rank - 1          # (N, D) -> N rows; (D,) -> single point
         orank = base if k == 1 else base + 1
-        tmp = self._new_tmp("kdq")
+        tmp   = self._new_tmp("kdq")
         fn = "nd::kd_query1(%s, %s)" if k == 1 else \
              "nd::kd_query(%s, %s, " + str(k) + ")"
         self.emit("nd::KDQuery %s = %s;"
@@ -4838,13 +4838,13 @@ class Transpiler:
                    array_t(recv.type.dtype, recv.type.rank))
 
     def _op_diagonal(self, recv, args, node):
-        off = self._kw(node, "offset") or (args[0] if args else None)
+        off  = self._kw(node, "offset") or (args[0] if args else None)
         offs = "0" if off is None else self._int_arg(off)
         return Val("nd::diagonal(%s, %s)" % (recv.code, offs),
                    array_t(recv.type.dtype, 1))
 
     def _op_trace(self, recv, args, node):
-        off = self._kw(node, "offset") or (args[0] if args else None)
+        off  = self._kw(node, "offset") or (args[0] if args else None)
         offs = "0" if off is None else self._int_arg(off)
         return Val("nd::trace(%s, %s)" % (recv.code, offs),
                    array_t(recv.type.dtype, 0))
@@ -4890,7 +4890,7 @@ class Transpiler:
 
     def _mv_bridge(self, fn, recv, args, node, what, rtype):
         self._need(node, args, 0)
-        code = "ndx::%s(%s)" % (fn, self._mv_recv(recv, node, what))
+        code                 = "ndx::%s(%s)" % (fn, self._mv_recv(recv, node, what))
         self.uses_maya_xform = True
         return Val(code, rtype)
 
@@ -4911,14 +4911,14 @@ class Transpiler:
     def _op_mv_get_element(self, recv, args, node):
         self._need(node, args, 2)
         base = self._mv_recv(recv, node, "getElement")
-        r = self._scalar_int_of(self.expr(args[0]), node)
-        c = self._scalar_int_of(self.expr(args[1]), node)
+        r    = self._scalar_int_of(self.expr(args[0]), node)
+        c    = self._scalar_int_of(self.expr(args[1]), node)
         return Val("nd::slice(%s, {nd::Sl::at(%s), nd::Sl::at(%s)})"
                    % (base, r, c), array_t("double", 0))
 
     # ---- Tier C: Maya semantics via the ndx:: bridge ---------------------
     def _op_mv_rotation(self, recv, args, node):
-        base = self._mv_recv(recv, node, "rotation")
+        base   = self._mv_recv(recv, node, "rotation")
         axnode = self._kw(node, "axes")
         if axnode is None and len(args) == 1:
             axnode = args[0]
@@ -4995,7 +4995,7 @@ class Transpiler:
         for bad in ("sep", "format"):
             if self._kw(node, bad) is not None:
                 self.fail(node, ".tofile(%s=...) is not lowered" % bad)
-        path = self._str_arg(args[0], node, ".tofile path")
+        path           = self._str_arg(args[0], node, ".tofile path")
         self.uses_ndio = True
         return Val("nd_io_write_raw(%s, %s)" % (path, recv.code),
                    scalar_t("bool"))
@@ -5021,15 +5021,15 @@ class Transpiler:
         if axis is None and args:
             axis = args[0]
         axes_code, n_axes = self._axes_arg(axis, node)
-        keep = self._kw(node, "keepdims")
-        keeps = "false" if keep is None else self._as_bool(self.expr(keep), node)
-        out_dt = out_dtype or recv.type.dtype
+        keep      = self._kw(node, "keepdims")
+        keeps     = "false" if keep is None else self._as_bool(self.expr(keep), node)
+        out_dt    = out_dtype or recv.type.dtype
         recv_code = recv.code
         if ndfn in ("sum", "reduce_prod") and recv.type.dtype == "bool":
             # numpy promotes bool.sum()/bool.prod() -> int64. Accumulate in the
             # promoted type: summing in bool saturates at 1 (true + true == true),
             # so a boolean mask's count would collapse to 1.
-            out_dt = "int64"
+            out_dt    = "int64"
             recv_code = "nd::astype<int64_t>(%s)" % recv.code
         rank = None
         if recv.type.rank is not None and keep is None:
@@ -5094,7 +5094,7 @@ class Transpiler:
         if len(args) > 1:
             self.fail(node, "pass ddof as a keyword (numpy's positional order "
                             "is axis, dtype, out, ddof)")
-        dd = self._kw(node, "ddof")
+        dd   = self._kw(node, "ddof")
         ddof = "0" if dd is None else self._int_arg(dd)
         return self._reduce_op(ndfn, ndfn, recv, args, node, "double", ddof)
 
@@ -5138,7 +5138,7 @@ class Transpiler:
         if dt == "bool":
             # numpy promotes a bool scan to int64; accumulating in bool would
             # saturate at 1 the same way np.sum(bool) does.
-            dt = "int64"
+            dt   = "int64"
             code = "nd::astype<int64_t>(%s)" % recv.code
         if axis is None:
             return Val("nd::%s(%s, (int64_t)0, true)" % (ndfn, code),
@@ -5184,7 +5184,7 @@ class Transpiler:
 
     def _op_searchsorted(self, recv, args, node):
         self._need(node, args, 1)
-        v = self.expr(args[0])
+        v    = self.expr(args[0])
         side = self._kw(node, "side")
         if side is None and len(args) > 1:
             side = args[1]
@@ -5222,7 +5222,7 @@ class Transpiler:
 
     def _op_repeat(self, recv, args, node):
         self._need(node, args, 1)
-        n = self._int_arg(args[0])
+        n    = self._int_arg(args[0])
         axis = self._kw(node, "axis")
         if axis is None and len(args) > 1:
             axis = args[1]
@@ -5297,7 +5297,7 @@ class Transpiler:
                         "`ys, xs = np.nonzero(a)` (or `a.nonzero()`)")
 
     def _op_round(self, recv, args, node):
-        dec = self._kw(node, "decimals") or (args[0] if args else None)
+        dec  = self._kw(node, "decimals") or (args[0] if args else None)
         decs = "0" if dec is None else self._int_arg(dec)
         return Val("nd::round(%s, %s)" % (recv.code, decs),
                    array_t(recv.type.dtype, recv.type.rank))
@@ -5313,7 +5313,7 @@ class Transpiler:
     def _rng_method(self, attr, recv, args, node):
         if attr in ("random", "random_sample", "ranf", "sample"):
             if len(args) == 1:
-                shp = self._shape_arg(args[0])
+                shp  = self._shape_arg(args[0])
                 rank = self._shape_rank(args[0])
             elif len(args) == 0:
                 shp, rank = "nd::Shape{}", 0
@@ -5462,7 +5462,7 @@ class Transpiler:
 
 # ==== public API ==========================================================
 def _extract_func(source):
-    tree = ast.parse(source)
+    tree  = ast.parse(source)
     funcs = [n for n in tree.body if isinstance(n, ast.FunctionDef)]
     if len(funcs) != 1:
         raise UnsupportedSpec("py_to_cpp: expected exactly one top-level "
@@ -5503,9 +5503,9 @@ class _HelperCtx:
         self.defs = defs
         # {name: value AST node} for INIT-tier module constants (see
         # _parse_module_consts). Empty unless the caller opted in.
-        self.consts = consts or {}
-        self.generated = {}
-        self.lines = []
+        self.consts      = consts or {}
+        self.generated   = {}
+        self.lines       = []
         self.in_progress = set()
         # emit_stack: keys whose bodies are currently being transpiled, in order.
         # Direct self-recursion is valid only when the recursive call's key is
@@ -5515,7 +5515,7 @@ class _HelperCtx:
         # rec: key -> (mono_name, seed_ret CppType) for a self-recursive helper
         # currently being emitted, so its own self-calls resolve to a typed call
         # of the std::function lambda before the lambda is fully written.
-        self.rec = {}
+        self.rec      = {}
         self._counter = 0
 
     def fresh(self, name):
@@ -5736,10 +5736,10 @@ def transpile_compute_block(source, env, output_writers, helper_source=None,
     imports, import_stars = _parse_import_bindings(_import_srcs)
     t = Transpiler(env, output_writers=output_writers, helper_ctx=helper_ctx,
                    state_vars=state_vars, blessed=blessed,
-                   blessed_unpack=blessed_unpack,
-                   side_effect_methods=side_effect_methods,
+                   blessed_unpack      = blessed_unpack,
+                   side_effect_methods = side_effect_methods,
                    imports=imports, import_stars=import_stars)
-    res = t.run_block(tree.body)
+    res          = t.run_block(tree.body)
     helper_lines = list(helper_ctx.lines) if helper_ctx else []
     # expose the per-node persistent state members discovered during transpile
     # (name -> CppType) so the caller can declare the state-registry struct.

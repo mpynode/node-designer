@@ -25,9 +25,9 @@ import numpy as np
 
 from mpynode import ndio
 
-N = 33          # grid resolution -> N*N verts, (N-1)^2 quads
+N      = 33    # grid resolution -> N*N verts, (N-1)^2 quads
 FRAMES = 48
-SIZE = 10.0     # world size of the grid
+SIZE   = 10.0  # world size of the grid
 
 
 def build():
@@ -53,7 +53,7 @@ def build():
             a = i * N + j
             quads.append([a, a + N, a + N + 1, a + 1])
     indices = np.asarray(quads, dtype=np.int64).ravel()
-    counts = np.full((N - 1) * (N - 1), 4, dtype=np.int64)
+    counts  = np.full((N - 1) * (N - 1), 4, dtype=np.int64)
     return pts, counts, indices
 
 

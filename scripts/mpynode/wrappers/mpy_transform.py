@@ -91,7 +91,7 @@ class MPyTransform(MPyNode):
     # Attributes-tab allowlist (framework OFF) = the promoted TRS inputs; the
     # rest of a transform's inherited plugs are DAG framework noise.
     USEFUL_INHERITED_PLUGS = frozenset(EXPOSED_INPUT_PLUGS)
-    NATIVE_TYPE = _TRANSFORM_TYPE_NAME
+    NATIVE_TYPE            = _TRANSFORM_TYPE_NAME
 
     @classmethod
     def create(cls, name: str = None,

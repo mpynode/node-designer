@@ -51,7 +51,7 @@ class TestDQSInvariants(unittest.TestCase):
 
         from mpynode.wrappers.mpy_skin_cluster import MPySkinCluster
         sc = MPySkinCluster.create(plane, joints=[j1, j2], name=name)
-        n = mc.polyEvaluate(plane, vertex=True)
+        n  = mc.polyEvaluate(plane, vertex=True)
         ys = [mc.xform("%s.vtx[%d]" % (plane, v), q=True, os=True, t=True)[1]
               for v in range(n)]
         lo, hi = min(ys), max(ys)

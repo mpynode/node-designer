@@ -52,7 +52,7 @@ def plan(root=ROOT, only=None):
     for tree in TREES:
         pattern = os.path.join(root, tree, "*", "*", "build", "manifest.json")
         for mf in sorted(glob.glob(pattern)):
-            build_dir = os.path.dirname(mf)
+            build_dir    = os.path.dirname(mf)
             template_dir = os.path.dirname(build_dir)
             try:
                 with open(mf, encoding="utf-8") as fh:
@@ -63,7 +63,7 @@ def plan(root=ROOT, only=None):
                 ty = row.get("type_name")
                 if not ty or (want and ty not in want):
                     continue
-                stage_dir = os.path.join(build_dir, "stages", ty)
+                stage_dir   = os.path.join(build_dir, "stages", ty)
                 rounds_path = os.path.join(stage_dir, "rounds.json")
                 if not os.path.isfile(rounds_path):
                     continue
@@ -103,16 +103,16 @@ def make_record(state, baseline_ms, final_ms, diverged, date=None):
     """The ``remeasured`` block. ``state`` is the adapters' ``bench_state_out``."""
     state = state or {}
     rec = {
-        "date": date or time.strftime("%Y-%m-%d"),
-        "rung": state.get("rung"),
-        "floor_ms": state.get("floor_ms"),
-        "perturbed": state.get("perturbed"),
+        "date":        date or time.strftime("%Y-%m-%d"),
+        "rung":        state.get("rung"),
+        "floor_ms":    state.get("floor_ms"),
+        "perturbed":   state.get("perturbed"),
         "fingerprint": state.get("fingerprint"),
         "baseline_ms": baseline_ms,
-        "final_ms": final_ms,
-        "speedup": speedup_of(baseline_ms, final_ms),
-        "diverged": diverged,
-        "reason": state.get("reason"),
+        "final_ms":    final_ms,
+        "speedup":     speedup_of(baseline_ms, final_ms),
+        "diverged":    diverged,
+        "reason":      state.get("reason"),
     }
     return rec
 
@@ -143,9 +143,9 @@ def rebench_one(item, maya, scratch, log):
     from mpynode.native.ai import optimizer_live, porter
     from mpynode.native.ai.optimizer import BenchmarkDiverged
 
-    ty = item["type_name"]
-    spec = item["spec"]
-    work = os.path.join(scratch, ty)
+    ty      = item["type_name"]
+    spec    = item["spec"]
+    work    = os.path.join(scratch, ty)
     plugins = {}
     for label, cpp in (("baseline", item["baseline_cpp"]),
                        ("final", item["final_cpp"])):
@@ -166,7 +166,7 @@ def rebench_one(item, maya, scratch, log):
     ad = optimizer_live.make_adapters(
         spec, os.path.join(work, "bench"), maya=maya, node_type=ty,
         log_cb=log, bench_state_out=state)
-    bench = ad["benchmark_fn"]
+    bench       = ad["benchmark_fn"]
     baseline_ms = bench(plugins["baseline"])       # calibrates + fingerprints
     if baseline_ms is None:
         return make_record(state, None, None, None)
@@ -186,10 +186,10 @@ def regen_report(item):
 
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
-    ap.add_argument("--only", default="", help="comma-separated type names")
+    ap.add_argument("--only",    default="",          help="comma-separated type names")
     ap.add_argument("--dry-run", action="store_true", help="list the work, do nothing")
-    ap.add_argument("--maya", default=None, help="Maya install root")
-    ap.add_argument("--json", default=None, help="write the summary here")
+    ap.add_argument("--maya",    default=None,        help="Maya install root")
+    ap.add_argument("--json",    default=None,        help="write the summary here")
     ap.add_argument("--scratch", default=None,
                     help="where plugins are built (default: a temp dir)")
     args = ap.parse_args(argv)
@@ -206,7 +206,7 @@ def main(argv=None):
         return 0
 
     from mpynode.native.toolchain import toolchain
-    maya = args.maya or os.environ.get("MAYA_LOCATION") or toolchain.default_maya_dir()
+    maya    = args.maya or os.environ.get("MAYA_LOCATION") or toolchain.default_maya_dir()
     scratch = args.scratch or tempfile.mkdtemp(prefix="mpynode-rebench-")
     print("maya: %s\nscratch: %s" % (maya, scratch))
 

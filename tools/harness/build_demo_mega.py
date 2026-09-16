@@ -28,14 +28,14 @@ import json
 import time
 import traceback
 
-MPN = sys.argv[1]
-OUT = sys.argv[2]
-BUNDLE = sys.argv[3]
+MPN           = sys.argv[1]
+OUT           = sys.argv[2]
+BUNDLE        = sys.argv[3]
 COMPILED_TYPE = sys.argv[4]
-_demo_arg = sys.argv[5] if len(sys.argv) > 5 else ""
-DEMO = None if _demo_arg in ("", "-") else _demo_arg
-MA_BASENAME = sys.argv[6] if len(sys.argv) > 6 else os.path.basename(OUT)
-MAYA_ROOT = os.environ.get("MPYNODE_MAYA_ROOT", "/Applications/Autodesk/maya2026")
+_demo_arg     = sys.argv[5] if len(sys.argv) > 5 else ""
+DEMO          = None if _demo_arg in ("", "-") else _demo_arg
+MA_BASENAME   = sys.argv[6] if len(sys.argv) > 6 else os.path.basename(OUT)
+MAYA_ROOT     = os.environ.get("MPYNODE_MAYA_ROOT", "/Applications/Autodesk/maya2026")
 
 os.makedirs(OUT, exist_ok=True)
 LOG = os.path.join(OUT, "build.log")
@@ -88,7 +88,7 @@ try:
 
     # Companion @maya_command plugins that ship beside the mega bundle.
     companions = []
-    mega_dir = os.path.dirname(BUNDLE)
+    mega_dir   = os.path.dirname(BUNDLE)
     for fn in sorted(os.listdir(mega_dir)):
         if fn.endswith("_commands.py") or (fn.endswith(".py")
                                            and "command" in fn.lower()):
@@ -108,7 +108,7 @@ try:
     from mpynode._common.io.mpn_io import deserialize_node
     from mpynode._common.methods.methods_registry import run_node_demo
 
-    payload = mpn_io.load_mpn(MPN, trusted=True)
+    payload     = mpn_io.load_mpn(MPN, trusted=True)
     native_type = payload.get("native_type")
     L("native type  : %s" % native_type)
 
@@ -131,7 +131,7 @@ try:
         L("    demo run FAILED: %r" % exc)
         L(traceback.format_exc())
 
-    after = set(mc.ls(type=native_type, long=True) or [])
+    after      = set(mc.ls(type=native_type, long=True) or [])
     tname_full = None
     for n in (mc.ls(tname, long=True) or []):
         tname_full = n
@@ -155,7 +155,7 @@ try:
 
     L(">>> swapping %s -> mega compiled type %s" % (tname_full, COMPILED_TYPE))
     comp, _dropped = node_swap.swap_node(tname_full, COMPILED_TYPE)
-    res["swapped"] = True
+    res["swapped"]       = True
     res["compiled_node"] = comp
     L("    swapped -> %s" % comp)
 
@@ -216,7 +216,7 @@ try:
     try:
         mc.file(rename=ma)
         mc.file(save=True, type="mayaAscii", force=True)
-        res["ma"] = ma
+        res["ma"]    = ma
         res["built"] = True
         L(">>> saved scene: %s" % ma)
     except Exception as exc:

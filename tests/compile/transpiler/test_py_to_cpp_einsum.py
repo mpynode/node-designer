@@ -37,10 +37,10 @@ class TestEinsumSpecialized(unittest.TestCase):
         # "nij,njk->nik": out labels n,i,k (C-order loops), sum label j inner.
         text = _emit('self.r = np.einsum("nij,njk->nik", self.a, self.b)\n',
                      {"self.a": _A(r=3), "self.b": _A(r=3)})
-        self.assertNotIn("nd::einsum(", text)          # specialized, not runtime
-        self.assertEqual(text.count("nd::at3("), 2)    # one read per rank-3 operand
-        self.assertIn("_acc += ", text)                # per-output accumulator
-        self.assertIn("_prod *= ", text)               # per-term product
+        self.assertNotIn("nd::einsum(", text)        # specialized, not runtime
+        self.assertEqual(text.count("nd::at3("), 2)  # one read per rank-3 operand
+        self.assertIn("_acc += ", text)              # per-output accumulator
+        self.assertIn("_prod *= ", text)             # per-term product
 
     def test_matvec_batch_nij_nj_specialized(self):
         # "nij,nj->ni": op1 is rank-2 -> at2 reads; op0 rank-3 -> at3.

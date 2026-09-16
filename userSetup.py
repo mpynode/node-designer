@@ -47,7 +47,7 @@ def _setup_phase_paths() -> None:
         )
         return
 
-    plugin_dir = os.path.join(PROJECT_DIR, "plug-ins")
+    plugin_dir  = os.path.join(PROJECT_DIR, "plug-ins")
     scripts_dir = os.path.join(PROJECT_DIR, "scripts")
 
     if not os.path.isdir(plugin_dir):

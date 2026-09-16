@@ -108,7 +108,7 @@ class TestE1CompoundAndMulti(unittest.TestCase):
 
         tf, _ = mc.polyPlane(name="p")
         sh = mc.listRelatives(tf, shapes=True)[0]
-        n = make_node_proxy_for_name(sh)
+        n  = make_node_proxy_for_name(sh)
         # A matrix multi is the unified (lazy plug-backed) MatrixArrayView.
         self.assertIsInstance(n.worldMatrix, MatrixArrayView)
         # kMatrix plugs return MatrixView (element 0 resolves lazily).
@@ -149,8 +149,8 @@ class TestE2GeometryWrappers(unittest.TestCase):
 
         tf, _ = mc.polyPlane(name="p", w=2, h=2, sx=4, sy=4)
         sh = mc.listRelatives(tf, shapes=True)[0]
-        n = make_node_proxy_for_name(sh)
-        m = n.outMesh
+        n  = make_node_proxy_for_name(sh)
+        m  = n.outMesh
         self.assertIsInstance(m, om.MFnMesh)
         self.assertEqual(m.numVertices(), 25)
         self.assertEqual(m.numPolygons(), 16)
@@ -185,9 +185,9 @@ class TestE2GeometryWrappers(unittest.TestCase):
         from mpynode._common.plugs.plug_proxy import make_node_proxy_for_name
 
         crv = mc.curve(name="testCrv", p=[(0, 0, 0), (1, 0, 0), (2, 0, 0)], d=1)
-        sh = mc.listRelatives(crv, shapes=True)[0]
-        n = make_node_proxy_for_name(sh)
-        c = n.worldSpace[0]
+        sh  = mc.listRelatives(crv, shapes=True)[0]
+        n   = make_node_proxy_for_name(sh)
+        c   = n.worldSpace[0]
         self.assertIsInstance(c, om.MFnNurbsCurve)
 
 
@@ -226,7 +226,7 @@ class TestPlugProxyErrors(unittest.TestCase):
 
         tf, _ = mc.polyPlane(name="p")
         sh = mc.listRelatives(tf, shapes=True)[0]
-        n = make_node_proxy_for_name(sh)
+        n  = make_node_proxy_for_name(sh)
         with self.assertRaises(TypeError):
             _ = n.worldMatrix["bogus"]
 
@@ -245,10 +245,10 @@ class TestPlugProxyIntrospection(unittest.TestCase):
         from mpynode._common.plugs.plug_proxy import make_node_proxy_for_name
 
         tf, _ = mc.polyPlane(name="p")
-        n = make_node_proxy_for_name(tf)
+        n     = make_node_proxy_for_name(tf)
         names = dir(n)
         self.assertIn("translateX", names)
-        self.assertIn("rotateY", names)
+        self.assertIn("rotateY",    names)
         self.assertIn("visibility", names)
         # Should include MANY (transforms have ~200+ attrs)
         self.assertGreater(len(names), 50)
@@ -310,7 +310,7 @@ class TestReadPromotions(unittest.TestCase):
 
         tf, _ = mc.polyPlane(name="p")
         sh = mc.listRelatives(tf, shapes=True)[0]
-        n = make_node_proxy_for_name(sh)
+        n  = make_node_proxy_for_name(sh)
         self.assertIsInstance(n.worldMatrix[0], MatrixView)
 
     def test_kMatrix_asMatrix_is_MMatrix(self):
@@ -319,15 +319,15 @@ class TestReadPromotions(unittest.TestCase):
 
         tf, _ = mc.polyPlane(name="p")
         sh = mc.listRelatives(tf, shapes=True)[0]
-        n = make_node_proxy_for_name(sh)
+        n  = make_node_proxy_for_name(sh)
         self.assertIsInstance(n.worldMatrix[0].asMatrix(), om2.MMatrix)
 
     def test_kMatrix_asNumpy_is_4x4_float64(self):
         from mpynode._common.plugs.plug_proxy import make_node_proxy_for_name
 
         tf, _ = mc.polyPlane(name="p")
-        sh = mc.listRelatives(tf, shapes=True)[0]
-        n = make_node_proxy_for_name(sh)
+        sh  = mc.listRelatives(tf, shapes=True)[0]
+        n   = make_node_proxy_for_name(sh)
         arr = n.worldMatrix[0].asNumpy()
         self.assertEqual(arr.shape, (4, 4))
         self.assertEqual(arr.dtype, np.float64)
@@ -338,7 +338,7 @@ class TestReadPromotions(unittest.TestCase):
 
         # rotateOrder is a kEnum on every transform.
         tf, _ = mc.polyPlane(name="p")
-        n = make_node_proxy_for_name(tf)
+        n  = make_node_proxy_for_name(tf)
         ro = n.rotateOrder
         self.assertIsInstance(ro, EnumInt)
         self.assertEqual(int(ro), 0)
@@ -350,7 +350,7 @@ class TestReadPromotions(unittest.TestCase):
         from mpynode._common.plugs.promoted_types import TimeFloat
 
         # time1.outTime is a kTime plug.
-        n = make_node_proxy_for_name("time1")
+        n   = make_node_proxy_for_name("time1")
         out = n.outTime
         self.assertIsInstance(out, TimeFloat)
         # asFrame() must be callable.
@@ -364,10 +364,10 @@ class TestReadPromotions(unittest.TestCase):
         mc.addAttr(tf, longName="testPts", dataType="pointArray")
         # Build (3, 3) sample.
         sample = [(1.0, 2.0, 3.0), (4.0, 5.0, 6.0), (7.0, 8.0, 9.0)]
-        n = make_node_proxy_for_name(tf)
+        n      = make_node_proxy_for_name(tf)
         # Set via PlugProxy (E3 init-time write).
         n.testPts = sample
-        arr = n.testPts
+        arr       = n.testPts
         self.assertIsInstance(arr, np.ndarray)
         self.assertEqual(arr.shape, (3, 3))
         self.assertEqual(arr.dtype, np.float64)
@@ -378,9 +378,9 @@ class TestReadPromotions(unittest.TestCase):
 
         tf, _ = mc.polyPlane(name="p")
         mc.addAttr(tf, longName="testDoubles", dataType="doubleArray")
-        n = make_node_proxy_for_name(tf)
+        n             = make_node_proxy_for_name(tf)
         n.testDoubles = [1.5, 2.5, 3.5, 4.5]
-        arr = n.testDoubles
+        arr           = n.testDoubles
         self.assertIsInstance(arr, np.ndarray)
         self.assertEqual(arr.shape, (4,))
         self.assertEqual(arr.dtype, np.float64)
@@ -390,9 +390,9 @@ class TestReadPromotions(unittest.TestCase):
 
         tf, _ = mc.polyPlane(name="p")
         mc.addAttr(tf, longName="testInts", dataType="Int32Array")
-        n = make_node_proxy_for_name(tf)
+        n          = make_node_proxy_for_name(tf)
         n.testInts = [1, 2, 3, 4, 5]
-        arr = n.testInts
+        arr        = n.testInts
         self.assertIsInstance(arr, np.ndarray)
         self.assertEqual(arr.shape, (5,))
         self.assertEqual(arr.dtype, np.int32)
@@ -402,9 +402,9 @@ class TestReadPromotions(unittest.TestCase):
 
         tf, _ = mc.polyPlane(name="p")
         mc.addAttr(tf, longName="testVecs", dataType="vectorArray")
-        n = make_node_proxy_for_name(tf)
+        n          = make_node_proxy_for_name(tf)
         n.testVecs = [(1.0, 2.0, 3.0), (4.0, 5.0, 6.0)]
-        arr = n.testVecs
+        arr        = n.testVecs
         self.assertIsInstance(arr, np.ndarray)
         self.assertEqual(arr.shape, (2, 3))
         self.assertEqual(arr.dtype, np.float64)
@@ -414,7 +414,7 @@ class TestReadPromotions(unittest.TestCase):
 
         tf, _ = mc.polyPlane(name="p")
         mc.addAttr(tf, longName="testStr", dataType="string")
-        n = make_node_proxy_for_name(tf)
+        n         = make_node_proxy_for_name(tf)
         n.testStr = "hello"
         self.assertEqual(n.testStr, "hello")
         self.assertIsInstance(n.testStr, str)
@@ -426,7 +426,7 @@ class TestReadPromotions(unittest.TestCase):
         n = make_node_proxy_for_name(tf)
         # translateX is float
         n.translate.translateX = 1.5
-        v = n.translate.translateX
+        v                      = n.translate.translateX
         # Either int or float ok depending on plug subtype, but it's
         # NOT an MFn / numpy / proxy.
         self.assertTrue(isinstance(v, (int, float)))
@@ -457,7 +457,7 @@ class TestE3ScalarWrites(unittest.TestCase):
         tf, _ = mc.polyPlane(name="p", sx=4, sy=4)
         from mpynode._common.plugs.plug_proxy import make_node_proxy_for_name
         self.tf = tf
-        self.n = make_node_proxy_for_name(tf)
+        self.n  = make_node_proxy_for_name(tf)
 
     def test_numeric_float(self):
         self.n.translateX = 7.5
@@ -488,14 +488,14 @@ class TestE3ScalarWrites(unittest.TestCase):
 
     def test_matrix(self):
         mc.addAttr(self.tf, longName="myMatrix", attributeType="matrix")
-        identity = om.MMatrix()
+        identity        = om.MMatrix()
         self.n.myMatrix = identity
-        m = mc.getAttr(self.tf + ".myMatrix")
+        m               = mc.getAttr(self.tf + ".myMatrix")
         self.assertEqual(len(m), 16)
         # Identity: diag entries = 1.0, off-diagonal = 0.
-        self.assertAlmostEqual(m[0], 1.0)   # [0][0]
-        self.assertAlmostEqual(m[5], 1.0)   # [1][1]
-        self.assertAlmostEqual(m[1], 0.0)   # [0][1]
+        self.assertAlmostEqual(m[0], 1.0)  # [0][0]
+        self.assertAlmostEqual(m[5], 1.0)  # [1][1]
+        self.assertAlmostEqual(m[1], 0.0)  # [0][1]
 
 
 # ===========================================================================
@@ -510,7 +510,7 @@ class TestE3CompoundWrites(unittest.TestCase):
         tf, _ = mc.polyPlane(name="p", sx=4, sy=4)
         from mpynode._common.plugs.plug_proxy import make_node_proxy_for_name
         self.tf = tf
-        self.n = make_node_proxy_for_name(tf)
+        self.n  = make_node_proxy_for_name(tf)
 
     def test_compound_child(self):
         """``node.translate.translateY = 3.14``"""
@@ -522,7 +522,7 @@ class TestE3CompoundWrites(unittest.TestCase):
     def test_compound_parent_unpacks_to_children(self):
         """``node.translate = (1, 2, 3)``"""
         self.n.translate = (1.5, 2.5, 3.5)
-        t = mc.getAttr(self.tf + ".translate")[0]
+        t                = mc.getAttr(self.tf + ".translate")[0]
         self.assertAlmostEqual(t[0], 1.5, places=5)
         self.assertAlmostEqual(t[1], 2.5, places=5)
         self.assertAlmostEqual(t[2], 3.5, places=5)
@@ -540,7 +540,7 @@ class TestE3MultiWrites(unittest.TestCase):
         tf, _ = mc.polyPlane(name="p", sx=4, sy=4)
         from mpynode._common.plugs.plug_proxy import make_node_proxy_for_name
         self.tf = tf
-        self.n = make_node_proxy_for_name(tf)
+        self.n  = make_node_proxy_for_name(tf)
 
     def test_multi_assignment_creates_sparse_elements(self):
         mc.addAttr(self.tf, longName="myMulti",
@@ -569,7 +569,7 @@ class TestE3ArrayWrites(unittest.TestCase):
         tf, _ = mc.polyPlane(name="p", sx=4, sy=4)
         from mpynode._common.plugs.plug_proxy import make_node_proxy_for_name
         self.tf = tf
-        self.n = make_node_proxy_for_name(tf)
+        self.n  = make_node_proxy_for_name(tf)
 
     def test_doubleArray(self):
         mc.addAttr(self.tf, longName="myDA", dataType="doubleArray")
@@ -579,7 +579,7 @@ class TestE3ArrayWrites(unittest.TestCase):
     def test_floatArray(self):
         mc.addAttr(self.tf, longName="myFA", dataType="floatArray")
         self.n.myFA = [0.5, 1.5]
-        result = mc.getAttr(self.tf + ".myFA")
+        result      = mc.getAttr(self.tf + ".myFA")
         self.assertEqual(len(result), 2)
         self.assertAlmostEqual(result[0], 0.5, places=5)
 
@@ -591,7 +591,7 @@ class TestE3ArrayWrites(unittest.TestCase):
     def test_pointArray(self):
         mc.addAttr(self.tf, longName="myPA", dataType="pointArray")
         self.n.myPA = [(1.0, 2.0, 3.0), (4.0, 5.0, 6.0)]
-        pts = mc.getAttr(self.tf + ".myPA")
+        pts         = mc.getAttr(self.tf + ".myPA")
         # cmds returns each point as a 4-tuple (x, y, z, w)
         self.assertEqual(len(pts), 2)
         self.assertAlmostEqual(pts[0][0], 1.0)
@@ -610,7 +610,7 @@ class TestE3WriteErrors(unittest.TestCase):
         tf, _ = mc.polyPlane(name="p", sx=4, sy=4)
         from mpynode._common.plugs.plug_proxy import make_node_proxy_for_name
         self.tf = tf
-        self.n = make_node_proxy_for_name(tf)
+        self.n  = make_node_proxy_for_name(tf)
 
     def test_missing_attribute_raises_AttributeError(self):
         with self.assertRaises(AttributeError):
@@ -628,7 +628,7 @@ class TestE3WriteThenRead(unittest.TestCase):
         ensure_plugins_loaded()
         tf, _ = mc.polyPlane(name="p", sx=4, sy=4)
         from mpynode._common.plugs.plug_proxy import make_node_proxy_for_name
-        n = make_node_proxy_for_name(tf)
+        n            = make_node_proxy_for_name(tf)
         n.translateX = 11.5
         self.assertAlmostEqual(n.translateX, 11.5, places=5)
 
@@ -718,7 +718,7 @@ class TestCompoundAsNumpy(unittest.TestCase):
         from mpynode._common.plugs.plug_proxy import make_node_proxy_for_name
 
         proxy = make_node_proxy_for_name(self.deformer.get_name())
-        arr = proxy.amplitude.asNumpy()
+        arr   = proxy.amplitude.asNumpy()
         self.assertEqual(arr.shape, (3,))
         np.testing.assert_array_almost_equal(arr, [1.5, 2.5, 3.5], decimal=4)
 
@@ -726,14 +726,14 @@ class TestCompoundAsNumpy(unittest.TestCase):
         from mpynode._common.plugs.plug_proxy import make_node_proxy_for_name
 
         proxy = make_node_proxy_for_name(self.deformer.get_name())
-        arr = np.asarray(proxy.amplitude)
+        arr   = np.asarray(proxy.amplitude)
         self.assertEqual(arr.shape, (3,))
 
     def test_iter_works(self):
         from mpynode._common.plugs.plug_proxy import make_node_proxy_for_name
 
         proxy = make_node_proxy_for_name(self.deformer.get_name())
-        vals = [float(v) for v in proxy.amplitude]
+        vals  = [float(v) for v in proxy.amplitude]
         self.assertEqual(len(vals), 3)
         self.assertAlmostEqual(vals[0], 1.5, places=4)
 
@@ -751,11 +751,11 @@ class TestNoCmdsGetAttrInDemo(unittest.TestCase):
         import inspect
         from mpynode._demos import build_mpyLatticeStyleDeformer as mod
 
-        src = inspect.getsource(mod)
+        src         = inspect.getsource(mod)
         expr_marker = "_EXPRESSION = "
-        idx = src.index(expr_marker)
-        end_idx = src.index('"""', src.index('"""', idx) + 3) + 3
-        expr_block = src[idx:end_idx]
+        idx         = src.index(expr_marker)
+        end_idx     = src.index('"""', src.index('"""', idx) + 3) + 3
+        expr_block  = src[idx:end_idx]
         # Match an actual function CALL: cmds.getAttr( (with paren).
         # The comment "cmds.getAttr workarounds" in docstring is OK.
         self.assertIsNone(
@@ -790,13 +790,13 @@ class TestInheritedDeformerPlugs(unittest.TestCase):
         from mpynode.wrappers.mpy_deformer import MPyDeformer
 
         self.deformer = MPyDeformer.create_on(plane, name="testDef")
-        self.plane = plane
+        self.plane    = plane
 
     def test_envelope_is_reachable_as_float(self):
         from mpynode._common.plugs.plug_proxy import make_node_proxy_for_name
 
         proxy = make_node_proxy_for_name(self.deformer.get_name())
-        env = proxy.envelope
+        env   = proxy.envelope
         self.assertIsInstance(env, float)
         self.assertAlmostEqual(env, 1.0, places=4)
 
@@ -808,7 +808,7 @@ class TestInheritedDeformerPlugs(unittest.TestCase):
         from mpynode._common.plugs.plug_proxy import make_node_proxy_for_name
 
         proxy = make_node_proxy_for_name(self.deformer.get_name())
-        og = proxy.outputGeometry
+        og    = proxy.outputGeometry
         # Whatever proxy type the multi resolves to, the name must
         # have resolved -- attr-error means the plug tree filtered it.
         self.assertIsNotNone(og)
@@ -845,7 +845,7 @@ class TestUserAddedPlugsRideAlongside(unittest.TestCase):
         from mpynode._common.plugs.promoted_types import MatrixView
 
         proxy = make_node_proxy_for_name(self.deformer.get_name())
-        m = proxy.driverMatrixA
+        m     = proxy.driverMatrixA
         self.assertIsInstance(
             m,
             MatrixView,

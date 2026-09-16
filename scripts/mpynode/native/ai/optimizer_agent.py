@@ -231,9 +231,9 @@ def render_history_block(ledger):
              ""]
     for r in rows:
         theme = (getattr(r, "theme", "") or "").strip()
-        head = "* round %s -- %s" % (r.index, theme or "(no theme recorded)")
-        bits = [str(getattr(r, "outcome", "") or "?")]
-        ms = getattr(r, "ms", None)
+        head  = "* round %s -- %s" % (r.index, theme or "(no theme recorded)")
+        bits  = [str(getattr(r, "outcome", "") or "?")]
+        ms    = getattr(r, "ms", None)
         if ms is not None:
             bits.append("measured %.3f ms" % ms)
         pred = getattr(r, "predicted_speedup", None)
@@ -617,9 +617,9 @@ def build_workspace(spec, ws_dir, cpp_text, *, maya=None, ntype=None,
     from ..compiler import build_scripts
     from ..toolchain import toolchain
 
-    name = spec["suggested"]["node_type_name"]
+    name  = spec["suggested"]["node_type_name"]
     ntype = ntype or name
-    maya = maya or toolchain.default_maya_dir()
+    maya  = maya or toolchain.default_maya_dir()
 
     os.makedirs(ws_dir, exist_ok=True)
     cpp_path = os.path.join(ws_dir, name + ".cpp")
@@ -658,14 +658,14 @@ def build_workspace(spec, ws_dir, cpp_text, *, maya=None, ntype=None,
     # to read the harness and check, so a drift here misleads nobody for long.
     verts = max(0, int(bench_geo) * (int(bench_geo) - 1) + 2)
     task = _TASK_MD.format(
-        name=name,
-        compute=(spec.get("compute") or "").strip() or "(none)",
-        init_block=init_block,
-        budget_block=budget_block,
-        history_block=render_history_block(history),
-        moved_block=_moved_block(perturbed),
-        bake_block=_bake_block(bench_mode, bake_source),
-        portability=PORTABILITY_RULE,
+        name          = name,
+        compute       = (spec.get("compute") or "").strip() or "(none)",
+        init_block    = init_block,
+        budget_block  = budget_block,
+        history_block = render_history_block(history),
+        moved_block   = _moved_block(perturbed),
+        bake_block    = _bake_block(bench_mode, bake_source),
+        portability   = PORTABILITY_RULE,
         geo=int(bench_geo), verts="{:,}".format(verts),
         array=int(bench_array), iters=int(bench_iters), cpp_path=cpp_path,
         baseline=("%.3f ms" % baseline_ms) if baseline_ms else "run ./bench.sh")
@@ -729,10 +729,10 @@ def optimize_with_agent(spec, ws_dir, cpp_text, agent_fn, *, maya=None,
         bench_array=bench_array, bench_geo=bench_geo, bench_iters=bench_iters,
         baseline_ms=baseline_ms, budget_s=budget_s, history=history,
         perturbed=perturbed, bench_mode=bench_mode, bake_source=bake_source)
-    guarded = _guarded_paths(ws_dir)
+    guarded       = _guarded_paths(ws_dir)
     before_digest = _digests(guarded)
-    before = cpp_text
-    agent_err = None
+    before        = cpp_text
+    agent_err     = None
     try:
         with _agent_bench_lock_env():
             agent_fn(task)

@@ -17,11 +17,11 @@ from .watch import decode_watch_vars, encode_watch_vars
 
 
 # Plug names — referenced by the widgets and the designer wiring.
-PROFILE_SNAPSHOT_ATTR_NAME = "_profileSnapshotData"
-WATCH_VARS_ATTR_NAME = "_watchVarsData"
-PROFILE_ENABLED_ATTR_NAME = "profile_enabled"
+PROFILE_SNAPSHOT_ATTR_NAME     = "_profileSnapshotData"
+WATCH_VARS_ATTR_NAME           = "_watchVarsData"
+PROFILE_ENABLED_ATTR_NAME      = "profile_enabled"
 DEEP_PROFILE_ENABLED_ATTR_NAME = "deep_profile_enabled"
-WATCH_ENABLED_ATTR_NAME = "watch_enabled"
+WATCH_ENABLED_ATTR_NAME        = "watch_enabled"
 
 
 # ---- Profile snapshot envelope (JSON, no pickling — values are pure numerics) ----
@@ -31,10 +31,10 @@ def encode_profile_snapshot(stats: dict, deep_table: list[dict] | None = None) -
     """JSON-encode the profile snapshot dict for the plug."""
     payload = {
         "last_us": float(stats.get("last_us", 0.0)),
-        "avg_us": float(stats.get("avg_us", 0.0)),
-        "min_us": float(stats.get("min_us", 0.0)),
-        "max_us": float(stats.get("max_us", 0.0)),
-        "count": int(stats.get("count", 0)),
+        "avg_us":  float(stats.get("avg_us", 0.0)),
+        "min_us":  float(stats.get("min_us", 0.0)),
+        "max_us":  float(stats.get("max_us", 0.0)),
+        "count":   int(stats.get("count", 0)),
     }
     if deep_table is not None:
         payload["deep_table"] = deep_table

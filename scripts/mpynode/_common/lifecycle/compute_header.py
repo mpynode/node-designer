@@ -26,7 +26,7 @@ def make_compute_header(node_type: str) -> str:
     and the live plug tree is what the autocomplete surfaces). Falls back
     to a usable header for unknown types.
     """
-    nt = node_type or "unknown"
+    nt  = node_type or "unknown"
     bar = "# " + "-" * 68
     lines = [
         bar,

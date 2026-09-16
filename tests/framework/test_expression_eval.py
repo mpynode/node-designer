@@ -81,7 +81,7 @@ class TestNoAutoImports(unittest.TestCase):
         )
 
         code = compile_expression("y = np.zeros(3)")
-        ns: dict = {}
+        ns:       dict = {}
         captured: list[str] = []
         ok = exec_with_profile_watch(
             code, ns, on_error=lambda msg: captured.append(msg)
@@ -97,7 +97,7 @@ class TestNoAutoImports(unittest.TestCase):
         )
 
         code = compile_expression("y = math.pi")
-        ns: dict = {}
+        ns:       dict = {}
         captured: list[str] = []
         ok = exec_with_profile_watch(
             code, ns, on_error=lambda msg: captured.append(msg)
@@ -112,7 +112,7 @@ class TestNoAutoImports(unittest.TestCase):
         )
 
         code = compile_expression("y = cmds.ls()")
-        ns: dict = {}
+        ns:       dict = {}
         captured: list[str] = []
         ok = exec_with_profile_watch(
             code, ns, on_error=lambda msg: captured.append(msg)
@@ -149,9 +149,9 @@ class TestNoAutoImports(unittest.TestCase):
         ns = build_exec_namespace()  # __builtins__ only
         ok = exec_with_profile_watch(code, ns)
         self.assertTrue(ok)
-        self.assertEqual(ns["out_len"], 3)
+        self.assertEqual(ns["out_len"],   3)
         self.assertEqual(ns["out_range"], [0, 1, 2])
-        self.assertEqual(ns["out_dict"], {"a": 1, "b": 2})
+        self.assertEqual(ns["out_dict"],  {"a": 1, "b": 2})
 
 
 # ===========================================================================
@@ -165,7 +165,7 @@ class TestBuildExecNamespace(unittest.TestCase):
 
         ns = build_exec_namespace()
         self.assertIn("__builtins__", ns)
-        self.assertNotIn("np", ns)
+        self.assertNotIn("np",   ns)
         self.assertNotIn("math", ns)
         self.assertNotIn("cmds", ns)
 
@@ -301,7 +301,7 @@ class TestConstraintInputsAreNumpy(unittest.TestCase):
 
         src = mc.polyCube(name="srcCube")[0]
         dst = mc.polyCube(name="dstCube")[0]
-        c = MPyConstraint.create(name="weightedCstr")
+        c   = MPyConstraint.create(name="weightedCstr")
         c.add_output_attr("out", "vector")
         # numpy expression reading preset inputs via self.X.
         c.set_compute_expression(

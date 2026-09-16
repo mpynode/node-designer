@@ -76,7 +76,7 @@ class TestTheEntryBaselineFollowsTheAcceptedBest(unittest.TestCase):
                 run_step=run_step)
             # A real compile is the one thing this wiring does not need.
             ad["compile_fn"] = lambda cpp: (True, "", "b:" + cpp)
-            res = optimize_cpp(_BASELINE_CPP, rounds=rounds, **ad)
+            res              = optimize_cpp(_BASELINE_CPP, rounds=rounds, **ad)
         return told, res, ad
 
     def test_round_two_is_told_the_accepted_measurement(self):
@@ -111,7 +111,7 @@ class TestTheEntryBaselineFollowsTheAcceptedBest(unittest.TestCase):
 class TestOptimizeAndFixHygiene(unittest.TestCase):
     def test_optimize_fn_strips_fence_to_whole_file(self):
         with tempfile.TemporaryDirectory() as tmp:
-            ad = _adapters(tmp)
+            ad  = _adapters(tmp)
             out = ad["optimize_fn"]("int OLD = 1;")
             self.assertEqual(out.strip(), "CANDIDATE_BODY;")   # fence peeled
 
@@ -123,7 +123,7 @@ class TestOptimizeAndFixHygiene(unittest.TestCase):
             return "```cpp\nFIXED_BODY;\n```"
 
         with tempfile.TemporaryDirectory() as tmp:
-            ad = _adapters(tmp, complete_fn=complete)
+            ad  = _adapters(tmp, complete_fn=complete)
             out = ad["fix_fn"]("int BAD = ;", "error: expected expression")
             self.assertEqual(out.strip(), "FIXED_BODY;")
             self.assertIn("expected expression", seen["user"])  # errors embedded
@@ -155,7 +155,7 @@ class TestParityFn(unittest.TestCase):
         # No parity harness -> cannot prove correctness -> SKIP (engine refuses).
         with tempfile.TemporaryDirectory() as tmp:
             ad = _adapters(tmp)   # parity_harness defaults None
-            v = ad["parity_fn"]("/some/bundle")
+            v  = ad["parity_fn"]("/some/bundle")
             self.assertEqual(v.status, PARITY_SKIP)
 
     def test_pass_and_fail_from_parity_json(self):
@@ -397,7 +397,7 @@ class TestParityFromVerify(unittest.TestCase):
 
     def test_skip_when_node_missing(self):
         vfn = lambda bundle, rows: {}   # verify reported nothing for the node
-        pf = optimizer_live.parity_fn_from_verify(vfn, "myNode", {})
+        pf  = optimizer_live.parity_fn_from_verify(vfn, "myNode", {})
         self.assertEqual(pf("/b").status, PARITY_SKIP)
 
 
@@ -447,7 +447,7 @@ class TestOptimizeSurviving(unittest.TestCase):
             return OptimizeResult(True, "WON", 9.0, 1.0, 9.0, 1, [], "ok")
 
         with tempfile.TemporaryDirectory() as tmp:
-            bad = self._write(tmp, "bad", "BOOM")
+            bad  = self._write(tmp, "bad", "BOOM")
             good = self._write(tmp, "good", "OK")
             res = self._run(tmp, [("bad", bad, {"suggested": {}}),
                                   ("good", good, {"suggested": {}})], engine)
@@ -476,9 +476,9 @@ class TestCancelStopsTheOptimizeLoop(unittest.TestCase):
             started.append(kw.get("node_type"))
             ad = optimizer_live.make_adapters(
                 spec, scratch, maya="/x", complete_fn=complete_fn,
-                node_type=kw.get("node_type"),
-                parity_fn=lambda b: ParityVerdict(PARITY_PASS),
-                benchmark_fn=lambda b: 10.0,
+                node_type    = kw.get("node_type"),
+                parity_fn    = lambda b: ParityVerdict(PARITY_PASS),
+                benchmark_fn = lambda b: 10.0,
                 run_step=lambda script, args, prefix, timeout: (None, False, ""))
             # The only piece that would want a real clang.
             ad["compile_fn"] = lambda cpp: (True, "", "bundle")
@@ -494,7 +494,7 @@ class TestCancelStopsTheOptimizeLoop(unittest.TestCase):
 
         started, lines = [], []
         with tempfile.TemporaryDirectory() as tmp:
-            first = self._write(tmp, "aNode", _BASELINE_CPP)
+            first  = self._write(tmp, "aNode", _BASELINE_CPP)
             second = self._write(tmp, "bNode", _BASELINE_CPP)
             res = optimizer_live.optimize_surviving(
                 [("aNode", first, _SPEC), ("bNode", second, _SPEC)], tmp,
@@ -532,7 +532,7 @@ class TestCancelStopsTheOptimizeLoop(unittest.TestCase):
 
         with tempfile.TemporaryDirectory() as tmp:
             cpp = self._write(tmp, "aNode", _BASELINE_CPP)
-            ev = threading.Event()
+            ev  = threading.Event()
             ev.set()
             res = optimizer_live.optimize_surviving(
                 [("aNode", cpp, _SPEC)], tmp, verify_fn=lambda b, r: {},
@@ -572,7 +572,7 @@ class TestOptimizeSurvivingChainsTheAdapterCallback(unittest.TestCase):
         from mpynode.native.ai.optimizer import RoundRecord
         from mpynode.native.compiler import bundler
         seen = []
-        rec = RoundRecord(1, "accept", slug="hoist_invariant", ms=8.0)
+        rec  = RoundRecord(1, "accept", slug="hoist_invariant", ms=8.0)
         with tempfile.TemporaryDirectory() as tmp:
             cpp = self._write(tmp, "kDTree", "BASE")
             optimizer_live.optimize_surviving(
@@ -591,7 +591,7 @@ class TestOptimizeSurvivingChainsTheAdapterCallback(unittest.TestCase):
         put the baseline update back inside that blast radius."""
         from mpynode.native.ai.optimizer import RoundRecord
         seen = []
-        rec = RoundRecord(1, "accept", slug=123, ms=8.0)   # writer will raise
+        rec  = RoundRecord(1, "accept", slug=123, ms=8.0)   # writer will raise
         with tempfile.TemporaryDirectory() as tmp:
             cpp = self._write(tmp, "kDTree", "BASE")
             optimizer_live.optimize_surviving(
@@ -638,7 +638,7 @@ class TestANoChangeRoundLeavesNoDuplicateOnDisk(unittest.TestCase):
         can mistake it for source the round produced."""
         with tempfile.TemporaryDirectory() as tmp:
             _w, path = self._no_change_round(tmp)
-            names = sorted(os.listdir(self._dir(tmp)))
+            names  = sorted(os.listdir(self._dir(tmp)))
             filled = [n for n in names if n.startswith("01_")]
             self.assertEqual(len(filled), 1, names)
             self.assertFalse(filled[0].endswith(".cpp"), filled)
@@ -737,7 +737,7 @@ class TestOptimizerRewriteTimeout(unittest.TestCase):
                 os.environ["MPYNODE_OPT_TIMEOUT"] = old
 
     def test_optimize_cli_timeout_env_override(self):
-        old = os.environ.get("MPYNODE_OPT_TIMEOUT")
+        old                               = os.environ.get("MPYNODE_OPT_TIMEOUT")
         os.environ["MPYNODE_OPT_TIMEOUT"] = "1234"
         try:
             self.assertEqual(optimizer_live._optimize_cli_timeout(), 1234.0)
@@ -756,7 +756,7 @@ class TestOptimizerRewriteTimeout(unittest.TestCase):
 
         def fake_make(cancel_event=None, log_cb=None, timeout=None,
                       max_tokens=None):
-            seen["timeout"] = timeout
+            seen["timeout"]    = timeout
             seen["max_tokens"] = max_tokens
             return lambda system, user: "```cpp\nX;\n```"
 
@@ -892,9 +892,9 @@ class TestApiCancelReachesTheRetryLoop(unittest.TestCase):
                 return b'{"content": [{"type": "text", "text": "X;"}]}'
 
         def fake_urlopen(req, timeout=None, context=None):
-            seen["method"] = req.get_method()
-            seen["url"] = req.full_url
-            seen["body"] = req.data
+            seen["method"]  = req.get_method()
+            seen["url"]     = req.full_url
+            seen["body"]    = req.data
             seen["headers"] = dict(req.header_items())
             seen["timeout"] = timeout
             return _Resp()
@@ -919,7 +919,7 @@ class TestApiCancelReachesTheRetryLoop(unittest.TestCase):
         cancel_event stays None. Compared field by field against the optimizer's
         request rather than assumed: this is the one path where a silent change
         would alter shipped compiles."""
-        ev = threading.Event()
+        ev          = threading.Event()
         porter_seen = self._spy(lambda lc: lc._complete("sys", "user"))
         opt_seen = self._spy(
             lambda lc: lc.make_cli_complete_fn(cancel_event=ev)("sys", "user"))
@@ -1053,7 +1053,7 @@ class TestOptimizeTimeoutUnbounded(unittest.TestCase):
     MPYNODE_OPT_TIMEOUT (set by the UI from the preference) means UNBOUNDED."""
 
     def _with_env(self, val):
-        old = os.environ.get("MPYNODE_OPT_TIMEOUT")
+        old                               = os.environ.get("MPYNODE_OPT_TIMEOUT")
         os.environ["MPYNODE_OPT_TIMEOUT"] = val
         try:
             return optimizer_live._optimize_cli_timeout()
@@ -1079,8 +1079,8 @@ class TestLLMClientUnboundedTimeout(unittest.TestCase):
     a None timeout still collapses to the shipped default (porter unchanged)."""
 
     class _FakeProc:
-        stdout = "OUT"
-        stderr = ""
+        stdout     = "OUT"
+        stderr     = ""
         returncode = 0
 
     def _run_with(self, timeout):
@@ -1121,7 +1121,7 @@ class TestRunStepCancellable(unittest.TestCase):
         long-running child mayapy so the poll loop must terminate it to proceed."""
 
         def __init__(self):
-            self._done = threading.Event()
+            self._done      = threading.Event()
             self.returncode = None
             self.terminated = False
 
@@ -1262,7 +1262,7 @@ def _heartbeat_lines(want=2, interval=0.02):
     return the lines it emitted. Never the shipped 300s: the label and the reset
     are what is under test, not the wall clock."""
     seen = []
-    hb = optimizer_live._Heartbeat(seen.append, "kDTree", interval=interval)
+    hb   = optimizer_live._Heartbeat(seen.append, "kDTree", interval=interval)
     with hb:
         hb.set_round(1, 2)
         deadline = time.time() + 5.0
@@ -1316,9 +1316,9 @@ def _heartbeat_phase_ticks(phases, interval=0.02):
     "finishing up" label, reached the way the code reaches it -- ``set_round``
     past the last round) and return ``{phase: the tick it emitted}``. Squeezed
     interval; the wording is under test, not the wall clock."""
-    seen = []
+    seen  = []
     ticks = {}
-    hb = optimizer_live._Heartbeat(seen.append, "kDTree", interval=interval)
+    hb    = optimizer_live._Heartbeat(seen.append, "kDTree", interval=interval)
 
     def _wait_for(text):
         deadline = time.time() + 5.0
@@ -1356,7 +1356,7 @@ class TestSweepCompileOneDropsTheHeartbeat(unittest.TestCase):
         path = os.path.join(optimizer_live._project_root(), "tools",
                             "sweep_compile_one.py")
         spec = importlib.util.spec_from_file_location("_sweep_one", path)
-        mod = importlib.util.module_from_spec(spec)
+        mod  = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(mod)
         needles = list(mod._heartbeat_needles())
         self.assertTrue(needles, "the heartbeat filter is gone entirely")
@@ -1365,9 +1365,9 @@ class TestSweepCompileOneDropsTheHeartbeat(unittest.TestCase):
     def test_every_phase_the_heartbeat_emits_is_dropped(self):
         """Enumerated from ``_ADAPTER_PHASES`` -- the table the filter derives
         from -- so a sixth sub-phase is covered the day it is added."""
-        phases = [p for _key, p in optimizer_live._ADAPTER_PHASES]
+        phases  = [p for _key, p in optimizer_live._ADAPTER_PHASES]
         needles = self._needles()
-        ticks = _heartbeat_phase_ticks(phases)
+        ticks   = _heartbeat_phase_ticks(phases)
 
         self.assertEqual(sorted(ticks), sorted(phases + ["finishing up"]))
         for phase, tick in sorted(ticks.items()):

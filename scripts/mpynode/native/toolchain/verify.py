@@ -123,7 +123,7 @@ def _default_verify(bundle_path, rows, maya=_MAYA_DEFAULT,
         if _timing_enabled() and "timing" not in res:
             res["timing"] = {
                 "measured": False,
-                "reason": "not timed -- generic parity did not pass for this "
+                "reason":   "not timed -- generic parity did not pass for this "
                           "node, so there is no trustworthy pair to measure (%s)"
                           % (res.get("reason") or "skipped")}
         # Augment with the node's authored @maya_test(s): a stronger gate for
@@ -188,7 +188,7 @@ def _run_authored_tests(cmds, bundle_path, spec):
         results.append(
             methods_registry.run_test_on_node_name(comp, source, ts.func_name))
     passes = sum(1 for r in results if r["passed"])
-    fails = [r for r in results if not r["passed"]]
+    fails  = [r for r in results if not r["passed"]]
     reason = "" if not fails else "; ".join(
         "%s: %s" % (r["name"], r["error"]) for r in fails)
     return {"ran": True, "passed": not fails, "count": len(results),
@@ -205,7 +205,7 @@ def _merge_authored_test(res, authored):
       * when the generic verify RAN, both must pass.
     The aggregate is attached under ``res['authored_test']`` and summarised in
     ``reason`` so the compile report can surface it."""
-    res = dict(res)
+    res                  = dict(res)
     res["authored_test"] = authored
     # Whether the GENERIC pointwise compare ran, kept apart from the merged
     # `ran` below -- that one becomes True on the authored test alone, and a
@@ -215,7 +215,7 @@ def _merge_authored_test(res, authored):
         if res.get("ran"):
             res["pass"] = bool(res.get("pass")) and bool(authored["passed"])
         else:
-            res["ran"] = True
+            res["ran"]  = True
             res["pass"] = bool(authored["passed"])
             if res.get("tol") is None:
                 res["tol"] = 0.0
@@ -224,7 +224,7 @@ def _merge_authored_test(res, authored):
     else:
         extra = ("authored @maya_test: %d/%d passed"
                  % (authored.get("passes", 0), authored.get("count", 0)))
-    prev = (res.get("reason") or "").strip()
+    prev          = (res.get("reason") or "").strip()
     res["reason"] = (prev + " | " + extra) if prev else extra
     return res
 
@@ -273,9 +273,9 @@ def _geo_output_components(node, attr, geo_type):
         geo = None
     if not geo:
         return [0.0]
-    pts = geo.get("pts") or []
+    pts  = geo.get("pts") or []
     topo = geo.get("topo") or ()
-    sig = []
+    sig  = []
     for part in topo:
         if isinstance(part, (list, tuple)):
             sig.append(float(len(part)))
@@ -340,8 +340,8 @@ def _env_float(name, default):
 
 _TIMING_WARN_RATIO = _env_float("MPYNODE_TIMING_WARN_RATIO", 5)
 _TIMING_LOUD_RATIO = 10.0
-_TIMING_BUDGET_S = _env_float("MPYNODE_TIMING_BUDGET_S", 90)
-_TIMING_SAMPLES = 3
+_TIMING_BUDGET_S   = _env_float("MPYNODE_TIMING_BUDGET_S", 90)
+_TIMING_SAMPLES    = 3
 
 
 def _timing_enabled():
@@ -444,15 +444,15 @@ def _timing_verdict(py_ms, cpp_ms, floor_ms, n, truncated, scene,
     # knob) grows the COMPILED side's cost while the interpreted side stays flat,
     # so py_ms would sit under the floor forever no matter how slow the port got.
     if max(py_ms, cpp_ms) < floor_ms:
-        row["ratio"] = (cpp_ms / py_ms) if py_ms > 0 else None
+        row["ratio"]   = (cpp_ms / py_ms) if py_ms > 0 else None
         row["verdict"] = "below-floor"
         return row
-    ratio = (cpp_ms / py_ms) if py_ms > 0 else float("inf")
+    ratio        = (cpp_ms / py_ms) if py_ms > 0 else float("inf")
     row["ratio"] = ratio
     if ratio < _TIMING_WARN_RATIO:
         row["verdict"] = "ok"
         return row
-    loud = ratio >= _TIMING_LOUD_RATIO
+    loud           = ratio >= _TIMING_LOUD_RATIO
     row["verdict"] = "much-slower" if loud else "slower"
     if warn is None:
         warn = _timing_warn_enabled()
@@ -488,8 +488,8 @@ def _pair_stats(a, b):
       * a pair with EXACTLY ONE side non-finite is a real discrepancy -> +inf;
       * otherwise the abs difference contributes to ``maxerr``."""
     maxerr = 0.0
-    n_cmp = 0
-    n_div = 0
+    n_cmp  = 0
+    n_div  = 0
     for x, y in zip(a, b):
         fx, fy = math.isfinite(x), math.isfinite(y)
         if not fx and not fy:
@@ -528,8 +528,8 @@ def _rand_matrix16(random):
     """A non-trivial but well-formed row-vector affine matrix (flat-16, row-major):
     random 3x3 upper-left + translate row, last column (indices 3/7/11/15) pinned
     to the affine [0,0,0,1] so Maya accepts it as a matrix."""
-    m = [random.uniform(-1.5, 1.5) for _ in range(16)]
-    m[3] = m[7] = m[11] = 0.0
+    m     = [random.uniform(-1.5, 1.5) for _ in range(16)]
+    m[3]  = m[7] = m[11] = 0.0
     m[15] = 1.0
     return m
 
@@ -588,8 +588,8 @@ _NON_DRIVEABLE_IN = frozenset(("string", "hex"))
 # Output geometry plug per typed geo input kind (the connection SOURCE the wiring
 # helper reads off a freshly-built upstream shape).
 _GEO_SRC_PLUG = {
-    "mesh": ".worldMesh[0]",
-    "nurbsCurve": ".worldSpace[0]",
+    "mesh":         ".worldMesh[0]",
+    "nurbsCurve":   ".worldSpace[0]",
     "nurbsSurface": ".worldSpace[0]",
 }
 
@@ -618,7 +618,7 @@ def _make_upstream_shape(cmds, geo_type, cfg, density=None):
         # consumer got no topology variation at all. `% 3` against _GEO_CFGS = 5
         # keeps the A->B->C->A revisit the sweep relies on, and cfg 0 still yields
         # 4 -- so the scalar parity path, which always passes cfg 0, is unchanged.
-        n = int(density) if density else 4 + (cfg % 3)
+        n  = int(density) if density else 4 + (cfg % 3)
         tr = cmds.sphere(ch=False, sections=n, spans=n)[0]
     shp = cmds.listRelatives(tr, s=True, f=True)[0]
     return shp + _GEO_SRC_PLUG[geo_type]
@@ -637,7 +637,7 @@ def _wire_geo_input(cmds, nodes, attr, geo_type, is_array, cfg, density=None,
     upstream shape (a fresh one for this ``cfg`` / ``density``). Default False, so
     every pre-existing caller keeps the idempotent behaviour byte-for-byte."""
     n_elems = 3 if is_array else 1
-    ok = True
+    ok      = True
     for i in range(n_elems):
         need = []
         for nd in nodes:
@@ -866,15 +866,15 @@ def _skin_rig(cmds, tag):
     xf = cmds.polyCylinder(r=0.5, h=6.0, sx=8, sy=6, sz=1, ch=False,
                            name="skinA_" + tag)[0]
     cmds.select(clear=True)
-    j0 = cmds.joint(p=(0.0, -3.0, 0.0), name="j0_" + tag)
-    j1 = cmds.joint(p=(0.0, 0.0, 0.0), name="j1_" + tag)
-    j2 = cmds.joint(p=(0.0, 3.0, 0.0), name="j2_" + tag)
+    j0     = cmds.joint(p=(0.0, -3.0, 0.0), name="j0_" + tag)
+    j1     = cmds.joint(p=(0.0, 0.0, 0.0),  name="j1_" + tag)
+    j2     = cmds.joint(p=(0.0, 3.0, 0.0),  name="j2_" + tag)
     joints = [j0, j1, j2]
     sc = cmds.skinCluster(joints + [xf], toSelectedBones=True,
                           maximumInfluences=2, obeyMaxInfluences=True)[0]
-    infl = list(cmds.skinCluster(sc, q=True, influence=True) or [])
-    order = [infl.index(j) for j in joints]
-    nv = cmds.polyEvaluate(xf, vertex=True)
+    infl    = list(cmds.skinCluster(sc, q=True, influence=True) or [])
+    order   = [infl.index(j) for j in joints]
+    nv      = cmds.polyEvaluate(xf, vertex=True)
     weights = []
     for vtx in range(nv):
         w = cmds.skinPercent(sc, "%s.vtx[%d]" % (xf, vtx), q=True, value=True)
@@ -912,7 +912,7 @@ def _skin_weight_values(weights, roll=0):
     """A declared per-vertex-per-joint weight array (twistWeights /
     swingWeights) sized N*J from the stock weights: the stock set as-is, or
     rolled one influence over and renormalised so a second set differs."""
-    J = len(weights[0]) if weights else 0
+    J   = len(weights[0]) if weights else 0
     out = []
     for row in weights:
         r = list(row[-roll % J:]) + list(row[:-roll % J]) if roll and J else list(row)
@@ -1194,14 +1194,14 @@ def parity_fixtures(spec, k=4, dirpath=None):
                and not _is_output_path_name(nm)]
     if not strings:
         return {}
-    compute = spec.get("compute") or ""
+    compute    = spec.get("compute") or ""
     is_texture = (spec.get("mpy_type") or "") == "mPyFile"
     reads_json = "frame_path(" in compute or ".json" in compute
     reads_ndio = "ndio.read(" in compute
     if not (is_texture or reads_json or reads_ndio):
         return {}
     dirpath = dirpath or tempfile.mkdtemp(prefix="mpynode-parity-fixtures-")
-    out = {}
+    out     = {}
     for nm, is_arr in strings:
         try:
             if is_texture:
@@ -1256,14 +1256,14 @@ def _metaclay_scene(res):
     mats = [_identity_matrix(0, 0, 0),
             _identity_matrix(0.6, 0.3, 0),
             _identity_matrix(0, 0, 0)]
-    stype = [1, 0, 2]          # box, sphere, cylinder
-    add = [1, 1, 0]            # union, union, subtract
+    stype  = [1, 0, 2]  # box, sphere, cylinder
+    add    = [1, 1, 0]  # union, union, subtract
     smooth = [0.0, 0.4, 0.0]
-    rad = [1.0, 0.7, 0.4]
-    hgt = [1.0, 1.0, 2.4]
-    ax = [1, 1, 0]
-    half = [[0.8, 0.8, 0.8], [0.5, 0.5, 0.5], [0.5, 0.5, 0.5]]
-    ops = []
+    rad    = [1.0, 0.7, 0.4]
+    hgt    = [1.0, 1.0, 2.4]
+    ax     = [1, 1, 0]
+    half   = [[0.8, 0.8, 0.8], [0.5, 0.5, 0.5], [0.5, 0.5, 0.5]]
+    ops    = []
     for i, m in enumerate(mats):
         ops.append({"plug": "shapeMatrix[%d]" % i, "kind": "matrix", "value": m})
     for i in range(len(stype)):
@@ -1299,8 +1299,8 @@ def _voxelize_scene(res):
 # Representative scenes, keyed by the TEMPLATE type name a compiled type name
 # starts with (metaballs -> metaballsSw); see builtin_scene_key.
 BUILTIN_SCENES = {
-    "metaClay": _metaclay_scene,
-    "metaballs": _metaclay_scene,
+    "metaClay":     _metaclay_scene,
+    "metaballs":    _metaclay_scene,
     "voxelizeMesh": _voxelize_scene,
 }
 
@@ -1310,7 +1310,7 @@ def builtin_scene_key(node_type, table=None):
     table = BUILTIN_SCENES if table is None else table
     if node_type in table:
         return node_type
-    low = (node_type or "").lower()
+    low   = (node_type or "").lower()
     cands = [k for k in table if low.startswith(k.lower())]
     return max(cands, key=len) if cands else None
 
@@ -1337,7 +1337,7 @@ def apply_scene_ops(cmds, node, ops):
     for op in ops or []:
         plug = "%s.%s" % (node, op["plug"])
         kind = op.get("kind", "scalar")
-        val = op["value"]
+        val  = op["value"]
         if kind == "matrix":
             cmds.setAttr(plug, *[float(x) for x in val], type="matrix")
         elif kind == "double3":
@@ -1384,11 +1384,11 @@ def bench_size_output_multis(cmds, node, spec, k):
     Never raises: a plug that will not connect is recorded and left.
     """
     out = {"sized": [], "skipped": []}
-    k = max(0, int(k))
+    k   = max(0, int(k))
     for attr, meta in sorted((spec.get("outputs") or {}).items()):
         if not isinstance(meta, dict) or not meta.get("is_array"):
             continue
-        t = meta.get("type")
+        t    = meta.get("type")
         sink = _sink_for(t)
         if sink is None:
             out["skipped"].append((attr, t, "no stock sink for this type"))
@@ -1425,7 +1425,7 @@ def seed_bench_scene(cmds, node, spec, *, k_array=512, geo_density=40,
     and candidate see the identical scene) while an exception is not.
     """
     import random as _random
-    rand = rand or _random.Random(20260808)
+    rand    = rand or _random.Random(20260808)
     enum_of = {}
     for nm, m in (spec.get("inputs") or {}).items():
         if isinstance(m, dict) and m.get("enum_names"):
@@ -1435,7 +1435,7 @@ def seed_bench_scene(cmds, node, spec, *, k_array=512, geo_density=40,
     for attr, meta in sorted((spec.get("inputs") or {}).items()):
         if not isinstance(meta, dict):
             continue
-        t = meta.get("type")
+        t      = meta.get("type")
         is_arr = bool(meta.get("is_array"))
         if t in _BENCH_SKIP_TYPES:
             report["skipped"].append((attr, t, "no scene-side value"))
@@ -1471,7 +1471,7 @@ def seed_bench_scene(cmds, node, spec, *, k_array=512, geo_density=40,
         except Exception as exc:
             report["skipped"].append((attr, t, str(exc)[:80]))
     # Outputs too: an array output with no consumer has no elements to write.
-    sized = bench_size_output_multis(cmds, node, spec, k_array)
+    sized             = bench_size_output_multis(cmds, node, spec, k_array)
     report["outputs"] = list(sized["sized"])
     report["skipped"].extend(sized["skipped"])
     return report
@@ -1484,11 +1484,11 @@ def seed_bench_scene(cmds, node, spec, *, k_array=512, geo_density=40,
 # node), not guessed; mesh/curve/surface defer to codegen._GEO_INFO so the attr
 # name has ONE spelling.
 _NATIVE_BENCH_OUTPUTS = {
-    "mPyDeformer":     (("outputGeometry", True),),
-    "mPySkinCluster":  (("outputGeometry", True),),
-    "mPyBlendShape":   (("outputGeometry", True),),
-    "mPyTransform":    (("matrix", False), ("_outLocalFlat", True)),
-    "mPyFile":         (("outColor", False), ("outAlpha", False)),
+    "mPyDeformer":    (("outputGeometry", True),),
+    "mPySkinCluster": (("outputGeometry", True),),
+    "mPyBlendShape":  (("outputGeometry", True),),
+    "mPyTransform":   (("matrix", False), ("_outLocalFlat", True)),
+    "mPyFile":        (("outColor", False), ("outAlpha", False)),
 }
 
 # Families with NO compute-driven output plug -- a plug-pull benchmark cannot
@@ -1527,7 +1527,7 @@ def bench_pull_plugs(spec):
         out.append((attr, bool(meta.get("is_array"))))
 
     mpy_type = spec.get("mpy_type")
-    native = list(_NATIVE_BENCH_OUTPUTS.get(mpy_type, ()))
+    native   = list(_NATIVE_BENCH_OUTPUTS.get(mpy_type, ()))
     # Geometry generators: reuse the codegen table so outMesh/outCurve/outSurface
     # are never re-spelled here.
     from mpynode.native import compiler as codegen
@@ -1558,13 +1558,13 @@ def bench_make_node(cmds, spec, type_name, density=40):
     Returns the node whose plugs the benchmark should pull.
     """
     from mpynode.native import compiler as codegen
-    base = (spec.get("suggested") or {}).get("mpx_base") or ""
+    base     = (spec.get("suggested") or {}).get("mpx_base") or ""
     mpy_type = spec.get("mpy_type") or ""
     is_deformer = (base in getattr(codegen, "_DEFORMER_BASES", ())
                    or mpy_type in ("mPyDeformer", "mPySkinCluster",
                                    "mPyBlendShape"))
     if is_deformer:
-        d = max(3, int(density))
+        d  = max(3, int(density))
         xf = cmds.polySphere(r=1, sx=d, sy=d, ch=False)[0]
         return cmds.deformer(xf, type=type_name)[0]
     return cmds.createNode(type_name)
@@ -1656,8 +1656,8 @@ def _geo_mover(cmds, plug, geo_type):
     if not srcs:
         return None, None
     src_plug = srcs[0]
-    shape = src_plug.split(".")[0]
-    comp = shape + comp_of.get(geo_type, ".vtx[0]")
+    shape    = src_plug.split(".")[0]
+    comp     = shape + comp_of.get(geo_type, ".vtx[0]")
 
     def fn(k, _comp=comp, _src=src_plug):
         cmds.move(1e-3, 0.0, 0.0, _comp, r=True)
@@ -1714,7 +1714,7 @@ def bench_perturb_fn(cmds, node, spec, hold=()):
     for attr, meta in sorted((spec.get("inputs") or {}).items()):
         if not isinstance(meta, dict):
             continue
-        t = meta.get("type")
+        t      = meta.get("type")
         is_arr = bool(meta.get("is_array"))
         # A rest/bind-style name, or a plug the representative scene holds
         # (see scene_hold): the workload's own setting, not something that
@@ -1795,7 +1795,7 @@ def _scale_pair_scene(cmds, nodes, in_meta, density, k_array, rand):
     for attr, meta in sorted((in_meta or {}).items()):
         if not isinstance(meta, dict):
             continue
-        t = meta.get("type")
+        t      = meta.get("type")
         is_arr = bool(meta.get("is_array"))
         try:
             if t in _GEO_IN_TYPES:
@@ -1842,10 +1842,10 @@ def _run_timing(cmds, spec, py_node, cpp_node, pull_py, pull_cpp, in_meta,
         floor = _timing_floor_ms()
         mesh_query = bool((spec.get("suggested") or {}).get(
             "uses_mesh_intersector"))
-        rand = _random.Random(20260812)
+        rand  = _random.Random(20260812)
         rungs = _timing_rungs()
-        res = None
-        rung = None
+        res   = None
+        rung  = None
         # Two rungs only, never a ladder climb: A, then at most B.
         for geo_d, k_arr in rungs:
             if time.perf_counter() > deadline:
@@ -1956,7 +1956,7 @@ class _ExpressionErrorTap:
     In-process by design: the interpreted node's compute runs in THIS mayapy."""
 
     def __init__(self):
-        self.hits = 0
+        self.hits  = 0
         self._real = None
 
     def write(self, s):
@@ -2260,7 +2260,7 @@ def _verify_one(cmds, bundle_path, spec, maya=_MAYA_DEFAULT, deadline=None):
     # no-file fallback -- the deformation / solve is compared for real and only the
     # decoded-pixel path goes unexercised. That caveat rides on the row's reason.
     reads_img = spec_extractor.spec_reads_image_file(spec)
-    base = spec.get("suggested", {}).get("mpx_base", "MPxNode")
+    base      = spec.get("suggested", {}).get("mpx_base", "MPxNode")
     # An mPyFile is no longer skipped: parity_fixtures() hands both nodes the
     # same generated gradient PNG and the compare runs at _TEXTURE_TOL. Only a
     # non-texture, non-geometry node that reads an image still has no fixture.
@@ -2314,7 +2314,7 @@ def _verify_one(cmds, bundle_path, spec, maya=_MAYA_DEFAULT, deadline=None):
     # ----- deformer family -----
     if base in codegen._DEFORMER_BASES:
         import mpynode
-        tol = 1e-3
+        tol      = 1e-3
         src_type = spec.get("mpy_type") or "mPyDeformer"
         # A skinCluster attached with a bare cmds.deformer has NO wired joints and
         # NO painted weights (J=0), so the generic point-compare pits two
@@ -2336,7 +2336,7 @@ def _verify_one(cmds, bundle_path, spec, maya=_MAYA_DEFAULT, deadline=None):
                               "polygon sphere, so pointwise parity is skipped -- "
                               "authored @maya_test drives a real NURBS surface"}
         IN_META = spec.get("inputs") or {}
-        INP = {k: v["type"] for k, v in IN_META.items()}
+        INP     = {k: v["type"] for k, v in IN_META.items()}
         ENUM = {k: (v.get("enum_names") or [])
                 for k, v in IN_META.items() if v.get("type") == "enum"}
         K_ARR = 4
@@ -2353,9 +2353,9 @@ def _verify_one(cmds, bundle_path, spec, maya=_MAYA_DEFAULT, deadline=None):
         else:
             sa = sph("origS_" + name)
         da = cmds.deformer(sa, type=src_type)[0]
-        w = mpynode.wrap_node(da)
+        w  = mpynode.wrap_node(da)
         for nm, m in IN_META.items():
-            t = m["type"]
+            t  = m["type"]
             ia = bool(m.get("is_array"))
             if t == "enum":
                 w.add_input_attr(nm, t, is_array=ia, enum_names=ENUM.get(nm) or None)
@@ -2436,7 +2436,7 @@ def _verify_one(cmds, bundle_path, spec, maya=_MAYA_DEFAULT, deadline=None):
             # a blank timing field would read as "measured, fine".
             row["timing"] = {
                 "measured": False,
-                "reason": "deformer timing not implemented -- the parity pair is "
+                "reason":   "deformer timing not implemented -- the parity pair is "
                           "bound to a fixed 12x12 sphere and its pull marshals "
                           "every vertex through Python"}
         return row
@@ -2462,7 +2462,7 @@ def _verify_one(cmds, bundle_path, spec, maya=_MAYA_DEFAULT, deadline=None):
         # tools/parity_sweep/parity_mPyIkSolver.py, run in-process here.
         import mpynode
         src_type = spec.get("mpy_type") or "mPyIkSolver"
-        IN_META = spec.get("inputs") or {}
+        IN_META  = spec.get("inputs") or {}
         ENUM = {k: (v.get("enum_names") or [])
                 for k, v in IN_META.items() if v.get("type") == "enum"}
         K_ARR = 4
@@ -2486,9 +2486,9 @@ def _verify_one(cmds, bundle_path, spec, maya=_MAYA_DEFAULT, deadline=None):
             return out
 
         sa = cmds.createNode(src_type)
-        w = mpynode.wrap_node(sa)
+        w  = mpynode.wrap_node(sa)
         for nm, m in IN_META.items():
-            t = m["type"]
+            t  = m["type"]
             ia = bool(m.get("is_array"))
             if t == "enum":
                 w.add_input_attr(nm, t, is_array=ia, enum_names=ENUM.get(nm) or None)
@@ -2504,9 +2504,9 @@ def _verify_one(cmds, bundle_path, spec, maya=_MAYA_DEFAULT, deadline=None):
         jb = chain("cmpIk_" + name)
         hb = cmds.ikHandle(sj=jb[0], ee=jb[-1], sol=sb)[0]
 
-        rest = ws(ja)
+        rest   = ws(ja)
         maxerr = 0.0
-        moved = False
+        moved  = False
         for _ in range(8):
             goal = (random.uniform(2.0, 9.0), random.uniform(-4.0, 4.0),
                     random.uniform(-4.0, 4.0))
@@ -2543,7 +2543,7 @@ def _verify_one(cmds, bundle_path, spec, maya=_MAYA_DEFAULT, deadline=None):
             # apply. A blank timing field would read as "measured, fine".
             row["timing"] = {
                 "measured": False,
-                "reason": "iksolver timing not implemented -- doSolve() is driven "
+                "reason":   "iksolver timing not implemented -- doSolve() is driven "
                           "by an ikHandle rather than an output-plug pull (see "
                           "bench_ik_rig)"}
         return row
@@ -2551,7 +2551,7 @@ def _verify_one(cmds, bundle_path, spec, maya=_MAYA_DEFAULT, deadline=None):
     # ----- scalar compute family (now also drives/compares ARRAY multis) -----
     tol = 1e-4
     from mpynode.wrappers._mpy_node import MPyNode
-    IN_META = spec.get("inputs") or {}
+    IN_META  = spec.get("inputs") or {}
     OUT_META = dict(spec.get("outputs") or {})
     OUT_META.update(_native_family_outputs(spec))
     INP = {k: v["type"] for k, v in IN_META.items()}
@@ -2577,7 +2577,7 @@ def _verify_one(cmds, bundle_path, spec, maya=_MAYA_DEFAULT, deadline=None):
     # (not add_input_attr'd), so a generic mPyNode can't host them. Rebuild the
     # Python original AS an mPyFile; a preset already present on the fresh node is
     # skipped in the add loops below. Genuine USER attrs are still added normally.
-    is_texture = spec.get("mpy_type") == "mPyFile"
+    is_texture   = spec.get("mpy_type") == "mPyFile"
     is_transform = spec.get("mpy_type") == "mPyTransform"
     if is_texture:
         from mpynode.wrappers.mpy_file import MPyFile
@@ -2604,7 +2604,7 @@ def _verify_one(cmds, bundle_path, spec, maya=_MAYA_DEFAULT, deadline=None):
     for nm, m in IN_META.items():
         if (is_texture or is_transform) and _is_native(orig, nm):
             continue  # native preset (uvCoord/fileName/...) already present
-        t = m["type"]
+        t  = m["type"]
         ia = bool(m.get("is_array"))
         if t == "enum":
             w.add_input_attr(nm, t, is_array=ia, enum_names=ENUM.get(nm) or None)
@@ -2617,7 +2617,7 @@ def _verify_one(cmds, bundle_path, spec, maya=_MAYA_DEFAULT, deadline=None):
     if (spec.get("init") or "").strip():
         w.set_init_expression(spec["init"])
     w.set_compute_expression(spec["compute"])
-    comp = cmds.createNode(name)
+    comp         = cmds.createNode(name)
     unregistered = _unregistered_type(cmds, comp, name, tol)
     if unregistered:
         return unregistered
@@ -2677,9 +2677,9 @@ def _verify_one(cmds, bundle_path, spec, maya=_MAYA_DEFAULT, deadline=None):
     peeled = sorted([nm for nm, m in IN_META.items()
                      if m["type"] in _NON_DRIVEABLE_IN and nm not in fixtures]
                     + geo_unwired)
-    maxerr = 0.0
-    compared = 0                    # non-vacuous guard: components actually paired
-    diverged = 0                   # pairs where BOTH sides blew up (non-finite)
+    maxerr   = 0.0
+    compared = 0  # non-vacuous guard: components actually paired
+    diverged = 0  # pairs where BOTH sides blew up (non-finite)
     # name -> (py_count, compiled_count). A DICT, not one slot: every diverging
     # output is kept so the strongest verdict decides (_pick_count_verdict).
     count_mismatch = {}
@@ -2688,7 +2688,7 @@ def _verify_one(cmds, bundle_path, spec, maya=_MAYA_DEFAULT, deadline=None):
     # interpreted count is a HIGH-WATER MARK and the compiled one is per-eval, so
     # recording every na != nb turned the deliberate semantics gap into a FAIL.
     out_hiwater = {}
-    stale_tail = {}
+    stale_tail  = {}
     first_drive = None              # input set #1, re-presented after the loop
 
     def _compare_once():
@@ -2700,7 +2700,7 @@ def _verify_one(cmds, bundle_path, spec, maya=_MAYA_DEFAULT, deadline=None):
             ao, na = ra[o]
             bo, nb = rb[o]
             if m.get("is_array"):
-                hw = max(out_hiwater.get(o, 0), nb)
+                hw             = max(out_hiwater.get(o, 0), nb)
                 out_hiwater[o] = hw
                 if na != nb:
                     if _is_stale_tail_shrink(na, nb, hw):
@@ -2710,15 +2710,15 @@ def _verify_one(cmds, bundle_path, spec, maya=_MAYA_DEFAULT, deadline=None):
             me, nc, nd = _pair_stats(ao, bo)
             err = max(err, me)
             ncomp += nc
-            ndiv += nd
+            ndiv  += nd
         return err, ncomp, ndiv
 
     # Only a carry-state node can be non-idempotent, and the probe costs an extra
     # evaluation per drive -- so decide ONCE, structurally, instead of probing all
     # 43 templates. See _interp_is_idempotent.
-    carry_state = _has_carry_state(spec)
+    carry_state          = _has_carry_state(spec)
     noncomparable_drives = 0
-    raised_drives = 0
+    raised_drives        = 0
     for _ in range(30):
         drive = {}
         for a, m in IN_META.items():
@@ -2754,7 +2754,7 @@ def _verify_one(cmds, bundle_path, spec, maya=_MAYA_DEFAULT, deadline=None):
     # it can never revisit one -- which is exactly where a mis-keyed cache hides.
     # Re-present input set #1 and compare against the interpreted node again.
     loop_maxerr = maxerr            # before the replay, so the two can be told apart
-    replay_err = None
+    replay_err  = None
     if first_drive:
         _apply_drive(cmds, (orig, comp), first_drive)
         # Re-checked, not assumed: this input set was comparable when it was
@@ -2910,12 +2910,12 @@ import re as _re
 # ``[^\n]*`` backtracks to the LAST self.X (``scale``), leaving the CV array
 # unseeded -- fatal for surfaces. ``*?`` (lazy) stops at the first one.
 _GEO_ROLE_RE = {
-    "points": _re.compile(r"self\.points\s*=\s*[^\n]*?self\.(\w+)"),
-    "counts": _re.compile(r"self\.counts\s*=\s*[^\n]*?self\.(\w+)"),
+    "points":  _re.compile(r"self\.points\s*=\s*[^\n]*?self\.(\w+)"),
+    "counts":  _re.compile(r"self\.counts\s*=\s*[^\n]*?self\.(\w+)"),
     "indices": _re.compile(r"self\.indices\s*=\s*[^\n]*?self\.(\w+)"),
-    "cvs": _re.compile(r"self\.cvs\s*=\s*[^\n]*?self\.(\w+)"),
-    "numU": _re.compile(r"self\.num_cvs_u\s*=\s*[^\n]*?self\.(\w+)"),
-    "numV": _re.compile(r"self\.num_cvs_v\s*=\s*[^\n]*?self\.(\w+)"),
+    "cvs":     _re.compile(r"self\.cvs\s*=\s*[^\n]*?self\.(\w+)"),
+    "numU":    _re.compile(r"self\.num_cvs_u\s*=\s*[^\n]*?self\.(\w+)"),
+    "numV":    _re.compile(r"self\.num_cvs_v\s*=\s*[^\n]*?self\.(\w+)"),
 }
 
 # The CONSTRUCTOR form -- ``Mesh(points=p, counts=c, indices=i)`` -- names the
@@ -2927,10 +2927,10 @@ _GEO_ROLE_RE = {
 # scanned only as far as the next ``,`` or ``)`` so one role cannot steal the next
 # argument's input. ``points=`` is kind-dependent, resolved in _geo_input_roles.
 _GEO_CTOR_ROLE_RE = {
-    "counts": _re.compile(r"\bcounts\s*=\s*[^\n,)]*?self\.(\w+)"),
+    "counts":  _re.compile(r"\bcounts\s*=\s*[^\n,)]*?self\.(\w+)"),
     "indices": _re.compile(r"\bindices\s*=\s*[^\n,)]*?self\.(\w+)"),
-    "numU": _re.compile(r"\bnum_u\s*=\s*[^\n,)]*?self\.(\w+)"),
-    "numV": _re.compile(r"\bnum_v\s*=\s*[^\n,)]*?self\.(\w+)"),
+    "numU":    _re.compile(r"\bnum_u\s*=\s*[^\n,)]*?self\.(\w+)"),
+    "numV":    _re.compile(r"\bnum_v\s*=\s*[^\n,)]*?self\.(\w+)"),
 }
 _GEO_CTOR_POINTS_RE = _re.compile(r"\bpoints\s*=\s*[^\n,)]*?self\.(\w+)")
 
@@ -3129,7 +3129,7 @@ def _read_geo_components(om2, node, kind, info):
     match with different topology still fails."""
     sel = om2.MSelectionList()
     sel.add(node)
-    mob = sel.getDependNode(0)
+    mob  = sel.getDependNode(0)
     plug = om2.MFnDependencyNode(mob).findPlug(info["attr"], True)
     try:
         data = plug.asMObject()
@@ -3283,12 +3283,12 @@ def _verify_geo(cmds, bundle_path, spec, kind, deadline=None):
     import mpynode
     from mpynode.native import compiler as codegen
 
-    tol = 1e-4
-    name = spec["suggested"]["node_type_name"]
+    tol      = 1e-4
+    name     = spec["suggested"]["node_type_name"]
     mpy_type = spec.get("mpy_type") or "mPyMesh"
-    info = codegen._GEO_INFO[kind]
-    inputs = spec.get("inputs") or {}
-    roles = _geo_input_roles(spec.get("compute") or "", kind)
+    info     = codegen._GEO_INFO[kind]
+    inputs   = spec.get("inputs") or {}
+    roles    = _geo_input_roles(spec.get("compute") or "", kind)
 
     cmds.file(new=True, force=True)
     if not cmds.pluginInfo(os.path.basename(bundle_path), q=True, loaded=True):
@@ -3296,15 +3296,15 @@ def _verify_geo(cmds, bundle_path, spec, kind, deadline=None):
     random.seed(4242)
     # Generated files for the string inputs a reader node needs (a JSON cube
     # sequence, an .ndio cache); {} for everything else -- see parity_fixtures.
-    fixtures = parity_fixtures(spec)
+    fixtures  = parity_fixtures(spec)
     scene_ops = builtin_scene_ops(name, 6)
 
     # Rebuild the Python original from the spec (its geo output attr is intrinsic
     # to the mPy* type -- we add only the user INPUT attrs).
     interp = cmds.createNode(mpy_type)
-    w = mpynode.wrap_node(interp)
+    w      = mpynode.wrap_node(interp)
     for nm, meta in inputs.items():
-        t = meta.get("type")
+        t  = meta.get("type")
         kw = {}
         if meta.get("is_array"):
             kw["is_array"] = True
@@ -3314,13 +3314,13 @@ def _verify_geo(cmds, bundle_path, spec, kind, deadline=None):
     if (spec.get("init") or "").strip():
         w.set_init_expression(spec["init"])
     w.set_compute_expression(spec["compute"])
-    comp = cmds.createNode(name)
+    comp         = cmds.createNode(name)
     unregistered = _unregistered_type(cmds, comp, name, tol)
     if unregistered:
         return unregistered
 
     saw_geom = False
-    maxerr = 0.0
+    maxerr   = 0.0
     for cfg in range(_GEO_CFGS):
         _drive_geo_inputs(cmds, (interp, comp), inputs, roles, cfg, random,
                           fixtures=fixtures)
@@ -3336,7 +3336,7 @@ def _verify_geo(cmds, bundle_path, spec, kind, deadline=None):
             # SIDES DISAGREE on emptiness that is a real divergence, not a skip.
             if (ci is None) != (cc is None):
                 return {"ran": True, "pass": False, "maxerr": float("inf"),
-                        "tol": tol,
+                        "tol":    tol,
                         "reason": "geo emptiness mismatch on %s (cfg %d): "
                                   "interp=%s compiled=%s"
                                   % (info["attr"], cfg,
@@ -3348,7 +3348,7 @@ def _verify_geo(cmds, bundle_path, spec, kind, deadline=None):
             if dump_dir:
                 _dump_geo_mismatch(dump_dir, name, cfg, ci, cc)
             return {"ran": True, "pass": False, "maxerr": float("inf"),
-                    "tol": tol,
+                    "tol":    tol,
                     "reason": "geo topology mismatch on %s (cfg %d): %s"
                               % (info["attr"], cfg,
                                  _topo_mismatch_detail(ci["topo"], cc["topo"]))}
@@ -3358,7 +3358,7 @@ def _verify_geo(cmds, bundle_path, spec, kind, deadline=None):
         ai, ac = ci.get("attrs", []), cc.get("attrs", [])
         if len(ai) != len(ac):
             return {"ran": True, "pass": False, "maxerr": float("inf"),
-                    "tol": tol,
+                    "tol":    tol,
                     "reason": "geo normals/colors channel mismatch on %s (cfg %d):"
                               " interp %d comps vs compiled %d"
                               % (info["attr"], cfg, len(ai), len(ac))}
@@ -3470,10 +3470,10 @@ def _scripts_root():
     root (which holds ``plug-ins/``), derived from THIS file's location:
     ``<root>/scripts/mpynode/native/toolchain/verify.py``."""
     toolchain_dir = os.path.dirname(os.path.abspath(__file__))
-    native_dir = os.path.dirname(toolchain_dir)
-    mpynode_dir = os.path.dirname(native_dir)
-    scripts_dir = os.path.dirname(mpynode_dir)
-    root_dir = os.path.dirname(scripts_dir)
+    native_dir    = os.path.dirname(toolchain_dir)
+    mpynode_dir   = os.path.dirname(native_dir)
+    scripts_dir   = os.path.dirname(mpynode_dir)
+    root_dir      = os.path.dirname(scripts_dir)
     return scripts_dir, root_dir
 
 
@@ -3489,7 +3489,7 @@ def _worker_cwd(env):
     site-packages that supply PIL and the interpreted decode fell back to
     MImage. A neutral cwd keeps the worker's environment the caller's."""
     payload = (env or {}).get("MPYNODE_VERIFY_PAYLOAD")
-    d = os.path.dirname(payload) if payload else None
+    d       = os.path.dirname(payload) if payload else None
     return d if d and os.path.isdir(d) else None
 
 
@@ -3521,9 +3521,9 @@ def _run_subprocess_verify(bundle_path, rows, *, maya=_MAYA_DEFAULT, runner=None
     runner = runner or _default_verify_runner
     tmpdir = None
     try:
-        tmpdir = tempfile.mkdtemp(prefix="mpynode_verify_")
+        tmpdir       = tempfile.mkdtemp(prefix="mpynode_verify_")
         payload_path = os.path.join(tmpdir, "payload.json")
-        result_path = os.path.join(tmpdir, "result.json")
+        result_path  = os.path.join(tmpdir, "result.json")
 
         # Only ship what the worker needs: bundle, (type_name, spec) per row,
         # and whether to run the authored @maya_test(s) inside the worker.
@@ -3541,14 +3541,14 @@ def _run_subprocess_verify(bundle_path, rows, *, maya=_MAYA_DEFAULT, runner=None
         env = dict(os.environ)
         # Make the subprocess import THIS mpynode + find the api plugins, and
         # tell the worker where to read/write.
-        cur_pp = env.get("PYTHONPATH", "")
+        cur_pp            = env.get("PYTHONPATH", "")
         env["PYTHONPATH"] = scripts_dir + (os.pathsep + cur_pp if cur_pp else "")
-        cur_pi = env.get("MAYA_PLUG_IN_PATH", "")
-        plugins_dir = os.path.join(root_dir, "plug-ins")
+        cur_pi            = env.get("MAYA_PLUG_IN_PATH", "")
+        plugins_dir       = os.path.join(root_dir, "plug-ins")
         env["MAYA_PLUG_IN_PATH"] = plugins_dir + (
             os.pathsep + cur_pi if cur_pi else "")
         env["MPYNODE_VERIFY_PAYLOAD"] = payload_path
-        env["MPYNODE_VERIFY_RESULT"] = result_path
+        env["MPYNODE_VERIFY_RESULT"]  = result_path
         # Avoid a Maya-version mismatch when a different-version mayapy is
         # spawned from the current session.
         for v in ("MAYA_LOCATION", "PYTHONHOME"):
@@ -3649,9 +3649,9 @@ def _verify_worker_main():
     import json
 
     payload_path = os.environ.get("MPYNODE_VERIFY_PAYLOAD", "")
-    result_path = os.environ.get("MPYNODE_VERIFY_RESULT", "")
-    out = {}
-    payload = {}
+    result_path  = os.environ.get("MPYNODE_VERIFY_RESULT", "")
+    out          = {}
+    payload      = {}
     try:
         with open(payload_path, encoding="utf-8") as fh:
             payload = json.load(fh)

@@ -42,12 +42,12 @@ def setup(self, *args, **kwargs):
                 out.append(n)
         return out
 
-    name = self.get_name()
+    name   = self.get_name()
     meshes = _meshes(_selection(override=kwargs.get("selection"), exclude=name))
     if len(meshes) < 2:
         raise SetupError("select one or more TARGET meshes then the BASE mesh LAST "
                          "to build %s" % self.NATIVE_TYPE)
-    base = meshes[-1]
+    base    = meshes[-1]
     targets = meshes[:-1]
     # S4 idempotency: "Run setup" is re-runnable -- only adopt the base mesh if
     # this blendShape is not already in its history.
@@ -110,8 +110,8 @@ def add_targets(self, meshes: list[str] = None):
     """
     from maya import cmds as mc
 
-    name = self.get_name()
-    sel = list(meshes) if meshes else (mc.ls(selection=True, long=False) or [])
+    name   = self.get_name()
+    sel    = list(meshes) if meshes else (mc.ls(selection=True, long=False) or [])
     picked = []
     for n in sel:
         # Never let the node be its own target, whatever is selected.

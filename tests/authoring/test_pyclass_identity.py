@@ -192,7 +192,7 @@ class TestLs(unittest.TestCase):
         a = MPyNode.create(name="lsBare1")
         b = MPyNode.create(name="lsSub1")
         b.set_py_class(_SUB_PATH)
-        loc = MPyLocator.create(name="lsLoc1")
+        loc   = MPyLocator.create(name="lsLoc1")
         names = set(w.get_name() for w in MPyNode.ls())
         self.assertIn(a.get_name(), names)
         self.assertIn(b.get_name(), names)
@@ -214,7 +214,7 @@ class TestLs(unittest.TestCase):
 
         n = MPyNode.create(name="lsBare3")
         MPyLocator.create(name="lsLoc3")
-        loc_names = set(w.get_name() for w in MPyLocator.ls())
+        loc_names  = set(w.get_name() for w in MPyLocator.ls())
         node_names = set(w.get_name() for w in MPyNode.ls())
         self.assertFalse(loc_names & node_names)
         self.assertIn(n.get_name(), node_names)
@@ -280,7 +280,7 @@ class TestAutoStamp(unittest.TestCase):
     def test_deformer_subclass_create_on_stamps_py_class(self):
         """The deformer's second constructor (``create_on``) must also stamp."""
         sph = mc.polySphere(constructionHistory=False)[0]
-        n = _DeformSub.create_on(sph, name="msDefOn")
+        n   = _DeformSub.create_on(sph, name="msDefOn")
         self.assertEqual(n.get_py_class(), _dotted(_DeformSub))
 
     def test_subtype_root_wrapper_create_does_not_stamp(self):
@@ -316,7 +316,7 @@ class TestMpnRoundTrip(unittest.TestCase):
     def test_serialize_omits_when_unset(self):
         from mpynode._common.io.mpn_io import serialize_node
 
-        n = MPyNode.create(name="mpn2")
+        n       = MPyNode.create(name="mpn2")
         payload = serialize_node(n)
         self.assertNotIn("class_path", payload)
         self.assertNotIn("py_class", payload)
@@ -374,19 +374,19 @@ class TestBakeIdentity(unittest.TestCase):
         return py_export.generate_node_script(py_node, **kw)
 
     def test_explicit_class_name_and_root_base(self):
-        n = MPyNode.create(name="bakeWeirdName")
+        n   = MPyNode.create(name="bakeWeirdName")
         src = self._gen(n, class_name="BlackWhiteThing")
         self.assertIn("from mpynode import MPyNode", src)
         self.assertIn("class BlackWhiteThing(MPyNode):", src)
 
     def test_no_ls_emitted(self):
-        n = MPyNode.create(name="bakeNoLs")
+        n   = MPyNode.create(name="bakeNoLs")
         src = self._gen(n, class_name="NoLsThing")
         self.assertNotIn("def ls(", src)
 
     def test_node_name_never_becomes_class_name(self):
-        n = MPyNode.create(name="uglyNodeName")
-        src = self._gen(n, class_name="CleanName")
+        n    = MPyNode.create(name="uglyNodeName")
+        src  = self._gen(n, class_name="CleanName")
         tree = ast.parse(src)
         classdefs = [c.name for c in ast.walk(tree)
                      if isinstance(c, ast.ClassDef)]
@@ -396,8 +396,8 @@ class TestBakeIdentity(unittest.TestCase):
     def test_subclass_instance_bakes_root_base_and_identity_name(self):
         # A logical subclass node: base is the ROOT wrapper (importable) and the
         # class name comes from the stamped identity, not the live subclass repr.
-        n = _PyClassSub.create(name="bakeSub")  # auto-stamps _pyClass
-        src = self._gen(n)  # no class_name -> derive from _pyClass short name
+        n   = _PyClassSub.create(name="bakeSub")  # auto-stamps _pyClass
+        src = self._gen(n)                        # no class_name -> derive from _pyClass short name
         self.assertIn("from mpynode import MPyNode", src)
         self.assertIn("class _PyClassSub(MPyNode):", src)
         self.assertNotIn("from mpynode import _PyClassSub", src)
@@ -423,7 +423,7 @@ class TestBakeNameResolution(unittest.TestCase):
 
         self.assertTrue(is_valid_class_name("Foo"))
         self.assertTrue(is_valid_class_name("BlackWhiteFile"))
-        self.assertTrue(is_valid_class_name("foo"))  # valid ident (lc = warn only)
+        self.assertTrue(is_valid_class_name("foo"))     # valid ident (lc = warn only)
         self.assertFalse(is_valid_class_name(""))
         self.assertFalse(is_valid_class_name("3Foo"))
         self.assertFalse(is_valid_class_name("Foo Bar"))
@@ -448,7 +448,7 @@ class TestBakeNameResolution(unittest.TestCase):
     def test_resolve_untagged_prompts_and_stamps(self):
         from mpynode._common.io.py_export import resolve_bake_class_name
 
-        n = MPyNode.create(name="uglyBakeName")
+        n    = MPyNode.create(name="uglyBakeName")
         name = resolve_bake_class_name(n, lambda: "CleanName")
         self.assertEqual(name, "CleanName")
         # A valid entered name stamps the node (importable in-memory class) so

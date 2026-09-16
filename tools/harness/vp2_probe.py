@@ -26,8 +26,8 @@ import os
 import shutil
 import sys
 
-BUNDLE = sys.argv[1]
-OUT = sys.argv[2]
+BUNDLE   = sys.argv[1]
+OUT      = sys.argv[2]
 BASELINE = "--baseline" in sys.argv  # expect the bug (subject flat) -> still ok
 os.makedirs(OUT, exist_ok=True)
 
@@ -53,13 +53,13 @@ def _stats(path):
         return {"file": path, "exists": False}
     im = Image.open(path).convert("RGB")
     w, h = im.size
-    px = list(im.getdata())
+    px  = list(im.getdata())
     lum = [0.299 * r + 0.587 * g + 0.114 * b for (r, g, b) in px]
     # Restrict the "textured?" judgement to NON-BLACK pixels (the plane), so a
     # flat-but-coloured plane on a black frame reads as flat, not textured.
     plane_lum = [v for v in lum if v > 0.5]
-    n = len(lum)
-    m = sum(lum) / n
+    n         = len(lum)
+    m         = sum(lum) / n
     if plane_lum:
         pmn, pmx = min(plane_lum), max(plane_lum)
     else:
@@ -114,7 +114,7 @@ try:
         mc.connectAttr(ramp + ".outColor", sh + ".outColor", force=True)
         mc.sets(plane, edit=True, forceElement=sg)
         mc.currentTime(1)
-        p = _ogs(os.path.join(OUT, "control_vp2"))
+        p              = _ogs(os.path.join(OUT, "control_vp2"))
         res["control"] = {"produced": p, "stats": _stats(p)}
     except Exception:
         import traceback
@@ -123,7 +123,7 @@ try:
     # -------- (B) SUBJECT: compiled scanlineTex via surfaceShader ------------
     try:
         from mpynode._base.plugins import load_or_reload_native_plugin
-        lr = load_or_reload_native_plugin(BUNDLE)
+        lr                       = load_or_reload_native_plugin(BUNDLE)
         res["subject"]["loaded"] = bool(lr.get("loaded"))
         if not lr.get("loaded"):
             res["subject"]["load_error"] = lr.get("error")
@@ -148,20 +148,20 @@ try:
                 res["subject"]["outColor_sample"] = mc.getAttr(tex + ".outColor")
             except Exception as e:
                 res["subject"]["outColor_err"] = str(e)
-            p = _ogs(os.path.join(OUT, "subject_vp2"))
+            p                          = _ogs(os.path.join(OUT, "subject_vp2"))
             res["subject"]["produced"] = p
-            res["subject"]["stats"] = _stats(p)
+            res["subject"]["stats"]    = _stats(p)
         else:
             res["subject"]["registered"] = False
     except Exception:
         import traceback
         res["subject"]["error"] = traceback.format_exc()
 
-    ctrl_ok = bool(res.get("control", {}).get("stats", {}).get("textured"))
-    subj_tex = bool(res.get("subject", {}).get("stats", {}).get("textured"))
+    ctrl_ok                 = bool(res.get("control", {}).get("stats", {}).get("textured"))
+    subj_tex                = bool(res.get("subject", {}).get("stats", {}).get("textured"))
     res["control_textured"] = ctrl_ok
     res["subject_textured"] = subj_tex
-    res["ok"] = ctrl_ok and (subj_tex or BASELINE)
+    res["ok"]               = ctrl_ok and (subj_tex or BASELINE)
 except Exception:
     import traceback
     res["errors"].append(traceback.format_exc())

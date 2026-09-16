@@ -78,7 +78,7 @@ class TestRunNodeSetupHelper(unittest.TestCase):
 
     class _FakeWrapper:
         def __init__(self, src):
-            self._src = src
+            self._src   = src
             self._calls = []
 
         def get_methods_source(self):

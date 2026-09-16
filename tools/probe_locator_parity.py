@@ -30,7 +30,7 @@ sys.path.insert(0, os.path.join(_ROOT, "scripts"))
 sys.path.insert(0, _HERE)
 
 OUT_DIR = "/tmp/probe_locator_parity"
-TOL = 1e-5          # the buffers are float32 on the Python side
+TOL     = 1e-5          # the buffers are float32 on the Python side
 
 # (name, compute) -- each must lower (verified by probe_locator_lowering.py).
 FIXTURES = [
@@ -321,7 +321,7 @@ def _shipped_template(name):
         data = json.load(fh)["data"]
     inputs = {}
     for plug, meta in (data.get("input_attrs") or {}).items():
-        meta = dict(meta)
+        meta         = dict(meta)
         meta["type"] = meta.pop("attr_type", meta.get("type"))
         inputs[plug] = meta
     return ("t_" + name, data.get("expression") or "",
@@ -344,7 +344,7 @@ class _EnumShim(int):
     for -- the VALUE semantics are what parity is testing."""
 
     def __new__(cls, value, names):
-        inst = int.__new__(cls, int(value))
+        inst        = int.__new__(cls, int(value))
         inst._names = list(names)
         return inst
 
@@ -383,13 +383,13 @@ def _interpreted(compute, init="", inputs=None):
     slf = _Self()
     _seed_inputs(slf, inputs)
     slf.wallclock = 0.0   # self.wallclock: the compiled probe POD starts at wallClock = 0.0
-    ns["self"] = slf
+    ns["self"]    = slf
     # The compiled probe's Inputs POD starts at wallClock = 0.0; pin the
     # interpreted clock to the same value so a wall-clock animation is compared
     # at ONE instant. (The compiled node's clock origin is the plugin's first
     # frame, not the epoch -- see the wall-clock note in nd_lower.)
     import time as _time_mod
-    _orig_time = _time_mod.time
+    _orig_time     = _time_mod.time
     _time_mod.time = lambda: 0.0
     try:
         exec(compute, ns)
@@ -428,7 +428,7 @@ def _compiled(name, compute, init="", inputs=None):
     with open(path, "w") as fh:
         fh.write(cpp)
 
-    maya = toolchain.default_maya_dir()
+    maya     = toolchain.default_maya_dir()
     compiler = toolchain.default_compiler()
     _link_maya_runtime(toolchain.maya_lib_dir(maya),
                        toolchain.maya_frameworks_dir(maya))
@@ -441,7 +441,7 @@ def _compiled(name, compute, init="", inputs=None):
             "-Wl,-rpath," + toolchain.maya_lib_dir(maya),
             "-Wl,-rpath," + toolchain.maya_frameworks_dir(maya)]
     env = toolchain.build_env(compiler) or None
-    r = subprocess.run(cmd, capture_output=True, text=True, env=env)
+    r   = subprocess.run(cmd, capture_output=True, text=True, env=env)
     if r.returncode != 0:
         raise AssertionError("%s probe build failed:\n%s" % (name, r.stderr[:3000]))
     run = subprocess.run([exe], capture_output=True, text=True, env=env)
@@ -486,19 +486,19 @@ def _py_elements(commands):
         elif slot == "polygons":
             out.append((slot, {
                 "points": buf["points"], "indices": buf["indices"],
-                "counts": buf["counts"],
-                "cull": bool(buf.get("cull_backfaces")),
-                "world": bool(buf.get("world_space")),
-                "precise": bool(buf.get("precise_hover")),
-                "wire": buf.get("wireframe") is not None,
+                "counts":     buf["counts"],
+                "cull":       bool(buf.get("cull_backfaces")),
+                "world":      bool(buf.get("world_space")),
+                "precise":    bool(buf.get("precise_hover")),
+                "wire":       buf.get("wireframe") is not None,
                 "wire_color": buf.get("wireframe"),
                 "wire_width": buf.get("wireframe_width"),
                 "wire_bonly": bool(buf.get("wireframe_boundary_only")),
-                "hl_fill": buf.get("highlight_fill"),
-                "hl_wire": buf.get("highlight_wire"),
+                "hl_fill":    buf.get("highlight_fill"),
+                "hl_wire":    buf.get("highlight_wire"),
                 # exactly one of these four is present -- see _flush_polygons
-                "face_colors": buf.get("face_colors"),
-                "vertex_colors": buf.get("vertex_colors"),
+                "face_colors":        buf.get("face_colors"),
+                "vertex_colors":      buf.get("vertex_colors"),
                 "face_vertex_colors": buf.get("face_vertex_colors"),
                 "uniform": buf.get("colors")}))
         else:
@@ -526,15 +526,15 @@ def _cpp_element(frame, slot, i):
         pg = frame["polys"][i]
         return {"points": pg["points"], "indices": pg["indices"],
                 "counts": pg["counts"], "cull": bool(pg["cull"]),
-                "world": bool(pg["worldSpace"]),
+                "world":   bool(pg["worldSpace"]),
                 "precise": bool(pg["preciseHover"]),
                 "wire": bool(pg["wire"]), "wire_color": pg["wireColor"],
                 "wire_width": pg["wireWidth"],
                 "wire_bonly": bool(pg["wireBoundaryOnly"]),
-                "hl_fill": bool(pg["highlightFill"]),
-                "hl_wire": bool(pg["highlightWire"]),
+                "hl_fill":    bool(pg["highlightFill"]),
+                "hl_wire":    bool(pg["highlightWire"]),
                 "colorMode": pg["colorMode"], "uniform": pg["uniform"],
-                "faceColors": pg["faceColors"],
+                "faceColors":   pg["faceColors"],
                 "vertexColors": pg["vertexColors"],
                 "faceVertexColors": pg["faceVertexColors"]}
     raise AssertionError("no comparison rule for slot %r" % slot)
@@ -556,8 +556,8 @@ def _cmp_poly_fill(want, got, tag, fails):
     if len(present) != 1:
         fails.append("%s expected exactly 1 fill, python has %s" % (tag, present))
         return 0.0
-    key = present[0]
-    py = np.asarray(want[key], dtype=float).reshape(-1, 4)
+    key  = present[0]
+    py   = np.asarray(want[key], dtype=float).reshape(-1, 4)
     mode = got["colorMode"]
 
     if mode == 0:
@@ -614,9 +614,9 @@ def main():
     fails = []
     for fixture in FIXTURES:
         name, compute = fixture[0], fixture[1]
-        init = fixture[2] if len(fixture) > 2 else ""
+        init   = fixture[2] if len(fixture) > 2 else ""
         inputs = fixture[3] if len(fixture) > 3 else None
-        py = _interpreted(compute, init, inputs)
+        py     = _interpreted(compute, init, inputs)
         try:
             frame = _compiled(name, compute, init, inputs)
         except AssertionError as exc:
@@ -624,9 +624,9 @@ def main():
             fails.append(name)
             continue
 
-        cpp_cmds = frame["cmds"]
-        flat = _py_elements(py)
-        py_slots = [s for s, _ in flat]
+        cpp_cmds  = frame["cmds"]
+        flat      = _py_elements(py)
+        py_slots  = [s for s, _ in flat]
         cpp_slots = [s for s, _ in cpp_cmds]
         if py_slots != cpp_slots:
             print("[%-10s] ORDER MISMATCH python=%s cpp=%s"

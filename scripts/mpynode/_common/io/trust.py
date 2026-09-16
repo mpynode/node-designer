@@ -41,7 +41,7 @@ _scene_trusted = True
 # authored-scene trust that :func:`note_file_imported` must reduce against.
 # ``None`` == not currently inside an import/reference transition.
 _import_prior = None
-_lock = threading.Lock()
+_lock         = threading.Lock()
 
 
 # ---- Per-scene flag (resolved on the main thread, read anywhere) ----
@@ -55,7 +55,7 @@ def begin_scene_change() -> None:
     absolute reset)."""
     global _scene_trusted, _import_prior
     _scene_trusted = False
-    _import_prior = None
+    _import_prior  = None
 
 
 def begin_import_change() -> None:
@@ -75,14 +75,14 @@ def reset_for_new_scene() -> None:
     """File > New / fresh session: authored content is trusted."""
     global _scene_trusted, _import_prior
     _scene_trusted = True
-    _import_prior = None
+    _import_prior  = None
 
 
 def note_file_opened(resolved: bool) -> None:
     """An open REPLACES the scene's trust with the opened file's resolution."""
     global _scene_trusted, _import_prior
     _scene_trusted = bool(resolved)
-    _import_prior = None
+    _import_prior  = None
 
 
 def note_file_imported(resolved: bool) -> None:
@@ -91,9 +91,9 @@ def note_file_imported(resolved: bool) -> None:
     :func:`begin_import_change` (falling back to the live flag if no snapshot
     was taken, e.g. a caller that didn't pair the before-event)."""
     global _scene_trusted, _import_prior
-    base = _import_prior if _import_prior is not None else _scene_trusted
+    base           = _import_prior if _import_prior is not None else _scene_trusted
     _scene_trusted = bool(base and resolved)
-    _import_prior = None
+    _import_prior  = None
 
 
 def pickle_trusted() -> bool:
@@ -159,7 +159,7 @@ def _save_store(data: dict) -> None:
 def is_remembered(path: str) -> bool:
     """True if ``path`` was previously trusted with an 'Always' decision
     (exact file, or any ancestor folder)."""
-    ap = os.path.abspath(path)
+    ap    = os.path.abspath(path)
     store = _load_store()
     if ap in store.get("files", []):
         return True

@@ -418,15 +418,15 @@ _SECTIONS = [
 
 _HELPERS = {
     "special": HELPER_BESSEL,
-    "linalg": HELPER_LU,
-    "interp": HELPER_BSPLINE,
-    "random": HELPER_RANDOM,
+    "linalg":  HELPER_LU,
+    "interp":  HELPER_BSPLINE,
+    "random":  HELPER_RANDOM,
 }
 
 
 def sections_for(source: str) -> list:
     """Return the section keys whose signatures appear in ``source``."""
-    src = source or ""
+    src  = source or ""
     keys = []
     for key, _text, pats in _SECTIONS:
         for p in pats:
@@ -444,8 +444,8 @@ def guide_for(source: str, include_helpers: bool = True) -> str:
     Always includes CORE; appends the section text (and verified C++ helper
     bodies) for every library signature detected in ``source``.
     """
-    parts = [CORE]
-    keys = sections_for(source)
+    parts       = [CORE]
+    keys        = sections_for(source)
     text_by_key = {k: t for k, t, _ in _SECTIONS}
     for key in keys:
         parts.append(text_by_key[key])
@@ -675,7 +675,7 @@ def _persistent_state_names(spec: dict):
     per-instance state (mirrors nd_lower._persistent_state_vars)."""
     import ast
 
-    src = "%s\n%s" % (spec.get("compute") or "", spec.get("init") or "")
+    src      = "%s\n%s" % (spec.get("compute") or "", spec.get("init") or "")
     declared = set(spec.get("inputs") or {}) | set(spec.get("outputs") or {})
     try:
         tree = ast.parse(src)
@@ -719,7 +719,7 @@ def guide_for_spec(spec: dict, include_helpers: bool = True) -> str:
     are appended too. A node flagged ``uses_mesh_intersector`` gets the
     closest-point mapping (the same flag emits <maya/MMeshIntersector.h> into the
     scaffold, which the porter itself may not add)."""
-    src = "%s\n%s" % (spec.get("compute") or "", spec.get("init") or "")
+    src   = "%s\n%s" % (spec.get("compute") or "", spec.get("init") or "")
     guide = guide_for(src, include_helpers=include_helpers)
     # The scaffold only declares the buffer when a path INPUT resolves (see
     # node_scaffold's `_path_in is None` suppression); promising `_imgPixels`

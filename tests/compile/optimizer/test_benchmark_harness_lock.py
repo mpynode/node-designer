@@ -70,7 +70,7 @@ def _load_func(name, ns=None):
     for node in tree.body:
         if isinstance(node, ast.FunctionDef) and node.name == name:
             mod = ast.Module(body=[node], type_ignores=[])
-            g = dict(ns or {})
+            g   = dict(ns or {})
             exec(compile(mod, _HARNESS, "exec"), g)
             return g[name]
     raise AssertionError("%s() not found in %s" % (name, _HARNESS))
@@ -105,7 +105,7 @@ def _bench_lock_fn(no_import=False):
 
 class _Env:
     def __init__(self, **kw):
-        self._kw = kw
+        self._kw  = kw
         self._old = {}
 
     def __enter__(self):

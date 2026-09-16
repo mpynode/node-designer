@@ -137,11 +137,11 @@ def throttle_step(state, now, cpu_now, period=_REFRESH_INTERVAL_SEC, backoff=_BA
     """
     if state["last_dirty"] is not None:
         spent = max(0.0, cpu_now - state["cpu_at_dirty"])
-        wait = max(period, backoff * spent)
+        wait  = max(period, backoff * spent)
         if (now - state["last_dirty"]) < wait:
             return False
         state["last_cost"] = spent
-    state["last_dirty"] = now
+    state["last_dirty"]   = now
     state["cpu_at_dirty"] = cpu_now
     return True
 
@@ -190,8 +190,8 @@ def _flush_parent_transform(parent_handle) -> bool:
         return False
     try:
         node_obj = parent_handle.object()
-        dep = om.MFnDependencyNode(node_obj)
-        ch = "translateX"
+        dep      = om.MFnDependencyNode(node_obj)
+        ch       = "translateX"
         try:
             from mpynode._common.plugs.auto_dirty import free_translate_channel
 
@@ -266,7 +266,7 @@ def _ensure_shared_timer() -> None:
 
 
 def _stop_shared_timer() -> None:
-    tid = _SHARED["timer_id"]
+    tid                 = _SHARED["timer_id"]
     _SHARED["timer_id"] = None
     if tid is None:
         return
@@ -345,7 +345,7 @@ def enable(node_obj: "om.MObject") -> None:
     _ensure_scene_callbacks_registered()
 
     handle = om.MObjectHandle(node_obj)
-    code = handle.hashCode()
+    code   = handle.hashCode()
     if code in _TIMERS:
         return  # already running for this node
 
@@ -367,7 +367,7 @@ def enable(node_obj: "om.MObject") -> None:
         pass
 
     _TIMERS[code] = {
-        "handle": handle,
+        "handle":        handle,
         "removal_cb_id": removal_cb_id,
         "parent_handle": parent_handle,
     }
@@ -379,8 +379,8 @@ def disable(node_obj: "om.MObject") -> None:
     the shared timer stops with the last enabled node.
     """
     handle = om.MObjectHandle(node_obj)
-    code = handle.hashCode()
-    rec = _TIMERS.pop(code, None)
+    code   = handle.hashCode()
+    rec    = _TIMERS.pop(code, None)
     if rec is None:
         return
     removal_cb_id = rec.get("removal_cb_id")

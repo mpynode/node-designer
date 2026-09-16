@@ -65,7 +65,7 @@ class TestCodegenEmitsClassification(unittest.TestCase):
         w.add_input_attr("uIn", "float")
         w.add_output_attr("outColor", "vector")
         w.set_compute_expression("self.outColor = [self.uIn, self.uIn, self.uIn]")
-        spec = spec_extractor.extract_spec(w.get_name())
+        spec                                = spec_extractor.extract_spec(w.get_name())
         spec["suggested"]["node_type_name"] = "classTestNode"
         if classif is not None:
             spec["suggested"]["classification"] = classif
@@ -98,7 +98,7 @@ class TestCodegenEnumDefault(unittest.TestCase):
         import maya.cmds as cmds
 
         cmds.file(new=True, force=True)
-        w = MPyNode.create(name="enumDefSrc#")
+        w  = MPyNode.create(name="enumDefSrc#")
         kw = {"enum_names": ["off", "on", "standby"]}
         if default_value is not None:
             kw["default_value"] = default_value
@@ -132,7 +132,7 @@ class TestBundlerPreservesClassification(unittest.TestCase):
         w.add_input_attr("uIn", "float")
         w.add_output_attr("outColor", "vector")
         w.set_compute_expression("self.outColor = [self.uIn, self.uIn, self.uIn]")
-        spec = spec_extractor.extract_spec(w.get_name())
+        spec                                = spec_extractor.extract_spec(w.get_name())
         spec["suggested"]["node_type_name"] = "bclassTestNode"
         spec["suggested"]["classification"] = "texture/2d:swatch/2dTextureSwatchGen"
         return spec
@@ -141,7 +141,7 @@ class TestBundlerPreservesClassification(unittest.TestCase):
         from mpynode.native import compiler as codegen
         from mpynode.native.compiler import bundler
         spec = self._spec()
-        cpp = codegen.generate_cpp(spec, for_port=False)  # complete stub cpp
+        cpp  = codegen.generate_cpp(spec, for_port=False)  # complete stub cpp
         frag, info = bundler.transform_node_cpp(
             cpp, spec["suggested"]["node_type_name"], lambda key: "0x00081234")
         self.assertIn('MString _classif("texture/2d:swatch/2dTextureSwatchGen");',
@@ -161,7 +161,7 @@ class TestExtractSpecCapturesMpyFileClassification(unittest.TestCase):
             node = cmds.createNode("mPyFile")
         except Exception as exc:
             self.skipTest("mPyFile node type not available: %s" % exc)
-        spec = spec_extractor.extract_spec(node)
+        spec    = spec_extractor.extract_spec(node)
         classif = spec["suggested"].get("classification", "")
         self.assertIn("texture/2d", classif)
         self.assertNotIn("drawdb/", classif)  # VP2-override segment is Phase 2
@@ -186,13 +186,13 @@ class TestDeformNormalsLowering(unittest.TestCase):
         return {
             "suggested": {"node_type_name": "sineRippleTest",
                           "class_name": "SineRippleTest",
-                          "type_id": "0x00070199",
+                          "type_id":    "0x00070199",
                           "mpx_base": "MPxDeformerNode"},
             "mpy_type": "mPyDeformer",
-            "compute": self._COMPUTE,
-            "init": "import numpy as np\nimport maya.OpenMaya as om\n",
-            "inputs": {"amplitude": {"type": "float"}},
-            "outputs": {},
+            "compute":  self._COMPUTE,
+            "init":     "import numpy as np\nimport maya.OpenMaya as om\n",
+            "inputs":   {"amplitude": {"type": "float"}},
+            "outputs":  {},
             "portability": {"portable": True, "blockers": [], "warnings": [],
                             "reads_image_file": False},
         }
@@ -250,12 +250,12 @@ class TestGeoImageFileScaffold(unittest.TestCase):
         return {
             "suggested": {"node_type_name": "imgGeoTest",
                           "class_name": "ImgGeoTest",
-                          "type_id": "0x00070198",
-                          "mpx_base": "MPxNode",
+                          "type_id":    "0x00070198",
+                          "mpx_base":   "MPxNode",
                           "reads_image_file": reads_image},
             "mpy_type": "mPyMesh",
-            "compute": self._COMPUTE,
-            "init": "",
+            "compute":  self._COMPUTE,
+            "init":     "",
             "inputs": (inputs if inputs is not None
                        else {"fileName": {"type": "string"}}),
             "outputs": {},
@@ -266,10 +266,10 @@ class TestGeoImageFileScaffold(unittest.TestCase):
     def test_image_read_emits_cached_decode(self):
         from mpynode.native import compiler as codegen
         cpp = codegen.generate_cpp(self._spec(), for_port=True)
-        self.assertIn("maya/MImage.h", cpp)
-        self.assertIn("NdImgRawCache", cpp)     # per-instance cache + lock
-        self.assertIn("nd_img_load_raw", cpp)   # the cached decode, not a
-        self.assertIn("_imgPixels", cpp)        # readFromFile per compute()
+        self.assertIn("maya/MImage.h",   cpp)
+        self.assertIn("NdImgRawCache",   cpp)  # per-instance cache + lock
+        self.assertIn("nd_img_load_raw", cpp)  # the cached decode, not a
+        self.assertIn("_imgPixels",      cpp)  # readFromFile per compute()
 
     def test_image_read_tells_the_porter_what_it_got(self):
         # The three facts a translator cannot recover from the buffer itself.
@@ -277,9 +277,9 @@ class TestGeoImageFileScaffold(unittest.TestCase):
         # transfer function, or crashes on a blank path.
         from mpynode.native import compiler as codegen
         cpp = codegen.generate_cpp(self._spec(), for_port=True)
-        self.assertIn("_imgPixels", cpp)
-        self.assertIn("BOTTOM-UP", cpp)
-        self.assertIn("RAW 8-bit", cpp)
+        self.assertIn("_imgPixels",   cpp)
+        self.assertIn("BOTTOM-UP",    cpp)
+        self.assertIn("RAW 8-bit",    cpp)
         self.assertIn("_imgOK false", cpp)
 
     def test_no_image_read_omits_the_cache(self):
@@ -288,9 +288,9 @@ class TestGeoImageFileScaffold(unittest.TestCase):
         from mpynode.native import compiler as codegen
         cpp = codegen.generate_cpp(self._spec(reads_image=False),
                                    for_port=True)
-        self.assertNotIn("NdImgRawCache", cpp)
+        self.assertNotIn("NdImgRawCache",   cpp)
         self.assertNotIn("nd_img_load_raw", cpp)
-        self.assertNotIn("BOTTOM-UP", cpp)
+        self.assertNotIn("BOTTOM-UP",       cpp)
 
     def test_string_array_path_input_rejects_honestly(self):
         # The path input is resolved by _pick_path_input, which prefers ANY
@@ -313,7 +313,7 @@ class TestGeoImageFileScaffold(unittest.TestCase):
 # input shape -- which is the whole point of the cross-base invariant test.
 
 _IMG_SCALAR_IN = {"fileName": {"type": "string"}}
-_IMG_ARRAY_IN = {"filePaths": {"type": "string", "is_array": True}}
+_IMG_ARRAY_IN  = {"filePaths": {"type": "string", "is_array": True}}
 # No string/hex input at all: the node's path is hardcoded (or comes from a
 # stored var), so there is no path PLUG to read.
 _IMG_NO_PATH_IN = {"amount": {"type": "float"}}
@@ -343,9 +343,9 @@ _IMG_COMPUTE = {
 }
 _IMG_MPY_TYPE = {"MPxNode": "mPyNode", "geo": "mPyMesh",
                  "MPxDeformerNode": "mPyDeformer",
-                 "MPxSkinCluster": "mPySkinCluster",
+                 "MPxSkinCluster":  "mPySkinCluster",
                  "MPxIkSolverNode": "mPyIkSolver",
-                 "MPxLocatorNode": "mPyLocator",
+                 "MPxLocatorNode":  "mPyLocator",
                  "MPxTransform": "mPyTransform"}
 
 
@@ -354,7 +354,7 @@ def _img_spec(base, inputs, reads_image=True):
 
     ``base`` "geo" means a plain MPxNode driven through the geometry GENERATOR
     emitter (mpy_type mPyMesh); every other value is the literal mpx_base."""
-    src_key = "MPxDeformerNode" if base == "MPxSkinCluster" else base
+    src_key    = "MPxDeformerNode" if base == "MPxSkinCluster" else base
     string_ins = [k for k, v in inputs.items() if v.get("type") == "string"]
     path = ('"/tmp/hardcoded.png"' if not string_ins
             else "self." + string_ins[0])
@@ -362,14 +362,14 @@ def _img_spec(base, inputs, reads_image=True):
     return {
         "suggested": {"node_type_name": "imgScafTest",
                       "class_name": "ImgScafTest",
-                      "type_id": "0x000701a4",
-                      "mpx_base": ("MPxNode" if base == "geo" else base),
+                      "type_id":    "0x000701a4",
+                      "mpx_base":   ("MPxNode" if base == "geo" else base),
                       "reads_image_file": reads_image},
         "mpy_type": _IMG_MPY_TYPE[base],
-        "compute": _IMG_COMPUTE[src_key] % path,
-        "init": "",
-        "inputs": dict(inputs),
-        "outputs": outs,
+        "compute":  _IMG_COMPUTE[src_key] % path,
+        "init":     "",
+        "inputs":   dict(inputs),
+        "outputs":  outs,
         "portability": {"portable": True, "blockers": [], "warnings": [],
                         "reads_image_file": reads_image},
     }
@@ -390,8 +390,8 @@ class TestDeformerImageFileScaffold(unittest.TestCase):
         from mpynode.native import compiler as codegen
         cpp = codegen.generate_cpp(
             _img_spec("MPxDeformerNode", _IMG_SCALAR_IN), for_port=True)
-        self.assertIn("NdImgRawCache _imgRawCache;", cpp)   # declared
-        self.assertIn("nd_img_load_raw(_imgRawCache", cpp)  # AND called
+        self.assertIn("NdImgRawCache _imgRawCache;",     cpp)  # declared
+        self.assertIn("nd_img_load_raw(_imgRawCache",    cpp)  # AND called
         self.assertIn("const unsigned char* _imgPixels", cpp)
 
     def test_skincluster_scalar_path_emits_cached_decode_and_buffer(self):
@@ -412,8 +412,8 @@ class TestDeformerImageFileScaffold(unittest.TestCase):
         cpp = codegen.generate_cpp(
             _img_spec("MPxDeformerNode", _IMG_ARRAY_IN), for_port=True)
         self.assertIn("NdImgCompositeCache _imgCompCache;", cpp)
-        self.assertIn("nd_img_composite(_imgCompCache", cpp)
-        self.assertIn("const unsigned char* _imgPixels", cpp)
+        self.assertIn("nd_img_composite(_imgCompCache",     cpp)
+        self.assertIn("const unsigned char* _imgPixels",    cpp)
         self.assertNotIn("nd_img_load_raw(_imgRawCache", cpp)
 
     def test_read_is_before_the_geometry_harvest(self):
@@ -434,10 +434,10 @@ class TestDeformerImageFileScaffold(unittest.TestCase):
         cpp = codegen.generate_cpp(
             _img_spec("MPxDeformerNode", _IMG_SCALAR_IN, reads_image=False),
             for_port=True)
-        self.assertNotIn("NdImgRawCache", cpp)
+        self.assertNotIn("NdImgRawCache",   cpp)
         self.assertNotIn("nd_img_load_raw", cpp)
-        self.assertNotIn("_imgPixels", cpp)
-        self.assertNotIn("BOTTOM-UP", cpp)
+        self.assertNotIn("_imgPixels",      cpp)
+        self.assertNotIn("BOTTOM-UP",       cpp)
 
     def test_image_read_tells_the_porter_what_it_got(self):
         # Deformer counterpart of the geo test: the three facts a translator
@@ -589,10 +589,10 @@ class TestImageCacheDeclarationMatchesUse(unittest.TestCase):
         # with no image intrinsic, so a lowered body can never name _imgPixels.
         for shape, ins in (("scalar", _IMG_SCALAR_IN),
                            ("no-path", _IMG_NO_PATH_IN)):
-            spec = _img_spec("MPxNode", ins)
+            spec            = _img_spec("MPxNode", ins)
             spec["compute"] = "self.outVal = self.amount * 2.0\n"
-            spec["inputs"] = dict(ins, amount={"type": "float"})
-            cpp = codegen.generate_cpp(spec, for_port=True)
+            spec["inputs"]  = dict(ins, amount={"type": "float"})
+            cpp             = codegen.generate_cpp(spec, for_port=True)
             yield "MPxNode/%s/lowered" % shape, cpp
 
     def test_declared_cache_is_always_used(self):
@@ -722,7 +722,7 @@ class TestImageReadKeepsRealParityOnItsOwnBranches(unittest.TestCase):
         return _read_source(verify)
 
     def test_the_skip_excludes_the_bases_that_verify_for_real(self):
-        src = self._source()
+        src   = self._source()
         guard = src.split("reads_img = spec_extractor.spec_reads_image_file", 1)
         self.assertEqual(len(guard), 2, "the image skip guard was renamed")
         guard = guard[1].split("return {", 1)[0]
@@ -756,7 +756,7 @@ class TestColorTupleLowers(unittest.TestCase):
         w.add_output_attr("outColor", "color")
         w.set_compute_expression(
             "self.outColor = (self.uIn, self.uIn * 0.5, 0.0)")
-        spec = spec_extractor.extract_spec(w.get_name())
+        spec                                = spec_extractor.extract_spec(w.get_name())
         spec["suggested"]["node_type_name"] = "colorTupleNode"
         return spec
 
@@ -767,8 +767,8 @@ class TestColorTupleLowers(unittest.TestCase):
         self.assertNotIn(codegen.PORT_BEGIN, cpp)
         # createColor attr; the tuple packs an nd::Array, the color writer
         # sets the float children.
-        self.assertIn("createColor", cpp)
-        self.assertIn("h_aOutColor.set3Float", cpp)
+        self.assertIn("createColor",            cpp)
+        self.assertIn("h_aOutColor.set3Float",  cpp)
         self.assertIn("nd::from_data<double>(", cpp)
 
 
@@ -820,7 +820,7 @@ class TestTransformMatrixInputScaffold(unittest.TestCase):
             "mpy_type": "mPyTransform",
             "suggested": {"node_type_name": "aimTransform",
                           "class_name": "AimTransform",
-                          "type_id": "0x00070200",
+                          "type_id":    "0x00070200",
                           "mpx_base": "MPxTransform"},
             "inputs": inputs, "outputs": {},
             "compute": compute, "init": "import numpy as np\n",
@@ -861,17 +861,17 @@ class TestTransformMatrixInputScaffold(unittest.TestCase):
         self.assertIn("MPxTransformationMatrix::asMatrix()", cpp)
         # opm = inv(L) * D on the _outLocalFlat double[16] output, rebuilt by a
         # stock fourByFourMatrix relay -> offsetParentMatrix.
-        self.assertIn("_outLocalFlat", cpp)
-        self.assertIn(".inverse()", cpp)
+        self.assertIn("_outLocalFlat",    cpp)
+        self.assertIn(".inverse()",       cpp)
         self.assertIn("fourByFourMatrix", cpp)
         # NO DAG-PARENT READ: the scaffold never touches MDagPath /
         # inclusiveMatrix / parentMatrix (the old stale-opm bug).
         self.assertNotIn("inclusiveMatrix", cpp)
-        self.assertNotIn("parent_matrix", cpp)
-        self.assertNotIn("MDagPath", cpp)
+        self.assertNotIn("parent_matrix",   cpp)
+        self.assertNotIn("MDagPath",        cpp)
         # asMatrix binds the same locals the lowered body materialises from.
-        self.assertIn("in_aMatrix0", cpp)
-        self.assertIn("in_aMatrix1", cpp)
+        self.assertIn("in_aMatrix0",     cpp)
+        self.assertIn("in_aMatrix1",     cpp)
         self.assertIn("in_aParentWorld", cpp)
 
     def test_inputless_transform_gains_flushfree_scaffold(self):
@@ -885,18 +885,18 @@ class TestTransformMatrixInputScaffold(unittest.TestCase):
                    "self.local_matrix = m\n"
                    "self.apply_translate = True\n")
         spec = self._spec({}, compute)
-        cpp = codegen.generate_cpp(spec, for_port=True)
+        cpp  = codegen.generate_cpp(spec, for_port=True)
         # Deterministic lowering (no AI PORT region) + gated dispatch present.
         self.assertNotIn(codegen.PORT_BEGIN, cpp)
-        self.assertIn("local_set = true;", cpp)
-        self.assertIn("apply_translate = ((", cpp)
+        self.assertIn("local_set = true;",           cpp)
+        self.assertIn("apply_translate = ((",        cpp)
         self.assertIn("nd_gate_mix(m, local_matrix", cpp)
         # The flush-free scaffold is present even with no matrix inputs.
-        self.assertIn("_outLocalFlat", cpp)
-        self.assertIn("desiredLocal", cpp)
+        self.assertIn("_outLocalFlat",      cpp)
+        self.assertIn("desiredLocal",       cpp)
         self.assertIn("setDependentsDirty", cpp)
-        self.assertIn("_syncNode", cpp)
-        self.assertIn("fourByFourMatrix", cpp)
+        self.assertIn("_syncNode",          cpp)
+        self.assertIn("fourByFourMatrix",   cpp)
         # ...but NO matrix-input attrs are created (there are none declared).
         self.assertNotIn('mAttr.create("matrix', cpp)
         self.assertNotIn("in_aMatrix", cpp)
@@ -944,7 +944,7 @@ def _id_for(_key):
 
 
 def _pp_balance(txt):
-    nif = len(re.findall(r"(?m)^\s*#\s*if", txt))
+    nif  = len(re.findall(r"(?m)^\s*#\s*if", txt))
     nend = len(re.findall(r"(?m)^\s*#\s*endif", txt))
     return nif, nend
 
@@ -1101,7 +1101,7 @@ def _color_locator_spec():
                       "note": "", "heaviness": "hard"},
         "inputs": {"defaultColor": {"type": "color", "is_array": False,
                                     "default_value": [0.2, 0.4, 0.8]}},
-        "outputs": {},
+        "outputs":   {},
         "variables": {},
         "compute": ("self.draw = DrawMesh([[0,0,0]], [0], [1],\n"
                     "                     colors=self.defaultColor)\n"),
@@ -1119,7 +1119,7 @@ class TestArrayElementTypeCoverage(unittest.TestCase):
             "schema_version": 1, "source_node": "arrProbe", "mpy_type": "mPyNode",
             "suggested": {"node_type_name": "arrProbe", "class_name": "ArrProbe",
                           "type_id": "0x00070311", "mpx_base": "MPxNode"},
-            "inputs": {"aIn": {"type": t, "is_array": True}},
+            "inputs":  {"aIn": {"type": t, "is_array": True}},
             "outputs": {"aOut": {"type": t, "is_array": True}},
             "compute": "pass\n", "init": "", "affects": "all",
             "portability": {"portable": True, "blockers": [], "warnings": [],
@@ -1130,16 +1130,16 @@ class TestArrayElementTypeCoverage(unittest.TestCase):
         from mpynode.native import compiler as codegen
         for t in sorted(codegen._ARRAY_OK):
             cpp = codegen.generate_cpp(self._arr_spec(t), for_port=False)
-            self.assertIn("std::vector<", cpp, "%s: no vector decl" % t)
-            self.assertIn("inputArrayValue", cpp, "%s: no array read" % t)
+            self.assertIn("std::vector<",      cpp, "%s: no vector decl" % t)
+            self.assertIn("inputArrayValue",   cpp, "%s: no array read" % t)
             self.assertIn("MArrayDataBuilder", cpp, "%s: no array write" % t)
 
     def test_string_array_reads_and_writes_strings(self):
         from mpynode.native import compiler as codegen
         cpp = codegen.generate_cpp(self._arr_spec("string"), for_port=False)
         self.assertIn("std::vector<MString>", cpp)
-        self.assertIn("eh.asString()", cpp)
-        self.assertIn("eh.setString(", cpp)
+        self.assertIn("eh.asString()",        cpp)
+        self.assertIn("eh.setString(",        cpp)
 
     def test_hex_array_transcodes_per_element(self):
         from mpynode.native import compiler as codegen
@@ -1157,8 +1157,8 @@ class TestArrayElementTypeCoverage(unittest.TestCase):
     def test_quaternion_array_uses_compound_children(self):
         from mpynode.native import compiler as codegen
         cpp = codegen.generate_cpp(self._arr_spec("quaternion"), for_port=False)
-        self.assertIn("std::vector<MQuaternion>", cpp)
-        self.assertIn("MFnCompoundAttribute _qf(", cpp)
+        self.assertIn("std::vector<MQuaternion>",         cpp)
+        self.assertIn("MFnCompoundAttribute _qf(",        cpp)
         self.assertIn("eh.child(_qf.child(0)).setDouble", cpp)
 
     def test_numeric_array_input_is_not_keyable(self):
@@ -1175,10 +1175,10 @@ class TestArrayElementTypeCoverage(unittest.TestCase):
     def test_scalar_single_input_stays_keyable(self):
         # A single (non-array) numeric input is unchanged: keyable, no keyable-off.
         from mpynode.native import compiler as codegen
-        spec = self._arr_spec("double")
-        spec["inputs"] = {"aIn": {"type": "double", "is_array": False}}
+        spec            = self._arr_spec("double")
+        spec["inputs"]  = {"aIn": {"type": "double", "is_array": False}}
         spec["outputs"] = {"aOut": {"type": "double", "is_array": False}}
-        cpp = codegen.generate_cpp(spec, for_port=False)
+        cpp             = codegen.generate_cpp(spec, for_port=False)
         self.assertIn("nAttr.setKeyable(true);", cpp)
         self.assertNotIn("nAttr.setKeyable(false);", cpp)
 
@@ -1190,7 +1190,7 @@ class TestLocatorColorInput(unittest.TestCase):
 
     def test_spec_model_accepts_color_locator_input(self):
         from mpynode.native.compiler import spec_model
-        spec = _color_locator_spec()
+        spec                = _color_locator_spec()
         spec["portability"] = {"portable": True, "blockers": []}
         # Must NOT raise UnsupportedSpec (color was previously rejected).
         spec_model._check(spec)
@@ -1270,7 +1270,7 @@ class TestLocatorOrderedDrawTransport(unittest.TestCase):
         spec = _color_locator_spec()
         spec["compute"] += "self.precise_hover = True\n"
         spec["needs_hover"] = True
-        cpp = codegen._generate_locator_cpp(spec, for_port=True)
+        cpp                 = codegen._generate_locator_cpp(spec, for_port=True)
         self.assertIn("for (size_t pi = 0; pi < d.polys.size(); ++pi) {", cpp)
         self.assertIn("if (!(d.preciseHover || pg.preciseHover)) continue;", cpp)
 
@@ -1318,7 +1318,7 @@ def _base_spec(node_type_name="metaCgNode"):
     w.add_input_attr("uIn", "float")
     w.add_output_attr("outVal", "float")
     w.set_compute_expression("self.outVal = self.uIn * 2.0")
-    spec = spec_extractor.extract_spec(w.get_name())
+    spec                                = spec_extractor.extract_spec(w.get_name())
     spec["suggested"]["node_type_name"] = node_type_name
     return spec
 
@@ -1331,7 +1331,7 @@ def _locator_spec__codegen_metadata(node_type_name="metaCgLoc"):
     cmds.file(new=True, force=True)
     loc = MPyLocator.create(name="metaCgLocSrc#")
     loc.set_compute_expression("self.polygons = None\n")
-    spec = spec_extractor.extract_spec(loc.get_name())
+    spec                                = spec_extractor.extract_spec(loc.get_name())
     spec["suggested"]["node_type_name"] = node_type_name
     return spec
 
@@ -1385,10 +1385,10 @@ class TestCodegenMetadataEmbedding(unittest.TestCase):
     def test_hash_deterministic_for_same_spec(self):
         from mpynode.native import compiler as codegen
 
-        spec = _base_spec("metaCgDet")
+        spec             = _base_spec("metaCgDet")
         spec["metadata"] = {"license": "(c) X"}
-        a = codegen.generate_cpp(spec, for_port=False)
-        b = codegen.generate_cpp(spec, for_port=False)
+        a                = codegen.generate_cpp(spec, for_port=False)
+        b                = codegen.generate_cpp(spec, for_port=False)
         self.assertEqual(a, b)
 
     def test_different_specs_differ_in_hash(self):
@@ -1396,8 +1396,8 @@ class TestCodegenMetadataEmbedding(unittest.TestCase):
 
         spec1 = _base_spec("metaCgA")
         spec2 = _base_spec("metaCgB")  # different node type name -> different cpp
-        h1 = _INIT_RE.search(codegen.generate_cpp(spec1)).group("hash")
-        h2 = _INIT_RE.search(codegen.generate_cpp(spec2)).group("hash")
+        h1    = _INIT_RE.search(codegen.generate_cpp(spec1)).group("hash")
+        h2    = _INIT_RE.search(codegen.generate_cpp(spec2)).group("hash")
         self.assertNotEqual(h1, h2)
 
     def test_metadata_change_changes_hash(self):
@@ -1417,28 +1417,28 @@ class TestCodegenMetadataEmbedding(unittest.TestCase):
         # is sanitized: the build hash stays the single trailing '+<hash12>'.
         from mpynode.native import compiler as codegen
 
-        spec = _base_spec("metaCgPlus")
+        spec             = _base_spec("metaCgPlus")
         spec["metadata"] = {"version": "2.0+rc1"}
-        cpp = codegen.generate_cpp(spec)
-        m = _INIT_RE.search(cpp)
+        cpp              = codegen.generate_cpp(spec)
+        m                = _INIT_RE.search(cpp)
         self.assertIsNotNone(m, "version+hash not parseable after a '+' version")
         self.assertEqual(m.group("version"), "2.0-rc1")
 
     def test_uninitialize_plugin_line_untouched(self):
         from mpynode.native import compiler as codegen
 
-        spec = _base_spec("metaCgUninit")
+        spec             = _base_spec("metaCgUninit")
         spec["metadata"] = {"license": "(c) Y"}
-        cpp = codegen.generate_cpp(spec, for_port=False)
+        cpp              = codegen.generate_cpp(spec, for_port=False)
         self.assertIn("MFnPlugin plugin(obj);", cpp)  # deregister form intact
 
     def test_locator_path_also_embeds(self):
         from mpynode.native import compiler as codegen
         from mpynode._common.lifecycle import metadata_registry as M
 
-        spec = _locator_spec__codegen_metadata()
+        spec             = _locator_spec__codegen_metadata()
         spec["metadata"] = {"authors": ["Loc Author"], "version": "5.0"}
-        cpp = codegen.generate_cpp(spec, for_port=False)
+        cpp              = codegen.generate_cpp(spec, for_port=False)
         self.assertNotIn(M.BUILD_HASH_PLACEHOLDER, cpp)
         m = _INIT_RE.search(cpp)
         self.assertIsNotNone(m, "locator path did not embed a stamped version")
@@ -1448,9 +1448,9 @@ class TestCodegenMetadataEmbedding(unittest.TestCase):
     def test_cpp_string_special_chars_escaped(self):
         from mpynode.native import compiler as codegen
 
-        spec = _base_spec("metaCgEsc")
+        spec             = _base_spec("metaCgEsc")
         spec["metadata"] = {"authors": ['He said "hi"\nback']}
-        cpp = codegen.generate_cpp(spec, for_port=False)
+        cpp              = codegen.generate_cpp(spec, for_port=False)
         # the vendor string literal must be a valid single-line C++ literal:
         # quotes escaped, newline collapsed.
         self.assertIn(r'MFnPlugin plugin(obj, "He said \"hi\" back",', cpp)
@@ -1473,8 +1473,8 @@ def _setUpModule__locator_hover_codegen():
 def _locator_spec__locator_hover_codegen(needs_hover):
     spec = {
         "schema_version": 1,
-        "source_node": "gizmoCube",
-        "mpy_type": "mPyLocator",
+        "source_node":    "gizmoCube",
+        "mpy_type":       "mPyLocator",
         "suggested": {
             "node_type_name": "gizmoCube", "class_name": "GizmoCube",
             "type_id": "0x00070123", "mpx_base": "MPxLocatorNode",
@@ -1492,7 +1492,7 @@ def _locator_spec__locator_hover_codegen(needs_hover):
         "compute": ("scale = 1.0 if self.hovered else 0.5\n"
                     "self.auto_refresh = True\n"
                     "self.polygons = None\n"),
-        "init": "",
+        "init":    "",
         "affects": "all",
     }
     if needs_hover:
@@ -1530,9 +1530,9 @@ class TestHoverLocatorCodegen(unittest.TestCase):
         self.assertNotIn("inp.wallClock = 0.0;", self.cpp)
 
     def test_emits_qt_cursor_hover_service(self):
-        self.assertIn("QtGui/QCursor", self.cpp)
-        self.assertIn("MTimerMessage", self.cpp)
-        self.assertIn("viewToWorld", self.cpp)
+        self.assertIn("QtGui/QCursor",        self.cpp)
+        self.assertIn("MTimerMessage",        self.cpp)
+        self.assertIn("viewToWorld",          self.cpp)
         self.assertIn("setGeometryDrawDirty", self.cpp)
 
     def test_live_wall_clock(self):
@@ -1577,10 +1577,10 @@ class TestHoverReviewFixes(unittest.TestCase):
         # Review #1: without a per-node delete callback g_tween/g_handles leak,
         # and a reused node hash hands a new locator a dead node's tween.
         self.assertIn("addNodePreRemovalCallback", self.cpp)
-        self.assertIn("g_tween.erase", self.cpp)
-        self.assertIn("g_handles.erase", self.cpp)
-        self.assertIn("g_hoverTris.erase", self.cpp)
-        self.assertIn("g_autoRefresh.erase", self.cpp)
+        self.assertIn("g_tween.erase",             self.cpp)
+        self.assertIn("g_handles.erase",           self.cpp)
+        self.assertIn("g_hoverTris.erase",         self.cpp)
+        self.assertIn("g_autoRefresh.erase",       self.cpp)
 
     def test_removal_callbacks_torn_down_on_scene_event(self):
         # The per-node callback ids must be removed on file-new / unload, not leak.
@@ -1591,9 +1591,9 @@ class TestHoverReviewFixes(unittest.TestCase):
         # the body and the sv_* write-back still runs.
         from mpynode.native import compiler as codegen
         lam = self.cpp.index("[&]() {")
-        pb = self.cpp.index(codegen.PORT_BEGIN)
-        pe = self.cpp.index(codegen.PORT_END)
-        wb = self.cpp.index("data.sv_prev_hovered = prev_hovered;")
+        pb  = self.cpp.index(codegen.PORT_BEGIN)
+        pe  = self.cpp.index(codegen.PORT_END)
+        wb  = self.cpp.index("data.sv_prev_hovered = prev_hovered;")
         self.assertLess(lam, pb, "IIFE must open before the ported body")
         self.assertLess(pe, wb, "write-back must come after the ported body")
         # and after the lambda closes
@@ -1749,11 +1749,11 @@ class TestEulerGeneratedVerifyScripts(unittest.TestCase):
 
     def _scalar_spec(self):
         return {
-            "suggested": {"node_type_name": "eulerVScalar", "mpx_base": "MPxNode"},
+            "suggested":   {"node_type_name": "eulerVScalar", "mpx_base": "MPxNode"},
             "source_node": "eulerVScalarSrc1",
-            "mpy_type": "mPyNode",
-            "inputs": {"rin": {"type": "euler"}},
-            "outputs": {"rout": {"type": "euler"}},
+            "mpy_type":    "mPyNode",
+            "inputs":      {"rin": {"type": "euler"}},
+            "outputs":     {"rout": {"type": "euler"}},
         }
 
     def _deformer_spec(self):
@@ -1761,9 +1761,9 @@ class TestEulerGeneratedVerifyScripts(unittest.TestCase):
             "suggested": {"node_type_name": "eulerVDef",
                           "mpx_base": "MPxDeformerNode"},
             "source_node": "eulerVDefSrc1",
-            "mpy_type": "mPyDeformer",
+            "mpy_type":    "mPyDeformer",
             "compute": "", "init": "",
-            "inputs": {"rin": {"type": "euler"}},
+            "inputs":  {"rin": {"type": "euler"}},
             "outputs": {},
         }
 
@@ -1799,7 +1799,7 @@ class TestEulerCodegen(unittest.TestCase):
         w.add_input_attr("rotIn", "euler", is_array=array)
         w.add_output_attr("rotOut", "euler", is_array=array)
         w.set_compute_expression("self.rotOut = self.rotIn")
-        spec = spec_extractor.extract_spec(w.get_name())
+        spec                                = spec_extractor.extract_spec(w.get_name())
         spec["suggested"]["node_type_name"] = "eulerTestNode"
         return spec
 
@@ -1820,7 +1820,7 @@ class TestEulerCodegen(unittest.TestCase):
         from mpynode.native import compiler as codegen
 
         spec = self._spec(array=True)
-        cpp = codegen.generate_cpp(spec, for_port=True)
+        cpp  = codegen.generate_cpp(spec, for_port=True)
         # Array machinery present (element loop) and still angle children.
         self.assertIn("MFnUnitAttribute::kAngle", cpp)
         self.assertIn("setArray(true)", cpp)
@@ -1837,9 +1837,9 @@ class TestEulerCodegen(unittest.TestCase):
         w.add_input_attr("v", "vector")
         w.add_output_attr("o", "vector")
         w.set_compute_expression("self.o = self.v")
-        spec = spec_extractor.extract_spec(w.get_name())
+        spec                                = spec_extractor.extract_spec(w.get_name())
         spec["suggested"]["node_type_name"] = "vecTestNode"
-        cpp = codegen.generate_cpp(spec, for_port=True)
+        cpp                                 = codegen.generate_cpp(spec, for_port=True)
         self.assertIn("MFnNumericData::kDouble", cpp)  # vector keeps kDouble kids
 
 
@@ -1860,7 +1860,7 @@ class TestQuaternionCodegen(unittest.TestCase):
         w.add_input_attr("qIn", "quaternion")
         w.add_output_attr("qOut", "quaternion")
         w.set_compute_expression("self.qOut = self.qIn")
-        spec = spec_extractor.extract_spec(w.get_name())
+        spec                                = spec_extractor.extract_spec(w.get_name())
         spec["suggested"]["node_type_name"] = "quatTestNode"
         return spec
 
@@ -1873,7 +1873,7 @@ class TestQuaternionCodegen(unittest.TestCase):
         from mpynode.native import compiler as codegen
 
         spec = self._spec()
-        cpp = codegen.generate_cpp(spec, for_port=True)
+        cpp  = codegen.generate_cpp(spec, for_port=True)
         # Generic compound built via MFnCompoundAttribute with X/Y/Z/W children.
         self.assertIn("MFnCompoundAttribute", cpp)
         self.assertIn("qInX", cpp)
@@ -1896,9 +1896,9 @@ class TestQuaternionCodegen(unittest.TestCase):
         w.add_input_attr("qIn", "quaternion", is_array=True)
         w.add_output_attr("qOut", "quaternion", is_array=True)
         w.set_compute_expression("pass")
-        spec = spec_extractor.extract_spec(w.get_name())
+        spec                                = spec_extractor.extract_spec(w.get_name())
         spec["suggested"]["node_type_name"] = "quatArrNode"
-        cpp = codegen.generate_cpp(spec, for_port=False)  # complete stub
+        cpp                                 = codegen.generate_cpp(spec, for_port=False)  # complete stub
         self.assertIn("std::vector<MQuaternion>", cpp)
         self.assertIn("MFnCompoundAttribute _qf(", cpp)
         self.assertIn("MQuaternion(eh.child(_qf.child(0)).asDouble()", cpp)
@@ -1919,7 +1919,7 @@ class TestHexCodegen(unittest.TestCase):
         w.add_input_attr("labelIn", "hex")
         w.add_output_attr("labelOut", "hex")
         w.set_compute_expression(compute)
-        spec = spec_extractor.extract_spec(w.get_name())
+        spec                                = spec_extractor.extract_spec(w.get_name())
         spec["suggested"]["node_type_name"] = "hexTestNode"
         return spec
 
@@ -1933,8 +1933,8 @@ class TestHexCodegen(unittest.TestCase):
 
         cpp = codegen.generate_cpp(self._spec(), for_port=True)
         # Maya-free std::string core + MString adapters, emitted above the class.
-        self.assertIn("nd_hex_encode_str", cpp)
-        self.assertIn("nd_hex_decode_str", cpp)
+        self.assertIn("nd_hex_encode_str",      cpp)
+        self.assertIn("nd_hex_decode_str",      cpp)
         self.assertIn("MString nd_hex_encode(", cpp)
         self.assertIn("MString nd_hex_decode(", cpp)
         # the core uses std::string -> the include must be present.
@@ -1996,9 +1996,9 @@ class TestHexCodegen(unittest.TestCase):
         w.add_input_attr("sIn", "string")
         w.add_output_attr("sOut", "string")
         w.set_compute_expression("self.sOut = self.sIn")
-        spec = spec_extractor.extract_spec(w.get_name())
+        spec                                = spec_extractor.extract_spec(w.get_name())
         spec["suggested"]["node_type_name"] = "strTestNode"
-        cpp = codegen.generate_cpp(spec, for_port=True)
+        cpp                                 = codegen.generate_cpp(spec, for_port=True)
         self.assertNotIn("nd_hex_encode", cpp)
         self.assertNotIn("nd_hex_decode", cpp)
         # plain string keeps the raw asString read + setString write.
@@ -2024,7 +2024,7 @@ class TestNurbsCurveInputCodegen(unittest.TestCase):
         w.add_output_attr("outP", "vector")
         # Reference self.inCrv so the input survives into the port spec.
         w.set_compute_expression("c = self.inCrv\nself.outP = [0.0, 0.0, 0.0]\n")
-        spec = spec_extractor.extract_spec(w.get_name())
+        spec                                = spec_extractor.extract_spec(w.get_name())
         spec["suggested"]["node_type_name"] = "crvTestNode"
         return spec
 
@@ -2069,7 +2069,7 @@ class TestPhase0HonestRejectGuard(unittest.TestCase):
         if init.strip():
             w.set_init_expression(init)
         w.set_compute_expression(compute)
-        spec = spec_extractor.extract_spec(w.get_name())
+        spec                                = spec_extractor.extract_spec(w.get_name())
         spec["suggested"]["node_type_name"] = "p0TestNode"
         return spec
 
@@ -2086,7 +2086,7 @@ class TestPhase0HonestRejectGuard(unittest.TestCase):
         # Reads only the declared input; NOT deterministically lowerable (str())
         # so the guard IS reached -- it must pass and emit the AI PORT region.
         spec = self._node("self.out = float(str(self.a)) + 1.0\n")
-        cpp = codegen.generate_cpp(spec, for_port=True)  # must NOT raise
+        cpp  = codegen.generate_cpp(spec, for_port=True)  # must NOT raise
         self.assertIn(codegen.PORT_BEGIN, cpp)
 
     def test_written_state_does_not_reject(self):
@@ -2104,7 +2104,7 @@ class TestPhase0HonestRejectGuard(unittest.TestCase):
         # A fully deterministic compute returns before the guard (no orphans
         # possible) -- byte-for-byte the pre-guard behaviour.
         spec = self._node("self.out = self.a * 2.0 + 1.0\n")
-        cpp = codegen.generate_cpp(spec, for_port=True)  # must NOT raise
+        cpp  = codegen.generate_cpp(spec, for_port=True)  # must NOT raise
         self.assertNotIn(codegen.PORT_BEGIN, cpp)  # lowered, no AI region
 
 

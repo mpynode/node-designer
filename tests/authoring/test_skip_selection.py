@@ -46,14 +46,14 @@ class CreateNodeFamilyTest(unittest.TestCase):
 
     def _check(self, make):
         # skip_selection=True -> selection untouched, node still created
-        m = _marker()
+        m    = _marker()
         node = make(True)
         self.assertEqual(mc.ls(selection=True), [m],
                          "skip_selection=True must not change the selection")
         self.assertTrue(mc.objExists(node.get_name()))
         # default -> the new node (or its transform) is selected, as today
         mc.file(new=True, force=True)
-        m = _marker()
+        m    = _marker()
         node = make(False)
         self.assertNotEqual(mc.ls(selection=True), [m],
                             "default create must still select the new node")
@@ -128,16 +128,16 @@ class DeformerAttachFamilyTest(unittest.TestCase):
 
     def _assert_selection_neutral(self, build, make):
         # skip_selection=True -> marker (live at call time) preserved
-        geo = build()
-        m = _marker()
+        geo  = build()
+        m    = _marker()
         node = make(geo, True)
         self.assertEqual(mc.ls(selection=True), [m],
                          "skip_selection=True must leave the live selection intact")
         self.assertTrue(mc.objExists(node.get_name()))
         # default -> cmds.deformer is selection-neutral, so STILL the marker
         mc.file(new=True, force=True)
-        geo = build()
-        m = _marker()
+        geo  = build()
+        m    = _marker()
         node = make(geo, False)
         self.assertTrue(mc.objExists(node.get_name()))
         self.assertEqual(mc.ls(selection=True), [m],
@@ -173,13 +173,13 @@ class ShadingNodeAttachFamilyTest(unittest.TestCase):
 
     def test_file_as_texture(self):
         from mpynode.wrappers.mpy_file import MPyFile
-        m = _marker()
+        m    = _marker()
         node = MPyFile.create(as_texture=True, skip_selection=True)
         self.assertEqual(mc.ls(selection=True), [m],
                          "skip_selection=True must restore the prior selection")
         self.assertTrue(mc.objExists(node.get_name()))
         mc.file(new=True, force=True)
-        m = _marker()
+        m    = _marker()
         node = MPyFile.create(as_texture=True, skip_selection=False)
         self.assertNotEqual(mc.ls(selection=True), [m],
                             "shadingNode default selects the new node")
@@ -192,15 +192,15 @@ class BuildAndCommandTest(unittest.TestCase):
 
     def test_build_threads_skip_selection(self):
         from mpynode.wrappers._mpy_node import MPyNode
-        m = _marker()
+        m    = _marker()
         node = MPyNode.build(skip_selection=True)
         self.assertEqual(mc.ls(selection=True), [m])
         self.assertTrue(mc.objExists(node.get_name()))
 
     def test_create_node_command(self):
         from mpynode._base.commands import _CreateNodeCommand, run_undoable
-        m = _marker()
-        cmd = _CreateNodeCommand("mPyNode", skip_selection=True)
+        m    = _marker()
+        cmd  = _CreateNodeCommand("mPyNode", skip_selection=True)
         name = run_undoable(cmd) or cmd.created_name
         self.assertEqual(mc.ls(selection=True), [m])
         self.assertTrue(mc.objExists(name))
@@ -208,10 +208,10 @@ class BuildAndCommandTest(unittest.TestCase):
     def test_deserialize_node(self):
         from mpynode.wrappers._mpy_node import MPyNode
         from mpynode._common.io.mpn_io import serialize_node, deserialize_node
-        src = MPyNode.create()
+        src     = MPyNode.create()
         payload = serialize_node(src, include_persistent=False)
         mc.delete(src.get_name())
-        m = _marker()
+        m    = _marker()
         node = deserialize_node(payload, skip_selection=True)
         self.assertEqual(mc.ls(selection=True), [m])
         self.assertTrue(mc.objExists(node.get_name()))
@@ -227,7 +227,7 @@ class GalleryCommandsAdoptSkipSelectionTest(unittest.TestCase):
     def _deformer_payload(self):
         from mpynode._node_registry import get_spec
         from mpynode._common.io.mpn_io import serialize_node
-        n = get_spec("mPyDeformer").get_wrapper_class().build()
+        n       = get_spec("mPyDeformer").get_wrapper_class().build()
         payload = serialize_node(n, include_persistent=False)
         mc.delete(n.get_name())
         return payload
@@ -235,9 +235,9 @@ class GalleryCommandsAdoptSkipSelectionTest(unittest.TestCase):
     def test_template_create_command_preserves_selection(self):
         from mpynode._base.commands import _TemplateCreateCommand, run_undoable
         payload = self._deformer_payload()
-        plane = mc.polyCube()[0]
+        plane   = mc.polyCube()[0]
         mc.select(plane, replace=True)
-        cmd = _TemplateCreateCommand(payload, "mPyDeformer", run_setup=True)
+        cmd  = _TemplateCreateCommand(payload, "mPyDeformer", run_setup=True)
         name = run_undoable(cmd) or cmd.created_name
         self.assertTrue(mc.objExists(name))
         self.assertNotIn(name, mc.ls(selection=True) or [],

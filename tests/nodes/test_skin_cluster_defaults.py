@@ -48,7 +48,7 @@ class TestSkinClusterComputeDefault(unittest.TestCase):
         src = scd.DEFAULT_COMPUTE_SOURCE
         self.assertNotIn("np.zeros", src)
         self.assertNotIn("np.stack", src)
-        self.assertNotIn("for ", src)
+        self.assertNotIn("for ",     src)
 
     def test_compute_compiles_with_no_toplevel_return(self):
         # exec-mode compile raises SyntaxError on a top-level `return`; a clean

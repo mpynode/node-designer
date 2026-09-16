@@ -145,8 +145,8 @@ class TestGolMeshCompilesNative(unittest.TestCase):
             self.skipTest("no Maya devkit headers for the running mayapy")
 
         spec = _gol_spec()
-        cpp = codegen.generate_cpp(spec, for_port=True)
-        inc = toolchain.maya_include_dir(maya)
+        cpp  = codegen.generate_cpp(spec, for_port=True)
+        inc  = toolchain.maya_include_dir(maya)
         native_dir = os.path.join(os.environ["MPYNODE_ROOT"], "scripts",
                                   "mpynode", "native")
 

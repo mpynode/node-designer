@@ -55,9 +55,9 @@ from mpynode.ui.widgets.font_prefs import wire_area_font
 # ``None`` = let Qt pick the default text color, so the log follows the
 # active Maya/Qt theme.
 LEVEL_COLOR: dict[str, str | None] = {
-    "info": None,
+    "info":    None,
     "warning": "#d4a000",  # amber
-    "error": "#d44444",  # red
+    "error":   "#d44444",  # red
 }
 
 
@@ -131,7 +131,7 @@ class NDLoggerWidget(QWidget):
 
         # Mirrors the right-click action, so the affordance is visible to
         # users who don't think to right-click. Same as Profile's Reset Stats.
-        btn_row = QHBoxLayout()
+        btn_row         = QHBoxLayout()
         self._clear_btn = QPushButton("Clear", self)
         self._clear_btn.setToolTip("Clear all log messages.")
         self._clear_btn.clicked.connect(self.clear)

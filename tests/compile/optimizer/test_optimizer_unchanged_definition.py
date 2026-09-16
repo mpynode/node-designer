@@ -59,8 +59,8 @@ def _status_from(tmp, **over):
     kw = dict(maya="/x", run_step=lambda s, a, p, t: (None, False, ""))
     kw.update(over)
     status = {}
-    ad = optimizer_live.make_adapters(_SPEC, tmp, status_out=status, **kw)
-    out = ad["optimize_fn"](_BASELINE_CPP)
+    ad     = optimizer_live.make_adapters(_SPEC, tmp, status_out=status, **kw)
+    out    = ad["optimize_fn"](_BASELINE_CPP)
     return status, out
 
 
@@ -86,8 +86,8 @@ class TestTheTwoReadersAgree(unittest.TestCase):
             _BASELINE_CPP, rounds=1,
             optimize_fn=lambda cpp: cand,
             fix_fn=lambda cpp, err: cpp,
-            compile_fn=lambda cpp: (True, "", "bundle"),
-            parity_fn=lambda b: optimizer.ParityVerdict(optimizer.PARITY_PASS),
+            compile_fn = lambda cpp: (True, "", "bundle"),
+            parity_fn  = lambda b: optimizer.ParityVerdict(optimizer.PARITY_PASS),
             benchmark_fn=lambda b: 10.0)
 
         self.assertEqual([r.outcome for r in res.ledger],

@@ -194,7 +194,7 @@ def _loc_generic_expose(gm):
     t = meta["type"]
     if emit_geo_io.is_geo(t) or meta.get("is_array"):
         # one const-ref binding covers std::vector<T>, Nd<Kind> and their lists.
-        decl = _loc_generic_field(gm).strip().rstrip(";")
+        decl  = _loc_generic_field(gm).strip().rstrip(";")
         ctype = decl[:decl.rfind(" ")].strip()
         return ("    const %s& in_%s = inp.%s; (void)in_%s;"
                 % (ctype, mem, mem, mem))
@@ -276,13 +276,13 @@ def _loc_implicit_stored_vars(src):
 def _loc_stored_vars(spec):
     """Stored vars seeded into the draw as mutable locals, persisted across
     frames in the g_tween map (hover or not -- see _locator_hover_service)."""
-    out = []
+    out    = []
     merged = dict(spec.get("variables") or {})
     for name, meta in _loc_implicit_stored_vars(spec.get("compute")).items():
         merged.setdefault(name, meta)
     for name, meta in merged.items():
         kind = meta.get("kind")
-        val = meta.get("value")
+        val  = meta.get("value")
         if kind == "bool":
             ctype, seed = "bool", ("true" if val else "false")
         elif kind == "int":
@@ -498,7 +498,7 @@ def _locator_hover_service(cls, data_cls, svars, needs_hover=True):
     hover, so the compiled one must persist them regardless of hover too.
     """
     tween_cls = cls + "Tween"
-    L = []
+    L         = []
     if needs_hover:
         L.append("// ===== passive hover + idle-refresh service (needs_hover) ==========")
         L.append("// Port of mpynode/_common/{hover_tracker,draw_refresh}.py. One")
@@ -800,25 +800,25 @@ def _generate_locator_cpp(spec, for_port=False):
     # compute ALWAYS goes to the AI porter, so a file read could
     # never be attached to real buffers.
     nd_io_cpp.reject_unlowered_io(spec, None, "locator")
-    sg = spec["suggested"]
-    cls = sg["class_name"]
-    type_name = sg["node_type_name"]
-    type_id = sg["type_id"]
-    data_cls = cls + "Data"
-    inp_cls = cls + "Inputs"
-    draw_cls = cls + "DrawOverride"
+    sg             = spec["suggested"]
+    cls            = sg["class_name"]
+    type_name      = sg["node_type_name"]
+    type_id        = sg["type_id"]
+    data_cls       = cls + "Data"
+    inp_cls        = cls + "Inputs"
+    draw_cls       = cls + "DrawOverride"
     classification = "drawdb/geometry/%s" % type_name
-    registrant = "%sPlugin" % type_name
+    registrant     = "%sPlugin" % type_name
 
-    scalars = _loc_scalar_inputs(spec)
-    meshes = _loc_mesh_inputs(spec)
-    strings = _loc_string_inputs(spec)
-    colors = _loc_color_inputs(spec)
-    generics = _loc_generic_inputs(spec)
-    svars = _loc_stored_vars(spec)
-    has_mesh = bool(meshes)
+    scalars     = _loc_scalar_inputs(spec)
+    meshes      = _loc_mesh_inputs(spec)
+    strings     = _loc_string_inputs(spec)
+    colors      = _loc_color_inputs(spec)
+    generics    = _loc_generic_inputs(spec)
+    svars       = _loc_stored_vars(spec)
+    has_mesh    = bool(meshes)
     needs_hover = bool(spec.get("needs_hover"))
-    tween_cls = cls + "Tween"
+    tween_cls   = cls + "Tween"
 
     # ---- companion commands (Methods tab @maya_command defs) ----------------
     # Emit the recognised companion MPxCommands (createMeshRegion/setMeshRegion)
@@ -828,11 +828,11 @@ def _generate_locator_cpp(spec, for_port=False):
     _REGION_ATTR = "regionFaces"
     cmd_ctx = {
         "node_type_name": type_name,
-        "node_cls": cls,
-        "mesh_plug": meshes[0]["plug"] if meshes else "inMesh",
-        "region_attr": _REGION_ATTR,
+        "node_cls":       cls,
+        "mesh_plug":      meshes[0]["plug"] if meshes else "inMesh",
+        "region_attr":    _REGION_ATTR,
     }
-    cmd_out = command_codegen.emit_commands(spec.get("commands") or [], cmd_ctx)
+    cmd_out      = command_codegen.emit_commands(spec.get("commands") or [], cmd_ctx)
     has_commands = bool(cmd_out["supported"])
     needs_region = bool(cmd_out["needs_region_attr"])
     # Everything command_codegen did NOT claim goes to the generic dispatch
@@ -1186,7 +1186,7 @@ def _generate_locator_cpp(spec, for_port=False):
         # rewind each mutated local to its seed before the write-back below.
         _on_err = ["data.reset();"]
         _on_err += ["%s = inp.sv_%s;" % (v["name"], v["name"]) for v in svars]
-        L += lowered_guard(type_name, draw_lowered, _on_err)
+        L       += lowered_guard(type_name, draw_lowered, _on_err)
     else:
         L.append("    " + PORT_BEGIN)
     if draw_lowered is None and for_port:
@@ -1334,8 +1334,8 @@ def _generate_locator_cpp(spec, for_port=False):
             L.append("    MFnMatrixAttribute   mAttr;")
         for s in scalars:
             plug = s["plug"]
-            t = s["type"]
-            mem = "a_" + s["member"]
+            t    = s["type"]
+            mem  = "a_" + s["member"]
             if t == "float":
                 L.append('    %s = nAttr.create("%s", "%s", MFnNumericData::kFloat, %s);'
                          % (mem, plug, plug, _loc_input_default("float", s["default_value"], [])))
@@ -1375,7 +1375,7 @@ def _generate_locator_cpp(spec, for_port=False):
             L.append("    addAttribute(%s);" % mem)
         for c in colors:
             mem = "a_" + c["member"]
-            dv = c["default_value"]
+            dv  = c["default_value"]
             L.append('    %s = nAttr.createColor("%s", "%s");'
                      % (mem, c["plug"], c["plug"]))
             try:
@@ -1933,7 +1933,7 @@ def _generate_locator_cpp(spec, for_port=False):
     if scalars:
         first = True
         for s in scalars:
-            kw = "if" if first else "else if"
+            kw    = "if" if first else "else if"
             first = False
             if s["type"] == "bool":
                 L.append('    %s (n == "%s") f.%s = (v != 0.0);' % (kw, s["member"], s["member"]))

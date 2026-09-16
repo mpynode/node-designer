@@ -11,12 +11,12 @@ for p in ("mpynode_api1", "mpynode_api2"):
     if not cmds.pluginInfo(p, q=True, loaded=True):
         cmds.loadPlugin(p, quiet=True)
 
-NB = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fixtures", "mPyLocator")
-SCENE = os.path.join(NB, "mPyLocator_spinGizmo_original.ma")
-PROBE = os.path.join(NB, "spinGizmo_probe")
+NB     = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fixtures", "mPyLocator")
+SCENE  = os.path.join(NB, "mPyLocator_spinGizmo_original.ma")
+PROBE  = os.path.join(NB, "spinGizmo_probe")
 FRAMES = [0, 6, 12, 18, 24, 30, 36, 42]
-TOL = 1e-4
-MAYA = "/Applications/Autodesk/maya2026"
+TOL    = 1e-4
+MAYA   = "/Applications/Autodesk/maya2026"
 
 
 def fail(reason):
@@ -29,8 +29,8 @@ def fail(reason):
 
 # ---- 1) run the existing probe (rebuild ONLY via fixed clang if it won't run) --
 def run_probe():
-    env = dict(os.environ)
-    env["DYLD_LIBRARY_PATH"] = os.path.join(MAYA, "Maya.app/Contents/MacOS")
+    env                        = dict(os.environ)
+    env["DYLD_LIBRARY_PATH"]   = os.path.join(MAYA, "Maya.app/Contents/MacOS")
     env["DYLD_FRAMEWORK_PATH"] = os.path.join(MAYA, "Maya.app/Contents/Frameworks")
     cp = subprocess.run([PROBE] + [str(f) for f in FRAMES],
                         env=env, capture_output=True, text=True)
@@ -43,7 +43,7 @@ out, err = run_probe()
 if out is None:
     # fixed clang of the existing .cpp -- NOT an LLM rebuild
     bp = os.path.join(NB, "build_probe.sh")
-    r = subprocess.run(["bash", bp], capture_output=True, text=True)
+    r  = subprocess.run(["bash", bp], capture_output=True, text=True)
     if r.returncode != 0:
         fail("probe won't run and build_probe.sh failed: " + (r.stderr or "")[:500])
     out, err = run_probe()
@@ -74,8 +74,8 @@ if not cmds.objExists(loc_name):
 
 sel = om.MSelectionList(); sel.add(loc_name)
 node_obj = sel.getDependNode(0)
-fn = om.MFnDependencyNode(node_obj)
-mpx = fn.userNode()
+fn       = om.MFnDependencyNode(node_obj)
+mpx      = fn.userNode()
 if mpx is None:
     fail("could not get MPx user node for %r (python ref unavailable)" % loc_name)
 
@@ -124,14 +124,14 @@ NUMERIC_MAP = [
 ]
 SHAPE_KIND_MAP = {"sphere": 0, "circle": 1}
 
-maxerr = 0.0
-ncomp = 0
-nsamp = 0
-mismatch_str = []
+maxerr         = 0.0
+ncomp          = 0
+nsamp          = 0
+mismatch_str   = []
 
 for f in FRAMES:
     key = round(float(f), 6)
-    pj = probe_by_t.get(key)
+    pj  = probe_by_t.get(key)
     if pj is None:
         fail("probe missing frame %s" % f)
     bufs = mpx.evaluateDrawItems(float(f))
@@ -139,9 +139,9 @@ for f in FRAMES:
 
     # numeric fields
     for jfield, slot, subkey in NUMERIC_MAP:
-        pvals = [float(x) for x in to_list(pj[jfield]) or []]
+        pvals  = [float(x) for x in to_list(pj[jfield]) or []]
         slot_d = bufs.get(slot)
-        yvals = []
+        yvals  = []
         if slot_d is not None and slot_d.get(subkey) is not None:
             yvals = to_list(slot_d.get(subkey)) or []
         # compare element-wise (must match length)
@@ -155,7 +155,7 @@ for f in FRAMES:
             ncomp += 1
 
     # shapeKind: probe int code vs python kind string -> code
-    pkind = [int(round(x)) for x in (to_list(pj["shapeKind"]) or [])]
+    pkind  = [int(round(x)) for x in (to_list(pj["shapeKind"]) or [])]
     shapes = bufs.get("shapes")
     ykinds = []
     if shapes is not None and shapes.get("kinds") is not None:
@@ -170,7 +170,7 @@ for f in FRAMES:
 
     # text strings: exact match (non-numeric, but a real output component)
     ptext = [str(s) for s in (pj.get("textStr") or [])]
-    txt = bufs.get("text")
+    txt   = bufs.get("text")
     ytext = []
     if txt is not None and txt.get("strings") is not None:
         ytext = [str(s) for s in txt["strings"]]

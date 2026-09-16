@@ -48,23 +48,23 @@ class TestMeshUVSets(unittest.TestCase):
     def test_uv_sets_returns_list_of_uvset(self):
         from mpynode._api2.geometry import UVSet
 
-        m = _attached_mesh(self._cube())
+        m    = _attached_mesh(self._cube())
         sets = m.uv_sets
         self.assertIsInstance(sets, list)
         self.assertGreaterEqual(len(sets), 1)
         self.assertIsInstance(sets[0], UVSet)
 
     def test_default_set_named_map1(self):
-        m = _attached_mesh(self._cube())
+        m     = _attached_mesh(self._cube())
         names = [s.name for s in m.uv_sets]
         self.assertIn("map1", names)
 
     def test_points_are_2d_and_invariants_hold(self):
         s = _attached_mesh(self._cube()).uv_sets[0]
         # points are (M, 2) float UV coords
-        self.assertEqual(s.points.ndim, 2)
+        self.assertEqual(s.points.ndim,     2)
         self.assertEqual(s.points.shape[1], 2)
-        self.assertEqual(s.points.dtype, np.float64)
+        self.assertEqual(s.points.dtype,    np.float64)
         # counts/indices reconstruct the per-face UV layout (same invariant as
         # the mesh's counts/indices): sum(counts) == len(indices)
         self.assertEqual(int(s.counts.sum()), int(s.indices.shape[0]))
@@ -80,14 +80,14 @@ class TestMeshUVSets(unittest.TestCase):
     def test_uv_index_space_independent_of_vertices(self):
         # UVs are per-face-vertex: a cube's seam corners are unshared, so there
         # are MORE UVs than the 8 vertices -- the UV point array is its own space.
-        m = _attached_mesh(self._cube())
+        m       = _attached_mesh(self._cube())
         n_verts = m.fn.numVertices
         self.assertNotEqual(m.uv_sets[0].num_uvs, n_verts)
 
     def test_as_mesh_builds_valid_2d_mesh(self):
         from mpynode._api2.geometry import Mesh, build_mesh_data
 
-        s = _attached_mesh(self._cube()).uv_sets[0]
+        s    = _attached_mesh(self._cube()).uv_sets[0]
         flat = s.as_mesh()
         self.assertIsInstance(flat, Mesh)
         # padded to (M, 3) with z == 0
@@ -119,10 +119,10 @@ class TestMeshGracefulCtor(unittest.TestCase):
         mc.file(new=True, force=True)
         xform = mc.polyCube(constructionHistory=False)[0]
         shape = mc.listRelatives(xform, shapes=True, fullPath=True)[0]
-        uv = _attached_mesh(shape).uv_sets[0]
+        uv    = _attached_mesh(shape).uv_sets[0]
 
-        direct = Mesh(uv)              # graceful: build straight from the UVSet
-        reference = uv.as_mesh()       # the explicit projection
+        direct    = Mesh(uv)      # graceful: build straight from the UVSet
+        reference = uv.as_mesh()  # the explicit projection
         self.assertTrue(np.array_equal(direct.points, reference.points))
         self.assertTrue(np.array_equal(direct.counts, reference.counts))
         self.assertTrue(np.array_equal(direct.indices, reference.indices))
@@ -144,7 +144,7 @@ class TestMeshGracefulCtor(unittest.TestCase):
         from mpynode._api2.geometry import Mesh
 
         pts = [[0, 0, 5], [1, 0, 5], [0, 1, 5]]
-        m = Mesh(points=pts, counts=[3], indices=[0, 1, 2])
+        m   = Mesh(points=pts, counts=[3], indices=[0, 1, 2])
         self.assertEqual(m.points.shape, (3, 3))
         self.assertTrue(np.allclose(m.points, pts))  # z preserved, no padding
 
@@ -160,8 +160,8 @@ class TestMeshGracefulCtor(unittest.TestCase):
         mc.file(new=True, force=True)
         xform = mc.polyCube(constructionHistory=False)[0]
         shape = mc.listRelatives(xform, shapes=True, fullPath=True)[0]
-        uv = _attached_mesh(shape).uv_sets[0]
-        data = build_mesh_data(Mesh(uv))
+        uv    = _attached_mesh(shape).uv_sets[0]
+        data  = build_mesh_data(Mesh(uv))
         self.assertFalse(data.isNull())
 
 

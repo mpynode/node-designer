@@ -39,7 +39,7 @@ class TestSetupRollbackMaya(unittest.TestCase):
         # The mPyMesh setup (against the pre-built self) creates: transform,
         # shape, connectAttr, then mc.sets. We want mc.sets to fail so the
         # body's render-node rollback runs and the error propagates to build().
-        original_sets = mc.sets
+        original_sets   = mc.sets
         sets_call_count = [0]
 
         def patched_sets(*args, **kwargs):

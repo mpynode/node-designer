@@ -47,7 +47,7 @@ _REL = "MPyNode/DNET"
 
 # The grid demo's fixed net (must match DEMO_DNET in build_templates.py).
 _ROWS, _COLS = 6, 8
-_N = _ROWS * _COLS
+_N       = _ROWS * _COLS
 _CORNERS = [0, _COLS - 1, (_ROWS - 1) * _COLS, _N - 1]
 _INTERIOR = [r * _COLS + c for r in range(1, _ROWS - 1)
              for c in range(1, _COLS - 1)]
@@ -63,7 +63,7 @@ def _payload(rel):
 def _create_with_demo(rel):
     payload, native_type = _payload(rel)
     mc.select(clear=True)
-    cmd = _TemplateCreateCommand(payload, native_type, run_demo=True)
+    cmd  = _TemplateCreateCommand(payload, native_type, run_demo=True)
     name = run_undoable(cmd) or cmd.created_name
     if cmd.tier_failures.get("demo"):
         raise AssertionError("demo failed: %s" % cmd.tier_failures["demo"])
@@ -140,7 +140,7 @@ class DnetTemplateStructureTest(unittest.TestCase):
         data, native_type = _payload(_REL)
         self.assertEqual(native_type, "mPyNode",
                          "dnet must be a base mPyNode, got %r" % native_type)
-        inputs = data.get("input_attrs") or {}
+        inputs  = data.get("input_attrs") or {}
         outputs = data.get("output_attrs") or {}
         for a in ("matrices", "anchors", "index0", "index1", "restLengths",
                   "tension", "push", "pull", "iterations", "damping",
@@ -183,7 +183,7 @@ class DnetTemplateStructureTest(unittest.TestCase):
         # their bodies are VENDORED into the methods source.
         data, _ = _payload(_REL)
         init_src = data.get("init_source") or ""
-        methods = data.get("methods_source") or ""
+        methods  = data.get("methods_source") or ""
         self.assertIn("from mpynode._common.nodes.rigging.dnet import Solver",
                       init_src,
                       "Init tab must import the shared Solver, not define it")
@@ -298,8 +298,8 @@ class DnetGridDemoTest(unittest.TestCase):
         sink = _ErrSink()
         log_bus.subscribe(sink)
         try:
-            d1 = self._positions(name, 1)     # rest grid: spacing == rest length
-            d24 = self._positions(name, 24)   # top-right corner pulled out of plane
+            d1  = self._positions(name, 1)   # rest grid: spacing == rest length
+            d24 = self._positions(name, 24)  # top-right corner pulled out of plane
         finally:
             log_bus.unsubscribe(sink)
         self.assertFalse(sink.errors,
@@ -327,8 +327,8 @@ class DnetGridDemoTest(unittest.TestCase):
         #   1. magnitude grows with tension -> guards a DROPPED per-link read.
         #   2. motion is CONTRACTION, not expansion -> guards a SIGN-FLIPPED term.
         name = _create_with_demo(_REL)
-        mc.setAttr(name + ".resetBuffer", 1)     # clean re-seed every eval
-        mc.setAttr(name + ".iterations", 200)    # let contraction develop
+        mc.setAttr(name + ".resetBuffer", 1)   # clean re-seed every eval
+        mc.setAttr(name + ".iterations", 200)  # let contraction develop
         mc.currentTime(1)
         links = _link_nodes(name)
         self.assertEqual(len(links), _GRID_LINKS,
@@ -343,13 +343,13 @@ class DnetGridDemoTest(unittest.TestCase):
             for link in links:                       # tension is per-link now
                 mc.setAttr(link + ".tension", tension)
             mc.dgdirty(name + ".positions")
-            max_mag = 0.0
+            max_mag        = 0.0
             dist_to_center = 0.0
             for i in _INTERIOR:
-                v = mc.getAttr(name + ".positions[%d]" % i)[0]
+                v       = mc.getAttr(name + ".positions[%d]" % i)[0]
                 max_mag = max(max_mag, _mag(v))
-                wx = float(i % _COLS) + v[0]        # solved world pos (grid frame)
-                wy = -float(i // _COLS) + v[1]
+                wx      = float(i % _COLS) + v[0]        # solved world pos (grid frame)
+                wy      = -float(i // _COLS) + v[1]
                 dist_to_center += ((wx - cx) ** 2 + (wy - cy) ** 2
                                    + v[2] ** 2) ** 0.5
             return max_mag, dist_to_center
@@ -381,9 +381,9 @@ class DnetGridDemoTest(unittest.TestCase):
         # append one extra index0 entry with NO matching index1 -> len mismatch.
         extra = mc.getAttr(name + ".index0", size=True)
         mc.setAttr(name + ".index0[%d]" % extra, 5)
-        mc.setAttr(name + ".resetBuffer", 1)     # deterministic single-eval solve
-        mc.setAttr(name + ".iterations", 200)
-        mc.currentTime(24)                        # corner pulled out -> net swings
+        mc.setAttr(name + ".resetBuffer",        1)  # deterministic single-eval solve
+        mc.setAttr(name + ".iterations",         200)
+        mc.currentTime(24)                           # corner pulled out -> net swings
 
         sink = _ErrSink()
         log_bus.subscribe(sink)
@@ -424,8 +424,8 @@ class DnetLayoutDemoTest(unittest.TestCase):
     upper-lip goals follow the cranium, the lower-lip goals follow the jaw. Run BY
     NAME through the wrapper's run_demo on a bare (no-demo) node."""
 
-    _LN = 30                                   # knots in the captured layout
-    _LE = 38                                   # links
+    _LN = 30  # knots in the captured layout
+    _LE = 38  # links
     # Free (unanchored) knots per the layout anchors[] (0 == free).
     _FREE = [1, 3, 5, 7, 9, 11, 13, 15]
 
@@ -556,7 +556,7 @@ class DnetLayoutDemoTest(unittest.TestCase):
         from mpynode._common.util import log_bus
 
         wrap_node(self.name).run_demo("demo_layout")
-        n = self.name
+        n     = self.name
         links = _link_nodes(n)
         self.assertEqual(len(links), self._LE,
                          "expected %d link transforms" % self._LE)
@@ -624,10 +624,10 @@ class DnetTwoKnotsDemoTest(unittest.TestCase):
     decomposeMatrix each. Run BY NAME through the wrapper's run_demo on a bare
     node."""
 
-    _LN = 6                                     # knots (2 free + 4 anchors)
-    _LE = 5                                     # links
-    _FREE = [0, 1]                              # solver-driven hubs (anchors = 0)
-    _ANCHORED = [2, 3, 4, 5]                    # pinned anchors (anchors = 1)
+    _LN       = 6             # knots (2 free + 4 anchors)
+    _LE       = 5             # links
+    _FREE     = [0, 1]        # solver-driven hubs (anchors = 0)
+    _ANCHORED = [2, 3, 4, 5]  # pinned anchors (anchors = 1)
     # Rest-state link spans = initial knot separations: four spokes at sqrt(18)
     # and the free-hub -> free-hub link at 6.0 (positions ~ 0 -> children at goals).
     _EXPECTED_SPANS = sorted([18.0 ** 0.5] * 4 + [6.0])
@@ -778,8 +778,8 @@ class DnetTwoKnotsDemoTest(unittest.TestCase):
                                  "curve %s cv %d must NOT read positions[]: %s"
                                  % (crv, cv, src))
             # The segment must SPAN its two knots, not collapse.
-            c0 = mc.pointPosition(crv + ".cv[0]", world=True)
-            c1 = mc.pointPosition(crv + ".cv[1]", world=True)
+            c0   = mc.pointPosition(crv + ".cv[0]", world=True)
+            c1   = mc.pointPosition(crv + ".cv[1]", world=True)
             span = _mag([c1[j] - c0[j] for j in range(3)])
             self.assertGreater(span, 1.0,
                                "link curve %s is degenerate (span=%.4f)"
@@ -828,8 +828,8 @@ class DnetTwoKnotsDemoTest(unittest.TestCase):
             self.assertIsNotNone(g2, "anchor 2 goal not wired to matrices[2]")
             mc.move(8.0, 5.0, 3.0, g2, relative=True)
 
-            after0 = driven_mag(0)                      # free hub follows -> grows
-            after2 = driven_mag(2)                      # anchor still pinned -> ~0
+            after0 = driven_mag(0)  # free hub follows -> grows
+            after2 = driven_mag(2)  # anchor still pinned -> ~0
         finally:
             log_bus.unsubscribe(sink)
 
@@ -854,7 +854,7 @@ class DnetAuthoringTest(unittest.TestCase):
     def setUp(self):
         mc.file(new=True, force=True)
         self.name = _create_vanilla(_REL)
-        self.w = wrap_node(self.name)
+        self.w    = wrap_node(self.name)
 
     def _knot(self, x, y, z, draw_icon=False):
         goal = self.w.call_command("dnetCreateKnot", draw_icon=draw_icon)
@@ -951,7 +951,7 @@ class DnetAuthoringTest(unittest.TestCase):
         # are translation-invariant, so these are exact wherever the rig sits.
         rest = [mc.getAttr(self.name + ".restLengths[%d]" % e)
                 for e in range(3)]
-        self.assertAlmostEqual(rest[0], 3.0, places=4)
+        self.assertAlmostEqual(rest[0], 3.0,         places=4)
         self.assertAlmostEqual(rest[1], 18.0 ** 0.5, places=4)
         self.assertAlmostEqual(rest[2], 18.0 ** 0.5, places=4)
 
@@ -995,8 +995,8 @@ class DnetAuthoringTest(unittest.TestCase):
                 self.assertTrue(mc.objExists("%s.%s" % (link, attr)),
                                 "%s has no %s attr" % (link, attr))
                 self.assertAlmostEqual(mc.getAttr("%s.%s" % (link, attr)), dflt,
-                                       places=4,
-                                       msg="%s.%s default should be %s"
+                                       places = 4,
+                                       msg    = "%s.%s default should be %s"
                                        % (link, attr, dflt))
                 wired = mc.listConnections("%s.%s" % (link, attr), source=False,
                                            destination=True, plugs=True) or []
@@ -1017,9 +1017,9 @@ class DnetAuthoringTest(unittest.TestCase):
         for k in knots[1:]:
             mc.select(k, add=True)                    # hub (origin) last
         links = self.w.call_command("dnetCreateLink")
-        mc.setAttr(knots[3] + ".anchored", 1.0)       # pin the hub
+        mc.setAttr(knots[3] + ".anchored",     1.0)       # pin the hub
         mc.setAttr(self.name + ".resetBuffer", 1)
-        mc.setAttr(self.name + ".iterations", 300)
+        mc.setAttr(self.name + ".iterations",  300)
 
         def spoke0_disp():
             mc.dgdirty(self.name + ".positions")
@@ -1050,15 +1050,15 @@ class DnetAuthoringTest(unittest.TestCase):
         # push[e]/pull[e] actually reach the kernel.
         from mpynode._common.util import log_bus
 
-        spoke = self._knot(5, 0, 0)                    # free spoke
-        hub = self._knot(0, 0, 0)                      # hub -> anchored
+        spoke = self._knot(5, 0, 0)  # free spoke
+        hub   = self._knot(0, 0, 0)  # hub -> anchored
         mc.select(spoke, replace=True)
         mc.select(hub, add=True)                       # hub selected last
         links = self.w.call_command("dnetCreateLink")
-        link = links[0]
-        mc.setAttr(hub + ".anchored", 1.0)            # pin the hub at origin
-        mc.setAttr(self.name + ".resetBuffer", 1)     # re-seed from goals each eval
-        mc.setAttr(self.name + ".iterations", 300)
+        link  = links[0]
+        mc.setAttr(hub + ".anchored",          1.0)  # pin the hub at origin
+        mc.setAttr(self.name + ".resetBuffer", 1)    # re-seed from goals each eval
+        mc.setAttr(self.name + ".iterations",  300)
 
         def spoke_disp():
             mc.dgdirty(self.name + ".positions")
@@ -1130,12 +1130,12 @@ class DnetSolverModuleTest(unittest.TestCase):
         # ends at x=0/x=20 anchored, middle's goal lifted OFF the line to y=8.
         # Two links of rest length 5 -> both stretched, pulling the middle down.
         matrices = np.array([mat(0.0), mat(10.0, 8.0), mat(20.0)])
-        anchors = np.array([1.0, 0.0, 1.0])
-        index0 = np.array([0, 1], dtype=np.int32)
-        index1 = np.array([1, 2], dtype=np.int32)
-        lengths = np.array([5.0, 5.0])
+        anchors  = np.array([1.0, 0.0, 1.0])
+        index0   = np.array([0, 1], dtype=np.int32)
+        index1   = np.array([1, 2], dtype=np.int32)
+        lengths  = np.array([5.0, 5.0])
 
-        solver = Solver(None)
+        solver   = Solver(None)
         solver.evaluate(matrices, anchors, lengths, index0=index0, index1=index1,
                         iterations=300, tolerance=1e-6, damping=0.2)
         pos = np.asarray(solver.positions)      # world solved positions (3, 3)

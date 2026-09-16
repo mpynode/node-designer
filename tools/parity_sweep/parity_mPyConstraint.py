@@ -9,14 +9,14 @@ for p in ("mpynode_api1", "mpynode_api2"):
     if not cmds.pluginInfo(p, q=True, loaded=True):
         cmds.loadPlugin(p, quiet=True)
 
-HERE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fixtures", "mPyConstraint")
-ORIG_MA = os.path.join(HERE, "mPyConstraint_pointBlend_original.ma")
-BUNDLE = os.path.join(HERE, "pointBlendConstraint.bundle")
+HERE      = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fixtures", "mPyConstraint")
+ORIG_MA   = os.path.join(HERE, "mPyConstraint_pointBlend_original.ma")
+BUNDLE    = os.path.join(HERE, "pointBlendConstraint.bundle")
 NODE_TYPE = "pointBlendConstraint"
-TOL = 1e-4
+TOL       = 1e-4
 
 INPUTS = {"blend": "float", "offset": "vector", "targetA": "vector", "targetB": "vector"}
-OUT = "outPos"
+OUT    = "outPos"
 
 
 def _sample(t):
@@ -58,7 +58,7 @@ def main():
     plug = os.path.basename(BUNDLE)
     if not cmds.pluginInfo(plug, q=True, loaded=True):
         cmds.loadPlugin(BUNDLE)
-    comp = cmds.createNode(NODE_TYPE)
+    comp      = cmds.createNode(NODE_TYPE)
     comp_type = cmds.nodeType(comp)
     print("COMP", comp, "type", comp_type)
     comp_built = cmds.objExists(comp)
@@ -68,10 +68,10 @@ def main():
         return
 
     random.seed(42)
-    n_samples = 25
+    n_samples      = 25
     comps_compared = 0
-    maxerr = 0.0
-    fails = 0
+    maxerr         = 0.0
+    fails          = 0
     for s in range(n_samples):
         for a, t in INPUTS.items():
             v = _sample(t)

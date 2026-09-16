@@ -46,25 +46,25 @@ def _verify(ran=False, ok=None, maxerr=None, tol=None, reason=""):
 def _row(type_name, build_status="compiled", verify=None, ported=False,
          incomplete=None, build_reason=""):
     return {
-        "source_node": type_name + "1",
-        "type_name": type_name,
+        "source_node":  type_name + "1",
+        "type_name":    type_name,
         "build_status": build_status,
         "build_reason": build_reason,
-        "ported": ported,
-        "incomplete": list(incomplete or []),
-        "invented_io": [],
-        "verify": verify or _verify(),
-        "spec": {"portability": {"blockers": []}},
+        "ported":       ported,
+        "incomplete":   list(incomplete or []),
+        "invented_io":  [],
+        "verify":       verify or _verify(),
+        "spec":         {"portability": {"blockers": []}},
     }
 
 
 def _result(nodes, ok=True):
     return {
-        "ok": ok,
+        "ok":          ok,
         "plugin_name": "myPlugin",
         "bundle_path": "/tmp/out/myPlugin.bundle" if ok else None,
-        "nodes": nodes,
-        "errors": [],
+        "nodes":       nodes,
+        "errors":      [],
     }
 
 
@@ -226,7 +226,7 @@ class TestPerNodeGreenLight(unittest.TestCase):
         try:
             dlg._update_ai_button(
                 _result([self._diverged(), self._dropped()]), "/tmp/out")
-            texts = [w.text() for w in dlg._greenlight_box.findChildren(QLabel)]
+            texts  = [w.text() for w in dlg._greenlight_box.findChildren(QLabel)]
             joined = "\n".join(texts)
             self.assertIn("alpha1 -- built, but its output DIVERGED", joined)
             self.assertIn("beta1 -- did not build", joined)

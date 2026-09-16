@@ -41,7 +41,7 @@ class TestWalkPlugTreeShape(unittest.TestCase):
     def test_inherited_envelope_visible_as_input(self):
         from mpynode.ui.widgets.plug_tree_walker import walk_plug_tree
 
-        rows = walk_plug_tree(self.deformer.get_name())
+        rows     = walk_plug_tree(self.deformer.get_name())
         env_rows = [r for r in rows if r.short_name == "envelope"]
         self.assertEqual(len(env_rows), 1)
         self.assertEqual(env_rows[0].direction, "INPUT")
@@ -50,7 +50,7 @@ class TestWalkPlugTreeShape(unittest.TestCase):
     def test_user_added_attrs_flagged(self):
         from mpynode.ui.widgets.plug_tree_walker import walk_plug_tree
 
-        rows = walk_plug_tree(self.deformer.get_name())
+        rows  = walk_plug_tree(self.deformer.get_name())
         names = {r.short_name for r in rows if r.is_user_added}
         self.assertIn("driverMatrixA", names)
         self.assertIn("amplitude", names)
@@ -60,7 +60,7 @@ class TestWalkPlugTreeShape(unittest.TestCase):
         (amplitudeX/Y/Z) visible as nested rows."""
         from mpynode.ui.widgets.plug_tree_walker import walk_plug_tree
 
-        rows = walk_plug_tree(self.deformer.get_name())
+        rows        = walk_plug_tree(self.deformer.get_name())
         child_paths = {r.plug_path for r in rows if r.parent_path == "amplitude"}
         self.assertEqual(
             child_paths,
@@ -72,7 +72,7 @@ class TestWalkPlugTreeShape(unittest.TestCase):
         componentTagExpression compound children show up."""
         from mpynode.ui.widgets.plug_tree_walker import walk_plug_tree
 
-        rows = walk_plug_tree(self.deformer.get_name())
+        rows   = walk_plug_tree(self.deformer.get_name())
         nested = {r.plug_path for r in rows}
         # input[0] (array element) + children should be present
         self.assertTrue(any("input[0]" in p for p in nested),
@@ -83,9 +83,9 @@ class TestWalkPlugTreeShape(unittest.TestCase):
             walk_plug_tree, filter_by_direction,
         )
 
-        rows = walk_plug_tree(self.deformer.get_name())
+        rows    = walk_plug_tree(self.deformer.get_name())
         outputs = filter_by_direction(rows, "OUTPUT")
-        names = {r.short_name for r in outputs}
+        names   = {r.short_name for r in outputs}
         self.assertIn("outputGeometry", names)
 
     def test_unknown_node_returns_empty(self):
@@ -138,7 +138,7 @@ class TestVariablesWidgetUnification(unittest.TestCase):
     def test_inherited_envelope_in_collect_plug_rows(self):
         from mpynode.ui.widgets.variables import collect_plug_rows
 
-        rows = collect_plug_rows(self.deformer.get_name())
+        rows       = collect_plug_rows(self.deformer.get_name())
         plug_paths = [r[0] for r in rows]
         self.assertIn("envelope", plug_paths)
 
@@ -148,7 +148,7 @@ class TestVariablesWidgetUnification(unittest.TestCase):
         parent 'amplitude'."""
         from mpynode.ui.widgets.variables import collect_plug_rows
 
-        rows = collect_plug_rows(self.deformer.get_name())
+        rows       = collect_plug_rows(self.deformer.get_name())
         plug_paths = [r[0] for r in rows]
         self.assertIn("amplitude", plug_paths)
         self.assertIn("amplitude.amplitudeX", plug_paths)
@@ -159,8 +159,8 @@ class TestVariablesWidgetUnification(unittest.TestCase):
 
         mc.file(new=True, force=True)
         ensure_plugins_loaded()
-        node = mc.createNode("mPyIkSolver")
-        rows = collect_internal_api_rows(node)
+        node  = mc.createNode("mPyIkSolver")
+        rows  = collect_internal_api_rows(node)
         names = [r[0] for r in rows]
         for slot in MPyIkSolver.INTERNAL_API_SLOTS:
             self.assertIn(slot[0], names)
@@ -220,7 +220,7 @@ class TestPlugTreeNoForceEval(unittest.TestCase):
         )
         name = node.get_name()
         mc.getAttr(name + ".pts[0]")  # prime so elements exist
-        rows = walk_plug_tree(name)
+        rows       = walk_plug_tree(name)
         elem_paths = [r.plug_path for r in rows]
         self.assertIn("pts[0]", elem_paths)
         self.assertIn("pts[1]", elem_paths)
@@ -359,7 +359,7 @@ class TestEditorLoadSaveMenu(unittest.TestCase):
         ed = QtPythonEditor()
         ed.setPlainText("# saved script\nx = 42\n")
         tmpdir = tempfile.mkdtemp(prefix="mpynode_loadsave_")
-        path = os.path.join(tmpdir, "out.py")
+        path   = os.path.join(tmpdir, "out.py")
         try:
             # Drive the file-write path directly.
             with open(path, "w", encoding="utf-8") as fp:
@@ -517,11 +517,11 @@ class TestRefreshContextMenu(unittest.TestCase):
         w = NDAttributesWidget()
         w.refresh(self.deformer)
         # Spy on each tree's refresh.
-        input_called = []
-        output_called = []
-        orig_in_refresh = w._input_tree.refresh
-        orig_out_refresh = w._output_tree.refresh
-        w._input_tree.refresh = lambda: (input_called.append(1), orig_in_refresh())
+        input_called           = []
+        output_called          = []
+        orig_in_refresh        = w._input_tree.refresh
+        orig_out_refresh       = w._output_tree.refresh
+        w._input_tree.refresh  = lambda: (input_called.append(1), orig_in_refresh())
         w._output_tree.refresh = lambda: (output_called.append(1), orig_out_refresh())
         # Trigger from the input tree.
         w._input_tree._refresh_both_trees()
@@ -637,9 +637,9 @@ class TestTransformBehaviorParity(unittest.TestCase):
         mc.setAttr(t.get_name() + ".translateZ", 3.0)
         # Empty expression -> matrix is default TRS composition.
         wm = mc.xform(t.get_name(), q=True, ws=True, t=True)
-        self.assertAlmostEqual(wm[0], 7.5, places=4)
+        self.assertAlmostEqual(wm[0], 7.5,   places=4)
         self.assertAlmostEqual(wm[1], -1.25, places=4)
-        self.assertAlmostEqual(wm[2], 3.0, places=4)
+        self.assertAlmostEqual(wm[2], 3.0,   places=4)
 
     def test_expression_drives_via_local_matrix(self):
         """The expression drives the node through the gated ``local_matrix``

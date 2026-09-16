@@ -145,7 +145,7 @@ def reveal_in_file_manager(path):
     window, and the compile dialog already surfaces ``err`` in a message box.
     """
     from mpynode.native.toolchain import toolchain
-    kw = toolchain.no_window_kwargs()
+    kw     = toolchain.no_window_kwargs()
     target = os.path.normpath(str(path))
     if not os.path.exists(target):
         return False, "no such path: %s" % target

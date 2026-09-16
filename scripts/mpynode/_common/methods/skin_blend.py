@@ -27,10 +27,10 @@ import numpy as np
 
 def linear_blend(rest, weights, joint, bind):
     """Linear blend skinning: deformed[v] = sum_j W[v,j] * (rest_h[v] @ M_j)."""
-    N = rest.shape[0]
-    W = weights
-    M = bind @ joint                                    # (J, 4, 4)
-    pts_h = np.concatenate([rest, np.ones((N, 1))], axis=1)       # (N, 4)
+    N     = rest.shape[0]
+    W     = weights
+    M     = bind @ joint                                     # (J, 4, 4)
+    pts_h = np.concatenate([rest, np.ones((N, 1))], axis=1)  # (N, 4)
     return np.einsum("vj,jkc,vk->vc", W, M, pts_h)[:, :3]         # (N, 3)
 
 
@@ -43,8 +43,8 @@ def dual_quaternion(rest, weights, joint, bind):
     M = bind @ joint                                    # (J, 4, 4)
 
     # Per-joint column-form rotation + translation from the Maya row-vector matrix.
-    R = np.transpose(M[:, :3, :3], (0, 2, 1))           # (J, 3, 3)
-    t = M[:, 3, :3]                                      # (J, 3)
+    R = np.transpose(M[:, :3, :3], (0, 2, 1))  # (J, 3, 3)
+    t = M[:, 3, :3]                            # (J, 3)
     r00 = R[:, 0, 0]; r01 = R[:, 0, 1]; r02 = R[:, 0, 2]
     r10 = R[:, 1, 0]; r11 = R[:, 1, 1]; r12 = R[:, 1, 2]
     r20 = R[:, 2, 0]; r21 = R[:, 2, 1]; r22 = R[:, 2, 2]
@@ -79,17 +79,17 @@ def dual_quaternion(rest, weights, joint, bind):
 
     # Hemisphere alignment: flip influences pointing away from influence 0.
     dot0 = np.sum(qr * qr[0], axis=1)                   # (J,)
-    sgn = np.sign(dot0)
-    sgn = np.where(sgn == 0.0, 1.0, sgn)
-    qr = qr * sgn[:, None]
-    qd = qd * sgn[:, None]
+    sgn  = np.sign(dot0)
+    sgn  = np.where(sgn == 0.0, 1.0, sgn)
+    qr   = qr * sgn[:, None]
+    qd   = qd * sgn[:, None]
 
     # Weighted blend of the dual quaternions, then re-normalise.
-    br = np.einsum("vj,jk->vk", W, qr)                  # (N, 4)
-    bd = np.einsum("vj,jk->vk", W, qd)                  # (N, 4)
-    mag = np.sqrt(np.sum(br * br, axis=1))              # (N,)
-    br = br / mag[:, None]
-    bd = bd / mag[:, None]
+    br  = np.einsum("vj,jk->vk", W, qr)     # (N, 4)
+    bd  = np.einsum("vj,jk->vk", W, qd)     # (N, 4)
+    mag = np.sqrt(np.sum(br * br, axis=1))  # (N,)
+    br  = br / mag[:, None]
+    bd  = bd / mag[:, None]
 
     # Blended unit dual quaternion -> rotation matrix + translation.
     bw = br[:, 0]; bx = br[:, 1]; by = br[:, 2]; bz = br[:, 3]
@@ -169,9 +169,9 @@ def _twist_rotation_row(M, bind, twist_axis=0):
     invariant, so a pure twist lands entirely here and a pure bend leaves it
     identity. A 180-deg swing perpendicular to the axis is the singular case,
     guarded to identity."""
-    R_row = M[:, :3, :3]                                 # (J, 3, 3) full rotation, row
-    Rc = np.transpose(R_row, (0, 2, 1))                 # (J, 3, 3) column form (for quat)
-    q = _mat_to_quat_cols(Rc)                            # (J, 4) [w, x, y, z]
+    R_row = M[:, :3, :3]                    # (J, 3, 3) full rotation, row
+    Rc    = np.transpose(R_row, (0, 2, 1))  # (J, 3, 3) column form (for quat)
+    q     = _mat_to_quat_cols(Rc)           # (J, 4) [w, x, y, z]
 
     # Twist axis a_j = the selected bone-local column at bind (X=0/Y=1/Z=2), a
     # column-vector in the geometry frame. Picked by a scalar-coefficient blend
@@ -180,20 +180,20 @@ def _twist_rotation_row(M, bind, twist_axis=0):
     # arithmetic, literal-index columns and scalar*array only, all of which lower
     # 1:1 to C++ (no dynamic index, no scalar-condition where). At twist_axis==0
     # this is cx=1, cy=cz=0, so ``a`` is the X column byte-for-byte.
-    t = float(twist_axis)
+    t  = float(twist_axis)
     cx = (t - 1.0) * (t - 2.0) * 0.5
     cy = t * (2.0 - t)
     cz = t * (t - 1.0) * 0.5
-    a = cx * bind[:, :3, 0] + cy * bind[:, :3, 1] + cz * bind[:, :3, 2]  # (J, 3)
-    a = a / np.sqrt(np.sum(a * a, axis=1) + 1e-30)[:, None]
+    a  = cx * bind[:, :3, 0] + cy * bind[:, :3, 1] + cz * bind[:, :3, 2]  # (J, 3)
+    a  = a / np.sqrt(np.sum(a * a, axis=1) + 1e-30)[:, None]
 
     qw = q[:, 0]; qx = q[:, 1]; qy = q[:, 2]; qz = q[:, 3]
-    d = qx * a[:, 0] + qy * a[:, 1] + qz * a[:, 2]       # v . a
-    tw = np.stack([qw, d * a[:, 0], d * a[:, 1], d * a[:, 2]], axis=1)   # (J, 4)
-    nrm = np.sqrt(np.sum(tw * tw, axis=1))              # (J,)
+    d   = qx * a[:, 0] + qy * a[:, 1] + qz * a[:, 2]                     # v . a
+    tw  = np.stack([qw, d * a[:, 0], d * a[:, 1], d * a[:, 2]], axis=1)  # (J, 4)
+    nrm = np.sqrt(np.sum(tw * tw, axis=1))                               # (J,)
     # Singularity guard: |twist| ~ 0 (180-deg swing perpendicular to a) -> identity.
     safe = nrm > 1e-8
-    tw = tw / np.where(safe, nrm, 1.0)[:, None]
+    tw   = tw / np.where(safe, nrm, 1.0)[:, None]
     ident_q = np.zeros_like(tw); ident_q[:, 0] = 1.0
     tw = np.where(safe[:, None], tw, ident_q)           # (J, 4) unit twist quat
     return np.transpose(_quat_to_mat_cols(tw), (0, 2, 1))   # (J,3,3) twist rotation, row
@@ -204,12 +204,12 @@ def _twist_matrix(M, bind, twist_axis=0):
     rotation about the joint rest centre ``c_j`` by the twist rotation ->
     ``[Rt_row | c@(I - Rt)]``, (J, 4, 4). ``twist_axis`` (0=X/1=Y/2=Z) picks the
     bone-local twist axis."""
-    Rt_row = _twist_rotation_row(M, bind, twist_axis)
-    c = _joint_centre(bind)
-    M_twist = np.zeros_like(M)
+    Rt_row             = _twist_rotation_row(M, bind, twist_axis)
+    c                  = _joint_centre(bind)
+    M_twist            = np.zeros_like(M)
     M_twist[:, :3, :3] = Rt_row
-    M_twist[:, 3, :3] = c - np.einsum("vj,vjk->vk", c, Rt_row)
-    M_twist[:, 3, 3] = 1.0
+    M_twist[:, 3, :3]  = c - np.einsum("vj,vjk->vk", c, Rt_row)
+    M_twist[:, 3, 3]   = 1.0
     return M_twist
 
 
@@ -225,18 +225,18 @@ def _swing_matrix(M, bind, twist_axis=0):
     @ M`` would rotate about ``M``'s translation -- a point that flies far from the
     joint under large rotation, so LBS-blending it collapses the mesh at the blend
     region."""
-    R_row = M[:, :3, :3]                                 # (J, 3, 3) full rotation, row
-    t = M[:, 3, :3]                                      # (J, 3) full translation
+    R_row  = M[:, :3, :3]  # (J, 3, 3) full rotation, row
+    t      = M[:, 3, :3]   # (J, 3) full translation
     Rt_row = _twist_rotation_row(M, bind, twist_axis)
     # Swing rotation (row) = inv(twist) @ full = Rt_row.T @ R_row.
     Rs_row = np.einsum("vij,vjk->vik", np.transpose(Rt_row, (0, 2, 1)), R_row)
-    c = _joint_centre(bind)
+    c      = _joint_centre(bind)
     # Net non-rotational translation of M about c_j: e = t - c@(I - R).
-    e = t - (c - np.einsum("vj,vjk->vk", c, R_row))
-    M_swing = np.zeros_like(M)
+    e                  = t - (c - np.einsum("vj,vjk->vk", c, R_row))
+    M_swing            = np.zeros_like(M)
     M_swing[:, :3, :3] = Rs_row
-    M_swing[:, 3, :3] = (c - np.einsum("vj,vjk->vk", c, Rs_row)) + e
-    M_swing[:, 3, 3] = 1.0
+    M_swing[:, 3, :3]  = (c - np.einsum("vj,vjk->vk", c, Rs_row)) + e
+    M_swing[:, 3, 3]   = 1.0
     return M_swing
 
 
@@ -265,9 +265,9 @@ def twist_swing_dual(rest, twist_weights, swing_weights, joint, bind, twist_axis
     ``twist_swing_skin`` template). Every operand is EXPLICIT -- the
     method reads nothing off self.
     """
-    M = bind @ joint                                    # (J, 4, 4)
-    M_twist = _twist_matrix(M, bind, twist_axis)        # (J, 4, 4)
-    M_swing = _swing_matrix(M, bind, twist_axis)        # (J, 4, 4)
+    M       = bind @ joint                        # (J, 4, 4)
+    M_twist = _twist_matrix(M, bind, twist_axis)  # (J, 4, 4)
+    M_swing = _swing_matrix(M, bind, twist_axis)  # (J, 4, 4)
     # bind = identity, so the reused blends see exactly M_twist / M_swing
     # (identity @ X == X byte-for-byte). Built with zeros + a set diagonal, not
     # np.broadcast_to / np.eye, so the whole method lowers to pure C++.

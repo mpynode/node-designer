@@ -36,11 +36,11 @@ def _spec(compute, *, base="MPxNode", mpy_type="mPyNode", inputs=None, outputs=N
     return {
         "suggested": {"node_type_name": "marshalTest", "class_name": "MarshalTest",
                       "type_id": "0x000701a6", "mpx_base": base},
-        "mpy_type": mpy_type,
-        "compute": compute,
-        "init": "",
-        "inputs": dict(inputs or {}),
-        "outputs": dict(outputs or {}),
+        "mpy_type":    mpy_type,
+        "compute":     compute,
+        "init":        "",
+        "inputs":      dict(inputs or {}),
+        "outputs":     dict(outputs or {}),
         "portability": {"portable": True, "blockers": [], "warnings": []},
     }
 
@@ -79,7 +79,7 @@ class TestInputsAreMoved(unittest.TestCase):
                      "mesh.setPoints(rest * self.gain)\n",
                      base="MPxDeformerNode", mpy_type="mPyDeformer",
                      inputs={"gain": {"type": "double", "is_array": False}})
-        cpp = codegen.generate_cpp(spec, for_port=True)
+        cpp   = codegen.generate_cpp(spec, for_port=True)
         stale = re.findall(r"nd::from_data<[a-z0-9_]+>\((_tmp|_gt|_tgt|_tmpn|_uv|skinW),", cpp)
         self.assertEqual(stale, [])
 
@@ -140,9 +140,9 @@ class TestGeoIoHelpersAreBulk(unittest.TestCase):
 
     def test_read_mesh_copies_topology_in_bulk(self):
         c = self.cpp
-        self.assertIn("if (_gc.length()) _gc.get(g.counts.data());", c)
+        self.assertIn("if (_gc.length()) _gc.get(g.counts.data());",  c)
         self.assertIn("if (_gv.length()) _gv.get(g.indices.data());", c)
-        self.assertIn("g.points[i] = MPoint((double)_rp[3 * i]", c)
+        self.assertIn("g.points[i] = MPoint((double)_rp[3 * i]",      c)
         self.assertNotIn("g.counts.push_back(", c)
 
 

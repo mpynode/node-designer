@@ -18,7 +18,7 @@ import subprocess
 import sys
 import tempfile
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+ROOT   = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DUMPER = os.path.join(ROOT, "tools", "dump_canonical_specs.py")
 MAYAPY = os.environ.get(
     "MPYNODE_MAYAPY",

@@ -26,7 +26,7 @@ import sys
 import tempfile
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-TPL = os.path.join(ROOT, "templates")
+TPL  = os.path.join(ROOT, "templates")
 # A deterministically-lowered template: no LLM call, so this probe is cheap and
 # never depends on a provider being reachable.
 MPN = os.path.join(TPL, "MPyNode", "Bubble Sort", "template.mpn")
@@ -73,15 +73,15 @@ def main():
     from mpynode.native.toolchain import port_cache, typeid_registry as tr
 
     scratch = tempfile.mkdtemp(prefix="pin-e2e-")
-    ok = True
+    ok      = True
     L("=" * 78)
     L("PINNED MTypeId -- end to end")
     L("=" * 78)
 
-    payload = mpn_io.load_mpn(MPN, trusted=True)
+    payload   = mpn_io.load_mpn(MPN, trusted=True)
     base_spec = spec_from_mpn_payload(payload)
     type_name = (base_spec.get("suggested") or {}).get("node_type_name")
-    derived = "0x%08x" % tr.deterministic_id(type_name)
+    derived   = "0x%08x" % tr.deterministic_id(type_name)
     L("  template   %s" % os.path.relpath(MPN, ROOT))
     L("  type name  %s" % type_name)
     L("  derived id %s" % derived)
@@ -114,7 +114,7 @@ def main():
         L("  PASS: the pin reached the shipped C++")
 
     rows_b = res_b.get("nodes") or res_b.get("rows") or []
-    srcs = [r.get("type_id_source") for r in rows_b]
+    srcs   = [r.get("type_id_source") for r in rows_b]
     L("  [pinned]   manifest type_id_source=%s" % srcs)
     if "pinned" not in srcs:
         L("  FAIL: manifest did not record the id as 'pinned'")
@@ -140,7 +140,7 @@ def main():
         L("  PASS: an unusable pin is ignored; the derived id is used")
 
     # ---- 4. pinning must not move the port-cache key -----------------------
-    k_plain = port_cache.cache_key(base_spec, provider="p", model="m")
+    k_plain  = port_cache.cache_key(base_spec, provider="p", model="m")
     k_pinned = port_cache.cache_key(pinned_spec, provider="p", model="m")
     L("")
     L("  cache key unpinned %s" % k_plain[:24])

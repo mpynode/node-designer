@@ -157,9 +157,9 @@ class MPyFile(MPyNode, ViewportSourceMixin, OslSourceMixin):
     @classmethod
     def create(
         cls,
-        name: str = None,
-        seed_defaults: bool = True,
-        as_texture: bool = True,
+        name:           str  = None,
+        seed_defaults:  bool = True,
+        as_texture:     bool = True,
         skip_selection: bool = False,
     ) -> "MPyFile":
         """Create a new ``mPyFile`` node and (optionally) seed the

@@ -28,7 +28,7 @@ def _attr_mobject_for_name(
     """Return the MObject for the attribute called ``name`` on the
     given node, or None if it doesn't exist."""
     try:
-        fn = om.MFnDependencyNode(node_mobject)
+        fn   = om.MFnDependencyNode(node_mobject)
         attr = fn.attribute(name)
         if attr.isNull():
             return None
@@ -86,7 +86,7 @@ def _read_numeric_plug(
         now restricted to init-time only (``data_block is None``).
     """
     fn_num = om.MFnNumericAttribute(attr_mobject)
-    nt = fn_num.unitType()
+    nt     = fn_num.unitType()
 
     try:
         if nt in (om.MFnNumericData.kBoolean,):
@@ -258,7 +258,7 @@ def _read_matrix_plug(plug, *, data_block=None):
     mm = None
     try:
         mobj = plug.asMObject()
-        mm = _copy_mmatrix(om.MFnMatrixData(mobj).matrix())
+        mm   = _copy_mmatrix(om.MFnMatrixData(mobj).matrix())
     except Exception:
         mm = None
 
@@ -273,7 +273,7 @@ def _read_matrix_plug(plug, *, data_block=None):
     if mm is None and data_block is None:
         try:
             vals = mc.getAttr(plug.name()) or []
-            mm = om.MMatrix()
+            mm   = om.MMatrix()
             if len(vals) == 16:
                 om.MScriptUtil.createMatrixFromList(vals, mm)
         except Exception:

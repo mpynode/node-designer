@@ -60,7 +60,7 @@ from typing import Dict, Iterable, List, Optional, Tuple
 # clash is detected + probed, not silent). Overridable via [typeid] base/end in
 # mpynode.ini -- set it if you have your own Autodesk-allocated block.
 DEFAULT_BASE = 0x00010000
-RANGE_END = 0x0007FFFF
+RANGE_END    = 0x0007FFFF
 
 _ENV_PATH = "MPYNODE_TYPEID_REGISTRY"
 
@@ -108,9 +108,9 @@ def deterministic_id(key: str, base: int | None = None,
 
     sha256 (not ``hash()``, which is salted per process and would make ids
     differ between Maya sessions) folded into ``[base, end]``."""
-    base = configured_base() if base is None else int(base)
-    end = configured_end() if end is None else int(end)
-    span = max(1, end - base + 1)
+    base   = configured_base() if base is None else int(base)
+    end    = configured_end() if end is None else int(end)
+    span   = max(1, end - base + 1)
     digest = hashlib.sha256(str(key).encode("utf-8")).hexdigest()
     return base + (int(digest, 16) % span)
 
@@ -127,14 +127,14 @@ class TypeIdRegistry:
     def __init__(self, path: str | None = None, base: int | None = None,
                  end: int | None = None):
         self._path = path
-        self.base = configured_base() if base is None else int(base)
-        self.end = configured_end() if end is None else int(end)
-        self._file_pins: Optional[Dict[str, int]] = None   # lazy, read-once
-        self._manual: Dict[str, int] = {}                  # metadata pins
-        self._issued: Dict[str, int] = {}                  # key -> id, this run
-        self._used: Dict[int, str] = {}                    # id -> key, this run
-        self.sources: Dict[str, str] = {}                  # key -> how it got it
-        self.collisions: List[Tuple[str, int, int]] = []   # (key, wanted, got)
+        self.base  = configured_base() if base is None else int(base)
+        self.end   = configured_end() if end is None else int(end)
+        self._file_pins: Optional[Dict[str, int]] = None  # lazy, read-once
+        self._manual:    Dict[str, int] = {}              # metadata pins
+        self._issued:    Dict[str, int] = {}              # key -> id, this run
+        self._used:      Dict[int, str] = {}              # id -> key, this run
+        self.sources:    Dict[str, str] = {}              # key -> how it got it
+        self.collisions: List[Tuple[str, int, int]] = []  # (key, wanted, got)
 
     @property
     def path(self) -> str:
@@ -194,8 +194,8 @@ class TypeIdRegistry:
         """Take ``wanted`` for ``name``, or the next free id after it. Probing
         wraps inside [base, end] so a value near the top of the block can't run
         off the end."""
-        span = max(1, self.end - self.base + 1)
-        got = wanted
+        span  = max(1, self.end - self.base + 1)
+        got   = wanted
         steps = 0
         while got in self._used and steps < span:
             got = self.base + ((got - self.base + 1) % span)
@@ -209,7 +209,7 @@ class TypeIdRegistry:
             self.collisions.append((name, wanted, got))
             source = "%s+probed" % source
         self._issued[name] = got
-        self._used[got] = name
+        self._used[got]    = name
         self.sources[name] = source
         return got
 
@@ -236,7 +236,7 @@ class TypeIdRegistry:
             if file_pin is not None:
                 out[nm] = _as_hex(self._claim(nm, file_pin, "pin-file"))
                 continue
-            wanted = deterministic_id(nm, self.base, self.end)
+            wanted  = deterministic_id(nm, self.base, self.end)
             out[nm] = _as_hex(self._claim(nm, wanted, "derived"))
         return out
 
@@ -263,7 +263,7 @@ class TypeIdRegistry:
         """Freeze this build's ids into a pin file. EXPLICIT and opt-in -- no
         compile calls this, so the build never depends on a writable home."""
         target = path or self.path
-        d = os.path.dirname(target)
+        d      = os.path.dirname(target)
         if d and not os.path.isdir(d):
             os.makedirs(d, exist_ok=True)
         doc = {"base": _as_hex(self.base), "map": self.export_map()}

@@ -115,7 +115,7 @@ src = mc.polyCube(name="srcCube")[0]
 dst = mc.polyCube(name="drivenCube")[0]
 
 # Build the constraint, add a vector output, and write targetTranslate to it.
-c = MPyConstraint.create(name="myConstraint")
+c    = MPyConstraint.create(name="myConstraint")
 node = c.get_name()
 c.add_output_attr("constrained_pos", "vector")
 c.set_compute_expression("self.constrained_pos = self.targetTranslate")

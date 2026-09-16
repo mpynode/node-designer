@@ -117,8 +117,8 @@ _FLAG_ATTR = {
 # scalar attr_type -> MFnNumericData token.
 _SCALAR_DATA = {
     "float": om.MFnNumericData.kFloat,
-    "int": om.MFnNumericData.kInt,
-    "bool": om.MFnNumericData.kBoolean,
+    "int":   om.MFnNumericData.kInt,
+    "bool":  om.MFnNumericData.kBoolean,
 }
 _CHILD_DATA = {"kFloat": om.MFnNumericData.kFloat}
 # interface long-name -> MPyFile class attr holding the MObject (referenced by
@@ -139,8 +139,8 @@ _CLASS_REF = {
     "borderColorG": "aBorderColorG", "borderColorB": "aBorderColorB",
     "outColor": "aOutColor", "outColorR": "aOutColorR",
     "outColorG": "aOutColorG", "outColorB": "aOutColorB",
-    "outAlpha": "aOutAlpha",
-    "outTransparency": "aOutTransparency",
+    "outAlpha":         "aOutAlpha",
+    "outTransparency":  "aOutTransparency",
     "outTransparencyR": "aOutTransparencyR",
     "outTransparencyG": "aOutTransparencyG",
     "outTransparencyB": "aOutTransparencyB",
@@ -186,7 +186,7 @@ def _build_preset_interface(cls):
         t = e["attr_type"]
         if t == "string":
             default = om.MFnStringData().create(e.get("default", ""))
-            obj = tAttr.create(e["long"], e["short"], om.MFnData.kString, default)
+            obj     = tAttr.create(e["long"], e["short"], om.MFnData.kString, default)
             _apply_flags(tAttr, e.get("flags", {}))
         elif t == "enum":
             obj = eAttr.create(e["long"], e["short"], e.get("default", 0))
@@ -222,10 +222,10 @@ def _build_preset_interface(cls):
 class MPyFile(om.MPxNode):
     """API 2.0 expression-driven file-texture node."""
 
-    NODE_NAME = "mPyFile"
-    NODE_ID = om.MTypeId(0x00135720)
+    NODE_NAME              = "mPyFile"
+    NODE_ID                = om.MTypeId(0x00135720)
     DRAW_DB_CLASSIFICATION = "drawdb/shader/texture/2d/mPyFile"
-    DRAW_REGISTRANT_ID = "mPyFilePlugin"
+    DRAW_REGISTRANT_ID     = "mPyFilePlugin"
     PLUGIN_NODE_CLASSIFY = (
         "texture/2d"
         ":swatch/2dTextureSwatchGen"
@@ -246,47 +246,47 @@ class MPyFile(om.MPxNode):
     DUMMY_TEXTURE_MODE: bool = False
 
     # --- internal-mpynode attrs (set by helpers.build_internal_attrs) ---
-    _expression_attr: om.MObject = om.MObject.kNullObj
-    _input_attrs_attr: om.MObject = om.MObject.kNullObj
-    _output_attrs_attr: om.MObject = om.MObject.kNullObj
-    _stored_vars_list_attr: om.MObject = om.MObject.kNullObj
-    _stored_vars_data_attr: om.MObject = om.MObject.kNullObj
-    _debug_mode_attr: om.MObject = om.MObject.kNullObj
-    _profile_enabled_attr: om.MObject = om.MObject.kNullObj
-    _deep_profile_enabled_attr: om.MObject = om.MObject.kNullObj
-    _watch_enabled_attr: om.MObject = om.MObject.kNullObj
+    _expression_attr:            om.MObject = om.MObject.kNullObj
+    _input_attrs_attr:           om.MObject = om.MObject.kNullObj
+    _output_attrs_attr:          om.MObject = om.MObject.kNullObj
+    _stored_vars_list_attr:      om.MObject = om.MObject.kNullObj
+    _stored_vars_data_attr:      om.MObject = om.MObject.kNullObj
+    _debug_mode_attr:            om.MObject = om.MObject.kNullObj
+    _profile_enabled_attr:       om.MObject = om.MObject.kNullObj
+    _deep_profile_enabled_attr:  om.MObject = om.MObject.kNullObj
+    _watch_enabled_attr:         om.MObject = om.MObject.kNullObj
     _profile_snapshot_data_attr: om.MObject = om.MObject.kNullObj
-    _watch_vars_data_attr: om.MObject = om.MObject.kNullObj
+    _watch_vars_data_attr:       om.MObject = om.MObject.kNullObj
 
     # --- preset file-texture attrs (mirrors customFileTexture) ---
-    aFileName: om.MObject = om.MObject.kNullObj
-    aUvCoord: om.MObject = om.MObject.kNullObj
-    aUCoord: om.MObject = om.MObject.kNullObj
-    aVCoord: om.MObject = om.MObject.kNullObj
-    aUvFilterSize: om.MObject = om.MObject.kNullObj
-    aUvFilterSizeX: om.MObject = om.MObject.kNullObj
-    aUvFilterSizeY: om.MObject = om.MObject.kNullObj
-    aColorSpace: om.MObject = om.MObject.kNullObj
-    aPreFilter: om.MObject = om.MObject.kNullObj
+    aFileName:        om.MObject = om.MObject.kNullObj
+    aUvCoord:         om.MObject = om.MObject.kNullObj
+    aUCoord:          om.MObject = om.MObject.kNullObj
+    aVCoord:          om.MObject = om.MObject.kNullObj
+    aUvFilterSize:    om.MObject = om.MObject.kNullObj
+    aUvFilterSizeX:   om.MObject = om.MObject.kNullObj
+    aUvFilterSizeY:   om.MObject = om.MObject.kNullObj
+    aColorSpace:      om.MObject = om.MObject.kNullObj
+    aPreFilter:       om.MObject = om.MObject.kNullObj
     aPreFilterKernel: om.MObject = om.MObject.kNullObj
     aPreFilterRadius: om.MObject = om.MObject.kNullObj
-    aFilterMode: om.MObject = om.MObject.kNullObj
-    aMaxAnisotropy: om.MObject = om.MObject.kNullObj
-    aMipmapMode: om.MObject = om.MObject.kNullObj
-    aMipLODBias: om.MObject = om.MObject.kNullObj
-    aMinLOD: om.MObject = om.MObject.kNullObj
-    aMaxLOD: om.MObject = om.MObject.kNullObj
-    aWrapU: om.MObject = om.MObject.kNullObj
-    aWrapV: om.MObject = om.MObject.kNullObj
-    aBorderColor: om.MObject = om.MObject.kNullObj
-    aBorderColorR: om.MObject = om.MObject.kNullObj
-    aBorderColorG: om.MObject = om.MObject.kNullObj
-    aBorderColorB: om.MObject = om.MObject.kNullObj
-    aOutColor: om.MObject = om.MObject.kNullObj
-    aOutColorR: om.MObject = om.MObject.kNullObj
-    aOutColorG: om.MObject = om.MObject.kNullObj
-    aOutColorB: om.MObject = om.MObject.kNullObj
-    aOutAlpha: om.MObject = om.MObject.kNullObj
+    aFilterMode:      om.MObject = om.MObject.kNullObj
+    aMaxAnisotropy:   om.MObject = om.MObject.kNullObj
+    aMipmapMode:      om.MObject = om.MObject.kNullObj
+    aMipLODBias:      om.MObject = om.MObject.kNullObj
+    aMinLOD:          om.MObject = om.MObject.kNullObj
+    aMaxLOD:          om.MObject = om.MObject.kNullObj
+    aWrapU:           om.MObject = om.MObject.kNullObj
+    aWrapV:           om.MObject = om.MObject.kNullObj
+    aBorderColor:     om.MObject = om.MObject.kNullObj
+    aBorderColorR:    om.MObject = om.MObject.kNullObj
+    aBorderColorG:    om.MObject = om.MObject.kNullObj
+    aBorderColorB:    om.MObject = om.MObject.kNullObj
+    aOutColor:        om.MObject = om.MObject.kNullObj
+    aOutColorR:       om.MObject = om.MObject.kNullObj
+    aOutColorG:       om.MObject = om.MObject.kNullObj
+    aOutColorB:       om.MObject = om.MObject.kNullObj
+    aOutAlpha:        om.MObject = om.MObject.kNullObj
 
     # --- viewport source attr (matches the wrapper's ViewportSourceMixin) ---
     aViewportSource: om.MObject = om.MObject.kNullObj
@@ -352,11 +352,11 @@ class MPyFile(om.MPxNode):
             _sh_attr = tAttr.create(
                 _sh_name, _sh_name, om.MFnData.kString, _sh_default
             )
-            tAttr.storable = True
-            tAttr.writable = True
-            tAttr.readable = True
+            tAttr.storable    = True
+            tAttr.writable    = True
+            tAttr.readable    = True
             tAttr.connectable = True
-            tAttr.keyable = False
+            tAttr.keyable     = False
             # hidden=True: osl is writable, so a non-hidden writable string
             # would render as an editable AE field -- but it is a wire/tab
             # artifact, not an artist control. hidden removes it from the AE +
@@ -370,18 +370,18 @@ class MPyFile(om.MPxNode):
 
         # ---- mpynode internal attrs (LAST, on purpose -- see top of ----
         #      initializer for why) -------------------------------------
-        plugs = helpers.build_internal_attrs(MPyFile)
-        MPyFile._expression_attr = plugs["_computeSource"]
-        MPyFile._input_attrs_attr = plugs["inputs"]
-        MPyFile._output_attrs_attr = plugs["outputs"]
-        MPyFile._stored_vars_list_attr = plugs["stored_vars_list"]
-        MPyFile._stored_vars_data_attr = plugs["stored_vars_data"]
-        MPyFile._debug_mode_attr = plugs["debug_mode"]
-        MPyFile._profile_enabled_attr = plugs["profile_enabled"]
-        MPyFile._deep_profile_enabled_attr = plugs["deep_profile_enabled"]
-        MPyFile._watch_enabled_attr = plugs["watch_enabled"]
+        plugs                               = helpers.build_internal_attrs(MPyFile)
+        MPyFile._expression_attr            = plugs["_computeSource"]
+        MPyFile._input_attrs_attr           = plugs["inputs"]
+        MPyFile._output_attrs_attr          = plugs["outputs"]
+        MPyFile._stored_vars_list_attr      = plugs["stored_vars_list"]
+        MPyFile._stored_vars_data_attr      = plugs["stored_vars_data"]
+        MPyFile._debug_mode_attr            = plugs["debug_mode"]
+        MPyFile._profile_enabled_attr       = plugs["profile_enabled"]
+        MPyFile._deep_profile_enabled_attr  = plugs["deep_profile_enabled"]
+        MPyFile._watch_enabled_attr         = plugs["watch_enabled"]
         MPyFile._profile_snapshot_data_attr = plugs["profile_snapshot_data"]
-        MPyFile._watch_vars_data_attr = plugs["watch_vars_data"]
+        MPyFile._watch_vars_data_attr       = plugs["watch_vars_data"]
 
         # Viewport source plug.
         MPyFile.aViewportSource = helpers.make_internal_string_attr(
@@ -401,10 +401,10 @@ class MPyFile(om.MPxNode):
             "_timeIn", "_tin", om.MFnUnitAttribute.kTime, 0.0
         )
         _time_fn.storable = True
-        _time_fn.keyable = False
+        _time_fn.keyable  = False
         _time_fn.readable = False
         _time_fn.writable = True
-        _time_fn.hidden = True
+        _time_fn.hidden   = True
         MPyFile.addAttribute(MPyFile._time_in_attr)
 
         # ---- attributeAffects -------------------------------------------
@@ -458,19 +458,19 @@ class MPyFile(om.MPxNode):
         """Recompile cached code objects when the expression or
         viewport source plug changes."""
         try:
-            attr = plug.attribute()
+            attr      = plug.attribute()
             node_name = ""
             try:
                 node_name = om.MFnDependencyNode(self.thisMObject()).name()
             except Exception:
                 pass
             if attr == type(self)._expression_attr:
-                new_src = data_handle.asString()
+                new_src        = data_handle.asString()
                 self._expr_str = new_src
                 code = safe_compile_expression(
                     new_src,
-                    node_name=node_name,
-                    filename="<mpyfile-compute>",
+                    node_name = node_name,
+                    filename  = "<mpyfile-compute>",
                 )
                 if code is not None:
                     self._expr_code = code
@@ -484,12 +484,12 @@ class MPyFile(om.MPxNode):
                 except Exception:
                     pass
             elif attr == type(self).aViewportSource:
-                new_src = data_handle.asString()
+                new_src            = data_handle.asString()
                 self._viewport_str = new_src
                 code = safe_compile_expression(
                     new_src,
-                    node_name=node_name,
-                    filename="<mpyfile-viewport>",
+                    node_name = node_name,
+                    filename  = "<mpyfile-viewport>",
                 )
                 if code is not None:
                     self._viewport_code = code
@@ -516,19 +516,19 @@ class MPyFile(om.MPxNode):
         expression / no init namespace / no viewport source), and writes
         outColor + outAlpha. Identical math to customFileTexture."""
         try:
-            path = data_block.inputValue(MPyFile.aFileName).asString()
-            cs_index = data_block.inputValue(MPyFile.aColorSpace).asShort()
+            path      = data_block.inputValue(MPyFile.aFileName).asString()
+            cs_index  = data_block.inputValue(MPyFile.aColorSpace).asShort()
             prefilter = data_block.inputValue(MPyFile.aPreFilter).asBool()
             pf_kernel = data_block.inputValue(MPyFile.aPreFilterKernel).asShort()
             pf_radius = data_block.inputValue(MPyFile.aPreFilterRadius).asFloat()
-            uv_h = data_block.inputValue(MPyFile.aUvCoord)
-            u = uv_h.child(MPyFile.aUCoord).asFloat()
-            v = uv_h.child(MPyFile.aVCoord).asFloat()
-            wrap_u = data_block.inputValue(MPyFile.aWrapU).asShort()
-            wrap_v = data_block.inputValue(MPyFile.aWrapV).asShort()
-            bc_h = data_block.inputValue(MPyFile.aBorderColor)
-            bc_vec = bc_h.asFloatVector()
-            border = (bc_vec.x, bc_vec.y, bc_vec.z)
+            uv_h      = data_block.inputValue(MPyFile.aUvCoord)
+            u         = uv_h.child(MPyFile.aUCoord).asFloat()
+            v         = uv_h.child(MPyFile.aVCoord).asFloat()
+            wrap_u    = data_block.inputValue(MPyFile.aWrapU).asShort()
+            wrap_v    = data_block.inputValue(MPyFile.aWrapV).asShort()
+            bc_h      = data_block.inputValue(MPyFile.aBorderColor)
+            bc_vec    = bc_h.asFloatVector()
+            border    = (bc_vec.x, bc_vec.y, bc_vec.z)
         except Exception:
             return
 
@@ -569,10 +569,10 @@ class MPyFile(om.MPxNode):
         GPU sampler has no bound texture. customFileTexture uses
         findPlug for this exact reason."""
         try:
-            node_obj = self.thisMObject()
-            fn = om.MFnDependencyNode(node_obj)
+            node_obj  = self.thisMObject()
+            fn        = om.MFnDependencyNode(node_obj)
             file_name = fn.findPlug("fileName", False).asString()
-            cs_index = int(fn.findPlug("colorSpace", False).asShort())
+            cs_index  = int(fn.findPlug("colorSpace", False).asShort())
             preFilter = bool(fn.findPlug("preFilter", False).asBool())
             preFilterKernel = int(
                 fn.findPlug("preFilterKernel", False).asShort()
@@ -588,11 +588,11 @@ class MPyFile(om.MPxNode):
             mipLODBias = float(
                 fn.findPlug("mipLODBias", False).asFloat()
             )
-            minLOD = int(fn.findPlug("minLOD", False).asInt())
-            maxLOD = int(fn.findPlug("maxLOD", False).asInt())
+            minLOD    = int(fn.findPlug("minLOD", False).asInt())
+            maxLOD    = int(fn.findPlug("maxLOD", False).asInt())
             wrapModeU = int(fn.findPlug("wrapModeU", False).asShort())
             wrapModeV = int(fn.findPlug("wrapModeV", False).asShort())
-            bc = fn.findPlug("borderColor", False)
+            bc        = fn.findPlug("borderColor", False)
             border = (
                 bc.child(0).asFloat(),
                 bc.child(1).asFloat(),
@@ -606,7 +606,7 @@ class MPyFile(om.MPxNode):
             return
 
         # Find map + sampler parameters on the fragment.
-        map_param = None
+        map_param  = None
         samp_param = None
         try:
             for pname in shader.parameterList():
@@ -638,7 +638,7 @@ class MPyFile(om.MPxNode):
             )
             if texture is not None:
                 try:
-                    assignment = omr.MTextureAssignment()
+                    assignment         = omr.MTextureAssignment()
                     assignment.texture = texture
                     shader.setParameter(map_param, assignment)
                 finally:
@@ -651,13 +651,13 @@ class MPyFile(om.MPxNode):
             try:
                 desc = omr.MSamplerStateDesc()
                 desc.setDefaults()
-                desc.filter = _tex.vp2_filter_for(filterMode)
+                desc.filter        = _tex.vp2_filter_for(filterMode)
                 desc.maxAnisotropy = maxAnisotropy
-                desc.mipLODBias = mipLODBias
-                desc.minLOD = minLOD
-                desc.maxLOD = maxLOD
-                desc.addressU = _tex.vp2_wrap_for(wrapModeU)
-                desc.addressV = _tex.vp2_wrap_for(wrapModeV)
+                desc.mipLODBias    = mipLODBias
+                desc.minLOD        = minLOD
+                desc.maxLOD        = maxLOD
+                desc.addressU      = _tex.vp2_wrap_for(wrapModeU)
+                desc.addressV      = _tex.vp2_wrap_for(wrapModeV)
                 try:
                     desc.borderColor = (
                         float(border[0]), float(border[1]),
@@ -724,7 +724,7 @@ class MPyFile(om.MPxNode):
 
         try:
             attr_obj = plug.attribute()
-            attr_fn = om.MFnAttribute(attr_obj)
+            attr_fn  = om.MFnAttribute(attr_obj)
             out_name = attr_fn.name
         except Exception:
             return self
@@ -797,7 +797,7 @@ class MPyFile(om.MPxNode):
             # the image size instead. A numeric seed would be indistinguishable
             # from a deliberate assignment of that same number.
             "outTransparency": None,
-            "outSize": None,
+            "outSize":         None,
         }
         # self.time -- current frame as a TimeFloat (carries the scene fps), so
         # image-sequence expressions can index by frame. Read from the hidden
@@ -817,8 +817,8 @@ class MPyFile(om.MPxNode):
             preset_locals["fileName"] = ""
         try:
             uv_handle = data_block.inputValue(MPyFile.aUvCoord)
-            u_val = uv_handle.child(MPyFile.aUCoord).asFloat()
-            v_val = uv_handle.child(MPyFile.aVCoord).asFloat()
+            u_val     = uv_handle.child(MPyFile.aUCoord).asFloat()
+            v_val     = uv_handle.child(MPyFile.aVCoord).asFloat()
         except Exception:
             u_val, v_val = 0.0, 0.0
         preset_locals["uvCoord"] = (float(u_val), float(v_val))
@@ -904,7 +904,7 @@ class MPyFile(om.MPxNode):
             preset_locals["wrapModeV"] = 0
         try:
             bc_handle = data_block.inputValue(MPyFile.aBorderColor)
-            bc_vec = bc_handle.asFloatVector()
+            bc_vec    = bc_handle.asFloatVector()
             preset_locals["borderColor"] = (
                 float(bc_vec.x), float(bc_vec.y), float(bc_vec.z)
             )
@@ -949,16 +949,16 @@ class MPyFile(om.MPxNode):
 
         self_proxy = SelfProxy(
             node_obj,
-            datablock=data_block,
-            user_storage=stored_vars,
-            compute_locals=preset_locals,
-            node_type_label=type(self).__name__,
-            node_type_name=type(self).NODE_NAME,
+            datablock       = data_block,
+            user_storage    = stored_vars,
+            compute_locals  = preset_locals,
+            node_type_label = type(self).__name__,
+            node_type_name  = type(self).NODE_NAME,
         )
 
         # Self-only: user inputs are reached via self.X (seeded into the
         # SelfProxy snapshot above for worker-thread safety), NOT as bare names.
-        namespace = build_exec_namespace()
+        namespace         = build_exec_namespace()
         namespace["self"] = self_proxy
 
         if self._expr_code is None:
@@ -977,8 +977,8 @@ class MPyFile(om.MPxNode):
         ok = exec_with_profile_watch(
             self._expr_code,
             namespace,
-            on_error=_on_err,
-            node_obj=node_obj,
+            on_error = _on_err,
+            node_obj = node_obj,
         )
         if not ok:
             if captured:
@@ -996,8 +996,8 @@ class MPyFile(om.MPxNode):
 
         # Read back outColor + outAlpha from the SelfProxy / locals.
         locals_out = self_proxy.get_compute_locals()
-        out_color = locals_out.get("outColor", (0.0, 0.0, 0.0))
-        out_alpha = locals_out.get("outAlpha", 0.0)
+        out_color  = locals_out.get("outColor", (0.0, 0.0, 0.0))
+        out_alpha  = locals_out.get("outAlpha", 0.0)
 
         try:
             r, g, b = (float(out_color[0]),
@@ -1093,10 +1093,10 @@ class MPyFile(om.MPxNode):
         self,
         shader,
         mappings,
-        stored_vars_str: str | None = None,
-        input_attrs_str: str | None = None,
-        user_inputs: dict | None = None,
-        presets: dict | None = None,
+        stored_vars_str: str  | None = None,
+        input_attrs_str: str  | None = None,
+        user_inputs:     dict | None = None,
+        presets:         dict | None = None,
     ) -> None:
         """Execute the Viewport source with bridge-injected helpers.
 
@@ -1168,11 +1168,11 @@ class MPyFile(om.MPxNode):
             texture_manager = None
 
         viewport_locals = {
-            "time": TimeFloat(_viewport_time_value()),
-            "shader": shader,
-            "mappings": mappings,
+            "time":            TimeFloat(_viewport_time_value()),
+            "shader":          shader,
+            "mappings":        mappings,
             "texture_manager": texture_manager,
-            "state_manager": omr.MStateManager,
+            "state_manager":   omr.MStateManager,
         }
         # Seed user inputs (read on the main thread in updateDG) so
         # ``self.<user input>`` resolves on the safe tier, not the unsafe
@@ -1191,16 +1191,16 @@ class MPyFile(om.MPxNode):
 
         self_proxy = SelfProxy(
             node_obj,
-            datablock=None,
-            user_storage=stored_vars,
-            compute_locals=viewport_locals,
-            node_type_label=type(self).__name__,
-            node_type_name=type(self).NODE_NAME,
+            datablock       = None,
+            user_storage    = stored_vars,
+            compute_locals  = viewport_locals,
+            node_type_label = type(self).__name__,
+            node_type_name  = type(self).NODE_NAME,
         )
 
         # Self-only: user inputs are reached via self.X (seeded into the
         # SelfProxy snapshot above), NOT as bare names.
-        namespace = build_exec_namespace()
+        namespace         = build_exec_namespace()
         namespace["self"] = self_proxy
 
         captured: list[str] = []
@@ -1211,9 +1211,9 @@ class MPyFile(om.MPxNode):
         ok = exec_with_profile_watch(
             self._viewport_code,
             namespace,
-            log_event_name="<mpyfile-viewport>",
-            on_error=_on_err,
-            node_obj=node_obj,
+            log_event_name = "<mpyfile-viewport>",
+            on_error       = _on_err,
+            node_obj       = node_obj,
         )
         if not ok and captured:
             sys.stderr.write(f"[mPyFile viewport] {captured[0]}")
@@ -1281,24 +1281,24 @@ class MPyFileOverride(omr.MPxShadingNodeOverride):
         self._mpx_node = None
         # Cached plug values, populated in updateDG. Mirrors
         # customFileTexture's pattern -- see updateDG docstring.
-        self._file_name = ""
-        self._cs_index = 0
-        self._pre_filter = False
+        self._file_name         = ""
+        self._cs_index          = 0
+        self._pre_filter        = False
         self._pre_filter_kernel = kPreFilterGaussian
         self._pre_filter_radius = 2.0
-        self._filter_mode = kFilterLinear
-        self._max_anisotropy = 1
-        self._mipmap_mode = kMipmapAuto
-        self._mip_lod_bias = 0.0
-        self._min_lod = 0
-        self._max_lod = 16
-        self._wrap_u = kWrapWrap
-        self._wrap_v = kWrapWrap
-        self._border_color = (0.0, 0.0, 0.0)
+        self._filter_mode       = kFilterLinear
+        self._max_anisotropy    = 1
+        self._mipmap_mode       = kMipmapAuto
+        self._mip_lod_bias      = 0.0
+        self._min_lod           = 0
+        self._max_lod           = 16
+        self._wrap_u            = kWrapWrap
+        self._wrap_v            = kWrapWrap
+        self._border_color      = (0.0, 0.0, 0.0)
         # Track what was last uploaded so we don't re-allocate the
         # texture on every updateShader call.
-        self._last_acquired_file = None
-        self._last_acquired_cs = None
+        self._last_acquired_file      = None
+        self._last_acquired_cs        = None
         self._last_acquired_prefilter = None
         # Internal-plug strings: populated by updateDG (main thread), read by
         # updateShader / runViewport (VP2 render thread) so neither has to make
@@ -1400,9 +1400,9 @@ class MPyFileOverride(omr.MPxShadingNodeOverride):
             )
             self._min_lod = int(fn.findPlug("minLOD", False).asInt())
             self._max_lod = int(fn.findPlug("maxLOD", False).asInt())
-            self._wrap_u = int(fn.findPlug("wrapModeU", False).asShort())
-            self._wrap_v = int(fn.findPlug("wrapModeV", False).asShort())
-            bc = fn.findPlug("borderColor", False)
+            self._wrap_u  = int(fn.findPlug("wrapModeU", False).asShort())
+            self._wrap_v  = int(fn.findPlug("wrapModeV", False).asShort())
+            bc            = fn.findPlug("borderColor", False)
             self._border_color = (
                 bc.child(0).asFloat(),
                 bc.child(1).asFloat(),
@@ -1454,14 +1454,14 @@ class MPyFileOverride(omr.MPxShadingNodeOverride):
         need this. updateDG runs on the MAIN thread, so every value here was
         read safely; runViewport only copies them into compute_locals."""
         return {
-            "fileName": self._file_name,
-            "colorSpace": self._cs_index,
-            "preFilter": self._pre_filter,
+            "fileName":        self._file_name,
+            "colorSpace":      self._cs_index,
+            "preFilter":       self._pre_filter,
             "preFilterKernel": self._pre_filter_kernel,
             "preFilterRadius": self._pre_filter_radius,
-            "wrapModeU": self._wrap_u,
-            "wrapModeV": self._wrap_v,
-            "borderColor": self._border_color,
+            "wrapModeU":       self._wrap_u,
+            "wrapModeV":       self._wrap_v,
+            "borderColor":     self._border_color,
         }
 
     def updateShader(self, shader, mappings):
@@ -1485,10 +1485,10 @@ class MPyFileOverride(omr.MPxShadingNodeOverride):
             self._mpx_node.runViewport(
                 shader,
                 mappings,
-                stored_vars_str=self._stored_vars_str,
-                input_attrs_str=self._input_attrs_str,
-                user_inputs=self._user_inputs,
-                presets=self._preset_snapshot(),
+                stored_vars_str = self._stored_vars_str,
+                input_attrs_str = self._input_attrs_str,
+                user_inputs     = self._user_inputs,
+                presets         = self._preset_snapshot(),
             )
         except Exception as exc:
             sys.stderr.write(
@@ -1507,7 +1507,7 @@ class MPyFileOverride(omr.MPxShadingNodeOverride):
         )
 
         # Find the fragment's texture + sampler parameters.
-        map_param = None
+        map_param  = None
         samp_param = None
         try:
             for pname in shader.parameterList():
@@ -1542,7 +1542,7 @@ class MPyFileOverride(omr.MPxShadingNodeOverride):
             if MPyFile.DUMMY_TEXTURE_MODE and _np is not None:
                 # Solid-red 64x64 RGBA float32 in scene-linear. Renders red =
                 # the GPU pipeline works; else the fragment binding is broken.
-                linear = _np.zeros((64, 64, 4), dtype=_np.float32)
+                linear         = _np.zeros((64, 64, 4), dtype=_np.float32)
                 linear[..., 0] = 1.0  # R
                 linear[..., 3] = 1.0  # A
                 sys.stderr.write(
@@ -1574,7 +1574,7 @@ class MPyFileOverride(omr.MPxShadingNodeOverride):
                 )
                 if texture is not None:
                     try:
-                        assignment = omr.MTextureAssignment()
+                        assignment         = omr.MTextureAssignment()
                         assignment.texture = texture
                         shader.setParameter(map_param, assignment)
                         sys.stderr.write(
@@ -1594,13 +1594,13 @@ class MPyFileOverride(omr.MPxShadingNodeOverride):
             try:
                 desc = omr.MSamplerStateDesc()
                 desc.setDefaults()
-                desc.filter = _tex.vp2_filter_for(self._filter_mode)
+                desc.filter        = _tex.vp2_filter_for(self._filter_mode)
                 desc.maxAnisotropy = self._max_anisotropy
-                desc.mipLODBias = self._mip_lod_bias
-                desc.minLOD = self._min_lod
-                desc.maxLOD = self._max_lod
-                desc.addressU = _tex.vp2_wrap_for(self._wrap_u)
-                desc.addressV = _tex.vp2_wrap_for(self._wrap_v)
+                desc.mipLODBias    = self._mip_lod_bias
+                desc.minLOD        = self._min_lod
+                desc.maxLOD        = self._max_lod
+                desc.addressU      = _tex.vp2_wrap_for(self._wrap_u)
+                desc.addressV      = _tex.vp2_wrap_for(self._wrap_v)
                 try:
                     desc.borderColor = (
                         float(self._border_color[0]),
@@ -1780,7 +1780,7 @@ def _install_attr_refresh_callback(node_obj) -> None:
     by MObjectHandle.hashCode()."""
     try:
         handle = om.MObjectHandle(node_obj)
-        code = handle.hashCode()
+        code   = handle.hashCode()
     except Exception:
         return
     if code in _ATTR_REFRESH_CB:

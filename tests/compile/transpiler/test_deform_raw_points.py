@@ -27,11 +27,11 @@ def _spec(compute, base="MPxDeformerNode", inputs=None):
     return {
         "suggested": {"node_type_name": "rawPtsTest", "class_name": "RawPtsTest",
                       "type_id": "0x000701a5", "mpx_base": base},
-        "mpy_type": "mPyDeformer" if base == "MPxDeformerNode" else "mPySkinCluster",
-        "compute": compute,
-        "init": "",
-        "inputs": dict(inputs or {}),
-        "outputs": {},
+        "mpy_type":    "mPyDeformer" if base == "MPxDeformerNode" else "mPySkinCluster",
+        "compute":     compute,
+        "init":        "",
+        "inputs":      dict(inputs or {}),
+        "outputs":     {},
         "portability": {"portable": True, "blockers": [], "warnings": []},
     }
 
@@ -94,9 +94,9 @@ class TestLoweredDeformUsesRawPoints(unittest.TestCase):
 class TestSkinClusterLowersTheSameWay(unittest.TestCase):
     def test_skin_deform_takes_the_raw_path(self):
         from mpynode._defaults import skin_cluster_defaults as scd
-        spec = _spec(scd.DEFAULT_COMPUTE_SOURCE, base="MPxSkinCluster")
+        spec         = _spec(scd.DEFAULT_COMPUTE_SOURCE, base="MPxSkinCluster")
         spec["init"] = scd.DEFAULT_INIT_SOURCE
-        cpp = codegen.generate_cpp(spec, for_port=True)
+        cpp          = codegen.generate_cpp(spec, for_port=True)
         self.assertIn("lowered deform (no port)", cpp)
         self.assertIn("_ofn.getRawPoints(&_hs)", cpp)
         self.assertIn("MFnMesh(_outMeshObj).updateSurface();", cpp)

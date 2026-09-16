@@ -68,7 +68,7 @@ class TestAllowlistWithAncestors(unittest.TestCase):
             self._row("input[0].inputGeometry", "input[0]", "inputGeometry"),
         ]
         # Only the deep leaf is allowlisted; both ancestors are NOT.
-        kept = _allowlist_with_ancestors(rows, {"inputGeometry"})
+        kept  = _allowlist_with_ancestors(rows, {"inputGeometry"})
         paths = [r.plug_path for r in kept]
         # All three survive, in the original depth-first order.
         self.assertEqual(
@@ -126,8 +126,8 @@ class TestTreeify(unittest.TestCase):
         children (amplitudeX/Y/Z)."""
         from mpynode.ui.widgets.plug_tree_walker import walk_plug_tree, treeify
 
-        rows = walk_plug_tree(self.deformer.get_name())
-        tops = treeify(rows)
+        rows     = walk_plug_tree(self.deformer.get_name())
+        tops     = treeify(rows)
         amp_node = None
         for t in tops:
             if t.row.short_name == "amplitude":
@@ -219,8 +219,8 @@ class TestAttributesWidgetWalker(unittest.TestCase):
         return out
 
     def test_input_tree_has_inherited_envelope(self):
-        tree = self._make_input_tree()
-        rows = self._flatten_tree(tree)
+        tree   = self._make_input_tree()
+        rows   = self._flatten_tree(tree)
         labels = [r[2] for r in rows if r[1] == "INH"]
         self.assertTrue(
             any("envelope" in lbl for lbl in labels),
@@ -228,10 +228,10 @@ class TestAttributesWidgetWalker(unittest.TestCase):
         )
 
     def test_input_tree_has_user_added_attrs(self):
-        tree = self._make_input_tree()
-        rows = self._flatten_tree(tree)
+        tree        = self._make_input_tree()
+        rows        = self._flatten_tree(tree)
         user_labels = [r[2] for r in rows if r[1] == "USER"]
-        names = [lbl.split(": ")[0].split("[", 1)[0] for lbl in user_labels]
+        names       = [lbl.split(": ")[0].split("[", 1)[0] for lbl in user_labels]
         self.assertIn("driverMatrixA", names)
         self.assertIn("driverMatrixB", names) if False else None  # only A added
         self.assertIn("amplitude", names)
@@ -239,8 +239,8 @@ class TestAttributesWidgetWalker(unittest.TestCase):
     def test_input_tree_nests_input_compound_multi(self):
         """Input[].something should appear as nested rows -- depth 0
         for 'input', depth 1 for '[0]', depth 2 for the children."""
-        tree = self._make_input_tree()
-        rows = self._flatten_tree(tree)
+        tree            = self._make_input_tree()
+        rows            = self._flatten_tree(tree)
         depths_by_label = {r[2]: r[0] for r in rows}
         # Find input parent depth.
         input_depth = None
@@ -260,8 +260,8 @@ class TestAttributesWidgetWalker(unittest.TestCase):
             "inputGeometry should be DEEPER in the tree than input")
 
     def test_output_tree_has_outputGeometry(self):
-        tree = self._make_output_tree()
-        rows = self._flatten_tree(tree)
+        tree   = self._make_output_tree()
+        rows   = self._flatten_tree(tree)
         labels = [r[2] for r in rows]
         self.assertTrue(
             any("outputGeometry" in lbl for lbl in labels),
@@ -302,7 +302,7 @@ class TestAttributesWidgetWalker(unittest.TestCase):
         from mpynode.ui.widgets.attributes import NDLockedAttrTreeItem
         from mpynode.ui.qt_wrapper import Qt
 
-        tree = self._make_input_tree()
+        tree         = self._make_input_tree()
         found_locked = False
         for i in range(tree.topLevelItemCount()):
             it = tree.topLevelItem(i)
@@ -401,7 +401,7 @@ class TestStorageTreeRender(unittest.TestCase):
         os.environ.pop("MPYNODE_FLAT_STORAGE", None)
         from mpynode.ui.widgets.variables import NDVariablesWidget
 
-        w = NDVariablesWidget()
+        w          = NDVariablesWidget()
         w._py_node = self.deformer
         # Populate through whichever refresh entry point the widget exposes.
         if hasattr(w, "refresh"):
@@ -518,8 +518,8 @@ class TestCollectPlugRows(unittest.TestCase):
     def test_blacklist_filters_bookkeeping_plugs(self):
         from mpynode.ui.widgets.variables import collect_plug_rows
 
-        n = mc.createNode("mPyNode")
-        rows = collect_plug_rows(n)
+        n     = mc.createNode("mPyNode")
+        rows  = collect_plug_rows(n)
         names = [r[0] for r in rows]
         for hidden in (
             "_computeSource",
@@ -534,15 +534,15 @@ class TestCollectPlugRows(unittest.TestCase):
     def test_surfaces_native_message_plug(self):
         from mpynode.ui.widgets.variables import collect_plug_rows
 
-        n = mc.createNode("mPyNode")
-        rows = collect_plug_rows(n)
+        n     = mc.createNode("mPyNode")
+        rows  = collect_plug_rows(n)
         names = [r[0] for r in rows]
         self.assertIn("message", names)
 
     def test_direction_tagged_in_or_out(self):
         from mpynode.ui.widgets.variables import collect_plug_rows
 
-        n = mc.createNode("mPyNode")
+        n    = mc.createNode("mPyNode")
         rows = collect_plug_rows(n)
         for plug_name, direction, value_text in rows:
             self.assertIn(direction, ("IN", "OUT"))
@@ -553,7 +553,7 @@ class TestCollectPlugRows(unittest.TestCase):
 
         # nodeState is on every node -- writable and accepts connections.
         src = mc.createNode("transform")
-        n = mc.createNode("mPyNode")
+        n   = mc.createNode("mPyNode")
         # Once connected, the row's value_text must start with "<-".
         mc.connectAttr(src + ".nodeState", n + ".nodeState", force=True)
         rows = collect_plug_rows(n)

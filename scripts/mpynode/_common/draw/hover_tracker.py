@@ -43,16 +43,16 @@ import numpy as np
 from maya import cmds
 
 
-_POLL_SEC = 1.0 / 30.0
+_POLL_SEC     = 1.0 / 30.0
 _LOCATOR_TYPE = "mPyLocator"
 
 # Lifecycle state.
 _timer_id = None
 _scene_cb_ids: list = []
-_node_cb_ids: list = []
+_node_cb_ids:  list = []
 
 # Hovered node (at most one).
-_hovered_hash = None
+_hovered_hash   = None
 _hovered_handle = None
 
 # Cached shape dagpaths; None means "dirty, rebuild on next poll".
@@ -80,7 +80,7 @@ def set_shape(node_obj: "om.MObject", tris) -> None:
     (ray-vs-triangle) hover on this locator. Called from the draw override
     when the expression sets ``self.precise_hover = True``."""
     try:
-        h = om.MObjectHandle(node_obj).hashCode()
+        h   = om.MObjectHandle(node_obj).hashCode()
         arr = np.asarray(tris, dtype=np.float64)
         if arr.ndim == 3 and arr.shape[1:] == (3, 3) and arr.shape[0] > 0:
             _shapes[h] = arr
@@ -169,9 +169,9 @@ def _cursor_ray():
         return None
     try:
         local = widget.mapFromGlobal(gp)
-        dpr = _device_pixel_ratio(widget)
-        x = int(round(local.x() * dpr))
-        y = int(round(view.portHeight() - local.y() * dpr))  # origin bottom-left
+        dpr   = _device_pixel_ratio(widget)
+        x     = int(round(local.x() * dpr))
+        y     = int(round(view.portHeight() - local.y() * dpr))  # origin bottom-left
         if x < 0 or y < 0 or x > view.portWidth() or y > view.portHeight():
             return None
         src = om.MPoint()
@@ -207,20 +207,20 @@ def _ray_aabb(o, d, lo, hi):
 def _ray_triangles(o, d, tris):
     """Vectorized Moller-Trumbore. ``o``/``d`` np(3,), ``tris`` (T,3,3).
     Returns the nearest hit t (>0) or None."""
-    v0 = tris[:, 0, :]
-    e1 = tris[:, 1, :] - v0
-    e2 = tris[:, 2, :] - v0
-    pvec = np.cross(d, e2)
-    det = np.einsum("ij,ij->i", e1, pvec)
-    ok = np.abs(det) > 1e-9
-    inv = np.zeros_like(det)
+    v0      = tris[:, 0, :]
+    e1      = tris[:, 1, :] - v0
+    e2      = tris[:, 2, :] - v0
+    pvec    = np.cross(d, e2)
+    det     = np.einsum("ij,ij->i", e1, pvec)
+    ok      = np.abs(det) > 1e-9
+    inv     = np.zeros_like(det)
     inv[ok] = 1.0 / det[ok]
-    tvec = o - v0
-    u = np.einsum("ij,ij->i", tvec, pvec) * inv
-    qvec = np.cross(tvec, e1)
-    v = (qvec @ d) * inv
-    tt = np.einsum("ij,ij->i", e2, qvec) * inv
-    hit = ok & (u >= 0.0) & (v >= 0.0) & (u + v <= 1.0) & (tt > 1e-6)
+    tvec    = o - v0
+    u       = np.einsum("ij,ij->i", tvec, pvec) * inv
+    qvec    = np.cross(tvec, e1)
+    v       = (qvec @ d) * inv
+    tt      = np.einsum("ij,ij->i", e2, qvec) * inv
+    hit     = ok & (u >= 0.0) & (v >= 0.0) & (u + v <= 1.0) & (tt > 1e-6)
     return float(tt[hit].min()) if hit.any() else None
 
 
@@ -275,13 +275,13 @@ def _poll(*_unused):
         o = (src.x, src.y, src.z)
         d = (vec.x, vec.y, vec.z)
 
-        best_t = 1e30
+        best_t   = 1e30
         best_obj = None
         for dp in _locator_dps():
             try:
                 if not dp.isValid():
                     continue
-                obj = dp.node()
+                obj  = dp.node()
                 tris = _shapes.get(om.MObjectHandle(obj).hashCode())
                 if tris is not None:
                     # Precise (opt-in self.precise_hover): ray-vs-triangle in
@@ -291,9 +291,9 @@ def _poll(*_unused):
                     # gizmo it stays the default unit cube), so gating on it
                     # would reject rays over any region grown past the original
                     # box. Mirrors the compiled C++ port, also precise-first.
-                    w2l = dp.inclusiveMatrixInverse()
+                    w2l   = dp.inclusiveMatrixInverse()
                     lo_pt = src * w2l
-                    ld = vec * w2l
+                    ld    = vec * w2l
                     tt = _ray_triangles(
                         np.array([lo_pt.x, lo_pt.y, lo_pt.z]),
                         np.array([ld.x, ld.y, ld.z]),
@@ -301,7 +301,7 @@ def _poll(*_unused):
                     )
                     if tt is None or tt >= best_t:
                         continue
-                    best_t = tt
+                    best_t   = tt
                     best_obj = obj
                 else:
                     # bbox mode: ray vs the world DAG bounding box, which is the
@@ -311,10 +311,10 @@ def _poll(*_unused):
                     bb.transformUsing(dp.inclusiveMatrix())
                     lo = bb.min
                     hi = bb.max
-                    t = _ray_aabb(o, d, (lo.x, lo.y, lo.z), (hi.x, hi.y, hi.z))
+                    t  = _ray_aabb(o, d, (lo.x, lo.y, lo.z), (hi.x, hi.y, hi.z))
                     if t is None or t >= best_t:
                         continue
-                    best_t = t
+                    best_t   = t
                     best_obj = obj
             except Exception:
                 continue
@@ -326,19 +326,19 @@ def _poll(*_unused):
 def _set_hovered(new_obj):
     """Update the hovered node; repaint any node whose state changed."""
     global _hovered_hash, _hovered_handle
-    new_hash = None
+    new_hash   = None
     new_handle = None
     if new_obj is not None:
         try:
             new_handle = om.MObjectHandle(new_obj)
-            new_hash = new_handle.hashCode()
+            new_hash   = new_handle.hashCode()
         except Exception:
-            new_hash = None
+            new_hash   = None
             new_handle = None
     if new_hash == _hovered_hash:
         return
-    old_handle = _hovered_handle
-    _hovered_hash = new_hash
+    old_handle      = _hovered_handle
+    _hovered_hash   = new_hash
     _hovered_handle = new_handle
     for handle in (old_handle, new_handle):
         if handle is None:
@@ -355,9 +355,9 @@ def _set_hovered(new_obj):
 
 def _on_scene_event(*_unused):
     global _hovered_hash, _hovered_handle, _dps
-    _hovered_hash = None
+    _hovered_hash   = None
     _hovered_handle = None
-    _dps = None
+    _dps            = None
     _shapes.clear()
 
 

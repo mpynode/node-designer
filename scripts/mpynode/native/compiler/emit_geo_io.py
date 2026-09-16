@@ -437,8 +437,8 @@ def geo_out_decls(o):
     ``std::vector<Nd<Kind>> out_<m>;`` (array). Default-constructed = empty
     geometry (the neutral stub), so a node that never fills it ships empty geo."""
     kind = _KIND[o["meta"]["type"]]
-    st = _STRUCT[kind]
-    v = "out_" + o["member"]
+    st   = _STRUCT[kind]
+    v    = "out_" + o["member"]
     if o["meta"].get("is_array"):
         return ["    std::vector<%s> %s;" % (st, v)]
     return ["    %s %s;" % (st, v)]
@@ -450,12 +450,12 @@ def geo_array_input_lines(m, src="data"):
     Dense: scatter each present element to its logical index; gap slots stay
     default-constructed (``present == false``), matching the interpreted list
     where a missing multi element is an empty geometry."""
-    mem = m["member"]
+    mem  = m["member"]
     kind = _KIND[m["meta"]["type"]]
-    v = "in_" + mem
-    st = _STRUCT[kind]
-    rd = "nd_read_" + kind
-    as_ = _AS[kind]
+    v    = "in_" + mem
+    st   = _STRUCT[kind]
+    rd   = "nd_read_" + kind
+    as_  = _AS[kind]
     return [
         "    std::vector<%s> %s;" % (st, v),
         "    {",
@@ -486,7 +486,7 @@ def geo_plug_decls(m):
     copyable POD (the locator's DrawInputs), which an MFn function set cannot
     live in, and Nd<Kind> is already the geo-array element type."""
     kind = _KIND[m["meta"]["type"]]
-    v = "in_" + m["member"]
+    v    = "in_" + m["member"]
     if m["meta"].get("is_array"):
         return ["    std::vector<%s> %s;" % (_STRUCT[kind], v)]
     return ["    %s %s;" % (_STRUCT[kind], v)]
@@ -498,7 +498,7 @@ def geo_plug_input_lines(m, plug_expr):
     Left default-constructed (``present == false``) when the plug carries no
     geometry, matching the interpreted empty-geometry case."""
     kind = _KIND[m["meta"]["type"]]
-    v = "in_" + m["member"]
+    v    = "in_" + m["member"]
     return [
         "        {",
         "            MObject _go = %s.asMObject();" % plug_expr,
@@ -515,8 +515,8 @@ def geo_plug_array_input_lines(m, plug_expr):
     present element to its logical index; gap slots stay default-constructed
     (``present == false``) -- an empty geometry, as in the interpreted list."""
     kind = _KIND[m["meta"]["type"]]
-    v = "in_" + m["member"]
-    rd = "nd_read_" + kind
+    v    = "in_" + m["member"]
+    rd   = "nd_read_" + kind
     return [
         "        {",
         "            unsigned _gn = %s.numElements();" % plug_expr,
@@ -536,10 +536,10 @@ def geo_output_lines(o):
     """Build+set a geo OUTPUT from its ``out_<m>`` buffer. Single: build one geo
     data MObject and set the handle. Array: an ``MArrayDataBuilder`` loop building
     one element per list entry (mirrors emit_attr._array_write_lines)."""
-    mem = o["member"]
+    mem  = o["member"]
     kind = _KIND[o["meta"]["type"]]
-    v = "out_" + mem
-    bd = "nd_build_" + kind
+    v    = "out_" + mem
+    bd   = "nd_build_" + kind
     if not o["meta"].get("is_array"):
         return [
             "    {",

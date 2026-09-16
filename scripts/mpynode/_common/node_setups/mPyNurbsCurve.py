@@ -11,7 +11,7 @@ def setup(self, *args, **kwargs):
     # render transform/shape this body creates so a partial failure leaves no
     # orphan; re-raise so build()/the command records built-but-unwired.
     created = []
-    conn = None  # break any wired connection before delete so the rollback
+    conn    = None  # break any wired connection before delete so the rollback
                  # doesn't cascade-delete the upstream ``self``.
     try:
         xform = mc.createNode("transform", name=name + "Render"); created.append(xform)

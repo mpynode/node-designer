@@ -74,7 +74,7 @@ def _scalar_safe(fn: ast.FunctionDef) -> bool:
     disqualifies, routing the helper to the inline path. Erring toward False is
     safe (inline still works); a false True would emit mis-typed C++."""
     params = set()
-    a = fn.args
+    a      = fn.args
     for p in list(getattr(a, "posonlyargs", [])) + list(a.args):
         params.add(p.arg)
 
@@ -164,7 +164,7 @@ def _derive_scalar_proto(unit: dict):
         return None
     if not _scalar_safe(fn):
         return None
-    pos = list(getattr(fn.args, "posonlyargs", [])) + list(fn.args.args)
+    pos    = list(getattr(fn.args, "posonlyargs", [])) + list(fn.args.args)
     c_name = _helper_symbol(unit["module"], unit["name"], unit["source"])
     params = ", ".join("double %s" % p.arg for p in pos)
     return c_name, "double %s(%s)" % (c_name, params)
@@ -262,7 +262,7 @@ def _signature_of(code: str) -> str:
     the definition's own signature (rather than a separately-stated PROTO line)
     guarantees the forward declaration the bundler emits can never disagree with
     the definition (a mismatch would be a hard link/compile failure)."""
-    i = code.find("{")
+    i   = code.find("{")
     sig = code[:i] if i >= 0 else code
     return " ".join(sig.split())
 
@@ -293,11 +293,11 @@ def _translate_helper(unit: dict, complete_fn, sibling_protos: list) -> dict:
     units ask the LLM to CHOOSE a typed signature and report it on a ``PROTO:``
     line, which is parsed + validated (must use the fixed name); a bad/missing
     proto raises :class:`_HelperProtoError` so the node falls back to inline."""
-    name = unit["name"]
+    name   = unit["name"]
     cached = _HELPER_MEMO.get(name)
     if cached is not None:
         return cached
-    others = [p for p in sibling_protos if p and p != unit.get("proto")]
+    others       = [p for p in sibling_protos if p and p != unit.get("proto")]
     others_block = ""
     if others:
         others_block = ("Other helpers you MAY call (already declared elsewhere "
@@ -332,7 +332,7 @@ def _translate_helper(unit: dict, complete_fn, sibling_protos: list) -> dict:
             % (unit["proto"], others_block, unit["module"], unit["sym"],
                unit["source"])
         )
-        code = _strip_fences(complete_fn(_SYSTEM_HELPER, user)).strip()
+        code   = _strip_fences(complete_fn(_SYSTEM_HELPER, user)).strip()
         result = {"name": name, "proto": unit["proto"], "code": code}
     _HELPER_MEMO[name] = result
     return result
@@ -343,10 +343,10 @@ def _inject_helper_blocks(skeleton: str, blocks: list) -> str:
     (so they precede the node class/namespace), or at the top if none."""
     if not blocks:
         return skeleton
-    lines = skeleton.splitlines()
+    lines   = skeleton.splitlines()
     inc_idx = [i for i, l in enumerate(lines) if l.lstrip().startswith("#")]
-    at = (max(inc_idx) + 1) if inc_idx else 0
-    chunk = "\n\n" + "\n".join(b.rstrip("\n") for b in blocks)
-    head = "\n".join(lines[:at])
-    tail = "\n".join(lines[at:])
+    at      = (max(inc_idx) + 1) if inc_idx else 0
+    chunk   = "\n\n" + "\n".join(b.rstrip("\n") for b in blocks)
+    head    = "\n".join(lines[:at])
+    tail    = "\n".join(lines[at:])
     return head + chunk + "\n" + tail

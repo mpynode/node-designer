@@ -48,17 +48,17 @@ def _read_node_mesh(node):
     import maya.cmds as mc
     import maya.api.OpenMaya as om
 
-    xfm = mc.createNode("transform")
+    xfm   = mc.createNode("transform")
     shape = mc.createNode("mesh", parent=xfm)
     mc.connectAttr(node + ".outMesh", shape + ".inMesh", force=True)
     mc.polyEvaluate(shape, vertex=True)  # force the DG to evaluate inMesh
 
     sel = om.MSelectionList()
     sel.add(shape)
-    dag = sel.getDagPath(0)
-    fn = om.MFnMesh(dag)
+    dag     = sel.getDagPath(0)
+    fn      = om.MFnMesh(dag)
     pts_arr = fn.getPoints(om.MSpace.kObject)
-    points = np.array([[p.x, p.y, p.z] for p in pts_arr], dtype=np.float64)
+    points  = np.array([[p.x, p.y, p.z] for p in pts_arr], dtype=np.float64)
     counts, conn = fn.getVertices()
     return points, np.array(counts, dtype=np.int32), np.array(conn, dtype=np.int32)
 
@@ -69,16 +69,16 @@ def _set_arrays(node, arrays):
     import maya.cmds as mc
 
     mats = arrays["matrices"]
-    n = mats.shape[0]
+    n    = mats.shape[0]
     for i in range(n):
         mc.setAttr("%s.shapeMatrix[%d]" % (node, i),
                    *mats[i].flatten().tolist(), type="matrix")
         mc.setAttr("%s.shapeType[%d]" % (node, i), int(arrays["shape_types"][i]))
-        mc.setAttr("%s.additive[%d]" % (node, i), int(bool(arrays["additive"][i])))
+        mc.setAttr("%s.additive[%d]" % (node, i),  int(bool(arrays["additive"][i])))
         mc.setAttr("%s.smoothing[%d]" % (node, i), float(arrays["smoothing"][i]))
-        mc.setAttr("%s.radius[%d]" % (node, i), float(arrays["radius"][i]))
-        mc.setAttr("%s.height[%d]" % (node, i), float(arrays["height"][i]))
-        mc.setAttr("%s.axis[%d]" % (node, i), int(arrays["axis"][i]))
+        mc.setAttr("%s.radius[%d]" % (node, i),    float(arrays["radius"][i]))
+        mc.setAttr("%s.height[%d]" % (node, i),    float(arrays["height"][i]))
+        mc.setAttr("%s.axis[%d]" % (node, i),      int(arrays["axis"][i]))
         mc.setAttr("%s.halfExtents[%d]" % (node, i),
                    *arrays["half_extents"][i].tolist(), type="double3")
 
@@ -106,16 +106,16 @@ class TestMPyMeshSDFSingleSphere(unittest.TestCase):
         # Reference: the shared module fed the SAME single sphere with the
         # SAME defaults the node should synthesize.
         ref_pts, ref_counts, ref_idx = sdf_dmc.mesh_from_shapes(
-            matrices=np.eye(4)[None],
-            shape_types=np.zeros(1, dtype=np.int64),
-            additive=np.ones(1, dtype=bool),
-            smoothing=np.zeros(1, dtype=np.float64),
-            radius=np.ones(1, dtype=np.float64),
-            height=np.ones(1, dtype=np.float64),
-            axis=np.ones(1, dtype=np.int64),
-            half_extents=np.tile([0.5, 0.5, 0.5], (1, 1)),
-            resolution=12,
-            iso_value=0.0,
+            matrices     = np.eye(4)[None],
+            shape_types  = np.zeros(1, dtype=np.int64),
+            additive     = np.ones(1, dtype=bool),
+            smoothing    = np.zeros(1, dtype=np.float64),
+            radius       = np.ones(1, dtype=np.float64),
+            height       = np.ones(1, dtype=np.float64),
+            axis         = np.ones(1, dtype=np.int64),
+            half_extents = np.tile([0.5, 0.5, 0.5], (1, 1)),
+            resolution   = 12,
+            iso_value    = 0.0,
         )
 
         self.assertEqual(pts.shape[0], ref_pts.shape[0])
@@ -129,8 +129,8 @@ class TestMPyMeshSDFIgloo(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         with np.load(_REF_NPZ, allow_pickle=True) as data:
-            cls.ref_points = np.asarray(data["points"], dtype=np.float64)
-            cls.ref_counts = np.asarray(data["counts"], dtype=np.int32)
+            cls.ref_points  = np.asarray(data["points"],  dtype=np.float64)
+            cls.ref_counts  = np.asarray(data["counts"],  dtype=np.int32)
             cls.ref_indices = np.asarray(data["indices"], dtype=np.int32)
 
     def _build_igloo_node(self):
@@ -142,7 +142,7 @@ class TestMPyMeshSDFIgloo(unittest.TestCase):
         mc.file(new=True, force=True)
         wrapper = MPyMesh.create(name="sdfIgloo")
         bld.configure_node(wrapper)
-        node = wrapper.get_name()
+        node   = wrapper.get_name()
 
         arrays = sdf_igloo.primitives_to_arrays(sdf_igloo.igloo_primitives())
         _set_arrays(node, arrays)
@@ -170,8 +170,8 @@ class TestMPyMeshSDFExampleScene(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         with np.load(_REF_NPZ, allow_pickle=True) as data:
-            cls.ref_points = np.asarray(data["points"], dtype=np.float64)
-            cls.ref_counts = np.asarray(data["counts"], dtype=np.int32)
+            cls.ref_points  = np.asarray(data["points"],  dtype=np.float64)
+            cls.ref_counts  = np.asarray(data["counts"],  dtype=np.int32)
             cls.ref_indices = np.asarray(data["indices"], dtype=np.int32)
 
     @unittest.skipUnless(os.path.exists(_EXAMPLE_MA),
@@ -214,7 +214,7 @@ class TestMPyMeshSDFCommands(unittest.TestCase):
 
     def test_commands_detected(self):
         wrapper = self._new_node()
-        names = {c["name"] for c in wrapper.list_commands()}
+        names   = {c["name"] for c in wrapper.list_commands()}
         self.assertEqual({"addSphere", "addBox", "addCylinder"} & names,
                          {"addSphere", "addBox", "addCylinder"})
         # All three are instance (self-first) commands, not factories/statics.
@@ -228,8 +228,8 @@ class TestMPyMeshSDFCommands(unittest.TestCase):
         from mpynode._common.nodes.mesh import sdf_dmc
 
         wrapper = self._new_node()
-        node = wrapper.get_name()
-        xf = mc.createNode("transform", name="sphereXf")
+        node    = wrapper.get_name()
+        xf      = mc.createNode("transform", name="sphereXf")
 
         out = wrapper.call_command("addSphere", transform=xf, radius=1.0)
         self.assertEqual(out, xf)
@@ -245,14 +245,14 @@ class TestMPyMeshSDFCommands(unittest.TestCase):
         mc.setAttr(node + ".resolution", 12)
         pts, counts, idx = _read_node_mesh(node)
         ref_pts, ref_counts, ref_idx = sdf_dmc.mesh_from_shapes(
-            matrices=np.eye(4)[None],
-            shape_types=np.zeros(1, dtype=np.int64),
-            additive=np.ones(1, dtype=bool),
-            smoothing=np.zeros(1, dtype=np.float64),
-            radius=np.ones(1, dtype=np.float64),
-            height=np.ones(1, dtype=np.float64),
-            axis=np.ones(1, dtype=np.int64),
-            half_extents=np.tile([0.5, 0.5, 0.5], (1, 1)),
+            matrices     = np.eye(4)[None],
+            shape_types  = np.zeros(1, dtype=np.int64),
+            additive     = np.ones(1, dtype=bool),
+            smoothing    = np.zeros(1, dtype=np.float64),
+            radius       = np.ones(1, dtype=np.float64),
+            height       = np.ones(1, dtype=np.float64),
+            axis         = np.ones(1, dtype=np.int64),
+            half_extents = np.tile([0.5, 0.5, 0.5], (1, 1)),
             resolution=12, iso_value=0.0,
         )
         self.assertEqual(pts.shape[0], ref_pts.shape[0])
@@ -263,11 +263,11 @@ class TestMPyMeshSDFCommands(unittest.TestCase):
         import maya.cmds as mc
         from mpynode._common.nodes.mesh import sdf_dmc
 
-        wrapper = self._new_node()
-        node = wrapper.get_name()
+        wrapper   = self._new_node()
+        node      = wrapper.get_name()
 
         sphere_xf = mc.createNode("transform", name="domeXf")
-        box_xf = mc.createNode("transform", name="cutXf")
+        box_xf    = mc.createNode("transform", name="cutXf")
         mc.setAttr(box_xf + ".translateY", -1.0)
 
         wrapper.call_command("addSphere", transform=sphere_xf, radius=1.5,
@@ -278,21 +278,21 @@ class TestMPyMeshSDFCommands(unittest.TestCase):
 
         self.assertEqual(mc.getAttr(node + ".shapeType[0]"), 0)
         self.assertEqual(mc.getAttr(node + ".shapeType[1]"), 1)
-        self.assertEqual(mc.getAttr(node + ".additive[1]"), 0)
+        self.assertEqual(mc.getAttr(node + ".additive[1]"),  0)
 
         pts, counts, idx = _read_node_mesh(node)
 
-        box_M = np.eye(4)
+        box_M        = np.eye(4)
         box_M[3, :3] = [0.0, -1.0, 0.0]
         ref_pts, ref_counts, ref_idx = sdf_dmc.mesh_from_shapes(
-            matrices=np.array([np.eye(4), box_M]),
-            shape_types=np.array([0, 1], dtype=np.int64),
-            additive=np.array([True, False]),
-            smoothing=np.zeros(2, dtype=np.float64),
-            radius=np.array([1.5, 1.0], dtype=np.float64),
-            height=np.ones(2, dtype=np.float64),
-            axis=np.ones(2, dtype=np.int64),
-            half_extents=np.array([[0.5, 0.5, 0.5], [2.0, 1.0, 2.0]]),
+            matrices     = np.array([np.eye(4), box_M]),
+            shape_types  = np.array([0, 1], dtype=np.int64),
+            additive     = np.array([True, False]),
+            smoothing    = np.zeros(2, dtype=np.float64),
+            radius       = np.array([1.5, 1.0], dtype=np.float64),
+            height       = np.ones(2, dtype=np.float64),
+            axis         = np.ones(2, dtype=np.int64),
+            half_extents = np.array([[0.5, 0.5, 0.5], [2.0, 1.0, 2.0]]),
             resolution=12, iso_value=0.0,
         )
         self.assertEqual(pts.shape[0], ref_pts.shape[0])
@@ -304,8 +304,8 @@ class TestMPyMeshSDFCommands(unittest.TestCase):
         import maya.cmds as mc
 
         wrapper = self._new_node()
-        node = wrapper.get_name()
-        xf = mc.createNode("transform", name="cylXf")
+        node    = wrapper.get_name()
+        xf      = mc.createNode("transform", name="cylXf")
 
         wrapper.call_command("addCylinder", transform=xf, radius=0.5,
                              height=1.2, axis=2)
@@ -319,7 +319,7 @@ class TestMPyMeshSDFCommands(unittest.TestCase):
         from mpynode._common.methods.methods_registry import run_node_setup
 
         wrapper = self._new_node()
-        node = wrapper.get_name()
+        node    = wrapper.get_name()
         run_node_setup(wrapper, selection=[])
 
         shape = node + "RenderShape"

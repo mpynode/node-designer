@@ -29,8 +29,8 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 # counting: counting three levels to scripts/ from here lands one ABOVE the
 # repo, which is a real directory, so sys.path.insert would succeed and the
 # only symptom would be a confusing `from mpynode...` ImportError later.
-_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(HERE)))
-_INC = os.path.join(_ROOT, "scripts", "mpynode", "native", "compiler")
+_ROOT    = os.path.dirname(os.path.dirname(os.path.dirname(HERE)))
+_INC     = os.path.join(_ROOT, "scripts", "mpynode", "native", "compiler")
 _SCRIPTS = os.path.join(_ROOT, "scripts")
 if _SCRIPTS not in sys.path:
     sys.path.insert(0, _SCRIPTS)
@@ -90,7 +90,7 @@ def _cval(x, dt):
 
 def _emit_input(name, v):
     if isinstance(v, np.ndarray):
-        dt = _dtag(v.dtype)
+        dt   = _dtag(v.dtype)
         flat = ", ".join(_cval(x, dt) for x in v.ravel(order="C").tolist())
         dims = ", ".join(str(d) for d in v.shape)
         return ("nd::Array<%s> %s = nd::from_data<%s>({%s}, {%s});"
@@ -134,11 +134,11 @@ static void print_result(bool v){ std::printf("RES bool 0 : %d\n", v ? 1 : 0); }
 
 
 def _build_program(src, inputs):
-    order = list(inputs.keys())
+    order     = list(inputs.keys())
     arg_types = {k: _cpp_type_of(v) for k, v in inputs.items()}
-    res = transpile_function(src, arg_types)
-    sig = ", ".join(_sig(n, arg_types[n]) for n in res.arg_names)
-    lines = [_PREAMBLE, ""]
+    res       = transpile_function(src, arg_types)
+    sig       = ", ".join(_sig(n, arg_types[n]) for n in res.arg_names)
+    lines     = [_PREAMBLE, ""]
     lines.append("static auto compute(%s) {" % sig)
     lines.extend(res.decl_lines)
     lines.extend(res.body_lines)
@@ -169,7 +169,7 @@ def _compile_and_run(cxx, program, tag):
         with open(cpp, "w") as fh:
             fh.write(program)
         cmd = [cxx, "-std=c++17", "-O2", "-I", _INC, cpp, "-o", exe]
-        r = subprocess.run(cmd, capture_output=True, text=True)
+        r   = subprocess.run(cmd, capture_output=True, text=True)
         if r.returncode != 0:
             return None, "COMPILE FAILED:\n%s\n---program---\n%s" % (
                 r.stderr, program)
@@ -184,7 +184,7 @@ def _parse_res(text):
         t = line.split()
         if not t or t[0] != "RES":
             continue
-        tag = t[1]
+        tag  = t[1]
         ndim = int(t[2])
         dims = [int(x) for x in t[3:3 + ndim]]
         assert t[3 + ndim] == ":", line
@@ -351,8 +351,8 @@ FIXTURES = [
     _F("matmul_bcast_int",
        "def matmul_bcast_int(a, b, c):\n"
        "    return a @ b + c\n",
-       a=np.arange(6, dtype=np.int64).reshape(2, 3),
-       b=np.arange(12, dtype=np.int64).reshape(3, 4),
+       a = np.arange(6, dtype=np.int64).reshape(2, 3),
+       b = np.arange(12, dtype=np.int64).reshape(3, 4),
        c=np.array([1, 2, 3, 4], dtype=np.int64)),
     # Inc2 ADVERSARIAL (skeptic panel): self-alias in PRODUCER mode -- the
     # assignment target is ALSO the matmul-A input. The matmul operands must be
@@ -380,14 +380,14 @@ FIXTURES = [
     _F("matmul_bcast_div_denom",
        "def matmul_bcast_div_denom(a, b, c):\n"
        "    return c / (a @ b)\n",
-       a=(np.arange(6.0).reshape(2, 3) + 1.0),
-       b=(np.arange(12.0).reshape(3, 4) + 1.0),
+       a = (np.arange(6.0).reshape(2, 3) + 1.0),
+       b = (np.arange(12.0).reshape(3, 4) + 1.0),
        c=np.array([1.0, 2.0, 3.0, 4.0])),
     _F("matmul_bcast_maximum_left",
        "def matmul_bcast_maximum_left(a, b, c):\n"
        "    return np.maximum(c, a @ b)\n",
-       a=(np.arange(6.0).reshape(2, 3) - 3.0),
-       b=(np.arange(12.0).reshape(3, 4) - 6.0),
+       a = (np.arange(6.0).reshape(2, 3) - 3.0),
+       b = (np.arange(12.0).reshape(3, 4) - 6.0),
        c=np.array([0.0, 5.0, -5.0, 100.0])),
     # Inc2 ADVERSARIAL: two matmul producers summed into the same (m,N) output.
     _F("matmul_two_producers",
@@ -739,8 +739,8 @@ FIXTURES = [
        "    mask = c >= 0\n"
        "    counts = np.maximum(mask.sum(axis=1), 1)\n"
        "    return p.sum(axis=1) / counts[:, None]\n",
-       p=_R.randn(2, 8, 3),
-       c=np.array([[0, 1, 2, 3, 4, 5, 6, 7], [0, -1, 2, -1, 4, -1, 6, -1]]),
+       p = _R.randn(2, 8, 3),
+       c = np.array([[0, 1, 2, 3, 4, 5, 6, 7], [0, -1, 2, -1, 4, -1, 6, -1]]),
        _tol=(1e-9, 1e-9)),
     # A SCALAR-tested conditional expression SELECTING between two arrays -- a
     # plain C++ ternary, not np.where's elementwise blend (the IK pole-vector
@@ -934,8 +934,8 @@ FIXTURES = [
     _F("m_choose",
        "def m_choose(i, x, y):\n"
        "    return i.choose((x, y)) + np.choose(i, (x, y))\n",
-       i=np.array([0, 1, 0, 1], dtype=np.int64),
-       x=np.array([10.0, 20.0, 30.0, 40.0]),
+       i = np.array([0, 1, 0, 1], dtype=np.int64),
+       x = np.array([10.0, 20.0, 30.0, 40.0]),
        y=np.array([-1.0, -2.0, -3.0, -4.0])),
     # Half-to-EVEN. std::round would answer 1/2/3/-1/-2 for these five.
     _F("m_round_banker",
@@ -1053,8 +1053,8 @@ FIXTURES = [
        "    t = cKDTree(p)\n"
        "    d, i = t.query(q)\n"
        "    return d\n",
-       p=(np.arange(60.0).reshape(20, 3) * np.pi % 7.3),
-       q=(np.arange(24.0).reshape(8, 3) * np.e % 6.1),
+       p = (np.arange(60.0).reshape(20, 3) * np.pi % 7.3),
+       q = (np.arange(24.0).reshape(8, 3) * np.e % 6.1),
        _tol=(1e-12, 1e-12)),
     _F("kd_query_k1_idx",
        "def kd_query_k1_idx(p, q):\n"
@@ -1070,8 +1070,8 @@ FIXTURES = [
        "    t = cKDTree(p)\n"
        "    d, i = t.query(q, 3)\n"
        "    return d + i.astype(np.float64) * 0.001\n",
-       p=(np.arange(60.0).reshape(20, 3) * np.pi % 7.3),
-       q=(np.arange(24.0).reshape(8, 3) * np.e % 6.1),
+       p = (np.arange(60.0).reshape(20, 3) * np.pi % 7.3),
+       q = (np.arange(24.0).reshape(8, 3) * np.e % 6.1),
        _tol=(1e-12, 1e-12)),
     # leafsize changes the tree SHAPE only. Because the result is defined by the
     # (distance, index) rule rather than by traversal, both trees must return
@@ -1084,8 +1084,8 @@ FIXTURES = [
        "    a, ia = t1.query(q, 2)\n"
        "    b, ib = t2.query(q, 2)\n"
        "    return a - b + (ia - ib).astype(np.float64)\n",
-       p=(np.arange(60.0).reshape(20, 3) * np.pi % 7.3),
-       q=(np.arange(24.0).reshape(8, 3) * np.e % 6.1),
+       p = (np.arange(60.0).reshape(20, 3) * np.pi % 7.3),
+       q = (np.arange(24.0).reshape(8, 3) * np.e % 6.1),
        _tol=(1e-12, 1e-12)),
     # output_type='ndarray' is REQUIRED, not optional: scipy's default is a
     # Python set, which has no lowered carrier and would make the two sides
@@ -1431,15 +1431,15 @@ FIXTURES = [
        "def gap_meshgrid_ij_3_int(x, y, z):\n"
        "    X, Y, Z = np.meshgrid(x, y, z, indexing='ij')\n"
        "    return X * 100 + Y * 10 + Z\n",
-       x=np.array([1, 2], dtype=np.int64),
-       y=np.array([3, 4, 5], dtype=np.int64),
+       x = np.array([1, 2], dtype=np.int64),
+       y = np.array([3, 4, 5], dtype=np.int64),
        z=np.array([6, 7, 8, 9], dtype=np.int64)),
     _F("gap_meshgrid_xy_3_int",
        "def gap_meshgrid_xy_3_int(x, y, z):\n"
        "    X, Y, Z = np.meshgrid(x, y, z)\n"
        "    return X * 100 + Y * 10 + Z\n",
-       x=np.array([1, 2], dtype=np.int64),
-       y=np.array([3, 4, 5], dtype=np.int64),
+       x = np.array([1, 2], dtype=np.int64),
+       y = np.array([3, 4, 5], dtype=np.int64),
        z=np.array([6, 7, 8, 9], dtype=np.int64)),
     # ...and the double path, one grid at a time so the comparison stays a pure
     # data movement (exact) rather than a multiply-add clang may contract.
@@ -1715,7 +1715,7 @@ def main():
         sys.exit(0)
 
     fails = []
-    n_ok = 0
+    n_ok  = 0
     for i, (name, src, inputs, tol) in enumerate(FIXTURES):
         try:
             program = _build_program(src, inputs)

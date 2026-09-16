@@ -28,8 +28,8 @@ from typing import Any, Callable
 # files pass to remove_for_owner() in uninitializePlugin (i.e. their
 # ``PLUGIN_NAME``), or a plugin would fail to tear down its own callbacks.
 OWNER_SHARED = "shared"
-OWNER_API1 = "mpynode_api1"
-OWNER_API2 = "mpynode_api2"
+OWNER_API1   = "mpynode_api1"
+OWNER_API2   = "mpynode_api2"
 
 _SHARED = OWNER_SHARED
 
@@ -45,9 +45,9 @@ class CallbackManager:
 
     def register(
         self,
-        callback_id: Any,
+        callback_id:     Any,
         deregister_func: Callable[[Any], None],
-        owner: Any = _SHARED,
+        owner:           Any                   = _SHARED,
     ) -> int:
         """Track a callback under ``owner``. ``deregister_func(callback_id)`` is
         called on ``remove_for_owner(owner)`` / ``remove_all`` / ``unregister``.

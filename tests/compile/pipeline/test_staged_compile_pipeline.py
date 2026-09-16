@@ -40,14 +40,14 @@ def _spec(compute, name="stagedProbe"):
     """Minimal portable spec (shape copied from test_native_compile_pipeline)."""
     return {
         "source_node": name,
-        "mpy_type": "mPyNode",
+        "mpy_type":    "mPyNode",
         "suggested": {"node_type_name": name,
                       "class_name": name[:1].upper() + name[1:],
                       "mpx_base": "MPxNode", "type_id": "0x0013a1c0"},
-        "inputs": {"a": {"type": "double"}},
-        "outputs": {"out": {"type": "double"}},
-        "compute": compute,
-        "init": "",
+        "inputs":      {"a": {"type": "double"}},
+        "outputs":     {"out": {"type": "double"}},
+        "compute":     compute,
+        "init":        "",
         "portability": {"portable": True, "blockers": []},
     }
 
@@ -55,7 +55,7 @@ def _spec(compute, name="stagedProbe"):
 # `self.`-form lowers deterministically; the bare form does not (self-only
 # contract), which makes it the cheapest spec that reaches the AI porter.
 DETERMINISTIC = "self.out = self.a * 2.0"
-NEEDS_PORTER = "out = a * 2.0"
+NEEDS_PORTER  = "out = a * 2.0"
 
 
 class TestStagesLayout(unittest.TestCase):
@@ -75,7 +75,7 @@ class TestStagesLayout(unittest.TestCase):
         frag_*.cpp; it must never reach into build/stages/."""
         from mpynode.native.compiler import bundler
 
-        out = tempfile.mkdtemp(prefix="mpynode-stages-")
+        out   = tempfile.mkdtemp(prefix="mpynode-stages-")
         stage = bundler.stage_dir_for(out, "kDTree")
         os.makedirs(os.path.join(stage, "3_optimized"), exist_ok=True)
         keep = [os.path.join(stage, "1_transpiled.cpp"),
@@ -133,8 +133,8 @@ class TestStageOneIsAlwaysPersisted(unittest.TestCase):
             _res, seen = self._run(
                 NEEDS_PORTER, complete_fn=lambda s, u: "out_h.setDouble(0.0);")
 
-        self.assertIn("1_transpiled", seen)
-        self.assertIn("2_assisted", seen)
+        self.assertIn("1_transpiled",          seen)
+        self.assertIn("2_assisted",            seen)
         self.assertIn("out_h.setDouble(0.0);", seen["2_assisted"])
 
 
@@ -501,11 +501,11 @@ class TestOptimizerRoundMetadata(unittest.TestCase):
         optimizer = self._engine()
 
         metas = [{"slug": "hoist_invariant",
-                  "theme": "peel the p==0 test out of the argmin",
-                  "hypothesis": "the invariant disjunct blocks NEON packing",
+                  "theme":             "peel the p==0 test out of the argmin",
+                  "hypothesis":        "the invariant disjunct blocks NEON packing",
                   "predicted_speedup": 2.0,
                   "risk": "none -- pure loop restructure"}]
-        ad = self._adapters(metas, times=[100.0, 50.0])
+        ad  = self._adapters(metas, times=[100.0, 50.0])
 
         res = optimizer.optimize_cpp("// baseline", rounds=1, **ad)
 
@@ -522,7 +522,7 @@ class TestOptimizerRoundMetadata(unittest.TestCase):
         metas = [{"slug": "good_one", "theme": "t1", "predicted_speedup": 2.0},
                  {"slug": "no_win", "theme": "t2", "predicted_speedup": 3.0}]
         # round 1: 100 -> 50 (accept). round 2: 50 -> 49.9 (not faster enough).
-        ad = self._adapters(metas, times=[100.0, 50.0, 49.9])
+        ad   = self._adapters(metas, times=[100.0, 50.0, 49.9])
 
         seen = []
 
@@ -546,7 +546,7 @@ class TestOptimizerRoundMetadata(unittest.TestCase):
         """The metadata is a report nicety; it must not gate optimization."""
         optimizer = self._engine()
 
-        ad = self._adapters([{}], times=[100.0, 50.0])
+        ad                  = self._adapters([{}], times=[100.0, 50.0])
         ad["round_meta_fn"] = lambda: (_ for _ in ()).throw(RuntimeError("x"))
 
         res = optimizer.optimize_cpp("// baseline", rounds=1, **ad)
@@ -562,7 +562,7 @@ class TestOptimizerRoundMetadata(unittest.TestCase):
 
         metas = [{"slug": "simd_argmin", "theme": "vectorise the argmin",
                   "predicted_speedup": 3.0, "risk": "medium"}]
-        ad = self._adapters(metas, times=[100.0, 50.0])
+        ad    = self._adapters(metas, times=[100.0, 50.0])
         lines = []
 
         optimizer.optimize_cpp("// baseline", rounds=1, label="kDTree",
@@ -571,9 +571,9 @@ class TestOptimizerRoundMetadata(unittest.TestCase):
         intent = [l for l in lines if "vectorise the argmin" in l]
         self.assertEqual(len(intent), 1, lines)
         self.assertIn("round 1/1", intent[0])
-        self.assertIn("3.00x", intent[0])
-        self.assertIn("medium", intent[0])
-        self.assertIn("[kDTree]", intent[0])
+        self.assertIn("3.00x",     intent[0])
+        self.assertIn("medium",    intent[0])
+        self.assertIn("[kDTree]",  intent[0])
         # And it must land BEFORE the measurement it predicts.
         self.assertLess(lines.index(intent[0]),
                         [i for i, l in enumerate(lines) if "ACCEPT" in l][0])
@@ -587,8 +587,8 @@ class TestOptimizerRoundMetadata(unittest.TestCase):
 
         ad = self._adapters([{"slug": "s", "theme": "vectorise the argmin"}],
                             times=[100.0, 50.0])
-        propose = ad["optimize_fn"]
-        lines = []
+        propose          = ad["optimize_fn"]
+        lines            = []
         seen_when_called = []
 
         def optimize_fn(cpp):
@@ -607,7 +607,7 @@ class TestOptimizerRoundMetadata(unittest.TestCase):
         -- a silent round is exactly the case it exists for."""
         optimizer = self._engine()
 
-        ad = self._adapters([{}], times=[100.0, 50.0])
+        ad    = self._adapters([{}], times=[100.0, 50.0])
         lines = []
 
         optimizer.optimize_cpp("// baseline", rounds=1, log_cb=lines.append,
@@ -618,7 +618,7 @@ class TestOptimizerRoundMetadata(unittest.TestCase):
     def test_a_themeless_round_says_nothing_rather_than_something_hollow(self):
         optimizer = self._engine()
 
-        ad = self._adapters([{}], times=[100.0, 50.0])
+        ad    = self._adapters([{}], times=[100.0, 50.0])
         lines = []
 
         optimizer.optimize_cpp("// baseline", rounds=1, log_cb=lines.append,
@@ -631,7 +631,7 @@ class TestOptimizerRoundMetadata(unittest.TestCase):
         must NOT reach the durable ledger."""
         optimizer = self._engine()
 
-        ad = self._adapters([{"slug": "s1"}], times=[100.0, 50.0])
+        ad  = self._adapters([{"slug": "s1"}], times=[100.0, 50.0])
         res = optimizer.optimize_cpp("// baseline", rounds=1, **ad)
 
         rec = [r for r in res.ledger if r.index == 1][0]
@@ -643,7 +643,7 @@ class TestOptimizerRoundMetadata(unittest.TestCase):
         from mpynode.native.ai import optimizer, optimizer_live
         from mpynode.native.compiler import bundler
 
-        ad = self._adapters([{"slug": "s1"}], times=[100.0, 50.0])
+        ad  = self._adapters([{"slug": "s1"}], times=[100.0, 50.0])
         res = optimizer.optimize_cpp("// baseline", rounds=1, **ad)
 
         out = tempfile.mkdtemp(prefix="mpynode-ledger-")
@@ -679,9 +679,9 @@ class TestKeepIntermediates(unittest.TestCase):
         from mpynode.native.ai import optimizer_live
         from mpynode.native.compiler import bundler
 
-        out = tempfile.mkdtemp(prefix="mpynode-keepint-")
+        out     = tempfile.mkdtemp(prefix="mpynode-keepint-")
         scratch = tempfile.mkdtemp(prefix="mpynode-keepint-scr-")
-        w = optimizer_live.make_version_writer(out, "kDTree", keep_bundles=True)
+        w       = optimizer_live.make_version_writer(out, "kDTree", keep_bundles=True)
 
         w(self._round(1, "simd_argmin",
                       self._fake_bundle(scratch, "kDTree.bundle")), "// v1")
@@ -696,9 +696,9 @@ class TestKeepIntermediates(unittest.TestCase):
         from mpynode.native.ai import optimizer_live
         from mpynode.native.compiler import bundler
 
-        out = tempfile.mkdtemp(prefix="mpynode-keepoff-")
+        out     = tempfile.mkdtemp(prefix="mpynode-keepoff-")
         scratch = tempfile.mkdtemp(prefix="mpynode-keepoff-scr-")
-        w = optimizer_live.make_version_writer(out, "kDTree")
+        w       = optimizer_live.make_version_writer(out, "kDTree")
 
         w(self._round(1, "simd_argmin",
                       self._fake_bundle(scratch, "kDTree.bundle")), "// v1")
@@ -710,8 +710,8 @@ class TestKeepIntermediates(unittest.TestCase):
         from mpynode.native.ai import optimizer_live
         from mpynode.native.compiler import bundler
 
-        out = tempfile.mkdtemp(prefix="mpynode-keepnone-")
-        w = optimizer_live.make_version_writer(out, "kDTree", keep_bundles=True)
+        out  = tempfile.mkdtemp(prefix="mpynode-keepnone-")
+        w    = optimizer_live.make_version_writer(out, "kDTree", keep_bundles=True)
 
         path = w(self._round(2, "did_not_build", None), "// v2")
 
@@ -745,7 +745,7 @@ class TestOptimizerVersionsOnDisk(unittest.TestCase):
         from mpynode.native.ai import optimizer_live
 
         out = tempfile.mkdtemp(prefix="mpynode-versions-")
-        w = optimizer_live.make_version_writer(out, "kDTree")
+        w   = optimizer_live.make_version_writer(out, "kDTree")
 
         from mpynode.native.ai.optimizer import RoundRecord
 
@@ -766,11 +766,11 @@ class TestOptimizerVersionsOnDisk(unittest.TestCase):
         from mpynode.native.compiler import bundler
 
         out = tempfile.mkdtemp(prefix="mpynode-slugs-")
-        w = optimizer_live.make_version_writer(out, "kDTree")
+        w   = optimizer_live.make_version_writer(out, "kDTree")
         w(RoundRecord(1, "accept", slug="NEON argmin / 2 accumulators!"), "// x")
         w(RoundRecord(2, "accept", slug=None), "// y")
 
-        d = os.path.join(bundler.stage_dir_for(out, "kDTree"), "3_optimized")
+        d     = os.path.join(bundler.stage_dir_for(out, "kDTree"), "3_optimized")
         names = sorted(os.listdir(d))
         self.assertEqual(len(names), 2)
         self.assertTrue(names[0].startswith("01_"), names)
@@ -821,7 +821,7 @@ class TestOptimizeSurvivingWritesTheHistory(unittest.TestCase):
                 verify_fn=lambda b, r: {}, engine=engine,
                 adapters_factory=lambda *a, **k: {})
 
-            stage = bundler.stage_dir_for(tmp, "kDTree")
+            stage    = bundler.stage_dir_for(tmp, "kDTree")
             versions = sorted(os.listdir(os.path.join(stage, "3_optimized")))
             self.assertEqual(versions, ["00_baseline.cpp",
                                         "01_hoist_invariant.cpp",
@@ -973,7 +973,7 @@ class TestScratchCleanup(unittest.TestCase):
         from mpynode.native.compiler import bundler
         from mpynode.native.ai import optimizer_live
 
-        out = tempfile.mkdtemp(prefix="mpynode-clean-")
+        out   = tempfile.mkdtemp(prefix="mpynode-clean-")
         build = bundler.build_dir_for(out)
         for sub in (bundler.source_dir_for(out),
                     bundler.stage_dir_for(out, "probeA")):

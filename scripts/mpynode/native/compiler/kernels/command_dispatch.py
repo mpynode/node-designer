@@ -85,12 +85,12 @@ _VALID_COMMAND_NAME = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 
 # Python type -> (MSyntax arg type, MArgDatabase getter, multi-use)
 _FLAG_TYPES = {
-    "str": ("MSyntax::kString", "asString", False),
-    "int": ("MSyntax::kLong", "asInt", False),
-    "float": ("MSyntax::kDouble", "asDouble", False),
-    "bool": ("MSyntax::kBoolean", "asBool", False),
-    "list[str]": ("MSyntax::kString", "asString", True),
-    "list[int]": ("MSyntax::kLong", "asInt", True),
+    "str":         ("MSyntax::kString", "asString", False),
+    "int":         ("MSyntax::kLong", "asInt", False),
+    "float":       ("MSyntax::kDouble", "asDouble", False),
+    "bool":        ("MSyntax::kBoolean", "asBool", False),
+    "list[str]":   ("MSyntax::kString", "asString", True),
+    "list[int]":   ("MSyntax::kLong", "asInt", True),
     "list[float]": ("MSyntax::kDouble", "asDouble", True),
 }
 
@@ -243,7 +243,7 @@ def flag_spec_for(cmd: dict) -> List[dict]:
             "%s: def %r not found in its own source"
             % (cmd.get("name"), cmd.get("func_name")))
 
-    a = fn.args
+    a       = fn.args
     creates = bool(cmd.get("creates"))
     if (a.vararg or a.kwarg) and not creates:
         raise CommandSpecError(
@@ -257,7 +257,7 @@ def flag_spec_for(cmd: dict) -> List[dict]:
     pos = list(a.posonlyargs) + list(a.args)
     if pos and pos[0].arg in ("self", "cls"):
         pos = pos[1:]
-    defaults = list(a.defaults)
+    defaults     = list(a.defaults)
     pos_defaults = [None] * (len(pos) - len(defaults)) + defaults
 
     params = [(arg, d, d is None) for arg, d in zip(pos, pos_defaults)]
@@ -283,11 +283,11 @@ def flag_spec_for(cmd: dict) -> List[dict]:
             unknown.append(pname)
             continue
         out.append({
-            "param": pname,
-            "long": pname,
-            "short": _short_name(pname, taken),
-            "type": ftype,
-            "multi": _FLAG_TYPES[ftype][2],
+            "param":    pname,
+            "long":     pname,
+            "short":    _short_name(pname, taken),
+            "type":     ftype,
+            "multi":    _FLAG_TYPES[ftype][2],
             "required": required,
         })
     if unknown:
@@ -312,12 +312,12 @@ COMPILED_UNSUPPORTED = {
     "set_variable":
         "stored variables are const-folded into C++ at compile time; a "
         "compiled node has no _storedVarNames/_storedVarsData plug to write to",
-    "get_variable": "same as set_variable -- no stored-variable plugs exist",
+    "get_variable":  "same as set_variable -- no stored-variable plugs exist",
     "get_variables": "same as set_variable -- no stored-variable plugs exist",
     "set_variables": "same as set_variable -- no stored-variable plugs exist",
     "get_variable_names":
         "same as set_variable -- no stored-variable plugs exist",
-    "add_variable": "same as set_variable -- no stored-variable plugs exist",
+    "add_variable":    "same as set_variable -- no stored-variable plugs exist",
     "remove_variable": "same as set_variable -- no stored-variable plugs exist",
     "get_input_attr_map":
         "attributes are baked into C++ initialize(); there is no _inputAttrs plug",
@@ -341,8 +341,8 @@ COMPILED_UNSUPPORTED = {
         "adding a blend-shape target rebuilds the delta tables, which needs "
         "get_compute_expression -- there is no _computeSource plug",
     "add_target_from_offsets": "same as add_target -- the rebuild cannot run",
-    "load_target": "same as add_target -- the rebuild cannot run",
-    "load_shapes": "same as add_target -- the rebuild cannot run",
+    "load_target":             "same as add_target -- the rebuild cannot run",
+    "load_shapes":             "same as add_target -- the rebuild cannot run",
     "rebuild":
         "rebuilding the blend-shape tables derives shapeSlot from the compute "
         "source, and the compute is C++ -- there is no _computeSource plug",
@@ -729,9 +729,9 @@ NATIVE_LOWERABLE_BASES = ("MPxNode",)
 # Python body it has today -- never an assumption that it behaves like these.
 # Adding one means measuring it against MDagModifier the same way first.
 _DAG_CREATE_TYPES = {
-    "transform": False,
-    "mesh": True,
-    "nurbsCurve": True,
+    "transform":    False,
+    "mesh":         True,
+    "nurbsCurve":   True,
     "nurbsSurface": True,
 }
 
@@ -777,15 +777,15 @@ class _RenderShapeReader(object):
     """
 
     def __init__(self, fn):
-        self.fn = fn
-        self.mc = None              # the ``maya.cmds`` alias in scope
-        self.name = None            # the local bound to self.get_name()
-        self.books = set()          # created=[] / conn=None bookkeeping locals
-        self.nodes = {}             # local -> plan node id
-        self.plugs = {}             # local -> (node id, ".attr")
-        self.creates = []
+        self.fn       = fn
+        self.mc       = None   # the ``maya.cmds`` alias in scope
+        self.name     = None   # the local bound to self.get_name()
+        self.books    = set()  # created=[] / conn=None bookkeeping locals
+        self.nodes    = {}     # local -> plan node id
+        self.plugs    = {}     # local -> (node id, ".attr")
+        self.creates  = []
         self.connects = []
-        self.sets = []
+        self.sets     = []
         self.returned = False
 
     # -- helpers ------------------------------------------------------------
@@ -896,7 +896,7 @@ class _RenderShapeReader(object):
         if not isinstance(tgt, ast.Name):
             raise _ShapeRefused("assignment to a non-name")
         target = tgt.id
-        val = stmt.value
+        val    = stmt.value
 
         # name = self.get_name()
         if (isinstance(val, ast.Call) and not val.args and not val.keywords
@@ -967,7 +967,7 @@ class _RenderShapeReader(object):
                 raise _ShapeRefused("sets() target is not a local this body "
                                     "created")
             set_name = None
-            edit = False
+            edit     = False
             for k in val.keywords:
                 if k.arg in ("edit", "e"):
                     if not _is_true(k.value):
@@ -998,7 +998,7 @@ class _RenderShapeReader(object):
                 and handler.type.id in ("Exception", "BaseException")):
             raise _ShapeRefused("except clause is not a bare Exception handler")
         allowed = ("disconnectAttr", "delete", "objExists")
-        raises = False
+        raises  = False
         for node in ast.walk(handler):
             if isinstance(node, ast.Return):
                 raise _ShapeRefused("the rollback returns a value")
@@ -2020,11 +2020,11 @@ def _parse_lines(flags: List[dict]) -> str:
     US, RS, GS = '"\\x1f"', '"\\x1e"', '"\\x1d"'
     ctype = {"str": "MString", "int": "int", "float": "double", "bool": "bool"}
 
-    out = []
+    out   = []
     for f in flags:
         short = f["short"]
-        base = f["type"][5:-1] if f["multi"] else f["type"]
-        kind = ("list:" + base) if f["multi"] else base
+        base  = f["type"][5:-1] if f["multi"] else f["type"]
+        kind  = ("list:" + base) if f["multi"] else base
         out.append('        if (argData.isFlagSet("-%s")) {' % short)
         out.append('            if (!blob.empty()) blob += %s;' % GS)
         out.append('            blob += "%s"; blob += %s; blob += "%s"; '
@@ -2118,7 +2118,7 @@ def emit_dispatch_commands(commands: List[dict], node_type_name: str,
         return {"classes": "", "register": [], "deregister": [],
                 "includes": [], "supported": [], "native": [], "errors": []}
 
-    ns = re.sub(r"\W", "_", node_type_name)
+    ns  = re.sub(r"\W", "_", node_type_name)
     mod = module_symbol(node_type_name)
 
     specs, errors, usable = {}, [], []
@@ -2188,7 +2188,7 @@ def emit_dispatch_commands(commands: List[dict], node_type_name: str,
     register, deregister, supported = [], [], []
     for c in usable:
         name = c["name"]
-        cls = cmd_class_name(name)
+        cls  = cmd_class_name(name)
         if name in plans:
             blocks.append(emit_native_command(c, plans[name], node_type_name))
         else:
@@ -2215,11 +2215,11 @@ def emit_dispatch_commands(commands: List[dict], node_type_name: str,
         includes += [h for h in NATIVE_COMMAND_INCLUDES if h not in includes]
 
     return {
-        "classes": "\n".join(blocks),
-        "register": register,
+        "classes":    "\n".join(blocks),
+        "register":   register,
         "deregister": deregister,
-        "includes": includes,
-        "supported": supported,
-        "native": [c["name"] for c in usable if c["name"] in plans],
-        "errors": [],
+        "includes":   includes,
+        "supported":  supported,
+        "native":     [c["name"] for c in usable if c["name"] in plans],
+        "errors":     [],
     }

@@ -33,25 +33,25 @@ class MPyNode(om.MPxNode):
     """API 2.0 expression-driven DG node."""
 
     NODE_NAME = "mPyNode"
-    NODE_ID = om.MTypeId(0x00135700)  # in our private range
+    NODE_ID   = om.MTypeId(0x00135700)  # in our private range
 
     # mPyNode has no bridge-injected internals beyond user storage; subclasses
     # (mPyConstraint, ...) add their own. There is no INTERNAL_VARS schema --
     # the expression reaches plug-tree state through ``self.X``.
 
     # Class-level MObjects for the internal attrs (set by nodeInitializer)
-    _expression_attr: om.MObject = om.MObject.kNullObj
-    _input_attrs_attr: om.MObject = om.MObject.kNullObj
-    _output_attrs_attr: om.MObject = om.MObject.kNullObj
+    _expression_attr:       om.MObject = om.MObject.kNullObj
+    _input_attrs_attr:      om.MObject = om.MObject.kNullObj
+    _output_attrs_attr:     om.MObject = om.MObject.kNullObj
     _stored_vars_list_attr: om.MObject = om.MObject.kNullObj
     _stored_vars_data_attr: om.MObject = om.MObject.kNullObj
-    _debug_mode_attr: om.MObject = om.MObject.kNullObj
+    _debug_mode_attr:       om.MObject = om.MObject.kNullObj
     # profile + watch instrumentation plugs.
-    _profile_enabled_attr: om.MObject = om.MObject.kNullObj
-    _deep_profile_enabled_attr: om.MObject = om.MObject.kNullObj
-    _watch_enabled_attr: om.MObject = om.MObject.kNullObj
+    _profile_enabled_attr:       om.MObject = om.MObject.kNullObj
+    _deep_profile_enabled_attr:  om.MObject = om.MObject.kNullObj
+    _watch_enabled_attr:         om.MObject = om.MObject.kNullObj
     _profile_snapshot_data_attr: om.MObject = om.MObject.kNullObj
-    _watch_vars_data_attr: om.MObject = om.MObject.kNullObj
+    _watch_vars_data_attr:       om.MObject = om.MObject.kNullObj
 
     def __init__(self):
         super().__init__()
@@ -70,19 +70,19 @@ class MPyNode(om.MPxNode):
 
     @staticmethod
     def initializer():
-        plugs = helpers.build_internal_attrs(MPyNode)
-        MPyNode._expression_attr = plugs["_computeSource"]
-        MPyNode._input_attrs_attr = plugs["inputs"]
-        MPyNode._output_attrs_attr = plugs["outputs"]
+        plugs                          = helpers.build_internal_attrs(MPyNode)
+        MPyNode._expression_attr       = plugs["_computeSource"]
+        MPyNode._input_attrs_attr      = plugs["inputs"]
+        MPyNode._output_attrs_attr     = plugs["outputs"]
         MPyNode._stored_vars_list_attr = plugs["stored_vars_list"]
         MPyNode._stored_vars_data_attr = plugs["stored_vars_data"]
-        MPyNode._debug_mode_attr = plugs["debug_mode"]
+        MPyNode._debug_mode_attr       = plugs["debug_mode"]
 
-        MPyNode._profile_enabled_attr = plugs["profile_enabled"]
-        MPyNode._deep_profile_enabled_attr = plugs["deep_profile_enabled"]
-        MPyNode._watch_enabled_attr = plugs["watch_enabled"]
+        MPyNode._profile_enabled_attr       = plugs["profile_enabled"]
+        MPyNode._deep_profile_enabled_attr  = plugs["deep_profile_enabled"]
+        MPyNode._watch_enabled_attr         = plugs["watch_enabled"]
         MPyNode._profile_snapshot_data_attr = plugs["profile_snapshot_data"]
-        MPyNode._watch_vars_data_attr = plugs["watch_vars_data"]
+        MPyNode._watch_vars_data_attr       = plugs["watch_vars_data"]
 
     def setInternalValue(self, plug, data_handle):
         """Track changes to the ``_computeSource`` attr by recompiling
@@ -107,7 +107,7 @@ class MPyNode(om.MPxNode):
                 dirty_affects.invalidate(self.thisMObject())
             if attr == type(self)._expression_attr:
                 # MDataHandle for a string returns asString()
-                new_src = data_handle.asString()
+                new_src        = data_handle.asString()
                 self._expr_str = new_src
                 from mpynode._common.compute.expression import safe_compile_expression
 
@@ -120,8 +120,8 @@ class MPyNode(om.MPxNode):
                     pass
                 code = safe_compile_expression(
                     new_src,
-                    node_name=node_name,
-                    filename="<mpynode-expression>",
+                    node_name = node_name,
+                    filename  = "<mpynode-expression>",
                 )
                 if code is not None:
                     self._expr_code = code
@@ -203,14 +203,14 @@ class MPyNode(om.MPxNode):
         # Identify the OUTPUT being requested.
         try:
             attr_obj = plug.attribute()
-            attr_fn = om.MFnAttribute(attr_obj)
+            attr_fn  = om.MFnAttribute(attr_obj)
             out_name = attr_fn.name
         except Exception:
             return
 
         # Figure out which USER outputs this node has.
         node_obj = self.thisMObject()
-        fn_node = om.MFnDependencyNode(node_obj)
+        fn_node  = om.MFnDependencyNode(node_obj)
 
         try:
             outputs_str = fn_node.findPlug(MPyNode._output_attrs_attr, True).asString()
@@ -227,7 +227,7 @@ class MPyNode(om.MPxNode):
         # Read all USER inputs.
         try:
             inputs_str = fn_node.findPlug(MPyNode._input_attrs_attr, True).asString()
-            input_map = serialization.decode_attr_map(inputs_str) if inputs_str else {}
+            input_map  = serialization.decode_attr_map(inputs_str) if inputs_str else {}
         except Exception:
             input_map = {}
 
@@ -240,7 +240,7 @@ class MPyNode(om.MPxNode):
         # Read stored variables. Exposed via ``self.X`` post-Phase-27.
         stored_vars = {}
         try:
-            sv_str = fn_node.findPlug(MPyNode._stored_vars_data_attr, True).asString()
+            sv_str      = fn_node.findPlug(MPyNode._stored_vars_data_attr, True).asString()
             stored_vars = _svstore.load_for_compute(node_obj, sv_str)
         except Exception:
             stored_vars = {}
@@ -256,7 +256,7 @@ class MPyNode(om.MPxNode):
         user_out_defaults: dict = {}
         for out_attr_name, meta in output_map.items():
             attr_type = meta.get("attr_type", "float")
-            is_array = bool(meta.get("is_array", False))
+            is_array  = bool(meta.get("is_array", False))
             # ARRAY outputs seed a PRE-SIZED (N, ...) buffer for in-place
             # slice-assign. N = the multi's connected element span (max
             # connected logical index + 1), so row i aligns with element [i].
@@ -264,8 +264,8 @@ class MPyNode(om.MPxNode):
             if is_array:
                 try:
                     oplug = fn_node.findPlug(out_attr_name, True)
-                    idxs = list(oplug.getExistingArrayAttributeIndices())
-                    n = (max(idxs) + 1) if idxs else 0
+                    idxs  = list(oplug.getExistingArrayAttributeIndices())
+                    n     = (max(idxs) + 1) if idxs else 0
                 except Exception:
                     n = 0
             user_out_defaults[out_attr_name] = output_default(
@@ -290,15 +290,15 @@ class MPyNode(om.MPxNode):
 
         self_proxy = SelfProxy(
             node_obj,
-            datablock=data_block,
-            user_storage=stored_vars,
-            compute_locals=merged_locals,
-            node_type_label=type(self).__name__,
+            datablock       = data_block,
+            user_storage    = stored_vars,
+            compute_locals  = merged_locals,
+            node_type_label = type(self).__name__,
         )
 
         # SINGLE namespace dict (no globals/locals split). Self-only: inputs
         # are reached via self.X, seeded into the snapshot above, not bare.
-        namespace = build_exec_namespace()  # __builtins__ only
+        namespace         = build_exec_namespace()  # __builtins__ only
         namespace["self"] = self_proxy
 
         # Keep compiled code in sync with the _computeSource plug so a
@@ -318,8 +318,8 @@ class MPyNode(om.MPxNode):
             ok = exec_with_profile_watch(
                 self._expr_code,
                 namespace,
-                on_error=_on_err,
-                node_obj=node_obj,
+                on_error = _on_err,
+                node_obj = node_obj,
             )
             if not ok and captured:
                 # Suppress the benign, self-correcting "self has no plug named
@@ -353,8 +353,8 @@ class MPyNode(om.MPxNode):
                 continue
             try:
                 out_plug_full = fn_node.findPlug(out_attr_name, True)
-                attr = out_plug_full.attribute()
-                attr_type = meta.get("attr_type", "float")
+                attr          = out_plug_full.attribute()
+                attr_type     = meta.get("attr_type", "float")
                 if bool(meta.get("is_array", False)):
                     helpers.write_multi_plug_value(
                         data_block,

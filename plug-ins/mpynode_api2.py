@@ -46,7 +46,7 @@ import maya.api.OpenMaya as om2
 from maya import cmds
 
 
-PLUGIN_NAME = "mpynode_api2"
+PLUGIN_NAME    = "mpynode_api2"
 PLUGIN_VERSION = "2.0.0a1"
 
 
@@ -91,7 +91,7 @@ class UndoableAPICommand(om2.MPxCommand):
 
     def doIt(self, args):
         self.py_class = self.call_class
-        result = self.py_class.doIt()
+        result        = self.py_class.doIt()
         if result is not None:
             self.setResult(result)
 

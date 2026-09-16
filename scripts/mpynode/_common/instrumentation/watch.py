@@ -181,7 +181,7 @@ class WatchLabel(str):
     __slots__ = ("type_name",)
 
     def __new__(cls, text, type_name):
-        obj = str.__new__(cls, text)
+        obj           = str.__new__(cls, text)
         obj.type_name = type_name
         return obj
 
@@ -251,8 +251,8 @@ def filter_watch_vars(exec_locals: dict, glob_filter: str = "") -> dict:
 
     Returns a fresh dict; never mutates exec_locals.
     """
-    pat = glob_filter or ""
-    has_glob = any(c in pat for c in ("*", "?", "["))
+    pat       = glob_filter or ""
+    has_glob  = any(c in pat for c in ("*", "?", "["))
     max_bytes = watch_max_bytes()
 
     out: dict = {}
@@ -310,7 +310,7 @@ def collect_framework_vars(namespace: dict) -> dict:
 
     Returns ``{}`` for any node whose proxy has no compute-locals surface.
     """
-    proxy = namespace.get("self")
+    proxy  = namespace.get("self")
     getter = getattr(proxy, "get_compute_locals", None)
     if getter is None:
         return {}

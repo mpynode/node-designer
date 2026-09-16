@@ -28,10 +28,10 @@ def _emit(compute, env):
 
 
 ENV = {
-    "a": array_t("double", 3),
-    "b": array_t("double", 3),
-    "m": array_t("double", 2),
-    "n": array_t("double", 2),
+    "a":  array_t("double", 3),
+    "b":  array_t("double", 3),
+    "m":  array_t("double", 2),
+    "n":  array_t("double", 2),
     "ib": array_t("bool", 2),
     "ii": array_t("int64", 2),
 }

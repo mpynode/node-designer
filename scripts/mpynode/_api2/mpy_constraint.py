@@ -61,15 +61,15 @@ def _read_double3_via_plug(plug_proxy, name):
 
 class MPyConstraint(MPyNode):
     NODE_NAME = "mPyConstraint"
-    NODE_ID = om.MTypeId(0x00135703)
+    NODE_ID   = om.MTypeId(0x00135703)
 
     # Cache the api1 MObject across compute calls: PlugProxy needs one to read
     # preset_internals, and re-resolving via MSelectionList every compute is
     # cheap but not free. A NameChanged callback refreshes ``_cached_api1_name``
     # proactively on rename -- the MObject itself stays valid, since Maya keeps
     # MObject pointers stable across a rename.
-    _cached_api1_mobject = None
-    _cached_api1_name = None
+    _cached_api1_mobject      = None
+    _cached_api1_name         = None
     _cached_api1_rename_token = None
 
     def _api1_mobject(self, current_name):
@@ -99,7 +99,7 @@ class MPyConstraint(MPyNode):
             mob = _om1.MObject()
             sel.getDependNode(0, mob)
             self._cached_api1_mobject = mob
-            self._cached_api1_name = current_name
+            self._cached_api1_name    = current_name
             # Register the rename hook once. Drop an existing token first, in
             # case the cache was invalidated by a name-mismatch path that
             # didn't tear down the prior callback.
@@ -117,7 +117,7 @@ class MPyConstraint(MPyNode):
 
                 def _on_renamed(_node, _old_name, *_args):
                     try:
-                        fn = _om1.MFnDependencyNode(self._cached_api1_mobject)
+                        fn                     = _om1.MFnDependencyNode(self._cached_api1_mobject)
                         self._cached_api1_name = fn.name()
                     except Exception:
                         # MObject went null between rename + callback;
@@ -139,7 +139,7 @@ class MPyConstraint(MPyNode):
             return mob
         except Exception:
             self._cached_api1_mobject = None
-            self._cached_api1_name = None
+            self._cached_api1_name    = None
             return None
 
     # The preset inputs (targetTranslate / targetRotate / targetWeight /
@@ -148,10 +148,10 @@ class MPyConstraint(MPyNode):
     # INTERNAL_VARS schema.
 
     _targetTranslate_attr: om.MObject = om.MObject.kNullObj
-    _targetRotate_attr: om.MObject = om.MObject.kNullObj
-    _targetWeight_attr: om.MObject = om.MObject.kNullObj
-    _restTranslate_attr: om.MObject = om.MObject.kNullObj
-    _restRotate_attr: om.MObject = om.MObject.kNullObj
+    _targetRotate_attr:    om.MObject = om.MObject.kNullObj
+    _targetWeight_attr:    om.MObject = om.MObject.kNullObj
+    _restTranslate_attr:   om.MObject = om.MObject.kNullObj
+    _restRotate_attr:      om.MObject = om.MObject.kNullObj
 
     @staticmethod
     def creator():
@@ -160,19 +160,19 @@ class MPyConstraint(MPyNode):
     @staticmethod
     def initializer():
         # Standard internal attrs (expression, in/out maps, debug_mode, ...).
-        plugs = helpers.build_internal_attrs(MPyConstraint)
-        MPyConstraint._expression_attr = plugs["_computeSource"]
-        MPyConstraint._input_attrs_attr = plugs["inputs"]
-        MPyConstraint._output_attrs_attr = plugs["outputs"]
+        plugs                                = helpers.build_internal_attrs(MPyConstraint)
+        MPyConstraint._expression_attr       = plugs["_computeSource"]
+        MPyConstraint._input_attrs_attr      = plugs["inputs"]
+        MPyConstraint._output_attrs_attr     = plugs["outputs"]
         MPyConstraint._stored_vars_list_attr = plugs["stored_vars_list"]
         MPyConstraint._stored_vars_data_attr = plugs["stored_vars_data"]
-        MPyConstraint._debug_mode_attr = plugs["debug_mode"]
+        MPyConstraint._debug_mode_attr       = plugs["debug_mode"]
 
-        MPyConstraint._profile_enabled_attr = plugs["profile_enabled"]
-        MPyConstraint._deep_profile_enabled_attr = plugs["deep_profile_enabled"]
-        MPyConstraint._watch_enabled_attr = plugs["watch_enabled"]
+        MPyConstraint._profile_enabled_attr       = plugs["profile_enabled"]
+        MPyConstraint._deep_profile_enabled_attr  = plugs["deep_profile_enabled"]
+        MPyConstraint._watch_enabled_attr         = plugs["watch_enabled"]
         MPyConstraint._profile_snapshot_data_attr = plugs["profile_snapshot_data"]
-        MPyConstraint._watch_vars_data_attr = plugs["watch_vars_data"]
+        MPyConstraint._watch_vars_data_attr       = plugs["watch_vars_data"]
 
         # Add the constraint-style preset INPUT attrs.
         nattr = om.MFnNumericAttribute()
@@ -181,39 +181,39 @@ class MPyConstraint(MPyNode):
         MPyConstraint._targetTranslate_attr = nattr.createPoint(
             "targetTranslate", "ttr"
         )
-        nattr.storable = True
-        nattr.keyable = True
+        nattr.storable    = True
+        nattr.keyable     = True
         nattr.connectable = True
         MPyConstraint.addAttribute(MPyConstraint._targetTranslate_attr)
 
         # targetRotate (vector input)
         MPyConstraint._targetRotate_attr = nattr.createPoint("targetRotate", "tro")
-        nattr.storable = True
-        nattr.keyable = True
-        nattr.connectable = True
+        nattr.storable                   = True
+        nattr.keyable                    = True
+        nattr.connectable                = True
         MPyConstraint.addAttribute(MPyConstraint._targetRotate_attr)
 
         # targetWeight (float input, default 1.0)
         MPyConstraint._targetWeight_attr = nattr.create(
             "targetWeight", "twg", om.MFnNumericData.kFloat, 1.0
         )
-        nattr.storable = True
-        nattr.keyable = True
+        nattr.storable    = True
+        nattr.keyable     = True
         nattr.connectable = True
         MPyConstraint.addAttribute(MPyConstraint._targetWeight_attr)
 
         # restTranslate (vector input)
         MPyConstraint._restTranslate_attr = nattr.createPoint("restTranslate", "rtr")
-        nattr.storable = True
-        nattr.keyable = True
-        nattr.connectable = True
+        nattr.storable                    = True
+        nattr.keyable                     = True
+        nattr.connectable                 = True
         MPyConstraint.addAttribute(MPyConstraint._restTranslate_attr)
 
         # restRotate (vector input)
         MPyConstraint._restRotate_attr = nattr.createPoint("restRotate", "rro")
-        nattr.storable = True
-        nattr.keyable = True
-        nattr.connectable = True
+        nattr.storable                 = True
+        nattr.keyable                  = True
+        nattr.connectable              = True
         MPyConstraint.addAttribute(MPyConstraint._restRotate_attr)
 
     def setDependentsDirty(self, plug, affected_plugs):
@@ -239,8 +239,8 @@ class MPyConstraint(MPyNode):
             affected_plugs,
             type(self)._input_attrs_attr,
             type(self)._output_attrs_attr,
-            expression_attr=type(self)._expression_attr,
-            extra_trigger_names=_PRESET_INPUT_NAMES,
+            expression_attr     = type(self)._expression_attr,
+            extra_trigger_names = _PRESET_INPUT_NAMES,
         )
         return None
 
@@ -274,7 +274,7 @@ class MPyConstraint(MPyNode):
 
         try:
             attr_obj = plug.attribute()
-            attr_fn = om.MFnAttribute(attr_obj)
+            attr_fn  = om.MFnAttribute(attr_obj)
             out_name = attr_fn.name
         except Exception:
             return
@@ -288,7 +288,7 @@ class MPyConstraint(MPyNode):
         )
 
         node_obj = self.thisMObject()
-        fn_node = om.MFnDependencyNode(node_obj)
+        fn_node  = om.MFnDependencyNode(node_obj)
 
         try:
             outputs_str = fn_node.findPlug(
@@ -346,9 +346,9 @@ class MPyConstraint(MPyNode):
             pp = PlugProxy(pp_node_obj_api1, datablock=None)
             preset_internals: dict = {
                 "targetTranslate": _read_double3_via_plug(pp, "targetTranslate"),
-                "targetRotate": _read_double3_via_plug(pp, "targetRotate"),
-                "restTranslate": _read_double3_via_plug(pp, "restTranslate"),
-                "restRotate": _read_double3_via_plug(pp, "restRotate"),
+                "targetRotate":    _read_double3_via_plug(pp, "targetRotate"),
+                "restTranslate":   _read_double3_via_plug(pp, "restTranslate"),
+                "restRotate":      _read_double3_via_plug(pp, "restRotate"),
             }
             try:
                 preset_internals["targetWeight"] = float(
@@ -360,10 +360,10 @@ class MPyConstraint(MPyNode):
             # Fallback for the unlikely case the api1 bridge failed.
             preset_internals = {
                 "targetTranslate": _np.zeros(3, dtype=_np.float64),
-                "targetRotate": _np.zeros(3, dtype=_np.float64),
-                "restTranslate": _np.zeros(3, dtype=_np.float64),
-                "restRotate": _np.zeros(3, dtype=_np.float64),
-                "targetWeight": 1.0,
+                "targetRotate":    _np.zeros(3, dtype=_np.float64),
+                "restTranslate":   _np.zeros(3, dtype=_np.float64),
+                "restRotate":      _np.zeros(3, dtype=_np.float64),
+                "targetWeight":    1.0,
             }
 
         # ``preset_internals`` becomes the compute_locals dict; the user
@@ -392,7 +392,7 @@ class MPyConstraint(MPyNode):
         _fn_out = om.MFnDependencyNode(node_obj)
         for out_attr_name, meta in output_map.items():
             attr_type = meta.get("attr_type", "float")
-            is_array = bool(meta.get("is_array", False))
+            is_array  = bool(meta.get("is_array", False))
             # ARRAY outputs seed a PRE-SIZED (N, ...) buffer so the user can
             # slice-assign in place (e.g. ``self.outMatrix[:, 3, :3] = ...``).
             # N = the output multi's connected element span.
@@ -400,8 +400,8 @@ class MPyConstraint(MPyNode):
             if is_array:
                 try:
                     oplug = _fn_out.findPlug(out_attr_name, True)
-                    idxs = list(oplug.getExistingArrayAttributeIndices())
-                    n = (max(idxs) + 1) if idxs else 0
+                    idxs  = list(oplug.getExistingArrayAttributeIndices())
+                    n     = (max(idxs) + 1) if idxs else 0
                 except Exception:
                     n = 0
             preset_internals[out_attr_name] = output_default(
@@ -429,15 +429,15 @@ class MPyConstraint(MPyNode):
 
         self_proxy = SelfProxy(
             node_obj,
-            datablock=data_block,
-            user_storage=stored_vars,
-            compute_locals=merged_locals,
-            node_type_label=type(self).__name__,
+            datablock       = data_block,
+            user_storage    = stored_vars,
+            compute_locals  = merged_locals,
+            node_type_label = type(self).__name__,
         )
 
         # Self-only: USER inputs are reached via self.X (live plug tree), NOT
         # as bare names.
-        namespace = build_exec_namespace()  # __builtins__ only
+        namespace         = build_exec_namespace()  # __builtins__ only
         namespace["self"] = self_proxy
 
         # Sync compiled code with the _computeSource plug so a DUPLICATED
@@ -455,8 +455,8 @@ class MPyConstraint(MPyNode):
             ok = exec_with_profile_watch(
                 self._expr_code,
                 namespace,
-                on_error=_on_err,
-                node_obj=node_obj,
+                on_error = _on_err,
+                node_obj = node_obj,
             )
             if not ok and captured:
                 # Base-contract policy (C10): suppress the benign transient
@@ -485,7 +485,7 @@ class MPyConstraint(MPyNode):
                 # User did not write to this output; skip.
                 continue
             try:
-                attr = fn_node.findPlug(out_attr_name, True).attribute()
+                attr      = fn_node.findPlug(out_attr_name, True).attribute()
                 attr_type = meta.get("attr_type", "float")
                 if bool(meta.get("is_array", False)):
                     helpers.write_multi_plug_value(

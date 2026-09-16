@@ -41,7 +41,7 @@ _PT_ATOL = 1e-9
 def _load_sdf():
     """Import sdf_dmc.py by file path (no mpynode package __init__ -> no Maya)."""
     spec = importlib.util.spec_from_file_location("sdf_dmc_under_test", _SDF_PATH)
-    mod = importlib.util.module_from_spec(spec)
+    mod  = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
     return mod
 
@@ -49,11 +49,11 @@ def _load_sdf():
 def _mat(translate=(0, 0, 0), euler=(0, 0, 0), scale=(1, 1, 1), rotate_order=0):
     """Compose a Maya row-vector 4x4 (M3 = diag(scale) @ R, translate in row 3)
     using the helper's own euler_to_matrix so test matrices decompose cleanly."""
-    m = _load_sdf()
-    R = m.euler_to_matrix(np.asarray(euler, dtype=np.float64), rotate_order)[:3, :3]
-    M = np.eye(4, dtype=np.float64)
+    m         = _load_sdf()
+    R         = m.euler_to_matrix(np.asarray(euler, dtype=np.float64), rotate_order)[:3, :3]
+    M         = np.eye(4, dtype=np.float64)
     M[:3, :3] = np.diag(np.asarray(scale, dtype=np.float64)) @ R
-    M[3, :3] = np.asarray(translate, dtype=np.float64)
+    M[3, :3]  = np.asarray(translate, dtype=np.float64)
     return M
 
 
@@ -63,21 +63,21 @@ def build_cases():
     Each case is a dict with the full mesh_from_shapes(...) argument set. Shapes:
     0=sphere, 1=box, 2=cylinder. No RNG -- fully reproducible.
     """
-    d64 = np.float64
+    d64   = np.float64
     cases = {}
 
     def case(name, mats, stype, add, smooth, rad, hgt, ax, half, res, iso=0.0):
         cases[name] = dict(
-            matrices=np.asarray(mats, dtype=d64),
-            shape_types=np.asarray(stype, dtype=np.int64),
-            additive=np.asarray(add, dtype=bool),
-            smoothing=np.asarray(smooth, dtype=d64),
-            radius=np.asarray(rad, dtype=d64),
-            height=np.asarray(hgt, dtype=d64),
-            axis=np.asarray(ax, dtype=np.int64),
-            half_extents=np.asarray(half, dtype=d64),
-            resolution=res,
-            iso_value=iso,
+            matrices     = np.asarray(mats, dtype=d64),
+            shape_types  = np.asarray(stype, dtype=np.int64),
+            additive     = np.asarray(add, dtype=bool),
+            smoothing    = np.asarray(smooth, dtype=d64),
+            radius       = np.asarray(rad, dtype=d64),
+            height       = np.asarray(hgt, dtype=d64),
+            axis         = np.asarray(ax, dtype=np.int64),
+            half_extents = np.asarray(half, dtype=d64),
+            resolution   = res,
+            iso_value    = iso,
         )
 
     I = np.eye(4, dtype=d64)
@@ -137,14 +137,14 @@ def _run(mod, c):
 
 def capture(path=_GOLDEN):
     """Freeze the CURRENT sdf_dmc output for every case into an .npz golden."""
-    mod = _load_sdf()
+    mod   = _load_sdf()
     cases = build_cases()
-    blob = {}
+    blob  = {}
     for name, c in cases.items():
         pts, cnts, idx = _run(mod, c)
-        blob["%s__points" % name] = np.asarray(pts, dtype=np.float64)
-        blob["%s__counts" % name] = np.asarray(cnts, dtype=np.int64)
-        blob["%s__indices" % name] = np.asarray(idx, dtype=np.int64)
+        blob["%s__points" % name]  = np.asarray(pts,  dtype=np.float64)
+        blob["%s__counts" % name]  = np.asarray(cnts, dtype=np.int64)
+        blob["%s__indices" % name] = np.asarray(idx,  dtype=np.int64)
     os.makedirs(os.path.dirname(path), exist_ok=True)
     np.savez_compressed(path, **blob)
     return {name: (blob["%s__points" % name].shape[0],
@@ -153,18 +153,18 @@ def capture(path=_GOLDEN):
 
 def compare_to_golden(path=_GOLDEN):
     """Return {case: reason} for every mismatch vs the golden (empty == all pass)."""
-    mod = _load_sdf()
-    cases = build_cases()
+    mod    = _load_sdf()
+    cases  = build_cases()
     golden = np.load(path)
-    fails = {}
+    fails  = {}
     for name, c in cases.items():
         pts, cnts, idx = _run(mod, c)
-        pts = np.asarray(pts, dtype=np.float64)
+        pts  = np.asarray(pts,  dtype=np.float64)
         cnts = np.asarray(cnts, dtype=np.int64)
-        idx = np.asarray(idx, dtype=np.int64)
-        gp = golden["%s__points" % name]
-        gc = golden["%s__counts" % name]
-        gi = golden["%s__indices" % name]
+        idx  = np.asarray(idx,  dtype=np.int64)
+        gp   = golden["%s__points" % name]
+        gc   = golden["%s__counts" % name]
+        gi   = golden["%s__indices" % name]
         if pts.shape != gp.shape:
             fails[name] = "points shape %s != golden %s" % (pts.shape, gp.shape)
             continue

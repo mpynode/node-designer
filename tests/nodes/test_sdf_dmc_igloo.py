@@ -41,17 +41,17 @@ class TestSDFIglooParity(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         with np.load(_REF_NPZ, allow_pickle=True) as data:
-            cls.ref_points = np.asarray(data["points"], dtype=np.float64)
-            cls.ref_counts = np.asarray(data["counts"], dtype=np.int32)
+            cls.ref_points  = np.asarray(data["points"],  dtype=np.float64)
+            cls.ref_counts  = np.asarray(data["counts"],  dtype=np.int32)
             cls.ref_indices = np.asarray(data["indices"], dtype=np.int32)
 
-        prims = sdf_igloo.igloo_primitives()
+        prims  = sdf_igloo.igloo_primitives()
         arrays = sdf_igloo.primitives_to_arrays(prims)
         points, counts, indices = sdf_dmc.mesh_from_shapes(
             resolution=16, iso_value=0.0, **arrays
         )
-        cls.points = points
-        cls.counts = counts
+        cls.points  = points
+        cls.counts  = counts
         cls.indices = indices
 
     def test_point_count(self):

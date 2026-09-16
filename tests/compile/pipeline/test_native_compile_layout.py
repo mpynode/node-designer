@@ -76,8 +76,8 @@ class TestCompileOutputLayout(unittest.TestCase):
 
     # ---- single-node -----------------------------------------------------
     def test_single_node_clean_top_level(self):
-        d = tempfile.mkdtemp(prefix="layout_single_")
-        p = self._write_node(d, "fooNode", "FooNode", "0x00081000")
+        d   = tempfile.mkdtemp(prefix="layout_single_")
+        p   = self._write_node(d, "fooNode", "FooNode", "0x00081000")
         out = self._assemble([("fooNode", p)], "solo", d)
 
         # Source is nested in build/source; scripts + README sit in build/.
@@ -92,19 +92,19 @@ class TestCompileOutputLayout(unittest.TestCase):
         self.assertEqual(set(os.listdir(out)), {"build"})
 
     def test_single_build_sh_paths(self):
-        d = tempfile.mkdtemp(prefix="layout_ssh_")
-        p = self._write_node(d, "fooNode", "FooNode", "0x00081000")
+        d   = tempfile.mkdtemp(prefix="layout_ssh_")
+        p   = self._write_node(d, "fooNode", "FooNode", "0x00081000")
         out = self._assemble([("fooNode", p)], "solo", d)
         with open(os.path.join(out, "build", "build.sh")) as fh:
             sh = fh.read()
-        self.assertIn("$HERE/source/fooNode.cpp", sh)      # input from source/
-        self.assertIn('-o "$HERE/../solo.bundle"', sh)     # bundle to top level
+        self.assertIn("$HERE/source/fooNode.cpp", sh)   # input from source/
+        self.assertIn('-o "$HERE/../solo.bundle"', sh)  # bundle to top level
 
     # ---- multi-node ------------------------------------------------------
     def test_multi_node_clean_top_level(self):
-        d = tempfile.mkdtemp(prefix="layout_multi_")
-        p1 = self._write_node(d, "fooNode", "FooNode", "0x00081000")
-        p2 = self._write_node(d, "barNode", "BarNode", "0x00081001")
+        d   = tempfile.mkdtemp(prefix="layout_multi_")
+        p1  = self._write_node(d, "fooNode", "FooNode", "0x00081000")
+        p2  = self._write_node(d, "barNode", "BarNode", "0x00081001")
         out = self._assemble([("fooNode", p1), ("barNode", p2)], "duo", d)
 
         src = os.path.join(out, "build", "source")
@@ -115,23 +115,23 @@ class TestCompileOutputLayout(unittest.TestCase):
         self.assertEqual(set(os.listdir(out)), {"build"})
 
     def test_multi_build_sh_paths(self):
-        d = tempfile.mkdtemp(prefix="layout_msh_")
-        p1 = self._write_node(d, "fooNode", "FooNode", "0x00081000")
-        p2 = self._write_node(d, "barNode", "BarNode", "0x00081001")
+        d   = tempfile.mkdtemp(prefix="layout_msh_")
+        p1  = self._write_node(d, "fooNode", "FooNode", "0x00081000")
+        p2  = self._write_node(d, "barNode", "BarNode", "0x00081001")
         out = self._assemble([("fooNode", p1), ("barNode", p2)], "duo", d)
         with open(os.path.join(out, "build", "build.sh")) as fh:
             sh = fh.read()
-        self.assertIn("$HERE/source/", sh)                 # inputs from source/
-        self.assertIn('-o "$HERE/../duo.bundle"', sh)      # bundle to top level
+        self.assertIn("$HERE/source/", sh)             # inputs from source/
+        self.assertIn('-o "$HERE/../duo.bundle"', sh)  # bundle to top level
 
     # ---- a DROPPED node must not orphan its fragment in source/ ----------
     def test_dropped_node_fragment_not_left_in_source(self):
         # Real-compiler integration: a best-effort multi-node build where one
         # node won't compile. The dropped node's fragment must NOT linger in
         # source/ -- source/ is exactly the bundle's source.
-        d = tempfile.mkdtemp(prefix="layout_drop_")
+        d    = tempfile.mkdtemp(prefix="layout_drop_")
         good = self._write_node(d, "goodNode", "GoodNode", "0x00081000")
-        bad = os.path.join(d, "badNode.cpp")
+        bad  = os.path.join(d, "badNode.cpp")
         with open(bad, "w") as fh:
             fh.write(_broken_node_src("badNode", "BadNode", "0x00081001"))
         out = os.path.join(d, "out")

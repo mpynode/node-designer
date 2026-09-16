@@ -52,8 +52,8 @@ mc.file(new=True, force=True)
 
 # Build a 3-joint vertical chain: hip -> knee -> ankle (10 units fully extended).
 mc.select(clear=True)
-hip = mc.joint(name="hipJ", position=(0, 5, 0))
-knee = mc.joint(name="kneeJ", position=(0, 0, 0))
+hip   = mc.joint(name="hipJ",   position=(0, 5, 0))
+knee  = mc.joint(name="kneeJ",  position=(0, 0, 0))
 ankle = mc.joint(name="ankleJ", position=(0, -5, 0))
 
 # Create the custom solver INSTANCE, then set its solve expression.

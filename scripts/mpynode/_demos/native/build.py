@@ -52,10 +52,10 @@ def build(out_dir=None):
     exe = toolchain.resolve_compiler(toolchain.default_compiler())
     cmd = toolchain.compile_to_plugin_cmd(
         exe, SRC, bundle,
-        include_dir=toolchain.maya_include_dir(maya),
-        lib_dir=toolchain.maya_lib_dir(maya),
-        libs=["OpenMaya", "Foundation"],
-        arch=toolchain.mac_arch() if toolchain.is_macos() else None,
+        include_dir = toolchain.maya_include_dir(maya),
+        lib_dir     = toolchain.maya_lib_dir(maya),
+        libs        = ["OpenMaya", "Foundation"],
+        arch        = toolchain.mac_arch() if toolchain.is_macos() else None,
     )
     sys.stderr.write("COMPILE: " + " ".join(cmd) + "\n")
     rc, _out = toolchain.run_streaming(cmd, log_cb=lambda l: sys.stderr.write(l + "\n"))

@@ -8,27 +8,27 @@ from mpynode._common.interface.api_methods import MethodSpec, CppKernel, validat
 
 INTERNAL_API_METHODS = (
     MethodSpec(
-        name="read_texture",
-        sig="read_texture(path=None) -> ndarray(H, W, 4) float32",
+        name = "read_texture",
+        sig  = "read_texture(path=None) -> ndarray(H, W, 4) float32",
         doc=("Load + linearize + prefilter an image, cached per (path, "
              "colorSpace, prefilter). Defaults to this node's fileName; pass a "
              "path to manage any other file the same way. None on missing file."),
-        runtime="mpynode._common.methods.file_methods:read_texture",
-        lower=CppKernel("nd_tex_load_linear"),
+        runtime = "mpynode._common.methods.file_methods:read_texture",
+        lower   = CppKernel("nd_tex_load_linear"),
         reads=("fileName", "colorSpace", "preFilter", "preFilterKernel",
                "preFilterRadius"),
     ),
     MethodSpec(
-        name="sample_texture",
-        sig="sample_texture(buf, u, v, missing=None) -> (r, g, b, a)",
+        name = "sample_texture",
+        sig  = "sample_texture(buf, u, v, missing=None) -> (r, g, b, a)",
         doc=("Wrap-aware bilinear lookup into a buffer from read_texture(). "
              "`missing` is what an unreadable buffer yields: None (the default) "
              "keeps the opaque magenta 'no image' sentinel; pass a literal RGBA "
              "4-tuple to substitute something else -- (0, 0, 0, 0) makes an "
              "unresolvable layer contribute nothing to a composite."),
-        runtime="mpynode._common.methods.file_methods:sample_texture",
-        lower=CppKernel("nd_tex_sample"),
-        reads=("wrapModeU", "wrapModeV", "borderColor"),
+        runtime = "mpynode._common.methods.file_methods:sample_texture",
+        lower   = CppKernel("nd_tex_sample"),
+        reads   = ("wrapModeU", "wrapModeV", "borderColor"),
     ),
     MethodSpec(
         name="composite_layers",
@@ -42,14 +42,14 @@ INTERNAL_API_METHODS = (
              "it exactly and a negative value subtracts. `missing` defaults to "
              "fully transparent so an unresolvable path drops out instead of "
              "covering the stack with the magenta sentinel."),
-        runtime="mpynode._common.methods.file_methods:composite_layers",
-        lower=CppKernel("nd_tex_composite_layers"),
+        runtime = "mpynode._common.methods.file_methods:composite_layers",
+        lower   = CppKernel("nd_tex_composite_layers"),
         reads=("colorSpace", "preFilter", "preFilterKernel", "preFilterRadius",
                "wrapModeU", "wrapModeV", "borderColor"),
     ),
     MethodSpec(
-        name="write_texture",
-        sig="write_texture(path, rgba, frame=None) -> bool",
+        name = "write_texture",
+        sig  = "write_texture(path, rgba, frame=None) -> bool",
         doc=("Write an (H, W, 4) float RGBA buffer to `path` as an 8-bit PNG. "
              "The twin of read_texture(), for a STATEFUL node whose board an "
              "OSL/Arnold tier cannot evaluate from (u, v, t) alone: bake the "
@@ -60,8 +60,8 @@ INTERNAL_API_METHODS = (
              "re-stats, so a fixed path never animates in a render. Returns "
              "False instead of raising, so the call stays a lowerable "
              "expression."),
-        runtime="mpynode._common.methods.file_methods:write_texture",
-        lower=CppKernel("nd_tex_write"),
+        runtime = "mpynode._common.methods.file_methods:write_texture",
+        lower   = CppKernel("nd_tex_write"),
     ),
 )
 

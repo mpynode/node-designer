@@ -29,7 +29,7 @@ class TestBuild(unittest.TestCase):
 
     def test_build_creates_unwired_node_with_setup_seeded(self):
         from mpynode._node_registry import get_spec
-        cls = get_spec("mPyDeformer").get_wrapper_class()
+        cls  = get_spec("mPyDeformer").get_wrapper_class()
         node = cls.build()                                  # no setup
         self.assertTrue(node and mc.objExists(node.get_name()))
         src = node.get_methods_source()
@@ -40,7 +40,7 @@ class TestBuild(unittest.TestCase):
         from mpynode._node_registry import get_spec
         mesh = mc.polyCube()[0]
         mc.select(mesh)
-        cls = get_spec("mPyDeformer").get_wrapper_class()
+        cls  = get_spec("mPyDeformer").get_wrapper_class()
         node = cls.build(setup=True)                        # snapshot=mesh, then setup
         self.assertTrue(cmds.deformer(node.get_name(), q=True, g=True))
 
@@ -48,16 +48,16 @@ class TestBuild(unittest.TestCase):
         from mpynode._node_registry import get_spec
         mesh = mc.polyCube()[0]
         mc.select(mesh)
-        cls = get_spec("mPyDeformer").get_wrapper_class()
+        cls  = get_spec("mPyDeformer").get_wrapper_class()
         node = cls.build(setup=True)
         self.assertIn(mc.listRelatives(mesh, shapes=True)[0],
                       cmds.deformer(node.get_name(), q=True, g=True) or [])
 
     def test_build_mpyfile_already_populated_seeds_without_double_seed(self):
         from mpynode._node_registry import get_spec
-        cls = get_spec("mPyFile").get_wrapper_class()
+        cls  = get_spec("mPyFile").get_wrapper_class()
         node = cls.build()
-        src = node.get_methods_source() or ""
+        src  = node.get_methods_source() or ""
         self.assertEqual(src.count("def setup(self"), 1)   # exactly one setup
 
 

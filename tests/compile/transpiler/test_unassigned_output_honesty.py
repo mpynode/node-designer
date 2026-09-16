@@ -169,7 +169,7 @@ class TestScaffoldNamesTheUnassignedOutputs(unittest.TestCase):
         w.add_output_attr("output", "vector", is_array=True)
         w.add_output_attr("distance", "float", is_array=True)
         w.set_compute_expression(compute)
-        spec = spec_extractor.extract_spec(w.get_name())
+        spec                                = spec_extractor.extract_spec(w.get_name())
         spec["suggested"]["node_type_name"] = name + "Probe"
 
         cpp = codegen.generate_cpp(spec, for_port=True)
@@ -184,7 +184,7 @@ class TestScaffoldNamesTheUnassignedOutputs(unittest.TestCase):
             "    self.distance = [0.0 for _ in self.queries]\n")
 
     def test_the_port_scaffold_says_leave_it_untouched(self):
-        region = self._region("kdScaffold", self.PARTIAL)
+        region   = self._region("kdScaffold", self.PARTIAL)
 
         populate = [l for l in region.splitlines() if "populate" in l]
         self.assertTrue(any("out_aOutput" in l for l in populate))
@@ -214,19 +214,19 @@ class TestScaffoldNamesTheUnassignedOutputs(unittest.TestCase):
         w.set_compute_expression(
             "if len(self.queries):\n"
             "    self.output = [[0.0, 0.0, 0.0] for _ in self.queries]\n")
-        spec = spec_extractor.extract_spec(w.get_name())
+        spec                                = spec_extractor.extract_spec(w.get_name())
         spec["suggested"]["node_type_name"] = "kdScalarProbe"
 
-        cpp = codegen.generate_cpp(spec, for_port=True)
+        cpp    = codegen.generate_cpp(spec, for_port=True)
         region = cpp.split(codegen.PORT_BEGIN, 1)[1].split(codegen.PORT_END, 1)[0]
-        skip = region.split("UNTOUCHED", 1)[1]
+        skip   = region.split("UNTOUCHED", 1)[1]
 
         self.assertIn("h_aTotal", skip)
         self.assertNotIn("out_aTotal", skip,
                          "no such buffer is declared for a scalar output")
 
     def test_a_node_that_assigns_everything_is_unchanged(self):
-        region = self._region("kdAll", self.FULL)
+        region   = self._region("kdAll", self.FULL)
 
         populate = [l for l in region.splitlines() if "populate" in l]
         self.assertTrue(any("out_aOutput" in l for l in populate))
@@ -436,7 +436,7 @@ class TestHandoffNamesTheRealProblem(unittest.TestCase):
 
         text = compile_bridge.starter_prompt(self._handoff([self._row()]))
 
-        low = text.lower()
+        low  = text.lower()
         self.assertTrue("why" in low or "before changing" in low
                         or "do not rewrite" in low,
                         "the ask must point at diagnosis first: %r" % text)

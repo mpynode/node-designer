@@ -49,9 +49,9 @@ class TestFindDemo(unittest.TestCase):
 class _FakeNode:
     """Minimal wrapper stand-in: pure-Python, no Maya. Records delegate calls."""
     def __init__(self, methods_source):
-        self._src = methods_source
+        self._src        = methods_source
         self.setup_calls = []
-        self.demo_calls = []
+        self.demo_calls  = []
 
     def get_methods_source(self):
         return self._src
@@ -155,18 +155,18 @@ class TestCommandsWiring(unittest.TestCase):
 
 class TestFindDemos(unittest.TestCase):
     def test_reserved_instance_demo(self):
-        src = "def demo(self):\n    return 1\n"
+        src   = "def demo(self):\n    return 1\n"
         specs = node_setups.find_demos(src)
-        self.assertEqual(len(specs), 1)
+        self.assertEqual(len(specs),         1)
         self.assertEqual(specs[0].func_name, "demo")
-        self.assertEqual(specs[0].label, "Run demo")
+        self.assertEqual(specs[0].label,     "Run demo")
         self.assertTrue(specs[0].is_instance)
         self.assertFalse(specs[0].is_factory)
 
     def test_reserved_factory_demo_now_accepted(self):
         # a reserved `def demo(cls)` is a factory demo that find_demos accepts,
         # though the back-compat find_demo shim still rejects it.
-        src = "def demo(cls):\n    return 1\n"
+        src   = "def demo(cls):\n    return 1\n"
         specs = node_setups.find_demos(src)
         self.assertEqual(len(specs), 1)
         self.assertTrue(specs[0].is_factory)
@@ -179,7 +179,7 @@ class TestFindDemos(unittest.TestCase):
         self.assertEqual({s.func_name for s in specs}, {"alt", "demo"})
 
     def test_decorated_demo_named_demo_not_double_counted(self):
-        src = "@maya_demo\ndef demo(self):\n    return 1\n"
+        src   = "@maya_demo\ndef demo(self):\n    return 1\n"
         specs = node_setups.find_demos(src)
         self.assertEqual(len(specs), 1)
 
@@ -204,7 +204,7 @@ class TestFindDemos(unittest.TestCase):
         specs = node_setups.find_demos(src)
         self.assertEqual(node_setups.select_demo(specs, "two").func_name, "two")
         self.assertEqual(node_setups.select_demo(specs, "One").func_name, "one")
-        self.assertEqual(node_setups.select_demo(specs, None).func_name, "one")
+        self.assertEqual(node_setups.select_demo(specs, None).func_name,  "one")
         self.assertIsNone(node_setups.select_demo(specs, "nope"))
         self.assertIsNone(node_setups.select_demo([], None))
 
@@ -273,7 +273,7 @@ class TestCommandFactoryRouting(unittest.TestCase):
         src = inspect.getsource(_RunDemoCommand.doIt)
         self.assertIn("run_type_demo", src)
         self.assertIn("run_node_demo", src)
-        self.assertIn("is_factory", src)
+        self.assertIn("is_factory",    src)
         # A demo builds its OWN scene -> still no selection snapshot.
         self.assertNotIn("cmds.ls(selection", src)
 

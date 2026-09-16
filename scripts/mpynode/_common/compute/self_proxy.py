@@ -196,16 +196,16 @@ class SelfProxy(object):
     def __init__(
         self,
         mobject,
-        datablock=None,
-        geom_iter=None,
-        compute_ctx=None,
-        init_bindings=None,
-        user_storage=None,
-        output_handles=None,
-        node_type_label="this node",
-        compute_locals=None,
-        output_scratch_keys=None,
-        node_type_name=None,
+        datablock           = None,
+        geom_iter           = None,
+        compute_ctx         = None,
+        init_bindings       = None,
+        user_storage        = None,
+        output_handles      = None,
+        node_type_label     = "this node",
+        compute_locals      = None,
+        output_scratch_keys = None,
+        node_type_name      = None,
     ):
         from mpynode._common.plugs.plug_proxy import PlugProxy
 
@@ -230,12 +230,12 @@ class SelfProxy(object):
         # ``MPyConstraint._cached_api1_mobject``.
         mobject = _ensure_api1_mobject(mobject)
 
-        object.__setattr__(self, "_psp_mobject", mobject)
-        object.__setattr__(self, "_psp_datablock", datablock)
-        object.__setattr__(self, "_psp_geom_iter", geom_iter)
-        object.__setattr__(self, "_psp_compute_ctx", compute_ctx)
+        object.__setattr__(self, "_psp_mobject",       mobject)
+        object.__setattr__(self, "_psp_datablock",     datablock)
+        object.__setattr__(self, "_psp_geom_iter",     geom_iter)
+        object.__setattr__(self, "_psp_compute_ctx",   compute_ctx)
         object.__setattr__(self, "_psp_init_bindings", init_bindings or {})
-        object.__setattr__(self, "_psp_user_storage", dict(user_storage or {}))
+        object.__setattr__(self, "_psp_user_storage",  dict(user_storage or {}))
         object.__setattr__(
             self, "_psp_user_storage_snapshot", dict(user_storage or {})
         )
@@ -253,9 +253,9 @@ class SelfProxy(object):
 
         plug_proxy = PlugProxy(
             mobject,
-            datablock=datablock,
-            geom_iter=geom_iter,
-            compute_ctx=compute_ctx,
+            datablock   = datablock,
+            geom_iter   = geom_iter,
+            compute_ctx = compute_ctx,
         )
         object.__setattr__(self, "_psp_plug_proxy", plug_proxy)
         object.__setattr__(self, "_psp_exec_namespace", {})
@@ -283,7 +283,7 @@ class SelfProxy(object):
             import importlib
             spec = blessed[name]
             mod_path, fn_name = spec.runtime.split(":")
-            fn = getattr(importlib.import_module(mod_path), fn_name)
+            fn    = getattr(importlib.import_module(mod_path), fn_name)
             _self = self
 
             def _bound(*args, **kwargs):
@@ -308,7 +308,7 @@ class SelfProxy(object):
         # slots, where a real plug wins (Tier 2) so a same-named user attr stays
         # readable. With no backing plug, Tier 2.5 returns the scratch value.
         try:
-            local_keys = object.__getattribute__(self, "_psp_compute_local_keys")
+            local_keys  = object.__getattribute__(self, "_psp_compute_local_keys")
             locals_dict = object.__getattribute__(self, "_psp_compute_locals")
         except AttributeError:
             local_keys, locals_dict = set(), {}
@@ -370,7 +370,7 @@ class SelfProxy(object):
             return
 
         try:
-            local_keys = object.__getattribute__(self, "_psp_compute_local_keys")
+            local_keys  = object.__getattribute__(self, "_psp_compute_local_keys")
             locals_dict = object.__getattribute__(self, "_psp_compute_locals")
         except AttributeError:
             local_keys, locals_dict = set(), {}
@@ -401,7 +401,7 @@ class SelfProxy(object):
                 except (NotImplementedError, AttributeError):
                     raise
 
-        storage = object.__getattribute__(self, "_psp_user_storage")
+        storage       = object.__getattribute__(self, "_psp_user_storage")
         storage[name] = value
 
     def __delattr__(self, name):
@@ -428,9 +428,9 @@ class SelfProxy(object):
         adds + modifications + deletions, with deleted keys surfaced as
         ``None`` so the bridge can drop them from the plug.
         """
-        current = self._psp_user_storage
+        current  = self._psp_user_storage
         snapshot = self._psp_user_storage_snapshot
-        out = {}
+        out      = {}
         for key, value in current.items():
             if key not in snapshot:
                 out[key] = value

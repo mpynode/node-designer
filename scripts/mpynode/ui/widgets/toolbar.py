@@ -28,23 +28,23 @@ class NDToolBar(QToolBar):
 
     def __init__(
         self,
-        parent: QWidget,
-        on_new_node: Callable[[str], None],
-        on_save_node: Callable[[], None],
-        on_save_all: Callable[[], None],
-        on_compile: Callable[[], None] | None = None,
-        on_new_from_template: Callable[[], None] | None = None,
+        parent:               QWidget,
+        on_new_node:          Callable[[str], None],
+        on_save_node:         Callable[[], None],
+        on_save_all:          Callable[[], None],
+        on_compile:           Callable[[], None]    | None = None,
+        on_new_from_template: Callable[[], None]    | None = None,
     ):
         super().__init__("Node Designer Toolbar", parent)
         self.setObjectName("NDToolBar")
         self.setMovable(False)
 
-        self._on_new_node = on_new_node
+        self._on_new_node  = on_new_node
         self._on_save_node = on_save_node
-        self._on_save_all = on_save_all
+        self._on_save_all  = on_save_all
         # Optional, so call sites that don't pass it get a no-op Compile
         # button rather than a crash.
-        self._on_compile = on_compile or (lambda: None)
+        self._on_compile           = on_compile or (lambda: None)
         self._on_new_from_template = on_new_from_template or (lambda: None)
 
         self._new_btn: QPushButton | None = None
@@ -79,7 +79,7 @@ class NDToolBar(QToolBar):
         )
 
         def _add_new_node_action(native_type):
-            spec = REGISTRY[native_type]
+            spec   = REGISTRY[native_type]
             action = QAction(native_type, self._new_menu)
             action.setIcon(get_node_type_icon(native_type))
             action.setToolTip(spec.description or native_type)

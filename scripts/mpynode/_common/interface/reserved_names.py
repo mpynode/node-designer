@@ -48,19 +48,19 @@ RESERVED_PREFIXES = ("_psp_",)
 # ``ui`` and does ``import maya.cmds`` at module scope, which the
 # registration-time caller cannot reach.
 _TYPE_TO_WRAPPER = {
-    "mPyNode": ("mpynode.wrappers._mpy_node", "MPyNode"),
+    "mPyNode":       ("mpynode.wrappers._mpy_node", "MPyNode"),
     "mPyBlendShape": ("mpynode.wrappers.mpy_blend_shape", "MPyBlendShape"),
     "mPyConstraint": ("mpynode.wrappers.mpy_constraint", "MPyConstraint"),
-    "mPyDeformer": ("mpynode.wrappers.mpy_deformer", "MPyDeformer"),
-    "mPyFile": ("mpynode.wrappers.mpy_file", "MPyFile"),
-    "mPyIkSolver": ("mpynode.wrappers.mpy_iksolver", "MPyIkSolver"),
-    "mPyLocator": ("mpynode.wrappers.mpy_locator", "MPyLocator"),
-    "mPyMesh": ("mpynode.wrappers.mpy_mesh", "MPyMesh"),
+    "mPyDeformer":   ("mpynode.wrappers.mpy_deformer", "MPyDeformer"),
+    "mPyFile":       ("mpynode.wrappers.mpy_file", "MPyFile"),
+    "mPyIkSolver":   ("mpynode.wrappers.mpy_iksolver", "MPyIkSolver"),
+    "mPyLocator":    ("mpynode.wrappers.mpy_locator", "MPyLocator"),
+    "mPyMesh":       ("mpynode.wrappers.mpy_mesh", "MPyMesh"),
     "mPyNurbsCurve": ("mpynode.wrappers.mpy_nurbs_curve", "MPyNurbsCurve"),
     "mPyNurbsSurface": ("mpynode.wrappers.mpy_nurbs_surface",
                         "MPyNurbsSurface"),
     "mPySkinCluster": ("mpynode.wrappers.mpy_skin_cluster", "MPySkinCluster"),
-    "mPyTransform": ("mpynode.wrappers.mpy_transform", "MPyTransform"),
+    "mPyTransform":   ("mpynode.wrappers.mpy_transform", "MPyTransform"),
 }
 
 
@@ -145,9 +145,9 @@ def _add_wrapper_slots(node_type, out):
                 if isinstance(entry, str):
                     name, direction, hint = entry, "", ""
                 else:
-                    name = str(entry[0])
+                    name      = str(entry[0])
                     direction = str(entry[1]) if len(entry) > 1 else ""
-                    hint = str(entry[2]) if len(entry) > 2 else ""
+                    hint      = str(entry[2]) if len(entry) > 2 else ""
             except Exception:
                 continue
             if not name or name in skip:

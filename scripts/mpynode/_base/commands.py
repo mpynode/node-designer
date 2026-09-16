@@ -193,15 +193,15 @@ class _CreateNodeCommand(_BaseCommand):
     def __init__(
         self,
         native_node_type: str,
-        name: str | None = None,
-        plugin_name: str | None = None,
-        seed_setup: bool = False,
-        skip_selection: bool = False,
-        seed_headers: bool = False,
+        name:             str  | None = None,
+        plugin_name:      str  | None = None,
+        seed_setup:       bool        = False,
+        skip_selection:   bool        = False,
+        seed_headers:     bool        = False,
     ):
         self.native_node_type = native_node_type
-        self.requested_name = name
-        self.plugin_name = plugin_name
+        self.requested_name   = name
+        self.plugin_name      = plugin_name
         # When True, merge the per-type setup source into the created node's
         # _methodsSource so the Methods tab shows it + "Run setup" works. Opt-in
         # so generic createNode callers are unaffected.
@@ -268,7 +268,7 @@ class _SetExpressionCommand(_BaseCommand):
     ``_computeSource`` plug)."""
 
     def __init__(self, py_node, new_text: str):
-        self.py_node = py_node
+        self.py_node  = py_node
         self.new_text = new_text
         self._old_text: str | None = None
 
@@ -305,26 +305,26 @@ class _AddInputAttrCommand(_BaseCommand):
     def __init__(
         self,
         py_node,
-        attr_name: str,
-        attr_type: str,
-        is_array: bool = False,
-        enum_names: list[str] | None = None,
-        auto_connect_time: bool = True,
-        min_value=None,
-        max_value=None,
-        default_value=None,
-        sparse: bool = False,
+        attr_name:         str,
+        attr_type:         str,
+        is_array:          bool             = False,
+        enum_names:        list[str] | None = None,
+        auto_connect_time: bool             = True,
+        min_value                           = None,
+        max_value                           = None,
+        default_value                       = None,
+        sparse:            bool             = False,
     ):
-        self.py_node = py_node
-        self.attr_name = attr_name
-        self.attr_type = attr_type
-        self.is_array = is_array
-        self.enum_names = enum_names
+        self.py_node           = py_node
+        self.attr_name         = attr_name
+        self.attr_type         = attr_type
+        self.is_array          = is_array
+        self.enum_names        = enum_names
         self.auto_connect_time = auto_connect_time
-        self.min_value = min_value
-        self.max_value = max_value
-        self.default_value = default_value
-        self.sparse = sparse
+        self.min_value         = min_value
+        self.max_value         = max_value
+        self.default_value     = default_value
+        self.sparse            = sparse
 
     def doIt(self) -> None:
         # Validate the node still exists before mutating: a stale wrapper (e.g.
@@ -344,12 +344,12 @@ class _AddInputAttrCommand(_BaseCommand):
             self.attr_name,
             self.attr_type,
             self.is_array,
-            enum_names=self.enum_names,
-            auto_connect_time=self.auto_connect_time,
-            min_value=self.min_value,
-            max_value=self.max_value,
-            default_value=self.default_value,
-            sparse=self.sparse,
+            enum_names        = self.enum_names,
+            auto_connect_time = self.auto_connect_time,
+            min_value         = self.min_value,
+            max_value         = self.max_value,
+            default_value     = self.default_value,
+            sparse            = self.sparse,
         )
 
     def undoIt(self) -> None:
@@ -367,21 +367,21 @@ class _AddOutputAttrCommand(_BaseCommand):
     def __init__(
         self,
         py_node,
-        attr_name: str,
-        attr_type: str,
-        is_array: bool = False,
-        enum_names: list[str] | None = None,
-        min_value=None,
-        max_value=None,
-        default_value=None,
+        attr_name:    str,
+        attr_type:    str,
+        is_array:     bool             = False,
+        enum_names:   list[str] | None = None,
+        min_value                      = None,
+        max_value                      = None,
+        default_value                  = None,
     ):
-        self.py_node = py_node
-        self.attr_name = attr_name
-        self.attr_type = attr_type
-        self.is_array = is_array
-        self.enum_names = enum_names
-        self.min_value = min_value
-        self.max_value = max_value
+        self.py_node       = py_node
+        self.attr_name     = attr_name
+        self.attr_type     = attr_type
+        self.is_array      = is_array
+        self.enum_names    = enum_names
+        self.min_value     = min_value
+        self.max_value     = max_value
         self.default_value = default_value
 
     def doIt(self) -> None:
@@ -400,10 +400,10 @@ class _AddOutputAttrCommand(_BaseCommand):
             self.attr_name,
             self.attr_type,
             self.is_array,
-            enum_names=self.enum_names,
-            min_value=self.min_value,
-            max_value=self.max_value,
-            default_value=self.default_value,
+            enum_names    = self.enum_names,
+            min_value     = self.min_value,
+            max_value     = self.max_value,
+            default_value = self.default_value,
         )
 
     def undoIt(self) -> None:
@@ -425,7 +425,7 @@ class _DeleteAttrCommand(_BaseCommand):
             raise ValueError(
                 f"direction must be 'input' or 'output', got {direction!r}"
             )
-        self.py_node = py_node
+        self.py_node   = py_node
         self.attr_name = attr_name
         self.direction = direction
 
@@ -505,9 +505,9 @@ class _RenameAttrCommand(_BaseCommand):
             raise ValueError(
                 f"direction must be 'input' or 'output', got {direction!r}"
             )
-        self.py_node = py_node
-        self.old_name = old_name
-        self.new_name = new_name
+        self.py_node   = py_node
+        self.old_name  = old_name
+        self.new_name  = new_name
         self.direction = direction
 
     def doIt(self) -> None:
@@ -518,7 +518,7 @@ class _RenameAttrCommand(_BaseCommand):
         # attr. Suspending evaluation (Blocking, or HasNoEffect for deformers --
         # see _eval_block_state) makes Maya skip it until we restore the prior
         # state, by which point the expression has been rewritten.
-        node_name = self.py_node.get_name()
+        node_name  = self.py_node.get_name()
         prev_state = None
         try:
             prev_state = cmds.getAttr(node_name + ".nodeState")
@@ -546,7 +546,7 @@ class _RenameAttrCommand(_BaseCommand):
             from mpynode._common.util import refactor
         except Exception:
             return
-        node = self.py_node
+        node  = self.py_node
         pairs = []
         for getter, setter in (
             ("get_compute_expression", "set_compute_expression"),
@@ -602,9 +602,9 @@ class _ReorderAttrCommand(_BaseCommand):
             raise ValueError(
                 f"direction must be 'input' or 'output', got {direction!r}"
             )
-        self.py_node = py_node
-        self.new_order = list(new_order)
-        self.direction = direction
+        self.py_node          = py_node
+        self.new_order        = list(new_order)
+        self.direction        = direction
         self.refused_playback = False
         self._original_order: list | None = None
 
@@ -670,7 +670,7 @@ class _ConnectAttrCommand(_BaseCommand):
     def __init__(self, src_plug: str, dst_plug: str, force: bool = True):
         self.src_plug = src_plug
         self.dst_plug = dst_plug
-        self.force = force
+        self.force    = force
 
     def doIt(self) -> None:
         cmds.connectAttr(self.src_plug, self.dst_plug, force=self.force)
@@ -700,7 +700,7 @@ class _ClobberMultiConnectCommand(_BaseCommand):
 
     def __init__(self, multi_attr_plug: str, pairs):
         self.multi_attr_plug = multi_attr_plug
-        self.pairs = list(pairs)
+        self.pairs           = list(pairs)
 
     def doIt(self) -> None:
         try:
@@ -734,7 +734,7 @@ class _DisconnectAllCommand(_BaseCommand):
             raise ValueError(
                 f"direction must be 'input' or 'output', got {direction!r}"
             )
-        self.plug = plug
+        self.plug      = plug
         self.direction = direction
 
     def doIt(self) -> None:
@@ -749,10 +749,10 @@ class _DisconnectAllCommand(_BaseCommand):
             pairs = (
                 cmds.listConnections(
                     self.plug,
-                    source=True,
-                    destination=False,
-                    plugs=True,
-                    connections=True,
+                    source      = True,
+                    destination = False,
+                    plugs       = True,
+                    connections = True,
                 )
                 or []
             )
@@ -767,10 +767,10 @@ class _DisconnectAllCommand(_BaseCommand):
             pairs = (
                 cmds.listConnections(
                     self.plug,
-                    source=False,
-                    destination=True,
-                    plugs=True,
-                    connections=True,
+                    source      = False,
+                    destination = True,
+                    plugs       = True,
+                    connections = True,
                 )
                 or []
             )
@@ -805,12 +805,12 @@ class _SetSparseCommand(_BaseCommand):
     """
 
     def __init__(self, py_node, attr_name: str, value: bool):
-        self.py_node = py_node
+        self.py_node   = py_node
         self.attr_name = attr_name
-        self.value = bool(value)
+        self.value     = bool(value)
 
     def doIt(self) -> None:
-        node = self.py_node
+        node      = self.py_node
         node_name = node.get_name()
         if not cmds.objExists(node_name):
             raise RuntimeError(
@@ -850,7 +850,7 @@ class _StoredVarCommand(_BaseCommand):
 
     py_node = None
     _before = None
-    _after = None
+    _after  = None
 
     def _capture_before(self) -> None:
         from mpynode._common.storedvars import stored_var_store
@@ -877,8 +877,8 @@ class _StoredVarCommand(_BaseCommand):
 
 class _AddStoredVarCommand(_StoredVarCommand):
     def __init__(self, py_node, var_name: str, initial_value=None):
-        self.py_node = py_node
-        self.var_name = var_name
+        self.py_node       = py_node
+        self.var_name      = var_name
         self.initial_value = initial_value
 
     def doIt(self) -> None:
@@ -893,8 +893,8 @@ class _AddTemporaryVarCommand(_StoredVarCommand):
     Undo/redo restore the cache via the base snapshot mechanism."""
 
     def __init__(self, py_node, var_name: str, initial_value=None):
-        self.py_node = py_node
-        self.var_name = var_name
+        self.py_node       = py_node
+        self.var_name      = var_name
         self.initial_value = initial_value
 
     def doIt(self) -> None:
@@ -912,7 +912,7 @@ class _AddTemporaryVarCommand(_StoredVarCommand):
 
 class _RemoveStoredVarCommand(_StoredVarCommand):
     def __init__(self, py_node, var_name: str):
-        self.py_node = py_node
+        self.py_node  = py_node
         self.var_name = var_name
 
     def doIt(self) -> None:
@@ -929,9 +929,9 @@ class _SetStoredVarCommand(_StoredVarCommand):
 
     def __init__(self, py_node, var_name: str, new_value,
                  persistent: bool | None = None):
-        self.py_node = py_node
-        self.var_name = var_name
-        self.new_value = new_value
+        self.py_node    = py_node
+        self.var_name   = var_name
+        self.new_value  = new_value
         self.persistent = None if persistent is None else bool(persistent)
 
     def doIt(self) -> None:
@@ -942,7 +942,7 @@ class _SetStoredVarCommand(_StoredVarCommand):
 
 class _RenameStoredVarCommand(_StoredVarCommand):
     def __init__(self, py_node, old_name: str, new_name: str):
-        self.py_node = py_node
+        self.py_node  = py_node
         self.old_name = old_name
         self.new_name = new_name
 
@@ -959,8 +959,8 @@ class _SetPersistentCommand(_BaseCommand):
     undoIt / redoIt are no-ops."""
 
     def __init__(self, py_node, var_name: str, persistent: bool):
-        self.py_node = py_node
-        self.var_name = var_name
+        self.py_node    = py_node
+        self.var_name   = var_name
         self.persistent = bool(persistent)
 
     def doIt(self) -> None:
@@ -986,7 +986,7 @@ class _SetAttrColorCommand(_BaseCommand):
             raise ValueError(
                 f"direction must be 'input' or 'output', got {direction!r}"
             )
-        self.py_node = py_node
+        self.py_node   = py_node
         self.attr_name = attr_name
         self.hex_color = hex_color  # str or None (None = clear)
         self.direction = direction
@@ -1020,7 +1020,7 @@ class _ImportNodeCommand(_BaseCommand):
                  restore_persistent: bool = True,
                  seed_setup: bool = False):
         self.payload = payload
-        self.name = name
+        self.name    = name
         # When False the imported node carries only its DEFINITIONS (no baked
         # persistent stored-var data). Default True keeps the legacy import.
         self._restore_persistent = restore_persistent
@@ -1129,7 +1129,7 @@ class _SetupNodeCommand(_BaseCommand):
 
     def __init__(self, native_type: str, mode: str = "headers"):
         self.native_type = native_type
-        self.mode = mode
+        self.mode        = mode
         self.created_name: str | None = None
 
     def doIt(self) -> None:
@@ -1196,8 +1196,8 @@ class _RunSetupCommand(_BaseCommand):
     the wiring."""
 
     def __init__(self, node_name, native_type):
-        self.node_name = node_name
-        self.native_type = native_type
+        self.node_name    = node_name
+        self.native_type  = native_type
         self.created_name = None  # no node created; harmless parity (review S1)
 
     def doIt(self):
@@ -1206,7 +1206,7 @@ class _RunSetupCommand(_BaseCommand):
         from mpynode._common.methods.methods_registry import run_node_setup
         from mpynode._common.methods import setup_helpers as node_setup
 
-        sel = cmds.ls(selection=True, long=False) or []   # snapshot
+        sel  = cmds.ls(selection=True, long=False) or []   # snapshot
         node = wrap_node(self.node_name, self.native_type)
         if node is None:
             raise node_setup.SetupError("cannot wrap %r" % self.node_name)
@@ -1232,9 +1232,9 @@ class _RunDemoCommand(_BaseCommand):
     / viewFit) rides Maya's undo chunk, so undoIt / redoIt are no-ops."""
 
     def __init__(self, node_name, native_type, demo_name=None):
-        self.node_name = node_name
-        self.native_type = native_type
-        self.demo_name = demo_name
+        self.node_name    = node_name
+        self.native_type  = native_type
+        self.demo_name    = demo_name
         self.created_name = None  # no template node created; harmless parity
 
     def doIt(self):
@@ -1275,11 +1275,11 @@ class _RunCommandCommand(_BaseCommand):
     are no-ops -- chunk-undo reverses it."""
 
     def __init__(self, node_name, native_type, command_name, args=(), kwargs=None):
-        self.node_name = node_name
-        self.native_type = native_type
+        self.node_name    = node_name
+        self.native_type  = native_type
         self.command_name = command_name
-        self.args = tuple(args)
-        self.kwargs = dict(kwargs or {})
+        self.args         = tuple(args)
+        self.kwargs       = dict(kwargs or {})
         self.created_name = None  # no node created; harmless parity
 
     def doIt(self):
@@ -1311,11 +1311,11 @@ class _RunTestCommand(_BaseCommand):
     are no-ops -- chunk-undo reverses it, leaving the scene as it was."""
 
     def __init__(self, node_name, native_type, test_name=None):
-        self.node_name = node_name
-        self.native_type = native_type
-        self.test_name = test_name
+        self.node_name    = node_name
+        self.native_type  = native_type
+        self.test_name    = test_name
         self.created_name = None  # no template node created; harmless parity
-        self.test_result = None
+        self.test_result  = None
 
     def doIt(self):
         from mpynode._node_registry import wrap_node
@@ -1362,12 +1362,12 @@ class _TemplateCreateCommand(_BaseCommand):
 
     def __init__(self, payload: dict, native_type: str, run_setup: bool = True,
                  run_demo: bool = False, demo_name=None):
-        self.payload = payload
+        self.payload     = payload
         self.native_type = native_type
-        self.run_setup = bool(run_setup)
-        self.run_demo = bool(run_demo)
-        self.demo_name = demo_name
-        self.created_name: str | None = None
+        self.run_setup   = bool(run_setup)
+        self.run_demo    = bool(run_demo)
+        self.demo_name   = demo_name
+        self.created_name:  str | None = None
         self.tier_failures: dict = {}
 
     def doIt(self) -> "str | None":
@@ -1411,7 +1411,7 @@ class _TemplateCreateCommand(_BaseCommand):
             self.payload, name=self.payload.get("preferred_name"),
             restore_persistent=False, return_failures=True,
             skip_selection=True)
-        created = py_node.get_name()
+        created           = py_node.get_name()
         self.created_name = created
         # seed the type default ONLY if the template carried no setup
         # (merge-not-replace inside _populate_methods_source).
@@ -1530,10 +1530,10 @@ def _rewire_input_connections(source_name: str, dup_name: str) -> None:
     pairs = (
         cmds.listConnections(
             source_name,
-            source=True,
-            destination=False,
-            plugs=True,
-            connections=True,
+            source      = True,
+            destination = False,
+            plugs       = True,
+            connections = True,
         )
         or []
     )
@@ -1610,8 +1610,8 @@ def build_duplicate_node_command(source_name: str, native_type: str | None = Non
     from mpynode._common.storedvars import stored_vars_api
 
     persistent_names = set(stored_vars_api.get_variable_names(source_name))
-    raw_vars = payload.get("stored_vars") or {}
-    persistent_vars = {k: v for k, v in raw_vars.items() if k in persistent_names}
+    raw_vars         = payload.get("stored_vars") or {}
+    persistent_vars  = {k: v for k, v in raw_vars.items() if k in persistent_names}
     # Then deep-copy so the copy's data is its own (never shared with the source).
     payload["stored_vars"] = _deep_copy_stored_vars(persistent_vars)
     return _DuplicateNodeCommand(
@@ -1752,12 +1752,12 @@ class _ConvertToCppCommand(_BaseCommand):
     idempotent, scene-state-free side effect, harmless if un-reversed on undo."""
 
     def __init__(self, node_name: str, native_type: str):
-        self.node_name = node_name
+        self.node_name   = node_name
         self.native_type = native_type
-        self.created_name: str | None = None
-        self.dropped: list = []
+        self.created_name:     str | None = None
+        self.dropped:          list = []
         self.cycle_introduced: bool = False
-        self._pre_cycle: bool = False
+        self._pre_cycle:       bool = False
 
     def doIt(self):
         from mpynode._base import node_swap
@@ -1815,7 +1815,7 @@ class _ConvertToCppCommand(_BaseCommand):
         # Advisory only: the compiled node's all-to-all attributeAffects can
         # introduce a DG cycle the selective interpreted node did not have.
         try:
-            found = cmds.cycleCheck([new_name], all=False, list=True) or []
+            found                 = cmds.cycleCheck([new_name], all=False, list=True) or []
             self.cycle_introduced = bool(found) and not self._pre_cycle
         except Exception:
             self.cycle_introduced = False
@@ -1849,7 +1849,7 @@ class _RevertToPyCommand(_BaseCommand):
     re-establishes the converted state."""
 
     def __init__(self, node_name: str, native_type: str):
-        self.node_name = node_name
+        self.node_name   = node_name
         self.native_type = native_type
         self.dropped: list = []
 

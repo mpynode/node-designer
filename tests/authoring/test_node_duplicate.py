@@ -80,7 +80,7 @@ class TestDuplicateNodeCommand(unittest.TestCase):
 
     def test_duplicate_copies_definition(self):
         dup = self._duplicate()
-        d = _wrap(dup)
+        d   = _wrap(dup)
         self.assertEqual(d.get_compute_expression(), "out = alpha * 2.0")
         self.assertIn("alpha", d.get_input_attr_map())
         self.assertIn("out", d.get_output_attr_map())
@@ -150,7 +150,7 @@ class TestDuplicateNodeCommand(unittest.TestCase):
 
     def test_duplicate_without_inputs_has_no_input_connections(self):
         up = self._make_upstream_driving_alpha()
-        d = _wrap(self._duplicate(with_inputs=False))
+        d  = _wrap(self._duplicate(with_inputs=False))
         conns = mc.listConnections(
             d.get_name() + ".alpha", source=True, destination=False
         ) or []
@@ -158,7 +158,7 @@ class TestDuplicateNodeCommand(unittest.TestCase):
 
     def test_duplicate_with_inputs_rewires_input_connection(self):
         up = self._make_upstream_driving_alpha()
-        d = _wrap(self._duplicate(with_inputs=True))
+        d  = _wrap(self._duplicate(with_inputs=True))
         srcs = mc.listConnections(
             d.get_name() + ".alpha", source=True, destination=False, plugs=True
         ) or []
@@ -205,14 +205,14 @@ class TestSceneTreeDuplicateMenu(unittest.TestCase):
         return tree
 
     def test_context_menu_has_both_duplicate_actions(self):
-        tree = self._tree_with_selected_item()
+        tree   = self._tree_with_selected_item()
         labels = [a.text() for a in tree._build_context_menu().actions()]
         self.assertIn("Duplicate", labels)
         self.assertIn("Duplicate + Inputs", labels)
 
     def test_duplicate_action_emits_signal(self):
         tree = self._tree_with_selected_item()
-        got = {}
+        got  = {}
         tree.duplicateNodeRequested.connect(
             lambda n, t: got.update(name=n, type=t)
         )
@@ -224,7 +224,7 @@ class TestSceneTreeDuplicateMenu(unittest.TestCase):
 
     def test_duplicate_with_inputs_action_emits_signal(self):
         tree = self._tree_with_selected_item()
-        got = {}
+        got  = {}
         tree.duplicateWithInputsRequested.connect(
             lambda n, t: got.update(name=n, type=t)
         )
@@ -327,9 +327,9 @@ class TestDuplicateFlushesUnsavedEditor(unittest.TestCase):
         return mc.getAttr(name + "._computeSource") or ""
 
     def test_save_tabs_for_node_flushes_compute_to_plug(self):
-        name = self.src.get_name()
-        w = self._widget_with_tab(self.src)
-        tab = w.getAllTabs()[0]
+        name  = self.src.get_name()
+        w     = self._widget_with_tab(self.src)
+        tab   = w.getAllTabs()[0]
         typed = "out = alpha * 3.0  # typed, not saved"
         tab.setText(typed)
         # Pre-condition: editor dirty, plug STALE (reproduces the user's bug).
@@ -341,11 +341,11 @@ class TestDuplicateFlushesUnsavedEditor(unittest.TestCase):
 
     def test_save_tabs_for_node_flushes_all_tiers(self):
         """P0: ALL expressions, not just Compute. Init must flush too."""
-        name = self.src.get_name()
-        w = self._widget_with_tab(self.src)
-        tab = w.getAllTabs()[0]
+        name    = self.src.get_name()
+        w       = self._widget_with_tab(self.src)
+        tab     = w.getAllTabs()[0]
         compute = "out = alpha * 4.0"
-        init = "import math\nTAU = math.pi * 2"
+        init    = "import math\nTAU = math.pi * 2"
         tab.setText(compute)
         # Init lives in the sister editor.
         self.assertIsNotNone(getattr(tab, "_init_editor", None))
@@ -379,9 +379,9 @@ class TestDuplicateFlushesUnsavedEditor(unittest.TestCase):
             run_undoable,
         )
 
-        name = self.src.get_name()
-        w = self._widget_with_tab(self.src)
-        tab = w.getAllTabs()[0]
+        name  = self.src.get_name()
+        w     = self._widget_with_tab(self.src)
+        tab   = w.getAllTabs()[0]
         typed = "out = alpha * 6.0"
         tab.setText(typed)
 

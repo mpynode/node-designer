@@ -74,9 +74,9 @@ class TestAttributesAndInternalAreDisjoint(unittest.TestCase):
         return set(r[0] for r in collect_internal_api_rows(node_name))
 
     def _assert_disjoint(self, node_name, label):
-        attrs = self._attribute_names(node_name)
+        attrs    = self._attribute_names(node_name)
         internal = self._internal_names(node_name)
-        overlap = attrs & internal
+        overlap  = attrs & internal
         self.assertEqual(
             overlap, set(),
             f"{label}: Attributes and Variables-Internal share {overlap!r} "
@@ -120,7 +120,7 @@ class TestMPyFileVariablesInternalSurfacesBridgeHandles(unittest.TestCase):
     def test_mPyFile(self):
         node = mc.shadingNode("mPyFile", asTexture=True, name="diffuseTexTest")
         from mpynode.ui.widgets.variables import collect_internal_api_rows
-        rows = collect_internal_api_rows(node)
+        rows  = collect_internal_api_rows(node)
         names = set(r[0] for r in rows)
         # The Viewport exec namespace binds these non-plug handles onto
         # self.<x>, so Variables-Internal is the ONLY place to surface them.
@@ -156,7 +156,7 @@ class TestMPyIkSolverDeclaresInternalApiSlots(unittest.TestCase):
             self.skipTest("mpynode.wrappers.mpy_iksolver not importable in this build")
         # ``INTERNAL_API_SLOTS`` accepts plain strings or ``(name, dir, hint)``
         # tuples; normalize to names before comparing.
-        raw = getattr(MPyIkSolver, "INTERNAL_API_SLOTS", ())
+        raw   = getattr(MPyIkSolver, "INTERNAL_API_SLOTS", ())
         slots = set()
         for entry in raw:
             if isinstance(entry, str):
@@ -242,7 +242,7 @@ class TestFormatSlotValue(unittest.TestCase):
         self.assertEqual(self.fmt([]), "list[0]")
 
     def test_long_string_truncated(self):
-        s = "x" * 200
+        s   = "x" * 200
         out = self.fmt(s)
         self.assertLessEqual(len(out), 80)
         self.assertTrue(out.endswith("..."))
@@ -253,7 +253,7 @@ class TestFormatSlotValue(unittest.TestCase):
 
     def test_mmatrix_compact(self):
         import maya.api.OpenMaya as om
-        m = om.MMatrix()
+        m   = om.MMatrix()
         out = self.fmt(m)
         self.assertTrue(out.startswith("MMatrix("), f"got {out!r}")
         # Identity matrix's first row starts with 1.
@@ -261,7 +261,7 @@ class TestFormatSlotValue(unittest.TestCase):
 
     def test_mvector_compact(self):
         import maya.api.OpenMaya as om
-        v = om.MVector(1.0, 2.0, 3.0)
+        v   = om.MVector(1.0, 2.0, 3.0)
         out = self.fmt(v)
         self.assertEqual(out, "MVector(1, 2, 3)")
 
@@ -321,7 +321,7 @@ class TestCollectInternalApiRowsLiveValues(unittest.TestCase):
         black box), never an empty list."""
         from mpynode.ui.widgets.variables import collect_internal_api_rows
 
-        node = mc.shadingNode("mPyFile", asTexture=True)
+        node  = mc.shadingNode("mPyFile", asTexture=True)
         names = {r[0] for r in collect_internal_api_rows(node)}
         self.assertTrue(
             {"shader", "time", "mappings", "texture_manager",
@@ -374,7 +374,7 @@ class TestWrapperInstanceFor(unittest.TestCase):
     def test_returns_instance_for_known_type(self):
         from mpynode.ui.widgets.plug_tree_walker import _wrapper_instance_for
 
-        node = mc.createNode("mPyNode")
+        node    = mc.createNode("mPyNode")
         wrapper = _wrapper_instance_for(node)
         self.assertIsNotNone(
             wrapper, "_wrapper_instance_for(mPyNode) must return a wrapper")
@@ -476,8 +476,8 @@ class TestDirColumnLabel(unittest.TestCase):
         # Ask 1: the Dir column shows the direction as a plain word
         # (READ / WRITE / READWRITE / METHOD).
         from mpynode.ui.widgets.variables import _dir_label
-        self.assertEqual(_dir_label("read"), "READ")
-        self.assertEqual(_dir_label("write"), "WRITE")
+        self.assertEqual(_dir_label("read"),      "READ")
+        self.assertEqual(_dir_label("write"),     "WRITE")
         self.assertEqual(_dir_label("readwrite"), "READWRITE")
         # Legacy flat-string slots (no declared direction) -> neutral blank.
         self.assertEqual(_dir_label(""), "")
@@ -486,7 +486,7 @@ class TestDirColumnLabel(unittest.TestCase):
     def test_transform_rows_carry_direction_not_in_value(self):
         node = mc.createNode("mPyTransform")
         from mpynode.ui.widgets.variables import collect_internal_api_rows
-        rows = collect_internal_api_rows(node)
+        rows    = collect_internal_api_rows(node)
         by_name = {r[0]: r for r in rows}
         self.assertIn("local_matrix", by_name)
         # 3-tuple: (name, direction, value_text)

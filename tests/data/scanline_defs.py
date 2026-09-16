@@ -21,20 +21,20 @@ ROOT = os.environ.get("MPYNODE_ROOT") or os.path.abspath(
 # the (retired) demo builder only; the gate reads just INIT_SRC / COMPUTE_SRC /
 # ARNOLD_OSL_SRC and never these.
 _DEMO_DATA = os.path.join(ROOT, "scripts", "mpynode", "_demos", "data")
-_DEMO_OUT = os.path.join(ROOT, "scripts", "mpynode", "_demos", "output", "mpy_demos")
-GRID_PNG = os.path.join(_DEMO_DATA, "test_grid.png")
-NODE_TYPE = "scanlineOverTime"
+_DEMO_OUT  = os.path.join(ROOT, "scripts", "mpynode", "_demos", "output", "mpy_demos")
+GRID_PNG   = os.path.join(_DEMO_DATA, "test_grid.png")
+NODE_TYPE  = "scanlineOverTime"
 OUT_DIR = os.path.join(ROOT, "scripts", "mpynode", "_demos", "output",
                        "scanline_overtime_build")
-PLUGIN_COPY = os.path.join(ROOT, "plug-ins", NODE_TYPE + ".bundle")
+PLUGIN_COPY  = os.path.join(ROOT, "plug-ins", NODE_TYPE + ".bundle")
 
-SCENE_PY = os.path.join(_DEMO_OUT, "mPyFile_scanline_python.ma")
+SCENE_PY     = os.path.join(_DEMO_OUT, "mPyFile_scanline_python.ma")
 SCENE_NATIVE = os.path.join(_DEMO_OUT, "mPyFile_scanline_compiled.ma")
 
 # Scanline look: NUM_BANDS horizontal bands, scrolling SPEED cycles/frame.
 NUM_BANDS = 12.0
-SPEED = 0.1
-TWO_PI = 6.283185307179586
+SPEED     = 0.1
+TWO_PI    = 6.283185307179586
 
 # MImage::readFromFile is bottom-up: verified marr[h-1-y] == PIL_arr[y], same RGBA
 # channel order. So the C++ computes Python's TOP-DOWN row (py_pil) exactly, then
@@ -502,17 +502,17 @@ def build_override_bundle(spec, maya=None):
         fh.write(cpp)
 
     compiler = toolchain.default_compiler()
-    benv = toolchain.build_env(compiler)
-    exe = toolchain.resolve_compiler(compiler, benv)
+    benv     = toolchain.build_env(compiler)
+    exe      = toolchain.resolve_compiler(compiler, benv)
     if exe is None:
         return False, toolchain.compiler_missing_message(compiler), None
-    maya = maya or porter._MAYA_DEFAULT
+    maya       = maya or porter._MAYA_DEFAULT
     out_plugin = os.path.join(OUT_DIR, NODE_TYPE + toolchain.plugin_ext())
     cmd = toolchain.compile_to_plugin_cmd(
         exe, cpp_path, out_plugin,
-        include_dir=toolchain.maya_include_dir(maya),
-        lib_dir=toolchain.maya_lib_dir(maya),
-        libs=vp2_override_libs(codegen._libs_for(spec)),
+        include_dir = toolchain.maya_include_dir(maya),
+        lib_dir     = toolchain.maya_lib_dir(maya),
+        libs        = vp2_override_libs(codegen._libs_for(spec)),
         arch=toolchain.mac_arch())
     rc, log = toolchain.run_streaming(cmd, env=benv)
     ok = (rc == 0 and os.path.isfile(out_plugin))
@@ -622,19 +622,19 @@ def make_complete_fn():
     )
 
     def complete_fn(system, user):
-        uv = re.search(r"const float2& (in_\w+)", user)
-        tin = re.search(r"const float (in_\w+) = data", user)
-        hcol = re.search(r"(h_\w+)\.set3Float", user)
-        halp = re.search(r"(h_\w+)\.setFloat\(", user)
+        uv   = re.search(r"const float2& (in_\w+)",      user)
+        tin  = re.search(r"const float (in_\w+) = data", user)
+        hcol = re.search(r"(h_\w+)\.set3Float",          user)
+        halp = re.search(r"(h_\w+)\.setFloat\(",         user)
         if not (uv and tin and hcol and halp):
             raise RuntimeError(
                 "scaffold missing expected members: uv=%s tin=%s hcol=%s halp=%s"
                 % (bool(uv), bool(tin), bool(hcol), bool(halp)))
         body = template
-        body = body.replace("__UV__", uv.group(1))
-        body = body.replace("__TIN__", tin.group(1))
-        body = body.replace("__HCOL__", hcol.group(1))
-        body = body.replace("__HALP__", halp.group(1))
+        body = body.replace("__UV__",    uv.group(1))
+        body = body.replace("__TIN__",   tin.group(1))
+        body = body.replace("__HCOL__",  hcol.group(1))
+        body = body.replace("__HALP__",  halp.group(1))
         body = body.replace("__BANDS__", repr(NUM_BANDS))
         body = body.replace("__SPEED__", repr(SPEED))
         body = body.replace("__TWOPI__", repr(TWO_PI))

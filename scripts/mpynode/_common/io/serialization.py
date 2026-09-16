@@ -110,7 +110,7 @@ def _encode_keyed(
     can be neither safe-encoded nor pickled are dropped and returned in
     ``dropped``.
     """
-    inner: dict[str, dict] = {}
+    inner:   dict[str, dict] = {}
     dropped: list[str] = []
     has_pickle = False
     for key, value in vars_dict.items():
@@ -134,11 +134,11 @@ def _encode_keyed(
     raw = json.dumps(inner, separators=(",", ":")).encode("utf-8")
     blob, codec = _compress(raw, compression)
     payload = {
-        "protocol": 8,
-        "format": "keyed2",
-        "codec": codec,
+        "protocol":   8,
+        "format":     "keyed2",
+        "codec":      codec,
         "has_pickle": has_pickle,
-        "data_b64": base64.b64encode(blob).decode("ascii"),
+        "data_b64":   base64.b64encode(blob).decode("ascii"),
     }
     return json.dumps(payload, separators=(",", ":")), dropped
 
@@ -188,7 +188,7 @@ def blob_has_pickle(plug_value: str) -> bool:
         return True  # old "keyed" / legacy single-blob == pickle
     # keyed2: ignore the self-declared flag; scan the actual inner for pickle.
     try:
-        raw = _decompress(base64.b64decode(wrapper["data_b64"]), wrapper.get("codec"))
+        raw   = _decompress(base64.b64decode(wrapper["data_b64"]), wrapper.get("codec"))
         inner = json.loads(raw.decode("utf-8"))
     except Exception:
         return True  # can't verify -> assume pickle (fail safe)
@@ -221,7 +221,7 @@ def _decode_keyed2(
         return {}, {}
     if not isinstance(inner, dict):
         return {}, {}
-    out: dict[str, Any] = {}
+    out:      dict[str, Any] = {}
     failures: dict[str, str] = {}
     trusted = trust.pickle_trusted() if trusted is None else bool(trusted)
     for key, entry in inner.items():
@@ -268,7 +268,7 @@ def _decode_legacy_pickle(
         return {}, {}
     if kind == "keyed":
         # outer is {name: pickled-bytes}; unpickle each value independently
-        out: dict[str, Any] = {}
+        out:      dict[str, Any] = {}
         failures: dict[str, str] = {}
         for key, blob in decoded.items():
             try:
@@ -355,9 +355,9 @@ def decode_stored_vars_detailed(
 # compute runs on EM worker threads.
 
 _DECODE_CACHE: "OrderedDict[str, dict]" = OrderedDict()
-_DECODE_CACHE_BYTES = 0
+_DECODE_CACHE_BYTES     = 0
 _DECODE_CACHE_MAX_BYTES = 128 * 1024 * 1024  # 128 MB of blob strings
-_DECODE_CACHE_LOCK = threading.Lock()
+_DECODE_CACHE_LOCK      = threading.Lock()
 
 
 def decode_cached(plug_value: str) -> dict[str, Any]:
@@ -373,7 +373,7 @@ def decode_cached(plug_value: str) -> dict[str, Any]:
             return dict(hit)
     # Miss: decode outside the lock (the expensive part), then insert.
     decoded = decode_stored_vars(plug_value)
-    nbytes = len(plug_value)
+    nbytes  = len(plug_value)
     with _DECODE_CACHE_LOCK:
         if plug_value not in _DECODE_CACHE:
             _DECODE_CACHE[plug_value] = decoded

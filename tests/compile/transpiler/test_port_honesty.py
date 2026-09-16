@@ -32,7 +32,7 @@ def setUpModule():
 
 
 BEGIN = "// ===== BEGIN PORTED COMPUTE ====="
-END = "// ===== END PORTED COMPUTE ====="
+END   = "// ===== END PORTED COMPUTE ====="
 
 
 def _file(body, scaffold_extra=""):
@@ -102,8 +102,8 @@ class TestUnportedReachesThePrompt(unittest.TestCase):
     def test_gaps_are_listed_verbatim(self):
         user = self._user_for(["uses pandas (no deterministic C++ lowering)",
                                "pickle (a stack VM with import opcodes)"])
-        self.assertIn("pandas", user)
-        self.assertIn("pickle", user)
+        self.assertIn("pandas",     user)
+        self.assertIn("pickle",     user)
         self.assertIn("KNOWN GAPS", user)
 
     def test_no_gaps_leaves_the_prompt_unchanged(self):
@@ -273,9 +273,9 @@ class TestScanRunsBeforeVp2Injection(unittest.TestCase):
         import inspect
         from mpynode.native.toolchain import compile_controller
 
-        src = inspect.getsource(compile_controller)
+        src     = inspect.getsource(compile_controller)
         scan_at = src.find("honesty[tn] = _prompt.scan_ported_body")
-        vp2_at = src.find("emit_vp2_override.inject_vp2_override")
+        vp2_at  = src.find("emit_vp2_override.inject_vp2_override")
         self.assertNotEqual(-1, scan_at, "the honesty scan block is gone")
         self.assertNotEqual(-1, vp2_at, "the VP2 injection block is gone")
         self.assertLess(scan_at, vp2_at,

@@ -26,15 +26,15 @@ def encode_cprofile_stats(profiler) -> list[dict]:
         for func, (cc, nc, tt, ct, _callers) in stats_obj.stats.items():
             file_, line, name = func
             short_file = file_.rsplit("/", 1)[-1] if file_ else ""
-            label = f"{name} ({short_file}:{line})" if short_file else name
-            calls = int(nc)
+            label      = f"{name} ({short_file}:{line})" if short_file else name
+            calls      = int(nc)
             tottime_ms = float(tt) * 1000.0
             cumtime_ms = float(ct) * 1000.0
             percall_ms = (float(ct) / cc * 1000.0) if cc else 0.0
             out.append(
                 {
-                    "function": label,
-                    "calls": calls,
+                    "function":   label,
+                    "calls":      calls,
                     "tottime_ms": tottime_ms,
                     "cumtime_ms": cumtime_ms,
                     "percall_ms": percall_ms,

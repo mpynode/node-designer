@@ -24,9 +24,9 @@ import unittest
 # --------------------------------------------------------------------------
 def _pfm_bytes(width, height, pixels, little_endian=True):
     """Serialize a bottom-row-first RGB float list into PFM bytes."""
-    scale = -1.0 if little_endian else 1.0
+    scale  = -1.0 if little_endian else 1.0
     header = ("PF\n%d %d\n%f\n" % (width, height, scale)).encode("ascii")
-    fmt = ("<" if little_endian else ">") + "%df" % len(pixels)
+    fmt    = ("<" if little_endian else ">") + "%df" % len(pixels)
     return header + struct.pack(fmt, *pixels)
 
 
@@ -100,7 +100,7 @@ class TestReadPfm(unittest.TestCase):
 
     def test_reads_shape_and_pixels(self):
         from mpynode._common.osl.osl_verify import read_pfm
-        px = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1]
+        px  = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1]
         img = read_pfm(self._write(_pfm_bytes(2, 2, px)))
         self.assertEqual((img.width, img.height, img.channels), (2, 2, 3))
         for got, want in zip(img.pixels, px):
@@ -118,7 +118,7 @@ class TestReadPfm(unittest.TestCase):
 
     def test_big_endian_scale_is_honoured(self):
         from mpynode._common.osl.osl_verify import read_pfm
-        px = [1.0, 2.0, 3.0]
+        px  = [1.0, 2.0, 3.0]
         img = read_pfm(self._write(_pfm_bytes(1, 1, px, little_endian=False)))
         self.assertEqual([round(p, 4) for p in img.pixels], [1.0, 2.0, 3.0])
 
@@ -141,9 +141,9 @@ class TestDiffImages(unittest.TestCase):
         from mpynode._common.osl.osl_verify import diff_images
         a = self._img(4, 4, _ramp(4, 4))
         d = diff_images(a, self._img(4, 4, _ramp(4, 4)))
-        self.assertEqual(d.max_abs, 0.0)
-        self.assertEqual(d.mean_abs, 0.0)
-        self.assertEqual(d.rms, 0.0)
+        self.assertEqual(d.max_abs,        0.0)
+        self.assertEqual(d.mean_abs,       0.0)
+        self.assertEqual(d.rms,            0.0)
         self.assertEqual(d.over_tolerance, 0)
 
     def test_uniform_offset_reports_that_offset(self):
@@ -151,14 +151,14 @@ class TestDiffImages(unittest.TestCase):
         a = self._img(4, 4, _flat(4, 4, 0.25))
         b = self._img(4, 4, _flat(4, 4, 0.30))
         d = diff_images(a, b)
-        self.assertAlmostEqual(d.max_abs, 0.05, places=6)
+        self.assertAlmostEqual(d.max_abs,  0.05, places=6)
         self.assertAlmostEqual(d.mean_abs, 0.05, places=6)
-        self.assertAlmostEqual(d.rms, 0.05, places=6)
+        self.assertAlmostEqual(d.rms,      0.05, places=6)
 
     def test_over_tolerance_counts_samples_not_pixels(self):
         from mpynode._common.osl.osl_verify import diff_images
-        px_a = _flat(2, 1, 0.0)
-        px_b = list(px_a)
+        px_a    = _flat(2, 1, 0.0)
+        px_b    = list(px_a)
         px_b[0] = 1.0          # one channel of one pixel blows the tolerance
         d = diff_images(self._img(2, 1, px_a), self._img(2, 1, px_b),
                         tolerance=1e-3)
@@ -211,7 +211,7 @@ def _fake_render(mapping, calls=None):
 class TestCompareRenders(unittest.TestCase):
     def test_matching_renders_pass(self):
         from mpynode._common.osl.osl_verify import compare_renders
-        fn = _fake_render({"A": _ramp, "B": _ramp})
+        fn  = _fake_render({"A": _ramp, "B": _ramp})
         res = compare_renders("A", "B", fn, width=4, height=4)
         self.assertTrue(res.ran)
         self.assertTrue(res.passed)
@@ -244,7 +244,7 @@ class TestCompareRenders(unittest.TestCase):
     def test_requested_size_reaches_the_renderer(self):
         from mpynode._common.osl.osl_verify import compare_renders
         calls = []
-        fn = _fake_render({"A": _ramp, "B": _ramp}, calls=calls)
+        fn    = _fake_render({"A": _ramp, "B": _ramp}, calls=calls)
         compare_renders("A", "B", fn, width=7, height=5)
         self.assertEqual(calls, [("A", 7, 5), ("B", 7, 5)])
 
@@ -255,7 +255,7 @@ class TestNoRendererIsNotAPass(unittest.TestCase):
 
     def test_first_render_unavailable_reports_not_ran(self):
         from mpynode._common.osl.osl_verify import compare_renders
-        fn = _fake_render({"A": None, "B": _ramp})
+        fn  = _fake_render({"A": None, "B": _ramp})
         res = compare_renders("A", "B", fn, width=4, height=4)
         self.assertFalse(res.ran)
         self.assertFalse(res.passed)
@@ -263,7 +263,7 @@ class TestNoRendererIsNotAPass(unittest.TestCase):
 
     def test_second_render_unavailable_reports_not_ran(self):
         from mpynode._common.osl.osl_verify import compare_renders
-        fn = _fake_render({"A": _ramp, "B": None})
+        fn  = _fake_render({"A": _ramp, "B": None})
         res = compare_renders("A", "B", fn, width=4, height=4)
         self.assertFalse(res.ran)
         self.assertFalse(res.passed)
@@ -321,7 +321,7 @@ class TestVacuousComparisonIsNotAPass(unittest.TestCase):
 
     def test_two_constant_images_do_not_pass(self):
         from mpynode._common.osl.osl_verify import compare_renders
-        fn = _fake_render({"A": _flat, "B": _flat})
+        fn  = _fake_render({"A": _flat, "B": _flat})
         res = compare_renders("A", "B", fn, width=4, height=4)
         self.assertTrue(res.ran)
         self.assertFalse(res.passed)
@@ -329,7 +329,7 @@ class TestVacuousComparisonIsNotAPass(unittest.TestCase):
 
     def test_one_constant_one_varying_still_compares(self):
         from mpynode._common.osl.osl_verify import compare_renders
-        fn = _fake_render({"A": _flat, "B": _ramp})
+        fn  = _fake_render({"A": _flat, "B": _ramp})
         res = compare_renders("A", "B", fn, width=4, height=4)
         self.assertTrue(res.ran)
         self.assertFalse(res.passed)
@@ -351,7 +351,7 @@ class TestCompareRenderToReference(unittest.TestCase):
     def test_render_size_follows_the_reference(self):
         from mpynode._common.osl.osl_verify import compare_render_to_reference
         calls = []
-        ref = self._img(7, 5, _ramp(7, 5))
+        ref   = self._img(7, 5, _ramp(7, 5))
         compare_render_to_reference("A", ref,
                                     _fake_render({"A": _ramp}, calls=calls))
         self.assertEqual(calls, [("A", 7, 5)])

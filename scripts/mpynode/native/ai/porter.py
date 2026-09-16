@@ -73,10 +73,10 @@ def compile_cpp(cpp_path: str, spec: dict, out_dir: str,
     on unix); it defaults False so the porter's own compiles are unchanged.
     """
     compiler = compiler or toolchain.default_compiler()
-    name = spec["suggested"]["node_type_name"]
-    plugin = os.path.join(out_dir, name + toolchain.plugin_ext())
-    is_msvc = toolchain.compiler_family(compiler) == "msvc"
-    benv = toolchain.build_env(compiler)
+    name     = spec["suggested"]["node_type_name"]
+    plugin   = os.path.join(out_dir, name + toolchain.plugin_ext())
+    is_msvc  = toolchain.compiler_family(compiler) == "msvc"
+    benv     = toolchain.build_env(compiler)
     # MSVC: with no captured vcvars env, do NOT fall back to a stray cl.exe on
     # PATH -- it may be an older toolset than the installed headers ("STL1001:
     # Unexpected compiler version"). Allow the ambient compiler only inside an
@@ -98,7 +98,7 @@ def compile_cpp(cpp_path: str, spec: dict, out_dir: str,
     # round would burn on the same error. Cannot trigger with a captured vcvars
     # env; this catches the ambient developer-shell fallback.
     if is_msvc:
-        include = (benv or os.environ).get("INCLUDE")
+        include  = (benv or os.environ).get("INCLUDE")
         mismatch = toolchain.diagnose_toolset_mismatch(exe, include)
         if mismatch:
             return False, mismatch, plugin
@@ -118,15 +118,15 @@ def compile_cpp(cpp_path: str, spec: dict, out_dir: str,
                 pass
     cmd = toolchain.compile_to_plugin_cmd(
         exe, cpp_path, plugin,
-        include_dir=toolchain.maya_include_dir(maya),
-        lib_dir=toolchain.maya_lib_dir(maya),
-        libs=codegen._libs_for(spec),
-        arch=toolchain.mac_arch(),
+        include_dir = toolchain.maya_include_dir(maya),
+        lib_dir     = toolchain.maya_lib_dir(maya),
+        libs        = codegen._libs_for(spec),
+        arch        = toolchain.mac_arch(),
         # A hover-capable locator links Maya's Qt frameworks (its self-contained
         # C++ hover service includes QCursor/QWidget). Off for every other node.
-        qt=bool(spec.get("needs_hover")),
-        optimize=optimize,
-        maya=maya,
+        qt       = bool(spec.get("needs_hover")),
+        optimize = optimize,
+        maya     = maya,
     )
     try:
         rc, log = toolchain.run_streaming(cmd, env=benv, log_cb=log_cb)
@@ -161,10 +161,10 @@ def apply_type_name(spec: dict, type_name: str) -> dict:
     # would perturb any reader before then). Deliberately does NOT use
     # identity.derive_class_identity (which lower-firsts the type name) -- this
     # override sets node_type_name to the sanitized name verbatim.
-    ident = spec_extractor._sanitize_ident(type_name)
-    sug = spec.setdefault("suggested", {})
+    ident                 = spec_extractor._sanitize_ident(type_name)
+    sug                   = spec.setdefault("suggested", {})
     sug["node_type_name"] = ident
-    sug["class_name"] = ident[:1].upper() + ident[1:]
+    sug["class_name"]     = ident[:1].upper() + ident[1:]
     return spec
 
 
@@ -195,7 +195,7 @@ def port_node(spec: dict, out_dir: str, complete_fn=None,
     complete_fn = complete_fn or _complete
     apply_type_name(spec, type_name)
     os.makedirs(out_dir, exist_ok=True)
-    name = spec["suggested"]["node_type_name"]
+    name     = spec["suggested"]["node_type_name"]
     cpp_path = os.path.join(out_dir, name + ".cpp")
 
     # Stream the porter's multi-step work into the live log window so the user
@@ -228,7 +228,7 @@ def port_node(spec: dict, out_dir: str, complete_fn=None,
         reason to throw away a good port. Used by all four splice sites,
         including the fix-loop, since `skel` is re-spliced from scratch each
         round and the previous round's additions are not carried over."""
-        out = splice_body(skel, ai_body)
+        out  = splice_body(skel, ai_body)
         need = prompt.missing_std_includes(out)
         if need:
             out = prompt.add_std_includes(out, need)
@@ -238,7 +238,7 @@ def port_node(spec: dict, out_dir: str, complete_fn=None,
 
     _log("[%s] generating C++ skeleton..." % name)
     inline_skeleton = codegen.generate_cpp(spec, for_port=True)  # validates scope
-    skeleton = inline_skeleton
+    skeleton        = inline_skeleton
 
     # Stage 1 is a DELIVERABLE. Emit it before anything can fail downstream, on
     # every path -- deterministic or not, assisted or not. For a node the
@@ -296,13 +296,13 @@ def port_node(spec: dict, out_dir: str, complete_fn=None,
     # (accumulated into `known` so a later helper may call an earlier one). No
     # shareable helpers -> shared_protos None -> the inline path, byte-for-byte. A
     # translation with no usable signature drops the node to the inline path.
-    shared_units = _shareable_helper_units(spec)
+    shared_units  = _shareable_helper_units(spec)
     shared_protos = None
     if shared_units:
         _log("[%s] translating %d shared helper(s)..."
              % (name, len(shared_units)))
         try:
-            known = [u["proto"] for u in shared_units if u.get("proto")]
+            known   = [u["proto"] for u in shared_units if u.get("proto")]
             results = []
             for u in shared_units:
                 r = _translate_helper(u, complete_fn, known)
@@ -315,14 +315,14 @@ def port_node(spec: dict, out_dir: str, complete_fn=None,
             shared_protos = [("%s.%s" % (u["module"], u["sym"]), r["proto"])
                              for (u, r) in zip(shared_units, results)]
         except _HelperProtoError:
-            skeleton = inline_skeleton
+            skeleton      = inline_skeleton
             shared_protos = None
 
     system, user = build_prompt(spec, skeleton, shared_protos=shared_protos)
 
     _log("[%s] requesting AI compute body..." % name)
     body = complete_fn(system, user)
-    cpp = _splice(skeleton, body)
+    cpp  = _splice(skeleton, body)
     with open(cpp_path, "w", encoding="utf-8") as f:
         f.write(cpp)
 
@@ -342,7 +342,7 @@ def port_node(spec: dict, out_dir: str, complete_fn=None,
             % (log[-4000:], cpp)
         )
         body = complete_fn(system, fix_user)
-        cpp = _splice(skeleton, body)
+        cpp  = _splice(skeleton, body)
         with open(cpp_path, "w", encoding="utf-8") as f:
             f.write(cpp)
         ok, log, bundle = compile_cpp(cpp_path, spec, out_dir, maya=maya,
@@ -357,7 +357,7 @@ def port_node(spec: dict, out_dir: str, complete_fn=None,
     if (not ok) and (shared_protos is not None):
         system, user = build_prompt(spec, inline_skeleton, shared_protos=None)
         body = complete_fn(system, user)
-        cpp = _splice(inline_skeleton, body)
+        cpp  = _splice(inline_skeleton, body)
         with open(cpp_path, "w", encoding="utf-8") as f:
             f.write(cpp)
         ok, log, bundle = compile_cpp(cpp_path, spec, out_dir, maya=maya,
@@ -373,7 +373,7 @@ def port_node(spec: dict, out_dir: str, complete_fn=None,
                 % (log[-4000:], cpp)
             )
             body = complete_fn(system, fix_user)
-            cpp = _splice(inline_skeleton, body)
+            cpp  = _splice(inline_skeleton, body)
             with open(cpp_path, "w", encoding="utf-8") as f:
                 f.write(cpp)
             ok, log, bundle = compile_cpp(cpp_path, spec, out_dir, maya=maya,
@@ -400,12 +400,12 @@ def port_node(spec: dict, out_dir: str, complete_fn=None,
         f.write(_verify_script(spec))
 
     return {
-        "ok": ok,
-        "node": name,
-        "cpp": cpp_path,
-        "bundle": bundle if ok else None,
-        "fix_rounds": rounds,
-        "compiler_log": log,
+        "ok":            ok,
+        "node":          name,
+        "cpp":           cpp_path,
+        "bundle":        bundle if ok else None,
+        "fix_rounds":    rounds,
+        "compiler_log":  log,
         "verify_script": verify_path,
     }
 

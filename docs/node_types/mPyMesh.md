@@ -96,7 +96,7 @@ from mpynode.wrappers.mpy_mesh import MPyMesh
 mc.file(new=True, force=True)
 
 # Build the expression-driven polygon generator (a DG node, no transform).
-gen = MPyMesh.create(name="quadGen")
+gen  = MPyMesh.create(name="quadGen")
 node = gen.get_name()
 
 # Compute a static 2x2 grid of quads: 3x3 = 9 verts, 4 quad faces.

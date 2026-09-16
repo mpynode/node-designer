@@ -17,14 +17,14 @@ Writes mega_results.json next to the bundle.
 """
 import os, sys, json, time
 
-HARNESS = os.path.dirname(os.path.abspath(__file__))
-ROOT = os.path.dirname(os.path.dirname(HARNESS))            # project root
+HARNESS      = os.path.dirname(os.path.abspath(__file__))
+ROOT         = os.path.dirname(os.path.dirname(HARNESS))            # project root
 MEGA_DEFAULT = os.path.join(ROOT, "templates", "All Templates Plugin")
 
-MODEL = os.environ.get("MPYNODE_PORT_MODEL", "claude-opus-4-8[1m]")
+MODEL  = os.environ.get("MPYNODE_PORT_MODEL", "claude-opus-4-8[1m]")
 EFFORT = os.environ.get("MPYNODE_PORT_EFFORT", "high")
 
-OUT_DIR = sys.argv[1] if len(sys.argv) > 1 else MEGA_DEFAULT
+OUT_DIR     = sys.argv[1] if len(sys.argv) > 1 else MEGA_DEFAULT
 PLUGIN_NAME = sys.argv[2] if len(sys.argv) > 2 else "mPyMega"
 
 # MPYNODE_MEGA_FROM_ARTIFACTS=1 links the per-template artifacts that already sit
@@ -105,12 +105,12 @@ def _assemble_from_artifacts(chosen, out_dir, plugin_name, maya_root):
     drop = set(rep.get("dropped") or [])
     rows = []
     for n in rep.get("nodes") or []:
-        name = n.get("name")
+        name   = n.get("name")
         ok_row = n.get("status") == "compiled" and name not in drop
         rows.append({
-            "type_name": name,
-            "base": "",
-            "type_id": n.get("id"),
+            "type_name":    name,
+            "base":         "",
+            "type_id":      n.get("id"),
             "build_status": "compiled" if ok_row else "dropped",
             "build_reason": "" if ok_row else (n.get("reason") or n.get("status")),
         })
@@ -122,12 +122,12 @@ def _assemble_from_artifacts(chosen, out_dir, plugin_name, maya_root):
                             "-- compile that template first",
         })
     return {
-        "ok": bool(rep.get("ok")) and not missing,
-        "bundle_path": rep.get("bundle"),
+        "ok":            bool(rep.get("ok")) and not missing,
+        "bundle_path":   rep.get("bundle"),
         "manifest_path": None,
-        "nodes": rows,
-        "errors": [],
-        "companions": [],
+        "nodes":         rows,
+        "errors":        [],
+        "companions":    [],
     }
 
 
@@ -185,7 +185,7 @@ def main():
 
     def progress_cb(ev):
         st = ev.get("stage"); status = ev.get("status")
-        node = ev.get("node") or "-"
+        node   = ev.get("node") or "-"
         detail = ev.get("detail") or ""
         if status in ("fail", "drop", "miss", "ok", "hit", "start") and \
            st in ("portability", "port", "assemble", "cache", "verify",
@@ -206,13 +206,13 @@ def main():
             [(p,) for p in paths],
             PLUGIN_NAME,
             OUT_DIR,
-            provider="claude_cli",
-            model=MODEL,
-            strict=False,       # best-effort: drop unportable, link the rest
-            verify=False,       # per-node parity already proven; prove co-link here
-            reuse_cache=True,   # warm cache from the per-template audit -> fast
-            progress_cb=progress_cb,
-            maya=MAYA_ROOT,
+            provider    = "claude_cli",
+            model       = MODEL,
+            strict      = False,  # best-effort: drop unportable, link the rest
+            verify      = False,  # per-node parity already proven; prove co-link here
+            reuse_cache = True,   # warm cache from the per-template audit -> fast
+            progress_cb = progress_cb,
+            maya        = MAYA_ROOT,
         )
     dt = time.time() - t0
 
@@ -221,8 +221,8 @@ def main():
     L("bundle_path   : %s" % result.get("bundle_path"))
     L("manifest_path : %s" % result.get("manifest_path"))
     L("seconds       : %.1f" % dt)
-    rows = result.get("nodes") or []
-    built = [r for r in rows if r.get("build_status") == "compiled"]
+    rows    = result.get("nodes") or []
+    built   = [r for r in rows if r.get("build_status") == "compiled"]
     dropped = [r for r in rows if r.get("build_status") != "compiled"]
     L("nodes linked  : %d / %d" % (len(built), len(rows)))
     L("")
@@ -249,15 +249,15 @@ def main():
         L("COMPANIONS: %s" % comps)
 
     out = {
-        "ok": bool(result.get("ok")),
+        "ok":          bool(result.get("ok")),
         "bundle_path": result.get("bundle_path"),
-        "seconds": dt,
-        "n_input": len(paths),
-        "n_linked": len(built),
-        "linked": [r.get("type_name") for r in built],
+        "seconds":     dt,
+        "n_input":     len(paths),
+        "n_linked":    len(built),
+        "linked":      [r.get("type_name") for r in built],
         "dropped": [{"type_name": r.get("type_name"),
                      "reason": r.get("build_reason")} for r in dropped],
-        "errors": result.get("errors"),
+        "errors":     result.get("errors"),
         "companions": comps,
     }
     # The build report is an artifact, not something loaded -- keep it under

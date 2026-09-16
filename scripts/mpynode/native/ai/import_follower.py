@@ -64,9 +64,9 @@ def _module_file(modname: str):
     PathFinder can't resolve from the filesystem.
     """
     try:
-        parts = modname.split(".")
+        parts  = modname.split(".")
         search = None  # None -> search sys.path (top level)
-        spec = None
+        spec   = None
         for i, _part in enumerate(parts):
             full = ".".join(parts[: i + 1])
             spec = _machinery.PathFinder.find_spec(full, search)
@@ -112,7 +112,7 @@ def _build_import_map(tree: ast.AST) -> dict:
                 if alias.asname:
                     m[alias.asname] = ("module", alias.name)
                 else:
-                    top = alias.name.split(".")[0]
+                    top    = alias.name.split(".")[0]
                     m[top] = ("module", top)
         elif isinstance(node, ast.ImportFrom):
             if (node.level or 0) > 0 or not node.module:
@@ -133,7 +133,7 @@ def _attr_chain(attr_node: ast.Attribute):
     """Flatten ``a.b.c`` -> ("a", ["b", "c"]) (base Name id, attr list, last =
     the accessed symbol). None if the chain root isn't a plain Name."""
     parts = []
-    cur = attr_node
+    cur   = attr_node
     while isinstance(cur, ast.Attribute):
         parts.append(cur.attr)
         cur = cur.value
@@ -154,7 +154,7 @@ def _module_ref_from_attr(attr_node: ast.Attribute, import_map: dict):
     ent = import_map.get(base)
     if not (ent and ent[0] == "module"):
         return None
-    real = ent[1]  # the real (possibly dotted) module the base binds to
+    real   = ent[1]      # the real (possibly dotted) module the base binds to
     middle = attrs[:-1]  # extra package segments between base and the symbol
     module = real + ("." + ".".join(middle) if middle else "")
     return (module, attrs[-1])
@@ -164,7 +164,7 @@ def _param_names(node: ast.AST) -> set:
     """Parameter names bound by a FunctionDef (so a param that shadows a
     top-level def isn't mistaken for a call to that def)."""
     names = set()
-    args = getattr(node, "args", None)
+    args  = getattr(node, "args", None)
     if args is not None:
         for a in (list(getattr(args, "posonlyargs", [])) + list(args.args)
                   + list(args.kwonlyargs)):
@@ -197,7 +197,7 @@ def _deps_of(node: ast.AST, modname: str, top_defs: dict, import_map: dict) -> s
     harmless (extra reference context); under-inclusion would drop a real helper,
     so we err toward including -- except we skip the def's own parameter names so
     a param shadowing a sibling def isn't mistaken for a call to it."""
-    deps = set()
+    deps  = set()
     bound = _param_names(node)
     for sub in ast.walk(node):
         if isinstance(sub, ast.Name) and isinstance(sub.ctx, ast.Load):
@@ -258,7 +258,7 @@ def collect_helper_sources(compute: str, init: str = "", *, max_sources: int = 5
     result = {"sources": [], "skipped": [], "errors": []}
     try:
         stdlib_dirs = _stdlib_dirs()
-        entry_src = "%s\n%s" % (init or "", compute or "")
+        entry_src   = "%s\n%s" % (init or "", compute or "")
         try:
             entry_tree = ast.parse(entry_src)
         except Exception:
@@ -273,20 +273,20 @@ def collect_helper_sources(compute: str, init: str = "", *, max_sources: int = 5
         # so the porter re-ran the LLM on every rebuild. Sorting the TRAVERSAL (not
         # ``result["sources"]``) keeps the BFS ordering -- sorted RESULTS would
         # change which unit shadows which in nd_lower._combined_helper_source.
-        worklist = sorted(_refs_in(entry_tree, entry_imports))
-        visited = set()
+        worklist     = sorted(_refs_in(entry_tree, entry_imports))
+        visited      = set()
         module_cache = {}  # modname -> (text, top_defs, import_map) | None
 
         def _load(modname):
             if modname in module_cache:
                 return module_cache[modname]
             entry = None
-            path = _module_file(modname)
+            path  = _module_file(modname)
             if path and _is_followable(modname, path, stdlib_dirs):
                 try:
                     with open(path, "r", encoding="utf-8") as f:
                         text = f.read()
-                    tree = ast.parse(text)
+                    tree  = ast.parse(text)
                     entry = (text, _top_level_defs(tree), _build_import_map(tree))
                 except Exception as exc:
                     result["errors"].append("parse %s: %s" % (modname, exc))
@@ -340,7 +340,7 @@ def render_for_prompt(result: dict) -> str:
     if not sources:
         return ""
     by_mod = {}
-    order = []
+    order  = []
     for s in sources:
         m = s.get("module", "?")
         if m not in by_mod:

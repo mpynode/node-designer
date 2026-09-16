@@ -24,8 +24,8 @@ from mpynode.native import compiler as codegen
 def _spec(needs_hover):
     spec = {
         "schema_version": 1,
-        "source_node": "gizmoCube",
-        "mpy_type": "mPyLocator",
+        "source_node":    "gizmoCube",
+        "mpy_type":       "mPyLocator",
         "suggested": {
             "node_type_name": "gizmoCube", "class_name": "GizmoCube",
             "type_id": "0x00070123", "mpx_base": "MPxLocatorNode",
@@ -35,12 +35,12 @@ def _spec(needs_hover):
             "wire_width": {"type": "float", "is_array": False,
                            "default_value": 2.0, "portable": True},
         },
-        "outputs": {},
+        "outputs":   {},
         "variables": {},
         "compute": ("scale = 1.0 if self.hovered else 0.5\n"
                     "self.auto_refresh = True\n"
                     "self.polygons = None\n"),
-        "init": "",
+        "init":    "",
         "affects": "all",
     }
     if needs_hover:
@@ -50,7 +50,7 @@ def _spec(needs_hover):
 
 def _fn_body(cpp, signature):
     start = cpp.index(signature)
-    end = cpp.index("\n}\n", start) + 3
+    end   = cpp.index("\n}\n", start) + 3
     return cpp[start:end]
 
 
@@ -74,7 +74,7 @@ class TestWholePixelPointSizes(unittest.TestCase):
 
 class TestOneDrawableBatchPerNode(unittest.TestCase):
     def setUp(self):
-        self.cpp = codegen._generate_locator_cpp(_spec(True))
+        self.cpp  = codegen._generate_locator_cpp(_spec(True))
         self.body = _fn_body(self.cpp, "::addUIDrawables(const MDagPath& objPath,")
 
     def test_one_pair_around_the_replay_loop_plus_the_polygon_bracket(self):
@@ -129,7 +129,7 @@ class TestTextSizedInPixels(unittest.TestCase):
 
 class TestThrottledIdleRefresh(unittest.TestCase):
     def setUp(self):
-        self.cpp = codegen._generate_locator_cpp(_spec(True))
+        self.cpp  = codegen._generate_locator_cpp(_spec(True))
         self.poll = _fn_body(self.cpp, "static void _poll(float, float, void*) {")
 
     def test_cost_is_the_main_threads_cpu_since_the_last_request(self):
@@ -140,8 +140,8 @@ class TestThrottledIdleRefresh(unittest.TestCase):
         self.assertIn("static double _threadCpu()", self.cpp)
         self.assertIn("GetThreadTimes(GetCurrentThread()", self.cpp)
         self.assertIn("clock_gettime(CLOCK_THREAD_CPUTIME_ID", self.cpp)
-        self.assertIn("#define NOMINMAX", self.cpp)          # windows.h must not shadow std::max
-        self.assertIn("#define NOGDI", self.cpp)             # nor define a DrawText macro
+        self.assertIn("#define NOMINMAX", self.cpp)  # windows.h must not shadow std::max
+        self.assertIn("#define NOGDI", self.cpp)     # nor define a DrawText macro
         for stale in ("g_lastTickT", "g_pendingMax", "_onEndRender", "addNotification",
                       "g_costPending", "MDrawContext"):
             self.assertNotIn(stale, self.cpp)
@@ -149,12 +149,12 @@ class TestThrottledIdleRefresh(unittest.TestCase):
     def test_poll_waits_twice_the_cpu_spent_never_less_than_a_period(self):
         self.assertIn("const double _spent = (g_lastDirtyT < 0.0) ? 0.0 : std::max(0.0, _cpu - g_cpuAtDirty);",
                       self.poll)
-        self.assertIn("const double _wait = std::max(_period, 2.0 * _spent);", self.poll)
-        self.assertIn("(g_lastDirtyT < 0.0 || (_now - g_lastDirtyT) >= _wait)", self.poll)
+        self.assertIn("const double _wait = std::max(_period, 2.0 * _spent);",            self.poll)
+        self.assertIn("(g_lastDirtyT < 0.0 || (_now - g_lastDirtyT) >= _wait)",           self.poll)
         self.assertIn("g_lastRedraw = _spent; g_lastDirtyT = _now; g_cpuAtDirty = _cpu;", self.poll)
 
     def test_dirtying_is_inside_the_gate(self):
-        gate = self.poll.index("(_now - g_lastDirtyT) >= _wait")
+        gate  = self.poll.index("(_now - g_lastDirtyT) >= _wait")
         dirty = self.poll.index("setGeometryDrawDirty(h->second.object())")
         self.assertLess(gate, dirty)
 
@@ -192,9 +192,9 @@ class TestWallClockSlot(unittest.TestCase):
         self.cpp = codegen._generate_locator_cpp(_spec(True))
 
     def test_wallclock_is_seeded_from_the_epoch_clock(self):
-        self.assertIn("static double _epochClock()", self.cpp)
+        self.assertIn("static double _epochClock()",            self.cpp)
         self.assertIn("system_clock::now().time_since_epoch()", self.cpp)
-        self.assertIn("inp.wallClock = _epochClock();", self.cpp)
+        self.assertIn("inp.wallClock = _epochClock();",         self.cpp)
         self.assertNotIn("inp.wallClock = _wallClock();", self.cpp)
 
     def test_the_service_itself_keeps_the_steady_clock(self):

@@ -10,8 +10,8 @@ from __future__ import annotations
 import maya.cmds as mc
 
 _STANDALONE_INITIALIZED = False
-_PLUGINS_LOADED = False
-_STUB_COMPILED_LOADED = False
+_PLUGINS_LOADED         = False
+_STUB_COMPILED_LOADED   = False
 
 
 def standalone_init() -> None:

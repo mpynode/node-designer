@@ -148,9 +148,9 @@ def ai_convert_compute_to_osl(compute_src, init_src, shader_name, complete_fn,
             except Exception:
                 pass
 
-    total = max_repair + 1
+    total       = max_repair + 1
     prior_error = None
-    last_error = "no attempts were made"
+    last_error  = "no attempts were made"
     for i in range(total):
         _log("Attempt %d/%d: generating OSL%s..." % (
             i + 1, total, " (repair)" if prior_error else ""))

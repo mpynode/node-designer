@@ -69,9 +69,9 @@ class TestClasslessCompileGate(unittest.TestCase):
     def test_classless_node_named_and_stamped(self):
         from mpynode import MPyNode
 
-        n = MPyNode.create(name="lonely")  # class-less
+        n   = MPyNode.create(name="lonely")  # class-less
         dlg = self._dialog()
-        dlg._checked = {n.get_name()}
+        dlg._checked               = {n.get_name()}
         dlg._prompt_class_name_for = lambda name: "Widget"
         proceed = dlg._resolve_classless(dlg._checked_nodes())
         self.assertTrue(proceed)
@@ -82,9 +82,9 @@ class TestClasslessCompileGate(unittest.TestCase):
     def test_classless_cancel_excludes_node(self):
         from mpynode import MPyNode
 
-        n = MPyNode.create(name="lonely2")
-        dlg = self._dialog()
-        dlg._checked = {n.get_name()}
+        n                          = MPyNode.create(name="lonely2")
+        dlg                        = self._dialog()
+        dlg._checked               = {n.get_name()}
         dlg._prompt_class_name_for = lambda name: None  # user cancelled
         dlg._resolve_classless(dlg._checked_nodes())
         # Excluded from this compile; still class-less (untouched).
@@ -92,7 +92,7 @@ class TestClasslessCompileGate(unittest.TestCase):
         self.assertEqual(_class_of(n.get_name()), "")
 
     def test_classed_node_is_not_prompted(self):
-        n = self._classed("clsNode", "Gizmo")
+        n   = self._classed("clsNode", "Gizmo")
         dlg = self._dialog()
         dlg._checked = {n.get_name()}
         calls = []
@@ -105,9 +105,9 @@ class TestClasslessCompileGate(unittest.TestCase):
     def test_invalid_name_excludes_node(self):
         from mpynode import MPyNode
 
-        n = MPyNode.create(name="lonely3")
+        n   = MPyNode.create(name="lonely3")
         dlg = self._dialog()
-        dlg._checked = {n.get_name()}
+        dlg._checked               = {n.get_name()}
         dlg._prompt_class_name_for = lambda name: "notPascal"  # lower-first
         warned = {}
         dlg._warn = lambda title, text: warned.setdefault("t", title)
@@ -121,11 +121,11 @@ class TestClasslessCompileGate(unittest.TestCase):
     def test_compile_aborts_when_only_classless_declined(self):
         from mpynode import MPyNode
 
-        n = MPyNode.create(name="onlyClassless")
-        dlg = self._dialog()
-        dlg._checked = {n.get_name()}
-        dlg._prompt_class_name_for = lambda name: None  # decline
-        dlg._warn = lambda title, text: None  # swallow the "Nothing to Compile"
+        n                          = MPyNode.create(name="onlyClassless")
+        dlg                        = self._dialog()
+        dlg._checked               = {n.get_name()}
+        dlg._prompt_class_name_for = lambda name: None         # decline
+        dlg._warn                  = lambda title, text: None  # swallow the "Nothing to Compile"
         dlg._on_compile()
         # Nothing left checked -> aborted before a controller ever started.
         self.assertIsNone(dlg._controller)
@@ -135,30 +135,30 @@ class TestClasslessCompileGate(unittest.TestCase):
     def test_compile_stops_after_naming_class_awaiting_second_click(self):
         from mpynode import MPyNode
 
-        n = MPyNode.create(name="willName")
+        n   = MPyNode.create(name="willName")
         dlg = self._dialog()
-        dlg._checked = {n.get_name()}
+        dlg._checked               = {n.get_name()}
         dlg._prompt_class_name_for = lambda name: "Widget"
         order = []
         # Would run AFTER the naming gate; must NOT be reached this click.
         dlg._resolve_divergence = lambda checked: (order.append("div"), False)[1]
-        warned = {}
-        dlg._warn = lambda title, text: warned.setdefault("title", title)
+        warned                  = {}
+        dlg._warn               = lambda title, text: warned.setdefault("title", title)
         dlg._on_compile()
         # Naming a Class must NOT auto-compile: the name is stamped, the run
         # stops before divergence, the node stays checked, and the user is
         # told to press Compile again.
-        self.assertEqual(order, [])                      # never reached divergence
+        self.assertEqual(order, [])                # never reached divergence
         self.assertEqual(_class_of(n.get_name()), "mpynode_user.Widget")
-        self.assertIsNone(dlg._controller)               # no compile started
-        self.assertIn(n.get_name(), dlg._checked)        # still checked for round 2
-        self.assertTrue(warned)                          # told to click again
+        self.assertIsNone(dlg._controller)         # no compile started
+        self.assertIn(n.get_name(), dlg._checked)  # still checked for round 2
+        self.assertTrue(warned)                    # told to click again
 
     def test_compile_with_all_classed_proceeds_to_divergence(self):
         # the second-click rule applies only when a Class was just named. With
         # everything already classed the gate names nothing, so the compile
         # flows straight to the divergence pre-flight.
-        n = self._classed("alreadyClassed", "Gizmo")
+        n   = self._classed("alreadyClassed", "Gizmo")
         dlg = self._dialog()
         dlg._checked = {n.get_name()}
         order = []

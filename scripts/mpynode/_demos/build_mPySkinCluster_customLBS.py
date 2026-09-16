@@ -101,8 +101,8 @@ def build():
     # --- 3-bone chain along Y: base (-3) -> mid (0) -> tip (3) ---------------
     mc.select(clear=True)
     j_base = mc.joint(name="skinBase", position=(0.0, -3.0, 0.0))
-    j_mid = mc.joint(name="skinMid", position=(0.0, 0.0, 0.0))
-    j_tip = mc.joint(name="skinTip", position=(0.0, 3.0, 0.0))   # chain only
+    j_mid  = mc.joint(name="skinMid",  position=(0.0, 0.0, 0.0))
+    j_tip  = mc.joint(name="skinTip",  position=(0.0, 3.0, 0.0))   # chain only
     mc.select(clear=True)
 
     # Rest vertex positions (object space).
@@ -116,14 +116,14 @@ def build():
     # Height-linear weights: t = (y - ymin)/(ymax - ymin);
     #   w_base = 1 - t (influence 0), w_mid = t (influence 1).
     ymin, ymax = -3.0, 3.0
-    t = np.clip((rest_pts[:, 1] - ymin) / (ymax - ymin), 0.0, 1.0)
-    weights = np.zeros((n_verts, 2), dtype=np.float64)
+    t             = np.clip((rest_pts[:, 1] - ymin) / (ymax - ymin), 0.0, 1.0)
+    weights       = np.zeros((n_verts, 2), dtype=np.float64)
     weights[:, 0] = 1.0 - t
     weights[:, 1] = t
 
     # --- custom skinCluster: influences = base + mid ONLY -------------------
     wrapper = MPySkinCluster.create(mesh=cyl, joints=[j_base, j_mid], name="customLBS")
-    node = wrapper.get_name()
+    node    = wrapper.get_name()
 
     # Populate weightList -- the source of truth Maya's Component Editor and
     # Paint Skin Weights read/write. Both influences per vertex (including

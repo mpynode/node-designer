@@ -123,8 +123,8 @@ class NewNodeOptionsMenu(QMenu):
 
     def __init__(self, parent, native_type, on_create):
         super().__init__(parent)
-        self._native_type = native_type
-        self._on_create = on_create
+        self._native_type     = native_type
+        self._on_create       = on_create
         self._supports_attach = _type_supports_attach(native_type)
         self.setToolTipsVisible(True)
 

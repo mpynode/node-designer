@@ -44,7 +44,7 @@ MATH_FUNCS = frozenset((
     "sqrt", "exp", "log", "pow", "floor", "ceil", "fabs", "hypot",
 ))
 BUILTIN_FUNCS = frozenset(("abs", "min", "max", "pow"))  # kept verbatim in OSL
-DROP_CASTS = frozenset(("float", "int"))  # OSL is typed -- casts are noise
+DROP_CASTS    = frozenset(("float", "int"))              # OSL is typed -- casts are noise
 
 
 # ---- Static constant extraction from the Init tier (no exec) ----
@@ -91,13 +91,13 @@ def _fmt_num(v):
 # ---- Conversion state ----
 class _Ctx:
     def __init__(self, consts):
-        self.consts = consts or {}
-        self.params = []               # ordered [(otype, name, default)]
-        self.param_names = set()
-        self.local_scalars = set()     # python names that became float locals
-        self.uv_map = {}               # python uv name -> 'u' / 'v'
-        self.color_var = None          # python name of the sampled colour
-        self.osl_color = "grid"
+        self.consts            = consts or {}
+        self.params            = []     # ordered [(otype, name, default)]
+        self.param_names       = set()
+        self.local_scalars     = set()  # python names that became float locals
+        self.uv_map            = {}     # python uv name -> 'u' / 'v'
+        self.color_var         = None   # python name of the sampled colour
+        self.osl_color         = "grid"
         self.referenced_consts = set()
 
     def add_param(self, otype, name, default):
@@ -176,7 +176,7 @@ class _OslExprTransform(ast.NodeTransformer):
             raise UnsupportedComputeError(
                 "operator '%s' is not supported in OSL v1%s"
                 % (_safe_unparse(node), _HINT))
-        node.left = self.visit(node.left)
+        node.left  = self.visit(node.left)
         node.right = self.visit(node.right)
         return node
 
@@ -225,18 +225,18 @@ class _OslExprTransform(ast.NodeTransformer):
         raise UnsupportedComputeError(
             "unsupported expression '%s'%s" % (_safe_unparse(node), _HINT))
 
-    visit_JoinedStr = _reject       # f-strings
+    visit_JoinedStr      = _reject       # f-strings
     visit_FormattedValue = _reject
-    visit_Tuple = _reject
-    visit_List = _reject
-    visit_Dict = _reject
-    visit_Set = _reject
-    visit_Lambda = _reject
-    visit_ListComp = _reject
-    visit_SetComp = _reject
-    visit_DictComp = _reject
-    visit_GeneratorExp = _reject
-    visit_Starred = _reject
+    visit_Tuple          = _reject
+    visit_List           = _reject
+    visit_Dict           = _reject
+    visit_Set            = _reject
+    visit_Lambda         = _reject
+    visit_ListComp       = _reject
+    visit_SetComp        = _reject
+    visit_DictComp       = _reject
+    visit_GeneratorExp   = _reject
+    visit_Starred        = _reject
 
 
 def _transpile(node, ctx):
@@ -368,7 +368,7 @@ def _detect_texture_idiom(stmts, ctx):
     col_axis, row_axis = uv[0], uv[1]   # "u, v = self.uvCoord" -> u=col, v=row
 
     consumed = set()
-    flip = False
+    flip     = False
     for i, st in enumerate(stmts):
         if _match_image_load(st):
             consumed.add(i)
@@ -386,15 +386,15 @@ def _detect_texture_idiom(stmts, ctx):
             consumed.add(i)
 
     ctx.add_param("string", "filename", '""')
-    ctx.color_var = color_var
+    ctx.color_var        = color_var
     ctx.uv_map[col_axis] = "u"
     ctx.uv_map[row_axis] = "v"
     return {
-        "consumed": consumed,
+        "consumed":     consumed,
         "sample_index": sample_index,
-        "file_param": "filename",
-        "u_expr": "u",
-        "flip_expr": "1.0 - v" if flip else "v",
+        "file_param":   "filename",
+        "u_expr":       "u",
+        "flip_expr":    "1.0 - v" if flip else "v",
     }
 
 
@@ -480,12 +480,12 @@ def convert_compute_to_osl(compute_src, consts=None, shader_name="mpyfile_shader
         raise UnsupportedComputeError(
             "Compute source is not valid Python (%s)%s" % (exc, _HINT))
 
-    ctx = _Ctx(consts)
-    stmts = list(tree.body)
-    idiom = _detect_texture_idiom(stmts, ctx)
+    ctx      = _Ctx(consts)
+    stmts    = list(tree.body)
+    idiom    = _detect_texture_idiom(stmts, ctx)
     consumed = idiom["consumed"] if idiom else set()
 
-    body_lines = []
+    body_lines      = []
     emitted_texture = False
     for i, st in enumerate(stmts):
         if i in consumed:
@@ -580,7 +580,7 @@ def assess_osl_tractability(compute_src, init_src=None,
     except SyntaxError:
         return True, ""  # a syntax error is the deterministic arm's to report
     written = []
-    seen = set()
+    seen    = set()
     for node in ast.walk(tree):
         if isinstance(node, ast.Assign):
             for tgt in node.targets:

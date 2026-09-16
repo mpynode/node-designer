@@ -6,18 +6,18 @@ __version__ = "2.0.0a1"
 # MPyNurbsCurve`` costs nothing at import time and cannot cycle. Importing a
 # name only defines the class; nodes are created in ``.create()``.
 _WRAPPER_EXPORTS = {
-    "MPyNode": "mpynode.wrappers._mpy_node",
-    "MPyNurbsCurve": "mpynode.wrappers.mpy_nurbs_curve",
-    "MPyMesh": "mpynode.wrappers.mpy_mesh",
+    "MPyNode":         "mpynode.wrappers._mpy_node",
+    "MPyNurbsCurve":   "mpynode.wrappers.mpy_nurbs_curve",
+    "MPyMesh":         "mpynode.wrappers.mpy_mesh",
     "MPyNurbsSurface": "mpynode.wrappers.mpy_nurbs_surface",
-    "MPyTransform": "mpynode.wrappers.mpy_transform",
-    "MPyLocator": "mpynode.wrappers.mpy_locator",
-    "MPyConstraint": "mpynode.wrappers.mpy_constraint",
-    "MPyFile": "mpynode.wrappers.mpy_file",
-    "MPyDeformer": "mpynode.wrappers.mpy_deformer",
-    "MPySkinCluster": "mpynode.wrappers.mpy_skin_cluster",
-    "MPyBlendShape": "mpynode.wrappers.mpy_blend_shape",
-    "MPyIkSolver": "mpynode.wrappers.mpy_iksolver",
+    "MPyTransform":    "mpynode.wrappers.mpy_transform",
+    "MPyLocator":      "mpynode.wrappers.mpy_locator",
+    "MPyConstraint":   "mpynode.wrappers.mpy_constraint",
+    "MPyFile":         "mpynode.wrappers.mpy_file",
+    "MPyDeformer":     "mpynode.wrappers.mpy_deformer",
+    "MPySkinCluster":  "mpynode.wrappers.mpy_skin_cluster",
+    "MPyBlendShape":   "mpynode.wrappers.mpy_blend_shape",
+    "MPyIkSolver":     "mpynode.wrappers.mpy_iksolver",
 }
 
 

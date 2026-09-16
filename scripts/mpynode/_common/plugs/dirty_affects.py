@@ -415,7 +415,7 @@ def api2_suspended_in_block(node, data_block) -> bool:
     Belt and braces with :func:`api2_dirty_gate`: a node suspended BY HAND
     while its outputs are still wired is still asked to compute by whatever
     reads them, and Blocking means "not evaluated"."""
-    cls = type(node)
+    cls  = type(node)
     attr = getattr(cls, _STATE_ATTR_CACHE, None)
     if attr is None:
         try:

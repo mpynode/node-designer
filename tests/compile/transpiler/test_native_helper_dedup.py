@@ -71,7 +71,7 @@ class TestCollectHelperSources(_TempModules):
             "from geomath1 import curvature\n"
             "self.out = curvature(self.a, self.b)\n"
         )
-        res = ifol.collect_helper_sources(compute, "")
+        res   = ifol.collect_helper_sources(compute, "")
         names = {s["name"] for s in res["sources"]}
         self.assertIn("curvature", names)
         self.assertIn("_norm", names)  # same-module transitive helper
@@ -82,8 +82,8 @@ class TestCollectHelperSources(_TempModules):
     def test_follows_module_attribute_access(self):
         self._write("geomath2", "def curv(a):\n    return a + 1\n")
         compute = "import geomath2 as g\nself.out = g.curv(self.a)\n"
-        res = ifol.collect_helper_sources(compute, "")
-        names = {s["name"] for s in res["sources"]}
+        res     = ifol.collect_helper_sources(compute, "")
+        names   = {s["name"] for s in res["sources"]}
         self.assertIn("curv", names)
 
     def test_follows_class_definition(self):
@@ -92,7 +92,7 @@ class TestCollectHelperSources(_TempModules):
             "class Solver:\n    def run(self, x):\n        return x\n",
         )
         compute = "from geomath3 import Solver\nself.out = Solver().run(self.a)\n"
-        res = ifol.collect_helper_sources(compute, "")
+        res     = ifol.collect_helper_sources(compute, "")
         self.assertIn("Solver", {s["name"] for s in res["sources"]})
         self.assertIn("class Solver", ifol.render_for_prompt(res))
 
@@ -104,8 +104,8 @@ class TestCollectHelperSources(_TempModules):
             "def curvature(a):\n    return helper(a) * 2\n",
         )
         compute = "from geomath4 import curvature\nself.out = curvature(self.a)\n"
-        res = ifol.collect_helper_sources(compute, "")
-        names = {(s["module"], s["name"]) for s in res["sources"]}
+        res     = ifol.collect_helper_sources(compute, "")
+        names   = {(s["module"], s["name"]) for s in res["sources"]}
         self.assertIn(("geomath4", "curvature"), names)
         self.assertIn(("geocore4", "helper"), names)  # followed across modules
 
@@ -115,15 +115,15 @@ class TestCollectHelperSources(_TempModules):
             "import math\n"
             "self.out = float(np.sum(self.pts)) + math.sqrt(self.a)\n"
         )
-        res = ifol.collect_helper_sources(compute, "")
+        res  = ifol.collect_helper_sources(compute, "")
         mods = {s["module"] for s in res["sources"]}
-        self.assertNotIn("numpy", mods)   # handled by translation_knowledge
-        self.assertNotIn("math", mods)    # stdlib / C builtin
+        self.assertNotIn("numpy", mods)  # handled by translation_knowledge
+        self.assertNotIn("math", mods)   # stdlib / C builtin
         self.assertEqual(res["sources"], [])
 
     def test_unresolvable_import_degrades(self):
         compute = "from totally_missing_xyz import foo\nself.out = foo(self.a)\n"
-        res = ifol.collect_helper_sources(compute, "")  # must not raise
+        res     = ifol.collect_helper_sources(compute, "")  # must not raise
         self.assertEqual(res["sources"], [])
 
     def test_syntax_error_source_degrades(self):
@@ -144,7 +144,7 @@ class TestCollectHelperSources(_TempModules):
             "def f(a):\n    return a\n" % sentinel,
         )
         compute = "from sideeffect5 import f\nself.out = f(self.a)\n"
-        res = ifol.collect_helper_sources(compute, "")
+        res     = ifol.collect_helper_sources(compute, "")
         self.assertIn("f", {s["name"] for s in res["sources"]})  # source found
         self.assertFalse(
             os.path.exists(sentinel),
@@ -162,7 +162,7 @@ class TestCollectHelperSources(_TempModules):
              "leaf": "def curvature(a):\n    return a * 2\n"},
         )
         compute = "from pkgX.leaf import curvature\nself.out = curvature(self.a)\n"
-        res = ifol.collect_helper_sources(compute, "")
+        res     = ifol.collect_helper_sources(compute, "")
         self.assertIn(
             ("pkgX.leaf", "curvature"),
             {(s["module"], s["name"]) for s in res["sources"]},
@@ -180,7 +180,7 @@ class TestCollectHelperSources(_TempModules):
             {"__init__": "", "sub": "def helper(a):\n    return a + 7\n"},
         )
         compute = "import pkgY.sub\nself.out = pkgY.sub.helper(self.a)\n"
-        res = ifol.collect_helper_sources(compute, "")
+        res     = ifol.collect_helper_sources(compute, "")
         self.assertIn(
             ("pkgY.sub", "helper"),
             {(s["module"], s["name"]) for s in res["sources"]},
@@ -194,8 +194,8 @@ class TestCollectHelperSources(_TempModules):
             "def memo(fn):\n    return fn\n\n@memo\ndef curvature(a):\n    return a * 2\n",
         )
         compute = "from decomod import curvature\nself.out = curvature(self.a)\n"
-        res = ifol.collect_helper_sources(compute, "")
-        curv = [s for s in res["sources"] if s["name"] == "curvature"]
+        res     = ifol.collect_helper_sources(compute, "")
+        curv    = [s for s in res["sources"] if s["name"] == "curvature"]
         self.assertTrue(curv)
         self.assertIn("@memo", curv[0]["source"])
 
@@ -210,7 +210,7 @@ class TestCollectHelperSources(_TempModules):
             "from shadowmod import curvature\n"
             "self.out = curvature(self.a, self.b)\n"
         )
-        res = ifol.collect_helper_sources(compute, "")
+        res   = ifol.collect_helper_sources(compute, "")
         names = {s["name"] for s in res["sources"]}
         self.assertIn("curvature", names)
         self.assertNotIn("scale", names)  # 'scale' is a param here, not the def
@@ -218,9 +218,9 @@ class TestCollectHelperSources(_TempModules):
     def test_helper_defined_in_init_is_not_external(self):
         # A helper DEFINED in Init (not imported) is already handed to the porter
         # via the Init block -- the follower shouldn't duplicate it as external.
-        init = "def localhelp(x):\n    return x + 1\n"
+        init    = "def localhelp(x):\n    return x + 1\n"
         compute = "self.out = localhelp(self.a)\n"
-        res = ifol.collect_helper_sources(compute, init)
+        res     = ifol.collect_helper_sources(compute, init)
         self.assertEqual(res["sources"], [])
 
 
@@ -230,13 +230,13 @@ class TestPorterPromptIntegration(unittest.TestCase):
 
     def _spec(self, **over):
         spec = {
-            "mpy_type": "mPyNode",
+            "mpy_type":    "mPyNode",
             "source_node": "n",
-            "suggested": {"mpx_base": "MPxNode"},
-            "compute": "self.out = self.a",
-            "init": "",
-            "inputs": {},
-            "outputs": {},
+            "suggested":   {"mpx_base": "MPxNode"},
+            "compute":     "self.out = self.a",
+            "init":        "",
+            "inputs":      {},
+            "outputs":     {},
         }
         spec.update(over)
         return spec
@@ -245,9 +245,9 @@ class TestPorterPromptIntegration(unittest.TestCase):
         from mpynode.native.ai import porter
 
         spec = self._spec(
-            compute="self.out = foo(self.a)",
-            init="from m import foo",
-            external_helpers="# --- from module 'm' ---\ndef foo(a):\n    return a + 1",
+            compute          = "self.out = foo(self.a)",
+            init             = "from m import foo",
+            external_helpers = "# --- from module 'm' ---\ndef foo(a):\n    return a + 1",
         )
         _system, user = porter.build_prompt(spec, "// PORT_BEGIN\n// PORT_END\n")
         self.assertIn("External helper modules", user)
@@ -260,7 +260,7 @@ class TestPorterPromptIntegration(unittest.TestCase):
         # No external_helpers key at all -> must match the absent-key prompt
         # exactly, and never mention the helper block.
         spec_absent = self._spec()
-        spec_empty = self._spec(external_helpers="")
+        spec_empty  = self._spec(external_helpers="")
         _s1, u_absent = porter.build_prompt(spec_absent, skeleton)
         _s2, u_empty = porter.build_prompt(spec_empty, skeleton)
         self.assertNotIn("External helper modules", u_absent)
@@ -396,7 +396,7 @@ class TestTransformExtractsSharedHelper(unittest.TestCase):
         src = _node_src("fooNode", "FooNode", "0x00081000")
         frag, _info = bundler.transform_node_cpp(src, "fooNode", _id_for)
         proto_at = frag.index("double mpyh_abc123def0(double x, double k);")
-        ns_at = frag.index("namespace nd_fooNode")
+        ns_at    = frag.index("namespace nd_fooNode")
         self.assertLess(proto_at, ns_at,
                         "proto decl must precede the node namespace (global scope)")
 
@@ -421,7 +421,7 @@ class TestAssembleDedup(unittest.TestCase):
         from mpynode.native.toolchain import typeid_registry
         from mpynode.native.compiler import bundler
 
-        d = tempfile.mkdtemp(prefix="shared_asm_")
+        d  = tempfile.mkdtemp(prefix="shared_asm_")
         p1 = os.path.join(d, "fooNode.cpp")
         p2 = os.path.join(d, "barNode.cpp")
         with open(p1, "w") as fh:
@@ -462,7 +462,7 @@ class TestAssembleDedup(unittest.TestCase):
         from mpynode.native.toolchain import typeid_registry
         from mpynode.native.compiler import bundler
 
-        d = tempfile.mkdtemp(prefix="shared_asm_none_")
+        d  = tempfile.mkdtemp(prefix="shared_asm_none_")
         p1 = os.path.join(d, "plainNode.cpp")
         with open(p1, "w") as fh:
             fh.write(_node_src("plainNode", "PlainNode", "0x00081000",
@@ -499,8 +499,8 @@ class TestPorterScalarProto(unittest.TestCase):
             self._u("scaled", "def scaled(x, k):\n    return x * k + 1.0\n"))
         c = porter._derive_scalar_proto(
             self._u("scaled", "def scaled(x, k):\n    return x * k + 2.0\n"))
-        self.assertEqual(a[0], b[0])          # same source -> same name
-        self.assertNotEqual(a[0], c[0])       # different source -> different name
+        self.assertEqual(a[0], b[0])     # same source -> same name
+        self.assertNotEqual(a[0], c[0])  # different source -> different name
 
     def test_no_arg_helper(self):
         from mpynode.native.ai import porter
@@ -531,8 +531,8 @@ class TestShareableHelperUnits(unittest.TestCase):
             {"module": "m", "name": "scaled",
              "source": "def scaled(x, k):\n    return x * k + 1.0\n"}]}
         units = porter._shareable_helper_units(spec)
-        self.assertEqual(len(units), 1)
-        self.assertEqual(units[0]["sym"], "scaled")
+        self.assertEqual(len(units),         1)
+        self.assertEqual(units[0]["sym"],    "scaled")
         self.assertEqual(units[0]["module"], "m")
         self.assertTrue(units[0]["name"].startswith("mpyh_"))
 
@@ -554,9 +554,9 @@ class TestShareableHelperUnits(unittest.TestCase):
 class TestPorterSharedPromptAndInject(unittest.TestCase):
     def _spec(self, **over):
         spec = {"mpy_type": "mPyNode", "source_node": "n",
-                "suggested": {"mpx_base": "MPxNode"},
-                "compute": "self.out = scaled(self.a, self.k)",
-                "init": "from m import scaled",
+                "suggested":        {"mpx_base": "MPxNode"},
+                "compute":          "self.out = scaled(self.a, self.k)",
+                "init":             "from m import scaled",
                 "external_helpers": "# --- from module 'm' ---\n"
                                     "def scaled(x, k):\n    return x * k + 1.0",
                 "inputs": {}, "outputs": {}}
@@ -693,7 +693,7 @@ class TestSharedUnitForwardDecls(unittest.TestCase):
             {"name": "mpyh_B", "proto": "double mpyh_B(double x)",
              "code": "double mpyh_B(double x) { return x * 2.0; }"},
         ]
-        d = tempfile.mkdtemp(prefix="shared_compile_")
+        d   = tempfile.mkdtemp(prefix="shared_compile_")
         src = os.path.join(d, "shared_helpers.cpp")
         with open(src, "w") as fh:
             fh.write(bundler.make_shared_helpers_cpp(blocks))
@@ -716,10 +716,10 @@ class TestPorterBundlerRoundTrip(unittest.TestCase):
             {"module": "m", "name": "scaled",
              "source": "def scaled(x, k):\n    return x * k + 1.0\n"})
         code = "%s { return x * k + 1.0; }" % proto
-        blk = porter._marked_block(name, proto, code)
+        blk  = porter._marked_block(name, proto, code)
         _t, blocks = bundler._extract_shared_helpers("pre\n" + blk + "post\n")
-        self.assertEqual(len(blocks), 1)
-        self.assertEqual(blocks[0]["name"], name)
+        self.assertEqual(len(blocks),        1)
+        self.assertEqual(blocks[0]["name"],  name)
         self.assertEqual(blocks[0]["proto"], proto)
         self.assertIn("return x * k + 1.0;", blocks[0]["code"])
 
@@ -912,7 +912,7 @@ class TestShareableUnitsTagging(unittest.TestCase):
 class TestTranslateHelperNonScalar(unittest.TestCase):
     def _unit(self):
         from mpynode.native.ai import porter
-        src = "def vdot(a, b):\n    return a[0]*b[0]+a[1]*b[1]+a[2]*b[2]\n"
+        src  = "def vdot(a, b):\n    return a[0]*b[0]+a[1]*b[1]+a[2]*b[2]\n"
         name = porter._helper_symbol("m", "vdot", src)
         return {"module": "m", "sym": "vdot", "source": src,
                 "name": name, "proto": None, "kind": "nonscalar"}
@@ -920,20 +920,20 @@ class TestTranslateHelperNonScalar(unittest.TestCase):
     def test_nonscalar_prompt_and_parsed_proto(self):
         from mpynode.native.ai import porter
         porter.reset_helper_memo()
-        u = self._unit()
+        u    = self._unit()
         seen = {}
 
         def spy(system, user):
             seen["system"] = system
-            seen["user"] = user
+            seen["user"]   = user
             return ("PROTO: double %s(const MVector& a, const MVector& b)\n"
                     "double %s(const MVector& a, const MVector& b) "
                     "{ return a.x*b.x+a.y*b.y+a.z*b.z; }" % (u["name"], u["name"]))
 
         r = porter._translate_helper(u, spy, [])
         self.assertEqual(seen["system"], porter._SYSTEM_HELPER)
-        self.assertIn("PROTO:", seen["user"])          # nonscalar output contract
-        self.assertIn(u["name"], seen["user"])         # the fixed name is given
+        self.assertIn("PROTO:", seen["user"])   # nonscalar output contract
+        self.assertIn(u["name"], seen["user"])  # the fixed name is given
         self.assertEqual(
             r["proto"], "double %s(const MVector& a, const MVector& b)" % u["name"])
         self.assertIn("a.x*b.x", r["code"])
@@ -941,7 +941,7 @@ class TestTranslateHelperNonScalar(unittest.TestCase):
     def test_translate_once_memoizes_chosen_proto(self):
         from mpynode.native.ai import porter
         porter.reset_helper_memo()
-        u = self._unit()
+        u     = self._unit()
         calls = {"n": 0}
 
         def spy(system, user):
@@ -997,14 +997,14 @@ class TestScalarPathUnchanged(unittest.TestCase):
 
         def spy(system, user):
             seen["system"] = system
-            seen["user"] = user
+            seen["user"]   = user
             return "%s { return x * k + 1.0; }" % proto
 
         r = porter._translate_helper(unit, spy, [proto])
         self.assertEqual(seen["system"], porter._SYSTEM_HELPER)
         self.assertIn("EXACTLY this name and signature", seen["user"])
-        self.assertNotIn("PROTO:", seen["user"])       # scalar never asks for PROTO
-        self.assertEqual(r["proto"], proto)            # fixed, not LLM-chosen
+        self.assertNotIn("PROTO:", seen["user"])  # scalar never asks for PROTO
+        self.assertEqual(r["proto"], proto)       # fixed, not LLM-chosen
 
     def test_legacy_unit_without_kind_is_scalar(self):
         # A unit dict lacking a 'kind' key (older callers) must behave as scalar.
@@ -1037,10 +1037,10 @@ def _port_spec():
         "mpy_type": "mPyNode", "source_node": "n",
         "suggested": {"class_name": "FooNode", "node_type_name": "fooNode",
                       "type_id": "0x00081234", "mpx_base": "MPxNode"},
-        "inputs": {"a": {"type": "float"}, "k": {"type": "float"}},
+        "inputs":  {"a": {"type": "float"}, "k": {"type": "float"}},
         "outputs": {"out": {"type": "float"}},
         "compute": "self.out = scaled(self.a, self.k)",
-        "init": "from m import scaled",
+        "init":    "from m import scaled",
         "external_helpers": ("# --- from module 'm' ---\n"
                              "def scaled(x, k):\n    return x * k + 1.0"),
         "external_helper_units": [
@@ -1055,7 +1055,7 @@ class TestInlineFallbackControlFlow(unittest.TestCase):
         import tempfile
         from mpynode.native.ai import porter
         self.porter = porter
-        self.tmp = tempfile.mkdtemp(prefix="nonscalar_fallback_")
+        self.tmp    = tempfile.mkdtemp(prefix="nonscalar_fallback_")
         porter.reset_helper_memo()
         self._real_compile = porter.compile_cpp
 
@@ -1094,7 +1094,7 @@ class TestInlineFallbackControlFlow(unittest.TestCase):
         # A node with no followed helpers must compile via the normal path with
         # shared_protos=None -- the fallback branch must not fire.
         porter = self.porter
-        calls = {"n": 0}
+        calls  = {"n": 0}
 
         def fake_compile(cpp_path, spec, out_dir, maya=None, compiler=None,
                          log_cb=None):
@@ -1102,7 +1102,7 @@ class TestInlineFallbackControlFlow(unittest.TestCase):
             return True, "ok", os.path.join(out_dir, "x.bundle")
 
         porter.compile_cpp = fake_compile
-        spec = _port_spec()
+        spec               = _port_spec()
         spec.pop("external_helpers")
         spec.pop("external_helper_units")
         res = porter.port_node(spec, self.tmp,
@@ -1183,7 +1183,7 @@ class TestSharedUnitVectorIncludes(unittest.TestCase):
         # that compiled in its (broad-include) node skeleton ALSO compiles here.
         from mpynode.native.compiler import bundler
         blocks = [{
-            "name": "mpyh_v",
+            "name":  "mpyh_v",
             "proto": "double mpyh_v(const MVector& a, const MVector& b)",
             "code": ("double mpyh_v(const MVector& a, const MVector& b) "
                      "{ return a.x*b.x+a.y*b.y+a.z*b.z; }")}]
@@ -1199,7 +1199,7 @@ class TestSharedUnitVectorIncludes(unittest.TestCase):
         # in the shared unit, or the whole bundle link aborts.
         from mpynode.native.compiler import bundler
         blocks = [{
-            "name": "mpyh_e",
+            "name":  "mpyh_e",
             "proto": "MEulerRotation mpyh_e(const MEulerRotation& r)",
             "code": "MEulerRotation mpyh_e(const MEulerRotation& r) { return r; }"}]
         cpp = bundler.make_shared_helpers_cpp(blocks)
@@ -1237,15 +1237,15 @@ class TestPerfGuidanceReach(unittest.TestCase):
         self.assertIn("PERFORMANCE", tk.CORE)
         self.assertIn("const&", tk.CORE)
         self.assertIn("reserve()", tk.CORE)
-        self.assertIn("-ffast-math", tk.CORE)            # the determinism guard
-        self.assertIn("std::vector<MVector>", tk.CORE)   # canonical type table
+        self.assertIn("-ffast-math", tk.CORE)           # the determinism guard
+        self.assertIn("std::vector<MVector>", tk.CORE)  # canonical type table
 
     def test_system_helper_has_type_mapping_perf_and_proto_contract(self):
         from mpynode.native.ai import porter
         self.assertIn("const MVector&", porter._SYSTEM_HELPER)
         self.assertIn("std::vector<double>", porter._SYSTEM_HELPER)
-        self.assertIn("PROTO:", porter._SYSTEM_HELPER)   # nonscalar output contract
-        self.assertIn("const&", porter._SYSTEM_HELPER)   # perf bullet
+        self.assertIn("PROTO:", porter._SYSTEM_HELPER)  # nonscalar output contract
+        self.assertIn("const&", porter._SYSTEM_HELPER)  # perf bullet
 
 
 def setUpModule():

@@ -311,7 +311,7 @@ class TestFrameworkTogglesHidden(unittest.TestCase):
     def test_mPySkinCluster_toggles_hidden(self):
         import maya.cmds as mc_
         sphere = mc_.polySphere(r=1)[0]
-        joint = mc_.joint(p=(0, 0, 0))
+        joint  = mc_.joint(p=(0, 0, 0))
         from mpynode.wrappers.mpy_skin_cluster import MPySkinCluster
         n = MPySkinCluster.create(mesh=sphere, joints=[joint], name="tog_test_skin")
         for a in TOGGLE_ATTRS:
@@ -468,7 +468,7 @@ class TestProfileWatchRoundTrip(unittest.TestCase):
         Verifies the snapshot reader path doesn't crash."""
         from mpynode.wrappers.mpy_locator import MPyLocator
 
-        loc = MPyLocator.create(name="snapshotGizmo")
+        loc  = MPyLocator.create(name="snapshotGizmo")
         snap = loc.get_profile_snapshot()
         # Either None or empty dict is fine; the contract is no crash.
         self.assertTrue(snap is None or isinstance(snap, dict))
@@ -476,7 +476,7 @@ class TestProfileWatchRoundTrip(unittest.TestCase):
     def test_locator_get_watch_vars_returns_none_before_eval(self):
         from mpynode.wrappers.mpy_locator import MPyLocator
 
-        loc = MPyLocator.create(name="watchVarsGizmo")
+        loc   = MPyLocator.create(name="watchVarsGizmo")
         watch = loc.get_watch_vars()
         self.assertTrue(watch is None or isinstance(watch, dict))
 
@@ -682,17 +682,17 @@ class TestRefreshUsesUnit(unittest.TestCase):
         # The 4 timing labels are rebuilt each refresh using the
         # current unit string.
         self.assertIn('f"Last ({unit}):"', src)
-        self.assertIn('f"Avg ({unit}):"', src)
-        self.assertIn('f"Min ({unit}):"', src)
-        self.assertIn('f"Max ({unit}):"', src)
+        self.assertIn('f"Avg ({unit}):"',  src)
+        self.assertIn('f"Min ({unit}):"',  src)
+        self.assertIn('f"Max ({unit}):"',  src)
 
     def test_refresh_rebuilds_tree_headers_with_unit(self):
         from mpynode.ui.widgets.profile import NDProfileWidget
 
         src = inspect.getsource(NDProfileWidget.refresh)
         self.assertIn('f"Cumulative ({unit})"', src)
-        self.assertIn('f"Total ({unit})"', src)
-        self.assertIn('f"Per-call ({unit})"', src)
+        self.assertIn('f"Total ({unit})"',      src)
+        self.assertIn('f"Per-call ({unit})"',   src)
 
     def test_refresh_converts_snapshot_values(self):
         from mpynode.ui.widgets.profile import NDProfileWidget
@@ -700,7 +700,7 @@ class TestRefreshUsesUnit(unittest.TestCase):
         src = inspect.getsource(NDProfileWidget.refresh)
         # The snapshot values are converted via _convert with the
         # microsecond-base divisor.
-        self.assertIn("_convert(", src)
+        self.assertIn("_convert(",             src)
         self.assertIn("_SNAP_BASE_TO_SECONDS", src)
         self.assertIn("_DEEP_BASE_TO_SECONDS", src)
 
@@ -744,9 +744,9 @@ class TestSortKeyIsCanonical(unittest.TestCase):
 
         src = inspect.getsource(_SortableTreeWidgetItem.__lt__)
         # Reads Qt.UserRole from both items and compares as floats.
-        self.assertIn("self.data(col, Qt.UserRole)", src)
+        self.assertIn("self.data(col, Qt.UserRole)",  src)
         self.assertIn("other.data(col, Qt.UserRole)", src)
-        self.assertIn("float(a) < float(b)", src)
+        self.assertIn("float(a) < float(b)",          src)
 
     def test_sortable_item_lt_does_not_call_super(self):
         """Regression guard: ``super().__lt__()`` re-enters
@@ -797,7 +797,7 @@ class TestSortableItemNumericOrder(unittest.TestCase):
             """Subset of _SortableTreeWidgetItem.__lt__ behavior we need."""
 
             def __init__(self, sort_value, display_text):
-                self.sort_value = sort_value
+                self.sort_value   = sort_value
                 self.display_text = display_text
 
             def __lt__(self, other):
@@ -809,13 +809,13 @@ class TestSortableItemNumericOrder(unittest.TestCase):
         # Bug repro from a real "Cumulative (ns)" column: the pre-fix lex sort
         # ordered these '208' < '250' < '1501', which is wrong.
         values = [84, 666, 541, 3959, 3334, 2542, 250, 208, 208, 1501, 13625, 12125]
-        items = [_MockItem(v, str(v)) for v in values]
+        items  = [_MockItem(v, str(v)) for v in values]
         items.sort()
         result = [item.sort_value for item in items]
         self.assertEqual(result, sorted(values))
         # Specifically: 250 should NOT come BEFORE 1501 (which is what
         # the buggy lex sort would do because '1' < '2').
-        idx_250 = result.index(250)
+        idx_250  = result.index(250)
         idx_1501 = result.index(1501)
         self.assertLess(
             idx_250,

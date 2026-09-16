@@ -123,7 +123,7 @@ class TestPlugSurface(unittest.TestCase):
         ) or []
         # Maya returns ['a:b:c:...'] -- single-element list joined by ':'.
         joined = names[0] if names else ""
-        n = len([s for s in joined.split(":") if s.strip()])
+        n      = len([s for s in joined.split(":") if s.strip()])
         self.assertEqual(n, 25)
 
     def test_default_color_space_is_zero(self):
@@ -154,7 +154,7 @@ class TestWrapperAndDefaults(unittest.TestCase):
         from mpynode.wrappers.mpy_file import MPyFile
 
         self.MPyFile = MPyFile
-        self.f = MPyFile.create(name="probe")
+        self.f       = MPyFile.create(name="probe")
 
     def test_create_returns_wrapper_with_name(self):
         self.assertEqual(self.f.get_name(), "probe")
@@ -300,10 +300,10 @@ class TestUserEditedSources(unittest.TestCase):
         f.set_viewport_expression(
             "n = getattr(self, 'counter', 0)\nself.counter = n + 1\n")
         name = f.get_name()
-        sel = om.MSelectionList()
+        sel  = om.MSelectionList()
         sel.add(name)
         mobj = sel.getDependNode(0)
-        mpx = om.MFnDependencyNode(mobj).userNode()
+        mpx  = om.MFnDependencyNode(mobj).userNode()
         for _ in range(3):
             mpx.runViewport(None, None)            # shader/mappings unused here
         counter = stored_var_store.load_for_compute(mobj, "").get("counter")
@@ -350,7 +350,7 @@ class TestRecipeRegistration(unittest.TestCase):
     def test_recipe_lists_outColor_and_outAlpha(self):
         from mpynode._common.util.recipes import get_recipe
 
-        r = get_recipe("mPyFile")
+        r         = get_recipe("mPyFile")
         out_names = {e.name for e in r.outputs}
         self.assertIn("outColor", out_names)
         self.assertIn("outAlpha", out_names)
@@ -379,7 +379,7 @@ class TestNodeRegistry(unittest.TestCase):
         from mpynode.wrappers.mpy_file import MPyFile
 
         # Use shadingNode (matches the wrapper's own create()).
-        node = mc.shadingNode("mPyFile", asTexture=True, name="reg_probe")
+        node    = mc.shadingNode("mPyFile", asTexture=True, name="reg_probe")
         wrapper = wrap_node(node, "mPyFile")
         self.assertIsInstance(wrapper, MPyFile)
 
@@ -498,8 +498,8 @@ class TestFileLoadAndSampling(unittest.TestCase):
         # (0.80, 0.46) lands on a white grid line where the blur pulls in
         # coloured neighbours (delta ~0.57); a flat cell interior such as
         # (0.40, 0.40) is invariant under the blur for this image.
-        mc.setAttr(self.f.get_name() + ".uCoord", 0.8)
-        mc.setAttr(self.f.get_name() + ".vCoord", 0.46)
+        mc.setAttr(self.f.get_name() + ".uCoord",    0.8)
+        mc.setAttr(self.f.get_name() + ".vCoord",    0.46)
 
         mc.setAttr(self.f.get_name() + ".preFilter", False)
         off = mc.getAttr(self.f.get_name() + ".outColor")[0]
@@ -659,7 +659,7 @@ class TestAttributeAffectsMatchesCustomFileTexture(unittest.TestCase):
         # customFileTexture omits uvFilterSize and we match it: it is a
         # GPU-sampler-only input and drives no CPU-level sampling.
         affected_by = self._affects("outColor")
-        self.assertNotIn("uvFilterSize", affected_by)
+        self.assertNotIn("uvFilterSize",  affected_by)
         self.assertNotIn("uvFilterSizeX", affected_by)
         self.assertNotIn("uvFilterSizeY", affected_by)
 
@@ -733,9 +733,9 @@ class TestPerChildPull(unittest.TestCase):
 
     def test_compound_outColor_matches_children(self):
         rgb = mc.getAttr(self.f.get_name() + ".outColor")[0]
-        r = mc.getAttr(self.f.get_name() + ".outColorR")
-        g = mc.getAttr(self.f.get_name() + ".outColorG")
-        b = mc.getAttr(self.f.get_name() + ".outColorB")
+        r   = mc.getAttr(self.f.get_name() + ".outColorR")
+        g   = mc.getAttr(self.f.get_name() + ".outColorG")
+        b   = mc.getAttr(self.f.get_name() + ".outColorB")
         self.assertAlmostEqual(rgb[0], r, places=4)
         self.assertAlmostEqual(rgb[1], g, places=4)
         self.assertAlmostEqual(rgb[2], b, places=4)
@@ -762,10 +762,10 @@ class TestPerChildPull(unittest.TestCase):
             ")\n"
             "self.outAlpha = float(v)\n"
         )
-        mc.setAttr(f.get_name() + ".colorSpace", 5)        # picked an unusual value
+        mc.setAttr(f.get_name() + ".colorSpace",      5)        # picked an unusual value
         mc.setAttr(f.get_name() + ".preFilterRadius", 3.5)
-        mc.setAttr(f.get_name() + ".uCoord", 0.25)
-        mc.setAttr(f.get_name() + ".vCoord", 0.75)
+        mc.setAttr(f.get_name() + ".uCoord",          0.25)
+        mc.setAttr(f.get_name() + ".vCoord",          0.75)
         rgb = mc.getAttr(f.get_name() + ".outColor")[0]
         self.assertAlmostEqual(rgb[0], 5 / 100.0, places=4,
                                msg="self.colorSpace must reach the expression")
@@ -885,7 +885,7 @@ class TestLoadLinearPixelsCache(unittest.TestCase):
         from mpynode._common.lifecycle import init_registry
         from mpynode._common.lifecycle.init_registry import _NODE_INIT_NS
         uuid = init_registry._node_uuid_from_name(f.get_name())
-        ns = _NODE_INIT_NS.get(uuid)
+        ns   = _NODE_INIT_NS.get(uuid)
         self.assertIsNotNone(ns, "init namespace was not registered")
         calls = ns["_CALLS"][0]
         # The cache key depends on settings, not UV, so N*N = 256 compute
@@ -901,7 +901,7 @@ class TestLoadLinearPixelsCache(unittest.TestCase):
         """Verify the SHIPPED default Init source contains the cache
         scaffolding. Catches a regression where someone removes the
         cache from the default."""
-        f = self.MPyFile.create(name="probe")  # seed_defaults=True
+        f   = self.MPyFile.create(name="probe")  # seed_defaults=True
         src = f.get_init_expression()
         self.assertIn(
             "_LINEAR_CACHE",
@@ -979,7 +979,7 @@ class TestBarebonesMode(unittest.TestCase):
     def test_barebones_samples_actual_texture(self):
         """With a real file + PIL available, the BAREBONES path
         samples test_grid pixel-by-pixel just like customFileTexture."""
-        f = self.MPyFile.create(name="probe_bb3", seed_defaults=False)
+        f     = self.MPyFile.create(name="probe_bb3", seed_defaults=False)
         asset = _test_asset_path()
         if not os.path.isfile(asset):
             self.skipTest(f"shared asset missing: {asset}")
@@ -1068,8 +1068,8 @@ def _setUpModule__mpyfile_viewport_refresh():
 class TestViewportUserInputs(unittest.TestCase):
     def setUp(self):
         from mpynode._api2.mpy_file import MPyFile as _NodeCls
-        self._NodeCls = _NodeCls
-        self._prev_bb = _NodeCls.BAREBONES_MODE
+        self._NodeCls           = _NodeCls
+        self._prev_bb           = _NodeCls.BAREBONES_MODE
         _NodeCls.BAREBONES_MODE = False  # exercise the user-Viewport path
         mc.file(new=True, force=True)
 
@@ -1104,7 +1104,7 @@ class TestViewportUserInputs(unittest.TestCase):
 
         import mpynode._api2.mpy_file as MF
         captured = {}
-        orig = MF.SelfProxy
+        orig     = MF.SelfProxy
 
         def _spy(*args, **kwargs):
             captured["locals"] = dict(kwargs.get("compute_locals") or {})
@@ -1223,9 +1223,9 @@ class TestCallbackInstallAndFire(unittest.TestCase):
 
     def test_setattr_preset_fires_dirty_and_refresh(self):
         """Setting a preset on an mPyFile must invoke the refresh action."""
-        node = self._make_node()
+        node  = self._make_node()
         calls = []
-        orig = self.MF._dirty_and_refresh
+        orig  = self.MF._dirty_and_refresh
         self.MF._dirty_and_refresh = lambda n: calls.append(n)
         try:
             mc.setAttr(node + ".preFilterRadius", 4.0)
@@ -1237,9 +1237,9 @@ class TestCallbackInstallAndFire(unittest.TestCase):
             "action -> the manual edit would not update the viewport")
 
     def test_setattr_viewport_only_preset_fires(self):
-        node = self._make_node()
+        node  = self._make_node()
         calls = []
-        orig = self.MF._dirty_and_refresh
+        orig  = self.MF._dirty_and_refresh
         self.MF._dirty_and_refresh = lambda n: calls.append(n)
         try:
             mc.setAttr(node + ".maxAnisotropy", 4)
@@ -1248,9 +1248,9 @@ class TestCallbackInstallAndFire(unittest.TestCase):
         self.assertIn(node, calls)
 
     def test_setattr_output_does_not_fire(self):
-        node = self._make_node()
+        node  = self._make_node()
         calls = []
-        orig = self.MF._dirty_and_refresh
+        orig  = self.MF._dirty_and_refresh
         self.MF._dirty_and_refresh = lambda n: calls.append(n)
         try:
             # outAlpha looks settable; it must not enter the refresh path
@@ -1271,7 +1271,7 @@ class TestRefreshCoalescing(unittest.TestCase):
 
     def setUp(self):
         import mpynode._api2.mpy_file as MF
-        self.MF = MF
+        self.MF             = MF
         MF._refresh_pending = False
 
     def tearDown(self):
@@ -1279,8 +1279,8 @@ class TestRefreshCoalescing(unittest.TestCase):
 
     def test_burst_enqueues_single_refresh(self):
         import maya.utils as mu
-        enqueued = []
-        orig = mu.executeDeferred
+        enqueued           = []
+        orig               = mu.executeDeferred
         mu.executeDeferred = lambda fn, *a, **k: enqueued.append(fn)
         try:
             for _ in range(5):
@@ -1295,8 +1295,8 @@ class TestRefreshCoalescing(unittest.TestCase):
 
     def test_refresh_runs_then_rearms(self):
         import maya.utils as mu
-        enqueued = []
-        orig = mu.executeDeferred
+        enqueued           = []
+        orig               = mu.executeDeferred
         mu.executeDeferred = lambda fn, *a, **k: enqueued.append(fn)
         try:
             self.MF._dirty_and_refresh("rearmNode")
@@ -1319,7 +1319,7 @@ class TestUnloadReset(unittest.TestCase):
     def test_reset_clears_dedup_and_pending(self):
         import mpynode._api2.mpy_file as MF
         MF._ATTR_REFRESH_CB[123456] = 999
-        MF._refresh_pending = True
+        MF._refresh_pending         = True
         MF._reset_attr_refresh_state()
         self.assertEqual(MF._ATTR_REFRESH_CB, {})
         self.assertFalse(MF._refresh_pending)
@@ -1368,8 +1368,8 @@ def _setUpModule__mpyfile_user_input_threadsafe():
 class TestMPyFileUserInputThreadSafe(unittest.TestCase):
     def setUp(self):
         from mpynode._api2.mpy_file import MPyFile as _NodeCls
-        self._NodeCls = _NodeCls
-        self._prev_bb = _NodeCls.BAREBONES_MODE
+        self._NodeCls           = _NodeCls
+        self._prev_bb           = _NodeCls.BAREBONES_MODE
         _NodeCls.BAREBONES_MODE = False
         mc.file(new=True, force=True)
 
@@ -1397,7 +1397,7 @@ class TestMPyFileUserInputThreadSafe(unittest.TestCase):
 
         import mpynode._api2.mpy_file as MF
         captured = {}
-        orig = MF.SelfProxy
+        orig     = MF.SelfProxy
 
         def _spy(*args, **kwargs):
             captured["compute_locals"] = dict(kwargs.get("compute_locals") or {})
@@ -1422,7 +1422,7 @@ class TestMPyFileUserInputThreadSafe(unittest.TestCase):
     def test_self_user_input_compute_produces_correct_output(self):
         """End-to-end: self.<user_input> drives the output correctly."""
         name = self._build()
-        col = mc.getAttr(name + ".outColor")[0]
+        col  = mc.getAttr(name + ".outColor")[0]
         self.assertAlmostEqual(col[0], 3.0, places=4)
         self.assertAlmostEqual(col[1], 6.0, places=4)
         self.assertAlmostEqual(col[2], 0.0, places=4)
@@ -1465,7 +1465,7 @@ class TestBarebonesHelperIsolation(unittest.TestCase):
         from mpynode._api2.mpy_file import MPyFile
 
         self._MPyFile = MPyFile
-        self._prior = MPyFile.BAREBONES_MODE
+        self._prior   = MPyFile.BAREBONES_MODE
         # leave the flag at the shipped default regardless of outcome.
         self.addCleanup(
             lambda: setattr(MPyFile, "BAREBONES_MODE", self.SHIPPED_DEFAULT)

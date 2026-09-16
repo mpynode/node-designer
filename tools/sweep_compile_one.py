@@ -50,10 +50,10 @@ def _heartbeat_needles():
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--template", required=True)
-    ap.add_argument("--out", required=True)
-    ap.add_argument("--optimize", action="store_true")
-    ap.add_argument("--json-out", default=None)
+    ap.add_argument("--template",  required=True)
+    ap.add_argument("--out",       required=True)
+    ap.add_argument("--optimize",  action="store_true")
+    ap.add_argument("--json-out",  default=None)
     ap.add_argument("--type-name", default=None)
     args = ap.parse_args()
 
@@ -75,19 +75,19 @@ def main():
     os.makedirs(out_dir, exist_ok=True)
 
     payload = mpn_io.load_mpn(args.template, trusted=True)
-    spec = spec_from_mpn_payload(payload)
+    spec    = spec_from_mpn_payload(payload)
     if args.type_name:
         spec.setdefault("suggested", {})["node_type_name"] = args.type_name
     tname = spec.get("suggested", {}).get("node_type_name")
 
     rec = {
-        "template": args.template,
+        "template":  args.template,
         "type_name": tname,
-        "optimize": bool(args.optimize),
-        "model": os.environ.get("_SWEEP_MODEL", ""),
+        "optimize":  bool(args.optimize),
+        "model":     os.environ.get("_SWEEP_MODEL", ""),
         "ultracode": os.environ.get("MPYNODE_PORT_ULTRACODE", "") or "off",
-        "rounds": os.environ.get("MPYNODE_OPT_ROUNDS", ""),
-        "budget_s": os.environ.get("MPYNODE_OPT_TIMEOUT", ""),
+        "rounds":    os.environ.get("MPYNODE_OPT_ROUNDS", ""),
+        "budget_s":  os.environ.get("MPYNODE_OPT_TIMEOUT", ""),
         "needs_llm": None, "ok": False, "bundle": None,
         "optimize_summary": {}, "wall_s": None, "events": [],
     }
@@ -114,12 +114,12 @@ def main():
         res = cc.compile_plugin([spec], (tname or "sweep") + "Cmp", out_dir,
                                 strict=False, verify=True, reuse_cache=True,
                                 optimize=bool(args.optimize), progress_cb=cb)
-        rec["ok"] = bool(res.get("ok"))
-        rec["bundle"] = res.get("bundle_path")
+        rec["ok"]               = bool(res.get("ok"))
+        rec["bundle"]           = res.get("bundle_path")
         rec["optimize_summary"] = res.get("optimize") or {}
     except Exception as exc:
         import traceback
-        rec["error"] = "%s: %s" % (type(exc).__name__, exc)
+        rec["error"]     = "%s: %s" % (type(exc).__name__, exc)
         rec["traceback"] = traceback.format_exc()[-2000:]
     rec["wall_s"] = round(time.time() - t0, 1)
 

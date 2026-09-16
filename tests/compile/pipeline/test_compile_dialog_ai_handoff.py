@@ -40,18 +40,18 @@ def setUpModule():
 
 def _result(nodes, ok=True):
     return {
-        "ok": ok,
+        "ok":          ok,
         "plugin_name": "myPlugin",
         "bundle_path": "/tmp/out/myPlugin.bundle" if ok else None,
-        "nodes": nodes,
-        "errors": [],
+        "nodes":       nodes,
+        "errors":      [],
     }
 
 
 def _row(type_name, build_status, verify=None):
     return {
-        "source_node": type_name + "1",
-        "type_name": type_name,
+        "source_node":  type_name + "1",
+        "type_name":    type_name,
         "build_status": build_status,
         "build_reason": "",
         "verify": verify or {"ran": False, "pass": None, "maxerr": None,

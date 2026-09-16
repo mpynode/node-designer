@@ -176,7 +176,7 @@ class TestStoredVarChangeListener(unittest.TestCase):
         from mpynode._common.storedvars import stored_var_store as svs
 
         got = []
-        cb = lambda h: got.append(h)
+        cb  = lambda h: got.append(h)
         svs.add_change_listener(cb)
         try:
             svs._notify_change("HASH_A")
@@ -216,14 +216,14 @@ class TestStoredVarChangeListener(unittest.TestCase):
         from mpynode._common.storedvars import stored_var_store as svs
         from mpynode.wrappers._mpy_node import MPyNode
 
-        n = MPyNode.create(name="listenNode")
+        n    = MPyNode.create(name="listenNode")
         name = n.get_name()
-        sel = om.MSelectionList()
+        sel  = om.MSelectionList()
         sel.add(name)
-        mo = sel.getDependNode(0)
+        mo  = sel.getDependNode(0)
 
         got = []
-        cb = lambda h: got.append(h)
+        cb  = lambda h: got.append(h)
         svs.add_change_listener(cb)
         try:
             svs.set_for_compute(mo, {"buf": b"bytes"})
@@ -245,7 +245,7 @@ class TestStoredVarChangeListener(unittest.TestCase):
         from mpynode._common.storedvars import stored_var_store as svs
         from mpynode.wrappers._mpy_node import MPyNode
 
-        n = MPyNode.create(name="writerNode")
+        n    = MPyNode.create(name="writerNode")
         name = n.get_name()
         want = svs._hash_for_name(name)
 
@@ -255,7 +255,7 @@ class TestStoredVarChangeListener(unittest.TestCase):
             ("remove_var", lambda: svs.remove_var(name, "v")),
         ):
             got = []
-            cb = lambda h: got.append(h)          # noqa: E731
+            cb  = lambda h: got.append(h)          # noqa: E731
             svs.add_change_listener(cb)
             try:
                 call()
@@ -271,9 +271,9 @@ class TestStoredVarChangeListener(unittest.TestCase):
         from mpynode._common.storedvars import stored_var_store as svs
         from mpynode.wrappers._mpy_node import MPyNode
 
-        n = MPyNode.create(name="apiWriterNode")
+        n   = MPyNode.create(name="apiWriterNode")
         got = []
-        cb = lambda h: got.append(h)              # noqa: E731
+        cb  = lambda h: got.append(h)              # noqa: E731
         svs.add_change_listener(cb)
         try:
             n.set_variable("audioData", b"RIFF....WAVE", persistent=True)
@@ -424,15 +424,15 @@ class TestValidators(unittest.TestCase):
     def test_parse_value_text_literals(self):
         from mpynode.ui.widgets.variables import parse_value_text
 
-        self.assertEqual(parse_value_text("42"), 42)
-        self.assertEqual(parse_value_text("3.14"), 3.14)
-        self.assertEqual(parse_value_text("'hello'"), "hello")
-        self.assertEqual(parse_value_text('"hello"'), "hello")
+        self.assertEqual(parse_value_text("42"),        42)
+        self.assertEqual(parse_value_text("3.14"),      3.14)
+        self.assertEqual(parse_value_text("'hello'"),   "hello")
+        self.assertEqual(parse_value_text('"hello"'),   "hello")
         self.assertEqual(parse_value_text("[1, 2, 3]"), [1, 2, 3])
-        self.assertEqual(parse_value_text("{'a': 1}"), {"a": 1})
-        self.assertEqual(parse_value_text("True"), True)
-        self.assertEqual(parse_value_text("None"), None)
-        self.assertEqual(parse_value_text(""), None)
+        self.assertEqual(parse_value_text("{'a': 1}"),  {"a": 1})
+        self.assertEqual(parse_value_text("True"),      True)
+        self.assertEqual(parse_value_text("None"),      None)
+        self.assertEqual(parse_value_text(""),          None)
 
     def test_parse_value_text_rejects_non_literal(self):
         from mpynode.ui.widgets.variables import parse_value_text
@@ -490,10 +490,10 @@ class TestVariablesWidgetShape(unittest.TestCase):
         from mpynode.ui.widgets.variables import NDVariablesWidget
 
         src = inspect.getsource(NDVariablesWidget.__init__)
-        self.assertIn("_add_btn.clicked.connect", src)
-        self.assertIn("_del_btn.clicked.connect", src)
+        self.assertIn("_add_btn.clicked.connect",     src)
+        self.assertIn("_del_btn.clicked.connect",     src)
         self.assertIn("_refresh_btn.clicked.connect", src)
-        self.assertIn("_tree.itemChanged.connect", src)
+        self.assertIn("_tree.itemChanged.connect",    src)
 
 
 # ===================== from test_stored_var_store.py =====================
@@ -600,7 +600,7 @@ class TestStoredVarStore(unittest.TestCase):
         )
         svs.evict_all()
         svs.load_and_clear_all()
-        self.assertEqual(_plug_raw(self.name), "")  # plug cleared
+        self.assertEqual(_plug_raw(self.name), "")                   # plug cleared
         self.assertEqual(svs.get_data(self.name).get("k"), "hello")  # cached
 
     def test_no_stale_read_after_load_clear(self):
@@ -685,7 +685,7 @@ class TestStoredVarStore(unittest.TestCase):
         mc.select(self.name, r=True)
         mc.file(tmp, exportSelected=True, type="mayaAscii", force=True)  # kBeforeExport -> flush
         mc.file(new=True, force=True)
-        mc.file(tmp, i=True)  # import -> kAfterImport load+clear
+        mc.file(tmp, i=True)                                             # import -> kAfterImport load+clear
         from mpynode._common.storedvars.stored_vars_api import get_variables
 
         # imported node keeps its name (no namespace clash in a fresh scene)
@@ -737,7 +737,7 @@ class TestRegistryGate(unittest.TestCase):
         self.assertEqual(svs.get_data(self.name).get("foo"), [1, 2, 3])
         # ...but never serialized.
         svs.flush_all()
-        raw = _plug_raw(self.name)
+        raw   = _plug_raw(self.name)
         saved = ser.decode_stored_vars(raw) if raw else {}
         self.assertNotIn("foo", saved)
 
@@ -838,9 +838,9 @@ class TestPersistenceToggle(unittest.TestCase):
 
         self.node.add_output_attr("out", "float")
         self.node.set_compute_expression("self.foo = [1, 2, 3]\nself.out = 1.0\n")
-        mc.getAttr(self.name + ".out")  # compute -> ephemeral self.foo
-        self.assertNotIn("foo", self._saved())          # session-only
-        set_variable_persistent(self.name, "foo", True)           # promote
+        mc.getAttr(self.name + ".out")                         # compute -> ephemeral self.foo
+        self.assertNotIn("foo", self._saved())                 # session-only
+        set_variable_persistent(self.name, "foo", True)        # promote
         self.assertIn("foo", get_variable_names(self.name))
         self.assertEqual(self._saved().get("foo"), [1, 2, 3])  # now saved
 
@@ -849,8 +849,8 @@ class TestPersistenceToggle(unittest.TestCase):
 
         self.node.add_variable("bar", 0)
         self.node.set_variable("bar", 5)
-        self.assertEqual(self._saved().get("bar"), 5)    # persistent
-        set_variable_persistent(self.name, "bar", False)          # demote
+        self.assertEqual(self._saved().get("bar"), 5)     # persistent
+        set_variable_persistent(self.name, "bar", False)  # demote
         # value still live this session...
         self.assertEqual(self.node.get_variables().get("bar"), 5)
         # ...but no longer serialized
@@ -895,7 +895,7 @@ class TestDecodeCache(unittest.TestCase):
 
         blob = ser.encode_stored_vars({"data": list(range(100))})
         ser.decode_cached(blob)  # warm (one real decode)
-        calls = {"n": 0}
+        calls      = {"n": 0}
         real_loads = pickle.loads
 
         def counting_loads(*a, **k):
@@ -920,16 +920,16 @@ class TestDecodeCache(unittest.TestCase):
     def test_container_isolation(self):
         """Mutating the returned dict's container must not corrupt the
         cache (shallow-copy handout)."""
-        blob = ser.encode_stored_vars({"a": 1})
-        d1 = ser.decode_cached(blob)
-        d1["injected"] = 999  # mutate the handed-out container
-        d2 = ser.decode_cached(blob)  # same blob -> cache hit
+        blob           = ser.encode_stored_vars({"a": 1})
+        d1             = ser.decode_cached(blob)
+        d1["injected"] = 999                      # mutate the handed-out container
+        d2             = ser.decode_cached(blob)  # same blob -> cache hit
         self.assertNotIn("injected", d2)
         self.assertEqual(d2, {"a": 1})
 
     def test_byte_budget_eviction(self):
         # Shrink the budget, push enough distinct blobs to force eviction.
-        orig_max = ser._DECODE_CACHE_MAX_BYTES
+        orig_max                    = ser._DECODE_CACHE_MAX_BYTES
         ser._DECODE_CACHE_MAX_BYTES = 2000  # tiny
         try:
             ser.clear_stored_var_decode_cache()
@@ -945,12 +945,12 @@ class TestDecodeCache(unittest.TestCase):
             ser.clear_stored_var_decode_cache()
 
     def test_oversized_single_entry_not_infinite_loop(self):
-        orig_max = ser._DECODE_CACHE_MAX_BYTES
+        orig_max                    = ser._DECODE_CACHE_MAX_BYTES
         ser._DECODE_CACHE_MAX_BYTES = 10  # smaller than any real blob
         try:
             ser.clear_stored_var_decode_cache()
             blob = ser.encode_stored_vars({"big": "y" * 5000})
-            got = ser.decode_cached(blob)  # must return, not hang
+            got  = ser.decode_cached(blob)  # must return, not hang
             self.assertEqual(got, {"big": "y" * 5000})
             self.assertEqual(ser._stored_var_decode_cache_info()[0], 1)
         finally:
@@ -968,9 +968,9 @@ class TestDecodeCache(unittest.TestCase):
             import numpy as np
         except Exception:
             self.skipTest("numpy unavailable")
-        arr = np.arange(12).reshape(3, 4)
+        arr  = np.arange(12).reshape(3, 4)
         blob = ser.encode_stored_vars({"arr": arr})
-        got = ser.decode_cached(blob)
+        got  = ser.decode_cached(blob)
         self.assertTrue(np.array_equal(got["arr"], arr))
 
 
@@ -1049,8 +1049,8 @@ class TestKeyedTwoStep(unittest.TestCase):
 
         w = json.loads(ser.encode_stored_vars({"a": 1, "b": [1, 2]}))
         self.assertEqual(w.get("protocol"), 8)
-        self.assertEqual(w.get("format"), "keyed2")
-        self.assertEqual(w.get("codec"), "zlib")
+        self.assertEqual(w.get("format"),   "keyed2")
+        self.assertEqual(w.get("codec"),    "zlib")
         # all-safe values carry no pickle -> opening the file needs no trust prompt
         self.assertFalse(w.get("has_pickle"))
 
@@ -1076,8 +1076,8 @@ class TestKeyedTwoStep(unittest.TestCase):
             "data_b64": base64.b64encode(outer).decode("ascii"),
         })
         values, failures = ser.decode_stored_vars_detailed(blob)
-        self.assertEqual(values, {"good": 42})       # salvaged the good one
-        self.assertIn("bad", failures)               # reported the bad one
+        self.assertEqual(values, {"good": 42})  # salvaged the good one
+        self.assertIn("bad", failures)          # reported the bad one
         # plain decode returns the partial dict, no raise
         self.assertEqual(ser.decode_stored_vars(blob), {"good": 42})
 

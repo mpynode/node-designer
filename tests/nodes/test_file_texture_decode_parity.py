@@ -55,7 +55,7 @@ def _composite_cpp():
     p = os.path.join(_repo_root(), "templates", "MPyFile", "File Composite",
                      "template.mpn")
     payload = mpn_io.load_mpn(p, trusted=True)
-    spec = mpn_spec_adapter.spec_from_mpn_payload(payload)
+    spec    = mpn_spec_adapter.spec_from_mpn_payload(payload)
     return vp2.inject_vp2_override(
         node_scaffold.generate_cpp(spec, for_port=False), spec)
 
@@ -105,8 +105,8 @@ class TestExactDecodeIsEmitted(unittest.TestCase):
         cls.cpp = _composite_cpp()
 
     def test_decoder_is_present_and_tried_before_mimage(self):
-        self.assertIn("static bool nd_png_supported(", self.cpp)
-        self.assertIn("static bool nd_png_decode(", self.cpp)
+        self.assertIn("static bool nd_png_supported(",    self.cpp)
+        self.assertIn("static bool nd_png_decode(",       self.cpp)
         self.assertIn("nd_png_decode_file(path.asChar()", self.cpp)
         # The exact path decodes STRAIGHT alpha, so it must not un-premultiply;
         # the MImage fallback must.
@@ -183,7 +183,7 @@ class TestDecodersAgree(unittest.TestCase):
 
     def _pngs(self):
         root = _repo_root()
-        out = []
+        out  = []
         for sub in ("templates", os.path.join("scripts", "mpynode", "_demos")):
             out += sorted(glob.glob(os.path.join(root, sub, "**", "*.png"),
                                     recursive=True))

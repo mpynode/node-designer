@@ -29,7 +29,7 @@ import re
 import unittest
 from tests import _paths
 
-_ROOT = _paths.ROOT
+_ROOT          = _paths.ROOT
 _SRC_TEMPLATES = os.path.join(_ROOT, "templates")
 # The compiled trees now live inside the templates they were generated from, so
 # the walk root and the source root are one and the same.
@@ -73,7 +73,7 @@ def _nodes():
             continue
         for tpl in sorted(os.listdir(fdir)):
             build = os.path.join(fdir, tpl, "build")
-            man = os.path.join(build, "manifest.json")
+            man   = os.path.join(build, "manifest.json")
             if not os.path.isfile(man):
                 continue
             try:
@@ -92,8 +92,8 @@ def _nodes():
                     continue
                 stages = os.path.join(build, "stages", ty)
                 entry = {
-                    "rel": "%s/%s" % (fam, tpl),
-                    "type": ty,
+                    "rel":    "%s/%s" % (fam, tpl),
+                    "type":   ty,
                     "stage1": os.path.join(stages, "1_transpiled.cpp"),
                     "baseline": os.path.join(stages, "3_optimized",
                                              "00_baseline.cpp"),
@@ -122,7 +122,7 @@ class TestShippedArtifactsAreFresh(unittest.TestCase):
         live, _ = _nodes()
         stale = []
         for e in live:
-            t1 = _build_hash(e["stage1"])
+            t1   = _build_hash(e["stage1"])
             base = _build_hash(e["baseline"])
             if t1 is None or base is None:
                 continue          # no optimizer stage for this node

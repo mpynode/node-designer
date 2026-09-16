@@ -227,14 +227,14 @@ def _generate_iksolver_cpp(spec: dict, for_port: bool = False) -> str:
     # A file read can only be attached to real buffers on the lowered path; when
     # the compute drops to the AI porter there is nothing to attach it to.
     nd_io_cpp.reject_unlowered_io(spec, iksolver_lowered, "IK solver")
-    sg = spec["suggested"]
-    cls = sg["class_name"]
+    sg        = spec["suggested"]
+    cls       = sg["class_name"]
     type_name = sg["node_type_name"]
-    type_id = sg["type_id"]
-    scalars = _ik_scalar_inputs(spec)
-    meshes = _ik_mesh_inputs(spec)
-    generics = _ik_generic_inputs(spec)
-    has_mesh = bool(meshes)
+    type_id   = sg["type_id"]
+    scalars   = _ik_scalar_inputs(spec)
+    meshes    = _ik_mesh_inputs(spec)
+    generics  = _ik_generic_inputs(spec)
+    has_mesh  = bool(meshes)
     # Sanctioned image-FILE read (reads_image_file): load the path input through
     # the same CACHED decode every other base uses and hand the ported solve an
     # RGBA8 buffer. Without it the translation guide tells the porter the pixels
@@ -245,10 +245,10 @@ def _generate_iksolver_cpp(spec: dict, for_port: bool = False) -> str:
     # node has no path PLUG, so there is nothing to load.
     _img_path = (_pick_path_input(generics)
                  if sg.get("reads_image_file") else None)
-    raw_img_cache = bool(_img_path) and not _img_path["meta"].get("is_array")
+    raw_img_cache       = bool(_img_path) and not _img_path["meta"].get("is_array")
     composite_img_cache = bool(_img_path) and bool(_img_path["meta"].get("is_array"))
-    img_read = raw_img_cache or composite_img_cache
-    cmd_out = command_dispatch.dispatch_for_spec(spec, type_name)
+    img_read            = raw_img_cache or composite_img_cache
+    cmd_out             = command_dispatch.dispatch_for_spec(spec, type_name)
     if cmd_out["errors"]:
         import sys as _sys
         _sys.stderr.write(

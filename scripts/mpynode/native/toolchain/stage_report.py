@@ -59,16 +59,16 @@ def _fmt_dur(v):
 
 
 _OUTCOME_MARK = {
-    "accept": "ACCEPTED",
-    "baseline": "--",
-    "not-faster": "rejected: not faster",
-    "no-change": "rejected: no change to the source",
-    "compile-failed": "rejected: did not compile",
-    "unmeasurable": "rejected: unmeasurable",
-    "bench-diverged": "rejected: outputs diverge from the baseline on the bench scene",
+    "accept":            "ACCEPTED",
+    "baseline":          "--",
+    "not-faster":        "rejected: not faster",
+    "no-change":         "rejected: no change to the source",
+    "compile-failed":    "rejected: did not compile",
+    "unmeasurable":      "rejected: unmeasurable",
+    "bench-diverged":    "rejected: outputs diverge from the baseline on the bench scene",
     "invalid-candidate": "rejected: invalid candidate",
-    "regressed": "rejected: slower on the small scene",
-    "error": "rejected: error",
+    "regressed":         "rejected: slower on the small scene",
+    "error":             "rejected: error",
 }
 
 
@@ -117,7 +117,7 @@ def _bench_sentence(bench):
         return ("Bench scene: not recorded (ledger predates the scene record; "
                 "no noise-floor gate, no per-tick perturbation check and no "
                 "output fingerprint applied to these rounds).")
-    rung = bench.get("rung") or [None, None]
+    rung  = bench.get("rung") or [None, None]
     moved = bench.get("perturbed")
     parts = ["Bench scene: %s" % _rung_text(rung)]
     if bench.get("floor_ms") is not None:
@@ -254,7 +254,7 @@ def _stop_phrase(rounds):
     why = (rounds or {}).get("stop_reason")
     if not why:
         return ""
-    mx = rounds.get("max_rounds")
+    mx  = rounds.get("max_rounds")
     cap = (" of max %d" % mx) if isinstance(mx, int) and mx > 0 else ""
     return " -- %d run%s, stopped: %s" % (len(rounds.get("ledger") or []) - 1,
                                           cap, why)
@@ -263,10 +263,10 @@ def _stop_phrase(rounds):
 def _stage_summary(stage_dir, row, rounds):
     """The three-line 'what actually ran' table at the top of a node report."""
     incomplete = list((row or {}).get("incomplete") or [])
-    ported = bool((row or {}).get("ported"))
+    ported     = bool((row or {}).get("ported"))
 
     transpiled = os.path.isfile(os.path.join(stage_dir, "1_transpiled.cpp"))
-    assisted = os.path.isfile(os.path.join(stage_dir, "2_assisted.cpp"))
+    assisted   = os.path.isfile(os.path.join(stage_dir, "2_assisted.cpp"))
 
     t = "deterministic C++, no AI" if transpiled and not ported else \
         ("emitted, with region(s) the transpiler could not lower"
@@ -302,12 +302,12 @@ def _stage_summary(stage_dir, row, rounds):
 def node_report_text(out_dir, type_name, *, row=None, spec=None):
     """The full Markdown for one node. Pure -- reads only files it is given."""
     stage_dir = bundler.stage_dir_for(out_dir, type_name)
-    rounds = _read_json(os.path.join(stage_dir, "rounds.json"))
-    row = row or {}
-    spec = spec or row.get("spec") or {}
+    rounds    = _read_json(os.path.join(stage_dir, "rounds.json"))
+    row       = row or {}
+    spec      = spec or row.get("spec") or {}
 
-    L = ["# %s -- compile report" % type_name, ""]
-    src = row.get("source_node") or spec.get("source_node") or "?"
+    L    = ["# %s -- compile report" % type_name, ""]
+    src  = row.get("source_node") or spec.get("source_node") or "?"
     base = (spec.get("suggested") or {}).get("mpx_base") or "MPxNode"
     L.append("**Source node:** `%s`  ·  **Base:** `%s`  ·  **Generated:** %s"
              % (src, base, time.strftime("%Y-%m-%d %H:%M")))
@@ -322,7 +322,7 @@ def node_report_text(out_dir, type_name, *, row=None, spec=None):
 
     # ---- stage 2 honesty -------------------------------------------------
     incomplete = list(row.get("incomplete") or [])
-    invented = list(row.get("invented_io") or [])
+    invented   = list(row.get("invented_io") or [])
     if incomplete or invented:
         L += ["## Unfinished work in the generated C++", ""]
         for what in incomplete:
@@ -461,9 +461,9 @@ def index_report_text(out_dir, plugin_name, rows):
     for row in rows or []:
         if not isinstance(row, dict) or not row.get("type_name"):
             continue
-        tn = row["type_name"]
-        stage_dir = bundler.stage_dir_for(out_dir, tn)
-        rounds = _read_json(os.path.join(stage_dir, "rounds.json"))
+        tn         = row["type_name"]
+        stage_dir  = bundler.stage_dir_for(out_dir, tn)
+        rounds     = _read_json(os.path.join(stage_dir, "rounds.json"))
         incomplete = list(row.get("incomplete") or [])
         assist = ("--" if not row.get("ported")
                   else ("%d unresolved" % len(incomplete) if incomplete

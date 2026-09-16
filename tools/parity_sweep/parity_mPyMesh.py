@@ -14,23 +14,23 @@ for p in ("mpynode_api1", "mpynode_api2"):
     if not cmds.pluginInfo(p, q=True, loaded=True):
         cmds.loadPlugin(p, quiet=True)
 
-NATIVE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fixtures", "mPyMesh")
+NATIVE_DIR  = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fixtures", "mPyMesh")
 ORIGINAL_MA = os.path.join(NATIVE_DIR, "mPyMesh_gridMesh_original.ma")
-BUNDLE = os.path.join(NATIVE_DIR, "gridMesh.bundle")
-NODE_TYPE = "gridMesh"
-SOURCE = "gridMeshSrc"
-TOL = 1e-4
+BUNDLE      = os.path.join(NATIVE_DIR, "gridMesh.bundle")
+NODE_TYPE   = "gridMesh"
+SOURCE      = "gridMeshSrc"
+TOL         = 1e-4
 
 
 def get_mesh_points(node):
     """Read outMesh plug -> MObject -> MFnMesh.getPoints(kObject)."""
     sel = om.MSelectionList()
     sel.add(node)
-    dep = om.MFnDependencyNode(sel.getDependNode(0))
-    plug = dep.findPlug("outMesh", False)
+    dep      = om.MFnDependencyNode(sel.getDependNode(0))
+    plug     = dep.findPlug("outMesh", False)
     mesh_obj = plug.asMObject()  # forces eval
-    fn = om.MFnMesh(mesh_obj)
-    pts = fn.getPoints(om.MSpace.kObject)
+    fn       = om.MFnMesh(mesh_obj)
+    pts      = fn.getPoints(om.MSpace.kObject)
     return fn.numVertices, fn.numPolygons, pts
 
 
@@ -59,11 +59,11 @@ def main():
     print("NATIVE built:", comp, "type:", cmds.nodeType(comp))
 
     # 3) Sweep 8 phase values.
-    phases = [i * 6.0 / 7.0 for i in range(8)]  # linspace 0..6, 8 pts
-    maxerr = 0.0
+    phases       = [i * 6.0 / 7.0 for i in range(8)]  # linspace 0..6, 8 pts
+    maxerr       = 0.0
     n_components = 0
-    n_samples = 0
-    py_nv = py_np = nat_nv = nat_np = None
+    n_samples    = 0
+    py_nv        = py_np = nat_nv = nat_np = None
 
     for ph in phases:
         cmds.setAttr(SOURCE + ".phase", ph)

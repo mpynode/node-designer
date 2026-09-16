@@ -77,7 +77,7 @@ def _spec_has_packed(spec):
 
 PORT_BEGIN = "// ===== BEGIN PORTED COMPUTE ====="
 
-PORT_END = "// ===== END PORTED COMPUTE ====="
+PORT_END   = "// ===== END PORTED COMPUTE ====="
 
 # Header the boundary handler below needs (MGlobal::displayError). Already in the
 # iksolver/locator/transform include lists; the plain-node, geo-generator and
@@ -122,8 +122,8 @@ def lowered_guard(type_name, lowered, on_error, indent="    "):
     return L
 
 _GEO_KIND = {
-    "mPyMesh": "mesh",
-    "mPyNurbsCurve": "curve",
+    "mPyMesh":         "mesh",
+    "mPyNurbsCurve":   "curve",
     "mPyNurbsSurface": "surface",
 }
 
@@ -251,7 +251,7 @@ def _check(spec):
         # mesh-region commands are validated here: they compile into the .bundle
         # and need a mesh input to connect/draw. classify_command is pure (no maya).
         from mpynode.native.compiler.kernels import command_codegen as _cc
-        cmds = spec.get("commands") or []
+        cmds        = spec.get("commands") or []
         region_cmds = [c for c in cmds if _cc.classify_command(c) is not None]
         if region_cmds and nmesh == 0:
             raise UnsupportedSpec(

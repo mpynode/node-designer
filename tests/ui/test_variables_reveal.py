@@ -127,7 +127,7 @@ class TestRevealVariable(unittest.TestCase):
         n = self._node()
         n.add_variable("board", persistent=True)
         content = NDScriptTabContent(n)
-        seen = []
+        seen    = []
         content.revealVariableRequested.connect(seen.append)
         try:
             content._api_view.variableActivated.emit("board")

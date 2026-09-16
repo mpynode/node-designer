@@ -57,13 +57,13 @@ _TIME_UNITS = (
     ("s", 1.0, 6),
 )
 _TIME_UNIT_MAP = {label: (mult, prec) for (label, mult, prec) in _TIME_UNITS}
-_DEFAULT_UNIT = "\u00b5s"
+_DEFAULT_UNIT  = "\u00b5s"
 
 # Combo index maps directly onto the node's (profile_enabled,
 # deep_profile_enabled) pair.
-_MODE_OFF = 0
-_MODE_PROFILE = 1
-_MODE_DEEP = 2
+_MODE_OFF      = 0
+_MODE_PROFILE  = 1
+_MODE_DEEP     = 2
 _PROFILE_MODES = ("Off", "Profile", "Deep Profile")
 
 # Base unit for each data source -> seconds divisor.
@@ -151,10 +151,10 @@ class NDProfileWidget(QWidget):
 
         # 5 rows of label/value pairs. The label text is rebuilt each refresh
         # so it tracks the selected unit.
-        self._stat_value_labels: dict[str, QLabel] = {}
+        self._stat_value_labels:  dict[str, QLabel] = {}
         self._stat_label_widgets: dict[str, QLabel] = {}
         for key in _STAT_KEYS:
-            row = QHBoxLayout()
+            row   = QHBoxLayout()
             label = QLabel("", self)  # text populated in refresh()
             label.setMinimumWidth(80)
             value = QLabel("\u2014", self)
@@ -163,7 +163,7 @@ class NDProfileWidget(QWidget):
             row.addWidget(value)
             row.addStretch(1)
             layout.addLayout(row)
-            self._stat_value_labels[key] = value
+            self._stat_value_labels[key]  = value
             self._stat_label_widgets[key] = label
 
         # cProfile drill-down. Header text is rebuilt each refresh.
@@ -263,7 +263,7 @@ class NDProfileWidget(QWidget):
 
             # Microseconds (base) -> selected unit.
             for key in ("last", "avg", "min", "max"):
-                raw_us = snap.get(key + "_us")
+                raw_us       = snap.get(key + "_us")
                 value_widget = self._stat_value_labels[key]
                 if raw_us is None:
                     value_widget.setText("\u2014")
@@ -346,8 +346,8 @@ class NDProfileWidget(QWidget):
         if self._refreshing or self._py_node is None:
             return
         profile_on = index >= _MODE_PROFILE
-        deep_on = index >= _MODE_DEEP
-        name = self._py_node.get_name()
+        deep_on    = index >= _MODE_DEEP
+        name       = self._py_node.get_name()
         try:
             mc.setAttr(name + ".profile_enabled", bool(profile_on))
         except Exception:
@@ -436,12 +436,12 @@ class NDProfileWidget(QWidget):
 
 
 def _set_float_col(
-    item: QTreeWidgetItem,
-    col: int,
-    value: float,
+    item:         QTreeWidgetItem,
+    col:          int,
+    value:        float,
     *,
-    sort_seconds: float | None = None,
-    unit: str | None = None,
+    sort_seconds: float           | None = None,
+    unit:         str             | None = None,
 ) -> None:
     """Set a float value with Qt.UserRole sort key for numeric sorting.
 
@@ -500,8 +500,8 @@ class _SortableTreeWidgetItem(QTreeWidgetItem):
             # stable ordering. Never call super.
             return self.text(0) < other.text(0)
         col = tree.sortColumn()
-        a = self.data(col, Qt.UserRole)
-        b = other.data(col, Qt.UserRole)
+        a   = self.data(col, Qt.UserRole)
+        b   = other.data(col, Qt.UserRole)
         if a is not None and b is not None:
             try:
                 return float(a) < float(b)

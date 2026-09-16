@@ -303,10 +303,10 @@ _OUTPUT_CONTRACT = (
 def _spec_context(spec: dict) -> str:
     """Compact reference block: the node's Python compute + init, for the model to
     check its rewrite against (the parity reference is this numpy, not the C++)."""
-    spec = spec or {}
+    spec    = spec or {}
     compute = (spec.get("compute") or "").strip()
-    init = (spec.get("init") or "").strip()
-    parts = []
+    init    = (spec.get("init") or "").strip()
+    parts   = []
     if compute:
         parts.append("Original Python compute (the parity reference -- match "
                      "THIS numpy result):\n```python\n%s\n```" % compute)
@@ -354,7 +354,7 @@ def _code_only(src: str) -> str:
                 i += 1
             continue
         if c == "/" and i + 1 < n and src[i + 1] == "*":
-            j = src.find("*/", i + 2)
+            j   = src.find("*/", i + 2)
             end = n if j < 0 else j + 2
             out.append("".join(ch if ch == "\n" else " " for ch in src[i:end]))
             i = end
@@ -363,8 +363,8 @@ def _code_only(src: str) -> str:
             j = src.find("(", i + 2)
             if j > 0:
                 closer = ")" + src[i + 2:j] + '"'
-                k = src.find(closer, j + 1)
-                end = n if k < 0 else k + len(closer)
+                k      = src.find(closer, j + 1)
+                end    = n if k < 0 else k + len(closer)
                 out.append("".join(ch if ch == "\n" else " "
                                    for ch in src[i:end]))
                 i = end
@@ -448,7 +448,7 @@ def _unguarded_platform_blocks(code: str) -> int:
     because it DOES carry an ``#else`` with plain std::cos/std::sin.
     """
     lines = code.splitlines()
-    bad = 0
+    bad   = 0
     for m in _PLATFORM_IF_RE.finditer(code):
         start = code.count("\n", 0, m.start())
         depth, has_else, has_code = 0, False, False
@@ -536,7 +536,7 @@ def build_optimize_prompt(cpp: str, spec: dict, bench_hint: str = None) -> tuple
     human note about where the time goes (e.g. current median ms / grid size)."""
     system = "\n\n".join([OPTIMIZER_GUIDE, CORRECTNESS, FUSED_EXEMPLAR,
                           _ASCII_RULE, PORTABILITY_RULE, _OUTPUT_CONTRACT])
-    ctx = _spec_context(spec)
+    ctx  = _spec_context(spec)
     hint = ("\nProfiling hint: %s\n" % bench_hint) if bench_hint else ""
     user = (
         "Optimize this native Maya node for speed WITHOUT changing its numerical "

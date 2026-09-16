@@ -85,10 +85,10 @@ def _parse(out):
             ok = False
     if err is None:
         err_m = _ERR.findall(out)
-        err = float(err_m[-1]) if err_m else None
+        err   = float(err_m[-1]) if err_m else None
     if comp is None:
         comp_m = _COMP.findall(out)
-        comp = int(comp_m[-1]) if comp_m else None
+        comp   = int(comp_m[-1]) if comp_m else None
     return {"pass": ok, "maxerr": err, "components": comp}
 
 
@@ -124,8 +124,8 @@ def main():
     rows = []
     for t in TYPES:
         script = os.path.join(HERE, "parity_%s.py" % t)
-        proc = subprocess.run([MAYAPY, script], capture_output=True, text=True)
-        info = _parse(proc.stdout + "\n" + proc.stderr)
+        proc   = subprocess.run([MAYAPY, script], capture_output=True, text=True)
+        info   = _parse(proc.stdout + "\n" + proc.stderr)
         rows.append((t, info))
         status = "PASS" if info["pass"] else ("FAIL" if info["pass"] is False
                                               else "????")

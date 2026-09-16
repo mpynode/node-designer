@@ -26,22 +26,22 @@ class TestPlatformConstants(unittest.TestCase):
         from mpynode.native.toolchain import toolchain as tc
 
         self.assertEqual(tc.plugin_ext(os_name="darwin"), ".bundle")
-        self.assertEqual(tc.plugin_ext(os_name="win32"), ".mll")
-        self.assertEqual(tc.plugin_ext(os_name="linux"), ".so")
+        self.assertEqual(tc.plugin_ext(os_name="win32"),  ".mll")
+        self.assertEqual(tc.plugin_ext(os_name="linux"),  ".so")
 
     def test_object_ext_per_os(self):
         from mpynode.native.toolchain import toolchain as tc
 
         self.assertEqual(tc.object_ext(os_name="darwin"), ".o")
-        self.assertEqual(tc.object_ext(os_name="linux"), ".o")
-        self.assertEqual(tc.object_ext(os_name="win32"), ".obj")
+        self.assertEqual(tc.object_ext(os_name="linux"),  ".o")
+        self.assertEqual(tc.object_ext(os_name="win32"),  ".obj")
 
     def test_maya_define_per_os(self):
         from mpynode.native.toolchain import toolchain as tc
 
         self.assertEqual(tc.maya_define(os_name="darwin"), "OSMac_")
-        self.assertEqual(tc.maya_define(os_name="win32"), "NT_PLUGIN")
-        self.assertEqual(tc.maya_define(os_name="linux"), "LINUX")
+        self.assertEqual(tc.maya_define(os_name="win32"),  "NT_PLUGIN")
+        self.assertEqual(tc.maya_define(os_name="linux"),  "LINUX")
 
     def test_maya_lib_dir_per_os(self):
         from mpynode.native.toolchain import toolchain as tc
@@ -62,16 +62,16 @@ class TestPlatformConstants(unittest.TestCase):
         from mpynode.native.toolchain import toolchain as tc
 
         self.assertEqual(tc.default_compiler(os_name="darwin"), "clang++")
-        self.assertEqual(tc.default_compiler(os_name="win32"), "cl")
-        self.assertEqual(tc.default_compiler(os_name="linux"), "g++")
+        self.assertEqual(tc.default_compiler(os_name="win32"),  "cl")
+        self.assertEqual(tc.default_compiler(os_name="linux"),  "g++")
 
     def test_compiler_family(self):
         from mpynode.native.toolchain import toolchain as tc
 
         self.assertEqual(tc.compiler_family("clang++"), "unix")
-        self.assertEqual(tc.compiler_family("g++"), "unix")
-        self.assertEqual(tc.compiler_family("cl"), "msvc")
-        self.assertEqual(tc.compiler_family("cl.exe"), "msvc")
+        self.assertEqual(tc.compiler_family("g++"),     "unix")
+        self.assertEqual(tc.compiler_family("cl"),      "msvc")
+        self.assertEqual(tc.compiler_family("cl.exe"),  "msvc")
         self.assertEqual(tc.compiler_family(r"C:\VS\bin\HostX64\x64\cl.exe"),
                          "msvc")
 
@@ -84,9 +84,9 @@ class TestMacRegressionExact(unittest.TestCase):
 
         got = tc.compile_to_plugin_cmd(
             "clang++", "foo.cpp", "/out/foo.bundle",
-            include_dir="/M/include",
-            lib_dir="/M/Maya.app/Contents/MacOS",
-            libs=["OpenMaya", "Foundation"],
+            include_dir = "/M/include",
+            lib_dir     = "/M/Maya.app/Contents/MacOS",
+            libs        = ["OpenMaya", "Foundation"],
             os_name="darwin", arch="arm64")
         self.assertEqual(got, [
             "clang++", "-std=c++17", "-O3", "-ffp-contract=off",
@@ -131,15 +131,15 @@ class TestMsvcContract(unittest.TestCase):
 
         got = tc.compile_to_plugin_cmd(
             "cl", r"C:\src\foo.cpp", r"C:\out\foo.mll",
-            include_dir=r"C:\M\include",
-            lib_dir=r"C:\M\lib",
-            libs=["OpenMaya", "Foundation"],
+            include_dir = r"C:\M\include",
+            lib_dir     = r"C:\M\lib",
+            libs        = ["OpenMaya", "Foundation"],
             os_name="win32")
         # DLL build, NT_PLUGIN, C++17, the source, the .mll output.
         self.assertEqual(got[0], "cl")
-        self.assertIn("/LD", got)
+        self.assertIn("/LD",        got)
         self.assertIn("/std:c++17", got)
-        self.assertIn("NT_PLUGIN", got)
+        self.assertIn("NT_PLUGIN",  got)
         self.assertNotIn("OSMac_", got)
         self.assertNotIn("-arch", got)
         self.assertIn(r"C:\src\foo.cpp", got)
@@ -151,9 +151,9 @@ class TestMsvcContract(unittest.TestCase):
                             for a in got), got)
         self.assertIn("OpenMaya.lib", got)
         self.assertIn("Foundation.lib", got)
-        self.assertTrue(any("initializePlugin" in a for a in got), got)
+        self.assertTrue(any("initializePlugin" in a for a in got),   got)
         self.assertTrue(any("uninitializePlugin" in a for a in got), got)
-        self.assertTrue(any(a.endswith("foo.mll") for a in got), got)
+        self.assertTrue(any(a.endswith("foo.mll") for a in got),     got)
 
     def test_compile_object_msvc(self):
         from mpynode.native.toolchain import toolchain as tc
@@ -176,10 +176,10 @@ class TestMsvcContract(unittest.TestCase):
             "cl", [r"C:\x\a.obj", r"C:\x\b.obj"], r"C:\out\plug.mll",
             lib_dir=r"C:\M\lib", libs=["OpenMaya"], os_name="win32")
         self.assertEqual(got[0], "cl")
-        self.assertIn("/LD", got)
-        self.assertIn(r"C:\x\a.obj", got)
-        self.assertIn(r"C:\x\b.obj", got)
-        self.assertIn("/link", got)
+        self.assertIn("/LD",          got)
+        self.assertIn(r"C:\x\a.obj",  got)
+        self.assertIn(r"C:\x\b.obj",  got)
+        self.assertIn("/link",        got)
         self.assertIn("OpenMaya.lib", got)
         self.assertTrue(any(a.startswith("/LIBPATH:") for a in got), got)
         self.assertTrue(any("initializePlugin" in a for a in got), got)
@@ -222,9 +222,9 @@ class TestMsvcFpPrecise(unittest.TestCase):
     def test_no_msvc_command_has_parity_breaking_flags(self):
         for name, cmd in self._all_cmds().items():
             joined = " ".join(cmd)
-            self.assertNotIn("/fp:fast", joined, "%s has /fp:fast" % name)
+            self.assertNotIn("/fp:fast",     joined, "%s has /fp:fast" % name)
             self.assertNotIn("/fp:contract", joined, "%s has /fp:contract" % name)
-            self.assertNotIn("/arch:", joined, "%s has /arch:" % name)
+            self.assertNotIn("/arch:",       joined, "%s has /arch:" % name)
 
     def test_msvc_compile_commands_are_utf8_and_silence_crt_secure(self):
         # 24 generated TUs carry non-ASCII comment bytes (cl reads them as the
@@ -257,7 +257,7 @@ class TestQtLinkage(unittest.TestCase):
     def test_qt_link_flags_darwin(self):
         from mpynode.native.toolchain import toolchain as tc
 
-        fw = os.path.join("/M", "Maya.app", "Contents", "Frameworks")
+        fw  = os.path.join("/M", "Maya.app", "Contents", "Frameworks")
         got = tc.qt_link_flags("/M", os_name="darwin")
         for f in ("QtCore", "QtGui", "QtWidgets"):
             self.assertIn("-framework", got)
@@ -270,7 +270,7 @@ class TestQtLinkage(unittest.TestCase):
     def test_qt_compile_flags_darwin_has_framework_search(self):
         from mpynode.native.toolchain import toolchain as tc
 
-        fw = os.path.join("/M", "Maya.app", "Contents", "Frameworks")
+        fw  = os.path.join("/M", "Maya.app", "Contents", "Frameworks")
         got = tc.qt_compile_flags("/M", os_name="darwin")
         self.assertIn("-F", got)
         self.assertIn(fw, got)
@@ -281,9 +281,9 @@ class TestQtLinkage(unittest.TestCase):
         # The whole-cmd anchor: qt defaults False -> unchanged from today.
         got = tc.compile_to_plugin_cmd(
             "clang++", "foo.cpp", "/out/foo.bundle",
-            include_dir="/M/include",
-            lib_dir="/M/Maya.app/Contents/MacOS",
-            libs=["OpenMaya", "Foundation"],
+            include_dir = "/M/include",
+            lib_dir     = "/M/Maya.app/Contents/MacOS",
+            libs        = ["OpenMaya", "Foundation"],
             os_name="darwin", arch="arm64")
         self.assertEqual(got, [
             "clang++", "-std=c++17", "-O3", "-ffp-contract=off",
@@ -301,13 +301,13 @@ class TestQtLinkage(unittest.TestCase):
 
         got = tc.compile_to_plugin_cmd(
             "clang++", "foo.cpp", "/out/foo.bundle",
-            include_dir="/M/include",
-            lib_dir="/M/Maya.app/Contents/MacOS",
-            libs=["OpenMaya", "Foundation"],
+            include_dir = "/M/include",
+            lib_dir     = "/M/Maya.app/Contents/MacOS",
+            libs        = ["OpenMaya", "Foundation"],
             os_name="darwin", arch="arm64", qt=True, maya="/M")
         fw = os.path.join("/M", "Maya.app", "Contents", "Frameworks")
-        self.assertIn("-framework", got)
-        self.assertIn("QtGui", got)
+        self.assertIn("-framework",       got)
+        self.assertIn("QtGui",            got)
         self.assertIn("-Wl,-rpath," + fw, got)
         # the .cpp and output are still present (well-formed compile+link)
         self.assertIn("foo.cpp", got)
@@ -621,8 +621,8 @@ class TestVcvarsParsing(unittest.TestCase):
         )
         env = tc._parse_set_output(sample)
         self.assertEqual(env["INCLUDE"], "C:\\VS\\include;C:\\SDK\\include")
-        self.assertEqual(env["LIB"], "C:\\VS\\lib")
-        self.assertEqual(env["EMPTY"], "")
+        self.assertEqual(env["LIB"],     "C:\\VS\\lib")
+        self.assertEqual(env["EMPTY"],   "")
         self.assertNotIn("WeirdNoEquals", env)
 
     def test_build_env_is_none_for_unix(self):
@@ -862,9 +862,9 @@ class TestCheckToolchain(unittest.TestCase):
 
         res = tc.check_toolchain(
             r"C:\M", os_name="win32",
-            _isdir=lambda p: True,
-            _find_vcvarsall=lambda: r"C:\VS\vcvarsall.bat",
-            _capture_vcvars=lambda: {"PATH": r"C:\VS\bin"},
+            _isdir          = lambda p: True,
+            _find_vcvarsall = lambda: r"C:\VS\vcvarsall.bat",
+            _capture_vcvars = lambda: {"PATH": r"C:\VS\bin"},
             _which=lambda n, path=None: None)
         self.assertFalse(res["ok"])
         self.assertTrue(any("cl" in p for p in res["problems"]), res["problems"])
@@ -874,9 +874,9 @@ class TestCheckToolchain(unittest.TestCase):
 
         res = tc.check_toolchain(
             r"C:\M", os_name="win32",
-            _isdir=lambda p: True,
-            _find_vcvarsall=lambda: r"C:\VS\vcvarsall.bat",
-            _capture_vcvars=lambda: {"PATH": r"C:\VS\bin"},
+            _isdir          = lambda p: True,
+            _find_vcvarsall = lambda: r"C:\VS\vcvarsall.bat",
+            _capture_vcvars = lambda: {"PATH": r"C:\VS\bin"},
             _which=lambda n, path=None: r"C:\VS\bin\cl.exe")
         self.assertTrue(res["ok"], res)
         self.assertEqual(res["compiler_path"], r"C:\VS\bin\cl.exe")
@@ -1047,7 +1047,7 @@ class TestToolsetConsistency(unittest.TestCase):
         self.assertIsNotNone(hint)
         self.assertIn("14.44.35207", hint)
         self.assertIn("14.51.36231", hint)
-        self.assertIn("STL1001", hint)
+        self.assertIn("STL1001",     hint)
 
     def test_no_mismatch_when_consistent(self):
         from mpynode.native.toolchain import toolchain as tc
@@ -1299,10 +1299,10 @@ class TestCodegenBuildScripts(unittest.TestCase):
         name, body = codegen.generate_build_script(_SPEC, maya=r"C:\M",
                                                    os_name="win32")
         self.assertEqual(name, "build.bat")
-        self.assertIn("cl /nologo", body)
-        self.assertIn("NT_PLUGIN", body)
-        self.assertIn("/OUT:", body)
-        self.assertIn("fooNode.mll", body)
+        self.assertIn("cl /nologo",       body)
+        self.assertIn("NT_PLUGIN",        body)
+        self.assertIn("/OUT:",            body)
+        self.assertIn("fooNode.mll",      body)
         self.assertIn("initializePlugin", body)
 
     def test_build_sh_recipe_unchanged(self):
@@ -1357,8 +1357,8 @@ class TestCodegenBuildScripts(unittest.TestCase):
 
         body = codegen.generate_build_bat(_SPEC, maya=r"C:\M")
         self.assertIn("for /d %%D in (", body)
-        self.assertIn("%%~fD", body)
-        self.assertIn('set "_V=%~1"', body)   # the version argument itself
+        self.assertIn("%%~fD",           body)
+        self.assertIn('set "_V=%~1"',    body)   # the version argument itself
 
     def test_build_sh_no_qt_without_needs_hover(self):
         from mpynode.native import compiler as codegen
@@ -1372,8 +1372,8 @@ class TestCodegenBuildScripts(unittest.TestCase):
 
         body = codegen.generate_build_sh(_HOVER_SPEC, maya="/M")
         self.assertIn("-framework QtGui", body)
-        self.assertIn("Frameworks", body)
-        self.assertIn("-Wl,-rpath,", body)
+        self.assertIn("Frameworks",       body)
+        self.assertIn("-Wl,-rpath,",      body)
         # still a well-formed locator build
         self.assertIn("gizmoCube.bundle", body)
 
@@ -1459,10 +1459,10 @@ class TestCodegenBuildScripts(unittest.TestCase):
         for body in (bundler.make_build_bat("plain", ["frag_a.cpp"]),
                      bundler.make_single_build_bat("plain", "foo.cpp",
                                                    ["OpenMaya"])):
-            self.assertNotIn("QTINC", body)
-            self.assertNotIn("/permissive-", body)
+            self.assertNotIn("QTINC",           body)
+            self.assertNotIn("/permissive-",    body)
             self.assertNotIn("/Zc:__cplusplus", body)
-            self.assertNotIn("/FI", body)
+            self.assertNotIn("/FI",             body)
 
     def test_qt_resolver_bat_probes_and_fails_loudly(self):
         """The resolver must actually PROBE (not just set a variable) and must
@@ -1476,10 +1476,10 @@ class TestCodegenBuildScripts(unittest.TestCase):
         self.assertIn(r"QtGui\QCursor", body)
         self.assertNotIn("QtGui/QCursor", body)
         self.assertIn(tc.QT_INCLUDE_ENV, body)
-        self.assertIn("for /d %%D in (", body)      # the subdirectory sweep
-        self.assertIn("%%~fD", body)
-        self.assertIn("exit /b 1", body)
-        self.assertIn("-include.zip", body)         # names the archive
+        self.assertIn("for /d %%D in (", body)  # the subdirectory sweep
+        self.assertIn("%%~fD",           body)
+        self.assertIn("exit /b 1",       body)
+        self.assertIn("-include.zip",    body)  # names the archive
         self.assertFalse(_uncollapsed_percent(body))
         # ...and extracts it by itself into a per-user cache: Windows' own
         # bsdtar by explicit path (Git's GNU tar cannot read zips), with
@@ -1497,7 +1497,7 @@ class TestCodegenBuildScripts(unittest.TestCase):
         import os
         from mpynode.native.toolchain import toolchain as tc
 
-        inc = r"C:\M\include"
+        inc  = r"C:\M\include"
         zips = ["qt_6.5.3_vc14-include.zip"]
         with unittest.mock.patch.dict(os.environ, {"LOCALAPPDATA": r"C:\U\Local"}):
             cache = os.path.join(r"C:\U\Local", "mpynode", "qt_include",
@@ -1607,7 +1607,7 @@ class TestBundlerBuildScripts(unittest.TestCase):
         build.sh is immune -- a shell script's status is its last command."""
         from mpynode.native.compiler import bundler
 
-        body = bundler.make_build_bat("myBundle", ["frag_a.cpp"])
+        body  = bundler.make_build_bat("myBundle", ["frag_a.cpp"])
         lines = [l for l in body.splitlines() if l.strip()]
         self.assertIn("del %OBJS%", body, "the cleanup sweep went missing")
         self.assertEqual(
@@ -1628,10 +1628,10 @@ class TestBundlerBuildScripts(unittest.TestCase):
         from mpynode.native.compiler import bundler
 
         got = bundler.make_build_bat("myBundle", ["frag_a.cpp"], needs_qt=True)
-        self.assertIn('set "QTINC=', got)          # the resolver is present
-        self.assertIn('/I "%QTINC%"', got)         # ...and actually used
+        self.assertIn('set "QTINC=',     got)  # the resolver is present
+        self.assertIn('/I "%QTINC%"',    got)  # ...and actually used
         self.assertIn("/Zc:__cplusplus", got)
-        self.assertIn("/permissive-", got)
+        self.assertIn("/permissive-",    got)
         self.assertFalse(_uncollapsed_percent(got))
         # No absolute host path may be baked in.
         self.assertNotIn(r"C:\M\include\qt", got)
@@ -1640,12 +1640,12 @@ class TestBundlerBuildScripts(unittest.TestCase):
         from mpynode.native.compiler import bundler
 
         body = bundler.make_build_bat("myBundle", ["frag_a.cpp", "frag_b.cpp"])
-        self.assertIn("frag_a.obj", body)
-        self.assertIn("frag_b.obj", body)
-        self.assertIn("plugin_main.obj", body)
-        self.assertIn("/OUT:", body)
-        self.assertIn("myBundle.mll", body)
-        self.assertIn("OpenMaya.lib", body)
+        self.assertIn("frag_a.obj",       body)
+        self.assertIn("frag_b.obj",       body)
+        self.assertIn("plugin_main.obj",  body)
+        self.assertIn("/OUT:",            body)
+        self.assertIn("myBundle.mll",     body)
+        self.assertIn("OpenMaya.lib",     body)
         self.assertIn("initializePlugin", body)
         # accumulates objects into %OBJS% then links them
         self.assertIn('set "OBJS=', body)
@@ -1957,7 +1957,7 @@ class MsvcLinkByproductTests(unittest.TestCase):
         from mpynode.native.compiler import bundler
 
         porter = codegen.generate_build_bat(_HOVER_SPEC, maya=r"C:\M")
-        multi = bundler.make_build_bat("myBundle", ["frag_a.cpp"])
+        multi  = bundler.make_build_bat("myBundle", ["frag_a.cpp"])
         single = bundler.make_single_build_bat("myBundle", "foo.cpp",
                                                ["OpenMaya"])
         # The link byproducts (.lib / .exp) are pinned into the LOCAL temp
@@ -1965,8 +1965,8 @@ class MsvcLinkByproductTests(unittest.TestCase):
         # the MSVC linker on a cloud-synced checkout (toolchain.link_via_temp_bat).
         for label, body in (("porter", porter), ("multi", multi),
                             ("single", single)):
-            self.assertIn('/IMPLIB:"%LINKTMP%\\', body, label)
-            self.assertIn('/OUT:"%LINKTMP%\\', body, label)
+            self.assertIn('/IMPLIB:"%LINKTMP%\\',       body, label)
+            self.assertIn('/OUT:"%LINKTMP%\\',          body, label)
             self.assertIn('rd /s /q "%LINKTMP%" 2>nul', body, label)
             self.assertNotIn('/OUT:"%HERE%', body, label)
             self.assertFalse(_uncollapsed_percent(body), label)
@@ -1977,7 +1977,7 @@ class MsvcLinkByproductTests(unittest.TestCase):
         self.assertIn('del "%HERE%foo.obj" 2>nul', single)
         self.assertIn('del %OBJS% 2>nul', multi)
         # ...and the plug-in is copied to where the old in-place link put it
-        self.assertIn('copy /Y "%LINKTMP%\\gizmoCube.mll" "%HERE%gizmoCube.mll"', porter)
+        self.assertIn('copy /Y "%LINKTMP%\\gizmoCube.mll" "%HERE%gizmoCube.mll"',   porter)
         self.assertIn('copy /Y "%LINKTMP%\\myBundle.mll" "%HERE%..\\myBundle.mll"', single)
         self.assertIn('copy /Y "%LINKTMP%\\myBundle.mll" "%HERE%..\\myBundle.mll"', multi)
 

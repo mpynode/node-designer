@@ -62,7 +62,7 @@ _MAYA_DEFAULT = toolchain.preferred_maya_dir()
 # any ``*_commands.py`` companions) at the TOP of ``out_dir``; build scripts,
 # README and manifest live in ``out_dir/build/``, C++ source one level deeper in
 # ``out_dir/build/source/``. "Here is the plugin, here is how it was made".
-BUILD_DIRNAME = "build"
+BUILD_DIRNAME  = "build"
 SOURCE_DIRNAME = "source"
 STAGES_DIRNAME = "stages"
 
@@ -142,7 +142,7 @@ def _extract_fn(text: str, fname: str) -> Optional[Tuple[int, int, str]]:
     if not m:
         return None
     open_brace = m.end() - 1
-    depth = 0
+    depth      = 0
     for j in range(open_brace, len(text)):
         c = text[j]
         if c == "{":
@@ -183,7 +183,7 @@ def _raw_string_span(text: str, i: int, n: int):
     prev = text[start - 1] if start > 0 else ""
     if prev.isalnum() or prev == "_":  # part of a longer identifier, not raw
         return None
-    j = i + 2  # past the R"
+    j      = i + 2  # past the R"
     dstart = j
     while j < n and text[j] != '(':  # delimiter: no (, ), backslash, whitespace
         if text[j] in '() \t\r\n\\':
@@ -192,7 +192,7 @@ def _raw_string_span(text: str, i: int, n: int):
     if j >= n:
         return None
     closer = ')' + text[dstart:j] + '"'
-    end = text.find(closer, j + 1)
+    end    = text.find(closer, j + 1)
     return n if end == -1 else end + len(closer)
 
 
@@ -352,9 +352,9 @@ def _extract_shared_helpers(text: str) -> Tuple[str, List[Dict[str, str]]]:
         if not m:
             out.append(text[pos:])
             break
-        name = m.group("name")
+        name       = m.group("name")
         end_marker = _SHARED_END_TMPL % name
-        end_at = text.find(end_marker, m.end())
+        end_at     = text.find(end_marker, m.end())
         if end_at < 0:
             # Unterminated marker -- leave the rest untouched (defensive: never
             # corrupt a fragment over a malformed block).
@@ -370,9 +370,9 @@ def _extract_shared_helpers(text: str) -> Tuple[str, List[Dict[str, str]]]:
     return "".join(out), blocks
 
 
-_PP_IF_RE = re.compile(r"^\s*#\s*if(?:def|ndef)?\b")
-_PP_ENDIF_RE = re.compile(r"^\s*#\s*endif\b")
-_PROBE_IFDEF_RE = re.compile(r"^\s*#\s*ifdef\s+MPYNODE_PROBE\b")
+_PP_IF_RE        = re.compile(r"^\s*#\s*if(?:def|ndef)?\b")
+_PP_ENDIF_RE     = re.compile(r"^\s*#\s*endif\b")
+_PROBE_IFDEF_RE  = re.compile(r"^\s*#\s*ifdef\s+MPYNODE_PROBE\b")
 _PROBE_IFNDEF_RE = re.compile(r"^\s*#\s*ifndef\s+MPYNODE_PROBE\b")
 
 
@@ -465,7 +465,7 @@ def _toplevel_directive_lines(text: str) -> List[int]:
         c = text[i]
         if c == "\n":
             line += 1
-            i += 1
+            i    += 1
             col0 = True
             continue
         at_col0, col0 = col0, False
@@ -488,7 +488,7 @@ def _toplevel_directive_lines(text: str) -> List[int]:
             i = n if j < 0 else j
             continue
         if c == "/" and i + 1 < n and text[i + 1] == "*":
-            j = text.find("*/", i + 2)
+            j   = text.find("*/", i + 2)
             end = n if j < 0 else j + 2
             line += text.count("\n", i, end)
             i = end
@@ -529,8 +529,8 @@ def transform_node_cpp(
         r"register(?:Node|Transform)\s*\(\s*\"([^\"]+)\"\s*,\s*(\w+)::id", text
     )
     node_name = reg.group(1) if reg else type_name
-    main_cls = reg.group(2) if reg else re.sub(r"\W", "", type_name.title())
-    ns = _ns_for(node_name)
+    main_cls  = reg.group(2) if reg else re.sub(r"\W", "", type_name.title())
+    ns        = _ns_for(node_name)
 
     # (c) override every MTypeId definition with a registry-assigned id.
     text = _rewrite_typeids(text, type_name, id_for, main_cls)
@@ -544,9 +544,9 @@ def transform_node_cpp(
     # Flatten a locator's MPYNODE_PROBE conditionals (drop the probe block, strip
     # the plugin-scaffold guard lines) so the head/hook split below can't orphan
     # the scaffold's closing #endif. No-op for every non-locator node.
-    text = _flatten_probe_guards(text)
+    text   = _flatten_probe_guards(text)
 
-    init = _extract_fn(text, "initializePlugin")
+    init   = _extract_fn(text, "initializePlugin")
     uninit = _extract_fn(text, "uninitializePlugin")
     if not init or not uninit:
         raise ValueError(
@@ -555,7 +555,7 @@ def transform_node_cpp(
 
     # Head = everything before the plugin functions. Wrap its code body in the
     # per-node namespace (keeping #include / # directives outside it).
-    head = text[: init[0]].rstrip()
+    head  = text[: init[0]].rstrip()
     lines = head.splitlines()
     # ONLY column-0 directives at BRACE DEPTH 0 delimit the preamble. py_to_cpp
     # emits the fp-contract fusion guard (#if/#pragma clang fp contract/#endif)
@@ -571,12 +571,12 @@ def transform_node_cpp(
     # profiling block, an __APPLE__ sincos guard), which reproduced the exact
     # same mid-function anchor from the other direction. The depth test covers
     # both -- see :func:`_toplevel_directive_lines`.
-    inc_idx = _toplevel_directive_lines(head)
-    last_inc = max(inc_idx) if inc_idx else -1
-    pre = lines[: last_inc + 1]
-    body = lines[last_inc + 1:]
+    inc_idx    = _toplevel_directive_lines(head)
+    last_inc   = max(inc_idx) if inc_idx else -1
+    pre        = lines[: last_inc + 1]
+    body       = lines[last_inc + 1:]
 
-    reg_hook = "register_%s" % main_cls
+    reg_hook   = "register_%s" % main_cls
     dereg_hook = "deregister_%s" % main_cls
 
     # Prototypes for the hoisted helpers, at GLOBAL scope (between the includes
@@ -600,11 +600,11 @@ def transform_node_cpp(
         + "\n"
     )
     info = {
-        "node_name": node_name,
-        "class": main_cls,
-        "ns": ns,
-        "register": reg_hook,
-        "deregister": dereg_hook,
+        "node_name":      node_name,
+        "class":          main_cls,
+        "ns":             ns,
+        "register":       reg_hook,
+        "deregister":     dereg_hook,
         "shared_helpers": shared,
     }
     return frag, info
@@ -631,9 +631,9 @@ def make_single_node_cpp(
         r"register(?:Node|Transform)\s*\(\s*\"([^\"]+)\"\s*,\s*(\w+)::id", text
     )
     node_name = reg.group(1) if reg else type_name
-    main_cls = reg.group(2) if reg else re.sub(r"\W", "", type_name.title())
-    text = _rewrite_typeids(text, type_name, id_for, main_cls)
-    text = _SHARED_MARKER_LINE_RE.sub("", text)
+    main_cls  = reg.group(2) if reg else re.sub(r"\W", "", type_name.title())
+    text      = _rewrite_typeids(text, type_name, id_for, main_cls)
+    text      = _SHARED_MARKER_LINE_RE.sub("", text)
     return text, {"node_name": node_name, "class": main_cls}
 
 
@@ -715,8 +715,8 @@ def _collect_shared_helpers(infos: List[Dict[str, str]]):
     First definition of a name wins; a later block with the SAME name but
     DIFFERENT code is recorded as a conflict (never silently merged). Returns
     ``(unique_blocks, conflicts)``."""
-    by_name: Dict[str, Dict[str, str]] = {}
-    order: List[str] = []
+    by_name:   Dict[str, Dict[str, str]] = {}
+    order:     List[str] = []
     conflicts: List[str] = []
     for info in infos:
         for b in info.get("shared_helpers") or []:
@@ -755,7 +755,7 @@ def make_shared_helpers_cpp(blocks: List[Dict[str, str]]) -> str:
     incs = "\n".join("#include %s" % h
                      for h in _SHARED_HELPER_INCLUDES + _maya_includes_for(blocks))
     protos = "\n".join("%s;" % b["proto"] for b in blocks)
-    defs = "\n\n".join(b["code"] for b in blocks)
+    defs   = "\n\n".join(b["code"] for b in blocks)
     return (
         "// shared_helpers.cpp -- followed-import helpers shared across nodes,\n"
         "// hoisted here so each compiles ONCE (generated by bundler.py).\n"
@@ -775,11 +775,11 @@ def make_build_sh(plugin_name: str, frag_files: List[str],
     (mirrors ``toolchain.qt_compile_flags`` / ``qt_link_flags``). Defaults False
     so a Qt-free bundle's script is byte-for-byte unchanged.
     """
-    cxx = " ".join(_CXXFLAGS)
+    cxx      = " ".join(_CXXFLAGS)
     frag_def = " ".join(_FRAG_DEFINES)
-    libs = " ".join("-l" + l for l in _LINK_LIBS)
-    fw = '"$MAYA/Maya.app/Contents/Frameworks"'
-    qt_cxx = (" -F%s" % fw) if needs_qt else ""
+    libs     = " ".join("-l" + l for l in _LINK_LIBS)
+    fw       = '"$MAYA/Maya.app/Contents/Frameworks"'
+    qt_cxx   = (" -F%s" % fw) if needs_qt else ""
     qt_link = ((" -framework QtCore -framework QtGui -framework QtWidgets "
                 "-F%s -Wl,-rpath,%s" % (fw, fw)) if needs_qt else "")
     lines = [
@@ -1120,8 +1120,8 @@ class _FailedLaunch:
 
     def __init__(self, message: str):
         self.returncode = 9009  # cmd.exe "command not found" rc; distinctive
-        self.stdout = ""
-        self.stderr = message
+        self.stdout     = ""
+        self.stderr     = message
 
 
 class _CompileResult:
@@ -1134,8 +1134,8 @@ class _CompileResult:
 
     def __init__(self, returncode, text):
         self.returncode = returncode
-        self.stdout = text
-        self.stderr = text
+        self.stdout     = text
+        self.stderr     = text
 
 
 def _run_compile(cmd, env, compiler, log_cb=None):
@@ -1174,7 +1174,7 @@ def _prepare_compiler(report: dict, compile_now: bool):
     set) when the toolchain can't compile. ``compile_now=False`` never fails.
     """
     compiler = toolchain.default_compiler()
-    obj_env = toolchain.build_env(compiler)
+    obj_env  = toolchain.build_env(compiler)
     # MSVC: refuse a stray PATH cl when the vcvars env couldn't be captured -- it
     # may be an older toolset than the installed headers (STL1001). Allowed inside
     # an x64 Native Tools prompt (ambient toolset already consistent).
@@ -1194,7 +1194,7 @@ def _prepare_compiler(report: dict, compile_now: bool):
     # per-node compile_cpp guard was skipped): refuse if the resolved cl differs
     # from the INCLUDE headers' toolset (the STL1001 cause).
     if compile_now and toolchain.compiler_family(compiler) == "msvc":
-        include = (obj_env or os.environ).get("INCLUDE")
+        include  = (obj_env or os.environ).get("INCLUDE")
         mismatch = toolchain.diagnose_toolset_mismatch(exe, include)
         if mismatch:
             report["reason"] = mismatch
@@ -1259,16 +1259,16 @@ def _clash_reason(clashes: Dict[str, List[str]]) -> str:
 
 
 def assemble(
-    nodes: List[Tuple[str, str]],
+    nodes:       List[Tuple[str, str]],
     plugin_name: str,
-    out_dir: str,
+    out_dir:     str,
     *,
-    strict: bool = True,
-    registry: Optional[typeid_registry.TypeIdRegistry] = None,
-    maya: str = _MAYA_DEFAULT,
-    compile_now: bool = True,
-    log_cb=None,
-    needs_qt: Optional[bool] = None,
+    strict:      bool                                     = True,
+    registry:    Optional[typeid_registry.TypeIdRegistry] = None,
+    maya:        str                                      = _MAYA_DEFAULT,
+    compile_now: bool                                     = True,
+    log_cb                                                = None,
+    needs_qt:    Optional[bool]                           = None,
 ) -> dict:
     """Assemble ``nodes`` (list of ``(type_name, cpp_path)``) into ONE plugin,
     laid out as a clean, re-buildable source folder (see the module docstring).
@@ -1311,7 +1311,7 @@ def assemble(
     # Nested layout: source under build/source, scripts under build/, bundle at
     # the top of out_dir. Create build/source (also makes build/) for both the
     # single- and multi-node paths below.
-    src_dir = source_dir_for(out_dir)
+    src_dir   = source_dir_for(out_dir)
     build_dir = build_dir_for(out_dir)
     os.makedirs(src_dir, exist_ok=True)
     report = {"plugin": plugin_name, "bundle": None, "nodes": [], "ok": False,
@@ -1326,8 +1326,8 @@ def assemble(
 
     # ---- multi-node: <node>.cpp fragments + plugin_main.cpp ----
     # 1) read + transform each node, collecting ids from the registry.
-    fragments: List[Tuple[str, Dict[str, str], str]] = []  # (cpp_path, info, type_name)
-    cmd_sources: List[Tuple[str, str]] = []  # (type_name, src) for clash detection
+    fragments:   List[Tuple[str, Dict[str, str], str]] = []  # (cpp_path, info, type_name)
+    cmd_sources: List[Tuple[str, str]] = []                  # (type_name, src) for clash detection
     for type_name, cpp_path in nodes:
         rec = {"name": type_name, "status": "pending", "id": None, "reason": ""}
         try:
@@ -1337,9 +1337,9 @@ def assemble(
             # Pre-allocate ids for every MTypeId this file defines so id_for is
             # a pure lookup during transform.
             cls_defs = re.findall(r"MTypeId\s+(\w+)::id\(0x[0-9a-fA-F]+\);", src)
-            reg_m = re.search(r"register(?:Node|Transform)\s*\(\s*\"[^\"]+\"\s*,\s*(\w+)::id", src)
+            reg_m    = re.search(r"register(?:Node|Transform)\s*\(\s*\"[^\"]+\"\s*,\s*(\w+)::id", src)
             main_cls = reg_m.group(1) if reg_m else None
-            keys = []
+            keys     = []
             for c in cls_defs:
                 keys.append(type_name if c == main_cls else "%s#%s" % (type_name, c))
             id_map = reg.allocate_many(keys)
@@ -1351,7 +1351,7 @@ def assemble(
             frag_path = os.path.join(src_dir, _node_cpp_name(info["node_name"]))
             with open(frag_path, "w", encoding="utf-8") as fh:
                 fh.write(frag)
-            rec["id"] = id_map.get(type_name)
+            rec["id"]     = id_map.get(type_name)
             rec["status"] = "transformed"
             fragments.append((frag_path, info, type_name))
             report["nodes"].append(rec)
@@ -1381,11 +1381,11 @@ def assemble(
     if tc is None:
         return report
     exe, obj_env, compiler = tc["exe"], tc["obj_env"], tc["compiler"]
-    arch = toolchain.mac_arch()
-    frag_files = []
-    frag_objs = []           # needed for the Windows direct-link path
+    arch           = toolchain.mac_arch()
+    frag_files     = []
+    frag_objs      = []           # needed for the Windows direct-link path
     compiled_infos = []
-    inc = toolchain.maya_include_dir(maya)
+    inc            = toolchain.maya_include_dir(maya)
     for frag_path, info, type_name in fragments:
         rec = next(r for r in report["nodes"] if r["name"] == type_name)
         obj = os.path.splitext(frag_path)[0] + toolchain.object_ext()
@@ -1452,7 +1452,7 @@ def assemble(
     # sources; a non-Qt build drops any copy a previous compile left behind.
     toolchain.ship_qt_msvc_compat_header(src_dir, needs_qt)
     node_cpp_files = [_node_cpp_name(i["node_name"]) for i in compiled_infos]
-    build_sh = os.path.join(build_dir, "build.sh")
+    build_sh       = os.path.join(build_dir, "build.sh")
     # newline="" on BOTH: the generators already emit their own line endings
     # (LF for .sh, CRLF for .bat). Without it a Windows host translates them
     # again -- the .sh becomes CRLF and dies with "$'\r': command not found",
@@ -1507,7 +1507,7 @@ def assemble(
             return report
     else:
         if compile_now:
-            env = dict(os.environ, MAYA=maya)
+            env  = dict(os.environ, MAYA=maya)
             proc = _run_compile(["bash", build_sh], env, compiler, log_cb=log_cb)
             if proc.returncode != 0:
                 report["reason"] = "link failed"
@@ -1557,7 +1557,7 @@ def _assemble_single(node, plugin_name, out_dir, reg, report, *, strict, maya,
 
     # Pre-allocate registry ids for every MTypeId this file defines.
     cls_defs = re.findall(r"MTypeId\s+(\w+)::id\(0x[0-9a-fA-F]+\);", src)
-    reg_m = re.search(r"register(?:Node|Transform)\s*\(\s*\"[^\"]+\"\s*,\s*(\w+)::id", src)
+    reg_m    = re.search(r"register(?:Node|Transform)\s*\(\s*\"[^\"]+\"\s*,\s*(\w+)::id", src)
     main_cls = reg_m.group(1) if reg_m else None
     keys = [type_name if c == main_cls else "%s#%s" % (type_name, c)
             for c in cls_defs]
@@ -1574,12 +1574,12 @@ def _assemble_single(node, plugin_name, out_dir, reg, report, *, strict, maya,
         return report
 
     node_file = _node_cpp_name(info["node_name"])
-    src_dir = source_dir_for(out_dir)
+    src_dir   = source_dir_for(out_dir)
     build_dir = build_dir_for(out_dir)
     os.makedirs(src_dir, exist_ok=True)
     with open(os.path.join(src_dir, node_file), "w", encoding="utf-8") as fh:
         fh.write(cpp_text)
-    rec["id"] = id_map.get(type_name)
+    rec["id"]     = id_map.get(type_name)
     rec["status"] = "transformed"
 
     # A single-node plugin has no plugin_main / shared unit -- drop any left by a
@@ -1593,7 +1593,7 @@ def _assemble_single(node, plugin_name, out_dir, reg, report, *, strict, maya,
     # The build scripts are cross-platform artifacts, so each gets its OWN
     # platform's default $MAYA. Only the HOST-platform script gets this compile's
     # actual maya -- we can't know the user's install on the other OS.
-    is_win = toolchain.is_windows()
+    is_win   = toolchain.is_windows()
     build_sh = os.path.join(build_dir, "build.sh")
     # newline="" -- see the note in assemble(): the generators own their line
     # endings, a second translation on a Windows host breaks both scripts.
@@ -1641,15 +1641,15 @@ def _assemble_single(node, plugin_name, out_dir, reg, report, *, strict, maya,
         # the macOS recipe (clang++/-D OSMac_/-bundle/lipo). Running it here
         # would fail deep in the compiler with a confusing message, so say so
         # up front. See docs/PORTING.md -- the g++/.so column is unimplemented.
-        rec["status"] = "compile-failed"
-        rec["reason"] = _LINUX_UNSUPPORTED
+        rec["status"]    = "compile-failed"
+        rec["reason"]    = _LINUX_UNSUPPORTED
         report["reason"] = _LINUX_UNSUPPORTED
         report["dropped"].append(type_name)
         return report
     else:
         # Dogfood the shipped build.sh: the script the user re-runs is the one
         # that built the bundle.
-        env = dict(os.environ, MAYA=maya)
+        env  = dict(os.environ, MAYA=maya)
         proc = _run_compile(["bash", build_sh], env, tc["compiler"], log_cb=log_cb)
 
     if proc.returncode != 0:

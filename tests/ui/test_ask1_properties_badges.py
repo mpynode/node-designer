@@ -23,10 +23,10 @@ class TestVariablesPropertiesSection(unittest.TestCase):
 
     def test_dir_label_full_words(self):
         from mpynode.ui.widgets.variables import _dir_label
-        self.assertEqual(_dir_label("read"), "READ")
-        self.assertEqual(_dir_label("write"), "WRITE")
+        self.assertEqual(_dir_label("read"),      "READ")
+        self.assertEqual(_dir_label("write"),     "WRITE")
         self.assertEqual(_dir_label("readwrite"), "READWRITE")
-        self.assertEqual(_dir_label("method"), "METHOD")
+        self.assertEqual(_dir_label("method"),    "METHOD")
 
     def test_dir_label_neutral_for_directionless(self):
         from mpynode.ui.widgets.variables import _dir_label

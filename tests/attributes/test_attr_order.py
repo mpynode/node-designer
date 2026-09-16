@@ -35,8 +35,8 @@ def _make_node(name="ordNode#"):
     from mpynode.wrappers._mpy_node import MPyNode
 
     n = MPyNode.create(name=name)
-    n.add_input_attr("width", "int", default_value=100)
-    n.add_input_attr("height", "int", default_value=100)
+    n.add_input_attr("width",   "int",   default_value=100)
+    n.add_input_attr("height",  "int",   default_value=100)
     n.add_input_attr("density", "float", default_value=0.5)
     n.add_input_attr("frame", "time")
     n.add_input_attr("reset", "enum", enum_names=["False", "True"])
@@ -54,7 +54,7 @@ class TestLiveAccessorOrder(unittest.TestCase):
     def test_output_attr_map_preserves_add_order(self):
         from mpynode.wrappers._mpy_node import MPyNode
 
-        n = MPyNode.create(name="outOrd#")
+        n     = MPyNode.create(name="outOrd#")
         order = ["gamma", "alpha", "beta"]
         for nm in order:
             n.add_output_attr(nm, "float")
@@ -73,7 +73,7 @@ class TestLiveAccessorOrder(unittest.TestCase):
         # Simulate a node saved before ``order`` existed: strip the field from
         # the stored map. The accessor must fall back to Maya's true creation
         # order (the attrs were created in _AUTHOR_ORDER), NOT alphabetical.
-        n = _make_node()
+        n   = _make_node()
         raw = n._read_input_map()
         for meta in raw.values():
             meta.pop("order", None)
@@ -90,7 +90,7 @@ class TestMpnRoundTripOrder(unittest.TestCase):
     def test_serialize_then_deserialize_preserves_order(self):
         from mpynode._common.io.mpn_io import serialize_node, deserialize_node
 
-        n = _make_node()
+        n       = _make_node()
         payload = serialize_node(n, include_persistent=False)
         # The payload's metas carry an explicit order field.
         ia = payload["input_attrs"]
@@ -113,9 +113,9 @@ class TestPyExportOrder(unittest.TestCase):
     def test_generated_script_adds_in_author_order(self):
         from mpynode._common.io import py_export
 
-        n = _make_node()
-        src = py_export.generate_node_script(n, class_name="OrdRebuilt")
-        tree = ast.parse(src)
+        n     = _make_node()
+        src   = py_export.generate_node_script(n, class_name="OrdRebuilt")
+        tree  = ast.parse(src)
         added = []
         for node in ast.walk(tree):
             if (

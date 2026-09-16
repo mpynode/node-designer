@@ -39,7 +39,7 @@ PACKED_INCLUDES = [
 # differ. Mirrors _api2/helpers.py::_PACKED_DATA_KIND / _PACKED_FN.
 _PACKED_DATA = {
     "double": ("kDoubleArray", "MFnDoubleArrayData", "MDoubleArray"),
-    "int": ("kIntArray", "MFnIntArrayData", "MIntArray"),
+    "int":    ("kIntArray", "MFnIntArrayData", "MIntArray"),
 }
 
 def _ident(name: str) -> str:
@@ -73,14 +73,14 @@ def keyable_array_inputs(mpy_type):
 
 def _members(spec):
     """Assign a unique C++ MObject member name to each attr plug."""
-    out = []
-    seen = set()
+    out            = []
+    seen           = set()
     keyable_arrays = keyable_array_inputs(spec.get("mpy_type"))
     for kind in ("inputs", "outputs"):
         for plug, meta in (spec.get(kind) or {}).items():
             base = "a" + _ident(plug)[:1].upper() + _ident(plug)[1:]
-            m = base
-            i = 1
+            m    = base
+            i    = 1
             while m in seen:
                 i += 1
                 m = "%s%d" % (base, i)
@@ -139,10 +139,10 @@ def _color_default(meta):
 def _create_lines(m):
     """C++ lines that create + flag one attribute in initialize()."""
     plug, mem, meta = m["plug"], m["member"], m["meta"]
-    t = meta["type"]
+    t      = meta["type"]
     is_out = m["kind"] == "outputs"
-    L = []
-    a = '"%s"' % plug
+    L      = []
+    a      = '"%s"' % plug
     if meta.get("packed") and t in _PACKED_DATA and not is_out:
         # ONE typed-array plug, not a multi -- returns EARLY so the setArray()
         # tail below never runs (setArray on a typed array would make it an
@@ -164,7 +164,7 @@ def _create_lines(m):
                 "bool": "kBoolean"}[t]
         dflt = {"float": _num_default(meta, float, "0.0"),
                 "double": _num_default(meta, float, "0.0"),
-                "int": _num_default(meta, int, "0"),
+                "int":    _num_default(meta, int, "0"),
                 "bool": _bool_default(meta)}[t]
         L.append("    %s = nAttr.create(%s, %s, MFnNumericData::%s, %s);"
                   % (mem, a, a, data, dflt))
@@ -585,7 +585,7 @@ def findplug_local_hint(m, scalar_hint):
     the attr is one of those, so the PORT block documents what the read actually
     produced (std::vector / MFn wrapper / Nd<Kind> list)."""
     meta = m["meta"]
-    t = meta["type"]
+    t    = meta["type"]
     if _geo.is_geo(t):
         kind = _geo.geo_kind_of(t)
         if meta.get("is_array"):
@@ -781,9 +781,9 @@ _OUT_DEFAULT = {
     "string": '%s.setString("");', "hex": '%s.setString("");',
     "angle": "%s.setMAngle(MAngle(0.0));", "time": "%s.setMTime(MTime(0.0));",
     "vector": "%s.set3Double(0.0, 0.0, 0.0);",
-    "euler": "%s.set3Double(0.0, 0.0, 0.0);",
+    "euler":  "%s.set3Double(0.0, 0.0, 0.0);",
     "float2": "%s.set2Float(0.0f, 0.0f);",
-    "color": "%s.set3Float(0.0f, 0.0f, 0.0f);",
+    "color":  "%s.set3Float(0.0f, 0.0f, 0.0f);",
 }
 
 def _out_handle_default(m):
@@ -825,12 +825,12 @@ def _setter_hint(m):
         "bool": "h_%s.setBool(<bool>)", "enum": "h_%s.setShort(<short>)",
         "matrix": "h_%s.setMMatrix(<MMatrix>)",
         "string": "h_%s.setString(<MString>)", "hex": "h_%s.setString(<MString>)",
-        "angle": "h_%s.setMAngle(MAngle(<radians>))",
-        "time": "h_%s.setMTime(MTime(<seconds>))",
+        "angle":  "h_%s.setMAngle(MAngle(<radians>))",
+        "time":   "h_%s.setMTime(MTime(<seconds>))",
         "vector": "h_%s.set3Double(<x>, <y>, <z>)",
-        "euler": "h_%s.set3Double(<rx>, <ry>, <rz>)  // radians",
+        "euler":  "h_%s.set3Double(<rx>, <ry>, <rz>)  // radians",
         "float2": "h_%s.set2Float(<u>, <v>)",
-        "color": "h_%s.set3Float(<r>, <g>, <b>)  // 0..1 linear color",
+        "color":  "h_%s.set3Float(<r>, <g>, <b>)  // 0..1 linear color",
         "quaternion": ("MFnCompoundAttribute qf(<member>); "
                        "h_%s.child(qf.child(0..3)).setDouble(<x>,<y>,<z>,<w>)"),
     }[t]
@@ -864,7 +864,7 @@ def _elem_read_expr(t):
         "enum": "eh.asShort()", "matrix": "eh.asMatrix()",
         "angle": "eh.asAngle().asRadians()", "time": "eh.asTime().value()",
         "vector": "MVector(eh.asDouble3())",
-        "euler": "MVector(eh.asDouble3())",
+        "euler":  "MVector(eh.asDouble3())",
     }[t]
 
 def _elem_set_stmt(t, val):

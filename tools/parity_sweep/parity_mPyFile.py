@@ -11,10 +11,10 @@ for p in ("mpynode_api1", "mpynode_api2"):
     if not cmds.pluginInfo(p, q=True, loaded=True):
         cmds.loadPlugin(p, quiet=True)
 
-PROC_BUNDLE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fixtures", "mPyFile", "proceduralTex.bundle")
+PROC_BUNDLE  = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fixtures", "mPyFile", "proceduralTex.bundle")
 PROC_ORIG_MA = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fixtures", "mPyFile", "mPyFile_proceduralTex_original.ma")
-FULL_BUNDLE = os.path.join(ROOT, "plug-ins", "fullFileNode.bundle")
-PNG = os.path.join(ROOT, "scripts", "mpynode", "_demos", "data", "test_grid.png")
+FULL_BUNDLE  = os.path.join(ROOT, "plug-ins", "fullFileNode.bundle")
+PNG          = os.path.join(ROOT, "scripts", "mpynode", "_demos", "data", "test_grid.png")
 
 # accumulators
 results = {}
@@ -38,14 +38,14 @@ def check_procedural():
     assert cmds.objExists(nat), "native proceduralTex node not created"
     assert nat != py_node, "name collision (%s)" % nat
 
-    inputs = {"uIn": "float", "vIn": "float", "kScale": "float"}
+    inputs     = {"uIn": "float", "vIn": "float", "kScale": "float"}
     out_scalar = ["outVal"]
-    out_vec = ["outRGB"]
+    out_vec    = ["outRGB"]
 
     random.seed(1234)
     maxerr = 0.0
-    comps = 0
-    nsamp = 25
+    comps  = 0
+    nsamp  = 25
     for _ in range(nsamp):
         for a in inputs:
             v = random.uniform(-5, 5)
@@ -53,11 +53,11 @@ def check_procedural():
             cmds.setAttr(nat + "." + a, v)
         # scalar outputs
         for o in out_scalar:
-            pv = cmds.getAttr(py_node + "." + o)
-            cv = cmds.getAttr(nat + "." + o)
-            pv = pv[0] if isinstance(pv, (list, tuple)) else pv
-            cv = cv[0] if isinstance(cv, (list, tuple)) else cv
-            e = abs(float(pv) - float(cv))
+            pv     = cmds.getAttr(py_node + "." + o)
+            cv     = cmds.getAttr(nat + "." + o)
+            pv     = pv[0] if isinstance(pv, (list, tuple)) else pv
+            cv     = cv[0] if isinstance(cv, (list, tuple)) else cv
+            e      = abs(float(pv) - float(cv))
             maxerr = max(maxerr, e)
             comps += 1
         # vector outputs (3 comps)
@@ -67,7 +67,7 @@ def check_procedural():
             pv = pv[0] if isinstance(pv[0], (list, tuple)) else pv
             cv = cv[0] if isinstance(cv[0], (list, tuple)) else cv
             for i in range(3):
-                e = abs(float(pv[i]) - float(cv[i]))
+                e      = abs(float(pv[i]) - float(cv[i]))
                 maxerr = max(maxerr, e)
                 comps += 1
     return {"maxerr": maxerr, "comps": comps, "samples": nsamp, "tol": 1e-4}
@@ -93,7 +93,7 @@ def check_fullfile():
 
     # python reference
     from mpynode.wrappers.mpy_file import MPyFile
-    pyf = MPyFile.create(name="pyf#", seed_defaults=True, as_texture=True)
+    pyf     = MPyFile.create(name="pyf#", seed_defaults=True, as_texture=True)
     py_node = pyf.get_name()
     assert cmds.objExists(py_node), "python MPyFile node not created"
     cmds.setAttr(py_node + ".fileName", PNG, type="string")
@@ -101,14 +101,14 @@ def check_fullfile():
     assert nat != py_node
 
     random.seed(987)
-    maxerr = 0.0
-    comps = 0
-    ncases = 20
+    maxerr     = 0.0
+    comps      = 0
+    ncases     = 20
     mismatches = []
     for _ in range(ncases):
         cs = random.randint(0, 24)
-        u = random.uniform(-0.2, 1.2)
-        v = random.uniform(-0.2, 1.2)
+        u  = random.uniform(-0.2, 1.2)
+        v  = random.uniform(-0.2, 1.2)
         wu = random.randint(0, 3)
         wv = random.randint(0, 3)
 
@@ -129,12 +129,12 @@ def check_fullfile():
 
         case_err = 0.0
         for i in range(3):
-            e = abs(float(pc[i]) - float(nc[i]))
-            maxerr = max(maxerr, e)
+            e        = abs(float(pc[i]) - float(nc[i]))
+            maxerr   = max(maxerr, e)
             case_err = max(case_err, e)
             comps += 1
-        e = abs(float(pa) - float(na))
-        maxerr = max(maxerr, e)
+        e        = abs(float(pa) - float(na))
+        maxerr   = max(maxerr, e)
         case_err = max(case_err, e)
         comps += 1
 
@@ -157,11 +157,11 @@ print("CHECK2 fullfile maxerr=%.3e comps=%d samples=%d tol=%.1e" % (
 for m in r2["mismatches"][:8]:
     print("  MISMATCH cs=%d uv=(%s,%s) wrap=(%d,%d) py=%s/%s nat=%s/%s err=%s" % m)
 
-overall_max = max(r1["maxerr"], r2["maxerr"])
-total_comps = r1["comps"] + r2["comps"]
+overall_max   = max(r1["maxerr"], r2["maxerr"])
+total_comps   = r1["comps"] + r2["comps"]
 total_samples = r1["samples"] + r2["samples"]
-pass1 = r1["maxerr"] <= r1["tol"]
-pass2 = r2["maxerr"] <= r2["tol"]
-overall = pass1 and pass2
+pass1         = r1["maxerr"] <= r1["tol"]
+pass2         = r2["maxerr"] <= r2["tol"]
+overall       = pass1 and pass2
 print("RESULT pass1=%s pass2=%s overall=%s overall_maxerr=%.3e total_comps=%d total_samples=%d" % (
     pass1, pass2, overall, overall_max, total_comps, total_samples))

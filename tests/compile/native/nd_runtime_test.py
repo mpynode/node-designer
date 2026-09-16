@@ -20,11 +20,11 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 # harness lives out in the suite, so -I pivots on the repo root (three
 # dirname()s up from tests/compile/native) and descends back into scripts/.
 _ROOT = os.path.dirname(os.path.dirname(os.path.dirname(HERE)))
-_INC = os.path.join(_ROOT, "scripts", "mpynode", "native", "compiler")
-SRC = os.path.join(HERE, "nd_runtime_test.cpp")
-FTOL = dict(rtol=1e-12, atol=1e-12)
+_INC  = os.path.join(_ROOT, "scripts", "mpynode", "native", "compiler")
+SRC   = os.path.join(HERE, "nd_runtime_test.cpp")
+FTOL  = dict(rtol=1e-12, atol=1e-12)
 
-_DT = {"f64": np.float64, "i64": np.int64, "bool": np.bool_}
+_DT   = {"f64": np.float64, "i64": np.int64, "bool": np.bool_}
 
 
 def _compile_and_run():
@@ -65,7 +65,7 @@ def _compile_and_run():
 def _parse(text):
     """-> list of (case_name, {name: ndarray} for IN, [(name, ndarray)] for OUT)."""
     cases = []
-    cur = None
+    cur   = None
     for line in text.splitlines():
         t = line.split()
         if not t:
@@ -77,7 +77,7 @@ def _parse(text):
             cur = None
         elif t[0] in ("IN", "OUT"):
             name = t[1]
-            dt = _DT[t[2]]
+            dt   = _DT[t[2]]
             ndim = int(t[3])
             dims = [int(x) for x in t[4:4 + ndim]]
             assert t[4 + ndim] == ":", line
@@ -129,8 +129,8 @@ def _oracle(name, i):
         a, b, c = i["a"], i["b"], i["c"]
         return {"last": (a * b).sum(2),
                 "lastk": (a * b).sum(2, keepdims=True),
-                "all": (a * b).sum(),
-                "mid": (a * b).sum(1),
+                "all":   (a * b).sum(),
+                "mid":   (a * b).sum(1),
                 "first": (a * b).sum(0),
                 "bcast": (c * b).sum(2)}
     if name == "cumsum_2d":
@@ -172,7 +172,7 @@ def _oracle(name, i):
         m = i["m"]
         return {"block": m[:, 1:3], "row1": m[1, :], "lastcol": m[:, -1]}
     if name == "slice_assign":
-        z = np.zeros((4, 4))
+        z           = np.zeros((4, 4))
         z[1:3, 1:3] = np.array([[5, 6], [7, 8]], dtype=float)
         return {"z": z}
     if name == "constructors":
@@ -211,10 +211,10 @@ def _oracle(name, i):
                 "s0": np.stack([a, b], 0), "s1": np.stack([a, b], 1)}
     if name == "concat_views":
         return {"cf": np.concatenate([i["offv"], i["other3"]], 1),
-                "cs": np.concatenate([i["strv"], i["other2"]], 1),
+                "cs":   np.concatenate([i["strv"], i["other2"]], 1),
                 "cmix": np.concatenate([i["strv"], i["other2"]], 0),
-                "c3d": np.concatenate([i["c3"], i["d3"]], 1),
-                "st1": np.stack([i["p"], i["q"], i["r"]], 1),
+                "c3d":  np.concatenate([i["c3"], i["d3"]], 1),
+                "st1":  np.stack([i["p"], i["q"], i["r"]], 1),
                 "st0": np.stack([i["p"], i["q"], i["r"]], 0)}
     if name == "colstack_tile":
         return {"cs": np.column_stack([i["x"], i["y"], i["z"]]),
@@ -228,7 +228,7 @@ def _oracle(name, i):
 
 
 def main():
-    text = _compile_and_run()
+    text  = _compile_and_run()
     cases = _parse(text)
     if not cases:
         print("NO CASES PARSED")
@@ -247,7 +247,7 @@ def main():
     if "MATMUL BATCHED BITEXACT OK" not in text:
         print("MISSING MATMUL BATCHED BITEXACT OK marker")
         sys.exit(1)
-    fails = []
+    fails    = []
     n_checks = 0
     for c in cases:
         exp = _oracle(c["name"], c["ins"])

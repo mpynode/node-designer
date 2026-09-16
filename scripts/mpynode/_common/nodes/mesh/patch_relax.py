@@ -69,14 +69,14 @@ def build_ring_adjacency(counts, indices, n_verts):
 
     Uses whatever numpy is convenient -- this never reaches the transpiler.
     """
-    counts = np.asarray(counts, dtype=np.int64).ravel()
+    counts  = np.asarray(counts, dtype=np.int64).ravel()
     indices = np.asarray(indices, dtype=np.int64).ravel()
     n_verts = int(n_verts)
     if n_verts <= 0 or counts.size == 0 or indices.size == 0:
         return np.zeros((max(n_verts, 0), 0), dtype=np.int64)
 
     # --- every face corner as (vertex, prev-in-face, next-in-face) ---
-    n_faces = counts.shape[0]
+    n_faces    = counts.shape[0]
     face_start = np.zeros(n_faces, dtype=np.int64)
     np.cumsum(counts[:-1], out=face_start[1:])
     total = int(counts.sum())
@@ -85,12 +85,12 @@ def build_ring_adjacency(counts, indices, n_verts):
                          % (indices.shape[0], total))
 
     corner_face = np.repeat(np.arange(n_faces, dtype=np.int64), counts)
-    base = face_start[corner_face]
-    within = np.arange(total, dtype=np.int64) - base
-    face_len = counts[corner_face]
-    nxt = indices[base + (within + 1) % face_len]
-    prv = indices[base + (within - 1) % face_len]
-    vtx = indices
+    base        = face_start[corner_face]
+    within      = np.arange(total, dtype=np.int64) - base
+    face_len    = counts[corner_face]
+    nxt         = indices[base + (within + 1) % face_len]
+    prv         = indices[base + (within - 1) % face_len]
+    vtx         = indices
 
     # A face with fewer than 3 corners describes no ring.
     keep = face_len >= 3
@@ -100,7 +100,7 @@ def build_ring_adjacency(counts, indices, n_verts):
 
     # --- bucket the corners by vertex into a dense (N, K) table ---
     valence = np.bincount(vtx, minlength=n_verts)[:n_verts].astype(np.int64)
-    width = int(valence.max())
+    width   = int(valence.max())
     if width < 3:
         return np.zeros((n_verts, 0), dtype=np.int64)
 
@@ -110,18 +110,18 @@ def build_ring_adjacency(counts, indices, n_verts):
     np.cumsum(valence, out=offset[1:])
     slot = np.arange(v_s.shape[0], dtype=np.int64) - offset[v_s]
 
-    nxt_tab = np.full((n_verts, width), -1, dtype=np.int64)
-    prv_tab = np.full((n_verts, width), -1, dtype=np.int64)
+    nxt_tab            = np.full((n_verts, width), -1, dtype=np.int64)
+    prv_tab            = np.full((n_verts, width), -1, dtype=np.int64)
     nxt_tab[v_s, slot] = n_s
     prv_tab[v_s, slot] = p_s
 
     # --- chain the corners: corner t follows corner s when prv[t] == nxt[s] ---
-    valid = np.arange(width)[None, :] < valence[:, None]        # (N, K)
-    link = (prv_tab[:, None, :] == nxt_tab[:, :, None])         # (N, s, t)
+    valid = np.arange(width)[None, :] < valence[:, None]  # (N, K)
+    link  = (prv_tab[:, None, :] == nxt_tab[:, :, None])  # (N, s, t)
     link &= valid[:, :, None] & valid[:, None, :]
-    has_succ = link.sum(axis=2) > 0                             # (N, s)
-    has_pred = link.sum(axis=1) > 0                             # (N, t)
-    succ = np.where(has_succ, link.argmax(axis=2), 0)
+    has_succ = link.sum(axis=2) > 0  # (N, s)
+    has_pred = link.sum(axis=1) > 0  # (N, t)
+    succ     = np.where(has_succ, link.argmax(axis=2), 0)
 
     # A ring is closed iff every corner has both a predecessor and a successor.
     closed = ((has_succ | ~valid).all(axis=1)
@@ -129,13 +129,13 @@ def build_ring_adjacency(counts, indices, n_verts):
               & (valence >= 3))
 
     # --- walk the cycle from corner 0: [prev0, next0, then one per step] ---
-    rows = np.arange(n_verts, dtype=np.int64)
-    ring = np.full((n_verts, width), -1, dtype=np.int64)
+    rows       = np.arange(n_verts, dtype=np.int64)
+    ring       = np.full((n_verts, width), -1, dtype=np.int64)
     ring[:, 0] = prv_tab[:, 0]
     ring[:, 1] = nxt_tab[:, 0]
-    cur = np.zeros(n_verts, dtype=np.int64)
+    cur        = np.zeros(n_verts, dtype=np.int64)
     for k in range(2, width):
-        cur = succ[rows, cur]
+        cur        = succ[rows, cur]
         ring[:, k] = np.where(k < valence, nxt_tab[rows, cur], -1)
 
     ring = np.where(valid, ring, -1)
@@ -183,20 +183,20 @@ def _decal_map(pos, index, mask, valence, wrap):
     independent of how cone-like the vertex is, then each neighbour is placed at
     its true edge LENGTH and its accumulated angle.
     """
-    edge = _gather_ring(pos, index, mask) - pos[:, None, :] * mask[:, :, None]
+    edge   = _gather_ring(pos, index, mask) - pos[:, None, :] * mask[:, :, None]
     length = np.sqrt((edge * edge).sum(axis=2)) + 1e-12
-    unit = edge / length[:, :, None]
+    unit   = edge / length[:, :, None]
 
     cos_between = (unit * _ring_next(unit, wrap)).sum(axis=2)
-    angle = np.arccos(np.clip(cos_between, -1.0, 1.0)) * mask
+    angle       = np.arccos(np.clip(cos_between, -1.0, 1.0)) * mask
 
     # Literal rather than a module constant: only the FUNCTIONS get carried
     # across when the transpiler inlines this helper, so a module global would
     # be "used before assignment" in the lowered C++.
     two_pi = 6.283185307179586
-    total = angle.sum(axis=1)
-    scale = np.where(total > 1e-8, two_pi / np.maximum(total, 1e-30), 1.0)
-    swept = _exclusive_prefix(angle) * scale[:, None]
+    total  = angle.sum(axis=1)
+    scale  = np.where(total > 1e-8, two_pi / np.maximum(total, 1e-30), 1.0)
+    swept  = _exclusive_prefix(angle) * scale[:, None]
     return np.stack([length * np.cos(swept), length * np.sin(swept)],
                     axis=2) * mask[:, :, None]
 
@@ -209,33 +209,33 @@ def _span_weights(decal, mask, valence, width):
     (``f_pos - f_neg``). A neighbour crowded in among others gets little weight;
     one that spans a wide empty span gets a lot. Rows are normalized to sum to 1.
     """
-    n = decal.shape[0]
+    n      = decal.shape[0]
     length = np.sqrt((decal * decal).sum(axis=2)) + 1e-12
-    tang = decal / length[:, :, None]
-    norm = np.stack([-tang[:, :, 1], tang[:, :, 0]], axis=2)
+    tang   = decal / length[:, :, None]
+    norm   = np.stack([-tang[:, :, 1], tang[:, :, 0]], axis=2)
 
     # (N, K, K): component of every OTHER ring edge along / across edge k.
     decal_t = np.transpose(decal, (0, 2, 1))
-    along = tang @ decal_t
-    across = norm @ decal_t
+    along   = tang @ decal_t
+    across  = norm @ decal_t
 
     off_diagonal = 1.0 - np.eye(width, dtype=np.float64)
-    other = mask[:, :, None] * mask[:, None, :] * off_diagonal[None, :, :]
-    is_other = other > 0.0
-    big = 1e30
+    other        = mask[:, :, None] * mask[:, None, :] * off_diagonal[None, :, :]
+    is_other     = other > 0.0
+    big          = 1e30
 
     c_neg = np.min(np.where(is_other, along, big), axis=2)
     f_pos = np.max(np.where(is_other, across, -big), axis=2)
     f_neg = np.min(np.where(is_other, across, big), axis=2)
 
     # A ring of one has no "other" -- fall through to the uniform branch below.
-    lone = (other.sum(axis=2) > 0.0)
-    c_neg = np.where(lone, c_neg, 0.0)
-    f_pos = np.where(lone, f_pos, 0.0)
-    f_neg = np.where(lone, f_neg, 0.0)
+    lone    = (other.sum(axis=2) > 0.0)
+    c_neg   = np.where(lone, c_neg, 0.0)
+    f_pos   = np.where(lone, f_pos, 0.0)
+    f_neg   = np.where(lone, f_neg, 0.0)
 
-    w = np.abs(c_neg) * np.maximum(f_pos - f_neg, 1e-8) * mask
-    total = w.sum(axis=1)
+    w       = np.abs(c_neg) * np.maximum(f_pos - f_neg, 1e-8) * mask
+    total   = w.sum(axis=1)
     uniform = mask / np.maximum(valence, 1.0)[:, None]
     return np.where((total > 1e-12)[:, None],
                     w / np.maximum(total, 1e-30)[:, None], uniform)
@@ -251,10 +251,10 @@ def _fit_rotations(rest_edge, posed_edge, w, n):
     """
     cov = np.transpose(rest_edge * w[:, :, None], (0, 2, 1)) @ posed_edge
     u, _s, vt = np.linalg.svd(cov)
-    v = np.transpose(vt, (0, 2, 1))
-    ut = np.transpose(u, (0, 2, 1))
-    flip = np.sign(np.linalg.det(v @ ut))
-    guard = np.tile(np.eye(3, dtype=np.float64), (n, 1, 1))
+    v              = np.transpose(vt, (0, 2, 1))
+    ut             = np.transpose(u, (0, 2, 1))
+    flip           = np.sign(np.linalg.det(v @ ut))
+    guard          = np.tile(np.eye(3, dtype=np.float64), (n, 1, 1))
     guard[:, 2, 2] = flip
     return v @ guard @ ut
 
@@ -280,11 +280,11 @@ def _rotate_scale_2d(vh2, vp2):
     """
     len_h = np.sqrt((vh2 * vh2).sum(axis=1))
     len_p = np.sqrt((vp2 * vp2).sum(axis=1))
-    dot = vh2[:, 0] * vp2[:, 0] + vh2[:, 1] * vp2[:, 1]
-    crs = vh2[:, 0] * vp2[:, 1] - vh2[:, 1] * vp2[:, 0]
+    dot   = vh2[:, 0] * vp2[:, 0] + vh2[:, 1] * vp2[:, 1]
+    crs   = vh2[:, 0] * vp2[:, 1] - vh2[:, 1] * vp2[:, 0]
     # Only bites when a vector is EXACTLY zero, where atan2(0, 0) is 0 and the
     # rotated result is zero anyway -- so the choice of angle cannot show up.
-    unit = np.maximum(len_h * len_p, 1e-300)
+    unit  = np.maximum(len_h * len_p, 1e-300)
     scale = (len_p + 1e-12) / (len_h + 1e-12)
     cos_t = (dot / unit) * scale
     sin_t = (crs / unit) * scale
@@ -301,8 +301,8 @@ def _lift_to_surface(target, decal, center, nbr_pos, mask, wrap):
     coordinates are applied to the 3D triangle. This keeps the vertex ON the
     surface instead of stepping off it through the chord.
     """
-    b = decal
-    c = _ring_next(decal, wrap)
+    b   = decal
+    c   = _ring_next(decal, wrap)
     tgt = target[:, None, :]
 
     d00 = (c * c).sum(axis=2)
@@ -311,13 +311,13 @@ def _lift_to_surface(target, decal, center, nbr_pos, mask, wrap):
     d11 = (b * b).sum(axis=2)
     d12 = (b * tgt).sum(axis=2)
 
-    denom = d00 * d11 - d01 * d01
+    denom  = d00 * d11 - d01 * d01
     usable = (np.abs(denom) >= 1e-15) & (mask > 0.0)
-    safe = np.where(usable, denom, 1.0)
+    safe   = np.where(usable, denom, 1.0)
 
-    bu = np.clip((d11 * d02 - d01 * d12) / safe, 0.0, 1.0)
-    bv = np.clip((d00 * d12 - d01 * d02) / safe, 0.0, 1.0)
-    bw = np.clip(1.0 - bu - bv, 0.0, 1.0)
+    bu  = np.clip((d11 * d02 - d01 * d12) / safe, 0.0, 1.0)
+    bv  = np.clip((d00 * d12 - d01 * d02) / safe, 0.0, 1.0)
+    bw  = np.clip(1.0 - bu - bv, 0.0, 1.0)
     tot = bu + bv + bw
     tot = np.where(tot > 1e-12, tot, 1.0)
     # One assignment per name: a tuple literal holding ARRAYS has no lowered
@@ -334,18 +334,18 @@ def _lift_to_surface(target, decal, center, nbr_pos, mask, wrap):
 
     # Distance is measured in 2D; the fan's apex sits at the origin there, so
     # the bw term drops out of pt2d entirely.
-    pt2d = bv[:, :, None] * b + bu[:, :, None] * c
+    pt2d  = bv[:, :, None] * b + bu[:, :, None] * c
     delta = pt2d - tgt
-    dist = np.where(usable, np.sqrt((delta * delta).sum(axis=2)), 1e30)
+    dist  = np.where(usable, np.sqrt((delta * delta).sum(axis=2)), 1e30)
 
     # Pick the FIRST closest triangle, matching the reference's strict "<".
     # argmin is unsupported, so select by mask and break ties with the same
     # prefix-count trick used for the ring angles.
-    chosen = (dist <= dist.min(axis=1)[:, None]) & usable
+    chosen   = (dist <= dist.min(axis=1)[:, None]) & usable
     chosen_f = chosen.astype(np.float64)
-    first = chosen_f * (1.0 - np.minimum(_exclusive_prefix(chosen_f), 1.0))
-    found = first.sum(axis=1)
-    best = (pos * first[:, :, None]).sum(axis=1)
+    first    = chosen_f * (1.0 - np.minimum(_exclusive_prefix(chosen_f), 1.0))
+    found    = first.sum(axis=1)
+    best     = (pos * first[:, :, None]).sum(axis=1)
     return np.where((found > 0.0)[:, None], best, center)
 
 
@@ -381,44 +381,44 @@ def patch_relax(points, rest_points, ring, iterations=30, alpha=1.0,
     Raising ``surface_blend`` therefore only WEAKENS the relaxation unless
     ``alpha < 1``, which is why the shipped template defaults it to 0.
     """
-    x = np.asarray(points, dtype=np.float64)
+    x     = np.asarray(points,      dtype=np.float64)
     x_hat = np.asarray(rest_points, dtype=np.float64)
-    ring = np.asarray(ring, dtype=np.int64)
-    n = x.shape[0]
+    ring  = np.asarray(ring,        dtype=np.int64)
+    n     = x.shape[0]
     width = ring.shape[1]
     if n == 0 or width == 0 or iterations <= 0:
         return x
 
-    mask = (ring >= 0).astype(np.float64)              # (N, K)
-    index = np.where(ring >= 0, ring, n)               # -1 -> the zero row
-    valence = mask.sum(axis=1)                         # (N,)
-    slots = np.arange(width, dtype=np.float64)
-    wrap = (slots[None, :] + 1.0) >= valence[:, None]  # last valid slot
+    mask    = (ring >= 0).astype(np.float64)              # (N, K)
+    index   = np.where(ring >= 0, ring, n)                # -1 -> the zero row
+    valence = mask.sum(axis=1)                            # (N,)
+    slots   = np.arange(width, dtype=np.float64)
+    wrap    = (slots[None, :] + 1.0) >= valence[:, None]  # last valid slot
 
     # --- rest-invariant precomputation ---
     rest_decal = _decal_map(x_hat, index, mask, valence, wrap)
-    w = _span_weights(rest_decal, mask, valence, width)
-    rest_edge = _gather_ring(x_hat, index, mask) - x_hat[:, None, :] * mask[:, :, None]
-    v_hat = (w[:, :, None] * rest_edge).sum(axis=1)    # (N, 3)
-    rest_2d = (w[:, :, None] * rest_decal).sum(axis=1)  # (N, 2)
+    w          = _span_weights(rest_decal, mask, valence, width)
+    rest_edge  = _gather_ring(x_hat, index, mask) - x_hat[:, None, :] * mask[:, :, None]
+    v_hat      = (w[:, :, None] * rest_edge).sum(axis=1)   # (N, 3)
+    rest_2d    = (w[:, :, None] * rest_decal).sum(axis=1)  # (N, 2)
 
     # Damped Jacobi step -- a full step oscillates on exactly the
     # high-frequency modes this is meant to remove. Matches the reference.
     # A local, not a module constant, for the same reason as two_pi above.
-    step_size = 0.5
+    step_size   = 0.5
     use_surface = surface_blend > 1e-6
 
     for _sweep in range(iterations):
         posed_edge = _gather_ring(x, index, mask) - x[:, None, :] * mask[:, :, None]
-        v_pose = (w[:, :, None] * posed_edge).sum(axis=1)
+        v_pose     = (w[:, :, None] * posed_edge).sum(axis=1)
 
-        rot = _fit_rotations(rest_edge, posed_edge, w, n)
+        rot     = _fit_rotations(rest_edge, posed_edge, w, n)
         rotated = (rot @ v_hat[:, :, None])[:, :, 0]
         through = x + step_size * (v_pose - alpha * rotated)
 
         if use_surface:
             posed_decal = _decal_map(x, index, mask, valence, wrap)
-            posed_2d = (w[:, :, None] * posed_decal).sum(axis=1)
+            posed_2d    = (w[:, :, None] * posed_decal).sum(axis=1)
             target = step_size * (posed_2d
                                   - alpha * _rotate_scale_2d(rest_2d,
                                                              posed_2d))
@@ -431,6 +431,6 @@ def patch_relax(points, rest_points, ring, iterations=30, alpha=1.0,
 
         # Pinned vertices (empty ring) never move.
         moves = (valence > 0.0)[:, None]
-        x = np.where(moves, step, x)
+        x     = np.where(moves, step, x)
 
     return x

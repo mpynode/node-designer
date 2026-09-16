@@ -68,7 +68,7 @@ def sibling_editors(editor):
     """Return ``[(editor_widget, label), ...]`` for every expression
     editor in the same tab content (Init / Compute / Viewport). Falls
     back to just the clicked editor if the parent can't be found."""
-    tc = _tab_content(editor)
+    tc  = _tab_content(editor)
     out = []
     if tc is not None:
         for attr, label in (("_init_editor", "Init"),
@@ -186,7 +186,7 @@ class NDRenameVariableDialog(QDialog):
         self.setWindowTitle("Rename Variable")
         self.setModal(True)
         self._old_name = old_name
-        self._plan_fn = plan_fn
+        self._plan_fn  = plan_fn
         self._apply_fn = None
 
         self.setMinimumWidth(460)
@@ -293,10 +293,10 @@ def run_rename(editor, lineno, col):
 
 
 def _run_local_rename(editor, lineno, col, name, node):
-    blocked = _blocked_local_names(node)
-    siblings = sibling_editors(editor)
+    blocked      = _blocked_local_names(node)
+    siblings     = sibling_editors(editor)
     active_label = _editor_label(editor, siblings)
-    source = editor.toPlainText()
+    source       = editor.toPlainText()
 
     def plan_fn(new_name):
         primary = refactor.plan_rename_at(
@@ -332,7 +332,7 @@ def _run_local_rename(editor, lineno, col, name, node):
         return (True, summary, tuple(warnings), apply_fn)
 
     header = f"Rename local variable: {name}"
-    dlg = NDRenameVariableDialog(editor, name, header, plan_fn)
+    dlg    = NDRenameVariableDialog(editor, name, header, plan_fn)
     dlg.show()
     dlg.raise_()
 
@@ -367,7 +367,7 @@ def _run_self_attr_rename(editor, attr, node):
             )
         # Rewrite plans for every tab (text side).
         tab_plans = []  # (editor, label, plan)
-        total = 0
+        total     = 0
         for ed, label in siblings:
             p = refactor.plan_rename_self_attr(ed.toPlainText(), attr, new_name)
             if not p.ok:
@@ -404,7 +404,7 @@ def _run_self_attr_rename(editor, attr, node):
         return (True, summary, (), apply_fn)
 
     header = f"Rename self.{attr} (node attribute)"
-    dlg = NDRenameVariableDialog(editor, attr, header, plan_fn)
+    dlg    = NDRenameVariableDialog(editor, attr, header, plan_fn)
     dlg.show()
     dlg.raise_()
 
@@ -427,7 +427,7 @@ def _run_self_attr_rename(editor, attr, node):
 
 def _internal_slot_names(node):
     slots = getattr(type(node), "INTERNAL_API_SLOTS", ()) if node else ()
-    out = set()
+    out   = set()
     for s in slots:
         out.add(s[0] if isinstance(s, (tuple, list)) else s)
     return out

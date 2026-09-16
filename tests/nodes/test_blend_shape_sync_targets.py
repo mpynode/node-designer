@@ -63,7 +63,7 @@ class _Rig(unittest.TestCase):
         mc.file(new=True, force=True)
         self.base = mc.polyPlane(w=2, h=2, sx=1, sy=1, name="bsBase",
                                  ch=False)[0]
-        self.bs = MPyBlendShape.create(mesh=self.base, name="bsSync")
+        self.bs   = MPyBlendShape.create(mesh=self.base, name="bsSync")
         self.name = self.bs.get_name()
         self.bs.set_compute_expression(COMPUTE)
         self.shape = mc.listRelatives(self.base, shapes=True,
@@ -362,7 +362,7 @@ class TestAComboDrivenCorrectiveGoesLive(unittest.TestCase):
         mc.file(new=True, force=True)
         self.base = mc.polyPlane(w=2, h=2, sx=1, sy=1, name="ccBase",
                                  ch=False)[0]
-        self.bs = MPyBlendShape.create(mesh=self.base, name="ccRig")
+        self.bs   = MPyBlendShape.create(mesh=self.base, name="ccRig")
         self.name = self.bs.get_name()
         self.bs.set_compute_expression(RESOLVED_COMPUTE)
         self.shape = mc.listRelatives(self.base, shapes=True,
@@ -408,7 +408,7 @@ class TestAComboDrivenCorrectiveGoesLive(unittest.TestCase):
     def test_rebuild_actually_decoded_it_as_a_combo(self):
         """Guards the premise. If the alias never decoded, every other
         assertion here would pass for the wrong reason."""
-        ci = self.idx["aUp_bUp"]
+        ci   = self.idx["aUp_bUp"]
         cofs = mc.getAttr(self.name + ".comboOffset") or []
         cdrv = mc.getAttr(self.name + ".comboDriver") or []
         self.assertGreater(len(cofs), ci + 1, "no combo table was written")
@@ -428,7 +428,7 @@ class TestAComboDrivenCorrectiveGoesLive(unittest.TestCase):
         mc.move(0, -3, 0, "%s.vtx[2]" % self.tgt["aUp_bUp"], relative=True,
                 objectSpace=True)
         after = self.pull()
-        dy = [round(a[1] - b[1], 4) for a, b in zip(after, before)]
+        dy    = [round(a[1] - b[1], 4) for a, b in zip(after, before)]
         self.assertAlmostEqual(dy[2], -3.0, places=3,
                                msg="the corrective's sculpt did not reach the "
                                    "deform -- it was skipped as zero-weight")

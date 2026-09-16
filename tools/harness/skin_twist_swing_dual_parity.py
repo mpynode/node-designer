@@ -28,7 +28,7 @@ import sys
 import glob
 
 HARNESS = os.path.dirname(os.path.abspath(__file__))
-ROOT = os.path.dirname(os.path.dirname(HARNESS))
+ROOT    = os.path.dirname(os.path.dirname(HARNESS))
 sys.path.insert(0, os.path.join(ROOT, "scripts"))
 
 import maya.standalone
@@ -74,7 +74,7 @@ def build_and_capture(sc_type, interpreted, skin_mode, twist_axis,
     mc.file(new=True, force=True)
     new = mc.file(_arm_path(), i=True, ignoreVersion=True,
                   returnNewNodes=True) or []
-    sc = (mc.ls(new, type="skinCluster") or [None])[0]
+    sc     = (mc.ls(new, type="skinCluster") or [None])[0]
     joints = mc.ls(new, type="joint", long=True) or []
     meshes = [m for m in (mc.ls(new, type="mesh", long=True) or [])
               if not mc.getAttr(m + ".intermediateObject")]
@@ -129,8 +129,8 @@ def build_and_capture(sc_type, interpreted, skin_mode, twist_axis,
     caps = []
     for rx, ry in poses:
         mc.setAttr(elbow + ".rotate", 0, 0, 0)
-        mc.setAttr(elbow + ".rotateX", float(rx))    # twist about the bone
-        mc.setAttr(elbow + ".rotateY", float(ry))    # bend (arm hinges on Y)
+        mc.setAttr(elbow + ".rotateX", float(rx))  # twist about the bone
+        mc.setAttr(elbow + ".rotateY", float(ry))  # bend (arm hinges on Y)
         mc.dgeval(mesh_shape + ".outMesh")
         caps.append(_mesh_pts(mesh_shape))
     return caps
@@ -155,7 +155,7 @@ def _weights_for_arm():
 def main():
     tol = 1e-4
     twist_w, swing_w = _weights_for_arm()
-    poses = [(0.0, 0.0), (60.0, 0.0), (60.0, 45.0)]   # rest, twist, twist+bend
+    poses  = [(0.0, 0.0), (60.0, 0.0), (60.0, 45.0)]   # rest, twist, twist+bend
     all_ok = True
 
     # PRIMARY gate: Live Result (mode 2), all three twist axes.
@@ -164,9 +164,9 @@ def main():
                                    twist_w, swing_w, twist_w, poses)
         comp = build_and_capture(COMPILED_TYPE, False, 2, axis,
                                  twist_w, swing_w, twist_w, poses)
-        moved = float(np.abs(interp[-1] - interp[0]).max())
-        diffs = [float(np.abs(a - b).max()) for a, b in zip(interp, comp)]
-        ok = moved > 1.0 and all(d <= tol for d in diffs)
+        moved  = float(np.abs(interp[-1] - interp[0]).max())
+        diffs  = [float(np.abs(a - b).max()) for a, b in zip(interp, comp)]
+        ok     = moved > 1.0 and all(d <= tol for d in diffs)
         all_ok = all_ok and ok
         print("Live (mode 2) axis %d: deform=%.4f  maxdiff=%s  -> %s"
               % (axis, moved, " ".join("%.2e" % d for d in diffs),
@@ -180,9 +180,9 @@ def main():
                                    twist_w, swing_w, active, poses)
         comp = build_and_capture(COMPILED_TYPE, False, mode, 0,
                                  twist_w, swing_w, active, poses)
-        moved = float(np.abs(interp[-1] - interp[0]).max())
-        diffs = [float(np.abs(a - b).max()) for a, b in zip(interp, comp)]
-        ok = moved > 1.0 and all(d <= tol for d in diffs)
+        moved  = float(np.abs(interp[-1] - interp[0]).max())
+        diffs  = [float(np.abs(a - b).max()) for a, b in zip(interp, comp)]
+        ok     = moved > 1.0 and all(d <= tol for d in diffs)
         all_ok = all_ok and ok
         print("%s (mode %d): deform=%.4f  maxdiff=%s  -> %s"
               % (label, mode, moved, " ".join("%.2e" % d for d in diffs),

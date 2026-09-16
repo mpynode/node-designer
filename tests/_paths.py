@@ -9,10 +9,10 @@ the artifact-freshness gates resolve nothing and quietly skip.
 """
 import os
 
-_HERE = os.path.dirname(os.path.abspath(__file__))
+_HERE   = os.path.dirname(os.path.abspath(__file__))
 
-TESTS = _HERE
-ROOT = os.path.dirname(_HERE)
-SCRIPTS = os.path.join(ROOT, "scripts")
-DATA = os.path.join(_HERE, "data")
-ASSETS = os.path.join(_HERE, "test_assets")
+TESTS   = _HERE
+ROOT    = os.path.dirname(_HERE)
+SCRIPTS = os.path.join(ROOT,  "scripts")
+DATA    = os.path.join(_HERE, "data")
+ASSETS  = os.path.join(_HERE, "test_assets")

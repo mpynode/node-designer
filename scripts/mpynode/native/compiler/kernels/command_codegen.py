@@ -72,13 +72,13 @@ COMMAND_INCLUDES = [
 # The two deterministic templates are keyed by command NAME. Recognising by name
 # keeps v1 bounded; arbitrary commands are reported, not guessed at.
 _CREATE_NAME = "createMeshRegion"
-_SET_NAME = "setMeshRegion"
+_SET_NAME    = "setMeshRegion"
 
 
 def cmd_class_name(command_name: str) -> str:
     """``"createMeshRegion"`` -> ``"CreateMeshRegionCmd"`` (always a valid C++
     identifier; non-identifier chars become ``_``)."""
-    parts = re.split(r"[^0-9A-Za-z]+", command_name or "")
+    parts  = re.split(r"[^0-9A-Za-z]+", command_name or "")
     pascal = "".join(p[:1].upper() + p[1:] for p in parts if p)
     if not pascal or not pascal[0].isalpha():
         pascal = "Cmd" + pascal
@@ -101,7 +101,7 @@ def classify_command(cmd: dict):
 
 def _region_helpers(ctx: dict) -> str:
     region_attr = ctx["region_attr"]
-    cls = ctx["node_cls"]
+    cls         = ctx["node_cls"]
     return "\n".join([
         "// ---- companion-command region helpers (mesh-region commands) ----",
         "static std::vector<int> _readRegionFaces(const MObject& node) {",
@@ -171,8 +171,8 @@ def _collect_indices_block(indent: str) -> List[str]:
 
 
 def _set_mesh_region_class(ctx: dict) -> str:
-    name = _SET_NAME
-    cn = cmd_class_name(name)
+    name      = _SET_NAME
+    cn        = cmd_class_name(name)
     type_name = ctx["node_type_name"]
     L = [
         "class %s : public MPxCommand {" % cn,
@@ -223,10 +223,10 @@ def _set_mesh_region_class(ctx: dict) -> str:
 
 
 def _create_mesh_region_class(ctx: dict) -> str:
-    name = _CREATE_NAME
-    cn = cmd_class_name(name)
+    name      = _CREATE_NAME
+    cn        = cmd_class_name(name)
     type_name = ctx["node_type_name"]
-    node_cls = ctx["node_cls"]
+    node_cls  = ctx["node_cls"]
     mesh_plug = ctx["mesh_plug"]
     L = [
         "class %s : public MPxCommand {" % cn,
@@ -340,7 +340,7 @@ def _create_mesh_region_class(ctx: dict) -> str:
 
 _TEMPLATES = {
     "create_mesh_region": _create_mesh_region_class,
-    "set_mesh_region": _set_mesh_region_class,
+    "set_mesh_region":    _set_mesh_region_class,
 }
 
 
@@ -359,10 +359,10 @@ def emit_commands(commands: List[dict], ctx: dict) -> dict:
       * ``needs_region_attr`` -- True iff a mesh-region command was emitted
       * ``supported`` / ``unsupported`` -- command NAMEs, in input order
     """
-    classes: List[str] = []
-    register: List[str] = []
-    deregister: List[str] = []
-    supported: List[str] = []
+    classes:     List[str] = []
+    register:    List[str] = []
+    deregister:  List[str] = []
+    supported:   List[str] = []
     unsupported: List[str] = []
     needs_region = False
 
@@ -389,11 +389,11 @@ def emit_commands(commands: List[dict], ctx: dict) -> dict:
         supported.append(name)
 
     return {
-        "classes": "\n".join(classes),
-        "register": register,
-        "deregister": deregister,
-        "includes": list(COMMAND_INCLUDES) if supported else [],
+        "classes":           "\n".join(classes),
+        "register":          register,
+        "deregister":        deregister,
+        "includes":          list(COMMAND_INCLUDES) if supported else [],
         "needs_region_attr": needs_region,
-        "supported": supported,
-        "unsupported": unsupported,
+        "supported":         supported,
+        "unsupported":       unsupported,
     }

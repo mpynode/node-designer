@@ -13,7 +13,7 @@ def save_demo(name: str) -> str:
 
     Returns the absolute path of the saved file.
     """
-    here = os.path.dirname(os.path.abspath(__file__))
+    here    = os.path.dirname(os.path.abspath(__file__))
     out_dir = os.path.abspath(os.path.join(here, "output", "mpy_demos"))
     os.makedirs(out_dir, exist_ok=True)
     path = os.path.join(out_dir, f"{name}.ma")

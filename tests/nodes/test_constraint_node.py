@@ -34,15 +34,15 @@ class TestApi1MObjectHelperCorrectness(unittest.TestCase):
         from mpynode._api2.mpy_constraint import MPyConstraint
 
         class Host:
-            _cached_api1_mobject = None
-            _cached_api1_name = None
+            _cached_api1_mobject      = None
+            _cached_api1_name         = None
             _cached_api1_rename_token = None
-            _api1_mobject = MPyConstraint._api1_mobject
+            _api1_mobject             = MPyConstraint._api1_mobject
 
         return Host()
 
     def test_helper_resolves_to_non_null_mobject(self):
-        h = self._make_helper_instance()
+        h   = self._make_helper_instance()
         mob = h._api1_mobject(self.node)
         self.assertIsNotNone(mob)
         self.assertFalse(mob.isNull(),
@@ -51,18 +51,18 @@ class TestApi1MObjectHelperCorrectness(unittest.TestCase):
     def test_second_call_reuses_cached(self):
         """The cache should hand back the same MObject reference on
         repeat calls with the same name."""
-        h = self._make_helper_instance()
-        first = h._api1_mobject(self.node)
+        h      = self._make_helper_instance()
+        first  = h._api1_mobject(self.node)
         second = h._api1_mobject(self.node)
         # Same wrapper instance.
         self.assertIs(first, second,
             "second call with same name should return CACHED instance")
 
     def test_name_change_invalidates_cache(self):
-        h = self._make_helper_instance()
+        h     = self._make_helper_instance()
         first = h._api1_mobject(self.node)
         # Simulate rename by passing a different name.
-        other = mc.createNode("transform", name="cache_test_other")
+        other  = mc.createNode("transform", name="cache_test_other")
         second = h._api1_mobject(other)
         self.assertIsNot(first, second,
             "rename should force a re-resolve, not return cached")
@@ -130,15 +130,15 @@ class TestCacheRenameHook(unittest.TestCase):
         from mpynode._api2.mpy_constraint import MPyConstraint
 
         class Host:
-            _cached_api1_mobject = None
-            _cached_api1_name = None
+            _cached_api1_mobject      = None
+            _cached_api1_name         = None
             _cached_api1_rename_token = None
-            _api1_mobject = MPyConstraint._api1_mobject
+            _api1_mobject             = MPyConstraint._api1_mobject
 
         return Host()
 
     def test_first_resolve_registers_callback(self):
-        h = self._make_helper_instance()
+        h   = self._make_helper_instance()
         mob = h._api1_mobject(self.node)
         self.assertIsNotNone(mob)
         # Hook token should be set (best-effort -- may be None if
@@ -163,7 +163,7 @@ class TestCacheRenameHook(unittest.TestCase):
     def test_mobject_pointer_stable_across_rename(self):
         """Maya keeps MObject pointers stable across rename -- only
         the name field needs refreshing."""
-        h = self._make_helper_instance()
+        h         = self._make_helper_instance()
         first_mob = h._api1_mobject(self.node)
         mc.rename(self.node, "o6_stable")
         # Calling helper again with the new name should hit the cache
@@ -181,8 +181,8 @@ class TestCacheRenameHookSourceShape(unittest.TestCase):
         from mpynode._api2.mpy_constraint import MPyConstraint
 
         src = inspect.getsource(MPyConstraint._api1_mobject)
-        self.assertIn("addNameChangedCallback", src)
-        self.assertIn("CALLBACK_MANAGER", src)
+        self.assertIn("addNameChangedCallback",    src)
+        self.assertIn("CALLBACK_MANAGER",          src)
         self.assertIn("_cached_api1_rename_token", src)
 
 

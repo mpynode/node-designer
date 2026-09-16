@@ -82,13 +82,13 @@ def _read_geometry_plug(plug: "om.MPlug", attr_type) -> Any:
             import re
             m = re.search(r"originalGeometry\[(\d+)\]", plug_partial)
             if m:
-                idx = int(m.group(1))
-                node_mobj = plug.node()
-                fn_node = om.MFnDependencyNode(node_mobj)
+                idx        = int(m.group(1))
+                node_mobj  = plug.node()
+                fn_node    = om.MFnDependencyNode(node_mobj)
                 input_plug = fn_node.findPlug("input", True)
                 input_elem = input_plug.elementByLogicalIndex(idx)
                 input_geom = input_elem.child(0)  # input[N].inputGeometry
-                sources = om.MPlugArray()
+                sources    = om.MPlugArray()
                 input_geom.connectedTo(sources, True, False)
                 if sources.length() > 0:
                     src_mobj = sources[0].asMObject()

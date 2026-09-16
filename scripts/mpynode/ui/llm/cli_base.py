@@ -37,30 +37,30 @@ def _debug():
 
 
 class BaseCliClient(QObject):
-    assistantText = Signal(str)
-    toolStarted = Signal(str)
-    toolFinished = Signal(str)
-    turnFinished = Signal()
-    notice = Signal(str)
-    thinking = Signal(str)
+    assistantText  = Signal(str)
+    toolStarted    = Signal(str)
+    toolFinished   = Signal(str)
+    turnFinished   = Signal()
+    notice         = Signal(str)
+    thinking       = Signal(str)
     retryScheduled = Signal(int, int, int, int, str)  # interface compat (unused)
-    tokensUsed = Signal(int)
-    errorOccurred = Signal(str)
-    busyChanged = Signal(bool)
+    tokensUsed     = Signal(int)
+    errorOccurred  = Signal(str)
+    busyChanged    = Signal(bool)
 
     PROVIDER = "cli"
-    LABEL = "CLI"
+    LABEL    = "CLI"
 
     def __init__(self, ctx_provider=None, parent=None):
         super().__init__(parent)
         self._ctx_provider = ctx_provider
-        self._busy = False
-        self._cancel = threading.Event()
-        self._proc = None
+        self._busy         = False
+        self._cancel       = threading.Event()
+        self._proc         = None
         self._emitted_text = False
-        self._answer_text = ""   # accumulated reply -> payload extraction
-        self._ctx = None         # ToolContext captured per turn (GUI thread)
-        self._node_name = None   # active node captured per turn (GUI thread)
+        self._answer_text  = ""    # accumulated reply -> payload extraction
+        self._ctx          = None  # ToolContext captured per turn (GUI thread)
+        self._node_name    = None  # active node captured per turn (GUI thread)
 
     # -- public interface ------------------------------------------------
 
@@ -103,7 +103,7 @@ class BaseCliClient(QObject):
             return
         # Capture the active node + a ToolContext on the GUI thread (Maya-safe),
         # then compose the full payload-mode prompt (serializes the active node).
-        self._ctx = self._ctx_provider() if callable(self._ctx_provider) else None
+        self._ctx       = self._ctx_provider() if callable(self._ctx_provider) else None
         self._node_name = getattr(self._ctx, "working_node", None)
         try:
             from mpynode.ui.llm import payload as _payload
@@ -124,7 +124,7 @@ class BaseCliClient(QObject):
 
     def _run(self, prompt, images):
         self._emitted_text = False
-        self._answer_text = ""
+        self._answer_text  = ""
         try:
             from mpynode.native.toolchain import toolchain
 

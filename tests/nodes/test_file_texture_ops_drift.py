@@ -32,8 +32,8 @@ def _exec_inline_source():
 class TestInitSourceMatchesOps(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.ns = _exec_inline_source()
-        rng = np.random.default_rng(1234)
+        cls.ns  = _exec_inline_source()
+        rng     = np.random.default_rng(1234)
         cls.img = (rng.random((17, 19, 4)) * 255.0).astype(np.uint8)
 
     def test_linearize_all_25_color_spaces(self):
@@ -55,7 +55,7 @@ class TestInitSourceMatchesOps(unittest.TestCase):
 
     def test_prefilter_all_kernels(self):
         inline = self.ns["_prefilter"]
-        lin = ops.linearize(self.img, 0)
+        lin    = ops.linearize(self.img, 0)
         for kernel in (ops.kPreFilterBox, ops.kPreFilterQuadratic,
                        ops.kPreFilterQuartic, ops.kPreFilterGaussian):
             self.assertTrue(np.array_equal(inline(lin, True, kernel, 2.0),
@@ -73,7 +73,7 @@ class TestInitSourceMatchesOps(unittest.TestCase):
 
     def test_sample_matches(self):
         inline = self.ns["_sample"]
-        lin = ops.linearize(self.img, 0)
+        lin    = ops.linearize(self.img, 0)
         border = (0.1, 0.2, 0.3)
         for wu in (ops.kWrapWrap, ops.kWrapClamp, ops.kWrapMirror, ops.kWrapBorder):
             for (u, v) in [(0.0, 0.0), (0.25, 0.75), (0.5, 0.5), (1.3, -0.4), (0.99, 0.01)]:

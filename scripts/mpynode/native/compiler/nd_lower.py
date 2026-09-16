@@ -83,7 +83,7 @@ _GEO_IN_TYPE_KIND = {"mesh": "mesh", "nurbsCurve": "curve", "nurbsSurface": "sur
 # vertex layout the transpiler has no shape for yet, and tags need a component
 # decode -- both stay on the porter until first-class.)
 _GEO_IN_CHANNELS = {
-    "mesh": {"points", "counts", "indices", "normals", "uvs"},
+    "mesh":  {"points", "counts", "indices", "normals", "uvs"},
     "curve": {"points", "cvs", "degree", "form", "knots"},
     "surface": {"points", "cvs", "num_u", "num_v", "degree_u", "degree_v",
                 "form_u", "form_v", "knots_u", "knots_v"},
@@ -298,12 +298,12 @@ def _materialise_input(m, dst):
     Returns (lines, CppType) or raises UnsupportedSpec for an unhandled type.
     """
     meta = m["meta"]
-    t = meta["type"]
-    src = "in_" + m["member"]
+    t    = meta["type"]
+    src  = "in_" + m["member"]
 
     if _is_scalar_numeric(meta):
         dt = _ND_DTYPE[t]
-        c = _ND_CTYPE[dt]
+        c  = _ND_CTYPE[dt]
         return (["    %s %s = (%s)(%s);" % (c, dst, c, src)], scalar_t(dt))
 
     if _is_vector_scalar(meta):
@@ -314,7 +314,7 @@ def _materialise_input(m, dst):
 
     if _is_numeric_array(meta):
         dt = _ND_DTYPE[t]
-        c = _ND_CTYPE[dt]
+        c  = _ND_CTYPE[dt]
         if _MAYA_CTYPE[t] == c:                      # same element type: direct
             return (["    nd::Array<%s> %s = nd::from_data<%s>("
                      "%s, {(int64_t)%s.size()});" % (c, dst, c, src, src)],
@@ -581,7 +581,7 @@ def _quaternion_scalar_output_lines(m, val):
     if not val.type.is_array():
         raise UnsupportedSpec("nd_lower: non-array value assigned to quaternion "
                               "output %r" % m["plug"])
-    h = "h_" + m["member"]
+    h   = "h_" + m["member"]
     mem = m["member"]
     return [
         "{",
@@ -666,10 +666,10 @@ def _numeric_array_output_lines(m, val):
     if not val.type.is_array():
         raise UnsupportedSpec("nd_lower: scalar value assigned to array output "
                               "%r" % m["plug"])
-    t = m["meta"]["type"]
-    dt = _ND_DTYPE[t]
+    t   = m["meta"]["type"]
+    dt  = _ND_DTYPE[t]
     ndc = _ND_CTYPE[dt]
-    mc = _MAYA_CTYPE[t]
+    mc  = _MAYA_CTYPE[t]
     out = "out_" + m["member"]
     return [
         "{",
@@ -759,7 +759,7 @@ def _string_scalar_output_lines(m, val):
     if val.type.kind != "str":
         raise UnsupportedSpec("nd_lower: non-string value assigned to string "
                               "output %r" % m["plug"])
-    h = "h_" + m["member"]
+    h    = "h_" + m["member"]
     expr = "MString((%s).c_str())" % val.code
     if m["meta"]["type"] == "hex":
         return ["%s.setString(nd_hex_encode(%s));" % (h, expr)]
@@ -850,7 +850,7 @@ def _persistent_state_vars(source, declared):
     preceding write is an orphan (its value comes from outside the node) and is
     rejected downstream (py_to_cpp / _unbound_self_reads)."""
     declared = set(declared)
-    tree = ast.parse(source)
+    tree     = ast.parse(source)
     written, read = set(), set()
     for n in ast.walk(tree):
         if isinstance(n, ast.Assign):
@@ -986,8 +986,8 @@ def _materialise_output_buffer(m, dst):
     AI porter reads the identical count for this node class).
 
     Returns ``(lines, CppType)`` or raises for an unliftable output type."""
-    meta = m["meta"]
-    t = meta["type"]
+    meta   = m["meta"]
+    t      = meta["type"]
     member = m["member"]
     ncount = "_ndoutn_" + member
     count = ("    int64_t %s = (int64_t)data.outputArrayValue(%s).elementCount();"
@@ -999,7 +999,7 @@ def _materialise_output_buffer(m, dst):
                 array_t("double", 2))
     if _is_numeric_array(meta):
         dt = _ND_DTYPE[t]
-        c = _ND_CTYPE[dt]
+        c  = _ND_CTYPE[dt]
         return ([count,
                  "    nd::Array<%s> %s = nd::zeros<%s>({%s});"
                  % (c, dst, c, ncount)],
@@ -1116,10 +1116,10 @@ def _materialise_geo_tag(member, kind, spec, dst):
     op, tag = spec
     if op == "tagclusters":
         return _materialise_geo_tag_clusters(member, kind, tag, dst)
-    src = "in_" + member
-    obj = src + "_obj"
-    tagc = _cpp_str(tag)
-    fn = _GEO_FN_CONST[kind]
+    src   = "in_" + member
+    obj   = src + "_obj"
+    tagc  = _cpp_str(tag)
+    fn    = _GEO_FN_CONST[kind]
     guard = "!%s.isNull() && %s.hasFn(MFn::%s)" % (obj, obj, fn)
     # C++ that decodes the tag component into a flat MIntArray _tel (single) or a
     # pair _tu/_tv (double), inside a `if (tag present) { ... }` block.
@@ -1237,7 +1237,7 @@ def _materialise_geo_tag_clusters(member, kind, tags_member, dst):
         raise UnsupportedSpec(
             "nd_lower: tag_clusters is only supported on a mesh geo input "
             "(got %r)" % kind)
-    obj = "in_%s_obj" % member
+    obj   = "in_%s_obj" % member
     names = "in_" + tags_member
     guard = "!%s.isNull() && %s.hasFn(MFn::%s)" % (obj, obj, _GEO_FN_CONST[kind])
     body = [
@@ -1421,7 +1421,7 @@ def _rewrite_geo_reads(source, geo_in, str_arr_in=None):
     regression.
     """
     str_arr_in = str_arr_in or {}
-    tree = ast.parse(source)
+    tree       = ast.parse(source)
 
     # A local name aliases a geo input only if it is assigned EXACTLY once and that
     # assignment is ``name = self.<geoIn>`` (a reassigned / multi-source name is
@@ -1443,7 +1443,7 @@ def _rewrite_geo_reads(source, geo_in, str_arr_in=None):
             alias[nm] = v.attr
 
     binds = {}
-    bad = []
+    bad   = []
 
     def _georef(node):
         # -> plug if node reads a geo input directly (self.<geoIn>) or via alias.
@@ -1471,7 +1471,7 @@ def _rewrite_geo_reads(source, geo_in, str_arr_in=None):
                 member, kind = geo_in[plug]
                 ch = node.attr
                 if ch in _GEO_IN_CHANNELS.get(kind, ()):
-                    syn = "%s%s_%s_" % (_GEO_SYN_PREFIX, member, ch)
+                    syn        = "%s%s_%s_" % (_GEO_SYN_PREFIX, member, ch)
                     binds[syn] = (member, kind, ch)
                     return ast.copy_location(
                         ast.Attribute(
@@ -1503,8 +1503,8 @@ def _rewrite_geo_reads(source, geo_in, str_arr_in=None):
                             and isinstance(node.args[0], ast.Constant)
                             and isinstance(node.args[0].value, str)):
                         member, kind = geo_in[plug]
-                        tag = node.args[0].value
-                        syn = _tag_syn(member, "region", tag)
+                        tag        = node.args[0].value
+                        syn        = _tag_syn(member, "region", tag)
                         binds[syn] = (member, kind, ("region", tag))
                         return ast.copy_location(_syn_attr(syn), node)
                     bad.append("%s.region(<non-literal>)" % plug)
@@ -1538,7 +1538,7 @@ def _rewrite_geo_reads(source, geo_in, str_arr_in=None):
                     and node.slice.value == "indices"
                     and isinstance(node.value, ast.Subscript)):
                 inner = node.value
-                base = inner.value
+                base  = inner.value
                 if (isinstance(base, ast.Attribute)
                         and base.attr == "component_tags"
                         and isinstance(inner.slice, ast.Constant)
@@ -1546,8 +1546,8 @@ def _rewrite_geo_reads(source, geo_in, str_arr_in=None):
                     plug = _georef(base.value)
                     if plug is not None:
                         member, kind = geo_in[plug]
-                        tag = inner.slice.value
-                        syn = _tag_syn(member, "tagidx", tag)
+                        tag        = inner.slice.value
+                        syn        = _tag_syn(member, "tagidx", tag)
                         binds[syn] = (member, kind, ("tagidx", tag))
                         return ast.copy_location(_syn_attr(syn), node)
             self.generic_visit(node)
@@ -1801,7 +1801,7 @@ def _rewrite_geo_array_reads(source, geo_arr_in):
             alias[nm] = el
 
     binds = {}
-    bad = []
+    bad   = []
 
     def _elemref(node):
         el = _geo_arr_elem(node, geo_arr_in)
@@ -1833,7 +1833,7 @@ def _rewrite_geo_array_reads(source, geo_arr_in):
                     and isinstance(arg.value, ast.Name) and arg.value.id == "self"
                     and arg.attr in geo_arr_in):
                 member, kind = geo_arr_in[arg.attr]
-                syn = "%sarrlen_%s_" % (_GEO_SYN_PREFIX, member)
+                syn        = "%sarrlen_%s_" % (_GEO_SYN_PREFIX, member)
                 binds[syn] = (member, kind, None, _GEO_ARR_LEN)
                 return ast.copy_location(_syn_attr(syn), node)
             self.generic_visit(node)
@@ -1894,7 +1894,7 @@ def _geo_input_surface(ins, source, allow_geo_array=False):
         else {}
     if not geo_in and not geo_arr:
         return source, {}, []
-    geo_env = {}
+    geo_env         = {}
     geo_materialise = []
     if geo_in:
         str_arr = {i["plug"]: i["member"] for i in ins
@@ -2004,7 +2004,7 @@ def _strip_eager_guard(source):
         tree = ast.parse(source)
     except SyntaxError:
         return source
-    flag = None
+    flag    = None
     hoisted = []
     changed = False
     for st in tree.body:
@@ -2088,9 +2088,9 @@ def lower_compute(ins, outs, source, init=None, spec=None):
     # Bind every USED input of a liftable type; unused inputs are ignored (a
     # node may carry an input its numpy-liftable compute never touches). A used
     # input of an unliftable type raises -> whole node falls back.
-    env = dict(geo_env)
+    env         = dict(geo_env)
     materialise = list(geo_materialise)
-    in_by_plug = {i["plug"]: i for i in ins}
+    in_by_plug  = {i["plug"]: i for i in ins}
     # sorted(): `used` is a SET of attr-name strings, whose iteration order
     # moves with PYTHONHASHSEED. These bindings are independent declarations, so
     # any fixed order is correct -- but it has to BE fixed, or the node's C++
@@ -2108,7 +2108,7 @@ def lower_compute(ins, outs, source, init=None, spec=None):
     # write work); whole-assigned outputs keep the writer-on-assignment path.
     out_by_plug = {o["plug"]: o for o in outs}
     subscript_out, whole_out = _output_subscript_targets(source, set(out_by_plug))
-    buffered = []
+    buffered        = []
     out_materialise = []
     for plug in sorted(subscript_out):
         m = out_by_plug[plug]
@@ -2131,7 +2131,7 @@ def lower_compute(ins, outs, source, init=None, spec=None):
 
     # Persistent stateful self-vars (undeclared self.<name> written whole): give
     # them a per-node home so they LATCH across evals instead of being flattened.
-    declared = {i["plug"] for i in ins} | {o["plug"] for o in outs}
+    declared   = {i["plug"] for i in ins} | {o["plug"] for o in outs}
     state_vars = _persistent_state_vars(source, declared)
 
     # Blessed API-method lowerings (mPyFile texture kernels). Empty maps for a
@@ -2149,7 +2149,7 @@ def lower_compute(ins, outs, source, init=None, spec=None):
     # writes a member; member C++ types come from the transpiler's discovery. The
     # matching declarations go in the CLASS body -- returned alongside the lines
     # for the node emitter to place (see LoweredBody.state_decls).
-    state_decls = _state_member_decls(res.state_members)
+    state_decls    = _state_member_decls(res.state_members)
     state_preamble = _state_binding_preamble(res.state_members)
 
     # Index-written outputs are written into their buffer (not via a writer), so
@@ -2352,13 +2352,13 @@ def _rewrite_geo_constructor(source, kind):
     The ctor statement's lines are blanked and the synthetic assigns appended at
     the END of the source (every referenced local is in scope by then). Returns
     the source unchanged if no such constructor is present."""
-    cls = _GEO_CTOR_CLASS[kind]
-    out_attr = _GEO_OUT_ATTR[kind]
+    cls        = _GEO_CTOR_CLASS[kind]
+    out_attr   = _GEO_OUT_ATTR[kind]
     positional = _GEO_CTOR_POSITIONAL[kind]
-    tree = ast.parse(source)
-    lines = source.splitlines()
-    appended = []
-    hit = False
+    tree       = ast.parse(source)
+    lines      = source.splitlines()
+    appended   = []
+    hit        = False
 
     def _is_none(node):
         return isinstance(node, ast.Constant) and node.value is None
@@ -2420,7 +2420,7 @@ def _strip_geo_output_assign(source, out_attr):
     """Blank any top-level ``self.<out_attr> = ...`` (the build_default_output
     step codegen reproduces natively). Line numbers are preserved (lines are
     emptied, not removed) so transpiler error messages stay accurate."""
-    tree = ast.parse(source)
+    tree  = ast.parse(source)
     strip = []
     for st in tree.body:
         tgt = None
@@ -2474,10 +2474,10 @@ def lower_geo_compute(in_members, kind, source, init=None):
     src, geo_env, geo_materialise = _geo_input_surface(
         in_members, src, allow_geo_array=True)
 
-    used = _used_self_attrs(src)
-    env = dict(geo_env)
+    used        = _used_self_attrs(src)
+    env         = dict(geo_env)
     materialise = list(geo_materialise)
-    in_by_plug = {i["plug"]: i for i in in_members}
+    in_by_plug  = {i["plug"]: i for i in in_members}
     for plug in sorted(used):             # sorted(): see lower_compute
         m = in_by_plug.get(plug)
         if m is None:
@@ -2493,7 +2493,7 @@ def lower_geo_compute(in_members, kind, source, init=None):
     res, written, helper_lines = py_to_cpp.transpile_compute_block(
         src, env, writers, init)
 
-    filled = {bufmap[d.split(".", 1)[1]][0] for d in written}
+    filled  = {bufmap[d.split(".", 1)[1]][0] for d in written}
     missing = [b for b in _GEO_REQUIRED_BUFS[kind] if b not in filled]
     if missing:
         raise UnsupportedSpec("nd_lower geo: buffers never filled: %s"
@@ -2553,8 +2553,8 @@ _GEOIO_FIELDS = {
         "points": ("points", "mpoint_arr"), "counts": ("counts", "int_arr"),
         "indices": ("indices", "int_arr"), "normals": ("normals", "vec3_arr"),
         "normal_indices": ("normalIndices", "int_arr"),
-        "colors": ("colors", "color_arr"),
-        "color_indices": ("colorIndices", "int_arr"),
+        "colors":         ("colors", "color_arr"),
+        "color_indices":  ("colorIndices", "int_arr"),
     },
     "curve": {
         "points": ("cvs", "mpoint_arr"), "cvs": ("cvs", "mpoint_arr"),
@@ -2615,8 +2615,8 @@ def _geoio_ctor_writes(source, call, kind, struct_var, syn_base, writers, label)
         raise UnsupportedSpec("nd_lower geo-io: %s must be a %s(...) constructor"
                               % (label, cls))
     positional = _GEO_CTOR_POSITIONAL[kind]
-    fld_map = _GEOIO_FIELDS[kind]
-    assigns = []
+    fld_map    = _GEOIO_FIELDS[kind]
+    assigns    = []
     for i, arg in enumerate(call.args):
         if isinstance(arg, ast.Starred) or i >= len(positional):
             raise UnsupportedSpec("nd_lower geo-io: bad positional ctor args")
@@ -2632,7 +2632,7 @@ def _geoio_ctor_writes(source, call, kind, struct_var, syn_base, writers, label)
         assigns.append((kw.arg, ast.get_source_segment(source, kw.value)))
     # emit a synthetic write per field, register its struct-field writer.
     appended = []
-    filled = set()
+    filled   = set()
     for fname, seg in assigns:
         if fname not in fld_map:
             raise UnsupportedSpec("nd_lower geo-io: ctor field %r not lowerable "
@@ -2699,12 +2699,12 @@ def lower_geo_io_compute(ins, outs, source, init=None):
     geo_arr_in = {i["plug"]: (i["member"], _GEO_IN_TYPE_KIND[i["meta"]["type"]])
                   for i in ins if _is_geo_array_input(i["meta"])}
     # Strip any interpreted-side eager-evaluation guard before lowering.
-    source = _strip_eager_guard(source)
-    tree = ast.parse(source)
-    lines = source.splitlines()
-    passthru = []            # raw C++ (array struct-vector copies)
-    written = set()          # geo output plugs satisfied
-    writers = {}             # self.<syn> -> writer callable
+    source         = _strip_eager_guard(source)
+    tree           = ast.parse(source)
+    lines          = source.splitlines()
+    passthru       = []     # raw C++ (array struct-vector copies)
+    written        = set()  # geo output plugs satisfied
+    writers        = {}     # self.<syn> -> writer callable
     syn_env_needed = False
     # Per output plug, the FORM of each assignment: "direct" (all of its C++ goes
     # into passthru, ahead of the body), "body" (a ctor, all of it emitted by the
@@ -2719,9 +2719,9 @@ def lower_geo_io_compute(ins, outs, source, init=None):
         if not (isinstance(tgt, ast.Attribute) and isinstance(tgt.value, ast.Name)
                 and tgt.value.id == "self" and tgt.attr in geo_out_by_plug):
             continue
-        o = geo_out_by_plug[tgt.attr]
+        o    = geo_out_by_plug[tgt.attr]
         kind = _GEO_IN_TYPE_KIND[o["meta"]["type"]]
-        val = st.value
+        val  = st.value
 
         # Same-kind ARRAY geo input elements are the passthrough item vocabulary
         # for BOTH a single geo output and each slot of an array geo output.
@@ -2752,7 +2752,7 @@ def lower_geo_io_compute(ins, outs, source, init=None):
             passthru.append("    out_%s.resize(%d);" % (o["member"], len(val.elts)))
             for k, item in enumerate(val.elts):
                 dst = "out_%s[%d]" % (o["member"], k)
-                el = _geo_arr_elem(item, same_kind_arr)
+                el  = _geo_arr_elem(item, same_kind_arr)
                 if el is not None:
                     passthru += _geoio_elem_copy(dst, same_kind_arr[el[0]][0], el[1])
                     continue
@@ -2814,10 +2814,10 @@ def lower_geo_io_compute(ins, outs, source, init=None):
         ins, source2, allow_geo_array=True)
 
     # materialise the numeric inputs the (rewritten) field expressions use.
-    env = dict(geo_env)
+    env         = dict(geo_env)
     materialise = list(geo_materialise)
     if syn_env_needed:
-        used = _used_self_attrs(source2)
+        used       = _used_self_attrs(source2)
         in_by_plug = {i["plug"]: i for i in ins}
         for plug in sorted(used):         # sorted(): see lower_compute
             m = in_by_plug.get(plug)
@@ -2875,8 +2875,8 @@ def _blank_stmt(lines, st):
 
 # Synthetic self-attrs the rewrite introduces (never real plugs, so they can't
 # collide with a user input/output name).
-_DEFORM_POINTS_ATTR = "__ndpoints__"   # harvested rest points, bound (N,3)
-_DEFORM_OUT_ATTR = "__ndout__"         # setPoints target, scattered back to pts
+_DEFORM_POINTS_ATTR  = "__ndpoints__"   # harvested rest points, bound (N,3)
+_DEFORM_OUT_ATTR     = "__ndout__"      # setPoints target, scattered back to pts
 _DEFORM_NORMALS_ATTR = "__ndnormals__"  # per-vertex normals, bound (N,3)
 
 
@@ -3011,9 +3011,9 @@ def _apply_normals_idiom(tree, source, lines, mesh_vars):
             return node.value.attr, node.attr
         return None
 
-    fva = {}         # MFloatVectorArray var name -> (lineno, end)
-    gvn = None       # (var, aw_bool, space_attr, lineno, end)
-    conv = None      # (target, lineno, end, indent)
+    fva  = {}    # MFloatVectorArray var name -> (lineno, end)
+    gvn  = None  # (var, aw_bool, space_attr, lineno, end)
+    conv = None  # (target, lineno, end, indent)
     for st in tree.body:
         end = getattr(st, "end_lineno", st.lineno)
         # nrm = om.MFloatVectorArray()
@@ -3046,7 +3046,7 @@ def _apply_normals_idiom(tree, source, lines, mesh_vars):
                 and isinstance(st.value, ast.Call)
                 and isinstance(st.value.func, ast.Attribute)
                 and st.value.func.attr == "array"):
-            raw = lines[st.lineno - 1]
+            raw    = lines[st.lineno - 1]
             indent = raw[:len(raw) - len(raw.lstrip())]
             conv = (st.targets[0].id, st.lineno, end, indent,
                     {n.id for n in ast.walk(st.value)
@@ -3066,9 +3066,9 @@ def _apply_normals_idiom(tree, source, lines, mesh_vars):
                 lines[ln - 1] = ""
 
     f_lo, f_hi = fva[nvar]
-    _blank(f_lo, f_hi)             # nrm = om.MFloatVectorArray()
-    _blank(g_lo, g_hi)             # mesh.getVertexNormals(...)
-    _blank(c_lo, c_hi)            # the np.array(...) conversion
+    _blank(f_lo, f_hi)  # nrm = om.MFloatVectorArray()
+    _blank(g_lo, g_hi)  # mesh.getVertexNormals(...)
+    _blank(c_lo, c_hi)  # the np.array(...) conversion
     lines[c_lo - 1] = "%s%s = self.%s" % (indent, tgt, _DEFORM_NORMALS_ATTR)
     return {"aw": aw, "space": space}
 
@@ -3093,7 +3093,7 @@ _MORPH_PROP = "morphs"
 # registry by a test so a renamed method cannot silently stop being reachable.
 _MORPH_CALLS = {
     "deltas": ("morph_deltas", 1, 2),
-    "apply": ("morph_apply", 1, 2),
+    "apply":  ("morph_apply", 1, 2),
 }
 
 # A const string sequence unrolls its loop body once per element. 40 correctives
@@ -3165,7 +3165,7 @@ def _bound_names(node):
     if isinstance(node, ast.ExceptHandler):
         return [node.name] if node.name else []
     if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-        a = node.args
+        a   = node.args
         out = [node.name]
         for arg in list(a.posonlyargs) + list(a.args) + list(a.kwonlyargs):
             out.append(arg.arg)
@@ -3279,7 +3279,7 @@ class _SlotCollector(ast.NodeVisitor):
     """
 
     def __init__(self, env):
-        self._env = env
+        self._env  = env
         self.slots = []
 
     def visit_Attribute(self, node):
@@ -3306,7 +3306,7 @@ class _SubstName(ast.NodeTransformer):
     """Replace every READ of ``name`` with a string constant."""
 
     def __init__(self, name, value):
-        self._name = name
+        self._name  = name
         self._value = value
 
     def visit_Name(self, node):
@@ -3348,7 +3348,7 @@ def _range_unroll_len(node, env, counts):
     if n is None or n < 0:
         return 0
 
-    var = node.target.id
+    var    = node.target.id
     needed = False
     for sub in ast.walk(node):
         if (isinstance(sub, ast.Subscript) and isinstance(sub.value, ast.Name)
@@ -3669,11 +3669,11 @@ def _rewrite_deform_io(source):
     single-line replacement, setPoints arg parenthesised so a multi-line arg
     stays valid) -- the result is re-parsed by the transpiler, so exact line
     numbers only matter for error text."""
-    tree = ast.parse(source)
-    lines = source.splitlines()
+    tree      = ast.parse(source)
+    lines     = source.splitlines()
     mesh_vars = set()
-    n_get = 0
-    n_set = 0
+    n_get     = 0
+    n_set     = 0
 
     def _indent_of(lineno):
         raw = lines[lineno - 1]
@@ -3807,7 +3807,7 @@ def lower_deform(ins, spec, base):
     # everyone else (it is part of the node's identity).
     if spec.get("mpy_type") == "mPyBlendShape":
         source = _rewrite_morph_reads(source)
-        spec = dict(spec, compute=source)
+        spec   = dict(spec, compute=source)
 
     src, normals_info = _rewrite_deform_io(source)
 
@@ -3827,7 +3827,7 @@ def lower_deform(ins, spec, base):
     # `used` because the compute literally spells self.weightList / self.matrix /
     # self.bindPreMatrix -- but it stays for methods that opt into implicit reads.
     used |= set(blessed_transpile.called_method_reads(spec))
-    env = dict(geo_env)
+    env         = dict(geo_env)
     materialise = list(geo_materialise)
 
     # harvested rest points -> (N,3) nd::Array.
@@ -3892,7 +3892,7 @@ def lower_deform(ins, spec, base):
     for plug, (dt, vec) in LIVE_CPP_VARS.items():
         if plug in used:
             dst = env_cpp_name("self." + plug)
-            c = _ND_CTYPE[dt]
+            c   = _ND_CTYPE[dt]
             materialise.append(
                 "    nd::Array<%s> %s = nd::from_data<%s>(%s, "
                 "{(int64_t)%s.size()});" % (c, dst, c, vec, vec))
@@ -3955,15 +3955,15 @@ def try_lower_deform(ins, spec, base):
 
 # self-attrs the lowered body may write.
 _TRANSFORM_MATRIX_SINKS = ("local_matrix",)
-_TRANSFORM_GATE_SINKS = ("apply_rotate", "apply_translate", "apply_scale")
+_TRANSFORM_GATE_SINKS   = ("apply_rotate", "apply_translate", "apply_scale")
 # self-attrs the lowered body may READ -> (C++ component local, nd builder kind).
 # These are this node's own live channels, bound to the MPxTransformationMatrix
 # component locals emit_transform's desiredLocal declares before the lowered body.
 _TRANSFORM_LOCAL_READS = {
-    "translate": ("t", "vec3"),
-    "rotate": ("r", "vec3"),        # MEulerRotation .x/.y/.z -> RADIANS
-    "scale": ("sc", "vec3"),
-    "shear": ("shr", "vec3"),
+    "translate":    ("t", "vec3"),
+    "rotate":       ("r", "vec3"),        # MEulerRotation .x/.y/.z -> RADIANS
+    "scale":        ("sc", "vec3"),
+    "shear":        ("shr", "vec3"),
     "rotate_order": ("ro", "scalar"),
 }
 
@@ -4071,7 +4071,7 @@ def lower_transform(spec):
         raise UnsupportedSpec("nd_lower transform: does not write "
                               "self.local_matrix")
 
-    env = {}
+    env         = {}
     materialise = []
     for attr in sorted(used):             # sorted(): see lower_compute
         if attr in _TRANSFORM_MATRIX_SINKS or attr in _TRANSFORM_GATE_SINKS:
@@ -4095,9 +4095,9 @@ def lower_transform(spec):
     writers = {
         "self.local_matrix": _transform_matrix_sink_writer(
             "local_matrix", "local_set"),
-        "self.apply_rotate": _transform_gate_writer("apply_rotate"),
+        "self.apply_rotate":    _transform_gate_writer("apply_rotate"),
         "self.apply_translate": _transform_gate_writer("apply_translate"),
-        "self.apply_scale": _transform_gate_writer("apply_scale"),
+        "self.apply_scale":     _transform_gate_writer("apply_scale"),
     }
     res, written, helper_lines = py_to_cpp.transpile_compute_block(
         source, env, writers, _combined_helper_source(spec))
@@ -4134,7 +4134,7 @@ def try_lower_transform(spec):
 # shape the transpiler has none for -- so joint reads are AST-REWRITTEN into
 # synthetic per-CHANNEL self-attrs bound to STACKED nd arrays, the same trick the
 # geometry read surface uses (see _rewrite_geo_reads).
-_IK_SYN_PREFIX = "__ndik_"
+_IK_SYN_PREFIX    = "__ndik_"
 _IK_NUMJOINTS_SYN = _IK_SYN_PREFIX + "numjoints_"
 
 # ``joints[j]["<channel>"]`` -> (C++ scaffold vector, element kind). Stacked to
@@ -4143,15 +4143,15 @@ _IK_NUMJOINTS_SYN = _IK_SYN_PREFIX + "numjoints_"
 # rotateOrder/jointOrient parity is not reproducible here) are deliberately
 # ABSENT -- reading either rejects the whole lowering to the porter.
 _IK_JOINT_CHANNELS = {
-    "world_matrix": ("bindWorld", "mat"),
-    "matrix": ("jointLocal", "mat"),
+    "world_matrix":   ("bindWorld", "mat"),
+    "matrix":         ("jointLocal", "mat"),
     "world_position": ("jointPos", "vec3"),
 }
 # Framework scalars/vectors the scaffold declares -> (C++ local, kind).
 _IK_SCALAR_READS = {
     "end_effector": ("endEffector", "vec3"),
-    "pole_vector": ("poleVector", "vec3"),
-    "twist": ("twist", "scalar"),
+    "pole_vector":  ("poleVector", "vec3"),
+    "twist":        ("twist", "scalar"),
 }
 # ``self.<sink>[j] = <4x4>`` -> (C++ MMatrix vector, C++ set-flag vector). Bound
 # as a MUTABLE nd (N,4,4) so an INDEXED write lowers through the transpiler's
@@ -4162,9 +4162,9 @@ _IK_MATRIX_SINKS = {
 }
 # ``self.<gate> = bool`` (broadcast) or ``= [bool]`` (per joint) -> C++ vector.
 _IK_GATE_SINKS = {
-    "apply_rotate": "applyRotate",
+    "apply_rotate":    "applyRotate",
     "apply_translate": "applyTranslate",
-    "apply_scale": "applyScale",
+    "apply_scale":     "applyScale",
 }
 
 
@@ -4484,7 +4484,7 @@ def lower_iksolver(spec):
     user_ms.update({gm["plug"]: gm for gm in _ik_generic_inputs(spec)})
 
     syn_reads = {_ik_channel_syn(ch) for ch in channels}
-    used = _used_self_attrs(source)
+    used      = _used_self_attrs(source)
     allowed = (syn_reads | {_IK_NUMJOINTS_SYN} | set(_IK_SCALAR_READS)
                | set(_IK_MATRIX_SINKS) | set(_IK_GATE_SINKS) | set(user_ms))
     extra = used - allowed
@@ -4502,7 +4502,7 @@ def lower_iksolver(spec):
         dst = env_cpp_name("self." + attr)
         if attr == _IK_NUMJOINTS_SYN:
             lines = ["    int64_t %s = (int64_t)numJoints;" % dst]
-            typ = scalar_t("int64")
+            typ   = scalar_t("int64")
         elif attr in syn_reads:
             ch = next(c for c in channels if _ik_channel_syn(c) == attr)
             src, kind = _IK_JOINT_CHANNELS[ch]
@@ -4514,7 +4514,7 @@ def lower_iksolver(spec):
                 lines, typ = _ik_vec3_to_nd(src, dst)
             else:
                 lines = ["    double %s = (double)(%s);" % (dst, src)]
-                typ = scalar_t("double")
+                typ   = scalar_t("double")
         elif attr in _IK_MATRIX_SINKS:
             # Seeded from the scaffold's OWN default so an untouched slot is
             # detectably unchanged (see _ik_matrix_sink_scatter).
@@ -4525,7 +4525,7 @@ def lower_iksolver(spec):
         materialise += lines
         env["self." + attr] = typ
 
-    writers = {"self." + g: _ik_gate_writer(v) for g, v in _IK_GATE_SINKS.items()}
+    writers        = {"self." + g: _ik_gate_writer(v) for g, v in _IK_GATE_SINKS.items()}
     helper_sources = _combined_helper_source(spec) or []
     if hoisted:
         helper_sources = list(helper_sources) + [hoisted]
@@ -4566,17 +4566,17 @@ _LOC_CONTEXT_READS = {
     # self.wallclock: seconds since the epoch, the same clock (and origin) as
     # Python's time.time() -- the scaffold seeds wallClock from system_clock.
     "wallclock": ("wallClock", "double"),
-    "selected": ("selected", "bool"),
-    "is_lead": ("is_lead", "bool"),
-    "hovered": ("hovered", "bool"),
+    "selected":  ("selected", "bool"),
+    "is_lead":   ("is_lead", "bool"),
+    "hovered":   ("hovered", "bool"),
 }
 # self.selection_color -> the scaffold's MColor local, as an nd (4,).
 _LOC_SELECTION_COLOR = "selection_color"
 # Write-only draw flags. Each lowers to a plain member store on `data`.
 _LOC_FLAG_SINKS = {
     "auto_highlight": "autoHighlight",
-    "auto_refresh": "autoRefresh",
-    "precise_hover": "preciseHover",
+    "auto_refresh":   "autoRefresh",
+    "precise_hover":  "preciseHover",
 }
 _LOC_DRAW_SINK = "draw"
 # self.<enum>.name() reads the enum's FIELD NAME. Rewritten to a synthetic
@@ -4667,8 +4667,8 @@ def _rewrite_loc_enum_names(source, enum_plugs):
                     and fn.value.attr in enum_plugs):
                 used.add(fn.value.attr)
                 return ast.copy_location(ast.Attribute(
-                    value=ast.Name(id="self", ctx=ast.Load()),
-                    attr=_LOC_ENUM_NAME_PREFIX + fn.value.attr,
+                    value = ast.Name(id="self", ctx=ast.Load()),
+                    attr  = _LOC_ENUM_NAME_PREFIX + fn.value.attr,
                     ctx=ast.Load()), node)
             return node
 
@@ -4724,7 +4724,7 @@ def lower_locator(spec):
                                 "meta": {"type": "string"}}
                     for s in _loc_string_inputs(spec)})
     user_ms.update({gm["plug"]: gm for gm in _loc_generic_inputs(spec)})
-    color_ms = {c["member"][3:]: c for c in _loc_color_inputs(spec)}
+    color_ms   = {c["member"][3:]: c for c in _loc_color_inputs(spec)}
 
     enum_plugs = {s["plug"] for s in scalar_ins if s["type"] == "enum"}
     source, _enum_reads = _rewrite_loc_enum_names(source, enum_plugs)
@@ -4774,9 +4774,9 @@ def lower_locator(spec):
             lines, typ = _loc_color_to_nd("in_" + attr, dst)
         elif attr in _LOC_CONTEXT_READS:
             src, kind = _LOC_CONTEXT_READS[attr]
-            c = "bool" if kind == "bool" else "double"
+            c     = "bool" if kind == "bool" else "double"
             lines = ["    %s %s = (%s)(%s);" % (c, dst, c, src)]
-            typ = scalar_t("bool" if kind == "bool" else "double")
+            typ   = scalar_t("bool" if kind == "bool" else "double")
         elif attr == _LOC_WALLCLOCK_ATTR:
             # time.time() under any import name -> the scaffold's wallClock,
             # which is system_clock epoch seconds since 2026-09 (recipe 30) --
@@ -4785,12 +4785,12 @@ def lower_locator(spec):
             # speed. (Before that it was steady_clock since the plugin's first
             # call, a deliberate phase difference; superseded by self.wallclock.)
             lines = ["    const double %s = wallClock;" % dst]
-            typ = scalar_t("double")
+            typ   = scalar_t("double")
         elif attr.startswith(_LOC_ENUM_NAME_PREFIX):
             # the scaffold's own enum-name lookup, bound as a std::string
-            plug = attr[len(_LOC_ENUM_NAME_PREFIX):]
+            plug  = attr[len(_LOC_ENUM_NAME_PREFIX):]
             lines = ["    const std::string %s = in_%s_name;" % (dst, plug)]
-            typ = str_t()
+            typ   = str_t()
         else:
             lines, typ = _materialise_input(user_ms[attr], dst)
         materialise += lines

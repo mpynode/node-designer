@@ -162,8 +162,8 @@ class TestMethodsTabWiring(unittest.TestCase):
         src = self._src("__init__")
         self.assertNotIn("NDScriptPane", src)
         self.assertNotIn("_script_pane", src)
-        self.assertNotIn('"Methods"', src)
-        self.assertNotIn("_outer_bar", src)
+        self.assertNotIn('"Methods"',    src)
+        self.assertNotIn("_outer_bar",   src)
 
     def test_the_api_view_feeds_the_dirty_aggregate(self):
         # Methods editing moved there, so that is where the tab now learns an
@@ -189,9 +189,9 @@ class TestMethodsTabWiring(unittest.TestCase):
 
         mc.file(new=True, force=True)
         loc = MPyLocator.create(name="tabOrderLoc")
-        w = NDScriptTabContent(loc)
+        w   = NDScriptTabContent(loc)
         try:
-            tabs = w._inner_tabs
+            tabs   = w._inner_tabs
             labels = [tabs.tabText(i) for i in range(tabs.count())]
             self.assertEqual(labels, ["Init", "Compute", "API"])
         finally:
@@ -237,7 +237,7 @@ class TestRetiredPaneNotReferenced(unittest.TestCase):
         import os
         from mpynode.ui import widgets
 
-        root = os.path.dirname(os.path.dirname(widgets.__file__))
+        root      = os.path.dirname(os.path.dirname(widgets.__file__))
         offenders = []
         for base, _dirs, files in os.walk(root):
             if "__pycache__" in base:
@@ -270,9 +270,9 @@ class TestAmbientMethodsHeader(unittest.TestCase):
         from mpynode._common.methods.methods_registry import make_methods_header
 
         hdr = make_methods_header("mPyLocator")
-        self.assertIn("Module", hdr)              # points at the Module strip
-        self.assertIn("no import needed", hdr)    # states decorators are ambient
-        self.assertIn("@maya_command", hdr)       # still shows the example
+        self.assertIn("Module",           hdr)  # points at the Module strip
+        self.assertIn("no import needed", hdr)  # states decorators are ambient
+        self.assertIn("@maya_command",    hdr)  # still shows the example
 
     def test_header_routes_entirely_to_methods_view(self):
         from mpynode._common.methods.methods_registry import make_methods_header
@@ -280,8 +280,8 @@ class TestAmbientMethodsHeader(unittest.TestCase):
 
         hdr = make_methods_header("mPyLocator")
         functions_text, methods_text = split_methods_source(hdr)
-        self.assertEqual(functions_text, "")      # Module strip empty
-        self.assertEqual(methods_text, hdr)       # whole header in Methods view
+        self.assertEqual(functions_text, "")  # Module strip empty
+        self.assertEqual(methods_text, hdr)   # whole header in Methods view
 
 
 def setUpModule():

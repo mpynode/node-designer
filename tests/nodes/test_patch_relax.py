@@ -36,7 +36,7 @@ def _torus(nu=12, nv=8, r_major=3.0, r_minor=1.0):
     for i in range(nu):
         a = 2.0 * np.pi * i / nu
         for j in range(nv):
-            b = 2.0 * np.pi * j / nv
+            b  = 2.0 * np.pi * j / nv
             rr = r_major + r_minor * np.cos(b)
             pts.append((rr * np.cos(a), r_minor * np.sin(b), rr * np.sin(a)))
     counts, indices = [], []
@@ -76,14 +76,14 @@ def _bend(pts, seed=7, twist=0.6, noise=0.05):
 
 def _edge_error(x, rest, ring):
     """Mean |deformed edge length - rest edge length| over every ring edge."""
-    n = x.shape[0]
-    m = ring >= 0
+    n   = x.shape[0]
+    m   = ring >= 0
     idx = np.where(m, ring, n)
-    xp = np.concatenate([x, np.zeros((1, 3))], 0)
-    rp = np.concatenate([rest, np.zeros((1, 3))], 0)
-    ed = np.take(xp, idx, 0) - x[:, None, :]
-    er = np.take(rp, idx, 0) - rest[:, None, :]
-    d = np.sqrt((ed * ed).sum(-1)) - np.sqrt((er * er).sum(-1))
+    xp  = np.concatenate([x, np.zeros((1, 3))], 0)
+    rp  = np.concatenate([rest, np.zeros((1, 3))], 0)
+    ed  = np.take(xp, idx, 0) - x[:, None, :]
+    er  = np.take(rp, idx, 0) - rest[:, None, :]
+    d   = np.sqrt((ed * ed).sum(-1)) - np.sqrt((er * er).sum(-1))
     return float((np.abs(d) * m).sum() / max(m.sum(), 1))
 
 
@@ -99,8 +99,8 @@ def _oracle_through_space(x, x_hat, ring, iterations, alpha):
     covariance, no padding and no masks. It shares no code with the vectorized
     implementation, so agreement between them is real evidence.
     """
-    x = x.copy()
-    n = x.shape[0]
+    x   = x.copy()
+    n   = x.shape[0]
     adj = [[int(v) for v in row if v >= 0] for row in ring]
 
     def decals(pos):
@@ -110,16 +110,16 @@ def _oracle_through_space(x, x_hat, ring, iterations, alpha):
             if val == 0:
                 out.append(np.zeros((0, 2)))
                 continue
-            edges = np.array([pos[j] - pos[vi] for j in nbrs])
-            lens = np.array([np.linalg.norm(e) + 1e-12 for e in edges])
+            edges  = np.array([pos[j] - pos[vi] for j in nbrs])
+            lens   = np.array([np.linalg.norm(e) + 1e-12 for e in edges])
             angles = np.zeros(val)
             for k in range(val):
-                e1 = edges[k] / lens[k]
-                e2 = edges[(k + 1) % val] / lens[(k + 1) % val]
+                e1        = edges[k] / lens[k]
+                e2        = edges[(k + 1) % val] / lens[(k + 1) % val]
                 angles[k] = np.arccos(np.clip(float(e1 @ e2), -1.0, 1.0))
             tot = angles.sum()
-            sc = (2.0 * np.pi / tot) if tot > 1e-8 else 1.0
-            d = np.zeros((val, 2))
+            sc  = (2.0 * np.pi / tot) if tot > 1e-8 else 1.0
+            d   = np.zeros((val, 2))
             cum = 0.0
             for k in range(val):
                 d[k] = (lens[k] * np.cos(cum), lens[k] * np.sin(cum))
@@ -136,11 +136,11 @@ def _oracle_through_space(x, x_hat, ring, iterations, alpha):
                 continue
             w = np.zeros(val)
             for k in range(val):
-                ek = d[k]
-                tang = ek / (np.linalg.norm(ek) + 1e-12)
-                norm = np.array([-tang[1], tang[0]])
+                ek    = d[k]
+                tang  = ek / (np.linalg.norm(ek) + 1e-12)
+                norm  = np.array([-tang[1], tang[0]])
                 c_neg = f_pos = f_neg = 0.0
-                seen = False
+                seen  = False
                 for m in range(val):
                     if m == k:
                         continue
@@ -179,11 +179,11 @@ def _oracle_through_space(x, x_hat, ring, iterations, alpha):
             for k in range(val):
                 h += rest_w[vi][k] * np.outer(hat_edges[vi][k], cur[k])
             u, _s, vt = np.linalg.svd(h)
-            v = vt.T
-            dmat = np.eye(3)
+            v          = vt.T
+            dmat       = np.eye(3)
             dmat[2, 2] = np.sign(np.linalg.det(v @ u.T))
-            rot = v @ dmat @ u.T
-            new[vi] = x[vi] + 0.5 * (v_pose - alpha * (rot @ v_hat[vi]))
+            rot        = v @ dmat @ u.T
+            new[vi]    = x[vi] + 0.5 * (v_pose - alpha * (rot @ v_hat[vi]))
         x = new
     return x
 
@@ -205,7 +205,7 @@ class TestRingAdjacency(unittest.TestCase):
         # neighbours: consecutive entries (a, b) are the prev/next of one face
         # around the centre, so some face contains the triple (a, vi, b).
         corners = set()
-        off = 0
+        off     = 0
         for c in counts:
             f = [int(v) for v in indices[off:off + c]]
             for k in range(c):
@@ -225,14 +225,14 @@ class TestRingAdjacency(unittest.TestCase):
         # Every row must hold at least a triangle's worth of neighbours, and a
         # ragged table's short rows must be -1 padded.
         pts, counts, indices = _torus(nu=6, nv=5)
-        ring = build_ring_adjacency(counts, indices, pts.shape[0])
+        ring    = build_ring_adjacency(counts, indices, pts.shape[0])
         valence = (ring >= 0).sum(axis=1)
         self.assertTrue((valence >= 3).all())
         self.assertTrue(((ring >= 0) | (ring == -1)).all())
 
     def test_border_vertices_are_pinned(self):
         pts, counts, indices = _grid(n=5)
-        ring = build_ring_adjacency(counts, indices, pts.shape[0])
+        ring   = build_ring_adjacency(counts, indices, pts.shape[0])
         pinned = (ring < 0).all(axis=1)
         # A 5x5 grid has 16 border vertices and 9 interior ones.
         self.assertEqual(int(pinned.sum()), 16)
@@ -252,10 +252,10 @@ class TestAgainstScalarOracle(unittest.TestCase):
     def test_through_space_matches_the_oracle(self):
         pts, counts, indices = _torus()
         ring = build_ring_adjacency(counts, indices, pts.shape[0])
-        x = _bend(pts)
+        x    = _bend(pts)
         for iterations, alpha in ((1, 1.0), (5, 1.0), (4, 0.35)):
             want = _oracle_through_space(x, pts, ring, iterations, alpha)
-            got = patch_relax(x, pts, ring, iterations, alpha, 0.0)
+            got  = patch_relax(x, pts, ring, iterations, alpha, 0.0)
             self.assertLess(
                 float(np.abs(want - got).max()), 1e-12,
                 "iterations=%d alpha=%s diverged from the scalar reference"
@@ -263,9 +263,9 @@ class TestAgainstScalarOracle(unittest.TestCase):
 
     def test_pinned_border_vertices_never_move(self):
         pts, counts, indices = _grid(n=5)
-        ring = build_ring_adjacency(counts, indices, pts.shape[0])
-        x = _bend(pts, noise=0.2)
-        out = patch_relax(x, pts, ring, 10, 1.0, 0.0)
+        ring   = build_ring_adjacency(counts, indices, pts.shape[0])
+        x      = _bend(pts, noise=0.2)
+        out    = patch_relax(x, pts, ring, 10, 1.0, 0.0)
         pinned = (ring < 0).all(axis=1)
         self.assertTrue(np.array_equal(out[pinned], x[pinned]),
                         "a pinned border vertex moved")
@@ -289,7 +289,7 @@ class TestRelaxationBehaviour(unittest.TestCase):
         x = np.stack([x[:, 0] * ca - x[:, 2] * sa, x[:, 1],
                       x[:, 0] * sa + x[:, 2] * ca], axis=1)
         before = _edge_error(x, pts, ring)
-        after = _edge_error(patch_relax(x, pts, ring, 20, 1.0, 0.0), pts, ring)
+        after  = _edge_error(patch_relax(x, pts, ring, 20, 1.0, 0.0), pts, ring)
         self.assertLess(after, before * 0.75,
                         "20 sweeps should cut edge distortion substantially "
                         "(before=%.6f after=%.6f)" % (before, after))
@@ -297,7 +297,7 @@ class TestRelaxationBehaviour(unittest.TestCase):
     def test_alpha_zero_and_zero_iterations_are_no_ops(self):
         pts, counts, indices = _torus()
         ring = build_ring_adjacency(counts, indices, pts.shape[0])
-        x = _bend(pts)
+        x    = _bend(pts)
         self.assertTrue(np.array_equal(patch_relax(x, pts, ring, 0, 1.0, 0.0), x))
         # alpha=0 drops the rest term, leaving the ring-centroid pull only, so
         # it is NOT a no-op -- but it must stay finite and bounded.
@@ -309,7 +309,7 @@ class TestRelaxationBehaviour(unittest.TestCase):
         # must not drift it, or the deformer would never be neutral.
         pts, counts, indices = _torus()
         ring = build_ring_adjacency(counts, indices, pts.shape[0])
-        out = patch_relax(pts.copy(), pts, ring, 10, 1.0, 0.0)
+        out  = patch_relax(pts.copy(), pts, ring, 10, 1.0, 0.0)
         self.assertLess(float(np.abs(out - pts).max()), 1e-9)
 
     def test_surface_blend_is_inert_at_alpha_one(self):
@@ -318,8 +318,8 @@ class TestRelaxationBehaviour(unittest.TestCase):
         # surface branch contributes nothing at alpha=1. Pinned so the surprise
         # is recorded rather than rediscovered.
         pts, counts, indices = _torus(nu=16, nv=10)
-        ring = build_ring_adjacency(counts, indices, pts.shape[0])
-        x = _bend(pts, noise=0.0)
+        ring         = build_ring_adjacency(counts, indices, pts.shape[0])
+        x            = _bend(pts, noise=0.0)
         full_surface = patch_relax(x, pts, ring, 10, 1.0, 1.0)
         self.assertLess(float(np.abs(full_surface - x).max()), 1e-9,
                         "surface_blend=1 at alpha=1 must be a no-op")

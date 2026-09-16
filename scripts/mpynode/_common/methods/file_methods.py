@@ -47,7 +47,7 @@ def _helper(self, init_name, ops_name):
 # thread, so two threads can reach a cold buffer at once and would otherwise
 # race writing the same temp file.
 _EMBED_PATHS = {}
-_EMBED_LOCK = threading.Lock()
+_EMBED_LOCK  = threading.Lock()
 
 # Serializes write_texture(). Same reason as _EMBED_LOCK: the swatch generator
 # and the VP2 render thread both pull compute() off the main thread, and a
@@ -142,7 +142,7 @@ def sample_texture(self, buf, u, v, missing=None):
     unchanged; a literal RGBA 4-tuple substitutes that instead -- (0, 0, 0, 0)
     lets a compositor drop an unresolvable layer rather than have it cover the
     stack."""
-    smp = _helper(self, "_sample", "sample")
+    smp    = _helper(self, "_sample", "sample")
     border = np.asarray(self.borderColor, dtype=np.float32)
     args = (buf, float(u), float(v),
             int(self.wrapModeU), int(self.wrapModeV),
@@ -176,12 +176,12 @@ def composite_layers(self, layers, opacities, u, v, missing=(0.0, 0.0, 0.0, 0.0)
     bothered to set is on unless you say otherwise.
     """
     n_ops = len(opacities)
-    cr = cg = cb = ca = 0.0
+    cr    = cg = cb = ca = 0.0
     for i in range(len(layers)):
         buf = read_texture(self, layers[i])
         r, g, b, a_src = sample_texture(self, buf, u, v, missing=missing)
         op = float(opacities[i]) if i < n_ops else 1.0
-        a = float(a_src) * op
+        a  = float(a_src) * op
         ia = 1.0 - a
         cr = float(r) * a + cr * ia
         cg = float(g) * a + cg * ia

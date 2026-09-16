@@ -226,7 +226,7 @@ class TestGatedTransformInterface(unittest.TestCase):
         not internal vars."""
         from mpynode.wrappers.mpy_transform import MPyTransform
 
-        slots = MPyTransform.INTERNAL_API_SLOTS
+        slots      = MPyTransform.INTERNAL_API_SLOTS
         directions = {s[0]: s[1] for s in slots}
         self.assertEqual(
             set(directions),

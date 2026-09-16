@@ -38,7 +38,7 @@ def build_cmd(bin_path, prompt, model=None, resume=None):
 
 class GeminiCliClient(BaseCliClient):
     PROVIDER = "gemini_cli"
-    LABEL = "Gemini CLI"
+    LABEL    = "Gemini CLI"
 
     def _bin(self):
         return _BIN

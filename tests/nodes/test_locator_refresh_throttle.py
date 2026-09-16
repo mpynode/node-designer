@@ -34,14 +34,14 @@ class TestPointPixelSize(unittest.TestCase):
 
         self.assertEqual(point_pixel_size(7.4), 7.0)
         self.assertEqual(point_pixel_size(7.6), 8.0)
-        self.assertEqual(point_pixel_size(5), 5.0)
+        self.assertEqual(point_pixel_size(5),   5.0)
         self.assertIsInstance(point_pixel_size(5), float)
 
     def test_never_below_one_pixel(self):
         from mpynode._common.draw.draw_buffers import point_pixel_size
 
-        self.assertEqual(point_pixel_size(0.2), 1.0)
-        self.assertEqual(point_pixel_size(-3.0), 1.0)
+        self.assertEqual(point_pixel_size(0.2),          1.0)
+        self.assertEqual(point_pixel_size(-3.0),         1.0)
         self.assertEqual(point_pixel_size("not a size"), 1.0)
 
     def test_draw_points_uses_it_in_both_spaces(self):
@@ -82,7 +82,7 @@ class TestThrottleStep(unittest.TestCase):
         for _ in range(30):
             if self._step(st, t, cpu):
                 fired += 1
-                cpu += 0.009
+                cpu   += 0.009
             t += P * 1.001
         self.assertEqual(fired, 30)
 
@@ -111,8 +111,8 @@ class TestThrottleStep(unittest.TestCase):
         while t < T:
             if self._step(st, t, cpu):
                 redraws += 1
-                t += R
-                cpu += R
+                t       += R
+                cpu     += R
             else:
                 t += P
         return redraws * R / T
@@ -128,8 +128,8 @@ class TestThrottleStep(unittest.TestCase):
     def test_cost_is_forgotten_when_the_scene_gets_cheap(self):
         st = self._state()
         self.assertTrue(self._step(st, 0.0, 0.0))
-        self.assertFalse(self._step(st, 0.125, 0.125))      # heavy: wait 0.25
-        self.assertTrue(self._step(st, 0.26, 0.125))        # request; this one is cheap (2 ms)
+        self.assertFalse(self._step(st, 0.125, 0.125))  # heavy: wait 0.25
+        self.assertTrue(self._step(st, 0.26, 0.125))    # request; this one is cheap (2 ms)
         self.assertTrue(self._step(st, 0.26 + P * 1.01, 0.127))
         self.assertAlmostEqual(st["last_cost"], 0.002)
 
@@ -189,7 +189,7 @@ class TestSharedTimer(unittest.TestCase):
         class _FakeOmr:
             MRenderer = _FakeRenderer
 
-        real = draw_refresh.omr
+        real             = draw_refresh.omr
         draw_refresh.omr = _FakeOmr
         try:
             draw_refresh._shared_tick()
@@ -286,7 +286,7 @@ class TestWatchSnapshotInMemory(unittest.TestCase):
         sel = om.MSelectionList()
         sel.add(loc.get_name())
         node_obj = sel.getDependNode(0)
-        real = cmds.setAttr
+        real     = cmds.setAttr
 
         def _refuse(*_a, **_k):
             raise RuntimeError("cannot set attributes during draw")
@@ -314,7 +314,7 @@ class TestWatchSnapshotInMemory(unittest.TestCase):
 
         text = encode_watch_vars({"__framework__": {"draw": _Unpicklable(), "wallclock": 2.0}})
         data = pickle.loads(base64.b64decode(json.loads(text)["data_b64"]))
-        fw = data["__framework__"]
+        fw   = data["__framework__"]
         self.assertIsInstance(fw, dict, "one unpicklable slot must not collapse the block to a repr")
         self.assertEqual(fw["wallclock"], 2.0)
         self.assertIsInstance(fw["draw"], str)

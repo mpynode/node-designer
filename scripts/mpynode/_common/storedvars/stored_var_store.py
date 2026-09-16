@@ -170,7 +170,7 @@ def load_for_compute(node_obj, raw_str: str) -> dict:
         # cache a premature pre-sweep compute poisoned with {} by reading the
         # plug before its value was set (compute can fire before kAfterOpen).
         if raw_str:
-            decoded = serialization.decode_stored_vars(raw_str)
+            decoded  = serialization.decode_stored_vars(raw_str)
             _DATA[h] = decoded
             _LOADED.add(h)
             return dict(decoded)
@@ -390,7 +390,7 @@ def flush_all() -> dict:
             data = dict(_DATA[h])
         # Only registered vars are serialized; session-only ones stay in-memory.
         registered = _registered_names(node_name)
-        data = {k: v for k, v in data.items() if k in registered}
+        data       = {k: v for k, v in data.items() if k in registered}
         if not data:
             # Nothing persistent -> clear, so a blob written before a var was
             # demoted doesn't get re-serialized.

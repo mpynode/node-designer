@@ -65,8 +65,8 @@ from mpynode.ui.widgets.font_prefs import wire_area_font
 # Maya: the bundled theme stylesheet wins on specificity. setIcon(0, ...)
 # always reserves a pixel slot before the text, which is structural and not
 # CSS-overridable. Lazy-created on first call.
-_BLANK_ICON = None
-_BLANK_ICON_WIDTH = 12  # px — just enough breathing room
+_BLANK_ICON        = None
+_BLANK_ICON_WIDTH  = 12  # px — just enough breathing room
 _BLANK_ICON_HEIGHT = 16
 
 
@@ -98,10 +98,10 @@ def _blank_icon():
 # default-brightness text; disconnected -> blank icon + muted-gray text.
 # Rows with an explicit ``ui_color`` keep full-strength foreground either way
 # (users opted into the color), so the icon is their only connection signal.
-_CONNECTED_ICON = None
-_CONNECTED_DOT_RGB = (130, 195, 255)  # light cyan-blue accent
-_MUTED_BRUSH = None
-_MUTED_BRUSH_RGBA = (180, 180, 180, 140)  # ~55% gray for unconnected text
+_CONNECTED_ICON    = None
+_CONNECTED_DOT_RGB = (130, 195, 255)       # light cyan-blue accent
+_MUTED_BRUSH       = None
+_MUTED_BRUSH_RGBA  = (180, 180, 180, 140)  # ~55% gray for unconnected text
 
 
 def _connected_icon():
@@ -190,7 +190,7 @@ class NDLockedAttrTreeItem(QTreeWidgetItem):
                 self.setToolTip(0, tooltip)
         else:
             self.row_spec = None
-            row = locked_row or {}
+            row           = locked_row or {}
             self.setText(0, row.get("display_text", ""))
             tooltip = row.get("tooltip", "")
             if tooltip:
@@ -255,7 +255,7 @@ def _allowlist_with_ancestors(rows, allowlist):
     as a container. Preserves the input depth-first row order.
     """
     row_by_path = {r.plug_path: r for r in rows}
-    keep = set()
+    keep        = set()
     for r in rows:
         if not (r.is_user_added or r.short_name in allowlist):
             continue
@@ -264,7 +264,7 @@ def _allowlist_with_ancestors(rows, allowlist):
         while p and p not in keep:
             keep.add(p)
             anc = row_by_path.get(p)
-            p = anc.parent_path if anc is not None else ""
+            p   = anc.parent_path if anc is not None else ""
     return [r for r in rows if r.plug_path in keep]
 
 
@@ -353,8 +353,8 @@ class NDUserAttrTreeItem(QTreeWidgetItem):
         / introspection.
         """
         # Look up the wrapper on the parent tree (we may be detached).
-        tree = self.treeWidget()
-        py_node = getattr(tree, "_py_node", None) if tree is not None else None
+        tree      = self.treeWidget()
+        py_node   = getattr(tree, "_py_node", None) if tree is not None else None
         connected = False
         if py_node is not None:
             try:
@@ -411,8 +411,8 @@ class NDUserAttrTreeItem(QTreeWidgetItem):
     @staticmethod
     def _format_label(name: str, meta: dict) -> str:
         attr_type = meta.get("attr_type", "?")
-        is_array = meta.get("is_array", False)
-        suffix = "[]" if is_array else ""
+        is_array  = meta.get("is_array", False)
+        suffix    = "[]" if is_array else ""
         # Dense is the default, so only sparse arrays get a marker.
         type_part = attr_type
         if is_array and meta.get("sparse"):
@@ -541,7 +541,7 @@ class NDInputAttrTree(QTreeWidget):
     user-added rows; uses _ConnectAttrCommand for undoable connects).
     """
 
-    ATTR_CATEGORY = "input"
+    ATTR_CATEGORY       = "input"
     LIST_ATTR_FUNC_NAME = "get_input_attr_map"
     # Blue header pairs with the amber Output header.
     HEADER_LABEL = "Input"
@@ -605,7 +605,7 @@ class NDInputAttrTree(QTreeWidget):
             pass
         # Tracks the highlighted item so its prior background brush can be
         # restored on drag-leave / drop.
-        self._drop_highlight_item = None
+        self._drop_highlight_item       = None
         self._drop_highlight_prev_brush = None
 
     # ------------------------------------------------------------------
@@ -738,7 +738,7 @@ class NDInputAttrTree(QTreeWidget):
                 item.setBackground(0, QBrush())
         except Exception:
             pass
-        self._drop_highlight_item = None
+        self._drop_highlight_item       = None
         self._drop_highlight_prev_brush = None
 
     def dropEvent(self, event):
@@ -762,7 +762,7 @@ class NDInputAttrTree(QTreeWidget):
                 event.ignore()
                 return
             src_bytes = bytes(md.data(self._MIME_TYPE))
-            src_plug = src_bytes.decode("utf-8", errors="replace")
+            src_plug  = src_bytes.decode("utf-8", errors="replace")
             if not src_plug:
                 event.ignore()
                 return
@@ -810,7 +810,7 @@ class NDInputAttrTree(QTreeWidget):
         md = event.mimeData()
         if md is None or not md.hasFormat(self._MIME_TYPE):
             return None
-        src = bytes(md.data(self._MIME_TYPE)).decode("utf-8", errors="replace")
+        src    = bytes(md.data(self._MIME_TYPE)).decode("utf-8", errors="replace")
         prefix = self._py_node.get_name() + "."
         if not src.startswith(prefix):
             return None
@@ -841,7 +841,7 @@ class NDInputAttrTree(QTreeWidget):
         place_after = False
         if target_item is not None:
             try:
-                rect = self.visualItemRect(target_item)
+                rect        = self.visualItemRect(target_item)
                 place_after = event.pos().y() > rect.center().y()
             except Exception:
                 place_after = False
@@ -903,7 +903,7 @@ class NDInputAttrTree(QTreeWidget):
     def keyPressEvent(self, event):
         try:
             mods = event.modifiers()
-            key = event.key()
+            key  = event.key()
             if (mods & Qt.ShiftModifier) and key in (Qt.Key_Up, Qt.Key_Down):
                 if self._move_selected(-1 if key == Qt.Key_Up else 1):
                     event.accept()
@@ -920,7 +920,7 @@ class NDInputAttrTree(QTreeWidget):
         if not isinstance(item, NDUserAttrTreeItem):
             return False
         name = item.attr_name
-        cur = list(self._current_attr_map().keys())
+        cur  = list(self._current_attr_map().keys())
         if name not in cur:
             return False
         i = cur.index(name)
@@ -956,14 +956,14 @@ class NDInputAttrTree(QTreeWidget):
         """Subscribe the attribute tree's refresh to a
         shared RefreshHub so addAttr/removeAttr/connectionMade events
         from the channel box or the Node Editor reflect immediately."""
-        prev = getattr(self, "_refresh_hub", None)
+        prev    = getattr(self, "_refresh_hub", None)
         view_id = "attr_tree_{}".format(id(self))
         if prev is not None and prev is not hub:
             try:
                 prev.unsubscribe(view_id)
             except Exception:
                 pass
-        self._refresh_hub = hub
+        self._refresh_hub         = hub
         self._refresh_hub_view_id = view_id
         if hub is None:
             return
@@ -996,8 +996,8 @@ class NDInputAttrTree(QTreeWidget):
     def refresh(self):
         # Without this, any color set/clear or connection collapses every
         # expanded compound + array row back to its top level.
-        expanded_locked = self._capture_expanded_locked_paths()
-        expanded_user = self._capture_expanded_user_names()
+        expanded_locked  = self._capture_expanded_locked_paths()
+        expanded_user    = self._capture_expanded_user_names()
         self._refreshing = True
         try:
             self.clear()
@@ -1112,7 +1112,7 @@ class NDInputAttrTree(QTreeWidget):
 
         # Walker says "INPUT"/"OUTPUT"/"INTERNAL"; ATTR_CATEGORY is lowercase.
         direction_filter = self.ATTR_CATEGORY.upper()
-        scoped_rows = filter_by_direction(all_rows, direction_filter)
+        scoped_rows      = filter_by_direction(all_rows, direction_filter)
 
         # Skip user-added rows; the NDUserAttrTreeItem path below gives them
         # editable items. Also skip CHILDREN of user-added compounds (e.g.
@@ -1322,7 +1322,7 @@ class NDInputAttrTree(QTreeWidget):
         # Walk up the parent chain to find the NDAttributesWidget.
         parent = self.parent()
         while parent is not None:
-            input_tree = getattr(parent, "_input_tree", None)
+            input_tree  = getattr(parent, "_input_tree", None)
             output_tree = getattr(parent, "_output_tree", None)
             if input_tree is not None or output_tree is not None:
                 for other in (input_tree, output_tree):
@@ -1374,8 +1374,8 @@ class NDInputAttrTree(QTreeWidget):
         self._add_dlg = NDAddAttrDialog(
             self,
             self._py_node,
-            initial_direction=self.ATTR_CATEGORY,
-            on_attr_added=_on_attr_added,
+            initial_direction = self.ATTR_CATEGORY,
+            on_attr_added     = _on_attr_added,
         )
         self._add_dlg.show()
         self._add_dlg.raise_()
@@ -1402,8 +1402,8 @@ class NDInputAttrTree(QTreeWidget):
         if not items or self._py_node is None:
             return
         # Operate on the FIRST selected item.
-        item = items[0]
-        attr_name = item.getCurrentName()
+        item        = items[0]
+        attr_name   = item.getCurrentName()
         target_plug = f"{self._py_node.get_name()}.{attr_name}"
         # Multi lets the dialog auto-distribute sources to next-available
         # indices.
@@ -1413,7 +1413,7 @@ class NDInputAttrTree(QTreeWidget):
             if self.ATTR_CATEGORY == "input"
             else NDConnectOutputAttrDialog
         )
-        dlg = DialogClass(self, target_plug, target_is_multi=target_is_multi)
+        dlg      = DialogClass(self, target_plug, target_is_multi=target_is_multi)
         accepted = dlg.exec_() if hasattr(dlg, "exec_") else dlg.exec()
         if not accepted:
             return
@@ -1423,7 +1423,7 @@ class NDInputAttrTree(QTreeWidget):
 
         # Multi-side index policy + target-array range (guarded so a duck-typed
         # fake dialog without the new getters still works).
-        clobber = dlg.getClobber() if hasattr(dlg, "getClobber") else False
+        clobber    = dlg.getClobber() if hasattr(dlg, "getClobber") else False
         range_text = dlg.getRangeText() if hasattr(dlg, "getRangeText") else ""
 
         # Compute (src, dst) pairs (handles multi index distribution).
@@ -1664,10 +1664,10 @@ class NDInputAttrTree(QTreeWidget):
 class NDOutputAttrTree(NDInputAttrTree):
     """Output-attr tree (same as input but other direction)."""
 
-    ATTR_CATEGORY = "output"
+    ATTR_CATEGORY       = "output"
     LIST_ATTR_FUNC_NAME = "get_output_attr_map"
-    HEADER_LABEL = "Output"
-    HEADER_COLOR = "#e0a34e"  # amber -- output
+    HEADER_LABEL        = "Output"
+    HEADER_COLOR        = "#e0a34e"  # amber -- output
 
 
 # ===========================================================================
@@ -1687,8 +1687,8 @@ class NDAttributesWidget(QWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        layout = QVBoxLayout(self)
-        header_row = QHBoxLayout()
+        layout       = QVBoxLayout(self)
+        header_row   = QHBoxLayout()
         self._header = QLabel("(no node selected)", self)
         header_row.addWidget(self._header, 1)
         self._show_framework_chk = QCheckBox("Show framework attrs", self)
@@ -1712,7 +1712,7 @@ class NDAttributesWidget(QWidget):
         )
         header_row.addWidget(self._show_framework_chk, 0)
         layout.addLayout(header_row)
-        self._input_tree = NDInputAttrTree(self)
+        self._input_tree  = NDInputAttrTree(self)
         self._output_tree = NDOutputAttrTree(self)
         layout.addWidget(self._input_tree)
         layout.addWidget(self._output_tree)

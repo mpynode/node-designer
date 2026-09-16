@@ -526,10 +526,10 @@ def cache_key(spec: dict, *, provider: str, model: str) -> str:
     indices). Non-JSON-able values are coerced via ``default=str``.
     """
     payload = {
-        "spec": _canonical_spec(spec),
+        "spec":     _canonical_spec(spec),
         "provider": provider,
-        "model": model,
-        "recipe": PORTER_RECIPE_VERSION,
+        "model":    model,
+        "recipe":   PORTER_RECIPE_VERSION,
     }
     blob = json.dumps(
         payload, sort_keys=True, separators=(",", ":"), default=str
@@ -586,8 +586,8 @@ def put(key: str, cpp_text: str, *, meta: dict) -> str:
     its sidecar. The sidecar records ``meta`` plus a write timestamp and the
     recipe version (so a human / future eviction can reason about staleness).
     """
-    cdir = cache_dir()  # ensure the dir exists
-    cpp_p = os.path.join(cdir, "%s.cpp" % key)
+    cdir   = cache_dir()  # ensure the dir exists
+    cpp_p  = os.path.join(cdir, "%s.cpp" % key)
     side_p = os.path.join(cdir, "%s.json" % key)
 
     # .cpp first.
@@ -608,7 +608,7 @@ def put(key: str, cpp_text: str, *, meta: dict) -> str:
 def clear() -> int:
     """Remove all cache entries (``.cpp`` + ``.json`` + any stray ``.tmp-*``)
     and return the number of files removed."""
-    d = cache_dir()
+    d       = cache_dir()
     removed = 0
     for name in os.listdir(d):
         if name.endswith(".cpp") or name.endswith(".json") or ".tmp-" in name:

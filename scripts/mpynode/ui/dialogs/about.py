@@ -28,7 +28,7 @@ class AboutDialog(QDialog):
         self.setModal(True)
         self.resize(680, 560)
 
-        layout = QVBoxLayout(self)
+        layout       = QVBoxLayout(self)
         self.browser = MarkdownBrowser(self)
         layout.addWidget(self.browser)
 

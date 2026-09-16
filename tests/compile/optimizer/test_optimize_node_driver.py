@@ -20,7 +20,7 @@ import unittest
 from unittest import mock
 from tests import _paths
 
-_ROOT = _paths.ROOT
+_ROOT    = _paths.ROOT
 _HARNESS = os.path.join(_ROOT, "tools", "harness")
 if _HARNESS not in sys.path:
     sys.path.insert(0, _HARNESS)
@@ -49,7 +49,7 @@ class TestOptimizeNodeScratchIsolation(unittest.TestCase):
                 captured["out_dir"] = out_dir
                 return {"optimize_fn": lambda c: c, "fix_fn": lambda c, e: c,
                         "compile_fn": lambda c: (True, "", "b"),
-                        "parity_fn": lambda b: None,
+                        "parity_fn":  lambda b: None,
                         "benchmark_fn": lambda b: None}
 
             # Honest reject: nothing accepted, so the source must be untouched.

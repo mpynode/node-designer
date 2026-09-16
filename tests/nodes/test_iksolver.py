@@ -73,8 +73,8 @@ class TestWalkJointChain(unittest.TestCase):
         from mpynode._api1.helpers import _walk_joint_chain
 
         mc.select(clear=True)
-        j0 = mc.joint(name="hip", position=(0, 5, 0))
-        j1 = mc.joint(name="knee", position=(0, 0, 0))
+        j0 = mc.joint(name="hip",   position=(0, 5, 0))
+        j1 = mc.joint(name="knee",  position=(0, 0, 0))
         j2 = mc.joint(name="ankle", position=(0, -5, 0))
 
         chain = _walk_joint_chain(j0, "anyEffector")
@@ -94,7 +94,7 @@ class TestWalkJointChain(unittest.TestCase):
         from mpynode._api1.helpers import _walk_joint_chain
 
         mc.select(clear=True)
-        j = mc.joint(name="lonely", position=(0, 0, 0))
+        j     = mc.joint(name="lonely", position=(0, 0, 0))
         chain = _walk_joint_chain(j, "anyEffector")
         self.assertEqual(chain, [j])
 
@@ -191,8 +191,8 @@ class TestMPyIkSolverMatrixSolve(unittest.TestCase):
         if not mc.ls(type="mPyIkSolver"):
             mc.createNode("mPyIkSolver", name="mPyIkSolver1", skipSelect=True)
         mc.select(clear=True)
-        hip = mc.joint(position=(0.0, 5.0, 0.0), name="ikHip")
-        knee = mc.joint(position=(0.0, 0.0, 0.0), name="ikKnee")
+        hip   = mc.joint(position=(0.0, 5.0, 0.0),  name="ikHip")
+        knee  = mc.joint(position=(0.0, 0.0, 0.0),  name="ikKnee")
         ankle = mc.joint(position=(0.0, -5.0, 0.0), name="ikAnkle")
         handle = mc.ikHandle(startJoint=hip, endEffector=ankle,
                              solver="mPyIkSolver", name="ikLeg")[0]

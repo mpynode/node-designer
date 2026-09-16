@@ -78,9 +78,9 @@ def _verify_script_deformer(spec: dict) -> str:
     """Mesh-based equivalence: applies the original mPy deformer and the
     compiled deformer to two identical spheres and compares deformed points.
     """
-    name = spec["suggested"]["node_type_name"]
-    src_type = spec.get("mpy_type") or "mPyDeformer"
-    is_skin = spec.get("suggested", {}).get("mpx_base") == "MPxSkinCluster"
+    name        = spec["suggested"]["node_type_name"]
+    src_type    = spec.get("mpy_type") or "mPyDeformer"
+    is_skin     = spec.get("suggested", {}).get("mpx_base") == "MPxSkinCluster"
     user_inputs = {n: m["type"] for n, m in (spec.get("inputs") or {}).items()}
 
     consts = (
@@ -191,7 +191,7 @@ def _verify_script_iksolver(spec: dict) -> str:
     POSITIONS (robust to euler representation). Mesh inputs need a wired floor --
     see the example's dedicated harness; here a connected mesh is skipped.
     """
-    name = spec["suggested"]["node_type_name"]
+    name     = spec["suggested"]["node_type_name"]
     src_type = spec.get("mpy_type") or "mPyIkSolver"
     scalar_inputs = {n: m["type"] for n, m in (spec.get("inputs") or {}).items()
                      if m.get("type") in ("float", "double", "int", "bool", "enum")}
@@ -325,8 +325,8 @@ if __name__ == "__main__":
 
 
 def _verify_script_scalar(spec: dict) -> str:
-    name = spec["suggested"]["node_type_name"]
-    inputs = {n: m["type"] for n, m in (spec.get("inputs") or {}).items()}
+    name    = spec["suggested"]["node_type_name"]
+    inputs  = {n: m["type"] for n, m in (spec.get("inputs") or {}).items()}
     outputs = {n: m["type"] for n, m in (spec.get("outputs") or {}).items()}
 
     consts = (

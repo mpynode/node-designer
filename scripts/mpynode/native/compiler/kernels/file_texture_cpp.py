@@ -1342,8 +1342,8 @@ def make_embedded_stage_cpp(img_bytes: bytes) -> str:
     import hashlib
 
     data = bytes(img_bytes)
-    key = hashlib.md5(data).hexdigest()[:16]
-    ext = _ext_for_bytes(data)
+    key  = hashlib.md5(data).hexdigest()[:16]
+    ext  = _ext_for_bytes(data)
     # bytes, 20 per line, as an unsigned char initializer list.
     rows = [", ".join(str(b) for b in data[i:i + 20])
             for i in range(0, len(data), 20)]
@@ -1824,10 +1824,10 @@ def _seq_frame_expr(node):
             and node.func.id == "int" and len(node.args) == 1):
         return None
     inner = node.args[0]
-    mode = "trunc"
+    mode  = "trunc"
     if (isinstance(inner, ast.Call) and isinstance(inner.func, ast.Name)
             and inner.func.id == "round" and len(inner.args) == 1):
-        mode = "round"
+        mode  = "round"
         inner = inner.args[0]
     if (isinstance(inner, ast.Attribute) and isinstance(inner.value, ast.Name)
             and inner.value.id == "self"):
@@ -1962,10 +1962,10 @@ def _ssot_meta(entry):
     compiled node does: without them maxLOD registers 0 instead of 16.
     """
     from mpynode._common.interface import file_texture_interface as _iface
-    t = entry["attr_type"]
+    t    = entry["attr_type"]
     meta = {"type": t}
     if t == "enum":
-        meta["enum_names"] = _iface.enum_labels(entry)
+        meta["enum_names"]    = _iface.enum_labels(entry)
         meta["default_value"] = entry["default"]
     elif t == "float2":
         meta["children"] = [c["long"] for c in entry["children"]]
@@ -1992,13 +1992,13 @@ def base_attr_members(spec: dict, members) -> list:
     for kind in ("inputs", "outputs"):
         have |= set((spec.get(kind) or {}).keys())
     taken = {m["member"] for m in (members or [])}
-    out = []
+    out   = []
 
     def _add(plug, kind, meta, flags, affects):
         if plug in have:
             return
         ident = _ident(plug)
-        base = "a" + ident[:1].upper() + ident[1:]
+        base  = "a" + ident[:1].upper() + ident[1:]
         mem, i = base, 1
         while mem in taken:
             i += 1
@@ -2028,7 +2028,7 @@ def base_affects_lines(ins, outs, base_extra, color_children):
     each including the compound's children, because Maya's legacy software
     swatch renderer pulls outColorR/G/B individually rather than the parent.
     """
-    base_in = [m for m in base_extra if m["kind"] == "inputs" and m["affects"]]
+    base_in  = [m for m in base_extra if m["kind"] == "inputs" and m["affects"]]
     base_out = [m for m in base_extra if m["kind"] == "outputs"]
     if not base_in and not base_out:
         return []
@@ -2296,7 +2296,7 @@ def make_blessed_lowerings(ins, outs, spec):
         # runtime-varying value cannot lower, and a blessed call that does not
         # lower is hard-rejected rather than AI-ported -- so say why.
         miss_node = tp._kw(node, "missing")
-        miss = (1.0, 0.0, 1.0, 1.0)
+        miss      = (1.0, 0.0, 1.0, 1.0)
         if miss_node is not None and not (
                 isinstance(miss_node, ast.Constant) and miss_node.value is None):
             if (not isinstance(miss_node, (ast.Tuple, ast.List))
@@ -2374,7 +2374,7 @@ def make_blessed_lowerings(ins, outs, spec):
         # differs though: a composite wants an unresolvable layer to DROP OUT,
         # not to cover the stack with the magenta sentinel.
         miss_node = tp._kw(node, "missing")
-        miss = (0.0, 0.0, 0.0, 0.0)
+        miss      = (0.0, 0.0, 0.0, 0.0)
         if miss_node is not None and not (
                 isinstance(miss_node, ast.Constant) and miss_node.value is None):
             if (not isinstance(miss_node, (ast.Tuple, ast.List))
@@ -2498,15 +2498,15 @@ def compute_glue_lines(ins, outs, tail=None, seq=None):
     number is substituted into the ``#``-padded pattern and the path-keyed cache
     reloads the new file automatically.
     """
-    fn = _member_by_plug(ins, "fileName")
-    uv = _member_by_plug(ins, "uvCoord")
-    cs = _member_by_plug(ins, "colorSpace")
-    pf = _member_by_plug(ins, "preFilter")
-    pk = _member_by_plug(ins, "preFilterKernel")
-    pr = _member_by_plug(ins, "preFilterRadius")
-    wu = _member_by_plug(ins, "wrapModeU")
-    wv = _member_by_plug(ins, "wrapModeV")
-    bc = _member_by_plug(ins, "borderColor")
+    fn = _member_by_plug(ins,  "fileName")
+    uv = _member_by_plug(ins,  "uvCoord")
+    cs = _member_by_plug(ins,  "colorSpace")
+    pf = _member_by_plug(ins,  "preFilter")
+    pk = _member_by_plug(ins,  "preFilterKernel")
+    pr = _member_by_plug(ins,  "preFilterRadius")
+    wu = _member_by_plug(ins,  "wrapModeU")
+    wv = _member_by_plug(ins,  "wrapModeV")
+    bc = _member_by_plug(ins,  "borderColor")
     oc = _member_by_plug(outs, "outColor")
     oa = _member_by_plug(outs, "outAlpha")
     # preFilter knobs are optional in the captured surface; default to off/0 if a
@@ -2520,7 +2520,7 @@ def compute_glue_lines(ins, outs, tail=None, seq=None):
     # then reloads whenever the resolved path changes (i.e. every frame).
     path_expr = "in_%s" % fn
     seq_lines = []
-    fm = _member_by_plug(ins, seq["frame_plug"]) if seq else None
+    fm        = _member_by_plug(ins, seq["frame_plug"]) if seq else None
     if fm:
         frame_cpp = ("(int)nearbyint((double)in_%s)" % fm
                      if seq.get("mode") == "round" else "(int)in_%s" % fm)

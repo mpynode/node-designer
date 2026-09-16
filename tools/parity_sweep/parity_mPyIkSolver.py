@@ -9,10 +9,10 @@ for p in ("mpynode_api1", "mpynode_api2"):
     if not cmds.pluginInfo(p, q=True, loaded=True):
         cmds.loadPlugin(p, quiet=True)
 
-BUILD = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fixtures", "mPyIkSolver")
-ORIG_SCENE = os.path.join(BUILD, "mPyIkSolver_twoBone_original.ma")
+BUILD        = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fixtures", "mPyIkSolver")
+ORIG_SCENE   = os.path.join(BUILD, "mPyIkSolver_twoBone_original.ma")
 PLUGIN_SCENE = os.path.join(BUILD, "mPyIkSolver_twoBoneSolver_plugin.ma")
-BUNDLE = os.path.join(BUILD, "twoBoneSolver.bundle")
+BUNDLE       = os.path.join(BUILD, "twoBoneSolver.bundle")
 
 # 8 goal positions (handle translate). Spread so the leg must bend to varying degrees.
 GOALS = [
@@ -34,11 +34,11 @@ def _solve_and_read(scene_path):
     cmds.file(scene_path, open=True, force=True)
     # discover
     handles = cmds.ls(type="ikHandle")
-    joints = cmds.ls(type="joint")
+    joints  = cmds.ls(type="joint")
     print("DISCOVER scene=%s handles=%s joints=%s" % (os.path.basename(scene_path), handles, joints))
     if not handles:
         raise RuntimeError("no ikHandle found in %s" % scene_path)
-    handle = handles[0]
+    handle  = handles[0]
     records = []
     for g in GOALS:
         cmds.setAttr(handle + ".t", g[0], g[1], g[2], type="double3")
@@ -52,7 +52,7 @@ def _solve_and_read(scene_path):
         for j in JOINT_NAMES:
             if not cmds.objExists(j):
                 raise RuntimeError("joint %s missing in %s" % (j, scene_path))
-            pos = cmds.xform(j, q=True, ws=True, t=True)
+            pos    = cmds.xform(j, q=True, ws=True, t=True)
             rec[j] = tuple(pos)
         records.append(rec)
     return records
@@ -75,10 +75,10 @@ def main():
     print("PLUGIN records collected:", len(plugin_records))
 
     # (3) compare element-wise
-    maxerr = 0.0
+    maxerr       = 0.0
     n_components = 0
-    n_samples = 0
-    worst = None
+    n_samples    = 0
+    worst        = None
     for i, (o, p) in enumerate(zip(orig_records, plugin_records)):
         n_samples += 1
         for j in JOINT_NAMES:
@@ -89,7 +89,7 @@ def main():
                 n_components += 1
                 if d > maxerr:
                     maxerr = d
-                    worst = (i, j, k, ov[k], pv[k])
+                    worst  = (i, j, k, ov[k], pv[k])
 
     print("RESULT samples=%d components=%d maxerr=%.6e worst=%s" % (n_samples, n_components, maxerr, worst))
     # also dump a couple sample positions for audit

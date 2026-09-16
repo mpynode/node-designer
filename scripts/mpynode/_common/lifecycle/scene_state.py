@@ -29,10 +29,10 @@ import time
 # Seconds after a scene-open during which the self-correcting transient
 # plug error is suppressed. Generous enough to cover the EM's first eager
 # evaluation pass, short enough that genuine post-load errors surface.
-_POST_OPEN_GRACE_S = 10.0
+_POST_OPEN_GRACE_S   = 10.0
 
 _last_open_monotonic = -1.0e9
-_installed = False
+_installed           = False
 
 # Attribute-surgery window. While a node is destructively rebuilding its
 # dynamic attrs (the drag/keyboard reorder deletes every user attr, writes
@@ -43,9 +43,9 @@ _installed = False
 # the trigger is a structural edit instead of a file load. A re-entrant
 # depth counter covers the synchronous edit; a short grace covers any
 # immediately-deferred EM pass just after it. Both auto-expire.
-_attr_surgery_depth = 0
+_attr_surgery_depth     = 0
 _last_surgery_monotonic = -1.0e9
-_SURGERY_GRACE_S = 2.0
+_SURGERY_GRACE_S        = 2.0
 
 
 def note_scene_opened() -> None:

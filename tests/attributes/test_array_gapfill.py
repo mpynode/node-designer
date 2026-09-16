@@ -56,10 +56,10 @@ class TestGapFillRead(unittest.TestCase):
         mc.setAttr(n.get_name() + ".d[8]", 22.0)
         out = _read(n, ["d"])["d"]
         self.assertEqual(len(out), 9)
-        self.assertEqual(out[3], 11.0)
-        self.assertEqual(out[8], 22.0)
-        self.assertEqual(out[0], 0.0)
-        self.assertEqual(out[5], 0.0)
+        self.assertEqual(out[3],   11.0)
+        self.assertEqual(out[8],   22.0)
+        self.assertEqual(out[0],   0.0)
+        self.assertEqual(out[5],   0.0)
 
     def test_float_gaps_fill_custom_dv(self):
         n = self.MPyNode.create(name="gf_dv")
@@ -67,18 +67,18 @@ class TestGapFillRead(unittest.TestCase):
         mc.setAttr(n.get_name() + ".d[2]", 99.0)
         out = _read(n, ["d"])["d"]
         self.assertEqual(len(out), 3)
-        self.assertEqual(out[0], 5.0)
-        self.assertEqual(out[1], 5.0)
-        self.assertEqual(out[2], 99.0)
+        self.assertEqual(out[0],   5.0)
+        self.assertEqual(out[1],   5.0)
+        self.assertEqual(out[2],   99.0)
 
     def test_int_gaps_fill_dv(self):
         n = self.MPyNode.create(name="gf_i")
         n.add_input_attr("k", "int", is_array=True, default_value=7)
         mc.setAttr(n.get_name() + ".k[4]", 3)
         out = _read(n, ["k"])["k"]
-        self.assertEqual(len(out), 5)
+        self.assertEqual(len(out),      5)
         self.assertEqual(list(out[:4]), [7, 7, 7, 7])
-        self.assertEqual(out[4], 3)
+        self.assertEqual(out[4],        3)
 
     def test_sparse_keeps_compact(self):
         n = self.MPyNode.create(name="gf_sp")
@@ -108,7 +108,7 @@ class TestGapFillRead(unittest.TestCase):
         n.add_input_attr("v", "vector", is_array=True)
         mc.setAttr(n.get_name() + ".v[2]", 1.0, 2.0, 3.0, type="double3")
         out = _read(n, ["v"])["v"]
-        self.assertEqual(out.shape, (3, 3))
+        self.assertEqual(out.shape,       (3, 3))
         self.assertEqual(out[0].tolist(), [0.0, 0.0, 0.0])
         self.assertEqual(out[2].tolist(), [1.0, 2.0, 3.0])
 

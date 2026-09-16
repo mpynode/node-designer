@@ -32,9 +32,9 @@ _SEED_SITES = {
                       ("_compute_locals",)),
     "mPyNurbsSurface": ("mpynode/_api2/mpy_nurbs_surface.py",
                         ("_compute_locals",)),
-    "mPyLocator": ("mpynode/_api2/mpy_locator.py", ("_compute_locals",)),
+    "mPyLocator":   ("mpynode/_api2/mpy_locator.py", ("_compute_locals",)),
     "mPyTransform": ("mpynode/_api1/mpy_transform.py", ("compute_locals",)),
-    "mPyIkSolver": ("mpynode/_api1/helpers.py", ("ik_compute_locals",)),
+    "mPyIkSolver":  ("mpynode/_api1/helpers.py", ("ik_compute_locals",)),
     "mPyFile": ("mpynode/_api2/mpy_file.py",
                 ("preset_locals", "viewport_locals")),
     "mPyConstraint": ("mpynode/_api2/mpy_constraint.py",
@@ -47,10 +47,10 @@ _SEED_SITES = {
 # instead of being shadowed -- not reserved. Same runtime-underivability as the
 # seed dicts above, hence a declared tuple plus this drift guard.
 _SCRATCH_SITES = {
-    "mPyMesh": "mpynode/_api2/mpy_mesh.py",
-    "mPyNurbsCurve": "mpynode/_api2/mpy_nurbs_curve.py",
+    "mPyMesh":         "mpynode/_api2/mpy_mesh.py",
+    "mPyNurbsCurve":   "mpynode/_api2/mpy_nurbs_curve.py",
     "mPyNurbsSurface": "mpynode/_api2/mpy_nurbs_surface.py",
-    "mPyLocator": "mpynode/_api2/mpy_locator.py",
+    "mPyLocator":      "mpynode/_api2/mpy_locator.py",
 }
 
 
@@ -63,7 +63,7 @@ class _SeedKeyCollector(ast.NodeVisitor):
 
     def __init__(self, targets):
         self.targets = set(targets)
-        self.keys = set()
+        self.keys    = set()
 
     def _dict_keys(self, node):
         if not isinstance(node, ast.Dict):
@@ -106,7 +106,7 @@ class _ScratchKeyCollector(ast.NodeVisitor):
     count the call sites (a second, un-mirrored site must not slip by)."""
 
     def __init__(self):
-        self.keys = set()
+        self.keys  = set()
         self.sites = 0
 
     def visit_keyword(self, node):
@@ -146,7 +146,7 @@ def _declared_slot_names(node_type):
     the class tuples, not from the resolver: the resolver subtracts the
     coexisting (output-scratch) names, and completeness of the DECLARATION is
     what the parity suite is guarding."""
-    cls = reserved_names._wrapper_class_for_type(node_type)
+    cls      = reserved_names._wrapper_class_for_type(node_type)
     declared = set()
     for attr in ("INTERNAL_API_SLOTS", "RESERVED_COMPUTE_LOCALS"):
         for entry in getattr(cls, attr, ()) or ():
@@ -221,7 +221,7 @@ class TestRuntimeParity(unittest.TestCase):
             seeded = _runtime_seed_keys(rel_path, targets)
             self.assertTrue(seeded, "no seed keys parsed from " + rel_path)
             declared = _declared_slot_names(node_type)
-            missing = seeded - declared
+            missing  = seeded - declared
             self.assertFalse(
                 missing,
                 "%s seeds %s into compute_locals but the wrapper does not "
@@ -233,7 +233,7 @@ class TestRuntimeParity(unittest.TestCase):
         # seeds is dead weight and would reserve a name for no reason.
         for node_type, (rel_path, targets) in sorted(_SEED_SITES.items()):
             seeded = _runtime_seed_keys(rel_path, targets)
-            stale = _declared_slot_names(node_type) - seeded
+            stale  = _declared_slot_names(node_type) - seeded
             self.assertFalse(
                 stale,
                 "%s declares %s but the bridge no longer seeds it"
@@ -294,8 +294,8 @@ class TestCoexistingScratchSlots(unittest.TestCase):
         # The counter-case, one per type: a seeded slot that is NOT
         # output-scratch really does shadow a same-named plug on read.
         shadowing = {
-            "mPyMesh": ("time",),
-            "mPyNurbsCurve": ("time", "degree", "form", "rational"),
+            "mPyMesh":         ("time",),
+            "mPyNurbsCurve":   ("time", "degree", "form", "rational"),
             "mPyNurbsSurface": ("time", "degree_u", "form_v"),
             "mPyLocator": ("time", "wallclock", "selected", "is_lead", "hovered",
                            "selection_color"),
@@ -360,7 +360,7 @@ class TestFailsOpen(unittest.TestCase):
     def _sabotage(self, *module_names):
         saved = {}
         for mod in module_names:
-            saved[mod] = sys.modules.get(mod)
+            saved[mod]       = sys.modules.get(mod)
             sys.modules[mod] = None  # makes `import mod` raise ImportError
         self.addCleanup(self._restore, saved)
 
@@ -461,10 +461,10 @@ class TestCoexistingNamesAreAddableOnLiveNodes(_LiveNodeCase):
 
     def test_shadowing_name_still_raises_on_every_type(self):
         for node_type, name in sorted({
-            "mPyMesh": "time",
-            "mPyNurbsCurve": "degree",
+            "mPyMesh":         "time",
+            "mPyNurbsCurve":   "degree",
             "mPyNurbsSurface": "degree_u",
-            "mPyLocator": "selected",
+            "mPyLocator":      "selected",
         }.items()):
             node = self._make(node_type)
             with self.assertRaises(ValueError) as ctx:

@@ -139,11 +139,11 @@ def _is_weightlist_attr(attr_mobject) -> bool:
 
 
 def _resolve_plug(
-    plug: "om.MPlug",
+    plug:         "om.MPlug",
     attr_mobject: "om.MObject",
-    datablock=None,
-    geom_iter=None,
-    compute_ctx=None,
+    datablock                  = None,
+    geom_iter                  = None,
+    compute_ctx                = None,
 ) -> Any:
     """Top-level dispatch: given a plug + its attribute MObject,
     return the appropriate Python value or sub-proxy.
@@ -247,17 +247,17 @@ class CompoundPlugProxy:
 
     def __init__(
         self,
-        plug: "om.MPlug",
+        plug:         "om.MPlug",
         attr_mobject: "om.MObject",
-        datablock=None,
-        geom_iter=None,
-        compute_ctx=None,
+        datablock                  = None,
+        geom_iter                  = None,
+        compute_ctx                = None,
     ):
-        object.__setattr__(self, "_plug", plug)
+        object.__setattr__(self, "_plug",         plug)
         object.__setattr__(self, "_attr_mobject", attr_mobject)
-        object.__setattr__(self, "_datablock", datablock)
-        object.__setattr__(self, "_geom_iter", geom_iter)
-        object.__setattr__(self, "_compute_ctx", compute_ctx)
+        object.__setattr__(self, "_datablock",    datablock)
+        object.__setattr__(self, "_geom_iter",    geom_iter)
+        object.__setattr__(self, "_compute_ctx",  compute_ctx)
 
     def __getattr__(self, name: str) -> Any:
         # Walk children of this compound, find the one whose attribute
@@ -267,14 +267,14 @@ class CompoundPlugProxy:
             child_plug = self._plug.child(i)
             try:
                 child_attr = child_plug.attribute()
-                fn = om.MFnAttribute(child_attr)
+                fn         = om.MFnAttribute(child_attr)
                 if fn.name() == name or fn.shortName() == name:
                     return _resolve_plug(
                         child_plug,
                         child_attr,
-                        datablock=self._datablock,
-                        geom_iter=self._geom_iter,
-                        compute_ctx=self._compute_ctx,
+                        datablock   = self._datablock,
+                        geom_iter   = self._geom_iter,
+                        compute_ctx = self._compute_ctx,
                     )
             except Exception:
                 continue
@@ -293,13 +293,13 @@ class CompoundPlugProxy:
             child_plug = self._plug.child(i)
             try:
                 child_attr = child_plug.attribute()
-                fn = om.MFnAttribute(child_attr)
+                fn         = om.MFnAttribute(child_attr)
                 if fn.name() == name or fn.shortName() == name:
                     _write_plug(
                         child_plug, child_attr, value,
-                        datablock=self._datablock,
-                        geom_iter=self._geom_iter,
-                        compute_ctx=self._compute_ctx,
+                        datablock   = self._datablock,
+                        geom_iter   = self._geom_iter,
+                        compute_ctx = self._compute_ctx,
                     )
                     return
             except Exception:
@@ -342,9 +342,9 @@ class CompoundPlugProxy:
                 child_attr = child_plug.attribute()
                 val = _resolve_plug(
                     child_plug, child_attr,
-                    datablock=self._datablock,
-                    geom_iter=self._geom_iter,
-                    compute_ctx=self._compute_ctx,
+                    datablock   = self._datablock,
+                    geom_iter   = self._geom_iter,
+                    compute_ctx = self._compute_ctx,
                 )
                 out.append(float(val) if val is not None else 0.0)
             except Exception:
@@ -382,9 +382,9 @@ class CompoundPlugProxy:
             child_attr = child_plug.attribute()
             val = _resolve_plug(
                 child_plug, child_attr,
-                datablock=self._datablock,
-                geom_iter=self._geom_iter,
-                compute_ctx=self._compute_ctx,
+                datablock   = self._datablock,
+                geom_iter   = self._geom_iter,
+                compute_ctx = self._compute_ctx,
             )
             return val
         except Exception:
@@ -409,17 +409,17 @@ class PlugListProxy:
 
     def __init__(
         self,
-        plug: "om.MPlug",
+        plug:         "om.MPlug",
         attr_mobject: "om.MObject",
-        datablock=None,
-        geom_iter=None,
-        compute_ctx=None,
+        datablock                  = None,
+        geom_iter                  = None,
+        compute_ctx                = None,
     ):
-        object.__setattr__(self, "_plug", plug)
+        object.__setattr__(self, "_plug",         plug)
         object.__setattr__(self, "_attr_mobject", attr_mobject)
-        object.__setattr__(self, "_datablock", datablock)
-        object.__setattr__(self, "_geom_iter", geom_iter)
-        object.__setattr__(self, "_compute_ctx", compute_ctx)
+        object.__setattr__(self, "_datablock",    datablock)
+        object.__setattr__(self, "_geom_iter",    geom_iter)
+        object.__setattr__(self, "_compute_ctx",  compute_ctx)
 
     def __getitem__(self, idx: int) -> Any:
         if not isinstance(idx, int):
@@ -432,7 +432,7 @@ class PlugListProxy:
             handles = self._compute_ctx.get("output_handles")
             if handles:
                 attr_name = _attr_short_or_long_name(self._attr_mobject)
-                key = (attr_name, int(idx))
+                key       = (attr_name, int(idx))
                 if key in handles:
                     return handles[key]
         try:
@@ -446,18 +446,18 @@ class PlugListProxy:
                 return CompoundPlugProxy(
                     element_plug,
                     self._attr_mobject,
-                    datablock=self._datablock,
-                    geom_iter=self._geom_iter,
-                    compute_ctx=self._compute_ctx,
+                    datablock   = self._datablock,
+                    geom_iter   = self._geom_iter,
+                    compute_ctx = self._compute_ctx,
                 )
         except Exception:
             pass
         return _resolve_plug(
             element_plug,
             self._attr_mobject,
-            datablock=self._datablock,
-            geom_iter=self._geom_iter,
-            compute_ctx=self._compute_ctx,
+            datablock   = self._datablock,
+            geom_iter   = self._geom_iter,
+            compute_ctx = self._compute_ctx,
         )
 
     def __setitem__(self, idx: int, value: Any) -> None:
@@ -472,9 +472,9 @@ class PlugListProxy:
             )
         _write_plug(
             element_plug, self._attr_mobject, value,
-            datablock=self._datablock,
-            geom_iter=self._geom_iter,
-            compute_ctx=self._compute_ctx,
+            datablock   = self._datablock,
+            geom_iter   = self._geom_iter,
+            compute_ctx = self._compute_ctx,
         )
 
     def __len__(self) -> int:
@@ -493,17 +493,17 @@ class PlugListProxy:
                     _resolve_plug(
                         elt,
                         self._attr_mobject,
-                        datablock=self._datablock,
-                        geom_iter=self._geom_iter,
-                        compute_ctx=self._compute_ctx,
+                        datablock   = self._datablock,
+                        geom_iter   = self._geom_iter,
+                        compute_ctx = self._compute_ctx,
                     )
                     if not elt.isCompound()
                     else CompoundPlugProxy(
                         elt,
                         self._attr_mobject,
-                        datablock=self._datablock,
-                        geom_iter=self._geom_iter,
-                        compute_ctx=self._compute_ctx,
+                        datablock   = self._datablock,
+                        geom_iter   = self._geom_iter,
+                        compute_ctx = self._compute_ctx,
                     ),
                 )
         except Exception:
@@ -534,11 +534,11 @@ class _MatrixPlugProvider:
 
     def __init__(self, plug, attr_mobject, datablock=None, geom_iter=None,
                  compute_ctx=None):
-        self._plug = plug
+        self._plug         = plug
         self._attr_mobject = attr_mobject
-        self._datablock = datablock
-        self._geom_iter = geom_iter
-        self._compute_ctx = compute_ctx
+        self._datablock    = datablock
+        self._geom_iter    = geom_iter
+        self._compute_ctx  = compute_ctx
 
     def count(self) -> int:
         try:
@@ -570,7 +570,7 @@ class _MatrixPlugProvider:
         if logical.length() == 0:
             return _np.zeros((0, 4, 4), dtype=_np.float64)
         size = max(logical[i] for i in range(logical.length())) + 1
-        out = _np.broadcast_to(_np.eye(4, dtype=_np.float64), (size, 4, 4)).copy()
+        out  = _np.broadcast_to(_np.eye(4, dtype=_np.float64), (size, 4, 4)).copy()
         for k in range(logical.length()):
             li = logical[k]
             try:
@@ -614,9 +614,9 @@ class WeightListView(PlugListProxy):
             out = _np.zeros((0, 0), dtype=_np.float64)
             return out.astype(dtype) if dtype is not None else out
 
-        rows = []            # (vertex_logical, [(infl_logical, weight), ...])
-        max_v = -1
-        max_j = -1
+        rows         = []            # (vertex_logical, [(infl_logical, weight), ...])
+        max_v        = -1
+        max_j        = -1
         weights_attr = None
         for k in range(nv):
             vi = v_idx[k]
@@ -644,7 +644,7 @@ class WeightListView(PlugListProxy):
                 if ji > max_j:
                     max_j = ji
                 welt = wplug.elementByLogicalIndex(ji)
-                w = None
+                w    = None
                 if weights_attr is not None:
                     w = _read_numeric_plug(welt, weights_attr,
                                            data_block=self._datablock)
@@ -656,8 +656,8 @@ class WeightListView(PlugListProxy):
                 pairs.append((ji, float(w)))
             rows.append((vi, pairs))
 
-        n = max_v + 1
-        j = max_j + 1 if max_j >= 0 else 0
+        n   = max_v + 1
+        j   = max_j + 1 if max_j >= 0 else 0
         out = _np.zeros((n, j), dtype=_np.float64)
         for vi, pairs in rows:
             for (ji, w) in pairs:
@@ -701,14 +701,14 @@ class PlugProxy:
 
     def __init__(
         self,
-        mobject: "om.MObject",
-        datablock=None,
-        geom_iter=None,
-        compute_ctx=None,
+        mobject:    "om.MObject",
+        datablock                = None,
+        geom_iter                = None,
+        compute_ctx              = None,
     ):
-        object.__setattr__(self, "_mobject", mobject)
-        object.__setattr__(self, "_datablock", datablock)
-        object.__setattr__(self, "_geom_iter", geom_iter)
+        object.__setattr__(self, "_mobject",     mobject)
+        object.__setattr__(self, "_datablock",   datablock)
+        object.__setattr__(self, "_geom_iter",   geom_iter)
         object.__setattr__(self, "_compute_ctx", compute_ctx)
 
     # ---- Attribute access ----
@@ -731,9 +731,9 @@ class PlugProxy:
         plug = om.MPlug(self._mobject, attr_mobj)
         return _resolve_plug(
             plug, attr_mobj,
-            datablock=self._datablock,
-            geom_iter=self._geom_iter,
-            compute_ctx=self._compute_ctx,
+            datablock   = self._datablock,
+            geom_iter   = self._geom_iter,
+            compute_ctx = self._compute_ctx,
         )
 
     def __setattr__(self, name: str, value: Any) -> None:
@@ -760,9 +760,9 @@ class PlugProxy:
         plug = om.MPlug(self._mobject, attr_mobj)
         _write_plug(
             plug, attr_mobj, value,
-            datablock=self._datablock,
-            geom_iter=self._geom_iter,
-            compute_ctx=self._compute_ctx,
+            datablock   = self._datablock,
+            geom_iter   = self._geom_iter,
+            compute_ctx = self._compute_ctx,
         )
 
     # ---- Geometry data (EM-safe) ----
@@ -819,12 +819,12 @@ class PlugProxy:
         Only the MANAGED ones -- listing a plug that ``__getattr__`` then
         refuses to return would be worse than not listing it."""
         try:
-            fn = om.MFnDependencyNode(self._mobject)
-            n = fn.attributeCount()
+            fn    = om.MFnDependencyNode(self._mobject)
+            n     = fn.attributeCount()
             names = []
             for i in range(n):
                 try:
-                    attr = fn.attribute(i)
+                    attr      = fn.attribute(i)
                     attr_name = om.MFnAttribute(attr).name()
                     if not plug_governance.is_managed(
                             self._mobject, attr, attr_name):

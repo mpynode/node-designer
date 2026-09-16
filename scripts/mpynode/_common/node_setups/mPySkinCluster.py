@@ -65,7 +65,7 @@ def setup(self, *args, **kwargs):
             mc.setAttr(f"{sc_name}.bindPreMatrix[{i}]", inv, type="matrix")
 
     name = self.get_name()
-    sel = _selection(override=kwargs.get("selection"), exclude=name)
+    sel  = _selection(override=kwargs.get("selection"), exclude=name)
     joints = _joints(sel); meshes = _meshes(sel)
     if not joints or not meshes:
         raise SetupError("select one or more influence joints AND a mesh to bind "

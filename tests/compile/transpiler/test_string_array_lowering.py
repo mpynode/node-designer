@@ -54,7 +54,7 @@ self.outAlpha = ca
 def _images():
     """The four images shipped beside the File Composite template."""
     root = os.environ.get("MPYNODE_ROOT") or os.getcwd()
-    d = os.path.join(root, "templates", "MPyFile", "File Composite")
+    d    = os.path.join(root, "templates", "MPyFile", "File Composite")
     names = ("grid_bg.png", "red_square.png", "green_circle.png",
              "blue_triangle.png")
     return [os.path.join(d, n) for n in names
@@ -65,7 +65,7 @@ class TestStringArrayLift(unittest.TestCase):
     def setUp(self):
         import maya.cmds as mc
 
-        self.mc = mc
+        self.mc   = mc
         self.imgs = _images()
         if len(self.imgs) < 2:
             self.skipTest("shipped File Composite images not present")
@@ -155,7 +155,7 @@ class TestStringArrayLift(unittest.TestCase):
 
     def test_interpreted_composites_every_element(self):
         """Four layers stack; the sampled texels are not one flat colour."""
-        n = self._node(self.imgs)
+        n    = self._node(self.imgs)
         seen = set()
         for u, v in ((0.0625, 0.0625), (0.1875, 0.4375),
                      (0.5625, 0.5625), (0.5625, 0.1875)):
@@ -169,7 +169,7 @@ class TestStringArrayLift(unittest.TestCase):
     def test_the_stack_length_is_runtime_not_four(self):
         """Six elements composite as six -- a fixed-slot node could not."""
         six = [self.imgs[0]] * 5 + [self.imgs[1]]
-        n = self._node(six, ops=[1.0] * 5 + [0.0])
+        n   = self._node(six, ops=[1.0] * 5 + [0.0])
         self.mc.setAttr(n + ".uCoord", 0.1875)
         self.mc.setAttr(n + ".vCoord", 0.4375)
         self.mc.dgdirty(n)
@@ -197,7 +197,7 @@ class TestStringArrayLift(unittest.TestCase):
         self.mc.dgdirty(good)
         alone = list(self.mc.getAttr(good + ".outColor")[0])
 
-        both = self._node(["", self.imgs[1]])
+        both  = self._node(["", self.imgs[1]])
         self.mc.setAttr(both + ".uCoord", 0.1875)
         self.mc.setAttr(both + ".vCoord", 0.4375)
         self.mc.dgdirty(both)

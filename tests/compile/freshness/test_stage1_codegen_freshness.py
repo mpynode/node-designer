@@ -46,9 +46,9 @@ import tempfile
 import unittest
 from tests import _paths
 
-_HERE = os.path.dirname(os.path.abspath(__file__))
-_ROOT = _paths.ROOT
-_CHECKER = os.path.join(_ROOT, "tools", "check_stage1_freshness.py")
+_HERE     = os.path.dirname(os.path.abspath(__file__))
+_ROOT     = _paths.ROOT
+_CHECKER  = os.path.join(_ROOT, "tools", "check_stage1_freshness.py")
 _BASELINE = os.path.join(_paths.DATA, "stage1_stale_baseline.json")
 
 # Measured 2026-08-13: 45 artifacts, 5 manifests. Floors, not equalities -- the
@@ -77,7 +77,7 @@ def _mayapy():
 
 def _measure():
     """Fresh-vs-shipped for every stage-1 artifact, from a seeded subprocess."""
-    env = dict(os.environ)
+    env                   = dict(os.environ)
     env["PYTHONHASHSEED"] = "0"
     out = os.path.join(tempfile.mkdtemp(prefix="mpynode-stage1-"),
                        "freshness.json")
@@ -104,8 +104,8 @@ def _by_state(result, state):
 def setUpModule():
     global _RESULT
     _RESULT = _measure()
-    stale = _by_state(_RESULT, "stale")
-    known = set(_baseline())
+    stale   = _by_state(_RESULT, "stale")
+    known   = set(_baseline())
     # The count, on every run, pass or fail: a tolerated stale set that nobody
     # can see is the thing this gate exists to prevent.
     sys.stderr.write(
@@ -177,7 +177,7 @@ class TestTheUngatedScanIsNotDerivedFromParsedManifests(unittest.TestCase):
             checker.ROOT, checker.TREES = was
 
     def _tree(self, manifest_body):
-        root = tempfile.mkdtemp(prefix="mpynode-t109-")
+        root  = tempfile.mkdtemp(prefix="mpynode-t109-")
         build = os.path.join(root, "compiled_templates", "probe", "build")
         os.makedirs(os.path.join(build, "stages", "probeNode"))
         if manifest_body is not None:
@@ -236,7 +236,7 @@ class TestStageOneArtifactsAreFresh(unittest.TestCase):
             "list:\n  %s" % (len(drifted), "\n  ".join(lines)))
 
     def test_baseline_only_lists_artifacts_that_are_still_stale(self):
-        fresh = set(_by_state(_RESULT, "fresh"))
+        fresh  = set(_by_state(_RESULT, "fresh"))
         healed = sorted(rel for rel in _baseline() if rel in fresh)
         self.assertEqual(
             healed, [],
@@ -248,7 +248,7 @@ class TestStageOneArtifactsAreFresh(unittest.TestCase):
 
     def test_baseline_only_lists_artifacts_that_were_measured(self):
         measured = set(_RESULT["artifacts"])
-        orphans = sorted(rel for rel in _baseline() if rel not in measured)
+        orphans  = sorted(rel for rel in _baseline() if rel not in measured)
         self.assertEqual(
             orphans, [],
             "%d baselined path(s) were not compared at all -- a typo or a "

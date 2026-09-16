@@ -20,12 +20,12 @@ import maya.cmds as mc
 | `mPyIkSolver` | `MPyIkSolver` | `MPyIkSolver.find_solver()` — first solver in the scene, else `create()` |
 
 ```python
-n = MPyNode.create(name="myNode")     # plug-in auto-loads; new node is selected
-n = MPyNode("existingNode")           # wrap a node already in the scene
-n.get_name()                          # -> Maya node name
-MPyNode.create(name=None)             # name DERIVED from the Class (camelCase)
-MPyNode.create(skip_selection=True)   # do not disturb the active selection
-MPyNode.build(name="myNode", setup=True)   # create + seed methods + run setup()
+n = MPyNode.create(name="myNode")  # plug-in auto-loads; new node is selected
+n = MPyNode("existingNode")        # wrap a node already in the scene
+n.get_name()                              # -> Maya node name
+MPyNode.create(name=None)                 # name DERIVED from the Class (camelCase)
+MPyNode.create(skip_selection=True)       # do not disturb the active selection
+MPyNode.build(name="myNode", setup=True)  # create + seed methods + run setup()
 ```
 
 `create()` is the primitive (bare, unseeded); `build()` is the orchestrated path.
@@ -86,8 +86,8 @@ builtin (`min`, `type`) is fine via the API — the Add-Attribute DIALOG rejects
 ```python
 n.delete_input_attr("amp"); n.rename_input_attr("amp", "gain")
 n.get_input_attr_map(); n.set_input_attr_sparse("points", True)
-n.set_input_attr_color("gain", "#ff8800")   # tints the row in Node Designer
-n.reorder_input_attrs(["gain", "points"])   # addAttribute order == Channel Box order
+n.set_input_attr_color("gain", "#ff8800")  # tints the row in Node Designer
+n.reorder_input_attrs(["gain", "points"])  # addAttribute order == Channel Box order
 ```
 
 ## 3. Init vs Compute
@@ -137,7 +137,7 @@ self.result = ripple(np.asarray(self.points), float(self.amp))
 ```python
 # --- Compute tab: mPyNode with inputs a/b/amp/offset, outputs sum/product ---
 import numpy as np
-self.sum = float(self.a) + float(self.b)
+self.sum     = float(self.a) + float(self.b)
 self.product = np.asarray(self.offset) * float(self.amp)
 ```
 
@@ -158,10 +158,10 @@ session-only, re-initialised on next file load. A bare `self.x = ...` write in
 Compute or Init lands in this store.
 
 ```python
-n.add_variable("counter", 0)                 # declare PERSISTENT
-n.set_variable("counter", 5)                 # value only -- KEEPS its status
-n.set_variable("scratch", 5)                 # NEW var -> TEMPORARY
-n.set_variable("scratch", 5, persistent=True)   # ...or promote as you write
+n.add_variable("counter", 0)                   # declare PERSISTENT
+n.set_variable("counter", 5)                   # value only -- KEEPS its status
+n.set_variable("scratch", 5)                   # NEW var -> TEMPORARY
+n.set_variable("scratch", 5, persistent=True)  # ...or promote as you write
 n.get_variables(); n.get_variable_names(); n.is_variable_persistent("counter")
 n.set_variable_persistent("counter", False)  # demote to TEMPORARY
 n.rename_variable("counter", "ticks"); n.remove_variable("ticks")
@@ -306,10 +306,10 @@ the AI Assistant.
 
 ```python
 mc.setAttr(n.get_name() + ".watch_enabled", 1)
-n.get_watch_vars()                 # locals from the last compute (Watch tab)
+n.get_watch_vars()                                     # locals from the last compute (Watch tab)
 mc.setAttr(n.get_name() + ".profile_enabled", 1)
-mc.setAttr(n.get_name() + ".deep_profile_enabled", 1)      # cProfile drill-down
-n.get_profile_snapshot()           # {last_us, avg_us, min_us, max_us, count, ...}
+mc.setAttr(n.get_name() + ".deep_profile_enabled", 1)  # cProfile drill-down
+n.get_profile_snapshot()                               # {last_us, avg_us, min_us, max_us, count, ...}
 
 from mpynode._common.util.log_bus import log
 log("hello from my node", level="info")     # shows in the Log tab

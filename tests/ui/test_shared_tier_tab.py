@@ -84,7 +84,7 @@ class TestSharedTierBehavioral(unittest.TestCase):
 
         # Global shared state — snapshot + reset so tests are isolated and do
         # not leak the shared tier into the rest of the suite.
-        self._saved_tier = NDScriptTabContent._shared_tier
+        self._saved_tier                = NDScriptTabContent._shared_tier
         NDScriptTabContent._shared_tier = "Compute"
         mc.file(new=True, force=True)
         self._widgets = []
@@ -103,7 +103,7 @@ class TestSharedTierBehavioral(unittest.TestCase):
         from mpynode.ui.widgets.script_tab_content import NDScriptTabContent
 
         loc = MPyLocator.create(name=name)
-        w = NDScriptTabContent(loc)
+        w   = NDScriptTabContent(loc)
         self._widgets.append(w)
         return w
 
@@ -177,8 +177,8 @@ class TestFirstOpenPrefersCompute(unittest.TestCase):
         import maya.cmds as mc
         from mpynode.ui.widgets.script_tab_content import NDScriptTabContent
 
-        self._saved_tier = NDScriptTabContent._shared_tier
-        self._saved_seen = set(NDScriptTabContent._seen_nodes)
+        self._saved_tier                = NDScriptTabContent._shared_tier
+        self._saved_seen                = set(NDScriptTabContent._seen_nodes)
         NDScriptTabContent._shared_tier = "Compute"
         NDScriptTabContent._seen_nodes.clear()
         mc.file(new=True, force=True)
@@ -244,7 +244,7 @@ class TestFirstOpenPrefersCompute(unittest.TestCase):
     def test_the_key_is_a_uuid_and_survives_a_rename(self):
         import maya.cmds as mc
 
-        w = self._content("firstOpenE")
+        w      = self._content("firstOpenE")
         before = w._node_key()
         self.assertEqual(before[0], "uuid")
         mc.rename("firstOpenE", "firstOpenE_renamed")

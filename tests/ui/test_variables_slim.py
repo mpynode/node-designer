@@ -54,7 +54,7 @@ class TestVariablesSlim(unittest.TestCase):
         from mpynode.ui.widgets.variables import NDVariablesWidget
 
         loc = self._make_locator()
-        w = NDVariablesWidget()
+        w   = NDVariablesWidget()
         try:
             w.setPyNode(loc)
             tree = w._tree

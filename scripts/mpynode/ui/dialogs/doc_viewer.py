@@ -44,32 +44,32 @@ from mpynode._common.util import docs_locator
 # Per-theme palettes: headings colour-coded by depth, tables a header band +
 # zebra rows, code blocks a box + token colours.
 _DARK = {
-    "heading": {1: "#8FD0FF", 2: "#63B3E8", 3: "#5FBE9C", 4: "#C9A6F0"},
+    "heading":         {1: "#8FD0FF", 2: "#63B3E8", 3: "#5FBE9C", 4: "#C9A6F0"},
     "heading_default": "#A8B6C2",
-    "code_bg": "#161B22",
-    "code_keyword": "#FF7B72",
-    "code_string": "#A5D6FF",
-    "code_comment": "#8B949E",
-    "code_number": "#79C0FF",
-    "table_border": "#4A4F55",
+    "code_bg":         "#161B22",
+    "code_keyword":    "#FF7B72",
+    "code_string":     "#A5D6FF",
+    "code_comment":    "#8B949E",
+    "code_number":     "#79C0FF",
+    "table_border":    "#4A4F55",
     "table_header_bg": "#33383E",
-    "table_zebra_bg": "#2A2E33",
-    "inline_code_bg": "#3A3F47",
-    "inline_code_fg": "#D7BA7D",
+    "table_zebra_bg":  "#2A2E33",
+    "inline_code_bg":  "#3A3F47",
+    "inline_code_fg":  "#D7BA7D",
 }
 _LIGHT = {
-    "heading": {1: "#1A5FA8", 2: "#1F6FB0", 3: "#1E7A52", 4: "#6A3FA0"},
+    "heading":         {1: "#1A5FA8", 2: "#1F6FB0", 3: "#1E7A52", 4: "#6A3FA0"},
     "heading_default": "#444444",
-    "code_bg": "#F6F8FA",
-    "code_keyword": "#CF222E",
-    "code_string": "#0A3069",
-    "code_comment": "#6E7781",
-    "code_number": "#0550AE",
-    "table_border": "#C8C8C8",
+    "code_bg":         "#F6F8FA",
+    "code_keyword":    "#CF222E",
+    "code_string":     "#0A3069",
+    "code_comment":    "#6E7781",
+    "code_number":     "#0550AE",
+    "table_border":    "#C8C8C8",
     "table_header_bg": "#E6E9ED",
-    "table_zebra_bg": "#F4F6F8",
-    "inline_code_bg": "#EFF1F3",
-    "inline_code_fg": "#953800",
+    "table_zebra_bg":  "#F4F6F8",
+    "inline_code_bg":  "#EFF1F3",
+    "inline_code_fg":  "#953800",
 }
 
 
@@ -83,7 +83,7 @@ def _enum_int(v) -> int:
 
 
 # Height-types for QTextBlockFormat.setLineHeight (Qt6 demands a plain int).
-_PROP_HEIGHT = _enum_int(QTextBlockFormat.ProportionalHeight)
+_PROP_HEIGHT   = _enum_int(QTextBlockFormat.ProportionalHeight)
 _SINGLE_HEIGHT = _enum_int(QTextBlockFormat.SingleHeight)
 
 # Qt tags every fenced-code line (incl. interior blanks) with
@@ -160,7 +160,7 @@ def style_markdown_document(document, dark: bool = True, doc_margin=None,
     block = document.firstBlock()
     while block.isValid():
         cursor = QTextCursor(block)
-        bf = QTextBlockFormat(block.blockFormat())
+        bf     = QTextBlockFormat(block.blockFormat())
         # Extra line spacing helps the density. Qt6 rejects the scoped
         # LineHeightTypes enum for the height-type, so pass a plain int.
         bf.setLineHeight(122.0, _PROP_HEIGHT)
@@ -172,7 +172,7 @@ def style_markdown_document(document, dark: bool = True, doc_margin=None,
             bf.setBottomMargin(bottom)
             cursor.setBlockFormat(bf)
             colour = pal["heading"].get(level, pal["heading_default"])
-            cf = QTextCharFormat()
+            cf     = QTextCharFormat()
             cf.setForeground(QColor(colour))
             cf.setFontWeight(QFont.Bold)
             sel = QTextCursor(block)
@@ -225,7 +225,7 @@ def _style_inline_code(document, pal) -> None:
     pill as this widget goes.
     """
     body = document.defaultFont()
-    cf = QTextCharFormat()
+    cf   = QTextCharFormat()
     cf.setBackground(QColor(pal["inline_code_bg"]))
     cf.setForeground(QColor(pal["inline_code_fg"]))
     # Slightly smaller so the chip sits INSIDE the line: the background paints
@@ -249,8 +249,8 @@ def _style_inline_code(document, pal) -> None:
             pass
 
     chip_bg = QColor(pal["inline_code_bg"])
-    spans = []
-    block = document.firstBlock()
+    spans   = []
+    block   = document.firstBlock()
     while block.isValid():
         if not _block_is_code(block) and block.blockFormat().headingLevel() == 0:
             it = block.begin()
@@ -290,7 +290,7 @@ def _style_code_blocks(document, pal) -> None:
     """Group consecutive fenced-code lines into regions, give each a
     contiguous background box, and syntax-highlight Python regions."""
     blocks = []
-    b = document.firstBlock()
+    b      = document.firstBlock()
     while b.isValid():
         blocks.append(b)
         b = b.next()
@@ -310,7 +310,7 @@ def _style_code_blocks(document, pal) -> None:
 
 
 def _apply_code_box(region, pal) -> None:
-    bg = QColor(pal["code_bg"])
+    bg   = QColor(pal["code_bg"])
     last = len(region) - 1
     for idx, blk in enumerate(region):
         bf = QTextBlockFormat()
@@ -334,7 +334,7 @@ def _highlight_python(document, region, pal) -> None:
     import keyword
     import tokenize
 
-    text = "\n".join(blk.text() for blk in region)
+    text  = "\n".join(blk.text() for blk in region)
     spans = []  # (start_row, start_col, end_row, end_col, colour)
     try:
         for tok in tokenize.generate_tokens(io.StringIO(text).readline):
@@ -357,7 +357,7 @@ def _highlight_python(document, region, pal) -> None:
     for srow, scol, erow, ecol, colour in spans:
         try:
             start = region[srow - 1].position() + scol
-            end = region[erow - 1].position() + ecol
+            end   = region[erow - 1].position() + ecol
         except IndexError:
             continue
         cur = QTextCursor(document)
@@ -400,7 +400,7 @@ def _style_tables(document, pal) -> None:
                 continue
             for c in range(cols):
                 cell = frame.cellAt(r, c)
-                ccf = cell.format()
+                ccf  = cell.format()
                 ccf.setBackground(bg)
                 cell.setFormat(ccf)
 
@@ -437,8 +437,8 @@ class MarkdownBrowser(QTextBrowser):
             f.setPointSize(f.pointSize() + 1)
             self.setFont(f)
         self._current_path = None
-        self._back = []
-        self._fwd = []
+        self._back         = []
+        self._fwd          = []
         self.anchorClicked.connect(self._on_anchor)
 
     def _dark_theme(self) -> bool:
@@ -507,10 +507,10 @@ class MarkdownBrowser(QTextBrowser):
         """
         if not slug:
             return False
-        doc = self.document()
+        doc    = self.document()
         target = slug.strip().lower()
-        loose = target.replace("-", "")
-        block = doc.firstBlock()
+        loose  = target.replace("-", "")
+        block  = doc.firstBlock()
         while block.isValid():
             if block.blockFormat().headingLevel() > 0:
                 hslug = docs_locator.slugify(block.text())
@@ -541,10 +541,10 @@ class DocViewerDialog(QDialog):
         self.setModal(False)
         self.resize(900, 720)
 
-        layout = QVBoxLayout(self)
-        nav = QHBoxLayout()
+        layout         = QVBoxLayout(self)
+        nav            = QHBoxLayout()
         self._back_btn = QPushButton("◀ Back")
-        self._fwd_btn = QPushButton("Forward ▶")
+        self._fwd_btn  = QPushButton("Forward ▶")
         self._home_btn = QPushButton("Home")
         for b in (self._back_btn, self._fwd_btn, self._home_btn):
             nav.addWidget(b)
@@ -617,7 +617,7 @@ def add_documentation_menu(help_menu, parent):
     nt_menu = help_menu.addMenu("Node Types")
     # mPyNode is pinned to the top with a separator (mirrors the "New" menu);
     # a ``None`` entry from the menu-order helper means "insert a separator".
-    entries = docs_locator.list_node_type_docs_menu_order()
+    entries    = docs_locator.list_node_type_docs_menu_order()
     any_action = False
     for entry in entries:
         if entry is None:

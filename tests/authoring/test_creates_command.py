@@ -134,7 +134,7 @@ class TestProxySafetyGate(unittest.TestCase):
         self.assertEqual(cd.create_command_blockers(c), [])
 
     def test_stored_variable_access_is_blocked(self):
-        c = self._cmd("    self.set_variable('p', [1], persistent=True)\n")
+        c        = self._cmd("    self.set_variable('p', [1], persistent=True)\n")
         blockers = cd.create_command_blockers(c)
         self.assertTrue(blockers)
         self.assertIn("set_variable", blockers[0])
@@ -165,7 +165,7 @@ class TestProxySafetyGate(unittest.TestCase):
         self.assertIn("wrap_node", blockers[0])
 
     def test_a_blocked_command_fails_the_emit(self):
-        c = self._cmd("    self.set_variable('p', 1)\n")
+        c   = self._cmd("    self.set_variable('p', 1)\n")
         out = cd.emit_dispatch_commands([c], "someNode", "")
         self.assertTrue(out["errors"])
         self.assertEqual(out["classes"], "")
@@ -174,13 +174,13 @@ class TestProxySafetyGate(unittest.TestCase):
 class TestGeneratedDispatch(unittest.TestCase):
     def test_kind_is_creates(self):
         cmds = resolve_create_command_names(detect_commands(UNNAMED_SRC), "myType")
-        src = cd.python_module_source("myType", UNNAMED_SRC, cmds)
+        src  = cd.python_module_source("myType", UNNAMED_SRC, cmds)
         self.assertIn("'myType': 'creates'", src.replace('"', "'"))
 
     def test_plain_instance_command_keeps_its_kind(self):
         src_py = "@maya_command\ndef poke(self):\n    return 1\n"
-        cmds = detect_commands(src_py)
-        src = cd.python_module_source("myType", src_py, cmds)
+        cmds   = detect_commands(src_py)
+        src    = cd.python_module_source("myType", src_py, cmds)
         self.assertIn("'poke': 'instance'", src.replace('"', "'"))
 
     def test_create_command_widens_its_object_arity(self):
@@ -188,7 +188,7 @@ class TestGeneratedDispatch(unittest.TestCase):
         command still takes exactly one."""
         both = "@maya_command\ndef poke(self):\n    return 1\n" + UNNAMED_SRC
         cmds = resolve_create_command_names(detect_commands(both), "myType")
-        out = cd.emit_dispatch_commands(cmds, "myType", both)
+        out  = cd.emit_dispatch_commands(cmds, "myType", both)
         self.assertEqual(out["errors"], [])
         self.assertIn("kSelectionList, 0, 255)", out["classes"])
         self.assertIn("kSelectionList, 0, 1)", out["classes"])
@@ -197,12 +197,12 @@ class TestGeneratedDispatch(unittest.TestCase):
         """*args/**kwargs is a hard CommandSpecError for a normal command; on a
         create command it is the setup hook's tail and must be tolerated."""
         cmds = resolve_create_command_names(detect_commands(UNNAMED_SRC), "myType")
-        out = cd.emit_dispatch_commands(cmds, "myType", UNNAMED_SRC)
+        out  = cd.emit_dispatch_commands(cmds, "myType", UNNAMED_SRC)
         self.assertEqual(out["errors"], [])
         self.assertEqual(out["supported"], ["myType"])
 
     def test_selection_is_not_exposed_as_a_flag(self):
-        cmds = resolve_create_command_names(detect_commands(CREATES_SRC), "myType")
+        cmds  = resolve_create_command_names(detect_commands(CREATES_SRC), "myType")
         flags = cd.flag_spec_for(cmds[0])
         self.assertEqual([f["param"] for f in flags], [])
 
@@ -211,7 +211,7 @@ class TestOutlineRouting(unittest.TestCase):
     def test_creates_setup_stays_in_the_setup_group(self):
         """It must NOT move to Commands: the Script tab's command runner does
         not pass selection=, so the setup would adopt nothing."""
-        items = build_outline(CREATES_SRC)
+        items  = build_outline(CREATES_SRC)
         groups = {}
         for it in items:
             groups.setdefault(it.kind, []).append(it)
@@ -270,8 +270,8 @@ class TestTypeDefaultsCarryCreateCommands(unittest.TestCase):
         parameter would swallow the dispatcher's snapshot and the body would
         fall back to the live selection -- which createNode just clobbered."""
         for t in self.DECORATED:
-            src = node_setups.setup_source_for_type(t)
-            fn = node_setups.find_setup(src)
+            src   = node_setups.setup_source_for_type(t)
+            fn    = node_setups.find_setup(src)
             named = [a.arg for a in fn.args.args]
             self.assertEqual(named, ["self"], "%s changed its signature" % t)
             self.assertIsNotNone(fn.args.kwarg, "%s lost **kwargs" % t)
@@ -324,9 +324,9 @@ class TestPayloadRowSizeCheck(unittest.TestCase):
         with self.assertRaises(AssertionError) as ctx:
             cd._b64_array_body("hi", indent=indent)
         msg = str(ctx.exception)
-        self.assertIn(str(len(indent) + 16), msg)
+        self.assertIn(str(len(indent) + 16),        msg)
         self.assertIn(str(cd.MSVC_SOURCE_LINE_MAX), msg)
-        self.assertIn("_B64_LINE_WIDTH", msg)
+        self.assertIn("_B64_LINE_WIDTH",            msg)
 
     def test_the_guard_is_a_raise_not_an_assert(self):
         """``python -O`` strips every ``assert`` statement. A guard on what the
@@ -451,12 +451,12 @@ class TestReachableMpynodeImportIsFatal(unittest.TestCase):
         it stops being latent the day this node acquires one @maya_command, with
         no edit to the import, so the compiler must not be blind to it."""
         spec = {"commands": [], "methods": "import mpynode\n\n\nX = 1\n"}
-        err = io.StringIO()
+        err  = io.StringIO()
         with contextlib.redirect_stderr(err):
             out = cd.dispatch_for_spec(spec, "quietType")
         text = err.getvalue()
-        self.assertIn("LATENT", text)
-        self.assertIn("quietType", text)
+        self.assertIn("LATENT",       text)
+        self.assertIn("quietType",    text)
         self.assertIn("module scope", text)
         self.assertEqual(out, dict(cd.EMPTY))
 
@@ -470,9 +470,9 @@ class TestReachableMpynodeImportIsFatal(unittest.TestCase):
     def test_an_all_native_node_reports_the_LATENT_import_and_compiles(self):
         """Same rule from the other side: the shipped mPyMesh setup lowers to
         pure C++, so no payload is emitted and the import never ships."""
-        src = "import mpynode\n" + node_setups.setup_source_for_type("mPyMesh")
+        src  = "import mpynode\n" + node_setups.setup_source_for_type("mPyMesh")
         cmds = resolve_create_command_names(detect_commands(src), "mPyMesh")
-        err = io.StringIO()
+        err  = io.StringIO()
         with contextlib.redirect_stderr(err):
             out = cd.emit_dispatch_commands(cmds, "mPyMesh", src,
                                             mpx_base="MPxNode")
@@ -499,7 +499,7 @@ class TestNativeLoweringSelectsTheCreatedNode(unittest.TestCase):
 
     def _emit(self):
         """The SHIPPED mPyMesh setup, run through the real emitter."""
-        src = node_setups.setup_source_for_type("mPyMesh")
+        src  = node_setups.setup_source_for_type("mPyMesh")
         cmds = resolve_create_command_names(detect_commands(src), "mPyMesh")
         out = cd.emit_dispatch_commands(cmds, "mPyMesh", src,
                                         mpx_base="MPxNode")

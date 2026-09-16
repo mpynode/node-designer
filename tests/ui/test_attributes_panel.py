@@ -217,7 +217,7 @@ class TestAttributesTabFilterIntegration(unittest.TestCase):
         return names
 
     def test_default_filter_hides_framework_attrs(self):
-        tree = self._make_tree()
+        tree  = self._make_tree()
         names = self._row_short_names(tree)
         # Framework attrs MUST NOT appear by default.
         for hidden in ("_computeSource", "caching", "nodeState",
@@ -262,7 +262,7 @@ class TestAttributesTabFilterIntegration(unittest.TestCase):
 
     def test_optionvar_on_shows_framework_attrs(self):
         mc.optionVar(iv=("mpynodeShowFrameworkAttrs", 1))
-        tree = self._make_tree()
+        tree  = self._make_tree()
         names = self._row_short_names(tree)
         # with the opt-in flag, at least one blocklisted framework attr
         # must appear.
@@ -558,7 +558,7 @@ class TestUserAttrConnectionVisual(unittest.TestCase):
         )
 
         muted_color = _muted_brush().color()
-        tag_color = QColor(TAG_HEX)
+        tag_color   = QColor(TAG_HEX)
         self.assertNotEqual(
             free_item.foreground(0).color().rgba(),
             muted_color.rgba(),
@@ -791,7 +791,7 @@ class TestRenameEditorDelegate(unittest.TestCase):
             NDInputAttrTree, NDUserAttrTreeItem,
         )
 
-        tree = self._make_tree()
+        tree   = self._make_tree()
         target = None
         for i in range(tree.topLevelItemCount()):
             top = tree.topLevelItem(i)
@@ -828,7 +828,7 @@ class TestRenameEditorDelegate(unittest.TestCase):
         pixel-flush with the painted text rect."""
         from mpynode.ui.widgets.attributes import NDInputAttrTree
 
-        tree = self._make_tree()
+        tree     = self._make_tree()
         delegate = tree._user_attr_rename_delegate
         try:
             try:
@@ -946,7 +946,7 @@ class TestExpandStatePreserved(unittest.TestCase):
             NDInputAttrTree, NDUserAttrTreeItem,
         )
 
-        tree = self._make_tree()
+        tree   = self._make_tree()
         target = None
         for i in range(tree.topLevelItemCount()):
             it = tree.topLevelItem(i)
@@ -1032,9 +1032,9 @@ class TestSourceShape__attr_color_live_refresh(unittest.TestCase):
 
         src = inspect.getsource(NDInputAttrTree.refresh)
         self.assertIn("_capture_expanded_locked_paths", src)
-        self.assertIn("_capture_expanded_user_names", src)
+        self.assertIn("_capture_expanded_user_names",   src)
         self.assertIn("_restore_expanded_locked_paths", src)
-        self.assertIn("_restore_expanded_user_names", src)
+        self.assertIn("_restore_expanded_user_names",   src)
 
     def test_color_commands_emit_signal(self):
         import inspect
@@ -1206,9 +1206,9 @@ class TestAttrRenamedSignalWiring(unittest.TestCase):
 
         src = inspect.getsource(_RenameAttrCommand.doIt)
         # Suspends eval via _eval_block_state + restores the prior value.
-        self.assertIn(".nodeState", src)
+        self.assertIn(".nodeState",        src)
         self.assertIn("_eval_block_state", src)
-        self.assertIn("prev_state", src)
+        self.assertIn("prev_state",        src)
 
     def test_eval_block_state_non_deformer_is_blocking(self):
         import maya.cmds as mc_
@@ -1479,9 +1479,9 @@ class TestUIShape(unittest.TestCase):
         from mpynode.ui.widgets.attributes import NDInputAttrTree
 
         src = inspect.getsource(NDInputAttrTree._show_set_color_dlg)
-        self.assertIn("QColorDialog", src)
+        self.assertIn("QColorDialog",         src)
         self.assertIn("_SetAttrColorCommand", src)
-        self.assertIn("run_undoable", src)
+        self.assertIn("run_undoable",         src)
 
     def test_clear_dispatches_command_with_None(self):
         import inspect
@@ -1502,8 +1502,8 @@ class TestUIShape(unittest.TestCase):
 
         helper_src = inspect.getsource(NDScriptEditor.refreshVarColors)
         self.assertIn("get_all_attr_colors", helper_src)
-        self.assertIn("_hex_to_rgb", helper_src)
-        self.assertIn("setVarColorMap", helper_src)
+        self.assertIn("_hex_to_rgb",         helper_src)
+        self.assertIn("setVarColorMap",      helper_src)
 
     def test_phase21_callback_pushes_new_colors(self):
         """When MNodeMessage fires for _inputAttrs/_outputAttrs change,
@@ -1662,7 +1662,7 @@ class TestAttrCommands(unittest.TestCase):
         from mpynode.wrappers._mpy_node import MPyNode
 
         src = mc.polyCube(name="srcCube")[0]
-        n = MPyNode.create(name="ac5")
+        n   = MPyNode.create(name="ac5")
         n.add_input_attr("driven", "float")
         run_undoable(_ConnectAttrCommand(f"{src}.translateX", f"{n.get_name()}.driven"))
         conns = mc.listConnections(f"{n.get_name()}.driven", source=True, plugs=True) or []
@@ -1677,7 +1677,7 @@ class TestAttrCommands(unittest.TestCase):
         from mpynode.wrappers._mpy_node import MPyNode
 
         src = mc.polyCube(name="srcCube2")[0]
-        n = MPyNode.create(name="ac6")
+        n   = MPyNode.create(name="ac6")
         n.add_input_attr("driven", "float")
         run_undoable(_ConnectAttrCommand(f"{src}.translateX", f"{n.get_name()}.driven"))
         run_undoable(_DisconnectAllCommand(f"{n.get_name()}.driven", "input"))

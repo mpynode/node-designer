@@ -52,10 +52,10 @@ def _v1_blob(obj):
 
 
 _TYPE_FLAGS = {
-    "float": {"attributeType": "double"},
-    "int": {"attributeType": "long"},
-    "bool": {"attributeType": "bool"},
-    "enum": {"attributeType": "enum", "enumName": "0:1"},
+    "float":  {"attributeType": "double"},
+    "int":    {"attributeType": "long"},
+    "bool":   {"attributeType": "bool"},
+    "enum":   {"attributeType": "enum", "enumName": "0:1"},
     "matrix": {"dataType": "matrix"},
     "vector": {"attributeType": "double3"},
 }
@@ -81,7 +81,7 @@ def _make_v1_node(inputs=None, outputs=None, stored=None,
     node rather than by opening a fixture scene: the real fixtures are 10 MB
     and live in another repository, and this reproduces the state that matters.
     """
-    inputs = {"inValue": "float"} if inputs is None else inputs
+    inputs  = {"inValue": "float"} if inputs is None else inputs
     outputs = {"outValue": "float"} if outputs is None else outputs
 
     node = MPyNode.create(name=name or "v1upgrade")._name
@@ -227,7 +227,7 @@ class TestStoredVariables(_Base):
         self.assertNotIn("defaultLength", MPyNode(node).get_variable_names())
 
     def test_a_node_with_no_stored_vars_is_fine(self):
-        node = _make_v1_node()
+        node   = _make_v1_node()
         report = U.upgrade_node(node)
         self.assertEqual(report["stored_vars"], {})
         self.assertNotIn("stored_var_error", report)
@@ -288,10 +288,10 @@ class TestTheReport(_Base):
                              # reported rather than rewritten.
                              expression="out = om.MVector(m)[0] if mode else 0.0")
         line = U.summarize(*U.upgrade_scene())[0]
-        self.assertIn(node, line)
+        self.assertIn(node,         line)
         self.assertIn("registered", line)
-        self.assertIn("mode", line)           # invented enum labels
-        self.assertIn("MVector", line)        # v1 api objects
+        self.assertIn("mode",       line)  # invented enum labels
+        self.assertIn("MVector",    line)  # v1 api objects
         # The api-object note no longer claims the maths is broken: the two
         # mismatches that actually broke a converted node are auto-fixed, so
         # what is left is a performance / C++-lowering remark.
@@ -344,8 +344,8 @@ class TestTheCallbackOrdering(unittest.TestCase):
 
         from mpynode._common.lifecycle import scene_callbacks
 
-        src = inspect.getsource(getattr(scene_callbacks, func_name))
-        up = src.find("_upgrade_v1_nodes()")
+        src     = inspect.getsource(getattr(scene_callbacks, func_name))
+        up      = src.find("_upgrade_v1_nodes()")
         hydrate = src.find("load_and_clear_all()")
         self.assertNotEqual(up, -1, "%s no longer sweeps v1 nodes" % func_name)
         self.assertNotEqual(hydrate, -1,
@@ -481,8 +481,8 @@ class TestTheConflictWarning(_Base):
         super().setUp()
         from mpynode._common.lifecycle import scene_callbacks
 
-        self._sc = scene_callbacks
-        self._saved = scene_callbacks._V1_CONFLICT_WARNED
+        self._sc                            = scene_callbacks
+        self._saved                         = scene_callbacks._V1_CONFLICT_WARNED
         scene_callbacks._V1_CONFLICT_WARNED = False
         self.addCleanup(setattr, scene_callbacks, "_V1_CONFLICT_WARNED",
                         self._saved)
@@ -498,7 +498,7 @@ class TestTheConflictWarning(_Base):
 
     def test_it_fires_and_explains_the_collision(self):
         node = _make_v1_owned_node()
-        out = self._sweep([node])
+        out  = self._sweep([node])
         self.assertIn("STANDING DOWN", out)
         self.assertIn(node, out)
         self.assertIn("mpynode_plugin.py", out)   # what to move

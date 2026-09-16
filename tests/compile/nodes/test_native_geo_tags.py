@@ -123,8 +123,8 @@ class TestTagLowerPureCpp(unittest.TestCase):
     def test_mesh_region_lowers(self):
         cpp = _gen("tMReg", _REGION, "mesh", _REGION_OUTS)
         self._no_port(cpp)
-        self.assertIn("MFnGeometryData", cpp)
-        self.assertIn("componentTagContents", cpp)
+        self.assertIn("MFnGeometryData",           cpp)
+        self.assertIn("componentTagContents",      cpp)
         self.assertIn("MFnSingleIndexedComponent", cpp)
         # BEHAVIOUR, not spelling: the tagged vertices are gathered from the
         # mesh's OBJECT-space positions. Either MFnMesh read is correct (the raw
@@ -146,8 +146,8 @@ class TestTagLowerPureCpp(unittest.TestCase):
     def test_mesh_tag_clusters_lowers(self):
         cpp = _gen("tMCl", _TAGCL, "mesh", _TAGCL_OUTS, ("clusterTags",))
         self._no_port(cpp)
-        self.assertIn("MFnGeometryData", cpp)
-        self.assertIn("hasComponentTag", cpp)
+        self.assertIn("MFnGeometryData",           cpp)
+        self.assertIn("hasComponentTag",           cpp)
         self.assertIn("MFnSingleIndexedComponent", cpp)
         # THE point of this form, asserted as BEHAVIOUR not spelling (the input
         # variable carries the emitter's member mangling): the tag name handed
@@ -177,7 +177,7 @@ class TestTagLowerPureCpp(unittest.TestCase):
 
     def test_tag_headers_present(self):
         cpp = _gen("tHdr", _REGION, "mesh", _REGION_OUTS)
-        self.assertIn("maya/MFnGeometryData.h", cpp)
+        self.assertIn("maya/MFnGeometryData.h",           cpp)
         self.assertIn("maya/MFnSingleIndexedComponent.h", cpp)
         self.assertIn("maya/MFnDoubleIndexedComponent.h", cpp)
 
@@ -274,7 +274,7 @@ class TestTagRuntimeParity(unittest.TestCase):
         if not _have_toolchain():
             self.skipTest("no C++ compiler or Maya devkit for the running mayapy")
         mc.file(new=True, force=True)
-        shp = mk_src()
+        shp      = mk_src()
         src_plug = shp + (".outMesh" if gt == "mesh" else ".local")
 
         def _seed(n):
@@ -296,8 +296,8 @@ class TestTagRuntimeParity(unittest.TestCase):
         _seed(ni)
         interp = {nm: mc.getAttr("%s.%s" % (ni, nm)) for nm, _ in outs}
 
-        spec = spec_extractor.extract_spec(ni)
-        d = tempfile.mkdtemp()
+        spec   = spec_extractor.extract_spec(ni)
+        d      = tempfile.mkdtemp()
         res = cc.compile_plugin([spec], "tagpar_" + name, d, strict=True,
                                 verify=False, reuse_cache=False)
         self.assertTrue(res["ok"], "build failed: %s" % res.get("errors"))
@@ -440,8 +440,8 @@ class TestMeshMatrixFromMeshData(unittest.TestCase):
         shape = self._shape("xf", t=(12.0, 3.0, -4.0), r=(0.0, 30.0, 0.0),
                             s=2.0)
         data, dag = self._data(shape)
-        m = om2.MMatrix(mesh_matrix_from_mesh_data(data))
-        got = [p * m for p in om2.MFnMesh(data).getPoints(om2.MSpace.kObject)]
+        m    = om2.MMatrix(mesh_matrix_from_mesh_data(data))
+        got  = [p * m for p in om2.MFnMesh(data).getPoints(om2.MSpace.kObject)]
         want = om2.MFnMesh(dag).getPoints(om2.MSpace.kWorld)
         self.assertEqual(len(got), len(want))
         for a, b in zip(got, want):
@@ -468,7 +468,7 @@ class TestMeshMatrixFromMeshData(unittest.TestCase):
             mesh_matrix_from_mesh_data)
         shape = self._shape("a1", t=(12.0, 3.0, -4.0), r=(0.0, 30.0, 0.0))
 
-        sel = om1.MSelectionList()
+        sel   = om1.MSelectionList()
         sel.add(shape + ".worldMesh[0]")
         plug = om1.MPlug()
         sel.getPlug(0, plug)
@@ -491,7 +491,7 @@ class TestMeshMatrixFromMeshData(unittest.TestCase):
         from mpynode._common.nodes.mesh.component_tags import (
             mesh_data_from_node_plug, mesh_matrix_from_mesh_data)
         shape = self._shape("live", t=(1.0, 2.0, 3.0))
-        n = mc.createNode("mPyNode", name="wsProbe")
+        n     = mc.createNode("mPyNode", name="wsProbe")
         mpynode.wrap_node(n).add_input_attr("inMesh", "mesh")
         mc.connectAttr(shape + ".worldMesh[0]", n + ".inMesh", force=True)
         m = mesh_matrix_from_mesh_data(mesh_data_from_node_plug(n, "inMesh"))

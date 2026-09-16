@@ -239,7 +239,7 @@ def mfnlattice_to_numpy_points(fn_lattice):
         for u in range(u_div):
             for t in range(t_div):
                 for s in range(s_div):
-                    p = fn_lattice.point(s, t, u)
+                    p           = fn_lattice.point(s, t, u)
                     out[idx, 0] = p.x
                     out[idx, 1] = p.y
                     out[idx, 2] = p.z
@@ -293,7 +293,7 @@ def joint_chain_walk(handle):
                 break
             # Walk to first joint child.
             child_count = current_path.childCount()
-            next_path = None
+            next_path   = None
             for i in range(child_count):
                 child_obj = current_path.child(i)
                 if child_obj.hasFn(om.MFn.kJoint):

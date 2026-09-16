@@ -39,7 +39,7 @@ import os
 import sys
 from typing import Optional
 
-CONFIG_ENV = "MPYNODE_CONFIG"
+CONFIG_ENV  = "MPYNODE_CONFIG"
 CONFIG_NAME = "mpynode.ini"
 
 # Parsed once per process: the config is a static description of the install,
@@ -67,7 +67,7 @@ def _load() -> None:
     global _loaded, _parser, _path, _base
     if _loaded:
         return
-    _loaded = True
+    _loaded   = True
     candidate = os.environ.get(CONFIG_ENV) or _package_config()
     if not os.path.isfile(candidate):
         return
@@ -85,8 +85,8 @@ def _load() -> None:
                          % (candidate, exc))
         return
     _parser = parser
-    _path = os.path.abspath(candidate)
-    _base = os.path.dirname(_path)
+    _path   = os.path.abspath(candidate)
+    _base   = os.path.dirname(_path)
 
 
 def get(section: str, option: str, default=None):
@@ -140,5 +140,5 @@ def _reset_for_tests() -> None:
     global _loaded, _parser, _path, _base
     _loaded = False
     _parser = None
-    _path = None
-    _base = None
+    _path   = None
+    _base   = None

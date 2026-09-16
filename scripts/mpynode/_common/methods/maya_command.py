@@ -89,9 +89,9 @@ def maya_command(name=None, undoable=True, creates=False):
 
     def _decorate(fn):
         fn.__maya_command__ = {
-            "name": name or fn.__name__,
+            "name":     name or fn.__name__,
             "undoable": bool(undoable),
-            "creates": bool(creates),
+            "creates":  bool(creates),
         }
         return fn
 
@@ -119,7 +119,7 @@ def maya_test(label=None, digits=None):
     an int LITERAL to be honored by ``detect_tests``; non-literals warn and fall
     back (humanized def name / helper default)."""
     if callable(label):  # used bare: @maya_test
-        fn = label
+        fn               = label
         fn.__maya_test__ = {"label": None, "digits": None}
         return fn
 
@@ -139,7 +139,7 @@ def maya_demo(label=None):
     must be a string LITERAL to be honored by ``detect_demos``; a non-literal
     warns and falls back to the humanized def name."""
     if callable(label):  # used bare: @maya_demo
-        fn = label
+        fn               = label
         fn.__maya_demo__ = {"label": None}
         return fn
 
@@ -152,7 +152,7 @@ def maya_demo(label=None):
 
 # ---- Static detection (AST only) ----
 
-_MARKER = "maya_command"
+_MARKER      = "maya_command"
 _MARKER_DEMO = "maya_demo"
 _MARKER_TEST = "maya_test"
 
@@ -224,7 +224,7 @@ def _param_names(fn: ast.AST) -> List[str]:
     """Positional + keyword param names of a def, with the binding parameter
     (``self`` for an instance command, ``cls`` for a factory command) removed --
     neither is a command argument."""
-    a = fn.args
+    a     = fn.args
     names = []
     for grp in (getattr(a, "posonlyargs", None) or [], a.args, a.kwonlyargs):
         names.extend(arg.arg for arg in grp)
@@ -292,7 +292,7 @@ def _collect_alias_targets(tree: ast.Module, symbol: str = _MARKER):
     handles ``@M.<symbol>`` correctly, so these are returned for explicit
     do-NOT-warn filtering rather than as silent-drop suspects.
     """
-    name_aliases = set()
+    name_aliases   = set()
     module_aliases = set()
     for stmt in tree.body:
         if isinstance(stmt, ast.ImportFrom):
@@ -400,10 +400,10 @@ def detect_commands(source: str, tree=None) -> List[dict]:
                     break
             continue
 
-        name = node.name
+        name          = node.name
         name_explicit = False
-        undoable = True
-        creates = False
+        undoable      = True
+        creates       = False
         if isinstance(call, ast.Call):
             # name= keyword, else first positional, else def name.
             kw = {k.arg: k.value for k in call.keywords if k.arg}
@@ -416,7 +416,7 @@ def detect_commands(source: str, tree=None) -> List[dict]:
                         "name %r is used instead." % (node.name, node.name)
                     )
                 else:
-                    name = lit
+                    name          = lit
                     name_explicit = True
             elif call.args:
                 lit = _const_str(call.args[0])
@@ -427,7 +427,7 @@ def detect_commands(source: str, tree=None) -> List[dict]:
                         "def name %r is used instead." % (node.name, node.name)
                     )
                 else:
-                    name = lit
+                    name          = lit
                     name_explicit = True
             if "undoable" in kw:
                 val = kw["undoable"]
@@ -451,7 +451,7 @@ def detect_commands(source: str, tree=None) -> List[dict]:
                     )
 
         is_factory = _is_factory_def(node)
-        is_static = _is_static_def(node)
+        is_static  = _is_static_def(node)
         # ``creates`` only means anything for an INSTANCE command: it tells the
         # compiled dispatcher to make the node and pass it as ``self``. A
         # factory already makes its own and a staticmethod gets no binding, so
@@ -466,16 +466,16 @@ def detect_commands(source: str, tree=None) -> List[dict]:
             creates = False
 
         out.append({
-            "name": name,
+            "name":          name,
             "name_explicit": name_explicit,
-            "func_name": node.name,
-            "undoable": undoable,
-            "creates": creates,
-            "is_factory": is_factory,
-            "is_static": is_static,
-            "params": _param_names(node),
-            "body_src": _node_source(source, node),
-            "lineno": node.lineno,
+            "func_name":     node.name,
+            "undoable":      undoable,
+            "creates":       creates,
+            "is_factory":    is_factory,
+            "is_static":     is_static,
+            "params":        _param_names(node),
+            "body_src":      _node_source(source, node),
+            "lineno":        node.lineno,
         })
     return out
 
@@ -616,12 +616,12 @@ def detect_demos(source: str, tree=None) -> List[dict]:
                     label = lit
 
         out.append({
-            "label": label or _humanize_label(node.name),
-            "func_name": node.name,
-            "is_factory": _is_factory_def(node),
-            "is_static": _is_static_def(node),
+            "label":       label or _humanize_label(node.name),
+            "func_name":   node.name,
+            "is_factory":  _is_factory_def(node),
+            "is_static":   _is_static_def(node),
             "is_instance": _is_instance_def(node),
-            "lineno": node.lineno,
+            "lineno":      node.lineno,
         })
     return out
 
@@ -682,7 +682,7 @@ def detect_tests(source: str, tree=None) -> List[dict]:
                     break
             continue
 
-        label = None
+        label  = None
         digits = None
         if isinstance(call, ast.Call):
             kw = {k.arg: k.value for k in call.keywords if k.arg}
@@ -718,12 +718,12 @@ def detect_tests(source: str, tree=None) -> List[dict]:
                     digits = d
 
         out.append({
-            "label": label or _humanize_label(node.name),
-            "func_name": node.name,
-            "digits": digits,
-            "is_factory": _is_factory_def(node),
-            "is_static": _is_static_def(node),
+            "label":       label or _humanize_label(node.name),
+            "func_name":   node.name,
+            "digits":      digits,
+            "is_factory":  _is_factory_def(node),
+            "is_static":   _is_static_def(node),
             "is_instance": _is_instance_def(node),
-            "lineno": node.lineno,
+            "lineno":      node.lineno,
         })
     return out

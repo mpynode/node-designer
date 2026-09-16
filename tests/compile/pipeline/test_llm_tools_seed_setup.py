@@ -39,7 +39,7 @@ class TestLLMToolsSeedSetup(unittest.TestCase):
         self.T = T
 
     def _create_node(self, node_type, name=None):
-        ctx = self.T.ToolContext()
+        ctx  = self.T.ToolContext()
         args = {"node_type": node_type}
         if name:
             args["name"] = name

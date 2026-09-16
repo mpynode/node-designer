@@ -54,10 +54,10 @@ def main():
     ap.add_argument("--spec", required=True, help="path to the node spec JSON")
     ap.add_argument("--node-type", default=None)
     ap.add_argument("--out-plug", default="outMesh")
-    ap.add_argument("--parity", default=None, help="parity harness .py (PARITY_JSON)")
-    ap.add_argument("--rounds", type=int, default=3)
-    ap.add_argument("--min-speedup", type=float, default=1.05)
-    ap.add_argument("--bench-res", type=int, default=16)
+    ap.add_argument("--parity",      default=None, help="parity harness .py (PARITY_JSON)")
+    ap.add_argument("--rounds",      type=int,     default=3)
+    ap.add_argument("--min-speedup", type=float,   default=1.05)
+    ap.add_argument("--bench-res",   type=int,     default=16)
     ap.add_argument("--maya", default=None)
     ap.add_argument("--apply", action="store_true",
                     help="swap the winner into the live .cpp (backs up original)")
@@ -71,8 +71,8 @@ def main():
             baseline = fh.read()
         with open(args.spec) as fh:
             spec = json.load(fh)
-        node = args.node_type or spec["suggested"]["node_type_name"]
-        out_dir = os.path.dirname(os.path.abspath(args.source))
+        node     = args.node_type or spec["suggested"]["node_type_name"]
+        out_dir  = os.path.dirname(os.path.abspath(args.source))
         snap_dir = os.path.join(out_dir, "opt_snapshots")
         os.makedirs(snap_dir, exist_ok=True)
         # Compile candidates into an ISOLATED scratch dir, NOT the source dir:
@@ -104,13 +104,13 @@ def main():
             baseline, rounds=args.rounds, min_speedup=args.min_speedup,
             label=node, log_cb=lambda m: print("[engine] %s" % m), **ad)
 
-        result["accepted"] = res.accepted
-        result["reason"] = res.reason
+        result["accepted"]    = res.accepted
+        result["reason"]      = res.reason
         result["baseline_ms"] = res.baseline_ms
-        result["best_ms"] = res.best_ms
-        result["speedup"] = res.speedup
-        result["rounds"] = res.rounds
-        result["ledger"] = [dataclasses.asdict(r) for r in res.ledger]
+        result["best_ms"]     = res.best_ms
+        result["speedup"]     = res.speedup
+        result["rounds"]      = res.rounds
+        result["ledger"]      = [dataclasses.asdict(r) for r in res.ledger]
 
         # Persist the ledger + winner alongside the source.
         with open(os.path.join(snap_dir, "%s.ledger.json" % node), "w") as fh:
@@ -125,7 +125,7 @@ def main():
                 with open(args.source, "w") as fh:
                     fh.write(res.best_cpp)
                 result["applied_to"] = args.source
-                result["backup"] = backup
+                result["backup"]     = backup
     except Exception:
         import traceback
         result["errors"].append(traceback.format_exc())

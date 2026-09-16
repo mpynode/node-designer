@@ -49,8 +49,8 @@ def _last_keyable(cpp, plug):
     call, and the emitter deliberately writes several."""
     import re
 
-    body = cpp.split('create("%s", "%s"' % (plug, plug))[1]
-    body = re.split(r"= [a-z]Attr\.create\(", body)[0]
+    body  = cpp.split('create("%s", "%s"' % (plug, plug))[1]
+    body  = re.split(r"= [a-z]Attr\.create\(", body)[0]
     calls = re.findall(r"Attr\.setKeyable\((true|false)\);", body)
     assert calls, "no setKeyable emitted for %r" % plug
     return calls[-1]
@@ -59,11 +59,11 @@ def _last_keyable(cpp, plug):
 def _bs_spec(**over):
     spec = {
         "schema_version": 1,
-        "source_node": "bsProbe",
-        "mpy_type": "mPyBlendShape",
+        "source_node":    "bsProbe",
+        "mpy_type":       "mPyBlendShape",
         "suggested": {"node_type_name": "bsProbe", "class_name": "BsProbe",
                       "mpx_base": "MPxDeformerNode", "type_id": "0x00131a01"},
-        "inputs": {"weight": _float_array()},
+        "inputs":  {"weight": _float_array()},
         "outputs": {},
         "portability": {"portable": True, "blockers": [], "warnings": [],
                         "notes": []},
@@ -134,15 +134,15 @@ class TestDeformerBaseFrameworkAttrs(unittest.TestCase):
     def test_a_spec_that_already_declares_it_wins(self):
         """The user/spec attr is emitted anyway -- never declare it twice."""
         from mpynode.native.compiler.emit_deformer import base_attr_members
-        spec = _bs_spec()
+        spec                             = _bs_spec()
         spec["inputs"]["targetGeometry"] = {"type": "mesh", "is_array": True}
-        spec["inputs"]["liveTargets"] = {"type": "bool"}
+        spec["inputs"]["liveTargets"]    = {"type": "bool"}
         self.assertEqual(base_attr_members(spec, []), [])
 
     def test_each_framework_plug_is_skipped_independently(self):
         """Declaring one must not suppress the other."""
         from mpynode.native.compiler.emit_deformer import base_attr_members
-        spec = _bs_spec()
+        spec                             = _bs_spec()
         spec["inputs"]["targetGeometry"] = {"type": "mesh", "is_array": True}
         self.assertEqual([m["plug"] for m in base_attr_members(spec, [])],
                          ["liveTargets"])
@@ -189,9 +189,9 @@ class TestEmittedCpp(unittest.TestCase):
 
     def test_a_non_exempt_array_stays_non_keyable(self):
         from mpynode.native.compiler import node_scaffold
-        spec = _bs_spec()
+        spec                        = _bs_spec()
         spec["inputs"]["interKnot"] = _float_array()
-        cpp = node_scaffold.generate_cpp(spec, for_port=True)
+        cpp                         = node_scaffold.generate_cpp(spec, for_port=True)
         self.assertEqual(_last_keyable(cpp, "interKnot"), "false")
         self.assertEqual(_last_keyable(cpp, "weight"), "true",
                          "the exemption must still apply alongside it")

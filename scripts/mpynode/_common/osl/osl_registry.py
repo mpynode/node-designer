@@ -26,7 +26,7 @@ import re
 import sys
 
 
-_PLUG_LONG_NAME = "osl"
+_PLUG_LONG_NAME  = "osl"
 _PLUG_SHORT_NAME = "osl"
 
 
@@ -87,9 +87,9 @@ class OslSourceMixin:
         ):
             cmds.addAttr(
                 self._name,
-                longName=_PLUG_LONG_NAME,
-                shortName=_PLUG_SHORT_NAME,
-                dataType="string",
+                longName  = _PLUG_LONG_NAME,
+                shortName = _PLUG_SHORT_NAME,
+                dataType  = "string",
             )
         try:
             cmds.setAttr(full, source or "", type="string")
@@ -147,8 +147,8 @@ class OslSourceMixin:
         )
 
         compute = ""
-        init = ""
-        getc = getattr(self, "get_compute_expression", None)
+        init    = ""
+        getc    = getattr(self, "get_compute_expression", None)
         if callable(getc):
             compute = getc() or ""
         geti = getattr(self, "get_init_expression", None)
@@ -157,7 +157,7 @@ class OslSourceMixin:
 
         consts = extract_simple_consts(init)
         shader = _osl_identifier(getattr(self, "_name", "") or "")
-        osl = _convert(compute, consts=consts, shader_name=shader)
+        osl    = _convert(compute, consts=consts, shader_name=shader)
 
         self.set_osl_expression(osl)
         if apply_to_arnold:
@@ -197,8 +197,8 @@ class OslSourceMixin:
         )
 
         compute = ""
-        init = ""
-        getc = getattr(self, "get_compute_expression", None)
+        init    = ""
+        getc    = getattr(self, "get_compute_expression", None)
         if callable(getc):
             compute = getc() or ""
         geti = getattr(self, "get_init_expression", None)
@@ -213,9 +213,9 @@ class OslSourceMixin:
         from mpynode._common.osl.osl_convert import assess_osl_tractability
         in_attrs = out_attrs = None
         try:
-            gim = getattr(self, "get_input_attr_map", None)
-            gom = getattr(self, "get_output_attr_map", None)
-            in_attrs = gim() if callable(gim) else None
+            gim       = getattr(self, "get_input_attr_map", None)
+            gom       = getattr(self, "get_output_attr_map", None)
+            in_attrs  = gim() if callable(gim) else None
             out_attrs = gom() if callable(gom) else None
         except Exception:
             in_attrs = out_attrs = None

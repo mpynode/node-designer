@@ -170,10 +170,10 @@ class TestClusterLowerPureCpp(unittest.TestCase):
         self.assertNotIn(codegen.PORT_BEGIN, cpp,
                          "guarded batched Procrustes solver must lower to C++")
         # Fingerprints of the ops the solver relies on.
-        self.assertIn("nd::take", cpp)
+        self.assertIn("nd::take",   cpp)
         self.assertIn("nd::einsum", cpp)
-        self.assertIn("nd::svd", cpp)
-        self.assertIn("nd::det", cpp)
+        self.assertIn("nd::svd",    cpp)
+        self.assertIn("nd::det",    cpp)
         # bool mask count must promote to an int64 accumulator (the 8x bug).
         self.assertIn("nd::sum(nd::astype<int64_t>", cpp)
         # matrix[] array output sink.
@@ -202,8 +202,8 @@ class TestClusterRuntimeParity(unittest.TestCase):
         mc.file(new=True, force=True)
         rest_tr, _ = mc.polyCube(sx=1, sy=1, sz=1)
         rest_shp = mc.listRelatives(rest_tr, s=True, f=True)[0]
-        def_tr = mc.duplicate(rest_tr)[0]
-        def_shp = mc.listRelatives(def_tr, s=True, f=True)[0]
+        def_tr   = mc.duplicate(rest_tr)[0]
+        def_shp  = mc.listRelatives(def_tr, s=True, f=True)[0]
         for i in range(8):
             a = 0.35 * i
             mc.move(0.20 * math.cos(a), 0.15 * math.sin(a * 1.3) + 0.4,
@@ -211,7 +211,7 @@ class TestClusterRuntimeParity(unittest.TestCase):
                     r=True, os=True)
 
         ident = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]
-        clus = [0, 1, 2, 3, 4, 5, 6, 7]
+        clus  = [0, 1, 2, 3, 4, 5, 6, 7]
 
         def wire(n):
             mc.connectAttr(rest_shp + ".worldMesh[0]", n + ".meshOrig", f=True)
@@ -225,8 +225,8 @@ class TestClusterRuntimeParity(unittest.TestCase):
         wire(ni)
         interp = mc.getAttr(ni + ".outMatrix[0]")
 
-        spec = spec_extractor.extract_spec(ni)
-        d = tempfile.mkdtemp()
+        spec   = spec_extractor.extract_spec(ni)
+        d      = tempfile.mkdtemp()
         res = cc.compile_plugin([spec], "clusterpar", d, strict=True,
                                 verify=False, reuse_cache=False)
         self.assertTrue(res["ok"], "build failed: %s" % res.get("errors"))
@@ -300,7 +300,7 @@ class TestShippedTemplateParity(unittest.TestCase):
                for i in range(nbm)]
 
         spec = spec_extractor.extract_spec(name)
-        cpp = codegen.generate_cpp(spec, for_port=True)
+        cpp  = codegen.generate_cpp(spec, for_port=True)
         self.assertNotIn(codegen.PORT_BEGIN, cpp,
                          "shipped template must lower deterministically")
 

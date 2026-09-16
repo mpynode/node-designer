@@ -115,10 +115,10 @@ class MPySkinCluster(MPyNode):
     @classmethod
     def create(
         cls,
-        mesh: str | None = None,
-        joints: list[str] | None = None,
-        name: str = None,
-        skip_selection: bool = False,
+        mesh:           str       | None = None,
+        joints:         list[str] | None = None,
+        name:           str              = None,
+        skip_selection: bool             = False,
     ) -> "MPySkinCluster":
         """Create an mPySkinCluster.
 
@@ -151,7 +151,7 @@ class MPySkinCluster(MPyNode):
         # mc.deformer works for any MPxGeometryFilter subclass. It has no
         # skipSelect and is selection-neutral in practice; snapshot + restore
         # anyway so the uniform contract always holds.
-        prior = mc.ls(selection=True, long=True) if skip_selection else None
+        prior   = mc.ls(selection=True, long=True) if skip_selection else None
         sc_name = mc.deformer(mesh, type=cls.NATIVE_TYPE, name=name)[0]
 
         if joints:

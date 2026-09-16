@@ -21,16 +21,16 @@ recipes.register_recipe(
         native_type="mPyIkSolver",
         inputs=[
             HydrationInputEntry(
-                name="joints",
-                source_plug="",  # SYNTHETIC
-                kind="joint_chain",
-                arity="list_of_dict",
+                name        = "joints",
+                source_plug = "",  # SYNTHETIC
+                kind        = "joint_chain",
+                arity       = "list_of_dict",
                 children={
-                    "name": "str",
+                    "name":           "str",
                     "world_position": "vector",
-                    "rotation": "vector",
-                    "matrix": "matrix",
-                    "world_matrix": "matrix",
+                    "rotation":       "vector",
+                    "matrix":         "matrix",
+                    "world_matrix":   "matrix",
                 },
                 description=(
                     "Joint chain walked from the IK handle's start joint "
@@ -41,27 +41,27 @@ recipes.register_recipe(
                 ),
             ),
             HydrationInputEntry(
-                name="end_effector",
-                source_plug="",  # SYNTHETIC
-                kind="vector",
+                name        = "end_effector",
+                source_plug = "",  # SYNTHETIC
+                kind        = "vector",
                 description=(
                     "World-space position of the IK HANDLE (the user's "
                     "puppet string). Synthetic \u2014 populated by the bridge."
                 ),
             ),
             HydrationInputEntry(
-                name="pole_vector",
-                source_plug="",  # SYNTHETIC
-                kind="vector",
+                name        = "pole_vector",
+                source_plug = "",  # SYNTHETIC
+                kind        = "vector",
                 description=(
                     "Pole vector from the IK handle. Synthetic \u2014 populated "
                     "by the bridge from handle.poleVector."
                 ),
             ),
             HydrationInputEntry(
-                name="twist",
-                source_plug="",  # SYNTHETIC
-                kind="float",
+                name        = "twist",
+                source_plug = "",  # SYNTHETIC
+                kind        = "float",
                 description=(
                     "Twist value from the IK handle. Synthetic \u2014 populated "
                     "by the bridge from handle.twist."
@@ -70,12 +70,12 @@ recipes.register_recipe(
         ],
         outputs=[
             HydrationOutputEntry(
-                name="local_matrices",
-                target_plug="",  # SYNTHETIC
-                kind="matrix",
-                arity="list",
-                shape_from_input="joints",
-                mode="compute",
+                name             = "local_matrices",
+                target_plug      = "",  # SYNTHETIC
+                kind             = "matrix",
+                arity            = "list",
+                shape_from_input = "joints",
+                mode             = "compute",
                 description=(
                     "Per-joint list (one slot per joint, all None by default) of "
                     "desired LOCAL (parent-relative) 4x4 matrices. Assign a slot "
@@ -85,12 +85,12 @@ recipes.register_recipe(
                 ),
             ),
             HydrationOutputEntry(
-                name="world_matrices",
-                target_plug="",  # SYNTHETIC
-                kind="matrix",
-                arity="list",
-                shape_from_input="joints",
-                mode="compute",
+                name             = "world_matrices",
+                target_plug      = "",  # SYNTHETIC
+                kind             = "matrix",
+                arity            = "list",
+                shape_from_input = "joints",
+                mode             = "compute",
                 description=(
                     "Per-joint list (one slot per joint, all None by default) of "
                     "desired WORLD (absolute) 4x4 matrices. Same application as "
@@ -99,26 +99,26 @@ recipes.register_recipe(
                 ),
             ),
             HydrationOutputEntry(
-                name="apply_rotate",
-                target_plug="",  # SYNTHETIC
-                kind="bool",
-                mode="compute",
+                name        = "apply_rotate",
+                target_plug = "",  # SYNTHETIC
+                kind        = "bool",
+                mode        = "compute",
                 description=("Gate: take rotation from the matrix (default True). "
                              "Scalar broadcasts; a per-joint list gates each joint."),
             ),
             HydrationOutputEntry(
-                name="apply_translate",
-                target_plug="",  # SYNTHETIC
-                kind="bool",
-                mode="compute",
+                name        = "apply_translate",
+                target_plug = "",  # SYNTHETIC
+                kind        = "bool",
+                mode        = "compute",
                 description=("Gate: take translate from the matrix (default False). "
                              "Scalar broadcasts; a per-joint list gates each joint."),
             ),
             HydrationOutputEntry(
-                name="apply_scale",
-                target_plug="",  # SYNTHETIC
-                kind="bool",
-                mode="compute",
+                name        = "apply_scale",
+                target_plug = "",  # SYNTHETIC
+                kind        = "bool",
+                mode        = "compute",
                 description=("Gate: take scale from the matrix (default False). "
                              "Scalar broadcasts; a per-joint list gates each joint."),
             ),
@@ -132,34 +132,34 @@ recipes.register_recipe(
         native_type="mPyConstraint",
         inputs=[
             HydrationInputEntry(
-                name="targetTranslate",
-                source_plug="targetTranslate",
-                kind="vector",
-                description="World-space target position to constrain to.",
+                name        = "targetTranslate",
+                source_plug = "targetTranslate",
+                kind        = "vector",
+                description = "World-space target position to constrain to.",
             ),
             HydrationInputEntry(
-                name="targetRotate",
-                source_plug="targetRotate",
-                kind="vector",
-                description="World-space target rotation (Euler XYZ degrees).",
+                name        = "targetRotate",
+                source_plug = "targetRotate",
+                kind        = "vector",
+                description = "World-space target rotation (Euler XYZ degrees).",
             ),
             HydrationInputEntry(
-                name="targetWeight",
-                source_plug="targetWeight",
-                kind="float",
-                description="Constraint weight, 0\u20131. Multiply your output by this.",
+                name        = "targetWeight",
+                source_plug = "targetWeight",
+                kind        = "float",
+                description = "Constraint weight, 0\u20131. Multiply your output by this.",
             ),
             HydrationInputEntry(
-                name="restTranslate",
-                source_plug="restTranslate",
-                kind="vector",
-                description="Rest-pose translate; output when targetWeight is 0.",
+                name        = "restTranslate",
+                source_plug = "restTranslate",
+                kind        = "vector",
+                description = "Rest-pose translate; output when targetWeight is 0.",
             ),
             HydrationInputEntry(
-                name="restRotate",
-                source_plug="restRotate",
-                kind="vector",
-                description="Rest-pose rotate; output when targetWeight is 0.",
+                name        = "restRotate",
+                source_plug = "restRotate",
+                kind        = "vector",
+                description = "Rest-pose rotate; output when targetWeight is 0.",
             ),
         ],
     )
@@ -170,25 +170,25 @@ recipes.register_recipe(
         native_type="mPyLocator",
         inputs=[
             HydrationInputEntry(
-                name="localPosition",
-                source_plug="localPosition",
-                kind="vector",
-                description="Local-space position offset of the locator.",
+                name        = "localPosition",
+                source_plug = "localPosition",
+                kind        = "vector",
+                description = "Local-space position offset of the locator.",
             ),
             HydrationInputEntry(
-                name="localScale",
-                source_plug="localScale",
-                kind="vector",
-                description="Local-space scale of the locator.",
+                name        = "localScale",
+                source_plug = "localScale",
+                kind        = "vector",
+                description = "Local-space scale of the locator.",
             ),
         ],
         outputs=[
             HydrationOutputEntry(
-                name="draw",
-                target_plug="",  # SYNTHETIC -- not a real plug
-                kind="draw",
-                arity="object",
-                mode="compute",
+                name        = "draw",
+                target_plug = "",  # SYNTHETIC -- not a real plug
+                kind        = "draw",
+                arity       = "object",
+                mode        = "compute",
                 description=(
                     "The whole drawing, in DRAW ORDER: one DrawItem, several "
                     "composed with '+', or a (possibly nested) list of them. "
@@ -215,18 +215,18 @@ recipes.register_recipe(
         native_type="mPyDeformer",
         inputs=[
             HydrationInputEntry(
-                name="envelope",
-                source_plug="envelope",
-                kind="float",
+                name        = "envelope",
+                source_plug = "envelope",
+                kind        = "float",
                 description=(
                     "Deformer envelope, 0.0 = no effect, 1.0 = full. "
                     "Inherited from MPxDeformerNode / geometryFilter."
                 ),
             ),
             HydrationInputEntry(
-                name="inputGeometry",
-                source_plug="input.inputGeometry",
-                kind="geometry",
+                name        = "inputGeometry",
+                source_plug = "input.inputGeometry",
+                kind        = "geometry",
                 description=(
                     "Multi -- the upstream geometry, READ-ONLY, reached as "
                     "self.input[i].inputGeometry. An MFnMesh / MFnNurbsCurve / "
@@ -236,10 +236,10 @@ recipes.register_recipe(
         ],
         outputs=[
             HydrationOutputEntry(
-                name="outputGeometry",
-                target_plug="outputGeometry",
-                kind="geometry",
-                mode="compute",
+                name        = "outputGeometry",
+                target_plug = "outputGeometry",
+                kind        = "geometry",
+                mode        = "compute",
                 description=(
                     "Multi -- the deformed geometry, reached as "
                     "self.outputGeometry[i]. A WRITABLE handle eager-copied "
@@ -305,10 +305,10 @@ recipes.register_recipe(
         ],
         outputs=[
             HydrationOutputEntry(
-                name="local_matrix",
-                target_plug="",  # SYNTHETIC
-                kind="matrix",
-                mode="compute",
+                name        = "local_matrix",
+                target_plug = "",  # SYNTHETIC
+                kind        = "matrix",
+                mode        = "compute",
                 description=(
                     "Desired LOCAL (parent-relative) (4, 4) matrix, or None "
                     "(default). Applied via offsetParentMatrix when at least "
@@ -318,30 +318,30 @@ recipes.register_recipe(
                 ),
             ),
             HydrationOutputEntry(
-                name="apply_rotate",
-                target_plug="",  # SYNTHETIC
-                kind="bool",
-                mode="compute",
+                name        = "apply_rotate",
+                target_plug = "",  # SYNTHETIC
+                kind        = "bool",
+                mode        = "compute",
                 description=(
                     "Gate (default True): take rotation from the matrix; "
                     "else keep the live TRS rotation. Synthetic."
                 ),
             ),
             HydrationOutputEntry(
-                name="apply_translate",
-                target_plug="",  # SYNTHETIC
-                kind="bool",
-                mode="compute",
+                name        = "apply_translate",
+                target_plug = "",  # SYNTHETIC
+                kind        = "bool",
+                mode        = "compute",
                 description=(
                     "Gate (default True): take translate from the matrix; "
                     "else keep the live TRS translate. Synthetic."
                 ),
             ),
             HydrationOutputEntry(
-                name="apply_scale",
-                target_plug="",  # SYNTHETIC
-                kind="bool",
-                mode="compute",
+                name        = "apply_scale",
+                target_plug = "",  # SYNTHETIC
+                kind        = "bool",
+                mode        = "compute",
                 description=(
                     "Gate (default True): take scale from the matrix; "
                     "else keep the live TRS scale. Synthetic."
@@ -359,9 +359,9 @@ recipes.register_recipe(
         native_type="mPyMesh",
         inputs=[
             HydrationInputEntry(
-                name="time",
-                source_plug="_timeIn",
-                kind="time",
+                name        = "time",
+                source_plug = "_timeIn",
+                kind        = "time",
                 description=(
                     "Current Maya scene time (frames). Auto-wired from "
                     "time1.outTime by the wrapper's create()."
@@ -370,10 +370,10 @@ recipes.register_recipe(
         ],
         outputs=[
             HydrationOutputEntry(
-                name="outMesh",
-                target_plug="outMesh",
-                kind="mesh",
-                mode="compute",
+                name        = "outMesh",
+                target_plug = "outMesh",
+                kind        = "mesh",
+                mode        = "compute",
                 description=(
                     "The cached MFnMesh built from self.points / "
                     "self.counts / self.indices each compute. Connect "
@@ -393,27 +393,27 @@ recipes.register_recipe(
         native_type="mPySkinCluster",
         inputs=[
             HydrationInputEntry(
-                name="envelope",
-                source_plug="envelope",
-                kind="float",
+                name        = "envelope",
+                source_plug = "envelope",
+                kind        = "float",
                 description=(
                     "Deformer envelope (0.0 = no effect, 1.0 = full). "
                     "Inherited from MPxGeometryFilter."
                 ),
             ),
             HydrationInputEntry(
-                name="matrix",
-                source_plug="matrix",
-                kind="matrix",
+                name        = "matrix",
+                source_plug = "matrix",
+                kind        = "matrix",
                 description=(
                     "Multi -- joint world matrices. Wrapper connects "
                     "each joint's worldMatrix[0] to matrix[i]."
                 ),
             ),
             HydrationInputEntry(
-                name="bindPreMatrix",
-                source_plug="bindPreMatrix",
-                kind="matrix",
+                name        = "bindPreMatrix",
+                source_plug = "bindPreMatrix",
+                kind        = "matrix",
                 description=(
                     "Multi -- joint bind-pose inverse matrices. "
                     "Wrapper seeds from joint.worldInverseMatrix at "
@@ -423,10 +423,10 @@ recipes.register_recipe(
         ],
         outputs=[
             HydrationOutputEntry(
-                name="outputGeometry",
-                target_plug="outputGeometry",
-                kind="mesh",
-                mode="compute",
+                name        = "outputGeometry",
+                target_plug = "outputGeometry",
+                kind        = "mesh",
+                mode        = "compute",
                 description=(
                     "Multi -- deformed mesh data. Maya's standard "
                     "deformer output."
@@ -445,15 +445,15 @@ recipes.register_recipe(
         native_type="mPyBlendShape",
         inputs=[
             HydrationInputEntry(
-                name="envelope",
-                source_plug="envelope",
-                kind="float",
-                description="Deformer envelope (0..1).",
+                name        = "envelope",
+                source_plug = "envelope",
+                kind        = "float",
+                description = "Deformer envelope (0..1).",
             ),
             HydrationInputEntry(
-                name="targetGeometry",
-                source_plug="targetGeometry",
-                kind="mesh",
+                name        = "targetGeometry",
+                source_plug = "targetGeometry",
+                kind        = "mesh",
                 description=(
                     "Multi -- target mesh shapes. Wrapper connects each "
                     "target's outMesh to targetGeometry[i]."
@@ -462,11 +462,11 @@ recipes.register_recipe(
         ],
         outputs=[
             HydrationOutputEntry(
-                name="outputGeometry",
-                target_plug="outputGeometry",
-                kind="mesh",
-                mode="compute",
-                description="Multi -- deformed mesh data.",
+                name        = "outputGeometry",
+                target_plug = "outputGeometry",
+                kind        = "mesh",
+                mode        = "compute",
+                description = "Multi -- deformed mesh data.",
             ),
         ],
     )
@@ -479,116 +479,116 @@ recipes.register_recipe(
         native_type="mPyFile",
         inputs=[
             HydrationInputEntry(
-                name="fileName",
-                source_plug="fileName",
-                kind="string",
-                description="Path to the texture image on disk.",
+                name        = "fileName",
+                source_plug = "fileName",
+                kind        = "string",
+                description = "Path to the texture image on disk.",
             ),
             HydrationInputEntry(
-                name="uvCoord",
-                source_plug="uvCoord",
-                kind="vector",
-                description="UV sample coordinate (compound float2).",
+                name        = "uvCoord",
+                source_plug = "uvCoord",
+                kind        = "vector",
+                description = "UV sample coordinate (compound float2).",
             ),
             HydrationInputEntry(
-                name="uvFilterSize",
-                source_plug="uvFilterSize",
-                kind="vector",
-                description="UV filter footprint (compound float2).",
+                name        = "uvFilterSize",
+                source_plug = "uvFilterSize",
+                kind        = "vector",
+                description = "UV filter footprint (compound float2).",
             ),
             HydrationInputEntry(
-                name="colorSpace",
-                source_plug="colorSpace",
-                kind="enum",
-                description="Input color space (25 entries).",
+                name        = "colorSpace",
+                source_plug = "colorSpace",
+                kind        = "enum",
+                description = "Input color space (25 entries).",
             ),
             HydrationInputEntry(
-                name="preFilter",
-                source_plug="preFilter",
-                kind="bool",
-                description="Enable CPU pre-filter blur.",
+                name        = "preFilter",
+                source_plug = "preFilter",
+                kind        = "bool",
+                description = "Enable CPU pre-filter blur.",
             ),
             HydrationInputEntry(
-                name="preFilterKernel",
-                source_plug="preFilterKernel",
-                kind="enum",
-                description="Kernel shape (Box / Quadratic / Quartic / Gaussian).",
+                name        = "preFilterKernel",
+                source_plug = "preFilterKernel",
+                kind        = "enum",
+                description = "Kernel shape (Box / Quadratic / Quartic / Gaussian).",
             ),
             HydrationInputEntry(
-                name="preFilterRadius",
-                source_plug="preFilterRadius",
-                kind="float",
-                description="Kernel radius in texels.",
+                name        = "preFilterRadius",
+                source_plug = "preFilterRadius",
+                kind        = "float",
+                description = "Kernel radius in texels.",
             ),
             HydrationInputEntry(
-                name="filterMode",
-                source_plug="filterMode",
-                kind="enum",
-                description="GPU sampler filter mode.",
+                name        = "filterMode",
+                source_plug = "filterMode",
+                kind        = "enum",
+                description = "GPU sampler filter mode.",
             ),
             HydrationInputEntry(
-                name="maxAnisotropy",
-                source_plug="maxAnisotropy",
-                kind="int",
-                description="Anisotropic-filter sample budget.",
+                name        = "maxAnisotropy",
+                source_plug = "maxAnisotropy",
+                kind        = "int",
+                description = "Anisotropic-filter sample budget.",
             ),
             HydrationInputEntry(
-                name="mipmapMode",
-                source_plug="mipmapMode",
-                kind="enum",
-                description="GPU mipmap generation (None / Auto).",
+                name        = "mipmapMode",
+                source_plug = "mipmapMode",
+                kind        = "enum",
+                description = "GPU mipmap generation (None / Auto).",
             ),
             HydrationInputEntry(
-                name="mipLODBias",
-                source_plug="mipLODBias",
-                kind="float",
-                description="LOD bias for mipmap selection.",
+                name        = "mipLODBias",
+                source_plug = "mipLODBias",
+                kind        = "float",
+                description = "LOD bias for mipmap selection.",
             ),
             HydrationInputEntry(
-                name="minLOD",
-                source_plug="minLOD",
-                kind="int",
-                description="Smallest mip the GPU may use.",
+                name        = "minLOD",
+                source_plug = "minLOD",
+                kind        = "int",
+                description = "Smallest mip the GPU may use.",
             ),
             HydrationInputEntry(
-                name="maxLOD",
-                source_plug="maxLOD",
-                kind="int",
-                description="Largest mip the GPU may use.",
+                name        = "maxLOD",
+                source_plug = "maxLOD",
+                kind        = "int",
+                description = "Largest mip the GPU may use.",
             ),
             HydrationInputEntry(
-                name="wrapModeU",
-                source_plug="wrapModeU",
-                kind="enum",
-                description="U-axis address mode.",
+                name        = "wrapModeU",
+                source_plug = "wrapModeU",
+                kind        = "enum",
+                description = "U-axis address mode.",
             ),
             HydrationInputEntry(
-                name="wrapModeV",
-                source_plug="wrapModeV",
-                kind="enum",
-                description="V-axis address mode.",
+                name        = "wrapModeV",
+                source_plug = "wrapModeV",
+                kind        = "enum",
+                description = "V-axis address mode.",
             ),
             HydrationInputEntry(
-                name="borderColor",
-                source_plug="borderColor",
-                kind="vector",
-                description="Color used when wrap mode = Border.",
+                name        = "borderColor",
+                source_plug = "borderColor",
+                kind        = "vector",
+                description = "Color used when wrap mode = Border.",
             ),
         ],
         outputs=[
             HydrationOutputEntry(
-                name="outColor",
-                target_plug="outColor",
-                kind="vector",
-                mode="read",
-                description="Sampled color3 (UV bilinear, scene-linear).",
+                name        = "outColor",
+                target_plug = "outColor",
+                kind        = "vector",
+                mode        = "read",
+                description = "Sampled color3 (UV bilinear, scene-linear).",
             ),
             HydrationOutputEntry(
-                name="outAlpha",
-                target_plug="outAlpha",
-                kind="float",
-                mode="read",
-                description="Sampled alpha.",
+                name        = "outAlpha",
+                target_plug = "outAlpha",
+                kind        = "float",
+                mode        = "read",
+                description = "Sampled alpha.",
             ),
         ],
     )

@@ -9,10 +9,10 @@ for p in ("mpynode_api1", "mpynode_api2"):
     if not cmds.pluginInfo(p, q=True, loaded=True):
         cmds.loadPlugin(p, quiet=True)
 
-NB = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fixtures", "mPyTransform")
+NB      = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fixtures", "mPyTransform")
 ORIG_MA = os.path.join(NB, "mPyTransform_bobXform_original.ma")
-BUNDLE = os.path.join(NB, "bobXform.bundle")
-TOL = 1e-4
+BUNDLE  = os.path.join(NB, "bobXform.bundle")
+TOL     = 1e-4
 
 # 1) Build/load the PYTHON reference: open original scene -> python mPyTransform 'bobXform'
 cmds.file(ORIG_MA, open=True, force=True)
@@ -44,11 +44,11 @@ assert cmds.objExists(PY)
 # composition of it. Probing only the composed plug leaves the authored one
 # unchecked, so both are compared -- purely additive, the worldMatrix
 # comparison below is untouched.
-sweep = [-4.0, -3.0, -2.0, -1.0, 1.0, 2.0, 3.0, 4.0]
-maxerr = 0.0
-ncomp = 0
-nsamp = 0
-maxbob = 0.0
+sweep      = [-4.0, -3.0, -2.0, -1.0, 1.0, 2.0, 3.0, 4.0]
+maxerr     = 0.0
+ncomp      = 0
+nsamp      = 0
+maxbob     = 0.0
 maxbob_opm = 0.0
 for tx in sweep:
     cmds.setAttr(PY + ".translateX", tx)

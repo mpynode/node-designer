@@ -31,8 +31,8 @@ def setUpModule():
 def _deformer_template_payload():
     """A definitions-only mPyDeformer payload (no methods_source), like a
     bundled template: build a bare node, serialize without persistent data."""
-    cls = get_spec("mPyDeformer").get_wrapper_class()
-    n = cls.build()                       # bare, unwired
+    cls     = get_spec("mPyDeformer").get_wrapper_class()
+    n       = cls.build()                       # bare, unwired
     payload = serialize_node(n, include_persistent=False)
     mc.delete(n.get_name())              # source node gone; payload is standalone
     return payload
@@ -44,10 +44,10 @@ class TestTemplateCreateCommand(unittest.TestCase):
 
     def test_create_seed_only_is_not_wired(self):
         payload = _deformer_template_payload()
-        mesh = mc.polyCube()[0]
+        mesh    = mc.polyCube()[0]
         mc.select(mesh)
         # seed-only path = _ImportNodeCommand(seed_setup=True), NOT _TemplateCreateCommand
-        cmd = _ImportNodeCommand(payload, restore_persistent=False, seed_setup=True)
+        cmd  = _ImportNodeCommand(payload, restore_persistent=False, seed_setup=True)
         name = run_undoable(cmd) or cmd.created_name
         node = wrap_node(name, "mPyDeformer")
         self.assertIn("def setup(self", node.get_methods_source() or "")
@@ -56,17 +56,17 @@ class TestTemplateCreateCommand(unittest.TestCase):
 
     def test_create_and_run_setup_wires(self):
         payload = _deformer_template_payload()
-        mesh = mc.polyCube()[0]
+        mesh    = mc.polyCube()[0]
         mc.select(mesh)
-        cmd = _TemplateCreateCommand(payload, "mPyDeformer", run_setup=True)
+        cmd  = _TemplateCreateCommand(payload, "mPyDeformer", run_setup=True)
         name = run_undoable(cmd) or cmd.created_name
         self.assertTrue(cmds.deformer(name, q=True, g=True))
 
     def test_snapshot_excludes_self(self):
         payload = _deformer_template_payload()
-        mesh = mc.polyCube()[0]
-        cmd = _TemplateCreateCommand(payload, "mPyDeformer", run_setup=True)
-        name = run_undoable(cmd) or cmd.created_name
+        mesh    = mc.polyCube()[0]
+        cmd     = _TemplateCreateCommand(payload, "mPyDeformer", run_setup=True)
+        name    = run_undoable(cmd) or cmd.created_name
         # node never wired to itself (authored setup excludes self; the created
         # node was not in the snapshot anyway since it didn't exist pre-create)
         geo = cmds.deformer(name, q=True, g=True) or []
@@ -74,9 +74,9 @@ class TestTemplateCreateCommand(unittest.TestCase):
 
     def test_undo_removes_node_and_wiring(self):
         payload = _deformer_template_payload()
-        mesh = mc.polyCube()[0]
+        mesh    = mc.polyCube()[0]
         mc.select(mesh)
-        cmd = _TemplateCreateCommand(payload, "mPyDeformer", run_setup=True)
+        cmd  = _TemplateCreateCommand(payload, "mPyDeformer", run_setup=True)
         name = run_undoable(cmd) or cmd.created_name
         self.assertTrue(mc.objExists(name))
         mc.undo()
@@ -90,7 +90,7 @@ class TestTemplateCreateCommand(unittest.TestCase):
         payload["methods_source"] = (
             "def setup(self, selection=None):\n"
             "    raise RuntimeError('boom-setup')\n")
-        cmd = _TemplateCreateCommand(payload, "mPyDeformer", run_setup=True)
+        cmd  = _TemplateCreateCommand(payload, "mPyDeformer", run_setup=True)
         name = run_undoable(cmd) or cmd.created_name
         self.assertTrue(mc.objExists(name))            # node still created
         self.assertIn("setup", cmd.tier_failures)
@@ -105,7 +105,7 @@ class TestTemplateCreateCommand(unittest.TestCase):
         payload["methods_source"] = (
             "def setup(self, selection=None):\n"
             "    self.add_variable('TEMPLATE_RAN', True, persistent=True)\n")
-        cmd = _TemplateCreateCommand(payload, "mPyDeformer", run_setup=True)
+        cmd  = _TemplateCreateCommand(payload, "mPyDeformer", run_setup=True)
         name = run_undoable(cmd) or cmd.created_name
         node = wrap_node(name, "mPyDeformer")
         # the template's custom setup survived (type default did NOT overwrite it)

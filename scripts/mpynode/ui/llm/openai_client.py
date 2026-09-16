@@ -27,8 +27,8 @@ from mpynode.ui.llm import config as _config
 from mpynode.ui.llm import tools as _tools
 from mpynode.ui.llm.system_prompt import build_system_prompt
 
-PROVIDER = "openai"
-_API_URL = "https://api.openai.com/v1/chat/completions"
+PROVIDER    = "openai"
+_API_URL    = "https://api.openai.com/v1/chat/completions"
 _MODELS_URL = "https://api.openai.com/v1/models"
 _MAX_TOKENS = 8192
 
@@ -48,9 +48,9 @@ def build_openai_tools():
         out.append({
             "type": "function",
             "function": {
-                "name": t["name"],
+                "name":        t["name"],
                 "description": t.get("description", ""),
-                "parameters": t.get("input_schema") or {"type": "object", "properties": {}},
+                "parameters":  t.get("input_schema") or {"type": "object", "properties": {}},
             },
         })
     return out
@@ -73,23 +73,23 @@ def _post(payload, api_key, on_retry=None, should_cancel=None, timeout=120.0):
 
 
 class OpenAIClient(QObject):
-    assistantText = Signal(str)
-    toolStarted = Signal(str)
-    toolFinished = Signal(str)
-    turnFinished = Signal()
-    notice = Signal(str)
-    thinking = Signal(str)  # interface compat (Chat Completions hides reasoning)
+    assistantText  = Signal(str)
+    toolStarted    = Signal(str)
+    toolFinished   = Signal(str)
+    turnFinished   = Signal()
+    notice         = Signal(str)
+    thinking       = Signal(str)  # interface compat (Chat Completions hides reasoning)
     retryScheduled = Signal(int, int, int, int, str)
-    tokensUsed = Signal(int)
-    errorOccurred = Signal(str)
-    busyChanged = Signal(bool)
+    tokensUsed     = Signal(int)
+    errorOccurred  = Signal(str)
+    busyChanged    = Signal(bool)
 
     def __init__(self, ctx_provider, parent=None):
         super().__init__(parent)
         self._ctx_provider = ctx_provider
-        self._messages = []  # OpenAI chat history
-        self._busy = False
-        self._cancel = threading.Event()
+        self._messages     = []  # OpenAI chat history
+        self._busy         = False
+        self._cancel       = threading.Event()
 
     def reset(self):
         self._messages = []
@@ -136,11 +136,11 @@ class OpenAIClient(QObject):
 
     def _run_turn(self, api_key, model):
         try:
-            system = build_system_prompt()
-            oa_tools = build_openai_tools()
-            ctx = self._ctx_provider()
-            effort = _config.get_effort(PROVIDER)        # off/low/medium/high
-            use_effort = effort != "off"                 # -> reasoning_effort
+            system     = build_system_prompt()
+            oa_tools   = build_openai_tools()
+            ctx        = self._ctx_provider()
+            effort     = _config.get_effort(PROVIDER)  # off/low/medium/high
+            use_effort = effort != "off"               # -> reasoning_effort
             err_rounds = 0
             for _ in range(24):  # tool-call rounds cap (safety)
                 if self._cancel.is_set():
@@ -193,7 +193,7 @@ class OpenAIClient(QObject):
 
                 n_err = 0
                 for tc in tool_calls:
-                    fn = (tc.get("function") or {})
+                    fn   = (tc.get("function") or {})
                     name = fn.get("name", "")
                     try:
                         args = json.loads(fn.get("arguments") or "{}")
@@ -206,9 +206,9 @@ class OpenAIClient(QObject):
                     if isinstance(result, dict) and "error" in result:
                         n_err += 1
                     self._messages.append({
-                        "role": "tool",
+                        "role":         "tool",
                         "tool_call_id": tc.get("id"),
-                        "content": json.dumps(result, default=str),
+                        "content":      json.dumps(result, default=str),
                     })
 
                 err_rounds = err_rounds + 1 if n_err == len(tool_calls) else 0
@@ -304,7 +304,7 @@ def describe_model(api_key, model, timeout=20.0):
         msg = "request failed"
         try:
             body = json.loads(exc.read().decode("utf-8", "replace"))
-            msg = body.get("error", {}).get("message", msg)
+            msg  = body.get("error", {}).get("message", msg)
         except Exception:
             pass
         return False, "HTTP %s: %s" % (getattr(exc, "code", "?"), msg)

@@ -22,9 +22,9 @@ class TestParseArgValue(unittest.TestCase):
     def test_parse_arg_value(self):
         from mpynode.ui.widgets.command_args import _parse_arg_value, _UNSET
 
-        self.assertEqual(_parse_arg_value("42"), 42)
+        self.assertEqual(_parse_arg_value("42"),     42)
         self.assertEqual(_parse_arg_value("[1, 2]"), [1, 2])
-        self.assertEqual(_parse_arg_value("foo"), "foo")
+        self.assertEqual(_parse_arg_value("foo"),    "foo")
         self.assertIs(_parse_arg_value("  "), _UNSET)
 
     def test_the_run_path_still_reaches_it(self):

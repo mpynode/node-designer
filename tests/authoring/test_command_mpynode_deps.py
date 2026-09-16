@@ -42,7 +42,7 @@ from mpynode._common.methods.maya_command import detect_commands
 from mpynode.native.compiler.kernels import command_dispatch as cd
 from tests import _paths
 
-_ROOT = _paths.ROOT
+_ROOT      = _paths.ROOT
 _TEMPLATES = os.path.join(_ROOT, "templates")
 _SCAN_TOOL = os.path.join(_ROOT, "tools", "scan_command_mpynode_deps.py")
 

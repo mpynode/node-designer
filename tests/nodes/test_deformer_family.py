@@ -97,7 +97,7 @@ class TestF0DeformerEndToEnd(unittest.TestCase):
     def _build_deformer(self):
         from mpynode.wrappers.mpy_deformer import MPyDeformer
         plane = mc.polyPlane(name="p", w=2, h=2, sx=4, sy=4)[0]
-        d = MPyDeformer.create_on(plane)
+        d     = MPyDeformer.create_on(plane)
         return plane, d
 
     def test_eager_copy_no_op_returns_input_unchanged(self):
@@ -106,10 +106,10 @@ class TestF0DeformerEndToEnd(unittest.TestCase):
         BEFORE exec, and an empty expression doesn't touch it."""
         plane, d = self._build_deformer()
         d.set_compute_expression("")
-        v0 = mc.xform(plane + ".vtx[0]", q=True, ws=True, t=True)
+        v0  = mc.xform(plane + ".vtx[0]", q=True, ws=True, t=True)
         v12 = mc.xform(plane + ".vtx[12]", q=True, ws=True, t=True)
         # vtx[0] of a 4x4 plane is (-1, 0, -1); vtx[12] is the centre.
-        self.assertAlmostEqual(v0[1], 0.0, places=4)
+        self.assertAlmostEqual(v0[1],  0.0, places=4)
         self.assertAlmostEqual(v12[0], 0.0, places=4)
         self.assertAlmostEqual(v12[1], 0.0, places=4)
         self.assertAlmostEqual(v12[2], 0.0, places=4)
@@ -224,7 +224,7 @@ class TestF0InitBindingsTier(unittest.TestCase):
         readable via ``self.MULT`` from the expression."""
         from mpynode.wrappers.mpy_deformer import MPyDeformer
         plane = mc.polyPlane(name="p", w=2, h=2, sx=4, sy=4)[0]
-        d = MPyDeformer.create_on(plane)
+        d     = MPyDeformer.create_on(plane)
         d.set_init_expression("self.MULT = 3.0")
         d.set_compute_expression(
             "mesh = self.outputGeometry[0]\n"
@@ -287,7 +287,7 @@ class TestF2CurveDeformerEndToEnd(unittest.TestCase):
         from mpynode.wrappers.mpy_deformer import MPyDeformer
 
         crv = mc.curve(name="testCrv", p=[(0, 0, 0), (1, 0, 0), (2, 0, 0), (3, 0, 0)], d=2)
-        d = MPyDeformer.create_on(crv)
+        d   = MPyDeformer.create_on(crv)
         d.set_compute_expression(
             "crv = self.outputGeometry[0]; "
             "cvs = crv.cvPositions(); "
@@ -304,7 +304,7 @@ class TestF2CurveDeformerEndToEnd(unittest.TestCase):
         from mpynode._common.storedvars.stored_vars_api import get_variables
 
         crv = mc.curve(name="testCrv2", p=[(0, 0, 0), (1, 0, 0), (2, 0, 0), (3, 0, 0)], d=2)
-        d = MPyDeformer.create_on(crv)
+        d   = MPyDeformer.create_on(crv)
         d.set_compute_expression(
             "crv = self.outputGeometry[0]; "
             "self.cv_count = int(crv.numCVs())"
@@ -328,8 +328,8 @@ class TestF2SurfaceDeformerEndToEnd(unittest.TestCase):
         from mpynode.wrappers.mpy_deformer import MPyDeformer
 
         srf = mc.nurbsPlane(name="testSrf", u=4, v=4)[0]
-        y0 = mc.xform(srf + ".cv[0][0]", q=True, ws=True, t=True)[1]
-        d = MPyDeformer.create_on(srf)
+        y0  = mc.xform(srf + ".cv[0][0]", q=True, ws=True, t=True)[1]
+        d   = MPyDeformer.create_on(srf)
         d.set_compute_expression(
             "srf = self.outputGeometry[0]; "
             "cvs = srf.cvPositions(); "
@@ -344,7 +344,7 @@ class TestF2SurfaceDeformerEndToEnd(unittest.TestCase):
         from mpynode._common.storedvars.stored_vars_api import get_variables
 
         srf = mc.nurbsPlane(name="testSrf2", u=4, v=4)[0]
-        d = MPyDeformer.create_on(srf)
+        d   = MPyDeformer.create_on(srf)
         d.set_compute_expression(
             "srf = self.outputGeometry[0]; "
             "self.uv_count_u = int(srf.numCVsInU()); "
@@ -424,7 +424,7 @@ class TestF3SkinClusterEndToEnd(unittest.TestCase):
 
     def test_matrix_attrs_present(self):
         plane = mc.polyPlane(name="sP")[0]
-        sc = mc.deformer(plane, type="mPySkinCluster")[0]
+        sc    = mc.deformer(plane, type="mPySkinCluster")[0]
         self.assertTrue(mc.attributeQuery("matrix", node=sc, exists=True))
         self.assertTrue(mc.attributeQuery("bindPreMatrix", node=sc, exists=True))
 
@@ -432,7 +432,7 @@ class TestF3SkinClusterEndToEnd(unittest.TestCase):
         j1 = mc.joint(p=(0, 0, 0), n="j1")
         mc.select(clear=True)
         plane = mc.polyPlane(name="sP", w=2, h=2, sx=4, sy=4)[0]
-        sc = mc.deformer(plane, type="mPySkinCluster")[0]
+        sc    = mc.deformer(plane, type="mPySkinCluster")[0]
         mc.connectAttr(j1 + ".worldMatrix[0]", sc + ".matrix[0]", force=True)
         mc.setAttr(
             sc + "._computeSource",
@@ -453,7 +453,7 @@ class TestF3BlendShapeEndToEnd(unittest.TestCase):
 
     def test_deform_pushes_y(self):
         plane = mc.polyPlane(name="bP", w=2, h=2, sx=4, sy=4)[0]
-        bs = mc.deformer(plane, type="mPyBlendShape")[0]
+        bs    = mc.deformer(plane, type="mPyBlendShape")[0]
         mc.setAttr(
             bs + "._computeSource",
             "mesh = self.outputGeometry[0]; "
@@ -529,7 +529,7 @@ mesh.setPoints(out)
 def _make_base_and_target():
     """Build a flat base plane + an identical-topology target whose verts
     are all pushed +1.0 in Y (object space). Returns (base, target)."""
-    base = mc.polyPlane(name="bBase", w=2, h=2, sx=4, sy=4)[0]
+    base   = mc.polyPlane(name="bBase", w=2, h=2, sx=4, sy=4)[0]
     target = mc.polyPlane(name="bTarget", w=2, h=2, sx=4, sy=4)[0]
     # move the target's VERTICES, not its transform, so object-space
     # positions differ from the base.
@@ -544,7 +544,7 @@ class TestBlendShapeTargetPlugs(unittest.TestCase):
 
     def test_target_geometry_plug_created_by_initializer(self):
         plane = mc.polyPlane(name="bP")[0]
-        bs = mc.deformer(plane, type="mPyBlendShape")[0]
+        bs    = mc.deformer(plane, type="mPyBlendShape")[0]
         self.assertTrue(
             mc.attributeQuery("targetGeometry", node=bs, exists=True),
             "targetGeometry[] plug must be created by node_initializer",
@@ -562,7 +562,7 @@ class TestBlendShapeTargetPlugs(unittest.TestCase):
         from mpynode.wrappers.mpy_blend_shape import MPyBlendShape
 
         plane = mc.polyPlane(name="bPlain")[0]
-        bare = mc.deformer(plane, type="mPyBlendShape")[0]
+        bare  = mc.deformer(plane, type="mPyBlendShape")[0]
         self.assertFalse(
             mc.attributeQuery("weight", node=bare, exists=True),
             "weight[] must NOT come from node_initializer",
@@ -582,7 +582,7 @@ class TestBlendShapeTargetPlugs(unittest.TestCase):
         from mpynode.wrappers.mpy_blend_shape import MPyBlendShape
 
         base, target = _make_base_and_target()
-        bs = MPyBlendShape.create(mesh=base, targets=[target], name="bsAlias")
+        bs   = MPyBlendShape.create(mesh=base, targets=[target], name="bsAlias")
         name = bs.get_name()
 
         self.assertEqual(bs.aliases, ["bTarget"])
@@ -699,7 +699,7 @@ class TestBlendShapeNameDecoding(unittest.TestCase):
         from mpynode.wrappers.mpy_blend_shape import MPyBlendShape
 
         base = mc.polyPlane(name="dBase", w=2, h=2, sx=2, sy=2)[0]
-        bs = MPyBlendShape.create(mesh=base, name="bsDecode")
+        bs   = MPyBlendShape.create(mesh=base, name="bsDecode")
         for i, n in enumerate(names):
             t = mc.polyPlane(name="dT%d" % i, w=2, h=2, sx=2, sy=2)[0]
             bs.add_target(t, n)
@@ -707,7 +707,7 @@ class TestBlendShapeNameDecoding(unittest.TestCase):
 
     def test_plain_names_are_main_targets(self):
         s = self._bs(["browUp", "mouthOpen"]).parse_aliases()
-        self.assertEqual(s["main"], [0, 1])
+        self.assertEqual(s["main"],  [0, 1])
         self.assertEqual(s["inter"], {})
         self.assertEqual(s["combo"], {})
 
@@ -760,7 +760,7 @@ class TestBlendShapeDeltaTables(unittest.TestCase):
         from mpynode.wrappers.mpy_blend_shape import MPyBlendShape
 
         base = mc.polyPlane(name="tBase", w=2, h=2, sx=2, sy=2)[0]
-        bs = MPyBlendShape.create(mesh=base, name="bsTables")
+        bs   = MPyBlendShape.create(mesh=base, name="bsTables")
         bs.ensure_delta_attrs()
         if correctives:
             bs.ensure_corrective_attrs()
@@ -778,8 +778,8 @@ class TestBlendShapeDeltaTables(unittest.TestCase):
         bs.add_target(self._target("tA", {0: (0.0, 1.0, 0.0)}), "A")
         tables = bs.rebuild()
 
-        self.assertEqual(tables["targetOffset"], [0, 1])
-        self.assertEqual(tables["targetComponents"], [0])
+        self.assertEqual(tables["targetOffset"],      [0, 1])
+        self.assertEqual(tables["targetComponents"],  [0])
         self.assertEqual(len(tables["targetDeltas"]), 3)
         self.assertAlmostEqual(tables["targetDeltas"][1], 1.0, places=5)
 
@@ -789,8 +789,8 @@ class TestBlendShapeDeltaTables(unittest.TestCase):
         bs.add_target(self._target("tB", {1: (1.0, 0.0, 0.0),
                                           2: (1.0, 0.0, 0.0)}), "B")
         t = bs.rebuild()
-        self.assertEqual(t["targetOffset"], [0, 1, 3])
-        self.assertEqual(t["targetComponents"], [0, 1, 2])
+        self.assertEqual(t["targetOffset"],      [0, 1, 3])
+        self.assertEqual(t["targetComponents"],  [0, 1, 2])
         self.assertEqual(len(t["targetDeltas"]), 9)
 
     def test_in_between_delta_is_stored_RAW(self):
@@ -816,8 +816,8 @@ class TestBlendShapeDeltaTables(unittest.TestCase):
     def test_combo_delta_is_stored_RAW(self):
         """Same for a combo: the drivers are NOT subtracted out of it."""
         bs = self._rig(correctives=True)
-        bs.add_target(self._target("tA", {0: (0.0, 1.0, 0.0)}), "A")
-        bs.add_target(self._target("tB", {0: (0.0, 2.0, 0.0)}), "B")
+        bs.add_target(self._target("tA", {0: (0.0, 1.0, 0.0)}),  "A")
+        bs.add_target(self._target("tB", {0: (0.0, 2.0, 0.0)}),  "B")
         bs.add_target(self._target("tAB", {0: (0.0, 3.5, 0.0)}), "A_B")
         t = bs.rebuild()
 
@@ -851,13 +851,13 @@ class TestBlendShapeDeltaTables(unittest.TestCase):
             "mesh.setPoints(base + self.envelope * self.morphs.deltas(base, w))\n"
         )
 
-        name = bs.get_name()
+        name  = bs.get_name()
         shape = mc.listRelatives("tBase", shapes=True, ni=True, f=True)[0]
 
         def y0(a, a50):
             mc.setAttr(name + ".weight[0]", a)
             mc.setAttr(name + ".weight[1]", a50)
-            mc.setAttr(name + ".envelope", 1.0)
+            mc.setAttr(name + ".envelope",  1.0)
             mc.dgdirty(name + ".outputGeometry")
             mc.getAttr(shape + ".outMesh")
             return mc.xform(shape + ".vtx[0]", query=True, objectSpace=True,
@@ -916,7 +916,7 @@ class TestBlendShapeDeltaTables(unittest.TestCase):
         for label in ("A", "B", "C"):
             bs.add_target(self._target("t" + label, {0: (0.0, 1.0, 0.0)}), label)
         bs.remove_target(1)
-        self.assertEqual(bs.aliases, ["A", "", "C"])
+        self.assertEqual(bs.aliases,      ["A", "", "C"])
         self.assertEqual(bs.target_names, ["A", "", "C"])
         self.assertEqual(bs.target_count, 3)
 
@@ -933,7 +933,7 @@ class TestBlendShapeTableStaleness(unittest.TestCase):
         from mpynode.wrappers.mpy_blend_shape import MPyBlendShape
 
         base = mc.polyPlane(name="sBase", w=2, h=2, sx=2, sy=2)[0]
-        bs = MPyBlendShape.create(mesh=base, name="bsStale")
+        bs   = MPyBlendShape.create(mesh=base, name="bsStale")
         bs.ensure_delta_attrs()
         bs.ensure_corrective_attrs()
         for label in ("A", "B"):
@@ -948,7 +948,7 @@ class TestBlendShapeTableStaleness(unittest.TestCase):
 
     def test_adding_a_target_makes_them_stale(self):
         bs = self._rig()
-        t = mc.polyPlane(name="sC", w=2, h=2, sx=2, sy=2)[0]
+        t  = mc.polyPlane(name="sC", w=2, h=2, sx=2, sy=2)[0]
         bs.add_target(t, "C")
         self.assertTrue(bs.tables_stale())
         bs.rebuild()
@@ -977,7 +977,7 @@ class TestBlendShapeTableStaleness(unittest.TestCase):
         from mpynode.wrappers.mpy_blend_shape import MPyBlendShape
 
         base = mc.polyPlane(name="nBase", w=2, h=2, sx=2, sy=2)[0]
-        bs = MPyBlendShape.create(mesh=base, name="bsNoTables")
+        bs   = MPyBlendShape.create(mesh=base, name="bsNoTables")
         self.assertTrue(bs.tables_stale())
 
 
@@ -1018,7 +1018,7 @@ class TestManualSetAttrForcesRecompute(unittest.TestCase):
         downstream mesh shape's vertex to move."""
         p0 = self._vtx_pos()
         mc.setAttr("sphereWaveFromLocator.offset", 2.5)
-        p1 = self._vtx_pos()
+        p1    = self._vtx_pos()
         delta = sum(abs(a - b) for a, b in zip(p0, p1))
         self.assertGreater(
             delta, 1e-3,
@@ -1028,7 +1028,7 @@ class TestManualSetAttrForcesRecompute(unittest.TestCase):
     def test_manual_amplitude_setattr_moves_vertex(self):
         p0 = self._vtx_pos()
         mc.setAttr("sphereWaveFromLocator.amplitude", 0.6)
-        p1 = self._vtx_pos()
+        p1    = self._vtx_pos()
         delta = sum(abs(a - b) for a, b in zip(p0, p1))
         self.assertGreater(delta, 1e-3,
             f"amplitude setAttr should move the vertex; delta={delta}")
@@ -1039,7 +1039,7 @@ class TestManualSetAttrForcesRecompute(unittest.TestCase):
         # driver, so integer / half-integer frequencies (18.0) leave the wave
         # phase ~unchanged. 2.25 perturbs it well above the 1e-3 gate.
         mc.setAttr("sphereWaveFromLocator.frequency", 2.25)
-        p1 = self._vtx_pos()
+        p1    = self._vtx_pos()
         delta = sum(abs(a - b) for a, b in zip(p0, p1))
         self.assertGreater(delta, 1e-3,
             f"frequency setAttr should move the vertex; delta={delta}")
@@ -1140,9 +1140,9 @@ class TestDoubleImportNoRecursion(unittest.TestCase):
         if not src or not shapes:
             self.fail(f"{deformer} missing driver or consumer mesh")
         driver = src[0]
-        shape = shapes[0]
-        vtx = self._vtx(shape)
-        p_a = mc.xform(vtx, q=True, ws=True, t=True)
+        shape  = shapes[0]
+        vtx    = self._vtx(shape)
+        p_a    = mc.xform(vtx, q=True, ws=True, t=True)
         mc.setAttr(f"{driver}.translateY", 4.5)
         p_b = mc.xform(vtx, q=True, ws=True, t=True)
         return sum(abs(a - b) for a, b in zip(p_a, p_b)), shape

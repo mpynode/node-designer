@@ -11,7 +11,7 @@ try:  # QApplication must exist before importing UI modules that build widgets.
     except Exception:
         from PySide2.QtWidgets import QApplication
     _app = QApplication.instance() or QApplication([])
-    _QT = True
+    _QT  = True
 except Exception:  # pragma: no cover - Qt missing
     _QT = False
 
@@ -105,7 +105,7 @@ class TestModeTabs(unittest.TestCase):
             return tw
 
         plain = _west()
-        wide = _west(_WideTabBar())
+        wide  = _west(_WideTabBar())
         self.assertIs(wide.tabBar().__class__, _WideTabBar)
         pw = plain.tabBar().tabRect(0).width()
         ww = wide.tabBar().tabRect(0).width()
@@ -166,9 +166,9 @@ class TestLayoutPersistence(unittest.TestCase):
         from mpynode.ui.mpynode_designer import _coerce_int_list
         self.assertEqual(_coerce_int_list([1, 2, 3], 3), [1, 2, 3])
         self.assertEqual(_coerce_int_list((10, 20), 2), [10, 20])
-        self.assertIsNone(_coerce_int_list([1, 2], 3))          # wrong length
-        self.assertIsNone(_coerce_int_list("nope", 3))          # wrong type
-        self.assertIsNone(_coerce_int_list(None, 3))            # None
+        self.assertIsNone(_coerce_int_list([1, 2], 3))           # wrong length
+        self.assertIsNone(_coerce_int_list("nope", 3))           # wrong type
+        self.assertIsNone(_coerce_int_list(None, 3))             # None
         self.assertIsNone(_coerce_int_list(["a", "b", "c"], 3))  # non-int elems
 
     def test_restore_layout_wired_in_build_ui(self):

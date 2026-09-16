@@ -14,12 +14,12 @@ import json
 import os
 import sys
 
-_HERE = os.path.dirname(os.path.abspath(__file__))
-_ROOT = os.path.dirname(_HERE)
+_HERE    = os.path.dirname(os.path.abspath(__file__))
+_ROOT    = os.path.dirname(_HERE)
 _HARNESS = os.path.join(_ROOT, "tools", "harness")
 sys.path.insert(0, _HARNESS)
 
-MANIFEST = os.path.join(_HARNESS, "templates.json")
+MANIFEST  = os.path.join(_HARNESS, "templates.json")
 TEMPLATES = os.path.join(_ROOT, "templates")
 
 
@@ -37,10 +37,10 @@ def main():
     from demo_specs import demo_specs_for
 
     check = "--check" in sys.argv
-    rows = json.load(open(MANIFEST))
-    have = {r["mpn"].replace("\\", "/") for r in rows}
+    rows  = json.load(open(MANIFEST))
+    have  = {r["mpn"].replace("\\", "/") for r in rows}
 
-    disk = []
+    disk  = []
     for dirpath, _dirs, files in os.walk(TEMPLATES):
         if "template.mpn" in files:
             p = os.path.join(dirpath, "template.mpn")
@@ -51,18 +51,18 @@ def main():
     for rel in disk:
         if rel in have:
             continue
-        path = os.path.join(_ROOT, rel)
-        data = (json.load(open(path)) or {}).get("data") or {}
-        demos = demo_specs_for(path)
+        path   = os.path.join(_ROOT, rel)
+        data   = (json.load(open(path)) or {}).get("data") or {}
+        demos  = demo_specs_for(path)
         folder = _folder_for(rel)
         row = {
-            "mpn": rel,
-            "folder": folder,
-            "plugin": folder + "_plugin",
+            "mpn":         rel,
+            "folder":      folder,
+            "plugin":      folder + "_plugin",
             "native_type": data.get("native_type") or data.get("node_type"),
-            "node_name": data.get("node_name"),
-            "demo_label": demos[0][1] if demos else "Run demo",
-            "n_demos": len(demos),
+            "node_name":   data.get("node_name"),
+            "demo_label":  demos[0][1] if demos else "Run demo",
+            "n_demos":     len(demos),
         }
         rows.append(row)
         added.append(row)

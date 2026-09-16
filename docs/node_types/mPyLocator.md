@@ -37,7 +37,7 @@ drawing accumulated in a loop needs no `sum()`, and its items stay individually
 addressable (swap two, drop one, reorder):
 
 ```python
-rings = [DrawCircle(radius=r) for r in radii]
+rings     = [DrawCircle(radius=r) for r in radii]
 self.draw = [background, rings, DrawText("hip_ctrl", position=(0, 2, 0))]
 ```
 
@@ -99,7 +99,7 @@ Transforms and restyling are chainable methods returning **new** items, so a
 drawing built once can be placed many times:
 
 ```python
-ring = DrawCircle(radius=1).colored(AMBER)
+ring      = DrawCircle(radius=1).colored(AMBER)
 self.draw = ring + ring.translated(0, 2, 0).scaled(0.5)
 ```
 

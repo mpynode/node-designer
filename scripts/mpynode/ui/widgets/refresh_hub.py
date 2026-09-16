@@ -71,9 +71,9 @@ from mpynode._common.lifecycle.callbacks import CALLBACK_MANAGER, OWNER_SHARED
 _DEBOUNCE_MS = 50
 
 EVENT_ATTR_ADDED_OR_REMOVED = "attribute_added_or_removed"
-EVENT_ATTR_SET = "attribute_set"
-EVENT_NAME_CHANGED = "name_changed"
-EVENT_NODE_ABOUT_TO_DELETE = "node_about_to_delete"
+EVENT_ATTR_SET              = "attribute_set"
+EVENT_NAME_CHANGED          = "name_changed"
+EVENT_NODE_ABOUT_TO_DELETE  = "node_about_to_delete"
 
 _ALL_EVENTS = (
     EVENT_ATTR_ADDED_OR_REMOVED,
@@ -112,7 +112,7 @@ class RefreshHub:
 
     def __init__(self, node_name: str):
         self._node_name = node_name
-        self._mobject = _resolve_mobject_for_name(node_name)
+        self._mobject   = _resolve_mobject_for_name(node_name)
         # {view_id: (callback, events_tuple, plug_filter)}
         self._subscribers: dict = {}
         # Event names waiting on the next debounce flush.
@@ -124,7 +124,7 @@ class RefreshHub:
         # CALLBACK_MANAGER tokens for the 4 MNodeMessage handles.
         self._tokens: list = []
         # Debounce timer; lazy-built so headless paths work without Qt.
-        self._timer = None
+        self._timer    = None
         self._attached = False
         if self._mobject is not None and not self._mobject.isNull():
             self._attach_maya_callbacks()
@@ -136,10 +136,10 @@ class RefreshHub:
 
     def subscribe(
         self,
-        view_id: str,
-        callback: Callable[[str], None],
-        events: Any = "all",
-        plug_filter=None,
+        view_id:    str,
+        callback:   Callable[[str], None],
+        events:     Any                   = "all",
+        plug_filter                       = None,
     ) -> None:
         """Register a callback for one or more event types.
 
@@ -160,7 +160,7 @@ class RefreshHub:
             ev_tuple: Tuple[str,...] = _ALL_EVENTS
         else:
             ev_tuple = tuple(events)
-        pf_tuple = tuple(plug_filter) if plug_filter else None
+        pf_tuple                   = tuple(plug_filter) if plug_filter else None
         self._subscribers[view_id] = (callback, ev_tuple, pf_tuple)
 
     def unsubscribe(self, view_id: str) -> bool:
@@ -194,7 +194,7 @@ class RefreshHub:
                 CALLBACK_MANAGER.unregister(tok)
             except Exception:
                 pass
-        self._tokens = []
+        self._tokens   = []
         self._attached = False
         if self._timer is not None:
             try:
@@ -280,7 +280,7 @@ class RefreshHub:
         plug-name set."""
         if not self._pending_events:
             return
-        events_snapshot = set(self._pending_events)
+        events_snapshot     = set(self._pending_events)
         plug_names_snapshot = set(self._pending_plug_names)
         self._pending_events.clear()
         self._pending_plug_names.clear()
@@ -376,7 +376,7 @@ class RefreshHub:
             try:
                 from maya import OpenMaya as om
 
-                attr_mob = plug.attribute()
+                attr_mob        = plug.attribute()
                 plug_short_name = om.MFnAttribute(attr_mob).name() or ""
             except Exception:
                 plug_short_name = ""
@@ -392,7 +392,7 @@ class RefreshHub:
         try:
             from maya import OpenMaya as om
 
-            fn = om.MFnDependencyNode(self._mobject)
+            fn              = om.MFnDependencyNode(self._mobject)
             self._node_name = fn.name()
         except Exception:
             pass

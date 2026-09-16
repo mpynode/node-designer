@@ -121,7 +121,7 @@ def _np_to_mmatrix(arr) -> om.MMatrix:
     if arr is None or not hasattr(arr, "shape") or arr.shape != (4, 4):
         return om.MMatrix()
     flat = np.asarray(arr, dtype=np.float64).flatten().tolist()
-    out = om.MMatrix()
+    out  = om.MMatrix()
     om.MScriptUtil.createMatrixFromList(flat, out)
     return out
 
@@ -267,7 +267,7 @@ def _resolve_desired_local(local_np, local_matrix, g_r, g_t, g_s):
 # matrix-typed output from MPxTransform.compute() segfaults in Maya 2026; a
 # double[] does not. A paired stock ``fourByFourMatrix`` relay rebuilds these
 # into the matrix wired to offsetParentMatrix.
-_OPM_FLAT_ATTR = "_outLocalFlat"
+_OPM_FLAT_ATTR       = "_outLocalFlat"
 _OPM_FLAT_ATTR_SHORT = "_olf"
 # Name of the paired relay node's connection target on the transform.
 _RELAY_NODE_SUFFIX = "_opmRelay"
@@ -361,7 +361,7 @@ class MPyTransformMatrix(ommpx.MPxTransformationMatrix):
         self._expr_str: str = ""
         self._expr_code = compile_expression("")
         # Re-entrancy guard for asMatrix() -- see the guard block there.
-        self._in_as_matrix = False
+        self._in_as_matrix   = False
         self._reentry_warned = False
 
     @staticmethod
@@ -418,7 +418,7 @@ class MPyTransformMatrix(ommpx.MPxTransformationMatrix):
 
         # Look up the owning node's name from the cached MObject.
         try:
-            fn_node = om.MFnDependencyNode(self._transform_mobject)
+            fn_node   = om.MFnDependencyNode(self._transform_mobject)
             node_name = fn_node.name()
         except Exception:
             return None
@@ -426,7 +426,7 @@ class MPyTransformMatrix(ommpx.MPxTransformationMatrix):
         # Stored vars.
         stored_vars: dict = {}
         try:
-            sv_str = fn_node.findPlug("_storedVarsData", True).asString()
+            sv_str      = fn_node.findPlug("_storedVarsData", True).asString()
             stored_vars = _svstore.load_for_compute(self._transform_mobject, sv_str)
         except Exception:
             stored_vars = {}
@@ -455,10 +455,10 @@ class MPyTransformMatrix(ommpx.MPxTransformationMatrix):
         # depend on the authored opm.
         srt_t, srt_r, srt_sc, srt_sh, srt_ro = _read_transform_components(self)
         compute_locals = {
-            "translate": srt_t,
-            "rotate": srt_r,
-            "scale": srt_sc,
-            "shear": srt_sh,
+            "translate":    srt_t,
+            "rotate":       srt_r,
+            "scale":        srt_sc,
+            "shear":        srt_sh,
             "rotate_order": srt_ro,
             "local_matrix": None,
             # Gates default TRUE. With local_matrix None the dispatch is still a
@@ -466,9 +466,9 @@ class MPyTransformMatrix(ommpx.MPxTransformationMatrix):
             # plain transform -- but setting local_matrix then drives ALL
             # channels without also opening gates. Close one explicitly
             # (self.apply_scale = False) to leave that channel live.
-            "apply_rotate": True,
+            "apply_rotate":    True,
             "apply_translate": True,
-            "apply_scale": True,
+            "apply_scale":     True,
         }
         compute_locals.update(seeded_array_outputs)
         # C2 (base contract): seed USER inputs DENSELY so ``self.<input>`` is a
@@ -480,17 +480,17 @@ class MPyTransformMatrix(ommpx.MPxTransformationMatrix):
         seed_user_inputs_into_locals(self._transform_mobject, compute_locals)
         self_proxy = SelfProxy(
             self._transform_mobject,
-            datablock=None,
-            user_storage=stored_vars,
-            compute_locals=compute_locals,
-            node_type_label="MPyTransform",
+            datablock       = None,
+            user_storage    = stored_vars,
+            compute_locals  = compute_locals,
+            node_type_label = "MPyTransform",
         )
 
         import builtins as _builtins
 
         namespace = {
             "__builtins__": _builtins,
-            "self": self_proxy,
+            "self":         self_proxy,
         }
 
         from mpynode._common.compute.expression import exec_with_profile_watch as _exec
@@ -503,9 +503,9 @@ class MPyTransformMatrix(ommpx.MPxTransformationMatrix):
         ok = _exec(
             self._expr_code,
             namespace,
-            log_event_name="<mpytransform-expression>",
-            on_error=_on_err,
-            node_obj=self._transform_mobject,
+            log_event_name = "<mpytransform-expression>",
+            on_error       = _on_err,
+            node_obj       = self._transform_mobject,
         )
         if not ok:
             if captured:
@@ -571,20 +571,20 @@ class MPyTransformMatrix(ommpx.MPxTransformationMatrix):
 
 class MPyTransform(ommpx.MPxTransform):
     NODE_NAME = "mPyTransform"
-    NODE_ID = om.MTypeId(0x00135717)
+    NODE_ID   = om.MTypeId(0x00135717)
 
     # No INTERNAL_VARS schema: the gated local-matrix write slots (local_matrix
     # / apply_*) are seeded straight into the compute locals and harvested by
     # name, with no separate validation table.
 
-    _expression_attr = None
-    _input_attrs_attr = None
-    _output_attrs_attr = None
+    _expression_attr       = None
+    _input_attrs_attr      = None
+    _output_attrs_attr     = None
     _stored_vars_list_attr = None
     _stored_vars_data_attr = None
-    _debug_mode_attr = None
-    _time_in_attr = None
-    _out_local_flat_attr = None
+    _debug_mode_attr       = None
+    _time_in_attr          = None
+    _out_local_flat_attr   = None
 
     def __init__(self):
         super().__init__()
@@ -597,13 +597,13 @@ class MPyTransform(ommpx.MPxTransform):
 
     @staticmethod
     def node_initializer():
-        plugs = helpers.build_internal_attrs(MPyTransform)
-        MPyTransform._expression_attr = plugs["_computeSource"]
-        MPyTransform._input_attrs_attr = plugs["inputs"]
-        MPyTransform._output_attrs_attr = plugs["outputs"]
+        plugs                               = helpers.build_internal_attrs(MPyTransform)
+        MPyTransform._expression_attr       = plugs["_computeSource"]
+        MPyTransform._input_attrs_attr      = plugs["inputs"]
+        MPyTransform._output_attrs_attr     = plugs["outputs"]
         MPyTransform._stored_vars_list_attr = plugs["stored_vars_list"]
         MPyTransform._stored_vars_data_attr = plugs["stored_vars_data"]
-        MPyTransform._debug_mode_attr = plugs["debug_mode"]
+        MPyTransform._debug_mode_attr       = plugs["debug_mode"]
         # NOTE: translate, rotate, scale, shear, rotateOrder, parentMatrix
         # are INHERITED from Maya's built-in transform base class. Don't
         # re-add them.
@@ -612,7 +612,7 @@ class MPyTransform(ommpx.MPxTransform):
         # so Maya's DG marks the matrix dirty on every frame change. Without it
         # time-driven expressions appear frozen during playback, because Maya
         # caches the local matrix.
-        time_fn = om.MFnUnitAttribute()
+        time_fn   = om.MFnUnitAttribute()
         time_attr = time_fn.create("_timeIn", "_tin", om.MFnUnitAttribute.kTime, 0.0)
         time_fn.setStorable(True)
         time_fn.setKeyable(False)
@@ -672,7 +672,7 @@ class MPyTransform(ommpx.MPxTransform):
 
             try:
                 _name = om.MFnDependencyNode(self.thisMObject()).name()
-                _cur = _cmds.getAttr(_name + "._computeSource") or ""
+                _cur  = _cmds.getAttr(_name + "._computeSource") or ""
             except Exception:
                 _name, _cur = "", self._expr_str
             if _cur != self._expr_str:
@@ -689,7 +689,7 @@ class MPyTransform(ommpx.MPxTransform):
             if isinstance(mtx_ptr, MPyTransformMatrix):
                 if mtx_ptr._transform_mobject is None:
                     mtx_ptr._transform_mobject = self.thisMObject()
-                mtx_ptr._expr_str = self._expr_str
+                mtx_ptr._expr_str  = self._expr_str
                 mtx_ptr._expr_code = self._expr_code
         except Exception:
             pass
@@ -709,7 +709,7 @@ class MPyTransform(ommpx.MPxTransform):
         so descendants + world caches track natively (no timeChanged flush).
         """
         try:
-            attr = plug.attribute()
+            attr    = plug.attribute()
             is_flat = attr == MPyTransform._out_local_flat_attr
             if not is_flat and plug.isElement():
                 try:
@@ -860,8 +860,8 @@ class MPyTransform(ommpx.MPxTransform):
             opm_mm = om.MMatrix()
         opm_flat = _mmatrix_to_np(opm_mm).flatten()
 
-        arr = data_block.outputArrayValue(MPyTransform._out_local_flat_attr)
-        builder = arr.builder()
+        arr      = data_block.outputArrayValue(MPyTransform._out_local_flat_attr)
+        builder  = arr.builder()
         for i in range(16):
             builder.addElement(i).setDouble(float(opm_flat[i]))
         arr.set(builder)
@@ -875,7 +875,7 @@ class MPyTransform(ommpx.MPxTransform):
         try:
             attr = plug.attribute()
             if attr == MPyTransform._expression_attr:
-                data = om.MFnStringData(data_handle.data())
+                data           = om.MFnStringData(data_handle.data())
                 self._expr_str = data.string()
                 from mpynode._common.compute.expression import safe_compile_expression
 
@@ -886,8 +886,8 @@ class MPyTransform(ommpx.MPxTransform):
                     pass
                 code = safe_compile_expression(
                     self._expr_str,
-                    node_name=node_name,
-                    filename="<mpytransform-expression>",
+                    node_name = node_name,
+                    filename  = "<mpytransform-expression>",
                 )
                 if code is not None:
                     self._expr_code = code
@@ -906,8 +906,8 @@ class MPyTransform(ommpx.MPxTransform):
         re-evaluation of the transform pipeline.
         """
         try:
-            attr_obj = plug.attribute()
-            attr_fn = om.MFnAttribute(attr_obj)
+            attr_obj  = plug.attribute()
+            attr_fn   = om.MFnAttribute(attr_obj)
             plug_name = attr_fn.name()
         except Exception:
             return
@@ -956,7 +956,7 @@ class MPyTransform(ommpx.MPxTransform):
         # every frame). ``elementByLogicalIndex`` materialises the element plug
         # if the builder hasn't run yet.
         try:
-            fn_node = om.MFnDependencyNode(self.thisMObject())
+            fn_node   = om.MFnDependencyNode(self.thisMObject())
             flat_plug = fn_node.findPlug(_OPM_FLAT_ATTR, True)
             affected_plugs.append(flat_plug)
             for i in range(16):
@@ -1002,7 +1002,7 @@ def ensure_opm_relay(node_name, force=False):
     try:
         if not cmds.objExists(node_name):
             return None
-        opm = node_name + ".offsetParentMatrix"
+        opm      = node_name + ".offsetParentMatrix"
         existing = cmds.listConnections(opm, source=True, destination=False)
         if existing and not force:
             return existing[0]

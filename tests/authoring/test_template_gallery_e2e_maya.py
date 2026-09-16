@@ -66,9 +66,9 @@ class TestTemplateCreateWiringE2E(unittest.TestCase):
     def test_create_plus_run_setup_wires_to_selection(self):
         from mpynode._common.io.mpn_io import load_mpn
         from mpynode._base.commands import _TemplateCreateCommand, run_undoable
-        entry = self._deformer_entry()
+        entry   = self._deformer_entry()
         payload = load_mpn(entry.mpn_path, trusted=True)
-        mesh = mc.polyCube()[0]
+        mesh    = mc.polyCube()[0]
         mc.select(mesh)
         name = run_undoable(
             _TemplateCreateCommand(payload, "mPyDeformer", run_setup=True))
@@ -79,9 +79,9 @@ class TestTemplateCreateWiringE2E(unittest.TestCase):
     def test_create_plus_run_setup_excludes_self(self):
         from mpynode._common.io.mpn_io import load_mpn
         from mpynode._base.commands import _TemplateCreateCommand, run_undoable
-        entry = self._deformer_entry()
+        entry   = self._deformer_entry()
         payload = load_mpn(entry.mpn_path, trusted=True)
-        mesh = mc.polyCube()[0]
+        mesh    = mc.polyCube()[0]
         mc.select(mesh)
         name = run_undoable(
             _TemplateCreateCommand(payload, "mPyDeformer", run_setup=True))
@@ -105,7 +105,7 @@ class TestTemplateCreateSeedOnlyE2E(unittest.TestCase):
         from mpynode._common.io.mpn_io import load_mpn
         from mpynode._base.commands import _ImportNodeCommand, run_undoable
         from mpynode._node_registry import get_spec
-        entry = self._deformer_entry()
+        entry   = self._deformer_entry()
         payload = load_mpn(entry.mpn_path, trusted=True)
         mc.polyCube()                       # something selectable in the scene
         cmd = _ImportNodeCommand(

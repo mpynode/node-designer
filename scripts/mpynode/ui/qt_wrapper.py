@@ -238,10 +238,10 @@ except ImportError:
 # ---------------------------------------------------------------------------
 
 HAS_QT_MULTIMEDIA = False
-QMediaPlayer = None
-QVideoWidget = None
-QAudioOutput = None
-QMediaContent = None
+QMediaPlayer      = None
+QVideoWidget      = None
+QAudioOutput      = None
+QMediaContent     = None
 
 if QT_BINDING == "PySide6":
     try:
@@ -274,8 +274,8 @@ else:
 # ---------------------------------------------------------------------------
 
 HAS_QT_AUDIO_DECODER = False
-QAudioDecoder = None
-QAudioFormat = None
+QAudioDecoder        = None
+QAudioFormat         = None
 
 if QT_BINDING == "PySide6":
     try:
@@ -313,7 +313,7 @@ def _q_audio_sample_format(fmt):
         v = getattr(QAudioFormat, name, None)
         if v is None:
             sfc = getattr(QAudioFormat, "SampleFormat", None)
-            v = getattr(sfc, name, None) if sfc is not None else None
+            v   = getattr(sfc, name, None) if sfc is not None else None
         return v
 
     try:
@@ -329,7 +329,7 @@ def _q_audio_sample_format(fmt):
     # Qt5: sampleType (SignedInt / UnSignedInt / Float) + sampleSize (bits).
     try:
         size = int(fmt.sampleSize())
-        st = fmt.sampleType()
+        st   = fmt.sampleType()
         if getattr(QAudioFormat, "Float", None) is not None and st == QAudioFormat.Float:
             return "float32", ch, rate
         if size == 8:
@@ -414,11 +414,11 @@ def decode_audio_bytes_to_pcm(data, suffix, timeout_ms=8000):
                 pass
         return None, None, 0, 0
 
-    chunks = []
+    chunks  = []
     fmt_box = {"sf": None, "ch": 1, "rate": 0}
-    dec = None
+    dec     = None
     try:
-        dec = QAudioDecoder()
+        dec  = QAudioDecoder()
         loop = QEventLoop()
 
         def _read_ready():
@@ -550,7 +550,7 @@ def make_audio_player(path, parent=None):
     player = None
     try:
         player = QMediaPlayer(parent)
-        url = QUrl.fromLocalFile(path)
+        url    = QUrl.fromLocalFile(path)
         if QT_BINDING == "PySide6":
             audio = QAudioOutput()
             audio.setParent(player)  # Qt parent-owns it (GC-safe)

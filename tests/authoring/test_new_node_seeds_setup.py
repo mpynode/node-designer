@@ -34,18 +34,18 @@ class TestNewNodeSeedsSetup(unittest.TestCase):
         mc.file(new=True, force=True)
 
     def _create(self, native_type, mode):
-        cmd = build_new_node_command(native_type, mode)
+        cmd  = build_new_node_command(native_type, mode)
         name = run_undoable(cmd) or cmd.created_name
         return name
 
     def test_template_seed_only_seeds_setup_into_methods(self):
         # seed-only template create = _ImportNodeCommand(seed_setup=True);
         # mode="template" is retired. The seeded type-default setup is present.
-        cls = get_spec("mPyDeformer").get_wrapper_class()
-        n = cls.build()
+        cls     = get_spec("mPyDeformer").get_wrapper_class()
+        n       = cls.build()
         payload = serialize_node(n, include_persistent=False)
         mc.delete(n.get_name())
-        cmd = _ImportNodeCommand(payload, restore_persistent=False, seed_setup=True)
+        cmd  = _ImportNodeCommand(payload, restore_persistent=False, seed_setup=True)
         name = run_undoable(cmd) or cmd.created_name
         node = wrap_node(name, "mPyDeformer")
         self.assertIn("def setup(self", node.get_methods_source() or "")
@@ -64,14 +64,14 @@ class TestNewNodeSeedsSetup(unittest.TestCase):
         # The template carries no methods_source, so exactly one setup appears
         # (no double-seed: deserialize applies none, seed_setup adds the type
         # default once).
-        cls = get_spec("mPyDeformer").get_wrapper_class()
-        n = cls.build()
+        cls     = get_spec("mPyDeformer").get_wrapper_class()
+        n       = cls.build()
         payload = serialize_node(n, include_persistent=False)
         mc.delete(n.get_name())
-        cmd = _ImportNodeCommand(payload, restore_persistent=False, seed_setup=True)
+        cmd  = _ImportNodeCommand(payload, restore_persistent=False, seed_setup=True)
         name = run_undoable(cmd) or cmd.created_name
         node = wrap_node(name, "mPyDeformer")
-        src = node.get_methods_source() or ""
+        src  = node.get_methods_source() or ""
         self.assertEqual(src.count("def setup(self"), 1)
 
     def test_template_mode_is_retired_returns_create_command(self):
@@ -104,8 +104,8 @@ class TestNewNodeSeedsSetup(unittest.TestCase):
         payload = serialize_node(n)
         self.assertNotIn("def setup(self", payload.get("methods_source") or "")
 
-        cmd = _ImportNodeCommand(payload)  # DEFAULT seed_setup=False
-        name = run_undoable(cmd) or cmd.created_name
+        cmd      = _ImportNodeCommand(payload)  # DEFAULT seed_setup=False
+        name     = run_undoable(cmd) or cmd.created_name
         imported = wrap_node(name, "mPyNode")
         self.assertNotIn("def setup(self", imported.get_methods_source() or "")
 

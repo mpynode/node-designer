@@ -34,13 +34,13 @@ class _FakeCmds:
 
     def __init__(self, loaded=False, unload_raises=False, load_raises=False,
                  load_silently_fails=False):
-        self._loaded = loaded
+        self._loaded        = loaded
         self._unload_raises = unload_raises
-        self._load_raises = load_raises
+        self._load_raises   = load_raises
         # Model Maya SWALLOWING a kFailure from initializePlugin: loadPlugin
         # returns WITHOUT raising but leaves the plugin UNLOADED.
         self._load_silently_fails = load_silently_fails
-        self.calls = []
+        self.calls                = []
 
     def pluginInfo(self, name, q=False, loaded=False):
         self.calls.append(("pluginInfo", name))
@@ -68,7 +68,7 @@ class TestLoadOrReloadPlugin(unittest.TestCase):
     def _patch(self, fake):
         from mpynode._base import plugins
 
-        self._orig = plugins.cmds
+        self._orig   = plugins.cmds
         plugins.cmds = fake
         self.addCleanup(lambda: setattr(plugins, "cmds", self._orig))
 
@@ -171,7 +171,7 @@ class TestValidateRegisteredTypes(unittest.TestCase):
     def _patch(self, fake):
         from mpynode._base import plugins
 
-        orig = plugins.cmds
+        orig         = plugins.cmds
         plugins.cmds = fake
         self.addCleanup(lambda: setattr(plugins, "cmds", orig))
 
@@ -188,7 +188,7 @@ class TestValidateRegisteredTypes(unittest.TestCase):
         self._patch(self._FakeCmds(["mPyThing", "mPyOther"]))
         with tempfile.TemporaryDirectory() as tmp:
             bundle = self._bundle_with_manifest(tmp, ["mPyThing"])
-            res = validate_registered_types(bundle)
+            res    = validate_registered_types(bundle)
         self.assertTrue(res["ok"])
         self.assertEqual(res["missing"], [])
         self.assertEqual(res["expected"], ["mPyThing"])
@@ -199,7 +199,7 @@ class TestValidateRegisteredTypes(unittest.TestCase):
         self._patch(self._FakeCmds([]))  # loaded, but registered nothing
         with tempfile.TemporaryDirectory() as tmp:
             bundle = self._bundle_with_manifest(tmp, ["mPyThing"])
-            res = validate_registered_types(bundle)
+            res    = validate_registered_types(bundle)
         self.assertFalse(res["ok"])
         self.assertEqual(res["missing"], ["mPyThing"])
         self.assertIn("mPyThing", res["error"])
@@ -210,7 +210,7 @@ class TestValidateRegisteredTypes(unittest.TestCase):
         self._patch(self._FakeCmds([]))
         with tempfile.TemporaryDirectory() as tmp:
             bundle = os.path.join(tmp, "mPyThing.bundle")  # no build/manifest
-            res = validate_registered_types(bundle)
+            res    = validate_registered_types(bundle)
         self.assertTrue(res["ok"])         # nothing to validate -> do not block
         self.assertEqual(res["expected"], [])
 
@@ -224,7 +224,7 @@ class TestValidateRegisteredTypes(unittest.TestCase):
         self._patch(_Boom())
         with tempfile.TemporaryDirectory() as tmp:
             bundle = self._bundle_with_manifest(tmp, ["mPyThing"])
-            res = validate_registered_types(bundle)
+            res    = validate_registered_types(bundle)
         self.assertFalse(res["ok"])
         self.assertIsNotNone(res["error"])
 

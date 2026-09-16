@@ -17,7 +17,7 @@ _TOOL = os.path.join(_paths.ROOT, "tools", "harness", "idle_probe.py")
 
 def _tool():
     spec = importlib.util.spec_from_file_location("idle_probe", _TOOL)
-    mod = importlib.util.module_from_spec(spec)
+    mod  = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
     return mod
 
@@ -67,9 +67,9 @@ class TestConfigs(unittest.TestCase):
         self.assertTrue(callable(c["scene"]) and callable(c["make"]))
 
     def test_interpreted_and_mesh_regions_configs(self):
-        t = _tool()
-        i = t.interpreted_config("py", "t.mpn", patch=t.static_patch)
-        m = t.mesh_regions_config("mr", "t.mpn", "head.ma", sweep=True)
+        t  = _tool()
+        i  = t.interpreted_config("py", "t.mpn", patch=t.static_patch)
+        m  = t.mesh_regions_config("mr", "t.mpn", "head.ma", sweep=True)
         cm = t.compiled_mesh_regions_config("cmr", "meshRegionLocator", "x.mll", "head.ma")
         for c in (i, m, cm):
             self.assertEqual(set(c), self.KEYS)
@@ -80,7 +80,7 @@ class TestConfigs(unittest.TestCase):
         self.assertFalse(cm["grid"])
 
     def test_static_patch_turns_the_idle_refresh_request_off(self):
-        t = _tool()
+        t    = _tool()
         expr = "self.auto_refresh = True\nself.draw = None\n"
         self.assertIn("self.auto_refresh = False", t.static_patch(expr))
         self.assertNotIn("self.auto_refresh = True", t.static_patch(expr))

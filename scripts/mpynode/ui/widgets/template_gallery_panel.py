@@ -93,16 +93,16 @@ class _PreviewLabel(QLabel):
         super(_PreviewLabel, self).__init__(parent)
         self.setAlignment(Qt.AlignCenter)
         self.setMinimumHeight(160)
-        self._mode = None      # None | "image" | "movie" | "none"
-        self._source = None    # original QPixmap (image mode)
-        self._movie = None     # QMovie (movie mode) + GC ref
-        self._label = None     # caption under the logo (none mode)
+        self._mode   = None  # None | "image" | "movie" | "none"
+        self._source = None  # original QPixmap (image mode)
+        self._movie  = None  # QMovie (movie mode) + GC ref
+        self._label  = None  # caption under the logo (none mode)
 
     def clear_preview(self):
         self._stop_movie()
-        self._mode = None
+        self._mode   = None
         self._source = None
-        self._label = None
+        self._label  = None
         self.clear()
 
     def show_image(self, pixmap):
@@ -225,8 +225,8 @@ class NDTemplateGalleryPanel(QWidget):
         if scan is None:
             from mpynode._common.util import template_gallery
             scan = template_gallery.scan_all
-        self._scan = scan
-        self._player = None  # keep a ref so the QMediaPlayer isn't GC'd
+        self._scan       = scan
+        self._player     = None  # keep a ref so the QMediaPlayer isn't GC'd
         self._demo_first = None  # func_name of the primary demo (button click)
         # Gates layout persistence. A gallery parented into a non-current tab
         # is never laid out, so its splitters report Qt placeholder even-split
@@ -238,15 +238,15 @@ class NDTemplateGalleryPanel(QWidget):
 
     # -- UI construction ------------------------------------------------
     def _build_ui(self):
-        outer = QVBoxLayout(self)
+        outer    = QVBoxLayout(self)
         splitter = _SeparatorSplitter(Qt.Horizontal, self)
         splitter.setHandleWidth(10)
         outer.addWidget(splitter, 1)
         self._h_splitter = splitter  # [tree | preview]; persisted across sessions
 
         # Stacked under the tree, so their width tracks the templates column.
-        left = QWidget(splitter)
-        lv = QVBoxLayout(left)
+        left             = QWidget(splitter)
+        lv               = QVBoxLayout(left)
         self.filter_edit = QLineEdit(left)
         self.filter_edit.setPlaceholderText("Filter…")
         self.filter_edit.textChanged.connect(self._apply_filter)
@@ -305,8 +305,8 @@ class NDTemplateGalleryPanel(QWidget):
             self.preview_stack.addWidget(self.video_widget)
         right_split.addWidget(self.preview_stack)
 
-        bottom = QWidget(right_split)
-        bv = QVBoxLayout(bottom)
+        bottom          = QWidget(right_split)
+        bv              = QVBoxLayout(bottom)
         self.meta_label = QLabel(bottom)
         self.meta_label.setWordWrap(True)
         bv.addWidget(self.meta_label)
@@ -404,7 +404,7 @@ class NDTemplateGalleryPanel(QWidget):
         # A node is a category, a buildable entry, or both. Buildable ones get
         # a native_type suffix; an entry with an unreadable type is disabled.
         native_type = getattr(node, "native_type", None)
-        is_entry = hasattr(node, "mpn_path")
+        is_entry    = hasattr(node, "mpn_path")
         if native_type:
             label = "%s  [%s]" % (node.label, native_type)
         elif is_entry:
@@ -440,9 +440,9 @@ class NDTemplateGalleryPanel(QWidget):
         """Enable/disable the Create buttons for the current selection. Create
         is available for any buildable node (a real ``native_type``); Create +
         Run demo only when the template carries its own ``def demo(self)``."""
-        entry = self._selected_entry()
+        entry       = self._selected_entry()
         native_type = getattr(entry, "native_type", None)
-        buildable = bool(native_type)
+        buildable   = bool(native_type)
         self.create_btn.setEnabled(buildable)
         # Demo has NO type default -- gated purely on the template's own demos.
         demos = self._template_demos(entry) if buildable else []
@@ -478,7 +478,7 @@ class NDTemplateGalleryPanel(QWidget):
         # a menu.
         if entry is None:
             return None
-        menu = QMenu(self.tree)
+        menu        = QMenu(self.tree)
         native_type = getattr(entry, "native_type", None)
         if not native_type:
             self._add_reveal_action(menu, entry)
@@ -527,7 +527,7 @@ class NDTemplateGalleryPanel(QWidget):
         the row has no readable path, matching how this menu already handles a
         template with no demo."""
         path = self._reveal_path(entry)
-        act = menu.addAction(reveal_label())
+        act  = menu.addAction(reveal_label())
         if path:
             act.triggered.connect(
                 lambda checked=False, p=path: reveal_in_file_manager(p))
@@ -546,7 +546,7 @@ class NDTemplateGalleryPanel(QWidget):
             from mpynode._common.io import mpn_io
             from mpynode._common import node_setups
             data = mpn_io.load_mpn_header(getattr(entry, "mpn_path", None))
-            src = (data or {}).get("methods_source") or ""
+            src  = (data or {}).get("methods_source") or ""
             return node_setups.find_demo(src) is not None
         except Exception:
             return False
@@ -560,7 +560,7 @@ class NDTemplateGalleryPanel(QWidget):
             from mpynode._common.io import mpn_io
             from mpynode._common import node_setups
             data = mpn_io.load_mpn_header(getattr(entry, "mpn_path", None))
-            src = (data or {}).get("methods_source") or ""
+            src  = (data or {}).get("methods_source") or ""
             return node_setups.find_demos(src)
         except Exception:
             return []
@@ -586,9 +586,9 @@ class NDTemplateGalleryPanel(QWidget):
         if entry is None:
             return
 
-        native_type = getattr(entry, "native_type", None)
-        pp = getattr(entry, "preview_path", None)
-        dp = getattr(entry, "description_path", None)
+        native_type = getattr(entry, "native_type",      None)
+        pp          = getattr(entry, "preview_path",     None)
+        dp          = getattr(entry, "description_path", None)
         # A pure container with no landing-page assets stays blank.
         if native_type is None and not pp and not dp:
             return
@@ -656,10 +656,10 @@ class NDTemplateGalleryPanel(QWidget):
         its native type. ``None`` when nothing sensible is known, which leaves
         the relief bare, exactly as the empty script editor shows it."""
         native_type = getattr(entry, "native_type", None)
-        label = getattr(entry, "label", None)
+        label       = getattr(entry, "label", None)
         if native_type is None:
             return label or None
-        item = self.tree.currentItem()
+        item   = self.tree.currentItem()
         parent = item.parent() if item is not None else None
         # ``parent.parent() is None`` means ``parent`` is a search ROOT row
         # ("templates"), which is a location, not a node class.
@@ -689,10 +689,10 @@ class NDTemplateGalleryPanel(QWidget):
                 QPalette.Base).lightness() < 128
             style_markdown_document(
                 self.desc_browser.document(),
-                dark=dark,
-                doc_margin=14.0,
-                para_spacing=(0.0, 10.0),
-                inline_code=True,
+                dark         = dark,
+                doc_margin   = 14.0,
+                para_spacing = (0.0, 10.0),
+                inline_code  = True,
             )
         except Exception:  # noqa: BLE001
             pass
@@ -716,7 +716,7 @@ class NDTemplateGalleryPanel(QWidget):
     # -- filter (E6) ----------------------------------------------------
     def _apply_filter(self, text):
         needle = (text or "").strip().lower()
-        root = self.tree.invisibleRootItem()
+        root   = self.tree.invisibleRootItem()
         self._filter_item(root, needle)
         # Categories start collapsed, so a hit would stay hidden under its
         # ancestors. While a needle is present expand every still-visible
@@ -750,15 +750,15 @@ class NDTemplateGalleryPanel(QWidget):
         # True if this subtree has any visible node. Categories AND entries can
         # have children, so leaf-ness comes from childCount; buildable nodes
         # always match by text.
-        is_root = item is self.tree.invisibleRootItem()
+        is_root           = item is self.tree.invisibleRootItem()
         any_child_visible = False
         for i in range(item.childCount()):
             if self._filter_item(item.child(i), needle):
                 any_child_visible = True
         if is_root:
             return any_child_visible
-        node = item.data(0, _ENTRY_ROLE)
-        buildable = bool(getattr(node, "native_type", None))
+        node         = item.data(0, _ENTRY_ROLE)
+        buildable    = bool(getattr(node, "native_type", None))
         is_tree_leaf = item.childCount() == 0
         if not needle:
             self_match = True

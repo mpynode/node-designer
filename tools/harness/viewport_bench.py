@@ -63,7 +63,7 @@ def grid_positions(n, spacing=2.0):
         return []
     side = int(math.ceil(math.sqrt(n)))
     half = (side - 1) * spacing / 2.0
-    out = []
+    out  = []
     for i in range(n):
         r, c = divmod(i, side)
         out.append((c * spacing - half, 0.0, r * spacing - half))
@@ -138,11 +138,11 @@ def _make_interpreted(cmds, payload, n):
     names; the wrapper's own name is only the fallback."""
     from mpynode._common.io import mpn_io
     native = payload.get("native_type") or ""
-    out = []
+    out    = []
     for _ in range(n):
-        before = set(cmds.ls(type=native, long=True) or []) if native else set()
+        before  = set(cmds.ls(type=native, long=True) or []) if native else set()
         py_node = mpn_io.deserialize_node(payload, skip_selection=True)
-        new = (set(cmds.ls(type=native, long=True) or []) - before) if native else set()
+        new     = (set(cmds.ls(type=native, long=True) or []) - before) if native else set()
         out.append(sorted(new)[0] if len(new) == 1 else _node_name_of(py_node))
     return out
 
@@ -172,7 +172,7 @@ def run(template=None, compiled_type=None, copies=(1, 10, 50, 100), frames=30,
         from mpynode._common.io import mpn_io
         payload = mpn_io.load_mpn(template, trusted=True)
 
-    counts = parse_copies(copies)
+    counts   = parse_copies(copies)
     variants = []
     if payload is not None:
         variants.append(("interpreted", lambda n: _make_interpreted(cmds, payload, n)))

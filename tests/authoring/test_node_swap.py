@@ -110,10 +110,10 @@ class TestCopyArrayValues(unittest.TestCase):
         from mpynode._base.node_swap import _array_value, copy_values
 
         src, dst = _arr(), _arr()
-        ident = [1.0, 0, 0, 0, 0, 1.0, 0, 0, 0, 0, 1.0, 0, 0, 0, 0, 1.0]
-        shift = list(ident)
+        ident        = [1.0, 0, 0, 0, 0, 1.0, 0, 0, 0, 0, 1.0, 0, 0, 0, 0, 1.0]
+        shift        = list(ident)
         shift[12:15] = [7.0, 8.0, 9.0]
-        mats = [ident, shift]
+        mats         = [ident, shift]
         mc.setAttr(src + ".ma", len(mats), *mats, type="matrixArray")
         copy_values(src, dst)
 
@@ -481,8 +481,8 @@ class TestMessageDestinationPolicy(unittest.TestCase):
 
         j1 = mc.joint(p=(0, 0, 0)); mc.joint(p=(0, 2, 0)); j3 = mc.joint(p=(0, 4, 0))
         handle = mc.ikHandle(sj=j1, ee=j3, solver="ikRPsolver")[0]
-        py = (mc.ls(type="ikRPsolver") or [None])[0]
-        cpp = mc.createNode("ikRPsolver")
+        py     = (mc.ls(type="ikRPsolver") or [None])[0]
+        cpp    = mc.createNode("ikRPsolver")
 
         move_outputs(py, cpp)
 
@@ -564,7 +564,7 @@ class TestOpmRelayCompanion(unittest.TestCase):
         from mpynode._base.node_swap import _opm_relay
 
         owner = mc.createNode("transform")
-        drv = mc.createNode("fourByFourMatrix")
+        drv   = mc.createNode("fourByFourMatrix")
         mc.connectAttr(drv + ".output", owner + ".offsetParentMatrix")
         self.assertIsNone(_opm_relay(owner))
 
@@ -586,7 +586,7 @@ class TestDownstreamDependents(unittest.TestCase):
     def test_reports_output_edges_and_dag_children(self):
         from mpynode._base.node_swap import downstream_dependents
 
-        xf = mc.createNode("transform", name="drv")
+        xf  = mc.createNode("transform", name="drv")
         kid = mc.createNode("transform", name="kid", parent=xf)
         sink = mc.createNode("network"); mc.addAttr(sink, ln="m", at="matrix")
         mc.connectAttr(xf + ".worldMatrix[0]", sink + ".m")
@@ -712,7 +712,7 @@ class TestSwapNode(unittest.TestCase):
     def test_creates_deletes_renames_and_returns_tuple(self):
         from mpynode._base.node_swap import swap_node
 
-        src = mc.createNode("network", name="swapSrc")
+        src      = mc.createNode("network", name="swapSrc")
         old_uuid = mc.ls(src, uuid=True)[0]
         mc.addAttr(src, ln="k", at="double"); mc.setAttr(src + ".k", 4.0)
         new_name, dropped = swap_node(src, "network")

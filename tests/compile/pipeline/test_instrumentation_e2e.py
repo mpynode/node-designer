@@ -92,10 +92,10 @@ class TestStatsMath(unittest.TestCase):
     def _fresh_stats(self) -> dict:
         return {
             "last_us": 0.0,
-            "avg_us": 0.0,
-            "min_us": 0.0,
-            "max_us": 0.0,
-            "count": 0,
+            "avg_us":  0.0,
+            "min_us":  0.0,
+            "max_us":  0.0,
+            "count":   0,
         }
 
     def test_first_sample_initializes_min_max_avg(self):
@@ -105,9 +105,9 @@ class TestStatsMath(unittest.TestCase):
         update_stats(stats, 100.0)
         self.assertEqual(stats["count"], 1)
         self.assertAlmostEqual(stats["last_us"], 100.0)
-        self.assertAlmostEqual(stats["avg_us"], 100.0)
-        self.assertAlmostEqual(stats["min_us"], 100.0)
-        self.assertAlmostEqual(stats["max_us"], 100.0)
+        self.assertAlmostEqual(stats["avg_us"],  100.0)
+        self.assertAlmostEqual(stats["min_us"],  100.0)
+        self.assertAlmostEqual(stats["max_us"],  100.0)
 
     def test_subsequent_samples_running_mean(self):
         from mpynode._common.instrumentation import update_stats
@@ -117,9 +117,9 @@ class TestStatsMath(unittest.TestCase):
         update_stats(stats, 200.0)
         update_stats(stats, 300.0)
         self.assertEqual(stats["count"], 3)
-        self.assertAlmostEqual(stats["avg_us"], 200.0)
-        self.assertAlmostEqual(stats["min_us"], 100.0)
-        self.assertAlmostEqual(stats["max_us"], 300.0)
+        self.assertAlmostEqual(stats["avg_us"],  200.0)
+        self.assertAlmostEqual(stats["min_us"],  100.0)
+        self.assertAlmostEqual(stats["max_us"],  300.0)
         self.assertAlmostEqual(stats["last_us"], 300.0)
 
     def test_min_max_track_extremes(self):
@@ -130,7 +130,7 @@ class TestStatsMath(unittest.TestCase):
             update_stats(stats, sample)
         self.assertEqual(stats["min_us"], 25.0)
         self.assertEqual(stats["max_us"], 200.0)
-        self.assertEqual(stats["count"], 6)
+        self.assertEqual(stats["count"],  6)
 
     def test_running_mean_no_overflow_long_session(self):
         """1000 samples shouldn't drift due to floating point."""
@@ -157,18 +157,18 @@ class TestProfileSnapshotEnvelope(unittest.TestCase):
 
         stats = {
             "last_us": 12.5,
-            "avg_us": 10.0,
-            "min_us": 5.0,
-            "max_us": 25.0,
-            "count": 42,
+            "avg_us":  10.0,
+            "min_us":  5.0,
+            "max_us":  25.0,
+            "count":   42,
         }
-        text = encode_profile_snapshot(stats)
+        text    = encode_profile_snapshot(stats)
         decoded = decode_profile_snapshot(text)
         self.assertEqual(decoded["count"], 42)
         self.assertAlmostEqual(decoded["last_us"], 12.5)
-        self.assertAlmostEqual(decoded["avg_us"], 10.0)
-        self.assertAlmostEqual(decoded["min_us"], 5.0)
-        self.assertAlmostEqual(decoded["max_us"], 25.0)
+        self.assertAlmostEqual(decoded["avg_us"],  10.0)
+        self.assertAlmostEqual(decoded["min_us"],  5.0)
+        self.assertAlmostEqual(decoded["max_us"],  25.0)
         self.assertNotIn("deep_table", decoded)
 
     def test_encode_includes_deep_table(self):
@@ -180,14 +180,14 @@ class TestProfileSnapshotEnvelope(unittest.TestCase):
         stats = {"last_us": 0, "avg_us": 0, "min_us": 0, "max_us": 0, "count": 1}
         deep = [
             {
-                "function": "foo (bar.py:10)",
-                "calls": 5,
+                "function":   "foo (bar.py:10)",
+                "calls":      5,
                 "tottime_ms": 1.5,
                 "cumtime_ms": 3.0,
                 "percall_ms": 0.6,
             }
         ]
-        text = encode_profile_snapshot(stats, deep)
+        text    = encode_profile_snapshot(stats, deep)
         decoded = decode_profile_snapshot(text)
         self.assertIn("deep_table", decoded)
         self.assertEqual(len(decoded["deep_table"]), 1)
@@ -210,8 +210,8 @@ class TestWatchVarsEnvelope(unittest.TestCase):
         from mpynode._common.instrumentation import decode_watch_vars, encode_watch_vars
 
         vars_dict = {"a": 1, "b": "hello", "c": [1, 2, 3], "d": {"key": True}}
-        text = encode_watch_vars(vars_dict)
-        decoded = decode_watch_vars(text)
+        text      = encode_watch_vars(vars_dict)
+        decoded   = decode_watch_vars(text)
         self.assertEqual(decoded, vars_dict)
 
     def test_round_trip_numpy_arrays(self):
@@ -219,8 +219,8 @@ class TestWatchVarsEnvelope(unittest.TestCase):
         from mpynode._common.instrumentation import decode_watch_vars, encode_watch_vars
 
         vars_dict = {"vec": np.array([1.0, 2.0, 3.0]), "mat": np.eye(3)}
-        text = encode_watch_vars(vars_dict)
-        decoded = decode_watch_vars(text)
+        text      = encode_watch_vars(vars_dict)
+        decoded   = decode_watch_vars(text)
         self.assertIn("vec", decoded)
         self.assertTrue(np.array_equal(decoded["vec"], vars_dict["vec"]))
         self.assertTrue(np.array_equal(decoded["mat"], vars_dict["mat"]))
@@ -230,8 +230,8 @@ class TestWatchVarsEnvelope(unittest.TestCase):
 
         # Lambda is not picklable.
         vars_dict = {"f": lambda x: x, "y": 42}
-        text = encode_watch_vars(vars_dict)
-        decoded = decode_watch_vars(text)
+        text      = encode_watch_vars(vars_dict)
+        decoded   = decode_watch_vars(text)
         self.assertIn("f", decoded)
         self.assertEqual(decoded["y"], 42)
         self.assertIsInstance(decoded["f"], str)
@@ -262,13 +262,13 @@ class TestFilterWatchVars(unittest.TestCase):
             pass
 
         scope = {
-            "x": 5,
-            "y": "hello",
-            "math": math,
-            "fn": fn,
-            "Cls": Cls,
-            "_priv": 99,
-            "__dunder": 100,
+            "x":            5,
+            "y":            "hello",
+            "math":         math,
+            "fn":           fn,
+            "Cls":          Cls,
+            "_priv":        99,
+            "__dunder":     100,
             "__builtins__": {},
         }
         out = filter_watch_vars(scope)
@@ -280,8 +280,8 @@ class TestFilterWatchVars(unittest.TestCase):
         scope = {
             "target_pos": [1, 2, 3],
             "target_rot": [0, 0, 0],
-            "rest_pos": [0, 0, 0],
-            "weight": 1.0,
+            "rest_pos":   [0, 0, 0],
+            "weight":     1.0,
         }
         out = filter_watch_vars(scope, glob_filter="target_*")
         self.assertEqual(set(out.keys()), {"target_pos", "target_rot"})
@@ -290,20 +290,20 @@ class TestFilterWatchVars(unittest.TestCase):
         from mpynode._common.instrumentation import filter_watch_vars
 
         scope = {"alpha_target": 1, "beta": 2, "target_x": 3}
-        out = filter_watch_vars(scope, glob_filter="target")
+        out   = filter_watch_vars(scope, glob_filter="target")
         self.assertEqual(set(out.keys()), {"alpha_target", "target_x"})
 
     def test_empty_filter_keeps_all_user_vars(self):
         from mpynode._common.instrumentation import filter_watch_vars
 
         scope = {"a": 1, "b": 2}
-        out = filter_watch_vars(scope, glob_filter="")
+        out   = filter_watch_vars(scope, glob_filter="")
         self.assertEqual(out, scope)
 
     def test_does_not_mutate_input(self):
         from mpynode._common.instrumentation import filter_watch_vars
 
-        scope = {"a": 1, "_b": 2}
+        scope    = {"a": 1, "_b": 2}
         snapshot = dict(scope)
         filter_watch_vars(scope)
         self.assertEqual(scope, snapshot)
@@ -331,8 +331,8 @@ class TestCProfileCapture(unittest.TestCase):
         rows = encode_cprofile_stats(prof)
         self.assertGreater(len(rows), 0)
         for row in rows:
-            self.assertIn("function", row)
-            self.assertIn("calls", row)
+            self.assertIn("function",   row)
+            self.assertIn("calls",      row)
             self.assertIn("tottime_ms", row)
             self.assertIn("cumtime_ms", row)
             self.assertIn("percall_ms", row)
@@ -368,11 +368,11 @@ class TestPerInstanceStats(unittest.TestCase):
         sentinel = object()
         try:
             stats = get_or_create_stats(sentinel)
-            self.assertEqual(stats["count"], 0)
+            self.assertEqual(stats["count"],   0)
             self.assertEqual(stats["last_us"], 0.0)
-            self.assertEqual(stats["avg_us"], 0.0)
-            self.assertEqual(stats["min_us"], 0.0)
-            self.assertEqual(stats["max_us"], 0.0)
+            self.assertEqual(stats["avg_us"],  0.0)
+            self.assertEqual(stats["min_us"],  0.0)
+            self.assertEqual(stats["max_us"],  0.0)
         finally:
             reset_stats(sentinel)
 
@@ -395,7 +395,7 @@ class TestPerInstanceStats(unittest.TestCase):
         )
 
         sentinel = object()
-        stats = get_or_create_stats(sentinel)
+        stats    = get_or_create_stats(sentinel)
         update_stats(stats, 50.0)
         update_stats(stats, 75.0)
         self.assertEqual(stats["count"], 2)
@@ -431,7 +431,7 @@ class TestEndToEndProfileWatch(unittest.TestCase):
         return n
 
     def test_node_has_phase25_plugs(self):
-        n = self._make_node("plug_check")
+        n         = self._make_node("plug_check")
         node_name = n.get_name()
         for attr in (
             "profile_enabled",
@@ -467,8 +467,8 @@ class TestEndToEndProfileWatch(unittest.TestCase):
         self.assertIsNotNone(snap, "expected snapshot after first compute")
         self.assertEqual(snap["count"], 1)
         self.assertGreater(snap["last_us"], 0.0)
-        self.assertGreater(snap["avg_us"], 0.0)
-        self.assertGreater(snap["max_us"], 0.0)
+        self.assertGreater(snap["avg_us"],  0.0)
+        self.assertGreater(snap["max_us"],  0.0)
 
     def test_multi_frame_stats_accumulate(self):
         n = self._make_node("multi_frame")
@@ -503,11 +503,11 @@ class TestEndToEndProfileWatch(unittest.TestCase):
         watch = n.get_watch_vars()
         self.assertIsNotNone(watch)
         self.assertIn("target_x", watch)
-        self.assertIn("rest_x", watch)
-        self.assertIn("tmp", watch)
+        self.assertIn("rest_x",   watch)
+        self.assertIn("tmp",      watch)
         # No module / function / class / dunder leakage.
-        self.assertNotIn("np", watch)
-        self.assertNotIn("math", watch)
+        self.assertNotIn("np",           watch)
+        self.assertNotIn("math",         watch)
         self.assertNotIn("__builtins__", watch)
         self.assertAlmostEqual(float(watch["target_x"]), 10.0)
         self.assertAlmostEqual(float(watch["rest_x"]), 6.0)
@@ -569,10 +569,10 @@ class TestWrapperReadHelpers(unittest.TestCase):
 
         stats = {
             "last_us": 5.0,
-            "avg_us": 4.0,
-            "min_us": 1.0,
-            "max_us": 8.0,
-            "count": 7,
+            "avg_us":  4.0,
+            "min_us":  1.0,
+            "max_us":  8.0,
+            "count":   7,
         }
         write_profile_snapshot(node_obj, stats)
         snap = n.get_profile_snapshot()
@@ -653,8 +653,8 @@ class TestProfileWidgetShape(unittest.TestCase):
         # The two Enable checkboxes became one Profile-mode combo
         # (Off / Profile / Deep) plus an "Evaluate Node" button.
         self.assertIn("self._mode_combo", src)
-        self.assertIn("Reset Stats", src)
-        self.assertIn("Evaluate Node", src)
+        self.assertIn("Reset Stats",      src)
+        self.assertIn("Evaluate Node",    src)
         self.assertIn("self._unit_combo", src)
 
     def test_widget_init_creates_5_stat_rows(self):
@@ -688,14 +688,14 @@ class TestWatchWidgetShape(unittest.TestCase):
         from mpynode.ui.widgets.watch import apply_filter
 
         scope = {"target_pos": 1, "target_rot": 2, "weight": 3}
-        out = apply_filter(scope, "target_*")
+        out   = apply_filter(scope, "target_*")
         self.assertEqual(set(out.keys()), {"target_pos", "target_rot"})
 
     def test_apply_filter_substring(self):
         from mpynode.ui.widgets.watch import apply_filter
 
         scope = {"alpha_target": 1, "weight": 2, "target_x": 3}
-        out = apply_filter(scope, "target")
+        out   = apply_filter(scope, "target")
         self.assertEqual(set(out.keys()), {"alpha_target", "target_x"})
 
     def test_apply_filter_empty_keeps_all(self):
@@ -717,9 +717,9 @@ class TestDesignerWiring(unittest.TestCase):
 
         src = inspect.getsource(NDMainWindow._build_ui)
         self.assertIn("NDProfileWidget", src)
-        self.assertIn("NDWatchWidget", src)
-        self.assertIn('"Profile"', src)
-        self.assertIn('"Watch"', src)
+        self.assertIn("NDWatchWidget",   src)
+        self.assertIn('"Profile"',       src)
+        self.assertIn('"Watch"',         src)
 
     def test_set_current_node_pushes_to_both_widgets(self):
         from mpynode.ui.mpynode_designer import NDMainWindow
@@ -732,10 +732,10 @@ class TestDesignerWiring(unittest.TestCase):
         from mpynode.ui.mpynode_designer import NDMainWindow
 
         src = inspect.getsource(NDMainWindow._on_node_attr_changed)
-        self.assertIn("_profileSnapshotData", src)
-        self.assertIn("_watchVarsData", src)
+        self.assertIn("_profileSnapshotData",      src)
+        self.assertIn("_watchVarsData",            src)
         self.assertIn("_refresh_profile_for_node", src)
-        self.assertIn("_refresh_watch_for_node", src)
+        self.assertIn("_refresh_watch_for_node",   src)
 
     def test_designer_has_refresh_methods(self):
         from mpynode.ui.mpynode_designer import NDMainWindow
@@ -938,7 +938,7 @@ class TestHotfix9TogglesUncheckOnNoNode(unittest.TestCase):
 
         from mpynode.ui.widgets.watch import NDWatchWidget
 
-        src = inspect.getsource(NDWatchWidget.refresh)
+        src      = inspect.getsource(NDWatchWidget.refresh)
         idx_none = src.find("self._py_node is None")
         self.assertGreater(idx_none, -1)
         cb_section = src[idx_none:]
@@ -954,9 +954,9 @@ class TestHotfix9NumpyFormatter(unittest.TestCase):
         import numpy as np
         from mpynode.ui.widgets.watch import _format_value
 
-        m = np.eye(4)
+        m       = np.eye(4)
         m[3, 0] = -5.33
-        out = _format_value(m)
+        out     = _format_value(m)
         self.assertIn("\n", out)
         rows = [ln for ln in out.split("\n") if "[" in ln or "]" in ln]
         self.assertGreaterEqual(len(rows), 4)
@@ -982,8 +982,8 @@ class TestHotfix9NumpyFormatter(unittest.TestCase):
                                    os.path.join(tmpdir, "preferences.json")):
                 preferences._reset_for_tests()
                 preferences.set_pref("watch_threshold_inf", False)
-                big = np.zeros((50, 4, 4))
-                out = _format_value(big, max_lines=5)
+                big        = np.zeros((50, 4, 4))
+                out        = _format_value(big, max_lines=5)
                 line_count = out.count("\n") + 1
                 self.assertLessEqual(line_count, 6)  # 5 + the "X more lines" tail
         finally:
@@ -1093,11 +1093,11 @@ class TestHotfix10NumpyAlignmentAndPrefs(unittest.TestCase):
         import numpy as np
         from mpynode.ui.widgets.watch import _format_value
 
-        m = np.eye(4)
-        m[3, 0] = -5.3349
-        out = _format_value(m)
-        lines = out.split("\n")
-        first_line = lines[0]
+        m                 = np.eye(4)
+        m[3, 0]           = -5.3349
+        out               = _format_value(m)
+        lines             = out.split("\n")
+        first_line        = lines[0]
         first_bracket_col = first_line.index("[[")
         # Each later row starts with ``[`` one column inside the outer ``[``.
         inner_col = first_bracket_col + 1
@@ -1127,7 +1127,7 @@ class TestHotfix10NumpyAlignmentAndPrefs(unittest.TestCase):
         preferences.set_pref("watch_suppress_scientific", False)
         preferences.set_pref("watch_threshold_inf", False)
         small = np.array([1e-9, 2.5e3, 1.0])
-        out = _format_value(small)
+        out   = _format_value(small)
         self.assertIn("e-", out.lower())
 
     def test_format_value_suppress_pref_default_hides_scientific(self):
@@ -1136,7 +1136,7 @@ class TestHotfix10NumpyAlignmentAndPrefs(unittest.TestCase):
         from mpynode.ui.widgets.watch import _format_value
 
         small = np.array([1e-9, 2.5e3, 1.0])
-        out = _format_value(small)
+        out   = _format_value(small)
         self.assertNotIn("e-", out.lower())
         self.assertNotIn("e+", out.lower())
 
@@ -1179,10 +1179,10 @@ class TestHotfix10NumpyAlignmentAndPrefs(unittest.TestCase):
         from mpynode.ui.widgets.watch import _format_value
 
         preferences.set_pref("watch_threshold_inf", False)  # summarizing path
-        a = np.zeros((300, 2))
-        a[:, 1] = 1.0  # 600 elems > 200 -> numpy summarizes (first/last 3 rows)
-        b = a.copy()
-        b[150] = [0.5, 0.5]  # change ONLY a hidden interior row
+        a       = np.zeros((300, 2))
+        a[:, 1] = 1.0         # 600 elems > 200 -> numpy summarizes (first/last 3 rows)
+        b       = a.copy()
+        b[150]  = [0.5, 0.5]  # change ONLY a hidden interior row
         # the summarized bodies are identical; only the tag differs.
         self.assertNotEqual(_format_value(a), _format_value(b))
 
@@ -1195,17 +1195,17 @@ class TestHotfix10NumpyAlignmentAndPrefs(unittest.TestCase):
         from mpynode.ui.widgets.watch import _format_value
 
         preferences.set_pref("watch_threshold_inf", False)
-        a = np.zeros((300, 2))
+        a       = np.zeros((300, 2))
         a[:, 1] = 1.0
-        b = a.copy()
+        b       = a.copy()
         # Permute two hidden interior rows: same multiset -> same min/max/mean/
         # sum. Only a full-buffer digest distinguishes them.
         a[100] = [0.2, 0.8]
         a[101] = [0.8, 0.2]
         b[100] = [0.8, 0.2]
         b[101] = [0.2, 0.8]
-        self.assertEqual(float(a.min()), float(b.min()))
-        self.assertEqual(float(a.max()), float(b.max()))
+        self.assertEqual(float(a.min()),  float(b.min()))
+        self.assertEqual(float(a.max()),  float(b.max()))
         self.assertEqual(float(a.mean()), float(b.mean()))
         self.assertNotEqual(_format_value(a), _format_value(b))
 
@@ -1218,7 +1218,7 @@ class TestHotfix10NumpyAlignmentAndPrefs(unittest.TestCase):
 
         preferences.set_pref("watch_threshold_inf", False)
         small = np.arange(12).reshape(3, 4).astype(float)  # 12 <= 200
-        out = _format_value(small)
+        out   = _format_value(small)
         self.assertNotIn("shape=", out)
         self.assertNotIn("#", out)
 
@@ -1230,7 +1230,7 @@ class TestHotfix10NumpyAlignmentAndPrefs(unittest.TestCase):
 
         preferences.set_pref("watch_threshold_inf", False)
         self.assertNotIn("shape=", _format_value(np.zeros(200)))  # 200: shown
-        self.assertIn("shape=", _format_value(np.zeros(201)))  # 201: elided
+        self.assertIn("shape=", _format_value(np.zeros(201)))     # 201: elided
 
     def test_format_value_no_tag_when_threshold_inf(self):
         """The full-array (threshold_inf) path stays unchanged: no tag."""
@@ -1271,7 +1271,7 @@ class TestHotfix10NumpyAlignmentAndPrefs(unittest.TestCase):
         self.assertIsInstance(_format_value(obj), str)
         # all-NaN and inf-bearing numeric arrays: no raise, still a string.
         self.assertIsInstance(_format_value(np.full(300, np.nan)), str)
-        inf_arr = np.zeros(300)
+        inf_arr    = np.zeros(300)
         inf_arr[7] = np.inf
         self.assertIsInstance(_format_value(inf_arr), str)
         self.assertIsInstance(_format_value(np.array(5.0)), str)  # 0-d
@@ -1349,9 +1349,9 @@ class TestHotfix11ToggleOffClearsValues(unittest.TestCase):
         # OFF branch clears the snapshot plug then delegates to refresh()
         # (which empties the panel). Check both halves.
         src = inspect.getsource(NDWatchWidget._on_watch_toggled)
-        self.assertIn("else:", src)
+        self.assertIn("else:",          src)
         self.assertIn("_watchVarsData", src)
-        self.assertIn('type="string"', src)
+        self.assertIn('type="string"',  src)
         self.assertIn("self.refresh()", src)
         refreshed = inspect.getsource(NDWatchWidget.refresh)
         self.assertIn("self._cached_vars = {}", refreshed)
@@ -1386,7 +1386,7 @@ class TestHotfix11CollapsibleBottomPanel(unittest.TestCase):
         self.assertIn("self._tools_tab_widget", src)
         # Editor goes top, tools go bottom.
         editor_idx = src.find("addWidget(self._script_tab_widget)")
-        tools_idx = src.find("addWidget(self._tools_tab_widget)")
+        tools_idx  = src.find("addWidget(self._tools_tab_widget)")
         self.assertGreater(editor_idx, -1)
         self.assertGreater(tools_idx, -1)
         self.assertLess(editor_idx, tools_idx)
@@ -1585,8 +1585,8 @@ class TestHotfix12ConnectDialogCompatToggle(unittest.TestCase):
 
         src = inspect.getsource(_ca._BaseConnectDialog._populate_tree)
         self.assertIn("_resolve_target_attr_type", src)
-        self.assertIn("_type_compatible", src)
-        self.assertIn("self._compat_check", src)
+        self.assertIn("_type_compatible",          src)
+        self.assertIn("self._compat_check",        src)
 
 
 class TestWatchColumnWidth(unittest.TestCase):
@@ -1605,9 +1605,9 @@ class TestWatchColumnWidth(unittest.TestCase):
         from mpynode.ui.widgets.watch import NDWatchWidget
 
         cls_src = inspect.getsource(NDWatchWidget)
-        self.assertNotIn("_autosize_columns", cls_src)
+        self.assertNotIn("_autosize_columns",      cls_src)
         self.assertNotIn("_compute_column_widths", cls_src)
-        self.assertNotIn("def resizeEvent", cls_src)
+        self.assertNotIn("def resizeEvent",        cls_src)
 
 
 class TestPrefsIsolationRegression(unittest.TestCase):
@@ -1631,7 +1631,7 @@ class TestPrefsIsolationRegression(unittest.TestCase):
 
         from mpynode.ui import preferences
 
-        sandbox = tempfile.mkdtemp(prefix="nd_realprefs_")
+        sandbox      = tempfile.mkdtemp(prefix="nd_realprefs_")
         sandbox_path = os.path.join(sandbox, "preferences.json")
         try:
             with mock.patch.object(preferences, "PREFS_DIR", sandbox), \

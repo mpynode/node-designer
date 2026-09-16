@@ -113,7 +113,7 @@ class TestKeyboardReorder(unittest.TestCase):
     def test_move_refused_during_playback(self):
         import mpynode.ui.widgets.attributes as attrmod
         self._select("beta")
-        orig = attrmod._timeline_is_playing
+        orig                         = attrmod._timeline_is_playing
         attrmod._timeline_is_playing = lambda: True
         try:
             self.assertFalse(self.tree._move_selected(1))

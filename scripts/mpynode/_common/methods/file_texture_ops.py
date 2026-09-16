@@ -57,7 +57,7 @@ try:
     _HAVE_SCIPY = True
 except ImportError:  # pragma: no cover
     _scipy_convolve1d = None
-    _HAVE_SCIPY = False
+    _HAVE_SCIPY       = False
 
 # Enum int constants -- REAL dedup from the declarative SSOT (no inline mirror).
 from mpynode._common.interface.file_texture_interface import (
@@ -114,20 +114,20 @@ if np is not None:
          [-0.085391, 1.236164, -0.150774],
          [0.028601, -0.275313, 1.246712]], dtype=np.float32)
 else:  # pragma: no cover
-    _M_AdobeRGB_to_Rec709 = None
-    _M_P3D65_to_Rec709 = None
-    _M_Rec2020_to_Rec709 = None
-    _M_AP0_to_Rec709 = None
-    _M_AP1_to_Rec709 = None
+    _M_AdobeRGB_to_Rec709  = None
+    _M_P3D65_to_Rec709     = None
+    _M_Rec2020_to_Rec709   = None
+    _M_AP0_to_Rec709       = None
+    _M_AP1_to_Rec709       = None
     _M_AlexaWide_to_Rec709 = None
-    _M_REDWide_to_Rec709 = None
-    _M_SGamut3_to_Rec709 = None
+    _M_REDWide_to_Rec709   = None
+    _M_SGamut3_to_Rec709   = None
 
 
 # ---- transfer functions (vectorized, no per-pixel loops) ----
 def srgb_eotf(rgb):
     """sRGB encoded -> linear (full piecewise)."""
-    low = rgb / 12.92
+    low  = rgb / 12.92
     high = np.power((rgb + 0.055) / 1.055, 2.4)
     return np.where(rgb <= 0.04045, low, high).astype(np.float32)
 
@@ -144,7 +144,7 @@ def apply_matrix(rgb, M):
 
 def acescct_eotf(rgb):
     """ACEScct encoded -> linear (AP1 primaries)."""
-    low = (rgb - np.float32(0.0729055341958355)) / np.float32(10.5402377416545)
+    low  = (rgb - np.float32(0.0729055341958355)) / np.float32(10.5402377416545)
     high = np.power(np.float32(2.0), rgb * np.float32(17.52) - np.float32(9.72))
     return np.where(rgb <= np.float32(0.155251141552511), low, high).astype(np.float32)
 
@@ -197,23 +197,23 @@ def adx10_eotf(rgb):
 def gaussian_kernel(radius):
     """1D Gaussian kernel. Maya convention: sigma = radius / 2."""
     sigma = max(float(radius) / 2.0, 0.5)
-    half = int(np.ceil(3.0 * sigma))
-    x = np.arange(-half, half + 1, dtype=np.float32)
-    k = np.exp(-(x * x) / (2.0 * sigma * sigma))
+    half  = int(np.ceil(3.0 * sigma))
+    x     = np.arange(-half, half + 1, dtype=np.float32)
+    k     = np.exp(-(x * x) / (2.0 * sigma * sigma))
     return (k / k.sum()).astype(np.float32)
 
 
 def box_kernel(radius):
     """1D uniform (box) kernel."""
     half = max(1, int(round(float(radius))))
-    n = 2 * half + 1
+    n    = 2 * half + 1
     return np.full(n, 1.0 / float(n), dtype=np.float32)
 
 
 def quadratic_kernel(radius):
     """1D triangular (tent / quadratic B-spline) kernel."""
     half = max(1, int(round(float(radius))))
-    x = np.arange(-half, half + 1, dtype=np.float32)
+    x    = np.arange(-half, half + 1, dtype=np.float32)
     k = np.maximum(
         np.float32(0.0), np.float32(1.0) - np.abs(x) / np.float32(half + 1)
     )
@@ -222,9 +222,9 @@ def quadratic_kernel(radius):
 
 def quartic_kernel(radius):
     """1D iterated-binomial kernel. Self-convolves [1,2,1]/4 (2*r) times."""
-    base = np.array([1.0, 2.0, 1.0], dtype=np.float32) / np.float32(4.0)
+    base   = np.array([1.0, 2.0, 1.0], dtype=np.float32) / np.float32(4.0)
     n_iter = max(1, int(round(float(radius))) * 2)
-    k = base.copy()
+    k      = base.copy()
     for _ in range(n_iter - 1):
         k = np.convolve(k, base, mode="full")
     return (k / k.sum()).astype(np.float32)
@@ -236,7 +236,7 @@ def blur_separable(image, k1d):
         out = _scipy_convolve1d(image, k1d, axis=0, mode="reflect")
         out = _scipy_convolve1d(out, k1d, axis=1, mode="reflect")
         return out.astype(np.float32)
-    half = (len(k1d) - 1) // 2
+    half   = (len(k1d) - 1) // 2
     padded = np.pad(image, ((half, half), (half, half), (0, 0)), mode="reflect")
     conv0 = np.apply_along_axis(
         lambda col: np.convolve(col, k1d, mode="valid"), axis=0, arr=padded
@@ -275,8 +275,8 @@ def linearize(pixels_uint8, cs_index, unpremultiply=False):
     ``unpremultiply`` undoes an ASSOCIATED-alpha decode -- see the same flag on
     the C++ twin ``nd_tex_linearize``. It has to happen before the transfer
     function, because the EOTF is non-linear: ``eotf(c*a) != eotf(c)*a``."""
-    f = pixels_uint8.astype(np.float32) * (np.float32(1.0) / np.float32(255.0))
-    rgb = f[...,:3]
+    f     = pixels_uint8.astype(np.float32) * (np.float32(1.0) / np.float32(255.0))
+    rgb   = f[...,:3]
     alpha = f[..., 3:4]
 
     if unpremultiply:
@@ -284,8 +284,8 @@ def linearize(pixels_uint8, cs_index, unpremultiply=False):
         # is already straight. Written as a reciprocal MULTIPLY, not a divide,
         # so it rounds the same way the C++ twin's `r *= ia` does.
         partial = (alpha > np.float32(0.0)) & (alpha < np.float32(1.0))
-        safe = np.where(partial, alpha, np.float32(1.0))
-        rgb = np.minimum(rgb * (np.float32(1.0) / safe), np.float32(1.0))
+        safe    = np.where(partial, alpha, np.float32(1.0))
+        rgb     = np.minimum(rgb * (np.float32(1.0) / safe), np.float32(1.0))
 
     # Transfer function.
     if cs_index in (19, 8, 9, 10, 11, 12, 13):
@@ -334,7 +334,7 @@ def linearize(pixels_uint8, cs_index, unpremultiply=False):
 
 
 # ---- exact PNG decode (straight alpha), the twin of PNG_CPP's nd_png_* ----
-_PNG_SIG = b"\x89PNG\r\n\x1a\n"
+_PNG_SIG  = b"\x89PNG\r\n\x1a\n"
 _PNG_CHAN = {0: 1, 2: 3, 3: 1, 4: 2, 6: 4}
 
 
@@ -370,7 +370,7 @@ def png_supported(data):
         # reference behaviour is not pinned, so decline rather than guess.
         off = 8
         while off + 8 <= len(data):
-            ln = struct.unpack(">I", data[off:off + 4])[0]
+            ln  = struct.unpack(">I", data[off:off + 4])[0]
             typ = data[off + 4:off + 8]
             if typ == b"tRNS":
                 return False
@@ -387,12 +387,12 @@ def _png_unfilter(raw, h, stride, fbpp):
     mod-256 cumulative sum down each byte lane -- so only Average and Paeth
     need the byte-at-a-time recurrence, and those rows pay for it alone.
     """
-    out = np.zeros((h, stride), np.uint8)
+    out  = np.zeros((h, stride), np.uint8)
     prev = np.zeros((stride,), np.uint8)
     for y in range(h):
         base = y * (stride + 1)
-        ft = raw[base]
-        src = np.frombuffer(raw, np.uint8, stride, base + 1)
+        ft   = raw[base]
+        src  = np.frombuffer(raw, np.uint8, stride, base + 1)
         if ft == 0:
             cur = src.copy()
         elif ft == 1:
@@ -408,12 +408,12 @@ def _png_unfilter(raw, h, stride, fbpp):
             c = [0] * stride
             if ft == 3:
                 for i in range(stride):
-                    a = c[i - fbpp] if i >= fbpp else 0
+                    a    = c[i - fbpp] if i >= fbpp else 0
                     c[i] = (s[i] + ((a + p[i]) >> 1)) & 0xFF
             else:
                 for i in range(stride):
-                    a = c[i - fbpp] if i >= fbpp else 0
-                    b = p[i]
+                    a  = c[i - fbpp] if i >= fbpp else 0
+                    b  = p[i]
                     cc = p[i - fbpp] if i >= fbpp else 0
                     pp = a + b - cc
                     pa = pp - a if pp > a else a - pp
@@ -430,7 +430,7 @@ def _png_unfilter(raw, h, stride, fbpp):
         else:
             return None
         out[y] = cur
-        prev = cur
+        prev   = cur
     return out
 
 
@@ -442,11 +442,11 @@ def _png_samples(rows, w, chan, depth):
         return rows[:, :w * chan]
     if depth == 16:
         return rows[:, 0:w * chan * 2:2]
-    per = 8 // depth
+    per  = 8 // depth
     mask = (1 << depth) - 1
-    out = np.empty((rows.shape[0], w * chan), np.uint8)
+    out  = np.empty((rows.shape[0], w * chan), np.uint8)
     for i in range(w * chan):
-        shift = (per - 1 - (i % per)) * depth
+        shift     = (per - 1 - (i % per)) * depth
         out[:, i] = (rows[:, i // per] >> shift) & mask
     return out
 
@@ -468,13 +468,13 @@ def png_decode(data):
     # "bytes per complete pixel, at least 1", which stops being the channel
     # count as soon as the depth stops being 8.
     stride = (w * chan * depth + 7) // 8
-    fbpp = max(1, (chan * depth) // 8)
+    fbpp   = max(1, (chan * depth) // 8)
 
-    idat = bytearray()
-    plte = trns = b""
+    idat   = bytearray()
+    plte   = trns = b""
     off, n = 8, len(data)
     while off + 8 <= n:
-        ln = struct.unpack(">I", data[off:off + 4])[0]
+        ln  = struct.unpack(">I", data[off:off + 4])[0]
         typ = data[off + 4:off + 8]
         if off + 12 + ln > n:
             return None
@@ -501,27 +501,27 @@ def png_decode(data):
     rows = _png_unfilter(raw, h, stride, fbpp)
     if rows is None:
         return None
-    s = _png_samples(rows, w, chan, depth)
+    s   = _png_samples(rows, w, chan, depth)
 
     out = np.full((h, w, 4), 255, np.uint8)
     if colour in (0, 4):
         # Sub-byte greyscale stretches to full range by an exact integer factor.
-        gs = (255 // ((1 << depth) - 1)) if depth < 8 else 1
+        gs           = (255 // ((1 << depth) - 1)) if depth < 8 else 1
         out[:, :, 0] = out[:, :, 1] = out[:, :, 2] = (s[:, 0::chan] * gs)
         if colour == 4:
             out[:, :, 3] = s[:, 1::chan]
     elif colour == 3:
-        idx = s.reshape(h, w)
-        pal = np.frombuffer(plte, np.uint8)
+        idx  = s.reshape(h, w)
+        pal  = np.frombuffer(plte, np.uint8)
         npal = len(pal) // 3
         if int(idx.max()) >= npal:
             return None
         out[:, :, :3] = pal[:npal * 3].reshape(npal, 3)[idx]
         if trns:
-            a = np.frombuffer(trns, np.uint8)
-            full = np.full((npal,), 255, np.uint8)
+            a                        = np.frombuffer(trns, np.uint8)
+            full                     = np.full((npal,), 255, np.uint8)
             full[:min(len(a), npal)] = a[:npal]
-            out[:, :, 3] = full[idx]
+            out[:, :, 3]             = full[idx]
     else:
         out[:, :, 0] = s[:, 0::chan]
         out[:, :, 1] = s[:, 1::chan]
@@ -658,7 +658,7 @@ def load_linear_pixels(path, cs_index, prefilter_on, kernel, radius):
     # and write are inside it.
     try:
         raw, premultiplied = decode_rgba8(path)
-        lin = linearize(raw, int(cs_index), unpremultiply=premultiplied)
+        lin    = linearize(raw, int(cs_index), unpremultiply=premultiplied)
         result = prefilter(lin, prefilter_on, int(kernel), radius_q)
     except Exception as exc:
         sys.stderr.write(
@@ -691,8 +691,8 @@ def apply_wrap(coord, mode):
             return 1.0 - 1e-6, False
         return coord, False
     if mode == kWrapMirror:
-        c = coord
-        n = int(c // 1.0)
+        c    = coord
+        n    = int(c // 1.0)
         frac = c - n
         if n % 2!= 0:
             frac = 1.0 - frac
@@ -730,22 +730,22 @@ def sample(pixels, u, v, wrap_u, wrap_v, border_color, missing=None):
 
     h, w, _ = pixels.shape
     # Maya V is bottom-up; image V is top-down.
-    vv = 1.0 - vv_raw
-    fx = uu * (w - 1)
-    fy = vv * (h - 1)
-    x0 = int(fx)
-    y0 = int(fy)
-    x1 = min(x0 + 1, w - 1)
-    y1 = min(y0 + 1, h - 1)
-    tx = fx - x0
-    ty = fy - y0
-    p00 = pixels[y0, x0]
-    p10 = pixels[y0, x1]
-    p01 = pixels[y1, x0]
-    p11 = pixels[y1, x1]
-    top = p00 * (1.0 - tx) + p10 * tx
+    vv     = 1.0 - vv_raw
+    fx     = uu * (w - 1)
+    fy     = vv * (h - 1)
+    x0     = int(fx)
+    y0     = int(fy)
+    x1     = min(x0 + 1, w - 1)
+    y1     = min(y0 + 1, h - 1)
+    tx     = fx - x0
+    ty     = fy - y0
+    p00    = pixels[y0, x0]
+    p10    = pixels[y0, x1]
+    p01    = pixels[y1, x0]
+    p11    = pixels[y1, x1]
+    top    = p00 * (1.0 - tx) + p10 * tx
     bottom = p01 * (1.0 - tx) + p11 * tx
-    rgba = top * (1.0 - ty) + bottom * ty
+    rgba   = top * (1.0 - ty) + bottom * ty
     return (float(rgba[0]), float(rgba[1]), float(rgba[2]), float(rgba[3]))
 
 
@@ -754,8 +754,8 @@ def vp2_filter_for(mode):
     """Map our filterMode enum to MSamplerState filter constant."""
     import maya.api.OpenMayaRender as omr
     return {
-        kFilterPoint: omr.MSamplerState.kMinMagMipPoint,
-        kFilterLinear: omr.MSamplerState.kMinMagMipLinear,
+        kFilterPoint:       omr.MSamplerState.kMinMagMipPoint,
+        kFilterLinear:      omr.MSamplerState.kMinMagMipLinear,
         kFilterAnisotropic: omr.MSamplerState.kAnisotropic,
     }.get(int(mode), omr.MSamplerState.kMinMagMipLinear)
 
@@ -764,8 +764,8 @@ def vp2_wrap_for(mode):
     """Map our wrapMode enum to MSamplerState address constant."""
     import maya.api.OpenMayaRender as omr
     return {
-        kWrapWrap: omr.MSamplerState.kTexWrap,
-        kWrapClamp: omr.MSamplerState.kTexClamp,
+        kWrapWrap:   omr.MSamplerState.kTexWrap,
+        kWrapClamp:  omr.MSamplerState.kTexClamp,
         kWrapMirror: omr.MSamplerState.kTexMirror,
         kWrapBorder: omr.MSamplerState.kTexBorder,
     }.get(int(mode), omr.MSamplerState.kTexWrap)
@@ -796,16 +796,16 @@ def upload_linear_texture(linear, fileName, colorSpace, mipmapMode,
 
     desc = omr.MTextureDescription()
     desc.setToDefault2DTexture()
-    desc.fWidth = w
-    desc.fHeight = h
-    desc.fDepth = 1
-    desc.fBytesPerRow = w * 4 * 4  # 4 channels * 4 bytes (float32)
+    desc.fWidth         = w
+    desc.fHeight        = h
+    desc.fDepth         = 1
+    desc.fBytesPerRow   = w * 4 * 4  # 4 channels * 4 bytes (float32)
     desc.fBytesPerSlice = desc.fBytesPerRow * h
-    desc.fMipmaps = 1
-    desc.fArraySlices = 1
-    desc.fFormat = omr.MRenderer.kR32G32B32A32_FLOAT
-    desc.fTextureType = omr.MTextureDescription.kImage2D
-    desc.fEnvMapType = omr.MTextureDescription.kEnvNone
+    desc.fMipmaps       = 1
+    desc.fArraySlices   = 1
+    desc.fFormat        = omr.MRenderer.kR32G32B32A32_FLOAT
+    desc.fTextureType   = omr.MTextureDescription.kImage2D
+    desc.fEnvMapType    = omr.MTextureDescription.kEnvNone
 
     if not linear.flags["C_CONTIGUOUS"]:
         linear = np.ascontiguousarray(linear)

@@ -23,7 +23,7 @@ def _setUpModule__compile_bundle_manager():
 class _FakeTable:
     def __init__(self):
         self.row_count = 0
-        self.items = {}
+        self.items     = {}
 
     def setRowCount(self, n):
         self.row_count = n
@@ -43,19 +43,19 @@ class _FakeSelf:
 
     def __init__(self, scene_nodes=None, checked=None):
         self._scene_nodes = list(scene_nodes or [])
-        self._checked = set(checked or [])
+        self._checked     = set(checked or [])
         # External .mpn rows merged into the table (none in these scene tests).
         self._file_rows = {}
         # Per-node persistent unchecks (pruned/remapped alongside _checked).
         self._persistent_unchecked = set()
-        self._has_persistent = {}
-        self._row_by_type = {}
-        self._busy = False
-        self._table = _FakeTable()
-        self.rendered = []
-        self.styled = []
-        self.rendered_persist = []
-        self.refresh_calls = 0
+        self._has_persistent       = {}
+        self._row_by_type          = {}
+        self._busy                 = False
+        self._table                = _FakeTable()
+        self.rendered              = []
+        self.styled                = []
+        self.rendered_persist      = []
+        self.refresh_calls         = 0
         # _refresh_table disambiguates file rows from the live scene with this
         # pure staticmethod; bind the real one, as a CompileDialog would have.
         from mpynode.ui.dialogs.compile_dialog import CompileDialog as _CD
@@ -83,7 +83,7 @@ class TestRefreshFromScene(unittest.TestCase):
     def test_refresh_queries_scene_sorts_and_renders(self):
         from mpynode.ui.dialogs import compile_dialog as cd
 
-        orig = cd._scene_mpy_nodes
+        orig                = cd._scene_mpy_nodes
         cd._scene_mpy_nodes = lambda: [("b", "T"), ("a", "U")]
         try:
             fake = _FakeSelf(checked=["a", "gone"])
@@ -91,9 +91,9 @@ class TestRefreshFromScene(unittest.TestCase):
         finally:
             cd._scene_mpy_nodes = orig
         # Sorted, full scene listed.
-        self.assertEqual(fake._scene_nodes, [("a", "U"), ("b", "T")])
+        self.assertEqual(fake._scene_nodes,     [("a", "U"), ("b", "T")])
         self.assertEqual(fake._table.row_count, 2)
-        self.assertEqual(len(fake.rendered), 2)
+        self.assertEqual(len(fake.rendered),    2)
         # Stale 'gone' pruned; live 'a' check preserved.
         self.assertEqual(fake._checked, {"a"})
 
@@ -103,10 +103,10 @@ class TestRefreshFromScene(unittest.TestCase):
         name can't inherit the stale uncheck and silently lose its stored vars."""
         from mpynode.ui.dialogs import compile_dialog as cd
 
-        orig = cd._scene_mpy_nodes
+        orig                = cd._scene_mpy_nodes
         cd._scene_mpy_nodes = lambda: [("a", "T")]
         try:
-            fake = _FakeSelf(scene_nodes=[("a", "T"), ("gone", "T")])
+            fake                       = _FakeSelf(scene_nodes=[("a", "T"), ("gone", "T")])
             fake._persistent_unchecked = {"gone", "a"}
             cd.CompileDialog._refresh_table(fake)
         finally:
@@ -118,25 +118,25 @@ class TestRefreshFromScene(unittest.TestCase):
         """The stale-list bug: a NEW empty scene must wipe the table+checks."""
         from mpynode.ui.dialogs import compile_dialog as cd
 
-        orig = cd._scene_mpy_nodes
+        orig                = cd._scene_mpy_nodes
         cd._scene_mpy_nodes = lambda: []
         try:
             fake = _FakeSelf(scene_nodes=[("old", "T")], checked=["old"])
             cd.CompileDialog._refresh_table(fake)
         finally:
             cd._scene_mpy_nodes = orig
-        self.assertEqual(fake._scene_nodes, [])
+        self.assertEqual(fake._scene_nodes,     [])
         self.assertEqual(fake._table.row_count, 0)
-        self.assertEqual(fake._checked, set())
-        self.assertEqual(fake.rendered, [])
+        self.assertEqual(fake._checked,         set())
+        self.assertEqual(fake.rendered,         [])
 
     def test_refresh_is_noop_while_busy(self):
         from mpynode.ui.dialogs import compile_dialog as cd
 
-        orig = cd._scene_mpy_nodes
+        orig                = cd._scene_mpy_nodes
         cd._scene_mpy_nodes = lambda: [("a", "T")]
         try:
-            fake = _FakeSelf(scene_nodes=[("old", "T")])
+            fake       = _FakeSelf(scene_nodes=[("old", "T")])
             fake._busy = True
             cd.CompileDialog._refresh_table(fake)
         finally:
@@ -147,7 +147,7 @@ class TestRefreshFromScene(unittest.TestCase):
     def test_default_is_unchecked(self):
         from mpynode.ui.dialogs import compile_dialog as cd
 
-        orig = cd._scene_mpy_nodes
+        orig                = cd._scene_mpy_nodes
         cd._scene_mpy_nodes = lambda: [("a", "T"), ("b", "U")]
         try:
             fake = _FakeSelf()
@@ -198,7 +198,7 @@ class TestCheckedSelection(unittest.TestCase):
     def test_set_all_checked_noop_while_busy(self):
         from mpynode.ui.dialogs import compile_dialog as cd
 
-        fake = _FakeSelf(scene_nodes=[("a", "T")])
+        fake       = _FakeSelf(scene_nodes=[("a", "T")])
         fake._busy = True
         cd.CompileDialog._set_all_checked(fake, True)
         self.assertEqual(fake._checked, set())
@@ -213,17 +213,17 @@ class TestRefreshResetsSelectionOnOpen(unittest.TestCase):
     def test_refresh_nodes_resets_checked_and_row_map(self):
         from mpynode.ui.dialogs import compile_dialog as cd
 
-        fake = _FakeSelf(scene_nodes=[("a", "T")], checked=["a"])
+        fake              = _FakeSelf(scene_nodes=[("a", "T")], checked=["a"])
         fake._row_by_type = {"T": 0}
         cd.CompileDialog.refresh_nodes(fake)
-        self.assertEqual(fake._checked, set())
-        self.assertEqual(fake._row_by_type, {})
+        self.assertEqual(fake._checked,      set())
+        self.assertEqual(fake._row_by_type,  {})
         self.assertEqual(fake.refresh_calls, 1)  # delegated to _refresh_table
 
     def test_refresh_nodes_noop_while_busy(self):
         from mpynode.ui.dialogs import compile_dialog as cd
 
-        fake = _FakeSelf(scene_nodes=[("a", "T")], checked=["a"])
+        fake       = _FakeSelf(scene_nodes=[("a", "T")], checked=["a"])
         fake._busy = True
         cd.CompileDialog.refresh_nodes(fake)
         self.assertEqual(fake._checked, {"a"})  # untouched
@@ -356,10 +356,10 @@ _ROWS = [
         "type_name": "fooNode",
         "spec": {
             "suggested": {"node_type_name": "fooNode", "mpx_base": "MPxNode"},
-            "compute": "self.out = self.a + 1.0",
-            "init": "",
-            "inputs": {"a": {"type": "float"}},
-            "outputs": {"out": {"type": "float"}},
+            "compute":   "self.out = self.a + 1.0",
+            "init":      "",
+            "inputs":    {"a": {"type": "float"}},
+            "outputs":   {"out": {"type": "float"}},
         },
         # extra keys the verify ignores but rows carry in production:
         "build_status": "compiled",
@@ -388,7 +388,7 @@ class TestSubprocessVerifyUnit(unittest.TestCase):
                                   runner=fake_runner)
         out = vf("/tmp/out/myPlug.bundle", _ROWS)
 
-        p = captured["payload"]
+        p   = captured["payload"]
         self.assertEqual(p["bundle_path"], "/tmp/out/myPlug.bundle")
         self.assertEqual(p["rows"][0]["type_name"], "fooNode")
         # The full spec must ride along so the worker can build the Python ref.
@@ -430,7 +430,7 @@ class TestSubprocessVerifyUnit(unittest.TestCase):
         def fake_runner(argv, env, timeout):
             return 1  # writes no result file
 
-        vf = subprocess_verify_fn(maya="/x", runner=fake_runner)
+        vf  = subprocess_verify_fn(maya="/x", runner=fake_runner)
         out = vf("/tmp/out/myPlug.bundle", _ROWS)
         self.assertIn("fooNode", out)
         self.assertFalse(out["fooNode"]["ran"])
@@ -443,7 +443,7 @@ class TestSubprocessVerifyUnit(unittest.TestCase):
         def fake_runner(argv, env, timeout):
             raise RuntimeError("spawn failed")
 
-        vf = subprocess_verify_fn(maya="/x", runner=fake_runner)
+        vf  = subprocess_verify_fn(maya="/x", runner=fake_runner)
         out = vf("/tmp/out/myPlug.bundle", _ROWS)
         self.assertFalse(out["fooNode"]["ran"])
         self.assertIsNone(out["fooNode"]["pass"])
@@ -456,7 +456,7 @@ class TestSubprocessVerifyUnit(unittest.TestCase):
                 json.dump({}, fh)
             return 0
 
-        vf = subprocess_verify_fn(maya="/x", runner=fake_runner)
+        vf  = subprocess_verify_fn(maya="/x", runner=fake_runner)
         out = vf("/tmp/out/myPlug.bundle", [])
         self.assertEqual(out, {})
 
@@ -466,7 +466,7 @@ class TestSubprocessVerifyUnit(unittest.TestCase):
         seen = {}
 
         def fake_impl(bundle_path, rows, maya=None, run_authored_tests=True):
-            seen["args"] = (bundle_path, rows, maya)
+            seen["args"]               = (bundle_path, rows, maya)
             seen["run_authored_tests"] = run_authored_tests
             return {"fooNode": {"ran": True, "pass": True, "maxerr": 0.0,
                                 "tol": 1e-4, "reason": ""}}
@@ -485,9 +485,9 @@ class TestSubprocessVerifyUnit(unittest.TestCase):
 
         from mpynode.native.toolchain import verify as cc
 
-        d = tempfile.mkdtemp(prefix="mpynode_vw_")
+        d            = tempfile.mkdtemp(prefix="mpynode_vw_")
         payload_path = os.path.join(d, "payload.json")
-        result_path = os.path.join(d, "result.json")
+        result_path  = os.path.join(d, "result.json")
         with open(payload_path, "w") as fh:
             json.dump({"bundle_path": "/b.bundle", "rows": _ROWS, "maya": "/m"},
                       fh)
@@ -498,7 +498,7 @@ class TestSubprocessVerifyUnit(unittest.TestCase):
             "fooNode": {"ran": True, "pass": True, "maxerr": 0.0, "tol": 1e-4,
                         "reason": ""}}
         os.environ["MPYNODE_VERIFY_PAYLOAD"] = payload_path
-        os.environ["MPYNODE_VERIFY_RESULT"] = result_path
+        os.environ["MPYNODE_VERIFY_RESULT"]  = result_path
         try:
             cc._verify_worker_main()
         finally:
@@ -540,11 +540,11 @@ class TestSubprocessVerifyIntegration(unittest.TestCase):
 
         with open(os.path.join(_BESSEL_DIR, "spec.json")) as fh:
             spec = json.load(fh)
-        tn = spec["suggested"]["node_type_name"]
+        tn   = spec["suggested"]["node_type_name"]
         rows = [{"type_name": tn, "spec": spec}]
 
-        vf = subprocess_verify_fn(maya=_MAYA2026)
-        out = vf(_BESSEL_BUNDLE, rows)
+        vf   = subprocess_verify_fn(maya=_MAYA2026)
+        out  = vf(_BESSEL_BUNDLE, rows)
 
         # THE FIX: the parent process's scene must be completely untouched.
         self.assertTrue(

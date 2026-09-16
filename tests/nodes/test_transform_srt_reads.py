@@ -138,8 +138,8 @@ class TestChannelInputExposure(unittest.TestCase):
         from mpynode.ui.widgets.plug_tree_walker import (
             walk_plug_tree, filter_by_direction)
 
-        n = mc.createNode("mPyTransform", name="t1")
-        rows = walk_plug_tree(n)
+        n           = mc.createNode("mPyTransform", name="t1")
+        rows        = walk_plug_tree(n)
         input_names = {r.short_name for r in filter_by_direction(rows, "INPUT")}
         internal_names = {r.short_name
                           for r in filter_by_direction(rows, "INTERNAL")}
@@ -151,7 +151,7 @@ class TestChannelInputExposure(unittest.TestCase):
     def test_exposed_plugs_lookup(self):
         from mpynode.ui.widgets.plug_tree_walker import _exposed_input_plugs_for
 
-        n = mc.createNode("mPyTransform", name="t1")
+        n       = mc.createNode("mPyTransform", name="t1")
         exposed = _exposed_input_plugs_for(n)
         for ch in ("translate", "rotate", "scale", "shear", "rotateOrder"):
             self.assertIn(ch, exposed)
@@ -163,8 +163,8 @@ class TestChannelInputExposure(unittest.TestCase):
         from mpynode._common.plugs.plug_filter import is_hidden_input_row
 
         exposed = ("translate", "rotate", "scale", "shear", "rotateOrder")
-        self.assertTrue(is_hidden_input_row("translate", ()))       # default hide
-        self.assertFalse(is_hidden_input_row("translate", exposed))  # promoted
+        self.assertTrue(is_hidden_input_row("translate", ()))         # default hide
+        self.assertFalse(is_hidden_input_row("translate", exposed))   # promoted
         self.assertTrue(is_hidden_input_row("worldMatrix", exposed))  # still hidden
 
 
@@ -197,11 +197,11 @@ class TestChannelLowering(unittest.TestCase):
         self.assertIsNotNone(
             res, "the per-channel reads must lower deterministically (not PORT)")
         joined = "\n".join(res)
-        self.assertIn("{t.x, t.y, t.z}", joined)      # translate -> t
-        self.assertIn("{r.x, r.y, r.z}", joined)      # rotate -> r (radians)
-        self.assertIn("{sc.x, sc.y, sc.z}", joined)   # scale -> sc
+        self.assertIn("{t.x, t.y, t.z}",       joined)  # translate -> t
+        self.assertIn("{r.x, r.y, r.z}",       joined)  # rotate -> r (radians)
+        self.assertIn("{sc.x, sc.y, sc.z}",    joined)  # scale -> sc
         self.assertIn("{shr.x, shr.y, shr.z}", joined)  # shear -> shr
-        self.assertIn("(int64_t)(ro)", joined)        # rotate_order -> ro (int)
+        self.assertIn("(int64_t)(ro)",         joined)  # rotate_order -> ro (int)
 
 
 if __name__ == "__main__":

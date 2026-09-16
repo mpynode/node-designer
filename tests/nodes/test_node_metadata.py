@@ -71,10 +71,10 @@ class TestPureHelpers(unittest.TestCase):
         defaults = {"license": "(c) Global", "version": "1.0",
                     "authors": ["Studio <s@x>"], "description": "global"}
         m = M.merge_metadata(node, defaults)
-        self.assertEqual(m["license"], "(c) Node")      # node wins
-        self.assertEqual(m["version"], "2.0")           # node wins
-        self.assertEqual(m["authors"], ["Studio <s@x>"])  # fell back
-        self.assertEqual(m["description"], "global")    # fell back
+        self.assertEqual(m["license"],     "(c) Node")        # node wins
+        self.assertEqual(m["version"],     "2.0")             # node wins
+        self.assertEqual(m["authors"],     ["Studio <s@x>"])  # fell back
+        self.assertEqual(m["description"], "global")          # fell back
 
     def test_merge_empty_node_uses_defaults(self):
         from mpynode._common.lifecycle import metadata_registry as M
@@ -132,7 +132,7 @@ class TestPureHelpers(unittest.TestCase):
         meta = {"authors": ["Jane <j@x>"], "version": "2.0",
                 "license": "(c) 2026 Acme\nMIT"}
         lines = M.banner_lines(meta)
-        blob = "\n".join(lines)
+        blob  = "\n".join(lines)
         self.assertTrue(all(ln.startswith("//") for ln in lines))
         self.assertIn("Jane <j@x>", blob)
         self.assertIn("2.0", blob)
@@ -373,9 +373,9 @@ class TestMetadataMixin(unittest.TestCase):
                 "description": "Does a thing."}
         self.assertTrue(self.node.set_metadata(meta))
         got = self.node.get_metadata()
-        self.assertEqual(got["authors"], ["Jane <j@x>"])
-        self.assertEqual(got["version"], "1.2.0")
-        self.assertEqual(got["license"], "(c) 2026 Acme\nMIT")
+        self.assertEqual(got["authors"],     ["Jane <j@x>"])
+        self.assertEqual(got["version"],     "1.2.0")
+        self.assertEqual(got["license"],     "(c) 2026 Acme\nMIT")
         self.assertEqual(got["description"], "Does a thing.")
         self.assertTrue(self.node.has_metadata())
 
@@ -427,7 +427,7 @@ class TestMetadataMpnRoundTrip(unittest.TestCase):
         from mpynode._common.io import mpn_io
         from mpynode.wrappers._mpy_node import MPyNode
 
-        node = MPyNode.create(name="plainMeta")
+        node    = MPyNode.create(name="plainMeta")
         payload = mpn_io.serialize_node(node)
         self.assertNotIn("metadata", payload)
 
@@ -441,7 +441,7 @@ class TestMetadataMpnRoundTrip(unittest.TestCase):
         self.assertIn("metadata", payload)
 
         rebuilt = mpn_io.deserialize_node(payload, name="dstMeta")
-        got = rebuilt.get_metadata()
+        got     = rebuilt.get_metadata()
         self.assertEqual(got["license"], "(c) 2026 Acme")
         self.assertEqual(got["version"], "9.9")
 
@@ -572,9 +572,9 @@ class TestNodeInfoDialog(unittest.TestCase):
             "description": "does things"})
         dlg = self._dialog(node)
         got = dlg.metadata_from_fields()
-        self.assertEqual(got["authors"], ["Jane <j@x>", "Bob <b@x>"])
-        self.assertEqual(got["version"], "2.0")
-        self.assertEqual(got["license"], "(c) Acme\nMIT")
+        self.assertEqual(got["authors"],     ["Jane <j@x>", "Bob <b@x>"])
+        self.assertEqual(got["version"],     "2.0")
+        self.assertEqual(got["license"],     "(c) Acme\nMIT")
         self.assertEqual(got["description"], "does things")
         self.assertNotIn("copyright", got)
 
@@ -596,7 +596,7 @@ class TestNodeInfoDialog(unittest.TestCase):
         # .strip() must trim only the OUTER whitespace; collapsing the inner
         # breaks here would undo the banner change one layer up.
         text = "MIT License\n\nPermission is hereby granted."
-        dlg = self._dialog(_FakeNode("ml", {"license": text}))
+        dlg  = self._dialog(_FakeNode("ml", {"license": text}))
         self.assertEqual(dlg.metadata_from_fields()["license"], text)
 
     def test_empty_node_yields_empty_fields(self):
@@ -610,7 +610,7 @@ class TestNodeInfoDialog(unittest.TestCase):
 
     def test_save_persists_to_node(self):
         node = _FakeNode("n3", {})
-        dlg = self._dialog(node)
+        dlg  = self._dialog(node)
         dlg._license_edit.setPlainText("(c) 2026 Me")
         dlg._version_edit.setText("1.5")
         dlg._authors_edit.setPlainText("Ann <a@x>\nBea <b@x>")
@@ -681,7 +681,7 @@ class TestNodeInfoDialog(unittest.TestCase):
 
     def test_multiline_license_round_trips(self):
         node = _FakeNode("nLic2", {})
-        dlg = self._dialog(node)
+        dlg  = self._dialog(node)
         lic = ("MIT License\n\nPermission is hereby granted, free of charge, "
                "to any person obtaining a copy of this software...")
         dlg._license_edit.setPlainText(lic)
@@ -696,8 +696,8 @@ class TestNodeInfoDialog(unittest.TestCase):
             preferences.set_pref("metadata_default_license", "(c) GLOBAL")
             dlg = self._dialog(_FakeNode("n4", {}))
             # default appears only as a placeholder hint, never as a real value
-            self.assertEqual(dlg._license_edit.toPlainText(), "")
-            self.assertEqual(dlg._license_edit.placeholderText(), "(c) GLOBAL")
+            self.assertEqual(dlg._license_edit.toPlainText(),       "")
+            self.assertEqual(dlg._license_edit.placeholderText(),   "(c) GLOBAL")
             self.assertEqual(dlg.metadata_from_fields()["license"], "")
         finally:
             preferences.set_pref("metadata_default_license", old)

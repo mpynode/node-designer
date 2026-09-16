@@ -71,7 +71,7 @@ def _tiny_png():
     from PIL import Image
 
     buf = io.BytesIO()
-    im = Image.new("RGBA", (3, 2), (10, 20, 30, 255))
+    im  = Image.new("RGBA", (3, 2), (10, 20, 30, 255))
     im.putpixel((0, 0), (200, 100, 50, 255))
     im.save(buf, format="PNG")
     return buf.getvalue()
@@ -216,20 +216,20 @@ class TestOpenBlockerLifted(unittest.TestCase):
         from mpynode.native.spec import spec_extractor as se
 
         self.assertTrue(hasattr(se, "_classify_opens"))
-        self.assertEqual(se._classify_opens('open("x", "wb")'), (1, 1))
-        self.assertEqual(se._classify_opens('open("x", "rb")'), (1, 1))
-        self.assertEqual(se._classify_opens('open("x")'), (1, 0))
+        self.assertEqual(se._classify_opens('open("x", "wb")'),      (1, 1))
+        self.assertEqual(se._classify_opens('open("x", "rb")'),      (1, 1))
+        self.assertEqual(se._classify_opens('open("x")'),            (1, 0))
         self.assertEqual(se._classify_opens('open("x", mode="wb")'), (1, 1))
-        self.assertEqual(se._classify_opens("fh.open('x')"), (0, 0))  # method call
+        self.assertEqual(se._classify_opens("fh.open('x')"),         (0, 0))  # method call
 
 
 class TestEmbeddedByteBaking(unittest.TestCase):
     """extract_spec bakes embeddedImage bytes; absence keeps a lean spec."""
 
     def test_bytes_roundtrip(self):
-        png = _tiny_png()
+        png  = _tiny_png()
         spec = _file_spec("File Simple", bake_embedded=png)
-        b64 = (spec.get("suggested") or {}).get("embedded_image_b64")
+        b64  = (spec.get("suggested") or {}).get("embedded_image_b64")
         self.assertTrue(b64)
         self.assertEqual(base64.b64decode(b64), png)
 
@@ -275,8 +275,8 @@ class TestMpnLiveEquivalence(unittest.TestCase):
         w.set_compute_expression(d["expression"])
         if bake_embedded is not None:
             w.set_variable("embeddedImage", bake_embedded)
-        live = sx.extract_spec(w.get_name())
-        payload = mpn_io.serialize_node(w)
+        live      = sx.extract_spec(w.get_name())
+        payload   = mpn_io.serialize_node(w)
         from_file = adapter.spec_from_mpn_payload(payload)
         return live, from_file
 
@@ -332,9 +332,9 @@ class TestEmbeddedCodegen(unittest.TestCase):
 
     def test_no_embedded_no_machinery_but_primary_load(self):
         cpp, _ = self._cpp("File Simple", bake_embedded=None)
-        self.assertNotIn("nd_embed_img[]", cpp)
+        self.assertNotIn("nd_embed_img[]",       cpp)
         self.assertNotIn("nd_img_embedded_path", cpp)
-        self.assertNotIn("_imgEmbedCache", cpp)
+        self.assertNotIn("_imgEmbedCache",       cpp)
         # the fileName load is STILL wired (the node reads its image by path)
         self.assertIn(
             "nd_tex_load_linear(_texCache, _texMutex, in_aFileName,", cpp)
@@ -357,9 +357,9 @@ class TestEmbeddedCodegen(unittest.TestCase):
 
     def test_raw_no_embedded_no_machinery_but_primary_load(self):
         cpp, _ = self._raw_cpp(bake_embedded=None)
-        self.assertNotIn("nd_embed_img[]", cpp)
+        self.assertNotIn("nd_embed_img[]",       cpp)
         self.assertNotIn("nd_img_embedded_path", cpp)
-        self.assertNotIn("_imgEmbedCache", cpp)
+        self.assertNotIn("_imgEmbedCache",       cpp)
         self.assertIn("nd_img_load_raw(_imgRawCache, _imgRawMutex, in_aFileName,",
                       cpp)
 
@@ -382,7 +382,7 @@ class TestEmbeddedStageHelperUnit(unittest.TestCase):
         from mpynode.native.compiler.kernels import file_texture_cpp as ftc
 
         data = b"\x89PNG\r\n\x1a\n" + bytes(range(40))
-        cpp = ftc.make_embedded_stage_cpp(data)
+        cpp  = ftc.make_embedded_stage_cpp(data)
         self.assertIn("static const unsigned char nd_embed_img[] = {", cpp)
         self.assertIn("static const size_t nd_embed_img_len = sizeof(nd_embed_img);",
                       cpp)
@@ -447,7 +447,7 @@ int main() {
         from mpynode.native.compiler.kernels import file_texture_cpp as ftc
 
         src = self._SHIM + ftc.make_embedded_stage_cpp(png) + self._MAIN
-        d = tempfile.mkdtemp(prefix="embed_stage_")
+        d   = tempfile.mkdtemp(prefix="embed_stage_")
         cpp = os.path.join(d, "t.cpp")
         exe = os.path.join(d, "t")
         with open(cpp, "w") as fh:

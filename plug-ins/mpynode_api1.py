@@ -23,7 +23,7 @@ import maya.OpenMaya as om  # noqa: F401 (used by registered MPx subclasses)
 import maya.OpenMayaMPx as ommpx
 
 
-PLUGIN_NAME = "mpynode_api1"
+PLUGIN_NAME    = "mpynode_api1"
 PLUGIN_VERSION = "2.0.0a1"
 
 

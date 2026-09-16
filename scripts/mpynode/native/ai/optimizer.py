@@ -74,24 +74,24 @@ def is_unchanged(candidate: str, current: str) -> bool:
 
 @dataclass
 class RoundRecord:
-    index: int                 # 0 = baseline, 1.. = optimize rounds
-    outcome: str               # "baseline" / "accept" / "parity-fail" / ...
-    note: str = ""
-    compiled: Optional[bool] = None
-    parity: Optional[str] = None
-    ms: Optional[float] = None
-    speedup: Optional[float] = None
+    index:      int  # 0 = baseline, 1.. = optimize rounds
+    outcome:    str  # "baseline" / "accept" / "parity-fail" / ...
+    note:       str = ""
+    compiled:   Optional[bool] = None
+    parity:     Optional[str] = None
+    ms:         Optional[float] = None
+    speedup:    Optional[float] = None
     fix_rounds: int = 0
     # What the optimizer SAID it was doing, from round_meta_fn. `slug` is a short
     # theme name and doubles as the version filename; `predicted_speedup` is
     # recorded BEFORE the measurement so the report can show predicted vs actual --
     # the divergences are the useful part.
-    slug: Optional[str] = None
-    theme: str = ""
-    hypothesis: str = ""
+    slug:              Optional[str] = None
+    theme:             str = ""
+    hypothesis:        str = ""
     predicted_speedup: Optional[float] = None
-    risk: str = ""
-    duration_s: Optional[float] = None
+    risk:              str = ""
+    duration_s:        Optional[float] = None
     # Where THIS round's binary was built -- a scratch path with the lifetime of
     # the run. Handed to round_cb so a caller can keep the artifact, and kept OUT
     # of the durable ledger, where it would be a lie by the time anyone read it.
@@ -100,18 +100,18 @@ class RoundRecord:
 
 @dataclass
 class OptimizeResult:
-    accepted: bool
-    best_cpp: str
+    accepted:    bool
+    best_cpp:    str
     baseline_ms: Optional[float]
-    best_ms: Optional[float]
-    speedup: float
-    rounds: int                # rounds actually RUN (the loop is adaptive)
-    ledger: List[RoundRecord] = field(default_factory=list)
-    reason: str = ""
+    best_ms:     Optional[float]
+    speedup:     float
+    rounds:      int                # rounds actually RUN (the loop is adaptive)
+    ledger:      List[RoundRecord] = field(default_factory=list)
+    reason:      str = ""
     # ``max_rounds`` is the cap the caller set; ``stop_reason`` says why the loop
     # ended ("round 3 not-faster -- ...", "round 2 gained 1.08x, below ...",
     # "max rounds (6) reached"). Both empty/0 on ledgers from the fixed-count era.
-    max_rounds: int = 0
+    max_rounds:  int = 0
     stop_reason: str = ""
 
 
@@ -224,7 +224,7 @@ def _compile_with_fixes(cpp, compile_fn, fix_fn, max_fix_rounds, log_cb=None,
     while not ok and fixes < max_fix_rounds:
         fixes += 1
         cand = fix_fn(cpp, log)
-        why = validate_fn(cand, cpp) if validate_fn else None
+        why  = validate_fn(cand, cpp) if validate_fn else None
         if why:
             _log(log_cb, "%sfix round %d rejected: %s" % (tag, fixes, why))
             return ok, log, bundle, cpp, fixes
@@ -234,24 +234,24 @@ def _compile_with_fixes(cpp, compile_fn, fix_fn, max_fix_rounds, log_cb=None,
 
 
 def optimize_cpp(baseline_cpp: str, *,
-                 optimize_fn: Callable[[str], str],
-                 fix_fn: Callable[[str, str], str],
-                 compile_fn: Callable[[str], tuple],
-                 parity_fn: Callable[[str], ParityVerdict],
-                 benchmark_fn: Callable[[str], Optional[float]],
-                 rounds: int = 3,
-                 min_speedup: float = 1.05,
-                 max_fix_rounds: int = 2,
-                 min_rounds: int = 2,
-                 continue_gain: float = 1.15,
-                 resolution_ms: float = 2.0,
-                 confirm_gain: float = 1.15,
-                 label: str = "",
-                 log_cb=None,
-                 validate_fn: Optional[Callable[[str, str], Optional[str]]]
+                 optimize_fn:    Callable[[str], str],
+                 fix_fn:         Callable[[str, str], str],
+                 compile_fn:     Callable[[str], tuple],
+                 parity_fn:      Callable[[str], ParityVerdict],
+                 benchmark_fn:   Callable[[str], Optional[float]],
+                 rounds:         int                                           = 3,
+                 min_speedup:    float                                         = 1.05,
+                 max_fix_rounds: int                                           = 2,
+                 min_rounds:     int                                           = 2,
+                 continue_gain:  float                                         = 1.15,
+                 resolution_ms:  float                                         = 2.0,
+                 confirm_gain:   float                                         = 1.15,
+                 label:          str                                           = "",
+                 log_cb                                                        = None,
+                 validate_fn:    Optional[Callable[[str, str], Optional[str]]]
                  = None,
                  round_meta_fn: Optional[Callable[[], dict]] = None,
-                 round_cb=None,
+                 round_cb                                    = None,
                  history_sink: Optional[Callable[[List[RoundRecord]],
                                                  None]] = None,
                  accept_check_fn: Optional[Callable[[str, str],
@@ -353,10 +353,10 @@ def optimize_cpp(baseline_cpp: str, *,
          "stops after a rejected round or a gain under %.2fx)"
          % (tag, baseline_ms, rounds, floor_rounds, continue_gain))
 
-    best_cpp = baseline_cpp
-    best_ms = baseline_ms
+    best_cpp    = baseline_cpp
+    best_ms     = baseline_ms
     best_bundle = b_bundle
-    rounds_run = 0
+    rounds_run  = 0
     stop_reason = ""
     # How the PREVIOUS round ended, for the stop rule: its outcome, and for an
     # accept the gain over the incumbent it replaced.
@@ -370,10 +370,10 @@ def optimize_cpp(baseline_cpp: str, *,
                 _log(log_cb, "%sstopping after round %d: %s" % (tag, i - 1, why))
                 break
         rounds_run = i
-        started = time.time()
-        meta = {}
-        cand = None
-        ended = {"outcome": None, "gain": None}
+        started    = time.time()
+        meta       = {}
+        cand       = None
+        ended      = {"outcome": None, "gain": None}
 
         def _round(outcome, **kw):
             """Record one resolved round, stamped with what it claimed to do.
@@ -405,8 +405,8 @@ def optimize_cpp(baseline_cpp: str, *,
         _log(log_cb, "%sround %d/%d starting" % (tag, i, rounds))
 
         try:
-            cand = optimize_fn(best_cpp)
-            meta = _fetch_meta(round_meta_fn)
+            cand   = optimize_fn(best_cpp)
+            meta   = _fetch_meta(round_meta_fn)
             intent = _round_intent(tag, i, rounds, meta)
             if intent:
                 _log(log_cb, intent)
@@ -496,8 +496,8 @@ def optimize_cpp(baseline_cpp: str, *,
                                              else "%.3f ms" % ms2))
                     _round("not-faster", compiled=True, parity=PARITY_PASS,
                            ms=(ms if ms2 is None else ms2), fix_rounds=fx,
-                           bundle=bundle,
-                           note="incumbent %s: second measurement %s "
+                           bundle = bundle,
+                           note   = "incumbent %s: second measurement %s "
                                 "did not confirm %.3f ms"
                                 % (band_label,
                                    "unmeasurable" if ms2 is None
@@ -523,7 +523,7 @@ def optimize_cpp(baseline_cpp: str, *,
                     continue
             if ms < best_ms / min_speedup:
                 speedup = baseline_ms / ms
-                gain = best_ms / ms
+                gain    = best_ms / ms
                 _log(log_cb, "%sround %d: ACCEPT %.3f ms (%.2fx vs baseline, "
                      "%.2fx over the previous best)" % (tag, i, ms, speedup, gain))
                 _round("accept", compiled=True, parity=PARITY_PASS, ms=ms,
@@ -542,8 +542,8 @@ def optimize_cpp(baseline_cpp: str, *,
     if not stop_reason:
         stop_reason = "max rounds (%d) reached" % rounds
     accepted = best_cpp is not baseline_cpp
-    speedup = (baseline_ms / best_ms) if best_ms else 1.0
-    reason = ("accepted (%.2fx)" % speedup) if accepted else "no candidate beat the baseline"
+    speedup  = (baseline_ms / best_ms) if best_ms else 1.0
+    reason   = ("accepted (%.2fx)" % speedup) if accepted else "no candidate beat the baseline"
     return OptimizeResult(accepted, best_cpp, baseline_ms, best_ms, speedup,
                           rounds_run, ledger, reason,
                           max_rounds=rounds, stop_reason=stop_reason)

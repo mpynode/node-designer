@@ -93,42 +93,42 @@ def _is_pivot_or_limit(attr_name: str) -> bool:
 # scalars, plain numerics, typed data, strings, everything else.
 _TYPE_CATEGORY_ORDER: dict[str, int] = {
     # Compound vectors (Tier 0 \u2014 first)
-    "double3": 0,
-    "float3": 0,
-    "short3": 0,
-    "long3": 0,
+    "double3":  0,
+    "float3":   0,
+    "short3":   0,
+    "long3":    0,
     "compound": 0,
     # Compound matrices
-    "matrix": 1,
+    "matrix":    1,
     "fltMatrix": 1,
     # Compound quaternions
     "double4": 2,
-    "float4": 2,
+    "float4":  2,
     # Linear / angle scalars + time
     "doubleLinear": 3,
-    "doubleAngle": 3,
-    "time": 3,
+    "doubleAngle":  3,
+    "time":         3,
     # Plain numerics
     "double": 4,
-    "float": 4,
-    "long": 4,
-    "short": 4,
-    "byte": 4,
-    "bool": 4,
-    "enum": 4,
-    "int": 4,
+    "float":  4,
+    "long":   4,
+    "short":  4,
+    "byte":   4,
+    "bool":   4,
+    "enum":   4,
+    "int":    4,
     # Typed data
-    "mesh": 5,
-    "nurbsCurve": 5,
-    "nurbsSurface": 5,
-    "polyComp": 5,
-    "lattice": 5,
-    "subdiv": 5,
+    "mesh":          5,
+    "nurbsCurve":    5,
+    "nurbsSurface":  5,
+    "polyComp":      5,
+    "lattice":       5,
+    "subdiv":        5,
     "componentList": 5,
     # Strings
-    "string": 6,
+    "string":      6,
     "stringArray": 6,
-    "message": 6,
+    "message":     6,
 }
 
 
@@ -195,10 +195,10 @@ _VECTOR4_TYPES: frozenset[str] = frozenset(
         "double4",
     }
 )
-_MATRIX_TYPES: frozenset[str] = frozenset({"matrix", "fltMatrix"})
-_STRING_TYPES: frozenset[str] = frozenset({"string"})
-_MESH_TYPES: frozenset[str] = frozenset({"mesh"})
-_NURBS_CURVE_TYPES: frozenset[str] = frozenset({"nurbsCurve"})
+_MATRIX_TYPES:        frozenset[str] = frozenset({"matrix", "fltMatrix"})
+_STRING_TYPES:        frozenset[str] = frozenset({"string"})
+_MESH_TYPES:          frozenset[str] = frozenset({"mesh"})
+_NURBS_CURVE_TYPES:   frozenset[str] = frozenset({"nurbsCurve"})
 _NURBS_SURFACE_TYPES: frozenset[str] = frozenset({"nurbsSurface"})
 
 
@@ -270,7 +270,7 @@ def _resolve_target_attr_type(target_plug: str) -> str:
         return ""
     # Strip trailing [N] / [0] / etc. for attributeQuery.
     attr_root = attr.split("[", 1)[0]
-    t = ""
+    t         = ""
     try:
         t = cmds.attributeQuery(attr_root, node=node, attributeType=True) or ""
     except Exception:
@@ -350,8 +350,8 @@ def _filter_matches(node_attr: str, filter_text: str) -> bool:
     if not pat:
         return True
     has_glob = any(ch in pat for ch in ("*", "?", "["))
-    full = (node_attr or "").lower()
-    needle = pat.lower()
+    full     = (node_attr or "").lower()
+    needle   = pat.lower()
     if has_glob:
         return fnmatch.fnmatchcase(full, needle)
     # No wildcard \u2192 strict exact match against the attr name.
@@ -376,10 +376,10 @@ def _next_available_multi_index(plug_name: str) -> int:
 
 
 def compute_connection_pairs(
-    target_plug: str,
+    target_plug:     str,
     target_is_multi: bool,
-    source_plugs: list[str],
-    clobber: bool = False,
+    source_plugs:    list[str],
+    clobber:         bool      = False,
 ) -> list[tuple[str, str]]:
     """Given the target + chosen source plugs, return the list of
     (source, dest) connection pairs.
@@ -428,10 +428,10 @@ def _next_available_source_index(plug_name: str) -> int:
         conns = (
             cmds.listConnections(
                 plug_name,
-                source=False,
-                destination=True,
-                plugs=True,
-                connections=True,
+                source      = False,
+                destination = True,
+                plugs       = True,
+                connections = True,
             )
             or []
         )
@@ -450,10 +450,10 @@ def _next_available_source_index(plug_name: str) -> int:
 
 
 def compute_output_connection_pairs(
-    source_plug: str,
+    source_plug:     str,
     source_is_multi: bool,
-    dest_plugs: list[str],
-    clobber: bool = False,
+    dest_plugs:      list[str],
+    clobber:         bool      = False,
 ) -> list[tuple[str, str]]:
     """Given a node's OUTPUT plug + the chosen destination plugs, return the
     list of (source, dest) connection pairs.
@@ -521,7 +521,7 @@ def parse_index_range(text: str, default_count: int) -> list[int]:
             a, _, b = tok.partition(":")
             try:
                 start = int(a) if a.strip() else 0
-                end = int(b) if b.strip() else int(default_count)
+                end   = int(b) if b.strip() else int(default_count)
             except ValueError:
                 continue
             out.extend(range(start, end))
@@ -545,11 +545,11 @@ def resolve_multi_target(target_plug: str) -> dict:
       ``nested``           -- 2+ un-indexed multi ancestors (unsupported)
     """
     info = {
-        "is_multi_target": False,
-        "template": None,
-        "existing_count": 0,
+        "is_multi_target":  False,
+        "template":         None,
+        "existing_count":   0,
         "existing_indices": [],
-        "nested": False,
+        "nested":           False,
     }
     node, _, attr = (target_plug or "").partition(".")
     if not node or not attr:
@@ -567,17 +567,17 @@ def resolve_multi_target(target_plug: str) -> dict:
     if len(multi_positions) > 1:
         info["nested"] = True  # unsupported: 2+ un-indexed multi ancestors
         return info
-    pos = multi_positions[0]
+    pos      = multi_positions[0]
     ancestor = node + "." + ".".join(segments[: pos + 1])
     try:
         idx = cmds.getAttr(ancestor, multiIndices=True) or []
     except Exception:
         idx = []
     info["existing_indices"] = list(idx)
-    info["existing_count"] = len(idx)
-    tmpl_segments = list(segments)
-    tmpl_segments[pos] = segments[pos] + "[{idx}]"
-    info["template"] = node + "." + ".".join(tmpl_segments)
+    info["existing_count"]   = len(idx)
+    tmpl_segments            = list(segments)
+    tmpl_segments[pos]       = segments[pos] + "[{idx}]"
+    info["template"]         = node + "." + ".".join(tmpl_segments)
     return info
 
 
@@ -630,7 +630,7 @@ def expand_dest_plugs(
 # insertion a destination does. These source-named aliases let the INPUT dialog
 # read symmetrically with the OUTPUT one.
 resolve_multi_source = resolve_multi_target
-expand_source_plugs = expand_dest_plugs
+expand_source_plugs  = expand_dest_plugs
 
 
 # ---------------------------------------------------------------------------
@@ -639,16 +639,16 @@ expand_source_plugs = expand_dest_plugs
 
 _NODE_SORT_MODES = ("selection", "natural_asc", "natural_desc")
 _TYPE_SORT_MODES = ("type_alpha_asc", "type_alpha_desc", "type_category")
-_ALL_SORT_MODES = _NODE_SORT_MODES + _TYPE_SORT_MODES
+_ALL_SORT_MODES  = _NODE_SORT_MODES + _TYPE_SORT_MODES
 
 # Header arrow indicator per mode.
 _MODE_INDICATORS = {
-    "selection": "\u2022",  # bullet
-    "natural_asc": "\u2191",  # up arrow
-    "natural_desc": "\u2193",  # down arrow
-    "type_alpha_asc": "\u2191",
+    "selection":       "\u2022",  # bullet
+    "natural_asc":     "\u2191",  # up arrow
+    "natural_desc":    "\u2193",  # down arrow
+    "type_alpha_asc":  "\u2191",
     "type_alpha_desc": "\u2193",
-    "type_category": "\u2605",  # star
+    "type_category":   "\u2605",  # star
 }
 
 
@@ -674,8 +674,8 @@ def _sort_rows(
     if mode == "type_alpha_desc":
         return sorted(
             rows,
-            key=lambda r: ((r[2] or "").lower(), _natural_key(f"{r[0]}.{r[1]}")),
-            reverse=True,
+            key     = lambda r: ((r[2] or "").lower(), _natural_key(f"{r[0]}.{r[1]}")),
+            reverse = True,
         )
     if mode == "type_category":
         return sorted(
@@ -703,9 +703,9 @@ class _BaseConnectDialog(QDialog):
         self.setModal(True)
         self.resize(560, 440)
 
-        self._target_plug = target_plug
+        self._target_plug     = target_plug
         self._target_is_multi = target_is_multi
-        self._chosen: list[str] = []
+        self._chosen:     list[str] = []
         self._extra_flag: bool = False
         # Multi-side index policy: True = clobber (wire from index 0 after
         # trimming the array), False = append at next-available. Only
@@ -715,7 +715,7 @@ class _BaseConnectDialog(QDialog):
         # sort state. (column_index, mode)
         # Column 0 = Node.Attr, Column 1 = Type. Mode comes from prefs.
         self._sort_mode = self._initial_sort_mode()
-        self._sort_col = 0 if self._sort_mode in _NODE_SORT_MODES else 1
+        self._sort_col  = 0 if self._sort_mode in _NODE_SORT_MODES else 1
 
         self._build_ui()
         self._populate_tree()
@@ -819,7 +819,7 @@ class _BaseConnectDialog(QDialog):
         btn_row = QHBoxLayout()
         btn_row.addStretch(1)
         self._connect_btn = QPushButton("Connect", self)
-        self._cancel_btn = QPushButton("Cancel", self)
+        self._cancel_btn  = QPushButton("Cancel", self)
         btn_row.addWidget(self._connect_btn)
         btn_row.addWidget(self._cancel_btn)
         outer.addLayout(btn_row)
@@ -861,7 +861,7 @@ class _BaseConnectDialog(QDialog):
             return
         rows = _sort_rows(rows, self._sort_mode)
         for node, attr, a_type in rows:
-            item = QTreeWidgetItem(self._tree)
+            item    = QTreeWidgetItem(self._tree)
             display = f"{node}.{attr}"
             item.setText(0, display)
             item.setText(1, a_type)
@@ -899,10 +899,10 @@ class _BaseConnectDialog(QDialog):
             return
 
         if self._sort_col == col and self._sort_mode in modes:
-            idx = modes.index(self._sort_mode)
+            idx             = modes.index(self._sort_mode)
             self._sort_mode = modes[(idx + 1) % len(modes)]
         else:
-            self._sort_col = col
+            self._sort_col  = col
             self._sort_mode = modes[0]
         self._populate_tree()
         self._update_header_indicator()
@@ -969,9 +969,9 @@ class _BaseConnectDialog(QDialog):
 
     def _build_range_field(self, outer_layout, label_text: str,
                            tooltip: str) -> None:
-        range_row = QHBoxLayout()
+        range_row         = QHBoxLayout()
         self._range_label = QLabel(label_text, self)
-        self._range_edit = QLineEdit(self)
+        self._range_edit  = QLineEdit(self)
         self._range_edit.setPlaceholderText("e.g. 0:14  (blank = all existing)")
         self._range_edit.setToolTip(tooltip)
         self._range_label.setEnabled(False)
@@ -1013,7 +1013,7 @@ class _BaseConnectDialog(QDialog):
         user_edited = bool(cur) and cur != getattr(self, "_range_autofill", "")
         if user_edited:
             return
-        new_val = ("0:%d" % max_count) if (any_multi and max_count) else ""
+        new_val              = ("0:%d" % max_count) if (any_multi and max_count) else ""
         self._range_autofill = new_val
         self._range_edit.setText(new_val)
 
@@ -1076,7 +1076,7 @@ class NDConnectInputAttrDialog(_BaseConnectDialog):
             # writes to empty slots -- either way force the per-element wire.
             self._extra_flag = True
         else:
-            self._clobber = False
+            self._clobber    = False
             self._extra_flag = self._force_check.isChecked()
         super()._on_connect_clicked()
 
@@ -1134,9 +1134,9 @@ class NDConnectOutputAttrDialog(_BaseConnectDialog):
 
     def _on_connect_clicked(self) -> None:
         if self._target_is_multi:
-            self._clobber = self._clobber_check.isChecked()
+            self._clobber    = self._clobber_check.isChecked()
             self._extra_flag = True  # clobber/append both force the dest wire
         else:
-            self._clobber = False
+            self._clobber    = False
             self._extra_flag = self._replace_check.isChecked()
         super()._on_connect_clicked()

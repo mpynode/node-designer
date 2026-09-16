@@ -107,15 +107,15 @@ class QtPythonHighlighter(QSyntaxHighlighter):
 
         # Monokai-ish palette.
         self._styles = {
-            "keyword": self.formatText((249, 38, 102)),
+            "keyword":  self.formatText((249, 38, 102)),
             "operator": self.formatText((255, 255, 255)),
-            "brace": self.formatText((255, 255, 255)),
+            "brace":    self.formatText((255, 255, 255)),
             "defclass": self.formatText((146, 226, 46), "bold"),
-            "string": self.formatText((230, 219, 91)),
-            "string2": self.formatText((230, 219, 91)),
-            "comment": self.formatText((127, 192, 88), "italic"),
-            "self": self.formatText((0, 166, 210), "italic"),
-            "numbers": self.formatText((174, 129, 222)),
+            "string":   self.formatText((230, 219, 91)),
+            "string2":  self.formatText((230, 219, 91)),
+            "comment":  self.formatText((127, 192, 88), "italic"),
+            "self":     self.formatText((0, 166, 210), "italic"),
+            "numbers":  self.formatText((174, 129, 222)),
             # Link-blue + underlined. Overrides the comment colour on the URL
             # span, since rebuildRules() appends this AFTER the comment rule.
             "url": self.formatText((102, 175, 255), "underline"),
@@ -159,7 +159,7 @@ class QtPythonHighlighter(QSyntaxHighlighter):
         self._comment_rules = [(r"#[^\n]*", 0, self._styles["comment"])]
         # After comments, so a link inside a comment renders blue +
         # underlined rather than comment-green.
-        self._url_rules = [(URL_PATTERN, 0, self._styles["url"])]
+        self._url_rules     = [(URL_PATTERN, 0, self._styles["url"])]
         self._var_rules_map = {}
 
         self.rebuildRules()
@@ -204,7 +204,7 @@ class QtPythonHighlighter(QSyntaxHighlighter):
             match_iter = expression.globalMatch(text)
             while match_iter.hasNext():
                 match = match_iter.next()
-                index = match.capturedStart(nth)
+                index  = match.capturedStart(nth)
                 length = len(match.captured(nth))
                 self.setFormat(index, length, fmt)
 
@@ -219,15 +219,15 @@ class QtPythonHighlighter(QSyntaxHighlighter):
         """Highlight multi-line triple-quoted strings."""
         if self.previousBlockState() == in_state:
             start = 0
-            add = 0
+            add   = 0
         else:
             match = delimiter.match(text)
             if match.hasMatch():
                 start = match.capturedStart()
-                add = match.capturedLength()
+                add   = match.capturedLength()
             else:
                 start = -1
-                add = 0
+                add   = 0
 
         while start >= 0:
             match_end = delimiter.match(text, start + add)
@@ -245,10 +245,10 @@ class QtPythonHighlighter(QSyntaxHighlighter):
             match = delimiter.match(text, start + length)
             if match.hasMatch():
                 start = match.capturedStart()
-                add = match.capturedLength()
+                add   = match.capturedLength()
             else:
                 start = -1
-                add = 0
+                add   = 0
 
         return self.currentBlockState() == in_state
 
@@ -262,14 +262,14 @@ class QtPythonHighlighter(QSyntaxHighlighter):
     def setVarColorMap(self, var_map: dict):
         self._var_rules_map = {}
         for var_name, color in var_map.items():
-            reg_ex = self.VAR_PATTERN_PREFIX + var_name + self.VAR_PATTERN_SUFFIX
-            style = self.formatText(color, style="italic")
+            reg_ex                        = self.VAR_PATTERN_PREFIX + var_name + self.VAR_PATTERN_SUFFIX
+            style                         = self.formatText(color, style="italic")
             self._var_rules_map[var_name] = (QRegularExpression(reg_ex), 0, style)
         self.rebuildRules()
 
     def appendVarColor(self, var_name: str, color):
-        reg_ex = self.VAR_PATTERN_PREFIX + var_name + self.VAR_PATTERN_SUFFIX
-        style = self.formatText(color, style="italic")
+        reg_ex                        = self.VAR_PATTERN_PREFIX + var_name + self.VAR_PATTERN_SUFFIX
+        style                         = self.formatText(color, style="italic")
         self._var_rules_map[var_name] = (QRegularExpression(reg_ex), 0, style)
         self.rebuildRules()
 

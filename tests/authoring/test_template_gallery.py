@@ -104,12 +104,12 @@ def _write_mpn(folder, native_type="mPyDeformer", stored_vars=None):
     from mpynode._common.io import mpn_io
     os.makedirs(folder, exist_ok=True)
     payload = {
-        "native_type": native_type,
-        "node_name": "demo",
-        "expression": "self.out = self.inp",
-        "input_attrs": {},
+        "native_type":  native_type,
+        "node_name":    "demo",
+        "expression":   "self.out = self.inp",
+        "input_attrs":  {},
         "output_attrs": {},
-        "stored_vars": stored_vars or {},
+        "stored_vars":  stored_vars or {},
     }
     mpn_io.save_mpn(payload, os.path.join(folder, "template.mpn"))
 
@@ -128,9 +128,9 @@ class TestScanRoot(unittest.TestCase):
         self.assertEqual(len(cat.children), 1)
         entry = cat.children[0]
         self.assertIsInstance(entry, tg.TemplateEntry)
-        self.assertEqual(entry.label, "sine_ripple")
-        self.assertEqual(entry.folder, leaf)
-        self.assertEqual(entry.mpn_path, os.path.join(leaf, "template.mpn"))
+        self.assertEqual(entry.label,       "sine_ripple")
+        self.assertEqual(entry.folder,      leaf)
+        self.assertEqual(entry.mpn_path,    os.path.join(leaf, "template.mpn"))
         self.assertEqual(entry.native_type, "mPyDeformer")
         self.assertIsNone(entry.preview_path)
         self.assertIsNone(entry.description_path)
@@ -264,12 +264,12 @@ class TestScanSecurity(unittest.TestCase):
         leaf = os.path.join(self.tmp, "tpl", "evil")
         os.makedirs(leaf)
         payload = {
-            "native_type": "mPyNode",
-            "node_name": "evil",
-            "expression": "",
-            "input_attrs": {},
+            "native_type":  "mPyNode",
+            "node_name":    "evil",
+            "expression":   "",
+            "input_attrs":  {},
             "output_attrs": {},
-            "stored_vars": {"x": _Evil()},
+            "stored_vars":  {"x": _Evil()},
         }
         mpn_io.save_mpn(payload, os.path.join(leaf, "template.mpn"))
 
@@ -283,7 +283,7 @@ class TestScanSecurity(unittest.TestCase):
         self.assertFalse(os.path.exists(marker), "authoring must not unpickle")
 
         # The actual scan -- reads native_type from raw JSON, no decode.
-        cat = tg.scan_root(os.path.join(self.tmp, "tpl"))
+        cat   = tg.scan_root(os.path.join(self.tmp, "tpl"))
         entry = cat.children[0]
         self.assertEqual(entry.native_type, "mPyNode")
         self.assertFalse(
@@ -301,11 +301,11 @@ class TestSearchRootsAndScanAll(unittest.TestCase):
         from mpynode._common.util import template_gallery as tg
         good = os.path.join(self.tmp, "good")
         os.makedirs(good)
-        missing = os.path.join(self.tmp, "nope_missing")
+        missing                     = os.path.join(self.tmp, "nope_missing")
         os.environ["NDTG_TEST_VAR"] = good
         try:
             import mpynode.ui.preferences as prefs
-            orig = prefs.template_search_paths
+            orig                        = prefs.template_search_paths
             prefs.template_search_paths = lambda: ["$NDTG_TEST_VAR", missing]
             try:
                 roots = tg.template_search_roots()
@@ -319,7 +319,7 @@ class TestSearchRootsAndScanAll(unittest.TestCase):
     def test_roots_default_when_pref_empty(self):
         from mpynode._common.util import template_gallery as tg
         import mpynode.ui.preferences as prefs
-        orig = prefs.template_search_paths
+        orig                        = prefs.template_search_paths
         prefs.template_search_paths = lambda: []
         try:
             roots = tg.template_search_roots()
@@ -336,7 +336,7 @@ class TestSearchRootsAndScanAll(unittest.TestCase):
         _write_mpn(os.path.join(r1, "tpl_a"))
         _write_mpn(os.path.join(r2, "tpl_b"))
         import mpynode.ui.preferences as prefs
-        orig = prefs.template_search_paths
+        orig                        = prefs.template_search_paths
         prefs.template_search_paths = lambda: [r1, r2]
         try:
             results = tg.scan_all()
@@ -366,7 +366,7 @@ def _load_build_module():
     # __name__ == "__main__"). It imports maya.standalone at module scope, so
     # this loader test must run under mayapy.
     spec = importlib.util.spec_from_file_location("_bt_mod", _BUILD)
-    mod = importlib.util.module_from_spec(spec)
+    mod  = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
     return mod
 
@@ -378,7 +378,7 @@ class TemplateBuildLayoutTest(unittest.TestCase):
         # describing the on-disk layout; each rel_dir is <category>/<name>.
         targets = dict(mod.TEMPLATE_TARGETS)
         self.assertEqual(targets["mPyDeformer"], "MPyDeformer/Sine Ripple")
-        self.assertEqual(targets["mPyFile"], "MPyFile/File Simple")
+        self.assertEqual(targets["mPyFile"],     "MPyFile/File Simple")
         self.assertEqual(targets["mPyIkSolver"], "MPyIkSolver/Two Bone IK")
         # The write helper composes <root>/<rel_dir>/template.mpn.
         self.assertTrue(
@@ -417,7 +417,7 @@ class TemplateBuildLayoutTest(unittest.TestCase):
         if not mod.TEMPLATE_MIRRORS:
             self.skipTest("no mirrors declared; the mechanism is unused")
         native_type = sorted(mod.TEMPLATE_MIRRORS)[0]
-        mirrors = mod.TEMPLATE_MIRRORS[native_type]
+        mirrors     = mod.TEMPLATE_MIRRORS[native_type]
         primary_rel = mod._TARGET_BY_TYPE[native_type]
 
         tmp = tempfile.mkdtemp(prefix="bt_mirror_")
@@ -488,7 +488,7 @@ class MigratedBundledTemplatesTest(unittest.TestCase):
         # + the mpynode example templates + the collision deformer) in
         # ALL_DECLARED_DIRS; pin the scanned tree to it.
         declared = set(mod.ALL_DECLARED_DIRS)
-        roots = template_gallery.scan_all()
+        roots    = template_gallery.scan_all()
         bundled = [c for (_l, path, c) in roots
                    if os.path.abspath(path) == os.path.abspath(_bundled_root())]
         self.assertEqual(len(bundled), 1, "bundled templates root not scanned")
@@ -539,9 +539,9 @@ class BundledMpynodeExamplesTest(unittest.TestCase):
         from mpynode._common.util import template_gallery as tg
         by_label = self._by_label()
         for snake in self._EXAMPLES:
-            e = by_label[tg.display_label(snake)]
+            e   = by_label[tg.display_label(snake)]
             raw = mpn_io.load_mpn_header(e.mpn_path)     # no decode
-            sv = raw.get("stored_vars")
+            sv  = raw.get("stored_vars")
             if isinstance(sv, str):                      # encoded blob on disk
                 self.assertFalse(
                     serialization.blob_has_pickle(sv),
@@ -560,7 +560,7 @@ class BundledMpynodeExamplesTest(unittest.TestCase):
         rel = os.path.relpath(os.path.dirname(e.mpn_path), _bundled_root())
         self.assertEqual(rel.replace(os.sep, "/"),
                          "MPyDeformer/Unit Sphere Collision")
-        raw = mpn_io.load_mpn_header(e.mpn_path)
+        raw    = mpn_io.load_mpn_header(e.mpn_path)
         inputs = raw.get("input_attrs") or {}
         self.assertIn("pusher", inputs)
         self.assertEqual(inputs["pusher"]["attr_type"], "matrix")
@@ -622,11 +622,11 @@ class BundledMeshGameOfLifeTest(unittest.TestCase):
 
     def test_inputs_are_the_grid_controls(self):
         from mpynode._common.io import mpn_io
-        raw = mpn_io.load_mpn_header(self._entry().mpn_path)   # no decode
+        raw    = mpn_io.load_mpn_header(self._entry().mpn_path)   # no decode
         inputs = raw.get("input_attrs") or {}
         self.assertEqual(inputs.get("boardX", {}).get("attr_type"), "int")
         self.assertEqual(inputs.get("boardY", {}).get("attr_type"), "int")
-        self.assertEqual(inputs.get("frame", {}).get("attr_type"), "time")
+        self.assertEqual(inputs.get("frame", {}).get("attr_type"),  "time")
         self.assertEqual(
             inputs.get("randomSamples", {}).get("attr_type"), "int")
         self.assertEqual(inputs.get("resetBoard", {}).get("attr_type"), "enum")
@@ -643,9 +643,9 @@ class BundledMeshGameOfLifeTest(unittest.TestCase):
 
     def test_is_vanilla_no_pickle(self):
         from mpynode._common.io import mpn_io, serialization
-        e = self._entry()
+        e   = self._entry()
         raw = mpn_io.load_mpn_header(e.mpn_path)
-        sv = raw.get("stored_vars")
+        sv  = raw.get("stored_vars")
         if isinstance(sv, str):
             self.assertFalse(
                 serialization.blob_has_pickle(sv),
@@ -684,7 +684,7 @@ class BundledMeshMetaballsTest(unittest.TestCase):
 
     def test_inputs_are_the_sdf_primitive_stream(self):
         from mpynode._common.io import mpn_io
-        raw = mpn_io.load_mpn_header(self._entry().mpn_path)   # no decode
+        raw    = mpn_io.load_mpn_header(self._entry().mpn_path)   # no decode
         inputs = raw.get("input_attrs") or {}
         # Per-shape parallel arrays (index == CSG fold order) + two scalars.
         expected_arrays = {
@@ -721,9 +721,9 @@ class BundledMeshMetaballsTest(unittest.TestCase):
 
     def test_is_vanilla_no_pickle(self):
         from mpynode._common.io import mpn_io, serialization
-        e = self._entry()
+        e   = self._entry()
         raw = mpn_io.load_mpn_header(e.mpn_path)
-        sv = raw.get("stored_vars")
+        sv  = raw.get("stored_vars")
         if isinstance(sv, str):
             self.assertFalse(
                 serialization.blob_has_pickle(sv),
@@ -777,7 +777,7 @@ class TestIgnoresFoldersWithoutMpn(unittest.TestCase):
         with open(os.path.join(swatch, "swatch.png"), "w") as f:
             f.write("x")
         os.makedirs(os.path.join(self.tmp, "empty_cat", "nested_empty"))
-        cat = tg.scan_root(self.tmp)
+        cat    = tg.scan_root(self.tmp)
         labels = [c.label for c in cat.children]
         self.assertEqual(labels, ["sine_ripple"])  # both junk folders dropped
 
@@ -785,7 +785,7 @@ class TestIgnoresFoldersWithoutMpn(unittest.TestCase):
         from mpynode._common.util import template_gallery as tg
         _write_mpn(os.path.join(self.tmp, "basics", "MPyDeformer", "sine_ripple"))
         os.makedirs(os.path.join(self.tmp, "basics", ".mayaSwatches"))
-        cat = tg.scan_root(self.tmp)
+        cat    = tg.scan_root(self.tmp)
         basics = cat.children[0]
         self.assertEqual(basics.label, "basics")
         self.assertEqual([c.label for c in basics.children], ["MPyDeformer"])
@@ -813,12 +813,12 @@ def _write_mpn_named(folder, filename, native_type="mPyNode"):
     from mpynode._common.io import mpn_io
     os.makedirs(folder, exist_ok=True)
     payload = {
-        "native_type": native_type,
-        "node_name": "demo",
-        "expression": "self.out = self.inp",
-        "input_attrs": {},
+        "native_type":  native_type,
+        "node_name":    "demo",
+        "expression":   "self.out = self.inp",
+        "input_attrs":  {},
         "output_attrs": {},
-        "stored_vars": {},
+        "stored_vars":  {},
     }
     mpn_io.save_mpn(payload, os.path.join(folder, filename))
 

@@ -85,7 +85,7 @@ class TestDisconnectAllMulti(unittest.TestCase):
         node = MPyNode.create(name="scal")
         node.add_input_attr("k", "float")
         plug = node.get_name() + ".k"
-        src = mc.createNode("transform", name="drv")
+        src  = mc.createNode("transform", name="drv")
         mc.connectAttr(src + ".translateX", plug, force=True)
         self.assertEqual(self._n_in(plug), 1)
         run_undoable(_DisconnectAllCommand(plug, "input"))
@@ -158,9 +158,9 @@ class TestOutputMultiConnectIndex(unittest.TestCase):
         data-bearing source element starting at 0."""
         from mpynode.ui.dialogs.connect_attr import compute_output_connection_pairs
 
-        t1 = mc.createNode("transform", name="dst1")
-        t2 = mc.createNode("transform", name="dst2")
-        t3 = mc.createNode("transform", name="dst3")
+        t1    = mc.createNode("transform", name="dst1")
+        t2    = mc.createNode("transform", name="dst2")
+        t3    = mc.createNode("transform", name="dst3")
         dests = [t1 + ".translate", t2 + ".translate", t3 + ".translate"]
         pairs = compute_output_connection_pairs(self.plug, True, dests)
         self.assertEqual(
@@ -177,8 +177,8 @@ class TestOutputMultiConnectIndex(unittest.TestCase):
         transforms off their (0,0,0) default."""
         from mpynode.ui.dialogs.connect_attr import compute_output_connection_pairs
 
-        t1 = mc.createNode("transform", name="cube1")
-        t2 = mc.createNode("transform", name="cube2")
+        t1    = mc.createNode("transform", name="cube1")
+        t2    = mc.createNode("transform", name="cube2")
         dests = [t1 + ".translate", t2 + ".translate"]
         pairs = compute_output_connection_pairs(self.plug, True, dests)
         for src, dst in pairs:
@@ -541,16 +541,16 @@ class TestListCandidatePlugs(unittest.TestCase):
 
         cube = mc.polyCube(name="cmpd")[0]
         mc.select(cube, replace=True)
-        rows = _list_candidate_plugs()  # hide_pivots=True (default)
+        rows       = _list_candidate_plugs()  # hide_pivots=True (default)
         attr_names = {r[1] for r in rows}
 
         # compound parents AND their children.
-        self.assertIn("translate", attr_names)
-        self.assertIn("rotate", attr_names)
-        self.assertIn("scale", attr_names)
+        self.assertIn("translate",  attr_names)
+        self.assertIn("rotate",     attr_names)
+        self.assertIn("scale",      attr_names)
         self.assertIn("translateX", attr_names)
-        self.assertIn("rotateY", attr_names)
-        self.assertIn("scaleZ", attr_names)
+        self.assertIn("rotateY",    attr_names)
+        self.assertIn("scaleZ",     attr_names)
         self.assertIn("visibility", attr_names)
 
     def test_default_hides_pivots(self):
@@ -559,15 +559,15 @@ class TestListCandidatePlugs(unittest.TestCase):
 
         cube = mc.polyCube(name="hidep")[0]
         mc.select(cube, replace=True)
-        rows = _list_candidate_plugs()  # hide_pivots=True (default)
+        rows       = _list_candidate_plugs()  # hide_pivots=True (default)
         attr_names = {r[1] for r in rows}
 
         # pivot families and limits filtered out.
-        self.assertNotIn("rotatePivotTranslate", attr_names)
-        self.assertNotIn("scalePivotTranslate", attr_names)
+        self.assertNotIn("rotatePivotTranslate",  attr_names)
+        self.assertNotIn("scalePivotTranslate",   attr_names)
         self.assertNotIn("rotatePivotTranslateX", attr_names)
-        self.assertNotIn("minRotXLimit", attr_names)
-        self.assertNotIn("maxScaleLimit", attr_names)
+        self.assertNotIn("minRotXLimit",          attr_names)
+        self.assertNotIn("maxScaleLimit",         attr_names)
 
     def test_hide_pivots_off_includes_pivots(self):
         """``hide_pivots=False`` shows the full settable surface."""
@@ -575,13 +575,13 @@ class TestListCandidatePlugs(unittest.TestCase):
 
         cube = mc.polyCube(name="showp")[0]
         mc.select(cube, replace=True)
-        rows = _list_candidate_plugs(hide_pivots=False)
+        rows       = _list_candidate_plugs(hide_pivots=False)
         attr_names = {r[1] for r in rows}
 
         self.assertIn("rotatePivotTranslate", attr_names)
-        self.assertIn("scalePivotTranslate", attr_names)
-        self.assertIn("translate", attr_names)
-        self.assertIn("translateX", attr_names)
+        self.assertIn("scalePivotTranslate",  attr_names)
+        self.assertIn("translate",            attr_names)
+        self.assertIn("translateX",           attr_names)
 
 
 # ===========================================================================
@@ -606,13 +606,13 @@ class TestSortRows(unittest.TestCase):
         from mpynode.ui.dialogs.connect_attr import _sort_rows
 
         rows = self._rows()
-        out = _sort_rows(rows, "selection")
+        out  = _sort_rows(rows, "selection")
         self.assertEqual(out, rows)
 
     def test_natural_asc_handles_numeric_node_names(self):
         from mpynode.ui.dialogs.connect_attr import _sort_rows
 
-        out = _sort_rows(self._rows(), "natural_asc")
+        out   = _sort_rows(self._rows(), "natural_asc")
         nodes = [r[0] for r in out]
         # pCube1 < pCube2 < pCube10 < pSphere1 (natsort respects the
         # numeric component, which string sort would get wrong).
@@ -623,14 +623,14 @@ class TestSortRows(unittest.TestCase):
     def test_natural_desc_reverses(self):
         from mpynode.ui.dialogs.connect_attr import _sort_rows
 
-        out = _sort_rows(self._rows(), "natural_desc")
+        out   = _sort_rows(self._rows(), "natural_desc")
         nodes = [r[0] for r in out]
         self.assertEqual(nodes[0], "pSphere1")
 
     def test_type_alpha_groups_same_types(self):
         from mpynode.ui.dialogs.connect_attr import _sort_rows
 
-        out = _sort_rows(self._rows(), "type_alpha_asc")
+        out   = _sort_rows(self._rows(), "type_alpha_asc")
         types = [r[2] for r in out]
         # Adjacent rows should share a type when grouped alpha-asc.
         # bool < double3 < doubleLinear < matrix < string
@@ -642,7 +642,7 @@ class TestSortRows(unittest.TestCase):
     def test_type_category_puts_compounds_first(self):
         from mpynode.ui.dialogs.connect_attr import _sort_rows
 
-        out = _sort_rows(self._rows(), "type_category")
+        out   = _sort_rows(self._rows(), "type_category")
         types = [r[2] for r in out]
         # double3 (cat 0) before matrix (cat 1) before doubleLinear (cat 3)
         # before bool (cat 4) before string (cat 6).
@@ -666,7 +666,7 @@ class TestTypeCategoryKey(unittest.TestCase):
 
         self.assertLess(_type_category_key("double3"), _type_category_key("matrix"))
         self.assertLess(_type_category_key("double3"), _type_category_key("double"))
-        self.assertLess(_type_category_key("float3"), _type_category_key("string"))
+        self.assertLess(_type_category_key("float3"),  _type_category_key("string"))
 
     def test_matrices_after_vectors(self):
         from mpynode.ui.dialogs.connect_attr import _type_category_key
@@ -856,10 +856,10 @@ class TestNodeMenuActions(unittest.TestCase):
         from mpynode.ui.mpynode_designer import NDMainWindow
 
         src = inspect.getsource(NDMainWindow._build_menu_bar)
-        self.assertIn("Select Node in Scene", src)
-        self.assertIn("Add Attribute", src)
+        self.assertIn("Select Node in Scene",     src)
+        self.assertIn("Add Attribute",            src)
         self.assertIn("selectCurrentNodeInScene", src)
-        self.assertIn("showAddAttributeDialog", src)
+        self.assertIn("showAddAttributeDialog",   src)
 
     def test_init_creates_current_node_and_dlg_cache(self):
         import inspect
@@ -889,7 +889,7 @@ def _setUpModule__attr_panel_refresh_on_connect():
 
 class _FakeItem:
     def __init__(self, name, is_array=False):
-        self._name = name
+        self._name     = name
         self.attr_name = name
         self.attr_meta = {"is_array": is_array}
 
@@ -902,8 +902,8 @@ class _RefreshRecorder:
 
     def __init__(self, category, py_node, item):
         self.ATTR_CATEGORY = category
-        self._py_node = py_node
-        self._item = item
+        self._py_node      = py_node
+        self._item         = item
         self.refresh_calls = 0
 
     def _selected_user_items(self):
@@ -926,7 +926,7 @@ class TestAttrPanelRefreshOnConnect(unittest.TestCase):
         node = MPyNode.create(name="dn")
         node.add_input_attr("k", "float")
         plug = node.get_name() + ".k"
-        src = mc.createNode("transform", name="drv")
+        src  = mc.createNode("transform", name="drv")
         mc.connectAttr(src + ".translateX", plug, force=True)
         self.assertTrue(mc.isConnected(src + ".translateX", plug))
 
@@ -943,8 +943,8 @@ class TestAttrPanelRefreshOnConnect(unittest.TestCase):
         mc.file(new=True, force=True)
         node = MPyNode.create(name="cn")
         node.add_input_attr("k", "float")
-        plug = node.get_name() + ".k"
-        src = mc.createNode("transform", name="drv2")
+        plug     = node.get_name() + ".k"
+        src      = mc.createNode("transform", name="drv2")
         src_plug = src + ".translateX"
 
         class _FakeDlg:
@@ -960,8 +960,8 @@ class TestAttrPanelRefreshOnConnect(unittest.TestCase):
             def getExtraFlag(self):
                 return True
 
-        fake = _RefreshRecorder("input", node, _FakeItem("k"))
-        orig = A.NDConnectInputAttrDialog
+        fake                       = _RefreshRecorder("input", node, _FakeItem("k"))
+        orig                       = A.NDConnectInputAttrDialog
         A.NDConnectInputAttrDialog = _FakeDlg
         try:
             A.NDInputAttrTree._show_connect_dlg(fake)
@@ -1140,8 +1140,8 @@ class TestComputeConnectionPairs(unittest.TestCase):
 
         pairs = compute_connection_pairs(
             "node.input",
-            target_is_multi=False,
-            source_plugs=["a.x", "b.x", "c.x"],
+            target_is_multi = False,
+            source_plugs    = ["a.x", "b.x", "c.x"],
         )
         self.assertEqual(pairs, [("a.x", "node.input")])
 
@@ -1156,8 +1156,8 @@ class TestComputeConnectionPairs(unittest.TestCase):
 
         pairs = compute_connection_pairs(
             target,
-            target_is_multi=True,
-            source_plugs=["a.translate", "b.translate", "c.translate"],
+            target_is_multi = True,
+            source_plugs    = ["a.translate", "b.translate", "c.translate"],
         )
         self.assertEqual(
             pairs,
@@ -1189,8 +1189,8 @@ class TestComputeConnectionPairs(unittest.TestCase):
         c4 = mc.polyCube(name="src4")[0]
         pairs = compute_connection_pairs(
             target,
-            target_is_multi=True,
-            source_plugs=[f"{c3}.translate", f"{c4}.translate"],
+            target_is_multi = True,
+            source_plugs    = [f"{c3}.translate", f"{c4}.translate"],
         )
         self.assertEqual(
             pairs,
@@ -1209,9 +1209,9 @@ class TestComputeConnectionPairs(unittest.TestCase):
 
         n = MPyNode.create(name="bugfix")
         n.add_input_attr("input", "vector", is_array=True)
-        target = f"{n.get_name()}.input"
+        target  = f"{n.get_name()}.input"
 
-        cubes = [mc.polyCube(name=f"bug_{i}")[0] for i in range(3)]
+        cubes   = [mc.polyCube(name=f"bug_{i}")[0] for i in range(3)]
         sources = [f"{c}.translate" for c in cubes]
 
         pairs = compute_connection_pairs(
@@ -1248,9 +1248,9 @@ class TestAddAttrDialogShape(unittest.TestCase):
         from mpynode.ui.dialogs.add_attr import NDAddAttrDialog
 
         build_src = inspect.getsource(NDAddAttrDialog._build_ui)
-        self.assertIn("_input_radio", build_src)
+        self.assertIn("_input_radio",  build_src)
         self.assertIn("_output_radio", build_src)
-        self.assertIn('"Done"', build_src)
+        self.assertIn('"Done"',        build_src)
         # Add button stays open + clears + refocuses
         add_src = inspect.getsource(NDAddAttrDialog._on_add_clicked)
         self.assertIn("self._name_edit.clear()", add_src)
@@ -1261,12 +1261,12 @@ class TestAddAttrDialogShape(unittest.TestCase):
 
         from mpynode.ui.dialogs.add_attr import NDAddAttrDialog
 
-        sig = inspect.signature(NDAddAttrDialog.__init__)
+        sig    = inspect.signature(NDAddAttrDialog.__init__)
         params = list(sig.parameters.keys())
         # parent, py_node, initial_direction, on_attr_added
-        self.assertIn("py_node", params)
+        self.assertIn("py_node",           params)
         self.assertIn("initial_direction", params)
-        self.assertIn("on_attr_added", params)
+        self.assertIn("on_attr_added",     params)
 
     def test_stack_built_before_populate_type_combo(self):
         """Regression: _populate_type_combo calls _on_type_changed which
@@ -1275,8 +1275,8 @@ class TestAddAttrDialogShape(unittest.TestCase):
 
         from mpynode.ui.dialogs.add_attr import NDAddAttrDialog
 
-        build_src = inspect.getsource(NDAddAttrDialog._build_ui)
-        stack_idx = build_src.find("self._stack = QStackedLayout")
+        build_src    = inspect.getsource(NDAddAttrDialog._build_ui)
+        stack_idx    = build_src.find("self._stack = QStackedLayout")
         populate_idx = build_src.find("self._populate_type_combo()")
         self.assertGreater(
             stack_idx,
@@ -1432,8 +1432,8 @@ class TestMPyConstraintExpression(unittest.TestCase):
         mc.setAttr(source + ".translate", -2.0, 1.5, 0.5, type="double3")
         ws = mc.xform(driven, q=True, ws=True, t=True)
         self.assertAlmostEqual(ws[0], -2.0, places=4)
-        self.assertAlmostEqual(ws[1], 1.5, places=4)
-        self.assertAlmostEqual(ws[2], 0.5, places=4)
+        self.assertAlmostEqual(ws[1], 1.5,  places=4)
+        self.assertAlmostEqual(ws[2], 0.5,  places=4)
 
     def test_weighted_constraint_blends_to_rest(self):
         """Target_weight=0 should output restTranslate; weight=1
@@ -1526,7 +1526,7 @@ class TestParseIndexRange(unittest.TestCase):
     def test_blank_or_all_is_full_existing_count(self):
         from mpynode.ui.dialogs.connect_attr import parse_index_range
 
-        self.assertEqual(parse_index_range("", 4), [0, 1, 2, 3])
+        self.assertEqual(parse_index_range("", 4),    [0, 1, 2, 3])
         self.assertEqual(parse_index_range("all", 3), [0, 1, 2])
         self.assertEqual(parse_index_range("   ", 2), [0, 1])
 
@@ -1565,7 +1565,7 @@ class TestResolveMultiTarget(unittest.TestCase):
     def test_polycolorpervertex_vertexcolor_is_multi_target(self):
         from mpynode.ui.dialogs.connect_attr import resolve_multi_target
 
-        pcv = mc.createNode("polyColorPerVertex")
+        pcv  = mc.createNode("polyColorPerVertex")
         info = resolve_multi_target(pcv + ".vertexColor.vertexColorRGB")
         self.assertTrue(info["is_multi_target"])
         self.assertFalse(info["nested"])
@@ -1576,7 +1576,7 @@ class TestResolveMultiTarget(unittest.TestCase):
     def test_plain_compound_is_not_a_multi_target(self):
         from mpynode.ui.dialogs.connect_attr import resolve_multi_target
 
-        t = mc.createNode("transform")
+        t    = mc.createNode("transform")
         info = resolve_multi_target(t + ".translate")
         self.assertFalse(info["is_multi_target"])
         self.assertIsNone(info["template"])
@@ -1596,7 +1596,7 @@ class TestResolveMultiTarget(unittest.TestCase):
         """plusMinusAverage.input3D is itself a multi; count = wired elems."""
         from mpynode.ui.dialogs.connect_attr import resolve_multi_target
 
-        pma = mc.createNode("plusMinusAverage")
+        pma  = mc.createNode("plusMinusAverage")
         locs = [mc.spaceLocator()[0] for _ in range(3)]
         for i, l in enumerate(locs):
             mc.connectAttr(l + ".translate", "%s.input3D[%d]" % (pma, i), force=True)
@@ -1653,7 +1653,7 @@ class TestExpandDestPlugs(unittest.TestCase):
         may be sparse), not range(count)."""
         from mpynode.ui.dialogs.connect_attr import expand_dest_plugs
 
-        pma = mc.createNode("plusMinusAverage")
+        pma  = mc.createNode("plusMinusAverage")
         locs = [mc.spaceLocator()[0] for _ in range(3)]
         for l, i in zip(locs, (0, 3, 7)):
             mc.connectAttr(l + ".translate", "%s.input3D[%d]" % (pma, i), force=True)
@@ -1753,7 +1753,7 @@ class TestClobberVsAppendPairs(unittest.TestCase):
             "self.pts=[[float(i)]*3 for i in range(len(self.pts))]\n"
         )
         plug = n.get_name() + ".pts"
-        ds = [mc.createNode("transform", name="ob%d" % i) for i in range(3)]
+        ds   = [mc.createNode("transform", name="ob%d" % i) for i in range(3)]
         for i, d in enumerate(ds):
             run_undoable(_ConnectAttrCommand("%s[%d]" % (plug, i), d + ".translate"))
         newd = mc.createNode("transform", name="obNew")
@@ -1822,7 +1822,7 @@ class TestClobberMultiConnectCommand(unittest.TestCase):
         mc.getAttr("%s[0]" % plug)
         self.assertEqual(self._idx(plug), [0, 1, 2, 3, 4, 5])
 
-        new = [mc.createNode("transform", name="clN%d" % i) for i in range(3)]
+        new   = [mc.createNode("transform", name="clN%d" % i) for i in range(3)]
         pairs = [("%s[%d]" % (plug, i), new[i] + ".translate") for i in range(3)]
         run_undoable(_ClobberMultiConnectCommand(plug, pairs))
         mc.dgdirty(n.get_name())
@@ -1855,13 +1855,13 @@ class TestClobberMultiConnectCommand(unittest.TestCase):
         mc.file(new=True, force=True)
         m = MPyNode.create(name="recvc")
         m.add_input_attr("inv", "vector", is_array=True)
-        ip = m.get_name() + ".inv"
+        ip   = m.get_name() + ".inv"
         srcs = [mc.createNode("transform", name="rc%d" % i) for i in range(6)]
         for i, s in enumerate(srcs):
             run_undoable(_ConnectAttrCommand(s + ".translate", "%s[%d]" % (ip, i)))
         self.assertEqual(self._idx(ip), [0, 1, 2, 3, 4, 5])
 
-        new = [mc.createNode("transform", name="rcN%d" % i) for i in range(3)]
+        new   = [mc.createNode("transform", name="rcN%d" % i) for i in range(3)]
         pairs = [(new[i] + ".translate", "%s[%d]" % (ip, i)) for i in range(3)]
         run_undoable(_ClobberMultiConnectCommand(ip, pairs))
         self.assertEqual(self._idx(ip), [0, 1, 2])
@@ -1895,8 +1895,8 @@ class TestMultiTargetEndToEnd(unittest.TestCase):
         )
         from mpynode.wrappers._mpy_node import MPyNode
 
-        pcv = self._make_pcv("m1")
-        info = resolve_multi_target(pcv + ".vertexColor.vertexColorRGB")
+        pcv   = self._make_pcv("m1")
+        info  = resolve_multi_target(pcv + ".vertexColor.vertexColorRGB")
         count = info["existing_count"]
         self.assertGreater(count, 0)
 
@@ -1931,11 +1931,11 @@ class TestMultiTargetEndToEnd(unittest.TestCase):
         )
         from mpynode.wrappers._mpy_node import MPyNode
 
-        pcv = self._make_pcv("m2")
-        info = resolve_multi_target(pcv + ".vertexColor.vertexColorRGB")
+        pcv   = self._make_pcv("m2")
+        info  = resolve_multi_target(pcv + ".vertexColor.vertexColorRGB")
         count = info["existing_count"]
 
-        node = MPyNode.create(name="colorArrDrv")
+        node  = MPyNode.create(name="colorArrDrv")
         node.add_output_attr("colorArray", "color", is_array=True)
         node.set_compute_expression(
             "for i in range(len(self.colorArray)):\n"
@@ -2044,7 +2044,7 @@ class TestShowConnectDlgWiring(unittest.TestCase):
         ensure_plugins_loaded()
         cube = mc.polyCube(name="scMesh")[0]
         mc.polyColorPerVertex(cube, rgb=(0.0, 0.0, 0.0))  # 8 vertexColor elems
-        pcv = mc.ls(type="polyColorPerVertex")[0]
+        pcv  = mc.ls(type="polyColorPerVertex")[0]
 
         node = MPyNode.create(name="scDrv")
         node.add_output_attr("colorArray", "color", is_array=True)
@@ -2076,7 +2076,7 @@ class TestShowConnectDlgWiring(unittest.TestCase):
         recorder = _RefreshRecorder(
             "output", node, _FakeItem("colorArray", is_array=True)
         )
-        orig = A.NDConnectOutputAttrDialog
+        orig                        = A.NDConnectOutputAttrDialog
         A.NDConnectOutputAttrDialog = _FakeDlg
         try:
             A.NDOutputAttrTree._show_connect_dlg(recorder)

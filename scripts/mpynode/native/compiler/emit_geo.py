@@ -30,7 +30,7 @@ _GEO_INCLUDES_BASE = [
 _GEO_INCLUDES_KIND = {
     "mesh": ["maya/MFnMesh.h", "maya/MFnMeshData.h",
              "maya/MColor.h", "maya/MColorArray.h", "maya/MVectorArray.h"],
-    "curve": ["maya/MFnNurbsCurve.h", "maya/MFnNurbsCurveData.h"],
+    "curve":   ["maya/MFnNurbsCurve.h", "maya/MFnNurbsCurveData.h"],
     "surface": ["maya/MFnNurbsSurface.h", "maya/MFnNurbsSurfaceData.h"],
 }
 
@@ -227,12 +227,12 @@ def _generate_geo_cpp(spec: dict, kind: str, for_port: bool = False) -> str:
     match the framework's build_default_output) are fixed; only the geometry
     MATH that fills the buffers (between the PORT markers) is AI-ported.
     """
-    sg = spec["suggested"]
-    cls = sg["class_name"]
-    type_name = sg["node_type_name"]
-    type_id = sg["type_id"]
-    info = _GEO_INFO[kind]
-    out_attr = info["attr"]
+    sg         = spec["suggested"]
+    cls        = sg["class_name"]
+    type_name  = sg["node_type_name"]
+    type_id    = sg["type_id"]
+    info       = _GEO_INFO[kind]
+    out_attr   = info["attr"]
     out_member = "a" + out_attr[:1].upper() + out_attr[1:]
 
     # User inputs (the geometry output itself is synthesized here, not from the

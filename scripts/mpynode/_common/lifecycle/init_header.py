@@ -161,8 +161,8 @@ def make_init_header(node_type: str) -> str:
     """Return the auto-generated commented header to prefill a fresh
     Init tab for a given node type."""
     bindings = _BRIDGE_BINDINGS.get(node_type)
-    lines = []
-    bar = "# " + "─" * 68
+    lines    = []
+    bar      = "# " + "─" * 68
     lines.append(bar)
     lines.append(f"# {node_type} — Init code (runs once per file open)")
     # Native Maya class this node type wraps + a versioned API-doc link.

@@ -22,10 +22,10 @@ import os
 import sys
 
 FRAMES = 24
-TURN = 0.62         # radians between consecutive cubes on the helix
+TURN   = 0.62  # radians between consecutive cubes on the helix
 RADIUS = 3.2
-RISE = 0.42         # world units of climb per cube
-HALF = 0.38         # cube half-extent
+RISE   = 0.42  # world units of climb per cube
+HALF   = 0.38  # cube half-extent
 
 # 8 corners of a unit cube, and 6 quads wound CCW as seen from OUTSIDE.
 _CORNERS = [(-1, -1, -1), (1, -1, -1), (1, 1, -1), (-1, 1, -1),
@@ -56,7 +56,7 @@ def frame_mesh(n_cubes):
 
 
 def main():
-    here = os.path.dirname(os.path.abspath(__file__))
+    here   = os.path.dirname(os.path.abspath(__file__))
     outdir = sys.argv[1] if len(sys.argv) > 1 else os.path.join(here, "seq")
     if not os.path.isdir(outdir):
         os.makedirs(outdir)

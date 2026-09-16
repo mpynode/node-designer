@@ -97,10 +97,10 @@ class TestComputeTierReach(unittest.TestCase):
     def test_blessed_methods_and_time_reachable(self):
         got = _compute_probe(self.node, ["read_texture", "sample_texture",
                                          "time", "fileName"])
-        self.assertTrue(got.get("read_texture"), got)
+        self.assertTrue(got.get("read_texture"),   got)
         self.assertTrue(got.get("sample_texture"), got)
-        self.assertTrue(got.get("time"), got)
-        self.assertTrue(got.get("fileName"), got)
+        self.assertTrue(got.get("time"),           got)
+        self.assertTrue(got.get("fileName"),       got)
 
     def test_viewport_only_slots_are_NOT_reachable(self):
         # The four the panel must hide outside the Viewport tab.

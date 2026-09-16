@@ -212,7 +212,7 @@ class TestApi2SuspendedNodesDoNotRunTheirExpression(unittest.TestCase):
         for module, cls_name in self._FAMILIES:
             with self.subTest(family=cls_name):
                 mc.file(new=True, force=True)
-                node = self._build(module, cls_name, "susp" + cls_name)
+                node   = self._build(module, cls_name, "susp" + cls_name)
                 before = self._runs()
                 self._step(1, 5)
                 self.assertGreater(self._runs(), before,
@@ -239,7 +239,7 @@ class TestApi2SuspendedNodesDoNotRunTheirExpression(unittest.TestCase):
         from mpynode._common.plugs import dirty_affects
 
         node = self._build(*self._FAMILIES[1], name="gateProbe")
-        sel = om.MSelectionList()
+        sel  = om.MSelectionList()
         sel.add(node)
         mobj = sel.getDependNode(0)
 

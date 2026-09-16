@@ -39,10 +39,10 @@ class TestPorterProjection(unittest.TestCase):
         # otherwise synthesizes <plug>X/<plug>Y, and uvCoord's children are
         # uCoord/vCoord -- without it a compiled mPyFile has no uCoord plug at
         # all, so the key miss there is likewise the contract working.
-        allowed = {"attr_type", "_writable", "_readable"}
-        allowed_enum = allowed | {"enum_names", "default_value"}
+        allowed        = {"attr_type", "_writable", "_readable"}
+        allowed_enum   = allowed | {"enum_names", "default_value"}
         allowed_float2 = allowed | {"children"}
-        extra = {"enum": allowed_enum, "float2": allowed_float2}
+        extra          = {"enum": allowed_enum, "float2": allowed_float2}
         for nm, meta in iface.build_porter_meta_table().items():
             ok = extra.get(meta["attr_type"], allowed)
             self.assertTrue(set(meta).issubset(ok),
@@ -56,8 +56,8 @@ class TestPorterProjection(unittest.TestCase):
         self.assertEqual(t["mipmapMode"]["default_value"], iface.kMipmapAuto)
         self.assertEqual(t["preFilterKernel"]["default_value"],
                          iface.kPreFilterGaussian)
-        self.assertEqual(t["wrapModeU"]["default_value"], iface.kWrapWrap)
-        self.assertEqual(t["wrapModeV"]["default_value"], iface.kWrapWrap)
+        self.assertEqual(t["wrapModeU"]["default_value"],  iface.kWrapWrap)
+        self.assertEqual(t["wrapModeV"]["default_value"],  iface.kWrapWrap)
         self.assertEqual(t["colorSpace"]["default_value"], 0)
 
     def test_every_enum_default_matches_its_declared_entry(self):
@@ -88,9 +88,9 @@ class TestPorterProjection(unittest.TestCase):
 
     def test_directions_route_correctly(self):
         t = iface.build_porter_meta_table()
-        self.assertFalse(t["outColor"]["_writable"])   # output
+        self.assertFalse(t["outColor"]["_writable"])  # output
         self.assertFalse(t["outAlpha"]["_writable"])
-        self.assertTrue(t["uvCoord"]["_writable"])      # input
+        self.assertTrue(t["uvCoord"]["_writable"])    # input
         self.assertTrue(t["fileName"]["_writable"])
         self.assertTrue(t["borderColor"]["_writable"])
         self.assertTrue(all(m["_readable"] for m in t.values()))
@@ -200,7 +200,7 @@ class TestConformsToLiveNode(unittest.TestCase):
                     return mc.attributeQuery(nm, node=node, **kw)
                 # enum fields (order + labels)
                 if e["attr_type"] == "enum":
-                    le = q(listEnum=True)
+                    le          = q(listEnum=True)
                     live_labels = le[0].split(":") if le and le[0] else []
                     self.assertEqual(live_labels, iface.enum_labels(e),
                                      "enum labels differ for %r" % nm)

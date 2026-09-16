@@ -37,14 +37,14 @@ from typing import NamedTuple
 class RenamePlan(NamedTuple):
     """Result of planning a rename against a single source string."""
 
-    ok: bool
-    new_source: str | None
-    count: int                       # occurrences rewritten in this source
-    reason: str | None               # refusal reason (set iff not ok)
-    warnings: tuple                  # non-fatal notes (e.g. string refs)
-    old_name: str
-    scope_kind: str                  # module/function/lambda/comprehension/""
-    is_module_level: bool            # True => cross-tab propagation candidate
+    ok:              bool
+    new_source:      str | None
+    count:           int         # occurrences rewritten in this source
+    reason:          str | None  # refusal reason (set iff not ok)
+    warnings:        tuple       # non-fatal notes (e.g. string refs)
+    old_name:        str
+    scope_kind:      str         # module/function/lambda/comprehension/""
+    is_module_level: bool        # True => cross-tab propagation candidate
 
 
 # ---- Identifier helpers ----
@@ -71,7 +71,7 @@ def word_at(source: str, lineno: int, col: int) -> str:
     if lineno < 1 or lineno > len(lines):
         return ""
     line = lines[lineno - 1]
-    n = len(line)
+    n    = len(line)
     if n == 0:
         return ""
     if col > n:
@@ -95,12 +95,12 @@ class _Scope:
     __slots__ = ("kind", "parent", "bindings", "globals", "nonlocals", "is_class")
 
     def __init__(self, kind, parent):
-        self.kind = kind
-        self.parent = parent
-        self.bindings = set()
-        self.globals = set()
+        self.kind      = kind
+        self.parent    = parent
+        self.bindings  = set()
+        self.globals   = set()
         self.nonlocals = set()
-        self.is_class = kind == "class"
+        self.is_class  = kind == "class"
 
 
 def _iter_target_names(target):
@@ -121,10 +121,10 @@ class _Analyzer:
     owning scope. Single pass, explicit recursion."""
 
     def __init__(self):
-        self.module = _Scope("module", None)
-        self.node_scope = {}
+        self.module      = _Scope("module", None)
+        self.node_scope  = {}
         self.occurrences = []
-        self.has_class = False
+        self.has_class   = False
 
     def _bind(self, scope, name):
         scope.bindings.add(name)
@@ -273,7 +273,7 @@ class _Analyzer:
 
     def _comprehension(self, node, scope):
         inner = _Scope("comprehension", scope)
-        gens = node.generators
+        gens  = node.generators
         for i, gen in enumerate(gens):
             if i == 0:
                 self.visit(gen.iter, scope)
@@ -288,10 +288,10 @@ class _Analyzer:
         else:
             self.visit(node.elt, inner)
 
-    _v_ListComp = _comprehension
-    _v_SetComp = _comprehension
+    _v_ListComp     = _comprehension
+    _v_SetComp      = _comprehension
     _v_GeneratorExp = _comprehension
-    _v_DictComp = _comprehension
+    _v_DictComp     = _comprehension
 
 
 def _all_args(args):
@@ -312,7 +312,7 @@ def _resolve(name, scope, module):
     """Return the scope that owns ``name`` as seen from ``scope`` (LEGB).
     Module scope for free/global/builtin names; None for malformed
     nonlocal so callers can refuse."""
-    s = scope
+    s     = scope
     first = True
     while s is not None:
         if name in s.globals:
@@ -330,7 +330,7 @@ def _resolve(name, scope, module):
             else:
                 return s
         first = False
-        s = s.parent
+        s     = s.parent
     return module
 
 
@@ -345,7 +345,7 @@ def _rewrite(source, nodes, new_name):
     """Replace each node's source span with ``new_name`` (per-line, on
     the UTF-8 byte representation since ast col offsets are byte-based;
     right-to-left within a line so spans don't shift)."""
-    lines = source.splitlines(keepends=True)
+    lines   = source.splitlines(keepends=True)
     by_line = {}
     for node in nodes:
         lineno, col, end_lineno, end_col = _node_span(node)
@@ -369,11 +369,11 @@ def _rewrite(source, nodes, new_name):
 def _dynamic_warnings(tree, name):
     """Flag string-literal references a static rename can't follow
     (getattr/setattr/globals/eval/exec). Returns warning strings."""
-    warns = []
+    warns     = []
     dyn_funcs = {"getattr", "setattr", "hasattr", "delattr"}
     for node in ast.walk(tree):
         if isinstance(node, ast.Call):
-            fn = node.func
+            fn      = node.func
             fn_name = None
             if isinstance(fn, ast.Name):
                 fn_name = fn.id
@@ -443,11 +443,11 @@ def _plan(source, new_name, *, target_pos=None, target_name=None,
             else target_node.arg
         )
         start_scope = analyzer.node_scope.get(id(target_node))
-        defining = _resolve(old_name, start_scope, module)
+        defining    = _resolve(old_name, start_scope, module)
     else:
         target_node = None
-        old_name = target_name
-        defining = module
+        old_name    = target_name
+        defining    = module
         start_scope = module
 
     if old_name in blocked_names:
@@ -521,7 +521,7 @@ def _plan(source, new_name, *, target_pos=None, target_name=None,
             (), old_name, defining.kind, defining is module,
         )
 
-    warnings = tuple(_dynamic_warnings(tree, old_name))
+    warnings   = tuple(_dynamic_warnings(tree, old_name))
     new_source = _rewrite(source, targets, new_name)
 
     try:
@@ -551,13 +551,13 @@ def plan_rename_at(source, lineno, col, new_name, *, blocked_names=frozenset()):
     # Convert the char column to a UTF-8 byte column (ast offsets are
     # byte-based). The node lookup happens inside _plan against its own
     # parse so id() comparisons stay valid.
-    lines = source.splitlines()
+    lines    = source.splitlines()
     line_txt = lines[lineno - 1] if 1 <= lineno <= len(lines) else ""
     byte_col = len(line_txt[:col].encode("utf-8"))
     return _plan(
         source, new_name,
-        target_pos=(lineno, byte_col, old_name),
-        blocked_names=blocked_names,
+        target_pos    = (lineno, byte_col, old_name),
+        blocked_names = blocked_names,
     )
 
 
@@ -595,7 +595,7 @@ def classify_at(source: str, lineno: int, col: int):
     except SyntaxError:
         # Best-effort heuristic when the buffer doesn\'t parse.
         lines = source.splitlines()
-        line = lines[lineno - 1] if 1 <= lineno <= len(lines) else ""
+        line  = lines[lineno - 1] if 1 <= lineno <= len(lines) else ""
         start = col
         while start > 0 and line[start - 1] in _IDENT_CHARS:
             start -= 1
@@ -603,7 +603,7 @@ def classify_at(source: str, lineno: int, col: int):
             return ("self_attr", word)
         return ("name", word)
 
-    lines = source.splitlines()
+    lines    = source.splitlines()
     line_txt = lines[lineno - 1] if 1 <= lineno <= len(lines) else ""
     byte_col = len(line_txt[:col].encode("utf-8"))
 
@@ -707,9 +707,9 @@ class _SpanNode:
     __slots__ = ("lineno", "col_offset", "end_lineno", "end_col_offset")
 
     def __init__(self, lineno, col, end_col):
-        self.lineno = lineno
-        self.col_offset = col
-        self.end_lineno = lineno
+        self.lineno         = lineno
+        self.col_offset     = col
+        self.end_lineno     = lineno
         self.end_col_offset = end_col
 
 
@@ -761,20 +761,20 @@ def plan_promote_local(source, lineno, col, *, blocked_names=frozenset()):
 
     analyzer = _Analyzer()
     analyzer.visit(tree, analyzer.module)
-    module = analyzer.module
+    module   = analyzer.module
 
-    lines = source.splitlines()
+    lines    = source.splitlines()
     line_txt = lines[lineno - 1] if 1 <= lineno <= len(lines) else ""
     byte_col = len(line_txt[:col].encode("utf-8"))
 
-    target = None
+    target       = None
     target_scope = None
     for node, sc in analyzer.occurrences:
         nm = node.id if isinstance(node, ast.Name) else node.arg
         if nm != old_name or node.lineno != lineno:
             continue
         if node.col_offset <= byte_col <= node.end_col_offset:
-            target = node
+            target       = node
             target_scope = sc
             break
     if target is None:

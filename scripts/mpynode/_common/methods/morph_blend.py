@@ -63,7 +63,7 @@ def resolve_weights(w, ibase, iknot, cofs, cdrv):
     Empty corrective tables (a node with no in-betweens or combos) leave every
     weight untouched, so this is a safe no-op on a plain blendShape.
     """
-    nt = w.shape[0]
+    nt  = w.shape[0]
     nib = ibase.shape[0]
     nkn = iknot.shape[0]
     nco = cofs.shape[0]
@@ -78,9 +78,9 @@ def resolve_weights(w, ibase, iknot, cofs, cdrv):
         if t < nib and t < nkn:
             m = int(ibase[t])
             if m >= 0 and m < nt:
-                k = float(iknot[t])
+                k  = float(iknot[t])
                 dv = float(w[m])
-                h = 0.0
+                h  = 0.0
                 if dv <= k:
                     if k > 0.0:
                         h = dv / k
@@ -119,11 +119,11 @@ def accumulate_deltas(base, w, ofs, comp, dlt):
     composable (scale it, mask it, add another field) and avoids the
     ``(base + d) - base`` cancellation the envelope lerp would otherwise need.
     """
-    nv = base.shape[0]
-    nt = w.shape[0]
-    no = ofs.shape[0]
-    nk = comp.shape[0]
-    nd = dlt.shape[0]
+    nv  = base.shape[0]
+    nt  = w.shape[0]
+    no  = ofs.shape[0]
+    nk  = comp.shape[0]
+    nd  = dlt.shape[0]
 
     out = np.zeros(nv * 3)
     for t in range(nt):
@@ -139,8 +139,8 @@ def accumulate_deltas(base, w, ofs, comp, dlt):
                 v = int(comp[j])
                 d = 3 * j
                 if v >= 0 and v < nv and d + 2 < nd:
-                    b = 3 * v
-                    out[b] = out[b] + wt * float(dlt[d])
+                    b          = 3 * v
+                    out[b]     = out[b] + wt * float(dlt[d])
                     out[b + 1] = out[b + 1] + wt * float(dlt[d + 1])
                     out[b + 2] = out[b + 2] + wt * float(dlt[d + 2])
     return out.reshape(-1, 3)
@@ -171,7 +171,7 @@ def accumulate_deltas_live(base, w, ofs, comp, dlt, lslot, lofs, lcomp, ldlt):
     ``accumulate_deltas``, which is the behaviour of a node with nothing
     connected.
     """
-    nt = w.shape[0]
+    nt  = w.shape[0]
     nlv = lslot.shape[0]
 
     # baked half: every target EXCEPT the ones being read live.
@@ -261,8 +261,8 @@ def weight_at_slot(slot, w, islot):
     behaves like that target sitting at rest -- the same degrade-don't-explode
     rule the table clamps follow.
     """
-    n = islot.shape[0]
-    nw = w.shape[0]
+    n   = islot.shape[0]
+    nw  = w.shape[0]
     out = 0.0
     if slot >= 0 and slot < n:
         j = int(islot[slot])

@@ -62,7 +62,7 @@ def _spec_for(compute):
 
 class TestBlessedPresetCapture(unittest.TestCase):
     def test_blessed_reads_are_captured(self):
-        spec = _spec_for(_BLESSED_COMPUTE)
+        spec   = _spec_for(_BLESSED_COMPUTE)
         inputs = spec.get("inputs") or {}
         for nm in _EXPECTED_READS:
             self.assertIn(
@@ -74,7 +74,7 @@ class TestBlessedPresetCapture(unittest.TestCase):
     def test_plain_compute_does_not_pull_blessed_reads(self):
         # A plain mPyFile that never calls a blessed method must NOT get the
         # blessed reads injected solely by this mechanism (over-capture guard).
-        spec = _spec_for("self.outAlpha = 0.0\n")
+        spec   = _spec_for("self.outAlpha = 0.0\n")
         inputs = spec.get("inputs") or {}
         for nm in ("colorSpace", "wrapModeU", "wrapModeV", "borderColor",
                    "preFilter", "preFilterKernel", "preFilterRadius"):

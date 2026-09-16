@@ -254,7 +254,7 @@ class TestApplyOslToArnold(unittest.TestCase):
     def test_apply_creates_compiled_and_connected_shader(self):
         from mpynode._common.osl.osl_targets import apply_osl_to_arnold
         node = self.f.get_name()
-        osl = apply_osl_to_arnold(node)
+        osl  = apply_osl_to_arnold(node)
         self.assertIsNotNone(osl, "apply_osl_to_arnold returned None with MtoA")
         # .code carries the source Arnold actually compiles.
         self.assertEqual(mc.getAttr(osl + ".code"), _OSL_SRC__osl_source)
@@ -351,7 +351,7 @@ class TestCLevelDiagnosticCapture(unittest.TestCase):
     def test_body_exception_propagates_and_text_is_kept(self):
         from mpynode._common.osl import osl_targets
 
-        before = [os.fstat(fd)[:2] for fd in (1, 2)]
+        before   = [os.fstat(fd)[:2] for fd in (1, 2)]
         captured = None
         with self.assertRaises(ValueError):
             with osl_targets._capture_c_output() as cap:
@@ -368,7 +368,7 @@ class TestCLevelDiagnosticCapture(unittest.TestCase):
         from mpynode._common.osl import osl_targets
 
         before = [os.fstat(fd)[:2] for fd in (1, 2)]
-        orig = os.dup
+        orig   = os.dup
 
         def _boom(_fd):
             raise OSError("no descriptors for you")
@@ -438,7 +438,7 @@ class TestAiConvertWithRealArnoldValidation(unittest.TestCase):
             "shader oslAi( output color outColor = color(0)) "
             "{ this is not valid osl ###; }"
         )
-        good = _OSL_SRC__osl_source  # the known-valid golden shader
+        good  = _OSL_SRC__osl_source  # the known-valid golden shader
         calls = []
 
         def fake_complete(system, user):
@@ -457,8 +457,8 @@ class TestAiConvertWithRealArnoldValidation(unittest.TestCase):
         # validate_osl_via_arnold fd-captures the compile.
         repair_user = calls[1][1]
         self.assertIn("REJECTED", repair_user)
-        self.assertIn("[osl]", repair_user)
-        self.assertIn("error:", repair_user)
+        self.assertIn("[osl]",    repair_user)
+        self.assertIn("error:",   repair_user)
 
 
 # ===================== from test_osl_convert.py =====================
@@ -474,7 +474,7 @@ def _load_scanline_defs():
     here = os.path.dirname(os.path.abspath(__file__))
     path = os.path.join(_paths.DATA, "scanline_defs.py")
     spec = importlib.util.spec_from_file_location("_scanline_defs_fixture", path)
-    mod = importlib.util.module_from_spec(spec)
+    mod  = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
     return mod
 
@@ -495,8 +495,8 @@ class TestExtractConsts(unittest.TestCase):
         from mpynode._common.osl import osl_convert as oc
         consts = oc.extract_simple_consts(S.INIT_SRC)
         self.assertEqual(consts.get("NUM_BANDS"), S.NUM_BANDS)
-        self.assertEqual(consts.get("SPEED"), S.SPEED)
-        self.assertEqual(consts.get("TWO_PI"), S.TWO_PI)
+        self.assertEqual(consts.get("SPEED"),     S.SPEED)
+        self.assertEqual(consts.get("TWO_PI"),    S.TWO_PI)
 
     def test_ignores_imports_and_functions(self):
         from mpynode._common.osl import osl_convert as oc
@@ -524,8 +524,8 @@ class TestStructure(unittest.TestCase):
         self.oc = oc
         self.osl = oc.convert_compute_to_osl(
             S.COMPUTE_SRC,
-            consts=oc.extract_simple_consts(S.INIT_SRC),
-            shader_name="scanline_overtime",
+            consts      = oc.extract_simple_consts(S.INIT_SRC),
+            shader_name = "scanline_overtime",
         )
 
     def test_shader_skeleton_and_output(self):
@@ -560,12 +560,12 @@ class TestNotVacuous(unittest.TestCase):
         from mpynode._common.osl import osl_convert as oc
         osl = oc.convert_compute_to_osl(
             S.COMPUTE_SRC,
-            consts={"NUM_BANDS": 3.0, "SPEED": 0.25, "TWO_PI": 6.0},
-            shader_name="scanline_overtime",
+            consts      = {"NUM_BANDS": 3.0, "SPEED": 0.25, "TWO_PI": 6.0},
+            shader_name = "scanline_overtime",
         )
         self.assertIn("float NUM_BANDS = 3.0;", osl)
-        self.assertIn("float SPEED = 0.25;", osl)
-        self.assertIn("float TWO_PI = 6.0;", osl)
+        self.assertIn("float SPEED = 0.25;",    osl)
+        self.assertIn("float TWO_PI = 6.0;",    osl)
         self.assertNotIn("12.0", osl)
 
     def test_look_math_flows_through(self):
@@ -575,8 +575,8 @@ class TestNotVacuous(unittest.TestCase):
         )
         osl = oc.convert_compute_to_osl(
             mutated,
-            consts=oc.extract_simple_consts(S.INIT_SRC),
-            shader_name="scanline_overtime",
+            consts      = oc.extract_simple_consts(S.INIT_SRC),
+            shader_name = "scanline_overtime",
         )
         self.assertIn("0.3 + 0.7 * s", osl)
         self.assertNotIn("0.4 + 0.6 * s", osl)
@@ -586,8 +586,8 @@ class TestNotVacuous(unittest.TestCase):
         mutated = S.COMPUTE_SRC.replace("self.tIn", "self.frame")
         osl = oc.convert_compute_to_osl(
             mutated,
-            consts=oc.extract_simple_consts(S.INIT_SRC),
-            shader_name="scanline_overtime",
+            consts      = oc.extract_simple_consts(S.INIT_SRC),
+            shader_name = "scanline_overtime",
         )
         self.assertIn("float frame = 0.0", osl)
         self.assertIn("frame * SPEED", osl)
@@ -600,8 +600,8 @@ class TestUnsupportedFallsBack(unittest.TestCase):
         with self.assertRaises(oc.UnsupportedComputeError) as ctx:
             oc.convert_compute_to_osl(
                 "for i in range(3):\n    self.outColor = (0.0, 0.0, 0.0)\n",
-                consts={},
-                shader_name="x",
+                consts      = {},
+                shader_name = "x",
             )
         self.assertIn("assistant", str(ctx.exception).lower())
 
@@ -617,8 +617,8 @@ class TestUnsupportedFallsBack(unittest.TestCase):
         with self.assertRaises(oc.UnsupportedComputeError):
             oc.convert_compute_to_osl(
                 "s = mystery * 2.0\nself.outColor = (s, s, s)\n",
-                consts={},
-                shader_name="x",
+                consts      = {},
+                shader_name = "x",
             )
 
 
@@ -774,7 +774,7 @@ class _RecordingComplete:
 
     def __init__(self, outputs):
         self._outputs = list(outputs)
-        self.calls = []
+        self.calls    = []
 
     def __call__(self, system, user):
         self.calls.append((system, user))
@@ -809,22 +809,22 @@ class TestBuildPrompt(unittest.TestCase):
 
 class TestAiConvert(unittest.TestCase):
     def test_returns_osl_on_first_try_no_validator(self):
-        cf = _RecordingComplete([_GOOD_OSL])
+        cf  = _RecordingComplete([_GOOD_OSL])
         out = ai_convert_compute_to_osl(_COMPUTE, _INIT, "mpyfile_shader", cf)
         self.assertEqual(out.strip(), _GOOD_OSL.strip())
         self.assertEqual(len(cf.calls), 1)
 
     def test_strips_markdown_fences(self):
         fenced = "```osl\n" + _GOOD_OSL + "```\n"
-        cf = _RecordingComplete([fenced])
-        out = ai_convert_compute_to_osl(_COMPUTE, _INIT, "mpyfile_shader", cf)
+        cf     = _RecordingComplete([fenced])
+        out    = ai_convert_compute_to_osl(_COMPUTE, _INIT, "mpyfile_shader", cf)
         self.assertNotIn("```", out)
         self.assertTrue(out.strip().startswith("shader"))
 
     def test_streams_attempt_and_rejection_markers_to_log(self):
         # "the log does not say much": the AI loop must announce each attempt and
         # WHY an attempt was rejected, so the activity strip shows real progress.
-        cf = _RecordingComplete(["I cannot help with that.", _GOOD_OSL])
+        cf   = _RecordingComplete(["I cannot help with that.", _GOOD_OSL])
         logs = []
         out = ai_convert_compute_to_osl(_COMPUTE, _INIT, "s", cf,
                                         log_cb=logs.append)
@@ -832,11 +832,11 @@ class TestAiConvert(unittest.TestCase):
         blob = "\n".join(logs).lower()
         self.assertIn("attempt 1", blob)
         self.assertIn("attempt 2", blob)
-        self.assertIn("rejected", blob)
+        self.assertIn("rejected",  blob)
 
     def test_structural_failure_triggers_one_repair(self):
         # First output is junk (no shader/outColor); second is good.
-        cf = _RecordingComplete(["I cannot help with that.", _GOOD_OSL])
+        cf  = _RecordingComplete(["I cannot help with that.", _GOOD_OSL])
         out = ai_convert_compute_to_osl(_COMPUTE, _INIT, "mpyfile_shader", cf)
         self.assertEqual(out.strip(), _GOOD_OSL.strip())
         self.assertEqual(len(cf.calls), 2)
@@ -913,7 +913,7 @@ def _scanline_srcs():
     here = os.path.dirname(os.path.abspath(__file__))
     path = os.path.join(_paths.DATA, "scanline_defs.py")
     spec = importlib.util.spec_from_file_location("_scanline_defs_action", path)
-    mod = importlib.util.module_from_spec(spec)
+    mod  = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
     return mod.INIT_SRC, mod.COMPUTE_SRC, mod.ARNOLD_OSL_SRC
 
@@ -1064,7 +1064,7 @@ class TestOslTabGatingSource(unittest.TestCase):
 
     def setUp(self):
         from mpynode.ui.widgets import script_tab_content as stc
-        self.stc = stc
+        self.stc      = stc
         self.init_src = inspect.getsource(stc.NDScriptTabContent.__init__)
 
     def test_osl_tab_added_gated_by_capability(self):
@@ -1274,7 +1274,7 @@ class TestSetOslExpressionTool(unittest.TestCase):
         """A node without an OSL output (plain mPyNode) must get a clear error,
         not a stack trace -- the tool is gated by capability."""
         node = mc.createNode("mPyNode", name="plainTool#")
-        ctx = self.T.ToolContext(working_node=node)
+        ctx  = self.T.ToolContext(working_node=node)
         res = self.T.dispatch("set_osl_expression",
                               {"source": _OSL_SRC__osl_tool}, ctx)
         self.assertIn("error", res)

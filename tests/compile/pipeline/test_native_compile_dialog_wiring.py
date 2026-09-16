@@ -49,8 +49,8 @@ class _W:
     def __init__(self):
         self.enabled = None
         self.visible = None
-        self.text = None
-        self.value = None
+        self.text    = None
+        self.value   = None
 
     def setEnabled(self, v):
         self.enabled = v
@@ -72,7 +72,7 @@ class _LogW:
     """Fake QPlainTextEdit: records appended lines + visibility + clears."""
 
     def __init__(self):
-        self.lines = []
+        self.lines   = []
         self.visible = None
         self.cleared = 0
 
@@ -94,12 +94,12 @@ class _FakeSelf:
     """Duck-typed CompileDialog with only what the tested methods touch."""
 
     def __init__(self):
-        self._busy = False
-        self._compile_btn = _W()
-        self._cancel_btn = _W()
-        self._name_edit = _W()
-        self._out_edit = _W()
-        self._browse_btn = _W()
+        self._busy         = False
+        self._compile_btn  = _W()
+        self._cancel_btn   = _W()
+        self._name_edit    = _W()
+        self._out_edit     = _W()
+        self._browse_btn   = _W()
         self._strict_check = _W()
         # Off-by-default "Run authored node tests" option (locked by _set_busy
         # like the other options; read by _on_compile).
@@ -107,16 +107,16 @@ class _FakeSelf:
         # The three-stage pipeline group. Stage 1 (transpile) always runs and
         # has no widget; stage 2 defaults ON so today's unconditional porting is
         # unchanged, and stage 3 is opt-in and implies stage 2.
-        self._optimize_check = _W()
-        self._assist_check = _W()
-        self._rounds_combo = _W()
+        self._optimize_check           = _W()
+        self._assist_check             = _W()
+        self._rounds_combo             = _W()
         self._keep_intermediates_check = _W()
-        self._clean_scratch_check = _W()
-        self._sync_pipeline_gates = lambda *a: None
+        self._clean_scratch_check      = _W()
+        self._sync_pipeline_gates      = lambda *a: None
         # Post-run shortcuts to the pipeline's own output (shown by _on_finished
         # only when there is something to open).
-        self._report_btn = _W()
-        self._folder_btn = _W()
+        self._report_btn       = _W()
+        self._folder_btn       = _W()
         self._last_report_path = None
         # Live checkpoint strip (its own logic is covered in
         # test_compile_dialog_pipeline; here it just must not be missing).
@@ -127,30 +127,30 @@ class _FakeSelf:
         # Mirror the real _set_busy's widgets (checkbox-list model): the bundle
         # is now driven by per-row checkboxes + these bulk buttons, not the old
         # Add/Remove pair.
-        self._select_all_btn = _W()
+        self._select_all_btn  = _W()
         self._select_none_btn = _W()
-        self._refresh_btn = _W()
+        self._refresh_btn     = _W()
         # External-.mpn feature widgets (locked by _set_busy alongside the rest).
-        self._add_mpn_btn = _W()
+        self._add_mpn_btn             = _W()
         self._ignore_persistent_check = _W()
-        self._table = _W()
-        self._status_label = _W()
-        self._row_by_type = {}
-        self._bundle_path = None
-        self._set_busy_calls = []
-        self._offer_load_calls = []
+        self._table                   = _W()
+        self._status_label            = _W()
+        self._row_by_type             = {}
+        self._bundle_path             = None
+        self._set_busy_calls          = []
+        self._offer_load_calls        = []
         # Spinner + log surface (recording stubs). The real implementations are
         # exercised separately in TestCompileDialogSpinnerLog; here they just
         # record so _set_busy/_on_progress_main wiring can be asserted.
-        self._log_view = _LogW()
-        self._log_toggle_btn = _W()
-        self._status_msg = ""
-        self._status_msgs = []
-        self._spin_started = 0
-        self._spin_stopped = 0
-        self._appended_logs = []
+        self._log_view        = _LogW()
+        self._log_toggle_btn  = _W()
+        self._status_msg      = ""
+        self._status_msgs     = []
+        self._spin_started    = 0
+        self._spin_stopped    = 0
+        self._appended_logs   = []
         self._clear_log_calls = 0
-        self._show_log_calls = []
+        self._show_log_calls  = []
         # Elapsed-timer origin (set by the real _set_busy(True); None when idle).
         self._run_start = None
         # Multi-version target checkboxes (locked by _set_busy; empty here).
@@ -166,9 +166,9 @@ class _FakeSelf:
         # Maya root a single build targeted (None = legacy/running Maya).
         self._build_target_root = None
         # WS2 "Fix with AI" concierge surface (recording stubs).
-        self._ai_btn = _W()
-        self._last_ai_result = None
-        self._last_ai_out_dir = None
+        self._ai_btn                 = _W()
+        self._last_ai_result         = None
+        self._last_ai_out_dir        = None
         self._update_ai_button_calls = []
         # NOTE: deliberately NO _progress_bar -- touching it must raise.
 
@@ -298,7 +298,7 @@ class TestCellTextVerify(unittest.TestCase):
         from mpynode.ui.dialogs.compile_dialog import CompileDialog
 
         reason = "uses array/multi attribute(s) controlPoints, outSamples"
-        txt = CompileDialog._cell_text("verify", "skip", reason)
+        txt    = CompileDialog._cell_text("verify", "skip", reason)
         # Must read as compiled/skipped, never as a parity FAILURE.
         self.assertNotIn("FAILED", txt)
         self.assertIn("skipped", txt.lower())
@@ -326,12 +326,12 @@ class TestCompileDialogOfferLoad(unittest.TestCase):
         from mpynode._base import plugins
         from mpynode.ui.dialogs import compile_dialog as cd
 
-        orig_q = cd.QMessageBox.question
-        orig_warn = cd.QMessageBox.warning
-        orig_crit = cd.QMessageBox.critical
+        orig_q      = cd.QMessageBox.question
+        orig_warn   = cd.QMessageBox.warning
+        orig_crit   = cd.QMessageBox.critical
         orig_helper = plugins.load_or_reload_native_plugin
-        warned = {}
-        crit = {}
+        warned      = {}
+        crit        = {}
 
         cd.QMessageBox.question = staticmethod(
             lambda *a, **k: cd.QMessageBox.Yes if answer_yes
@@ -350,9 +350,9 @@ class TestCompileDialogOfferLoad(unittest.TestCase):
         try:
             cd.CompileDialog._offer_load(fake, "/out/myPlug.bundle")
         finally:
-            cd.QMessageBox.question = orig_q
-            cd.QMessageBox.warning = orig_warn
-            cd.QMessageBox.critical = orig_crit
+            cd.QMessageBox.question              = orig_q
+            cd.QMessageBox.warning               = orig_warn
+            cd.QMessageBox.critical              = orig_crit
             plugins.load_or_reload_native_plugin = orig_helper
         return warned, crit
 
@@ -375,9 +375,9 @@ class TestCompileDialogOfferLoad(unittest.TestCase):
     def test_offer_load_no_means_no_load(self):
         from mpynode._base import plugins
 
-        fake = _FakeSelf()
+        fake   = _FakeSelf()
         called = {"n": 0}
-        orig = plugins.load_or_reload_native_plugin
+        orig   = plugins.load_or_reload_native_plugin
         plugins.load_or_reload_native_plugin = lambda p: called.__setitem__(
             "n", called["n"] + 1)
         try:
@@ -396,9 +396,9 @@ class TestCompileDialogOfferLoad(unittest.TestCase):
         """
         from mpynode._base import plugins
 
-        fake = _FakeSelf()
+        fake   = _FakeSelf()
         called = {"n": 0}
-        orig = plugins.load_or_reload_native_plugin
+        orig   = plugins.load_or_reload_native_plugin
         plugins.load_or_reload_native_plugin = lambda p: called.__setitem__(
             "n", called["n"] + 1)
         try:
@@ -449,7 +449,7 @@ class TestCompileDialogNoProgressBar(unittest.TestCase):
     def test_on_finished_success_offers_load_without_progress_bar(self):
         from mpynode.ui.dialogs import compile_dialog as cd
 
-        fake = _FakeSelf()
+        fake  = _FakeSelf()
         bpath = _real_bundle(self)
 
         class _Ctrl:
@@ -480,14 +480,14 @@ class _SpinLogFake:
     def __init__(self):
         from mpynode.ui.dialogs.compile_dialog import CompileDialog as C
 
-        self._status_label = _W()
-        self._status_msg = ""
-        self._spin_running = False
-        self._spin_i = 0
-        self._spin_timer = None
-        self._log_view = _LogW()
+        self._status_label   = _W()
+        self._status_msg     = ""
+        self._spin_running   = False
+        self._spin_i         = 0
+        self._spin_timer     = None
+        self._log_view       = _LogW()
         self._log_toggle_btn = _W()
-        self._log_shown = False
+        self._log_shown      = False
         # Elapsed-timer origin; None -> the spinner shows no timer (default).
         self._run_start = None
         for m in self._METHODS:
@@ -543,20 +543,20 @@ class TestCompileDialogSpinnerLog(unittest.TestCase):
     def test_tick_spinner_prepends_a_braille_frame(self):
         from mpynode.ui.dialogs import compile_dialog as cd
 
-        fake = _SpinLogFake()
-        fake._status_msg = "Porting"
+        fake               = _SpinLogFake()
+        fake._status_msg   = "Porting"
         fake._spin_running = True
-        fake._spin_i = 0
+        fake._spin_i       = 0
         fake._tick_spinner()
         text = fake._status_label.text
         self.assertIn("Porting", text)
         self.assertIn(text[0], cd._SPIN_FRAMES)
 
     def test_tick_spinner_advances_frame(self):
-        fake = _SpinLogFake()
-        fake._status_msg = "x"
+        fake               = _SpinLogFake()
+        fake._status_msg   = "x"
         fake._spin_running = True
-        fake._spin_i = 0
+        fake._spin_i       = 0
         fake._tick_spinner()
         first = fake._status_label.text[0]
         fake._tick_spinner()
@@ -564,7 +564,7 @@ class TestCompileDialogSpinnerLog(unittest.TestCase):
         self.assertNotEqual(first, second)
 
     def test_render_status_has_no_frame_when_not_spinning(self):
-        fake = _SpinLogFake()
+        fake               = _SpinLogFake()
         fake._spin_running = False
         fake._set_status_msg("Built ok")
         self.assertEqual(fake._status_label.text, "Built ok")
@@ -604,7 +604,7 @@ class TestCompileDialogSpinnerLog(unittest.TestCase):
         self.assertIn("▸", fake._log_toggle_btn.text)  # collapsed marker
 
     def test_toggle_log_flips_state(self):
-        fake = _SpinLogFake()
+        fake            = _SpinLogFake()
         fake._log_shown = False
         fake._toggle_log()
         self.assertTrue(fake._log_shown)
@@ -617,10 +617,10 @@ class TestCompileDialogSpinnerLog(unittest.TestCase):
         # A pending QTimer tick can fire after the dialog is torn down; a None
         # _status_label must NOT raise (the spinner runs on the GUI thread but
         # the widget may already be gone on close).
-        fake = _SpinLogFake()
+        fake               = _SpinLogFake()
         fake._status_label = None
         fake._spin_running = True
-        fake._status_msg = "Porting"
+        fake._status_msg   = "Porting"
         fake._render_status()  # must not raise
         fake._tick_spinner()   # must not raise either
 
@@ -663,7 +663,7 @@ class TestCompileLogWrapping(unittest.TestCase):
         from mpynode.ui.dialogs import compile_dialog as cd
 
         parts = cd._wrap_log_line(self._LONG).split("\n")
-        head = self._LONG[:len(self._LONG) - len(self._LONG.lstrip(" "))]
+        head  = self._LONG[:len(self._LONG) - len(self._LONG.lstrip(" "))]
 
         self.assertTrue(parts[0].startswith(head))
         for p in parts[1:]:
@@ -696,8 +696,8 @@ class TestCompileDialogLogBuildUI(unittest.TestCase):
         from mpynode.ui.dialogs import compile_dialog as cd
 
         src = inspect.getsource(cd.CompileDialog._build_ui)
-        self.assertIn("_log_view", src)
-        self.assertIn("QPlainTextEdit", src)
+        self.assertIn("_log_view",       src)
+        self.assertIn("QPlainTextEdit",  src)
         self.assertIn("_log_toggle_btn", src)
 
     def test_log_starts_hidden_collapsed(self):
@@ -768,9 +768,9 @@ class TestCompileDialogFinishSummary(unittest.TestCase):
     def test_format_elapsed_basic(self):
         from mpynode.ui.dialogs import compile_dialog as cd
 
-        self.assertEqual(cd._format_elapsed(0), "0:00")
-        self.assertEqual(cd._format_elapsed(7), "0:07")
-        self.assertEqual(cd._format_elapsed(83), "1:23")
+        self.assertEqual(cd._format_elapsed(0),   "0:00")
+        self.assertEqual(cd._format_elapsed(7),   "0:07")
+        self.assertEqual(cd._format_elapsed(83),  "1:23")
         self.assertEqual(cd._format_elapsed(725), "12:05")
 
     def test_format_elapsed_none_or_negative_is_blank(self):
@@ -788,8 +788,8 @@ class TestCompileDialogFinishSummary(unittest.TestCase):
             "/out/myPlug.manifest.json", ["/out/aNode.cpp"],
             ["aNode (compiled)"], [])
         blob = "\n".join(lines)
-        self.assertIn("0:12", blob)               # how long it took
-        self.assertIn("Compiled", blob)           # clear "done"
+        self.assertIn("0:12", blob)                # how long it took
+        self.assertIn("Compiled", blob)            # clear "done"
         self.assertIn("/out/myPlug.bundle", blob)  # generated file + location
         self.assertIn("/out/myPlug.manifest.json", blob)
         self.assertIn("/out/aNode.cpp", blob)
@@ -803,9 +803,9 @@ class TestCompileDialogFinishSummary(unittest.TestCase):
             False, "0:05", "myPlug", None, None, [], [],
             ["assemble: boom", "dropped: aNode"])
         blob = "\n".join(lines)
-        self.assertIn("0:05", blob)
-        self.assertIn("failed", blob.lower())
-        self.assertIn("boom", blob)
+        self.assertIn("0:05",           blob)
+        self.assertIn("failed",         blob.lower())
+        self.assertIn("boom",           blob)
         self.assertIn("dropped: aNode", blob)
         self.assertIn(cd._SUMMARY_RULE, lines)
 
@@ -838,9 +838,9 @@ class TestCompileDialogFinishSummary(unittest.TestCase):
         # summary AND a modal. The success path used to pass [] for errors.
         from mpynode.ui.dialogs import compile_dialog as cd
 
-        fake = _FakeSelf()
+        fake            = _FakeSelf()
         fake._run_start = None
-        bpath = _real_bundle(self)
+        bpath           = _real_bundle(self)
 
         class _Ctrl:
             result = {"ok": True, "bundle_path": bpath,
@@ -850,8 +850,8 @@ class TestCompileDialogFinishSummary(unittest.TestCase):
                       "nodes": [{"type_name": "A", "build_status": "compiled"}]}
 
         fake._controller = _Ctrl()
-        warned = {}
-        orig_warn = cd.QMessageBox.warning
+        warned           = {}
+        orig_warn        = cd.QMessageBox.warning
         cd.QMessageBox.warning = staticmethod(
             lambda *a, **k: warned.update(msg=a[-1] if a else ""))
         try:
@@ -859,8 +859,8 @@ class TestCompileDialogFinishSummary(unittest.TestCase):
         finally:
             cd.QMessageBox.warning = orig_warn
         blob = "\n".join(fake._appended_logs)
-        self.assertIn("dup", blob)            # surfaced in the summary
-        self.assertTrue(warned.get("msg"))    # and a modal popped
+        self.assertIn("dup", blob)          # surfaced in the summary
+        self.assertTrue(warned.get("msg"))  # and a modal popped
         self.assertIn("dup", warned["msg"])
         # The build still succeeded -> it still offered to load the bundle.
         self.assertEqual(fake._offer_load_calls, [bpath])
@@ -872,9 +872,9 @@ class TestCompileDialogFinishSummary(unittest.TestCase):
         the built branch with the AI failure carried as the warning it is."""
         from mpynode.ui.dialogs import compile_dialog as cd
 
-        fake = _FakeSelf()
+        fake            = _FakeSelf()
         fake._run_start = None
-        bpath = _real_bundle(self)
+        bpath           = _real_bundle(self)
         why = ("AI optimize was requested but produced no candidate for any of "
                "the 2 node(s) attempted (1 blocked: nodeA). First failure: "
                "AgentUnavailable: sandbox_apply")
@@ -886,8 +886,8 @@ class TestCompileDialogFinishSummary(unittest.TestCase):
                       "nodes": [{"type_name": "A", "build_status": "compiled"}]}
 
         fake._controller = _Ctrl()
-        warned = {}
-        orig_warn = cd.QMessageBox.warning
+        warned           = {}
+        orig_warn        = cd.QMessageBox.warning
         cd.QMessageBox.warning = staticmethod(
             lambda *a, **k: warned.update(title=a[1] if len(a) > 1 else "",
                                           msg=a[-1] if a else ""))
@@ -900,8 +900,8 @@ class TestCompileDialogFinishSummary(unittest.TestCase):
         self.assertNotIn("Compile failed", blob)
         # Told BOTH halves: the AI step failed, and the plugin is loadable.
         self.assertIn("AI optimize FAILED", blob)
-        self.assertIn("sandbox_apply", blob)
-        self.assertIn("can be loaded", blob)
+        self.assertIn("sandbox_apply",      blob)
+        self.assertIn("can be loaded",      blob)
         self.assertEqual(fake._offer_load_calls, [bpath],
                          "a linked bundle was withheld over an AI failure")
         self.assertNotIn("Compile failed", fake._status_msg)
@@ -924,14 +924,14 @@ class TestCompileDialogFinishSummary(unittest.TestCase):
         class _Ctrl:
             pass
 
-        _Ctrl.result = result
+        _Ctrl.result     = result
         fake._controller = _Ctrl()
         # Bind the REAL multi handler so _on_finished's dispatch is covered too.
         fake._on_finished_multi = (
             lambda *a: cd.CompileDialog._on_finished_multi(fake, *a))
-        orig_warn = cd.QMessageBox.warning
+        orig_warn    = cd.QMessageBox.warning
         orig_resolve = cd._resolve_maya_dir
-        warned = {}
+        warned       = {}
         cd.QMessageBox.warning = staticmethod(
             lambda *a, **k: warned.update(title=a[1] if len(a) > 1 else "",
                                           msg=a[-1] if a else ""))
@@ -940,7 +940,7 @@ class TestCompileDialogFinishSummary(unittest.TestCase):
             cd.CompileDialog._on_finished(fake)
         finally:
             cd.QMessageBox.warning = orig_warn
-            cd._resolve_maya_dir = orig_resolve
+            cd._resolve_maya_dir   = orig_resolve
         return warned
 
     def test_on_finished_multi_ai_failure_still_offers_the_linked_bundle(self):
@@ -950,9 +950,9 @@ class TestCompileDialogFinishSummary(unittest.TestCase):
         (``compile_plugin_multi`` forwards ``optimize`` to each per-version
         ``compile_plugin``). Reporting it as a flat FAILED hid a loadable
         artifact and never offered it."""
-        fake = _FakeSelf()
+        fake            = _FakeSelf()
         fake._run_start = None
-        bpath = _real_bundle(self)
+        bpath           = _real_bundle(self)
         why = ("AI optimize was requested but produced no candidate for any of "
                "the 2 node(s) attempted (1 blocked: nodeA)")
         sub = {"ok": False, "bundle_path": bpath, "manifest_path": None,
@@ -961,7 +961,7 @@ class TestCompileDialogFinishSummary(unittest.TestCase):
 
         warned = self._run_multi(fake, self._multi_result(sub))
 
-        blob = "\n".join(fake._appended_logs)
+        blob   = "\n".join(fake._appended_logs)
         self.assertIn("Built 1/1 Maya version(s)", blob,
                       "the linked version was counted as a failure")
         # It is being OFFERED to load, so it must not also be named in a
@@ -976,16 +976,16 @@ class TestCompileDialogFinishSummary(unittest.TestCase):
         """The special case must not swallow a version that actually broke: no
         ``ai_optimize_failed`` key means that version stays FAILED, is never
         offered, and still raises the modal."""
-        fake = _FakeSelf()
+        fake            = _FakeSelf()
         fake._run_start = None
-        bpath = _real_bundle(self)
+        bpath           = _real_bundle(self)
         sub = {"ok": False, "bundle_path": bpath, "manifest_path": None,
                "plugin_name": "myPlug", "errors": ["link error: undefined"],
                "nodes": []}
 
         warned = self._run_multi(fake, self._multi_result(sub))
 
-        blob = "\n".join(fake._appended_logs)
+        blob   = "\n".join(fake._appended_logs)
         self.assertIn("Built 0/1 Maya version(s)", blob)
         self.assertIn("FAILED", blob)
         self.assertEqual(fake._offer_load_calls, [])
@@ -996,9 +996,9 @@ class TestCompileDialogFinishSummary(unittest.TestCase):
         ``ai_optimize_failed`` key means the failure branch, unchanged."""
         from mpynode.ui.dialogs import compile_dialog as cd
 
-        fake = _FakeSelf()
+        fake            = _FakeSelf()
         fake._run_start = None
-        bpath = _real_bundle(self)
+        bpath           = _real_bundle(self)
 
         class _Ctrl:
             result = {"ok": False, "bundle_path": bpath,
@@ -1006,8 +1006,8 @@ class TestCompileDialogFinishSummary(unittest.TestCase):
                       "errors": ["link error: undefined symbol"],
                       "nodes": [{"type_name": "A", "build_status": "dropped"}]}
 
-        fake._controller = _Ctrl()
-        orig_warn = cd.QMessageBox.warning
+        fake._controller       = _Ctrl()
+        orig_warn              = cd.QMessageBox.warning
         cd.QMessageBox.warning = staticmethod(lambda *a, **k: None)
         try:
             cd.CompileDialog._on_finished(fake)
@@ -1040,30 +1040,30 @@ class TestCompileDialogFinishSummary(unittest.TestCase):
     def test_render_status_shows_elapsed_next_to_frame_while_spinning(self):
         from mpynode.ui.dialogs import compile_dialog as cd
 
-        fake = _SpinLogFake()
-        fake._run_start = 100.0
+        fake               = _SpinLogFake()
+        fake._run_start    = 100.0
         fake._spin_running = True
-        fake._spin_i = 0
-        fake._status_msg = "Porting"
-        orig_now = cd._now
-        cd._now = lambda: 107.0
+        fake._spin_i       = 0
+        fake._status_msg   = "Porting"
+        orig_now           = cd._now
+        cd._now            = lambda: 107.0
         try:
             fake._render_status()
         finally:
             cd._now = orig_now
         text = fake._status_label.text
-        self.assertIn("0:07", text)               # the little timer
-        self.assertIn("Porting", text)            # the message
-        self.assertIn(text[0], cd._SPIN_FRAMES)   # still the animated icon
+        self.assertIn("0:07",    text)             # the little timer
+        self.assertIn("Porting", text)             # the message
+        self.assertIn(text[0],   cd._SPIN_FRAMES)  # still the animated icon
 
     def test_render_status_no_timer_when_no_run_start(self):
         from mpynode.ui.dialogs import compile_dialog as cd
 
-        fake = _SpinLogFake()
-        fake._run_start = None
+        fake               = _SpinLogFake()
+        fake._run_start    = None
         fake._spin_running = True
-        fake._spin_i = 0
-        fake._status_msg = "x"
+        fake._spin_i       = 0
+        fake._status_msg   = "x"
         fake._render_status()
         self.assertTrue(fake._status_label.text.endswith("x"))
         self.assertNotIn(":", fake._status_label.text)  # no time component
@@ -1072,9 +1072,9 @@ class TestCompileDialogFinishSummary(unittest.TestCase):
     def test_set_busy_true_records_run_start(self):
         from mpynode.ui.dialogs import compile_dialog as cd
 
-        fake = _FakeSelf()
+        fake     = _FakeSelf()
         orig_now = cd._now
-        cd._now = lambda: 555.0
+        cd._now  = lambda: 555.0
         try:
             cd.CompileDialog._set_busy(fake, True)
         finally:
@@ -1085,9 +1085,9 @@ class TestCompileDialogFinishSummary(unittest.TestCase):
     def test_on_finished_appends_summary_block_to_log(self):
         from mpynode.ui.dialogs import compile_dialog as cd
 
-        fake = _FakeSelf()
+        fake            = _FakeSelf()
         fake._run_start = None
-        bpath = _real_bundle(self)
+        bpath           = _real_bundle(self)
 
         class _Ctrl:
             result = {"ok": True, "bundle_path": bpath,
@@ -1100,8 +1100,8 @@ class TestCompileDialogFinishSummary(unittest.TestCase):
         cd.CompileDialog._on_finished(fake)
         blob = "\n".join(fake._appended_logs)
         self.assertIn("Compiled", blob)
-        self.assertIn(bpath, blob)
-        self.assertIn("aNode", blob)
+        self.assertIn(bpath,      blob)
+        self.assertIn("aNode",    blob)
         # And it still offered to load the built bundle.
         self.assertEqual(fake._offer_load_calls, [bpath])
 
@@ -1125,12 +1125,12 @@ class _AddMpnFake:
     def __init__(self):
         from mpynode.ui.dialogs.compile_dialog import CompileDialog as C
 
-        self._busy = False
-        self._out_edit = _TextW("/tmp")
-        self._file_rows = {}
-        self._checked = set()
-        self._scene_nodes = []
-        self._refresh_calls = 0
+        self._busy            = False
+        self._out_edit        = _TextW("/tmp")
+        self._file_rows       = {}
+        self._checked         = set()
+        self._scene_nodes     = []
+        self._refresh_calls   = 0
         self._unique_row_name = types.MethodType(C._unique_row_name, self)
 
     def _refresh_table(self):
@@ -1146,9 +1146,9 @@ class TestCompileDialogExternalMpn(unittest.TestCase):
         from mpynode.ui.dialogs import compile_dialog as cd
 
         src = inspect.getsource(cd.CompileDialog._build_ui)
-        self.assertIn("Add .mpn files", src)
-        self.assertIn("_add_mpn_btn", src)
-        self.assertIn("Ignore persistent data", src)
+        self.assertIn("Add .mpn files",           src)
+        self.assertIn("_add_mpn_btn",             src)
+        self.assertIn("Ignore persistent data",   src)
         self.assertIn("_ignore_persistent_check", src)
 
     def test_wire_signals_connects_add_mpn(self):
@@ -1162,9 +1162,9 @@ class TestCompileDialogExternalMpn(unittest.TestCase):
 
         src = inspect.getsource(cd.CompileDialog._on_compile)
         # File rows go through the pure adapter; scene rows still use extract_spec.
-        self.assertIn("_file_rows", src)
+        self.assertIn("_file_rows",            src)
         self.assertIn("spec_from_mpn_payload", src)
-        self.assertIn("extract_spec", src)
+        self.assertIn("extract_spec",          src)
 
     def test_on_compile_threads_bake_persistent(self):
         from mpynode.ui.dialogs import compile_dialog as cd
@@ -1197,7 +1197,7 @@ class TestCompileDialogExternalMpn(unittest.TestCase):
         from mpynode.ui.dialogs import compile_dialog as cd
         from mpynode._common.io import mpn_io
 
-        fake = _AddMpnFake()
+        fake     = _AddMpnFake()
         orig_dlg = cd.QFileDialog.getOpenFileNames
         cd.QFileDialog.getOpenFileNames = staticmethod(
             lambda *a, **k: (["/x/libNode.mpn"], ""))
@@ -1216,7 +1216,7 @@ class TestCompileDialogExternalMpn(unittest.TestCase):
         self.assertEqual(fake._refresh_calls, 1)
 
     def test_unique_row_name_disambiguates(self):
-        fake = _AddMpnFake()
+        fake              = _AddMpnFake()
         fake._scene_nodes = [("foo", "mPyNode")]
         self.assertEqual(fake._unique_row_name("bar"), "bar")
         self.assertEqual(fake._unique_row_name("foo"), "foo (2)")
@@ -1229,7 +1229,7 @@ class TestCompileDialogExternalMpn(unittest.TestCase):
         from mpynode._common.io import mpn_io
         from mpynode.native.spec import mpn_spec_adapter
 
-        fake = _AddMpnFake()
+        fake     = _AddMpnFake()
         orig_dlg = cd.QFileDialog.getOpenFileNames
         cd.QFileDialog.getOpenFileNames = staticmethod(
             lambda *a, **k: (["/x/foo.mpn", "/y/foo.mpn"], ""))
@@ -1258,7 +1258,7 @@ class TestCompileDialogExternalMpn(unittest.TestCase):
         from mpynode._common.io import mpn_io
         from mpynode.native.spec import mpn_spec_adapter
 
-        fake = _AddMpnFake()
+        fake     = _AddMpnFake()
         orig_dlg = cd.QFileDialog.getOpenFileNames
         cd.QFileDialog.getOpenFileNames = staticmethod(
             lambda *a, **k: (["/x/bad.mpn"], ""))
@@ -1274,9 +1274,9 @@ class TestCompileDialogExternalMpn(unittest.TestCase):
         finally:
             cd.QFileDialog.getOpenFileNames = orig_dlg
 
-        self.assertEqual(fake._file_rows, {})     # not added
-        self.assertEqual(fake._checked, set())    # not checked
-        self.assertEqual(fake._refresh_calls, 0)  # nothing added -> no refresh
+        self.assertEqual(fake._file_rows,     {})     # not added
+        self.assertEqual(fake._checked,       set())  # not checked
+        self.assertEqual(fake._refresh_calls, 0)      # nothing added -> no refresh
 
     def test_on_add_mpn_caches_has_persistent_on_row(self):
         # The row tuple carries (path, native_type, has_persistent, node_type) so
@@ -1286,7 +1286,7 @@ class TestCompileDialogExternalMpn(unittest.TestCase):
         from mpynode._common.io import mpn_io
         from mpynode.native.spec import mpn_spec_adapter
 
-        fake = _AddMpnFake()
+        fake     = _AddMpnFake()
         orig_dlg = cd.QFileDialog.getOpenFileNames
         cd.QFileDialog.getOpenFileNames = staticmethod(
             lambda *a, **k: (["/x/foo.mpn"], ""))
@@ -1306,8 +1306,8 @@ class TestCompileDialogExternalMpn(unittest.TestCase):
 
         val = fake._file_rows["foo"]
         self.assertEqual(val[0], "/x/foo.mpn")
-        self.assertIs(val[2], True)        # has_persistent
-        self.assertEqual(val[3], "foo")    # node_type identity
+        self.assertIs(val[2], True)      # has_persistent
+        self.assertEqual(val[3], "foo")  # node_type identity
 
     def test_on_add_mpn_reads_new_node_name_key(self):
         # New-key .mpn payloads carry ``node_name`` (the old key was
@@ -1317,7 +1317,7 @@ class TestCompileDialogExternalMpn(unittest.TestCase):
         from mpynode._common.io import mpn_io
         from mpynode.native.spec import mpn_spec_adapter
 
-        fake = _AddMpnFake()
+        fake     = _AddMpnFake()
         orig_dlg = cd.QFileDialog.getOpenFileNames
         cd.QFileDialog.getOpenFileNames = staticmethod(
             lambda *a, **k: (["/x/whatever.mpn"], ""))
@@ -1342,7 +1342,7 @@ class TestCompileDialogExternalMpn(unittest.TestCase):
         from mpynode.ui.dialogs import compile_dialog as cd
         from mpynode._common.io import mpn_io
 
-        fake = _AddMpnFake()
+        fake     = _AddMpnFake()
         captured = {}
 
         def cap_load(p, **k):
@@ -1389,7 +1389,7 @@ class TestCompileDialogExternalMpn(unittest.TestCase):
         rows = {"bar": ("/x/bar.mpn", "mPyNode")}
         new_rows, new_checked, new_persist = C._disambiguate_file_rows(
             rows, {"bar"}, {"bar"}, {"foo"})
-        self.assertEqual(new_rows, rows)
+        self.assertEqual(new_rows,    rows)
         self.assertEqual(new_checked, {"bar"})
         self.assertEqual(new_persist, {"bar"})
 
@@ -1418,11 +1418,11 @@ class TestCompileDialogExternalMpn(unittest.TestCase):
         class _F:
             pass
 
-        fake = _F()
-        fake._busy = False
-        fake._checked = {"a"}
-        fake._row_by_type = {"t": 0}
-        fake._file_rows = {"x": ("/x.mpn", "mPyNode")}
+        fake                = _F()
+        fake._busy          = False
+        fake._checked       = {"a"}
+        fake._row_by_type   = {"t": 0}
+        fake._file_rows     = {"x": ("/x.mpn", "mPyNode")}
         fake._refresh_table = lambda: None
         C.refresh_nodes(fake)
         self.assertEqual(fake._file_rows, {})
@@ -1505,7 +1505,7 @@ class TestMultiVersionCompileDialog(unittest.TestCase):
         fake._maya_targets = [{"label": "maya2024", "root": "/m/2024"},
                               {"label": "maya2026", "root": "/m/2026"}]
         fake._maya_checks = {"maya2024": _CB(False), "maya2026": _CB(True)}
-        got = C._checked_targets(fake)
+        got               = C._checked_targets(fake)
         self.assertEqual([t["label"] for t in got], ["maya2026"])
 
     # ---- source-level wiring --------------------------------------------
@@ -1514,8 +1514,8 @@ class TestMultiVersionCompileDialog(unittest.TestCase):
 
         src = inspect.getsource(cd.CompileDialog._build_ui)
         self.assertIn("discover_maya_installs", src)
-        self.assertIn("Maya versions", src)
-        self.assertIn("_maya_checks", src)
+        self.assertIn("Maya versions",          src)
+        self.assertIn("_maya_checks",           src)
 
     def test_build_ui_version_list_scrollable_with_select_all(self):
         from mpynode.ui.dialogs import compile_dialog as cd
@@ -1523,17 +1523,17 @@ class TestMultiVersionCompileDialog(unittest.TestCase):
         # Many installed versions must not widen / overflow the dialog: the
         # version list is a height-capped scroll area with Select All / None.
         src = inspect.getsource(cd.CompileDialog._build_ui)
-        self.assertIn("QScrollArea", src)
-        self.assertIn("_ver_all_btn", src)
+        self.assertIn("QScrollArea",       src)
+        self.assertIn("_ver_all_btn",      src)
         self.assertIn("_set_all_versions", src)
 
     def test_on_compile_branches_multi_vs_single(self):
         from mpynode.ui.dialogs import compile_dialog as cd
 
         src = inspect.getsource(cd.CompileDialog._on_compile)
-        self.assertIn("_checked_targets", src)
-        self.assertIn("start_multi", src)
-        self.assertIn("verify_fn_for", src)
+        self.assertIn("_checked_targets",     src)
+        self.assertIn("start_multi",          src)
+        self.assertIn("verify_fn_for",        src)
         self.assertIn("subprocess_verify_fn", src)
 
     def test_on_progress_narrates_and_handles_version(self):
@@ -1553,8 +1553,8 @@ class TestMultiVersionCompileDialog(unittest.TestCase):
     def test_set_busy_locks_version_checks(self):
         from mpynode.ui.dialogs import compile_dialog as cd
 
-        fake = _FakeSelf()
-        cb = _W()
+        fake              = _FakeSelf()
+        cb                = _W()
         fake._maya_checks = {"maya2026": cb}
         cd.CompileDialog._set_busy(fake, True)
         self.assertIs(cb.enabled, False)
@@ -1585,8 +1585,8 @@ class TestMultiVersionCompileDialog(unittest.TestCase):
     def test_set_busy_locks_version_buttons(self):
         from mpynode.ui.dialogs import compile_dialog as cd
 
-        fake = _FakeSelf()
-        fake._ver_all_btn = _W()
+        fake               = _FakeSelf()
+        fake._ver_all_btn  = _W()
         fake._ver_none_btn = _W()
         cd.CompileDialog._set_busy(fake, True)
         self.assertIs(fake._ver_all_btn.enabled, False)
@@ -1639,11 +1639,11 @@ class TestCompileDialogSourceColumn(unittest.TestCase):
         # 7-column layout: Compile · Node Name · Class · Source · Data ·
         # Node Type · Status. Source sits between Class and Data; Node Type is the
         # derived compiled type (col 5); Status is last (col 6).
-        self.assertEqual(cd._COL_CLASS, 2)
-        self.assertEqual(cd._COL_SOURCE, 3)
+        self.assertEqual(cd._COL_CLASS,   2)
+        self.assertEqual(cd._COL_SOURCE,  3)
         self.assertEqual(cd._COL_PERSIST, 4)
-        self.assertEqual(cd._COL_TYPE, 5)
-        self.assertEqual(cd._COL_STATUS, 6)
+        self.assertEqual(cd._COL_TYPE,    5)
+        self.assertEqual(cd._COL_STATUS,  6)
         # Distinct indices, no collision (all seven columns).
         self.assertEqual(
             len({cd._COL_CHECK, cd._COL_NODE, cd._COL_CLASS, cd._COL_TYPE,
@@ -1657,8 +1657,8 @@ class TestCompileDialogSourceColumn(unittest.TestCase):
         self.assertEqual(cd._COL_HEADERS[cd._COL_SOURCE], "Source")
         self.assertEqual(cd._COL_COUNT, 7)
         src = inspect.getsource(cd.CompileDialog._build_ui)
-        self.assertIn("_COL_SOURCE", src)
-        self.assertIn("_COL_COUNT", src)
+        self.assertIn("_COL_SOURCE",  src)
+        self.assertIn("_COL_COUNT",   src)
         self.assertIn("_COL_HEADERS", src)
 
     def test_source_label_scene_vs_external(self):
@@ -1667,7 +1667,7 @@ class TestCompileDialogSourceColumn(unittest.TestCase):
         class _F:
             pass
 
-        fake = _F()
+        fake            = _F()
         fake._file_rows = {"ext": ("/x/ext.mpn", "mPyNode")}
         self.assertEqual(C._source_label(fake, "ext"), "External .mpn")
         self.assertEqual(C._source_label(fake, "sceneNode"), "Scene")
@@ -1684,9 +1684,9 @@ class _ItemChangedFake:
     """Duck-typed self for _on_check_toggled (both columns)."""
 
     def __init__(self):
-        self._checked = set()
+        self._checked              = set()
         self._persistent_unchecked = set()
-        self.rendered_persist = []
+        self.rendered_persist      = []
 
     def _apply_row_style(self, row, checked):
         pass
@@ -1789,9 +1789,9 @@ class TestPersistentColumn(unittest.TestCase):
             cd._COL_HEADERS,
             ["Compile", "Node Name", "Class", "Source", "Data", "Node Type",
              "Status"])
-        self.assertEqual(cd._COL_HEADERS[cd._COL_CHECK], "Compile")
+        self.assertEqual(cd._COL_HEADERS[cd._COL_CHECK],   "Compile")
         self.assertEqual(cd._COL_HEADERS[cd._COL_PERSIST], "Data")
-        self.assertEqual(cd._COL_HEADERS[cd._COL_TYPE], "Node Type")
+        self.assertEqual(cd._COL_HEADERS[cd._COL_TYPE],    "Node Type")
 
     def test_render_persistent_cell_uses_centered_widget(self):
         from mpynode.ui.dialogs import compile_dialog as cd
@@ -1820,9 +1820,9 @@ class TestPersistentColumn(unittest.TestCase):
         # routes toggles to _on_check_toggled. checked/enabled are set BEFORE
         # connect, so (re)building a cell never fires the handler.
         src = inspect.getsource(cd.CompileDialog._make_check_cell)
-        self.assertIn("QHBoxLayout", src)
-        self.assertIn("AlignCenter", src)
-        self.assertIn("QCheckBox", src)
+        self.assertIn("QHBoxLayout",       src)
+        self.assertIn("AlignCenter",       src)
+        self.assertIn("QCheckBox",         src)
         self.assertIn("_on_check_toggled", src)
         self.assertLess(src.index("setChecked"), src.index("toggled.connect"),
                         "state must be set before connecting the signal")
@@ -1844,9 +1844,9 @@ class TestPersistentColumn(unittest.TestCase):
         class _F:
             pass
 
-        fake = _F()
+        fake        = _F()
         fake._table = QWidget()
-        fired = []
+        fired       = []
         fake._on_check_toggled = (
             lambda col, name, row, checked: fired.append(
                 (col, name, row, checked)))
@@ -1886,8 +1886,8 @@ class TestPersistentColumn(unittest.TestCase):
 
         src = inspect.getsource(cd.CompileDialog._on_compile)
         self.assertIn("_persistent_unchecked", src)
-        self.assertIn("bake_persistent", src)
-        self.assertIn("_bake_choice_for", src)
+        self.assertIn("bake_persistent",       src)
+        self.assertIn("_bake_choice_for",      src)
 
     def test_wire_signals_connects_ignore_toggle(self):
         from mpynode.ui.dialogs import compile_dialog as cd
@@ -1950,9 +1950,9 @@ class TestPersistentColumn(unittest.TestCase):
         class _F:
             pass
 
-        fake = _F()
+        fake        = _F()
         fake._table = _Tbl(["alpha", None, "gamma"])
-        forwarded = []
+        forwarded   = []
         fake._render_persistent_cell = (
             lambda row, name: forwarded.append((row, name)))
         cd.CompileDialog._refresh_persistent_column(fake)
@@ -1989,12 +1989,12 @@ class TestPersistentColumn(unittest.TestCase):
         class _F:
             pass
 
-        fake = _F()
-        fake._table = QTableWidget(1, 6)
-        fake._checked = {"n"}
+        fake                       = _F()
+        fake._table                = QTableWidget(1, 6)
+        fake._checked              = {"n"}
         fake._persistent_unchecked = set()
-        fake._on_check_toggled = lambda *a: None
-        fake._persist_cell_state = cd.CompileDialog._persist_cell_state
+        fake._on_check_toggled     = lambda *a: None
+        fake._persist_cell_state   = cd.CompileDialog._persist_cell_state
         fake._make_check_cell = cd.CompileDialog._make_check_cell.__get__(
             fake, cd.CompileDialog)
         # _render_persistent_cell now re-applies the checked-row highlight to the
@@ -2037,10 +2037,10 @@ class TestCompanionReportAndLoad(unittest.TestCase):
                           {"name": "op", "func_name": "op",
                            "kind": "instance"}]}]}
         lines = cd._companion_command_lines(result)
-        blob = "\n".join(lines)
-        self.assertIn("mk", blob)
-        self.assertIn("factory", blob)
-        self.assertIn("op", blob)
+        blob  = "\n".join(lines)
+        self.assertIn("mk",        blob)
+        self.assertIn("factory",   blob)
+        self.assertIn("op",        blob)
         self.assertIn("companion", blob.lower())
 
     def test_companion_command_lines_empty_when_none(self):
@@ -2070,10 +2070,10 @@ class TestCompanionReportAndLoad(unittest.TestCase):
         from mpynode._base import plugins
         from mpynode.ui.dialogs import compile_dialog as cd
 
-        fake = _FakeSelf()
-        calls = []
+        fake   = _FakeSelf()
+        calls  = []
         orig_q = cd.QMessageBox.question
-        orig_helper = plugins.load_or_reload_native_plugin
+        orig_helper             = plugins.load_or_reload_native_plugin
         cd.QMessageBox.question = staticmethod(lambda *a, **k: cd.QMessageBox.Yes)
 
         def _helper(path):
@@ -2086,7 +2086,7 @@ class TestCompanionReportAndLoad(unittest.TestCase):
             cd.CompileDialog._offer_load(
                 fake, "/out/myPlug.bundle", ["/out/addNode1_commands.py"])
         finally:
-            cd.QMessageBox.question = orig_q
+            cd.QMessageBox.question              = orig_q
             plugins.load_or_reload_native_plugin = orig_helper
 
         self.assertIn("/out/myPlug.bundle", calls)
@@ -2201,9 +2201,9 @@ class TestCompileDialogRunTestsAndHighlight(unittest.TestCase):
         class _F:
             pass
 
-        fake = _F()
+        fake        = _F()
         fake._table = _Tbl()
-        tint_calls = []
+        tint_calls  = []
         fake._tint_cell_widget = (
             lambda w, checked: tint_calls.append((w, checked)))
         fake._checked_row_color = cd.CompileDialog._checked_row_color.__get__(
@@ -2235,9 +2235,9 @@ class TestCompileDialogRunTestsAndHighlight(unittest.TestCase):
         class _F:
             pass
 
-        fake = _F()
+        fake        = _F()
         fake._table = _Tbl()
-        col = cd.CompileDialog._checked_row_color(fake)
+        col         = cd.CompileDialog._checked_row_color(fake)
         self.assertEqual(col, cd._CHECKED_ROW_FALLBACK)
         # Cached after first computation.
         self.assertIs(cd.CompileDialog._checked_row_color(fake),
@@ -2255,15 +2255,15 @@ class TestOnFinishedMultiVerifyCrashGate(unittest.TestCase):
     def _drive(self, verify_row):
         from mpynode.ui.dialogs import compile_dialog as cd
 
-        fake = _FakeSelf()
+        fake  = _FakeSelf()
         bpath = _real_bundle(self)
         sub = {"ok": True, "bundle_path": bpath, "companions": [],
                "nodes": [{"type_name": "A", "build_status": "compiled",
                           "verify": verify_row}]}
         result = {"ok": True, "results": [
             {"result": sub, "label": "2026", "root": self._RUNNING}]}
-        warned = {}
-        orig_warn = cd.QMessageBox.warning
+        warned       = {}
+        orig_warn    = cd.QMessageBox.warning
         orig_resolve = cd._resolve_maya_dir
         cd.QMessageBox.warning = staticmethod(
             lambda *a, **k: warned.update(msg=a[-1] if a else ""))
@@ -2272,7 +2272,7 @@ class TestOnFinishedMultiVerifyCrashGate(unittest.TestCase):
             cd.CompileDialog._on_finished_multi(fake, result, "0:05")
         finally:
             cd.QMessageBox.warning = orig_warn
-            cd._resolve_maya_dir = orig_resolve
+            cd._resolve_maya_dir   = orig_resolve
         return fake, warned, bpath
 
     def test_skips_load_when_running_version_verify_crashed(self):

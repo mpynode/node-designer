@@ -74,7 +74,7 @@ def _capture_c_output():
     into a crash.
     """
     captured: list = []
-    saved: list = []
+    saved:    list = []
     tmp = None
     try:
         tmp = tempfile.TemporaryFile()
@@ -118,7 +118,7 @@ def _osl_error_message(exc_text: str, diagnostic: str) -> str:
     if len(diagnostic) > _MAX_DIAGNOSTIC_CHARS:
         diagnostic = diagnostic[-_MAX_DIAGNOSTIC_CHARS:]
     exc_text = (exc_text or "").strip()
-    parts = [p for p in (diagnostic, exc_text) if p]
+    parts    = [p for p in (diagnostic, exc_text) if p]
     if len(parts) == 2 and parts[1] in parts[0]:
         parts.pop()
     return "\n".join(parts) or ("OSL did not compile (no shader params "
@@ -168,7 +168,7 @@ def validate_osl_via_arnold(osl_src: str):
     except Exception:
         return True, ""
 
-    tmp = cmds.createNode("aiOslShader", name="_oslValidate#", skipSelect=True)
+    tmp         = cmds.createNode("aiOslShader", name="_oslValidate#", skipSelect=True)
     compile_err = ""
     try:
         try:

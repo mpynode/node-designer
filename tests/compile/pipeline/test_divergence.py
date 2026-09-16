@@ -80,8 +80,8 @@ class TestDivergence(unittest.TestCase):
         # Two consistent Classes, each with identical instances -> no divergence.
         a = self._mk("divX1", cls="Alpha", expr="out = 1")
         b = self._mk("divX2", cls="Alpha", expr="out = 1")
-        c = self._mk("divY1", cls="Beta", expr="out = 2")
-        d = self._mk("divY2", cls="Beta", expr="out = 2")
+        c = self._mk("divY1", cls="Beta",  expr="out = 2")
+        d = self._mk("divY2", cls="Beta",  expr="out = 2")
         self.assertEqual(diverged_classes([a, b, c, d]), {})
 
     def test_none_wrappers_are_skipped(self):
@@ -103,8 +103,8 @@ class TestDivergence(unittest.TestCase):
     def test_end_to_end_plan_forks_over_live_nodes(self):
         from mpynode.native.spec.divergence import diverged_classes, plan_forks
 
-        a = self._mk("divPlanA", cls="Widget", expr="out = x + 1")
-        b = self._mk("divPlanB", cls="Widget", expr="out = x + 2")
+        a     = self._mk("divPlanA", cls="Widget", expr="out = x + 1")
+        b     = self._mk("divPlanB", cls="Widget", expr="out = x + 2")
         plans = plan_forks(diverged_classes([a, b]))
         self.assertEqual(len(plans), 1)
         p = plans[0]
@@ -138,7 +138,7 @@ class TestPlanForks(unittest.TestCase):
             "h2": self._grp("c1"),
         }}
         plans = plan_forks(diverged)
-        p = plans[0]
+        p     = plans[0]
         self.assertEqual(p["keep"], ["a1", "a2"])
         self.assertEqual([f["class_name"] for f in p["forks"]],
                          ["Widget2", "Widget3"])
@@ -237,8 +237,8 @@ class TestSpecLevelDivergence(unittest.TestCase):
         from mpynode.native.spec.divergence import diverged_spec_groups
 
         meta = {"x": {"type": "double", "is_array": False}}
-        a = self._spec("widget", "out = x + 1", inputs=dict(meta))
-        b = self._spec("widget", "out = x + 1", inputs=dict(meta))
+        a    = self._spec("widget", "out = x + 1", inputs=dict(meta))
+        b    = self._spec("widget", "out = x + 1", inputs=dict(meta))
         self.assertEqual(diverged_spec_groups([a, b]), {})
 
     def test_specs_without_type_name_skipped(self):

@@ -31,9 +31,9 @@ class TestInitSourceMixinAPI(unittest.TestCase):
         from mpynode.wrappers.mpy_deformer import MPyDeformer
 
         plane = mc.polyPlane(name="p", sx=4, sy=4)[0]
-        d = MPyDeformer.create_on(plane)
+        d     = MPyDeformer.create_on(plane)
 
-        src = "import numpy as np\nMY_TABLE = np.array([1, 2, 3])\n"
+        src   = "import numpy as np\nMY_TABLE = np.array([1, 2, 3])\n"
         self.assertTrue(d.set_init_expression(src))
         self.assertEqual(d.get_init_expression(), src)
 
@@ -41,7 +41,7 @@ class TestInitSourceMixinAPI(unittest.TestCase):
         from mpynode.wrappers.mpy_deformer import MPyDeformer
 
         plane = mc.polyPlane(name="p", sx=4, sy=4)[0]
-        d = MPyDeformer.create_on(plane)
+        d     = MPyDeformer.create_on(plane)
 
         self.assertFalse(mc.attributeQuery("_initSource", node=d.get_name(), exists=True))
         d.set_init_expression("X = 1")
@@ -51,7 +51,7 @@ class TestInitSourceMixinAPI(unittest.TestCase):
         from mpynode.wrappers.mpy_deformer import MPyDeformer
 
         plane = mc.polyPlane(name="p", sx=4, sy=4)[0]
-        d = MPyDeformer.create_on(plane)
+        d     = MPyDeformer.create_on(plane)
         self.assertFalse(d.has_init_expression())
         d.set_init_expression("X = 42")
         self.assertTrue(d.has_init_expression())
@@ -60,7 +60,7 @@ class TestInitSourceMixinAPI(unittest.TestCase):
         from mpynode.wrappers.mpy_deformer import MPyDeformer
 
         plane = mc.polyPlane(name="p", sx=4, sy=4)[0]
-        d = MPyDeformer.create_on(plane)
+        d     = MPyDeformer.create_on(plane)
         d.set_init_expression("Y = 7")
         self.assertTrue(d.has_init_expression())
         d.clear_init_expression()
@@ -74,7 +74,7 @@ class TestInitSourceMixinAPI(unittest.TestCase):
         from mpynode.wrappers.mpy_deformer import MPyDeformer
 
         plane = mc.polyPlane(name="p", sx=4, sy=4)[0]
-        d = MPyDeformer.create_on(plane)
+        d     = MPyDeformer.create_on(plane)
         d.set_init_expression("A = 1")
         self.assertTrue(d.has_init_expression())
         d.set_init_expression("")  # explicit empty
@@ -87,8 +87,8 @@ class TestInitSourceMixinAPI(unittest.TestCase):
         from mpynode.wrappers.mpy_deformer import MPyDeformer
 
         plane = mc.polyPlane(name="p", sx=4, sy=4)[0]
-        d = MPyDeformer.create_on(plane)
-        ok = d.set_init_expression("this is not valid python!!")
+        d     = MPyDeformer.create_on(plane)
+        ok    = d.set_init_expression("this is not valid python!!")
         self.assertFalse(ok)
         uuid = init_registry._node_uuid_from_name(d.get_name())
         self.assertNotIn(uuid, init_registry._NODE_INIT_NS)
@@ -113,7 +113,7 @@ class TestInitRegistryHelpers(unittest.TestCase):
 
         self.assertEqual(init_registry.init_ns_count(), 0)
         plane = mc.polyPlane(name="p", sx=4, sy=4)[0]
-        d1 = MPyDeformer.create_on(plane)
+        d1    = MPyDeformer.create_on(plane)
         d1.set_init_expression("X = 1")
         self.assertEqual(init_registry.init_ns_count(), 1)
 
@@ -138,7 +138,7 @@ class TestInitRegistryHelpers(unittest.TestCase):
         from mpynode.wrappers.mpy_deformer import MPyDeformer
 
         plane = mc.polyPlane(name="p", sx=4, sy=4)[0]
-        d = MPyDeformer.create_on(plane)
+        d     = MPyDeformer.create_on(plane)
         d.set_init_expression("CONST = 12345")
 
         sel = om.MSelectionList()
@@ -219,7 +219,7 @@ class TestMakeInitHeader(unittest.TestCase):
 
         hdr = make_init_header("mPySkinCluster")
         # Check only the type-specific bindings section.
-        start = hdr.index("Available in your Expression tab")
+        start    = hdr.index("Available in your Expression tab")
         bindings = hdr[start:hdr.index("Compute-time plug writes")]
         for binding in ("self.weightList", "self.outputGeometry", "self.matrix",
                         "self.bindPreMatrix"):
@@ -403,7 +403,7 @@ class TestLegacyJitSourceMigration(unittest.TestCase):
         from mpynode.wrappers.mpy_deformer import MPyDeformer
 
         plane = mc.polyPlane(name="p", sx=4, sy=4)[0]
-        d = MPyDeformer.create_on(plane)
+        d     = MPyDeformer.create_on(plane)
 
         # A phase-05-era .ma has only the legacy _jitSource attr.
         mc.addAttr(d.get_name(), longName="_jitSource", dataType="string")
@@ -427,7 +427,7 @@ class TestLegacyJitSourceMigration(unittest.TestCase):
         from mpynode.wrappers.mpy_deformer import MPyDeformer
 
         plane = mc.polyPlane(name="p", sx=4, sy=4)[0]
-        d = MPyDeformer.create_on(plane)
+        d     = MPyDeformer.create_on(plane)
 
         d.set_init_expression("NEW_VALUE = 100")  # adds _initSource
         mc.addAttr(d.get_name(), longName="_jitSource", dataType="string")
@@ -644,8 +644,8 @@ class TestInitProxyBindings(unittest.TestCase):
         from mpynode.wrappers.mpy_deformer import MPyDeformer
 
         plane = mc.polyPlane(name="p", sx=4, sy=4)[0]
-        d = MPyDeformer.create_on(plane)
-        ok = d.set_init_expression("self.A = 1\nself.B = [2, 3]\nself.C = 'hi'")
+        d     = MPyDeformer.create_on(plane)
+        ok    = d.set_init_expression("self.A = 1\nself.B = [2, 3]\nself.C = 'hi'")
         self.assertTrue(ok)
 
         stored = get_variables(d.get_name())
@@ -660,7 +660,7 @@ class TestInitProxyBindings(unittest.TestCase):
         from mpynode.wrappers.mpy_deformer import MPyDeformer
 
         plane = mc.polyPlane(name="p", sx=4, sy=4)[0]
-        d = MPyDeformer.create_on(plane)
+        d     = MPyDeformer.create_on(plane)
         ok = d.set_init_expression(
             "self.X = 100\nself.Y = self.X + 50\n"  # read back
         )
@@ -677,7 +677,7 @@ class TestInitProxyBindings(unittest.TestCase):
         from mpynode.wrappers.mpy_deformer import MPyDeformer
 
         plane = mc.polyPlane(name="p", sx=4, sy=4)[0]
-        d = MPyDeformer.create_on(plane)
+        d     = MPyDeformer.create_on(plane)
         d.set_init_expression("self.A = 1")
         d.set_init_expression("self.B = 2")  # NO `A` this time
 
@@ -690,7 +690,7 @@ class TestInitProxyBindings(unittest.TestCase):
         from mpynode.wrappers.mpy_deformer import MPyDeformer
 
         plane = mc.polyPlane(name="p", sx=4, sy=4)[0]
-        d = MPyDeformer.create_on(plane)
+        d     = MPyDeformer.create_on(plane)
         ok = d.set_init_expression(
             "self.A = 1\n"
             "raise RuntimeError('boom')\n"  # bombs AFTER writing A
@@ -711,7 +711,7 @@ class TestInitProxyBindings(unittest.TestCase):
         from mpynode.wrappers.mpy_deformer import MPyDeformer
 
         plane = mc.polyPlane(name="p", sx=4, sy=4)[0]
-        d = MPyDeformer.create_on(plane)
+        d     = MPyDeformer.create_on(plane)
         d.set_init_expression("self.A = 1")
         uuid = init_registry._node_uuid_from_name(d.get_name())
         self.assertIn(uuid, init_registry._INIT_BINDINGS)
@@ -737,7 +737,7 @@ class TestInitProxyBindings(unittest.TestCase):
         from mpynode.wrappers.mpy_deformer import MPyDeformer
 
         plane = mc.polyPlane(name="p", sx=4, sy=4)[0]
-        d = MPyDeformer.create_on(plane)
+        d     = MPyDeformer.create_on(plane)
         d.set_init_expression("self.VAL = 42")
 
         sel = om.MSelectionList()
@@ -760,9 +760,9 @@ class TestInitProxyBindings(unittest.TestCase):
         from mpynode.wrappers.mpy_deformer import MPyDeformer
 
         plane = mc.polyPlane(name="p", sx=4, sy=4)[0]
-        d = MPyDeformer.create_on(plane)  # no init source
+        d     = MPyDeformer.create_on(plane)  # no init source
 
-        sel = om.MSelectionList()
+        sel   = om.MSelectionList()
         sel.add(d.get_name())
         mobj = om.MObject()
         sel.getDependNode(0, mobj)
@@ -828,7 +828,7 @@ class TestMatrixHelpers(unittest.TestCase):
         om.MScriptUtil.createMatrixFromList(
             [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 7, 8, 9, 1], mm
         )
-        v = MatrixView(mm)
+        v   = MatrixView(mm)
         arr = ih.mtm_to_numpy(v)
         self.assertEqual(arr.shape, (4, 4))
         self.assertAlmostEqual(arr[3, 0], 7.0, places=4)
@@ -860,11 +860,11 @@ class TestMeshHelper(unittest.TestCase):
 
         plane = mc.polyPlane(w=2.0, h=2.0, sx=2, sy=2)[0]
         shape = mc.listRelatives(plane, shapes=True)[0]
-        sel = om.MSelectionList()
+        sel   = om.MSelectionList()
         sel.add(shape)
         dag = om.MDagPath()
         sel.getDagPath(0, dag)
-        fn = om.MFnMesh(dag)
+        fn  = om.MFnMesh(dag)
 
         pts = ih.mfnmesh_to_numpy_points(fn)
         self.assertEqual(pts.ndim, 2)
@@ -916,8 +916,8 @@ class TestSceneOpenPreFiltersTypes(unittest.TestCase):
         # _register_init_sources_for_tracked read the tracked-types tuple by
         # value at module load, so patch the scene_callbacks binding, which
         # is the name the handler sees.
-        original = scene_callbacks._INIT_TRACKED_NODE_TYPES
-        original_ns = init_registry._NODE_INIT_NS.copy()
+        original      = scene_callbacks._INIT_TRACKED_NODE_TYPES
+        original_ns   = init_registry._NODE_INIT_NS.copy()
         original_bind = init_registry._INIT_BINDINGS.copy()
         try:
             scene_callbacks._INIT_TRACKED_NODE_TYPES = (
@@ -980,8 +980,8 @@ class TestInitSourceMixinOnAllWrappers(unittest.TestCase):
         from mpynode._common.lifecycle.init_registry import _INIT_TRACKED_NODE_TYPES
 
         registered = set(REGISTRY.keys())
-        tracked = set(_INIT_TRACKED_NODE_TYPES)
-        missing = registered - tracked
+        tracked    = set(_INIT_TRACKED_NODE_TYPES)
+        missing    = registered - tracked
         self.assertFalse(
             missing,
             f"REGISTRY types not in _INIT_TRACKED_NODE_TYPES: "
@@ -1012,16 +1012,16 @@ class TestInitExecTrustGate(unittest.TestCase):
         ensure_plugins_loaded()
         init_registry.clear_all_init_ns()
 
-        self.trust = trust
-        self.ir = init_registry
+        self.trust        = trust
+        self.ir           = init_registry
         self._prior_trust = trust.pickle_trusted()
-        self._prior_env = os.environ.pop("MPYNODE_TRUST_PICKLE", None)
+        self._prior_env   = os.environ.pop("MPYNODE_TRUST_PICKLE", None)
         self.addCleanup(self._restore)
 
-        probe = types.ModuleType(self.PROBE)
-        probe.ran = False
+        probe                   = types.ModuleType(self.PROBE)
+        probe.ran               = False
         sys.modules[self.PROBE] = probe
-        self.probe = probe
+        self.probe              = probe
 
         plane = mc.polyPlane(name="t38_p", sx=2, sy=2)[0]
         from mpynode.wrappers.mpy_deformer import MPyDeformer
@@ -1069,7 +1069,7 @@ class TestInitExecTrustGate(unittest.TestCase):
 
         self.trust.note_file_opened(False)
         os.environ["MPYNODE_TRUST_PICKLE"] = "1"
-        ok = self.ir.register_init_source(self.node, self.src)
+        ok                                 = self.ir.register_init_source(self.node, self.src)
         self.assertTrue(ok)
         self.assertTrue(self.probe.ran)
 
@@ -1164,16 +1164,16 @@ class TestComputeExecTrustGate(unittest.TestCase):
         mc.file(new=True, force=True)
         ensure_plugins_loaded()
 
-        self.trust = trust
-        self.expr = expr
+        self.trust        = trust
+        self.expr         = expr
         self._prior_trust = trust.pickle_trusted()
-        self._prior_env = os.environ.pop("MPYNODE_TRUST_PICKLE", None)
+        self._prior_env   = os.environ.pop("MPYNODE_TRUST_PICKLE", None)
         self.addCleanup(self._restore)
 
-        probe = types.ModuleType(self.PROBE)
-        probe.ran = False
+        probe                   = types.ModuleType(self.PROBE)
+        probe.ran               = False
         sys.modules[self.PROBE] = probe
-        self.probe = probe
+        self.probe              = probe
         self.code = compile(
             "import {p}\n{p}.ran = True\n".format(p=self.PROBE),
             "<t38-compute>",
@@ -1184,7 +1184,7 @@ class TestComputeExecTrustGate(unittest.TestCase):
         from mpynode.wrappers.mpy_deformer import MPyDeformer
 
         self.node = MPyDeformer.create_on(plane).get_name()
-        sel = om1.MSelectionList()
+        sel       = om1.MSelectionList()
         sel.add(self.node)
         self.mobj = om1.MObject()
         sel.getDependNode(0, self.mobj)
@@ -1282,10 +1282,10 @@ class TestSceneTrustScanSeesNodePython(unittest.TestCase):
         ensure_plugins_loaded()
         self.tp = trust_prompt
 
-        plane = mc.polyPlane(name="t38_s", sx=2, sy=2)[0]
+        plane   = mc.polyPlane(name="t38_s", sx=2, sy=2)[0]
         from mpynode.wrappers.mpy_deformer import MPyDeformer
 
-        self.w = MPyDeformer.create_on(plane)
+        self.w    = MPyDeformer.create_on(plane)
         self.node = self.w.get_name()
 
     def test_code_free_pickle_free_scene_needs_no_trust(self):
@@ -1352,14 +1352,14 @@ class TestPickleFreeSceneOpenIsGated(unittest.TestCase):
         mc.file(new=True, force=True)
         ensure_plugins_loaded()
 
-        self.trust = trust
+        self.trust        = trust
         self._prior_trust = trust.pickle_trusted()
-        self._prior_env = os.environ.pop("MPYNODE_TRUST_PICKLE", None)
+        self._prior_env   = os.environ.pop("MPYNODE_TRUST_PICKLE", None)
 
-        probe = types.ModuleType(self.PROBE)
-        probe.ran = False
+        probe                   = types.ModuleType(self.PROBE)
+        probe.ran               = False
         sys.modules[self.PROBE] = probe
-        self.probe = probe
+        self.probe              = probe
 
         plane = mc.polyPlane(name="t38_o", sx=2, sy=2)[0]
         from mpynode.wrappers.mpy_deformer import MPyDeformer
@@ -1371,7 +1371,7 @@ class TestPickleFreeSceneOpenIsGated(unittest.TestCase):
 
         # A fresh dir so the persistent "Always" store can't pre-trust it.
         self.tmpdir = tempfile.mkdtemp(prefix="t38_open_")
-        self.path = os.path.join(self.tmpdir, "t38_open.ma")
+        self.path   = os.path.join(self.tmpdir, "t38_open.ma")
         mc.file(rename=self.path)
         mc.file(save=True, type="mayaAscii", force=True)
         mc.file(new=True, force=True)
@@ -1423,19 +1423,19 @@ class _FakeMessageBox:
     prompt only ever appears in the GUI, so this is the only way the shipped
     wording + button wiring get exercised at all."""
 
-    Warning = object()
-    YesRole = object()
-    AcceptRole = object()
-    NoRole = object()
+    Warning     = object()
+    YesRole     = object()
+    AcceptRole  = object()
+    NoRole      = object()
 
     click_label = "Don't Trust"
-    last = None
+    last        = None
 
     def __init__(self):
-        self.title = ""
-        self.text = ""
+        self.title       = ""
+        self.text        = ""
         self.informative = ""
-        self.buttons = []
+        self.buttons     = []
         type(self).last = self
 
     def setIcon(self, _icon):
@@ -1472,16 +1472,16 @@ class TestTrustPromptTextMatchesTheGate(unittest.TestCase):
     def setUp(self):
         from mpynode.ui import qt_wrapper
 
-        self.qt = qt_wrapper
-        self._prior_box = qt_wrapper.QMessageBox
-        qt_wrapper.QMessageBox = _FakeMessageBox
-        _FakeMessageBox.last = None
+        self.qt                     = qt_wrapper
+        self._prior_box             = qt_wrapper.QMessageBox
+        qt_wrapper.QMessageBox      = _FakeMessageBox
+        _FakeMessageBox.last        = None
         _FakeMessageBox.click_label = "Don't Trust"
         self.addCleanup(self._restore)
 
     def _restore(self):
-        self.qt.QMessageBox = self._prior_box
-        _FakeMessageBox.last = None
+        self.qt.QMessageBox         = self._prior_box
+        _FakeMessageBox.last        = None
         _FakeMessageBox.click_label = "Don't Trust"
 
     def _run(self, subject, path="/tmp/x.ma", allow_always=True):

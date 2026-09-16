@@ -28,10 +28,10 @@ from mpynode.native.compiler.errors import UnsupportedSpec
 
 
 _ENV = {
-    "self.a": p2c.array_t("double", 2),      # a matrix
-    "self.v": p2c.array_t("double", 1),      # a vector
-    "self.i": p2c.array_t("int64", 1),       # indices
-    "self.m": p2c.array_t("bool", 1),        # a mask
+    "self.a": p2c.array_t("double", 2),  # a matrix
+    "self.v": p2c.array_t("double", 1),  # a vector
+    "self.i": p2c.array_t("int64", 1),   # indices
+    "self.m": p2c.array_t("bool", 1),    # a mask
 }
 
 

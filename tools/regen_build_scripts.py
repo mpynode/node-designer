@@ -85,19 +85,19 @@ def _plugin_name(build_dir, man):
 # frag_files in its original ORDER; the single-node link line names its one
 # source; the provenance is either the label already stamped in, or -- first time
 # through, before the resolver replaced it -- the old baked-in $MAYA default.
-_FRAG_RE = re.compile(r'-c "\$HERE/source/([^"]+)"')
+_FRAG_RE       = re.compile(r'-c "\$HERE/source/([^"]+)"')
 _SINGLE_SRC_RE = re.compile(r'-o "\$HERE/\.\./[^"]+" "\$HERE/source/([^"]+)"')
-_PROV_RE = re.compile(r"^# Built against: (.+)$", re.M)
-_OLD_MAYA_RE = re.compile(r'^MAYA="\$\{MAYA:-([^}]+)\}"$', re.M)
+_PROV_RE       = re.compile(r"^# Built against: (.+)$", re.M)
+_OLD_MAYA_RE   = re.compile(r'^MAYA="\$\{MAYA:-([^}]+)\}"$', re.M)
 
 
 def _recorded_inputs(old_sh):
     """(frags, node_file, needs_qt, maya) read back out of a committed build.sh."""
-    frags = [f for f in _FRAG_RE.findall(old_sh) if f != "plugin_main.cpp"]
-    m = _SINGLE_SRC_RE.search(old_sh)
+    frags     = [f for f in _FRAG_RE.findall(old_sh) if f != "plugin_main.cpp"]
+    m         = _SINGLE_SRC_RE.search(old_sh)
     node_file = m.group(1) if m else None
-    needs_qt = "-framework QtCore" in old_sh
-    prov = _PROV_RE.search(old_sh) or _OLD_MAYA_RE.search(old_sh)
+    needs_qt  = "-framework QtCore" in old_sh
+    prov      = _PROV_RE.search(old_sh) or _OLD_MAYA_RE.search(old_sh)
     return frags, node_file, needs_qt, (prov.group(1) if prov else None)
 
 
@@ -111,7 +111,7 @@ def _compat_header_text(toolchain):
 
 def _regen_one(build_dir, man, bundler, build_scripts, toolchain):
     """(rel, {name: (old, new)}) for the scripts this tree already ships."""
-    rel = os.path.relpath(build_dir, ROOT)
+    rel  = os.path.relpath(build_dir, ROOT)
     rows = _linked(man)
     if not rows:
         return rel, {}
@@ -188,7 +188,7 @@ def _regen_one(build_dir, man, bundler, build_scripts, toolchain):
             if os.path.isfile(path):
                 with open(path, encoding="utf-8", newline="") as fh:
                     old = fh.read()
-                key = "%s/%s" % (row["type_name"], toolchain.QT_MSVC_COMPAT_HEADER)
+                key      = "%s/%s" % (row["type_name"], toolchain.QT_MSVC_COMPAT_HEADER)
                 out[key] = (old, _compat_header_text(toolchain))
     return rel, out
 
@@ -222,16 +222,16 @@ def main(argv=None):
     ap.add_argument("--json", metavar="PATH",
                     help="write the measurement here (implies --check's "
                          "read-only behaviour); consumed by the gate test")
-    args = ap.parse_args(argv)
+    args      = ap.parse_args(argv)
     read_only = args.dry_run or args.check or bool(args.json)
 
     from mpynode.native.compiler import build_scripts, bundler
     from mpynode.native.toolchain import toolchain
 
-    trees = skipped = changed = same = 0
-    stale = []
+    trees   = skipped = changed = same = 0
+    stale   = []
     orphans = []
-    fresh = []
+    fresh   = []
     for build_dir, man in _iter_build_dirs():
         trees += 1
         rel, scripts = _regen_one(build_dir, man, bundler, build_scripts,

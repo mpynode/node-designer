@@ -51,9 +51,9 @@ import pickle
 
 # v1's identity, for reference and for error messages.
 V1_NODE_TYPE = "mPyNode"
-V1_TYPE_ID = "0x001255C3"
+V1_TYPE_ID   = "0x001255C3"
 
-_EXPR_PLUG = "expression"
+_EXPR_PLUG   = "expression"
 _PICKLE_PLUGS = ("_inputAttrs", "_outputAttrs", "_storedVarNames",
                  "_storedVarsData")
 
@@ -66,11 +66,11 @@ class V1Node(object):
     """One v1 ``mPyNode`` as it was found in the file."""
 
     def __init__(self, name):
-        self.name = name
-        self.expression = ""
-        self.inputs = {}        # {name: type}
-        self.outputs = {}       # {name: type}
-        self.stored_vars = {}   # {name: value}
+        self.name        = name
+        self.expression  = ""
+        self.inputs      = {}  # {name: type}
+        self.outputs     = {}  # {name: type}
+        self.stored_vars = {}  # {name: value}
 
     @property
     def attr_names(self):
@@ -104,11 +104,11 @@ def _quoted(line):
     i = j - 1
     while i >= 0:
         if line[i] == '"':
-            k = i - 1
+            k       = i - 1
             slashes = 0
             while k >= 0 and line[k] == chr(92):
                 slashes += 1
-                k -= 1
+                k       -= 1
             if slashes % 2 == 0:
                 break
         i -= 1
@@ -252,7 +252,7 @@ def read_v1_ma(path):
 
         if s.startswith("createNode "):
             parts = s.split()
-            cur = None
+            cur   = None
             if len(parts) > 1 and parts[1] == V1_NODE_TYPE:
                 cur = V1Node((s.split('"')[1] if '"' in s else "") or "mPyNode1")
                 nodes.append(cur)
@@ -332,7 +332,7 @@ class _ScopeBinds(ast.NodeVisitor):
         for a in node.names:
             self.bound.add((a.asname or a.name).split(".")[0])
 
-    visit_Import = _alias
+    visit_Import     = _alias
     visit_ImportFrom = _alias
 
     def visit_FunctionDef(self, node):
@@ -356,7 +356,7 @@ class _Selfify(ast.NodeTransformer):
     def __init__(self, rewrite, skipped):
         self.rewrite = rewrite
         self.skipped = skipped
-        self.hits = 0
+        self.hits    = 0
 
     def visit_Name(self, node):
         if node.id not in self.rewrite:
@@ -473,12 +473,12 @@ class _ApiTypeFix(ast.NodeTransformer):
     """
 
     def __init__(self, types):
-        self.types = types
-        self.matrix_fixes = []
-        self.vec3_fixes = []
+        self.types          = types
+        self.matrix_fixes   = []
+        self.vec3_fixes     = []
         self.vec_ctor_fixes = []
-        self.eval_fixes = []
-        self.time_fixes = []
+        self.eval_fixes     = []
+        self.time_fixes     = []
 
     def _is_matrix_plug(self, node):
         name = _plug_of(node)
@@ -505,8 +505,8 @@ class _ApiTypeFix(ast.NodeTransformer):
             if want in self.types:
                 self.eval_fixes.append(want)
                 return ast.Call(
-                    func=node.func,
-                    args=[ast.Constant(value="self." + want)],
+                    func = node.func,
+                    args = [ast.Constant(value="self." + want)],
                     keywords=node.keywords)
             return node
 
@@ -698,12 +698,12 @@ def split_and_selfify(expression, inputs, outputs):
 
     names = set(inputs) | set(outputs)
 
-    top = _ScopeBinds()
+    top   = _ScopeBinds()
     for st in tree.body:
         top.visit(st)
     # An input the module also binds was a local shadow in v1; leave it bare.
-    shadowed = (set(inputs) & top.bound) - set(outputs)
-    report["shadowed"] = sorted(shadowed)
+    shadowed                  = (set(inputs) & top.bound) - set(outputs)
+    report["shadowed"]        = sorted(shadowed)
     report["globals_in_defs"] = sorted(_globals_used_in_defs(tree, names))
 
     dead = list(_nested_v1_lib_imports(tree))
@@ -732,7 +732,7 @@ def split_and_selfify(expression, inputs, outputs):
            if isinstance(st, ast.ImportFrom)
            and (st.module or "").split(".")[0] in _V1_THIRD_PARTY})
 
-    xf = _Selfify(names - shadowed, shadowed)
+    xf   = _Selfify(names - shadowed, shadowed)
     body = [xf.visit(s) for s in compute_body]
 
     # Now that plug access wears a `self.` prefix, the declared types can be
@@ -740,7 +740,7 @@ def split_and_selfify(expression, inputs, outputs):
     # optional: _ApiTypeFix recognises a plug by that prefix.
     types = dict(inputs)
     types.update(outputs)
-    fix = _ApiTypeFix(types)
+    fix  = _ApiTypeFix(types)
     body = [fix.visit(s) for s in body]
 
     # Init too. A top-level def is partitioned into Init before any rewriting
@@ -748,12 +748,12 @@ def split_and_selfify(expression, inputs, outputs):
     # `spring()` does, twice -- kept a name that does not exist under v2.
     # Deliberately AFTER the compute pass and with the SAME instance, so the
     # counters cover both halves.
-    init_body = [fix.visit(s) for s in init_body]
+    init_body                   = [fix.visit(s) for s in init_body]
     report["matrix_view_fixes"] = list(fix.matrix_fixes)
-    report["vec3_fixes"] = sorted(set(fix.vec3_fixes))
-    report["vec_ctor_fixes"] = sorted(set(fix.vec_ctor_fixes))
-    report["eval_fixes"] = sorted(set(fix.eval_fixes))
-    report["time_fixes"] = sorted(set(fix.time_fixes))
+    report["vec3_fixes"]        = sorted(set(fix.vec3_fixes))
+    report["vec_ctor_fixes"]    = sorted(set(fix.vec_ctor_fixes))
+    report["eval_fixes"]        = sorted(set(fix.eval_fixes))
+    report["time_fixes"]        = sorted(set(fix.time_fixes))
 
     # The shim goes in Init, whose names are bare globals in Compute -- and
     # only when something actually needs it, so a node that does not gets no
@@ -778,8 +778,8 @@ def split_and_selfify(expression, inputs, outputs):
 
     compute_mod = ast.Module(body=body, type_ignores=[])
     ast.fix_missing_locations(compute_mod)
-    report["rewrites"] = xf.hits
-    report["init_stmts"] = len(init_body)
+    report["rewrites"]      = xf.hits
+    report["init_stmts"]    = len(init_body)
     report["compute_stmts"] = len(compute_body)
 
     init_mod = ast.Module(body=init_body, type_ignores=[])

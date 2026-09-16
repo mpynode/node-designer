@@ -112,7 +112,7 @@ def _as_indices(arr, n):
 # name key is used, so parsing each time is not viable; the source IS the cache
 # key, so an edit invalidates the entry for free.
 _SLOT_NAME_CACHE = {}
-_SLOT_CACHE_MAX = 64
+_SLOT_CACHE_MAX  = 64
 
 
 def _slot_names_for(source):
@@ -186,11 +186,11 @@ class Morph:
 
     def __init__(self, name="", offsets=None, indices=None, weight=0.0,
                  index=-1):
-        self.name = name
+        self.name    = name
         self.offsets = _as_offsets(offsets)
         self.indices = _as_indices(indices, self.offsets.shape[0])
-        self.weight = float(weight)
-        self.index = int(index)
+        self.weight  = float(weight)
+        self.index   = int(index)
 
     # ----- read surface -----
     @property
@@ -220,7 +220,7 @@ class Morph:
         not move. Handy for arithmetic against a full point array."""
         out = np.zeros((int(n_verts), 3), dtype=np.float64)
         if self.indices.size:
-            keep = (self.indices >= 0) & (self.indices < int(n_verts))
+            keep                    = (self.indices >= 0) & (self.indices < int(n_verts))
             out[self.indices[keep]] = self.offsets[keep]
         return out
 
@@ -252,7 +252,7 @@ class Morph:
         not 90001.
         """
         merged = np.union1d(a.indices, b.indices).astype(np.int64)
-        out = np.zeros((merged.size, 3), dtype=np.float64)
+        out    = np.zeros((merged.size, 3), dtype=np.float64)
         if a.indices.size:
             out[np.searchsorted(merged, a.indices)] += a.offsets
         if b.indices.size:
@@ -283,7 +283,7 @@ class Morph:
         if isinstance(other, Morph):
             idx, off = self._merge(self, other, 0.0)
             # element-wise product over the union (absent side contributes 0)
-            prod = np.zeros_like(off)
+            prod   = np.zeros_like(off)
             common = np.intersect1d(self.indices, other.indices)
             if common.size:
                 prod[np.searchsorted(idx, common)] = (
@@ -351,7 +351,7 @@ class MorphStack:
                           else np.asarray(slot_index,
                                           dtype=np.int64).reshape(-1))
         self._slot_source = slot_source
-        self._slot_names = None
+        self._slot_names  = None
         # The compute's ``self``, when this stack was built from one. Everything
         # above is a detached SNAPSHOT of the baked tables; the deltas surface is
         # the one place that is not enough, because a CONNECTED target is read
@@ -375,13 +375,13 @@ class MorphStack:
             return bs._read_multi(attr, cast)
 
         return cls(weight=_multi("weight", float),
-                   offset=_multi("targetOffset", int),
-                   components=_multi("targetComponents", int),
-                   deltas=_multi("targetDeltas", float),
-                   inter_base=_multi("interBase", int),
-                   inter_knot=_multi("interKnot", float),
-                   combo_offset=_multi("comboOffset", int),
-                   combo_driver=_multi("comboDriver", int),
+                   offset       = _multi("targetOffset", int),
+                   components   = _multi("targetComponents", int),
+                   deltas       = _multi("targetDeltas", float),
+                   inter_base   = _multi("interBase", int),
+                   inter_knot   = _multi("interKnot", float),
+                   combo_offset = _multi("comboOffset", int),
+                   combo_driver = _multi("comboDriver", int),
                    names=bs.target_names)
 
     @classmethod
@@ -401,16 +401,16 @@ class MorphStack:
             return None if v is None else np.asarray(v, dtype=dtype).reshape(-1)
 
         return cls(weight=_t("weight", np.float64),
-                   offset=_t("targetOffset", np.int64),
-                   components=_t("targetComponents", np.int64),
-                   deltas=_t("targetDeltas", np.float64),
-                   inter_base=_t("interBase", np.int64),
-                   inter_knot=_t("interKnot", np.float64),
-                   combo_offset=_t("comboOffset", np.int64),
-                   combo_driver=_t("comboDriver", np.int64),
-                   names=None,
-                   slot_index=_t("shapeSlot", np.int64),
-                   slot_source=lambda: _compute_source_of(proxy),
+                   offset       = _t("targetOffset", np.int64),
+                   components   = _t("targetComponents", np.int64),
+                   deltas       = _t("targetDeltas", np.float64),
+                   inter_base   = _t("interBase", np.int64),
+                   inter_knot   = _t("interKnot", np.float64),
+                   combo_offset = _t("comboOffset", np.int64),
+                   combo_driver = _t("comboDriver", np.int64),
+                   names        = None,
+                   slot_index   = _t("shapeSlot", np.int64),
+                   slot_source  = lambda: _compute_source_of(proxy),
                    proxy=proxy)
 
     # ----- list surface -----
@@ -497,10 +497,10 @@ class MorphStack:
         hi = min(hi, int(self._comp.size), int(self._dlt.size) // 3)
         if hi < lo:
             hi = lo
-        idx = self._comp[lo:hi]
-        off = self._dlt[3 * lo:3 * hi].reshape(-1, 3) if hi > lo else None
+        idx  = self._comp[lo:hi]
+        off  = self._dlt[3 * lo:3 * hi].reshape(-1, 3) if hi > lo else None
         name = self._names[i] if i < len(self._names) else ""
-        w = float(self.weights[i]) if i < self.weights.size else 0.0
+        w    = float(self.weights[i]) if i < self.weights.size else 0.0
         return Morph(name, off, idx, w, i)
 
     # ----- dict / search surface -----
@@ -524,9 +524,9 @@ class MorphStack:
         keyword search -- ``stack.find("_")`` finds every combo,
         ``stack.find("browUp*")`` a target and all its in-betweens.
         """
-        pat = str(pattern)
+        pat    = str(pattern)
         globby = any(c in pat for c in "*?[")
-        out = []
+        out    = []
         for i, nm in enumerate(self._names):
             if not nm:
                 continue
@@ -566,7 +566,7 @@ class MorphStack:
         """
         from mpynode._common.methods import morph_blend
         base = np.asarray(base, dtype=np.float64)
-        wv = self.resolved if w is None else np.asarray(w, dtype=np.float64)
+        wv   = self.resolved if w is None else np.asarray(w, dtype=np.float64)
         if self._proxy is not None:
             from mpynode._common.methods import morph_methods
             return morph_methods._deltas(self._proxy, base, wv.reshape(-1))

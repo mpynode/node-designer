@@ -30,7 +30,7 @@ from __future__ import annotations
 import sys
 
 
-_PLUG_LONG_NAME = "_viewportSource"
+_PLUG_LONG_NAME  = "_viewportSource"
 _PLUG_SHORT_NAME = "_viewportSource"
 
 
@@ -78,9 +78,9 @@ class ViewportSourceMixin:
         ):
             cmds.addAttr(
                 self._name,
-                longName=_PLUG_LONG_NAME,
-                shortName=_PLUG_SHORT_NAME,
-                dataType="string",
+                longName  = _PLUG_LONG_NAME,
+                shortName = _PLUG_SHORT_NAME,
+                dataType  = "string",
             )
         try:
             cmds.setAttr(full, source or "", type="string")

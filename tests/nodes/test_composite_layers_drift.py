@@ -61,17 +61,17 @@ class _Stub(object):
     last row/column onto the opposite edge -- comparing under wrap would just
     re-measure that fold instead of the compositing math.
     """
-    fileName = ""
-    colorSpace = 0
-    preFilter = False
+    fileName        = ""
+    colorSpace      = 0
+    preFilter       = False
     preFilterKernel = 3
     preFilterRadius = 2.0
-    wrapModeU = 1
-    wrapModeV = 1
-    borderColor = (0.0, 0.0, 0.0)
+    wrapModeU       = 1
+    wrapModeV       = 1
+    borderColor     = (0.0, 0.0, 0.0)
 
     def __init__(self, layers, opacities):
-        self.layers = list(layers)
+        self.layers    = list(layers)
         self.opacities = list(opacities)
 
     def get_init_helper(self, name):
@@ -100,7 +100,7 @@ class TestScalarAndImageFormsAgree(unittest.TestCase):
         ns = {"__name__": "tpl_init"}
         exec(compile(_template()["init_source"], "<init>", "exec"), ns)
         cls.image_fn = staticmethod(ns["_composite_layers"])
-        cls.paths = [os.path.join(_LDIR, n) for n in _NAMES]
+        cls.paths    = [os.path.join(_LDIR, n) for n in _NAMES]
 
     # (y, x) probes: all four corners (where the grid convention bites) plus
     # interior points.
@@ -110,7 +110,7 @@ class TestScalarAndImageFormsAgree(unittest.TestCase):
     def _compare(self, opacities, layers=None):
         from mpynode._common.methods import file_methods
         stub = _Stub(layers if layers is not None else self.paths, opacities)
-        img = type(self).image_fn(stub)
+        img  = type(self).image_fn(stub)
         self.assertIsNotNone(
             img, "the whole-image form returned None; the compiled tier always "
                  "uploads a canvas, so returning nothing is a divergence")
@@ -125,7 +125,7 @@ class TestScalarAndImageFormsAgree(unittest.TestCase):
                 stub, stub.layers, stub.opacities, u, v), dtype=np.float64)
             im = img[y, x].astype(np.float64)
             # NaN in the same slot on both sides is agreement, not a diff.
-            d = np.where(np.isnan(sc) & np.isnan(im), 0.0, np.abs(sc - im))
+            d     = np.where(np.isnan(sc) & np.isnan(im), 0.0, np.abs(sc - im))
             worst = max(worst, float(np.nanmax(d)))
         # Measured worst over these cases is 3.3e-08 -- the scalar form
         # accumulates in Python float64, the image form in float32.

@@ -49,8 +49,8 @@ _POSITIONAL = {
     "DrawCurve": ("points", "color", "closed", "world_space", "space",
                   "screen_space"),
     "DrawPoints": ("positions", "color", "size", "space", "screen_space"),
-    "DrawText": ("text", "position", "color", "size", "space", "screen_space"),
-    "DrawMesh": ("points", "counts", "indices", "color"),
+    "DrawText":   ("text", "position", "color", "size", "space", "screen_space"),
+    "DrawMesh":   ("points", "counts", "indices", "color"),
 }
 for _k in _SHAPE_KINDS:
     _POSITIONAL[_k] = ("center", "radius", "axis", "color", "filled")
@@ -145,9 +145,9 @@ def _as_emit_call(call, alias):
     order) so the blessed lowering reads one shape only. The concrete type is
     carried as a ``_kind`` keyword for the shape family, and as ``_ctor`` for
     everything else, so the lowering never has to re-derive it."""
-    ctor = call.func.id
+    ctor  = call.func.id
     names = _POSITIONAL[ctor]
-    kw = {}
+    kw    = {}
     for i, arg in enumerate(call.args):
         if i >= len(names):
             raise UnsupportedSpec(
@@ -271,7 +271,7 @@ def _single_assignments(tree):
               and isinstance(node.func, ast.Attribute)
               and isinstance(node.func.value, ast.Name)
               and node.func.attr in ("append", "extend", "insert")):
-            nm = node.func.value.id
+            nm         = node.func.value.id
             counts[nm] = counts.get(nm, 0) + 2              # mutated -> opaque
     return {k: v for k, v in values.items() if counts.get(k) == 1}
 
@@ -368,7 +368,7 @@ def _draw_accumulators(tree):
         if (isinstance(node, ast.Assign) and len(node.targets) == 1
                 and isinstance(node.targets[0], ast.Name)
                 and isinstance(node.value, ast.List) and not node.value.elts):
-            nm = node.targets[0].id
+            nm        = node.targets[0].id
             seeds[nm] = seeds.get(nm, 0) + 1
             accounted.add(id(node.targets[0]))
         # N.append(<one positional drawing>) as a bare statement
@@ -396,9 +396,9 @@ def desugar_draw(source):
 
     Returns the rewritten source. Raises ``UnsupportedSpec`` when the drawing
     cannot be proven -- the caller then keeps the PORT region."""
-    tree = ast.parse(source)
-    assigns = _single_assignments(tree)
-    accums = _draw_accumulators(tree)
+    tree     = ast.parse(source)
+    assigns  = _single_assignments(tree)
+    accums   = _draw_accumulators(tree)
     consumed = set()
 
     def _emits(value, at):
@@ -525,7 +525,7 @@ def make_blessed_lowerings():
         return _arr(tp, node), "true"
 
     def _space_guard(tp, kw, what):
-        sp = kw.get("space")
+        sp  = kw.get("space")
         scr = kw.get("screen_space")
         if scr is not None and _const(scr, False):
             raise UnsupportedSpec(
@@ -537,23 +537,23 @@ def make_blessed_lowerings():
                 % (what, _const(sp, "local")))
 
     def _emit_shape(tp, node):
-        kw = _kwmap(node)
+        kw   = _kwmap(node)
         kind = _const(kw.get("_kind"), 1)
         ctor = _const(kw.get("_ctor"), "DrawCircle")
         _space_guard(tp, kw, ctor)
         centers = _arr(tp, kw.get("center"))
         if centers is None:
             raise UnsupportedSpec("nd_lower locator: %s() needs a center" % ctor)
-        radii = _arr(tp, kw.get("radius")) or "nd::scalar<double>(1.0)"
+        radii        = _arr(tp, kw.get("radius")) or "nd::scalar<double>(1.0)"
         default_axis = "0.0, 0.0, 1.0" if ctor == "DrawCircle" else "0.0, 1.0, 0.0"
-        axes = _arr(tp, kw.get("axis"))
+        axes         = _arr(tp, kw.get("axis"))
         if axes is None:
             axes = tp._new_tmp("dax")
             tp.emit("const nd::Array<double> %s = nd::from_data<double>("
                     "std::vector<double>{%s}, nd::Shape{3});" % (axes, default_axis))
         col, has = _color(tp, kw.get("color"))
         filled = _flag(tp, kw.get("filled"))   # DrawPrimitive defaults filled=False
-        i = tp._new_tmp("di")
+        i      = tp._new_tmp("di")
         tp.emit("for (int64_t %s = 0; %s < std::max<int64_t>(_ndRows(%s), 1); ++%s)"
                 % (i, i, centers, i))
         tp.emit("    data.emitShape(%d, _ndPoint(%s, %s), _ndAt1(%s, %s), "
@@ -569,7 +569,7 @@ def make_blessed_lowerings():
             raise UnsupportedSpec("nd_lower locator: DrawPoints() needs positions")
         col, has = _color(tp, kw.get("color"))
         size = _arr(tp, kw.get("size")) or "nd::scalar<double>(4.0)"
-        i = tp._new_tmp("di")
+        i    = tp._new_tmp("di")
         tp.emit("for (int64_t %s = 0; %s < _ndRows(%s); ++%s)" % (i, i, pos, i))
         tp.emit("    data.emitPoint(_ndPoint(%s, %s), _ndColor(%s, %s, %s), "
                 "(float)_ndAt1(%s, %s));" % (pos, i, col, has, i, size, i))
@@ -579,13 +579,13 @@ def make_blessed_lowerings():
         kw = _kwmap(node)
         _space_guard(tp, kw, "DrawLines")
         starts = _arr(tp, kw.get("starts"))
-        ends = _arr(tp, kw.get("ends"))
+        ends   = _arr(tp, kw.get("ends"))
         if starts is None or ends is None:
             raise UnsupportedSpec(
                 "nd_lower locator: DrawLines() needs starts and ends")
         col, has = _color(tp, kw.get("color"))
         world = _flag(tp, kw.get("world_space"))
-        i = tp._new_tmp("di")
+        i     = tp._new_tmp("di")
         tp.emit("for (int64_t %s = 0; %s < _ndRows(%s); ++%s)" % (i, i, starts, i))
         tp.emit("    data.emitLine(_ndPoint(%s, %s), _ndPoint(%s, %s), "
                 "_ndColor(%s, %s, %s), %s);"
@@ -602,7 +602,7 @@ def make_blessed_lowerings():
             raise UnsupportedSpec("nd_lower locator: DrawCurve() needs points")
         col, has = _color(tp, kw.get("color"))
         closed = _flag(tp, kw.get("closed"))
-        world = _flag(tp, kw.get("world_space"))
+        world  = _flag(tp, kw.get("world_space"))
         n, i = tp._new_tmp("dn"), tp._new_tmp("di")
         tp.emit("const int64_t %s = _ndRows(%s);" % (n, pts))
         tp.emit("for (int64_t %s = 0; %s + 1 < %s + (%s ? 1 : 0); ++%s)"
@@ -690,16 +690,16 @@ def make_blessed_lowerings():
         return Val("0", scalar_t("int64"))
 
     def _emit_mesh(tp, node):
-        kw = _kwmap(node)
-        pts = _arr(tp, kw.get("points"))
-        counts = kw.get("counts")
+        kw      = _kwmap(node)
+        pts     = _arr(tp, kw.get("points"))
+        counts  = kw.get("counts")
         indices = kw.get("indices")
         if pts is None or counts is None or indices is None:
             raise UnsupportedSpec(
                 "nd_lower locator: DrawMesh() needs points, counts and indices")
         cnt = _iarr(tp, counts)
         idx = _iarr(tp, indices)
-        pg = tp._new_tmp("dpg")
+        pg  = tp._new_tmp("dpg")
         tp.emit("DrawPoly& %s = data.emitPoly();" % pg)
         tp.emit("_ndFillPts(%s.pts, %s);" % (pg, pts))
         tp.emit("_ndFillInts(%s.cnt, %s);" % (pg, cnt))

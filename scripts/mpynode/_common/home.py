@@ -49,7 +49,7 @@ from mpynode._common import bootstrap
 HOME_ENV = "MPYNODE_HOME"
 
 _DEFAULT_DIRNAME = "mpynode"
-_LEGACY_DIRNAME = ".mpynode"
+_LEGACY_DIRNAME  = ".mpynode"
 
 # One-time guard so ensure_home()'s migration + makedirs run at most once per
 # process (path resolution stays cheap thereafter).

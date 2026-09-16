@@ -65,7 +65,7 @@ def _import_py_class(dotted_path: str):
     module_path, _, class_name = dotted_path.rpartition(".")
     try:
         module = importlib.import_module(module_path)
-        obj = getattr(module, class_name, None)
+        obj    = getattr(module, class_name, None)
     except Exception:  # noqa: BLE001
         return None
     return obj if isinstance(obj, type) else None
@@ -164,24 +164,24 @@ def _validate_attr_name(name: str, node_type: str | None = None) -> None:
 
 # Maya cmds.addAttr type strings keyed by our wire-type strings.
 _ADD_ATTR_KIND: dict[str, dict] = {
-    "float": {"at": "float"},
+    "float":  {"at": "float"},
     "double": {"at": "double"},
-    "int": {"at": "long"},
-    "bool": {"at": "bool"},
+    "int":    {"at": "long"},
+    "bool":   {"at": "bool"},
     "vector": {"at": "double3"},
     "matrix": {"dt": "matrix"},
     "string": {"dt": "string"},
     # angle / euler / enum.
     "angle": {"at": "doubleAngle"},
     "euler": {"at": "double3"},  # parent compound; XYZ children are doubleAngle
-    "enum": {"at": "enum"},  # enumName supplied per-instance below
+    "enum":  {"at": "enum"},     # enumName supplied per-instance below
     # python = string with pickle/base64 wrap; hex = string with UTF-8-hex wrap
     # (write plain text -> "48 69 ..."; read decodes back), which drives Maya's
     # ``type`` node textInput. mesh/nurbsCurve/nurbsSurface = typed geo plugs.
-    "python": {"dt": "string"},
-    "hex": {"dt": "string"},
-    "mesh": {"dt": "mesh"},
-    "nurbsCurve": {"dt": "nurbsCurve"},
+    "python":       {"dt": "string"},
+    "hex":          {"dt": "string"},
+    "mesh":         {"dt": "mesh"},
+    "nurbsCurve":   {"dt": "nurbsCurve"},
     "nurbsSurface": {"dt": "nurbsSurface"},
     # time — single time value, auto-connectable to time1.
     "time": {"at": "time"},
@@ -208,7 +208,7 @@ _IDENTITY_MATRIX_16 = (
     0.0, 0.0, 0.0, 1.0,
 )
 
-VALID_INPUT_TYPES = list(_ADD_ATTR_KIND.keys())
+VALID_INPUT_TYPES  = list(_ADD_ATTR_KIND.keys())
 VALID_OUTPUT_TYPES = list(_ADD_ATTR_KIND.keys())
 
 
@@ -255,11 +255,11 @@ def _validate_packed(name, attr_type, is_array, sparse):
 # Child-axis suffixes for compound attrs whose children are renamed alongside
 # the parent (vector/euler XYZ, quaternion XYZW, color RGB).
 _COMPOUND_CHILD_AXES = {
-    "vector": ("X", "Y", "Z"),
-    "euler": ("X", "Y", "Z"),
+    "vector":     ("X", "Y", "Z"),
+    "euler":      ("X", "Y", "Z"),
     "quaternion": ("X", "Y", "Z", "W"),
-    "color": ("R", "G", "B"),
-    "float2": ("U", "V"),
+    "color":      ("R", "G", "B"),
+    "float2":     ("U", "V"),
 }
 
 # Scalar numeric types that accept min/max/default via cmds.addAttr. Compound,
@@ -446,7 +446,7 @@ class MPyNode(InitSourceMixin, MethodsSourceMixin, MetadataMixin,
                             # an explicit subclass is honored as-is.
                             if cls is MPyNode or cls is root:
                                 chosen = root
-                                pc = _read_py_class(name)
+                                pc     = _read_py_class(name)
                                 if pc:
                                     logical = _import_py_class(pc)
                                     if (isinstance(logical, type)
@@ -536,7 +536,7 @@ class MPyNode(InitSourceMixin, MethodsSourceMixin, MetadataMixin,
         it -- import-on-wrap (``__new__``) has already upgraded each wrapper to
         its stamped ``_pyClass``, so the filter reflects true identity.
         """
-        names = mc.ls(type=cls.NATIVE_TYPE, long=True) or []
+        names   = mc.ls(type=cls.NATIVE_TYPE, long=True) or []
         wrapped = []
         for n in names:
             try:
@@ -646,7 +646,7 @@ class MPyNode(InitSourceMixin, MethodsSourceMixin, MetadataMixin,
         cls._populate_methods_source(node)
         if setup:
             src = node.get_methods_source() or ""
-            fn = build_methods_namespace(src).get("setup")
+            fn  = build_methods_namespace(src).get("setup")
             if _resolved_is_instance_setup(fn):
                 try:
                     invoke_command(fn, node, kwargs={"selection": selection, **kwargs})
@@ -679,9 +679,9 @@ class MPyNode(InitSourceMixin, MethodsSourceMixin, MetadataMixin,
 
     # Class-level defaults so the ``_name`` property is safe even on an
     # instance whose ``__init__`` never ran (``object.__new__`` in a factory).
-    _name_cache = None
+    _name_cache  = None
     _name_handle = None
-    _name_fn = None
+    _name_fn     = None
     _name_is_dag = False
 
     @property
@@ -702,7 +702,7 @@ class MPyNode(InitSourceMixin, MethodsSourceMixin, MetadataMixin,
         exactly where they failed before.
         """
         handle = self._name_handle
-        fn = self._name_fn
+        fn     = self._name_fn
         if handle is None or fn is None or not handle.isValid():
             return self._name_cache
         try:
@@ -725,7 +725,7 @@ class MPyNode(InitSourceMixin, MethodsSourceMixin, MetadataMixin,
         cached string it has always used.
         """
         self._name_handle = None
-        self._name_fn = None
+        self._name_fn     = None
         self._name_is_dag = False
         try:
             import maya.api.OpenMaya as om2
@@ -736,14 +736,14 @@ class MPyNode(InitSourceMixin, MethodsSourceMixin, MetadataMixin,
                 return
             obj = sel.getDependNode(0)
             if obj.hasFn(om2.MFn.kDagNode):
-                self._name_fn = om2.MFnDagNode(obj)
+                self._name_fn     = om2.MFnDagNode(obj)
                 self._name_is_dag = True
             else:
                 self._name_fn = om2.MFnDependencyNode(obj)
             self._name_handle = om2.MObjectHandle(obj)
         except Exception:  # noqa: BLE001
             self._name_handle = None
-            self._name_fn = None
+            self._name_fn     = None
             self._name_is_dag = False
 
     def get_name(self) -> str:
@@ -823,16 +823,16 @@ class MPyNode(InitSourceMixin, MethodsSourceMixin, MetadataMixin,
 
     def add_input_attr(
         self,
-        name: str,
-        attr_type: str,
-        is_array: bool = False,
-        enum_names: list[str] | None = None,
-        auto_connect_time: bool = True,
-        min_value=None,
-        max_value=None,
-        default_value=None,
-        sparse: bool = False,
-        packed: bool = False,
+        name:              str,
+        attr_type:         str,
+        is_array:          bool             = False,
+        enum_names:        list[str] | None = None,
+        auto_connect_time: bool             = True,
+        min_value                           = None,
+        max_value                           = None,
+        default_value                       = None,
+        sparse:            bool             = False,
+        packed:            bool             = False,
     ) -> None:
         """Add a user-defined INPUT plug to this node.
 
@@ -892,7 +892,7 @@ class MPyNode(InitSourceMixin, MethodsSourceMixin, MetadataMixin,
             kwargs = {"dataType": _PACKED_DT[attr_type]}
         else:
             kwargs = dict(_ADD_ATTR_KIND[attr_type])
-        kwargs["longName"] = name
+        kwargs["longName"]  = name
         kwargs["shortName"] = name
         # Array inputs are NOT keyable: a scalar-numeric multi would otherwise
         # leak into the channel box. Still editable in the Attribute Editor.
@@ -908,7 +908,7 @@ class MPyNode(InitSourceMixin, MethodsSourceMixin, MetadataMixin,
             kwargs["multi"] = True
         # enumName is per-instance.
         if attr_type == "enum":
-            entries = list(enum_names) if enum_names else ["False", "True"]
+            entries            = list(enum_names) if enum_names else ["False", "True"]
             kwargs["enumName"] = ":".join(entries)
         # min/max/default are numeric-attr flags; addAttr rejects them on a
         # dataType plug, and a packed table has no per-element default anyway.
@@ -925,22 +925,22 @@ class MPyNode(InitSourceMixin, MethodsSourceMixin, MetadataMixin,
             for axis in ("X", "Y", "Z"):
                 mc.addAttr(
                     self._name,
-                    longName=name + axis,
-                    shortName=name + axis,
-                    attributeType="double",
-                    parent=name,
-                    keyable=True,
+                    longName      = name + axis,
+                    shortName     = name + axis,
+                    attributeType = "double",
+                    parent        = name,
+                    keyable       = True,
                 )
         # euler is double3 with doubleAngle children.
         elif attr_type == "euler":
             for axis in ("X", "Y", "Z"):
                 mc.addAttr(
                     self._name,
-                    longName=name + axis,
-                    shortName=name + axis,
-                    attributeType="doubleAngle",
-                    parent=name,
-                    keyable=True,
+                    longName      = name + axis,
+                    shortName     = name + axis,
+                    attributeType = "doubleAngle",
+                    parent        = name,
+                    keyable       = True,
                 )
         # quaternion — generic compound; 4 double children X/Y/Z/W. W defaults
         # to 1.0 so an unset / unconnected quaternion reads as identity.
@@ -948,12 +948,12 @@ class MPyNode(InitSourceMixin, MethodsSourceMixin, MetadataMixin,
             for axis in ("X", "Y", "Z", "W"):
                 mc.addAttr(
                     self._name,
-                    longName=name + axis,
-                    shortName=name + axis,
-                    attributeType="double",
-                    parent=name,
-                    keyable=True,
-                    defaultValue=(1.0 if axis == "W" else 0.0),
+                    longName      = name + axis,
+                    shortName     = name + axis,
+                    attributeType = "double",
+                    parent        = name,
+                    keyable       = True,
+                    defaultValue  = (1.0 if axis == "W" else 0.0),
                 )
         # color — float3 + usedAsColor; the R/G/B float children must be added
         # explicitly (cmds float3 does NOT auto-create them).
@@ -969,11 +969,11 @@ class MPyNode(InitSourceMixin, MethodsSourceMixin, MetadataMixin,
                 _kw = {} if _cdv is None else {"defaultValue": _cdv[i]}
                 mc.addAttr(
                     self._name,
-                    longName=name + axis,
-                    shortName=name + axis,
-                    attributeType="float",
-                    parent=name,
-                    keyable=True,
+                    longName      = name + axis,
+                    shortName     = name + axis,
+                    attributeType = "float",
+                    parent        = name,
+                    keyable       = True,
                     **_kw
                 )
         # float2 — float2 parent + 2 float children (U/V), added explicitly.
@@ -981,15 +981,15 @@ class MPyNode(InitSourceMixin, MethodsSourceMixin, MetadataMixin,
             for axis in ("U", "V"):
                 mc.addAttr(
                     self._name,
-                    longName=name + axis,
-                    shortName=name + axis,
-                    attributeType="float",
-                    parent=name,
-                    keyable=True,
+                    longName      = name + axis,
+                    shortName     = name + axis,
+                    attributeType = "float",
+                    parent        = name,
+                    keyable       = True,
                 )
 
         attr_map = self._read_input_map()
-        meta = {"attr_type": attr_type, "is_array": is_array}
+        meta     = {"attr_type": attr_type, "is_array": is_array}
         if is_array and sparse:
             meta["sparse"] = True
         if is_array and packed:
@@ -1003,7 +1003,7 @@ class MPyNode(InitSourceMixin, MethodsSourceMixin, MetadataMixin,
         # so recording one there would put a value in the payload that was
         # never on the plug.
         _record_color_default(meta, attr_type, default_value)
-        meta["order"] = self._next_order_value(attr_map)
+        meta["order"]  = self._next_order_value(attr_map)
         attr_map[name] = meta
         self._write_input_map(attr_map)
 
@@ -1116,13 +1116,13 @@ class MPyNode(InitSourceMixin, MethodsSourceMixin, MetadataMixin,
 
     def add_output_attr(
         self,
-        name: str,
-        attr_type: str,
-        is_array: bool = False,
-        enum_names: list[str] | None = None,
-        min_value=None,
-        max_value=None,
-        default_value=None,
+        name:         str,
+        attr_type:    str,
+        is_array:     bool             = False,
+        enum_names:   list[str] | None = None,
+        min_value                      = None,
+        max_value                      = None,
+        default_value                  = None,
     ) -> None:
         _validate_attr_name(name, type(self).NATIVE_TYPE)
         if attr_type not in _ADD_ATTR_KIND:
@@ -1130,18 +1130,18 @@ class MPyNode(InitSourceMixin, MethodsSourceMixin, MetadataMixin,
                 f"attr_type {attr_type!r} not supported; valid: {sorted(_ADD_ATTR_KIND)}"
             )
 
-        kwargs = dict(_ADD_ATTR_KIND[attr_type])
-        kwargs["longName"] = name
+        kwargs              = dict(_ADD_ATTR_KIND[attr_type])
+        kwargs["longName"]  = name
         kwargs["shortName"] = name
         # Outputs are NOT keyable (driven by compute).
-        kwargs["keyable"] = False
+        kwargs["keyable"]  = False
         kwargs["writable"] = False
         kwargs["readable"] = True
         if is_array:
             kwargs["multi"] = True
         # enumName per-instance.
         if attr_type == "enum":
-            entries = list(enum_names) if enum_names else ["False", "True"]
+            entries            = list(enum_names) if enum_names else ["False", "True"]
             kwargs["enumName"] = ":".join(entries)
         _apply_numeric_limits(kwargs, attr_type, min_value, max_value, default_value)
         _apply_enum_default(kwargs, attr_type, default_value)
@@ -1153,76 +1153,76 @@ class MPyNode(InitSourceMixin, MethodsSourceMixin, MetadataMixin,
             for axis in ("X", "Y", "Z"):
                 mc.addAttr(
                     self._name,
-                    longName=name + axis,
-                    shortName=name + axis,
-                    attributeType="double",
-                    parent=name,
-                    keyable=False,
-                    writable=False,
-                    readable=True,
+                    longName      = name + axis,
+                    shortName     = name + axis,
+                    attributeType = "double",
+                    parent        = name,
+                    keyable       = False,
+                    writable      = False,
+                    readable      = True,
                 )
         # euler is double3 with doubleAngle children.
         elif attr_type == "euler":
             for axis in ("X", "Y", "Z"):
                 mc.addAttr(
                     self._name,
-                    longName=name + axis,
-                    shortName=name + axis,
-                    attributeType="doubleAngle",
-                    parent=name,
-                    keyable=False,
-                    writable=False,
-                    readable=True,
+                    longName      = name + axis,
+                    shortName     = name + axis,
+                    attributeType = "doubleAngle",
+                    parent        = name,
+                    keyable       = False,
+                    writable      = False,
+                    readable      = True,
                 )
         # quaternion — generic compound; 4 double children X/Y/Z/W (W default 1.0).
         elif attr_type == "quaternion":
             for axis in ("X", "Y", "Z", "W"):
                 mc.addAttr(
                     self._name,
-                    longName=name + axis,
-                    shortName=name + axis,
-                    attributeType="double",
-                    parent=name,
-                    keyable=False,
-                    writable=False,
-                    readable=True,
-                    defaultValue=(1.0 if axis == "W" else 0.0),
+                    longName      = name + axis,
+                    shortName     = name + axis,
+                    attributeType = "double",
+                    parent        = name,
+                    keyable       = False,
+                    writable      = False,
+                    readable      = True,
+                    defaultValue  = (1.0 if axis == "W" else 0.0),
                 )
         # color — float3 + usedAsColor; explicit R/G/B float children.
         elif attr_type == "color":
             for axis in ("R", "G", "B"):
                 mc.addAttr(
                     self._name,
-                    longName=name + axis,
-                    shortName=name + axis,
-                    attributeType="float",
-                    parent=name,
-                    keyable=False,
-                    writable=False,
-                    readable=True,
+                    longName      = name + axis,
+                    shortName     = name + axis,
+                    attributeType = "float",
+                    parent        = name,
+                    keyable       = False,
+                    writable      = False,
+                    readable      = True,
                 )
         # float2 — float2 parent + 2 float children (U/V), added explicitly.
         elif attr_type == "float2":
             for axis in ("U", "V"):
                 mc.addAttr(
                     self._name,
-                    longName=name + axis,
-                    shortName=name + axis,
-                    attributeType="float",
-                    parent=name,
-                    keyable=False,
-                    writable=False,
-                    readable=True,
+                    longName      = name + axis,
+                    shortName     = name + axis,
+                    attributeType = "float",
+                    parent        = name,
+                    keyable       = False,
+                    writable      = False,
+                    readable      = True,
                 )
 
         attr_map = self._read_output_map()
-        meta = {"attr_type": attr_type, "is_array": is_array}
+        meta     = {"attr_type": attr_type, "is_array": is_array}
         if attr_type == "enum":
             meta["enum_names"] = list(enum_names) if enum_names else ["False", "True"]
         _record_numeric_limits(meta, attr_type, min_value, max_value, default_value)
         _record_enum_default(meta, attr_type, default_value)
         _record_bool_default(meta, attr_type, default_value)
-        meta["order"] = self._next_order_value(attr_map)
+        meta["order"]  = self._next_order_value(attr_map)
         attr_map[name] = meta
         self._write_output_map(attr_map)
 
@@ -1262,7 +1262,7 @@ class MPyNode(InitSourceMixin, MethodsSourceMixin, MetadataMixin,
         if new_name == old_name:
             return
         _validate_attr_name(new_name, type(self).NATIVE_TYPE)
-        meta = attr_map[old_name]
+        meta        = attr_map[old_name]
         _child_axes = _COMPOUND_CHILD_AXES.get(meta.get("attr_type"))
         if _child_axes:
             for axis in _child_axes:
@@ -1573,9 +1573,9 @@ class MPyNode(InitSourceMixin, MethodsSourceMixin, MetadataMixin,
 
         out: dict = {}
         for i, (name, meta) in enumerate(sorted(attr_map.items(), key=_key)):
-            m = dict(meta)
+            m          = dict(meta)
             m["order"] = i
-            out[name] = m
+            out[name]  = m
         return out
 
     # ------------------------------------------------------------------
@@ -1687,19 +1687,19 @@ class MPyNode(InitSourceMixin, MethodsSourceMixin, MetadataMixin,
         attr_type = meta.get("attr_type")
         if (not meta.get("is_array") and attr_type != "time" and not snap["in"]):
             try:
-                snap["value"] = mc.getAttr(node + "." + name)
+                snap["value"]  = mc.getAttr(node + "." + name)
                 snap["matrix"] = (attr_type == "matrix")
             except Exception:
                 snap["value"] = None
         return snap
 
     def _readd_attr_for_reorder(self, adder, name: str, meta: dict) -> None:
-        attr_type = meta.get("attr_type", "float")
-        is_array = bool(meta.get("is_array", False))
+        attr_type  = meta.get("attr_type", "float")
+        is_array   = bool(meta.get("is_array", False))
         enum_names = meta.get("enum_names")
         kw = {
-            "min_value": meta.get("min_value"),
-            "max_value": meta.get("max_value"),
+            "min_value":     meta.get("min_value"),
+            "max_value":     meta.get("max_value"),
             "default_value": meta.get("default_value"),
         }
         if adder is self.add_input_attr and is_array and meta.get("sparse"):

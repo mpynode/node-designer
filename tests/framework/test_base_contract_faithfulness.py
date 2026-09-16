@@ -161,10 +161,10 @@ class TestIkSolverSyntaxErrorSurfaces(unittest.TestCase):
         with contextlib.redirect_stderr(buf):
             result = helpers.compute_ik_user_solve(
                 _Shim(),
-                joints=[],
-                end_effector=[0.0, 0.0, 0.0],
-                pole_vector=[0.0, 0.0, 0.0],
-                twist=0.0,
+                joints       = [],
+                end_effector = [0.0, 0.0, 0.0],
+                pole_vector  = [0.0, 0.0, 0.0],
+                twist        = 0.0,
             )
 
         # a compile failure aborts the solve tick (last-known-good pose) and
@@ -199,7 +199,7 @@ class TestDuplicatedDeformerRunsExpression(unittest.TestCase):
         from mpynode.wrappers.mpy_deformer import MPyDeformer
 
         plane = mc.polyPlane(name="dupP", w=2, h=2, sx=4, sy=4)[0]
-        d = MPyDeformer.create_on(plane)
+        d     = MPyDeformer.create_on(plane)
         d.set_compute_expression(
             "mesh = self.outputGeometry[0]\n"
             "pts = mesh.getPoints()\n"
@@ -209,7 +209,7 @@ class TestDuplicatedDeformerRunsExpression(unittest.TestCase):
         v_orig = mc.xform(plane + ".vtx[12]", q=True, ws=True, t=True)
         self.assertAlmostEqual(v_orig[1], 0.5, places=3)
 
-        dup = mc.duplicate(plane, upstreamNodes=True, name="dupP_copy")[0]
+        dup   = mc.duplicate(plane, upstreamNodes=True, name="dupP_copy")[0]
         v_dup = mc.xform(dup + ".vtx[12]", q=True, ws=True, t=True)
         self.assertAlmostEqual(
             v_dup[1], 0.5, places=3,
@@ -376,8 +376,8 @@ class TestOwnPathComputeDefersDuringFileRead(unittest.TestCase):
         ensure_plugins_loaded()
 
     def _assert_defers_during_file_read(self, make, trigger, cls):
-        node = make()
-        orig = cls._run_expression
+        node  = make()
+        orig  = cls._run_expression
         calls = []
 
         def spy(self_inner, *a, **k):
@@ -606,7 +606,7 @@ class TestOwnPathComputeDenseInputSeeding(unittest.TestCase):
         )
         sel = om.MSelectionList()
         sel.add(n)
-        mpx = om.MFnDependencyNode(sel.getDependNode(0)).userNode()
+        mpx  = om.MFnDependencyNode(sel.getDependNode(0)).userNode()
         cmds = mpx.evaluateDrawItems(time_value=0.0)["commands"]
         self.assertEqual(
             [c["slot"] for c in cmds], ["points"],
@@ -694,8 +694,8 @@ class TestOwnPathComputeDenseInputSeeding(unittest.TestCase):
         from mpynode.wrappers.mpy_deformer import MPyDeformer
 
         plane = mc.polyPlane(name="defDenseP", w=2, h=2, sx=2, sy=2)[0]
-        d = MPyDeformer.create_on(plane)
-        n = d.get_name()
+        d     = MPyDeformer.create_on(plane)
+        n     = d.get_name()
         d.add_input_attr("pts", "vector", is_array=True)
         for i, v in enumerate([(1, 2, 3), (4, 5, 6), (7, 8, 9)]):
             mc.setAttr("%s.pts[%d]" % (n, i), v[0], v[1], v[2], type="double3")
@@ -759,10 +759,10 @@ class TestOwnPathComputeDenseInputSeeding(unittest.TestCase):
 
         local_mats, _world, _gr, _gt, _gs = helpers.compute_ik_user_solve(
             _Shim(),
-            joints=["j"],  # length 1 -> matrix buffers are 1-slot lists
-            end_effector=[0.0, 0.0, 0.0],
-            pole_vector=[0.0, 0.0, 0.0],
-            twist=0.0,
+            joints       = ["j"],  # length 1 -> matrix buffers are 1-slot lists
+            end_effector = [0.0, 0.0, 0.0],
+            pole_vector  = [0.0, 0.0, 0.0],
+            twist        = 0.0,
         )
         self.assertIsNotNone(
             local_mats,

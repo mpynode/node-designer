@@ -35,7 +35,7 @@ class TestSetupCommand(unittest.TestCase):
     def _run(self, native_type, mode="headers"):
         from mpynode._base.commands import _SetupNodeCommand, run_undoable
 
-        cmd = _SetupNodeCommand(native_type, mode=mode)
+        cmd     = _SetupNodeCommand(native_type, mode=mode)
         created = run_undoable(cmd)
         if created is None:
             created = getattr(cmd, "created_name", None)
@@ -69,9 +69,9 @@ class TestSetupCommand(unittest.TestCase):
         )
         payload = load_mpn(template_path, trusted=True)
 
-        plane = mc.polyPlane(name="tplPlane")[0]
+        plane   = mc.polyPlane(name="tplPlane")[0]
         mc.select(plane, replace=True)
-        cmd = _TemplateCreateCommand(payload, "mPyDeformer", run_setup=False)
+        cmd     = _TemplateCreateCommand(payload, "mPyDeformer", run_setup=False)
         created = run_undoable(cmd) or cmd.created_name
         self.assertTrue(created and mc.objExists(created))
 
@@ -84,7 +84,7 @@ class TestSetupCommand(unittest.TestCase):
         from mpynode._base.commands import _SetupNodeCommand, run_undoable
 
         mc.select(clear=True)  # no mesh -> setup can't run
-        cmd = _SetupNodeCommand("mPyDeformer", mode="headers")
+        cmd     = _SetupNodeCommand("mPyDeformer", mode="headers")
         created = run_undoable(cmd) or getattr(cmd, "created_name", None)
         # Safe degrade: a bare mPyDeformer is still created.
         self.assertTrue(created and mc.objExists(created))
@@ -140,7 +140,7 @@ class TestSelectionHelper(unittest.TestCase):
 
     def test_no_args_reads_live_selection(self):
         from mpynode._common.methods import setup_helpers as node_setup
-        orig = node_setup.mc.ls
+        orig             = node_setup.mc.ls
         node_setup.mc.ls = lambda *a, **k: ["live1", "live2"]
         try:
             self.assertEqual(node_setup._selection(), ["live1", "live2"])
@@ -149,7 +149,7 @@ class TestSelectionHelper(unittest.TestCase):
 
     def test_exclude_with_live(self):
         from mpynode._common.methods import setup_helpers as node_setup
-        orig = node_setup.mc.ls
+        orig             = node_setup.mc.ls
         node_setup.mc.ls = lambda *a, **k: ["nodeX", "keep"]
         try:
             self.assertEqual(

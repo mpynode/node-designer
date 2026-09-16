@@ -124,7 +124,7 @@ mc.connectAttr(gen.get_name() + ".outCurve", shape + ".create", force=True)
 
 # Force evaluation and read back a concrete result (headless, no viewport).
 mc.dgeval(gen.get_name() + ".outCurve")
-spans = mc.getAttr(shape + ".spans")
+spans    = mc.getAttr(shape + ".spans")
 cv_count = spans + mc.getAttr(shape + ".degree")  # open curve: spans + degree CVs
 assert cv_count == 8, "expected 8 CVs, got %r" % cv_count
 print("mPyNurbsCurve OK -- built nurbsCurve with %d CVs (degree %d)"

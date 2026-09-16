@@ -97,8 +97,8 @@ class TestPruneAndCloseTabs(unittest.TestCase):
     # -- isBackingNodeAlive tri-state -----------------------------------
 
     def test_backing_node_alive_true_then_false_after_file_new(self):
-        node = self._new_node("ghostAlive")
-        w = self._tab_widget(node)
+        node    = self._new_node("ghostAlive")
+        w       = self._tab_widget(node)
         content = w.widget(0)
         self.assertTrue(
             content.isBackingNodeAlive(),
@@ -109,9 +109,9 @@ class TestPruneAndCloseTabs(unittest.TestCase):
             "after File>New the node is gone -> tab must report NOT alive")
 
     def test_backing_node_alive_none_when_no_handle(self):
-        node = self._new_node("ghostNoHandle")
-        w = self._tab_widget(node)
-        content = w.widget(0)
+        node                 = self._new_node("ghostNoHandle")
+        w                    = self._tab_widget(node)
+        content              = w.widget(0)
         content._node_handle = None  # simulate an unresolvable handle
         self.assertIsNone(
             content.isBackingNodeAlive(),
@@ -121,7 +121,7 @@ class TestPruneAndCloseTabs(unittest.TestCase):
 
     def test_prune_removes_tab_after_file_new(self):
         node = self._new_node("ghostPrune")
-        w = self._tab_widget(node)
+        w    = self._tab_widget(node)
         self.assertEqual(w.count(), 1)
         mc.file(new=True, force=True)
         pruned = w.pruneStaleTabs()
@@ -131,8 +131,8 @@ class TestPruneAndCloseTabs(unittest.TestCase):
     def test_prune_keeps_live_tab_on_unchanged_scene(self):
         """Reopen on the SAME scene: the node still exists -> tab survives, and
         no tabsChanged is emitted (nothing changed)."""
-        node = self._new_node("liveKeep")
-        w = self._tab_widget(node)
+        node    = self._new_node("liveKeep")
+        w       = self._tab_widget(node)
         emitted = []
         w.tabsChanged.connect(emitted.append)
         pruned = w.pruneStaleTabs()
@@ -146,7 +146,7 @@ class TestPruneAndCloseTabs(unittest.TestCase):
         the name exist and left a ghost tab; the MObjectHandle check prunes it
         because the ORIGINAL object is gone."""
         node = self._new_node("collideName")
-        w = self._tab_widget(node)
+        w    = self._tab_widget(node)
         mc.file(new=True, force=True)
         # A brand-new, unrelated node that happens to reuse the name.
         replacement = self._new_node("collideName")
@@ -158,9 +158,9 @@ class TestPruneAndCloseTabs(unittest.TestCase):
         self.assertEqual(pruned, ["collideName"])
 
     def test_prune_emits_tabschanged_once(self):
-        n1 = self._new_node("pruneEmitA")
-        n2 = self._new_node("pruneEmitB")
-        w = self._tab_widget(n1, n2)
+        n1      = self._new_node("pruneEmitA")
+        n2      = self._new_node("pruneEmitB")
+        w       = self._tab_widget(n1, n2)
         emitted = []
         w.tabsChanged.connect(emitted.append)
         mc.file(new=True, force=True)
@@ -175,7 +175,7 @@ class TestPruneAndCloseTabs(unittest.TestCase):
     def test_close_all_tabs_closes_everything_and_emits_once(self):
         n1 = self._new_node("closeAllA")
         n2 = self._new_node("closeAllB")
-        w = self._tab_widget(n1, n2)
+        w  = self._tab_widget(n1, n2)
         self.assertEqual(w.count(), 2)
         emitted = []
         w.tabsChanged.connect(emitted.append)
@@ -187,7 +187,7 @@ class TestPruneAndCloseTabs(unittest.TestCase):
         self.assertEqual(emitted[0], [])
 
     def test_close_all_tabs_noop_when_empty(self):
-        w = self._tab_widget()
+        w       = self._tab_widget()
         emitted = []
         w.tabsChanged.connect(emitted.append)
         closed = w.closeAllTabs()
@@ -221,14 +221,14 @@ class TestSceneResetWiring(unittest.TestCase):
         self.assertTrue(hasattr(NDScriptTabContent, "isBackingNodeAlive"))
 
     def test_scene_change_uses_close_all_tabs(self):
-        m = self._m()
+        m   = self._m()
         src = inspect.getsource(m.NDMainWindow._handle_scene_change)
         self.assertIn("closeAllTabs", src)
         # the fragile raw removeTab loop is gone (the widget owns removal now).
         self.assertNotIn(".removeTab(", src)
 
     def test_reopen_uses_prune_stale_tabs(self):
-        m = self._m()
+        m   = self._m()
         src = inspect.getsource(m.NDMainWindow._handle_reopen)
         self.assertIn("pruneStaleTabs", src)
         # the name-based objExists prune is gone from the tab-pruning path.

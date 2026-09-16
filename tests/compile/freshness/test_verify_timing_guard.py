@@ -40,8 +40,8 @@ class _FakeClock:
 
     def __init__(self, events, start=0.0, step=1e-4):
         self.events = events
-        self.t = start
-        self.step = step
+        self.t      = start
+        self.step   = step
 
     def perf_counter(self):
         self.events.append("clock")
@@ -83,9 +83,9 @@ class TestTimePair(unittest.TestCase):
         self.assertLessEqual(res["n"], 1)
 
     def test_perturbs_run_once_per_tick_and_never_inside_the_timed_window(self):
-        events = []
-        clock = _FakeClock(events)
-        orig_time = self.v.time
+        events      = []
+        clock       = _FakeClock(events)
+        orig_time   = self.v.time
         self.v.time = clock
         try:
             perturbs = [lambda: events.append("perturb0"),
@@ -183,7 +183,7 @@ class TestTimingVerdict(unittest.TestCase):
 
     def test_the_mesh_query_clause_needs_the_spec_flag(self):
         with_flag = self._verdict(10.0, 120.0, mesh_query=True)["warning"]
-        without = self._verdict(10.0, 120.0, mesh_query=False)["warning"]
+        without   = self._verdict(10.0, 120.0, mesh_query=False)["warning"]
         self.assertIn("MMeshIntersector", with_flag)
         self.assertNotIn("MMeshIntersector", without)
 
@@ -236,7 +236,7 @@ class TestTimingWiring(unittest.TestCase):
         import textwrap
 
         tree = ast.parse(textwrap.dedent(self._src("_pull_geo_plug")))
-        fn = tree.body[0]
+        fn   = tree.body[0]
         if ast.get_docstring(fn):
             fn.body = fn.body[1:]        # judge the CODE, not the prose
         src = ast.unparse(fn)

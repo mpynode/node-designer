@@ -44,7 +44,7 @@ _SDF_PATH = os.path.normpath(
 
 def _load_sdf():
     spec = importlib.util.spec_from_file_location("sdf_dmc_glue_test", _SDF_PATH)
-    mod = importlib.util.module_from_spec(spec)
+    mod  = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
     return mod
 
@@ -55,8 +55,8 @@ _SDF = _load_sdf()
 # --- the OLD glue: _read_dense + mesh_from_shapes (verbatim from the .mpn) ----
 def _read_dense(self, name, defaults):
     proxy = getattr(self, name, None)
-    out = np.array(defaults)
-    n = out.shape[0]
+    out   = np.array(defaults)
+    n     = out.shape[0]
     if proxy is None or n == 0:
         return out
     is_vec = out.ndim > 1
@@ -76,18 +76,18 @@ def _old_glue(self):
         return (np.zeros((0, 3), dtype=np.float64),
                 np.zeros(0, dtype=np.int32),
                 np.zeros(0, dtype=np.int32))
-    n = mats.shape[0]
-    shape_type = _read_dense(self, "shapeType", np.zeros(n, dtype=np.int64))
-    additive = _read_dense(self, "additive", np.ones(n, dtype=bool))
-    smoothing = _read_dense(self, "smoothing", np.zeros(n, dtype=np.float64))
-    radius = _read_dense(self, "radius", np.where(shape_type == 2, 0.5, 1.0))
-    height = _read_dense(self, "height", np.ones(n, dtype=np.float64))
-    axis = _read_dense(self, "axis", np.ones(n, dtype=np.int64))
-    half = _read_dense(self, "halfExtents", np.tile([0.5, 0.5, 0.5], (n, 1)))
-    _res = getattr(self, "resolution", None)
-    res = 8 if _res is None else int(_res)
-    _iso = getattr(self, "isoValue", None)
-    iso = 0.0 if _iso is None else float(_iso)
+    n          = mats.shape[0]
+    shape_type = _read_dense(self, "shapeType",   np.zeros(n, dtype=np.int64))
+    additive   = _read_dense(self, "additive",    np.ones(n, dtype=bool))
+    smoothing  = _read_dense(self, "smoothing",   np.zeros(n, dtype=np.float64))
+    radius     = _read_dense(self, "radius",      np.where(shape_type == 2, 0.5, 1.0))
+    height     = _read_dense(self, "height",      np.ones(n, dtype=np.float64))
+    axis       = _read_dense(self, "axis",        np.ones(n, dtype=np.int64))
+    half       = _read_dense(self, "halfExtents", np.tile([0.5, 0.5, 0.5], (n, 1)))
+    _res       = getattr(self, "resolution", None)
+    res        = 8 if _res is None else int(_res)
+    _iso       = getattr(self, "isoValue", None)
+    iso        = 0.0 if _iso is None else float(_iso)
     return _SDF.mesh_from_shapes(
         mats, shape_type, additive, smoothing, radius, height, axis, half,
         res, iso)
@@ -97,8 +97,8 @@ def _old_glue(self):
 #     init/expression that nd_lower lowers) ------------------------------------
 def _dense_over(raw, defaults):
     out = np.array(defaults)
-    n = out.shape[0]
-    k = raw.shape[0]
+    n   = out.shape[0]
+    k   = raw.shape[0]
     if k > n:
         k = n
     out[0:k] = raw[0:k]
@@ -106,23 +106,23 @@ def _dense_over(raw, defaults):
 
 
 def _new_glue(self):
-    mats = np.asarray(self.shapeMatrix, dtype=np.float64)
-    n = mats.shape[0]
-    shape_type = _dense_over(self.shapeType, np.zeros(n, dtype=np.int64))
-    additive = _dense_over(self.additive, np.ones(n, dtype=np.int64))
-    smoothing = _dense_over(self.smoothing, np.zeros(n, dtype=np.float64))
-    radius = _dense_over(self.radius, np.where(shape_type == 2, 0.5, 1.0))
-    height = _dense_over(self.height, np.ones(n, dtype=np.float64))
-    axis = _dense_over(self.axis, np.ones(n, dtype=np.int64))
-    half = _dense_over(self.halfExtents, np.full((n, 3), 0.5))
+    mats       = np.asarray(self.shapeMatrix, dtype=np.float64)
+    n          = mats.shape[0]
+    shape_type = _dense_over(self.shapeType,   np.zeros(n, dtype=np.int64))
+    additive   = _dense_over(self.additive,    np.ones(n, dtype=np.int64))
+    smoothing  = _dense_over(self.smoothing,   np.zeros(n, dtype=np.float64))
+    radius     = _dense_over(self.radius,      np.where(shape_type == 2, 0.5, 1.0))
+    height     = _dense_over(self.height,      np.ones(n, dtype=np.float64))
+    axis       = _dense_over(self.axis,        np.ones(n, dtype=np.int64))
+    half       = _dense_over(self.halfExtents, np.full((n, 3), 0.5))
     packed = _SDF._mesh_packed(
         mats, shape_type, additive, smoothing, radius, height, axis, half,
         int(self.resolution), float(self.isoValue))
-    V = int(packed[0])
-    F = int(packed[1])
-    points = packed[2:2 + 3 * V].reshape(V, 3)
+    V       = int(packed[0])
+    F       = int(packed[1])
+    points  = packed[2:2 + 3 * V].reshape(V, 3)
     indices = packed[2 + 3 * V:2 + 3 * V + 4 * F].astype(np.int32)
-    counts = np.full(F, 4, dtype=np.int32)
+    counts  = np.full(F, 4, dtype=np.int32)
     return points, counts, indices
 
 
@@ -136,13 +136,13 @@ class _MockSelf:
 
 
 def _mat(tx=0.0, ty=0.0, tz=0.0):
-    m = np.eye(4, dtype=np.float64)
+    m        = np.eye(4, dtype=np.float64)
     m[3, :3] = (tx, ty, tz)
     return m
 
 
 def build_cases():
-    d64 = np.float64
+    d64   = np.float64
     cases = {}
 
     # Case A: box(0) sphere(1) box(2). radius set only for the sphere (index 1)
@@ -151,13 +151,13 @@ def build_cases():
     # index 1 is the attr default [0,0,0] (irrelevant to a sphere); height/axis
     # empty (no cylinder) -> full-default tails.
     cases["mixed_tail_pad"] = _MockSelf(
-        shapeMatrix=np.stack([_mat(-0.7, 0, 0), _mat(0.2, 0.3, 0), _mat(0.8, 0, 0)]),
-        shapeType=np.array([1, 0, 1], dtype=np.int64),
-        additive=np.array([True, True, True], dtype=bool),
-        smoothing=np.array([0.0, 0.3, 0.0], dtype=d64),
-        radius=np.array([0.0, 0.9], dtype=d64),           # len 2 < n=3
-        height=np.zeros(0, dtype=d64),                    # empty multi
-        axis=np.zeros(0, dtype=np.int64),                 # empty multi
+        shapeMatrix = np.stack([_mat(-0.7, 0, 0), _mat(0.2, 0.3, 0), _mat(0.8, 0, 0)]),
+        shapeType   = np.array([1, 0, 1], dtype=np.int64),
+        additive    = np.array([True, True, True], dtype=bool),
+        smoothing   = np.array([0.0, 0.3, 0.0], dtype=d64),
+        radius      = np.array([0.0, 0.9], dtype=d64),  # len 2 < n=3
+        height      = np.zeros(0, dtype=d64),           # empty multi
+        axis        = np.zeros(0, dtype=np.int64),      # empty multi
         halfExtents=np.array([[0.6, 0.6, 0.6], [0.0, 0.0, 0.0], [0.5, 0.4, 0.7]],
                              dtype=d64),
         resolution=8, isoValue=0.0)
@@ -166,13 +166,13 @@ def build_cases():
     # the smooth-union and difference CSG branches. sphere(0) cyl(1) box(2), the
     # box additive=False (difference). halfExtents dense len 3 (gaps at 0,1).
     cases["csg_all_ops"] = _MockSelf(
-        shapeMatrix=np.stack([_mat(-0.4, 0, 0), _mat(0.3, 0, 0), _mat(0.5, 0.4, 0)]),
-        shapeType=np.array([0, 2, 1], dtype=np.int64),
-        additive=np.array([True, True, False], dtype=bool),
-        smoothing=np.array([0.0, 0.4, 0.0], dtype=d64),
-        radius=np.array([1.0, 0.5, 0.0], dtype=d64),
-        height=np.array([0.0, 1.3], dtype=d64),           # len 2 < n=3
-        axis=np.array([0, 0], dtype=np.int64),            # len 2 < n=3 -> tail=1
+        shapeMatrix = np.stack([_mat(-0.4, 0, 0), _mat(0.3, 0, 0), _mat(0.5, 0.4, 0)]),
+        shapeType   = np.array([0, 2, 1], dtype=np.int64),
+        additive    = np.array([True, True, False], dtype=bool),
+        smoothing   = np.array([0.0, 0.4, 0.0], dtype=d64),
+        radius      = np.array([1.0, 0.5, 0.0], dtype=d64),
+        height      = np.array([0.0, 1.3], dtype=d64),   # len 2 < n=3
+        axis        = np.array([0, 0], dtype=np.int64),  # len 2 < n=3 -> tail=1
         halfExtents=np.array([[0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.7, 0.5, 0.6]],
                              dtype=d64),
         resolution=9, isoValue=0.1)
@@ -181,14 +181,14 @@ def build_cases():
     # every attr falls entirely to its semantic default tail). radius default
     # for a sphere is 1.0.
     cases["all_defaults"] = _MockSelf(
-        shapeMatrix=np.stack([_mat(0, 0, 0)]),
-        shapeType=np.array([0], dtype=np.int64),
-        additive=np.zeros(0, dtype=bool),
-        smoothing=np.zeros(0, dtype=d64),
-        radius=np.zeros(0, dtype=d64),
-        height=np.zeros(0, dtype=d64),
-        axis=np.zeros(0, dtype=np.int64),
-        halfExtents=np.zeros((0, 3), dtype=d64),
+        shapeMatrix = np.stack([_mat(0, 0, 0)]),
+        shapeType   = np.array([0], dtype=np.int64),
+        additive    = np.zeros(0, dtype=bool),
+        smoothing   = np.zeros(0, dtype=d64),
+        radius      = np.zeros(0, dtype=d64),
+        height      = np.zeros(0, dtype=d64),
+        axis        = np.zeros(0, dtype=np.int64),
+        halfExtents = np.zeros((0, 3), dtype=d64),
         resolution=8, isoValue=0.0)
 
     # Case E: EMPTY scene (0 shapes). The OLD glue short-circuits via its
@@ -196,27 +196,27 @@ def build_cases():
     # guard and folds n==0 through _mesh_packed (which returns an empty packed
     # array). Both must yield the identical empty (points, counts, indices).
     cases["empty_scene"] = _MockSelf(
-        shapeMatrix=np.zeros((0, 4, 4), dtype=d64),
-        shapeType=np.zeros(0, dtype=np.int64),
-        additive=np.zeros(0, dtype=bool),
-        smoothing=np.zeros(0, dtype=d64),
-        radius=np.zeros(0, dtype=d64),
-        height=np.zeros(0, dtype=d64),
-        axis=np.zeros(0, dtype=np.int64),
-        halfExtents=np.zeros((0, 3), dtype=d64),
+        shapeMatrix = np.zeros((0, 4, 4), dtype=d64),
+        shapeType   = np.zeros(0, dtype=np.int64),
+        additive    = np.zeros(0, dtype=bool),
+        smoothing   = np.zeros(0, dtype=d64),
+        radius      = np.zeros(0, dtype=d64),
+        height      = np.zeros(0, dtype=d64),
+        axis        = np.zeros(0, dtype=np.int64),
+        halfExtents = np.zeros((0, 3), dtype=d64),
         resolution=8, isoValue=0.0)
 
     # Case D: all-cylinder default radius branch (where(shape_type==2, 0.5, 1.0)
     # -> 0.5) exercised via an empty radius multi with a cylinder present.
     cases["cyl_default_radius"] = _MockSelf(
-        shapeMatrix=np.stack([_mat(0, 0, 0)]),
-        shapeType=np.array([2], dtype=np.int64),
-        additive=np.zeros(0, dtype=bool),
-        smoothing=np.zeros(0, dtype=d64),
-        radius=np.zeros(0, dtype=d64),                    # -> default 0.5 (cyl)
-        height=np.zeros(0, dtype=d64),                    # -> default 1.0
-        axis=np.zeros(0, dtype=np.int64),                 # -> default 1 (Y)
-        halfExtents=np.zeros((0, 3), dtype=d64),
+        shapeMatrix = np.stack([_mat(0, 0, 0)]),
+        shapeType   = np.array([2], dtype=np.int64),
+        additive    = np.zeros(0, dtype=bool),
+        smoothing   = np.zeros(0, dtype=d64),
+        radius      = np.zeros(0, dtype=d64),       # -> default 0.5 (cyl)
+        height      = np.zeros(0, dtype=d64),       # -> default 1.0
+        axis        = np.zeros(0, dtype=np.int64),  # -> default 1 (Y)
+        halfExtents = np.zeros((0, 3), dtype=d64),
         resolution=8, isoValue=0.0)
 
     return cases

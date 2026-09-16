@@ -33,7 +33,7 @@ def _qt():
 
 
 def _last_color(ed):
-    b = ed.document().lastBlock()
+    b  = ed.document().lastBlock()
     it = b.begin()
     if it.atEnd():
         return None
@@ -60,7 +60,7 @@ class TestLoggerColorReset(unittest.TestCase):
         """Simulate the intermittent Qt carry-over: force the editor's
         current + trailing char format to red, then log info. It must
         still come out theme-default."""
-        w = self._widget()
+        w   = self._widget()
         red = QTextCharFormat()
         red.setForeground(QColor("#d44444"))
         w._editor.setCurrentCharFormat(red)

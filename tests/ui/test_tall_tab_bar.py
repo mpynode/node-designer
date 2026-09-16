@@ -23,7 +23,7 @@ try:  # QApplication must exist before importing UI modules that build widgets.
     except Exception:
         from PySide2.QtWidgets import QApplication
     _app = QApplication.instance() or QApplication([])
-    _QT = True
+    _QT  = True
 except Exception:  # pragma: no cover - Qt missing
     _QT = False
 
@@ -56,7 +56,7 @@ class TestTallTabBarUnit(unittest.TestCase):
         from mpynode.ui.qt_wrapper import QTabWidget, QWidget
         from mpynode.ui.widgets.tall_tab_bar import make_tabs_tall, TallTabBar
 
-        tw = QTabWidget()
+        tw  = QTabWidget()
         bar = make_tabs_tall(tw)
         tw.addTab(QWidget(), "A")
         tw.addTab(QWidget(), "B")
@@ -82,9 +82,9 @@ class TestTallTabBarBehavioral(unittest.TestCase):
     def test_tall_bar_is_1_5x_taller(self):
         from mpynode.ui.widgets.tall_tab_bar import TallTabBar
         plain = self._north()
-        tall = self._north(TallTabBar())
-        ph = plain.tabBar().tabRect(0).height()
-        th = tall.tabBar().tabRect(0).height()
+        tall  = self._north(TallTabBar())
+        ph    = plain.tabBar().tabRect(0).height()
+        th    = tall.tabBar().tabRect(0).height()
         self.assertGreater(ph, 0)
         self.assertGreater(th, ph)  # taller
         self.assertAlmostEqual(th / float(ph), 1.5, delta=0.2)
@@ -101,9 +101,9 @@ class TestTallTabBarBehavioral(unittest.TestCase):
         # reliable close button); it must be taller by the same factor.
         from mpynode.ui.widgets.script_tab import NDEditorTabBar
         plain = self._north()
-        ed = self._north(NDEditorTabBar())
-        ph = plain.tabBar().tabRect(0).height()
-        eh = ed.tabBar().tabRect(0).height()
+        ed    = self._north(NDEditorTabBar())
+        ph    = plain.tabBar().tabRect(0).height()
+        eh    = ed.tabBar().tabRect(0).height()
         self.assertGreater(eh, ph)
         self.assertAlmostEqual(eh / float(ph), 1.5, delta=0.2)
         plain.deleteLater()
@@ -157,7 +157,7 @@ class TestEqualWidthTabBar(unittest.TestCase):
         from mpynode.ui.widgets.tall_tab_bar import EqualWidthTabBar
 
         host = QWidget()
-        lay = QVBoxLayout(host)
+        lay  = QVBoxLayout(host)
         lay.setContentsMargins(0, 0, 0, 0)
         bar = EqualWidthTabBar()
         bar.addTab("Expressions")
@@ -171,7 +171,7 @@ class TestEqualWidthTabBar(unittest.TestCase):
         self.assertGreater(w0, 0)
         self.assertAlmostEqual(w0, w1, delta=2)                 # equal halves
         self.assertAlmostEqual(w0, bar.width() / 2.0, delta=6)  # ~half the bar
-        self.assertGreater(w0, 150)  # fills width, not text-hugging
+        self.assertGreater(w0, 150)                             # fills width, not text-hugging
         host.deleteLater()
 
 
@@ -194,8 +194,8 @@ class TestTallTabBarWiredIn(unittest.TestCase):
             script_tab_content.NDScriptTabContent.__init__)
         self.assertIn("make_tabs_uniform(self._inner_tabs)", src)
         self.assertIn("self._inner_tab_bar =", src)  # ref kept vs PySide GC
-        self.assertNotIn("EqualWidthTabBar", src)
-        self.assertNotIn("self._outer_bar", src)
+        self.assertNotIn("EqualWidthTabBar",  src)
+        self.assertNotIn("self._outer_bar",   src)
         self.assertNotIn("self._outer_stack", src)
 
     def test_designer_panel_and_tools_are_tall(self):

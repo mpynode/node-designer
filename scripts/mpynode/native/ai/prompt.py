@@ -492,7 +492,7 @@ def build_prompt(spec: dict, skeleton: str, shared_protos=None) -> tuple:
     helper source for inline porting -- used when the followed helpers were
     hoisted into the shared C++ unit."""
     base = spec.get("suggested", {}).get("mpx_base", "MPxNode")
-    gk = codegen._geo_kind(spec)
+    gk   = codegen._geo_kind(spec)
     if gk:
         # Lazy import: emit_attr sits under the compiler package prompt.py
         # already depends on, but keep the module-level surface unchanged.
@@ -566,7 +566,7 @@ def build_prompt(spec: dict, skeleton: str, shared_protos=None) -> tuple:
     # text, which for several constructs (the MorphStack surface, ndio,
     # bake_deltas) names the supported form outright, so the model gets the
     # correct route rather than just a warning.
-    unported = list((spec.get("portability") or {}).get("unported") or [])
+    unported       = list((spec.get("portability") or {}).get("unported") or [])
     unported_block = ""
     if unported:
         unported_block = (
@@ -654,7 +654,7 @@ def _extract_body(text: str) -> str:
     leading/trailing prose lines. Interleaved mid-body prose is left for the
     compile fix-loop -- stripping it heuristically would risk real code. Pairs
     with the always-on ASCII scrub in ``llm_client._ascii_typography``."""
-    t = _strip_fences(text)
+    t      = _strip_fences(text)
     blocks = _FENCE_RE.findall((text or "").strip())
     if blocks:
         t = "\n".join(b.rstrip("\n") for b in blocks).strip("\n")
@@ -679,9 +679,9 @@ _BODY_IO_PATTERNS = [
      "scene access via MGlobal::execute* (the C++ shape of maya.cmds)"),
 ]
 
-_CPP_STR_RE = re.compile(r'"(?:\\.|[^"\\])*"')
+_CPP_STR_RE           = re.compile(r'"(?:\\.|[^"\\])*"')
 _CPP_BLOCK_COMMENT_RE = re.compile(r"/\*.*?\*/", re.DOTALL)
-_CPP_LINE_COMMENT_RE = re.compile(r"//[^\n]*")
+_CPP_LINE_COMMENT_RE  = re.compile(r"//[^\n]*")
 
 
 def _strip_cpp_comments(text: str) -> str:
@@ -789,11 +789,11 @@ def add_std_includes(cpp_text: str, headers) -> str:
     inlined nd_runtime header hundreds of lines below first use."""
     if not headers:
         return cpp_text
-    text = cpp_text or ""
-    tail = "\n" if text.endswith("\n") else ""
+    text  = cpp_text or ""
+    tail  = "\n" if text.endswith("\n") else ""
     lines = text.splitlines()
-    new = ["#include <%s>" % h for h in headers]
-    at = None
+    new   = ["#include <%s>" % h for h in headers]
+    at    = None
     for i, ln in enumerate(lines):
         if _ANGLE_INC_RE.match(ln):
             at = i
@@ -828,8 +828,8 @@ def scan_ported_body(cpp_text: str) -> dict:
     Pure text; safe on a cached .cpp, so a cache HIT reports the same state a
     fresh port would."""
     incomplete = []
-    io = []
-    bodies = ported_bodies(cpp_text)
+    io         = []
+    bodies     = ported_bodies(cpp_text)
     for body in bodies:
         for ln in body.splitlines():
             if PORT_INCOMPLETE in ln:
@@ -839,7 +839,7 @@ def scan_ported_body(cpp_text: str) -> dict:
         for pat, what in _BODY_IO_PATTERNS:
             if pat.search(code) and what not in io:
                 io.append(what)
-    out = {"ported": bool(bodies), "incomplete": incomplete, "io": io}
+    out  = {"ported": bool(bodies), "incomplete": incomplete, "io": io}
     need = missing_std_includes(cpp_text)
     if need:
         out["includes"] = need

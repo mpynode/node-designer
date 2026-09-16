@@ -93,7 +93,7 @@ def _scripts_dir():
 
 def _lowered_under(seed):
     """{path: [C++ lines]} produced by a fresh process with PYTHONHASHSEED."""
-    env = dict(os.environ)
+    env                   = dict(os.environ)
     env["PYTHONHASHSEED"] = str(seed)
     proc = subprocess.run(
         [sys.executable, "-c", _CHILD % (_scripts_dir(),)],

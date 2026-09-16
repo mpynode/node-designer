@@ -39,9 +39,9 @@ import struct
 import numpy as np
 
 MAGIC_NDIO = b"NDIO\x01"
-MAGIC_NPY = b"\x93NUMPY"
+MAGIC_NPY  = b"\x93NUMPY"
 
-__all__ = ["read", "write", "read_raw", "write_raw", "keys", "frame_path"]
+__all__  = ["read", "write", "read_raw", "write_raw", "keys", "frame_path"]
 
 _HASH_RE = re.compile(r"#+")
 
@@ -133,7 +133,7 @@ def _parse_ndio(buf):
             p += 8 * ndim
             (nbytes,) = struct.unpack_from("<Q", buf, p)
             p += 8
-            dt = np.dtype("<%s%d" % (kind, size))
+            dt  = np.dtype("<%s%d" % (kind, size))
             arr = np.frombuffer(buf[p:p + nbytes], dtype=dt)
             p += nbytes
             out[name] = arr.reshape(shape) if shape else arr
@@ -212,7 +212,7 @@ def read_raw(path, dtype=np.float64):
     if buf is None:
         return _empty(dtype)
     dt = np.dtype(dtype)
-    n = len(buf) // dt.itemsize
+    n  = len(buf) // dt.itemsize
     return np.frombuffer(buf[:n * dt.itemsize], dtype=dt)
 
 

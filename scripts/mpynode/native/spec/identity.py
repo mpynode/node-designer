@@ -33,8 +33,8 @@ def derive_class_identity(class_path, mpy_type, *, node_type_name_override=None)
     (or the explicit override). Keys: ``node_type_name``, ``class_name``,
     ``type_id``, plus ``**map_mpx_base(mpy_type)``.
     """
-    short = (class_path or "").rpartition(".")[2] or (class_path or "")
-    sane = _sanitize_ident(short)
+    short      = (class_path or "").rpartition(".")[2] or (class_path or "")
+    sane       = _sanitize_ident(short)
     class_name = sane[:1].upper() + sane[1:]
     if node_type_name_override and str(node_type_name_override).strip():
         node_type_name = _sanitize_ident(node_type_name_override)
@@ -46,7 +46,7 @@ def derive_class_identity(class_path, mpy_type, *, node_type_name_override=None)
     # suggestion anyway (reallocated at assemble, excluded from the port_cache key).
     return {
         "node_type_name": node_type_name,
-        "class_name": class_name,
-        "type_id": suggest_type_id(node_type_name),
+        "class_name":     class_name,
+        "type_id":        suggest_type_id(node_type_name),
         **map_mpx_base(mpy_type),
     }

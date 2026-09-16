@@ -130,18 +130,18 @@ class NDMethodsEditor(_NDMethodsBaseEditor):
         Module strip, which never holds a self-first setup/demo. Mirrors the
         base's ``menu.exec_(...)`` idiom so it behaves identically under PySide2
         (Maya 2024) and PySide6 (2026)."""
-        menu = self.createStandardContextMenu()
+        menu      = self.createStandardContextMenu()
         has_setup = False
-        demos = []
+        demos     = []
         try:
             from mpynode._common import node_setups
 
-            src = self._py_node.get_methods_source() or ""
+            src       = self._py_node.get_methods_source() or ""
             has_setup = node_setups.find_setup(src) is not None
-            demos = node_setups.find_demos(src)
+            demos     = node_setups.find_demos(src)
         except Exception:
             has_setup = False
-            demos = []
+            demos     = []
         if has_setup or demos:
             menu.addSeparator()
             if has_setup:

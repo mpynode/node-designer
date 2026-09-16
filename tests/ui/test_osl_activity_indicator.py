@@ -32,7 +32,7 @@ class _FakeNode:
     """Minimal py_node stand-in for NDOslEditor (OSL get/set + name)."""
 
     def __init__(self, osl="PRIOR OSL"):
-        self._osl = osl
+        self._osl      = osl
         self.set_calls = []
 
     def get_osl_expression(self):
@@ -57,11 +57,11 @@ class TestOslEditorConvertSignals(unittest.TestCase):
     def setUp(self):
         from mpynode.ui.widgets.osl_editor import NDOslEditor
 
-        self.node = _FakeNode()
-        self.editor = NDOslEditor(self.node)
-        self.progress = []
+        self.node      = _FakeNode()
+        self.editor    = NDOslEditor(self.node)
+        self.progress  = []
         self.succeeded = []
-        self.failed = []
+        self.failed    = []
         self.cancelled = []
         self.editor.convertProgress.connect(self.progress.append)
         self.editor.convertSucceeded.connect(lambda: self.succeeded.append(True))
@@ -77,7 +77,7 @@ class TestOslEditorConvertSignals(unittest.TestCase):
         from mpynode._common.osl import osl_ai_convert
         import maya.utils as mu
 
-        _MISSING = object()
+        _MISSING  = object()
         orig_make = porter.make_cli_complete_fn
         orig_conv = osl_ai_convert.ai_convert_compute_to_osl
         # In real Maya GUI this exists; in headless mayapy it may be absent, so
@@ -88,12 +88,12 @@ class TestOslEditorConvertSignals(unittest.TestCase):
                          validate_fn=None, max_repair=1, log_cb=None):
             return complete_fn("system", "user")
 
-        porter.make_cli_complete_fn = make_fn
+        porter.make_cli_complete_fn              = make_fn
         osl_ai_convert.ai_convert_compute_to_osl = _passthrough
-        mu.executeInMainThreadWithResult = lambda fn: fn()
+        mu.executeInMainThreadWithResult         = lambda fn: fn()
 
         def _cleanup():
-            porter.make_cli_complete_fn = orig_make
+            porter.make_cli_complete_fn              = orig_make
             osl_ai_convert.ai_convert_compute_to_osl = orig_conv
             if orig_marshal is _MISSING:
                 try:
@@ -117,9 +117,9 @@ class TestOslEditorConvertSignals(unittest.TestCase):
         self._patch(make)
         self.editor._run_ai_convert("compute", "init", "fakeShader")
 
-        self.assertEqual(self.progress, ["line 0", "line 1", "line 2"])
+        self.assertEqual(self.progress,  ["line 0", "line 1", "line 2"])
         self.assertEqual(self.succeeded, [True])
-        self.assertEqual(self.failed, [])
+        self.assertEqual(self.failed,    [])
         self.assertEqual(self.node._osl, "shader fakeShader() { }")
 
     def test_failure_emits_convertFailed_and_preserves_osl(self):
@@ -149,7 +149,7 @@ class TestOslEditorConvertSignals(unittest.TestCase):
         self.editor._run_ai_convert("compute", "init", "fakeShader")
 
         self.assertEqual(self.cancelled, [True])
-        self.assertEqual(self.failed, [])
+        self.assertEqual(self.failed,    [])
         self.assertEqual(self.succeeded, [])
         self.assertEqual(self.node._osl, "PRIOR OSL")  # untouched
 
@@ -166,9 +166,9 @@ class TestOslEditorConvertSignals(unittest.TestCase):
         from mpynode.ui.widgets.osl_editor import _make_destroy_canceller
 
         holder = {"ev": None}
-        fn = _make_destroy_canceller(holder)
+        fn     = _make_destroy_canceller(holder)
         fn()  # nothing in flight -> no-op, must not raise
-        ev = threading.Event()
+        ev           = threading.Event()
         holder["ev"] = ev
         fn()
         self.assertTrue(ev.is_set())
@@ -184,10 +184,10 @@ class TestOslEditorConvertSignals(unittest.TestCase):
         from mpynode._common.osl import osl_ai_convert
         import maya.utils as mu
 
-        _MISSING = object()
-        captured = {}
-        orig_make = porter.make_cli_complete_fn
-        orig_conv = osl_ai_convert.ai_convert_compute_to_osl
+        _MISSING     = object()
+        captured     = {}
+        orig_make    = porter.make_cli_complete_fn
+        orig_conv    = osl_ai_convert.ai_convert_compute_to_osl
         orig_marshal = getattr(mu, "executeInMainThreadWithResult", _MISSING)
 
         def _cap(compute, init, shader, complete_fn,
@@ -201,10 +201,10 @@ class TestOslEditorConvertSignals(unittest.TestCase):
             lambda cancel_event=None, log_cb=None:
             (lambda system, user: "shader fakeShader() { }"))
         osl_ai_convert.ai_convert_compute_to_osl = _cap
-        mu.executeInMainThreadWithResult = lambda fn: fn()
+        mu.executeInMainThreadWithResult         = lambda fn: fn()
 
         def _cleanup():
-            porter.make_cli_complete_fn = orig_make
+            porter.make_cli_complete_fn              = orig_make
             osl_ai_convert.ai_convert_compute_to_osl = orig_conv
             if orig_marshal is _MISSING:
                 try:
@@ -225,8 +225,8 @@ class TestOslEditorConvertSignals(unittest.TestCase):
         from mpynode.native.ai import porter
         from mpynode._common.osl.osl_convert import UnsupportedComputeError
 
-        orig_check = porter.check_provider
-        orig_thread = threading.Thread
+        orig_check            = porter.check_provider
+        orig_thread           = threading.Thread
         porter.check_provider = lambda: {"ok": True}
 
         class _NoRunThread:  # capture target, never actually run it
@@ -240,7 +240,7 @@ class TestOslEditorConvertSignals(unittest.TestCase):
 
         def _cleanup():
             porter.check_provider = orig_check
-            threading.Thread = orig_thread
+            threading.Thread      = orig_thread
 
         self.addCleanup(_cleanup)
 
@@ -277,7 +277,7 @@ class TestOslActivityStrip(unittest.TestCase):
 
     def test_stop_button_emits_stopRequested(self):
         strip = self._make()
-        got = []
+        got   = []
         strip.stopRequested.connect(lambda: got.append(True))
         strip.start()
         strip.request_stop()
@@ -361,22 +361,22 @@ class TestOslTabIntegration(unittest.TestCase):
                               NDOslActivityStrip)
 
     def test_signals_drive_the_strip(self):
-        tab = self._make_tab()
-        ed = tab._osl_editor
+        tab   = self._make_tab()
+        ed    = tab._osl_editor
         strip = tab._osl_activity
 
-        ed.convertBusyChanged.emit(True)             # host -> strip.start()
+        ed.convertBusyChanged.emit(True)                  # host -> strip.start()
         ed.convertProgress.emit("[tool] validating OSL compile")
         self.assertIn("validating OSL compile", strip.log_text())
         self.assertIn("Validating", strip.status_text())  # curated stage bump
 
-        ed.convertFailed.emit("kaboom")              # persistent inline error
+        ed.convertFailed.emit("kaboom")                   # persistent inline error
         self.assertIn("kaboom", strip.status_text())
         self.assertIn("✕", strip.status_text())
 
     def test_success_signal_clears_error(self):
-        tab = self._make_tab()
-        ed = tab._osl_editor
+        tab   = self._make_tab()
+        ed    = tab._osl_editor
         strip = tab._osl_activity
         ed.convertBusyChanged.emit(True)
         ed.convertSucceeded.emit()
@@ -431,13 +431,13 @@ class TestOslEditorIntractabilityGate(unittest.TestCase):
         from mpynode._common.osl.osl_convert import UnsupportedComputeError
         from mpynode.native.ai import porter
 
-        node = _CompositeNode()
+        node   = _CompositeNode()
         editor = NDOslEditor(node)
         failed = []
         editor.convertFailed.connect(failed.append)
 
         check_calls = {"n": 0}
-        orig_check = porter.check_provider
+        orig_check  = porter.check_provider
         orig_thread = threading.Thread
 
         def _spy_check():
@@ -452,19 +452,19 @@ class TestOslEditorIntractabilityGate(unittest.TestCase):
                 raise AssertionError("worker thread must NOT start")
 
         porter.check_provider = _spy_check
-        threading.Thread = _NoRun
+        threading.Thread      = _NoRun
         try:
             started = editor._convert_via_ai(UnsupportedComputeError("nope"))
         finally:
             porter.check_provider = orig_check
-            threading.Thread = orig_thread
+            threading.Thread      = orig_thread
             editor.deleteLater()
 
         self.assertFalse(started)
         self.assertFalse(editor._ai_busy)
-        self.assertEqual(check_calls["n"], 0)   # short-circuits before pre-flight
+        self.assertEqual(check_calls["n"], 0)     # short-circuits before pre-flight
         self.assertEqual(len(failed), 1)
-        self.assertIn("filePaths", failed[0])   # actionable, names the culprit
+        self.assertIn("filePaths", failed[0])     # actionable, names the culprit
         self.assertEqual(node._osl, "PRIOR OSL")  # prior osl untouched
 
 

@@ -24,16 +24,16 @@ SCHEMA_VERSION = 1
 
 # mPy maya nodeType -> target C++ MPx base + porting note + heaviness.
 _MPX_BASE = {
-    "mPyNode": ("MPxNode", "plain dependency node", "easy"),
-    "mPyTransform": ("MPxTransform", "custom transform matrix", "medium"),
-    "mPyDeformer": ("MPxDeformerNode", "per-point mesh deform", "medium"),
-    "mPySkinCluster": ("MPxSkinCluster", "custom skinning", "hard"),
-    "mPyConstraint": ("MPxNode", "constraint emulated as a DG node", "medium"),
-    "mPyMesh": ("MPxNode", "outputs a mesh data attr", "medium"),
-    "mPyNurbsCurve": ("MPxNode", "outputs a nurbsCurve data attr", "medium"),
+    "mPyNode":         ("MPxNode", "plain dependency node", "easy"),
+    "mPyTransform":    ("MPxTransform", "custom transform matrix", "medium"),
+    "mPyDeformer":     ("MPxDeformerNode", "per-point mesh deform", "medium"),
+    "mPySkinCluster":  ("MPxSkinCluster", "custom skinning", "hard"),
+    "mPyConstraint":   ("MPxNode", "constraint emulated as a DG node", "medium"),
+    "mPyMesh":         ("MPxNode", "outputs a mesh data attr", "medium"),
+    "mPyNurbsCurve":   ("MPxNode", "outputs a nurbsCurve data attr", "medium"),
     "mPyNurbsSurface": ("MPxNode", "outputs a nurbsSurface data attr", "medium"),
-    "mPyFile": ("MPxNode", "texture/file evaluation node", "medium"),
-    "mPyLocator": ("MPxLocatorNode", "viewport draw override (MUIDrawManager)", "hard"),
+    "mPyFile":         ("MPxNode", "texture/file evaluation node", "medium"),
+    "mPyLocator":      ("MPxLocatorNode", "viewport draw override (MUIDrawManager)", "hard"),
     # mPyBlendShape is an MPxDeformerNode, so it ports via the deformer codegen.
     "mPyBlendShape": ("MPxDeformerNode", "expression blendShape (deformer-based)", "medium"),
     # mPyIkSolver -> doSolve codegen (dedicated emitter).
@@ -75,16 +75,16 @@ _NORM_TYPE = {
     "float2": {"cat": "vector2","fn": "MFnNumericAttribute", "data": "k2Float",  "cpp": "float[2]", "read": "asFloat2", "portable": True},
     # color: 3-float RENDERABLE compound (createColor/usedAsColor) -- binds to
     # material.color + Arnold, unlike a plain vector.
-    "color":  {"cat": "color",  "fn": "MFnNumericAttribute", "data": "color",    "cpp": "float[3]", "read": "asFloat3", "portable": True},
-    "euler":  {"cat": "vector", "fn": "MFnUnitAttribute*3",  "data": "kAngle*3", "cpp": "double[3]","read": "asDouble3","portable": True},
+    "color": {"cat": "color",  "fn": "MFnNumericAttribute", "data": "color",    "cpp": "float[3]", "read": "asFloat3", "portable": True},
+    "euler": {"cat": "vector", "fn": "MFnUnitAttribute*3",  "data": "kAngle*3", "cpp": "double[3]","read": "asDouble3","portable": True},
     # quaternion: generic compound of 4 doubles -- there is no numeric double4,
     # so children are read via MFnCompoundAttribute child handles (no asDouble4).
-    "quaternion": {"cat": "quaternion", "fn": "MFnCompoundAttribute", "data": "kDouble*4", "cpp": "double[4]", "read": "child", "portable": True},
-    "matrix": {"cat": "matrix", "fn": "MFnMatrixAttribute",  "data": "kDouble",  "cpp": "MMatrix", "read": "asMatrix", "portable": True},
-    "enum":   {"cat": "enum",   "fn": "MFnEnumAttribute",    "data": "enum",     "cpp": "short",   "read": "asShort",  "portable": True},
-    "string": {"cat": "string", "fn": "MFnTypedAttribute",   "data": "kString",  "cpp": "MString", "read": "asString", "portable": True},
-    "hex":    {"cat": "string", "fn": "MFnTypedAttribute",   "data": "kString",  "cpp": "MString", "read": "asString", "portable": True},
-    "mesh":   {"cat": "geo",    "fn": "MFnTypedAttribute",   "data": "kMesh",        "cpp": "MObject", "read": "asMesh",        "portable": True},
+    "quaternion":   {"cat": "quaternion", "fn": "MFnCompoundAttribute", "data": "kDouble*4", "cpp": "double[4]", "read": "child", "portable": True},
+    "matrix":       {"cat": "matrix", "fn": "MFnMatrixAttribute",  "data": "kDouble",  "cpp": "MMatrix", "read": "asMatrix", "portable": True},
+    "enum":         {"cat": "enum",   "fn": "MFnEnumAttribute",    "data": "enum",     "cpp": "short",   "read": "asShort",  "portable": True},
+    "string":       {"cat": "string", "fn": "MFnTypedAttribute",   "data": "kString",  "cpp": "MString", "read": "asString", "portable": True},
+    "hex":          {"cat": "string", "fn": "MFnTypedAttribute",   "data": "kString",  "cpp": "MString", "read": "asString", "portable": True},
+    "mesh":         {"cat": "geo",    "fn": "MFnTypedAttribute",   "data": "kMesh",        "cpp": "MObject", "read": "asMesh",        "portable": True},
     "nurbsCurve":   {"cat": "geo", "fn": "MFnTypedAttribute","data": "kNurbsCurve",  "cpp": "MObject", "read": "asNurbsCurve",  "portable": True},
     "nurbsSurface": {"cat": "geo", "fn": "MFnTypedAttribute","data": "kNurbsSurface","cpp": "MObject", "read": "asNurbsSurface","portable": True},
     # Arbitrary pickled Python -- no native representation.
@@ -294,10 +294,10 @@ def map_mpx_base(mpy_type: str) -> dict:
 def normalize_attr(meta: dict) -> dict:
     """Augment a raw attr meta dict with normalized C++ codegen hints."""
     attr_type = meta.get("attr_type", "")
-    norm = _NORM_TYPE.get(attr_type)
-    portable = bool(norm["portable"]) if norm else False
+    norm      = _NORM_TYPE.get(attr_type)
+    portable  = bool(norm["portable"]) if norm else False
     out = {
-        "type": attr_type,
+        "type":     attr_type,
         "is_array": bool(meta.get("is_array", False)),
         "portable": portable,
         # Codegen hints only when the attr is representable in C++.
@@ -398,19 +398,19 @@ def _strip_comments_strings(src: str) -> str:
         if srow < 0 or srow >= len(lines):
             continue
         if srow == erow:
-            line = lines[srow]
+            line        = lines[srow]
             lines[srow] = line[:scol] + " " * (ecol - scol) + line[ecol:]
             continue
         # Multi-line token (e.g. a triple-quoted string): blank each row it spans.
-        first = lines[srow]
-        nl = "\n" if first.endswith("\n") else ""
+        first       = lines[srow]
+        nl          = "\n" if first.endswith("\n") else ""
         lines[srow] = first[:scol] + " " * (len(first) - scol - len(nl)) + nl
         for r in range(srow + 1, min(erow, len(lines) - 1) + 1):
             row = lines[r]
             if r == erow:
                 lines[r] = " " * ecol + row[ecol:]
             else:
-                nl = "\n" if row.endswith("\n") else ""
+                nl       = "\n" if row.endswith("\n") else ""
                 lines[r] = " " * (len(row) - len(nl)) + nl
     return "".join(lines)
 
@@ -494,8 +494,8 @@ def assess_portability(compute: str, init: str, inputs: dict, outputs: dict,
     blockers: list[str] = []
     warnings: list[str] = []
     unported: list[str] = []
-    reads_image_file = False
-    reads_embedded_image = False
+    reads_image_file      = False
+    reads_embedded_image  = False
     uses_mesh_intersector = False
 
     def _unported(reason):
@@ -741,8 +741,8 @@ def assess_portability(compute: str, init: str, inputs: dict, outputs: dict,
                 warnings.append("%s %r is geometry -- heavier C++ (MFn* construction)" % (label, name))
 
     return {"portable": not blockers, "blockers": blockers, "warnings": warnings,
-            "unported": unported,
-            "reads_image_file": reads_image_file,
+            "unported":             unported,
+            "reads_image_file":     reads_image_file,
             "reads_embedded_image": reads_embedded_image,
             "uses_mesh_intersector": uses_mesh_intersector}
 
@@ -838,7 +838,7 @@ _MAYA_ATTR_TO_SPEC = {
     "float": "float", "double": "double", "doubleLinear": "double",
     "long": "int", "short": "int", "byte": "int", "bool": "bool",
     "enum": "enum", "doubleAngle": "angle", "time": "time",
-    "float2": "float2",
+    "float2":  "float2",
     "double3": "vector",
     "matrix": "matrix", "fltMatrix": "matrix",
 }
@@ -885,9 +885,9 @@ def _preset_attr_meta(node: str, attr: str, mc) -> dict | None:
         except Exception:
             return None
 
-    writable = bool(q(writable=True))
-    readable = bool(q(readable=True))
-    at = q(attributeType=True)
+    writable  = bool(q(writable=True))
+    readable  = bool(q(readable=True))
+    at        = q(attributeType=True)
     spec_type = _MAYA_ATTR_TO_SPEC.get(at)
     if at == "typed":
         # Maya reports a string attr as 'typed'; confirm via getAttr type.
@@ -946,7 +946,7 @@ def _capture_preset_attrs(node: str, mpy_type: str, compute: str, init: str,
     the live and scene-free (.mpn) paths produce byte-identical output by construction."""
     if mpy_type not in _PRESET_CAPTURE_TYPES:
         return {}, {}
-    table = _preset_meta_table()
+    table      = _preset_meta_table()
     referenced = set(_self_attr_refs("%s\n%s" % (compute or "", init or "")))
     # Blessed-method reads: a compute that CALLS a blessed method (e.g.
     # self.read_texture()) reads the PRESET inputs INSIDE the interpreted adapter,
@@ -1012,7 +1012,7 @@ def capture_named_presets(node: str, names) -> dict:
     ``{name: normalized_entry}``.
     """
     table = _preset_meta_table()
-    out = {}
+    out   = {}
     for nm in names:
         if not nm or nm.startswith("_"):
             continue
@@ -1047,11 +1047,11 @@ def extract_spec(node: str) -> dict:
     if w is None:
         raise ValueError("node %r not found (or not an mPy node)" % node)
 
-    name = w.get_name()
+    name     = w.get_name()
     mpy_type = mc.nodeType(name)
 
-    raw_in = {}
-    raw_out = {}
+    raw_in   = {}
+    raw_out  = {}
     try:
         raw_in = w.get_input_attr_map() or {}
     except Exception:
@@ -1087,23 +1087,23 @@ def extract_spec(node: str) -> dict:
     for k, v in preset_out.items():
         raw_out.setdefault(k, v)
 
-    inputs = {n: normalize_attr(m) for n, m in raw_in.items()}
+    inputs  = {n: normalize_attr(m) for n, m in raw_in.items()}
     outputs = {n: normalize_attr(m) for n, m in raw_out.items()}
 
     # Follow the node's imports to the SOURCE of pure-Python helpers it calls from
     # external modules, so the porter ports them alongside the compute. Best-effort
     # + read-only (static resolution, no import/exec); ANY failure -> "".
     # See native/ai/import_follower.py.
-    external_helpers = ""
+    external_helpers      = ""
     external_helper_units = []
     try:
         from mpynode.native.ai import import_follower
 
-        _hres = import_follower.collect_helper_sources(compute, init)
-        external_helpers = import_follower.render_for_prompt(_hres)
+        _hres                 = import_follower.collect_helper_sources(compute, init)
+        external_helpers      = import_follower.render_for_prompt(_hres)
         external_helper_units = _hres.get("sources") or []
     except Exception:
-        external_helpers = ""
+        external_helpers      = ""
         external_helper_units = []
 
     from mpynode.native.spec.identity import derive_class_identity
@@ -1119,14 +1119,14 @@ def extract_spec(node: str) -> dict:
     # instance-name fallback is a safety net for programmatic extraction only.
     spec = {
         "schema_version": SCHEMA_VERSION,
-        "source_node": name,
-        "mpy_type": mpy_type,
-        "suggested": derive_class_identity(class_path or name, mpy_type),
-        "inputs": inputs,
-        "outputs": outputs,
-        "variables": variables,
-        "compute": compute,
-        "init": init,
+        "source_node":    name,
+        "mpy_type":       mpy_type,
+        "suggested":      derive_class_identity(class_path or name, mpy_type),
+        "inputs":         inputs,
+        "outputs":        outputs,
+        "variables":      variables,
+        "compute":        compute,
+        "init":           init,
         # Conservative default: every input affects every output.
         "affects": "all",
     }

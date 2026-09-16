@@ -81,7 +81,7 @@ def force_one_eval(py_node) -> None:
 
     # Strategy 3: bump-and-restore the first USER scalar input. The bump dirties
     # the output but doesn't fire compute -- pull an output afterward.
-    get_input_map = getattr(py_node, "get_input_attr_map", None)
+    get_input_map  = getattr(py_node, "get_input_attr_map", None)
     get_output_map = getattr(py_node, "get_output_attr_map", None)
     if callable(get_input_map):
         try:
@@ -91,7 +91,7 @@ def force_one_eval(py_node) -> None:
         bumped = False
         for input_name, meta in input_map.items():
             attr_type = meta.get("attr_type")
-            plug = f"{name}.{input_name}"
+            plug      = f"{name}.{input_name}"
             if attr_type in ("float", "double"):
                 try:
                     old = cmds.getAttr(plug)

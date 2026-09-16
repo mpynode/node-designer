@@ -75,8 +75,8 @@ class TestCompileDialogDivergence(unittest.TestCase):
         u, ident, div = CompileDialog._dedup_specs_by_type(
             [spec("w", "out=1"), spec("w", "out=1")])
         self.assertEqual(len(u), 1)
-        self.assertEqual(ident, ["w"])
-        self.assertEqual(div, [])
+        self.assertEqual(ident,  ["w"])
+        self.assertEqual(div,    [])
         # Two divergent instances: the second is a LOSSY drop, returned whole
         # so the caller can key an acknowledgment by source_node.
         u, ident, div = CompileDialog._dedup_specs_by_type(
@@ -89,9 +89,9 @@ class TestCompileDialogDivergence(unittest.TestCase):
     # --- pre-flight branches -------------------------------------------
 
     def test_identical_instances_proceed_without_prompt(self):
-        a = self._mk("dlgIdA", "Widget", "out = x + 1")
-        b = self._mk("dlgIdB", "Widget", "out = x + 1")
-        dlg = self._dialog()
+        a       = self._mk("dlgIdA", "Widget", "out = x + 1")
+        b       = self._mk("dlgIdB", "Widget", "out = x + 1")
+        dlg     = self._dialog()
         checked = [(a.get_name(), "mPyNode"), (b.get_name(), "mPyNode")]
         # If the prompt is reached it's a bug -> make it fail loudly.
         dlg._prompt_divergence_choice = lambda d: self.fail(
@@ -100,9 +100,9 @@ class TestCompileDialogDivergence(unittest.TestCase):
         self.assertEqual(dlg._acknowledged_diverged_nodes, set())
 
     def test_fork_choice_forks_the_divergent_sibling(self):
-        a = self._mk("dlgForkA", "Widget", "out = x + 1")
-        b = self._mk("dlgForkB", "Widget", "out = x + 2")
-        dlg = self._dialog()
+        a       = self._mk("dlgForkA", "Widget", "out = x + 1")
+        b       = self._mk("dlgForkB", "Widget", "out = x + 2")
+        dlg     = self._dialog()
         checked = [(a.get_name(), "mPyNode"), (b.get_name(), "mPyNode")]
         dlg._prompt_divergence_choice = lambda d: "fork"
         self.assertTrue(dlg._resolve_divergence(checked))
@@ -115,9 +115,9 @@ class TestCompileDialogDivergence(unittest.TestCase):
     def test_fork_skips_existing_class_names(self):
         # Widget2 already taken by an unrelated node -> fork lands on Widget3.
         self._mk("dlgTaken", "Widget2", "out = 7")
-        a = self._mk("dlgFA", "Widget", "out = x + 1")
-        b = self._mk("dlgFB", "Widget", "out = x + 2")
-        dlg = self._dialog()
+        a       = self._mk("dlgFA", "Widget", "out = x + 1")
+        b       = self._mk("dlgFB", "Widget", "out = x + 2")
+        dlg     = self._dialog()
         checked = [(a.get_name(), "mPyNode"), (b.get_name(), "mPyNode")]
         dlg._prompt_divergence_choice = lambda d: "fork"
         self.assertTrue(dlg._resolve_divergence(checked))
@@ -129,11 +129,11 @@ class TestCompileDialogDivergence(unittest.TestCase):
         # on a different base and silently fail.
         from mpynode._common.io.user_classes import synthesize
         synthesize("Widget2", "mPyNode")  # orphan: no node carries it
-        a = self._mk("dlgOrphA", "Widget", "out = x + 1")
-        b = self._mk("dlgOrphB", "Widget", "out = x + 2")
+        a   = self._mk("dlgOrphA", "Widget", "out = x + 1")
+        b   = self._mk("dlgOrphB", "Widget", "out = x + 2")
         dlg = self._dialog()
         self.assertIn("Widget2", dlg._scene_class_names())  # union catches orphan
-        checked = [(a.get_name(), "mPyNode"), (b.get_name(), "mPyNode")]
+        checked                       = [(a.get_name(), "mPyNode"), (b.get_name(), "mPyNode")]
         dlg._prompt_divergence_choice = lambda d: "fork"
         self.assertTrue(dlg._resolve_divergence(checked))
         self.assertEqual(b.get_py_class(), "mpynode_user.Widget3")
@@ -141,19 +141,19 @@ class TestCompileDialogDivergence(unittest.TestCase):
     def test_fork_incomplete_cancels_rather_than_lossy_compile(self):
         # a fork that can't be fully applied aborts (returns False) instead of
         # falling through to a lossy compile.
-        a = self._mk("dlgIncA", "Widget", "out = x + 1")
-        b = self._mk("dlgIncB", "Widget", "out = x + 2")
-        dlg = self._dialog()
+        a       = self._mk("dlgIncA", "Widget", "out = x + 1")
+        b       = self._mk("dlgIncB", "Widget", "out = x + 2")
+        dlg     = self._dialog()
         checked = [(a.get_name(), "mPyNode"), (b.get_name(), "mPyNode")]
         dlg._prompt_divergence_choice = lambda d: "fork"
-        dlg._apply_fork_plan = lambda plan, nt: 0  # simulate a total fork failure
+        dlg._apply_fork_plan          = lambda plan, nt: 0  # simulate a total fork failure
         dlg._warn = lambda *a, **k: None           # don't block on the modal
         self.assertFalse(dlg._resolve_divergence(checked))
 
     def test_representative_choice_acknowledges_loss(self):
-        a = self._mk("dlgRepA", "Widget", "out = x + 1")
-        b = self._mk("dlgRepB", "Widget", "out = x + 2")
-        dlg = self._dialog()
+        a       = self._mk("dlgRepA", "Widget", "out = x + 1")
+        b       = self._mk("dlgRepB", "Widget", "out = x + 2")
+        dlg     = self._dialog()
         checked = [(a.get_name(), "mPyNode"), (b.get_name(), "mPyNode")]
         dlg._prompt_divergence_choice = lambda d: "representative"
         self.assertTrue(dlg._resolve_divergence(checked))
@@ -166,9 +166,9 @@ class TestCompileDialogDivergence(unittest.TestCase):
         self.assertEqual(b.get_py_class(), "mpynode_user.Widget")
 
     def test_cancel_choice_aborts_without_mutation(self):
-        a = self._mk("dlgCanA", "Widget", "out = x + 1")
-        b = self._mk("dlgCanB", "Widget", "out = x + 2")
-        dlg = self._dialog()
+        a       = self._mk("dlgCanA", "Widget", "out = x + 1")
+        b       = self._mk("dlgCanB", "Widget", "out = x + 2")
+        dlg     = self._dialog()
         checked = [(a.get_name(), "mPyNode"), (b.get_name(), "mPyNode")]
         dlg._prompt_divergence_choice = lambda d: "cancel"
         self.assertFalse(dlg._resolve_divergence(checked))
@@ -185,7 +185,7 @@ class TestCompileDialogDivergence(unittest.TestCase):
         a.set_compute_expression("out = 1")
         b = MPyNode.create(name="dlgLessB")
         b.set_compute_expression("out = 2")
-        dlg = self._dialog()
+        dlg     = self._dialog()
         checked = [(a.get_name(), "mPyNode"), (b.get_name(), "mPyNode")]
         dlg._prompt_divergence_choice = lambda d: self.fail(
             "prompt shown for class-less nodes")

@@ -12,9 +12,9 @@ for p in ("mpynode_api1", "mpynode_api2"):
 random.seed(1234)
 
 NATIVE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fixtures", "mPyBlendShape")
-BUNDLE = os.path.join(NATIVE_DIR, "customSquash.bundle")
-NODE_TYPE = "customSquash"
-SRC_TYPE = "mPyBlendShape"
+BUNDLE     = os.path.join(NATIVE_DIR, "customSquash.bundle")
+NODE_TYPE  = "customSquash"
+SRC_TYPE   = "mPyBlendShape"
 COMPUTE = ('mesh = self.outputGeometry[0]\n'
            'rest = mesh.getPoints()\n'
            'env = float(self.envelope)\n'
@@ -28,10 +28,10 @@ COMPUTE = ('mesh = self.outputGeometry[0]\n'
            'out[:, 2] = rest[:, 2] * inv\n'
            'out = rest + env * (out - rest)\n'
            'mesh.setPoints(out)\n')
-INIT = 'import numpy as np\n'
+INIT        = 'import numpy as np\n'
 USER_INPUTS = {"squash": "float"}
-TOL = 1e-4
-SAMPLES = 14
+TOL         = 1e-4
+SAMPLES     = 14
 
 
 def fail(reason):
@@ -52,7 +52,7 @@ import mpynode
 
 def _apply(deformer_type, configure):
     tr = cmds.polySphere(r=1, sx=12, sy=12, ch=False)[0]
-    d = cmds.deformer(tr, type=deformer_type)[0]
+    d  = cmds.deformer(tr, type=deformer_type)[0]
     if configure:
         configure(d)
     return tr, d
@@ -94,13 +94,13 @@ have_src_squash = cmds.objExists(src_d + ".squash")
 have_cmp_squash = cmds.objExists(cmp_d + ".squash")
 print("ATTR src.squash=%s cmp.squash=%s" % (have_src_squash, have_cmp_squash))
 
-maxerr = 0.0
+maxerr     = 0.0
 components = 0
-nsamp = 0
-mismatch = 0
+nsamp      = 0
+mismatch   = 0
 
 for k in range(SAMPLES):
-    env = random.uniform(0.0, 1.0)
+    env  = random.uniform(0.0, 1.0)
     sval = random.uniform(-2.0, 2.0)
     cmds.setAttr(src_d + ".envelope", env)
     cmds.setAttr(cmp_d + ".envelope", env)

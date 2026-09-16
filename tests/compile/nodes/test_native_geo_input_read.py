@@ -143,9 +143,9 @@ def _running_maya_root():
 
 
 _MESH_IN = [("inMesh", "mesh")]
-_CRV_IN = [("inCrv", "nurbsCurve")]
-_SRF_IN = [("inSrf", "nurbsSurface")]
-_XYZ = [("cx", "double"), ("cy", "double"), ("cz", "double")]
+_CRV_IN  = [("inCrv", "nurbsCurve")]
+_SRF_IN  = [("inSrf", "nurbsSurface")]
+_XYZ     = [("cx", "double"), ("cy", "double"), ("cz", "double")]
 
 
 class TestGeoInputLowerPureCpp(unittest.TestCase):
@@ -306,7 +306,7 @@ class TestGeoInputParity(unittest.TestCase):
         if not _running_maya_root():
             self.skipTest("no Maya devkit headers for the running mayapy")
         spec = _spec(name, compute, inputs, outs)
-        d = tempfile.mkdtemp()
+        d    = tempfile.mkdtemp()
         res = cc.compile_plugin([spec], name + "P", d, strict=True,
                                 verify=False, reuse_cache=False)
         self.assertTrue(res["ok"], "build failed: %s" % res.get("errors"))

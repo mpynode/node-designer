@@ -101,15 +101,15 @@ def seed_user_output_defaults_api2(fn_node, output_map) -> dict:
     """
     seeded: dict = {}
     for out_attr_name, meta in (output_map or {}).items():
-        meta = meta or {}
+        meta      = meta or {}
         attr_type = meta.get("attr_type", "float")
-        is_array = bool(meta.get("is_array", False))
-        n = 0
+        is_array  = bool(meta.get("is_array", False))
+        n         = 0
         if is_array:
             try:
                 oplug = fn_node.findPlug(out_attr_name, True)
-                idxs = list(oplug.getExistingArrayAttributeIndices())
-                n = (max(idxs) + 1) if idxs else 0
+                idxs  = list(oplug.getExistingArrayAttributeIndices())
+                n     = (max(idxs) + 1) if idxs else 0
             except Exception:
                 n = 0
         seeded[out_attr_name] = output_default(attr_type, is_array, n)
@@ -160,7 +160,7 @@ def seed_array_outputs_api1(node_mobject) -> dict:
     except Exception:
         return {}
     try:
-        fn = om1.MFnDependencyNode(node_mobject)
+        fn       = om1.MFnDependencyNode(node_mobject)
         outs_str = fn.findPlug("_outputAttrs", True).asString() or ""
     except Exception:
         return {}
@@ -175,7 +175,7 @@ def seed_array_outputs_api1(node_mobject) -> dict:
         meta = meta or {}
         if not meta.get("is_array"):
             continue
-        n = _array_output_size_api1(fn, name)
+        n            = _array_output_size_api1(fn, name)
         seeded[name] = array_default(meta.get("attr_type", "float"), n)
     return seeded
 

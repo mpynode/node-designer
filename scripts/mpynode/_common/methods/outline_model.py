@@ -53,14 +53,14 @@ OUTLINE_GROUPS = ("Module", "Commands", "Demos", "Test", "Setup", "Instance",
 # (a test enforces coverage). "Module" reads as "Functions", and the three method
 # kinds are spelled out so instance / class / static are distinguishable.
 GROUP_LABELS = {
-    "Module": "Functions",
-    "Commands": "Commands",
-    "Demos": "Demos",
-    "Test": "Tests",
-    "Setup": "Setup",
-    "Instance": "Instance Methods",
+    "Module":      "Functions",
+    "Commands":    "Commands",
+    "Demos":       "Demos",
+    "Test":        "Tests",
+    "Setup":       "Setup",
+    "Instance":    "Instance Methods",
     "Classmethod": "Class Methods",
-    "Static": "Static Methods",
+    "Static":      "Static Methods",
 }
 
 # Categories the outline ALWAYS renders, empty ones as a dimmed "(none)" row, so
@@ -140,8 +140,8 @@ def build_outline(source, native_type=None):
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         commands = detect_commands(source, tree=tree)
-        demos = detect_demos(source, tree=tree)
-        tests = detect_tests(source, tree=tree)
+        demos    = detect_demos(source, tree=tree)
+        tests    = detect_tests(source, tree=tree)
     # A ``creates=True`` def named ``setup`` is BOTH the reserved setup hook and
     # a command. It stays in the Setup group with run_kind="setup": the Script
     # tab's Run must keep going through _RunSetupCommand, which passes
@@ -164,7 +164,7 @@ def build_outline(source, native_type=None):
                          and c["func_name"] == "setup")}
     demo_funcs = {d["func_name"] for d in demos}
     test_funcs = {t["func_name"] for t in tests}
-    items = []
+    items      = []
     for c in commands:
         if creates_setup is not None and c["func_name"] == "setup":
             continue        # emitted by the Setup branch below instead

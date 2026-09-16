@@ -13,11 +13,11 @@ for p in ("mpynode_api1", "mpynode_api2"):
         cmds.loadPlugin(p, quiet=True)
 
 BUILD_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fixtures", "mPyNurbsCurve")
-ORIG_MA = os.path.join(BUILD_DIR, "mPyNurbsCurve_sineCurve_original.ma")
-BUNDLE = os.path.join(BUILD_DIR, "sineCurve.bundle")
+ORIG_MA   = os.path.join(BUILD_DIR, "mPyNurbsCurve_sineCurve_original.ma")
+BUNDLE    = os.path.join(BUILD_DIR, "sineCurve.bundle")
 NODE_TYPE = "sineCurve"
-SOURCE = "sineCurveSrc"
-TOL = 1e-4
+SOURCE    = "sineCurveSrc"
+TOL       = 1e-4
 
 PHASES = [0.0, 0.5, 1.0, 1.5, 2.0, 3.14159265, 4.5, 6.0]
 
@@ -59,17 +59,17 @@ def cv_positions(node):
     """Force-eval outCurve, return list of (x,y,z) in object space via API."""
     sel = om.MSelectionList()
     sel.add(node)
-    dep = om.MFnDependencyNode(sel.getDependNode(0))
+    dep  = om.MFnDependencyNode(sel.getDependNode(0))
     plug = dep.findPlug("outCurve", False)
     mobj = plug.asMObject()  # forces evaluation of the nurbsCurve data
-    fn = om.MFnNurbsCurve(mobj)
-    pts = fn.cvPositions(om.MSpace.kObject)
+    fn   = om.MFnNurbsCurve(mobj)
+    pts  = fn.cvPositions(om.MSpace.kObject)
     return [(p.x, p.y, p.z) for p in pts]
 
 
-maxerr = 0.0
-components = 0
-num_samples = 0
+maxerr          = 0.0
+components      = 0
+num_samples     = 0
 mismatch_detail = ""
 
 for phase in PHASES:
@@ -77,7 +77,7 @@ for phase in PHASES:
     cmds.setAttr(SOURCE + ".phase", phase)
     try:
         comp_cvs = cv_positions(comp)
-        src_cvs = cv_positions(SOURCE)
+        src_cvs  = cv_positions(SOURCE)
     except Exception as e:
         fail("error reading curve at phase=%s: %s" % (phase, e))
 

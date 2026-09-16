@@ -23,20 +23,20 @@ from mpynode.ui.qt_wrapper import (
 )
 from mpynode.ui.widgets.icons import icon_path
 
-RELIEF_ICON = "mpynode_hr.png"
-RELIEF_SCALE = 0.55            # fraction of the area's shorter side
+RELIEF_ICON          = "mpynode_hr.png"
+RELIEF_SCALE         = 0.55            # fraction of the area's shorter side
 RELIEF_HILIGHT_ALPHA = 0.05
-RELIEF_SHADOW_ALPHA = 0.06
+RELIEF_SHADOW_ALPHA  = 0.06
 
 # Optional caption under the logo (the gallery's node class): the caller's
 # text colour at this opacity, at the size Qt gives a markdown H1 -- so it
 # matches the title of the description shown beneath the frame. It never
 # overlaps the logo, so the relief above it is exactly the editor's.
-CAPTION_ALPHA = 0.35
-CAPTION_TITLE_FACTOR = 2.0     # Qt markdown H1: FontSizeAdjustment +3 = 2x body
-CAPTION_GAP = 0.08             # logo-to-caption space, fraction of the logo side
+CAPTION_ALPHA        = 0.35
+CAPTION_TITLE_FACTOR = 2.0   # Qt markdown H1: FontSizeAdjustment +3 = 2x body
+CAPTION_GAP          = 0.08  # logo-to-caption space, fraction of the logo side
 
-_base: QPixmap | None = None
+_base:   QPixmap | None = None
 _layers: dict[int, tuple[QPixmap, QPixmap]] = {}
 
 
@@ -75,7 +75,7 @@ def relief_base() -> QPixmap:
     """The source logo, loaded once; an empty pixmap when the icon is absent."""
     global _base
     if _base is None:
-        path = icon_path(RELIEF_ICON)
+        path  = icon_path(RELIEF_ICON)
         _base = QPixmap(path) if os.path.exists(path) else QPixmap()
     return _base
 
@@ -106,7 +106,7 @@ def paint_relief(painter: QPainter, rect: QRect, caption: str | None = None,
     the logo in ``caption_color``, at the size a markdown title gets; the
     logo itself sits exactly where the caption-less relief would, so every
     surface lines up. Returns ``True`` when something was painted."""
-    side = int(min(rect.width(), rect.height()) * RELIEF_SCALE)
+    side   = int(min(rect.width(), rect.height()) * RELIEF_SCALE)
     layers = relief_layers(side)
     if layers is None:
         return False

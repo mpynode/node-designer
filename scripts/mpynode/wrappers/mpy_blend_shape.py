@@ -130,7 +130,7 @@ _TABLE_KIND = {name: kind
 # cmds.setAttr needs the Maya data-type name, and needs the values already in
 # the right Python type -- an int table handed floats writes silently wrong.
 _PACKED_SET_TYPE = {"double": "doubleArray", "int": "Int32Array"}
-_TABLE_CAST = {"double": float, "int": int}
+_TABLE_CAST      = {"double": float, "int": int}
 
 # Scene formats that need a plug-in before mc.file can read them. Loaded on
 # demand: a rig that never loads an .obj should not pay for objExport.
@@ -226,10 +226,10 @@ class MPyBlendShape(MPyNode):
     @classmethod
     def create(
         cls,
-        mesh: str | None = None,
-        targets: list[str] | None = None,
-        name: str = None,
-        skip_selection: bool = False,
+        mesh:           str       | None = None,
+        targets:        list[str] | None = None,
+        name:           str              = None,
+        skip_selection: bool             = False,
     ) -> "MPyBlendShape":
         """Create + attach an mPyBlendShape, with a stock-blendShape surface.
 
@@ -256,9 +256,9 @@ class MPyBlendShape(MPyNode):
 
         # cmds.deformer has no skipSelect and is selection-neutral in practice;
         # snapshot + restore anyway so the uniform contract always holds.
-        prior = mc.ls(selection=True, long=True) if skip_selection else None
+        prior   = mc.ls(selection=True, long=True) if skip_selection else None
         bs_name = mc.deformer(mesh, type=cls.NATIVE_TYPE, name=name)[0]
-        self = cls._stamp_py_class(cls(bs_name))
+        self    = cls._stamp_py_class(cls(bs_name))
         self._ensure_weight_attr()
         self._ensure_original_geometry()
 
@@ -393,7 +393,7 @@ class MPyBlendShape(MPyNode):
         """
         plug = "%s.%s" % (node, attr)
         if self._is_packed(attr, node):
-            dt = _PACKED_SET_TYPE[_TABLE_KIND[attr]]
+            dt  = _PACKED_SET_TYPE[_TABLE_KIND[attr]]
             seq = [_TABLE_CAST[_TABLE_KIND[attr]](v) for v in values]
             mc.setAttr(plug, seq, type=dt)
             return
@@ -450,7 +450,7 @@ class MPyBlendShape(MPyNode):
         Gaps (a removed target leaves a sparse index, exactly as Maya does) come
         back as ``""`` so position still equals logical index.
         """
-        flat = mc.aliasAttr(self._name, query=True) or []
+        flat     = mc.aliasAttr(self._name, query=True) or []
         by_index = {}
         for i in range(0, len(flat) - 1, 2):
             alias, plug = flat[i], flat[i + 1]
@@ -478,7 +478,7 @@ class MPyBlendShape(MPyNode):
         mid-edit), so every table build indexes off THIS, never off one of the
         two underlying lists.
         """
-        n = self.target_count
+        n  = self.target_count
         al = self.aliases
         return [(al[i] if i < len(al) else "") for i in range(n)]
 
@@ -499,17 +499,17 @@ class MPyBlendShape(MPyNode):
         import hashlib
 
         payload = "|".join(self.aliases)
-        slots = self.compute_slot_names()
+        slots   = self.compute_slot_names()
         if slots:
             payload += "\x00slots\x00" + "|".join(slots)
         return hashlib.sha1(payload.encode("utf-8")).hexdigest()[:16]
 
     def _free_alias(self, wanted: str) -> str:
         """A sanitised alias that is unique and does not shadow a real attr."""
-        base = _sanitise(wanted)
+        base  = _sanitise(wanted)
         taken = set(self.aliases)
-        cand = base
-        n = 1
+        cand  = base
+        n     = 1
         while cand in taken or (mc.objExists("%s.%s" % (self._name, cand))
                                 and cand not in taken):
             n += 1
@@ -580,9 +580,9 @@ class MPyBlendShape(MPyNode):
 
     def rename_target(self, index: int, name: str) -> str:
         """Re-alias target ``index``. Returns the alias actually used."""
-        wplug = "%s.%s[%d]" % (self._name, WEIGHT_ATTR, index)
+        wplug   = "%s.%s[%d]" % (self._name, WEIGHT_ATTR, index)
         current = None
-        flat = mc.aliasAttr(self._name, query=True) or []
+        flat    = mc.aliasAttr(self._name, query=True) or []
         for i in range(0, len(flat) - 1, 2):
             if flat[i + 1] == "%s[%d]" % (WEIGHT_ATTR, index):
                 current = flat[i]
@@ -602,7 +602,7 @@ class MPyBlendShape(MPyNode):
         silently re-point every alias and every table entry after the hole.
         """
         wplug = "%s.%s[%d]" % (self._name, WEIGHT_ATTR, index)
-        flat = mc.aliasAttr(self._name, query=True) or []
+        flat  = mc.aliasAttr(self._name, query=True) or []
         for i in range(0, len(flat) - 1, 2):
             if flat[i + 1] == "%s[%d]" % (WEIGHT_ATTR, index):
                 mc.aliasAttr("%s.%s" % (self._name, flat[i]), remove=True)
@@ -679,8 +679,8 @@ class MPyBlendShape(MPyNode):
         # The ORIG (intermediate) shape is the undeformed base. Falling back to
         # the deformed shape would fold the current deformation into the deltas.
         shape = geo[0]
-        orig = _orig_shape(shape)
-        sel = om2.MSelectionList()
+        orig  = _orig_shape(shape)
+        sel   = om2.MSelectionList()
         sel.add(orig or shape)
         fn = om2.MFnMesh(sel.getDependNode(0))
         return np.array([[p.x, p.y, p.z]
@@ -732,7 +732,7 @@ class MPyBlendShape(MPyNode):
         "combo": {i: [drivers]}}``, all in logical-index space. Nothing here
         ever reaches the compute -- only the tables built from it do.
         """
-        names = self.target_names if names is None else list(names)
+        names   = self.target_names if names is None else list(names)
         by_name = {n: i for i, n in enumerate(names) if n}
 
         inter, combo = {}, {}
@@ -765,11 +765,11 @@ class MPyBlendShape(MPyNode):
         """
         if not self._has_attr("targetOffset"):
             return {}
-        ofs = self._read_multi("targetOffset", int)
+        ofs   = self._read_multi("targetOffset",     int)
         comps = self._read_multi("targetComponents", int)
-        flat = self._read_multi("targetDeltas", float)
+        flat  = self._read_multi("targetDeltas",     float)
 
-        out = {}
+        out   = {}
         for i in range(max(0, len(ofs) - 1)):
             a, b = ofs[i], ofs[i + 1]
             # A truncated or mid-edit table is skipped rather than trusted:
@@ -815,9 +815,9 @@ class MPyBlendShape(MPyNode):
         import numpy as np
 
         self.ensure_delta_attrs()
-        base = self._base_points()
-        names = self.target_names
-        n_t = len(names)
+        base     = self._base_points()
+        names    = self.target_names
+        n_t      = len(names)
         supplied = supplied or {}
         previous = self._previous_deltas()
 
@@ -873,7 +873,7 @@ class MPyBlendShape(MPyNode):
         """Derive the in-between / combo tables from ``names``. Pure -- no DG
         writes -- so ``rebuild_correctives`` and ``tables_stale`` agree by
         construction instead of by two copies of the same logic."""
-        n_t = len(names)
+        n_t    = len(names)
         struct = self.parse_aliases(names)
 
         inter_base = [-1] * n_t
@@ -999,12 +999,12 @@ class MPyBlendShape(MPyNode):
 
         base = self._require_base()
         if isinstance(offsets, Morph):
-            name = name or offsets.name
+            name    = name or offsets.name
             indices = offsets.indices if indices is None else indices
             offsets = offsets.offsets
 
         rows = np.asarray(offsets, dtype=np.float64).reshape(-1, 3)
-        n = base.shape[0]
+        n    = base.shape[0]
         if indices is None:
             if rows.shape[0] != n:
                 raise ValueError(
@@ -1045,15 +1045,15 @@ class MPyBlendShape(MPyNode):
         import os
 
         base = self._require_base()
-        ext = os.path.splitext(path)[1].lower()
+        ext  = os.path.splitext(path)[1].lower()
         if not os.path.isfile(path):
             raise ValueError("%s: no such file" % path)
 
         if ext in (".npz", ".json"):
             from mpynode._common.io import shape_files
-            doc = shape_files.read_mesh(path)
+            doc    = shape_files.read_mesh(path)
             points = doc["points"]
-            found = doc["name"]
+            found  = doc["name"]
         else:
             points, found = self._points_from_scene_file(path)
 
@@ -1084,8 +1084,8 @@ class MPyBlendShape(MPyNode):
         """
         from mpynode._common.io import shape_files
 
-        base = self._require_base()
-        n = base.shape[0]
+        base    = self._require_base()
+        n       = base.shape[0]
         records = shape_files.read_shapes(path)
 
         # Validate the WHOLE file before claiming a single index: failing
@@ -1101,14 +1101,14 @@ class MPyBlendShape(MPyNode):
 
         supplied = {}
         for rec in records:
-            idx = self._claim_weight_slot(rec["name"] or "shape")
+            idx           = self._claim_weight_slot(rec["name"] or "shape")
             supplied[idx] = shape_files.dense_offsets(rec, n)
         self.rebuild(supplied=supplied)
 
         struct = self.parse_aliases()
-        mine = set(supplied)
+        mine   = set(supplied)
         return {"loaded": len(supplied),
-                "main": len(mine & set(struct["main"])),
+                "main":  len(mine & set(struct["main"])),
                 "inter": len(mine & set(struct["inter"])),
                 "combo": len(mine & set(struct["combo"])),
                 "names": [r["name"] for r in records]}
@@ -1124,7 +1124,7 @@ class MPyBlendShape(MPyNode):
         import os
         import maya.api.OpenMaya as om2
 
-        ext = os.path.splitext(path)[1].lower()
+        ext    = os.path.splitext(path)[1].lower()
         plugin = _IMPORT_PLUGIN.get(ext)
         if plugin and not mc.pluginInfo(plugin, query=True, loaded=True):
             try:
@@ -1176,7 +1176,7 @@ class MPyBlendShape(MPyNode):
         if not self._has_attr("targetOffset"):
             return True
         names = self.target_names
-        n_t = len(names)
+        n_t   = len(names)
         if self._multi_len("targetOffset") != n_t + 1:
             return True                     # a target was added
 

@@ -14,7 +14,7 @@ _TOOL = os.path.join(_paths.ROOT, "tools", "harness", "viewport_bench.py")
 
 def _tool():
     spec = importlib.util.spec_from_file_location("viewport_bench", _TOOL)
-    mod = importlib.util.module_from_spec(spec)
+    mod  = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
     return mod
 
@@ -28,7 +28,7 @@ class TestPureHelpers(unittest.TestCase):
             t.parse_copies("0,-3")
 
     def test_grid_is_square_centred_and_spread(self):
-        t = _tool()
+        t   = _tool()
         pts = t.grid_positions(9, spacing=2.0)
         self.assertEqual(len(pts), 9)
         self.assertEqual(len(set(pts)), 9)                 # no two copies overlap

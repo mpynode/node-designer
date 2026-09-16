@@ -68,26 +68,26 @@ def _buildAdjacency(kCount, linkIndex0, linkIndex1):
         counts[linkIndex1[i]] += 1
 
     # build offsets (prefix sum)
-    offsets = np.empty(kCount + 1, dtype=np.int32)
+    offsets    = np.empty(kCount + 1, dtype=np.int32)
     offsets[0] = 0
     for i in range(kCount):
         offsets[i + 1] = offsets[i] + counts[i]
 
     # fill adjacency arrays
-    total = offsets[kCount]
-    adj_link = np.empty(total, dtype=np.int32)
-    adj_sign = np.empty(total, dtype=np.float64)
+    total     = offsets[kCount]
+    adj_link  = np.empty(total, dtype=np.int32)
+    adj_sign  = np.empty(total, dtype=np.float64)
 
     counts[:] = 0
     for i in range(lCount):
-        k0  = linkIndex0[i]
-        idx = offsets[k0] + counts[k0]
+        k0            = linkIndex0[i]
+        idx           = offsets[k0] + counts[k0]
         adj_link[idx] = i
         adj_sign[idx] = 1.0
         counts[k0] += 1
 
-        k1  = linkIndex1[i]
-        idx = offsets[k1] + counts[k1]
+        k1            = linkIndex1[i]
+        idx           = offsets[k1] + counts[k1]
         adj_link[idx] = i
         adj_sign[idx] = -1.0
         counts[k1] += 1
@@ -109,8 +109,8 @@ def _evaluate_parallel(knotPositions, knotAnchored, linkLengths, linkIndex0, lin
     init_positions = np.empty(knotPositions.shape)
     positions      = np.empty(knotPositions.shape)
     positions_     = np.empty(knotPositions.shape)
-    F              = np.empty((kCount, D))          # shared force buffer
-    displacements  = np.empty(kCount)               # per-knot displacement
+    F              = np.empty((kCount, D))  # shared force buffer
+    displacements  = np.empty(kCount)       # per-knot displacement
 
     for i in prange(kCount):
         for j in range(D):
@@ -137,14 +137,14 @@ def _evaluate_parallel(knotPositions, knotAnchored, linkLengths, linkIndex0, lin
                 sign = adj_sign[ci]
 
                 tension = 0.0
-                link = np.empty(D)
+                link    = np.empty(D)
                 for j in range(D):
                     link[j] = positions[linkIndex1[li], j] - positions[linkIndex0[li], j]
                     tension += link[j] ** 2
 
                 if tension > 0.0:
                     tension = tension ** 0.5
-                    force = tension - (linkLengths[li] - linkLengths[li] * linkForces[li])
+                    force   = tension - (linkLengths[li] - linkLengths[li] * linkForces[li])
 
                     if tension < linkLengths[li]:
                         force *= linkPushDamping[li]
@@ -162,7 +162,7 @@ def _evaluate_parallel(knotPositions, knotAnchored, linkLengths, linkIndex0, lin
                 displacement = 0.0
                 for j in range(D):
                     positions[i, j] += F[i, j] * damping
-                    displacement += (positions[i, j] - positions_[i, j]) ** 2
+                    displacement    += (positions[i, j] - positions_[i, j]) ** 2
                     positions_[i, j] = positions[i, j]
 
                 displacements[i] = displacement
@@ -221,15 +221,15 @@ class Solver():
                  matrices,
                  anchors,
                  lengths,
-                 inverseMatrix=None,
-                 index0=None,
-                 index1=None,
-                 tensions=None,
-                 push=None,
-                 pull=None,
-                 reset=None,
-                 iterations=100,
-                 tolerance=0.001,
+                 inverseMatrix = None,
+                 index0        = None,
+                 index1        = None,
+                 tensions      = None,
+                 push          = None,
+                 pull          = None,
+                 reset         = None,
+                 iterations    = 100,
+                 tolerance     = 0.001,
                  damping=0.1):
 
 
@@ -288,7 +288,7 @@ class Solver():
         # blend between eval modes
         previous = self.previous @ inverseMatrix
         matrices = matrices @ inverseMatrix
-        M = previous + reset[:,None][:,None] * (matrices - previous)
+        M        = previous + reset[:,None][:,None] * (matrices - previous)
 
         # Rebuild adjacency if topology changed
         kCount = M.shape[0]
@@ -325,13 +325,13 @@ class Solver():
 
 
         # Localise to parent matrix
-        I =  np.linalg.inv(matrices)
+        I                    = np.linalg.inv(matrices)
         self.local_positions = np.einsum('ni,nij->nj', self.positions, I[:, :3, :3]) + I[:, 3, :3]
 
 
 
         # Reset previous position
-        self.previous = matrices
+        self.previous         = matrices
         self.previous[:,3,:3] = self.positions
 
 
@@ -362,7 +362,7 @@ def create_knot(node, draw_icon=False):
 
     # Next free knot slot (indices may be sparse after deletes -> max + 1).
     idxs = mc.getAttr(name + ".matrices", multiIndices=True) or []
-    i = (max(idxs) + 1) if idxs else 0
+    i    = (max(idxs) + 1) if idxs else 0
 
     # GOAL: the transform you place/drive. worldMatrix -> matrices[i]; owns an
     # `anchored` weight (0 free / 1 pinned) wired into anchors[i].
@@ -392,9 +392,9 @@ def create_knot(node, draw_icon=False):
         # Reparent the SHAPES: the hidden PROXY onto the RESULT child, the visible
         # DUPLICATE onto the GOAL. Then drop the emptied creator transforms.
         proxy_shp = mc.listRelatives(proxy_xf, shapes=True, fullPath=True)[0]
-        vis_shp = mc.listRelatives(vis_xf, shapes=True, fullPath=True)[0]
+        vis_shp   = mc.listRelatives(vis_xf, shapes=True, fullPath=True)[0]
         proxy_shp = mc.parent(proxy_shp, child, shape=True, relative=True)[0]
-        vis_shp = mc.parent(vis_shp, goal, shape=True, relative=True)[0]
+        vis_shp   = mc.parent(vis_shp, goal, shape=True, relative=True)[0]
         mc.delete(proxy_xf, vis_xf)
         # Worldspace blendShape: proxy(child, rides positions) -> visible(goal),
         # so the visible icon deforms onto the solved knot. Build it BEFORE hiding
@@ -430,7 +430,7 @@ def create_link(node, draw_icon=False):
     import math
     name = node.get_name()
 
-    sel = mc.ls(selection=True, long=True, type="transform") or []
+    sel  = mc.ls(selection=True, long=True, type="transform") or []
     if len(sel) < 2:
         raise RuntimeError("create_link needs >= 2 selected knots "
                            "(spokes first, hub last)")
@@ -461,13 +461,13 @@ def create_link(node, draw_icon=False):
         raise RuntimeError("%s has no result child (positions[] -> translate)"
                            % goal)
 
-    hub_i = knot_index(hub)
+    hub_i     = knot_index(hub)
     hub_child = knot_child(hub)
-    hub_pos = mc.xform(hub, query=True, worldSpace=True, translation=True)
+    hub_pos   = mc.xform(hub, query=True, worldSpace=True, translation=True)
 
     # Next free link slot.
     lidxs = mc.getAttr(name + ".index0", multiIndices=True) or []
-    e = (max(lidxs) + 1) if lidxs else 0
+    e     = (max(lidxs) + 1) if lidxs else 0
 
     links = []
     for spoke in spokes:

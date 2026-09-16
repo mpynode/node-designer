@@ -52,32 +52,32 @@ def _make_sphere():
 
 GEO = {
     "mesh": {
-        "type": "mesh",
-        "make": _make_cube,
-        "src_plug": ".worldMesh[0]",
+        "type":       "mesh",
+        "make":       _make_cube,
+        "src_plug":   ".worldMesh[0]",
         "count_expr": "int(g.points.shape[0])",
-        "min": 8,
+        "min":        8,
     },
     "nurbsCurve": {
-        "type": "nurbsCurve",
-        "make": _make_circle,
-        "src_plug": ".worldSpace[0]",
+        "type":       "nurbsCurve",
+        "make":       _make_circle,
+        "src_plug":   ".worldSpace[0]",
         "count_expr": "int(g.points.shape[0])",
-        "min": 3,
+        "min":        3,
     },
     "nurbsSurface": {
-        "type": "nurbsSurface",
-        "make": _make_sphere,
-        "src_plug": ".worldSpace[0]",
+        "type":       "nurbsSurface",
+        "make":       _make_sphere,
+        "src_plug":   ".worldSpace[0]",
         "count_expr": "int(g.num_u * g.num_v)",
-        "min": 4,
+        "min":        4,
     },
 }
 
 # geo_kind -> (data function set, count getter) for reading an output plug.
 _OUT_READERS = {
-    "mesh": (om.MFnMesh, lambda fn: fn.numVertices),
-    "nurbsCurve": (om.MFnNurbsCurve, lambda fn: fn.numCVs),
+    "mesh":         (om.MFnMesh, lambda fn: fn.numVertices),
+    "nurbsCurve":   (om.MFnNurbsCurve, lambda fn: fn.numCVs),
     "nurbsSurface": (om.MFnNurbsSurface, lambda fn: fn.numCVsInU * fn.numCVsInV),
 }
 
@@ -91,7 +91,7 @@ def _read_geo_output_count(node, plug, kind, index=None):
     except Exception:
         pass
     dep = om.MFnDependencyNode(om.MSelectionList().add(node).getDependNode(0))
-    p = dep.findPlug(plug, False)
+    p   = dep.findPlug(plug, False)
     if index is not None:
         p = p.elementByLogicalIndex(index)
     try:
@@ -245,13 +245,13 @@ class GeometryWrapperConformance(unittest.TestCase):
     def test_deformer_input_wrapper_and_handle_points(self):
         from mpynode.wrappers.mpy_deformer import MPyDeformer
 
-        box = mc.polyCube(sx=1, sy=1, sz=1, ch=False, name="confDefBox")[0]
+        box  = mc.polyCube(sx=1, sy=1, sz=1, ch=False, name="confDefBox")[0]
         bshp = mc.listRelatives(box, s=True, f=True)[0]
         rest = np.array(om.MFnMesh(om.MSelectionList().add(bshp).getDagPath(0))
                         .getPoints(om.MSpace.kObject), dtype=np.float64)[:, :3]
-        col = mc.polySphere(sx=6, sy=6, r=1.0, ch=False, name="confCollider")[0]
+        col  = mc.polySphere(sx=6, sy=6, r=1.0, ch=False, name="confCollider")[0]
         cshp = mc.listRelatives(col, s=True, f=True)[0]
-        d = MPyDeformer.create_on(box)
+        d    = MPyDeformer.create_on(box)
         d.add_input_attr("collider", "mesh")
         # Drive the deform from the collider's OBJECT-space vertex data (top
         # Y ~= radius). Object space is transform-independent, so this proves

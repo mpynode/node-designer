@@ -72,7 +72,7 @@ class TestCollectPlugTree(unittest.TestCase):
         from mpynode.ui.widgets.variables import collect_plug_tree
 
         nodes = collect_plug_tree(self.deformer.get_name())
-        amp = None
+        amp   = None
         for n in nodes:
             if n.row.short_name == "amplitude":
                 amp = n
@@ -139,7 +139,7 @@ class TestAttributesDnD(unittest.TestCase):
     def test_mimeData_builds_full_plug_payload(self):
         from mpynode.ui.widgets.attributes import NDUserAttrTreeItem
 
-        tree = self._make_input_tree()
+        tree   = self._make_input_tree()
         target = None
         for i in range(tree.topLevelItemCount()):
             it = tree.topLevelItem(i)
@@ -167,13 +167,13 @@ class TestAttributesDnD(unittest.TestCase):
         from mpynode.ui.widgets.attributes import NDUserAttrTreeItem
 
         target_item = None
-        target_pos = None
+        target_pos  = None
         for i in range(tree.topLevelItemCount()):
             it = tree.topLevelItem(i)
             if isinstance(it, NDUserAttrTreeItem) and it.attr_name == "driverA":
                 target_item = it
-                rect = tree.visualItemRect(it)
-                target_pos = rect.center()
+                rect        = tree.visualItemRect(it)
+                target_pos  = rect.center()
                 break
         # Simpler than a synthetic QDropEvent: run _ConnectAttrCommand the way
         # dropEvent does, so the command path is checked on a real connection
@@ -196,10 +196,10 @@ class TestAttributesDnDSourceShape(unittest.TestCase):
         from mpynode.ui.widgets.attributes import NDInputAttrTree
 
         src = inspect.getsource(NDInputAttrTree)
-        self.assertIn("def dropEvent", src)
-        self.assertIn("def dragEnterEvent", src)
-        self.assertIn("def mimeData", src)
-        self.assertIn("_MIME_TYPE", src)
+        self.assertIn("def dropEvent",       src)
+        self.assertIn("def dragEnterEvent",  src)
+        self.assertIn("def mimeData",        src)
+        self.assertIn("_MIME_TYPE",          src)
         self.assertIn("_ConnectAttrCommand", src)
 
     def test_drop_event_gates_to_user_items(self):
@@ -273,7 +273,7 @@ class TestDropHighlight(unittest.TestCase):
     def test_set_drop_highlight_changes_background(self):
         from mpynode.ui.widgets.attributes import NDUserAttrTreeItem
 
-        tree = self._make_tree()
+        tree   = self._make_tree()
         target = None
         for i in range(tree.topLevelItemCount()):
             it = tree.topLevelItem(i)
@@ -285,16 +285,16 @@ class TestDropHighlight(unittest.TestCase):
         tree._set_drop_highlight(target)
         after_brush = target.background(0)
         # the brush is the configured Maya yellow.
-        self.assertEqual(after_brush.color().red(), 255)
+        self.assertEqual(after_brush.color().red(),   255)
         self.assertEqual(after_brush.color().green(), 204)
-        self.assertEqual(after_brush.color().blue(), 0)
+        self.assertEqual(after_brush.color().blue(),  0)
         # the tree remembers which item is highlighted.
         self.assertIs(tree._drop_highlight_item, target)
 
     def test_clear_restores_background(self):
         from mpynode.ui.widgets.attributes import NDUserAttrTreeItem
 
-        tree = self._make_tree()
+        tree   = self._make_tree()
         target = None
         for i in range(tree.topLevelItemCount()):
             it = tree.topLevelItem(i)
@@ -320,7 +320,7 @@ class TestDropHighlight(unittest.TestCase):
         from mpynode.ui.widgets.attributes import NDUserAttrTreeItem
 
         self.node.add_input_attr("driverB", "float")
-        tree = self._make_tree()
+        tree   = self._make_tree()
         item_a = item_b = None
         for i in range(tree.topLevelItemCount()):
             it = tree.topLevelItem(i)
@@ -411,7 +411,7 @@ class TestStorageDnDHighlight(unittest.TestCase):
 
     def _make_widget(self):
         from mpynode.ui.widgets.variables import NDVariablesWidget
-        w = NDVariablesWidget()
+        w          = NDVariablesWidget()
         w._py_node = self.node
         if hasattr(w, "refresh"):
             try:
@@ -457,7 +457,7 @@ class TestStorageDnDHighlight(unittest.TestCase):
         from mpynode.ui.widgets.variables import (
             NDVariablesWidget, NDVariableTreeItem,
         )
-        w = self._make_widget()
+        w      = self._make_widget()
         target = None
         for i in range(w._tree.topLevelItemCount()):
             top = w._tree.topLevelItem(i)

@@ -77,8 +77,8 @@ class TestTabWidgetResolver(unittest.TestCase):
         mc.file(new=True, force=True)
         from mpynode.wrappers._mpy_node import MPyNode
 
-        self.node = MPyNode.create(name="mcTabNode")
-        self.name = self.node.get_name()
+        self.node     = MPyNode.create(name="mcTabNode")
+        self.name     = self.node.get_name()
         self._widgets = []
 
     def tearDown(self):
@@ -108,14 +108,14 @@ class TestTabWidgetResolver(unittest.TestCase):
     def test_tab_bar_middle_click_resolves_clicked_tab(self):
         """The tab bar maps a screen pos -> tab index -> the owner's
         nodeNameForIndex. tabAt is stubbed so the test is geometry-free."""
-        w = self._tab_widget()
-        bar = w.tabBar()
+        w         = self._tab_widget()
+        bar       = w.tabBar()
         bar.tabAt = lambda _pos: 0          # over the (only) tab
         self.assertEqual(bar.middleClickNodeName(_QPoint(5, 5)), self.name)
 
     def test_tab_bar_middle_click_off_any_tab_is_none(self):
-        w = self._tab_widget()
-        bar = w.tabBar()
+        w         = self._tab_widget()
+        bar       = w.tabBar()
         bar.tabAt = lambda _pos: -1         # empty tab-bar area
         self.assertIsNone(bar.middleClickNodeName(_QPoint(9999, 9999)))
 
@@ -130,8 +130,8 @@ class TestSceneTreeResolver(unittest.TestCase):
         mc.file(new=True, force=True)
         from mpynode.wrappers._mpy_node import MPyNode
 
-        self.node = MPyNode.create(name="mcTreeNode")
-        self.name = self.node.get_name()
+        self.node     = MPyNode.create(name="mcTreeNode")
+        self.name     = self.node.get_name()
         self._widgets = []
 
     def tearDown(self):
@@ -155,14 +155,14 @@ class TestSceneTreeResolver(unittest.TestCase):
         exercised without depending on offscreen pixel geometry."""
         from mpynode.ui.widgets.scene_tree import NDSceneTreeItem
 
-        t = self._tree()
+        t    = self._tree()
         item = t.topLevelItem(0)
         self.assertIsInstance(item, NDSceneTreeItem)
         t.itemAt = lambda _pos: item
         self.assertEqual(t.middleClickNodeName(_QPoint(5, 5)), self.name)
 
     def test_middle_click_off_row_is_none(self):
-        t = self._tree()
+        t        = self._tree()
         t.itemAt = lambda _pos: None
         self.assertIsNone(t.middleClickNodeName(_QPoint(9999, 9999)))
 
@@ -170,7 +170,7 @@ class TestSceneTreeResolver(unittest.TestCase):
         """A stray non-NDSceneTreeItem under the cursor must not resolve."""
         from mpynode.ui.qt_wrapper import QTreeWidgetItem
 
-        t = self._tree()
+        t        = self._tree()
         t.itemAt = lambda _pos: QTreeWidgetItem()
         self.assertIsNone(t.middleClickNodeName(_QPoint(5, 5)))
 
@@ -210,9 +210,9 @@ class TestAncestorWalk(unittest.TestCase):
         from mpynode.ui.qt_wrapper import QWidget
 
         Resolver = self._resolver_cls()
-        stop = QWidget()
-        parent = Resolver("nodeFoo", stop)
-        child = QWidget(parent)          # plain, no resolver
+        stop     = QWidget()
+        parent   = Resolver("nodeFoo", stop)
+        child    = QWidget(parent)          # plain, no resolver
         self._widgets += [stop, parent, child]
 
         self.assertEqual(
@@ -222,9 +222,9 @@ class TestAncestorWalk(unittest.TestCase):
         from mpynode.ui.mpynode_designer import _middle_click_node_from_widget
         from mpynode.ui.qt_wrapper import QWidget
 
-        stop = QWidget()
+        stop   = QWidget()
         parent = QWidget(stop)
-        child = QWidget(parent)
+        child  = QWidget(parent)
         self._widgets += [stop, parent, child]
 
         self.assertIsNone(_middle_click_node_from_widget(child, stop, _QPoint()))
@@ -237,11 +237,11 @@ class TestAncestorWalk(unittest.TestCase):
         from mpynode.ui.mpynode_designer import _middle_click_node_from_widget
         from mpynode.ui.qt_wrapper import QWidget
 
-        Resolver = self._resolver_cls()
-        stop = QWidget()
-        grandparent = Resolver("nodeFoo", stop)   # higher resolver: truthy
-        parent = Resolver(None, grandparent)      # nearer resolver: None
-        child = QWidget(parent)
+        Resolver    = self._resolver_cls()
+        stop        = QWidget()
+        grandparent = Resolver("nodeFoo", stop)    # higher resolver: truthy
+        parent      = Resolver(None, grandparent)  # nearer resolver: None
+        child       = QWidget(parent)
         self._widgets += [stop, grandparent, parent, child]
 
         # only passes if the walk CONTINUES past the None resolver.
@@ -253,7 +253,7 @@ class TestAncestorWalk(unittest.TestCase):
         from mpynode.ui.mpynode_designer import _middle_click_node_from_widget
 
         Resolver = self._resolver_cls()
-        stop = Resolver("shouldNotSee")   # stop IS a resolver, must be skipped
+        stop     = Resolver("shouldNotSee")   # stop IS a resolver, must be skipped
         self._widgets.append(stop)
 
         self.assertIsNone(_middle_click_node_from_widget(stop, stop, _QPoint()))
@@ -284,12 +284,12 @@ class TestGlobalFilterWiring(unittest.TestCase):
                 f"NDMainWindow must define {attr}")
 
     def test_init_installs_filter(self):
-        m = self._m()
+        m   = self._m()
         src = inspect.getsource(m.NDMainWindow.__init__)
         self.assertIn("_install_global_middle_click_filter", src)
 
     def test_close_removes_filter(self):
-        m = self._m()
+        m   = self._m()
         src = inspect.getsource(m.NDMainWindow.closeEvent)
         self.assertIn("_remove_global_middle_click_filter", src)
 
@@ -297,7 +297,7 @@ class TestGlobalFilterWiring(unittest.TestCase):
         """closeEvent removes the filter but the X-button keeps the singleton
         alive; _handle_reopen MUST re-install it or the feature dies for the
         session after the first close/reopen."""
-        m = self._m()
+        m   = self._m()
         src = inspect.getsource(m.NDMainWindow._handle_reopen)
         self.assertIn("_install_global_middle_click_filter", src)
 
@@ -305,18 +305,18 @@ class TestGlobalFilterWiring(unittest.TestCase):
         """An app-level filter is re-invoked once per ancestor for one physical
         press; the handler must act only on the first (under-cursor) delivery,
         keyed by event timestamp, so a later ancestor can't overwrite it."""
-        m = self._m()
+        m   = self._m()
         src = inspect.getsource(m.NDMainWindow._on_global_middle_click)
         self.assertIn("timestamp", src)
         self.assertIn("_last_middle_click_ts", src)
 
     def test_install_uses_app_level_event_filter(self):
-        m = self._m()
+        m   = self._m()
         src = inspect.getsource(m.NDMainWindow._install_global_middle_click_filter)
         self.assertIn("installEventFilter", src)
 
     def test_event_filter_is_middle_press_and_non_consuming(self):
-        m = self._m()
+        m   = self._m()
         src = inspect.getsource(m.NDMainWindow.eventFilter)
         self.assertIn("MouseButtonPress", src)
         self.assertIn("MiddleButton", src)
@@ -324,11 +324,11 @@ class TestGlobalFilterWiring(unittest.TestCase):
         self.assertIn("return False", src)
 
     def test_handler_scopes_and_falls_back_to_active_node(self):
-        m = self._m()
+        m   = self._m()
         src = inspect.getsource(m.NDMainWindow._on_global_middle_click)
-        self.assertIn("isAncestorOf", src)          # scoped to Designer subtree
-        self.assertIn("_current_node", src)          # active-node fallback
-        self.assertIn("replace=True", src)           # selects in the scene
+        self.assertIn("isAncestorOf",  src)  # scoped to Designer subtree
+        self.assertIn("_current_node", src)  # active-node fallback
+        self.assertIn("replace=True",  src)  # selects in the scene
 
 
 # ===========================================================================
@@ -379,9 +379,9 @@ class TestGlobalDispatch(unittest.TestCase):
         from mpynode.ui.mpynode_designer import NDMainWindow
         from mpynode.ui.qt_wrapper import QWidget
 
-        self._widgets = []
-        self.root = QWidget()                     # NDMainWindow stand-in ("self")
-        self.root._current_node = _node_stub("activeNode")
+        self._widgets                   = []
+        self.root                       = QWidget()                     # NDMainWindow stand-in ("self")
+        self.root._current_node         = _node_stub("activeNode")
         self.root._last_middle_click_ts = None
         # eventFilter dispatches to self._on_global_middle_click, so the
         # stand-in carries it bound like the real window.
@@ -421,7 +421,7 @@ class TestGlobalDispatch(unittest.TestCase):
         calls = []
         import maya.cmds as _mc
 
-        orig = _mc.select
+        orig       = _mc.select
         _mc.select = lambda *a, **k: calls.append((a, k))
         try:
             NDMainWindow._on_global_middle_click(self.root, obj, event)
@@ -430,7 +430,7 @@ class TestGlobalDispatch(unittest.TestCase):
         return calls
 
     def test_fallback_selects_active_node(self):
-        obj = self._plain_child(self.root)        # no resolver in chain
+        obj   = self._plain_child(self.root)        # no resolver in chain
         calls = self._dispatch(obj, _fake_event(1, _QPoint(2, 2)))
         self.assertEqual(calls, [(("activeNode",), {"replace": True})])
 
@@ -443,14 +443,14 @@ class TestGlobalDispatch(unittest.TestCase):
         self.assertEqual(calls, [], "must not select for widgets outside the window")
 
     def test_under_cursor_resolver_wins_over_active(self):
-        obj = self._resolver_child("clickedNode", self.root)
+        obj   = self._resolver_child("clickedNode", self.root)
         calls = self._dispatch(obj, _fake_event(1, _QPoint(2, 2)))
         self.assertEqual(calls, [(("clickedNode",), {"replace": True})])
 
     def test_no_active_node_and_no_resolver_is_noop(self):
         self.root._current_node = None
-        obj = self._plain_child(self.root)
-        calls = self._dispatch(obj, _fake_event(1, _QPoint(2, 2)))
+        obj                     = self._plain_child(self.root)
+        calls                   = self._dispatch(obj, _fake_event(1, _QPoint(2, 2)))
         self.assertEqual(calls, [], "no target -> no select, no raise")
 
     def test_same_press_dedup_keeps_under_cursor_node(self):
@@ -458,14 +458,14 @@ class TestGlobalDispatch(unittest.TestCase):
         Fire A (obj = tab-bar-like resolver) selects the clicked node; fire B
         (obj = its parent, no resolver, SAME timestamp) must be deduped so it
         does NOT fall back and overwrite with the active node."""
-        tab_widget = self._plain_child(self.root)             # NDScriptTabWidget-like
-        tab_bar = self._resolver_child("tabNode", tab_widget)  # NDEditorTabBar-like
+        tab_widget = self._plain_child(self.root)                 # NDScriptTabWidget-like
+        tab_bar    = self._resolver_child("tabNode", tab_widget)  # NDEditorTabBar-like
 
         from mpynode.ui.mpynode_designer import NDMainWindow
         import maya.cmds as _mc
 
-        calls = []
-        orig = _mc.select
+        calls      = []
+        orig       = _mc.select
         _mc.select = lambda *a, **k: calls.append((a, k))
         try:
             NDMainWindow._on_global_middle_click(
@@ -489,8 +489,8 @@ class TestGlobalDispatch(unittest.TestCase):
         from mpynode.ui.mpynode_designer import NDMainWindow
         import maya.cmds as _mc
 
-        calls = []
-        orig = _mc.select
+        calls      = []
+        orig       = _mc.select
         _mc.select = lambda *args, **k: calls.append((args, k))
         try:
             NDMainWindow._on_global_middle_click(self.root, a, _fake_event(1, _QPoint()))
@@ -507,9 +507,9 @@ class TestGlobalDispatch(unittest.TestCase):
         from mpynode.ui.qt_wrapper import QEvent, Qt
         import maya.cmds as _mc
 
-        obj = self._resolver_child("clickedNode", self.root)
-        calls = []
-        orig = _mc.select
+        obj        = self._resolver_child("clickedNode", self.root)
+        calls      = []
+        orig       = _mc.select
         _mc.select = lambda *a, **k: calls.append((a, k))
         try:
             # Middle press -> selects, and NEVER consumes (returns False).

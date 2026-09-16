@@ -115,11 +115,11 @@ def verify_tag(node0):
 
 def classify(rec):
     folder = rec["folder"]
-    st = rec.get("status")
-    cj = rec.get("compile") or {}
-    cok = cj.get("ok")
-    node0 = (cj.get("nodes") or [{}])[0]
-    vp = node0.get("verify_pass")     # True / False / None(=skip or texture)
+    st     = rec.get("status")
+    cj     = rec.get("compile") or {}
+    cok    = cj.get("ok")
+    node0  = (cj.get("nodes") or [{}])[0]
+    vp     = node0.get("verify_pass")     # True / False / None(=skip or texture)
     if not cok and folder in HONEST_DROP:
         return "HONEST-DROP"
     if not cok:
@@ -158,11 +158,11 @@ def main():
         detai = ("det" if cj.get("deterministic") else
                  ("ai" if cj.get("ai_ported") else "-"))
         demos = r.get("demos") or []
-        dok = sum(1 for d in demos if d.get("status") == "ok")
-        b = classify(r)
+        dok   = sum(1 for d in demos if d.get("status") == "ok")
+        b     = classify(r)
         buckets[b].append(r["folder"])
         node0 = (cj.get("nodes") or [{}])[0]
-        vtag = verify_tag(node0)
+        vtag  = verify_tag(node0)
         print("%-42s %-14s %-7s %8s  %d/%d%s" %
               (r["folder"], r.get("status"), detai,
                str(cj.get("seconds")), dok, len(demos), vtag))

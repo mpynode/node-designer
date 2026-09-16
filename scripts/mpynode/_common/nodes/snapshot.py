@@ -17,12 +17,12 @@ SNAPSHOT_ATTR_NAME = "_solverContextSnapshot"
 
 
 def write_solver_context_snapshot(
-    node_obj: om.MObject,
+    node_obj:    om.MObject,
     handle_name: str,
-    joints: list[dict],
+    joints:      list[dict],
     end_effector,
     pole_vector,
-    twist: float,
+    twist:       float,
 ) -> None:
     """Serialize the iksolver context to JSON + write to the node's
     ``_solverContextSnapshot`` plug.
@@ -34,9 +34,9 @@ def write_solver_context_snapshot(
             "handle": handle_name,
             "joints": [
                 {
-                    "name": j["name"],
+                    "name":           j["name"],
                     "world_position": list(j["world_position"]),
-                    "rotation": list(j["rotation"]),
+                    "rotation":       list(j["rotation"]),
                 }
                 for j in joints
             ],
@@ -53,7 +53,7 @@ def write_solver_context_snapshot(
         return
 
     try:
-        fn = om.MFnDependencyNode(node_obj)
+        fn   = om.MFnDependencyNode(node_obj)
         plug = fn.findPlug(SNAPSHOT_ATTR_NAME, True)
         plug.setString(text)
     except Exception:

@@ -15,15 +15,15 @@ from typing import Any
 # native_type -> (module_name, class_name) for the impl class carrying the
 # ``INTERNAL_VARS`` class attribute.
 _NATIVE_TYPE_TO_IMPL: dict[str, tuple[str, str]] = {
-    "mPyNode": ("mpynode._api2._mpy_node", "MPyNode"),
-    "mPyConstraint": ("mpynode._api2.mpy_constraint", "MPyConstraint"),
-    "mPyLocator": ("mpynode._api2.mpy_locator", "MPyLocator"),
-    "mPyIkSolver": ("mpynode._api1.mpy_iksolver", "MPyIkSolver"),
-    "mPyDeformer": ("mpynode._api1.mpy_deformer", "MPyDeformer"),
-    "mPyTransform": ("mpynode._api1.mpy_transform", "MPyTransform"),
-    "mPyMesh": ("mpynode._api2.mpy_mesh", "MPyMesh"),
+    "mPyNode":        ("mpynode._api2._mpy_node", "MPyNode"),
+    "mPyConstraint":  ("mpynode._api2.mpy_constraint", "MPyConstraint"),
+    "mPyLocator":     ("mpynode._api2.mpy_locator", "MPyLocator"),
+    "mPyIkSolver":    ("mpynode._api1.mpy_iksolver", "MPyIkSolver"),
+    "mPyDeformer":    ("mpynode._api1.mpy_deformer", "MPyDeformer"),
+    "mPyTransform":   ("mpynode._api1.mpy_transform", "MPyTransform"),
+    "mPyMesh":        ("mpynode._api2.mpy_mesh", "MPyMesh"),
     "mPySkinCluster": ("mpynode._api1.mpy_skin_cluster", "MPySkinCluster"),
-    "mPyBlendShape": ("mpynode._api1.mpy_blend_shape", "MPyBlendShape"),
+    "mPyBlendShape":  ("mpynode._api1.mpy_blend_shape", "MPyBlendShape"),
 }
 
 
@@ -38,8 +38,8 @@ def get_internal_vars_schema(native_type: str) -> dict[str, dict[str, Any]]:
         return {}
     module_name, class_name = _NATIVE_TYPE_TO_IMPL[native_type]
     try:
-        mod = importlib.import_module(module_name)
-        cls = getattr(mod, class_name)
+        mod    = importlib.import_module(module_name)
+        cls    = getattr(mod, class_name)
         schema = getattr(cls, "INTERNAL_VARS", None)
         if isinstance(schema, dict):
             return dict(schema)

@@ -119,10 +119,10 @@ class RenderCompareResult(object):
     __slots__ = ("ran", "passed", "reason", "diff")
 
     def __init__(self, ran, passed, reason, diff=None):
-        self.ran = bool(ran)
+        self.ran    = bool(ran)
         self.passed = bool(passed) and self.ran
         self.reason = reason or ""
-        self.diff = diff
+        self.diff   = diff
 
     def __bool__(self):
         return self.passed
@@ -153,7 +153,7 @@ def read_pfm(path):
         data = handle.read()
 
     fields = []
-    pos = 0
+    pos    = 0
     while len(fields) < 3:
         nl = data.find(b"\n", pos)
         if nl < 0:
@@ -172,12 +172,12 @@ def read_pfm(path):
         raise ValueError("%s: malformed PFM header %r" % (path, fields[1:]))
 
     count = width * height * channels
-    need = count * 4
+    need  = count * 4
     if len(data) - pos < need:
         raise ValueError(
             "%s: truncated PFM data (%d bytes, need %d)"
             % (path, len(data) - pos, need))
-    order = "<" if scale < 0 else ">"
+    order  = "<" if scale < 0 else ">"
     pixels = list(struct.unpack(order + "%df" % count, data[pos:pos + need]))
     return OslImage(width, height, channels, pixels)
 
@@ -194,14 +194,14 @@ def diff_images(image_a, image_b, tolerance=DEFAULT_TOLERANCE):
             % (image_a.width, image_a.height, image_a.channels,
                image_b.width, image_b.height, image_b.channels))
 
-    total = 0.0
+    total    = 0.0
     total_sq = 0.0
-    max_abs = 0.0
-    over = 0
-    count = 0
+    max_abs  = 0.0
+    over     = 0
+    count    = 0
     for val_a, val_b in zip(image_a.pixels, image_b.pixels):
         delta = abs(val_a - val_b)
-        total += delta
+        total    += delta
         total_sq += delta * delta
         if delta > max_abs:
             max_abs = delta
@@ -211,14 +211,14 @@ def diff_images(image_a, image_b, tolerance=DEFAULT_TOLERANCE):
     if not count:
         raise ValueError("cannot compare empty images")
     return ImageDiff(
-        width=image_a.width,
-        height=image_a.height,
-        channels=image_a.channels,
-        mean_abs=total / count,
-        max_abs=max_abs,
-        rms=(total_sq / count) ** 0.5,
-        over_tolerance=over,
-        over_fraction=float(over) / count,
+        width          = image_a.width,
+        height         = image_a.height,
+        channels       = image_a.channels,
+        mean_abs       = total / count,
+        max_abs        = max_abs,
+        rms            = (total_sq / count) ** 0.5,
+        over_tolerance = over,
+        over_fraction  = float(over) / count,
     )
 
 
@@ -229,7 +229,7 @@ def image_is_constant(image, tolerance=DEFAULT_TOLERANCE):
     channels = image.channels
     if not image.pixels:
         return True
-    lows = list(image.pixels[:channels])
+    lows  = list(image.pixels[:channels])
     highs = list(lows)
     for index, value in enumerate(image.pixels):
         chan = index % channels
@@ -392,7 +392,7 @@ def _exe(name):
 
 def _default_search_dirs():
     """Where Arnold standalone is looked for, most specific first."""
-    dirs = []
+    dirs     = []
     override = os.environ.get("MPYNODE_ARNOLD_BIN")
     if override:
         dirs.append(override)

@@ -38,7 +38,7 @@ def _ma(expression="", inputs=None, outputs=None, stored=None, wrap=False,
         if wrap:
             L.append('\tsetAttr ".%s" -type "string" (' % plug)
             chunk = 40
-            bits = [payload[i:i + chunk] for i in range(0, len(payload), chunk)]
+            bits  = [payload[i:i + chunk] for i in range(0, len(payload), chunk)]
             for k, bit in enumerate(bits):
                 L.append('\t\t%s"%s"' % ("" if k == 0 else "+ ", bit))
         else:
@@ -78,11 +78,11 @@ class TestReadingTheFile(unittest.TestCase):
 
     def test_attrs_and_stored_vars_decode(self):
         n = self._read(expression="out = a",
-                       inputs={"a": "float", "m": "matrix"},
-                       outputs={"out": "vector"},
+                       inputs  = {"a": "float", "m": "matrix"},
+                       outputs = {"out": "vector"},
                        stored={"count": 7})[0]
-        self.assertEqual(n.inputs, {"a": "float", "m": "matrix"})
-        self.assertEqual(n.outputs, {"out": "vector"})
+        self.assertEqual(n.inputs,      {"a": "float", "m": "matrix"})
+        self.assertEqual(n.outputs,     {"out": "vector"})
         self.assertEqual(n.stored_vars, {"count": 7})
 
     def test_the_payload_is_the_LAST_string_on_the_line(self):
@@ -383,8 +383,8 @@ class TestApiTypeFixes(unittest.TestCase):
         exec(compile(init, "<init>", "exec"), ns)
         shim = ns["_v1_vec3"]
         self.assertEqual(shim([1, 2, 3, 1]), [1, 2, 3])
-        self.assertEqual(shim([1, 2, 3]), [1, 2, 3])
-        self.assertEqual(shim(7.5), 7.5)          # not a sequence at all
+        self.assertEqual(shim([1, 2, 3]),    [1, 2, 3])
+        self.assertEqual(shim(7.5),          7.5)          # not a sequence at all
 
     def test_the_pass_is_idempotent(self):
         # convert() may be re-run on the same source; a double wrap would
@@ -537,8 +537,8 @@ class TestBareVectorConstructors(unittest.TestCase):
         self.assertEqual(list(vec(1, 2, 3, 1)), [1.0, 2.0, 3.0])
         # Single-sequence form, and short input padded with zeros.
         self.assertEqual(list(vec([4, 5, 6])), [4.0, 5.0, 6.0])
-        self.assertEqual(list(vec()), [0.0, 0.0, 0.0])
-        self.assertEqual(list(vec(7)), [7.0, 0.0, 0.0])
+        self.assertEqual(list(vec()),          [0.0, 0.0, 0.0])
+        self.assertEqual(list(vec(7)),         [7.0, 0.0, 0.0])
 
     def test_the_shim_result_supports_scalar_arithmetic(self):
         # The actual reason it is numpy and not a list: splineNode does
@@ -682,10 +682,10 @@ class TestV1CompatModule(unittest.TestCase):
         self.assertEqual(v.length(), 5.0)
         # normal() copies; normalize() mutates in place and returns self,
         # which is what springChainNode relies on.
-        self.assertEqual(list(v.normal()), [0.6, 0.8, 0.0])
-        self.assertEqual(list(v), [3.0, 4.0, 0.0])
+        self.assertEqual(list(v.normal()),    [0.6, 0.8, 0.0])
+        self.assertEqual(list(v),             [3.0, 4.0, 0.0])
         self.assertEqual(list(v.normalize()), [0.6, 0.8, 0.0])
-        self.assertEqual(list(v), [0.6, 0.8, 0.0])
+        self.assertEqual(list(v),             [0.6, 0.8, 0.0])
 
     def test_a_zero_vector_normalises_without_dividing_by_zero(self):
         z = self.C.v1_vec(0, 0, 0)
@@ -740,7 +740,7 @@ class TestV1CompatModule(unittest.TestCase):
         # unitSphereCollisionNode compute against plain lists from their
         # saved buffers and raise on the first multiply.
         import pickle
-        v = self.C.coerce_stored([1, 2, 3])
+        v    = self.C.coerce_stored([1, 2, 3])
         back = pickle.loads(pickle.dumps(v))
         self.assertEqual(list(back), [1.0, 2.0, 3.0])
         self.assertEqual(back.length(), self.C.v1_vec(1, 2, 3).length())
@@ -764,7 +764,7 @@ class TestV1CompatModule(unittest.TestCase):
         self.assertEqual(handle.getnchannels(), 1)
         self.assertEqual(handle.getsampwidth(), 2)
         self.assertEqual(handle.getframerate(), 22050)
-        self.assertEqual(handle.getnframes(), n)
+        self.assertEqual(handle.getnframes(),   n)
 
     def test_out_of_range_samples_are_clamped_not_wrapped(self):
         # v1 fed these to the sound card directly, so nothing guarantees they
@@ -772,7 +772,7 @@ class TestV1CompatModule(unittest.TestCase):
         import array
         import io as _io
         import wave
-        pcm = array.array("f", [2.0, -2.0, 0.0]).tobytes()
+        pcm    = array.array("f", [2.0, -2.0, 0.0]).tobytes()
         handle = wave.open(_io.BytesIO(self.C.wav_from_float32(pcm, 8000)))
         frames = array.array("h")
         frames.frombytes(handle.readframes(3))

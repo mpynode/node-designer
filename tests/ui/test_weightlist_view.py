@@ -47,7 +47,7 @@ class TestWeightListView(unittest.TestCase):
         weightList plug directly with setAttr to exercise exact logical layouts
         (gaps included) without Maya's binding heuristics."""
         plane = mc.polyPlane(name="wlP", w=2, h=2, sx=sx, sy=sy)[0]
-        sc = mc.deformer(plane, type="mPySkinCluster")[0]
+        sc    = mc.deformer(plane, type="mPySkinCluster")[0]
         return plane, sc
 
     def test_view_type_and_detection(self):

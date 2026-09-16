@@ -105,14 +105,14 @@ class TestDocsLocator(unittest.TestCase):
         from mpynode._common.util import docs_locator
 
         items = [("a", "/pa"), ("mPyNode", "/pm"), ("b", "/pb")]
-        out = docs_locator._pin_first_with_separator(items, "mPyNode")
+        out   = docs_locator._pin_first_with_separator(items, "mPyNode")
         self.assertEqual(out, [("mPyNode", "/pm"), None, ("a", "/pa"), ("b", "/pb")])
 
     def test_pin_first_with_separator_no_match_is_unchanged(self):
         from mpynode._common.util import docs_locator
 
         items = [("a", "/pa"), ("b", "/pb")]
-        out = docs_locator._pin_first_with_separator(items, "zzz")
+        out   = docs_locator._pin_first_with_separator(items, "zzz")
         self.assertEqual(out, items)
         self.assertNotIn(None, out)
 
@@ -126,9 +126,9 @@ class TestDocLinkResolution(unittest.TestCase):
     def setUp(self):
         from mpynode._common.util import docs_locator
 
-        self.loc = docs_locator
-        self.root = docs_locator.find_docs_root()
-        self.index = os.path.join(self.root, "index.md")
+        self.loc    = docs_locator
+        self.root   = docs_locator.find_docs_root()
+        self.index  = os.path.join(self.root, "index.md")
         self.nt_dir = os.path.join(self.root, "node_types")
 
     def test_relative_md_from_index_resolves(self):
@@ -141,13 +141,13 @@ class TestDocLinkResolution(unittest.TestCase):
         self.assertEqual(kind[2], "")
 
     def test_sibling_link_between_node_docs(self):
-        src = os.path.join(self.nt_dir, "mPyDeformer.md")
+        src  = os.path.join(self.nt_dir, "mPyDeformer.md")
         kind = self.loc.resolve_doc_link(src, "mPySkinCluster.md")
         self.assertEqual(kind[0], "file")
         self.assertTrue(kind[1].endswith("mPySkinCluster.md"))
 
     def test_md_with_fragment(self):
-        src = os.path.join(self.nt_dir, "mPyDeformer.md")
+        src  = os.path.join(self.nt_dir, "mPyDeformer.md")
         kind = self.loc.resolve_doc_link(src, "mPyBlendShape.md#example")
         self.assertEqual(kind[0], "file")
         self.assertTrue(kind[1].endswith("mPyBlendShape.md"))
@@ -307,9 +307,9 @@ class TestSectionSeparators(unittest.TestCase):
         """Every mPy*.md delineates its sections with `---` rules."""
         from mpynode._common.util import docs_locator
 
-        root = docs_locator.find_docs_root()
+        root   = docs_locator.find_docs_root()
         nt_dir = os.path.join(root, "node_types")
-        mpy = [n for n in os.listdir(nt_dir) if n.startswith("mPy") and n.endswith(".md")]
+        mpy    = [n for n in os.listdir(nt_dir) if n.startswith("mPy") and n.endswith(".md")]
         # 12 mPy*.md node-type pages: mPyGeometryFilter was removed and its
         # nurbsWave demo moved to mPyDeformer, leaving 12 registered types.
         self.assertGreaterEqual(len(mpy), 12)
@@ -388,10 +388,10 @@ class TestMarkdownStyling(unittest.TestCase):
     def test_headings_get_top_margin(self):
         from mpynode._common.util import docs_locator
 
-        b = self._browser_on(docs_locator.home_doc())
+        b   = self._browser_on(docs_locator.home_doc())
         doc = b.document()
         blk = doc.firstBlock()
-        tm = None
+        tm  = None
         while blk.isValid():
             if blk.blockFormat().headingLevel() > 0:
                 tm = blk.blockFormat().topMargin()
@@ -405,7 +405,7 @@ class TestMarkdownStyling(unittest.TestCase):
         from mpynode.ui.qt_wrapper import QTextTable
 
         mesh = [p for t, p in docs_locator.list_node_type_docs() if t == "mPyMesh"][0]
-        b = self._browser_on(mesh)
+        b    = self._browser_on(mesh)
         tables = [
             f for f in b.document().rootFrame().childFrames()
             if isinstance(f, QTextTable)
@@ -432,8 +432,8 @@ class TestMarkdownStyling(unittest.TestCase):
         get the background too (so it doesn't read as stripes)."""
         from mpynode._common.util import docs_locator
 
-        mesh = [p for t, p in docs_locator.list_node_type_docs() if t == "mPyMesh"][0]
-        b = self._browser_on(mesh)
+        mesh  = [p for t, p in docs_locator.list_node_type_docs() if t == "mPyMesh"][0]
+        b     = self._browser_on(mesh)
         coded = self._code_bg_blocks(b)
         self.assertTrue(coded, "mPyMesh.md should contain a code block")
         self.assertTrue(
@@ -450,9 +450,9 @@ class TestMarkdownStyling(unittest.TestCase):
         from mpynode.ui.dialogs.doc_viewer import _enum_int
 
         single = _enum_int(QTextBlockFormat.SingleHeight)
-        mesh = [p for t, p in docs_locator.list_node_type_docs() if t == "mPyMesh"][0]
-        b = self._browser_on(mesh)
-        coded = self._code_bg_blocks(b)
+        mesh   = [p for t, p in docs_locator.list_node_type_docs() if t == "mPyMesh"][0]
+        b      = self._browser_on(mesh)
+        coded  = self._code_bg_blocks(b)
         self.assertTrue(coded)
         for blk in coded:
             self.assertEqual(
@@ -464,8 +464,8 @@ class TestMarkdownStyling(unittest.TestCase):
         block contains more than one foreground colour."""
         from mpynode._common.util import docs_locator
 
-        mesh = [p for t, p in docs_locator.list_node_type_docs() if t == "mPyMesh"][0]
-        b = self._browser_on(mesh)
+        mesh    = [p for t, p in docs_locator.list_node_type_docs() if t == "mPyMesh"][0]
+        b       = self._browser_on(mesh)
         colours = set()
         for blk in self._code_bg_blocks(b):
             it = blk.begin()
@@ -521,8 +521,8 @@ class TestStylerOptionalPasses(unittest.TestCase):
         from mpynode.ui.dialogs import doc_viewer as dv
 
         want = QColor(dv._DARK["inline_code_bg"])
-        out = []
-        b = doc.firstBlock()
+        out  = []
+        b    = doc.firstBlock()
         while b.isValid():
             it = b.begin()
             while not it.atEnd():
@@ -543,7 +543,7 @@ class TestStylerOptionalPasses(unittest.TestCase):
         from mpynode.ui.dialogs.doc_viewer import _block_is_code
 
         got = set()
-        b = doc.firstBlock()
+        b   = doc.firstBlock()
         while b.isValid():
             if (b.blockFormat().headingLevel() == 0 and not _block_is_code(b)
                     and b.textList() is None
@@ -594,7 +594,7 @@ class TestStylerOptionalPasses(unittest.TestCase):
         from mpynode.ui.dialogs import doc_viewer as dv
 
         text = self._doc(inline_code=True).toPlainText()
-        n = len(self._chips(self._doc(inline_code=True)))
+        n    = len(self._chips(self._doc(inline_code=True)))
         self.assertGreater(n, 0)
         self.assertEqual(text.count(dv._CHIP_PAD), 2 * n)
         self.assertEqual(dv._CHIP_PAD, "\u202f")
@@ -603,7 +603,7 @@ class TestStylerOptionalPasses(unittest.TestCase):
         from mpynode.ui.dialogs.doc_viewer import style_markdown_document
         from mpynode.ui.dialogs import doc_viewer as dv
 
-        doc = self._doc(inline_code=True)
+        doc    = self._doc(inline_code=True)
         before = doc.toPlainText().count(dv._CHIP_PAD)
         style_markdown_document(doc, dark=True, inline_code=True)
         self.assertEqual(doc.toPlainText().count(dv._CHIP_PAD), before)
@@ -614,9 +614,9 @@ class TestStylerOptionalPasses(unittest.TestCase):
         on Maya 2024. Guard the distinction the implementation depends on."""
         from mpynode.ui.dialogs import doc_viewer as dv
 
-        doc = self._doc()          # unstyled by the inline pass
+        doc  = self._doc()          # unstyled by the inline pass
         seen = 0
-        b = doc.firstBlock()
+        b    = doc.firstBlock()
         while b.isValid():
             it = b.begin()
             while not it.atEnd():

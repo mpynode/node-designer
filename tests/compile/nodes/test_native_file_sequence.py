@@ -64,7 +64,7 @@ def _seq_spec():
     w.add_input_attr("frame", "int")
     w.set_init_expression(fd.DEFAULT_INIT_SOURCE)
     w.set_compute_expression(_SEQ_COMPUTE)
-    spec = spec_extractor.extract_spec(w.get_name())
+    spec                                = spec_extractor.extract_spec(w.get_name())
     spec["suggested"]["node_type_name"] = "seqFileNative"
     return spec
 
@@ -98,12 +98,12 @@ class TestResolveSeqPathParity(unittest.TestCase):
 
     def test_resolution_cases(self):
         R = self._resolver()
-        self.assertEqual(R("render.####.png", 42), "render.0042.png")
-        self.assertEqual(R("render.####.png", 7), "render.0007.png")
-        self.assertEqual(R("a.#.png", 5), "a.5.png")
-        self.assertEqual(R("a.##.png", 123), "a.123.png")   # wider than pad: kept
-        self.assertEqual(R("seq_###.exr", -5), "seq_-05.exr")  # sign-aware zfill
-        self.assertEqual(R("static.png", 99), "static.png")    # no token
+        self.assertEqual(R("render.####.png", 42),  "render.0042.png")
+        self.assertEqual(R("render.####.png", 7),   "render.0007.png")
+        self.assertEqual(R("a.#.png", 5),           "a.5.png")
+        self.assertEqual(R("a.##.png", 123),        "a.123.png")          # wider than pad: kept
+        self.assertEqual(R("seq_###.exr", -5),      "seq_-05.exr")        # sign-aware zfill
+        self.assertEqual(R("static.png", 99),       "static.png")         # no token
         self.assertEqual(R("d.####/f.####.png", 3), "d.####/f.0003.png")  # last run
 
     def test_classify_recognizes_idiom(self):
@@ -164,7 +164,7 @@ class TestSequenceCompiledReload(unittest.TestCase):
                 self.skipTest("PIL not available to author test PNGs")
         pattern = os.path.join(seqdir, "seq.####.png")
 
-        spec = _seq_spec()
+        spec    = _seq_spec()
         out_dir = tempfile.mkdtemp(prefix="seq_build_")
         res = compile_controller.compile_plugin(
             [spec], "seqFileTest", out_dir, strict=True, verify=False)
@@ -180,7 +180,7 @@ class TestSequenceCompiledReload(unittest.TestCase):
 
         # frame -> expected linear color (Raw: pixel/255, so red=1,0,0 etc.)
         expected = {1: (1.0, 0.0, 0.0), 2: (0.0, 1.0, 0.0), 3: (0.0, 0.0, 1.0)}
-        seen = []
+        seen     = []
         for fr in (1, 2, 3, 1):     # revisit frame 1 to prove it re-resolves back
             cmds.setAttr(n + ".frame", fr)
             col = cmds.getAttr(n + ".outColor")[0]

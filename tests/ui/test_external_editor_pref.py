@@ -22,8 +22,8 @@ class TestExternalEditorPref(unittest.TestCase):
         from mpynode.ui.dialogs import preferences as dlg
         src = inspect.getsource(dlg)
         self.assertIn("external_editor_command", src)
-        self.assertIn("_external_editor_edit", src)
-        self.assertIn("Auto-detect", src)
+        self.assertIn("_external_editor_edit",   src)
+        self.assertIn("Auto-detect",             src)
 
     def test_dialog_offers_auto_detect_preset(self):
         from mpynode.ui.dialogs.preferences import _EDITOR_PRESETS

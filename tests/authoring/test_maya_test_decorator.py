@@ -48,8 +48,8 @@ class TestDetectTests(unittest.TestCase):
         self.assertIsNone(a["digits"])
         self.assertTrue(a["is_instance"])
         self.assertEqual(b["func_name"], "test_b")
-        self.assertEqual(b["label"], "UV move")
-        self.assertEqual(b["digits"], 3)
+        self.assertEqual(b["label"],     "UV move")
+        self.assertEqual(b["digits"],    3)
 
     def test_positional_label(self):
         from mpynode._common.methods.maya_command import detect_tests
@@ -308,7 +308,7 @@ class TestRunNodeTest(unittest.TestCase):
             "@maya_test(label='no')\n"
             "def test_no(self):\n    assert_true(False)\n"
         )
-        cmd = _RunTestCommand(loc.get_name(), loc.NATIVE_TYPE, "test_ok")
+        cmd     = _RunTestCommand(loc.get_name(), loc.NATIVE_TYPE, "test_ok")
         verdict = run_undoable(cmd)
         self.assertEqual(verdict, "PASS")
         self.assertTrue(cmd.test_result["passed"])

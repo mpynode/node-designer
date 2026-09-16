@@ -60,7 +60,7 @@ def _scripts_dir():
 
 def _order_under(seed):
     """Followed-helper order produced by a fresh process with PYTHONHASHSEED."""
-    env = dict(os.environ)
+    env                   = dict(os.environ)
     env["PYTHONHASHSEED"] = str(seed)
     proc = subprocess.run(
         [sys.executable, "-c", _CHILD % (_scripts_dir(), _COMPUTE)],
@@ -89,7 +89,7 @@ class TestFollowedHelperOrderIsProcessStable(unittest.TestCase):
 
     def test_order_is_stable_across_repeated_calls(self):
         """In-process determinism (cheap; catches a stateful regression)."""
-        first = import_follower.collect_helper_sources(_COMPUTE)["sources"]
+        first  = import_follower.collect_helper_sources(_COMPUTE)["sources"]
         second = import_follower.collect_helper_sources(_COMPUTE)["sources"]
         self.assertEqual([(u["module"], u["name"]) for u in first],
                          [(u["module"], u["name"]) for u in second])
@@ -116,9 +116,9 @@ class TestSpecKeyIsProcessStable(unittest.TestCase):
 
         units = import_follower.collect_helper_sources(_COMPUTE)["sources"]
         self.assertGreater(len(units), 1)
-        key = port_cache.cache_key(_spec(units), provider="p", model="m")
+        key      = port_cache.cache_key(_spec(units), provider="p", model="m")
         shuffled = list(reversed(units))
-        other = port_cache.cache_key(_spec(shuffled), provider="p", model="m")
+        other    = port_cache.cache_key(_spec(shuffled), provider="p", model="m")
         # Pins WHY order matters: json.dumps preserves list order, so a reorder
         # really does move the key. If this ever stops being true the sort above
         # is no longer load-bearing and this suite should be revisited.

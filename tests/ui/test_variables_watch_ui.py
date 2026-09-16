@@ -51,10 +51,10 @@ class TestVariablesSections(unittest.TestCase):
 
         self.node = MPyNode.create(name="sections_test")
         self.name = self.node.get_name()
-        self.node.add_variable("zeta", 1)            # persistent
+        self.node.add_variable("zeta", 1)  # persistent
         self.node.add_output_attr("out", "float")
         self.node.set_compute_expression("self.alpha = 5\nself.out = 1.0\n")
-        mc.getAttr(self.name + ".out")                 # compute -> temporary
+        mc.getAttr(self.name + ".out")     # compute -> temporary
 
     def _rows(self, section):
         from mpynode.ui.widgets.variables import NDVariableTreeItem
@@ -69,15 +69,15 @@ class TestVariablesSections(unittest.TestCase):
     def _build(self):
         from mpynode.ui.widgets.variables import NDVariablesWidget
 
-        w = NDVariablesWidget()
+        w          = NDVariablesWidget()
         w._py_node = self.node
         w.refresh()
         return w
 
     def test_vars_split_into_correct_sections(self):
-        w = self._build()
+        w          = self._build()
         persistent = [r.var_name for r in self._rows(w._persistent_section)]
-        temporary = [r.var_name for r in self._rows(w._temporary_section)]
+        temporary  = [r.var_name for r in self._rows(w._temporary_section)]
         self.assertEqual(persistent, ["zeta"])
         self.assertEqual(temporary, ["alpha"])
 
@@ -87,7 +87,7 @@ class TestVariablesSections(unittest.TestCase):
         from mpynode._common.storedvars import stored_var_store
 
         stored_var_store.set_var(self.name, "_player", "<player>")
-        w = self._build()
+        w    = self._build()
         temp = [r.var_name for r in self._rows(w._temporary_section)]
         self.assertIn("alpha", temp)
         self.assertNotIn("_player", temp)
@@ -107,29 +107,29 @@ class TestVariablesSections(unittest.TestCase):
     def test_edit_gating_by_section(self):
         from mpynode.ui.qt_wrapper import Qt
 
-        w = self._build()
+        w    = self._build()
         prow = self._rows(w._persistent_section)[0]
         trow = self._rows(w._temporary_section)[0]
-        self.assertTrue(prow.flags() & Qt.ItemIsEditable)    # persistent editable
-        self.assertFalse(trow.flags() & Qt.ItemIsEditable)   # temporary locked
+        self.assertTrue(prow.flags() & Qt.ItemIsEditable)   # persistent editable
+        self.assertFalse(trow.flags() & Qt.ItemIsEditable)  # temporary locked
 
     def test_promote_moves_to_persistent_section(self):
         from mpynode._common.storedvars.stored_vars_api import get_variable_names
 
-        w = self._build()
+        w     = self._build()
         alpha = self._rows(w._temporary_section)[0]
         self.assertEqual(alpha.var_name, "alpha")
         w._toggle_persistent(alpha, True)  # promote (right-click target)
         self.assertIn("alpha", get_variable_names(self.name))
         persistent = [r.var_name for r in self._rows(w._persistent_section)]
-        temporary = [r.var_name for r in self._rows(w._temporary_section)]
+        temporary  = [r.var_name for r in self._rows(w._temporary_section)]
         self.assertIn("alpha", persistent)
         self.assertNotIn("alpha", temporary)
 
     def test_demote_moves_to_temporary_section(self):
         from mpynode._common.storedvars.stored_vars_api import get_variable_names
 
-        w = self._build()
+        w    = self._build()
         zeta = self._rows(w._persistent_section)[0]
         w._toggle_persistent(zeta, False)  # demote
         self.assertNotIn("zeta", get_variable_names(self.name))
@@ -142,7 +142,7 @@ class TestVariablesSections(unittest.TestCase):
         # to widen col 0 via ResizeToContents and hide the Value column for
         # Temporary rows. Demote zeta so no persistent vars remain.
         self.node.set_variable_persistent("zeta", False)
-        w = self._build()
+        w    = self._build()
         rows = {r.var_name: r for r in self._rows(w._temporary_section)}
         self.assertIn("alpha", rows)
         self.assertIn("zeta", rows)
@@ -213,7 +213,7 @@ class TestVariablesSections(unittest.TestCase):
     def test_dir_column_not_editable(self):
         # The blank Dir column (col 1) must not open an editor, even on
         # persistent rows (which are otherwise ItemIsEditable).
-        w = self._build()
+        w        = self._build()
         delegate = w._tree.itemDelegateForColumn(1)
         self.assertIsNotNone(delegate)
         self.assertIsNone(delegate.createEditor(None, None, None))
@@ -223,7 +223,7 @@ class TestVariablesSections(unittest.TestCase):
         import mpynode.ui.widgets.variables as vmod
         from mpynode._common.storedvars.stored_vars_api import get_variable_names
 
-        orig = vmod.confirm_delete_node
+        orig                     = vmod.confirm_delete_node
         vmod.confirm_delete_node = lambda *a, **k: True
         try:
             w = self._build()
@@ -256,7 +256,7 @@ class TestVariablesSections(unittest.TestCase):
 
         arr = np.arange(12).reshape(3, 4).astype(float)
         self.node.set_variable("mat", arr, persistent=True)
-        w = self._build()
+        w    = self._build()
         rows = {r.var_name: r for r in self._rows(w._persistent_section)}
         self.assertIn("mat", rows)
         item = rows["mat"]
@@ -270,7 +270,7 @@ class TestVariablesSections(unittest.TestCase):
     def test_value_column_monospace(self):
         from mpynode.ui.qt_wrapper import QFont
 
-        w = self._build()
+        w    = self._build()
         rows = self._rows(w._persistent_section)
         self.assertTrue(rows)
         self.assertEqual(rows[0].font(2).styleHint(), QFont.Monospace)
@@ -316,8 +316,8 @@ class TestVariablesSections(unittest.TestCase):
         finally:
             preferences.set_pref("display_round_enabled", True)
             preferences.set_pref("display_round_digits", 8)
-        self.assertIn("1.12", out2)
-        self.assertIn("1.1234567", out8)       # 8 decimals
+        self.assertIn("1.12",        out2)
+        self.assertIn("1.1234567",   out8)     # 8 decimals
         self.assertIn("1.123456789", outfull)  # full precision, no rounding
         self.assertNotEqual(out2, out8)
 
@@ -332,8 +332,8 @@ class TestVariablesSections(unittest.TestCase):
         run_undoable(_AddStoredVarCommand(self.node, "p_new", 1))
         run_undoable(_AddTemporaryVarCommand(self.node, "t_new", 2))
         names = get_variable_names(self.name)
-        self.assertIn("p_new", names)      # persistent -> registered
-        self.assertNotIn("t_new", names)   # temporary -> NOT registered
+        self.assertIn("p_new", names)     # persistent -> registered
+        self.assertNotIn("t_new", names)  # temporary -> NOT registered
         data = self.node.get_variables()
         self.assertEqual(data.get("p_new"), 1)
         self.assertEqual(data.get("t_new"), 2)  # still live in the store
@@ -410,9 +410,9 @@ class TestVariablesSections(unittest.TestCase):
         parent = QWidget()
         tb = NDToolBar(
             parent,
-            on_new_node=lambda nt: None,
-            on_save_node=lambda: None,
-            on_save_all=lambda: None,
+            on_new_node  = lambda nt: None,
+            on_save_node = lambda: None,
+            on_save_all  = lambda: None,
         )
         self.assertTrue(hasattr(tb, "_left_spacer"))
         self.assertGreater(tb._left_spacer.width(), 0)
@@ -422,7 +422,7 @@ class TestVariablesSections(unittest.TestCase):
 
     @staticmethod
     def _watch_sections(w):
-        t = w._tree
+        t   = w._tree
         out = {}
         for i in range(t.topLevelItemCount()):
             h = t.topLevelItem(i)
@@ -434,10 +434,10 @@ class TestVariablesSections(unittest.TestCase):
     def test_watch_tab_groups_store_vars(self):
         from mpynode.ui.widgets.watch import NDWatchWidget
 
-        self.node.add_variable("p_persist", 1)        # persistent
+        self.node.add_variable("p_persist", 1)  # persistent
         self.node.add_output_attr("wout", "float")
         self.node.set_compute_expression("self.t_temp = 7\nself.wout = 1.0\n")
-        mc.getAttr(self.name + ".wout")                 # compute -> t_temp (temporary)
+        mc.getAttr(self.name + ".wout")         # compute -> t_temp (temporary)
 
         w = NDWatchWidget()
         w.setPyNode(self.node)
@@ -445,9 +445,9 @@ class TestVariablesSections(unittest.TestCase):
         w._watch_cb.setChecked(True)
         secs = self._watch_sections(w)
         self.assertIn("Persistent", secs)
-        self.assertIn("Temporary", secs)
-        self.assertIn("p_persist", secs["Persistent"])
-        self.assertIn("t_temp", secs["Temporary"])
+        self.assertIn("Temporary",  secs)
+        self.assertIn("p_persist",  secs["Persistent"])
+        self.assertIn("t_temp",     secs["Temporary"])
 
         # Scope toggle: hide Persistent -> its section disappears.
         w._show_persist_cb.setChecked(False)
@@ -475,13 +475,13 @@ class TestVariablesSections(unittest.TestCase):
         w.setPyNode(io)                       # Watch capture left OFF (default)
         self.assertFalse(w._watch_cb.isChecked())
         secs = self._watch_sections(w)
-        self.assertIn("Inputs", secs)
+        self.assertIn("Inputs",  secs)
         self.assertIn("Outputs", secs)
-        self.assertIn("gain", secs["Inputs"])
-        self.assertIn("result", secs["Outputs"])
+        self.assertIn("gain",    secs["Inputs"])
+        self.assertIn("result",  secs["Outputs"])
         # Locals / stored vars still require Enable Watch -> hidden when off.
-        self.assertNotIn("Locals", secs)
-        self.assertNotIn("Temporary", secs)
+        self.assertNotIn("Locals",     secs)
+        self.assertNotIn("Temporary",  secs)
         self.assertNotIn("Persistent", secs)
 
     def test_watch_tab_scope_checkboxes_default_on(self):
@@ -503,7 +503,7 @@ class TestVariablesSections(unittest.TestCase):
             def dispose(self):
                 self.disposed = True
 
-        spy = _Spy()
+        spy                = _Spy()
         w._waveform_player = spy
         w.setPyNode(None)                 # node change -> dispose old player
         self.assertTrue(spy.disposed)
@@ -524,7 +524,7 @@ class TestVariablesSections(unittest.TestCase):
             def dispose(self):
                 self.disposed = True
 
-        spy = _Spy()
+        spy                = _Spy()
         w._waveform_player = spy
         w.setPyNode(None)
         self.assertTrue(spy.disposed)
@@ -603,7 +603,7 @@ class TestFormatValueLabel(unittest.TestCase):
             DrawText("hello"),
         ]
         for obj in cases:
-            cls = type(obj).__name__
+            cls   = type(obj).__name__
             label = cap_watch_value(obj)
             self.assertEqual(_format_type(label), cls)
             self.assertEqual(_format_size(label), "NA",
@@ -619,8 +619,8 @@ class TestFormatSize(unittest.TestCase):
         from mpynode.ui.widgets.watch import _format_size
 
         self.assertEqual(_format_size([1, 2, 3]), "3")
-        self.assertEqual(_format_size((1, 2)), "2")
-        self.assertEqual(_format_size([]), "0")
+        self.assertEqual(_format_size((1, 2)),    "2")
+        self.assertEqual(_format_size([]),        "0")
 
     def test_string_length(self):
         from mpynode.ui.widgets.watch import _format_size
@@ -728,9 +728,9 @@ class TestFormatType(unittest.TestCase):
         from mpynode.ui.widgets.watch import _format_type
 
         self.assertEqual(_format_type([1, 2, 3]), "list")
-        self.assertEqual(_format_type((1, 2)), "tuple")
-        self.assertEqual(_format_type({"a": 1}), "dict")
-        self.assertEqual(_format_type("hi"), "str")
+        self.assertEqual(_format_type((1, 2)),    "tuple")
+        self.assertEqual(_format_type({"a": 1}),  "dict")
+        self.assertEqual(_format_type("hi"),      "str")
 
     def test_a_collapsed_label_reports_what_it_replaced(self):
         # WatchLabel IS a str, so the plain type() answer would be "str" for
@@ -860,7 +860,7 @@ class TestWatchDecodeIOValue(unittest.TestCase):
     def test_python_dict_decoded_with_real_type(self):
         from mpynode.ui.widgets.watch import decode_io_value, _format_type
 
-        raw = _encode({"x": 1, "y": 2})
+        raw     = _encode({"x": 1, "y": 2})
         decoded = decode_io_value(raw, "python")
         self.assertEqual(decoded, {"x": 1, "y": 2})
         self.assertEqual(_format_type(decoded), "dict")
@@ -868,7 +868,7 @@ class TestWatchDecodeIOValue(unittest.TestCase):
     def test_python_numpy_decoded_with_real_type(self):
         from mpynode.ui.widgets.watch import decode_io_value, _format_type
 
-        arr = np.arange(6, dtype=float).reshape(2, 3)
+        arr     = np.arange(6, dtype=float).reshape(2, 3)
         decoded = decode_io_value(_encode(arr), "python")
         self.assertIsInstance(decoded, np.ndarray)
         np.testing.assert_array_equal(decoded, arr)
@@ -916,8 +916,8 @@ class TestWatchDecodeCache(unittest.TestCase):
         try:
             cache: dict = {}
             raw = _encode({"a": 1})
-            v1 = W.decode_io_value_cached(cache, "python", raw, "python")
-            v2 = W.decode_io_value_cached(cache, "python", raw, "python")
+            v1  = W.decode_io_value_cached(cache, "python", raw, "python")
+            v2  = W.decode_io_value_cached(cache, "python", raw, "python")
             self.assertEqual(v1, {"a": 1})
             self.assertEqual(v2, {"a": 1})
             self.assertEqual(calls["n"], 1, "unchanged blob should decode once")
@@ -1003,12 +1003,12 @@ class _FakeWatch:
     """
 
     def __init__(self):
-        self._live_timer = _FakeTimer()
-        self._refreshing = False
-        self._py_node = object()  # truthy -> a node is "selected"
-        self._live_suspended = False
+        self._live_timer      = _FakeTimer()
+        self._refreshing      = False
+        self._py_node         = object()  # truthy -> a node is "selected"
+        self._live_suspended  = False
         self._live_was_active = False
-        self.refresh_calls = 0
+        self.refresh_calls    = 0
 
     def refresh(self):
         self.refresh_calls += 1
@@ -1129,7 +1129,7 @@ class TestWatchNoForceEval(unittest.TestCase):
         mc.file(new=True, force=True)
         name = self._make("EVALW2", "EVALW2")
         mc.getAttr(name + ".pts[0]")  # prime
-        meta = {"attr_type": "vector", "is_array": True}
+        meta  = {"attr_type": "vector", "is_array": True}
         total = 0
         for _ in range(5):
             n, _ = self._count(
@@ -1146,10 +1146,10 @@ class TestWatchNoForceEval(unittest.TestCase):
         name = self._make("EVALW3", "EVALW3")
         mc.getAttr(name + ".pts[0]")  # prime
         meta = {"attr_type": "vector", "is_array": True}
-        val = read_multi_plug_values(name, "pts", meta)
+        val  = read_multi_plug_values(name, "pts", meta)
         import numpy as np
 
-        self.assertEqual(np.asarray(val).shape, (2, 3))
+        self.assertEqual(np.asarray(val).shape,    (2, 3))
         self.assertEqual(list(np.asarray(val)[0]), [1.0, 2.0, 3.0])
         self.assertEqual(list(np.asarray(val)[1]), [4.0, 5.0, 6.0])
 
@@ -1195,11 +1195,11 @@ class TestWatchNoForceEval(unittest.TestCase):
 
         mc.file(new=True, force=True)
         node = MPyNode.create(name="scalarArrays")
-        node.add_input_attr("idx", "int", is_array=True)
-        node.add_input_attr("wts", "float", is_array=True)
-        node.add_input_attr("flags", "bool", is_array=True)
-        node.add_input_attr("tags", "string", is_array=True)
-        node.add_input_attr("empty", "int", is_array=True)
+        node.add_input_attr("idx",   "int",    is_array=True)
+        node.add_input_attr("wts",   "float",  is_array=True)
+        node.add_input_attr("flags", "bool",   is_array=True)
+        node.add_input_attr("tags",  "string", is_array=True)
+        node.add_input_attr("empty", "int",    is_array=True)
         name = node.get_name()
         for i, v in enumerate((2, 3, 1)):
             mc.setAttr("%s.idx[%d]" % (name, i), v)
@@ -1271,8 +1271,8 @@ class TestWatchNoForceEval(unittest.TestCase):
         dn = read_multi_plug_values(
             name, "g", {"attr_type": "int", "is_array": True, "sparse": False})
         self.assertIsInstance(dn, np.ndarray)
-        self.assertEqual(dn.dtype, np.dtype(np.int64))
-        self.assertEqual(dn.shape, (3,))
+        self.assertEqual(dn.dtype,   np.dtype(np.int64))
+        self.assertEqual(dn.shape,   (3,))
         self.assertEqual(int(dn[0]), 5)
         self.assertEqual(int(dn[1]), 0)
         self.assertEqual(int(dn[2]), 7)
@@ -1295,7 +1295,7 @@ class TestWatchNoForceEval(unittest.TestCase):
         node.add_input_attr("angs", "angle", is_array=True)
         node.add_input_attr("rot", "euler")
         name = node.get_name()
-        mc.setAttr("%s.ang" % name, 90)          # 90 deg (UI unit)
+        mc.setAttr("%s.ang" % name,     90)          # 90 deg (UI unit)
         mc.setAttr("%s.angs[0]" % name, 90)
         mc.setAttr("%s.angs[1]" % name, 180)
         mc.setAttr("%s.rot" % name, 90, 180, 45, type="double3")
@@ -1335,8 +1335,8 @@ class TestWatchNoForceEval(unittest.TestCase):
         v = read_multi_plug_values(
             name, "v", {"attr_type": "vector", "is_array": True})
         self.assertIsInstance(v, np.ndarray)
-        self.assertEqual(v.dtype, np.dtype(np.float64))
-        self.assertEqual(v.shape, (0, 3))
+        self.assertEqual(v.dtype,         np.dtype(np.float64))
+        self.assertEqual(v.shape,         (0, 3))
         self.assertEqual(_format_type(v), "numpy.ndarray[float64]")
 
 

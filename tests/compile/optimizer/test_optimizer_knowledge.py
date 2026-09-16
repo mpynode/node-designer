@@ -34,10 +34,10 @@ class TestOptimizerKnowledge(unittest.TestCase):
         system, user = ok.build_optimize_prompt("int MAGIC_CPP_TOKEN = 1;", spec,
                                                 bench_hint="median 12.3 ms")
         self.assertTrue(system and user)
-        self.assertIn("MAGIC_CPP_TOKEN", user)        # the source is embedded
-        self.assertIn("self.a ** 2", user)            # the parity reference too
-        self.assertIn("12.3 ms", user)                # the bench hint
-        self.assertIn("COMPLETE", system)             # whole-file output contract
+        self.assertIn("MAGIC_CPP_TOKEN", user)    # the source is embedded
+        self.assertIn("self.a ** 2",     user)    # the parity reference too
+        self.assertIn("12.3 ms",         user)    # the bench hint
+        self.assertIn("COMPLETE",        system)  # whole-file output contract
 
     def test_fix_prompt_embeds_errors_and_cpp(self):
         system, user = ok.build_fix_prompt("int X = ;", "error: expected expression")

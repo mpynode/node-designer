@@ -22,12 +22,12 @@ class _Cap:
 
 class TestOpenInEditor(unittest.TestCase):
     def setUp(self):
-        self._orig = editor_launch.subprocess.Popen
-        self.cap = _Cap()
+        self._orig                     = editor_launch.subprocess.Popen
+        self.cap                       = _Cap()
         editor_launch.subprocess.Popen = self.cap
         # Pretend every bare name resolves, so the result does not depend on
         # which editors the test machine has.
-        self._orig_which = editor_launch.shutil.which
+        self._orig_which           = editor_launch.shutil.which
         editor_launch.shutil.which = lambda name, path=None: "/fake/bin/" + name
         # Pin a known template regardless of the user's prefs.
         import mpynode.ui.preferences as prefs
@@ -38,7 +38,7 @@ class TestOpenInEditor(unittest.TestCase):
 
     def tearDown(self):
         editor_launch.subprocess.Popen = self._orig
-        editor_launch.shutil.which = self._orig_which
+        editor_launch.shutil.which     = self._orig_which
         import mpynode.ui.preferences as prefs
         prefs.get_pref = self._orig_get
 
@@ -97,7 +97,7 @@ class TestOpenInEditor(unittest.TestCase):
 
     def test_detect_default_editor_falls_back_when_none_found(self):
         editor_launch.shutil.which = lambda name, path=None: None
-        cmd = editor_launch.detect_default_editor_command()
+        cmd                        = editor_launch.detect_default_editor_command()
         self.assertEqual(cmd, editor_launch._DEFAULT_EDITOR_COMMAND)
 
     def test_empty_pref_triggers_auto_detection(self):
@@ -141,7 +141,7 @@ class TestRevealTargetsAFolderCorrectly(unittest.TestCase):
 
         from mpynode.ui import editor_launch
         self.editor_launch = editor_launch
-        self.calls = []
+        self.calls         = []
 
         self.dir = tempfile.mkdtemp()
         self.addCleanup(shutil.rmtree, self.dir, True)

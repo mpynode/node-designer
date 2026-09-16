@@ -45,7 +45,7 @@ import tempfile
 import unittest
 from tests import _paths
 
-_HERE = os.path.dirname(os.path.abspath(__file__))
+_HERE       = os.path.dirname(os.path.abspath(__file__))
 _NATIVE_DIR = os.path.join(_paths.TESTS, "compile", "native")
 
 # Generous ceiling: the compile-heavy harnesses run ~20s each locally; a large
@@ -79,7 +79,7 @@ def _run_harness(test_case, filename, success_markers, needs_cxx=True):
     except subprocess.TimeoutExpired:
         test_case.fail("%s timed out after %ds" % (filename, _TIMEOUT_S))
 
-    out = (proc.stdout or "") + (proc.stderr or "")
+    out  = (proc.stdout or "") + (proc.stderr or "")
     tail = out[-3000:]
 
     # A harness may self-skip (no compiler) even though we found one above (e.g.

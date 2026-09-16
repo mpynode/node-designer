@@ -23,10 +23,10 @@ import json
 import os
 import sys
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-MEGA = os.path.join(ROOT, "templates", "All Templates Plugin", "build")
+ROOT     = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+MEGA     = os.path.join(ROOT, "templates", "All Templates Plugin", "build")
 MANIFEST = os.path.join(MEGA, "manifest.json")
-STAGES = os.path.join(MEGA, "stages")
+STAGES   = os.path.join(MEGA, "stages")
 
 
 def _stage_path(type_name):
@@ -58,7 +58,7 @@ def main():
     changed, same, missing, failed = [], [], [], []
     for row in man.get("nodes") or []:
         type_name = row.get("type_name")
-        spec = row.get("spec")
+        spec      = row.get("spec")
         if not type_name or not isinstance(spec, dict):
             continue
         dst = _stage_path(type_name)

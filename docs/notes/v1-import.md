@@ -531,7 +531,7 @@ unchanged, and nothing is seeded into any namespace.
 ```python
 import pyaudio, threading
 def ouch(sample_rate, sample_data):
-    p = pyaudio.PyAudio()
+    p      = pyaudio.PyAudio()
     stream = p.open(format=32, channels=1, rate=sample_rate, output=True)
     stream.write(sample_data)          # BLOCKING, hence the thread
 ```
@@ -559,7 +559,7 @@ self.color = [0, 1, 0]
 if self.angle < 0.165009870842:
     self.color = [1, 0, 0]
     if not self.pain:
-        self.pain = True
+        self.pain   = True
         self.player = play_pcm(self.sample, int(self.sampleRate))
 else:
     self.pain = False

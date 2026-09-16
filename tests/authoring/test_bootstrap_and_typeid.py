@@ -25,7 +25,7 @@ class _Env:
     """Set/restore env vars around a block."""
 
     def __init__(self, **kw):
-        self._kw = kw
+        self._kw    = kw
         self._saved = {}
 
     def __enter__(self):
@@ -82,7 +82,7 @@ class TestBootstrapFile(unittest.TestCase):
             # assertion said C:\...\tmp\data, so this failed on Windows purely
             # on the separator (the value round-trips correctly either way).
             target = os.path.join(d, "data")
-            ini = _write_ini(d, "[paths]\nhome = %s\n" % target)
+            ini    = _write_ini(d, "[paths]\nhome = %s\n" % target)
             with _Env(MPYNODE_CONFIG=ini, MPYNODE_HOME=None):
                 self.assertEqual(home.home_dir(), target)
 
@@ -97,7 +97,7 @@ class TestBootstrapFile(unittest.TestCase):
     def test_locations_relocate_independently(self):
         """The point of splitting them: move ONLY the compile output."""
         with tempfile.TemporaryDirectory() as d:
-            data = os.path.join(d, "data")
+            data    = os.path.join(d, "data")
             plugins = os.path.join(d, "plugins")
             ini = _write_ini(
                 d, "[paths]\nhome = %s\ncompiled = %s\n" % (data, plugins))
@@ -175,9 +175,9 @@ class TestDeterministicId(unittest.TestCase):
                                                         0x7FFFF))
 
     def test_distinct_keys_get_distinct_ids(self):
-        reg = typeid_registry.TypeIdRegistry(path="/nonexistent/pins.json")
+        reg   = typeid_registry.TypeIdRegistry(path="/nonexistent/pins.json")
         names = ["nodeA", "nodeB", "nodeC", "nodeD", "nodeE"]
-        got = reg.allocate_many(names)
+        got   = reg.allocate_many(names)
         self.assertEqual(len(set(got.values())), len(names))
 
     def test_ids_stay_inside_mayas_range(self):
@@ -191,7 +191,7 @@ class TestDeterministicId(unittest.TestCase):
         """The EPERM class of failure, gone: resolving ids touches no disk."""
         with tempfile.TemporaryDirectory() as d:
             pins = os.path.join(d, "pins.json")
-            reg = typeid_registry.TypeIdRegistry(path=pins)
+            reg  = typeid_registry.TypeIdRegistry(path=pins)
             reg.allocate_many(["one", "two", "three"])
             self.assertFalse(os.path.exists(pins),
                              "a compile must not write the pin file")
@@ -201,7 +201,7 @@ class TestDeterministicId(unittest.TestCase):
         self.assertTrue(reg.allocate("stillWorks").startswith("0x"))
 
     def test_allocate_is_idempotent_within_a_build(self):
-        reg = typeid_registry.TypeIdRegistry(path="/nonexistent/pins.json")
+        reg   = typeid_registry.TypeIdRegistry(path="/nonexistent/pins.json")
         first = reg.allocate("dup")
         self.assertEqual(first, reg.allocate("dup"))
         self.assertEqual(first, reg.allocate_many(["dup"])["dup"])
@@ -231,9 +231,9 @@ class TestCollisionHandling(unittest.TestCase):
         self.assertIn("pool exhausted", str(ctx.exception))
 
     def test_two_nodes_in_a_bundle_never_share_an_id(self):
-        reg = typeid_registry.TypeIdRegistry(path="/nonexistent/pins.json")
+        reg   = typeid_registry.TypeIdRegistry(path="/nonexistent/pins.json")
         names = ["n%03d" % i for i in range(200)]
-        got = reg.allocate_many(names)
+        got   = reg.allocate_many(names)
         self.assertEqual(len(set(got.values())), len(names))
 
 
@@ -289,7 +289,7 @@ class TestPinPrecedence(unittest.TestCase):
     def test_write_pins_is_explicit_and_freezes_the_build(self):
         with tempfile.TemporaryDirectory() as d:
             pins = os.path.join(d, "pins.json")
-            reg = typeid_registry.TypeIdRegistry(path=pins)
+            reg  = typeid_registry.TypeIdRegistry(path=pins)
             reg.allocate_many(["a", "b"])
             reg.write_pins()
             with open(pins) as fh:
@@ -301,7 +301,7 @@ class TestPinPrecedence(unittest.TestCase):
                              {k: v for k, v in doc["map"].items()})
 
     def test_get_previews_without_claiming(self):
-        reg = typeid_registry.TypeIdRegistry(path="/nonexistent/pins.json")
+        reg     = typeid_registry.TypeIdRegistry(path="/nonexistent/pins.json")
         preview = reg.get("preview")
         self.assertEqual(reg.sources, {}, "get() must not allocate")
         self.assertEqual(reg.allocate("preview"), preview)
@@ -343,7 +343,7 @@ class TestMetadataTypeIdField(unittest.TestCase):
         """The id is rewritten by bundler and never survives into the binary, so
         changing it must not force a re-port -- and adding the field must not
         invalidate every existing entry."""
-        base = {"suggested": {"node_type_name": "n"}, "compute": "pass"}
+        base      = {"suggested": {"node_type_name": "n"}, "compute": "pass"}
         with_meta = dict(base, metadata=md.coerce({"authors": ["A"]}))
         pinned = dict(base,
                       metadata=md.coerce({"authors": ["A"],
@@ -360,7 +360,7 @@ class TestMetadataTypeIdField(unittest.TestCase):
         that one has metadata on both sides, so it never exercised the case where
         pinning INTRODUCES the metadata dict. Leaving the emptied husk in the
         payload made merely pinning an id force a full LLM re-port."""
-        base = {"suggested": {"node_type_name": "n"}, "compute": "pass"}
+        base     = {"suggested": {"node_type_name": "n"}, "compute": "pass"}
         pin_only = dict(base, metadata=md.coerce({"type_id": "0x00012345"}))
         self.assertEqual(
             port_cache.cache_key(base, provider="p", model="m"),
@@ -369,7 +369,7 @@ class TestMetadataTypeIdField(unittest.TestCase):
     def test_real_metadata_still_keys_differently(self):
         """The emptied-husk drop must not swallow metadata that DOES reach the
         C++ banner -- otherwise an authorship edit would serve a stale .cpp."""
-        base = {"suggested": {"node_type_name": "n"}, "compute": "pass"}
+        base     = {"suggested": {"node_type_name": "n"}, "compute": "pass"}
         authored = dict(base, metadata=md.coerce({"authors": ["A"]}))
         self.assertNotEqual(
             port_cache.cache_key(base, provider="p", model="m"),

@@ -60,9 +60,9 @@ class TestDeformerFamilyAllowlists(unittest.TestCase):
         mc.file(new=True, force=True)
         j1 = mc.joint(p=(0, 0, 0)); mc.select(cl=True)
         j2 = mc.joint(p=(0, 2, 0)); mc.select(cl=True)
-        pl = mc.polyPlane(w=2, h=2, sx=1, sy=1)[0]
-        sc = MPySkinCluster.create(pl, joints=[j1, j2], name="wlSkin")
-        leaves = _leaves(sc.get_name())
+        pl      = mc.polyPlane(w=2, h=2, sx=1, sy=1)[0]
+        sc      = MPySkinCluster.create(pl, joints=[j1, j2], name="wlSkin")
+        leaves  = _leaves(sc.get_name())
         missing = MPySkinCluster.USEFUL_INHERITED_PLUGS - leaves
         self.assertFalse(missing, "allowlist names not on node: %r" % missing)
 
@@ -75,10 +75,10 @@ class TestDeformerFamilyAllowlists(unittest.TestCase):
             MPyBlendShape.USEFUL_INHERITED_PLUGS,
             DEFORMER_USEFUL | {"targetGeometry"})
         mc.file(new=True, force=True)
-        pl = mc.polyPlane(w=2, h=2, sx=1, sy=1)[0]
-        tgt = mc.polyPlane(w=2, h=2, sx=1, sy=1)[0]
-        bs = MPyBlendShape.create(pl, targets=[tgt], name="wlBS")
-        leaves = _leaves(bs.get_name())
+        pl      = mc.polyPlane(w=2, h=2, sx=1, sy=1)[0]
+        tgt     = mc.polyPlane(w=2, h=2, sx=1, sy=1)[0]
+        bs      = MPyBlendShape.create(pl, targets=[tgt], name="wlBS")
+        leaves  = _leaves(bs.get_name())
         missing = MPyBlendShape.USEFUL_INHERITED_PLUGS - leaves
         self.assertFalse(missing, "allowlist names not on node: %r" % missing)
 
@@ -127,7 +127,7 @@ class TestFileConstraintIkAllowlists(unittest.TestCase):
         for noise in ("preFilter", "mipmapMode", "maxAnisotropy", "borderColor"):
             self.assertNotIn(noise, MPyFile.USEFUL_INHERITED_PLUGS)
         mc.file(new=True, force=True)
-        n = mc.createNode("mPyFile")
+        n       = mc.createNode("mPyFile")
         missing = expect - _leaves(n)
         self.assertFalse(missing, "allowlist names not on node: %r" % missing)
 
@@ -154,7 +154,7 @@ class TestAllowlistInvariants(unittest.TestCase):
         from mpynode.ui.widgets.plug_tree_walker import _TYPE_TO_WRAPPER
         out = {}
         for typ, (mod, cls) in _TYPE_TO_WRAPPER.items():
-            m = __import__(mod, fromlist=[cls])
+            m        = __import__(mod, fromlist=[cls])
             out[typ] = getattr(m, cls)
         return out
 
@@ -169,7 +169,7 @@ class TestAllowlistInvariants(unittest.TestCase):
     def test_exposed_inputs_subset_of_useful(self):
         for typ, cls in self._wrapper_classes().items():
             exposed = frozenset(getattr(cls, "EXPOSED_INPUT_PLUGS", ()) or ())
-            useful = getattr(cls, "USEFUL_INHERITED_PLUGS", frozenset())
+            useful  = getattr(cls, "USEFUL_INHERITED_PLUGS", frozenset())
             self.assertTrue(exposed <= useful,
                             "%s: EXPOSED_INPUT_PLUGS not subset of USEFUL: %r"
                             % (typ, exposed - useful))

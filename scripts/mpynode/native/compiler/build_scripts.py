@@ -32,7 +32,7 @@ def generate_build_sh(spec: dict, maya=None) -> str:
     ``maya`` is provenance only; the Maya root is resolved at RUN time from the
     optional version argument (``./build.sh 2026``).
     """
-    name = spec["suggested"]["node_type_name"]
+    name     = spec["suggested"]["node_type_name"]
     libflags = " ".join("-l%s" % l for l in _libs_for(spec))
     lines = [
         "#!/usr/bin/env bash",
@@ -85,7 +85,7 @@ def generate_build_bat(spec: dict, maya=None) -> str:
     libs = " ".join("%s.lib" % l for l in _libs_for(spec))
     # A hover-capable locator also links Maya's Qt import libs (best-effort; only
     # macOS is build-verified). No rpath on Windows -- Qt6*.dll sits next to maya.exe.
-    qt_inc = ""
+    qt_inc   = ""
     needs_qt = bool(spec.get("needs_hover"))
     if needs_qt:
         libs = libs + " Qt6Core.lib Qt6Gui.lib Qt6Widgets.lib"
@@ -155,15 +155,15 @@ def write_plugin(spec: dict, out_dir: str) -> dict:
     Raises UnsupportedSpec (via generate_cpp) before writing anything if the
     spec is out of phase-1 scope.
     """
-    name = spec["suggested"]["node_type_name"]
+    name    = spec["suggested"]["node_type_name"]
     cpp_src = generate_cpp(spec)  # validates first
     os.makedirs(out_dir, exist_ok=True)
     build_name, build_src = generate_build_script(spec)
     paths = {
-        "cpp": os.path.join(out_dir, name + ".cpp"),
-        "build_sh": os.path.join(out_dir, build_name),
+        "cpp":       os.path.join(out_dir, name + ".cpp"),
+        "build_sh":  os.path.join(out_dir, build_name),
         "load_test": os.path.join(out_dir, "load_test.py"),
-        "node": name,
+        "node":      name,
     }
     with open(paths["cpp"], "w", encoding="utf-8") as f:
         f.write(cpp_src)
@@ -182,7 +182,7 @@ def write_plugin(spec: dict, out_dir: str) -> dict:
     return paths
 
 def generate_load_test(spec: dict) -> str:
-    name = spec["suggested"]["node_type_name"]
+    name        = spec["suggested"]["node_type_name"]
     plugin_file = name + toolchain.plugin_ext()
     return "\n".join([
         '"""Smoke-load the generated %s plugin in Maya."""' % name,

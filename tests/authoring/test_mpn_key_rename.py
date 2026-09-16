@@ -26,7 +26,7 @@ class TestMpnKeys(unittest.TestCase):
 
     def test_deserialize_reads_new_keys(self):
         from mpynode._common.io.mpn_io import serialize_node, deserialize_node
-        p = serialize_node(self._make())
+        p  = serialize_node(self._make())
         n2 = deserialize_node(p, name="keyRenameRestore#")
         self.assertEqual(n2.get_py_class(), "mpynode_user.KeyThing")
 
@@ -38,7 +38,7 @@ class TestMpnKeys(unittest.TestCase):
         legacy = {
             "native_type": "mPyNode",
             "source_name": "legacyNode",
-            "py_class": "mpynode_user.Legacy",
+            "py_class":    "mpynode_user.Legacy",
             "expression": "", "input_attrs": {}, "output_attrs": {},
             "stored_vars": {},
         }
@@ -65,7 +65,7 @@ class TestMpnKeys(unittest.TestCase):
         spec = spec_from_mpn_payload({
             "native_type": "mPyNode",
             "source_name": "foo",
-            "py_class": "mpynode_user.Legacy",
+            "py_class":    "mpynode_user.Legacy",
             "expression": "", "input_attrs": {}, "output_attrs": {},
             "stored_vars": {},
         })

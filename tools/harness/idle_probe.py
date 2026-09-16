@@ -60,9 +60,9 @@ def main_thread_cpu_s():
     # GetCurrentThread returns the pseudo-handle -2; with the default c_int
     # restype it is truncated to 0xFFFFFFFE and GetThreadTimes fails.
     k.GetCurrentThread.restype = ctypes.c_void_p
-    k.GetThreadTimes.restype = ctypes.c_int
-    k.GetThreadTimes.argtypes = [ctypes.c_void_p] + [ctypes.POINTER(_FILETIME)] * 4
-    h = k.GetCurrentThread()
+    k.GetThreadTimes.restype   = ctypes.c_int
+    k.GetThreadTimes.argtypes  = [ctypes.c_void_p] + [ctypes.POINTER(_FILETIME)] * 4
+    h                          = k.GetCurrentThread()
     c, e, kt, ut = _FILETIME(), _FILETIME(), _FILETIME(), _FILETIME()
     if not k.GetThreadTimes(h, ctypes.byref(c), ctypes.byref(e), ctypes.byref(kt), ctypes.byref(ut)):
         return None
@@ -106,9 +106,9 @@ def _view_rect_global(omui):
     try:
         QtCore, QtGui, QtWidgets, shib = _qt()
         view = omui.M3dView.active3dView()
-        w = shib.wrapInstance(int(view.widget()), QtWidgets.QWidget)
-        tl = w.mapToGlobal(w.rect().topLeft())
-        br = w.mapToGlobal(w.rect().bottomRight())
+        w    = shib.wrapInstance(int(view.widget()), QtWidgets.QWidget)
+        tl   = w.mapToGlobal(w.rect().topLeft())
+        br   = w.mapToGlobal(w.rect().bottomRight())
         return QtCore.QRect(tl, br)
     except Exception:
         return None
@@ -124,7 +124,7 @@ def _set_cursor(x, y):
 
 # ---------------------------------------------------------------- scene makers
 def _model_panel(cmds):
-    ed = cmds.playblast(activeEditor=True) or ""
+    ed    = cmds.playblast(activeEditor=True) or ""
     panel = ed.split("|")[-1] if ed else ""
     if panel and cmds.getPanel(typeOf=panel) == "modelPanel":
         return panel
@@ -155,7 +155,7 @@ def _vb():
         import importlib.util
         path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "viewport_bench.py")
         spec = importlib.util.spec_from_file_location("viewport_bench", path)
-        mod = importlib.util.module_from_spec(spec)
+        mod  = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(mod)
         return mod
 
@@ -437,7 +437,7 @@ class Probe:
                "wall_s": wall, "redraws": self.n_redraw,
                "redraws_per_s": self.n_redraw / wall if wall > 0 else 0.0,
                "ms_per_redraw": (self.sum_ms / self.n_redraw) if self.n_redraw else None,
-               "main_cpu_pct": (100.0 * (c1 - self.c0) / wall) if (c1 is not None and self.c0 is not None and wall > 0) else None,
+               "main_cpu_pct":  (100.0 * (c1 - self.c0) / wall) if (c1 is not None and self.c0 is not None and wall > 0) else None,
                "proc_cpu_pct": (100.0 * (p1 - self.p0) / wall) if wall > 0 else None}
         self.rows.append(row)
         self.log("[idle_probe] %-28s N=%-4d %6.1f redraws/s  render %s ms  main %s%%  proc %s%%" % (

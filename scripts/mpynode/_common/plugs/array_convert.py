@@ -42,10 +42,10 @@ def points_array_to_numpy(pa):
     Maya's MPoint is internally 4-wide (x, y, z, w). We slice off
     the w here so callers always get the canonical (N, 3) shape type promotion table (Section 4).
     """
-    n = pa.length()
+    n   = pa.length()
     out = np.empty((n, 3), dtype=np.float64)
     for i in range(n):
-        p = pa[i]
+        p         = pa[i]
         out[i, 0] = p.x
         out[i, 1] = p.y
         out[i, 2] = p.z
@@ -128,10 +128,10 @@ def coerce_to_point_array(value, out=None):
 
 def float_vector_array_to_numpy(va):
     """Copy an MFloatVectorArray to (N, 3) float32."""
-    n = va.length()
+    n   = va.length()
     out = np.empty((n, 3), dtype=np.float32)
     for i in range(n):
-        v = va[i]
+        v         = va[i]
         out[i, 0] = v.x
         out[i, 1] = v.y
         out[i, 2] = v.z
@@ -140,10 +140,10 @@ def float_vector_array_to_numpy(va):
 
 def vector_array_to_numpy(va):
     """Copy an MVectorArray to (N, 3) float64."""
-    n = va.length()
+    n   = va.length()
     out = np.empty((n, 3), dtype=np.float64)
     for i in range(n):
-        v = va[i]
+        v         = va[i]
         out[i, 0] = v.x
         out[i, 1] = v.y
         out[i, 2] = v.z
@@ -152,7 +152,7 @@ def vector_array_to_numpy(va):
 
 def int_array_to_numpy(ia):
     """Copy an MIntArray to (N,) int32."""
-    n = ia.length()
+    n   = ia.length()
     out = np.empty(n, dtype=np.int32)
     for i in range(n):
         out[i] = ia[i]
@@ -161,7 +161,7 @@ def int_array_to_numpy(ia):
 
 def double_array_to_numpy(da):
     """Copy an MDoubleArray to (N,) float64."""
-    n = da.length()
+    n   = da.length()
     out = np.empty(n, dtype=np.float64)
     for i in range(n):
         out[i] = da[i]
@@ -170,7 +170,7 @@ def double_array_to_numpy(da):
 
 def float_array_to_numpy(fa):
     """Copy an MFloatArray to (N,) float32."""
-    n = fa.length()
+    n   = fa.length()
     out = np.empty(n, dtype=np.float32)
     for i in range(n):
         out[i] = fa[i]

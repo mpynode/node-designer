@@ -23,13 +23,13 @@ import os
 import sys
 
 SIZE = 1024
-SS = 4  # supersample factor, then downsample -> antialiased edges
+SS   = 4  # supersample factor, then downsample -> antialiased edges
 
 # The originals' colours, taken as the modal opaque pixel of each image being
 # replaced (45627 / 32903 / 14910 opaque texels respectively).
-RED = (220, 40, 40)
+RED   = (220, 40, 40)
 GREEN = (40, 190, 70)
-BLUE = (50, 90, 230)
+BLUE  = (50, 90, 230)
 
 
 def _out_dir():
@@ -44,7 +44,7 @@ def _out_dir():
 def build():
     from PIL import Image, ImageDraw
 
-    n = SIZE * SS
+    n   = SIZE * SS
     out = _out_dir()
     if not os.path.isdir(out):
         raise SystemExit("no assets dir: %s" % out)
@@ -60,29 +60,29 @@ def build():
     # green probe would not break the gate, since green composites ON TOP, but
     # it would stop the probes isolating one layer each.)
     im = Image.new("RGBA", (n, n), (0, 0, 0, 0))
-    d = ImageDraw.Draw(im)
+    d  = ImageDraw.Draw(im)
     d.rectangle([int(0.06 * n), int(0.10 * n), int(0.55 * n), int(0.59 * n)],
                 fill=RED + (255,))
     made.append(("red_square.png", im))
 
     # --- green circle: a TRUE circle now, centred a little above middle ------
     im = Image.new("RGBA", (n, n), (0, 0, 0, 0))
-    d = ImageDraw.Draw(im)
-    r = int(0.23 * n)
+    d  = ImageDraw.Draw(im)
+    r  = int(0.23 * n)
     cx, cy = int(0.52 * n), int(0.42 * n)
     d.ellipse([cx - r, cy - r, cx + r, cy + r], fill=GREEN + (255,))
     made.append(("green_circle.png", im))
 
     # --- blue triangle: apex DOWN, lower-right, as in the original -----------
     im = Image.new("RGBA", (n, n), (0, 0, 0, 0))
-    d = ImageDraw.Draw(im)
+    d  = ImageDraw.Draw(im)
     d.polygon([(int(0.30 * n), int(0.55 * n)),
                (int(0.86 * n), int(0.62 * n)),
                (int(0.55 * n), int(0.97 * n))], fill=BLUE + (255,))
     made.append(("blue_triangle.png", im))
 
     for name, img in made:
-        img = img.resize((SIZE, SIZE), Image.LANCZOS)
+        img  = img.resize((SIZE, SIZE), Image.LANCZOS)
         path = os.path.join(out, name)
         img.save(path)
         print("wrote %s  %dx%d" % (path, SIZE, SIZE))

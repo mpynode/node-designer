@@ -107,8 +107,8 @@ class InitProxy:
     def __init__(self, node_uuid: str, node_name: str, plug_proxy=None):
         # object.__setattr__ throughout, so our own __setattr__ doesn't
         # intercept these bookkeeping writes.
-        object.__setattr__(self, "_ip_node_uuid", node_uuid)
-        object.__setattr__(self, "_ip_node_name", node_name)
+        object.__setattr__(self, "_ip_node_uuid",  node_uuid)
+        object.__setattr__(self, "_ip_node_name",  node_name)
         object.__setattr__(self, "_ip_plug_proxy", plug_proxy)
         # Legacy dict kept (empty) for the bridge fast-path; Init writes go to
         # stored vars now.
@@ -195,7 +195,7 @@ class InitProxy:
         if not object.__getattribute__(self, "_ip_dirty"):
             return
         node_name = object.__getattribute__(self, "_ip_node_name")
-        storage = object.__getattribute__(self, "_ip_storage")
+        storage   = object.__getattribute__(self, "_ip_storage")
         try:
             from mpynode._common.storedvars import stored_var_store
 
@@ -208,7 +208,7 @@ class InitProxy:
 
     def __repr__(self) -> str:
         storage = _INIT_BINDINGS.get(self._ip_node_uuid, {})
-        keys = sorted(object.__getattribute__(self, "_ip_storage").keys())
+        keys    = sorted(object.__getattribute__(self, "_ip_storage").keys())
         return f"<InitProxy node={self._ip_node_name!r} stored={keys}>"
 
 
@@ -317,7 +317,7 @@ def _hide_init_source_attr(node_name: str) -> bool:
         sel.add(node_name)
         mobj = om.MObject()
         sel.getDependNode(0, mobj)
-        fn = om.MFnDependencyNode(mobj)
+        fn   = om.MFnDependencyNode(mobj)
         attr = fn.attribute("_initSource")
         if attr.isNull():
             return False
@@ -427,8 +427,8 @@ def register_init_source(
 
     ns: dict = {
         "__builtins__": _builtins,
-        "__name__": f"<init:{node_name}>",
-        "self": InitProxy(node_uuid, node_name, plug_proxy),
+        "__name__":     f"<init:{node_name}>",
+        "self":         InitProxy(node_uuid, node_name, plug_proxy),
     }
     if plug_proxy is not None:
         ns["node"] = plug_proxy

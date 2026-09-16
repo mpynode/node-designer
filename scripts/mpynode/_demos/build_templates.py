@@ -447,9 +447,9 @@ def _with_metadata(rel, payload):
         return payload
     out = dict(payload)
     out["metadata"] = {
-        "authors": list(TEMPLATE_AUTHORS),
-        "version": TEMPLATE_VERSION,
-        "license": TEMPLATE_LICENSES[entry[0]].rstrip(),
+        "authors":     list(TEMPLATE_AUTHORS),
+        "version":     TEMPLATE_VERSION,
+        "license":     TEMPLATE_LICENSES[entry[0]].rstrip(),
         "description": entry[1],
     }
     return out

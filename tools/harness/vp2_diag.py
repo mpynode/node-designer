@@ -27,10 +27,10 @@ def _stats(path):
         return {"file": path, "exists": False}
     im = Image.open(path).convert("RGB")
     w, h = im.size
-    px = list(im.getdata())
+    px  = list(im.getdata())
     lum = [0.299 * r + 0.587 * g + 0.114 * b for (r, g, b) in px]
-    n = len(lum)
-    m = sum(lum) / n if n else 0
+    n   = len(lum)
+    m   = sum(lum) / n if n else 0
     var = sum((v - m) ** 2 for v in lum) / n if n else 0
     # also count non-black pixels
     nonblack = sum(1 for (r, g, b) in px if (r + g + b) > 0)
@@ -41,7 +41,7 @@ def _stats(path):
 mc.file(new=True, force=True)
 mc.directionalLight(name="key")
 plane = mc.polyPlane(name="p", w=10, h=10, sx=1, sy=1)[0]
-sh = mc.shadingNode("lambert", asShader=True, name="redL")
+sh    = mc.shadingNode("lambert", asShader=True, name="redL")
 mc.setAttr(sh + ".color", 1, 0, 0, type="double3")
 mc.setAttr(sh + ".incandescence", 1, 0, 0, type="double3")  # unlit-visible
 sg = mc.sets(renderable=True, noSurfaceShader=True, empty=True, name="redSG")
@@ -53,10 +53,10 @@ mc.currentTime(1)
 for cam in ("top", "persp"):
     try:
         shape = mc.listRelatives(cam, shapes=True)[0]
-        info = {"t": mc.getAttr(cam + ".translate")[0]}
+        info  = {"t": mc.getAttr(cam + ".translate")[0]}
         if mc.attributeQuery("orthographicWidth", node=shape, exists=True):
             info["orthoWidth"] = mc.getAttr(shape + ".orthographicWidth")
-            info["ortho"] = mc.getAttr(shape + ".orthographic")
+            info["ortho"]      = mc.getAttr(shape + ".orthographic")
         res.setdefault("cameras", {})[cam] = info
     except Exception as e:
         res["notes"].append("cam %s: %s" % (cam, e))
@@ -78,7 +78,7 @@ def _ogs(cam, tag):
         return {"error": traceback.format_exc()}
 
 
-res["methods"]["ogs_top"] = _ogs("top", "ogs_top")
+res["methods"]["ogs_top"]   = _ogs("top", "ogs_top")
 res["methods"]["ogs_persp"] = _ogs("persp", "ogs_persp")
 
 try:

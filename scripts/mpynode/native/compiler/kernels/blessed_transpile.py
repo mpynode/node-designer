@@ -57,7 +57,7 @@ def _load_free_fn(ref):
             % ref)
     try:
         mod = importlib.import_module(mod_name)
-        fn = getattr(mod, qual)
+        fn  = getattr(mod, qual)
         src = inspect.getsource(fn)
     except (ImportError, AttributeError, OSError, TypeError) as e:
         raise UnsupportedSpec(
@@ -78,9 +78,9 @@ def _load_free_fn(ref):
 
 def _dedent(src):
     """Left-strip common leading whitespace so a nested/def source parses."""
-    lines = src.splitlines()
+    lines   = src.splitlines()
     indents = [len(ln) - len(ln.lstrip()) for ln in lines if ln.strip()]
-    cut = min(indents) if indents else 0
+    cut     = min(indents) if indents else 0
     return "\n".join(ln[cut:] if len(ln) >= cut else ln for ln in lines) + "\n"
 
 
@@ -101,13 +101,13 @@ def _called_self_methods(compute, names):
 
 def _make_emit(spec):
     """Build the ``callable(tp, node) -> Val`` that lowers one blessed call."""
-    ref = spec.lower.free_fn
+    ref   = spec.lower.free_fn
     reads = tuple(spec.reads)
 
     def _emit(tp, node):
-        fdef = _load_free_fn(ref)
+        fdef     = _load_free_fn(ref)
         n_params = len(fdef.args.args)
-        n_user = n_params - len(reads)
+        n_user   = n_params - len(reads)
         if n_user < 0:
             raise UnsupportedSpec(
                 "blessed %r: free fn has fewer params than declared reads"
@@ -145,7 +145,7 @@ def called_method_reads(spec_dict):
     materialises the node reads the followed free fn needs -- the reads are
     consumed INSIDE the method, never spelled ``self.<read>`` in the compute."""
     type_name = spec_dict.get("mpy_type")
-    specs = transpile_method_specs(type_name)
+    specs     = transpile_method_specs(type_name)
     if not specs:
         return ()
     called = _called_self_methods(spec_dict.get("compute") or "",
@@ -173,13 +173,13 @@ def transpile_helper_sources(spec_dict):
     so every other node is unaffected. A self-contained free fn (LBS / DQS) simply
     calls none of the registered siblings, so nothing extra is emitted."""
     type_name = spec_dict.get("mpy_type")
-    specs = transpile_method_specs(type_name)
+    specs     = transpile_method_specs(type_name)
     if not specs:
         return []
     called = _called_self_methods(spec_dict.get("compute") or "",
                                   {m.name for m in specs})
     sources = []
-    seen = set()
+    seen    = set()
     for m in specs:
         if m.name not in called:
             continue
@@ -224,7 +224,7 @@ def make_transpile_lowerings(spec_dict):
     here: a ``Transpile`` method returns a single value used in expression
     position (tuple-unpack lowering is the CppKernel path's concern)."""
     type_name = spec_dict.get("mpy_type")
-    specs = transpile_method_specs(type_name)
+    specs     = transpile_method_specs(type_name)
     if not specs:
         return {}, {}
     called = _called_self_methods(spec_dict.get("compute") or "",

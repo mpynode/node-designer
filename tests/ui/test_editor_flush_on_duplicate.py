@@ -86,9 +86,9 @@ class TestFlushOnNativeDuplicate(unittest.TestCase):
 
     def test_native_duplicate_carries_typed_but_unsaved_compute(self):
         """The headline defect: Ctrl+D on a node being typed in."""
-        name = self.src.get_name()
-        w = self._widget_with_tab(self.src)
-        tab = w.getAllTabs()[0]
+        name  = self.src.get_name()
+        w     = self._widget_with_tab(self.src)
+        tab   = w.getAllTabs()[0]
         typed = "out = alpha * 3.0  # typed, never saved"
         tab.setText(typed)
         self.assertTrue(tab.hasUnsavedChanges())
@@ -104,13 +104,13 @@ class TestFlushOnNativeDuplicate(unittest.TestCase):
         the interception, not something else, is what carries it."""
         from mpynode.ui.widgets import script_tab as st
 
-        name = self.src.get_name()
-        w = self._widget_with_tab(self.src)
-        tab = w.getAllTabs()[0]
+        name  = self.src.get_name()
+        w     = self._widget_with_tab(self.src)
+        tab   = w.getAllTabs()[0]
         typed = "out = alpha * 4.0"
         tab.setText(typed)
 
-        original = st.NDScriptTabWidget.flushDirtyTabsBeforeDuplicate
+        original                                           = st.NDScriptTabWidget.flushDirtyTabsBeforeDuplicate
         st.NDScriptTabWidget.flushDirtyTabsBeforeDuplicate = lambda self: 0
         try:
             mc.select(name, replace=True)
@@ -128,8 +128,8 @@ class TestFlushOnNativeDuplicate(unittest.TestCase):
         """After the flush the tab is no longer dirty -- otherwise the very next
         Save would re-run and re-log a save with nothing to do."""
         name = self.src.get_name()
-        w = self._widget_with_tab(self.src)
-        tab = w.getAllTabs()[0]
+        w    = self._widget_with_tab(self.src)
+        tab  = w.getAllTabs()[0]
         tab.setText("out = alpha * 5.0")
         mc.select(name, replace=True)
         mc.duplicate()
@@ -139,7 +139,7 @@ class TestFlushOnNativeDuplicate(unittest.TestCase):
         """No dirty tab -> nothing is written, so a duplicate of an untouched
         node costs no extra undo entry and logs no phantom save."""
         name = self.src.get_name()
-        w = self._widget_with_tab(self.src)
+        w    = self._widget_with_tab(self.src)
         self.assertFalse(w.getAllTabs()[0].hasUnsavedChanges())
         self.assertEqual(w.flushDirtyTabsBeforeDuplicate(), 0)
 
@@ -149,13 +149,13 @@ class TestFlushOnNativeDuplicate(unittest.TestCase):
         before-duplicate callback blocks the operation it is nested in."""
         from mpynode.ui import qt_wrapper
 
-        name = self.src.get_name()
-        w = self._widget_with_tab(self.src)
-        tab = w.getAllTabs()[0]
+        name   = self.src.get_name()
+        w      = self._widget_with_tab(self.src)
+        tab    = w.getAllTabs()[0]
         broken = "out = alpha *"
         tab.setText(broken)
 
-        calls = []
+        calls    = []
         original = qt_wrapper.QMessageBox.warning
         qt_wrapper.QMessageBox.warning = staticmethod(
             lambda *a, **k: calls.append(a))
@@ -172,8 +172,8 @@ class TestFlushOnNativeDuplicate(unittest.TestCase):
         """A dangling Maya callback into a deleted QWidget is a crash. Closing
         the editor must unhook it."""
         name = self.src.get_name()
-        w = self._widget_with_tab(self.src)
-        tab = w.getAllTabs()[0]
+        w    = self._widget_with_tab(self.src)
+        tab  = w.getAllTabs()[0]
         tab.setText("out = alpha * 6.0")
         w.detachSceneCallbacks()
         mc.select(name, replace=True)
@@ -192,8 +192,8 @@ class TestFlushOnNativeDuplicate(unittest.TestCase):
         the copy and leave the source alone, and redo must bring it back."""
         name = self.src.get_name()
         mc.undoInfo(state=True, infinity=True)
-        w = self._widget_with_tab(self.src)
-        tab = w.getAllTabs()[0]
+        w     = self._widget_with_tab(self.src)
+        tab   = w.getAllTabs()[0]
         typed = "self.out = self.alpha * 7.0"
         tab.setText(typed)
 

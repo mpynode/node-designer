@@ -226,9 +226,9 @@ if linear is None:
     self.outColor = (1.0, 0.0, 1.0); self.outAlpha = 1.0
 else:
     h, w, _ = linear.shape
-    x = int((u % 1.0) * (w - 1))
-    y = int(((1.0 - (v % 1.0))) * (h - 1))  # Maya V is bottom-up
-    p = linear[y, x]
+    x             = int((u % 1.0) * (w - 1))
+    y             = int(((1.0 - (v % 1.0))) * (h - 1))  # Maya V is bottom-up
+    p             = linear[y, x]
     self.outColor = (float(p[0]), float(p[1]), float(p[2]))
     self.outAlpha = float(p[3])
 ```

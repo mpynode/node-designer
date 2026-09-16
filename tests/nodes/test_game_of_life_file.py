@@ -63,19 +63,19 @@ class TestGameOfLifeTextureContent(unittest.TestCase):
         # The OSL bake target is an INPUT, not a stored var: Compute reads it to
         # drive self.write_texture, and persistent state cannot carry a string
         # (so a stored one would stop the compute lowering).
-        self.assertEqual(ia["bakePath"].get("attr_type"), "string")
-        self.assertEqual(ia["width"].get("default_value"), 100)
-        self.assertEqual(ia["height"].get("default_value"), 100)
+        self.assertEqual(ia["bakePath"].get("attr_type"),    "string")
+        self.assertEqual(ia["width"].get("default_value"),   100)
+        self.assertEqual(ia["height"].get("default_value"),  100)
         self.assertEqual(ia["density"].get("default_value"), 0.5)
-        self.assertEqual(ia["density"].get("min_value"), 0.0)
-        self.assertEqual(ia["density"].get("max_value"), 1.0)
-        self.assertEqual(ia["reset"].get("enum_names"), ["False", "True"])
+        self.assertEqual(ia["density"].get("min_value"),     0.0)
+        self.assertEqual(ia["density"].get("max_value"),     1.0)
+        self.assertEqual(ia["reset"].get("enum_names"),      ["False", "True"])
 
     def test_inputs_in_authored_order(self):
         # Channel Box / Designer order must be the authored add-order
         # (width+height adjacent), NOT alphabetical -- carried by each meta's
         # ``order`` field through the .mpn.
-        d = _load_payload()
+        d  = _load_payload()
         ia = d.get("input_attrs") or {}
         self.assertTrue(all("order" in m for m in ia.values()),
                         "template inputs missing the 'order' field")
@@ -86,9 +86,9 @@ class TestGameOfLifeTextureContent(unittest.TestCase):
 
     def test_all_tiers_present(self):
         d = _load_payload()
-        self.assertTrue(d.get("expression"))            # Compute
-        self.assertTrue(d.get("init_source"))           # Init
-        self.assertTrue(d.get("viewport_source"))       # Viewport (VP2)
+        self.assertTrue(d.get("expression"))       # Compute
+        self.assertTrue(d.get("init_source"))      # Init
+        self.assertTrue(d.get("viewport_source"))  # Viewport (VP2)
         osl = d.get("osl_source") or ""
         self.assertIn("shader gameOfLife", osl)         # OSL (Arnold)
         # The shader samples a per-frame name it rebuilds from fileName +
@@ -97,9 +97,9 @@ class TestGameOfLifeTextureContent(unittest.TestCase):
         # frame forever. `%s.%04d.png` is the cross-tier contract -- the Compute
         # tier and the nd_tex_write C++ kernel name the file the same way.
         self.assertIn("float bakeFrame", osl)
-        self.assertIn("texture(path", osl)
-        self.assertIn('"%s.%04d.png"', osl)
-        self.assertIn("closest", osl)                   # crisp cells (nearest)
+        self.assertIn("texture(path",    osl)
+        self.assertIn('"%s.%04d.png"',   osl)
+        self.assertIn("closest",         osl)                   # crisp cells (nearest)
 
     def test_carries_self_first_demo(self):
         from mpynode._common.node_setups import find_demo
@@ -157,22 +157,22 @@ class TestBoundedSimulation(unittest.TestCase):
         self.fns = _init_funcs(_load_payload())
 
     def test_blinker_is_period_two(self):
-        step = self.fns["_gol_step"]
-        blink = np.zeros((5, 5), dtype=bool)
+        step          = self.fns["_gol_step"]
+        blink         = np.zeros((5, 5), dtype=bool)
         blink[2, 1:4] = True
-        self.assertFalse(np.array_equal(step(blink), blink))     # it changes
+        self.assertFalse(np.array_equal(step(blink), blink))       # it changes
         self.assertTrue(np.array_equal(step(step(blink)), blink))  # period 2
 
     def test_edge_cell_does_not_wrap(self):
         step = self.fns["_gol_step"]
         # A single live cell at a corner has < 3 neighbours and dies. If the grid
         # wrapped, the corner would border the opposite edges and could survive.
-        corner = np.zeros((6, 6), dtype=bool)
+        corner       = np.zeros((6, 6), dtype=bool)
         corner[0, 0] = True
         self.assertFalse(step(corner).any())
 
     def test_density_seeds_expected_fraction(self):
-        seed = self.fns["_gol_seed"]
+        seed  = self.fns["_gol_seed"]
         board = seed(200, 200, 0.5, seed=1)
         self.assertAlmostEqual(float(board.mean()), 0.5, delta=0.02)
 
@@ -183,12 +183,12 @@ class TestLiveNode(unittest.TestCase):
     def setUp(self):
         mc.file(new=True, force=True)
         from mpynode._common.io.mpn_io import deserialize_node
-        payload = _load_payload()
-        self.fns = _init_funcs(payload)
+        payload   = _load_payload()
+        self.fns  = _init_funcs(payload)
         self.node = deserialize_node(payload, restore_persistent=False)
         self.name = self.node.get_name()
-        mc.setAttr(self.name + ".width", self.N)
-        mc.setAttr(self.name + ".height", self.N)
+        mc.setAttr(self.name + ".width",   self.N)
+        mc.setAttr(self.name + ".height",  self.N)
         mc.setAttr(self.name + ".density", 0.5)
 
     def _sample(self, cx, cy):
@@ -211,8 +211,8 @@ class TestLiveNode(unittest.TestCase):
         mc.setAttr(self.name + ".reset", 1)
         mc.currentTime(5)
         seeded = self._board_from_node()                # evaluate -> seeds frame 5
-        mc.setAttr(self.name + ".reset", 0)             # False -> simulate
-        mc.currentTime(6)                               # next frame -> one step
+        mc.setAttr(self.name + ".reset", 0)  # False -> simulate
+        mc.currentTime(6)                    # next frame -> one step
         expected = self.fns["_gol_step"](seeded)
         np.testing.assert_array_equal(self._board_from_node(), expected)
 
@@ -241,18 +241,18 @@ class TestViewportTierAnimates(unittest.TestCase):
         self._om = om
         self.fns = _init_funcs(_load_payload())
         # Route through the full viewport-source machinery, not BAREBONES.
-        self._bb = MPyFile.BAREBONES_MODE
+        self._bb               = MPyFile.BAREBONES_MODE
         MPyFile.BAREBONES_MODE = False
         self.addCleanup(setattr, MPyFile, "BAREBONES_MODE", self._bb)
         self.node = deserialize_node(_load_payload(), restore_persistent=False)
         self.name = self.node.get_name()
-        mc.setAttr(self.name + ".width", self.N)
-        mc.setAttr(self.name + ".height", self.N)
+        mc.setAttr(self.name + ".width",   self.N)
+        mc.setAttr(self.name + ".height",  self.N)
         mc.setAttr(self.name + ".density", 0.5)
         sel = om.MSelectionList()
         sel.add(self.name)
         self.mobj = sel.getDependNode(0)
-        self.mpx = om.MFnDependencyNode(self.mobj).userNode()
+        self.mpx  = om.MFnDependencyNode(self.mobj).userNode()
 
     def _viewport_board(self):
         """Run the viewport tier once (headless: texture_manager is None, so it
@@ -299,8 +299,8 @@ class TestFullDemo(unittest.TestCase):
         return name
 
     def test_demo_builds_plane_and_shader(self):
-        name = self._create_with_demo()
-        plane = name + "_plane"
+        name   = self._create_with_demo()
+        plane  = name + "_plane"
         shader = name + "_lambert"
         self.assertTrue(mc.objExists(plane), "polyPlane not created")
         self.assertTrue(mc.objExists(shader), "lambert not created")
@@ -312,7 +312,7 @@ class TestFullDemo(unittest.TestCase):
         # plane assigned to the lambert's shading group
         sg = shader + "SG"
         self.assertTrue(mc.objExists(sg))
-        members = mc.sets(sg, query=True) or []
+        members      = mc.sets(sg, query=True) or []
         plane_shapes = mc.listRelatives(plane, shapes=True, fullPath=False) or []
         assigned = any(m in members or m.split(".")[0] in plane_shapes
                        for m in members) or bool(
@@ -337,7 +337,7 @@ class TestFullDemo(unittest.TestCase):
         except Exception:
             self.skipTest("MtoA not available")
         name = self._create_with_demo()
-        sg = name + "_lambertSG"
+        sg   = name + "_lambertSG"
         if not mc.attributeQuery("aiSurfaceShader", node=sg, exists=True):
             self.skipTest("aiSurfaceShader unavailable (MtoA classification)")
         mtl = mc.listConnections(sg + ".aiSurfaceShader", source=True,

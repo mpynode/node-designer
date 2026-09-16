@@ -44,12 +44,12 @@ class NativeSideEffect(NamedTuple):
 
 
 class MethodSpec(NamedTuple):
-    name: str                       # e.g. "read_texture"
-    sig: str                        # display signature, e.g. "read_texture() -> ..."
-    doc: str                        # one-line docstring (tooltip)
-    runtime: str                    # "module.path:function" interpreted adapter
-    lower: Union[CppKernel, Transpile, NativeSideEffect]
-    reads: tuple = ()               # node PRESET attr names the interpreted
+    name:    str         # e.g. "read_texture"
+    sig:     str         # display signature, e.g. "read_texture() -> ..."
+    doc:     str         # one-line docstring (tooltip)
+    runtime: str         # "module.path:function" interpreted adapter
+    lower:   Union[CppKernel, Transpile, NativeSideEffect]
+    reads:   tuple = ()  # node PRESET attr names the interpreted
                                     # adapter reads (e.g. colorSpace/borderColor).
                                     # The extractor unions these into the compiled
                                     # spec when a compute CALLS this method -- the
@@ -74,10 +74,10 @@ class PropertySpec(NamedTuple):
     honest-rejects. The property is therefore an INTERPRETED + authoring surface
     whose compiled equivalent is always a method.
     """
-    name: str                       # e.g. "morphs"
-    sig: str                        # display signature, e.g. "morphs -> MorphStack"
-    doc: str                        # one-line docstring (tooltip)
-    runtime: str                    # "module.path:function" -- fn(self) -> value
+    name:    str  # e.g. "morphs"
+    sig:     str  # display signature, e.g. "morphs -> MorphStack"
+    doc:     str  # one-line docstring (tooltip)
+    runtime: str  # "module.path:function" -- fn(self) -> value
 
 
 def validate_properties(props, plug_names, method_names=()) -> None:

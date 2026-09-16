@@ -119,7 +119,7 @@ class TestRenameFalloutInTabLookup(unittest.TestCase):
         from mpynode.wrappers._mpy_node import MPyNode
 
         node = MPyNode.create(name="tabRename")
-        old = node.get_name()
+        old  = node.get_name()
         mc.rename(old, "tabRenamed")
 
         class _Tab:
@@ -142,7 +142,7 @@ class TestRenameFalloutInTabLookup(unittest.TestCase):
             def _setTabTitle(self, index, name, dirty):
                 self.titled = (index, name, dirty)
 
-        host = _Host()
+        host  = _Host()
         found = NDScriptTabWidget.renameTabForNode(host, old, "tabRenamed")
         self.assertTrue(found, "the tab for the renamed node was not found")
         self.assertEqual(host.titled, (0, "tabRenamed", False))

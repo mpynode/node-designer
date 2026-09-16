@@ -52,7 +52,7 @@ def _make_test_png(path: str) -> None:
 
 def _make_solid_png(path: str, value: int) -> None:
     """Write a tiny solid-grey RGBA PNG (every pixel == ``value``) via MImage."""
-    w = h = 4
+    w   = h = 4
     buf = bytes((value, value, value, 255)) * (w * h)
     img = om.MImage()
     img.create(w, h, 4, om.MImage.kByte)
@@ -165,13 +165,13 @@ class TestInitNamespaceWarming(unittest.TestCase):
     def setUp(self):
         from mpynode._api2.mpy_file import MPyFile
 
-        self._barebones = MPyFile.BAREBONES_MODE
+        self._barebones        = MPyFile.BAREBONES_MODE
         MPyFile.BAREBONES_MODE = False
         mc.file(new=True, force=True)
         from mpynode.wrappers.mpy_file import MPyFile as W
 
         self.name = mc.createNode("mPyFile", name="warmme")
-        w = W(self.name)
+        w         = W(self.name)
         w.set_init_expression(self.INIT_SRC)
         w.set_compute_expression(self.COMPUTE_SRC)
         sel = om.MSelectionList()
@@ -207,7 +207,7 @@ class TestInitNamespaceWarming(unittest.TestCase):
             outAlpha = 0.0
 
         def run_on_worker():
-            s = _Self()
+            s  = _Self()
             ns = {"self": s}
             expr.exec_with_profile_watch(code, ns, node_obj=self.obj)
             return s.outColor
@@ -215,7 +215,7 @@ class TestInitNamespaceWarming(unittest.TestCase):
         # COLD -> black on the worker thread.
         ir.clear_init_expression(self.name)
         res = {}
-        t = threading.Thread(target=lambda: res.__setitem__("c", run_on_worker()))
+        t   = threading.Thread(target=lambda: res.__setitem__("c", run_on_worker()))
         t.start(); t.join()
         self.assertEqual(res["c"], (0.0, 0.0, 0.0))  # documents the bug
 
@@ -223,7 +223,7 @@ class TestInitNamespaceWarming(unittest.TestCase):
         ir.clear_init_expression(self.name)
         warm_init_namespace(self.name)
         res2 = {}
-        t2 = threading.Thread(target=lambda: res2.__setitem__("d", run_on_worker()))
+        t2   = threading.Thread(target=lambda: res2.__setitem__("d", run_on_worker()))
         t2.start(); t2.join()
         self.assertEqual(res2["d"], (0.5, 0.25, 0.75))
 
@@ -256,7 +256,7 @@ class TestInitNamespaceWarming(unittest.TestCase):
         ir.clear_init_expression(self.name)
         mc.dgdirty(self.name + ".outColor")
         cold = {}
-        tc = threading.Thread(target=worker_outcolor, args=(cold,))
+        tc   = threading.Thread(target=worker_outcolor, args=(cold,))
         tc.start(); tc.join()
         self.assertNotEqual(cold["v"], CORRECT)  # broken when cold
 
@@ -265,7 +265,7 @@ class TestInitNamespaceWarming(unittest.TestCase):
         warm_init_namespace(self.name)
         mc.dgdirty(self.name + ".outColor")
         warm = {}
-        tw = threading.Thread(target=worker_outcolor, args=(warm,))
+        tw   = threading.Thread(target=worker_outcolor, args=(warm,))
         tw.start(); tw.join()
         self.assertEqual(warm["v"], CORRECT)
 
@@ -282,12 +282,12 @@ class TestNodeAddedLifecycleEndToEnd(unittest.TestCase):
     def setUp(self):
         from mpynode._api2.mpy_file import MPyFile
 
-        self._barebones = MPyFile.BAREBONES_MODE
+        self._barebones        = MPyFile.BAREBONES_MODE
         MPyFile.BAREBONES_MODE = False
         mc.file(new=True, force=True)
         import maya.utils as mu
 
-        self._mu = mu
+        self._mu       = mu
         self._orig_def = mu.executeDeferred
 
         def _inline(fn, *a, **k):
@@ -355,8 +355,8 @@ class TestForceViewportRefresh(unittest.TestCase):
         """Patch executeDeferred to run synchronously + record cmds.refresh."""
         import maya.utils as mu
 
-        calls = {"refresh": 0, "deferred": 0}
-        orig_def = mu.executeDeferred
+        calls        = {"refresh": 0, "deferred": 0}
+        orig_def     = mu.executeDeferred
         orig_refresh = mc.refresh
 
         def fake_def(fn, *a, **k):
@@ -370,13 +370,13 @@ class TestForceViewportRefresh(unittest.TestCase):
             calls["refresh"] += 1
 
         mu.executeDeferred = fake_def
-        mc.refresh = fake_refresh
+        mc.refresh         = fake_refresh
         return calls, (mu, orig_def, orig_refresh)
 
     def _unpatch(self, saved):
         mu, orig_def, orig_refresh = saved
         mu.executeDeferred = orig_def
-        mc.refresh = orig_refresh
+        mc.refresh         = orig_refresh
 
     def test_refresh_fires_for_viewport_capable_node(self):
         from mpynode._base.eval_helpers import force_viewport_refresh
@@ -507,13 +507,13 @@ class TestTemplateColorManagement(unittest.TestCase):
     def setUp(self):
         from mpynode._api2.mpy_file import MPyFile
 
-        self._barebones = MPyFile.BAREBONES_MODE
+        self._barebones        = MPyFile.BAREBONES_MODE
         MPyFile.BAREBONES_MODE = False
         mc.file(new=True, force=True)
-        self.tmp = tempfile.mkdtemp()
+        self.tmp  = tempfile.mkdtemp()
         self.gray = os.path.join(self.tmp, "_solid128.png")
         _make_solid_png(self.gray, 128)            # sRGB 0.502
-        self.raw = 128 / 255.0
+        self.raw    = 128 / 255.0
         self.linear = _srgb_to_linear(self.raw)    # ~0.2159
 
     def tearDown(self):
@@ -551,9 +551,9 @@ class TestTemplateColorManagement(unittest.TestCase):
 
         cns = {}
         exec(DEFAULT_INIT_SOURCE, cns)
-        px = np.full((2, 2, 4), 128, dtype=np.uint8)
+        px         = np.full((2, 2, 4), 128, dtype=np.uint8)
         px[..., 3] = 255
-        canon = float(cns["_linearize"](px, 0)[0, 0, 0])
+        canon      = float(cns["_linearize"](px, 0)[0, 0, 0])
 
         self.assertAlmostEqual(tmpl, canon, delta=1e-4)
 
@@ -661,8 +661,8 @@ class TestAlwaysOnTimeWiring(unittest.TestCase):
         from mpynode._common.io import mpn_io
 
         py_node = mpn_io.deserialize_node({"native_type": "mPyFile"})
-        node = py_node.get_name()
-        other = mc.createNode("time", name="altTime", skipSelect=True)
+        node    = py_node.get_name()
+        other   = mc.createNode("time", name="altTime", skipSelect=True)
         mc.connectAttr(other + ".outTime", node + "._timeIn", force=True)
         # Re-wrapping / re-seeding the same node must not steal it back.
         mpn_io.apply_payload_to_node(py_node, {"native_type": "mPyFile"})
@@ -751,7 +751,7 @@ class TestDerivedShaderOutputs(unittest.TestCase):
     def test_transparency_connects_to_a_shader(self):
         """The point of the plug: parent AND per-child, since Maya's legacy
         Software renderer pulls R/G/B individually."""
-        n = self._node()
+        n   = self._node()
         lam = mc.shadingNode("lambert", asShader=True, name="derLam")
         mc.connectAttr(n + ".outTransparency", lam + ".transparency")
         self.assertTrue(mc.isConnected(n + ".outTransparency",

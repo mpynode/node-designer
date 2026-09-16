@@ -52,7 +52,7 @@ def _spec(compute):
         "mpy_type": "mPyFile",
         "suggested": {"node_type_name": "blessedFileNode",
                       "class_name": "BlessedFileNode",
-                      "type_id": "0x00070310",
+                      "type_id":    "0x00070310",
                       "mpx_base": "MPxNode"},
         "inputs": dict(_INPUTS), "outputs": dict(_OUTPUTS),
         "compute": compute, "init": "import numpy as np\n",
@@ -91,10 +91,10 @@ class TestBlessedFileCodegen(unittest.TestCase):
     def test_blessed_compute_lowers_deterministically(self):
         from mpynode.native import compiler as codegen
         cpp = codegen.generate_cpp(_spec(_LOWERABLE), for_port=True)
-        self.assertIn("nd_tex_load_linear", cpp)     # verified load kernel present
-        self.assertIn("NdTexCache _texCache", cpp)   # per-instance cache member
-        self.assertIn("nd_tex_sample", cpp)          # verified sampler present
-        self.assertNotIn(codegen.PORT_BEGIN, cpp)    # blessed lowered -> no AI port
+        self.assertIn("nd_tex_load_linear",   cpp)  # verified load kernel present
+        self.assertIn("NdTexCache _texCache", cpp)  # per-instance cache member
+        self.assertIn("nd_tex_sample",        cpp)  # verified sampler present
+        self.assertNotIn(codegen.PORT_BEGIN, cpp)   # blessed lowered -> no AI port
 
     def test_blessed_compute_that_wont_lower_is_honest_reject(self):
         from mpynode.native import compiler as codegen

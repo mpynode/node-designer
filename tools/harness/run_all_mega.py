@@ -25,7 +25,7 @@ import time
 import subprocess
 
 HARNESS = os.path.dirname(os.path.abspath(__file__))
-ROOT = os.path.dirname(os.path.dirname(HARNESS))            # project root
+ROOT    = os.path.dirname(os.path.dirname(HARNESS))            # project root
 # Audit scratch, NOT templates/ -- `out_dir` below is AUDIT_ROOT/<folder> with a
 # FLAT folder name, which would litter the template tree with fake families.
 AUDIT_ROOT = os.path.join(ROOT, "_audit")                   # audit output root
@@ -58,7 +58,7 @@ def _mega_info():
     if not os.path.isfile(res_path):
         raise SystemExit("no mega_results.json at %s -- run mega_plugin.py first"
                          % res_path)
-    d = json.load(open(res_path))
+    d      = json.load(open(res_path))
     bundle = d.get("bundle_path")
     if bundle and not os.path.isabs(bundle):
         # mega_plugin writes bundle_path relative to the PROJECT ROOT
@@ -95,9 +95,9 @@ FILTER = set(sys.argv[1:])
 if FILTER:
     TEMPLATES = [t for t in TEMPLATES if t["folder"] in FILTER]
 
-MASTER_LOG = os.path.join(AUDIT_ROOT, "mega_master.log")
+MASTER_LOG  = os.path.join(AUDIT_ROOT, "mega_master.log")
 MASTER_JSON = os.path.join(AUDIT_ROOT, "mega_master_results.json")
-_ml = open(MASTER_LOG, "a")
+_ml         = open(MASTER_LOG, "a")
 
 
 def ML(msg=""):
@@ -108,8 +108,8 @@ def ML(msg=""):
 
 
 def base_env(out_dir):
-    e = dict(os.environ)
-    e["MPYNODE_ROOT"] = ROOT
+    e                       = dict(os.environ)
+    e["MPYNODE_ROOT"]       = ROOT
     e["MPYNODE_USE_STUDIO"] = "1"
     # T38: headless can't prompt, so an untrusted scene stops exec'ing Init AND
     # Compute. reopen_check_mega.py opens a saved .ma. Mirrors run_all.py.
@@ -156,12 +156,12 @@ ML("mega bundle : %s" % BUNDLE)
 ML("linked types: %d   dropped: %d" % (len(LINKED), len(DROPPED)))
 
 for idx, t in enumerate(TEMPLATES, 1):
-    folder = t["folder"]
+    folder  = t["folder"]
     out_dir = os.path.join(AUDIT_ROOT, folder)
-    mpn = os.path.join(ROOT, t["mpn"])
-    label = t["demo_label"]
-    src = t.get("node_name") or t.get("source_name")
-    ctype = LINKED.get(src)
+    mpn     = os.path.join(ROOT, t["mpn"])
+    label   = t["demo_label"]
+    src     = t.get("node_name") or t.get("source_name")
+    ctype   = LINKED.get(src)
     rec = {"folder": folder, "mpn": t["mpn"], "native_type": t["native_type"],
            "source_name": src, "demo_label": label, "compiled_type": ctype,
            "status": "pending", "demos": [], "issues": []}
@@ -171,7 +171,7 @@ for idx, t in enumerate(TEMPLATES, 1):
                                         t["native_type"], src, ctype))
 
     if not ctype:
-        reason = DROPPED.get(src, "type not present in the mega bundle")
+        reason        = DROPPED.get(src, "type not present in the mega bundle")
         rec["status"] = "not_linked"
         rec["issues"].append("mega drop: %s" % reason)
         ML("   SKIP: not linked into the mega bundle -- %s" % reason[:120])
@@ -180,10 +180,10 @@ for idx, t in enumerate(TEMPLATES, 1):
         continue
 
     os.makedirs(out_dir, exist_ok=True)
-    demos = demo_specs_for(mpn) or [(None, label)]
-    multi = len(demos) > 1
+    demos             = demo_specs_for(mpn) or [(None, label)]
+    multi             = len(demos) > 1
     rec["multi_demo"] = multi
-    _btmo = int(os.environ.get("MPYNODE_BUILD_TIMEOUT", "900"))
+    _btmo             = int(os.environ.get("MPYNODE_BUILD_TIMEOUT", "900"))
     ML("   demos (%d): %s" % (len(demos), [d[1] for d in demos]))
 
     for func_name, dlabel in demos:

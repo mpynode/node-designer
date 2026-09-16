@@ -71,7 +71,7 @@ import maya.OpenMaya as om
 
 # Hidden string plugs holding the framework's record of every dynamic attribute
 # it added. Their presence is also how we recognise an mpynode at all.
-_INPUT_MAP_ATTR = "_inputAttrs"
+_INPUT_MAP_ATTR  = "_inputAttrs"
 _OUTPUT_MAP_ATTR = "_outputAttrs"
 
 # Bumped whenever any node's managed set may have changed. Coarse on purpose:
@@ -92,10 +92,10 @@ class _Entry:
     __slots__ = ("gen", "handle", "verdicts", "managed", "is_mpynode")
 
     def __init__(self, gen, handle, is_mpynode):
-        self.gen = gen
-        self.handle = handle
-        self.verdicts = {}
-        self.managed = None
+        self.gen        = gen
+        self.handle     = handle
+        self.verdicts   = {}
+        self.managed    = None
         self.is_mpynode = is_mpynode
 
 
@@ -185,7 +185,7 @@ def _entry_for(node_mobject):
     """The live cache entry for this node, rebuilt if stale or recycled."""
     try:
         handle = om.MObjectHandle(node_mobject)
-        key = handle.hashCode()
+        key    = handle.hashCode()
     except Exception:
         return None
     entry = _CACHE.get(key)
@@ -200,7 +200,7 @@ def _entry_for(node_mobject):
     # Cold path only -- a new entry is the first thing that can go stale, so
     # this is the earliest point the invalidation callbacks are needed.
     install_once()
-    entry = _Entry(_GENERATION, handle, _has_attr(fn, _INPUT_MAP_ATTR))
+    entry       = _Entry(_GENERATION, handle, _has_attr(fn, _INPUT_MAP_ATTR))
     _CACHE[key] = entry
     return entry
 

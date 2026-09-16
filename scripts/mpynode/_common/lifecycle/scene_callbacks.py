@@ -64,8 +64,8 @@ def _register_init_sources_for_tracked(only_new: bool = False) -> tuple[int, int
         known_types = set(cmds.allNodeTypes() or [])
     except Exception:
         known_types = None
-    loaded = 0
-    failed = 0
+    loaded   = 0
+    failed   = 0
     migrated = 0
     for node_type in _INIT_TRACKED_NODE_TYPES:
         if known_types is not None and node_type not in known_types:
@@ -155,7 +155,7 @@ def _scan_reserved_name_collisions():
             for plug, kind in (("_inputAttrs", "input attr"),
                                ("_outputAttrs", "output attr")):
                 try:
-                    raw = cmds.getAttr("{}.{}".format(node, plug)) or ""
+                    raw   = cmds.getAttr("{}.{}".format(node, plug)) or ""
                     names = decode_attr_map(raw) if raw else {}
                 except Exception:
                     continue
@@ -290,7 +290,7 @@ def _on_scene_change(_unused_client_data):
         trust.begin_scene_change()
     except Exception:
         pass
-    n_ns = len(_NODE_INIT_NS)
+    n_ns   = len(_NODE_INIT_NS)
     n_bind = len(_INIT_BINDINGS)
     if n_ns or n_bind:
         _NODE_INIT_NS.clear()
@@ -762,8 +762,8 @@ def teardown_shared_callbacks() -> None:
 
     # Reset our own latch + transient open/reference flags.
     _SCENE_CALLBACKS_REGISTERED = False
-    _OPEN_IN_PROGRESS = False
-    _REF_RESOLVE_PENDING = False
+    _OPEN_IN_PROGRESS           = False
+    _REF_RESOLVE_PENDING        = False
 
     # Sibling install guards -- lazy import to avoid a load-time cycle.
     import importlib
@@ -775,7 +775,7 @@ def teardown_shared_callbacks() -> None:
         "mpynode._common.lifecycle.time_utils",
     ):
         try:
-            mod = importlib.import_module(mod_name)
+            mod   = importlib.import_module(mod_name)
             reset = getattr(mod, "reset_install_state", None)
             if reset is not None:
                 reset()

@@ -29,7 +29,7 @@ def setup(self, *args, **kwargs):
     def _joints(sel):
         return [n for n in sel if mc.nodeType(n) == "joint"]
 
-    name = self.get_name()
+    name   = self.get_name()
     joints = _joints(_selection(override=kwargs.get("selection"), exclude=name))
     if len(joints) < 2:
         raise SetupError("select the START joint then the END joint of the chain "

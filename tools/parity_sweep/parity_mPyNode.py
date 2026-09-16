@@ -11,9 +11,9 @@ for p in ("mpynode_api1", "mpynode_api2"):
 
 import random
 
-BUILD = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fixtures", "mPyNode")
+BUILD   = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fixtures", "mPyNode")
 ORIG_MA = os.path.join(BUILD, "mPyNode_mathNode_original.ma")
-BUNDLE = os.path.join(BUILD, "mathNode.bundle")
+BUNDLE  = os.path.join(BUILD, "mathNode.bundle")
 
 # --- 1) Open the original scene (python mPyNode 'mathNode') ---
 cmds.file(ORIG_MA, open=True, force=True)
@@ -39,18 +39,18 @@ def set_inputs(node, a, b, k, vx, vy, vz):
 
 def read_outputs(node):
     total = cmds.getAttr(node + ".total")
-    vlen = cmds.getAttr(node + ".vlen")
-    vsum = cmds.getAttr(node + ".vsum")[0]  # (x,y,z)
+    vlen  = cmds.getAttr(node + ".vlen")
+    vsum  = cmds.getAttr(node + ".vsum")[0]  # (x,y,z)
     return float(total), float(vlen), float(vsum[0]), float(vsum[1]), float(vsum[2])
 
-N = 25
-maxerr = 0.0
+N          = 25
+maxerr     = 0.0
 components = 0
-worst = None
+worst      = None
 for i in range(N):
-    a = random.uniform(-10, 10)
-    b = random.uniform(-10, 10)
-    k = random.uniform(-10, 10)
+    a  = random.uniform(-10, 10)
+    b  = random.uniform(-10, 10)
+    k  = random.uniform(-10, 10)
     vx = random.uniform(-10, 10)
     vy = random.uniform(-10, 10)
     vz = random.uniform(-10, 10)
@@ -66,12 +66,12 @@ for i in range(N):
         components += 1
         if e > maxerr:
             maxerr = e
-            worst = (i, pj, cj)
+            worst  = (i, pj, cj)
 
-print("SAMPLES:", N)
+print("SAMPLES:",    N)
 print("COMPONENTS:", components)
-print("MAXERR:", repr(maxerr))
-print("WORST:", worst)
-TOL = 1e-4
+print("MAXERR:",     repr(maxerr))
+print("WORST:",      worst)
+TOL  = 1e-4
 PASS = (components > 0) and (maxerr <= TOL)
 print("RESULT:", "PASS" if PASS else "FAIL")

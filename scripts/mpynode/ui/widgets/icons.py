@@ -45,37 +45,37 @@ def icon_path(name: str) -> str:
 # circular pill. Cached so we don't repaint on every tree refresh.
 
 NODE_TYPE_LETTERS: dict[str, str] = {
-    "mPyNode": "N",
-    "mPyConstraint": "C",
-    "mPyIkSolver": "I",
-    "mPyLocator": "L",
-    "mPyDeformer": "D",
-    "mPyTransform": "T",
-    "mPyMesh": "P",
-    "mPySkinCluster": "K",
-    "mPyBlendShape": "B",
-    "mPyNurbsCurve": "U",        # cUrve; P is taken by mPyMesh
-    "mPyNurbsSurface": "R",      # suRface
-    "mPyFile": "M",              # Map, its role in a shading graph
+    "mPyNode":         "N",
+    "mPyConstraint":   "C",
+    "mPyIkSolver":     "I",
+    "mPyLocator":      "L",
+    "mPyDeformer":     "D",
+    "mPyTransform":    "T",
+    "mPyMesh":         "P",
+    "mPySkinCluster":  "K",
+    "mPyBlendShape":   "B",
+    "mPyNurbsCurve":   "U",  # cUrve; P is taken by mPyMesh
+    "mPyNurbsSurface": "R",  # suRface
+    "mPyFile":         "M",  # Map, its role in a shading graph
 }
 
 NODE_TYPE_COLORS: dict[str, tuple[int, int, int]] = {
-    "mPyNode": (110, 160, 230),  # blue
-    "mPyConstraint": (200, 100, 60),  # rust
-    "mPyIkSolver": (190, 100, 220),  # purple
-    "mPyLocator": (170, 170, 170),  # grey
-    "mPyDeformer": (60, 190, 200),  # teal
-    "mPyTransform": (220, 130, 60),  # amber
-    "mPyMesh": (90, 200, 170),  # sea-foam (geometry generator)
+    "mPyNode":        (110, 160, 230),  # blue
+    "mPyConstraint":  (200, 100, 60),   # rust
+    "mPyIkSolver":    (190, 100, 220),  # purple
+    "mPyLocator":     (170, 170, 170),  # grey
+    "mPyDeformer":    (60, 190, 200),   # teal
+    "mPyTransform":   (220, 130, 60),   # amber
+    "mPyMesh":        (90, 200, 170),   # sea-foam (geometry generator)
     "mPySkinCluster": (240, 140, 200),  # rose (skin deformer)
-    "mPyBlendShape": (170, 100, 220),  # violet (shape blender)
-    "mPyFile": (255, 180, 90),  # warm gold, to evoke a "texture map"
+    "mPyBlendShape":  (170, 100, 220),  # violet (shape blender)
+    "mPyFile":        (255, 180, 90),   # warm gold, to evoke a "texture map"
     # Generators echo mPyMesh's sea-foam family.
-    "mPyNurbsCurve": (90, 220, 200),  # bright sea-foam (curve generator)
+    "mPyNurbsCurve":   (90, 220, 200),  # bright sea-foam (curve generator)
     "mPyNurbsSurface": (90, 200, 220),  # cyan-ish (surface generator)
 }
 
-DEFAULT_NODE_TYPE_COLOR = (140, 140, 140)
+DEFAULT_NODE_TYPE_COLOR  = (140, 140, 140)
 DEFAULT_NODE_TYPE_LETTER = "?"
 
 # QIcon cache; avoids a repaint on every refresh.
@@ -87,18 +87,18 @@ _NODE_ICON_CACHE: dict[tuple[str, int, int, bool], QIcon] = {}
 # SINGLE tint cannot work -- a light ring vanishes on the grey mPyLocator pill
 # and a cyan one vanishes on the sea-foam generators -- so the two-tone pair
 # is what keeps it legible against all twelve type colours.
-_HALO_DARK_RGB = (30, 30, 30)
+_HALO_DARK_RGB  = (30, 30, 30)
 _HALO_LIGHT_RGB = (232, 232, 232)
-_HALO_PAD = 3          # px of canvas added on EVERY side to hold the rings
+_HALO_PAD       = 3          # px of canvas added on EVERY side to hold the rings
 
 
 def _make_letter_pill_pixmap(
     letter: str,
     bg_rgb: tuple[int, int, int],
     fg_rgb: tuple[int, int, int] = (255, 255, 255),
-    size: int = 16,
-    pad: int = 0,
-    ring: bool = False,
+    size:   int                  = 16,
+    pad:    int                  = 0,
+    ring:   bool                 = False,
 ) -> QPixmap:
     """Render a circular pill with the given letter centered on it.
 
@@ -110,7 +110,7 @@ def _make_letter_pill_pixmap(
     a ringed row and a plain row keep their pills the same size and aligned.
     """
     canvas = size + 2 * pad
-    pm = QPixmap(canvas, canvas)
+    pm     = QPixmap(canvas, canvas)
     pm.fill(Qt.transparent)
     painter = QPainter(pm)
     try:
@@ -148,9 +148,9 @@ def _make_letter_pill_pixmap(
 
 def get_node_type_icon(
     native_type: str,
-    size: int = 16,
-    pad: int = 0,
-    ring: bool = False,
+    size:        int  = 16,
+    pad:         int  = 0,
+    ring:        bool = False,
 ) -> QIcon:
     """Return (or build + cache) the letter-pill QIcon for a native_type.
 
@@ -163,9 +163,9 @@ def get_node_type_icon(
     if key in _NODE_ICON_CACHE:
         return _NODE_ICON_CACHE[key]
     letter = NODE_TYPE_LETTERS.get(native_type, DEFAULT_NODE_TYPE_LETTER)
-    bg = NODE_TYPE_COLORS.get(native_type, DEFAULT_NODE_TYPE_COLOR)
-    pm = _make_letter_pill_pixmap(letter, bg, size=size, pad=pad, ring=ring)
-    icon = QIcon(pm)
+    bg     = NODE_TYPE_COLORS.get(native_type, DEFAULT_NODE_TYPE_COLOR)
+    pm     = _make_letter_pill_pixmap(letter, bg, size=size, pad=pad, ring=ring)
+    icon   = QIcon(pm)
     _NODE_ICON_CACHE[key] = icon
     return icon
 
@@ -179,39 +179,39 @@ def get_node_type_icon(
 # list: angle / euler / enum / time / python / mesh / nurbsCurve /
 # nurbsSurface.
 ATTR_COLOR_DARK_GREEN = (0, 128, 1)
-ATTR_COLOR_GREEN = (80, 230, 80)
-ATTR_COLOR_BLUE = (128, 230, 230)
-ATTR_COLOR_ORANGE = (221, 135, 36)
-ATTR_COLOR_GREY_BLUE = (128, 170, 170)
-ATTR_COLOR_PINK = (230, 1, 230)
-ATTR_COLOR_BLACK = (128, 128, 128)
-ATTR_COLOR_BROWN = (146, 101, 49)
-ATTR_COLOR_YELLOW = (255, 218, 76)
+ATTR_COLOR_GREEN      = (80, 230, 80)
+ATTR_COLOR_BLUE       = (128, 230, 230)
+ATTR_COLOR_ORANGE     = (221, 135, 36)
+ATTR_COLOR_GREY_BLUE  = (128, 170, 170)
+ATTR_COLOR_PINK       = (230, 1, 230)
+ATTR_COLOR_BLACK      = (128, 128, 128)
+ATTR_COLOR_BROWN      = (146, 101, 49)
+ATTR_COLOR_YELLOW     = (255, 218, 76)
 
 ATTR_TYPE_COLORS: dict[str, tuple[int, int, int]] = {
     # Numeric scalars
-    "int": ATTR_COLOR_DARK_GREEN,
-    "float": ATTR_COLOR_GREEN,
+    "int":    ATTR_COLOR_DARK_GREEN,
+    "float":  ATTR_COLOR_GREEN,
     "double": ATTR_COLOR_GREEN,
-    "bool": ATTR_COLOR_ORANGE,
+    "bool":   ATTR_COLOR_ORANGE,
     # Vector-y
-    "float2": ATTR_COLOR_GREEN,
-    "vector": ATTR_COLOR_GREEN,
-    "euler": ATTR_COLOR_GREEN,
-    "color": ATTR_COLOR_GREEN,
+    "float2":     ATTR_COLOR_GREEN,
+    "vector":     ATTR_COLOR_GREEN,
+    "euler":      ATTR_COLOR_GREEN,
+    "color":      ATTR_COLOR_GREEN,
     "quaternion": ATTR_COLOR_BLUE,
     # Specials
-    "angle": ATTR_COLOR_BLUE,
+    "angle":  ATTR_COLOR_BLUE,
     "matrix": ATTR_COLOR_GREY_BLUE,
-    "time": ATTR_COLOR_GREEN,
-    "enum": ATTR_COLOR_BROWN,
+    "time":   ATTR_COLOR_GREEN,
+    "enum":   ATTR_COLOR_BROWN,
     # Strings + Python + hex
     "string": ATTR_COLOR_YELLOW,
     "python": ATTR_COLOR_YELLOW,
-    "hex": ATTR_COLOR_BROWN,
+    "hex":    ATTR_COLOR_BROWN,
     # Typed Maya geometry
-    "mesh": ATTR_COLOR_PINK,
-    "nurbsCurve": ATTR_COLOR_BLUE,
+    "mesh":         ATTR_COLOR_PINK,
+    "nurbsCurve":   ATTR_COLOR_BLUE,
     "nurbsSurface": ATTR_COLOR_BLACK,
 }
 

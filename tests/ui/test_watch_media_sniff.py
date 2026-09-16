@@ -22,13 +22,13 @@ from mpynode._common.instrumentation import watch as _iw
 _PAD = b"\x00" * 32
 
 HEADERS = {
-    "WAV":  b"RIFF\x24\x00\x00\x00WAVEfmt " + _PAD,
-    "MP3-ID3":   b"ID3\x03\x00\x00\x00\x00\x00\x00" + _PAD,
-    "MP3-SYNC":  b"\xff\xfb\x90\x00" + _PAD,
-    "OGG":  b"OggS\x00\x02\x00\x00\x00\x00\x00\x00" + _PAD,
-    "FLAC": b"fLaC\x00\x00\x00\x22\x00\x00\x00\x00" + _PAD,
-    "AIFF": b"FORM\x00\x00\x00\x2eAIFF" + _PAD,
-    "M4A":  b"\x00\x00\x00\x20ftypM4A \x00\x00\x00\x00" + _PAD,
+    "WAV":      b"RIFF\x24\x00\x00\x00WAVEfmt " + _PAD,
+    "MP3-ID3":  b"ID3\x03\x00\x00\x00\x00\x00\x00" + _PAD,
+    "MP3-SYNC": b"\xff\xfb\x90\x00" + _PAD,
+    "OGG":      b"OggS\x00\x02\x00\x00\x00\x00\x00\x00" + _PAD,
+    "FLAC":     b"fLaC\x00\x00\x00\x22\x00\x00\x00\x00" + _PAD,
+    "AIFF":     b"FORM\x00\x00\x00\x2eAIFF" + _PAD,
+    "M4A":      b"\x00\x00\x00\x20ftypM4A \x00\x00\x00\x00" + _PAD,
 }
 
 
@@ -52,7 +52,7 @@ class TestHeadlessSniffAcceptsEveryAudioContainer(unittest.TestCase):
             self.skipTest("image_preview needs Qt: %r" % (exc,))
         disagree = []
         for kind, blob in HEADERS.items():
-            renders = _ip._audio_container_kind(blob) is not None
+            renders     = _ip._audio_container_kind(blob) is not None
             previewable = _iw._is_previewable_media(blob)
             if renders != previewable:
                 disagree.append("%s: image_preview=%s watch=%s"
@@ -70,7 +70,7 @@ class TestTheCapIsWhatWasActuallyBroken(unittest.TestCase):
 
     def test_an_mp3_over_the_generic_cap_survives_capping(self):
         # 80 KB: over the 64 KB generic default, under the 2 MB media default.
-        blob = HEADERS["MP3-ID3"] + b"\x00" * (80 * 1024)
+        blob   = HEADERS["MP3-ID3"] + b"\x00" * (80 * 1024)
         capped = _iw.cap_watch_value(blob, max_bytes=64 * 1024)
         self.assertIsInstance(
             capped, (bytes, bytearray),
@@ -79,7 +79,7 @@ class TestTheCapIsWhatWasActuallyBroken(unittest.TestCase):
 
     def test_a_non_media_blob_of_the_same_size_is_still_elided(self):
         """The cap must still do its job -- this is not 'disable the cap'."""
-        blob = b"\x00" * (80 * 1024)
+        blob   = b"\x00" * (80 * 1024)
         capped = _iw.cap_watch_value(blob, max_bytes=64 * 1024)
         self.assertIsInstance(
             capped, str,

@@ -102,7 +102,7 @@ class TestBlendShapeRationale(unittest.TestCase):
         for rel, text in self._sources():
             lines = text.splitlines()
             for n, raw in enumerate(lines, 1):
-                low = raw.lower()
+                low  = raw.lower()
                 hits = [s for s in _API2_ONLY_SPELLINGS if s in low]
                 if not hits:
                     continue
@@ -123,7 +123,7 @@ class TestBlendShapeRationale(unittest.TestCase):
         from mpynode._api1.mpy_blend_shape import MPyBlendShape as Api1Class
         from mpynode._node_registry import REGISTRY
 
-        spec = REGISTRY["mPyBlendShape"]
+        spec        = REGISTRY["mPyBlendShape"]
         actual_base = Api1Class.__bases__[0]
         expected = "%s.%s" % (actual_base.__module__.replace(
             "maya.OpenMayaMPx", "maya.OpenMayaMPx"), actual_base.__name__)

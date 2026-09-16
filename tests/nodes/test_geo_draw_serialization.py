@@ -132,7 +132,7 @@ class TestAttachedGeometryPickle(unittest.TestCase):
         mc.file(new=True, force=True)
 
     def _attached_cube(self):
-        cube = mc.polyCube(name="pickleCube", constructionHistory=False)[0]
+        cube  = mc.polyCube(name="pickleCube", constructionHistory=False)[0]
         shape = mc.listRelatives(cube, shapes=True, fullPath=True)[0]
         data, plug = _plug_data(shape, "outMesh")
         return Mesh._attach(data, plug)
@@ -162,9 +162,9 @@ class TestAttachedGeometryPickle(unittest.TestCase):
         np.testing.assert_allclose(r.uv_sets[0].points, m.uv_sets[0].points)
 
     def test_unpickled_mesh_still_marshals_to_an_output(self):
-        m = self._attached_cube()
-        n = m.points.shape[0]
-        r = pickle.loads(pickle.dumps(m))
+        m   = self._attached_cube()
+        n   = m.points.shape[0]
+        r   = pickle.loads(pickle.dumps(m))
         out = build_mesh_data(r)
         self.assertFalse(out.isNull())
         self.assertEqual(om.MFnMesh(out).numVertices, n)
@@ -175,7 +175,7 @@ class TestAttachedGeometryPickle(unittest.TestCase):
         self.assertNotIn(b"MObject", blob)
 
     def test_attached_curve_pickles_as_a_detached_value(self):
-        crv = mc.curve(p=[(0, 0, 0), (1, 2, 0), (3, 1, 0), (4, 0, 0)], degree=3)
+        crv   = mc.curve(p=[(0, 0, 0), (1, 2, 0), (3, 1, 0), (4, 0, 0)], degree=3)
         shape = mc.listRelatives(crv, shapes=True, fullPath=True)[0]
         data, plug = _plug_data(shape, "local")
         c = NurbsCurve._attach(data, plug)
@@ -255,7 +255,7 @@ class TestDrawJson(unittest.TestCase, _DrawRoundTripMixin):
 
     def test_a_list_of_items_round_trips_as_a_list(self):
         items = [_draw_items()[9], _draw_items()[8], _draw_items()[0]]
-        back = draw_from_json(json.dumps([i.to_json() for i in items]))
+        back  = draw_from_json(json.dumps([i.to_json() for i in items]))
         self.assertIsInstance(back, list)
         self.assertSameDrawing(items, back)
 

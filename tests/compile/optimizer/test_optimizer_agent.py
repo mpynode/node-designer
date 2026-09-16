@@ -20,7 +20,7 @@ _SPEC = {
                   "mpx_base": "MPxNode", "type_id": "0x00012345"},
     "inputs": {}, "outputs": {},
     "compute": "self.out = self.a * 2",
-    "init": "import numpy as np",
+    "init":    "import numpy as np",
 }
 
 _CPP = "// original\nint main() { return 0; }\n"
@@ -121,10 +121,10 @@ class TestBuildWorkspace(_Ws):
         _p, task = oa.build_workspace(_SPEC, self.ws, _CPP, bench_mode="bake",
                                       bake_source=2048)
         bench = self._read("bench.sh")
-        self.assertIn("--mode bake", bench)
+        self.assertIn("--mode bake",        bench)
         self.assertIn("--bake-source 2048", bench)
-        self.assertIn("TEXTURE node", task)
-        self.assertIn("2048x2048", task)
+        self.assertIn("TEXTURE node",       task)
+        self.assertIn("2048x2048",          task)
 
     def test_a_compute_node_benches_without_bake_flags(self):
         _p, task = oa.build_workspace(_SPEC, self.ws, _CPP)
@@ -232,7 +232,7 @@ class TestBenchShHonoursTheBenchmarkLock(_Ws):
         until the timeout -- so the child env is scrubbed, not trusted."""
         from mpynode.native.ai import optimizer_live
 
-        old = os.environ.get(self._MARKER)
+        old                      = os.environ.get(self._MARKER)
         os.environ[self._MARKER] = "1"
         try:
             env = optimizer_live._base_env(self.ws)
@@ -260,7 +260,7 @@ class TestTheAgentProcessCarriesTheLockItself(_Ws):
     """
 
     _MARKER = "MPYNODE_BENCH_LOCK_CHILD"
-    _LOCK = "MPYNODE_BENCH_LOCK"
+    _LOCK   = "MPYNODE_BENCH_LOCK"
 
     def _run_agent(self, lock):
         """Run a stub agent with the lock env as given; return what it saw."""
@@ -268,7 +268,7 @@ class TestTheAgentProcessCarriesTheLockItself(_Ws):
 
         def agent(prompt):
             seen[self._MARKER] = os.environ.get(self._MARKER)
-            seen[self._LOCK] = os.environ.get(self._LOCK)
+            seen[self._LOCK]   = os.environ.get(self._LOCK)
             return ""
 
         old = {k: os.environ.get(k) for k in (self._LOCK, self._MARKER)}
@@ -301,8 +301,8 @@ class TestTheAgentProcessCarriesTheLockItself(_Ws):
         self.assertIsNone(os.environ.get(self._MARKER))
 
     def test_it_closes_even_when_the_agent_raises(self):
-        lock = os.path.join(self.ws, "bench.lock")
-        old = os.environ.get(self._LOCK)
+        lock                   = os.path.join(self.ws, "bench.lock")
+        old                    = os.environ.get(self._LOCK)
         os.environ[self._LOCK] = lock
         try:
             def boom(prompt):
@@ -457,11 +457,11 @@ class TestUltracodeDirective(unittest.TestCase):
         seen = {}
 
         def fake_run(cmd, stdin_text, binp, **kw):
-            seen["cmd"] = list(cmd)
+            seen["cmd"]    = list(cmd)
             seen["prompt"] = stdin_text
             return "ok"
 
-        orig = llm_client._run_cli_proc
+        orig                     = llm_client._run_cli_proc
         llm_client._run_cli_proc = fake_run
         try:
             llm_client.make_cli_agent_fn("/tmp/ultracode_test_ws")("DO IT")

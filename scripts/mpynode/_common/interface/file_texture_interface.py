@@ -26,22 +26,22 @@ package so the headless porter/.mpn path can read it). The live api2 node interp
 from __future__ import annotations
 
 # --- enum int constants (the SINGLE copy; mpy_file.py + file_defaults.py import these) ---
-kFilterPoint = 0
-kFilterLinear = 1
+kFilterPoint       = 0
+kFilterLinear      = 1
 kFilterAnisotropic = 2
 
 kMipmapNone = 0
 kMipmapAuto = 1
 
-kWrapWrap = 0
-kWrapClamp = 1
+kWrapWrap   = 0
+kWrapClamp  = 1
 kWrapMirror = 2
 kWrapBorder = 3
 
-kPreFilterBox = 0
+kPreFilterBox       = 0
 kPreFilterQuadratic = 1
-kPreFilterQuartic = 2
-kPreFilterGaussian = 3
+kPreFilterQuartic   = 2
+kPreFilterGaussian  = 3
 
 # --- colorSpace enum labels (in-repo contract, NOT OCIO-config-derived, so portable/
 #     deterministic; index 0 = default; scene-saved integer indices round-trip). ---
@@ -106,8 +106,8 @@ def _cs_enum():
 FILE_TEXTURE_ATTRS = [
     {
         "long": "fileName", "short": "fn", "attr_type": "string", "direction": "input",
-        "default": "",
-        "flags": {"used_as_filename": True, "storable": True, "keyable": False},
+        "default":        "",
+        "flags":          {"used_as_filename": True, "storable": True, "keyable": False},
         "affects_output": True,
     },
     {
@@ -118,7 +118,7 @@ FILE_TEXTURE_ATTRS = [
             {"long": "vCoord", "short": "v", "data": "kFloat", "default": 0.0,
              "flags": {"keyable": True}},
         ],
-        "flags": {"hidden": False, "storable": True},
+        "flags":          {"hidden": False, "storable": True},
         "affects_output": True,
     },
     {
@@ -129,19 +129,19 @@ FILE_TEXTURE_ATTRS = [
             {"long": "uvFilterSizeY", "short": "fsy", "data": "kFloat", "default": 0.0,
              "flags": {}},
         ],
-        "flags": {"hidden": True},
+        "flags":          {"hidden": True},
         "affects_output": False,
     },
     {
         "long": "colorSpace", "short": "cs", "attr_type": "enum", "direction": "input",
         "default": 0, "enum": _cs_enum(),
-        "flags": {"keyable": False, "storable": True},
+        "flags":          {"keyable": False, "storable": True},
         "affects_output": True,
     },
     {
         "long": "preFilter", "short": "pf", "attr_type": "bool", "direction": "input",
-        "default": False,
-        "flags": {"keyable": True, "storable": True},
+        "default":        False,
+        "flags":          {"keyable": True, "storable": True},
         "affects_output": True,
     },
     {
@@ -149,13 +149,13 @@ FILE_TEXTURE_ATTRS = [
         "default": kPreFilterGaussian,
         "enum": [("Box", kPreFilterBox), ("Quadratic", kPreFilterQuadratic),
                  ("Quartic", kPreFilterQuartic), ("Gaussian", kPreFilterGaussian)],
-        "flags": {"keyable": False, "storable": True},
+        "flags":          {"keyable": False, "storable": True},
         "affects_output": True,
     },
     {
         "long": "preFilterRadius", "short": "pfr", "attr_type": "float", "direction": "input",
         "default": 2.0, "min": 0.0, "max": 8.0,
-        "flags": {"keyable": True, "storable": True},
+        "flags":          {"keyable": True, "storable": True},
         "affects_output": True,
     },
     {
@@ -163,38 +163,38 @@ FILE_TEXTURE_ATTRS = [
         "default": kFilterAnisotropic,
         "enum": [("Point", kFilterPoint), ("Linear", kFilterLinear),
                  ("Anisotropic", kFilterAnisotropic)],
-        "flags": {"keyable": True, "storable": True},
+        "flags":          {"keyable": True, "storable": True},
         "affects_output": True,
     },
     {
         "long": "maxAnisotropy", "short": "maxa", "attr_type": "int", "direction": "input",
         "default": 16, "min": 1, "max": 16,
-        "flags": {"keyable": True, "storable": True},
+        "flags":          {"keyable": True, "storable": True},
         "affects_output": True,
     },
     {
         "long": "mipmapMode", "short": "mmm", "attr_type": "enum", "direction": "input",
-        "default": kMipmapAuto,
-        "enum": [("None", kMipmapNone), ("Auto", kMipmapAuto)],
-        "flags": {"keyable": True, "storable": True},
+        "default":        kMipmapAuto,
+        "enum":           [("None", kMipmapNone), ("Auto", kMipmapAuto)],
+        "flags":          {"keyable": True, "storable": True},
         "affects_output": True,
     },
     {
         "long": "mipLODBias", "short": "mlb", "attr_type": "float", "direction": "input",
         "default": 0.0, "min": -8.0, "max": 8.0,
-        "flags": {"keyable": True},
+        "flags":          {"keyable": True},
         "affects_output": True,
     },
     {
         "long": "minLOD", "short": "mnl", "attr_type": "int", "direction": "input",
         "default": 0, "min": 0, "max": 16,
-        "flags": {"keyable": True},
+        "flags":          {"keyable": True},
         "affects_output": True,
     },
     {
         "long": "maxLOD", "short": "mxl", "attr_type": "int", "direction": "input",
         "default": 16, "min": 0, "max": 16,
-        "flags": {"keyable": True},
+        "flags":          {"keyable": True},
         "affects_output": True,
     },
     {
@@ -202,7 +202,7 @@ FILE_TEXTURE_ATTRS = [
         "default": kWrapWrap,
         "enum": [("Wrap", kWrapWrap), ("Clamp", kWrapClamp),
                  ("Mirror", kWrapMirror), ("Border", kWrapBorder)],
-        "flags": {"keyable": True},
+        "flags":          {"keyable": True},
         "affects_output": True,
     },
     {
@@ -210,7 +210,7 @@ FILE_TEXTURE_ATTRS = [
         "default": kWrapWrap,
         "enum": [("Wrap", kWrapWrap), ("Clamp", kWrapClamp),
                  ("Mirror", kWrapMirror), ("Border", kWrapBorder)],
-        "flags": {"keyable": True},
+        "flags":          {"keyable": True},
         "affects_output": True,
     },
     {
@@ -223,7 +223,7 @@ FILE_TEXTURE_ATTRS = [
             {"long": "borderColorB", "short": "bcb", "data": "kFloat", "default": 0.0,
              "flags": {}},
         ],
-        "flags": {"used_as_color": True, "keyable": True, "storable": True},
+        "flags":          {"used_as_color": True, "keyable": True, "storable": True},
         "affects_output": True,
     },
     {
@@ -242,7 +242,7 @@ FILE_TEXTURE_ATTRS = [
     {
         "long": "outAlpha", "short": "oa", "attr_type": "float", "direction": "output",
         "default": 1.0,
-        "flags": {"storable": False, "writable": False, "readable": True},
+        "flags":   {"storable": False, "writable": False, "readable": True},
     },
     # outTransparency / outSize complete the stock `file` node's output surface.
     # NEITHER is authored by the compute: a compute writes colour + alpha, and the
@@ -318,7 +318,7 @@ def build_porter_meta_table() -> dict:
             "_readable": True,
         }
         if e["attr_type"] == "enum":
-            meta["enum_names"] = enum_labels(e)
+            meta["enum_names"]    = enum_labels(e)
             meta["default_value"] = e["default"]
         if e["attr_type"] == "float2":
             meta["children"] = [c["long"] for c in e["children"]]

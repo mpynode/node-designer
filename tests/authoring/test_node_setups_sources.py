@@ -67,7 +67,7 @@ class TestSkinClusterWireJointsVendoring(unittest.TestCase):
 
     def test_the_setup_imports_no_mpynode(self):
         # AST, not a substring scan: the file NAMES mpynode in its comments.
-        tree = ast.parse(ns.setup_source_for_type("mPySkinCluster"))
+        tree    = ast.parse(ns.setup_source_for_type("mPySkinCluster"))
         modules = []
         for node in ast.walk(tree):
             if isinstance(node, ast.Import):

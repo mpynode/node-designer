@@ -1762,9 +1762,9 @@ class TestClosestPointSweepTemplateIsSeen(unittest.TestCase):
                             "MPyMesh", "Voxelize", "template.mpn")
         if not os.path.isfile(path):
             self.skipTest("voxelize template not installed: %s" % path)
-        payload = dict(mpn_io.load_mpn(path, trusted=True))
+        payload                = dict(mpn_io.load_mpn(path, trusted=True))
         payload["init_source"] = self._SWEEP_INIT
-        payload["expression"] = self._SWEEP_COMPUTE
+        payload["expression"]  = self._SWEEP_COMPUTE
         return mpn_spec_adapter.spec_from_mpn_payload(payload)
 
     def test_report_names_the_query_and_the_spec_carries_the_flag(self):

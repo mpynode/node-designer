@@ -37,9 +37,9 @@ _TWO_DEMOS = (
 class TestDemoMultiplicity(unittest.TestCase):
     def setUp(self):
         mc.file(new=True, force=True)
-        cmd = _CreateNodeCommand("mPyNode")
+        cmd            = _CreateNodeCommand("mPyNode")
         self.node_name = run_undoable(cmd) or cmd.created_name
-        node = wrap_node(self.node_name, "mPyNode")
+        node           = wrap_node(self.node_name, "mPyNode")
         node.set_methods_source(_TWO_DEMOS)
 
     def test_instance_demo_by_name(self):

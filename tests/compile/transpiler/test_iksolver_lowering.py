@@ -149,8 +149,8 @@ class TestSolverLowering(unittest.TestCase):
         lines = nd_lower.try_lower_iksolver(_spec(src))
         self.assertIsNotNone(lines, "a plain world-matrix write must lower")
         joined = "\n".join(lines)
-        self.assertIn("bindWorld[_j](_r, _c)", joined)       # stacked read
-        self.assertIn("outWorldSet[_j] = 1;", joined)        # scatter + flag
+        self.assertIn("bindWorld[_j](_r, _c)", joined)  # stacked read
+        self.assertIn("outWorldSet[_j] = 1;", joined)   # scatter + flag
 
     def test_local_matrix_sink_lowers(self):
         src = _src(
@@ -209,7 +209,7 @@ class TestSolverLowering(unittest.TestCase):
         porter path reads, so both paths see identical C++."""
         src = _src(
             "self.world_matrices[0] = np.eye(4) * float(self.blend)\n")
-        spec = _spec(src, inputs={"blend": {"type": "double"}})
+        spec   = _spec(src, inputs={"blend": {"type": "double"}})
         joined = "\n".join(nd_lower.try_lower_iksolver(spec))
         self.assertIn("in_blend", joined)
 
@@ -236,13 +236,13 @@ class TestTwoBoneIkTemplate(unittest.TestCase):
         spec = _spec(self.source,
                      suggested={"class_name": "TwoBoneIk",
                                 "node_type_name": "twoBoneIk",
-                                "type_id": "0x00136000",
+                                "type_id":        "0x00136000",
                                 "mpx_base": "MPxIkSolverNode"},
                      source_node="twoBoneIk1", mpy_type="mPyIkSolver")
         cpp = emit_iksolver._generate_iksolver_cpp(spec)
         self.assertNotIn(PORT_BEGIN, cpp)
-        self.assertIn("nd::Array", cpp)          # lowered math present
-        self.assertIn("namespace nd", cpp)       # nd_runtime.h inlined
+        self.assertIn("nd::Array", cpp)     # lowered math present
+        self.assertIn("namespace nd", cpp)  # nd_runtime.h inlined
 
     def test_unlowerable_solver_keeps_the_port_region(self):
         """Zero regression: a compute outside the lowerable subset still gets
@@ -253,7 +253,7 @@ class TestTwoBoneIkTemplate(unittest.TestCase):
         spec = _spec("for jd in self.joints:\n    pass\n",
                      suggested={"class_name": "Weird",
                                 "node_type_name": "weirdSolver",
-                                "type_id": "0x00136001",
+                                "type_id":        "0x00136001",
                                 "mpx_base": "MPxIkSolverNode"},
                      source_node="weird1", mpy_type="mPyIkSolver")
         cpp = emit_iksolver._generate_iksolver_cpp(spec)

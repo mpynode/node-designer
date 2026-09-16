@@ -60,13 +60,13 @@ def _read_input_geometry_data(block, multi_index):
     input[multi_index].inputGeometry plug, plus a label like 'mesh'/
     'curve'/'surface'/'lattice'/'unknown'.
     """
-    input_attr = ommpx.cvar.MPxGeometryFilter_input
+    input_attr      = ommpx.cvar.MPxGeometryFilter_input
     input_geom_attr = ommpx.cvar.MPxGeometryFilter_inputGeom
 
     try:
         in_array = block.outputArrayValue(input_attr)
         in_array.jumpToElement(int(multi_index))
-        in_handle = in_array.outputValue()
+        in_handle   = in_array.outputValue()
         geom_handle = in_handle.child(input_geom_attr)
     except Exception:
         return None, "unknown"
@@ -153,8 +153,8 @@ def allocate_deformer_output_handle(
             plug_name=plug_short_name, plug_index=int(multi_index),
         )
         try:
-            u = int(fresh_mfn.numCVsInU())
-            v = int(fresh_mfn.numCVsInV())
+            u      = int(fresh_mfn.numCVsInU())
+            v      = int(fresh_mfn.numCVsInV())
             vcount = u * v
         except Exception:
             vcount = 0
@@ -302,10 +302,10 @@ def commit_user_storage(node_obj, sp):
     from mpynode._common.storedvars import stored_var_store as _svstore
     from maya import cmds
 
-    fn_node = om.MFnDependencyNode(node_obj)
+    fn_node   = om.MFnDependencyNode(node_obj)
     node_name = fn_node.name()
     try:
-        sv_str = fn_node.findPlug("_storedVarsData", True).asString()
+        sv_str   = fn_node.findPlug("_storedVarsData", True).asString()
         existing = _svstore.load_for_compute(node_obj, sv_str)
     except Exception:
         existing = {}
@@ -326,11 +326,11 @@ def run_generic_compute(
     node_obj,
     datablock,
     *,
-    geom_iter=None,
-    multi_index=None,
-    output_plug_short_name="outputGeometry",
-    family="deformer",
-    expression_code=None,
+    geom_iter              = None,
+    multi_index            = None,
+    output_plug_short_name = "outputGeometry",
+    family                 = "deformer",
+    expression_code        = None,
 ):
     """Run the generic compute path for one tick.
 
@@ -372,10 +372,10 @@ def run_generic_compute(
         pass
 
     # ---- allocate output handle (Section 5.1) ----
-    handle = None
-    fresh_mobject = None
+    handle              = None
+    fresh_mobject       = None
     expected_vert_count = 0
-    output_handles = {}
+    output_handles      = {}
 
     if family == "deformer":
         if multi_index is None:
@@ -457,27 +457,27 @@ def run_generic_compute(
 
     # ---- build SelfProxy + namespace ----
     compute_ctx = {
-        "datablock": datablock,
-        "geom_iter": geom_iter,
-        "multi_index": multi_index,
+        "datablock":      datablock,
+        "geom_iter":      geom_iter,
+        "multi_index":    multi_index,
         "output_handles": output_handles,
     }
 
     sp = SelfProxy(
         node_obj,
-        datablock=datablock,
-        geom_iter=geom_iter,
-        compute_ctx=compute_ctx,
-        user_storage=user_storage,
-        output_handles=output_handles,
-        node_type_label=fn_node.typeName(),
-        compute_locals=seeded_array_outputs,
+        datablock       = datablock,
+        geom_iter       = geom_iter,
+        compute_ctx     = compute_ctx,
+        user_storage    = user_storage,
+        output_handles  = output_handles,
+        node_type_label = fn_node.typeName(),
+        compute_locals  = seeded_array_outputs,
     )
 
     import builtins as _builtins
     namespace = {
         "__builtins__": _builtins,
-        "self": sp,
+        "self":         sp,
     }
 
     # ---- exec ----
@@ -489,10 +489,10 @@ def run_generic_compute(
     ok = exec_with_profile_watch(
         expression_code,
         namespace,
-        log_event_name="<{}-expression>".format(fn_node.name()),
-        on_error=_on_err,
-        node_obj=node_obj,
-        compute_ctx=compute_ctx,
+        log_event_name = "<{}-expression>".format(fn_node.name()),
+        on_error       = _on_err,
+        node_obj       = node_obj,
+        compute_ctx    = compute_ctx,
     )
     if not ok:
         if captured:

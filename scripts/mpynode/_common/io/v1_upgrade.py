@@ -37,7 +37,7 @@ re-read.
 """
 from __future__ import annotations
 
-LEGACY_PLUG = "expression"
+LEGACY_PLUG   = "expression"
 _COMPUTE_PLUG = "_computeSource"
 _V1_PLUGS = {"inputs": "_inputAttrs", "outputs": "_outputAttrs",
              "stored": "_storedVarsData"}
@@ -132,7 +132,7 @@ def _v1_node_from_plugs(node):
     """Build a :class:`v1_import.V1Node` from the live plugs."""
     from mpynode._common.io import v1_import as V
 
-    v1 = V.V1Node(node)
+    v1            = V.V1Node(node)
     v1.expression = str(_get(node, LEGACY_PLUG))
     for field, plug in _V1_PLUGS.items():
         payload = str(_get(node, plug))
@@ -210,7 +210,7 @@ def upgrade_node(node, clear_legacy=False):
     from mpynode._common.io import v1_import as V
     from mpynode.wrappers._mpy_node import MPyNode
 
-    v1 = _v1_node_from_plugs(node)
+    v1   = _v1_node_from_plugs(node)
     spec = V.convert(v1)
 
     wrapper = MPyNode(node)
@@ -222,9 +222,9 @@ def upgrade_node(node, clear_legacy=False):
         node, v1.inputs, spec["synthesized_enums"], "_inputAttrs")
     _out, miss_out = _rewrite_attr_registry(
         node, v1.outputs, spec["synthesized_enums"], "_outputAttrs")
-    spec["registered_inputs"] = sorted(_in)
+    spec["registered_inputs"]  = sorted(_in)
     spec["registered_outputs"] = sorted(_out)
-    spec["missing_plugs"] = sorted(miss_in + miss_out)
+    spec["missing_plugs"]      = sorted(miss_in + miss_out)
 
     for attr, names in spec["synthesized_enums"].items():
         # v1 stored no enum labels and v2 rejects an enum without them. The

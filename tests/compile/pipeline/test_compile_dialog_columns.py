@@ -88,7 +88,7 @@ class TestColumnLayout(unittest.TestCase):
     def test_classed_row_class_and_node_type(self):
         from mpynode.ui.dialogs import compile_dialog as cd
 
-        n = self._classed("dlgColA", "Widget")
+        n   = self._classed("dlgColA", "Widget")
         dlg = self._dialog()
         row = self._row_of(dlg, n.get_name())
         self.assertEqual(dlg._table.item(row, cd._COL_CLASS).text(),
@@ -98,7 +98,7 @@ class TestColumnLayout(unittest.TestCase):
     def test_node_type_is_derived_not_native(self):
         from mpynode.ui.dialogs import compile_dialog as cd
 
-        n = self._classed("dlgColB", "ProcrustesConstraint")
+        n   = self._classed("dlgColB", "ProcrustesConstraint")
         dlg = self._dialog()
         row = self._row_of(dlg, n.get_name())
         # Node Type = the derived compiled type, NOT the base native type.
@@ -110,7 +110,7 @@ class TestColumnLayout(unittest.TestCase):
         from mpynode import MPyNode
         from mpynode.ui.dialogs import compile_dialog as cd
 
-        n = MPyNode.create(name="lonely")  # class-less
+        n   = MPyNode.create(name="lonely")  # class-less
         dlg = self._dialog()
         row = self._row_of(dlg, n.get_name())
         self.assertEqual(dlg._table.item(row, cd._COL_CLASS).text(), "MPyNode()")
@@ -159,17 +159,17 @@ class TestPersistentBakeConfirm(unittest.TestCase):
         n.set_py_class(dotted_path(cls))
 
     def test_nodes_baking_persistent_lists_only_data_nodes(self):
-        dlg = self._dialog()
-        dlg._scene_nodes = [("hasData", "mPyNode"), ("noData", "mPyNode")]
-        dlg._checked = {"hasData", "noData"}
+        dlg                      = self._dialog()
+        dlg._scene_nodes         = [("hasData", "mPyNode"), ("noData", "mPyNode")]
+        dlg._checked             = {"hasData", "noData"}
         dlg._node_has_persistent = lambda name: name == "hasData"
         self.assertEqual(
             dlg._nodes_baking_persistent(dlg._checked_nodes()), ["hasData"])
 
     def test_nodes_baking_respects_uncheck_and_global_ignore(self):
-        dlg = self._dialog()
-        dlg._scene_nodes = [("hasData", "mPyNode")]
-        dlg._checked = {"hasData"}
+        dlg                      = self._dialog()
+        dlg._scene_nodes         = [("hasData", "mPyNode")]
+        dlg._checked             = {"hasData"}
         dlg._node_has_persistent = lambda name: True
         # An explicit per-node uncheck -> not baking.
         dlg._persistent_unchecked = {"hasData"}
@@ -184,10 +184,10 @@ class TestPersistentBakeConfirm(unittest.TestCase):
 
         n = MPyNode.create(name="bakeCancel")
         self._classify(n)
-        dlg = self._dialog()
-        dlg._checked = {n.get_name()}
+        dlg                      = self._dialog()
+        dlg._checked             = {n.get_name()}
         dlg._node_has_persistent = lambda name: True  # force "has data"
-        seen = {}
+        seen                     = {}
         dlg._confirm_bake_persistent = (
             lambda names: (seen.__setitem__("names", list(names)) or False))
         dlg._on_compile()
@@ -205,10 +205,10 @@ class TestPersistentBakeConfirm(unittest.TestCase):
 
         n = MPyNode.create(name="orderNode")
         self._classify(n)
-        dlg = self._dialog()
-        dlg._checked = {n.get_name()}
+        dlg                      = self._dialog()
+        dlg._checked             = {n.get_name()}
         dlg._node_has_persistent = lambda name: True
-        order = []
+        order                    = []
         dlg._confirm_bake_persistent = (
             lambda names: (order.append("bake"), False)[1])
         dlg._resolve_divergence = (
@@ -225,10 +225,10 @@ class TestPersistentBakeConfirm(unittest.TestCase):
         n = MPyNode.create(name="staleCache")
         n.set_variable("v", 1, persistent=True)  # really carries data
         self._classify(n)
-        dlg = self._dialog()
-        dlg._checked = {n.get_name()}
+        dlg                 = self._dialog()
+        dlg._checked        = {n.get_name()}
         dlg._has_persistent = {n.get_name(): False}  # STALE: says "no data"
-        seen = {}
+        seen                = {}
         dlg._confirm_bake_persistent = (
             lambda names: (seen.__setitem__("names", list(names)) or False))
         dlg._on_compile()

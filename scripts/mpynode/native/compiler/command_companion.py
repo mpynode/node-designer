@@ -208,7 +208,7 @@ def _command_class(cmd: dict) -> str:
     """Source for one command's ``MPxCommand`` subclass."""
     func = cmd["func_name"]
     name = cmd["name"]
-    cls = "_Cmd_%s" % func
+    cls  = "_Cmd_%s" % func
     if _needs_target(cmd):
         dispatch = (
             "        _target = _resolve_target(args, %r)\n"
@@ -240,10 +240,10 @@ def _command_class(cmd: dict) -> str:
 
 
 def generate_companion_plugin(
-    plugin_name: str,
+    plugin_name:    str,
     node_type_name: str,
     methods_source: str,
-    commands=None,
+    commands            = None,
 ) -> str:
     """Return the source of a Python plugin exposing ``methods_source``'s
     ``@maya_command`` defs as ``maya.cmds`` commands bound to ``node_type_name``
@@ -401,13 +401,13 @@ def emit_companions(nodes, plugin_name: str, out_dir: str) -> List[dict]:
     # ``seen`` tracks EVERY command name (native + companion) so a companion can
     # never collide with a natively-compiled name, or vice versa.
     # ``generate_companion_plugin`` also raises here on intra-node clashes.
-    seen = {}
+    seen    = {}
     planned = []  # [(type_name, path, src, summary)]
     for type_name, spec in nodes:
         cmds = (spec or {}).get("commands") or []
         if not cmds:
             continue
-        native = [c for c in cmds if _native_command(spec, c)]
+        native    = [c for c in cmds if _native_command(spec, c)]
         companion = [c for c in cmds if not _native_command(spec, c)]
         for c in native + companion:
             nm = c.get("name")

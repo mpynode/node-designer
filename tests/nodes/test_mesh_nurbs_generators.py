@@ -24,8 +24,8 @@ def _read_outmesh_counts(node):
 
     sel = om.MSelectionList()
     sel.add(node)
-    mob = sel.getDependNode(0)
-    plug = om.MFnDependencyNode(mob).findPlug("outMesh", True)
+    mob      = sel.getDependNode(0)
+    plug     = om.MFnDependencyNode(mob).findPlug("outMesh", True)
     mesh_obj = plug.asMObject()
     if mesh_obj.isNull():
         return (0, 0)
@@ -43,8 +43,8 @@ def _read_outmesh(node):
 
     sel = om.MSelectionList()
     sel.add(node)
-    mob = sel.getDependNode(0)
-    plug = om.MFnDependencyNode(mob).findPlug("outMesh", True)
+    mob      = sel.getDependNode(0)
+    plug     = om.MFnDependencyNode(mob).findPlug("outMesh", True)
     mesh_obj = plug.asMObject()
     if mesh_obj.isNull():
         mesh_obj = om.MFnMeshData().create()
@@ -74,10 +74,10 @@ class TestMPyMeshBasics(unittest.TestCase):
     def test_node_is_dg_not_dag(self):
         """MPyMesh is a plain DG node -- no parent transform after
         createNode. This is the architectural pivot from mPyShape."""
-        n = mc.createNode("mPyMesh", name="p1")
+        n         = mc.createNode("mPyMesh", name="p1")
         inherited = mc.nodeType(n, inherited=True) or []
-        self.assertNotIn("dagNode", inherited)
-        self.assertNotIn("shape", inherited)
+        self.assertNotIn("dagNode",      inherited)
+        self.assertNotIn("shape",        inherited)
         self.assertNotIn("surfaceShape", inherited)
         # no parent transform was auto-created; listRelatives on a DG node
         # returns None or fails.
@@ -173,12 +173,12 @@ class TestMPyMeshCompute(unittest.TestCase):
         for f in (1, 10, 30, 50):
             mc.currentTime(f, edit=True)
             mfn = _read_outmesh(p.get_name())
-            p0 = mfn.getPoint(0)
+            p0  = mfn.getPoint(0)
             self.assertAlmostEqual(
                 p0.y,
                 f * 0.1,
-                places=3,
-                msg=f"mesh stale at frame {f}",
+                places = 3,
+                msg    = f"mesh stale at frame {f}",
             )
 
     def test_expression_error_fallback_empty_mesh(self):
@@ -256,7 +256,7 @@ class TestMPyMeshWrapper(unittest.TestCase):
     def test_set_get_expression_roundtrip(self):
         from mpynode.wrappers.mpy_mesh import MPyMesh
 
-        p = MPyMesh.create(name="p1")
+        p   = MPyMesh.create(name="p1")
         src = "self.points = None"
         p.set_compute_expression(src)
         self.assertEqual(p.get_compute_expression(), src)
@@ -539,8 +539,8 @@ class TestMPyNurbsCurveExtendedSchema(unittest.TestCase):
             ["time", "cvs", "knots", "degree", "form"],
         )
         dirs = {s[0]: s[1] for s in specs}
-        self.assertEqual(dirs["time"], "read")
-        self.assertEqual(dirs["cvs"], "write")
+        self.assertEqual(dirs["time"],   "read")
+        self.assertEqual(dirs["cvs"],    "write")
         self.assertEqual(dirs["degree"], "write")
 
     def test_pass1_names_only_view_still_works(self):
@@ -642,7 +642,7 @@ class TestOffsetAttrPropagates(unittest.TestCase):
         for i in range(100):
             offset = i * 0.05
             mc.setAttr(self.node + ".offset", offset)
-            cv0 = mc.pointPosition(f"{self.xform}|{self.shape}.cv[0]")
+            cv0        = mc.pointPosition(f"{self.xform}|{self.shape}.cv[0]")
             expected_x = math.cos(0.0 + offset)
             self.assertAlmostEqual(
                 cv0[0], expected_x, places=3,
@@ -670,8 +670,8 @@ class TestPhaseQCurveThreadSafety(unittest.TestCase):
         import textwrap
         from mpynode._api2.mpy_nurbs_curve import MPyNurbsCurve as MPxCurve
 
-        compute_src = textwrap.dedent(inspect.getsource(MPxCurve.compute))
-        tree = _ast.parse(compute_src)
+        compute_src  = textwrap.dedent(inspect.getsource(MPxCurve.compute))
+        tree         = _ast.parse(compute_src)
         called_attrs = []
         for node in _ast.walk(tree):
             if isinstance(node, _ast.Call):
@@ -707,9 +707,9 @@ class TestPhaseQCurveThreadSafety(unittest.TestCase):
             "MPyNurbsCurve must override setDependentsDirty for api1-cache",
         )
         src = inspect.getsource(MPxCurve.setDependentsDirty)
-        self.assertIn("_api1_mobject", src)
+        self.assertIn("_api1_mobject",  src)
         self.assertIn("MSelectionList", src)
-        self.assertIn("maya.OpenMaya", src)
+        self.assertIn("maya.OpenMaya",  src)
 
     def test_self_proxy_receives_data_block(self):
         """``_run_expression`` must thread data_block down to
@@ -758,18 +758,18 @@ class _CurveBase(unittest.TestCase):
         sel = om.MSelectionList()
         sel.add(self.node)
         node_obj = sel.getDependNode(0)
-        fn = om.MFnDependencyNode(node_obj)
+        fn       = om.MFnDependencyNode(node_obj)
         # Stash on self so the plug + obj live until the test ends.
-        self._plug = fn.findPlug("outCurve", True)
+        self._plug     = fn.findPlug("outCurve", True)
         self._data_obj = self._plug.asMObject()
         if self._data_obj.isNull():
             return None
         try:
-            mfn = om.MFnNurbsCurve(self._data_obj)
+            mfn     = om.MFnNurbsCurve(self._data_obj)
             num_cvs = int(mfn.numCVs)
-            degree = int(mfn.degree)
-            form = int(mfn.form)
-            cv0_y = float(mfn.cvPosition(0).y) if num_cvs > 0 else 0.0
+            degree  = int(mfn.degree)
+            form    = int(mfn.form)
+            cv0_y   = float(mfn.cvPosition(0).y) if num_cvs > 0 else 0.0
         except RuntimeError:
             # MFnNurbsCurve.numCVs raises "Object does not exist" on an empty
             # MFnNurbsCurveData (the ship-empty failure mode); report the
@@ -777,9 +777,9 @@ class _CurveBase(unittest.TestCase):
             return {"num_cvs": 0, "degree": 0, "form": 0, "cv0_y": 0.0}
         return {
             "num_cvs": num_cvs,
-            "degree": degree,
-            "form": form,
-            "cv0_y": cv0_y,
+            "degree":  degree,
+            "form":    form,
+            "cv0_y":   cv0_y,
         }
 
 
@@ -938,9 +938,9 @@ class _SurfaceBase(unittest.TestCase):
 
         sel = om.MSelectionList()
         sel.add(self.node)
-        node_obj = sel.getDependNode(0)
-        fn = om.MFnDependencyNode(node_obj)
-        self._plug = fn.findPlug("outSurface", True)
+        node_obj       = sel.getDependNode(0)
+        fn             = om.MFnDependencyNode(node_obj)
+        self._plug     = fn.findPlug("outSurface", True)
         self._data_obj = self._plug.asMObject()
         if self._data_obj.isNull():
             return None
@@ -949,9 +949,9 @@ class _SurfaceBase(unittest.TestCase):
             return {
                 "num_cvs_u": int(mfn.numCVsInU),
                 "num_cvs_v": int(mfn.numCVsInV),
-                "degree_u": int(mfn.degreeInU),
-                "degree_v": int(mfn.degreeInV),
-                "cv0_y": float(mfn.cvPosition(0, 0).y),
+                "degree_u":  int(mfn.degreeInU),
+                "degree_v":  int(mfn.degreeInV),
+                "cv0_y":     float(mfn.cvPosition(0, 0).y),
             }
         except RuntimeError:
             return {"num_cvs_u": 0, "num_cvs_v": 0, "degree_u": 0, "degree_v": 0, "cv0_y": 0.0}
@@ -975,8 +975,8 @@ class TestSurfaceBasic(_SurfaceBase):
         self.assertIsNotNone(info)
         self.assertEqual(info["num_cvs_u"], 6)
         self.assertEqual(info["num_cvs_v"], 4)
-        self.assertEqual(info["degree_u"], 3)
-        self.assertEqual(info["degree_v"], 3)
+        self.assertEqual(info["degree_u"],  3)
+        self.assertEqual(info["degree_v"],  3)
 
     def test_flat_cvs_with_explicit_dims(self):
         self._set_expr(
@@ -1085,7 +1085,7 @@ class TestPolyExpressionRoundTrip(unittest.TestCase):
 
     def test_triangle_round_trip(self):
         """User expression writes 3 points + 1 face -> outMesh has 3 verts."""
-        n = mc.createNode("mPyMesh")
+        n          = mc.createNode("mPyMesh")
         mesh_xform = mc.createNode("transform")
         mesh_shape = mc.createNode("mesh", parent=mesh_xform)
         mc.connectAttr(n + ".outMesh", mesh_shape + ".inMesh")
@@ -1103,7 +1103,7 @@ class TestPolyExpressionRoundTrip(unittest.TestCase):
 
     def test_time_value_visible(self):
         """``self.time`` is populated when time is connected (opt-in)."""
-        n = mc.createNode("mPyMesh")
+        n          = mc.createNode("mPyMesh")
         mesh_xform = mc.createNode("transform")
         mesh_shape = mc.createNode("mesh", parent=mesh_xform)
         mc.connectAttr(n + ".outMesh", mesh_shape + ".inMesh")
@@ -1201,8 +1201,8 @@ class TestGeometryVectorArrayInputDense(unittest.TestCase):
         the expression saw. Returns the node name."""
         wrapper.add_input_attr(input_name, "vector", is_array=True)
         wrapper.add_output_attr("outIsNdarray", "float")
-        wrapper.add_output_attr("outRows", "float")
-        wrapper.add_output_attr("outCols", "float")
+        wrapper.add_output_attr("outRows",      "float")
+        wrapper.add_output_attr("outCols",      "float")
         nm = wrapper.get_name()
         for i, (x, y, z) in enumerate(self._PTS):
             mc.setAttr(f"{nm}.{input_name}[{i}]", x, y, z, type="double3")

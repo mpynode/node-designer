@@ -136,7 +136,7 @@ class TestFileSurfaceIsComplete(unittest.TestCase):
         from mpynode.wrappers.mpy_file import MPyFile
 
         mc.file(new=True, force=True)
-        node = MPyFile.create(name="fileAuth#")
+        node  = MPyFile.create(name="fileAuth#")
         names = {n for n, _s, _d in authoring_method_rows_for(node.get_name())}
         expected = {
             "get_file_name", "set_file_name", "reseed_defaults",

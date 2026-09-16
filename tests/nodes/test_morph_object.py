@@ -37,11 +37,11 @@ def setUpModule():
 class TestMorphKernels(unittest.TestCase):
     def setUp(self):
         from mpynode._common.methods import morph_blend
-        self.mb = morph_blend
+        self.mb   = morph_blend
         self.base = np.zeros((5, 3))
-        self.ofs = np.array([0, 2, 3], dtype=np.int64)
+        self.ofs  = np.array([0, 2, 3], dtype=np.int64)
         self.comp = np.array([0, 1, 4], dtype=np.int64)
-        self.dlt = np.array([1., 0., 0., 0., 2., 0., 0., 0., 3.])
+        self.dlt  = np.array([1., 0., 0., 0., 2., 0., 0., 0., 3.])
 
     def test_accumulate_scales_each_target_by_its_weight(self):
         d = self.mb.accumulate_deltas(
@@ -72,8 +72,8 @@ class TestMorphKernels(unittest.TestCase):
         self.assertEqual(d.shape, (5, 3))
 
     def test_empty_corrective_tables_leave_weights_untouched(self):
-        w = np.array([0.25, 0.75])
-        z = np.zeros(0, dtype=np.int64)
+        w   = np.array([0.25, 0.75])
+        z   = np.zeros(0, dtype=np.int64)
         got = self.mb.resolve_weights(w, z, np.zeros(0), z, z)
         self.assertTrue(np.allclose(got, w))
 
@@ -81,16 +81,16 @@ class TestMorphKernels(unittest.TestCase):
         # target 1 is an in-between of target 0 at knot 0.5
         ibase = np.array([-1, 0], dtype=np.int64)
         iknot = np.array([0.0, 0.5])
-        z = np.zeros(0, dtype=np.int64)
-        cofs = np.zeros(0, dtype=np.int64)
+        z     = np.zeros(0, dtype=np.int64)
+        cofs  = np.zeros(0, dtype=np.int64)
 
         def hat(driver):
             return self.mb.resolve_weights(
                 np.array([driver, 0.0]), ibase, iknot, cofs, z)[1]
 
-        self.assertAlmostEqual(hat(0.0), 0.0)
-        self.assertAlmostEqual(hat(0.5), 1.0)     # peaks exactly on the knot
-        self.assertAlmostEqual(hat(1.0), 0.0)
+        self.assertAlmostEqual(hat(0.0),  0.0)
+        self.assertAlmostEqual(hat(0.5),  1.0)     # peaks exactly on the knot
+        self.assertAlmostEqual(hat(1.0),  0.0)
         self.assertAlmostEqual(hat(0.25), 0.5)
         self.assertAlmostEqual(hat(0.75), 0.5)
 
@@ -101,25 +101,25 @@ class TestMorphKernels(unittest.TestCase):
         # Editor), so a value keyed there has to reach the deform.
         ibase = np.array([-1, 0], dtype=np.int64)
         iknot = np.array([0.0, 0.5])
-        z = np.zeros(0, dtype=np.int64)
-        a = self.mb.resolve_weights(np.array([0.5, 0.0]), ibase, iknot, z, z)
-        b = self.mb.resolve_weights(np.array([0.5, 0.9]), ibase, iknot, z, z)
-        self.assertAlmostEqual(a[1], 1.0)          # hat alone, at the knot
-        self.assertAlmostEqual(b[1], 1.9)          # hat + the hand-keyed 0.9
-        self.assertAlmostEqual(b[0], a[0])         # the MAIN is untouched
+        z     = np.zeros(0, dtype=np.int64)
+        a     = self.mb.resolve_weights(np.array([0.5, 0.0]), ibase, iknot, z, z)
+        b     = self.mb.resolve_weights(np.array([0.5, 0.9]), ibase, iknot, z, z)
+        self.assertAlmostEqual(a[1], 1.0)   # hat alone, at the knot
+        self.assertAlmostEqual(b[1], 1.9)   # hat + the hand-keyed 0.9
+        self.assertAlmostEqual(b[0], a[0])  # the MAIN is untouched
 
     def test_inbetween_own_channel_alone_drives_it_with_the_main_at_rest(self):
         # Drivers down, corrective dialled by hand: the channel is the only
         # contribution, so it passes straight through.
         ibase = np.array([-1, 0], dtype=np.int64)
         iknot = np.array([0.0, 0.5])
-        z = np.zeros(0, dtype=np.int64)
-        got = self.mb.resolve_weights(np.array([0.0, 0.7]), ibase, iknot, z, z)
+        z     = np.zeros(0, dtype=np.int64)
+        got   = self.mb.resolve_weights(np.array([0.0, 0.7]), ibase, iknot, z, z)
         self.assertAlmostEqual(got[1], 0.7)
 
     def test_combo_is_the_product_of_its_drivers(self):
         # target 2 is a combo of targets 0 and 1
-        z = np.zeros(0, dtype=np.int64)
+        z    = np.zeros(0, dtype=np.int64)
         cofs = np.array([0, 0, 0, 2], dtype=np.int64)
         cdrv = np.array([0, 1], dtype=np.int64)
         got = self.mb.resolve_weights(
@@ -128,7 +128,7 @@ class TestMorphKernels(unittest.TestCase):
 
     def test_combo_ADDS_the_product_to_its_OWN_channel(self):
         # Same rule as the in-between: driven product PLUS the hand-keyed value.
-        z = np.zeros(0, dtype=np.int64)
+        z    = np.zeros(0, dtype=np.int64)
         cofs = np.array([0, 0, 0, 2], dtype=np.int64)
         cdrv = np.array([0, 1], dtype=np.int64)
         got = self.mb.resolve_weights(
@@ -155,7 +155,7 @@ class TestMorphKernels(unittest.TestCase):
 class TestMorphInterface(unittest.TestCase):
     def setUp(self):
         from mpynode._common.interface import morph_method_interface as mmi
-        self.mmi = mmi
+        self.mmi     = mmi
         self.by_name = {m.name: m for m in mmi.INTERNAL_API_METHODS}
 
     def test_registered_for_mPyBlendShape(self):
@@ -437,9 +437,9 @@ class TestMorphStackLive(unittest.TestCase):
     # ----- Morph value semantics -----
     def test_a_target_is_sparse(self):
         m = self.bs.morphs["browUp"]
-        self.assertEqual(m.size, 1)
+        self.assertEqual(m.size,             1)
         self.assertEqual(m.indices.tolist(), [0])
-        self.assertEqual(m.offsets.shape, (1, 3))
+        self.assertEqual(m.offsets.shape,    (1, 3))
 
     def test_addition_takes_the_sparse_index_UNION(self):
         m = self.bs.morphs
@@ -546,14 +546,14 @@ class TestMorphStackLive(unittest.TestCase):
             mc.setAttr(self.node + "._computeSource", src, type="string")
             spec = extract_spec(self.node)
             self.assertEqual((spec["portability"].get("blockers") or []), [])
-            ins = [m for m in _members(spec) if m["kind"] == "inputs"]
+            ins  = [m for m in _members(spec) if m["kind"] == "inputs"]
             body = nd_lower.try_lower_deform(ins, spec, "MPxDeformerNode")
             self.assertIsNotNone(body, "did not lower:\n%s" % src)
             text = "\n".join(body)
             # the object is ERASED and nothing name-derived is baked in
             self.assertNotIn("MorphStack", text)
-            self.assertNotIn("browUp", text)
-            self.assertNotIn("mouthOpen", text)
+            self.assertNotIn("browUp",     text)
+            self.assertNotIn("mouthOpen",  text)
 
     def test_an_unsupported_object_form_is_reported_to_the_porter(self):
         """The gate must run the REAL desugar on the RAW source.
@@ -812,7 +812,7 @@ class TestMorphSlots(unittest.TestCase):
         import maya.cmds as mc
         from mpynode.wrappers.mpy_blend_shape import MPyBlendShape
         other = mc.polySphere(name="lonelyBase", sx=4, sy=3, ch=False)[0]
-        bs2 = MPyBlendShape.create(mesh=other, name="lonelyBS")
+        bs2   = MPyBlendShape.create(mesh=other, name="lonelyBS")
         mc.setAttr(bs2.get_name() + "._computeSource", self.SRC, type="string")
         bs2.rebuild()
         self.assertEqual(bs2._read_multi("shapeSlot", int), [-1, -1])
@@ -852,7 +852,7 @@ class TestMorphSlots(unittest.TestCase):
         mc.setAttr(self.node + "._computeSource", self.SRC, type="string")
         spec = extract_spec(self.node)
         self.assertEqual(spec["portability"].get("blockers") or [], [])
-        ins = [m for m in _members(spec) if m["kind"] == "inputs"]
+        ins  = [m for m in _members(spec) if m["kind"] == "inputs"]
         body = nd_lower.try_lower_deform(ins, spec, "MPxDeformerNode")
         self.assertIsNotNone(body)
         text = "\n".join(body)

@@ -237,8 +237,8 @@ def _add_primitive(wrapper, group, index, prim):
     xf = mc.createNode("transform", parent=group,
                        name="%s%02d" % (_KIND_NAME.get(kind, "shape"), index))
     mc.setAttr(xf + ".translate", *[float(v) for v in prim["translate"]])
-    mc.setAttr(xf + ".rotate", *[float(v) for v in prim["rotate"]])
-    mc.setAttr(xf + ".scale", *[float(v) for v in prim["scale"]])
+    mc.setAttr(xf + ".rotate",    *[float(v) for v in prim["rotate"]])
+    mc.setAttr(xf + ".scale",     *[float(v) for v in prim["scale"]])
     common = dict(transform=xf, additive=prim["additive"],
                   smoothing=prim["smoothing"])
     if kind == 0:
@@ -263,7 +263,7 @@ def build():
 
     wrapper = MPyMesh.create(name="sdfIgloo")
     configure_node(wrapper)
-    node = wrapper.get_name()
+    node  = wrapper.get_name()
 
     group = mc.createNode("transform", name="iglooShapes")
     for i, prim in enumerate(sdf_igloo.igloo_primitives()):

@@ -36,13 +36,13 @@ class TestSplit(unittest.TestCase):
 
     def test_routes_methods_and_functions(self):
         fns, meth = split_methods_source(METHODS)
-        self.assertIn("def helper", fns)
+        self.assertIn("def helper",   fns)
         self.assertIn("import numpy", fns)
-        self.assertIn("GAIN = 2.0", fns)
+        self.assertIn("GAIN = 2.0",   fns)
         self.assertNotIn("def doThing", fns)
-        self.assertIn("def doThing", meth)
+        self.assertIn("def doThing",  meth)
         self.assertIn("@classmethod", meth)
-        self.assertIn("def make", meth)
+        self.assertIn("def make",     meth)
         self.assertNotIn("def helper", meth)
 
     def test_roundtrip_canonical(self):
@@ -69,8 +69,8 @@ class TestSplit(unittest.TestCase):
         )
         fns, meth = split_methods_source(src)
         self.assertIn("class Helper", fns)
-        self.assertIn("async def a", fns)
-        self.assertIn("def m(self)", meth)
+        self.assertIn("async def a",  fns)
+        self.assertIn("def m(self)",  meth)
         self.assertNotIn("class Helper", meth)
 
     def test_static_and_cls_first_go_to_methods(self):
@@ -82,9 +82,9 @@ class TestSplit(unittest.TestCase):
         )
         fns, meth = split_methods_source(src)
         self.assertIn("@staticmethod", meth)
-        self.assertIn("def s()", meth)
-        self.assertIn("def c(cls)", meth)
-        self.assertIn("def free(x)", fns)
+        self.assertIn("def s()",       meth)
+        self.assertIn("def c(cls)",    meth)
+        self.assertIn("def free(x)",   fns)
         self.assertNotIn("def free(x)", meth)
 
     def test_decorator_rides_with_def(self):
@@ -121,8 +121,8 @@ class TestSplit(unittest.TestCase):
         self.assertEqual(join_methods_source(fns, meth), src)
 
     def test_join_order_and_short_circuit(self):
-        self.assertEqual(join_methods_source("", "M\n"), "M\n")
-        self.assertEqual(join_methods_source("F\n", ""), "F\n")
+        self.assertEqual(join_methods_source("", "M\n"),  "M\n")
+        self.assertEqual(join_methods_source("F\n", ""),  "F\n")
         self.assertEqual(join_methods_source("F", "M\n"), "F\nM\n")
 
     def test_classify_contract(self):

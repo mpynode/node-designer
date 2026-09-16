@@ -52,7 +52,7 @@ _CURVE_TYPE_NAME = "mPyNurbsCurve"
 class MPyNurbsCurve(MPyNode):
     # Attributes-tab allowlist (framework OFF): the generated curve output.
     USEFUL_INHERITED_PLUGS = frozenset({"outCurve"})
-    NATIVE_TYPE = _CURVE_TYPE_NAME
+    NATIVE_TYPE            = _CURVE_TYPE_NAME
 
     # The I/O contract this wrapper exposes to user expressions. ``self.time``
     # (a TimeFloat) is READ tier, pre-populated into compute_locals by the

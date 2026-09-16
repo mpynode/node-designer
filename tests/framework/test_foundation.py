@@ -78,7 +78,7 @@ class TestUndoablePluginAndBase(unittest.TestCase):
         """_CreateNodeCommand creates an mPyNode that Ctrl+Z removes."""
         from mpynode._base.commands import _CreateNodeCommand, run_undoable
 
-        cmd = _CreateNodeCommand("mPyNode", name="cmdTestNode")
+        cmd     = _CreateNodeCommand("mPyNode", name="cmdTestNode")
         created = run_undoable(cmd)
         self.assertEqual(created, "cmdTestNode")
         self.assertTrue(mc.objExists("cmdTestNode"))
@@ -178,7 +178,7 @@ class TestNodeRegistry(unittest.TestCase):
         from mpynode._node_registry import wrap_node
 
         mc.file(new=True, force=True)
-        self.assertIsNone(wrap_node("noSuchNode__xyz"))   # does not exist
+        self.assertIsNone(wrap_node("noSuchNode__xyz"))           # does not exist
         self.assertIsNone(wrap_node(mc.createNode("transform")))  # not an mPy
 
     def test_the_bare_wrap_name_is_retired(self):
@@ -264,9 +264,9 @@ class TestDesignerWiring(unittest.TestCase):
         from mpynode.ui.mpynode_designer import NDMainWindow
 
         src = inspect.getsource(NDMainWindow._build_ui)
-        self.assertIn("NDSceneTree", src)
+        self.assertIn("NDSceneTree",       src)
         self.assertIn("NDScriptTabWidget", src)
-        self.assertIn("Refresh", src)  # refresh button
+        self.assertIn("Refresh",           src)  # refresh button
 
     def test_wire_signals_connects_scene_tree_to_tab(self):
         import inspect

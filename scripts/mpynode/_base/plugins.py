@@ -37,7 +37,7 @@ def load_or_reload_native_plugin(bundle_path: str) -> dict:
     ``loadPlugin`` takes the full ``bundle_path``; ``pluginInfo`` /
     ``unloadPlugin`` take the BASE name (e.g. ``"myPlug.bundle"``).
     """
-    base = os.path.basename(bundle_path)
+    base   = os.path.basename(bundle_path)
     result = {"base": base, "loaded": False, "reloaded": False, "error": None}
 
     try:
@@ -132,8 +132,8 @@ def validate_registered_types(bundle_path: str) -> dict:
                                % (base, exc))
             return result
         result["registered"] = registered
-        missing = [t for t in expected if t not in registered]
-        result["missing"] = missing
+        missing              = [t for t in expected if t not in registered]
+        result["missing"]    = missing
         if missing:
             result["ok"] = False
             result["error"] = (

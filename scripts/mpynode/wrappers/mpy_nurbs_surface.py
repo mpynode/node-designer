@@ -81,7 +81,7 @@ class MPyNurbsSurface(MPyNode):
 
     # Attributes-tab allowlist (framework OFF): the generated surface output.
     USEFUL_INHERITED_PLUGS = frozenset({"outSurface"})
-    NATIVE_TYPE = _SURFACE_TYPE_NAME
+    NATIVE_TYPE            = _SURFACE_TYPE_NAME
 
     @classmethod
     def create(cls, name: str = None,

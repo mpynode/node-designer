@@ -49,7 +49,7 @@ def _euler_from_mmatrix(mmatrix, order_idx=0) -> np.ndarray:
     """Decompose an ``MMatrix`` into an euler ``(3,)`` (radians) in the
     requested Maya rotate-order index (default XYZ)."""
     tm = om.MTransformationMatrix(mmatrix)
-    e = tm.eulerRotation()  # kXYZ representation
+    e  = tm.eulerRotation()  # kXYZ representation
     try:
         e.reorderIt(_euler_order(order_idx))
     except Exception:
@@ -115,7 +115,7 @@ class MatrixView(object):
     """
 
     def __init__(self, matrix=None):
-        self._m = self._to_mmatrix(matrix)
+        self._m  = self._to_mmatrix(matrix)
         self._tm = om2.MTransformationMatrix(self._m)
 
     # ---- Coercion helpers ----
@@ -515,14 +515,14 @@ class MatrixArrayView(object):
         # A plug provider (api1, lazy) vs. a raw (N,4,4) array (api2).
         if hasattr(source, "get_matrix") and hasattr(source, "stack"):
             self._provider = source
-            self._a = None
+            self._a        = None
         else:
             arr = np.asarray(source, dtype=np.float64)
             if arr.size == 0:
                 arr = np.zeros((0, 4, 4), dtype=np.float64)
             else:
                 arr = arr.reshape(-1, 4, 4)
-            self._a = arr
+            self._a        = arr
             self._provider = None
 
     # -- backing -------------------------------------------------------
@@ -607,7 +607,7 @@ class MatrixArrayView(object):
         if n == 0:
             return np.zeros((0, 3), dtype=np.float64)
         orders = _normalize_axes(axes, n)
-        out = np.empty((n, 3), dtype=np.float64)
+        out    = np.empty((n, 3), dtype=np.float64)
         for i in range(n):
             mm = om.MMatrix()
             om.MScriptUtil.createMatrixFromList(
@@ -618,7 +618,7 @@ class MatrixArrayView(object):
 
     def scale(self):
         """``(N, 3)`` scales per matrix."""
-        a = self.asNumpy()
+        a   = self.asNumpy()
         out = np.empty((a.shape[0], 3), dtype=np.float64)
         for i in range(a.shape[0]):
             out[i] = self._row_view(a[i]).scale()
@@ -626,7 +626,7 @@ class MatrixArrayView(object):
 
     def shear(self):
         """``(N, 3)`` shears per matrix."""
-        a = self.asNumpy()
+        a   = self.asNumpy()
         out = np.empty((a.shape[0], 3), dtype=np.float64)
         for i in range(a.shape[0]):
             out[i] = self._row_view(a[i]).shear()
@@ -694,7 +694,7 @@ class EnumInt(int):
     """
 
     def __new__(cls, value, attr_mobject=None):
-        inst = int.__new__(cls, int(value))
+        inst               = int.__new__(cls, int(value))
         inst._attr_mobject = attr_mobject
         return inst
 

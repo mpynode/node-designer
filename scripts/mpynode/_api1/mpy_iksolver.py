@@ -40,18 +40,18 @@ from mpynode._common.compute.expression import compile_expression
 
 class MPyIkSolver(ommpx.MPxIkSolverNode):
     NODE_NAME = "mPyIkSolver"
-    NODE_ID = om.MTypeId(0x00135713)
+    NODE_ID   = om.MTypeId(0x00135713)
 
     # Per solve; the expression reaches plug-tree state through ``self.X``.
 
-    _expression_attr = None
-    _input_attrs_attr = None
-    _output_attrs_attr = None
-    _stored_vars_list_attr = None
-    _stored_vars_data_attr = None
-    _debug_mode_attr = None
+    _expression_attr              = None
+    _input_attrs_attr             = None
+    _output_attrs_attr            = None
+    _stored_vars_list_attr        = None
+    _stored_vars_data_attr        = None
+    _debug_mode_attr              = None
     _solver_context_snapshot_attr = None
-    _joint_bind_offsets_attr = None
+    _joint_bind_offsets_attr      = None
 
     def __init__(self):
         super().__init__()
@@ -64,13 +64,13 @@ class MPyIkSolver(ommpx.MPxIkSolverNode):
 
     @staticmethod
     def node_initializer():
-        plugs = helpers.build_internal_attrs(MPyIkSolver)
-        MPyIkSolver._expression_attr = plugs["_computeSource"]
-        MPyIkSolver._input_attrs_attr = plugs["inputs"]
-        MPyIkSolver._output_attrs_attr = plugs["outputs"]
+        plugs                              = helpers.build_internal_attrs(MPyIkSolver)
+        MPyIkSolver._expression_attr       = plugs["_computeSource"]
+        MPyIkSolver._input_attrs_attr      = plugs["inputs"]
+        MPyIkSolver._output_attrs_attr     = plugs["outputs"]
         MPyIkSolver._stored_vars_list_attr = plugs["stored_vars_list"]
         MPyIkSolver._stored_vars_data_attr = plugs["stored_vars_data"]
-        MPyIkSolver._debug_mode_attr = plugs["debug_mode"]
+        MPyIkSolver._debug_mode_attr       = plugs["debug_mode"]
 
         # solver context snapshot (JSON written by doSolve).
         MPyIkSolver._solver_context_snapshot_attr = helpers.make_internal_string_attr(
@@ -90,7 +90,7 @@ class MPyIkSolver(ommpx.MPxIkSolverNode):
         try:
             attr = plug.attribute()
             if attr == MPyIkSolver._expression_attr:
-                data = om.MFnStringData(data_handle.data())
+                data           = om.MFnStringData(data_handle.data())
                 self._expr_str = data.string()
                 from mpynode._common.compute.expression import safe_compile_expression
 
@@ -101,8 +101,8 @@ class MPyIkSolver(ommpx.MPxIkSolverNode):
                     pass
                 code = safe_compile_expression(
                     self._expr_str,
-                    node_name=node_name,
-                    filename="<mpyiksolver-expression>",
+                    node_name = node_name,
+                    filename  = "<mpyiksolver-expression>",
                 )
                 if code is not None:
                     self._expr_code = code

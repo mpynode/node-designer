@@ -30,10 +30,10 @@ from typing import List, Optional
 
 
 # ---- Parsing the deterministic codegen output ------------------------------
-_CLASS_RE = re.compile(r"\nclass (\w+) : public MPx\w+ \{")
+_CLASS_RE    = re.compile(r"\nclass (\w+) : public MPx\w+ \{")
 _REGISTER_RE = re.compile(r'registerNode\(\s*"(\w+)"')
-_PORT_BEGIN = "// ===== BEGIN PORTED COMPUTE ====="
-_PORT_END = "// ===== END PORTED COMPUTE ====="
+_PORT_BEGIN  = "// ===== BEGIN PORTED COMPUTE ====="
+_PORT_END    = "// ===== END PORTED COMPUTE ====="
 
 # A compute the transpiler lowered DETERMINISTICALLY has no PORT region at all --
 # emit_compute writes this banner and wraps the body in spec_model.lowered_guard
@@ -42,7 +42,7 @@ _PORT_END = "// ===== END PORTED COMPUTE ====="
 # texture read/sample became blessed kernels): no override, and VP2 falls back to
 # a flat colour. Recognize BOTH shapes.
 _LOWERED_BEGIN = "// --- deterministic numpy->C++ lowered compute (no port) ---"
-_LOWERED_END = "// --- finalize ---"
+_LOWERED_END   = "// --- finalize ---"
 
 # One compute input declaration, e.g.
 #   const int in_aBands = data.inputValue(aBands).asInt();
@@ -94,14 +94,14 @@ class _Input:
 
     def __init__(self, type_, var, attr, read, plug, multi=False, elem="",
                  fill=""):
-        self.type = type_.replace(" ", "")   # 'float2&'
-        self.var = var                       # 'in_aBands'
-        self.attr = attr                     # 'aBands'
-        self.read = read                     # 'asInt()' / 'asTime().value()'
-        self.plug = plug                     # 'bands'
+        self.type  = type_.replace(" ", "")  # 'float2&'
+        self.var   = var                     # 'in_aBands'
+        self.attr  = attr                    # 'aBands'
+        self.read  = read                    # 'asInt()' / 'asTime().value()'
+        self.plug  = plug                    # 'bands'
         self.multi = multi                   # array (multi) input
-        self.elem = elem                     # multi element ctype ('MString')
-        self.fill = fill                     # multi sparse-gap default
+        self.elem  = elem                    # multi element ctype ('MString')
+        self.fill  = fill                    # multi sparse-gap default
 
     @property
     def is_uv(self):
@@ -154,7 +154,7 @@ def _parse_inputs(cpp: str) -> List[_Input]:
     found = []
     # Only scan the inputs block of compute() (between '--- inputs ---' and the
     # next section) so we don't pick up stray matches elsewhere.
-    m = re.search(r"//\s*---\s*inputs\s*---(.*?)\n\n", cpp, re.S)
+    m     = re.search(r"//\s*---\s*inputs\s*---(.*?)\n\n", cpp, re.S)
     scope = m.group(1) if m else cpp
     for d in _INPUT_DECL_RE.finditer(scope):
         attr = d.group("attr")
@@ -191,11 +191,11 @@ class _Output:
     __slots__ = ("var", "attr", "plug", "setter", "ctype")
 
     def __init__(self, var, attr, plug, setter):
-        self.var = var                    # 'aMaxWidth'
-        self.attr = attr                  # 'aMaxWidth'
-        self.plug = plug                  # 'maxWidth'
-        self.setter = setter              # 'setInt'
-        self.ctype = _SETTER_CTYPE.get(setter, "")
+        self.var    = var     # 'aMaxWidth'
+        self.attr   = attr    # 'aMaxWidth'
+        self.plug   = plug    # 'maxWidth'
+        self.setter = setter  # 'setInt'
+        self.ctype  = _SETTER_CTYPE.get(setter, "")
 
 
 def _parse_outputs(cpp: str) -> List[_Output]:
@@ -226,8 +226,8 @@ def _parse_composite_path(cpp: str):
     m = re.search(r"nd_img_composite\(\s*\w+\s*,\s*\w+\s*,\s*(in_a\w+)\s*,", cpp)
     if not m:
         return None
-    var = m.group(1)                       # 'in_aFilePaths'
-    attr = var[len("in_"):]                # 'aFilePaths'
+    var  = m.group(1)        # 'in_aFilePaths'
+    attr = var[len("in_"):]  # 'aFilePaths'
     attr_to_plug = {mm.group("attr"): mm.group("plug")
                     for mm in _CREATE_RE.finditer(cpp)}
     return {"var": var, "attr": attr, "plug": attr_to_plug.get(attr, "")}
@@ -309,7 +309,7 @@ def _parse_texload(body: str, inputs=()) -> Optional[dict]:
         #  cache, mutex, out)
         if not args or len(args) != 16:
             return None
-        mid = ", ".join(re.sub(r"\bin_a", "_m_in_a", a) for a in args[5:9])
+        mid    = ", ".join(re.sub(r"\bin_a", "_m_in_a", a) for a in args[5:9])
         lifted = dict(_LIFT_COPY_RE.findall(body))
         lifted.update(dict(_LIFT_ALIAS_RE.findall(body)))
         multi = {i.var for i in inputs if i.multi}
@@ -329,7 +329,7 @@ def _parse_texload(body: str, inputs=()) -> Optional[dict]:
     # (cache, mutex, path, colorSpace, prefilter, kernel, radius, &w, &h)
     if not args or len(args) != 9:
         return None
-    mid = ", ".join(re.sub(r"\bin_a", "_m_in_a", a) for a in args[3:7])
+    mid  = ", ".join(re.sub(r"\bin_a", "_m_in_a", a) for a in args[3:7])
     path = args[2]
     if re.fullmatch(r"in_a\w+", path):
         return {"kind": "one",
@@ -376,7 +376,7 @@ def _parse_wrap_override(body: str, inputs) -> Optional[List["_Input"]]:
     # recognised. Missing it silently drops the bake back to the texel-CENTRE
     # grid, which is the defect this whole path exists to prevent.
     _WRAP_AT = {
-        "nd_tex_sample": (10, 5),            # (lin,W,H,u,v,wU,wV,border,miss,out)
+        "nd_tex_sample":           (10, 5),  # (lin,W,H,u,v,wU,wV,border,miss,out)
         "nd_tex_composite_layers": (16, 9),  # (...,wU,wV,border,miss,cache,mtx,out)
     }
     hits = []
@@ -386,7 +386,7 @@ def _parse_wrap_override(body: str, inputs) -> Optional[List["_Input"]]:
     if not hits:
         return None
     by_var = {i.var: i for i in inputs if not i.multi}
-    pair = None
+    pair   = None
     for h, argc, at in hits:
         args = _call_args(body, h)
         if not args or len(args) != argc:
@@ -433,7 +433,7 @@ def _parse_state(cpp: str):
     if not m:
         return None
     struct = m.group(0)
-    am = _STATE_ARRAY_RE.search(struct)
+    am     = _STATE_ARRAY_RE.search(struct)
     return {"struct": struct, "array": am.group(1) if am else ""}
 
 
@@ -514,9 +514,9 @@ def _texel_signature(inputs, has_raw, extras=(), has_texcache=False,
 
 def _make_texel_fn(port_body, inputs, has_raw, extras=(), has_texcache=False,
                    has_state=False):
-    uv = next((i for i in inputs if i.is_uv), None)
+    uv      = next((i for i in inputs if i.is_uv), None)
     uv_name = uv.var if uv else "in_aUvCoord"
-    params = _texel_signature(inputs, has_raw, extras, has_texcache, has_state)
+    params  = _texel_signature(inputs, has_raw, extras, has_texcache, has_state)
     lines = [
         "// ===========================================================================",
         "// nd_texel -- one pixel of the mPyFile buffer. SHARED by compute() (one",
@@ -566,9 +566,9 @@ def _compute_call(inputs, has_raw, extras=(), has_texcache=False,
     lowered guard, so a transpiled body that throws still reports through
     MGlobal::displayError and abandons the evaluation exactly as before.
     """
-    uv = next((i for i in inputs if i.is_uv), None)
+    uv      = next((i for i in inputs if i.is_uv), None)
     uv_name = uv.var if uv else "in_aUvCoord"
-    args = ["(double)%s[0]" % uv_name, "(double)%s[1]" % uv_name]
+    args    = ["(double)%s[0]" % uv_name, "(double)%s[1]" % uv_name]
     for i in inputs:
         if i.is_uv:
             continue
@@ -619,9 +619,9 @@ def _make_override_block(cls, type_name, inputs, has_raw, extras=(), comp=None,
     override caches the string-array path plug and rebuilds the composite via
     nd_img_composite for the bake. ``extras`` are node-scalar outputs nd_texel
     also writes (maxWidth/maxHeight) -- the bake passes throwaways for them."""
-    over = cls + "Override"
+    over    = cls + "Override"
     scalars = [i for i in inputs if not i.is_uv]
-    fn_inp = next((i for i in inputs if i.plug == "fileName"), None)
+    fn_inp  = next((i for i in inputs if i.plug == "fileName"), None)
 
     # cached members
     members = []
@@ -788,7 +788,7 @@ def _make_override_block(cls, type_name, inputs, has_raw, extras=(), comp=None,
         # it was insuring against. The heavy-file cost is real, but it is the
         # cost the reference tier already pays, and matching it is the point.
         corner = wrap_clamp is not None
-        load = ["        unsigned int _w = 0, _h = 0;"]
+        load   = ["        unsigned int _w = 0, _h = 0;"]
         if texload["kind"] == "many":
             # Looped multi-layer read: the canvas is the MAX over the layers that
             # load, mirroring _composite_layers' max_h/max_w. Probing only the
@@ -941,7 +941,7 @@ def _make_override_block(cls, type_name, inputs, has_raw, extras=(), comp=None,
     # texel_args -- so the override cannot leak into either.
     bake_args = list(texel_args)
     if corner and wrap_clamp:
-        _forced = {"_m_%s" % w.var: "(%s)1" % w.member_type for w in wrap_clamp}
+        _forced   = {"_m_%s" % w.var: "(%s)1" % w.member_type for w in wrap_clamp}
         bake_args = [_forced.get(a, a) for a in bake_args]
     if corner:
         # CORNER grid. `max(_h - 1, 1)` mirrors the interpreted tier's own
@@ -973,7 +973,7 @@ def _make_override_block(cls, type_name, inputs, has_raw, extras=(), comp=None,
     # in a hash of the baked pixels (below), so the key does not exist until the
     # bake has already run. gameOfLifeTex measures 470 fps regardless.
     guard = not state
-    pad = "    " if guard else ""
+    pad   = "    " if guard else ""
     if guard:
         block.append("            " + "\n            ".join(key_parts))
         block.append("            MHWRender::MTexture* tex = tmgr->findTexture(texName);")
@@ -1253,8 +1253,8 @@ def _lowered_region(cpp: str):
     if end < 0:
         return None
     full = cpp[i0:end + 1]
-    t = full.find("try {")
-    c = full.rfind("} catch (const std::exception&")
+    t    = full.find("try {")
+    c    = full.rfind("} catch (const std::exception&")
     if t < 0 or c < 0 or c < t:
         return None
     return full[t + len("try {"):c], full
@@ -1339,9 +1339,9 @@ def inject_vp2_override(cpp: str, spec: Optional[dict] = None) -> str:
     if not can_inject(cpp):
         return cpp
 
-    cm = _CLASS_RE.search(cpp)
+    cm  = _CLASS_RE.search(cpp)
     cls = cm.group(1)
-    rm = _REGISTER_RE.search(cpp)
+    rm  = _REGISTER_RE.search(cpp)
     if not rm:
         return cpp
     type_name = rm.group(1)

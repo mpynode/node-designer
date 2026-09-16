@@ -47,7 +47,7 @@ class TestSetupWiringMaya(unittest.TestCase):
 
     # 7b: mPyNurbsCurve, mPyNurbsSurface — outCurve/outSurface → shape.create
     def test_mpynurbscurve_wires_curve_shape(self):
-        name = self._run_setup("mPyNurbsCurve")
+        name         = self._run_setup("mPyNurbsCurve")
         render_xform = name + "Render"
         render_shape = name + "RenderShape"
         self.assertTrue(mc.objExists(render_xform))
@@ -57,7 +57,7 @@ class TestSetupWiringMaya(unittest.TestCase):
         self.assertTrue(mc.isConnected(name + ".outCurve", render_shape + ".create"))
 
     def test_mpynurbssurface_wires_surface_shape(self):
-        name = self._run_setup("mPyNurbsSurface")
+        name         = self._run_setup("mPyNurbsSurface")
         render_xform = name + "Render"
         render_shape = name + "RenderShape"
         self.assertTrue(mc.objExists(render_xform))
@@ -124,8 +124,8 @@ class TestSetupWiringMaya(unittest.TestCase):
     # 7f: mPySkinCluster — matrix[i]/bindPreMatrix[i] from joints
     def test_mpyskincluster_wires_joints(self):
         mc.select(clear=True)
-        j1 = mc.joint(p=(0, 0, 0), name="skinJ1")
-        j2 = mc.joint(p=(0, 2, 0), name="skinJ2")
+        j1   = mc.joint(p=(0, 0, 0), name="skinJ1")
+        j2   = mc.joint(p=(0, 2, 0), name="skinJ2")
         mesh = mc.polyPlane(name="skinPlane")[0]
         mc.select([j1, j2, mesh], replace=True)
         name = self._run_setup("mPySkinCluster")
@@ -140,7 +140,7 @@ class TestSetupWiringMaya(unittest.TestCase):
 
     # 7g: mPyBlendShape — targetGeometry[i] from targets
     def test_mpyblendshape_wires_targets(self):
-        tgt = mc.polyPlane(name="blendTarget")[0]
+        tgt  = mc.polyPlane(name="blendTarget")[0]
         base = mc.polyPlane(name="blendBase")[0]
         mc.select([tgt, base], replace=True)
         name = self._run_setup("mPyBlendShape")
@@ -158,9 +158,9 @@ class TestSetupWiringMaya(unittest.TestCase):
     # 7h: mPyIkSolver — ikHandle references solver node name
     def test_mpyiksolver_creates_handle(self):
         mc.select(clear=True)
-        root = mc.joint(p=(0, 5, 0), name="ikRoot")
-        mid = mc.joint(p=(0, 0, 0), name="ikMid")
-        tip = mc.joint(p=(0, -5, 0), name="ikTip")
+        root = mc.joint(p=(0, 5, 0),  name="ikRoot")
+        mid  = mc.joint(p=(0, 0, 0),  name="ikMid")
+        tip  = mc.joint(p=(0, -5, 0), name="ikTip")
         mc.select([root, tip], replace=True)
         name = self._run_setup("mPyIkSolver")
         self.assertEqual(mc.nodeType(name), "mPyIkSolver")

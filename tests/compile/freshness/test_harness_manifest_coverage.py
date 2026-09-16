@@ -28,8 +28,8 @@ import tempfile
 import unittest
 from tests import _paths
 
-_ROOT = _paths.ROOT
-_HARNESS = os.path.join(_ROOT, "tools", "harness")
+_ROOT      = _paths.ROOT
+_HARNESS   = os.path.join(_ROOT, "tools", "harness")
 _TEMPLATES = os.path.join(_ROOT, "templates")
 
 
@@ -51,8 +51,8 @@ def _link_dir(target, link):
             raise
         import _winapi
         _winapi.CreateJunction(target, link)
-_MANIFEST = os.path.join(_HARNESS, "templates.json")
-_SYNC_TOOL = os.path.join(_ROOT, "tools", "sync_harness_manifest.py")
+_MANIFEST      = os.path.join(_HARNESS, "templates.json")
+_SYNC_TOOL     = os.path.join(_ROOT, "tools", "sync_harness_manifest.py")
 _COVERAGE_TOOL = os.path.join(_ROOT, "tools", "list_template_coverage.py")
 
 if _HARNESS not in sys.path:
@@ -63,7 +63,7 @@ import demo_specs  # noqa: E402
 
 def _load_tool(name, path):
     spec = importlib.util.spec_from_file_location(name, path)
-    mod = importlib.util.module_from_spec(spec)
+    mod  = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
     return mod
 
@@ -76,9 +76,9 @@ def _run(*argv):
 
 class TestManifestCoversTheTree(unittest.TestCase):
     def test_every_template_on_disk_has_a_manifest_row(self):
-        cov = _load_tool("_list_template_coverage", _COVERAGE_TOOL)
-        disk = {p.replace("\\", "/") for p in cov.on_disk()}
-        rows = demo_specs.load_templates(_HARNESS, _ROOT)
+        cov     = _load_tool("_list_template_coverage", _COVERAGE_TOOL)
+        disk    = {p.replace("\\", "/") for p in cov.on_disk()}
+        rows    = demo_specs.load_templates(_HARNESS, _ROOT)
         covered = {r["mpn"].replace("\\", "/") for r in rows}
         # Without this the two assertions below pass on an empty walk.
         self.assertGreater(len(disk), 30,

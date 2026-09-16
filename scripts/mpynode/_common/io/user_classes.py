@@ -30,8 +30,8 @@ def ensure_module():
     ``sys.modules`` on first call. Idempotent; no disk, no ``sys.path`` change."""
     mod = sys.modules.get(PACKAGE)
     if mod is None:
-        mod = types.ModuleType(PACKAGE)
-        mod.__doc__ = "In-memory home for UI-authored MPyNode classes."
+        mod                  = types.ModuleType(PACKAGE)
+        mod.__doc__          = "In-memory home for UI-authored MPyNode classes."
         sys.modules[PACKAGE] = mod
     return mod
 
@@ -58,8 +58,8 @@ def synthesize(class_name, native_type):
     SAME name with a DIFFERENT base raises ValueError (a real identity clash)."""
     if not class_name or not isinstance(class_name, str):
         raise ValueError("class_name must be a non-empty str")
-    mod = ensure_module()
-    root = _root_wrapper(native_type)
+    mod      = ensure_module()
+    root     = _root_wrapper(native_type)
     existing = getattr(mod, class_name, None)
     if existing is not None:
         if isinstance(existing, type) and issubclass(existing, root):
@@ -116,8 +116,8 @@ def synthesize_from_scene():
         known = set(cmds.allNodeTypes() or [])
     except Exception:
         known = None
-    seen = set()
-    count = 0
+    seen   = set()
+    count  = 0
     prefix = PACKAGE + "."
     for nt in all_native_types():
         if known is not None and nt not in known:
@@ -131,7 +131,7 @@ def synthesize_from_scene():
             if not pc or not pc.startswith(prefix):
                 continue
             short = pc.rpartition(".")[2]
-            key = (short, nt)
+            key   = (short, nt)
             if not short or key in seen:
                 continue
             seen.add(key)

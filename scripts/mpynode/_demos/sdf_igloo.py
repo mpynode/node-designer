@@ -57,8 +57,8 @@ def igloo_primitives():
     prims = []
 
     # === MAIN DOME ===
-    prims.append(sphere(1.5))                                              # dome_outer (union)
-    prims.append(sphere(1.3, additive=False))                             # dome_inner (subtract)
+    prims.append(sphere(1.5))                  # dome_outer (union)
+    prims.append(sphere(1.3, additive=False))  # dome_inner (subtract)
     prims.append(box([3.0, 1.5, 3.0], translate=[0, -1.5, 0],
                      additive=False))                                      # ground_cut (subtract)
 
@@ -90,9 +90,9 @@ def igloo_primitives():
             continue
         prims.append(box(
             [0.25, 0.12, 0.08],
-            translate=[np.cos(angle) * 1.45, 0.15, np.sin(angle) * 1.45],
-            rotate=[0, -np.degrees(angle), 0],
-            smoothing=0.08,
+            translate = [np.cos(angle) * 1.45, 0.15, np.sin(angle) * 1.45],
+            rotate    = [0, -np.degrees(angle), 0],
+            smoothing = 0.08,
         ))
     # Loop B -- mid ring
     for i in range(num_base_blocks):
@@ -104,8 +104,8 @@ def igloo_primitives():
             [0.22, 0.11, 0.07],
             translate=[np.cos(angle) * radius_at_height, 0.45,
                        np.sin(angle) * radius_at_height],
-            rotate=[8, -np.degrees(angle), 0],
-            smoothing=0.06,
+            rotate    = [8, -np.degrees(angle), 0],
+            smoothing = 0.06,
         ))
     # Loop C -- upper rings
     for ring in range(2, 5):
@@ -113,16 +113,16 @@ def igloo_primitives():
         if height > 1.2:
             break
         radius_at_height = np.sqrt(max(0, 1.5 ** 2 - height ** 2)) * 0.97
-        num_blocks = max(6, num_base_blocks - ring * 3)
+        num_blocks       = max(6, num_base_blocks - ring * 3)
         for i in range(num_blocks):
             angle = (2 * np.pi * (i + ring * 0.3)) / num_blocks
-            tilt = np.degrees(np.arctan2(height, radius_at_height))
+            tilt  = np.degrees(np.arctan2(height, radius_at_height))
             prims.append(box(
                 [0.18 - ring * 0.02, 0.09, 0.05],
                 translate=[np.cos(angle) * radius_at_height, height,
                            np.sin(angle) * radius_at_height],
-                rotate=[tilt, -np.degrees(angle), 0],
-                smoothing=0.05,
+                rotate    = [tilt, -np.degrees(angle), 0],
+                smoothing = 0.05,
             ))
 
     # === SNOW MOUNDS ===
@@ -138,29 +138,29 @@ def primitives_to_arrays(prims):
     """Compose the parallel arrays ``sdf_dmc.mesh_from_shapes`` expects from
     a list of primitive dicts. Matrices are built with the same euler kernel
     the source used (``M3 = diag(scale) @ R``, translation in row 3)."""
-    n = len(prims)
-    matrices = np.empty((n, 4, 4), dtype=np.float64)
-    shape_types = np.empty(n, dtype=np.int64)
-    additive = np.empty(n, dtype=bool)
-    smoothing = np.empty(n, dtype=np.float64)
-    radius = np.empty(n, dtype=np.float64)
-    height = np.empty(n, dtype=np.float64)
-    axis = np.empty(n, dtype=np.int64)
-    half = np.empty((n, 3), dtype=np.float64)
+    n           = len(prims)
+    matrices    = np.empty((n, 4, 4), dtype=np.float64)
+    shape_types = np.empty(n,         dtype=np.int64)
+    additive    = np.empty(n,         dtype=bool)
+    smoothing   = np.empty(n,         dtype=np.float64)
+    radius      = np.empty(n,         dtype=np.float64)
+    height      = np.empty(n,         dtype=np.float64)
+    axis        = np.empty(n,         dtype=np.int64)
+    half        = np.empty((n, 3),    dtype=np.float64)
 
     for s, p in enumerate(prims):
-        R = sdf_dmc.euler_to_matrix(np.radians(np.asarray(p["rotate"], float)), 0)
-        M = np.eye(4)
-        M[:3, :3] = np.diag(np.asarray(p["scale"], float)) @ R[:3, :3]
-        M[3, :3] = np.asarray(p["translate"], float)
-        matrices[s] = M
+        R              = sdf_dmc.euler_to_matrix(np.radians(np.asarray(p["rotate"], float)), 0)
+        M              = np.eye(4)
+        M[:3, :3]      = np.diag(np.asarray(p["scale"], float)) @ R[:3, :3]
+        M[3, :3]       = np.asarray(p["translate"], float)
+        matrices[s]    = M
         shape_types[s] = p["kind"]
-        additive[s] = p["additive"]
-        smoothing[s] = p["smoothing"]
-        radius[s] = p["radius"]
-        height[s] = p["height"]
-        axis[s] = p["axis"]
-        half[s] = p["half"]
+        additive[s]    = p["additive"]
+        smoothing[s]   = p["smoothing"]
+        radius[s]      = p["radius"]
+        height[s]      = p["height"]
+        axis[s]        = p["axis"]
+        half[s]        = p["half"]
 
     return dict(
         matrices=matrices, shape_types=shape_types, additive=additive,

@@ -32,8 +32,8 @@ _CAMEL = ("camelCase, lowercase first letter (e.g. noiseAmount, driverMatrix); "
 # Enum plugs are the one type whose declaration is incomplete without a
 # second field. Maya stores the field INDEX, so the order here is the contract.
 _ENUM_NAMES_PROP = {
-    "type": "array",
-    "items": {"type": "string"},
+    "type":        "array",
+    "items":       {"type": "string"},
     "description": "REQUIRED when type is 'enum': the ordered field labels, "
                    "index 0 first. A rotate-order plug is "
                    "['xyz','yzx','zxy','xzy','yxz','zyx'], which matches "
@@ -44,12 +44,12 @@ _ENUM_NAMES_PROP = {
 _INPUT_ITEM = {
     "type": "object",
     "properties": {
-        "name": {"type": "string", "description": "plug name -- " + _CAMEL},
-        "type": {"type": "string", "enum": _ATTR_TYPES},
-        "is_array": {"type": "boolean"},
-        "min": {"type": "number"},
-        "max": {"type": "number"},
-        "default": {"type": "number"},
+        "name":       {"type": "string", "description": "plug name -- " + _CAMEL},
+        "type":       {"type": "string", "enum": _ATTR_TYPES},
+        "is_array":   {"type": "boolean"},
+        "min":        {"type": "number"},
+        "max":        {"type": "number"},
+        "default":    {"type": "number"},
         "enum_names": _ENUM_NAMES_PROP,
     },
     "required": ["name", "type"],
@@ -57,9 +57,9 @@ _INPUT_ITEM = {
 _OUTPUT_ITEM = {
     "type": "object",
     "properties": {
-        "name": {"type": "string", "description": "plug name -- " + _CAMEL},
-        "type": {"type": "string", "enum": _ATTR_TYPES},
-        "is_array": {"type": "boolean"},
+        "name":       {"type": "string", "description": "plug name -- " + _CAMEL},
+        "type":       {"type": "string", "enum": _ATTR_TYPES},
+        "is_array":   {"type": "boolean"},
         "enum_names": _ENUM_NAMES_PROP,
     },
     "required": ["name", "type"],
@@ -69,7 +69,7 @@ _VAR_ITEM = {
     "properties": {
         "name": {"type": "string", "description": "variable name -- snake_case "
                  "(Python convention), e.g. kernel_size; NOT a plug name"},
-        "value": {"description": "any JSON value"},
+        "value":      {"description": "any JSON value"},
         "persistent": {"type": "boolean"},
     },
     "required": ["name", "value"],
@@ -87,7 +87,7 @@ class ToolContext:
     """
 
     def __init__(self, working_node: str | None = None, on_nodes_changed=None):
-        self.working_node = working_node
+        self.working_node     = working_node
         self.on_nodes_changed = on_nodes_changed
 
     def _notify(self):
@@ -104,24 +104,24 @@ class ToolContext:
 
 TOOL_SCHEMAS: list[dict] = [
     {
-        "name": "list_node_types",
+        "name":        "list_node_types",
         "description": "List every mPy node type that can be created, with a "
                        "one-line description. Call this first if unsure which "
                        "node type fits the task.",
         "input_schema": {"type": "object", "properties": {}},
     },
     {
-        "name": "get_node",
+        "name":        "get_node",
         "description": "Inspect a node: its type, Compute + Init expressions, "
                        "user inputs, user outputs, and stored variables. "
                        "Defaults to the working node.",
         "input_schema": {
-            "type": "object",
+            "type":       "object",
             "properties": {"node": {"type": "string"}},
         },
     },
     {
-        "name": "list_nodes",
+        "name":        "list_nodes",
         "description": "List the mPy node INSTANCES already in the scene (name + "
                        "type). Call this to FIND an existing node to edit -- e.g. "
                        "when the user says 'my node' / 'the gizmo' / 'the region' "
@@ -132,7 +132,7 @@ TOOL_SCHEMAS: list[dict] = [
         "input_schema": {"type": "object", "properties": {}},
     },
     {
-        "name": "define_node",
+        "name":        "define_node",
         "description": "Build or fully configure a node in ONE call: create it "
                        "(node_type) or target an existing one (node), add ALL "
                        "inputs/outputs, set stored variables, and set the "
@@ -149,9 +149,9 @@ TOOL_SCHEMAS: list[dict] = [
                 "node": {"type": "string",
                          "description": "existing node to configure "
                                         "(omit to create node_type)"},
-                "name": {"type": "string", "description": "optional name when creating"},
-                "inputs": {"type": "array", "items": _INPUT_ITEM},
-                "outputs": {"type": "array", "items": _OUTPUT_ITEM},
+                "name":      {"type": "string", "description": "optional name when creating"},
+                "inputs":    {"type": "array", "items": _INPUT_ITEM},
+                "outputs":   {"type": "array", "items": _OUTPUT_ITEM},
                 "variables": {"type": "array", "items": _VAR_ITEM},
                 "compute": {"type": "string",
                             "description": "Compute expression source. Inputs read "
@@ -207,7 +207,7 @@ TOOL_SCHEMAS: list[dict] = [
         },
     },
     {
-        "name": "create_node",
+        "name":        "create_node",
         "description": "Create a bare mPy node (no attrs). Prefer define_node "
                        "when you also know the attributes/expressions. Makes it "
                        "the working node; returns its name + schema.",
@@ -222,36 +222,36 @@ TOOL_SCHEMAS: list[dict] = [
         },
     },
     {
-        "name": "set_working_node",
+        "name":        "set_working_node",
         "description": "Focus an existing node so subsequent tools default to it.",
         "input_schema": {
-            "type": "object",
+            "type":       "object",
             "properties": {"node": {"type": "string"}},
-            "required": ["node"],
+            "required":   ["node"],
         },
     },
     {
-        "name": "add_input",
+        "name":        "add_input",
         "description": "Add a USER INPUT attribute to the node. Read it in the "
                        "Compute expression as self.<name>. Plug names MUST be "
                        "camelCase, lowercase first letter (e.g. noiseAmount).",
         "input_schema": {
             "type": "object",
             "properties": {
-                "node": {"type": "string"},
-                "name": {"type": "string", "description": "plug name -- " + _CAMEL},
-                "type": {"type": "string", "enum": _ATTR_TYPES},
-                "is_array": {"type": "boolean"},
-                "min": {"type": "number"},
-                "max": {"type": "number"},
-                "default": {"type": "number"},
+                "node":       {"type": "string"},
+                "name":       {"type": "string", "description": "plug name -- " + _CAMEL},
+                "type":       {"type": "string", "enum": _ATTR_TYPES},
+                "is_array":   {"type": "boolean"},
+                "min":        {"type": "number"},
+                "max":        {"type": "number"},
+                "default":    {"type": "number"},
                 "enum_names": _ENUM_NAMES_PROP,
             },
             "required": ["name", "type"],
         },
     },
     {
-        "name": "add_output",
+        "name":        "add_output",
         "description": "Add a USER OUTPUT attribute. Write it in Compute as "
                        "self.<name> = value. Use type 'hex' to drive Maya's "
                        "type node textInput from plain text. Plug names MUST be "
@@ -259,17 +259,17 @@ TOOL_SCHEMAS: list[dict] = [
         "input_schema": {
             "type": "object",
             "properties": {
-                "node": {"type": "string"},
-                "name": {"type": "string", "description": "plug name -- " + _CAMEL},
-                "type": {"type": "string", "enum": _ATTR_TYPES},
-                "is_array": {"type": "boolean"},
+                "node":       {"type": "string"},
+                "name":       {"type": "string", "description": "plug name -- " + _CAMEL},
+                "type":       {"type": "string", "enum": _ATTR_TYPES},
+                "is_array":   {"type": "boolean"},
                 "enum_names": _ENUM_NAMES_PROP,
             },
             "required": ["name", "type"],
         },
     },
     {
-        "name": "set_compute_expression",
+        "name":        "set_compute_expression",
         "description": "Replace the node's Compute expression (the per-frame "
                        "body). Inputs read via self.<name> are ALREADY native "
                        "Python (float/int/bool/str; vector->numpy (3,); "
@@ -292,14 +292,14 @@ TOOL_SCHEMAS: list[dict] = [
         "input_schema": {
             "type": "object",
             "properties": {
-                "node": {"type": "string"},
+                "node":   {"type": "string"},
                 "source": {"type": "string"},
             },
             "required": ["source"],
         },
     },
     {
-        "name": "set_init_expression",
+        "name":        "set_init_expression",
         "description": "Replace the node's Init expression (runs once on file "
                        "open / edit). Put imports + helper/function defs HERE -- "
                        "their names are visible in Compute as globals, so don't "
@@ -307,14 +307,14 @@ TOOL_SCHEMAS: list[dict] = [
         "input_schema": {
             "type": "object",
             "properties": {
-                "node": {"type": "string"},
+                "node":   {"type": "string"},
                 "source": {"type": "string"},
             },
             "required": ["source"],
         },
     },
     {
-        "name": "set_osl_expression",
+        "name":        "set_osl_expression",
         "description": "Set the node's OSL (Open Shading Language) render-target "
                        "string -- ONLY for OSL-capable nodes (mPyFile). This is "
                        "NOT Python: it is a renderer shader the node exposes as "
@@ -334,7 +334,7 @@ TOOL_SCHEMAS: list[dict] = [
         },
     },
     {
-        "name": "set_methods_source",
+        "name":        "set_methods_source",
         "description": "Set the node's METHODS source -- a third code tier beside "
                        "Compute and Init, ISOLATED from both (its own namespace). "
                        "Put companion COMMANDS and helper functions here. A def "
@@ -365,7 +365,7 @@ TOOL_SCHEMAS: list[dict] = [
         },
     },
     {
-        "name": "set_variable",
+        "name":        "set_variable",
         "description": "Set a stored variable on the node (persisted with the "
                        "scene). Value is JSON (number/string/bool/list/nested). "
                        "Variable names use snake_case (Python convention), NOT "
@@ -376,20 +376,20 @@ TOOL_SCHEMAS: list[dict] = [
                 "node": {"type": "string"},
                 "name": {"type": "string", "description": "variable name -- "
                          "snake_case, e.g. kernel_size (NOT a plug name)"},
-                "value": {"description": "any JSON value"},
+                "value":      {"description": "any JSON value"},
                 "persistent": {"type": "boolean"},
             },
             "required": ["name", "value"],
         },
     },
     {
-        "name": "compile_check",
+        "name":        "compile_check",
         "description": "Syntax-check a Python expression WITHOUT running it. "
                        "Returns {ok, error}. Use before set_compute_expression.",
         "input_schema": {
-            "type": "object",
+            "type":       "object",
             "properties": {"source": {"type": "string"}},
-            "required": ["source"],
+            "required":   ["source"],
         },
     },
 ]
@@ -459,10 +459,10 @@ def _resolve(ctx: ToolContext, args: dict) -> str:
 def _node_schema(name: str) -> dict:
     w = _wrap(name)
     out = {
-        "name": w.get_name(),
-        "type": mc.nodeType(name),
-        "inputs": {},
-        "outputs": {},
+        "name":      w.get_name(),
+        "type":      mc.nodeType(name),
+        "inputs":    {},
+        "outputs":   {},
         "variables": {},
     }
     try:
@@ -607,7 +607,7 @@ def _dispatch(tool_name: str, args: dict, ctx: ToolContext) -> dict:
             known = set(mc.allNodeTypes() or [])
         except Exception:
             known = None
-        seen = set()
+        seen  = set()
         nodes = []
         for t in REGISTRY:
             if known is not None and t not in known:
@@ -629,7 +629,7 @@ def _dispatch(tool_name: str, args: dict, ctx: ToolContext) -> dict:
         from mpynode._node_registry import get_spec
 
         node_type = args["node_type"]
-        spec = get_spec(node_type)
+        spec      = get_spec(node_type)
         if spec is None:
             return {"error": "unknown node_type %r" % node_type}
         cls = spec.get_wrapper_class()
@@ -645,7 +645,7 @@ def _dispatch(tool_name: str, args: dict, ctx: ToolContext) -> dict:
             w = cls.build(**kwargs)
             return w.get_name()
 
-        name = _do("create_node", ctx, _make)
+        name             = _do("create_node", ctx, _make)
         ctx.working_node = name
         return {"created": name, "schema": _node_schema(name)}
 
@@ -661,7 +661,7 @@ def _dispatch(tool_name: str, args: dict, ctx: ToolContext) -> dict:
 
         def _add():
             warnings = []
-            extra = attr_kwargs(args, _INPUT_EXTRA, warnings)
+            extra    = attr_kwargs(args, _INPUT_EXTRA, warnings)
             _wrap(name).add_input_attr(args["name"], args["type"], **extra)
             res = {"added_input": args["name"], "type": args["type"]}
             if warnings:
@@ -675,7 +675,7 @@ def _dispatch(tool_name: str, args: dict, ctx: ToolContext) -> dict:
 
         def _add():
             warnings = []
-            extra = attr_kwargs(args, _OUTPUT_EXTRA, warnings)
+            extra    = attr_kwargs(args, _OUTPUT_EXTRA, warnings)
             _wrap(name).add_output_attr(args["name"], args["type"], **extra)
             res = {"added_output": args["name"], "type": args["type"]}
             if warnings:
@@ -716,7 +716,7 @@ def _dispatch(tool_name: str, args: dict, ctx: ToolContext) -> dict:
 
     if tool_name == "set_osl_expression":
         name = _resolve(ctx, args)
-        w = _wrap(name)
+        w    = _wrap(name)
         # Capability-gated: only OSL-capable wrappers (mPyFile) carry an .osl
         # render-target output. NOTE: deliberately NOT _compile_check'd or
         # _expr_guard'd -- OSL is not Python, so those would reject valid OSL.
@@ -733,7 +733,7 @@ def _dispatch(tool_name: str, args: dict, ctx: ToolContext) -> dict:
 
     if tool_name == "set_methods_source":
         name = _resolve(ctx, args)
-        w = _wrap(name)
+        w    = _wrap(name)
         # Capability-gated like set_osl_expression: only wrappers exposing the
         # Methods tier accept it (all current mPy types do, via base MPyNode).
         if not hasattr(w, "set_methods_source"):
@@ -758,7 +758,7 @@ def _dispatch(tool_name: str, args: dict, ctx: ToolContext) -> dict:
 
         def _set():
             persistent = bool(args.get("persistent", True))
-            value = _coerce_value(args["value"])
+            value      = _coerce_value(args["value"])
             _wrap(name).set_variable(args["name"], value, persistent=persistent)
             return {"set_variable": args["name"]}
 
@@ -780,7 +780,7 @@ def _define_node(args: dict, ctx: ToolContext) -> dict:
     """
     from mpynode._node_registry import get_spec
 
-    node = args.get("node")
+    node      = args.get("node")
     node_type = args.get("node_type")
     if not node and not node_type:
         return {"error": "define_node needs 'node_type' (to create) or 'node' "
@@ -791,7 +791,7 @@ def _define_node(args: dict, ctx: ToolContext) -> dict:
         return {"error": "unknown node_type %r" % node_type}
 
     compute = args.get("compute")
-    init = args.get("init")
+    init    = args.get("init")
     for label, src in (("compute", compute), ("init", init)):
         if src is not None:
             ok, err = _compile_check(src)
@@ -812,17 +812,17 @@ def _define_node(args: dict, ctx: ToolContext) -> dict:
     state = {"node": node}
 
     def _apply():
-        created = None
+        created  = None
         warnings = []
         try:
             if not state["node"]:
-                cls = get_spec(node_type).get_wrapper_class()
+                cls    = get_spec(node_type).get_wrapper_class()
                 kwargs = {"name": args["name"]} if args.get("name") else {}
                 # build() (NOT create()) seeds the per-type setup source; no
                 # setup=True (the all-or-nothing atomicity guard below must not
                 # be weakened by build()'s setup-failure-swallow).
                 state["node"] = cls.build(**kwargs).get_name()
-                created = state["node"]
+                created       = state["node"]
             w = _wrap(state["node"])
 
             added_in = []
@@ -863,13 +863,13 @@ def _define_node(args: dict, ctx: ToolContext) -> dict:
             raise
 
         result = {
-            "node": state["node"],
-            "added_inputs": added_in,
+            "node":          state["node"],
+            "added_inputs":  added_in,
             "added_outputs": added_out,
             "set_variables": set_vars,
-            "set_compute": compute is not None,
-            "set_init": init is not None,
-            "set_methods": methods is not None,
+            "set_compute":   compute is not None,
+            "set_init":      init is not None,
+            "set_methods":   methods is not None,
         }
         if created:
             result["created"] = created
@@ -883,7 +883,7 @@ def _define_node(args: dict, ctx: ToolContext) -> dict:
         return {"error": "define_node failed (no node left behind): %s: %s"
                          % (type(exc).__name__, exc)}
     ctx.working_node = res.get("node") or ctx.working_node
-    res["schema"] = _node_schema(res["node"])
+    res["schema"]    = _node_schema(res["node"])
     return res
 
 
@@ -1005,9 +1005,9 @@ def tool_summary(tool_name: str, args: dict) -> str:
     a = args or {}
     if tool_name == "define_node":
         target = a.get("node") or a.get("node_type", "?")
-        n_in = len(a.get("inputs") or [])
-        n_out = len(a.get("outputs") or [])
-        bits = [target]
+        n_in   = len(a.get("inputs") or [])
+        n_out  = len(a.get("outputs") or [])
+        bits   = [target]
         if n_in:
             bits.append("%d in" % n_in)
         if n_out:

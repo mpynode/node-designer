@@ -13,7 +13,7 @@ for p in ("mpynode_api1", "mpynode_api2"):
 import maya.api.OpenMaya as om
 
 NATIVE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fixtures", "mPySkinCluster", "customLBS.bundle")
-TOL = 1e-4
+TOL    = 1e-4
 
 COMPUTE = ('mesh = self.outputGeometry[0]\nrest = mesh.getPoints()\nN = rest.shape[0]\nJ = 2\n'
            'env = float(self.envelope)\n'
@@ -40,7 +40,7 @@ def _orig_shape_points(mesh_xform):
     """Read object-space points from the INTERMEDIATE (orig/input) shape of a
     deformed mesh via OpenMaya. Does NOT trigger a deformer eval."""
     shapes = cmds.listRelatives(mesh_xform, shapes=True, fullPath=True) or []
-    orig = None
+    orig   = None
     for s in shapes:
         if cmds.getAttr(s + ".intermediateObject"):
             orig = s
@@ -51,8 +51,8 @@ def _orig_shape_points(mesh_xform):
     sel = om.MSelectionList()
     sel.add(orig)
     dag = sel.getDagPath(0)
-    fn = om.MFnMesh(dag)
-    pa = fn.getPoints(om.MSpace.kObject)
+    fn  = om.MFnMesh(dag)
+    pa  = fn.getPoints(om.MSpace.kObject)
     return [(pa[k].x, pa[k].y, pa[k].z) for k in range(len(pa))]
 
 
@@ -99,14 +99,14 @@ def build_rig(prefix, deformer_type, configure=None):
     # default on first eval and then resists setAttr. Read the orig shape via
     # OpenMaya so no deformer eval is triggered before weights are set.
     rest_pts = _orig_shape_points(cyl)
-    nverts = len(rest_pts)
+    nverts   = len(rest_pts)
     for i in range(nverts):
         y = rest_pts[i][1]
         # map y in [-5,5] to t in [0,1]; w_mid = t, w_base = 1-t
-        t = (y + 5.0) / 10.0
-        t = max(0.0, min(1.0, t))
+        t      = (y + 5.0) / 10.0
+        t      = max(0.0, min(1.0, t))
         w_base = 1.0 - t
-        w_mid = t
+        w_mid  = t
         cmds.setAttr(d + ".weightList[%d].weights[0]" % i, w_base)
         cmds.setAttr(d + ".weightList[%d].weights[1]" % i, w_mid)
 
@@ -116,12 +116,12 @@ def build_rig(prefix, deformer_type, configure=None):
 def get_os_points(mesh_xform):
     """Read object-space points of the deformed output via OpenMaya (forces eval)."""
     shapes = cmds.listRelatives(mesh_xform, shapes=True, noIntermediate=True, fullPath=True)
-    shape = shapes[0]
-    sel = om.MSelectionList()
+    shape  = shapes[0]
+    sel    = om.MSelectionList()
     sel.add(shape)
     dag = sel.getDagPath(0)
-    fn = om.MFnMesh(dag)
-    pa = fn.getPoints(om.MSpace.kObject)
+    fn  = om.MFnMesh(dag)
+    pa  = fn.getPoints(om.MSpace.kObject)
     out = []
     for k in range(len(pa)):
         out.append((pa[k].x, pa[k].y, pa[k].z))
@@ -164,10 +164,10 @@ def main():
     cmds.setAttr(py_d + ".envelope", 1.0)
     cmds.setAttr(cmp_d + ".envelope", 1.0)
 
-    angles = [0.0, 15.0, 30.0, 45.0, 60.0, 90.0, -30.0, -60.0]
-    maxerr = 0.0
+    angles           = [0.0, 15.0, 30.0, 45.0, 60.0, 90.0, -30.0, -60.0]
+    maxerr           = 0.0
     total_components = 0
-    nsamples = 0
+    nsamples         = 0
 
     for ang in angles:
         cmds.setAttr(py_jm + ".rotateZ", ang)
@@ -192,7 +192,7 @@ def main():
     p0 = get_os_points(py_cyl)
     cmds.setAttr(py_jm + ".rotateZ", 0.0)
     p_rest = get_os_points(py_cyl)
-    disp = max(abs(p0[i][c] - p_rest[i][c]) for i in range(len(p0)) for c in range(3))
+    disp   = max(abs(p0[i][c] - p_rest[i][c]) for i in range(len(p0)) for c in range(3))
     print("DEFORM SANITY max displacement (45deg vs rest):", disp)
 
     passed = (maxerr <= TOL) and (total_components > 0) and (disp > 1e-3)

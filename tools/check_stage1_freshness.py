@@ -30,9 +30,9 @@ import sys
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Every tree that ships stage-1 artifacts. `_snapshots` is deliberately absent:
 # snapshots are frozen copies and must never be gated.
-TREES = ("templates",)
+TREES      = ("templates",)
 STAGE_FILE = "1_transpiled.cpp"
-BASELINE = os.path.join(ROOT, "tests", "data", "stage1_stale_baseline.json")
+BASELINE   = os.path.join(ROOT, "tests", "data", "stage1_stale_baseline.json")
 
 
 def _rel(path):
@@ -70,7 +70,7 @@ def _diff_detail(old, new):
     """Bounded, human-usable summary of HOW the artifact drifted."""
     old_lines = old.splitlines()
     new_lines = new.splitlines()
-    first = None
+    first     = None
     for i, (a, b) in enumerate(zip(old_lines, new_lines)):
         if a != b:
             first = i + 1
@@ -81,7 +81,7 @@ def _diff_detail(old, new):
         old_lines, new_lines, "shipped", "fresh", n=1, lineterm=""))
     return {"first_diff_line": first,
             "shipped_lines": len(old_lines),
-            "fresh_lines": len(new_lines),
+            "fresh_lines":   len(new_lines),
             "excerpt": excerpt[:12]}
 
 
@@ -90,7 +90,7 @@ def collect():
     from mpynode.native import compiler as codegen
 
     artifacts = {}
-    absent = []
+    absent    = []
     manifests = []
     for man_path, man in _manifests():
         man_rel = _rel(man_path)
@@ -98,10 +98,10 @@ def collect():
         stages = os.path.join(os.path.dirname(man_path), "stages")
         for row in man.get("nodes") or []:
             type_name = row.get("type_name")
-            spec = row.get("spec")
+            spec      = row.get("spec")
             if not type_name or not isinstance(spec, dict):
                 continue
-            art = os.path.join(stages, type_name, STAGE_FILE)
+            art     = os.path.join(stages, type_name, STAGE_FILE)
             art_rel = _rel(art)
             if not os.path.isfile(art):
                 # A node the build dropped before stage 1 never wrote one.
@@ -111,8 +111,8 @@ def collect():
             try:
                 fresh = codegen.generate_cpp(spec, for_port=True)
             except Exception as exc:
-                entry["state"] = "error"
-                entry["detail"] = "%s: %s" % (type(exc).__name__, exc)
+                entry["state"]     = "error"
+                entry["detail"]    = "%s: %s" % (type(exc).__name__, exc)
                 artifacts[art_rel] = entry
                 continue
             entry["fresh_sha"] = hashlib.sha256(
@@ -122,7 +122,7 @@ def collect():
             if shipped == fresh:
                 entry["state"] = "fresh"
             else:
-                entry["state"] = "stale"
+                entry["state"]  = "stale"
                 entry["detail"] = _diff_detail(shipped, fresh)
             artifacts[art_rel] = entry
     # Artifacts on disk that no manifest row claims. They are UNGATED: nothing
@@ -141,9 +141,9 @@ def collect():
                 unmatched.append(art_rel)
     return {"root": ROOT,
             "pythonhashseed": os.environ.get("PYTHONHASHSEED"),
-            "manifests": manifests,
-            "unmatched": sorted(unmatched),
-            "absent": sorted(absent),
+            "manifests":      manifests,
+            "unmatched":      sorted(unmatched),
+            "absent":         sorted(absent),
             "artifacts": artifacts}
 
 
@@ -163,7 +163,7 @@ def _report(result):
         for rel in names:
             if state == "fresh":
                 continue
-            row = result["artifacts"][rel]
+            row    = result["artifacts"][rel]
             detail = row.get("detail")
             if isinstance(detail, dict):
                 detail = "first diff at line %s (%s -> %s lines)" % (
@@ -201,7 +201,7 @@ def _write_baseline(result):
 
 
 def main():
-    argv = sys.argv[1:]
+    argv     = sys.argv[1:]
     json_out = None
     if "--json" in argv:
         json_out = argv[argv.index("--json") + 1]

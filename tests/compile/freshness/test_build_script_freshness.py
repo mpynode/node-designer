@@ -36,7 +36,7 @@ _TOOL = os.path.join(_ROOT, "tools", "regen_build_scripts.py")
 # Measured 2026-08-29: 40 build trees, 119 regenerable scripts. Floors, not
 # equalities -- a path rename or a manifest-shape change must not turn this
 # suite into a no-op that passes on an empty measurement.
-_MIN_TREES = 35
+_MIN_TREES   = 35
 _MIN_SCRIPTS = 110
 
 # The one script no manifest row accounts for: `meshRegions/` is the scratch dir

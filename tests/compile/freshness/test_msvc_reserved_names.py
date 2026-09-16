@@ -40,13 +40,13 @@ _ROOT = _paths.ROOT
 # rule is a Windows fact, not a codegen one, so it applies there as well.
 _SCAN_ROOTS = ("templates", "plug-ins", "scripts")
 
-_IDENT_RE = re.compile(r"\b__[A-Za-z_][A-Za-z0-9_]*")
+_IDENT_RE   = re.compile(r"\b__[A-Za-z_][A-Za-z0-9_]*")
 
 # Comment/string stripping: a SAL name NAMED in a comment (or in a string) is
 # fine and is in fact how the fix documents itself. Mirrors
 # optimizer_knowledge._code_only's intent, kept local so this file stands alone.
 _COMMENT_RE = re.compile(r"//[^\n]*|/\*.*?\*/", re.S)
-_STRING_RE = re.compile(r'"(?:\\.|[^"\\])*"')
+_STRING_RE  = re.compile(r'"(?:\\.|[^"\\])*"')
 
 _SAL_DEFINE_RE = re.compile(r"^\s*#define\s+(__[A-Za-z_][A-Za-z0-9_]*)", re.M)
 
@@ -63,9 +63,9 @@ def _sal_names_from_sdk():
     %WindowsSDKVersion% when a developer shell exported them, else the newest
     versioned include dir under the default Windows Kits root.
     """
-    roots = []
+    roots   = []
     sdk_dir = os.environ.get("WindowsSdkDir")
-    ver = (os.environ.get("WindowsSDKVersion") or "").strip("\\/")
+    ver     = (os.environ.get("WindowsSDKVersion") or "").strip("\\/")
     if sdk_dir and ver:
         roots.append(os.path.join(sdk_dir, "Include", ver, "shared"))
     base = os.path.join(os.environ.get("ProgramFiles(x86)",

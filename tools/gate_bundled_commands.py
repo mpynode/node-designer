@@ -110,7 +110,7 @@ def build_bundle(tmp):
     from mpynode.native.toolchain import toolchain
 
     cmds_found = detect_commands(METHODS)
-    out = cd.emit_dispatch_commands(cmds_found, "gateProbeNode", METHODS)
+    out        = cd.emit_dispatch_commands(cmds_found, "gateProbeNode", METHODS)
     if out["errors"]:
         for e in out["errors"]:
             check(False, "codegen error: %s" % e)
@@ -135,8 +135,8 @@ def build_bundle(tmp):
     bundle = os.path.join(tmp, "gateCmds.bundle")
     cmd = toolchain.compile_to_plugin_cmd(
         "clang++", src, bundle,
-        include_dir=toolchain.maya_include_dir(MAYA),
-        lib_dir=toolchain.maya_lib_dir(MAYA),
+        include_dir = toolchain.maya_include_dir(MAYA),
+        lib_dir     = toolchain.maya_lib_dir(MAYA),
         libs=["OpenMaya", "OpenMayaAnim", "OpenMayaUI", "OpenMayaRender",
               "Foundation"],
         arch=toolchain.mac_arch(), maya=MAYA)
@@ -232,7 +232,7 @@ def main():
         mc.loadPlugin(bundle) if not mc.pluginInfo(
             os.path.basename(bundle), q=True, loaded=True) else None
         sentinel = mc.createNode("transform", name="sentinel")
-        made = mc.gateMakeNodes(sentinel, prefix="gate")
+        made     = mc.gateMakeNodes(sentinel, prefix="gate")
         check(mc.objExists("gateA") and mc.objExists("gateB"),
               "the command built its nodes", str(made))
         check(abs(mc.getAttr("gateB.tx") - 5.0) < 1e-9, "and set the attr")
@@ -275,8 +275,8 @@ def main():
                 "print('NAMES', mc.gateNames(t, items=['ab', 'cd']))\n"
                 "print('MADE', mc.gateMakeNodes(t, prefix='cold'))\n"
                 % (bundle, bundle))
-        env = dict(os.environ)
-        env["PYTHONPATH"] = ""          # mpynode is now unimportable
+        env                      = dict(os.environ)
+        env["PYTHONPATH"]        = ""          # mpynode is now unimportable
         env["MAYA_PLUG_IN_PATH"] = ""
         # ...but PYTHONPATH alone does NOT make a machine mpynode-free, and a
         # child that can still import it makes every check below vacuous:
@@ -290,7 +290,7 @@ def main():
         p = subprocess.run(
             [os.path.join(MAYA, "Maya.app/Contents/bin/mayapy"), script],
             capture_output=True, text=True, env=env, cwd=tmp)
-        got = p.stdout
+        got  = p.stdout
         tail = (got + p.stderr)[-1500:]
         check("LOADED True" in got,
               "the bundle loads with mpynode unimportable", got[-400:])

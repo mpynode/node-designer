@@ -171,8 +171,8 @@ def build_methods_namespace(source: str) -> dict:
     """
     ns = {
         "maya_command": maya_command,
-        "maya_demo": maya_demo,
-        "maya_test": maya_test,
+        "maya_demo":    maya_demo,
+        "maya_test":    maya_test,
     }
     ns.update(test_helpers.HELPERS)
     exec(compile(source or "", "<methods>", "exec"), ns)
@@ -208,14 +208,14 @@ def resolve_demo(source, demo_name=None):
     from mpynode._common import node_setups
 
     specs = node_setups.find_demos(source)
-    spec = node_setups.select_demo(specs, demo_name)
+    spec  = node_setups.select_demo(specs, demo_name)
     if spec is None:
         if demo_name:
             raise node_setup.SetupError("no demo named %r" % demo_name)
         raise node_setup.SetupError("no demo defined")
-    ns = build_methods_namespace(source or "")
-    fn = ns.get(spec.func_name)
-    is_factory = _resolved_is_factory(fn)
+    ns          = build_methods_namespace(source or "")
+    fn          = ns.get(spec.func_name)
+    is_factory  = _resolved_is_factory(fn)
     is_instance = _resolved_is_instance_setup(fn)
     if not (is_factory or is_instance):
         raise node_setup.SetupError(
@@ -276,7 +276,7 @@ def resolve_test(source, test_name=None):
     from mpynode._common import node_setups
 
     specs = node_setups.find_tests(source)
-    spec = node_setups.select_test(specs, test_name)
+    spec  = node_setups.select_test(specs, test_name)
     if spec is None:
         if test_name:
             raise node_setup.SetupError("no test named %r" % test_name)
@@ -472,7 +472,7 @@ class MethodsSourceMixin:
         instance; a FACTORY command (first param ``cls``, or authored as a
         ``@classmethod``) is bound to the wrapper CLASS and typically returns a
         NEW node. See :func:`invoke_command`."""
-        source = self.get_methods_source()
+        source    = self.get_methods_source()
         func_name = None
         for c in detect_commands(source):
             if command_name in (c["name"], c["func_name"]):

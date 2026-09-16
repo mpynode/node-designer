@@ -118,7 +118,7 @@ class TestInitTimeGeometryWrite(unittest.TestCase):
         import maya.api.OpenMaya as om2
         from mpynode._api2.geometry import NurbsCurve
 
-        n = _mpy_node_with("outCrv", "nurbsCurve")
+        n   = _mpy_node_with("outCrv", "nurbsCurve")
         cvs = np.array([[0., 0, 0], [1, 1, 0], [2, 0, 0], [3, 1, 0]])
         _write(n, "outCrv", NurbsCurve(points=cvs, degree=3))
         data = _read_back(n, "outCrv")
@@ -129,7 +129,7 @@ class TestInitTimeGeometryWrite(unittest.TestCase):
         import maya.api.OpenMaya as om2
         from mpynode._api2.geometry import NurbsSurface
 
-        n = _mpy_node_with("outSrf", "nurbsSurface")
+        n    = _mpy_node_with("outSrf", "nurbsSurface")
         grid = np.zeros((4, 4, 3))
         for i in range(4):
             for j in range(4):

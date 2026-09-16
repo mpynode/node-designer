@@ -52,10 +52,10 @@ _SINGLE = {
                     "degree_u=self.aIn.degree_u, degree_v=self.aIn.degree_v, "
                     "knots_u=self.aIn.knots_u, knots_v=self.aIn.knots_v)\n",
 }
-_ARRAY = "self.aOut = self.aIn\n"
+_ARRAY   = "self.aOut = self.aIn\n"
 
 _KIND_OF = {"mesh": "mesh", "nurbsCurve": "curve", "nurbsSurface": "surface"}
-_KINDS = ("mesh", "nurbsCurve", "nurbsSurface")
+_KINDS   = ("mesh", "nurbsCurve", "nurbsSurface")
 
 
 def _make_node(name, compute, t, is_array):
@@ -249,7 +249,7 @@ def _make_source(mc, t, seed):
         return shp + ".outMesh"
     if t == "nurbsCurve":
         pts = [(0, 0, 0), (1, 1 + seed, 0), (2, -1, 0), (3, 1, 0), (4, 0, 0)]
-        tr = mc.curve(d=3, p=pts)
+        tr  = mc.curve(d=3, p=pts)
         shp = mc.listRelatives(tr, s=True, f=True)[0]
         return shp + ".local"
     tr, _ = mc.nurbsPlane(d=3, u=3, v=3, w=1 + seed)
@@ -322,10 +322,10 @@ class TestGeoIoRuntimeRoundTrip(unittest.TestCase):
         name = "geoio_%s_%s" % (t, "arr" if is_array else "one")
         spec = _spec(name, _compute(t, is_array), t, is_array)
         # give each node a distinct type id (a re-registered id would clash).
-        base = 0x00070560 + _KINDS.index(t) * 4 + (1 if is_array else 0)
-        spec["suggested"]["type_id"] = "0x%08x" % base
+        base                                = 0x00070560 + _KINDS.index(t) * 4 + (1 if is_array else 0)
+        spec["suggested"]["type_id"]        = "0x%08x" % base
         spec["suggested"]["node_type_name"] = name
-        spec["suggested"]["class_name"] = "GeoIoRt" + name.title().replace("_", "")
+        spec["suggested"]["class_name"]     = "GeoIoRt" + name.title().replace("_", "")
 
         d = tempfile.mkdtemp()
         res = cc.compile_plugin([spec], name, d, strict=True, verify=False,
@@ -333,12 +333,12 @@ class TestGeoIoRuntimeRoundTrip(unittest.TestCase):
         self.assertTrue(res["ok"], "build failed: %s" % res.get("errors"))
         mc.file(new=True, force=True)
         mc.loadPlugin(res["bundle_path"])
-        node = mc.createNode(name)
+        node   = mc.createNode(name)
         n_elem = 3 if is_array else 1
-        srcs = []
+        srcs   = []
         for i in range(n_elem):
             out_plug = _make_source(mc, t, i)
-            dst = "%s.aIn[%d]" % (node, i) if is_array else "%s.aIn" % node
+            dst      = "%s.aIn[%d]" % (node, i) if is_array else "%s.aIn" % node
             mc.connectAttr(out_plug, dst, f=True)
             srcs.append(out_plug)
         mc.dgeval("%s.aOut" % node)
@@ -346,7 +346,7 @@ class TestGeoIoRuntimeRoundTrip(unittest.TestCase):
         for i in range(n_elem):
             ssel = om2.MSelectionList()
             ssel.add(srcs[i])
-            exp = _read_geo(om2, ssel.getPlug(0), kind)
+            exp  = _read_geo(om2, ssel.getPlug(0), kind)
             nsel = om2.MSelectionList()
             nsel.add(node)
             op = om2.MFnDependencyNode(nsel.getDependNode(0)).findPlug("aOut", False)

@@ -22,10 +22,10 @@ from typing import Optional
 class NodeTypeSpec:
     """Per-node-type metadata."""
 
-    native_type: str
-    wrapper_module: str
+    native_type:        str
+    wrapper_module:     str
     wrapper_class_name: str
-    description: str = ""
+    description:        str = ""
     # Native Maya proxy class this node type wraps, e.g.
     # "maya.api.OpenMaya.MPxNode" (api2). Shown in the Init header.
     native_class: str = ""
@@ -71,7 +71,7 @@ class NodeTypeSpec:
         if v < 2022:
             return None
         tree = "Maya-SDK" if v <= 2022 else "MAYA-API-REF"
-        ref = "py_ref" if self.api == 2 else "cpp_ref"
+        ref  = "py_ref" if self.api == 2 else "cpp_ref"
         return (
             f"https://help.autodesk.com/cloudhelp/{v}/ENU/"
             f"{tree}/{ref}/{self.doc_slug}.html"
@@ -81,77 +81,77 @@ class NodeTypeSpec:
 # native_class / api / doc_slug below are HAND-VERIFIED against Autodesk's help
 # site (Maya 2022-2027). api2 -> py_ref tree; api1 (OpenMayaMPx proxy) ->
 # cpp_ref tree (namespace-less slug). NodeTypeSpec.doc_url() builds the URL.
-_MPXNODE_A2 = "maya.api.OpenMaya.MPxNode"
-_MPXNODE_SLUG = "class_open_maya_1_1_m_px_node"
-_MPXDEFORMER = "maya.OpenMayaMPx.MPxDeformerNode"
+_MPXNODE_A2       = "maya.api.OpenMaya.MPxNode"
+_MPXNODE_SLUG     = "class_open_maya_1_1_m_px_node"
+_MPXDEFORMER      = "maya.OpenMayaMPx.MPxDeformerNode"
 _MPXDEFORMER_SLUG = "class_m_px_deformer_node"
 
 REGISTRY: dict[str, NodeTypeSpec] = {
     "mPyNode": NodeTypeSpec(
-        native_type="mPyNode",
-        wrapper_module="mpynode.wrappers._mpy_node",
-        wrapper_class_name="MPyNode",
-        description="Generic Python expression node.",
+        native_type        = "mPyNode",
+        wrapper_module     = "mpynode.wrappers._mpy_node",
+        wrapper_class_name = "MPyNode",
+        description        = "Generic Python expression node.",
         native_class=_MPXNODE_A2, api=2, doc_slug=_MPXNODE_SLUG,
     ),
     "mPyLocator": NodeTypeSpec(
-        native_type="mPyLocator",
-        wrapper_module="mpynode.wrappers.mpy_locator",
-        wrapper_class_name="MPyLocator",
-        description="Custom viewport-drawn locator.",
+        native_type        = "mPyLocator",
+        wrapper_module     = "mpynode.wrappers.mpy_locator",
+        wrapper_class_name = "MPyLocator",
+        description        = "Custom viewport-drawn locator.",
         native_class="maya.api.OpenMayaUI.MPxLocatorNode", api=2,
         doc_slug="class_open_maya_u_i_1_1_m_px_locator_node",
     ),
     "mPyConstraint": NodeTypeSpec(
-        native_type="mPyConstraint",
-        wrapper_module="mpynode.wrappers.mpy_constraint",
-        wrapper_class_name="MPyConstraint",
-        description="Constraint with preset target/rest inputs + user output math.",
+        native_type        = "mPyConstraint",
+        wrapper_module     = "mpynode.wrappers.mpy_constraint",
+        wrapper_class_name = "MPyConstraint",
+        description        = "Constraint with preset target/rest inputs + user output math.",
         native_class=_MPXNODE_A2, api=2, doc_slug=_MPXNODE_SLUG,
     ),
     "mPyIkSolver": NodeTypeSpec(
-        native_type="mPyIkSolver",
-        wrapper_module="mpynode.wrappers.mpy_iksolver",
-        wrapper_class_name="MPyIkSolver",
-        description="Custom IK solver \u2014 your joint solve in Python.",
+        native_type        = "mPyIkSolver",
+        wrapper_module     = "mpynode.wrappers.mpy_iksolver",
+        wrapper_class_name = "MPyIkSolver",
+        description        = "Custom IK solver \u2014 your joint solve in Python.",
         native_class="maya.OpenMayaMPx.MPxIkSolverNode", api=1,
         doc_slug="class_m_px_ik_solver_node",
     ),
     "mPyDeformer": NodeTypeSpec(
-        native_type="mPyDeformer",
-        wrapper_module="mpynode.wrappers.mpy_deformer",
-        wrapper_class_name="MPyDeformer",
-        description="Custom mesh deformer driven by a Python expression.",
+        native_type        = "mPyDeformer",
+        wrapper_module     = "mpynode.wrappers.mpy_deformer",
+        wrapper_class_name = "MPyDeformer",
+        description        = "Custom mesh deformer driven by a Python expression.",
         native_class=_MPXDEFORMER, api=1, doc_slug=_MPXDEFORMER_SLUG,
     ),
     "mPyTransform": NodeTypeSpec(
-        native_type="mPyTransform",
-        wrapper_module="mpynode.wrappers.mpy_transform",
-        wrapper_class_name="MPyTransform",
-        description="Custom transform with expression-driven local matrix.",
+        native_type        = "mPyTransform",
+        wrapper_module     = "mpynode.wrappers.mpy_transform",
+        wrapper_class_name = "MPyTransform",
+        description        = "Custom transform with expression-driven local matrix.",
         native_class="maya.OpenMayaMPx.MPxTransform", api=1,
         doc_slug="class_m_px_transform",
     ),
     "mPyMesh": NodeTypeSpec(
-        native_type="mPyMesh",
-        wrapper_module="mpynode.wrappers.mpy_mesh",
-        wrapper_class_name="MPyMesh",
-        description="DG polygon geometry generator (connect outMesh → mesh.inMesh).",
+        native_type        = "mPyMesh",
+        wrapper_module     = "mpynode.wrappers.mpy_mesh",
+        wrapper_class_name = "MPyMesh",
+        description        = "DG polygon geometry generator (connect outMesh → mesh.inMesh).",
         native_class=_MPXNODE_A2, api=2, doc_slug=_MPXNODE_SLUG,
     ),
     "mPySkinCluster": NodeTypeSpec(
-        native_type="mPySkinCluster",
-        wrapper_module="mpynode.wrappers.mpy_skin_cluster",
-        wrapper_class_name="MPySkinCluster",
-        description="Expression-driven skinCluster (MPxSkinCluster; write your own LBS/DQ/custom).",
+        native_type        = "mPySkinCluster",
+        wrapper_module     = "mpynode.wrappers.mpy_skin_cluster",
+        wrapper_class_name = "MPySkinCluster",
+        description        = "Expression-driven skinCluster (MPxSkinCluster; write your own LBS/DQ/custom).",
         native_class="maya.OpenMayaMPx.MPxSkinCluster", api=1,
         doc_slug="class_m_px_skin_cluster",
     ),
     "mPyBlendShape": NodeTypeSpec(
-        native_type="mPyBlendShape",
-        wrapper_module="mpynode.wrappers.mpy_blend_shape",
-        wrapper_class_name="MPyBlendShape",
-        description="Expression-driven blendShape (aliased weight[] + targetGeometry[]).",
+        native_type        = "mPyBlendShape",
+        wrapper_module     = "mpynode.wrappers.mpy_blend_shape",
+        wrapper_class_name = "MPyBlendShape",
+        description        = "Expression-driven blendShape (aliased weight[] + targetGeometry[]).",
         # mPyBlendShape is built on MPxDeformerNode, not MPxBlendShape --
         # deliberately. MPxBlendShape DOES ship (api1, Maya 2024 + 2026); it
         # is unusable here because it never calls deform() and its native
@@ -163,10 +163,10 @@ REGISTRY: dict[str, NodeTypeSpec] = {
     # stock ``file`` node, with the colour-space / kernel / sampling math
     # exposed in the Init tab and the VP2 plumbing in the Viewport tab.
     "mPyFile": NodeTypeSpec(
-        native_type="mPyFile",
-        wrapper_module="mpynode.wrappers.mpy_file",
-        wrapper_class_name="MPyFile",
-        description="Expression-driven file texture (Hypershade + VP2 shading).",
+        native_type        = "mPyFile",
+        wrapper_module     = "mpynode.wrappers.mpy_file",
+        wrapper_class_name = "MPyFile",
+        description        = "Expression-driven file texture (Hypershade + VP2 shading).",
         native_class=_MPXNODE_A2, api=2, doc_slug=_MPXNODE_SLUG,
     ),
     # DG generator node types for curve / surface output, mirroring mPyMesh's
@@ -175,17 +175,17 @@ REGISTRY: dict[str, NodeTypeSpec] = {
     # MPx subclasses and inherit MPyNode, which provides the attr / variable /
     # init / profile / watch surface the Node Designer panes need.
     "mPyNurbsCurve": NodeTypeSpec(
-        native_type="mPyNurbsCurve",
-        wrapper_module="mpynode.wrappers.mpy_nurbs_curve",
-        wrapper_class_name="MPyNurbsCurve",
-        description="DG NURBS curve generator (connect outCurve \u2192 curveShape.create).",
+        native_type        = "mPyNurbsCurve",
+        wrapper_module     = "mpynode.wrappers.mpy_nurbs_curve",
+        wrapper_class_name = "MPyNurbsCurve",
+        description        = "DG NURBS curve generator (connect outCurve \u2192 curveShape.create).",
         native_class=_MPXNODE_A2, api=2, doc_slug=_MPXNODE_SLUG,
     ),
     "mPyNurbsSurface": NodeTypeSpec(
-        native_type="mPyNurbsSurface",
-        wrapper_module="mpynode.wrappers.mpy_nurbs_surface",
-        wrapper_class_name="MPyNurbsSurface",
-        description="DG NURBS surface generator (connect outSurface \u2192 nurbsShape.create).",
+        native_type        = "mPyNurbsSurface",
+        wrapper_module     = "mpynode.wrappers.mpy_nurbs_surface",
+        wrapper_class_name = "MPyNurbsSurface",
+        description        = "DG NURBS surface generator (connect outSurface \u2192 nurbsShape.create).",
         native_class=_MPXNODE_A2, api=2, doc_slug=_MPXNODE_SLUG,
     ),
 }

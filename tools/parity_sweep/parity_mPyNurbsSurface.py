@@ -12,10 +12,10 @@ for p in ("mpynode_api1", "mpynode_api2"):
     if not cmds.pluginInfo(p, q=True, loaded=True):
         cmds.loadPlugin(p, quiet=True)
 
-BUILD = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fixtures", "mPyNurbsSurface")
+BUILD   = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fixtures", "mPyNurbsSurface")
 ORIG_MA = os.path.join(BUILD, "mPyNurbsSurface_waveSurf_original.ma")
-BUNDLE = os.path.join(BUILD, "waveSurf.bundle")
-TOL = 1e-4
+BUNDLE  = os.path.join(BUILD, "waveSurf.bundle")
+TOL     = 1e-4
 
 # --- open original scene (provides python ref node 'waveSurfSrc') ---
 cmds.file(ORIG_MA, open=True, force=True)
@@ -32,13 +32,13 @@ print("COMP_NODE", comp)
 def read_cvs(node):
     sel = om.MSelectionList()
     sel.add(node)
-    obj = sel.getDependNode(0)
-    fn = om.MFnDependencyNode(obj)
-    plug = fn.findPlug("outSurface", True)
+    obj      = sel.getDependNode(0)
+    fn       = om.MFnDependencyNode(obj)
+    plug     = fn.findPlug("outSurface", True)
     surf_obj = plug.asMObject()  # forces eval
-    sfn = om.MFnNurbsSurface(surf_obj)
-    pts = sfn.cvPositions(om.MSpace.kObject)
-    out = []
+    sfn      = om.MFnNurbsSurface(surf_obj)
+    pts      = sfn.cvPositions(om.MSpace.kObject)
+    out      = []
     for i in range(len(pts)):
         out.append((pts[i].x, pts[i].y, pts[i].z))
     return out
@@ -46,9 +46,9 @@ def read_cvs(node):
 
 phases = [0.0, 0.25, 0.5, 1.0, 1.5708, 2.0, 3.14159, 5.5]
 maxerr = 0.0
-ncomp = 0
-nsamp = 0
-fail = False
+ncomp  = 0
+nsamp  = 0
+fail   = False
 
 for ph in phases:
     cmds.setAttr("waveSurfSrc.phase", ph)

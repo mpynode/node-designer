@@ -50,7 +50,7 @@ class _Env:
     """Set/restore env vars around a block (None removes)."""
 
     def __init__(self, **kw):
-        self._kw = kw
+        self._kw  = kw
         self._old = {}
 
     def __enter__(self):
@@ -151,7 +151,7 @@ class TestTheLockIsOffByDefault(unittest.TestCase):
 class TestMutualExclusionAcrossProcesses(unittest.TestCase):
     def test_two_processes_never_benchmark_at_the_same_time(self):
         with tempfile.TemporaryDirectory() as tmp:
-            lock = os.path.join(tmp, "bench.lock")
+            lock    = os.path.join(tmp, "bench.lock")
             journal = os.path.join(tmp, "journal.txt")
             procs = [_spawn(lock, journal, "p%d" % i, hold_s=0.6)
                      for i in range(4)]
@@ -174,12 +174,12 @@ class TestMutualExclusionAcrossProcesses(unittest.TestCase):
 
     def test_a_waiter_actually_waits_for_the_holder(self):
         with tempfile.TemporaryDirectory() as tmp:
-            lock = os.path.join(tmp, "bench.lock")
+            lock    = os.path.join(tmp, "bench.lock")
             journal = os.path.join(tmp, "journal.txt")
-            holder = _spawn(lock, journal, "holder", hold_s=2.0)
+            holder  = _spawn(lock, journal, "holder", hold_s=2.0)
             self.assertTrue(_wait_for(journal, "ENTER holder"),
                             "holder never acquired")
-            t0 = time.time()
+            t0     = time.time()
             waiter = _spawn(lock, journal, "waiter", hold_s=0.0)
             waiter.communicate(timeout=180)
             waited = time.time() - t0
@@ -199,9 +199,9 @@ class TestACrashedHolderDoesNotWedgeTheFleet(unittest.TestCase):
 
     def test_sigkilled_holder_releases_the_lock(self):
         with tempfile.TemporaryDirectory() as tmp:
-            lock = os.path.join(tmp, "bench.lock")
+            lock    = os.path.join(tmp, "bench.lock")
             journal = os.path.join(tmp, "journal.txt")
-            holder = _spawn(lock, journal, "zombie", mode="hang")
+            holder  = _spawn(lock, journal, "zombie", mode="hang")
             self.assertTrue(_wait_for(journal, "HANGING zombie"),
                             "hanging holder never acquired the lock")
             _reap(holder)
@@ -221,9 +221,9 @@ class TestACrashedHolderDoesNotWedgeTheFleet(unittest.TestCase):
 class TestAWedgedHolderIsALoudError(unittest.TestCase):
     def test_waiting_past_the_timeout_raises_instead_of_hanging(self):
         with tempfile.TemporaryDirectory() as tmp:
-            lock = os.path.join(tmp, "bench.lock")
+            lock    = os.path.join(tmp, "bench.lock")
             journal = os.path.join(tmp, "journal.txt")
-            holder = _spawn(lock, journal, "wedged", mode="hang")
+            holder  = _spawn(lock, journal, "wedged", mode="hang")
             self.assertTrue(_wait_for(journal, "HANGING wedged"))
             try:
                 with _Env(MPYNODE_BENCH_LOCK=lock,
@@ -375,7 +375,7 @@ class TestACancelDuringTheLockWaitIsACancel(unittest.TestCase):
 
         with tempfile.TemporaryDirectory() as tmp:
             lock = os.path.join(tmp, "bench.lock")
-            cpp = os.path.join(tmp, "kDTree.cpp")
+            cpp  = os.path.join(tmp, "kDTree.cpp")
             with open(cpp, "w") as fh:
                 fh.write("void f(){ return; }\n")
             with _Env(MPYNODE_BENCH_LOCK=lock), _hold(lock):

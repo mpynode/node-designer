@@ -25,12 +25,12 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 # harness lives out in the suite, so -I pivots on the repo root (three
 # dirname()s up from tests/compile/native) and descends back into scripts/.
 _ROOT = os.path.dirname(os.path.dirname(os.path.dirname(HERE)))
-_INC = os.path.join(_ROOT, "scripts", "mpynode", "native", "compiler")
-SRC = os.path.join(HERE, "nd_intnan_test.cpp")
+_INC  = os.path.join(_ROOT, "scripts", "mpynode", "native", "compiler")
+SRC   = os.path.join(HERE, "nd_intnan_test.cpp")
 
-IMIN = int(np.iinfo(np.int64).min)
-NAN = np.nan
-INF = np.inf
+IMIN  = int(np.iinfo(np.int64).min)
+NAN   = np.nan
+INF   = np.inf
 
 
 def _compile_and_run():
@@ -81,7 +81,7 @@ def _msvc_float(v):
 
 def _parse(text):
     """-> {(case, name): 1-D ndarray}, plus a DONE sentinel check."""
-    got = {}
+    got  = {}
     done = False
     for line in text.splitlines():
         t = line.split()
@@ -109,31 +109,31 @@ def _expected():
     exp = {}
     with np.errstate(divide="ignore", invalid="ignore", over="ignore"):
         # 1 / 2: integer // and % with 0 and -1 divisors.
-        a = np.array([7, -7, 0, 5, -5, IMIN, IMIN, IMIN, 9, -9, IMIN], dtype=np.int64)
-        b = np.array([0, 0, 0, -1, -1, -1, 0, 1, 4, 4, 3], dtype=np.int64)
+        a                             = np.array([7, -7, 0, 5, -5, IMIN, IMIN, IMIN, 9, -9, IMIN], dtype=np.int64)
+        b                             = np.array([0, 0, 0, -1, -1, -1, 0, 1, 4, 4, 3], dtype=np.int64)
         exp[("int_degenerate", "fd")] = a // b
         exp[("int_degenerate", "md")] = np.mod(a, b)
 
-        xs = np.array([7, -7, 0, IMIN, IMIN, -13], dtype=np.int64)
-        ys = np.array([0, 0, 0, -1, 0, -1], dtype=np.int64)
+        xs                        = np.array([7, -7, 0, IMIN, IMIN, -13], dtype=np.int64)
+        ys                        = np.array([0, 0, 0, -1, 0, -1], dtype=np.int64)
         exp[("int_scalar", "fd")] = xs // ys
         exp[("int_scalar", "md")] = np.mod(xs, ys)
 
         # 3: float // and % by zero.
-        fa = np.array([5.0, -5.0, 0.0, -0.0])
-        fb = np.zeros(4)
+        fa                           = np.array([5.0, -5.0, 0.0, -0.0])
+        fb                           = np.zeros(4)
         exp[("float_divzero", "fd")] = fa // fb
         exp[("float_divzero", "md")] = np.mod(fa, fb)
 
         # 4: minimum/maximum, flat.
-        xa = np.array([NAN, 1.0, NAN, 2.0, -0.0, INF, -INF, 3.0])
-        xb = np.array([1.0, NAN, NAN, 7.0, 0.0, 1.0, 1.0, NAN])
+        xa                         = np.array([NAN, 1.0, NAN, 2.0, -0.0, INF, -INF, 3.0])
+        xb                         = np.array([1.0, NAN, NAN, 7.0, 0.0, 1.0, 1.0, NAN])
         exp[("minmax_flat", "mx")] = np.maximum(xa, xb)
         exp[("minmax_flat", "mn")] = np.minimum(xa, xb)
 
         # 5: minimum/maximum, broadcast (3,1) x (3,2).
-        col = np.array([NAN, 2.0, -1.0]).reshape(3, 1)
-        m2 = np.array([1.0, NAN, NAN, 5.0, 4.0, NAN]).reshape(3, 2)
+        col                         = np.array([NAN, 2.0, -1.0]).reshape(3, 1)
+        m2                          = np.array([1.0, NAN, NAN, 5.0, 4.0, NAN]).reshape(3, 2)
         exp[("minmax_bcast", "mx")] = np.maximum(col, m2).ravel()
         exp[("minmax_bcast", "mn")] = np.minimum(col, m2).ravel()
 
@@ -141,24 +141,24 @@ def _expected():
         m = np.array([[1.0, NAN, 3.0],
                       [4.0, 5.0, 6.0],
                       [NAN, 8.0, 9.0]])
-        exp[("reduce_nan", "mx1")] = m.max(1)
-        exp[("reduce_nan", "mn1")] = m.min(1)
-        exp[("reduce_nan", "mx0")] = m.max(0)
-        exp[("reduce_nan", "mn0")] = m.min(0)
+        exp[("reduce_nan", "mx1")]   = m.max(1)
+        exp[("reduce_nan", "mn1")]   = m.min(1)
+        exp[("reduce_nan", "mx0")]   = m.max(0)
+        exp[("reduce_nan", "mn0")]   = m.min(0)
         exp[("reduce_nan", "mxall")] = np.array([m.max()])
         exp[("reduce_nan", "mnall")] = np.array([m.min()])
 
         # 7: integer max/min unaffected.
-        ia = np.array([3, -4, 0, IMIN], dtype=np.int64)
-        ib = np.array([1, 5, 0, 7], dtype=np.int64)
-        exp[("int_minmax", "mx")] = np.maximum(ia, ib)
-        exp[("int_minmax", "mn")] = np.minimum(ia, ib)
+        ia                         = np.array([3, -4, 0, IMIN], dtype=np.int64)
+        ib                         = np.array([1, 5, 0, 7], dtype=np.int64)
+        exp[("int_minmax", "mx")]  = np.maximum(ia, ib)
+        exp[("int_minmax", "mn")]  = np.minimum(ia, ib)
         exp[("int_minmax", "rmx")] = np.array([ia.max()], dtype=np.int64)
         exp[("int_minmax", "rmn")] = np.array([ia.min()], dtype=np.int64)
 
         # 8: scalar apply_binop Min/Max.
-        ls = np.array([NAN, 1.0, NAN, 2.0])
-        rs = np.array([1.0, NAN, NAN, 7.0])
+        ls                           = np.array([NAN, 1.0, NAN, 2.0])
+        rs                           = np.array([1.0, NAN, NAN, 7.0])
         exp[("minmax_scalar", "mx")] = np.maximum(ls, rs)
         exp[("minmax_scalar", "mn")] = np.minimum(ls, rs)
     return {k: np.asarray(v).ravel() for k, v in exp.items()}
@@ -186,7 +186,7 @@ def main():
     if not done:
         print("HARNESS DID NOT REACH DONE\n", text)
         sys.exit(1)
-    exp = _expected()
+    exp   = _expected()
     fails = []
     for key in sorted(exp):
         if key not in got:

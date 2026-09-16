@@ -94,7 +94,7 @@ class TestMeshUnion(unittest.TestCase):
     def test_union_drops_derived_channels(self):
         a, b = _quad(0.0), _quad(5.0)
         a.normals = np.tile([0.0, 0.0, 1.0], (4, 1))
-        c = a + b
+        c         = a + b
         self.assertIsNone(c.normals)
 
 
@@ -110,7 +110,7 @@ class TestMeshDifference(unittest.TestCase):
     def _quad_shifted(self, eps):
         """The x=5 quad nudged ``eps`` along +x, so every corner sits exactly
         ``eps`` from its partner in the union."""
-        q = _quad(5.0)
+        q        = _quad(5.0)
         q.points = q.points + np.array([eps, 0.0, 0.0])
         return q
 
@@ -143,26 +143,26 @@ class TestMeshDifference(unittest.TestCase):
             (self._union() - self._quad_shifted(1.1e-6)).counts, [4, 4])
 
     def test_no_coincident_vertex_leaves_the_mesh_untouched(self):
-        m = self._union()
+        m         = self._union()
         m.normals = np.tile([0.0, 0.0, 1.0], (8, 1))
-        c = m - _quad(50.0)
+        c         = m - _quad(50.0)
         np.testing.assert_array_equal(c.counts, [4, 4])
         self.assertEqual(c.points.shape, (8, 3))
         # no face was removed, so the derived channels still describe the mesh
         self.assertIsNotNone(c.normals)
 
     def test_removing_a_face_drops_the_derived_channels(self):
-        m = self._union()
+        m         = self._union()
         m.normals = np.tile([0.0, 0.0, 1.0], (8, 1))
-        m._tags = {"all": {"type": "face", "indices": np.array([0, 1])}}
-        c = m - _quad(5.0)
+        m._tags   = {"all": {"type": "face", "indices": np.array([0, 1])}}
+        c         = m - _quad(5.0)
         self.assertIsNone(c.normals)
         self.assertEqual(c.component_tags, {})
 
     def test_subtracting_itself_yields_an_empty_mesh(self):
         c = _quad(0.0) - _quad(0.0)
         self.assertEqual(c.points.shape, (0, 3))
-        self.assertEqual(c.counts.size, 0)
+        self.assertEqual(c.counts.size,  0)
         self.assertEqual(c.indices.size, 0)
 
     def test_sub_does_not_mutate_either_operand(self):
@@ -189,7 +189,7 @@ class TestMeshDifference(unittest.TestCase):
 class TestMeshMorph(unittest.TestCase):
 
     def test_add_morph_applies_offsets_at_indices(self):
-        m = _quad(0.0)
+        m   = _quad(0.0)
         out = m + _FakeMorph([1, 3], [[0, 0, 2.0], [0, 0, -1.0]])
         np.testing.assert_allclose(out.points[1], [1, 0, 2.0])
         np.testing.assert_allclose(out.points[3], [0, 1, -1.0])
@@ -198,12 +198,12 @@ class TestMeshMorph(unittest.TestCase):
     def test_duplicate_indices_ACCUMULATE(self):
         """``points[idx] += off`` would keep only the last write. np.add.at
         accumulates -- this is the whole reason for using it."""
-        m = _quad(0.0)
+        m   = _quad(0.0)
         out = m + _FakeMorph([2, 2, 2], [[0, 0, 1.0]] * 3)
         np.testing.assert_allclose(out.points[2][2], 3.0)
 
     def test_subtract_morph_is_the_mirror(self):
-        m = _quad(0.0)
+        m  = _quad(0.0)
         mo = _FakeMorph([1], [[0, 0, 5.0]])
         np.testing.assert_allclose((m + mo - mo).points, m.points)
 
@@ -351,7 +351,7 @@ class TestNurbsCurveConcat(unittest.TestCase):
         np.testing.assert_allclose(c.points[4], [10, 0, 0])
 
     def test_knots_are_dropped_for_rebuild(self):
-        a = self._curve(0.0)
+        a       = self._curve(0.0)
         a.knots = np.linspace(0.0, 1.0, 6)
         self.assertIsNone((a + self._curve(10.0)).knots)
 
@@ -389,7 +389,7 @@ class TestAttachedMeshEdits(unittest.TestCase):
         from mpynode._api2.geometry import Mesh
         mc.file(new=True, force=True)
         cube = mc.polyCube(constructionHistory=False)[0]
-        sel = om.MSelectionList()
+        sel  = om.MSelectionList()
         sel.add(cube)
         dag = sel.getDagPath(0)
         dag.extendToShape()
@@ -408,7 +408,7 @@ class TestAttachedMeshEdits(unittest.TestCase):
         self.assertEqual(self._attached_cube().points.shape, (8, 3))
 
     def test_iadd_morph_on_an_attached_mesh_detaches(self):
-        m = self._attached_cube()
+        m      = self._attached_cube()
         before = float(m.points[0][1])
         m += _FakeMorph([0], [[0.0, 10.0, 0.0]])
         self.assertFalse(m.__dict__.get("_attached"),
@@ -420,13 +420,13 @@ class TestAttachedMeshEdits(unittest.TestCase):
         m = self._attached_cube()
         m += _quad(20.0)
         self.assertFalse(m.__dict__.get("_attached"))
-        self.assertEqual(m.points.shape, (12, 3))
-        self.assertEqual(int(m.counts.size), 7)      # 6 cube faces + 1 quad
-        self.assertEqual(int(m.indices.max()), 11)   # quad rebased past vert 7
+        self.assertEqual(m.points.shape,       (12, 3))
+        self.assertEqual(int(m.counts.size),   7)   # 6 cube faces + 1 quad
+        self.assertEqual(int(m.indices.max()), 11)  # quad rebased past vert 7
 
     def test_isub_mesh_on_an_attached_mesh_detaches(self):
         from mpynode._api2.geometry import Mesh
-        m = self._attached_cube()
+        m     = self._attached_cube()
         face0 = m.points[m.indices[:4]]                 # one cube face
         m -= Mesh(points=face0, counts=np.array([4]),
                   indices=np.arange(4))
@@ -475,9 +475,9 @@ class TestGeometryDisplayName(unittest.TestCase):
         from mpynode._api2 import helpers as H
 
         mc.file(new=True, force=True)
-        cube = mc.polyCube(constructionHistory=False)[0]
+        cube  = mc.polyCube(constructionHistory=False)[0]
         shape = mc.listRelatives(cube, shapes=True)[0]
-        dst = mc.createNode("transform", name="probe")
+        dst   = mc.createNode("transform", name="probe")
         mc.addAttr(dst, longName="inGeo", dataType="mesh")
         mc.connectAttr(shape + ".outMesh", dst + ".inGeo", force=True)
 
@@ -496,7 +496,7 @@ class TestGeometryDisplayName(unittest.TestCase):
 
         mesh, _shape = self._connected_mesh()
         calls = []
-        orig = G.om.MFnDependencyNode
+        orig  = G.om.MFnDependencyNode
 
         class Counting(orig):
             def __init__(self, *a, **k):
@@ -533,7 +533,7 @@ class TestGeometryDisplayName(unittest.TestCase):
 
         mc.file(new=True, force=True)
         cube = mc.polyCube(constructionHistory=False)[0]
-        sel = om.MSelectionList()
+        sel  = om.MSelectionList()
         sel.add(cube)
         dag = sel.getDagPath(0)
         dag.extendToShape()

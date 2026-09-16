@@ -27,8 +27,8 @@ The standard idiom:
 
 ```python
 import numpy as np
-mesh = self.outputGeometry[0]      # writable MFnMesh handle
-rest = mesh.getPoints()            # (N, 3) float64 numpy
+mesh = self.outputGeometry[0]  # writable MFnMesh handle
+rest = mesh.getPoints()        # (N, 3) float64 numpy
 out  = rest.copy()
 out[:, 1] += float(self.envelope) * np.sin(rest[:, 0])
 mesh.setPoints(out)                # commit
@@ -136,7 +136,7 @@ mc.file(new=True, force=True)
 
 # Build a flat polyPlane and attach the deformer in one call.
 plane = mc.polyPlane(name="targetPlane", sx=20, sy=20, w=4, h=4)[0]
-d = MPyDeformer.create_on(plane, name="myDeformer")
+d     = MPyDeformer.create_on(plane, name="myDeformer")
 
 # Deform contract: read/mutate/commit through self.outputGeometry[0].
 d.set_init_expression("import numpy as np")
@@ -152,8 +152,8 @@ mc.setAttr(d.get_name() + ".envelope", 1.0)
 # Force evaluation: querying the deformed plane's vertex positions pulls
 # outputGeometry through the deformer's deform() in headless mayapy.
 verts = mc.xform(plane + ".vtx[*]", q=True, ws=True, t=True)
-ys = verts[1::3]
-peak = max(abs(y) for y in ys)
+ys    = verts[1::3]
+peak  = max(abs(y) for y in ys)
 assert peak > 0.05, "deformer did not move any vertex (peak Y=%r)" % peak
 print("PASS deformed peak |Y| = %.4f" % peak)
 ```

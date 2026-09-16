@@ -69,7 +69,7 @@ def collect():
             rows.append({"template": rel, "error": repr(exc)})
             continue
         try:
-            spec = spec_from_mpn_payload(data)
+            spec      = spec_from_mpn_payload(data)
             type_name = _type_name_for(spec)
         except Exception as exc:                                # noqa: BLE001
             rows.append({"template": rel, "error": "spec: %r" % (exc,)})
@@ -90,11 +90,11 @@ def collect():
         except Exception:                                       # noqa: BLE001
             cmds_found = []
         rows.append({
-            "template": rel,
-            "type_name": type_name,
-            "source_node": data.get("node_name"),
-            "native_type": data.get("native_type"),
-            "commands": [c["name"] for c in cmds_found],
+            "template":     rel,
+            "type_name":    type_name,
+            "source_node":  data.get("node_name"),
+            "native_type":  data.get("native_type"),
+            "commands":     [c["name"] for c in cmds_found],
             "lower_errors": _lower_errors(spec, type_name),
         })
     return rows
@@ -135,7 +135,7 @@ def audit(rows):
         RESERVED_NODE_TYPE_NAMES)
 
     problems = []
-    info = {}
+    info     = {}
 
     # ---- what Maya already owns -------------------------------------------
     # Two oracles: dir(maya.cmds) covers registered commands, and MEL `exists`
@@ -157,7 +157,7 @@ def audit(rows):
         existing_types = set(mc.allNodeTypes() or [])
     except Exception:                                           # noqa: BLE001
         existing_types = set()
-    info["maya_commands"] = len(existing_cmds)
+    info["maya_commands"]   = len(existing_cmds)
     info["maya_node_types"] = len(existing_types)
 
     # ---- command names -----------------------------------------------------
@@ -169,18 +169,18 @@ def audit(rows):
     for name, owners in sorted(cmd_owners.items()):
         if len(owners) > 1:
             problems.append({
-                "kind": "command-name-duplicate",
-                "name": name,
+                "kind":   "command-name-duplicate",
+                "name":   name,
                 "owners": owners,
-                "why": "two templates register the same command; the 2nd "
+                "why":    "two templates register the same command; the 2nd "
                        "registerCommand fails and aborts the whole plugin",
             })
         if _taken(name):
             problems.append({
-                "kind": "command-shadows-maya",
-                "name": name,
+                "kind":   "command-shadows-maya",
+                "name":   name,
                 "owners": owners,
-                "why": "a Maya command of this name already exists",
+                "why":    "a Maya command of this name already exists",
             })
 
     # ---- node type names ---------------------------------------------------
@@ -193,55 +193,55 @@ def audit(rows):
     for name, owners in sorted(type_owners.items()):
         if len(owners) > 1:
             problems.append({
-                "kind": "node-type-duplicate",
-                "name": name,
+                "kind":   "node-type-duplicate",
+                "name":   name,
                 "owners": owners,
-                "why": "two templates compile to the same node type name; the "
+                "why":    "two templates compile to the same node type name; the "
                        "2nd registerNode fails and aborts the whole plugin",
             })
         if name.lower() in RESERVED_NODE_TYPE_NAMES:
             problems.append({
-                "kind": "node-type-reserved",
-                "name": name,
+                "kind":   "node-type-reserved",
+                "name":   name,
                 "owners": owners,
-                "why": "shadows an interpreted mPy* type",
+                "why":    "shadows an interpreted mPy* type",
             })
         if name in existing_types:
             problems.append({
-                "kind": "node-type-shadows-maya",
-                "name": name,
+                "kind":   "node-type-shadows-maya",
+                "name":   name,
                 "owners": owners,
-                "why": "a Maya node type of this name already exists",
+                "why":    "a Maya node type of this name already exists",
             })
 
     # ---- command lowerability ----------------------------------------------
     for r in rows:
         for msg in r.get("lower_errors") or []:
             problems.append({
-                "kind": "command-not-lowerable",
-                "name": msg,
+                "kind":   "command-not-lowerable",
+                "name":   msg,
                 "owners": [r["template"]],
-                "why": "no companion plug-in exists any more, so this command "
+                "why":    "no companion plug-in exists any more, so this command "
                        "would be ABSENT from the bundle (and it costs the node "
                        "all of its other commands too)",
             })
 
     info["templates"] = len(rows)
-    info["errors"] = [r for r in rows if r.get("error")]
+    info["errors"]    = [r for r in rows if r.get("error")]
     # A template that could not be read contributes NO names, so a run where
     # everything failed would otherwise report "no clashes" -- a false pass on
     # zero data. Unreadable templates are themselves a fatal audit result.
     for r in info["errors"]:
         problems.append({
-            "kind": "template-unreadable",
-            "name": r["template"],
+            "kind":   "template-unreadable",
+            "name":   r["template"],
             "owners": [r["template"]],
-            "why": "could not be read, so its names were NOT audited: %s"
+            "why":    "could not be read, so its names were NOT audited: %s"
                    % r["error"],
         })
-    info["total_commands"] = sum(len(r.get("commands") or []) for r in rows)
+    info["total_commands"]  = sum(len(r.get("commands") or []) for r in rows)
     info["unique_commands"] = len(cmd_owners)
-    info["unique_types"] = len(type_owners)
+    info["unique_types"]    = len(type_owners)
     return problems, info
 
 

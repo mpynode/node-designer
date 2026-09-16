@@ -77,7 +77,7 @@ def get_or_create_stats(node_obj) -> dict:
     MObject. If Maya recycled the hash code (e.g. after ``file(new=True)``
     or node deletion), the stale entry is evicted before the lookup.
     """
-    h = _get_node_hash(node_obj)
+    h     = _get_node_hash(node_obj)
     stats = _INSTANCE_STATS.get(h)
     if stats is not None:
         stored_handle = stats.get("_handle")
@@ -87,17 +87,17 @@ def get_or_create_stats(node_obj) -> dict:
             stats = None
     if stats is None:
         stats = {
-            "last_us": 0.0,
-            "avg_us": 0.0,
-            "min_us": 0.0,
-            "max_us": 0.0,
-            "count": 0,
+            "last_us":    0.0,
+            "avg_us":     0.0,
+            "min_us":     0.0,
+            "max_us":     0.0,
+            "count":      0,
             "deep_table": None,
             # Internal book-keeping for transition detection.
             "_prev_profile_on": False,
-            "_prev_deep_on": False,
-            "_prev_watch_on": False,
-            "_handle": _get_node_handle(node_obj),
+            "_prev_deep_on":    False,
+            "_prev_watch_on":   False,
+            "_handle":          _get_node_handle(node_obj),
         }
         _INSTANCE_STATS[h] = stats
     return stats
@@ -115,7 +115,7 @@ def update_stats(stats: dict, elapsed_us: float) -> None:
     Uses cumulative running mean so we never overflow on long sessions.
     First sample initializes min/max/avg to that sample.
     """
-    n = stats["count"]
+    n                = stats["count"]
     stats["last_us"] = float(elapsed_us)
     if n == 0:
         stats["avg_us"] = float(elapsed_us)

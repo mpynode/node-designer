@@ -141,7 +141,7 @@ def _make_fixture_png(path):
     try:
         import maya.api.OpenMaya as om
 
-        w = h = 8
+        w   = h = 8
         buf = bytearray()
         for i in range(w * h):
             buf += bytes(((i * 7) % 256, (i * 13) % 256, (i * 29) % 256, 255))
@@ -163,7 +163,7 @@ class TestBlessedExtractionLowers(unittest.TestCase):
     def setUp(self):
         from mpynode.native.spec import spec_extractor
 
-        self.f = _build_blessed_mpyfile()
+        self.f    = _build_blessed_mpyfile()
         self.spec = spec_extractor.extract_spec(self.f.get_name())
 
     def test_presets_and_coords_captured_as_inputs(self):
@@ -190,8 +190,8 @@ class TestBlessedExtractionLowers(unittest.TestCase):
         from mpynode.native import compiler as codegen
 
         cpp = codegen.generate_cpp(self.spec, for_port=True)
-        self.assertIn("nd_tex_load_linear", cpp)   # verified load kernel
-        self.assertIn("nd_tex_sample", cpp)         # verified sampler
+        self.assertIn("nd_tex_load_linear",   cpp)  # verified load kernel
+        self.assertIn("nd_tex_sample",        cpp)  # verified sampler
         self.assertIn("NdTexCache _texCache", cpp)  # per-instance cache member
         # fully lowered, so no AI PORT region: compiled compute is pure C++.
         self.assertNotIn(codegen.PORT_BEGIN, cpp)
@@ -201,8 +201,8 @@ class TestBlessedExtractionLowers(unittest.TestCase):
         from mpynode.native.compiler import nd_lower
 
         members = codegen._members(self.spec)
-        ins = [m for m in members if m["kind"] == "inputs"]
-        outs = [m for m in members if m["kind"] == "outputs"]
+        ins     = [m for m in members if m["kind"] == "inputs"]
+        outs    = [m for m in members if m["kind"] == "outputs"]
         lowered = nd_lower.try_lower_compute(ins, outs, self.spec)
         self.assertIsNotNone(
             lowered, "blessed compute must lower deterministically; None means "
@@ -228,10 +228,10 @@ class TestBlessedCompilesClean(unittest.TestCase):
         if not maya:
             self.skipTest("no Maya devkit headers for the running mayapy")
 
-        f = _build_blessed_mpyfile()
+        f    = _build_blessed_mpyfile()
         spec = spec_extractor.extract_spec(f.get_name())
-        cpp = codegen.generate_cpp(spec, for_port=True)
-        inc = toolchain.maya_include_dir(maya)
+        cpp  = codegen.generate_cpp(spec, for_port=True)
+        inc  = toolchain.maya_include_dir(maya)
         native_dir = os.path.join(os.environ["MPYNODE_ROOT"], "scripts",
                                   "mpynode", "native")
 
@@ -265,7 +265,7 @@ class TestBlessedLoadedParity(unittest.TestCase):
         # BAREBONES inline fast path. Force it off, restore after.
         from mpynode._api2.mpy_file import MPyFile as _NodeCls
 
-        self._prev_bb = _NodeCls.BAREBONES_MODE
+        self._prev_bb           = _NodeCls.BAREBONES_MODE
         _NodeCls.BAREBONES_MODE = False
         self.addCleanup(setattr, _NodeCls, "BAREBONES_MODE", self._prev_bb)
 
@@ -277,9 +277,9 @@ class TestBlessedLoadedParity(unittest.TestCase):
 
         mc.setAttr(node + ".fileName", png, type="string")
         mc.setAttr(node + ".colorSpace", color_space)
-        mc.setAttr(node + ".wrapModeU", wrap)
-        mc.setAttr(node + ".wrapModeV", wrap)
-        mc.setAttr(node + ".preFilter", 0)
+        mc.setAttr(node + ".wrapModeU",  wrap)
+        mc.setAttr(node + ".wrapModeV",  wrap)
+        mc.setAttr(node + ".preFilter",  0)
         for c in ("borderColorR", "borderColorG", "borderColorB"):
             try:
                 mc.setAttr(node + "." + c, 0.0)
@@ -325,7 +325,7 @@ class TestBlessedLoadedParity(unittest.TestCase):
             self.skipTest("could not write an MImage PNG fixture on this host")
 
         # -- interpreted node + extracted spec --
-        f = _build_blessed_mpyfile(name="blessedParityNode")
+        f    = _build_blessed_mpyfile(name="blessedParityNode")
         node = f.get_name()
         spec = spec_extractor.extract_spec(node)
 
@@ -348,17 +348,17 @@ class TestBlessedLoadedParity(unittest.TestCase):
         compiled = mc.createNode(type_name, name="compiledBlessed")
 
         # -- compare over a couple of colorSpace / wrapMode configs --
-        configs = [(0, 0), (9, 1)]  # (colorSpace, wrapMode): sRGB/wrap, ACEScg/clamp
-        maxerr = 0.0
+        configs    = [(0, 0), (9, 1)]  # (colorSpace, wrapMode): sRGB/wrap, ACEScg/clamp
+        maxerr     = 0.0
         had_signal = False
         for cs, wrap in configs:
             interp = self._drive(node, png, cs, wrap)
-            comp = self._drive(compiled, png, cs, wrap)
+            comp   = self._drive(compiled, png, cs, wrap)
             for uv in _UV_GRID:
                 if interp[uv][0] > 1e-4 or interp[uv][1] > 1e-4:
                     had_signal = True
                 for ch in range(4):
-                    d = abs(interp[uv][ch] - comp[uv][ch])
+                    d      = abs(interp[uv][ch] - comp[uv][ch])
                     maxerr = max(maxerr, d)
                     self.assertLessEqual(
                         d, TOL,

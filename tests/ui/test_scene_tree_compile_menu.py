@@ -81,10 +81,10 @@ class _PreselFake:
     """Duck-typed CompileDialog for preselect_node (only what it touches)."""
 
     def __init__(self, nodes, busy=False):
-        self._busy = busy
+        self._busy        = busy
         self._scene_nodes = list(nodes)
-        self._checked = set()
-        self._refreshed = 0
+        self._checked     = set()
+        self._refreshed   = 0
 
     def _refresh_table(self):
         self._refreshed += 1
@@ -134,10 +134,10 @@ class TestConvertCompileMenuStates(unittest.TestCase):
         from mpynode._base import commands
         from mpynode.ui.widgets.scene_tree import NDSceneTree, NDSceneTreeItem
 
-        orig_conv = commands.is_convertible_to_cpp
-        orig_isc = commands.is_converted
+        orig_conv                      = commands.is_convertible_to_cpp
+        orig_isc                       = commands.is_converted
         commands.is_convertible_to_cpp = lambda n, t: convertible
-        commands.is_converted = lambda n: converted
+        commands.is_converted          = lambda n: converted
         self.addCleanup(setattr, commands, "is_convertible_to_cpp", orig_conv)
         self.addCleanup(setattr, commands, "is_converted", orig_isc)
 
@@ -145,9 +145,9 @@ class TestConvertCompileMenuStates(unittest.TestCase):
         self.addCleanup(tree.deleteLater)
         item = NDSceneTreeItem(tree, "fakeNode1", "mPyMesh")
         tree.setCurrentItem(item)
-        menu = tree._build_context_menu()
+        menu   = tree._build_context_menu()
         states = {}
-        order = []
+        order  = []
         for a in menu.actions():
             txt = a.text()
             if txt:

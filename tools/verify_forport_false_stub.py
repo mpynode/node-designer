@@ -51,9 +51,9 @@ def make_spec(compute_src, node_type, arr_input=False):
     w.add_input_attr("pixels", "float")
   w.add_output_attr("result", "float")
   w.set_compute_expression(compute_src)
-  spec = spec_extractor.extract_spec(w.get_name())
+  spec                                = spec_extractor.extract_spec(w.get_name())
   spec["suggested"]["node_type_name"] = node_type
-  spec["suggested"]["class_name"] = node_type
+  spec["suggested"]["class_name"]     = node_type
   return spec
 
 
@@ -74,7 +74,7 @@ def section_b(spec, label):
   from mpynode.native import compiler as codegen
   cpp = codegen.generate_cpp(spec, for_port=False)
   # print from the compute() signature to the end
-  idx = cpp.find("::compute(")
+  idx   = cpp.find("::compute(")
   start = cpp.rfind("\n", 0, idx)
   print(cpp[start:])
   print("\n---- ASSERTIONS ----")
@@ -100,18 +100,18 @@ def section_c(cpp, node_type):
   from mpynode.native.toolchain import toolchain
 
   outdir = tempfile.mkdtemp(prefix="forport-false-")
-  src = os.path.join(outdir, node_type + ".cpp")
+  src    = os.path.join(outdir, node_type + ".cpp")
   with open(src, "w") as f:
     f.write(cpp)
   plugin = os.path.join(outdir, node_type + ".bundle")
-  maya = toolchain.default_maya_dir()
+  maya   = toolchain.default_maya_dir()
   cmd = toolchain.compile_to_plugin_cmd(
     toolchain.default_compiler(), src, plugin,
-    include_dir=toolchain.maya_include_dir(maya),
-    lib_dir=toolchain.maya_lib_dir(maya),
-    libs=codegen._libs_for({}),
-    arch=toolchain.mac_arch(),
-    maya=maya,
+    include_dir = toolchain.maya_include_dir(maya),
+    lib_dir     = toolchain.maya_lib_dir(maya),
+    libs        = codegen._libs_for({}),
+    arch        = toolchain.mac_arch(),
+    maya        = maya,
   )
   print("cpp:    %s" % src)
   print("cmd:    %s" % " ".join(cmd))
@@ -149,8 +149,8 @@ def main():
   section_a()
 
   spec = make_spec(CV2_COMPUTE, "probeNode")
-  cpp = section_b(spec, "cv2 GaussianBlur -- no deterministic lowering")
-  ok = section_c(cpp, "probeNode")
+  cpp  = section_b(spec, "cv2 GaussianBlur -- no deterministic lowering")
+  ok   = section_c(cpp, "probeNode")
 
   hdr("D. CONTROL: same emitter, scipy cKDTree compute")
   cmds.file(new=True, force=True)

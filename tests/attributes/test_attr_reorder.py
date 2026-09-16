@@ -63,7 +63,7 @@ class TestWrapperReorder(unittest.TestCase):
         mc.file(new=True, force=True)
 
     def test_reorder_moves_plugs_in_channel_box(self):
-        n = _node()
+        n   = _node()
         new = ["delta", "alpha", "gamma", "beta"]
         n.reorder_input_attrs(new)
         # Both the JSON map order AND Maya's true creation order follow.
@@ -71,9 +71,9 @@ class TestWrapperReorder(unittest.TestCase):
         self.assertEqual(_user_attr_order(n.get_name()), new)
 
     def test_reorder_preserves_incoming_connection(self):
-        n = _node()
+        n    = _node()
         name = n.get_name()
-        drv = mc.createNode("transform", name="drv#")
+        drv  = mc.createNode("transform", name="drv#")
         mc.connectAttr(drv + ".translateX", name + ".gamma")
         n.reorder_input_attrs(["gamma", "delta", "alpha", "beta"])
         srcs = mc.listConnections(name + ".gamma", source=True, destination=False,
@@ -86,11 +86,11 @@ class TestWrapperReorder(unittest.TestCase):
         from mpynode.wrappers._mpy_node import MPyNode
 
         n = MPyNode.create(name="vecReord#")
-        n.add_input_attr("a", "float")
+        n.add_input_attr("a",   "float")
         n.add_input_attr("vec", "vector")
-        n.add_input_attr("z", "float")
+        n.add_input_attr("z",   "float")
         name = n.get_name()
-        drv = mc.createNode("transform", name="vdrv#")
+        drv  = mc.createNode("transform", name="vdrv#")
         mc.connectAttr(drv + ".translateX", name + ".vecX")
         n.reorder_input_attrs(["vec", "z", "a"])
         self.assertEqual(list(n.get_input_attr_map().keys()), ["vec", "z", "a"])
@@ -99,7 +99,7 @@ class TestWrapperReorder(unittest.TestCase):
         self.assertEqual(srcs, [drv + ".translateX"])
 
     def test_reorder_preserves_unconnected_value(self):
-        n = _node()
+        n    = _node()
         name = n.get_name()
         mc.setAttr(name + ".beta", 7.5)
         n.reorder_input_attrs(["beta", "alpha", "gamma", "delta"])
@@ -157,7 +157,7 @@ class TestReorderSuppressesTransientEval(unittest.TestCase):
         mc.file(new=True, force=True)
         from mpynode._common.lifecycle import scene_state as scene_io
         scene_io._last_surgery_monotonic = -1.0e9
-        scene_io._attr_surgery_depth = 0
+        scene_io._attr_surgery_depth     = 0
 
     def _build(self):
         from mpynode.wrappers._mpy_node import MPyNode
@@ -172,7 +172,7 @@ class TestReorderSuppressesTransientEval(unittest.TestCase):
         import mpynode.wrappers._mpy_node as W
         from mpynode._common.lifecycle import scene_state as scene_io
 
-        n = self._build()
+        n    = self._build()
         name = n.get_name()
 
         # Sample (schema-map, should_defer?) before every deleteAttr and
@@ -239,7 +239,7 @@ class TestReorderSuppressesTransientEval(unittest.TestCase):
             )
 
         scene_io._last_surgery_monotonic = -1.0e9
-        scene_io._attr_surgery_depth = 0
+        scene_io._attr_surgery_depth     = 0
         self.assertFalse(spurious(), "outside surgery the error must surface")
         scene_io.begin_attr_surgery()
         try:
@@ -255,7 +255,7 @@ class TestSceneIoAttrSurgery(unittest.TestCase):
         # sleeping is worse.
         from mpynode._common.lifecycle import scene_state as scene_io
         scene_io._last_surgery_monotonic = -1.0e9
-        scene_io._attr_surgery_depth = 0
+        scene_io._attr_surgery_depth     = 0
 
     def test_surgery_window_defers_transient(self):
         from mpynode._common.lifecycle import scene_state as scene_io
@@ -283,9 +283,9 @@ class TestReorderCommand(unittest.TestCase):
     def test_command_reorders_and_single_undo_restores(self):
         from mpynode._base.commands import _ReorderAttrCommand, run_undoable
 
-        n = _node()
+        n    = _node()
         name = n.get_name()
-        drv = mc.createNode("transform", name="drvU#")
+        drv  = mc.createNode("transform", name="drvU#")
         mc.connectAttr(drv + ".translateX", name + ".alpha")
         run_undoable(_ReorderAttrCommand(n, ["delta", "gamma", "beta", "alpha"],
                                          "input"))
@@ -303,9 +303,9 @@ class TestReorderCommand(unittest.TestCase):
     def test_command_redo_reapplies_new_order(self):
         from mpynode._base.commands import _ReorderAttrCommand, run_undoable
 
-        n = _node()
+        n    = _node()
         name = n.get_name()
-        new = ["gamma", "alpha", "delta", "beta"]
+        new  = ["gamma", "alpha", "delta", "beta"]
         run_undoable(_ReorderAttrCommand(n, new, "input"))
         mc.undo()
         self.assertEqual(_user_attr_order(name),
@@ -317,9 +317,9 @@ class TestReorderCommand(unittest.TestCase):
         from mpynode._base import commands as cmdmod
         from mpynode._base.commands import _ReorderAttrCommand, run_undoable
 
-        n = _node()
-        name = n.get_name()
-        orig = cmdmod.cmds.play
+        n                = _node()
+        name             = n.get_name()
+        orig             = cmdmod.cmds.play
         cmdmod.cmds.play = lambda *a, **k: True       # pretend the timeline is playing
         try:
             cmd = _ReorderAttrCommand(n, ["delta", "alpha", "gamma", "beta"],
@@ -371,7 +371,7 @@ class TestReorderDropSeam(unittest.TestCase):
 
     def test_seam_refused_during_playback(self):
         import mpynode.ui.widgets.attributes as attrmod
-        orig = attrmod._timeline_is_playing
+        orig                         = attrmod._timeline_is_playing
         attrmod._timeline_is_playing = lambda: True
         try:
             ok = self.tree._reorder_to("delta", "alpha", place_after=False)

@@ -15,9 +15,9 @@ import os
 import sys
 import time
 
-_HERE = os.path.dirname(os.path.abspath(__file__))
+_HERE    = os.path.dirname(os.path.abspath(__file__))
 _SCRIPTS = os.path.abspath(os.path.join(_HERE, "..", "..", ".."))
-_ROOT = os.path.abspath(os.path.join(_SCRIPTS, ".."))
+_ROOT    = os.path.abspath(os.path.join(_SCRIPTS, ".."))
 for p in (os.environ.get("SDF_NUMPY_PATH"), _SCRIPTS):
     if p and p not in sys.path:
         sys.path.insert(0, p)
@@ -52,11 +52,11 @@ def set_arrays(node, arrays):
         mc.setAttr("%s.shapeMatrix[%d]" % (node, i),
                    *mats[i].flatten().tolist(), type="matrix")
         mc.setAttr("%s.shapeType[%d]" % (node, i), int(arrays["shape_types"][i]))
-        mc.setAttr("%s.additive[%d]" % (node, i), int(bool(arrays["additive"][i])))
+        mc.setAttr("%s.additive[%d]" % (node, i),  int(bool(arrays["additive"][i])))
         mc.setAttr("%s.smoothing[%d]" % (node, i), float(arrays["smoothing"][i]))
-        mc.setAttr("%s.radius[%d]" % (node, i), float(arrays["radius"][i]))
-        mc.setAttr("%s.height[%d]" % (node, i), float(arrays["height"][i]))
-        mc.setAttr("%s.axis[%d]" % (node, i), int(arrays["axis"][i]))
+        mc.setAttr("%s.radius[%d]" % (node, i),    float(arrays["radius"][i]))
+        mc.setAttr("%s.height[%d]" % (node, i),    float(arrays["height"][i]))
+        mc.setAttr("%s.axis[%d]" % (node, i),      int(arrays["axis"][i]))
         mc.setAttr("%s.halfExtents[%d]" % (node, i),
                    *arrays["half_extents"][i].tolist(), type="double3")
 
@@ -64,7 +64,7 @@ def set_arrays(node, arrays):
 def read_mesh(node):
     # NB: never mc.delete the temp shape -- outMesh->inMesh is construction
     # history, so deleting it cascades and removes the source node.
-    xf = mc.createNode("transform")
+    xf  = mc.createNode("transform")
     shp = mc.createNode("mesh", parent=xf)
     mc.connectAttr(node + ".outMesh", shp + ".inMesh", force=True)
     mc.polyEvaluate(shp, vertex=True)
@@ -79,7 +79,7 @@ def read_mesh(node):
 
 def main():
     bundle = _build.build()
-    res = load_or_reload_native_plugin(bundle)
+    res    = load_or_reload_native_plugin(bundle)
     log("LOAD %s" % res)
     if res.get("error"):
         raise SystemExit(res["error"])
@@ -103,7 +103,7 @@ def main():
     t0 = time.perf_counter()
     d32, _c32, i32 = read_mesh(nat)
     t_nat32 = time.perf_counter() - t0
-    t0 = time.perf_counter()
+    t0      = time.perf_counter()
     rp32, _rc32, ri32 = sdf_dmc.mesh_from_shapes(resolution=32, iso_value=0.0, **arrays)
     t_py32 = time.perf_counter() - t0
     log("DENSE res32: native=%d (%.3fs) python=%.3fs maxerr=%.3e indices_equal=%s"

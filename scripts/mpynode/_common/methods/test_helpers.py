@@ -43,7 +43,7 @@ class TestFailure(AssertionError):
 
 
 _FALLBACK_DIGITS = 4
-_scope = threading.local()
+_scope           = threading.local()
 
 
 def default_digits() -> int:
@@ -55,7 +55,7 @@ def set_default_digits(digits):
     """Set (or clear, with ``None``) the test-scoped default tolerance. Returns
     the PREVIOUS value so a caller can restore it. Used by ``run_node_test`` to
     scope ``@maya_test(digits=N)`` around a single test invocation."""
-    prev = getattr(_scope, "digits", None)
+    prev          = getattr(_scope, "digits", None)
     _scope.digits = digits
     return prev
 
@@ -110,8 +110,8 @@ def assert_close(got, expected, digits=None, msg=None):
     ``digits`` defaults to the current test-scoped default (see
     :func:`default_digits`) -- the ``@maya_test(digits=N)`` tolerance -- so a
     compile that differs only in the trailing ulps still passes."""
-    d = default_digits() if digits is None else digits
-    tol = 0.5 * (10.0 ** (-d))
+    d    = default_digits() if digits is None else digits
+    tol  = 0.5 * (10.0 ** (-d))
     diff = max_abs_diff(got, expected)
     if diff > tol:
         raise TestFailure(
@@ -122,8 +122,8 @@ def assert_close(got, expected, digits=None, msg=None):
 # The helper names injected into the Methods namespace by build_methods_namespace
 # (so authored @maya_test code can call them with no import).
 HELPERS = {
-    "TestFailure": TestFailure,
-    "assert_true": assert_true,
+    "TestFailure":  TestFailure,
+    "assert_true":  assert_true,
     "assert_equal": assert_equal,
     "assert_close": assert_close,
     "max_abs_diff": max_abs_diff,

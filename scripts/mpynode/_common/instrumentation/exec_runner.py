@@ -42,7 +42,7 @@ def run_instrumented_exec(
     namespace: dict,
     node_obj,
     *,
-    period: int = DEFAULT_THROTTLE_PERIOD,
+    period:    int  = DEFAULT_THROTTLE_PERIOD,
 ) -> tuple[bool, BaseException | None]:
     """Execute the user code with timing / cProfile / watch instrumentation
     when the corresponding toggles are on. Always increments per-instance
@@ -71,11 +71,11 @@ def run_instrumented_exec(
     # A toggle flipping on resets stats, for a fresh baseline.
     if profile_on and not stats.get("_prev_profile_on", False):
         # New profile session — reset numerics.
-        stats["last_us"] = 0.0
-        stats["avg_us"] = 0.0
-        stats["min_us"] = 0.0
-        stats["max_us"] = 0.0
-        stats["count"] = 0
+        stats["last_us"]    = 0.0
+        stats["avg_us"]     = 0.0
+        stats["min_us"]     = 0.0
+        stats["max_us"]     = 0.0
+        stats["count"]      = 0
         stats["deep_table"] = None
     elif watch_on and not stats.get("_prev_watch_on", False):
         # Reset the throttle so the next compute (count==1) writes a snapshot
@@ -83,8 +83,8 @@ def run_instrumented_exec(
         # eval, which reads as "Watch isn't updating".
         stats["count"] = 0
     stats["_prev_profile_on"] = profile_on
-    stats["_prev_deep_on"] = deep_on
-    stats["_prev_watch_on"] = watch_on
+    stats["_prev_deep_on"]    = deep_on
+    stats["_prev_watch_on"]   = watch_on
 
     # cProfile setup.
     profiler = None
@@ -111,7 +111,7 @@ def run_instrumented_exec(
         else:
             exec(code, namespace)
     except BaseException as exc:
-        success = False
+        success  = False
         captured = exc
 
     if profile_on:

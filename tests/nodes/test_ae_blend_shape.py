@@ -67,7 +67,7 @@ class TestWeightRows(unittest.TestCase):
     def test_a_derived_shape_is_not_filtered_out(self):
         # browUp50 and browUp_mouthOpen are the DRIVEN ones. They are additive,
         # so their own channels reach the deform and must be reachable in the AE.
-        bs = _rig("aeDerivedBS", self.COMBO)
+        bs     = _rig("aeDerivedBS", self.COMBO)
         labels = [lbl for _, lbl in self._rows(bs)]
         self.assertIn("browUp50", labels)
         self.assertIn("browUp_mouthOpen", labels)

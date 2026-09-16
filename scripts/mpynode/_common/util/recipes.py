@@ -54,13 +54,13 @@ class HydrationInputEntry:
 class HydrationOutputEntry:
     """One OUTPUT entry in a recipe. Either real plug OR synthetic buffer."""
 
-    name: str
+    name:        str
     target_plug: str
     """Maya plug name on the node. EMPTY STRING means synthetic
     (e.g. ``joint_rotations``, ``draw_items``)."""
 
-    kind: str
-    arity: str = "scalar"
+    kind:             str
+    arity:            str = "scalar"
     shape_from_input: str = ""
     """If non-empty, this output's shape is derived from the named input."""
 
@@ -76,7 +76,7 @@ class HydrationRecipe:
     native_type: str
     """Maya node type name, e.g. ``"mPyIkSolver"``."""
 
-    inputs: list[HydrationInputEntry] = field(default_factory=list)
+    inputs:  list[HydrationInputEntry] = field(default_factory=list)
     outputs: list[HydrationOutputEntry] = field(default_factory=list)
 
 

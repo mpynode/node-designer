@@ -94,7 +94,7 @@ class TestTemplateClassUniqueness(unittest.TestCase):
         by_dir = dict(self.rows)
         for native_type, mirrors in TEMPLATE_MIRRORS.items():
             primary_dir = _TARGET_BY_TYPE[native_type].replace("/", os.sep)
-            primary = by_dir.get(primary_dir)
+            primary     = by_dir.get(primary_dir)
             if primary is None:
                 continue
             for rel, declared in mirrors:

@@ -81,7 +81,7 @@ class TestStampClass(unittest.TestCase):
     def test_stamp_class_synthesizes_and_stamps(self):
         from mpynode._common.io import user_classes
         from mpynode.wrappers._mpy_node import MPyNode, _read_py_class
-        n = MPyNode.create(name="stampA#")
+        n    = MPyNode.create(name="stampA#")
         path = user_classes.stamp_class(n.get_name(), "mPyNode", "Gadget")
         self.assertEqual(path, "mpynode_user.Gadget")
         self.assertEqual(_read_py_class(n.get_name()), "mpynode_user.Gadget")

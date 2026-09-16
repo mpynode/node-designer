@@ -42,7 +42,7 @@ import maya.cmds as mc
 
 
 # The node type whose AE this template drives, and the multi it draws.
-NODE_TYPE = "mPyBlendShape"
+NODE_TYPE   = "mPyBlendShape"
 WEIGHT_ATTR = "weight"
 
 # Child layout holding the weight rows. A SHORT name under the parent the AE
@@ -82,7 +82,7 @@ def weight_rows(node):
 
     # Alias decoding is the wrapper's job and it already handles sparse indices
     # and holes; re-deriving it here would be a second implementation to drift.
-    bs = MPyBlendShape(node)
+    bs    = MPyBlendShape(node)
     names = bs.target_names
     present = set(mc.getAttr("%s.%s" % (node, WEIGHT_ATTR),
                              multiIndices=True) or [])
@@ -107,8 +107,8 @@ def _rebuild_rows(parent, plug):
         mc.columnLayout(_ROWS_LAYOUT, adjustableColumn=True, parent=parent)
         for index, label in weight_rows(node):
             mc.attrFieldSliderGrp(
-                label=label,
-                attribute="%s.%s[%d]" % (node, WEIGHT_ATTR, index),
+                label     = label,
+                attribute = "%s.%s[%d]" % (node, WEIGHT_ATTR, index),
                 minValue=_SLIDER_MIN, maxValue=_SLIDER_MAX,
                 fieldMinValue=_FIELD_MIN, fieldMaxValue=_FIELD_MAX,
             )

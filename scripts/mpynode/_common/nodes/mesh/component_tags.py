@@ -45,9 +45,9 @@ def parse_component_strings(contents) -> list:
 
 def _to_component_strings(shape: str, indices) -> list:
     """Compress vertex ids into ``shape.vtx[a:b]`` / ``shape.vtx[a]`` runs."""
-    idx = sorted({int(i) for i in indices})
+    idx  = sorted({int(i) for i in indices})
     runs = []
-    i = 0
+    i    = 0
     while i < len(idx):
         j = i
         while j + 1 < len(idx) and idx[j + 1] == idx[j] + 1:
@@ -149,9 +149,9 @@ def pad_clusters(index_lists):
     """Pad a list of ragged id lists into one ``(N, L)`` int array, ``-1`` fill."""
     import numpy as np
 
-    n = len(index_lists)
+    n     = len(index_lists)
     width = max((len(c) for c in index_lists), default=0)
-    arr = np.full((n, max(width, 1)), -1, dtype=np.int64)
+    arr   = np.full((n, max(width, 1)), -1, dtype=np.int64)
     for i, c in enumerate(index_lists):
         if c:
             arr[i, : len(c)] = c
@@ -273,7 +273,7 @@ def mesh_data_from_node_plug(node, input_plug="mesh"):
         # (shape.worldMesh[0]); unconnected -> None (empty, like a compiled node's
         # empty input handle). Reads the source data MObject in api1.
         target = plug
-        srcs = om1.MPlugArray()
+        srcs   = om1.MPlugArray()
         try:
             plug.connectedTo(srcs, True, False)  # asDst -> sources
         except Exception:
@@ -356,7 +356,7 @@ def tag_indices_from_mesh_data(mesh_data, tag_name):
     try:
         import maya.OpenMaya as om1
 
-        gfn = om1.MFnGeometryData(mesh_data)
+        gfn  = om1.MFnGeometryData(mesh_data)
         comp = gfn.componentTagContents(tag_name)
         if comp is None or comp.isNull():
             return []
@@ -389,7 +389,7 @@ def _live_mesh_data_for_self(self_proxy, input_plug):
     # Tier 1: bridge-seeded DATA MObject (EM-safe, carries live tags).
     try:
         locals_map = self_proxy.get_compute_locals()
-        geom = locals_map.get("_mpy_geom_data") if locals_map else None
+        geom       = locals_map.get("_mpy_geom_data") if locals_map else None
         if isinstance(geom, dict):
             data = geom.get(input_plug)
             if data is not None:

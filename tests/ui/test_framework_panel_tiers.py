@@ -120,14 +120,14 @@ class TestFilePanelPerTier(_PanelCase):
     def test_compute_hides_the_vp2_only_handles(self):
         """shader / mappings / texture_manager / state_manager are injected by
         the VP2 draw override; in a compute they raise."""
-        w = self._panel(self._file(), "Compute")
+        w    = self._panel(self._file(), "Compute")
         rows = _rows(w._tree, "Properties")
         self.assertEqual(rows, ["time"])
         for name in ("shader", "mappings", "texture_manager", "state_manager"):
             self.assertNotIn(name, rows)
 
     def test_viewport_adds_the_vp2_handles_back(self):
-        w = self._panel(self._file(), "Viewport")
+        w    = self._panel(self._file(), "Viewport")
         rows = _rows(w._tree, "Properties")
         for name in ("time", "shader", "mappings", "texture_manager",
                      "state_manager"):
@@ -140,7 +140,7 @@ class TestFilePanelPerTier(_PanelCase):
         self.assertIn("shader language", w._tree.topLevelItem(0).text(0))
 
     def test_api_shows_authoring_and_nothing_from_the_expression_side(self):
-        w = self._panel(self._file(), "API")
+        w      = self._panel(self._file(), "API")
         labels = _group_labels(w._tree)
         self.assertIn("Authoring Methods", labels)
         self.assertNotIn("Methods", labels,
@@ -181,7 +181,7 @@ class TestTierWiringBehaviour(_PanelCase):
     def test_unset_tier_renders_the_compute_panel(self):
         """The panel is constructed before the editor reports a tab. It must
         show a USEFUL surface meanwhile, not an empty one."""
-        node = self._file()
+        node    = self._file()
         default = self._panel(node)
         compute = self._panel(node, "Compute")
         self.assertIsNone(default.activeTier())
@@ -193,7 +193,7 @@ class TestTierWiringBehaviour(_PanelCase):
     def test_switching_tabs_rebuilds_live(self):
         """Round-trip: the API tab's groups must not persist back onto Compute,
         and Compute's must come back."""
-        w = self._panel(self._file(), "Compute")
+        w      = self._panel(self._file(), "Compute")
         before = _group_labels(w._tree)
         w.setActiveTier("API")
         self.assertEqual(_group_labels(w._tree), ["Authoring Methods"])
@@ -201,7 +201,7 @@ class TestTierWiringBehaviour(_PanelCase):
         self.assertEqual(_group_labels(w._tree), before)
 
     def test_repeating_a_tier_is_a_no_op(self):
-        w = self._panel(self._file(), "Compute")
+        w      = self._panel(self._file(), "Compute")
         before = _group_labels(w._tree)
         w.setActiveTier("Compute")
         self.assertEqual(_group_labels(w._tree), before)

@@ -17,8 +17,8 @@ import os
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 import unittest
 
-_QAPP = None
-QStyle = None
+_QAPP                = None
+QStyle               = None
 QStyleOptionViewItem = None
 try:
     from PySide6.QtWidgets import QApplication as _QApp
@@ -64,9 +64,9 @@ class TestCellFocusHighlight(unittest.TestCase):
         from mpynode import MPyNode
 
         MPyNode.create(name="focusNode")
-        dlg = self._dialog()
+        dlg      = self._dialog()
         delegate = dlg._table.itemDelegate()
-        index = dlg._table.model().index(0, 0)
+        index    = dlg._table.model().index(0, 0)
         self.assertTrue(index.isValid(), "row 0 should be populated")
         opt = QStyleOptionViewItem()
         opt.state |= QStyle.State_HasFocus  # the view sets this on the current cell

@@ -38,7 +38,7 @@ def _make_test_png(path: str, rgb: tuple) -> None:
         path: Output PNG file path.
         rgb: (r, g, b) as uint8 0-255.
     """
-    w = h = 4
+    w   = h = 4
     buf = bytes((rgb[0], rgb[1], rgb[2], 255)) * (w * h)
     img = om.MImage()
     img.create(w, h, 4, om.MImage.kByte)
@@ -212,7 +212,7 @@ class TestArnoldRenderNonBlack(unittest.TestCase):
         # Render with Arnold to a temp image file.
         render_path = os.path.join(self.tmpdir, "test_render.png")
         mc.setAttr("defaultRenderGlobals.imageFormat", 32)  # PNG
-        mc.setAttr("defaultRenderGlobals.animation", 0)  # Still frame
+        mc.setAttr("defaultRenderGlobals.animation", 0)     # Still frame
         mc.setAttr("defaultRenderGlobals.putFrameBeforeExt", 1)
         mc.setAttr("defaultRenderGlobals.extensionPadding", 4)
         mc.setAttr("defaultRenderGlobals.outFormatControl", 0)
@@ -256,8 +256,8 @@ class TestArnoldRenderNonBlack(unittest.TestCase):
         # Extract pixel data (uint8 RGBA).
         import ctypes
 
-        ptr = img.pixels()
-        buf = ctypes.string_at(ptr, w * h * 4)
+        ptr    = img.pixels()
+        buf    = ctypes.string_at(ptr, w * h * 4)
         pixels = [buf[i] for i in range(0, len(buf), 4)]  # R channel of each pixel
 
         max_channel = max(pixels)

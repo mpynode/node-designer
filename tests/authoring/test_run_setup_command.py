@@ -27,7 +27,7 @@ class TestRunSetupCommand(unittest.TestCase):
         from mpynode._node_registry import get_spec
         from mpynode._base.commands import _RunSetupCommand, run_undoable
         mesh = mc.polyCube()[0]
-        cls = get_spec("mPyDeformer").get_wrapper_class()
+        cls  = get_spec("mPyDeformer").get_wrapper_class()
         node = cls.build()                                   # unwired
         mc.select(mesh)
         run_undoable(_RunSetupCommand(node.get_name(), "mPyDeformer"))
@@ -37,7 +37,7 @@ class TestRunSetupCommand(unittest.TestCase):
         from mpynode._node_registry import get_spec
         from mpynode._base.commands import _RunSetupCommand, run_undoable
         mesh = mc.polyCube()[0]
-        cls = get_spec("mPyDeformer").get_wrapper_class()
+        cls  = get_spec("mPyDeformer").get_wrapper_class()
         node = cls.build()
         mc.select(mesh, node.get_name())                     # self also selected
         run_undoable(_RunSetupCommand(node.get_name(), "mPyDeformer"))
@@ -48,7 +48,7 @@ class TestRunSetupCommand(unittest.TestCase):
         from mpynode._node_registry import get_spec
         from mpynode._base.commands import _RunSetupCommand, run_undoable
         mesh = mc.polyCube()[0]
-        cls = get_spec("mPyDeformer").get_wrapper_class()
+        cls  = get_spec("mPyDeformer").get_wrapper_class()
         node = cls.build()
         mc.select(mesh)
         run_undoable(_RunSetupCommand(node.get_name(), "mPyDeformer"))

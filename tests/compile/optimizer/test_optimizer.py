@@ -42,10 +42,10 @@ class TestOptimizeAcceptPath(unittest.TestCase):
             "BASE",
             optimize_fn=lambda cpp: "CAND",
             fix_fn=lambda cpp, errs: cpp,
-            compile_fn=_compile_ok,
-            parity_fn=_parity(PARITY_PASS),
-            benchmark_fn=_bench({"BASE": 100.0, "CAND": 40.0}),
-            rounds=1,
+            compile_fn   = _compile_ok,
+            parity_fn    = _parity(PARITY_PASS),
+            benchmark_fn = _bench({"BASE": 100.0, "CAND": 40.0}),
+            rounds       = 1,
         )
         self.assertTrue(res.accepted)
         self.assertEqual(res.best_cpp, "CAND")
@@ -59,10 +59,10 @@ class TestOptimizeRejectPaths(unittest.TestCase):
         kw = dict(
             optimize_fn=lambda cpp: "CAND",
             fix_fn=lambda cpp, errs: cpp,
-            compile_fn=_compile_ok,
-            parity_fn=_parity(PARITY_PASS),
-            benchmark_fn=_bench({"BASE": 100.0, "CAND": 40.0}),
-            rounds=1,
+            compile_fn   = _compile_ok,
+            parity_fn    = _parity(PARITY_PASS),
+            benchmark_fn = _bench({"BASE": 100.0, "CAND": 40.0}),
+            rounds       = 1,
         )
         kw.update(over)
         return optimize_cpp("BASE", **kw)
@@ -110,9 +110,9 @@ class TestOptimizeFixLoop(unittest.TestCase):
             "BASE",
             optimize_fn=lambda cpp: "CAND",       # CAND won't compile
             fix_fn=lambda cpp, errs: "CANDFIX",   # the fix does
-            compile_fn=compile_fn,
-            parity_fn=_parity(PARITY_PASS),
-            benchmark_fn=_bench({"BASE": 100.0, "CANDFIX": 30.0}),
+            compile_fn   = compile_fn,
+            parity_fn    = _parity(PARITY_PASS),
+            benchmark_fn = _bench({"BASE": 100.0, "CANDFIX": 30.0}),
             rounds=1, max_fix_rounds=2,
         )
         self.assertTrue(res.accepted)
@@ -131,10 +131,10 @@ class TestOptimizeMultiRound(unittest.TestCase):
             "BASE",
             optimize_fn=optimize_fn,
             fix_fn=lambda cpp, errs: cpp,
-            compile_fn=_compile_ok,
-            parity_fn=_parity(PARITY_PASS),
-            benchmark_fn=_bench({"BASE": 100.0, "CAND1": 50.0, "CAND2": 20.0}),
-            rounds=2,
+            compile_fn   = _compile_ok,
+            parity_fn    = _parity(PARITY_PASS),
+            benchmark_fn = _bench({"BASE": 100.0, "CAND1": 50.0, "CAND2": 20.0}),
+            rounds       = 2,
         )
         self.assertTrue(res.accepted)
         self.assertEqual(res.best_cpp, "CAND2")     # compounded to the fastest
@@ -153,10 +153,10 @@ class TestOptimizeBaselineGuard(unittest.TestCase):
             "BASE",
             optimize_fn=optimize_fn,
             fix_fn=lambda cpp, errs: cpp,
-            compile_fn=lambda cpp: (False, "boom", ""),
-            parity_fn=_parity(PARITY_PASS),
-            benchmark_fn=lambda b: 1.0,
-            rounds=1,
+            compile_fn   = lambda cpp: (False, "boom", ""),
+            parity_fn    = _parity(PARITY_PASS),
+            benchmark_fn = lambda b: 1.0,
+            rounds       = 1,
         )
         self.assertFalse(res.accepted)
         self.assertEqual(res.best_cpp, "BASE")
@@ -169,15 +169,15 @@ class TestOptimizeLedger(unittest.TestCase):
             "BASE",
             optimize_fn=lambda cpp: "CAND",
             fix_fn=lambda cpp, errs: cpp,
-            compile_fn=_compile_ok,
-            parity_fn=_parity(PARITY_FAIL),   # rejected -> honest reject
-            benchmark_fn=_bench({"BASE": 100.0, "CAND": 10.0}),
+            compile_fn   = _compile_ok,
+            parity_fn    = _parity(PARITY_FAIL),   # rejected -> honest reject
+            benchmark_fn = _bench({"BASE": 100.0, "CAND": 10.0}),
             rounds=3, min_rounds=3,            # fixed count: every round runs
         )
         self.assertFalse(res.accepted)
-        self.assertIs(res.best_cpp, "BASE")               # returns the ORIGINAL
+        self.assertIs(res.best_cpp, "BASE")       # returns the ORIGINAL
         self.assertEqual(res.ledger[0].outcome, "baseline")
-        self.assertEqual(len(res.ledger), 1 + 3)          # baseline + 3 rounds
+        self.assertEqual(len(res.ledger), 1 + 3)  # baseline + 3 rounds
         for rec in res.ledger[1:]:
             self.assertIn("parity", rec.outcome.lower())
 
@@ -192,10 +192,10 @@ class TestValidateFn(unittest.TestCase):
         kw = dict(
             optimize_fn=lambda cpp: "CAND",
             fix_fn=lambda cpp, errs: cpp,
-            compile_fn=_compile_ok,
-            parity_fn=_parity(PARITY_PASS),
-            benchmark_fn=_bench({"BASE": 100.0, "CAND": 40.0}),
-            rounds=1,
+            compile_fn   = _compile_ok,
+            parity_fn    = _parity(PARITY_PASS),
+            benchmark_fn = _bench({"BASE": 100.0, "CAND": 40.0}),
+            rounds       = 1,
         )
         kw.update(over)
         return optimize_cpp("BASE", **kw)
@@ -255,12 +255,12 @@ class TestNoChangeCandidate(unittest.TestCase):
         kw = dict(
             optimize_fn=optimize_fn,
             fix_fn=lambda cpp, errs: cpp,
-            compile_fn=_compile_ok,
-            parity_fn=_parity(PARITY_PASS),
+            compile_fn = _compile_ok,
+            parity_fn  = _parity(PARITY_PASS),
             # Re-measuring the same source comes back 10x faster: pure jitter,
             # far past min_speedup. No round may turn that into a win.
-            benchmark_fn=benchmark_fn or _bench_seq(100.0, 10.0, 10.0, 10.0),
-            rounds=rounds,
+            benchmark_fn = benchmark_fn or _bench_seq(100.0, 10.0, 10.0, 10.0),
+            rounds       = rounds,
         )
         kw.update(over)
         return optimize_cpp(self.SRC, **kw)
@@ -290,8 +290,8 @@ class TestNoChangeCandidate(unittest.TestCase):
                         parity_fn=parity_fn, benchmark_fn=benchmark_fn)
 
         self.assertFalse(res.accepted)
-        self.assertEqual(compiled, [self.SRC])   # the baseline, nothing after it
-        self.assertEqual(parity, [])
+        self.assertEqual(compiled,     [self.SRC])   # the baseline, nothing after it
+        self.assertEqual(parity,       [])
         self.assertEqual(len(benched), 1)
 
     def test_the_round_is_recorded_with_no_measurement_to_misread(self):
@@ -319,7 +319,7 @@ class TestNoChangeCandidate(unittest.TestCase):
         still gated as an edit -- spending one round measuring a cosmetic
         change is cheaper than discarding a real optimization."""
         cand = self.SRC.replace("    return n + 1;", "    return n + 1;  ")
-        res = self._run(lambda cpp: cand, benchmark_fn=_bench_seq(100.0, 10.0))
+        res  = self._run(lambda cpp: cand, benchmark_fn=_bench_seq(100.0, 10.0))
         self.assertTrue(res.accepted)
         self.assertEqual(res.best_cpp, cand)
         self.assertEqual(res.ledger[-1].outcome, "accept")
@@ -363,8 +363,8 @@ class TestAdaptiveRounds(unittest.TestCase):
             compile_fn=_compile_ok,
             parity_fn=lambda b: ParityVerdict(
                 PARITY_FAIL if b[2:].startswith("BAD") else PARITY_PASS),
-            benchmark_fn=_bench(ms),
-            rounds=6,
+            benchmark_fn = _bench(ms),
+            rounds       = 6,
         )
         kw.update(over)
         return optimize_cpp("BASE", **kw)
@@ -374,9 +374,9 @@ class TestAdaptiveRounds(unittest.TestCase):
                         ms={"BASE": 100.0, "C1": 50.0, "C3": 10.0})
         self.assertEqual([r.outcome for r in res.ledger],
                          ["baseline", "accept", "parity-fail"])
-        self.assertEqual(res.rounds, 2)               # rounds RUN, not the cap
+        self.assertEqual(res.rounds,     2)               # rounds RUN, not the cap
         self.assertEqual(res.max_rounds, 6)
-        self.assertEqual(res.best_cpp, "C1")
+        self.assertEqual(res.best_cpp,   "C1")
         self.assertIn("round 2 parity-fail", res.stop_reason)
 
     def test_min_rounds_always_run_even_after_a_reject(self):
@@ -416,15 +416,15 @@ class TestAdaptiveRounds(unittest.TestCase):
         res = self._run({"BASE": "C1", "C1": "C2", "C2": "C3", "C3": "C4"},
                         ms={"BASE": 100.0, "C1": 50.0, "C2": 25.0, "C3": 12.0,
                             "C4": 6.0}, rounds=3)
-        self.assertEqual(res.rounds, 3)
-        self.assertEqual(res.best_cpp, "C3")
+        self.assertEqual(res.rounds,      3)
+        self.assertEqual(res.best_cpp,    "C3")
         self.assertEqual(res.stop_reason, "max rounds (3) reached")
 
     def test_zero_rounds_measures_the_baseline_only(self):
         res = self._run({"BASE": "C1"}, ms={"BASE": 100.0, "C1": 1.0}, rounds=0)
         self.assertFalse(res.accepted)
-        self.assertEqual(res.rounds, 0)
-        self.assertEqual(res.max_rounds, 0)
+        self.assertEqual(res.rounds,      0)
+        self.assertEqual(res.max_rounds,  0)
         self.assertEqual(len(res.ledger), 1)
 
     def test_a_fixed_count_is_still_available(self):
@@ -461,10 +461,10 @@ class TestSubResolutionConfirmation(unittest.TestCase):
         kw = dict(
             optimize_fn=lambda cpp: "CAND",
             fix_fn=lambda cpp, errs: cpp,
-            compile_fn=_compile_ok,
-            parity_fn=_parity(PARITY_PASS),
-            benchmark_fn=benchmark_fn,
-            rounds=1,
+            compile_fn   = _compile_ok,
+            parity_fn    = _parity(PARITY_PASS),
+            benchmark_fn = benchmark_fn,
+            rounds       = 1,
         )
         kw.update(over)
         return optimize_cpp("BASE", **kw), calls["n"]
@@ -541,9 +541,9 @@ class TestAcceptCheck(unittest.TestCase):
         kw = dict(
             optimize_fn=lambda cpp: {"BASE": "C1", "C1": "C2"}[cpp],
             fix_fn=lambda cpp, errs: cpp,
-            compile_fn=_compile_ok,
-            parity_fn=_parity(PARITY_PASS),
-            benchmark_fn=_bench({"BASE": 100.0, "C1": 50.0, "C2": 20.0}),
+            compile_fn   = _compile_ok,
+            parity_fn    = _parity(PARITY_PASS),
+            benchmark_fn = _bench({"BASE": 100.0, "C1": 50.0, "C2": 20.0}),
             rounds=1, accept_check_fn=check,
         )
         kw.update(over)
@@ -561,8 +561,8 @@ class TestAcceptCheck(unittest.TestCase):
         self.assertEqual(res.best_cpp, "BASE")
         self.assertEqual(res.ledger[-1].outcome, "regressed")
         self.assertIn("small scene", res.ledger[-1].note)
-        self.assertAlmostEqual(res.ledger[-1].ms, 50.0)   # its frozen-scene time
-        self.assertEqual(seen, [("b:C1", "b:BASE")])       # candidate, incumbent
+        self.assertAlmostEqual(res.ledger[-1].ms, 50.0)  # its frozen-scene time
+        self.assertEqual(seen, [("b:C1", "b:BASE")])     # candidate, incumbent
 
     def test_none_lets_the_accept_through(self):
         res = self._run(lambda cand, best: None)
@@ -587,7 +587,7 @@ class TestAcceptCheck(unittest.TestCase):
 
     def test_the_incumbent_advances_with_each_accept(self):
         seen = []
-        res = self._run(lambda c, b: seen.append((c, b)), rounds=2)
+        res  = self._run(lambda c, b: seen.append((c, b)), rounds=2)
         self.assertEqual(res.best_cpp, "C2")
         self.assertEqual(seen, [("b:C1", "b:BASE"), ("b:C2", "b:C1")])
 

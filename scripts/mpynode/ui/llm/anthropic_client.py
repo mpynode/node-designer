@@ -24,8 +24,8 @@ from mpynode.ui.llm import config as _config
 from mpynode.ui.llm import tools as _tools
 from mpynode.ui.llm.system_prompt import build_system_prompt
 
-PROVIDER = "anthropic"
-_API_URL = "https://api.anthropic.com/v1/messages"
+PROVIDER     = "anthropic"
+_API_URL     = "https://api.anthropic.com/v1/messages"
 _API_VERSION = "2023-06-01"
 # Generous so a big define_node (full compute+init+viewport source) isn't
 # truncated mid tool-call -- truncation used to leave a dangling tool_use.
@@ -45,9 +45,9 @@ def _post(payload, api_key, on_retry=None, should_cancel=None, timeout=120.0):
 
     def _once():
         req = urllib.request.Request(_API_URL, data=data, method="POST")
-        req.add_header("content-type", "application/json")
+        req.add_header("content-type",      "application/json")
         req.add_header("anthropic-version", _API_VERSION)
-        req.add_header("x-api-key", api_key)
+        req.add_header("x-api-key",         api_key)
         with urllib.request.urlopen(
             req, timeout=timeout, context=_config.ssl_context()
         ) as resp:
@@ -86,7 +86,7 @@ def describe_model(api_key, model, timeout=20.0):
 def _http_error_msg(exc):
     try:
         data = json.loads(exc.read().decode("utf-8", "replace"))
-        err = data.get("error", {})
+        err  = data.get("error", {})
         return err.get("message") if isinstance(err, dict) else str(err)
     except Exception:
         return getattr(exc, "reason", "request failed")
@@ -137,16 +137,16 @@ class AssistantClient(QObject):
       * ``busyChanged(bool)``    -- True while a turn is in flight.
     """
 
-    assistantText = Signal(str)
-    toolStarted = Signal(str)
-    toolFinished = Signal(str)
-    turnFinished = Signal()
-    notice = Signal(str)
-    thinking = Signal(str)  # extended-thinking trace (when effort > off)
+    assistantText  = Signal(str)
+    toolStarted    = Signal(str)
+    toolFinished   = Signal(str)
+    turnFinished   = Signal()
+    notice         = Signal(str)
+    thinking       = Signal(str)                      # extended-thinking trace (when effort > off)
     retryScheduled = Signal(int, int, int, int, str)  # code, secs, attempt, max, detail
-    tokensUsed = Signal(int)  # tokens consumed by one response
-    errorOccurred = Signal(str)
-    busyChanged = Signal(bool)
+    tokensUsed     = Signal(int)                      # tokens consumed by one response
+    errorOccurred  = Signal(str)
+    busyChanged    = Signal(bool)
 
     def __init__(self, ctx_provider, parent=None):
         super().__init__(parent)
@@ -154,7 +154,7 @@ class AssistantClient(QObject):
         # node tracks the host UI's active tab).
         self._ctx_provider = ctx_provider
         self._messages: list[dict] = []
-        self._busy = False
+        self._busy   = False
         self._cancel = threading.Event()
 
     def reset(self):
@@ -233,23 +233,23 @@ class AssistantClient(QObject):
     def _run_turn(self, api_key: str, model: str):
         try:
             system = build_system_prompt()
-            ctx = self._ctx_provider()
+            ctx    = self._ctx_provider()
             # Extended thinking. Newer models want the "adaptive" form +
             # output_config.effort, older ones "enabled" + budget_tokens.
             # Adaptive first, fall back to budget on a thinking-related 400.
-            effort = _config.get_effort(PROVIDER)        # off/low/medium/high
-            think_on = effort != "off"
-            budget = _config.effort_budget(effort)
-            think_mode = "adaptive" if think_on else None
+            effort      = _config.get_effort(PROVIDER)        # off/low/medium/high
+            think_on    = effort != "off"
+            budget      = _config.effort_budget(effort)
+            think_mode  = "adaptive" if think_on else None
             think_tried = set()
-            err_rounds = 0
+            err_rounds  = 0
             for _ in range(24):  # tool-call rounds cap (safety)
                 if self._cancel.is_set():
                     self._finish_cancelled()
                     break
                 max_tokens = _MAX_TOKENS
                 payload = {
-                    "model": model,
+                    "model":      model,
                     "max_tokens": max_tokens,
                     # Prompt caching: one breakpoint at the end of the system
                     # block caches the static prefix (tools + system) that is
@@ -257,16 +257,16 @@ class AssistantClient(QObject):
                     # Ignored if the prefix is below the model's cache minimum,
                     # so it is always safe to send.
                     "system": [{
-                        "type": "text",
-                        "text": system,
+                        "type":          "text",
+                        "text":          system,
                         "cache_control": {"type": "ephemeral"},
                     }],
-                    "tools": _tools.TOOL_SCHEMAS,
+                    "tools":    _tools.TOOL_SCHEMAS,
                     "messages": self._messages,
                 }
                 if think_on:
                     if think_mode == "adaptive":
-                        payload["thinking"] = {"type": "adaptive"}
+                        payload["thinking"]      = {"type": "adaptive"}
                         payload["output_config"] = {"effort": effort}
                     else:  # budget form (older models); needs max_tokens > budget
                         payload["max_tokens"] = max(_MAX_TOKENS, budget + 4096)
@@ -293,13 +293,13 @@ class AssistantClient(QObject):
                     self.errorOccurred.emit("API error: %s" % msg)
                     break
 
-                u = resp.get("usage") or {}
+                u   = resp.get("usage") or {}
                 tot = (u.get("input_tokens") or 0) + (u.get("output_tokens") or 0)
                 if tot:
                     self.tokensUsed.emit(int(tot))
 
-                content = resp.get("content", [])
-                stop = resp.get("stop_reason")
+                content   = resp.get("content", [])
+                stop      = resp.get("stop_reason")
 
                 tool_uses = []
                 for block in content:
@@ -336,10 +336,10 @@ class AssistantClient(QObject):
 
                 # Execute each tool on the MAIN thread, collect tool_result.
                 results = []
-                n_err = 0
+                n_err   = 0
                 for tu in tool_uses:
-                    name = tu.get("name", "")
-                    args = tu.get("input", {}) or {}
+                    name    = tu.get("name", "")
+                    args    = tu.get("input", {}) or {}
                     display = _tools.resolve_tool_name(name) or name
                     self.toolStarted.emit(_tools.tool_summary(display, args))
                     result = self._run_tool_main_thread(name, args, ctx)
@@ -347,9 +347,9 @@ class AssistantClient(QObject):
                     if isinstance(result, dict) and "error" in result:
                         n_err += 1
                     results.append({
-                        "type": "tool_result",
+                        "type":        "tool_result",
                         "tool_use_id": tu.get("id"),
-                        "content": json.dumps(result, default=str),
+                        "content":     json.dumps(result, default=str),
                     })
                 self._messages.append({"role": "user", "content": results})
 

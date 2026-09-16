@@ -188,7 +188,7 @@ MStatus uninitializePlugin(MObject obj) { return MS::kSuccess; }
 def _update_shader_body(text):
     """The generated ``updateShader`` method body, sliced by brace balance."""
     at = text.index("void updateShader(")
-    i = text.index("{", text.index(")", at))
+    i  = text.index("{", text.index(")", at))
     depth, j = 0, i
     while j < len(text):
         if text[j] == "{":
@@ -264,14 +264,14 @@ class TestInject(unittest.TestCase):
         self.assertIn("nd_texel(", self.out.split("MStatus MyTex::compute")[1])
 
     def test_registers_override_creator_and_classification(self):
-        self.assertIn("registerShadingNodeOverrideCreator", self.out)
-        self.assertIn("drawdb/shader/texture/2d/myTex", self.out)
+        self.assertIn("registerShadingNodeOverrideCreator",   self.out)
+        self.assertIn("drawdb/shader/texture/2d/myTex",       self.out)
         self.assertIn("texture/2d:swatch/2dTextureSwatchGen", self.out)
 
     def test_timechanged_callback(self):
         self.assertIn('addEventCallback(', self.out)
-        self.assertIn('"timeChanged"', self.out)
-        self.assertIn("removeCallback", self.out)
+        self.assertIn('"timeChanged"',     self.out)
+        self.assertIn("removeCallback",    self.out)
 
     def test_sets_used_as_filename(self):
         self.assertIn("setUsedAsFilename(true)", self.out)
@@ -303,7 +303,7 @@ class TestInject(unittest.TestCase):
         body = _update_shader_body(self.out)
         self.assertIn("findTexture(texName)", body,
                       "the override must ask the texture manager before baking")
-        key_at = body.find("MString texName(")
+        key_at  = body.find("MString texName(")
         loop_at = body.find("for (unsigned int py")
         self.assertNotEqual(key_at, -1)
         self.assertNotEqual(loop_at, -1)
@@ -318,9 +318,9 @@ class TestInject(unittest.TestCase):
         per node, so setParameter must run on every call -- this is exactly the
         distinction that made the interpreted tier disable its own
         ``_last_acquired_*`` short-circuit (_api2/mpy_file.py)."""
-        body = _update_shader_body(self.out)
+        body     = _update_shader_body(self.out)
         guard_at = body.find("if (!tex) {")
-        set_at = body.find("setParameter(mapParam")
+        set_at   = body.find("setParameter(mapParam")
         self.assertNotEqual(guard_at, -1)
         self.assertNotEqual(set_at, -1)
         self.assertLess(guard_at, set_at)
@@ -355,7 +355,7 @@ class TestInject(unittest.TestCase):
         take Maya down rather than skip a frame, which is the whole reason
         updateShader has an outer try in the first place."""
         body = _update_shader_body(self.out)
-        lam = _bake_worker_body(body)
+        lam  = _bake_worker_body(body)
         self.assertIn("catch (...) { _bakeFailed.store(true); }", lam,
                       "the worker body must catch everything")
         self.assertIn("if (_bakeFailed.load()) return;", body)
@@ -391,7 +391,7 @@ class TestStatefulBake(unittest.TestCase):
     bake runs every frame and the per-texel state lock is the dominant cost."""
 
     def setUp(self):
-        self.out = vp2.inject_vp2_override(_STATE_TEX_CPP)
+        self.out  = vp2.inject_vp2_override(_STATE_TEX_CPP)
         self.body = _update_shader_body(self.out)
 
     def test_fixture_actually_selects_the_state_path(self):
@@ -436,7 +436,7 @@ class TestStatefulBake(unittest.TestCase):
     def test_lock_is_released_before_the_upload(self):
         """Scoped to the dispatch only. Holding it across acquireTexture would
         block compute() on GPU work it has nothing to do with."""
-        open_at = self.body.rindex("{", 0, self.body.index("_bakeStateLock"))
+        open_at  = self.body.rindex("{", 0, self.body.index("_bakeStateLock"))
         close_at = _matching_brace(self.body, open_at)
         self.assertLess(close_at, self.body.index("acquireTexture"))
 
@@ -477,7 +477,7 @@ class TestNestedMarkerPort(unittest.TestCase):
         # Isolate JUST the function body: from its signature to its own closing
         # brace ("\n}\n") -- NOT up to compute() (the VP2 override's bake loop
         # between them legitimately calls nd_texel).
-        after = self.out.split("static void nd_texel(", 1)[1]
+        after      = self.out.split("static void nd_texel(", 1)[1]
         texel_body = after.split("\n}\n", 1)[0]
         self.assertIn("h_aOutColor.set3Float(0.5f, 0.5f, 0.5f);", texel_body)
         self.assertNotIn("nd_texel(", texel_body.split("{", 1)[1])

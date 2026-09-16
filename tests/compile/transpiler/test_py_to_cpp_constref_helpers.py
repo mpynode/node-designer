@@ -38,8 +38,8 @@ class TestConstRefReadOnlyParams(unittest.TestCase):
         text = _emit("def _f(kv):\n    return kv + 1.0\n",
                      "self.r = _f(self.kv)\n", {"self.kv": _A()})
         self.assertIn("const nd::Array<double>& kv", text)
-        self.assertNotIn("nd::Array<double> kv", text)          # not by value
-        self.assertIn("-> nd::Array<double>", text)             # return by value
+        self.assertNotIn("nd::Array<double> kv", text)  # not by value
+        self.assertIn("-> nd::Array<double>", text)     # return by value
         self.assertNotIn("-> const nd::Array<double>&", text)
 
     def test_recursive_readonly_array_param_is_const_ref_in_sig_and_params(self):
@@ -53,8 +53,8 @@ class TestConstRefReadOnlyParams(unittest.TestCase):
         text = _emit(helper, "self.r = _sum(self.k, self.kv)\n",
                      {"self.k": _S("int64"), "self.kv": _A()})
         self.assertIn("std::function<", text)
-        self.assertIn("const nd::Array<double>&)", text)        # sigtypes tail
-        self.assertIn("const nd::Array<double>& kv", text)      # lambda param
+        self.assertIn("const nd::Array<double>&)", text)    # sigtypes tail
+        self.assertIn("const nd::Array<double>& kv", text)  # lambda param
 
 
 class TestWrittenParamStaysByValue(unittest.TestCase):

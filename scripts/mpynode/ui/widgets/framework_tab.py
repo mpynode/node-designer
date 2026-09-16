@@ -288,7 +288,7 @@ class NDFrameworkWidget(QWidget):
         if slot_rows:
             for name, direction, value_text in slot_rows:
                 detail = "%s  %s" % (_dir_label(direction), value_text)
-                child = QTreeWidgetItem(state_top, [name, detail])
+                child  = QTreeWidgetItem(state_top, [name, detail])
                 child.setFlags(Qt.ItemIsEnabled | Qt.ItemIsSelectable)
         else:
             none_row = QTreeWidgetItem(
@@ -351,7 +351,7 @@ class NDFrameworkWidget(QWidget):
         top.setFirstColumnSpanned(True)
         for name, kind, doc in prop_rows:
             detail = doc.splitlines()[0] if doc else kind
-            child = QTreeWidgetItem(top, [name, detail])
+            child  = QTreeWidgetItem(top, [name, detail])
             child.setFlags(Qt.ItemIsEnabled | Qt.ItemIsSelectable)
             if doc:
                 child.setToolTip(0, doc)
@@ -369,17 +369,17 @@ class NDFrameworkWidget(QWidget):
         if spec is None:
             return
 
-        menu = QMenu(self._tree)
+        menu     = QMenu(self._tree)
         resolved = resolve_method_source(spec)
         open_act = reveal_act = copy_act = None
         if resolved is not None:
-            open_act = menu.addAction("Open in Editor")
+            open_act   = menu.addAction("Open in Editor")
             reveal_act = menu.addAction(reveal_label())
-            copy_act = menu.addAction("Copy Path")
+            copy_act   = menu.addAction("Copy Path")
         else:
             menu.addAction("(source not on disk)").setEnabled(False)
 
-        run = getattr(menu, "exec_", None) or menu.exec
+        run    = getattr(menu, "exec_", None) or menu.exec
         chosen = run(self._tree.viewport().mapToGlobal(pos))
         if chosen is None:
             return

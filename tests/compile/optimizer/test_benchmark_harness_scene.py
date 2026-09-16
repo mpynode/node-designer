@@ -36,7 +36,7 @@ def _load_func(name, ns=None):
     for node in tree.body:
         if isinstance(node, ast.FunctionDef) and node.name == name:
             mod = ast.Module(body=[node], type_ignores=[])
-            g = dict(ns or {})
+            g   = dict(ns or {})
             exec(compile(mod, _HARNESS, "exec"), g)
             return g[name]
     raise AssertionError("%s() not found in %s" % (name, _HARNESS))
@@ -54,9 +54,9 @@ class TestBuiltinSceneKey(unittest.TestCase):
 
     def test_compiled_suffix_still_finds_the_scene(self):
         # THE BUG: metaballsSw fell through to generic seeding -> empty mesh.
-        self.assertEqual(self.fn("metaballsSw"), "metaballs")
+        self.assertEqual(self.fn("metaballsSw"),  "metaballs")
         self.assertEqual(self.fn("metaballsCmp"), "metaballs")
-        self.assertEqual(self.fn("metaClaySw"), "metaClay")
+        self.assertEqual(self.fn("metaClaySw"),   "metaClay")
 
     def test_unrelated_type_matches_nothing(self):
         self.assertIsNone(self.fn("kDTreeSw"))
@@ -95,7 +95,7 @@ class TestGeoEmptiness(unittest.TestCase):
 
         def __init__(self, counts=None):
             self.MFn = TestGeoEmptiness._MFn
-            counts = counts or {}
+            counts   = counts or {}
 
             def mk(attr, key):
                 class _Fn:
@@ -110,9 +110,9 @@ class TestGeoEmptiness(unittest.TestCase):
                             raise RuntimeError("Object does not exist")
                         return v
                 return _Fn
-            self.MFnMesh = mk("numVertices", "mesh")
-            self.MFnNurbsCurve = mk("numCVs", "curve")
-            self.MFnNurbsSurface = mk("numCVsInU", "surface")
+            self.MFnMesh         = mk("numVertices", "mesh")
+            self.MFnNurbsCurve   = mk("numCVs",      "curve")
+            self.MFnNurbsSurface = mk("numCVsInU",   "surface")
 
     class _Plug:
         def __init__(self, data=None, raises=False):

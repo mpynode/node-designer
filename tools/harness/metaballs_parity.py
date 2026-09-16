@@ -21,7 +21,7 @@ import sys
 
 import numpy as np
 
-BUNDLE = sys.argv[1]
+BUNDLE   = sys.argv[1]
 
 _PT_ATOL = 1e-4          # compiled float path vs numpy; topology must be EXACT
 
@@ -44,7 +44,7 @@ def _mat(tx=0.0, ty=0.0, tz=0.0, sx=1.0, sy=1.0, sz=1.0):
 
 def _scenes():
     d64 = np.float64
-    S = []
+    S   = []
     # single sphere
     S.append(("sphere", dict(
         mats=np.stack([_mat()]),
@@ -96,7 +96,7 @@ def _drive(node, s):
 
 def _read_mesh(node):
     sel = om2.MSelectionList(); sel.add(node)
-    mob = sel.getDependNode(0)
+    mob  = sel.getDependNode(0)
     plug = om2.MFnDependencyNode(mob).findPlug("outMesh", True)
     data = plug.asMObject()
     if data.isNull():
@@ -117,7 +117,7 @@ try:
 
     all_ok = True
     for name, s in _scenes():
-        rec = {"scene": name, "ok": False}
+        rec  = {"scene": name, "ok": False}
         node = mc.createNode("metaballs")
         _drive(node, s)
         mc.dgeval(node + ".outMesh")
@@ -131,9 +131,9 @@ try:
         ri = np.asarray(ri, np.int64)
 
         rec["compiled_verts"] = int(cp.shape[0]) if cp is not None else 0
-        rec["ref_verts"] = int(rp.shape[0])
+        rec["ref_verts"]      = int(rp.shape[0])
         rec["compiled_faces"] = int(cc.shape[0]) if cc is not None else 0
-        rec["ref_faces"] = int(rc.shape[0])
+        rec["ref_faces"]      = int(rc.shape[0])
 
         if cp is None:
             rec["reason"] = "compiled produced no geometry"
@@ -144,7 +144,7 @@ try:
         elif not np.array_equal(ci, ri):
             rec["reason"] = "indices differ"
         else:
-            maxerr = float(np.max(np.abs(cp - rp))) if cp.size else 0.0
+            maxerr        = float(np.max(np.abs(cp - rp))) if cp.size else 0.0
             rec["maxerr"] = maxerr
             if maxerr <= _PT_ATOL:
                 rec["ok"] = True

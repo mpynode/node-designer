@@ -51,7 +51,7 @@ def _api2_plug(plug: "om.MPlug"):
         node_name = om.MFnDependencyNode(node).name()
     # full attribute path, array indices kept, long names.
     attr_path = plug.partialName(False, True, True, False, True, True)
-    sel = om2.MSelectionList()
+    sel       = om2.MSelectionList()
     sel.add("%s.%s" % (node_name, attr_path))
     return sel.getPlug(0)
 
@@ -60,12 +60,12 @@ def _api2_plug(plug: "om.MPlug"):
 
 
 def _write_plug(
-    plug: "om.MPlug",
+    plug:         "om.MPlug",
     attr_mobject: "om.MObject",
-    value: Any,
-    datablock=None,
-    geom_iter=None,
-    compute_ctx=None,
+    value:        Any,
+    datablock                  = None,
+    geom_iter                  = None,
+    compute_ctx                = None,
 ) -> None:
     """Dispatch write to compute-time (DataBlock) or init-time
     (cmds.setAttr) path based on whether a DataBlock is present."""
@@ -79,12 +79,12 @@ def _write_plug(
 
 
 def _write_plug_compute_time(
-    plug: "om.MPlug",
+    plug:         "om.MPlug",
     attr_mobject: "om.MObject",
-    value: Any,
+    value:        Any,
     datablock,
-    geom_iter=None,
-    compute_ctx=None,
+    geom_iter                  = None,
+    compute_ctx                = None,
 ) -> None:
     """E4 compute-time write via MDataBlock.
 
@@ -150,7 +150,7 @@ def _write_plug_compute_time(
                 else:
                     n_comp = 4
                 data_obj = om.MFnNumericData().create(nt)
-                fn_data = om.MFnNumericData(data_obj)
+                fn_data  = om.MFnNumericData(data_obj)
                 if nt in (om.MFnNumericData.k2Float, om.MFnNumericData.k3Float):
                     if n_comp == 2:
                         fn_data.setData2Float(float(value[0]), float(value[1]))
@@ -297,7 +297,7 @@ def _write_via_geom_iter(geom_iter, value, compute_ctx=None) -> None:
     if isinstance(value, om.MPointArray):
         geom_iter.setAllPositions(value)
     elif hasattr(value, "shape") and len(value.shape) == 2 and value.shape[1] == 3:
-        n = int(value.shape[0])
+        n  = int(value.shape[0])
         pa = om.MPointArray(n)
         for i in range(n):
             pa.set(
@@ -325,9 +325,9 @@ def _write_via_geom_iter(geom_iter, value, compute_ctx=None) -> None:
 
 
 def _write_plug_init_time(
-    plug: "om.MPlug",
+    plug:         "om.MPlug",
     attr_mobject: "om.MObject",
-    value: Any,
+    value:        Any,
 ) -> None:
     """Write ``value`` to ``plug`` using cmds.setAttr (init-time path).
 
@@ -445,7 +445,7 @@ def _write_plug_init_time(
         if attr_type in _GEO_ATTR_KINDS:
             from mpynode._api2.helpers import _geo_value_to_data
 
-            kind = _GEO_ATTR_KINDS[attr_type]
+            kind      = _GEO_ATTR_KINDS[attr_type]
             data_mobj = _geo_value_to_data(kind, value)
             if data_mobj is None:
                 raise AttributeError(
@@ -561,7 +561,7 @@ def _coerce_to_4x4_numpy(value):
         if arr.shape == (16,):
             return arr.reshape(4, 4).copy()
         if arr.shape == (3, 3):
-            out = _np.eye(4, dtype=_np.float64)
+            out         = _np.eye(4, dtype=_np.float64)
             out[:3, :3] = arr
             return out
     except Exception:

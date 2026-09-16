@@ -43,7 +43,7 @@ from mpynode.wrappers._mpy_node import MPyNode
 
 
 _DEFORMER_TYPE_NAME = "mPyDeformer"
-_PLUGIN_NAME = "mpynode_api1.py"
+_PLUGIN_NAME        = "mpynode_api1.py"
 
 
 def _ensure_plugin_loaded() -> None:
@@ -106,7 +106,7 @@ class MPyDeformer(MPyNode):
             name = cls._default_create_name()
         if not mc.objExists(mesh):
             raise ValueError(f"mesh {mesh!r} does not exist")
-        prior = mc.ls(selection=True, long=True) if skip_selection else None
+        prior  = mc.ls(selection=True, long=True) if skip_selection else None
         result = mc.deformer(mesh, type=cls.NATIVE_TYPE, name=name)
         # cmds.deformer returns [deformer_name]; rename if needed.
         deformer_name = result[0]

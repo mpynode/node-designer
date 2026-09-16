@@ -67,21 +67,21 @@ def _extract_stock_skin(sc, mesh_shape):
     import maya.OpenMayaAnim as oma1
 
     mfn_sc = oma1.MFnSkinCluster(_mobj1(sc))
-    infl = om1.MDagPathArray()
+    infl   = om1.MDagPathArray()
     mfn_sc.influenceObjects(infl)
     infl_names = [infl[i].partialPathName() for i in range(infl.length())]
 
     comp_fn = om1.MFnSingleIndexedComponent()
-    comp = comp_fn.create(om1.MFn.kMeshVertComponent)
-    nv = mc.polyEvaluate(mesh_shape, vertex=True)
+    comp    = comp_fn.create(om1.MFn.kMeshVertComponent)
+    nv      = mc.polyEvaluate(mesh_shape, vertex=True)
     comp_fn.setCompleteData(nv)
     wts = om1.MDoubleArray()
-    su = om1.MScriptUtil()
+    su  = om1.MScriptUtil()
     su.createFromInt(0)
     p_uint = su.asUintPtr()
     mfn_sc.getWeights(_dag1(mesh_shape), comp, wts, p_uint)
     ninf = om1.MScriptUtil.getUint(p_uint)
-    W = np.array([wts[i] for i in range(wts.length())]).reshape(nv, ninf)
+    W    = np.array([wts[i] for i in range(wts.length())]).reshape(nv, ninf)
 
     bind_vals = {}
     for c in (mc.getAttr(sc + ".bindPreMatrix", multiIndices=True) or []):
@@ -98,14 +98,14 @@ class TestArmWeightExtractionParity(unittest.TestCase):
         arm = _arm_path()
         self.assertTrue(os.path.isfile(arm), "bundled arm.ma missing: %s" % arm)
 
-        new = mc.file(arm, i=True, ignoreVersion=True, returnNewNodes=True) or []
-        skins = mc.ls(new, type="skinCluster") or []
+        new    = mc.file(arm, i=True, ignoreVersion=True, returnNewNodes=True) or []
+        skins  = mc.ls(new, type="skinCluster") or []
         joints = mc.ls(new, type="joint", long=True) or []
         meshes = [m for m in (mc.ls(new, type="mesh", long=True) or [])
                   if not mc.getAttr(m + ".intermediateObject")]
         self.assertTrue(skins and meshes, "arm.ma missing skinCluster/mesh")
 
-        sc = skins[0]
+        sc         = skins[0]
         mesh_shape = meshes[0]
         mesh_xform = mc.listRelatives(mesh_shape, parent=True, fullPath=True)[0]
         elbow = (next((j for j in joints
@@ -162,10 +162,10 @@ class TestArmWeightExtractionParity(unittest.TestCase):
         mpy_straight = _mesh_pts(mesh_shape)
         mc.setAttr(elbow + ".rotateY", 50.0)   # arm hinges on Y
         mc.dgeval(mesh_shape + ".outMesh")
-        mpy_bent = _mesh_pts(mesh_shape)
+        mpy_bent   = _mesh_pts(mesh_shape)
 
         d_straight = float(np.abs(mpy_straight - stock_straight).max())
-        d_bent = float(np.abs(mpy_bent - stock_bent).max())
+        d_bent     = float(np.abs(mpy_bent - stock_bent).max())
         # The bent pose must be a non-trivial deform (else parity is vacuous).
         self.assertGreater(float(np.abs(stock_bent - stock_straight).max()), 1.0,
                            "elbow pose did not move the stock mesh")

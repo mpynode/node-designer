@@ -55,12 +55,12 @@ def base_attr_members(spec, members):
     for kind in ("inputs", "outputs"):
         have |= set((spec.get(kind) or {}).keys())
     taken = {m["member"] for m in (members or [])}
-    out = []
+    out   = []
     for plug, meta, flags in entries:
         if plug in have:
             continue
         ident = _ident(plug)
-        base = "a" + ident[:1].upper() + ident[1:]
+        base  = "a" + ident[:1].upper() + ident[1:]
         mem, i = base, 1
         while mem in taken:
             i += 1
@@ -238,9 +238,9 @@ def _live_targets_read(tg_member, gate_member):
     contributes 0.0 whether it is taken from the live table or the bake.
     """
     slot = LIVE_CPP_VARS["liveSlot"][1]
-    ofs = LIVE_CPP_VARS["liveOffset"][1]
+    ofs  = LIVE_CPP_VARS["liveOffset"][1]
     comp = LIVE_CPP_VARS["liveComponents"][1]
-    dlt = LIVE_CPP_VARS["liveDeltas"][1]
+    dlt  = LIVE_CPP_VARS["liveDeltas"][1]
     return [
         "    // --- live targets (construction history; no plug write) ---",
         "    std::vector<int64_t> %s;" % slot,
@@ -357,7 +357,7 @@ def _deform_lines(cls, ins, spec, base, for_port, lowered=None,
     guide promised the porter and that never existed.
     """
     is_skin = base == "MPxSkinCluster"
-    L = []
+    L       = []
     L.append("MStatus %s::deform(MDataBlock& block, MItGeometry& iter," % cls)
     L.append("                   const MMatrix& worldMatrix, unsigned int multiIndex) {")
     L.append("    MStatus status;")
@@ -400,7 +400,7 @@ def _deform_lines(cls, ins, spec, base, for_port, lowered=None,
     # all. Deriving it here silently emitted nothing while nd_lower bound the
     # names anyway -- caught, at least, as an undeclared-identifier build error.
     if live_targets:
-        tg = _member_for("targetGeometry", ins, base_extra)
+        tg   = _member_for("targetGeometry", ins, base_extra)
         gate = _member_for("liveTargets", ins, base_extra)
         if tg and gate:
             L += _live_targets_read(tg, gate)

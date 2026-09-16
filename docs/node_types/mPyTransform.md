@@ -107,8 +107,8 @@ Maya `MMatrix` is **row-major** with translation in the **last row** (row
 
 ```python
 import numpy as np
-m = np.eye(4)
-m[3, 1] = 2.0
+m                 = np.eye(4)
+m[3, 1]           = 2.0
 self.local_matrix = m         # gates default True -> all channels driven
 # set e.g. self.apply_rotate = False to keep the live rotation
 ```
@@ -173,7 +173,7 @@ mc.file(new=True, force=True)
 # Custom transform: publish a local matrix offset +2 in Y with only the
 # translate gate open (gates default True, so rotate/scale are closed
 # explicitly to leave them on the live TRS).
-t = MPyTransform.create(name="liftingTransform")
+t    = MPyTransform.create(name="liftingTransform")
 node = t.get_name()
 
 # Parent a child so the offset shows up in a real worldMatrix read.

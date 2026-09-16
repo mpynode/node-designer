@@ -65,7 +65,7 @@ class TestRefreshHubBasic(unittest.TestCase):
     def test_subscribe_unsubscribe(self):
         from mpynode.ui.widgets.refresh_hub import make_hub
 
-        hub = make_hub(self.node)
+        hub   = make_hub(self.node)
         calls = []
         hub.subscribe("v1", lambda ev: calls.append(("v1", ev)))
         self.assertTrue(hub.has_subscriber("v1"))
@@ -79,7 +79,7 @@ class TestRefreshHubBasic(unittest.TestCase):
             make_hub, EVENT_ATTR_ADDED_OR_REMOVED,
         )
 
-        hub = make_hub(self.node)
+        hub   = make_hub(self.node)
         calls = []
         hub.subscribe("v1", lambda ev: calls.append(ev))
         hub.fire(EVENT_ATTR_ADDED_OR_REMOVED)
@@ -95,7 +95,7 @@ class TestRefreshHubBasic(unittest.TestCase):
             make_hub, EVENT_ATTR_ADDED_OR_REMOVED,
         )
 
-        hub = make_hub(self.node)
+        hub   = make_hub(self.node)
         calls = []
         hub.subscribe("v1", lambda ev: calls.append(ev))
         for _ in range(5):
@@ -112,7 +112,7 @@ class TestRefreshHubBasic(unittest.TestCase):
             make_hub, EVENT_ATTR_SET, EVENT_NAME_CHANGED,
         )
 
-        hub = make_hub(self.node)
+        hub        = make_hub(self.node)
         attr_calls = []
         name_calls = []
         hub.subscribe("attr_only", lambda ev: attr_calls.append(ev),
@@ -152,7 +152,7 @@ class TestRefreshHubMayaCallbacks(unittest.TestCase):
             make_hub, EVENT_ATTR_ADDED_OR_REMOVED,
         )
 
-        hub = make_hub(self.node)
+        hub    = make_hub(self.node)
         events = []
         hub.subscribe("v1", lambda ev: events.append(ev))
         # Trigger
@@ -170,7 +170,7 @@ class TestRefreshHubMayaCallbacks(unittest.TestCase):
             make_hub, EVENT_NODE_ABOUT_TO_DELETE,
         )
 
-        hub = make_hub(self.node)
+        hub    = make_hub(self.node)
         events = []
         hub.subscribe("v1", lambda ev: events.append(ev))
         # Delete the node
@@ -207,7 +207,7 @@ class TestEditorRefreshHubAttach(unittest.TestCase):
             make_hub, EVENT_ATTR_ADDED_OR_REMOVED,
         )
 
-        ed = NDScriptEditor(self.deformer)
+        ed  = NDScriptEditor(self.deformer)
         hub = make_hub(self.deformer.get_name())
         ed.attachRefreshHub(hub)
         before = set(ed.getCompletionWords())
@@ -275,7 +275,7 @@ class TestRefreshHubPlugFilter(unittest.TestCase):
             make_hub, EVENT_ATTR_SET,
         )
 
-        hub = make_hub(self.node)
+        hub    = make_hub(self.node)
         events = []
         hub.subscribe("v1", lambda ev: events.append(ev),
                       events=(EVENT_ATTR_SET,))
@@ -289,13 +289,13 @@ class TestRefreshHubPlugFilter(unittest.TestCase):
             make_hub, EVENT_ATTR_SET,
         )
 
-        hub = make_hub(self.node)
+        hub    = make_hub(self.node)
         events = []
         hub.subscribe(
             "v1",
             lambda ev: events.append(ev),
-            events=(EVENT_ATTR_SET,),
-            plug_filter=("driverMatrixA", "amplitude"),
+            events      = (EVENT_ATTR_SET,),
+            plug_filter = ("driverMatrixA", "amplitude"),
         )
         hub.fire_plug_set("envelope")  # not in filter
         hub._dispatch_pending()
@@ -308,13 +308,13 @@ class TestRefreshHubPlugFilter(unittest.TestCase):
             make_hub, EVENT_ATTR_SET,
         )
 
-        hub = make_hub(self.node)
+        hub    = make_hub(self.node)
         events = []
         hub.subscribe(
             "v1",
             lambda ev: events.append(ev),
-            events=(EVENT_ATTR_SET,),
-            plug_filter=("driverMatrixA",),
+            events      = (EVENT_ATTR_SET,),
+            plug_filter = ("driverMatrixA",),
         )
         hub.fire_plug_set("driverMatrixA")
         hub._dispatch_pending()
@@ -328,13 +328,13 @@ class TestRefreshHubPlugFilter(unittest.TestCase):
             make_hub, EVENT_ATTR_SET,
         )
 
-        hub = make_hub(self.node)
+        hub    = make_hub(self.node)
         events = []
         hub.subscribe(
             "v1",
             lambda ev: events.append(ev),
-            events=(EVENT_ATTR_SET,),
-            plug_filter=("amplitude",),
+            events      = (EVENT_ATTR_SET,),
+            plug_filter = ("amplitude",),
         )
         hub.fire_plug_set("envelope")
         hub.fire_plug_set("amplitude")
@@ -352,17 +352,17 @@ class TestRefreshHubPlugFilter(unittest.TestCase):
             make_hub, EVENT_ATTR_SET,
         )
 
-        hub = make_hub(self.node)
+        hub               = make_hub(self.node)
         unfiltered_events = []
-        filtered_events = []
+        filtered_events   = []
         hub.subscribe(
             "uf", lambda ev: unfiltered_events.append(ev),
             events=(EVENT_ATTR_SET,),
         )
         hub.subscribe(
             "f", lambda ev: filtered_events.append(ev),
-            events=(EVENT_ATTR_SET,),
-            plug_filter=("X",),
+            events      = (EVENT_ATTR_SET,),
+            plug_filter = ("X",),
         )
         hub.fire(EVENT_ATTR_SET)
         hub._dispatch_pending()

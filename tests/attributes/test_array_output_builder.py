@@ -68,7 +68,7 @@ def _arr_spec(t):
         "schema_version": 1, "source_node": "arrProbe", "mpy_type": "mPyNode",
         "suggested": {"node_type_name": "arrProbe", "class_name": "ArrProbe",
                       "type_id": "0x00070311", "mpx_base": "MPxNode"},
-        "inputs": {"aIn": {"type": t, "is_array": True}},
+        "inputs":  {"aIn": {"type": t, "is_array": True}},
         "outputs": {"aOut": {"type": t, "is_array": True}},
         "compute": "pass\n", "init": "", "affects": "all",
         "portability": {"portable": True, "blockers": [], "warnings": [],
@@ -176,7 +176,7 @@ class TestArrayOutputSizedBuilder(unittest.TestCase):
 # a guard-false evaluation reaches the unconditional finalize with an empty
 # buffer.
 _RT_COMPUTE = "if self.gate:\n    self.aOut = self.aIn\n"
-_RT_NAME = "arrOutRt"
+_RT_NAME    = "arrOutRt"
 _RT_TYPE_ID = "0x00070570"
 
 
@@ -203,7 +203,7 @@ def _have_toolchain():
 class TestArrayOutputRuntime(unittest.TestCase):
     """Compile the guarded array-output node once, then drive it."""
 
-    _tmp = None
+    _tmp    = None
     _bundle = None
 
     @classmethod
@@ -217,15 +217,15 @@ class TestArrayOutputRuntime(unittest.TestCase):
 
         mc.file(new=True, force=True)
         src = mc.createNode("mPyNode", name="arrOutRtSrc")
-        w = mpynode.wrap_node(src)
+        w   = mpynode.wrap_node(src)
         w.add_input_attr("aIn", "double", is_array=True)
         w.add_input_attr("gate", "bool")
         w.add_output_attr("aOut", "double", is_array=True)
         w.set_compute_expression(_RT_COMPUTE)
-        spec = spec_extractor.extract_spec(src)
+        spec                                = spec_extractor.extract_spec(src)
         spec["suggested"]["node_type_name"] = _RT_NAME
-        spec["suggested"]["class_name"] = "ArrOutRt"
-        spec["suggested"]["type_id"] = _RT_TYPE_ID
+        spec["suggested"]["class_name"]     = "ArrOutRt"
+        spec["suggested"]["type_id"]        = _RT_TYPE_ID
 
         cls._tmp = tempfile.mkdtemp()
         res = cc.compile_plugin([spec], _RT_NAME, cls._tmp, strict=True,
@@ -312,7 +312,7 @@ class TestArrayOutputRuntime(unittest.TestCase):
         import mpynode
 
         src = mc.createNode("mPyNode")
-        w = mpynode.wrap_node(src)
+        w   = mpynode.wrap_node(src)
         w.add_input_attr("aIn", "double", is_array=True)
         w.add_input_attr("gate", "bool")
         w.add_output_attr("aOut", "double", is_array=True)

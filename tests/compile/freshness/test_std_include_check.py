@@ -46,13 +46,13 @@ _COMPILER_DIR = os.path.join(_REPO, "scripts", "mpynode", "native", "compiler")
 
 def _load_tool():
     spec = importlib.util.spec_from_file_location("check_std_includes_t", _TOOL)
-    mod = importlib.util.module_from_spec(spec)
+    mod  = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
     return mod
 
 
 BEGIN = "// ===== BEGIN PORTED COMPUTE ====="
-END = "// ===== END PORTED COMPUTE ====="
+END   = "// ===== END PORTED COMPUTE ====="
 
 # The AI translation unit's real include set (compiler/emit_attr.py:_INCLUDES).
 # Everything the model can reach beyond this is a Windows-only compile error.
@@ -97,7 +97,7 @@ class TestChecker(unittest.TestCase):
 
     def test_all_five_calibration_defects_are_caught(self):
         for header, stmt in self.CALIBRATION:
-            txt = self._BASE + "void g() { %s }\n" % stmt
+            txt   = self._BASE + "void g() { %s }\n" % stmt
             found = self.chk.check_text(txt)
             self.assertIn(header, self.chk.missing_headers(found),
                           "missed std defect needing <%s>: %s" % (header, stmt))
@@ -133,7 +133,7 @@ class TestChecker(unittest.TestCase):
         self.assertEqual([], self.chk.check_text(txt))
 
     def test_order_is_reported_when_the_header_lands_after_first_use(self):
-        txt = "void h() { std::array<int,2> a{}; (void)a; }\n#include <array>\n"
+        txt   = "void h() { std::array<int,2> a{}; (void)a; }\n#include <array>\n"
         found = self.chk.check_text(txt)
         self.assertEqual(["order"], [f.kind for f in found])
         # ORDER is not a missing header, so it must not be auto-added.
@@ -151,7 +151,7 @@ class TestKnownCleanCorpus(unittest.TestCase):
     def test_mega_corpus_reports_zero_findings(self):
         if not os.path.isdir(_MEGA_SRC):
             self.skipTest("mega build/source not present")
-        chk = _load_tool()
+        chk   = _load_tool()
         files = [f for f in sorted(os.listdir(_MEGA_SRC)) if f.endswith(".cpp")]
         self.assertTrue(files, "no TUs to calibrate against")
         bad = {}
@@ -170,8 +170,8 @@ class TestPortedRegion(unittest.TestCase):
     def test_region_resolves_against_the_whole_files_includes(self):
         # std::sqrt is covered by the scaffold's <cmath>; the region must not be
         # blamed for a header it does not carry itself.
-        chk = _load_tool()
-        cpp = _ported("h_out.setDouble(std::sqrt(in_a));")
+        chk  = _load_tool()
+        cpp  = _ported("h_out.setDouble(std::sqrt(in_a));")
         body = "h_out.setDouble(std::sqrt(in_a));"
         self.assertEqual([], chk.check_region(body, cpp))
 
@@ -198,7 +198,7 @@ class TestPortedRegion(unittest.TestCase):
 
     def test_add_std_includes_repairs_the_file(self):
         from mpynode.native.ai import prompt
-        cpp = _ported("static std::mutex m; std::lock_guard<std::mutex> lk(m);")
+        cpp   = _ported("static std::mutex m; std::lock_guard<std::mutex> lk(m);")
         fixed = prompt.add_std_includes(cpp, ["mutex"])
         self.assertIn("#include <mutex>", fixed)
         # placed in the include block, above the compute that uses it
@@ -291,7 +291,7 @@ class TestPortabilityRule(unittest.TestCase):
 
         needle = "libc++ satisfies many facilities through"
         ai_dir = os.path.dirname(ai_pkg.__file__)
-        homes = []
+        homes  = []
         for fn in sorted(os.listdir(ai_dir)):
             if not fn.endswith(".py"):
                 continue

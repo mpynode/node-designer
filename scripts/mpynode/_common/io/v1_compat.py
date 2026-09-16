@@ -113,9 +113,9 @@ class V1Vec(numpy.ndarray):
         rows = matrix_rows(other)
         if rows is None:
             return numpy.ndarray.__mul__(self, other)
-        p = [float(self[0]), float(self[1]), float(self[2]), 1.0]
+        p   = [float(self[0]), float(self[1]), float(self[2]), 1.0]
         out = [sum(p[k] * rows[k][c] for k in range(4)) for c in range(4)]
-        w = out[3] or 1.0
+        w   = out[3] or 1.0
         return v1_vec(out[0] / w, out[1] / w, out[2] / w)
 
 
@@ -222,13 +222,13 @@ def wav_from_float32(raw, rate, channels=1):
     import io as _io
     import wave
 
-    data = bytes(raw)
+    data   = bytes(raw)
     floats = array.array("f")
     floats.frombytes(data[:len(data) // 4 * 4])
     ints = array.array(
         "h", (int(max(-1.0, min(1.0, f)) * 32767) for f in floats))
 
-    buf = _io.BytesIO()
+    buf    = _io.BytesIO()
     handle = wave.open(buf, "wb")
     try:
         handle.setnchannels(int(channels))
@@ -267,7 +267,7 @@ def play_pcm(raw, rate, channels=1):
     except Exception:
         return None
 
-    key = hashlib.md5(wav).hexdigest()[:12]
+    key    = hashlib.md5(wav).hexdigest()[:12]
     player = _PLAYERS.get(key)
     if player is None:
         path = os.path.join(tempfile.gettempdir(),

@@ -41,7 +41,7 @@ class TestPresetCaptureDeterministic(unittest.TestCase):
         from mpynode.native.spec import spec_extractor as se
         pin, pout = se.capture_preset_attrs_transient(
             "mPyFile", _SCANLINE_COMPUTE, "", {}, {})
-        self.assertIn("uvCoord", pin)
+        self.assertIn("uvCoord",  pin)
         self.assertIn("fileName", pin)
         self.assertIn("outColor", pout)
         self.assertIn("outAlpha", pout)
@@ -91,7 +91,7 @@ class TestTransientCaptureResilient(unittest.TestCase):
                 "mPyFile", _SCANLINE_COMPUTE, "", {}, {})
         finally:
             mc.createNode = orig
-        self.assertIn("uvCoord", pin)
+        self.assertIn("uvCoord",  pin)
         self.assertIn("fileName", pin)
         self.assertIn("outColor", pout)
 
@@ -142,7 +142,7 @@ class TestStaticTablePinnedToLive(unittest.TestCase):
                     continue
                 payload = mpn_io.load_mpn(mpn, trusted=True)
                 compute = payload.get("compute") or payload.get("compute_source") or ""
-                init = payload.get("init") or payload.get("init_source") or ""
+                init    = payload.get("init") or payload.get("init_source") or ""
                 # self.<name> refs + fileName (reached inside read_texture()).
                 refs = set(se._self_attr_refs("%s\n%s" % (compute, init)))
                 refs.add("fileName")
@@ -215,7 +215,7 @@ class TestFileNameResilientToFlakyCreateNode(unittest.TestCase):
         if not _os.path.isfile(mpn):
             self.skipTest("template missing: %s" % mpn)
         payload = mpn_io.load_mpn(mpn, trusted=True)
-        orig = mc.createNode
+        orig    = mc.createNode
 
         def _boom(*a, **k):
             raise RuntimeError("simulated flaky createNode (2026-07-19 mega)")
@@ -229,7 +229,7 @@ class TestFileNameResilientToFlakyCreateNode(unittest.TestCase):
     def test_filename_survives_flaky_createNode(self):
         for t in self._FILE_GETATTR:
             spec = self._adapt_with_flaky_createNode(t)
-            ins = spec.get("inputs") or {}
+            ins  = spec.get("inputs") or {}
             # uvCoord is protected by the self.<name> fallback (already fixed).
             self.assertIn("uvCoord", ins,
                           "%s lost uvCoord under flaky createNode" % t)

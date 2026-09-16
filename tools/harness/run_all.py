@@ -113,7 +113,7 @@ FILTER = set(sys.argv[1:])
 if FILTER:
     TEMPLATES = [t for t in TEMPLATES if t["folder"] in FILTER]
 
-MASTER_LOG = os.path.join(AUDIT_ROOT, "master.log")
+MASTER_LOG  = os.path.join(AUDIT_ROOT, "master.log")
 MASTER_JSON = os.path.join(AUDIT_ROOT, "master_results.json")
 
 # preserve prior results for folders we are NOT re-running this pass
@@ -136,19 +136,19 @@ def ML(msg=""):
 
 
 def base_env(out_dir):
-    e = dict(os.environ)
-    e["MPYNODE_ROOT"] = ROOT
+    e                       = dict(os.environ)
+    e["MPYNODE_ROOT"]       = ROOT
     e["MPYNODE_USE_STUDIO"] = "1"
     # T38: headless can't show the trust prompt, so an untrusted scene stops
     # exec'ing Init AND Compute. reopen_check.py opens a saved demo .ma, which
     # would otherwise mark the whole session untrusted and silently flatten the
     # INTERPRETED reference it compares against.
     e["MPYNODE_TRUST_PICKLE"] = "1"
-    e["PYTHONPATH"] = os.path.join(ROOT, "scripts") + ":" + e.get("PYTHONPATH", "")
+    e["PYTHONPATH"]           = os.path.join(ROOT, "scripts") + ":" + e.get("PYTHONPATH", "")
     e["MAYA_PLUG_IN_PATH"] = ":".join(
         [os.path.join(ROOT, "plug-ins"), out_dir, e.get("MAYA_PLUG_IN_PATH", "")])
     e["QT_QPA_PLATFORM"] = "offscreen"
-    cb = e.get("CLAUDE_BIN")
+    cb                   = e.get("CLAUDE_BIN")
     if not cb:
         for c in ("/usr/local/bin/claude", "/opt/homebrew/bin/claude"):
             if os.path.isfile(c):
@@ -188,12 +188,12 @@ ML("=" * 70)
 ML("AUDIT START: %d template(s)" % len(TEMPLATES))
 
 for idx, t in enumerate(TEMPLATES, 1):
-    folder = t["folder"]
+    folder  = t["folder"]
     out_dir = os.path.join(AUDIT_ROOT, folder)
     os.makedirs(out_dir, exist_ok=True)
-    mpn = os.path.join(ROOT, t["mpn"])
+    mpn    = os.path.join(ROOT, t["mpn"])
     plugin = t["plugin"]
-    label = t["demo_label"]
+    label  = t["demo_label"]
     # Dual-read the node name: templates.json now carries ``node_name`` (the old
     # key was ``source_name``); tolerate either so a partly-migrated manifest works.
     src = t.get("node_name") or t.get("source_name")
@@ -219,7 +219,7 @@ for idx, t in enumerate(TEMPLATES, 1):
         rec["status"] = "compile_failed"
         ML("   COMPILE: NO RESULT -- %s" % ctail.splitlines()[-1:])
         results.append(rec)
-        _all = {r["folder"]: r for r in results}
+        _all   = {r["folder"]: r for r in results}
         merged = list(_prior.values())
         merged = [r for r in merged if r["folder"] not in _all] + results
         json.dump(merged, open(MASTER_JSON, "w"), indent=1)
@@ -233,7 +233,7 @@ for idx, t in enumerate(TEMPLATES, 1):
         rec["issues"].append("compile failed: %s" % (cj.get("errors")))
         rec["status"] = "compile_failed"
         results.append(rec)
-        _all = {r["folder"]: r for r in results}
+        _all   = {r["folder"]: r for r in results}
         merged = [r for r in _prior.values() if r["folder"] not in _all] + results
         json.dump(merged, open(MASTER_JSON, "w"), indent=1)
         continue
@@ -258,14 +258,14 @@ for idx, t in enumerate(TEMPLATES, 1):
     # A template may declare several @maya_demo methods (e.g. DNET: Grid Net /
     # Layout Net / Two Knots). Build EVERY one -- the earlier audit built only
     # the first, silently missing the rest.
-    demos = demo_specs_for(mpn) or [(None, label)]
-    multi = len(demos) > 1
-    _btmo = int(os.environ.get("MPYNODE_BUILD_TIMEOUT", "900"))
+    demos             = demo_specs_for(mpn) or [(None, label)]
+    multi             = len(demos) > 1
+    _btmo             = int(os.environ.get("MPYNODE_BUILD_TIMEOUT", "900"))
     rec["multi_demo"] = multi
-    rec["demos"] = []
+    rec["demos"]      = []
     ML("   demos (%d): %s" % (len(demos), [d[1] for d in demos]))
     for func_name, dlabel in demos:
-        ma_base = folder if not multi else "%s__%s" % (folder, func_name or "demo")
+        ma_base  = folder if not multi else "%s__%s" % (folder, func_name or "demo")
         demo_sel = func_name or "-"
         drec = {"func_name": func_name, "label": dlabel, "ma_basename": ma_base,
                 "build": None, "reopen": None, "status": "pending"}
@@ -313,7 +313,7 @@ for idx, t in enumerate(TEMPLATES, 1):
 
     # Back-compat: mirror the FIRST demo into rec["build"]/rec["reopen"].
     if rec["demos"]:
-        rec["build"] = rec["demos"][0]["build"]
+        rec["build"]  = rec["demos"][0]["build"]
         rec["reopen"] = rec["demos"][0]["reopen"]
     # Overall status = worst across demos (compile already ok at this point).
     dstat = [d["status"] for d in rec["demos"]]
@@ -331,7 +331,7 @@ for idx, t in enumerate(TEMPLATES, 1):
     results.append(rec)
 
     # persist after every template
-    _all = {r["folder"]: r for r in results}
+    _all   = {r["folder"]: r for r in results}
     merged = [r for r in _prior.values() if r["folder"] not in _all] + results
     json.dump(merged, open(MASTER_JSON, "w"), indent=1)
 

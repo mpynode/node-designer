@@ -13,8 +13,8 @@ import sys
 import tempfile
 from tests import _paths
 
-HERE = os.path.dirname(os.path.abspath(__file__))
-ROOT = _paths.ROOT
+HERE    = os.path.dirname(os.path.abspath(__file__))
+ROOT    = _paths.ROOT
 SCRIPTS = os.path.join(ROOT, "scripts")
 sys.path.insert(0, SCRIPTS)
 
@@ -71,7 +71,7 @@ def _build_harness():
     from mpynode.native.compiler.kernels.file_texture_cpp import MATH_CPP
     src = _HARNESS_MAIN.split("int main", 1)[0] + MATH_CPP + "\nint main" + \
         _HARNESS_MAIN.split("int main", 1)[1]
-    d = tempfile.mkdtemp(prefix="ndtex_math_")
+    d   = tempfile.mkdtemp(prefix="ndtex_math_")
     cpp = os.path.join(d, "harness.cpp")
     exe = os.path.join(d, "harness")
     with open(cpp, "w") as fh:
@@ -89,23 +89,23 @@ def main():
     np.random.seed(12345)
     exe = _build_harness()
 
-    cases = []          # (W,H,cs,pf,kernel,radius,u,v,wu,wv,br,bg,bb, raw)
-    expected = []       # (r,g,b,a)
+    cases    = []  # (W,H,cs,pf,kernel,radius,u,v,wu,wv,br,bg,bb, raw)
+    expected = []  # (r,g,b,a)
     # Cover every colour space with a couple of UVs; sample wrap/kernel combos.
     for cs in range(25):
         for _ in range(3):
             W, H = 6, 5
-            raw = np.random.randint(0, 256, (H, W, 4), dtype=np.uint8)
-            u = float(np.random.uniform(-0.3, 1.3))
-            v = float(np.random.uniform(-0.3, 1.3))
-            wu = int(np.random.randint(0, 4))
-            wv = int(np.random.randint(0, 4))
-            pf = int(np.random.randint(0, 2))
+            raw    = np.random.randint(0, 256, (H, W, 4), dtype=np.uint8)
+            u      = float(np.random.uniform(-0.3, 1.3))
+            v      = float(np.random.uniform(-0.3, 1.3))
+            wu     = int(np.random.randint(0, 4))
+            wv     = int(np.random.randint(0, 4))
+            pf     = int(np.random.randint(0, 2))
             kernel = int(np.random.randint(0, 4))
             radius = float(np.random.choice([0.0, 1.0, 1.5, 2.0, 3.0]))
             br, bg, bb = (float(np.random.rand()) for _ in range(3))
             lin = _linearize(raw, cs)
-            rq = round(radius, 1) if radius else 0.0
+            rq  = round(radius, 1) if radius else 0.0
             lin = _prefilter(lin, bool(pf), kernel, rq)
             r, g, b, a = _sample(lin, u, v, wu, wv, (br, bg, bb))
             cases.append((W, H, cs, pf, kernel, radius, u, v, wu, wv, br, bg, bb, raw))
@@ -128,13 +128,13 @@ def main():
         sys.exit(1)
 
     maxerr = 0.0
-    worst = None
+    worst  = None
     for i, (e, g) in enumerate(zip(expected, got)):
         for ec, gc in zip(e, g):
             d = abs(float(ec) - float(gc))
             if d > maxerr:
                 maxerr = d
-                worst = (i, cases[i][2], e, g)  # (case, cs, exp, got)
+                worst  = (i, cases[i][2], e, g)  # (case, cs, exp, got)
     print("cases=%d  maxerr=%.3e  tol=%.1e" % (len(cases), maxerr, TOL))
     if worst:
         print("worst: case=%d cs=%d exp=%r got=%r" % worst)
@@ -194,15 +194,15 @@ SCANLINE_INIT = DEFAULT_INIT_SOURCE + (
 def _full_inputs(extra=None):
     """The preset surface is_full_parity_file_node requires, plus extras."""
     base = {
-        "fileName": {"type": "string"},
-        "uvCoord": {"type": "float2"},
-        "colorSpace": {"type": "int"},
-        "preFilter": {"type": "bool"},
+        "fileName":        {"type": "string"},
+        "uvCoord":         {"type": "float2"},
+        "colorSpace":      {"type": "int"},
+        "preFilter":       {"type": "bool"},
         "preFilterKernel": {"type": "int"},
         "preFilterRadius": {"type": "float"},
-        "wrapModeU": {"type": "int"},
-        "wrapModeV": {"type": "int"},
-        "borderColor": {"type": "color"},
+        "wrapModeU":       {"type": "int"},
+        "wrapModeV":       {"type": "int"},
+        "borderColor":     {"type": "color"},
     }
     if extra:
         base.update(extra)
@@ -212,9 +212,9 @@ def _full_inputs(extra=None):
 def _spec(compute, init="", inputs=None):
     return {
         "suggested": {"reads_image_file": True},
-        "inputs": inputs if inputs is not None else _full_inputs(),
-        "compute": compute,
-        "init": init,
+        "inputs":    inputs if inputs is not None else _full_inputs(),
+        "compute":   compute,
+        "init":      init,
     }
 
 
@@ -231,7 +231,7 @@ _BLESSED_CORE = (
 def _blessed_spec(compute, init="", inputs=None):
     """A full-parity mPyFile spec whose compute uses the blessed method spelling.
     Needs mpy_type so method_registry.methods_for_type resolves the blessings."""
-    spec = _spec(compute, init=init, inputs=inputs)
+    spec             = _spec(compute, init=init, inputs=inputs)
     spec["mpy_type"] = "mPyFile"
     return spec
 
@@ -294,8 +294,8 @@ class TestClassify(unittest.TestCase):
         kind, tail = ftc.classify_full_parity_compute(
             _spec(compute, init=SCANLINE_INIT,
                   inputs=_full_inputs({"tIn": {"type": "float"}})))
-        self.assertEqual(kind, "scanline")
-        self.assertEqual(tail["tin"], "tIn")
+        self.assertEqual(kind,          "scanline")
+        self.assertEqual(tail["tin"],   "tIn")
         self.assertEqual(tail["bands"], 12.0)
         self.assertEqual(tail["speed"], 0.1)
         self.assertAlmostEqual(tail["twopi"], 6.283185307179586)
@@ -345,7 +345,7 @@ class TestClassify(unittest.TestCase):
         # blessed core + the plain default write is the SAME "default" as the
         # Init-helper spelling.
         compute = _BLESSED_CORE + "self.outColor = (r, g, b)\nself.outAlpha = a\n"
-        spec = _blessed_spec(compute, init=DEFAULT_INIT_SOURCE)
+        spec    = _blessed_spec(compute, init=DEFAULT_INIT_SOURCE)
         kind, tail = ftc.classify_full_parity_compute(spec)
         self.assertEqual(kind, "default")
         self.assertIsNone(tail)
@@ -358,8 +358,8 @@ class TestClassify(unittest.TestCase):
         kind, tail = ftc.classify_full_parity_compute(
             _blessed_spec(compute, init=SCANLINE_INIT,
                           inputs=_full_inputs({"tIn": {"type": "float"}})))
-        self.assertEqual(kind, "scanline")
-        self.assertEqual(tail["tin"], "tIn")
+        self.assertEqual(kind,          "scanline")
+        self.assertEqual(tail["tin"],   "tIn")
         self.assertEqual(tail["bands"], 12.0)
         self.assertEqual(tail["speed"], 0.1)
         self.assertAlmostEqual(tail["twopi"], 6.283185307179586)
@@ -370,7 +370,7 @@ class TestClassify(unittest.TestCase):
         # a custom write the glue cannot reproduce falls back to the porter
         # path, rather than silently rendering plain texture.
         compute = _BLESSED_CORE + "self.outColor = (r * 0.5, g, b)\nself.outAlpha = a\n"
-        spec = _blessed_spec(compute, init=SCANLINE_INIT)
+        spec    = _blessed_spec(compute, init=SCANLINE_INIT)
         kind, tail = ftc.classify_full_parity_compute(spec)
         self.assertIsNone(kind)
         self.assertIsNone(tail)
@@ -535,10 +535,10 @@ class TestComputeGlueLinesScanlineTail(unittest.TestCase):
         tail = {"c0": 0.3, "c1": 0.7, "c2": 0.25, "c3": 0.75,
                 "bands": 7.0, "speed": 0.05, "twopi": 6.0, "tin": "tIn"}
         body = self._emit(tail)
-        self.assertIn("7.0", body)
+        self.assertIn("7.0",  body)
         self.assertIn("0.05", body)
-        self.assertIn("0.3", body)
-        self.assertIn("0.7", body)
+        self.assertIn("0.3",  body)
+        self.assertIn("0.7",  body)
         self.assertNotIn("12.0", body)
         self.assertNotIn("0.1 ", body)
 
@@ -550,7 +550,7 @@ class TestComputeGlueLinesScanlineTail(unittest.TestCase):
         # rename the tIn input plug -> the glue must follow the member name
         for m in ins:
             if m["plug"] == "tIn":
-                m["plug"] = "frame"
+                m["plug"]   = "frame"
                 m["member"] = _mname("frame")
         body = "\n".join(ftc.compute_glue_lines(ins, outs, tail=tail))
         self.assertIn("(double)in_aFrame", body)
@@ -576,15 +576,15 @@ _FULL_COMPUTE = (
 )
 
 _FULL_INPUTS = {
-    "fileName": {"attr_type": "string"},
-    "uvCoord": {"attr_type": "float2"},
-    "colorSpace": {"attr_type": "enum", "enum_names": ["sRGB", "linear"]},
-    "preFilter": {"attr_type": "bool"},
+    "fileName":        {"attr_type": "string"},
+    "uvCoord":         {"attr_type": "float2"},
+    "colorSpace":      {"attr_type": "enum", "enum_names": ["sRGB", "linear"]},
+    "preFilter":       {"attr_type": "bool"},
     "preFilterKernel": {"attr_type": "enum", "enum_names": ["box", "gauss"]},
     "preFilterRadius": {"attr_type": "float"},
-    "wrapModeU": {"attr_type": "enum", "enum_names": ["wrap", "clamp"]},
-    "wrapModeV": {"attr_type": "enum", "enum_names": ["wrap", "clamp"]},
-    "borderColor": {"attr_type": "color"},
+    "wrapModeU":       {"attr_type": "enum", "enum_names": ["wrap", "clamp"]},
+    "wrapModeV":       {"attr_type": "enum", "enum_names": ["wrap", "clamp"]},
+    "borderColor":     {"attr_type": "color"},
 }
 _FULL_OUTPUTS = {"outColor": {"attr_type": "color"}, "outAlpha": {"attr_type": "float"}}
 
@@ -600,8 +600,8 @@ def _full_spec(inputs=None, compute=_FULL_COMPUTE, reads_image_file=True):
     return {
         "suggested": sug, "mpy_type": "mPyFile",
         "compute": compute, "init": "",
-        "inputs": {n: se.normalize_attr(m) for n, m in inputs.items()},
-        "outputs": {n: se.normalize_attr(m) for n, m in _FULL_OUTPUTS.items()},
+        "inputs":    {n: se.normalize_attr(m) for n, m in inputs.items()},
+        "outputs":   {n: se.normalize_attr(m) for n, m in _FULL_OUTPUTS.items()},
         "variables": {},
         "portability": {"portable": True, "blockers": [], "warnings": [],
                         "reads_image_file": reads_image_file},
@@ -633,8 +633,8 @@ class TestFullParityCodegen(unittest.TestCase):
 
     def test_emits_verified_helpers(self):
         self.assertIn("nd_tex_load_linear", self.cpp)
-        self.assertIn("nd_tex_sample", self.cpp)
-        self.assertIn("nd_tex_linearize", self.cpp)
+        self.assertIn("nd_tex_sample",      self.cpp)
+        self.assertIn("nd_tex_linearize",   self.cpp)
 
     def test_emits_cache_members(self):
         self.assertIn("NdTexCache", self.cpp)
@@ -660,9 +660,9 @@ class TestFullParityCodegen(unittest.TestCase):
                             "fileName must be addAttribute'd before %s" % other)
 
     def test_glue_calls_sample_into_color_output(self):
-        self.assertIn("nd_tex_sample(_lin", self.cpp)
+        self.assertIn("nd_tex_sample(_lin",    self.cpp)
         self.assertIn("h_aOutColor.set3Float", self.cpp)
-        self.assertIn("h_aOutAlpha.setFloat", self.cpp)
+        self.assertIn("h_aOutAlpha.setFloat",  self.cpp)
 
     def test_color_output_children_in_affects(self):
         """The legacy software swatch renderer pulls outColor's R/G/B children
@@ -696,10 +696,10 @@ class TestFullParityCodegen(unittest.TestCase):
             "self.outColor = (r, g, b)\nself.outAlpha = a\n"
         )
         cpp = codegen.generate_cpp(_full_spec(compute=blessed), for_port=True)
-        self.assertIn("nd_tex_load_linear", cpp)
-        self.assertIn("nd_tex_sample", cpp)
+        self.assertIn("nd_tex_load_linear",    cpp)
+        self.assertIn("nd_tex_sample",         cpp)
         self.assertIn("h_aOutColor.set3Float", cpp)
-        self.assertIn("h_aOutAlpha.setFloat", cpp)
+        self.assertIn("h_aOutAlpha.setFloat",  cpp)
         self.assertNotIn(codegen.PORT_BEGIN, cpp)
 
 
@@ -717,15 +717,15 @@ class TestScanlineStillUsesPortRegion(unittest.TestCase):
             "mpy_type": "mPyFile", "compute": "pass", "init": "",
             "inputs": {"fileName": se.normalize_attr({"attr_type": "string"}),
                        "uvCoord": se.normalize_attr({"attr_type": "float2"})},
-            "outputs": {"outColor": se.normalize_attr({"attr_type": "color"})},
+            "outputs":   {"outColor": se.normalize_attr({"attr_type": "color"})},
             "variables": {},
             "portability": {"portable": True, "blockers": [], "warnings": [],
                             "reads_image_file": True},
         }
         cpp = codegen.generate_cpp(spec, for_port=True)
-        self.assertIn(codegen.PORT_BEGIN, cpp)        # still AI-filled
-        self.assertIn("_imgPixels", cpp)              # inline scaffold
-        self.assertNotIn("nd_tex_load_linear", cpp)   # no verified-helper block
+        self.assertIn(codegen.PORT_BEGIN, cpp)       # still AI-filled
+        self.assertIn("_imgPixels", cpp)             # inline scaffold
+        self.assertNotIn("nd_tex_load_linear", cpp)  # no verified-helper block
 
 
 def _scanline_spec():
@@ -761,7 +761,7 @@ class TestLightweightImageCache(unittest.TestCase):
     def setUp(self):
         from mpynode.native import compiler as codegen
         self.codegen = codegen
-        self.cpp = codegen.generate_cpp(_scanline_spec(), for_port=True)
+        self.cpp     = codegen.generate_cpp(_scanline_spec(), for_port=True)
 
     def test_decode_is_not_per_compute(self):
         body = self.cpp.split("::compute(", 1)[1]
@@ -860,7 +860,7 @@ class TestExactTexelFastPath(unittest.TestCase):
     def setUpClass(cls):
         if shutil.which("clang++") is None:
             raise unittest.SkipTest("clang++ not on PATH")
-        cls.exe = _build_harness()
+        cls.exe     = _build_harness()
         cls.helpers = _python_helpers()
 
     @staticmethod
@@ -872,11 +872,11 @@ class TestExactTexelFastPath(unittest.TestCase):
     def _run(self, W, H, cs=0):
         _linearize, _prefilter, _sample, np = self.helpers
         np.random.seed(4242)
-        raw = np.random.randint(0, 256, (H, W, 4), dtype=np.uint8)
-        lin = _linearize(raw, cs)
-        lin = _prefilter(lin, False, 0, 0.0)
-        uvs = self._corner_uvs(W, H)
-        lines = ["%d" % len(uvs)]
+        raw      = np.random.randint(0, 256, (H, W, 4), dtype=np.uint8)
+        lin      = _linearize(raw, cs)
+        lin      = _prefilter(lin, False, 0, 0.0)
+        uvs      = self._corner_uvs(W, H)
+        lines    = ["%d" % len(uvs)]
         expected = []
         for u, v in uvs:
             # wrap mode 1 (clamp) is what the corner grid ships with.

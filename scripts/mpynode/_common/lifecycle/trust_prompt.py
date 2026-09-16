@@ -240,7 +240,7 @@ def _resolve_pickle_trust(is_import: bool) -> None:
         if is_import:
             # The imported file's path isn't reliably available in the
             # after-callback, so no per-folder "Always" for it.
-            prompt = None if _is_batch(cmds) else _make_trust_prompt(allow_always=False)
+            prompt   = None if _is_batch(cmds) else _make_trust_prompt(allow_always=False)
             resolved = trust.resolve_for_import(None, has_pickle, prompt_fn=prompt)
             trust.note_file_imported(resolved)
         else:
@@ -248,7 +248,7 @@ def _resolve_pickle_trust(is_import: bool) -> None:
                 path = cmds.file(q=True, sceneName=True) or None
             except Exception:
                 path = None
-            prompt = None if _is_batch(cmds) else _make_trust_prompt(allow_always=True)
+            prompt   = None if _is_batch(cmds) else _make_trust_prompt(allow_always=True)
             resolved = trust.resolve_for_open(path, has_pickle, prompt_fn=prompt)
             trust.note_file_opened(resolved)
     except Exception as exc:

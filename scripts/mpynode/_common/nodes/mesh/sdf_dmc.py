@@ -35,8 +35,8 @@ import numpy as np
 # Shape-type codes for the ``shape_types`` array (module-level for callers;
 # the followed functions below use the literals 0/1/2 so the native port
 # does not depend on these constants).
-SPHERE = 0
-BOX = 1
+SPHERE   = 0
+BOX      = 1
 CYLINDER = 2
 
 
@@ -49,9 +49,9 @@ def eval_sphere(X, Y, Z, radius=1.0):
 
 def eval_box(X, Y, Z, half_extents):
     half_extents = np.asarray(half_extents, dtype=np.float64)
-    dx = np.abs(X) - half_extents[0]
-    dy = np.abs(Y) - half_extents[1]
-    dz = np.abs(Z) - half_extents[2]
+    dx           = np.abs(X) - half_extents[0]
+    dy           = np.abs(Y) - half_extents[1]
+    dz           = np.abs(Z) - half_extents[2]
     outside = np.sqrt(
         np.maximum(dx, 0) ** 2 + np.maximum(dy, 0) ** 2 + np.maximum(dz, 0) ** 2
     )
@@ -64,7 +64,7 @@ def eval_cylinder(X, Y, Z, radius=0.5, height=1.0, axis=1):
     # transpiler can lower it. Radial axes are the two coordinates != axis; the
     # height axis is the third. Behaviour is identical to the old
     # coords=[X,Y,Z]; radial_axes=[i for i in range(3) if i != axis] form.
-    axis = int(axis)
+    axis        = int(axis)
     half_height = height / 2.0
     if axis == 0:
         r0 = Y
@@ -119,8 +119,8 @@ def euler_to_matrix(euler_radians, rotate_order=0):
     Used at build/test time to compose shape matrices; the node's compute
     path does not call this (it decomposes the live plug matrix).
     """
-    euler_safe = [0, 1, 2, 0]
-    euler_next = [1, 2, 0, 1]
+    euler_safe  = [0, 1, 2, 0]
+    euler_next  = [1, 2, 0, 1]
     euler_order = [0, 8, 16, 4, 12, 20]
     maya_ea = [
         [0, 1, 2], [1, 2, 0], [2, 0, 1], [0, 2, 1], [1, 0, 2], [2, 1, 0],
@@ -129,17 +129,17 @@ def euler_to_matrix(euler_radians, rotate_order=0):
 
     # _get_euler_order
     o_ = euler_order[axis]
-    f = o_ & 1
+    f  = o_ & 1
     o_ >>= 1
     s = o_ & 1
     o_ >>= 1
     n = o_ & 1
     o_ >>= 1
-    i = euler_safe[o_ & 3]
-    j = euler_next[i + n]
-    k = euler_next[i + 1 - n]
+    i  = euler_safe[o_ & 3]
+    j  = euler_next[i + n]
+    k  = euler_next[i + 1 - n]
 
-    e = np.asarray(euler_radians, dtype=np.float64).reshape(3)
+    e  = np.asarray(euler_radians, dtype=np.float64).reshape(3)
     ea = [e[maya_ea[axis][0]], e[maya_ea[axis][1]], e[maya_ea[axis][2]]]
     if f == 1:
         ea[0], ea[2] = ea[2], ea[0]
@@ -179,10 +179,10 @@ def affine_inverse(M):
     """Affine TRS fast-inverse (port of ``_matrix_inverse``). Exact for a
     rigid matrix (rotation rows have unit norm); divides each transposed
     column by the source row's squared norm to handle scaled rows."""
-    M = np.asarray(M, dtype=np.float64)
-    sx = M[0, 0] ** 2 + M[0, 1] ** 2 + M[0, 2] ** 2
-    sy = M[1, 0] ** 2 + M[1, 1] ** 2 + M[1, 2] ** 2
-    sz = M[2, 0] ** 2 + M[2, 1] ** 2 + M[2, 2] ** 2
+    M   = np.asarray(M, dtype=np.float64)
+    sx  = M[0, 0] ** 2 + M[0, 1] ** 2 + M[0, 2] ** 2
+    sy  = M[1, 0] ** 2 + M[1, 1] ** 2 + M[1, 2] ** 2
+    sz  = M[2, 0] ** 2 + M[2, 1] ** 2 + M[2, 2] ** 2
     inv = np.zeros((4, 4), dtype=np.float64)
     inv[0, 0] = M[0, 0] / sx; inv[0, 1] = M[1, 0] / sy; inv[0, 2] = M[2, 0] / sz
     inv[1, 0] = M[0, 1] / sx; inv[1, 1] = M[1, 1] / sy; inv[1, 2] = M[2, 1] / sz
@@ -198,7 +198,7 @@ def matrix_point(points, M):
     """Row-vector point transform: ``p' = p @ M[:3,:3] + M[3,:3]``
     (port of ``_matrix_point_multiply``)."""
     points = np.asarray(points, dtype=np.float64)
-    M = np.asarray(M, dtype=np.float64)
+    M      = np.asarray(M, dtype=np.float64)
     return points[:, :3] @ M[:3, :3] + M[3, :3]
 
 
@@ -210,7 +210,7 @@ def decompose_translate(M):
 
 def decompose_scale(M):
     """Per-axis scale = row norm of the upper-left 3x3 (``M[:3,:3]``)."""
-    M = np.asarray(M, dtype=np.float64)
+    M  = np.asarray(M, dtype=np.float64)
     M3 = M[:3, :3]
     return np.sqrt((M3 ** 2).sum(axis=1))
 
@@ -218,10 +218,10 @@ def decompose_scale(M):
 def decompose_rotation(M):
     """Orthonormal rotation rows: each ``M[:3,:3]`` row divided by its norm
     (unit rows for a zero-scale axis are avoided via the ``safe`` guard)."""
-    M = np.asarray(M, dtype=np.float64)
-    M3 = M[:3, :3]
+    M     = np.asarray(M, dtype=np.float64)
+    M3    = M[:3, :3]
     scale = np.sqrt((M3 ** 2).sum(axis=1))
-    safe = np.where(scale == 0.0, 1.0, scale)
+    safe  = np.where(scale == 0.0, 1.0, scale)
     return M3 / safe[:, None]
 
 
@@ -247,14 +247,14 @@ def sample_shape(M, shape_type, radius, height, axis, half_extents, points):
     scale, evaluate the unit-convention primitive, and scale the returned
     distance by ``min(abs(scale))``."""
     translate = decompose_translate(M)
-    R = decompose_rotation(M)
-    scale = decompose_scale(M)
+    R         = decompose_rotation(M)
+    scale     = decompose_scale(M)
     min_scale = float(np.min(np.abs(scale)))
 
-    rigid = np.eye(4, dtype=np.float64)
+    rigid         = np.eye(4, dtype=np.float64)
     rigid[:3, :3] = R
-    rigid[3, :3] = translate
-    rigid_inv = affine_inverse(rigid)
+    rigid[3, :3]  = translate
+    rigid_inv     = affine_inverse(rigid)
 
     local = matrix_point(points, rigid_inv)
     local = local / scale
@@ -273,23 +273,23 @@ def sample_shape(M, shape_type, radius, height, axis, half_extents, points):
 def _shape_bbox(M, shape_type, radius, height, axis, half_extents):
     """World-space AABB as a (2,3) array ``[min; max]`` (transpiler-friendly
     single-return form of shape_bounding_box; identical math)."""
-    R = decompose_rotation(M)
-    scale = decompose_scale(M)
+    R         = decompose_rotation(M)
+    scale     = decompose_scale(M)
     translate = decompose_translate(M)
-    st = int(shape_type)
+    st        = int(shape_type)
     if st == 1:
         local_half = np.asarray(half_extents, dtype=np.float64) * scale
     elif st == 2:
-        local_half = np.full(3, float(radius), dtype=np.float64)
+        local_half            = np.full(3, float(radius), dtype=np.float64)
         local_half[int(axis)] = float(height) / 2.0
-        local_half = local_half * scale
+        local_half            = local_half * scale
     else:
         local_half = np.full(3, float(radius), dtype=np.float64) * scale
-    Rb = R.T
+    Rb         = R.T
     world_half = np.abs(Rb) @ local_half
-    out = np.empty((2, 3), dtype=np.float64)
-    out[0] = translate - world_half
-    out[1] = translate + world_half
+    out        = np.empty((2, 3), dtype=np.float64)
+    out[0]     = translate - world_half
+    out[1]     = translate + world_half
     return out
 
 
@@ -305,7 +305,7 @@ def _effective_bounds(matrices, shape_types, radius, height, axis, half_extents)
     at least one shape (the node returns an empty mesh before this when n==0).
     Transpiler-friendly single-return form of effective_bounds (no ``position``
     offset -- the metaballs node never passes one); identical math otherwise."""
-    n = matrices.shape[0]
+    n       = matrices.shape[0]
     all_min = np.full(3, np.inf, dtype=np.float64)
     all_max = np.full(3, -np.inf, dtype=np.float64)
     for s in range(n):
@@ -315,11 +315,11 @@ def _effective_bounds(matrices, shape_types, radius, height, axis, half_extents)
         )
         all_min = np.minimum(all_min, bb[0])
         all_max = np.maximum(all_max, bb[1])
-    extent = all_max - all_min
+    extent  = all_max - all_min
     padding = extent * 0.1
-    out = np.empty((2, 3), dtype=np.float64)
-    out[0] = all_min - padding
-    out[1] = all_max + padding
+    out     = np.empty((2, 3), dtype=np.float64)
+    out[0]  = all_min - padding
+    out[1]  = all_max + padding
     return out
 
 
@@ -350,11 +350,11 @@ def make_grid(shape, bounds):
     """Build an ij-indexed sample grid (port of ``rl``'s ``make_grid``)."""
     min_bound = np.asarray(bounds[0], dtype=np.float64)
     max_bound = np.asarray(bounds[1], dtype=np.float64)
-    x = np.linspace(min_bound[0], max_bound[0], shape[0])
-    y = np.linspace(min_bound[1], max_bound[1], shape[1])
-    z = np.linspace(min_bound[2], max_bound[2], shape[2])
+    x         = np.linspace(min_bound[0], max_bound[0], shape[0])
+    y         = np.linspace(min_bound[1], max_bound[1], shape[1])
+    z         = np.linspace(min_bound[2], max_bound[2], shape[2])
     X, Y, Z = np.meshgrid(x, y, z, indexing="ij")
-    grid_origin = min_bound.copy()
+    grid_origin  = min_bound.copy()
     grid_spacing = (max_bound - min_bound) / (np.array(shape, dtype=np.float64) - 1)
     return X, Y, Z, grid_origin, grid_spacing
 
@@ -380,7 +380,7 @@ def _dmc_packed(scalar_field, iso_value, grid_origin, grid_spacing):
     shift, and the owned edges/masks are small local arrays instead of a tuple
     loop -- both purely to stay inside the transpiler's supported subset."""
     scalar_field = np.asarray(scalar_field, dtype=np.float64)
-    grid_origin = np.asarray(grid_origin, dtype=np.float64)
+    grid_origin  = np.asarray(grid_origin,  dtype=np.float64)
     grid_spacing = np.asarray(grid_spacing, dtype=np.float64)
 
     # --- lookup tables (locals so import_follower carries them to C++) ---
@@ -437,7 +437,7 @@ def _dmc_packed(scalar_field, iso_value, grid_origin, grid_spacing):
     face_offsets_z = np.array(
         [[0, 0, 0], [-1, 0, 0], [-1, -1, 0], [0, -1, 0]], dtype=np.int32
     )
-    owned = np.array([0, 3, 8], dtype=np.int64)
+    owned       = np.array([0, 3, 8], dtype=np.int64)
     owned_masks = np.array([1, 8, 256], dtype=np.int64)
 
     nx, ny, nz = scalar_field.shape
@@ -445,7 +445,7 @@ def _dmc_packed(scalar_field, iso_value, grid_origin, grid_spacing):
     cy = ny - 1
     cz = nz - 1
     if cx <= 0 or cy <= 0 or cz <= 0:
-        empty = np.empty(2, dtype=np.float64)
+        empty    = np.empty(2, dtype=np.float64)
         empty[0] = 0.0
         empty[1] = 0.0
         return empty
@@ -456,9 +456,9 @@ def _dmc_packed(scalar_field, iso_value, grid_origin, grid_spacing):
     # --- pass 1: per-cube corner-bit config + lexicographic vertex numbering.
     # Visiting (i,j,k) in C-order and numbering active cubes 0,1,2,... reproduces
     # argwhere(active).astype + arange scatter EXACTLY. ---
-    cfg_grid = np.full((cx, cy, cz), 0, dtype=np.int64)
+    cfg_grid       = np.full((cx, cy, cz), 0, dtype=np.int64)
     cube_to_vertex = np.full((cx, cy, cz), -1, dtype=np.int64)
-    vc = 0
+    vc             = 0
     for i in range(cx):
         for j in range(cy):
             for k in range(cz):
@@ -474,10 +474,10 @@ def _dmc_packed(scalar_field, iso_value, grid_origin, grid_spacing):
                 cfg_grid[i, j, k] = cfg
                 if cfg > 0 and cfg < 255:
                     cube_to_vertex[i, j, k] = vc
-                    vc = vc + 1
+                    vc                      = vc + 1
 
     if vc == 0:
-        empty = np.empty(2, dtype=np.float64)
+        empty    = np.empty(2, dtype=np.float64)
         empty[0] = 0.0
         empty[1] = 0.0
         return empty
@@ -490,43 +490,43 @@ def _dmc_packed(scalar_field, iso_value, grid_origin, grid_spacing):
                 cfg = int(cfg_grid[i, j, k])
                 if cfg <= 0 or cfg >= 255:
                     continue
-                v = int(cube_to_vertex[i, j, k])
+                v         = int(cube_to_vertex[i, j, k])
                 edge_bits = int(edge_table[cfg])
-                sx = 0.0
-                sy = 0.0
-                sz = 0.0
-                count = 0
-                ebit = 1
+                sx        = 0.0
+                sy        = 0.0
+                sz        = 0.0
+                count     = 0
+                ebit      = 1
                 for e in range(12):
                     if (edge_bits & ebit) != 0:
-                        c0 = int(edge_vertices[e, 0])
-                        c1 = int(edge_vertices[e, 1])
+                        c0  = int(edge_vertices[e, 0])
+                        c1  = int(edge_vertices[e, 1])
                         o0x = int(corner_offsets[c0, 0])
                         o0y = int(corner_offsets[c0, 1])
                         o0z = int(corner_offsets[c0, 2])
                         o1x = int(corner_offsets[c1, 0])
                         o1y = int(corner_offsets[c1, 1])
                         o1z = int(corner_offsets[c1, 2])
-                        v0 = float(scalar_field[i + o0x, j + o0y, k + o0z])
-                        v1 = float(scalar_field[i + o1x, j + o1y, k + o1z])
-                        dv = v1 - v0
+                        v0  = float(scalar_field[i + o0x, j + o0y, k + o0z])
+                        v1  = float(scalar_field[i + o1x, j + o1y, k + o1z])
+                        dv  = v1 - v0
                         if abs(dv) < 1e-10:
                             t = 0.5
                         else:
                             t = (iso_value - v0) / dv
-                        p0x = ox + (i + o0x) * hx
-                        p1x = ox + (i + o1x) * hx
-                        p0y = oy + (j + o0y) * hy
-                        p1y = oy + (j + o1y) * hy
-                        p0z = oz + (k + o0z) * hz
-                        p1z = oz + (k + o1z) * hz
-                        sx = sx + p0x + t * (p1x - p0x)
-                        sy = sy + p0y + t * (p1y - p0y)
-                        sz = sz + p0z + t * (p1z - p0z)
+                        p0x   = ox + (i + o0x) * hx
+                        p1x   = ox + (i + o1x) * hx
+                        p0y   = oy + (j + o0y) * hy
+                        p1y   = oy + (j + o1y) * hy
+                        p0z   = oz + (k + o0z) * hz
+                        p1z   = oz + (k + o1z) * hz
+                        sx    = sx + p0x + t * (p1x - p0x)
+                        sy    = sy + p0y + t * (p1y - p0y)
+                        sz    = sz + p0z + t * (p1z - p0z)
                         count = count + 1
                     ebit = ebit * 2
                 if count > 0:
-                    inv = 1.0 / count
+                    inv          = 1.0 / count
                     points[v, 0] = sx * inv
                     points[v, 1] = sy * inv
                     points[v, 2] = sz * inv
@@ -538,7 +538,7 @@ def _dmc_packed(scalar_field, iso_value, grid_origin, grid_spacing):
     # --- pass 3: quad faces on owned edges (0,3,8), gradient winding. Same
     # lexicographic cube order + owned-edge order as the vertex pass. ---
     idxbuf = np.empty(3 * vc * 4, dtype=np.int64)
-    nf = 0
+    nf     = 0
     for i in range(cx):
         for j in range(cy):
             for k in range(cz):
@@ -547,7 +547,7 @@ def _dmc_packed(scalar_field, iso_value, grid_origin, grid_spacing):
                     continue
                 edge_bits = int(edge_table[cfg])
                 for eo in range(3):
-                    e = int(owned[eo])
+                    e     = int(owned[eo])
                     emask = int(owned_masks[eo])
                     if (edge_bits & emask) == 0:
                         continue
@@ -558,7 +558,7 @@ def _dmc_packed(scalar_field, iso_value, grid_origin, grid_spacing):
                         offs = face_offsets_y
                     else:
                         offs = face_offsets_z
-                    quad = np.full(4, -1, dtype=np.int64)
+                    quad  = np.full(4, -1, dtype=np.int64)
                     valid = 1
                     for nidx in range(4):
                         ci = i + int(offs[nidx, 0])
@@ -574,16 +574,16 @@ def _dmc_packed(scalar_field, iso_value, grid_origin, grid_spacing):
                         quad[nidx] = vmap
                     if valid == 0:
                         continue
-                    c0 = int(edge_vertices[e, 0])
-                    c1 = int(edge_vertices[e, 1])
-                    o0x = int(corner_offsets[c0, 0])
-                    o0y = int(corner_offsets[c0, 1])
-                    o0z = int(corner_offsets[c0, 2])
-                    o1x = int(corner_offsets[c1, 0])
-                    o1y = int(corner_offsets[c1, 1])
-                    o1z = int(corner_offsets[c1, 2])
-                    v0 = float(scalar_field[i + o0x, j + o0y, k + o0z])
-                    v1 = float(scalar_field[i + o1x, j + o1y, k + o1z])
+                    c0   = int(edge_vertices[e, 0])
+                    c1   = int(edge_vertices[e, 1])
+                    o0x  = int(corner_offsets[c0, 0])
+                    o0y  = int(corner_offsets[c0, 1])
+                    o0z  = int(corner_offsets[c0, 2])
+                    o1x  = int(corner_offsets[c1, 0])
+                    o1y  = int(corner_offsets[c1, 1])
+                    o1z  = int(corner_offsets[c1, 2])
+                    v0   = float(scalar_field[i + o0x, j + o0y, k + o0z])
+                    v1   = float(scalar_field[i + o1x, j + o1y, k + o1z])
                     base = nf * 4
                     if v0 < v1:
                         idxbuf[base + 0] = int(quad[0])
@@ -597,10 +597,10 @@ def _dmc_packed(scalar_field, iso_value, grid_origin, grid_spacing):
                         idxbuf[base + 3] = int(quad[0])
                     nf = nf + 1
 
-    total = 2 + 3 * vc + 4 * nf
-    packed = np.empty(total, dtype=np.float64)
-    packed[0] = float(vc)
-    packed[1] = float(nf)
+    total                = 2 + 3 * vc + 4 * nf
+    packed               = np.empty(total, dtype=np.float64)
+    packed[0]            = float(vc)
+    packed[1]            = float(nf)
     packed[2:2 + 3 * vc] = points.ravel()
     if nf > 0:
         packed[2 + 3 * vc:2 + 3 * vc + 4 * nf] = idxbuf[0:4 * nf].astype(np.float64)
@@ -613,7 +613,7 @@ def dual_marching_cubes(scalar_field, iso_value, grid_origin, grid_spacing):
     indices (4F,) int32)``. Thin wrapper that unpacks the packed 1-D array from
     ``_dmc_packed`` (the transpiler-friendly single-return core), preserving the
     historical (points, counts, indices) tuple API and dtypes."""
-    packed = _dmc_packed(scalar_field, iso_value, grid_origin, grid_spacing)
+    packed  = _dmc_packed(scalar_field, iso_value, grid_origin, grid_spacing)
     v_count = int(packed[0])
     f_count = int(packed[1])
     if v_count == 0:
@@ -630,7 +630,7 @@ def dual_marching_cubes(scalar_field, iso_value, grid_origin, grid_spacing):
             np.zeros(0, dtype=np.int32),
         )
     indices = packed[2 + 3 * v_count:2 + 3 * v_count + 4 * f_count].astype(np.int32)
-    counts = np.full(f_count, 4, dtype=np.int32)
+    counts  = np.full(f_count, 4, dtype=np.int32)
     return points, counts, indices
 
 
@@ -653,19 +653,19 @@ def _mesh_packed(
     unpacks this into the historical (points, counts, indices) tuple, so the
     parity harness (which exercises ``mesh_from_shapes``) gates this code."""
     matrices = np.asarray(matrices, dtype=np.float64)
-    n = matrices.shape[0]
+    n        = matrices.shape[0]
     if n == 0:
-        empty = np.empty(2, dtype=np.float64)
+        empty    = np.empty(2, dtype=np.float64)
         empty[0] = 0.0
         empty[1] = 0.0
         return empty
 
-    shape_types = np.asarray(shape_types)
-    additive = np.asarray(additive)
-    smoothing = np.asarray(smoothing, dtype=np.float64)
-    radius = np.asarray(radius, dtype=np.float64)
-    height = np.asarray(height, dtype=np.float64)
-    axis = np.asarray(axis)
+    shape_types  = np.asarray(shape_types)
+    additive     = np.asarray(additive)
+    smoothing    = np.asarray(smoothing, dtype=np.float64)
+    radius       = np.asarray(radius,    dtype=np.float64)
+    height       = np.asarray(height,    dtype=np.float64)
+    axis         = np.asarray(axis)
     half_extents = np.asarray(half_extents, dtype=np.float64)
 
     rr = float(int(resolution))
@@ -684,17 +684,17 @@ def _mesh_packed(
 
     # --- sample grid: linspace per axis, gathered by C-order flat index (an
     # exact stand-in for meshgrid(x,y,z,indexing="ij").ravel()) ---
-    x = np.linspace(lo0, hi0, nx)
-    y = np.linspace(lo1, hi1, ny)
-    z = np.linspace(lo2, hi2, nz)
-    npts = nx * ny * nz
-    fidx = np.arange(npts)
-    ii = fidx // (ny * nz)
-    jj = (fidx // nz) % ny
-    kk = fidx % nz
-    gx = np.take(x, ii)
-    gy = np.take(y, jj)
-    gz = np.take(z, kk)
+    x           = np.linspace(lo0, hi0, nx)
+    y           = np.linspace(lo1, hi1, ny)
+    z           = np.linspace(lo2, hi2, nz)
+    npts        = nx * ny * nz
+    fidx        = np.arange(npts)
+    ii          = fidx // (ny * nz)
+    jj          = (fidx // nz) % ny
+    kk          = fidx % nz
+    gx          = np.take(x, ii)
+    gy          = np.take(y, jj)
+    gz          = np.take(z, kk)
     grid_points = np.stack([gx, gy, gz], axis=-1)
 
     # --- CSG fold (base shape, then union / smooth-union / difference) ---
@@ -716,8 +716,8 @@ def _mesh_packed(
         else:
             combined = sdf_difference(combined, sdf)
 
-    origin = lo
-    spacing = np.empty(3, dtype=np.float64)
+    origin     = lo
+    spacing    = np.empty(3, dtype=np.float64)
     spacing[0] = (hi0 - lo0) / (nx - 1)
     spacing[1] = (hi1 - lo1) / (ny - 1)
     spacing[2] = (hi2 - lo2) / (nz - 1)
@@ -760,5 +760,5 @@ def mesh_from_shapes(
             np.zeros(0, dtype=np.int32),
         )
     indices = packed[2 + 3 * v_count:2 + 3 * v_count + 4 * f_count].astype(np.int32)
-    counts = np.full(f_count, 4, dtype=np.int32)
+    counts  = np.full(f_count, 4, dtype=np.int32)
     return points, counts, indices

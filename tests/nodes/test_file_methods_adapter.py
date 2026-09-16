@@ -30,7 +30,7 @@ class TestFileMethodAdapters(unittest.TestCase):
         self.assertAlmostEqual(mc.getAttr(node._name + ".outColorR"), 1.0)
         self.assertAlmostEqual(mc.getAttr(node._name + ".outColorG"), 0.0)
         self.assertAlmostEqual(mc.getAttr(node._name + ".outColorB"), 1.0)
-        self.assertAlmostEqual(mc.getAttr(node._name + ".outAlpha"), 1.0)
+        self.assertAlmostEqual(mc.getAttr(node._name + ".outAlpha"),  1.0)
 
 
 class TestWriteTexture(unittest.TestCase):
@@ -42,8 +42,8 @@ class TestWriteTexture(unittest.TestCase):
     def _rgba(self, board):
         import numpy as np
 
-        a = board.astype(np.float32)
-        out = np.zeros((board.shape[0], board.shape[1], 4), dtype=np.float32)
+        a            = board.astype(np.float32)
+        out          = np.zeros((board.shape[0], board.shape[1], 4), dtype=np.float32)
         out[:, :, 0] = a
         out[:, :, 1] = a
         out[:, :, 2] = a
@@ -61,11 +61,11 @@ class TestWriteTexture(unittest.TestCase):
         from mpynode._common.methods.file_methods import write_texture
 
         # NOT square and NOT symmetric, so a transpose or a flip cannot pass.
-        board = np.zeros((3, 5), dtype=bool)
+        board       = np.zeros((3, 5), dtype=bool)
         board[0, 0] = True
         board[0, 4] = True
         board[2, 1] = True
-        path = os.path.join(tempfile.mkdtemp(prefix="wtex_"), "b.png")
+        path        = os.path.join(tempfile.mkdtemp(prefix="wtex_"), "b.png")
         self.assertTrue(write_texture(None, path, self._rgba(board)))
 
         img = om.MImage()

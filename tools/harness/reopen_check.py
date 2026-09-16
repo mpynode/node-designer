@@ -29,7 +29,7 @@ import time
 import traceback
 
 OUT = sys.argv[1]
-MA = sys.argv[2]
+MA  = sys.argv[2]
 
 HARNESS = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.environ.get("MPYNODE_ROOT") or os.path.dirname(
@@ -76,7 +76,7 @@ def _demo_for(ma_path, folder):
     and a single-demo one just ``<folder>``; None selects the first demo, which
     is exactly what the single-demo case means.
     """
-    base = os.path.splitext(os.path.basename(ma_path))[0]
+    base   = os.path.splitext(os.path.basename(ma_path))[0]
     prefix = folder + "__"
     return base[len(prefix):] if base.startswith(prefix) else None
 
@@ -97,9 +97,9 @@ def _interpreted_verts(mc, om):
 
 
 try:
-    manifest = json.load(open(os.path.join(OUT, "build", "manifest.json")))
-    nodes = manifest.get("nodes") or []
-    ctype = nodes[0].get("type_name") if nodes else None
+    manifest             = json.load(open(os.path.join(OUT, "build", "manifest.json")))
+    nodes                = manifest.get("nodes") or []
+    ctype                = nodes[0].get("type_name") if nodes else None
     res["compiled_type"] = ctype
 
     import maya.standalone
@@ -139,8 +139,8 @@ try:
 
     if res["interp_mesh_verts"] is not None:
         res["verts_compared"] = True
-        res["verts_delta"] = res["mesh_verts"] - res["interp_mesh_verts"]
-        res["verts_match"] = (res["verts_delta"] == 0)
+        res["verts_delta"]    = res["mesh_verts"] - res["interp_mesh_verts"]
+        res["verts_match"]    = (res["verts_delta"] == 0)
         if not res["verts_match"]:
             res["errors"].append(
                 "VERTEX COUNT MISMATCH: compiled %d vs interpreted %d "

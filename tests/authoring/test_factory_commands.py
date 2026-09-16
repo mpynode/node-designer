@@ -68,9 +68,9 @@ class TestFactoryRuntime(unittest.TestCase):
             '@maya_command("mk")\ndef mk(cls):\n'
             '    return cls.create(name="madeByFactory#")\n'
         )
-        before = set(mc.ls(type="mPyNode"))
+        before  = set(mc.ls(type="mPyNode"))
         created = self.node.call_command("mk")
-        after = set(mc.ls(type="mPyNode"))
+        after   = set(mc.ls(type="mPyNode"))
         self.assertEqual(len(after - before), 1, "factory must create one node")
         cname = created.get_name() if hasattr(created, "get_name") else str(created)
         self.assertNotEqual(cname, self.name, "must be a NEW node, not the host")

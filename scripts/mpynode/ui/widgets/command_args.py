@@ -46,10 +46,10 @@ def prompt_command_args(command_name, params, parent=None):
     if the dialog is cancelled/closed."""
     dlg = QDialog(parent)
     dlg.setWindowTitle("Run %s" % command_name)
-    form = QFormLayout(dlg)
+    form  = QFormLayout(dlg)
     edits = {}
     for name in params:
-        edit = QLineEdit(dlg)
+        edit        = QLineEdit(dlg)
         edits[name] = edit
         form.addRow(str(name), edit)
     buttons = QDialogButtonBox(

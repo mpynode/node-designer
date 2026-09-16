@@ -65,7 +65,7 @@ class _LinkedPair(unittest.TestCase):
         mc.file(new=True, force=True)
         self.base = mc.polyPlane(w=2, h=2, sx=1, sy=1, name="cvBase",
                                  ch=False)[0]
-        self.bs = MPyBlendShape.create(mesh=self.base, name="cvSrc")
+        self.bs   = MPyBlendShape.create(mesh=self.base, name="cvSrc")
         self.name = self.bs.get_name()
         self.bs.set_compute_expression(COMPUTE)
         self.shape = mc.listRelatives(self.base, shapes=True,
@@ -81,7 +81,7 @@ class _LinkedPair(unittest.TestCase):
         # The stand-in sibling, on its own mesh so it has a base of its own.
         self.sib_mesh = mc.polyPlane(w=2, h=2, sx=1, sy=1, name="cvSibBase",
                                      ch=False)[0]
-        self.sib = MPyBlendShape.create(mesh=self.sib_mesh, name="cvCpp")
+        self.sib      = MPyBlendShape.create(mesh=self.sib_mesh, name="cvCpp")
         self.sib_name = self.sib.get_name()
         # A real compiled sibling declares the tables in its C++; this stand-in
         # only grows them on demand, so create them up front.

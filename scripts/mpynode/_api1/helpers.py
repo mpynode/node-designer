@@ -24,20 +24,20 @@ import numpy as np
 
 
 def make_internal_string_attr(
-    long_name: str,
+    long_name:  str,
     short_name: str,
-    default: str = "",
-    storable: bool = True,
+    default:    str  = "",
+    storable:   bool = True,
 ):
     """Build an internal hidden string attribute (API 1.0). Returns MObject.
 
     ``storable=False`` keeps the attribute out of
     the.ma. Used for the profile + watch snapshot data plugs.
     """
-    str_data = om.MFnStringData()
+    str_data    = om.MFnStringData()
     default_obj = str_data.create(default)
-    fn = om.MFnTypedAttribute()
-    obj = fn.create(long_name, short_name, om.MFnData.kString, default_obj)
+    fn          = om.MFnTypedAttribute()
+    obj         = fn.create(long_name, short_name, om.MFnData.kString, default_obj)
     fn.setConnectable(False)
     fn.setReadable(False)
     fn.setWritable(True)
@@ -50,10 +50,10 @@ def make_internal_string_attr(
 
 def make_expression_attr():
     """Connectable + keyable internal string attr for the user expression."""
-    str_data = om.MFnStringData()
+    str_data    = om.MFnStringData()
     default_obj = str_data.create("None")
-    fn = om.MFnTypedAttribute()
-    obj = fn.create("_computeSource", "_computeSource", om.MFnData.kString, default_obj)
+    fn          = om.MFnTypedAttribute()
+    obj         = fn.create("_computeSource", "_computeSource", om.MFnData.kString, default_obj)
     fn.setConnectable(True)
     fn.setReadable(True)
     fn.setWritable(True)
@@ -65,10 +65,10 @@ def make_expression_attr():
 
 
 def make_bool_attr(
-    long_name: str,
+    long_name:  str,
     short_name: str,
-    default: bool = False,
-    storable: bool = True,
+    default:    bool = False,
+    storable:   bool = True,
 ):
     """Hidden framework-toggle bool attribute.
 
@@ -85,7 +85,7 @@ def make_bool_attr(
     profile / watch toggles -- avoids ever shipping a scene with the
     profiler accidentally left on).
     """
-    fn = om.MFnNumericAttribute()
+    fn  = om.MFnNumericAttribute()
     obj = fn.create(long_name, short_name, om.MFnNumericData.kBoolean, default)
     fn.setConnectable(False)
     fn.setStorable(bool(storable))
@@ -107,8 +107,8 @@ def build_internal_attrs(cls):
     """
     plugs = {
         "_computeSource": make_expression_attr(),
-        "inputs": make_internal_string_attr("_inputAttrs", "_inputAttrs"),
-        "outputs": make_internal_string_attr("_outputAttrs", "_outputAttrs"),
+        "inputs":         make_internal_string_attr("_inputAttrs", "_inputAttrs"),
+        "outputs":        make_internal_string_attr("_outputAttrs", "_outputAttrs"),
         "stored_vars_list": make_internal_string_attr(
             "_storedVarNames", "_storedVarNames"
         ),
@@ -193,8 +193,8 @@ def _walk_joint_chain(start_joint: str, effector: str) -> list[str]:
     from maya import cmds
 
     chain = [start_joint]
-    cur = start_joint
-    seen = {cur}
+    cur   = start_joint
+    seen  = {cur}
 
     # Safety cap to prevent infinite loops on bad scene state.
     for _ in range(100):
@@ -248,21 +248,21 @@ def _gate_mix_world(w_base, w_target, gate_r, gate_t, gate_s):
     which holds for joint chains. Shear, if any, follows the rotation source.
     """
     def _decomp(mat):
-        m = np.asarray(mat, dtype=np.float64).reshape(4, 4)
-        rows = m[:3, :3].copy()
+        m     = np.asarray(mat, dtype=np.float64).reshape(4, 4)
+        rows  = m[:3, :3].copy()
         scale = np.linalg.norm(rows, axis=1)
-        safe = np.where(scale < 1e-12, 1.0, scale)
-        rot = rows / safe[:, None]
+        safe  = np.where(scale < 1e-12, 1.0, scale)
+        rot   = rows / safe[:, None]
         return rot, scale, m[3, :3].copy()
 
     rot_b, scale_b, trans_b = _decomp(w_base)
     rot_t, scale_t, trans_t = _decomp(w_target)
-    rot = rot_t if gate_r else rot_b
-    scale = scale_t if gate_s else scale_b
-    trans = trans_t if gate_t else trans_b
-    out = np.eye(4, dtype=np.float64)
+    rot         = rot_t if gate_r else rot_b
+    scale       = scale_t if gate_s else scale_b
+    trans       = trans_t if gate_t else trans_b
+    out         = np.eye(4, dtype=np.float64)
     out[:3, :3] = rot * scale[:, None]
-    out[3, :3] = trans
+    out[3, :3]  = trans
     return out
 
 
@@ -428,8 +428,8 @@ def _apply_joint_solve(joints, local_mats, world_mats,
             return False
 
     parent_world = _root_parent_world(joints[0]["name"])
-    written = 0
-    warned = False
+    written      = 0
+    warned       = False
     for i in range(n):
         name = joints[i]["name"]
         try:
@@ -437,11 +437,11 @@ def _apply_joint_solve(joints, local_mats, world_mats,
         except Exception:
             local = np.eye(4, dtype=np.float64)
         bind_off = bind_offsets[i] if i < len(bind_offsets) else np.eye(4)
-        gr = gates_r[i] if i < len(gates_r) else True
-        gt = gates_t[i] if i < len(gates_t) else False
-        gs = gates_s[i] if i < len(gates_s) else False
-        w = world_mats[i] if i < len(world_mats) else None
-        l = local_mats[i] if i < len(local_mats) else None
+        gr       = gates_r[i] if i < len(gates_r) else True
+        gt       = gates_t[i] if i < len(gates_t) else False
+        gs       = gates_s[i] if i < len(gates_s) else False
+        w        = world_mats[i] if i < len(world_mats) else None
+        l        = local_mats[i] if i < len(local_mats) else None
 
         if w is not None:
             if l is not None and not warned:
@@ -458,7 +458,7 @@ def _apply_joint_solve(joints, local_mats, world_mats,
                 parent_world = local @ bind_off @ parent_world
                 continue
             rest_world = local @ bind_off @ parent_world
-            w_mixed = _gate_mix_world(rest_world, W, gr, gt, gs)
+            w_mixed    = _gate_mix_world(rest_world, W, gr, gt, gs)
             try:
                 offset = (np.linalg.inv(local) @ w_mixed
                           @ np.linalg.inv(parent_world))
@@ -518,7 +518,7 @@ def compute_ik_doSolve(node_self, log_event_name: str = "<mpyiksolver-solve>"):
 
     try:
         handle_obj = hg.handle(0)
-        fn_handle = oma.MFnIkHandle(handle_obj)
+        fn_handle  = oma.MFnIkHandle(handle_obj)
     except Exception:
         return
 
@@ -528,7 +528,7 @@ def compute_ik_doSolve(node_self, log_event_name: str = "<mpyiksolver-solve>"):
         ee_path = om.MDagPath()
         fn_handle.getEffector(ee_path)
         start_joint_name = sj_path.partialPathName()
-        effector_name = ee_path.partialPathName()
+        effector_name    = ee_path.partialPathName()
     except Exception:
         return
 
@@ -569,14 +569,14 @@ def compute_ik_doSolve(node_self, log_event_name: str = "<mpyiksolver-solve>"):
             local_mat = _np4(cmds.getAttr(name + ".matrix"))
         except Exception:
             local_mat = np.eye(4, dtype=np.float64)
-        bind_off = bind_offsets[i] if i < len(bind_offsets) else np.eye(4)
+        bind_off  = bind_offsets[i] if i < len(bind_offsets) else np.eye(4)
         world_mat = local_mat @ bind_off @ _pw
-        _pw = world_mat
+        _pw       = world_mat
         joints.append(
             {
-                "name": name,
+                "name":           name,
                 "world_position": world_mat[3, :3].copy(),
-                "rotation": np.array(local_rot, dtype=np.float64),
+                "rotation":       np.array(local_rot, dtype=np.float64),
                 # local (parent-relative, offset-free) matrix -- the base to
                 # build a self.local_matrices (LOCAL) result from.
                 "matrix": MatrixView(local_mat),
@@ -613,14 +613,14 @@ def compute_ik_doSolve(node_self, log_event_name: str = "<mpyiksolver-solve>"):
             end_effector = [0.0, 0.0, 0.0]
 
     pole_vector = [0.0, 0.0, 0.0]
-    twist = 0.0
+    twist       = 0.0
     if handle_name_for_target:
         try:
-            pv_x = cmds.getAttr(f"{handle_name_for_target}.poleVectorX")
-            pv_y = cmds.getAttr(f"{handle_name_for_target}.poleVectorY")
-            pv_z = cmds.getAttr(f"{handle_name_for_target}.poleVectorZ")
+            pv_x        = cmds.getAttr(f"{handle_name_for_target}.poleVectorX")
+            pv_y        = cmds.getAttr(f"{handle_name_for_target}.poleVectorY")
+            pv_z        = cmds.getAttr(f"{handle_name_for_target}.poleVectorZ")
             pole_vector = [pv_x, pv_y, pv_z]
-            twist = float(cmds.getAttr(f"{handle_name_for_target}.twist"))
+            twist       = float(cmds.getAttr(f"{handle_name_for_target}.twist"))
         except Exception:
             pass
 
@@ -707,7 +707,7 @@ def compute_ik_user_solve(
     fn_node = om.MFnDependencyNode(node_self.thisMObject())
     try:
         expr_plug = fn_node.findPlug("_computeSource", True)
-        expr_str = expr_plug.asString()
+        expr_str  = expr_plug.asString()
     except Exception:
         return _IK_SOLVE_ERR
     if not expr_str or expr_str == "None":
@@ -727,8 +727,8 @@ def compute_ik_user_solve(
         pass
     code = safe_compile_expression(
         expr_str,
-        node_name=node_name_for_msg,
-        filename="<mpyiksolver-expression>",
+        node_name = node_name_for_msg,
+        filename  = "<mpyiksolver-expression>",
     )
     if code is None:
         # Syntax error already surfaced by safe_compile_expression; skip
@@ -760,7 +760,7 @@ def compute_ik_user_solve(
     stored_vars = {}
     if node_obj is not None:
         try:
-            sv_str = fn_node.findPlug("_storedVarsData", True).asString()
+            sv_str      = fn_node.findPlug("_storedVarsData", True).asString()
             stored_vars = _svstore.load_for_compute(node_obj, sv_str)
         except RuntimeError:
             # genuine plug-read failure (missing/garbage plug); start empty.
@@ -776,10 +776,10 @@ def compute_ik_user_solve(
     world_matrices_buf = [None] * n
 
     ik_compute_locals = {
-        "joints": joints,
+        "joints":       joints,
         "end_effector": np.asarray(end_effector, dtype=np.float64),
-        "pole_vector": np.asarray(pole_vector, dtype=np.float64),
-        "twist": float(twist),
+        "pole_vector":  np.asarray(pole_vector, dtype=np.float64),
+        "twist":        float(twist),
         # per-joint desired LOCAL (parent-relative) matrices.
         "local_matrices": local_matrices_buf,
         # per-joint desired WORLD (absolute) matrices.
@@ -788,9 +788,9 @@ def compute_ik_user_solve(
         # joint. Ungated components come from the rest pose, so rotate-only
         # reorients in place and preserves bone lengths. A scalar broadcasts; a
         # per-joint list gates individual joints.
-        "apply_rotate": True,
+        "apply_rotate":    True,
         "apply_translate": False,
-        "apply_scale": False,
+        "apply_scale":     False,
     }
     # C2 (base contract): seed USER inputs DENSELY so ``self.<input>`` is a
     # numpy value instead of the ragged live plug proxy that breaks
@@ -802,15 +802,15 @@ def compute_ik_user_solve(
 
     self_proxy = SelfProxy(
         node_obj,
-        datablock=None,
-        user_storage=stored_vars,
-        compute_locals=ik_compute_locals,
+        datablock      = None,
+        user_storage   = stored_vars,
+        compute_locals = ik_compute_locals,
         # local_matrices / world_matrices are in-place-mutated output buffers,
         # left UNMARKED so ``self.local_matrices[i] = ...`` keeps mutating the
         # seeded list. joints / end_effector / pole_vector / twist are decoded
         # type-promoted reads and must stay Tier-1 wins -- NOT scratch.
-        output_scratch_keys=set(),
-        node_type_label=type(node_self).__name__,
+        output_scratch_keys = set(),
+        node_type_label     = type(node_self).__name__,
     )
 
     # Single namespace dict -- only __builtins__ auto-injected; the IK
@@ -821,7 +821,7 @@ def compute_ik_user_solve(
 
     namespace: dict = {
         "__builtins__": _builtins,
-        "self": self_proxy,
+        "self":         self_proxy,
         # Convenience: build/mutate a matrix result via MatrixView
         # (setRotation / setTranslation in RADIANS, chainable).
         "MatrixView": MatrixView,
@@ -839,9 +839,9 @@ def compute_ik_user_solve(
     ok = _exec(
         code,
         namespace,
-        log_event_name=log_event_name,
-        on_error=_on_err,
-        node_obj=node_obj,
+        log_event_name = log_event_name,
+        on_error       = _on_err,
+        node_obj       = node_obj,
     )
     if not ok:
         if captured:
@@ -869,7 +869,7 @@ def compute_ik_user_solve(
     locals_out = self_proxy.get_compute_locals()
     local_mats = _normalize_matrix_list(locals_out.get("local_matrices"), n)
     world_mats = _normalize_matrix_list(locals_out.get("world_matrices"), n)
-    gates_r = _normalize_gate(locals_out.get("apply_rotate", True), n, True)
-    gates_t = _normalize_gate(locals_out.get("apply_translate", False), n, False)
-    gates_s = _normalize_gate(locals_out.get("apply_scale", False), n, False)
+    gates_r    = _normalize_gate(locals_out.get("apply_rotate", True),     n, True)
+    gates_t    = _normalize_gate(locals_out.get("apply_translate", False), n, False)
+    gates_s    = _normalize_gate(locals_out.get("apply_scale", False),     n, False)
     return (local_mats, world_mats, gates_r, gates_t, gates_s)

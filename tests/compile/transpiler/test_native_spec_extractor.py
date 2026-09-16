@@ -24,12 +24,12 @@ class TestAdapterPure(unittest.TestCase):
 
     def _payload(self, **over):
         p = {
-            "native_type": "mPyNode",
-            "node_name": "foo",
-            "expression": "out = x",
-            "input_attrs": {"x": {"attr_type": "float"}},
+            "native_type":  "mPyNode",
+            "node_name":    "foo",
+            "expression":   "out = x",
+            "input_attrs":  {"x": {"attr_type": "float"}},
             "output_attrs": {"out": {"attr_type": "float"}},
-            "stored_vars": {"k": 3},
+            "stored_vars":  {"k": 3},
         }
         p.update(over)
         return p
@@ -78,7 +78,7 @@ class TestAdapterPure(unittest.TestCase):
         meta = {"authors": ["me"], "version": "1.0"}
         spec = adapter.spec_from_mpn_payload(
             self._payload(methods_source=methods_src, metadata=meta))
-        self.assertEqual(spec["methods"], methods_src)
+        self.assertEqual(spec["methods"],  methods_src)
         self.assertEqual(spec["commands"], maya_command.detect_commands(methods_src))
         self.assertEqual(spec["metadata"], md.coerce(meta))
 
@@ -111,7 +111,7 @@ class TestAdapterPure(unittest.TestCase):
 
         from mpynode.native.spec import mpn_spec_adapter as adapter
 
-        tree = ast.parse(inspect.getsource(adapter))
+        tree     = ast.parse(inspect.getsource(adapter))
         imported = []
         for node in ast.walk(tree):
             if isinstance(node, ast.Import):
@@ -136,7 +136,7 @@ class TestAdapterEquivalence(unittest.TestCase):
         from mpynode._common.io import mpn_io
         from mpynode._common.storedvars.stored_vars_api import set_variable
 
-        n = MPyNode.create(name="equiv_node")
+        n  = MPyNode.create(name="equiv_node")
         nm = n.get_name()
         n.add_input_attr("amount", "float", False)
         n.add_output_attr("result", "float", False)
@@ -144,8 +144,8 @@ class TestAdapterEquivalence(unittest.TestCase):
         n.set_init_expression("self.k = 1\n")
         set_variable(nm, "scale", 3, persistent=True)
 
-        live = sx.extract_spec(nm)
-        payload = mpn_io.serialize_node(n)
+        live      = sx.extract_spec(nm)
+        payload   = mpn_io.serialize_node(n)
         from_file = adapter.spec_from_mpn_payload(payload)
         self.assertEqual(from_file, live)
 
@@ -167,8 +167,8 @@ class TestAdapterEquivalence(unittest.TestCase):
             "self.outColor = (u * self.gain, v * self.gain, 0.0)\n"
             "self.outAlpha = 1.0\n")
 
-        live = sx.extract_spec(f.get_name())
-        payload = mpn_io.serialize_node(f)
+        live      = sx.extract_spec(f.get_name())
+        payload   = mpn_io.serialize_node(f)
         from_file = adapter.spec_from_mpn_payload(payload)
         # The texture interface must be present + identical (types + membership).
         self.assertEqual(from_file["inputs"], live["inputs"])
@@ -231,7 +231,7 @@ class TestControllerDefaultsMerge(unittest.TestCase):
         cc._merge_metadata_defaults_into_specs(
             specs, {"license": "(c) Global", "version": "1.0"})
         m = specs[0]["metadata"]
-        self.assertEqual(m["version"], "9.9")        # node wins
+        self.assertEqual(m["version"], "9.9")         # node wins
         self.assertEqual(m["license"], "(c) Global")  # filled from default
 
     def test_defaults_applied_to_node_without_metadata(self):
@@ -750,11 +750,11 @@ def _codegen_spec(inputs, outputs, compute="self.outColor = (0.0,0.0,0.0)"):
     return {
         "suggested": {"node_type_name": "presetCgNode", "class_name": "PresetCgNode",
                       "type_id": "0x00070abc", "mpx_base": "MPxNode"},
-        "compute": compute,
-        "init": "",
-        "inputs": {n: se.normalize_attr(m) for n, m in inputs.items()},
-        "outputs": {n: se.normalize_attr(m) for n, m in outputs.items()},
-        "variables": {},
+        "compute":     compute,
+        "init":        "",
+        "inputs":      {n: se.normalize_attr(m) for n, m in inputs.items()},
+        "outputs":     {n: se.normalize_attr(m) for n, m in outputs.items()},
+        "variables":   {},
         "portability": {"portable": True, "blockers": [], "warnings": []},
     }
 
@@ -846,7 +846,7 @@ class TestPresetCapture(unittest.TestCase):
 
     def test_captures_referenced_presets(self):
         from mpynode.native.spec import spec_extractor
-        f = self._scanline_mpyfile()
+        f    = self._scanline_mpyfile()
         spec = spec_extractor.extract_spec(f.get_name())
         ins, outs = spec["inputs"], spec["outputs"]
         # Inputs: fileName (string), uvCoord (float2), + user tIn (float).
@@ -863,7 +863,7 @@ class TestPresetCapture(unittest.TestCase):
 
     def test_does_not_capture_unreferenced_presets(self):
         from mpynode.native.spec import spec_extractor
-        f = self._scanline_mpyfile()
+        f    = self._scanline_mpyfile()
         spec = spec_extractor.extract_spec(f.get_name())
         # colorSpace / wrapModeU / preFilter are presets the compute never
         # references -> not dragged into the port.
@@ -885,7 +885,7 @@ class TestPresetCapture(unittest.TestCase):
 
     def test_reads_image_and_classification_present(self):
         from mpynode.native.spec import spec_extractor
-        f = self._scanline_mpyfile()
+        f    = self._scanline_mpyfile()
         spec = spec_extractor.extract_spec(f.get_name())
         self.assertTrue(spec["suggested"].get("reads_image_file"))
         self.assertIn("texture/2d", spec["suggested"].get("classification", ""))
@@ -901,11 +901,11 @@ class TestTextureInterfaceGuidance(unittest.TestCase):
         from mpynode.native.ai import translation_knowledge as tk
         from mpynode.native.spec import spec_extractor as se
         spec = {
-            "compute": "u, v = self.uvCoord\nself.outColor = (u, v, 0.0)",
-            "init": "",
+            "compute":   "u, v = self.uvCoord\nself.outColor = (u, v, 0.0)",
+            "init":      "",
             "suggested": {},
-            "inputs": {"uvCoord": se.normalize_attr({"attr_type": "float2"})},
-            "outputs": {"outColor": se.normalize_attr({"attr_type": "color"})},
+            "inputs":    {"uvCoord": se.normalize_attr({"attr_type": "float2"})},
+            "outputs":   {"outColor": se.normalize_attr({"attr_type": "color"})},
         }
         guide = tk.guide_for_spec(spec)
         self.assertIn("set3Float", guide)
@@ -916,7 +916,7 @@ class TestTextureInterfaceGuidance(unittest.TestCase):
         from mpynode.native.spec import spec_extractor as se
         spec = {
             "compute": "self.b = self.a * 2", "init": "", "suggested": {},
-            "inputs": {"a": se.normalize_attr({"attr_type": "float"})},
+            "inputs":  {"a": se.normalize_attr({"attr_type": "float"})},
             "outputs": {"b": se.normalize_attr({"attr_type": "float"})},
         }
         guide = tk.guide_for_spec(spec)
@@ -980,8 +980,8 @@ class TestEnumLabelEscaping(unittest.TestCase):
             "compute": "self.o = float(self.cs)", "init": "",
             "inputs": {"cs": se.normalize_attr(
                 {"attr_type": "enum", "enum_names": names})},
-            "outputs": {"o": se.normalize_attr({"attr_type": "float"})},
-            "variables": {},
+            "outputs":     {"o": se.normalize_attr({"attr_type": "float"})},
+            "variables":   {},
             "portability": {"portable": True, "blockers": [], "warnings": []},
         }
 
@@ -989,9 +989,9 @@ class TestEnumLabelEscaping(unittest.TestCase):
         from mpynode.native import compiler as codegen
         cpp = codegen.generate_cpp(self._enum_spec(['a "b" c', 'd\\e']),
                                    for_port=True)
-        self.assertIn(r'\"b\"', cpp)              # quote escaped
-        self.assertNotIn('"a "b" c"', cpp)        # not emitted raw
-        self.assertIn(r'd\\e', cpp)               # backslash escaped
+        self.assertIn(r'\"b\"', cpp)        # quote escaped
+        self.assertNotIn('"a "b" c"', cpp)  # not emitted raw
+        self.assertIn(r'd\\e', cpp)         # backslash escaped
 
     def test_explicit_index_form_parsed(self):
         from mpynode.native import compiler as codegen
@@ -1006,8 +1006,8 @@ class TestEnumLabelEscaping(unittest.TestCase):
         from mpynode.native import compiler as codegen
         cpp = codegen.generate_cpp(self._enum_spec(["Wrap", "Clamp", "Mirror"]),
                                    for_port=True)
-        self.assertIn('addField("Wrap", 0)', cpp)
-        self.assertIn('addField("Clamp", 1)', cpp)
+        self.assertIn('addField("Wrap", 0)',   cpp)
+        self.assertIn('addField("Clamp", 1)',  cpp)
         self.assertIn('addField("Mirror", 2)', cpp)
 
 
@@ -1030,10 +1030,10 @@ class TestVerifySkipsTextureTypes(unittest.TestCase):
 
         spec = {
             "suggested": {"node_type_name": "texProc", "mpx_base": "MPxNode"},
-            "compute": "u, v = self.uvCoord\nself.outColor = (u, v, 0.0)",
-            "init": "",
-            "inputs": {"uvCoord": {"type": "float2"}},
-            "outputs": {"outColor": {"type": "color"}},
+            "compute":   "u, v = self.uvCoord\nself.outColor = (u, v, 0.0)",
+            "init":      "",
+            "inputs":    {"uvCoord": {"type": "float2"}},
+            "outputs":   {"outColor": {"type": "color"}},
         }
         res = cc._verify_one(_BoomCmds(), "/x.bundle", spec)
         self.assertFalse(res["ran"])
@@ -1072,12 +1072,12 @@ class TestCaptureNamedPresets(unittest.TestCase):
             self.assertIn(nm, got, "viewport preset %r not captured" % nm)
         # Real types (not coerced): the enums must be enums (with field names),
         # the numeric ones int/float -- matching the Python node's attrs.
-        self.assertEqual(got["filterMode"]["type"], "enum")
-        self.assertEqual(got["mipmapMode"]["type"], "enum")
+        self.assertEqual(got["filterMode"]["type"],    "enum")
+        self.assertEqual(got["mipmapMode"]["type"],    "enum")
         self.assertEqual(got["maxAnisotropy"]["type"], "int")
-        self.assertEqual(got["minLOD"]["type"], "int")
-        self.assertEqual(got["maxLOD"]["type"], "int")
-        self.assertEqual(got["mipLODBias"]["type"], "float")
+        self.assertEqual(got["minLOD"]["type"],        "int")
+        self.assertEqual(got["maxLOD"]["type"],        "int")
+        self.assertEqual(got["mipLODBias"]["type"],    "float")
         self.assertEqual(
             got["filterMode"].get("enum_names"),
             ["Point", "Linear", "Anisotropic"])
@@ -1103,7 +1103,7 @@ class TestCaptureNamedPresets(unittest.TestCase):
         normalize_attr produces) so a setdefault-merge is sound."""
         from mpynode.native.spec import spec_extractor as SE
         spec = SE.extract_spec(self.node)
-        got = SE.capture_named_presets(self.node, VIEWPORT_ONLY)
+        got  = SE.capture_named_presets(self.node, VIEWPORT_ONLY)
         for nm, entry in got.items():
             spec["inputs"].setdefault(nm, entry)
         # the merged inputs are still all dicts with a 'type'

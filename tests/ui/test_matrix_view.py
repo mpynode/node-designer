@@ -39,7 +39,7 @@ class TestConstruction(unittest.TestCase):
 
     def test_from_16_list(self):
         flat = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 7, 8, 9, 1]
-        m = MatrixView(flat)
+        m    = MatrixView(flat)
         self.assertAlmostEqual(m.getElement(3, 1), 8.0)
 
     def test_from_api1_mmatrix(self):
@@ -82,7 +82,7 @@ class TestRawAccessors(unittest.TestCase):
 
 class TestMMatrixSurface(unittest.TestCase):
     def test_inverse_returns_matrixview_and_inverts(self):
-        m = MatrixView(_np_translate(10, 20, 30))
+        m   = MatrixView(_np_translate(10, 20, 30))
         inv = m.inverse()
         self.assertIsInstance(inv, MatrixView)
         np.testing.assert_array_almost_equal(
@@ -137,22 +137,22 @@ class TestMMatrixSurface(unittest.TestCase):
         self.assertIs(a.isEquivalent(_np_translate(1, 2, 3)), True)
 
     def test_setElement_mutates_and_returns_self(self):
-        m = MatrixView()
+        m   = MatrixView()
         out = m.setElement(3, 0, 5.0)
         self.assertIs(out, m)
         self.assertAlmostEqual(m.getElement(3, 0), 5.0)
         self.assertAlmostEqual(m.translation()[0], 5.0)
 
     def test_setToIdentity_mutates_and_returns_self(self):
-        m = MatrixView(_np_translate(1, 2, 3))
+        m   = MatrixView(_np_translate(1, 2, 3))
         out = m.setToIdentity()
         self.assertIs(out, m)
         np.testing.assert_array_almost_equal(m.asNumpy(), np.eye(4))
 
     def test_setToProduct_mutates_and_returns_self(self):
-        m = MatrixView()
-        a = MatrixView(_np_translate(1, 2, 3))
-        b = MatrixView(_np_translate(4, 5, 6))
+        m   = MatrixView()
+        a   = MatrixView(_np_translate(1, 2, 3))
+        b   = MatrixView(_np_translate(4, 5, 6))
         out = m.setToProduct(a, b)
         self.assertIs(out, m)
         np.testing.assert_array_almost_equal(m.translation(), [5, 7, 9])
@@ -166,7 +166,7 @@ class TestTransformationSurface(unittest.TestCase):
         np.testing.assert_array_almost_equal(t, [7, 8, 9])
 
     def test_setTranslation(self):
-        m = MatrixView()
+        m   = MatrixView()
         out = m.setTranslation([5, 6, 7])
         self.assertIs(out, m)
         np.testing.assert_array_almost_equal(m.translation(), [5, 6, 7])
@@ -184,7 +184,7 @@ class TestTransformationSurface(unittest.TestCase):
         np.testing.assert_array_almost_equal(s, [2, 3, 4])
 
     def test_setScale(self):
-        m = MatrixView()
+        m   = MatrixView()
         out = m.setScale([2, 3, 4])
         self.assertIs(out, m)
         np.testing.assert_array_almost_equal(m.scale(), [2, 3, 4])
@@ -202,20 +202,20 @@ class TestTransformationSurface(unittest.TestCase):
     def test_as_matrix_family_returns_mmatrix(self):
         m = MatrixView(_np_translate(1, 2, 3))
         self.assertIsInstance(m.asMatrixInverse(), om2.MMatrix)
-        self.assertIsInstance(m.asRotateMatrix(), om2.MMatrix)
-        self.assertIsInstance(m.asScaleMatrix(), om2.MMatrix)
+        self.assertIsInstance(m.asRotateMatrix(),  om2.MMatrix)
+        self.assertIsInstance(m.asScaleMatrix(),   om2.MMatrix)
 
 
 class TestNumpyTransparency(unittest.TestCase):
     def test_matmul_returns_numpy(self):
-        a = MatrixView(_np_translate(1, 2, 3))
+        a   = MatrixView(_np_translate(1, 2, 3))
         out = a @ np.eye(4)
         self.assertIsInstance(out, np.ndarray)
         np.testing.assert_array_almost_equal(out, a.asNumpy())
 
     def test_mul_returns_matrixview(self):
-        a = MatrixView(_np_translate(1, 2, 3))
-        b = MatrixView(_np_translate(4, 5, 6))
+        a    = MatrixView(_np_translate(1, 2, 3))
+        b    = MatrixView(_np_translate(4, 5, 6))
         prod = a * b
         self.assertIsInstance(prod, MatrixView)
         np.testing.assert_array_almost_equal(prod.translation(), [5, 7, 9])

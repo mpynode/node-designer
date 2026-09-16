@@ -33,7 +33,7 @@ class TestStalenessReason(unittest.TestCase):
     def setUp(self):
         from mpynode.native.toolchain import verify
 
-        self.fn = verify._staleness_reason
+        self.fn  = verify._staleness_reason
         self.tol = 1e-4
 
     def test_clean_run_says_nothing(self):
@@ -68,7 +68,7 @@ class TestApplyDrive(unittest.TestCase):
             pass
 
         orig_scalar = verify._drive_input
-        orig_array = verify._drive_array_input
+        orig_array  = verify._drive_array_input
         verify._drive_input = lambda c, n, a, t, v: calls.append(
             ("scalar", a, t, v))
         verify._drive_array_input = lambda c, n, a, t, v: calls.append(
@@ -76,10 +76,10 @@ class TestApplyDrive(unittest.TestCase):
         try:
             verify._apply_drive(_Cmds(), ("a", "b"), {
                 "gain": ("double", False, 0.5),
-                "pts": ("vector", True, [[0, 0, 0], [1, 1, 1]]),
+                "pts":  ("vector", True, [[0, 0, 0], [1, 1, 1]]),
             })
         finally:
-            verify._drive_input = orig_scalar
+            verify._drive_input       = orig_scalar
             verify._drive_array_input = orig_array
 
         self.assertIn(("scalar", "gain", "double", 0.5), calls)
@@ -89,8 +89,8 @@ class TestApplyDrive(unittest.TestCase):
         """Replay is only meaningful if the recorded set is re-applicable."""
         from mpynode.native.toolchain import verify
 
-        seen = []
-        orig_scalar = verify._drive_input
+        seen                = []
+        orig_scalar         = verify._drive_input
         verify._drive_input = lambda c, n, a, t, v: seen.append(v)
         try:
             drive = {"gain": ("double", False, 0.25)}

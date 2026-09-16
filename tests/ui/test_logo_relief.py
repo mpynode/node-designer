@@ -14,7 +14,7 @@ try:  # QApplication must exist before any QWidget is constructed.
     except Exception:
         from PySide2.QtWidgets import QApplication
     _app = QApplication.instance() or QApplication([])
-    _QT = True
+    _QT  = True
 except Exception:  # pragma: no cover - Qt missing
     _QT = False
 
@@ -92,7 +92,7 @@ class TestPaintRelief(unittest.TestCase):
         # only change rows below it.
         side = int(min(300, 200) * RELIEF_SCALE)
         light, _dark = relief_layers(side)
-        cy = QRect(0, 0, 300, 200).center().y() - light.height() // 2
+        cy          = QRect(0, 0, 300, 200).center().y() - light.height() // 2
         logo_bottom = cy + light.height() + max(1, side // 180)
         self.assertGreaterEqual(min(changed), logo_bottom)
 
@@ -117,8 +117,8 @@ class TestBothSurfacesUseIt(unittest.TestCase):
 
     def test_empty_script_editor_paints_it(self):
         import mpynode.ui.widgets.script_tab as mod
-        calls = []
-        orig = mod.paint_relief
+        calls            = []
+        orig             = mod.paint_relief
         mod.paint_relief = lambda painter, rect, **kw: calls.append(rect) or True
         try:
             w = mod.NDScriptTabWidget()

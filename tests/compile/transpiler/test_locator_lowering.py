@@ -131,8 +131,8 @@ class TestLocatorLowers(unittest.TestCase):
         self.assertRegex(out, r"data\.autoHighlight = .*false")
         self.assertRegex(out, r"data\.autoRefresh = .*true")
         self.assertRegex(out, r"data\.preciseHover = .*true")
-        self.assertIn("ndin_self_time", out)              # self.time bound
-        self.assertIn("ndin_self_selection_color", out)   # self.selection_color
+        self.assertIn("ndin_self_time", out)             # self.time bound
+        self.assertIn("ndin_self_selection_color", out)  # self.selection_color
 
     def test_draw_none_lowers_to_an_empty_frame(self):
         """`self.draw = None` is a legal drawing -- nothing. It must lower, not
@@ -362,7 +362,7 @@ class TestWallClock(unittest.TestCase):
     _INIT = "import time as _wall\n"
 
     def _spec_hover(self, compute, init=None, hover=True):
-        spec = _spec(compute, init=self._INIT if init is None else init)
+        spec                = _spec(compute, init=self._INIT if init is None else init)
         spec["needs_hover"] = hover
         return spec
 
@@ -409,7 +409,7 @@ class TestWallclockSlot(unittest.TestCase):
     needs the live-clock service, which the extractor flags automatically."""
 
     def _spec_hover(self, compute, hover=True):
-        spec = _spec(compute)
+        spec                = _spec(compute)
         spec["needs_hover"] = hover
         return spec
 
@@ -665,8 +665,8 @@ class TestEnumNameDispatch(unittest.TestCase):
             "    self.draw = DrawCircle(center=(0.0, 0.0, 0.0))\n",
             inputs=_ENUM_IN)
         self.assertIn("in_shapeMode_name", out)
-        self.assertIn("data.emitShape(2,", out)   # box
-        self.assertIn("data.emitShape(1,", out)   # circle
+        self.assertIn("data.emitShape(2,", out)  # box
+        self.assertIn("data.emitShape(1,", out)  # circle
 
     def test_enum_name_compares_as_a_string(self):
         out = _lower(
@@ -869,10 +869,10 @@ class TestOtherNodeTypesUnaffected(unittest.TestCase):
         silently alter deformer / mesh / transform / iksolver lowering."""
         from mpynode.native.compiler.errors import UnsupportedSpec
 
-        env = {"self.inValue": py_to_cpp.scalar_t("double")}
+        env     = {"self.inValue": py_to_cpp.scalar_t("double")}
         writers = {"self.outValue": lambda v: ["    out = %s;" % v.code]}
-        src = "self.outValue = self.inValue * TWO_PI\n"
-        init = "TWO_PI = 6.28\n"
+        src     = "self.outValue = self.inValue * TWO_PI\n"
+        init    = "TWO_PI = 6.28\n"
 
         with self.assertRaises(UnsupportedSpec):
             py_to_cpp.transpile_compute_block(src, env, writers, init)

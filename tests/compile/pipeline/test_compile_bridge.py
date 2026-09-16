@@ -12,8 +12,8 @@ def _row(source_node, type_name, build_status, *, verify=None,
          build_reason="", blockers=None):
     spec = {"portability": {"blockers": list(blockers or [])}}
     return {
-        "source_node": source_node,
-        "type_name": type_name,
+        "source_node":  source_node,
+        "type_name":    type_name,
         "build_status": build_status,
         "build_reason": build_reason,
         "verify": verify or {"ran": False, "pass": None, "maxerr": None,
@@ -24,12 +24,12 @@ def _row(source_node, type_name, build_status, *, verify=None,
 
 def _result(nodes, *, ok=True, errors=None, plugin_name="myPlugin"):
     return {
-        "ok": ok,
+        "ok":          ok,
         "bundle_path": "/tmp/out/myPlugin.bundle",
         "plugin_name": plugin_name,
-        "nodes": nodes,
-        "errors": list(errors or []),
-        "strict": True,
+        "nodes":       nodes,
+        "errors":      list(errors or []),
+        "strict":      True,
     }
 
 
@@ -55,8 +55,8 @@ class TestBuildHandoff(unittest.TestCase):
         self.assertNotIn("passNode", picked)
         # primary = first picked row that has a source_node
         self.assertEqual(h["primary_source_node"], "dropNode1")
-        self.assertEqual(h["plugin_name"], "myPlugin")
-        self.assertEqual(h["out_dir"], "/tmp/out")
+        self.assertEqual(h["plugin_name"],         "myPlugin")
+        self.assertEqual(h["out_dir"],             "/tmp/out")
 
     def test_optimize_kind_picks_built_nodes(self):
         from mpynode.ui.llm import compile_bridge
@@ -112,14 +112,14 @@ class TestFormatReportBlock(unittest.TestCase):
                  verify={"ran": True, "pass": False, "maxerr": 2.1e-3,
                          "tol": 1e-4, "reason": "outMesh mismatch"}),
         ]
-        h = compile_bridge.build_handoff(_result(rows), {})
+        h    = compile_bridge.build_handoff(_result(rows), {})
         text = compile_bridge.format_report_block(h)
         self.assertIn("[Compile report]", text)
         self.assertIn("[/Compile report]", text)
         self.assertIn("dropNode", text)
         self.assertIn("divNode", text)
         self.assertIn("2.1e-03", text.replace("2.1e-3", "2.1e-03"))  # maxerr shown
-        self.assertIn("dict keyed by tuple in compute", text)   # blocker shown
+        self.assertIn("dict keyed by tuple in compute", text)        # blocker shown
         # reframe guidance: enable, don't hard-block; C++ ok; green-light/editable
         low = text.lower()
         self.assertTrue("green-light" in low or "green light" in low
@@ -131,7 +131,7 @@ class TestFormatReportBlock(unittest.TestCase):
         rows = [_row("a1", "a", "compiled",
                      verify={"ran": True, "pass": True, "maxerr": 0.0,
                              "tol": 1e-4, "reason": ""})]
-        h = compile_bridge.build_handoff(_result(rows), {}, kind="optimize")
+        h    = compile_bridge.build_handoff(_result(rows), {}, kind="optimize")
         text = compile_bridge.format_report_block(h)
         self.assertIn("[Compile report]", text)
         self.assertIn("a", text)
@@ -155,8 +155,8 @@ class TestClassify(unittest.TestCase):
         self.assertEqual(c["n_total"], 4)
         self.assertEqual({r["type_name"] for r in c["built"]},
                          {"ok", "div", "nv"})
-        self.assertEqual({r["type_name"] for r in c["dropped"]}, {"drop"})
-        self.assertEqual({r["type_name"] for r in c["diverged"]}, {"div"})
+        self.assertEqual({r["type_name"] for r in c["dropped"]},     {"drop"})
+        self.assertEqual({r["type_name"] for r in c["diverged"]},    {"div"})
         self.assertEqual({r["type_name"] for r in c["verified_ok"]}, {"ok"})
         self.assertTrue(c["needs_ai"])
 
@@ -193,11 +193,11 @@ class TestVerifySummaryLines(unittest.TestCase):
         ]
         lines = compile_bridge.verify_summary_lines(_result(rows))
         self.assertEqual(len(lines), 3)
-        self.assertIn("PASS", lines[0])
-        self.assertIn("FAIL", lines[1])
+        self.assertIn("PASS",             lines[0])
+        self.assertIn("FAIL",             lines[1])
         self.assertIn("outMesh mismatch", lines[1])
-        self.assertIn("did not run", lines[2])
-        self.assertIn("string input", lines[2])
+        self.assertIn("did not run",      lines[2])
+        self.assertIn("string input",     lines[2])
 
 
 class TestTimingNote(unittest.TestCase):
@@ -216,8 +216,8 @@ class TestTimingNote(unittest.TestCase):
                              "timing": {"measured": True, "py_ms": 5.5,
                                         "cpp_ms": 124.7, "n": 3,
                                         "truncated": False,
-                                        "verdict": "much-slower",
-                                        "warning": warn,
+                                        "verdict":   "much-slower",
+                                        "warning":   warn,
                                         "scene": "geo 140/array 5000"}})]
         lines = compile_bridge.verify_summary_lines(_result(rows))
         self.assertEqual(len(lines), 2, lines)

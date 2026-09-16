@@ -40,8 +40,8 @@ class TestCseNonTrivialOperand(unittest.TestCase):
         # bound to a const, and the ternary must reference the bound temp.
         text = _emit("self.r = abs(float(self.a @ self.b))\n",
                      {"self.a": _A(), "self.b": _A()})
-        self.assertEqual(text.count("nd::matmul("), 1)   # bound once, not 3x
-        self.assertIn("const auto", text)                # a cse temp was emitted
+        self.assertEqual(text.count("nd::matmul("), 1)  # bound once, not 3x
+        self.assertIn("const auto", text)               # a cse temp was emitted
 
     def test_abs_of_scalar_name_stays_inline(self):
         # abs(x) where x is a scalar Name -> trivial operand -> NO const temp; the

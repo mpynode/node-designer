@@ -142,7 +142,7 @@ def plan_forks(diverged, taken_names=None):
             continue
         base = _short(class_path)
         taken.add(base)
-        forks = []
+        forks  = []
         suffix = 2
         for grp in groups[1:]:
             while (base + str(suffix)) in taken:
@@ -155,8 +155,8 @@ def plan_forks(diverged, taken_names=None):
         plans.append({
             "class_path": class_path,
             "class_name": base,
-            "keep": [_node_name(n) for n in groups[0]],
-            "forks": forks,
+            "keep":       [_node_name(n) for n in groups[0]],
+            "forks":      forks,
         })
     return plans
 
@@ -193,9 +193,9 @@ def spec_content_hash(spec):
         spec.get("compute") or "",
         _attr_tokens(spec.get("inputs")),
         _attr_tokens(spec.get("outputs")),
-        init=spec.get("init") or "",
-        methods=spec.get("methods") or "",
-        persistent_names=list((spec.get("variables") or {}).keys()),
+        init             = spec.get("init") or "",
+        methods          = spec.get("methods") or "",
+        persistent_names = list((spec.get("variables") or {}).keys()),
     )
 
 

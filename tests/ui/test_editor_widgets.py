@@ -61,7 +61,7 @@ class TestIndentBlock(unittest.TestCase):
         text = "a = 1\nb = 2\nc = 3\n"
         # selection ends exactly at the start of line 3 (offset 12).
         start = 0
-        end = text.index("c = 3")
+        end   = text.index("c = 3")
         out, ns, ne = indent_block(text, start, end, add=True)
         # only lines 1 + 2 indented; line 3 untouched.
         self.assertEqual(out, "    a = 1\n    b = 2\nc = 3\n")
@@ -220,7 +220,7 @@ class TestEditorIntegration(unittest.TestCase):
         insert path can\'t be exercised reliably via a synthetic event
         offscreen, but the guard (no block indent) is what matters."""
         ed = self._editor("x = 1\n")
-        c = ed.textCursor()
+        c  = ed.textCursor()
         # Caret mid-line (col 3): at col 0 a soft-tab insert and a block-indent
         # both prepend "    " and are indistinguishable. Mid-line, only a
         # wrongly block-indented line starts with INDENT_UNIT.
@@ -300,18 +300,18 @@ class TestEditorFind(unittest.TestCase):
         self.assertEqual(total, 3)  # excludes "Amplitude"
 
     def test_find_step_forward_selects_match(self):
-        ed = self._editor()
+        ed          = self._editor()
         QTextCursor = _qtextcursor()
-        cur = ed.textCursor()
+        cur         = ed.textCursor()
         cur.movePosition(QTextCursor.Start)
         ed.setTextCursor(cur)
         self.assertTrue(ed.find_step("amplitude", backward=False, case=False))
         self.assertEqual(ed.textCursor().selectedText().lower(), "amplitude")
 
     def test_find_step_wraps_around(self):
-        ed = self._editor()
+        ed          = self._editor()
         QTextCursor = _qtextcursor()
-        cur = ed.textCursor()
+        cur         = ed.textCursor()
         cur.movePosition(QTextCursor.End)
         ed.setTextCursor(cur)
         # 'import' only appears at the very top -> forward find from the
@@ -346,9 +346,9 @@ class TestEditorFind(unittest.TestCase):
     def test_current_index_tracks_selection(self):
         """find_match_stats reports the 1-based index of the match the
         cursor is currently sitting on."""
-        ed = self._editor()
+        ed          = self._editor()
         QTextCursor = _qtextcursor()
-        cur = ed.textCursor()
+        cur         = ed.textCursor()
         cur.movePosition(QTextCursor.Start)
         ed.setTextCursor(cur)
         # Step to the first match, then the second.
@@ -436,8 +436,8 @@ class TestVocabularyBuilder(unittest.TestCase):
 
         vocab = build_vocabulary(None, scope="expression")
         texts = [c.text for c in vocab]
-        self.assertIn("np", texts)
-        self.assertIn("mc", texts)
+        self.assertIn("np",   texts)
+        self.assertIn("mc",   texts)
         self.assertIn("self", texts)
 
     def test_expression_scope_includes_self_plugs(self):
@@ -445,9 +445,9 @@ class TestVocabularyBuilder(unittest.TestCase):
 
         vocab = build_vocabulary(self.deformer.get_name(), scope="expression")
         texts = [c.text for c in vocab]
-        self.assertIn("self.envelope", texts)
+        self.assertIn("self.envelope",      texts)
         self.assertIn("self.driverMatrixA", texts)
-        self.assertIn("self.amplitude", texts)
+        self.assertIn("self.amplitude",     texts)
 
     def test_expression_scope_includes_nested_compound_paths(self):
         from mpynode.ui.widgets.autocomplete import build_vocabulary
@@ -588,7 +588,7 @@ class TestEditorCompletionWiring(unittest.TestCase):
         from mpynode.ui.widgets.script_editor import NDScriptEditor
 
         editor = NDScriptEditor(self.deformer)
-        words = editor.getCompletionWords()
+        words  = editor.getCompletionWords()
         self.assertIn("self.envelope", words)
         self.assertIn("self.driverMatrixA", words)
         self.assertIn("np", words)
@@ -597,7 +597,7 @@ class TestEditorCompletionWiring(unittest.TestCase):
         from mpynode.ui.widgets.init_editor import NDInitEditor
 
         editor = NDInitEditor(self.deformer)
-        words = editor.getCompletionWords()
+        words  = editor.getCompletionWords()
         # Init scope: no plug completions.
         self.assertNotIn("self.envelope", words)
         # But init helpers + builtins present.
@@ -695,7 +695,7 @@ class TestNewNodeHeaderModeGate(unittest.TestCase):
         from mpynode.wrappers.mpy_locator import MPyLocator
 
         loc = MPyLocator.create(name="sentinelLoc")
-        ed = NDScriptEditor(loc)
+        ed  = NDScriptEditor(loc)
         ed.refresh()
         self.assertEqual(ed.getText().strip(), "")
 
@@ -704,7 +704,7 @@ class TestNewNodeHeaderModeGate(unittest.TestCase):
         from mpynode._base.commands import build_new_node_command
         from mpynode._node_registry import wrap_node
 
-        cmd = build_new_node_command(native_type, mode)
+        cmd  = build_new_node_command(native_type, mode)
         name = cmd.doIt()
         self.assertTrue(name, "create command returned no node name")
         return wrap_node(name, native_type)
@@ -864,9 +864,9 @@ class TestHighlighterModuleShape(unittest.TestCase):
         from mpynode.ui.widgets.highlighter import QtPythonHighlighter
 
         src = inspect.getsource(QtPythonHighlighter.formatText)
-        self.assertIn("QColor", src)
+        self.assertIn("QColor",          src)
         self.assertIn("QTextCharFormat", src)
-        self.assertIn("setForeground", src)
+        self.assertIn("setForeground",   src)
 
 
 # ===========================================================================
@@ -1082,12 +1082,12 @@ class TestModuleScopeRename(unittest.TestCase):
             "result = amplitude * 2\n"
             "final = amplitude + result\n"
         )
-        col = _col_of(src, 1, "amplitude")
+        col  = _col_of(src, 1, "amplitude")
         plan = rf.plan_rename_at(src, 1, col, "amp")
         self.assertTrue(plan.ok, plan.reason)
         self.assertEqual(plan.count, 3)
-        self.assertIn("amp = 1.0", plan.new_source)
-        self.assertIn("amp * 2", plan.new_source)
+        self.assertIn("amp = 1.0",    plan.new_source)
+        self.assertIn("amp * 2",      plan.new_source)
         self.assertIn("amp + result", plan.new_source)
         self.assertNotIn("amplitude", plan.new_source)
         self.assertTrue(plan.is_module_level)
@@ -1095,15 +1095,15 @@ class TestModuleScopeRename(unittest.TestCase):
 
     def test_rename_from_a_usage_site(self):
         """Cursor on a USE (not the def) still renames the binding."""
-        src = "amplitude = 1.0\nresult = amplitude * 2\n"
-        col = _col_of(src, 2, "amplitude")
+        src  = "amplitude = 1.0\nresult = amplitude * 2\n"
+        col  = _col_of(src, 2, "amplitude")
         plan = rf.plan_rename_at(src, 2, col, "amp")
         self.assertTrue(plan.ok, plan.reason)
         self.assertEqual(plan.count, 2)
 
     def test_does_not_touch_substrings(self):
-        src = "amp = 1\namplitude = 2\nx = amp + amplitude\n"
-        col = _col_of(src, 1, "amp")
+        src  = "amp = 1\namplitude = 2\nx = amp + amplitude\n"
+        col  = _col_of(src, 1, "amp")
         plan = rf.plan_rename_at(src, 1, col, "gain")
         self.assertTrue(plan.ok, plan.reason)
         # only the 'amp' binding (2 occurrences), NOT 'amplitude'.
@@ -1122,7 +1122,7 @@ class TestScopeIsolation(unittest.TestCase):
             "y = x\n"
         )
         # Rename the FUNCTION-LOCAL x (line 3) -> only lines 3 + 4.
-        col = _col_of(src, 3, "x")
+        col  = _col_of(src, 3, "x")
         plan = rf.plan_rename_at(src, 3, col, "z")
         self.assertTrue(plan.ok, plan.reason)
         self.assertEqual(plan.count, 2)
@@ -1141,7 +1141,7 @@ class TestScopeIsolation(unittest.TestCase):
             "y = x\n"
         )
         # Rename the MODULE x (line 1) -> only lines 1 + 5.
-        col = _col_of(src, 1, "x")
+        col  = _col_of(src, 1, "x")
         plan = rf.plan_rename_at(src, 1, col, "z")
         self.assertTrue(plan.ok, plan.reason)
         self.assertEqual(plan.count, 2)
@@ -1155,7 +1155,7 @@ class TestScopeIsolation(unittest.TestCase):
             "def f(amp, b):\n"
             "    return amp * b\n"
         )
-        col = _col_of(src, 1, "amp")
+        col  = _col_of(src, 1, "amp")
         plan = rf.plan_rename_at(src, 1, col, "gain")
         self.assertTrue(plan.ok, plan.reason)
         self.assertEqual(plan.count, 2)  # param + use
@@ -1169,10 +1169,10 @@ class TestScopeIsolation(unittest.TestCase):
             "x = 99\n"
         )
         # Rename comprehension target x (line 2) -> only within the comp.
-        col = _col_of(src, 2, "x")
+        col  = _col_of(src, 2, "x")
         plan = rf.plan_rename_at(src, 2, col, "v")
         self.assertTrue(plan.ok, plan.reason)
-        self.assertEqual(plan.count, 2)  # 'x * 2' + 'for x'
+        self.assertEqual(plan.count, 2)           # 'x * 2' + 'for x'
         self.assertEqual(plan.scope_kind, "comprehension")
         self.assertIn("[v * 2 for v in items]", plan.new_source)
         self.assertIn("x = 99", plan.new_source)  # module x untouched
@@ -1180,35 +1180,35 @@ class TestScopeIsolation(unittest.TestCase):
 
 class TestRefusals(unittest.TestCase):
     def test_collision_refused(self):
-        src = "a = 1\nb = 2\nc = a + b\n"
-        col = _col_of(src, 1, "a")
+        src  = "a = 1\nb = 2\nc = a + b\n"
+        col  = _col_of(src, 1, "a")
         plan = rf.plan_rename_at(src, 1, col, "b")
         self.assertFalse(plan.ok)
         self.assertIn("already exists", plan.reason)
         self.assertIsNone(plan.new_source)
 
     def test_invalid_new_name_refused(self):
-        src = "a = 1\n"
-        col = _col_of(src, 1, "a")
+        src  = "a = 1\n"
+        col  = _col_of(src, 1, "a")
         plan = rf.plan_rename_at(src, 1, col, "2bad")
         self.assertFalse(plan.ok)
         self.assertIn("not a valid", plan.reason)
 
     def test_keyword_new_name_refused(self):
-        src = "a = 1\n"
-        col = _col_of(src, 1, "a")
+        src  = "a = 1\n"
+        col  = _col_of(src, 1, "a")
         plan = rf.plan_rename_at(src, 1, col, "class")
         self.assertFalse(plan.ok)
 
     def test_blocked_name_refused(self):
-        src = "x = np.sin(1.0)\n"
-        col = _col_of(src, 1, "np")
+        src  = "x = np.sin(1.0)\n"
+        col  = _col_of(src, 1, "np")
         plan = rf.plan_rename_at(src, 1, col, "numpy", blocked_names={"np"})
         self.assertFalse(plan.ok)
         self.assertIn("framework", plan.reason)
 
     def test_syntax_error_refused(self):
-        src = "a = = 1\n"
+        src  = "a = = 1\n"
         plan = rf.plan_rename_at(src, 1, 0, "b")
         self.assertFalse(plan.ok)
         self.assertIn("syntax error", plan.reason)
@@ -1216,8 +1216,8 @@ class TestRefusals(unittest.TestCase):
     def test_cursor_on_attribute_refused(self):
         """self.amplitude -- the 'amplitude' attribute is NOT a local
         variable, so the local renamer declines it."""
-        src = "self.amplitude = 1.0\n"
-        col = _col_of(src, 1, "amplitude")
+        src  = "self.amplitude = 1.0\n"
+        col  = _col_of(src, 1, "amplitude")
         plan = rf.plan_rename_at(src, 1, col, "amp")
         self.assertFalse(plan.ok)
 
@@ -1228,7 +1228,7 @@ class TestRefusals(unittest.TestCase):
             "    global g\n"
             "    g = 1\n"
         )
-        col = _col_of(src, 1, "g")
+        col  = _col_of(src, 1, "g")
         plan = rf.plan_rename_at(src, 1, col, "h")
         self.assertFalse(plan.ok)
         self.assertIn("global/nonlocal", plan.reason)
@@ -1240,7 +1240,7 @@ class TestDynamicWarnings(unittest.TestCase):
             "amplitude = 1.0\n"
             "v = getattr(self, 'amplitude')\n"
         )
-        col = _col_of(src, 1, "amplitude")
+        col  = _col_of(src, 1, "amplitude")
         plan = rf.plan_rename_at(src, 1, col, "amp")
         self.assertTrue(plan.ok, plan.reason)
         # The code binding renamed; the string ref flagged, not touched.
@@ -1248,8 +1248,8 @@ class TestDynamicWarnings(unittest.TestCase):
         self.assertIn("'amplitude'", plan.new_source)  # string literal kept
 
     def test_eval_warned(self):
-        src = "amplitude = 1.0\nv = eval('amplitude + 1')\n"
-        col = _col_of(src, 1, "amplitude")
+        src  = "amplitude = 1.0\nv = eval('amplitude + 1')\n"
+        col  = _col_of(src, 1, "amplitude")
         plan = rf.plan_rename_at(src, 1, col, "amp")
         self.assertTrue(plan.ok, plan.reason)
         self.assertTrue(any("eval" in w for w in plan.warnings))
@@ -1260,7 +1260,7 @@ class TestFreeNamePath(unittest.TestCase):
 
     def test_free_rename_in_sibling(self):
         # Sibling Compute tab that READS an Init-defined 'amplitude'.
-        src = "result = amplitude * np.sin(amplitude)\n"
+        src  = "result = amplitude * np.sin(amplitude)\n"
         plan = rf.plan_rename_free_name(src, "amplitude", "amp")
         self.assertTrue(plan.ok, plan.reason)
         self.assertEqual(plan.count, 2)
@@ -1282,7 +1282,7 @@ class TestFreeNamePath(unittest.TestCase):
         self.assertIn("return amplitude * 2", plan.new_source)
 
     def test_free_rename_no_occurrences(self):
-        src = "result = something_else\n"
+        src  = "result = something_else\n"
         plan = rf.plan_rename_free_name(src, "amplitude", "amp")
         self.assertFalse(plan.ok)
 
@@ -1299,7 +1299,7 @@ class TestRewriteIntegrity(unittest.TestCase):
             "    return amplitude * k\n"
             "out = scale(amplitude, 2) + sum(data)\n"
         )
-        col = _col_of(src, 2, "amplitude")
+        col  = _col_of(src, 2, "amplitude")
         plan = rf.plan_rename_at(src, 2, col, "gain")
         self.assertTrue(plan.ok, plan.reason)
         _ast.parse(plan.new_source)  # must not raise
@@ -1385,12 +1385,12 @@ class TestPlanRenameSelfAttr(unittest.TestCase):
         plan = rf.plan_rename_self_attr(src, "amplitude", "amp")
         self.assertTrue(plan.ok, plan.reason)
         self.assertEqual(plan.count, 3)
-        self.assertIn("self.amp = 1.0", plan.new_source)
-        self.assertIn("self.amp * 2", plan.new_source)
+        self.assertIn("self.amp = 1.0",        plan.new_source)
+        self.assertIn("self.amp * 2",          plan.new_source)
         self.assertIn("self.other + self.amp", plan.new_source)
 
     def test_leaves_non_self_attr_alone(self):
-        src = "x = obj.amplitude + self.amplitude\n"
+        src  = "x = obj.amplitude + self.amplitude\n"
         plan = rf.plan_rename_self_attr(src, "amplitude", "amp")
         self.assertTrue(plan.ok, plan.reason)
         self.assertEqual(plan.count, 1)
@@ -1398,14 +1398,14 @@ class TestPlanRenameSelfAttr(unittest.TestCase):
         self.assertIn("self.amp", plan.new_source)
 
     def test_zero_in_sibling_without_attr(self):
-        src = "x = 1 + 2\n"
+        src  = "x = 1 + 2\n"
         plan = rf.plan_rename_self_attr(src, "amplitude", "amp")
         self.assertTrue(plan.ok, plan.reason)
         self.assertEqual(plan.count, 0)
         self.assertEqual(plan.new_source, src)
 
     def test_invalid_new_attr_refused(self):
-        src = "self.amplitude = 1.0\n"
+        src  = "self.amplitude = 1.0\n"
         plan = rf.plan_rename_self_attr(src, "amplitude", "2bad")
         self.assertFalse(plan.ok)
 
@@ -1426,7 +1426,7 @@ def _col(source, lineno, token):
 
 class TestPromoteEngine(unittest.TestCase):
     def test_promote_simple_local(self):
-        src = "var2 = [5, 6, 7, 8]\nx = var2[0]\n"
+        src  = "var2 = [5, 6, 7, 8]\nx = var2[0]\n"
         plan = rf.plan_promote_local(src, 1, _col(src, 1, "var2"))
         self.assertTrue(plan.ok, plan.reason)
         self.assertEqual(plan.count, 2)
@@ -1434,7 +1434,7 @@ class TestPromoteEngine(unittest.TestCase):
         self.assertIn("x = self.var2[0]", plan.new_source)
 
     def test_promote_from_usage_site(self):
-        src = "amp = 1.0\ny = amp * 2\n"
+        src  = "amp = 1.0\ny = amp * 2\n"
         plan = rf.plan_promote_local(src, 2, _col(src, 2, "amp"))
         self.assertTrue(plan.ok, plan.reason)
         self.assertEqual(plan.count, 2)
@@ -1442,7 +1442,7 @@ class TestPromoteEngine(unittest.TestCase):
         self.assertIn("y = self.amp * 2", plan.new_source)
 
     def test_promote_refuses_function_local(self):
-        src = "def f():\n    inner = 1\n    return inner\n"
+        src  = "def f():\n    inner = 1\n    return inner\n"
         plan = rf.plan_promote_local(src, 2, _col(src, 2, "inner"))
         self.assertFalse(plan.ok)
         self.assertIn("top-level", plan.reason)
@@ -1456,18 +1456,18 @@ class TestPromoteEngine(unittest.TestCase):
         self.assertFalse(plan.ok)
 
     def test_promote_only_touches_target_binding(self):
-        src = "a = 1\nb = 2\nc = a + b\n"
+        src  = "a = 1\nb = 2\nc = a + b\n"
         plan = rf.plan_promote_local(src, 1, _col(src, 1, "a"))
         self.assertTrue(plan.ok, plan.reason)
         self.assertEqual(plan.count, 2)  # 'a =' + 'a + b'
-        self.assertIn("self.a = 1", plan.new_source)
-        self.assertIn("b = 2", plan.new_source)
+        self.assertIn("self.a = 1",     plan.new_source)
+        self.assertIn("b = 2",          plan.new_source)
         self.assertIn("c = self.a + b", plan.new_source)
 
     def test_promote_result_parses(self):
         import ast as _ast
 
-        src = "vals = [i * 2 for i in range(3)]\ntotal = sum(vals)\n"
+        src  = "vals = [i * 2 for i in range(3)]\ntotal = sum(vals)\n"
         plan = rf.plan_promote_local(src, 1, _col(src, 1, "vals"))
         self.assertTrue(plan.ok, plan.reason)
         _ast.parse(plan.new_source)
@@ -1476,7 +1476,7 @@ class TestPromoteEngine(unittest.TestCase):
         self.assertIn("total = sum(self.vals)", plan.new_source)
 
     def test_promote_no_identifier(self):
-        src = "a = 1 + 2\n"
+        src  = "a = 1 + 2\n"
         plan = rf.plan_promote_local(src, 1, 6)  # on '+'
         self.assertFalse(plan.ok)
 
@@ -1536,28 +1536,28 @@ class TestPersistUIFlow(unittest.TestCase):
     def test_classify_make_for_fresh_self_attr(self):
         from mpynode.ui.widgets.rename_var import classify_persistable
 
-        ed = self._editor("self.foo = 5\n")
+        ed  = self._editor("self.foo = 5\n")
         col = ed.toPlainText().index("foo")
         self.assertEqual(classify_persistable(ed, 1, col), ("make", "foo"))
 
     def test_classify_no_make_for_plug(self):
         from mpynode.ui.widgets.rename_var import classify_persistable
 
-        ed = self._editor("self.amplitude = 5\n")
+        ed  = self._editor("self.amplitude = 5\n")
         col = ed.toPlainText().index("amplitude")
         self.assertEqual(classify_persistable(ed, 1, col), (None, ""))
 
     def test_classify_promote_for_local(self):
         from mpynode.ui.widgets.rename_var import classify_persistable
 
-        ed = self._editor("var2 = [1, 2, 3]\n")
+        ed  = self._editor("var2 = [1, 2, 3]\n")
         col = ed.toPlainText().index("var2")
         self.assertEqual(classify_persistable(ed, 1, col), ("promote", "var2"))
 
     def test_classify_no_promote_collides_with_plug(self):
         from mpynode.ui.widgets.rename_var import classify_persistable
 
-        ed = self._editor("amplitude = 9.0\n")  # collides with the plug
+        ed  = self._editor("amplitude = 9.0\n")  # collides with the plug
         col = ed.toPlainText().index("amplitude")
         self.assertEqual(classify_persistable(ed, 1, col), (None, ""))
 
@@ -1575,7 +1575,7 @@ class TestPersistUIFlow(unittest.TestCase):
     def test_promote_rewrites_editor_and_registers(self):
         from mpynode.ui.widgets.rename_var import promote_to_persistent_variable
 
-        ed = self._editor("var2 = [5, 6, 7, 8]\nself.outVal = var2[0]\n")
+        ed  = self._editor("var2 = [5, 6, 7, 8]\nself.outVal = var2[0]\n")
         col = ed.toPlainText().index("var2")
         promote_to_persistent_variable(ed, 1, col)
         # Editor rewritten.
@@ -1665,7 +1665,7 @@ class TestRenameVarPlumbing(unittest.TestCase):
 
         def fake_dialog(parent, old, header, plan_fn):
             ok, summary, warnings, apply_fn = plan_fn("scale")
-            captured["ok"] = ok
+            captured["ok"]    = ok
             captured["apply"] = apply_fn
 
             class _Stub:
@@ -1673,7 +1673,7 @@ class TestRenameVarPlumbing(unittest.TestCase):
                 def raise_(self_): pass
             return _Stub()
 
-        orig = rename_var.NDRenameVariableDialog
+        orig                              = rename_var.NDRenameVariableDialog
         rename_var.NDRenameVariableDialog = fake_dialog
         try:
             rename_var.run_rename(ed, 1, 0)
@@ -1691,7 +1691,7 @@ class TestRenameVarPlumbing(unittest.TestCase):
 
         ed = self._editor("import numpy as np\nself.outVal = np.pi\n")
         # 'np' on line 1.
-        col = "import numpy as ".__len__()
+        col     = "import numpy as ".__len__()
         results = {}
 
         def fake_dialog(parent, old, header, plan_fn):
@@ -1702,7 +1702,7 @@ class TestRenameVarPlumbing(unittest.TestCase):
                 def raise_(self_): pass
             return _Stub()
 
-        orig = rename_var.NDRenameVariableDialog
+        orig                              = rename_var.NDRenameVariableDialog
         rename_var.NDRenameVariableDialog = fake_dialog
         try:
             # 'np' is module-scope but framework-blocklisted -> refused.
@@ -1720,21 +1720,21 @@ class TestRenameVarPlumbing(unittest.TestCase):
     def test_self_input_attr_rename_applies(self):
         from mpynode.ui.widgets import rename_var
 
-        ed = self._editor("self.outVal = self.amplitude * 2.0\n")
+        ed       = self._editor("self.outVal = self.amplitude * 2.0\n")
         captured = {}
 
         def fake_dialog(parent, old, header, plan_fn):
             ok, summary, warnings, apply_fn = plan_fn("amp")
-            captured["ok"] = ok
+            captured["ok"]      = ok
             captured["summary"] = summary
-            captured["apply"] = apply_fn
+            captured["apply"]   = apply_fn
 
             class _Stub:
                 def show(self_): pass
                 def raise_(self_): pass
             return _Stub()
 
-        orig = rename_var.NDRenameVariableDialog
+        orig                              = rename_var.NDRenameVariableDialog
         rename_var.NDRenameVariableDialog = fake_dialog
         try:
             # click on 'amplitude' (the attr token) in self.amplitude.
@@ -1756,7 +1756,7 @@ class TestRenameVarPlumbing(unittest.TestCase):
     def test_self_attr_collision_refused(self):
         from mpynode.ui.widgets import rename_var
 
-        ed = self._editor("self.outVal = self.amplitude\n")
+        ed      = self._editor("self.outVal = self.amplitude\n")
         results = {}
 
         def fake_dialog(parent, old, header, plan_fn):
@@ -1768,7 +1768,7 @@ class TestRenameVarPlumbing(unittest.TestCase):
                 def raise_(self_): pass
             return _Stub()
 
-        orig = rename_var.NDRenameVariableDialog
+        orig                              = rename_var.NDRenameVariableDialog
         rename_var.NDRenameVariableDialog = fake_dialog
         try:
             col = ed.toPlainText().index("amplitude")

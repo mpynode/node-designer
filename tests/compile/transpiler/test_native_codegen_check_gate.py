@@ -61,10 +61,10 @@ class TestLocatorInputGate(unittest.TestCase):
         from mpynode.native import compiler as codegen
         spec = _loc_spec({
             "wire_width": {"type": "float", "is_array": False},
-            "count": {"type": "int", "is_array": False},
-            "show": {"type": "bool", "is_array": False},
-            "mode": {"type": "enum", "is_array": False, "enum_names": ["a", "b"]},
-            "inMesh": {"type": "mesh", "is_array": False},
+            "count":      {"type": "int", "is_array": False},
+            "show":       {"type": "bool", "is_array": False},
+            "mode":       {"type": "enum", "is_array": False, "enum_names": ["a", "b"]},
+            "inMesh":     {"type": "mesh", "is_array": False},
         })
         codegen._check(spec)  # must NOT raise
 
@@ -119,7 +119,7 @@ class TestLocatorInputGate(unittest.TestCase):
         # every mesh is marshalled into the POD; meshes[0] drives the region draw.
         from mpynode.native import compiler as codegen
         spec = _loc_spec({
-            "inMesh": {"type": "mesh", "is_array": False},
+            "inMesh":    {"type": "mesh", "is_array": False},
             "floorMesh": {"type": "mesh", "is_array": False},
         })
         codegen._check(spec)  # must NOT raise
@@ -149,14 +149,14 @@ class TestRegionCommandGate(unittest.TestCase):
 
     def test_region_command_without_mesh_input_raises(self):
         from mpynode.native import compiler as codegen
-        spec = _loc_spec({})  # NO mesh input
+        spec             = _loc_spec({})  # NO mesh input
         spec["commands"] = [_cmd("setMeshRegion")]
         with self.assertRaises(codegen.UnsupportedSpec):
             codegen._check(spec)
 
     def test_region_command_without_mesh_message_names_command_and_mesh(self):
         from mpynode.native import compiler as codegen
-        spec = _loc_spec({})
+        spec             = _loc_spec({})
         spec["commands"] = [_cmd("setMeshRegion")]
         try:
             codegen._check(spec)
@@ -168,7 +168,7 @@ class TestRegionCommandGate(unittest.TestCase):
 
     def test_region_command_with_mesh_input_ok(self):
         from mpynode.native import compiler as codegen
-        spec = _loc_spec({"inMesh": {"type": "mesh", "is_array": False}})
+        spec             = _loc_spec({"inMesh": {"type": "mesh", "is_array": False}})
         spec["commands"] = [_cmd("createMeshRegion"), _cmd("setMeshRegion")]
         codegen._check(spec)  # must NOT raise
 
@@ -176,7 +176,7 @@ class TestRegionCommandGate(unittest.TestCase):
         # A command with no deterministic native template is not a compile
         # error: it ships as a companion Python plugin, so _check passes it.
         from mpynode.native import compiler as codegen
-        spec = _loc_spec({"inMesh": {"type": "mesh", "is_array": False}})
+        spec             = _loc_spec({"inMesh": {"type": "mesh", "is_array": False}})
         spec["commands"] = [_cmd("frobnicate")]
         codegen._check(spec)  # must NOT raise (frobnicate -> companion)
 
@@ -228,7 +228,7 @@ class TestNonLocatorCommandGate(unittest.TestCase):
     def test_locator_with_commands_still_supported(self):
         # Regression anchor: the locator path STILL accepts the region commands.
         from mpynode.native import compiler as codegen
-        spec = _loc_spec({"inMesh": {"type": "mesh", "is_array": False}})
+        spec             = _loc_spec({"inMesh": {"type": "mesh", "is_array": False}})
         spec["commands"] = [_cmd("createMeshRegion"), _cmd("setMeshRegion")]
         codegen._check(spec)  # must NOT raise
 
@@ -245,8 +245,8 @@ class TestGeoGeneratorInputGate(unittest.TestCase):
         from mpynode.native import compiler as codegen
         spec = _geo_spec({
             "resolution": {"type": "int", "is_array": False},
-            "isoValue": {"type": "double", "is_array": False},
-            "label": {"type": "hex", "is_array": False},   # scalar hex is fine
+            "isoValue":   {"type": "double", "is_array": False},
+            "label":      {"type": "hex", "is_array": False},   # scalar hex is fine
         })
         codegen._check(spec)  # must NOT raise
 
@@ -255,9 +255,9 @@ class TestGeoGeneratorInputGate(unittest.TestCase):
         from mpynode.native import compiler as codegen
         spec = _geo_spec({
             "shapeMatrix": {"type": "matrix", "is_array": True},
-            "shapeType": {"type": "int", "is_array": True},
-            "additive": {"type": "bool", "is_array": True},
-            "smoothing": {"type": "double", "is_array": True},
+            "shapeType":   {"type": "int", "is_array": True},
+            "additive":    {"type": "bool", "is_array": True},
+            "smoothing":   {"type": "double", "is_array": True},
             "halfExtents": {"type": "vector", "is_array": True},
         })
         codegen._check(spec)  # must NOT raise
@@ -304,7 +304,7 @@ class TestGeoScalarOutputGate(unittest.TestCase):
                                   "default_value": 0}}
 
     def _spec(self, outputs, inputs=None):
-        spec = _geo_spec(inputs or {"start": {"type": "int", "is_array": False}})
+        spec            = _geo_spec(inputs or {"start": {"type": "int", "is_array": False}})
         spec["outputs"] = outputs
         return spec
 
@@ -333,7 +333,7 @@ class TestGeoScalarOutputGate(unittest.TestCase):
     def test_handle_is_declared_before_the_port_region_and_cleaned_after(self):
         from mpynode.native import compiler as codegen
         from mpynode.native.compiler.spec_model import PORT_BEGIN, PORT_END
-        cpp = codegen.generate_cpp(self._spec(self._INT_OUT), for_port=True)
+        cpp      = codegen.generate_cpp(self._spec(self._INT_OUT), for_port=True)
         i_handle = cpp.index("MDataHandle h_aSolutionSteps")
         i_begin, i_end = cpp.index(PORT_BEGIN), cpp.index(PORT_END)
         i_clean = cpp.index("h_aSolutionSteps.setClean();")
@@ -402,9 +402,9 @@ class TestColorInputDefault(unittest.TestCase):
         cpp = codegen.generate_cpp(_geo_spec(
             {"tint": {"type": "color", "is_array": False,
                       "default_value": [1.0, 0.9, 0.1]}}))
-        i_create = cpp.index('nAttr.createColor("tint", "tint");')
+        i_create  = cpp.index('nAttr.createColor("tint", "tint");')
         i_default = cpp.index("nAttr.setDefault(1.0f, 0.9f, 0.1f);")
-        i_flag = cpp.index("nAttr.setStorable(true);", i_create)
+        i_flag    = cpp.index("nAttr.setStorable(true);", i_create)
         self.assertLess(i_create, i_default)
         self.assertLess(i_default, i_flag,
                         "setDefault must apply to the attr just created, before "
@@ -472,12 +472,12 @@ class TestDefaultValueContract(unittest.TestCase):
     }
     # distinctive literals that must NOT appear anywhere in initialize()
     IGNORED = {
-        "vector": ([1.25, 2.5, 3.75], ("1.25", "3.75")),
-        "euler": ([0.11, 0.22, 0.33], ("0.11", "0.22", "0.33")),
-        "float2": ([0.125, 0.875], ("0.125", "0.875")),
+        "vector":     ([1.25, 2.5, 3.75], ("1.25", "3.75")),
+        "euler":      ([0.11, 0.22, 0.33], ("0.11", "0.22", "0.33")),
+        "float2":     ([0.125, 0.875], ("0.125", "0.875")),
         "quaternion": ([0.11, 0.22, 0.33, 0.44], ("0.11", "0.22", "0.44")),
-        "string": ("zzhelloqq", ("zzhelloqq",)),
-        "time": (2.75, ("2.75",)),
+        "string":     ("zzhelloqq", ("zzhelloqq",)),
+        "time":       (2.75, ("2.75",)),
     }
 
     def _init_block(self, t, dv):
@@ -502,7 +502,7 @@ class TestDefaultValueContract(unittest.TestCase):
 
     def test_the_two_sets_cover_every_supported_type(self):
         from mpynode.native import compiler as codegen
-        covered = set(self.HONOURED) | set(self.IGNORED)
+        covered            = set(self.HONOURED) | set(self.IGNORED)
         no_default_concept = {"matrix", "hex", "mesh", "nurbsCurve", "nurbsSurface"}
         self.assertEqual(set(codegen._SUPPORTED) - no_default_concept, covered,
                          "a supported type is missing from the default contract")

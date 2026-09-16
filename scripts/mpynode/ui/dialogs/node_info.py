@@ -61,7 +61,7 @@ def _derived_type_id(py_node) -> str:
         from mpynode.native.toolchain import typeid_registry
         from mpynode.wrappers._mpy_node import _read_py_class
 
-        name = py_node.get_name()
+        name       = py_node.get_name()
         class_path = _read_py_class(name) or ""
         type_name = derive_class_identity(
             class_path or name, cmds.nodeType(name))["node_type_name"]
@@ -137,7 +137,7 @@ class NDNodeInfoDialog(QDialog):
 
         def _pane(text, field):
             pane = QWidget(self)
-            lay = QHBoxLayout(pane)
+            lay  = QHBoxLayout(pane)
             lay.setContentsMargins(0, 0, 0, 0)
             lay.setSpacing(6)
             lab = QLabel(text, pane)
@@ -281,11 +281,11 @@ class NDNodeInfoDialog(QDialog):
         """The editable state as a metadata dict (empty fields stay empty so the
         compile-time merge can fall back to the live global default)."""
         return {
-            "authors": _text_to_authors(self._authors_edit.toPlainText()),
-            "version": self._version_edit.text().strip(),
-            "license": self._license_edit.toPlainText().strip(),
+            "authors":     _text_to_authors(self._authors_edit.toPlainText()),
+            "version":     self._version_edit.text().strip(),
+            "license":     self._license_edit.toPlainText().strip(),
             "description": self._description_edit.toPlainText().strip(),
-            "type_id": self._type_id_edit.text().strip(),
+            "type_id":     self._type_id_edit.text().strip(),
         }
 
     def save(self) -> None:

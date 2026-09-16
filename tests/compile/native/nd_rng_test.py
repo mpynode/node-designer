@@ -22,8 +22,8 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 # harness lives out in the suite, so -I pivots on the repo root (three
 # dirname()s up from tests/compile/native) and descends back into scripts/.
 _ROOT = os.path.dirname(os.path.dirname(os.path.dirname(HERE)))
-_INC = os.path.join(_ROOT, "scripts", "mpynode", "native", "compiler")
-SRC = os.path.join(HERE, "nd_rng_test.cpp")
+_INC  = os.path.join(_ROOT, "scripts", "mpynode", "native", "compiler")
+SRC   = os.path.join(HERE, "nd_rng_test.cpp")
 
 
 def _compile_and_run():
@@ -67,7 +67,7 @@ def _expected(kind, name, tokens):
             return np.random.RandomState(seed).random_sample(count)
         if name.startswith("initarr_"):
             words = [int(w) for w in name[len("initarr_"):].split("_")]
-            key = np.array(words, dtype=np.uint32)
+            key   = np.array(words, dtype=np.uint32)
             return np.random.RandomState(key).random_sample(count)
         raise KeyError("no oracle for SEQ %r" % name)
     if kind == "SHAPE":
@@ -79,8 +79,8 @@ def _expected(kind, name, tokens):
 
 
 def main():
-    text = _compile_and_run()
-    fails = []
+    text    = _compile_and_run()
+    fails   = []
     n_cases = 0
     n_draws = 0
     for line in text.splitlines():
@@ -95,7 +95,7 @@ def main():
             fails.append("%s %s: malformed (no ':')" % (kind, name))
             continue
         header = t[2:colon]
-        vals = np.array([float(v) for v in t[colon + 1:]], dtype=np.float64)
+        vals   = np.array([float(v) for v in t[colon + 1:]], dtype=np.float64)
         try:
             exp = np.asarray(_expected(kind, name, header), dtype=np.float64).ravel()
         except KeyError as e:

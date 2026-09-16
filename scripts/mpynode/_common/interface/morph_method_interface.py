@@ -58,7 +58,7 @@ SLOT_PLUG = "shapeSlot"
 WEIGHT_READS = (WEIGHT_PLUG, "interBase", "interKnot", "comboOffset",
                 "comboDriver")
 DELTA_READS = ("targetOffset", "targetComponents", "targetDeltas")
-SLOT_READS = (WEIGHT_PLUG, SLOT_PLUG)
+SLOT_READS  = (WEIGHT_PLUG, SLOT_PLUG)
 
 # The live-target tables: a target's offsets read off its CONNECTED mesh instead
 # of the bake, in the same CSR layout, keyed by live ENTRY rather than by target
@@ -76,16 +76,16 @@ LIVE_READS = ("liveSlot", "liveOffset", "liveComponents", "liveDeltas")
 # drift into a node that declares a read nothing fills -- which does not fail
 # loudly, it drops the whole deform to the AI porter.
 LIVE_CPP_VARS = {
-    "liveSlot": ("int64", "mpyLiveSlot"),
-    "liveOffset": ("int64", "mpyLiveOfs"),
+    "liveSlot":       ("int64", "mpyLiveSlot"),
+    "liveOffset":     ("int64", "mpyLiveOfs"),
     "liveComponents": ("int64", "mpyLiveComp"),
-    "liveDeltas": ("double", "mpyLiveDlt"),
+    "liveDeltas":     ("double", "mpyLiveDlt"),
 }
 
 INTERNAL_API_METHODS = (
     MethodSpec(
-        name="morph_weights",
-        sig="morph_weights() -> ndarray(T,)",
+        name = "morph_weights",
+        sig  = "morph_weights() -> ndarray(T,)",
         doc=("Effective per-target weights: the raw weight[] channels with "
              "in-between hats and combo products ADDED on top. An in-between "
              "target adds a triangular hat on its main target's weight; a combo "
@@ -93,13 +93,13 @@ INTERNAL_API_METHODS = (
              "keyed on their own channel, so a corrective can be dialled by "
              "hand as well as driven. A node with no correctives gets its raw "
              "weights back unchanged."),
-        runtime="mpynode._common.methods.morph_methods:morph_weights",
-        lower=Transpile("mpynode._common.methods.morph_blend:resolve_weights"),
-        reads=WEIGHT_READS,
+        runtime = "mpynode._common.methods.morph_methods:morph_weights",
+        lower   = Transpile("mpynode._common.methods.morph_blend:resolve_weights"),
+        reads   = WEIGHT_READS,
     ),
     MethodSpec(
-        name="morph_deltas",
-        sig="morph_deltas(base, w) -> ndarray(N, 3)",
+        name = "morph_deltas",
+        sig  = "morph_deltas(base, w) -> ndarray(N, 3)",
         doc=("The weighted sum of every target's sparse deltas as an OFFSET "
              "field -- what to ADD to base -- for the per-target weight vector "
              "w (typically self.morph_weights()). base supplies the vertex "
@@ -111,20 +111,20 @@ INTERNAL_API_METHODS = (
         reads=DELTA_READS + LIVE_READS,
     ),
     MethodSpec(
-        name="morph_apply",
-        sig="morph_apply(base, envelope) -> ndarray(N, 3)",
+        name = "morph_apply",
+        sig  = "morph_apply(base, envelope) -> ndarray(N, 3)",
         doc=("The whole deform in one call: base + envelope * deltas, with "
              "in-betweens and combos resolved. This is what "
              "self.morphs.apply(base, envelope) desugars to in a compiled "
              "compute -- a single call, so the base expression is evaluated "
              "exactly once."),
-        runtime="mpynode._common.methods.morph_methods:morph_apply",
-        lower=Transpile("mpynode._common.methods.morph_blend:apply_morphs_live"),
-        reads=WEIGHT_READS + DELTA_READS + LIVE_READS,
+        runtime = "mpynode._common.methods.morph_methods:morph_apply",
+        lower   = Transpile("mpynode._common.methods.morph_blend:apply_morphs_live"),
+        reads   = WEIGHT_READS + DELTA_READS + LIVE_READS,
     ),
     MethodSpec(
-        name="blend_targets",
-        sig="blend_targets(base) -> ndarray(N, 3)",
+        name = "blend_targets",
+        sig  = "blend_targets(base) -> ndarray(N, 3)",
         doc=("Fully-blended points: resolve the weights, accumulate the deltas, "
              "add to base. The one-call convenience form. Apply the envelope in "
              "your Compute -- base + envelope * (blend_targets(base) - base) -- "
@@ -135,16 +135,16 @@ INTERNAL_API_METHODS = (
         reads=WEIGHT_READS + DELTA_READS + LIVE_READS,
     ),
     MethodSpec(
-        name="morph_weight_at",
-        sig="morph_weight_at(slot) -> float",
+        name = "morph_weight_at",
+        sig  = "morph_weight_at(slot) -> float",
         doc=("One target's RAW weight, reached by compile-time slot. This is "
              "what self.morphs[\"browUp\"].weight desugars to: the compiler "
              "turns the name into an ordinal and shapeSlot maps that ordinal to "
              "this rig's weight[] index, so the name itself never reaches the "
              "generated C++. A slot this rig has no target for reads 0.0."),
-        runtime="mpynode._common.methods.morph_methods:morph_weight_at",
-        lower=Transpile("mpynode._common.methods.morph_blend:weight_at_slot"),
-        reads=SLOT_READS,
+        runtime = "mpynode._common.methods.morph_methods:morph_weight_at",
+        lower   = Transpile("mpynode._common.methods.morph_blend:weight_at_slot"),
+        reads   = SLOT_READS,
     ),
 )
 
@@ -165,8 +165,8 @@ _BS_PLUG_NAMES = frozenset({
 
 INTERNAL_API_PROPERTIES = (
     PropertySpec(
-        name="morphs",
-        sig="morphs -> MorphStack",
+        name = "morphs",
+        sig  = "morphs -> MorphStack",
         doc=("The target stack as an object: list-like (len / [i] / iterate) "
              "and, in authoring code, dict-like ([\"browUp\"], .find(\"brow*\")). "
              "A VIEW over the node's baked tables -- no plugs of its own. In a "

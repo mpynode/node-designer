@@ -32,7 +32,7 @@ _HEAD = "def f(m):\n    import numpy as np\n"
 
 # A matrix input materialises as an nd (4,4): rank 2 is all the transpiler can
 # prove statically, and it is what the receiver guard checks.
-_ARGS = {"m": array_t("double", 2)}
+_ARGS     = {"m": array_t("double", 2)}
 _ARGS_VEC = {"m": array_t("double", 1)}
 
 

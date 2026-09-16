@@ -33,24 +33,24 @@ def strokes_to_arrays(boxes):
     the builder's reference and a headless verification of the field."""
     from mpynode._common.nodes.mesh import sdf_dmc
 
-    n = len(boxes)
+    n        = len(boxes)
     matrices = np.empty((n, 4, 4), dtype=np.float64)
-    half = np.empty((n, 3), dtype=np.float64)
+    half     = np.empty((n, 3), dtype=np.float64)
     for s, b in enumerate(boxes):
         R = sdf_dmc.euler_to_matrix(
             np.array([0.0, 0.0, math.radians(b["angle"])]), 0)
-        M = np.eye(4)
-        M[:3, :3] = R[:3, :3]
-        M[3, :3] = [b["cx"], b["cy"], 0.0]
+        M           = np.eye(4)
+        M[:3, :3]   = R[:3, :3]
+        M[3, :3]    = [b["cx"], b["cy"], 0.0]
         matrices[s] = M
-        half[s] = [b["length"] * 0.5, b["thick"] * 0.5, b["depth"] * 0.5]
+        half[s]     = [b["length"] * 0.5, b["thick"] * 0.5, b["depth"] * 0.5]
     return dict(
-        matrices=matrices,
-        shape_types=np.ones(n, dtype=np.int64),       # all boxes
-        additive=np.ones(n, dtype=bool),
-        smoothing=np.zeros(n, dtype=np.float64),       # crisp hard union
-        radius=np.ones(n, dtype=np.float64),
-        height=np.ones(n, dtype=np.float64),
-        axis=np.ones(n, dtype=np.int64),
-        half_extents=half,
+        matrices     = matrices,
+        shape_types  = np.ones(n, dtype=np.int64),     # all boxes
+        additive     = np.ones(n, dtype=bool),
+        smoothing    = np.zeros(n, dtype=np.float64),  # crisp hard union
+        radius       = np.ones(n, dtype=np.float64),
+        height       = np.ones(n, dtype=np.float64),
+        axis         = np.ones(n, dtype=np.int64),
+        half_extents = half,
     )

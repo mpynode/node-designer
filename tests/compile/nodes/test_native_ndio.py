@@ -45,7 +45,7 @@ class TestNdioPython(_Tmp):
     def test_ndio_container_round_trips_many_named_arrays(self):
         from mpynode import ndio
 
-        p = self.path("bundle.ndio")
+        p   = self.path("bundle.ndio")
         pts = np.arange(24, dtype=np.float64).reshape(4, 2, 3)
         cnt = np.array([4, 4, 3], dtype=np.int64)
         self.assertTrue(ndio.write(p, points=pts, counts=cnt))
@@ -121,7 +121,7 @@ class TestNdioPython(_Tmp):
         ndio.write(p, points=np.zeros((3, 3)))
         ndio.read(p, "points")
         calls = []
-        real = ndio._slurp
+        real  = ndio._slurp
 
         def counting(path):
             calls.append(path)
@@ -153,12 +153,12 @@ class TestNdioPython(_Tmp):
 
         # No '#' -> unchanged, so a plain filename still works as a template.
         self.assertEqual(ndio.frame_path("mesh.json", 7), "mesh.json")
-        self.assertEqual(ndio.frame_path("", 7), "")
-        self.assertEqual(ndio.frame_path(None, 7), "")
+        self.assertEqual(ndio.frame_path("", 7),          "")
+        self.assertEqual(ndio.frame_path(None, 7),        "")
         # `frame` arrives from a time/double plug: truncate toward zero, and
         # keep the sign inside the pad width (snprintf "%0*lld" does the same).
-        self.assertEqual(ndio.frame_path("f.####.x", 7.9), "f.0007.x")
-        self.assertEqual(ndio.frame_path("f.####.x", -7), "f.-007.x")
+        self.assertEqual(ndio.frame_path("f.####.x", 7.9),  "f.0007.x")
+        self.assertEqual(ndio.frame_path("f.####.x", -7),   "f.-007.x")
         self.assertEqual(ndio.frame_path("f.####.x", -7.9), "f.-007.x")
         # Wider than the pad -> NOT truncated. Silently dropping digits would
         # read the wrong frame instead of failing.
@@ -387,7 +387,7 @@ class TestNdioCodegenWiring(unittest.TestCase):
         from mpynode.native.compiler.errors import UnsupportedSpec
 
         io_spec = {"compute": "pts = ndio.read(self.p, 'x')", "init": ""}
-        plain = {"compute": "out = 1.0", "init": ""}
+        plain   = {"compute": "out = 1.0", "init": ""}
         # lowered -> fine; no IO -> fine; IO + not lowered -> refuse
         k.reject_unlowered_io(io_spec, ["some c++"], "node")
         k.reject_unlowered_io(plain, None, "node")
@@ -400,8 +400,8 @@ class TestNdioCodegenWiring(unittest.TestCase):
         # which is what keeps the port cache valid.
         from mpynode.native.compiler.kernels import nd_io_cpp as k
 
-        self.assertIn("_ndioCache", k.NDIO_MEMBERS)
-        self.assertIn("_ndioMutex", k.NDIO_MEMBERS)
+        self.assertIn("_ndioCache",            k.NDIO_MEMBERS)
+        self.assertIn("_ndioMutex",            k.NDIO_MEMBERS)
         self.assertIn("ND_IO_KERNEL_INCLUDED", k.NDIO_CPP)
         for h in ("mutex", "fstream", "sys/stat.h"):
             self.assertIn(h, k.NDIO_INCLUDES)

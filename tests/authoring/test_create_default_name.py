@@ -46,12 +46,12 @@ class TestCreateDefaultName(unittest.TestCase):
 
     def test_user_subclass_single_word_camelcase(self):
         Widget = self._synth("Widget", "mPyNode")
-        n = Widget.create()
+        n      = Widget.create()
         self.assertEqual(n.get_name(), "widget1")
 
     def test_user_subclass_multiword_pascal_to_camel(self):
         Cls = self._synth("ProcrustesConstraint", "mPyConstraint")
-        n = Cls.create()
+        n   = Cls.create()
         self.assertEqual(n.get_name(), "procrustesConstraint1")
 
     def test_root_constraint_named_after_its_type_not_mpynode(self):
@@ -74,12 +74,12 @@ class TestCreateDefaultName(unittest.TestCase):
         # subclass of it must still derive its name from the Class, not the
         # wrapper's hardcoded default.
         Cls = self._synth("GlowGizmo", "mPyLocator")
-        n = Cls.create()
+        n   = Cls.create()
         self.assertIn("glowGizmo", n.get_name())
 
     def test_build_also_derives(self):
         Widget = self._synth("Gadget", "mPyNode")
-        n = Widget.build()
+        n      = Widget.build()
         self.assertEqual(n.get_name(), "gadget1")
 
     def test_find_solver_root_unchanged(self):
@@ -95,7 +95,7 @@ class TestCreateDefaultName(unittest.TestCase):
         # solver) must derive its node name from the Class -- camelCase --
         # NOT the hardcoded "mPyIkSolver1" literal.
         Cls = self._synth("MyRigSolver", "mPyIkSolver")
-        n = Cls.find_solver()
+        n   = Cls.find_solver()
         self.assertEqual(n.get_name(), "myRigSolver1")
 
 

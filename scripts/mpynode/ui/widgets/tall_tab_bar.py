@@ -89,7 +89,7 @@ class UniformWidthTabBar(TallTabBar):
     """
 
     def tabSizeHint(self, index):
-        s = super(UniformWidthTabBar, self).tabSizeHint(index)   # 1.5x taller
+        s      = super(UniformWidthTabBar, self).tabSizeHint(index)   # 1.5x taller
         widest = s.width()
         for i in range(self.count()):
             if i != index:

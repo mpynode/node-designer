@@ -147,8 +147,8 @@ class TestBoolDefaultCodegen(unittest.TestCase):
 # declared default on BOTH backends. SKIP (never fail) without a compiler.
 
 _PASSTHROUGH = "self.outFlags = self.flags\n"
-_RT_NAME = "boolDvRt"
-_RT_TYPE_ID = "0x00070574"
+_RT_NAME     = "boolDvRt"
+_RT_TYPE_ID  = "0x00070574"
 
 
 def _running_maya_root():
@@ -175,9 +175,9 @@ class TestBoolGapRuntimeParity(unittest.TestCase):
     """flags[0]=False, flags[2]=False leaves logical index 1 ABSENT. With
     ``default_value=True`` both backends must read it as True."""
 
-    _tmp = None
+    _tmp    = None
     _bundle = None
-    _spec = None
+    _spec   = None
 
     @classmethod
     def _build_source(cls):
@@ -201,11 +201,11 @@ class TestBoolGapRuntimeParity(unittest.TestCase):
         from mpynode.native.toolchain import compile_controller as cc
 
         n, _ = cls._build_source()
-        spec = spec_extractor.extract_spec(n)
+        spec                                = spec_extractor.extract_spec(n)
         spec["suggested"]["node_type_name"] = _RT_NAME
-        spec["suggested"]["class_name"] = "BoolDvRt"
-        spec["suggested"]["type_id"] = _RT_TYPE_ID
-        cls._spec = spec
+        spec["suggested"]["class_name"]     = "BoolDvRt"
+        spec["suggested"]["type_id"]        = _RT_TYPE_ID
+        cls._spec                           = spec
 
         cls._tmp = tempfile.mkdtemp()
         res = cc.compile_plugin([spec], _RT_NAME, cls._tmp, strict=True,
@@ -263,9 +263,9 @@ class TestMetaballsDeclaredDefaults(unittest.TestCase):
 
     #: stream -> declared default, mirroring COMPUTE_SOURCE's overlay.
     EXPECTED = {"shapeType": None,      # overlays 0 == the bare default
-                "smoothing": None,      # overlays 0.0 == the bare default
-                "additive": True,       # overlays np.ones
-                "height": 1.0,          # overlays np.ones
+                "smoothing": None,  # overlays 0.0 == the bare default
+                "additive":  True,  # overlays np.ones
+                "height":    1.0,   # overlays np.ones
                 "axis": 1}              # overlays np.ones  (T89)
 
     def test_generator_declares_the_overlay_defaults(self):

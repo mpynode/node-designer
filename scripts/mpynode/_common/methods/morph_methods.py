@@ -55,7 +55,7 @@ def _rebake_if_stale(name):
     from maya import cmds as mc
     from mpynode.wrappers.mpy_blend_shape import MPyBlendShape
 
-    bs = MPyBlendShape(name)
+    bs    = MPyBlendShape(name)
     names = bs.target_names
     live = [bool(mc.listConnections("%s.targetGeometry[%d]" % (name, i),
                                     s=True, d=False))
@@ -87,9 +87,9 @@ def _rebake_if_stale(name):
 
 # The gate. A node predating it has no such plug and reads LIVE, which is the
 # behaviour the attribute exists to expose rather than to withhold.
-LIVE_GATE = "liveTargets"
+LIVE_GATE  = "liveTargets"
 TARGET_GEO = "targetGeometry"
-ORIG_GEO = "originalGeometry"
+ORIG_GEO   = "originalGeometry"
 
 
 def _pts_fast(mfn):
@@ -172,7 +172,7 @@ def _live_deltas(self, base, w):
         pass                    # no gate on this node -> live (see LIVE_GATE)
 
     try:
-        mobj = self._psp_mobject
+        mobj  = self._psp_mobject
         block = self._psp_datablock
     except AttributeError:
         return None
@@ -194,9 +194,9 @@ def _live_deltas(self, base, w):
     # 167-target rig affordable, since almost none of a face are dialled in at once.
     try:
         gplug = om1.MPlug(mobj, fn.attribute(TARGET_GEO))
-        want = set()
+        want  = set()
         for k in range(gplug.numElements()):
-            e = gplug.elementByPhysicalIndex(k)
+            e  = gplug.elementByPhysicalIndex(k)
             li = int(e.logicalIndex())
             if li < w.shape[0] and w[li] != 0.0 and e.isDestination():
                 want.add(li)
@@ -205,7 +205,7 @@ def _live_deltas(self, base, w):
     if not want:
         return None
 
-    nv = base.shape[0]
+    nv   = base.shape[0]
     orig = _orig_points(self, fn, nv)
     if orig is None:
         # No rest reference -> no live pass. Falling back to ``base`` would be
@@ -213,9 +213,9 @@ def _live_deltas(self, base, w):
         return None
 
     slots = []
-    offs = [0]
+    offs  = [0]
     comps = []
-    dlts = []
+    dlts  = []
     try:
         arr = block.inputArrayValue(fn.attribute(TARGET_GEO))
         for k in range(arr.elementCount()):

@@ -45,12 +45,12 @@ def _ledger():
     return [
         {"index": 0, "outcome": "baseline", "ms": 100.0, "compiled": True},
         {"index": 1, "outcome": "accept", "slug": "hoist_invariant",
-         "theme": "peel the p==0 test out of the argmin",
+         "theme":      "peel the p==0 test out of the argmin",
          "hypothesis": "the invariant disjunct blocks NEON packing",
          "predicted_speedup": 2.0, "speedup": 2.01, "ms": 49.8,
          "duration_s": 41.0, "parity": "pass", "compiled": True},
         {"index": 2, "outcome": "not-faster", "slug": "soa_split",
-         "theme": "three double streams instead of MVector",
+         "theme":      "three double streams instead of MVector",
          "hypothesis": "SoA is always faster",
          "predicted_speedup": 3.0, "ms": 101.0, "duration_s": 55.0,
          "parity": "pass", "compiled": True,
@@ -183,9 +183,9 @@ class TestDegradesWithoutData(unittest.TestCase):
                      "incomplete": ["pandas DataFrame groupby has no C++ form"],
                      "invented_io": ["file read"]})
 
-        self.assertIn("Unfinished work", md)
+        self.assertIn("Unfinished work",          md)
         self.assertIn("pandas DataFrame groupby", md)
-        self.assertIn("invented I/O", md)
+        self.assertIn("invented I/O",             md)
 
 
 class TestTimingIsRecorded(unittest.TestCase):

@@ -43,7 +43,7 @@ _TEMPLATES = [
     ("MPyFile/Game Of Life Texture", "gameOfLifeTex", False),
 ]
 
-_CREATE_RE = re.compile(r'\.create(?:Color|Point)?\(\s*"(\w+)"')
+_CREATE_RE      = re.compile(r'\.create(?:Color|Point)?\(\s*"(\w+)"')
 _AFFECTS_SRC_RE = re.compile(r"attributeAffects\((\w+),")
 
 
@@ -61,8 +61,8 @@ def _generate(rel):
     from mpynode.native.compiler import node_scaffold
     from mpynode.native.compiler import emit_vp2_override as vp2
     payload = mpn_io.load_mpn(_template_path(rel), trusted=True)
-    spec = mpn_spec_adapter.spec_from_mpn_payload(payload)
-    cpp = node_scaffold.generate_cpp(spec, for_port=False)
+    spec    = mpn_spec_adapter.spec_from_mpn_payload(payload)
+    cpp     = node_scaffold.generate_cpp(spec, for_port=False)
     return spec, cpp, vp2.inject_vp2_override(cpp, spec)
 
 
@@ -156,7 +156,7 @@ class TestFileBaseAttributeSurface(unittest.TestCase):
         for rel, ty, _v in _TEMPLATES:
             with self.subTest(template=rel):
                 _spec, cpp, _inj = _generate(rel)
-                have = set(_CREATE_RE.findall(cpp)) | auto_color
+                have    = set(_CREATE_RE.findall(cpp)) | auto_color
                 missing = [w for w in want if w not in have]
                 self.assertEqual(missing, [], "%s is missing base plugs" % ty)
 

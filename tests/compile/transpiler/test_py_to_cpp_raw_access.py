@@ -46,8 +46,8 @@ class TestRawScalarRead(unittest.TestCase):
         )
         env = {"n": scalar_t("int64"), "a": array_t("double", 3)}
         cpp = _transpile(compute, env)
-        self.assertIn("nd::at3(", cpp)              # raw access fired
-        self.assertNotIn(".item()", cpp)            # no per-element view alloc
+        self.assertIn("nd::at3(", cpp)    # raw access fired
+        self.assertNotIn(".item()", cpp)  # no per-element view alloc
         self.assertNotIn("nd::slice(", cpp)
 
     def test_two_d_read_uses_at2(self):
@@ -118,8 +118,8 @@ class TestRawAccessGates(unittest.TestCase):
         )
         env = {"n": scalar_t("int64"), "flags": array_t("bool", 2)}
         cpp = _transpile(compute, env)
-        self.assertNotIn("nd::at2(", cpp)           # NOT the raw path for bool
-        self.assertIn("nd::slice(", cpp)            # still the nd:: view path
+        self.assertNotIn("nd::at2(", cpp)  # NOT the raw path for bool
+        self.assertIn("nd::slice(", cpp)   # still the nd:: view path
 
     def test_partial_index_stays_a_view(self):
         # a[i] on a 2-D array is a rank-1 VIEW (not a scalar) -> must stay a

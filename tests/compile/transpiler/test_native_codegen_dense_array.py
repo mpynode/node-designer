@@ -83,7 +83,7 @@ class TestArrayReadLinesDense(unittest.TestCase):
 
     def test_float_dense_default(self):
         cpp = self._cpp(_member("float"))
-        self.assertIn("_arr.elementIndex()", cpp)
+        self.assertIn("_arr.elementIndex()",           cpp)
         self.assertIn("in_myarr.resize(_li + 1, 0.0)", cpp)
         self.assertIn("in_myarr[_li] = eh.asFloat();", cpp)
         self.assertNotIn("push_back", cpp)
@@ -146,7 +146,7 @@ class TestGenerateCppEndToEnd(unittest.TestCase):
         w.add_input_attr("arr", "float", is_array=True, sparse=sparse)
         w.add_output_attr("o", "float")
         w.set_compute_expression("self.o = float(self.arr[0])")
-        spec = spec_extractor.extract_spec(w.get_name())
+        spec                                = spec_extractor.extract_spec(w.get_name())
         spec["suggested"]["node_type_name"] = "denseTestNode"
         return spec
 

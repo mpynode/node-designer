@@ -90,8 +90,8 @@ def _dense_weight_list(mc, name):
     matches the deform operands even when a vertex omits a zero-weight column."""
     import numpy as np
     verts = mc.getAttr(name + ".weightList", size=True) or 0
-    infl = len(mc.getAttr(name + ".matrix", multiIndices=True) or [])
-    W = np.zeros((verts, infl), dtype=np.float64)
+    infl  = len(mc.getAttr(name + ".matrix", multiIndices=True) or [])
+    W     = np.zeros((verts, infl), dtype=np.float64)
     for v in range(verts):
         idx = mc.getAttr("%s.weightList[%d].weights" % (name, v),
                          multiIndices=True) or []
@@ -167,7 +167,7 @@ def _bulk_set_weights(mc, name, W):
         sel2.getDagPath(0, dag)
 
         comp_fn = om1.MFnSingleIndexedComponent()
-        comp = comp_fn.create(om1.MFn.kMeshVertComponent)
+        comp    = comp_fn.create(om1.MFn.kMeshVertComponent)
         comp_fn.setCompleteData(nv)
 
         inf_ids = om1.MIntArray()
@@ -236,9 +236,9 @@ def sync_paint(self, mode):
     except Exception:
         pass
 
-    mode = int(mode)
-    prev = getattr(self, "_paintMode", None)
-    switched = prev != mode
+    mode            = int(mode)
+    prev            = getattr(self, "_paintMode", None)
+    switched        = prev != mode
     self._paintMode = mode
     if mode not in (0, 1):
         return                                  # Live Result: nothing to stage
@@ -247,7 +247,7 @@ def sync_paint(self, mode):
     active_name = "swingWeights" if mode == 0 else "twistWeights"
     active_flat = getattr(self, active_name, None)
 
-    mobj = self._psp_mobject
+    mobj   = self._psp_mobject
     handle = om1.MObjectHandle(mobj)
 
     if switched:
@@ -261,8 +261,8 @@ def sync_paint(self, mode):
             from maya import cmds as mc
             if not handle.isValid() or not handle.isAlive():
                 return
-            name = om1.MFnDependencyNode(mobj).name()
-            infl = len(mc.getAttr(name + ".matrix", multiIndices=True) or [])
+            name  = om1.MFnDependencyNode(mobj).name()
+            infl  = len(mc.getAttr(name + ".matrix", multiIndices=True) or [])
             verts = mc.getAttr(name + ".weightList", size=True) or 0
             if not infl or not verts or flat.size < verts * infl:
                 return
@@ -281,7 +281,7 @@ def sync_paint(self, mode):
         if not handle.isValid() or not handle.isAlive():
             return
         name = om1.MFnDependencyNode(mobj).name()
-        W = _dense_weight_list(mc, name)          # (N, J) dense from weightList
+        W    = _dense_weight_list(mc, name)          # (N, J) dense from weightList
         flat = W.ravel()
         if prev_flat is not None and prev_flat.size == flat.size \
                 and np.allclose(prev_flat, flat, atol=1e-9):
@@ -330,7 +330,7 @@ def update_weights(self, weights):
     # deferred write. The node NAME is resolved INSIDE _apply so the
     # (thread-unsafe) api1 MFnDependencyNode lookup never runs on a worker
     # thread -- _apply only ever executes on the main thread.
-    buf = W.copy()
+    buf  = W.copy()
     mobj = self._psp_mobject
     # Handle to detect deletion: a deferred write can fire long after it is
     # scheduled (interactive path), by which point the node -- or the whole
@@ -350,7 +350,7 @@ def update_weights(self, weights):
         # a later np.asarray(self.weightList) read-back would reshape to a wrong J
         # that breaks the skin_blend matmul. Extra rows/cols are simply dropped.
         try:
-            infl = len(mc.getAttr(name + ".matrix", multiIndices=True) or [])
+            infl  = len(mc.getAttr(name + ".matrix", multiIndices=True) or [])
             verts = mc.getAttr(name + ".weightList", size=True)
         except Exception:
             infl, verts = 0, 0

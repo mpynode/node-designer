@@ -137,12 +137,12 @@ def _unbound_self_reads(ins, outs, spec) -> set:
     external setup, or a live scene query -- which the compiled node has no way to
     obtain; the AI port would compile but silently no-op. Returns the offending
     names (empty set = clean)."""
-    src = "%s\n%s" % (spec.get("compute") or "", spec.get("init") or "")
+    src  = "%s\n%s" % (spec.get("compute") or "", spec.get("init") or "")
     refs = _self_attr_refs(src)
     if not refs:
         return set()
     declared = {i["plug"] for i in ins} | {o["plug"] for o in outs}
-    written = _self_attr_writes(src)
+    written  = _self_attr_writes(src)
     return {r for r in refs if r not in declared and r not in written}
 
 
@@ -162,8 +162,8 @@ def _compute_lines(cls, ins, outs, spec, for_port, lowered=_UNSET,
     kUnknownParameter and read a stale value -- and be written by the derived
     tail at the end of finalize."""
     base_outs = [m for m in base_extra if m["kind"] == "outputs"]
-    derived = file_texture_cpp.derived_output_lines(ins, outs, base_extra, spec)
-    L = ["MStatus %s::compute(const MPlug& plug, MDataBlock& data) {" % cls]
+    derived   = file_texture_cpp.derived_output_lines(ins, outs, base_extra, spec)
+    L         = ["MStatus %s::compute(const MPlug& plug, MDataBlock& data) {" % cls]
     if outs or base_outs:
         guard = " && ".join("plug != %s" % o["member"]
                             for o in list(outs) + base_outs)

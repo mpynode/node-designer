@@ -75,7 +75,7 @@ def _flat_points(pt_array):
 
 _QUAD_PTS = np.array([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0],
                       [1.0, 1.0, 0.0], [0.0, 1.0, 0.0]], dtype=np.float64)
-_QUAD_COUNTS = np.array([4], dtype=np.int32)
+_QUAD_COUNTS  = np.array([4], dtype=np.int32)
 _QUAD_INDICES = np.array([0, 1, 2, 3], dtype=np.int32)
 
 
@@ -98,7 +98,7 @@ class TestMeshDataclass(unittest.TestCase):
         nrm = np.array([[0.0, 0.0, 1.0]] * 4, dtype=np.float64)
         dm = geometry.Mesh(points=_QUAD_PTS, counts=_QUAD_COUNTS,
                            indices=_QUAD_INDICES, normals=nrm).to_mobject()
-        fn = om.MFnMesh(dm)
+        fn   = om.MFnMesh(dm)
         read = fn.getVertexNormals(False, om.MSpace.kObject)
         self.assertEqual(len(read), 4)
         for v in read:
@@ -144,18 +144,18 @@ class TestMeshDataclass(unittest.TestCase):
                        dtype=np.float64)
         dm = geometry.Mesh(points=_QUAD_PTS, counts=_QUAD_COUNTS,
                            indices=_QUAD_INDICES, colors=col).to_mobject()
-        fn = om.MFnMesh(dm)
+        fn  = om.MFnMesh(dm)
         fvc = fn.getFaceVertexColors(fn.getColorSetNames()[0])
         self.assertAlmostEqual(fvc[0].a, 0.25, places=5)
         self.assertAlmostEqual(fvc[3].a, 1.0, places=5)
 
     def test_indexed_colors(self):
-        pal = np.array([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]], dtype=np.float64)
+        pal  = np.array([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]], dtype=np.float64)
         cidx = np.array([0, 1, 0, 1], dtype=np.int32)
         dm = geometry.Mesh(points=_QUAD_PTS, counts=_QUAD_COUNTS,
                            indices=_QUAD_INDICES, colors=pal,
                            color_indices=cidx).to_mobject()
-        fn = om.MFnMesh(dm)
+        fn  = om.MFnMesh(dm)
         fvc = fn.getFaceVertexColors(fn.getColorSetNames()[0])
         self.assertAlmostEqual(fvc[0].r, 1.0, places=5)  # pal[0] red
         self.assertAlmostEqual(fvc[1].g, 1.0, places=5)  # pal[1] green
@@ -165,7 +165,7 @@ class TestMeshDataclass(unittest.TestCase):
     # ---- fail-soft validation (empty geometry, never raises) ------------
     def test_missing_required_counts_empty(self):
         obj = SimpleNamespace(points=_QUAD_PTS, indices=_QUAD_INDICES)
-        dm = geometry.build_mesh_data(obj)
+        dm  = geometry.build_mesh_data(obj)
         self.assertEqual(_mesh_vert_count(dm), 0)
 
     def test_indices_len_mismatch_empty(self):
@@ -186,8 +186,8 @@ class TestMeshDataclass(unittest.TestCase):
     def test_bad_optional_channel_skipped_geometry_still_builds(self):
         # per-vertex normals of the wrong length: skip the channel, keep mesh.
         dm = geometry.Mesh(points=_QUAD_PTS, counts=_QUAD_COUNTS,
-                           indices=_QUAD_INDICES,
-                           normals=np.array([[0.0, 0.0, 1.0]], np.float64)
+                           indices = _QUAD_INDICES,
+                           normals = np.array([[0.0, 0.0, 1.0]], np.float64)
                            ).to_mobject()
         fn = om.MFnMesh(dm)
         self.assertEqual(fn.numVertices, 4)     # mesh survived
@@ -196,11 +196,11 @@ class TestMeshDataclass(unittest.TestCase):
     def test_duck_typed_foo_accepted(self):
         class Foo:
             pass
-        foo = Foo()
-        foo.points = _QUAD_PTS
-        foo.counts = _QUAD_COUNTS
+        foo         = Foo()
+        foo.points  = _QUAD_PTS
+        foo.counts  = _QUAD_COUNTS
         foo.indices = _QUAD_INDICES
-        foo.colors = np.array([[1.0, 0.0, 0.0]] * 4, np.float64)
+        foo.colors  = np.array([[1.0, 0.0, 0.0]] * 4, np.float64)
         self.assertTrue(geometry.is_mesh_like(foo))
         dm = geometry.build_mesh_data(foo)
         fn = om.MFnMesh(dm)
@@ -226,8 +226,8 @@ class TestCurveDataclass(unittest.TestCase):
     def test_open_curve_defaults(self):
         dm = geometry.NurbsCurve(points=self._open_cvs(6)).to_mobject()
         fn = om.MFnNurbsCurve(dm)
-        self.assertEqual(fn.numCVs, 6)
-        self.assertEqual(fn.degree, 3)
+        self.assertEqual(fn.numCVs,    6)
+        self.assertEqual(fn.degree,    3)
         self.assertEqual(int(fn.form), int(om.MFnNurbsCurve.kOpen))
         # auto knot count = numCVs + degree - 1
         self.assertEqual(len(fn.knots()), 6 + 3 - 1)
@@ -241,9 +241,9 @@ class TestCurveDataclass(unittest.TestCase):
 
     def test_kv_override_used(self):
         cvs = self._open_cvs(5)
-        kv = geometry._curve_uniform_knots(5, 3, False)   # length 7, valid
-        dm = geometry.NurbsCurve(points=cvs, degree=3, kv=kv).to_mobject()
-        fn = om.MFnNurbsCurve(dm)
+        kv  = geometry._curve_uniform_knots(5, 3, False)   # length 7, valid
+        dm  = geometry.NurbsCurve(points=cvs, degree=3, kv=kv).to_mobject()
+        fn  = om.MFnNurbsCurve(dm)
         self.assertEqual(len(fn.knots()), len(kv))
 
     def test_kv_wrong_length_rebuilds_uniform(self):
@@ -286,10 +286,10 @@ class TestSurfaceDataclass(unittest.TestCase):
 
     def _periodic_u_flat(self):
         # 11 x 4 periodic-U (wrapped) x open-V grid, U-major flat.
-        rx = [1.0, 0.7, 0.0, -0.7, -1.0, -0.7, 0.0, 0.7, 1.0, 0.7, 0.0]
-        ry = [0.0, 0.7, 1.0, 0.7, 0.0, -0.7, -1.0, -0.7, 0.0, 0.7, 1.0]
+        rx      = [1.0, 0.7, 0.0, -0.7, -1.0, -0.7, 0.0, 0.7, 1.0, 0.7, 0.0]
+        ry      = [0.0, 0.7, 1.0, 0.7, 0.0, -0.7, -1.0, -0.7, 0.0, 0.7, 1.0]
         heights = [0.0, 1.0, 2.0, 3.0]
-        rows = []
+        rows    = []
         for u in range(11):
             for v in range(4):
                 rows.append([rx[u], heights[v], ry[u]])
@@ -305,12 +305,12 @@ class TestSurfaceDataclass(unittest.TestCase):
 
     def test_flat_with_num_uv(self):
         grid = self._grid(4, 4).reshape(16, 3)
-        dm = geometry.NurbsSurface(points=grid, num_u=4, num_v=4).to_mobject()
+        dm   = geometry.NurbsSurface(points=grid, num_u=4, num_v=4).to_mobject()
         self.assertEqual(_surface_cv_count(dm), 16)
 
     def test_flat_without_num_uv_empty(self):
         grid = self._grid(4, 4).reshape(16, 3)
-        dm = geometry.NurbsSurface(points=grid).to_mobject()  # no num_u/num_v
+        dm   = geometry.NurbsSurface(points=grid).to_mobject()  # no num_u/num_v
         self.assertEqual(_surface_cv_count(dm), 0)
 
     def test_num_uv_mismatch_empty(self):
@@ -326,7 +326,7 @@ class TestSurfaceDataclass(unittest.TestCase):
                                    periodic_u=True,
                                    periodic_v=False).to_mobject()
         fn = om.MFnNurbsSurface(dm)
-        self.assertEqual(fn.numCVsInU, 11)
+        self.assertEqual(fn.numCVsInU,    11)
         self.assertEqual(int(fn.formInU), int(om.MFnNurbsSurface.kPeriodic))
         self.assertEqual(int(fn.formInV), int(om.MFnNurbsSurface.kOpen))
 
@@ -380,14 +380,14 @@ class TestBuildDefaultOutputShims(unittest.TestCase):
         # legacy positional signature: (cvs, knots, degree, form)
         from mpynode._api2.mpy_nurbs_curve import build_default_output
         cvs = np.array([[float(i), 0.0, 0.0] for i in range(6)], np.float64)
-        dm = build_default_output(cvs, None, 3, "open")
+        dm  = build_default_output(cvs, None, 3, "open")
         self.assertEqual(_curve_cv_count(dm), 6)
 
     def test_curve_shim_closed_form_passthrough(self):
         from mpynode._api2.mpy_nurbs_curve import build_default_output
         cvs = np.array([[float(i), 0.0, 0.0] for i in range(6)], np.float64)
-        dm = build_default_output(cvs, None, 3, "closed")
-        fn = om.MFnNurbsCurve(dm)
+        dm  = build_default_output(cvs, None, 3, "closed")
+        fn  = om.MFnNurbsCurve(dm)
         self.assertEqual(int(fn.form), int(om.MFnNurbsCurve.kClosed))
 
     def test_surface_shim(self):

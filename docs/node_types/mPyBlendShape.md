@@ -238,13 +238,13 @@ agree by construction rather than by two implementations happening to match.
 The key must be a **provable compile-time constant**. All of these work:
 
 ```python
-x = self.morphs["browUp"].weight             # literal
+x     = self.morphs["browUp"].weight        # literal
 
-JAW = "jawOpen"                              # assigned once, at the top
-y = self.morphs[JAW].weight
+JAW   = "jawOpen"                           # assigned once, at the top
+y     = self.morphs[JAW].weight
 
-NAMES = ("browUp", "mouthOpen", "jawOpen")   # constant tuple
-tot = 0.0
+NAMES = ("browUp", "mouthOpen", "jawOpen")  # constant tuple
+tot   = 0.0
 for n in NAMES:                              # unrolled at compile time
     tot = tot + self.morphs[n].weight
 
@@ -298,8 +298,8 @@ from mpynode.wrappers.mpy_blend_shape import MPyBlendShape
 bs = MPyBlendShape.create(mesh=base)
 bs.add_target(browUpMesh, "browUp")
 bs.add_target(mouthOpenMesh, "mouthOpen")
-bs.rebuild()                            # bake deltas + decode names
-mc.setAttr(bs.get_name() + ".browUp", 1.0)     # by ALIAS, like Maya
+bs.rebuild()                                # bake deltas + decode names
+mc.setAttr(bs.get_name() + ".browUp", 1.0)  # by ALIAS, like Maya
 
 bs.morphs["browUp"]          # by name
 bs.morphs.find("brow")       # case-insensitive substring; glob if you pass * or ?
@@ -456,7 +456,7 @@ mc.file(new=True, force=True)
 
 # Base sphere plus two same-topology targets edited in OBJECT space, so the
 # blendShape bakes real per-vertex deltas (not transform offsets).
-base = mc.polySphere(name="morphBase", radius=1.0)[0]
+base   = mc.polySphere(name="morphBase", radius=1.0)[0]
 taller = mc.polySphere(name="targetTaller", radius=1.0)[0]
 mc.scale(1.0, 1.6, 1.0, taller + ".vtx[*]", relative=True)
 wider = mc.polySphere(name="targetWider", radius=1.0)[0]
@@ -480,11 +480,11 @@ mc.setAttr(name + ".mouthOpen", 0.0)
 
 # Force deform eval and read the deformed base back via its shape points.
 base_shape = mc.listRelatives(base, shapes=True, noIntermediate=True)[0]
-y_taller = max(p[1] for p in mc.getAttr(base_shape + ".vrts[*]"))
+y_taller   = max(p[1] for p in mc.getAttr(base_shape + ".vrts[*]"))
 assert y_taller > 1.4, "browUp did not stretch base (got %r)" % y_taller
 
 mc.setAttr(name + ".mouthOpen", 1.0)
-xs = [p[0] for p in mc.getAttr(base_shape + ".vrts[*]")]
+xs       = [p[0] for p in mc.getAttr(base_shape + ".vrts[*]")]
 x_extent = max(xs) - min(xs)
 assert x_extent > 2.4, "mouthOpen did not widen base (got %r)" % x_extent
 

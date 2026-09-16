@@ -27,16 +27,16 @@ class TestBuildOutline(unittest.TestCase):
         return d
     def test_groups(self):
         items = build_outline(SRC)
-        d = self._by_kind(items)
+        d     = self._by_kind(items)
         self.assertEqual(d.get("Commands"), ["doThing"])
-        self.assertEqual(d.get("Demos"), ["My Demo"])
-        self.assertEqual(d.get("Setup"), ["setup"])
-        self.assertEqual(d.get("Static"), ["util"])
+        self.assertEqual(d.get("Demos"),    ["My Demo"])
+        self.assertEqual(d.get("Setup"),    ["setup"])
+        self.assertEqual(d.get("Static"),   ["util"])
         self.assertEqual(d.get("Instance"), ["plain_method"])
-        self.assertEqual(d.get("Module"), ["helper"])
+        self.assertEqual(d.get("Module"),   ["helper"])
     def test_command_params_and_runnable(self):
         items = build_outline(SRC)
-        cmd = [it for it in items if it.kind == "Commands"][0]
+        cmd   = [it for it in items if it.kind == "Commands"][0]
         self.assertTrue(cmd.runnable)
         self.assertEqual(cmd.run_kind, "command")
         self.assertIn("a", cmd.params)
@@ -105,10 +105,10 @@ class TestGroupMetadata(unittest.TestCase):
 
     def test_method_labels_read_clearly(self):
         from mpynode._common.methods.outline_model import GROUP_LABELS
-        self.assertEqual(GROUP_LABELS["Instance"], "Instance Methods")
+        self.assertEqual(GROUP_LABELS["Instance"],    "Instance Methods")
         self.assertEqual(GROUP_LABELS["Classmethod"], "Class Methods")
-        self.assertEqual(GROUP_LABELS["Static"], "Static Methods")
-        self.assertEqual(GROUP_LABELS["Module"], "Functions")
+        self.assertEqual(GROUP_LABELS["Static"],      "Static Methods")
+        self.assertEqual(GROUP_LABELS["Module"],      "Functions")
 
     def test_sort_never_keyerrors_on_new_kind(self):
         # build_outline sorts by order[kind]; a Classmethod item must sort fine.

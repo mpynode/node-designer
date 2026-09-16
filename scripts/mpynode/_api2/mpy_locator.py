@@ -97,10 +97,10 @@ from mpynode._common.draw.draw_buffers import (
 
 
 class MPyLocator(omui.MPxLocatorNode):
-    NODE_NAME = "mPyLocator"
-    NODE_ID = om.MTypeId(0x00135702)
+    NODE_NAME              = "mPyLocator"
+    NODE_ID                = om.MTypeId(0x00135702)
     DRAW_DB_CLASSIFICATION = "drawdb/geometry/mpyLocator"
-    DRAW_REGISTRANT_ID = "mPyLocatorPlugin"
+    DRAW_REGISTRANT_ID     = "mPyLocatorPlugin"
 
     # The user expression assigns ``self.draw``; evaluateDrawItems flattens it
     # into ordered ``{"slot", "buffer"}`` commands that MPyLocatorDrawOverride
@@ -108,18 +108,18 @@ class MPyLocator(omui.MPxLocatorNode):
     # helpers live in ``_common/draw_buffers.py``. Plug-tree state is reached
     # through ``self.X`` -- there is no INTERNAL_VARS schema.
 
-    _expression_attr: om.MObject = om.MObject.kNullObj
-    _input_attrs_attr: om.MObject = om.MObject.kNullObj
-    _output_attrs_attr: om.MObject = om.MObject.kNullObj
+    _expression_attr:       om.MObject = om.MObject.kNullObj
+    _input_attrs_attr:      om.MObject = om.MObject.kNullObj
+    _output_attrs_attr:     om.MObject = om.MObject.kNullObj
     _stored_vars_list_attr: om.MObject = om.MObject.kNullObj
     _stored_vars_data_attr: om.MObject = om.MObject.kNullObj
-    _debug_mode_attr: om.MObject = om.MObject.kNullObj
+    _debug_mode_attr:       om.MObject = om.MObject.kNullObj
     # profile + watch instrumentation plugs.
-    _profile_enabled_attr: om.MObject = om.MObject.kNullObj
-    _deep_profile_enabled_attr: om.MObject = om.MObject.kNullObj
-    _watch_enabled_attr: om.MObject = om.MObject.kNullObj
+    _profile_enabled_attr:       om.MObject = om.MObject.kNullObj
+    _deep_profile_enabled_attr:  om.MObject = om.MObject.kNullObj
+    _watch_enabled_attr:         om.MObject = om.MObject.kNullObj
     _profile_snapshot_data_attr: om.MObject = om.MObject.kNullObj
-    _watch_vars_data_attr: om.MObject = om.MObject.kNullObj
+    _watch_vars_data_attr:       om.MObject = om.MObject.kNullObj
 
     def __init__(self):
         super().__init__()
@@ -132,25 +132,25 @@ class MPyLocator(omui.MPxLocatorNode):
 
     @staticmethod
     def initializer():
-        plugs = helpers.build_internal_attrs(MPyLocator)
-        MPyLocator._expression_attr = plugs["_computeSource"]
-        MPyLocator._input_attrs_attr = plugs["inputs"]
-        MPyLocator._output_attrs_attr = plugs["outputs"]
+        plugs                             = helpers.build_internal_attrs(MPyLocator)
+        MPyLocator._expression_attr       = plugs["_computeSource"]
+        MPyLocator._input_attrs_attr      = plugs["inputs"]
+        MPyLocator._output_attrs_attr     = plugs["outputs"]
         MPyLocator._stored_vars_list_attr = plugs["stored_vars_list"]
         MPyLocator._stored_vars_data_attr = plugs["stored_vars_data"]
-        MPyLocator._debug_mode_attr = plugs["debug_mode"]
+        MPyLocator._debug_mode_attr       = plugs["debug_mode"]
 
-        MPyLocator._profile_enabled_attr = plugs["profile_enabled"]
-        MPyLocator._deep_profile_enabled_attr = plugs["deep_profile_enabled"]
-        MPyLocator._watch_enabled_attr = plugs["watch_enabled"]
+        MPyLocator._profile_enabled_attr       = plugs["profile_enabled"]
+        MPyLocator._deep_profile_enabled_attr  = plugs["deep_profile_enabled"]
+        MPyLocator._watch_enabled_attr         = plugs["watch_enabled"]
         MPyLocator._profile_snapshot_data_attr = plugs["profile_snapshot_data"]
-        MPyLocator._watch_vars_data_attr = plugs["watch_vars_data"]
+        MPyLocator._watch_vars_data_attr       = plugs["watch_vars_data"]
 
     def setInternalValue(self, plug, data_handle):
         try:
             attr = plug.attribute()
             if attr == MPyLocator._expression_attr:
-                new_src = data_handle.asString()
+                new_src        = data_handle.asString()
                 self._expr_str = new_src
                 # surface SyntaxError instead of swallowing.
                 from mpynode._common.compute.expression import safe_compile_expression
@@ -164,8 +164,8 @@ class MPyLocator(omui.MPxLocatorNode):
                     pass
                 code = safe_compile_expression(
                     new_src,
-                    node_name=node_name,
-                    filename="<mpylocator-expression>",
+                    node_name = node_name,
+                    filename  = "<mpylocator-expression>",
                 )
                 if code is not None:
                     self._expr_code = code
@@ -179,12 +179,12 @@ class MPyLocator(omui.MPxLocatorNode):
 
     def evaluateDrawItems(
         self,
-        time_value: float = 0.0,
-        selected: bool = False,
-        is_lead: bool = False,
-        selection_color: tuple = (1.0, 1.0, 1.0, 1.0),
-        hovered: bool = False,
-        wallclock: float | None = None,
+        time_value:      float        = 0.0,
+        selected:        bool         = False,
+        is_lead:         bool         = False,
+        selection_color: tuple        = (1.0, 1.0, 1.0, 1.0),
+        hovered:         bool         = False,
+        wallclock:       float | None = None,
     ) -> dict:
         """Run the user expression and return this frame's ORDERED draw
         commands (empty if the expression drew nothing).
@@ -215,13 +215,13 @@ class MPyLocator(omui.MPxLocatorNode):
             }
         """
         _EMPTY = {
-            "commands": [],
-            "auto_highlight": True,  # framework tints by default
-            "auto_refresh": False,  # framework does NOT auto-refresh by default
-            "precise_hover": False,  # bbox hover by default (precise = opt-in)
+            "commands":       [],
+            "auto_highlight": True,   # framework tints by default
+            "auto_refresh":   False,  # framework does NOT auto-refresh by default
+            "precise_hover":  False,  # bbox hover by default (precise = opt-in)
         }
         node_obj = self.thisMObject()
-        fn_node = om.MFnDependencyNode(node_obj)
+        fn_node  = om.MFnDependencyNode(node_obj)
 
         # Keep the compiled code in sync with _computeSource; covers node
         # DUPLICATION, which doesn't route through setInternalValue.
@@ -230,7 +230,7 @@ class MPyLocator(omui.MPxLocatorNode):
         # Read user inputs (rare for locator, but supported).
         try:
             inputs_str = fn_node.findPlug(MPyLocator._input_attrs_attr, True).asString()
-            input_map = serialization.decode_attr_map(inputs_str) if inputs_str else {}
+            input_map  = serialization.decode_attr_map(inputs_str) if inputs_str else {}
         except Exception:
             input_map = {}
 
@@ -265,23 +265,23 @@ class MPyLocator(omui.MPxLocatorNode):
         # wins on read via the live plug).
         _compute_locals = dict(input_values)
         _compute_locals.update({
-            "time": TimeFloat(time_value),
-            "wallclock": float(wallclock) if wallclock is not None else _time.time(),
-            "selected": bool(selected),
-            "is_lead": bool(is_lead),
-            "hovered": bool(hovered),
+            "time":            TimeFloat(time_value),
+            "wallclock":       float(wallclock) if wallclock is not None else _time.time(),
+            "selected":        bool(selected),
+            "is_lead":         bool(is_lead),
+            "hovered":         bool(hovered),
             "selection_color": tuple(selection_color),
-            "auto_highlight": None,
-            "auto_refresh": None,
-            "draw": None,
-            "precise_hover": None,
+            "auto_highlight":  None,
+            "auto_refresh":    None,
+            "draw":            None,
+            "precise_hover":   None,
         })
 
         self_proxy = SelfProxy(
             node_obj,
-            datablock=None,
-            user_storage=stored_vars,
-            compute_locals=_compute_locals,
+            datablock      = None,
+            user_storage   = stored_vars,
+            compute_locals = _compute_locals,
             # The drawing + draw flags are WRITE-ONLY output slots. Mark them as
             # output-scratch so a user-added INPUT/OUTPUT of the same name (e.g.
             # a ``draw`` bool gating the gizmo) is READABLE via ``self.<name>``
@@ -300,7 +300,7 @@ class MPyLocator(omui.MPxLocatorNode):
 
         # Self-only: USER inputs are reached via self.X (live plug tree), NOT
         # as bare names.
-        namespace = build_exec_namespace()  # __builtins__ only
+        namespace         = build_exec_namespace()  # __builtins__ only
         namespace["self"] = self_proxy
 
         if self._expr_code is None:
@@ -316,8 +316,8 @@ class MPyLocator(omui.MPxLocatorNode):
         ok = exec_with_profile_watch(
             self._expr_code,
             namespace,
-            on_error=_on_err,
-            node_obj=node_obj,
+            on_error = _on_err,
+            node_obj = node_obj,
         )
         if not ok:
             if captured:
@@ -349,7 +349,7 @@ class MPyLocator(omui.MPxLocatorNode):
         # auto_highlight True (framework selection-tinting), auto_refresh False
         # (no auto-redraw -- explicit opt-in).
         locals_out = self_proxy.get_compute_locals()
-        ah = locals_out.get("auto_highlight")
+        ah         = locals_out.get("auto_highlight")
         if ah is None:
             ah = True
         ar = locals_out.get("auto_refresh")
@@ -359,7 +359,7 @@ class MPyLocator(omui.MPxLocatorNode):
         # ``self.draw = DrawCircle(...) + DrawText(...)`` (or a list of items)
         # flattens to the ordered command list the override replays.
         commands = []
-        drawing = locals_out.get("draw")
+        drawing  = locals_out.get("draw")
         if drawing is not None:
             try:
                 commands = draw_types.to_commands(drawing)
@@ -375,9 +375,9 @@ class MPyLocator(omui.MPxLocatorNode):
                 commands = []
 
         return {
-            "commands": commands,
+            "commands":       commands,
             "auto_highlight": bool(ah),
-            "auto_refresh": bool(ar),
+            "auto_refresh":   bool(ar),
             # Node-WIDE precise-hover opt-in: hover-test every polygon patch
             # this gizmo draws. A single patch can opt in on its own with
             # ``DrawMesh(..., precise_hover=True)``; the two compose.
@@ -505,7 +505,7 @@ class MPyLocatorDrawData(om.MUserData):
         self.commands: list = []
         # Selection tinting: if is_selected AND auto_highlight, addUIDrawables
         # overrides all per-buffer colors with sel_color.
-        self.is_selected: bool = False
+        self.is_selected:    bool = False
         self.auto_highlight: bool = True
         self.sel_color = None  # om.MColor or None
         # Camera position in the locator's local frame -- the same space as the
@@ -516,7 +516,7 @@ class MPyLocatorDrawData(om.MUserData):
         # auto-scale bitmap TEXT in local space (None -> text ``sizes`` are
         # pixels). ``screen_ctx``: matrices + viewport to project object points
         # to pixels for ``space="screen"`` slots (None -> screen slots draw local).
-        self.local_ppu = None
+        self.local_ppu  = None
         self.screen_ctx = None
 
 
@@ -578,7 +578,7 @@ class MPyLocatorDrawOverride(omr.MPxDrawOverride):
         try:
             mpx_node = omr.MPxDrawOverride.getMpxFromObject(node_obj)
         except AttributeError:
-            fn = om.MFnDependencyNode(node_obj)
+            fn       = om.MFnDependencyNode(node_obj)
             mpx_node = fn.userNode()
 
         # Per-frame display state. MGeometryUtilities is the canonical source
@@ -591,10 +591,10 @@ class MPyLocatorDrawOverride(omr.MPxDrawOverride):
         hover_tracker.ensure_started()  # idempotent, GUI-only
         is_hovered = hover_tracker.is_hovered(node_obj)
         try:
-            status = omr.MGeometryUtilities.displayStatus(obj_path)
-            is_lead = status == omr.MGeometryUtilities.kLead
-            is_active = status == omr.MGeometryUtilities.kActive
-            is_selected = is_lead or is_active
+            status       = omr.MGeometryUtilities.displayStatus(obj_path)
+            is_lead      = status == omr.MGeometryUtilities.kLead
+            is_active    = status == omr.MGeometryUtilities.kActive
+            is_selected  = is_lead or is_active
             sel_color_mc = omr.MGeometryUtilities.wireframeColor(obj_path)
             sel_color_tuple = (
                 float(sel_color_mc.r),
@@ -603,10 +603,10 @@ class MPyLocatorDrawOverride(omr.MPxDrawOverride):
                 float(sel_color_mc.a),
             )
         except Exception:
-            is_lead = False
-            is_active = False
-            is_selected = False
-            sel_color_mc = None
+            is_lead         = False
+            is_active       = False
+            is_selected     = False
+            sel_color_mc    = None
             sel_color_tuple = (1.0, 1.0, 1.0, 1.0)
 
         # displayStatus on a SHAPE doesn't reliably report kLead/kActive when
@@ -631,16 +631,16 @@ class MPyLocatorDrawOverride(omr.MPxDrawOverride):
             harvest = (
                 mpx_node.evaluateDrawItems(
                     time_value,
-                    selected=is_selected,
-                    is_lead=is_lead,
-                    selection_color=sel_color_tuple,
-                    hovered=is_hovered,
+                    selected        = is_selected,
+                    is_lead         = is_lead,
+                    selection_color = sel_color_tuple,
+                    hovered         = is_hovered,
                 )
                 or {}
             )
         except Exception:
             harvest = {}
-        commands = harvest.get("commands") or []
+        commands       = harvest.get("commands") or []
         auto_highlight = bool(harvest.get("auto_highlight", True))
         # enable/disable the idle-refresh timer.
         auto_refresh = bool(harvest.get("auto_refresh", False))
@@ -669,9 +669,9 @@ class MPyLocatorDrawOverride(omr.MPxDrawOverride):
         # hover_tracker re-applies M^-1 to the cursor ray against these cached
         # "local" tris, so picking still matches what's drawn.
         _WORLD_KEYS = {"polygons": ("points",), "lines": ("starts", "ends")}
-        w2l = None                    # one inverse per frame, computed lazily
+        w2l         = None                    # one inverse per frame, computed lazily
         for cmd in commands:
-            buf = cmd.get("buffer")
+            buf  = cmd.get("buffer")
             keys = _WORLD_KEYS.get(cmd.get("slot"))
             if not buf or keys is None or not buf.pop("world_space", False):
                 continue
@@ -687,10 +687,10 @@ class MPyLocatorDrawOverride(omr.MPxDrawOverride):
                         continue
                     pts = np.asarray(pts, dtype=np.float64)
                     if pts.ndim == 2 and pts.shape[1] == 3 and pts.shape[0]:
-                        homog = np.empty((pts.shape[0], 4), dtype=np.float64)
+                        homog        = np.empty((pts.shape[0], 4), dtype=np.float64)
                         homog[:, :3] = pts
-                        homog[:, 3] = 1.0
-                        buf[_key] = (homog @ w2l)[:, :3]
+                        homog[:, 3]  = 1.0
+                        buf[_key]    = (homog @ w2l)[:, :3]
             except Exception:
                 pass
 
@@ -718,10 +718,10 @@ class MPyLocatorDrawOverride(omr.MPxDrawOverride):
                 hover_tracker.clear_shape(node_obj)
         except Exception:
             pass
-        data.commands = commands
-        data.is_selected = is_selected
+        data.commands       = commands
+        data.is_selected    = is_selected
         data.auto_highlight = auto_highlight
-        data.sel_color = sel_color_mc
+        data.sel_color      = sel_color_mc
 
         # Camera position in the locator's local frame, for view-dependent
         # backface culling. inclusiveMatrixInverse() takes world -> shape-local;
@@ -732,7 +732,7 @@ class MPyLocatorDrawOverride(omr.MPxDrawOverride):
             cam_pos_world = om.MPoint(
                 cam_world[12], cam_world[13], cam_world[14]
             )
-            loc_w2l = obj_path.inclusiveMatrixInverse()
+            loc_w2l   = obj_path.inclusiveMatrixInverse()
             cam_local = cam_pos_world * loc_w2l
             data.view_pos_local = (
                 float(cam_local.x),
@@ -748,31 +748,31 @@ class MPyLocatorDrawOverride(omr.MPxDrawOverride):
         # Both derive from this frame's world->clip matrix + viewport. One
         # guarded block so a headless draw (no frame_context matrices) degrades:
         # local_ppu None -> text sizes are pixels; screen_ctx None -> draw local.
-        data.local_ppu = None
+        data.local_ppu  = None
         data.screen_ctx = None
         try:
-            vpm = frame_context.getMatrix(omr.MFrameContext.kViewProjMtx)
+            vpm       = frame_context.getMatrix(omr.MFrameContext.kViewProjMtx)
             view_proj = [vpm[i] for i in range(16)]
-            dims = frame_context.getViewportDimensions()  # (x, y, w, h)
-            vp_w = float(dims[2])
-            vp_h = float(dims[3])
-            ow = obj_path.inclusiveMatrix()
+            dims      = frame_context.getViewportDimensions()  # (x, y, w, h)
+            vp_w      = float(dims[2])
+            vp_h      = float(dims[3])
+            ow        = obj_path.inclusiveMatrix()
             obj_world = [ow[i] for i in range(16)]
             data.screen_ctx = {
                 "obj_world": obj_world,
                 "view_proj": view_proj,
-                "vp_w": vp_w,
-                "vp_h": vp_h,
+                "vp_w":      vp_w,
+                "vp_h":      vp_h,
             }
             # local text scale: pixels per OBJECT unit at the node's depth.
             anchor_world = (obj_world[12], obj_world[13], obj_world[14])
-            cam_m = camera_path.inclusiveMatrix()
-            up_world = (cam_m[4], cam_m[5], cam_m[6])  # camera up axis (row 1)
-            ppw = pixels_per_world_unit(view_proj, vp_h, anchor_world, up_world)
+            cam_m        = camera_path.inclusiveMatrix()
+            up_world     = (cam_m[4], cam_m[5], cam_m[6])  # camera up axis (row 1)
+            ppw          = pixels_per_world_unit(view_proj, vp_h, anchor_world, up_world)
             if ppw is not None:
                 data.local_ppu = ppw * matrix_uniform_scale(obj_world)
         except Exception:
-            data.local_ppu = None
+            data.local_ppu  = None
             data.screen_ctx = None
         return data
 
@@ -791,7 +791,7 @@ class MPyLocatorDrawOverride(omr.MPxDrawOverride):
             override_color = data.sel_color
 
         screen_ctx = data.screen_ctx
-        local_ppu = data.local_ppu
+        local_ppu  = data.local_ppu
         draw_manager.beginDrawable()
         try:
             # Replay IN ORDER -- the point of the ordered transport. Bucketing
@@ -799,7 +799,7 @@ class MPyLocatorDrawOverride(omr.MPxDrawOverride):
             # _draw_X already issues one setColor + primitive call per element.
             for cmd in commands:
                 slot = cmd.get("slot")
-                buf = cmd.get("buffer")
+                buf  = cmd.get("buffer")
                 if not buf:
                     continue
                 if slot == "lines":
@@ -816,11 +816,11 @@ class MPyLocatorDrawOverride(omr.MPxDrawOverride):
                     self._draw_polygons(
                         draw_manager,
                         buf,
-                        view_pos_local=data.view_pos_local,
-                        is_selected=data.is_selected,
-                        global_auto_highlight=data.auto_highlight,
-                        sel_color=data.sel_color,
-                        screen_ctx=screen_ctx,
+                        view_pos_local        = data.view_pos_local,
+                        is_selected           = data.is_selected,
+                        global_auto_highlight = data.auto_highlight,
+                        sel_color             = data.sel_color,
+                        screen_ctx            = screen_ctx,
                     )
                 elif slot == "shapes":
                     self._draw_shapes(
@@ -868,7 +868,7 @@ class MPyLocatorDrawOverride(omr.MPxDrawOverride):
     def _draw_lines(cls, dm, buf, override=None, screen_ctx=None):
         try:
             starts = np.asarray(buf.get("starts"), dtype=np.float32)
-            ends = np.asarray(buf.get("ends"), dtype=np.float32)
+            ends   = np.asarray(buf.get("ends"), dtype=np.float32)
             if starts.ndim!= 2 or starts.shape[1]!= 3:
                 return
             if ends.shape!= starts.shape:
@@ -928,7 +928,7 @@ class MPyLocatorDrawOverride(omr.MPxDrawOverride):
             colors = normalize_color(buf.get("colors"), n)
         except Exception:
             return
-        sizes = buf.get("sizes")
+        sizes     = buf.get("sizes")
         sizes_arr = None
         if sizes is not None:
             sa = np.asarray(sizes, dtype=np.float32)
@@ -986,9 +986,9 @@ class MPyLocatorDrawOverride(omr.MPxDrawOverride):
         overlay, both honoring backface culling and per-aspect selection
         highlighting."""
         try:
-            points = np.asarray(buf.get("points"), dtype=np.float32)
+            points    = np.asarray(buf.get("points"),  dtype=np.float32)
             o_indices = np.asarray(buf.get("indices"), dtype=np.int64)
-            o_counts = np.asarray(buf.get("counts"), dtype=np.int64)
+            o_counts  = np.asarray(buf.get("counts"),  dtype=np.int64)
             if points.ndim != 2 or points.shape[1] != 3:
                 return
             if o_indices.ndim != 1 or o_counts.ndim != 1 or o_counts.shape[0] == 0:
@@ -1006,10 +1006,10 @@ class MPyLocatorDrawOverride(omr.MPxDrawOverride):
             except Exception:
                 px = None
             if px is not None and px.shape[0] == points.shape[0]:
-                pix3 = np.zeros((px.shape[0], 3), dtype=np.float32)
+                pix3        = np.zeros((px.shape[0], 3), dtype=np.float32)
                 pix3[:, :2] = px
-                hl_fill = bool(buf.get("highlight_fill", global_auto_highlight))
-                hl_wire = bool(buf.get("highlight_wire", global_auto_highlight))
+                hl_fill     = bool(buf.get("highlight_fill", global_auto_highlight))
+                hl_wire     = bool(buf.get("highlight_wire", global_auto_highlight))
                 fill_override = (
                     sel_color if (is_selected and hl_fill and sel_color is not None)
                     else None
@@ -1042,7 +1042,7 @@ class MPyLocatorDrawOverride(omr.MPxDrawOverride):
         # Keep the per-face mask + kept-corner indices so per-face /
         # face-varying colors can be subset to match the culled mesh.
         indices, counts = o_indices, o_counts
-        keep_mask = None
+        keep_mask       = None
         kept_corner_idx = None
         if buf.get("cull_backfaces"):
             view_pos = (
@@ -1089,7 +1089,7 @@ class MPyLocatorDrawOverride(omr.MPxDrawOverride):
     def _draw_poly_fill(cls, dm, buf, points, indices, counts, o_counts,
                         keep_mask, kept_corner_idx, fill_override, use_2d=False):
         # 2D (screen-space) fill uses mesh2d; 3D (object-space) uses mesh.
-        mesh_fn = dm.mesh2d if use_2d else dm.mesh
+        mesh_fn  = dm.mesh2d if use_2d else dm.mesh
         provided = [k for k in cls._FILL_KEYS if buf.get(k) is not None]
         if not provided:
             return  # no fill
@@ -1130,7 +1130,7 @@ class MPyLocatorDrawOverride(omr.MPxDrawOverride):
             corner = vc[pt_idx]
         else:  # face_vertex_colors
             o_corners = int(np.asarray(o_counts, dtype=np.int64).sum())
-            fvc = normalize_color(buf.get("face_vertex_colors"), o_corners)
+            fvc       = normalize_color(buf.get("face_vertex_colors"), o_corners)
             if kept_corner_idx is not None:
                 fvc = fvc[kept_corner_idx]
             _, fc_idx = triangle_corner_indices(indices, counts)
@@ -1149,7 +1149,7 @@ class MPyLocatorDrawOverride(omr.MPxDrawOverride):
                         wire_override, sel_color, use_2d=False):
         # 2D (screen-space) edges use line2d; 3D (object-space) uses line.
         line_fn = dm.line2d if use_2d else dm.line
-        wire = buf.get("wireframe")
+        wire    = buf.get("wireframe")
         if wire is None:
             return
         # Check sequence first, else coerce to bool (True/1 => system color on,
@@ -1175,7 +1175,7 @@ class MPyLocatorDrawOverride(omr.MPxDrawOverride):
             if boundary.shape[0] == 0:
                 return
             starts = points[boundary[:, 0]]
-            ends = points[boundary[:, 1]]
+            ends   = points[boundary[:, 1]]
         else:
             starts, ends = build_edge_point_pairs(points, indices, counts)
             edge_faces = None
@@ -1184,7 +1184,7 @@ class MPyLocatorDrawOverride(omr.MPxDrawOverride):
             return
 
         edge_colors = None  # (E, 4) per-edge
-        single = None       # one MColor for the whole wireframe
+        single      = None  # one MColor for the whole wireframe
         if wire_override is not None:
             single = wire_override
         elif not is_seq:
@@ -1234,7 +1234,7 @@ class MPyLocatorDrawOverride(omr.MPxDrawOverride):
     @classmethod
     def _draw_shapes(cls, dm, buf, override=None, screen_ctx=None):
         try:
-            kinds = list(buf.get("kinds") or [])
+            kinds   = list(buf.get("kinds") or [])
             centers = np.asarray(buf.get("centers"), dtype=np.float32)
             if centers.ndim!= 2 or centers.shape[1]!= 3:
                 return
@@ -1251,7 +1251,7 @@ class MPyLocatorDrawOverride(omr.MPxDrawOverride):
         screen = (
             normalize_space(buf.get("space")) == "screen" and screen_ctx is not None
         )
-        centers_px = None
+        centers_px    = None
         centers_valid = None
         if screen:
             try:
@@ -1276,7 +1276,7 @@ class MPyLocatorDrawOverride(omr.MPxDrawOverride):
         if axes_in is None:
             axes = None
         else:
-            ax = np.asarray(axes_in, dtype=np.float32)
+            ax   = np.asarray(axes_in, dtype=np.float32)
             axes = ax if (ax.ndim == 2 and ax.shape == (n, 3)) else None
 
         filled_in = buf.get("filled")
@@ -1339,7 +1339,7 @@ class MPyLocatorDrawOverride(omr.MPxDrawOverride):
                 elif kind == "box":
                     # box(center, upAxis, sideAxis, width/2, height/2, depth/2, filled)
                     side = om.MVector(1.0, 0.0, 0.0)
-                    up = axis
+                    up   = axis
                     dm.box(center, up, side, r, r, r, f)
                 elif kind == "cone":
                     dm.cone(center, axis, r, r * 2.0, f)
@@ -1354,7 +1354,7 @@ class MPyLocatorDrawOverride(omr.MPxDrawOverride):
     def _draw_text(cls, dm, buf, override=None, local_ppu=None, screen_ctx=None):
         try:
             positions = np.asarray(buf.get("positions"), dtype=np.float32)
-            strings = list(buf.get("strings") or [])
+            strings   = list(buf.get("strings") or [])
             if positions.ndim!= 2 or positions.shape[1]!= 3:
                 return
             n = positions.shape[0]
@@ -1363,7 +1363,7 @@ class MPyLocatorDrawOverride(omr.MPxDrawOverride):
             colors = normalize_color(buf.get("colors"), n)
         except Exception:
             return
-        sizes = buf.get("sizes")
+        sizes     = buf.get("sizes")
         sizes_arr = None
         if sizes is not None:
             sa = np.asarray(sizes, dtype=np.float32)

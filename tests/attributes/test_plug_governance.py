@@ -51,7 +51,7 @@ class _GovernanceCase(unittest.TestCase):
         cmds.file(new=True, force=True)
         from mpynode.wrappers.mpy_mesh import MPyMesh
 
-        self.nd = MPyMesh.create(name="govMesh")
+        self.nd   = MPyMesh.create(name="govMesh")
         self.node = self.nd.get_name()
         # MANAGED: recorded in _inputAttrs by the framework's own API.
         self.nd.add_input_attr("managedIn", "float")
@@ -211,7 +211,7 @@ class TestGovernanceInvalidation(_GovernanceCase):
         from mpynode._common.plugs import plug_governance
 
         mobject = _mobj(self.node)
-        attr = om.MFnDependencyNode(mobject).attribute("smuggled")
+        attr    = om.MFnDependencyNode(mobject).attribute("smuggled")
         self.assertFalse(plug_governance.is_managed(mobject, attr, "smuggled"))
 
         self.nd.add_input_attr("adopted", "float")
@@ -253,7 +253,7 @@ class TestGovernanceInvalidation(_GovernanceCase):
         from mpynode._common.plugs import plug_governance
 
         mobject = _mobj(self.node)
-        attr = om.MFnDependencyNode(mobject).attribute("managedIn")
+        attr    = om.MFnDependencyNode(mobject).attribute("managedIn")
         plug_governance.is_managed(mobject, attr, "managedIn")
         self.assertTrue(plug_governance._installed)
 
@@ -263,7 +263,7 @@ class TestGovernanceInvalidation(_GovernanceCase):
         from mpynode._common.plugs import plug_governance
 
         mobject = _mobj(self.node)
-        attr = om.MFnDependencyNode(mobject).attribute("outMesh")
+        attr    = om.MFnDependencyNode(mobject).attribute("outMesh")
         plug_governance.invalidate()
         self.assertTrue(plug_governance.is_managed(mobject, attr, "outMesh"))
         self.assertFalse(plug_governance._map_is_loaded(mobject))

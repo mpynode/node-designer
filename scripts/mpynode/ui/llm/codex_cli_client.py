@@ -49,7 +49,7 @@ def build_cmd(bin_path, prompt, model=None, effort=None, image_paths=None):
 
 class CodexCliClient(BaseCliClient):
     PROVIDER = "codex_cli"
-    LABEL = "Codex CLI"
+    LABEL    = "Codex CLI"
 
     def __init__(self, ctx_provider=None, parent=None):
         super().__init__(ctx_provider, parent)
@@ -91,8 +91,8 @@ class CodexCliClient(BaseCliClient):
         if not isinstance(ev, dict):
             return
         outer = str(ev.get("type", "")).lower()
-        item = ev.get("item") or ev.get("msg") or ev
-        typ = str(item.get("type", "") or outer).lower()
+        item  = ev.get("item") or ev.get("msg") or ev
+        typ   = str(item.get("type", "") or outer).lower()
         text = (item.get("text") or item.get("message")
                 or item.get("content") or item.get("delta"))
         if isinstance(text, dict):
