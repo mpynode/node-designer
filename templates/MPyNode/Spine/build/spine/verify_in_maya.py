@@ -7,7 +7,7 @@ import maya.cmds as cmds
 BUNDLE = os.path.join(os.path.dirname(__file__), 'spine.bundle')
 NODE_TYPE = 'spine'
 SOURCE = 'spine'
-INPUTS = {"controlMatrices": "matrix", "curveAimAxis": "enum", "curveInvertAimAxis": "enum", "curveInvertUpAxis": "enum", "curveUpAxis": "enum", "inputCurve": "nurbsCurve", "pivot": "float", "resetDefaultLength": "enum", "samples": "float", "scale": "float", "scaleMethod": "enum", "shift": "float", "stretch": "float"}
+INPUTS = {"controlMatrices": "matrix", "curveAimAxis": "enum", "curveInvertAimAxis": "enum", "curveInvertUpAxis": "enum", "curveUpAxis": "enum", "inputCurve": "nurbsCurve", "pivot": "float", "defaultLength": "float", "samples": "float", "scale": "float", "scaleMethod": "enum", "shift": "float", "stretch": "float"}
 OUTPUTS = {"asss": "float", "outputRotate": "euler", "outputScale": "vector", "outputTranslate": "vector"}
 TOL = 1e-4
 

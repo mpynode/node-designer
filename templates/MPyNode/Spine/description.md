@@ -14,7 +14,7 @@ Drives a chain of joints along a NURBS curve. Feed it the curve and one matrix p
 * `shift` -- slides every rider along the curve together.
 * `pivot` -- where the stretch is anchored, so the chain can stretch from the base, from the tip, or from anywhere between.
 * `scaleMethod` -- how squash and stretch falls off across the chain: **Square Root**, **Linear** or **Cosine**.
-* `resetDefaultLength` -- set it to **True** to re-measure the curve's rest length after rebuilding or re-shaping it.
+* `defaultLength` -- the curve's rest length. `build_system` sets it to the curve's arc length when it builds the spine; set it again yourself after rebuilding or re-shaping the curve.
 
 ## Outputs
 
