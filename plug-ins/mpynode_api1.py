@@ -24,7 +24,7 @@ import maya.OpenMayaMPx as ommpx
 
 
 PLUGIN_NAME = "mpynode_api1"
-PLUGIN_VERSION = "1.0.0a1"
+PLUGIN_VERSION = "2.0.0a1"
 
 
 def initializePlugin(plugin):
