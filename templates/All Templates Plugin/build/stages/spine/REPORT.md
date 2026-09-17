@@ -27,9 +27,6 @@
 max_parameter = self.inputCurve.findParamFromLength(10 ** 9)
 currentLength = self.inputCurve.findLengthFromParam(max_parameter)
 
-if self.resetDefaultLength or not hasattr(self, 'defaultLength'):
-    self.defaultLength = currentLength
-
 # End points / tangents for out-of-range projection (om -> numpy 3-vectors)
 t0 = np.array(self.inputCurve.tangent(0, space=om.MSpace.kWorld))[:3]
 t1 = np.array(self.inputCurve.tangent(max_parameter, space=om.MSpace.kWorld))[:3]
