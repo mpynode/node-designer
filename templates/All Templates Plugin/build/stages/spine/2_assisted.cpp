@@ -70,7 +70,7 @@ public:
     static MObject aCurveUpAxis;
     static MObject aInputCurve;
     static MObject aPivot;
-    static MObject aResetDefaultLength;
+    static MObject aDefaultLength;
     static MObject aSamples;
     static MObject aScale;
     static MObject aScaleMethod;
@@ -90,7 +90,7 @@ MObject Spine::aCurveInvertUpAxis;
 MObject Spine::aCurveUpAxis;
 MObject Spine::aInputCurve;
 MObject Spine::aPivot;
-MObject Spine::aResetDefaultLength;
+MObject Spine::aDefaultLength;
 MObject Spine::aSamples;
 MObject Spine::aScale;
 MObject Spine::aScaleMethod;
@@ -140,11 +140,9 @@ MStatus Spine::initialize() {
     aPivot = nAttr.create("pivot", "pivot", MFnNumericData::kFloat, 0.0);
     nAttr.setStorable(true);
     nAttr.setKeyable(true);
-    aResetDefaultLength = eAttr.create("resetDefaultLength", "resetDefaultLength", 0);
-    eAttr.addField("False", 0);
-    eAttr.addField("True", 1);
-    eAttr.setStorable(true);
-    eAttr.setKeyable(true);
+    aDefaultLength = nAttr.create("defaultLength", "defaultLength", MFnNumericData::kFloat, 0.0);
+    nAttr.setStorable(true);
+    nAttr.setKeyable(true);
     aSamples = nAttr.create("samples", "samples", MFnNumericData::kFloat, 0.0);
     nAttr.setStorable(true);
     nAttr.setKeyable(true);
@@ -200,7 +198,7 @@ MStatus Spine::initialize() {
     addAttribute(aCurveUpAxis);
     addAttribute(aInputCurve);
     addAttribute(aPivot);
-    addAttribute(aResetDefaultLength);
+    addAttribute(aDefaultLength);
     addAttribute(aSamples);
     addAttribute(aScale);
     addAttribute(aScaleMethod);
@@ -218,7 +216,7 @@ MStatus Spine::initialize() {
     attributeAffects(aCurveUpAxis, aAsss);
     attributeAffects(aInputCurve, aAsss);
     attributeAffects(aPivot, aAsss);
-    attributeAffects(aResetDefaultLength, aAsss);
+    attributeAffects(aDefaultLength, aAsss);
     attributeAffects(aSamples, aAsss);
     attributeAffects(aScale, aAsss);
     attributeAffects(aScaleMethod, aAsss);
@@ -231,7 +229,7 @@ MStatus Spine::initialize() {
     attributeAffects(aCurveUpAxis, aOutputRotate);
     attributeAffects(aInputCurve, aOutputRotate);
     attributeAffects(aPivot, aOutputRotate);
-    attributeAffects(aResetDefaultLength, aOutputRotate);
+    attributeAffects(aDefaultLength, aOutputRotate);
     attributeAffects(aSamples, aOutputRotate);
     attributeAffects(aScale, aOutputRotate);
     attributeAffects(aScaleMethod, aOutputRotate);
@@ -244,7 +242,7 @@ MStatus Spine::initialize() {
     attributeAffects(aCurveUpAxis, aOutputScale);
     attributeAffects(aInputCurve, aOutputScale);
     attributeAffects(aPivot, aOutputScale);
-    attributeAffects(aResetDefaultLength, aOutputScale);
+    attributeAffects(aDefaultLength, aOutputScale);
     attributeAffects(aSamples, aOutputScale);
     attributeAffects(aScale, aOutputScale);
     attributeAffects(aScaleMethod, aOutputScale);
@@ -257,7 +255,7 @@ MStatus Spine::initialize() {
     attributeAffects(aCurveUpAxis, aOutputTranslate);
     attributeAffects(aInputCurve, aOutputTranslate);
     attributeAffects(aPivot, aOutputTranslate);
-    attributeAffects(aResetDefaultLength, aOutputTranslate);
+    attributeAffects(aDefaultLength, aOutputTranslate);
     attributeAffects(aSamples, aOutputTranslate);
     attributeAffects(aScale, aOutputTranslate);
     attributeAffects(aScaleMethod, aOutputTranslate);
@@ -1072,7 +1070,7 @@ MStatus Spine::compute(const MPlug& plug, MDataBlock& data) {
     MObject in_aInputCurve_obj = data.inputValue(aInputCurve).asNurbsCurve();
     MFnNurbsCurve in_aInputCurve(in_aInputCurve_obj);
     const float in_aPivot = data.inputValue(aPivot).asFloat();
-    const short in_aResetDefaultLength = data.inputValue(aResetDefaultLength).asShort();
+    const float in_aDefaultLength = data.inputValue(aDefaultLength).asFloat();
     std::vector<float> in_aSamples;
     {
         MArrayDataHandle _arr = data.inputArrayValue(aSamples);
@@ -1140,28 +1138,11 @@ MStatus Spine::compute(const MPlug& plug, MDataBlock& data) {
         return (V0 * std::sin((1.0 - weight) * angle) + V1 * std::sin(weight * angle)) * (1.0 / std::sin(angle));
     };
 
-    // --- persistent per-instance state (self.defaultLength) ---
-    struct NodeState {
-        const void* key;
-        bool   initialized = false;
-        double defaultLength = 0.0;
-    };
-    static std::vector<NodeState*> s_states;
-    NodeState* st = nullptr;
-    for (NodeState* s : s_states)
-        if (s->key == (const void*)this) { st = s; break; }
-    if (!st) { st = new NodeState(); st->key = (const void*)this; s_states.push_back(st); }
-
     // Guard: a curve query on a null / non-curve input must not crash compute().
     if (!in_aInputCurve_obj.isNull() && in_aInputCurve_obj.hasFn(MFn::kNurbsCurve)) {
 
         double max_parameter = in_aInputCurve.findParamFromLength(1.0e9);
         double currentLength = in_aInputCurve.findLengthFromParam(max_parameter);
-
-        if (in_aResetDefaultLength || !st->initialized) {
-            st->defaultLength = currentLength;
-            st->initialized = true;
-        }
 
         // End points / tangents for out-of-range projection.
         MVector t0 = in_aInputCurve.tangent(0.0, MSpace::kWorld);
@@ -1191,8 +1172,8 @@ MStatus Spine::compute(const MPlug& plug, MDataBlock& data) {
             keys[i] /= total;
         }
 
-        double ratio = st->defaultLength / currentLength;
-        double delta = (currentLength - st->defaultLength) / currentLength;
+        double ratio = (double)in_aDefaultLength / currentLength;
+        double delta = (currentLength - (double)in_aDefaultLength) / currentLength;
 
         const size_t nOut = in_aSamples.size();
         out_aOutputTranslate.reserve(nOut);

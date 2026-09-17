@@ -71,7 +71,7 @@ public:
     static MObject aCurveUpAxis;
     static MObject aInputCurve;
     static MObject aPivot;
-    static MObject aResetDefaultLength;
+    static MObject aDefaultLength;
     static MObject aSamples;
     static MObject aScale;
     static MObject aScaleMethod;
@@ -91,7 +91,7 @@ MObject Spine::aCurveInvertUpAxis;
 MObject Spine::aCurveUpAxis;
 MObject Spine::aInputCurve;
 MObject Spine::aPivot;
-MObject Spine::aResetDefaultLength;
+MObject Spine::aDefaultLength;
 MObject Spine::aSamples;
 MObject Spine::aScale;
 MObject Spine::aScaleMethod;
@@ -141,11 +141,9 @@ MStatus Spine::initialize() {
     aPivot = nAttr.create("pivot", "pivot", MFnNumericData::kFloat, 0.0);
     nAttr.setStorable(true);
     nAttr.setKeyable(true);
-    aResetDefaultLength = eAttr.create("resetDefaultLength", "resetDefaultLength", 0);
-    eAttr.addField("False", 0);
-    eAttr.addField("True", 1);
-    eAttr.setStorable(true);
-    eAttr.setKeyable(true);
+    aDefaultLength = nAttr.create("defaultLength", "defaultLength", MFnNumericData::kFloat, 0.0);
+    nAttr.setStorable(true);
+    nAttr.setKeyable(true);
     aSamples = nAttr.create("samples", "samples", MFnNumericData::kFloat, 0.0);
     nAttr.setStorable(true);
     nAttr.setKeyable(true);
@@ -201,7 +199,7 @@ MStatus Spine::initialize() {
     addAttribute(aCurveUpAxis);
     addAttribute(aInputCurve);
     addAttribute(aPivot);
-    addAttribute(aResetDefaultLength);
+    addAttribute(aDefaultLength);
     addAttribute(aSamples);
     addAttribute(aScale);
     addAttribute(aScaleMethod);
@@ -219,7 +217,7 @@ MStatus Spine::initialize() {
     attributeAffects(aCurveUpAxis, aAsss);
     attributeAffects(aInputCurve, aAsss);
     attributeAffects(aPivot, aAsss);
-    attributeAffects(aResetDefaultLength, aAsss);
+    attributeAffects(aDefaultLength, aAsss);
     attributeAffects(aSamples, aAsss);
     attributeAffects(aScale, aAsss);
     attributeAffects(aScaleMethod, aAsss);
@@ -232,7 +230,7 @@ MStatus Spine::initialize() {
     attributeAffects(aCurveUpAxis, aOutputRotate);
     attributeAffects(aInputCurve, aOutputRotate);
     attributeAffects(aPivot, aOutputRotate);
-    attributeAffects(aResetDefaultLength, aOutputRotate);
+    attributeAffects(aDefaultLength, aOutputRotate);
     attributeAffects(aSamples, aOutputRotate);
     attributeAffects(aScale, aOutputRotate);
     attributeAffects(aScaleMethod, aOutputRotate);
@@ -245,7 +243,7 @@ MStatus Spine::initialize() {
     attributeAffects(aCurveUpAxis, aOutputScale);
     attributeAffects(aInputCurve, aOutputScale);
     attributeAffects(aPivot, aOutputScale);
-    attributeAffects(aResetDefaultLength, aOutputScale);
+    attributeAffects(aDefaultLength, aOutputScale);
     attributeAffects(aSamples, aOutputScale);
     attributeAffects(aScale, aOutputScale);
     attributeAffects(aScaleMethod, aOutputScale);
@@ -258,7 +256,7 @@ MStatus Spine::initialize() {
     attributeAffects(aCurveUpAxis, aOutputTranslate);
     attributeAffects(aInputCurve, aOutputTranslate);
     attributeAffects(aPivot, aOutputTranslate);
-    attributeAffects(aResetDefaultLength, aOutputTranslate);
+    attributeAffects(aDefaultLength, aOutputTranslate);
     attributeAffects(aSamples, aOutputTranslate);
     attributeAffects(aScale, aOutputTranslate);
     attributeAffects(aScaleMethod, aOutputTranslate);
@@ -1074,7 +1072,7 @@ MStatus Spine::compute(const MPlug& plug, MDataBlock& data) {
     MObject in_aInputCurve_obj = data.inputValue(aInputCurve).asNurbsCurve();
     MFnNurbsCurve in_aInputCurve(in_aInputCurve_obj);
     const float in_aPivot = data.inputValue(aPivot).asFloat();
-    const short in_aResetDefaultLength = data.inputValue(aResetDefaultLength).asShort();
+    const float in_aDefaultLength = data.inputValue(aDefaultLength).asFloat();
     std::vector<float> in_aSamples;
     {
         MArrayDataHandle _arr = data.inputArrayValue(aSamples);
@@ -1101,25 +1099,6 @@ MStatus Spine::compute(const MPlug& plug, MDataBlock& data) {
     std::vector<MVector> out_aOutputTranslate;
 
     // ===== BEGIN PORTED COMPUTE =====
-        // ---------------------------------------------------------------------
-        // Persistent per-instance state: the Python latches `self.defaultLength`
-        // on the first eval (or when resetDefaultLength is set) and reads it back
-        // unmodified on later evals. Re-deriving it every frame would make
-        // ratio == 1 forever and turn `stretch` into a no-op, so it gets a home
-        // keyed on the node instance.
-        // ---------------------------------------------------------------------
-        struct NodeState {
-            const void* key;
-            bool   initialized = false;   // hasattr(self, 'defaultLength')
-            double defaultLength {};
-        };
-        static std::vector<NodeState*> s_states;   // POINTERS: the vector reallocates,
-                                                   // the states it points at never move
-        NodeState* st = nullptr;
-        for (NodeState* s : s_states)
-            if (s->key == (const void*)this) { st = s; break; }
-        if (!st) { st = new NodeState(); st->key = (const void*)this; s_states.push_back(st); }
-
         const double ND_PI     = 3.14159265358979323846;
         const double ND_RAD2DEG = 180.0 / ND_PI;      // CPython math.degrees: x * (180/pi)
         const double ND_DEG2RAD = ND_PI / 180.0;      // CPython math.radians: x * (pi/180)
@@ -1175,11 +1154,6 @@ MStatus Spine::compute(const MPlug& plug, MDataBlock& data) {
             const double max_parameter = in_aInputCurve.findParamFromLength(1.0e9);
             const double currentLength = in_aInputCurve.findLengthFromParam(max_parameter);
 
-            if (in_aResetDefaultLength || !st->initialized) {
-                st->defaultLength = currentLength;
-                st->initialized   = true;
-            }
-
             // End points / tangents for out-of-range projection.
             const MVector t0 = in_aInputCurve.tangent(0.0, MSpace::kWorld);
             const MVector t1 = in_aInputCurve.tangent(max_parameter, MSpace::kWorld);
@@ -1206,8 +1180,8 @@ MStatus Spine::compute(const MPlug& plug, MDataBlock& data) {
             // last element ends up dividing by itself and lands exactly on 1.0.
             for (size_t i = 1; i < keys.size(); ++i) keys[i] /= keys[keys.size() - 1];
 
-            const double ratio = st->defaultLength / currentLength;
-            const double delta = (currentLength - st->defaultLength) / currentLength;
+            const double ratio = (double)in_aDefaultLength / currentLength;
+            const double delta = (currentLength - (double)in_aDefaultLength) / currentLength;
 
             // ---- O(1) replacement for bisect_left over `keys` -----------------
             // keys is ascending and spans [0,1], so a uniform bucket table over
