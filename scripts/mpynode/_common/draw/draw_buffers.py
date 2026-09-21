@@ -24,6 +24,9 @@ What's in this module:
  ``(E*2,)`` index array of edges (each face's perimeter) suitable
  for ``MUIDrawManager.mesh(kLines, point_array_indexed)``. Used by
  the wireframe path.
+* ``command_bounds(commands)`` -- the object-space extent of a whole
+ draw-command list, which is what the locator reports as its
+ bounding box so framing and bbox picking match the drawing.
 
 All functions accept array-like inputs (lists, tuples, np.ndarray)
 and coerce via ``np.asarray``. None inputs are handled explicitly.
@@ -688,3 +691,80 @@ def project_object_points_to_pixels(points_obj, obj_world_m16, view_proj_m16,
     pixels[:, 1]   = (ndc_y * 0.5 + 0.5) * float(vp_h)
     pixels[~valid] = 0.0
     return pixels, valid
+
+
+# ---------------------------------------------------------------------------
+# Drawn extent (what `F` should frame)
+
+#: Per-slot position arrays. A slot missing from here contributes no extent.
+_BOUNDS_KEYS = {
+    "lines":    ("starts", "ends"),
+    "points":   ("positions",),
+    "polygons": ("points",),
+    "text":     ("positions",),
+    "shapes":   ("centers",),
+}
+
+
+def command_bounds(commands, include_world=False):
+    """``(min_xyz, max_xyz)`` over everything a draw-command list places, or
+    ``None`` when it places nothing.
+
+    This is the shape's REAL extent, which is what a locator has to report for
+    "frame selection" and a bbox pick to line up with the drawing: MPxLocator's
+    default box is the unit cube scaled by ``localScale``, so a gizmo drawing a
+    radius-10 ring frames as if it were one unit across.
+
+    Details that matter:
+
+    * ``shapes`` carry a centre and a radius rather than corners, so each
+      centre is grown by its own radius -- a sphere whose centre is in frame is
+      not the same as a sphere that IS in frame.
+    * ``text`` contributes only its anchor. Glyphs are sized in PIXELS, so
+      their on-screen extent is not an object-space quantity and would change
+      the box with the camera.
+    * ``world_space`` buffers are SKIPPED by default. Their points are already
+      in world space (pulled from other nodes), while a bounding box is
+      reported in the shape's own object space -- mixing the two moves the box
+      somewhere the drawing isn't. Pass ``include_world=True`` when the caller
+      has already rebased them.
+    """
+    lo = np.array([np.inf] * 3, dtype=np.float64)
+    hi = np.array([-np.inf] * 3, dtype=np.float64)
+    hit = False
+    for cmd in commands or ():
+        try:
+            slot = cmd.get("slot")
+            buf  = cmd.get("buffer") or {}
+        except AttributeError:
+            continue
+        if buf.get("world_space") and not include_world:
+            continue
+        radii = None
+        if slot == "shapes":
+            try:
+                radii = np.asarray(buf.get("radii"), dtype=np.float64).reshape(-1)
+            except Exception:
+                radii = None
+        for key in _BOUNDS_KEYS.get(slot, ()):
+            try:
+                pts = np.asarray(buf.get(key), dtype=np.float64)
+            except Exception:
+                continue
+            if pts.ndim != 2 or pts.shape[1] != 3 or pts.shape[0] == 0:
+                continue
+            if not np.isfinite(pts).all():
+                pts = pts[np.isfinite(pts).all(axis=1)]
+                if pts.shape[0] == 0:
+                    continue
+            if radii is not None and radii.shape[0] == pts.shape[0]:
+                grow = np.abs(radii)[:, None]
+                lo   = np.minimum(lo, (pts - grow).min(axis=0))
+                hi   = np.maximum(hi, (pts + grow).max(axis=0))
+            else:
+                lo = np.minimum(lo, pts.min(axis=0))
+                hi = np.maximum(hi, pts.max(axis=0))
+            hit = True
+    if not hit:
+        return None
+    return (tuple(float(v) for v in lo), tuple(float(v) for v in hi))

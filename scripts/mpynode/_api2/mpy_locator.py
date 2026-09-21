@@ -80,6 +80,7 @@ from mpynode._common.draw import draw_types
 from mpynode._common.draw.draw_buffers import (
     apply_face_mask,
     build_edge_point_pairs,
+    command_bounds,
     cull_backfaces_mask,
     edge_face_indices,
     expand_face_colors_to_triangles,
@@ -94,6 +95,10 @@ from mpynode._common.draw.draw_buffers import (
     region_boundary_edges,
     triangle_corner_indices,
 )
+
+
+#: Anything this wide is Maya's "unbounded" sentinel box, not a real extent.
+_HUGE_EXTENT = 1e29
 
 
 class MPyLocator(omui.MPxLocatorNode):
@@ -125,10 +130,54 @@ class MPyLocator(omui.MPxLocatorNode):
         super().__init__()
         self._expr_str: str = ""
         self._expr_code = compile_expression("")
+        # Object-space extent of the LAST drawing (see boundingBox); None until
+        # the gizmo has drawn once.
+        self._draw_bounds = None
 
     @staticmethod
     def creator():
         return MPyLocator()
+
+    # -- extent -----------------------------------------------------------
+    # MPxLocatorNode's default box is the unit cube scaled by localScale, which
+    # describes the cross gizmo Maya draws for a plain locator -- not what an
+    # expression draws. So "frame selection" on a gizmo drawing a radius-10 ring
+    # zoomed to a one-unit box, and a bbox pick missed most of the drawing. The
+    # drawn extent is measured once per draw (evaluateDrawItems) and reported
+    # here, unioned with the default box so localScale still counts.
+
+    def isBounded(self):
+        return True
+
+    def boundingBox(self):
+        """The box around what this gizmo actually DRAWS, in object space.
+
+        Falls back to the locator default until the node has drawn once (the
+        bounds are a by-product of drawing, never a second evaluation of the
+        user expression -- Maya calls this during selection and framing, where
+        running arbitrary user code would be a surprise).
+        """
+        bounds = self._draw_bounds
+        if not bounds:
+            try:
+                return super().boundingBox()
+            except Exception:
+                return om.MBoundingBox()
+        lo, hi = bounds
+        box = om.MBoundingBox(om.MPoint(lo[0], lo[1], lo[2]),
+                              om.MPoint(hi[0], hi[1], hi[2]))
+        # The locator's own localPosition/localScale box joins in only when it
+        # is FINITE: MPxLocatorNode's default is Maya's infinite box (±1e30),
+        # and expanding by that reports exactly the unbounded extent this
+        # override exists to replace -- framing zooms to the whole scene.
+        try:
+            base = super().boundingBox()
+            if base is not None and float(base.width) < _HUGE_EXTENT:
+                box.expand(base.min)
+                box.expand(base.max)
+        except Exception:
+            pass
+        return box
 
     @staticmethod
     def initializer():
@@ -304,6 +353,7 @@ class MPyLocator(omui.MPxLocatorNode):
         namespace["self"] = self_proxy
 
         if self._expr_code is None:
+            self._draw_bounds = None       # nothing drawn -> locator default box
             return dict(_EMPTY)
 
         # Capture stderr + broadcast to the UI Log panel via the Qt-free
@@ -332,6 +382,7 @@ class MPyLocator(omui.MPxLocatorNode):
                     captured[0],
                     declared_names=set(input_map),
                 )
+            self._draw_bounds = None       # nothing drawn -> locator default box
             return dict(_EMPTY)
 
         # commit any stored-var changes the expression made.
@@ -373,6 +424,10 @@ class MPyLocator(omui.MPxLocatorNode):
                     "mPyLocator", "self.draw: %s" % (exc,),
                     declared_names=set(input_map))
                 commands = []
+
+        # Measured HERE, off the drawing we just built, so boundingBox() costs
+        # nothing and never re-runs the user expression.
+        self._draw_bounds = command_bounds(commands)
 
         return {
             "commands":       commands,
@@ -504,7 +559,8 @@ class MPyLocatorDrawData(om.MUserData):
         # front-to-back by addUIDrawables so authoring order IS draw order.
         self.commands: list = []
         # Selection tinting: if is_selected AND auto_highlight, addUIDrawables
-        # overrides all per-buffer colors with sel_color.
+        # tints every per-buffer color with sel_color -- its RGB only, each
+        # element keeping its own alpha (see _tinted).
         self.is_selected:    bool = False
         self.auto_highlight: bool = True
         self.sel_color = None  # om.MColor or None
@@ -784,8 +840,10 @@ class MPyLocatorDrawOverride(omr.MPxDrawOverride):
             return
 
         # Framework auto-highlight: when selected AND auto_highlight is on,
-        # every draw call below replaces its per-element color with Maya's
-        # selection color. Just an MColor or None; each _draw_X checks it.
+        # every draw call below tints its per-element color with Maya's
+        # selection color -- RGB only, each element keeping its own alpha, so a
+        # translucent gizmo stays translucent while selected (see _tinted).
+        # Just an MColor or None; each _draw_X checks it.
         override_color = None
         if data.is_selected and data.auto_highlight and data.sel_color is not None:
             override_color = data.sel_color
@@ -851,6 +909,26 @@ class MPyLocatorDrawOverride(omr.MPxDrawOverride):
         )
 
     @staticmethod
+    def _tinted(override, rgba) -> om.MColor:
+        """The selection highlight applied to ONE element: the tint replaces
+        hue, never opacity.
+
+        Maya's wireframe colour is opaque, so tinting with it wholesale turns a
+        deliberately translucent drawing -- a faded band, a ghosted guide --
+        solid the moment the node is selected, which reads as the gizmo
+        changing shape rather than changing state. Keeping each element's own
+        alpha means selecting something changes what colour it is, not how much
+        of the scene you can see through it."""
+        return om.MColor(
+            (
+                float(override.r),
+                float(override.g),
+                float(override.b),
+                float(rgba[3]) if len(rgba) > 3 else 1.0,
+            )
+        )
+
+    @staticmethod
     def _project_screen(points, screen_ctx):
         """Object-space ``(N, 3)`` points -> ``(pixels (N, 2), valid (N,))``
         for ``space="screen"`` slots, via this frame's screen context
@@ -893,7 +971,8 @@ class MPyLocatorDrawOverride(omr.MPxDrawOverride):
                     if not (vs[i] and ve[i]):
                         continue
                     dm.setColor(
-                        override if override is not None else cls._mcolor(colors[i])
+                        cls._tinted(override, colors[i])
+                        if override is not None else cls._mcolor(colors[i])
                     )
                     try:
                         dm.line2d(
@@ -906,7 +985,7 @@ class MPyLocatorDrawOverride(omr.MPxDrawOverride):
 
         for i in range(n):
             if override is not None:
-                dm.setColor(override)
+                dm.setColor(cls._tinted(override, colors[i]))
             else:
                 dm.setColor(cls._mcolor(colors[i]))
             dm.line(
@@ -949,7 +1028,8 @@ class MPyLocatorDrawOverride(omr.MPxDrawOverride):
                     if not valid[i]:
                         continue
                     dm.setColor(
-                        override if override is not None else cls._mcolor(colors[i])
+                        cls._tinted(override, colors[i])
+                        if override is not None else cls._mcolor(colors[i])
                     )
                     if sizes_arr is not None:
                         dm.setPointSize(point_pixel_size(sizes_arr[i]))
@@ -961,7 +1041,7 @@ class MPyLocatorDrawOverride(omr.MPxDrawOverride):
 
         for i in range(n):
             if override is not None:
-                dm.setColor(override)
+                dm.setColor(cls._tinted(override, colors[i]))
             else:
                 dm.setColor(cls._mcolor(colors[i]))
             if sizes_arr is not None:
@@ -1106,12 +1186,14 @@ class MPyLocatorDrawOverride(omr.MPxDrawOverride):
             return
         mpts = om.MPointArray(tri_pts.tolist())
 
-        # Uniform / selection-override fast path: one setColor + one mesh.
-        if fill_override is not None or key == "colors":
-            if fill_override is not None:
-                dm.setColor(fill_override)
-            else:
-                dm.setColor(cls._mcolor(normalize_color(buf.get("colors"), 1)[0]))
+        # Uniform fast path: one setColor + one mesh. A selection tint rides on
+        # top of it and keeps the buffer's own alpha (see _tinted).
+        if key == "colors":
+            base = normalize_color(buf.get("colors"), 1)[0]
+            dm.setColor(
+                cls._tinted(fill_override, base)
+                if fill_override is not None else cls._mcolor(base)
+            )
             try:
                 mesh_fn(omr.MUIDrawManager.kTriangles, mpts)
             except Exception:
@@ -1138,6 +1220,13 @@ class MPyLocatorDrawOverride(omr.MPxDrawOverride):
 
         if corner.shape[0] != tri_pts.shape[0]:
             return
+        # Selected: tint per CORNER instead of one flat setColor, so a patch
+        # keeps its own alpha ramp while it is highlighted (see _tinted).
+        if fill_override is not None:
+            corner = np.array(corner, dtype=np.float32, copy=True)
+            corner[:, 0] = float(fill_override.r)
+            corner[:, 1] = float(fill_override.g)
+            corner[:, 2] = float(fill_override.b)
         mcols = om.MColorArray(corner.tolist())
         try:
             mesh_fn(omr.MUIDrawManager.kTriangles, mpts, None, mcols)
@@ -1185,9 +1274,7 @@ class MPyLocatorDrawOverride(omr.MPxDrawOverride):
 
         edge_colors = None  # (E, 4) per-edge
         single      = None  # one MColor for the whole wireframe
-        if wire_override is not None:
-            single = wire_override
-        elif not is_seq:
+        if not is_seq:
             # True / truthy non-sequence -> system wireframe color.
             single = sel_color if sel_color is not None else cls._mcolor((1, 1, 1, 1))
         else:
@@ -1207,6 +1294,22 @@ class MPyLocatorDrawOverride(omr.MPxDrawOverride):
                     edge_colors = wf[ef]
                 else:
                     single = cls._mcolor((1, 1, 1, 1))
+
+        # The selection tint goes on LAST and keeps each edge's own alpha (see
+        # _tinted): selecting a ghosted outline must not make it solid.
+        if wire_override is not None:
+            if edge_colors is not None:
+                edge_colors = np.array(edge_colors, dtype=np.float32, copy=True)
+                edge_colors[:, 0] = float(wire_override.r)
+                edge_colors[:, 1] = float(wire_override.g)
+                edge_colors[:, 2] = float(wire_override.b)
+            elif single is not None:
+                single = cls._tinted(
+                    wire_override,
+                    (single.r, single.g, single.b, single.a),
+                )
+            else:
+                single = wire_override
 
         # NOTE: the API-2.0 MUIDrawManager method is setLineWidth (there is
         # no lineWidth) -- calling the wrong name silently no-ops here.
@@ -1294,7 +1397,7 @@ class MPyLocatorDrawOverride(omr.MPxDrawOverride):
         for i in range(n):
             kind = str(kinds[i]).lower()
             if override is not None:
-                dm.setColor(override)
+                dm.setColor(cls._tinted(override, colors[i]))
             else:
                 dm.setColor(cls._mcolor(colors[i]))
             r = float(radii[i])
@@ -1384,7 +1487,7 @@ class MPyLocatorDrawOverride(omr.MPxDrawOverride):
         )
         for i in range(n):
             if override is not None:
-                dm.setColor(override)
+                dm.setColor(cls._tinted(override, colors[i]))
             else:
                 dm.setColor(cls._mcolor(colors[i]))
             if sizes_arr is not None:

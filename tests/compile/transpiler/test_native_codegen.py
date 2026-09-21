@@ -1646,7 +1646,8 @@ class TestShapeSwitchMatchesInterpreted(unittest.TestCase):
 class TestAutoHighlightWiredIntoDraw(unittest.TestCase):
     """self.auto_highlight gates the selection tint (the framework's
     MPyLocatorDrawOverride passes override_color when selected AND
-    auto_highlight); polygons resolve it per aspect."""
+    auto_highlight); polygons resolve it per aspect. The tint itself replaces
+    hue only -- each element keeps its own alpha, matching ``_tinted``."""
 
     def setUp(self):
         from mpynode.native import compiler as codegen
@@ -1659,8 +1660,10 @@ class TestAutoHighlightWiredIntoDraw(unittest.TestCase):
 
     def test_every_non_poly_slot_tints_through_hl_all(self):
         for buf in ("lineColor", "pointColor", "textColor", "shapeColor"):
-            self.assertIn("dm.setColor(hlAll ? d->selColor : d->%s[i]);" % buf,
-                          self.cpp)
+            self.assertIn(
+                "dm.setColor(hlAll ? _selTint(d->selColor, d->%s[i]) "
+                ": d->%s[i]);" % (buf, buf),
+                self.cpp)
 
     def test_poly_highlight_flags_inherit_via_minus_one_sentinel(self):
         # -1 == unset -> inherit the node-wide auto_highlight (interpreted
@@ -1674,7 +1677,21 @@ class TestAutoHighlightWiredIntoDraw(unittest.TestCase):
 
     def test_poly_tint_consumes_the_resolved_flags(self):
         self.assertIn("const bool tintFill = (selOK && hlFill);", self.cpp)
-        self.assertIn("(selOK && hlWire) ? d.selColor : pg.wireColor", self.cpp)
+        self.assertIn("(selOK && hlWire) ? _selTint(d.selColor, pg.wireColor)",
+                      self.cpp)
+
+    def test_the_tint_keeps_each_element_s_own_alpha(self):
+        """Port of MPyLocatorDrawOverride._tinted: the highlight takes its hue
+        from the selection colour and its alpha from the element, so a
+        translucent drawing does not snap solid the moment it is selected."""
+        self.assertIn(
+            "static inline MColor _selTint(const MColor& sel, const MColor& own) {",
+            self.cpp)
+        self.assertIn("return MColor(sel.r, sel.g, sel.b, own.a);", self.cpp)
+        # The per-corner path tints the colour ARRAY instead of collapsing to
+        # one flat setColor -- collapsing is what used to destroy a ramp.
+        self.assertIn("tcol.append(tintFill ? _selTint(d.selColor, col) : col);",
+                      self.cpp)
 
 
 class TestNonHoverStoredVarsPersist(unittest.TestCase):

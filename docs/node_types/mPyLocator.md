@@ -167,7 +167,7 @@ locator drives the rig).
 | `self.X` | Type | Default | Notes |
 |---|---|---|---|
 | `self.precise_hover` | `bool` | `False` | Opt the whole node into precise ray-vs-drawn-triangle hover instead of bounding-box hover. One patch at a time via `DrawMesh(..., precise_hover=True)`; the two compose. |
-| `self.auto_highlight` | `bool` / `None` | `True` | Override the automatic selection tint (when selected, per-buffer colors are replaced by `selection_color`). |
+| `self.auto_highlight` | `bool` / `None` | `True` | Override the automatic selection tint (when selected, per-buffer colors take `selection_color`'s RGB and keep their own alpha, so translucent drawing stays translucent). |
 | `self.auto_refresh` | truthy / `None` | `False` (off) | Opt into a redraw timer so time-driven animation advances without a time-input plug. The value is treated as a **boolean flag** — any truthy value enables a fixed **30 fps** (`1/30 s`) redraw; falsy/`None` disables it. The interval is not user-configurable. |
 
 > ⚠️ The wrapper docstring describes `auto_refresh` as "redraw interval in

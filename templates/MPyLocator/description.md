@@ -7,7 +7,8 @@ A viewport-drawn locator: an `MPxLocatorNode` (API 2.0) paired with an `MPxDrawO
 * Compute produces a drawing, not plug values. `self.draw` takes one item, a `+` chain, or a list nested as deeply as you like; `None` entries are skipped and `self.draw = None` draws nothing.
 * Authoring order is draw order. Whatever you write last draws on top; items are never re-bucketed by type.
 * User inputs work and feed the drawing. User outputs never compute: `MPxLocatorNode` does not dispatch `compute()` for runtime output plugs, so for output math chain a downstream `mPyNode`.
-* Selection and hover are first-class: the drawing is tinted with Maya's selection colour when selected, and a cursor-ray tracker reports hover per locator.
+* Selection and hover are first-class: the drawing is tinted with Maya's selection colour when selected (hue only, so anything translucent stays translucent), and a cursor-ray tracker reports hover per locator.
+* Its bounding box is the extent it actually draws, so Frame Selected fits the drawing.
 
 ## Draw types
 
