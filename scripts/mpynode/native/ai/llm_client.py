@@ -235,10 +235,14 @@ def _build_cli(provider, binp, model, effort, prompt,
             cmd += ["--effort", effort]
         return cmd, prompt
     if provider == "gemini_cli":
-        cmd = [binp, "-p", prompt]
-        if model:
-            cmd += ["-m", model]
-        return cmd, None
+        # STDIN, not argv. A port prompt (system + user + the node's compute) is
+        # tens of KB and Windows refuses the spawn outright -- WinError 206,
+        # "The filename or extension is too long" -- before the CLI even starts.
+        # auto_approve stays OFF: the porter wants C++ text back and nothing
+        # else, the same posture as the Claude branch's deny list above. See
+        # _config.GEMINI_PROMPT_TAIL for the rest of the reasoning.
+        return (_config.gemini_cli_argv(binp, model=model, auto_approve=False),
+                prompt + "\n")
     # codex_cli (best-effort; output may carry banner noise)
     cmd = [binp, "exec", "--skip-git-repo-check"]
     if model:
@@ -274,6 +278,28 @@ def _cli_env(provider, max_tokens):
     env                         = dict(os.environ)
     env[_CLAUDE_MAX_OUTPUT_ENV] = str(int(max_tokens))
     return env
+
+
+_GEMINI_SCRATCH = None
+
+
+def _cli_cwd(provider: str):
+    """Working directory for a CLI child, or None to inherit Maya's.
+
+    Only the Gemini CLI needs one: it refuses to run in a folder that was never
+    trusted interactively, so its argv carries ``--skip-trust`` -- and what that
+    trusts should be a scratch directory, not whatever project directory Maya
+    happens to have been launched from. Reused across rounds so one port does
+    not litter temp.
+    """
+    global _GEMINI_SCRATCH
+    if provider != "gemini_cli":
+        return None
+    if not _GEMINI_SCRATCH or not os.path.isdir(_GEMINI_SCRATCH):
+        import tempfile
+
+        _GEMINI_SCRATCH = tempfile.mkdtemp(prefix="mpynode_port_gemini_")
+    return _GEMINI_SCRATCH
 
 
 def _resolve_cli_bin(provider: str) -> str:
@@ -531,7 +557,8 @@ def _complete_cli(provider: str, model: str, system: str, user: str,
         provider, binp, model, _config.get_effort(provider), prompt,
         orchestrate=(provider == "claude_cli" and _porter_orchestrate()),
         stream_json=(provider == "claude_cli"))
-    return _run_cli_proc(cmd, stdin_text, binp, cancel_event=None, log_cb=log_cb)
+    return _run_cli_proc(cmd, stdin_text, binp, cancel_event=None, log_cb=log_cb,
+                         cwd=_cli_cwd(provider))
 
 
 def _complete(system: str, user: str, max_tokens=None, timeout=None,
@@ -801,7 +828,7 @@ def make_cli_complete_fn(cancel_event=None, log_cb=None, timeout=None,
                 stream_json=(provider == "claude_cli"))
             return _run_cli_proc(cmd, stdin_text, binp,
                                  cancel_event=cancel_event, log_cb=log_cb,
-                                 timeout=timeout,
+                                 timeout=timeout, cwd=_cli_cwd(provider),
                                  env=_cli_env(provider, max_tokens))
         # API providers: no mid-flight kill of a response being read, but the
         # event reaches the retry loop, so a cancel lands before the next attempt

@@ -14,6 +14,7 @@ CLI-specific bits:
   * ``_bin()``                       -- binary name (with env override)
   * ``_build_cmd(prompt, images)``   -- the argv
   * ``_stdin_payload(prompt, images)`` -- str to write to stdin, or None
+  * ``_cwd()``                       -- working dir for the child, or None
   * ``_handle_event(line)``          -- map one stdout line -> signals
   * ``_cleanup()``                   -- optional post-run cleanup (temp files)
 
@@ -138,11 +139,16 @@ class BaseCliClient(QObject):
             # console, so the agent waits on a handle that never delivers. The
             # Claude CLI charges 3s for that on every request before giving up
             # ("no stdin data received in 3s"). DEVNULL is an immediate EOF.
+            # The agent runs in a WORKING DIRECTORY of the provider's choosing
+            # (default: inherit Maya's). A CLI that can touch files should not
+            # start life pointed at whatever directory Maya happened to launch
+            # from -- usually the user's project.
             self._proc = subprocess.Popen(
                 cmd,
                 stdin=(subprocess.PIPE if stdin_data is not None
                        else subprocess.DEVNULL),
                 stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                cwd=self._cwd(),
                 bufsize=1, **toolchain.cli_subprocess_kwargs())
             if stdin_data is not None:
                 try:
@@ -214,6 +220,10 @@ class BaseCliClient(QObject):
         raise NotImplementedError
 
     def _stdin_payload(self, prompt, images):
+        return None
+
+    def _cwd(self):
+        """Working directory for the child, or None to inherit Maya's."""
         return None
 
     def _handle_event(self, line):

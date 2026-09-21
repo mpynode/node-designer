@@ -34,6 +34,16 @@ from mpynode.ui.qt_wrapper import (
 from mpynode.ui.llm import config as _llm_config
 
 
+# Provider -> the panel method that lists its models LOCALLY, with no API key.
+# Kept beside config.SELF_LISTING_CLI_PROVIDERS (a test holds the two equal): a
+# CLI listed there but missing here silently falls back to the API-key path,
+# which is the bug that made the Gemini CLI demand a Gemini API key.
+_CLI_MODEL_FETCHERS = {
+    "claude_cli": "_fetch_claude_cli_models",
+    "gemini_cli": "_fetch_gemini_cli_models",
+}
+
+
 def _esc(text: str) -> str:
     return (
         str(text)
@@ -1229,9 +1239,9 @@ class NDAssistantPanel(QWidget):
         finally:
             self._loading_settings = False
         try:
-            if provider == "claude_cli":
+            if provider in _llm_config.CLI_PROVIDERS:
                 self._model_edit.lineEdit().setPlaceholderText(
-                    "blank = claude's default; or a full model id")
+                    "blank = the CLI's own default; or a full model id")
             else:
                 self._model_edit.lineEdit().setPlaceholderText(
                     "model (default: %s)" % _llm_config.DEFAULT_MODELS.get(provider, ""))
@@ -1325,8 +1335,10 @@ class NDAssistantPanel(QWidget):
     def _list_source(self, provider):
         """Where to fetch a model list for a provider: (source_provider, key).
 
-        Claude CLI has no list API of its own, but it runs Anthropic models --
-        so we reuse the Anthropic key/list to surface versioned ids for it.
+        Only for providers that have no local lister of their own -- a CLI that
+        can answer for itself never reaches here (see _cli_model_fetcher). What
+        is left is codex_cli, which borrows the OpenAI key, plus the API
+        providers, which use their own key.
         """
         cli_src = {"claude_cli": "anthropic", "gemini_cli": "gemini",
                    "codex_cli": "openai"}.get(provider)
@@ -1334,26 +1346,40 @@ class NDAssistantPanel(QWidget):
             return cli_src, _llm_config.get_api_key(cli_src)
         return provider, _llm_config.get_api_key(provider)
 
+    def _cli_model_fetcher(self, provider):
+        """The local, keyless model lister for a CLI provider -- or None.
+
+        A CLI provider signs in with the machine's own login, so its list is
+        asked of the CLI itself. Table-driven because the alternative (an `if
+        provider == "claude_cli"`) silently sent every OTHER CLI down the
+        API-key path, which demanded a Gemini key to list a CLI that never uses
+        one.
+        """
+        name = _CLI_MODEL_FETCHERS.get(provider)
+        return getattr(self, name) if name else None
+
     def _maybe_autorefresh_models(self, provider):
         """Auto-fetch the model list once per session (so the dropdown isn't a
-        single item until Refresh). Claude CLI always refreshes (it asks the CLI,
-        which needs no key); the others fetch live when a key is available, and
-        with no key restore the last successful fetch from prefs."""
+        single item until Refresh). A self-listing CLI always refreshes (it asks
+        the CLI, which needs no key); the others fetch live when a key is
+        available, and with no key restore the last successful fetch from
+        prefs."""
         if provider in self._model_cache:
             return
         _src, key = self._list_source(provider)
-        if (provider == "claude_cli" or key
+        if (self._cli_model_fetcher(provider) or key
                 or _llm_config.cli_model_candidates(provider)):
             self._on_refresh_models()
 
     def _on_refresh_models(self):
         self._save_key()
         provider = self._current_provider()
-        if provider == "claude_cli":
-            # A CLI provider authenticates through the machine's own `claude`
-            # login, so the list is asked OF THE CLI and no key is involved.
-            # Checked BEFORE the key branch so no key can ever gate it.
-            self._start_model_fetch(provider, self._fetch_claude_cli_models)
+        cli_fetch = self._cli_model_fetcher(provider)
+        if cli_fetch is not None:
+            # A CLI provider authenticates through the machine's own login, so
+            # the list is asked OF THE CLI and no key is involved. Checked
+            # BEFORE the key branch so no key can ever gate it.
+            self._start_model_fetch(provider, cli_fetch)
             return
         src, key = self._list_source(provider)
         if not key:
@@ -1402,6 +1428,17 @@ class NDAssistantPanel(QWidget):
         self._cli_current_model  = current
         self._cli_model_displays = displays or {}
         return models
+
+    def _fetch_gemini_cli_models(self):
+        """Model ids from the local `gemini` binary (no API key). Worker side.
+
+        The Gemini CLI has no list command, so its own model table is read out
+        of the installed bundle -- local, keyless, and free of an API round
+        trip. See gemini_cli_client.list_models.
+        """
+        from mpynode.ui.llm.gemini_cli_client import list_models
+
+        return list_models()
 
     def _populate_cli_models(self, models):
         """Fill the combo with the CLI list -- every entry an explicit versioned
@@ -1461,10 +1498,13 @@ class NDAssistantPanel(QWidget):
         if provider != self._current_provider():
             return  # user switched provider while fetching
         if not models:
-            if provider == "claude_cli":
+            if self._cli_model_fetcher(provider) is not None:
+                binary = {"claude_cli": "claude", "gemini_cli": "gemini"}.get(
+                    provider, provider)
                 self._append_error(
-                    "Could not read the model list from the claude CLI. Check "
-                    "that `claude` runs in a terminal -- or just type a model id.")
+                    "Could not read the model list from the %s CLI. Check that "
+                    "`%s` runs in a terminal -- or just type a model id."
+                    % (binary, binary))
             else:
                 self._append_error("No models returned (check the API key).")
             return

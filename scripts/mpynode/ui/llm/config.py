@@ -55,6 +55,52 @@ PROVIDER_LABELS = {
 API_PROVIDERS = ("anthropic", "gemini", "openai")
 # CLI-backed providers (run a local agent binary; no API key).
 CLI_PROVIDERS = ("claude_cli", "gemini_cli", "codex_cli")
+# ---------------------------------------------------------------------------
+# Gemini CLI headless invocation -- shared by the interactive assistant
+# (ui.llm.gemini_cli_client) and the compile porter (native.ai.llm_client),
+# because both hit the same two walls independently:
+#
+# * The prompt CANNOT ride in argv. A node payload or a port prompt runs to tens
+#   of KB; Windows then refuses the spawn outright (CreateProcess -> WinError
+#   206, "The filename or extension is too long") or, through npm's .cmd
+#   launcher and cmd.exe, "The command line is too long." at ~8 KB. Gemini CLI
+#   documents ``-p`` as "Appended to input on stdin (if any)", so the prompt
+#   goes to STDIN and ``-p`` carries the tail below.
+# * The tail must be NON-EMPTY: ``-p ""`` is falsy to the CLI's argument parser,
+#   which drops it back into interactive mode -- and with no TTY that hangs.
+#
+# ``--skip-trust`` is what lets it start at all: the CLI refuses to run in a
+# folder that was never trusted interactively (exit 55, "not running in a
+# trusted directory"), and Maya's working directory never has been. Both callers
+# pair it with a scratch working directory, so what gets trusted is a temp dir
+# rather than the user's project.
+GEMINI_PROMPT_TAIL = "Follow the instructions above."
+
+
+def gemini_cli_argv(bin_path, model=None, stream_json=False, auto_approve=True):
+    """argv for a headless Gemini CLI run. The PROMPT goes on stdin (above).
+
+    ``auto_approve`` (``-y``) lets the agent run its own tools without a prompt
+    it could never answer headlessly. The porter leaves it OFF -- it wants text
+    back and nothing else, matching the tool deny-list it hands the Claude CLI.
+    """
+    cmd = [str(bin_path), "-p", GEMINI_PROMPT_TAIL]
+    if stream_json:
+        cmd += ["-o", "stream-json"]
+    if auto_approve:
+        cmd += ["-y"]
+    cmd += ["--skip-trust"]
+    if model:
+        cmd += ["-m", str(model)]
+    return cmd
+
+
+# CLI providers that can answer "which models will you run?" LOCALLY, with no
+# API key: `claude` is asked directly, and the Gemini CLI's own model table is
+# read out of the installed bundle. Demanding the matching HTTP key instead was
+# wrong twice over -- it is a different backend, and a CLI provider exists
+# precisely so the user does not need a key.
+SELF_LISTING_CLI_PROVIDERS = ("claude_cli", "gemini_cli")
 
 # The Claude CLI list is NOT derived from the Anthropic HTTP API -- different
 # backends, and a gateway build rejects ids /v1/models returns. It is asked of
@@ -84,10 +130,11 @@ def cli_model_candidates(provider: str) -> list:
     4.8 after Opus 5 shipped). The panel surfaces the empty case with guidance,
     and the combo is editable, so a model id can always be typed.
 
-    Only the Claude CLI is handled here -- gemini_cli/codex_cli fetch via their
-    source provider's key, and API providers use their own list endpoints.
+    Served for the CLI providers that list themselves (see
+    SELF_LISTING_CLI_PROVIDERS); codex_cli still fetches via its source
+    provider's key, and API providers use their own list endpoints.
     """
-    if provider == "claude_cli":
+    if provider in SELF_LISTING_CLI_PROVIDERS:
         return get_cached_models(provider)
     return []
 

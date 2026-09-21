@@ -1422,7 +1422,32 @@ _CLI_FALLBACK_DIRS = (
     "/usr/local/bin",     # npm-global (Intel) / manual
     "/opt/homebrew/bin",  # Homebrew (Apple silicon)
     "~/.npm-global/bin",  # npm prefix override
+    # Windows npm-global: npm puts its shims here and appends the dir to the
+    # USER Path, which a Maya already running (or launched from a shortcut with
+    # a scrubbed environment) never picked up -- so a `gemini` that works in a
+    # terminal is invisible to which() there too.
+    "~/AppData/Roaming/npm",
+    "~/AppData/Local/npm",
 )
+
+
+def _executable_names(name: str, os_name: Optional[str] = None):
+    """``name`` plus the Windows launcher extensions to try for it.
+
+    ``shutil.which`` applies PATHEXT itself, but the fallback probe below joins
+    paths by hand -- without this an npm shim (``gemini.cmd``) in an off-PATH
+    dir is looked up as extensionless ``gemini`` and never found.
+    """
+    if not is_windows(os_name) or os.path.splitext(name)[1]:
+        return (name,)
+    exts = [e.strip() for e in
+            os.environ.get("PATHEXT", ".COM;.EXE;.BAT;.CMD").split(";")
+            if e.strip()]
+    # Extensions FIRST: npm drops both `gemini.cmd` and an extensionless
+    # `gemini` shell script (for Git Bash) in the same dir, and on Windows
+    # os.access(X_OK) is true for any file -- so the bare name wins a race it
+    # would then lose at CreateProcess, which cannot launch a shell script.
+    return tuple(name + e.lower() for e in exts) + (name,)
 
 
 def find_executable(name: str) -> Optional[str]:
@@ -1445,9 +1470,10 @@ def find_executable(name: str) -> Optional[str]:
     if hit:
         return hit
     for d in _CLI_FALLBACK_DIRS:
-        cand = os.path.join(os.path.expanduser(d), name)
-        if os.path.isfile(cand) and os.access(cand, os.X_OK):
-            return cand
+        for n in _executable_names(name):
+            cand = os.path.join(os.path.expanduser(d), n)
+            if os.path.isfile(cand) and os.access(cand, os.X_OK):
+                return cand
     return None
 
 

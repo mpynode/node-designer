@@ -34,13 +34,14 @@ class TestClaudeCliModelCandidates(unittest.TestCase):
         cfg.set_cached_models("claude_cli", fetched)
         self.assertEqual(cfg.get_cached_models("claude_cli"), fetched)
 
-    def test_only_claude_cli_is_served(self):
-        # gemini_cli / codex_cli still fetch via their own key path; API
-        # providers use their list endpoints.
-        self.assertEqual(cfg.cli_model_candidates("gemini_cli"), [])
-        self.assertEqual(cfg.cli_model_candidates("codex_cli"),  [])
-        self.assertEqual(cfg.cli_model_candidates("anthropic"),  [])
-        self.assertEqual(cfg.cli_model_candidates("gemini"),     [])
+    def test_only_the_self_listing_clis_are_served(self):
+        # A CLI that can list itself is served from the cache (claude_cli and
+        # gemini_cli, see SELF_LISTING_CLI_PROVIDERS -- covered in
+        # test_assistant_gemini_cli.py); codex_cli still fetches via its own
+        # key path, and API providers use their list endpoints.
+        self.assertEqual(cfg.cli_model_candidates("codex_cli"), [])
+        self.assertEqual(cfg.cli_model_candidates("anthropic"), [])
+        self.assertEqual(cfg.cli_model_candidates("gemini"),    [])
 
     def test_returns_independent_copies(self):
         # The panel mutates the returned list when populating the combo; it must

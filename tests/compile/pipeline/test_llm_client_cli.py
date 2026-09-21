@@ -211,5 +211,58 @@ class TestRunCliProcForwardsTheEnv(unittest.TestCase):
         self.assertIsNone(seen.get("env"))
 
 
+class TestGeminiPorterArgvFitsAndIsTrusted(unittest.TestCase):
+    """The compile porter spawns the Gemini CLI itself, and hit both walls the
+    interactive assistant did.
+
+    The prompt used to ride in argv, so a real port -- system prompt + the
+    node's compute + the cheat sheet -- was tens of KB and Windows refused the
+    spawn before the CLI started: ``[WinError 206] The filename or extension is
+    too long``. And the CLI will not run in a folder that was never trusted
+    interactively (exit 55), which Maya's working directory never is.
+    """
+
+    _BIG = "x" * 60000
+
+    def test_the_prompt_is_not_in_argv(self):
+        cmd, stdin = llm_client._build_cli("gemini_cli", "gemini", "auto",
+                                           "off", self._BIG)
+        self.assertNotIn(self._BIG, cmd)
+        self.assertTrue(stdin.startswith("x"))
+        self.assertEqual(len(stdin), len(self._BIG) + 1)
+
+    def test_argv_stays_far_below_the_windows_limit(self):
+        cmd, _ = llm_client._build_cli("gemini_cli", "gemini", "auto", "off",
+                                       self._BIG)
+        self.assertLess(sum(len(a) + 1 for a in cmd), 1024)
+
+    def test_the_workspace_is_trusted_but_not_auto_approving(self):
+        # --skip-trust is what lets it start; -y is deliberately absent, because
+        # the porter wants C++ text back and nothing else (the Claude branch
+        # denies every editing tool for the same reason).
+        cmd, _ = llm_client._build_cli("gemini_cli", "gemini", "auto", "off", "P")
+        self.assertIn("--skip-trust", cmd)
+        self.assertNotIn("-y", cmd)
+
+    def test_only_gemini_gets_a_scratch_working_directory(self):
+        # What --skip-trust trusts should be a temp dir, not the user's project.
+        import os
+
+        got = llm_client._cli_cwd("gemini_cli")
+        self.assertTrue(os.path.isdir(got))
+        self.assertNotEqual(os.path.normcase(got), os.path.normcase(os.getcwd()))
+        self.assertEqual(llm_client._cli_cwd("gemini_cli"), got)  # reused
+        self.assertIsNone(llm_client._cli_cwd("claude_cli"))
+        self.assertIsNone(llm_client._cli_cwd("codex_cli"))
+
+    def test_the_claude_path_is_untouched(self):
+        # Same argv, same stdin, same deny list as before this fix.
+        cmd, stdin = llm_client._build_cli("claude_cli", "claude", "opus",
+                                           "max", self._BIG, stream_json=True)
+        self.assertEqual(stdin, self._BIG)
+        self.assertNotIn("--skip-trust", cmd)
+        self.assertLess(sum(len(a) + 1 for a in cmd), 2048)
+
+
 if __name__ == "__main__":
     unittest.main()
