@@ -322,5 +322,14 @@
     "node_name": "aimTransform",
     "demo_label": "Aim Between Two Locators",
     "n_demos": 1
+  },
+  {
+    "mpn": "templates/MPyLocator/Circular Text/template.mpn",
+    "folder": "MPyLocator_Circular_Text",
+    "plugin": "MPyLocator_Circular_Text_plugin",
+    "native_type": "mPyLocator",
+    "node_name": "circularText",
+    "demo_label": "Run demo",
+    "n_demos": 1
   }
 ]

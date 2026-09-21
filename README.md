@@ -100,7 +100,7 @@ Full detail in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ## Templates
 
-36 templates in `templates/`, at least one for every node type, each with a runnable demo.
+37 templates in `templates/`, at least one for every node type, each with a runnable demo.
 Browse them in the Designer's **Templates** tab.
 
 Source code for each template is provided. To compile them yourself — see [INSTALL.md](INSTALL.md).

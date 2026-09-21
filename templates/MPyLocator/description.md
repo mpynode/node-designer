@@ -31,7 +31,7 @@ All live in `mpynode._common.draw.draw_types` and a fresh Init tab imports them 
 
 * `MPyLocator.create(name)` creates the shape and Maya adds the parent transform; `get_transform()` returns it.
 * `evaluate_draw_commands(time_value)` runs the expression headless and returns the ordered command list, handy for tests without a viewport.
-* Four shipped templates: an animated selection gizmo, animated text, tagged mesh regions and a widget showcase.
+* Five shipped templates: an animated selection gizmo, animated text, text written around a ring, tagged mesh regions and a widget showcase.
 
 ## Common to all node types
 
