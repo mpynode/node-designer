@@ -32,8 +32,8 @@ import numpy as np
 from mpynode import ndio
 from mpynode._api2.geometry import Mesh
 
-frames = ndio.read(self.cachePath, "points")
-counts = ndio.read(self.cachePath, "counts", dtype=np.int64)
+frames  = ndio.read(self.cachePath, "points")
+counts  = ndio.read(self.cachePath, "counts", dtype=np.int64)
 indices = ndio.read(self.cachePath, "indices", dtype=np.int64)
 
 n = frames.shape[0]
@@ -41,7 +41,7 @@ n = frames.shape[0]
 if n < 1:
     pts = np.zeros((0, 3))
 else:
-    i = int(self.frame) % n
+    i   = int(self.frame) % n
     pts = frames[i] * self.scale
 
 self.outMesh = Mesh(points=pts, counts=counts, indices=indices)

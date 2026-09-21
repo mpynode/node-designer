@@ -35,9 +35,9 @@ from mpynode._api2.geometry import Mesh
 
 resolved = ndio.frame_path(self.path, self.frame)
 
-pts = ndio.read(resolved, "points")
-counts = ndio.read(resolved, "counts", dtype=np.int64)
-indices = ndio.read(resolved, "indices", dtype=np.int64)
+pts      = ndio.read(resolved, "points")
+counts   = ndio.read(resolved, "counts", dtype=np.int64)
+indices  = ndio.read(resolved, "indices", dtype=np.int64)
 
 # Accepts points as [[x,y,z], ...] or a flat [x,y,z,x,y,z, ...]; an absent file
 # gives an empty array, which must not go through reshape(-1, 3).

@@ -58,9 +58,9 @@ _ALIAS_RE = re.compile(
 #: an embedding model (it cannot answer a prompt).
 _ID_OK = re.compile(r"^(?:gemini|gemma)-\d[A-Za-z0-9._-]*$")
 
-_SCAN_CHUNK   = 8 << 20
+_SCAN_CHUNK = 8 << 20
 #: the table spans a few hundred bytes; this overlap keeps it whole across reads.
-_SCAN_OVERLAP = 64 << 10
+_SCAN_OVERLAP   = 64 << 10
 _MAX_SCAN_FILES = 6
 
 
@@ -106,8 +106,8 @@ def _package_roots(binp):
         pass
     pkg = os.path.join("node_modules", "@google", "gemini-cli")
     for base in (here, os.path.dirname(here)):
-        _add(os.path.join(base, pkg))           # npm prefix (Windows)
-        _add(os.path.join(base, "lib", pkg))    # npm prefix (unix)
+        _add(os.path.join(base, pkg))         # npm prefix (Windows)
+        _add(os.path.join(base, "lib", pkg))  # npm prefix (unix)
     return out
 
 

@@ -4,12 +4,12 @@ Run in Maya. Loads the .bundle, samples inputs, compares outputs.
 import os, random
 import maya.cmds as cmds
 
-BUNDLE = os.path.join(os.path.dirname(__file__), 'mPyDnet.bundle')
+BUNDLE    = os.path.join(os.path.dirname(__file__), 'mPyDnet.bundle')
 NODE_TYPE = 'mPyDnet'
-SOURCE = 'dnet'
-INPUTS = {"matrices": "matrix", "anchors": "float", "index0": "int", "index1": "int", "restLengths": "float", "tension": "float", "iterations": "int", "tolerance": "float", "damping": "float", "inverseMatrix": "matrix", "resetBuffer": "enum", "evaluate": "enum", "push": "float", "pull": "float", "time": "time"}
-OUTPUTS = {"positions": "vector", "lengths": "float", "maxIterations": "int", "maxForce": "float"}
-TOL = 1e-4
+SOURCE    = 'dnet'
+INPUTS    = {"matrices": "matrix", "anchors": "float", "index0": "int", "index1": "int", "restLengths": "float", "tension": "float", "iterations": "int", "tolerance": "float", "damping": "float", "inverseMatrix": "matrix", "resetBuffer": "enum", "evaluate": "enum", "push": "float", "pull": "float", "time": "time"}
+OUTPUTS   = {"positions": "vector", "lengths": "float", "maxIterations": "int", "maxForce": "float"}
+TOL       = 1e-4
 
 
 def _sample(t):
@@ -31,7 +31,7 @@ def _flat(v):
     # getAttr returns a scalar, [(x, y, z)] for a double3, or nested lists for a
     # matrix. Comparing only [0] silently passed a vector wrong on Y/Z or a
     # transposed matrix -- flatten to EVERY leaf component and compare them all.
-    out = []
+    out   = []
     stack = [v]
     while stack:
         x = stack.pop()
@@ -50,8 +50,8 @@ def run(samples=20):
         return True
     if not cmds.pluginInfo(os.path.basename(BUNDLE), q=True, loaded=True):
         cmds.loadPlugin(BUNDLE)
-    comp = cmds.createNode(NODE_TYPE)
-    fails = 0
+    comp     = cmds.createNode(NODE_TYPE)
+    fails    = 0
     compared = 0
     for _ in range(samples):
         for a, t in INPUTS.items():

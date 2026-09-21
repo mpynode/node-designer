@@ -46,7 +46,7 @@ try:
     # every frame.
     if raw != self.audioPath:
         self.audioPath = raw
-        path = ouch_resolve_clip_path(raw)
+        path           = ouch_resolve_clip_path(raw)
         if path:
             data = ouch_load_bytes(path)
             if data is not None:
@@ -60,7 +60,7 @@ try:
         sig = ouch_bytes_signature(data)
         if getattr(self, "_player_sig", None) != sig:
             self._player_sig = sig
-            old = getattr(self, "_player", None)
+            old              = getattr(self, "_player", None)
             if old is not None:
                 try:
                     old.stop()
@@ -82,7 +82,7 @@ if self.angle < 0.165009870842:
     self.color = [1, 0, 0]
     if not self.pain:
         self.pain = True
-        player = getattr(self, "_player", None)
+        player    = getattr(self, "_player", None)
         if player is not None:
             player.setPosition(0)
             player.play()

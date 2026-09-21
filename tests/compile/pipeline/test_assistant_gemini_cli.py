@@ -59,8 +59,8 @@ class TestGeminiCliModelTable(unittest.TestCase):
     def test_membership_table_resolves_its_constants(self):
         ids = gcli.parse_model_table(_BUNDLE_JS)
         self.assertIn("gemini-3-pro-preview", ids)
-        self.assertIn("gemini-2.5-pro", ids)
-        self.assertIn("gemini-2.5-flash", ids)
+        self.assertIn("gemini-2.5-pro",       ids)
+        self.assertIn("gemini-2.5-flash",     ids)
 
     def test_literal_entries_are_kept_too(self):
         self.assertIn("gemini-3.1-flash-lite", gcli.parse_model_table(_BUNDLE_JS))

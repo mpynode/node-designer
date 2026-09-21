@@ -20,14 +20,14 @@
 import numpy as np
 nu = 8
 nv = 8
-u = np.linspace(0.0, self.size, nu)
-v = np.linspace(0.0, self.size, nv)
+u  = np.linspace(0.0, self.size, nu)
+v  = np.linspace(0.0, self.size, nv)
 # Broadcast into (nu, nv) grids, then flatten row-major (k = i*nv + j).
-Uf = (u[:, None] + np.zeros((nu, nv))).reshape(nu * nv)
-Vf = (np.zeros((nu, nv)) + v[None, :]).reshape(nu * nv)
+Uf    = (u[:, None] + np.zeros((nu, nv))).reshape(nu * nv)
+Vf    = (np.zeros((nu, nv)) + v[None, :]).reshape(nu * nv)
 phase = self.t * 0.1
-Yf = self.amplitude * np.sin(Uf * self.freq + phase) * np.cos(Vf * self.freq + phase)
-cvs = np.stack([Uf, Yf, Vf], axis=1)
+Yf    = self.amplitude * np.sin(Uf * self.freq + phase) * np.cos(Vf * self.freq + phase)
+cvs   = np.stack([Uf, Yf, Vf], axis=1)
 self.outSurface = NurbsSurface(points=cvs, num_u=nu, num_v=nv,
                                degree_u=3, degree_v=3)
 ```

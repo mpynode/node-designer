@@ -19,7 +19,7 @@
 # (Imports + helper functions live in the Init tab.)
 
 # -------------------------- Main --------------------------#
-c = len(self.cv)
+c      = len(self.cv)
 degree = min(self.degree, c - 1)
 
 # Open knot vector (float array via numpy so the same source lowers to
@@ -30,10 +30,10 @@ kv = np.concatenate([np.zeros(degree, dtype=np.float64),
                      np.full(degree, float(c - degree), dtype=np.float64)])
 
 for i in range(n):
-    u = float(i) / (n - 1) * float(kv[-1])
+    u   = float(i) / (n - 1) * float(kv[-1])
     acc = np.zeros(3)
     for k in range(c):
-        w = DeBoor(u, k, degree, kv)
+        w   = DeBoor(u, k, degree, kv)
         acc = acc + self.cv[k] * w
     self.samples[i] = acc
 

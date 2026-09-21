@@ -46,10 +46,10 @@ mode = int(self.skinMode)
 # interactive paint load/bank/latch (a no-op in the compiled node).
 self.sync_paint(mode)
 
-nj = self.matrix.shape[0]                        # influence count
-nv = rest.shape[0]                               # vertex count
-twist = np.asarray(self.twistWeights)            # flat (N*J,) weight-set plugs
-swing = np.asarray(self.swingWeights)
+nj        = self.matrix.shape[0]           # influence count
+nv        = rest.shape[0]                  # vertex count
+twist     = np.asarray(self.twistWeights)  # flat (N*J,) weight-set plugs
+swing     = np.asarray(self.swingWeights)
 have_sets = twist.size == nv * nj and swing.size == nv * nj
 
 if mode == 0:                                    # Paint LBS: preview live weightList

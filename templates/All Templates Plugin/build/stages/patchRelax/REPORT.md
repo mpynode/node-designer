@@ -39,12 +39,12 @@
 # in the datablock.) setPoints stays UNCONDITIONAL so the deformer keeps its
 # single getPoints/setPoints shape; the gates only choose what gets written.
 mesh = self.outputGeometry[0]
-P = mesh.getPoints()
-N = P.shape[0]
+P    = mesh.getPoints()
+N    = P.shape[0]
 flat = np.asarray(self.ringNbrs, dtype=np.int64)
-Kw = int(self.ringWidth)
+Kw   = int(self.ringWidth)
 
-out = P
+out  = P
 if (Kw > 0) and (flat.shape[0] == N * Kw):
     rest = self.restMesh.points
     if rest.shape[0] == N:

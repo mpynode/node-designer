@@ -22,28 +22,28 @@
 # gizmo repainting between the redraws Maya would otherwise never issue.
 self.auto_refresh = True
 
-raw = getattr(self, "displayText", "")
-msg = raw if (raw and str(raw).strip()) else "MPyNode!"
-chars = list(str(msg))
-n = len(chars)
-idx = np.arange(n, dtype=np.float64)
+raw     = getattr(self, "displayText", "")
+msg     = raw if (raw and str(raw).strip()) else "MPyNode!"
+chars   = list(str(msg))
+n       = len(chars)
+idx     = np.arange(n, dtype=np.float64)
 
-dur = float(self.loopDuration)
-speed = (1.0 / dur) if dur != 0.0 else 0.0    # loops per wall-clock second
-cyc = self.wallclock * speed                  # loop position; its fraction is the phase
-phase = TWO_PI * cyc
+dur     = float(self.loopDuration)
+speed   = (1.0 / dur) if dur != 0.0 else 0.0  # loops per wall-clock second
+cyc     = self.wallclock * speed              # loop position; its fraction is the phase
+phase   = TWO_PI * cyc
 
 spacing = self.spacing
-wave = self.waveHeight
+wave    = self.waveHeight
 
 # layout along X with a slow one-per-loop horizontal sway
-xs = (idx - (n - 1) / 2.0) * spacing + 1.2 * np.sin(phase)
-ys = wave * np.sin(idx * 0.7 - 2.0 * phase)     # 2 travelling waves / loop
-zs = 0.5 * np.cos(idx * 0.5 - 1.0 * phase)
+xs        = (idx - (n - 1) / 2.0) * spacing + 1.2 * np.sin(phase)
+ys        = wave * np.sin(idx * 0.7 - 2.0 * phase)     # 2 travelling waves / loop
+zs        = 0.5 * np.cos(idx * 0.5 - 1.0 * phase)
 positions = np.stack([xs, ys, zs], axis=1).astype(np.float32)
 
 # scrolling rainbow (hue cycles once per loop + per-glyph offset)
-rgb = hue2rgb(idx / max(n, 1) + cyc)
+rgb    = hue2rgb(idx / max(n, 1) + cyc)
 colors = np.concatenate([rgb, np.ones((n, 1))], axis=1).astype(np.float32)
 if bool(getattr(self, "selected", False)):
     colors[:] = (1.0, 1.0, 1.0, 1.0)          # flash white while selected
@@ -65,10 +65,10 @@ psize = (5.0 + 6.0 * np.abs(np.sin(idx * 0.9 + 2.0 * phase))).astype(np.float32)
 # pts[:-1] / pts[1:] segment split itself -- including trimming the per-vertex
 # colours to the segment count, which is easy to forget by hand and silently
 # rejects the whole buffer when the lengths disagree.
-m = 64
-lx = np.linspace(xs.min() - 1.0, xs.max() + 1.0, m)
-ly = 0.7 * np.sin(lx * 0.8 + 1.0 * phase) - 2.4
-pts = np.stack([lx, ly, np.zeros(m)], axis=1).astype(np.float32)
+m    = 64
+lx   = np.linspace(xs.min() - 1.0, xs.max() + 1.0, m)
+ly   = 0.7 * np.sin(lx * 0.8 + 1.0 * phase) - 2.4
+pts  = np.stack([lx, ly, np.zeros(m)], axis=1).astype(np.float32)
 lrgb = hue2rgb(lx * 0.04 + cyc)
 lcol = np.concatenate([lrgb, np.ones((m, 1))], axis=1).astype(np.float32)
 

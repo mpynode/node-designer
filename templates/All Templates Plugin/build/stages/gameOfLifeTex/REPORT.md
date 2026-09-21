@@ -22,16 +22,16 @@
 # helper), the first-run seed is hasattr-guarded (persistent state must be written
 # before it is read), uvCoord is indexed rather than tuple-unpacked, and the
 # sampled cell is float()-ed (an indexed element is a rank-0 array, not a scalar).
-hh = max(1, int(self.height))
-ww = max(1, int(self.width))
-fr = float(self.frame)
-dens = float(self.density)
+hh       = max(1, int(self.height))
+ww       = max(1, int(self.width))
+fr       = float(self.frame)
+dens     = float(self.density)
 reset_on = int(self.reset) == 1
 if not hasattr(self, "board"):
-    self.board = _gol_seed(hh, ww, dens, seed=int(fr) if reset_on else 0)
-    self.lastFrame = fr
+    self.board      = _gol_seed(hh, ww, dens, seed=int(fr) if reset_on else 0)
+    self.lastFrame  = fr
     self.bakedFrame = -1.0
-board = self.board
+board     = self.board
 shape_bad = (int(board.shape[0]) != hh or int(board.shape[1]) != ww)
 if shape_bad or fr != self.lastFrame:
     if reset_on or shape_bad:
@@ -40,22 +40,22 @@ if shape_bad or fr != self.lastFrame:
         board = _gol_seed(hh, ww, dens, seed=int(fr) if reset_on else 0)
     else:
         board = _gol_step(board)
-    self.board = board
+    self.board     = board
     self.lastFrame = fr
 # Bake the frame for the OSL/Arnold tier, which samples the file (Game of Life is
 # stateful, so a shader cannot evaluate it from (u, v, t)). The result is ASSIGNED:
 # a blessed call left as a bare statement is dropped from the emitted C++.
 if self.bakePath != "" and fr != self.bakedFrame:
-    baked = self.write_texture(self.bakePath, _gol_rgba(board))
+    baked           = self.write_texture(self.bakePath, _gol_rgba(board))
     self.bakedFrame = fr
 h, w = int(board.shape[0]), int(board.shape[1])
-u = self.uvCoord[0]
-v = self.uvCoord[1]
-uu = u - np.floor(u)
-vv = v - np.floor(v)
-cx = min(w - 1, int(uu * w))
-cy = min(h - 1, int((1.0 - vv) * h))
-alive = 1.0 if float(board[cy, cx]) > 0.5 else 0.0
+u             = self.uvCoord[0]
+v             = self.uvCoord[1]
+uu            = u - np.floor(u)
+vv            = v - np.floor(v)
+cx            = min(w - 1, int(uu * w))
+cy            = min(h - 1, int((1.0 - vv) * h))
+alive         = 1.0 if float(board[cy, cx]) > 0.5 else 0.0
 self.outColor = (alive, alive, alive)
 self.outAlpha = 1.0
 ```

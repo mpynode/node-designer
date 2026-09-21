@@ -1373,7 +1373,7 @@ class NDAssistantPanel(QWidget):
 
     def _on_refresh_models(self):
         self._save_key()
-        provider = self._current_provider()
+        provider  = self._current_provider()
         cli_fetch = self._cli_model_fetcher(provider)
         if cli_fetch is not None:
             # A CLI provider authenticates through the machine's own login, so

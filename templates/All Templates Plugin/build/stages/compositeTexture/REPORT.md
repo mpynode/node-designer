@@ -43,10 +43,10 @@ u = self.uvCoord[0]
 v = self.uvCoord[1]
 
 # Accumulate over transparent black, bottom layer first.
-cr = 0.0
-cg = 0.0
-cb = 0.0
-ca = 0.0
+cr   = 0.0
+cg   = 0.0
+cb   = 0.0
+ca   = 0.0
 n_op = len(self.opacities)
 for i in range(len(self.layers)):
     r, g, b, a_src = self.sample_texture(self.read_texture(self.layers[i]),
@@ -54,7 +54,7 @@ for i in range(len(self.layers)):
     op = 1.0
     if i < n_op:
         op = float(self.opacities[i])
-    a = a_src * op
+    a  = a_src * op
     cr = r * a + cr * (1.0 - a)
     cg = g * a + cg * (1.0 - a)
     cb = b * a + cb * (1.0 - a)

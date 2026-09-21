@@ -72,7 +72,7 @@ import maya.cmds as mc
 # path was measured running four benchmarks at once. So the caller that knows it
 # holds nothing is the one that asks for the lock.
 _LOCK_CHILD_ENV = "MPYNODE_BENCH_LOCK_CHILD"
-_OFF = ("", "0", "off", "false", "no")
+_OFF            = ("", "0", "off", "false", "no")
 
 
 def _bench_lock(label):
@@ -118,7 +118,7 @@ def _builtin_scene_key(node_type):
     """
     if node_type in _BUILTIN:
         return node_type
-    low = (node_type or "").lower()
+    low   = (node_type or "").lower()
     cands = [k for k in _BUILTIN if low.startswith(k.lower())]
     return max(cands, key=len) if cands else None
 
@@ -229,7 +229,7 @@ def _fingerprint_outputs(mc, om, node, pulls):
     two fingerprints always cover the same plugs."""
     fp = {}
     for attr, is_arr in pulls:
-        base = "%s.%s" % (node, attr)
+        base  = "%s.%s" % (node, attr)
         entry = {"kind": "opaque", "count": 0, "values": []}
         try:
             idx = None
@@ -295,13 +295,13 @@ def _bake_asset(path, n):
     """
     import numpy as np
     import maya.api.OpenMaya as om
-    ramp = np.linspace(0, 255, n).astype(np.uint8)
-    a = np.empty((n, n, 4), np.uint8)
+    ramp      = np.linspace(0, 255, n).astype(np.uint8)
+    a         = np.empty((n, n, 4), np.uint8)
     a[..., 0] = ramp[None, :]
     a[..., 1] = ramp[:, None]
     a[..., 2] = 128
     a[..., 3] = 255
-    img = om.MImage()
+    img       = om.MImage()
     img.create(n, n, 4, om.MImage.kByte)
     img.setPixels(bytes(a.tobytes()), n, n)
     img.writeToFile(path, "png")
@@ -459,9 +459,9 @@ def main():
     ap.add_argument("bundle")
     ap.add_argument("node_type")
     ap.add_argument("--out", default=None)
-    ap.add_argument("--iters", type=int, default=9)
+    ap.add_argument("--iters",  type=int, default=9)
     ap.add_argument("--warmup", type=int, default=3)
-    ap.add_argument("--res", type=int, default=16)
+    ap.add_argument("--res",    type=int, default=16)
     ap.add_argument("--scene", default=None)
     # The spec drives UNIVERSAL seeding: every supported input plug (single and
     # array) gets a value and every supported output plug gets pulled. Without
@@ -515,7 +515,7 @@ def main():
         else:
             _bkey = _builtin_scene_key(args.node_type)
             if _bkey:
-                ops = _BUILTIN[_bkey](args.res)
+                ops         = _BUILTIN[_bkey](args.res)
                 scene_label = "builtin:%s@res%d" % (_bkey, args.res)
             else:
                 ops = []
@@ -544,7 +544,7 @@ def main():
             rep = _verify.seed_bench_scene(mc, node, spec,
                                            k_array=args.bench_array,
                                            geo_density=args.bench_geo)
-            result["driven"] = ["%s:%s(%s)" % r for r in rep["driven"]]
+            result["driven"]  = ["%s:%s(%s)" % r for r in rep["driven"]]
             result["skipped"] = ["%s:%s(%s)" % r for r in rep["skipped"]]
             result["sized_outputs"] = ["%s[%d]->%s" % o
                                        for o in rep.get("outputs", [])]
@@ -649,7 +649,7 @@ def main():
             except Exception:
                 _perturb = None
         result["perturbed"] = _perturb is not None
-        result["moved"] = list(getattr(_perturb, "moved", None) or [])
+        result["moved"]     = list(getattr(_perturb, "moved", None) or [])
         if args.copies > 1:
             # One perturbation per instance (the first node's is copy_perturbs[0]
             # when a spec drives it), so no copy answers a tick from cache.
@@ -691,7 +691,7 @@ def main():
             # was accepted at "95x". Refuse to report a timing instead. Flagged
             # separately from a crash so the optimizer's ladder can GROW the
             # scene rather than give up.
-            _empt = [_geo_emptiness(p, om) for p in plugs]
+            _empt  = [_geo_emptiness(p, om) for p in plugs]
             _known = [e for e in _empt if e is not None]
             if _known and all(_known):
                 result["empty_output"] = True
@@ -722,8 +722,8 @@ def main():
                 samples.append((t1 - t0) * 1000.0)
 
         result["samples_ms"] = [round(x, 4) for x in samples]
-        result["median_ms"] = round(_median(samples), 4)
-        result["ok"] = result["median_ms"] is not None
+        result["median_ms"]  = round(_median(samples), 4)
+        result["ok"]         = result["median_ms"] is not None
     except Exception:
         import traceback
         result["errors"].append(traceback.format_exc())

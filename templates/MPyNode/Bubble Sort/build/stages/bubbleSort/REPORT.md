@@ -26,7 +26,7 @@
 #
 # (Imports live in the Init tab.)
 
-n = len(self.sort)
+n     = len(self.sort)
 reset = self.reset
 
 # (re)generate normalized [0, 1] data: first eval, output-count change,
@@ -38,7 +38,7 @@ if reset == 2 and getattr(self, 'sorted', False):
     regen = True
 
 if regen:
-    self.data = [random.random() for _ in range(n)]
+    self.data   = [random.random() for _ in range(n)]
     self.sorted = False
 
 # one bubble pass (skipped while held in True so it keeps reshuffling)

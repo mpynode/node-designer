@@ -21,19 +21,19 @@
 # is fully configured so a partial state never raises.
 _ok = True
 try:
-    rest = self.meshOrig.points
+    rest     = self.meshOrig.points
     deformed = self.mesh.points
     # Tags are authored on the deforming `mesh` (visible twistTubeShape); resolve
     # membership LIVE off its data so tag edits take effect immediately.
-    cl = np.asarray(self.mesh.tag_clusters(self.clusterTags), dtype=np.int64)
+    cl   = np.asarray(self.mesh.tag_clusters(self.clusterTags), dtype=np.int64)
     bind = np.asarray(self.bindMatrices, dtype=np.float64).reshape(-1, 4, 4)
     # cluster count (live from clusterTags) and bind count (the per-ring offset
     # INPUT) can diverge the instant a user adds/removes a tag NAME from the
     # multi-string input. procrustes_clusters broadcasts bind row-for-row against
     # clusters, so a mismatch would raise -- clamp both to the common length so a
     # tag edit is a clean partial update rather than a crash.
-    _n = min(cl.shape[0], bind.shape[0])
-    cl = cl[:_n]
+    _n   = min(cl.shape[0], bind.shape[0])
+    cl   = cl[:_n]
     bind = bind[:_n]
 except Exception:
     _ok = False

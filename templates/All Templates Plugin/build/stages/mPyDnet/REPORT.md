@@ -38,7 +38,7 @@ if not hasattr(self, 'node'):
     self.node = Solver(self.previous)
 
 matrices = np.asarray(self.matrices, dtype=np.float64).reshape(-1, 4, 4)
-N = matrices.shape[0]
+N        = matrices.shape[0]
 
 if self.evaluate and N > 0:
     # anchors dense to the knot count (unset knots read 0 == free).
@@ -52,11 +52,11 @@ if self.evaluate and N > 0:
     # wired so a bare (no-demo) node still relaxes into a line.
     index0 = np.asarray(self.index0, dtype=np.int32).ravel()
     index1 = np.asarray(self.index1, dtype=np.int32).ravel()
-    L = min(index0.shape[0], index1.shape[0])
+    L      = min(index0.shape[0], index1.shape[0])
     if L == 0 and N >= 2:
         index0 = np.arange(N - 1, dtype=np.int32)
         index1 = np.arange(1, N, dtype=np.int32)
-        L = N - 1
+        L      = N - 1
     else:
         index0 = index0[:L]
         index1 = index1[:L]
@@ -65,21 +65,21 @@ if self.evaluate and N > 0:
         a = np.asarray(v, dtype=np.float64).ravel()
         if a.shape[0] >= L:
             return a[:L]
-        out = np.full(L, neutral, dtype=np.float64)
+        out              = np.full(L, neutral, dtype=np.float64)
         out[:a.shape[0]] = a
         return out
 
-    restLengths = _dense(self.restLengths, 1.0)   # rest length per link
-    tension = _dense(self.tension, 0.0)           # per-link contraction (0 = none)
-    push = _dense(self.push, 1.0)                 # per-link compression resistance
-    pull = _dense(self.pull, 1.0)                 # per-link stretch resistance
+    restLengths = _dense(self.restLengths, 1.0)  # rest length per link
+    tension     = _dense(self.tension,     0.0)  # per-link contraction (0 = none)
+    push        = _dense(self.push,        1.0)  # per-link compression resistance
+    pull        = _dense(self.pull,        1.0)  # per-link stretch resistance
 
     self.node.evaluate(matrices, anchors, restLengths,
                        inverseMatrix=self.inverseMatrix, index0=index0, index1=index1,
                        tensions=tension, push=push, pull=pull,
-                       reset=self.resetBuffer,
-                       iterations=self.iterations,
-                       tolerance=self.tolerance,
+                       reset      = self.resetBuffer,
+                       iterations = self.iterations,
+                       tolerance  = self.tolerance,
                        damping=self.damping)
 
     self.positions     = self.node.local_positions

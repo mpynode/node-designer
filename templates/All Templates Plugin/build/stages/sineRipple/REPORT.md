@@ -14,8 +14,8 @@
 # Sine-ripple deformer: each vertex rides a travelling sine wave along its
 # surface normal. The wave's phase advances with distance from the mesh
 # centre and with time, so it animates as the timeline plays.
-mesh = self.outputGeometry[0]            # writable handle for this output mesh
-pts = mesh.getPoints()                   # (N, 3) object-space points (numpy)
+mesh = self.outputGeometry[0]  # writable handle for this output mesh
+pts  = mesh.getPoints()        # (N, 3) object-space points (numpy)
 
 # True per-vertex normals (object space). The output handle wraps an API-1
 # MFnMesh, so use the in-out MFloatVectorArray form.
@@ -24,14 +24,14 @@ mesh.getVertexNormals(False, nrm, om.MSpace.kObject)
 normals = np.array([[nrm[i].x, nrm[i].y, nrm[i].z]
                     for i in range(nrm.length())], dtype=float)
 
-amp = self.amplitude
-freq = self.frequency
-speed = self.speed
-env = self.envelope               # built-in deformer envelope (0..1)
+amp    = self.amplitude
+freq   = self.frequency
+speed  = self.speed
+env    = self.envelope               # built-in deformer envelope (0..1)
 
 centre = pts.mean(axis=0)
-dist = np.linalg.norm(pts - centre, axis=1)
-phase = 2.0 * np.pi * freq * dist - speed * self.time
+dist   = np.linalg.norm(pts - centre, axis=1)
+phase  = 2.0 * np.pi * freq * dist - speed * self.time
 offset = (amp * np.sin(phase))[:, None] * normals
 
 mesh.setPoints(pts + env * offset)

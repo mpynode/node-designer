@@ -31,11 +31,11 @@
 # than a red node. Bad `start` / `end` indices, degenerate faces and
 # non-manifold edges degrade the same way. Nothing here ever raises.
 
-src = getattr(self, "inMesh", None)
-pts = None if src is None else getattr(src, "points", None)
-pts = None if pts is None else np.asarray(pts, dtype=np.float64)
-counts = None if src is None else getattr(src, "counts", None)
-counts = None if counts is None else np.asarray(counts, dtype=np.int64)
+src     = getattr(self, "inMesh", None)
+pts     = None if src is None else getattr(src, "points", None)
+pts     = None if pts is None else np.asarray(pts, dtype=np.float64)
+counts  = None if src is None else getattr(src, "counts", None)
+counts  = None if counts is None else np.asarray(counts, dtype=np.int64)
 indices = None if src is None else getattr(src, "indices", None)
 indices = None if indices is None else np.asarray(indices, dtype=np.int64)
 
@@ -44,7 +44,7 @@ if (pts is None or counts is None or indices is None
         or int(counts.sum()) != int(indices.shape[0])):
     # No input, an empty one, or a point cloud with no faces to use as cells
     # -> an empty but VALID mesh, never a raise.
-    self.outMesh = Mesh()
+    self.outMesh       = Mesh()
     self.solutionSteps = 0
 else:
     n_verts = int(pts.shape[0])
@@ -55,7 +55,7 @@ else:
     nrm = getattr(src, "normals", None)
     nrm = None if nrm is None else np.asarray(nrm, dtype=np.float64)
     if nrm is None or int(nrm.shape[0]) != n_verts:
-        nrm = np.zeros((n_verts, 3), dtype=np.float64)
+        nrm       = np.zeros((n_verts, 3), dtype=np.float64)
         nrm[:, 1] = 1.0
 
     # A NEGATIVE index counts back from the end, so the documented
@@ -63,13 +63,13 @@ else:
     # Anything still out of range is CLAMPED: a typo in a face id has to
     # degrade to a maze somewhere else on the mesh, never to a red node.
     start = int(self.start)
-    end = int(self.end)
+    end   = int(self.end)
     if start < 0:
         start = n_faces + start
     if end < 0:
         end = n_faces + end
     start = min(max(start, 0), n_faces - 1)
-    end = min(max(end, 0), n_faces - 1)
+    end   = min(max(end, 0), n_faces - 1)
 
     key, fv_face = _maze_edges(counts, indices, n_verts)
     uniq, inv, ei, adj_start, deg, adj_dst, adj_eid = _maze_dual(
@@ -90,8 +90,8 @@ else:
     # `parent` back from `end` IS the one path between them. `solutionSteps`
     # reports its length -- 0 when `end` was never reached -- so `solutionStep`
     # can be keyed exactly from the entrance (0) to the exit (n).
-    path = _maze_solution(parent, visited, start, end)
-    n_steps = max(int(path.shape[0]) - 1, 0)
+    path               = _maze_solution(parent, visited, start, end)
+    n_steps            = max(int(path.shape[0]) - 1, 0)
     self.solutionSteps = n_steps
 
     # An edge is LIVE when any face it touches was reached. Doors are carved
@@ -105,13 +105,13 @@ else:
     is_door[ei[door]] = True
     wall = np.nonzero(live & ~is_door)[0]
 
-    h = float(self.wallHeight)
+    h    = float(self.wallHeight)
     half = 0.5 * float(self.wallThickness)
-    wp = np.zeros((0, 3), dtype=np.float64)
-    wc = np.zeros(0, dtype=np.int64)
-    wi = np.zeros(0, dtype=np.int64)
+    wp   = np.zeros((0, 3), dtype=np.float64)
+    wc   = np.zeros(0,      dtype=np.int64)
+    wi   = np.zeros(0,      dtype=np.int64)
     if int(wall.shape[0]) > 0:
-        k = uniq[wall]
+        k  = uniq[wall]
         va = k // np.int64(n_verts)
         vb = k - va * np.int64(n_verts)
         wp, wc, wi = _maze_walls(pts, nrm, va, vb, h, half)
@@ -121,8 +121,8 @@ else:
     # a tenth of the wall height so it does not z-fight the floor. Switched
     # off, or no path at all, draws nothing -- never an error.
     tp = np.zeros((0, 3), dtype=np.float64)
-    tc = np.zeros(0, dtype=np.int64)
-    ti = np.zeros(0, dtype=np.int64)
+    tc = np.zeros(0,      dtype=np.int64)
+    ti = np.zeros(0,      dtype=np.int64)
     if bool(self.drawSolution) and int(path.shape[0]) > 0:
         upto = min(max(int(self.solutionStep), 0), n_steps) + 1
         tp, tc, ti = _maze_tiles(pts, nrm, counts, indices, path[:upto],
@@ -141,8 +141,8 @@ else:
             np.zeros((int(tp.shape[0]), 3), dtype=np.float64) + path_col[None, :]],
             axis=0)
         self.outMesh = Mesh(points=np.concatenate([wp, tp], axis=0),
-                            counts=np.concatenate([wc, tc]),
-                            indices=np.concatenate([wi, ti + np.int64(wp.shape[0])]),
+                            counts  = np.concatenate([wc, tc]),
+                            indices = np.concatenate([wi, ti + np.int64(wp.shape[0])]),
                             colors=col)
 ```
 

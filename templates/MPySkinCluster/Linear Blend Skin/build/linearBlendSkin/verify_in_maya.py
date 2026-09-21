@@ -7,14 +7,14 @@ envelope/input samples.
 import os, random
 import maya.cmds as cmds
 
-BUNDLE = os.path.join(os.path.dirname(__file__), 'linearBlendSkin.mll')
-NODE_TYPE = 'linearBlendSkin'
-SRC_TYPE = 'mPySkinCluster'
-COMPUTE = "# ----------------------------------------------------------------------\n# mPySkinCluster -- default Compute source: linear blend skinning (LBS)\n#\n# The skinning math is the blessed API method self.linear_blend(rest,\n# weights, joint, bind). Every operand is passed EXPLICITLY -- the method reads\n# nothing off self -- so the plug dependencies are visible right here. They are\n# the same plugs Maya's Component Editor / Paint Skin Weights / skinPercent edit:\n#   self.weightList     -> dense (N, J) per-vertex, per-influence weights\n#   self.matrix         -> (J, 4, 4) live joint WORLD matrices\n#   self.bindPreMatrix  -> (J, 4, 4) joint bind-pose inverse matrices\n# It blends M_j = bindPreMatrix_j @ jointWorld_j linearly (identity at the bind\n# pose, so the mesh stays at rest until a joint moves) and returns the deformed\n# object-space points (N, 3); the envelope + write stay here so partial-effect\n# composition is explicit.\n#\n# self.outputGeometry[0] is the writable mesh handle (object space). It holds a\n# copy of the input geometry, so getPoints() == rest and setPoints() commits the\n# deform. A deformer cannot change topology -- setPoints must keep the same N.\n# ----------------------------------------------------------------------\n\nmesh = self.outputGeometry[0]\nrest = mesh.getPoints()                         # (N, 3) object-space rest points\n\n# Linear blend skinning of the rest points (envelope=0 rest, 1 fully skinned).\nmesh.setPoints(rest + float(self.envelope) * (\n    self.linear_blend(rest, self.weightList, self.matrix, self.bindPreMatrix)\n    - rest))\n"
-INIT = 'import numpy as np\n'
+BUNDLE      = os.path.join(os.path.dirname(__file__), 'linearBlendSkin.mll')
+NODE_TYPE   = 'linearBlendSkin'
+SRC_TYPE    = 'mPySkinCluster'
+COMPUTE     = "# ----------------------------------------------------------------------\n# mPySkinCluster -- default Compute source: linear blend skinning (LBS)\n#\n# The skinning math is the blessed API method self.linear_blend(rest,\n# weights, joint, bind). Every operand is passed EXPLICITLY -- the method reads\n# nothing off self -- so the plug dependencies are visible right here. They are\n# the same plugs Maya's Component Editor / Paint Skin Weights / skinPercent edit:\n#   self.weightList     -> dense (N, J) per-vertex, per-influence weights\n#   self.matrix         -> (J, 4, 4) live joint WORLD matrices\n#   self.bindPreMatrix  -> (J, 4, 4) joint bind-pose inverse matrices\n# It blends M_j = bindPreMatrix_j @ jointWorld_j linearly (identity at the bind\n# pose, so the mesh stays at rest until a joint moves) and returns the deformed\n# object-space points (N, 3); the envelope + write stay here so partial-effect\n# composition is explicit.\n#\n# self.outputGeometry[0] is the writable mesh handle (object space). It holds a\n# copy of the input geometry, so getPoints() == rest and setPoints() commits the\n# deform. A deformer cannot change topology -- setPoints must keep the same N.\n# ----------------------------------------------------------------------\n\nmesh = self.outputGeometry[0]\nrest = mesh.getPoints()                         # (N, 3) object-space rest points\n\n# Linear blend skinning of the rest points (envelope=0 rest, 1 fully skinned).\nmesh.setPoints(rest + float(self.envelope) * (\n    self.linear_blend(rest, self.weightList, self.matrix, self.bindPreMatrix)\n    - rest))\n"
+INIT        = 'import numpy as np\n'
 USER_INPUTS = {}
-IS_SKIN = True
-TOL = 1e-3
+IS_SKIN     = True
+TOL         = 1e-3
 
 
 def _sample(t):
@@ -38,7 +38,7 @@ def _pts(mesh):
 
 def _apply(deformer_type, configure):
     tr = cmds.polySphere(r=1, sx=12, sy=12, ch=False)[0]
-    d = cmds.deformer(tr, type=deformer_type)[0]
+    d  = cmds.deformer(tr, type=deformer_type)[0]
     if configure:
         configure(d)
     return tr, d

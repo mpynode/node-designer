@@ -7,14 +7,14 @@ envelope/input samples.
 import os, random
 import maya.cmds as cmds
 
-BUNDLE = os.path.join(os.path.dirname(__file__), 'unitSphereCollision.bundle')
-NODE_TYPE = 'unitSphereCollision'
-SRC_TYPE = 'mPyDeformer'
-COMPUTE = '# Unit-sphere collision deformer (accumulating "pusher" port). Every vertex\n# INSIDE the collider sphere is pushed onto its surface, and the pushed result\n# is kept in a persistent buffer (self.positions) so the deformation BAKES --\n# once the collider passes, the dent stays put (it does not spring back). The\n# collider is the UNIT sphere in the local space of the `pusher` matrix, so\n# wiring a sphere transform\'s worldMatrix into `pusher` makes its translate /\n# rotate / scale set the collider\'s centre, orientation and effective radius.\n#\n# self.positions is registered + seeded by the node\'s setup from the mesh\'s\n# initial points; if it is missing or stale (topology change) it is re-seeded\n# here from the current input. A deformer is not evaluated until a mesh is\n# connected, so nothing computes before then.\n#\n# WARNING: getPoints()/setPoints() are OBJECT space while `pusher` is a WORLD\n# matrix, so this is only correct when the deformed mesh has an identity\n# transform at the world origin (freeze its transform).\nmesh = self.outputGeometry[0]\npts = mesh.getPoints()                         # (N, 3) current input, object space\nif len(pts):\n    seed = np.hstack([np.asarray(pts, dtype=float), np.ones((len(pts), 1))])\n    try:\n        buf = np.asarray(self.positions, dtype=float)\n    except Exception:\n        buf = None\n    if buf is None or buf.ndim != 2 or buf.shape != (len(pts), 4):\n        buf = seed                             # first eval / topology change -> seed\n\n    P = buf.copy()\n    M = self.pusher                            # collider world matrix (MatrixView)\n    inv = M.inverse().asNumpy()                # api2 analytic inverse (EM-safe)\n    fwd = np.asarray(M, dtype=float)\n\n    local = P @ inv                            # accumulated buffer -> collider local\n    dist = np.linalg.norm(local[:, :3], axis=1)\n    inside = (dist > 0.0) & (dist < 1.0)       # guard dist==0 (no push direction)\n    local[inside, :3] = local[inside, :3] / dist[inside, None]   # onto surface\n    P = local @ fwd                            # back to object space (buffer accumulates)\n\n    self.positions = P                         # persist the baked buffer\n    env = self.envelope                 # blend the baked buffer against rest\n    mesh.setPoints(pts + env * (P[:, :3] - pts))\n'
-INIT = 'import numpy as np\n'
+BUNDLE      = os.path.join(os.path.dirname(__file__), 'unitSphereCollision.bundle')
+NODE_TYPE   = 'unitSphereCollision'
+SRC_TYPE    = 'mPyDeformer'
+COMPUTE     = '# Unit-sphere collision deformer (accumulating "pusher" port). Every vertex\n# INSIDE the collider sphere is pushed onto its surface, and the pushed result\n# is kept in a persistent buffer (self.positions) so the deformation BAKES --\n# once the collider passes, the dent stays put (it does not spring back). The\n# collider is the UNIT sphere in the local space of the `pusher` matrix, so\n# wiring a sphere transform\'s worldMatrix into `pusher` makes its translate /\n# rotate / scale set the collider\'s centre, orientation and effective radius.\n#\n# self.positions is registered + seeded by the node\'s setup from the mesh\'s\n# initial points; if it is missing or stale (topology change) it is re-seeded\n# here from the current input. A deformer is not evaluated until a mesh is\n# connected, so nothing computes before then.\n#\n# WARNING: getPoints()/setPoints() are OBJECT space while `pusher` is a WORLD\n# matrix, so this is only correct when the deformed mesh has an identity\n# transform at the world origin (freeze its transform).\nmesh = self.outputGeometry[0]\npts = mesh.getPoints()                         # (N, 3) current input, object space\nif len(pts):\n    seed = np.hstack([np.asarray(pts, dtype=float), np.ones((len(pts), 1))])\n    try:\n        buf = np.asarray(self.positions, dtype=float)\n    except Exception:\n        buf = None\n    if buf is None or buf.ndim != 2 or buf.shape != (len(pts), 4):\n        buf = seed                             # first eval / topology change -> seed\n\n    P = buf.copy()\n    M = self.pusher                            # collider world matrix (MatrixView)\n    inv = M.inverse().asNumpy()                # api2 analytic inverse (EM-safe)\n    fwd = np.asarray(M, dtype=float)\n\n    local = P @ inv                            # accumulated buffer -> collider local\n    dist = np.linalg.norm(local[:, :3], axis=1)\n    inside = (dist > 0.0) & (dist < 1.0)       # guard dist==0 (no push direction)\n    local[inside, :3] = local[inside, :3] / dist[inside, None]   # onto surface\n    P = local @ fwd                            # back to object space (buffer accumulates)\n\n    self.positions = P                         # persist the baked buffer\n    env = self.envelope                 # blend the baked buffer against rest\n    mesh.setPoints(pts + env * (P[:, :3] - pts))\n'
+INIT        = 'import numpy as np\n'
 USER_INPUTS = {"pusher": "matrix"}
-IS_SKIN = False
-TOL = 1e-3
+IS_SKIN     = False
+TOL         = 1e-3
 
 
 def _sample(t):
@@ -38,7 +38,7 @@ def _pts(mesh):
 
 def _apply(deformer_type, configure):
     tr = cmds.polySphere(r=1, sx=12, sy=12, ch=False)[0]
-    d = cmds.deformer(tr, type=deformer_type)[0]
+    d  = cmds.deformer(tr, type=deformer_type)[0]
     if configure:
         configure(d)
     return tr, d

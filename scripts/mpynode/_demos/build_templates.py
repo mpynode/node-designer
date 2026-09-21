@@ -7682,10 +7682,10 @@ def build_locator_circular_text():
     w.add_input_attr("invertAim", "enum", enum_names=["False", "True"])
     w.add_input_attr("upAxis", "enum", enum_names=["x", "y", "z"],
                      default_value=1)
-    w.add_input_attr("invertUp", "enum", enum_names=["False", "True"])
-    w.add_input_attr("textStyle", "enum", enum_names=["filled", "lines"])
-    w.add_input_attr("ringStyle", "enum", enum_names=["shaded", "lines"])
-    w.add_input_attr("color", "color", default_value=(1.0, 0.85, 0.2))
+    w.add_input_attr("invertUp",  "enum",  enum_names=["False", "True"])
+    w.add_input_attr("textStyle", "enum",  enum_names=["filled", "lines"])
+    w.add_input_attr("ringStyle", "enum",  enum_names=["shaded", "lines"])
+    w.add_input_attr("color",     "color", default_value=(1.0, 0.85, 0.2))
     w.add_input_attr("alpha", "float", default_value=1.0, min_value=0.0,
                      max_value=1.0)
     w.set_init_expression(LOC_RING_INIT)
@@ -7718,8 +7718,8 @@ def build_locator_circular_text():
     # top of it, and no lines at all; `lines` trades the band for the two
     # guide rings. Blank text falls back to MPyNode, all of it A-Z, so no
     # stroke fallback is needed.
-    bs         = _bufs()
-    b0         = _bufs(displayText="", ringStyle=1)
+    bs = _bufs()
+    b0 = _bufs(displayText="", ringStyle=1)
     default_ok = (len(bs.get("polygons", [])) == 2
                   and "vertex_colors" in bs["polygons"][0]
                   and "colors" in bs["polygons"][1]
@@ -7737,8 +7737,8 @@ def build_locator_circular_text():
     p90     = _pts(_bufs(roll=90.0))
     roll_ok = (float(p90[:, 0].mean()) > 5.0
                and abs(float(p90[:, 2].mean())) < 1.5)
-    pt         = _pts(_bufs(roll=0.0, tilt=90.0))
-    rad        = np.sqrt(pt[:, 0] ** 2 + pt[:, 2] ** 2)
+    pt  = _pts(_bufs(roll=0.0, tilt=90.0))
+    rad = np.sqrt(pt[:, 0] ** 2 + pt[:, 2] ** 2)
     upright_ok = (float(pt[:, 1].max()) > 1.4
                   and float(np.abs(rad - 10.0).max()) < 1e-6)
 
@@ -7759,17 +7759,17 @@ def build_locator_circular_text():
     tracking_ok = two > one * 1.6
 
     # A negative radius flips to the far side; the axis enums move the ring.
-    pn      = _pts(_bufs(tracking=1.0, radius=-10.0))
-    neg_ok  = float(pn[:, 2].mean()) < -5.0
-    pz      = _pts(_bufs(radius=10.0, aimAxis=0, upAxis=2))
+    pn     = _pts(_bufs(tracking=1.0, radius=-10.0))
+    neg_ok = float(pn[:, 2].mean()) < -5.0
+    pz     = _pts(_bufs(radius=10.0, aimAxis=0, upAxis=2))
     axes_ok = (float(np.abs(pz[:, 2]).max()) < 1e-6
                and float(pz[:, 0].mean()) > 5.0)
     pi      = _pts(_bufs(invertAim=1))
     axes_ok = axes_ok and float(pi[:, 0].mean()) < -5.0
 
     # style: lines drops the polygons; a digit falls back to strokes.
-    bl       = _bufs(aimAxis=2, upAxis=1, invertAim=0, textStyle=1)
-    bd       = _bufs(textStyle=0, displayText="A1")
+    bl = _bufs(aimAxis=2, upAxis=1, invertAim=0, textStyle=1)
+    bd = _bufs(textStyle=0, displayText="A1")
     style_ok = (not bl.get("polygons")
                 and len(bl.get("lines", [])) == 3
                 and len(bd.get("polygons", [])) == 1
@@ -7818,10 +7818,10 @@ def build_locator_circular_text():
 
     # `lines` gets the same treatment: gapped arcs that fade out as they
     # reach the text, instead of two closed rings ruled through it.
-    bg  = _bufs(ringStyle=1, textStyle=0, displayText="MPyNode", alpha=0.8)
-    ga  = np.asarray(bg["lines"][0]["starts"], dtype=np.float64)
-    gc  = np.asarray(bg["lines"][0]["colors"], dtype=np.float64)
-    gp  = np.asarray(bg["polygons"][0]["points"], dtype=np.float64)
+    bg = _bufs(ringStyle=1, textStyle=0, displayText="MPyNode", alpha=0.8)
+    ga = np.asarray(bg["lines"][0]["starts"],    dtype=np.float64)
+    gc = np.asarray(bg["lines"][0]["colors"],    dtype=np.float64)
+    gp = np.asarray(bg["polygons"][0]["points"], dtype=np.float64)
     guide_ok = (len(bg["lines"]) == 2
                 and float(np.abs(np.arctan2(ga[:, 0], ga[:, 2])).min())
                     > float(np.abs(np.arctan2(gp[:, 0], gp[:, 2])).max()) + 1e-3

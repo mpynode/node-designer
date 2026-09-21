@@ -15,7 +15,7 @@
 # locator (no auto_refresh). The `preset` enum selects which draw slots
 # light up; a persistent `presets` dict (if present) overrides the shipped
 # DEFAULT_PRESETS. Unassigned slots stay None and simply don't draw.
-preset = self.preset.name()
+preset  = self.preset.name()
 presets = getattr(self, "presets", None)
 if not isinstance(presets, dict):
     presets = DEFAULT_PRESETS

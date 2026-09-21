@@ -28,7 +28,7 @@
 # matrix, so this is only correct when the deformed mesh has an identity
 # transform at the world origin (freeze its transform).
 mesh = self.outputGeometry[0]
-pts = mesh.getPoints()                         # (N, 3) current input, object space
+pts  = mesh.getPoints()                         # (N, 3) current input, object space
 if len(pts):
     seed = np.hstack([np.asarray(pts, dtype=float), np.ones((len(pts), 1))])
     try:
@@ -38,19 +38,19 @@ if len(pts):
     if buf is None or buf.ndim != 2 or buf.shape != (len(pts), 4):
         buf = seed                             # first eval / topology change -> seed
 
-    P = buf.copy()
-    M = self.pusher                            # collider world matrix (MatrixView)
-    inv = M.inverse().asNumpy()                # api2 analytic inverse (EM-safe)
+    P   = buf.copy()
+    M   = self.pusher            # collider world matrix (MatrixView)
+    inv = M.inverse().asNumpy()  # api2 analytic inverse (EM-safe)
     fwd = np.asarray(M, dtype=float)
 
-    local = P @ inv                            # accumulated buffer -> collider local
-    dist = np.linalg.norm(local[:, :3], axis=1)
-    inside = (dist > 0.0) & (dist < 1.0)       # guard dist==0 (no push direction)
-    local[inside, :3] = local[inside, :3] / dist[inside, None]   # onto surface
-    P = local @ fwd                            # back to object space (buffer accumulates)
+    local             = P @ inv                                 # accumulated buffer -> collider local
+    dist              = np.linalg.norm(local[:, :3], axis=1)
+    inside            = (dist > 0.0) & (dist < 1.0)             # guard dist==0 (no push direction)
+    local[inside, :3] = local[inside, :3] / dist[inside, None]  # onto surface
+    P                 = local @ fwd                             # back to object space (buffer accumulates)
 
-    self.positions = P                         # persist the baked buffer
-    env = self.envelope                 # blend the baked buffer against rest
+    self.positions = P              # persist the baked buffer
+    env            = self.envelope  # blend the baked buffer against rest
     mesh.setPoints(pts + env * (P[:, :3] - pts))
 ```
 

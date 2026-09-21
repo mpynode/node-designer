@@ -28,8 +28,8 @@ mesh = self.inMesh
 _tag = getattr(self, "regionTag", None)
 # ONE read of the input data, shared by the tag membership and the source
 # transform below (both live on the same MFnGeometryData).
-_mdata = mesh_data_from_node_plug(node_name_from_self(self), "inMesh")
-_wmat = mesh_matrix_from_mesh_data(_mdata)
+_mdata  = mesh_data_from_node_plug(node_name_from_self(self), "inMesh")
+_wmat   = mesh_matrix_from_mesh_data(_mdata)
 regions = None
 if _tag:
     _faces = tag_indices_from_mesh_data(_mdata, _tag)
@@ -43,11 +43,11 @@ else:
 if mesh is None or not regions:
     self.draw = None
 else:
-    offset = self.offset
-    hover_offset = self.hoverOffset
+    offset        = self.offset
+    hover_offset  = self.hoverOffset
     select_offset = self.selectOffset
-    hover_dur = max(self.hoverDur, 1e-3)
-    alpha = float(self.alpha)
+    hover_dur     = max(self.hoverDur, 1e-3)
+    alpha         = float(self.alpha)
     # Per-state RGB colours (each a 3-float `color` input) + one shared alpha.
     # The active colour tweens default->hover on the SAME elastic curve as the
     # lift, and snaps to the select colour when selected. Each input carries its
@@ -58,11 +58,11 @@ else:
     sel_c = np.asarray(self.selectColor, dtype=np.float64).ravel()[:3]
     # The outline around each patch has the SAME three states, on the same
     # curve, so it can read as its own accent rather than a fixed dark edge.
-    odef_c = np.asarray(self.outlineColor, dtype=np.float64).ravel()[:3]
-    ohov_c = np.asarray(self.outlineHoverColor, dtype=np.float64).ravel()[:3]
-    osel_c = np.asarray(self.outlineSelectColor, dtype=np.float64).ravel()[:3]
+    odef_c   = np.asarray(self.outlineColor, dtype=np.float64).ravel()[:3]
+    ohov_c   = np.asarray(self.outlineHoverColor, dtype=np.float64).ravel()[:3]
+    osel_c   = np.asarray(self.outlineSelectColor, dtype=np.float64).ravel()[:3]
 
-    hovered = bool(self.hovered)
+    hovered  = bool(self.hovered)
     selected = bool(self.selected)
     if selected:
         hovered = False          # selected shows only its selected form
@@ -73,10 +73,10 @@ else:
                        float(getattr(self, "hv_to", 0.0)), hover_dur)
     if hovered != bool(getattr(self, "hv_prev", False)):
         self.hv_start = now
-        self.hv_from = h_cur
-        self.hv_to = 1.0 if hovered else 0.0
-        self.hv_prev = hovered
-        h_e = 0.0
+        self.hv_from  = h_cur
+        self.hv_to    = 1.0 if hovered else 0.0
+        self.hv_prev  = hovered
+        h_e           = 0.0
 
     # THREE ABSOLUTE normal offsets (world units): the patch floats at `offset`
     # at rest, tweens to `hoverOffset` on hover, and snaps to `selectOffset`
@@ -125,24 +125,24 @@ else:
         # the patch draws at the ORIGIN and never follows the mesh. Maya is
         # row-vector (p * M): the 3x3 rotates/scales, row 3 translates.
         if _wmat is not None:
-            _m = np.asarray(_wmat, dtype=np.float64).reshape(4, 4)
-            pts = pts @ _m[:3, :3] + _m[3, :3]
-            nrm = nrm @ _m[:3, :3]
+            _m   = np.asarray(_wmat, dtype=np.float64).reshape(4, 4)
+            pts  = pts @ _m[:3, :3] + _m[3, :3]
+            nrm  = nrm @ _m[:3, :3]
             _mag = np.linalg.norm(nrm, axis=1, keepdims=True)
-            nrm = nrm / np.where(_mag > 1e-12, _mag, 1.0)
+            nrm  = nrm / np.where(_mag > 1e-12, _mag, 1.0)
         patches.append(DrawMesh(
             pts + nrm * lift, cnt, idx, color=rgba,
             outline=orgba, outline_width=2.0,
-            outline_boundary_only=True,   # clean outer silhouette only
-            world_space=True,             # follow the mesh, not the locator
+            outline_boundary_only = True,  # clean outer silhouette only
+            world_space           = True,  # follow the mesh, not the locator
             precise_hover=True))
 
     if not patches:
         self.draw = None
     else:
-        self.draw = patches
+        self.draw           = patches
         self.auto_highlight = False
-        self.auto_refresh = bool(h_e < 1.0)
+        self.auto_refresh   = bool(h_e < 1.0)
 ```
 
 ## Unfinished work in the generated C++

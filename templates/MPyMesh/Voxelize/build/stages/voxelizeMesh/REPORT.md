@@ -41,33 +41,33 @@
 # a null mesh, so it has no `is None` test to make.)
 src = self.inMesh
 pts = np.zeros((0, 3), dtype=np.float64)
-cnt = np.zeros(0, dtype=np.int64)
-idx = np.zeros(0, dtype=np.int64)
+cnt = np.zeros(0,      dtype=np.int64)
+idx = np.zeros(0,      dtype=np.int64)
 if src is not None and src.points is not None and src.counts is not None and src.indices is not None:
-    pts = np.asarray(src.points, dtype=np.float64)
-    cnt = np.asarray(src.counts, dtype=np.int64)
+    pts = np.asarray(src.points,  dtype=np.float64)
+    cnt = np.asarray(src.counts,  dtype=np.int64)
     idx = np.asarray(src.indices, dtype=np.int64)
-vs = max(1e-6, float(self.voxelSize))
+vs  = max(1e-6, float(self.voxelSize))
 cap = int(self.maxVoxels)
-h = 0.5 * vs
+h   = 0.5 * vs
 
 # --- O(T): triangles, per-triangle cell ranges, brake ----------------------
-tv = _vox_tris(cnt, idx)                                  # (T,3) vertex ids
-T = int(tv.shape[0])
-bounds = _vox_tri_bounds(pts, tv, vs)                     # (T,6) lo | hi cells
-span_t = bounds[:, 3:6] - bounds[:, 0:3] + 1
-per_tri = span_t[:, 0] * span_t[:, 1] * span_t[:, 2]     # cells per triangle
-M = int(per_tri.sum())                                    # candidate pairs
-base = np.zeros(3, dtype=np.int64)
-span = np.ones(3, dtype=np.int64)
-ngrid = 0
-tol = 1e-9 * vs
+tv      = _vox_tris(cnt, idx)                         # (T,3) vertex ids
+T       = int(tv.shape[0])
+bounds  = _vox_tri_bounds(pts, tv, vs)                # (T,6) lo | hi cells
+span_t  = bounds[:, 3:6] - bounds[:, 0:3] + 1
+per_tri = span_t[:, 0] * span_t[:, 1] * span_t[:, 2]  # cells per triangle
+M       = int(per_tri.sum())                          # candidate pairs
+base    = np.zeros(3, dtype=np.int64)
+span    = np.ones(3, dtype=np.int64)
+ngrid   = 0
+tol     = 1e-9 * vs
 if T > 0:
-    base = bounds[:, 0:3].min(axis=0)
-    span = bounds[:, 3:6].max(axis=0) - base + 1
-    ngrid = int(span[0] * span[1] * span[2])              # the old K^3 count
-    ext = float(np.maximum(base + span, 0 - base).max()) * vs
-    tol = 1e-9 * vs + 1e-13 * ext                         # robust touching
+    base  = bounds[:, 0:3].min(axis=0)
+    span  = bounds[:, 3:6].max(axis=0) - base + 1
+    ngrid = int(span[0] * span[1] * span[2])  # the old K^3 count
+    ext   = float(np.maximum(base + span, 0 - base).max()) * vs
+    tol   = 1e-9 * vs + 1e-13 * ext           # robust touching
 # Brake BEFORE the expansion: every voxel is one grid cell and at least one
 # candidate pair, so min(ngrid, M) bounds the count; it is never above the
 # old grid count, so no scene that computed before aborts now.
@@ -81,24 +81,24 @@ k1, = np.nonzero(_vox_plane_keep(pts, tv, cand, vs, tol))
 cand = np.take(cand, k1, axis=0)
 k2, = np.nonzero(_vox_edge_keep(pts, tv, cand, vs, tol))
 cand = np.take(cand, k2, axis=0)                          # (P,4) overlapping
-tri = cand[:, 0]
+tri  = cand[:, 0]
 cell = cand[:, 1:4]
-ctr = (cell.astype(np.float64) + 0.5) * vs
+ctr  = (cell.astype(np.float64) + 0.5) * vs
 
 # --- winner per cell + surface point ---------------------------------------
-tt = tv[tri]                                              # (P,3) corner ids
-a = pts[tt[:, 0]]
-b = pts[tt[:, 1]]
-c = pts[tt[:, 2]]
-w = _vox_bary_closest(ctr, a, b, c)                       # (P,3) weights
-q = a * w[:, 0:1] + b * w[:, 1:2] + c * w[:, 2:3]         # closest points
-dq = q - ctr
-dist2 = (dq * dq).sum(axis=1)
-win = _vox_pick(cell, dist2, base, span)                  # (S,) pair index
-cells = cell[win]
-corner = tt[win]
-wgt = w[win]
-m = int(cells.shape[0])
+tt      = tv[tri]                                        # (P,3) corner ids
+a       = pts[tt[:, 0]]
+b       = pts[tt[:, 1]]
+c       = pts[tt[:, 2]]
+w       = _vox_bary_closest(ctr, a, b, c)                # (P,3) weights
+q       = a * w[:, 0:1] + b * w[:, 1:2] + c * w[:, 2:3]  # closest points
+dq      = q - ctr
+dist2   = (dq * dq).sum(axis=1)
+win     = _vox_pick(cell, dist2, base, span)             # (S,) pair index
+cells   = cell[win]
+corner  = tt[win]
+wgt     = w[win]
+m       = int(cells.shape[0])
 centers = (cells.astype(np.float64) + 0.5) * vs
 
 # --- one colour per cube: texture -> vertex colour -> defaultColor ---------
@@ -120,8 +120,8 @@ if not got and src is not None:
             col = (vcol[corner] * wgt[:, :, None]).sum(1)[:, :3]
 
 # --- cubes -----------------------------------------------------------------
-points = _vox_cube_points(centers, h)
-counts = np.full(6 * m, 4, dtype=np.int64)
+points  = _vox_cube_points(centers, h)
+counts  = np.full(6 * m, 4, dtype=np.int64)
 indices = _vox_cube_indices(m)
 self.outMesh = Mesh(points=points, counts=counts, indices=indices,
                     colors=np.repeat(col, 8, axis=0))

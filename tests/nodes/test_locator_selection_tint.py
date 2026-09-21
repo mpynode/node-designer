@@ -34,8 +34,8 @@ class _FakeDrawManager:
     """Records the colours the override asks for; no-ops every draw call."""
 
     def __init__(self):
-        self.colors = []      # every setColor, in order
-        self.meshes = []      # (points, colors-or-None) per mesh call
+        self.colors = []  # every setColor, in order
+        self.meshes = []  # (points, colors-or-None) per mesh call
 
     def setColor(self, color):
         self.colors.append((float(color.r), float(color.g), float(color.b),

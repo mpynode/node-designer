@@ -22,11 +22,11 @@
 # `bands` = number of bands across V, `speed` = scroll rate, `intensity` = how
 # dark the troughs get (0 = flat, 1 = full black between).
 buf = self.read_texture()
-v = self.uvCoord[1]
+v   = self.uvCoord[1]
 r, g, b, a = self.sample_texture(buf, self.uvCoord[0], v)
 
-vv = v - np.floor(v)
-s = 0.5 + 0.5 * np.sin((vv * self.bands - self.frame * self.speed) * 2.0 * np.pi)
+vv   = v - np.floor(v)
+s    = 0.5 + 0.5 * np.sin((vv * self.bands - self.frame * self.speed) * 2.0 * np.pi)
 scan = (1.0 - self.intensity) + self.intensity * s
 
 self.outColor = (r * scan, g * scan, b * scan)

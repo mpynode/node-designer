@@ -1223,7 +1223,7 @@ class MPyLocatorDrawOverride(omr.MPxDrawOverride):
         # Selected: tint per CORNER instead of one flat setColor, so a patch
         # keeps its own alpha ramp while it is highlighted (see _tinted).
         if fill_override is not None:
-            corner = np.array(corner, dtype=np.float32, copy=True)
+            corner       = np.array(corner, dtype=np.float32, copy=True)
             corner[:, 0] = float(fill_override.r)
             corner[:, 1] = float(fill_override.g)
             corner[:, 2] = float(fill_override.b)
@@ -1299,7 +1299,7 @@ class MPyLocatorDrawOverride(omr.MPxDrawOverride):
         # _tinted): selecting a ghosted outline must not make it solid.
         if wire_override is not None:
             if edge_colors is not None:
-                edge_colors = np.array(edge_colors, dtype=np.float32, copy=True)
+                edge_colors       = np.array(edge_colors, dtype=np.float32, copy=True)
                 edge_colors[:, 0] = float(wire_override.r)
                 edge_colors[:, 1] = float(wire_override.g)
                 edge_colors[:, 2] = float(wire_override.b)

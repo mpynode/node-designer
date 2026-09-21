@@ -18,10 +18,10 @@
 # getPoints/setPoints). `time` (auto-wired to the timeline) animates the wave;
 # `envelope` (0..1) blends it against rest.
 import numpy as np
-h = self.outputGeometry[0]
-rest = h.cvPositions()                 # (N, 3) object-space CVs (numpy)
-env = float(self.envelope)
-out = rest.copy()
+h         = self.outputGeometry[0]
+rest      = h.cvPositions()                 # (N, 3) object-space CVs (numpy)
+env       = float(self.envelope)
+out       = rest.copy()
 out[:, 0] = out[:, 0] + env * self.amplitude * np.sin(rest[:, 1] * self.freq + self.time * 0.1)
 h.setCVPositions(out)
 ```

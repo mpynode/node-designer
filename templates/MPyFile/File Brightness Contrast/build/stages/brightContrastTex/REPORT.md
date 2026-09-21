@@ -32,9 +32,9 @@ else:
     py = min(h - 1, int((1.0 - vv) * h))
     r, g, b, a = (float(c) for c in img[py, px])
 
-    bright = self.brightness
+    bright   = self.brightness
     contrast = self.contrast
-    out = []
+    out      = []
     for ch in (r, g, b):
         ch = ch * bright
         ch = (ch - 0.5) * contrast + 0.5

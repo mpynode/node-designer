@@ -18,13 +18,13 @@
 # kNurbsCurveData; the native compile reproduces that build step, so this lowers
 # to pure C++.
 import numpy as np
-n = 120
-u = np.linspace(0.0, 1.0, n)
-ang = u * self.turns * 2.0 * np.pi + self.t * 0.05
-x = self.radius * np.cos(ang)
-z = self.radius * np.sin(ang)
-y = (u - 0.5) * self.height
-cvs = np.stack([x, y, z], axis=1)
+n             = 120
+u             = np.linspace(0.0, 1.0, n)
+ang           = u * self.turns * 2.0 * np.pi + self.t * 0.05
+x             = self.radius * np.cos(ang)
+z             = self.radius * np.sin(ang)
+y             = (u - 0.5) * self.height
+cvs           = np.stack([x, y, z], axis=1)
 self.outCurve = NurbsCurve(points=cvs, degree=3)
 ```
 

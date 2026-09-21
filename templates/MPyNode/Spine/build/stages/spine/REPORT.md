@@ -34,7 +34,7 @@ p0 = np.array(self.inputCurve.getPointAtParam(0, space=om.MSpace.kWorld))[:3]
 p1 = np.array(self.inputCurve.getPointAtParam(max_parameter, space=om.MSpace.kWorld))[:3]
 
 # Control matrices as a single (n,4,4) numpy array (row-major; translate = row 3)
-CM = np.asarray(self.controlMatrices)
+CM    = np.asarray(self.controlMatrices)
 trans = CM[:, 3, :3]
 
 # Normalized control parameters (chord-length keys)
@@ -69,13 +69,13 @@ for i in range(len(self.outputTranslate)):
     elif index == len(keys) - 1:
         index -= 1
 
-    up0 = CM[index][self.curveUpAxis, :3]
-    up1 = CM[index + 1][self.curveUpAxis, :3]
+    up0     = CM[index][self.curveUpAxis, :3]
+    up1     = CM[index + 1][self.curveUpAxis, :3]
 
-    blend = (u - keys[index]) / (keys[index + 1] - keys[index])
-    blend = max(min(blend, 1), 0)
+    blend   = (u - keys[index]) / (keys[index + 1] - keys[index])
+    blend   = max(min(blend, 1), 0)
 
-    normal = vectorSlerp(up0, up1, blend)
+    normal  = vectorSlerp(up0, up1, blend)
     tangent = np.array(self.inputCurve.tangent(w, space=om.MSpace.kWorld))[:3]
 
     if self.curveInvertUpAxis:
@@ -83,14 +83,14 @@ for i in range(len(self.outputTranslate)):
     if self.curveInvertAimAxis:
         tangent = -tangent
 
-    basis = vectorToMatrix(tangent, normal, self.curveAimAxis, self.curveUpAxis)
-    e = om.MTransformationMatrix(om.MMatrix(basis.flatten().tolist())).rotation()
+    basis                = vectorToMatrix(tangent, normal, self.curveAimAxis, self.curveUpAxis)
+    e                    = om.MTransformationMatrix(om.MMatrix(basis.flatten().tolist())).rotation()
     self.outputRotate[i] = np.array([e.x, e.y, e.z])
 
     # -- SCALE --
     if self.scaleMethod == 0:
-        s0 = np.abs(_scale_of(CM[index])) ** (1 - blend)
-        s1 = np.abs(_scale_of(CM[index + 1])) ** blend
+        s0                  = np.abs(_scale_of(CM[index])) ** (1 - blend)
+        s1                  = np.abs(_scale_of(CM[index + 1])) ** blend
         self.outputScale[i] = s0 * s1
     else:
         if self.scaleMethod == 2:

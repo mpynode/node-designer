@@ -20,12 +20,12 @@
 import numpy as np
 from mpynode._api2.geometry import Mesh
 
-src = getattr(self, "inMesh", None)
+src  = getattr(self, "inMesh", None)
 sets = src.uv_sets if src is not None else []
 if not sets:
     self.outMesh = Mesh()
 else:
-    want = (getattr(self, "uvSetName", "") or "").strip()
+    want   = (getattr(self, "uvSetName", "") or "").strip()
     chosen = sets[0]
     if want:
         for s in sets:

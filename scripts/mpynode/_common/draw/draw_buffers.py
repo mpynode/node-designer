@@ -729,8 +729,8 @@ def command_bounds(commands, include_world=False):
       somewhere the drawing isn't. Pass ``include_world=True`` when the caller
       has already rebased them.
     """
-    lo = np.array([np.inf] * 3, dtype=np.float64)
-    hi = np.array([-np.inf] * 3, dtype=np.float64)
+    lo  = np.array([np.inf] * 3, dtype=np.float64)
+    hi  = np.array([-np.inf] * 3, dtype=np.float64)
     hit = False
     for cmd in commands or ():
         try:

@@ -30,11 +30,11 @@ buf = self.read_texture()
 r, g, b, a = self.sample_texture(buf, self.uvCoord[0], self.uvCoord[1])
 
 # brightness scales about black, contrast about mid-grey, then clamp.
-bright = self.brightness
+bright   = self.brightness
 contrast = self.contrast
-r = min(1.0, max(0.0, (r * bright - 0.5) * contrast + 0.5))
-g = min(1.0, max(0.0, (g * bright - 0.5) * contrast + 0.5))
-b = min(1.0, max(0.0, (b * bright - 0.5) * contrast + 0.5))
+r        = min(1.0, max(0.0, (r * bright - 0.5) * contrast + 0.5))
+g        = min(1.0, max(0.0, (g * bright - 0.5) * contrast + 0.5))
+b        = min(1.0, max(0.0, (b * bright - 0.5) * contrast + 0.5))
 
 self.outColor = (r, g, b)
 self.outAlpha = a

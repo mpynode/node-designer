@@ -21,19 +21,19 @@
 import numpy as np
 from mpynode._api2.geometry import Mesh
 
-bx = max(1, self.boardX)
-by = max(1, self.boardY)
+bx    = max(1, self.boardX)
+by    = max(1, self.boardY)
 board = _gol_board(by, bx, self.randomSamples, self.frame, self.resetBoard)
 
-half = 0.5 * max(1e-6, self.cellSize)
+half  = 0.5 * max(1e-6, self.cellSize)
 ys, xs = np.nonzero(board)              # row (y) + col (x) of each live cell
 m = int(xs.shape[0])
 
 if m == 0:
     # An all-dead board -> an empty (but valid) mesh: no points, no faces.
-    points = np.zeros((0, 3), dtype=np.float64)
-    counts = np.zeros(0, dtype=np.int32)
-    indices = np.zeros(0, dtype=np.int32)
+    points  = np.zeros((0, 3), dtype=np.float64)
+    counts  = np.zeros(0,      dtype=np.int32)
+    indices = np.zeros(0,      dtype=np.int32)
 else:
     # Cube centre = grid cell coordinate (x, y, 0), one unit apart.
     centers = np.column_stack([
@@ -54,9 +54,9 @@ else:
         [0, 3, 2, 1], [4, 5, 6, 7], [0, 1, 5, 4],
         [3, 7, 6, 2], [0, 4, 7, 3], [1, 2, 6, 5],
     ], dtype=np.int32)
-    base = (8 * np.arange(m, dtype=np.int32))[:, None, None]
+    base    = (8 * np.arange(m, dtype=np.int32))[:, None, None]
     indices = (base + faces[None, :, :]).reshape(-1)
-    counts = np.full(6 * m, 4, dtype=np.int32)
+    counts  = np.full(6 * m, 4, dtype=np.int32)
 
 self.outMesh = Mesh(points=points, counts=counts, indices=indices)
 ```

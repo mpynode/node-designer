@@ -41,38 +41,38 @@
 # WARNING: getPoints()/setPoints() are OBJECT space while the cages are read in
 # WORLD space (worldMesh), so this is only correct when the deformed mesh has an
 # identity transform at the world origin (freeze its transform).
-mesh = self.outputGeometry[0]
-rest = self.restCage.points
-deform = self.deformCage.points
-P = mesh.getPoints()
-M = rest.shape[0]
-Md = deform.shape[0]
-Mm = min(M, Md)
-Nn = P.shape[0]
-rc = (rest * rest).sum(1)
-d2 = rc[:, None] + rc[None, :] - 2.0 * (rest @ rest.T)
-d2 = np.maximum(d2, 0.0)
-K = np.where(d2 > 1e-12, 0.5 * d2 * np.log(np.maximum(d2, 1e-12)), 0.0)
-A = np.zeros((M + 4, M + 4))
-A[:M, :M] = K
-A[:M, M] = 1.0
+mesh          = self.outputGeometry[0]
+rest          = self.restCage.points
+deform        = self.deformCage.points
+P             = mesh.getPoints()
+M             = rest.shape[0]
+Md            = deform.shape[0]
+Mm            = min(M, Md)
+Nn            = P.shape[0]
+rc            = (rest * rest).sum(1)
+d2            = rc[:, None] + rc[None, :] - 2.0 * (rest @ rest.T)
+d2            = np.maximum(d2, 0.0)
+K             = np.where(d2 > 1e-12, 0.5 * d2 * np.log(np.maximum(d2, 1e-12)), 0.0)
+A             = np.zeros((M + 4, M + 4))
+A[:M, :M]     = K
+A[:M, M]      = 1.0
 A[:M, M + 1:] = rest
-A[M, :M] = 1.0
+A[M, :M]      = 1.0
 A[M + 1:, :M] = rest.T
-A = A + 1e-8 * np.eye(M + 4)
-T = np.zeros((M + 4, 3))
-T[:Mm, :] = deform[:Mm, :]
-W = np.linalg.inv(A) @ T
-pc = (P * P).sum(1)
-e2 = pc[:, None] + rc[None, :] - 2.0 * (P @ rest.T)
-e2 = np.maximum(e2, 0.0)
-Ke = np.where(e2 > 1e-12, 0.5 * e2 * np.log(np.maximum(e2, 1e-12)), 0.0)
-H = np.zeros((Nn, M + 4))
-H[:, :M] = Ke
-H[:, M] = 1.0
-H[:, M + 1:] = P
-warped = H @ W
-hasCage = 1.0 if (M > 0 and M == Md) else 0.0
+A             = A + 1e-8 * np.eye(M + 4)
+T             = np.zeros((M + 4, 3))
+T[:Mm, :]     = deform[:Mm, :]
+W             = np.linalg.inv(A) @ T
+pc            = (P * P).sum(1)
+e2            = pc[:, None] + rc[None, :] - 2.0 * (P @ rest.T)
+e2            = np.maximum(e2, 0.0)
+Ke            = np.where(e2 > 1e-12, 0.5 * e2 * np.log(np.maximum(e2, 1e-12)), 0.0)
+H             = np.zeros((Nn, M + 4))
+H[:, :M]      = Ke
+H[:, M]       = 1.0
+H[:, M + 1:]  = P
+warped        = H @ W
+hasCage       = 1.0 if (M > 0 and M == Md) else 0.0
 mesh.setPoints(P + (self.envelope * hasCage) * (warped - P))
 ```
 

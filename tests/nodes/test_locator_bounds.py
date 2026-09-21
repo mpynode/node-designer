@@ -137,9 +137,9 @@ class TestLocatorReportsItsDrawnExtent(unittest.TestCase):
         loc = self._locator("boundsRing", self._RING)
         loc.evaluate_draw_commands()
         bb = mc.exactWorldBoundingBox(loc.get_name())
-        self.assertAlmostEqual(bb[0], -10.0, places=2)   # xmin
-        self.assertAlmostEqual(bb[3],  10.0, places=2)   # xmax
-        self.assertAlmostEqual(bb[5],  10.0, places=2)   # zmax
+        self.assertAlmostEqual(bb[0], -10.0, places=2)  # xmin
+        self.assertAlmostEqual(bb[3], 10.0,  places=2)  # xmax
+        self.assertAlmostEqual(bb[5], 10.0,  places=2)  # zmax
         self.assertTrue(self._mpx(loc).isBounded())
 
     def test_the_box_follows_the_drawing(self):
@@ -179,7 +179,7 @@ class TestLocatorReportsItsDrawnExtent(unittest.TestCase):
             "boundsNoRerun",
             "self.count = float(getattr(self, 'count', 0.0)) + 1.0\n" + self._RING)
         loc.evaluate_draw_commands()
-        mpx = self._mpx(loc)
+        mpx    = self._mpx(loc)
         before = mpx._draw_bounds
         for _ in range(5):
             mpx.boundingBox()
