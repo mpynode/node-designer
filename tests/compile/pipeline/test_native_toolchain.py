@@ -1116,6 +1116,338 @@ class TestRunStreaming(unittest.TestCase):
         self.assertEqual(rc, 0)
         self.assertEqual(text, "line\n")
 
+    def test_without_a_limit_the_launch_is_unchanged(self):
+        # No cwd and no session flag unless asked: every existing caller's
+        # Popen arguments stay exactly what they were.
+        from mpynode.native.toolchain import toolchain as tc
+
+        seen = {}
+
+        class _Proc:
+            stdout = []
+
+            def wait(self):
+                return 0
+
+        def popen(*a, **k):
+            seen.update(k)
+            return _Proc()
+
+        tc.run_streaming(["cl"], _popen=popen)
+        self.assertNotIn("cwd", seen)
+        self.assertNotIn("start_new_session", seen)
+
+
+def _stuck_proc(printed, release):
+    """A child that printed ``printed`` and then hangs until ``release`` is set --
+    the wedged linker: it never exits and keeps its pipe open."""
+    import subprocess
+
+    class _Proc:
+        pid = 4242
+
+        def __init__(self):
+            def lines():
+                for line in printed:
+                    yield line
+                release.wait(10)
+            self.stdout = lines()
+
+        def wait(self, timeout=None):
+            raise subprocess.TimeoutExpired("link", timeout)
+
+        def kill(self):
+            pass
+
+    return _Proc()
+
+
+class TestRunStreamingTimeout(unittest.TestCase):
+    """A compile or link that never ends must fail the build, not hang it."""
+
+    def test_an_overrun_kills_the_tree_and_raises(self):
+        import threading
+        import time
+
+        from mpynode.native.toolchain import toolchain as tc
+
+        release = threading.Event()
+        self.addCleanup(release.set)
+        proc   = _stuck_proc(["linking...\n"], release)
+        killed = []
+
+        def kill(p, os_name=None):
+            killed.append(p)
+            release.set()  # the kill worked: the pipe closes
+
+        t0 = time.monotonic()
+        with unittest.mock.patch.object(tc, "_kill_tree", kill), \
+             self.assertRaises(tc.BuildTimeout) as ctx:
+            tc.run_streaming(["link.exe", "/OUT:x.mll"], timeout=0.2,
+                             _popen=lambda *a, **k: proc)
+        self.assertLess(time.monotonic() - t0, 5.0)
+        self.assertEqual(killed, [proc])
+        self.assertIn("linking...",         ctx.exception.output)
+        self.assertIn("link.exe",           str(ctx.exception))
+        self.assertIn(tc.BUILD_TIMEOUT_ENV, str(ctx.exception))
+
+    def test_a_child_that_cannot_be_killed_does_not_block_the_caller(self):
+        # MEASURED 2026-09-22: link.exe wedged in the Google Drive driver
+        # survived Stop-Process -Force for over an hour, holding the pipe.
+        import threading
+        import time
+
+        from mpynode.native.toolchain import toolchain as tc
+
+        release = threading.Event()
+        self.addCleanup(release.set)
+        proc = _stuck_proc(["linking...\n"], release)
+        t0   = time.monotonic()
+        with unittest.mock.patch.object(tc, "_kill_tree", lambda *a, **k: None), \
+             unittest.mock.patch.object(tc, "_DRAIN_GRACE_S", 0.1), \
+             self.assertRaises(tc.BuildTimeout):
+            tc.run_streaming(["link.exe"], timeout=0.1,
+                             _popen=lambda *a, **k: proc)
+        self.assertLess(time.monotonic() - t0, 3.0)
+
+    def test_a_timely_run_streams_as_before(self):
+        from mpynode.native.toolchain import toolchain as tc
+
+        seen  = {}
+        lines = []
+
+        class _Proc:
+            pid    = 1
+            stdout = ["a\n", "b\n"]
+
+            def wait(self, timeout=None):
+                return 0
+
+        def popen(*a, **k):
+            seen.update(k)
+            return _Proc()
+
+        rc, text = tc.run_streaming(["cl"], log_cb=lines.append, cwd="/b/tmp",
+                                    timeout=30, _popen=popen)
+        self.assertEqual((rc, text),  (0, "a\nb\n"))
+        self.assertEqual(lines,       ["a", "b"])
+        self.assertEqual(seen["cwd"], "/b/tmp")
+
+
+class TestBuildTimeoutSetting(unittest.TestCase):
+    def test_default_and_overrides(self):
+        from mpynode.native.toolchain import toolchain as tc
+
+        cases = ((None, 1800.0), ("", 1800.0), ("90", 90.0), ("2.5", 2.5),
+                 ("0", None), ("off", None), ("NONE", None), ("-1", None),
+                 ("soon", 1800.0))
+        for raw, want in cases:
+            with unittest.mock.patch.dict(os.environ, {}):
+                os.environ.pop(tc.BUILD_TIMEOUT_ENV, None)
+                if raw is not None:
+                    os.environ[tc.BUILD_TIMEOUT_ENV] = raw
+                self.assertEqual(tc.build_timeout(), want, raw)
+
+
+class TestTempBuildDir(unittest.TestCase):
+    def test_removed_afterwards_with_whatever_the_build_left(self):
+        from mpynode.native.toolchain import toolchain as tc
+
+        with tc.temp_build_dir() as d:
+            self.assertTrue(os.path.isdir(d))
+            with open(os.path.join(d, "x.obj"), "wb") as fh:
+                fh.write(b"obj")
+        self.assertFalse(os.path.exists(d))
+
+    def test_removed_when_the_build_raises(self):
+        from mpynode.native.toolchain import toolchain as tc
+
+        with self.assertRaises(RuntimeError):
+            with tc.temp_build_dir() as d:
+                raise RuntimeError("boom")
+        self.assertFalse(os.path.exists(d))
+
+
+class TestInstallBuiltPlugin(unittest.TestCase):
+    def _write(self, path, data):
+        with open(path, "wb") as fh:
+            fh.write(data)
+
+    def test_copies_then_replaces_leaving_nothing_else(self):
+        from mpynode.native.toolchain import toolchain as tc
+
+        with tempfile.TemporaryDirectory() as a, tempfile.TemporaryDirectory() as b:
+            built = os.path.join(a, "p.mll")
+            dst   = os.path.join(b, "sub", "p.mll")
+            self._write(built, b"one")
+            self.assertIsNone(tc.install_built_plugin(built, dst))
+            self._write(built, b"two")
+            self.assertIsNone(tc.install_built_plugin(built, dst))
+            with open(dst, "rb") as fh:
+                self.assertEqual(fh.read(), b"two")
+            self.assertEqual(os.listdir(os.path.dirname(dst)), ["p.mll"])
+
+    def test_no_plugin_to_copy_is_a_message(self):
+        from mpynode.native.toolchain import toolchain as tc
+
+        with tempfile.TemporaryDirectory() as d:
+            msg = tc.install_built_plugin(os.path.join(d, "none.mll"),
+                                          os.path.join(d, "p.mll"))
+        self.assertIn("wrote no plug-in", msg)
+
+    def test_a_locked_destination_is_named(self):
+        # Windows locks a plug-in Maya has loaded.
+        from mpynode.native.toolchain import toolchain as tc
+
+        with tempfile.TemporaryDirectory() as d:
+            built = os.path.join(d, "built.mll")
+            dst   = os.path.join(d, "p.mll")
+            self._write(built, b"new")
+            with unittest.mock.patch.object(
+                    tc.os, "replace", side_effect=PermissionError(13, "in use")):
+                msg = tc.install_built_plugin(built, dst)
+            self.assertFalse(os.path.exists(dst + ".part"))
+        self.assertIn(dst, msg)
+        self.assertIn("unload", msg)
+
+
+class TestRunBuild(unittest.TestCase):
+    """Compiler output names the sources where they live, not the temp copy."""
+
+    def test_runs_in_the_temp_folder_and_names_the_sources(self):
+        from mpynode.native.toolchain import toolchain as tc
+
+        tmp     = os.path.join(tempfile.gettempdir(), "mpynode_build_ab")
+        src_dir = os.path.join(os.sep, "proj", "build", "source")
+        seen    = {}
+        lines   = []
+
+        def fake(cmd, *, env=None, log_cb=None, cwd=None, timeout=None, **k):
+            seen.update(cwd=cwd, timeout=timeout)
+            err = os.path.join(tmp, "n.cpp") + "(3): error C2065"
+            log_cb(err)
+            return 2, err + "\n"
+
+        with unittest.mock.patch.object(tc, "run_streaming", fake), \
+             unittest.mock.patch.dict(os.environ, {tc.BUILD_TIMEOUT_ENV: "77"}):
+            rc, text = tc.run_build(["cl"], tmp=tmp, src_dir=src_dir,
+                                    log_cb=lines.append)
+        want = os.path.join(src_dir, "n.cpp") + "(3): error C2065"
+        self.assertEqual((rc, text), (2, want + "\n"))
+        self.assertEqual(lines,      [want])
+        self.assertEqual(seen,       {"cwd": tmp, "timeout": 77.0})
+
+    def test_a_timeout_names_the_sources_too(self):
+        from mpynode.native.toolchain import toolchain as tc
+
+        tmp     = os.path.join(tempfile.gettempdir(), "mpynode_build_cd")
+        src_dir = os.path.join(os.sep, "proj", "src")
+
+        def fake(cmd, **k):
+            raise tc.BuildTimeout(cmd, 1, os.path.join(tmp, "n.cpp") + "\n")
+
+        with unittest.mock.patch.object(tc, "run_streaming", fake), \
+             self.assertRaises(tc.BuildTimeout) as ctx:
+            tc.run_build(["cl"], tmp=tmp, src_dir=src_dir)
+        self.assertIn(os.path.join(src_dir, "n.cpp"), ctx.exception.output)
+        self.assertNotIn(tmp, ctx.exception.output)
+
+
+def _touch_outputs(cmd):
+    """Write every file a (faked) compile/link ``cmd`` asks for -- MSVC ``/Fo``,
+    ``/OUT:``, ``/IMPLIB:``; unix ``-o`` -- the way the real tools would."""
+    outs = []
+    for i, tok in enumerate(cmd):
+        for flag in ("/Fo", "/OUT:", "/IMPLIB:"):
+            if tok.startswith(flag):
+                outs.append(tok[len(flag):])
+        if tok == "-o" and i + 1 < len(cmd):
+            outs.append(cmd[i + 1])
+    for p in outs:
+        with open(p, "wb") as fh:
+            fh.write(b"built")
+    return outs
+
+
+class TestBuildPluginOneShot(unittest.TestCase):
+    """Copy the source to a temp folder, build there, copy only the plug-in back."""
+
+    def _build(self, d, fake):
+        from mpynode.native.toolchain import toolchain as tc
+
+        src = os.path.join(d, "n.cpp")
+        out = os.path.join(d, "n" + tc.plugin_ext())
+        with open(src, "w") as fh:
+            fh.write("// n\n")
+        with unittest.mock.patch.object(tc, "run_streaming", fake):
+            ok, log = tc.build_plugin_one_shot(
+                tc.default_compiler(), src, out,
+                include_dir="/M/include", lib_dir="/M/lib", libs=["OpenMaya"])
+        return src, out, ok, log
+
+    def test_only_the_plugin_reaches_the_output_folder(self):
+        seen = {}
+
+        def fake(cmd, *, env=None, log_cb=None, cwd=None, timeout=None, **k):
+            seen.update(cmd=list(cmd), cwd=cwd)
+            _touch_outputs(cmd)
+            return 0, os.path.join(cwd, "n.cpp") + ": warning C4100\n"
+
+        with tempfile.TemporaryDirectory() as d:
+            src, out, ok, log = self._build(d, fake)
+            self.assertTrue(ok, log)
+            tmp = seen["cwd"]
+            self.assertIn(os.path.join(tmp, "n.cpp"), seen["cmd"])
+            self.assertFalse(os.path.exists(tmp), "the temp folder must be gone")
+            self.assertEqual(sorted(os.listdir(d)),
+                             sorted(["n.cpp", os.path.basename(out)]))
+            with open(src) as fh:
+                self.assertEqual(fh.read(), "// n\n")
+            self.assertIn(os.path.join(d, "n.cpp"), log)
+            self.assertNotIn(tmp, log)
+
+    def test_a_failed_build_writes_nothing(self):
+        def fake(cmd, **k):
+            return 1, "error C2065\n"
+
+        with tempfile.TemporaryDirectory() as d:
+            _src, out, ok, log = self._build(d, fake)
+            self.assertFalse(ok)
+            self.assertFalse(os.path.exists(out))
+        self.assertIn("C2065", log)
+
+    def test_a_missing_source_never_launches(self):
+        from mpynode.native.toolchain import toolchain as tc
+
+        def fake(*a, **k):
+            raise AssertionError("must not launch the compiler")
+
+        with tempfile.TemporaryDirectory() as d, \
+             unittest.mock.patch.object(tc, "run_streaming", fake):
+            ok, log = tc.build_plugin_one_shot(
+                tc.default_compiler(), os.path.join(d, "gone.cpp"),
+                os.path.join(d, "n" + tc.plugin_ext()),
+                include_dir="/M/include", lib_dir="/M/lib", libs=[])
+        self.assertFalse(ok)
+        self.assertIn("gone.cpp", log)
+
+    def test_a_timeout_propagates_and_writes_nothing(self):
+        from mpynode.native.toolchain import toolchain as tc
+
+        seen = {}
+
+        def fake(cmd, *, cwd=None, **k):
+            seen["cwd"] = cwd
+            raise tc.BuildTimeout(cmd, 1)
+
+        with tempfile.TemporaryDirectory() as d, \
+             self.assertRaises(tc.BuildTimeout):
+            try:
+                self._build(d, fake)
+            finally:
+                self.assertEqual(os.listdir(d), ["n.cpp"])
+        self.assertFalse(os.path.exists(seen["cwd"]))
+
 
 def _fallback_cand(name, d="/usr/local/bin"):
     """The candidate path ``find_executable`` actually builds for a fallback dir.

@@ -15,6 +15,7 @@ needed): the source/scripts are written regardless of whether the link runs.
 from __future__ import annotations
 
 import os
+import shutil
 import tempfile
 import unittest
 
@@ -215,6 +216,102 @@ class TestCleanWorkingSubdirs(unittest.TestCase):
         # bundle + companion untouched.
         self.assertTrue(os.path.exists(os.path.join(d, "P.bundle")))
         self.assertTrue(os.path.exists(os.path.join(d, "foo_commands.py")))
+
+
+class TestBuildsInATempFolder(unittest.TestCase):
+    """Every compile and link runs in-process in ONE local temp folder, on
+    Windows AND macOS, and only the finished plug-in reaches out_dir. The
+    build.sh / build.bat beside the sources are for a user compiling by hand:
+    the pipeline never runs them (macOS used to run build.sh)."""
+
+    _PLATFORMS = (("win32", "cl"), ("darwin", "clang++"))
+
+    def _assemble(self, os_name, compiler, n_nodes, with_block=False):
+        from unittest import mock
+
+        from tests.compile.pipeline.test_native_toolchain import _touch_outputs
+
+        real_current_os = toolchain.current_os
+        runs            = []
+
+        def fake_run(cmd, *, env=None, log_cb=None, cwd=None, timeout=None, **k):
+            runs.append({"cmd": list(cmd), "cwd": cwd, "timeout": timeout})
+            _touch_outputs(cmd)
+            return 0, ""
+
+        d = tempfile.mkdtemp(prefix="tmpbuild_")
+        self.addCleanup(shutil.rmtree, d, True)
+        nodes = []
+        for i in range(n_nodes):
+            p = os.path.join(d, "n%dNode.cpp" % i)
+            with open(p, "w") as fh:
+                fh.write(_node_src("n%dNode" % i, "N%dNode" % i,
+                                   "0x0008100%d" % i, with_block=with_block))
+            nodes.append(("n%dNode" % i, p))
+        out = os.path.join(d, "out")
+        with mock.patch.object(
+                toolchain, "current_os",
+                lambda name=None: real_current_os(name) if name else os_name), \
+             mock.patch.object(toolchain, "default_compiler", lambda *a: compiler), \
+             mock.patch.object(toolchain, "build_env", lambda *a, **k: {"PATH": "x"}), \
+             mock.patch.object(toolchain, "resolve_compiler", lambda c, *a, **k: c), \
+             mock.patch.object(toolchain, "diagnose_toolset_mismatch",
+                               lambda *a, **k: None), \
+             mock.patch.object(toolchain, "run_streaming", fake_run):
+            report = bundler.assemble(nodes, "plug", out, strict=True,
+                                      registry=_reg(d))
+            ext = toolchain.plugin_ext()
+        return report, runs, out, ext
+
+    def _check(self, report, runs, out, ext):
+        self.assertTrue(report.get("ok"), report)
+        self.assertEqual(report["bundle"], os.path.join(out, "plug" + ext))
+        self.assertTrue(os.path.isfile(report["bundle"]))
+        self.assertFalse([r for r in runs
+                          if os.path.basename(r["cmd"][0]) == "bash"],
+                         "the pipeline must not run build.sh")
+        tmps = {r["cwd"] for r in runs}
+        self.assertEqual(len(tmps), 1, "one temp folder per build")
+        tmp = tmps.pop()
+        for r in runs:
+            self.assertEqual(r["timeout"], toolchain.build_timeout())
+            for tok in r["cmd"]:
+                if tok.endswith(".cpp"):
+                    self.assertTrue(tok.startswith(tmp), tok)
+        self.assertFalse(os.path.exists(tmp), "the temp folder must be gone")
+        # Sources and scripts only -- no object, import library or export file.
+        src = bundler.source_dir_for(out)
+        self.assertTrue(all(f.endswith((".cpp", ".h")) for f in os.listdir(src)),
+                        os.listdir(src))
+        for f in ("build.sh", "build.bat", "README.txt"):
+            self.assertTrue(os.path.isfile(os.path.join(out, "build", f)), f)
+        self.assertEqual(sorted(os.listdir(out)), sorted(["build", "plug" + ext]))
+
+    def test_single_node(self):
+        for os_name, compiler in self._PLATFORMS:
+            with self.subTest(os_name):
+                report, runs, out, ext = self._assemble(os_name, compiler, 1)
+                self._check(report, runs, out, ext)
+                self.assertEqual(len(runs), 1, "one compile+link call")
+
+    def test_multi_node(self):
+        for os_name, compiler in self._PLATFORMS:
+            with self.subTest(os_name):
+                report, runs, out, ext = self._assemble(os_name, compiler, 2)
+                self._check(report, runs, out, ext)
+                # 2 fragments + plugin_main compiled, then ONE link -- the
+                # fragment objects are the link inputs, not compiled twice.
+                self.assertEqual(len(runs), 4)
+
+    def test_multi_node_with_a_shared_helper_unit(self):
+        for os_name, compiler in self._PLATFORMS:
+            with self.subTest(os_name):
+                report, runs, out, ext = self._assemble(os_name, compiler, 2,
+                                                        with_block=True)
+                self._check(report, runs, out, ext)
+                self.assertTrue(os.path.isfile(os.path.join(
+                    bundler.source_dir_for(out), bundler.SHARED_HELPERS_FILE)))
+                self.assertEqual(len(runs), 5)
 
 
 if __name__ == "__main__":

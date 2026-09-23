@@ -8,6 +8,8 @@ Pure argv-builder assertions -> no standalone Maya needed.
 
 from __future__ import annotations
 
+import os
+import tempfile
 import unittest
 from unittest import mock
 
@@ -67,14 +69,19 @@ class TestPorterForwardsOptimize(unittest.TestCase):
             seen["optimize"] = k.get("optimize")
             return ["clang++"]
 
-        with mock.patch.object(toolchain, "resolve_compiler",
-                               lambda *a, **k: "clang++"), \
-             mock.patch.object(toolchain, "build_env", lambda *a, **k: None), \
-             mock.patch.object(toolchain, "run_streaming",
-                               lambda cmd, **k: (0, "ok")), \
-             mock.patch.object(toolchain, "compile_to_plugin_cmd", fake_cmd):
-            porter.compile_cpp("x.cpp", self._SPEC, "/tmp/out",
-                               compiler="clang++", **compile_kw)
+        # A real source: compile_cpp copies it into its temp build folder.
+        with tempfile.TemporaryDirectory() as d:
+            cpp = os.path.join(d, "x.cpp")
+            with open(cpp, "w") as fh:
+                fh.write("// x\n")
+            with mock.patch.object(toolchain, "resolve_compiler",
+                                   lambda *a, **k: "clang++"), \
+                 mock.patch.object(toolchain, "build_env", lambda *a, **k: None), \
+                 mock.patch.object(toolchain, "run_streaming",
+                                   lambda cmd, **k: (0, "ok")), \
+                 mock.patch.object(toolchain, "compile_to_plugin_cmd", fake_cmd):
+                porter.compile_cpp(cpp, self._SPEC, d, compiler="clang++",
+                                   **compile_kw)
         return seen["optimize"]
 
     def test_forwards_optimize_true(self):

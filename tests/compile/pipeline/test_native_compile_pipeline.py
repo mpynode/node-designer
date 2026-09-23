@@ -15,6 +15,7 @@ import unittest
 import unittest.mock
 
 from tests._setup import standalone_init
+from tests.compile.pipeline.test_native_toolchain import _touch_outputs
 
 
 def _setUpModule__compile_preflight():
@@ -203,6 +204,9 @@ class TestCompileCppMissingCompiler(unittest.TestCase):
         def fake_stream(cmd, *, env=None, log_cb=None, **k):
             for ln in ("compiling…", "linking…"):
                 log_cb(ln)
+            # A successful build writes the plug-in; compile_cpp then copies
+            # it out of the temp folder.
+            _touch_outputs(cmd)
             return 0, "compiling…\nlinking…\n"
 
         with tempfile.TemporaryDirectory() as d:
@@ -273,6 +277,7 @@ class TestCompileCppMissingCompiler(unittest.TestCase):
         def fake_stream(cmd, *, env=None, log_cb=None, **k):
             if log_cb:
                 log_cb("cl : compiling x.cpp")
+            _touch_outputs(cmd)
             return 0, "cl : compiling x.cpp\n"
 
         with tempfile.TemporaryDirectory() as d:
@@ -326,6 +331,74 @@ class TestPortNodeStepLogging(unittest.TestCase):
         self.assertIn("skeleton",     joined)
         self.assertIn("compute body", joined)
         self.assertIn("compil",       joined)  # "compiling ..."
+
+
+# ---------------------------------------------------------------------------
+# compile_cpp -- build in a local temp folder, copy only the plug-in back
+# ---------------------------------------------------------------------------
+
+
+class TestCompileCppBuildsInTemp(unittest.TestCase):
+    """The source stays put, the build runs in a temp folder, and only the
+    plug-in reaches out_dir -- so a cloud-synced out_dir never meets the
+    linker (MEASURED 2026-09-22: link.exe wedged for 70+ minutes on G:)."""
+
+    def _compile(self, d, fake):
+        from mpynode.native.ai import porter
+
+        cpp = os.path.join(d, "x.cpp")
+        with open(cpp, "w") as fh:
+            fh.write("// stub\n")
+        with unittest.mock.patch.object(porter.toolchain, "run_streaming", fake):
+            return porter.compile_cpp(cpp, _portable_spec(), d)
+
+    def test_only_the_plugin_reaches_out_dir(self):
+        seen = {}
+
+        def fake(cmd, *, env=None, log_cb=None, cwd=None, timeout=None, **k):
+            seen["cwd"] = cwd
+            _touch_outputs(cmd)  # plug-in, objects, import lib: all of it
+            return 0, ""
+
+        with tempfile.TemporaryDirectory() as d:
+            ok, log, plugin = self._compile(d, fake)
+            self.assertTrue(ok, log)
+            self.assertEqual(os.path.dirname(plugin), d)
+            self.assertEqual(sorted(os.listdir(d)),
+                             sorted(["x.cpp", os.path.basename(plugin)]))
+        self.assertFalse(os.path.exists(seen["cwd"]))
+
+    def test_a_timeout_ends_the_compile_instead_of_failing_it(self):
+        from mpynode.native.ai import porter
+
+        def fake(cmd, **k):
+            raise porter.toolchain.BuildTimeout(cmd, 1)
+
+        with tempfile.TemporaryDirectory() as d, \
+             self.assertRaises(porter.toolchain.BuildTimeout):
+            self._compile(d, fake)
+
+
+class TestPortNodeTimeoutSkipsTheFixLoop(unittest.TestCase):
+    def test_no_fix_round_for_a_build_that_timed_out(self):
+        # A timeout is not a C++ error: a fix round would spend a model call on
+        # code that was never the problem.
+        from mpynode.native.ai import porter
+
+        asked = []
+
+        def complete_fn(system, user):
+            asked.append(user)
+            return "out = a * 2.0;"
+
+        def fake_compile(*a, **k):
+            raise porter.toolchain.BuildTimeout(["cl"], 1)
+
+        with tempfile.TemporaryDirectory() as d, \
+             unittest.mock.patch.object(porter, "compile_cpp", fake_compile), \
+             self.assertRaises(porter.toolchain.BuildTimeout):
+            porter.port_node(_portable_spec(), d, complete_fn=complete_fn)
+        self.assertEqual(len(asked), 1)
 
 
 # ---------------------------------------------------------------------------

@@ -26,12 +26,16 @@ running platform) so the whole matrix is testable from any host.
 """
 from __future__ import annotations
 
+import contextlib
 import os
 import platform
 import re
 import shutil
+import signal
 import subprocess
 import sys
+import tempfile
+import threading
 from typing import Dict, List, Optional, Tuple
 
 
@@ -1501,7 +1505,8 @@ def cli_subprocess_kwargs(os_name: Optional[str] = None) -> Dict[str, object]:
     return kw
 
 
-def run_streaming(cmd, *, env=None, log_cb=None, os_name=None, _popen=None):
+def run_streaming(cmd, *, env=None, log_cb=None, os_name=None, _popen=None,
+                  cwd=None, timeout=None):
     """Run ``cmd``, streaming combined stdout+stderr LINE BY LINE to ``log_cb``
     while ALSO accumulating the full text. Returns ``(returncode, full_text)``.
 
@@ -1513,16 +1518,30 @@ def run_streaming(cmd, *, env=None, log_cb=None, os_name=None, _popen=None):
     ``compiler_log`` / ``report['stderr']`` are preserved). UTF-8 with
     ``errors='replace'`` (the Windows console default cp1252 mangles output).
 
+    ``cwd`` is the child's working folder. ``timeout`` (seconds; ``None`` = no
+    limit) bounds the run: on expiry the whole process TREE is killed and
+    :class:`BuildTimeout` is raised. With a limit the output is drained on a
+    helper thread, so a grandchild that cannot be killed -- a linker wedged in a
+    file-system driver still holds the pipe -- cannot block the caller.
+
     Raises ``FileNotFoundError`` if the executable can't be launched (callers
     decode that into an actionable message). ``_popen`` is injectable for tests.
     """
     popen = _popen or subprocess.Popen
+    extra = dict(no_window_kwargs(os_name))
+    if cwd is not None:
+        extra["cwd"] = cwd
+    if timeout is not None and not is_windows(os_name):
+        extra["start_new_session"] = True  # one process group to kill
     proc = popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                  env=env, text=True, encoding="utf-8", errors="replace",
-                 **no_window_kwargs(os_name))
+                 **extra)
     chunks = []
     out    = getattr(proc, "stdout", None)
-    if out is not None:
+
+    def _drain():
+        if out is None:
+            return
         for line in out:
             chunks.append(line)
             if log_cb is not None:
@@ -1535,8 +1554,236 @@ def run_streaming(cmd, *, env=None, log_cb=None, os_name=None, _popen=None):
             out.close()
         except Exception:
             pass
-    rc = proc.wait()
+
+    if timeout is None:
+        _drain()
+        rc = proc.wait()
+        return rc, "".join(chunks)
+    reader = threading.Thread(target=_drain, name="mpynode-build-output",
+                              daemon=True)
+    reader.start()
+    try:
+        rc = proc.wait(timeout=timeout)
+    except subprocess.TimeoutExpired:
+        _kill_tree(proc, os_name)
+        reader.join(_DRAIN_GRACE_S)
+        raise BuildTimeout(cmd, timeout, "".join(chunks))
+    # The child is gone; an orphaned grandchild could still hold the pipe, so
+    # the wait for the rest of the output is bounded too.
+    reader.join(timeout)
     return rc, "".join(chunks)
+
+
+# How long a killed build gets to flush its last output before the caller
+# moves on without it.
+_DRAIN_GRACE_S = 5.0
+
+
+def _kill_tree(proc, os_name: Optional[str] = None) -> None:
+    """Kill ``proc`` AND its children -- ``cl`` runs ``link`` as a child, and
+    killing only ``cl`` leaves the linker running. Best effort: a process stuck
+    inside a driver may survive even this, which is why the caller never waits
+    on it."""
+    pid = getattr(proc, "pid", None)
+    if pid and is_windows(os_name):
+        try:
+            subprocess.run(["taskkill", "/F", "/T", "/PID", str(pid)],
+                           stdout=subprocess.DEVNULL,
+                           stderr=subprocess.DEVNULL, timeout=30,
+                           **no_window_kwargs(os_name))
+        except Exception:
+            pass
+    elif pid:
+        try:
+            # Only a group the child LEADS (run_streaming starts it in its own
+            # session): killing a shared group would take Maya down with it.
+            if os.getpgid(pid) == pid:
+                os.killpg(pid, signal.SIGKILL)
+        except Exception:
+            pass
+    try:
+        proc.kill()
+    except Exception:
+        pass
+
+
+# ---------------------------------------------------------------------------
+# Building in a local temp folder
+# ---------------------------------------------------------------------------
+# Every in-process build compiles AND links inside a fresh local temp folder,
+# then copies only the finished plug-in to where it belongs. The sources stay
+# where they are; nothing else the compiler or linker writes -- objects, import
+# library, export file -- ever reaches the source tree, so there is nothing to
+# sweep afterwards.
+#
+# The reason is the one link_via_temp_bat gives the hand-run build.bat: the MSVC
+# linker memory-maps its outputs, and on a cloud-synced folder (a Google Drive
+# stream, OneDrive, Dropbox) that write never completes. MEASURED again
+# 2026-09-22 on the Drive G: volume: link.exe sat 70+ minutes on a 0-byte .mll
+# (370 s of kernel time, 0 bytes written) and a forced kill could not end it,
+# while the same link on C: took seconds. Reading a finished plug-in from such
+# a folder is fine (it maps in milliseconds), so a plain copy is all it takes.
+BUILD_TIMEOUT_ENV     = "MPYNODE_BUILD_TIMEOUT"
+BUILD_TIMEOUT_DEFAULT = 1800.0
+
+
+class BuildTimeout(RuntimeError):
+    """One compiler or linker call ran past :func:`build_timeout` and was killed.
+
+    ``output`` is what it printed before that. Raised rather than returned as a
+    failed build, so the AI fix loop never spends a round "fixing" C++ that was
+    never the problem.
+    """
+
+    def __init__(self, cmd, seconds, output=""):
+        self.cmd     = list(cmd or [])
+        self.seconds = seconds
+        self.output  = output
+        tool         = os.path.basename(str(self.cmd[0])) if self.cmd else "the build"
+        super().__init__(
+            "%s did not finish within %g s and was stopped -- set %s to allow "
+            "longer, or to 0 for no limit" % (tool, seconds, BUILD_TIMEOUT_ENV))
+
+
+def build_timeout() -> Optional[float]:
+    """Seconds one compiler or linker call may run; ``None`` means no limit.
+
+    ``MPYNODE_BUILD_TIMEOUT`` overrides the default of 30 minutes -- generous,
+    since a healthy call takes seconds. ``0``, ``off`` or ``none`` turn the
+    limit off; anything unparsable keeps the default.
+    """
+    raw = (os.environ.get(BUILD_TIMEOUT_ENV) or "").strip().lower()
+    if raw in ("off", "none", "no", "false"):
+        return None
+    try:
+        value = float(raw)
+    except ValueError:
+        return BUILD_TIMEOUT_DEFAULT
+    return value if value > 0 else None
+
+
+@contextlib.contextmanager
+def temp_build_dir():
+    """A fresh local folder to compile and link in, removed afterwards.
+
+    Removal ignores errors: a process that could not be killed may still hold
+    a file in it, and that must never fail the build it belonged to. The OS
+    temp cleanup reclaims whatever is left.
+    """
+    path = tempfile.mkdtemp(prefix="mpynode_build_")
+    try:
+        yield path
+    finally:
+        shutil.rmtree(path, ignore_errors=True)
+
+
+def install_built_plugin(built: str, dst: str) -> Optional[str]:
+    """Copy a plug-in linked in a temp folder to ``dst``.
+
+    Returns ``None`` on success, else why it could not be put in place. The
+    copy lands under a temporary name beside ``dst`` and is then renamed over
+    it, so nothing ever loads half a plug-in. Windows locks a plug-in Maya has
+    loaded, and the message says so instead of quoting a bare errno.
+    """
+    if not os.path.isfile(built):
+        return ("the linker reported success but wrote no plug-in (expected %s)"
+                % built)
+    part = dst + ".part"
+    try:
+        os.makedirs(os.path.dirname(os.path.abspath(dst)), exist_ok=True)
+        shutil.copy(built, part)
+        os.replace(part, dst)
+    except OSError as exc:
+        try:
+            os.remove(part)
+        except OSError:
+            pass
+        return ("could not put the plug-in in place at %s (%s) -- if Maya has "
+                "it loaded, unload it and compile again" % (dst, exc))
+    return None
+
+
+def _temp_path_rewriter(tmp: str, src_dir: str):
+    """``text -> text`` with the temp folder's path replaced by ``src_dir``, in
+    both separator styles, so build errors name files the user can open."""
+    pairs = [(tmp, src_dir)]
+    if "\\" in tmp:
+        pairs.append((tmp.replace("\\", "/"), src_dir.replace("\\", "/")))
+
+    def rewrite(text):
+        for old, new in pairs:
+            text = text.replace(old, new)
+        return text
+
+    return rewrite
+
+
+def run_build(cmd, *, tmp: str, src_dir: str, env=None, log_cb=None):
+    """Run one compile or link ``cmd`` inside the temp folder ``tmp``.
+
+    :func:`run_streaming` with the CWD in ``tmp`` and the :func:`build_timeout`
+    limit, and with ``tmp`` rewritten to ``src_dir`` in the live log AND the
+    returned text -- errors then point at the sources where they actually live
+    (a link error naming an object file points into ``src_dir`` too, though the
+    object only ever existed in ``tmp``). Returns ``(returncode, text)``; raises
+    :class:`BuildTimeout` and ``FileNotFoundError`` like ``run_streaming``.
+    """
+    rewrite = _temp_path_rewriter(tmp, src_dir)
+    live    = None
+    if log_cb is not None:
+        def live(line):
+            log_cb(rewrite(line))
+    try:
+        rc, text = run_streaming(cmd, env=env, log_cb=live, cwd=tmp,
+                                 timeout=build_timeout())
+    except BuildTimeout as exc:
+        exc.output = rewrite(exc.output)
+        raise
+    return rc, rewrite(text)
+
+
+def build_plugin_one_shot(exe: str, src: str, out_plugin: str, *,
+                          include_dir: str, lib_dir: str, libs: List[str],
+                          env=None, log_cb=None,
+                          arch:     Optional[str] = None,
+                          qt:       bool          = False,
+                          optimize: bool          = False,
+                          maya: Optional[str] = None) -> Tuple[bool, str]:
+    """Compile + link the single source ``src`` into ``out_plugin``, in a temp
+    folder (see the note above this section). Returns ``(ok, log)``.
+
+    The one-shot recipe (:func:`compile_to_plugin_cmd`) that every per-node and
+    optimizer build and every single-node plug-in shares, on every platform.
+    ``out_plugin`` is written only when the build succeeded. Raises
+    ``FileNotFoundError`` when the compiler cannot be launched and
+    :class:`BuildTimeout` when a call overran.
+    """
+    with temp_build_dir() as tmp:
+        tmp_src    = os.path.join(tmp, os.path.basename(src))
+        tmp_plugin = os.path.join(tmp, os.path.basename(out_plugin))
+        try:
+            shutil.copyfile(src, tmp_src)
+        except OSError as exc:
+            return False, "could not copy %s to the build folder: %s" % (src, exc)
+        cmd = compile_to_plugin_cmd(
+            exe, tmp_src, tmp_plugin,
+            include_dir = include_dir,
+            lib_dir     = lib_dir,
+            libs        = libs,
+            arch        = arch,
+            qt          = qt,
+            optimize    = optimize,
+            maya        = maya,
+        )
+        rc, log = run_build(cmd, tmp=tmp,
+                            src_dir=os.path.dirname(os.path.abspath(src)),
+                            env=env, log_cb=log_cb)
+        if rc != 0:
+            return False, log
+        problem = install_built_plugin(tmp_plugin, out_plugin)
+    if problem:
+        return False, (log.rstrip("\n") + "\n" + problem) if log else problem
+    return True, log
 
 
 # ---------------------------------------------------------------------------

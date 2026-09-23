@@ -66,11 +66,18 @@ def compile_cpp(cpp_path: str, spec: dict, out_dir: str,
 
     The compile/link recipe and the plugin extension are chosen per platform by
     ``native.toolchain`` (macOS: clang -> ``.bundle``; Windows: cl -> ``.mll``).
+    The build itself runs in a local temp folder and only the finished plug-in
+    is copied to ``plugin_path`` (``toolchain.build_plugin_one_shot``): the
+    source stays put, and no object or link byproduct lands in ``out_dir``.
     ``compiler`` defaults to the platform compiler. ``log_cb(line)`` (optional)
     receives each line of compiler output as it streams, for a live log view;
     the full text is still returned in ``log`` (so the fix-loop is unchanged).
     ``optimize=True`` is the AI-optimizer recompile recipe (-O3 -ffp-contract=off
     on unix); it defaults False so the porter's own compiles are unchanged.
+
+    A compiler or linker call that overruns ``toolchain.build_timeout()`` raises
+    ``toolchain.BuildTimeout``: that is not a code error, so it ends the port
+    instead of feeding the AI fix loop.
     """
     compiler = compiler or toolchain.default_compiler()
     name     = spec["suggested"]["node_type_name"]
@@ -116,27 +123,28 @@ def compile_cpp(cpp_path: str, spec: dict, out_dir: str,
                 log_cb("toolset: cl=%s  headers=%s" % (cl_ts, inc_ts))
             except Exception:
                 pass
-    cmd = toolchain.compile_to_plugin_cmd(
-        exe, cpp_path, plugin,
-        include_dir = toolchain.maya_include_dir(maya),
-        lib_dir     = toolchain.maya_lib_dir(maya),
-        libs        = codegen._libs_for(spec),
-        arch        = toolchain.mac_arch(),
-        # A hover-capable locator links Maya's Qt frameworks (its self-contained
-        # C++ hover service includes QCursor/QWidget). Off for every other node.
-        qt       = bool(spec.get("needs_hover")),
-        optimize = optimize,
-        maya     = maya,
-    )
     try:
-        rc, log = toolchain.run_streaming(cmd, env=benv, log_cb=log_cb)
+        ok, log = toolchain.build_plugin_one_shot(
+            exe, cpp_path, plugin,
+            include_dir = toolchain.maya_include_dir(maya),
+            lib_dir     = toolchain.maya_lib_dir(maya),
+            libs        = codegen._libs_for(spec),
+            env         = benv,
+            log_cb      = log_cb,
+            arch        = toolchain.mac_arch(),
+            # A hover-capable locator links Maya's Qt frameworks (its
+            # self-contained C++ hover service includes QCursor/QWidget). Off
+            # for every other node.
+            qt       = bool(spec.get("needs_hover")),
+            optimize = optimize,
+            maya     = maya,
+        )
     except FileNotFoundError:
         # The compiler executable could not be launched at all -- translate the
         # opaque OS "file not found" into an actionable message instead of
         # bubbling a bare [WinError 2] up to the user.
         return False, toolchain.compiler_missing_message(compiler), plugin
-    toolchain.remove_msvc_link_byproducts(plugin, one_shot=True)
-    return rc == 0, log, plugin
+    return ok, log, plugin
 
 
 # ---------------------------------------------------------------------------

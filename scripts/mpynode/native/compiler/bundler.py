@@ -23,8 +23,11 @@ Output source (what a compile produces, under ``build/source/``):
     ``<plugin>.bundle``.
   * **Always:** ``build.sh`` AND ``build.bat`` (rebuild on macOS/Linux OR
     Windows by re-running the script) and a ``README.txt`` explaining what to
-    edit and how to rebuild. Object files are removed after a successful link so
-    only source + scripts + the bundle remain.
+    edit and how to rebuild. The scripts are helpers for a user compiling by
+    hand; the pipeline never runs them. It compiles and links in a local temp
+    folder (``toolchain.temp_build_dir``) and copies back only the finished
+    bundle, so no object file ever lands here -- only source + scripts + the
+    bundle.
 
 Transforms:
   * **Global per-user MTypeIds** via :mod:`typeid_registry` -- collision-free,
@@ -91,7 +94,7 @@ def stage_dir_for(out_dir: str, type_name: str) -> str:
     so the stages sort in pipeline order ("assisted" would otherwise sort before
     "transpiled").
 
-    Distinct from ``build/<Type>/`` (per-node port SCRATCH: object files, an
+    Distinct from ``build/<Type>/`` (per-node port SCRATCH: the node's .cpp, an
     intermediate .bundle, verify_in_maya.py) which is swept after a successful
     build. Nothing here is ever swept: it is source and reports, which is the
     only thing worth keeping once the lint is gone.
@@ -1138,19 +1141,47 @@ class _CompileResult:
         self.stderr     = text
 
 
-def _run_compile(cmd, env, compiler, log_cb=None):
+def _run_compile(cmd, env, compiler, log_cb=None, *, tmp=None, src_dir=None):
     """Run a compile/link ``cmd``, streaming output to ``log_cb`` (if given);
-    never raise on a missing executable.
+    never raise on a missing executable or an overrun.
+
+    With ``tmp`` the command runs inside that temp build folder, with ``tmp``
+    rewritten to ``src_dir`` in its output (``toolchain.run_build``). Every call
+    is bounded by ``toolchain.build_timeout()``.
 
     On ``FileNotFoundError`` (the compiler binary could not be launched at all)
     return a :class:`_FailedLaunch` carrying ``toolchain.compiler_missing_message``
     so the caller reports a clear cause rather than crashing with ``[WinError 2]``.
+    An overrun comes back as a failed result whose last line names the limit.
     """
     try:
-        rc, text = toolchain.run_streaming(cmd, env=env, log_cb=log_cb)
+        if tmp is None:
+            rc, text = toolchain.run_streaming(cmd, env=env, log_cb=log_cb,
+                                               timeout=toolchain.build_timeout())
+        else:
+            rc, text = toolchain.run_build(cmd, tmp=tmp, src_dir=src_dir,
+                                           env=env, log_cb=log_cb)
     except FileNotFoundError:
         return _FailedLaunch(toolchain.compiler_missing_message(compiler))
+    except toolchain.BuildTimeout as exc:
+        return _timed_out(exc)
     return _CompileResult(rc, text)
+
+
+def _timed_out(exc) -> _CompileResult:
+    """A failed result for a ``toolchain.BuildTimeout``: what the call printed,
+    then the message naming the limit as the last line (the line a report
+    quotes as the reason)."""
+    head = exc.output.rstrip("\n") + "\n" if exc.output else ""
+    return _CompileResult(124, "%s%s\n" % (head, exc))
+
+
+def _copy_into(src: str, tmp: str) -> Tuple[str, str]:
+    """``(copy, object)``: ``src`` copied into the temp build folder ``tmp``,
+    and the object file its compile writes there, beside the copy."""
+    copy = os.path.join(tmp, os.path.basename(src))
+    shutil.copyfile(src, copy)
+    return copy, os.path.splitext(copy)[0] + toolchain.object_ext()
 
 
 def _detect_qt(nodes) -> bool:
@@ -1200,17 +1231,6 @@ def _prepare_compiler(report: dict, compile_now: bool):
             report["reason"] = mismatch
             return None
     return {"exe": exe, "obj_env": obj_env, "compiler": compiler}
-
-
-def _remove_objects(directory: str) -> None:
-    """Delete object files left by a link (in ``directory`` = build/source) so a
-    successful build leaves only source + scripts (best-effort)."""
-    for pat in ("*.o", "*.obj"):
-        for p in glob.glob(os.path.join(directory, pat)):
-            try:
-                os.remove(p)
-            except OSError:
-                pass
 
 
 def _rm(path: str) -> None:
@@ -1276,8 +1296,9 @@ def assemble(
     A **single-node** plugin becomes a self-contained ``<node>.cpp`` (no
     ``plugin_main.cpp``); a **multi-node** plugin becomes ``<node>.cpp`` per node
     + ``plugin_main.cpp`` (+ optional ``shared_helpers.cpp``). Either way the
-    folder also gets ``build.sh`` AND ``build.bat`` + a ``README.txt``, and object
-    files are removed after a successful link.
+    folder also gets ``build.sh`` AND ``build.bat`` + a ``README.txt``. On every
+    platform the compile and link run in-process in a local temp folder; only
+    the finished plug-in is copied to ``out_dir``.
 
     Returns a report dict: ``{plugin, bundle, nodes:[{name,status,id,reason}],
     ok, dropped}``. With ``strict=True`` any per-node compile failure aborts and
@@ -1377,141 +1398,147 @@ def assemble(
 
     # 2) compile each fragment to an object file (per-node isolation ->
     #    drop-or-abort). The compile/link recipe is platform-chosen by toolchain.
+    #    Every copy and object lives in ONE local temp folder for the rest of
+    #    the build (toolchain.temp_build_dir): the sources stay in build/source
+    #    and only the finished plug-in is copied out.
     tc = _prepare_compiler(report, compile_now)
     if tc is None:
         return report
     exe, obj_env, compiler = tc["exe"], tc["obj_env"], tc["compiler"]
     arch           = toolchain.mac_arch()
     frag_files     = []
-    frag_objs      = []           # needed for the Windows direct-link path
+    frag_objs      = []  # the link inputs, all in the temp folder
     compiled_infos = []
     inc            = toolchain.maya_include_dir(maya)
-    for frag_path, info, type_name in fragments:
-        rec = next(r for r in report["nodes"] if r["name"] == type_name)
-        obj = os.path.splitext(frag_path)[0] + toolchain.object_ext()
-        cmd = toolchain.compile_object_cmd(
-            exe, frag_path, obj, include_dir=inc, frag=True, arch=arch,
-            qt=needs_qt, maya=maya)
-        if compile_now:
-            proc = _run_compile(cmd, obj_env, compiler, log_cb=log_cb)
-            if proc.returncode != 0:
-                rec["status"] = "compile-failed"
-                rec["reason"] = proc.stderr.strip().splitlines()[-1] if proc.stderr.strip() else "compile error"
-                report["dropped"].append(type_name)
-                if strict:
+    with toolchain.temp_build_dir() as tmp:
+        for frag_path, info, type_name in fragments:
+            rec = next(r for r in report["nodes"] if r["name"] == type_name)
+            if compile_now:
+                src, obj = _copy_into(frag_path, tmp)
+                cmd = toolchain.compile_object_cmd(
+                    exe, src, obj, include_dir=inc, frag=True, arch=arch,
+                    qt=needs_qt, maya=maya)
+                proc = _run_compile(cmd, obj_env, compiler, log_cb=log_cb,
+                                    tmp=tmp, src_dir=src_dir)
+                if proc.returncode != 0:
+                    rec["status"] = "compile-failed"
+                    rec["reason"] = proc.stderr.strip().splitlines()[-1] if proc.stderr.strip() else "compile error"
+                    report["dropped"].append(type_name)
+                    if strict:
+                        report["stderr"] = proc.stderr
+                        return report
+                    # Best-effort: this node is DROPPED from the bundle, so its
+                    # transformed fragment must not linger in source/ (which is
+                    # the bundle's source -- build.sh never compiles it). The
+                    # debug breadcrumb is the per-node scratch dir the
+                    # controller keeps.
+                    _rm(frag_path)
+                    continue
+                frag_objs.append(obj)
+            rec["status"] = "compiled"
+            frag_files.append(os.path.basename(frag_path))
+            compiled_infos.append(info)
+
+        if not compiled_infos:
+            return report
+
+        # 2b) collect + dedup shared-helper blocks across the nodes that
+        #     ACTUALLY compiled (so a dropped node never orphans its helper into
+        #     the unit), emit the one shared unit, compile it, and add it to the
+        #     link set. No node carried a block -> shared_path stays None and
+        #     NOTHING below changes. A broken shared helper is a hard build
+        #     failure.
+        shared_blocks, shared_conflicts = _collect_shared_helpers(compiled_infos)
+        if shared_conflicts:
+            report["shared_helper_conflicts"] = shared_conflicts
+        shared_path = None
+        if shared_blocks:
+            shared_path = os.path.join(src_dir, SHARED_HELPERS_FILE)
+            with open(shared_path, "w", encoding="utf-8") as fh:
+                fh.write(make_shared_helpers_cpp(shared_blocks))
+            report["shared_helpers"] = [b["name"] for b in shared_blocks]
+        if shared_path is not None:
+            if compile_now:
+                sh_src, shared_obj = _copy_into(shared_path, tmp)
+                sh_cmd = toolchain.compile_object_cmd(
+                    exe, sh_src, shared_obj, include_dir=inc, frag=True,
+                    arch=arch, qt=needs_qt, maya=maya)
+                proc = _run_compile(sh_cmd, obj_env, compiler, log_cb=log_cb,
+                                    tmp=tmp, src_dir=src_dir)
+                if proc.returncode != 0:
+                    report["reason"] = "shared helpers compile failed"
                     report["stderr"] = proc.stderr
                     return report
-                # Best-effort: this node is DROPPED from the bundle, so its
-                # transformed fragment must not linger in source/ (which is the
-                # bundle's source -- build.sh never compiles it). The debug
-                # breadcrumb is the per-node scratch dir the controller keeps.
-                _rm(frag_path)
-                continue
-        rec["status"] = "compiled"
-        frag_files.append(os.path.basename(frag_path))
-        frag_objs.append(obj)
-        compiled_infos.append(info)
+                frag_objs.append(shared_obj)
+            frag_files.append(os.path.basename(shared_path))
 
-    if not compiled_infos:
-        return report
+        # 3) plugin_main (into build/source) + BOTH build scripts + README (into
+        #    build/), then link the bundle at the TOP of out_dir.
+        with open(os.path.join(src_dir, "plugin_main.cpp"), "w", encoding="utf-8") as fh:
+            fh.write(make_plugin_main(compiled_infos, plugin_name))
+        # build.bat force-includes the stdext compat header by BARE name (see
+        # toolchain.QT_MSVC_COMPAT_HEADER), so a Qt build ships a copy beside its
+        # sources; a non-Qt build drops any copy a previous compile left behind.
+        toolchain.ship_qt_msvc_compat_header(src_dir, needs_qt)
+        node_cpp_files = [_node_cpp_name(i["node_name"]) for i in compiled_infos]
+        build_sh       = os.path.join(build_dir, "build.sh")
+        # newline="" on BOTH: the generators already emit their own line endings
+        # (LF for .sh, CRLF for .bat). Without it a Windows host translates them
+        # again -- the .sh becomes CRLF and dies with "$'\r': command not found",
+        # the .bat becomes \r\r\n. No-op on macOS (os.linesep is already "\n").
+        with open(build_sh, "w", newline="", encoding="utf-8") as fh:
+            fh.write(make_build_sh(plugin_name, frag_files, needs_qt=needs_qt))
+        if not toolchain.is_windows():
+            os.chmod(build_sh, 0o755)
+        with open(os.path.join(build_dir, "build.bat"), "w", newline="", encoding="utf-8") as fh:
+            fh.write(make_build_bat(plugin_name, frag_files, needs_qt=needs_qt))
+        out_plugin = os.path.join(out_dir, plugin_name + toolchain.plugin_ext())
+        with open(os.path.join(build_dir, "README.txt"), "w", encoding="utf-8") as fh:
+            fh.write(make_readme(plugin_name, node_cpp_files, single=False,
+                                 bundle_name=os.path.basename(out_plugin)))
 
-    # 2b) collect + dedup shared-helper blocks across the nodes that ACTUALLY
-    #     compiled (so a dropped node never orphans its helper into the unit),
-    #     emit the one shared unit, compile it, and add it to the link set. No
-    #     node carried a block -> shared_path stays None and NOTHING below
-    #     changes. A broken shared helper is a hard build failure.
-    shared_blocks, shared_conflicts = _collect_shared_helpers(compiled_infos)
-    if shared_conflicts:
-        report["shared_helper_conflicts"] = shared_conflicts
-    shared_path = None
-    if shared_blocks:
-        shared_path = os.path.join(src_dir, SHARED_HELPERS_FILE)
-        with open(shared_path, "w", encoding="utf-8") as fh:
-            fh.write(make_shared_helpers_cpp(shared_blocks))
-        report["shared_helpers"] = [b["name"] for b in shared_blocks]
-    if shared_path is not None:
-        shared_obj = os.path.splitext(shared_path)[0] + toolchain.object_ext()
+        # Remove any stale bundle from a PRIOR compile up-front so the post-link
+        # existence check below means "THIS run produced it", not a leftover an
+        # aborted/failed link never overwrote (#67).
         if compile_now:
-            sh_cmd = toolchain.compile_object_cmd(
-                exe, shared_path, shared_obj, include_dir=inc, frag=True,
-                arch=arch, qt=needs_qt, maya=maya)
-            proc = _run_compile(sh_cmd, obj_env, compiler, log_cb=log_cb)
-            if proc.returncode != 0:
-                report["reason"] = "shared helpers compile failed"
-                report["stderr"] = proc.stderr
+            _rm(out_plugin)
+
+        if toolchain.is_linux():
+            # No Linux generator exists -- build.sh above is the macOS recipe.
+            # Fail with a readable reason instead of a confusing clang error.
+            # See the note on the single-node path and docs/PORTING.md.
+            if compile_now:
+                report["reason"] = _LINUX_UNSUPPORTED
                 return report
-        frag_files.append(os.path.basename(shared_path))
-        frag_objs.append(shared_obj)
-
-    # 3) plugin_main (into build/source) + BOTH build scripts + README (into
-    #    build/), then link the bundle at the TOP of out_dir.
-    with open(os.path.join(src_dir, "plugin_main.cpp"), "w", encoding="utf-8") as fh:
-        fh.write(make_plugin_main(compiled_infos, plugin_name))
-    # build.bat force-includes the stdext compat header by BARE name (see
-    # toolchain.QT_MSVC_COMPAT_HEADER), so a Qt build ships a copy beside its
-    # sources; a non-Qt build drops any copy a previous compile left behind.
-    toolchain.ship_qt_msvc_compat_header(src_dir, needs_qt)
-    node_cpp_files = [_node_cpp_name(i["node_name"]) for i in compiled_infos]
-    build_sh       = os.path.join(build_dir, "build.sh")
-    # newline="" on BOTH: the generators already emit their own line endings
-    # (LF for .sh, CRLF for .bat). Without it a Windows host translates them
-    # again -- the .sh becomes CRLF and dies with "$'\r': command not found",
-    # the .bat becomes \r\r\n. No-op on macOS (os.linesep is already "\n").
-    with open(build_sh, "w", newline="", encoding="utf-8") as fh:
-        fh.write(make_build_sh(plugin_name, frag_files, needs_qt=needs_qt))
-    if not toolchain.is_windows():
-        os.chmod(build_sh, 0o755)
-    with open(os.path.join(build_dir, "build.bat"), "w", newline="", encoding="utf-8") as fh:
-        fh.write(make_build_bat(plugin_name, frag_files, needs_qt=needs_qt))
-    out_plugin = os.path.join(out_dir, plugin_name + toolchain.plugin_ext())
-    with open(os.path.join(build_dir, "README.txt"), "w", encoding="utf-8") as fh:
-        fh.write(make_readme(plugin_name, node_cpp_files, single=False,
-                             bundle_name=os.path.basename(out_plugin)))
-
-    # Remove any stale bundle from a PRIOR compile up-front so the post-link
-    # existence check below means "THIS run produced it", not a leftover an
-    # aborted/failed link never overwrote (#67).
-    if compile_now:
-        _rm(out_plugin)
-
-    if toolchain.is_windows():
-        # Direct cl compile+link (the build-verified path); build.bat above is the
-        # hand-runnable mirror.
-        if compile_now:
-            pm_obj = os.path.join(src_dir, "plugin_main" + toolchain.object_ext())
+        elif compile_now:
+            # In-process compile + link, the same on Windows and macOS: the
+            # build.sh / build.bat above are helpers for a user compiling by
+            # hand, and the pipeline never runs them.
+            pm_src, pm_obj = _copy_into(
+                os.path.join(src_dir, "plugin_main.cpp"), tmp)
             pm_cmd = toolchain.compile_object_cmd(
-                exe, os.path.join(src_dir, "plugin_main.cpp"), pm_obj,
+                exe, pm_src, pm_obj,
                 include_dir=inc, frag=False, arch=arch, qt=needs_qt, maya=maya)
-            proc = _run_compile(pm_cmd, obj_env, compiler, log_cb=log_cb)
+            proc = _run_compile(pm_cmd, obj_env, compiler, log_cb=log_cb,
+                                tmp=tmp, src_dir=src_dir)
             if proc.returncode != 0:
                 report["reason"] = "plugin_main compile failed"
                 report["stderr"] = proc.stderr
                 return report
+            tmp_plugin = os.path.join(tmp, os.path.basename(out_plugin))
             link_cmd = toolchain.link_plugin_cmd(
-                exe, frag_objs + [pm_obj], out_plugin,
+                exe, frag_objs + [pm_obj], tmp_plugin,
                 lib_dir=toolchain.maya_lib_dir(maya), libs=_LINK_LIBS,
-                qt=needs_qt, maya=maya)
-            proc = _run_compile(link_cmd, obj_env, compiler, log_cb=log_cb)
-            toolchain.remove_msvc_link_byproducts(out_plugin)
+                arch=arch, qt=needs_qt, maya=maya)
+            proc = _run_compile(link_cmd, obj_env, compiler, log_cb=log_cb,
+                                tmp=tmp, src_dir=src_dir)
             if proc.returncode != 0:
                 report["reason"] = "link failed"
                 report["stderr"] = proc.stderr
                 return report
-            report["bundle"] = out_plugin
-    elif toolchain.is_linux():
-        # No Linux generator exists -- build.sh above is the macOS recipe. Fail
-        # with a readable reason instead of a confusing clang error. See the
-        # note on the single-node path and docs/PORTING.md.
-        if compile_now:
-            report["reason"] = _LINUX_UNSUPPORTED
-            return report
-    else:
-        if compile_now:
-            env  = dict(os.environ, MAYA=maya)
-            proc = _run_compile(["bash", build_sh], env, compiler, log_cb=log_cb)
-            if proc.returncode != 0:
-                report["reason"] = "link failed"
-                report["stderr"] = proc.stderr
+            problem = toolchain.install_built_plugin(tmp_plugin, out_plugin)
+            if problem:
+                report["reason"] = problem
                 return report
             report["bundle"] = out_plugin
 
@@ -1523,7 +1550,6 @@ def assemble(
                                 "produced at %s" % report["bundle"])
             report["bundle"] = None
             return report
-        _remove_objects(src_dir)
     report["ok"] = True
     return report
 
@@ -1628,15 +1654,7 @@ def _assemble_single(node, plugin_name, out_dir, reg, report, *, strict, maya,
     # can't find a toolchain never destroys the last-good bundle.
     _rm(out_plugin)
 
-    if toolchain.is_windows():
-        cmd = toolchain.compile_to_plugin_cmd(
-            tc["exe"], os.path.join(src_dir, node_file), out_plugin,
-            include_dir=toolchain.maya_include_dir(maya),
-            lib_dir=toolchain.maya_lib_dir(maya), libs=libs,
-            arch=toolchain.mac_arch(), qt=needs_qt, maya=maya)
-        proc = _run_compile(cmd, tc["obj_env"], tc["compiler"], log_cb=log_cb)
-        toolchain.remove_msvc_link_byproducts(out_plugin, one_shot=True)
-    elif toolchain.is_linux():
+    if toolchain.is_linux():
         # There is no Linux build-script generator: make_single_build_sh emits
         # the macOS recipe (clang++/-D OSMac_/-bundle/lipo). Running it here
         # would fail deep in the compiler with a confusing message, so say so
@@ -1646,11 +1664,26 @@ def _assemble_single(node, plugin_name, out_dir, reg, report, *, strict, maya,
         report["reason"] = _LINUX_UNSUPPORTED
         report["dropped"].append(type_name)
         return report
-    else:
-        # Dogfood the shipped build.sh: the script the user re-runs is the one
-        # that built the bundle.
-        env  = dict(os.environ, MAYA=maya)
-        proc = _run_compile(["bash", build_sh], env, tc["compiler"], log_cb=log_cb)
+    # The one-shot recipe porter.compile_cpp uses, in-process and in a temp
+    # folder on Windows AND macOS. The build.sh / build.bat written above are
+    # helpers for a user compiling by hand; the pipeline never runs them.
+    try:
+        ok, log = toolchain.build_plugin_one_shot(
+            tc["exe"], os.path.join(src_dir, node_file), out_plugin,
+            include_dir = toolchain.maya_include_dir(maya),
+            lib_dir     = toolchain.maya_lib_dir(maya),
+            libs        = libs,
+            env         = tc["obj_env"],
+            log_cb      = log_cb,
+            arch        = toolchain.mac_arch(),
+            qt          = needs_qt,
+            maya        = maya,
+        )
+        proc = _CompileResult(0 if ok else 1, log)
+    except FileNotFoundError:
+        proc = _FailedLaunch(toolchain.compiler_missing_message(tc["compiler"]))
+    except toolchain.BuildTimeout as exc:
+        proc = _timed_out(exc)
 
     if proc.returncode != 0:
         rec["status"] = "compile-failed"
@@ -1672,6 +1705,5 @@ def _assemble_single(node, plugin_name, out_dir, reg, report, *, strict, maya,
         report["dropped"].append(type_name)
         return report
     report["bundle"] = out_plugin
-    _remove_objects(src_dir)
-    report["ok"] = True
+    report["ok"]     = True
     return report
