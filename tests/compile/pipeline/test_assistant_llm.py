@@ -75,6 +75,15 @@ _CLI_MODEL_REPLY = (
     "sonnet[1m], opus[1m], fable[1m], opusplan, default, or a full model ID.\n"
 )
 
+# The same reply from Claude Code 2.1.273, verbatim: the name now comes wrapped
+# in backticks and tagged "(default)". Kept beside the older one, since both
+# shapes are in the wild.
+_CLI_MODEL_REPLY_2_1_273 = (
+    "Current model: `Opus 5 (1M context) (default)` (effort: xhigh)\n"
+    "Usage: /model <name>. Available: sonnet, opus, haiku, fable, best, "
+    "sonnet[1m], opus[1m], fable[1m], opusplan, default, or a full model ID.\n"
+)
+
 
 class TestClaudeCliModelListing(unittest.TestCase):
     """The Claude CLI list is read FROM THE CLI -- no API key, ever.
@@ -98,9 +107,29 @@ class TestClaudeCliModelListing(unittest.TestCase):
 
     def test_reports_current_model(self):
         # The list is ALIASES, so naming what the active one resolves to is the
-        # only way a user can tell which alias is the model they want.
+        # only way a user can tell which alias is the model they want. The
+        # effort tag is settings.json, not the model, and is dropped.
         _, current = self._parse(_CLI_MODEL_REPLY)
-        self.assertEqual(current, "Opus 5 (1M context) (effort: xhigh)")
+        self.assertEqual(current, "Opus 5 (1M context)")
+
+    def test_reports_current_model_2_1_273(self):
+        # Backticks and "(default)" leaked into the status line verbatim.
+        names, current = self._parse(_CLI_MODEL_REPLY_2_1_273)
+        self.assertEqual(current, "Opus 5 (1M context)")
+        self.assertEqual(len(names), 10)
+
+    def test_clean_label(self):
+        from mpynode.ui.llm.claude_cli_client import clean_label
+
+        for raw, want in (
+            ("`Opus 5 (1M context) (default)` (effort: xhigh)", "Opus 5 (1M context)"),
+            ("`Opus 5`", "Opus 5"),
+            ("Opus 5.5 (disabled)", "Opus 5.5"),
+            ("Opus in plan mode, else Sonnet", "Opus in plan mode, else Sonnet"),
+            ("", ""),
+            (None, ""),
+        ):
+            self.assertEqual(clean_label(raw), want, raw)
 
     def test_prose_trailer_is_not_a_model(self):
         names, _ = self._parse(_CLI_MODEL_REPLY)
@@ -150,6 +179,14 @@ class TestClaudeCliFullIdDiscovery(unittest.TestCase):
 
         return cli
 
+    def setUp(self):
+        # These pin the per-id contract through a patched probe_model; the
+        # batched path would spawn the (fake) binary first.
+        p = unittest.mock.patch.object(self._cli(), "_probe_batches",
+                                       lambda *a, **k: {})
+        p.start()
+        self.addCleanup(p.stop)
+
     def test_probe_classifies_the_three_outcomes(self):
         cli = self._cli()
         cases = [
@@ -164,6 +201,98 @@ class TestClaudeCliFullIdDiscovery(unittest.TestCase):
                  unittest.mock.patch.object(cli, "_run_cli", lambda *a, **k: out):
                 status, label = cli.probe_model("claude-opus-5")
             self.assertEqual((status, label), (want_status, want_label), out)
+
+    def test_probe_classifies_the_2_1_273_replies(self):
+        # Verbatim from Claude Code 2.1.273. Before, the backticks rode into
+        # the label and the too-old 400 was an unlabelled 'error'.
+        cli = self._cli()
+        too_old = ('API error: 400 {"type":"error","error":{"type":'
+                   '"invalid_request_error","message":"Claude Code 2.1.273 does '
+                   'not support this model; version 2.1.280 or newer is required. '
+                   "Run 'claude update', or update the Claude desktop app, then "
+                   'try again.","details":{"error_code":'
+                   '"claude_code_version_too_old"}},"request_id":"req_1"}')
+        cases = [
+            ("Set model to `Opus 5 (1M context)` for this session only",
+             ("valid", "Opus 5 (1M context)")),
+            (too_old, ("too_old", "2.1.280")),
+            ('{"error_code":"claude_code_version_too_old"}', ("too_old", "")),
+            ("Unable to validate model: Model access is denied by policy",
+             ("error", "Model access is denied by policy")),
+        ]
+        for out, want in cases:
+            self.assertEqual(cli.classify_probe(out), want, out)
+
+    def test_probe_retries_with_the_login_when_bare_cannot_authenticate(self):
+        # THE root cause of the alias-only dropdown: --bare never reads the
+        # OAuth login, so every full id failed and nothing validated.
+        cli   = self._cli()
+        calls = []
+
+        def _run(binp, args, extra=(), timeout=0, feed=None):
+            calls.append(list(extra))
+            if "--bare" in extra:
+                return ("Unable to validate model: Could not resolve "
+                        "authentication method. Expected one of apiKey")
+            return "Set model to `Opus 4.8` for this session only"
+
+        with unittest.mock.patch.object(cli, "_resolve", lambda *_a: "/bin/login"), \
+             unittest.mock.patch.object(cli, "_run_cli", _run), \
+             unittest.mock.patch.dict(cli._PROBE_START, {}, clear=True):
+            self.assertEqual(cli.probe_model("claude-opus-4-8"), ("valid", "Opus 4.8"))
+            self.assertIn("--bare", calls[0])
+            self.assertEqual(calls[0][calls[0].index("--model") + 1], cli._GUARD_MODEL)
+            self.assertIn("--safe-mode", calls[1])
+            self.assertNotIn("--bare", calls[1])
+            # The next probe starts at the set that worked.
+            del calls[:]
+            cli.probe_model("claude-opus-5")
+            self.assertEqual(len(calls), 1)
+            self.assertIn("--safe-mode", calls[0])
+
+    def test_probe_drops_a_flag_the_cli_does_not_know(self):
+        cli   = self._cli()
+        calls = []
+
+        def _run(binp, args, extra=(), timeout=0, feed=None):
+            calls.append(list(extra))
+            if "--bare" in extra:
+                return "Unable to validate model: Could not resolve authentication method"
+            if "--safe-mode" in extra:
+                return "error: unknown option '--safe-mode'"
+            return "Model 'claude-opus-5-1' not found"
+
+        with unittest.mock.patch.object(cli, "_resolve", lambda *_a: "/bin/old"), \
+             unittest.mock.patch.object(cli, "_run_cli", _run), \
+             unittest.mock.patch.dict(cli._PROBE_START, {}, clear=True):
+            self.assertEqual(cli.probe_model("claude-opus-5-1"), ("unknown", ""))
+        self.assertEqual(len(calls), 3)
+        self.assertNotIn("--safe-mode", calls[2])
+
+    def test_logged_out_reports_why(self):
+        cli = self._cli()
+        msg = ("Unable to validate model: Could not resolve authentication "
+               "method. Expected one of apiKey")
+        with unittest.mock.patch.object(cli, "_resolve", lambda *_a: "/bin/out"), \
+             unittest.mock.patch.object(cli, "_run_cli", lambda *a, **k: msg), \
+             unittest.mock.patch.dict(cli._PROBE_START, {}, clear=True):
+            status, why = cli.probe_model("claude-opus-5")
+        self.assertEqual(status, "error")
+        self.assertIn("Could not resolve authentication method", why)
+
+    def test_bedrock_revisions_and_foreign_names_are_not_candidates(self):
+        cli = self._cli()
+        self.assertFalse(cli._is_candidate("claude-opus-4-6-v1"))
+        self.assertFalse(cli._is_candidate("claude-sonnet-4-20250514-v1"))
+        self.assertTrue(cli._is_candidate("claude-sonnet-4-20250514"))
+        # A family nobody has heard of yet is a candidate: validation decides.
+        self.assertTrue(cli._is_candidate("claude-sage-1"))
+
+    def test_family_comes_from_the_id(self):
+        cli = self._cli()
+        self.assertEqual(cli.family_of("claude-opus-5[1m]"), "opus")
+        self.assertEqual(cli.family_of("claude-sage-1-2"), "sage")
+        self.assertEqual(cli.family_of("opus"), "")
 
     def test_restricted_model_is_not_offered(self):
         # 403 means the id is REAL but this login cannot use it. Offering it
@@ -348,6 +477,12 @@ class TestClaudeCliAliasFallback(unittest.TestCase):
 
         return cli
 
+    def setUp(self):
+        p = unittest.mock.patch.object(self._cli(), "_probe_batches",
+                                       lambda *a, **k: {})
+        p.start()
+        self.addCleanup(p.stop)
+
     def _list(self, cands, probe=None, aliases=("opus", "sonnet")):
         cli   = self._cli()
         probe = probe or (lambda m, *a, **k: ("valid", m.upper()))
@@ -508,7 +643,7 @@ class TestClaudeCliScanIsClaudeRelated(unittest.TestCase):
 
 
 class TestClaudeCliComboRendering(unittest.TestCase):
-    """One homogeneous block of explicit ids -- no aliases, no separator."""
+    """Every PICKABLE row is an explicit id; the rest can never be picked."""
 
     def _panel(self):
         from mpynode.ui.widgets.assistant_panel import NDAssistantPanel
@@ -518,16 +653,42 @@ class TestClaudeCliComboRendering(unittest.TestCase):
         return p
 
     def test_every_row_is_a_real_model(self):
-        # A separator row would make count() disagree with the model count and
-        # is meaningless now that there is only one kind of entry.
+        # Beside the ids sit the default row (blank) and one header per
+        # family. Only an id may be picked, and its text is exactly that id.
+        from mpynode.ui.widgets.assistant_panel import _ROW_KIND
+
         p                     = self._panel()
         p._cli_model_displays = {"claude-opus-5": "Opus 5"}
         p._model_edit.clear()
         models = ["claude-opus-5", "claude-opus-5[1m]", "claude-haiku-4-5"]
         p._populate_cli_models(models)
-        self.assertEqual(p._model_edit.count(), len(models))
+        combo = p._model_edit
         for m in models:
-            self.assertGreaterEqual(p._model_edit.findText(m), 0, m)
+            self.assertGreaterEqual(combo.findText(m), 0, m)
+        kinds = [combo.itemData(i, _ROW_KIND) for i in range(combo.count())]
+        self.assertEqual(kinds.count("model"), len(models))
+        self.assertEqual(kinds[0], "default")
+        self.assertEqual(combo.itemText(0), "", "the default row must send nothing")
+        for i, kind in enumerate(kinds):
+            enabled = combo.model().item(i).isEnabled()
+            self.assertEqual(enabled, kind in ("model", "default"), (i, kind))
+            if kind == "model":
+                self.assertTrue(cfg.is_explicit_cli_id(combo.itemText(i)))
+
+    def test_a_flat_alias_is_shown_but_never_pickable(self):
+        # The old fallback cached aliases; get_model() drops them, so a row
+        # for one would show a model the box never sends.
+        from mpynode.ui.widgets.assistant_panel import _ROW_KIND
+
+        p = self._panel()
+        p._model_edit.clear()
+        p._populate_cli_models(["opus", "claude-opus-5"])
+        combo = p._model_edit
+        self.assertEqual(combo.findText("opus"), -1)
+        greyed = [i for i in range(combo.count())
+                  if combo.itemData(i, _ROW_KIND) == "greyed"]
+        self.assertEqual(len(greyed), 1)
+        self.assertFalse(combo.model().item(greyed[0]).isEnabled())
 
     def test_display_name_becomes_a_tooltip(self):
         from mpynode.ui.qt_wrapper import Qt
@@ -551,8 +712,8 @@ class TestClaudeCliListNeedsNoKey(unittest.TestCase):
         self.addCleanup(p.deleteLater)
         calls = []
         with unittest.mock.patch.object(
-            cli, "list_models",
-            lambda *a, **k: (calls.append(1), (["opus"], "Opus 5", {}))[1]
+            cli, "list_model_rows",
+            lambda *a, **k: (calls.append(1), cli.build_rows({}))[1]
         ), unittest.mock.patch.object(
             p, "_list_source",
             lambda prov: (_ for _ in ()).throw(
@@ -567,13 +728,49 @@ class TestClaudeCliListNeedsNoKey(unittest.TestCase):
 
         p = NDAssistantPanel()
         self.addCleanup(p.deleteLater)
-        with unittest.mock.patch.object(
-            cli, "list_models",
-            lambda *a, **k: (["opus"], "Opus 5 (1M context)", {"opus": "Opus 5"})
-        ):
+        payload = cli.build_rows({"claude-opus-5": ("valid", "Opus 5")},
+                                 current="Opus 5 (1M context)")
+        with unittest.mock.patch.object(cli, "list_model_rows",
+                                        lambda *a, **k: payload):
+            before = p._cli_current_model
             models = p._fetch_claude_cli_models()
-        self.assertEqual(models, ["opus"])
-        self.assertEqual(p._cli_current_model, "Opus 5 (1M context)")
+        self.assertEqual(models, ["claude-opus-5"])
+        self.assertIs(p._cli_rows_fetched, payload)
+        self.assertEqual(p._cli_rows_fetched["current"], "Opus 5 (1M context)")
+        self.assertTrue(payload.get("fetched"), "a full check must be stamped")
+        # The worker leaves what is on screen alone; the GUI thread applies it.
+        self.assertEqual(p._cli_current_model, before)
+
+    def test_launch_relinks_fresh_rows_instead_of_revalidating(self):
+        # Validation is the slow, login-backed step. Saved rows that are still
+        # good for this CLI version are only re-linked at launch.
+        import time as _time
+
+        import mpynode.ui.llm.claude_cli_client as cli
+        from mpynode.ui.widgets.assistant_panel import NDAssistantPanel
+
+        p = NDAssistantPanel()
+        self.addCleanup(p.deleteLater)
+        saved = cli.build_rows({"claude-opus-5": ("valid", "Opus 5")},
+                               cli_version="2.1.273")
+        saved["fetched"] = _time.time()
+        prior            = cfg.get_cached_rows("claude_cli")
+        self.addCleanup(cfg.set_cached_rows, "claude_cli", prior)
+        cfg.set_cached_rows("claude_cli", saved)
+        full = []
+        with unittest.mock.patch.object(cli, "cli_version", lambda *a, **k: "2.1.273"), \
+             unittest.mock.patch.object(cli, "relink_saved_rows",
+                                        lambda s, *a, **k: dict(s)), \
+             unittest.mock.patch.object(
+                 cli, "list_model_rows",
+                 lambda *a, **k: (full.append(1), cli.build_rows({}))[1]):
+            self.assertEqual(p._fetch_claude_cli_models(quick=True), ["claude-opus-5"])
+            self.assertEqual(full, [])
+            # A CLI update forces the full check.
+            with unittest.mock.patch.object(cli, "cli_version",
+                                            lambda *a, **k: "2.1.280"):
+                p._fetch_claude_cli_models(quick=True)
+            self.assertEqual(full, [1])
 
     def test_autorefresh_not_gated_on_a_key(self):
         from mpynode.ui.widgets.assistant_panel import NDAssistantPanel
@@ -626,6 +823,787 @@ class TestModelSelectionAfterFetch(unittest.TestCase):
     def test_empty_models_never_raises(self):
         self.assertEqual(cfg.model_selection_after_fetch("anthropic", "", []), "")
         self.assertEqual(cfg.model_selection_after_fetch("claude_cli", "", []), "")
+
+
+# What Claude Code 2.1.273 answered on the owner's machine (2026-09-22), trimmed
+# to what the row builder reads. Nothing in the code under test names a model.
+_PROBES_2_1_273 = {
+    "claude-opus-5":             ("valid", "Opus 5"),
+    "claude-opus-4-8":           ("valid", "Opus 4.8"),
+    "claude-opus-5-1":           ("unknown", ""),
+    "claude-sonnet-5":           ("valid", "Sonnet 5"),
+    "claude-haiku-4-5":          ("valid", "Haiku 4.5"),
+    "claude-haiku-4-5-20251001": ("valid", "Haiku 4.5"),
+    "claude-fable-5-1":          ("valid", "Fable 5.1"),
+}
+_WIDE_2_1_273 = {
+    "claude-opus-5[1m]":    ("valid", "Opus 5 (1M context)"),
+    "claude-sonnet-5[1m]":  ("valid", "Sonnet 5"),
+    "claude-haiku-4-5[1m]": ("error", ""),
+}
+_ALIASES_2_1_273 = ["sonnet", "opus", "haiku", "fable", "best", "sonnet[1m]",
+                    "opus[1m]", "fable[1m]", "opusplan", "default"]
+_ALIAS_LABELS_2_1_273 = {
+    "sonnet": "Sonnet 5", "opus": "Opus 5", "haiku": "Haiku 4.5",
+    "fable": "Fable 5.1", "best": "Fable 5.1", "sonnet[1m]": "Sonnet 5",
+    "opus[1m]": "Opus 5 (1M context)", "fable[1m]": "Fable 5.1",
+    "opusplan": "Opus in plan mode, else Sonnet", "default": "Opus 5 (1M context)",
+}
+_HINTS_2_1_273 = [
+    {"value": "claude-fable-5-1[1m]", "label": "Fable", "disabled": False,
+     "description": "Fable 5.1 \u00b7 Most capable for your hardest tasks"},
+    {"value": "cc-update-required-1", "label": "Opus 5.5 (disabled)",
+     "description": "Update to 2.1.280+ to use Opus 5.5", "disabled": True},
+]
+
+
+class TestClaudeCliRows(unittest.TestCase):
+    """build_rows: the dropdown as data, from what the CLI answered."""
+
+    def _cli(self):
+        import mpynode.ui.llm.claude_cli_client as cli
+
+        return cli
+
+    def _rows(self, **kw):
+        args = dict(probes=_PROBES_2_1_273, wide=_WIDE_2_1_273,
+                    alias_labels=_ALIAS_LABELS_2_1_273, current="Opus 5 (1M context)",
+                    aliases=_ALIASES_2_1_273, hints=_HINTS_2_1_273,
+                    cli_version="2.1.273")
+        args.update(kw)
+        return self._cli().build_rows(**args)
+
+    def test_the_owners_dropdown(self):
+        # 2.1.273's binary has never heard of claude-opus-5-5, so Opus 5.5
+        # appears only through the CLI's own "update to use" hint.
+        p   = self._rows()
+        got = [(r["status"], r["id"] or r["label"]) for r in p["rows"]]
+        self.assertEqual(got, [
+            ("hint", "Opus 5.5"),
+            ("valid", "claude-opus-5"),
+            ("valid", "claude-opus-5[1m]"),
+            ("valid", "claude-opus-4-8"),
+            ("valid", "claude-sonnet-5"),
+            ("valid", "claude-haiku-4-5"),
+            ("valid", "claude-fable-5-1"),
+        ])
+        self.assertNotIn("claude-opus-5-1", [r["id"] for r in p["rows"]])
+        self.assertEqual(p["default_id"], "claude-opus-5[1m]")
+        self.assertEqual(p["current"], "Opus 5 (1M context)")
+        self.assertFalse(p["fallback"])
+
+    def test_default_family_first_then_the_cli_order(self):
+        fams = []
+        for r in self._rows()["rows"]:
+            if r["family"] not in fams:
+                fams.append(r["family"])
+        self.assertEqual(fams, ["opus", "sonnet", "haiku", "fable"])
+
+    def test_aliases_become_chips_on_the_row_they_run(self):
+        p     = self._rows()
+        chips = {r["id"]: r["aliases"] for r in p["rows"] if r["aliases"]}
+        self.assertEqual(chips["claude-opus-5"],     ["opus"])
+        self.assertEqual(chips["claude-opus-5[1m]"], ["opus[1m]", "default"])
+        self.assertEqual(chips["claude-fable-5-1"],  ["fable", "best", "fable[1m]"])
+        self.assertEqual(chips["claude-sonnet-5"],   ["sonnet", "sonnet[1m]"])
+        self.assertNotIn("opusplan", p["alias_map"], "names no single model")
+        self.assertEqual(p["alias_map"]["best"], "claude-fable-5-1")
+
+    def test_a_build_stamp_naming_the_same_model_is_listed_once(self):
+        ids = [r["id"] for r in self._rows()["rows"]]
+        self.assertIn("claude-haiku-4-5", ids)
+        self.assertNotIn("claude-haiku-4-5-20251001", ids)
+
+    def test_the_update_hint_is_a_greyed_row_at_the_top_of_its_family(self):
+        rows = self._rows()["rows"]
+        self.assertEqual(rows[0]["status"],      "hint")
+        self.assertEqual(rows[0]["label"],       "Opus 5.5")
+        self.assertEqual(rows[0]["min_version"], "2.1.280")
+        self.assertEqual(rows[0]["id"], "", "a hint names no id to send")
+
+    def test_a_too_old_id_takes_the_hints_name(self):
+        # Opus 5.5 as a hint AND as a probed id (an API key supplied it): one
+        # greyed row, named by the hint, not two.
+        probes = dict(_PROBES_2_1_273)
+        probes["claude-opus-5-5"] = ("too_old", "2.1.280")
+        rows = self._rows(probes=probes)["rows"]
+        grey = [r for r in rows if r["status"] != "valid"]
+        self.assertEqual(len(grey), 1)
+        self.assertEqual((grey[0]["id"], grey[0]["label"]),
+                         ("claude-opus-5-5", "Opus 5.5"))
+
+    def test_a_new_family_needs_no_code(self):
+        p = self._cli().build_rows({"claude-sage-1": ("valid", "Sage 1"),
+                                    "claude-opus-5": ("valid", "Opus 5")},
+                                   aliases=["opus", "sage"])
+        self.assertEqual([r["family"] for r in p["rows"]], ["opus", "sage"])
+
+    def test_nothing_validated_is_a_fallback(self):
+        p = self._cli().build_rows({"claude-opus-5": ("error", "logged out")},
+                                   alias_labels={"opus": "Opus 5"},
+                                   error="logged out")
+        self.assertTrue(p["fallback"])
+        self.assertEqual(p["error"], "logged out")
+        self.assertEqual(p["alias_labels"], {"opus": "Opus 5"})
+
+    def test_relinking_moves_chips_not_rows(self):
+        # Local facts change without a CLI update: settings.json moves the
+        # default. The pinned rows stay; the chips and default follow.
+        cli   = self._cli()
+        saved = self._rows()
+        moved = dict(_ALIAS_LABELS_2_1_273, default="Opus 5")
+        p = cli.link_rows(saved["rows"], moved, "Opus 5", _ALIASES_2_1_273,
+                              _HINTS_2_1_273, "2.1.273")
+        self.assertEqual([r["id"] for r in p["rows"]],
+                         [r["id"] for r in saved["rows"]])
+        self.assertEqual(p["default_id"], "claude-opus-5")
+
+    def test_rows_survive_json(self):
+        import json as _json
+
+        p = self._rows()
+        self.assertEqual(_json.loads(_json.dumps(p)), p)
+
+    def test_a_blank_box_follows_the_settings_override(self):
+        # settings.json "model": "sonnet" (or ANTHROPIC_MODEL): "Current model"
+        # says Sonnet 5 while "/model default" still names the built-in Opus.
+        # A blank box runs Sonnet, so that is the default row -- verified live.
+        p = self._rows(current="Sonnet 5")
+        self.assertEqual(p["default_id"], "claude-sonnet-5")
+        chips = {r["id"]: r["aliases"] for r in p["rows"]}
+        self.assertIn("default", chips["claude-sonnet-5"])
+        self.assertNotIn("default", chips["claude-opus-5[1m]"])
+        self.assertNotIn("default", p["alias_map"], "default is the blank row")
+
+    def test_a_hint_this_cli_already_satisfies_is_dropped(self):
+        # After `claude update`, the CLI rewrites its hint cache only later.
+        probes                    = dict(_PROBES_2_1_273)
+        probes["claude-opus-5-5"] = ("valid", "Opus 5.5")
+        for kw in ({"cli_version": "2.1.280"},
+                   {"cli_version": "", "probes": probes}):
+            rows = self._rows(**kw)["rows"]
+            self.assertFalse([r for r in rows if r["status"] == "hint"], kw)
+
+    def test_hidden_but_valid_ids_are_kept_aside(self):
+        # Typed, a build stamp or a same-name twin still runs its model; the
+        # Runs line must not call it unchecked.
+        p = self._rows()
+        self.assertEqual(p["also_valid"]["claude-haiku-4-5-20251001"], "Haiku 4.5")
+        self.assertEqual(p["also_valid"]["claude-sonnet-5[1m]"], "Sonnet 5")
+        self.assertNotIn("claude-haiku-4-5[1m]", p["also_valid"], "that twin failed")
+
+    def test_relink_keeps_the_last_chips_when_the_lookup_fails(self):
+        cli   = self._cli()
+        saved = self._rows()
+        with unittest.mock.patch.object(cli, "_resolve", lambda *_a: "/b"), \
+             unittest.mock.patch.object(cli, "alias_listing", lambda *a, **k: ([], "")), \
+             unittest.mock.patch.object(cli, "resolve_aliases", lambda *a, **k: {}), \
+             unittest.mock.patch.object(cli, "read_server_hints", lambda *a: _HINTS_2_1_273):
+            p = cli.relink_saved_rows(dict(saved, fetched=7.0))
+        self.assertEqual(p["alias_map"],  saved["alias_map"])
+        self.assertEqual(p["default_id"], saved["default_id"])
+        self.assertEqual(p["fetched"],    7.0)
+
+    def test_a_current_model_with_no_row_is_no_row(self):
+        # settings.json "model": "opusplan": the blank box runs something that
+        # is not a row, so no row may claim to be the default.
+        p = self._rows(current="Opus in plan mode, else Sonnet")
+        self.assertEqual(p["default_id"], "")
+        self.assertFalse([r for r in p["rows"] if "default" in r["aliases"]])
+        # Unknown current (the listing failed): the built-in default stands in.
+        self.assertEqual(self._rows(current="")["default_id"], "claude-opus-5[1m]")
+
+    def test_the_twin_of_a_parked_build_stamp_is_kept_aside(self):
+        probes = {"claude-sonnet-4-5": ("valid", "Sonnet 4.5"),
+                  "claude-sonnet-4-5-20250929": ("valid", "Sonnet 4.5")}
+        wide = {"claude-sonnet-4-5[1m]": ("valid", "Sonnet 4.5 (1M context)"),
+                "claude-sonnet-4-5-20250929[1m]": ("valid", "Sonnet 4.5 (1M context)")}
+        p = self._cli().build_rows(probes, wide)
+        self.assertEqual(p["also_valid"]["claude-sonnet-4-5-20250929[1m]"],
+                         "Sonnet 4.5 (1M context)")
+
+    def test_refusals_are_kept_and_an_unfinished_check_says_so(self):
+        p = self._rows()
+        self.assertEqual(p["refused"]["claude-opus-5-1"], "not found")
+        self.assertFalse(p["partial"])
+        cli                       = self._cli()
+        wide                      = dict(_WIDE_2_1_273)
+        wide["claude-opus-5[1m]"] = ("error", cli._NO_ANSWER)
+        self.assertTrue(self._rows(wide=wide)["partial"], "a twin timed out")
+        labels = dict(_ALIAS_LABELS_2_1_273)
+        del labels["opus[1m]"]
+        self.assertTrue(self._rows(alias_labels=labels)["partial"],
+                        "a listed alias did not resolve")
+
+
+class TestClaudeCliServerHints(unittest.TestCase):
+    """read_server_hints reads an undocumented CLI cache: never trust it."""
+
+    def _write(self, text):
+        import os
+        import tempfile
+
+        fd, path = tempfile.mkstemp(suffix=".json")
+        with os.fdopen(fd, "w", encoding="utf-8") as fh:
+            fh.write(text)
+        self.addCleanup(os.remove, path)
+        return path
+
+    def test_reads_the_real_shape(self):
+        import json as _json
+
+        from mpynode.ui.llm.claude_cli_client import read_server_hints
+
+        path = self._write(_json.dumps(
+            {"additionalModelOptionsCache": _HINTS_2_1_273, "other": 1}))
+        hints = read_server_hints(path)
+        self.assertEqual([h["disabled"] for h in hints], [False, True])
+        self.assertEqual(hints[1]["label"], "Opus 5.5 (disabled)")
+
+    def test_anything_surprising_is_empty(self):
+        from mpynode.ui.llm.claude_cli_client import read_server_hints
+
+        for text in ("", "not json", "[]", '{"x": 1}',
+                     '{"additionalModelOptionsCache": "nope"}',
+                     '{"additionalModelOptionsCache": [1, null, "x"]}'):
+            self.assertEqual(read_server_hints(self._write(text)), [], text)
+        self.assertEqual(read_server_hints(r"Z:\no\such\.claude.json"), [])
+
+
+def _stream_log(replies):
+    """A ``-p --output-format stream-json`` log answering each /model."""
+    import json as _json
+
+    out = []
+    for r in replies:
+        out.append(_json.dumps({"type": "system", "subtype": "init",
+                                "model": "claude-probe-guard-0"}))
+        out.append(_json.dumps({"type": "result", "subtype": "success",
+                                "is_error": False, "result": r}))
+    return "\n".join(out)
+
+
+class TestClaudeCliBatchedProbe(unittest.TestCase):
+    """One process checks many ids: the login serialises across processes."""
+
+    def _cli(self):
+        import mpynode.ui.llm.claude_cli_client as cli
+
+        return cli
+
+    def test_one_process_answers_every_id(self):
+        cli   = self._cli()
+        calls = []
+
+        def _run(binp, args, extra=(), timeout=0, feed=None):
+            calls.append((list(extra), feed))
+            return _stream_log(["Set model to `Opus 5` for this session only",
+                                "Model 'claude-opus-5-1' not found"])
+
+        with unittest.mock.patch.object(cli, "_run_cli", _run), \
+             unittest.mock.patch.dict(cli._PROBE_START, {}, clear=True):
+            got = cli._probe_batch(["claude-opus-5", "claude-opus-5-1"], "/b", 9)
+        self.assertEqual(got, {"claude-opus-5": ("valid", "Opus 5"),
+                               "claude-opus-5-1": ("unknown", "")})
+        self.assertEqual(len(calls), 1)
+        extra, feed = calls[0]
+        # The guard model: a message the CLI mistook for a prompt fails free.
+        self.assertEqual(extra[extra.index("--model") + 1], cli._GUARD_MODEL)
+        self.assertIn('"/model claude-opus-5-1"', feed)
+
+    def test_a_batch_that_cannot_log_in_moves_to_the_login_flags(self):
+        cli   = self._cli()
+        calls = []
+
+        def _run(binp, args, extra=(), timeout=0, feed=None):
+            calls.append(list(extra))
+            if "--bare" in extra:
+                return _stream_log(["Unable to validate model: Could not "
+                                    "resolve authentication method."] * 2)
+            return _stream_log(["Set model to `Opus 5` for this session only",
+                                "Set model to `Sonnet 5` for this session only"])
+
+        with unittest.mock.patch.object(cli, "_run_cli", _run), \
+             unittest.mock.patch.dict(cli._PROBE_START, {}, clear=True):
+            got = cli._probe_batch(["claude-opus-5", "claude-sonnet-5"], "/b", 9)
+        self.assertEqual(got["claude-sonnet-5"], ("valid", "Sonnet 5"))
+        self.assertIn("--safe-mode", calls[1])
+
+    def test_unanswered_ids_fall_back_to_one_process_each(self):
+        cli    = self._cli()
+        probed = []
+        with unittest.mock.patch.object(cli, "_probe_batches",
+                                        lambda ids, *a: {ids[0]: ("valid", "A")}), \
+             unittest.mock.patch.object(
+                 cli, "probe_model",
+                 lambda m, *a, **k: (probed.append(m), ("valid", m))[1]):
+            got = cli._probe_many(["claude-a-1", "claude-b-1", "claude-c-1"], "/b", 9, 4)
+        self.assertEqual(list(got), ["claude-a-1", "claude-b-1", "claude-c-1"])
+        self.assertEqual(sorted(probed), ["claude-b-1", "claude-c-1"])
+
+    def test_logged_out_spawns_nothing_more(self):
+        cli    = self._cli()
+        probed = []
+        noauth = ("error", "Could not resolve authentication method.")
+        with unittest.mock.patch.object(cli, "_probe_batches", lambda *a: {}), \
+             unittest.mock.patch.object(
+                 cli, "probe_model",
+                 lambda m, *a, **k: (probed.append(m), noauth)[1]):
+            got = cli._probe_many(["claude-a-1", "claude-b-1", "claude-c-1"], "/b", 9, 4)
+        self.assertEqual(probed, ["claude-a-1"])
+        self.assertEqual(set(got.values()), {noauth})
+
+    def test_batches_split_across_processes(self):
+        cli  = self._cli()
+        seen = []
+        with unittest.mock.patch.object(
+                cli, "_probe_batch",
+                lambda ids, *a: (seen.append(len(ids)),
+                                 {m: ("unknown", "") for m in ids})[1]):
+            got = cli._probe_batches(["claude-x-%d" % i for i in range(32)], "/b", 9)
+        self.assertEqual(len(got), 32)
+        self.assertEqual(sorted(seen), [8, 8, 8, 8])
+
+    def test_auth_is_judged_per_reply(self):
+        # A policy refusal is answered locally, before any credential is read,
+        # so under --bare it can come first while the rest cannot log in.
+        cli   = self._cli()
+        calls = []
+        deny = ("Model 'claude-code-1' is not available. Your organization "
+                 "restricts model selection.")
+        noauth = "Unable to validate model: Could not resolve authentication method."
+
+        def _run(binp, args, extra=(), timeout=0, feed=None):
+            calls.append((list(extra), feed.count("/model")))
+            if "--bare" in extra:
+                return _stream_log([deny, noauth, noauth])
+            return _stream_log(["Set model to `Opus 5` for this session only",
+                                "Set model to `Sonnet 5` for this session only"])
+
+        with unittest.mock.patch.object(cli, "_run_cli", _run), \
+             unittest.mock.patch.dict(cli._PROBE_START, {}, clear=True):
+            got = cli._probe_batch(["claude-code-1", "claude-opus-5",
+                                    "claude-sonnet-5"], "/b", 9)
+            memo = dict(cli._PROBE_START)
+        self.assertEqual(got["claude-code-1"], ("restricted", ""))
+        self.assertEqual(got["claude-opus-5"], ("valid", "Opus 5"))
+        self.assertEqual(calls[1][1], 2, "only the ids that could not log in")
+        self.assertEqual(memo, {"/b": 1}, "--bare must not stick")
+
+    def test_a_timeout_ends_the_batch(self):
+        cli   = self._cli()
+        calls = []
+        with unittest.mock.patch.object(
+                cli, "_run_cli", lambda *a, **k: (calls.append(1), None)[1]), \
+             unittest.mock.patch.object(cli, "_resolve", lambda *_a: "/b"), \
+             unittest.mock.patch.dict(cli._PROBE_START, {}, clear=True):
+            self.assertEqual(cli._probe_batch(["claude-opus-5"], "/b", 9), {})
+            self.assertEqual(cli.probe_model("claude-opus-5", "/b"),
+                             ("error", cli._NO_ANSWER))
+        self.assertEqual(len(calls), 2, "no retry across flag sets on a timeout")
+
+    def test_replies_that_cannot_be_paired_are_not_trusted(self):
+        cli = self._cli()
+        with unittest.mock.patch.object(
+                cli, "_run_cli",
+                lambda *a, **k: _stream_log(["extra", "Set model to `A` for this session"])), \
+             unittest.mock.patch.dict(cli._PROBE_START, {}, clear=True):
+            self.assertEqual(cli._probe_batch(["claude-opus-5"], "/b", 9), {})
+
+    def test_no_answer_spawns_nothing_more(self):
+        cli    = self._cli()
+        probed = []
+        with unittest.mock.patch.object(cli, "_probe_batches", lambda *a: {}), \
+             unittest.mock.patch.object(
+                 cli, "probe_model",
+                 lambda m, *a, **k: (probed.append(m), ("error", cli._NO_ANSWER))[1]):
+            cli._probe_many(["claude-a-1", "claude-b-1", "claude-c-1"], "/b", 9, 4)
+        self.assertEqual(probed, ["claude-a-1"])
+
+    def test_alias_lookup_retries_without_bare(self):
+        # alias_listing already retries for a CLI that predates --bare.
+        cli   = self._cli()
+        flags = []
+
+        def _run(binp, args, extra=(), timeout=0, feed=None):
+            flags.append(list(extra))
+            if "--bare" in extra:
+                return "error: unknown option '--bare'"
+            return _stream_log(["Set model to `Opus 5` for this session only"])
+
+        with unittest.mock.patch.object(cli, "_resolve", lambda *_a: "/b"), \
+             unittest.mock.patch.object(cli, "_run_cli", _run):
+            self.assertEqual(cli.resolve_aliases(["opus"]), {"opus": "Opus 5"})
+        self.assertNotIn("--bare", flags[-1])
+        self.assertEqual(len(flags), 2, "no per-alias spawns just to hear 'unknown option'")
+
+
+class TestClaudeCliRowsConfig(unittest.TestCase):
+    """Saved rows, when they need a full re-check, and the alias migration."""
+
+    def setUp(self):
+        self._rows  = cfg.get_cached_rows("claude_cli")
+        self._model = cfg.saved_model("claude_cli")
+        self.addCleanup(cfg.set_cached_rows, "claude_cli", self._rows)
+        self.addCleanup(cfg.set_model, "claude_cli", self._model)
+
+    def test_rows_round_trip(self):
+        p = {"rows": [{"id": "claude-opus-5"}], "cli_version": "2.1.273",
+             "fetched": 5.0}
+        cfg.set_cached_rows("claude_cli", p)
+        self.assertEqual(cfg.get_cached_rows("claude_cli"), p)
+
+    def test_full_check_only_when_it_can_have_changed(self):
+        now = 1_000_000.0
+        good = {"rows": [{"id": "claude-opus-5"}], "cli_version": "2.1.273",
+                "fetched": now - 3600}
+        self.assertFalse(cfg.rows_need_full_check(good, "2.1.273", now))
+        self.assertTrue(cfg.rows_need_full_check(good, "2.1.280", now), "CLI updated")
+        self.assertTrue(cfg.rows_need_full_check(good, "", now),        "version unknown")
+        self.assertTrue(cfg.rows_need_full_check({}, "2.1.273", now),   "never checked")
+        self.assertTrue(cfg.rows_need_full_check(
+            dict(good, fetched=now - 8 * 86400), "2.1.273", now), "a week old")
+        self.assertTrue(cfg.rows_need_full_check(
+            dict(good, fallback=True), "2.1.273", now), "last check failed")
+        self.assertTrue(cfg.rows_need_full_check(
+            dict(good, partial=True), "2.1.273", now), "last check did not finish")
+        self.assertTrue(cfg.rows_need_full_check(
+            dict(good, fetched="junk"), "2.1.273", now))
+
+    def test_a_saved_alias_is_pinned_to_what_it_names(self):
+        cfg.set_model("claude_cli", "opus[1m]")
+        self.assertEqual(cfg.get_model("claude_cli"), "", "was never sent")
+        res = cfg.migrate_saved_alias("claude_cli", {"opus[1m]": "claude-opus-5[1m]"})
+        self.assertEqual(res, ("opus[1m]", "claude-opus-5[1m]"))
+        self.assertEqual(cfg.get_model("claude_cli"), "claude-opus-5[1m]")
+        self.assertIsNone(cfg.migrate_saved_alias("claude_cli", {}), "only once")
+
+    def test_an_unknown_name_is_cleared(self):
+        cfg.set_model("claude_cli", "opusplan")
+        self.assertEqual(cfg.migrate_saved_alias("claude_cli", {}), ("opusplan", ""))
+        self.assertEqual(cfg.saved_model("claude_cli"), "")
+
+    def test_pinned_ids_and_other_providers_are_left_alone(self):
+        cfg.set_model("claude_cli", "claude-opus-4-8")
+        self.assertIsNone(cfg.migrate_saved_alias("claude_cli", {"x": "y"}))
+        self.assertIsNone(cfg.migrate_saved_alias("anthropic", {"x": "y"}))
+        self.assertEqual(cfg.saved_model("claude_cli"), "claude-opus-4-8")
+
+
+class TestClaudeCliPanelRows(unittest.TestCase):
+    """What the panel does with a row payload."""
+
+    def setUp(self):
+        self._rows     = cfg.get_cached_rows("claude_cli")
+        self._flat     = cfg.get_cached_models("claude_cli")
+        self._model    = cfg.saved_model("claude_cli")
+        self._provider = cfg.get_provider()
+        self.addCleanup(cfg.set_cached_rows,   "claude_cli", self._rows)
+        self.addCleanup(cfg.set_cached_models, "claude_cli", self._flat)
+        self.addCleanup(cfg.set_model,         "claude_cli", self._model)
+        self.addCleanup(cfg.set_provider, self._provider)
+        cfg.set_provider("claude_cli")
+
+    def _panel(self):
+        from mpynode.ui.widgets.assistant_panel import NDAssistantPanel
+
+        with unittest.mock.patch.object(NDAssistantPanel, "_maybe_autorefresh_models",
+                                        lambda *a: None):
+            p = NDAssistantPanel()
+        self.addCleanup(p.deleteLater)
+        return p
+
+    def _payload(self, **kw):
+        import mpynode.ui.llm.claude_cli_client as cli
+
+        args = dict(probes=_PROBES_2_1_273, wide=_WIDE_2_1_273,
+                    alias_labels=_ALIAS_LABELS_2_1_273, current="Opus 5 (1M context)",
+                    aliases=_ALIASES_2_1_273, hints=_HINTS_2_1_273,
+                    cli_version="2.1.273")
+        args.update(kw)
+        p            = cli.build_rows(**args)
+        p["fetched"] = 1.0
+        return p
+
+    def test_rows_render_with_names_chips_and_ids(self):
+        from mpynode.ui.widgets.assistant_panel import (
+            _ROW_CHIPS, _ROW_KIND, _ROW_LABEL)
+
+        p = self._panel()
+        p._model_edit.clear()
+        p._populate_cli_rows(self._payload())
+        combo = p._model_edit
+        i     = combo.findText("claude-opus-5[1m]")
+        self.assertGreaterEqual(i, 0)
+        self.assertEqual(combo.itemData(i, _ROW_LABEL), "Opus 5 (1M context)")
+        self.assertEqual(combo.itemData(i, _ROW_CHIPS), "opus[1m] default")
+        greyed = [j for j in range(combo.count())
+                  if combo.itemData(j, _ROW_KIND) == "greyed"]
+        self.assertTrue(greyed)
+        for j in greyed:
+            self.assertEqual(combo.itemText(j), "")
+            self.assertFalse(combo.model().item(j).isEnabled())
+
+    def test_a_fetch_pins_the_saved_alias_once_and_says_so(self):
+        cfg.set_model("claude_cli", "opus[1m]")
+        p = self._panel()
+        p._apply_cli_rows_fetch(self._payload())
+        self.assertEqual(cfg.saved_model("claude_cli"), "claude-opus-5[1m]")
+        self.assertEqual(p._model_edit.currentText(), "claude-opus-5[1m]")
+        log = p._transcript.toPlainText()
+        self.assertIn("never sent", log)
+        self.assertIn("the same model", log)
+        self.assertIn("Runs: Opus 5 (1M context)", p._runs_label.text())
+
+    def test_a_failed_fetch_keeps_the_good_saved_list(self):
+        import mpynode.ui.llm.claude_cli_client as cli
+
+        good = self._payload()
+        cfg.set_cached_rows("claude_cli", good)
+        p = self._panel()
+        p._apply_cli_rows_fetch(cli.build_rows({}, error="Could not resolve "
+                                               "authentication method"))
+        self.assertEqual(cfg.get_cached_rows("claude_cli"), good)
+        self.assertIn("Keeping the list", p._transcript.toPlainText())
+
+    def test_the_runs_line_names_the_model_and_the_update(self):
+        p = self._panel()
+        p._apply_cli_rows_fetch(self._payload())
+        p._model_edit.setEditText("")
+        text = p._runs_label.text()
+        self.assertIn("Claude Code default \u2192 Opus 5 (1M context)", text)
+        self.assertIn("Opus 5.5 needs Claude Code 2.1.280+ (installed 2.1.273)", text)
+        self.assertIn("claude update", text)
+
+    def test_a_typed_alias_becomes_its_pinned_id(self):
+        p = self._panel()
+        p._apply_cli_rows_fetch(self._payload())
+        p._model_edit.setEditText("best")
+        p._on_model_typed()
+        self.assertEqual(p._model_edit.currentText(), "claude-fable-5-1")
+        self.assertEqual(cfg.saved_model("claude_cli"), "claude-fable-5-1")
+
+    def test_the_turn_footer_flags_a_remapped_model(self):
+        # Compared against what the turn ASKED for at send -- not the box at
+        # the turn's end, which the user may have changed meanwhile.
+        p = self._panel()
+        p._apply_cli_rows_fetch(self._payload())
+        cfg.set_model("claude_cli", "claude-opus-5")
+        p._turn_want, p._turn_ran = "claude-haiku-4-5", "claude-haiku-4-5-20251001"
+        self.assertEqual(p._turn_ran_html(), " \u00b7 ran claude-haiku-4-5-20251001")
+        p._turn_want, p._turn_ran = "claude-haiku-4-5", "claude-opus-5"
+        self.assertIn("asked for claude-haiku-4-5", p._turn_ran_html())
+        self.assertEqual(p._turn_ran_html(), "", "consumed once")
+
+    def test_a_dead_worker_keeps_the_saved_list(self):
+        # The worker died before writing its payload: that is a failed fetch,
+        # not a successful empty one (which wiped the saved rows).
+        # A stale payload from an EARLIER fetch must not be re-applied either:
+        # the Refresh itself clears it before the worker starts.
+        good = self._payload()
+        cfg.set_cached_rows("claude_cli", good)
+        cfg.set_cached_models("claude_cli", ["claude-opus-5"])
+        p                   = self._panel()
+        p._cli_rows_fetched = self._payload(current="Sonnet 5")
+        with unittest.mock.patch.object(p, "_start_model_fetch", lambda *a: None):
+            p._on_refresh_models()
+        p._on_models_fetched([], "claude_cli")
+        self.assertEqual(cfg.get_cached_rows("claude_cli"), good)
+        self.assertEqual(cfg.get_cached_models("claude_cli"), ["claude-opus-5"])
+        self.assertIn("stopped early", p._transcript.toPlainText())
+
+    def test_an_unfinished_check_does_not_replace_a_good_list(self):
+        import mpynode.ui.llm.claude_cli_client as cli
+
+        good = self._payload()
+        cfg.set_cached_rows("claude_cli", good)
+        wide                      = dict(_WIDE_2_1_273)
+        wide["claude-opus-5[1m]"] = ("error", cli._NO_ANSWER)
+        p                         = self._panel()
+        p._apply_cli_rows_fetch(self._payload(wide=wide))
+        self.assertEqual(cfg.get_cached_rows("claude_cli"), good)
+        self.assertIn("Keeping the list", p._transcript.toPlainText())
+
+    def test_the_pin_waits_for_an_answer_about_its_own_alias(self):
+        import mpynode.ui.llm.claude_cli_client as cli
+
+        cfg.set_model("claude_cli", "opus[1m]")
+        p = self._panel()
+        # The twin check timed out: no Opus 5 (1M) row this time.
+        wide                      = dict(_WIDE_2_1_273)
+        wide["claude-opus-5[1m]"] = ("error", cli._NO_ANSWER)
+        p._apply_cli_rows_fetch(self._payload(wide=wide))
+        self.assertEqual(cfg.saved_model("claude_cli"), "opus[1m]")
+        # This alias alone did not resolve.
+        labels = {a: l for a, l in _ALIAS_LABELS_2_1_273.items() if a != "opus[1m]"}
+        p._apply_cli_rows_fetch(self._payload(alias_labels=labels))
+        self.assertEqual(cfg.saved_model("claude_cli"), "opus[1m]")
+        # A complete answer finally pins it.
+        p._apply_cli_rows_fetch(self._payload())
+        self.assertEqual(cfg.saved_model("claude_cli"), "claude-opus-5[1m]")
+
+    def test_an_alias_naming_no_single_model_is_cleared_and_explained(self):
+        cfg.set_model("claude_cli", "opusplan")
+        p = self._panel()
+        p._apply_cli_rows_fetch(self._payload())
+        self.assertEqual(cfg.saved_model("claude_cli"), "")
+        self.assertIn("names no single model", p._transcript.toPlainText())
+
+    def test_no_pin_while_the_box_has_focus(self):
+        cfg.set_model("claude_cli", "opus[1m]")
+        p = self._panel()
+        with unittest.mock.patch.object(p._model_edit.lineEdit(), "hasFocus",
+                                        lambda: True):
+            p._apply_cli_rows_fetch(self._payload())
+        self.assertEqual(cfg.saved_model("claude_cli"), "opus[1m]")
+        self.assertEqual(p._model_at_launch, "opus[1m]", "still pending")
+
+    def test_picking_the_default_row_cancels_the_pin(self):
+        # The box already shows blank (the alias is filtered), so picking the
+        # default row changes no text -- it must still count as a choice.
+        cfg.set_model("claude_cli", "opus[1m]")
+        p = self._panel()
+        p._model_edit.activated.emit(0)
+        self.assertEqual(p._model_at_launch, "")
+        self.assertEqual(cfg.saved_model("claude_cli"), "")
+        p._apply_cli_rows_fetch(self._payload())
+        self.assertEqual(cfg.saved_model("claude_cli"), "")
+
+    def test_typing_default_means_the_blank_row(self):
+        p = self._panel()
+        p._apply_cli_rows_fetch(self._payload())
+        p._model_edit.setEditText("default")
+        p._on_model_typed()
+        self.assertEqual(p._model_edit.currentText(), "")
+
+    def test_the_runs_line_names_a_refusal(self):
+        p = self._panel()
+        p._apply_cli_rows_fetch(self._payload())
+        p._model_edit.setEditText("claude-opus-5-1")
+        self.assertIn("does not take claude-opus-5-1 (not found)", p._runs_label.text())
+
+    def test_only_the_value_saved_at_launch_is_migrated(self):
+        cfg.set_model("claude_cli", "opus[1m]")
+        p = self._panel()
+        # Aliases did not resolve this time: nothing is decided on no data.
+        p._apply_cli_rows_fetch(self._payload(alias_labels={}))
+        self.assertEqual(cfg.saved_model("claude_cli"), "opus[1m]")
+        # Text typed since launch is the user's, not a legacy value.
+        cfg.set_model("claude_cli", "op")
+        p._apply_cli_rows_fetch(self._payload())
+        self.assertEqual(cfg.saved_model("claude_cli"), "op")
+
+    def test_a_saved_default_becomes_the_blank_row(self):
+        cfg.set_model("claude_cli", "default")
+        p = self._panel()
+        p._apply_cli_rows_fetch(self._payload())
+        self.assertEqual(cfg.saved_model("claude_cli"), "")
+        self.assertIn("blank", p._transcript.toPlainText())
+
+    def test_a_typed_alias_is_converted_before_send(self):
+        # Ctrl+Enter never leaves the box, so editingFinished has not fired.
+        p = self._panel()
+        p._apply_cli_rows_fetch(self._payload())
+        p._model_edit.setEditText("opus")
+        p._input.setPlainText("hi")
+        sent = []
+        with unittest.mock.patch.object(p._client, "send",
+                                        lambda *a, **k: sent.append(1)):
+            p._on_send()
+        self.assertEqual(sent, [1])
+        self.assertEqual(cfg.saved_model("claude_cli"), "claude-opus-5")
+        self.assertEqual(p._turn_want, "claude-opus-5")
+
+    def test_a_hidden_valid_id_reads_as_pinned(self):
+        p = self._panel()
+        p._apply_cli_rows_fetch(self._payload())
+        p._model_edit.setEditText("claude-haiku-4-5-20251001")
+        self.assertIn("Runs: Haiku 4.5 · pinned", p._runs_label.text())
+
+
+class TestClaudeCliTurnReceipt(unittest.TestCase):
+    """_handle_event: which model answered, and a too-old refusal."""
+
+    def _client(self):
+        from mpynode.ui.llm.claude_cli_client import ClaudeCliClient
+
+        c = ClaudeCliClient()
+        self.addCleanup(c.deleteLater)
+        return c
+
+    def test_the_answering_model_is_recorded(self):
+        import json as _json
+
+        c = self._client()
+        c._handle_event(_json.dumps({"type": "system", "subtype": "init",
+                                     "model": "claude-opus-5-5"}))
+        self.assertEqual(c._ran_model, "", "init echoes the request unchecked")
+        c._handle_event(_json.dumps({"type": "assistant", "message": {
+            "model": "claude-haiku-4-5-20251001", "content": []}}))
+        self.assertEqual(c._ran_model, "claude-haiku-4-5-20251001")
+
+    def test_model_usage_is_the_fallback(self):
+        import json as _json
+
+        from mpynode.ui.llm.claude_cli_client import main_model
+
+        self.assertEqual(main_model({"claude-haiku-4-5": {"outputTokens": 3},
+                                     "claude-opus-5": {"outputTokens": 90}}),
+                         "claude-opus-5")
+        self.assertEqual(main_model(None), "")
+        c = self._client()
+        c._handle_event(_json.dumps({"type": "result", "is_error": False,
+                                     "modelUsage": {"claude-opus-5": {"outputTokens": 1}}}))
+        self.assertEqual(c._ran_model, "claude-opus-5")
+
+    def test_a_too_old_refusal_names_the_fix(self):
+        import json as _json
+
+        from mpynode.ui.llm import claude_cli_client as cli
+
+        text = ("API Error: 400 Claude Code 2.1.273 does not support this model; "
+                "version 2.1.280 or newer is required. Run 'claude update'.")
+        lines = [
+            _json.dumps({"type": "system", "subtype": "init",
+                         "model": "claude-opus-5-5"}),
+            _json.dumps({"type": "assistant", "error": "invalid_request",
+                         "message": {"model": "<synthetic>", "content": [
+                             {"type": "text", "text": text}]}}),
+            _json.dumps({"type": "result", "is_error": True, "result": text,
+                         "modelUsage": {}}),
+        ]
+        c    = self._client()
+        errs = []
+        ran  = []
+        c.errorOccurred.connect(errs.append)
+        c.modelRan.connect(ran.append)
+        proc = _FakeProc(lines, rc=1, stderr='[claude-code:unrecognized_model] '
+                                            '{"model":"claude-opus-5-5"}')
+        with unittest.mock.patch.object(cli.subprocess, "Popen", return_value=proc):
+            c._run("hi", [])
+        self.assertEqual(len(errs), 1, errs)
+        self.assertIn("2.1.280", errs[0])
+        self.assertIn("claude update", errs[0])
+        self.assertNotIn("exited", errs[0])
+        self.assertEqual(ran, [], "nothing ran")
+
+    def test_a_good_turn_reports_the_model(self):
+        import json as _json
+
+        from mpynode.ui.llm import claude_cli_client as cli
+
+        lines = [_json.dumps({"type": "assistant", "message": {
+                     "model": "claude-opus-5", "content": [
+                         {"type": "text", "text": "done"}]}}),
+                 _json.dumps({"type": "result", "is_error": False, "result": "done"})]
+        c   = self._client()
+        ran = []
+        c.modelRan.connect(ran.append)
+        with unittest.mock.patch.object(cli.subprocess, "Popen",
+                                        return_value=_FakeProc(lines, rc=0)), \
+             unittest.mock.patch.object(c, "_finalize", lambda: None):
+            c._run("hi", [])
+        self.assertEqual(ran, ["claude-opus-5"])
 
 
 # ===================== from test_cli_effort_values.py =====================

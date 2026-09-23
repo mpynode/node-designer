@@ -10,18 +10,25 @@ worker thread must never touch Maya/Qt directly).
 
 from __future__ import annotations
 
+import re
 import time
 
 from mpynode.ui.qt_wrapper import (
     QColor,
     QComboBox,
     QFont,
+    QFontMetrics,
     QHBoxLayout,
     QLabel,
     QLineEdit,
     QPlainTextEdit,
     QPushButton,
+    QRect,
+    QSize,
     QSplitter,
+    QStyle,
+    QStyledItemDelegate,
+    QStyleOptionViewItem,
     Qt,
     QSyntaxHighlighter,
     QTextCharFormat,
@@ -42,6 +49,149 @@ _CLI_MODEL_FETCHERS = {
     "claude_cli": "_fetch_claude_cli_models",
     "gemini_cli": "_fetch_gemini_cli_models",
 }
+
+# What the Refresh button does, per provider.
+_REFRESH_TIPS = {
+    "claude_cli": "Re-check which models this `claude` install can run. Uses "
+                  "its own login, no API key; each model gets a one-token check "
+                  "and the whole pass takes about half a minute",
+    "gemini_cli": "Re-read the models the local `gemini` CLI knows",
+    "codex_cli":  "Fetch model ids with the OpenAI API key (set it under the "
+                  "'ChatGPT (OpenAI API)' provider); or type a model id",
+}
+
+# Data roles on the Claude CLI rows, drawn by _ModelRowDelegate. The item TEXT
+# stays the exact id sent to --model -- blank for the default row and for rows
+# that cannot be picked -- so selecting, saving and typing work as they did.
+_ROW_KIND  = Qt.UserRole + 1  # "default" | "header" | "model" | "greyed"
+_ROW_LABEL = Qt.UserRole + 2  # display name, or the family on a header
+_ROW_CHIPS = Qt.UserRole + 3  # aliases resolving to this row, space-separated
+_ROW_RIGHT = Qt.UserRole + 4  # the id, or why the row is greyed
+
+_DATE_STAMP_RE = re.compile(r"-20\d{6}$")
+
+
+def _model_root(mid):
+    """``claude-haiku-4-5`` for ``claude-haiku-4-5-20251001[1m]``: the part two
+    names of one model share. ``[1m]`` picks a context size, not a model, and a
+    build stamp is the same model."""
+    return _DATE_STAMP_RE.sub("", (mid or "").replace("[1m]", ""))
+
+
+def _fmt_day(ts):
+    try:
+        return time.strftime("%Y-%m-%d", time.localtime(float(ts))) if ts else "?"
+    except (TypeError, ValueError, OverflowError, OSError):
+        return "?"
+
+
+class _ModelRowDelegate(QStyledItemDelegate):
+    """Draws a Claude CLI model row as ``name  [chips]  id``.
+
+    The style paints the background with the text blanked, so hover and
+    selection look native, and the three parts are drawn over it: the display
+    name, one small chip per alias that resolves to the row today, and the exact
+    id right-aligned. A header is its family name with a rule; a greyed row is
+    dim throughout. Rows without ``_ROW_KIND`` (the API providers) paint as
+    plain items.
+    """
+
+    _DIM  = QColor(0x80, 0x80, 0x80)
+    _CHIP = QColor(0x93, 0xC3, 0xCD)
+    _RULE = QColor(0x50, 0x50, 0x50)
+    _PAD  = 6
+    _GAP  = 12
+
+    @staticmethod
+    def _chip_font(font):
+        f  = QFont(font)
+        pt = font.pointSize()
+        if pt > 0:
+            f.setPointSize(max(6, int(round(pt * 0.8))))
+        else:
+            f.setPixelSize(max(7, int(round(font.pixelSize() * 0.8))))
+        return f
+
+    def _parts(self, index):
+        label = index.data(_ROW_LABEL) or ""
+        right = index.data(_ROW_RIGHT) or ""
+        chips = (index.data(_ROW_CHIPS) or "").split()
+        return label, chips, ("" if right == label else right)
+
+    def paint(self, painter, option, index):
+        kind = index.data(_ROW_KIND)
+        if not kind:
+            super().paint(painter, option, index)
+            return
+        opt = QStyleOptionViewItem(option)
+        self.initStyleOption(opt, index)
+        opt.text = ""
+        widget   = getattr(option, "widget", None)
+        style    = widget.style() if widget is not None else None
+        if style is not None:
+            style.drawControl(QStyle.CE_ItemViewItem, opt, painter, widget)
+        label, chips, right = self._parts(index)
+        rect     = QRect(option.rect).adjusted(self._PAD, 0, -self._PAD, 0)
+        fm       = QFontMetrics(option.font)
+        selected = bool(option.state & QStyle.State_Selected)
+        fg = (option.palette.highlightedText() if selected
+                    else option.palette.text()).color()
+        painter.save()
+        try:
+            if kind == "header":
+                f = QFont(option.font)
+                f.setBold(True)
+                painter.setFont(f)
+                painter.setPen(self._DIM)
+                painter.drawText(rect, Qt.AlignVCenter | Qt.AlignLeft, label)
+                x = rect.left() + QFontMetrics(f).horizontalAdvance(label) + self._PAD
+                y = rect.center().y()
+                painter.setPen(self._RULE)
+                painter.drawLine(x, y, rect.right(), y)
+                return
+            dim = kind == "greyed"
+            # On the highlight, grey would vanish into it: use its text colour.
+            side    = fg if selected else self._DIM
+            chip_fg = fg if selected else self._CHIP
+            painter.setFont(option.font)
+            painter.setPen(side)
+            painter.drawText(rect, Qt.AlignVCenter | Qt.AlignRight, right)
+            room = max(0, rect.width() - fm.horizontalAdvance(right) - self._GAP)
+            painter.setPen(self._DIM if dim else fg)
+            name = fm.elidedText(label, Qt.ElideRight, room)
+            painter.drawText(QRect(rect.left(), rect.top(), room, rect.height()),
+                             Qt.AlignVCenter | Qt.AlignLeft, name)
+            x     = rect.left() + fm.horizontalAdvance(name) + self._GAP
+            limit = rect.left() + room
+            cf    = self._chip_font(option.font)
+            cfm   = QFontMetrics(cf)
+            painter.setFont(cf)
+            for chip in chips:
+                w = cfm.horizontalAdvance(chip) + 8
+                if x + w > limit:
+                    break
+                h   = cfm.height() + 2
+                box = QRect(x, rect.top() + (rect.height() - h) // 2, w, h)
+                painter.setPen(chip_fg)
+                painter.setBrush(Qt.NoBrush)
+                painter.drawRoundedRect(box, 3, 3)
+                painter.drawText(box, Qt.AlignCenter, chip)
+                x += w + 4
+        finally:
+            painter.restore()
+
+    def sizeHint(self, option, index):
+        s    = super().sizeHint(option, index)
+        kind = index.data(_ROW_KIND)
+        if not kind or kind == "header":
+            return s
+        label, chips, right = self._parts(index)
+        fm  = QFontMetrics(option.font)
+        cfm = QFontMetrics(self._chip_font(option.font))
+        width = (2 * self._PAD + fm.horizontalAdvance(label) + self._GAP
+                 + sum(cfm.horizontalAdvance(c) + 12 for c in chips)
+                 + (self._GAP + fm.horizontalAdvance(right) if right else 0))
+        return QSize(max(s.width(), width), s.height())
 
 
 def _esc(text: str) -> str:
@@ -359,7 +509,16 @@ class NDAssistantPanel(QWidget):
         self._model_cache        = {}     # provider -> fetched model list (kept until refresh)
         self._cli_current_model  = ""     # claude CLI's active model, from /model
         self._cli_model_displays = {}     # model id -> display name, from /model <id>
+        self._cli_rows           = {}     # claude CLI rows payload on screen (build_rows)
+        self._cli_rows_fetched   = None   # payload a worker fetched, read on the GUI thread
+        self._cli_quick_fetch    = False  # next claude CLI fetch may just re-link saved rows
+        self._cli_typed_id       = ""     # explicit id in the box, checked with the rest
+        self._turn_ran           = ""     # model id the CLI reported for this turn
+        self._turn_want          = ""     # model id this turn asked for, at send
         self._turn_start         = None   # monotonic time the current turn began
+        # The saved Claude CLI model as the panel opened: only THAT value is a
+        # candidate for the one-time alias pin, never text typed since.
+        self._model_at_launch = _llm_config.saved_model("claude_cli")
         # The reply streams in chunks and, for the CLI providers, carries a
         # fenced .mpn payload we must NOT show in chat. Buffer the turn's
         # chunks and re-render ONE bubble with the payload stripped. The
@@ -426,7 +585,16 @@ class NDAssistantPanel(QWidget):
         slay.addWidget(QLabel("Model:", self._settings))
         self._model_edit = QComboBox(self._settings)
         self._model_edit.setEditable(True)  # type-in always allowed
+        # Enter must not append what was typed as a new row: a Claude CLI row
+        # means "checked against this CLI", and a typed alias is converted.
+        self._model_edit.setInsertPolicy(QComboBox.NoInsert)
+        self._model_row_delegate = _ModelRowDelegate(self._model_edit)
+        self._model_edit.setItemDelegate(self._model_row_delegate)
         self._model_edit.currentTextChanged.connect(self._save_model)
+        self._model_edit.currentTextChanged.connect(self._update_runs_line)
+        self._model_edit.lineEdit().editingFinished.connect(self._on_model_typed)
+        self._model_edit.activated.connect(self._on_model_picked)
+        self._model_edit.lineEdit().textEdited.connect(self._on_model_picked)
         model_row = QHBoxLayout()
         model_row.setContentsMargins(0, 0, 0, 0)
         model_row.addWidget(self._model_edit, 1)
@@ -435,6 +603,16 @@ class NDAssistantPanel(QWidget):
         self._refresh_models_btn.clicked.connect(self._on_refresh_models)
         model_row.addWidget(self._refresh_models_btn)
         slay.addLayout(model_row)
+
+        # Claude CLI only: what the box will actually run, and anything the
+        # installed CLI is too old for.
+        self._runs_label = QLabel("", self._settings)
+        self._runs_label.setWordWrap(True)
+        self._runs_label.setTextFormat(Qt.RichText)
+        self._runs_label.setStyleSheet("color: #888;")  # size via QFont
+        wire_area_font(self._runs_label, "assistant", rel=0.85)
+        self._runs_label.setVisible(False)
+        slay.addWidget(self._runs_label)
 
         # API key + Test connection -- HTTP providers only (hidden for Claude CLI).
         self._api_section = QWidget(self._settings)
@@ -598,6 +776,8 @@ class NDAssistantPanel(QWidget):
         self._client.errorOccurred.connect(self._append_error)
         self._client.busyChanged.connect(self._on_busy)
         self._client.turnFinished.connect(self._on_turn_finished)
+        if hasattr(self._client, "modelRan"):  # Claude CLI only
+            self._client.modelRan.connect(self._on_model_ran)
 
     # -- ToolContext provider (runs on worker thread: NO Maya/Qt calls) --
 
@@ -647,6 +827,12 @@ class NDAssistantPanel(QWidget):
                 images.append(enc)
         if not text and not images:
             return
+        # An alias typed and sent with Ctrl+Enter never left the box, so
+        # editingFinished has not converted it yet.
+        self._on_model_typed()
+        # What this turn asks for, for the footer to compare against.
+        self._turn_want = (_llm_config.get_model("claude_cli")
+                           or (self._cli_rows or {}).get("default_id", ""))
         # HERE, on the GUI thread, so the worker never queries Maya. Seeds
         # BOTH provider paths.
         self._capture_working_node()
@@ -992,6 +1178,11 @@ class NDAssistantPanel(QWidget):
         # provider has no model.
         label = ("Claude CLI" if provider == "claude_cli"
                  else _llm_config.PROVIDER_LABELS.get(provider, provider))
+        if provider == "claude_cli":
+            # A name, not an id -- and a blank box says what it resolves to.
+            current = (self._cli_rows or {}).get("current", "")
+            model = (self._cli_model_displays.get(model, model) if model
+                       else "default \u2192 %s" % current if current else "")
         suffix = (" \u00b7 %s" % _esc(model)) if model else ""
         self._append(
             '<div style="color:#9cc;font-size:11px;margin-top:6px;margin-left:2px;">'
@@ -1077,6 +1268,7 @@ class NDAssistantPanel(QWidget):
         self._settings.setEnabled(not busy)
         if busy:
             self._turn_start = time.monotonic()
+            self._turn_ran   = ""
             self._status_msg = "Working\u2026"
             self._spin_i     = 0
             self._spin_timer.start()
@@ -1109,8 +1301,24 @@ class NDAssistantPanel(QWidget):
             self._turn_start = None
             self._append(
                 '<div style="color:#666;font-size:10px;margin-left:8px;">'
-                '\u23f1 done in %s</div>' % _fmt_duration(elapsed))
+                '\u23f1 done in %s%s</div>' % (_fmt_duration(elapsed),
+                                               self._turn_ran_html()))
         self._set_idle_status()
+
+    def _on_model_ran(self, model_id):
+        self._turn_ran = str(model_id or "")
+
+    def _turn_ran_html(self):
+        """`` \u00b7 ran <id>`` for the turn that just ended -- amber when it is not
+        the model the box asked for (a retired id the CLI silently remaps)."""
+        ran, self._turn_ran = self._turn_ran, ""
+        want, self._turn_want = self._turn_want, ""
+        if not ran:
+            return ""
+        if want and _model_root(want) != _model_root(ran):
+            return (' \u00b7 <span style="color:#dca54c;">ran %s (asked for %s)'
+                    '</span>' % (_esc(ran), _esc(want)))
+        return " \u00b7 ran %s" % _esc(ran)
 
     def _set_idle_status(self):
         """Green 'Ready' indicator so it's clear nothing is running."""
@@ -1174,8 +1382,7 @@ class NDAssistantPanel(QWidget):
         self._refresh_models_btn.setEnabled(True)
         self._refresh_models_btn.setToolTip(
             "Fetch the models available to this API key" if is_api else
-            "Fetch CLI model versions via your Anthropic API key (set it under "
-            "the 'Claude (Anthropic API)' provider); or just type opus/sonnet")
+            _REFRESH_TIPS.get(provider, "Refresh the model list"))
 
     def _load_effort(self, provider: str):
         # Repopulate per provider (Claude CLI exposes xhigh/max), then select.
@@ -1230,11 +1437,17 @@ class NDAssistantPanel(QWidget):
                 # never fetched; _maybe_autorefresh_models then tries a live
                 # one, and the combo stays editable either way.
                 cached = _llm_config.cli_model_candidates(provider)
-            if cached:
-                if provider == "claude_cli":
+            self._model_edit.view().setMinimumWidth(0)
+            if provider == "claude_cli":
+                # Saved rows carry names, chips and greyed rows; a flat list
+                # (an older MPyNode wrote only that) still renders.
+                rows = self._cli_rows or _llm_config.get_cached_rows(provider)
+                if rows:
+                    self._populate_cli_rows(rows)
+                elif cached:
                     self._populate_cli_models(cached)
-                else:
-                    self._model_edit.addItems(cached)
+            elif cached:
+                self._model_edit.addItems(cached)
             self._model_edit.setCurrentText(saved)
         finally:
             self._loading_settings = False
@@ -1247,6 +1460,7 @@ class NDAssistantPanel(QWidget):
                     "model (default: %s)" % _llm_config.DEFAULT_MODELS.get(provider, ""))
         except Exception:
             pass
+        self._update_runs_line()
 
     def _on_provider_changed(self, *_):
         provider = self._current_provider()
@@ -1369,9 +1583,13 @@ class NDAssistantPanel(QWidget):
         _src, key = self._list_source(provider)
         if (self._cli_model_fetcher(provider) or key
                 or _llm_config.cli_model_candidates(provider)):
+            # At launch the saved Claude CLI rows only need re-linking unless
+            # the CLI changed; the Refresh button always re-checks in full.
+            self._cli_quick_fetch = True
             self._on_refresh_models()
 
     def _on_refresh_models(self):
+        quick, self._cli_quick_fetch = self._cli_quick_fetch, False
         self._save_key()
         provider  = self._current_provider()
         cli_fetch = self._cli_model_fetcher(provider)
@@ -1379,6 +1597,17 @@ class NDAssistantPanel(QWidget):
             # A CLI provider authenticates through the machine's own login, so
             # the list is asked OF THE CLI and no key is involved. Checked
             # BEFORE the key branch so no key can ever gate it.
+            if provider == "claude_cli":
+                # Cleared HERE, on the GUI thread: a worker that dies before
+                # writing it must read as a failed fetch, not the last one.
+                self._cli_rows_fetched = None
+                # An explicit id typed in the box is checked too, so the
+                # Runs line's "press ↻" is kept.
+                typed = self._model_edit.currentText().strip()
+                self._cli_typed_id = (
+                    typed if _llm_config.is_explicit_cli_id(typed) else "")
+                if quick:
+                    cli_fetch = lambda: self._fetch_claude_cli_models(quick=True)
             self._start_model_fetch(provider, cli_fetch)
             return
         src, key = self._list_source(provider)
@@ -1411,23 +1640,36 @@ class NDAssistantPanel(QWidget):
 
         self._start_model_fetch(provider, _fetch_api_models)
 
-    def _fetch_claude_cli_models(self):
-        """Model names from the local `claude` binary (no API key). Worker side.
+    def _fetch_claude_cli_models(self, quick=False):
+        """Pickable ids from the local `claude` binary (no API key). Worker side.
 
-        Full versioned ids are discovered + validated as well as the aliases, so
-        a specific older version can be picked. An Anthropic key is NOT needed;
-        if one happens to be set its ids ride along as extra CANDIDATES, still
-        validated against this CLI (the HTTP list names models the CLI rejects).
+        Full versioned ids are discovered + validated, so a specific older
+        version can be picked, and the aliases are resolved into chips. With
+        ``quick`` and saved rows still good for this CLI version (see
+        config.rows_need_full_check), only the local facts are re-linked (~4 s)
+        instead of re-validating every id with the login (25-40 s).
+
+        An Anthropic key is NOT needed; if one happens to be set its ids ride
+        along as extra CANDIDATES, still validated against this CLI (the HTTP
+        list names models the CLI rejects).
         """
-        from mpynode.ui.llm.claude_cli_client import list_models
+        from mpynode.ui.llm import claude_cli_client as cli
 
-        models, current, displays = list_models(
-            extra_candidates=self._api_model_candidates())
-        # Read back on the main thread in _on_models_fetched. Written BEFORE
-        # the queued signal; the queue crossing is the barrier.
-        self._cli_current_model  = current
-        self._cli_model_displays = displays or {}
-        return models
+        payload = None
+        saved   = _llm_config.get_cached_rows("claude_cli") if quick else {}
+        if saved and not _llm_config.rows_need_full_check(saved, cli.cli_version()):
+            payload = cli.relink_saved_rows(saved)
+        if payload is None:
+            extra = list(self._api_model_candidates())
+            if self._cli_typed_id:
+                extra.append(self._cli_typed_id)
+            payload            = cli.list_model_rows(extra_candidates=extra)
+            payload["fetched"] = time.time()
+        # Read back on the main thread in _on_models_fetched, which derives
+        # everything else from it -- a failed check must not touch what is on
+        # screen. Written BEFORE the queued signal; the queue is the barrier.
+        self._cli_rows_fetched = payload
+        return [r["id"] for r in payload.get("rows") or [] if r.get("status") == "valid"]
 
     def _fetch_gemini_cli_models(self):
         """Model ids from the local `gemini` binary (no API key). Worker side.
@@ -1441,26 +1683,186 @@ class NDAssistantPanel(QWidget):
         return list_models()
 
     def _populate_cli_models(self, models):
-        """Fill the combo with the CLI list -- every entry an explicit versioned
-        id, NEWEST FIRST per family. Display names ride along as tooltips
-        because two ids can resolve to the same one (claude-opus-4 /
-        claude-opus-4-20250514 are both "Opus 4").
+        """Fill the combo from a FLAT id list -- what an older MPyNode saved, or
+        a fallback. Rendered through the same rows as a fresh fetch, NEWEST
+        FIRST per family, with whatever display names are known.
 
-        Order is re-derived here rather than trusted from the caller, so a list
-        restored from the prefs cache renders exactly like a fresh fetch.
+        A name that is not an explicit id (a floating alias from the old
+        fallback) is shown greyed, never pickable: ``get_model`` would drop it,
+        so offering it would show a model the box never sends.
         """
-        from mpynode.ui.llm.claude_cli_client import order_display
+        from mpynode.ui.llm import claude_cli_client as cli
 
         displays = getattr(self, "_cli_model_displays", None) or {}
-        for m in order_display(models):
-            self._model_edit.addItem(m)
-            label = displays.get(m)
-            if label:
-                try:
-                    self._model_edit.setItemData(
-                        self._model_edit.count() - 1, label, Qt.ToolTipRole)
-                except Exception:
-                    pass
+        rows     = []
+        for m in cli.order_display(models):
+            if _llm_config.is_explicit_cli_id(m):
+                rows.append({"id": m, "label": displays.get(m) or m,
+                             "family": cli.family_of(m), "aliases": [],
+                             "status": "valid", "note": "", "min_version": ""})
+            else:
+                rows.append({"id": "", "label": m, "family": "", "aliases": [],
+                             "status": "alias", "note": "alias · not sent",
+                             "min_version": ""})
+        self._populate_cli_rows(cli.link_rows(rows, current=self._cli_current_model))
+
+    def _populate_cli_rows(self, payload):
+        """Fill the combo from a ``claude_cli_client.build_rows`` payload.
+
+        Order: the default row (blank: Claude Code's own default, named), then
+        one block per family under a header, greyed "needs update" rows first.
+        Item text is the exact id -- blank where there is nothing to send -- and
+        the name, chips and notes ride in data roles for _ModelRowDelegate. The
+        name is also the tooltip: two ids can share one ("Opus 4").
+        """
+        payload = dict(payload or {})
+        rows    = payload.get("rows") or []
+        current = payload.get("current") or ""
+        self._cli_rows           = payload
+        self._cli_current_model  = current
+        self._cli_model_displays = dict(payload.get("also_valid") or {})
+        self._cli_model_displays.update(
+            {r["id"]: r["label"] for r in rows if r.get("id")})
+        self._add_model_row(
+            "", "default",
+            "Claude Code default" + (" → %s" % current if current else ""),
+            right   = "(blank)",
+            tooltip = "Leave blank to run whatever Claude Code runs by default. "
+                    "It moves when Claude Code's default moves.")
+        family = None
+        for r in rows:
+            if r.get("family") != family:
+                family = r.get("family")
+                if family:
+                    self._add_model_row("", "header", family.capitalize())
+            if r.get("status") == "valid":
+                self._add_model_row(r["id"], "model", r.get("label") or r["id"],
+                                    r.get("aliases") or (), r["id"],
+                                    r.get("label"))
+            else:
+                self._add_model_row("", "greyed", r.get("label") or r.get("id", ""),
+                                    right=r.get("note", ""), tooltip=r.get("note"))
+        if payload.get("fallback"):
+            # Nothing validated: say where each alias points today, greyed.
+            labels = payload.get("alias_labels") or {}
+            for alias, label in labels.items():
+                self._add_model_row("", "greyed", "%s → %s" % (alias, label),
+                                    right="alias · not sent")
+        self._fit_model_popup()
+
+    def _add_model_row(self, text, kind, label, chips=(), right="", tooltip=None):
+        combo = self._model_edit
+        combo.addItem(text)
+        i = combo.count() - 1
+        combo.setItemData(i, kind,            _ROW_KIND)
+        combo.setItemData(i, label,           _ROW_LABEL)
+        combo.setItemData(i, " ".join(chips), _ROW_CHIPS)
+        combo.setItemData(i, right,           _ROW_RIGHT)
+        if tooltip:
+            combo.setItemData(i, tooltip, Qt.ToolTipRole)
+        if kind in ("header", "greyed"):
+            try:
+                item = combo.model().item(i)
+                item.setEnabled(False)
+                item.setSelectable(False)
+            except Exception:
+                pass
+
+    def _fit_model_popup(self):
+        """Widen the popup to the widest row: the panel is narrow, and a row
+        carries a name, chips AND an id."""
+        view = self._model_edit.view()
+        try:
+            opt      = QStyleOptionViewItem()
+            opt.font = view.font()
+            model    = self._model_edit.model()
+            width = max((self._model_row_delegate.sizeHint(
+                opt, model.index(i, 0)).width() for i in range(model.rowCount())),
+                default=0)
+            view.setMinimumWidth(min(width + 24, 720))
+        except Exception:
+            pass
+
+    def _on_model_picked(self, *_):
+        """The user chose: picked a row, or typed. That cancels the one-time
+        alias pin (see _pin_saved_alias), and the choice is saved even when the
+        text did not change -- picking the blank default row while a filtered
+        alias is saved leaves the box blank, so no change signal fires."""
+        if self._loading_settings:
+            return
+        self._model_at_launch = ""
+        self._save_model()
+
+    def _on_model_typed(self):
+        """A typed alias becomes the pinned id it resolves to today.
+
+        ``get_model`` never sends an alias, so leaving "opus" in the box would
+        show one thing and run Claude Code's default. The chips say where each
+        alias points; typing one is the same as picking that row.
+        """
+        if self._loading_settings or self._current_provider() != "claude_cli":
+            return
+        text = self._model_edit.currentText().strip()
+        if not text or _llm_config.is_explicit_cli_id(text):
+            return
+        if text == "default":
+            self._model_edit.setEditText("")  # the blank row IS the default
+            return
+        target = ((self._cli_rows or {}).get("alias_map") or {}).get(text)
+        if not target:
+            return
+        self._model_edit.setEditText(target)
+        self._append_system("%s → %s (%s), pinned." % (
+            text, target, self._cli_model_displays.get(target, target)))
+
+    def _update_runs_line(self, *_):
+        """The line under the Claude CLI box: what it will run, and anything
+        the installed CLI is too old for."""
+        if self._current_provider() != "claude_cli":
+            self._runs_label.setVisible(False)
+            return
+        p    = self._cli_rows or {}
+        rows = p.get("rows") or []
+        ver  = p.get("cli_version") or ""
+        cur  = p.get("current") or ""
+        by_id = {mid: {"label": lab, "status": "valid"}
+                 for mid, lab in (p.get("also_valid") or {}).items()}
+        by_id.update({r["id"]: r for r in rows if r.get("id")})
+        text = self._model_edit.currentText().strip()
+        tail = (" · Claude Code %s" % ver) if ver else ""
+        row  = by_id.get(text)
+        if not text:
+            line = ("Runs: Claude Code default%s · moves when that default "
+                    "moves%s" % ((" → %s" % cur) if cur else "", tail))
+        elif row is not None and row.get("status") == "valid":
+            line = ("Runs: %s · pinned, won't change on its own%s"
+                    % (row.get("label") or text, tail))
+        elif row is not None:
+            line = "Runs: nothing — %s %s" % (text, row.get("note") or "")
+        elif text in (p.get("refused") or {}):
+            line = ("Runs: nothing — Claude Code%s does not take %s (%s)"
+                    % ((" " + ver) if ver else "", text, p["refused"][text]))
+        elif _llm_config.is_explicit_cli_id(text):
+            line = "Runs: %s · not checked yet — press ↻" % text
+        elif (p.get("alias_map") or {}).get(text):
+            line = ("Runs: '%s' is an alias — press Enter to pin it to %s"
+                    % (text, p["alias_map"][text]))
+        else:
+            line = ("Runs: Claude Code default — '%s' is not a model id, so "
+                    "it is not sent" % text)
+        html = _esc(line)
+        for r in rows:
+            if r.get("status") not in ("hint", "too_old") or not r.get("min_version"):
+                continue
+            html += ('<br><span style="color:#dca54c;">⚠ %s needs Claude Code '
+                     '%s+%s — run <code>claude update</code>, then ↻</span>'
+                     % (_esc(r.get("label") or r.get("id")), _esc(r["min_version"]),
+                        (" (installed %s)" % _esc(ver)) if ver else ""))
+        if p.get("fallback") and p.get("error"):
+            html += ('<br><span style="color:#e77;">Could not check model ids: %s'
+                     '</span>' % _esc(p["error"]))
+        self._runs_label.setText(html)
+        self._runs_label.setVisible(True)
 
     def _api_model_candidates(self):
         """Anthropic ids to offer the validator as extra guesses ([] with no key)."""
@@ -1497,6 +1899,14 @@ class NDAssistantPanel(QWidget):
         self._status.setText("")
         if provider != self._current_provider():
             return  # user switched provider while fetching
+        if provider == "claude_cli":
+            payload = self._cli_rows_fetched
+            if not isinstance(payload, dict):
+                from mpynode.ui.llm.claude_cli_client import build_rows
+
+                payload = build_rows({}, error="the model check stopped early")
+            self._apply_cli_rows_fetch(payload)
+            return
         if not models:
             if self._cli_model_fetcher(provider) is not None:
                 binary = {"claude_cli": "claude", "gemini_cli": "gemini"}.get(
@@ -1526,10 +1936,122 @@ class NDAssistantPanel(QWidget):
                 _llm_config.model_selection_after_fetch(provider, current, models))
         finally:
             self._loading_settings = False
-        # Naming what a blank box resolves to is the only way the user can
-        # tell what it will actually run.
-        suffix = ""
-        if provider == "claude_cli" and getattr(self, "_cli_current_model", ""):
-            suffix = " (current: %s)" % self._cli_current_model
         self._append('<div style="color:#6a6;font-size:11px;margin-left:8px;">'
-                     '\u2713 %d models available%s</div>' % (len(models), suffix))
+                     '\u2713 %d models available</div>' % len(models))
+
+    def _apply_cli_rows_fetch(self, payload):
+        """GUI-thread side of a Claude CLI fetch (``_fetch_claude_cli_models``).
+
+        A fetch where nothing validated -- logged out, offline, a CLI this
+        cannot read -- never replaces a good saved list, and neither does one
+        that did not finish (``partial``): that list is kept and the reason
+        reported. Otherwise the rows are shown and saved (with the flat id list
+        an older MPyNode reads), and a saved alias is pinned once.
+        """
+        provider = "claude_cli"
+        saved    = _llm_config.get_cached_rows(provider)
+        ids      = [r["id"] for r in payload.get("rows") or [] if r.get("status") == "valid"]
+        fallback = bool(payload.get("fallback"))
+        keep = (saved and not saved.get("fallback")
+                    and (fallback or not saved.get("partial")))
+        self._model_cache[provider] = ids  # once per session, success or not
+        if (fallback or payload.get("partial")) and keep:
+            reason = payload.get("error") or "the check did not finish"
+            self._append_error(
+                "Could not re-check the Claude CLI models (%s). Keeping the "
+                "list checked %s with Claude Code %s."
+                % (reason, _fmt_day(saved.get("fetched")),
+                   saved.get("cli_version") or "?"))
+            return
+        if fallback:
+            reason = payload.get("error") or "no model id validated"
+            self._append_error(
+                "Could not check the claude CLI's model ids (%s). Check that "
+                "`claude` runs in a terminal -- or type a full model id." % reason)
+        else:
+            _llm_config.set_cached_rows(provider, payload)
+            _llm_config.set_cached_models(provider, ids)
+        current                = self._model_edit.currentText()
+        self._loading_settings = True
+        try:
+            self._model_edit.clear()
+            self._populate_cli_rows(payload)
+            self._model_edit.setCurrentText(
+                _llm_config.model_selection_after_fetch(provider, current, ids))
+        finally:
+            self._loading_settings = False
+        self._update_runs_line()
+        if payload.get("fallback"):
+            return
+        self._pin_saved_alias(payload)
+        needs = sum(1 for r in payload.get("rows") or []
+                    if r.get("status") in ("hint", "too_old"))
+        parts = ["\u2713 %d models" % len(ids)]
+        if payload.get("cli_version"):
+            parts.append("Claude Code %s" % payload["cli_version"])
+        if payload.get("current"):
+            parts.append("default %s" % payload["current"])
+        if needs:
+            parts.append("%d need%s a Claude Code update" % (needs, "" if needs > 1 else "s"))
+        if payload.get("fetched"):
+            parts.append("checked %s" % _fmt_day(payload["fetched"]))
+        if payload.get("partial"):
+            parts.append("check incomplete, re-checked next launch")
+        self._append('<div style="color:#6a6;font-size:11px;margin-left:8px;">'
+                     '%s</div>' % _esc(" \u00b7 ".join(parts)))
+
+    def _pin_saved_alias(self, payload):
+        """Pin a saved alias to the id it names today (see
+        config.migrate_saved_alias), and say so once.
+
+        Only the value saved when the panel opened is a candidate -- never
+        text typed since, never while the box has focus -- and only once this
+        fetch resolved the aliases, so a slow lookup cannot clear a real one.
+        """
+        launch = self._model_at_launch
+        labels = payload.get("alias_labels") or {}
+        if (not launch or not labels
+                or _llm_config.saved_model("claude_cli") != launch
+                or self._model_edit.lineEdit().hasFocus()):
+            return
+        # Not resolved THIS time -- the check did not finish, or this alias did
+        # not answer -- so the next fetch decides rather than clearing it.
+        if launch != "default" and launch not in (payload.get("alias_map") or {}):
+            if payload.get("partial") or (
+                    launch in (payload.get("aliases") or ()) and launch not in labels):
+                return
+        res                   = _llm_config.migrate_saved_alias("claude_cli", payload.get("alias_map"))
+        self._model_at_launch = ""
+        if not res:
+            return
+        old, new = res
+        cur                    = payload.get("current") or "Claude Code's default"
+        self._loading_settings = True
+        try:
+            self._model_edit.setCurrentText(new)
+        finally:
+            self._loading_settings = False
+        self._update_runs_line()
+        if old == "default":
+            self._append_system(
+                "Saved model “default” is now the blank “Claude "
+                "Code default” row (%s)." % cur)
+            return
+        if not new and old in labels:
+            self._append_system(
+                "Saved model \u201c%s\u201d names no single model (%s), so it "
+                "was never sent and every turn ran %s. Cleared."
+                % (old, labels[old], cur))
+            return
+        if not new:
+            self._append_system(
+                "Saved model \u201c%s\u201d is not a model id, so it was never "
+                "sent and every turn ran %s. Cleared." % (old, cur))
+            return
+        same = new == payload.get("default_id")
+        self._append_system(
+            "Saved model \u201c%s\u201d was never sent (an alias is not a pinned "
+            "id), so every turn ran %s. It is now pinned to %s (%s)%s." % (
+                old, cur, new, self._cli_model_displays.get(new, new),
+                " \u2014 the same model, and it won't change on its own"
+                if same else ""))

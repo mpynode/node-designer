@@ -120,6 +120,48 @@ def set_cached_models(provider: str, models) -> None:
     _set_pref("assistant_models_%s" % provider, [str(m) for m in (models or [])])
 
 
+# The Claude CLI dropdown's full rows (display names, alias chips, greyed
+# "needs update" entries) as claude_cli_client.build_rows returns them, stamped
+# with the CLI version they were checked against and when. The flat
+# ``assistant_models_<provider>`` list above is still written beside it: an
+# older MPyNode sharing this preferences file reads only that one.
+ROWS_MAX_AGE = 7 * 24 * 3600
+
+
+def get_cached_rows(provider: str) -> dict:
+    """The last validated row payload for ``provider`` ({} if never)."""
+    val = _pref("assistant_model_rows_%s" % provider, None)
+    if isinstance(val, dict) and isinstance(val.get("rows"), list):
+        return dict(val)
+    return {}
+
+
+def set_cached_rows(provider: str, payload) -> None:
+    _set_pref("assistant_model_rows_%s" % provider, dict(payload or {}))
+
+
+def rows_need_full_check(cached, cli_version, now=None, max_age=ROWS_MAX_AGE) -> bool:
+    """True when saved rows must be re-validated against the CLI. Pure.
+
+    Validation is the slow, login-backed step (25-40 s), so it runs only when its
+    answer can have changed: never checked, the last check did not finish,
+    the CLI version moved (a new CLI runs models the old one refused), or the
+    check is older than ``max_age`` (the server can grant or withdraw access).
+    Anything unreadable counts as stale.
+    """
+    if (not cached or not cached.get("rows") or cached.get("fallback")
+            or cached.get("partial")):
+        return True
+    if not cli_version or cached.get("cli_version") != cli_version:
+        return True
+    try:
+        fetched = float(cached.get("fetched") or 0)
+    except (TypeError, ValueError):
+        return True
+    now = time.time() if now is None else now
+    return not (0 < fetched <= now + 60) or now - fetched > max_age
+
+
 def cli_model_candidates(provider: str) -> list:
     """Model ids to OFFER for a CLI provider that has no list endpoint.
 
@@ -145,9 +187,8 @@ def model_selection_after_fetch(provider: str, current: str, models) -> str:
     Preserve the user's current choice. When it's blank, API providers surface
     the first concrete id (cosmetic -- their blank already maps to a real
     ``DEFAULT_MODELS`` entry), but CLI providers KEEP blank: for them blank means
-    "use the CLI's own default", so showing ``models[0]`` would imply a version
-    the tool will not actually pass (e.g. display opus-4-8[1m] but run the CLI's
-    default opus 4.6).
+    "use the CLI's own default", so showing ``models[0]`` would display one
+    version while the CLI runs whatever its default is.
     """
     if current:
         return current
@@ -415,12 +456,42 @@ def set_api_key(provider: str, key: str) -> None:
 _EXPLICIT_CLI_ID = re.compile(r"^claude-[a-z]+-[0-9][A-Za-z0-9.\-]*(\[1m\])?$")
 
 
+def is_explicit_cli_id(model) -> bool:
+    """True for a pinned Claude id (``claude-opus-5``, ``claude-opus-5[1m]``)."""
+    return bool(_EXPLICIT_CLI_ID.match((model or "").strip()))
+
+
 def get_model(provider: str) -> str:
-    m = (_pref("assistant_model_%s" % provider, "") or "").strip()
-    if provider == "claude_cli" and m and not _EXPLICIT_CLI_ID.match(m):
+    m = saved_model(provider)
+    if provider == "claude_cli" and m and not is_explicit_cli_id(m):
         return ""
     return m or DEFAULT_MODELS.get(provider, "")
 
 
+def saved_model(provider: str) -> str:
+    """The stored model string as typed -- unlike ``get_model``, NOT filtered."""
+    return (_pref("assistant_model_%s" % provider, "") or "").strip()
+
+
 def set_model(provider: str, model: str) -> None:
     _set_pref("assistant_model_%s" % provider, (model or "").strip())
+
+
+def migrate_saved_alias(provider: str, alias_map):
+    """Pin a saved Claude CLI alias to the id it names today: ``(old, new)``, or None.
+
+    The dropdown once offered aliases, and ``get_model`` has always dropped
+    them, so a saved "opus[1m]" was never sent: every turn ran Claude Code's
+    default. Rather than keep a value that does nothing, it is pinned to the
+    model it names on THIS machine -- ``alias_map`` is resolved live by the
+    caller, never hardcoded. Anything else non-explicit becomes blank, which is
+    what already ran.
+    """
+    if provider != "claude_cli":
+        return None
+    old = saved_model(provider)
+    if not old or is_explicit_cli_id(old):
+        return None
+    new = (alias_map or {}).get(old, "")
+    set_model(provider, new)
+    return old, new
