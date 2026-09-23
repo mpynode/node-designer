@@ -2,7 +2,7 @@
 #
 # This fixes nothing. Every tracked *.sh is ALREADY stored LF and checks out
 # LF, verified byte-exactly (`git cat-file blob HEAD:<path> | tr -dc '\r' |
-# wc -c` reports 0 for all 84, working copies too). Re-adding all of them
+# wc -c` reports 0 for all 81, working copies too). Re-adding all of them
 # under this rule produced no blob change.
 #
 # It is here to PIN that, because the correctness currently depends on how
@@ -21,7 +21,7 @@
 
 # Two omissions, both deliberate and both measured rather than assumed.
 #
-#  * *.bat is NOT declared. Those 40 blobs are stored WITH CRLF, which is
+#  * *.bat is NOT declared. Those 71 blobs are stored WITH CRLF, which is
 #    correct for batch files. Adding `*.bat text eol=crlf` normalises them to
 #    LF in the index -- the opposite of the intent -- so the rule that looks
 #    right is the one that does damage. Left alone on purpose.
