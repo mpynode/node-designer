@@ -184,6 +184,60 @@ class TestWindowsBuildScriptFpFlags(unittest.TestCase):
         self.assertNotIn("/fp:fast", bat)
 
 
+class TestBuildScriptsMatchTheirRegenerator(unittest.TestCase):
+    """A compile writes its build scripts in the committed form that
+    tools/regen_build_scripts.py regenerates -- on a Windows host too, which is
+    where the per-node build.bat used to come out as \\r\\r\\n and both .bat files
+    carried a "REM Built against" line no committed build.bat has. Either one
+    failed test_build_script_freshness after every Windows compile."""
+
+    _MAYA = "C:/Program Files/Autodesk/Maya2025"
+
+    def _with_host(self, windows):
+        real                 = toolchain.is_windows
+        toolchain.is_windows = lambda os_name=None: windows
+        self.addCleanup(setattr, toolchain, "is_windows", real)
+
+    def _read(self, path):
+        with open(path, "rb") as fh:
+            return fh.read()
+
+    def test_tree_build_bat_never_records_provenance(self):
+        for windows in (True, False):
+            with self.subTest(windows_host=windows):
+                self._with_host(windows)
+                d = tempfile.mkdtemp(prefix="layout_prov_")
+                self.addCleanup(shutil.rmtree, d, True)
+                p = os.path.join(d, "fooNode.cpp")
+                with open(p, "w") as fh:
+                    fh.write(_node_src("fooNode", "FooNode", "0x00081000", with_block=False))
+                report = bundler.assemble([("fooNode", p)], "solo", os.path.join(d, "out"),
+                                          strict=True, registry=_reg(d), maya=self._MAYA,
+                                          compile_now=False)
+                self.assertTrue(report.get("ok"), report)
+                bat = self._read(os.path.join(d, "out", "build", "build.bat"))
+                sh  = self._read(os.path.join(d, "out", "build", "build.sh"))
+                self.assertNotIn(b"Built against", bat)
+                self.assertNotIn(b"\r\r\n", bat)
+                self.assertEqual(b"Built against: Maya2025" in sh, not windows)
+
+    def test_node_build_script_is_the_generator_output_verbatim(self):
+        from mpynode.native.ai import porter
+        from mpynode.native.compiler import build_scripts
+
+        spec = {"suggested": {"node_type_name": "fooNode", "mpx_base": "MPxNode"}}
+        for windows, name in ((True, "build.bat"), (False, "build.sh")):
+            with self.subTest(windows_host=windows):
+                self._with_host(windows)
+                d = tempfile.mkdtemp(prefix="layout_node_")
+                self.addCleanup(shutil.rmtree, d, True)
+                path = porter._write_build_script(spec, d)
+                self.assertEqual(os.path.basename(path), name)
+                want = build_scripts.generate_build_script(spec)[1].encode("utf-8")
+                self.assertEqual(self._read(path), want)
+                self.assertNotIn(b"Built against", want)
+
+
 class TestCleanWorkingSubdirs(unittest.TestCase):
     """The controller's post-build scratch sweep: drop a built node's
     build/<type>/, keep a dropped node's for debugging, and MIGRATE away any

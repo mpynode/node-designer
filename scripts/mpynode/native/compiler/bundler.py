@@ -1617,8 +1617,12 @@ def _assemble_single(node, plugin_name, out_dir, reg, report, *, strict, maya,
 
     libs = list(_LINK_LIBS)
     # The build scripts are cross-platform artifacts, so each gets its OWN
-    # platform's default $MAYA. Only the HOST-platform script gets this compile's
-    # actual maya -- we can't know the user's install on the other OS.
+    # platform's default $MAYA. Only build.sh, and only on a macOS/Linux host,
+    # records this compile's maya as provenance -- we can't know the user's
+    # install on the other OS. build.bat never carries it: every committed
+    # build.bat is provenance-free, and tools/regen_build_scripts.py (which reads
+    # provenance back from build.sh only) regenerates it that way, so a Windows
+    # compile that stamped one failed the build-script freshness gate.
     is_win   = toolchain.is_windows()
     build_sh = os.path.join(build_dir, "build.sh")
     # newline="" -- see the note in assemble(): the generators own their line
@@ -1630,8 +1634,7 @@ def _assemble_single(node, plugin_name, out_dir, reg, report, *, strict, maya,
         os.chmod(build_sh, 0o755)
     with open(os.path.join(build_dir, "build.bat"), "w", newline="", encoding="utf-8") as fh:
         fh.write(make_single_build_bat(plugin_name, node_file, libs,
-                                       needs_qt=needs_qt,
-                                       maya=(maya if is_win else None)))
+                                       needs_qt=needs_qt, maya=None))
     out_plugin = os.path.join(out_dir, plugin_name + toolchain.plugin_ext())
     with open(os.path.join(build_dir, "README.txt"), "w", encoding="utf-8") as fh:
         fh.write(make_readme(plugin_name, [node_file], single=True,

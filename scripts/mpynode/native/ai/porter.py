@@ -152,6 +152,27 @@ def compile_cpp(cpp_path: str, spec: dict, out_dir: str,
 # ---------------------------------------------------------------------------
 
 
+def _write_build_script(spec: dict, out_dir: str) -> str:
+    """Emit the node's platform build script (build.sh on macOS/Linux, build.bat
+    on Windows) beside its .cpp, plus the Qt compat header a Windows hover build
+    force-includes by bare name. Returns the script path.
+
+    Written exactly as ``tools/regen_build_scripts.py`` regenerates a committed
+    ``build/<type>/`` script: no maya, so no "Built against" provenance line (that
+    line belongs to the tree-level build.sh only), and ``newline=""`` because the
+    generator emits its own line endings -- a text-mode write on Windows turned
+    the .bat's CRLF into \\r\\r\\n.
+    """
+    build_name, build_src = codegen.generate_build_script(spec)
+    build_path = os.path.join(out_dir, build_name)
+    with open(build_path, "w", newline="", encoding="utf-8") as f:
+        f.write(build_src)
+    if not toolchain.is_windows():
+        os.chmod(build_path, 0o755)
+    toolchain.ship_qt_msvc_compat_header(out_dir, bool(spec.get("needs_hover")))
+    return build_path
+
+
 def apply_type_name(spec: dict, type_name: str) -> dict:
     """Override the generated node *type* name (and derived class name).
 
@@ -263,15 +284,7 @@ def port_node(spec: dict, out_dir: str, complete_fn=None,
             f.write(inline_skeleton)
         ok, log, bundle = compile_cpp(cpp_path, spec, out_dir, maya=maya,
                                       log_cb=log_cb)
-        build_name, build_src = codegen.generate_build_script(spec, maya=maya)
-        build_path = os.path.join(out_dir, build_name)
-        with open(build_path, "w", encoding="utf-8") as f:
-            f.write(build_src)
-        if not toolchain.is_windows():
-            os.chmod(build_path, 0o755)
-        # The Windows script force-includes this by bare name: keep it beside
-        # the .cpp (toolchain.QT_MSVC_COMPAT_HEADER).
-        toolchain.ship_qt_msvc_compat_header(out_dir, bool(spec.get("needs_hover")))
+        _write_build_script(spec, out_dir)
         verify_path = os.path.join(out_dir, "verify_in_maya.py")
         with open(verify_path, "w", encoding="utf-8") as f:
             f.write(_verify_script(spec))
@@ -394,15 +407,7 @@ def port_node(spec: dict, out_dir: str, complete_fn=None,
 
     # Always emit the build + verify helpers (platform-appropriate build
     # script: build.sh on macOS/Linux, build.bat on Windows).
-    build_name, build_src = codegen.generate_build_script(spec, maya=maya)
-    build_path = os.path.join(out_dir, build_name)
-    with open(build_path, "w", encoding="utf-8") as f:
-        f.write(build_src)
-    if not toolchain.is_windows():
-        os.chmod(build_path, 0o755)
-    # The Windows script force-includes this by bare name: keep it beside
-    # the .cpp (toolchain.QT_MSVC_COMPAT_HEADER).
-    toolchain.ship_qt_msvc_compat_header(out_dir, bool(spec.get("needs_hover")))
+    _write_build_script(spec, out_dir)
     verify_path = os.path.join(out_dir, "verify_in_maya.py")
     with open(verify_path, "w", encoding="utf-8") as f:
         f.write(_verify_script(spec))
