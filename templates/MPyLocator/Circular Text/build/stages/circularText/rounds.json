@@ -1,0 +1,38 @@
+{
+  "accepted": false,
+  "baseline_ms": null,
+  "bench": {
+    "floor_ms": 15.0,
+    "rung": [
+      40,
+      512
+    ]
+  },
+  "best_ms": null,
+  "created": 1790214440.1808515,
+  "ledger": [
+    {
+      "compiled": true,
+      "duration_s": null,
+      "fix_rounds": 0,
+      "hypothesis": "",
+      "index": 0,
+      "ms": null,
+      "note": "unmeasurable",
+      "outcome": "baseline",
+      "parity": null,
+      "predicted_speedup": null,
+      "risk": "",
+      "slug": null,
+      "speedup": null,
+      "theme": ""
+    }
+  ],
+  "max_rounds": 6,
+  "parity_gate": "not exercised",
+  "reason": "baseline could not be benchmarked",
+  "rounds": 0,
+  "speedup": 1.0,
+  "stop_reason": "baseline could not be benchmarked",
+  "type_name": "circularText"
+}
