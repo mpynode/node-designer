@@ -1137,6 +1137,12 @@ class MPyNode(InitSourceMixin, MethodsSourceMixin, MetadataMixin,
         kwargs["keyable"]  = False
         kwargs["writable"] = False
         kwargs["readable"] = True
+        # addAttr defaults cachedInternally to False for a non-writable attr. A
+        # non-cached TYPED output (matrix / string / mesh ...) drops its value
+        # after every read, so each read re-ran the expression: once per pulled
+        # array element, once per consumer. Static and compiled outputs are
+        # cached by default. See tests/attributes/test_output_cached.py.
+        kwargs["cachedInternally"] = True
         if is_array:
             kwargs["multi"] = True
         # enumName per-instance.
