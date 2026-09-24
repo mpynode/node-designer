@@ -1,10 +1,10 @@
 # MPyNode_Spring_Chain -- compile report
 
-Generated 2026-08-25 10:28
+Generated 2026-09-24 11:51
 
 | node | status | assist | optimize | detail |
 |---|---|---|---|---|
-| `springChain` | compiled | filled | **1.07x** | [report](build/stages/springChain/REPORT.md) |
+| `springChain` | compiled | 1 unresolved | **2.87x** | [report](build/stages/springChain/REPORT.md) |
 
 ## Layout
 

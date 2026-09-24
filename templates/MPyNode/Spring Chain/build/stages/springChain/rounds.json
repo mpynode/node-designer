@@ -1,66 +1,9 @@
 {
   "accepted": true,
-  "baseline_ms": 0.0015,
-  "best_ms": 0.0014,
-  "created": 1787678922.0615199,
-  "ledger": [
-    {
-      "compiled": true,
-      "duration_s": null,
-      "fix_rounds": 0,
-      "hypothesis": "",
-      "index": 0,
-      "ms": 0.0015,
-      "note": "",
-      "outcome": "baseline",
-      "parity": null,
-      "predicted_speedup": null,
-      "risk": "",
-      "slug": null,
-      "speedup": null,
-      "theme": ""
-    },
-    {
-      "compiled": true,
-      "duration_s": 439.734,
-      "fix_rounds": 0,
-      "hypothesis": "the workload description promises 20000-element arrays and a 159k-vert sphere, but springChain has NO array inputs and NO geometry inputs -- the only array is the driven OUTPUT, whose elementCount comes from downstream connections. So compute() is ~11 Maya API calls over a handful of elements, and the only lever is removing API calls: one outputArrayValue instead of two, no MArrayDataBuilder allocate + set() rebuild, no out_aDriven heap allocation per evaluate",
-      "index": 1,
-      "ms": 0.0016,
-      "note": "",
-      "outcome": "not-faster",
-      "parity": "pass",
-      "predicted_speedup": 1.3,
-      "risk": "the in-place walk writes position[i] to the i-th EXISTING element while MArrayDataBuilder densifies to logical indices 0..n-1; those diverge on a sparse driven array, so the walk is guarded by an elementIndex()==i check per element and falls back to the verbatim builder path on any mismatch. Deleting the static registry also changes lifetime semantics, but in the safe direction (no cross-node inheritance of a dead node's buffers)",
-      "slug": "drop_builder_and_registry",
-      "speedup": null,
-      "theme": "this node is API-overhead-bound at ~1.5us, not algorithm-bound: collapse the two outputArrayValue calls into one, delete the per-compute MArrayDataBuilder rebuild and the staging vector in favour of a guarded in-place element walk, and lift the leaking static NodeState registry into a per-instance member"
-    },
-    {
-      "compiled": true,
-      "duration_s": 501.218,
-      "fix_rounds": 0,
-      "hypothesis": "the spec declares no array and no geometry inputs, so --bench-array 20000 / --bench-geo 400 seed nothing and n = elementCount(driven) = 1 (confirmed by instrumenting the node: 'DBG n=1 pos=1'). The spring integration is therefore ~3 flops and irrelevant; the measurable cost is Maya API call count per compute. Cutting the per-call constant should get most of the way to the harness floor.",
-      "index": 2,
-      "ms": 0.0014,
-      "note": "",
-      "outcome": "accept",
-      "parity": "pass",
-      "predicted_speedup": 1.6,
-      "risk": "dropping the unused `time` read leaves that input plug unclean; it is safe because in_aTime was dead in the ported body and attributeAffects(aTime, aDriven) still re-invokes compute on a time change, so the output value is bit-identical",
-      "slug": "strip_percall_overhead",
-      "speedup": 1.0714285714285714,
-      "theme": "this node is not compute-bound at all -- the benchmark drives it with exactly ONE driven element, so every microsecond is per-call fixed overhead (datablock lookups, two MArrayDataHandle acquisitions, a heap-allocating temp vector, an MArrayDataBuilder rebuild and a static registry scan); removing that overhead is the whole win"
-    }
-  ],
-  "parity_gate": "authored+pointwise",
-  "reason": "accepted (1.07x)",
-  "remeasured": {
-    "baseline_ms": null,
-    "date": "2026-09-08",
-    "diverged": null,
-    "final_ms": null,
-    "fingerprint": null,
+  "baseline_ms": 3.17,
+  "bench": {
+    "below_floor": true,
+    "fingerprint": "checked (1 plug(s))",
     "floor_ms": 15.0,
     "perturbed": [
       "damping (float)",
@@ -72,14 +15,89 @@
       "tension (float)",
       "time (time)"
     ],
-    "reason": "baseline 1.462 ms is below the 15 ms noise floor even at the largest bench scene (geo=400 array=20000); nothing this small can be optimized against measurably",
+    "reason": "baseline 3.170 ms is below the 15 ms noise floor even at the largest bench scene (geo=400 array=20000); measured anyway -- every accept must clear 1.15x on two independent timings",
     "rung": [
       400,
       20000
     ],
-    "speedup": null
+    "small_rung": [
+      40,
+      512
+    ]
   },
-  "rounds": 2,
-  "speedup": 1.0714285714285714,
+  "best_ms": 1.1048,
+  "created": 1790273803.1571016,
+  "ledger": [
+    {
+      "compiled": true,
+      "duration_s": null,
+      "fix_rounds": 0,
+      "hypothesis": "",
+      "index": 0,
+      "ms": 3.17,
+      "note": "",
+      "outcome": "baseline",
+      "parity": null,
+      "predicted_speedup": null,
+      "risk": "",
+      "slug": null,
+      "speedup": null,
+      "theme": ""
+    },
+    {
+      "compiled": true,
+      "duration_s": 1523.243,
+      "fix_rounds": 0,
+      "hypothesis": "A phase profile of the original showed the finalize (20000 addElement + set3Double + outArr.set) at 2.1-2.9 ms of a ~3 ms tick, the latency-bound spring chain at 0.2-0.5 ms and the vector copy at ~40 us. The node is ELEMENTWISE (serial recurrence, no query, nothing cacheable: every input it reads moves), so the lever is per-access overhead: writing the existing elements in place removes a 20000-element allocate/free per tick, and emitting each element right after its spring lets the out-of-order core overlap the Maya calls with the chain's divide/sqrt latency. Accepted follow-ups, each A/B'd 3/3 with byte-identical fingerprints: layout checked once up front instead of elementIndex() per element; the min/max clamp if/elif turned into a select (the bench drives minDistance == maxDistance, so inside-vs-outside flips link to link and mispredicts, flushing the overlapped API work); spring rewritten on named scalars and the chain state carried in plain doubles across the opaque API calls. Also lifted the static NodeState registry to a per-instance member. Rejected: writing through asDouble3() instead of set3Double (slower 3/3), a bit-mask select (mixed), and writing through the existing array's own builder (addElement + set3Double, 2 calls instead of 3) -- slower 3/3, because addElement's index lookup costs more than next().",
+      "index": 1,
+      "ms": 1.1048,
+      "note": "confirmed twice (incumbent under the noise floor): 0.787 / 1.105 ms",
+      "outcome": "accept",
+      "parity": "pass",
+      "predicted_speedup": 2.0,
+      "risk": "The in-place fast path relies on Maya keeping array elements sorted by logical index (then first == 0 and last == n-1 means exactly 0..n-1); any other layout skips it and the original builder rewrites the whole multi. The branchless clamp keeps every comparison's type, direction and strictness, keeps if/elif precedence (min wins when both hold), and divides by 1.0 when length == 0 (x / 1.0 == x exactly). Outputs are byte-identical to the original build: all 20000 doubles x3 after warm-up, at n=37 and with 1 warm-up tick. Measured on this Windows box with an MSVC build (/O2 /fp:precise, the generator's recipe) run through the same harness arguments, because build.sh is macOS-only and bench.sh prints BUILD FAILED here. Original 1.25-1.87 ms vs final 0.67-0.83 ms (41-sample medians, noisy machine), so roughly 2x; the M4/clang ratio is unmeasured.",
+      "slug": "inplace_output_write",
+      "speedup": 2.8692976104272265,
+      "theme": "Write the 20000-element driven multi in place, fused into the serial spring loop, instead of building and swapping in a brand-new MArrayDataBuilder array every tick."
+    },
+    {
+      "compiled": true,
+      "duration_s": 1293.908,
+      "fix_rounds": 0,
+      "hypothesis": "Instrumenting compute() at 20000 links showed three serial costs on one thread: the latency-bound chain (~400 us; div -> sqrt -> div per link, irreducible without changing roundings), data.setClean(aDriven) (~380-1800 us, Maya walking 20000 connected element plugs), and 20000 in-place element writes (~170 us). setClean and the writes must stay on the compute thread (Maya API), but the chain is pure C++, so it can run concurrently with setClean; the critical path drops from chain + writes + setClean to max(chain, setClean) + writes.",
+      "index": 2,
+      "ms": 0.7707,
+      "note": "Accepted by the optimizer at 4.11x, withheld in review: it runs the serial chain on a persistent worker thread while the compute thread calls data.setClean and writes the chunks the worker publishes -- a producer/consumer pipeline, outside the one threading shape the optimizer rules permit (a parallel map), and its setClean-before-write ordering was only checked in DG.",
+      "outcome": "invalid-candidate",
+      "parity": "pass",
+      "predicted_speedup": 1.5,
+      "risk": "Running data.setClean(aDriven) before the element values are written is new ordering inside compute(). It was verified in DG evaluation, but not under a parallel Evaluation Manager. The EM contract here: both calls still happen inside compute(), before it returns. Speed depends on the OS scheduling the worker on a P-core; on an E-core the chain can outlast setClean, and the progress hand-off only partly hides that.",
+      "slug": "overlap_chain_with_setclean",
+      "speedup": 4.113143895160244,
+      "theme": "Run the inherently serial spring chain on a persistent per-node worker thread while the calling thread performs Maya's expensive attribute-level data.setClean(aDriven), then write the outputs in place chunk by chunk as the worker publishes them."
+    },
+    {
+      "compiled": null,
+      "duration_s": 654.608,
+      "fix_rounds": 0,
+      "hypothesis": "Instrumented phase timing (per compute, 20000 links) showed the worker takes 90-150 us to wake before the serial chain (358 us) even starts, while the caller idles, and the in-place writer (3 Maya calls per element, ~20 ns) then trails the chain by 75-450 us. Filling the wake gap with caller-side fused integrate+write, then a mid-chain handoff at link h (q of link h-1 passed under the mutex, 256-link publish chunks, bounded atomic spin before condvar), should cut roughly the wake lag off every tick while keeping one writer per link and one fixed integration order.",
+      "index": 3,
+      "ms": null,
+      "note": "candidate is identical to the current best",
+      "outcome": "no-change",
+      "parity": null,
+      "predicted_speedup": 1.18,
+      "risk": "none shipped. Parity is untouched: the handoff point only chose which thread computed a link, never its value, but the version is not kept.",
+      "slug": "caller_fused_until_worker_ready",
+      "speedup": null,
+      "theme": "NO CHANGE SHIPPED: the caller integrated and wrote links itself until the chain worker woke, then handed it the rest; it measured slower and springChain.cpp was restored byte-identical to the entry file."
+    }
+  ],
+  "max_rounds": 6,
+  "parity_gate": "authored+pointwise",
+  "reason": "accepted (2.87x); later rounds withheld in review",
+  "rounds": 3,
+  "speedup": 2.8692976104272265,
+  "stop_reason": "round 3 no-change -- nothing new to compound from",
   "type_name": "springChain"
 }

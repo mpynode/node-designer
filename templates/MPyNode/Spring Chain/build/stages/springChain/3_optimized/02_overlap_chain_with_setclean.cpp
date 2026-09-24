@@ -25,6 +25,10 @@
 #include <vector>
 #include <random>
 #include <cstdint>
+#include <cstdlib>
+#include <thread>
+#include <mutex>
+#include <condition_variable>
 #include <maya/MPxNode.h>
 #include <maya/MFnPlugin.h>
 #include <maya/MTypeId.h>
@@ -50,6 +54,203 @@
 #include <maya/MArrayDataBuilder.h>
 #include <maya/MPlug.h>
 #include <maya/MStatus.h>
+
+namespace {
+
+// spring() from the Init tab. The Python returns the new (p1, v); here p1 and v
+// are updated in place. The components stay independent until the norm, so one
+// pass per component reproduces numpy's element-wise ops. Each product gets its
+// own statement: numpy rounds every element-wise op separately.
+inline void spring_step(const double qx, const double qy, const double qz,
+                        double& px, double& py, double& pz,
+                        double& wx, double& wy, double& wz,
+                        const double gx, const double gy, const double gz,
+                        double k, double m, double d, double minDist, double maxDist) {
+    // Acceleration -> velocity -> position
+    {
+        const double s  = qx - px;
+        const double ks = k * s;
+        const double dv = d * wx;
+        const double a  = ks / m - dv / m + gx;
+        wx = wx + a;
+        px = px + wx;
+    }
+    {
+        const double s  = qy - py;
+        const double ks = k * s;
+        const double dv = d * wy;
+        const double a  = ks / m - dv / m + gy;
+        wy = wy + a;
+        py = py + wy;
+    }
+    {
+        const double s  = qz - pz;
+        const double ks = k * s;
+        const double dv = d * wz;
+        const double a  = ks / m - dv / m + gz;
+        wz = wz + a;
+        pz = pz + wz;
+    }
+
+    // Simple distance limits
+    if (minDist != 0.0 || maxDist != 0.0) {
+        double sx = qx - px;
+        double sy = qy - py;
+        double sz = qz - pz;
+
+        // np.linalg.norm(s) = sqrt(s . s), accumulated in index order
+        const double sxx = sx * sx;
+        const double syy = sy * sy;
+        const double szz = sz * sz;
+        double sq = sxx + syy;
+        sq = sq + szz;
+        const double length = std::sqrt(sq);
+        // x / 1.0 == x exactly, so dividing by 1 when length == 0 is the same
+        // as skipping the division -- without a branch.
+        const double len = (length != 0.0) ? length : 1.0;
+        sx = sx / len;
+        sy = sy / len;
+        sz = sz / len;
+
+        // if / elif as a SELECT: the min test wins when both hold. Same
+        // comparisons, same strictness; only the control flow is gone.
+        const bool useMin = (minDist > 0.0) & (length < minDist);
+        const bool useMax = (maxDist > 0.0) & (length > maxDist);
+        const bool clamp  = useMin | useMax;
+        const double lim  = useMin ? minDist : maxDist;
+        const double tx   = sx * lim;
+        const double ty   = sy * lim;
+        const double tz   = sz * lim;
+        const double cx   = qx - tx;
+        const double cy   = qy - ty;
+        const double cz   = qz - tz;
+        px = clamp ? cx : px;
+        py = clamp ? cy : py;
+        pz = clamp ? cz : pz;
+        wx = clamp ? 0.0 : wx;
+        wy = clamp ? 0.0 : wy;
+        wz = clamp ? 0.0 : wz;
+    }
+}
+
+// One integration pass down the chain: link i's p0 is link i - 1's position
+// from THIS pass (the driver for link 0). Pure C++ on raw buffers -- no Maya API.
+struct ChainJob {
+    MVector* P = nullptr;
+    MVector* V = nullptr;
+    size_t   n = 0;
+    double   qx = 0.0, qy = 0.0, qz = 0.0;
+    double   gx = 0.0, gy = 0.0, gz = 0.0;
+    double   k = 0.0, m = 0.0, d = 0.0, minDist = 0.0, maxDist = 0.0;
+};
+
+inline void run_chain(const ChainJob& j, size_t b, size_t e, double q[3]) {
+    MVector* P = j.P;
+    MVector* V = j.V;
+    double qx = q[0], qy = q[1], qz = q[2];
+    for (size_t i = b; i < e; ++i) {
+        double px = P[i].x, py = P[i].y, pz = P[i].z;
+        double wx = V[i].x, wy = V[i].y, wz = V[i].z;
+        spring_step(qx, qy, qz, px, py, pz, wx, wy, wz, j.gx, j.gy, j.gz, j.k, j.m, j.d, j.minDist, j.maxDist);
+        P[i].x = px; P[i].y = py; P[i].z = pz;
+        V[i].x = wx; V[i].y = wy; V[i].z = wz;
+        qx = px; qy = py; qz = pz;
+    }
+    q[0] = qx; q[1] = qy; q[2] = qz;
+}
+
+// Links per published chunk: the caller writes a finished chunk out while the
+// worker integrates the next one. Chunking only decides WHEN a link is handed
+// over, never its value -- the chain itself runs in one fixed order.
+constexpr size_t kChunkLinks = 2048;
+
+// Persistent per-node worker that runs the (inherently serial) chain pass
+// while the calling thread does the Maya-side bookkeeping. One task, one
+// writer: the worker alone writes P/V for the whole [0, n) range, so the
+// answer cannot depend on scheduling. Started once, joined in the destructor.
+// SPRINGCHAIN_THREADS=0 turns it off (everything then runs on the caller).
+class ChainWorker {
+public:
+    ChainWorker() {
+        const char* e = std::getenv("SPRINGCHAIN_THREADS");
+        _enabled = !(e && std::atoi(e) <= 0) && std::thread::hardware_concurrency() > 1;
+    }
+    ~ChainWorker() {
+        {
+            std::lock_guard<std::mutex> lk(_mu);
+            _quit = true;
+        }
+        _cv.notify_all();
+        if (_th.joinable())
+            _th.join();
+    }
+    bool enabled() const { return _enabled; }
+
+    // False (and nothing started) when the worker thread cannot be created;
+    // the caller then runs the chain itself.
+    bool start(const ChainJob& j) {
+        std::unique_lock<std::mutex> lk(_mu);
+        if (!_th.joinable()) {
+            try {
+                _th = std::thread(&ChainWorker::loop, this);
+            } catch (...) {
+                _enabled = false;
+                return false;
+            }
+        }
+        _job      = j;
+        _pending  = true;
+        _progress = 0;
+        lk.unlock();
+        _cv.notify_all();
+        return true;
+    }
+    // Blocks until at least `need` links are integrated; returns how many are.
+    // Links below the returned count are final and no longer touched by the
+    // worker (published under the mutex, so the caller sees their values).
+    size_t waitFor(size_t need) {
+        std::unique_lock<std::mutex> lk(_mu);
+        _cvDone.wait(lk, [this, need] { return _progress >= need; });
+        return _progress;
+    }
+
+private:
+    void loop() {
+        std::unique_lock<std::mutex> lk(_mu);
+        for (;;) {
+            _cv.wait(lk, [this] { return _pending || _quit; });
+            if (_quit)
+                return;
+            _pending = false;
+            const ChainJob j = _job;
+            double q[3] = {j.qx, j.qy, j.qz};
+            for (size_t b = 0; b < j.n;) {
+                const size_t e = std::min(j.n, b + kChunkLinks);
+                lk.unlock();
+                run_chain(j, b, e, q);
+                lk.lock();
+                _progress = e;
+                _cvDone.notify_all();
+                b = e;
+            }
+        }
+    }
+
+    std::thread             _th;
+    std::mutex              _mu;
+    std::condition_variable _cv;
+    std::condition_variable _cvDone;
+    ChainJob                _job;
+    size_t                  _progress = 0;
+    bool                    _pending = false;
+    bool                    _quit    = false;
+    bool                    _enabled = false;
+};
+
+// Below this many links the serial chain costs less than waking the worker.
+constexpr size_t kOffloadMinLinks = 4096;
+
+}  // namespace
 
 class SpringChain : public MPxNode {
 public:
@@ -79,10 +280,11 @@ public:
         std::vector<MVector> velocity;     // self.velocity
         std::vector<MVector> position;     // self.position
     };
-    NodeState _state;
+    NodeState   _state;
+    ChainWorker _worker;   // persistent chain offload, joined with the node
 };
 
-MTypeId SpringChain::id(0x000148ac);
+MTypeId SpringChain::id(0x000749b0);
 MObject SpringChain::aDamping;
 MObject SpringChain::aDriver;
 MObject SpringChain::aGravity;
@@ -200,6 +402,7 @@ MStatus SpringChain::compute(const MPlug& plug, MDataBlock& data) {
         // whose first is 0 and last is n-1 are exactly 0..n-1. Any other layout
         // skips this and the builder below rewrites the whole multi.
         bool     _inPlace = n > 0;
+        bool     _cleanedEarly = false;   // data.setClean(aDriven) already issued
         unsigned _nOut    = 0;
         if (_inPlace)
             _inPlace = _outArr.jumpToArrayElement((unsigned)n - 1) == MS::kSuccess
@@ -208,7 +411,11 @@ MStatus SpringChain::compute(const MPlug& plug, MDataBlock& data) {
                     && _outArr.elementIndex() == 0;
         auto emit = [&](double x, double y, double z) {
             if (_inPlace) {
-                _outArr.outputValue().set3Double(x, y, z);
+                // Store straight into the element's double3 (one call fewer
+                // than set3Double); the handle stays alive while r is used.
+                MDataHandle h = _outArr.outputValue();
+                double3&    r = h.asDouble3();
+                r[0] = x; r[1] = y; r[2] = z;
                 _outArr.next();
                 ++_nOut;
             }
@@ -226,78 +433,7 @@ MStatus SpringChain::compute(const MPlug& plug, MDataBlock& data) {
                          double& wx, double& wy, double& wz,
                          const double gx, const double gy, const double gz,
                          double k, double m, double d, double minDist, double maxDist) {
-            // Named scalars, not 3-arrays: the chain through p0 is serial across
-            // links, so every stack round-trip the optimiser leaves in is paid
-            // 20000 times. Same ops, same order, same roundings as before.
-
-            // Acceleration -> velocity -> position
-            {
-                const double s  = qx - px;
-                const double ks = k * s;
-                const double dv = d * wx;
-                const double a  = ks / m - dv / m + gx;
-                wx = wx + a;
-                px = px + wx;
-            }
-            {
-                const double s  = qy - py;
-                const double ks = k * s;
-                const double dv = d * wy;
-                const double a  = ks / m - dv / m + gy;
-                wy = wy + a;
-                py = py + wy;
-            }
-            {
-                const double s  = qz - pz;
-                const double ks = k * s;
-                const double dv = d * wz;
-                const double a  = ks / m - dv / m + gz;
-                wz = wz + a;
-                pz = pz + wz;
-            }
-
-            // Simple distance limits
-            if (minDist != 0.0 || maxDist != 0.0) {
-                double sx = qx - px;
-                double sy = qy - py;
-                double sz = qz - pz;
-
-                // np.linalg.norm(s) = sqrt(s . s), accumulated in index order like
-                // numpy's dot (a BLAS ddot built with FMA can differ in the last bits)
-                const double sxx = sx * sx;
-                const double syy = sy * sy;
-                const double szz = sz * sz;
-                double sq = sxx + syy;
-                sq = sq + szz;
-                const double length = std::sqrt(sq);
-                // x / 1.0 == x exactly, so dividing by 1 when length == 0 is the
-                // same as skipping the division -- without a branch.
-                const double len = (length != 0.0) ? length : 1.0;
-                sx = sx / len;
-                sy = sy / len;
-                sz = sz / len;
-
-                // if / elif as a SELECT: the min test wins when both hold. Same
-                // comparisons, same strictness; only the control flow is gone,
-                // because whether a link sits just inside or just outside the
-                // limit flips from link to link and mispredicts.
-                const bool useMin = (minDist > 0.0) & (length < minDist);
-                const bool useMax = (maxDist > 0.0) & (length > maxDist);
-                const bool clamp  = useMin | useMax;
-                const double lim  = useMin ? minDist : maxDist;
-                const double tx   = sx * lim;
-                const double ty   = sy * lim;
-                const double tz   = sz * lim;
-                const double cx   = qx - tx;
-                const double cy   = qy - ty;
-                const double cz   = qz - tz;
-                px = clamp ? cx : px;
-                py = clamp ? cy : py;
-                pz = clamp ? cz : pz;
-                wx = clamp ? 0.0 : wx;
-                wy = clamp ? 0.0 : wy;
-                wz = clamp ? 0.0 : wz;
-            }
+            spring_step(qx, qy, qz, px, py, pz, wx, wy, wz, gx, gy, gz, k, m, d, minDist, maxDist);
         };
 
         // Fresh (vanilla) node: seed the spring buffers so the first integration
@@ -338,15 +474,37 @@ MStatus SpringChain::compute(const MPlug& plug, MDataBlock& data) {
             // p0 of link i is link i - 1's position from THIS eval, carried in
             // qx/qy/qz so the serial chain never round-trips through memory.
             const double gx = gravity.x, gy = gravity.y, gz = gravity.z;
-            double qx = driver.x, qy = driver.y, qz = driver.z;
-            for (size_t i = 0; i < n; ++i) {
-                double px = P[i].x, py = P[i].y, pz = P[i].z;
-                double wx = V[i].x, wy = V[i].y, wz = V[i].z;
-                spring(qx, qy, qz, px, py, pz, wx, wy, wz, gx, gy, gz, k, m, d, minDist, maxDist);
-                P[i].x = px; P[i].y = py; P[i].z = pz;
-                V[i].x = wx; V[i].y = wy; V[i].z = wz;
-                emit(px, py, pz);
-                qx = px; qy = py; qz = pz;
+            ChainJob j;
+            j.P = P; j.V = V; j.n = n;
+            j.qx = driver.x; j.qy = driver.y; j.qz = driver.z;
+            j.gx = gx; j.gy = gy; j.gz = gz;
+            j.k = k; j.m = m; j.d = d; j.minDist = minDist; j.maxDist = maxDist;
+            if (_inPlace && n >= kOffloadMinLinks && _worker.enabled() && _worker.start(j)) {
+                // The chain runs on the node's worker while this thread hands
+                // Maya the attribute-level clean -- the two costs overlap. The
+                // values then go out in place, chunk by chunk, as they finish.
+                data.setClean(aDriven);
+                _cleanedEarly = true;
+                // Write each finished chunk while the worker integrates the
+                // rest; returns only once all n links are integrated.
+                for (size_t i = 0; i < n;) {
+                    const size_t e = _worker.waitFor(i + 1);
+                    for (; i < e; ++i)
+                        emit(P[i].x, P[i].y, P[i].z);
+                }
+            } else {
+                // Small chain, no worker, or a rebuilt multi: integrate here,
+                // fused with the in-place writer.
+                double qx = driver.x, qy = driver.y, qz = driver.z;
+                for (size_t i = 0; i < n; ++i) {
+                    double px = P[i].x, py = P[i].y, pz = P[i].z;
+                    double wx = V[i].x, wy = V[i].y, wz = V[i].z;
+                    spring(qx, qy, qz, px, py, pz, wx, wy, wz, gx, gy, gz, k, m, d, minDist, maxDist);
+                    P[i].x = px; P[i].y = py; P[i].z = pz;
+                    V[i].x = wx; V[i].y = wy; V[i].z = wz;
+                    emit(px, py, pz);
+                    qx = px; qy = py; qz = pz;
+                }
             }
             integrated = true;
         }
@@ -381,7 +539,8 @@ MStatus SpringChain::compute(const MPlug& plug, MDataBlock& data) {
             }
         }
         _outArr.setAllClean();
-        data.setClean(aDriven);
+        if (!_cleanedEarly)
+            data.setClean(aDriven);
     }
 
     return MS::kSuccess;
