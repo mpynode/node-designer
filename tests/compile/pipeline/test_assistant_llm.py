@@ -645,16 +645,24 @@ class TestClaudeCliScanIsClaudeRelated(unittest.TestCase):
 class TestClaudeCliComboRendering(unittest.TestCase):
     """Every PICKABLE row is an explicit id; the rest can never be picked."""
 
+    def setUp(self):
+        # Filling the box by hand moves its current row, which saves.
+        for prov in cfg.PROVIDERS:
+            self.addCleanup(cfg.set_model, prov, cfg.saved_model(prov))
+
     def _panel(self):
         from mpynode.ui.widgets.assistant_panel import NDAssistantPanel
 
-        p = NDAssistantPanel()
+        # No live model check: it would run the claude CLI.
+        with unittest.mock.patch.object(NDAssistantPanel, "_maybe_autorefresh_models",
+                                        lambda *a: None):
+            p = NDAssistantPanel()
         self.addCleanup(p.deleteLater)
         return p
 
     def test_every_row_is_a_real_model(self):
-        # Beside the ids sit the default row (blank) and one header per
-        # family. Only an id may be picked, and its text is exactly that id.
+        # Beside the ids sit the default row (it saves "") and one header per
+        # family. Only an id may be picked, and what it saves is exactly that id.
         from mpynode.ui.widgets.assistant_panel import _ROW_KIND
 
         p                     = self._panel()
@@ -664,16 +672,16 @@ class TestClaudeCliComboRendering(unittest.TestCase):
         p._populate_cli_models(models)
         combo = p._model_edit
         for m in models:
-            self.assertGreaterEqual(combo.findText(m), 0, m)
+            self.assertGreaterEqual(combo.findData(m), 0, m)
         kinds = [combo.itemData(i, _ROW_KIND) for i in range(combo.count())]
         self.assertEqual(kinds.count("model"), len(models))
         self.assertEqual(kinds[0], "default")
-        self.assertEqual(combo.itemText(0), "", "the default row must send nothing")
+        self.assertEqual(combo.itemData(0), "", "the default row must send nothing")
         for i, kind in enumerate(kinds):
             enabled = combo.model().item(i).isEnabled()
             self.assertEqual(enabled, kind in ("model", "default"), (i, kind))
             if kind == "model":
-                self.assertTrue(cfg.is_explicit_cli_id(combo.itemText(i)))
+                self.assertTrue(cfg.is_explicit_cli_id(combo.itemData(i)))
 
     def test_a_flat_alias_is_shown_but_never_pickable(self):
         # The old fallback cached aliases; get_model() drops them, so a row
@@ -684,6 +692,7 @@ class TestClaudeCliComboRendering(unittest.TestCase):
         p._model_edit.clear()
         p._populate_cli_models(["opus", "claude-opus-5"])
         combo = p._model_edit
+        self.assertEqual(combo.findData("opus"), -1)
         self.assertEqual(combo.findText("opus"), -1)
         greyed = [i for i in range(combo.count())
                   if combo.itemData(i, _ROW_KIND) == "greyed"]
@@ -697,7 +706,7 @@ class TestClaudeCliComboRendering(unittest.TestCase):
         p._cli_model_displays = {"claude-opus-4-20250514": "Opus 4"}
         p._model_edit.clear()
         p._populate_cli_models(["claude-opus-4", "claude-opus-4-20250514"])
-        i = p._model_edit.findText("claude-opus-4-20250514")
+        i = p._model_edit.findData("claude-opus-4-20250514")
         self.assertEqual(p._model_edit.itemData(i, Qt.ToolTipRole), "Opus 4")
 
 
@@ -1333,7 +1342,7 @@ class TestClaudeCliPanelRows(unittest.TestCase):
         p._model_edit.clear()
         p._populate_cli_rows(self._payload())
         combo = p._model_edit
-        i     = combo.findText("claude-opus-5[1m]")
+        i     = combo.findData("claude-opus-5[1m]")
         self.assertGreaterEqual(i, 0)
         self.assertEqual(combo.itemData(i, _ROW_LABEL), "Opus 5 (1M context)")
         self.assertEqual(combo.itemData(i, _ROW_CHIPS), "opus[1m] default")
@@ -1347,9 +1356,13 @@ class TestClaudeCliPanelRows(unittest.TestCase):
     def test_a_fetch_pins_the_saved_alias_once_and_says_so(self):
         cfg.set_model("claude_cli", "opus[1m]")
         p = self._panel()
+        # Never sent, so until the pin the box shows the default row: that is
+        # what runs.
+        self.assertEqual(p._model_edit.currentIndex(), 0)
         p._apply_cli_rows_fetch(self._payload())
         self.assertEqual(cfg.saved_model("claude_cli"), "claude-opus-5[1m]")
-        self.assertEqual(p._model_edit.currentText(), "claude-opus-5[1m]")
+        self.assertEqual(p._model_edit.currentData(),   "claude-opus-5[1m]")
+        self.assertEqual(p._model_edit.currentText(),   "Opus 5 (1M context)")
         log = p._transcript.toPlainText()
         self.assertIn("never sent", log)
         self.assertIn("the same model", log)
@@ -1367,21 +1380,14 @@ class TestClaudeCliPanelRows(unittest.TestCase):
         self.assertIn("Keeping the list", p._transcript.toPlainText())
 
     def test_the_runs_line_names_the_model_and_the_update(self):
+        cfg.set_model("claude_cli", "")
         p = self._panel()
         p._apply_cli_rows_fetch(self._payload())
-        p._model_edit.setEditText("")
         text = p._runs_label.text()
-        self.assertIn("Claude Code default \u2192 Opus 5 (1M context)", text)
+        self.assertIn("Runs: Opus 5 (1M context) \u00b7 follows Claude Code's "
+                      "default \u00b7 Claude Code 2.1.273", text)
         self.assertIn("Opus 5.5 needs Claude Code 2.1.280+ (installed 2.1.273)", text)
         self.assertIn("claude update", text)
-
-    def test_a_typed_alias_becomes_its_pinned_id(self):
-        p = self._panel()
-        p._apply_cli_rows_fetch(self._payload())
-        p._model_edit.setEditText("best")
-        p._on_model_typed()
-        self.assertEqual(p._model_edit.currentText(), "claude-fable-5-1")
-        self.assertEqual(cfg.saved_model("claude_cli"), "claude-fable-5-1")
 
     def test_the_turn_footer_flags_a_remapped_model(self):
         # Compared against what the turn ASKED for at send -- not the box at
@@ -1449,10 +1455,10 @@ class TestClaudeCliPanelRows(unittest.TestCase):
         self.assertEqual(cfg.saved_model("claude_cli"), "")
         self.assertIn("names no single model", p._transcript.toPlainText())
 
-    def test_no_pin_while_the_box_has_focus(self):
+    def test_no_pin_while_the_list_is_open(self):
         cfg.set_model("claude_cli", "opus[1m]")
         p = self._panel()
-        with unittest.mock.patch.object(p._model_edit.lineEdit(), "hasFocus",
+        with unittest.mock.patch.object(p._model_edit.view(), "isVisible",
                                         lambda: True):
             p._apply_cli_rows_fetch(self._payload())
         self.assertEqual(cfg.saved_model("claude_cli"), "opus[1m]")
@@ -1469,17 +1475,14 @@ class TestClaudeCliPanelRows(unittest.TestCase):
         p._apply_cli_rows_fetch(self._payload())
         self.assertEqual(cfg.saved_model("claude_cli"), "")
 
-    def test_typing_default_means_the_blank_row(self):
-        p = self._panel()
-        p._apply_cli_rows_fetch(self._payload())
-        p._model_edit.setEditText("default")
-        p._on_model_typed()
-        self.assertEqual(p._model_edit.currentText(), "")
-
     def test_the_runs_line_names_a_refusal(self):
+        # A saved id the check refused has no row of its own: it gets one, so
+        # the closed box shows what is sent, and the line says why.
+        cfg.set_model("claude_cli", "claude-opus-5-1")
         p = self._panel()
         p._apply_cli_rows_fetch(self._payload())
-        p._model_edit.setEditText("claude-opus-5-1")
+        self.assertEqual(p._model_edit.currentData(), "claude-opus-5-1")
+        self.assertEqual(cfg.saved_model("claude_cli"), "claude-opus-5-1")
         self.assertIn("does not take claude-opus-5-1 (not found)", p._runs_label.text())
 
     def test_only_the_value_saved_at_launch_is_migrated(self):
@@ -1493,32 +1496,268 @@ class TestClaudeCliPanelRows(unittest.TestCase):
         p._apply_cli_rows_fetch(self._payload())
         self.assertEqual(cfg.saved_model("claude_cli"), "op")
 
-    def test_a_saved_default_becomes_the_blank_row(self):
+    def test_a_saved_default_becomes_the_follow_row(self):
         cfg.set_model("claude_cli", "default")
         p = self._panel()
         p._apply_cli_rows_fetch(self._payload())
         self.assertEqual(cfg.saved_model("claude_cli"), "")
-        self.assertIn("blank", p._transcript.toPlainText())
+        self.assertEqual(p._model_edit.currentIndex(), 0)
+        self.assertIn("follows Claude Code's default", p._transcript.toPlainText())
 
-    def test_a_typed_alias_is_converted_before_send(self):
-        # Ctrl+Enter never leaves the box, so editingFinished has not fired.
+    def test_a_turn_asks_for_the_picked_row(self):
+        cfg.set_model("claude_cli", "")
         p = self._panel()
         p._apply_cli_rows_fetch(self._payload())
-        p._model_edit.setEditText("opus")
-        p._input.setPlainText("hi")
         sent = []
         with unittest.mock.patch.object(p._client, "send",
                                         lambda *a, **k: sent.append(1)):
+            p._input.setPlainText("hi")
             p._on_send()
-        self.assertEqual(sent, [1])
-        self.assertEqual(cfg.saved_model("claude_cli"), "claude-opus-5")
+            # The default row sends nothing: the turn expects the default's id.
+            self.assertEqual(p._turn_want, "claude-opus-5[1m]")
+            self._pick(p, "claude-opus-5")
+            p._input.setPlainText("again")
+            p._on_send()
+        self.assertEqual(sent, [1, 1])
         self.assertEqual(p._turn_want, "claude-opus-5")
 
     def test_a_hidden_valid_id_reads_as_pinned(self):
         p = self._panel()
         p._apply_cli_rows_fetch(self._payload())
-        p._model_edit.setEditText("claude-haiku-4-5-20251001")
+        self._pick(p, "claude-haiku-4-5-20251001")
         self.assertIn("Runs: Haiku 4.5 · pinned", p._runs_label.text())
+
+    # -- the pure dropdown ------------------------------------------------
+
+    def _pick(self, p, value):
+        """What a click on the row that saves ``value`` does."""
+        combo = p._model_edit
+        i     = combo.findData(value)
+        self.assertGreaterEqual(i, 0, value)
+        combo.setCurrentIndex(i)
+        combo.activated.emit(i)
+        return i
+
+    def test_the_claude_cli_box_takes_no_typing(self):
+        p     = self._panel()
+        combo = p._model_edit
+        self.assertFalse(combo.isEditable())
+        self.assertIsNone(combo.lineEdit())
+        p._apply_cli_rows_fetch(self._payload())
+        self.assertFalse(combo.isEditable())
+        self.assertIsNone(combo.lineEdit())
+
+    def test_the_other_providers_stay_typeable(self):
+        # setEditable makes a NEW line edit each time: its signal must be
+        # connected again, and the Claude CLI box must lose it again.
+        prior = {prov: cfg.saved_model(prov) for prov in cfg.PROVIDERS}
+        for prov, model in prior.items():
+            self.addCleanup(cfg.set_model, prov, model)
+        p     = self._panel()
+        combo = p._model_edit
+
+        def switch(prov):
+            with unittest.mock.patch.object(p, "_maybe_autorefresh_models",
+                                            lambda *a: None):
+                p._provider_combo.setCurrentIndex(p._provider_combo.findData(prov))
+
+        others = [prov for prov in cfg.PROVIDERS if prov != "claude_cli"]
+        self.assertEqual(len(others), 5)
+        for prov in others:
+            switch(prov)
+            self.assertTrue(combo.isEditable(), prov)
+            line_edit = combo.lineEdit()
+            self.assertIsNotNone(line_edit, prov)
+            self.assertTrue(line_edit.placeholderText(), prov)
+            combo.setEditText("typed-%s" % prov)
+            self.assertEqual(cfg.saved_model(prov), "typed-%s" % prov)
+            p._model_at_launch = "opus[1m]"
+            line_edit.textEdited.emit("typed-%s" % prov)
+            self.assertEqual(p._model_at_launch, "", "typing cancels the pin")
+            switch("claude_cli")
+            self.assertFalse(combo.isEditable())
+            self.assertIsNone(combo.lineEdit())
+            self.assertEqual(cfg.saved_model(prov), "typed-%s" % prov)
+
+    def test_the_top_row_follows_claude_codes_default(self):
+        from mpynode.ui.widgets.assistant_panel import _ROW_KIND, _ROW_RIGHT
+
+        cfg.set_model("claude_cli", "")
+        p     = self._panel()
+        combo = p._model_edit
+        p._apply_cli_rows_fetch(self._payload())
+        self.assertEqual(combo.currentIndex(), 0)
+        self.assertEqual(combo.itemData(0, _ROW_KIND), "default")
+        self.assertEqual(combo.currentText(),
+                         "Opus 5 (1M context) — what Claude Code runs")
+        self.assertEqual(combo.itemData(0, _ROW_RIGHT), "follows Claude Code's default")
+        self.assertEqual(combo.currentData(), "")
+        self._pick(p, "claude-opus-5")
+        self.assertEqual(cfg.saved_model("claude_cli"), "claude-opus-5")
+        self._pick(p, "")
+        self.assertEqual(combo.currentIndex(), 0)
+        self.assertEqual(cfg.saved_model("claude_cli"), "", "nothing is sent")
+        self.assertEqual(cfg.get_model("claude_cli"), "")
+
+    def test_the_top_row_is_checking_until_the_model_is_known(self):
+        cfg.set_cached_rows("claude_cli", {})
+        cfg.set_cached_models("claude_cli", [])
+        cfg.set_model("claude_cli", "claude-opus-5")
+        p     = self._panel()
+        combo = p._model_edit
+        self.assertEqual(combo.itemText(0), "Checking what Claude Code runs…")
+        self._pick(p, "")
+        self.assertEqual(cfg.saved_model("claude_cli"), "")
+        # A check that could not name it ends the wait all the same.
+        p._apply_cli_rows_fetch(self._payload(current=""))
+        self.assertEqual(combo.itemText(0), "Claude Code's default")
+        self.assertEqual(combo.currentIndex(), 0)
+
+    def test_the_top_row_is_checking_while_a_cli_update_is_rechecked(self):
+        # Rows saved by an older Claude Code name ITS model: the updated CLI
+        # may run another, so the row waits for the full check to say.
+        import mpynode.ui.llm.claude_cli_client as cli
+
+        cfg.set_cached_rows("claude_cli", self._payload())
+        cfg.set_model("claude_cli", "")
+        p     = self._panel()
+        combo = p._model_edit
+        self.assertEqual(combo.itemText(0), "Opus 5 (1M context) — what Claude Code runs")
+        fresh = self._payload(current="Opus 5.5 (1M context)", cli_version="2.1.280")
+        seen  = []
+
+        def full_check(*a, **k):
+            seen.append((combo.itemText(0), p._runs_label.text()))
+            return fresh
+
+        with unittest.mock.patch.object(cli, "cli_version", lambda *a, **k: "2.1.280"), \
+             unittest.mock.patch.object(cli, "list_model_rows", full_check), \
+             unittest.mock.patch.object(p, "_api_model_candidates", lambda: []):
+            ids = p._fetch_claude_cli_models(quick=True)
+        self.assertEqual(seen[0][0], "Checking what Claude Code runs…")
+        self.assertIn("checking which model that is", seen[0][1])
+        self.assertEqual(cfg.saved_model("claude_cli"), "")
+        p._on_models_fetched(ids, "claude_cli")
+        self.assertEqual(combo.itemText(0), "Opus 5.5 (1M context) — what Claude Code runs")
+        self.assertEqual(combo.currentIndex(), 0)
+        self.assertIn("Runs: Opus 5.5 (1M context) · follows", p._runs_label.text())
+
+    def test_a_failed_recheck_after_a_cli_update_names_no_model(self):
+        # The kept rows name the OLDER Claude Code's model, which the updated
+        # one may not run: the top row must not claim it.
+        import mpynode.ui.llm.claude_cli_client as cli
+
+        cfg.set_cached_rows("claude_cli", self._payload())
+        cfg.set_model("claude_cli", "")
+        p     = self._panel()
+        combo = p._model_edit
+        with unittest.mock.patch.object(cli, "cli_version", lambda *a, **k: "2.1.280"), \
+             unittest.mock.patch.object(cli, "list_model_rows",
+                                        lambda *a, **k: cli.build_rows({}, error="offline")), \
+             unittest.mock.patch.object(p, "_api_model_candidates", lambda: []):
+            ids = p._fetch_claude_cli_models(quick=True)
+        p._on_models_fetched(ids, "claude_cli")
+        self.assertEqual(combo.itemText(0), "Claude Code's default")
+        self.assertEqual(combo.currentIndex(), 0)
+        self.assertNotIn("Opus 5 (1M context)", p._runs_label.text())
+        # The next check that works names it again.
+        p._apply_cli_rows_fetch(self._payload(current="Opus 5.5 (1M context)",
+                                              cli_version="2.1.280"))
+        self.assertEqual(combo.itemText(0), "Opus 5.5 (1M context) — what Claude Code runs")
+
+    def test_a_quick_relink_keeps_the_saved_name(self):
+        # Rows still good for this CLI are only re-linked: nothing to wait for.
+        import time as _time
+
+        import mpynode.ui.llm.claude_cli_client as cli
+
+        saved            = self._payload()
+        saved["fetched"] = _time.time()
+        cfg.set_cached_rows("claude_cli", saved)
+        p     = self._panel()
+        combo = p._model_edit
+        seen  = []
+
+        def relink(s, *a, **k):
+            seen.append(combo.itemText(0))
+            return dict(s)
+
+        with unittest.mock.patch.object(cli, "cli_version", lambda *a, **k: "2.1.273"), \
+             unittest.mock.patch.object(cli, "relink_saved_rows", relink):
+            ids = p._fetch_claude_cli_models(quick=True)
+        self.assertEqual(seen, ["Opus 5 (1M context) — what Claude Code runs"])
+        p._on_models_fetched(ids, "claude_cli")
+        self.assertEqual(combo.itemText(0), "Opus 5 (1M context) — what Claude Code runs")
+
+    def test_a_failed_recheck_keeps_a_saved_alias_for_its_pin(self):
+        # Renaming the top row as a check ends must not save "" over a saved
+        # legacy alias: the next good check still pins it, and says so.
+        import mpynode.ui.llm.claude_cli_client as cli
+
+        cfg.set_cached_rows("claude_cli", self._payload(current=""))
+        cfg.set_model("claude_cli", "opus[1m]")
+        p     = self._panel()
+        combo = p._model_edit
+        self.assertEqual(combo.itemText(0), "Checking what Claude Code runs…")
+        p._apply_cli_rows_fetch(cli.build_rows({}, error="offline"))
+        self.assertIn("Keeping the list", p._transcript.toPlainText())
+        self.assertEqual(combo.itemText(0), "Claude Code's default")
+        self.assertEqual(cfg.saved_model("claude_cli"), "opus[1m]")
+        p._apply_cli_rows_fetch(self._payload())
+        self.assertEqual(cfg.saved_model("claude_cli"), "claude-opus-5[1m]")
+        self.assertIn("now pinned to claude-opus-5[1m]", p._transcript.toPlainText())
+
+    def test_an_unknown_current_model_shows_its_raw_name(self):
+        # settings.json "model": "opusplan", or a gateway id: no row is it.
+        cfg.set_model("claude_cli", "")
+        p = self._panel()
+        p._apply_cli_rows_fetch(self._payload(current="opusplan"))
+        self.assertEqual(p._model_edit.itemText(0),
+                         "opusplan — what Claude Code runs")
+        self.assertIn("Runs: opusplan · follows Claude Code's default",
+                      p._runs_label.text())
+
+    def test_picking_a_row_pins_its_id_and_shows_its_name(self):
+        p     = self._panel()
+        combo = p._model_edit
+        p._apply_cli_rows_fetch(self._payload())
+        self._pick(p, "claude-fable-5-1")
+        self.assertEqual(cfg.saved_model("claude_cli"), "claude-fable-5-1")
+        self.assertEqual(combo.currentText(), "Fable 5.1", "the closed box")
+        self.assertIn("Runs: Fable 5.1 · pinned, won't change on its own",
+                      p._runs_label.text())
+        # Reopened, the saved id finds its row again.
+        p2 = self._panel()
+        self.assertEqual(p2._model_edit.currentData(), "claude-fable-5-1")
+
+    def test_ids_once_reachable_only_by_typing_have_rows(self):
+        from mpynode.ui.widgets.assistant_panel import (
+            _ROW_KIND, _ROW_LABEL, _model_root)
+
+        payload = self._payload()
+        self.assertEqual(sorted(payload["also_valid"]),
+                         ["claude-haiku-4-5-20251001", "claude-sonnet-5[1m]"])
+        p     = self._panel()
+        combo = p._model_edit
+        p._apply_cli_rows_fetch(payload)
+        for mid in payload["also_valid"]:
+            i = combo.findData(mid)
+            self.assertGreaterEqual(i, 0, mid)
+            self.assertEqual(combo.itemData(i, _ROW_KIND), "model")
+            self.assertTrue(combo.model().item(i).isEnabled())
+            head = max(j for j in range(i)
+                       if combo.itemData(j, _ROW_KIND) == "header")
+            family = mid.split("-")[1]
+            self.assertEqual(combo.itemData(head, _ROW_LABEL), family.capitalize())
+            # Right after the row of the same model.
+            self.assertEqual(_model_root(combo.itemData(i - 1)), _model_root(mid))
+        # The CLI names a twin like its listed model; the row says what differs.
+        self.assertEqual(combo.itemData(combo.findData("claude-sonnet-5[1m]"), _ROW_LABEL),
+                         "Sonnet 5 (1M context)")
+        self._pick(p, "claude-haiku-4-5-20251001")
+        self.assertEqual(combo.currentText(), "Haiku 4.5 (20251001)")
+        self._pick(p, "claude-haiku-4-5")
+        self.assertEqual(combo.currentText(), "Haiku 4.5")
 
 
 class TestClaudeCliTurnReceipt(unittest.TestCase):
