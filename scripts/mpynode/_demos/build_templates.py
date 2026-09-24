@@ -128,13 +128,17 @@ MPYNODE_EXAMPLES = [
      "the threshold."),
     ("spine", "Spine",
      "# Spine\n\n"
-     "Drives a joint chain along a NURBS curve. Feed it an `inputCurve` and a "
-     "`controlMatrices` array, one per control, returning `outputTranslate`, "
-     "`outputRotate` and `outputScale` arrays -- one per entry in `samples`, "
-     "0 to 1 along it. `stretch`, `scale`, `shift`, `pivot` and `scaleMethod` "
+     "Drives a joint chain along a B-spline it builds from `controlMatrices`, "
+     "one per control, returning `outputTranslate`, `outputRotate` and "
+     "`outputScale` arrays -- one per entry in `samples`, 0 to 1 along it by "
+     "arc length. `rotateMode` / `scaleMode` pick which controls drive the "
+     "twist and the scale, `rotateProjection` / `scaleProjection` how riders "
+     "blend between and past them, and `periodic` closes the curve on the "
+     "first control. `stretch`, `scale`, `shift`, `pivot` and `scaleMethod` "
      "tune the falloff.\n\n"
-     "**Create + Run demo** builds a curve up Y, four control locators and a "
-     "chain of 12 joints -- move a control or edit the curve to reshape it."),
+     "**Create + Run demo** builds four control locators up Y and a chain of "
+     "12 joints -- move a control to reshape it. Two more demos twist and "
+     "squash a chain from chosen controls and close a loop."),
     ("spline", "De Boor Spline",
      "# De Boor Spline\n\n"
      "Evaluates a b-spline through control points, De Boor style. Put the "

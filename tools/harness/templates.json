@@ -249,7 +249,7 @@
     "native_type": "mPyNode",
     "node_name": "spine",
     "demo_label": "Run demo",
-    "n_demos": 1
+    "n_demos": 3
   },
   {
     "mpn": "templates/MPyNode/De Boor Spline/template.mpn",

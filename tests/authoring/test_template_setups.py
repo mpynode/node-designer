@@ -55,12 +55,14 @@ def _create_with_setup(rel, selection):
     return name
 
 
-def _create_with_demo(rel):
+def _create_with_demo(rel, demo_name=None):
     """Run the gallery Create + Run demo command. A demo fabricates its OWN
-    showcase scene, so there is NO selection. Returns the created node name."""
+    showcase scene, so there is NO selection. ``demo_name`` picks one of
+    several demos (function name or label). Returns the created node name."""
     payload, native_type = _payload(rel)
     mc.select(clear=True)
-    cmd  = _TemplateCreateCommand(payload, native_type, run_demo=True)
+    cmd = _TemplateCreateCommand(payload, native_type, run_demo=True,
+                                 demo_name=demo_name)
     name = run_undoable(cmd) or cmd.created_name
     if cmd.tier_failures.get("demo"):
         raise AssertionError("demo failed: %s" % cmd.tier_failures["demo"])
@@ -760,60 +762,97 @@ class MpynodeExampleSetupsTest(unittest.TestCase):
         self.assertEqual(after.get("_player_sig"), _hl.md5(manual).hexdigest(),
                          "player not rebuilt to match manually-loaded audioData")
 
-    def test_spine_demo_builds_curve_controls_and_joint_riders(self):
-        # The spine demo now routes through the spineBuildSystem @maya_command:
-        # four control locators drive a degree-3 curve (each CV live-driven via a
-        # decomposeMatrix worldMatrix bridge, so arbitrary/parented controls
-        # work) and twelve JOINTS ride the per-sample outputs.
-        name = _create_with_demo("MPyNode/Spine")
-        self.assertTrue(_incoming(name + ".inputCurve"), "inputCurve not wired")
-        # spine runs UP THE Y axis: aim = Y (1), up = Z (2)
-        self.assertEqual(mc.getAttr(name + ".curveAimAxis"), 1, "aim axis not Y")
-        self.assertEqual(mc.getAttr(name + ".curveUpAxis"), 2, "up axis not Z")
-        # 4 control locators feed controlMatrices (one per curve CV)
-        cm = mc.listConnections(name + ".controlMatrices", source=True,
-                                destination=False) or []
-        self.assertEqual(len(set(cm)), 4,
-                         "expected 4 control matrices (one per curve CV)")
-        # each curve CV is live-driven through a decomposeMatrix bridge fed by a
-        # control's worldMatrix (robust for arbitrary / parented controls)
-        crv_shape = _incoming(name + ".inputCurve")[0].split(".")[0]
-        cp_src = mc.listConnections(crv_shape + ".controlPoints", source=True,
-                                    destination=False,
-                                    type="decomposeMatrix") or []
-        self.assertEqual(len(set(cp_src)), 4,
-                         "expected 4 decomposeMatrix bridges driving curve CVs")
-        # the SAME controls feed both the CV bridge and controlMatrices
-        bridge_controls = set()
-        for dm in set(cp_src):
-            bridge_controls.update(mc.listConnections(
-                dm + ".inputMatrix", source=True, destination=False) or [])
-        self.assertEqual(bridge_controls, set(cm),
-                         "CV decompose bridges + controlMatrices must share the "
-                         "same control transforms")
-        # no offset: each CV coincides with its control's world position
-        n_cv = mc.getAttr(crv_shape + ".spans") + mc.getAttr(crv_shape + ".degree")
-        cv_pos = sorted(tuple(round(v, 4) for v in mc.pointPosition(
-            "%s.cv[%d]" % (crv_shape, i), world=True)) for i in range(n_cv))
-        ctl_pos = sorted(tuple(round(v, 4) for v in mc.xform(
-            c, q=True, ws=True, t=True)) for c in set(cm))
-        self.assertEqual(cv_pos, ctl_pos,
-                         "curve CVs do not coincide with their controls (offset!)")
-        riders = sorted(set(mc.listConnections(
-            name + ".outputTranslate", source=False, destination=True) or []))
-        self.assertEqual(len(riders), 12)
+    def _spine_parts(self, name):
+        """(controls, riders) in index order: controlMatrices[k]'s source and
+        outputTranslate[i]'s destination."""
+        controls = [(mc.listConnections("%s.controlMatrices[%d]" % (name, k), source=True,
+                                        destination=False) or [None])[0]
+                    for k in mc.getAttr(name + ".controlMatrices", multiIndices=True) or []]
+        riders = [(mc.listConnections("%s.outputTranslate[%d]" % (name, i), source=False,
+                                      destination=True) or [None])[0]
+                  for i in mc.getAttr(name + ".outputTranslate", multiIndices=True) or []]
+        return controls, riders
+
+    def _assert_spine_wired(self, name, n_controls, n_riders, rider_type):
+        # The node builds its own B-spline: no curve input, one control matrix
+        # per control, and every rider driven by the three per-sample outputs.
+        self.assertFalse(mc.attributeQuery("inputCurve", node=name, exists=True),
+                         "Spine v2 has no curve input")
+        controls, riders = self._spine_parts(name)
+        self.assertEqual(len(set(controls)), n_controls, "controlMatrices not fed per control")
+        self.assertEqual(len(riders), n_riders)
         for r in riders:
+            self.assertEqual(mc.nodeType(r), rider_type, "rider %s is not a %s" % (r, rider_type))
             self.assertTrue(_driven_by(r + ".translate", name, "outputTranslate"))
             self.assertTrue(_driven_by(r + ".rotate", name, "outputRotate"))
             self.assertTrue(_driven_by(r + ".scale", name, "outputScale"))
-            # riders are JOINTS (the command's default rider_type)
-            self.assertEqual(mc.nodeType(r), "joint",
-                             "rider %s is not a joint" % r)
-        # evaluates without a defaultLength error and spreads riders UP the Y axis
-        mc.dgdirty(name)
+        # the build captured the rest pose
+        self.assertTrue(mc.getAttr(name + ".restValid"), "rest data not captured")
+        self.assertAlmostEqual(mc.getAttr(name + ".defaultLength"),
+                               mc.getAttr(name + ".currentLength"), places=6)
+        return controls, riders
+
+    def test_spine_demo_builds_controls_and_joint_riders(self):
+        # Four control locators up Y feed controlMatrices through the
+        # spineBuildSystem command; twelve JOINTS ride the per-sample outputs,
+        # and a templated display curve follows the controls without feeding
+        # the node.
+        name = _create_with_demo("MPyNode/Spine")
+        self.assertEqual(mc.getAttr(name + ".curveAimAxis"), 1, "aim axis not Y")
+        self.assertEqual(mc.getAttr(name + ".curveUpAxis"), 2, "up axis not Z")
+        controls, riders = self._assert_spine_wired(name, 4, 12, "joint")
+        # the display curve: CVs bridged from the same controls, templated,
+        # and never an input of the node
+        bridges = set(mc.ls(type="decomposeMatrix"))
+        fed     = set()
+        for dm in bridges:
+            fed.update(mc.listConnections(dm + ".inputMatrix", source=True,
+                                          destination=False) or [])
+        self.assertEqual(fed, set(controls), "display curve not bridged from the controls")
+        curves = mc.ls(type="nurbsCurve")
+        self.assertEqual(len(curves), 1, "expected one display curve")
+        self.assertEqual(mc.getAttr(curves[0] + ".overrideDisplayType"), 1, "curve not templated")
+        self.assertFalse(mc.listConnections(curves[0], destination=True, source=False,
+                                            type=mc.nodeType(name)), "curve feeds the node")
+        # riders spread up Y, and follow a control
         ys = [mc.getAttr(r + ".translateY") for r in riders]
-        self.assertGreater(max(ys) - min(ys), 1.0,
-                           "riders not distributed up the Y-axis spine")
+        self.assertGreater(ys[-1] - ys[0], 8.0, "riders not spread up the Y-axis spine")
+        mc.setAttr(controls[-1] + ".translateY", 12.0)
+        self.assertAlmostEqual(mc.getAttr(riders[-1] + ".translateY"), 12.0, places=4,
+                               msg="tip rider does not follow the tip control")
+
+    def test_spine_twist_squash_demo_drives_from_chosen_controls(self):
+        # Only the two end controls drive the twist (the top one turned 90
+        # degrees) and controls 0 / 2 / 4 drive the scale (2 fattened).
+        name = _create_with_demo("MPyNode/Spine", "demo_twist_squash")
+        controls, riders = self._assert_spine_wired(name, 5, 16, "joint")
+        self.assertEqual(mc.getAttr(name + ".rotateMode"), 1, "rotate not Flagged")
+        self.assertEqual(mc.getAttr(name + ".scaleMode"), 1, "scale not Flagged")
+        self.assertEqual([bool(v) for v in mc.getAttr(name + ".rotateFlags")[0]],
+                         [True, False, False, False, True])
+        self.assertEqual([bool(v) for v in mc.getAttr(name + ".scaleFlags")[0]],
+                         [True, False, True, False, True])
+        tip  = mc.xform(riders[-1], q=True, ws=True, matrix=True)[8:11]
+        ctrl = mc.xform(controls[-1], q=True, ws=True, matrix=True)[8:11]
+        norm = sum(v * v for v in tip) ** 0.5
+        self.assertGreater(sum(a * b for a, b in zip(tip, ctrl)) / norm, 0.95,
+                           "tip rider does not take the tip control's twist")
+        sx = [mc.getAttr(r + ".scaleX") for r in riders]
+        self.assertGreater(max(sx), 1.6, "middle of the chain does not bulge")
+        self.assertAlmostEqual(sx[0], 1.0, places=6)
+        self.assertAlmostEqual(sx[-1], 1.0, places=6)
+
+    def test_spine_closed_loop_demo_registers_on_the_first_control(self):
+        # Six controls on a circle, closed curve: rider 0 sits where control 0
+        # pulls hardest -- (P5 + 4 P0 + P1) / 6 for degree 3.
+        name = _create_with_demo("MPyNode/Spine", "demo_closed_loop")
+        controls, riders = self._assert_spine_wired(name, 6, 24, "transform")
+        self.assertTrue(mc.getAttr(name + ".periodic"), "loop is not closed")
+        P    = [mc.xform(c, q=True, ws=True, t=True) for c in controls]
+        want = [(P[5][k] + 4.0 * P[0][k] + P[1][k]) / 6.0 for k in range(3)]
+        got  = mc.xform(riders[0], q=True, ws=True, t=True)
+        for k in range(3):
+            self.assertAlmostEqual(got[k], want[k], places=5)
 
     def test_spine_setup_builds_from_selected_transforms(self):
         # Selection-driven setup: pick >=2 transforms in order, Create + Run
@@ -825,22 +864,11 @@ class MpynodeExampleSetupsTest(unittest.TestCase):
             mc.setAttr(loc + ".translate", 0.0, y, 0.0, type="double3")
             locs.append(loc)
         name = _create_with_setup("MPyNode/Spine", locs)
-        self.assertTrue(_incoming(name + ".inputCurve"), "inputCurve not wired")
-        cm = mc.listConnections(name + ".controlMatrices", source=True,
-                                destination=False) or []
-        self.assertEqual(set(cm), set(locs),
-                         "controlMatrices must be driven by the selected "
-                         "transforms")
-        riders = sorted(set(mc.listConnections(
-            name + ".outputTranslate", source=False, destination=True) or []))
-        self.assertEqual(len(riders), 10, "default n=10 riders")
-        for r in riders:
-            self.assertEqual(mc.nodeType(r), "joint", "rider %s not a joint" % r)
-            self.assertTrue(_driven_by(r + ".translate", name, "outputTranslate"))
-        mc.dgdirty(name)
+        controls, riders = self._assert_spine_wired(name, 4, 10, "joint")
+        self.assertEqual(controls, locs,
+                         "controlMatrices must be driven by the selected transforms, in order")
         ys = [mc.getAttr(r + ".translateY") for r in riders]
-        self.assertGreater(max(ys) - min(ys), 1.0,
-                           "riders not spread up the Y-axis spine")
+        self.assertGreater(ys[-1] - ys[0], 8.0, "riders not spread up the Y-axis spine")
 
     def test_spline_builds_controls_and_samples(self):
         name = _create_with_demo("MPyNode/De Boor Spline")
