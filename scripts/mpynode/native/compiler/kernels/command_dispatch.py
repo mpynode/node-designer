@@ -188,6 +188,14 @@ def _default_type(node) -> str:
     return ""
 
 
+# MSyntax takes a SHORT flag name of 1-3 characters and a LONG one of 4 or more.
+# addFlag with either outside its range fails -- silently in C++, the flag is
+# never registered, and cmds then rejects it as "Invalid flag" (measured, Maya
+# 2025: -n/-n, -n/-nnn and -abcd/-abcdef all fail; -n/-n_flag works). Short
+# names are always <= 3 and long names >= 4, so the two can never collide.
+_MAX_SHORT = 3
+
+
 def _short_name(long_name: str, taken: set) -> str:
     """A unique short flag.
 
@@ -204,18 +212,38 @@ def _short_name(long_name: str, taken: set) -> str:
         cands.append(words[0][:2].lower())
         cands.append(words[0][:3].lower())
     base = re.sub(r"[^A-Za-z0-9]", "", long_name).lower() or "f"
-    cands += [base[:1], base[:2], base[:3], base[:4]]
+    stem = base[:2] if base[:1].isalpha() else "f"
+    cands += [base[:1], base[:2], base[:3]]
+    cands += ["%s%d" % (stem, i) for i in range(1, 10)]
+    cands += ["%s%d" % (stem[:1], i) for i in range(10, 100)]
     for c in cands:
-        if c and c not in taken and re.match(r"^[A-Za-z]\w*$", c):
+        if c and len(c) <= _MAX_SHORT and c not in taken \
+                and re.match(r"^[A-Za-z]\w*$", c):
             taken.add(c)
             return c
-    i = 1
-    while True:
-        c = "%s%d" % (base[:2] or "f", i)
-        if c not in taken:
-            taken.add(c)
-            return c
+    raise CommandSpecError(
+        "no free 1-%d character short flag name left for %r"
+        % (_MAX_SHORT, long_name))
+
+
+def _long_name(pname: str, taken: set) -> str:
+    """A legal long flag name for ``pname``, unique within ``taken``.
+
+    A parameter of 4+ characters is its own long name. A shorter one cannot
+    be, so it becomes ``<param>_flag`` (numbered if a real parameter already
+    has that name). The Python keyword still works because such a parameter
+    also owns its name as the SHORT flag -- see :func:`flag_spec_for`.
+    """
+    if len(pname) > _MAX_SHORT:
+        taken.add(pname)
+        return pname
+    c = pname + "_flag"
+    i = 2
+    while c in taken:
+        c = "%s_flag%d" % (pname, i)
         i += 1
+    taken.add(c)
+    return c
 
 
 def flag_spec_for(cmd: dict) -> List[dict]:
@@ -266,7 +294,15 @@ def flag_spec_for(cmd: dict) -> List[dict]:
 
     explicit = cmd.get("flags") or {}
     out: List[dict] = []
-    taken = {"h"}                       # -h is Maya's own help flag
+    names = [arg.arg for arg, _, _ in params]
+    # A parameter of 1-3 characters can only be its SHORT name -- that is the
+    # slot cmds matches ``n=6`` against -- so it claims its own name before
+    # any generated short can take it, and gets a synthesised long name.
+    # -h is Maya's own help flag, so no GENERATED short uses it; a parameter
+    # literally named h still owns it (measured to work, Maya 2025).
+    taken = {"h"}
+    taken |= {n for n in names if len(n) <= _MAX_SHORT}
+    longs = set(names)
     unknown: List[str] = []
     for arg, dflt, required in params:
         pname = arg.arg
@@ -282,10 +318,12 @@ def flag_spec_for(cmd: dict) -> List[dict]:
         if ftype not in _FLAG_TYPES:
             unknown.append(pname)
             continue
+        short = (pname if len(pname) <= _MAX_SHORT
+                 else _short_name(pname, taken))
         out.append({
             "param":    pname,
-            "long":     pname,
-            "short":    _short_name(pname, taken),
+            "long":     _long_name(pname, longs),
+            "short":    short,
             "type":     ftype,
             "multi":    _FLAG_TYPES[ftype][2],
             "required": required,

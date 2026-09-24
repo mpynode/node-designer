@@ -256,6 +256,102 @@ class TestEmitCompanions(unittest.TestCase):
                          "a clash must leave NO orphaned companion files")
 
 
+class TestShortParameterFlags(unittest.TestCase):
+    """MSyntax takes a SHORT flag name of 1-3 characters and a LONG one of 4+;
+    addFlag with either outside its range fails silently in C++. A parameter of
+    1-3 characters (Spine's ``n``) was emitted as its own long name --
+    ``addFlag("-n", "-n", ...)`` -- so ``cmds.spineBuildSystem(node, n=6)``
+    raised ``Invalid flag 'n'`` on the compiled plug-in. It now owns its name as
+    the SHORT flag, the slot cmds matches ``n=6`` against, and gets a
+    synthesised long name; the blob still hands Python ``n``."""
+
+    # nodes comes FIRST: its generated short used to be "n".
+    _SHORT = ('@maya_command("zzShortArgs")\n'
+              'def short_args(self, nodes: list[str], n=10, ab=1.0, xyz="",'
+              ' h=2):\n'
+              '    return self.get_name()\n')
+
+    def _flags(self, methods=_SHORT):
+        from mpynode.native.compiler.kernels import command_dispatch as cd
+
+        return {f["param"]: f for f in cd.flag_spec_for(_detect(methods)[0])}
+
+    def test_every_flag_name_is_legal_for_msyntax(self):
+        flags = list(self._flags().values())
+        for f in flags:
+            self.assertTrue(1 <= len(f["short"]) <= 3, f)
+            self.assertGreaterEqual(len(f["long"]), 4, f)
+        self.assertEqual(len({f["short"] for f in flags}), len(flags))
+        self.assertEqual(len({f["long"] for f in flags}), len(flags))
+
+    def test_a_short_parameter_owns_its_name_as_the_short_flag(self):
+        flags = self._flags()
+        for p in ("n", "ab", "xyz", "h"):
+            self.assertEqual(flags[p]["short"], p)
+            self.assertEqual(flags[p]["long"], p + "_flag")
+
+    def test_a_longer_parameter_cannot_take_that_short_name(self):
+        self.assertEqual(self._flags()["nodes"]["short"], "no")
+
+    def test_the_synthesised_long_name_skips_a_real_parameter(self):
+        flags = self._flags('@maya_command("zzLongClash")\n'
+                            'def long_clash(self, n=1, n_flag=2):\n'
+                            '    return n\n')
+        self.assertEqual(flags["n"]["long"], "n_flag2")
+        self.assertEqual(flags["n_flag"]["long"], "n_flag")
+
+    def test_a_generated_short_never_exceeds_three_characters(self):
+        from mpynode.native.compiler.kernels import command_dispatch as cd
+
+        # a, ab and abc exhaust abcd's prefixes; it used to fall to "abcd".
+        flags = self._flags('@maya_command("zzPrefixes")\n'
+                            'def prefixes(self, a=1, ab=2, abc=3, abcd=4):\n'
+                            '    return a\n')
+        self.assertEqual(flags["abcd"]["short"], "ab1")
+        # past ab9 the numbered fallback used to reach "ab10".
+        taken = {"a", "ab", "abc"} | {"ab%d" % i for i in range(1, 10)}
+        self.assertEqual(cd._short_name("abcd", taken), "a10")
+
+    def test_emitted_cpp_registers_the_legal_pair_and_keys_the_blob_by_param(self):
+        import re
+
+        from mpynode.native.compiler.kernels import command_dispatch
+
+        spec = {"suggested": {"mpx_base": "MPxNode"},
+                "methods": self._SHORT,
+                "commands": _detect(self._SHORT)}
+        out = command_dispatch.dispatch_for_spec(spec, "zzShortType")
+        cpp = out["classes"]
+        self.assertEqual(out["errors"], [])
+        self.assertIn('syn.addFlag("-n", "-n_flag", MSyntax::kLong);', cpp)
+        self.assertIn('argData.isFlagSet("-n")', cpp)
+        # Python receives the keyword it declared, not the long flag name.
+        self.assertIn('blob += "n";', cpp)
+        self.assertNotIn('blob += "n_flag";', cpp)
+        pairs = re.findall(r'syn\.addFlag\("-(\w+)", "-(\w+)"', cpp)
+        self.assertEqual(len(pairs), 5)
+        for short, long_ in pairs:
+            self.assertTrue(1 <= len(short) <= 3, short)
+            self.assertGreaterEqual(len(long_), 4, long_)
+
+    def test_spine_build_system_n_is_a_legal_flag(self):
+        import json
+
+        from mpynode.native.compiler.kernels import command_dispatch as cd
+
+        mpn = os.path.join(os.environ["MPYNODE_ROOT"], "templates", "MPyNode",
+                           "Spine", "template.mpn")
+        with open(mpn, encoding="utf-8") as fh:
+            methods = json.load(fh)["data"]["methods_source"]
+        cmd   = [c for c in _detect(methods) if c["name"] == "spineBuildSystem"]
+        flags = {f["param"]: f for f in cd.flag_spec_for(cmd[0])}
+        self.assertEqual((flags["n"]["short"], flags["n"]["long"]),
+                         ("n", "n_flag"))
+        for f in flags.values():
+            self.assertTrue(1 <= len(f["short"]) <= 3, f)
+            self.assertGreaterEqual(len(f["long"]), 4, f)
+
+
 class TestControllerWiring(unittest.TestCase):
     """compile_plugin must leave NO sibling .py beside the bundle while still
     reporting the bundled commands per node. Mocks the toolchain/cache/assemble
