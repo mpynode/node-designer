@@ -1,12 +1,12 @@
 # bubbleSort -- compile report
 
-**Source node:** `bubbleSort`  ·  **Base:** `MPxNode`  ·  **Generated:** 2026-09-08 23:28
+**Source node:** `bubbleSort`  ·  **Base:** `MPxNode`  ·  **Generated:** 2026-09-24 11:04
 
 | stage | outcome |
 |---|---|
 | 1 Transpile | emitted, with region(s) the transpiler could not lower |
 | 2 AI assist | ran -- no unresolved regions |
-| 3 AI optimize | **1.15x** over 2 round(s) -- re-measured: unmeasurable under the gate |
+| 3 AI optimize | **2.82x** over 3 round(s) -- 3 run of max 6, stopped: round 3 no-change -- nothing new to compound from |
 
 ## The Python this was generated from
 
@@ -26,7 +26,7 @@
 #
 # (Imports live in the Init tab.)
 
-n     = len(self.sort)
+n = len(self.sort)
 reset = self.reset
 
 # (re)generate normalized [0, 1] data: first eval, output-count change,
@@ -38,7 +38,7 @@ if reset == 2 and getattr(self, 'sorted', False):
     regen = True
 
 if regen:
-    self.data   = [random.random() for _ in range(n)]
+    self.data = [random.random() for _ in range(n)]
     self.sorted = False
 
 # one bubble pass (skipped while held in True so it keeps reshuffling)
@@ -58,30 +58,32 @@ self.sort = [lo + t * (hi - lo) for t in self.data]
 
 ## Optimization
 
-Parity gate: `authored+pointwise`. Every accepted round was re-checked against the interpreted Python before it was allowed to win. Where a node's generic pointwise parity SKIPS -- a deformer writes through the native `outputGeometry`, which the scalar harness cannot read -- the authored `@maya_test` is the ONLY gate, so treat those rows as behavioural checks rather than numerical ones.
+**Parity gate: authored `@maya_test` only.** The generic pointwise compare did not run for this node, so every accepted round below was judged by the authored test's own scene -- a behavioural check, not a numerical one. The bench-scene fingerprint (when recorded below) is the only value-level check these rounds had.
 
-Bench scene: not recorded (ledger predates the scene record; no noise-floor gate, no per-tick perturbation check and no output fingerprint applied to these rounds).
+Bench scene: geo density 400 / array length 20000; noise floor 15 ms; moved per tick: `maxVal (float)`, `minVal (float)`, `time (time)`; outputs skipped (node draws random numbers); accepts re-timed against the incumbent on the smallest scene (geo density 40 / array length 512) and rejected if slower there; baseline under the noise floor at the largest scene, so every accept had to clear 1.15x on two independent timings. baseline 1.895 ms is below the 15 ms noise floor even at the largest bench scene (geo=400 array=20000); measured anyway -- every accept must clear 1.15x on two independent timings.
 
-Baseline **0.002 ms** -> best **0.002 ms** (**1.15x**).
+Baseline **1.895 ms** -> best **0.672 ms** (**2.82x**).
 
-**Re-measured 2026-09-08** under the gated harness (noise floor, animated-input perturbation, output fingerprint), geo density 400 / array length 20000: **unmeasurable** -- baseline 0.333 ms is below the 15 ms noise floor even at the largest bench scene (geo=400 array=20000); nothing this small can be optimized against measurably. The speedup above was taken before the gate existed and cannot be reproduced under it. Moved per tick: `maxVal (float)`, `minVal (float)`, `time (time)`.
+Rounds: **3** run of at most 6; the loop stopped because round 3 no-change -- nothing new to compound from.
 
 | # | change | theme | predicted | measured | time | outcome |
 |---|---|---|---|---|---|---|
-| 00 | `--` | -- | -- | 0.002 ms | -- | -- |
-| 01 | `splitmix64_rng` | the node re-seeds a 312-word Mersenne Twister every evaluation to draw a single double; replace it with splitmix64 and strip the per-eval allocations around it | 2.00x | 1.15x | 7.5 min | ACCEPTED |
-| 02 | `walk_array_no_builder` | replace the MArrayDataBuilder round-trip on the sort output with an in-place walk of the already-existing elements; it lost, so the round ships the pristine file unchanged | 1.30x | -- | 14.1 min | rejected: no change to the source |
+| 00 | `--` | -- | -- | 1.895 ms | -- | -- |
+| 01 | `builder_addlast_asfloat` | fill the 20k-element sort[] builder with addLast().asFloat() in one fused lerp loop (no temp vector, no setFloat call, RNG built only on regen, state moved from a static registry to a per-instance member) | 1.10x | 1.57x | 17.6 min | ACCEPTED |
+| 02 | `inplace_sort_write` | Write the 20k sort[] floats in place through the existing element handles (jumpToElement(i) proves the 0..n-1 layout, builder kept as fallback) instead of rebuilding the whole array with MArrayDataBuilder, and fuse a bit-identical inlined mt19937_64 draw into that write loop. | 2.00x | 2.82x | 20.8 min | ACCEPTED |
+| 03 | `no_change_setclean_floor` | No candidate beat the entry file, so bubbleSort.cpp is left byte-identical: about 70% of compute() is Maya's mandatory data.setClean(aSort) on 20000 connected elements, and no change inside the node can shrink it. | 1.30x | -- | 20.3 min | rejected: no change to the source |
 
 ### Predicted vs measured
 
 The rounds where the guess and the stopwatch disagreed. These are the transferable part -- a prediction that missed says more about the machine than one that landed.
 
-* `splitmix64_rng` -- predicted 2.00x, measured **1.15x**. this is an ELEMENTWISE node at n=1, not a QUERY node -- the harness seeds reset=1 ('held reshuffle') and only sort[0] exists, so regen fires on every tick and the entire per-eval cost is std::mt19937_64 state init plus a first-draw twist (~624 word-ops) plus a handful of Maya-side allocations. There is no scan to accelerate and no cross-eval structure worth caching, so the lever is deleting fixed overhead, not changing an exponent.
-* `walk_array_no_builder` -- predicted 1.30x, **rejected: no change to the source**. candidate is identical to the current best
+* `builder_addlast_asfloat` -- predicted 1.10x, measured **1.57x**. compute() is not algorithmic here (bench drives reset=1: 20k RNG draws = 43 us); it is Maya per-element API cost -- the builder fill (~190 us) plus the mandatory data.setClean(aSort) over 20k connected elements (0.4-1.2 ms) -- so cutting API calls per element is the only controllable lever. Probe: fill loop 174-250 us -> 126-150 us, and setClean ran cheaper after asFloat writes. Tried and rejected: in-place outputValue() writes (loop 115 us but setClean 1.6-2.0 ms, total 2.27 ms), reusing _outArr.builder() (fill 450-900 us), swapping setClean/setAllClean order (no gain)
+* `inplace_sort_write` -- predicted 2.00x, measured **2.82x**. The profile put data.setClean(aSort) at 500-1300 us and I read it as Maya tearing down the replaced 20k-element array, so writing in place would drop both the builder allocations and that teardown. Wrong half: a no-write diagnostic shows setClean is ~260-330 us whether we write or not, so it is Maya's per-plug bookkeeping for 20k connected elements. The measured win is all on our side of the call: builder fill 145 us -> 105 us in place, RNG 42 us -> 24 us, fusing the draw into the write saves another 12-20 us.
+* `no_change_setclean_floor` -- predicted 1.30x, **rejected: no change to the source**. candidate is identical to the current best
 
 ### Rejected rounds
 
-* `walk_array_no_builder` -- rejected: no change to the source. candidate is identical to the current best
+* `no_change_setclean_floor` -- rejected: no change to the source. candidate is identical to the current best
 
 ## Verification
 
@@ -94,6 +96,7 @@ The rounds where the guess and the stopwatch disagreed. These are the transferab
 build/stages/bubbleSort/1_transpiled.cpp     deterministic transpile (no AI)
 build/stages/bubbleSort/2_assisted.cpp       AI filled the unported region(s)
 build/stages/bubbleSort/3_optimized/00_baseline.cpp
-build/stages/bubbleSort/3_optimized/01_splitmix64_rng.cpp
+build/stages/bubbleSort/3_optimized/01_builder_addlast_asfloat.cpp
+build/stages/bubbleSort/3_optimized/02_inplace_sort_write.cpp
 build/source/bubbleSort.cpp      SHIPPED
 ```

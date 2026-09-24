@@ -1,8 +1,27 @@
 {
   "accepted": true,
-  "baseline_ms": 0.0023,
-  "best_ms": 0.002,
-  "created": 1787677821.017905,
+  "baseline_ms": 1.8953,
+  "bench": {
+    "below_floor": true,
+    "fingerprint": "skipped (node draws random numbers)",
+    "floor_ms": 15.0,
+    "perturbed": [
+      "maxVal (float)",
+      "minVal (float)",
+      "time (time)"
+    ],
+    "reason": "baseline 1.895 ms is below the 15 ms noise floor even at the largest bench scene (geo=400 array=20000); measured anyway -- every accept must clear 1.15x on two independent timings",
+    "rung": [
+      400,
+      20000
+    ],
+    "small_rung": [
+      40,
+      512
+    ]
+  },
+  "best_ms": 0.6716,
+  "created": 1790273087.063599,
   "ledger": [
     {
       "compiled": true,
@@ -10,7 +29,7 @@
       "fix_rounds": 0,
       "hypothesis": "",
       "index": 0,
-      "ms": 0.0023,
+      "ms": 1.8953,
       "note": "",
       "outcome": "baseline",
       "parity": null,
@@ -22,59 +41,58 @@
     },
     {
       "compiled": true,
-      "duration_s": 448.156,
+      "duration_s": 1057.239,
       "fix_rounds": 0,
-      "hypothesis": "this is an ELEMENTWISE node at n=1, not a QUERY node -- the harness seeds reset=1 ('held reshuffle') and only sort[0] exists, so regen fires on every tick and the entire per-eval cost is std::mt19937_64 state init plus a first-draw twist (~624 word-ops) plus a handful of Maya-side allocations. There is no scan to accelerate and no cross-eval structure worth caching, so the lever is deleting fixed overhead, not changing an exponent.",
+      "hypothesis": "compute() is not algorithmic here (bench drives reset=1: 20k RNG draws = 43 us); it is Maya per-element API cost -- the builder fill (~190 us) plus the mandatory data.setClean(aSort) over 20k connected elements (0.4-1.2 ms) -- so cutting API calls per element is the only controllable lever. Probe: fill loop 174-250 us -> 126-150 us, and setClean ran cheaper after asFloat writes. Tried and rejected: in-place outputValue() writes (loop 115 us but setClean 1.6-2.0 ms, total 2.27 ms), reusing _outArr.builder() (fill 450-900 us), swapping setClean/setAllClean order (no gain)",
       "index": 1,
-      "ms": 0.002,
-      "note": "",
+      "ms": 1.2055,
+      "note": "confirmed twice (incumbent under the noise floor): 0.630 / 1.206 ms",
+      "outcome": "accept",
+      "parity": "pass",
+      "predicted_speedup": 1.1,
+      "risk": "addLast() relies on the freshly constructed builder being empty so it hands out logical indices 0..n-1 in order, like the old addElement(i); verified by a byte-identical output fingerprint (values and multi indices, 20000 elements) against the original. ./bench.sh cannot build on this Windows host (build.sh is macOS clang/arm64 only), so timings come from an MSVC build of this exact file run through the same harness and spec: interleaved medians 0.57-0.74 ms vs original 0.62-1.62 ms, and setClean noise dominates every sample",
+      "slug": "builder_addlast_asfloat",
+      "speedup": 1.572210700953961,
+      "theme": "fill the 20k-element sort[] builder with addLast().asFloat() in one fused lerp loop (no temp vector, no setFloat call, RNG built only on regen, state moved from a static registry to a per-instance member)"
+    },
+    {
+      "compiled": true,
+      "duration_s": 1248.175,
+      "fix_rounds": 0,
+      "hypothesis": "The profile put data.setClean(aSort) at 500-1300 us and I read it as Maya tearing down the replaced 20k-element array, so writing in place would drop both the builder allocations and that teardown. Wrong half: a no-write diagnostic shows setClean is ~260-330 us whether we write or not, so it is Maya's per-plug bookkeeping for 20k connected elements. The measured win is all on our side of the call: builder fill 145 us -> 105 us in place, RNG 42 us -> 24 us, fusing the draw into the write saves another 12-20 us.",
+      "index": 2,
+      "ms": 0.6716,
+      "note": "confirmed twice (incumbent under the noise floor): 0.533 / 0.672 ms",
       "outcome": "accept",
       "parity": "pass",
       "predicted_speedup": 2.0,
-      "risk": "the RNG stream changes, but the spec marks this node 'NOT bit-identical to Python, so pointwise parity is skipped'; splitmix64 keeps the same uniform [0,1) range and the same deterministic seeding expression, so the lerp still lands inside [minVal, maxVal] and the sort/text convergence behaviour is unchanged",
-      "slug": "splitmix64_rng",
-      "speedup": 1.15,
-      "theme": "the node re-seeds a 312-word Mersenne Twister every evaluation to draw a single double; replace it with splitmix64 and strip the per-eval allocations around it"
+      "risk": "The RNG must stay identical per STL. Mt64 is the standard-fixed mt19937_64 (0 mismatches over 40.66M draws against the library engine, 10000th output 9981545732273789042), and it still goes through the library's own uniform_real_distribution, so MSVC's P0952 generate_canonical and libc++'s version each keep their own mapping. In-place writes only happen when every logical 0..n-1 element exists and elementCount == n; any other layout falls back to the original builder path.",
+      "slug": "inplace_sort_write",
+      "speedup": 2.822066706372841,
+      "theme": "Write the 20k sort[] floats in place through the existing element handles (jumpToElement(i) proves the 0..n-1 layout, builder kept as fallback) instead of rebuilding the whole array with MArrayDataBuilder, and fuse a bit-identical inlined mt19937_64 draw into that write loop."
     },
     {
       "compiled": null,
-      "duration_s": 847.293,
+      "duration_s": 1218.566,
       "fix_rounds": 0,
-      "hypothesis": "every element of the sort multi already exists, so builder()+addElement()+set() re-installs the whole multi for nothing and an outputValue()/next() walk should be strictly cheaper",
-      "index": 2,
+      "hypothesis": "The bench holds reset=1 (seeded draw: Random(20260808) -> reset 1), so every tick is a reseed, 20000 draws and 20000 element writes. The first idea was to walk the output array by position with next() instead of 20000 logical jumpToElement(i) searches. It was measured 65% SLOWER (1.02 vs 0.61 ms): on an output MArrayDataHandle, next() and elementIndex() cost more than the jump. Phase timers inside compute() then showed where the time goes: setClean(aSort) about 400 us, write loop about 120 us, RNG about 22 us, everything else under 10 us. setClean costs the same when called before the writes, after them, or with no writes at all, so it is a per-networked-plug DG cost inside Maya.",
+      "index": 3,
       "ms": null,
       "note": "candidate is identical to the current best",
       "outcome": "no-change",
       "parity": null,
       "predicted_speedup": 1.3,
-      "risk": "a walk writes the elements that EXIST while addElement(0..n-1) would CREATE 0..n-1, so sparse logical indices diverge; guarded with an elementIndex() density check that falls back to the builder",
-      "slug": "walk_array_no_builder",
+      "risk": "None shipped. Rejected on correctness, not speed: writing by physical position (jumpToArrayElement) was 26 us faster, but it needs position p to hold logical index p, and Maya does not document that elements are stored in logical-index order. Checking each element with elementIndex() gives back the whole gain.",
+      "slug": "no_change_setclean_floor",
       "speedup": null,
-      "theme": "replace the MArrayDataBuilder round-trip on the sort output with an in-place walk of the already-existing elements; it lost, so the round ships the pristine file unchanged"
+      "theme": "No candidate beat the entry file, so bubbleSort.cpp is left byte-identical: about 70% of compute() is Maya's mandatory data.setClean(aSort) on 20000 connected elements, and no change inside the node can shrink it."
     }
   ],
-  "parity_gate": "authored+pointwise",
-  "reason": "accepted (1.15x)",
-  "remeasured": {
-    "baseline_ms": null,
-    "date": "2026-09-08",
-    "diverged": null,
-    "final_ms": null,
-    "fingerprint": null,
-    "floor_ms": 15.0,
-    "perturbed": [
-      "maxVal (float)",
-      "minVal (float)",
-      "time (time)"
-    ],
-    "reason": "baseline 0.333 ms is below the 15 ms noise floor even at the largest bench scene (geo=400 array=20000); nothing this small can be optimized against measurably",
-    "rung": [
-      400,
-      20000
-    ],
-    "speedup": null
-  },
-  "rounds": 2,
-  "speedup": 1.15,
+  "max_rounds": 6,
+  "parity_gate": "authored-only",
+  "reason": "accepted (2.82x)",
+  "rounds": 3,
+  "speedup": 2.822066706372841,
+  "stop_reason": "round 3 no-change -- nothing new to compound from",
   "type_name": "bubbleSort"
 }

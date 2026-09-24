@@ -1,10 +1,10 @@
 # MPyNode_Bubble_Sort -- compile report
 
-Generated 2026-08-25 10:10
+Generated 2026-09-24 11:04
 
 | node | status | assist | optimize | detail |
 |---|---|---|---|---|
-| `bubbleSort` | compiled | filled | **1.15x** | [report](build/stages/bubbleSort/REPORT.md) |
+| `bubbleSort` | compiled | filled | **2.82x** | [report](build/stages/bubbleSort/REPORT.md) |
 
 ## Layout
 

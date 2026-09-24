@@ -156,54 +156,8 @@ MStatus BubbleSort::compute(const MPlug& plug, MDataBlock& data) {
         // Seeded locally from the time input (the node has no seed input), so
         // each frame is reproducible while held reshuffle / Auto still vary per
         // frame. Built only on a regen: seeding mt19937_64 is not free.
-        // std::mt19937_64, bit for bit: the standard fixes every parameter,
-        // the seeding recurrence and the tempering, so this yields the same
-        // sequence on every library. It refills its 312-word block in one
-        // straight loop and inlines the draw, where the library engine pays
-        // a call per word. Same result_type/min/max, so the library's own
-        // uniform_real_distribution maps it to the same doubles as before.
-        struct Mt64 {
-            using result_type = uint64_t;
-            static constexpr result_type (min)() { return 0; }
-            static constexpr result_type (max)() { return ~(uint64_t)0; }
-            uint64_t mt[312];
-            unsigned idx = 312;
-            void seed(uint64_t seed) {
-                mt[0] = seed;
-                for (unsigned i = 1; i < 312; ++i)
-                    mt[i] = 6364136223846793005ULL * (mt[i - 1] ^ (mt[i - 1] >> 62)) + i;
-                idx = 312;
-            }
-            void refill() {
-                const uint64_t UM = 0xFFFFFFFF80000000ULL;
-                const uint64_t LM = 0x000000007FFFFFFFULL;
-                const uint64_t A  = 0xB5026F5AA96619E9ULL;
-                unsigned i = 0;
-                for (; i < 156; ++i) {
-                    const uint64_t x = (mt[i] & UM) | (mt[i + 1] & LM);
-                    mt[i] = mt[i + 156] ^ (x >> 1) ^ ((x & 1) ? A : 0);
-                }
-                for (; i < 311; ++i) {
-                    const uint64_t x = (mt[i] & UM) | (mt[i + 1] & LM);
-                    mt[i] = mt[i - 156] ^ (x >> 1) ^ ((x & 1) ? A : 0);
-                }
-                const uint64_t x = (mt[311] & UM) | (mt[0] & LM);
-                mt[311] = mt[155] ^ (x >> 1) ^ ((x & 1) ? A : 0);
-                idx = 0;
-            }
-            result_type operator()() {
-                if (idx >= 312)
-                    refill();
-                uint64_t y = mt[idx++];
-                y ^= (y >> 29) & 0x5555555555555555ULL;
-                y ^= (y << 17) & 0x71D67FFFEDA60000ULL;
-                y ^= (y << 37) & 0xFFF7EEE000000000ULL;
-                y ^= (y >> 43);
-                return y;
-            }
-        };
         struct NdRng {
-            Mt64 eng;
+            std::mt19937_64 eng;
             static uint64_t nd_mix_seed(uint64_t s) {
                 // SplitMix64 finalizer: spreads a small/zero seed into well-distributed bits.
                 s += 0x9E3779B97F4A7C15ULL;
@@ -211,7 +165,7 @@ MStatus BubbleSort::compute(const MPlug& plug, MDataBlock& data) {
                 s = (s ^ (s >> 27)) * 0x94D049BB133111EBULL;
                 return s ^ (s >> 31);
             }
-            void seed(uint64_t seed) { eng.seed(nd_mix_seed(seed)); }
+            explicit NdRng(uint64_t seed) : eng(nd_mix_seed(seed)) {}
             double random() {                       // random.random() -> [0,1)
                 return std::uniform_real_distribution<double>(0.0, 1.0)(eng);
             }
@@ -229,20 +183,12 @@ MStatus BubbleSort::compute(const MPlug& plug, MDataBlock& data) {
         if (reset == 2 && st->sorted)
             regen = true;
 
-        // A held reshuffle (reset == 1) regenerates and never sorts, so its
-        // fresh draws go straight to the outputs: the draw is fused into the
-        // finalize's write loop (same draws, same order, same stored data)
-        // instead of a separate pass over the whole buffer first.
-        const bool fuseDraw = regen && reset == 1;
-        NdRng      rng;                         // seeded only on a regen
         if (regen) {
-            rng.seed((uint64_t)std::llround(in_aTime * 1000.0));
+            NdRng rng((uint64_t)std::llround(in_aTime * 1000.0));
             st->data.resize(n);
-            if (!fuseDraw) {
-                double* d = st->data.data();
-                for (size_t i = 0; i < n; ++i)
-                    d[i] = rng.random();
-            }
+            double* d = st->data.data();
+            for (size_t i = 0; i < n; ++i)
+                d[i] = rng.random();
             st->sorted      = false;
             st->initialized = true;
         }
@@ -277,47 +223,11 @@ MStatus BubbleSort::compute(const MPlug& plug, MDataBlock& data) {
             const double  lo   = (double)in_aMinVal;
             const double  hi   = (double)in_aMaxVal;
             const double  span = hi - lo;
-            double* const d    = st->data.data();
-            // Fast path: the existing elements are exactly logical 0..n-1
-            // (n == elementCount and every jumpToElement(i) finds its
-            // element), which is the set the builder would produce -- write
-            // the same values through them in place. No per-element
-            // allocation, and no whole-array swap for Maya to tear down. Any
-            // other layout falls back to the builder, which overwrites
-            // everything written so far.
-            bool   inPlace = true;
-            size_t _i      = 0;
-            if (fuseDraw) {
-                // draw i, store it, write it -- the RNG arithmetic overlaps
-                // the latency-bound handle calls.
-                for (; _i < n; ++_i) {
-                    if (_outArr.jumpToElement((unsigned)_i) != MS::kSuccess) {
-                        inPlace = false;
-                        break;
-                    }
-                    const double t = rng.random();
-                    d[_i] = t;
-                    _outArr.outputValue().asFloat() = (float)(lo + t * span);
-                }
-                for (size_t _k = _i; _k < n; ++_k)   // finish the draw on a bail-out
-                    d[_k] = rng.random();
-            } else {
-                for (; _i < n; ++_i) {
-                    if (_outArr.jumpToElement((unsigned)_i) != MS::kSuccess) {
-                        inPlace = false;
-                        break;
-                    }
-                    _outArr.outputValue().asFloat() = (float)(lo + d[_i] * span);
-                }
-            }
-            if (inPlace && (size_t)_outArr.elementCount() != n)
-                inPlace = false;
-            if (!inPlace) {
-                MArrayDataBuilder _b(&data, aSort, (unsigned)n);
-                for (size_t _j = 0; _j < n; ++_j)
-                    _b.addLast().asFloat() = (float)(lo + d[_j] * span);
-                _outArr.set(_b);
-            }
+            const double* d    = st->data.data();
+            MArrayDataBuilder _b(&data, aSort, (unsigned)n);
+            for (size_t _i = 0; _i < n; ++_i)
+                _b.addLast().asFloat() = (float)(lo + d[_i] * span);
+            _outArr.set(_b);
         } else {
             float _dflt = 0.0;
             unsigned _ne = _outArr.elementCount();
