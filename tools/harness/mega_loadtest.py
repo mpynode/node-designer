@@ -121,6 +121,7 @@ def main():
     import maya.standalone
     maya.standalone.initialize(name="python")
     import maya.cmds as mc
+    from mpynode.native.toolchain import toolchain
 
     # Source/scripts/manifest live under build/; only the bundle sits on top.
     manifest    = json.load(open(os.path.join(MEGA_DIR, "build", "manifest.json")))
@@ -133,7 +134,9 @@ def main():
     linked_types = {n.get("source_node") or n.get("type_name"): n["type_name"]
                     for n in built}
 
-    bundle = os.path.join(MEGA_DIR, plugin_name + ".bundle")
+    # .bundle on macOS, .mll on Windows, .so on Linux -- the host builds its own.
+    ext    = toolchain.plugin_ext()
+    bundle = os.path.join(MEGA_DIR, plugin_name + ext)
     L("=" * 74)
     L("MEGA LOAD TEST: %s" % bundle)
     L("=" * 74)
@@ -145,9 +148,9 @@ def main():
                   if f.endswith((".bundle", ".mll", ".so"))
                   or f.endswith("_commands.py"))
     L("artifacts in mega dir : %s" % arts)
-    if arts != [plugin_name + ".bundle"]:
-        problems.append("expected exactly [%s.bundle], got %s"
-                        % (plugin_name, arts))
+    if arts != [plugin_name + ext]:
+        problems.append("expected exactly [%s%s], got %s"
+                        % (plugin_name, ext, arts))
 
     # ---- 2. load the combined bundle --------------------------------------
     mc.loadPlugin(bundle)
