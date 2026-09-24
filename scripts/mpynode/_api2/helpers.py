@@ -597,7 +597,8 @@ def _write_value_to_handle(
     Pure handle-write: parameterized so we can call it from BOTH the
     scalar path (``data_block.outputValue(plug)``) AND the multi path
     (``builder.addElement(idx)``). Caller is responsible for any
-    handle.setClean() / array_handle.setAllClean() bookkeeping.
+    handle.setClean() / array_handle.setAllClean() + data_block.setClean(attr)
+    bookkeeping.
 
     ``child_attrs`` is the list of child attribute MObjects for a
     ``quaternion`` (a GENERIC compound of 4 doubles whose handle has no
@@ -834,6 +835,15 @@ def write_multi_plug_value(
     objects). This generalizes the deformer's existing per-``multiIndex``
     geometry write.
 
+    CLEAN BOOKKEEPING: after the write the array is marked clean twice over --
+    ``array_handle.setAllClean()`` for the elements and
+    ``data_block.setClean(attr_obj)`` for the attribute itself. Without the
+    second call the attribute stayed dirty after the evaluation that wrote it,
+    and the Evaluation Manager called compute again for every connected array
+    output (measured 2026-09-23: Spine 3 runs a frame, DNET 2, its solver
+    stepping once per run). The compiled twin, ``emit_attr._array_write_lines``,
+    emits the same pair.
+
     Type contract for ``values``:
       * scalar types (float / double / int / bool / string / angle /
         enum / time / python) \u2014 1D iterable of scalars, e.g.
@@ -874,6 +884,11 @@ def write_multi_plug_value(
         _write_value_to_handle(elem_handle, attr_type, value, child_attrs)
     array_handle.set(builder)
     array_handle.setAllClean()
+    # setAllClean cleans the ELEMENTS only; the array attribute stayed dirty, so
+    # the Evaluation Manager re-ran compute once per connected array output
+    # (Spine 2.0: 5 runs a frame -> 1) and a DG read of the whole array paid a
+    # second compute. See CLEAN BOOKKEEPING in the docstring.
+    data_block.setClean(attr_obj)
 
 
 def array_gap_default(attr_obj, attr_type: str):

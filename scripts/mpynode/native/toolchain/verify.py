@@ -2000,11 +2000,14 @@ def _interp_is_idempotent(cmds, node, out_meta, tol):
     """Does the INTERPRETED node answer the same twice for UNCHANGED inputs?
 
     Pointwise interp-vs-compiled parity silently assumes the two sides evaluate
-    the same number of times. They do not: an interpreted mPyNode re-runs its
-    compute 2-3x per ``dgdirty`` where the compiled node runs once. For a node
-    carrying state that asymmetry advances the two trajectories differently, and
-    the compare measures the harness rather than the port -- dnet drifts 1.8e-4
-    that way while being faithful to 1.0e-9.
+    the same number of times. They do not: per drive the harness evaluates the
+    interpreted node more often than the compiled one -- ``_reference_raised``
+    reads it, and this probe dirties it and reads it again -- and until
+    2026-09 a written array output stayed dirty (``setAllClean`` only), so every
+    read re-ran compute once per array output. For a node carrying state that
+    asymmetry advances the two trajectories differently, and the compare
+    measures the harness rather than the port -- dnet drifts 1.8e-4 that way
+    while being faithful to 1.0e-9.
 
     So MEASURE it per drive instead of assuming: dirty the interpreted node,
     make it recompute, and see whether its own answer moved. A drive where it
@@ -2029,14 +2032,15 @@ def _carry_state_drift(spec, maxerr, tol):
     """True when a SMALL divergence comes from state the compute carries across
     evaluations, for which pointwise interp-vs-compiled parity is not defined.
 
-    An interpreted mPyNode re-runs its compute 2-3x per ``dgdirty`` where the
-    compiled node runs once, so anything the compute keeps between evaluations
-    -- a solver carry buffer, an integrator's velocity -- is advanced a
-    DIFFERENT number of times on the two sides. Both are individually correct;
-    the trajectories simply separate. dnet is the case in point: with
-    ``resetBuffer=0`` its positions come from the carried buffer, and on the one
-    drive where the solver relaxes nothing (``iterations <= 0``) there is no
-    contraction left to pull the two back together.
+    The harness evaluates the interpreted node more often than the compiled one
+    (see :func:`_interp_is_idempotent`), so anything the compute keeps between
+    evaluations -- a solver carry buffer, an integrator's velocity -- is
+    advanced a DIFFERENT number of times on the two sides. Both are
+    individually correct; the trajectories simply separate. dnet is the case
+    in point: with ``resetBuffer=0`` its positions come from the carried
+    buffer, and on the one drive where the solver relaxes nothing
+    (``iterations <= 0``) there is no contraction left to pull the two back
+    together.
 
     Keyed on ``_persistent_state_vars`` -- the SAME definition codegen already
     uses to give a carry-over var a per-node home -- so this cannot fire on a
@@ -2792,9 +2796,9 @@ def _verify_one(cmds, bundle_path, spec, maya=_MAYA_DEFAULT, deadline=None):
         return {"ran": False, "pass": None, "maxerr": maxerr, "tol": tol,
                 "reason": _with_stale_tail(
                     "compute carries state across evaluations and the outputs "
-                    "drifted by %.3g (<= %gx tol %.3g) -- the interpreted node "
-                    "re-runs its compute 2-3x per dgdirty where the compiled "
-                    "node runs once, so the two carry buffers are advanced a "
+                    "drifted by %.3g (<= %gx tol %.3g) -- the harness "
+                    "evaluates the interpreted node more often than the "
+                    "compiled one, so the two carry buffers are advanced a "
                     "different number of times; pointwise parity is not a "
                     "valid check -- skipped (authored @maya_test is the parity "
                     "gate)" % (maxerr, _CARRY_DRIFT_MULT, tol),
@@ -2837,9 +2841,9 @@ def _verify_one(cmds, bundle_path, spec, maya=_MAYA_DEFAULT, deadline=None):
     reason = ""
     if noncomparable_drives:
         reason = ("compared on %d of 30 input sets: on %d the interpreted "
-                  "reference was non-idempotent (it carries state and re-runs "
-                  "its compute 2-3x per dgdirty where the compiled node runs "
-                  "once), so those cannot be lined up pointwise"
+                  "reference was non-idempotent (it carries state, and the "
+                  "harness evaluates it more often than the compiled node), "
+                  "so those cannot be lined up pointwise"
                   % (30 - noncomparable_drives, noncomparable_drives))
     if raised_drives:
         reason = ((reason + " -- " if reason else "")
