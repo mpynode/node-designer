@@ -246,7 +246,12 @@ CORRECTNESS = """\
   its own rule at the top of its section in this file -- read it before touching
   that code rather than re-deriving it. The -ffp-contract=off rule above is the
   same failure through a different door: both are a last-bit change that survives
-  every tolerance check and flips a discrete choice."""
+  every tolerance check and flips a discrete choice.
+- KEEP EVERY data.setClean(<attr>) the finalize has, reached on every path that
+  returns MS::kSuccess. setAllClean() on an array handle cleans only its
+  ELEMENTS; without the attribute-level call Maya's Evaluation Manager re-runs
+  compute once per connected output array. Parity cannot see it, so a candidate
+  that drops one is rejected before it is compiled."""
 
 
 # A trimmed, worked few-shot exemplar: the metaClay per-shape struct-of-scalars
@@ -389,6 +394,23 @@ def _code_only(src: str) -> str:
     return "".join(out)
 
 
+# A datablock setClean the optimizer may not drop. ``setAllClean()`` on an array
+# handle cleans its ELEMENTS only; ``data.setClean(aX)`` cleans the attribute,
+# and without it the Evaluation Manager re-runs compute once per connected array
+# output (measured 2026-09-23: Spine 3 runs a frame -> 1, DNET 2 -> 1 and its
+# solver drift gone). Neither parity nor the bench can see a dropped call -- the
+# values are identical and the bench pulls a single element -- so it is gated
+# here. Any receiver counts (``data.``, ``block.``, ``->``): candidates rename
+# the datablock. A handle's no-argument ``setClean()`` is not matched.
+_SETCLEAN_RE = re.compile(r"(?:\.|->)\s*setClean\s*\(\s*([A-Za-z_][\w:]*)\s*\)")
+
+
+def setclean_targets(src: str) -> set:
+    """The attributes / plugs ``src`` marks clean through a datablock
+    ``setClean(<name>)`` call, comments and string literals excluded."""
+    return set(_SETCLEAN_RE.findall(_code_only(src or "")))
+
+
 # Constructs MSVC (cl.exe /std:c++17) rejects outright. PORTABILITY_RULE already
 # TELLS the model the file is compiled by both Apple clang and MSVC, and it has
 # been obeying that -- but nothing MEASURED it: the optimizer's own compile gate
@@ -482,7 +504,9 @@ def implausible_reason(cand, baseline):
     original source", and that answer was written to the .cpp too.
 
     Checks are calibrated against the baseline rather than hardcoded, so a node
-    whose source legitimately lacks a token cannot be false-flagged. Injected
+    whose source legitimately lacks a token cannot be false-flagged. That holds
+    for the clean bookkeeping too: a candidate may not drop a datablock
+    ``setClean(<attr>)`` its baseline had (:func:`setclean_targets`). Injected
     into ``optimizer.optimize_cpp`` as ``validate_fn`` -- the engine itself stays
     content-agnostic so it remains testable with opaque stubs.
     """
@@ -519,6 +543,12 @@ def implausible_reason(cand, baseline):
     if extra > 0:
         return ("introduces %d platform conditional(s) with no #else -- one "
                 "toolchain would get no code at all" % extra)
+    lost = sorted(set(_SETCLEAN_RE.findall(base_code))
+                  - set(_SETCLEAN_RE.findall(cand_code)))
+    if lost:
+        return ("drops data.setClean(%s) -- every output the baseline marks clean "
+                "must stay marked clean, or the Evaluation Manager re-runs compute "
+                "once per output array" % ", ".join(lost))
     return None
 
 

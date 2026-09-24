@@ -22,7 +22,8 @@ class TestOptimizerKnowledge(unittest.TestCase):
     def test_guide_carries_the_load_bearing_rules(self):
         blob = ok.OPTIMIZER_GUIDE + ok.CORRECTNESS
         for needle in ("-ffp-contract=off", "-ffast-math", "x*x", "offset",
-                       "strides", "static const", "topology", "ND_RESTRICT"):
+                       "strides", "static const", "topology", "ND_RESTRICT",
+                       "setClean"):
             self.assertIn(needle, blob, "missing rule: %s" % needle)
 
     def test_correctness_reference_is_interpreted_numpy(self):
@@ -246,6 +247,95 @@ class TestPortabilityGate(unittest.TestCase):
         cand = _PBASE.replace(
             "double f(", "// renamed off __out: sal.h defines it\ndouble f(")
         self.assertIsNone(ok.implausible_reason(cand, _PBASE))
+
+
+# The finalize a recipe-34 baseline carries: each array output is cleaned per
+# element AND at the attribute. Parity and the bench cannot see a candidate that
+# drops the attribute call, so implausible_reason has to.
+_SBASE = (
+    "#include <maya/MPxNode.h>\n"
+    "MStatus initializePlugin(MObject o) { return MS::kSuccess; }\n"
+    "MStatus uninitializePlugin(MObject o) { return MS::kSuccess; }\n"
+    "MStatus N::compute(const MPlug& plug, MDataBlock& data) {\n"
+    "    // --- finalize ---\n"
+    "    {\n"
+    "        MArrayDataHandle _outArr = data.outputArrayValue(aOutA);\n"
+    "        _outArr.setAllClean();\n"
+    "        data.setClean(aOutA);\n"
+    "    }\n"
+    "    {\n"
+    "        MArrayDataHandle _outArr = data.outputArrayValue(aOutB);\n"
+    "        _outArr.setAllClean();\n"
+    "        data.setClean(aOutB);\n"
+    "    }\n"
+    "    return MS::kSuccess;\n"
+    "}\n"
+)
+
+
+class TestSetCleanGuard(unittest.TestCase):
+    """A candidate may not drop a datablock setClean its baseline had."""
+
+    def test_untouched_finalize_is_accepted(self):
+        self.assertIsNone(ok.implausible_reason(
+            _SBASE.replace("return MS::kSuccess;\n}", "int z = 0; (void)z;\n"
+                           "    return MS::kSuccess;\n}"), _SBASE))
+
+    def test_dropped_call_is_rejected_by_name(self):
+        reason = ok.implausible_reason(
+            _SBASE.replace("        data.setClean(aOutB);\n", ""), _SBASE)
+        self.assertIsNotNone(reason)
+        self.assertIn("aOutB", reason)
+        self.assertNotIn("aOutA", reason)
+
+    def test_commented_out_call_is_rejected(self):
+        cand = _SBASE.replace("data.setClean(aOutB);", "// data.setClean(aOutB);")
+        self.assertIn("aOutB", ok.implausible_reason(cand, _SBASE))
+
+    def test_call_only_in_a_string_literal_is_rejected(self):
+        cand = _SBASE.replace("data.setClean(aOutB);",
+                              'const char* s = "data.setClean(aOutB);"; (void)s;')
+        self.assertIn("aOutB", ok.implausible_reason(cand, _SBASE))
+
+    def test_restructured_finalize_is_accepted(self):
+        # Hoisted handles, a renamed marker, the calls moved and reordered.
+        cand = _SBASE.replace(
+            "    // --- finalize ---\n", "    // --- publish ---\n").replace(
+            "        data.setClean(aOutA);\n", "").replace(
+            "        data.setClean(aOutB);\n",
+            "        data.setClean(aOutB);\n        data.setClean(aOutA);\n")
+        self.assertIsNone(ok.implausible_reason(cand, _SBASE))
+
+    def test_other_datablock_receivers_are_accepted(self):
+        cand = (_SBASE.replace("data.setClean(aOutA);", "block.setClean(aOutA);")
+                .replace("data.setClean(aOutB);", "pData->setClean(aOutB);"))
+        self.assertIsNone(ok.implausible_reason(cand, _SBASE))
+
+    def test_dropped_plug_clean_is_rejected(self):
+        base = _SBASE.replace("    return MS::kSuccess;\n}",
+                              "    data.setClean(plug);\n    return MS::kSuccess;\n}")
+        cand = base.replace("    data.setClean(plug);\n", "")
+        self.assertIn("plug", ok.implausible_reason(cand, base))
+
+    def test_pre_fix_baseline_requires_nothing(self):
+        base = (_SBASE.replace("        data.setClean(aOutA);\n", "")
+                .replace("        data.setClean(aOutB);\n", ""))
+        self.assertIsNone(ok.implausible_reason(base, base))
+        self.assertIsNone(ok.implausible_reason(_SBASE, base))  # adding one is fine
+
+    def test_call_moved_into_a_parameterized_helper_is_rejected(self):
+        # Conservative on purpose: the gate reads names, not data flow, so a
+        # helper taking the attribute as a parameter no longer names aOutB.
+        cand = _SBASE.replace(
+            "        data.setClean(aOutB);\n", "        publish(data, aOutB);\n").replace(
+            "MStatus N::compute(",
+            "static void publish(MDataBlock& d, const MObject& a) { d.setClean(a); }\n"
+            "MStatus N::compute(")
+        self.assertIn("aOutB", ok.implausible_reason(cand, _SBASE))
+
+    def test_no_argument_handle_clean_is_not_counted(self):
+        self.assertEqual(ok.setclean_targets(
+            "h.setClean(); _outArr.setAllClean(); data.setClean(aX);"), {"aX"})
 
 
 if __name__ == "__main__":

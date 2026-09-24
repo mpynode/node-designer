@@ -434,6 +434,12 @@ that make the same work marginally cheaper.
 * Keep `initializePlugin` / `uninitializePlugin`, the MTypeId, the node type
   name, and every attribute's name/type/array-ness exactly as they are. The
   node's plug interface is a contract with existing scenes.
+* Keep every `data.setClean(<attr>)` call, reached on every path that returns
+  `MS::kSuccess`. Restructure the finalize freely, but `setAllClean()` on an
+  array handle cleans only its ELEMENTS: without the attribute-level call
+  Maya's Evaluation Manager re-runs compute once per connected output array.
+  Parity cannot see that, so a file missing one is rejected before it is
+  compiled.
 * Results must match the reference below. This is re-verified independently
   against the interpreted Python across randomised scenes after you finish, and
   a divergent result is thrown away no matter how fast it is.
@@ -450,8 +456,9 @@ that make the same work marginally cheaper.
 
 ## Threading: one shape is permitted, the rest are prohibited
 Nothing downstream checks any of this. The plausibility check on your output
-inspects brace balance and file size, nothing more, so this prompt is the ONLY
-enforcement -- a violation ships silently or surfaces as a race much later.
+inspects brace balance, file size, portability tokens and datablock setClean
+calls -- nothing about threading -- so this prompt is the ONLY enforcement --
+a violation ships silently or surfaces as a race much later.
 
 Prohibited, each with its reason:
 

@@ -75,7 +75,7 @@ class TestBuildWorkspace(_Ws):
     def test_task_states_the_invariants_that_get_it_rejected(self):
         _p, task = oa.build_workspace(_SPEC, self.ws, _CPP)
         for must in ("initializePlugin", "ONE self-contained translation unit",
-                     "ffp-contract"):
+                     "ffp-contract", "data.setClean"):
             self.assertIn(must, task)
 
     def test_task_states_the_wall_clock_budget_when_bounded(self):

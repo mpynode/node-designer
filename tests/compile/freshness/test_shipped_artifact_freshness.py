@@ -173,6 +173,24 @@ class TestShippedArtifactsAreFresh(unittest.TestCase):
             "disagrees with the interpreted one. Bump PORTER_RECIPE_VERSION "
             "and rebuild:\n  " + "\n  ".join(missing))
 
+    def test_shipped_artifacts_keep_every_setclean_of_stage1(self):
+        """Every attribute stage 1 marks clean, the artifact that LINKS marks
+        clean too. A stale port-cache hit or an optimizer rewrite that drops a
+        ``data.setClean(aX)`` passes parity (the values are identical) while the
+        Evaluation Manager re-runs compute once per output array."""
+        from mpynode.native.ai.optimizer_knowledge import setclean_targets
+
+        live, _ = _nodes()
+        missing = []
+        for e in live:
+            gone = setclean_targets(_read(e["stage1"])) - setclean_targets(_read(e["final"]))
+            if gone:
+                missing.append("%s (%s): %s" % (e["rel"], e["type"], ", ".join(sorted(gone))))
+        self.assertEqual(
+            missing, [],
+            "stage 1 marks these attributes clean but the SHIPPED artifact does "
+            "not. Bump PORTER_RECIPE_VERSION and rebuild:\n  " + "\n  ".join(missing))
+
     def test_orphaned_build_trees_are_named(self):
         """A build tree with no source template cannot be rebuilt, so the gates
         above skip it. Keep that list SHORT and visible rather than silent."""
