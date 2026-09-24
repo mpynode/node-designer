@@ -86,6 +86,33 @@ class TestEscapeHatchInPrompt(unittest.TestCase):
                           "base %r lost the escape hatch" % base)
 
 
+class TestUnassignedOutputRuleInPrompt(unittest.TestCase):
+    """DNET's ports held their last solved outputs when `evaluate` was off; the
+    interpreted node publishes defaults. The porter is told which."""
+
+    def test_rule_states_the_default_and_forbids_holding(self):
+        from mpynode.native.ai import prompt
+        rule = prompt._UNASSIGNED_OUTPUT_RULE
+        self.assertIn("PUBLISHES ITS DEFAULT", rule)
+        self.assertIn("NEVER hold an output's previous value", rule)
+        rule.encode("ascii")
+
+    def test_every_family_gets_the_rule(self):
+        from mpynode.native.ai import prompt
+        from mpynode.native import compiler as codegen
+
+        bases = ["MPxNode", codegen._TRANSFORM_BASE, codegen._LOCATOR_BASE,
+                 codegen._IKSOLVER_BASE] + list(codegen._DEFORMER_BASES)
+        for base in bases:
+            spec = {"suggested": {"mpx_base": base, "node_type_name": "n"},
+                    "mpy_type": "mPyNode", "source_node": "n1",
+                    "compute": "if self.go:\n    self.out = 1.0", "init": "",
+                    "inputs": {}, "outputs": {"out": {"type": "float"}}}
+            system, _user = prompt.build_prompt(spec, _file(""))
+            self.assertIn(prompt._UNASSIGNED_OUTPUT_RULE, system,
+                          "base %r lost the unassigned-output rule" % base)
+
+
 class TestUnportedReachesThePrompt(unittest.TestCase):
     def _user_for(self, unported):
         from mpynode.native.ai import prompt

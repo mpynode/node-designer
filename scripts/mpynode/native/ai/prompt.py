@@ -474,6 +474,31 @@ _COMPLEXITY_RULE = (
 )
 
 
+# Learned from DNET (2026-09-24). Its Python assigns every output only inside
+# `if self.evaluate and N > 0:`. Two independent ports kept the last solved values
+# in a member and re-emitted them when `evaluate` was off, each with a comment that
+# "the interpreted node's outputs keep their last values" -- plain-Python attribute
+# intuition, and wrong here: every base pre-seeds each output to its default before
+# compute runs, so the interpreted node published zeros. The authored test never
+# toggles `evaluate`; only the generic parity sweep saw it (2.9e11). Nothing in the
+# prompt said otherwise, so it has to say so.
+_UNASSIGNED_OUTPUT_RULE = (
+    "AN OUTPUT THE PYTHON DOES NOT ASSIGN PUBLISHES ITS DEFAULT. Before every "
+    "evaluation the interpreted node resets each output attribute to its default "
+    "(zero, an empty array, the identity matrix); it does NOT keep the value an "
+    "earlier evaluation assigned, whatever plain Python attribute semantics "
+    "suggest. So when the Python assigns `self.<output>` only on some paths -- "
+    "under an `if`, after an early return, before a raise -- an evaluation that "
+    "skips the assignment must publish the DEFAULT: leave that output's handle / "
+    "buffer unwritten on that path, and the scaffold (which pre-sets every handle "
+    "and starts every output buffer empty) publishes the default. NEVER hold an "
+    "output's previous value in a member, a static or a cache to re-emit it. State "
+    "the Python itself carries between evaluations -- a `self.<name>` that is not an "
+    "output attribute, a solver object -- is different: keep exactly what the "
+    "Python keeps."
+)
+
+
 _ASCII_RULE = (
     "ASCII ONLY -- CRITICAL: emit strictly 7-bit ASCII C++. NEVER use smart/"
     "curly quotes, em-dashes or en-dashes, the Unicode MINUS SIGN, Unicode math "
@@ -528,6 +553,9 @@ def build_prompt(spec: dict, skeleton: str, shared_protos=None) -> tuple:
     # shown "it did not compile" must not be free to reach for a simpler, slower
     # algorithm to make the error go away.
     system = system + "\n\n" + _COMPLEXITY_RULE
+    # And for the same reason again: a fix round must not "restore" a held output
+    # value to quiet a diff.
+    system = system + "\n\n" + _UNASSIGNED_OUTPUT_RULE
     # Append the library-aware translation guide (numpy/scipy/numba/imaging ->
     # C++, plus verified helper bodies for the libs this node actually uses).
     guide = translation_knowledge.guide_for_spec(spec)
