@@ -1,6 +1,6 @@
 @echo off
 setlocal
-REM Generated combined build for native plugin 'mPyMega' (36 nodes).
+REM Generated combined build for native plugin 'mPyMega' (37 nodes).
 REM Runs from any cmd.exe: MSVC is located via vswhere and vcvarsall x64
 REM is called for you. An 'x64 Native Tools Command Prompt' is used as-is.
 REM
@@ -201,6 +201,9 @@ set "OBJS=%OBJS% "%HERE%source\twistSwingSkin.obj""
 cl /nologo /std:c++17 /O2 /fp:precise /EHsc /MD /bigobj /utf-8 /D NT_PLUGIN /D REQUIRE_IOSTREAM /D _BOOL /D WIN32 /D _WINDOWS /D _CRT_SECURE_NO_WARNINGS /Zc:__cplusplus /permissive- /I "%QTINC%" /FI nd_msvc_stdext_compat.h /D MNoVersionString /D MNoPluginEntry /c "%HERE%source\aimTransform.cpp" /Fo"%HERE%source\aimTransform.obj" /I "%MAYA%\include"
 if errorlevel 1 exit /b 1
 set "OBJS=%OBJS% "%HERE%source\aimTransform.obj""
+cl /nologo /std:c++17 /O2 /fp:precise /EHsc /MD /bigobj /utf-8 /D NT_PLUGIN /D REQUIRE_IOSTREAM /D _BOOL /D WIN32 /D _WINDOWS /D _CRT_SECURE_NO_WARNINGS /Zc:__cplusplus /permissive- /I "%QTINC%" /FI nd_msvc_stdext_compat.h /D MNoVersionString /D MNoPluginEntry /c "%HERE%source\circularText.cpp" /Fo"%HERE%source\circularText.obj" /I "%MAYA%\include"
+if errorlevel 1 exit /b 1
+set "OBJS=%OBJS% "%HERE%source\circularText.obj""
 cl /nologo /std:c++17 /O2 /fp:precise /EHsc /MD /bigobj /utf-8 /D NT_PLUGIN /D REQUIRE_IOSTREAM /D _BOOL /D WIN32 /D _WINDOWS /D _CRT_SECURE_NO_WARNINGS /Zc:__cplusplus /permissive- /I "%QTINC%" /FI nd_msvc_stdext_compat.h /c "%HERE%source\plugin_main.cpp" /Fo"%HERE%source\plugin_main.obj" /I "%MAYA%\include"
 if errorlevel 1 exit /b 1
 set "OBJS=%OBJS% "%HERE%source\plugin_main.obj""

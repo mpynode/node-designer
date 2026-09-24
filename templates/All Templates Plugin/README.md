@@ -3,15 +3,16 @@
 One native plugin holding **every** template node type, plus one Maya scene per
 demo, each already swapped over to the compiled node.
 
-* `build/` -- the C++ this compiles: 36 namespaced node fragments plus the
+* `build/` -- the C++ this compiles: 37 namespaced node fragments plus the
   generated `plugin_main.cpp` that registers them, and the full per-node stage
   lineage under `stages/`.
-* `scenes/` -- 39 scenes, one per `@maya_demo`. Templates with several
-  demos get one scene each (DNET has three: `demo`, `demo_layout`,
-  `demo_two_knots`).
+* `scenes/` -- 40 scenes, one per `@maya_demo` (Circular Text has none yet).
+  Templates with several demos get one scene each (DNET has three: `demo`,
+  `demo_layout`, `demo_two_knots`; Spine has three: `demo`,
+  `demo_twist_squash`, `demo_closed_loop`).
 * `reports/` -- the evidence behind them.
-* `plugin/` -- where you build `mPyMega` (36/36 node types, 32 bundled
-  `@maya_command`s, zero drops). **Empty in a fresh clone**: see below.
+* `plugin/` -- where you build `mPyMega` (37/37 node types, 32 bundled
+  `@maya_command`s, zero node drops). **Empty in a fresh clone**: see below.
 
 ## Build the plug-in first
 
@@ -30,14 +31,14 @@ Windows, from an *x64 Native Tools Command Prompt for VS*:
 build.bat 2026
 ```
 
-It compiles `build/` (36 node types + 32 bundled commands, each namespaced and
+It compiles `build/` (37 node types + 32 bundled commands, each namespaced and
 linked through one generated `plugin_main.cpp`) and installs the result into
 `plugin/`, creating that folder if it does not exist yet.
 
 **Do not rename the built file.** Maya derives a plug-in's *name* from its
 filename, and every scene here carries `requires ... "mPyMega"`. A
 version-stamped copy like `mPyMega.2026.bundle` loads without complaint but
-registers as `mPyMega.2026`, and then all 39 scenes open with unknown nodes —
+registers as `mPyMega.2026`, and then all 40 scenes open with unknown nodes —
 nothing fails at build time, so the breakage only shows up in the viewport.
 
 ## Opening a scene
@@ -61,8 +62,10 @@ too.
 Each scene ran its template's `@maya_demo` interpreted, then swapped that
 template's own node to the mega-compiled type (attributes and connections
 preserved), evaluated it, and saved. Every scene was then re-opened in a clean
-`mayapy` to prove it loads: all 39 report **0 unknown nodes** and at
-least one live compiled node.
+`mayapy` to prove it loads: all 40 report at least one live compiled node.
+The three Spine scenes were saved from Maya 2025, the rest from Maya 2026; opened
+in Maya 2025, seven of the 2026 scenes also report two unknown
+`nodeGraphEditorInfo` nodes -- Node Editor tab layout, not scene content.
 
 ## Known, recorded caveats
 
@@ -78,8 +81,13 @@ least one live compiled node.
   bundle, verify and pass their authored tests, but one Python capability
   (relative texture-path resolution, audio loading, a legacy baked dict) was
   deliberately NOT ported rather than faked. This is by design and a re-run
-  cannot clear it.
-* The mega plugin links the **ported** C++, not the per-template optimizer
-  output. The two-pass AI optimization lives in `templates/<Family>/<Template>/`
-  (see the speedup column in the compile summary); the mega build is the
-  co-existence/link artifact, exactly as its harness has always produced it.
+  cannot clear it. Spring Chain's recipe-34 port, which that summary predates,
+  records one too: a reopened scene restarts its chain instead of restoring the
+  saved solver state.
+* **Mesh Regions' setup command is not bundled** -- its setup edits stored
+  variables, which a compiled node does not have, so the command generator
+  skips it; `mega_loadtest.py` reports it.
+* The mega plugin links each template's **shipped** C++
+  (`templates/<Family>/<Template>/build/<type>/<type>.cpp`, the optimizer's
+  winner where one was accepted), relinked from those artifacts with
+  `MPYNODE_MEGA_FROM_ARTIFACTS=1 tools/harness/mega_plugin.py`.

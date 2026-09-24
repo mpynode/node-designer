@@ -6,7 +6,7 @@
 #
 # No binary ships with this repo: a Maya plug-in is compiled against one Maya
 # version's devkit and will not load in another. This compiles the committed
-# C++ under build/ beside this script (36 node types + 32 bundled commands,
+# C++ under build/ beside this script (37 node types + 32 bundled commands,
 # namespaced per node and linked through one generated plugin_main.cpp) and
 # drops the result next to the demo scenes.
 set -euo pipefail
@@ -30,6 +30,6 @@ mkdir -p "$HERE/plugin"
 # The name must stay exactly mPyMega.bundle. Maya derives a plug-in's NAME from
 # its filename, and every scene here carries `requires ... "mPyMega"`. A
 # version-stamped copy loads fine but registers as "mPyMega.2026", and then all
-# 39 scenes open with unknown nodes -- with nothing failing at build time.
+# 40 scenes open with unknown nodes -- with nothing failing at build time.
 cp "$HERE/mPyMega.bundle" "$HERE/plugin/mPyMega.bundle"
 echo "Installed: $HERE/plugin/mPyMega.bundle"

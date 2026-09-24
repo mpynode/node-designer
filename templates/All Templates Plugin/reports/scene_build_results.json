@@ -1310,13 +1310,13 @@
    {
     "func_name": "demo",
     "label": "Spine From Four Controls",
-    "ma_basename": "MPyNode_Spine",
+    "ma_basename": "MPyNode_Spine__demo",
     "build": {
      "demo": "demo",
      "mpn": "templates/MPyNode/Spine/template.mpn",
      "built": true,
-     "ma": "compiled_templates/MPyNode_Spine/MPyNode_Spine.ma",
-     "ma_basename": "MPyNode_Spine",
+     "ma": "templates/All Templates Plugin/scenes/MPyNode_Spine__demo.ma",
+     "ma_basename": "MPyNode_Spine__demo",
      "compiled_type": "spine",
      "swapped": true,
      "eval_ok": true,
@@ -1328,7 +1328,71 @@
      "compiled_node": "spine"
     },
     "reopen": {
-     "ma": "compiled_templates/MPyNode_Spine/MPyNode_Spine.ma",
+     "ma": "templates/All Templates Plugin/scenes/MPyNode_Spine__demo.ma",
+     "reopened": true,
+     "compiled_type": "spine",
+     "compiled_nodes": 1,
+     "mesh_verts": 0,
+     "unknown_nodes": 0,
+     "unknown_plugins": [],
+     "errors": []
+    },
+    "status": "ok"
+   },
+   {
+    "func_name": "demo_twist_squash",
+    "label": "Spine: Twist Ends, Squash Middle",
+    "ma_basename": "MPyNode_Spine__demo_twist_squash",
+    "build": {
+     "demo": "demo_twist_squash",
+     "mpn": "templates/MPyNode/Spine/template.mpn",
+     "built": true,
+     "ma": "templates/All Templates Plugin/scenes/MPyNode_Spine__demo_twist_squash.ma",
+     "ma_basename": "MPyNode_Spine__demo_twist_squash",
+     "compiled_type": "spine",
+     "swapped": true,
+     "eval_ok": true,
+     "aux_interpreted": [],
+     "errors": [],
+     "notes": [],
+     "via": "mega",
+     "companions": [],
+     "compiled_node": "spine"
+    },
+    "reopen": {
+     "ma": "templates/All Templates Plugin/scenes/MPyNode_Spine__demo_twist_squash.ma",
+     "reopened": true,
+     "compiled_type": "spine",
+     "compiled_nodes": 1,
+     "mesh_verts": 0,
+     "unknown_nodes": 0,
+     "unknown_plugins": [],
+     "errors": []
+    },
+    "status": "ok"
+   },
+   {
+    "func_name": "demo_closed_loop",
+    "label": "Spine: Closed Loop",
+    "ma_basename": "MPyNode_Spine__demo_closed_loop",
+    "build": {
+     "demo": "demo_closed_loop",
+     "mpn": "templates/MPyNode/Spine/template.mpn",
+     "built": true,
+     "ma": "templates/All Templates Plugin/scenes/MPyNode_Spine__demo_closed_loop.ma",
+     "ma_basename": "MPyNode_Spine__demo_closed_loop",
+     "compiled_type": "spine",
+     "swapped": true,
+     "eval_ok": true,
+     "aux_interpreted": [],
+     "errors": [],
+     "notes": [],
+     "via": "mega",
+     "companions": [],
+     "compiled_node": "spine"
+    },
+    "reopen": {
+     "ma": "templates/All Templates Plugin/scenes/MPyNode_Spine__demo_closed_loop.ma",
      "reopened": true,
      "compiled_type": "spine",
      "compiled_nodes": 1,
@@ -1341,7 +1405,7 @@
    }
   ],
   "issues": [],
-  "multi_demo": false
+  "multi_demo": true
  },
  {
   "folder": "MPyNode_De_Boor_Spline",

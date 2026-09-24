@@ -8,7 +8,7 @@ REM called for you. An 'x64 Native Tools Command Prompt' is used as-is.
 REM
 REM No binary ships with this repo: a Maya plug-in is compiled against one Maya
 REM version's devkit and will not load in another. This compiles the committed
-REM C++ under build\ beside this script (36 node types + 32 bundled commands,
+REM C++ under build\ beside this script (37 node types + 32 bundled commands,
 REM namespaced per node and linked through one generated plugin_main.cpp) and
 REM drops the result next to the demo scenes.
 setlocal
@@ -33,7 +33,7 @@ if not exist "%HERE%plugin" mkdir "%HERE%plugin"
 REM The name must stay exactly mPyMega.mll. Maya derives a plug-in's NAME from
 REM its filename, and every scene here carries `requires ... "mPyMega"`. A
 REM version-stamped copy loads fine but registers as "mPyMega.2026", and then
-REM all 39 scenes open with unknown nodes -- with nothing failing at build time.
+REM all 40 scenes open with unknown nodes -- with nothing failing at build time.
 copy /Y "%HERE%mPyMega.mll" "%HERE%plugin\mPyMega.mll" >nul
 if errorlevel 1 exit /b 1
 echo Installed: %HERE%plugin\mPyMega.mll

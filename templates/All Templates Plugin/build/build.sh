@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Generated combined build for native plugin 'mPyMega' (36 nodes).
+# Generated combined build for native plugin 'mPyMega' (37 nodes).
 #
 # Usage:  ./build.sh [maya-version]      e.g. ./build.sh 2026
 # With no argument the newest installed Maya is used; MAYA=<path>
@@ -101,6 +101,8 @@ OBJS+=("$HERE/source/linearBlendSkin.o")
 OBJS+=("$HERE/source/twistSwingSkin.o")
 "${CXX[@]}" -D MNoVersionString -D MNoPluginEntry -c "$HERE/source/aimTransform.cpp" -o "$HERE/source/aimTransform.o"
 OBJS+=("$HERE/source/aimTransform.o")
+"${CXX[@]}" -D MNoVersionString -D MNoPluginEntry -c "$HERE/source/circularText.cpp" -o "$HERE/source/circularText.o"
+OBJS+=("$HERE/source/circularText.o")
 "${CXX[@]}" -c "$HERE/source/plugin_main.cpp" -o "$HERE/source/plugin_main.o"
 OBJS+=("$HERE/source/plugin_main.o")
 clang++ -std=c++17 -arch arm64 -bundle -L"$MAYA/Maya.app/Contents/MacOS" -lOpenMaya -lOpenMayaAnim -lOpenMayaUI -lOpenMayaRender -lFoundation "${OBJS[@]}" -framework QtCore -framework QtGui -framework QtWidgets -F"$MAYA/Maya.app/Contents/Frameworks" -Wl,-rpath,"$MAYA/Maya.app/Contents/Frameworks" -o "$HERE/../mPyMega.bundle"

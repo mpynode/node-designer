@@ -57,6 +57,7 @@ Source (in source/)
   source/linearBlendSkin.cpp
   source/twistSwingSkin.cpp
   source/aimTransform.cpp
+  source/circularText.cpp
   source/plugin_main.cpp   <- registers every node above.
   source/shared_helpers.cpp (if present) <- helpers shared across nodes.
 

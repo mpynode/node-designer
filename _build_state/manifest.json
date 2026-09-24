@@ -733,7 +733,7 @@
           "events": [
             "portability procrustesTags start: ",
             "cache procrustesTags start: ",
-            "cache procrustesTags miss: cache miss 08fba9c9f396",
+            "cache procrustesTags miss: cache miss f64a450caefb",
             "port procrustesTags start: porting",
             "stage procrustesTags ok: 1_transpiled",
             "port procrustesTags ok: ported (0 fix rounds)",
@@ -752,10 +752,10 @@
           "optimize_events_tail": []
         },
         "bundle_exists": true,
-        "bundle_path": "C:\\Users\\eric.vignola\\Desktop\\MPyNode\\templates\\MPyConstraint\\Procrustes Tags\\MPyConstraint_Procrustes_Tags.mll",
-        "ended": 1788986381.3002975,
+        "bundle_path": "C:\\Users\\eric.vignola\\mpynode_build\\MPyNode\\templates\\MPyConstraint\\Procrustes Tags\\MPyConstraint_Procrustes_Tags.mll",
+        "ended": 1790267108.4320264,
         "errors": [],
-        "log": "C:\\Users\\eric.vignola\\Desktop\\MPyNode\\templates\\MPyConstraint\\Procrustes Tags\\_runner\\phase_a.log",
+        "log": "C:\\Users\\eric.vignola\\mpynode_build\\MPyNode\\templates\\MPyConstraint\\Procrustes Tags\\_runner\\phase_a.log",
         "mode": {
           "ai_assist": true,
           "keep_intermediates": false,
@@ -783,16 +783,16 @@
               "ran": true,
               "reason": "verified with 1 geo/string input(s) left at default (unwired, could not be synthesized): clusterTags | authored @maya_test: 1/1 passed",
               "timing": {
-                "cpp_ms": 0.4205000586807728,
+                "cpp_ms": 1.0528000129852444,
                 "measured": true,
                 "n": 3,
-                "py_ms": 37.489499896764755,
-                "ratio": 0.011216475542184036,
+                "py_ms": 47.83930000849068,
+                "ratio": 0.022007011239679297,
                 "rung": [
-                  40,
-                  512
+                  140,
+                  5000
                 ],
-                "scene": "geo 40 / array 512",
+                "scene": "geo 140 / array 5000",
                 "truncated": false,
                 "verdict": "ok"
               },
@@ -804,11 +804,11 @@
         "phase": "a",
         "rel": "MPyConstraint\\Procrustes Tags",
         "rounds": {},
-        "secs": 8.7,
+        "secs": 8.3,
         "smoke": false,
-        "started": 1788986372.6340294,
+        "started": 1790267100.102259,
         "state": "ok",
-        "wall_secs": 14.1
+        "wall_secs": 13.0
       },
       "phase_b": {
         "ai": {
@@ -822,7 +822,7 @@
             "portability procrustesTags start: ",
             "cache procrustesTags start: ",
             "stage procrustesTags ok: 1_transpiled",
-            "cache procrustesTags hit: cache hit 08fba9c9f396",
+            "cache procrustesTags hit: cache hit f64a450caefb",
             "port - skip: no node needed AI assist -- every compute lowered deterministically",
             "assemble - start: linking 1 node(s)",
             "assemble - ok: bundle: MPyConstraint_Procrustes_Tags.mll",
@@ -833,41 +833,33 @@
             "done - ok: 1 node(s)"
           ],
           "n_log_lines": 2,
-          "n_optimize_events": 25,
+          "n_optimize_events": 17,
           "no_node_needed_llm": true,
           "optimize_events_tail": [
             "- info: [procrustesTags] optimizing -- measuring baseline",
-            "- info: [procrustesTags] baseline 10.035 ms; up to 6 optimize round(s) (at least 2; stops after a rejected round or a gain under 1.15x)",
+            "- info: [procrustesTags] baseline 11.169 ms; up to 6 optimize round(s) (at least 2; stops after a rejected round or a gain under 1.15x)",
             "- info: [procrustesTags] round 1/6 starting",
-            "- info: [procrustesTags] round 1/6 -- AI working 4m27s",
-            "- info: [procrustesTags] round 1/6 -- AI working 9m27s",
-            "- info: [procrustesTags] round 1/6 -- AI working 14m27s",
-            "- info: [optimizer] agent edited procrustesTags.cpp (424749 -> 425334 bytes)",
-            "- info: [procrustesTags] round 1/6 trying: Read only what the math touches: gather the cluster-member points straight from the two meshes' float stores instead of widening both 160k-vertex meshes to double, and pull only the first min(clusterRows, bindRows) bind matrices by logical index instead of marshall",
-            "- info: [procrustesTags] round 1: ACCEPT 2.350 ms (4.27x vs baseline, 4.27x over the previous best)",
+            "- info: [procrustesTags] round 1/6 -- AI working 4m21s",
+            "- info: [optimizer] agent edited procrustesTags.cpp (426300 -> 426584 bytes)",
+            "- info: [procrustesTags] round 1/6 trying: Read only the cluster-member vertices straight from the raw float buffers, and only the bind matrices below min(ncl, nbind), instead of widening both 159k-vertex meshes and all 20k bind matrices into double arrays every tick. (predicted 3.00x, risk: The scan must s",
+            "- info: [procrustesTags] round 1: ACCEPT 2.776 ms (4.02x vs baseline, 4.02x over the previous best)",
             "- info: [procrustesTags] round 2/6 starting",
-            "- info: [procrustesTags] round 2/6 -- AI working 3m36s",
-            "- info: [procrustesTags] round 2/6 -- AI working 8m36s",
-            "- info: [procrustesTags] round 2/6 -- AI working 13m37s",
-            "- info: [procrustesTags] round 2/6 -- AI working 18m37s",
-            "- info: [optimizer] agent edited procrustesTags.cpp (425334 -> 418583 bytes)",
-            "- info: [procrustesTags] round 2/6 trying: replace the generic nd:: array chain (18 whole-array temporaries, reshape/slice/tile/einsum/svd/det/matmul) with one fused per-cluster Kabsch kernel that calls svd3_core directly and reproduces every accumulation in the same left-fold order (predicted 1.02x, risk: ",
-            "- info: [procrustesTags] round 2: ACCEPT 2.031 ms (4.94x vs baseline, 1.16x over the previous best)",
-            "- info: [procrustesTags] round 3/6 starting",
-            "- info: [procrustesTags] round 3/6 -- AI working 2m30s",
-            "- info: [procrustesTags] round 3/6 -- AI working 7m30s",
-            "- info: [procrustesTags] round 3/6 -- AI working 12m30s",
-            "- info: [procrustesTags] round 3/6 trying: timed every segment of compute() at the bench scene and found 94% of the tick is Maya evaluating the two non-cached upstream worldMesh[0] plugs inside data.inputValue(), 6% is the one unavoidable MFnMesh attach per mesh, and everything this file can reach is under ",
-            "- info: [procrustesTags] round 3: no change to the source",
-            "- info: [procrustesTags] stopping after round 3: round 3 no-change -- nothing new to compound from",
-            "- ok: procrustesTags: 4.94x faster"
+            "- info: [procrustesTags] round 2/6 -- AI working 34s",
+            "- info: [procrustesTags] round 2/6 -- AI working 5m34s",
+            "- info: [procrustesTags] round 2/6 -- AI working 10m34s",
+            "- info: [procrustesTags] round 2/6 -- AI working 15m34s",
+            "- info: [optimizer] agent edited procrustesTags.cpp (426584 -> 422416 bytes)",
+            "- info: [procrustesTags] round 2/6 trying: Read only the first ncl bind matrices by logical index instead of walking all 20000 bindMatrices elements, and run the per-cluster Procrustes fit as one scalar pass instead of ~60 nd:: whole-array temporaries. (predicted 1.08x, risk: jumpToElement cost on very larg",
+            "- info: [procrustesTags] round 2: not faster (2.863 ms vs best 2.776 ms)",
+            "- info: [procrustesTags] stopping after round 2: round 2 not-faster -- nothing new to compound from",
+            "- ok: procrustesTags: 4.02x faster"
           ]
         },
         "bundle_exists": true,
-        "bundle_path": "C:\\Users\\eric.vignola\\Desktop\\MPyNode\\templates\\MPyConstraint\\Procrustes Tags\\MPyConstraint_Procrustes_Tags.mll",
-        "ended": 1788990254.5612564,
+        "bundle_path": "C:\\Users\\eric.vignola\\mpynode_build\\MPyNode\\templates\\MPyConstraint\\Procrustes Tags\\MPyConstraint_Procrustes_Tags.mll",
+        "ended": 1790270455.9436817,
         "errors": [],
-        "log": "C:\\Users\\eric.vignola\\Desktop\\MPyNode\\templates\\MPyConstraint\\Procrustes Tags\\_runner\\phase_b.log",
+        "log": "C:\\Users\\eric.vignola\\mpynode_build\\MPyNode\\templates\\MPyConstraint\\Procrustes Tags\\_runner\\phase_b.log",
         "mode": {
           "ai_assist": true,
           "keep_intermediates": true,
@@ -895,16 +887,16 @@
               "ran": true,
               "reason": "verified with 1 geo/string input(s) left at default (unwired, could not be synthesized): clusterTags | authored @maya_test: 1/1 passed",
               "timing": {
-                "cpp_ms": 0.2566000912338495,
+                "cpp_ms": 0.5548000044655055,
                 "measured": true,
                 "n": 3,
-                "py_ms": 25.59480001218617,
-                "ratio": 0.010025477484163868,
+                "py_ms": 49.695099995005876,
+                "ratio": 0.011164078641984024,
                 "rung": [
-                  40,
-                  512
+                  140,
+                  5000
                 ],
-                "scene": "geo 40 / array 512",
+                "scene": "geo 140 / array 5000",
                 "truncated": false,
                 "verdict": "ok"
               },
@@ -919,10 +911,13 @@
               "candidates": 2,
               "errors": [],
               "path": "agent",
-              "rounds": 3
+              "rounds": 2
             },
-            "reason": "accepted (4.94x)",
-            "speedup": 4.940915805022156
+            "max_rounds": 6,
+            "reason": "accepted (4.02x)",
+            "rounds": 2,
+            "speedup": 4.023451008645534,
+            "stop_reason": "round 2 not-faster -- nothing new to compound from"
           }
         },
         "phase": "b",
@@ -930,14 +925,14 @@
         "rounds": {
           "procrustesTags": {
             "accepted": true,
-            "baseline_ms": 10.035,
-            "best_ms": 2.031,
-            "created": 1788990252.9916573,
+            "baseline_ms": 11.1691,
+            "best_ms": 2.776,
+            "created": 1790270451.7213848,
             "fresh": true,
-            "n_rounds": 3,
+            "n_rounds": 2,
             "parity_gate": "authored+pointwise",
-            "path": "C:\\Users\\eric.vignola\\Desktop\\MPyNode\\templates\\MPyConstraint\\Procrustes Tags\\build\\stages\\procrustesTags\\rounds.json",
-            "reason": "accepted (4.94x)",
+            "path": "C:\\Users\\eric.vignola\\mpynode_build\\MPyNode\\templates\\MPyConstraint\\Procrustes Tags\\build\\stages\\procrustesTags\\rounds.json",
+            "reason": "accepted (4.02x)",
             "rounds": [
               {
                 "cpp_same_as_baseline": true,
@@ -945,7 +940,7 @@
                 "has_hypothesis": false,
                 "has_theme": false,
                 "index": 0,
-                "ms": 10.035,
+                "ms": 11.1691,
                 "note": "",
                 "outcome": "baseline",
                 "parity": null,
@@ -954,52 +949,39 @@
               },
               {
                 "cpp_same_as_baseline": false,
-                "duration_s": 950.078,
+                "duration_s": 527.88,
                 "has_hypothesis": true,
                 "has_theme": true,
                 "index": 1,
-                "ms": 2.3498,
-                "note": "confirmed twice (incumbent under the noise floor): 2.228 / 2.350 ms",
+                "ms": 2.776,
+                "note": "confirmed twice (incumbent under the noise floor): 2.634 / 2.776 ms",
                 "outcome": "accept",
                 "parity": "pass",
-                "slug": "gather_members_not_meshes",
-                "speedup": 4.270576219252702
+                "slug": "gather_member_rows",
+                "speedup": 4.023451008645534
               },
               {
                 "cpp_same_as_baseline": false,
-                "duration_s": 1266.192,
+                "duration_s": 1170.346,
                 "has_hypothesis": true,
                 "has_theme": true,
                 "index": 2,
-                "ms": 2.031,
-                "note": "confirmed twice (incumbent under the noise floor): 1.896 / 2.031 ms",
-                "outcome": "accept",
+                "ms": 2.8627,
+                "note": "",
+                "outcome": "not-faster",
                 "parity": "pass",
-                "slug": "fuse_kabsch_kernel",
-                "speedup": 4.940915805022156
-              },
-              {
-                "cpp_same_as_baseline": null,
-                "duration_s": 907.594,
-                "has_hypothesis": true,
-                "has_theme": true,
-                "index": 3,
-                "ms": null,
-                "note": "candidate is identical to the current best",
-                "outcome": "no-change",
-                "parity": null,
-                "slug": "profile_upstream_bound_no_change",
+                "slug": "skip_bind_walk",
                 "speedup": null
               }
             ],
-            "speedup": 4.940915805022156
+            "speedup": 4.023451008645534
           }
         },
-        "secs": 3159.8,
+        "secs": 1741.9,
         "smoke": false,
-        "started": 1788987094.7636998,
+        "started": 1790268714.0323327,
         "state": "ok",
-        "wall_secs": 3164.6
+        "wall_secs": 1746.0
       }
     },
     "MPyDeformer": {
@@ -12738,6 +12720,547 @@
         "wall_secs": 1023.7
       }
     },
+    "MPyNode\\Bubble Sort": {
+      "phase_a": {
+        "ai": {
+          "assisted_cached": [],
+          "assisted_now": [
+            "bubbleSort"
+          ],
+          "cache_hit": [],
+          "cache_miss": [
+            "bubbleSort"
+          ],
+          "events": [
+            "portability bubbleSort start: ",
+            "cache bubbleSort start: ",
+            "cache bubbleSort miss: cache miss d8ac03b48312",
+            "port bubbleSort start: porting",
+            "stage bubbleSort ok: 1_transpiled",
+            "stage bubbleSort ok: 2_assisted",
+            "port bubbleSort ok: ported (0 fix rounds)",
+            "assemble - start: linking 1 node(s)",
+            "assemble - ok: bundle: MPyNode_Bubble_Sort.mll",
+            "verify - start: parity check",
+            "verify bubbleSort ok: maxerr=None",
+            "verify - ok: verify done",
+            "done - ok: 1 node(s)"
+          ],
+          "n_log_lines": 11,
+          "n_optimize_events": 0,
+          "no_node_needed_llm": false,
+          "optimize_events_tail": []
+        },
+        "bundle_exists": true,
+        "bundle_path": "C:\\Users\\eric.vignola\\mpynode_build\\MPyNode\\templates\\MPyNode\\Bubble Sort\\MPyNode_Bubble_Sort.mll",
+        "ended": 1790267367.7708063,
+        "errors": [],
+        "log": "C:\\Users\\eric.vignola\\mpynode_build\\MPyNode\\templates\\MPyNode\\Bubble Sort\\_runner\\phase_a.log",
+        "mode": {
+          "ai_assist": true,
+          "keep_intermediates": false,
+          "optimize": false
+        },
+        "nodes": [
+          {
+            "build_reason": "",
+            "build_status": "compiled",
+            "cache": "miss",
+            "incomplete": [],
+            "ported": true,
+            "type_name": "bubbleSort",
+            "verify": {
+              "authored_test": {
+                "count": 1,
+                "passed": true,
+                "passes": 1,
+                "ran": true,
+                "reason": ""
+              },
+              "generic_ran": false,
+              "maxerr": null,
+              "pass": true,
+              "ran": true,
+              "reason": "uses RNG via the AI porter (C++ <random>); not bit-identical to Python -- pointwise parity skipped | authored @maya_test: 1/1 passed",
+              "timing": {
+                "measured": false,
+                "reason": "not timed -- generic parity did not pass for this node, so there is no trustworthy pair to measure (uses RNG via the AI porter (C++ <random>); not bit-identical to Python -- pointwise parity skipped)"
+              },
+              "tol": 0.0
+            }
+          }
+        ],
+        "optimize_summary": {},
+        "phase": "a",
+        "rel": "MPyNode\\Bubble Sort",
+        "rounds": {},
+        "secs": 267.7,
+        "smoke": false,
+        "started": 1790267100.0927026,
+        "state": "ok",
+        "wall_secs": 272.0
+      },
+      "phase_b": {
+        "ai": {
+          "assisted_cached": [
+            "bubbleSort"
+          ],
+          "assisted_now": [],
+          "cache_hit": [
+            "bubbleSort"
+          ],
+          "cache_miss": [],
+          "events": [
+            "portability bubbleSort start: ",
+            "cache bubbleSort start: ",
+            "stage bubbleSort ok: 1_transpiled",
+            "cache bubbleSort hit: cache hit d8ac03b48312",
+            "stage bubbleSort ok: 2_assisted_cached",
+            "assemble - start: linking 1 node(s)",
+            "assemble - ok: bundle: MPyNode_Bubble_Sort.mll",
+            "verify - start: parity check",
+            "verify bubbleSort ok: maxerr=None",
+            "verify - ok: verify done",
+            "done - ok: 1 node(s)"
+          ],
+          "n_log_lines": 2,
+          "n_optimize_events": 26,
+          "no_node_needed_llm": false,
+          "optimize_events_tail": [
+            "- info: [bubbleSort] optimizing -- measuring baseline",
+            "- info: [bubbleSort] baseline 1.895 ms; up to 6 optimize round(s) (at least 2; stops after a rejected round or a gain under 1.15x)",
+            "- info: [bubbleSort] round 1/6 starting",
+            "- info: [bubbleSort] round 1/6 -- AI working 4m15s",
+            "- info: [bubbleSort] round 1/6 -- AI working 9m15s",
+            "- info: [bubbleSort] round 1/6 -- AI working 14m15s",
+            "- info: [optimizer] agent edited bubbleSort.cpp (10432 -> 10047 bytes)",
+            "- info: [bubbleSort] round 1/6 trying: fill the 20k-element sort[] builder with addLast().asFloat() in one fused lerp loop (no temp vector, no setFloat call, RNG built only on regen, state moved from a static registry to a per-instance member) (predicted 1.10x, risk: addLast() relies on the freshly construc",
+            "- info: [bubbleSort] round 1: ACCEPT 1.206 ms (1.57x vs baseline, 1.57x over the previous best)",
+            "- info: [bubbleSort] round 2/6 starting",
+            "- info: [bubbleSort] round 2/6 -- AI working 1m38s",
+            "- info: [bubbleSort] round 2/6 -- AI working 6m38s",
+            "- info: [bubbleSort] round 2/6 -- AI working 11m38s",
+            "- info: [bubbleSort] round 2/6 -- AI working 16m38s",
+            "- info: [optimizer] agent edited bubbleSort.cpp (10047 -> 14413 bytes)",
+            "- info: [bubbleSort] round 2/6 trying: Write the 20k sort[] floats in place through the existing element handles (jumpToElement(i) proves the 0..n-1 layout, builder kept as fallback) instead of rebuilding the whole array with MArrayDataBuilder, and fuse a bit-identical inlined mt19937_64 draw into that writ",
+            "- info: [bubbleSort] round 2: ACCEPT 0.672 ms (2.82x vs baseline, 1.79x over the previous best)",
+            "- info: [bubbleSort] round 3/6 starting",
+            "- info: [bubbleSort] round 3/6 -- AI working 50s",
+            "- info: [bubbleSort] round 3/6 -- AI working 5m50s",
+            "- info: [bubbleSort] round 3/6 -- AI working 10m50s",
+            "- info: [bubbleSort] round 3/6 -- AI working 15m50s",
+            "- info: [bubbleSort] round 3/6 trying: No candidate beat the entry file, so bubbleSort.cpp is left byte-identical: about 70% of compute() is Maya's mandatory data.setClean(aSort) on 20000 connected elements, and no change inside the node can shrink it. (predicted 1.30x, risk: None shipped. Rejected on corre",
+            "- info: [bubbleSort] round 3: no change to the source",
+            "- info: [bubbleSort] stopping after round 3: round 3 no-change -- nothing new to compound from",
+            "- ok: bubbleSort: 2.82x faster"
+          ]
+        },
+        "bundle_exists": true,
+        "bundle_path": "C:\\Users\\eric.vignola\\mpynode_build\\MPyNode\\templates\\MPyNode\\Bubble Sort\\MPyNode_Bubble_Sort.mll",
+        "ended": 1790273088.3436177,
+        "errors": [],
+        "log": "C:\\Users\\eric.vignola\\mpynode_build\\MPyNode\\templates\\MPyNode\\Bubble Sort\\_runner\\phase_b.log",
+        "mode": {
+          "ai_assist": true,
+          "keep_intermediates": true,
+          "optimize": true
+        },
+        "nodes": [
+          {
+            "build_reason": "",
+            "build_status": "compiled",
+            "cache": "hit",
+            "incomplete": [],
+            "ported": true,
+            "type_name": "bubbleSort",
+            "verify": {
+              "authored_test": {
+                "count": 1,
+                "passed": true,
+                "passes": 1,
+                "ran": true,
+                "reason": ""
+              },
+              "generic_ran": false,
+              "maxerr": null,
+              "pass": true,
+              "ran": true,
+              "reason": "uses RNG via the AI porter (C++ <random>); not bit-identical to Python -- pointwise parity skipped | authored @maya_test: 1/1 passed",
+              "timing": {
+                "measured": false,
+                "reason": "not timed -- generic parity did not pass for this node, so there is no trustworthy pair to measure (uses RNG via the AI porter (C++ <random>); not bit-identical to Python -- pointwise parity skipped)"
+              },
+              "tol": 0.0
+            }
+          }
+        ],
+        "optimize_summary": {
+          "bubbleSort": {
+            "accepted": true,
+            "ai": {
+              "candidates": 2,
+              "errors": [],
+              "path": "agent",
+              "rounds": 3
+            },
+            "max_rounds": 6,
+            "reason": "accepted (2.82x)",
+            "rounds": 3,
+            "speedup": 2.822066706372841,
+            "stop_reason": "round 3 no-change -- nothing new to compound from"
+          }
+        },
+        "phase": "b",
+        "rel": "MPyNode\\Bubble Sort",
+        "rounds": {
+          "bubbleSort": {
+            "accepted": true,
+            "baseline_ms": 1.8953,
+            "best_ms": 0.6716,
+            "created": 1790273087.063599,
+            "fresh": true,
+            "n_rounds": 3,
+            "parity_gate": "authored-only",
+            "path": "C:\\Users\\eric.vignola\\mpynode_build\\MPyNode\\templates\\MPyNode\\Bubble Sort\\build\\stages\\bubbleSort\\rounds.json",
+            "reason": "accepted (2.82x)",
+            "rounds": [
+              {
+                "cpp_same_as_baseline": true,
+                "duration_s": null,
+                "has_hypothesis": false,
+                "has_theme": false,
+                "index": 0,
+                "ms": 1.8953,
+                "note": "",
+                "outcome": "baseline",
+                "parity": null,
+                "slug": null,
+                "speedup": null
+              },
+              {
+                "cpp_same_as_baseline": false,
+                "duration_s": 1057.239,
+                "has_hypothesis": true,
+                "has_theme": true,
+                "index": 1,
+                "ms": 1.2055,
+                "note": "confirmed twice (incumbent under the noise floor): 0.630 / 1.206 ms",
+                "outcome": "accept",
+                "parity": "pass",
+                "slug": "builder_addlast_asfloat",
+                "speedup": 1.572210700953961
+              },
+              {
+                "cpp_same_as_baseline": false,
+                "duration_s": 1248.175,
+                "has_hypothesis": true,
+                "has_theme": true,
+                "index": 2,
+                "ms": 0.6716,
+                "note": "confirmed twice (incumbent under the noise floor): 0.533 / 0.672 ms",
+                "outcome": "accept",
+                "parity": "pass",
+                "slug": "inplace_sort_write",
+                "speedup": 2.822066706372841
+              },
+              {
+                "cpp_same_as_baseline": null,
+                "duration_s": 1218.566,
+                "has_hypothesis": true,
+                "has_theme": true,
+                "index": 3,
+                "ms": null,
+                "note": "candidate is identical to the current best",
+                "outcome": "no-change",
+                "parity": null,
+                "slug": "no_change_setclean_floor",
+                "speedup": null
+              }
+            ],
+            "speedup": 2.822066706372841
+          }
+        },
+        "secs": 3570.8,
+        "smoke": false,
+        "started": 1790269517.5123515,
+        "state": "ok",
+        "wall_secs": 3575.0
+      }
+    },
+    "MPyNode\\DNET": {
+      "phase_a": {
+        "ai": {
+          "assisted_cached": [],
+          "assisted_now": [
+            "mPyDnet"
+          ],
+          "cache_hit": [],
+          "cache_miss": [
+            "mPyDnet"
+          ],
+          "events": [
+            "portability mPyDnet start: ",
+            "cache mPyDnet start: ",
+            "cache mPyDnet miss: cache miss 1e48a2a417b7",
+            "port mPyDnet start: porting",
+            "stage mPyDnet ok: 1_transpiled",
+            "stage mPyDnet ok: 2_assisted",
+            "port mPyDnet ok: ported (0 fix rounds)",
+            "assemble - start: linking 1 node(s)",
+            "assemble - ok: bundle: MPyNode_DNET.mll",
+            "assemble - ok: bundled command(s): 2 (no companion plug-in)",
+            "verify - start: parity check",
+            "verify mPyDnet ok: maxerr=1.8496648408472538e-05",
+            "verify - ok: verify done",
+            "done - ok: 1 node(s)"
+          ],
+          "n_log_lines": 11,
+          "n_optimize_events": 0,
+          "no_node_needed_llm": false,
+          "optimize_events_tail": []
+        },
+        "bundle_exists": true,
+        "bundle_path": "C:\\Users\\eric.vignola\\mpynode_build\\MPyNode\\templates\\MPyNode\\DNET\\MPyNode_DNET.mll",
+        "ended": 1790270397.7971284,
+        "errors": [],
+        "log": "C:\\Users\\eric.vignola\\mpynode_build\\MPyNode\\templates\\MPyNode\\DNET\\_runner\\phase_a.log",
+        "mode": {
+          "ai_assist": true,
+          "keep_intermediates": false,
+          "optimize": false
+        },
+        "nodes": [
+          {
+            "build_reason": "",
+            "build_status": "compiled",
+            "cache": "miss",
+            "incomplete": [],
+            "ported": true,
+            "type_name": "mPyDnet",
+            "verify": {
+              "authored_test": {
+                "count": 1,
+                "passed": true,
+                "passes": 1,
+                "ran": true,
+                "reason": ""
+              },
+              "generic_ran": true,
+              "maxerr": 1.8496648408472538e-05,
+              "pass": true,
+              "ran": true,
+              "reason": "compared on 23 of 30 input sets: on 7 the interpreted reference was non-idempotent (it carries state, and the harness evaluates it more often than the compiled node), so those cannot be lined up pointwise | authored @maya_test: 1/1 passed",
+              "timing": {
+                "cpp_ms": 7.7634000044781715,
+                "measured": true,
+                "n": 3,
+                "py_ms": 20.128599979216233,
+                "ratio": 0.3856900138357493,
+                "rung": [
+                  40,
+                  512
+                ],
+                "scene": "geo 40 / array 512",
+                "truncated": false,
+                "verdict": "ok"
+              },
+              "tol": 0.0001
+            }
+          }
+        ],
+        "optimize_summary": {},
+        "phase": "a",
+        "rel": "MPyNode\\DNET",
+        "rounds": {},
+        "secs": 801.7,
+        "smoke": false,
+        "started": 1790269596.0549722,
+        "state": "ok",
+        "wall_secs": 807.0
+      },
+      "phase_b": {
+        "ai": {
+          "assisted_cached": [
+            "mPyDnet"
+          ],
+          "assisted_now": [],
+          "cache_hit": [
+            "mPyDnet"
+          ],
+          "cache_miss": [],
+          "events": [
+            "portability mPyDnet start: ",
+            "cache mPyDnet start: ",
+            "stage mPyDnet ok: 1_transpiled",
+            "cache mPyDnet hit: cache hit 1e48a2a417b7",
+            "stage mPyDnet ok: 2_assisted_cached",
+            "assemble - start: linking 1 node(s)",
+            "assemble - ok: bundle: MPyNode_DNET.mll",
+            "assemble - ok: bundled command(s): 2 (no companion plug-in)",
+            "verify - start: parity check",
+            "verify mPyDnet ok: maxerr=1.8496648408472538e-05",
+            "verify - ok: verify done",
+            "done - ok: 1 node(s)"
+          ],
+          "n_log_lines": 2,
+          "n_optimize_events": 23,
+          "no_node_needed_llm": false,
+          "optimize_events_tail": [
+            "- info: [mPyDnet] optimizing -- measuring baseline",
+            "- info: [mPyDnet] baseline 18.110 ms; up to 6 optimize round(s) (at least 2; stops after a rejected round or a gain under 1.15x)",
+            "- info: [mPyDnet] round 1/6 starting",
+            "- info: [mPyDnet] round 1/6 -- AI working 3m57s",
+            "- info: [mPyDnet] round 1/6 -- AI working 8m57s",
+            "- info: [mPyDnet] round 1/6 -- AI working 13m57s",
+            "- info: [mPyDnet] round 1/6 -- AI working 18m57s",
+            "- info: [mPyDnet] round 1/6 -- AI working 23m57s",
+            "- info: [mPyDnet] round 1/6 -- AI working 28m57s",
+            "- info: [optimizer] agent edited mPyDnet.cpp (367767 -> 377973 bytes)",
+            "- info: [mPyDnet] round 1/6 trying: Replace the MMatrix vector with raw row-major doubles (input read, both blend products, row-3-only previous) and run the per-knot product+blend+inverse and the two solver phases as parallel maps on a persistent per-node pool, with per-link forces computed once instead of ",
+            "- info: [mPyDnet] round 1: ACCEPT 9.909 ms (1.83x vs baseline, 1.83x over the previous best)",
+            "- info: [mPyDnet] round 2/6 starting",
+            "- info: [mPyDnet] round 2/6 -- AI working 4m04s",
+            "- info: [mPyDnet] round 2/6 -- AI working 9m04s",
+            "- info: [mPyDnet] round 2/6 -- AI working 14m04s",
+            "- info: [mPyDnet] round 2/6 -- AI working 19m04s",
+            "- info: [mPyDnet] round 2/6 -- AI working 24m04s",
+            "- info: [optimizer] agent edited mPyDnet.cpp (377973 -> 383084 bytes)",
+            "- info: [mPyDnet] round 2/6 trying: Move the solver state from a static node registry into a per-instance member that also owns every per-tick scratch buffer, then trim the solve: one fused parallel region per Jacobi iteration instead of two, a threaded post-solve pass, and the serial adjacency rebuild over",
+            "- info: [mPyDnet] round 2: ACCEPT 8.995 ms (2.01x vs baseline, 1.10x over the previous best)",
+            "- info: [mPyDnet] stopping after round 2: round 2 gained 1.10x, below the 1.15x needed to continue",
+            "- ok: mPyDnet: 2.01x faster"
+          ]
+        },
+        "bundle_exists": true,
+        "bundle_path": "C:\\Users\\eric.vignola\\mpynode_build\\MPyNode\\templates\\MPyNode\\DNET\\MPyNode_DNET.mll",
+        "ended": 1790274014.3192139,
+        "errors": [],
+        "log": "C:\\Users\\eric.vignola\\mpynode_build\\MPyNode\\templates\\MPyNode\\DNET\\_runner\\phase_b.log",
+        "mode": {
+          "ai_assist": true,
+          "keep_intermediates": true,
+          "optimize": true
+        },
+        "nodes": [
+          {
+            "build_reason": "",
+            "build_status": "compiled",
+            "cache": "hit",
+            "incomplete": [],
+            "ported": true,
+            "type_name": "mPyDnet",
+            "verify": {
+              "authored_test": {
+                "count": 1,
+                "passed": true,
+                "passes": 1,
+                "ran": true,
+                "reason": ""
+              },
+              "generic_ran": true,
+              "maxerr": 1.8496648408472538e-05,
+              "pass": true,
+              "ran": true,
+              "reason": "compared on 23 of 30 input sets: on 7 the interpreted reference was non-idempotent (it carries state, and the harness evaluates it more often than the compiled node), so those cannot be lined up pointwise | authored @maya_test: 1/1 passed",
+              "timing": {
+                "cpp_ms": 9.519200015347451,
+                "measured": true,
+                "n": 3,
+                "py_ms": 19.32759999181144,
+                "ratio": 0.49251847199758214,
+                "rung": [
+                  40,
+                  512
+                ],
+                "scene": "geo 40 / array 512",
+                "truncated": false,
+                "verdict": "ok"
+              },
+              "tol": 0.0001
+            }
+          }
+        ],
+        "optimize_summary": {
+          "mPyDnet": {
+            "accepted": true,
+            "ai": {
+              "candidates": 2,
+              "errors": [],
+              "path": "agent",
+              "rounds": 2
+            },
+            "max_rounds": 6,
+            "reason": "accepted (2.01x)",
+            "rounds": 2,
+            "speedup": 2.013307392996109,
+            "stop_reason": "round 2 gained 1.10x, below the 1.15x needed to continue"
+          }
+        },
+        "phase": "b",
+        "rel": "MPyNode\\DNET",
+        "review": "shipped optimizer round 1 (1.83x); round 2 (2.01x) withheld in review: a serial pass overlapped with its parallel map, outside the permitted shape",
+        "rounds": {
+          "mPyDnet": {
+            "accepted": true,
+            "baseline_ms": 18.1097,
+            "best_ms": 8.995,
+            "created": 1790274006.7584004,
+            "fresh": true,
+            "n_rounds": 2,
+            "parity_gate": "authored+pointwise",
+            "path": "C:\\Users\\eric.vignola\\mpynode_build\\MPyNode\\templates\\MPyNode\\DNET\\build\\stages\\mPyDnet\\rounds.json",
+            "reason": "accepted (2.01x)",
+            "rounds": [
+              {
+                "cpp_same_as_baseline": true,
+                "duration_s": null,
+                "has_hypothesis": false,
+                "has_theme": false,
+                "index": 0,
+                "ms": 18.1097,
+                "note": "",
+                "outcome": "baseline",
+                "parity": null,
+                "slug": null,
+                "speedup": null
+              },
+              {
+                "cpp_same_as_baseline": false,
+                "duration_s": 1793.221,
+                "has_hypothesis": true,
+                "has_theme": true,
+                "index": 1,
+                "ms": 9.9094,
+                "note": "",
+                "outcome": "accept",
+                "parity": "pass",
+                "slug": "raw_matrices_pooled_knot_map",
+                "speedup": 1.8275273982279452
+              },
+              {
+                "cpp_same_as_baseline": false,
+                "duration_s": 1624.807,
+                "has_hypothesis": true,
+                "has_theme": true,
+                "index": 2,
+                "ms": 8.995,
+                "note": "",
+                "outcome": "accept",
+                "parity": "pass",
+                "slug": "persistent_scratch_state",
+                "speedup": 2.013307392996109
+              }
+            ],
+            "speedup": 2.013307392996109
+          }
+        },
+        "secs": 3489.9,
+        "smoke": false,
+        "started": 1790270524.4130726,
+        "state": "ok",
+        "wall_secs": 3494.0
+      }
+    },
     "MPyNode\\De Boor Spline": {
       "phase_a": {
         "ai": {
@@ -12750,7 +13273,7 @@
           "events": [
             "portability spline start: ",
             "cache spline start: ",
-            "cache spline miss: cache miss ca8c25611a2f",
+            "cache spline miss: cache miss e0dd73114021",
             "port spline start: porting",
             "stage spline ok: 1_transpiled",
             "port spline ok: ported (0 fix rounds)",
@@ -12768,10 +13291,10 @@
           "optimize_events_tail": []
         },
         "bundle_exists": true,
-        "bundle_path": "C:\\Users\\eric.vignola\\Desktop\\MPyNode\\templates\\MPyNode\\De Boor Spline\\MPyNode_De_Boor_Spline.mll",
-        "ended": 1788986408.7605696,
+        "bundle_path": "C:\\Users\\eric.vignola\\mpynode_build\\MPyNode\\templates\\MPyNode\\De Boor Spline\\MPyNode_De_Boor_Spline.mll",
+        "ended": 1790267107.3245661,
         "errors": [],
-        "log": "C:\\Users\\eric.vignola\\Desktop\\MPyNode\\templates\\MPyNode\\De Boor Spline\\_runner\\phase_a.log",
+        "log": "C:\\Users\\eric.vignola\\mpynode_build\\MPyNode\\templates\\MPyNode\\De Boor Spline\\_runner\\phase_a.log",
         "mode": {
           "ai_assist": true,
           "keep_intermediates": false,
@@ -12799,16 +13322,16 @@
               "ran": true,
               "reason": "on 13 of 30 input sets the interpreted reference raised mid-compute (an input the node rejects, e.g. a negative degree) and left stale outputs; those sets were excluded | authored @maya_test: 1/1 passed",
               "timing": {
-                "cpp_ms": 1.6338999848812819,
+                "cpp_ms": 7.512499985750765,
                 "measured": true,
                 "n": 3,
-                "py_ms": 38.947700057178736,
-                "ratio": 0.04195112888521195,
+                "py_ms": 98.24409999419004,
+                "ratio": 0.07646769613844535,
                 "rung": [
-                  40,
-                  512
+                  140,
+                  5000
                 ],
-                "scene": "geo 40 / array 512",
+                "scene": "geo 140 / array 5000",
                 "truncated": false,
                 "verdict": "ok"
               },
@@ -12820,11 +13343,11 @@
         "phase": "a",
         "rel": "MPyNode\\De Boor Spline",
         "rounds": {},
-        "secs": 4.2,
+        "secs": 7.2,
         "smoke": false,
-        "started": 1788986404.5226305,
+        "started": 1790267100.0841951,
         "state": "ok",
-        "wall_secs": 10.0
+        "wall_secs": 12.0
       },
       "phase_b": {
         "ai": {
@@ -12838,7 +13361,7 @@
             "portability spline start: ",
             "cache spline start: ",
             "stage spline ok: 1_transpiled",
-            "cache spline hit: cache hit ca8c25611a2f",
+            "cache spline hit: cache hit e0dd73114021",
             "port - skip: no node needed AI assist -- every compute lowered deterministically",
             "assemble - start: linking 1 node(s)",
             "assemble - ok: bundle: MPyNode_De_Boor_Spline.mll",
@@ -12848,34 +13371,33 @@
             "done - ok: 1 node(s)"
           ],
           "n_log_lines": 2,
-          "n_optimize_events": 18,
+          "n_optimize_events": 17,
           "no_node_needed_llm": true,
           "optimize_events_tail": [
             "- info: [spline] optimizing -- measuring baseline",
-            "- info: [spline] baseline 91.026 ms; up to 6 optimize round(s) (at least 2; stops after a rejected round or a gain under 1.15x)",
+            "- info: [spline] baseline 94.001 ms; up to 6 optimize round(s) (at least 2; stops after a rejected round or a gain under 1.15x)",
             "- info: [spline] round 1/6 starting",
             "- info: [spline] round 1/6 -- AI working 4m53s",
-            "- info: [spline] round 1/6 -- AI working 9m53s",
-            "- info: [spline] round 1/6 -- AI working 14m53s",
-            "- info: [optimizer] agent edited spline.cpp (180840 -> 184371 bytes)",
-            "- info: [spline] round 1/6 trying: evaluate only the d+1 basis functions whose support contains u -- the other c-d-1 are exactly +-0.0 and cannot change the accumulator -- with the same Cox-de Boor recursion, so the O(n*c*2^d) std::function sum becomes O(n*(d+1)*2^d) and is bit-identical (predicted 300.00x,",
-            "- info: [spline] round 1: ACCEPT 0.011 ms (8507.12x vs baseline, 8507.12x over the previous best)",
+            "- info: [optimizer] agent edited spline.cpp (182089 -> 189754 bytes)",
+            "- info: [spline] round 1/6 trying: Cache the De Boor basis weights per instance as a sparse table (at most degree+1 per sample), keyed on cv count, effective degree and sample count, so a tick that only moves cvs costs O(n*(d+1)) instead of O(n*c*2^(d+1)) recursive std::function calls; then write the output",
+            "- info: [spline] round 1: ACCEPT 0.015 ms (6143.89x vs baseline, 6143.89x over the previous best)",
             "- info: [spline] round 2/6 starting",
-            "- info: [spline] round 2/6 -- AI working 4m22s",
-            "- info: [spline] round 2/6 -- AI working 9m22s",
-            "- info: [spline] round 2/6 -- AI working 14m22s",
-            "- info: [optimizer] agent edited spline.cpp (184371 -> 185366 bytes)",
-            "- info: [spline] round 2/6 trying: store each output sample through the double3& that MDataHandle::asDouble3() exposes instead of calling set3Double, and fuse the sample evaluation into that write loop so a tick allocates nothing and never round-trips an n*3 temporary (predicted 1.05x, risk: expected to be ",
-            "- info: [spline] round 2: 0.009 ms vs best 0.011 ms is inside the noise band (incumbent under 2 ms; needs 1.15x)",
+            "- info: [spline] round 2/6 -- AI working 2m01s",
+            "- info: [spline] round 2/6 -- AI working 7m01s",
+            "- info: [spline] round 2/6 -- AI working 12m01s",
+            "- info: [spline] round 2/6 -- AI working 17m01s",
+            "- info: [optimizer] agent edited spline.cpp (189754 -> 193402 bytes)",
+            "- info: [spline] round 2/6 trying: cut per-element Maya data-handle calls: prove the cv and samples arrays dense once instead of calling elementIndex per element, write outputs through the asDouble3 reference instead of set3Double, and evaluate each sample straight into its output handle instead of staging ",
+            "- info: [spline] round 2: not faster (0.020 ms vs best 0.015 ms)",
             "- info: [spline] stopping after round 2: round 2 not-faster -- nothing new to compound from",
-            "- ok: spline: 8507.12x faster"
+            "- ok: spline: 6143.89x faster"
           ]
         },
         "bundle_exists": true,
-        "bundle_path": "C:\\Users\\eric.vignola\\Desktop\\MPyNode\\templates\\MPyNode\\De Boor Spline\\MPyNode_De_Boor_Spline.mll",
-        "ended": 1788998364.0812292,
+        "bundle_path": "C:\\Users\\eric.vignola\\mpynode_build\\MPyNode\\templates\\MPyNode\\De Boor Spline\\MPyNode_De_Boor_Spline.mll",
+        "ended": 1790268688.4195685,
         "errors": [],
-        "log": "C:\\Users\\eric.vignola\\Desktop\\MPyNode\\templates\\MPyNode\\De Boor Spline\\_runner\\phase_b.log",
+        "log": "C:\\Users\\eric.vignola\\mpynode_build\\MPyNode\\templates\\MPyNode\\De Boor Spline\\_runner\\phase_b.log",
         "mode": {
           "ai_assist": true,
           "keep_intermediates": true,
@@ -12903,16 +13425,16 @@
               "ran": true,
               "reason": "on 13 of 30 input sets the interpreted reference raised mid-compute (an input the node rejects, e.g. a negative degree) and left stale outputs; those sets were excluded | authored @maya_test: 1/1 passed",
               "timing": {
-                "cpp_ms": 0.08919998072087765,
+                "cpp_ms": 0.13609998859465122,
                 "measured": true,
                 "n": 3,
-                "py_ms": 31.659400090575218,
-                "ratio": 0.0028174880277479376,
+                "py_ms": 103.26780000468716,
+                "ratio": 0.0013179324880405496,
                 "rung": [
-                  40,
-                  512
+                  140,
+                  5000
                 ],
-                "scene": "geo 40 / array 512",
+                "scene": "geo 140 / array 5000",
                 "truncated": false,
                 "verdict": "ok"
               },
@@ -12929,8 +13451,11 @@
               "path": "agent",
               "rounds": 2
             },
-            "reason": "accepted (8507.12x)",
-            "speedup": 8507.121495327103
+            "max_rounds": 6,
+            "reason": "accepted (6143.89x)",
+            "rounds": 2,
+            "speedup": 6143.888888888889,
+            "stop_reason": "round 2 not-faster -- nothing new to compound from"
           }
         },
         "phase": "b",
@@ -12938,14 +13463,14 @@
         "rounds": {
           "spline": {
             "accepted": true,
-            "baseline_ms": 91.0262,
-            "best_ms": 0.0107,
-            "created": 1788998362.787731,
+            "baseline_ms": 94.0015,
+            "best_ms": 0.0153,
+            "created": 1790268685.2850606,
             "fresh": true,
             "n_rounds": 2,
             "parity_gate": "authored+pointwise",
-            "path": "C:\\Users\\eric.vignola\\Desktop\\MPyNode\\templates\\MPyNode\\De Boor Spline\\build\\stages\\spline\\rounds.json",
-            "reason": "accepted (8507.12x)",
+            "path": "C:\\Users\\eric.vignola\\mpynode_build\\MPyNode\\templates\\MPyNode\\De Boor Spline\\build\\stages\\spline\\rounds.json",
+            "reason": "accepted (6143.89x)",
             "rounds": [
               {
                 "cpp_same_as_baseline": true,
@@ -12953,7 +13478,7 @@
                 "has_hypothesis": false,
                 "has_theme": false,
                 "index": 0,
-                "ms": 91.0262,
+                "ms": 94.0015,
                 "note": "",
                 "outcome": "baseline",
                 "parity": null,
@@ -12962,39 +13487,618 @@
               },
               {
                 "cpp_same_as_baseline": false,
-                "duration_s": 930.456,
+                "duration_s": 471.607,
                 "has_hypothesis": true,
                 "has_theme": true,
                 "index": 1,
-                "ms": 0.0107,
+                "ms": 0.0153,
                 "note": "",
                 "outcome": "accept",
                 "parity": "pass",
-                "slug": "local_support_basis",
-                "speedup": 8507.121495327103
+                "slug": "cache_sparse_basis",
+                "speedup": 6143.888888888889
               },
               {
                 "cpp_same_as_baseline": false,
-                "duration_s": 912.76,
+                "duration_s": 1066.565,
                 "has_hypothesis": true,
                 "has_theme": true,
                 "index": 2,
-                "ms": 0.0095,
-                "note": "incumbent under 2 ms: 1.15x required, measured 1.13x",
+                "ms": 0.0203,
+                "note": "",
                 "outcome": "not-faster",
                 "parity": "pass",
-                "slug": "write_through_asdouble3_ref",
+                "slug": "direct_handle_io",
                 "speedup": null
               }
             ],
-            "speedup": 8507.121495327103
+            "speedup": 6143.888888888889
           }
         },
-        "secs": 1852.7,
+        "secs": 1549.2,
         "smoke": false,
-        "started": 1788996511.373888,
+        "started": 1790267139.229525,
         "state": "ok",
-        "wall_secs": 1858.3
+        "wall_secs": 1553.0
+      }
+    },
+    "MPyNode\\Spine": {
+      "phase_a": {
+        "ai": {
+          "assisted_cached": [],
+          "assisted_now": [],
+          "cache_hit": [],
+          "cache_miss": [
+            "spine"
+          ],
+          "events": [
+            "portability spine start: ",
+            "cache spine start: ",
+            "cache spine miss: cache miss 45c12110e2cf",
+            "port spine start: porting",
+            "stage spine ok: 1_transpiled",
+            "port spine ok: ported (0 fix rounds)",
+            "port - skip: no node needed AI assist -- every compute lowered deterministically",
+            "assemble - start: linking 1 node(s)",
+            "assemble - ok: bundle: MPyNode_Spine.mll",
+            "assemble - ok: bundled command(s): 4 (no companion plug-in)",
+            "verify - start: parity check",
+            "verify spine ok: maxerr=0.0",
+            "verify - ok: verify done",
+            "done - ok: 1 node(s)"
+          ],
+          "n_log_lines": 9,
+          "n_optimize_events": 0,
+          "no_node_needed_llm": true,
+          "optimize_events_tail": []
+        },
+        "bundle_exists": true,
+        "bundle_path": "C:\\Users\\eric.vignola\\mpynode_build\\MPyNode\\templates\\MPyNode\\Spine\\MPyNode_Spine.mll",
+        "ended": 1790267039.801568,
+        "errors": [],
+        "log": "C:\\Users\\eric.vignola\\mpynode_build\\MPyNode\\templates\\MPyNode\\Spine\\_runner\\phase_a.log",
+        "mode": {
+          "ai_assist": true,
+          "keep_intermediates": false,
+          "optimize": false
+        },
+        "nodes": [
+          {
+            "build_reason": "",
+            "build_status": "compiled",
+            "cache": "miss",
+            "incomplete": [],
+            "ported": false,
+            "type_name": "spine",
+            "verify": {
+              "authored_test": {
+                "count": 4,
+                "passed": true,
+                "passes": 4,
+                "ran": true,
+                "reason": ""
+              },
+              "generic_ran": true,
+              "maxerr": 0.0,
+              "pass": true,
+              "ran": true,
+              "reason": "authored @maya_test: 4/4 passed",
+              "timing": {
+                "cpp_ms": 1336.9224999914877,
+                "measured": true,
+                "n": 3,
+                "py_ms": 1403.1235000002198,
+                "ratio": 0.9528188359693771,
+                "rung": [
+                  40,
+                  512
+                ],
+                "scene": "geo 40 / array 512",
+                "truncated": false,
+                "verdict": "ok"
+              },
+              "tol": 0.0001
+            }
+          }
+        ],
+        "optimize_summary": {},
+        "phase": "a",
+        "rel": "MPyNode\\Spine",
+        "rounds": {},
+        "secs": 24.5,
+        "smoke": false,
+        "started": 1790267015.2583153,
+        "state": "ok",
+        "wall_secs": 28.0
+      },
+      "phase_b": {
+        "ai": {
+          "assisted_cached": [],
+          "assisted_now": [],
+          "cache_hit": [
+            "spine"
+          ],
+          "cache_miss": [],
+          "events": [
+            "portability spine start: ",
+            "cache spine start: ",
+            "stage spine ok: 1_transpiled",
+            "cache spine hit: cache hit 45c12110e2cf",
+            "port - skip: no node needed AI assist -- every compute lowered deterministically",
+            "assemble - start: linking 1 node(s)",
+            "assemble - ok: bundle: MPyNode_Spine.mll",
+            "assemble - ok: bundled command(s): 4 (no companion plug-in)",
+            "verify - start: parity check",
+            "verify spine ok: maxerr=0.0",
+            "verify - ok: verify done",
+            "done - ok: 1 node(s)"
+          ],
+          "n_log_lines": 2,
+          "n_optimize_events": 26,
+          "no_node_needed_llm": true,
+          "optimize_events_tail": [
+            "- info: [spine] optimizing -- measuring baseline",
+            "- info: [spine] baseline 80.092 ms; up to 6 optimize round(s) (at least 2; stops after a rejected round or a gain under 1.15x)",
+            "- info: [spine] round 1/6 starting",
+            "- info: [spine] round 1/6 -- AI working 4m48s",
+            "- info: [spine] round 1/6 -- AI working 9m48s",
+            "- info: [spine] round 1/6 -- AI working 14m48s",
+            "- info: [spine] round 1/6 -- AI working 19m48s",
+            "- info: [optimizer] agent edited spine.cpp (593051 -> 609094 bytes)",
+            "- info: [spine] round 1/6 trying: Evaluate the B-spline arc-length table, the arc-length inversion and the weights one parameter at a time in exact scalar twins of the nd:: helpers, and cache per-span and per-control derived state across evaluations. (predicted 6.00x, risk: Parity: every replacement keeps t",
+            "- info: [spine] round 1: ACCEPT 3.270 ms (24.49x vs baseline, 24.49x over the previous best)",
+            "- info: [spine] round 2/6 starting",
+            "- info: [spine] round 2/6 -- AI working 4m04s",
+            "- info: [optimizer] agent edited spine.cpp (609094 -> 609098 bytes)",
+            "- info: [spine] round 2/6 trying: write the 262,144-element outputWeights multi through MDataHandle::asDouble()'s double& instead of one setDouble() call per element, on both the ON (in-place) and OFF (defaults) paths (predicted 1.30x, risk: asDouble() returns a reference into the data block (MDataHandle.h:",
+            "- info: [spine] round 2: ACCEPT 1.987 ms (40.31x vs baseline, 1.65x over the previous best)",
+            "- info: [spine] round 3/6 starting",
+            "- info: [spine] round 3/6 -- AI working 3s",
+            "- info: [spine] round 3/6 -- AI working 5m03s",
+            "- info: [spine] round 3/6 -- AI working 10m03s",
+            "- info: [spine] round 3/6 -- AI working 15m03s",
+            "- info: [spine] round 3/6 -- AI working 20m03s",
+            "- info: [optimizer] agent edited spine.cpp (609098 -> 618794 bytes)",
+            "- info: [spine] round 3/6 trying: Keep the 512 x 512 outputWeights matrix as per-row sparse bands and generate each value inside the in-place datablock write, instead of zero-filling, band-filling and re-reading a dense 2 MB buffer every tick; also write the three MVector outputs and controlKeys in place in",
+            "- info: [spine] round 3: not faster (2.505 ms vs best 1.987 ms)",
+            "- info: [spine] stopping after round 3: round 3 not-faster -- nothing new to compound from",
+            "- ok: spine: 40.31x faster"
+          ]
+        },
+        "bundle_exists": true,
+        "bundle_path": "C:\\Users\\eric.vignola\\mpynode_build\\MPyNode\\templates\\MPyNode\\Spine\\MPyNode_Spine.mll",
+        "ended": 1790270261.0945008,
+        "errors": [],
+        "log": "C:\\Users\\eric.vignola\\mpynode_build\\MPyNode\\templates\\MPyNode\\Spine\\_runner\\phase_b.log",
+        "mode": {
+          "ai_assist": true,
+          "keep_intermediates": true,
+          "optimize": true
+        },
+        "nodes": [
+          {
+            "build_reason": "",
+            "build_status": "compiled",
+            "cache": "hit",
+            "incomplete": [],
+            "ported": false,
+            "type_name": "spine",
+            "verify": {
+              "authored_test": {
+                "count": 4,
+                "passed": true,
+                "passes": 4,
+                "ran": true,
+                "reason": ""
+              },
+              "generic_ran": true,
+              "maxerr": 0.0,
+              "pass": true,
+              "ran": true,
+              "reason": "authored @maya_test: 4/4 passed",
+              "timing": {
+                "cpp_ms": 1341.7411999835167,
+                "measured": true,
+                "n": 3,
+                "py_ms": 1515.9850000054576,
+                "ratio": 0.8850623192041388,
+                "rung": [
+                  40,
+                  512
+                ],
+                "scene": "geo 40 / array 512",
+                "truncated": false,
+                "verdict": "ok"
+              },
+              "tol": 0.0001
+            }
+          }
+        ],
+        "optimize_summary": {
+          "spine": {
+            "accepted": true,
+            "ai": {
+              "candidates": 3,
+              "errors": [],
+              "path": "agent",
+              "rounds": 3
+            },
+            "max_rounds": 6,
+            "reason": "accepted (40.31x)",
+            "rounds": 3,
+            "speedup": 40.311858264546004,
+            "stop_reason": "round 3 not-faster -- nothing new to compound from"
+          }
+        },
+        "phase": "b",
+        "rel": "MPyNode\\Spine",
+        "rounds": {
+          "spine": {
+            "accepted": true,
+            "baseline_ms": 80.0916,
+            "best_ms": 1.9868,
+            "created": 1790270240.61848,
+            "fresh": true,
+            "n_rounds": 3,
+            "parity_gate": "authored+pointwise",
+            "path": "C:\\Users\\eric.vignola\\mpynode_build\\MPyNode\\templates\\MPyNode\\Spine\\build\\stages\\spine\\rounds.json",
+            "reason": "accepted (40.31x)",
+            "rounds": [
+              {
+                "cpp_same_as_baseline": true,
+                "duration_s": null,
+                "has_hypothesis": false,
+                "has_theme": false,
+                "index": 0,
+                "ms": 80.0916,
+                "note": "",
+                "outcome": "baseline",
+                "parity": null,
+                "slug": null,
+                "speedup": null
+              },
+              {
+                "cpp_same_as_baseline": false,
+                "duration_s": 1243.861,
+                "has_hypothesis": true,
+                "has_theme": true,
+                "index": 1,
+                "ms": 3.2698,
+                "note": "",
+                "outcome": "accept",
+                "parity": "pass",
+                "slug": "scalar_arc_table",
+                "speedup": 24.4943421616001
+              },
+              {
+                "cpp_same_as_baseline": false,
+                "duration_s": 540.724,
+                "has_hypothesis": true,
+                "has_theme": true,
+                "index": 2,
+                "ms": 1.9868,
+                "note": "",
+                "outcome": "accept",
+                "parity": "pass",
+                "slug": "weights_ref_write",
+                "speedup": 40.311858264546004
+              },
+              {
+                "cpp_same_as_baseline": false,
+                "duration_s": 1363.654,
+                "has_hypothesis": true,
+                "has_theme": true,
+                "index": 3,
+                "ms": 2.5049,
+                "note": "",
+                "outcome": "not-faster",
+                "parity": "pass",
+                "slug": "fuse_sparse_weights",
+                "speedup": null
+              }
+            ],
+            "speedup": 40.311858264546004
+          }
+        },
+        "secs": 3182.1,
+        "smoke": false,
+        "started": 1790267079.0258887,
+        "state": "ok",
+        "wall_secs": 3186.0
+      }
+    },
+    "MPyNode\\Spring Chain": {
+      "phase_a": {
+        "ai": {
+          "assisted_cached": [],
+          "assisted_now": [
+            "springChain"
+          ],
+          "cache_hit": [],
+          "cache_miss": [
+            "springChain"
+          ],
+          "events": [
+            "portability springChain start: ",
+            "cache springChain start: ",
+            "cache springChain miss: cache miss d7cf76b80c5a",
+            "port springChain start: porting",
+            "stage springChain ok: 1_transpiled",
+            "stage springChain ok: 2_assisted",
+            "port springChain ok: ported (0 fix rounds)",
+            "assemble - start: linking 1 node(s)",
+            "honesty springChain incomplete: the Python node restores self.position / self.velocity from the saved scene (mPyNode stored vars); this region can add no storable attribute and may do no file I/O, so the buffers are session-only and a reopened scene restarts the chain from zero (the vanilla seed below) instead of from its saved st",
+            "assemble - ok: bundle: MPyNode_Spring_Chain.mll",
+            "verify - start: parity check",
+            "verify springChain ok: maxerr=0.0",
+            "verify - ok: verify done",
+            "done - ok: 1 node(s)"
+          ],
+          "n_log_lines": 11,
+          "n_optimize_events": 0,
+          "no_node_needed_llm": false,
+          "optimize_events_tail": []
+        },
+        "bundle_exists": true,
+        "bundle_path": "C:\\Users\\eric.vignola\\mpynode_build\\MPyNode\\templates\\MPyNode\\Spring Chain\\MPyNode_Spring_Chain.mll",
+        "ended": 1790267492.5897906,
+        "errors": [],
+        "log": "C:\\Users\\eric.vignola\\mpynode_build\\MPyNode\\templates\\MPyNode\\Spring Chain\\_runner\\phase_a.log",
+        "mode": {
+          "ai_assist": true,
+          "keep_intermediates": false,
+          "optimize": false
+        },
+        "nodes": [
+          {
+            "build_reason": "",
+            "build_status": "compiled",
+            "cache": "miss",
+            "incomplete": [
+              "the Python node restores self.position / self.velocity from the saved scene (mPyNode stored vars); this region can add no storable attribute and may do no file I/O, so the buffers are session-only and a reopened scene restarts the chain from zero (the vanilla seed below) instead of from its saved state."
+            ],
+            "ported": true,
+            "type_name": "springChain",
+            "verify": {
+              "authored_test": {
+                "count": 1,
+                "passed": true,
+                "passes": 1,
+                "ran": true,
+                "reason": ""
+              },
+              "generic_ran": true,
+              "maxerr": 0.0,
+              "pass": true,
+              "ran": true,
+              "reason": "compared on 16 of 30 input sets: on 14 the interpreted reference was non-idempotent (it carries state, and the harness evaluates it more often than the compiled node), so those cannot be lined up pointwise | authored @maya_test: 1/1 passed",
+              "timing": {
+                "cpp_ms": 0.04469999112188816,
+                "measured": true,
+                "n": 3,
+                "py_ms": 0.25159999495372176,
+                "ratio": 0.1776629253514496,
+                "rung": [
+                  140,
+                  5000
+                ],
+                "scene": "geo 140 / array 5000",
+                "truncated": false,
+                "verdict": "below-floor"
+              },
+              "tol": 0.0001
+            }
+          }
+        ],
+        "optimize_summary": {},
+        "phase": "a",
+        "rel": "MPyNode\\Spring Chain",
+        "rounds": {},
+        "secs": 392.5,
+        "smoke": false,
+        "started": 1790267100.1112792,
+        "state": "ok",
+        "wall_secs": 397.0
+      },
+      "phase_b": {
+        "ai": {
+          "assisted_cached": [
+            "springChain"
+          ],
+          "assisted_now": [],
+          "cache_hit": [
+            "springChain"
+          ],
+          "cache_miss": [],
+          "events": [
+            "portability springChain start: ",
+            "cache springChain start: ",
+            "stage springChain ok: 1_transpiled",
+            "cache springChain hit: cache hit d7cf76b80c5a",
+            "stage springChain ok: 2_assisted_cached",
+            "assemble - start: linking 1 node(s)",
+            "honesty springChain incomplete: the Python node restores self.position / self.velocity from the saved scene (mPyNode stored vars); this region can add no storable attribute and may do no file I/O, so the buffers are session-only and a reopened scene restarts the chain from zero (the vanilla seed below) instead of from its saved st",
+            "assemble - ok: bundle: MPyNode_Spring_Chain.mll",
+            "verify - start: parity check",
+            "verify springChain ok: maxerr=0.0",
+            "verify - ok: verify done",
+            "done - ok: 1 node(s)"
+          ],
+          "n_log_lines": 2,
+          "n_optimize_events": 26,
+          "no_node_needed_llm": false,
+          "optimize_events_tail": [
+            "- info: [springChain] optimizing -- measuring baseline",
+            "- info: [springChain] baseline 3.170 ms; up to 6 optimize round(s) (at least 2; stops after a rejected round or a gain under 1.15x)",
+            "- info: [springChain] round 1/6 starting",
+            "- info: [springChain] round 1/6 -- AI working 4m16s",
+            "- info: [springChain] round 1/6 -- AI working 9m16s",
+            "- info: [springChain] round 1/6 -- AI working 14m16s",
+            "- info: [springChain] round 1/6 -- AI working 19m16s",
+            "- info: [springChain] round 1/6 -- AI working 24m16s",
+            "- info: [optimizer] agent edited springChain.cpp (14978 -> 17918 bytes)",
+            "- info: [springChain] round 1/6 trying: Write the 20000-element driven multi in place, fused into the serial spring loop, instead of building and swapping in a brand-new MArrayDataBuilder array every tick. (predicted 2.00x, risk: The in-place fast path relies on Maya keeping array elements sorted by logical",
+            "- info: [springChain] round 1: ACCEPT 1.105 ms (2.87x vs baseline, 2.87x over the previous best)",
+            "- info: [springChain] round 2/6 starting",
+            "- info: [springChain] round 2/6 -- AI working 3m53s",
+            "- info: [springChain] round 2/6 -- AI working 8m53s",
+            "- info: [springChain] round 2/6 -- AI working 13m53s",
+            "- info: [springChain] round 2/6 -- AI working 18m53s",
+            "- info: [optimizer] agent edited springChain.cpp (17918 -> 23707 bytes)",
+            "- info: [springChain] round 2/6 trying: Run the inherently serial spring chain on a persistent per-node worker thread while the calling thread performs Maya's expensive attribute-level data.setClean(aDriven), then write the outputs in place chunk by chunk as the worker publishes them. (predicted 1.50x, risk",
+            "- info: [springChain] round 2: ACCEPT 0.771 ms (4.11x vs baseline, 1.43x over the previous best)",
+            "- info: [springChain] round 3/6 starting",
+            "- info: [springChain] round 3/6 -- AI working 2m19s",
+            "- info: [springChain] round 3/6 -- AI working 7m19s",
+            "- info: [springChain] round 3/6 trying: NO CHANGE SHIPPED: the caller integrated and wrote links itself until the chain worker woke, then handed it the rest; it measured slower and springChain.cpp was restored byte-identical to the entry file. (predicted 1.18x, risk: none shipped. Parity is untouched: the h",
+            "- info: [springChain] round 3: no change to the source",
+            "- info: [springChain] stopping after round 3: round 3 no-change -- nothing new to compound from",
+            "- ok: springChain: 4.11x faster"
+          ]
+        },
+        "bundle_exists": true,
+        "bundle_path": "C:\\Users\\eric.vignola\\mpynode_build\\MPyNode\\templates\\MPyNode\\Spring Chain\\MPyNode_Spring_Chain.mll",
+        "ended": 1790273804.6695375,
+        "errors": [],
+        "log": "C:\\Users\\eric.vignola\\mpynode_build\\MPyNode\\templates\\MPyNode\\Spring Chain\\_runner\\phase_b.log",
+        "mode": {
+          "ai_assist": true,
+          "keep_intermediates": true,
+          "optimize": true
+        },
+        "nodes": [
+          {
+            "build_reason": "",
+            "build_status": "compiled",
+            "cache": "hit",
+            "incomplete": [
+              "the Python node restores self.position / self.velocity from the saved scene (mPyNode stored vars); this region can add no storable attribute and may do no file I/O, so the buffers are session-only and a reopened scene restarts the chain from zero (the vanilla seed below) instead of from its saved state."
+            ],
+            "ported": true,
+            "type_name": "springChain",
+            "verify": {
+              "authored_test": {
+                "count": 1,
+                "passed": true,
+                "passes": 1,
+                "ran": true,
+                "reason": ""
+              },
+              "generic_ran": true,
+              "maxerr": 0.0,
+              "pass": true,
+              "ran": true,
+              "reason": "compared on 16 of 30 input sets: on 14 the interpreted reference was non-idempotent (it carries state, and the harness evaluates it more often than the compiled node), so those cannot be lined up pointwise | authored @maya_test: 1/1 passed",
+              "timing": {
+                "cpp_ms": 0.07010000990703702,
+                "measured": true,
+                "n": 3,
+                "py_ms": 0.37300001713447273,
+                "ratio": 0.18793567476369524,
+                "rung": [
+                  140,
+                  5000
+                ],
+                "scene": "geo 140 / array 5000",
+                "truncated": false,
+                "verdict": "below-floor"
+              },
+              "tol": 0.0001
+            }
+          }
+        ],
+        "optimize_summary": {
+          "springChain": {
+            "accepted": true,
+            "ai": {
+              "candidates": 2,
+              "errors": [],
+              "path": "agent",
+              "rounds": 3
+            },
+            "max_rounds": 6,
+            "reason": "accepted (4.11x)",
+            "rounds": 3,
+            "speedup": 4.113143895160244,
+            "stop_reason": "round 3 no-change -- nothing new to compound from"
+          }
+        },
+        "phase": "b",
+        "rel": "MPyNode\\Spring Chain",
+        "review": "shipped optimizer round 1 (2.87x); round 2 (4.11x) withheld in review: a worker-thread pipeline outside the permitted threading shape",
+        "rounds": {
+          "springChain": {
+            "accepted": true,
+            "baseline_ms": 3.17,
+            "best_ms": 0.7707,
+            "created": 1790273803.1571016,
+            "fresh": true,
+            "n_rounds": 3,
+            "parity_gate": "authored+pointwise",
+            "path": "C:\\Users\\eric.vignola\\mpynode_build\\MPyNode\\templates\\MPyNode\\Spring Chain\\build\\stages\\springChain\\rounds.json",
+            "reason": "accepted (4.11x)",
+            "rounds": [
+              {
+                "cpp_same_as_baseline": true,
+                "duration_s": null,
+                "has_hypothesis": false,
+                "has_theme": false,
+                "index": 0,
+                "ms": 3.17,
+                "note": "",
+                "outcome": "baseline",
+                "parity": null,
+                "slug": null,
+                "speedup": null
+              },
+              {
+                "cpp_same_as_baseline": false,
+                "duration_s": 1523.243,
+                "has_hypothesis": true,
+                "has_theme": true,
+                "index": 1,
+                "ms": 1.1048,
+                "note": "confirmed twice (incumbent under the noise floor): 0.787 / 1.105 ms",
+                "outcome": "accept",
+                "parity": "pass",
+                "slug": "inplace_output_write",
+                "speedup": 2.8692976104272265
+              },
+              {
+                "cpp_same_as_baseline": false,
+                "duration_s": 1293.908,
+                "has_hypothesis": true,
+                "has_theme": true,
+                "index": 2,
+                "ms": 0.7707,
+                "note": "confirmed twice (incumbent under the noise floor): 0.771 / 0.708 ms",
+                "outcome": "accept",
+                "parity": "pass",
+                "slug": "overlap_chain_with_setclean",
+                "speedup": 4.113143895160244
+              },
+              {
+                "cpp_same_as_baseline": null,
+                "duration_s": 654.608,
+                "has_hypothesis": true,
+                "has_theme": true,
+                "index": 3,
+                "ms": null,
+                "note": "candidate is identical to the current best",
+                "outcome": "no-change",
+                "parity": null,
+                "slug": "caller_fused_until_worker_ready",
+                "speedup": null
+              }
+            ],
+            "speedup": 4.113143895160244
+          }
+        },
+        "secs": 3518.3,
+        "smoke": false,
+        "started": 1790270286.3985786,
+        "state": "ok",
+        "wall_secs": 3522.0
       }
     },
     "MPyNurbsCurve/NURBS Helix": {

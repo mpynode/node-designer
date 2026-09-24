@@ -348,7 +348,7 @@
     "bytes": 88547
   },
   {
-    "scene": "MPyNode_Spine.ma",
+    "scene": "MPyNode_Spine__demo.ma",
     "template": "MPyNode_Spine",
     "native_type": "mPyNode",
     "compiled_type": "spine",
@@ -357,7 +357,31 @@
     "status": "ok",
     "reopen_compiled_nodes": 1,
     "reopen_unknown_nodes": 0,
-    "bytes": 14059
+    "bytes": 13886
+  },
+  {
+    "scene": "MPyNode_Spine__demo_twist_squash.ma",
+    "template": "MPyNode_Spine",
+    "native_type": "mPyNode",
+    "compiled_type": "spine",
+    "demo_func": "demo_twist_squash",
+    "demo_label": "Spine: Twist Ends, Squash Middle",
+    "status": "ok",
+    "reopen_compiled_nodes": 1,
+    "reopen_unknown_nodes": 0,
+    "bytes": 16226
+  },
+  {
+    "scene": "MPyNode_Spine__demo_closed_loop.ma",
+    "template": "MPyNode_Spine",
+    "native_type": "mPyNode",
+    "compiled_type": "spine",
+    "demo_func": "demo_closed_loop",
+    "demo_label": "Spine: Closed Loop",
+    "status": "ok",
+    "reopen_compiled_nodes": 1,
+    "reopen_unknown_nodes": 0,
+    "bytes": 21793
   },
   {
     "scene": "MPyNode_De_Boor_Spline.ma",

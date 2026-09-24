@@ -1,9 +1,9 @@
 {
   "ok": true,
   "bundle_path": "C:\\Users\\eric.vignola\\mpynode_build\\MPyNode\\templates\\All Templates Plugin\\mPyMega.mll",
-  "seconds": 95.35789895057678,
-  "n_input": 36,
-  "n_linked": 36,
+  "seconds": 58.320040702819824,
+  "n_input": 37,
+  "n_linked": 37,
   "linked": [
     "mPyDnet",
     "comboCorrectives",
@@ -40,7 +40,8 @@
     "dualQuaternionSkin",
     "linearBlendSkin",
     "twistSwingSkin",
-    "aimTransform"
+    "aimTransform",
+    "circularText"
   ],
   "dropped": [],
   "errors": [],
