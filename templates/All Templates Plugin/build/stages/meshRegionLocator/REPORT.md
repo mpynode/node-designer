@@ -1,12 +1,12 @@
 # meshRegionLocator -- compile report
 
-**Source node:** `meshRegions`  ·  **Base:** `MPxLocatorNode`  ·  **Generated:** 2026-08-26 01:21
+**Source node:** `meshRegions`  ·  **Base:** `MPxLocatorNode`  ·  **Generated:** 2026-09-24 13:30
 
 | stage | outcome |
 |---|---|
 | 1 Transpile | emitted, with region(s) the transpiler could not lower |
-| 2 AI assist | ran -- 1 region(s) still marked incomplete |
-| 3 AI optimize | not run |
+| 2 AI assist | ran -- no unresolved regions |
+| 3 AI optimize | ran, nothing accepted (baseline could not be benchmarked) -- 0 run of max 6, stopped: baseline could not be benchmarked |
 
 ## The Python this was generated from
 
@@ -17,37 +17,33 @@
 # setup) -- so editing the component tag (add/remove faces) updates the drawn
 # region immediately, and a compiled C++ node resolves the SAME way off its own
 # input handle. self.inMesh is the live world-space MFnMesh (worldMesh[0]) used
-# for the geometry; the tag membership comes from that same input's data. Falls
-# back to a legacy baked `regions` dict for scenes saved before this change.
+# for the geometry; the tag membership comes from that same input's data.
 mesh = self.inMesh
 # The region is chosen purely by NAME via the `regionTag` string input. If the
-# name matches no component tag on the input mesh, the region goes BLANK (a typo
-# or a removed/renamed tag reads as empty). Only when regionTag is unset do we
-# honour a legacy baked `regions` dict (scenes saved before regionTag existed /
-# the build probe).
+# name matches no component tag on the input mesh -- or is unset -- the region
+# goes BLANK (a typo or a removed/renamed tag reads as empty). `setup` names the
+# region, and migrates a pre-regionTag scene's baked `regions` dict into that
+# name, so the draw reads no stored Python state: the interpreted and the
+# compiled node resolve the region the same way.
 _tag = getattr(self, "regionTag", None)
 # ONE read of the input data, shared by the tag membership and the source
 # transform below (both live on the same MFnGeometryData).
-_mdata  = mesh_data_from_node_plug(node_name_from_self(self), "inMesh")
-_wmat   = mesh_matrix_from_mesh_data(_mdata)
+_mdata = mesh_data_from_node_plug(node_name_from_self(self), "inMesh")
+_wmat = mesh_matrix_from_mesh_data(_mdata)
 regions = None
 if _tag:
     _faces = tag_indices_from_mesh_data(_mdata, _tag)
     if _faces:
         regions = {_tag: _faces}
-    # else: named tag has no match -> leave regions None -> blank (no fallback).
-else:
-    _legacy = getattr(self, "regions", None)
-    if isinstance(_legacy, dict) and _legacy:
-        regions = _legacy
+    # else: named tag has no match -> leave regions None -> blank.
 if mesh is None or not regions:
     self.draw = None
 else:
-    offset        = self.offset
-    hover_offset  = self.hoverOffset
+    offset = self.offset
+    hover_offset = self.hoverOffset
     select_offset = self.selectOffset
-    hover_dur     = max(self.hoverDur, 1e-3)
-    alpha         = float(self.alpha)
+    hover_dur = max(self.hoverDur, 1e-3)
+    alpha = float(self.alpha)
     # Per-state RGB colours (each a 3-float `color` input) + one shared alpha.
     # The active colour tweens default->hover on the SAME elastic curve as the
     # lift, and snaps to the select colour when selected. Each input carries its
@@ -58,25 +54,25 @@ else:
     sel_c = np.asarray(self.selectColor, dtype=np.float64).ravel()[:3]
     # The outline around each patch has the SAME three states, on the same
     # curve, so it can read as its own accent rather than a fixed dark edge.
-    odef_c   = np.asarray(self.outlineColor, dtype=np.float64).ravel()[:3]
-    ohov_c   = np.asarray(self.outlineHoverColor, dtype=np.float64).ravel()[:3]
-    osel_c   = np.asarray(self.outlineSelectColor, dtype=np.float64).ravel()[:3]
+    odef_c = np.asarray(self.outlineColor, dtype=np.float64).ravel()[:3]
+    ohov_c = np.asarray(self.outlineHoverColor, dtype=np.float64).ravel()[:3]
+    osel_c = np.asarray(self.outlineSelectColor, dtype=np.float64).ravel()[:3]
 
-    hovered  = bool(self.hovered)
+    hovered = bool(self.hovered)
     selected = bool(self.selected)
     if selected:
         hovered = False          # selected shows only its selected form
-    now = float(_wallclock.time())
+    now = float(self.wallclock)
 
     h_cur, h_e = tween(now, float(getattr(self, "hv_start", 0.0)),
                        float(getattr(self, "hv_from", 0.0)),
                        float(getattr(self, "hv_to", 0.0)), hover_dur)
     if hovered != bool(getattr(self, "hv_prev", False)):
         self.hv_start = now
-        self.hv_from  = h_cur
-        self.hv_to    = 1.0 if hovered else 0.0
-        self.hv_prev  = hovered
-        h_e           = 0.0
+        self.hv_from = h_cur
+        self.hv_to = 1.0 if hovered else 0.0
+        self.hv_prev = hovered
+        h_e = 0.0
 
     # THREE ABSOLUTE normal offsets (world units): the patch floats at `offset`
     # at rest, tweens to `hoverOffset` on hover, and snaps to `selectOffset`
@@ -125,34 +121,50 @@ else:
         # the patch draws at the ORIGIN and never follows the mesh. Maya is
         # row-vector (p * M): the 3x3 rotates/scales, row 3 translates.
         if _wmat is not None:
-            _m   = np.asarray(_wmat, dtype=np.float64).reshape(4, 4)
-            pts  = pts @ _m[:3, :3] + _m[3, :3]
-            nrm  = nrm @ _m[:3, :3]
+            _m = np.asarray(_wmat, dtype=np.float64).reshape(4, 4)
+            pts = pts @ _m[:3, :3] + _m[3, :3]
+            nrm = nrm @ _m[:3, :3]
             _mag = np.linalg.norm(nrm, axis=1, keepdims=True)
-            nrm  = nrm / np.where(_mag > 1e-12, _mag, 1.0)
+            nrm = nrm / np.where(_mag > 1e-12, _mag, 1.0)
         patches.append(DrawMesh(
             pts + nrm * lift, cnt, idx, color=rgba,
             outline=orgba, outline_width=2.0,
-            outline_boundary_only = True,  # clean outer silhouette only
-            world_space           = True,  # follow the mesh, not the locator
+            outline_boundary_only=True,   # clean outer silhouette only
+            world_space=True,             # follow the mesh, not the locator
             precise_hover=True))
 
     if not patches:
         self.draw = None
     else:
-        self.draw           = patches
+        self.draw = patches
         self.auto_highlight = False
-        self.auto_refresh   = bool(h_e < 1.0)
+        self.auto_refresh = bool(h_e < 1.0)
 ```
 
-## Unfinished work in the generated C++
+## Optimization
 
-* **not translated:** legacy baked `self.regions` dict (pre-regionTag
+Parity gate: not exercised -- no candidate reached the parity check (the baseline was unmeasurable or no round compiled).
+
+Bench scene: geo density 40 / array length 512; noise floor 15 ms.
+
+Baseline **--** -> best **--** (**1.00x**).
+
+Rounds: **0** run of at most 6; the loop stopped because baseline could not be benchmarked.
+
+| # | change | theme | predicted | measured | time | outcome |
+|---|---|---|---|---|---|---|
+| 00 | `--` | -- | -- | -- | -- | -- |
+
+## Verification
+
+* parity: **pass**
+* no scalar outputs to compare -- pointwise parity skipped (vacuous check) | authored @maya_test: 1/1 passed
 
 ## Files
 
 ```
 build/stages/meshRegionLocator/1_transpiled.cpp     deterministic transpile (no AI)
 build/stages/meshRegionLocator/2_assisted.cpp       AI filled the unported region(s)
+build/stages/meshRegionLocator/3_optimized/00_baseline.cpp
 build/source/meshRegionLocator.cpp      SHIPPED
 ```
