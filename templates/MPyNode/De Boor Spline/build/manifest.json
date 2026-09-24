@@ -1,12 +1,12 @@
 {
   "manifest_version": 1,
-  "porter_recipe_version": "27",
+  "porter_recipe_version": "34",
   "provider": "claude_cli",
-  "model": "claude-fable-5-1",
+  "model": "claude-opus-5-5[1m]",
   "strict": false,
   "plugin_name": "MPyNode_De_Boor_Spline",
-  "bundle": "C:\\Users\\eric.vignola\\Desktop\\MPyNode\\templates\\MPyNode\\De Boor Spline\\MPyNode_De_Boor_Spline.mll",
-  "created": 1788998364.077722,
+  "bundle": "C:\\Users\\eric.vignola\\mpynode_build\\MPyNode\\templates\\MPyNode\\De Boor Spline\\MPyNode_De_Boor_Spline.mll",
+  "created": 1790268688.4170606,
   "nodes": [
     {
       "source_node": "spline",
@@ -14,8 +14,8 @@
       "type_id": "0x0004b6da",
       "type_id_source": "derived",
       "base": "MPxNode",
-      "spec_hash": "ca8c25611a2ff30960e959c6ce2b31f4138639875e6146ec16ea7bf2851201ea",
-      "port_cache_key": "ca8c25611a2ff30960e959c6ce2b31f4138639875e6146ec16ea7bf2851201ea",
+      "spec_hash": "e0dd73114021de6b7dadb0016bc3957c1974d95d1e14410f63ec0e174fa1036a",
+      "port_cache_key": "e0dd73114021de6b7dadb0016bc3957c1974d95d1e14410f63ec0e174fa1036a",
       "cache": "hit",
       "build_status": "compiled",
       "build_reason": "",
@@ -32,16 +32,16 @@
         "reason": "on 13 of 30 input sets the interpreted reference raised mid-compute (an input the node rejects, e.g. a negative degree) and left stale outputs; those sets were excluded | authored @maya_test: 1/1 passed",
         "timing": {
           "measured": true,
-          "py_ms": 31.659400090575218,
-          "cpp_ms": 0.08919998072087765,
+          "py_ms": 103.26780000468716,
+          "cpp_ms": 0.13609998859465122,
           "n": 3,
           "truncated": false,
-          "scene": "geo 40 / array 512",
-          "ratio": 0.0028174880277479376,
+          "scene": "geo 140 / array 5000",
+          "ratio": 0.0013179324880405496,
           "verdict": "ok",
           "rung": [
-            40,
-            512
+            140,
+            5000
           ]
         },
         "authored_test": {
@@ -115,6 +115,15 @@
         "affects": "all",
         "methods": "# Build a complete, self-contained spline demo: a row of control locators\n# (cv -- grouped under \"<node>_controls\", zig-zagged so the curve is visibly\n# curved) AND a chain of small sample spheres placed evenly along the resulting\n# De Boor b-spline (driven by the samples output array). Drag the control\n# locators to reshape the curve; the samples follow live.\ndef demo(self):\n    from maya import cmds as mc\n    name = self.get_name()\n    mc.setAttr(name + \".degree\", 3)\n    n_ctrl, n_samp = 5, 24\n    cgrp = mc.group(empty=True, name=name + \"_controls\")\n    for j in range(n_ctrl):\n        loc = mc.spaceLocator(name=\"%s_cv%d\" % (name, j + 1))[0]\n        loc = mc.parent(loc, cgrp)[0]\n        mc.setAttr(loc + \".translateX\", float(j) * 3.0)\n        mc.setAttr(loc + \".translateY\", 4.0 if j % 2 else 0.0)   # zig-zag\n        shp = mc.listRelatives(loc, shapes=True, fullPath=True)[0]\n        mc.connectAttr(shp + \".worldPosition[0]\", name + \".cv[%d]\" % j, force=True)\n    sgrp = mc.group(empty=True, name=\"spline_samples#\")\n    for i in range(n_samp):\n        s = mc.polySphere(name=\"splineSample#\", radius=0.3)[0]\n        s = mc.parent(s, sgrp)[0]\n        mc.connectAttr(name + \".samples[%d]\" % i, s + \".translate\", force=True)\n    try:\n        for _panel in mc.getPanel(type=\"modelPanel\") or []:\n            _cam = mc.modelEditor(_panel, query=True, camera=True)\n            if _cam:\n                mc.viewFit(_cam, allObjects=True)\n    except Exception:\n        pass\n    return name\n\n\n@maya_test(label=\"Spline: b-spline endpoints match the first/last control point\", digits=3)\ndef test_spline(self):\n    \"\"\"Same test passes interpreted and compiled (parity): a De Boor b-spline\n    interpolates its endpoints, so sample[0] sits on the first CV and sample[-1]\n    on the last. Drives `self` through public plugs.\"\"\"\n    from maya import cmds as mc\n    from mpynode._common.methods.test_helpers import assert_close\n    name = self.get_name()\n\n    def _set(plug, *vals, **kw):\n        for s in (mc.listConnections(plug, s=True, d=False, plugs=True) or []):\n            mc.disconnectAttr(s, plug)\n        mc.setAttr(plug, *vals, **kw)\n\n    cvs = [(0.0, 0.0, 0.0), (3.0, 4.0, 0.0), (6.0, 0.0, 0.0),\n           (9.0, 4.0, 0.0), (12.0, 0.0, 0.0)]\n    for k, p in enumerate(cvs):\n        _set(\"%s.cv[%d]\" % (name, k), p[0], p[1], p[2], type=\"double3\")\n    _set(name + \".degree\", 3)\n\n    # Ensure sample outputs exist (reuse the demo's spheres if present).\n    n = mc.getAttr(name + \".samples\", size=True) or 0\n    if n < 6:\n        for i in range(12):\n            loc = mc.spaceLocator(name=\"splineTest#\")[0]\n            mc.connectAttr(\"%s.samples[%d]\" % (name, i), loc + \".translate\", force=True)\n        n = 12\n        mc.dgdirty(name + \".samples\")\n\n    first = mc.getAttr(\"%s.samples[0]\" % name)[0]\n    last = mc.getAttr(\"%s.samples[%d]\" % (name, n - 1))[0]\n    assert_close(list(first), list(cvs[0]),\n                 msg=\"first sample should equal the first control point\")\n    assert_close(list(last), list(cvs[-1]),\n                 msg=\"last sample should equal the last control point\")\n",
         "commands": [],
+        "metadata": {
+          "authors": [
+            "Eric Vignola"
+          ],
+          "version": "1.0.0",
+          "license": "Copyright 2026 Eric Vignola\n\nPermission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the \"Software\"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.",
+          "description": "Evaluates a B-spline through control points and returns evenly spaced samples.",
+          "type_id": ""
+        },
         "portability": {
           "portable": true,
           "blockers": [],

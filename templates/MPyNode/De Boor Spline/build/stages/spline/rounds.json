@@ -1,6 +1,6 @@
 {
   "accepted": true,
-  "baseline_ms": 91.0262,
+  "baseline_ms": 94.0015,
   "bench": {
     "fingerprint": "checked (1 plug(s))",
     "floor_ms": 15.0,
@@ -12,8 +12,8 @@
       512
     ]
   },
-  "best_ms": 0.0107,
-  "created": 1788998362.787731,
+  "best_ms": 0.0153,
+  "created": 1790268685.2850606,
   "ledger": [
     {
       "compiled": true,
@@ -21,7 +21,7 @@
       "fix_rounds": 0,
       "hypothesis": "",
       "index": 0,
-      "ms": 91.0262,
+      "ms": 94.0015,
       "note": "",
       "outcome": "baseline",
       "parity": null,
@@ -33,42 +33,42 @@
     },
     {
       "compiled": true,
-      "duration_s": 930.456,
+      "duration_s": 471.607,
       "fix_rounds": 0,
-      "hypothesis": "the node is QUERY-shaped (every sample scans every control point) but the scanned function has compact support: a degree-d B-spline basis is exactly zero unless one of its d+1 degree-0 leaves contains u, and adding +-0.0 to an accumulator that is never -0.0 is a no-op under round-to-nearest. Locating the knot span by binary search (confirmed with the reference's exact leaf test) and evaluating just k in [span-d, span] removes a LEVEL of work (512 -> 4 basis evaluations per sample) instead of making each evaluation cheaper. Dropping the std::function recursion and the per-(i,k) nd::Array allocation of the accumulator is a constant-factor bonus. Non-finite cv or n == 1 (u = 0/0 = NaN) fall back to the full-range reference loop so NaN/inf propagation stays identical.",
+      "hypothesis": "The weights depend only on (c, degree, n), and all three hold between ticks; only cv VALUES move. Outside the support [jmin-d, jmax] every weight is exactly +-0, and acc is never -0, so skipping those terms is bit-exact when cvs are finite. Non-finite cvs, n<2 and negative degree fall back to the original lowered loop, kept unchanged.",
       "index": 1,
-      "ms": 0.0107,
+      "ms": 0.0153,
       "note": "",
       "outcome": "accept",
       "parity": "pass",
-      "predicted_speedup": 300.0,
-      "risk": "a skipped term must be exactly +-0.0: it is, for finite cv (ratio*0.0 with a finite ratio), and cv with inf/NaN or the n==1 NaN-u case take the untouched full-range path. Verified bit-identical against the reference full sum in pure Python across degrees 0..9 and c in {1,2,3,5,7,10,512}, n in {2..512} (12 cases, struct-packed byte compare). Comparisons that select the knot span keep the reference's type, direction and strictness ((u-left) >= 0.0 && (u-right) < 0.0).",
-      "slug": "local_support_basis",
-      "speedup": 8507.121495327103,
-      "theme": "evaluate only the d+1 basis functions whose support contains u -- the other c-d-1 are exactly +-0.0 and cannot change the accumulator -- with the same Cox-de Boor recursion, so the O(n*c*2^d) std::function sum becomes O(n*(d+1)*2^d) and is bit-identical"
+      "predicted_speedup": 200.0,
+      "risk": "Exactness depends on the +-0 argument: finite coefficients (denom >= 1, u finite when n >= 2) and finite cvs, so any non-finite cv takes the original path. Weights are computed with the recursion's exact per-node arithmetic, memoised as a triangle. The cache is a pure function of its complete integer key; the setDependentsDirty/preEvaluation invalidation on degree is a backstop. In-place output write happens only when the array already holds exactly logical indices 0..n-1, otherwise the MArrayDataBuilder path runs.",
+      "slug": "cache_sparse_basis",
+      "speedup": 6143.888888888889,
+      "theme": "Cache the De Boor basis weights per instance as a sparse table (at most degree+1 per sample), keyed on cv count, effective degree and sample count, so a tick that only moves cvs costs O(n*(d+1)) instead of O(n*c*2^(d+1)) recursive std::function calls; then write the output array in place instead of rebuilding it with MArrayDataBuilder."
     },
     {
       "compiled": true,
-      "duration_s": 912.76,
+      "duration_s": 1066.565,
       "fix_rounds": 0,
-      "hypothesis": "at 512 cv x 512 samples the basis table is already cached and the local-support arithmetic is ~2 us, so the 10 us tick is almost entirely Maya handle plumbing; set3Double is a validating setter (it re-checks the handle's numeric type on every call) while asDouble3() hands back storage the loop can write directly, so 512 of those calls become 512 plain stores. Fusing eval into the write loop and keeping cv/knots as per-instance members removes the two per-tick heap buffers as well (that half alone measured 0.0103 vs 0.0104 ms -- noise-level).",
+      "hypothesis": "the sparse basis cache already made the math ~1 us, so compute is bound by ~3.5k OpenMaya calls on 512 cvs + 512 samples (profiled: read 4.8 us, basis eval 1.3 us, write+finalize 7.8 us); dropping one call per element on each side and the staging pass removes a level of per-element work while the arithmetic (same operand order, same +-0 behaviour) is untouched",
       "index": 2,
-      "ms": 0.0095,
-      "note": "incumbent under 2 ms: 1.15x required, measured 1.13x",
+      "ms": 0.0203,
+      "note": "",
       "outcome": "not-faster",
       "parity": "pass",
-      "predicted_speedup": 1.05,
-      "risk": "expected to be a coin flip inside the bench's noise band (samples span 0.0096-0.0120 ms), yet it measured 0.0101 -> 0.0092 ms with every sample below the prior median, and re-measured 0.0092 after a revert cycle. The fused write must reproduce the reference's final samples[-1] = cv[-1] override, done by short-circuiting sample n-1 to cv[c-1] (c >= 1 is guaranteed once the degree check passes). Two follow-ups were reverted: pre-sizing cv once instead of 512 per-element resizes measured 0.0105 vs 0.0103 ms (noise); un-fusing the arithmetic back into a reusable per-instance n*3 buffer -- predicted ~1.1x on the theory that an opaque Maya call between samples stops the core overlapping consecutive dependent add chains -- measured 0.0165 vs 0.0092 ms, a 1.8x REGRESSION, so at this size the fused form is the right one.",
-      "slug": "write_through_asdouble3_ref",
+      "predicted_speedup": 1.25,
+      "risk": "the dense proof assumes MArrayDataHandle physical order is ascending distinct logical order (last physical at logical n-1 => indices are exactly 0..n-1); any other layout falls back to the original per-element elementIndex loops. Folded finiteness test uses (x - x) == 0.0, exact iff finite under -ffp-contract=off / fp:precise.",
+      "slug": "direct_handle_io",
       "speedup": null,
-      "theme": "store each output sample through the double3& that MDataHandle::asDouble3() exposes instead of calling set3Double, and fuse the sample evaluation into that write loop so a tick allocates nothing and never round-trips an n*3 temporary"
+      "theme": "cut per-element Maya data-handle calls: prove the cv and samples arrays dense once instead of calling elementIndex per element, write outputs through the asDouble3 reference instead of set3Double, and evaluate each sample straight into its output handle instead of staging a 12 KB buffer"
     }
   ],
   "max_rounds": 6,
   "parity_gate": "authored+pointwise",
-  "reason": "accepted (8507.12x)",
+  "reason": "accepted (6143.89x)",
   "rounds": 2,
-  "speedup": 8507.121495327103,
+  "speedup": 6143.888888888889,
   "stop_reason": "round 2 not-faster -- nothing new to compound from",
   "type_name": "spline"
 }

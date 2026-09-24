@@ -1,10 +1,10 @@
 # MPyNode_De_Boor_Spline -- compile report
 
-Generated 2026-09-09 16:59
+Generated 2026-09-24 09:51
 
 | node | status | assist | optimize | detail |
 |---|---|---|---|---|
-| `spline` | compiled | -- | **8507.12x** | [report](build/stages/spline/REPORT.md) |
+| `spline` | compiled | -- | **6143.89x** | [report](build/stages/spline/REPORT.md) |
 
 ## Layout
 

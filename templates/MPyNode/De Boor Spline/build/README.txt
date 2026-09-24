@@ -1,5 +1,5 @@
 MPyNode compiled plugin: MPyNode_De_Boor_Spline
-=======================================
+===============================================
 
 This 'build/' folder holds everything the compiler produced EXCEPT the
 plugin itself: the C++ source (under source/) plus the scripts to rebuild
