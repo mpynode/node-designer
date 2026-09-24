@@ -1,10 +1,10 @@
 # MPyNode_DNET -- compile report
 
-Generated 2026-08-25 10:20
+Generated 2026-09-24 11:53
 
 | node | status | assist | optimize | detail |
 |---|---|---|---|---|
-| `mPyDnet` | compiled | filled | **3.77x** | [report](build/stages/mPyDnet/REPORT.md) |
+| `mPyDnet` | compiled | filled | **1.83x** | [report](build/stages/mPyDnet/REPORT.md) |
 
 ## Layout
 

@@ -27,6 +27,7 @@
 #include <cmath>
 #include <algorithm>
 #include <vector>
+#include <utility>
 #include <random>
 #include <cstdint>
 #include <maya/MPxNode.h>
@@ -65,11 +66,239 @@
 #include <maya/MSelectionList.h>
 #include <string>
 #include <sstream>
+#include <thread>
+#include <mutex>
+#include <condition_variable>
+#include <atomic>
+#include <functional>
+#include <cstdlib>
+#include <cstring>
+
+// Persistent per-node worker pool for a PARALLEL MAP with deterministic
+// per-element writes: fn(lo, hi) must write only its own [lo, hi) slots, so the
+// result is independent of the chunk split and of the thread count. The calling
+// thread takes part; the chunk cursor is a MEMBER (never file-scope) so two node
+// instances evaluating concurrently never share it. Workers are created once,
+// on the first run(), and joined in the destructor. MPYDNET_THREADS caps the
+// total thread count (1 = serial) without a rebuild.
+class DnetPool {
+public:
+    DnetPool() {}
+    ~DnetPool() {
+        {
+            std::lock_guard<std::mutex> lk(_m);
+            _quit = true;
+        }
+        _cvWork.notify_all();
+        for (std::thread& t : _workers) t.join();
+    }
+    void run(int n, int chunk, const std::function<void(int, int)>& fn) {
+        if (n <= 0) return;
+        ensure();
+        if (_workers.empty() || n <= chunk) { fn(0, n); return; }
+        {
+            std::lock_guard<std::mutex> lk(_m);
+            _fn     = &fn;
+            _n      = n;
+            _chunk  = chunk;
+            _cursor.store(0, std::memory_order_relaxed);
+            _active = (int)_workers.size();
+            ++_gen;
+        }
+        _cvWork.notify_all();
+        drain(fn, n, chunk);
+        std::unique_lock<std::mutex> lk(_m);
+        _cvDone.wait(lk, [this] { return _active == 0; });
+        _fn = nullptr;
+    }
+    // run() plus `pre`, executed on the CALLING thread after the workers are
+    // woken and before it joins the drain, so serial work that is independent
+    // of fn (touches nothing fn reads or writes) overlaps the parallel map.
+    void run(int n, int chunk, const std::function<void(int, int)>& fn,
+             const std::function<void()>& pre) {
+        if (n <= 0) { pre(); return; }
+        ensure();
+        if (_workers.empty() || n <= chunk) { pre(); fn(0, n); return; }
+        {
+            std::lock_guard<std::mutex> lk(_m);
+            _fn     = &fn;
+            _n      = n;
+            _chunk  = chunk;
+            _cursor.store(0, std::memory_order_relaxed);
+            _active = (int)_workers.size();
+            ++_gen;
+        }
+        _cvWork.notify_all();
+        pre();
+        drain(fn, n, chunk);
+        std::unique_lock<std::mutex> lk(_m);
+        _cvDone.wait(lk, [this] { return _active == 0; });
+        _fn = nullptr;
+    }
+private:
+    void drain(const std::function<void(int, int)>& fn, int n, int chunk) {
+        for (;;) {
+            const int lo = _cursor.fetch_add(chunk, std::memory_order_relaxed);
+            if (lo >= n) break;
+            fn(lo, std::min(n, lo + chunk));
+        }
+    }
+    void ensure() {
+        if (_started) return;
+        _started = true;
+        const unsigned hw   = std::thread::hardware_concurrency();
+        int            want = hw > 1 ? (int)hw - 1 : 0;
+        if (want > 7) want = 7;   // default: at most 8 threads including the caller
+        if (const char* s = std::getenv("MPYDNET_THREADS")) {
+            const int v = std::atoi(s);
+            if (v >= 1) want = v - 1;
+        }
+        for (int i = 0; i < want; ++i) _workers.emplace_back([this] { loop(); });
+    }
+    void loop() {
+        unsigned seen = 0;
+        std::unique_lock<std::mutex> lk(_m);
+        for (;;) {
+            _cvWork.wait(lk, [&] { return _quit || _gen != seen; });
+            if (_quit) return;
+            seen = _gen;
+            const std::function<void(int, int)>* fn = _fn;
+            const int n = _n, chunk = _chunk;
+            lk.unlock();
+            drain(*fn, n, chunk);
+            lk.lock();
+            if (--_active == 0) _cvDone.notify_one();
+        }
+    }
+    std::vector<std::thread>                 _workers;
+    std::mutex                               _m;
+    std::condition_variable                  _cvWork;
+    std::condition_variable                  _cvDone;
+    const std::function<void(int, int)>*     _fn      = nullptr;
+    int                                      _n       = 0;
+    int                                      _chunk   = 1;
+    int                                      _active  = 0;
+    unsigned                                 _gen     = 0;
+    bool                                     _quit    = false;
+    bool                                     _started = false;
+    std::atomic<int>                         _cursor{0};
+};
+
+// numpy.linalg.inv for one 4x4 (row-major A), writing columns 0..2 of the
+// inverse into X (row-major, stride 4). numpy runs LAPACK dgesv against the
+// identity -- LU with partial pivoting (first largest |pivot|, reciprocal
+// scaling, rank-1 update), then the unit-lower and upper solves -- and raises
+// LinAlgError on an exactly-zero pivot: returns false there.
+static bool dnetInvert4(const double* A, double* X) {
+    double a[4][4];
+    for (int r = 0; r < 4; ++r)
+        for (int c = 0; c < 4; ++c) a[r][c] = A[4 * r + c];
+    int piv[4];
+    for (int k = 0; k < 4; ++k) {
+        int    p   = k;
+        double big = std::fabs(a[k][k]);
+        for (int r = k + 1; r < 4; ++r) {
+            const double v = std::fabs(a[r][k]);
+            if (v > big) { big = v; p = r; }
+        }
+        piv[k] = p;
+        if (a[p][k] == 0.0) return false;   // dgetrf info > 0 -> "Singular matrix"
+        if (p != k) {
+            for (int c = 0; c < 4; ++c) {
+                const double t = a[k][c];
+                a[k][c] = a[p][c];
+                a[p][c] = t;
+            }
+        }
+        if (std::fabs(a[k][k]) >= 2.2250738585072014e-308) {   // LAPACK sfmin
+            const double rp = 1.0 / a[k][k];
+            for (int r = k + 1; r < 4; ++r) a[r][k] *= rp;
+        } else {
+            for (int r = k + 1; r < 4; ++r) a[r][k] /= a[k][k];
+        }
+        for (int r = k + 1; r < 4; ++r) {
+            for (int c = k + 1; c < 4; ++c) {
+                const double t = a[r][k] * a[k][c];
+                a[r][c] -= t;
+            }
+        }
+    }
+    // dgetrs: B = I with the row interchanges applied, then L y = b, U x = y.
+    double b[4][4];
+    for (int r = 0; r < 4; ++r)
+        for (int c = 0; c < 4; ++c) b[r][c] = (r == c) ? 1.0 : 0.0;
+    for (int k = 0; k < 4; ++k) {
+        if (piv[k] == k) continue;
+        for (int c = 0; c < 4; ++c) {
+            const double t = b[k][c];
+            b[k][c]      = b[piv[k]][c];
+            b[piv[k]][c] = t;
+        }
+    }
+    // Columns solve independently and column 3 of the inverse is never read
+    // (only I[:, :3, :3] and I[:, 3, :3]), so skip it.
+    for (int c = 0; c < 3; ++c) {
+        for (int k = 0; k < 4; ++k) {        // unit lower, forward
+            if (b[k][c] == 0.0) continue;
+            for (int r = k + 1; r < 4; ++r) {
+                const double t = b[k][c] * a[r][k];
+                b[r][c] -= t;
+            }
+        }
+        for (int k = 3; k >= 0; --k) {       // upper, backward
+            if (b[k][c] == 0.0) continue;
+            b[k][c] /= a[k][k];
+            for (int r = 0; r < k; ++r) {
+                const double t = b[k][c] * a[r][k];
+                b[r][c] -= t;
+            }
+        }
+    }
+    for (int r = 0; r < 4; ++r)
+        for (int c = 0; c < 3; ++c) X[4 * r + c] = b[r][c];
+    return true;
+}
+
+// Persistent per-instance solver state (the Python Solver on self.node) plus
+// reusable scratch buffers, so a tick allocates (and page-faults) nothing. The
+// scratch vectors are rewritten in full every compute before they are read; only
+// hasPrevious/prevRow3 and the adjacency cache carry information across ticks.
+struct DnetState {
+    bool                 initialized  = false;  // hasattr(self, 'node')
+    bool                 hasPrevious  = false;  // Solver.previous is not None
+    std::vector<double>  prevRow3;              // Solver.previous[:, 3, :], (N, 4)
+    std::vector<double>  mats;                  // scratch: matrices @ inverseMatrix, (N, 16)
+    std::vector<double>  invs;                  // scratch: inv(matrices), (N, 16), cols 0..2
+    std::vector<unsigned char> invOk;           // scratch: inv(matrices[k]) succeeded
+    bool                 adjBuilt     = false;  // Solver._adj_offsets is not None
+    int                  cachedKCount = -1;     // Solver._cached_kCount
+    std::vector<int>     cachedIndex0;          // Solver._cached_index0
+    std::vector<int>     cachedIndex1;          // Solver._cached_index1
+    std::vector<int>     adjOffsets;            // Solver._adj_offsets, kCount + 1
+    std::vector<int>     adjLink;               // Solver._adj_link
+    std::vector<double>  adjSign;               // Solver._adj_sign
+    std::vector<int>     counts;                // scratch: adjacency build
+
+    // per-tick input snapshots
+    std::vector<double>  inMats16;
+    std::vector<float>   inAnchors, inRest, inTension, inPush, inPull;
+    std::vector<int>     inIndex0, inIndex1;
+    // per-tick solver scratch
+    std::vector<double>  anchors, restLengths, tensions, push, pull;
+    std::vector<int>     index0, index1;
+    std::vector<double>  knots, initPositions, positions, linkF, displacements, lengths;
+    // per-tick outputs
+    std::vector<double>  outPos3;               // local positions, 3 per knot
+    std::vector<float>   outLengths;
+};
 
 class MPyDnet : public MPxNode {
 public:
     MPyDnet() {}
     ~MPyDnet() override {}
+    DnetPool       _pool;   // persistent per-node workers (see DnetPool)
+    DnetState      _state;  // persistent per-instance solver state + scratch
+    std::mutex     _stateMutex;
     static void*   creator() { return new MPyDnet(); }
     static MStatus initialize();
     MStatus        compute(const MPlug& plug, MDataBlock& data) override;
@@ -1354,74 +1583,101 @@ MStatus MPyDnet::compute(const MPlug& plug, MDataBlock& data) {
     if (plug != aPositions && plug != aLengths && plug != aMaxIterations && plug != aMaxForce)
         return MS::kUnknownParameter;
 
+    std::lock_guard<std::mutex> _stateLock(_stateMutex);
+    DnetState* st = &_state;
+
     // --- inputs ---
-    std::vector<MMatrix> in_aMatrices;
+    // matrices as raw row-major doubles, 16 per logical index; a gap in the
+    // sparse array reads MMatrix() (identity), as the MMatrix vector did.
+    std::vector<double>& in_aMatrices16 = st->inMats16;
+    in_aMatrices16.clear();
+    size_t              in_aMatricesN = 0;
     {
         MArrayDataHandle _arr = data.inputArrayValue(aMatrices);
         unsigned _n = _arr.elementCount();
+        // Pre-size to the element count with identity: logical indices are
+        // distinct, so the highest one is at least _n - 1 and the final size
+        // (highest index + 1, gaps identity) is what the one-at-a-time growth
+        // below would have produced; it only runs now for an index past _n.
+        {
+            static const double _ident0[16] = {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
+            in_aMatrices16.resize((size_t)16 * _n);
+            for (unsigned _k = 0; _k < _n; ++_k)
+                std::memcpy(&in_aMatrices16[(size_t)16 * _k], _ident0, sizeof(_ident0));
+            in_aMatricesN = _n;
+        }
         for (unsigned _i = 0; _i < _n; ++_i) {
             unsigned _li = _arr.elementIndex();
-            if (_li >= in_aMatrices.size()) in_aMatrices.resize(_li + 1, MMatrix());
-            MDataHandle eh = _arr.inputValue();
-            in_aMatrices[_li] = eh.asMatrix();
+            while (in_aMatricesN <= (size_t)_li) {
+                static const double _ident[16] = {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
+                in_aMatrices16.insert(in_aMatrices16.end(), _ident, _ident + 16);
+                ++in_aMatricesN;
+            }
+            const MMatrix& _m = _arr.inputValue().asMatrix();
+            std::memcpy(&in_aMatrices16[(size_t)16 * _li], &_m.matrix[0][0], sizeof(double) * 16);
             _arr.next();
         }
     }
-    std::vector<float> in_aAnchors;
+    std::vector<float>& in_aAnchors = st->inAnchors;
+    in_aAnchors.clear();
     {
         MArrayDataHandle _arr = data.inputArrayValue(aAnchors);
         unsigned _n = _arr.elementCount();
         for (unsigned _i = 0; _i < _n; ++_i) {
             unsigned _li = _arr.elementIndex();
-            if (_li >= in_aAnchors.size()) in_aAnchors.resize(_li + 1, 0.0);
+            if (_li >= in_aAnchors.size()) in_aAnchors.resize(std::max<size_t>((size_t)_li + 1, (size_t)_n), 0.0);
             MDataHandle eh = _arr.inputValue();
             in_aAnchors[_li] = eh.asFloat();
             _arr.next();
         }
     }
-    std::vector<int> in_aIndex0;
+    std::vector<int>& in_aIndex0 = st->inIndex0;
+    in_aIndex0.clear();
     {
         MArrayDataHandle _arr = data.inputArrayValue(aIndex0);
         unsigned _n = _arr.elementCount();
         for (unsigned _i = 0; _i < _n; ++_i) {
             unsigned _li = _arr.elementIndex();
-            if (_li >= in_aIndex0.size()) in_aIndex0.resize(_li + 1, 0);
+            if (_li >= in_aIndex0.size()) in_aIndex0.resize(std::max<size_t>((size_t)_li + 1, (size_t)_n), 0);
             MDataHandle eh = _arr.inputValue();
             in_aIndex0[_li] = eh.asInt();
             _arr.next();
         }
     }
-    std::vector<int> in_aIndex1;
+    std::vector<int>& in_aIndex1 = st->inIndex1;
+    in_aIndex1.clear();
     {
         MArrayDataHandle _arr = data.inputArrayValue(aIndex1);
         unsigned _n = _arr.elementCount();
         for (unsigned _i = 0; _i < _n; ++_i) {
             unsigned _li = _arr.elementIndex();
-            if (_li >= in_aIndex1.size()) in_aIndex1.resize(_li + 1, 0);
+            if (_li >= in_aIndex1.size()) in_aIndex1.resize(std::max<size_t>((size_t)_li + 1, (size_t)_n), 0);
             MDataHandle eh = _arr.inputValue();
             in_aIndex1[_li] = eh.asInt();
             _arr.next();
         }
     }
-    std::vector<float> in_aRestLengths;
+    std::vector<float>& in_aRestLengths = st->inRest;
+    in_aRestLengths.clear();
     {
         MArrayDataHandle _arr = data.inputArrayValue(aRestLengths);
         unsigned _n = _arr.elementCount();
         for (unsigned _i = 0; _i < _n; ++_i) {
             unsigned _li = _arr.elementIndex();
-            if (_li >= in_aRestLengths.size()) in_aRestLengths.resize(_li + 1, 1.0);
+            if (_li >= in_aRestLengths.size()) in_aRestLengths.resize(std::max<size_t>((size_t)_li + 1, (size_t)_n), 1.0);
             MDataHandle eh = _arr.inputValue();
             in_aRestLengths[_li] = eh.asFloat();
             _arr.next();
         }
     }
-    std::vector<float> in_aTension;
+    std::vector<float>& in_aTension = st->inTension;
+    in_aTension.clear();
     {
         MArrayDataHandle _arr = data.inputArrayValue(aTension);
         unsigned _n = _arr.elementCount();
         for (unsigned _i = 0; _i < _n; ++_i) {
             unsigned _li = _arr.elementIndex();
-            if (_li >= in_aTension.size()) in_aTension.resize(_li + 1, 0.0);
+            if (_li >= in_aTension.size()) in_aTension.resize(std::max<size_t>((size_t)_li + 1, (size_t)_n), 0.0);
             MDataHandle eh = _arr.inputValue();
             in_aTension[_li] = eh.asFloat();
             _arr.next();
@@ -1433,25 +1689,27 @@ MStatus MPyDnet::compute(const MPlug& plug, MDataBlock& data) {
     const MMatrix in_aInverseMatrix = data.inputValue(aInverseMatrix).asMatrix();
     const short in_aResetBuffer = data.inputValue(aResetBuffer).asShort();
     const short in_aEvaluate = data.inputValue(aEvaluate).asShort();
-    std::vector<float> in_aPush;
+    std::vector<float>& in_aPush = st->inPush;
+    in_aPush.clear();
     {
         MArrayDataHandle _arr = data.inputArrayValue(aPush);
         unsigned _n = _arr.elementCount();
         for (unsigned _i = 0; _i < _n; ++_i) {
             unsigned _li = _arr.elementIndex();
-            if (_li >= in_aPush.size()) in_aPush.resize(_li + 1, 1.0);
+            if (_li >= in_aPush.size()) in_aPush.resize(std::max<size_t>((size_t)_li + 1, (size_t)_n), 1.0);
             MDataHandle eh = _arr.inputValue();
             in_aPush[_li] = eh.asFloat();
             _arr.next();
         }
     }
-    std::vector<float> in_aPull;
+    std::vector<float>& in_aPull = st->inPull;
+    in_aPull.clear();
     {
         MArrayDataHandle _arr = data.inputArrayValue(aPull);
         unsigned _n = _arr.elementCount();
         for (unsigned _i = 0; _i < _n; ++_i) {
             unsigned _li = _arr.elementIndex();
-            if (_li >= in_aPull.size()) in_aPull.resize(_li + 1, 1.0);
+            if (_li >= in_aPull.size()) in_aPull.resize(std::max<size_t>((size_t)_li + 1, (size_t)_n), 1.0);
             MDataHandle eh = _arr.inputValue();
             in_aPull[_li] = eh.asFloat();
             _arr.next();
@@ -1464,94 +1722,446 @@ MStatus MPyDnet::compute(const MPlug& plug, MDataBlock& data) {
     h_aMaxIterations.setInt(0);
     MDataHandle h_aMaxForce = data.outputValue(aMaxForce);
     h_aMaxForce.setFloat(0.0f);
-    std::vector<MVector> out_aPositions;
-    std::vector<float> out_aLengths;
+    std::vector<double>& out_aPos3 = st->outPos3;
+    out_aPos3.clear();
+    std::vector<float>& out_aLengths = st->outLengths;
+    out_aLengths.clear();
 
     // ===== BEGIN PORTED COMPUTE =====
-    // Inputs are in `in_<name>` (arrays are std::vector<...>).
-    // Write these outputs:
-    //   h_aMaxIterations.setInt(<int>)
-    //   h_aMaxForce.setFloat(<float>)
-    //   populate std::vector out_aPositions (one entry per output element)
-    //   populate std::vector out_aLengths (one entry per output element)
-    // Original Python compute (translate faithfully):
-    //   | # DNET spring-network relaxation -- the source dnet .mpn's Compute
-    //   | # expression (bugs/dnet_code.mpn), built on the VERBATIM numba Solver in the Init
-    //   | # tab. The only addition over the .mpn's one-liner is reading the per-link inputs
-    //   | # DENSELY: the .mpn's evaluate() fills a neutral default only for a *None* arg, but
-    //   | # in an mPyNode a demo / create_link network wires the topology
-    //   | # (index0 / index1 / restLengths) and tension yet leaves push / pull unset (empty
-    //   | # multis) -- a raw pass would let the kernels index past a short array and silently
-    //   | # ship an unrelaxed (all-zero) solve. So we pad each per-link array to the link
-    //   | # count (the same "compute reads dense" contract the numpy-free port used); for a
-    //   | # network whose arrays are already full (the .mpn's own scenes) this is a no-op and
-    //   | # the Solver sees exactly what it did there.
-    //   | 
-    //   | 
-    //   | # `previous` is the solver carry-over state. In the source .mpn it is a persistent
-    //   | # stored var (returns None until first solved); as a vanilla template it starts as
-    //   | # session scratch, so seed it to None on first touch -- Solver(None) cold-starts
-    //   | # (snaps free knots to their live goals). Promote `previous` to persistent (Data
-    //   | # column) to carry the solved state across scene save / load like the .mpn.
-    //   | if not hasattr(self, 'previous'):
-    //   |     self.previous = None
-    //   | 
-    //   | # Init the node
-    //   | if not hasattr(self, 'node'):
-    //   |     self.node = Solver(self.previous)
-    //   | 
-    //   | matrices = np.asarray(self.matrices, dtype=np.float64).reshape(-1, 4, 4)
-    //   | N = matrices.shape[0]
-    //   | 
-    //   | if self.evaluate and N > 0:
-    //   |     # anchors dense to the knot count (unset knots read 0 == free).
-    //   |     anchors = np.asarray(self.anchors, dtype=np.float64).ravel()
-    //   |     if anchors.shape[0] < N:
-    //   |         anchors = np.concatenate([anchors, np.zeros(N - anchors.shape[0])])
-    //   |     else:
-    //   |         anchors = anchors[:N]
-    //   | 
-    //   |     # Topology: paired link indices. Fall back to an open chain when no links are
-    //   |     # wired so a bare (no-demo) node still relaxes into a line.
-    //   |     index0 = np.asarray(self.index0, dtype=np.int32).ravel()
-    //   |     index1 = np.asarray(self.index1, dtype=np.int32).ravel()
-    //   |     L = min(index0.shape[0], index1.shape[0])
-    //   |     if L == 0 and N >= 2:
-    //   |         index0 = np.arange(N - 1, dtype=np.int32)
-    //   |         index1 = np.arange(1, N, dtype=np.int32)
-    //   |         L = N - 1
-    //   |     else:
-    //   |         index0 = index0[:L]
-    //   |         index1 = index1[:L]
-    //   | 
-    //   |     def _dense(v, neutral):
-    //   |         a = np.asarray(v, dtype=np.float64).ravel()
-    //   |         if a.shape[0] >= L:
-    //   |             return a[:L]
-    //   |         out = np.full(L, neutral, dtype=np.float64)
-    //   |         out[:a.shape[0]] = a
-    //   |         return out
-    //   | 
-    //   |     restLengths = _dense(self.restLengths, 1.0)   # rest length per link
-    //   |     tension = _dense(self.tension, 0.0)           # per-link contraction (0 = none)
-    //   |     push = _dense(self.push, 1.0)                 # per-link compression resistance
-    //   |     pull = _dense(self.pull, 1.0)                 # per-link stretch resistance
-    //   | 
-    //   |     self.node.evaluate(matrices, anchors, restLengths,
-    //   |                        inverseMatrix=self.inverseMatrix, index0=index0, index1=index1,
-    //   |                        tensions=tension, push=push, pull=pull,
-    //   |                        reset=self.resetBuffer,
-    //   |                        iterations=self.iterations,
-    //   |                        tolerance=self.tolerance,
-    //   |                        damping=self.damping)
-    //   | 
-    //   |     self.positions     = self.node.local_positions
-    //   |     self.lengths       = self.node.lengths
-    //   |     self.maxIterations = self.node.iterations
-    //   |     self.maxForce      = self.node.max_force
-    //   | 
-    //   |     # Store previous state
-    //   |     self.previous = self.node.previous
+    // Port of the dnet Compute expression and the Solver it drives
+        // (mpynode._common.nodes.rigging.dnet: Solver.evaluate, _buildAdjacency,
+        // _evaluate_parallel). numba's fastmath=True may contract or reassociate;
+        // this keeps plain IEEE with one rounding per statement, so it agrees to
+        // ~1e-5 rather than bit for bit.
+
+        // ---- persistent per-instance state ---------------------------------------
+        // The Python keeps a Solver on self (`self.node`) plus `self.previous`. The
+        // Solver is built once, from `self.previous` while that is still None, so
+        // the node-level `self.previous` (a lagging alias of the Solver's, assigned
+        // after each solve) is never read again. What carries across evaluations
+        // is the Solver's own data -- its `previous` buffer and its adjacency
+        // cache -- and those are the members below. Its per-eval fields
+        // (positions, local_positions, lengths, iterations, max_force) are
+        // rewritten by every evaluate() before compute reads them, so they stay locals.
+        // (state lives in the per-instance DnetState member _state; st points at it)
+
+        // if not hasattr(self, 'previous'): self.previous = None
+        // if not hasattr(self, 'node'):     self.node = Solver(self.previous)
+        // Solver(None) is a cold solver: no previous buffer, no adjacency cache.
+        if (!st->initialized) {
+            st->hasPrevious  = false;
+            st->prevRow3.clear();
+            st->adjBuilt     = false;
+            st->cachedKCount = -1;
+            st->cachedIndex0.clear();
+            st->cachedIndex1.clear();
+            st->adjOffsets.clear();
+            st->adjLink.clear();
+            st->adjSign.clear();
+            st->initialized  = true;
+        }
+
+        (void)in_aTime;   // dirty trigger only -- the Python never reads it
+
+        const int N = (int)in_aMatricesN;
+
+        // Outputs are assigned only when Solver.evaluate() completes. Every other
+        // path (evaluate off, no knots, a raise inside evaluate) leaves them
+        // unwritten, so the scaffold publishes their defaults.
+        if (in_aEvaluate != 0 && N > 0) {
+            // anchors dense to the knot count (unset knots read 0 == free).
+            std::vector<double>& anchors = st->anchors;
+            anchors.assign((size_t)N, 0.0);
+            {
+                const size_t n = std::min(in_aAnchors.size(), (size_t)N);
+                for (size_t i = 0; i < n; ++i) anchors[i] = (double)in_aAnchors[i];
+            }
+
+            // Topology: paired link indices. Fall back to an open chain when no
+            // links are wired so a bare node still relaxes into a line.
+            int L = (int)std::min(in_aIndex0.size(), in_aIndex1.size());
+            std::vector<int>& index0 = st->index0;
+            std::vector<int>& index1 = st->index1;
+            if (L == 0 && N >= 2) {
+                L = N - 1;
+                index0.resize((size_t)L);
+                index1.resize((size_t)L);
+                for (int i = 0; i < L; ++i) { index0[i] = i; index1[i] = i + 1; }
+            } else {
+                index0.assign(in_aIndex0.begin(), in_aIndex0.begin() + L);
+                index1.assign(in_aIndex1.begin(), in_aIndex1.begin() + L);
+            }
+
+            // _dense(v, neutral): the first L values, padded with `neutral`.
+            auto dense = [L](std::vector<double>& a, const std::vector<float>& v, double neutral) {
+                a.assign((size_t)L, neutral);
+                const size_t n = std::min(v.size(), (size_t)L);
+                for (size_t i = 0; i < n; ++i) a[i] = (double)v[i];
+            };
+            dense(st->restLengths, in_aRestLengths, 1.0);
+            dense(st->tensions,    in_aTension,     0.0);
+            dense(st->push,        in_aPush,        1.0);
+            dense(st->pull,        in_aPull,        1.0);
+            const std::vector<double>& restLengths = st->restLengths;  // rest length per link
+            const std::vector<double>& tensions    = st->tensions;     // per-link contraction
+            const std::vector<double>& push        = st->push;         // compression resistance
+            const std::vector<double>& pull        = st->pull;         // stretch resistance
+
+            // ============================ Solver.evaluate ============================
+            const MMatrix& inverseMatrix = in_aInverseMatrix;
+            const double   resetBuffer   = (double)in_aResetBuffer;   // 0-d reset -> np.full(N, reset)
+
+            // reset previous if size mismatch (to the raw input matrices).
+            // Only ROW 3 of previous is ever read (prevK(3, :3) below depends on
+            // previous[k] row 3 alone), so that is all the state keeps: 4 doubles
+            // per knot instead of an MMatrix.
+            if (!st->hasPrevious || st->prevRow3.size() != (size_t)4 * N) {
+                st->prevRow3.resize((size_t)4 * N);
+                for (int k = 0; k < N; ++k)
+                    for (int c = 0; c < 4; ++c)
+                        st->prevRow3[(size_t)4 * k + c] = in_aMatrices16[(size_t)16 * k + 12 + c];
+                st->hasPrevious = true;
+            }
+
+            // blend between eval modes, both sides taken through inverseMatrix:
+            //   M = previous + reset * (matrices - previous)
+            // with reset forced to 1 where anchor > 0. Only M[:, 3, :3] is read.
+            // The products are MMatrix::operator*'s own arithmetic, spelled out:
+            // each entry accumulates left to right, a0*b0 + a1*b1 + a2*b2 + a3*b3
+            // (verified bit-identical to operator* on 320k random entries; the
+            // pairwise order differed on 30%).
+            const double* Bm = &inverseMatrix.matrix[0][0];
+            std::vector<double>& matrices = st->mats;       // matrices @ inverseMatrix, 16 per knot
+            matrices.resize((size_t)16 * N);
+            // M[:, 3, :3] is written straight into both solver buffers (initPositions and
+            // positions start as copies of it), so no separate knots array is kept.
+            std::vector<double>& initPositions = st->initPositions; initPositions.resize((size_t)3 * N);
+            std::vector<double>& positions     = st->positions;     positions.resize((size_t)3 * N);
+            // The inverse of each matrices[k] (np.linalg.inv, used only after
+            // the solve) depends on nothing the solve produces, so it is taken
+            // here in the same per-knot map; invOk[k] records a singular one and
+            // the check stays where the Python raises (after the solve).
+            std::vector<double>& inverses = st->invs;
+            inverses.resize((size_t)16 * N);
+            std::vector<unsigned char>& invOk = st->invOk;
+            invOk.resize((size_t)N);
+            // Rebuild adjacency if topology changed -- serial, on the calling
+            // thread, overlapped with the per-knot map below: it reads only the
+            // topology and writes only the adjacency cache, which the map neither
+            // reads nor writes, so running it during the map changes nothing.
+            bool ok = true;
+            const std::function<void()> adjacency = [&]() {
+            const bool rebuild = !st->adjBuilt
+                              || st->cachedKCount != N
+                              || st->cachedIndex0 != index0
+                              || st->cachedIndex1 != index1;
+            if (rebuild) {
+                // _buildAdjacency: an index outside [0, kCount) has no defined
+                // result in the Python. numpy raises IndexError -- or, for a
+                // negative index (counts[] and offsets[] wrap against different
+                // lengths), may fill another knot's slots and leave np.empty
+                // garbage -- and numba writes out of bounds. Taken as the raise:
+                // evaluate() does not return, the cache stays as it was, and no
+                // output is assigned. (The cache only ever holds validated
+                // topology, so invalid indices always land here.)
+                for (int i = 0; i < L; ++i) {
+                    if (index0[i] < 0 || index0[i] >= N || index1[i] < 0 || index1[i] >= N) {
+                        ok = false;
+                        break;
+                    }
+                }
+                if (ok) {
+                    // count connections per knot
+                    std::vector<int>& counts = st->counts; counts.assign((size_t)N, 0);
+                    for (int i = 0; i < L; ++i) {
+                        ++counts[index0[i]];
+                        ++counts[index1[i]];
+                    }
+                    // build offsets (prefix sum)
+                    st->adjOffsets.assign((size_t)N + 1, 0);
+                    for (int i = 0; i < N; ++i)
+                        st->adjOffsets[i + 1] = st->adjOffsets[i] + counts[i];
+                    // fill adjacency arrays
+                    const int total = st->adjOffsets[N];
+                    st->adjLink.assign((size_t)total, 0);
+                    st->adjSign.assign((size_t)total, 0.0);
+                    for (int i = 0; i < N; ++i) counts[i] = 0;
+                    for (int i = 0; i < L; ++i) {
+                        const int k0  = index0[i];
+                        const int at0 = st->adjOffsets[k0] + counts[k0];
+                        st->adjLink[at0] = i;
+                        st->adjSign[at0] = 1.0;
+                        ++counts[k0];
+
+                        const int k1  = index1[i];
+                        const int at1 = st->adjOffsets[k1] + counts[k1];
+                        st->adjLink[at1] = i;
+                        st->adjSign[at1] = -1.0;
+                        ++counts[k1];
+                    }
+                    st->cachedKCount = N;
+                    st->cachedIndex0 = index0;
+                    st->cachedIndex1 = index1;
+                    st->adjBuilt     = true;
+                }
+            }
+            };
+            {
+                const double*       inM  = in_aMatrices16.data();
+                const double*       Prev = st->prevRow3.data();
+                const double*       anc  = anchors.data();
+                double*             Mall = matrices.data();
+                double*             Kall = positions.data();
+                double*             Jall = initPositions.data();
+                double*             Iall = inverses.data();
+                unsigned char*      Oall = invOk.data();
+                _pool.run(N, 512, [=](int lo, int hi) {
+                    for (int k = lo; k < hi; ++k) {
+                        const double* A  = &inM[(size_t)16 * k];
+                        double*       Mk = &Mall[(size_t)16 * k];
+                        for (int r = 0; r < 4; ++r) {
+                            for (int c = 0; c < 4; ++c) {
+                                double acc = A[4 * r + 0] * Bm[c];
+                                acc += A[4 * r + 1] * Bm[4 + c];
+                                acc += A[4 * r + 2] * Bm[8 + c];
+                                acc += A[4 * r + 3] * Bm[12 + c];
+                                Mk[4 * r + c] = acc;
+                            }
+                        }
+                        const double* P     = &Prev[(size_t)4 * k];
+                        const double  reset = (anc[k] > 0.0) ? 1.0 : resetBuffer;
+                        for (int j = 0; j < 3; ++j) {
+                            double prevKj = P[0] * Bm[j];
+                            prevKj += P[1] * Bm[4 + j];
+                            prevKj += P[2] * Bm[8 + j];
+                            prevKj += P[3] * Bm[12 + j];
+                            const double d = Mk[12 + j] - prevKj;
+                            const double w = reset * d;
+                            const double kv = prevKj + w;
+                            Kall[(size_t)3 * k + j] = kv;
+                            Jall[(size_t)3 * k + j] = kv;
+                        }
+                        Oall[k] = dnetInvert4(Mk, &Iall[(size_t)16 * k]) ? 1 : 0;
+                    }
+                }, adjacency);
+            }
+
+
+            if (ok) {
+                // ========================== _evaluate_parallel ==========================
+                // Each prange loop is a per-knot Jacobi phase (phase 1 reads
+                // positions and writes F, phase 2 reads F and writes positions),
+                // so plain serial loops produce the same numbers.
+                const std::vector<int>&    adjOffsets = st->adjOffsets;
+                const std::vector<int>&    adjLink    = st->adjLink;
+                const std::vector<double>& adjSign    = st->adjSign;
+
+                const double tolerance = (double)in_aTolerance * (double)in_aTolerance;  // tolerance ** 2
+                const double damping   = (double)in_aDamping;
+
+                // Second position buffer for the fused Jacobi step (the old
+                // per-link force scratch, re-sized to one slot per knot).
+                std::vector<double>& posAlt = st->linkF;
+                posAlt.resize((size_t)3 * N);
+
+                std::vector<double>& displacements = st->displacements; displacements.assign((size_t)N, -1.0);  // per-knot displacement
+
+                // Raw views for the per-iteration map. It is a parallel MAP with
+                // disjoint writes (knot i writes only its own slots of the write
+                // buffer and displacements[i]); the convergence max stays a SERIAL
+                // loop in knot order on this thread.
+                const int*    i0p   = index0.data();
+                const int*    i1p   = index1.data();
+                const double* restp = restLengths.data();
+                const double* tenp  = tensions.data();
+                const double* pushp = push.data();
+                const double* pullp = pull.data();
+                const int*    aoff  = adjOffsets.data();
+                const int*    alnk  = adjLink.data();
+                const double* asgn  = adjSign.data();
+                const double* ancp  = anchors.data();
+                double*       posp  = positions.data();
+                double*       disp  = displacements.data();
+
+                // One fused region per iteration. Knot i re-derives the force of
+                // each adjacent link from the READ buffer with exactly the per-link
+                // expression (a link with tension <= 0 or NaN contributes sign*+0.0,
+                // which leaves the +0.0-started sum bit-identical), gathers them in
+                // adjacency order, and writes its new position into the WRITE buffer
+                // (an anchored knot copies its old one). The buffers swap after the
+                // region, so every read sees the previous iteration: the Jacobi split
+                // is preserved and the result does not depend on the chunking.
+                double* srcp = posp;
+                double* dstp = posAlt.data();
+                const std::function<void(int, int)> iterate = [&](int lo, int hi) {
+                    const double* rp = srcp;
+                    double*       wp = dstp;
+                    for (int i = lo; i < hi; ++i) {
+                        double Fi0 = 0.0, Fi1 = 0.0, Fi2 = 0.0;
+                        for (int ci = aoff[i]; ci < aoff[i + 1]; ++ci) {
+                            const int     li = alnk[ci];
+                            const double* p0 = &rp[(size_t)3 * i0p[li]];
+                            const double* p1 = &rp[(size_t)3 * i1p[li]];
+
+                            double fl[3];
+                            double link[3];
+                            double tension = 0.0;
+                            for (int j = 0; j < 3; ++j) {
+                                link[j] = p1[j] - p0[j];
+                                const double sq = link[j] * link[j];
+                                tension += sq;
+                            }
+                            if (tension > 0.0) {
+                                tension = std::sqrt(tension);
+                                const double rest   = restp[li];
+                                const double shrink = rest * tenp[li];
+                                double force = tension - (rest - shrink);
+                                if (tension < rest)
+                                    force *= pushp[li];
+                                else if (tension > rest)
+                                    force *= pullp[li];
+                                for (int j = 0; j < 3; ++j) {
+                                    const double unit = link[j] / tension;
+                                    fl[j] = unit * force;
+                                }
+                            } else {
+                                fl[0] = 0.0;
+                                fl[1] = 0.0;
+                                fl[2] = 0.0;
+                            }
+
+                            const double sign = asgn[ci];
+                            const double sf0  = sign * fl[0];
+                            const double sf1  = sign * fl[1];
+                            const double sf2  = sign * fl[2];
+                            Fi0 += sf0;
+                            Fi1 += sf1;
+                            Fi2 += sf2;
+                        }
+                        const size_t b   = (size_t)3 * i;
+                        double       dsp = -1.0;
+                        if (ancp[i] < 1.0) {
+                            const double Fi[3] = {Fi0, Fi1, Fi2};
+                            double displacement = 0.0;
+                            for (int j = 0; j < 3; ++j) {
+                                const size_t e    = b + j;
+                                const double step = Fi[j] * damping;
+                                const double prev = rp[e];
+                                wp[e] = prev + step;
+                                const double delta = wp[e] - prev;
+                                const double sq    = delta * delta;
+                                displacement += sq;
+                            }
+                            dsp = displacement;
+                        } else {
+                            wp[b + 0] = rp[b + 0];
+                            wp[b + 1] = rp[b + 1];
+                            wp[b + 2] = rp[b + 2];
+                        }
+                        disp[i] = dsp;
+                    }
+                };
+
+                int    iterations      = in_aIterations;
+                int    iterationCount  = 0;
+                double maxDisplacement = 0.0;   // bound before the loop: iterations <= 0 -> 0.0
+                while (iterationCount < iterations) {
+                    _pool.run(N, 1024, iterate);
+                    std::swap(srcp, dstp);
+
+                    // -- Convergence check (sequential) --
+                    maxDisplacement = -1.0;
+                    for (int i = 0; i < N; ++i)
+                        if (disp[i] > maxDisplacement) maxDisplacement = disp[i];
+                    if (maxDisplacement < tolerance) iterations = 0;
+                    ++iterationCount;
+                }
+                posp = srcp;   // the buffer holding the final iterate
+
+                // The blend, the link lengths and the localisation below are only
+                // observable when every inverse succeeded (otherwise nothing is
+                // assigned and positions/lengths are scratch), so the inverse check
+                // runs first and the three passes run as two parallel maps.
+
+                // ======================= Localise to parent matrix =======================
+                // I = np.linalg.inv(matrices). numpy runs LAPACK dgesv against the
+                // identity -- LU with partial pivoting (first largest |pivot|,
+                // reciprocal scaling, rank-1 update), then the unit-lower and upper
+                // solves -- and raises LinAlgError on an exactly-zero pivot in ANY
+                // of the N matrices. evaluate() then does not return: any adjacency
+                // rebuild above stands, previous keeps its pre-solve value, and no
+                // output is assigned.
+                // (inverses were taken in the per-knot map above)
+                for (int k = 0; k < N && ok; ++k)
+                    ok = invOk[k] != 0;
+
+                if (ok) {
+                    // Per-knot map: blend between init and eval positions, then
+                    //   local_positions = einsum('ni,nij->nj', positions, I[:, :3, :3]) + I[:, 3, :3]
+                    // and reset previous position:
+                    //   self.previous = matrices; self.previous[:, 3, :3] = positions
+                    // (row 3 only -- see prevRow3 above). Knot k writes only its own slots.
+                    out_aPos3.resize((size_t)3 * N);
+                    {
+                        const double* initp = initPositions.data();
+                        const double* Iall  = inverses.data();
+                        const double* Mall  = matrices.data();
+                        double*       prevp = st->prevRow3.data();
+                        double*       outp  = out_aPos3.data();
+                        _pool.run(N, 1024, [=](int lo, int hi) {
+                            for (int k = lo; k < hi; ++k) {
+                                const double a    = ancp[k];
+                                const double keep = 1.0 - a;
+                                double*      p    = &posp[(size_t)3 * k];
+                                for (int j = 0; j < 3; ++j) {
+                                    const size_t e  = (size_t)3 * k + j;
+                                    const double w0 = initp[e] * a;
+                                    const double w1 = posp[e] * keep;
+                                    posp[e] = w0 + w1;
+                                }
+                                const double* Ik = &Iall[(size_t)16 * k];
+                                for (int j = 0; j < 3; ++j) {
+                                    double acc = 0.0;
+                                    for (int i = 0; i < 3; ++i) {
+                                        const double t = p[i] * Ik[4 * i + j];
+                                        acc += t;
+                                    }
+                                    outp[(size_t)3 * k + j] = acc + Ik[12 + j];
+                                }
+                                double* P = &prevp[(size_t)4 * k];
+                                P[0] = p[0];
+                                P[1] = p[1];
+                                P[2] = p[2];
+                                P[3] = Mall[(size_t)16 * k + 15];
+                            }
+                        });
+                    }
+
+                    // Per-link map: final link lengths from the blended positions.
+                    // self.lengths / self.maxIterations / self.maxForce
+                    // (maxForce is the max SQUARED displacement, as the Python returns it)
+                    out_aLengths.resize((size_t)L);
+                    {
+                        float* olp = out_aLengths.data();
+                        _pool.run(L, 1024, [=](int lo, int hi) {
+                            for (int i = lo; i < hi; ++i) {
+                                const double* p0 = &posp[(size_t)3 * i0p[i]];
+                                const double* p1 = &posp[(size_t)3 * i1p[i]];
+                                double s = 0.0;
+                                for (int j = 0; j < 3; ++j) {
+                                    const double dl = p1[j] - p0[j];
+                                    const double sq = dl * dl;
+                                    s += sq;
+                                }
+                                olp[i] = (float)std::sqrt(s);
+                            }
+                        });
+                    }
+                    h_aMaxIterations.setInt(iterationCount);
+                    h_aMaxForce.setFloat((float)maxDisplacement);
+                }
+            }
+        }
     // ===== END PORTED COMPUTE =====
 
     // --- finalize ---
@@ -1559,13 +2169,27 @@ MStatus MPyDnet::compute(const MPlug& plug, MDataBlock& data) {
     h_aMaxForce.setClean();
     {
         MArrayDataHandle _outArr = data.outputArrayValue(aPositions);
-        if (!out_aPositions.empty()) {
-            MArrayDataBuilder _b(&data, aPositions, (unsigned)out_aPositions.size());
-            for (size_t _i = 0; _i < out_aPositions.size(); ++_i) {
-                MDataHandle eh = _b.addElement((unsigned)_i);
-                eh.set3Double((out_aPositions[_i]).x, (out_aPositions[_i]).y, (out_aPositions[_i]).z);
+        if (!out_aPos3.empty()) {
+            // Write in place when the array already holds exactly the logical
+            // indices 0..n-1 (every tick after the first); otherwise the builder
+            // replaces the whole array, so the final element set is identical.
+            const unsigned _n = (unsigned)(out_aPos3.size() / 3);
+            bool _inPlace = (_outArr.elementCount() == _n);
+            if (_inPlace) {
+                for (unsigned _i = 0; _i < _n; ++_i) {
+                    if (_outArr.elementIndex() != _i) { _inPlace = false; break; }
+                    _outArr.outputValue().set3Double(out_aPos3[(size_t)3 * _i], out_aPos3[(size_t)3 * _i + 1], out_aPos3[(size_t)3 * _i + 2]);
+                    _outArr.next();
+                }
             }
-            _outArr.set(_b);
+            if (!_inPlace) {
+                MArrayDataBuilder _b(&data, aPositions, _n);
+                for (size_t _i = 0; _i < (size_t)_n; ++_i) {
+                    MDataHandle eh = _b.addElement((unsigned)_i);
+                    eh.set3Double(out_aPos3[3 * _i], out_aPos3[3 * _i + 1], out_aPos3[3 * _i + 2]);
+                }
+                _outArr.set(_b);
+            }
         } else {
             MVector _dflt = MVector();
             unsigned _ne = _outArr.elementCount();
@@ -1581,12 +2205,23 @@ MStatus MPyDnet::compute(const MPlug& plug, MDataBlock& data) {
     {
         MArrayDataHandle _outArr = data.outputArrayValue(aLengths);
         if (!out_aLengths.empty()) {
-            MArrayDataBuilder _b(&data, aLengths, (unsigned)out_aLengths.size());
-            for (size_t _i = 0; _i < out_aLengths.size(); ++_i) {
-                MDataHandle eh = _b.addElement((unsigned)_i);
-                eh.setFloat(out_aLengths[_i]);
+            const unsigned _n = (unsigned)out_aLengths.size();
+            bool _inPlace = (_outArr.elementCount() == _n);
+            if (_inPlace) {
+                for (unsigned _i = 0; _i < _n; ++_i) {
+                    if (_outArr.elementIndex() != _i) { _inPlace = false; break; }
+                    _outArr.outputValue().setFloat(out_aLengths[_i]);
+                    _outArr.next();
+                }
             }
-            _outArr.set(_b);
+            if (!_inPlace) {
+                MArrayDataBuilder _b(&data, aLengths, _n);
+                for (size_t _i = 0; _i < out_aLengths.size(); ++_i) {
+                    MDataHandle eh = _b.addElement((unsigned)_i);
+                    eh.setFloat(out_aLengths[_i]);
+                }
+                _outArr.set(_b);
+            }
         } else {
             float _dflt = 0.0;
             unsigned _ne = _outArr.elementCount();

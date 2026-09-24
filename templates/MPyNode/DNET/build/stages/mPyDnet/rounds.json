@@ -1,66 +1,8 @@
 {
   "accepted": true,
-  "baseline_ms": 5.963,
-  "best_ms": 1.5799,
-  "created": 1787678450.5152462,
-  "ledger": [
-    {
-      "compiled": true,
-      "duration_s": null,
-      "fix_rounds": 0,
-      "hypothesis": "",
-      "index": 0,
-      "ms": 5.963,
-      "note": "",
-      "outcome": "baseline",
-      "parity": null,
-      "predicted_speedup": null,
-      "risk": "",
-      "slug": null,
-      "speedup": null,
-      "theme": ""
-    },
-    {
-      "compiled": true,
-      "duration_s": 589.544,
-      "fix_rounds": 0,
-      "hypothesis": "This node is ELEMENTWISE, not QUERY -- N=20000 knots and L=20000 links with no inner scan over a second collection, so there is no acceleration structure to build and the win has to come from deleting per-element work and whole-array temporaries. A one-shot instrumented run confirmed it: read=1.80 pre=0.79 solve=0.92 loc=1.86 out=0.47 ms, with only 4 solver iterations -- so the solver was never the bottleneck and `loc` was, and `loc` was almost entirely 20000 Maya 4x4 inverses at ~75 ns each. Only columns 0..2 of each inverse are ever read, so the adjugate gives all of them in ~30 flops. Same reasoning applied to prevM (only row 3 of the product is read) and to phase 1 of the solver (the CSR counting sort fills each knot's bucket in increasing link order, so a link-ordered scatter accumulates into F[i] in exactly the sequence the per-knot gather did -- bit-identical, half the sqrt/divides).",
-      "index": 1,
-      "ms": 3.3814,
-      "note": "",
-      "outcome": "accept",
-      "parity": "pass",
-      "predicted_speedup": 1.5,
-      "risk": "The adjugate is a different algorithm from Maya's inverse, so the last bits move -- validated at 3.2e-13 worst relative error over 2000 random 4x4 matrices, far inside the 1e-3/1e-4 gate, and nothing here is a comparison that selects a winner, so the tie-break rule does not bite. A det==0 matrix falls back to MMatrix::inverse() so degenerate input behaves exactly as before. The link scatter is the one change that is bit-identical rather than merely within tolerance, because the accumulation ORDER into F[i] is provably unchanged. Nothing was threaded: at 4 iterations the whole solver is 0.65 ms and each pass sits near the ~50 us floor, so a parallel region would have bought little for real race risk.",
-      "slug": "adjugate_inverse",
-      "speedup": 1.7634707517596262,
-      "theme": "Profiled compute() into five sections and removed whole levels of work from the three fattest: replace 20000 general MMatrix::inverse() calls with a direct adjugate that only forms the three columns actually read, build only row 3 of the prev*inverseMatrix product instead of the full 4x4, and walk the spring links once scattering the +/- force to both endpoints instead of recomputing every link twice from each endpoint's adjacency slot."
-    },
-    {
-      "compiled": true,
-      "duration_s": 699.962,
-      "fix_rounds": 0,
-      "hypothesis": "profiling said the compute was 40% MArrayDataHandle traversal (1330 us for 6 multis x 20000 elements) and only ONE array input moves between ticks, so invalidating on setDependentsDirty + preEvaluation + an element-count backstop should retire five sixths of that read cost outright; the residual solve time is per-element overhead and whole-array temporaries, not arithmetic, so inlining MMatrix::operator* and deleting positionsPrev/displacements/the per-iteration F fill should take the rest",
-      "index": 2,
-      "ms": 1.5799,
-      "note": "",
-      "outcome": "accept",
-      "parity": "pass",
-      "predicted_speedup": 2.2,
-      "risk": "the input cache is only as correct as its invalidation -- a dirty route that bypasses BOTH setDependentsDirty and preEvaluation would ship a stale array, which is exactly what parity's re-presented earlier input set is built to catch. The element-count backstop covers a resize but not a same-size value change, so the two dirty hooks are load-bearing. Second risk: the hand-inlined 4x4 product must keep MMatrix's k-order accumulation or curM drifts a ULP; the only comparison it feeds is `det == 0.0`, which is exact either way.",
-      "slug": "cache_clean_array_inputs",
-      "speedup": 3.77428951199443,
-      "theme": "snapshot every array input in per-instance state and re-walk only the multis that actually went dirty, then inline the matrices*inverseMatrix product and collapse the solver's three redundant 480 KB streams into one fused pass"
-    }
-  ],
-  "parity_gate": "authored+pointwise",
-  "reason": "accepted (3.77x)",
-  "remeasured": {
-    "baseline_ms": null,
-    "date": "2026-09-08",
-    "diverged": null,
-    "final_ms": null,
-    "fingerprint": null,
+  "baseline_ms": 18.1097,
+  "bench": {
+    "fingerprint": "checked (4 plug(s))",
     "floor_ms": 15.0,
     "perturbed": [
       "anchors[0] (float)",
@@ -76,14 +18,72 @@
       "time (time)",
       "tolerance (float)"
     ],
-    "reason": "baseline 14.236 ms is below the 15 ms noise floor even at the largest bench scene (geo=400 array=20000); nothing this small can be optimized against measurably",
     "rung": [
       400,
       20000
     ],
-    "speedup": null
+    "small_rung": [
+      40,
+      512
+    ]
   },
+  "best_ms": 9.9094,
+  "created": 1790274006.7584004,
+  "ledger": [
+    {
+      "compiled": true,
+      "duration_s": null,
+      "fix_rounds": 0,
+      "hypothesis": "",
+      "index": 0,
+      "ms": 18.1097,
+      "note": "",
+      "outcome": "baseline",
+      "parity": null,
+      "predicted_speedup": null,
+      "risk": "",
+      "slug": null,
+      "speedup": null,
+      "theme": ""
+    },
+    {
+      "compiled": true,
+      "duration_s": 1793.221,
+      "fix_rounds": 0,
+      "hypothesis": "Profile of one tick (16.6 ms, it~9): read 3.8, blend 1.65, solve 3.6, inverse 2.5, previous 0.65, finalize 3.9 ms. The node is ELEMENTWISE (N=L=20000, no scan), so the levers are per-access overhead and serial per-knot work: (1) the per-element std::vector<MMatrix> resize/copy on read and the exported MMatrix::operator*/get/ctor calls dominate read+blend+previous; MMatrix::operator* accumulates each entry left to right (verified bit-identical on 320k random entries, pairwise differed on 30%), so a raw product is exact, and only previous[:,3,:] is ever read so 4 doubles/knot suffice. (2) inv(matrices[k]) depends on nothing the solve produces, so it moves into the same per-knot map (column 3 of the inverse is never read, so its solve is skipped). (3) The solver's per-knot gather recomputed each link's sqrt/div for both endpoints; a per-link force pass + a per-knot gather/apply pass keeps the Jacobi split and the per-knot summation order. Maps write disjoint slots; the convergence max stays a serial loop in knot order.",
+      "index": 1,
+      "ms": 9.9094,
+      "note": "",
+      "outcome": "accept",
+      "parity": "pass",
+      "predicted_speedup": 2.5,
+      "risk": "Bit-exactness rests on MMatrix::operator* accumulating left to right with no FMA (verified on random general matrices through API 2.0, and the Mac build uses -ffp-contract=off). Bitwise parity (positions, lengths, maxForce, maxIterations hashed over 12 perturbed bench ticks) was IDENTICAL to the original after every kept step. The pool is persistent per node (joined in the destructor), its cursor is a member, workers never touch the Maya API, and the MPYDNET_THREADS env var caps it (1 = serial). NOTE: ./bench.sh cannot run on this Windows machine because build.sh is the macOS clang script (it exits 'no Maya install ... under /Applications/Autodesk'); all numbers come from an MSVC build of this exact file driven through the same benchmark_node.py command, spec and sizes that bench.sh uses.",
+      "slug": "raw_matrices_pooled_knot_map",
+      "speedup": 1.8275273982279452,
+      "theme": "Replace the MMatrix vector with raw row-major doubles (input read, both blend products, row-3-only previous) and run the per-knot product+blend+inverse and the two solver phases as parallel maps on a persistent per-node pool, with per-link forces computed once instead of twice."
+    },
+    {
+      "compiled": true,
+      "duration_s": 1624.807,
+      "fix_rounds": 0,
+      "hypothesis": "An in-process probe put a tick at ~8.8 ms: ~3.4 ms in the two required data.setClean(<array attr>) calls (fixed DG cost; setAllClean is ~1 us, and call order made no difference), ~2 ms reading 8 x 20000 input elements through the API, and only ~3 ms of our own work. The per-tick vectors (~5 MB, 2.5 MB of it the matrix snapshot) are freshly allocated and page-faulted every tick, so reusing them should be the largest single cut. The solve is region-overhead bound (~140 us/iter at 8 threads, flat from 4 to 16 threads, vs ~400 us serial), so one region per iteration should beat two even though each link force is computed twice (once per endpoint, same expression, same bits, double-buffered positions keep the Jacobi split). The rest are smaller certain cuts: blend/localise/prevRow3 and lengths as two parallel maps (~420 -> ~190 us), M row 3 written straight into both solver buffers (two 480 KB copies gone), input vectors pre-sized once instead of resize(li+1) per element, and the ~180 us adjacency rebuild run on the calling thread while the workers run the map.",
+      "index": 2,
+      "ms": 8.995,
+      "note": "Accepted by the optimizer at 2.01x, withheld in review: besides its parallel maps it runs the serial adjacency rebuild on the calling thread concurrently with the per-knot map -- outside the one threading shape the optimizer rules permit (a parallel map on the pool, the calling thread waiting).",
+      "outcome": "invalid-candidate",
+      "parity": "pass",
+      "predicted_speedup": 1.15,
+      "risk": "Every output was checked byte-for-byte: the harness --fingerprint-out JSON (all 20000 positions, 20000 lengths, maxIterations, maxForce after warm-up) is identical to the original's for each kept step. Parallel work stays disjoint-write maps: no parallel reductions, the convergence max stays serial, and there is no Maya API in workers. The fused kernel's result depends on the adjacency order, which is unchanged. The recomputed link force is the identical expression, so it gives identical bits. The adjacency lambda touches only the topology and the adjacency cache, which the map never reads.",
+      "slug": "persistent_scratch_state",
+      "speedup": 2.013307392996109,
+      "theme": "Move the solver state from a static node registry into a per-instance member that also owns every per-tick scratch buffer, then trim the solve: one fused parallel region per Jacobi iteration instead of two, a threaded post-solve pass, and the serial adjacency rebuild overlapped with the per-knot matrix map."
+    }
+  ],
+  "max_rounds": 6,
+  "parity_gate": "authored+pointwise",
+  "reason": "accepted (1.83x); later rounds withheld in review",
   "rounds": 2,
-  "speedup": 3.77428951199443,
+  "speedup": 1.8275273982279452,
+  "stop_reason": "round 2 gained 1.10x, below the 1.15x needed to continue",
   "type_name": "mPyDnet"
 }
