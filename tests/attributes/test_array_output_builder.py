@@ -147,6 +147,20 @@ class TestArrayOutputSizedBuilder(unittest.TestCase):
                            got.index("        } else {"),
                            "setAllClean must still run after the default fill")
 
+    def test_write_lines_clean_the_array_attribute(self):
+        """``setAllClean`` cleans the ELEMENTS; the attribute needs its own
+        ``data.setClean`` or the Evaluation Manager re-enters compute once per
+        connected array output. Right after setAllClean, outside the empty
+        guard, so the default-fill branch cleans too."""
+        from mpynode.native.compiler import emit_attr
+        got = emit_attr._array_write_lines(
+            {"member": "aAOut", "plug": "aOut",
+             "meta": {"type": "double", "is_array": True}})
+        self.assertEqual(got.count("        data.setClean(aAOut);"), 1)
+        self.assertEqual(got.index("        data.setClean(aAOut);"),
+                         got.index("        _outArr.setAllClean();") + 1)
+        self.assertEqual(got[-1], "    }")
+
     def test_every_array_type_emits_the_sized_builder(self):
         """Every ``_ARRAY_OK`` element type routes through the same writer --
         incl. quaternion, whose block also declares an MFnCompoundAttribute."""
@@ -164,6 +178,8 @@ class TestArrayOutputSizedBuilder(unittest.TestCase):
                           "%s: no default fill on a guard-false evaluation" % t)
             self.assertIn("unsigned _ne = _outArr.elementCount();", cpp,
                           "%s: empty branch does not walk existing elements" % t)
+            self.assertEqual(cpp.count("data.setClean(aAOut);"), 1,
+                             "%s: array attribute left dirty" % t)
 
 
 # --------------------------------------------------------------------------- #

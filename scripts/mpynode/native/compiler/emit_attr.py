@@ -1025,8 +1025,14 @@ def _array_write_lines(m):
     ``_array_gap_default_cpp``, the same helper the dense-array READ path uses,
     which already mirrors ``_api2.helpers.array_gap_default``.
 
-    ``setAllClean`` stays UNCONDITIONAL: the old code always left the output
-    array clean, and a dirty array output re-enters compute.
+    CLEAN BOOKKEEPING, both calls UNCONDITIONAL: ``_outArr.setAllClean()``
+    cleans the ELEMENTS and ``data.setClean(<member>)`` the attribute itself.
+    With only the first, the attribute stayed dirty after the evaluation that
+    wrote it, and the Evaluation Manager called compute once per connected array
+    output (measured 2026-09-23: Spine 3 computes a frame -> 1, DNET 2 -> 1 and
+    its solver no longer drifting from DG). Both run on the default-fill branch
+    too, since those defaults ARE this evaluation's value. The interpreted twin
+    is ``_api2.helpers.write_multi_plug_value``.
     """
     mem, t = m["member"], m["meta"]["type"]
     v = "out_" + mem
@@ -1052,6 +1058,7 @@ def _array_write_lines(m):
         "            }",
         "        }",
         "        _outArr.setAllClean();",
+        "        data.setClean(%s);" % mem,
         "    }",
     ]
 

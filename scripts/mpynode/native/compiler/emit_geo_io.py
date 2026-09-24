@@ -535,7 +535,8 @@ def geo_plug_array_input_lines(m, plug_expr):
 def geo_output_lines(o):
     """Build+set a geo OUTPUT from its ``out_<m>`` buffer. Single: build one geo
     data MObject and set the handle. Array: an ``MArrayDataBuilder`` loop building
-    one element per list entry (mirrors emit_attr._array_write_lines)."""
+    one element per list entry, then the same clean pair as
+    emit_attr._array_write_lines (elements, then the attribute)."""
     mem  = o["member"]
     kind = _KIND[o["meta"]["type"]]
     v    = "out_" + mem
@@ -558,5 +559,6 @@ def geo_output_lines(o):
         "        }",
         "        _goArr.set(_gb);",
         "        _goArr.setAllClean();",
+        "        data.setClean(%s);" % mem,
         "    }",
     ]

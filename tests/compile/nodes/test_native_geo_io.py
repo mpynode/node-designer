@@ -147,6 +147,10 @@ class TestGeoOutputLowerPureCpp(unittest.TestCase):
                 # array out -> vector build via nd_build_<kind> + MArrayDataBuilder
                 self.assertIn("nd_build_%s" % k, cpp)
                 self.assertIn("MArrayDataBuilder", cpp)
+                # ... cleaned per element AND at the attribute, or the EM
+                # re-enters compute once per connected array output
+                self.assertRegex(cpp, r"        _goArr\.setAllClean\(\);\n"
+                                      r"        data\.setClean\(a\w+\);\n")
 
     def test_geo_io_header_emitted_once(self):
         # the shared value model is emitted with an include guard (single TU).

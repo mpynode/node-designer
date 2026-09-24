@@ -438,7 +438,20 @@ from typing import Optional
 # The skeleton is fused into the cached .cpp (bundler only rewrites the
 # MTypeId), so a colour/time/quaternion codegen change is invisible without a
 # version bump -- 2026-09-14.
-PORTER_RECIPE_VERSION = "33"
+# v34: every array output is now cleaned at the ATTRIBUTE, not only per element:
+# emit_attr._array_write_lines and emit_geo_io.geo_output_lines emit
+# `data.setClean(<member>)` after `setAllClean()`. With the elements clean and
+# the attribute dirty, the Evaluation Manager called compute once per connected
+# array output -- measured (Maya 2025, parallel/serial EM): Spine 3 computes a
+# frame -> 1, DNET 2 -> 1 with its solver no longer drifting from DG; values
+# otherwise identical. Specs are unchanged and a HIT copies the cached .cpp with
+# codegen skipped, so without the bump every node would keep the old finalize.
+# Moves 12 of 75 stage-1 files: bubbleSort, mPyDnet, procrustesTags, spine,
+# spline and springChain, in their templates and in the All Templates Plugin.
+# It also retires cache entries predating three unbumped skeleton changes:
+# c3d402f (prelude whitespace), 217eff7 (locator selection tint) and 81973d1
+# (1-3 character command parameters get a legal long flag) -- 2026-09-24.
+PORTER_RECIPE_VERSION = "34"
 
 # Spec keys excluded from the cache key -- provably irrelevant to the generated
 # C++. A deny-list, NOT an allow-list (design C1).
