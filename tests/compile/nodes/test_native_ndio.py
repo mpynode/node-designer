@@ -114,6 +114,46 @@ class TestNdioPython(_Tmp):
         self.assertTrue(np.array_equal(first, np.ones((2, 3))))
         self.assertTrue(np.array_equal(second, np.full((2, 3), 7.0)))
 
+    def _same_tick(self, p, first):
+        """Give ``p`` the mtime ``first`` had: a rewrite that landed in the SAME
+        mtime tick, which a loaded NTFS box produced on its own (2026-09-24)."""
+        os.utime(p, ns=(first.st_atime_ns, first.st_mtime_ns))
+        st = os.stat(p)
+        self.assertEqual((st.st_mtime_ns, st.st_size),
+                         (first.st_mtime_ns, first.st_size),
+                         "the collision was not reproduced")
+        return st
+
+    def test_a_same_tick_rewrite_through_write_is_picked_up(self):
+        # Deterministic form of the timing test above: same size, same mtime.
+        # write() evicts its own path, so nothing about the stat key matters.
+        from mpynode import ndio
+
+        p = self.path("e.ndio")
+        ndio.write(p, points=np.ones((2, 3)))
+        ndio.read(p, "points")
+        first = os.stat(p)
+        ndio.write(p, points=np.full((2, 3), 7.0))
+        self._same_tick(p, first)
+        self.assertTrue(np.array_equal(ndio.read(p, "points"), np.full((2, 3), 7.0)))
+
+    def test_a_same_tick_replace_from_outside_is_picked_up(self):
+        # Another writer (another process, a sim) replaced the file through a
+        # temp file and a rename, in the same mtime tick at the same size. No
+        # eviction can see that; the file ID in the stat key does.
+        from mpynode import ndio
+
+        p, q = self.path("f.ndio"), self.path("f.incoming")
+        ndio.write(p, points=np.ones((2, 3)))
+        ndio.read(p, "points")
+        first = os.stat(p)
+        ndio.write(q, points=np.full((2, 3), 7.0))
+        os.replace(q, p)
+        st = self._same_tick(p, first)
+        if not first.st_ino or st.st_ino == first.st_ino:
+            self.skipTest("this filesystem reports no distinct file IDs")
+        self.assertTrue(np.array_equal(ndio.read(p, "points"), np.full((2, 3), 7.0)))
+
     def test_repeat_reads_do_not_re_parse(self):
         from mpynode import ndio
 

@@ -76,12 +76,12 @@ def _slurp(path):
         return None
 
 
-# One parsed document, keyed by identity-of-CONTENT (path + mtime + size). That
-# makes scrubbing a timeline free: every frame after the first is a dict hit.
-# The C++ half caches on the SAME key (nd_io_stat_key), so interpreted and
-# compiled do the same number of disk reads. mtime+size rather than path alone
-# is what picks up a file REWRITTEN under the same name instead of serving it
-# stale.
+# One parsed document, keyed by identity-of-CONTENT (path + mtime + size + file
+# ID). That makes scrubbing a timeline free: every frame after the first is a
+# dict hit. mtime+size rather than path alone is what picks up a file REWRITTEN
+# under the same name instead of serving it stale. The C++ half (nd_io_stat_key)
+# keys on path + mtime + size only; the file ID and the write-side eviction
+# below are this half's alone.
 _CACHE_KEY = [None]
 _CACHE_DOC = [None]
 
@@ -90,11 +90,26 @@ def _stat_key(path):
     # NANOSECOND mtime, matching nd_io_stat_key: whole-second resolution serves
     # a stale entry for a file rewritten within the same second at the same
     # size -- exactly what a sim writing frame after frame does.
+    #
+    # Even nanoseconds are not enough on a loaded Windows machine: two writes can
+    # land in the SAME mtime tick, and a same-size rewrite then kept its key
+    # (seen 2026-09-24). The file ID closes that for any writer that replaces the
+    # file -- write() below and every temp-then-rename writer give the new file a
+    # new ID. It reads 0 where a filesystem has no IDs, which changes nothing.
     try:
         st = os.stat(path)
-        return "%s|%d|%d" % (path, int(st.st_mtime_ns), int(st.st_size))
+        return "%s|%d|%d|%d" % (path, int(st.st_mtime_ns), int(st.st_size),
+                                int(st.st_ino))
     except Exception:
         return "%s|missing" % path
+
+
+def _evict(path):
+    """Forget ``path``'s cached document: this process just rewrote it."""
+    key = _CACHE_KEY[0]
+    if key is not None and key.startswith("%s|" % path):
+        _CACHE_KEY[0] = None
+        _CACHE_DOC[0] = None
 
 
 # ---------------------------------------------------------------------------
@@ -220,6 +235,7 @@ def write_raw(path, arr):
     """``arr`` as a headerless little-endian buffer. True on success."""
     try:
         np.ascontiguousarray(arr).tofile(path)
+        _evict(path)
         return True
     except Exception:
         return False
@@ -255,6 +271,9 @@ def write(path, **arrays):
             fh.write(struct.pack("<I", len(arrays)))
             fh.write(bytes(body))
         os.replace(tmp, path)
+        # Whatever the stat key can or cannot see, a rewrite from THIS process
+        # is known for certain: the next read must not be served from cache.
+        _evict(path)
         return True
     except Exception:
         return False
