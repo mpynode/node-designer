@@ -26,7 +26,11 @@
 #include <random>
 #include <cstdint>
 #include <cstring>
+#include <cstdlib>
 #include <mutex>
+#include <atomic>
+#include <thread>
+#include <condition_variable>
 #include <maya/MPxNode.h>
 #include <maya/MFnPlugin.h>
 #include <maya/MTypeId.h>
@@ -4047,6 +4051,71 @@ static inline bool inplace_double(MArrayDataHandle& arr, const std::vector<doubl
     return true;
 }
 
+// inplace_double for a double3 compound array: same layout check, same values
+// as a builder holding elements [0, n), without allocating n new elements.
+static inline bool inplace_vec3(MArrayDataHandle& arr, const std::vector<MVector>& v) {
+    const unsigned n = (unsigned)v.size();
+    if (n == 0 || arr.elementCount() != n) return false;
+    if (arr.jumpToArrayElement(n - 1) != MS::kSuccess || arr.elementIndex() != n - 1) return false;
+    if (arr.jumpToArrayElement(0) != MS::kSuccess || arr.elementIndex() != 0) return false;
+    for (unsigned i = 0; i < n; ++i) {
+        MDataHandle eh = arr.outputValue();
+        eh.set3Double(v[i].x, v[i].y, v[i].z);
+        arr.next();
+    }
+    return true;
+}
+
+// One row of the (n x c) weights matrix as its non-zero band: at most d + 1
+// <= 8 (col, value) entries, sorted by col. Every other column is 0.0.
+struct WRow {
+    int32_t cnt;
+    int32_t col[8];
+    double  val[8];
+};
+
+// Wr[col] = Wr[col] + v on a row that started as all 0.0.
+static inline void wrow_add(WRow& R, int64_t col, double v) {
+    for (int32_t e = 0; e < R.cnt; ++e)
+        if (R.col[e] == (int32_t)col) { R.val[e] = R.val[e] + v; return; }
+    int32_t e = R.cnt++;
+    while (e > 0 && R.col[e - 1] > (int32_t)col) { R.col[e] = R.col[e - 1]; R.val[e] = R.val[e - 1]; --e; }
+    R.col[e] = (int32_t)col;
+    R.val[e] = 0.0 + v;
+}
+
+// Wr[col] = v.
+static inline void wrow_set(WRow& R, int64_t col, double v) {
+    for (int32_t e = 0; e < R.cnt; ++e)
+        if (R.col[e] == (int32_t)col) { R.val[e] = v; return; }
+    int32_t e = R.cnt++;
+    while (e > 0 && R.col[e - 1] > (int32_t)col) { R.col[e] = R.col[e - 1]; R.val[e] = R.val[e - 1]; --e; }
+    R.col[e] = (int32_t)col;
+    R.val[e] = v;
+}
+
+// inplace_double for a matrix held as sparse rows: the value of element
+// i * c + k is generated while the handle walks, so the dense buffer is never
+// built. Same layout check (exactly [0, n * c) in order) and write order.
+static inline bool inplace_wrows(MArrayDataHandle& arr, const std::vector<WRow>& rows, int64_t n, int64_t c) {
+    const unsigned tot = (unsigned)(n * c);
+    if (tot == 0 || arr.elementCount() != tot) return false;
+    if (arr.jumpToArrayElement(tot - 1) != MS::kSuccess || arr.elementIndex() != tot - 1) return false;
+    if (arr.jumpToArrayElement(0) != MS::kSuccess || arr.elementIndex() != 0) return false;
+    for (int64_t i = 0; i < n; ++i) {
+        const WRow& R = rows[(size_t)i];
+        int32_t     e = 0;
+        for (int64_t k = 0; k < c; ++k) {
+            double v = 0.0;
+            if (e < R.cnt && R.col[e] == (int32_t)k) { v = R.val[e]; ++e; }
+            MDataHandle eh = arr.outputValue();
+            eh.asDouble() = v;
+            arr.next();
+        }
+    }
+    return true;
+}
+
 // The linear driver scan: the LAST q in [1, M - 1) with seq[q, 0] <= x, else 0.
 // Column 0 is copied once per compute; when those keys are sorted and NaN-free
 // the answer is found by binary search (the qualifying q form a prefix), and
@@ -4073,6 +4142,125 @@ static inline int64_t last_le_seq(const nd::Array<double>& seq, int64_t M, doubl
         if (k[q] <= x) j = q;
     return j;
 }
+
+// Persistent per-node worker pool for ONE shape of work: a parallel map whose
+// element i is a pure function of i and read-only inputs, written to a slot
+// sized before the region opens. Threads are created on the first region and
+// joined in the destructor, never per evaluation; idle workers block on a
+// condition variable. The calling thread drains chunks itself and waits only
+// for chunks another thread has CLAIMED, so a worker that wakes late finds no
+// work instead of stalling the caller. The cursor packs (job generation, next
+// index) and is claimed by CAS, so a late worker can never take a chunk of a
+// newer job; it is a member, so two nodes never share it. Chunk boundaries
+// cannot change any value. No Maya API is ever called from a worker.
+// SPINE_THREADS caps the participant count (1 = serial).
+class Pool {
+public:
+    Pool() = default;
+    Pool(const Pool&) = delete;
+    Pool& operator=(const Pool&) = delete;
+    ~Pool() {
+        {
+            std::lock_guard<std::mutex> lk(m_);
+            quit_ = true;
+        }
+        cv_.notify_all();
+        for (std::thread& t : th_) t.join();
+    }
+    // fn(lo, hi) over disjoint chunks covering [0, n); returns when all ran.
+    template <class F>
+    void run(int64_t n, int64_t chunk, F& fn) {
+        std::lock_guard<std::mutex> one(run_);
+        start_();
+        if (th_.empty() || n <= chunk) { fn((int64_t)0, n); return; }
+        uint64_t g = 0;
+        {
+            std::lock_guard<std::mutex> lk(m_);
+            g      = ++gen_;
+            job_   = &tramp_<F>;
+            ctx_   = (void*)&fn;
+            n_     = n;
+            chunk_ = chunk;
+            done_.store(0, std::memory_order_relaxed);
+            cur_.store(pack_(g, 0), std::memory_order_release);
+        }
+        cv_.notify_all();
+        drain_(g, &tramp_<F>, (void*)&fn, n, chunk);
+        while (done_.load(std::memory_order_acquire) < n)
+            std::this_thread::yield();
+    }
+
+private:
+    using Job = void (*)(void*, int64_t, int64_t);
+    template <class F>
+    static void tramp_(void* ctx, int64_t lo, int64_t hi) { (*(F*)ctx)(lo, hi); }
+
+    static uint64_t pack_(uint64_t g, int64_t idx) { return ((g & 0xFFFFFFull) << 40) | (uint64_t)idx; }
+
+    bool claim_(uint64_t g, int64_t n, int64_t chunk, int64_t& lo) {
+        uint64_t c = cur_.load(std::memory_order_acquire);
+        for (;;) {
+            if ((c >> 40) != (g & 0xFFFFFFull)) return false;
+            const int64_t idx = (int64_t)(c & ((1ull << 40) - 1));
+            if (idx >= n) return false;
+            if (cur_.compare_exchange_weak(c, c + (uint64_t)chunk, std::memory_order_acq_rel, std::memory_order_acquire)) {
+                lo = idx;
+                return true;
+            }
+        }
+    }
+    void drain_(uint64_t g, Job job, void* ctx, int64_t n, int64_t chunk) {
+        int64_t lo = 0;
+        while (claim_(g, n, chunk, lo)) {
+            const int64_t hi = std::min(n, lo + chunk);
+            job(ctx, lo, hi);
+            done_.fetch_add(hi - lo, std::memory_order_acq_rel);
+        }
+    }
+    void start_() {
+        if (started_) return;
+        started_ = true;
+        unsigned hw = std::thread::hardware_concurrency();
+        if (hw == 0) hw = 1;
+        unsigned cap = 8;
+        if (const char* e = std::getenv("SPINE_THREADS")) {
+            const long v = std::strtol(e, nullptr, 10);
+            if (v >= 1) cap = (unsigned)v;
+        }
+        const unsigned total = std::min(hw, cap);
+        for (unsigned w = 1; w < total; ++w) th_.emplace_back([this] { loop_(); });
+    }
+    void loop_() {
+        uint64_t seen = 0;
+        std::unique_lock<std::mutex> lk(m_);
+        for (;;) {
+            cv_.wait(lk, [&] { return quit_ || gen_ != seen; });
+            if (quit_) return;
+            seen = gen_;
+            const Job     job   = job_;
+            void* const   ctx   = ctx_;
+            const int64_t n     = n_;
+            const int64_t chunk = chunk_;
+            lk.unlock();
+            drain_(seen, job, ctx, n, chunk);
+            lk.lock();
+        }
+    }
+
+    std::mutex               run_;
+    std::mutex               m_;
+    std::condition_variable  cv_;
+    std::vector<std::thread> th_;
+    std::atomic<uint64_t>    cur_{0};
+    std::atomic<int64_t>     done_{0};
+    Job                      job_     = nullptr;
+    void*                    ctx_     = nullptr;
+    int64_t                  n_       = 0;
+    int64_t                  chunk_   = 1;
+    uint64_t                 gen_     = 0;
+    bool                     quit_    = false;
+    bool                     started_ = false;
+};
 
 // Per-node, per-control cache of MTransformationMatrix(controlMatrices[k]).getScale.
 struct ScaleCache {
@@ -4201,6 +4389,8 @@ public:
     spfast::ArcCache   _arc;
     spfast::ScaleCache _scl;
     std::vector<double> _wbuf;
+    std::vector<spfast::WRow> _wrows;
+    spfast::Pool        _pool;
     static MTypeId id;
     static MObject aControlMatrices;
     static MObject aSamples;
@@ -6044,6 +6234,9 @@ MStatus Spine::compute(const MPlug& plug, MDataBlock& data) {
     std::vector<double>& out_aOutputWeights = _wbuf;
     out_aOutputWeights.clear();
     bool                wDirect = false;
+    bool                wSparse = false;
+    int64_t             wN      = 0;
+    int64_t             wC      = 0;
     std::vector<double> _rkeys, _skeys;
     int                 _rmono = -1, _smono = -1;
 
@@ -6870,9 +7063,19 @@ MStatus Spine::compute(const MPlug& plug, MDataBlock& data) {
                 const int64_t S  = per ? c : (c - d);
                 const double  cd = (double)c;
                 spd = nd::Array<double>::alloc(nd::Shape{(int64_t)6 * n});
-                double* so = spd.data->data();
-                for (int64_t i = 0; i < 6 * n; ++i)
-                    so[i] = spfast::speed1(Qf.data(), kvf.data(), spfast::native1(pp[i], t0, cd, per), S, d);
+                double*       so  = spd.data->data();
+                const double* Qp  = Qf.data();
+                const double* kvp = kvf.data();
+                // Parallel map: slot i is a pure function of pp[i] and the
+                // read-only CVs / knots, so the chunk split cannot change it.
+                auto body = [&](int64_t lo, int64_t hi) {
+                    for (int64_t i = lo; i < hi; ++i)
+                        so[i] = spfast::speed1(Qp, kvp, spfast::native1(pp[i], t0, cd, per), S, d);
+                };
+                if (6 * n >= 1024)
+                    _pool.run(6 * n, 64, body);
+                else
+                    body((int64_t)0, 6 * n);
             } else {
                 spd = _h__sp_speed_8(_h__sp_point_7(Q, kv, _h__sp_native_4(pts, t0, c, per), c, d, per));
             }
@@ -7704,12 +7907,16 @@ MStatus Spine::compute(const MPlug& plug, MDataBlock& data) {
             if (wfin) {
                 // Scalar twin of the Wm build below, written straight into the
                 // output buffer (same span, basis and accumulation order).
+                // Held as sparse rows (the band plus the end-projection
+                // entries); the finalize generates the dense values while it
+                // writes, so the n x c buffer is never zero-filled or re-read.
                 const std::vector<double> kvf = spfast::flat1(nl_kv);
                 const int64_t S = nl_per ? nl_c : (nl_c - nl_d);
-                out_aOutputWeights.assign((size_t)(nl_n * nl_c), 0.0);
+                _wrows.resize((size_t)nl_n);
                 double N[8], dN[8];
                 for (int64_t i = 0; i < nl_n; ++i) {
-                    double*       Wr = out_aOutputWeights.data() + (size_t)(i * nl_c);
+                    spfast::WRow& R  = _wrows[(size_t)i];
+                    R.cnt            = 0;
                     const double  t  = (double)nd::at1(nl_tn, i);
                     const int64_t si = spfast::span1(t, S, nl_d);
                     spfast::basis1(t, si, nl_d, kvf.data(), N, dN);
@@ -7717,24 +7924,27 @@ MStatus Spine::compute(const MPlug& plug, MDataBlock& data) {
                         int64_t col = (si - nl_d) + r;
                         if (nl_per)
                             col = nd::apply_binop<int64_t>(nd::BinOp::Mod, col, nl_c);
-                        Wr[col] = Wr[col] + N[r];
+                        spfast::wrow_add(R, col, N[r]);
                     }
                     if ((!nl_per) && (nl_tproj == 1)) {
                         const double ui = (double)nd::at1(nl_u, i);
                         if (ui < 0.0 && nl_l0 > 1e-12) {
                             const double kl = (ui * nl_length) / nl_l0;
-                            for (int64_t k = 0; k < nl_c; ++k) Wr[k] = 0.0;
-                            Wr[0]     = 1.0 - kl;
-                            Wr[nl_m0] = Wr[nl_m0] + kl;
+                            R.cnt = 0;
+                            spfast::wrow_set(R, 0, 1.0 - kl);
+                            spfast::wrow_add(R, nl_m0, kl);
                         }
                         if (ui > 1.0 && nl_l1 > 1e-12) {
                             const double kh = ((ui - 1.0) * nl_length) / nl_l1;
-                            for (int64_t k = 0; k < nl_c; ++k) Wr[k] = 0.0;
-                            Wr[nl_c - 1] = 1.0 + kh;
-                            Wr[nl_m1]    = Wr[nl_m1] - kh;
+                            R.cnt = 0;
+                            spfast::wrow_set(R, nl_c - 1, 1.0 + kh);
+                            spfast::wrow_add(R, nl_m1, -kh);
                         }
                     }
                 }
+                wN      = nl_n;
+                wC      = nl_c;
+                wSparse = true;
                 wDirect = true;
             } else if (ndin_self_computeWeights) {
                 nl_sp = _h__sp_span_5(nl_tn, nl_c, nl_d, nl_per);
@@ -7825,7 +8035,9 @@ MStatus Spine::compute(const MPlug& plug, MDataBlock& data) {
     h_aRestValid.setClean();
     {
         MArrayDataHandle _outArr = data.outputArrayValue(aOutputRotate);
-        if (!out_aOutputRotate.empty()) {
+        if (!out_aOutputRotate.empty() && spfast::inplace_vec3(_outArr, out_aOutputRotate)) {
+            // written in place: the array already holds exactly [0, n)
+        } else if (!out_aOutputRotate.empty()) {
             MArrayDataBuilder _b(&data, aOutputRotate, (unsigned)out_aOutputRotate.size());
             for (size_t _i = 0; _i < out_aOutputRotate.size(); ++_i) {
                 MDataHandle eh = _b.addElement((unsigned)_i);
@@ -7846,7 +8058,9 @@ MStatus Spine::compute(const MPlug& plug, MDataBlock& data) {
     }
     {
         MArrayDataHandle _outArr = data.outputArrayValue(aOutputScale);
-        if (!out_aOutputScale.empty()) {
+        if (!out_aOutputScale.empty() && spfast::inplace_vec3(_outArr, out_aOutputScale)) {
+            // written in place: the array already holds exactly [0, n)
+        } else if (!out_aOutputScale.empty()) {
             MArrayDataBuilder _b(&data, aOutputScale, (unsigned)out_aOutputScale.size());
             for (size_t _i = 0; _i < out_aOutputScale.size(); ++_i) {
                 MDataHandle eh = _b.addElement((unsigned)_i);
@@ -7867,7 +8081,9 @@ MStatus Spine::compute(const MPlug& plug, MDataBlock& data) {
     }
     {
         MArrayDataHandle _outArr = data.outputArrayValue(aOutputTranslate);
-        if (!out_aOutputTranslate.empty()) {
+        if (!out_aOutputTranslate.empty() && spfast::inplace_vec3(_outArr, out_aOutputTranslate)) {
+            // written in place: the array already holds exactly [0, n)
+        } else if (!out_aOutputTranslate.empty()) {
             MArrayDataBuilder _b(&data, aOutputTranslate, (unsigned)out_aOutputTranslate.size());
             for (size_t _i = 0; _i < out_aOutputTranslate.size(); ++_i) {
                 MDataHandle eh = _b.addElement((unsigned)_i);
@@ -7888,7 +8104,9 @@ MStatus Spine::compute(const MPlug& plug, MDataBlock& data) {
     }
     {
         MArrayDataHandle _outArr = data.outputArrayValue(aControlKeys);
-        if (!out_aControlKeys.empty()) {
+        if (!out_aControlKeys.empty() && spfast::inplace_double(_outArr, out_aControlKeys)) {
+            // written in place: the array already holds exactly [0, n)
+        } else if (!out_aControlKeys.empty()) {
             MArrayDataBuilder _b(&data, aControlKeys, (unsigned)out_aControlKeys.size());
             for (size_t _i = 0; _i < out_aControlKeys.size(); ++_i) {
                 MDataHandle eh = _b.addElement((unsigned)_i);
@@ -7909,7 +8127,20 @@ MStatus Spine::compute(const MPlug& plug, MDataBlock& data) {
     }
     {
         MArrayDataHandle _outArr = data.outputArrayValue(aOutputWeights);
-        if (!out_aOutputWeights.empty() && spfast::inplace_double(_outArr, out_aOutputWeights)) {
+        if (wSparse && !spfast::inplace_wrows(_outArr, _wrows, wN, wC)) {
+            // Not the [0, n * c) layout yet: materialize the dense rows for
+            // the builder below.
+            out_aOutputWeights.assign((size_t)(wN * wC), 0.0);
+            for (int64_t i = 0; i < wN; ++i) {
+                const spfast::WRow& R = _wrows[(size_t)i];
+                for (int32_t e = 0; e < R.cnt; ++e)
+                    out_aOutputWeights[(size_t)(i * wC + R.col[e])] = R.val[e];
+            }
+            wSparse = false;
+        }
+        if (wSparse) {
+            // written in place from the sparse rows
+        } else if (!out_aOutputWeights.empty() && spfast::inplace_double(_outArr, out_aOutputWeights)) {
             // written in place: the array already holds exactly [0, n)
         } else if (!out_aOutputWeights.empty()) {
             MArrayDataBuilder _b(&data, aOutputWeights, (unsigned)out_aOutputWeights.size());

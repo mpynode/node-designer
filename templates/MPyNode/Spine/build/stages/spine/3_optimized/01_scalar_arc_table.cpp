@@ -4041,7 +4041,7 @@ static inline bool inplace_double(MArrayDataHandle& arr, const std::vector<doubl
     if (arr.jumpToArrayElement(0) != MS::kSuccess || arr.elementIndex() != 0) return false;
     for (unsigned i = 0; i < n; ++i) {
         MDataHandle eh = arr.outputValue();
-        eh.asDouble() = v[i];
+        eh.setDouble(v[i]);
         arr.next();
     }
     return true;
@@ -7923,7 +7923,7 @@ MStatus Spine::compute(const MPlug& plug, MDataBlock& data) {
             unsigned _ne = _outArr.elementCount();
             for (unsigned _i = 0; _i < _ne; ++_i) {
                 MDataHandle eh = _outArr.outputValue();
-                eh.asDouble() = _dflt;
+                eh.setDouble(_dflt);
                 _outArr.next();
             }
         }

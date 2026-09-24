@@ -1,12 +1,12 @@
 {
   "manifest_version": 1,
-  "porter_recipe_version": "19",
+  "porter_recipe_version": "34",
   "provider": "claude_cli",
-  "model": "claude-opus-5[1m]",
+  "model": "claude-opus-5-5[1m]",
   "strict": false,
   "plugin_name": "MPyNode_Spine",
-  "bundle": "templates/MPyNode/Spine/MPyNode_Spine.bundle",
-  "created": 1787679151.212872,
+  "bundle": "C:\\Users\\eric.vignola\\mpynode_build\\MPyNode\\templates\\MPyNode\\Spine\\MPyNode_Spine.mll",
+  "created": 1790270261.091599,
   "nodes": [
     {
       "source_node": "spine",
@@ -14,34 +14,44 @@
       "type_id": "0x00079a93",
       "type_id_source": "derived",
       "base": "MPxNode",
-      "spec_hash": "da177bfc810cbcb56a907e65691971837260859004674b36304281d5034159c1",
-      "port_cache_key": "da177bfc810cbcb56a907e65691971837260859004674b36304281d5034159c1",
-      "cache": "miss",
+      "spec_hash": "45c12110e2cf07333efabd684ed7eea2e6f925e93012ea283fe8b049952d8d1f",
+      "port_cache_key": "45c12110e2cf07333efabd684ed7eea2e6f925e93012ea283fe8b049952d8d1f",
+      "cache": "hit",
       "build_status": "compiled",
       "build_reason": "",
-      "ported": true,
+      "ported": false,
       "incomplete": [],
       "invented_io": [],
       "missing_includes": [],
+      "vp2_skip": "",
       "verify": {
         "ran": true,
-        "pass": false,
-        "maxerr": 0.04546562905909468,
+        "pass": true,
+        "maxerr": 0.0,
         "tol": 0.0001,
-        "reason": "authored @maya_test: 1/1 passed",
+        "reason": "authored @maya_test: 4/4 passed",
         "timing": {
-          "measured": false,
-          "reason": "not timed -- generic parity did not pass for this node, so there is no trustworthy pair to measure (skipped)"
+          "measured": true,
+          "py_ms": 1515.9850000054576,
+          "cpp_ms": 1341.7411999835167,
+          "n": 3,
+          "truncated": false,
+          "scene": "geo 40 / array 512",
+          "ratio": 0.8850623192041388,
+          "verdict": "ok",
+          "rung": [
+            40,
+            512
+          ]
         },
         "authored_test": {
           "ran": true,
           "passed": true,
-          "count": 1,
-          "passes": 1,
+          "count": 4,
+          "passes": 4,
           "reason": ""
         },
-        "generic_ran": true,
-        "reverified": "2026-09-08"
+        "generic_ran": true
       },
       "spec": {
         "schema_version": 1,
@@ -69,7 +79,163 @@
               "portable": true
             }
           },
+          "samples": {
+            "type": "float",
+            "is_array": true,
+            "portable": true,
+            "cpp": {
+              "cat": "scalar",
+              "fn": "MFnNumericAttribute",
+              "data": "kFloat",
+              "cpp": "float",
+              "read": "asFloat",
+              "portable": true
+            }
+          },
+          "degree": {
+            "type": "int",
+            "is_array": false,
+            "portable": true,
+            "cpp": {
+              "cat": "scalar",
+              "fn": "MFnNumericAttribute",
+              "data": "kInt",
+              "cpp": "int",
+              "read": "asInt",
+              "portable": true
+            },
+            "default_value": 3
+          },
+          "periodic": {
+            "type": "bool",
+            "is_array": false,
+            "portable": true,
+            "cpp": {
+              "cat": "scalar",
+              "fn": "MFnNumericAttribute",
+              "data": "kBoolean",
+              "cpp": "bool",
+              "read": "asBool",
+              "portable": true
+            }
+          },
+          "stretch": {
+            "type": "float",
+            "is_array": false,
+            "portable": true,
+            "cpp": {
+              "cat": "scalar",
+              "fn": "MFnNumericAttribute",
+              "data": "kFloat",
+              "cpp": "float",
+              "read": "asFloat",
+              "portable": true
+            },
+            "default_value": 1.0
+          },
+          "pivot": {
+            "type": "float",
+            "is_array": false,
+            "portable": true,
+            "cpp": {
+              "cat": "scalar",
+              "fn": "MFnNumericAttribute",
+              "data": "kFloat",
+              "cpp": "float",
+              "read": "asFloat",
+              "portable": true
+            }
+          },
+          "scale": {
+            "type": "float",
+            "is_array": false,
+            "portable": true,
+            "cpp": {
+              "cat": "scalar",
+              "fn": "MFnNumericAttribute",
+              "data": "kFloat",
+              "cpp": "float",
+              "read": "asFloat",
+              "portable": true
+            },
+            "default_value": 1.0
+          },
+          "shift": {
+            "type": "float",
+            "is_array": false,
+            "portable": true,
+            "cpp": {
+              "cat": "scalar",
+              "fn": "MFnNumericAttribute",
+              "data": "kFloat",
+              "cpp": "float",
+              "read": "asFloat",
+              "portable": true
+            }
+          },
+          "defaultLength": {
+            "type": "double",
+            "is_array": false,
+            "portable": true,
+            "cpp": {
+              "cat": "scalar",
+              "fn": "MFnNumericAttribute",
+              "data": "kDouble",
+              "cpp": "double",
+              "read": "asDouble",
+              "portable": true
+            }
+          },
+          "restKeys": {
+            "type": "double",
+            "is_array": true,
+            "portable": true,
+            "cpp": {
+              "cat": "scalar",
+              "fn": "MFnNumericAttribute",
+              "data": "kDouble",
+              "cpp": "double",
+              "read": "asDouble",
+              "portable": true
+            }
+          },
+          "translateProjection": {
+            "type": "enum",
+            "is_array": false,
+            "portable": true,
+            "cpp": {
+              "cat": "enum",
+              "fn": "MFnEnumAttribute",
+              "data": "enum",
+              "cpp": "short",
+              "read": "asShort",
+              "portable": true
+            },
+            "default_value": 1,
+            "enum_names": [
+              "Clamped",
+              "Infinite"
+            ]
+          },
           "curveAimAxis": {
+            "type": "enum",
+            "is_array": false,
+            "portable": true,
+            "cpp": {
+              "cat": "enum",
+              "fn": "MFnEnumAttribute",
+              "data": "enum",
+              "cpp": "short",
+              "read": "asShort",
+              "portable": true
+            },
+            "enum_names": [
+              "X",
+              "Y",
+              "Z"
+            ]
+          },
+          "curveUpAxis": {
             "type": "enum",
             "is_array": false,
             "portable": true,
@@ -121,7 +287,20 @@
               "True"
             ]
           },
-          "curveUpAxis": {
+          "controlUpAxes": {
+            "type": "int",
+            "is_array": true,
+            "portable": true,
+            "cpp": {
+              "cat": "scalar",
+              "fn": "MFnNumericAttribute",
+              "data": "kInt",
+              "cpp": "int",
+              "read": "asInt",
+              "portable": true
+            }
+          },
+          "rotateMode": {
             "type": "enum",
             "is_array": false,
             "portable": true,
@@ -134,76 +313,118 @@
               "portable": true
             },
             "enum_names": [
-              "X",
-              "Y",
-              "Z"
+              "All",
+              "Flagged",
+              "None",
+              "Matrix"
             ]
           },
-          "inputCurve": {
-            "type": "nurbsCurve",
-            "is_array": false,
-            "portable": true,
-            "cpp": {
-              "cat": "geo",
-              "fn": "MFnTypedAttribute",
-              "data": "kNurbsCurve",
-              "cpp": "MObject",
-              "read": "asNurbsCurve",
-              "portable": true
-            }
-          },
-          "pivot": {
-            "type": "float",
-            "is_array": false,
-            "portable": true,
-            "cpp": {
-              "cat": "scalar",
-              "fn": "MFnNumericAttribute",
-              "data": "kFloat",
-              "cpp": "float",
-              "read": "asFloat",
-              "portable": true
-            }
-          },
-          "defaultLength": {
-            "type": "float",
-            "is_array": false,
-            "portable": true,
-            "cpp": {
-              "cat": "scalar",
-              "fn": "MFnNumericAttribute",
-              "data": "kFloat",
-              "cpp": "float",
-              "read": "asFloat",
-              "portable": true
-            }
-          },
-          "samples": {
-            "type": "float",
+          "rotateFlags": {
+            "type": "bool",
             "is_array": true,
             "portable": true,
             "cpp": {
               "cat": "scalar",
               "fn": "MFnNumericAttribute",
-              "data": "kFloat",
-              "cpp": "float",
-              "read": "asFloat",
+              "data": "kBoolean",
+              "cpp": "bool",
+              "read": "asBool",
               "portable": true
             }
           },
-          "scale": {
-            "type": "float",
+          "rotateMatrix": {
+            "type": "matrix",
             "is_array": false,
+            "portable": true,
+            "cpp": {
+              "cat": "matrix",
+              "fn": "MFnMatrixAttribute",
+              "data": "kDouble",
+              "cpp": "MMatrix",
+              "read": "asMatrix",
+              "portable": true
+            }
+          },
+          "rotateProjection": {
+            "type": "enum",
+            "is_array": false,
+            "portable": true,
+            "cpp": {
+              "cat": "enum",
+              "fn": "MFnEnumAttribute",
+              "data": "enum",
+              "cpp": "short",
+              "read": "asShort",
+              "portable": true
+            },
+            "enum_names": [
+              "Frozen",
+              "Infinite",
+              "Clamped"
+            ]
+          },
+          "scaleMode": {
+            "type": "enum",
+            "is_array": false,
+            "portable": true,
+            "cpp": {
+              "cat": "enum",
+              "fn": "MFnEnumAttribute",
+              "data": "enum",
+              "cpp": "short",
+              "read": "asShort",
+              "portable": true
+            },
+            "enum_names": [
+              "All",
+              "Flagged",
+              "None",
+              "Matrix"
+            ]
+          },
+          "scaleFlags": {
+            "type": "bool",
+            "is_array": true,
             "portable": true,
             "cpp": {
               "cat": "scalar",
               "fn": "MFnNumericAttribute",
-              "data": "kFloat",
-              "cpp": "float",
-              "read": "asFloat",
+              "data": "kBoolean",
+              "cpp": "bool",
+              "read": "asBool",
+              "portable": true
+            }
+          },
+          "scaleMatrix": {
+            "type": "matrix",
+            "is_array": false,
+            "portable": true,
+            "cpp": {
+              "cat": "matrix",
+              "fn": "MFnMatrixAttribute",
+              "data": "kDouble",
+              "cpp": "MMatrix",
+              "read": "asMatrix",
+              "portable": true
+            }
+          },
+          "scaleProjection": {
+            "type": "enum",
+            "is_array": false,
+            "portable": true,
+            "cpp": {
+              "cat": "enum",
+              "fn": "MFnEnumAttribute",
+              "data": "enum",
+              "cpp": "short",
+              "read": "asShort",
               "portable": true
             },
-            "default_value": 1.0
+            "enum_names": [
+              "Frozen",
+              "Infinite",
+              "Clamped"
+            ]
           },
           "scaleMethod": {
             "type": "enum",
@@ -223,48 +444,21 @@
               "Cosine"
             ]
           },
-          "shift": {
-            "type": "float",
+          "computeWeights": {
+            "type": "bool",
             "is_array": false,
             "portable": true,
             "cpp": {
               "cat": "scalar",
               "fn": "MFnNumericAttribute",
-              "data": "kFloat",
-              "cpp": "float",
-              "read": "asFloat",
+              "data": "kBoolean",
+              "cpp": "bool",
+              "read": "asBool",
               "portable": true
             }
-          },
-          "stretch": {
-            "type": "float",
-            "is_array": false,
-            "portable": true,
-            "cpp": {
-              "cat": "scalar",
-              "fn": "MFnNumericAttribute",
-              "data": "kFloat",
-              "cpp": "float",
-              "read": "asFloat",
-              "portable": true
-            },
-            "default_value": 1.0
           }
         },
         "outputs": {
-          "asss": {
-            "type": "float",
-            "is_array": false,
-            "portable": true,
-            "cpp": {
-              "cat": "scalar",
-              "fn": "MFnNumericAttribute",
-              "data": "kFloat",
-              "cpp": "float",
-              "read": "asFloat",
-              "portable": true
-            }
-          },
           "outputRotate": {
             "type": "euler",
             "is_array": true,
@@ -303,13 +497,65 @@
               "read": "asDouble3",
               "portable": true
             }
+          },
+          "currentLength": {
+            "type": "double",
+            "is_array": false,
+            "portable": true,
+            "cpp": {
+              "cat": "scalar",
+              "fn": "MFnNumericAttribute",
+              "data": "kDouble",
+              "cpp": "double",
+              "read": "asDouble",
+              "portable": true
+            }
+          },
+          "controlKeys": {
+            "type": "double",
+            "is_array": true,
+            "portable": true,
+            "cpp": {
+              "cat": "scalar",
+              "fn": "MFnNumericAttribute",
+              "data": "kDouble",
+              "cpp": "double",
+              "read": "asDouble",
+              "portable": true
+            }
+          },
+          "restValid": {
+            "type": "bool",
+            "is_array": false,
+            "portable": true,
+            "cpp": {
+              "cat": "scalar",
+              "fn": "MFnNumericAttribute",
+              "data": "kBoolean",
+              "cpp": "bool",
+              "read": "asBool",
+              "portable": true
+            }
+          },
+          "outputWeights": {
+            "type": "double",
+            "is_array": true,
+            "portable": true,
+            "cpp": {
+              "cat": "scalar",
+              "fn": "MFnNumericAttribute",
+              "data": "kDouble",
+              "cpp": "double",
+              "read": "asDouble",
+              "portable": true
+            }
           }
         },
         "variables": {},
-        "compute": "# Name: Re-rootable Quaternion Spine  (numpy-first port of the original MPyNode)\n# Author: Eric Vignola - eric.vignola@gmail.com\n#\n# Ported to the current MPyNode value-type contract:\n#   * matrix inputs arrive as numpy (n,4,4) row-major (translation in row 3)\n#   * vector / euler outputs are pre-sized numpy buffers (slice-assign by index)\n#   * nurbsCurve input is an MFnNurbsCurve (om), used as-is for curve queries\n#   * matrix->euler decomposition uses om.MTransformationMatrix (rotation-order exact)\n#\n# (Imports + helper functions live in the Init tab.)\n\n# ---------------------- Main ----------------------#\n\nmax_parameter = self.inputCurve.findParamFromLength(10 ** 9)\ncurrentLength = self.inputCurve.findLengthFromParam(max_parameter)\n\n# End points / tangents for out-of-range projection (om -> numpy 3-vectors)\nt0 = np.array(self.inputCurve.tangent(0, space=om.MSpace.kWorld))[:3]\nt1 = np.array(self.inputCurve.tangent(max_parameter, space=om.MSpace.kWorld))[:3]\np0 = np.array(self.inputCurve.getPointAtParam(0, space=om.MSpace.kWorld))[:3]\np1 = np.array(self.inputCurve.getPointAtParam(max_parameter, space=om.MSpace.kWorld))[:3]\n\n# Control matrices as a single (n,4,4) numpy array (row-major; translate = row 3)\nCM = np.asarray(self.controlMatrices)\ntrans = CM[:, 3, :3]\n\n# Normalized control parameters (chord-length keys)\nkeys = [0.0]\nfor i in range(len(CM)):\n    if i > 0:\n        dist = float(np.linalg.norm(trans[i] - trans[i - 1])) + keys[i - 1]\n        keys.append(dist)\nfor i in range(1, len(keys)):\n    keys[i] /= keys[-1]\n\nratio = self.defaultLength / currentLength\ndelta = (currentLength - self.defaultLength) / currentLength\n\nfor i in range(len(self.outputTranslate)):\n\n    # -- POSITION --\n    u = self.shift + self.pivot + (((((self.samples[i] * ratio + delta * self.pivot) * (1 - self.stretch)) + self.samples[i] * self.stretch) - self.pivot) * self.scale)\n    w = self.inputCurve.findParamFromLength(u * currentLength)\n\n    if u < 0:\n        self.outputTranslate[i] = (p0 + t0 * (u * currentLength))\n    elif u > 1:\n        self.outputTranslate[i] = (p1 + t1 * ((u - 1) * currentLength))\n    else:\n        self.outputTranslate[i] = np.array(self.inputCurve.getPointAtParam(w, space=om.MSpace.kWorld))[:3]\n\n    # -- ROTATION --\n    index = bl(keys, u) - 1\n    if index < 0:\n        index = 0\n    elif index == len(keys) - 1:\n        index -= 1\n\n    up0 = CM[index][self.curveUpAxis, :3]\n    up1 = CM[index + 1][self.curveUpAxis, :3]\n\n    blend = (u - keys[index]) / (keys[index + 1] - keys[index])\n    blend = max(min(blend, 1), 0)\n\n    normal = vectorSlerp(up0, up1, blend)\n    tangent = np.array(self.inputCurve.tangent(w, space=om.MSpace.kWorld))[:3]\n\n    if self.curveInvertUpAxis:\n        normal = -normal\n    if self.curveInvertAimAxis:\n        tangent = -tangent\n\n    basis = vectorToMatrix(tangent, normal, self.curveAimAxis, self.curveUpAxis)\n    e = om.MTransformationMatrix(om.MMatrix(basis.flatten().tolist())).rotation()\n    self.outputRotate[i] = np.array([e.x, e.y, e.z])\n\n    # -- SCALE --\n    if self.scaleMethod == 0:\n        s0 = np.abs(_scale_of(CM[index])) ** (1 - blend)\n        s1 = np.abs(_scale_of(CM[index + 1])) ** blend\n        self.outputScale[i] = s0 * s1\n    else:\n        if self.scaleMethod == 2:\n            blend = 1 - ((math.cos(math.radians(blend * 180)) + 1) * 0.5)\n        self.outputScale[i] = _scale_of(CM[index + 1]) * blend + _scale_of(CM[index]) * (1 - blend)\n",
-        "init": "# Init tab \u2014 runs once per file open (not per compute()).\n# Imports + helper functions shared by the Compute expression.\n\nimport numpy as np\nimport math\nfrom bisect import bisect_left as bl\nimport maya.api.OpenMaya as om\n\n\ndef _scale_of(M4):\n    \"\"\"Per-axis scale = row-norms of the upper 3x3 (matches MTransformationMatrix.scale).\"\"\"\n    return np.linalg.norm(M4[:3, :3], axis=1)\n\n\ndef vectorToMatrix(V0, V1, aim_axis=0, up_axis=1):\n    \"\"\"Orthonormal 4x4 (numpy) from an aim (V0) and up (V1) vector.\n    Basis rows: row aim_axis = aim, row up_axis = up, row right_axis = side.\n    \"\"\"\n    V0 = V0 / np.linalg.norm(V0)\n    V1 = V1 / np.linalg.norm(V1)\n    V2 = np.cross(V1, V0); V2 = V2 / np.linalg.norm(V2)\n    V1 = np.cross(V0, V2); V1 = V1 / np.linalg.norm(V1)\n\n    right_axis = (min([aim_axis, up_axis]) - max([aim_axis, up_axis]) + min([aim_axis, up_axis])) % 3\n    flip = 0\n    if aim_axis == 0 and up_axis == 2:\n        flip = 1\n    elif aim_axis == 1 and up_axis == 0:\n        flip = 1\n    elif aim_axis == 2 and up_axis == 1:\n        flip = 1\n\n    XYZ = np.eye(4)\n    for i in range(3):\n        XYZ[aim_axis, i] = V0[i]\n        XYZ[up_axis, i] = V1[i]\n        XYZ[right_axis, i] = (0 - V2[i]) if flip else V2[i]\n    return XYZ\n\n\ndef vectorSlerp(V0, V1, weight):\n    \"\"\"Slerp between two numpy vectors.\"\"\"\n    dot = float(np.dot(V0 / np.linalg.norm(V0), V1 / np.linalg.norm(V1)))\n    dot = max(min(dot, 1), -1)\n    angle = math.acos(dot)\n    if angle == 0:\n        return V0\n    elif math.degrees(angle) == 180:\n        return V1\n    return ((V0 * math.sin((1 - weight) * angle)) + (V1 * math.sin(weight * angle))) / math.sin(angle)\n",
+        "compute": "# Name: Spine (v2) -- a B-spline built from controlMatrices, sampled by arc\n# length, with rail_spine's rotate / scale drivers and projections.\n# Author: Eric Vignola - eric.vignola@gmail.com\n#\n# (Helpers live in the Init tab.) The curve is evaluated in whole arrays; the\n# per-control and per-sample work below is written as plain scalar loops, which\n# lower to tight C++ instead of many small array temporaries.\n\nCM = np.asarray(self.controlMatrices, dtype=np.float64).reshape(-1, 4, 4)\nc  = CM.shape[0]\nus = np.asarray(self.samples, dtype=np.float64)\nn  = us.shape[0]\n\naim_ax = int(self.curveAimAxis)\nup_ax  = int(self.curveUpAxis)\nif up_ax == aim_ax:\n    up_ax = (aim_ax + 1) % 3\nw_ax    = 3 - aim_ax - up_ax\ncyclic  = (up_ax - aim_ax + 3) % 3 == 1\ninv_aim = int(self.curveInvertAimAxis) != 0\ninv_up  = int(self.curveInvertUpAxis) != 0\nrmode   = int(self.rotateMode)\nsmode   = int(self.scaleMode)\nrproj   = int(self.rotateProjection)\nsproj   = int(self.scaleProjection)\ntproj   = int(self.translateProjection)\nsmeth   = int(self.scaleMethod)\n\nT       = np.zeros((n, 3))\nRE      = np.zeros((n, 3))\nSC      = np.ones((n, 3))\nlength  = 0.0\nkeys    = np.zeros(c)\nrvalid  = False\nW       = np.zeros(0)\n\n# One pass over the controls: scale (decomposeMatrix-exact), up vector\n# (controlUpAxes: 0 = rider up axis, 1-3 = +X/+Y/+Z, 4-6 = -X/-Y/-Z) and the\n# rotate / scale driver flags (modes: 0 All, 1 Flagged, 2 None, 3 Matrix).\ncodes  = np.asarray(self.controlUpAxes, dtype=np.int64)\nrflags = np.asarray(self.rotateFlags,   dtype=np.float64)\nsflags = np.asarray(self.scaleFlags,    dtype=np.float64)\nncode  = codes.shape[0]\nnrf    = rflags.shape[0]\nnsf    = sflags.shape[0]\nCS     = np.ones((c, 3))\nUP     = np.zeros((c, 3))\nrmask  = np.zeros(c)\nsmask  = np.zeros(c)\nfor k in range(c):\n    CS[k] = self.controlMatrices[k].scale()\n    code  = 0\n    if k < ncode:\n        code = int(codes[k])\n    if code < 0 or code > 6:\n        code = 0\n    axis = up_ax\n    sign = 1.0\n    if code >= 1 and code <= 3:\n        axis = code - 1\n    if code >= 4:\n        axis = code - 4\n        sign = -1.0\n    ux = float(CM[k, axis, 0])\n    uy = float(CM[k, axis, 1])\n    uz = float(CM[k, axis, 2])\n    ln = math.sqrt(ux * ux + uy * uy + uz * uz)\n    if ln > 1e-12:\n        UP[k, 0] = sign * ux / ln\n        UP[k, 1] = sign * uy / ln\n        UP[k, 2] = sign * uz / ln\n    else:\n        UP[k, axis] = sign\n    if rmode == 0:\n        rmask[k] = 1.0\n    if rmode == 1 and k < nrf:\n        rmask[k] = float(rflags[k])\n    if smode == 0:\n        smask[k] = 1.0\n    if smode == 1 and k < nsf:\n        smask[k] = float(sflags[k])\n\n# Matrix mode: one outside up vector / scale for every sample.\nRM  = np.asarray(self.rotateMatrix, dtype=np.float64).reshape(4, 4)\nmx  = float(RM[up_ax, 0])\nmy  = float(RM[up_ax, 1])\nmz  = float(RM[up_ax, 2])\nmln = math.sqrt(mx * mx + my * my + mz * mz)\nif mln > 1e-12:\n    mx = mx / mln\n    my = my / mln\n    mz = mz / mln\nelse:\n    mx = 0.0\n    my = 0.0\n    mz = 0.0\n    if up_ax == 0:\n        mx = 1.0\n    if up_ax == 1:\n        my = 1.0\n    if up_ax == 2:\n        mz = 1.0\nMSV = self.scaleMatrix.scale()\nmsx = float(MSV[0])\nmsy = float(MSV[1])\nmsz = float(MSV[2])\n\nif c == 1:\n    T = T + CM[0, 3, 0:3]\n    if smode == 3:\n        for i in range(n):\n            SC[i, 0] = msx\n            SC[i, 1] = msy\n            SC[i, 2] = msz\n    if smode != 2 and smode != 3 and float(smask[0]) > 0.5:\n        SC = SC * CS[0]\n    if bool(self.computeWeights):\n        W = np.ones(n)\nelif c >= 2:\n    d   = min(max(int(self.degree), 1), 7)\n    d   = min(d, c - 1)\n    per = bool(self.periodic) and c >= 3\n    P   = CM[:, 3, 0:3]\n    Q   = _sp_cvs(P, d, per)\n    kv  = _sp_knots(c, d, per)\n    t0  = 0.0\n    if per:\n        t0 = (float(c) - 0.5 * float(d - 1)) % float(c)\n    table  = _sp_arc_table(Q, kv, c, d, per, t0, 16)\n    length = float(table[table.shape[0] - 1, 1])\n\n    # Rider u: rail_spine's stretch / pivot / shift / scale over the rest length.\n    L0 = float(self.defaultLength)\n    if not (L0 > 0.0 and L0 < 1e300):\n        L0 = length\n    ratio = 1.0\n    delta = 0.0\n    if length > 1e-12:\n        ratio = L0 / length\n        delta = (length - L0) / length\n    piv = float(self.pivot)\n    stc = float(self.stretch)\n    sft = float(self.shift)\n    scl = float(self.scale)\n    u   = np.zeros(n)\n    ur  = np.zeros(n)\n    uc  = np.zeros(n)\n    for i in range(n):\n        s_  = float(us[i])\n        ui  = sft + piv + (((s_ * ratio + delta * piv) * (1.0 - stc) + s_ * stc) - piv) * scl\n        uri = s_\n        if per:\n            # floor-mod: riders loop round a closed curve for any shift\n            fl = float(int(ui))\n            if fl > ui:\n                fl = fl - 1.0\n            ui = ui - fl\n            fl = float(int(uri))\n            if fl > uri:\n                fl = fl - 1.0\n            uri = uri - fl\n        u[i]  = ui\n        ur[i] = uri\n        uc[i] = min(max(ui, 0.0), 1.0)\n    tau = _sp_invert(table, uc * length, Q, kv, c, d, per, t0)\n    tn  = _sp_native(tau, t0, c, per)\n    E   = _sp_point(Q, kv, tn, c, d, per)\n    T   = E[:, 0:3] * 1.0\n    TAN = E[:, 3:6] * 1.0\n\n    # Open ends: translateProjection Infinite continues along the exact end\n    # direction (first / last non-coincident CV), Clamped holds the end point.\n    m0 = 1\n    m1 = c - 2\n    l0 = 0.0\n    l1 = 0.0\n    if not per:\n        eps   = 1e-12 * (1.0 + length)\n        found = False\n        for m in range(1, c):\n            ex = float(P[m, 0] - P[0, 0])\n            ey = float(P[m, 1] - P[0, 1])\n            ez = float(P[m, 2] - P[0, 2])\n            if not found and math.sqrt(ex * ex + ey * ey + ez * ez) > eps:\n                m0    = m\n                found = True\n        found = False\n        for mm in range(c - 1):\n            m  = c - 2 - mm\n            ex = float(P[c - 1, 0] - P[m, 0])\n            ey = float(P[c - 1, 1] - P[m, 1])\n            ez = float(P[c - 1, 2] - P[m, 2])\n            if not found and math.sqrt(ex * ex + ey * ey + ez * ez) > eps:\n                m1    = m\n                found = True\n        a0x = float(P[m0, 0] - P[0, 0])\n        a0y = float(P[m0, 1] - P[0, 1])\n        a0z = float(P[m0, 2] - P[0, 2])\n        l0  = math.sqrt(a0x * a0x + a0y * a0y + a0z * a0z)\n        a1x = float(P[c - 1, 0] - P[m1, 0])\n        a1y = float(P[c - 1, 1] - P[m1, 1])\n        a1z = float(P[c - 1, 2] - P[m1, 2])\n        l1  = math.sqrt(a1x * a1x + a1y * a1y + a1z * a1z)\n        if l0 > eps:\n            a0x = a0x / l0\n            a0y = a0y / l0\n            a0z = a0z / l0\n        else:\n            a0x = 0.0\n            a0y = 0.0\n            a0z = 0.0\n        if l1 > eps:\n            a1x = a1x / l1\n            a1y = a1y / l1\n            a1z = a1z / l1\n        else:\n            a1x = 0.0\n            a1y = 0.0\n            a1z = 0.0\n        for i in range(n):\n            ui = float(u[i])\n            if ui < 0.0:\n                if tproj == 1:\n                    T[i, 0] = P[0, 0] + a0x * (ui * length)\n                    T[i, 1] = P[0, 1] + a0y * (ui * length)\n                    T[i, 2] = P[0, 2] + a0z * (ui * length)\n                TAN[i, 0] = a0x\n                TAN[i, 1] = a0y\n                TAN[i, 2] = a0z\n            if ui > 1.0:\n                if tproj == 1:\n                    T[i, 0] = P[c - 1, 0] + a1x * ((ui - 1.0) * length)\n                    T[i, 1] = P[c - 1, 1] + a1y * ((ui - 1.0) * length)\n                    T[i, 2] = P[c - 1, 2] + a1z * ((ui - 1.0) * length)\n                TAN[i, 0] = a1x\n                TAN[i, 1] = a1y\n                TAN[i, 2] = a1z\n\n    keys   = _sp_chord_keys(P, per)\n    rk     = np.asarray(self.restKeys, dtype=np.float64)\n    rok    = _sp_rest_ok(rk, c)\n    rvalid = rok > 0.5 and float(self.defaultLength) > 0.0\n\n    # Driver sequences [key | value]: the flagged controls in order, wrapped\n    # round the seam on a closed curve exactly as rail_spine does (control 0\n    # driving appends (1, v0); otherwise prepend (k_last - 1, v_last) and append\n    # (1 + k_first, v_first)). Frozen reads the rest keys when they are valid.\n    ridx, = np.nonzero(rmask > 0.5)\n    sidx, = np.nonzero(smask > 0.5)\n    nr  = int(ridx.shape[0])\n    ns  = int(sidx.shape[0])\n    rot = rmode == 3\n    if rmode != 2 and nr >= 1:\n        rot = True\n    rseq = np.zeros((nr + 2, 4))\n    sseq = np.zeros((ns + 2, 4))\n    MR   = 0\n    MS   = 0\n    if rmode != 3 and nr >= 2:\n        off = 0\n        if per and int(ridx[0]) != 0:\n            off = 1\n        for q in range(nr):\n            kk = int(ridx[q])\n            kq = float(keys[kk])\n            if rproj == 0 and rok > 0.5:\n                kq = float(rk[kk])\n            rseq[q + off, 0] = kq\n            rseq[q + off, 1] = UP[kk, 0]\n            rseq[q + off, 2] = UP[kk, 1]\n            rseq[q + off, 3] = UP[kk, 2]\n        MR = nr + off\n        if per:\n            src = 0\n            if off == 1:\n                rseq[0, 0] = rseq[nr, 0] - 1.0\n                rseq[0, 1] = rseq[nr, 1]\n                rseq[0, 2] = rseq[nr, 2]\n                rseq[0, 3] = rseq[nr, 3]\n                src        = 1\n            rseq[MR, 0] = 1.0 + rseq[src, 0]\n            if off == 0:\n                rseq[MR, 0] = 1.0\n            rseq[MR, 1] = rseq[src, 1]\n            rseq[MR, 2] = rseq[src, 2]\n            rseq[MR, 3] = rseq[src, 3]\n            MR          = MR + 1\n    if smode != 3 and ns >= 2:\n        off = 0\n        if per and int(sidx[0]) != 0:\n            off = 1\n        for q in range(ns):\n            kk = int(sidx[q])\n            kq = float(keys[kk])\n            if sproj == 0 and rok > 0.5:\n                kq = float(rk[kk])\n            sseq[q + off, 0] = kq\n            sseq[q + off, 1] = CS[kk, 0]\n            sseq[q + off, 2] = CS[kk, 1]\n            sseq[q + off, 3] = CS[kk, 2]\n        MS = ns + off\n        if per:\n            src = 0\n            if off == 1:\n                sseq[0, 0] = sseq[ns, 0] - 1.0\n                sseq[0, 1] = sseq[ns, 1]\n                sseq[0, 2] = sseq[ns, 2]\n                sseq[0, 3] = sseq[ns, 3]\n                src        = 1\n            sseq[MS, 0] = 1.0 + sseq[src, 0]\n            if off == 0:\n                sseq[MS, 0] = 1.0\n            sseq[MS, 1] = sseq[src, 1]\n            sseq[MS, 2] = sseq[src, 2]\n            sseq[MS, 3] = sseq[src, 3]\n            MS          = MS + 1\n\n    # Per sample: up vector (None -> identity, no aim; Matrix / one driver ->\n    # constant; else slerp over the sequence -- Frozen: rest u, Infinite: live\n    # u, Clamped: live u held inside the end drivers), the right-handed frame\n    # and its XYZ euler; then the scale by the same rules.\n    R9 = np.zeros(9)\n    for i in range(n):\n        ui  = float(u[i])\n        uri = float(ur[i])\n        if rot:\n            upx = mx\n            upy = my\n            upz = mz\n            if rmode != 3 and nr == 1:\n                kk  = int(ridx[0])\n                upx = float(UP[kk, 0])\n                upy = float(UP[kk, 1])\n                upz = float(UP[kk, 2])\n            if rmode != 3 and nr >= 2:\n                x = ui\n                if rproj == 0:\n                    x = uri\n                if rproj == 2:\n                    x = min(max(x, float(rseq[0, 0])), float(rseq[MR - 1, 0]))\n                j = 0\n                for q in range(1, MR - 1):\n                    if float(rseq[q, 0]) <= x:\n                        j = q\n                k0  = float(rseq[j, 0])\n                k1  = float(rseq[j + 1, 0])\n                gap = k1 - k0\n                w   = 0.0\n                if gap > 1e-12:\n                    w = (x - k0) / gap\n                elif x >= k1:\n                    w = 1.0\n                ax  = float(rseq[j, 1])\n                ay  = float(rseq[j, 2])\n                az  = float(rseq[j, 3])\n                bx  = float(rseq[j + 1, 1])\n                by  = float(rseq[j + 1, 2])\n                bz  = float(rseq[j + 1, 3])\n                dot = min(max(ax * bx + ay * by + az * bz, -1.0), 1.0)\n                th  = math.acos(dot)\n                sn  = math.sin(th)\n                c0  = 1.0 - w\n                c1  = w\n                if sn > 1e-6:\n                    c0 = math.sin((1.0 - w) * th) / sn\n                    c1 = math.sin(w * th) / sn\n                upx = ax * c0 + bx * c1\n                upy = ay * c0 + by * c1\n                upz = az * c0 + bz * c1\n\n            # aim: the unit tangent (world aim axis when degenerate)\n            Ax = float(TAN[i, 0])\n            Ay = float(TAN[i, 1])\n            Az = float(TAN[i, 2])\n            al = math.sqrt(Ax * Ax + Ay * Ay + Az * Az)\n            if al > 1e-12:\n                Ax = Ax / al\n                Ay = Ay / al\n                Az = Az / al\n            else:\n                Ax = 0.0\n                Ay = 0.0\n                Az = 0.0\n                if aim_ax == 0:\n                    Ax = 1.0\n                if aim_ax == 1:\n                    Ay = 1.0\n                if aim_ax == 2:\n                    Az = 1.0\n            if inv_aim:\n                Ax = 0.0 - Ax\n                Ay = 0.0 - Ay\n                Az = 0.0 - Az\n            # up: made perpendicular to aim; falls back to the world up axis,\n            # then the world third axis, when parallel\n            dd = upx * Ax + upy * Ay + upz * Az\n            Ux = upx - dd * Ax\n            Uy = upy - dd * Ay\n            Uz = upz - dd * Az\n            ul = math.sqrt(Ux * Ux + Uy * Uy + Uz * Uz)\n            for fb in range(2):\n                if not (ul > 1e-12):\n                    fa = up_ax\n                    if fb == 1:\n                        fa = w_ax\n                    fx = 0.0\n                    fy = 0.0\n                    fz = 0.0\n                    if fa == 0:\n                        fx = 1.0\n                    if fa == 1:\n                        fy = 1.0\n                    if fa == 2:\n                        fz = 1.0\n                    dd = fx * Ax + fy * Ay + fz * Az\n                    Ux = fx - dd * Ax\n                    Uy = fy - dd * Ay\n                    Uz = fz - dd * Az\n                    ul = math.sqrt(Ux * Ux + Uy * Uy + Uz * Uz)\n            Ux = Ux / ul\n            Uy = Uy / ul\n            Uz = Uz / ul\n            if inv_up:\n                Ux = 0.0 - Ux\n                Uy = 0.0 - Uy\n                Uz = 0.0 - Uz\n            Wx = Uy * Az - Uz * Ay\n            Wy = Uz * Ax - Ux * Az\n            Wz = Ux * Ay - Uy * Ax\n            if cyclic:\n                Wx = 0.0 - Wx\n                Wy = 0.0 - Wy\n                Wz = 0.0 - Wz\n            R9[3 * aim_ax]     = Ax\n            R9[3 * aim_ax + 1] = Ay\n            R9[3 * aim_ax + 2] = Az\n            R9[3 * up_ax]      = Ux\n            R9[3 * up_ax + 1]  = Uy\n            R9[3 * up_ax + 2]  = Uz\n            R9[3 * w_ax]       = Wx\n            R9[3 * w_ax + 1]   = Wy\n            R9[3 * w_ax + 2]   = Wz\n            # XYZ euler of the row-vector rotation R = Rx * Ry * Rz\n            ry = math.asin(min(max(0.0 - float(R9[2]), -1.0), 1.0))\n            rx = 0.0\n            rz = 0.0\n            if math.cos(ry) > 1e-9:\n                rx = _sp_atan2s(float(R9[5]), float(R9[8]))\n                rz = _sp_atan2s(float(R9[1]), float(R9[0]))\n            else:\n                rx = _sp_atan2s(0.0 - float(R9[7]), float(R9[4]))\n            RE[i, 0] = rx\n            RE[i, 1] = ry\n            RE[i, 2] = rz\n\n        if smode == 3:\n            SC[i, 0] = msx\n            SC[i, 1] = msy\n            SC[i, 2] = msz\n        if smode != 2 and smode != 3 and ns == 1:\n            kk       = int(sidx[0])\n            SC[i, 0] = CS[kk, 0]\n            SC[i, 1] = CS[kk, 1]\n            SC[i, 2] = CS[kk, 2]\n        if smode != 3 and ns >= 2:\n            x = ui\n            if sproj == 0:\n                x = uri\n            if sproj == 2:\n                x = min(max(x, float(sseq[0, 0])), float(sseq[MS - 1, 0]))\n            j = 0\n            for q in range(1, MS - 1):\n                if float(sseq[q, 0]) <= x:\n                    j = q\n            k0  = float(sseq[j, 0])\n            k1  = float(sseq[j + 1, 0])\n            gap = k1 - k0\n            w   = 0.0\n            if gap > 1e-12:\n                w = (x - k0) / gap\n            elif x >= k1:\n                w = 1.0\n            SC[i, 0] = _sp_blend1(float(sseq[j, 1]), float(sseq[j + 1, 1]), w, smeth)\n            SC[i, 1] = _sp_blend1(float(sseq[j, 2]), float(sseq[j + 1, 2]), w, smeth)\n            SC[i, 2] = _sp_blend1(float(sseq[j, 3]), float(sseq[j + 1, 3]), w, smeth)\n\n    # Basis (on request): W @ CV rows == outputTranslate, registration applied,\n    # periodic columns folded onto the c controls; open Infinite rows past the\n    # ends follow the same end direction as the positions.\n    if bool(self.computeWeights):\n        sp = _sp_span(tn, c, d, per)\n        B  = _sp_basis(tn, sp, d, kv)\n        Wm = np.zeros((n, c))\n        for i in range(n):\n            si = int(sp[i])\n            for r in range(d + 1):\n                col = si - d + r\n                if per:\n                    col = col % c\n                Wm[i, col] = Wm[i, col] + B[i, r]\n            if not per and tproj == 1:\n                ui = float(u[i])\n                if ui < 0.0 and l0 > 1e-12:\n                    kl = ui * length / l0\n                    for k in range(c):\n                        Wm[i, k] = 0.0\n                    Wm[i, 0]  = 1.0 - kl\n                    Wm[i, m0] = Wm[i, m0] + kl\n                if ui > 1.0 and l1 > 1e-12:\n                    kh = (ui - 1.0) * length / l1\n                    for k in range(c):\n                        Wm[i, k] = 0.0\n                    Wm[i, c - 1] = 1.0 + kh\n                    Wm[i, m1]    = Wm[i, m1] - kh\n        W = Wm.reshape(-1)\n\nself.outputTranslate = T\nself.outputRotate    = RE\nself.outputScale     = SC\nself.currentLength   = length\nself.controlKeys     = keys\nself.restValid       = rvalid\n# Assigned only when asked for: an unassigned output publishes its defaults in\n# both modes, while an empty assignment would keep stale values interpreted.\nif bool(self.computeWeights):\n    self.outputWeights = W\n",
+        "init": "# Init tab -- runs once per file open (not per compute()).\n# Spine v2: the node builds its own uniform B-spline from controlMatrices,\n# samples it by arc length and drives rider rotation / scale the way\n# rail_spine does (drivers, Frozen / Infinite / Clamped projections, a closed\n# curve registered on control 0).\n#\n# Every helper is plain numpy / math written so the SAME source runs in Python\n# mode and lowers 1:1 to C++: one array or scalar per return (results are\n# packed side by side), no tuples, no atan2, no batched np.cross, no module\n# level constants.\n\nimport math\nimport numpy as np\n\n\ndef _sp_span_count(c, d, per):\n    \"\"\"Unit knot spans in the domain: c periodic, c - d open.\"\"\"\n    if per:\n        return c\n    return c - d\n\n\ndef _sp_knots(c, d, per):\n    \"\"\"Uniform knots. Open: clamped [0]*d + 0..c-d + [c-d]*d (mc.curve's own\n    form). Periodic: -d..c+d over the c + d wrapped CVs.\"\"\"\n    if per:\n        return np.arange(c + 2 * d + 1, dtype=np.float64) - float(d)\n    return np.clip(np.arange(c + d + 1, dtype=np.float64) - float(d), 0.0, float(c - d))\n\n\ndef _sp_cvs(P, d, per):\n    \"\"\"CV rows; a periodic curve repeats its first d CVs at the end.\"\"\"\n    if per:\n        return np.concatenate([P, P[0:d]])\n    return P\n\n\ndef _sp_native(tau, t0, c, per):\n    \"\"\"Curve parameter for a table parameter tau: periodic curves start at the\n    registration parameter t0 and wrap every c.\"\"\"\n    if per:\n        return (tau + t0) % float(c)\n    return tau\n\n\ndef _sp_span(t, c, d, per):\n    \"\"\"Knot span d + floor(t) of native t on unit knots, held in the domain.\"\"\"\n    S = _sp_span_count(c, d, per)\n    k = np.clip(np.floor(t), 0.0, float(S - 1))\n    return k.astype(np.int64) + d\n\n\ndef _sp_basis(t, s, d, kv):\n    \"\"\"[N | dN] (n, 2d+2): the d+1 non-zero basis values at t on spans s and\n    their first derivatives (NURBS Book A2.2, derivative from degree d-1).\n    On a non-empty span every denominator spans at least that span, so none\n    is zero and no guard is needed.\"\"\"\n    n       = t.shape[0]\n    N       = np.zeros((n, d + 1))\n    Nd1     = np.zeros((n, d + 1))\n    left    = np.zeros((n, d + 1))\n    right   = np.zeros((n, d + 1))\n    N[:, 0] = 1.0\n    for j in range(1, d + 1):\n        if j == d:\n            Nd1[:, :] = N\n        left[:, j]  = t - kv[s + 1 - j]\n        right[:, j] = kv[s + j] - t\n        saved       = np.zeros(n)\n        for r in range(j):\n            tmp     = N[:, r] / (right[:, r + 1] + left[:, j - r])\n            N[:, r] = saved + right[:, r + 1] * tmp\n            saved   = left[:, j - r] * tmp\n        N[:, j] = saved\n    out             = np.zeros((n, 2 * d + 2))\n    out[:, 0:d + 1] = N\n    fd              = float(d)\n    for r in range(d + 1):\n        v = np.zeros(n)\n        if r >= 1:\n            v = v + Nd1[:, r - 1] / (kv[s + r] - kv[s - d + r])\n        if r <= d - 1:\n            v = v - Nd1[:, r] / (kv[s + r + 1] - kv[s - d + r + 1])\n        out[:, d + 1 + r] = fd * v\n    return out\n\n\ndef _sp_point(Q, kv, t, c, d, per):\n    \"\"\"[C | C'] (n, 6): point and first derivative at native parameters t.\"\"\"\n    s   = _sp_span(t, c, d, per)\n    B   = _sp_basis(t, s, d, kv)\n    out = np.zeros((t.shape[0], 6))\n    for r in range(d + 1):\n        row         = Q[s - d + r]\n        out[:, 0:3] = out[:, 0:3] + B[:, r:r + 1] * row\n        out[:, 3:6] = out[:, 3:6] + B[:, d + 1 + r:d + 2 + r] * row\n    return out\n\n\ndef _sp_speed(E):\n    \"\"\"|C'| of packed [C | C'] rows.\"\"\"\n    return np.sqrt(E[:, 3] * E[:, 3] + E[:, 4] * E[:, 4] + E[:, 5] * E[:, 5])\n\n\ndef _sp_arc_table(Q, kv, c, d, per, t0, steps):\n    \"\"\"[tau | s | speed] (K+1, 3): cumulative arc length at `steps` equal\n    sub-steps per unit span, 5-point Gauss-Legendre per sub-step.\"\"\"\n    xg = np.array([0.0, -0.5384693101056831, 0.5384693101056831,\n                     -0.9061798459386640, 0.9061798459386640])\n    wg = np.array([0.5688888888888889, 0.4786286704993665, 0.4786286704993665,\n                     0.2369268850561891, 0.2369268850561891])\n    K = _sp_span_count(c, d, per) * steps\n    h = 1.0 / float(steps)\n    k = np.arange(K, dtype=np.float64)\n    # One evaluation for every quadrature point (5 per step) and every step\n    # boundary (K + 1).\n    tau = np.zeros(6 * K + 1)\n    for g in range(5):\n        tau[g * K:(g + 1) * K] = (k + 0.5 + 0.5 * xg[g]) * h\n    tau[5 * K:6 * K + 1] = np.arange(K + 1, dtype=np.float64) * h\n    sp                   = _sp_speed(_sp_point(Q, kv, _sp_native(tau, t0, c, per), c, d, per))\n    seg                  = np.zeros(K)\n    for g in range(5):\n        seg = seg + wg[g] * sp[g * K:(g + 1) * K]\n    out             = np.zeros((K + 1, 3))\n    out[:, 0]       = tau[5 * K:6 * K + 1]\n    out[1:K + 1, 1] = np.cumsum(seg * (0.5 * h))\n    out[:, 2]       = sp[5 * K:6 * K + 1]\n    return out\n\n\ndef _sp_invert(table, target, Q, kv, c, d, per, t0):\n    \"\"\"Table parameter at arc length `target`: cubic Hermite of tau(s) inside\n    the table step (slopes 1/speed), then one Newton step on the exact 5-point\n    Gauss-Legendre integral from the step start.\"\"\"\n    xg = np.array([0.0, -0.5384693101056831, 0.5384693101056831,\n                     -0.9061798459386640, 0.9061798459386640])\n    wg = np.array([0.5688888888888889, 0.4786286704993665, 0.4786286704993665,\n                     0.2369268850561891, 0.2369268850561891])\n    K  = table.shape[0] - 1\n    ta = table[:, 0]\n    sa = table[:, 1]\n    va = table[:, 2]\n    x  = np.clip(target, 0.0, sa[K])\n    j  = np.clip(np.searchsorted(sa, x, side=\"right\") - 1, 0, K - 1)\n    a  = ta[j]\n    b  = ta[j + 1]\n    s0 = sa[j]\n    ds = sa[j + 1] - s0\n    v0 = va[j]\n    v1 = va[j + 1]\n    tt = np.where(ds > 0.0,   (x - s0) / np.where(ds > 0.0, ds, 1.0), 0.0)\n    m0 = np.where(v0 > 1e-12, ds / np.where(v0 > 1e-12, v0, 1.0),     b - a)\n    m1 = np.where(v1 > 1e-12, ds / np.where(v1 > 1e-12, v1, 1.0),     b - a)\n    t2 = tt * tt\n    t3 = t2 * tt\n    tau = (2.0 * t3 - 3.0 * t2 + 1.0) * a + (t3 - 2.0 * t2 + tt) * m0 \\\n         + (3.0 * t2 - 2.0 * t3) * b + (t3 - t2) * m1\n    tau  = np.clip(tau, a, b)\n    half = 0.5 * (tau - a)\n    mid  = 0.5 * (tau + a)\n    # One evaluation for the 5 quadrature points and the Newton point of every\n    # sample.\n    n   = x.shape[0]\n    pts = np.zeros(6 * n)\n    for g in range(5):\n        pts[g * n:(g + 1) * n] = mid + half * xg[g]\n    pts[5 * n:6 * n] = tau\n    spd              = _sp_speed(_sp_point(Q, kv, _sp_native(pts, t0, c, per), c, d, per))\n    acc              = np.zeros(n)\n    for g in range(5):\n        acc = acc + wg[g] * spd[g * n:(g + 1) * n]\n    f   = s0 + acc * half - x\n    sp  = spd[5 * n:6 * n]\n    tau = np.where(sp > 1e-12, tau - f / np.where(sp > 1e-12, sp, 1.0), tau)\n    return np.clip(tau, a, b)\n\n\ndef _sp_chord_keys(P, per):\n    \"\"\"rail_spine's keys: cumulative chord length between consecutive\n    controls, normalized to [0, 1] (the closing chord counts when periodic).\"\"\"\n    c = P.shape[0]\n    K = np.zeros(c)\n    for k in range(1, c):\n        ex   = float(P[k, 0] - P[k - 1, 0])\n        ey   = float(P[k, 1] - P[k - 1, 1])\n        ez   = float(P[k, 2] - P[k - 1, 2])\n        K[k] = K[k - 1] + math.sqrt(ex * ex + ey * ey + ez * ez)\n    total = float(K[c - 1])\n    if per:\n        ex    = float(P[0, 0] - P[c - 1, 0])\n        ey    = float(P[0, 1] - P[c - 1, 1])\n        ez    = float(P[0, 2] - P[c - 1, 2])\n        total = total + math.sqrt(ex * ex + ey * ey + ez * ez)\n    span = float(c - 1)\n    if per:\n        span = float(c)\n    for k in range(c):\n        if total > 1e-12:\n            K[k] = K[k] / total\n        else:\n            K[k] = float(k) / span\n    return K\n\n\ndef _sp_rest_ok(rk, c):\n    \"\"\"1.0 when restKeys can stand in for the live keys: one per control,\n    finite, non-decreasing, inside [0, 1].\"\"\"\n    ok = 1.0\n    if rk.shape[0] != c:\n        ok = 0.0\n    else:\n        prev = 0.0\n        for k in range(c):\n            v = float(rk[k])\n            if not (v >= 0.0 and v <= 1.0):\n                ok = 0.0\n            if k > 0 and v < prev:\n                ok = 0.0\n            prev = v\n    return ok\n\n\ndef _sp_atan2s(y, x):\n    \"\"\"Scalar atan2 from atan (math.atan2 does not lower).\"\"\"\n    if x > 0.0:\n        return math.atan(y / x)\n    if x < 0.0:\n        if y >= 0.0:\n            return math.atan(y / x) + math.pi\n        return math.atan(y / x) - math.pi\n    if y > 0.0:\n        return 0.5 * math.pi\n    if y < 0.0:\n        return -0.5 * math.pi\n    return 0.0\n\n\ndef _sp_blend1(a, b, w, method):\n    \"\"\"One scale component between drivers a and b: 0 Square Root (elerp,\n    sign-safe, bounded), 1 Linear, 2 Cosine (holds past the ends).\"\"\"\n    if method == 0:\n        if a * b > 0.0:\n            mag = math.exp((1.0 - w) * math.log(abs(a)) + w * math.log(abs(b)))\n            mag = min(max(mag, 1e-6), 1e6)\n            if a < 0.0:\n                return -mag\n            return mag\n        return a + (b - a) * w\n    if method == 2:\n        e = 0.5 * (1.0 - math.cos(math.pi * min(max(w, 0.0), 1.0)))\n        return a + (b - a) * e\n    return a + (b - a) * w\n",
         "affects": "all",
-        "methods": "from typing import Optional\n\n\nclass SetupError(Exception):\n    \"\"\"The current selection / scene state can't support setup for this node.\n    Message is user-facing (it names what to select).\"\"\"\n\n\n# --- Authoring command: build a complete spine system from a LIST OF DRIVING\n# TRANSFORMS. This is the single source of truth -- the setup (from a selection)\n# and the demo (from fabricated locators) both build THROUGH it. Given >=2\n# control transforms it: creates a degree-`degree` NURBS curve through their\n# world positions; live-drives each curve CV from a control's worldMatrix (a\n# decomposeMatrix bridge, so arbitrary / parented controls work -- the curve is\n# created at the world origin so its local space == world); feeds each control's\n# worldMatrix into controlMatrices[k] (the per-control twist / scale basis);\n# resolves the sample params (samples=None -> equally spaced by arc length, else\n# one rider per preset u in `samples`); and creates + connects N rider\n# transforms to the per-sample outputs. ---\n@maya_command(name=\"spineBuildSystem\", undoable=True)\ndef build_system(self, transforms: list[str], n=10, degree=3,\n                 samples: Optional[list[float]] = None,\n                 aim_axis=1, up_axis=2, rider_type=\"joint\",\n                 rider_prefix=\"spineRider\"):\n    \"\"\"Wire a whole spine into THIS node from ``transforms`` (>=2 transform names\n    driving the spine, in order). ``n`` riders are spread equally along the curve\n    when ``samples`` is None, else one rider per preset u-param in ``samples``\n    (normalized arc length 0..1). ``degree`` is the NURBS curve degree (clamped\n    to len(transforms)-1 if too few controls). ``rider_type`` is\n    joint|locator|group|cube. Returns {\"curve\", \"controls\", \"riders\"}.\"\"\"\n    from maya import cmds as mc\n\n    controls = list(transforms or [])\n    if len(controls) < 2:\n        raise SetupError(\"Spine needs at least 2 driving transforms.\")\n    degree = int(degree)\n    if degree >= len(controls):\n        degree = max(1, len(controls) - 1)\n\n    name = self.get_name()\n    mc.setAttr(name + \".curveAimAxis\", int(aim_axis))\n    mc.setAttr(name + \".curveUpAxis\", int(up_axis))\n\n    # NURBS curve through the controls' current world positions.\n    pts = [tuple(mc.xform(t, query=True, worldSpace=True, translation=True)) for t in controls]\n    curve = mc.curve(degree=degree, name=\"spineCurve#\", point=pts)\n    cshape = mc.listRelatives(curve, shapes=True, fullPath=True)[0]\n    mc.connectAttr(cshape + \".worldSpace[0]\", name + \".inputCurve\", force=True)\n\n    # Live CV drive (decomposeMatrix bridge) + control twist/scale basis.\n    for k, t in enumerate(controls):\n        dm = mc.createNode(\"decomposeMatrix\", name=\"spineCvDecomp#\")\n        mc.connectAttr(t + \".worldMatrix[0]\", dm + \".inputMatrix\", force=True)\n        mc.connectAttr(dm + \".outputTranslate\",\n                       \"%s.controlPoints[%d]\" % (cshape, k), force=True)\n        mc.connectAttr(t + \".worldMatrix[0]\",\n                       \"%s.controlMatrices[%d]\" % (name, k), force=True)\n\n    # Rest length: the driven curve's arc length at build time (arclen\n    # measures exactly what the compute's findLengthFromParam does).\n    mc.setAttr(name + \".defaultLength\", mc.arclen(cshape))\n\n    # Sample params: preset list (count follows it), else equally spaced.\n    if samples is not None:\n        su = [max(0.0, min(1.0, float(u))) for u in samples]\n    elif int(n) <= 1:\n        su = [0.0]\n    else:\n        n = int(n)\n        su = [i / float(n - 1) for i in range(n)]\n\n    rgrp = mc.group(empty=True, name=\"spine_riders#\")\n    riders = []\n    for i, u in enumerate(su):\n        mc.setAttr(\"%s.samples[%d]\" % (name, i), u)\n        if rider_type == \"joint\":\n            mc.select(clear=True)              # fresh root -- never chain-parent\n            rider = mc.joint(name=rider_prefix + \"#\")\n        elif rider_type == \"group\":\n            rider = mc.group(empty=True, name=rider_prefix + \"#\")\n        elif rider_type == \"cube\":\n            rider = mc.polyCube(name=rider_prefix + \"#\", width=0.6,\n                                height=0.6, depth=0.6)[0]\n        else:\n            rider = mc.spaceLocator(name=rider_prefix + \"#\")[0]\n        rider = mc.parent(rider, rgrp)[0]\n        mc.connectAttr(\"%s.outputTranslate[%d]\" % (name, i),\n                       rider + \".translate\", force=True)\n        mc.connectAttr(\"%s.outputRotate[%d]\" % (name, i),\n                       rider + \".rotate\", force=True)\n        mc.connectAttr(\"%s.outputScale[%d]\" % (name, i),\n                       rider + \".scale\", force=True)\n        riders.append(rider)\n    return {\"curve\": curve, \"controls\": controls, \"riders\": riders}\n\n\n# Setup: select the transforms that should drive the spine (in order along the\n# spine), then Create + Run setup. Thin adapter -> the spineBuildSystem command.\n@maya_command(creates=True)\ndef setup(self, *args, **kwargs):\n    from maya import cmds as mc\n    name = self.get_name()\n    # pre-create selection snapshot (pick order), excluding this node.\n    order = [o for o in (kwargs.get(\"selection\") or mc.ls(selection=True) or []) if o != name]\n    controls = [o for o in order\n                if \"transform\" in (mc.nodeType(o, inherited=True) or [])]\n    if len(controls) < 2:\n        raise SetupError(\"Select at least 2 transforms (in order along the \" \"spine) to drive it.\")\n    return self.call_command(\n        \"spineBuildSystem\", transforms=controls,\n        n=int(kwargs.get(\"n\", 10)), degree=int(kwargs.get(\"degree\", 3)),\n        samples=kwargs.get(\"samples\", None),\n        rider_type=kwargs.get(\"rider_type\", \"joint\"))\n\n\n# Demo: fabricate four control locators up the Y axis and build the whole spine\n# through the command -- a degree-3 curve driven by the four controls with twelve\n# joints riding it, spread by equal arc length. Same command path as the setup.\n@maya_demo(label=\"Spine From Four Controls\")\ndef demo(self):\n    from maya import cmds as mc\n    name = self.get_name()\n    ctrl_pos = ((0.0, 0.0, 0.0), (1.0, 3.0, 0.0), (-1.0, 6.0, 0.0), (0.0, 9.0, 0.0))\n    cgrp = mc.group(empty=True, name=\"spine_controls#\")\n    controls = []\n    for p in ctrl_pos:\n        c = mc.spaceLocator(name=\"spineCtrl#\")[0]\n        c = mc.parent(c, cgrp)[0]\n        mc.setAttr(c + \".translate\", p[0], p[1], p[2], type=\"double3\")\n        controls.append(c)\n    self.call_command(\"spineBuildSystem\", transforms=controls, n=12, degree=3)\n    try:\n        for _panel in mc.getPanel(type=\"modelPanel\") or []:\n            _cam = mc.modelEditor(_panel, query=True, camera=True)\n            if _cam:\n                mc.viewFit(_cam, allObjects=True)\n    except Exception:\n        pass\n    return name\n\n\n@maya_test(label=\"Spine: riders climb the curve monotonically from base to tip\", digits=2)\ndef test_spine(self):\n    \"\"\"Same test passes interpreted and compiled (parity): the spine drives its\n    riders up the curve, so their Y climbs monotonically and spans a real height.\n    Builds a minimal spine THROUGH the node's own command when nothing drives it\n    yet (parity-safe: the companion command feeds self's inputs).\"\"\"\n    from maya import cmds as mc\n    from mpynode._common.methods.test_helpers import assert_true\n    name = self.get_name()\n\n    if not (mc.listConnections(name + \".inputCurve\", s=True, d=False) or []):\n        controls = []\n        for p in ((0.0, 0.0, 0.0), (0.0, 5.0, 0.0), (0.0, 10.0, 0.0)):\n            loc = mc.spaceLocator(name=\"spineTestCtrl#\")[0]\n            mc.setAttr(loc + \".translate\", p[0], p[1], p[2], type=\"double3\")\n            controls.append(loc)\n        # Call the top-level build_system() FUNCTION directly (not\n        # self.call_command(\"spineBuildSystem\"), which routes through the\n        # wrapper's command dispatcher -- absent on the compiled node's\n        # _NodeNameProxy) so the SAME test runs on BOTH the interpreted node\n        # and its C++ compile. The spineBuildSystem companion command itself\n        # still exists (the setup + demo call it); this is the same function\n        # it dispatches to, and it drives only self.get_name() + cmds.\n        build_system(self, transforms=controls, n=5,\n                     degree=2, rider_type=\"locator\")\n\n    mc.dgdirty(name + \".outputTranslate\")\n    n = mc.getAttr(name + \".outputTranslate\", size=True) or 0\n    assert_true(n >= 3, \"spine should drive at least 3 rider samples; got %d\" % n)\n\n    ys = [mc.getAttr(\"%s.outputTranslate[%d]\" % (name, i))[0][1] for i in range(n)]\n    assert_true(ys[-1] - ys[0] > 2.0,\n                \"spine should span a real height; rider Ys=%r\" % ys)\n    assert_true(all(ys[i] <= ys[i + 1] + 1e-2 for i in range(n - 1)),\n                \"rider Y should increase monotonically up the spine; Ys=%r\" % ys)\n",
+        "methods": "from typing import Optional\n\n\nclass SetupError(Exception):\n    \"\"\"The current selection / scene state can't support setup for this node.\n    Message is user-facing (it names what to select).\"\"\"\n\n\n_PROJECTIONS = {\"frozen\": 0, \"infinite\": 1, \"clamped\": 2}\n_MODES       = {\"all\": 0, \"flagged\": 1, \"none\": 2, \"matrix\": 3}\n\n\ndef _flat(values):\n    \"\"\"cmds.getAttr of a numeric multi returns [(v0, v1, ...)]; flatten it.\"\"\"\n    values = values or []\n    if values and isinstance(values[0], (list, tuple)):\n        return list(values[0])\n    return list(values)\n\n\ndef _set_multi(node, attr, values):\n    \"\"\"Write values[k] to node.attr[k] and drop every stale index past them.\"\"\"\n    from maya import cmds as mc\n    for k, v in enumerate(values):\n        mc.setAttr(\"%s.%s[%d]\" % (node, attr, k), v)\n    for k in mc.getAttr(\"%s.%s\" % (node, attr), multiIndices=True) or []:\n        if k >= len(values):\n            mc.removeMultiInstance(\"%s.%s[%d]\" % (node, attr, k), b=True)\n\n\ndef _snapshot_rest(name):\n    \"\"\"Rest data for Frozen and stretch: the node's own live length and control\n    keys become defaultLength / restKeys.\"\"\"\n    from maya import cmds as mc\n    mc.setAttr(name + \".defaultLength\", mc.getAttr(name + \".currentLength\"))\n    _set_multi(name, \"restKeys\", _flat(mc.getAttr(name + \".controlKeys\")))\n\n\ndef _driving_controls(name):\n    \"\"\"The transforms feeding controlMatrices, in index order.\"\"\"\n    from maya import cmds as mc\n    out = []\n    for k in mc.getAttr(name + \".controlMatrices\", multiIndices=True) or []:\n        src = mc.listConnections(\"%s.controlMatrices[%d]\" % (name, k),\n                                 source=True, destination=False) or []\n        out.append(src[0] if src else None)\n    return out\n\n\ndef _apply_driver(name, channel, controls, preset, members, matrix):\n    \"\"\"One channel (\"rotate\" / \"scale\"): mode + flags + outside matrix.\n\n    preset: all | none | ends | first | last | list | matrix. A member list\n    forces Flagged, an outside transform forces Matrix.\"\"\"\n    from maya import cmds as mc\n    preset = (preset or \"all\").lower()\n    if members:\n        preset = \"list\"\n    if matrix:\n        preset = \"matrix\"\n    c     = len(controls)\n    flags = [False] * c\n    if preset == \"ends\":\n        flags[0] = flags[-1] = True\n    elif preset == \"first\":\n        flags[0] = True\n    elif preset == \"last\":\n        flags[-1] = True\n    elif preset == \"list\":\n        for m in members or []:\n            if m not in controls:\n                raise SetupError(\"%s driver '%s' is not one of the spine's controls.\"\n                                 % (channel.capitalize(), m))\n            flags[controls.index(m)] = True\n    mode = {\"all\": 0, \"none\": 2, \"matrix\": 3}.get(preset, 1)\n    if preset == \"matrix\":\n        if not matrix or not mc.objExists(matrix):\n            raise SetupError(\"%s driver 'matrix' needs an existing transform.\"\n                             % channel.capitalize())\n        mc.connectAttr(matrix + \".worldMatrix[0]\", \"%s.%sMatrix\" % (name, channel),\n                       force=True)\n    mc.setAttr(\"%s.%sMode\" % (name, channel), mode)\n    _set_multi(name, channel + \"Flags\", flags)\n\n\ndef _display_curve(controls, degree, periodic):\n    \"\"\"A templated Maya curve that follows the controls, for looking at only:\n    it is never connected to the node.\"\"\"\n    from maya import cmds as mc\n    c   = len(controls)\n    d   = max(1, min(int(degree), c - 1))\n    pts = [tuple(mc.xform(t, query=True, worldSpace=True, translation=True)) for t in controls]\n    if periodic:\n        curve = mc.curve(degree=d, periodic=True, point=pts + pts[:d],\n                         knot=list(range(-d + 1, c + d)), name=\"spineCurve#\")\n    else:\n        curve = mc.curve(degree=d, point=pts, name=\"spineCurve#\")\n    shape = mc.listRelatives(curve, shapes=True, fullPath=True)[0]\n    ncp   = mc.getAttr(shape + \".controlPoints\", size=True)\n    for k in range(ncp):\n        dm = mc.createNode(\"decomposeMatrix\", name=\"spineCurveDecomp#\")\n        mc.connectAttr(controls[k % c] + \".worldMatrix[0]\", dm + \".inputMatrix\", force=True)\n        mc.connectAttr(dm + \".outputTranslate\", \"%s.controlPoints[%d]\" % (shape, k), force=True)\n    mc.setAttr(shape + \".overrideEnabled\", 1)\n    mc.setAttr(shape + \".overrideDisplayType\", 1)\n    return curve\n\n\n# --- Authoring command: wire a whole spine into THIS node from a list of\n# driving transforms (>= 2, >= 3 closed, in order). Each control's worldMatrix\n# feeds controlMatrices[k]: its position is a B-spline CV, its axes can drive\n# the riders' twist and its scale their scale. The node builds the curve itself\n# (no Maya curve in the evaluation). Riders are created and connected to the\n# per-sample outputs; the rest length and rest keys are captured last. ---\n@maya_command(name=\"spineBuildSystem\", undoable=True)\ndef build_system(self, transforms: list[str], n=10, degree=3,\n                 samples: Optional[list[float]] = None,\n                 aim_axis=1, up_axis=2, rider_type=\"joint\",\n                 rider_prefix=\"spineRider\", periodic=False,\n                 rotate=\"all\", scale=\"all\",\n                 rotate_controls: Optional[list[str]] = None,\n                 scale_controls:  Optional[list[str]] = None,\n                 rotate_matrix=\"\", scale_matrix=\"\",\n                 up_axes: Optional[list[int]] = None,\n                 rotate_projection=\"frozen\", scale_projection=\"frozen\",\n                 translate_projection=\"infinite\", display_curve=True):\n    \"\"\"Wire a whole spine into THIS node from ``transforms``.\n\n    ``n`` riders spread evenly by arc length when ``samples`` is None, else one\n    rider per preset u (0..1). ``rotate`` / ``scale`` pick the drivers:\n    all | none | ends | first | last, or pass ``rotate_controls`` /\n    ``scale_controls`` (a subset of ``transforms``) or ``rotate_matrix`` /\n    ``scale_matrix`` (one outside transform). ``up_axes`` gives each control's\n    up row: 0 = the rider up axis, 1-3 = +X/+Y/+Z, 4-6 = -X/-Y/-Z.\n    Projections: frozen | infinite | clamped (translate: clamped | infinite).\n    ``rider_type`` is joint|locator|group|cube. Returns\n    {\"curve\", \"controls\", \"riders\"}.\"\"\"\n    from maya import cmds as mc\n\n    controls = list(transforms or [])\n    need     = 3 if periodic else 2\n    if len(controls) < need:\n        raise SetupError(\"Spine needs at least %d driving transforms%s.\"\n                         % (need, \" for a closed curve\" if periodic else \"\"))\n    if len(set(controls)) != len(controls):\n        raise SetupError(\"Each driving transform can only appear once.\")\n    for p in (rotate_projection, scale_projection):\n        if str(p).lower() not in _PROJECTIONS:\n            raise SetupError(\"Projection must be frozen, infinite or clamped; got %r.\" % p)\n\n    name = self.get_name()\n    mc.setAttr(name + \".curveAimAxis\",     int(aim_axis))\n    mc.setAttr(name + \".curveUpAxis\",      int(up_axis))\n    mc.setAttr(name + \".degree\",           int(degree))\n    mc.setAttr(name + \".periodic\",         bool(periodic))\n    mc.setAttr(name + \".rotateProjection\", _PROJECTIONS[str(rotate_projection).lower()])\n    mc.setAttr(name + \".scaleProjection\",  _PROJECTIONS[str(scale_projection).lower()])\n    mc.setAttr(name + \".translateProjection\",\n               0 if str(translate_projection).lower() == \"clamped\" else 1)\n    for k, t in enumerate(controls):\n        mc.connectAttr(t + \".worldMatrix[0]\",\n                       \"%s.controlMatrices[%d]\" % (name, k), force=True)\n    for k in mc.getAttr(name + \".controlMatrices\", multiIndices=True) or []:\n        if k >= len(controls):\n            mc.removeMultiInstance(\"%s.controlMatrices[%d]\" % (name, k), b=True)\n    _apply_driver(name, \"rotate\", controls, rotate, rotate_controls, rotate_matrix)\n    _apply_driver(name, \"scale\", controls, scale, scale_controls, scale_matrix)\n    _set_multi(name, \"controlUpAxes\", [int(a) for a in (up_axes or [])][:len(controls)])\n\n    if samples is not None:\n        su = [float(u) for u in samples]\n        if not periodic:\n            su = [max(0.0, min(1.0, u)) for u in su]\n    elif int(n) <= 1:\n        su = [0.0]\n    elif periodic:\n        su = [i / float(n) for i in range(int(n))]\n    else:\n        su = [i / float(int(n) - 1) for i in range(int(n))]\n    _set_multi(name, \"samples\", su)\n\n    rgrp   = mc.group(empty=True, name=\"spine_riders#\")\n    riders = []\n    for i in range(len(su)):\n        if rider_type == \"joint\":\n            mc.select(clear=True)\n            rider = mc.joint(name=rider_prefix + \"#\")\n        elif rider_type == \"group\":\n            rider = mc.group(empty=True, name=rider_prefix + \"#\")\n        elif rider_type == \"cube\":\n            rider = mc.polyCube(name=rider_prefix + \"#\", width=0.6,\n                                height=0.6, depth=0.6)[0]\n        else:\n            rider = mc.spaceLocator(name=rider_prefix + \"#\")[0]\n        rider = mc.parent(rider, rgrp)[0]\n        mc.connectAttr(\"%s.outputTranslate[%d]\" % (name, i), rider + \".translate\", force=True)\n        mc.connectAttr(\"%s.outputRotate[%d]\" % (name, i),    rider + \".rotate\",    force=True)\n        mc.connectAttr(\"%s.outputScale[%d]\" % (name, i),     rider + \".scale\",     force=True)\n        riders.append(rider)\n\n    curve = _display_curve(controls, degree, periodic) if display_curve else None\n    _snapshot_rest(name)\n    return {\"curve\": curve, \"controls\": controls, \"riders\": riders}\n\n\n# Re-capture the rest pose: the current curve length and control keys become\n# the Frozen keys and the stretch reference (rail_spine rebuilt its proxy).\n@maya_command(name=\"spineResetRest\", undoable=True)\ndef reset_rest(self):\n    \"\"\"Capture the current pose as the rest pose (defaultLength, restKeys).\"\"\"\n    from maya import cmds as mc\n    name = self.get_name()\n    if any(t is None for t in _driving_controls(name)):\n        mc.warning(\"%s: controlMatrices has gaps; rest keys follow the index order.\"\n                   % name)\n    _snapshot_rest(name)\n    if not mc.getAttr(name + \".restValid\"):\n        mc.warning(\"%s: the rest data is still not valid for Frozen.\" % name)\n    return name\n\n\n# Change which controls drive twist / scale after the build, by name. Presets\n# and lists as in spineBuildSystem; an empty preset leaves that channel alone.\n@maya_command(name=\"spineSetDrivers\", undoable=True)\ndef set_drivers(self, rotate=\"\", scale=\"\",\n                rotate_controls: Optional[list[str]] = None,\n                scale_controls:  Optional[list[str]] = None,\n                rotate_matrix=\"\", scale_matrix=\"\",\n                up_axes: Optional[list[int]] = None):\n    \"\"\"Set the rotate / scale drivers of a built spine by control name.\"\"\"\n    name     = self.get_name()\n    controls = [t for t in _driving_controls(name) if t]\n    if rotate or rotate_controls or rotate_matrix:\n        _apply_driver(name, \"rotate\", controls, rotate, rotate_controls, rotate_matrix)\n    if scale or scale_controls or scale_matrix:\n        _apply_driver(name, \"scale\", controls, scale, scale_controls, scale_matrix)\n    if up_axes is not None:\n        _set_multi(name, \"controlUpAxes\", [int(a) for a in up_axes][:len(controls)])\n    return name\n\n\n# Setup: select the transforms that should drive the spine (in order along the\n# spine), then Create + Run setup. Thin adapter -> the spineBuildSystem command.\n@maya_command(creates=True)\ndef setup(self, *args, **kwargs):\n    from maya import cmds as mc\n    name  = self.get_name()\n    order = [o for o in (kwargs.get(\"selection\") or mc.ls(selection=True) or []) if o != name]\n    controls = [o for o in order\n                if \"transform\" in (mc.nodeType(o, inherited=True) or [])]\n    if len(controls) < 2:\n        raise SetupError(\"Select at least 2 transforms (in order along the \" \"spine) to drive it.\")\n    return self.call_command(\n        \"spineBuildSystem\",\n        transforms = controls,\n        n          = int(kwargs.get(\"n\", 10)),\n        degree     = int(kwargs.get(\"degree\", 3)),\n        periodic   = bool(kwargs.get(\"periodic\", False)),\n        samples    = kwargs.get(\"samples\", None),\n        rider_type = kwargs.get(\"rider_type\", \"joint\"),\n    )\n\n\ndef _demo_controls(positions, group):\n    from maya import cmds as mc\n    cgrp     = mc.group(empty=True, name=group)\n    controls = []\n    for p in positions:\n        c = mc.spaceLocator(name=\"spineCtrl#\")[0]\n        c = mc.parent(c, cgrp)[0]\n        mc.setAttr(c + \".translate\", p[0], p[1], p[2], type=\"double3\")\n        controls.append(c)\n    return controls\n\n\ndef _demo_frame():\n    from maya import cmds as mc\n    try:\n        for _panel in mc.getPanel(type=\"modelPanel\") or []:\n            _cam = mc.modelEditor(_panel, query=True, camera=True)\n            if _cam:\n                mc.viewFit(_cam, allObjects=True)\n    except Exception:\n        pass\n\n\n# Demo: four control locators up the Y axis driving twelve joints.\n@maya_demo(label=\"Spine From Four Controls\")\ndef demo(self):\n    ctrl_pos = ((0.0, 0.0, 0.0), (1.0, 3.0, 0.0), (-1.0, 6.0, 0.0), (0.0, 9.0, 0.0))\n    controls = _demo_controls(ctrl_pos, \"spine_controls#\")\n    self.call_command(\"spineBuildSystem\", transforms=controls, n=12, degree=3)\n    _demo_frame()\n    return self.get_name()\n\n\n# Demo: five controls up Y; only the two ends drive the twist (the top one is\n# turned 90 degrees) and the ends plus the middle drive the scale (the middle\n# one is fattened), so the joints twist smoothly and bulge in the middle.\n@maya_demo(label=\"Spine: Twist Ends, Squash Middle\")\ndef demo_twist_squash(self):\n    from maya import cmds as mc\n    ctrl_pos = ((0.0, 0.0, 0.0), (0.5, 2.5, 0.0), (0.0, 5.0, 0.0), (-0.5, 7.5, 0.0), (0.0, 10.0, 0.0))\n    controls = _demo_controls(ctrl_pos, \"spine_controls#\")\n    mc.setAttr(controls[-1] + \".rotateY\", 90.0)\n    mc.setAttr(controls[2] + \".scale\", 1.8, 1.0, 1.8, type=\"double3\")\n    self.call_command(\"spineBuildSystem\", transforms=controls, n=16, degree=3,\n                      rotate=\"ends\", scale_controls=[controls[0], controls[2], controls[4]])\n    _demo_frame()\n    return self.get_name()\n\n\n# Demo: six controls on a circle, closed (periodic) curve; rider 0 sits on the\n# first control, the rest go round the loop.\n@maya_demo(label=\"Spine: Closed Loop\")\ndef demo_closed_loop(self):\n    import math\n    ctrl_pos = [(4.0 * math.cos(2.0 * math.pi * k / 6.0), 0.0,\n                 4.0 * math.sin(2.0 * math.pi * k / 6.0)) for k in range(6)]\n    controls = _demo_controls(ctrl_pos, \"spine_controls#\")\n    self.call_command(\"spineBuildSystem\", transforms=controls, n=24, degree=3,\n                      periodic=True, rider_type=\"locator\")\n    _demo_frame()\n    return self.get_name()\n\n\ndef _test_controls(positions):\n    from maya import cmds as mc\n    controls = []\n    for p in positions:\n        loc = mc.spaceLocator(name=\"spineTestCtrl#\")[0]\n        mc.setAttr(loc + \".translate\", p[0], p[1], p[2], type=\"double3\")\n        controls.append(loc)\n    return controls\n\n\ndef _test_read(name, attr, n):\n    from maya import cmds as mc\n    return [mc.getAttr(\"%s.%s[%d]\" % (name, attr, i))[0] for i in range(n)]\n\n\ndef _test_euler(name, n):\n    \"\"\"outputRotate in radians (getAttr answers in the UI angle unit).\"\"\"\n    import math\n    from maya import cmds as mc\n    k = 1.0\n    if mc.currentUnit(query=True, angle=True).startswith(\"deg\"):\n        k = math.pi / 180.0\n    return [tuple(v * k for v in e) for e in _test_read(name, \"outputRotate\", n)]\n\n\ndef _test_rows(e):\n    \"\"\"Rider rotation rows of a row-vector XYZ euler (radians).\"\"\"\n    import math\n    cx, sx = math.cos(e[0]), math.sin(e[0])\n    cy, sy = math.cos(e[1]), math.sin(e[1])\n    cz, sz = math.cos(e[2]), math.sin(e[2])\n    return ((cy * cz, cy * sz, -sy),\n            (sx * sy * cz - cx * sz, sx * sy * sz + cx * cz, sx * cy),\n            (cx * sy * cz + sx * sz, cx * sy * sz - sx * cz, cx * cy))\n\n\n@maya_test(label=\"Spine: riders climb the curve monotonically from base to tip\", digits=2)\ndef test_spine(self):\n    \"\"\"Same test passes interpreted and compiled (parity): the spine drives its\n    riders up the curve, so their Y climbs monotonically and spans a real\n    height, and the rest data matches the live curve right after the build.\n    Calls build_system() directly -- the compiled node's proxy has no command\n    dispatcher -- so the SAME test runs on both.\"\"\"\n    from maya import cmds as mc\n    from mpynode._common.methods.test_helpers import assert_true\n    name = self.get_name()\n\n    if not (mc.listConnections(name + \".controlMatrices\", s=True, d=False) or []):\n        controls = _test_controls(((0.0, 0.0, 0.0), (0.0, 5.0, 0.0), (0.0, 10.0, 0.0)))\n        build_system(self, transforms=controls, n=5, degree=2,\n                     rider_type=\"locator\", display_curve=False)\n\n    mc.dgdirty(name + \".outputTranslate\")\n    n = mc.getAttr(name + \".outputTranslate\", size=True) or 0\n    assert_true(n >= 3, \"spine should drive at least 3 rider samples; got %d\" % n)\n    ys = [p[1] for p in _test_read(name, \"outputTranslate\", n)]\n    assert_true(ys[-1] - ys[0] > 2.0, \"spine should span a real height; rider Ys=%r\" % ys)\n    assert_true(all(ys[i] <= ys[i + 1] + 1e-2 for i in range(n - 1)),\n                \"rider Y should increase monotonically up the spine; Ys=%r\" % ys)\n    length = mc.getAttr(name + \".currentLength\")\n    assert_true(length > 0.0, \"currentLength should be positive; got %r\" % length)\n    assert_true(abs(mc.getAttr(name + \".defaultLength\") - length) < 1e-9,\n                \"the build should capture the rest length\")\n    assert_true(bool(mc.getAttr(name + \".restValid\")), \"the build should leave valid rest data\")\n\n\n@maya_test(label=\"Spine: rotate / scale drivers (none, one, matrix, ends)\", digits=2)\ndef test_spine_drivers(self):\n    \"\"\"None -> identity rotation and unit scale; one scale driver -> that scale\n    everywhere; Matrix -> one outside up vector for every rider; 'ends' -> the\n    tip rider takes the tip control's up.\"\"\"\n    from maya import cmds as mc\n    from mpynode._common.methods.test_helpers import assert_true\n    name     = self.get_name()\n    controls = _test_controls(((0.0, 0.0, 0.0), (1.0, 3.0, 0.0), (0.0, 6.0, 0.0), (-1.0, 9.0, 0.0)))\n    mc.setAttr(controls[1] + \".scale\", 2.0, 0.5, 1.5, type=\"double3\")\n    mc.setAttr(controls[-1] + \".rotateY\", 90.0)\n    build_system(self, transforms=controls, n=6, degree=3, aim_axis=1, up_axis=2,\n                 rotate=\"none\", scale_controls=[controls[1]], rider_type=\"locator\",\n                 display_curve=False)\n    n = 6\n    for e in _test_euler(name, n):\n        assert_true(max(abs(v) for v in e) < 1e-9, \"rotate none should give identity; got %r\" % (e,))\n    for s in _test_read(name, \"outputScale\", n):\n        assert_true(max(abs(a - b) for a, b in zip(s, (2.0, 0.5, 1.5))) < 1e-6,\n                    \"one scale driver should scale every rider alike; got %r\" % (s,))\n\n    up_obj = mc.spaceLocator(name=\"spineTestUp#\")[0]\n    mc.setAttr(up_obj + \".rotateY\", 90.0)  # its Z row points along +X\n    set_drivers(self, rotate=\"matrix\", rotate_matrix=up_obj)\n    for e in _test_euler(name, n):\n        z = _test_rows(e)[2]\n        assert_true(z[0] > 0.8, \"Matrix mode should take the outside up (+X); got row %r\" % (z,))\n\n    set_drivers(self, rotate=\"ends\")\n    tip  = _test_rows(_test_euler(name, n)[-1])\n    ctrl = mc.xform(controls[-1], query=True, worldSpace=True, matrix=True)\n    up   = ctrl[8:11]  # the tip control's Z row\n    dot  = sum(a * b for a, b in zip(tip[2], up))\n    assert_true(dot > 0.9, \"the tip rider should follow the tip control's up; dot=%.3f\" % dot)\n\n\n@maya_test(label=\"Spine: projections past the end drivers (Frozen / Infinite / Clamped)\", digits=2)\ndef test_spine_projections(self):\n    \"\"\"Five controls on a line, twist drivers on controls 1 and 3 (0 and 90\n    degrees): Clamped holds the end drivers, Frozen and Infinite extrapolate\n    past them, and Frozen ignores shift.\"\"\"\n    import math\n    from maya import cmds as mc\n    from mpynode._common.methods.test_helpers import assert_true\n    name     = self.get_name()\n    controls = _test_controls([(0.0, 3.0 * k, 0.0) for k in range(5)])\n    mc.setAttr(controls[3] + \".rotateY\", 90.0)\n    samples = [0.1, 0.5, 0.9]\n    build_system(self, transforms=controls, samples=samples, degree=3, aim_axis=1,\n                 up_axis=2, rotate_controls=[controls[1], controls[3]], scale=\"none\",\n                 rider_type=\"locator\", display_curve=False)\n\n    def twist():\n        out = []\n        for e in _test_euler(name, 3):\n            z = _test_rows(e)[2]\n            out.append(math.degrees(math.atan2(z[0], z[2])))\n        return out\n\n    mc.setAttr(name + \".rotateProjection\", 2)\n    clamped = twist()\n    assert_true(abs(clamped[0]) < 1.0 and abs(clamped[2] - 90.0) < 1.0,\n                \"Clamped should hold 0 / 90 past the drivers; got %r\" % clamped)\n    mc.setAttr(name + \".rotateProjection\", 0)\n    frozen = twist()\n    assert_true(abs(frozen[0] + 27.0) < 3.0 and abs(frozen[2] - 117.0) < 3.0,\n                \"Frozen should extend past the drivers (about -27 / 117); got %r\" % frozen)\n    mc.setAttr(name + \".shift\", 0.05)\n    shifted = twist()\n    assert_true(max(abs(a - b) for a, b in zip(frozen, shifted)) < 1e-6,\n                \"Frozen twist should ignore shift; got %r vs %r\" % (frozen, shifted))\n    mc.setAttr(name + \".rotateProjection\", 1)\n    infinite = twist()\n    assert_true(abs(infinite[1] - frozen[1]) > 1.0,\n                \"Infinite should follow the shifted riders; got %r vs %r\" % (infinite, frozen))\n\n\n@maya_test(label=\"Spine: closed curve registers u=0 on control 0; frames are right-handed\", digits=2)\ndef test_spine_periodic_and_frames(self):\n    \"\"\"A square loop: rider u=0 sits at (P3 + 4 P0 + P1) / 6 for degree 3, and\n    every aim / up pair gives a right-handed frame whose aim follows the curve.\"\"\"\n    from maya import cmds as mc\n    from mpynode._common.methods.test_helpers import assert_true\n    name     = self.get_name()\n    pts      = ((4.0, 0.0, 0.0), (0.0, 0.0, 4.0), (-4.0, 0.0, 0.0), (0.0, 0.0, -4.0))\n    controls = _test_controls(pts)\n    build_system(self, transforms=controls, n=8, degree=3, periodic=True,\n                 rider_type=\"locator\", display_curve=False)\n    p0   = _test_read(name, \"outputTranslate\", 1)[0]\n    want = [(pts[3][k] + 4.0 * pts[0][k] + pts[1][k]) / 6.0 for k in range(3)]\n    assert_true(max(abs(a - b) for a, b in zip(p0, want)) < 1e-6,\n                \"u=0 should register on control 0; got %r want %r\" % (p0, want))\n\n    for aim, up in ((0, 1), (0, 2), (1, 0), (1, 2), (2, 0), (2, 1)):\n        mc.setAttr(name + \".curveAimAxis\", aim)\n        mc.setAttr(name + \".curveUpAxis\", up)\n        pos = _test_read(name, \"outputTranslate\", 8)\n        for i, e in enumerate(_test_euler(name, 8)):\n            R = _test_rows(e)\n            det = (R[0][0] * (R[1][1] * R[2][2] - R[1][2] * R[2][1])\n                   - R[0][1] * (R[1][0] * R[2][2] - R[1][2] * R[2][0])\n                   + R[0][2] * (R[1][0] * R[2][1] - R[1][1] * R[2][0]))\n            assert_true(det > 0.999, \"frame should be right-handed; det=%.4f (%d,%d)\" % (det, aim, up))\n            nxt = pos[(i + 1) % 8]\n            prv = pos[(i - 1) % 8]\n            fwd = [nxt[k] - prv[k] for k in range(3)]\n            fl  = sum(v * v for v in fwd) ** 0.5\n            dot = sum(R[aim][k] * fwd[k] for k in range(3)) / fl\n            assert_true(dot > 0.95, \"aim should follow the curve; dot=%.3f (%d,%d)\" % (dot, aim, up))\n",
         "commands": [
           {
             "name": "spineBuildSystem",
@@ -327,10 +573,54 @@
               "aim_axis",
               "up_axis",
               "rider_type",
-              "rider_prefix"
+              "rider_prefix",
+              "periodic",
+              "rotate",
+              "scale",
+              "rotate_controls",
+              "scale_controls",
+              "rotate_matrix",
+              "scale_matrix",
+              "up_axes",
+              "rotate_projection",
+              "scale_projection",
+              "translate_projection",
+              "display_curve"
             ],
-            "body_src": "@maya_command(name=\"spineBuildSystem\", undoable=True)\ndef build_system(self, transforms: list[str], n=10, degree=3,\n                 samples: Optional[list[float]] = None,\n                 aim_axis=1, up_axis=2, rider_type=\"joint\",\n                 rider_prefix=\"spineRider\"):\n    \"\"\"Wire a whole spine into THIS node from ``transforms`` (>=2 transform names\n    driving the spine, in order). ``n`` riders are spread equally along the curve\n    when ``samples`` is None, else one rider per preset u-param in ``samples``\n    (normalized arc length 0..1). ``degree`` is the NURBS curve degree (clamped\n    to len(transforms)-1 if too few controls). ``rider_type`` is\n    joint|locator|group|cube. Returns {\"curve\", \"controls\", \"riders\"}.\"\"\"\n    from maya import cmds as mc\n\n    controls = list(transforms or [])\n    if len(controls) < 2:\n        raise SetupError(\"Spine needs at least 2 driving transforms.\")\n    degree = int(degree)\n    if degree >= len(controls):\n        degree = max(1, len(controls) - 1)\n\n    name = self.get_name()\n    mc.setAttr(name + \".curveAimAxis\", int(aim_axis))\n    mc.setAttr(name + \".curveUpAxis\", int(up_axis))\n\n    # NURBS curve through the controls' current world positions.\n    pts = [tuple(mc.xform(t, query=True, worldSpace=True, translation=True)) for t in controls]\n    curve = mc.curve(degree=degree, name=\"spineCurve#\", point=pts)\n    cshape = mc.listRelatives(curve, shapes=True, fullPath=True)[0]\n    mc.connectAttr(cshape + \".worldSpace[0]\", name + \".inputCurve\", force=True)\n\n    # Live CV drive (decomposeMatrix bridge) + control twist/scale basis.\n    for k, t in enumerate(controls):\n        dm = mc.createNode(\"decomposeMatrix\", name=\"spineCvDecomp#\")\n        mc.connectAttr(t + \".worldMatrix[0]\", dm + \".inputMatrix\", force=True)\n        mc.connectAttr(dm + \".outputTranslate\",\n                       \"%s.controlPoints[%d]\" % (cshape, k), force=True)\n        mc.connectAttr(t + \".worldMatrix[0]\",\n                       \"%s.controlMatrices[%d]\" % (name, k), force=True)\n\n    # Rest length: the driven curve's arc length at build time (arclen\n    # measures exactly what the compute's findLengthFromParam does).\n    mc.setAttr(name + \".defaultLength\", mc.arclen(cshape))\n\n    # Sample params: preset list (count follows it), else equally spaced.\n    if samples is not None:\n        su = [max(0.0, min(1.0, float(u))) for u in samples]\n    elif int(n) <= 1:\n        su = [0.0]\n    else:\n        n = int(n)\n        su = [i / float(n - 1) for i in range(n)]\n\n    rgrp = mc.group(empty=True, name=\"spine_riders#\")\n    riders = []\n    for i, u in enumerate(su):\n        mc.setAttr(\"%s.samples[%d]\" % (name, i), u)\n        if rider_type == \"joint\":\n            mc.select(clear=True)              # fresh root -- never chain-parent\n            rider = mc.joint(name=rider_prefix + \"#\")\n        elif rider_type == \"group\":\n            rider = mc.group(empty=True, name=rider_prefix + \"#\")\n        elif rider_type == \"cube\":\n            rider = mc.polyCube(name=rider_prefix + \"#\", width=0.6,\n                                height=0.6, depth=0.6)[0]\n        else:\n            rider = mc.spaceLocator(name=rider_prefix + \"#\")[0]\n        rider = mc.parent(rider, rgrp)[0]\n        mc.connectAttr(\"%s.outputTranslate[%d]\" % (name, i),\n                       rider + \".translate\", force=True)\n        mc.connectAttr(\"%s.outputRotate[%d]\" % (name, i),\n                       rider + \".rotate\", force=True)\n        mc.connectAttr(\"%s.outputScale[%d]\" % (name, i),\n                       rider + \".scale\", force=True)\n        riders.append(rider)\n    return {\"curve\": curve, \"controls\": controls, \"riders\": riders}",
-            "lineno": 21
+            "body_src": "@maya_command(name=\"spineBuildSystem\", undoable=True)\ndef build_system(self, transforms: list[str], n=10, degree=3,\n                 samples: Optional[list[float]] = None,\n                 aim_axis=1, up_axis=2, rider_type=\"joint\",\n                 rider_prefix=\"spineRider\", periodic=False,\n                 rotate=\"all\", scale=\"all\",\n                 rotate_controls: Optional[list[str]] = None,\n                 scale_controls:  Optional[list[str]] = None,\n                 rotate_matrix=\"\", scale_matrix=\"\",\n                 up_axes: Optional[list[int]] = None,\n                 rotate_projection=\"frozen\", scale_projection=\"frozen\",\n                 translate_projection=\"infinite\", display_curve=True):\n    \"\"\"Wire a whole spine into THIS node from ``transforms``.\n\n    ``n`` riders spread evenly by arc length when ``samples`` is None, else one\n    rider per preset u (0..1). ``rotate`` / ``scale`` pick the drivers:\n    all | none | ends | first | last, or pass ``rotate_controls`` /\n    ``scale_controls`` (a subset of ``transforms``) or ``rotate_matrix`` /\n    ``scale_matrix`` (one outside transform). ``up_axes`` gives each control's\n    up row: 0 = the rider up axis, 1-3 = +X/+Y/+Z, 4-6 = -X/-Y/-Z.\n    Projections: frozen | infinite | clamped (translate: clamped | infinite).\n    ``rider_type`` is joint|locator|group|cube. Returns\n    {\"curve\", \"controls\", \"riders\"}.\"\"\"\n    from maya import cmds as mc\n\n    controls = list(transforms or [])\n    need     = 3 if periodic else 2\n    if len(controls) < need:\n        raise SetupError(\"Spine needs at least %d driving transforms%s.\"\n                         % (need, \" for a closed curve\" if periodic else \"\"))\n    if len(set(controls)) != len(controls):\n        raise SetupError(\"Each driving transform can only appear once.\")\n    for p in (rotate_projection, scale_projection):\n        if str(p).lower() not in _PROJECTIONS:\n            raise SetupError(\"Projection must be frozen, infinite or clamped; got %r.\" % p)\n\n    name = self.get_name()\n    mc.setAttr(name + \".curveAimAxis\",     int(aim_axis))\n    mc.setAttr(name + \".curveUpAxis\",      int(up_axis))\n    mc.setAttr(name + \".degree\",           int(degree))\n    mc.setAttr(name + \".periodic\",         bool(periodic))\n    mc.setAttr(name + \".rotateProjection\", _PROJECTIONS[str(rotate_projection).lower()])\n    mc.setAttr(name + \".scaleProjection\",  _PROJECTIONS[str(scale_projection).lower()])\n    mc.setAttr(name + \".translateProjection\",\n               0 if str(translate_projection).lower() == \"clamped\" else 1)\n    for k, t in enumerate(controls):\n        mc.connectAttr(t + \".worldMatrix[0]\",\n                       \"%s.controlMatrices[%d]\" % (name, k), force=True)\n    for k in mc.getAttr(name + \".controlMatrices\", multiIndices=True) or []:\n        if k >= len(controls):\n            mc.removeMultiInstance(\"%s.controlMatrices[%d]\" % (name, k), b=True)\n    _apply_driver(name, \"rotate\", controls, rotate, rotate_controls, rotate_matrix)\n    _apply_driver(name, \"scale\", controls, scale, scale_controls, scale_matrix)\n    _set_multi(name, \"controlUpAxes\", [int(a) for a in (up_axes or [])][:len(controls)])\n\n    if samples is not None:\n        su = [float(u) for u in samples]\n        if not periodic:\n            su = [max(0.0, min(1.0, u)) for u in su]\n    elif int(n) <= 1:\n        su = [0.0]\n    elif periodic:\n        su = [i / float(n) for i in range(int(n))]\n    else:\n        su = [i / float(int(n) - 1) for i in range(int(n))]\n    _set_multi(name, \"samples\", su)\n\n    rgrp   = mc.group(empty=True, name=\"spine_riders#\")\n    riders = []\n    for i in range(len(su)):\n        if rider_type == \"joint\":\n            mc.select(clear=True)\n            rider = mc.joint(name=rider_prefix + \"#\")\n        elif rider_type == \"group\":\n            rider = mc.group(empty=True, name=rider_prefix + \"#\")\n        elif rider_type == \"cube\":\n            rider = mc.polyCube(name=rider_prefix + \"#\", width=0.6,\n                                height=0.6, depth=0.6)[0]\n        else:\n            rider = mc.spaceLocator(name=rider_prefix + \"#\")[0]\n        rider = mc.parent(rider, rgrp)[0]\n        mc.connectAttr(\"%s.outputTranslate[%d]\" % (name, i), rider + \".translate\", force=True)\n        mc.connectAttr(\"%s.outputRotate[%d]\" % (name, i),    rider + \".rotate\",    force=True)\n        mc.connectAttr(\"%s.outputScale[%d]\" % (name, i),     rider + \".scale\",     force=True)\n        riders.append(rider)\n\n    curve = _display_curve(controls, degree, periodic) if display_curve else None\n    _snapshot_rest(name)\n    return {\"curve\": curve, \"controls\": controls, \"riders\": riders}",
+            "lineno": 116
+          },
+          {
+            "name": "spineResetRest",
+            "name_explicit": true,
+            "func_name": "reset_rest",
+            "undoable": true,
+            "creates": false,
+            "is_factory": false,
+            "is_static": false,
+            "params": [],
+            "body_src": "@maya_command(name=\"spineResetRest\", undoable=True)\ndef reset_rest(self):\n    \"\"\"Capture the current pose as the rest pose (defaultLength, restKeys).\"\"\"\n    from maya import cmds as mc\n    name = self.get_name()\n    if any(t is None for t in _driving_controls(name)):\n        mc.warning(\"%s: controlMatrices has gaps; rest keys follow the index order.\"\n                   % name)\n    _snapshot_rest(name)\n    if not mc.getAttr(name + \".restValid\"):\n        mc.warning(\"%s: the rest data is still not valid for Frozen.\" % name)\n    return name",
+            "lineno": 209
+          },
+          {
+            "name": "spineSetDrivers",
+            "name_explicit": true,
+            "func_name": "set_drivers",
+            "undoable": true,
+            "creates": false,
+            "is_factory": false,
+            "is_static": false,
+            "params": [
+              "rotate",
+              "scale",
+              "rotate_controls",
+              "scale_controls",
+              "rotate_matrix",
+              "scale_matrix",
+              "up_axes"
+            ],
+            "body_src": "@maya_command(name=\"spineSetDrivers\", undoable=True)\ndef set_drivers(self, rotate=\"\", scale=\"\",\n                rotate_controls: Optional[list[str]] = None,\n                scale_controls:  Optional[list[str]] = None,\n                rotate_matrix=\"\", scale_matrix=\"\",\n                up_axes: Optional[list[int]] = None):\n    \"\"\"Set the rotate / scale drivers of a built spine by control name.\"\"\"\n    name     = self.get_name()\n    controls = [t for t in _driving_controls(name) if t]\n    if rotate or rotate_controls or rotate_matrix:\n        _apply_driver(name, \"rotate\", controls, rotate, rotate_controls, rotate_matrix)\n    if scale or scale_controls or scale_matrix:\n        _apply_driver(name, \"scale\", controls, scale, scale_controls, scale_matrix)\n    if up_axes is not None:\n        _set_multi(name, \"controlUpAxes\", [int(a) for a in up_axes][:len(controls)])\n    return name",
+            "lineno": 225
           },
           {
             "name": "spine",
@@ -341,16 +631,24 @@
             "is_factory": false,
             "is_static": false,
             "params": [],
-            "body_src": "@maya_command(creates=True)\ndef setup(self, *args, **kwargs):\n    from maya import cmds as mc\n    name = self.get_name()\n    # pre-create selection snapshot (pick order), excluding this node.\n    order = [o for o in (kwargs.get(\"selection\") or mc.ls(selection=True) or []) if o != name]\n    controls = [o for o in order\n                if \"transform\" in (mc.nodeType(o, inherited=True) or [])]\n    if len(controls) < 2:\n        raise SetupError(\"Select at least 2 transforms (in order along the \" \"spine) to drive it.\")\n    return self.call_command(\n        \"spineBuildSystem\", transforms=controls,\n        n=int(kwargs.get(\"n\", 10)), degree=int(kwargs.get(\"degree\", 3)),\n        samples=kwargs.get(\"samples\", None),\n        rider_type=kwargs.get(\"rider_type\", \"joint\"))",
-            "lineno": 100
+            "body_src": "@maya_command(creates=True)\ndef setup(self, *args, **kwargs):\n    from maya import cmds as mc\n    name  = self.get_name()\n    order = [o for o in (kwargs.get(\"selection\") or mc.ls(selection=True) or []) if o != name]\n    controls = [o for o in order\n                if \"transform\" in (mc.nodeType(o, inherited=True) or [])]\n    if len(controls) < 2:\n        raise SetupError(\"Select at least 2 transforms (in order along the \" \"spine) to drive it.\")\n    return self.call_command(\n        \"spineBuildSystem\",\n        transforms = controls,\n        n          = int(kwargs.get(\"n\", 10)),\n        degree     = int(kwargs.get(\"degree\", 3)),\n        periodic   = bool(kwargs.get(\"periodic\", False)),\n        samples    = kwargs.get(\"samples\", None),\n        rider_type = kwargs.get(\"rider_type\", \"joint\"),\n    )",
+            "lineno": 245
           }
         ],
+        "metadata": {
+          "authors": [
+            "Eric Vignola"
+          ],
+          "version": "2.0.0",
+          "license": "Copyright 2026 Eric Vignola\n\nPermission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the \"Software\"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.",
+          "description": "Drives a chain of riders along a B-spline it builds from a set of control matrices.",
+          "type_id": ""
+        },
         "portability": {
           "portable": true,
           "blockers": [],
           "warnings": [
-            "uses numpy -- vectorized math is reverse-engineered to C++ loops (verify numerically; np.random maps to C++ <random>; file I/O lowers only where the dtype is explicit -- np.fromfile/np.save/.tofile and ndio.read/ndio.write -- while np.load/np.loadtxt are blockers)",
-            "input 'inputCurve' is geometry -- heavier C++ (MFn* construction)"
+            "uses numpy -- vectorized math is reverse-engineered to C++ loops (verify numerically; np.random maps to C++ <random>; file I/O lowers only where the dtype is explicit -- np.fromfile/np.save/.tofile and ndio.read/ndio.write -- while np.load/np.loadtxt are blockers)"
           ],
           "unported": [],
           "reads_image_file": false,
@@ -362,6 +660,16 @@
         {
           "name": "spineBuildSystem",
           "func_name": "build_system",
+          "kind": "instance"
+        },
+        {
+          "name": "spineResetRest",
+          "func_name": "reset_rest",
+          "kind": "instance"
+        },
+        {
+          "name": "spineSetDrivers",
+          "func_name": "set_drivers",
           "kind": "instance"
         },
         {

@@ -1,10 +1,10 @@
 # MPyNode_Spine -- compile report
 
-Generated 2026-08-25 10:32
+Generated 2026-09-24 10:17
 
 | node | status | assist | optimize | detail |
 |---|---|---|---|---|
-| `spine` | compiled | filled | **4.79x** | [report](build/stages/spine/REPORT.md) |
+| `spine` | compiled | -- | **40.31x** | [report](build/stages/spine/REPORT.md) |
 
 ## Layout
 

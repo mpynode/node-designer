@@ -4,12 +4,12 @@ Run in Maya. Loads the .bundle, samples inputs, compares outputs.
 import os, random
 import maya.cmds as cmds
 
-BUNDLE    = os.path.join(os.path.dirname(__file__), 'spine.bundle')
+BUNDLE = os.path.join(os.path.dirname(__file__), 'spine.mll')
 NODE_TYPE = 'spine'
-SOURCE    = 'spine'
-INPUTS    = {"controlMatrices": "matrix", "curveAimAxis": "enum", "curveInvertAimAxis": "enum", "curveInvertUpAxis": "enum", "curveUpAxis": "enum", "inputCurve": "nurbsCurve", "pivot": "float", "defaultLength": "float", "samples": "float", "scale": "float", "scaleMethod": "enum", "shift": "float", "stretch": "float"}
-OUTPUTS   = {"asss": "float", "outputRotate": "euler", "outputScale": "vector", "outputTranslate": "vector"}
-TOL       = 1e-4
+SOURCE = 'spine'
+INPUTS = {"controlMatrices": "matrix", "samples": "float", "degree": "int", "periodic": "bool", "stretch": "float", "pivot": "float", "scale": "float", "shift": "float", "defaultLength": "double", "restKeys": "double", "translateProjection": "enum", "curveAimAxis": "enum", "curveUpAxis": "enum", "curveInvertAimAxis": "enum", "curveInvertUpAxis": "enum", "controlUpAxes": "int", "rotateMode": "enum", "rotateFlags": "bool", "rotateMatrix": "matrix", "rotateProjection": "enum", "scaleMode": "enum", "scaleFlags": "bool", "scaleMatrix": "matrix", "scaleProjection": "enum", "scaleMethod": "enum", "computeWeights": "bool"}
+OUTPUTS = {"outputRotate": "euler", "outputScale": "vector", "outputTranslate": "vector", "currentLength": "double", "controlKeys": "double", "restValid": "bool", "outputWeights": "double"}
+TOL = 1e-4
 
 
 def _sample(t):
@@ -31,7 +31,7 @@ def _flat(v):
     # getAttr returns a scalar, [(x, y, z)] for a double3, or nested lists for a
     # matrix. Comparing only [0] silently passed a vector wrong on Y/Z or a
     # transposed matrix -- flatten to EVERY leaf component and compare them all.
-    out   = []
+    out = []
     stack = [v]
     while stack:
         x = stack.pop()
@@ -50,8 +50,8 @@ def run(samples=20):
         return True
     if not cmds.pluginInfo(os.path.basename(BUNDLE), q=True, loaded=True):
         cmds.loadPlugin(BUNDLE)
-    comp     = cmds.createNode(NODE_TYPE)
-    fails    = 0
+    comp = cmds.createNode(NODE_TYPE)
+    fails = 0
     compared = 0
     for _ in range(samples):
         for a, t in INPUTS.items():

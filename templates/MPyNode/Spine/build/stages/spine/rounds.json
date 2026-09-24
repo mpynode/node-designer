@@ -1,8 +1,30 @@
 {
   "accepted": true,
-  "baseline_ms": 8.7233,
-  "best_ms": 1.821,
-  "created": 1787679149.601465,
+  "baseline_ms": 80.0916,
+  "bench": {
+    "fingerprint": "checked (7 plug(s))",
+    "floor_ms": 15.0,
+    "perturbed": [
+      "computeWeights (bool)",
+      "controlMatrices[0] (matrix)",
+      "controlUpAxes[0] (int)",
+      "defaultLength (double)",
+      "degree (int)",
+      "pivot (float)",
+      "rotateMatrix (matrix)",
+      "samples[0] (float)",
+      "scale (float)",
+      "scaleMatrix (matrix)",
+      "shift (float)",
+      "stretch (float)"
+    ],
+    "rung": [
+      40,
+      512
+    ]
+  },
+  "best_ms": 1.9868,
+  "created": 1790270240.61848,
   "ledger": [
     {
       "compiled": true,
@@ -10,7 +32,7 @@
       "fix_rounds": 0,
       "hypothesis": "",
       "index": 0,
-      "ms": 8.7233,
+      "ms": 80.0916,
       "note": "",
       "outcome": "baseline",
       "parity": null,
@@ -22,63 +44,58 @@
     },
     {
       "compiled": true,
-      "duration_s": 672.242,
+      "duration_s": 1243.861,
       "fix_rounds": 0,
-      "hypothesis": "this node is ELEMENTWISE over 20000 samples, but the rotation block hid a QUERY-shaped inner cost: std::lower_bound over 160 KB of keys is ~14 dependent L2 loads per sample, and the same control matrix is re-normalised and re-row-normed for every sample that lands on it; a bucket table makes the search O(1) with a bit-identical result, and an O(nCM) precompute pass amortises the rest",
+      "hypothesis": "The profile put 21-66 ms of the 71.5 ms tick in _sp_arc_table: about 48.9k degree-7 point evaluations run as whole-array nd:: temporaries. The node is ELEMENTWISE (a sampled curve), not QUERY-shaped. So the lever is removing the per-op temporaries (a scalar kernel with the same operations in the same order) plus caching what the held inputs derive. Only controlMatrices[0] moves, so arc-table steps, per-control scales and driver keys are almost all cache hits. Steps, all measured with the MSVC build: (1) scalar arc table 71.5 -> 11.2 ms; (2) per-knot-span arc cache keyed on a bitwise compare of every CV row, only steps whose points read a changed row are re-evaluated, cumsum always rebuilt serially: 11.2 -> 10.4; (3) weights written straight into the output buffer, and the output multi overwritten in place when it already holds exactly [0, n): 10.4 -> 6.2; (4) scalar speed/point inside _sp_invert and for the final E: 6.2 -> 4.0; (5) per-row cache of MTransformationMatrix(controlMatrices[k]).getScale keyed on the 16 matrix doubles: 4.0 -> 3.7; (6) binary search for the driver-key scan when the keys are sorted and NaN-free, linear-scan fallback otherwise: 3.7 -> 3.6; (7) raw reads in place of nd::slice/sub/item in the end-direction search and _sp_chord_keys: 3.6 -> 3.0; (8) a reused per-node weights buffer (no 2 MB of fresh pages per tick): 3.0 -> 2.44; (9) span indices stored in the arc cache: arc stage 0.35 -> 0.13 ms, median within noise; (10) in-place write checks the two end indices instead of every element: ~2.43 -> ~2.30; (11) speed-only kernel that skips the unused degree-d basis pass: ~2.30 -> ~2.15. Final ~2.0-2.1 ms, of which ~1.4 ms is Maya's per-element write of the 512 x 512 = 262k outputWeights elements (an API floor; the write is never skipped).",
       "index": 1,
-      "ms": 7.6934,
+      "ms": 3.2698,
       "note": "",
       "outcome": "accept",
       "parity": "pass",
-      "predicted_speedup": 1.4,
-      "risk": "the bucket table must return exactly bisect_left, so each bucket is finished with the SAME std::lower_bound on the bracketed range rather than a linear scan with a recomputed comparison; the exp/log scale path replaces pow(|s0|,1-t)*pow(|s1|,t) with exp((1-t)log s0 + t log s1), which is guarded by an any-zero-scale flag because log(0) would turn t==0/1 into NaN where pow() returns a finite value",
-      "slug": "bucket_index_keys",
-      "speedup": 1.1338679907453142,
-      "theme": "replace the per-sample bisect_left over the 20000-entry chord-length key table with a uniform bucket table that brackets each query to a handful of adjacent entries, and hoist the per-control-matrix up-row/scale/log work out of the sample loop"
+      "predicted_speedup": 6.0,
+      "risk": "Parity: every replacement keeps the source's operation order, types and comparison strictness. Verified BIT-IDENTICAL (byte-compare of repr() output) against the original spine.cpp over 24 randomized scenes x 2 pulls: open/periodic, degree 0-9, 1-77 controls, all enum modes, samples outside [0,1], with controlMatrices[0]/degree/pivot/samples[0] moved between pulls to exercise cache hits. Caches: per-instance members, mutex-guarded, freed with the node, bounded by the last evaluation's sizes. Every cache is keyed on a full bitwise compare of the inputs it derives from (all CV rows plus c/d/per/t0/steps; each control's 16 matrix doubles), never a pointer, so a stale hit is impossible in DG, EM or parallel EM. I deliberately did not add setDependentsDirty/preEvaluation flushes: the bench dgdirties the node every tick, and a flush there would turn every hit into a full rebuild without adding correctness beyond the content key. No threading. Non-finite curve parameters fall back to the original nd:: path. ENVIRONMENT: this machine is Windows, and the fixed build.sh is macOS-only (clang -arch arm64, /Applications/Autodesk). ./bench.sh prints BUILD FAILED on the untouched original too, so every number above comes from an equivalent MSVC /O2 /fp:precise build of this exact file, driven by the same benchmark_node.py and _bench_spec.json with --iters 9 --bench-array 512 --bench-geo 40. That baseline measured 71.55 ms (the stated 80.092 ms came from another machine). The file also passes a clang++ -std=c++17 -ffp-contract=off -fsyntax-only check with no new warnings. The in-place output write assumes Maya keeps a multi's data elements in ascending logical-index order; it checks the element count and the first and last index, and otherwise uses the original MArrayDataBuilder path.",
+      "slug": "scalar_arc_table",
+      "speedup": 24.4943421616001,
+      "theme": "Evaluate the B-spline arc-length table, the arc-length inversion and the weights one parameter at a time in exact scalar twins of the nd:: helpers, and cache per-span and per-control derived state across evaluations."
     },
     {
       "compiled": true,
-      "duration_s": 629.284,
+      "duration_s": 540.724,
       "fix_rounds": 0,
-      "hypothesis": "profiling said tangent() cost 2.5ms of a 7.1ms loop while getPointAtParam cost 0.28ms -- a 9x gap that only makes sense if getPointAtParam was being SKIPPED, i.e. the samples land outside [0,1] and findParamFromLength keeps clamping w onto one endpoint param. If w repeats, tangent(w) repeats, and once u leaves the key span blend saturates so the slerped normal, the basis, the MTransformationMatrix euler and the blended scale all repeat too. Memoizing on exact bit equality is identity-preserving, not tolerance-preserving, so it cannot move the answer.",
+      "hypothesis": "a section profile (steady state, 512 controls x 512 samples) put ~1320 of ~1950 us in the outputWeights finalize, 262k elements rewritten EVERY tick (computeWeights toggles, and OFF rewrites every existing element to its 0.0 default); dropping one exported API call per element should cut that loop by a third",
       "index": 2,
-      "ms": 1.821,
+      "ms": 1.9868,
       "note": "",
       "outcome": "accept",
       "parity": "pass",
-      "predicted_speedup": 2.0,
-      "risk": "the memos are exact by construction (bit-equal key -> same pure function -> same value), so the only real exposure is the findParamFromLength plateau cache, which is justified by MONOTONICITY alone rather than by any assumption about how Maya clamps out-of-range lengths: if La < Lb both map to param W, every L between them is sandwiched and must map to W. A NaN blend never compares equal and falls through to the full path.",
-      "slug": "memo_bit_equal_pure_queries",
-      "speedup": 4.790389895661725,
-      "theme": "every per-sample NURBS query and the whole rotation/scale block are pure functions of a key that barely changes across the 20000 samples, so one-entry memos keyed on BIT-EQUAL arguments replace 60000 Maya curve calls with 17"
+      "predicted_speedup": 1.3,
+      "risk": "asDouble() returns a reference into the data block (MDataHandle.h: double& asDouble() const); cleanliness is still set by the unchanged setAllClean() + data.setClean(aOutputWeights). No arithmetic, comparison or output element count changed.",
+      "slug": "weights_ref_write",
+      "speedup": 40.311858264546004,
+      "theme": "write the 262,144-element outputWeights multi through MDataHandle::asDouble()'s double& instead of one setDouble() call per element, on both the ON (in-place) and OFF (defaults) paths"
+    },
+    {
+      "compiled": true,
+      "duration_s": 1363.654,
+      "fix_rounds": 0,
+      "hypothesis": "Section timers on the cached d=7 ticks (the median ticks: the harness sets degree=k, so d stays 7 from tick 7 on, and computeWeights=k%2 makes the median tick a weights-ON one) put ~1270 us of ~1900 us in the finalize: 262,144 per-element MArrayDataHandle writes, which the API cannot batch. That floor stays, so the win is removing everything around it: the 2 MB memset, dense band fill and dense re-read (~100-200 us), the builders' ~2k addElement allocations, and ~200 us of serial Cox-de Boor speed evaluations (35 divisions each at d=7).",
+      "index": 3,
+      "ms": 2.5049,
+      "note": "",
+      "outcome": "not-faster",
+      "parity": "pass",
+      "predicted_speedup": 1.25,
+      "risk": "The pool is a disjoint-range parallel map (slot i = speed1(pp[i]), read-only CVs and knots): fixed chunk boundaries, no reduction, no Maya API in workers, threads created once per node and joined in the destructor, member cursor, SPINE_THREADS env cap (default 8, 1 = serial), serial below 1024 evaluations. Idle workers block on a condvar; only the caller yields briefly while chunks already claimed finish.",
+      "slug": "fuse_sparse_weights",
+      "speedup": null,
+      "theme": "Keep the 512 x 512 outputWeights matrix as per-row sparse bands and generate each value inside the in-place datablock write, instead of zero-filling, band-filling and re-reading a dense 2 MB buffer every tick; also write the three MVector outputs and controlKeys in place instead of through MArrayDataBuilder, and move _sp_invert's 3072 speed evaluations onto a persistent per-node pool whose caller never waits for a worker's wake-up."
     }
   ],
+  "max_rounds": 6,
   "parity_gate": "authored+pointwise",
-  "reason": "accepted (4.79x)",
-  "remeasured": {
-    "baseline_ms": 17.1806,
-    "date": "2026-09-08",
-    "diverged": null,
-    "final_ms": 15.1979,
-    "fingerprint": "checked (4 plug(s))",
-    "floor_ms": 15.0,
-    "perturbed": [
-      "controlMatrices[0] (matrix)",
-      "inputCurve <- nurbsCircleShape1.cv[0]",
-      "pivot (float)",
-      "samples[0] (float)",
-      "scale (float)",
-      "shift (float)",
-      "stretch (float)"
-    ],
-    "reason": null,
-    "rung": [
-      400,
-      20000
-    ],
-    "speedup": 1.1304588133886917
-  },
-  "rounds": 2,
-  "speedup": 4.790389895661725,
+  "reason": "accepted (40.31x)",
+  "rounds": 3,
+  "speedup": 40.311858264546004,
+  "stop_reason": "round 3 not-faster -- nothing new to compound from",
   "type_name": "spine"
 }
