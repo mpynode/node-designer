@@ -792,28 +792,29 @@ class MpynodeExampleSetupsTest(unittest.TestCase):
                                mc.getAttr(name + ".currentLength"), places=6)
         return controls, riders
 
-    def test_spine_demo_builds_controls_and_joint_riders(self):
+    def _assert_spine_demo_look(self, controls, riders):
+        # The demos show locator CONTROLS driving CUBE riders and build no Maya
+        # curve: the node builds its own B-spline, and a display curve would
+        # read as if one fed it.
+        for c in controls:
+            self.assertTrue(mc.listRelatives(c, shapes=True, type="locator"),
+                            "control %s is not a locator" % c)
+        for r in riders:
+            self.assertTrue(mc.listRelatives(r, shapes=True, type="mesh"),
+                            "rider %s is not a cube" % r)
+            self.assertFalse(mc.listRelatives(r, shapes=True, type="locator"),
+                             "rider %s is a locator" % r)
+        self.assertEqual(mc.ls(type="nurbsCurve"), [], "a demo built a curve")
+        self.assertEqual(mc.ls(type="decomposeMatrix"), [], "a demo bridged a curve")
+
+    def test_spine_demo_builds_controls_and_cube_riders(self):
         # Four control locators up Y feed controlMatrices through the
-        # spineBuildSystem command; twelve JOINTS ride the per-sample outputs,
-        # and a templated display curve follows the controls without feeding
-        # the node.
+        # spineBuildSystem command; twelve CUBES ride the per-sample outputs.
         name = _create_with_demo("MPyNode/Spine")
         self.assertEqual(mc.getAttr(name + ".curveAimAxis"), 1, "aim axis not Y")
         self.assertEqual(mc.getAttr(name + ".curveUpAxis"), 2, "up axis not Z")
-        controls, riders = self._assert_spine_wired(name, 4, 12, "joint")
-        # the display curve: CVs bridged from the same controls, templated,
-        # and never an input of the node
-        bridges = set(mc.ls(type="decomposeMatrix"))
-        fed     = set()
-        for dm in bridges:
-            fed.update(mc.listConnections(dm + ".inputMatrix", source=True,
-                                          destination=False) or [])
-        self.assertEqual(fed, set(controls), "display curve not bridged from the controls")
-        curves = mc.ls(type="nurbsCurve")
-        self.assertEqual(len(curves), 1, "expected one display curve")
-        self.assertEqual(mc.getAttr(curves[0] + ".overrideDisplayType"), 1, "curve not templated")
-        self.assertFalse(mc.listConnections(curves[0], destination=True, source=False,
-                                            type=mc.nodeType(name)), "curve feeds the node")
+        controls, riders = self._assert_spine_wired(name, 4, 12, "transform")
+        self._assert_spine_demo_look(controls, riders)
         # riders spread up Y, and follow a control
         ys = [mc.getAttr(r + ".translateY") for r in riders]
         self.assertGreater(ys[-1] - ys[0], 8.0, "riders not spread up the Y-axis spine")
@@ -825,7 +826,8 @@ class MpynodeExampleSetupsTest(unittest.TestCase):
         # Only the two end controls drive the twist (the top one turned 90
         # degrees) and controls 0 / 2 / 4 drive the scale (2 fattened).
         name = _create_with_demo("MPyNode/Spine", "demo_twist_squash")
-        controls, riders = self._assert_spine_wired(name, 5, 16, "joint")
+        controls, riders = self._assert_spine_wired(name, 5, 16, "transform")
+        self._assert_spine_demo_look(controls, riders)
         self.assertEqual(mc.getAttr(name + ".rotateMode"), 1, "rotate not Flagged")
         self.assertEqual(mc.getAttr(name + ".scaleMode"), 1, "scale not Flagged")
         self.assertEqual([bool(v) for v in mc.getAttr(name + ".rotateFlags")[0]],
@@ -847,6 +849,7 @@ class MpynodeExampleSetupsTest(unittest.TestCase):
         # pulls hardest -- (P5 + 4 P0 + P1) / 6 for degree 3.
         name = _create_with_demo("MPyNode/Spine", "demo_closed_loop")
         controls, riders = self._assert_spine_wired(name, 6, 24, "transform")
+        self._assert_spine_demo_look(controls, riders)
         self.assertTrue(mc.getAttr(name + ".periodic"), "loop is not closed")
         P    = [mc.xform(c, q=True, ws=True, t=True) for c in controls]
         want = [(P[5][k] + 4.0 * P[0][k] + P[1][k]) / 6.0 for k in range(3)]

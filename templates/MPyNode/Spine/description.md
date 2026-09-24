@@ -51,6 +51,6 @@ Drives a chain of riders along a B-spline that the node builds itself from one m
 
 ## Create + Run demo
 
-* **Spine From Four Controls** -- four control locators up Y and a chain of 12 joints spread evenly along the curve. Move a control to reshape the chain.
-* **Spine: Twist Ends, Squash Middle** -- five controls; only the two ends drive the twist (the top one is turned 90 degrees) and the ends plus the middle drive the scale, so the chain twists smoothly and bulges in the middle.
-* **Spine: Closed Loop** -- six controls on a circle driving a closed curve, 24 locators round it, the first one registered on the first control.
+* **Spine From Four Controls** -- four control locators up Y and 12 cubes spread evenly along the spine. Move a control to reshape it.
+* **Spine: Twist Ends, Squash Middle** -- five controls; only the two ends drive the twist (the top one is turned 90 degrees) and the ends plus the middle drive the scale, so the cubes twist smoothly and bulge in the middle.
+* **Spine: Closed Loop** -- six controls on a circle driving a closed spine, 24 cubes round it, the first one registered on the first control.

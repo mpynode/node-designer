@@ -1332,7 +1332,7 @@
      "reopened": true,
      "compiled_type": "spine",
      "compiled_nodes": 1,
-     "mesh_verts": 0,
+     "mesh_verts": 96,
      "unknown_nodes": 0,
      "unknown_plugins": [],
      "errors": []
@@ -1364,7 +1364,7 @@
      "reopened": true,
      "compiled_type": "spine",
      "compiled_nodes": 1,
-     "mesh_verts": 0,
+     "mesh_verts": 128,
      "unknown_nodes": 0,
      "unknown_plugins": [],
      "errors": []
@@ -1396,7 +1396,7 @@
      "reopened": true,
      "compiled_type": "spine",
      "compiled_nodes": 1,
-     "mesh_verts": 0,
+     "mesh_verts": 192,
      "unknown_nodes": 0,
      "unknown_plugins": [],
      "errors": []

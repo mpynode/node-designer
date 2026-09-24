@@ -357,7 +357,7 @@
     "status": "ok",
     "reopen_compiled_nodes": 1,
     "reopen_unknown_nodes": 0,
-    "bytes": 13886
+    "bytes": 19256
   },
   {
     "scene": "MPyNode_Spine__demo_twist_squash.ma",
@@ -369,7 +369,7 @@
     "status": "ok",
     "reopen_compiled_nodes": 1,
     "reopen_unknown_nodes": 0,
-    "bytes": 16226
+    "bytes": 23579
   },
   {
     "scene": "MPyNode_Spine__demo_closed_loop.ma",
@@ -381,7 +381,7 @@
     "status": "ok",
     "reopen_compiled_nodes": 1,
     "reopen_unknown_nodes": 0,
-    "bytes": 21793
+    "bytes": 31444
   },
   {
     "scene": "MPyNode_De_Boor_Spline.ma",
