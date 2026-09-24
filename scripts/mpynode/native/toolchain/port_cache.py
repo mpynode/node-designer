@@ -451,7 +451,15 @@ from typing import Optional
 # It also retires cache entries predating three unbumped skeleton changes:
 # c3d402f (prelude whitespace), 217eff7 (locator selection tint) and 81973d1
 # (1-3 character command parameters get a legal long flag) -- 2026-09-24.
-PORTER_RECIPE_VERSION = "34"
+# v35: command_dispatch.create_command_blockers no longer blocks an
+# interpreted-only `self.<member>` inside a `try` that swallows RuntimeError --
+# on a compiled node the proxy raises exactly that at the lookup. Mesh Regions'
+# setup migrates a legacy `regions` variable that way, so since 36e4dea its
+# compiled node shipped WITHOUT its creates=True `meshRegionLocator` command.
+# The command is a C++ MPxCommand fused into the cached .cpp, so a HIT would
+# keep shipping it without one. Moves 1 of 76 stage-1 files (Mesh Regions);
+# every other create command was already unblocked -- 2026-09-24.
+PORTER_RECIPE_VERSION = "35"
 
 # Spec keys excluded from the cache key -- provably irrelevant to the generated
 # C++. A deny-list, NOT an allow-list (design C1).

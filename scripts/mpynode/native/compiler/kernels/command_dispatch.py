@@ -414,6 +414,51 @@ _BINDING_CLASSMETHODS = ("create", "build")
 # convention is what separates a wrapper CLASS from a plain helper function.
 _WRAPPER_CLASS = re.compile(r"^MPy[A-Z0-9_]")
 
+# Handler types that catch the RuntimeError _CompiledProxy.__getattr__ raises.
+_CATCHES_RUNTIME = ("RuntimeError", "Exception", "BaseException")
+
+
+def _proxy_guarded(tree) -> set:
+    """ids of the nodes a RuntimeError from the proxy cannot escape.
+
+    A setup may probe for interpreted-only state and fall through when it is
+    missing -- Mesh Regions migrates a legacy ``regions`` variable inside
+    ``try: ... except Exception: pass``. On a compiled node the member lookup
+    raises RuntimeError at the attribute, the handler swallows it, and the
+    setup carries on, so the access is not a blocker. Guarded means inside the
+    ``body`` of a ``try`` whose first RuntimeError-catching handler does not
+    ``raise``. Nested defs and lambdas are left out: they can be called after
+    the ``try`` has exited.
+    """
+    def _catches(handler):
+        t = handler.type
+        if t is None:
+            return True
+        for e in (t.elts if isinstance(t, ast.Tuple) else [t]):
+            name = e.attr if isinstance(e, ast.Attribute) else getattr(e, "id", None)
+            if name in _CATCHES_RUNTIME:
+                return True
+        return False
+
+    def _within(nodes):
+        stack = list(nodes)
+        while stack:
+            n = stack.pop()
+            yield n
+            if not isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef,
+                                  ast.Lambda, ast.ClassDef)):
+                stack.extend(ast.iter_child_nodes(n))
+
+    guarded = set()
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Try):
+            continue
+        handler = next((h for h in node.handlers if _catches(h)), None)
+        if handler is None or any(isinstance(n, ast.Raise) for n in _within(handler.body)):
+            continue
+        guarded.update(id(n) for n in _within(node.body))
+    return guarded
+
 
 def create_command_blockers(cmd: dict) -> List[str]:
     """Reasons ``cmd`` cannot be lowered as a ``creates=True`` command, else [].
@@ -426,6 +471,8 @@ def create_command_blockers(cmd: dict) -> List[str]:
 
       * ``self.<member>`` for a member with no compiled backing (stored
         variables, the attr maps, the source plugs) -- see COMPILED_UNSUPPORTED.
+        Not when the access sits in a ``try`` that swallows the proxy's
+        RuntimeError -- see _proxy_guarded.
       * binding an interpreted wrapper INSTANCE (``MPyBlendShape(name)``,
         ``wrap_node(name)``, ``MPyX.create()``). Note this keys on the
         construction, NOT the import: importing the module and calling a
@@ -463,13 +510,15 @@ def create_command_blockers(cmd: dict) -> List[str]:
             node = node.value
         return node.id if isinstance(node, ast.Name) else None
 
+    guarded = _proxy_guarded(tree)
     out, seen = [], set()
     for node in ast.walk(tree):
         if (isinstance(node, ast.Attribute)
                 and isinstance(node.value, ast.Name)
                 and node.value.id == "self"
                 and node.attr in COMPILED_UNSUPPORTED
-                and node.attr not in seen):
+                and node.attr not in seen
+                and id(node) not in guarded):
             seen.add(node.attr)
             out.append("self.%s is not available on a compiled node (%s)"
                        % (node.attr, COMPILED_UNSUPPORTED[node.attr]))

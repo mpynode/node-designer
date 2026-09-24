@@ -164,6 +164,49 @@ class TestProxySafetyGate(unittest.TestCase):
         self.assertTrue(blockers)
         self.assertIn("wrap_node", blockers[0])
 
+    def test_access_in_a_swallowing_try_is_allowed(self):
+        """Mesh Regions' legacy migration: on a compiled node the proxy raises
+        RuntimeError at the lookup, the handler swallows it, the setup goes on."""
+        c = self._cmd(
+            "    try:\n"
+            "        legacy = (self.get_variables() or {}).get('regions')\n"
+            "    except Exception:\n"
+            "        legacy = None\n"
+            "    try:\n"
+            "        self.remove_variable('regions')\n"
+            "    except (KeyError, RuntimeError):\n"
+            "        pass\n")
+        self.assertEqual(cd.create_command_blockers(c), [])
+
+    def test_bare_except_and_base_exception_guard_too(self):
+        for handler in ("except:", "except BaseException:", "except builtins.RuntimeError:"):
+            c = self._cmd("    try:\n        self.get_variables()\n    %s\n        pass\n" % handler)
+            self.assertEqual(cd.create_command_blockers(c), [], handler)
+
+    def test_a_handler_that_misses_runtime_error_still_blocks(self):
+        c        = self._cmd("    try:\n        self.get_variables()\n    except KeyError:\n        pass\n")
+        blockers = cd.create_command_blockers(c)
+        self.assertTrue(blockers)
+        self.assertIn("get_variables", blockers[0])
+
+    def test_a_handler_that_reraises_still_blocks(self):
+        c = self._cmd("    try:\n        self.get_variables()\n"
+                      "    except RuntimeError:\n        raise ValueError('no')\n")
+        self.assertTrue(cd.create_command_blockers(c))
+
+    def test_access_outside_the_try_body_still_blocks(self):
+        for body in ("    try:\n        pass\n    except Exception:\n        self.get_variables()\n",
+                     "    try:\n        pass\n    except Exception:\n        pass\n"
+                     "    finally:\n        self.get_variables()\n",
+                     "    try:\n        pass\n    except Exception:\n        pass\n"
+                     "    else:\n        self.get_variables()\n"):
+            self.assertTrue(cd.create_command_blockers(self._cmd(body)), body)
+
+    def test_a_deferred_call_defined_in_the_try_still_blocks(self):
+        c = self._cmd("    try:\n        later = lambda: self.get_variables()\n"
+                      "    except Exception:\n        pass\n    later()\n")
+        self.assertTrue(cd.create_command_blockers(c))
+
     def test_a_blocked_command_fails_the_emit(self):
         c   = self._cmd("    self.set_variable('p', 1)\n")
         out = cd.emit_dispatch_commands([c], "someNode", "")
