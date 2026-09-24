@@ -48,14 +48,38 @@ def check(ok, what, extra=""):
 
 
 # A methods source exercising the whole flag/return matrix. It does NOT
-# import maya_command: build_methods_namespace injects that name (plus
-# maya_demo/maya_test and test_helpers.HELPERS) before exec'ing this source, so
-# the decorators below bind the copy VENDORED into the bundle -- which is what
-# makes the mpynode-free invocation at the end of main() a real test of the
-# prelude. An import here would be exec'd on the bare machine and raise
-# ModuleNotFoundError at the first CALL (measured), and would shadow the
-# injected name even where it resolved.
+# import maya_command: build_methods_namespace injects that name before
+# exec'ing this source, so the decorators below bind the copy VENDORED into the
+# bundle -- which is what makes the mpynode-free invocation at the end of main()
+# a real test of the prelude. An import here would be exec'd on the bare machine
+# and raise ModuleNotFoundError at the first CALL (measured), and would shadow
+# the injected name even where it resolved.
+#
+# The bundle embeds only the commands and what they use
+# (command_dispatch.command_payload_source): gateScaled needs a helper, a module
+# constant and an import read only in an annotation, and all three must survive
+# the trim; the demo, and the mpynode import inside it, must not ship.
 METHODS = '''
+from typing import Optional
+
+_SCALE = 2.0
+
+
+def _scaled(x: Optional[float] = None) -> float:
+    return (x or 0.0) * _SCALE
+
+
+@maya_command(name="gateScaled")
+def scaled(self, value: float = 1.0):
+    return _scaled(value)
+
+
+@maya_demo
+def demo(self):
+    import mpynode
+    return mpynode
+
+
 @maya_command(name="gateEcho")
 def echo(self, text: str = "dflt", count: int = 3, scale: float = 1.5,
          loud: bool = False):
@@ -102,6 +126,13 @@ def make_nodes(self, prefix: str = "gate"):
 def as_dict(self):
     return {"a": 1, "b": [2, 3]}
 '''
+
+
+def cd_payload():
+    """The Methods text the bundle embeds."""
+    from mpynode.native.compiler.kernels import command_dispatch as cd
+
+    return cd.command_payload_source(METHODS)
 
 
 def build_bundle(tmp):
@@ -166,7 +197,10 @@ def main():
         if bundle is None:
             print("\n%d PROBLEM(S)" % len(FAILURES))
             return 1
-        check(len(found) == 7, "detected 7 commands (got %d)" % len(found))
+        check(len(found) == 8, "detected 8 commands (got %d)" % len(found))
+        payload = cd_payload()
+        check("def demo" not in payload and "import mpynode" not in payload,
+              "the demo is not embedded in the bundle")
 
         print("\n[load -- must need NO Python at initializePlugin]")
         mc.loadPlugin(bundle)
@@ -175,7 +209,7 @@ def main():
         reg = set(mc.pluginInfo(os.path.basename(bundle), q=True,
                                 command=True) or [])
         for name in ("gateEcho", "gateSum", "gateNames", "gateTypes",
-                     "gateCount", "gateMakeNodes", "gateDict"):
+                     "gateCount", "gateMakeNodes", "gateDict", "gateScaled"):
             check(name in reg, "%s is registered by the BUNDLE itself" % name)
 
         # These are self-first INSTANCE commands, so they need a target node --
@@ -201,6 +235,10 @@ def main():
         check(r == ["AB", "CD"], "multi-use string flag preserves ORDER", r)
         r = mc.gateCount(tgt, nums=[1, 2, 3, 4])
         check(r == 4, "multi-use int flag", r)
+        r = mc.gateScaled(tgt, value=1.5)
+        check(abs(r - 3.0) < 1e-9,
+              "a helper, a constant and an annotation-only import survive "
+              "the trim", r)
 
         print("\n[target resolution]")
         mc.select(tgt, replace=True)

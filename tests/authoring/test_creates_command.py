@@ -387,8 +387,8 @@ class TestPayloadRowSizeCheck(unittest.TestCase):
 
 
 class TestReachableMpynodeImportIsFatal(unittest.TestCase):
-    """A bundle ships the Methods source as embedded Python and is loaded on
-    machines that have Maya but NOT mpynode, where a reachable ``import
+    """A bundle ships its commands, and what they use, as embedded Python and is
+    loaded on machines that have Maya but NOT mpynode, where a shipped ``import
     mpynode`` raises ModuleNotFoundError the first time the command runs.
 
     That used to be a stderr WARNING ("Not fatal -- the command still
@@ -453,15 +453,26 @@ class TestReachableMpynodeImportIsFatal(unittest.TestCase):
         in the artifact -- not something to note and carry on past."""
         from mpynode.native.compiler.errors import UnsupportedSpec
 
-        src = ("from mpynode._common.methods.maya_command import maya_test\n\n\n"
-               + self.POKE)
+        src = ("from mpynode._common.methods.setup_helpers import _meshes\n\n\n"
+               "@maya_command('pokeIt')\n"
+               "def poke(self):\n"
+               "    return _meshes(None)\n")
         cmds = detect_commands(src)
         with self.assertRaises(UnsupportedSpec) as ctx:
             cd.emit_dispatch_commands(cmds, "pokeType", src)
         msg = str(ctx.exception)
         self.assertIn("pokeType", msg)
-        self.assertIn("maya_command import maya_test", msg)
+        self.assertIn("setup_helpers import _meshes", msg)
         self.assertIn("module scope", msg)
+
+    def test_a_module_scope_import_no_command_uses_does_not_ship(self):
+        """The payload carries only the commands and what they use, so an
+        import only a demo or test needs is not in the bundle at all."""
+        src = ("from mpynode._common.methods.maya_command import maya_test\n\n\n"
+               + self.POKE)
+        out = cd.emit_dispatch_commands(detect_commands(src), "pokeType", src)
+        self.assertEqual(out["supported"], ["pokeIt"])
+        self.assertNotIn("maya_test", cd.command_payload_source(src))
 
     def test_the_failure_names_every_reachable_import_at_once(self):
         from mpynode.native.compiler.errors import UnsupportedSpec
@@ -469,7 +480,7 @@ class TestReachableMpynodeImportIsFatal(unittest.TestCase):
         src = ("import mpynode\n\n\n"
                "def _grab():\n"
                "    from mpynode._common.methods import setup_helpers\n"
-               "    return setup_helpers\n\n\n"
+               "    return mpynode, setup_helpers\n\n\n"
                "@maya_command('pokeIt')\n"
                "def poke(self):\n"
                "    return _grab()\n")

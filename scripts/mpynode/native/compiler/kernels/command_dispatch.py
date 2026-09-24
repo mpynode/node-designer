@@ -77,6 +77,7 @@ from __future__ import annotations
 import ast
 import base64
 import re
+import symtable
 import sys
 import textwrap
 from typing import List
@@ -699,6 +700,255 @@ def report_latent_mpynode_imports(node_type_name: str,
     for line in latent:
         sys.stderr.write("[command_dispatch]     %s\n" % line)
     return latent
+
+
+# ---- What a bundle embeds: the commands and what they use -------------------
+#
+# A compiled bundle only ever RUNS its @maya_command bodies. Demos and tests
+# always run on the interpreted node -- the gallery, Run demo / Run test and the
+# demo-scene harness read the .mpn or the _methodsSource plug, and verify reads
+# the @maya_test bodies from spec["methods"] -- so the copy a bundle embeds is
+# trimmed to the commands and their closure. spec["methods"] itself stays whole.
+#
+#   * UNITS -- each top-level statement; statements sharing a line
+#     (``a = 1; b = 2``) are one unit, since the payload is cut by lines.
+#   * ROOTS -- every def detect_commands finds in the WHOLE source. That is what
+#     _FUNCS resolves (call_command can reach a natively lowered or excluded
+#     command's Python body), so every lookup still binds.
+#   * ALWAYS -- a unit that runs code while the namespace is built: a loop, a
+#     with/try/if block, a call at module level (bare, in an assigned value, a
+#     default or a decorator of its own), a store into a subscript or attribute,
+#     ``+=``, a star or ``__future__`` import. What it does cannot be traced by
+#     name, so it ships. A bare string or ``pass`` is dropped.
+#   * CLOSURE -- a unit is kept when it binds a module name a kept unit reads.
+#     Reads are resolved by scope (stdlib symtable): a decorator, default, base
+#     class or annotation, and any name inside a def, class, lambda or
+#     comprehension that resolves to the module. A parameter or local named
+#     like a demo is not a read.
+#
+# Kept units are copied byte-exact and PACKED in source order, so editing a demo
+# or a test never changes the payload, nor the cache key built on it. A
+# command's traceback line numbers count into the packed text, not the Methods
+# tab. A kept unit that looks module names up dynamically -- globals(), a
+# one-argument eval/exec, locals()/vars() at module level -- cannot be traced,
+# so it fails the compile instead of shipping a copy that may be missing what
+# it needs.
+
+# Decorators that only mark or wrap: applying one runs no code of the author's.
+_PURE_DECORATORS = frozenset({"maya_command", "maya_demo", "maya_test",
+                              "staticmethod", "classmethod", "property",
+                              "setter", "getter", "deleter"})
+_SCOPE_NODES = (ast.FunctionDef, ast.AsyncFunctionDef, ast.Lambda, ast.ClassDef)
+
+
+def _source_lines(source: str) -> List[str]:
+    """Lines as Python counts them, endings kept. Only \\r\\n, \\r and \\n end
+    a line: str.splitlines also breaks on \\x0c, \\x85, U+2028 and others, which
+    would shift every slice after one."""
+    return re.findall(r"[^\r\n]*(?:\r\n|\r|\n)|[^\r\n]+\Z", source)
+
+
+def _decorator_name(node) -> str:
+    node = node.func if isinstance(node, ast.Call) else node
+    if isinstance(node, ast.Attribute):
+        return node.attr
+    return node.id if isinstance(node, ast.Name) else ""
+
+
+def _has_call(nodes) -> bool:
+    return any(isinstance(n, (ast.Call, ast.Await, ast.Yield, ast.YieldFrom))
+               for node in nodes if node is not None for n in ast.walk(node))
+
+
+def _runs_code(stmt) -> bool:
+    """True when running ``stmt`` as the namespace is built does more than bind
+    names -- see ALWAYS in the section note."""
+    if isinstance(stmt, ast.Import):
+        return False
+    if isinstance(stmt, ast.ImportFrom):
+        return stmt.module == "__future__" or any(a.name == "*" for a in stmt.names)
+    if isinstance(stmt, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+        if any(_decorator_name(d) not in _PURE_DECORATORS for d in stmt.decorator_list):
+            return True
+        if isinstance(stmt, ast.ClassDef):
+            return (_has_call(stmt.bases + [k.value for k in stmt.keywords])
+                    or any(_runs_code(s) for s in stmt.body))
+        a    = stmt.args
+        args = a.posonlyargs + a.args + a.kwonlyargs + [a.vararg, a.kwarg]
+        return _has_call(a.defaults + a.kw_defaults + [stmt.returns]
+                         + [x.annotation for x in args if x is not None])
+    if isinstance(stmt, (ast.Assign, ast.AnnAssign)):
+        targets = stmt.targets if isinstance(stmt, ast.Assign) else [stmt.target]
+        if any(isinstance(n, (ast.Attribute, ast.Subscript))
+               for t in targets for n in ast.walk(t)):
+            return True
+        return _has_call([stmt.value, getattr(stmt, "annotation", None)])
+    if isinstance(stmt, ast.Expr):
+        return not isinstance(stmt.value, ast.Constant)
+    return not isinstance(stmt, ast.Pass)
+
+
+def _scope_names(text: str):
+    """``(binds, reads)``: the module names ``text`` binds, and the module names
+    it reads -- at module level, or from inside a def, class, lambda or
+    comprehension where the name resolves to the module. Raises SyntaxError."""
+    top = symtable.symtable(text, "<methods>", "exec")
+    binds = {s.get_name() for s in top.get_symbols()
+             if s.is_assigned() or s.is_imported() or s.is_namespace()}
+    reads = {s.get_name() for s in top.get_symbols() if s.is_referenced()}
+    stack = list(top.get_children())
+    while stack:
+        table = stack.pop()
+        stack.extend(table.get_children())
+        reads.update(s.get_name() for s in table.get_symbols() if s.is_global())
+    return binds, reads
+
+
+def _dynamic_lookup(stmt):
+    """``(line, what)`` of the first dynamic module-name lookup in ``stmt``."""
+    for node in ast.walk(stmt):
+        if not (isinstance(node, ast.Call) and isinstance(node.func, ast.Name)):
+            continue
+        if node.func.id == "globals":
+            return node.lineno, "globals()"
+        if (node.func.id in ("eval", "exec") and len(node.args) < 2
+                and not any(k.arg == "globals" for k in node.keywords)):
+            return node.lineno, "a one-argument %s()" % node.func.id
+    stack = [] if isinstance(stmt, _SCOPE_NODES) else [stmt]
+    while stack:
+        node = stack.pop()
+        if (isinstance(node, ast.Call) and isinstance(node.func, ast.Name)
+                and node.func.id in ("locals", "vars")
+                and not node.args and not node.keywords):
+            return node.lineno, "%s() at module level" % node.func.id
+        stack.extend(c for c in ast.iter_child_nodes(node)
+                     if not isinstance(c, _SCOPE_NODES))
+    return None
+
+
+def _command_closure(methods_source: str):
+    """``(units, kept, parent)`` for the command closure, or None if the source
+    does not parse. A unit is ``{"start", "end", "stmts", "binds", "reads"}``;
+    ``kept`` holds unit indices; ``parent`` maps a kept name to the kept def
+    that first read it (None for a root)."""
+    from mpynode._common.methods.maya_command import detect_commands
+
+    source = methods_source or ""
+    try:
+        tree = ast.parse(source)
+    except (SyntaxError, ValueError):
+        return None
+    lines, units = _source_lines(source), []
+    for stmt in tree.body:
+        start = min([d.lineno for d in getattr(stmt, "decorator_list", [])]
+                    + [stmt.lineno])
+        if units and start <= units[-1]["end"]:
+            units[-1]["end"] = max(units[-1]["end"], stmt.end_lineno)
+            units[-1]["stmts"].append(stmt)
+        else:
+            units.append({"start": start, "end": stmt.end_lineno, "stmts": [stmt]})
+    for u in units:
+        try:
+            u["binds"], u["reads"] = _scope_names(
+                "".join(lines[u["start"] - 1:u["end"]]))
+        except (SyntaxError, ValueError):
+            u["binds"] = set().union(*[_top_level_names(s) for s in u["stmts"]])
+            u["reads"] = {n.id for s in u["stmts"] for n in ast.walk(s)
+                          if isinstance(n, ast.Name)}
+    roots  = {c["func_name"] for c in detect_commands(source)}
+    parent = {nm: None for nm in roots}
+    kept = {i for i, u in enumerate(units)
+              if u["binds"] & roots or any(_runs_code(s) for s in u["stmts"])}
+    queue = sorted(kept)
+    while queue:                                        # fixpoint closure
+        i    = queue.pop(0)
+        name = getattr(units[i]["stmts"][0], "name", None)
+        for j, u in enumerate(units):
+            hit = u["binds"] & units[i]["reads"]
+            if j in kept or not hit:
+                continue
+            kept.add(j)
+            queue.append(j)
+            for nm in hit:
+                parent.setdefault(nm, name)
+    return units, kept, parent
+
+
+def _top_level_names(stmt) -> set:
+    """Fallback bindings for a unit symtable cannot read: every stored name."""
+    out = {getattr(stmt, "name", None)} - {None}
+    for node in ast.walk(stmt):
+        if isinstance(node, ast.Name) and not isinstance(node.ctx, ast.Load):
+            out.add(node.id)
+        elif isinstance(node, (ast.Import, ast.ImportFrom)):
+            out.update(a.asname or a.name.split(".")[0] for a in node.names)
+    return out
+
+
+def command_payload_source(methods_source: str) -> str:
+    """The part of ``methods_source`` a compiled bundle embeds: the
+    ``@maya_command`` defs and everything they use, packed. See the section
+    note above. Raises ValueError when kept code looks names up dynamically."""
+    source  = methods_source or ""
+    closure = _command_closure(source)
+    if closure is None:
+        return source                   # flag_spec_for reports the parse failure
+    units, kept, _parent = closure
+    for i in sorted(kept):
+        for stmt in units[i]["stmts"]:
+            found = _dynamic_lookup(stmt)
+            if found:
+                raise ValueError(
+                    "L%d: %s looks module names up dynamically, so the compiler "
+                    "cannot tell which Methods code the command needs. Name what "
+                    "it uses directly." % found)
+    lines, parts = _source_lines(source), []
+    for i in sorted(kept):
+        text = "".join(lines[units[i]["start"] - 1:units[i]["end"]])
+        parts.append(text if text.endswith(("\n", "\r")) else text + "\n")
+    return "\n".join(parts)
+
+
+def payload_mpynode_imports(methods_source: str) -> List[str]:
+    """One report line per mpynode import the embedded payload carries.
+
+    The payload is what ships (:func:`command_payload_source`), so this is the
+    set that raises ModuleNotFoundError on a machine without the package.
+    Line numbers are the Methods tab's, not the packed payload's.
+    """
+    closure = _command_closure(methods_source)
+    if closure is None:
+        return []
+    units, kept, parent = closure
+    lines = [l.rstrip("\r\n") for l in _source_lines(methods_source or "")]
+
+    def _text(node):
+        end = getattr(node, "end_lineno", node.lineno)
+        return " ".join(" ".join(lines[node.lineno - 1:end]).split())
+
+    def _chain(nm):
+        path = [nm]
+        while parent.get(nm) is not None and parent[nm] not in path:
+            nm = parent[nm]
+            path.append(nm)
+        return " <- ".join(path)
+
+    out = []
+    for i in sorted(kept):
+        for stmt in units[i]["stmts"]:
+            named = isinstance(stmt, (ast.FunctionDef, ast.AsyncFunctionDef,
+                                      ast.ClassDef))
+            for node in ast.walk(stmt):
+                if not (isinstance(node, (ast.Import, ast.ImportFrom))
+                        and _mpynode_import_root(node)):
+                    continue
+                if named:
+                    out.append("L%d in def %s (via %s): %s"
+                               % (node.lineno, stmt.name, _chain(stmt.name),
+                                  _text(node)))
+                else:
+                    out.append("L%d module scope: %s" % (node.lineno, _text(node)))
+    return out
 
 
 # ---- Native lowering: PURE C++ bodies, no embedded Python ------------------
@@ -1469,9 +1719,9 @@ class _CompiledProxy(object):
         return object.__getattribute__(self, "_name")
 
     def get_methods_source(self):
-        """The node's Methods source. On the interpreted node this is a plug
-        read; here the source is already embedded in this module, so a setup
-        that reaches for it (directly or via call_command) works unchanged."""
+        """The Methods source embedded in this module: the @maya_command defs
+        and what they use, not the demos or tests (the interpreted node reads
+        the whole source off its plug)."""
         return _METHODS_SRC
 
     def call_command(self, command_name, *args, **kwargs):
@@ -1685,24 +1935,25 @@ _PRELUDE_HEAD = '''# ---- vendored at codegen time; see command_dispatch._prelud
 import inspect
 '''
 
-# The ONE hand-written member of the prelude. The original reads HELPERS off the
-# test_helpers MODULE object; a flat prelude vendors that module's CONTENTS, so
-# there is no module to attribute through and HELPERS is bound directly.
+# The ONE hand-written member of the prelude. The embedded source holds only the
+# commands and what they use (command_payload_source), so the test kit the
+# original also injects -- maya_demo / maya_test and test_helpers.HELPERS -- is
+# not vendored, and python_module_source refuses kept code that reads it.
 _PRELUDE_NAMESPACE = '''
 def build_methods_namespace(source):
-    """Twin of methods_registry.build_methods_namespace.
-
-    Injects exactly the same names: maya_command / maya_demo / maya_test plus
-    every key of test_helpers.HELPERS."""
-    ns = {
-        "maya_command": maya_command,
-        "maya_demo": maya_demo,
-        "maya_test": maya_test,
-    }
-    ns.update(HELPERS)
+    """Twin of methods_registry.build_methods_namespace, for the trimmed
+    source a bundle embeds: only maya_command is injected."""
+    ns = {"maya_command": maya_command}
     exec(compile(source or "", "<methods>", "exec"), ns)
     return ns
 '''
+
+
+def _test_kit_names() -> set:
+    """The names the host namespace injects for demos and tests only."""
+    from mpynode._common.methods import test_helpers as _test_helpers
+
+    return set(_test_helpers.HELPERS) | {"maya_demo", "maya_test"}
 
 # A __future__ import is only legal at the top of a FILE; a vendored chunk lands
 # mid-module, where it is a hard SyntaxError.
@@ -1713,22 +1964,16 @@ def _prelude_source() -> str:
     """The mpynode names the dispatch module needs, as VENDORED source text.
 
     Extracted with ``inspect.getsource`` rather than hand-copied so the bundle
-    cannot drift from the SSOT (notably ``test_helpers.HELPERS``, which decides
-    what ``build_methods_namespace`` injects). Raises rather than emitting a
-    partial prelude: a missing name here is invisible until a user runs the
-    command in a scene.
+    cannot drift from the SSOT. Raises rather than emitting a partial prelude:
+    a missing name here is invisible until a user runs the command in a scene.
     """
     import inspect as _inspect
 
     from mpynode._common.methods import maya_command as _maya_command
     from mpynode._common.methods import methods_registry as _methods_registry
-    from mpynode._common.methods import test_helpers as _test_helpers
 
     wanted = (
-        ("mpynode._common.methods.test_helpers", _test_helpers),
         ("maya_command", _maya_command.maya_command),
-        ("maya_demo", _maya_command.maya_demo),
-        ("maya_test", _maya_command.maya_test),
         ("methods_registry.invoke_command", _methods_registry.invoke_command),
     )
     parts = [_PRELUDE_HEAD]
@@ -1800,11 +2045,32 @@ def python_module_source(node_type_name: str, methods_source: str,
     for c in detect_commands(methods_source or ""):
         for key in (c["name"], c["func_name"]):
             funcs.setdefault(key, c["func_name"])
+    # Only the commands and what they use are embedded (see
+    # command_payload_source). The test kit is not vendored either, so kept
+    # code that reads one of its names would fail when the command runs: fail
+    # here, by name, instead.
+    payload = command_payload_source(methods_source)
+    try:
+        bound, reads = _scope_names(payload)
+    except (SyntaxError, ValueError) as exc:
+        try:
+            ast.parse(methods_source or "")
+        except (SyntaxError, ValueError):
+            bound, reads = set(), set()     # flag_spec_for reports the parse failure
+        else:
+            raise ValueError("the trimmed payload does not parse (%s)" % exc) from exc
+    kit = sorted((reads - bound) & _test_kit_names())
+    if kit:
+        raise ValueError(
+            "the command code reads %s, which only @maya_test / @maya_demo "
+            "bodies are given and the bundle does not carry. Copy what it "
+            "needs into the Methods source under its own name"
+            % ", ".join(kit))
     # The prelude goes in FIRST so a Methods source that happens to contain the
     # token cannot be spliced into.
     return (_PY_DISPATCH
             .replace("__MPY_PRELUDE__", _prelude_source())
-            .replace("__MPY_METHODS_SRC__", repr(methods_source))
+            .replace("__MPY_METHODS_SRC__", repr(payload))
             .replace("__MPY_NODE_TYPE__", repr(node_type_name))
             .replace("__MPY_KINDS__", repr(kinds))
             .replace("__MPY_FUNCS__", repr(funcs))
@@ -2239,23 +2505,25 @@ def emit_dispatch_commands(commands: List[dict], node_type_name: str,
                 plans[c["name"]] = plan
     pythonic = [c for c in usable if c["name"] not in plans]
 
-    # FATAL once a payload exists -- see the section note above. The roots stay
-    # the FULL command set, because _CompiledProxy.call_command can reach a
-    # natively lowered command's Python body out of the embedded source. With no
-    # payload nothing embeds the source, so the module-scope imports are LATENT
-    # and only reported.
+    # FATAL once a payload exists -- see the section note above. Judged on what
+    # the payload CARRIES (command_payload_source), whose roots are the FULL
+    # command set, because _CompiledProxy.call_command can reach a natively
+    # lowered command's Python body out of the embedded source. With no payload
+    # nothing embeds the source, so the module-scope imports are LATENT and
+    # only reported.
     if pythonic:
-        reachable = reachable_mpynode_imports(methods_source, usable)
+        reachable = payload_mpynode_imports(methods_source)
         if reachable:
             from mpynode.native.compiler.errors import UnsupportedSpec
             raise UnsupportedSpec(
-                "%s: %d mpynode import(s) are REACHABLE from a @maya_command. "
-                "The bundle ships this source as EMBEDDED PYTHON and is loaded "
-                "on machines that have Maya but NOT the mpynode package, where "
-                "each one raises ModuleNotFoundError the first time the command "
-                "runs. Vendor the code into the Methods source, or move the "
-                "import inside a @maya_demo / @maya_test body (a bundle never "
-                "invokes one):\n  %s"
+                "%s: %d mpynode import(s) ship in the embedded payload. The "
+                "bundle carries the @maya_command code, and what it uses, as "
+                "EMBEDDED PYTHON, and is loaded on machines that have Maya but "
+                "NOT the mpynode package, where each one raises "
+                "ModuleNotFoundError the first time the command runs. Vendor "
+                "the code into the Methods source, or keep the import out of "
+                "the commands' reach (a demo or test body, or a helper no "
+                "command uses):\n  %s"
                 % (node_type_name, len(reachable), "\n  ".join(reachable)))
     else:
         report_latent_mpynode_imports(node_type_name, methods_source)
@@ -2266,7 +2534,13 @@ def emit_dispatch_commands(commands: List[dict], node_type_name: str,
     # never calls MGlobal::executePythonCommand.
     blocks = []
     if pythonic:
-        py_src = python_module_source(node_type_name, methods_source, pythonic)
+        try:
+            py_src = python_module_source(node_type_name, methods_source, pythonic)
+        except ValueError as exc:
+            from mpynode.native.compiler.errors import UnsupportedSpec
+            raise UnsupportedSpec(
+                "%s: the embedded payload cannot be trimmed to the commands: "
+                "%s." % (node_type_name, exc)) from exc
         blocks.append(_CPP_STRHELP)
         blocks.append(_CPP_SUPPORT.replace("@LIT@", _b64_array_body(py_src))
                                   .replace("@MOD@", mod)

@@ -492,7 +492,13 @@ _DENY_NESTED = (("suggested", "type_id"), ("metadata", "type_id"))
 # ``methods`` only reaches the .cpp through the command dispatcher's embedded
 # module, so it is keyed ONLY when the spec HAS commands -- a command-less spec
 # keeps its old key byte-identical and never re-ports on a setup/demo-only edit.
-_METHODS_KEY = "methods"
+# And only the part that module embeds is keyed: the commands and what they use
+# (command_dispatch.command_payload_source), so a demo or test edit keeps the
+# key too. ``_PAYLOAD_FORMAT`` names that embedding; bump it when the embedded
+# module changes shape without the trimmed text changing.
+_METHODS_KEY    = "methods"
+_PAYLOAD_KEY    = "methods_payload"
+_PAYLOAD_FORMAT = "commands-only-1"
 
 
 def cache_dir() -> str:
@@ -515,9 +521,24 @@ def _canonical_spec(spec: dict) -> dict:
     order is preserved as-is)."""
     out = {k: v for k, v in (spec or {}).items() if k not in _DENY_LIST}
     # ``methods`` only reaches the .cpp via the commands (see _METHODS_KEY), so
-    # key on it only when there ARE commands. ``commands`` itself is always kept.
+    # key on it only when there ARE commands, and only on what is embedded.
+    # ``commands`` itself is always kept.
     if not (out.get("commands") or []):
         out.pop(_METHODS_KEY, None)
+    else:
+        if _METHODS_KEY in out:
+            from mpynode.native.compiler.kernels import command_dispatch
+
+            try:
+                out[_METHODS_KEY] = command_dispatch.command_payload_source(
+                    out[_METHODS_KEY] or "")
+            except ValueError:
+                pass    # the emit fails on it by name; key the whole source
+        # A command's ``lineno`` is where it sits in the Methods tab: codegen
+        # never reads it, and a demo edit above the command moves it.
+        out["commands"] = [{k: v for k, v in c.items() if k != "lineno"}
+                           if isinstance(c, dict) else c for c in out["commands"]]
+        out[_PAYLOAD_KEY] = _PAYLOAD_FORMAT
     for parent, child in _DENY_NESTED:
         sub = out.get(parent)
         if isinstance(sub, dict) and child in sub:
