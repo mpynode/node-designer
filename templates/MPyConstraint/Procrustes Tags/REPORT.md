@@ -1,10 +1,10 @@
 # MPyConstraint_Procrustes_Tags -- compile report
 
-Generated 2026-09-09 14:44
+Generated 2026-09-24 10:20
 
 | node | status | assist | optimize | detail |
 |---|---|---|---|---|
-| `procrustesTags` | compiled | -- | **4.94x** | [report](build/stages/procrustesTags/REPORT.md) |
+| `procrustesTags` | compiled | -- | **4.02x** | [report](build/stages/procrustesTags/REPORT.md) |
 
 ## Layout
 

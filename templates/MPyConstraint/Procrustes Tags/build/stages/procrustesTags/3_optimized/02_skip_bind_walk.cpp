@@ -4640,15 +4640,51 @@ MStatus ProcrustesTags::compute(const MPlug& plug, MDataBlock& data) {
             _arr.next();
         }
     }
-    std::vector<MMatrix> in_aBindMatrices;
+    // Only rows [0, min(ncl, nbind)) of the bind stack ever reach the output,
+    // nbind being max logical index + 1 and ncl the tag-row count. Scan the
+    // logical indices for nbind; read an element's matrix only below ncl.
+    // Holes stay identity, as MMatrix() fills them in the dense source copy.
+    const int64_t bind_ncl = (!in_aMesh_obj.isNull() && in_aMesh_obj.hasFn(MFn::kMesh)) ? (int64_t)in_aClusterTags.size() : 0;
+    int64_t bind_nb = 0;
+    std::vector<double> bind_head((size_t)bind_ncl * 16, 0.0);
+    for (int64_t _r = 0; _r < bind_ncl; ++_r)
+        for (int _d = 0; _d < 4; ++_d) bind_head[(size_t)(_r * 16 + _d * 5)] = 1.0;
     {
         MArrayDataHandle _arr = data.inputArrayValue(aBindMatrices);
         unsigned _n = _arr.elementCount();
-        for (unsigned _i = 0; _i < _n; ++_i) {
+        // nbind only reaches the output through min(ncl, nbind), and not at all
+        // when ncl is 0. When the LAST physical element's logical index already
+        // reaches ncl, nbind >= ncl whatever the element order, so only the ncl
+        // rows below it are read -- each by logical index, holes left identity --
+        // instead of walking every element. Anything else walks as before.
+        bool _walk = bind_ncl > 0;
+        if (_walk && _n > 0 && bind_ncl <= 16 &&
+            _arr.jumpToArrayElement(_n - 1) == MS::kSuccess) {
+            const int64_t _last = (int64_t)_arr.elementIndex() + 1;
+            if (_last >= bind_ncl) {
+                bind_nb = _last;
+                _walk   = false;
+                for (int64_t _li = 0; _li < bind_ncl; ++_li) {
+                    if (_arr.jumpToElement((unsigned)_li) != MS::kSuccess) continue;
+                    MDataHandle eh = _arr.inputValue();
+                    const MMatrix _m = eh.asMatrix();
+                    for (int _r = 0; _r < 4; ++_r)
+                        for (int _c = 0; _c < 4; ++_c)
+                            bind_head[(size_t)_li * 16 + _r * 4 + _c] = _m(_r, _c);
+                }
+            }
+        }
+        if (_walk && _n > 0) _arr.jumpToArrayElement(0);
+        for (unsigned _i = 0; _walk && _i < _n; ++_i) {
             unsigned _li = _arr.elementIndex();
-            if (_li >= in_aBindMatrices.size()) in_aBindMatrices.resize(_li + 1, MMatrix());
-            MDataHandle eh = _arr.inputValue();
-            in_aBindMatrices[_li] = eh.asMatrix();
+            if ((int64_t)_li + 1 > bind_nb) bind_nb = (int64_t)_li + 1;
+            if ((int64_t)_li < bind_ncl) {
+                MDataHandle eh = _arr.inputValue();
+                const MMatrix _m = eh.asMatrix();
+                for (int _r = 0; _r < 4; ++_r)
+                    for (int _c = 0; _c < 4; ++_c)
+                        bind_head[(size_t)_li * 16 + _r * 4 + _c] = _m(_r, _c);
+            }
             _arr.next();
         }
     }
@@ -4658,26 +4694,14 @@ MStatus ProcrustesTags::compute(const MPlug& plug, MDataBlock& data) {
 
     // --- deterministic numpy->C++ lowered compute (no port) ---
     try {
-    nd::Array<double> ndin_self___ndgeo_aMeshOrig_points_;
-    {
-        const float* _gr = (!in_aMeshOrig_obj.isNull() && in_aMeshOrig_obj.hasFn(MFn::kMesh)) ? in_aMeshOrig.getRawPoints(NULL) : (const float*)0;
-        unsigned int _gn = (_gr == 0) ? 0u : (unsigned int)in_aMeshOrig.numVertices();
-        std::vector<double> _gt; _gt.reserve((size_t)_gn * 3);
-        for (unsigned int _gi = 0; _gi < _gn; ++_gi) {
-            _gt.push_back((double)_gr[3 * _gi]); _gt.push_back((double)_gr[3 * _gi + 1]); _gt.push_back((double)_gr[3 * _gi + 2]);
-        }
-        ndin_self___ndgeo_aMeshOrig_points_ = nd::from_data<double>(std::move(_gt), {(int64_t)_gn, 3});
-    }
-    nd::Array<double> ndin_self___ndgeo_aMesh_points_;
-    {
-        const float* _gr = (!in_aMesh_obj.isNull() && in_aMesh_obj.hasFn(MFn::kMesh)) ? in_aMesh.getRawPoints(NULL) : (const float*)0;
-        unsigned int _gn = (_gr == 0) ? 0u : (unsigned int)in_aMesh.numVertices();
-        std::vector<double> _gt; _gt.reserve((size_t)_gn * 3);
-        for (unsigned int _gi = 0; _gi < _gn; ++_gi) {
-            _gt.push_back((double)_gr[3 * _gi]); _gt.push_back((double)_gr[3 * _gi + 1]); _gt.push_back((double)_gr[3 * _gi + 2]);
-        }
-        ndin_self___ndgeo_aMesh_points_ = nd::from_data<double>(std::move(_gt), {(int64_t)_gn, 3});
-    }
+    // Raw float views of both meshes. Only the cluster MEMBER rows are ever
+    // read, so the gather in the procrustes block pulls them straight from
+    // these buffers instead of widening every vertex into a (V+1, 3) double
+    // copy first. Row count keeps the source contract: 0 when no raw buffer.
+    const float* rest_raw = (!in_aMeshOrig_obj.isNull() && in_aMeshOrig_obj.hasFn(MFn::kMesh)) ? in_aMeshOrig.getRawPoints(NULL) : (const float*)0;
+    const int64_t rest_n  = (rest_raw == 0) ? 0 : (int64_t)(unsigned int)in_aMeshOrig.numVertices();
+    const float* def_raw  = (!in_aMesh_obj.isNull() && in_aMesh_obj.hasFn(MFn::kMesh)) ? in_aMesh.getRawPoints(NULL) : (const float*)0;
+    const int64_t def_n   = (def_raw == 0) ? 0 : (int64_t)(unsigned int)in_aMesh.numVertices();
     nd::Array<int64_t> ndin_self___ndgeo_aMesh_tagcl_clusterTags_;
     {
         std::vector< std::vector<int64_t> > _tcr;
@@ -4697,241 +4721,162 @@ MStatus ProcrustesTags::compute(const MPlug& plug, MDataBlock& data) {
                 _tcr.push_back(_trow);
             }
         }
+        // Width spans EVERY tag row (the source pads to the widest), but only
+        // the first min(ncl, nbind) rows survive the clamp, so only they are built.
         int64_t _tw = 1;
         for (size_t _tn = 0; _tn < _tcr.size(); ++_tn)
             if ((int64_t)_tcr[_tn].size() > _tw) _tw = (int64_t)_tcr[_tn].size();
-        std::vector<int64_t> _tgt((size_t)((int64_t)_tcr.size() * _tw), (int64_t)-1);
-        for (size_t _tn = 0; _tn < _tcr.size(); ++_tn)
-            for (size_t _tk = 0; _tk < _tcr[_tn].size(); ++_tk)
-                _tgt[(size_t)((int64_t)_tn * _tw) + _tk] = _tcr[_tn][_tk];
-        ndin_self___ndgeo_aMesh_tagcl_clusterTags_ = nd::from_data<int64_t>(std::move(_tgt), {(int64_t)_tcr.size(), _tw});
+        const int64_t _tk_n = ((int64_t)_tcr.size() < bind_nb) ? (int64_t)_tcr.size() : bind_nb;
+        std::vector<int64_t> _tgt((size_t)(_tk_n * _tw), (int64_t)-1);
+        for (int64_t _tn = 0; _tn < _tk_n; ++_tn)
+            for (size_t _tk = 0; _tk < _tcr[(size_t)_tn].size(); ++_tk)
+                _tgt[(size_t)(_tn * _tw) + _tk] = _tcr[(size_t)_tn][_tk];
+        ndin_self___ndgeo_aMesh_tagcl_clusterTags_ = nd::from_data<int64_t>(std::move(_tgt), {_tk_n, _tw});
     }
-    nd::Array<double> ndin_self_bindMatrices;
-    {
-        std::vector<double> _tmp; _tmp.reserve(in_aBindMatrices.size() * 16);
-        for (size_t _i = 0; _i < in_aBindMatrices.size(); ++_i) {
-            for (int _r = 0; _r < 4; ++_r)
-                for (int _c = 0; _c < 4; ++_c)
-                    _tmp.push_back(in_aBindMatrices[_i](_r, _c));
-        }
-        ndin_self_bindMatrices = nd::from_data<double>(std::move(_tmp), {(int64_t)in_aBindMatrices.size(), 4, 4});
-    }
-    nd::Array<double> nl_rest;
-    nd::Array<double> nl_deformed;
+    int64_t nl__n = ndin_self___ndgeo_aMesh_tagcl_clusterTags_.shape[0];
     nd::Array<int64_t> nl_cl;
     nd::Array<double> nl_bind;
-    int64_t nl__n = 0;
-    auto _h_procrustes_clusters_1 = [&](nd::Array<double> rest_pts, nd::Array<double> deformed_pts, nd::Array<int64_t> clusters, nd::Array<double> bind_matrices, bool with_scale) -> nd::Array<double> {
-        int64_t n = 0;
-        nd::Array<double> rp;
-        nd::Array<double> dp;
-        nd::Array<double> P;
-        nd::Array<double> Q;
-        nd::Array<bool> mask;
-        nd::Array<int64_t> counts;
-        nd::Array<double> cP;
-        nd::Array<double> cQ;
-        nd::Array<double> P0;
-        nd::Array<double> Q0;
-        nd::Array<double> H;
-        nd::Array<double> U;
-        nd::Array<double> S;
-        nd::Array<double> Vt;
-        nd::Array<double> Vt_t;
-        nd::Array<double> U_t;
-        nd::Array<double> d;
-        nd::Array<double> D;
-        nd::Array<double> R;
-        nd::Array<double> var_p;
-        nd::Array<double> s;
-        nd::Array<double> t;
-        nd::Array<double> M;
-        rest_pts = rest_pts;
-        deformed_pts = deformed_pts;
-        clusters = clusters;
-        bind_matrices = nd::reshape(bind_matrices, {(-((int64_t)1)), (int64_t)4, (int64_t)4});
-        n = (int64_t)clusters.shape[(int64_t)0];
-        if (((n == (int64_t)0))) {
-            return nd::zeros<double>(nd::Shape{(int64_t)0, (int64_t)4, (int64_t)4});
-        }
-        rp = nd::vstack(std::vector<nd::Array<double>>{rest_pts, nd::zeros<double>(nd::Shape{(int64_t)1, (int64_t)3})});
-        dp = nd::vstack(std::vector<nd::Array<double>>{deformed_pts, nd::zeros<double>(nd::Shape{(int64_t)1, (int64_t)3})});
-        P = nd::take(rp, clusters, (int64_t)0);
-        Q = nd::take(dp, clusters, (int64_t)0);
-        mask = nd::cmp_ge(clusters, (int64_t)((int64_t)0));
-        {
-            const nd::Array<int64_t> __L0 = nd::sum(nd::astype<int64_t>(mask), {(int64_t)1}, false);
-            const int64_t __s0 = (int64_t)1;
-            if ( true ) {
-                #if defined(__clang__)
-                #pragma clang fp contract(off)
-                #endif
-                counts = nd::Array<int64_t>::alloc(__L0.shape);
-                int64_t* __o = counts.data->data();
-                const int64_t __n = counts.size();
-                for (int64_t __i = 0; __i < __n; ++__i) {
-                    __o[(size_t)__i] = (int64_t)( nd::maximum_elem<int64_t>((*__L0.data)[(size_t)(__L0.offset + __i * __L0.strides[0])], __s0) );
-                }
-            } else {
-                counts = nd::maximum(__L0, nd::scalar<int64_t>(__s0));
-            }
-        }
-        cP = nd::divide(nd::sum(P, {(int64_t)1}, false), nd::astype<double>(nd::newaxis(nd::slice(counts, {nd::Sl::mk(false, 0, false, 0, 1)}), 1)));
-        cQ = nd::divide(nd::sum(Q, {(int64_t)1}, false), nd::astype<double>(nd::newaxis(nd::slice(counts, {nd::Sl::mk(false, 0, false, 0, 1)}), 1)));
-        P0 = nd::mul(nd::sub(P, nd::newaxis(nd::slice(cP, {nd::Sl::mk(false, 0, false, 0, 1)}), 1)), nd::astype<double>(nd::newaxis(nd::slice(mask, {nd::Sl::mk(false, 0, false, 0, 1), nd::Sl::mk(false, 0, false, 0, 1)}), 2)));
-        Q0 = nd::mul(nd::sub(Q, nd::newaxis(nd::slice(cQ, {nd::Sl::mk(false, 0, false, 0, 1)}), 1)), nd::astype<double>(nd::newaxis(nd::slice(mask, {nd::Sl::mk(false, 0, false, 0, 1), nd::Sl::mk(false, 0, false, 0, 1)}), 2)));
-        const nd::Array<double> es_1_op0 = P0;
-        const nd::Array<double> es_1_op1 = Q0;
-        nd::Array<double> es_1 = nd::Array<double>::alloc(nd::Shape{es_1_op0.shape[0], es_1_op0.shape[2], es_1_op1.shape[2]});
-        double* es_1_dst = es_1.data->data();
-        int64_t es_1_pos = 0;
-        for (int64_t es_1_n = 0; es_1_n < es_1_op0.shape[0]; ++es_1_n) {
-            for (int64_t es_1_i = 0; es_1_i < es_1_op0.shape[2]; ++es_1_i) {
-                for (int64_t es_1_j = 0; es_1_j < es_1_op1.shape[2]; ++es_1_j) {
-                    double es_1_acc = (double)0;
-                    for (int64_t es_1_l = 0; es_1_l < es_1_op0.shape[1]; ++es_1_l) {
-                        double es_1_prod = (double)1;
-                        es_1_prod *= nd::at3(es_1_op0, es_1_n, es_1_l, es_1_i);
-                        es_1_prod *= nd::at3(es_1_op1, es_1_n, es_1_l, es_1_j);
-                        es_1_acc += es_1_prod;
-                    }
-                    es_1_dst[es_1_pos++] = es_1_acc;
-                }
-            }
-        }
-        H = es_1;
-        nd::SVD3 svd_2 = nd::svd(H);
-        U = svd_2.U;
-        S = svd_2.S;
-        Vt = svd_2.Vt;
-        Vt_t = nd::transpose(Vt, {0, 2, 1});
-        U_t = nd::transpose(U, {0, 2, 1});
-        const nd::Array<double> es_3_op0 = Vt_t;
-        const nd::Array<double> es_3_op1 = U_t;
-        nd::Array<double> es_3 = nd::Array<double>::alloc(nd::Shape{es_3_op0.shape[0], es_3_op0.shape[1], es_3_op1.shape[2]});
-        double* es_3_dst = es_3.data->data();
-        int64_t es_3_pos = 0;
-        for (int64_t es_3_n = 0; es_3_n < es_3_op0.shape[0]; ++es_3_n) {
-            for (int64_t es_3_i = 0; es_3_i < es_3_op0.shape[1]; ++es_3_i) {
-                for (int64_t es_3_k = 0; es_3_k < es_3_op1.shape[2]; ++es_3_k) {
-                    double es_3_acc = (double)0;
-                    for (int64_t es_3_j = 0; es_3_j < es_3_op0.shape[2]; ++es_3_j) {
-                        double es_3_prod = (double)1;
-                        es_3_prod *= nd::at3(es_3_op0, es_3_n, es_3_i, es_3_j);
-                        es_3_prod *= nd::at3(es_3_op1, es_3_n, es_3_j, es_3_k);
-                        es_3_acc += es_3_prod;
-                    }
-                    es_3_dst[es_3_pos++] = es_3_acc;
-                }
-            }
-        }
-        {
-            const nd::Array<double> __L0 = nd::det(es_3);
-            if ( true ) {
-                #if defined(__clang__)
-                #pragma clang fp contract(off)
-                #endif
-                d = nd::Array<double>::alloc(__L0.shape);
-                double* __o = d.data->data();
-                const int64_t __n = d.size();
-                for (int64_t __i = 0; __i < __n; ++__i) {
-                    __o[(size_t)__i] = (double)( (double)((((*__L0.data)[(size_t)(__L0.offset + __i * __L0.strides[0])])>0)-(((*__L0.data)[(size_t)(__L0.offset + __i * __L0.strides[0])])<0)) );
-                }
-            } else {
-                d = nd::sign(__L0);
-            }
-        }
-        D = nd::tile(nd::eye((int64_t)3), nd::Shape{n, (int64_t)1, (int64_t)1});
-        nd::assign(nd::slice(D, {nd::Sl::mk(false, 0, false, 0, 1), nd::Sl::at((int64_t)2), nd::Sl::at((int64_t)2)}), d);
-        const nd::Array<double> es_4_op0 = Vt_t;
-        const nd::Array<double> es_4_op1 = D;
-        const nd::Array<double> es_4_op2 = U_t;
-        nd::Array<double> es_4 = nd::Array<double>::alloc(nd::Shape{es_4_op0.shape[0], es_4_op0.shape[1], es_4_op2.shape[2]});
-        double* es_4_dst = es_4.data->data();
-        int64_t es_4_pos = 0;
-        for (int64_t es_4_n = 0; es_4_n < es_4_op0.shape[0]; ++es_4_n) {
-            for (int64_t es_4_i = 0; es_4_i < es_4_op0.shape[1]; ++es_4_i) {
-                for (int64_t es_4_l = 0; es_4_l < es_4_op2.shape[2]; ++es_4_l) {
-                    double es_4_acc = (double)0;
-                    for (int64_t es_4_j = 0; es_4_j < es_4_op0.shape[2]; ++es_4_j) {
-                        for (int64_t es_4_k = 0; es_4_k < es_4_op1.shape[2]; ++es_4_k) {
-                            double es_4_prod = (double)1;
-                            es_4_prod *= nd::at3(es_4_op0, es_4_n, es_4_i, es_4_j);
-                            es_4_prod *= nd::at3(es_4_op1, es_4_n, es_4_j, es_4_k);
-                            es_4_prod *= nd::at3(es_4_op2, es_4_n, es_4_k, es_4_l);
-                            es_4_acc += es_4_prod;
-                        }
-                    }
-                    es_4_dst[es_4_pos++] = es_4_acc;
-                }
-            }
-        }
-        R = es_4;
-        if (with_scale) {
-            var_p = nd::sum_mul(P0, P0, {(int64_t)1, (int64_t)2}, false);
-            s = nd::sum_mul(S, nd::stack(std::vector<nd::Array<double>>{nd::ones<double>(nd::Shape{n}), nd::ones<double>(nd::Shape{n}), d}, (int64_t)1), {(int64_t)1}, false);
-            {
-                const nd::Array<double> __L0 = s;
-                const nd::Array<double> __L1 = var_p;
-                const double __s0 = (1e-12);
-                const double __s1 = (1.0);
-                if ( __L1.shape == __L0.shape ) {
-                    #if defined(__clang__)
-                    #pragma clang fp contract(off)
-                    #endif
-                    s = nd::Array<double>::alloc(__L0.shape);
-                    double* __o = s.data->data();
-                    const int64_t __n = s.size();
-                    for (int64_t __i = 0; __i < __n; ++__i) {
-                        __o[(size_t)__i] = (double)( (((double)((*__L0.data)[(size_t)(__L0.offset + __i * __L0.strides[0])])) / ((double)((((*__L1.data)[(size_t)(__L1.offset + __i * __L1.strides[0])] > __s0) ? (*__L1.data)[(size_t)(__L1.offset + __i * __L1.strides[0])] : __s1)))) );
-                    }
+    // procrustes_clusters(rest, deformed, cl, bind) (with_scale=False) as ONE
+    // pass per cluster straight off the float buffers: the arithmetic of the
+    // lowered nd:: chain in the same order (gather, sequential centroid fold,
+    // masked centering, H = P0^T Q0, svd3_core, sign(det) reflection fix, R, t,
+    // bind @ M) without its ~60 whole-array temporaries. The gather is np.take
+    // over vstack([pts, zeros(1,3)]): a negative index wraps by V+1, so -1 (the
+    // tag padding) and V both land on the zero row. Returns (n, 4, 4) row-major.
+    auto _procrustes_fast = [&](const nd::Array<int64_t>& clusters, const nd::Array<double>& bind_matrices) -> std::vector<double> {
+        const int64_t n  = clusters.shape[0];
+        const int64_t nw = clusters.shape[1];
+        const int64_t* ix = clusters.data->data() + clusters.offset;
+        const double*  bm = bind_matrices.data->data() + bind_matrices.offset;
+        std::vector<double> res((size_t)n * 16);
+        std::vector<double> P((size_t)nw * 3), Q((size_t)nw * 3);
+        std::vector<char>   mk((size_t)nw);
+        const int64_t Lr = rest_n + 1, Ld = def_n + 1;
+        for (int64_t c = 0; c < n; ++c) {
+            const int64_t* row = ix + c * nw;
+            int64_t cnt = 0;
+            for (int64_t k = 0; k < nw; ++k) {
+                const int64_t v = row[k];
+                mk[(size_t)k] = (v >= 0) ? 1 : 0;
+                cnt += (v >= 0) ? 1 : 0;
+                int64_t vr = v; if (vr < 0) vr += Lr;
+                if (vr >= 0 && vr < rest_n) {
+                    P[3 * k]     = (double)rest_raw[3 * vr];
+                    P[3 * k + 1] = (double)rest_raw[3 * vr + 1];
+                    P[3 * k + 2] = (double)rest_raw[3 * vr + 2];
                 } else {
-                    s = nd::divide(s, nd::where(nd::cmp_gt(var_p, (double)(__s0)), var_p, (double)(__s1)));
+                    P[3 * k] = 0.0; P[3 * k + 1] = 0.0; P[3 * k + 2] = 0.0;
+                }
+                int64_t vd = v; if (vd < 0) vd += Ld;
+                if (vd >= 0 && vd < def_n) {
+                    Q[3 * k]     = (double)def_raw[3 * vd];
+                    Q[3 * k + 1] = (double)def_raw[3 * vd + 1];
+                    Q[3 * k + 2] = (double)def_raw[3 * vd + 2];
+                } else {
+                    Q[3 * k] = 0.0; Q[3 * k + 1] = 0.0; Q[3 * k + 2] = 0.0;
                 }
             }
-        } else {
-            s = nd::ones<double>(nd::Shape{n});
-        }
-        const nd::Array<double> es_5_op0 = R;
-        const nd::Array<double> es_5_op1 = cP;
-        nd::Array<double> es_5 = nd::Array<double>::alloc(nd::Shape{es_5_op0.shape[0], es_5_op0.shape[1]});
-        double* es_5_dst = es_5.data->data();
-        int64_t es_5_pos = 0;
-        for (int64_t es_5_n = 0; es_5_n < es_5_op0.shape[0]; ++es_5_n) {
-            for (int64_t es_5_i = 0; es_5_i < es_5_op0.shape[1]; ++es_5_i) {
-                double es_5_acc = (double)0;
-                for (int64_t es_5_j = 0; es_5_j < es_5_op0.shape[2]; ++es_5_j) {
-                    double es_5_prod = (double)1;
-                    es_5_prod *= nd::at3(es_5_op0, es_5_n, es_5_i, es_5_j);
-                    es_5_prod *= nd::at2(es_5_op1, es_5_n, es_5_j);
-                    es_5_acc += es_5_prod;
-                }
-                es_5_dst[es_5_pos++] = es_5_acc;
+            if (cnt < 1) cnt = 1;
+            const double cntd = (double)cnt;
+            double cP[3], cQ[3];
+            for (int d = 0; d < 3; ++d) {
+                double ap = 0.0, aq = 0.0;
+                for (int64_t k = 0; k < nw; ++k) { ap = ap + P[3 * k + d]; aq = aq + Q[3 * k + d]; }
+                cP[d] = ap / cntd;
+                cQ[d] = aq / cntd;
             }
+            for (int64_t k = 0; k < nw; ++k) {
+                const double m = mk[(size_t)k] ? 1.0 : 0.0;
+                for (int d = 0; d < 3; ++d) {
+                    P[3 * k + d] = (P[3 * k + d] - cP[d]) * m;
+                    Q[3 * k + d] = (Q[3 * k + d] - cQ[d]) * m;
+                }
+            }
+            double H[3][3];
+            for (int i = 0; i < 3; ++i)
+                for (int j = 0; j < 3; ++j) {
+                    double acc = 0.0;
+                    for (int64_t l = 0; l < nw; ++l) {
+                        double prod = 1.0;
+                        prod *= P[3 * l + i];
+                        prod *= Q[3 * l + j];
+                        acc += prod;
+                    }
+                    H[i][j] = acc;
+                }
+            double U[3][3], S[3], Vt[3][3];
+            nd::svd3_core(H, U, S, Vt);
+            double E[3][3];                                   // Vt^T @ U^T
+            for (int i = 0; i < 3; ++i)
+                for (int k = 0; k < 3; ++k) {
+                    double acc = 0.0;
+                    for (int j = 0; j < 3; ++j) {
+                        double prod = 1.0;
+                        prod *= Vt[j][i];
+                        prod *= U[k][j];
+                        acc += prod;
+                    }
+                    E[i][k] = acc;
+                }
+            const double dv = E[0][0]*(E[1][1]*E[2][2] - E[1][2]*E[2][1])
+                            - E[0][1]*(E[1][0]*E[2][2] - E[1][2]*E[2][0])
+                            + E[0][2]*(E[1][0]*E[2][1] - E[1][1]*E[2][0]);
+            const double sg = (double)((dv > 0) - (dv < 0));
+            const double D[3][3] = {{1.0, 0.0, 0.0}, {0.0, 1.0, 0.0}, {0.0, 0.0, sg}};
+            double R[3][3];                                   // Vt^T @ D @ U^T
+            for (int i = 0; i < 3; ++i)
+                for (int l = 0; l < 3; ++l) {
+                    double acc = 0.0;
+                    for (int j = 0; j < 3; ++j)
+                        for (int k = 0; k < 3; ++k) {
+                            double prod = 1.0;
+                            prod *= Vt[j][i];
+                            prod *= D[j][k];
+                            prod *= U[l][k];
+                            acc += prod;
+                        }
+                    R[i][l] = acc;
+                }
+            double M[4][4];
+            for (int i = 0; i < 3; ++i) {
+                double acc = 0.0;                             // R @ cP
+                for (int j = 0; j < 3; ++j) {
+                    double prod = 1.0;
+                    prod *= R[i][j];
+                    prod *= cP[j];
+                    acc += prod;
+                }
+                M[3][i] = cQ[i] - (1.0 * acc);                // t, s == 1
+            }
+            for (int a = 0; a < 3; ++a) {
+                for (int b = 0; b < 3; ++b) M[a][b] = 1.0 * R[b][a];
+                M[a][3] = 0.0;
+            }
+            M[3][3] = 1.0;
+            const double* B = bm + c * 16;
+            double* o = res.data() + c * 16;
+            for (int i = 0; i < 4; ++i)
+                for (int j = 0; j < 4; ++j) {
+                    double acc = 0.0;
+                    for (int l = 0; l < 4; ++l) acc += B[i * 4 + l] * M[l][j];
+                    o[i * 4 + j] = acc;
+                }
         }
-        t = nd::sub(cQ, nd::mul(nd::newaxis(nd::slice(s, {nd::Sl::mk(false, 0, false, 0, 1)}), 1), es_5));
-        M = nd::tile(nd::eye((int64_t)4), nd::Shape{n, (int64_t)1, (int64_t)1});
-        nd::assign(nd::slice(M, {nd::Sl::mk(false, 0, false, 0, 1), nd::Sl::mk(false, 0, true, (int64_t)3, 1), nd::Sl::mk(false, 0, true, (int64_t)3, 1)}), nd::transpose(nd::mul(nd::newaxis(nd::newaxis(nd::slice(s, {nd::Sl::mk(false, 0, false, 0, 1)}), 1), 2), R), {0, 2, 1}));
-        nd::assign(nd::slice(M, {nd::Sl::mk(false, 0, false, 0, 1), nd::Sl::at((int64_t)3), nd::Sl::mk(false, 0, true, (int64_t)3, 1)}), t);
-        return nd::matmul(bind_matrices, M);
+        return res;
     };
-    nl_rest = ndin_self___ndgeo_aMeshOrig_points_;
-    nl_deformed = ndin_self___ndgeo_aMesh_points_;
+    // Both stacks arrive already clamped to nl__n = min(ncl, nbind) rows.
     nl_cl = ndin_self___ndgeo_aMesh_tagcl_clusterTags_;
-    nl_bind = nd::reshape(ndin_self_bindMatrices, {(-((int64_t)1)), (int64_t)4, (int64_t)4});
-    nl__n = ((int64_t)nl_bind.shape[(int64_t)0] < (int64_t)nl_cl.shape[(int64_t)0] ? (int64_t)nl_bind.shape[(int64_t)0] : (int64_t)nl_cl.shape[(int64_t)0]);
-    nl_cl = nd::slice(nl_cl, {nd::Sl::mk(false, 0, true, nl__n, 1)});
-    nl_bind = nd::slice(nl_bind, {nd::Sl::mk(false, 0, true, nl__n, 1)});
-    if (((((int64_t)nl_cl.shape[(int64_t)0]) != 0) && (((int64_t)nl_rest.shape[(int64_t)0]) != 0) && (((int64_t)nl_deformed.shape[(int64_t)0]) != 0))) {
+    bind_head.resize((size_t)nl__n * 16);
+    nl_bind = nd::from_data<double>(std::move(bind_head), {nl__n, (int64_t)4, (int64_t)4});
+    if (((((int64_t)nl_cl.shape[(int64_t)0]) != 0) && (rest_n != 0) && (def_n != 0))) {
         {
-            nd::Array<double> _o = (_h_procrustes_clusters_1(nl_rest, nl_deformed, nl_cl, nl_bind, false));
-            if (_o.offset != 0 || !_o.is_contiguous()) _o = _o.copy();
-            int64_t _n = _o.shape.empty() ? 0 : _o.shape[0];
+            const std::vector<double> _o = _procrustes_fast(nl_cl, nl_bind);
+            int64_t _n = (int64_t)(_o.size() / 16);
             out_aOutMatrix.resize((size_t)_n);
             for (int64_t _i = 0; _i < _n; ++_i) {
                 MMatrix _m;
                 for (int _r = 0; _r < 4; ++_r) for (int _c = 0; _c < 4; ++_c)
-                    _m(_r, _c) = (*_o.data)[_i * 16 + _r * 4 + _c];
+                    _m(_r, _c) = _o[(size_t)(_i * 16 + _r * 4 + _c)];
                 out_aOutMatrix[(size_t)_i] = _m;
             }
         }
