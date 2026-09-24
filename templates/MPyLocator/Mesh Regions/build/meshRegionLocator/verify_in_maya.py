@@ -4,12 +4,12 @@ Run in Maya. Loads the .bundle, samples inputs, compares outputs.
 import os, random
 import maya.cmds as cmds
 
-BUNDLE    = os.path.join(os.path.dirname(__file__), 'meshRegionLocator.mll')
+BUNDLE = os.path.join(os.path.dirname(__file__), 'meshRegionLocator.mll')
 NODE_TYPE = 'meshRegionLocator'
-SOURCE    = 'meshRegions'
-INPUTS    = {"inMesh": "mesh", "regionTag": "string", "offset": "float", "hoverOffset": "float", "selectOffset": "float", "hoverDur": "float", "defaultColor": "color", "hoverColor": "color", "selectColor": "color", "outlineColor": "color", "outlineHoverColor": "color", "outlineSelectColor": "color", "alpha": "float"}
-OUTPUTS   = {}
-TOL       = 1e-4
+SOURCE = 'meshRegions'
+INPUTS = {"inMesh": "mesh", "regionTag": "string", "offset": "float", "hoverOffset": "float", "selectOffset": "float", "hoverDur": "float", "defaultColor": "color", "hoverColor": "color", "selectColor": "color", "outlineColor": "color", "outlineHoverColor": "color", "outlineSelectColor": "color", "alpha": "float"}
+OUTPUTS = {}
+TOL = 1e-4
 
 
 def _sample(t):
@@ -31,7 +31,7 @@ def _flat(v):
     # getAttr returns a scalar, [(x, y, z)] for a double3, or nested lists for a
     # matrix. Comparing only [0] silently passed a vector wrong on Y/Z or a
     # transposed matrix -- flatten to EVERY leaf component and compare them all.
-    out   = []
+    out = []
     stack = [v]
     while stack:
         x = stack.pop()
@@ -50,8 +50,8 @@ def run(samples=20):
         return True
     if not cmds.pluginInfo(os.path.basename(BUNDLE), q=True, loaded=True):
         cmds.loadPlugin(BUNDLE)
-    comp     = cmds.createNode(NODE_TYPE)
-    fails    = 0
+    comp = cmds.createNode(NODE_TYPE)
+    fails = 0
     compared = 0
     for _ in range(samples):
         for a, t in INPUTS.items():

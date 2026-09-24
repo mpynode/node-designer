@@ -7353,7 +7353,7 @@
           "events": [
             "portability meshRegionLocator start: ",
             "cache meshRegionLocator start: ",
-            "cache meshRegionLocator miss: cache miss 460024f87238",
+            "cache meshRegionLocator miss: cache miss 7943f694a72b",
             "port meshRegionLocator start: porting",
             "stage meshRegionLocator ok: 1_transpiled",
             "stage meshRegionLocator ok: 2_assisted",
@@ -7372,10 +7372,10 @@
           "optimize_events_tail": []
         },
         "bundle_exists": true,
-        "bundle_path": "C:\\Users\\eric.vignola\\Desktop\\MPyNode\\templates\\MPyLocator\\Mesh Regions\\MPyLocator_Mesh_Regions.mll",
-        "ended": 1789077967.4409492,
+        "bundle_path": "C:\\Users\\eric.vignola\\mpynode_build\\MPyNode\\templates\\MPyLocator\\Mesh Regions\\MPyLocator_Mesh_Regions.mll",
+        "ended": 1790281769.9982986,
         "errors": [],
-        "log": "C:\\Users\\eric.vignola\\Desktop\\MPyNode\\templates\\MPyLocator\\Mesh Regions\\_runner\\phase_a.log",
+        "log": "C:\\Users\\eric.vignola\\mpynode_build\\MPyNode\\templates\\MPyLocator\\Mesh Regions\\_runner\\phase_a.log",
         "mode": {
           "ai_assist": true,
           "keep_intermediates": false,
@@ -7414,11 +7414,11 @@
         "phase": "a",
         "rel": "MPyLocator\\Mesh Regions",
         "rounds": {},
-        "secs": 81.4,
+        "secs": 368.6,
         "smoke": false,
-        "started": 1789077886.0515764,
+        "started": 1790281401.36655,
         "state": "ok",
-        "wall_secs": 86.0
+        "wall_secs": 373.0
       },
       "phase_b": {
         "ai": {
@@ -7434,7 +7434,7 @@
             "portability meshRegionLocator start: ",
             "cache meshRegionLocator start: ",
             "stage meshRegionLocator ok: 1_transpiled",
-            "cache meshRegionLocator hit: cache hit 460024f87238",
+            "cache meshRegionLocator hit: cache hit 7943f694a72b",
             "stage meshRegionLocator ok: 2_assisted_cached",
             "assemble - start: linking 1 node(s)",
             "assemble - ok: bundle: MPyLocator_Mesh_Regions.mll",
@@ -7454,10 +7454,10 @@
           ]
         },
         "bundle_exists": true,
-        "bundle_path": "C:\\Users\\eric.vignola\\Desktop\\MPyNode\\templates\\MPyLocator\\Mesh Regions\\MPyLocator_Mesh_Regions.mll",
-        "ended": 1789077982.5463922,
+        "bundle_path": "C:\\Users\\eric.vignola\\mpynode_build\\MPyNode\\templates\\MPyLocator\\Mesh Regions\\MPyLocator_Mesh_Regions.mll",
+        "ended": 1790281829.4899697,
         "errors": [],
-        "log": "C:\\Users\\eric.vignola\\Desktop\\MPyNode\\templates\\MPyLocator\\Mesh Regions\\_runner\\phase_b.log",
+        "log": "C:\\Users\\eric.vignola\\mpynode_build\\MPyNode\\templates\\MPyLocator\\Mesh Regions\\_runner\\phase_b.log",
         "mode": {
           "ai_assist": true,
           "keep_intermediates": true,
@@ -7500,8 +7500,11 @@
               "errors": [],
               "rounds": 0
             },
+            "max_rounds": 6,
             "reason": "baseline could not be benchmarked",
-            "speedup": 1.0
+            "rounds": 0,
+            "speedup": 1.0,
+            "stop_reason": "baseline could not be benchmarked"
           }
         },
         "phase": "b",
@@ -7511,11 +7514,11 @@
             "accepted": false,
             "baseline_ms": null,
             "best_ms": null,
-            "created": 1789077980.2998328,
+            "created": 1790281826.6956408,
             "fresh": true,
             "n_rounds": 0,
             "parity_gate": "not exercised",
-            "path": "C:\\Users\\eric.vignola\\Desktop\\MPyNode\\templates\\MPyLocator\\Mesh Regions\\build\\stages\\meshRegionLocator\\rounds.json",
+            "path": "C:\\Users\\eric.vignola\\mpynode_build\\MPyNode\\templates\\MPyLocator\\Mesh Regions\\build\\stages\\meshRegionLocator\\rounds.json",
             "reason": "baseline could not be benchmarked",
             "rounds": [
               {
@@ -7535,9 +7538,9 @@
             "speedup": 1.0
           }
         },
-        "secs": 10.3,
+        "secs": 11.9,
         "smoke": false,
-        "started": 1789077972.262036,
+        "started": 1790281817.6014626,
         "state": "ok",
         "wall_secs": 16.0
       }
