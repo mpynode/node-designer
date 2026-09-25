@@ -47,7 +47,7 @@ from maya import cmds
 
 
 PLUGIN_NAME    = "mpynode_api2"
-PLUGIN_VERSION = "2.0.0a1"
+PLUGIN_VERSION = "2.0.0a2"
 
 
 def maya_useNewAPI():
