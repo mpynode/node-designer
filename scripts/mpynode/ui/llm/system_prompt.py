@@ -6,7 +6,8 @@ from __future__ import annotations
 def build_system_prompt() -> str:
     """Return the system prompt, with the live node-type list injected."""
     types_block = _node_types_block()
-    return _PROMPT.replace("{NODE_TYPES}", types_block)
+    return (_PROMPT.replace("{NODE_TYPES}", types_block)
+                   .replace("{WRITE_CONTRACTS}", _WRITE_CONTRACTS))
 
 
 def build_payload_system_prompt() -> str:
@@ -16,7 +17,8 @@ def build_payload_system_prompt() -> str:
     session, so instead of the tool-calling protocol they emit ONE JSON node
     payload we apply through the same spine. This prompt teaches that protocol;
     the node/value/naming/safety guidance mirrors the tool-mode prompt."""
-    return _PAYLOAD_PROMPT.replace("{NODE_TYPES}", _node_types_block())
+    return (_PAYLOAD_PROMPT.replace("{NODE_TYPES}", _node_types_block())
+                           .replace("{WRITE_CONTRACTS}", _WRITE_CONTRACTS))
 
 
 def _node_types_block() -> str:
@@ -29,6 +31,73 @@ def _node_types_block() -> str:
         )
     except Exception:
         return "  (node type list unavailable)"
+
+
+_WRITE_CONTRACTS = """\
+HOW EACH NODE TYPE PUBLISHES ITS RESULT (Compute writes -- get these exactly right)
+  Every type below auto-builds its output from REQUIRED slots you write on self.
+  Writing the wrong slot is usually SILENT: the node computes, writes nothing the
+  bridge reads, and ships empty geometry / an unmoved point set with no error.
+
+  mPyNode -- plain outputs only: `self.<outputName> = value` for each attr you
+    added with add_output_attr. No special slots.
+
+  mPyMesh -- a polygon mesh:
+    self.points  = pts                           # (N, 3) float64 vertex positions
+    self.counts  = np.full(F, 3, dtype=np.int32) # verts per face (3 = triangles)
+    self.indices = tris.ravel().astype(np.int32) # flat connectivity, len = counts.sum()
+    # optional: self.colors = (F, 3|4) per face, or one (3|4,) for all
+    Faces wind COUNTER-CLOCKWISE seen from outside (outward normals). Empty =
+    points (0,3), counts (0,), indices (0,) -- never None.
+
+  mPyNurbsCurve -- write self.cvs, NOT self.points (self.points is not harvested
+    here and ships an empty curve):
+    self.cvs    = cvs        # (N, 3) float64; needs at least degree + 1 CVs
+    self.degree = 3          # 1, 2, 3, 5 or 7 (default 3)
+    self.form   = "open"     # "open" | "closed" | "periodic"
+    # optional self.knots (K,); omit and a uniform vector is built
+
+  mPyNurbsSurface -- also self.cvs, as a GRID:
+    self.cvs      = grid     # (num_cvs_u, num_cvs_v, 3) float64
+    self.degree_u = self.degree_v = 3
+    self.form_u   = self.form_v   = "open"
+    # a flat (u*v, 3) array also works, with self.num_cvs_u / self.num_cvs_v
+
+  NEVER assign raw arrays to the output PLUG (self.outMesh / self.outCurve /
+  self.outSurface). Those take a finished Maya data MObject ONLY, so
+  `self.outMesh = (points, counts, indices)` ships an EMPTY mesh with no error.
+  The one legitimate use is the merged path:
+    from mpynode._common.geometry import build_default_output
+    self.outMesh = build_default_output(self.points, self.counts, self.indices)
+
+  mPyDeformer / mPySkinCluster / mPyBlendShape -- deform IN PLACE through the
+    output mesh handle; there is no points/deformed slot:
+    mesh = self.outputGeometry[0]        # writable, eager-copied from the input
+    pts  = mesh.getPoints()              # (N, 3) float64
+    mesh.setPoints(pts + offset * self.envelope)
+    Read the upstream source with self.input[0].inputGeometry, joint world
+    matrices with self.matrix[j].asNumpy() (skinCluster), and target shapes with
+    self.targetGeometry[j] (blendShape). Scale the effect by self.envelope.
+
+  mPyTransform -- see its own section below (self.local_matrix + apply_* gates).
+
+  mPyIkSolver -- drive joints through per-joint matrix lists, one slot per joint
+    (leave a slot None to keep that joint at rest). The solver writes only
+    offsetParentMatrix; it never touches translate/rotate/scale/jointOrient:
+    self.world_matrices[i] = M    # desired WORLD (absolute) (4,4), wins over local
+    self.local_matrices[i] = M    # desired LOCAL (parent-relative) (4,4)
+    self.apply_rotate = True      # gates, scalar or per-joint list;
+    self.apply_translate = self.apply_scale = False   # ungated = rest pose
+
+  mPyConstraint -- reads the preset inputs self.targetTranslate /
+    targetRotate / targetWeight / restTranslate / restRotate (always present,
+    read-only) and publishes through USER output attrs you add:
+    self.outTranslate = self.targetTranslate * self.targetWeight
+
+  mPyLocator / mPyFile -- self.draw and the OSL/viewport tiers; see their
+    sections below.
+"""
+
 
 
 _PROMPT = """\
@@ -192,8 +261,10 @@ mPyLocator DRAWING (write self.draw in Compute -- the ONLY draw surface)
   Common kwargs: color=(r,g,b,a), size=, space="local"|"screen", world_space=,
   precise_hover=. Chainable copies: .translated(x,y,z) / .scaled(f) / .outlined(
   color, width=, boundary_only=).
-  There are NO per-type dict buffers -- self.lines / self.points / self.polygons
-  / self.shapes / self.text do NOT exist. Everything goes through self.draw.
+  A LOCATOR has NO per-type dict buffers -- self.lines / self.points /
+  self.polygons / self.shapes / self.text do NOT exist on it; everything goes
+  through self.draw. (self.points IS the vertex slot on an mPyMesh -- different
+  node type, see the write contracts below.)
 
 mPyLocator DRAW STATE
   self.wallclock     -- seconds since the epoch (time.time()); THE animation clock.
@@ -204,6 +275,7 @@ mPyLocator DRAW STATE
   self.auto_refresh = True  -- REQUIRED for any animated drawing (Maya only
                               re-evaluates a locator on selection change otherwise).
 
+{WRITE_CONTRACTS}
 mPyTransform MATRIX OUTPUT (GATED LOCAL-MATRIX -- Compute drives this transform)
   The node is a single-joint IK solver: publish a desired LOCAL matrix + gates.
   WRITE (all default to a no-op = plain transform):
@@ -422,8 +494,9 @@ mPyLocator DRAWING -- the ONLY draw surface: compose draw objects into self.draw
   DrawBox / DrawCone / DrawCylinder / DrawCircle. kwargs: color, size,
   space="local"|"screen", world_space, precise_hover. Copies: .translated/
   .scaled/.outlined.
-  There are NO per-type dict buffers: self.lines / self.points / self.polygons /
-  self.shapes / self.text do NOT exist.
+  A LOCATOR has no per-type dict buffers: self.lines / self.points /
+  self.polygons / self.shapes / self.text do NOT exist on it. (self.points IS
+  the vertex slot on an mPyMesh -- see the write contracts below.)
 
 mPyLocator DRAW STATE
   self.wallclock -- seconds since the epoch (time.time()): the animation clock,
@@ -431,6 +504,7 @@ mPyLocator DRAW STATE
   self.time   -- current frame (float); reading it opts the drawing into the timeline.
   self.auto_refresh = True is REQUIRED for any animated drawing.
 
+{WRITE_CONTRACTS}
 mPyTransform MATRIX OUTPUT (GATED LOCAL-MATRIX) -- publish a desired LOCAL matrix
 + open gates (all default to a no-op = plain transform):
   self.local_matrix = M   # (4,4) parent-relative, or None
