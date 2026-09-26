@@ -1,6 +1,6 @@
 # animatedSelection -- compile report
 
-**Source node:** `animatedSelection`  ·  **Base:** `MPxLocatorNode`  ·  **Generated:** 2026-09-10 14:36
+**Source node:** `animatedSelection`  ·  **Base:** `MPxLocatorNode`  ·  **Generated:** 2026-09-25 20:20
 
 | stage | outcome |
 |---|---|
@@ -17,31 +17,31 @@
 # enum. Selection tints the FILL only (highlight_fill) while the wireframe
 # keeps its own colour (highlight_wire=False) -- per-aspect highlighting.
 # Animation state lives in getattr-defaulted vars, so it needs no seeding.
-hovered     = bool(self.hovered)
-now         = float(self.wallclock)
-duration    = max(self.popDuration, 1e-3)
-amount      = self.popAmount
+hovered = bool(self.hovered)
+now = float(self.wallclock)
+duration = max(self.popDuration, 1e-3)
+amount = self.popAmount
 
-prev        = bool(getattr(self, "prev_hovered", False))
-anim_start  = float(getattr(self, "anim_start_t", 0.0))
-anim_from   = float(getattr(self, "anim_from", 0.0))
-anim_to     = float(getattr(self, "anim_to", 0.0))
+prev = bool(getattr(self, "prev_hovered", False))
+anim_start = float(getattr(self, "anim_start_t", 0.0))
+anim_from = float(getattr(self, "anim_from", 0.0))
+anim_to = float(getattr(self, "anim_to", 0.0))
 
-elapsed     = (now - anim_start) / duration
-elapsed     = 0.0 if elapsed < 0.0 else (1.0 if elapsed > 1.0 else elapsed)
+elapsed = (now - anim_start) / duration
+elapsed = 0.0 if elapsed < 0.0 else (1.0 if elapsed > 1.0 else elapsed)
 current_pop = anim_from + (anim_to - anim_from) * elastic_in_out(elapsed)
 
 if hovered != prev:
     self.anim_start_t = now
-    self.anim_from    = current_pop
-    self.anim_to      = 1.0 if hovered else 0.0
+    self.anim_from = current_pop
+    self.anim_to = 1.0 if hovered else 0.0
     self.prev_hovered = hovered
-    elapsed           = 0.0
+    elapsed = 0.0
 
 scale = 1.0 + amount * current_pop
 
 # Spin on the wall clock at the user-tunable spinSpeed (radians per second).
-ang  = self.wallclock * self.spinSpeed
+ang = self.wallclock * self.spinSpeed
 spun = ((cube_pts * scale) @ rot_y(ang).T) @ rot_x(ang * 0.6).T
 
 # The four fill modes are named after the buffer key each one drives, so the
@@ -68,7 +68,7 @@ cube = DrawMesh(spun, cube_cnt, cube_idx,
 if self.show_wireframe:
     cube = cube.outlined((0.04, 0.04, 0.06, 1.0), width=self.wire_width, boundary_only=False)
 
-self.draw           = cube
+self.draw = cube
 self.auto_highlight = False      # we drive highlighting ourselves
 # Keep repainting while the pop tween runs AND while the cube spins: on the wall
 # clock nothing else ever redraws it between interactions (a still cube with
