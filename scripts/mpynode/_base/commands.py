@@ -790,6 +790,126 @@ class _DisconnectAllCommand(_BaseCommand):
         pass
 
 
+class _CreateGeoForPlugCommand(_BaseCommand):
+    """Create the geometry shape a mesh / NURBS plug wants, and wire it.
+
+    The same convenience a ``time`` input gets when it offers to plug in
+    ``time1``: a geometry plug is useless until something is on the other end
+    of it, and building that by hand is four steps in the Outliner
+    (create, find the shape, find the right world plug, connect).
+
+    Which node depends on the DIRECTION, because the two ends need different
+    things:
+
+    * an INPUT wants something to read, so it gets a primitive with actual
+      geometry in it (an empty shape would connect and feed nothing) wired
+      ``<shape>.worldMesh[0]`` / ``.worldSpace[0]`` -> plug;
+    * an OUTPUT wants somewhere to land, so it gets an EMPTY shape under a
+      transform, wired plug -> ``<shape>.inMesh`` / ``.create``, which is
+      exactly what each node type's own setup builds for its render shape. A
+      mesh also joins ``initialShadingGroup``, or it draws as an invisible
+      surface until the user works out why.
+
+    An array plug takes the next free element rather than the bare parent,
+    which Maya rejects for a multi.
+
+    ``undoIt`` / ``redoIt`` are no-ops on purpose: every call here
+    (``polyCube``, ``createNode``, ``connectAttr``, ``sets``) is itself
+    undoable and rides the ``run_undoable`` chunk, so one Ctrl+Z takes the
+    whole thing back (same contract as :class:`_CreateNodeCommand`).
+    """
+
+    #: attr type -> (shape type, the shape's OUTPUT plug, its INPUT plug)
+    GEO_TYPES = {
+        "mesh":         ("mesh",         "worldMesh[0]",  "inMesh"),
+        "nurbsCurve":   ("nurbsCurve",   "worldSpace[0]", "create"),
+        "nurbsSurface": ("nurbsSurface", "worldSpace[0]", "create"),
+    }
+    #: what an INPUT gets, so the plug reads real geometry from the start.
+    PRIMITIVES = {
+        "mesh":         ("polyCube",  {}),
+        "nurbsCurve":   ("circle",    {"constructionHistory": True}),
+        "nurbsSurface": ("nurbsPlane", {"constructionHistory": True}),
+    }
+
+    def __init__(self, node_name: str, attr_name: str, attr_type: str,
+                 direction: str, is_array: bool = False):
+        if attr_type not in self.GEO_TYPES:
+            raise ValueError(
+                "attr_type must be one of %s, got %r"
+                % (sorted(self.GEO_TYPES), attr_type))
+        if direction not in ("input", "output"):
+            raise ValueError(
+                "direction must be 'input' or 'output', got %r" % (direction,))
+        self.node_name = node_name
+        self.attr_name = attr_name
+        self.attr_type = attr_type
+        self.direction = direction
+        self.is_array  = bool(is_array)
+        #: the transform created, for the caller to select / report.
+        self.created_name: str | None = None
+
+    # -- plugs ---------------------------------------------------------
+
+    def _node_plug(self) -> str:
+        """This node's side of the connection, indexed when it is a multi."""
+        plug = "%s.%s" % (self.node_name, self.attr_name)
+        if not self.is_array:
+            return plug
+        used = cmds.getAttr(plug, multiIndices=True) or []
+        return "%s[%d]" % (plug, (max(used) + 1) if used else 0)
+
+    # -- build ---------------------------------------------------------
+
+    def _make_source(self) -> str:
+        """A primitive to drive an input. Returns its shape."""
+        ctor, kwargs = self.PRIMITIVES[self.attr_type]
+        made = getattr(cmds, ctor)(name="%sSource" % self.attr_name, **kwargs)
+        xform = made[0] if isinstance(made, (list, tuple)) else made
+        self.created_name = xform
+        shapes = cmds.listRelatives(xform, shapes=True, fullPath=False) or []
+        if not shapes:
+            raise RuntimeError("%s created no shape" % ctor)
+        return shapes[0]
+
+    def _make_destination(self) -> str:
+        """An empty shape to receive an output. Returns it."""
+        shape_type = self.GEO_TYPES[self.attr_type][0]
+        # <attr>Render / <attr>RenderShape, the names each geometry node type's
+        # own setup gives the shape it builds for its output.
+        xform = cmds.createNode("transform", name="%sRender" % self.attr_name)
+        self.created_name = xform
+        shape = cmds.createNode(shape_type, name="%sRenderShape" % self.attr_name,
+                                parent=xform)
+        if self.attr_type == "mesh":
+            # Without a shading group the mesh is in the scene but invisible.
+            try:
+                cmds.sets(shape, edit=True, forceElement="initialShadingGroup")
+            except Exception:
+                pass
+        return shape
+
+    def doIt(self) -> str | None:
+        node_plug = self._node_plug()
+        if self.direction == "input":
+            shape = self._make_source()
+            src   = "%s.%s" % (shape, self.GEO_TYPES[self.attr_type][1])
+            cmds.connectAttr(src, node_plug, force=True)
+        else:
+            shape = self._make_destination()
+            dst   = "%s.%s" % (shape, self.GEO_TYPES[self.attr_type][2])
+            cmds.connectAttr(node_plug, dst, force=True)
+        return self.created_name
+
+    def undoIt(self) -> None:
+        # No-op: every call above rode the undo chunk (see the class docstring).
+        pass
+
+    def redoIt(self) -> None:
+        # Same.
+        pass
+
+
 class _SetSparseCommand(_BaseCommand):
     """Undoable toggle of a user ARRAY INPUT attr's ``sparse`` read flag.
 

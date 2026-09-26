@@ -24,6 +24,7 @@ from mpynode._base.commands import (
     _AddOutputAttrCommand,
     _ClobberMultiConnectCommand,
     _ConnectAttrCommand,
+    _CreateGeoForPlugCommand,
     _DeleteAttrCommand,
     _DisconnectAllCommand,
     _RenameAttrCommand,
@@ -1217,6 +1218,21 @@ class NDInputAttrTree(QTreeWidget):
     # Right-click context menu
     # ------------------------------------------------------------------
 
+    #: How a geometry attr type reads in the menu.
+    _GEO_MENU_LABELS = {
+        "mesh":         "Mesh",
+        "nurbsCurve":   "NURBS Curve",
+        "nurbsSurface": "NURBS Surface",
+    }
+
+    def _selected_geo_items(self) -> list:
+        """Selected user attrs whose type is mesh / nurbsCurve / nurbsSurface."""
+        return [
+            it for it in self._selected_user_items()
+            if str((it.attr_meta or {}).get("attr_type", ""))
+            in _CreateGeoForPlugCommand.GEO_TYPES
+        ]
+
     def contextMenuEvent(self, event):
         if self._py_node is None:
             return
@@ -1255,6 +1271,24 @@ class NDInputAttrTree(QTreeWidget):
                 lambda checked=False: self._disconnect_selected()
             )
             menu.addAction(disconnect_act)
+
+            # A geometry plug is inert until something is on the other end
+            # of it, and wiring that by hand is four steps in the Outliner.
+            # Same convenience a time input gets from time1.
+            geo_items = self._selected_geo_items()
+            if geo_items:
+                kinds = {(it.attr_meta or {}).get("attr_type") for it in geo_items}
+                what  = (self._GEO_MENU_LABELS[kinds.pop()] if len(kinds) == 1
+                         else "Geometry")
+                geo_act = QAction("Create + Connect %s" % what, menu)
+                geo_act.setToolTip(
+                    "Builds a cube / circle / plane and drives this input with it"
+                    if self.ATTR_CATEGORY == "input" else
+                    "Builds an empty shape for this output to draw into")
+                geo_act.triggered.connect(
+                    lambda checked=False: self._create_geo_for_selected()
+                )
+                menu.addAction(geo_act)
 
             menu.addSeparator()
             set_color_act = QAction("Set Color\u2026", menu)
@@ -1516,6 +1550,43 @@ class NDInputAttrTree(QTreeWidget):
             mc.select(self._py_node.get_name(), replace=True)
         except Exception:
             pass
+
+    def _create_geo_for_selected(self) -> None:
+        """Build and wire the shape each selected geometry plug wants.
+
+        An input gets a primitive to read (an empty shape would connect and
+        feed it nothing); an output gets an empty shape to draw into, the same
+        render shape each geometry node type's own setup builds. One undoable
+        command per plug, so a multi-select is undone one plug at a time --
+        matching Set Color and Sparse, which also loop.
+        """
+        if self._py_node is None:
+            return
+        node  = self._py_node.get_name()
+        built = []
+        for it in self._selected_geo_items():
+            meta = it.attr_meta or {}
+            try:
+                built.append(run_undoable(_CreateGeoForPlugCommand(
+                    node,
+                    it.attr_name,
+                    str(meta.get("attr_type", "")),
+                    self.ATTR_CATEGORY,
+                    is_array=bool(meta.get("is_array")),
+                )))
+            except Exception as exc:
+                QMessageBox.warning(
+                    self, "Create Failed", f"{it.attr_name}: {exc}"
+                )
+                break
+        if built:
+            # Both trees: the new node shows as a connection on this plug, and
+            # a node wired both ways would otherwise leave the sibling stale.
+            self._refresh_both_trees()
+            try:
+                mc.select([n for n in built if n and mc.objExists(n)])
+            except Exception:
+                pass
 
     def _toggle_sparse(self, value: bool) -> None:
         """Flip the ``sparse`` read flag on the selected user ARRAY input attr(s).
