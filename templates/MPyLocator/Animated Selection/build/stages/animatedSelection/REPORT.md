@@ -1,6 +1,6 @@
 # animatedSelection -- compile report
 
-**Source node:** `animatedSelection`  ·  **Base:** `MPxLocatorNode`  ·  **Generated:** 2026-09-25 20:20
+**Source node:** `animatedSelection`  ·  **Base:** `MPxLocatorNode`  ·  **Generated:** 2026-09-26 00:20
 
 | stage | outcome |
 |---|---|

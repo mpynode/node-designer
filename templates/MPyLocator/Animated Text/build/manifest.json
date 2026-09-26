@@ -1,12 +1,12 @@
 {
   "manifest_version": 1,
-  "porter_recipe_version": "35",
+  "porter_recipe_version": "36",
   "provider": "claude_cli",
   "model": "",
   "strict": false,
   "plugin_name": "MPyLocator_Animated_Text",
   "bundle": "G:\\My Drive\\claude\\projects\\MPyNode\\templates\\MPyLocator\\Animated Text\\MPyLocator_Animated_Text.mll",
-  "created": 1790392884.4535866,
+  "created": 1790407251.0474744,
   "nodes": [
     {
       "source_node": "animatedText",
@@ -14,8 +14,8 @@
       "type_id": "0x0004e393",
       "type_id_source": "derived",
       "base": "MPxLocatorNode",
-      "spec_hash": "13ef2f58d287dcf57e6ebbca987ba00ad347a1f0165b62ba83f495cf4aa11260",
-      "port_cache_key": "13ef2f58d287dcf57e6ebbca987ba00ad347a1f0165b62ba83f495cf4aa11260",
+      "spec_hash": "c6ee9427907cc7018fa0c11944f1861ab990f3f8745f95afe0f57cbff03faa97",
+      "port_cache_key": "c6ee9427907cc7018fa0c11944f1861ab990f3f8745f95afe0f57cbff03faa97",
       "cache": "hit",
       "build_status": "compiled",
       "build_reason": "",

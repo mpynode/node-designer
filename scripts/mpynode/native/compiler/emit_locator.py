@@ -25,6 +25,10 @@ _LOCATOR_INCLUDES_COMMON = [
 ]
 
 _LOCATOR_INCLUDES_PLUGIN = [
+    # MObjectHandle: every locator now keys its drawn extent by node hash
+    # (boundingBox / _setBBox), not just the hover + stored-var builds.
+    # MApiNamespace.h only forward-declares it, which reads as C2027.
+    "maya/MObjectHandle.h",
     "maya/MPxLocatorNode.h", "maya/MFnPlugin.h", "maya/MTypeId.h",
     "maya/MMatrix.h", "maya/MBoundingBox.h", "maya/MTransformationMatrix.h",
     "maya/MDagPath.h", "maya/MObject.h", "maya/MFnDependencyNode.h",
@@ -578,6 +582,7 @@ def _locator_hover_service(cls, data_cls, svars, needs_hover=True):
     L.append("// doesn't leak and -- crucially -- so a later node that reuses the freed")
     L.append("// MObjectHandle hashCode() starts from the lockstep defaults, not a dead")
     L.append("// node's stale tween (Python kept these on self, immune to hash reuse).")
+    L.append("")
     L.append("static void _onNodeRemoved(MObject& node, void*) {")
     L.append("    unsigned hash = MObjectHandle(node).hashCode();   // node still valid here")
     if needs_hover:
@@ -585,6 +590,9 @@ def _locator_hover_service(cls, data_cls, svars, needs_hover=True):
         L.append("    g_hoverTris.erase(hash); g_autoRefresh.erase(hash);")
     else:
         L.append("    g_tween.erase(hash);")
+    # Same reason as the tween: a later node reusing this freed hashCode() must
+    # not inherit a dead node's extent.
+    L.append("    g_bbox.erase(hash);")
     L.append("    g_removalCbs.erase(hash);   // Maya releases the firing callback itself")
     if needs_hover:
         L.append("    if (g_hoverValid && g_hoverHash == hash) { g_hoverValid = false; g_hoverHash = 0; }")
@@ -754,6 +762,7 @@ def _locator_hover_service(cls, data_cls, svars, needs_hover=True):
         L.append("    g_autoRefresh.clear(); g_hoverTris.clear(); g_handles.clear(); g_tween.clear();")
     else:
         L.append("    g_tween.clear();")
+    L.append("    g_bbox.clear();")
     L.append("}")
     L.append("static void _ensureHoverStarted() {")
     L.append("    if (g_started) return;")
@@ -1280,6 +1289,12 @@ def _generate_locator_cpp(spec, for_port=False):
     L.append("#ifndef MPYNODE_PROBE  // ===== plugin scaffold (excluded from probe) =====")
     L.append("")
     # ---- the locator node ----------------------------------------------------
+    # The extent of each node's last drawing, for boundingBox() below.
+    # Measured in prepareForDraw, where the buffers exist -- the node itself
+    # never sees them (the interpreted MPyLocator caches it on self, off the
+    # same buffers). Declared HERE, before the class, because the draw side's
+    # globals sit in an anonymous namespace and the member body cannot.
+    L.append("static std::map<unsigned, MBoundingBox> g_bbox;   // hash -> drawn extent")
     L.append("class %s : public MPxLocatorNode {" % cls)
     L.append("public:")
     L.append("    %s() {}" % cls)
@@ -1289,6 +1304,20 @@ def _generate_locator_cpp(spec, for_port=False):
     L.append("    static MTypeId id;")
     L.append("    static MString drawDbClassification;")
     L.append("    static MString drawRegistrantId;")
+    L.append("    // The drawn extent (see _drawnBounds), so Frame Selected and a bbox")
+    L.append("    // pick line up with the gizmo -- MPxLocatorNode's default is the unit")
+    L.append("    // cube scaled by localScale, which describes a plain locator's cross.")
+    L.append("    bool isBounded() const override { return true; }")
+    L.append("    MBoundingBox boundingBox() const override {")
+    L.append("        // Measured off the last drawing, never by re-running the")
+    L.append("        // expression: Maya asks for this during selection and framing.")
+    L.append("        // Before the first draw nothing is measured and the stock")
+    L.append("        // locator box stands.")
+    L.append("        std::map<unsigned, MBoundingBox>::const_iterator it =")
+    L.append("            g_bbox.find(MObjectHandle(thisMObject()).hashCode());")
+    L.append("        if (it == g_bbox.end()) return MPxLocatorNode::boundingBox();")
+    L.append("        return it->second;")
+    L.append("    }")
     for s in scalars:
         L.append("    static MObject a_%s;" % s["member"])
     for m in meshes:
@@ -1426,6 +1455,38 @@ def _generate_locator_cpp(spec, for_port=False):
         L.append(disp_out["classes"])
         L.append("")
     # ---- the draw override ---------------------------------------------------
+    L.append("// The extent of what was drawn, in OBJECT space -- the port of")
+    L.append("// draw_buffers.command_bounds, rule for rule: a shape grows by its own")
+    L.append("// radius (a sphere whose CENTRE is in frame is not a sphere in frame),")
+    L.append("// text contributes only its anchor (glyphs are sized in PIXELS, so their")
+    L.append("// on-screen extent is not an object-space quantity), and world-space")
+    L.append("// items are skipped because a bounding box is reported in the shape's")
+    L.append("// own space. Returns false when nothing drawable was emitted.")
+    L.append("static bool _drawnBounds(const %s& d, MBoundingBox& out) {" % data_cls)
+    L.append("    bool any = false;")
+    L.append("    for (size_t i = 0; i < d.lineStart.size(); ++i) {")
+    L.append("        if (i < d.lineWorld.size() && d.lineWorld[i]) continue;")
+    L.append("        out.expand(d.lineStart[i]); out.expand(d.lineEnd[i]); any = true;")
+    L.append("    }")
+    L.append("    for (size_t i = 0; i < d.pointPos.size(); ++i) { out.expand(d.pointPos[i]); any = true; }")
+    L.append("    for (size_t i = 0; i < d.textPos.size(); ++i)  { out.expand(d.textPos[i]);  any = true; }")
+    L.append("    for (size_t i = 0; i < d.shapeCenter.size(); ++i) {")
+    L.append("        const double r = (i < d.shapeRadius.size()) ? std::fabs(d.shapeRadius[i]) : 0.0;")
+    L.append("        const MPoint& c = d.shapeCenter[i];")
+    L.append("        out.expand(MPoint(c.x - r, c.y - r, c.z - r));")
+    L.append("        out.expand(MPoint(c.x + r, c.y + r, c.z + r));")
+    L.append("        any = true;")
+    L.append("    }")
+    L.append("    for (size_t p = 0; p < d.polys.size(); ++p) {")
+    L.append("        const DrawPoly& pg = d.polys[p];")
+    L.append("        if (pg.worldSpace) continue;")
+    L.append("        for (size_t i = 0; i < pg.pts.size(); ++i) { out.expand(pg.pts[i]); any = true; }")
+    L.append("    }")
+    L.append("    return any;")
+    L.append("}")
+    L.append("static void _setBBox(unsigned hash, const MBoundingBox& bb, bool any) {")
+    L.append("    if (any) g_bbox[hash] = bb; else g_bbox.erase(hash);")
+    L.append("}")
     L.append("class %s : public MHWRender::MPxDrawOverride {" % draw_cls)
     L.append("public:")
     L.append("    static MHWRender::MPxDrawOverride* creator(const MObject& obj) {")
@@ -1647,6 +1708,13 @@ def _generate_locator_cpp(spec, for_port=False):
         L.append("    // per-item precise_hover); _setHoverTris clears when nothing opted in.")
         L.append("    { std::vector<MPoint> _htris; _buildHoverTris(*data, objPath, _htris);")
         L.append("      _setHoverTris(_nodeHash, _htris); }")
+    L.append("    // Frame Selected must fit the drawing, not MPxLocatorNode's unit box.")
+    L.append("    // The hash is taken here rather than from the hover path's _nodeHash,")
+    L.append("    // which a locator with no hover and no stored vars never declares; it")
+    L.append("    // is the same key boundingBox() looks up.")
+    L.append("    { const unsigned _bbHash = MObjectHandle(objPath.node()).hashCode();")
+    L.append("      MBoundingBox _bb; const bool _anyBB = _drawnBounds(*data, _bb);")
+    L.append("      _setBBox(_bbHash, _bb, _anyBB); }")
     L.append("    data->selected = inp.selected;")
     L.append("    data->selColor = MColor(inp.selColor[0], inp.selColor[1], inp.selColor[2], inp.selColor[3]);")
     L.append("    return data;")

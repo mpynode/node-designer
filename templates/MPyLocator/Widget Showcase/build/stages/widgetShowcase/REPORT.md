@@ -1,6 +1,6 @@
 # widgetShowcase -- compile report
 
-**Source node:** `widgetShowcase`  ·  **Base:** `MPxLocatorNode`  ·  **Generated:** 2026-09-25 20:21
+**Source node:** `widgetShowcase`  ·  **Base:** `MPxLocatorNode`  ·  **Generated:** 2026-09-25 23:47
 
 | stage | outcome |
 |---|---|

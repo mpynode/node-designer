@@ -459,7 +459,21 @@ from typing import Optional
 # The command is a C++ MPxCommand fused into the cached .cpp, so a HIT would
 # keep shipping it without one. Moves 1 of 76 stage-1 files (Mesh Regions);
 # every other create command was already unblocked -- 2026-09-24.
-PORTER_RECIPE_VERSION = "35"
+# v36: a compiled locator now reports the extent it DRAWS. The node emits
+# `isBounded() { return true; }` plus a `boundingBox()` reading a per-node
+# `g_bbox`, which `prepareForDraw` fills through `_drawnBounds` -- the port of
+# draw_buffers.command_bounds, same rules (a shape grows by its radius, text
+# counts only its anchor, world-space items are skipped). Before this the
+# emitted node had no override at all, so Frame Selected on a compiled gizmo
+# zoomed to the whole scene while the interpreted one framed the drawing
+# (mpy_locator.boundingBox, 217eff7). The draw OVERRIDE stays unbounded on
+# purpose: culling on the node's box would cull a gizmo drawing far from its
+# origin before it had ever been measured. This is a SKELETON change the cache
+# key cannot see, so a hit would keep shipping the old node. Moves 9 of 76
+# stage-1 files -- animatedSelection, animatedText, circularText,
+# meshRegionLocator and widgetShowcase, in their templates and in the All
+# Templates Plugin -- 2026-09-25.
+PORTER_RECIPE_VERSION = "36"
 
 # Spec keys excluded from the cache key -- provably irrelevant to the generated
 # C++. A deny-list, NOT an allow-list (design C1).

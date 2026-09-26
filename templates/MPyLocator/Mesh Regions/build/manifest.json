@@ -1,12 +1,12 @@
 {
   "manifest_version": 1,
-  "porter_recipe_version": "35",
+  "porter_recipe_version": "36",
   "provider": "claude_cli",
-  "model": "claude-opus-5-5[1m]",
+  "model": "",
   "strict": false,
   "plugin_name": "MPyLocator_Mesh_Regions",
-  "bundle": "C:\\Users\\eric.vignola\\mpynode_build\\MPyNode\\templates\\MPyLocator\\Mesh Regions\\MPyLocator_Mesh_Regions.mll",
-  "created": 1790281829.4859648,
+  "bundle": "G:\\My Drive\\claude\\projects\\MPyNode\\templates\\MPyLocator\\Mesh Regions\\MPyLocator_Mesh_Regions.mll",
+  "created": 1790407314.9132762,
   "nodes": [
     {
       "source_node": "meshRegions",
@@ -14,8 +14,8 @@
       "type_id": "0x000609ee",
       "type_id_source": "derived",
       "base": "MPxLocatorNode",
-      "spec_hash": "7943f694a72ba5dec1e78343893fc2360f13f081e1a487a97a60692c369b9811",
-      "port_cache_key": "7943f694a72ba5dec1e78343893fc2360f13f081e1a487a97a60692c369b9811",
+      "spec_hash": "ec677a939c2b881b099895b1b3eca0bada06cb75b7303cc2870f26b853536b1d",
+      "port_cache_key": "ec677a939c2b881b099895b1b3eca0bada06cb75b7303cc2870f26b853536b1d",
       "cache": "hit",
       "build_status": "compiled",
       "build_reason": "",

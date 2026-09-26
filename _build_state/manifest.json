@@ -6955,7 +6955,7 @@
           "events": [
             "portability animatedSelection start: ",
             "cache animatedSelection start: ",
-            "cache animatedSelection miss: cache miss 6ef0217d7ec9",
+            "cache animatedSelection miss: cache miss fce4cbedbc3c",
             "port animatedSelection start: porting",
             "stage animatedSelection ok: 1_transpiled",
             "stage animatedSelection ok: 2_assisted",
@@ -6974,7 +6974,7 @@
         },
         "bundle_exists": true,
         "bundle_path": "G:\\My Drive\\claude\\projects\\MPyNode\\templates\\MPyLocator\\Animated Selection\\MPyLocator_Animated_Selection.mll",
-        "ended": 1790391452.5023973,
+        "ended": 1790406131.0762293,
         "errors": [],
         "log": "G:\\My Drive\\claude\\projects\\MPyNode\\templates\\MPyLocator\\Animated Selection\\_runner\\phase_a.log",
         "mode": {
@@ -7015,11 +7015,11 @@
         "phase": "a",
         "rel": "MPyLocator\\Animated Selection",
         "rounds": {},
-        "secs": 292.3,
+        "secs": 326.3,
         "smoke": false,
-        "started": 1790391160.2176263,
+        "started": 1790405804.7263508,
         "state": "ok",
-        "wall_secs": 302.2
+        "wall_secs": 338.2
       },
       "phase_b": {
         "ai": {
@@ -7035,7 +7035,7 @@
             "portability animatedSelection start: ",
             "cache animatedSelection start: ",
             "stage animatedSelection ok: 1_transpiled",
-            "cache animatedSelection hit: cache hit 6ef0217d7ec9",
+            "cache animatedSelection hit: cache hit fce4cbedbc3c",
             "stage animatedSelection ok: 2_assisted_cached",
             "assemble - start: linking 1 node(s)",
             "assemble - ok: bundle: MPyLocator_Animated_Selection.mll",
@@ -7055,7 +7055,7 @@
         },
         "bundle_exists": true,
         "bundle_path": "G:\\My Drive\\claude\\projects\\MPyNode\\templates\\MPyLocator\\Animated Selection\\MPyLocator_Animated_Selection.mll",
-        "ended": 1790392843.579504,
+        "ended": 1790407215.3918107,
         "errors": [],
         "log": "G:\\My Drive\\claude\\projects\\MPyNode\\templates\\MPyLocator\\Animated Selection\\_runner\\phase_b.log",
         "mode": {
@@ -7114,7 +7114,7 @@
             "accepted": false,
             "baseline_ms": null,
             "best_ms": null,
-            "created": 1790392838.898049,
+            "created": 1790407210.9507844,
             "fresh": true,
             "n_rounds": 0,
             "parity_gate": "not exercised",
@@ -7138,11 +7138,11 @@
             "speedup": 1.0
           }
         },
-        "secs": 22.7,
+        "secs": 20.3,
         "smoke": false,
-        "started": 1790392820.9133272,
+        "started": 1790407195.0627723,
         "state": "ok",
-        "wall_secs": 34.0
+        "wall_secs": 30.0
       }
     },
     "MPyLocator\\Animated Text": {
@@ -7157,7 +7157,7 @@
           "events": [
             "portability animatedText start: ",
             "cache animatedText start: ",
-            "cache animatedText miss: cache miss 13ef2f58d287",
+            "cache animatedText miss: cache miss c6ee9427907c",
             "port animatedText start: porting",
             "stage animatedText ok: 1_transpiled",
             "port animatedText ok: ported (0 fix rounds)",
@@ -7176,7 +7176,7 @@
         },
         "bundle_exists": true,
         "bundle_path": "G:\\My Drive\\claude\\projects\\MPyNode\\templates\\MPyLocator\\Animated Text\\MPyLocator_Animated_Text.mll",
-        "ended": 1790391176.598762,
+        "ended": 1790405820.9274766,
         "errors": [],
         "log": "G:\\My Drive\\claude\\projects\\MPyNode\\templates\\MPyLocator\\Animated Text\\_runner\\phase_a.log",
         "mode": {
@@ -7217,11 +7217,11 @@
         "phase": "a",
         "rel": "MPyLocator\\Animated Text",
         "rounds": {},
-        "secs": 16.5,
+        "secs": 16.2,
         "smoke": false,
-        "started": 1790391160.1157944,
+        "started": 1790405804.7263508,
         "state": "ok",
-        "wall_secs": 26.0
+        "wall_secs": 28.0
       },
       "phase_b": {
         "ai": {
@@ -7235,7 +7235,7 @@
             "portability animatedText start: ",
             "cache animatedText start: ",
             "stage animatedText ok: 1_transpiled",
-            "cache animatedText hit: cache hit 13ef2f58d287",
+            "cache animatedText hit: cache hit c6ee9427907c",
             "port - skip: no node needed AI assist -- every compute lowered deterministically",
             "assemble - start: linking 1 node(s)",
             "assemble - ok: bundle: MPyLocator_Animated_Text.mll",
@@ -7255,7 +7255,7 @@
         },
         "bundle_exists": true,
         "bundle_path": "G:\\My Drive\\claude\\projects\\MPyNode\\templates\\MPyLocator\\Animated Text\\MPyLocator_Animated_Text.mll",
-        "ended": 1790392884.5274208,
+        "ended": 1790407251.1078622,
         "errors": [],
         "log": "G:\\My Drive\\claude\\projects\\MPyNode\\templates\\MPyLocator\\Animated Text\\_runner\\phase_b.log",
         "mode": {
@@ -7314,7 +7314,7 @@
             "accepted": false,
             "baseline_ms": null,
             "best_ms": null,
-            "created": 1790392876.4307218,
+            "created": 1790407243.941597,
             "fresh": true,
             "n_rounds": 0,
             "parity_gate": "not exercised",
@@ -7338,11 +7338,215 @@
             "speedup": 1.0
           }
         },
-        "secs": 28.9,
+        "secs": 26.1,
         "smoke": false,
-        "started": 1790392855.6618648,
+        "started": 1790407225.0313172,
         "state": "ok",
-        "wall_secs": 40.0
+        "wall_secs": 36.0
+      }
+    },
+    "MPyLocator\\Circular Text": {
+      "phase_a": {
+        "ai": {
+          "assisted_cached": [],
+          "assisted_now": [
+            "circularText"
+          ],
+          "cache_hit": [],
+          "cache_miss": [
+            "circularText"
+          ],
+          "events": [
+            "portability circularText start: ",
+            "cache circularText start: ",
+            "cache circularText miss: cache miss 48bdaf3613d6",
+            "port circularText start: porting",
+            "stage circularText ok: 1_transpiled",
+            "stage circularText ok: 2_assisted",
+            "port circularText ok: ported (0 fix rounds)",
+            "assemble - start: linking 1 node(s)",
+            "assemble - ok: bundle: MPyLocator_Circular_Text.mll",
+            "verify - start: parity check",
+            "verify circularText ok: maxerr=None",
+            "verify - ok: verify done",
+            "done - ok: 1 node(s)"
+          ],
+          "n_log_lines": 12,
+          "n_optimize_events": 0,
+          "no_node_needed_llm": false,
+          "optimize_events_tail": []
+        },
+        "bundle_exists": true,
+        "bundle_path": "G:\\My Drive\\claude\\projects\\MPyNode\\templates\\MPyLocator\\Circular Text\\MPyLocator_Circular_Text.mll",
+        "ended": 1790407183.809059,
+        "errors": [],
+        "log": "G:\\My Drive\\claude\\projects\\MPyNode\\templates\\MPyLocator\\Circular Text\\_runner\\phase_a.log",
+        "mode": {
+          "ai_assist": true,
+          "keep_intermediates": false,
+          "optimize": false
+        },
+        "nodes": [
+          {
+            "build_reason": "",
+            "build_status": "compiled",
+            "cache": "miss",
+            "incomplete": [],
+            "ported": true,
+            "type_name": "circularText",
+            "verify": {
+              "authored_test": {
+                "count": 1,
+                "passed": true,
+                "passes": 1,
+                "ran": true,
+                "reason": ""
+              },
+              "generic_ran": false,
+              "maxerr": null,
+              "pass": true,
+              "ran": true,
+              "reason": "no scalar outputs to compare -- pointwise parity skipped (vacuous check) | authored @maya_test: 1/1 passed",
+              "timing": {
+                "measured": false,
+                "reason": "not timed -- generic parity did not pass for this node, so there is no trustworthy pair to measure (no scalar outputs to compare -- pointwise parity skipped (vacuous check))"
+              },
+              "tol": 0.0001
+            }
+          }
+        ],
+        "optimize_summary": {},
+        "phase": "a",
+        "rel": "MPyLocator\\Circular Text",
+        "rounds": {},
+        "secs": 1353.5,
+        "smoke": false,
+        "started": 1790405830.2707698,
+        "state": "ok",
+        "wall_secs": 1364.5
+      },
+      "phase_b": {
+        "ai": {
+          "assisted_cached": [
+            "circularText"
+          ],
+          "assisted_now": [],
+          "cache_hit": [
+            "circularText"
+          ],
+          "cache_miss": [],
+          "events": [
+            "portability circularText start: ",
+            "cache circularText start: ",
+            "stage circularText ok: 1_transpiled",
+            "cache circularText hit: cache hit 48bdaf3613d6",
+            "stage circularText ok: 2_assisted_cached",
+            "assemble - start: linking 1 node(s)",
+            "assemble - ok: bundle: MPyLocator_Circular_Text.mll",
+            "verify - start: parity check",
+            "verify circularText ok: maxerr=None",
+            "verify - ok: verify done",
+            "done - ok: 1 node(s)"
+          ],
+          "n_log_lines": 2,
+          "n_optimize_events": 3,
+          "no_node_needed_llm": false,
+          "optimize_events_tail": [
+            "- info: [circularText] optimizing -- measuring baseline",
+            "- info: [circularText] baseline could not be benchmarked; skipping",
+            "- ok: circularText: kept original (baseline could not be benchmarked)"
+          ]
+        },
+        "bundle_exists": true,
+        "bundle_path": "G:\\My Drive\\claude\\projects\\MPyNode\\templates\\MPyLocator\\Circular Text\\MPyLocator_Circular_Text.mll",
+        "ended": 1790407282.9899316,
+        "errors": [],
+        "log": "G:\\My Drive\\claude\\projects\\MPyNode\\templates\\MPyLocator\\Circular Text\\_runner\\phase_b.log",
+        "mode": {
+          "ai_assist": true,
+          "keep_intermediates": true,
+          "optimize": true
+        },
+        "nodes": [
+          {
+            "build_reason": "",
+            "build_status": "compiled",
+            "cache": "hit",
+            "incomplete": [],
+            "ported": true,
+            "type_name": "circularText",
+            "verify": {
+              "authored_test": {
+                "count": 1,
+                "passed": true,
+                "passes": 1,
+                "ran": true,
+                "reason": ""
+              },
+              "generic_ran": false,
+              "maxerr": null,
+              "pass": true,
+              "ran": true,
+              "reason": "no scalar outputs to compare -- pointwise parity skipped (vacuous check) | authored @maya_test: 1/1 passed",
+              "timing": {
+                "measured": false,
+                "reason": "not timed -- generic parity did not pass for this node, so there is no trustworthy pair to measure (no scalar outputs to compare -- pointwise parity skipped (vacuous check))"
+              },
+              "tol": 0.0001
+            }
+          }
+        ],
+        "optimize_summary": {
+          "circularText": {
+            "accepted": false,
+            "ai": {
+              "candidates": 0,
+              "errors": [],
+              "rounds": 0
+            },
+            "max_rounds": 6,
+            "reason": "baseline could not be benchmarked",
+            "rounds": 0,
+            "speedup": 1.0,
+            "stop_reason": "baseline could not be benchmarked"
+          }
+        },
+        "phase": "b",
+        "rel": "MPyLocator\\Circular Text",
+        "rounds": {
+          "circularText": {
+            "accepted": false,
+            "baseline_ms": null,
+            "best_ms": null,
+            "created": 1790407277.8987908,
+            "fresh": true,
+            "n_rounds": 0,
+            "parity_gate": "not exercised",
+            "path": "G:\\My Drive\\claude\\projects\\MPyNode\\templates\\MPyLocator\\Circular Text\\build\\stages\\circularText\\rounds.json",
+            "reason": "baseline could not be benchmarked",
+            "rounds": [
+              {
+                "cpp_same_as_baseline": true,
+                "duration_s": null,
+                "has_hypothesis": false,
+                "has_theme": false,
+                "index": 0,
+                "ms": null,
+                "note": "unmeasurable",
+                "outcome": "baseline",
+                "parity": null,
+                "slug": null,
+                "speedup": null
+              }
+            ],
+            "speedup": 1.0
+          }
+        },
+        "secs": 21.9,
+        "smoke": false,
+        "started": 1790407261.1365266,
+        "state": "ok",
+        "wall_secs": 32.0
       }
     },
     "MPyLocator\\Mesh Regions": {
@@ -7359,7 +7563,7 @@
           "events": [
             "portability meshRegionLocator start: ",
             "cache meshRegionLocator start: ",
-            "cache meshRegionLocator miss: cache miss 7943f694a72b",
+            "cache meshRegionLocator miss: cache miss ec677a939c2b",
             "port meshRegionLocator start: porting",
             "stage meshRegionLocator ok: 1_transpiled",
             "stage meshRegionLocator ok: 2_assisted",
@@ -7378,10 +7582,10 @@
           "optimize_events_tail": []
         },
         "bundle_exists": true,
-        "bundle_path": "C:\\Users\\eric.vignola\\mpynode_build\\MPyNode\\templates\\MPyLocator\\Mesh Regions\\MPyLocator_Mesh_Regions.mll",
-        "ended": 1790281769.9982986,
+        "bundle_path": "G:\\My Drive\\claude\\projects\\MPyNode\\templates\\MPyLocator\\Mesh Regions\\MPyLocator_Mesh_Regions.mll",
+        "ended": 1790406483.5103848,
         "errors": [],
-        "log": "C:\\Users\\eric.vignola\\mpynode_build\\MPyNode\\templates\\MPyLocator\\Mesh Regions\\_runner\\phase_a.log",
+        "log": "G:\\My Drive\\claude\\projects\\MPyNode\\templates\\MPyLocator\\Mesh Regions\\_runner\\phase_a.log",
         "mode": {
           "ai_assist": true,
           "keep_intermediates": false,
@@ -7420,11 +7624,11 @@
         "phase": "a",
         "rel": "MPyLocator\\Mesh Regions",
         "rounds": {},
-        "secs": 368.6,
+        "secs": 341.5,
         "smoke": false,
-        "started": 1790281401.36655,
+        "started": 1790406142.0073195,
         "state": "ok",
-        "wall_secs": 373.0
+        "wall_secs": 352.1
       },
       "phase_b": {
         "ai": {
@@ -7440,7 +7644,7 @@
             "portability meshRegionLocator start: ",
             "cache meshRegionLocator start: ",
             "stage meshRegionLocator ok: 1_transpiled",
-            "cache meshRegionLocator hit: cache hit 7943f694a72b",
+            "cache meshRegionLocator hit: cache hit ec677a939c2b",
             "stage meshRegionLocator ok: 2_assisted_cached",
             "assemble - start: linking 1 node(s)",
             "assemble - ok: bundle: MPyLocator_Mesh_Regions.mll",
@@ -7460,10 +7664,10 @@
           ]
         },
         "bundle_exists": true,
-        "bundle_path": "C:\\Users\\eric.vignola\\mpynode_build\\MPyNode\\templates\\MPyLocator\\Mesh Regions\\MPyLocator_Mesh_Regions.mll",
-        "ended": 1790281829.4899697,
+        "bundle_path": "G:\\My Drive\\claude\\projects\\MPyNode\\templates\\MPyLocator\\Mesh Regions\\MPyLocator_Mesh_Regions.mll",
+        "ended": 1790407314.9717946,
         "errors": [],
-        "log": "C:\\Users\\eric.vignola\\mpynode_build\\MPyNode\\templates\\MPyLocator\\Mesh Regions\\_runner\\phase_b.log",
+        "log": "G:\\My Drive\\claude\\projects\\MPyNode\\templates\\MPyLocator\\Mesh Regions\\_runner\\phase_b.log",
         "mode": {
           "ai_assist": true,
           "keep_intermediates": true,
@@ -7520,11 +7724,11 @@
             "accepted": false,
             "baseline_ms": null,
             "best_ms": null,
-            "created": 1790281826.6956408,
+            "created": 1790407309.9029512,
             "fresh": true,
             "n_rounds": 0,
             "parity_gate": "not exercised",
-            "path": "C:\\Users\\eric.vignola\\mpynode_build\\MPyNode\\templates\\MPyLocator\\Mesh Regions\\build\\stages\\meshRegionLocator\\rounds.json",
+            "path": "G:\\My Drive\\claude\\projects\\MPyNode\\templates\\MPyLocator\\Mesh Regions\\build\\stages\\meshRegionLocator\\rounds.json",
             "reason": "baseline could not be benchmarked",
             "rounds": [
               {
@@ -7544,11 +7748,11 @@
             "speedup": 1.0
           }
         },
-        "secs": 11.9,
+        "secs": 21.8,
         "smoke": false,
-        "started": 1790281817.6014626,
+        "started": 1790407293.2077503,
         "state": "ok",
-        "wall_secs": 16.0
+        "wall_secs": 32.0
       }
     },
     "MPyLocator\\Widget Showcase": {
@@ -7565,7 +7769,7 @@
           "events": [
             "portability widgetShowcase start: ",
             "cache widgetShowcase start: ",
-            "cache widgetShowcase miss: cache miss 068843163eeb",
+            "cache widgetShowcase miss: cache miss 56c0896dc7fa",
             "port widgetShowcase start: porting",
             "stage widgetShowcase ok: 1_transpiled",
             "stage widgetShowcase ok: 2_assisted",
@@ -7584,7 +7788,7 @@
         },
         "bundle_exists": true,
         "bundle_path": "G:\\My Drive\\claude\\projects\\MPyNode\\templates\\MPyLocator\\Widget Showcase\\MPyLocator_Widget_Showcase.mll",
-        "ended": 1790392564.9627109,
+        "ended": 1790405246.9703443,
         "errors": [],
         "log": "G:\\My Drive\\claude\\projects\\MPyNode\\templates\\MPyLocator\\Widget Showcase\\_runner\\phase_a.log",
         "mode": {
@@ -7625,11 +7829,11 @@
         "phase": "a",
         "rel": "MPyLocator\\Widget Showcase",
         "rounds": {},
-        "secs": 749.3,
+        "secs": 859.8,
         "smoke": false,
-        "started": 1790391815.61275,
+        "started": 1790404387.1549556,
         "state": "ok",
-        "wall_secs": 760.1
+        "wall_secs": 872.2
       },
       "phase_b": {
         "ai": {
@@ -7645,7 +7849,7 @@
             "portability widgetShowcase start: ",
             "cache widgetShowcase start: ",
             "stage widgetShowcase ok: 1_transpiled",
-            "cache widgetShowcase hit: cache hit 068843163eeb",
+            "cache widgetShowcase hit: cache hit 56c0896dc7fa",
             "stage widgetShowcase ok: 2_assisted_cached",
             "assemble - start: linking 1 node(s)",
             "assemble - ok: bundle: MPyLocator_Widget_Showcase.mll",
@@ -7665,7 +7869,7 @@
         },
         "bundle_exists": true,
         "bundle_path": "G:\\My Drive\\claude\\projects\\MPyNode\\templates\\MPyLocator\\Widget Showcase\\MPyLocator_Widget_Showcase.mll",
-        "ended": 1790392914.9663284,
+        "ended": 1790405276.813029,
         "errors": [],
         "log": "G:\\My Drive\\claude\\projects\\MPyNode\\templates\\MPyLocator\\Widget Showcase\\_runner\\phase_b.log",
         "mode": {
@@ -7724,7 +7928,7 @@
             "accepted": false,
             "baseline_ms": null,
             "best_ms": null,
-            "created": 1790392911.9881752,
+            "created": 1790405274.1708508,
             "fresh": true,
             "n_rounds": 0,
             "parity_gate": "not exercised",
@@ -7748,9 +7952,9 @@
             "speedup": 1.0
           }
         },
-        "secs": 19.4,
+        "secs": 18.9,
         "smoke": false,
-        "started": 1790392895.6037283,
+        "started": 1790405257.8763664,
         "state": "ok",
         "wall_secs": 30.0
       }
