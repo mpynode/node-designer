@@ -39,7 +39,6 @@ nothing registered yet. Plugin must load + unload cleanly.
 
 from __future__ import annotations
 
-import functools
 import sys
 
 import maya.api.OpenMaya as om2
@@ -116,21 +115,15 @@ class UndoableAPICommand(om2.MPxCommand):
     def wrap_command(cls):
         """Replace ``cmds.runUndoableAPICommand`` with a wrapper that accepts a
         python command object (bypassing the MEL-compatible no-arg signature)
-        and brackets the call in a single named undo chunk."""
-        cmd_func = getattr(cmds, UNDOABLE_COMMAND_NAME)
+        and brackets the call in a single named undo chunk.
 
-        @functools.wraps(cmd_func)
-        def wrapped(py_class):
-            # Keep a reference so the class can't go out of scope.
-            cls.call_class = py_class
-            cmds.undoInfo(openChunk=True, chunkName=UNDOABLE_COMMAND_NAME)
-            try:
-                return cmd_func()
-            finally:
-                cmds.undoInfo(closeChunk=True)
+        Installed from ``mpynode._common.lifecycle.undoable_command`` so the
+        rule that it must never stack on another toolkit's wrapper has one
+        home, and can be tested without loading a plug-in.
+        """
+        from mpynode._common.lifecycle import undoable_command
 
-        wrapped.__wrapped__ = cmd_func
-        setattr(cmds, UNDOABLE_COMMAND_NAME, wrapped)
+        undoable_command.install_wrapper(cls)
 
 
 def _undoable_command_creator():
@@ -162,20 +155,30 @@ def initializePlugin(plugin):
     except Exception:
         pass
 
-    # Command names are global, so guard against a stale double-registration on
-    # reload, and NEVER let a registration hiccup abort initializePlugin -- that
-    # would take every node type below down with it. Always (re)apply the cmds
-    # wrapper once the command exists.
+    # Command names are global to the SESSION, not to a plug-in, and the same
+    # command ships in other toolkits (rig's ``undoable_api_command``). Asking
+    # only whether WE had registered it meant that in a session where theirs
+    # loaded first -- or on any reload of this plug-in while theirs was loaded
+    # -- the wrapper install wrapped THEIR wrapper, and every undoable action
+    # raised. The helper decides against every loaded plug-in.
+    #
+    # NEVER let a hiccup here abort initializePlugin: that would take every
+    # node type below down with it.
     try:
-        _cmd_already = UNDOABLE_COMMAND_NAME in (
-            cmds.pluginInfo(PLUGIN_NAME, q=True, command=True) or []
+        from mpynode._common.lifecycle import undoable_command
+
+        _claim = undoable_command.claim(
+            PLUGIN_NAME,
+            lambda: plugin2.registerCommand(
+                UNDOABLE_COMMAND_NAME, _undoable_command_creator
+            ),
+            UndoableAPICommand,
         )
-        if not _cmd_already:
-            plugin2.registerCommand(UNDOABLE_COMMAND_NAME, _undoable_command_creator)
-    except Exception:
-        pass
-    try:
-        UndoableAPICommand.wrap_command()
+        if _claim.startswith("deferred:"):
+            sys.stdout.write(
+                f"[{PLUGIN_NAME}] {UNDOABLE_COMMAND_NAME} is already provided by "
+                f"{_claim.split(':', 1)[1]}; using that one.\n"
+            )
     except Exception:
         pass
 
@@ -372,9 +375,17 @@ def uninitializePlugin(plugin):
     """Deregister all API 2.0 node types + remove tracked callbacks."""
     plugin2 = om2.MFnPlugin(plugin)
 
-    # Deregister on every unload (not gated on last-out), like deregisterNode.
+    # Deregister on every unload (not gated on last-out), like deregisterNode,
+    # but ONLY when this plug-in is what registered it: deregisterCommand takes
+    # a NAME, so an unconditional call pulls the command out from under
+    # whichever other toolkit owns it.
     try:
-        plugin2.deregisterCommand(UNDOABLE_COMMAND_NAME)
+        from mpynode._common.lifecycle import undoable_command
+
+        undoable_command.release(
+            PLUGIN_NAME,
+            lambda: plugin2.deregisterCommand(UNDOABLE_COMMAND_NAME),
+        )
     except Exception:
         pass
 
