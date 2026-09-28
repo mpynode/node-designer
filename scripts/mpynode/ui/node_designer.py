@@ -95,7 +95,7 @@ def _ensure_plugins_loaded() -> None:
 # ===========================================================================
 # Tree items + attribute trees + NDAttributesWidget live in
 # widgets/attributes.py. Re-imported at the top of this module for
-# backward-compat with ``from mpynode.ui.mpynode_designer import ...``.
+# backward-compat with ``from mpynode.ui.node_designer import ...``.
 # ===========================================================================
 
 
@@ -114,7 +114,7 @@ def _ensure_plugins_loaded() -> None:
 
 class NDVariablesWidget(QWidget):  # noqa: F811
     """DEPRECATED placeholder kept for backwards-compat with anything that
-    imported NDVariablesWidget from mpynode.ui.mpynode_designer.
+    imported NDVariablesWidget from mpynode.ui.node_designer.
 
     moved the real implementation to widgets/variables.py with
     full +/-/refresh/inline-edit support. This class is just here so old
@@ -251,7 +251,7 @@ class NDMainWindow(QMainWindow):
             if existing is not None and existing is not self:
                 raise RuntimeError(
                     "Node Designer is already open; use "
-                    "mpynode.ui.mpynode_designer.show_designer() to focus it."
+                    "mpynode.ui.node_designer.show_designer() to focus it."
                 )
 
         super().__init__(parent)

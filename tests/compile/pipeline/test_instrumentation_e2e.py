@@ -713,7 +713,7 @@ class TestWatchWidgetShape(unittest.TestCase):
 @unittest.skipUnless(_qt_available(), "Qt unavailable")
 class TestDesignerWiring(unittest.TestCase):
     def test_build_ui_adds_profile_and_watch_tabs(self):
-        from mpynode.ui.mpynode_designer import NDMainWindow
+        from mpynode.ui.node_designer import NDMainWindow
 
         src = inspect.getsource(NDMainWindow._build_ui)
         self.assertIn("NDProfileWidget", src)
@@ -722,14 +722,14 @@ class TestDesignerWiring(unittest.TestCase):
         self.assertIn('"Watch"',         src)
 
     def test_set_current_node_pushes_to_both_widgets(self):
-        from mpynode.ui.mpynode_designer import NDMainWindow
+        from mpynode.ui.node_designer import NDMainWindow
 
         src = inspect.getsource(NDMainWindow.setCurrentNode)
         self.assertIn("self._profile_widget.setPyNode", src)
         self.assertIn("self._watch_widget.setPyNode", src)
 
     def test_on_node_attr_changed_dispatches_both_plugs(self):
-        from mpynode.ui.mpynode_designer import NDMainWindow
+        from mpynode.ui.node_designer import NDMainWindow
 
         src = inspect.getsource(NDMainWindow._on_node_attr_changed)
         self.assertIn("_profileSnapshotData",      src)
@@ -738,7 +738,7 @@ class TestDesignerWiring(unittest.TestCase):
         self.assertIn("_refresh_watch_for_node",   src)
 
     def test_designer_has_refresh_methods(self):
-        from mpynode.ui.mpynode_designer import NDMainWindow
+        from mpynode.ui.node_designer import NDMainWindow
 
         for name in ("_refresh_profile_for_node", "_refresh_watch_for_node"):
             self.assertTrue(
@@ -1378,7 +1378,7 @@ class TestHotfix11CollapsibleBottomPanel(unittest.TestCase):
     def test_build_ui_uses_vertical_split_for_right_side(self):
         import inspect
 
-        from mpynode.ui.mpynode_designer import NDMainWindow
+        from mpynode.ui.node_designer import NDMainWindow
 
         src = inspect.getsource(NDMainWindow._build_ui)
         # A vertical QSplitter wraps the script editor + tools.
@@ -1394,7 +1394,7 @@ class TestHotfix11CollapsibleBottomPanel(unittest.TestCase):
     def test_profile_and_watch_added_to_tools_widget_not_panel(self):
         import inspect
 
-        from mpynode.ui.mpynode_designer import NDMainWindow
+        from mpynode.ui.node_designer import NDMainWindow
 
         src = inspect.getsource(NDMainWindow._build_ui)
         # Profile + Watch go on the tools widget, NOT the panel tabs (the old
@@ -1419,7 +1419,7 @@ class TestHotfix11CollapsibleBottomPanel(unittest.TestCase):
     def test_right_split_collapsible_settings(self):
         import inspect
 
-        from mpynode.ui.mpynode_designer import NDMainWindow
+        from mpynode.ui.node_designer import NDMainWindow
 
         src = inspect.getsource(NDMainWindow._build_ui)
         # NEITHER pane fully collapses (was setCollapsible(1, True)); the

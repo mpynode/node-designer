@@ -8,7 +8,7 @@ def setUpModule():
 
 class TestFrameworkWiring(unittest.TestCase):
     def _win(self):
-        from mpynode.ui import mpynode_designer as md
+        from mpynode.ui import node_designer as md
         return md.NDMainWindow
 
     def test_build_ui_adds_framework_after_variables(self):

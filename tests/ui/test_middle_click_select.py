@@ -206,7 +206,7 @@ class TestAncestorWalk(unittest.TestCase):
         return _ResolverWidget
 
     def test_walk_finds_resolver_ancestor(self):
-        from mpynode.ui.mpynode_designer import _middle_click_node_from_widget
+        from mpynode.ui.node_designer import _middle_click_node_from_widget
         from mpynode.ui.qt_wrapper import QWidget
 
         Resolver = self._resolver_cls()
@@ -219,7 +219,7 @@ class TestAncestorWalk(unittest.TestCase):
             _middle_click_node_from_widget(child, stop, _QPoint()), "nodeFoo")
 
     def test_walk_returns_none_when_no_resolver(self):
-        from mpynode.ui.mpynode_designer import _middle_click_node_from_widget
+        from mpynode.ui.node_designer import _middle_click_node_from_widget
         from mpynode.ui.qt_wrapper import QWidget
 
         stop   = QWidget()
@@ -234,7 +234,7 @@ class TestAncestorWalk(unittest.TestCase):
         walk: a higher resolver ancestor still resolves. A two-resolver chain is
         required -- with a single None resolver the result is None either way,
         so the test couldn't distinguish continue-vs-stop."""
-        from mpynode.ui.mpynode_designer import _middle_click_node_from_widget
+        from mpynode.ui.node_designer import _middle_click_node_from_widget
         from mpynode.ui.qt_wrapper import QWidget
 
         Resolver    = self._resolver_cls()
@@ -250,7 +250,7 @@ class TestAncestorWalk(unittest.TestCase):
 
     def test_walk_excludes_stop_widget(self):
         """The stop widget (the window) is NOT itself asked to resolve."""
-        from mpynode.ui.mpynode_designer import _middle_click_node_from_widget
+        from mpynode.ui.node_designer import _middle_click_node_from_widget
 
         Resolver = self._resolver_cls()
         stop     = Resolver("shouldNotSee")   # stop IS a resolver, must be skipped
@@ -267,7 +267,7 @@ class TestAncestorWalk(unittest.TestCase):
 
 class TestGlobalFilterWiring(unittest.TestCase):
     def _m(self):
-        from mpynode.ui import mpynode_designer as m
+        from mpynode.ui import node_designer as m
 
         return m
 
@@ -376,7 +376,7 @@ class TestGlobalDispatch(unittest.TestCase):
     def setUp(self):
         import types
 
-        from mpynode.ui.mpynode_designer import NDMainWindow
+        from mpynode.ui.node_designer import NDMainWindow
         from mpynode.ui.qt_wrapper import QWidget
 
         self._widgets                   = []
@@ -416,7 +416,7 @@ class TestGlobalDispatch(unittest.TestCase):
 
     def _dispatch(self, obj, event):
         """Call the unbound handler with mc.select spied; return recorded calls."""
-        from mpynode.ui.mpynode_designer import NDMainWindow
+        from mpynode.ui.node_designer import NDMainWindow
 
         calls = []
         import maya.cmds as _mc
@@ -461,7 +461,7 @@ class TestGlobalDispatch(unittest.TestCase):
         tab_widget = self._plain_child(self.root)                 # NDScriptTabWidget-like
         tab_bar    = self._resolver_child("tabNode", tab_widget)  # NDEditorTabBar-like
 
-        from mpynode.ui.mpynode_designer import NDMainWindow
+        from mpynode.ui.node_designer import NDMainWindow
         import maya.cmds as _mc
 
         calls      = []
@@ -486,7 +486,7 @@ class TestGlobalDispatch(unittest.TestCase):
         a = self._resolver_child("nodeA", self.root)
         b = self._plain_child(self.root)
 
-        from mpynode.ui.mpynode_designer import NDMainWindow
+        from mpynode.ui.node_designer import NDMainWindow
         import maya.cmds as _mc
 
         calls      = []
@@ -503,7 +503,7 @@ class TestGlobalDispatch(unittest.TestCase):
             [(("nodeA",), {"replace": True}), (("activeNode",), {"replace": True})])
 
     def test_event_filter_is_non_consuming_and_gates_button(self):
-        from mpynode.ui.mpynode_designer import NDMainWindow
+        from mpynode.ui.node_designer import NDMainWindow
         from mpynode.ui.qt_wrapper import QEvent, Qt
         import maya.cmds as _mc
 
@@ -574,12 +574,12 @@ class TestOldHandlersRemoved(unittest.TestCase):
     def test_middle_button_centralized_to_designer(self):
         """``MiddleButton`` must appear ONLY in the designer module now, not in
         the two widget modules -- i.e. the action is fully global."""
-        from mpynode.ui import mpynode_designer
+        from mpynode.ui import node_designer
         from mpynode.ui.widgets import scene_tree, script_tab
 
         self.assertNotIn("MiddleButton", inspect.getsource(script_tab))
         self.assertNotIn("MiddleButton", inspect.getsource(scene_tree))
-        self.assertIn("MiddleButton", inspect.getsource(mpynode_designer))
+        self.assertIn("MiddleButton", inspect.getsource(node_designer))
 
 
 if __name__ == "__main__":

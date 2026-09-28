@@ -51,28 +51,28 @@ class TestCompileMenuSignalAndAction(unittest.TestCase):
 
 class TestCompileMenuWiring(unittest.TestCase):
     def test_signal_wired(self):
-        from mpynode.ui import mpynode_designer
+        from mpynode.ui import node_designer
 
-        src = inspect.getsource(mpynode_designer.NDMainWindow._wire_signals)
+        src = inspect.getsource(node_designer.NDMainWindow._wire_signals)
         self.assertIn("compileNodeRequested.connect", src)
 
     def test_handler_exists(self):
-        from mpynode.ui import mpynode_designer
+        from mpynode.ui import node_designer
         self.assertTrue(hasattr(
-            mpynode_designer.NDMainWindow, "_on_compile_node_requested"))
+            node_designer.NDMainWindow, "_on_compile_node_requested"))
 
     def test_open_compile_dialog_accepts_preselect(self):
-        from mpynode.ui import mpynode_designer
+        from mpynode.ui import node_designer
 
         sig = inspect.signature(
-            mpynode_designer.NDMainWindow._open_compile_dialog)
+            node_designer.NDMainWindow._open_compile_dialog)
         self.assertIn("preselect", sig.parameters)
 
     def test_handler_opens_dialog_with_preselect(self):
-        from mpynode.ui import mpynode_designer
+        from mpynode.ui import node_designer
 
         src = inspect.getsource(
-            mpynode_designer.NDMainWindow._on_compile_node_requested)
+            node_designer.NDMainWindow._on_compile_node_requested)
         self.assertIn("_open_compile_dialog", src)
         self.assertIn("preselect", src)
 
@@ -232,9 +232,9 @@ class TestConvertCompileMenuStates(unittest.TestCase):
 
     def test_designer_wires_load_compiled_plugin(self):
         """The signal is useless unless NDMainWindow has the slot it names."""
-        from mpynode.ui import mpynode_designer
+        from mpynode.ui import node_designer
         self.assertTrue(
-            hasattr(mpynode_designer.NDMainWindow,
+            hasattr(node_designer.NDMainWindow,
                     "_on_load_compiled_plugin_requested"))
 
 

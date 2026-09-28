@@ -13,18 +13,18 @@ import unittest
 
 class TestReopenAutoSelect(unittest.TestCase):
     def _designer_source(self) -> str:
-        from mpynode.ui import mpynode_designer
+        from mpynode.ui import node_designer
 
-        return inspect.getsource(mpynode_designer)
+        return inspect.getsource(node_designer)
 
     def test_handle_reopen_calls_auto_select_first_node(self):
         """``_handle_reopen`` must include a call to
         ``self._auto_select_first_node()`` so the new scene\'s first
         node populates the editor tabs after a reopen-with-scene-swap.
         """
-        from mpynode.ui import mpynode_designer
+        from mpynode.ui import node_designer
 
-        src = inspect.getsource(mpynode_designer.NDMainWindow._handle_reopen)
+        src = inspect.getsource(node_designer.NDMainWindow._handle_reopen)
         self.assertIn(
             "_auto_select_first_node",
             src,
@@ -38,9 +38,9 @@ class TestReopenAutoSelect(unittest.TestCase):
         stale-tab prune (step 2) -- otherwise the auto-select helper\'s
         ``count() > 0`` guard would see the not-yet-pruned stale tabs
         and bail out, leaving the editor blank."""
-        from mpynode.ui import mpynode_designer
+        from mpynode.ui import node_designer
 
-        src = inspect.getsource(mpynode_designer.NDMainWindow._handle_reopen)
+        src = inspect.getsource(node_designer.NDMainWindow._handle_reopen)
         # The stale-tab prune delegates to the tab widget's pruneStaleTabs()
         # (MObjectHandle liveness), not an inline removeTab(i) loop. What
         # matters here is the ordering: auto-select AFTER the prune.
@@ -71,9 +71,9 @@ class TestReopenAutoSelect(unittest.TestCase):
         so the tree must be refreshed BEFORE the auto-select fires --
         otherwise the helper picks the first node from the previous
         scene\'s stale tree snapshot."""
-        from mpynode.ui import mpynode_designer
+        from mpynode.ui import node_designer
 
-        src         = inspect.getsource(mpynode_designer.NDMainWindow._handle_reopen)
+        src         = inspect.getsource(node_designer.NDMainWindow._handle_reopen)
         refresh_idx = src.find("self._scene_tree.refresh()")
         auto_idx    = src.find("_auto_select_first_node()")
         self.assertGreaterEqual(
@@ -92,12 +92,12 @@ class TestReopenAutoSelect(unittest.TestCase):
         in try/except so a transient lookup failure (e.g. a callback
         ordering hiccup) can\'t leak into the rest of the reopen
         flow."""
-        from mpynode.ui import mpynode_designer
+        from mpynode.ui import node_designer
 
-        src = inspect.getsource(mpynode_designer.NDMainWindow._handle_reopen)
+        src = inspect.getsource(node_designer.NDMainWindow._handle_reopen)
         # Find the auto-select call + verify a try/except surrounds it.
         tree = ast.parse(inspect.getsource(
-            mpynode_designer.NDMainWindow._handle_reopen
+            node_designer.NDMainWindow._handle_reopen
         ).lstrip())
         wrapped = False
         for node in ast.walk(tree):
@@ -123,10 +123,10 @@ class TestReopenAutoSelect(unittest.TestCase):
         ``count() > 0`` guard to skip auto-select when the user reopens
         on the SAME scene (so prior tabs stay intact). Pin that guard
         so a future refactor doesn\'t silently drop it."""
-        from mpynode.ui import mpynode_designer
+        from mpynode.ui import node_designer
 
         src = inspect.getsource(
-            mpynode_designer.NDMainWindow._auto_select_first_node
+            node_designer.NDMainWindow._auto_select_first_node
         )
         self.assertIn(
             "_script_tab_widget.count()",
@@ -338,7 +338,7 @@ class TestToolbarModuleShape(unittest.TestCase):
 @unittest.skipUnless(_qt_available(), "Qt unavailable")
 class TestDesignerPhase16Wiring(unittest.TestCase):
     def test_main_window_has_phase16_methods(self):
-        from mpynode.ui.mpynode_designer import NDMainWindow
+        from mpynode.ui.node_designer import NDMainWindow
 
         for m in (
             "_build_menu_bar",
@@ -353,7 +353,7 @@ class TestDesignerPhase16Wiring(unittest.TestCase):
     def test_addNewNodeEvent_uses_create_node_command(self):
         import inspect
 
-        from mpynode.ui.mpynode_designer import NDMainWindow
+        from mpynode.ui.node_designer import NDMainWindow
 
         # Phase F moved the post-create tab-open tail into _post_create and
         # routed command building through _new_node_command. Intent unchanged:
@@ -370,7 +370,7 @@ class TestDesignerPhase16Wiring(unittest.TestCase):
     def test_install_shortcuts_binds_F5(self):
         import inspect
 
-        from mpynode.ui.mpynode_designer import NDMainWindow
+        from mpynode.ui.node_designer import NDMainWindow
 
         src = inspect.getsource(NDMainWindow._install_shortcuts)
         self.assertIn("F5", src)
@@ -379,7 +379,7 @@ class TestDesignerPhase16Wiring(unittest.TestCase):
     def test_menu_bar_includes_required_menus(self):
         import inspect
 
-        from mpynode.ui.mpynode_designer import NDMainWindow
+        from mpynode.ui.node_designer import NDMainWindow
 
         src = inspect.getsource(NDMainWindow._build_menu_bar)
         for menu in ('"File"', '"Node"', '"Help"', '"New Node"'):
@@ -388,7 +388,7 @@ class TestDesignerPhase16Wiring(unittest.TestCase):
     def test_toolbar_built_with_callbacks(self):
         import inspect
 
-        from mpynode.ui.mpynode_designer import NDMainWindow
+        from mpynode.ui.node_designer import NDMainWindow
 
         src = inspect.getsource(NDMainWindow._build_toolbar)
         self.assertIn("NDToolBar",    src)
@@ -501,7 +501,7 @@ class TestAttrColorRegistry(unittest.TestCase):
 
     def test_attr_colors_match_phase29_for_known_types(self):
         """RGB values for the original types (verified against the
-        original mpynode_designer.py)."""
+        original node_designer.py)."""
         from mpynode.ui.widgets.icons import ATTR_TYPE_COLORS
 
         self.assertEqual(ATTR_TYPE_COLORS["int"],          (0, 128, 1))
@@ -600,7 +600,7 @@ class TestWiring(unittest.TestCase):
     def test_node_menu_sets_icon(self):
         import inspect
 
-        from mpynode.ui.mpynode_designer import NDMainWindow
+        from mpynode.ui.node_designer import NDMainWindow
 
         src = inspect.getsource(NDMainWindow._build_menu_bar)
         self.assertIn("get_node_type_icon", src)
@@ -683,7 +683,7 @@ class TestShowDesignerRestoresAMinimizedWindow(unittest.TestCase):
     def test_second_call_unminimizes_the_same_window(self):
         from unittest import mock
 
-        from mpynode.ui import mpynode_designer as dm
+        from mpynode.ui import node_designer as dm
         from mpynode.ui.qt_wrapper import QMainWindow
 
         try:
@@ -732,7 +732,7 @@ class TestShowDesignerSingleton(unittest.TestCase):
         NDMainWindow() bypass + module-reload races."""
         import inspect
 
-        from mpynode.ui import mpynode_designer as dm
+        from mpynode.ui import node_designer as dm
 
         src = inspect.getsource(dm.show_designer)
         self.assertIn("findChild", src)
@@ -743,7 +743,7 @@ class TestShowDesignerSingleton(unittest.TestCase):
         construct a new NDMainWindow."""
         import inspect
 
-        from mpynode.ui import mpynode_designer as dm
+        from mpynode.ui import node_designer as dm
 
         src = inspect.getsource(dm.show_designer)
         # NDMainWindow must be constructed AFTER the findChild lookup and its
@@ -763,7 +763,7 @@ class TestShowDesignerSingleton(unittest.TestCase):
         accidentally removed."""
         import inspect
 
-        from mpynode.ui.mpynode_designer import NDMainWindow
+        from mpynode.ui.node_designer import NDMainWindow
 
         src = inspect.getsource(NDMainWindow.__init__)
         self.assertIn("setObjectName(self.WINDOW_OBJECT_NAME)", src)
@@ -777,7 +777,7 @@ class TestNDMainWindowHardSingleton(unittest.TestCase):
         Qt main-window subtree."""
         import inspect
 
-        from mpynode.ui.mpynode_designer import NDMainWindow
+        from mpynode.ui.node_designer import NDMainWindow
 
         src = inspect.getsource(NDMainWindow.__init__)
         # Must call findChild before super().__init__ to catch the bypass.
@@ -797,7 +797,7 @@ class TestNDMainWindowHardSingleton(unittest.TestCase):
         still work by looking up Maya's main window."""
         import inspect
 
-        from mpynode.ui.mpynode_designer import NDMainWindow
+        from mpynode.ui.node_designer import NDMainWindow
 
         src = inspect.getsource(NDMainWindow.__init__)
         self.assertIn("maya_main_window()", src)
@@ -828,7 +828,7 @@ class TestReopenAfterSceneChange(unittest.TestCase):
     """
 
     def test_handle_reopen_method_exists(self):
-        from mpynode.ui.mpynode_designer import NDMainWindow
+        from mpynode.ui.node_designer import NDMainWindow
 
         self.assertTrue(callable(getattr(NDMainWindow, "_handle_reopen", None)))
 
@@ -838,7 +838,7 @@ class TestReopenAfterSceneChange(unittest.TestCase):
         (3) clear _current_node if gone, (4) refresh the scene tree."""
         import inspect
 
-        from mpynode.ui.mpynode_designer import NDMainWindow
+        from mpynode.ui.node_designer import NDMainWindow
 
         src = inspect.getsource(NDMainWindow._handle_reopen)
         # 1. Re-register
@@ -856,7 +856,7 @@ class TestReopenAfterSceneChange(unittest.TestCase):
     def test_show_designer_calls_handle_reopen_on_existing(self):
         import inspect
 
-        import mpynode.ui.mpynode_designer as dm
+        import mpynode.ui.node_designer as dm
 
         src = inspect.getsource(dm.show_designer)
         self.assertIn("_handle_reopen", src)
@@ -871,7 +871,7 @@ class TestReopenAfterSceneChange(unittest.TestCase):
 
     def _make_stand_in(self):
         """Build a minimal object with the attrs _handle_reopen touches."""
-        from mpynode.ui.mpynode_designer import NDMainWindow
+        from mpynode.ui.node_designer import NDMainWindow
 
         class _FakeTabWidget:
             def __init__(self):
@@ -1146,7 +1146,7 @@ class TestUIClassesPresent(unittest.TestCase):
     structure via inspect instead."""
 
     def test_main_window_class(self):
-        from mpynode.ui.mpynode_designer import NDMainWindow
+        from mpynode.ui.node_designer import NDMainWindow
 
         self.assertTrue(hasattr(NDMainWindow, "_build_ui"))
         self.assertTrue(hasattr(NDMainWindow, "setCurrentNode"))
@@ -1160,7 +1160,7 @@ class TestUIClassesPresent(unittest.TestCase):
         Internal section."""
         import inspect
 
-        from mpynode.ui.mpynode_designer import NDMainWindow
+        from mpynode.ui.node_designer import NDMainWindow
 
         src = inspect.getsource(NDMainWindow._build_ui)
         for label in ("Scene", "Attributes", "Variables"):
@@ -1173,21 +1173,21 @@ class TestUIClassesPresent(unittest.TestCase):
         self.assertNotIn('"Solver Context"', src)
 
     def test_attribute_widget_class(self):
-        from mpynode.ui.mpynode_designer import NDAttributesWidget
+        from mpynode.ui.node_designer import NDAttributesWidget
 
         self.assertTrue(hasattr(NDAttributesWidget, "refresh"))
         self.assertTrue(hasattr(NDAttributesWidget, "refreshInputs"))
         self.assertTrue(hasattr(NDAttributesWidget, "refreshOutputs"))
 
     def test_input_tree_class(self):
-        from mpynode.ui.mpynode_designer import NDInputAttrTree
+        from mpynode.ui.node_designer import NDInputAttrTree
 
         self.assertEqual(NDInputAttrTree.ATTR_CATEGORY, "input")
         self.assertEqual(NDInputAttrTree.LIST_ATTR_FUNC_NAME, "get_input_attr_map")
         self.assertTrue(hasattr(NDInputAttrTree, "_buildLockedItems"))
 
     def test_output_tree_class(self):
-        from mpynode.ui.mpynode_designer import NDOutputAttrTree
+        from mpynode.ui.node_designer import NDOutputAttrTree
 
         self.assertEqual(NDOutputAttrTree.ATTR_CATEGORY, "output")
         self.assertEqual(NDOutputAttrTree.LIST_ATTR_FUNC_NAME, "get_output_attr_map")
@@ -1198,14 +1198,14 @@ class TestUIClassesPresent(unittest.TestCase):
         ``build_locked_rows`` + ``get_recipe`` hand-curated path)."""
         import inspect
 
-        from mpynode.ui.mpynode_designer import NDInputAttrTree
+        from mpynode.ui.node_designer import NDInputAttrTree
 
         src = inspect.getsource(NDInputAttrTree._buildLockedTreeFromWalker)
         self.assertIn("walk_plug_tree", src)
         self.assertIn("treeify", src)
 
     def test_locked_item_class(self):
-        from mpynode.ui.mpynode_designer import NDLockedAttrTreeItem
+        from mpynode.ui.node_designer import NDLockedAttrTreeItem
         from mpynode.ui.qt_wrapper import Qt
 
         # Must NOT be selectable (LOCKED_FLAGS == ItemIsEnabled only).
@@ -1214,10 +1214,10 @@ class TestUIClassesPresent(unittest.TestCase):
     def test_solver_context_tree_removed(self):
         """NDSolverContextTree class removed; Storage tab's
         Internal section now surfaces snapshot data inline."""
-        from mpynode.ui import mpynode_designer
+        from mpynode.ui import node_designer
 
         self.assertFalse(
-            hasattr(mpynode_designer, "NDSolverContextTree"),
+            hasattr(node_designer, "NDSolverContextTree"),
             "NDSolverContextTree should be removed.5",
         )
 
@@ -1256,9 +1256,9 @@ class TestNDSolverContextTreeWiring(unittest.TestCase):
 
     def test_solver_context_class_removed(self):
         """The pre-27.5 NDSolverContextTree class is gone."""
-        from mpynode.ui import mpynode_designer
+        from mpynode.ui import node_designer
 
-        self.assertFalse(hasattr(mpynode_designer, "NDSolverContextTree"))
+        self.assertFalse(hasattr(node_designer, "NDSolverContextTree"))
 
     def test_setCurrentNode_does_not_call_solver_context_tab_logic(self):
         """The pre-27.5 has_solver_context / _setSolverContextTabVisible
@@ -1266,7 +1266,7 @@ class TestNDSolverContextTreeWiring(unittest.TestCase):
         the snapshot now."""
         import inspect
 
-        from mpynode.ui.mpynode_designer import NDMainWindow
+        from mpynode.ui.node_designer import NDMainWindow
 
         src = inspect.getsource(NDMainWindow.setCurrentNode)
         self.assertNotIn("has_solver_context", src)
@@ -1331,18 +1331,18 @@ class TestSceneTreeSingleSelect(unittest.TestCase):
 
 class TestDesignerCompileWiring(unittest.TestCase):
     def test_no_right_click_compile_handler(self):
-        from mpynode.ui.mpynode_designer import NDMainWindow
+        from mpynode.ui.node_designer import NDMainWindow
 
         self.assertFalse(hasattr(NDMainWindow, "_on_compile_nodes_requested"))
 
     def test_compile_toolbar_entrypoint_intact(self):
-        from mpynode.ui.mpynode_designer import NDMainWindow
+        from mpynode.ui.node_designer import NDMainWindow
 
         self.assertTrue(hasattr(NDMainWindow, "_on_compile_toolbar"))
         self.assertTrue(hasattr(NDMainWindow, "_open_compile_dialog"))
 
     def test_designer_does_not_connect_compile_signal(self):
-        from mpynode.ui.mpynode_designer import NDMainWindow
+        from mpynode.ui.node_designer import NDMainWindow
 
         # No method on the window may still reference the removed scene-tree
         # compile signal: a dangling .connect() AttributeErrors at construction.

@@ -12,7 +12,7 @@ since we don't ship custom icons.
 Snippet for shelf drag-and-drop (paste into Maya's script editor and
 Ctrl+Drag the highlighted text to a shelf):
 
-    from mpynode.ui.mpynode_designer import show_designer
+    from mpynode.ui.node_designer import show_designer
     show_designer()
 """
 
@@ -33,7 +33,7 @@ DEFAULT_ICON  = _MPYNODE_ICON if os.path.exists(_MPYNODE_ICON) else "pythonFamil
 
 # Module-level constant so tests can verify the click command.
 SHELF_BUTTON_COMMAND = (
-    "from mpynode.ui.mpynode_designer import show_designer\nshow_designer()"
+    "from mpynode.ui.node_designer import show_designer\nshow_designer()"
 )
 
 

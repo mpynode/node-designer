@@ -476,7 +476,7 @@ class TestVariablesWidgetShape(unittest.TestCase):
     def test_designer_imports_new_widget_module(self):
         import inspect
 
-        import mpynode.ui.mpynode_designer as dm
+        import mpynode.ui.node_designer as dm
 
         src = inspect.getsource(dm)
         self.assertIn(
@@ -1247,7 +1247,7 @@ out = self.counter
 @unittest.skipUnless(_qt_available(), "Qt unavailable")
 class TestNDVariablesWidget(unittest.TestCase):
     def test_widget_classes_present(self):
-        from mpynode.ui.mpynode_designer import NDVariablesWidget
+        from mpynode.ui.node_designer import NDVariablesWidget
 
         self.assertTrue(hasattr(NDVariablesWidget, "setPyNode"))
         self.assertTrue(hasattr(NDVariablesWidget, "refresh"))

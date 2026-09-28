@@ -146,57 +146,57 @@ class TestWiring(unittest.TestCase):
         self.assertIn("show_new_node_options", src)
 
     def test_designer_menu_sets_data_and_right_click_handler(self):
-        from mpynode.ui import mpynode_designer
+        from mpynode.ui import node_designer
 
-        src = inspect.getsource(mpynode_designer)
+        src = inspect.getsource(node_designer)
         self.assertIn("right_click_handler", src)
         self.assertIn("show_new_node_options", src)
 
     def test_new_node_command_accepts_mode_override(self):
-        from mpynode.ui import mpynode_designer
+        from mpynode.ui import node_designer
 
-        sig = inspect.signature(mpynode_designer.NDMainWindow._new_node_command)
+        sig = inspect.signature(node_designer.NDMainWindow._new_node_command)
         self.assertIn("mode", sig.parameters)
 
     def test_add_new_node_event_accepts_mode_override(self):
-        from mpynode.ui import mpynode_designer
+        from mpynode.ui import node_designer
 
-        sig = inspect.signature(mpynode_designer.NDMainWindow.addNewNodeEvent)
+        sig = inspect.signature(node_designer.NDMainWindow.addNewNodeEvent)
         self.assertIn("mode", sig.parameters)
 
     def test_main_window_has_post_create_helper(self):
-        from mpynode.ui import mpynode_designer
+        from mpynode.ui import node_designer
 
         self.assertTrue(
-            hasattr(mpynode_designer.NDMainWindow, "_post_create"),
+            hasattr(node_designer.NDMainWindow, "_post_create"),
             "addNewNodeEvent's select+open-tabs tail must be factored into "
             "_post_create(name) so the gallery path can reuse it",
         )
         sig = inspect.signature(
-            mpynode_designer.NDMainWindow._post_create
+            node_designer.NDMainWindow._post_create
         )
         # (self, name)
         self.assertIn("name", sig.parameters)
 
     def test_main_window_has_create_from_template(self):
-        from mpynode.ui import mpynode_designer
+        from mpynode.ui import node_designer
 
         sig = inspect.signature(
-            mpynode_designer.NDMainWindow._create_from_template
+            node_designer.NDMainWindow._create_from_template
         )
         for p in ("payload", "native_type", "run_setup"):
             self.assertIn(p, sig.parameters)
         self.assertTrue(
-            hasattr(mpynode_designer.NDMainWindow, "_on_new_from_template")
+            hasattr(node_designer.NDMainWindow, "_on_new_from_template")
         )
 
     def test_create_from_template_routes_by_run_setup(self):
         # run_setup=False -> _ImportNodeCommand(seed_setup=True, restore
         # _persistent=False); run_setup=True -> _TemplateCreateCommand.
-        from mpynode.ui import mpynode_designer
+        from mpynode.ui import node_designer
 
         src = inspect.getsource(
-            mpynode_designer.NDMainWindow._create_from_template
+            node_designer.NDMainWindow._create_from_template
         )
         self.assertIn("_TemplateCreateCommand", src)
         self.assertIn("_ImportNodeCommand",     src)
@@ -206,9 +206,9 @@ class TestWiring(unittest.TestCase):
         self.assertIn("_post_create",           src)
 
     def test_designer_wires_reveal_and_select(self):
-        from mpynode.ui import mpynode_designer
+        from mpynode.ui import node_designer
 
-        src = inspect.getsource(mpynode_designer)
+        src = inspect.getsource(node_designer)
         # The gallery is shown as a full-width mode now, not opened as a modal
         # dialog (Option B mode tabs).
         self.assertNotIn("open_template_gallery", src)
@@ -261,15 +261,15 @@ class TestAutoAttachOption(unittest.TestCase):
         self.assertFalse(m_plain._supports_attach)
 
     def test_new_node_command_accepts_autoconnect(self):
-        from mpynode.ui import mpynode_designer
+        from mpynode.ui import node_designer
 
-        sig = inspect.signature(mpynode_designer.NDMainWindow._new_node_command)
+        sig = inspect.signature(node_designer.NDMainWindow._new_node_command)
         self.assertIn("autoconnect", sig.parameters)
 
     def test_add_new_node_event_accepts_autoconnect(self):
-        from mpynode.ui import mpynode_designer
+        from mpynode.ui import node_designer
 
-        sig = inspect.signature(mpynode_designer.NDMainWindow.addNewNodeEvent)
+        sig = inspect.signature(node_designer.NDMainWindow.addNewNodeEvent)
         self.assertIn("autoconnect", sig.parameters)
 
     def test_menus_module_wires_attach_context(self):
@@ -309,9 +309,9 @@ class TestNewFromTemplateAction(unittest.TestCase):
     def test_node_menu_has_new_from_template_action(self):
         # The Node menu must offer a single global "New from Template..."
         # action wired to _on_new_from_template.
-        from mpynode.ui import mpynode_designer
+        from mpynode.ui import node_designer
 
-        src = inspect.getsource(mpynode_designer.NDMainWindow._build_menu_bar)
+        src = inspect.getsource(node_designer.NDMainWindow._build_menu_bar)
         self.assertIn("New from Template", src)
         self.assertIn("_on_new_from_template", src)
 
@@ -331,9 +331,9 @@ class TestNewFromTemplateAction(unittest.TestCase):
         self.assertIn("on_new_from_template", sig.parameters)
 
     def test_designer_passes_on_new_from_template_to_toolbar(self):
-        from mpynode.ui import mpynode_designer
+        from mpynode.ui import node_designer
 
-        src = inspect.getsource(mpynode_designer)
+        src = inspect.getsource(node_designer)
         # The NDToolBar(...) construction must forward the gallery hook. The
         # keyword block is columnised, so the spacing around '=' is free.
         self.assertRegex(

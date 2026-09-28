@@ -31,7 +31,7 @@ class TestModeTabs(unittest.TestCase):
     sharing the cramped 340px right panel with the Assistant."""
 
     def test_build_ui_creates_mode_tabs(self):
-        from mpynode.ui.mpynode_designer import NDMainWindow
+        from mpynode.ui.node_designer import NDMainWindow
         src = inspect.getsource(NDMainWindow._build_ui)
         self.assertIn("self._mode_tabs", src)
         self.assertIn("NDTemplateGalleryPanel", src)
@@ -48,7 +48,7 @@ class TestModeTabs(unittest.TestCase):
         # The gallery (Templates mode page) is built OUTSIDE the assistant's
         # try/except so Templates mode is always available; the assistant
         # degrades to a Workspace-without-Assistant on failure.
-        from mpynode.ui.mpynode_designer import NDMainWindow
+        from mpynode.ui.node_designer import NDMainWindow
         src = inspect.getsource(NDMainWindow._build_ui)
         self.assertIn("self._assistant_panel = None", src)
         self.assertLess(
@@ -56,7 +56,7 @@ class TestModeTabs(unittest.TestCase):
         )
 
     def test_mode_tab_change_stops_video(self):
-        from mpynode.ui.mpynode_designer import NDMainWindow
+        from mpynode.ui.node_designer import NDMainWindow
         self.assertTrue(hasattr(NDMainWindow, "_on_mode_tab_changed"))
         chg = inspect.getsource(NDMainWindow._on_mode_tab_changed)
         self.assertIn("stop_video", chg)
@@ -69,7 +69,7 @@ class TestModeTabs(unittest.TestCase):
         # The Workspace | Templates mode switch is a vertical tab bar down the
         # LEFT edge so it reads distinctly from the horizontal Scene |
         # Attributes | Variables panel tabs it would otherwise stack above.
-        from mpynode.ui.mpynode_designer import NDMainWindow
+        from mpynode.ui.node_designer import NDMainWindow
         src = inspect.getsource(NDMainWindow._build_ui)
         self.assertIn("setTabPosition(QTabWidget.West)", src)
 
@@ -81,7 +81,7 @@ class TestModeTabs(unittest.TestCase):
 
     def test_mode_tab_bar_is_widened(self):
         # _build_ui installs the custom wide bar before adding tabs.
-        from mpynode.ui.mpynode_designer import NDMainWindow
+        from mpynode.ui.node_designer import NDMainWindow
         src = inspect.getsource(NDMainWindow._build_ui)
         self.assertIn("_WideTabBar(self._mode_tabs)", src)
         self.assertIn("setTabBar(self._mode_tab_bar)", src)
@@ -89,7 +89,7 @@ class TestModeTabs(unittest.TestCase):
     def test_wide_tab_bar_is_1_5x_thicker(self):
         # Behavioral: a West bar built from _WideTabBar juts out ~1.5x further
         # than a plain West bar (its tabs are wider / more noticeable).
-        from mpynode.ui.mpynode_designer import _WideTabBar
+        from mpynode.ui.node_designer import _WideTabBar
         from mpynode.ui.qt_wrapper import QTabWidget, QWidget
 
         def _west(bar=None):
@@ -119,14 +119,14 @@ class TestModeTabs(unittest.TestCase):
 @unittest.skipUnless(_QT, "Qt unavailable")
 class TestModeSwitching(unittest.TestCase):
     def test_on_new_from_template_switches_and_reloads(self):
-        from mpynode.ui.mpynode_designer import NDMainWindow
+        from mpynode.ui.node_designer import NDMainWindow
         src = inspect.getsource(NDMainWindow._on_new_from_template)
         self.assertIn("_show_templates_mode", src)
         self.assertIn("reload", src)
         self.assertNotIn("open_template_gallery", src)
 
     def test_show_templates_mode_switches_page(self):
-        from mpynode.ui.mpynode_designer import NDMainWindow
+        from mpynode.ui.node_designer import NDMainWindow
         self.assertTrue(hasattr(NDMainWindow, "_show_templates_mode"))
         src = inspect.getsource(NDMainWindow._show_templates_mode)
         self.assertIn("setCurrentIndex", src)
@@ -134,13 +134,13 @@ class TestModeSwitching(unittest.TestCase):
     def test_create_returns_to_workspace(self):
         # Any create (plain New or from a template) lands the user back in the
         # Workspace with the new node's editor open.
-        from mpynode.ui.mpynode_designer import NDMainWindow
+        from mpynode.ui.node_designer import NDMainWindow
         self.assertTrue(hasattr(NDMainWindow, "_show_workspace_mode"))
         src = inspect.getsource(NDMainWindow._post_create)
         self.assertIn("_show_workspace_mode", src)
 
     def test_toggle_uses_assistant_pane(self):
-        from mpynode.ui.mpynode_designer import NDMainWindow
+        from mpynode.ui.node_designer import NDMainWindow
         src = inspect.getsource(NDMainWindow.toggle_assistant_panel)
         self.assertIn("_assistant_panel", src)
 
@@ -163,7 +163,7 @@ class TestLayoutPersistence(unittest.TestCase):
         self.assertEqual(preferences.DEFAULT_PREFS["layout_mode_tab"], 0)
 
     def test_coerce_int_list(self):
-        from mpynode.ui.mpynode_designer import _coerce_int_list
+        from mpynode.ui.node_designer import _coerce_int_list
         self.assertEqual(_coerce_int_list([1, 2, 3], 3), [1, 2, 3])
         self.assertEqual(_coerce_int_list((10, 20), 2), [10, 20])
         self.assertIsNone(_coerce_int_list([1, 2], 3))           # wrong length
@@ -172,7 +172,7 @@ class TestLayoutPersistence(unittest.TestCase):
         self.assertIsNone(_coerce_int_list(["a", "b", "c"], 3))  # non-int elems
 
     def test_restore_layout_wired_in_build_ui(self):
-        from mpynode.ui.mpynode_designer import NDMainWindow
+        from mpynode.ui.node_designer import NDMainWindow
         self.assertTrue(hasattr(NDMainWindow, "_restore_layout"))
         build = inspect.getsource(NDMainWindow._build_ui)
         self.assertIn("self._restore_layout()", build)
@@ -182,7 +182,7 @@ class TestLayoutPersistence(unittest.TestCase):
             self.assertIn(key, src)
 
     def test_close_event_saves_layout(self):
-        from mpynode.ui.mpynode_designer import NDMainWindow
+        from mpynode.ui.node_designer import NDMainWindow
         src = inspect.getsource(NDMainWindow.closeEvent)
         self.assertIn("layout_main_splitter", src)
         self.assertIn("layout_right_splitter", src)
@@ -190,7 +190,7 @@ class TestLayoutPersistence(unittest.TestCase):
         self.assertIn("set_pref", src)
 
     def test_mode_tab_change_saves_active_tab(self):
-        from mpynode.ui.mpynode_designer import NDMainWindow
+        from mpynode.ui.node_designer import NDMainWindow
         src = inspect.getsource(NDMainWindow._on_mode_tab_changed)
         self.assertIn("layout_mode_tab", src)
         self.assertIn("set_pref", src)

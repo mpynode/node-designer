@@ -153,8 +153,8 @@ class TestSitesUseHome(unittest.TestCase):
 
     def test_designer_triggers_ensure_home(self):
         import inspect
-        from mpynode.ui import mpynode_designer
-        src = inspect.getsource(mpynode_designer.NDMainWindow.__init__)
+        from mpynode.ui import node_designer
+        src = inspect.getsource(node_designer.NDMainWindow.__init__)
         self.assertIn("ensure_home", src)
 
 

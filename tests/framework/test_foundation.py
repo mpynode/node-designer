@@ -261,7 +261,7 @@ class TestDesignerWiring(unittest.TestCase):
     def test_main_window_uses_scene_tree_and_tab_widget(self):
         import inspect
 
-        from mpynode.ui.mpynode_designer import NDMainWindow
+        from mpynode.ui.node_designer import NDMainWindow
 
         src = inspect.getsource(NDMainWindow._build_ui)
         self.assertIn("NDSceneTree",       src)
@@ -271,7 +271,7 @@ class TestDesignerWiring(unittest.TestCase):
     def test_wire_signals_connects_scene_tree_to_tab(self):
         import inspect
 
-        from mpynode.ui.mpynode_designer import NDMainWindow
+        from mpynode.ui.node_designer import NDMainWindow
 
         src = inspect.getsource(NDMainWindow._wire_signals)
         self.assertIn("nodeSelected", src)
@@ -281,7 +281,7 @@ class TestDesignerWiring(unittest.TestCase):
         self.assertIn(".refresh", src)  # refresh button connected
 
     def test_cascade_method_present(self):
-        from mpynode.ui.mpynode_designer import NDMainWindow
+        from mpynode.ui.node_designer import NDMainWindow
 
         for m in (
             "_on_scene_node_selected",
@@ -299,7 +299,7 @@ class TestDesignerWiring(unittest.TestCase):
     def test_close_event_removes_callbacks(self):
         import inspect
 
-        from mpynode.ui.mpynode_designer import NDMainWindow
+        from mpynode.ui.node_designer import NDMainWindow
 
         src = inspect.getsource(NDMainWindow.closeEvent)
         self.assertIn("_remove_scene_callbacks", src)

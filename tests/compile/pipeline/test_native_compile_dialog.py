@@ -312,13 +312,13 @@ class TestToolbarLauncherWiring(unittest.TestCase):
         self.assertIn("self._on_compile", src)
 
     def test_designer_build_toolbar_passes_on_compile(self):
-        from mpynode.ui.mpynode_designer import NDMainWindow
+        from mpynode.ui.node_designer import NDMainWindow
 
         src = inspect.getsource(NDMainWindow._build_toolbar)
         self.assertIn("on_compile", src)
 
     def test_designer_has_open_compile_dialog_launcher(self):
-        from mpynode.ui.mpynode_designer import NDMainWindow
+        from mpynode.ui.node_designer import NDMainWindow
 
         self.assertTrue(hasattr(NDMainWindow, "_open_compile_dialog"))
 
@@ -326,7 +326,7 @@ class TestToolbarLauncherWiring(unittest.TestCase):
         """Non-modal (show/raise, not exec_) AND re-queries the scene on every
         open (refresh_nodes) so it never shows a previous scene's nodes. The old
         seed/add_nodes path is gone (the table lists the whole scene now)."""
-        from mpynode.ui.mpynode_designer import NDMainWindow
+        from mpynode.ui.node_designer import NDMainWindow
 
         launcher = inspect.getsource(NDMainWindow._open_compile_dialog)
         self.assertIn("show", launcher)

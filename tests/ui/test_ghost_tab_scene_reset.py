@@ -203,7 +203,7 @@ class TestPruneAndCloseTabs(unittest.TestCase):
 
 class TestSceneResetWiring(unittest.TestCase):
     def _m(self):
-        from mpynode.ui import mpynode_designer as m
+        from mpynode.ui import node_designer as m
 
         return m
 

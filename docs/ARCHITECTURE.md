@@ -132,7 +132,7 @@ facts are the whole install: `MAYA_PLUG_IN_PATH` contains `plug-ins/` and
 
 | Sub-area | Owns |
 |---|---|
-| `mpynode_designer.py` | The ~124 KB main window: mode tabs Workspace / Templates; Workspace is a 3-pane splitter — `Scene \| Attributes \| Variables \| Framework` left, the Script editor over `Log \| Watch \| Profile` centre, the AI Assistant right. |
+| `node_designer.py` | The ~124 KB main window: mode tabs Workspace / Templates; Workspace is a 3-pane splitter — `Scene \| Attributes \| Variables \| Framework` left, the Script editor over `Log \| Watch \| Profile` centre, the AI Assistant right. |
 | `widgets/` | 35 modules: `editor_core.py`, `script_tab_content.py`, `api_view.py`, `script_navigator.py`, `scene_tree.py`, `attributes.py`, `variables.py`, `template_gallery_panel.py`, … |
 | `dialogs/`, `llm/` | 8 dialogs (`about`, `add_attr`, `compile_dialog`, `confirm`, `connect_attr`, `doc_viewer`, `node_info`, `preferences`); 6 LLM provider clients (`anthropic_client`, `openai_client`, `gemini_client`, and the three CLI ones `claude_cli_client`/`codex_cli_client`/`gemini_cli_client`) plus shared plumbing — `cli_base`, `config`, `payload`, `system_prompt`, `tools`, `compile_bridge`. |
 | `qt_wrapper.py` | PySide6 first (Maya 2026+), falling back to PySide2 (Maya 2022–2025). |

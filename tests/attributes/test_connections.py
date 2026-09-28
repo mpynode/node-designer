@@ -811,13 +811,13 @@ class TestConnectDialogPhase18_6(unittest.TestCase):
 @unittest.skipUnless(_qt_available(), "Qt unavailable")
 class TestNodeMenuActions(unittest.TestCase):
     def test_select_node_method_present(self):
-        from mpynode.ui.mpynode_designer import NDMainWindow
+        from mpynode.ui.node_designer import NDMainWindow
 
         self.assertTrue(hasattr(NDMainWindow, "selectCurrentNodeInScene"))
         self.assertTrue(callable(NDMainWindow.selectCurrentNodeInScene))
 
     def test_add_attribute_method_present(self):
-        from mpynode.ui.mpynode_designer import NDMainWindow
+        from mpynode.ui.node_designer import NDMainWindow
 
         self.assertTrue(hasattr(NDMainWindow, "showAddAttributeDialog"))
         self.assertTrue(callable(NDMainWindow.showAddAttributeDialog))
@@ -825,7 +825,7 @@ class TestNodeMenuActions(unittest.TestCase):
     def test_select_node_uses_cmds_select(self):
         import inspect
 
-        from mpynode.ui.mpynode_designer import NDMainWindow
+        from mpynode.ui.node_designer import NDMainWindow
 
         src = inspect.getsource(NDMainWindow.selectCurrentNodeInScene)
         self.assertIn("mc.select", src)
@@ -834,7 +834,7 @@ class TestNodeMenuActions(unittest.TestCase):
     def test_add_attribute_opens_NDAddAttrDialog(self):
         import inspect
 
-        from mpynode.ui.mpynode_designer import NDMainWindow
+        from mpynode.ui.node_designer import NDMainWindow
 
         src = inspect.getsource(NDMainWindow.showAddAttributeDialog)
         self.assertIn("NDAddAttrDialog", src)
@@ -845,7 +845,7 @@ class TestNodeMenuActions(unittest.TestCase):
     def test_setCurrentNode_tracks_current_node(self):
         import inspect
 
-        from mpynode.ui.mpynode_designer import NDMainWindow
+        from mpynode.ui.node_designer import NDMainWindow
 
         src = inspect.getsource(NDMainWindow.setCurrentNode)
         self.assertIn("self._current_node = py_node", src)
@@ -853,7 +853,7 @@ class TestNodeMenuActions(unittest.TestCase):
     def test_menu_bar_wires_both_actions(self):
         import inspect
 
-        from mpynode.ui.mpynode_designer import NDMainWindow
+        from mpynode.ui.node_designer import NDMainWindow
 
         src = inspect.getsource(NDMainWindow._build_menu_bar)
         self.assertIn("Select Node in Scene",     src)
@@ -864,7 +864,7 @@ class TestNodeMenuActions(unittest.TestCase):
     def test_init_creates_current_node_and_dlg_cache(self):
         import inspect
 
-        from mpynode.ui.mpynode_designer import NDMainWindow
+        from mpynode.ui.node_designer import NDMainWindow
 
         src = inspect.getsource(NDMainWindow.__init__)
         self.assertIn("self._current_node = None", src)

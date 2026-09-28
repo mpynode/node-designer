@@ -806,7 +806,7 @@ class TestMenuWiring(unittest.TestCase):
     def test_menu_handler_opens_NDPreferencesDialog(self):
         import inspect
 
-        from mpynode.ui.mpynode_designer import NDMainWindow
+        from mpynode.ui.node_designer import NDMainWindow
 
         src = inspect.getsource(NDMainWindow._show_preferences_placeholder)
         self.assertIn("NDPreferencesDialog", src)

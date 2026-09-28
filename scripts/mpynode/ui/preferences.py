@@ -279,7 +279,7 @@ DEFAULT_PREFS: dict[str, Any] = {
     "metadata_bake_header": True,
     # Window layout, persisted on close. All default to None (0 for the mode)
     # so a first run falls back to the hard-coded sizes / Workspace mode. Lists
-    # of ints, validated on restore by mpynode_designer._coerce_int_list.
+    # of ints, validated on restore by node_designer._coerce_int_list.
     "layout_main_splitter": None,     # [left, editor, assistant] pane widths
     "layout_right_splitter": None,    # [editor, tools] heights
     "layout_mode_tab": 0,             # 0 = Workspace, 1 = Templates

@@ -453,7 +453,7 @@ class TestShelfInstaller(unittest.TestCase):
         from mpynode.ui.shelf import SHELF_BUTTON_COMMAND
 
         self.assertIn("show_designer", SHELF_BUTTON_COMMAND)
-        self.assertIn("from mpynode.ui.mpynode_designer import", SHELF_BUTTON_COMMAND)
+        self.assertIn("from mpynode.ui.node_designer import", SHELF_BUTTON_COMMAND)
 
 
 # ===========================================================================
@@ -466,7 +466,7 @@ class TestUIShape(unittest.TestCase):
     def test_file_menu_has_import_export_actions(self):
         import inspect
 
-        from mpynode.ui.mpynode_designer import NDMainWindow
+        from mpynode.ui.node_designer import NDMainWindow
 
         src = inspect.getsource(NDMainWindow._build_menu_bar)
         self.assertIn("Import .mpn", src)
@@ -475,7 +475,7 @@ class TestUIShape(unittest.TestCase):
         self.assertIn("exportCurrentNodeAsMpn", src)
 
     def test_main_window_has_export_helpers(self):
-        from mpynode.ui.mpynode_designer import NDMainWindow
+        from mpynode.ui.node_designer import NDMainWindow
 
         for name in (
             "importMpnDialog",
@@ -501,7 +501,7 @@ class TestUIShape(unittest.TestCase):
     def test_main_window_wires_export_signal(self):
         import inspect
 
-        from mpynode.ui.mpynode_designer import NDMainWindow
+        from mpynode.ui.node_designer import NDMainWindow
 
         src = inspect.getsource(NDMainWindow._wire_signals)
         self.assertIn("exportNodeRequested.connect", src)
@@ -528,7 +528,7 @@ class TestExportCompressionPref(unittest.TestCase):
 
     def test_export_uses_native_dialog_and_reads_pref(self):
         import inspect
-        from mpynode.ui.mpynode_designer import NDMainWindow
+        from mpynode.ui.node_designer import NDMainWindow
 
         src = inspect.getsource(NDMainWindow._export_node_as_mpn)
         self.assertIn("getSaveFileName", src)             # native dialog

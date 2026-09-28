@@ -307,8 +307,8 @@ class TestSceneTreeDemoWiring(unittest.TestCase):
 
     def test_designer_run_demo_handler_accepts_demo_name(self):
         import inspect
-        from mpynode.ui import mpynode_designer
-        src = inspect.getsource(mpynode_designer.NDMainWindow._on_run_demo_requested)
+        from mpynode.ui import node_designer
+        src = inspect.getsource(node_designer.NDMainWindow._on_run_demo_requested)
         self.assertIn("demo_name", src)
 
 
@@ -342,9 +342,9 @@ class TestGalleryDemoWiring(unittest.TestCase):
 
     def test_create_from_template_forwards_demo_name(self):
         import inspect
-        from mpynode.ui import mpynode_designer
+        from mpynode.ui import node_designer
         src = inspect.getsource(
-            mpynode_designer.NDMainWindow._create_from_template)
+            node_designer.NDMainWindow._create_from_template)
         self.assertIn("demo_name", src)
 
 

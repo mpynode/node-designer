@@ -277,7 +277,7 @@ a wrapper method called from Compute raises `AttributeError`.
 ## 8. Node Designer — tabs and keys
 
 ```python
-from mpynode.ui.mpynode_designer import show_designer
+from mpynode.ui.node_designer import show_designer
 show_designer()
 ```
 

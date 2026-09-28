@@ -194,7 +194,7 @@ class TestMainWindowReconcile(unittest.TestCase):
     def test_main_window_has_callback_registry(self):
         import inspect
 
-        from mpynode.ui.mpynode_designer import NDMainWindow
+        from mpynode.ui.node_designer import NDMainWindow
 
         src = inspect.getsource(NDMainWindow.__init__)
         self.assertIn("_node_attr_callbacks", src)
@@ -202,7 +202,7 @@ class TestMainWindowReconcile(unittest.TestCase):
     def test_wire_signals_connects_tabsChanged(self):
         import inspect
 
-        from mpynode.ui.mpynode_designer import NDMainWindow
+        from mpynode.ui.node_designer import NDMainWindow
 
         src = inspect.getsource(NDMainWindow._wire_signals)
         self.assertIn("tabsChanged.connect", src)
@@ -211,7 +211,7 @@ class TestMainWindowReconcile(unittest.TestCase):
     def test_close_event_unregisters_all_attr_callbacks(self):
         import inspect
 
-        from mpynode.ui.mpynode_designer import NDMainWindow
+        from mpynode.ui.node_designer import NDMainWindow
 
         src = inspect.getsource(NDMainWindow.closeEvent)
         self.assertIn("_unregister_all_node_attr_callbacks", src)
@@ -221,7 +221,7 @@ class TestMainWindowReconcile(unittest.TestCase):
         with same input \u2014 verify by source inspection."""
         import inspect
 
-        from mpynode.ui.mpynode_designer import NDMainWindow
+        from mpynode.ui.node_designer import NDMainWindow
 
         src = inspect.getsource(NDMainWindow._reconcile_node_attr_callbacks)
         # both set differences, so existing entries stay untouched.
@@ -231,7 +231,7 @@ class TestMainWindowReconcile(unittest.TestCase):
     def test_dispatcher_routes_to_correct_panel(self):
         import inspect
 
-        from mpynode.ui.mpynode_designer import NDMainWindow
+        from mpynode.ui.node_designer import NDMainWindow
 
         src = inspect.getsource(NDMainWindow._on_node_attr_changed)
         # Routes for each special plug kind:
@@ -250,7 +250,7 @@ class TestMainWindowReconcile(unittest.TestCase):
         """Conflict resolution: don't clobber unsaved edits."""
         import inspect
 
-        from mpynode.ui.mpynode_designer import NDMainWindow
+        from mpynode.ui.node_designer import NDMainWindow
 
         src = inspect.getsource(NDMainWindow._refresh_editor_for_node)
         self.assertIn("hasUnsavedChanges", src)
@@ -262,7 +262,7 @@ class TestMainWindowReconcile(unittest.TestCase):
         node IS the currently-displayed node (panels are single-node)."""
         import inspect
 
-        from mpynode.ui.mpynode_designer import NDMainWindow
+        from mpynode.ui.node_designer import NDMainWindow
 
         for fn_name in (
             "_refresh_attributes_for_node",
@@ -295,7 +295,7 @@ class TestE2EIntegration(unittest.TestCase):
         """Build a minimal object with the attrs NDMainWindow methods
         expect, without inheriting from QMainWindow (which can't be
         constructed cleanly in mayapy)."""
-        from mpynode.ui.mpynode_designer import NDMainWindow
+        from mpynode.ui.node_designer import NDMainWindow
 
         class _StandIn:
             pass
@@ -474,7 +474,7 @@ class _FakeSelf:
 
 class TestConnectionChangedRouting(unittest.TestCase):
     def test_routes_node_name_to_attr_refresh(self):
-        from mpynode.ui.mpynode_designer import NDMainWindow
+        from mpynode.ui.node_designer import NDMainWindow
 
         fake = _FakeSelf()
         NDMainWindow._on_node_connection_changed(
@@ -483,7 +483,7 @@ class TestConnectionChangedRouting(unittest.TestCase):
         self.assertEqual(fake.refreshed, ["pointNoise"])
 
     def test_never_raises_on_bad_plug(self):
-        from mpynode.ui.mpynode_designer import NDMainWindow
+        from mpynode.ui.node_designer import NDMainWindow
 
         class _BadPlug:
             def name(self):

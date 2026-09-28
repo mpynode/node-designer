@@ -118,7 +118,7 @@ class TestDisableAllInstrumentationTogglesInScene(unittest.TestCase):
 
 class TestDesignerCloseEventScrubsToggles(unittest.TestCase):
     def test_closeEvent_calls_scrub_helper(self):
-        from mpynode.ui.mpynode_designer import NDMainWindow
+        from mpynode.ui.node_designer import NDMainWindow
 
         src = inspect.getsource(NDMainWindow.closeEvent)
         self.assertIn(
@@ -130,7 +130,7 @@ class TestDesignerCloseEventScrubsToggles(unittest.TestCase):
 
     def test_closeEvent_scrub_is_inside_try_except(self):
         """Never let a scrub error block Designer close."""
-        from mpynode.ui.mpynode_designer import NDMainWindow
+        from mpynode.ui.node_designer import NDMainWindow
 
         src = inspect.getsource(NDMainWindow.closeEvent)
         # Strip line-comments before checking.
@@ -146,7 +146,7 @@ class TestDesignerCloseEventScrubsToggles(unittest.TestCase):
 
 class TestDesignerWiresTabSavedSignal(unittest.TestCase):
     def test_signal_is_connected(self):
-        from mpynode.ui.mpynode_designer import NDMainWindow
+        from mpynode.ui.node_designer import NDMainWindow
 
         src = inspect.getsource(NDMainWindow)
         self.assertIn(
@@ -158,13 +158,13 @@ class TestDesignerWiresTabSavedSignal(unittest.TestCase):
         self.assertIn("_on_tab_saved", src)
 
     def test_on_tab_saved_handler_exists(self):
-        from mpynode.ui.mpynode_designer import NDMainWindow
+        from mpynode.ui.node_designer import NDMainWindow
 
         self.assertTrue(hasattr(NDMainWindow, "_on_tab_saved"))
         self.assertTrue(callable(NDMainWindow._on_tab_saved))
 
     def test_on_tab_saved_refreshes_both_widgets(self):
-        from mpynode.ui.mpynode_designer import NDMainWindow
+        from mpynode.ui.node_designer import NDMainWindow
 
         src = inspect.getsource(NDMainWindow._on_tab_saved)
         self.assertIn("self._profile_widget.refresh()", src)
@@ -174,7 +174,7 @@ class TestDesignerWiresTabSavedSignal(unittest.TestCase):
         """The handler must only refresh widgets bound to the SAME
         node as the one whose save triggered the signal -- otherwise
         a save of node A would clobber Profile/Watch state for node B."""
-        from mpynode.ui.mpynode_designer import NDMainWindow
+        from mpynode.ui.node_designer import NDMainWindow
 
         src = inspect.getsource(NDMainWindow._on_tab_saved)
         self.assertIn(".get_name() == py_node.get_name()", src)

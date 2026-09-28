@@ -169,7 +169,7 @@ class TestDesignerAutoSetupWiring(unittest.TestCase):
     def test_new_node_command_no_pref_but_uses_selector(self):
         import inspect
 
-        from mpynode.ui import mpynode_designer as m
+        from mpynode.ui import node_designer as m
 
         src = inspect.getsource(m.NDMainWindow._new_node_command)
         self.assertNotIn("auto_setup_on_create", src)

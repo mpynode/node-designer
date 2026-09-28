@@ -783,7 +783,7 @@ class NDAssistantPanel(QWidget):
         self._splitter.setStretchFactor(0, 1)
         self._splitter.setStretchFactor(1, 0)
         # 260 is the tools pane default (Log | Watch | Profile, set in
-        # mpynode_designer as right_split [610, 260]), so the prompt box
+        # node_designer as right_split [610, 260]), so the prompt box
         # comes up the same height as the panel across from it instead of
         # the crushed two-line strip 110 gave.
         self._splitter.setSizes([1000, 260])

@@ -71,7 +71,7 @@ class TestOslHandoffPropagation(unittest.TestCase):
     def test_designer_has_route_handler(self):
         # The final hop connects the tab widget's aggregated signal to this
         # handler (also used by the compile dialog's "Fix with AI").
-        from mpynode.ui.mpynode_designer import NDMainWindow
+        from mpynode.ui.node_designer import NDMainWindow
 
         self.assertTrue(hasattr(NDMainWindow, "_route_compile_handoff"))
 

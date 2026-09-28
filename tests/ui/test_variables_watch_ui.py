@@ -168,7 +168,7 @@ class TestVariablesSections(unittest.TestCase):
         import inspect
 
         try:
-            from mpynode.ui.mpynode_designer import NDMainWindow
+            from mpynode.ui.node_designer import NDMainWindow
         except Exception as exc:  # pragma: no cover
             self.skipTest(f"designer import unavailable: {exc}")
         src = inspect.getsource(NDMainWindow._on_tab_saved)

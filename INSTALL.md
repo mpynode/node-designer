@@ -41,7 +41,7 @@ set "MPYNODE_USE_STUDIO=1"
 Then start Maya from that shell and open the authoring window:
 
 ```python
-from mpynode.ui.mpynode_designer import show_designer
+from mpynode.ui.node_designer import show_designer
 show_designer()
 ```
 

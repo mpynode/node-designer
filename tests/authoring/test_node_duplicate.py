@@ -241,21 +241,21 @@ class TestSceneTreeDuplicateMenu(unittest.TestCase):
 # ===========================================================================
 class TestDesignerDuplicateWiring(unittest.TestCase):
     def test_signals_are_wired(self):
-        from mpynode.ui import mpynode_designer as m
+        from mpynode.ui import node_designer as m
 
         src = inspect.getsource(m.NDMainWindow._wire_signals)
         self.assertIn("duplicateNodeRequested", src)
         self.assertIn("duplicateWithInputsRequested", src)
 
     def test_node_menu_exposes_duplicate_actions(self):
-        from mpynode.ui import mpynode_designer as m
+        from mpynode.ui import node_designer as m
 
         src = inspect.getsource(m.NDMainWindow._build_menu_bar)
         self.assertIn("Duplicate", src)
         self.assertIn("Duplicate + Inputs", src)
 
     def test_handlers_exist(self):
-        from mpynode.ui import mpynode_designer as m
+        from mpynode.ui import node_designer as m
 
         self.assertTrue(hasattr(m.NDMainWindow, "_on_duplicate_node_requested"))
         self.assertTrue(
@@ -267,7 +267,7 @@ class TestDesignerDuplicateWiring(unittest.TestCase):
         its plugs BEFORE serializing -- the editors only commit to the DG plugs
         on explicit Save, so an unsaved-but-typed expression would otherwise be
         lost on the copy. The flush must come BEFORE build_duplicate_node_command."""
-        from mpynode.ui import mpynode_designer as m
+        from mpynode.ui import node_designer as m
 
         src = inspect.getsource(m.NDMainWindow._duplicate_node)
         self.assertIn("saveTabsForNode", src)
@@ -282,7 +282,7 @@ class TestDesignerDuplicateWiring(unittest.TestCase):
     def test_export_handler_flushes_unsaved_editor(self):
         """The .mpn export path shares the same stale-plug bug -- it must also
         flush the node's editor before serialize_node."""
-        from mpynode.ui import mpynode_designer as m
+        from mpynode.ui import node_designer as m
 
         src = inspect.getsource(m.NDMainWindow._export_node_as_mpn)
         self.assertIn("saveTabsForNode", src)

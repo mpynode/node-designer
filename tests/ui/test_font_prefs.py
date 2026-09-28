@@ -406,7 +406,7 @@ class TestWiringIsPresent(unittest.TestCase):
         from tests import _paths
 
         src = io.open(os.path.join(_paths.ROOT, "scripts", "mpynode", "ui",
-                                   "mpynode_designer.py"),
+                                   "node_designer.py"),
                       encoding="utf-8").read()
         self.assertIn('wire_area_font(self._script_tab_widget.tabBar(), "panel")', src)
         self.assertIn('wire_area_font(self._mode_tab_bar, "panel")', src)

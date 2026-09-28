@@ -287,31 +287,31 @@ class TestDesignerBakeWiring(unittest.TestCase):
     mirrors the other designer wiring tests)."""
 
     def test_class_signals_wired(self):
-        from mpynode.ui import mpynode_designer
+        from mpynode.ui import node_designer
 
-        src = inspect.getsource(mpynode_designer.NDMainWindow._wire_signals)
+        src = inspect.getsource(node_designer.NDMainWindow._wire_signals)
         self.assertIn("nameClassRequested.connect", src)
         self.assertIn("reclassifyRequested.connect", src)
 
     def test_class_handlers_exist(self):
-        from mpynode.ui import mpynode_designer
+        from mpynode.ui import node_designer
 
         self.assertTrue(
-            hasattr(mpynode_designer.NDMainWindow, "_on_name_class_requested"))
+            hasattr(node_designer.NDMainWindow, "_on_name_class_requested"))
         self.assertTrue(
-            hasattr(mpynode_designer.NDMainWindow, "_on_reclassify_requested"))
+            hasattr(node_designer.NDMainWindow, "_on_reclassify_requested"))
 
     def test_class_name_prompt_helper_exists(self):
-        from mpynode.ui import mpynode_designer
+        from mpynode.ui import node_designer
 
         self.assertTrue(
-            hasattr(mpynode_designer.NDMainWindow, "_prompt_for_class_name"))
+            hasattr(node_designer.NDMainWindow, "_prompt_for_class_name"))
 
     def test_bake_paths_resolve_class_name(self):
-        from mpynode.ui import mpynode_designer
+        from mpynode.ui import node_designer
 
         for meth in ("_export_node_as_py", "_copy_node_as_py"):
-            src = inspect.getsource(getattr(mpynode_designer.NDMainWindow, meth))
+            src = inspect.getsource(getattr(node_designer.NDMainWindow, meth))
             self.assertIn("resolve_bake_class_name", src)
             self.assertIn("class_name=", src)
 
@@ -323,7 +323,7 @@ class TestNameRenameForkHandlers(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        from mpynode.ui.mpynode_designer import NDMainWindow
+        from mpynode.ui.node_designer import NDMainWindow
 
         cls._window = NDMainWindow()
 
@@ -445,26 +445,26 @@ class TestConvertToCppMenu(unittest.TestCase):
 
 class TestConvertToCppWiring(unittest.TestCase):
     def test_signal_wired(self):
-        from mpynode.ui import mpynode_designer
+        from mpynode.ui import node_designer
 
-        src = inspect.getsource(mpynode_designer.NDMainWindow._wire_signals)
+        src = inspect.getsource(node_designer.NDMainWindow._wire_signals)
         self.assertIn("convertToCppRequested.connect", src)
 
     def test_revert_signal_wired(self):
-        from mpynode.ui import mpynode_designer
+        from mpynode.ui import node_designer
 
-        src = inspect.getsource(mpynode_designer.NDMainWindow._wire_signals)
+        src = inspect.getsource(node_designer.NDMainWindow._wire_signals)
         self.assertIn("revertToPyRequested.connect", src)
 
     def test_handler_exists(self):
-        from mpynode.ui import mpynode_designer
+        from mpynode.ui import node_designer
         self.assertTrue(hasattr(
-            mpynode_designer.NDMainWindow, "_on_convert_to_cpp_requested"))
+            node_designer.NDMainWindow, "_on_convert_to_cpp_requested"))
 
     def test_revert_handler_exists(self):
-        from mpynode.ui import mpynode_designer
+        from mpynode.ui import node_designer
         self.assertTrue(hasattr(
-            mpynode_designer.NDMainWindow, "_on_revert_to_py_requested"))
+            node_designer.NDMainWindow, "_on_revert_to_py_requested"))
 
 
 class TestConvertToCppHandler(unittest.TestCase):
@@ -473,7 +473,7 @@ class TestConvertToCppHandler(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        from mpynode.ui.mpynode_designer import NDMainWindow
+        from mpynode.ui.node_designer import NDMainWindow
         cls._window = NDMainWindow()
 
     def setUp(self):

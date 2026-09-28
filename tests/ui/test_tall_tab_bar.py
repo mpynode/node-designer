@@ -199,7 +199,7 @@ class TestTallTabBarWiredIn(unittest.TestCase):
         self.assertNotIn("self._outer_stack", src)
 
     def test_designer_panel_and_tools_are_tall(self):
-        from mpynode.ui.mpynode_designer import NDMainWindow
+        from mpynode.ui.node_designer import NDMainWindow
         src = inspect.getsource(NDMainWindow._build_ui)
         self.assertIn("make_tabs_tall(self._panel_tab_widget)", src)
         self.assertIn("make_tabs_tall(self._tools_tab_widget)", src)
@@ -212,15 +212,15 @@ class TestTallTabBarWiredIn(unittest.TestCase):
         # tab labels show" when collapsed) must be DERIVED from the now-taller
         # bar, not the old hard-coded 30 (calibrated to the ~31/36px bar)
         # which would clip the taller labels.
-        from mpynode.ui.mpynode_designer import NDMainWindow
+        from mpynode.ui.node_designer import NDMainWindow
         src = inspect.getsource(NDMainWindow._build_ui)
         self.assertIn("self._tools_tab_bar.sizeHint().height()", src)
         self.assertNotIn("setMinimumHeight(30)", src)
 
     def test_designer_imports_make_tabs_tall(self):
         import inspect as _i
-        from mpynode.ui import mpynode_designer
-        src = _i.getsource(mpynode_designer)
+        from mpynode.ui import node_designer
+        src = _i.getsource(node_designer)
         self.assertIn(
             "from mpynode.ui.widgets.tall_tab_bar import make_tabs_tall", src
         )
@@ -228,7 +228,7 @@ class TestTallTabBarWiredIn(unittest.TestCase):
     def test_mode_tabs_stay_wide_not_tall(self):
         # The vertical West Workspace | Templates switch keeps the WIDTH-scaling
         # _WideTabBar; the tall (height) bar must NOT be applied to it.
-        from mpynode.ui.mpynode_designer import NDMainWindow
+        from mpynode.ui.node_designer import NDMainWindow
         src = inspect.getsource(NDMainWindow._build_ui)
         self.assertIn("_WideTabBar(self._mode_tabs)", src)
         self.assertNotIn("make_tabs_tall(self._mode_tabs)", src)

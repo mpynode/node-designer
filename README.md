@@ -64,7 +64,7 @@ Found this useful? [Buy us a coffee :)](https://buymeacoffee.com/ericvignola) â˜
 **Launch Node Designer**
 
 ```python
-from mpynode.ui.mpynode_designer import show_designer
+from mpynode.ui.node_designer import show_designer
 show_designer()
 ```
 And start building new nodes, or browse any of the provided templates.

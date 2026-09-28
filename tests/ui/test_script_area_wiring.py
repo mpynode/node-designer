@@ -490,7 +490,7 @@ class TestAGeneratedBlockRoutesToItsAuthoringSurface(unittest.TestCase):
     def test_the_designer_raises_the_attributes_tab(self):
         import inspect
 
-        from mpynode.ui.mpynode_designer import NDMainWindow
+        from mpynode.ui.node_designer import NDMainWindow
 
         self.assertTrue(hasattr(NDMainWindow, "revealAttributes"))
         src = inspect.getsource(NDMainWindow.revealAttributes)

@@ -175,7 +175,7 @@ def get_node_type_icon(
 # ===========================================================================
 #
 # RGB tuples carried over from the pre-refactor ATTR_COLOR_MAP (which no
-# longer exists in ui/mpynode_designer.py), extended to cover the full type
+# longer exists in ui/node_designer.py), extended to cover the full type
 # list: angle / euler / enum / time / python / mesh / nurbsCurve /
 # nurbsSurface.
 ATTR_COLOR_DARK_GREEN = (0, 128, 1)

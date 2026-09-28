@@ -1051,7 +1051,7 @@ class TestSourceShape__attr_color_live_refresh(unittest.TestCase):
 
     def test_designer_wires_color_signal_to_editor(self):
         import inspect
-        from mpynode.ui.mpynode_designer import NDMainWindow
+        from mpynode.ui.node_designer import NDMainWindow
 
         src = inspect.getsource(NDMainWindow._on_attr_color_changed)
         self.assertIn("refreshVarColors", src)
@@ -1182,7 +1182,7 @@ class TestAttrRenamedSignalWiring(unittest.TestCase):
     def test_designer_connects_and_refreshes(self):
         import inspect
 
-        from mpynode.ui.mpynode_designer import NDMainWindow
+        from mpynode.ui.node_designer import NDMainWindow
 
         wire = inspect.getsource(NDMainWindow._wire_signals)
         self.assertIn("attrRenamed.connect", wire)
@@ -1510,7 +1510,7 @@ class TestUIShape(unittest.TestCase):
         the editor's var colors should also refresh."""
         import inspect
 
-        from mpynode.ui.mpynode_designer import NDMainWindow
+        from mpynode.ui.node_designer import NDMainWindow
 
         src = inspect.getsource(NDMainWindow._refresh_attributes_for_node)
         self.assertIn("refreshVarColors", src)
@@ -1832,7 +1832,7 @@ class TestAttributesWidgetShape(unittest.TestCase):
     def test_designer_imports_attributes_module(self):
         import inspect
 
-        import mpynode.ui.mpynode_designer as designer_module
+        import mpynode.ui.node_designer as designer_module
 
         src = inspect.getsource(designer_module)
         self.assertIn(

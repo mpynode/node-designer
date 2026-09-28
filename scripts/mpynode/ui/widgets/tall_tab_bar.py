@@ -5,7 +5,7 @@ Log | Watch | Profile tools panel, the per-node editor's document tabs, and the
 Init | Compute | ... inner tier tabs) read as thin default-height bars. This
 widget makes them ~1.5x taller so they are easier to hit and more noticeable —
 the North-bar analog of the West mode tabs' 1.5x *width* (see
-``mpynode_designer._WideTabBar``).
+``node_designer._WideTabBar``).
 
 For a North/South bar, ``tabSizeHint().height()`` is the bar THICKNESS (tab
 height); ``.width()`` is length along the bar. We scale ONLY the height.

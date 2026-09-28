@@ -1,7 +1,7 @@
 """'New from Template' gallery panel.
 
 An always-available ``QWidget`` — a permanent tab in the Node Designer's
-shared right-hand side panel (see ui/mpynode_designer.py). Lifted out of the
+shared right-hand side panel (see ui/node_designer.py). Lifted out of the
 former non-modal ``TemplateGalleryDialog`` so the gallery lives inside a tab
 rather than a pop-up.
 
@@ -57,7 +57,7 @@ from mpynode.ui.widgets.logo_relief import paint_relief, relief_layers
 def _coerce_int_list(value, n):
     """Return ``value`` as a list of exactly ``n`` ints, or None if it is not a
     valid persisted layout value (wrong type / length / non-int element).
-    Mirrors the helper of the same name in ui/mpynode_designer.py; duplicated
+    Mirrors the helper of the same name in ui/node_designer.py; duplicated
     here rather than imported to avoid a circular import (the designer imports
     this module)."""
     if not isinstance(value, (list, tuple)) or len(value) != n:

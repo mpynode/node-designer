@@ -1,6 +1,6 @@
 """Attribute panels (Inputs + Outputs) with right-click menus + inline rename.
 
-Extracts the Attributes-tab widgets out of mpynode_designer.py
+Extracts the Attributes-tab widgets out of node_designer.py
 into their own module + adds:
 
   * Right-click context menu on Input + Output trees

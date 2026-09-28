@@ -138,7 +138,7 @@ class TestRevealVariable(unittest.TestCase):
     def test_designer_wires_the_relay_to_reveal(self):
         import inspect
 
-        from mpynode.ui.mpynode_designer import NDMainWindow
+        from mpynode.ui.node_designer import NDMainWindow
         from mpynode.ui.widgets.script_tab import NDScriptTabWidget
 
         self.assertTrue(hasattr(NDScriptTabWidget, "revealVariableRequested"))
