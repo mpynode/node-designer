@@ -34,9 +34,13 @@ lifecycle only). We use Maya DG callbacks exclusively:
  own tree -- it's only the cross-node hop into our dynamic attr
  that Maya can't trace.
 
- * **One global ``MDGMessage.addConnectionCallback``** per node type
- detects future connections made/broken to user inputs, and
- installs / tears down the per-source callbacks as needed.
+ * **ONE global ``MDGMessage.addConnectionCallback`` for the whole
+ module** detects future connections made/broken to user inputs and
+ installs / tears down the per-source callbacks as needed. Maya
+ cannot filter a connection callback by type (unlike
+ ``addNodeAddedCallback``), so every connection in the scene enters
+ it; it dispatches on the destination's type id and rejects a
+ stranger in about a microsecond. See ``_connection_types``.
 
 Installation:
 
@@ -281,11 +285,163 @@ _source_callbacks: dict = {}
 # dest_node_uuids that already have an addAttributeChangedCallback.
 _dest_callbacks: set = set()
 
-# node-type name -> owner of that type's one global addConnectionCallback. The
-# callback is plugin-owned and removed on EVERY unload, so its latch must be
-# cleared on every unload too (not just last-plugin-out) -- otherwise a reload
-# with the sibling plugin still loaded skips re-registering it. See forget_owner.
+# node-type name -> the plug-in that asked for that type's connection coverage.
+# The structural install is latched on this (it must not run twice for a type),
+# so it has to be cleared on EVERY unload, not just last-plugin-out -- otherwise
+# a reload with the sibling plugin still loaded hits a stale latch and the type
+# is never re-covered. See forget_owner.
+#
+# The CALLBACK itself is no longer per-type and no longer plugin-owned: one
+# shared callback serves every type (see _connection_types below).
 _connection_callbacks_installed: dict = {}
+
+# The ONE global connection callback, and the registry it dispatches on.
+#
+# Maya CANNOT filter a connection callback: unlike ``addNodeAddedCallback``,
+# which takes a type name and is filtered in C++, every connection anywhere in
+# the scene enters every registered connection callback. Registering one PER
+# TYPE therefore multiplied that cost by the number of covered types, and each
+# one then asked ``cmds.nodeType(fn.name())`` -- the slowest way to ask, 8.9 us
+# -- before discovering the node was not ours, which it almost never is.
+#
+# MEASURED on Windows 2026-09-28 with the 9 types the two plug-ins cover: 5,000
+# ``connectAttr`` between stock multiplyDivide nodes cost 55 us each with the
+# plug-ins unloaded and 492 us each loaded, and the ``rig`` DSL's rail_spine
+# example built in 3.9 s instead of 2.1 s. That was paid by every tool in the
+# session that makes connections, not just by MPyNode.
+#
+# So: one callback, dispatching on a type-id dict. Rejecting a stranger costs
+# an MFnDependencyNode + typeId + dict lookup (1.6 us measured), once, instead
+# of nine name lookups.
+#
+# ``_connection_types`` is keyed by type id (int) because that is the cheapest
+# thing the callback can ask the destination for. A type whose id cannot be
+# resolved yet (MNodeClass answers 0 for a type Maya has not registered) waits
+# in ``_pending_connection_types`` and is folded in on the next connection --
+# the hot path only pays for that while something is actually pending.
+_connection_types: dict = {}          # type id (int) -> entry (the hot path)
+_pending_connection_types: dict = {}  # type name -> (kind, owner), unresolved
+_shared_connection_cb = None          # the single callback id, or None
+
+
+def _type_id(type_name):
+    """Registered type id for ``type_name``, or ``None`` if Maya has none.
+
+    ``MNodeClass`` does exist in API 1.0 (verified, Maya 2025). It answers 0
+    rather than raising for a type that is not registered, so 0 means "not yet".
+    """
+    try:
+        tid = om.MNodeClass(type_name).typeId().id()
+    except Exception:
+        return None
+    return tid or None
+
+
+def _resolve_pending_connection_types() -> None:
+    """Fold any type whose id has since become resolvable into the registry."""
+    for name in list(_pending_connection_types):
+        tid = _type_id(name)
+        if tid is None:
+            continue
+        kind, owner = _pending_connection_types.pop(name)
+        _connection_types[tid] = {"type_name": name, "kind": kind, "owner": owner}
+
+
+def _on_any_connection(src_plug, dest_plug, made, _client):
+    """The module's single connection callback. Keep it CHEAP -- this runs on
+    every connection made anywhere in the scene, by any tool."""
+    if not made:
+        return
+    try:
+        if _pending_connection_types:
+            _resolve_pending_connection_types()
+        dest_node_obj = dest_plug.node()
+        entry = _connection_types.get(
+            om.MFnDependencyNode(dest_node_obj).typeId().id()
+        )
+        if entry is None:
+            return                      # not one of ours: the common case
+        if entry["kind"] == "native":
+            _on_native_geo_connection(src_plug, dest_plug, dest_node_obj)
+        else:
+            _on_user_input_connection(src_plug, dest_plug, dest_node_obj)
+    except Exception:
+        pass
+
+
+def _on_user_input_connection(src_plug, dest_plug, dest_node_obj) -> None:
+    """A connection landed on one of our interpreted nodes: cover the source
+    side if it landed on a USER input (the ``_inputAttrs`` map)."""
+    fn = om.MFnDependencyNode(dest_node_obj)
+    try:
+        attr_name = om.MFnAttribute(dest_plug.attribute()).name()
+    except Exception:
+        return
+    try:
+        ia_str = fn.findPlug("_inputAttrs", True).asString()
+        user_inputs = (
+            set(serialization.decode_attr_map(ia_str).keys()) if ia_str else set()
+        )
+    except Exception:
+        user_inputs = set()
+    if attr_name not in user_inputs:
+        return
+    # Pass the dest as an MObject so the closure resolves the live name at fire
+    # time, not the stale import-time name.
+    _install_source_callback(src_plug.node(), dest_node_obj)
+
+
+def _on_native_geo_connection(src_plug, dest_plug, dest_node_obj) -> None:
+    """Same, for a COMPILED node: it has no ``_inputAttrs`` plug, so the filter
+    is the geometry-typed attribute test."""
+    if not _attr_is_geo(dest_plug.attribute()):
+        return
+    _install_source_callback(src_plug.node(), dest_node_obj)
+
+
+def _ensure_shared_connection_callback() -> None:
+    """Register the one connection callback, once per session.
+
+    Owned by ``OWNER_SHARED``, never by the calling plug-in: unloading api1
+    while api2 stays loaded must NOT remove the callback api2 still needs.
+    Last-plugin-out removes it (``remove_for_owner(OWNER_SHARED)``) and
+    ``reset_install_state`` drops the id.
+    """
+    global _shared_connection_cb
+    if _shared_connection_cb is not None:
+        return
+    try:
+        cb_id = om.MDGMessage.addConnectionCallback(_on_any_connection)
+    except Exception as exc:
+        sys.stderr.write(f"[auto_dirty] addConnectionCallback failed: {exc}\n")
+        return
+    _shared_connection_cb = cb_id
+    CALLBACK_MANAGER.register(cb_id, om.MMessage.removeCallback, OWNER_SHARED)
+
+
+def _register_connection_type(type_name, kind, owner) -> None:
+    """Have the shared callback dispatch ``type_name`` to ``kind`` handling.
+
+    ``kind`` is ``"user"`` (interpreted, filtered by ``_inputAttrs``) or
+    ``"native"`` (compiled, filtered by geometry-typed attribute).
+    """
+    tid = _type_id(type_name)
+    if tid is None:
+        _pending_connection_types[type_name] = (kind, owner)
+    else:
+        _connection_types[tid] = {"type_name": type_name, "kind": kind,
+                                  "owner": owner}
+    _ensure_shared_connection_callback()
+
+
+def _forget_connection_types(owner) -> None:
+    """Drop ``owner``'s dispatch entries. The shared callback itself stays: the
+    sibling plug-in may still need it."""
+    for tid in [i for i, e in _connection_types.items() if e["owner"] == owner]:
+        del _connection_types[tid]
+    for n in [n for n, (_k, o) in _pending_connection_types.items() if o == owner]:
+        del _pending_connection_types[n]
+
 
 
 # Clear the per-MObject-hash dedup sets on scene change. `_install_dest_callback`
@@ -628,8 +784,8 @@ def refresh_for_node(node_name: str) -> None:
       * The plug-in's per-type ``MDGMessage.addNodeAddedCallback``
         (so file-loaded and newly-created nodes get coverage).
 
-    The plug-in's per-type ``MDGMessage.addConnectionCallback`` handles
-    later connections (those made after refresh_for_node has run).
+    The module's shared ``MDGMessage.addConnectionCallback`` handles later
+    connections (those made after refresh_for_node has run).
     """
     try:
         from maya import cmds
@@ -677,9 +833,11 @@ def install_for_type(type_name: str, touch=None, owner: str = OWNER_SHARED) -> i
     Sweeps existing nodes + installs:
       * ``MDGMessage.addNodeAddedCallback`` so future nodes get
         ``refresh_for_node`` called on creation.
-      * ``MDGMessage.addConnectionCallback`` so future connections to
-        user inputs trigger a fresh ``refresh_for_node`` (to install
-        the new source-side callback).
+      * a dispatch entry on the module's ONE shared
+        ``MDGMessage.addConnectionCallback``, so future connections to
+        user inputs install the new source-side callback. Registering a
+        callback PER TYPE made every connection in the scene pay for all
+        of them; see ``_connection_types``.
 
     ``touch`` is ignored (kept for backward compat); the per-type
     touch is now looked up via:data:`TOUCH_BY_TYPE`.
@@ -746,52 +904,14 @@ def install_for_type(type_name: str, touch=None, owner: str = OWNER_SHARED) -> i
         # our deferred install finishes. The sweep is idempotent, so cheap.
         _install_scene_open_sweep(type_name, owner)
 
-        # Cover future connections via addConnectionCallback (global). It uses
-        # the src_plug argument directly -- DO NOT use listConnections here, the
-        # connection may not be visible in the DG yet when the callback fires.
+        # Cover future connections through the module's ONE shared connection
+        # callback. It uses the src_plug argument directly -- DO NOT use
+        # listConnections here, the connection may not be visible in the DG yet
+        # when the callback fires.
         if type_name in _connection_callbacks_installed:
             return
         _connection_callbacks_installed[type_name] = owner
-
-        def _on_connection(src_plug, dest_plug, made, _client):
-            if not made:
-                return
-            try:
-                dest_node_obj  = dest_plug.node()
-                fn             = om.MFnDependencyNode(dest_node_obj)
-                dest_node_name = fn.name()
-                from maya import cmds
-
-                if cmds.nodeType(dest_node_name)!= type_name:
-                    return
-                # Only user inputs.
-                try:
-                    attr_name = om.MFnAttribute(dest_plug.attribute()).name()
-                except Exception:
-                    return
-                try:
-                    ia_str = fn.findPlug("_inputAttrs", True).asString()
-                    user_inputs = (
-                        set(serialization.decode_attr_map(ia_str).keys())
-                        if ia_str
-                        else set()
-                    )
-                except Exception:
-                    user_inputs = set()
-                if attr_name not in user_inputs:
-                    return
-                # Pass the dest as an MObject so the closure resolves the live
-                # name at fire time, not the stale import-time name.
-                src_node_obj = src_plug.node()
-                _install_source_callback(src_node_obj, dest_node_obj)
-            except Exception:
-                pass
-
-        try:
-            cb_id2 = om.MDGMessage.addConnectionCallback(_on_connection)
-            CALLBACK_MANAGER.register(cb_id2, om.MMessage.removeCallback, owner)
-        except Exception as exc:
-            sys.stderr.write(f"[auto_dirty] addConnectionCallback failed: {exc}\n")
+        _register_connection_type(type_name, "user", owner)
 
     try:
         from maya import cmds
@@ -836,17 +956,22 @@ def forget_owner(owner) -> None:
     """Clear the connection-callback install latch entries owned by ``owner``.
 
     Called from a plug-in's ``uninitializePlugin`` on EVERY unload (right after
-    ``CALLBACK_MANAGER.remove_for_owner(PLUGIN_NAME)``). The per-type
-    ``addConnectionCallback`` is plugin-owned, so it is deregistered on every
-    single-plugin unload -- its latch must therefore be cleared on every unload
-    too, or a reload while the sibling plug-in stays loaded would hit the stale
-    latch in ``install_for_type`` and skip re-registering the connection
-    callback (new connections to that plugin's nodes would then never get a
-    source-side dirty callback). ``reset_install_state`` (last-plugin-out) clears
-    the whole latch; this clears just one owner's slice for the non-final case.
+    ``CALLBACK_MANAGER.remove_for_owner(PLUGIN_NAME)``). The structural install
+    in ``install_for_type`` is latched per type, so the latch must be cleared on
+    every single-plugin unload -- otherwise a reload while the sibling plug-in
+    stays loaded hits the stale latch and that type is never re-covered (new
+    connections to its nodes would get no source-side dirty callback).
+    ``reset_install_state`` (last-plugin-out) clears the whole latch; this clears
+    just one owner's slice for the non-final case.
+
+    Also drops this owner's dispatch entries, so the shared callback stops
+    recognising types whose plug-in has gone. The shared callback itself is
+    ``OWNER_SHARED`` and deliberately SURVIVES: the sibling plug-in still needs
+    it, and it is removed only at last-plugin-out.
     """
     for t in [t for t, o in _connection_callbacks_installed.items() if o == owner]:
         del _connection_callbacks_installed[t]
+    _forget_connection_types(owner)
 
 
 def reset_install_state() -> None:
@@ -863,9 +988,13 @@ def reset_install_state() -> None:
         keys -> ``refresh_for_node`` short-circuits and never re-installs.
     """
     global _scene_change_clear_installed, _native_discovery_sweep_installed
+    global _shared_connection_cb
+    _shared_connection_cb             = None
     _scene_change_clear_installed     = False
     _native_discovery_sweep_installed = False
     _connection_callbacks_installed.clear()
+    _connection_types.clear()
+    _pending_connection_types.clear()
     _dest_callbacks.clear()
     _source_callbacks.clear()
 
@@ -1065,31 +1194,7 @@ def install_for_native_type(type_name, touch, owner: str = OWNER_SHARED,
                     f"{type_name!r}: {exc}\n"
                 )
 
-        def _on_connection(src_plug, dest_plug, made, _client):
-            if not made:
-                return
-            try:
-                dest_node_obj  = dest_plug.node()
-                fn             = om.MFnDependencyNode(dest_node_obj)
-                dest_node_name = fn.name()
-                from maya import cmds
-
-                if cmds.nodeType(dest_node_name) != type_name:
-                    return
-                if not _attr_is_geo(dest_plug.attribute()):
-                    return
-                src_node_obj = src_plug.node()
-                _install_source_callback(src_node_obj, dest_node_obj)
-            except Exception:
-                pass
-
-        try:
-            cb_id2 = om.MDGMessage.addConnectionCallback(_on_connection)
-            CALLBACK_MANAGER.register(cb_id2, om.MMessage.removeCallback, owner)
-        except Exception as exc:
-            sys.stderr.write(
-                f"[auto_dirty] native addConnectionCallback failed: {exc}\n"
-            )
+        _register_connection_type(type_name, "native", owner)
 
     if defer:
         try:
