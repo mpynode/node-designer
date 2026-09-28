@@ -638,6 +638,38 @@ def discover_maya_installs(os_name: Optional[str] = None,
                        else (0, e["version"])))
 
 
+def running_maya_dir() -> Optional[str]:
+    """The Maya install THIS PROCESS is running inside, or ``None``.
+
+    A compile needs two Mayas to agree: the one whose devkit the plug-in is
+    built AGAINST, and the one that will LOAD it. Maya stamps its version into
+    an inline namespace (``OpenMaya20270000``), so a plug-in built against one
+    version resolves not one symbol in another. Windows reports that as "The
+    specified procedure could not be found" at load -- long after the build
+    said ok, and naming nothing that points back at the version.
+
+    Both seeds are consulted because neither alone covers every caller:
+    ``MAYA_LOCATION`` is set by any running Maya but points at
+    ``<root>/Maya.app/Contents`` on macOS, while ``sys.executable`` is the
+    mayapy under ``<root>/bin`` but is an embedding host's binary when Maya
+    itself is doing the asking. Walking UP to the first ancestor that carries
+    devkit headers normalises both shapes.
+
+    ``None`` when this process is not inside a Maya that ships a devkit: there
+    is then nothing to build against here and the caller must fall back.
+    """
+    seeds = [os.environ.get("MAYA_LOCATION") or ""]
+    if sys.executable:
+        seeds.append(os.path.dirname(os.path.abspath(sys.executable)))
+    for seed in seeds:
+        cur = os.path.abspath(seed) if seed else ""
+        while cur and cur != os.path.dirname(cur):
+            if os.path.isdir(os.path.join(maya_include_dir(cur), "maya")):
+                return cur
+            cur = os.path.dirname(cur)
+    return None
+
+
 def preferred_maya_dir(os_name: Optional[str] = None) -> str:
     """The Maya root a build should target when the caller names none.
 
@@ -651,12 +683,34 @@ def preferred_maya_dir(os_name: Optional[str] = None) -> str:
     ``C:\\Program Files\\Autodesk\\Maya2026`` does not exist -- reported only as
     "dropped", with no reason naming the missing devkit.
 
-    Prefers the newest install :func:`discover_maya_installs` can actually see
-    (it sorts year versions numerically and LAST), and falls back to the
-    conventional constant, so behaviour on a machine that HAS the pinned version
-    is unchanged. Callers that know better still win: the compile dialog resolves
-    the RUNNING Maya from ``MAYA_LOCATION`` and passes it explicitly.
+    Precedence:
+
+      1. :func:`running_maya_dir` -- the Maya this process is running inside;
+      2. the newest install :func:`discover_maya_installs` can see (it sorts
+         year versions numerically and LAST);
+      3. the conventional constant, so a machine that HAS the pinned version
+         behaves as before.
+
+    (1) leads because the answer is only right if the plug-in loads where it
+    was asked for, and the asker is nearly always sitting in the Maya that will
+    load it -- a mayapy running the suite, a batch build, the Designer inside a
+    session. "Newest installed" agreed with that for as long as the newest Maya
+    on a box was the one being used. MEASURED on Windows 2026-09-28: installing
+    Maya 2027 beside the 2025 in use broke the coincidence, and four compiled
+    node tests began building 2027 plug-ins and loading them into 2025.
+
+    Naming ``os_name`` asks a HYPOTHETICAL about another platform, which this
+    process cannot be running inside, so it skips (1) and answers from the
+    install scan as it always did.
+
+    Callers that know better still win by passing a root explicitly: the
+    compile dialog resolves the running session, and ``compile_plugin_multi``
+    names each version it targets.
     """
+    if os_name is None:
+        running = running_maya_dir()
+        if running:
+            return running
     installs = discover_maya_installs(os_name)
     if installs:
         return installs[-1]["root"]

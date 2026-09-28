@@ -608,6 +608,102 @@ class TestPreferredMayaDir(unittest.TestCase):
                              "%s pins its Maya default" % mod.__name__)
 
 
+class TestRunningMayaDir(unittest.TestCase):
+    """The default must name the Maya that will LOAD the plug-in.
+
+    Maya stamps its version into an inline namespace (``OpenMaya20270000``), so
+    a plug-in built against one version resolves not one symbol in another --
+    Windows reports it as "The specified procedure could not be found", at load,
+    naming nothing that points back at the version.
+
+    MEASURED on Windows 2026-09-28: installing Maya 2027 beside the 2025 in use
+    made ``preferred_maya_dir`` (then "newest installed") hand the compiler the
+    2027 devkit while the suite ran in 2025's mayapy. Four compiled node tests
+    began failing on a repo nobody had touched.
+    """
+
+    def _tree(self, *parts):
+        """A fake install root carrying devkit headers."""
+        root = os.path.join(tempfile.mkdtemp(prefix="mayaroot_"), *parts)
+        os.makedirs(os.path.join(root, "include", "maya"))
+        return root
+
+    def _isolate(self, maya_location="", executable="/nowhere/python"):
+        """Neither seed points at a real Maya unless a test says so."""
+        env = unittest.mock.patch.dict(os.environ,
+                                       {"MAYA_LOCATION": maya_location})
+        exe = unittest.mock.patch.object(tc_mod().sys, "executable", executable)
+        env.start(); exe.start()
+        self.addCleanup(env.stop); self.addCleanup(exe.stop)
+
+    def test_it_reads_the_session_maya_location(self):
+        tc = tc_mod()
+        root = self._tree()
+        self._isolate(maya_location=root)
+        self.assertEqual(tc.running_maya_dir(), root)
+
+    def test_it_walks_up_from_the_macos_shape(self):
+        """macOS MAYA_LOCATION is <root>/Maya.app/Contents, not <root>."""
+        tc = tc_mod()
+        root = self._tree()
+        self._isolate(maya_location=os.path.join(root, "Maya.app", "Contents"))
+        self.assertEqual(tc.running_maya_dir(), root)
+
+    def test_it_falls_back_to_the_interpreter(self):
+        """An embedded Maya need not export MAYA_LOCATION; mayapy still sits
+        under <root>/bin."""
+        tc = tc_mod()
+        root = self._tree()
+        self._isolate(executable=os.path.join(root, "bin", "mayapy.exe"))
+        self.assertEqual(tc.running_maya_dir(), root)
+
+    def test_none_when_this_is_not_a_maya(self):
+        """A plain python, or a Maya with no devkit: nothing to build against,
+        so the caller must fall back rather than be handed a wrong answer."""
+        tc = tc_mod()
+        self._isolate(maya_location=tempfile.mkdtemp(prefix="notmaya_"))
+        self.assertIsNone(tc.running_maya_dir())
+
+
+class TestPreferredPrefersTheRunningMaya(unittest.TestCase):
+
+    def test_the_running_maya_outranks_a_newer_install(self):
+        """The whole point: newer on disk does not mean it will load here."""
+        tc = tc_mod()
+        newer = [{"label": "Maya2027", "version": "2027",
+                  "root": "/A/Maya2027", "mayapy": "x"}]
+        with unittest.mock.patch.object(tc, "running_maya_dir",
+                                        return_value="/A/Maya2025"),              unittest.mock.patch.object(tc, "discover_maya_installs",
+                                        return_value=newer):
+            self.assertEqual(tc.preferred_maya_dir(), "/A/Maya2025")
+
+    def test_it_still_scans_when_not_inside_a_maya(self):
+        tc = tc_mod()
+        found = [{"label": "Maya2027", "version": "2027",
+                  "root": "/A/Maya2027", "mayapy": "x"}]
+        with unittest.mock.patch.object(tc, "running_maya_dir",
+                                        return_value=None),              unittest.mock.patch.object(tc, "discover_maya_installs",
+                                        return_value=found):
+            self.assertEqual(tc.preferred_maya_dir(), "/A/Maya2027")
+
+    def test_naming_a_platform_asks_a_hypothetical(self):
+        """``preferred_maya_dir("darwin")`` on Windows cannot mean "the Maya I
+        am running inside" -- this process is not inside a macOS Maya. Those
+        callers keep the install-scan answer."""
+        tc = tc_mod()
+        found = [{"label": "Maya2027", "version": "2027",
+                  "root": "/A/Maya2027", "mayapy": "x"}]
+        with unittest.mock.patch.object(tc, "running_maya_dir",
+                                        return_value="/A/Maya2025"),              unittest.mock.patch.object(tc, "discover_maya_installs",
+                                        return_value=found):
+            self.assertEqual(tc.preferred_maya_dir("win32"), "/A/Maya2027")
+
+
+def tc_mod():
+    from mpynode.native.toolchain import toolchain as tc
+    return tc
+
+
 class TestVcvarsParsing(unittest.TestCase):
     def test_parse_set_output(self):
         from mpynode.native.toolchain import toolchain as tc
