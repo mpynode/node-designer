@@ -644,7 +644,7 @@ class TestBundlerCarriesCommands(unittest.TestCase):
         frag, info = self._frag()
         ns     = info["ns"]
         i_end  = frag.index("}  // namespace %s" % ns)
-        i_hook = frag.index("register_%s" % info["class"])
+        i_hook = frag.index(info["register"])
         i_reg  = frag.index('registerCommand("createMeshRegion"')
         self.assertGreater(i_reg, i_end)   # outside the class namespace
         self.assertGreater(i_reg, i_hook)  # inside the register hook

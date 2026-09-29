@@ -164,20 +164,45 @@ class TypeIdRegistry:
         self._file_pins = pins
         return pins
 
-    def pin(self, name: str, value) -> Optional[int]:
+    def pin(self, name: str, value, any_range: bool = False) -> Optional[int]:
         """Force ``name`` to a specific id for this build (the node-metadata
         ``type_id``). Highest precedence. Returns the parsed id, or ``None`` if
         the value is unusable or out of Maya's range -- a bad pin is ignored in
-        favour of the derived id rather than failing the build."""
+        favour of the derived id rather than failing the build.
+
+        The default range is the local-testing block. ``any_range`` admits any
+        32-bit id: an id read off a COMPILED source is whatever its author
+        registered with Autodesk, and turning it into "derived" would silently
+        re-number a node that ships in scenes."""
         if value is None or not str(value).strip():
             return None
         try:
             val = _as_int(str(value).strip())
         except Exception:  # noqa: BLE001
             return None
-        if val < 0 or val > 0x0007FFFF:
+        top = 0xFFFFFFFF if any_range else 0x0007FFFF
+        if val < 0 or val > top:
             return None
         self._manual[str(name)] = val
+        return val
+
+    def claim_literal(self, name: str, value) -> int:
+        """Take EXACTLY ``value`` for ``name`` -- the id a compiled fragment
+        already carries in its text -- or raise ``ValueError`` when another key
+        holds it. Never probes forward: the literal is baked into the fragment,
+        so a moved id would make the report lie about what links."""
+        val   = _as_int(str(value).strip())
+        owner = self._used.get(val)
+        if owner is not None and owner != str(name):
+            raise ValueError("MTypeId %s is already held by %r"
+                             % (_as_hex(val), owner))
+        have = self._issued.get(str(name))
+        if have is not None and have != val:
+            raise ValueError("%r already resolved to %s, not %s"
+                             % (name, _as_hex(have), _as_hex(val)))
+        self._issued[str(name)] = val
+        self._used[val]         = str(name)
+        self.sources[str(name)] = "literal"
         return val
 
     def seed(self, mapping: Dict[str, str]) -> None:

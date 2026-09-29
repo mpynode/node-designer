@@ -413,7 +413,7 @@ class TestTransformBackwardCompatible(unittest.TestCase):
         self.assertNotIn("mpyh_", frag)
         # Structure intact: still namespace-wrapped + register hook generated.
         self.assertIn("namespace nd_fooNode", frag)
-        self.assertIn("register_FooNode", frag)
+        self.assertIn("register_nd_fooNode", frag)
 
 
 class TestAssembleDedup(unittest.TestCase):

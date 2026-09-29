@@ -518,6 +518,78 @@ def _toplevel_directive_lines(text: str) -> List[int]:
     return out
 
 
+FRAGMENT_STAMP = "// MPYNODE FRAGMENT v2"
+
+# A run of global code that must NOT move into the node's namespace: a
+# specialisation in namespace std, or C linkage, only mean anything at global
+# scope. Such runs stay put and are handed back so a bundle whose members
+# disagree on one can be refused (bundle_plan preflight E8). A using-DIRECTIVE
+# (`using namespace std::chrono;`, which every hover locator has inside its
+# clock helpers) is not one of these: it is fine inside the node namespace.
+_GLOBAL_ONLY_RE = re.compile(
+    r'(?<!using )\bnamespace\s+std\b|\bextern\s+"C"|\b(?:struct|class)\s+std::')
+
+
+def _is_code(line: str) -> bool:
+    t = line.strip()
+    return bool(t) and not t.startswith("//")
+
+
+def isolate_global_runs(lines: List[str], ns: str) -> Tuple[List[str], List[str]]:
+    """Wrap every run of code between depth-0 preprocessor directives in
+    ``namespace <ns> { ... }``.
+
+    A ported node carries its whole inlined runtime -- ``namespace nd`` (about
+    220 inline functions), NdIo, NdTex, the ``ndx`` matrix helpers -- at file
+    scope BEFORE its last ``#include``, which is where the transform opened the
+    node namespace. Every member of a bundle therefore shared ONE copy of each
+    inline function: the linker keeps whichever object it saw first and says
+    nothing. MEASURED (2026-09-28) with two real versions of ``nd_runtime.h``:
+    ``nd::det`` threw for one node in one link order and was right in the
+    other. Combining nodes built at different times is exactly what bundling
+    makes routine, so each node now owns its runtime, wrapped in the node's own
+    namespace, reopened around each run.
+
+    Directive lines (with their backslash continuations) stay outside. A run of
+    blanks and comments is left alone. A run matching :data:`_GLOBAL_ONLY_RE`
+    is left alone too and returned in the second value.
+    """
+    head      = "\n".join(lines)
+    directive = set(_toplevel_directive_lines(head))
+    out:  List[str] = []
+    left: List[str] = []
+    run:  List[str] = []
+
+    def flush():
+        if not run:
+            return
+        if not any(_is_code(ln) for ln in run):
+            out.extend(run)
+        elif _GLOBAL_ONLY_RE.search("\n".join(run)):
+            left.append("\n".join(run))
+            out.extend(run)
+        else:
+            out.append("namespace %s {" % ns)
+            out.extend(run)
+            out.append("}  // namespace %s" % ns)
+        del run[:]
+
+    i, n = 0, len(lines)
+    while i < n:
+        if i in directive:
+            flush()
+            out.append(lines[i])
+            while lines[i].rstrip().endswith("\\") and i + 1 < n:
+                i += 1
+                out.append(lines[i])
+            i += 1
+            continue
+        run.append(lines[i])
+        i += 1
+    flush()
+    return out, left
+
+
 def transform_node_cpp(
     text: str, type_name: str, id_for
 ) -> Tuple[str, Dict[str, str]]:
@@ -579,8 +651,15 @@ def transform_node_cpp(
     pre        = lines[: last_inc + 1]
     body       = lines[last_inc + 1:]
 
-    reg_hook   = "register_%s" % main_cls
-    dereg_hook = "deregister_%s" % main_cls
+    # The code runs of the preamble (the inlined runtime and friends) get the
+    # node's namespace too -- see isolate_global_runs.
+    pre, unwrapped = isolate_global_runs(pre, ns)
+
+    # Hooks are named after the NAMESPACE, not the class: two nodes whose
+    # classes happen to share a name (a user's `Node`, a template's `Node`)
+    # would otherwise both emit register_Node and fail to link (LNK2005).
+    reg_hook   = "register_%s" % ns
+    dereg_hook = "deregister_%s" % ns
 
     # Prototypes for the hoisted helpers, at GLOBAL scope (between the includes
     # and the node namespace) so unqualified calls inside the namespace resolve
@@ -592,7 +671,8 @@ def transform_node_cpp(
                        + "\n".join("%s;" % b["proto"] for b in shared))
 
     frag = (
-        "\n".join(pre)
+        FRAGMENT_STAMP + "\n"
+        + "\n".join(pre)
         + proto_block
         + "\n\nnamespace %s {\n" % ns
         + "\n".join(body).strip("\n")
@@ -602,28 +682,34 @@ def transform_node_cpp(
         + _make_hook(uninit[2], dereg_hook, ns)
         + "\n"
     )
-    info = {
-        "node_name":      node_name,
-        "class":          main_cls,
-        "ns":             ns,
-        "register":       reg_hook,
-        "deregister":     dereg_hook,
-        "shared_helpers": shared,
-        # What the member claims in the session, for plugin_main's pre-check:
-        # read back off the finished fragment so they can never disagree with
-        # what its hooks actually register.
-        "type_names":     [node_name],
-        "type_ids":       _TYPEID_RE.findall(frag),
-        "commands":       command_names_in(frag),
-    }
+    info = fragment_info(frag)
+    info["shared_helpers"] = shared
+    info["unwrapped_runs"] = unwrapped
     return frag, info
 
 
 _HOOK_RE   = re.compile(r"MStatus\s+(register_\w+)\s*\(\s*MFnPlugin\s*&")
 _DEREG_RE  = re.compile(r"MStatus\s+(deregister_\w+)\s*\(\s*MFnPlugin\s*&")
-_REGNAME_RE = re.compile(r"register(?:Node|Transform)\s*\(\s*\"([^\"]+)\"")
+_REGNAME_RE = re.compile(
+    r"register(?:Node|Transform)\s*\(\s*\"([^\"]+)\"\s*,\s*(\w+)::id")
 _TYPEID_RE = re.compile(r"MTypeId\s+\w+::id\s*\(\s*(0x[0-9a-fA-F]+)\s*\)")
+_TYPEID_CLS_RE = re.compile(r"MTypeId\s+(\w+)::id\s*\(\s*(0x[0-9a-fA-F]+)\s*\)")
 _NS_RE     = re.compile(r"^namespace\s+(nd_\w+)\s*\{", re.M)
+_INIT_RE   = re.compile(r"\bMStatus\s+initializePlugin\s*\(")
+
+
+def is_fragment_text(text: str) -> bool:
+    """True for a bundler fragment (register hooks, no ``initializePlugin``),
+    False for a single-node source. The two are the only node shapes."""
+    return bool(_HOOK_RE.search(text)) and not _INIT_RE.search(text)
+
+
+def _is_fragment_path(path: str) -> bool:
+    try:
+        with open(path, encoding="utf-8") as fh:
+            return is_fragment_text(fh.read())
+    except OSError:
+        return False
 
 
 def fragment_info(text: str) -> Dict[str, object]:
@@ -631,6 +717,11 @@ def fragment_info(text: str) -> Dict[str, object]:
     already-transformed fragment (a ``build/source/<node>.cpp`` of a multi-node
     build) -- so ``plugin_main.cpp`` can be regenerated for a shipped tree
     without re-running the transform, and a fragment can be re-bundled as-is.
+
+    ``version`` is 2 for a fragment stamped :data:`FRAGMENT_STAMP` (its global
+    runs are isolated) and 1 for one from before that; ``type_id_map`` keys
+    every MTypeId the way the registry does (``<node>`` for the main class,
+    ``<node>#<Class>`` for a companion).
 
     Raises ``ValueError`` when ``text`` is not a fragment (no ``register_*``
     hook), which is also how a caller tells a fragment from a single-node
@@ -645,19 +736,51 @@ def fragment_info(text: str) -> Dict[str, object]:
     m = _REGNAME_RE.search(text, reg.start())
     if not m:
         raise ValueError("fragment %s registers no node" % reg.group(1))
-    node_name = m.group(1)
-    ns_m      = _NS_RE.search(text)
+    node_name, main_cls = m.group(1), m.group(2)
+    ns_m = _NS_RE.search(text)
+    ids  = _TYPEID_CLS_RE.findall(text)
     return {
         "node_name":      node_name,
-        "class":          reg.group(1)[len("register_"):],
+        "class":          main_cls,
         "ns":             ns_m.group(1) if ns_m else _ns_for(node_name),
         "register":       reg.group(1),
         "deregister":     dereg.group(1),
         "shared_helpers": [],
+        "unwrapped_runs": [],
+        "version":        2 if text.startswith(FRAGMENT_STAMP) else 1,
         "type_names":     [node_name],
-        "type_ids":       _TYPEID_RE.findall(text),
+        "type_ids":       [hx for _c, hx in ids],
+        "type_id_map":    {(node_name if c == main_cls else "%s#%s" % (node_name, c)): hx
+                           for c, hx in ids},
         "commands":       command_names_in(text),
     }
+
+
+def upgrade_fragment(text: str) -> Tuple[str, Dict[str, object]]:
+    """A version-1 fragment, with its global runs isolated and the v2 stamp.
+
+    The fragments shipped in an existing multi-node tree (the All Templates
+    Plugin's, or any Compile-dialog build before this change) carry their
+    runtime at global scope. Re-bundling one beside a node built later is the
+    silent-ODR case ``isolate_global_runs`` exists for, so it gets the same
+    treatment on the way in. A v2 fragment is returned unchanged.
+    """
+    info = fragment_info(text)
+    if info["version"] >= 2:
+        return text, info
+    if "defined in shared_helpers.cpp" in text:
+        raise ValueError(
+            "fragment %s depends on a shared_helpers.cpp that is not part of "
+            "the input; re-bundle it from its standalone source" % info["node_name"])
+    m = re.search(r"^namespace %s\s*\{" % re.escape(info["ns"]), text, re.M)
+    if not m:
+        raise ValueError("fragment %s has no node namespace" % info["node_name"])
+    pre, unwrapped = isolate_global_runs(text[: m.start()].rstrip("\n").splitlines(),
+                                         info["ns"])
+    new  = FRAGMENT_STAMP + "\n" + "\n".join(pre) + "\n\n" + text[m.start():]
+    info = fragment_info(new)
+    info["unwrapped_runs"] = unwrapped
+    return new, info
 
 
 def make_single_node_cpp(
@@ -1436,6 +1559,33 @@ def _rm(path: str) -> None:
         pass
 
 
+# What every file this module (or the emitters) writes says about itself, so
+# the migration sweep can tell its own leftovers from a user's files by name.
+_GENERATED_BANNERS = (
+    "Generated combined build for native plugin",   # make_build_bat / _sh
+    "Rebuild native plugin",                        # make_single_build_*
+    "MPyNode compiled plugin:",                     # make_readme
+    "generated by bundler.py",                      # plugin_main / shared unit
+    FRAGMENT_STAMP,                                 # a v2 fragment
+    "// build: ",                                   # the emitter's stamp
+)
+
+
+def _is_bundler_output(path: str) -> bool:
+    """True when ``path`` is something this pipeline wrote (by its banner, or
+    for a manifest by its shape), False for a missing file or anyone else's."""
+    try:
+        with open(path, encoding="utf-8", errors="replace") as fh:
+            text = fh.read()
+    except OSError:
+        return False
+    if path.lower().endswith(".json"):
+        return '"plugin_name"' in text and '"nodes"' in text
+    if any(b in text for b in _GENERATED_BANNERS):
+        return True
+    return path.lower().endswith(".cpp") and bool(_HOOK_RE.search(text))
+
+
 def _clean_stale_intermediates(out_dir: str, keep=()) -> None:
     """Remove leftovers from a PRIOR compile into the same folder so a re-compile
     yields the clean nested layout.
@@ -1451,12 +1601,18 @@ def _clean_stale_intermediates(out_dir: str, keep=()) -> None:
     ``out_dir`` at the very folder holding the inputs (some tests do), and the
     ``*.cpp`` migration sweep must not eat them."""
     keep = {os.path.abspath(p) for p in keep}
-    # (1) migration: flat-layout files an OLD compile left at the top level.
+    # (1) migration: flat-layout files an OLD compile left at the top level --
+    #     but ONLY files this pipeline wrote. The All Templates Plugin keeps a
+    #     hand-written build.bat / build.sh at its top level that wrap the
+    #     generated ones; a sweep by NAME would eat them.
     for name in ("build.sh", "build.bat", "README.txt", "manifest.json"):
         p = os.path.join(out_dir, name)
-        if os.path.abspath(p) not in keep:
+        if os.path.abspath(p) not in keep and _is_bundler_output(p):
             _rm(p)
-    for pat in ("*.cpp", "*.o", "*.obj"):  # *.cpp covers frag_*/plugin_main/etc.
+    for p in glob.glob(os.path.join(out_dir, "*.cpp")):  # frag_* / plugin_main / <node>
+        if os.path.abspath(p) not in keep and _is_bundler_output(p):
+            _rm(p)
+    for pat in ("*.o", "*.obj"):
         for p in glob.glob(os.path.join(out_dir, pat)):
             if os.path.abspath(p) not in keep:
                 _rm(p)
@@ -1543,7 +1699,9 @@ def assemble(
 
     # Single-node plugin -> one clean, self-contained <node>.cpp (the common
     # case: one node per plugin). No namespace/hook surgery, no plugin_main.
-    if len(nodes) == 1:
+    # A lone FRAGMENT has no initializePlugin to keep, so it takes the
+    # multi-node path (one fragment + plugin_main) instead.
+    if len(nodes) == 1 and not _is_fragment_path(nodes[0][1]):
         return _assemble_single(
             nodes[0], plugin_name, out_dir, reg, report, strict=strict,
             maya=maya, compile_now=compile_now, log_cb=log_cb, needs_qt=needs_qt)
@@ -1558,31 +1716,42 @@ def assemble(
             with open(cpp_path, encoding="utf-8") as fh:
                 src = fh.read()
             cmd_sources.append((type_name, src))
-            # Pre-allocate ids for every MTypeId this file defines so id_for is
-            # a pure lookup during transform.
-            cls_defs = re.findall(r"MTypeId\s+(\w+)::id\(0x[0-9a-fA-F]+\);", src)
-            reg_m    = re.search(r"register(?:Node|Transform)\s*\(\s*\"[^\"]+\"\s*,\s*(\w+)::id", src)
-            main_cls = reg_m.group(1) if reg_m else None
-            keys     = []
-            for c in cls_defs:
-                keys.append(type_name if c == main_cls else "%s#%s" % (type_name, c))
-            id_map = reg.allocate_many(keys)
+            if is_fragment_text(src):
+                # An already-transformed fragment (from another multi-node
+                # build) passes through as-is: its ids are baked into its text,
+                # so they are CLAIMED, never re-allocated, and a clash with
+                # another member is an error rather than a silent move.
+                frag, info = upgrade_fragment(src)
+                for key, hx in info["type_id_map"].items():
+                    reg.claim_literal(key, hx)
+                id_map = dict(info["type_id_map"])
+            else:
+                # Pre-allocate ids for every MTypeId this file defines so id_for
+                # is a pure lookup during transform.
+                cls_defs = re.findall(r"MTypeId\s+(\w+)::id\(0x[0-9a-fA-F]+\);", src)
+                reg_m    = re.search(r"register(?:Node|Transform)\s*\(\s*\"[^\"]+\"\s*,\s*(\w+)::id", src)
+                main_cls = reg_m.group(1) if reg_m else None
+                keys     = []
+                for c in cls_defs:
+                    keys.append(type_name if c == main_cls else "%s#%s" % (type_name, c))
+                id_map = reg.allocate_many(keys)
 
-            def id_for(key, _m=id_map):
-                return _m[key]
+                def id_for(key, _m=id_map):
+                    return _m[key]
 
-            frag, info = transform_node_cpp(src, type_name, id_for)
+                frag, info = transform_node_cpp(src, type_name, id_for)
             frag_path = os.path.join(src_dir, _node_cpp_name(info["node_name"]))
             with open(frag_path, "w", encoding="utf-8") as fh:
                 fh.write(frag)
-            rec["id"]     = id_map.get(type_name)
+            rec["id"]     = id_map.get(type_name) or id_map.get(info["node_name"])
             rec["status"] = "transformed"
-            fragments.append((frag_path, info, type_name))
+            fragments.append((frag_path, info, type_name, rec))
             report["nodes"].append(rec)
         except Exception as exc:
             rec["status"] = "error"
             rec["reason"] = "transform: %s" % exc
             report["nodes"].append(rec)
+            report["dropped"].append(type_name)
             if strict:
                 return report
 
@@ -1614,8 +1783,7 @@ def assemble(
     compiled_infos = []
     inc            = toolchain.maya_include_dir(maya)
     with toolchain.temp_build_dir() as tmp:
-        for frag_path, info, type_name in fragments:
-            rec = next(r for r in report["nodes"] if r["name"] == type_name)
+        for frag_path, info, type_name, rec in fragments:
             if compile_now:
                 src, obj = _copy_into(frag_path, tmp)
                 cmd = toolchain.compile_object_cmd(
@@ -1638,7 +1806,10 @@ def assemble(
                     _rm(frag_path)
                     continue
                 frag_objs.append(obj)
-            rec["status"] = "compiled"
+            # "generated" when nothing was compiled: the tree is complete and
+            # re-buildable, but calling it compiled would let a caller treat a
+            # bundle that does not exist as one that does.
+            rec["status"] = "compiled" if compile_now else "generated"
             frag_files.append(os.path.basename(frag_path))
             compiled_infos.append(info)
 

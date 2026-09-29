@@ -378,6 +378,31 @@ res = porter.port_from_node("myNode", "out")   # one node -> one plug-in
 - Network / file / `maya.cmds` / GUI use is reported as **unported** — a warning plus AI-porter context, NOT a gate. The only BLOCKERS are `python` and `message` attr types.
 - Needs a C++ toolchain; a fully deterministic or fully cached build needs no AI provider.
 
+### Bundling nodes that are already compiled
+
+`tools\bundle.bat` / `tools/bundle.sh` combine compiled node sources -- a
+single-node compile's `build/source/<node>.cpp`, a multi-node compile's
+fragments, or a whole plug-in folder -- into ONE plug-in, porting nothing again:
+
+```bash
+tools/bundle.sh rigTools "templates/MPyNurbsCurve/NURBS Helix" \
+    "templates/All Templates Plugin::spine,twoBoneIK" out/mine/build/source/myNode.cpp
+tools/bundle.sh --check INPUT...      # every pre-flight check; writes nothing
+tools/bundle.sh --refresh rigTools    # rebuild from the inputs its manifest lists
+```
+
+- Each node keeps the type id it shipped with. A duplicate name, id or command
+  is refused before anything compiles (exit 2), never renumbered: `.mb` scenes
+  store ids.
+- Each node's inlined runtime is wrapped in its own namespace, so nodes built
+  at different times cannot silently share one copy of it.
+- The output has the All Templates Plugin layout: `<name>.mll`, `build/source/`,
+  `build/build.bat` + `build.sh` (a compiler and Maya, nothing else), and
+  `build/manifest.json` whose `bundled_from` is the saved selection.
+- The result is test-loaded in the target Maya's own mayapy. At load, a member
+  another loaded plug-in already provides is skipped with a warning;
+  `--strict-load` refuses the whole plug-in instead.
+
 ## 11. Troubleshooting
 
 | Symptom | Cause / fix |

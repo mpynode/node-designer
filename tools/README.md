@@ -58,6 +58,19 @@ Walks `templates/` and compiles each one in place, into a `build/` tree inside
 that template's own folder, farming each out to
 `build_compiled_templates_worker.py` in its own mayapy.
 
+## Bundling compiled nodes
+
+| | macOS / Linux | Windows |
+|---|---|---|
+| Combine compiled node sources into one plug-in | `tools/bundle.sh NAME INPUT...` | `tools\bundle.bat NAME INPUT...` |
+
+Both find a mayapy (`MPYNODE_MAYAPY`, then `MAYA_LOCATION`, then the newest
+install with a devkit) and run `mpynode.native.bundle` under it -- `--help`
+lists the input forms and options, `--check` runs every pre-flight check and
+writes nothing, `--refresh DIR` rebuilds a bundle from the inputs its manifest
+records. The tree it writes rebuilds with its own `build/build.bat` /
+`build.sh`, which need only a compiler and Maya.
+
 ## Attended probes and gates
 
 Run by hand when investigating the thing they name; none is wired into a script.

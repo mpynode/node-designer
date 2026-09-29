@@ -999,7 +999,7 @@ class TestProbeGuardFlatten(unittest.TestCase):
         # probe-only int main() must be gone; the plugin scaffold must remain.
         self.assertNotIn("_readFrames", frag, "probe block must be dropped")
         self.assertIn("addUIDrawables", frag, "plugin scaffold must be kept")
-        self.assertIn("register_GizmoCube", frag, "register hook must be emitted")
+        self.assertIn("register_nd_gizmoCube", frag, "register hook must be emitted")
 
 
 def _cpp_with_directive(block):
