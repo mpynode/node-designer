@@ -417,7 +417,8 @@ class NDMainWindow(QMainWindow):
         )
 
         self._gallery_panel = NDTemplateGalleryPanel(
-            self._mode_tabs, on_create=self._create_from_template
+            self._mode_tabs, on_create=self._create_from_template,
+            on_bundle=self._bundle_from_template,
         )
 
         # Workspace mode page: tree | editor+tools | Assistant, in one splitter.
@@ -979,7 +980,12 @@ class NDMainWindow(QMainWindow):
                ", ".join(types) or "(none)",
                ", ".join(cmds_) or "(none)"))
 
-    def _open_compile_dialog(self, preselect=None) -> None:
+    def _bundle_from_template(self, cpp_path: str) -> None:
+        """Gallery "Add to bundle…": open the Compile dialog with this
+        template's compiled source added as a checked "Compiled C++" row."""
+        self._open_compile_dialog(compiled=[cpp_path])
+
+    def _open_compile_dialog(self, preselect=None, compiled=None) -> None:
         """Open (or raise) the single non-modal CompileDialog.
 
         The dialog lists every mPy* node in the CURRENT scene; ``refresh_nodes``
@@ -990,6 +996,8 @@ class NDMainWindow(QMainWindow):
 
         ``preselect`` (a scene node name) checks exactly that node after the
         refresh, so the scene-tab right-click "Compile…" lands on it directly.
+        ``compiled`` (already-compiled node source paths) adds them as checked
+        "Compiled C++" rows, which is how the gallery's "Add to bundle…" lands.
         """
         # Local import to avoid a top-level cycle (the dialog pulls in the
         # native compile stack, which need not load until first used).
@@ -1001,6 +1009,8 @@ class NDMainWindow(QMainWindow):
                 dlg.refresh_nodes()
                 if preselect:
                     dlg.preselect_node(preselect)
+                if compiled:
+                    dlg.add_compiled_sources(compiled)
                 dlg.show()
                 dlg.raise_()
                 dlg.activateWindow()
@@ -1026,6 +1036,8 @@ class NDMainWindow(QMainWindow):
         self._compile_dialog = dlg
         if preselect:
             dlg.preselect_node(preselect)
+        if compiled:
+            dlg.add_compiled_sources(compiled)
         dlg.show()
         dlg.raise_()
         dlg.activateWindow()

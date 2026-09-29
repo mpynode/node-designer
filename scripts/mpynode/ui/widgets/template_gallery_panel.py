@@ -218,9 +218,13 @@ class NDTemplateGalleryPanel(QWidget):
     """Always-available template picker (tree + preview) for the shared side
     panel. Embeds as a tab; stays open after Create."""
 
-    def __init__(self, parent=None, on_create=None, scan=None):
+    def __init__(self, parent=None, on_create=None, scan=None, on_bundle=None):
         super(NDTemplateGalleryPanel, self).__init__(parent)
         self._on_create = on_create
+        # "Add to bundle…": called with the template's COMPILED source path,
+        # so the Compile dialog can take it as the C++ it is (None = no menu
+        # target, the action is shown disabled).
+        self._on_bundle = on_bundle
         # Injectable for tests; defaults to the real discovery.
         if scan is None:
             from mpynode._common.util import template_gallery
@@ -506,8 +510,31 @@ class NDTemplateGalleryPanel(QWidget):
             demo_act.setEnabled(False)
             demo_act.setToolTip("This template has no demo to run.")
         menu.addSeparator()
+        self._add_bundle_action(menu, entry)
+        menu.addSeparator()
         self._add_reveal_action(menu, entry)
         return menu
+
+    def _add_bundle_action(self, menu, entry):
+        """Append "Add to bundle…": hand the template's compiled source to the
+        Compile dialog, where it joins a plug-in as the C++ it already is.
+        Only a template that HAS been compiled has one to give; otherwise the
+        action is disabled with the reason, like a template with no demo."""
+        from mpynode.native.toolchain import bundle_plan
+
+        folder = getattr(entry, "folder", None)
+        path   = bundle_plan.compiled_artifact_for(folder) if folder else None
+        act    = menu.addAction("Add to bundle…")
+        if path and self._on_bundle is not None:
+            act.setToolTip(path)
+            act.triggered.connect(
+                lambda checked=False, p=path: self._on_bundle(p))
+        else:
+            act.setEnabled(False)
+            act.setToolTip("Compile this template first -- it has no compiled "
+                           "source to add." if not path
+                           else "No Compile dialog to add it to.")
+        return act
 
     @staticmethod
     def _reveal_path(entry):

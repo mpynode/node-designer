@@ -589,8 +589,14 @@ def compile_plugin(specs, plugin_name, out_dir, *, strict=True, verify=True,
                    progress_cb=None, cancel_event=None, provider=None,
                    model=None, registry=None, maya=_MAYA_DEFAULT,
                    bake_persistent=True, optimize=False, ai_assist=True,
-                   clean_scratch=True, keep_intermediates=False):
+                   clean_scratch=True, keep_intermediates=False, prebuilt=None):
     """Compile a list of specs into ONE native plugin .bundle (+ manifest.json).
+
+    ``prebuilt`` names node sources the bundler wrote EARLIER -- a single-node
+    compile's ``build/source/<node>.cpp`` or a multi-node build's fragment.
+    They join the link as they are: nothing is ported, verified or cached for
+    them, ``bundle_plan`` decides their ids, and a clash with each other or
+    with a spec is refused at pre-flight, before any AI run.
 
     ``specs`` is a list of already-extracted spec dicts (the
     ``spec_extractor.extract_spec`` output shape). Synchronous: runs every step
@@ -692,6 +698,40 @@ def compile_plugin(specs, plugin_name, out_dir, *, strict=True, verify=True,
         errors.append(reason)
         return _result(False, None, None, plugin_name, rows, errors, strict,
                        out_dir, provider, model, progress_cb, write_manifest=True)
+
+    # ---- (a.3) PRE-FLIGHT: the nodes that are ALREADY compiled -------------
+    # bundle_plan refuses what cannot load together (a duplicate name, id or
+    # command, a source that is not a node, ...) and decides each one's id.
+    # Here, before any port, so a clash with a checked node costs no AI run.
+    prebuilt_members = []
+    if prebuilt:
+        from mpynode.native.toolchain import bundle_plan
+
+        plan       = bundle_plan.preflight([bundle_plan.scan(p) for p in prebuilt],
+                                           maya=maya)
+        problems   = ["%s %s" % e for e in plan.errors]
+        spec_types = {_type_name_for(s) for s in specs}
+        for m in plan.members:
+            if m.node in spec_types:
+                problems.append("E1 node '%s' is both compiled here and taken "
+                                "already compiled from %s" % (m.node, m.path))
+            for cmd in m.commands:
+                if cmd in cmd_owners:
+                    problems.append("E3 command '%s' is declared by %s and also "
+                                    "registered by the compiled %s"
+                                    % (cmd, ", ".join(cmd_owners[cmd]), m.node))
+        if problems:
+            reason = _preflight_message(
+                "Some of the already-compiled nodes cannot join this plug-in.",
+                problems)
+            _emit(progress_cb, "preflight", None, "fail", reason, 0, n_total)
+            errors.append(reason)
+            return _result(False, None, None, plugin_name, rows, errors, strict,
+                           out_dir, provider, model, progress_cb,
+                           write_manifest=True)
+        for w in plan.warnings:
+            _emit(progress_cb, "preflight", None, "warn", w, 0, n_total)
+        prebuilt_members = plan.members
 
     # The AI provider is only used on a cache MISS with no injected complete_fn.
     # Check once here (cheap, no tokens) and enforce at the first miss, so a fully
@@ -969,7 +1009,9 @@ def compile_plugin(specs, plugin_name, out_dir, *, strict=True, verify=True,
                                write_manifest=True)
             # best-effort: drop + continue.
 
-    if not surviving:
+    # A set made of nothing but prebuilt sources has no spec to survive and
+    # still has a plug-in to link.
+    if not surviving and not prebuilt_members:
         _emit(progress_cb, "assemble", None, "fail", "no portable nodes", 0,
               n_total)
         errors.append("no portable nodes to assemble")
@@ -1232,7 +1274,22 @@ def compile_plugin(specs, plugin_name, out_dir, *, strict=True, verify=True,
             _emit(progress_cb, "typeid", tn, "warn",
                   "ignoring unusable pinned type_id %r (using the derived id)"
                   % pinned, 0, n_total)
-    asm_nodes = [(tn, cpp) for (tn, cpp, _s, _k, _cs) in surviving]
+    # A prebuilt node's ids are whatever its source carries (decided by
+    # bundle_plan.resolve_ids); they are CLAIMED so a derived id for a spec
+    # never lands on one. Two prebuilt nodes on one id were refused at (a.3).
+    for m in prebuilt_members:
+        for key, hx in m.resolved.items():
+            try:
+                reg.claim_literal(key, hx)
+            except ValueError as exc:
+                reason = "compiled node %s: %s" % (m.node, exc)
+                _emit(progress_cb, "typeid", m.node, "fail", reason, 0, n_total)
+                errors.append(reason)
+                return _result(False, None, None, plugin_name, rows, errors,
+                               strict, out_dir, provider, model, progress_cb,
+                               write_manifest=True)
+    asm_nodes = ([(tn, cpp) for (tn, cpp, _s, _k, _cs) in surviving]
+                 + [(m.node, m.path) for m in prebuilt_members])
     report = bundler.assemble(asm_nodes, plugin_name, out_dir, strict=strict,
                               registry=reg, maya=maya, compile_now=True,
                               log_cb=_make_log_cb(progress_cb, None, 0, n_total))
@@ -1299,6 +1356,13 @@ def compile_plugin(specs, plugin_name, out_dir, *, strict=True, verify=True,
         if scan["io"]:
             _emit(progress_cb, "honesty", tn, "io",
                   "; ".join(scan["io"]), 0, n_total)
+
+    # Rows for the prebuilt members: no spec, no verify, the bundler's status.
+    if prebuilt_members:
+        from mpynode.native.toolchain import bundle_plan as _bundle_plan
+
+        for m in prebuilt_members:
+            rows.append(_bundle_plan.controller_row(m, asm_by_name.get(m.node)))
 
     bundle_path = report.get("bundle")
     # Honest success (#62): the linker returning ok is not enough -- the artifact
@@ -1638,6 +1702,84 @@ def _result(ok, bundle_path, manifest_path, plugin_name, rows, errors, strict,
 # ---------------------------------------------------------------------------
 
 
+def bundle_prebuilt(paths, plugin_name, out_dir, *, targets=None,
+                    maya=_MAYA_DEFAULT, strict=True, strict_load=False,
+                    vendor="mpynode-native", version=None, compile_now=True,
+                    progress_cb=None, cancel_event=None):
+    """Make ONE plug-in of nodes that are already compiled -- no spec, no port,
+    no verify. The Compile dialog's path when every checked row is compiled
+    C++; the CLI (``mpynode.native.bundle``) is the same engine from a shell.
+
+    Returns the dict ``compile_plugin`` returns. With two or more ``targets``
+    (``discover_maya_installs`` rows) it builds one plug-in per version into
+    ``out_dir/<label>/`` and returns the ``compile_plugin_multi`` shape, so the
+    dialog's finish path needs nothing new.
+    """
+    from mpynode.native.toolchain import bundle_plan
+
+    members = [bundle_plan.scan(p) for p in paths]
+    n       = len(members)
+
+    def _refused(reason):
+        _emit(progress_cb, "preflight", None, "fail", reason, 0, n)
+        return {"ok": False, "bundle_path": None, "manifest_path": None,
+                "report_path": None, "plugin_name": plugin_name, "nodes": [],
+                "errors": [reason], "strict": strict, "companions": [],
+                "prebuilt": True}
+
+    def _one(root, sub_out):
+        plan = bundle_plan.preflight(members, maya=root)
+        if plan.errors:
+            return _refused(_preflight_message(
+                "These compiled nodes cannot become one plug-in.",
+                ["%s %s" % e for e in plan.errors]))
+        for w in plan.warnings:
+            _emit(progress_cb, "preflight", None, "warn", w, 0, n)
+        _emit(progress_cb, "assemble", None, "start",
+              "linking %d compiled node(s)" % len(plan.members), 0, n)
+        try:
+            report = bundle_plan.build(
+                plan, plugin_name, sub_out, maya=root, compile_now=compile_now,
+                best_effort=not strict, strict_load=strict_load, vendor=vendor,
+                version=version, log_cb=_make_log_cb(progress_cb, None, 0, n))
+        except bundle_plan.BundleRefused as exc:
+            return _refused(_preflight_message(
+                "The output folder cannot be used.", ["%s %s" % e for e in exc.errors]))
+        result = bundle_plan.as_controller_result(report, plan, plugin_name, strict)
+        for row in result["nodes"]:
+            built = row["build_status"] in ("compiled", "generated")
+            _emit(progress_cb, "assemble", row["type_name"],
+                  "ok" if built else "fail", row.get("build_reason", ""), 0, n)
+        return result
+
+    if targets and len(targets) >= 2:
+        results, errs, cancelled = [], [], False
+        for t in targets:
+            if _cancelled(cancel_event):
+                cancelled = True
+                break
+            label, sub_out = t["label"], os.path.join(out_dir, t["label"])
+            _emit(progress_cb, "version", label, "start", "Building %s…" % label, 0, n)
+            res = _one(t["root"], sub_out)
+            _emit(progress_cb, "version", label, "ok" if res["ok"] else "fail", "", 0, n)
+            results.append({"label": label, "root": t["root"], "out_dir": sub_out,
+                            "result": res})
+            if not res["ok"]:
+                errs.append("%s: %s" % (label, "; ".join(res["errors"])))
+        ok = bool(results) and all(r["result"]["ok"] for r in results) and not cancelled
+        _emit(progress_cb, "done", None, "ok" if ok else "fail",
+              "%d version(s)" % len(results), 0, n)
+        return {"ok": ok, "multi": True, "plugin_name": plugin_name,
+                "out_dir": out_dir, "cancelled": cancelled, "errors": errs,
+                "results": results}
+
+    root = targets[0]["root"] if targets else maya
+    res  = _one(root, out_dir)
+    _emit(progress_cb, "done", None, "ok" if res["ok"] else "fail",
+          "%d node(s)" % len(res["nodes"]), 0, n)
+    return res
+
+
 class CompileController:
     """Run ``compile_plugin`` off the calling thread on a daemon worker.
 
@@ -1715,6 +1857,41 @@ class CompileController:
             except Exception as exc:
                 # Last-resort guard: surface an engine crash as a failed result
                 # + a 'done/fail' event, never a silently dead worker.
+                self._result = {
+                    "ok": False, "bundle_path": None, "manifest_path": None,
+                    "plugin_name": plugin_name, "nodes": [],
+                    "errors": ["controller crash: %s\n%s"
+                               % (exc, traceback.format_exc())],
+                    "strict": opts.get("strict", True),
+                }
+                _emit(self._progress_cb, "done", None, "fail",
+                      "controller crash: %s" % exc, 0, 0)
+            finally:
+                self._busy = False
+
+        self._thread = threading.Thread(target=_run, daemon=True)
+        self._thread.start()
+        return self._thread
+
+    def start_bundle(self, paths, plugin_name, out_dir, **opts):
+        """Like ``start``, for nodes that are ALREADY compiled: runs
+        :func:`bundle_prebuilt` on the worker. ``opts`` are forwarded to it
+        (``targets`` for a per-version build, ``maya`` for one)."""
+        if self._busy:
+            raise RuntimeError("CompileController is already running")
+        self._cancel.clear()
+        self._result = None
+        self._busy   = True
+        opts.pop("cancel_event", None)
+        opts.pop("progress_cb", None)
+
+        def _run():
+            try:
+                self._result = bundle_prebuilt(
+                    paths, plugin_name, out_dir,
+                    progress_cb=self._progress_cb,
+                    cancel_event=self._cancel, **opts)
+            except Exception as exc:
                 self._result = {
                     "ok": False, "bundle_path": None, "manifest_path": None,
                     "plugin_name": plugin_name, "nodes": [],

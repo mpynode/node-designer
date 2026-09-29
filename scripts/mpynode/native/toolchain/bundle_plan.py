@@ -748,3 +748,128 @@ def load_check(bundle_path: str, expected_types: List[str], maya: str,
     result["ok"] = bool(result["loaded"] and not result["missing"]
                         and not result["create_failed"])
     return result
+
+
+# ---------------------------------------------------------------------------
+# 7. What the Designer needs on top: where compiled nodes live, and a result
+#    in the compile controller's shape
+# ---------------------------------------------------------------------------
+
+def compiled_artifact_for(folder: str) -> Optional[str]:
+    """The compiled node source a template or plug-in folder ships, or
+    ``None``: the promoted ``build/source/<type>.cpp`` for the type its
+    manifest records, else the scratch ``build/<type>/<type>.cpp``. The type
+    comes from the manifest, never from a directory listing -- a stale scratch
+    dir left by a rename is invisible to the manifest but not to listdir."""
+    build = os.path.join(folder, bundler.BUILD_DIRNAME)
+    try:
+        with open(os.path.join(build, "manifest.json"), encoding="utf-8") as fh:
+            man = json.load(fh)
+    except (OSError, ValueError):
+        return None
+    for row in man.get("nodes") or []:
+        ty = row.get("type_name")
+        if not ty:
+            continue
+        san = re.sub(r"\W", "_", ty)
+        for cand in (os.path.join(build, bundler.SOURCE_DIRNAME, san + ".cpp"),
+                     os.path.join(build, san, san + ".cpp")):
+            if os.path.isfile(cand):
+                return cand
+    return None
+
+
+_SKIP_DIRS = {"stages", "__pycache__", "_optscratch", "scenes", "reports",
+              ".git", "port_cache"}
+
+
+def list_candidates(roots) -> List[Member]:
+    """Every compiled node under ``roots`` (template trees, the user's
+    compiled folder, anything the picker was pointed at), one :class:`Member`
+    per manifest row that has a source on disk. A multi-node build's members
+    are listed one by one, so a picker can take part of it."""
+    out: List[Member] = []
+    seen = set()
+    for root in roots:
+        if not root or not os.path.isdir(root):
+            continue
+        for dirpath, dirnames, filenames in os.walk(root):
+            dirnames[:] = [d for d in dirnames if d not in _SKIP_DIRS]
+            if os.path.basename(dirpath) != bundler.BUILD_DIRNAME or "manifest.json" not in filenames:
+                continue
+            dirnames[:] = []          # a build tree: nothing to find below it
+            try:
+                with open(os.path.join(dirpath, "manifest.json"), encoding="utf-8") as fh:
+                    man = json.load(fh)
+            except (OSError, ValueError):
+                continue
+            for row in man.get("nodes") or []:
+                ty = row.get("type_name")
+                if not ty or row.get("build_status") in ("dropped", "compile-failed"):
+                    continue
+                san = re.sub(r"\W", "_", ty)
+                for cand in (os.path.join(dirpath, bundler.SOURCE_DIRNAME, san + ".cpp"),
+                             os.path.join(dirpath, san, san + ".cpp")):
+                    key = os.path.normcase(cand)
+                    if os.path.isfile(cand) and key not in seen:
+                        seen.add(key)
+                        out.append(scan(cand))
+                        break
+    return out
+
+
+def controller_row(m: Member, rec: Optional[dict] = None) -> dict:
+    """A manifest / result row for a prebuilt member, in the compile
+    controller's row shape (what the Designer's summary, the load offer and
+    ``validate_registered_types`` read). No spec, no verify: the node was
+    compiled and verified when it was built."""
+    rec = rec or {}
+    return {
+        "source_node":      m.node,
+        "type_name":        m.node,
+        "type_id":          rec.get("id") or m.resolved.get(m.node),
+        "type_id_source":   m.id_source.get(m.node, ""),
+        "base":             "",
+        "spec_hash":        "",
+        "port_cache_key":   "",
+        "cache":            "prebuilt",
+        "build_status":     rec.get("status", "unknown"),
+        "build_reason":     rec.get("reason", ""),
+        "ported":           True,
+        "incomplete":       [],
+        "invented_io":      [],
+        "missing_includes": [],
+        "vp2_skip":         "",
+        "verify":           {"ran": False, "pass": None, "maxerr": None, "tol": None,
+                             "reason": "already compiled; not re-verified"},
+        "spec":             None,
+        "prebuilt":         m.row(),
+    }
+
+
+def as_controller_result(report: dict, plan: Plan, plugin_name: str,
+                         strict: bool = True) -> dict:
+    """The bundler report as the dict ``compile_plugin`` returns, so the
+    Compile dialog's finish path (summary, warnings, the offer to load) serves
+    a bundle of compiled nodes without a second code path."""
+    by_name = {r["name"]: r for r in report.get("nodes", [])}
+    rows    = [controller_row(m, by_name.get(m.node)) for m in plan.members]
+    errors: List[str] = []
+    if not report.get("ok"):
+        reason = report.get("reason") or "assemble failed"
+        tail   = (report.get("stderr") or "").strip().splitlines()[-12:]
+        errors.append(reason + ("\n" + "\n".join(tail) if tail else ""))
+    for d in report.get("dropped") or []:
+        errors.append("dropped %s: %s" % (d, by_name.get(d, {}).get("reason", "")))
+    return {
+        "ok":            bool(report.get("ok")),
+        "bundle_path":   report.get("bundle"),
+        "manifest_path": report.get("manifest"),
+        "report_path":   None,
+        "plugin_name":   plugin_name,
+        "nodes":         rows,
+        "errors":        errors,
+        "strict":        strict,
+        "companions":    [],
+        "prebuilt":      True,
+    }

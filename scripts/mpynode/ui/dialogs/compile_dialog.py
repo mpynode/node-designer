@@ -481,6 +481,11 @@ class CompileDialog(QDialog):
         # compile with NO scene node, via the pure mpn_spec_adapter instead of
         # the live extract_spec. Seeded BEFORE _build_ui (which merges them in).
         self._file_rows = {}
+        # Already-compiled rows added via "Add compiled nodes…": display name ->
+        # bundle_plan.Member. They join the plug-in as the C++ they are -- no
+        # spec, no port, no verify -- and are checked against each other (and
+        # the other rows) live, in the Status column.
+        self._compiled_rows = {}
         # Per-node "bake persistent data" choice, tracking only EXPLICIT
         # unchecks. A node NOT in this set bakes (the legacy default), so a
         # detection miss can never silently DROP a node's stored vars; the
@@ -987,10 +992,18 @@ class CompileDialog(QDialog):
         self._add_mpn_btn.setToolTip(
             "Add external .mpn node templates to compile -- no scene node is "
             "created; they are read straight off disk")
+        # Add nodes that are ALREADY compiled: they join the plug-in as the C++
+        # they are, so a plug-in can be made of nothing but compiled nodes.
+        self._add_compiled_btn = QPushButton("Add compiled nodes" + _ELLIPSIS, self)
+        self._add_compiled_btn.setToolTip(
+            "Add already-compiled node sources (a compile's build/source "
+            "<node>.cpp, or members of a multi-node build) -- nothing is "
+            "ported or verified again; they are linked as they are")
         edit_row.addWidget(self._select_all_btn)
         edit_row.addWidget(self._select_none_btn)
         edit_row.addWidget(self._refresh_btn)
         edit_row.addWidget(self._add_mpn_btn)
+        edit_row.addWidget(self._add_compiled_btn)
         edit_row.addStretch(1)
         outer.addLayout(edit_row)
 
@@ -1224,6 +1237,8 @@ class CompileDialog(QDialog):
             lambda checked=False: self._refresh_table())
         self._add_mpn_btn.clicked.connect(
             lambda checked=False: self._on_add_mpn())
+        self._add_compiled_btn.clicked.connect(
+            lambda checked=False: self._on_add_compiled())
         # The global "Ignore persistent data" greys out / restores the per-node
         # Persistent column when toggled.
         self._ignore_persistent_check.toggled.connect(
@@ -1359,6 +1374,7 @@ class CompileDialog(QDialog):
         # External .mpn rows are an in-session add; a fresh open starts clean
         # (the Refresh *button* goes through _refresh_table and keeps them).
         self._file_rows = {}
+        self._compiled_rows = {}
         # Per-node persistent choices + detection cache are also in-session.
         self._persistent_unchecked = set()
         self._has_persistent       = {}
@@ -1395,11 +1411,18 @@ class CompileDialog(QDialog):
          self._persistent_unchecked) = self._disambiguate_file_rows(
             self._file_rows, self._checked, self._persistent_unchecked,
             scene_names)
+        # getattr-guarded like the version section: the duck-typed dialogs the
+        # picker-plumbing tests drive carry no compiled-row state.
+        (self._compiled_rows, self._checked,
+         self._persistent_unchecked) = self._disambiguate_file_rows(
+            getattr(self, "_compiled_rows", {}), self._checked,
+            self._persistent_unchecked, scene_names | set(self._file_rows))
         # Merge external .mpn file rows so they list + compile alongside scene
         # nodes. Their checks survive a rescan because they are in ``names``.
         file_rows = sorted(
             (name, val[1]) for name, val in self._file_rows.items())
-        nodes             = nodes + file_rows
+        compiled_rows = sorted((name, "compiled") for name in self._compiled_rows)
+        nodes             = nodes + file_rows + compiled_rows
         self._scene_nodes = nodes
         names             = {n for (n, _t) in nodes}
         self._checked     = {n for n in self._checked if n in names}
@@ -1421,10 +1444,15 @@ class CompileDialog(QDialog):
         self._table.resizeColumnToContents(_COL_SOURCE)
         self._table.resizeColumnToContents(_COL_PERSIST)
         self._table.resizeColumnToContents(_COL_TYPE)
+        if getattr(self, "_compiled_rows", None):
+            self._refresh_compiled_status()
 
     def _source_label(self, name: str) -> str:
         """Where a row's node comes from: ``"External .mpn"`` for a row added off
-        disk (in ``_file_rows``), else ``"Scene"`` for a live scene node."""
+        disk (in ``_file_rows``), ``"Compiled C++"`` for an already-compiled
+        source, else ``"Scene"`` for a live scene node."""
+        if name in getattr(self, "_compiled_rows", {}):
+            return "Compiled C++"
         return "External .mpn" if name in self._file_rows else "Scene"
 
     @staticmethod
@@ -1516,6 +1544,9 @@ class CompileDialog(QDialog):
         class-less / un-migrated .mpn), so a class-less .mpn renders ``Parent()``
         exactly like a class-less scene node -- never a Class fabricated from the
         instance-derived node type."""
+        member = getattr(self, "_compiled_rows", {}).get(name)
+        if member is not None:
+            return member.cls
         val = self._file_rows.get(name)
         if val is not None:
             return (val[4] if len(val) > 4 else "") or ""
@@ -1531,6 +1562,8 @@ class CompileDialog(QDialog):
         """Option-A Class notation for a row: ``Class(Parent)`` classed,
         ``Parent()`` class-less -- the same notation the scene tree shows."""
         short  = self._row_class_short(name)
+        if name in getattr(self, "_compiled_rows", {}):
+            return "%s (C++)" % short if short else "(C++)"
         parent = _parent_wrapper_name(native_type)
         return "%s(%s)" % (short, parent) if short else "%s()" % parent
 
@@ -1542,6 +1575,9 @@ class CompileDialog(QDialog):
         -- byte-identical to what ``spec_extractor.extract_spec`` produces
         (camelCase of the Class when classed; the instance-derived type when
         class-less), so the column matches what actually compiles."""
+        member = getattr(self, "_compiled_rows", {}).get(name)
+        if member is not None:
+            return member.node
         val = self._file_rows.get(name)
         if val is not None:
             return (val[3] if len(val) > 3 else "") or ""
@@ -1675,6 +1711,9 @@ class CompileDialog(QDialog):
         data; it only affects whether the confirm prompt fires."""
         if name in self._has_persistent:
             return self._has_persistent[name]
+        if name in getattr(self, "_compiled_rows", {}):   # baked, or not, when compiled
+            self._has_persistent[name] = False
+            return False
         val = self._file_rows.get(name)
         if val is not None:
             has = bool(val[2]) if len(val) > 2 else False
@@ -1806,6 +1845,12 @@ class CompileDialog(QDialog):
                 self._apply_row_style(row, checked)
             except Exception:
                 pass
+            # A compiled row's verdict depends on what ELSE is checked.
+            if getattr(self, "_compiled_rows", None):
+                try:
+                    self._refresh_compiled_status()
+                except Exception:
+                    pass
         elif col == _COL_PERSIST:  # track only EXPLICIT unchecks (default=bake)
             if checked:
                 self._persistent_unchecked.discard(name)
@@ -1816,7 +1861,8 @@ class CompileDialog(QDialog):
         """A display name for a new file row that doesn't collide with a scene
         node or another file row (names key ``_checked`` / ``_row_by_type``, so a
         clash would silently merge two rows). Appends `` (2)``, `` (3)``…."""
-        existing = {n for (n, _t) in self._scene_nodes} | set(self._file_rows)
+        existing = ({n for (n, _t) in self._scene_nodes} | set(self._file_rows)
+                    | set(getattr(self, "_compiled_rows", {})))
         name     = base or "imported"
         if name not in existing:
             return name
@@ -1861,6 +1907,145 @@ class CompileDialog(QDialog):
             new_rows[name] = val
             used.add(name)
         return new_rows, new_checked, new_persist
+
+    # ------------------------------------------------------------------
+    # Already-compiled rows
+    # ------------------------------------------------------------------
+
+    def add_compiled_sources(self, paths, check: bool = True):
+        """Add already-compiled node sources as rows (Source = "Compiled C++").
+
+        Each path is read by ``bundle_plan.scan`` for what it is -- a
+        single-node compile's source, a multi-node build's fragment, a scratch
+        artifact -- and its registered node name. A source that is not a node,
+        or a node already listed as compiled, is reported rather than added.
+        Returns ``(added_row_names, problems)``.
+        """
+        from mpynode.native.toolchain import bundle_plan
+
+        added, problems = [], []
+        have = {m.node: n for n, m in self._compiled_rows.items()}
+        for p in paths or []:
+            m = bundle_plan.scan(p)
+            if m.kind == "refused":
+                problems.append("%s: %s" % (os.path.basename(str(p)), m.reason))
+                continue
+            if m.node in have:
+                problems.append("%s: already listed as '%s'" % (m.node, have[m.node]))
+                continue
+            name = self._unique_row_name(m.node)
+            self._compiled_rows[name] = m
+            have[m.node] = name
+            if check:
+                self._checked.add(name)
+            added.append(name)
+        if added or problems:
+            self._refresh_table()
+        return added, problems
+
+    def _on_add_compiled(self) -> None:
+        if self._busy:
+            return
+        from mpynode.ui.dialogs.compiled_node_picker import CompiledNodePicker
+
+        dlg = CompiledNodePicker(self, maya=self._compile_target_root())
+        if dlg.exec_() != QDialog.Accepted:
+            return
+        _added, problems = self.add_compiled_sources(dlg.selected_paths())
+        if problems:
+            QMessageBox.warning(self, "Some Sources Skipped", "\n".join(problems))
+
+    def _compile_target_root(self):
+        """The Maya root the NEXT build would target: the first checked version
+        row, else the Maya this session runs in."""
+        targets = self._checked_targets()
+        return targets[0]["root"] if targets else _resolve_maya_dir()
+
+    def _refresh_compiled_status(self) -> None:
+        """Pre-flight the CHECKED compiled rows and write each verdict in its
+        Status cell -- "Ready", or the E-code reason -- on every toggle. Text
+        only (``bundle_plan.preflight`` reads nothing but the sources), so it
+        is cheap enough to run live; the same checks run again in the engine."""
+        if not self._compiled_rows or self._busy:
+            return
+        from mpynode.native.toolchain import bundle_plan
+
+        row_by_name = {n: i for i, (n, _t) in enumerate(self._scene_nodes)}
+        checked     = [n for n in self._compiled_rows if n in self._checked]
+        members     = [self._compiled_rows[n] for n in checked]
+        plan        = (bundle_plan.preflight(members, maya=self._compile_target_root())
+                       if members else None)
+        # The node types the OTHER checked rows would compile to.
+        other_types = {}
+        for (n, t) in self._scene_nodes:
+            if n in self._checked and n not in self._compiled_rows:
+                other_types[self._row_node_type(n, t)] = n
+        for name, m in self._compiled_rows.items():
+            row = row_by_name.get(name)
+            if row is None:
+                continue
+            if name not in self._checked:
+                self._set_cell(row, _COL_STATUS, "")
+                continue
+            text = "Ready"
+            if m.node in other_types:
+                text = ("Conflict: '%s' is also compiled from %s"
+                        % (m.node, other_types[m.node]))
+            elif plan is not None:
+                for code, msg in plan.errors:
+                    if m.node in msg or m.path in msg:
+                        kind = "Refused" if code in ("E6", "E7", "E9", "E10") else "Conflict"
+                        text = "%s: %s %s" % (kind, code, msg)
+                        break
+            self._set_cell(row, _COL_STATUS, text)
+
+    def _on_bundle_compiled(self, plugin_name, out_dir, names) -> None:
+        """Every checked row is compiled C++: make the plug-in of them as they
+        are. No spec, no port, no verify -- ``bundle_prebuilt`` on the worker,
+        through the same busy / progress / finish path as a compile."""
+        members = [self._compiled_rows[n] for n in names]
+        paths   = [m.path for m in members]
+        targets = self._checked_targets()
+        if self._maya_targets and not targets:
+            QMessageBox.warning(
+                self, "No Maya Version",
+                "Check at least one Maya version to build against.")
+            return
+        if not self._preflight_unload_if_loaded(plugin_name):
+            self._set_status_msg("Compile cancelled.")
+            return
+        from mpynode.native.toolchain import CompileController
+
+        if self._controller is None:
+            self._controller = CompileController(progress_cb=self._on_progress)
+        strict      = self._strict_check.isChecked()
+        row_by_name = {n: i for i, (n, _t) in enumerate(self._scene_nodes)}
+        self._row_by_type = {}
+        for n, m in zip(names, members):
+            row = row_by_name.get(n, 0)
+            self._row_by_type[m.node] = row
+            self._set_cell(row, _COL_STATUS, "queued")
+        self._set_busy(True)
+        self._rail_reset(self._pipeline_options())
+        self._bundle_path       = None
+        self._build_target_root = None
+        try:
+            if len(targets) >= 2:
+                self._set_status_msg(
+                    "Bundling %d compiled node(s) for %d Maya versions…"
+                    % (len(paths), len(targets)))
+                self._controller.start_bundle(paths, plugin_name, out_dir,
+                                              targets=targets, strict=strict)
+            else:
+                maya_dir                = targets[0]["root"] if targets else _resolve_maya_dir()
+                self._build_target_root = maya_dir
+                maya_kw                 = {"maya": maya_dir} if maya_dir else {}
+                self._set_status_msg("Bundling %d compiled node(s)…" % len(paths))
+                self._controller.start_bundle(paths, plugin_name, out_dir,
+                                              strict=strict, **maya_kw)
+        except RuntimeError as exc:
+            self._set_busy(False)
+            QMessageBox.warning(self, "Already Running", str(exc))
 
     def _on_add_mpn(self) -> None:
         """Pick external .mpn templates and add them as compile rows WITHOUT
@@ -2374,6 +2559,15 @@ class CompileDialog(QDialog):
             QMessageBox.warning(self, "Nothing to Compile",
                                 "Check at least one node to compile.")
             return
+        # Compiled rows take no part in the gates below (they have no scene
+        # node, no Class to name, nothing to bake or fork). Only compiled rows
+        # checked -> the plug-in is made of them as they are.
+        compiled_rows    = getattr(self, "_compiled_rows", {})
+        compiled_checked = [n for (n, _t) in checked if n in compiled_rows]
+        checked          = [(n, t) for (n, t) in checked if n not in compiled_rows]
+        if not checked:
+            self._on_bundle_compiled(plugin_name, out_dir, compiled_checked)
+            return
 
         # --- class-less naming gate (must-fix #2) ------------------------
         # A class-less node would compile to a type derived from its renameable
@@ -2386,7 +2580,8 @@ class CompileDialog(QDialog):
             QMessageBox.warning(
                 self, "Class Check Skipped",
                 "Could not check for class-less nodes:\n%s" % exc)
-        checked = self._checked_nodes()  # the gate may have excluded nodes
+        checked = [(n, t) for (n, t) in self._checked_nodes()   # the gate may
+                   if n not in compiled_rows]                    # have excluded nodes
         if not checked:
             self._warn(
                 "Nothing to Compile",
@@ -2590,6 +2785,15 @@ class CompileDialog(QDialog):
         except Exception:
             pass
 
+        # Compiled rows ride along as prebuilt sources: linked as they are,
+        # refused at the engine's pre-flight (before any port) if they clash.
+        prebuilt = [compiled_rows[n].path for n in compiled_checked] or None
+        for n in compiled_checked:
+            row = row_by_name.get(n)
+            if row is not None:
+                self._row_by_type[compiled_rows[n].node] = row
+                self._set_cell(row, _COL_STATUS, "queued")
+
         self._set_busy(True)
         self._rail_reset(pipe)
         self._bundle_path = None
@@ -2603,7 +2807,7 @@ class CompileDialog(QDialog):
                     % (len(specs), len(targets)))
                 self._controller.start_multi(
                     specs, plugin_name, out_dir, targets,
-                    strict=strict, verify=True,
+                    strict=strict, verify=True, prebuilt=prebuilt,
                     verify_fn_for=lambda root: subprocess_verify_fn(
                         maya=root, run_authored_tests=run_tests),
                     bake_persistent=bake_persistent, optimize=optimize,
@@ -2618,6 +2822,7 @@ class CompileDialog(QDialog):
                 self._set_status_msg("Compiling %d node(s)…" % len(specs))
                 self._controller.start(specs, plugin_name, out_dir,
                                        strict=strict, verify=True,
+                                       prebuilt=prebuilt,
                                        verify_fn=subprocess_verify_fn(
                                            run_authored_tests=run_tests,
                                            **maya_kw),
@@ -2653,6 +2858,9 @@ class CompileDialog(QDialog):
         self._select_none_btn.setEnabled(not busy)
         self._refresh_btn.setEnabled(not busy)
         self._add_mpn_btn.setEnabled(not busy)
+        _add_compiled = getattr(self, "_add_compiled_btn", None)
+        if _add_compiled is not None:
+            _add_compiled.setEnabled(not busy)
         self._ignore_persistent_check.setEnabled(not busy)
         self._assist_check.setEnabled(not busy)
         self._rounds_combo.setEnabled(not busy)
