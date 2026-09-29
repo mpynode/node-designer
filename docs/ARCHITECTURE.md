@@ -75,7 +75,7 @@ and no AI — which is what makes the freshness gates (section 5) possible.
 | `templates/All Templates Plugin/` | The multi-node build tree that links every template into one plug-in, plus the turnkey demo around it: `build/` (37 namespaced fragments + the generated `plugin_main.cpp`, and the full stage lineage), 39 `.ma` demo scenes, `reports/`, and `plugin/` — where you build `mPyMega` (37/37 node types + 32 bundled commands). No binary is committed; its `build.sh` / `build.bat` compiles `build/` and installs the result into `plugin/`. The filename must stay `mPyMega.*` — Maya takes the plug-in name from it and the scenes `requires "mPyMega"`. |
 | `tests/` | The unit suite, outside the package so shipping `scripts/mpynode/` does not ship the tests. 278 test modules grouped by area: `nodes/`, `ui/`, `authoring/`, `attributes/`, `framework/`, and `compile/` (split into `transpiler/`, `pipeline/`, `nodes/`, `optimizer/`, `freshness/`, `native/`). Shared bootstrap `_setup.py`, repo anchors `_paths.py`, fixtures in `data/` and `test_assets/`. `compile/native/` is the odd one out: eleven standalone transpiler oracle harnesses, named `*_test.py` / `*_parity.py` so discovery does **not** collect them — `compile/transpiler/test_native_transpiler_harnesses.py` subprocesses each one and asserts its printed marker. |
 | `docs/` | All reference material: `index.md` (the API guide), `CHEATSHEET.md` (the authoring quick reference), this file, `PORTING.md` (Windows/Linux finish-and-verify handoff), and `node_types/` (one `.md` per type + `_input_type_contract.md`). Only `index.md` and `node_types/` are reachable from the in-app Help menu — `docs_locator` enumerates exactly those. |
-| `tools/` | Every dev/CI script, and the only place they live — there are no runners at the repo root. The four gate launchers are `run_tests.sh` / `run_tests.bat` (unit suite) and `run_parity_sweep.sh` / `.bat` (compiled parity), plus `build_compiled_templates.sh`, the freshness checkers (`check_stage1_freshness.py`, `check_std_includes.py`, `regen_build_scripts.py`, `regen_mega_transpiled.py`), `parity_sweep/`, and the probes and audits. Most of these are not optional: thirteen are executed or imported by the unit suite, so deleting one turns tests red. `tools/harness/` holds the attended out-of-suite mayapy drivers (see its `README.md`), including `benchmark_node.py`, which the AI optimizer shells out to at runtime. |
+| `tools/` | Every dev/CI script, and the only place they live — there are no runners at the repo root. The four gate launchers are `run_tests.sh` / `run_tests.bat` (unit suite) and `run_parity_sweep.sh` / `.bat` (compiled parity), plus `build_compiled_templates.sh`, the freshness checkers (`check_stage1_freshness.py`, `check_std_includes.py`, `regen_build_scripts.py`, `regen_plugin_main.py`, `regen_mega_transpiled.py`), `parity_sweep/`, and the probes and audits. Most of these are not optional: thirteen are executed or imported by the unit suite, so deleting one turns tests red. `tools/harness/` holds the attended out-of-suite mayapy drivers (see its `README.md`), including `benchmark_node.py`, which the AI optimizer shells out to at runtime. |
 | `icons/` | UI icons for the Node Designer. |
 | `README.md`, `INSTALL.md`, `LICENSE.md` | The only docs at the root, and only because each is an entry point: the landing page, the two-env-var install, and the licence. Everything longer-form lives in `docs/`. `README.md` and `LICENSE.md` are additionally load-bearing — `docs_locator._repo_root_doc()` resolves them relative to the parent of `docs/` for the About dialog and the Help menu, so they cannot move. |
 | `userSetup.py` | **Copy** (never symlink — `PROJECT_DIR` uses `abspath`, which does not follow links) into a Maya prefs `scripts/` dir, then set `MPYNODE_PROJECT_DIR`. Sets both paths, purges foreign `mpynode.*` modules from `sys.modules`. Skipped when `MPYNODE_USE_STUDIO=1`. |
@@ -335,6 +335,18 @@ family-level `templates/MPyDeformer/build/` tree (holding
 `sineRippleDefault`) is never visited — **unpinned**, not pinned. The mega tree
 has its own `tests/compile/freshness/test_mega_stage1_freshness.py`, refreshed with
 `mayapy tools/regen_mega_transpiled.py` (codegen only, no compiler).
+
+**Gate 3 — the entry point.**
+`tests/compile/freshness/test_plugin_main_freshness.py`. A multi-node tree's
+`build/source/plugin_main.cpp` is codegen too (`bundler.make_plugin_main`), and
+it is the part that decides what a failed load leaves behind: the shipped
+mPyMega once stopped at its first failed member and left the earlier ones
+registered with no plug-in behind them, and `createNode` on one crashed Maya.
+`tools/regen_plugin_main.py` re-derives each committed entry point from the
+fragments beside it (`bundler.fragment_info` reads the hooks, the registered
+name, the MTypeIds and the commands back off each `<node>.cpp`), keeping the
+member order, vendor, version and strictness the file records; the test is an
+equality over its `--json` result, and the fix is to re-run the tool.
 
 ### Determinism
 
