@@ -100,15 +100,15 @@ class CompiledNodePicker(QDialog):
             self.resize(820, 440)
         self._roots   = list(roots) if roots is not None else default_roots()
         self._maya    = maya
-        self._members = []          # bundle_plan.Member, table order
+        self._members = []  # bundle_plan.Member, table order
         self._build_ui()
         self.rescan()
 
     # ---- UI -------------------------------------------------------------
 
     def _build_ui(self) -> None:
-        outer = QVBoxLayout(self)
-        top   = QHBoxLayout()
+        outer        = QVBoxLayout(self)
+        top          = QHBoxLayout()
         self._search = QLineEdit(self)
         self._search.setPlaceholderText("Filter by node, class or folder…")
         self._search.textChanged.connect(self._apply_filter)
@@ -129,13 +129,13 @@ class CompiledNodePicker(QDialog):
             pass
         outer.addWidget(self._table, 1)
 
-        row = QHBoxLayout()
-        self._all_btn    = QPushButton("Select All", self)
+        row              = QHBoxLayout()
+        self._all_btn    = QPushButton("Select All",  self)
         self._none_btn   = QPushButton("Select None", self)
         self._folder_btn = QPushButton("Add Folder…", self)
         self._folder_btn.setToolTip("Scan another folder for compiled nodes "
                                     "(remembered for next time)")
-        self._file_btn   = QPushButton("Add .cpp…", self)
+        self._file_btn = QPushButton("Add .cpp…", self)
         self._file_btn.setToolTip("Add compiled node sources by file")
         self._rescan_btn = QPushButton("Rescan", self)
         for b in (self._all_btn, self._none_btn, self._folder_btn, self._file_btn,
@@ -176,7 +176,7 @@ class CompiledNodePicker(QDialog):
     def rescan(self) -> None:
         from mpynode.native.toolchain import bundle_plan
 
-        keep = set(self.selected_paths())
+        keep          = set(self.selected_paths())
         self._members = bundle_plan.list_candidates(self._roots)
         self._fill(checked=keep)
 
@@ -304,10 +304,10 @@ class CompiledNodePicker(QDialog):
         self.rescan()
 
     def _on_add_file(self) -> None:
-        start  = self._roots[-1] if self._roots else os.path.expanduser("~")
+        start = self._roots[-1] if self._roots else os.path.expanduser("~")
         chosen = QFileDialog.getOpenFileNames(self, "Add compiled node sources", start,
                                               "Compiled node sources (*.cpp *.mpn)")
-        paths = chosen[0] if isinstance(chosen, tuple) else chosen
+        paths    = chosen[0] if isinstance(chosen, tuple) else chosen
         problems = self.add_sources(paths)
         if problems:
             self._summary.setText("; ".join(problems))

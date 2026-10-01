@@ -24,9 +24,9 @@ import unittest
 
 from tests import _paths
 
-_ROOT = _paths.ROOT
-_TOOL = os.path.join(_ROOT, "tools", "regen_plugin_main.py")
-_MEGA = "templates/All Templates Plugin/build/source/plugin_main.cpp"
+_ROOT   = _paths.ROOT
+_TOOL   = os.path.join(_ROOT, "tools", "regen_plugin_main.py")
+_MEGA   = "templates/All Templates Plugin/build/source/plugin_main.cpp"
 
 _RESULT = None
 

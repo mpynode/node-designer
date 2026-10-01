@@ -36,9 +36,9 @@ class TestBundleCliBuildsAndLoads(unittest.TestCase):
 
         # tempfile lands on local disk, which the linker needs (a streamed
         # drive hangs link.exe).
-        d = tempfile.mkdtemp(prefix="bundle_e2e_")
-        a = _write(d, "in/aNode.cpp", _src("aNode", "ANode", "0x00081010"))
-        b = _write(d, "in/bNode.cpp", _src("bNode", "BNode", "0x00081011"))
+        d   = tempfile.mkdtemp(prefix="bundle_e2e_")
+        a   = _write(d, "in/aNode.cpp", _src("aNode", "ANode", "0x00081010"))
+        b   = _write(d, "in/bNode.cpp", _src("bNode", "BNode", "0x00081011"))
         out = os.path.join(d, "duo")
         buf = io.StringIO()
         with redirect_stdout(buf):

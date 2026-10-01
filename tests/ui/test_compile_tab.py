@@ -55,9 +55,9 @@ class TestDesignerHasACompileTab(unittest.TestCase):
         from mpynode.ui import node_designer
 
         src = inspect.getsource(node_designer.NDMainWindow._build_ui)
-        self.assertIn('addTab(workspace, "Workspace")', src)
+        self.assertIn('addTab(workspace, "Workspace")',           src)
         self.assertIn('addTab(self._gallery_panel, "Templates")', src)
-        self.assertIn('addTab(self._compile_page, "Compile")', src)
+        self.assertIn('addTab(self._compile_page, "Compile")',    src)
 
     def test_the_launcher_switches_to_the_page_and_never_execs(self):
         from mpynode.ui import node_designer
@@ -73,9 +73,9 @@ class TestDesignerHasACompileTab(unittest.TestCase):
         from mpynode.ui import node_designer
 
         src = inspect.getsource(node_designer.NDMainWindow._ensure_compile_dialog)
-        self.assertIn("embedded=True", src)
+        self.assertIn("embedded=True",      src)
         self.assertIn("handoffToAssistant", src)
-        self.assertIn("classesStamped", src)
+        self.assertIn("classesStamped",     src)
 
     def test_closing_the_window_closes_the_embedded_dialog(self):
         from mpynode.ui import node_designer
@@ -106,8 +106,8 @@ class _FakeWindow:
     """Only what _open_compile_dialog / _on_compile_tab_shown touch."""
 
     def __init__(self):
-        self.dlg   = _FakeDialog()
-        self.shown = 0
+        self.dlg                    = _FakeDialog()
+        self.shown                  = 0
         self._compile_tab_switching = False
 
     def _ensure_compile_dialog(self):

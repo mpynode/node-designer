@@ -121,10 +121,10 @@ class TestTheTableCarriesWhatThePreCheckReads(unittest.TestCase):
     def test_an_int_id_and_a_quote_in_a_name_are_handled(self):
         from mpynode.native.compiler import bundler
 
-        infos = _infos()
+        infos                = _infos()
         infos[0]["type_ids"] = [0x81000]
         infos[0]["commands"] = ['say"hi']
-        cpp = bundler.make_plugin_main(infos, "duo")
+        cpp                  = bundler.make_plugin_main(infos, "duo")
         self.assertIn("{0x00081000u, 0u}", cpp)
         self.assertIn('{"say\\"hi", nullptr}', cpp)
 
@@ -143,8 +143,8 @@ class TestFragmentInfoRecoversAMember(unittest.TestCase):
     def test_the_transform_records_the_members_claims(self):
         _frag, info = self._fragment()
         self.assertEqual(info["type_names"], ["fooNode"])
-        self.assertEqual(info["type_ids"], ["0x00081000"])
-        self.assertEqual(info["commands"], [])
+        self.assertEqual(info["type_ids"],   ["0x00081000"])
+        self.assertEqual(info["commands"],   [])
 
     def test_a_fragment_reads_back_to_the_same_info(self):
         frag, info = self._fragment()
@@ -177,7 +177,7 @@ class TestAssembleEmitsTheTable(unittest.TestCase):
         from mpynode.native.compiler import bundler
         from mpynode.native.toolchain import typeid_registry
 
-        d = tempfile.mkdtemp(prefix="pm_assemble_")
+        d     = tempfile.mkdtemp(prefix="pm_assemble_")
         paths = []
         for node, cls, tid in (("fooNode", "FooNode", "0x00081000"),
                                ("barNode", "BarNode", "0x00081001")):

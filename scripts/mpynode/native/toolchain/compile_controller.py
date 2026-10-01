@@ -707,8 +707,8 @@ def compile_plugin(specs, plugin_name, out_dir, *, strict=True, verify=True,
     if prebuilt:
         from mpynode.native.toolchain import bundle_plan
 
-        plan       = bundle_plan.preflight([bundle_plan.scan(p) for p in prebuilt],
-                                           maya=maya)
+        plan = bundle_plan.preflight([bundle_plan.scan(p) for p in prebuilt],
+                                     maya=maya)
         problems   = ["%s %s" % e for e in plan.errors]
         spec_types = {_type_name_for(s) for s in specs}
         for m in plan.members:

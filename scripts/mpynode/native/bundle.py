@@ -41,9 +41,9 @@ EXIT_OK, EXIT_BUILD, EXIT_REFUSED, EXIT_USAGE = 0, 1, 2, 3
 
 def _parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
-        prog="mpynode.native.bundle",
-        description="Combine compiled MPyNode node sources into one Maya plug-in.",
-        epilog="INPUT (any mix" + __doc__.split("INPUT (any mix", 1)[1],
+        prog        = "mpynode.native.bundle",
+        description = "Combine compiled MPyNode node sources into one Maya plug-in.",
+        epilog      = "INPUT (any mix" + __doc__.split("INPUT (any mix", 1)[1],
         formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("args", nargs="*", metavar="NAME INPUT...",
                    help="the plug-in name, then the inputs")
@@ -131,8 +131,8 @@ def _print_plan(plan: bundle_plan.Plan, members_all) -> None:
         if m.kind == "refused":
             _say("  REFUSED     %-40s %s" % (os.path.basename(m.path), m.reason))
     for m in plan.members:
-        main = m.resolved.get(m.node, "?")
-        src  = m.id_source.get(m.node, "")
+        main  = m.resolved.get(m.node, "?")
+        src   = m.id_source.get(m.node, "")
         extra = []
         if m.commands:
             extra.append("%d command(s)" % len(m.commands))
@@ -149,9 +149,9 @@ def _print_plan(plan: bundle_plan.Plan, members_all) -> None:
 
 def _plan_json(plan, members_all) -> dict:
     return {
-        "members":  [m.row() for m in plan.members],
-        "refused":  [{"path": m.path, "reason": m.reason}
-                     for m in members_all if m.kind == "refused"],
+        "members": [m.row() for m in plan.members],
+        "refused": [{"path": m.path, "reason": m.reason}
+                    for m in members_all if m.kind == "refused"],
         "errors":   [{"code": c, "message": m} for c, m in plan.errors],
         "warnings": list(plan.warnings),
         "needs_qt": plan.needs_qt,
@@ -232,7 +232,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         return EXIT_REFUSED
 
     result = {"plan": _plan_json(plan, members), "report": report, "load_check": None}
-    ok = bool(report.get("ok"))
+    ok     = bool(report.get("ok"))
     if not ns.json:
         for rec in report.get("nodes", []):
             _say("  %-11s %-24s %s" % (rec.get("status", "?"), rec.get("name"),
@@ -252,7 +252,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     if ok and not ns.no_compile and not ns.no_load_check:
         expected = [rec["name"] for rec in report.get("nodes", [])
                     if rec.get("status") == "compiled"]
-        lc = bundle_plan.load_check(report["bundle"], expected, maya)
+        lc                   = bundle_plan.load_check(report["bundle"], expected, maya)
         result["load_check"] = lc
         if not ns.json:
             if lc["ok"]:

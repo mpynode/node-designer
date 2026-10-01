@@ -29,8 +29,8 @@ class TestBundlePrebuilt(unittest.TestCase):
     def setUp(self):
         self.d    = tempfile.mkdtemp(prefix="bp_ctl_")
         self.maya = _devkit(self.d)
-        self.a = _write(self.d, "in/aNode.cpp", _src("aNode", "ANode", "0x00081000"))
-        self.b = _write(self.d, "in/bNode.cpp", _src("bNode", "BNode", "0x00081001"))
+        self.a    = _write(self.d, "in/aNode.cpp", _src("aNode", "ANode", "0x00081000"))
+        self.b    = _write(self.d, "in/bNode.cpp", _src("bNode", "BNode", "0x00081001"))
 
     def test_a_generated_tree_comes_back_in_the_controllers_shape(self):
         from mpynode.native.toolchain import compile_controller as cc
@@ -80,7 +80,7 @@ class TestBundlePrebuilt(unittest.TestCase):
     def test_start_bundle_runs_it_on_the_worker(self):
         from mpynode.native.toolchain import compile_controller as cc
 
-        done = threading.Event()
+        done   = threading.Event()
         events = []
 
         def cb(ev):
@@ -105,8 +105,8 @@ class TestCompilePluginTakesPrebuilt(unittest.TestCase):
     def setUp(self):
         self.d    = tempfile.mkdtemp(prefix="bp_cp_")
         self.maya = _devkit(self.d)
-        self.a = _write(self.d, "in/aNode.cpp", _src("aNode", "ANode", "0x00081000"))
-        self.b = _write(self.d, "in/bNode.cpp", _src("bNode", "BNode", "0x00081001"))
+        self.a    = _write(self.d, "in/aNode.cpp", _src("aNode", "ANode", "0x00081000"))
+        self.b    = _write(self.d, "in/bNode.cpp", _src("bNode", "BNode", "0x00081001"))
 
     def _fake_assemble(self, calls):
         def assemble(nodes, plugin_name, out_dir, **kw):
@@ -146,7 +146,7 @@ class TestCompilePluginTakesPrebuilt(unittest.TestCase):
         from mpynode.native.toolchain import compile_controller as cc, toolchain
         from mpynode.native.compiler import bundler
 
-        dup = _write(self.d, "dup/aNode.cpp", _src("aNode", "ANode", "0x00081002"))
+        dup   = _write(self.d, "dup/aNode.cpp", _src("aNode", "ANode", "0x00081002"))
         calls = []
         with mock.patch.object(toolchain, "check_toolchain", return_value={"ok": True}), \
              mock.patch.object(bundler, "assemble", side_effect=self._fake_assemble(calls)):

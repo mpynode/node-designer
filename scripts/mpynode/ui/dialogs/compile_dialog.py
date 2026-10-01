@@ -990,7 +990,7 @@ class CompileDialog(QDialog):
         self._left_split = QSplitter(Qt.Vertical, left)
         self._left_split.setChildrenCollapsible(False)
         self._compiled_pane_host = QWidget(self._left_split)
-        pane_lay = QVBoxLayout(self._compiled_pane_host)
+        pane_lay                 = QVBoxLayout(self._compiled_pane_host)
         pane_lay.setContentsMargins(0, 0, 0, 0)
         self._compiled_pane_host.setVisible(False)
         self._compiled_pane = None
@@ -1456,7 +1456,7 @@ class CompileDialog(QDialog):
         self._row_by_type = {}
         # External .mpn rows are an in-session add; a fresh open starts clean
         # (the Refresh *button* goes through _refresh_table and keeps them).
-        self._file_rows = {}
+        self._file_rows     = {}
         self._compiled_rows = {}
         # Per-node persistent choices + detection cache are also in-session.
         self._persistent_unchecked = set()
@@ -1511,7 +1511,7 @@ class CompileDialog(QDialog):
         # nodes. Their checks survive a rescan because they are in ``names``.
         file_rows = sorted(
             (name, val[1]) for name, val in self._file_rows.items())
-        compiled_rows = sorted((name, "compiled") for name in self._compiled_rows)
+        compiled_rows     = sorted((name, "compiled") for name in self._compiled_rows)
         nodes             = nodes + file_rows + compiled_rows
         self._scene_nodes = nodes
         names             = {n for (n, _t) in nodes}
@@ -1802,7 +1802,7 @@ class CompileDialog(QDialog):
         data; it only affects whether the confirm prompt fires."""
         if name in self._has_persistent:
             return self._has_persistent[name]
-        if name in getattr(self, "_compiled_rows", {}):   # baked, or not, when compiled
+        if name in getattr(self, "_compiled_rows", {}):  # baked, or not, when compiled
             self._has_persistent[name] = False
             return False
         val = self._file_rows.get(name)
@@ -2026,9 +2026,9 @@ class CompileDialog(QDialog):
             if m.node in have:
                 problems.append("%s: already listed as '%s'" % (m.node, have[m.node]))
                 continue
-            name = self._unique_row_name(m.node)
+            name                      = self._unique_row_name(m.node)
             self._compiled_rows[name] = m
-            have[m.node] = name
+            have[m.node]              = name
             if check:
                 self._checked.add(name)
             added.append(name)
@@ -2090,8 +2090,8 @@ class CompileDialog(QDialog):
         row_by_name = {n: i for i, (n, _t) in enumerate(self._scene_nodes)}
         checked     = [n for n in self._compiled_rows if n in self._checked]
         members     = [self._compiled_rows[n] for n in checked]
-        plan        = (bundle_plan.preflight(members, maya=self._compile_target_root())
-                       if members else None)
+        plan = (bundle_plan.preflight(members, maya=self._compile_target_root())
+                if members else None)
         # The node types the OTHER checked rows would compile to.
         other_types = {}
         for (n, t) in self._scene_nodes:
@@ -2135,11 +2135,11 @@ class CompileDialog(QDialog):
 
         if self._controller is None:
             self._controller = CompileController(progress_cb=self._on_progress)
-        strict      = self._strict_check.isChecked()
-        row_by_name = {n: i for i, (n, _t) in enumerate(self._scene_nodes)}
+        strict            = self._strict_check.isChecked()
+        row_by_name       = {n: i for i, (n, _t) in enumerate(self._scene_nodes)}
         self._row_by_type = {}
         for n, m in zip(names, members):
-            row = row_by_name.get(n, 0)
+            row                       = row_by_name.get(n, 0)
             self._row_by_type[m.node] = row
             self._set_cell(row, _COL_STATUS, "queued")
         self._set_busy(True)
@@ -2697,8 +2697,8 @@ class CompileDialog(QDialog):
             QMessageBox.warning(
                 self, "Class Check Skipped",
                 "Could not check for class-less nodes:\n%s" % exc)
-        checked = [(n, t) for (n, t) in self._checked_nodes()   # the gate may
-                   if n not in compiled_rows]                    # have excluded nodes
+        checked = [(n, t) for (n, t) in self._checked_nodes()  # the gate may
+                   if n not in compiled_rows]  # have excluded nodes
         if not checked:
             self._warn(
                 "Nothing to Compile",

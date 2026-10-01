@@ -79,7 +79,7 @@ def _src(node, cls, tid, commands=(), runtime=True, trailing="", companion=None,
 
 
 def _write(d, name, text):
-    p = os.path.abspath(os.path.join(d, name))   # abspath: one separator style
+    p = os.path.abspath(os.path.join(d, name))  # abspath: one separator style
     os.makedirs(os.path.dirname(p), exist_ok=True)
     with open(p, "w", encoding="utf-8") as fh:
         fh.write(text)
@@ -100,7 +100,7 @@ def _fragment(node, cls, tid, version=2, **kw):
              and ln not in ("namespace nd_%s {" % node, "}  // namespace nd_%s" % node)]
     # put the ONE body namespace back, and name the hooks after the CLASS as
     # the old transform did (register_<Cls>), which is what E5 is about
-    text = "\n".join(lines)
+    text    = "\n".join(lines)
     body_at = text.index("class %s" % cls)
     text = (text[:body_at] + "namespace nd_%s {\n" % node + text[body_at:]
             .replace("MStatus register_", "}  // namespace nd_%s\n\nMStatus register_"
@@ -219,7 +219,7 @@ class TestEachNodeKeepsTheIdItShippedWith(unittest.TestCase):
 
     def _member(self, tid, name="fooNode", cls="FooNode", manifest=None, scratch=False, **kw):
         rel = "build/%s/%s.cpp" % (name, name) if scratch else "build/source/%s.cpp" % name
-        p = _write(self.d, rel, _src(name, cls, tid, **kw))
+        p   = _write(self.d, rel, _src(name, cls, tid, **kw))
         if manifest:
             _write(self.d, "build/manifest.json", json.dumps({
                 "plugin_name": "p", "nodes": [{"type_name": name, "type_id": manifest}]}))
@@ -265,8 +265,8 @@ class TestEachNodeKeepsTheIdItShippedWith(unittest.TestCase):
                          ("0x00090000", "pinned"))
 
     def test_a_fragments_id_is_baked_in_so_a_pin_is_refused(self):
-        p = _write(self.d, "f.cpp", _fragment("barNode", "BarNode", "0x00081002"))
-        m = self.bp.scan(p)
+        p    = _write(self.d, "f.cpp", _fragment("barNode", "BarNode", "0x00081002"))
+        m    = self.bp.scan(p)
         errs = self.bp.resolve_ids([m], pins={"barNode": "0x00090000"})
         self.assertEqual([c for c, _ in errs], ["E4"])
         self.assertEqual(m.resolved["barNode"], "0x00081002")
@@ -279,8 +279,8 @@ class TestPreflightRefusesEveryBadCombination(unittest.TestCase):
     def setUp(self):
         from mpynode.native.toolchain import bundle_plan
 
-        self.bp = bundle_plan
-        self.d  = tempfile.mkdtemp(prefix="bundle_pf_")
+        self.bp   = bundle_plan
+        self.d    = tempfile.mkdtemp(prefix="bundle_pf_")
         self.maya = _devkit(self.d)
 
     def _scan(self, rel, text):
@@ -462,8 +462,8 @@ class TestAssemblePassesFragmentsThrough(unittest.TestCase):
         from mpynode.native.toolchain import typeid_registry
 
         self.bundler = bundler
-        self.d   = tempfile.mkdtemp(prefix="bundle_asm_")
-        self.reg = typeid_registry.TypeIdRegistry(path=os.path.join(self.d, "none.json"))
+        self.d       = tempfile.mkdtemp(prefix="bundle_asm_")
+        self.reg     = typeid_registry.TypeIdRegistry(path=os.path.join(self.d, "none.json"))
 
     def test_a_fragment_keeps_its_literal_id_and_joins_plugin_main(self):
         a = _write(self.d, "aNode.cpp", _src("aNode", "ANode", "0x00081000"))
@@ -502,7 +502,7 @@ class TestAssemblePassesFragmentsThrough(unittest.TestCase):
         self.assertIn("already held", rep["nodes"][1]["reason"])
 
     def test_a_transform_failure_is_reported_as_dropped(self):
-        a = _write(self.d, "aNode.cpp", _src("aNode", "ANode", "0x00081000"))
+        a   = _write(self.d, "aNode.cpp", _src("aNode", "ANode", "0x00081000"))
         bad = _write(self.d, "bad.cpp", "int x;\n")
         rep = self.bundler.assemble([("aNode", a), ("bad", bad)], "duo",
                                     os.path.join(self.d, "out3"), compile_now=False,
@@ -541,7 +541,7 @@ class TestTheSweepLeavesHandWrittenScriptsAlone(unittest.TestCase):
     def test_only_generated_files_are_swept(self):
         from mpynode.native.compiler import bundler
 
-        d = tempfile.mkdtemp(prefix="bundle_sweep_")
+        d    = tempfile.mkdtemp(prefix="bundle_sweep_")
         mine = _write(d, "build.bat", "@echo off\nREM my wrapper\n")
         gen  = _write(d, "build.sh", bundler.make_build_sh("p", ["a.cpp"]))
         bundler._clean_stale_intermediates(d)
@@ -573,8 +573,8 @@ class TestBuildWritesAManifestARefreshCanReadBack(unittest.TestCase):
 
         d    = tempfile.mkdtemp(prefix="bundle_build_")
         maya = _devkit(d)
-        a = _write(d, "in/aNode.cpp", _src("aNode", "ANode", "0x00081000", commands=("aCmd",)))
-        f = _write(d, "in/barNode.cpp", _fragment("barNode", "BarNode", "0x00081002", version=1))
+        a    = _write(d, "in/aNode.cpp", _src("aNode", "ANode", "0x00081000", commands=("aCmd",)))
+        f    = _write(d, "in/barNode.cpp", _fragment("barNode", "BarNode", "0x00081002", version=1))
         plan = bundle_plan.preflight([bundle_plan.scan(a), bundle_plan.scan(f)], maya=maya)
         self.assertTrue(plan.ok, plan.errors)
         out = os.path.join(d, "out")
@@ -601,8 +601,8 @@ class TestBuildWritesAManifestARefreshCanReadBack(unittest.TestCase):
 
         d    = tempfile.mkdtemp(prefix="bundle_refused_")
         maya = _devkit(d)
-        a = _write(d, "a/a.cpp", _src("aNode", "ANode", "0x00081000"))
-        b = _write(d, "b/b.cpp", _src("bNode", "BNode", "0x00081000"))
+        a    = _write(d, "a/a.cpp", _src("aNode", "ANode", "0x00081000"))
+        b    = _write(d, "b/b.cpp", _src("bNode", "BNode", "0x00081000"))
         plan = bundle_plan.preflight([bundle_plan.scan(a), bundle_plan.scan(b)], maya=maya)
         with self.assertRaises(bundle_plan.BundleRefused) as cm:
             bundle_plan.build(plan, "duo", os.path.join(d, "out"), maya=maya, compile_now=False)
@@ -618,8 +618,8 @@ class TestTheCli(unittest.TestCase):
         self.cli  = bundle
         self.d    = tempfile.mkdtemp(prefix="bundle_cli_")
         self.maya = _devkit(self.d)
-        self.a = _write(self.d, "in/aNode.cpp", _src("aNode", "ANode", "0x00081000"))
-        self.b = _write(self.d, "in/bNode.cpp", _src("bNode", "BNode", "0x00081001"))
+        self.a    = _write(self.d, "in/aNode.cpp", _src("aNode", "ANode", "0x00081000"))
+        self.b    = _write(self.d, "in/bNode.cpp", _src("bNode", "BNode", "0x00081001"))
 
     def _run(self, *argv):
         import io

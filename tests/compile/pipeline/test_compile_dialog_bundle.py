@@ -42,7 +42,7 @@ class _FakeController:
     """Records what the dialog asked for instead of building anything."""
 
     def __init__(self):
-        self.calls = []
+        self.calls  = []
         self.result = None
 
     def is_busy(self):
@@ -102,8 +102,8 @@ class TestCompiledRows(unittest.TestCase):
         row = self._row_of(dlg, "aNode")
         self.assertIsNotNone(row)
         self.assertEqual(self._cell(dlg, row, cd._COL_SOURCE), "Compiled C++")
-        self.assertEqual(self._cell(dlg, row, cd._COL_TYPE), "aNode")
-        self.assertEqual(self._cell(dlg, row, cd._COL_CLASS), "ANode (C++)")
+        self.assertEqual(self._cell(dlg, row, cd._COL_TYPE),   "aNode")
+        self.assertEqual(self._cell(dlg, row, cd._COL_CLASS),  "ANode (C++)")
         self.assertEqual(self._cell(dlg, row, cd._COL_STATUS), "Ready")
         self.assertTrue(dlg._compile_checkbox(row).isChecked())
         self.assertIn("aNode", dlg._checked)
@@ -138,7 +138,7 @@ class TestCompiledRows(unittest.TestCase):
         from mpynode.ui.dialogs import compile_dialog as cd
 
         dlg = self._dialog()
-        c = _write(self.d, "c/build/source/cNode.cpp", _src("cNode", "CNode", "0x00081000"))
+        c   = _write(self.d, "c/build/source/cNode.cpp", _src("cNode", "CNode", "0x00081000"))
         dlg.add_compiled_sources([self.a, c])
         for name in ("aNode", "cNode"):
             status = self._cell(dlg, self._row_of(dlg, name), cd._COL_STATUS)
@@ -157,7 +157,7 @@ class TestCompiledRows(unittest.TestCase):
         synthesize("ANode", "mPyNode")
         n = MPyNode.create(name="liveA")
         n.set_py_class(dotted_path("ANode"))
-        dlg = self._dialog()
+        dlg        = self._dialog()
         scene_row  = self._row_of(dlg, "liveA")
         scene_type = self._cell(dlg, scene_row, cd._COL_TYPE)
         clash = _write(self.d, "k/build/source/%s.cpp" % scene_type,
@@ -176,7 +176,7 @@ class TestCompiledRows(unittest.TestCase):
 
         dlg = self._dialog()
         dlg.add_compiled_sources([self.a, self.b])
-        fake = _FakeController()
+        fake            = _FakeController()
         dlg._controller = fake
         dlg._name_edit.setText("duo")
         out = os.path.join(self.d, "out")
@@ -186,8 +186,8 @@ class TestCompiledRows(unittest.TestCase):
         self.addCleanup(dlg._set_busy, False)
         self.assertEqual(len(fake.calls), 1, fake.calls)
         kind, paths, name, out_dir, opts = fake.calls[0]
-        self.assertEqual(kind, "bundle")
-        self.assertEqual(paths, [self.a, self.b])
+        self.assertEqual(kind,            "bundle")
+        self.assertEqual(paths,           [self.a, self.b])
         self.assertEqual((name, out_dir), ("duo", out))
         self.assertTrue(dlg._busy)
         # progress events are keyed by the registered node name

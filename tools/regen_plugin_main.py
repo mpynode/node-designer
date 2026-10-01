@@ -28,10 +28,10 @@ sys.path.insert(0, os.path.join(_ROOT, "scripts"))
 _TEMPLATES = os.path.join(_ROOT, "templates")
 _NOT_NODES = {"plugin_main.cpp", "shared_helpers.cpp"}
 
-_NAME_RE    = re.compile(r"^// (.+?) -- combined MPyNode plugin entry", re.M)
-_DECL_RE    = re.compile(r"^MStatus (register_\w+)\(MFnPlugin&\);", re.M)
-_VENDOR_RE  = re.compile(r'MFnPlugin plugin\(obj, "((?:[^"\\]|\\.)*)", "((?:[^"\\]|\\.)*)", "Any"\);')
-_STRICT_RE  = re.compile(r"^#define ND_BUNDLE_STRICT (\d)", re.M)
+_NAME_RE   = re.compile(r"^// (.+?) -- combined MPyNode plugin entry", re.M)
+_DECL_RE   = re.compile(r"^MStatus (register_\w+)\(MFnPlugin&\);", re.M)
+_VENDOR_RE = re.compile(r'MFnPlugin plugin\(obj, "((?:[^"\\]|\\.)*)", "((?:[^"\\]|\\.)*)", "Any"\);')
+_STRICT_RE = re.compile(r"^#define ND_BUNDLE_STRICT (\d)", re.M)
 
 
 def _iter_plugin_mains(root=_TEMPLATES):
@@ -51,7 +51,7 @@ def regenerate(path: str, bundler) -> tuple[str, str]:
         old = fh.read()
     src_dir = os.path.dirname(path)
     name_m  = _NAME_RE.search(old)
-    plugin  = name_m.group(1) if name_m else os.path.basename(
+    plugin = name_m.group(1) if name_m else os.path.basename(
         os.path.dirname(os.path.dirname(os.path.dirname(path))))
     vm      = _VENDOR_RE.search(old)
     vendor  = _unescape(vm.group(1)) if vm else "mpynode-native"
@@ -59,7 +59,7 @@ def regenerate(path: str, bundler) -> tuple[str, str]:
     sm      = _STRICT_RE.search(old)
     strict  = bool(int(sm.group(1))) if sm else False
 
-    infos = {}
+    infos   = {}
     for fname in sorted(os.listdir(src_dir)):
         if not fname.endswith(".cpp") or fname in _NOT_NODES:
             continue
@@ -68,7 +68,7 @@ def regenerate(path: str, bundler) -> tuple[str, str]:
         infos[info["register"]] = info
     # Member order is what the committed file records (its declaration order),
     # then any fragment it did not know about, by file name.
-    order  = [h for h in _DECL_RE.findall(old) if h in infos]
+    order = [h for h in _DECL_RE.findall(old) if h in infos]
     order += [h for h in infos if h not in order]
     new = bundler.make_plugin_main([infos[h] for h in order], plugin,
                                    vendor=vendor, version=version,

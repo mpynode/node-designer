@@ -36,8 +36,8 @@ class TestPicker(unittest.TestCase):
 
     def setUp(self):
         self.root = tempfile.mkdtemp(prefix="picker_")
-        self.a = _plugin_tree(self.root, "plugA", "aNode", "ANode", "0x00081000")
-        self.b = _plugin_tree(self.root, "plugB", "bNode", "BNode", "0x00081001")
+        self.a    = _plugin_tree(self.root, "plugA", "aNode", "ANode", "0x00081000")
+        self.b    = _plugin_tree(self.root, "plugB", "bNode", "BNode", "0x00081001")
 
     def _picker(self):
         from mpynode.ui.dialogs.compiled_node_picker import CompiledNodePicker
@@ -45,7 +45,7 @@ class TestPicker(unittest.TestCase):
         return CompiledNodePicker(roots=[self.root])
 
     def test_it_lists_one_row_per_compiled_node(self):
-        p = self._picker()
+        p     = self._picker()
         nodes = sorted(m.node for m in p._members)
         self.assertEqual(nodes, ["aNode", "bNode"])
         self.assertEqual(p.selected_paths(), [])
@@ -58,8 +58,8 @@ class TestPicker(unittest.TestCase):
         self.assertEqual(p.selected_paths(), [])
 
     def test_a_file_that_is_not_a_node_is_shown_but_not_selectable(self):
-        p = self._picker()
-        bad = _write(self.root, "plugA/build/source/plugin_main.cpp", "// entry")
+        p        = self._picker()
+        bad      = _write(self.root, "plugA/build/source/plugin_main.cpp", "// entry")
         problems = p.add_sources([bad])
         self.assertEqual(len(problems), 1)
         p._set_all(True)

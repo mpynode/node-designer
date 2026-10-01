@@ -74,12 +74,12 @@ def _norm_hex(value) -> str:
 class Member:
     """One input source and everything the plan knows about it."""
     path:             str
-    kind:             str = ""             # standalone | fragment | scratch | refused
-    node:             str = ""             # the REGISTERED node type name
+    kind:             str = ""                                                  # standalone | fragment | scratch | refused
+    node:             str = ""                                                  # the REGISTERED node type name
     cls:              str = ""
-    hook:             str = ""             # a fragment's register_* hook
-    ids:              Dict[str, str] = dataclasses.field(default_factory=dict)   # literal
-    commands:         List[str]      = dataclasses.field(default_factory=list)
+    hook:             str = ""                                                  # a fragment's register_* hook
+    ids:              Dict[str, str] = dataclasses.field(default_factory=dict)  # literal
+    commands:         List[str] = dataclasses.field(default_factory=list)
     needs_qt:         bool = False
     sha256:           str = ""
     build_stamp:      str = ""
@@ -196,9 +196,9 @@ def _sibling_manifest(m: Member) -> None:
     """Fill ``manifest_id`` / ``recipe`` / ``source_plugin`` from the
     ``build/manifest.json`` beside the source, and for a scratch input the
     promoted ``build/source/<node>.cpp`` literal it would ship with."""
-    d = os.path.dirname(m.path)
-    build = os.path.dirname(d)                 # build/source/x.cpp, build/<t>/x.cpp
-    mf = os.path.join(build, "manifest.json")
+    d     = os.path.dirname(m.path)
+    build = os.path.dirname(d)  # build/source/x.cpp, build/<t>/x.cpp
+    mf    = os.path.join(build, "manifest.json")
     try:
         with open(mf, encoding="utf-8") as fh:
             man = json.load(fh)
@@ -240,7 +240,7 @@ def scan(path: str) -> Member:
     """Read one source and say what it is. Never raises for a bad input --
     it comes back ``kind == "refused"`` with the reason, so pre-flight can
     report every problem at once."""
-    m = Member(path=os.path.abspath(path))
+    m    = Member(path=os.path.abspath(path))
     base = os.path.basename(m.path)
     if base in NOT_NODES:
         m.kind, m.reason = "refused", "not a node: %s is a bundle's own file" % base
@@ -251,10 +251,10 @@ def scan(path: str) -> Member:
     except OSError as exc:
         m.kind, m.reason = "refused", "cannot read: %s" % exc
         return m
-    text = raw.decode("utf-8", errors="replace")
-    m.sha256   = _sha256(raw)
-    m.needs_qt = _QT_MARK in text
-    st = _STAMP_RE.search(text)
+    text          = raw.decode("utf-8", errors="replace")
+    m.sha256      = _sha256(raw)
+    m.needs_qt    = _QT_MARK in text
+    st            = _STAMP_RE.search(text)
     m.build_stamp = st.group(1) if st else ""
 
     if bundler.is_fragment_text(text):
@@ -263,8 +263,8 @@ def scan(path: str) -> Member:
         except ValueError as exc:
             m.kind, m.reason = "refused", str(exc)
             return m
-        m.kind             = "fragment"
-        m.node, m.cls      = info["node_name"], info["class"]
+        m.kind = "fragment"
+        m.node, m.cls = info["node_name"], info["class"]
         m.hook             = info["register"]
         m.ids              = {k: _norm_hex(v) for k, v in info["type_id_map"].items()}
         m.commands         = list(info["commands"])
@@ -286,8 +286,8 @@ def scan(path: str) -> Member:
         m.ids = {(m.node if c == m.cls else "%s#%s" % (m.node, c)): _norm_hex(hx)
                  for c, hx in bundler._TYPEID_CLS_RE.findall(text)}
         m.commands = bundler.command_names_in(text)
-        parent  = os.path.basename(os.path.dirname(m.path))
-        gparent = os.path.basename(os.path.dirname(os.path.dirname(m.path)))
+        parent     = os.path.basename(os.path.dirname(m.path))
+        gparent    = os.path.basename(os.path.dirname(os.path.dirname(m.path)))
         m.kind = ("scratch" if parent == os.path.splitext(base)[0] and gparent == "build"
                   else "standalone")
         if not bundler._extract_fn(text, "uninitializePlugin"):
@@ -333,7 +333,7 @@ def resolve_ids(members: List[Member], pins: Optional[Dict[str, str]] = None
     """
     from mpynode.native.spec.spec_extractor import suggest_type_id
 
-    pins   = {k: _norm_hex(v) for k, v in (pins or {}).items()}
+    pins = {k: _norm_hex(v) for k, v in (pins or {}).items()}
     errors: List[Tuple[str, str]] = []
     for m in members:
         if m.kind == "refused":
@@ -392,10 +392,10 @@ def _unwrapped_runs(m: Member, text: str) -> Dict[str, str]:
     """The global-only runs isolation must leave at file scope, keyed by their
     first code line, so two members can be compared on them."""
     if m.kind == "fragment":
-        mm = re.search(r"^namespace nd_\w+\s*\{", text, re.M)
+        mm   = re.search(r"^namespace nd_\w+\s*\{", text, re.M)
         head = text[: mm.start()] if mm else text
     else:
-        fn = bundler._extract_fn(bundler._flatten_probe_guards(text), "initializePlugin")
+        fn   = bundler._extract_fn(bundler._flatten_probe_guards(text), "initializePlugin")
         head = text[: fn[0]] if fn else text
     _pre, left = bundler.isolate_global_runs(head.splitlines(), "nd_probe")
     out = {}
@@ -404,7 +404,7 @@ def _unwrapped_runs(m: Member, text: str) -> Dict[str, str]:
         # The key is the run's SIGNATURE -- its first line up to the body --
         # so `extern "C" int hook() { return 1; }` and the same with `return 2`
         # compare instead of passing as two unrelated runs.
-        key = re.split(r"[{=;]", first, 1)[0].strip()
+        key      = re.split(r"[{=;]", first, 1)[0].strip()
         out[key] = run
     return out
 
@@ -454,7 +454,7 @@ def preflight(members: List[Member], *, maya: str, exclude=(),
     for m in live:
         group = by_name[m.node]
         if group[0] is not m:
-            continue                       # handled with the first
+            continue  # handled with the first
         if len(group) > 1:
             if all(g.sha256 == m.sha256 for g in group):
                 warnings.append("%s given %d times with identical content; using %s"
@@ -592,7 +592,7 @@ def build(plan: Plan, name: str, out_dir: str, *, maya: str,
     for m in plan.members:
         for key, hx in m.resolved.items():
             reg.claim_literal(key, hx)
-    nodes  = [(m.node, m.path) for m in plan.members]
+    nodes = [(m.node, m.path) for m in plan.members]
     report = bundler.assemble(nodes, name, out_dir, strict=not best_effort,
                               registry=reg, maya=maya, compile_now=compile_now,
                               log_cb=log_cb, vendor=vendor, version=version,
@@ -610,7 +610,7 @@ def write_manifest(out_dir: str, name: str, plan: Plan, report: dict, *,
     load offer read) plus ``bundled_from``: the exact inputs, so ``--refresh``
     can rebuild the same set and a picker can reload the selection."""
     by_name = {r["name"]: r for r in report.get("nodes", [])}
-    rows = []
+    rows    = []
     for m in plan.members:
         rec = by_name.get(m.node, {})
         rows.append({
@@ -658,7 +658,7 @@ def refresh_inputs(out_dir: str, *, from_self: bool = False) -> Tuple[List[str],
     if from_self:
         paths = _node_sources_in(out_dir)
     else:
-        paths = [r["path"] for r in man.get("bundled_from") or []]
+        paths   = [r["path"] for r in man.get("bundled_from") or []]
         missing = [p for p in paths if not os.path.isfile(p)]
         if missing:
             raise InputError("inputs recorded by %s no longer exist: %s (use "
@@ -725,9 +725,9 @@ def load_check(bundle_path: str, expected_types: List[str], maya: str,
     if not os.path.isfile(mayapy):
         result["error"] = "mayapy not found at %s" % mayapy
         return result
-    env = dict(os.environ)
+    env                     = dict(os.environ)
     env["MAYA_DISABLE_CER"] = "1"
-    script = _LOAD_SCRIPT % {"bundle": bundle_path, "want": list(expected_types)}
+    script                  = _LOAD_SCRIPT % {"bundle": bundle_path, "want": list(expected_types)}
     try:
         proc = subprocess.run([mayapy, "-c", script], env=env, capture_output=True,
                               text=True, timeout=timeout)
@@ -797,7 +797,7 @@ def list_candidates(roots) -> List[Member]:
             dirnames[:] = [d for d in dirnames if d not in _SKIP_DIRS]
             if os.path.basename(dirpath) != bundler.BUILD_DIRNAME or "manifest.json" not in filenames:
                 continue
-            dirnames[:] = []          # a build tree: nothing to find below it
+            dirnames[:] = []  # a build tree: nothing to find below it
             try:
                 with open(os.path.join(dirpath, "manifest.json"), encoding="utf-8") as fh:
                     man = json.load(fh)
@@ -840,10 +840,10 @@ def controller_row(m: Member, rec: Optional[dict] = None) -> dict:
         "invented_io":      [],
         "missing_includes": [],
         "vp2_skip":         "",
-        "verify":           {"ran": False, "pass": None, "maxerr": None, "tol": None,
-                             "reason": "already compiled; not re-verified"},
-        "spec":             None,
-        "prebuilt":         m.row(),
+        "verify": {"ran": False, "pass": None, "maxerr": None, "tol": None,
+                   "reason": "already compiled; not re-verified"},
+        "spec":     None,
+        "prebuilt": m.row(),
     }
 
 

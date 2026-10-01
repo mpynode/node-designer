@@ -49,7 +49,7 @@ class TestAddToBundleAction(unittest.TestCase):
         return None
 
     def test_enabled_for_a_compiled_template_and_hands_over_its_source(self):
-        d = tempfile.mkdtemp(prefix="gal_bundle_")
+        d   = tempfile.mkdtemp(prefix="gal_bundle_")
         cpp = _write(d, "build/source/aNode.cpp", _src("aNode", "ANode", "0x00081000"))
         _write(d, "build/manifest.json", json.dumps({
             "plugin_name": "T", "nodes": [{"type_name": "aNode", "type_id": "0x00081000"}]}))

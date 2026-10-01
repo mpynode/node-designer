@@ -290,15 +290,15 @@ class NDMainWindow(QMainWindow):
         # (deepest = under the cursor) delivery, keyed by event timestamp.
         self._last_middle_click_ts = None
         # Set in _build_ui; defaulted here so early/failed construction is safe.
-        self._mode_tabs       = None
-        self._gallery_panel   = None
+        self._mode_tabs     = None
+        self._gallery_panel = None
         # The Compile mode page and the CompileDialog it hosts (built on first
         # use); the flag marks a switch made by _open_compile_dialog, which is
         # not a user's return to the tab.
-        self._compile_page    = None
-        self._compile_dialog  = None
+        self._compile_page          = None
+        self._compile_dialog        = None
         self._compile_tab_switching = False
-        self._assistant_panel = None
+        self._assistant_panel       = None
         # Assistant pane width, remembered for re-showing it after the user has
         # dragged it closed in the Workspace splitter.
         self._last_side_panel_width = 340
@@ -574,7 +574,7 @@ class NDMainWindow(QMainWindow):
         self._mode_tabs.addTab(workspace, "Workspace")
         self._mode_tabs.addTab(self._gallery_panel, "Templates")
         self._compile_page = QWidget(self._mode_tabs)
-        page_lay = QVBoxLayout(self._compile_page)
+        page_lay           = QVBoxLayout(self._compile_page)
         page_lay.setContentsMargins(0, 0, 0, 0)
         self._mode_tabs.addTab(self._compile_page, "Compile")
         self._mode_tabs.setCurrentIndex(0)  # Workspace default
