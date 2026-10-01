@@ -292,6 +292,12 @@ class NDMainWindow(QMainWindow):
         # Set in _build_ui; defaulted here so early/failed construction is safe.
         self._mode_tabs       = None
         self._gallery_panel   = None
+        # The Compile mode page and the CompileDialog it hosts (built on first
+        # use); the flag marks a switch made by _open_compile_dialog, which is
+        # not a user's return to the tab.
+        self._compile_page    = None
+        self._compile_dialog  = None
+        self._compile_tab_switching = False
         self._assistant_panel = None
         # Assistant pane width, remembered for re-showing it after the user has
         # dragged it closed in the Workspace splitter.
@@ -388,10 +394,11 @@ class NDMainWindow(QMainWindow):
         except Exception:
             pass
 
-        # Top-level mode switcher: Workspace (tree | editor | Assistant) and
-        # Templates (full-width gallery). Two big tabs that swap the entire
-        # content region; both pages stay alive so editor and gallery state
-        # survive. Tradeoff: gallery + editor are never visible at once.
+        # Top-level mode switcher: Workspace (tree | editor | Assistant),
+        # Templates (full-width gallery) and Compile (the compiler). Three big
+        # tabs that swap the entire content region; every page stays alive so
+        # editor, gallery and compile state survive. Tradeoff: they are never
+        # visible at once.
         self._mode_tabs = QTabWidget(central)
         # 1.5x-wider tab bar so the vertical mode switch is a more noticeable
         # target. Install BEFORE addTab/setMovable so those apply to the custom
@@ -559,10 +566,17 @@ class NDMainWindow(QMainWindow):
         self._main_splitter = splitter
         ws_layout.addWidget(splitter)
 
-        # Assemble the two modes. Workspace is tab 0 (default); Templates is the
-        # full-width gallery page.
+        # Assemble the three modes. Workspace is tab 0 (default); Templates is
+        # the full-width gallery page; Compile hosts the CompileDialog as a
+        # plain child widget, built on first use (_ensure_compile_dialog) --
+        # it queries the scene and the installed Mayas, which a Designer that
+        # never compiles should not pay for.
         self._mode_tabs.addTab(workspace, "Workspace")
         self._mode_tabs.addTab(self._gallery_panel, "Templates")
+        self._compile_page = QWidget(self._mode_tabs)
+        page_lay = QVBoxLayout(self._compile_page)
+        page_lay.setContentsMargins(0, 0, 0, 0)
+        self._mode_tabs.addTab(self._compile_page, "Compile")
         self._mode_tabs.setCurrentIndex(0)  # Workspace default
         outer.addWidget(self._mode_tabs)
 
@@ -650,6 +664,11 @@ class NDMainWindow(QMainWindow):
         try:
             if self._mode_tabs.tabText(index) != "Templates":
                 self._gallery_panel.stop_video()
+        except Exception:
+            pass
+        try:
+            if self._mode_tabs.tabText(index) == "Compile":
+                self._on_compile_tab_shown()
         except Exception:
             pass
 
@@ -986,40 +1005,46 @@ class NDMainWindow(QMainWindow):
         self._open_compile_dialog(compiled=[cpp_path])
 
     def _open_compile_dialog(self, preselect=None, compiled=None) -> None:
-        """Open (or raise) the single non-modal CompileDialog.
+        """Show the Compile page -- the one compiler UI (design decision 3).
 
-        The dialog lists every mPy* node in the CURRENT scene; ``refresh_nodes``
-        re-queries the live scene on every open so it never shows nodes from a
-        previous scene. Non-modal so the user can keep working while a compile
-        runs (it never touches the scene); a single reused instance avoids a
-        pile of duplicate windows.
-
-        ``preselect`` (a scene node name) checks exactly that node after the
-        refresh, so the scene-tab right-click "Compile…" lands on it directly.
-        ``compiled`` (already-compiled node source paths) adds them as checked
-        "Compiled C++" rows, which is how the gallery's "Add to bundle…" lands.
+        The page hosts the single CompileDialog, built on first use. With no
+        arguments this is a fresh open: ``refresh_nodes`` re-queries the live
+        scene and resets the checks, so it never shows nodes from a previous
+        scene. ``preselect`` (a scene node name) then checks exactly that
+        node, so the scene-tab right-click "Compile…" lands on it directly.
+        ``compiled`` (already-compiled node sources) adds them as checked
+        compiled rows to what the page
+        already holds -- the gallery's "Add to bundle…" is additive, one
+        template after another.
         """
+        dlg = self._ensure_compile_dialog()
+        if dlg is None:
+            return
+        try:
+            if compiled:
+                dlg.add_compiled_sources(compiled)
+            else:
+                dlg.refresh_nodes()
+                if preselect:
+                    dlg.preselect_node(preselect)
+        except Exception:
+            pass
+        self._show_compile_mode()
+
+    def _ensure_compile_dialog(self):
+        """The CompileDialog the Compile page hosts, built on first use and
+        kept for the life of the window: a QDialog embedded as a plain child
+        (Qt.Widget), so every method the tests pin stays where it is and the
+        page is the one compiler UI."""
+        if self._compile_dialog is not None:
+            return self._compile_dialog
+        if self._compile_page is None:
+            return None
         # Local import to avoid a top-level cycle (the dialog pulls in the
         # native compile stack, which need not load until first used).
         from mpynode.ui.dialogs.compile_dialog import CompileDialog
 
-        dlg = getattr(self, "_compile_dialog", None)
-        if dlg is not None:
-            try:
-                dlg.refresh_nodes()
-                if preselect:
-                    dlg.preselect_node(preselect)
-                if compiled:
-                    dlg.add_compiled_sources(compiled)
-                dlg.show()
-                dlg.raise_()
-                dlg.activateWindow()
-                return
-            except Exception:
-                # The previous dialog was destroyed; fall through and remake it.
-                self._compile_dialog = None
-
-        dlg = CompileDialog(parent=self)
+        dlg = CompileDialog(parent=self._compile_page, embedded=True)
         # WS2 concierge: route the dialog's "Fix with AI" hand-off to the
         # assistant panel (the dialog stays decoupled from the panel).
         try:
@@ -1033,14 +1058,23 @@ class NDMainWindow(QMainWindow):
             dlg.classesStamped.connect(self._on_compile_dialog_classes_stamped)
         except Exception:
             pass
+        self._compile_page.layout().addWidget(dlg)
         self._compile_dialog = dlg
-        if preselect:
-            dlg.preselect_node(preselect)
-        if compiled:
-            dlg.add_compiled_sources(compiled)
-        dlg.show()
-        dlg.raise_()
-        dlg.activateWindow()
+        return dlg
+
+    def _on_compile_tab_shown(self) -> None:
+        """The Compile page became current. On a user's click, re-scan the
+        scene but keep the session -- checks, added .mpn and compiled rows --
+        because a tab is left and returned to all day and a return is not a
+        fresh open; a switch made by ``_open_compile_dialog`` has already set
+        the page up and is left alone."""
+        dlg = self._ensure_compile_dialog()
+        if dlg is None or getattr(self, "_compile_tab_switching", False):
+            return
+        try:
+            dlg.rescan_scene()
+        except Exception:
+            pass
 
     def _route_compile_handoff(self, handoff) -> None:
         """Seed the assistant panel with a compile hand-off from the compile
@@ -1987,6 +2021,27 @@ class NDMainWindow(QMainWindow):
             return
         try:
             self._mode_tabs.setCurrentIndex(0)
+        except Exception:
+            pass
+
+    def _show_compile_mode(self) -> None:
+        """Switch the top-level mode switcher to the Compile page and pop it
+        into view. The switch is not a user's return to the tab, so the page
+        is not re-scanned here: ``_open_compile_dialog`` has already put it in
+        the state it means to show."""
+        if self._mode_tabs is None or self._compile_page is None:
+            return
+        try:
+            idx = self._mode_tabs.indexOf(self._compile_page)
+            if idx >= 0:
+                self._compile_tab_switching = True
+                try:
+                    self._mode_tabs.setCurrentIndex(idx)
+                finally:
+                    self._compile_tab_switching = False
+            self._mode_tabs.raise_()
+            self.raise_()
+            self.activateWindow()
         except Exception:
             pass
 
@@ -3075,6 +3130,13 @@ class NDMainWindow(QMainWindow):
         self._remove_global_middle_click_filter()
         self._remove_scene_callbacks()
         self._unregister_all_node_attr_callbacks()
+        # A compile still running is cancelled with the window: the embedded
+        # dialog's closeEvent does that, and in a tab nothing else delivers it.
+        if self._compile_dialog is not None:
+            try:
+                self._compile_dialog.close()
+            except Exception:
+                pass
         # Drop the stored-var store listener, else it outlives the window.
         if self._stored_vars_listener is not None:
             try:

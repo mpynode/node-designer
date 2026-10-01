@@ -1,12 +1,13 @@
 """Pick already-compiled nodes to put in a plug-in.
 
-The Compile dialog's "Add compiled nodes…" opens this. It lists every node
-source the bundler has written under the places compiled nodes live -- the
-shipped templates, the user's compiled-plug-ins folder, and any folder added
-here (remembered in the ``bundle_source_paths`` preference) -- plus single
-files added by hand. A multi-node build is listed member by member, so part
-of one can be taken. Nothing is compiled or read beyond the source text;
-``bundle_plan.scan`` does the reading and says what each file is.
+The Compile tab's "Add compiled nodes…" shows this as its compiled pane
+(embedded; standalone it is a dialog). It lists every compiled node under
+the places compiled nodes live -- the shipped templates, the user's
+compiled-plug-ins folder, and any folder added here (remembered in the
+``bundle_source_paths`` preference) -- plus single files added by hand. A multi-node build is listed member by
+member, so part of one can be taken. Nothing is compiled or read beyond the
+source text; ``bundle_plan.scan`` does the reading and says what each file
+is.
 """
 from __future__ import annotations
 
@@ -27,6 +28,7 @@ from mpynode.ui.qt_wrapper import (
     QTableWidget,
     QTableWidgetItem,
     QVBoxLayout,
+    Signal,
 )
 
 _PREF_KEY = "bundle_source_paths"
@@ -75,14 +77,27 @@ def _remember_root(path: str) -> None:
         pass
 
 
+def _key(m) -> str:
+    """The path a member is known by: its source."""
+    return m.path
+
+
 class CompiledNodePicker(QDialog):
-    """A checklist of compiled nodes; ``selected_paths()`` after ``Accepted``."""
+    """A checklist of compiled nodes; ``selected_paths()`` after ``Accepted``.
+    Embedded (``embedded=True``) it is a pane, not a window: no OK / Cancel,
+    an "Add Selected" button that emits ``addSelected`` with the paths."""
+
+    addSelected = Signal(object)
 
     def __init__(self, parent=None, roots: Optional[List[str]] = None,
-                 maya: Optional[str] = None):
+                 maya: Optional[str] = None, embedded: bool = False):
         super().__init__(parent)
+        self._embedded = bool(embedded)
+        if self._embedded:
+            self.setWindowFlags(Qt.Widget)
         self.setWindowTitle("Add Compiled Nodes")
-        self.resize(820, 440)
+        if not self._embedded:
+            self.resize(820, 440)
         self._roots   = list(roots) if roots is not None else default_roots()
         self._maya    = maya
         self._members = []          # bundle_plan.Member, table order
@@ -127,16 +142,27 @@ class CompiledNodePicker(QDialog):
                   self._rescan_btn):
             row.addWidget(b)
         row.addStretch(1)
+        # Embedded: "Add Selected" is a button on this row, and the pane stays.
+        self._add_btn = None
+        if self._embedded:
+            self._add_btn = QPushButton("Add Selected", self)
+            self._add_btn.setEnabled(False)
+            self._add_btn.clicked.connect(
+                lambda checked=False: self.addSelected.emit(self.selected_paths()))
+            row.addWidget(self._add_btn)
         outer.addLayout(row)
 
         self._summary = QLabel("", self)
         outer.addWidget(self._summary)
 
-        self._buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel, self)
-        self._buttons.button(QDialogButtonBox.Ok).setText("Add Selected")
-        self._buttons.accepted.connect(self.accept)
-        self._buttons.rejected.connect(self.reject)
-        outer.addWidget(self._buttons)
+        # Standalone: OK adds and closes, as a dialog does.
+        self._buttons = None
+        if not self._embedded:
+            self._buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel, self)
+            self._buttons.button(QDialogButtonBox.Ok).setText("Add Selected")
+            self._buttons.accepted.connect(self.accept)
+            self._buttons.rejected.connect(self.reject)
+            outer.addWidget(self._buttons)
 
         self._all_btn.clicked.connect(lambda checked=False: self._set_all(True))
         self._none_btn.clicked.connect(lambda checked=False: self._set_all(False))
@@ -154,12 +180,22 @@ class CompiledNodePicker(QDialog):
         self._members = bundle_plan.list_candidates(self._roots)
         self._fill(checked=keep)
 
+    def clear_selection(self) -> None:
+        """Uncheck every row, hidden ones too (after an add went through)."""
+        self._table.blockSignals(True)
+        for row in range(self._table.rowCount()):
+            it = self._table.item(row, _COL_CHECK)
+            if it is not None:
+                it.setCheckState(Qt.Unchecked)
+        self._table.blockSignals(False)
+        self._update_summary()
+
     def add_sources(self, paths) -> List[str]:
         """Add sources by file; returns the reasons for any that were refused."""
         from mpynode.native.toolchain import bundle_plan
 
         keep     = set(self.selected_paths())
-        have     = {os.path.normcase(m.path) for m in self._members}
+        have     = {os.path.normcase(_key(m)) for m in self._members}
         problems = []
         for p in paths or []:
             p = os.path.abspath(p)
@@ -167,11 +203,11 @@ class CompiledNodePicker(QDialog):
                 continue
             m = bundle_plan.scan(p)
             self._members.append(m)
-            have.add(os.path.normcase(p))
+            have.add(os.path.normcase(_key(m)))
             if m.kind == "refused":
                 problems.append("%s: %s" % (os.path.basename(p), m.reason))
             else:
-                keep.add(m.path)
+                keep.add(_key(m))
         self._fill(checked=keep)
         return problems
 
@@ -184,19 +220,21 @@ class CompiledNodePicker(QDialog):
             tick = QTableWidgetItem("")
             tick.setFlags((Qt.ItemIsUserCheckable | Qt.ItemIsEnabled | Qt.ItemIsSelectable)
                           if ok else Qt.ItemIsSelectable)
-            tick.setCheckState(Qt.Checked if (ok and m.path in checked) else Qt.Unchecked)
+            tick.setCheckState(Qt.Checked if (ok and _key(m) in checked) else Qt.Unchecked)
             self._table.setItem(row, _COL_CHECK, tick)
             main = m.resolved.get(m.node) or m.ids.get(m.node) or ""
+            kind = m.kind if ok else "refused"
+            if m.kind == "fragment":
+                kind += " v%d" % m.fragment_version
             cells = {
-                _COL_NODE:   m.node or os.path.basename(m.path),
+                _COL_NODE:   m.node or os.path.basename(_key(m)),
                 _COL_CLASS:  m.cls,
-                _COL_KIND:   (m.kind if ok else "refused")
-                             + (" v%d" % m.fragment_version if m.kind == "fragment" else ""),
+                _COL_KIND:   kind,
                 _COL_ID:     main,
                 _COL_CMDS:   ", ".join(m.commands),
                 _COL_QT:     "Qt" if m.needs_qt else "",
                 _COL_RECIPE: m.recipe,
-                _COL_FROM:   os.path.dirname(m.path),
+                _COL_FROM:   os.path.dirname(_key(m)),
             }
             for col, text in cells.items():
                 it = QTableWidgetItem(str(text))
@@ -212,7 +250,7 @@ class CompiledNodePicker(QDialog):
     def _apply_filter(self, text) -> None:
         needle = (text or "").strip().lower()
         for row, m in enumerate(self._members):
-            hay = " ".join((m.node, m.cls, m.path)).lower()
+            hay = " ".join((m.node, m.cls, _key(m))).lower()
             self._table.setRowHidden(row, bool(needle) and needle not in hay)
 
     def _set_all(self, on: bool) -> None:
@@ -232,7 +270,10 @@ class CompiledNodePicker(QDialog):
             text += "  (%d not usable -- hover for the reason)" % n_bad
         self._summary.setText(text)
         try:
-            self._buttons.button(QDialogButtonBox.Ok).setEnabled(n_sel > 0)
+            if self._buttons is not None:
+                self._buttons.button(QDialogButtonBox.Ok).setEnabled(n_sel > 0)
+            if self._add_btn is not None:
+                self._add_btn.setEnabled(n_sel > 0)
         except Exception:
             pass
 
@@ -247,7 +288,7 @@ class CompiledNodePicker(QDialog):
         return out
 
     def selected_paths(self) -> List[str]:
-        return [m.path for m in self.selected_members()]
+        return [_key(m) for m in self.selected_members()]
 
     # ---- actions --------------------------------------------------------
 
@@ -265,7 +306,7 @@ class CompiledNodePicker(QDialog):
     def _on_add_file(self) -> None:
         start  = self._roots[-1] if self._roots else os.path.expanduser("~")
         chosen = QFileDialog.getOpenFileNames(self, "Add compiled node sources", start,
-                                              "C++ sources (*.cpp)")
+                                              "Compiled node sources (*.cpp *.mpn)")
         paths = chosen[0] if isinstance(chosen, tuple) else chosen
         problems = self.add_sources(paths)
         if problems:

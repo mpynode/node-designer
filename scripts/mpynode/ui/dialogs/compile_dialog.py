@@ -44,6 +44,7 @@ from mpynode.ui.qt_wrapper import (
     QPlainTextEdit,
     QPushButton,
     QScrollArea,
+    QSplitter,
     QStyle,
     QStyledItemDelegate,
     Qt,
@@ -464,8 +465,15 @@ class CompileDialog(QDialog):
     # re-syncs its Identity panel + scene-tree tags for those nodes (#68).
     classesStamped = Signal(object)
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, embedded=False):
         super().__init__(parent)
+        # Embedded: hosted by the Designer's Compile tab as a plain child
+        # widget (a QDialog is a QWidget; Qt.Widget drops the window flag), so
+        # there is no window to close and no Close button. Standalone is what
+        # the tests construct.
+        self._embedded = bool(embedded)
+        if self._embedded:
+            self.setWindowFlags(Qt.Widget)
         # Full live scene listing (re-queried on every open) and the set of
         # checked node NAMES = the bundle. Seeded here BEFORE _build_ui so the
         # plugin-name default can reflect a single-node scene.
@@ -499,7 +507,8 @@ class CompileDialog(QDialog):
         # Not modal: a compile can take minutes; the user may want to keep
         # working in Maya while it runs (the worker never touches the scene).
         self.setModal(False)
-        self.resize(560, 420)
+        if not self._embedded:
+            self.resize(980, 640)
 
         # Lazily-created controller (Qt-free engine); reused across runs.
         self._controller = None
@@ -531,12 +540,23 @@ class CompileDialog(QDialog):
     # ---- pipeline (transpile -> assist -> optimize) ----------------------
 
     def _dim(self, text):
-        """A secondary-colour explanatory label."""
+        """A secondary-colour explanatory label. It wraps: an explanation is
+        never what sets the page's minimum width (the Compile tab's would
+        become the Designer window's)."""
         lab = QLabel(text, self)
+        lab.setWordWrap(True)
         pal = lab.palette()
         pal.setColor(QPalette.WindowText,
                      pal.color(QPalette.Disabled, QPalette.WindowText))
         lab.setPalette(pal)
+        return lab
+
+    def _caption(self, text):
+        """A bold group caption, the way the pipeline group is headed."""
+        lab = QLabel(text, self)
+        f   = lab.font()
+        f.setBold(True)
+        lab.setFont(f)
         return lab
 
     def _build_pipeline_ui(self):
@@ -907,35 +927,74 @@ class CompileDialog(QDialog):
         }
 
     def _build_ui(self) -> None:
+        """The wide layout: the sources strip and the node table on the left,
+        the options in groups on the right, then the status line, the pipeline
+        rail, the live log and the buttons across the bottom. The Compile tab
+        hosts this as it is; the standalone window (what the tests construct)
+        gets the same layout."""
         outer = QVBoxLayout(self)
         outer.setSpacing(6)
         outer.setContentsMargins(10, 10, 10, 10)
 
-        # --- plugin name -------------------------------------------------
-        name_row = QHBoxLayout()
-        name_row.addWidget(QLabel("Plugin name:", self))
-        self._name_edit = QLineEdit(self)
-        self._name_edit.setText(self._default_name_for_scene())
-        name_row.addWidget(self._name_edit, stretch=1)
-        outer.addLayout(name_row)
+        body = QSplitter(Qt.Horizontal, self)
+        body.setChildrenCollapsible(False)
 
-        # --- output folder ----------------------------------------------
-        out_row = QHBoxLayout()
-        out_row.addWidget(QLabel("Output folder:", self))
-        self._out_edit = QLineEdit(self)
-        self._out_edit.setText(self._default_out_dir())
-        out_row.addWidget(self._out_edit, stretch=1)
-        self._browse_btn = QPushButton("Browse" + _ELLIPSIS, self)
-        out_row.addWidget(self._browse_btn)
-        outer.addLayout(out_row)
-        # Keep the output folder tracking the plugin name until the user
-        # picks a folder by hand (then we stop auto-syncing).
-        self._out_user_set = False
+        # ================= left: the sources, over the node table =========
+        left     = QWidget(body)
+        left_col = QVBoxLayout(left)
+        left_col.setContentsMargins(0, 0, 0, 0)
+        left_col.setSpacing(6)
 
-        # --- provider / model (read-only; configured in the panel) -------
-        self._provider_label = QLabel(self._provider_text(), self)
-        self._provider_label.setEnabled(False)  # informational, dimmed
-        outer.addWidget(self._provider_label)
+        # --- sources strip: Scene · .mpn files · Compiled -----------------
+        # Every row in the table comes from one of three places; the strip
+        # names them and holds each one's controls, over the table they feed.
+        strip                = QHBoxLayout()
+        self._select_all_btn = QPushButton("Select All", self)
+        self._select_all_btn.setToolTip("Check every node in the scene")
+        self._select_none_btn = QPushButton("Select None", self)
+        self._select_none_btn.setToolTip("Uncheck every node")
+        self._refresh_btn = QPushButton("Refresh", self)
+        self._refresh_btn.setToolTip(
+            "Re-scan the scene for mPy* nodes (after creating/deleting one)")
+        # Add external .mpn templates to the list WITHOUT creating scene nodes.
+        self._add_mpn_btn = QPushButton("Add .mpn files" + _ELLIPSIS, self)
+        self._add_mpn_btn.setToolTip(
+            "Add external .mpn node templates to compile -- no scene node is "
+            "created; they are read straight off disk")
+        # Nodes that are ALREADY compiled join the plug-in as the C++ they are,
+        # so a plug-in can be made of nothing but compiled nodes. The button
+        # shows the compiled pane: the picker, embedded over the table.
+        self._add_compiled_btn = QPushButton("Add compiled nodes" + _ELLIPSIS, self)
+        self._add_compiled_btn.setCheckable(True)
+        self._add_compiled_btn.setToolTip(
+            "Browse already-compiled nodes (a compile's build/source "
+            "<node>.cpp, members of a multi-node build) "
+            "and add the checked ones -- nothing is ported or verified again; "
+            "they are linked as they are")
+        strip.addWidget(self._dim("Scene:"))
+        strip.addWidget(self._select_all_btn)
+        strip.addWidget(self._select_none_btn)
+        strip.addWidget(self._refresh_btn)
+        strip.addSpacing(10)
+        strip.addWidget(self._dim(".mpn files:"))
+        strip.addWidget(self._add_mpn_btn)
+        strip.addSpacing(10)
+        strip.addWidget(self._dim("Compiled:"))
+        strip.addWidget(self._add_compiled_btn)
+        strip.addStretch(1)
+        left_col.addLayout(strip)
+
+        # --- the compiled pane, over the table ---------------------------
+        # Built on first use (_ensure_compiled_pane); a vertical splitter so
+        # the user sizes it against the table.
+        self._left_split = QSplitter(Qt.Vertical, left)
+        self._left_split.setChildrenCollapsible(False)
+        self._compiled_pane_host = QWidget(self._left_split)
+        pane_lay = QVBoxLayout(self._compiled_pane_host)
+        pane_lay.setContentsMargins(0, 0, 0, 0)
+        self._compiled_pane_host.setVisible(False)
+        self._compiled_pane = None
+        self._left_split.addWidget(self._compiled_pane_host)
 
         # --- node table (checkbox list of every mPy* node in the scene) --
         self._table = QTableWidget(0, _COL_COUNT, self)
@@ -976,85 +1035,52 @@ class CompileDialog(QDialog):
             header.setStretchLastSection(True)
         # Populate from the live scene (re-queried on every open).
         self._refresh_table()
-        outer.addWidget(self._table, stretch=1)
+        self._left_split.addWidget(self._table)
+        self._left_split.setStretchFactor(0, 1)
+        self._left_split.setStretchFactor(1, 2)
+        left_col.addWidget(self._left_split, stretch=1)
+        body.addWidget(left)
 
-        # --- selection helpers -------------------------------------------
-        edit_row             = QHBoxLayout()
-        self._select_all_btn = QPushButton("Select All", self)
-        self._select_all_btn.setToolTip("Check every node in the scene")
-        self._select_none_btn = QPushButton("Select None", self)
-        self._select_none_btn.setToolTip("Uncheck every node")
-        self._refresh_btn = QPushButton("Refresh", self)
-        self._refresh_btn.setToolTip(
-            "Re-scan the scene for mPy* nodes (after creating/deleting one)")
-        # Add external .mpn templates to the list WITHOUT creating scene nodes.
-        self._add_mpn_btn = QPushButton("Add .mpn files" + _ELLIPSIS, self)
-        self._add_mpn_btn.setToolTip(
-            "Add external .mpn node templates to compile -- no scene node is "
-            "created; they are read straight off disk")
-        # Add nodes that are ALREADY compiled: they join the plug-in as the C++
-        # they are, so a plug-in can be made of nothing but compiled nodes.
-        self._add_compiled_btn = QPushButton("Add compiled nodes" + _ELLIPSIS, self)
-        self._add_compiled_btn.setToolTip(
-            "Add already-compiled node sources (a compile's build/source "
-            "<node>.cpp, or members of a multi-node build) -- nothing is "
-            "ported or verified again; they are linked as they are")
-        edit_row.addWidget(self._select_all_btn)
-        edit_row.addWidget(self._select_none_btn)
-        edit_row.addWidget(self._refresh_btn)
-        edit_row.addWidget(self._add_mpn_btn)
-        edit_row.addWidget(self._add_compiled_btn)
-        edit_row.addStretch(1)
-        outer.addLayout(edit_row)
+        # ================= right: the options, in groups ==================
+        # Inside a scroll area: many Maya versions or a small screen scroll the
+        # column rather than growing the page, and its minimum width never
+        # reaches the window (a tab page's minimum is the Designer's).
+        right     = QWidget()
+        right_col = QVBoxLayout(right)
+        right_col.setContentsMargins(0, 0, 8, 0)
+        right_col.setSpacing(10)
 
-        # --- options -----------------------------------------------------
-        opt_row = QHBoxLayout()
-        # Default ON = strict (abort the whole compile on any per-node
-        # failure). Unchecking switches the controller to best-effort.
-        self._strict_check = QCheckBox("Strict (abort on any node failure)", self)
-        self._strict_check.setChecked(True)
-        self._strict_check.setToolTip(
-            "Strict: if ANY selected node fails to port or compile, abort the "
-            "whole build and produce no plugin.\n"
-            "Unchecked (best-effort): build every node that can, and drop the "
-            "ones that fail -- each dropped node is reported with a reason.\n"
-            "Verify is REPORTED, never fatal: a parity failure does not abort "
-            "the build or drop the node, in either mode.\n"
-            "Strict has NOTHING to do with your authored @maya_test methods -- "
-            "those run only when 'Run authored node tests' is checked, in either "
-            "mode.")
-        opt_row.addWidget(self._strict_check)
-        # Default OFF = do NOT run authored @maya_test methods during the build.
-        # The built-in byte-parity check always runs; this extra author-written
-        # gate is opt-in because it is slower and not needed for a working plugin.
-        self._run_tests_check = QCheckBox("Run authored node tests", self)
-        self._run_tests_check.setChecked(False)
-        self._run_tests_check.setToolTip(
-            "Also run each node's authored @maya_test method(s) against the "
-            "COMPILED node during verification, for extra parity confidence.\n"
-            "Optional and OFF by default -- the built-in byte-parity check "
-            "always runs regardless; nodes with no @maya_test are unaffected.")
-        opt_row.addWidget(self._run_tests_check)
-        # Default OFF = bake persistent stored-var data into the compiled plugin.
-        # Checking it compiles a "vanilla" plugin (drops baked persistent data).
-        self._ignore_persistent_check = QCheckBox("Ignore persistent data", self)
-        self._ignore_persistent_check.setToolTip(
-            "Compile a vanilla plugin: do NOT bake persistent stored-variable "
-            "values into the generated C++ (definitions/defaults are kept). "
-            "Overrides the per-node Persistent column (greys it out) for ALL "
-            "nodes while checked.")
-        opt_row.addWidget(self._ignore_persistent_check)
-        opt_row.addStretch(1)
-        outer.addLayout(opt_row)
-
-        # --- pipeline: three gated stages --------------------------------
-        outer.addLayout(self._build_pipeline_ui())
+        # --- plug-in: name, output folder, provider ----------------------
+        right_col.addWidget(self._caption("Plug-in"))
+        plug = QGridLayout()
+        plug.setContentsMargins(18, 0, 0, 0)
+        plug.setHorizontalSpacing(8)
+        plug.setVerticalSpacing(4)
+        plug.addWidget(QLabel("Plugin name:", self), 0, 0)
+        self._name_edit = QLineEdit(self)
+        self._name_edit.setText(self._default_name_for_scene())
+        plug.addWidget(self._name_edit, 0, 1, 1, 2)
+        plug.addWidget(QLabel("Output folder:", self), 1, 0)
+        self._out_edit = QLineEdit(self)
+        self._out_edit.setText(self._default_out_dir())
+        plug.addWidget(self._out_edit, 1, 1)
+        self._browse_btn = QPushButton("Browse" + _ELLIPSIS, self)
+        plug.addWidget(self._browse_btn, 1, 2)
+        # Keep the output folder tracking the plugin name until the user
+        # picks a folder by hand (then we stop auto-syncing).
+        self._out_user_set = False
+        # Provider / model (read-only; configured in the panel).
+        self._provider_label = QLabel(self._provider_text(), self)
+        self._provider_label.setEnabled(False)  # informational, dimmed
+        plug.addWidget(self._provider_label, 2, 0, 1, 3)
+        plug.setColumnStretch(1, 1)
+        right_col.addLayout(plug)
 
         # --- target Maya versions (multi-version compile) ----------------
         # Auto-detect installed Maya versions usable as build targets (devkit +
         # mayapy); one checkbox each, the RUNNING Maya pre-checked. Check 2+ to
         # build a plugin per version into out_dir/<label>/. If discovery finds
-        # nothing the row is omitted and the compile targets the running Maya.
+        # nothing the group is omitted and the compile targets the running Maya.
         self._maya_targets = []
         self._maya_checks  = {}
         try:
@@ -1063,20 +1089,20 @@ class CompileDialog(QDialog):
             self._maya_targets = toolchain.discover_maya_installs()
         except Exception:
             self._maya_targets = []
-        # Live-log toggle: created unconditionally so the dialog always has it.
-        # Placed in the version button column (below) when versions exist, else
-        # it falls back onto the status row.
+        # Live-log toggle: created unconditionally so the dialog always has it;
+        # it sits on the status row, beside the phase line it expands.
         self._log_toggle_btn = QPushButton(_log_toggle_text(False), self)
         self._log_toggle_btn.setToolTip("Show/hide the live compiler output log")
         self._log_toggle_btn.setCheckable(True)
         if self._maya_targets:
             default_labels = set(self._default_checked_labels(
                 self._maya_targets, _resolve_maya_dir()))
-            outer.addWidget(QLabel("Maya versions:", self))
+            right_col.addWidget(self._caption("Maya versions"))
             # Scrollable, height-capped list so 5+ installed versions scroll
-            # instead of widening the dialog. The Select All / None + Log toggle
-            # buttons stack to its RIGHT, sized to sit flush with the list.
-            ver_row    = QHBoxLayout()
+            # instead of growing the column. Select All / None stack to its
+            # RIGHT, sized to sit flush with the list.
+            ver_row = QHBoxLayout()
+            ver_row.setContentsMargins(18, 0, 0, 0)
             ver_scroll = QScrollArea(self)
             ver_scroll.setWidgetResizable(True)
             ver_scroll.setMaximumHeight(_VER_LIST_MAX_H)
@@ -1097,7 +1123,7 @@ class CompileDialog(QDialog):
             ver_scroll.setWidget(ver_host)
             ver_row.addWidget(ver_scroll, stretch=1)
             # Right-hand button column: Select All / None (the "compile all
-            # versions" affordance) + the live-log toggle, top-aligned.
+            # versions" affordance), top-aligned.
             ver_btn_col       = QVBoxLayout()
             self._ver_all_btn = QPushButton("Select All", self)
             self._ver_all_btn.setToolTip("Check every Maya version")
@@ -1109,30 +1135,85 @@ class CompileDialog(QDialog):
                 lambda checked=False: self._set_all_versions(False))
             ver_btn_col.addWidget(self._ver_all_btn)
             ver_btn_col.addWidget(self._ver_none_btn)
-            ver_btn_col.addWidget(self._log_toggle_btn)
             ver_btn_col.addStretch(1)
             ver_row.addLayout(ver_btn_col)
-            outer.addLayout(ver_row)
+            right_col.addLayout(ver_row)
+
+        # --- options -----------------------------------------------------
+        # Built BEFORE the pipeline group: its gate sync reads these boxes.
+        # Laid out after it, below.
+        opt_col = QVBoxLayout()
+        opt_col.setContentsMargins(18, 0, 0, 0)
+        opt_col.setSpacing(3)
+        # Default ON = strict (abort the whole compile on any per-node
+        # failure). Unchecking switches the controller to best-effort.
+        self._strict_check = QCheckBox("Strict (abort on any node failure)", self)
+        self._strict_check.setChecked(True)
+        self._strict_check.setToolTip(
+            "Strict: if ANY selected node fails to port or compile, abort the "
+            "whole build and produce no plugin.\n"
+            "Unchecked (best-effort): build every node that can, and drop the "
+            "ones that fail -- each dropped node is reported with a reason.\n"
+            "Verify is REPORTED, never fatal: a parity failure does not abort "
+            "the build or drop the node, in either mode.\n"
+            "Strict has NOTHING to do with your authored @maya_test methods -- "
+            "those run only when 'Run authored node tests' is checked, in either "
+            "mode.")
+        opt_col.addWidget(self._strict_check)
+        # Default OFF = do NOT run authored @maya_test methods during the build.
+        # The built-in byte-parity check always runs; this extra author-written
+        # gate is opt-in because it is slower and not needed for a working plugin.
+        self._run_tests_check = QCheckBox("Run authored node tests", self)
+        self._run_tests_check.setChecked(False)
+        self._run_tests_check.setToolTip(
+            "Also run each node's authored @maya_test method(s) against the "
+            "COMPILED node during verification, for extra parity confidence.\n"
+            "Optional and OFF by default -- the built-in byte-parity check "
+            "always runs regardless; nodes with no @maya_test are unaffected.")
+        opt_col.addWidget(self._run_tests_check)
+        # Default OFF = bake persistent stored-var data into the compiled plugin.
+        # Checking it compiles a "vanilla" plugin (drops baked persistent data).
+        self._ignore_persistent_check = QCheckBox("Ignore persistent data", self)
+        self._ignore_persistent_check.setToolTip(
+            "Compile a vanilla plugin: do NOT bake persistent stored-variable "
+            "values into the generated C++ (definitions/defaults are kept). "
+            "Overrides the per-node Persistent column (greys it out) for ALL "
+            "nodes while checked.")
+        opt_col.addWidget(self._ignore_persistent_check)
+
+        # --- pipeline: three gated stages --------------------------------
+        right_col.addLayout(self._build_pipeline_ui())
+
+        right_col.addWidget(self._caption("Options"))
+        right_col.addLayout(opt_col)
+        right_col.addStretch(1)
+        right_scroll = QScrollArea(body)
+        right_scroll.setWidgetResizable(True)
+        right_scroll.setFrameShape(QScrollArea.NoFrame)
+        right_scroll.setWidget(right)
+        body.addWidget(right_scroll)
+        body.setStretchFactor(0, 3)
+        body.setStretchFactor(1, 2)
+        body.setSizes([600, 380])
+        outer.addWidget(body, stretch=1)
 
         # --- status ------------------------------------------------------
         # No progress bar: the slowest steps (LLM port, clang++ link, subprocess
         # parity verify) have no sub-progress, so a percentage would only lie (it
         # used to pin to 100% the instant work started). Instead an animated
         # braille spinner prefixes this honest phase line, and a collapsible log
-        # pane below streams the raw compiler output. The Log toggle lives in the
-        # version button column, or on the status row when no installs exist.
+        # pane below streams the raw compiler output; the Log toggle sits here.
         status_row         = QHBoxLayout()
         self._status_label = QLabel("", self)
         status_row.addWidget(self._status_label, stretch=1)
-        if not self._maya_targets:
-            status_row.addWidget(self._log_toggle_btn)
+        status_row.addWidget(self._log_toggle_btn)
         outer.addLayout(status_row)
 
         # --- live pipeline rail (checkpoints + what the AI is trying) -----
         outer.addLayout(self._build_rail_ui())
 
         # --- live compiler log (collapsible; auto-opens on compile) ------
-        # Hidden when idle so it doesn't dominate the dialog; _set_busy(True)
+        # Hidden when idle so it doesn't dominate the page; _set_busy(True)
         # clears + shows it, and the Log toggle flips it any time.
         self._log_view = QPlainTextEdit(self)
         self._log_view.setReadOnly(True)
@@ -1207,6 +1288,8 @@ class CompileDialog(QDialog):
         self._folder_btn.setToolTip("Reveal the output folder.")
         self._folder_btn.clicked.connect(self._on_open_folder)
         self._close_btn = QPushButton("Close", self)
+        # Embedded in the Compile tab there is no window to close.
+        self._close_btn.setVisible(not self._embedded)
         btn_row.addWidget(self._compile_btn)
         btn_row.addWidget(self._cancel_btn)
         btn_row.addWidget(self._ai_btn)
@@ -1380,6 +1463,13 @@ class CompileDialog(QDialog):
         self._has_persistent       = {}
         self._refresh_table()
 
+    def rescan_scene(self) -> None:
+        """Re-scan the scene and keep the session: the checks of surviving
+        nodes, the added .mpn and compiled rows. What the Compile tab does
+        when the user switches back to it -- a tab is left and returned to
+        all day, and a return is not a fresh open."""
+        self._refresh_table()
+
     def preselect_node(self, name) -> None:
         """Check exactly ``name`` (a scene node) and clear other checks, so a
         scene-tab right-click "Compile…" lands one click from compiling just it.
@@ -1454,6 +1544,7 @@ class CompileDialog(QDialog):
         if name in getattr(self, "_compiled_rows", {}):
             return "Compiled C++"
         return "External .mpn" if name in self._file_rows else "Scene"
+
 
     @staticmethod
     def _default_checked_labels(installs, running_root):
@@ -1923,6 +2014,8 @@ class CompileDialog(QDialog):
         """
         from mpynode.native.toolchain import bundle_plan
 
+        if self._busy:
+            return [], ["a compile is running; add compiled nodes when it is done"]
         added, problems = [], []
         have = {m.node: n for n, m in self._compiled_rows.items()}
         for p in paths or []:
@@ -1944,16 +2037,40 @@ class CompileDialog(QDialog):
         return added, problems
 
     def _on_add_compiled(self) -> None:
+        """Show or hide the compiled pane: the picker, embedded over the
+        table, listing every compiled node under its roots -- the
+        ``build/source`` files -- whose "Add Selected" puts the checked ones in
+        the table as compiled rows."""
         if self._busy:
+            self._add_compiled_btn.setChecked(False)
             return
-        from mpynode.ui.dialogs.compiled_node_picker import CompiledNodePicker
+        show = self._add_compiled_btn.isChecked()
+        if show:
+            fresh = self._compiled_pane is None
+            pane  = self._ensure_compiled_pane()
+            if not fresh:
+                pane.rescan()
+        self._compiled_pane_host.setVisible(show)
 
-        dlg = CompiledNodePicker(self, maya=self._compile_target_root())
-        if dlg.exec_() != QDialog.Accepted:
-            return
-        _added, problems = self.add_compiled_sources(dlg.selected_paths())
+    def _ensure_compiled_pane(self):
+        """The embedded picker, built on first use (it scans its roots)."""
+        if self._compiled_pane is None:
+            from mpynode.ui.dialogs.compiled_node_picker import CompiledNodePicker
+
+            pane = CompiledNodePicker(self._compiled_pane_host,
+                                      maya=self._compile_target_root(),
+                                      embedded=True)
+            pane.addSelected.connect(self._add_from_compiled_pane)
+            self._compiled_pane_host.layout().addWidget(pane)
+            self._compiled_pane = pane
+        return self._compiled_pane
+
+    def _add_from_compiled_pane(self, paths) -> None:
+        _added, problems = self.add_compiled_sources(list(paths or []))
         if problems:
             QMessageBox.warning(self, "Some Sources Skipped", "\n".join(problems))
+        if self._compiled_pane is not None:
+            self._compiled_pane.clear_selection()
 
     def _compile_target_root(self):
         """The Maya root the NEXT build would target: the first checked version

@@ -292,9 +292,9 @@ the AI Assistant.
 | `Node ▸ Add Attribute…` | persistent dialog: `Add` clears + refocuses, `Done` closes |
 | `Node ▸ Duplicate` / `Duplicate + Inputs` | the latter re-creates input connections |
 | `Node ▸ Save Node` (F5) / `Save All` | commit editor buffers to the node |
-| `Node ▸ Compile to Native Plugin…` | the compile dialog; `Add compiled nodes…` adds already-compiled sources as rows |
+| `Node ▸ Compile to Native Plugin…` | the Compile tab (Workspace · Templates · **Compile**); `Add compiled nodes…` opens the compiled pane over the node table |
 | Scene-tree right-click | `Info…` (metadata) · `Run setup` · `Run demo` |
-| Templates gallery | `Create` · `Create + Run demo` · `Add to bundle…` (a compiled template's C++, into the compile dialog) |
+| Templates gallery | `Create` · `Create + Run demo` · `Add to bundle…` (a compiled template's C++, into the Compile tab -- additive) |
 
 | Key | Action |
 |---|---|
@@ -345,10 +345,14 @@ is regenerated; `ls` / `wrap` / `create` are inherited.
 
 ## 10. Compiling to a native plug-in
 
-`Node ▸ Compile to Native Plugin…` — check the scene nodes to bundle, name the
+`Node ▸ Compile to Native Plugin…` opens the **Compile** tab (the third mode
+tab, beside Workspace and Templates): the sources strip and the node table on
+the left, the options on the right, the status line, the pipeline rail and
+the live log across the bottom. Check the scene nodes to bundle, name the
 plug-in, pick target Maya versions (one checkbox per install found with a
 devkit). It ports, compiles and parity-verifies in a throwaway `mayapy`, so the
-live scene is never touched.
+live scene is never touched. Switching away and back keeps the checks and the
+added rows (the scene is re-scanned); the menu entry is a fresh open.
 
 ```python
 from mpynode.native.spec import spec_extractor
@@ -403,14 +407,15 @@ tools/bundle.sh --refresh rigTools    # rebuild from the inputs its manifest lis
   another loaded plug-in already provides is skipped with a warning;
   `--strict-load` refuses the whole plug-in instead.
 
-The same thing from the Designer: `Node ▸ Compile to Native Plugin… ▸ Add
-compiled nodes…` lists every compiled node it can find (the templates, your
-compiled folder, folders you add) and adds the checked ones as "Compiled C++"
-rows. Each checked compiled row shows its pre-flight verdict in Status as you
-toggle rows. Compile with nothing but compiled rows checked bundles them as
-they are (no porting, no verify); with scene or `.mpn` rows checked too, the
-compiled ones join that build as they are. The gallery's right-click
-`Add to bundle…` drops a compiled template straight into the dialog.
+The same thing from the Designer: the Compile tab's `Add compiled nodes…`
+opens the compiled pane over the node table, listing every compiled node it
+can find (the templates, your compiled folder, folders you add), and
+`Add Selected` adds the checked ones as "Compiled C++" rows. Each checked
+compiled row shows its pre-flight verdict in Status as you toggle rows.
+Compile with nothing but compiled rows checked bundles them as they are (no
+porting, no verify); with scene or `.mpn` rows checked too, the compiled ones
+join that build as they are. The gallery's right-click `Add to bundle…` drops
+a compiled template straight into the tab, one after another.
 
 ## 11. Troubleshooting
 
