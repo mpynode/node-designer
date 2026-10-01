@@ -1771,23 +1771,49 @@ class _CompiledProxy(object):
         cmds.setAttr("%s.%s" % (name, attr), value)
 
 
+def _is_target(node):
+    """``node`` is a node of this command's type, or a transform whose shape
+    is one (a locator family's node is a shape the user picks by its
+    transform)."""
+    try:
+        if cmds.objectType(node, isAType=_NODE_TYPE):
+            return True
+        shapes = cmds.listRelatives(node, shapes=True, fullPath=True) or []
+        return any(cmds.objectType(s, isAType=_NODE_TYPE) for s in shapes)
+    except Exception:
+        return False
+
+
 def _resolve_target(target, cmd_name):
     """An INSTANCE command's target: the explicit object argument, else the
     active selection. A compiled command has no implicit ``self``.
 
     ``target`` arrives RS-joined (the C++ side sends every object name so a
     create command can see them all); an instance command is capped at one
-    object by its own MSyntax, and takes the first regardless."""
+    object by its own MSyntax, and takes the first regardless.
+
+    The target must be a node of this command's type. Aimed at anything else
+    a command used to run and fail partway, on the first attribute the other
+    node lacks -- ``spineBuildSystem`` with a locator selected died on
+    ``setAttr: No object matches name: locator4.curveAimAxis``."""
+    node = ""
     if target:
-        first = next((t for t in target.split(RS) if t), "")
-        if first:
-            return first
-    sel = cmds.ls(selection=True) or []
-    if sel:
-        return sel[0]
-    raise RuntimeError(
-        "%s: select (or name) the target node -- a compiled command has no "
-        "implicit 'self'." % cmd_name)
+        node = next((t for t in target.split(RS) if t), "")
+    if not node:
+        sel  = cmds.ls(selection=True) or []
+        node = sel[0] if sel else ""
+    if not node:
+        raise RuntimeError(
+            "%s: select (or name) the target node -- a compiled command has no "
+            "implicit 'self'." % cmd_name)
+    if not cmds.objExists(node):
+        raise RuntimeError("%s: no node named %r." % (cmd_name, node))
+    if not _is_target(node):
+        raise RuntimeError(
+            "%s: %r is a %s, not a %s -- pass the %s node as the command's first "
+            "argument, or select it." % (cmd_name, node, cmds.nodeType(node),
+                                         _NODE_TYPE, _NODE_TYPE))
+    return node
 
 
 def _tagged(result):

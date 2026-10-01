@@ -510,9 +510,11 @@ _DENY_NESTED = (("suggested", "type_id"), ("metadata", "type_id"))
 # (command_dispatch.command_payload_source), so a demo or test edit keeps the
 # key too. ``_PAYLOAD_FORMAT`` names that embedding; bump it when the embedded
 # module changes shape without the trimmed text changing.
+#   -2: an instance command checks that its target is a node of its own type
+#       (command_dispatch._resolve_target) -- 2026-09-29.
 _METHODS_KEY    = "methods"
 _PAYLOAD_KEY    = "methods_payload"
-_PAYLOAD_FORMAT = "commands-only-1"
+_PAYLOAD_FORMAT = "commands-only-2"
 
 
 def cache_dir() -> str:
