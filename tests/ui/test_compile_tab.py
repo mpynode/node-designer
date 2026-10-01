@@ -155,6 +155,35 @@ class TestEntryPoints(unittest.TestCase):
         self.assertEqual(w.dlg.calls, [])
 
 
+class _FakePanel:
+    def __init__(self):
+        self.seen = []
+
+    def setVisible(self, on):
+        pass
+
+    def raise_(self):
+        pass
+
+    def seed_compile_context(self, handoff):
+        self.seen.append(handoff)
+
+
+class TestFixWithAiHandOff(unittest.TestCase):
+
+    def test_a_hand_off_from_the_compile_tab_shows_the_workspace(self):
+        # The assistant lives on the Workspace page: seeding it while the
+        # Compile page is up fills a panel nobody can see.
+        from mpynode.ui.node_designer import NDMainWindow
+
+        w                   = mock.Mock()
+        w._assistant_panel  = _FakePanel()
+        w._reveal_assistant = lambda: NDMainWindow._reveal_assistant(w)
+        NDMainWindow._route_compile_handoff(w, {"node": "x"})
+        w._show_workspace_mode.assert_called_once_with()
+        self.assertEqual(w._assistant_panel.seen, [{"node": "x"}])
+
+
 # ---------------------------------------------------------------------------
 # The dialog, embedded
 # ---------------------------------------------------------------------------

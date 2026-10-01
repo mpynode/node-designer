@@ -1083,14 +1083,9 @@ class NDMainWindow(QMainWindow):
         ``auto_recompile`` preference used to send it unread; removed 2026-09:
         it never re-ran a compile, which is what its name and tooltip
         promised, and skipping the review bought nothing.)"""
-        panel = getattr(self, "_assistant_panel", None)
+        panel = self._reveal_assistant()
         if panel is None:
             return
-        try:
-            panel.setVisible(True)
-            panel.raise_()
-        except Exception:
-            pass
         try:
             panel.seed_compile_context(handoff)
         except Exception as exc:  # never let a hand-off crash the designer
@@ -1098,6 +1093,21 @@ class NDMainWindow(QMainWindow):
 
             sys.stderr.write("[node designer] compile hand-off failed: %s\n"
                              % exc)
+
+    def _reveal_assistant(self):
+        """Bring the assistant into view and return it, or None without one.
+        It lives on the Workspace page: a hand-off that starts on the Compile
+        page has to switch there, or it fills a panel nobody can see."""
+        panel = getattr(self, "_assistant_panel", None)
+        if panel is None:
+            return None
+        self._show_workspace_mode()
+        try:
+            panel.setVisible(True)
+            panel.raise_()
+        except Exception:
+            pass
+        return panel
 
     def _on_delete_node_requested(self, node_name: str, native_type: str) -> None:
         """Handler for the Scene tree's Delete-Node right-click.
