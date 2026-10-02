@@ -128,9 +128,10 @@ permutation reproduces that exactly where the plain `std::sort` in `nd::unique`
 would not. `return_inverse` / `return_counts` still reject.
 
 ### Rejected → AI porter (still pure C++)
-`np.linalg.solve`; deferred `argwhere`; any
-non-numeric I/O (matrix/string/hex/quaternion/float2/color, matrix arrays, raw
-mesh/nurbs handles). `np.linalg.svd` **without** tuple-unpack and `np.einsum`
+`np.linalg.solve`; deferred `argwhere`; I/O `nd_lower` cannot lift (`python`
+either way, a `string`/`hex` array output, geometry array inputs outside the
+plain `MPxNode` path, a geometry-output shape `lower_geo_io_compute` does not
+recognise). `np.linalg.svd` **without** tuple-unpack and `np.einsum`
 **without** an explicit `->` are rejected with a message pointing at the required
 form.
 
@@ -148,15 +149,21 @@ addition); `tobytes`/`tostring`, `dump`/`dumps`, `getfield`/`setfield`.
 
 | Family | Entry | Notes |
 |--------|-------|-------|
-| generic compute | `try_lower_compute` | scalar / 1-D array / vector / (N,3) vec-array I/O. |
+| generic compute | `try_lower_compute` | the I/O listed below; a geometry output routes to `lower_geo_io_compute`. |
 | geometry (mesh/curve/surface) | `try_lower_geo_compute` | fills the typed geo buffer; the flagship GoL mPyMesh lowers here. |
 | deformer | `try_lower_deform` | `getPoints`/`setPoints` in-place mutate idiom. |
 | transform | `try_lower_transform` | `asMatrix()` frame math. |
 | locator / iksolver | (assessed, SP-4d) | draw/solve idioms stay on the AI-porter path; no deterministic template yet. |
 
-Supported I/O (numeric only): scalar (`float/double/int/bool/enum/angle/time`),
-1-D array → `(N,)`, vector/euler → `(3,)`, vector-array → `(N,3)`. Anything else
-rejects with zero regression.
+Supported I/O, single and multi: numeric scalars
+(`float/double/long/bool/enum/doubleAngle/doubleLinear/time`) → scalar /
+`(N,)`; `double3`/`euler`/`position` and `color` → `(3,)` / `(N,3)`;
+`quaternion` → `(4,)` / `(N,4)`; `float2` → `(2,)` / `(N,2)`; `matrix` →
+`(4,4)` / `(N,4,4)`; `string`/`hex` → `std::string` / `std::vector<std::string>`
+(an output lowers only as a single value; `hex` decodes on read and encodes on
+write). A single geometry input binds through `_is_geo_input`; a geometry
+array input only on the plain `MPxNode` path. Anything else rejects to the
+porter with zero regression.
 
 ## Extending the transpiler
 

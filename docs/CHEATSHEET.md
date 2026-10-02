@@ -33,40 +33,67 @@ MPyNode.build(name="myNode", setup=True)  # create + seed methods + run setup()
 ## 2. Adding attributes
 
 ```python
-n.add_input_attr("amp", "float", min_value=0.0, max_value=10.0, default_value=1.0)
+n.add_input_attr("amp", "double", min_value=0.0, max_value=10.0, default_value=1.0)
 n.add_input_attr("mode", "enum", enum_names=["off", "add", "mult"])
-n.add_input_attr("points", "vector", is_array=True)
-n.add_input_attr("table", "double", is_array=True, packed=True)   # bulk data
-n.add_output_attr("result", "vector")
-n.add_output_attr("outs", "float", is_array=True)
+n.add_input_attr("points", "position", is_array=True)            # cm, like translate
+n.add_input_attr("table", "double", is_array=True, packed=True)  # bulk data
+n.add_output_attr("result", "double3")
+n.add_output_attr("outs", "double", is_array=True)
 ```
 
-### Every `attr_type` (19)
+### Every `attr_type` (21)
 
-| `attr_type` | Maya plug | `self.X` reads as | `is_array=True` reads as |
-|---|---|---|---|
-| `float` | `at="float"` | `float` | `ndarray (n,)` float64 |
-| `double` | `at="double"` | `float` | `ndarray (n,)` float64 |
-| `int` | `at="long"` | `int` | `ndarray (n,)` int64 |
-| `bool` | `at="bool"` | `bool` | `ndarray (n,)` bool |
-| `angle` | `at="doubleAngle"` | `float` (RADIANS) | `ndarray (n,)` float64 |
-| `time` | `at="time"` | `TimeFloat` = FRAME (`.fps`, `.asSeconds()`) | `ndarray (n,)` float64 |
-| `vector` | `at="double3"` | `ndarray (3,)` float64 | `ndarray (n, 3)` |
-| `euler` | `at="double3"` (doubleAngle kids) | `ndarray (3,)` RADIANS | `ndarray (n, 3)` |
-| `color` | `at="float3"`, `usedAsColor` | `ndarray (3,)` R/G/B | `ndarray (n, 3)` |
-| `quaternion` | `at="compound"` nc=4 | `ndarray (4,)` X/Y/Z/W | `ndarray (n, 4)` |
-| `float2` | `at="float2"` | `ndarray (2,)` float64 (U/V) | — |
-| `matrix` | `dt="matrix"` | `MatrixView`, numpy-transparent 4x4 | `MatrixArrayView` → `(n, 4, 4)` |
-| `string` | `dt="string"` | `str` | `list[str]` |
-| `enum` | `at="enum"` | `EnumInt` (int; `.name()` → label) | — |
-| `hex` | `dt="string"` | `str` (hex-decoded text) | — |
-| `python` | `dt="string"` | any unpickled object (trust-gated) | `list` |
-| `mesh` | `dt="mesh"` | `MFnMesh` or `None` | `list` |
-| `nurbsCurve` | `dt="nurbsCurve"` | `MFnNurbsCurve` or `None` | `list` |
-| `nurbsSurface` | `dt="nurbsSurface"` | `MFnNurbsSurface` or `None` | `list` |
+In `_common/attr_types.py` order, which is also the Add-Attribute dialog's.
 
-`—` = not specified in `docs/node_types/_input_type_contract.md`. The Add-Attribute
-dialog offers 17 of these; `double` and `float2` are API-only.
+| `attr_type` | Maya plug | `self.X` reads as | `is_array=True` reads as | Units |
+|---|---|---|---|---|
+| `double` | `at="double"` | `float` | `ndarray (n,)` float64 | — |
+| `float` | `at="float"` (32-bit) | `float` | `ndarray (n,)` float64 | — |
+| `long` | `at="long"` | `int` | `ndarray (n,)` int64 | — |
+| `bool` | `at="bool"` | `bool` | `ndarray (n,)` bool | — |
+| `doubleAngle` | `at="doubleAngle"` | `float` | `ndarray (n,)` float64 | RADIANS |
+| `doubleLinear` | `at="doubleLinear"` | `float` | `ndarray (n,)` float64 | CM |
+| `double3` | `at="double3"`, `double` kids X/Y/Z | `ndarray (3,)` float64 | `ndarray (n, 3)` | — |
+| `euler` | `at="double3"`, `doubleAngle` kids X/Y/Z | `ndarray (3,)` float64 | `ndarray (n, 3)` | RADIANS |
+| `position` | `at="double3"`, `doubleLinear` kids X/Y/Z | `ndarray (3,)` float64 | `ndarray (n, 3)` | CM |
+| `matrix` | `at="matrix"` | `MatrixView`, numpy-transparent 4x4; identity until set | `MatrixArrayView` → `(n, 4, 4)` | — (Maya's own matrices hold CM) |
+| `quaternion` | `at="double4"`, `double` kids X/Y/Z/W, W defaults to 1 | `ndarray (4,)` X/Y/Z/W; `[0,0,0,1]` until set | `ndarray (n, 4)` | — |
+| `color` | `at="float3"`, `usedAsColor`, `float` kids R/G/B | `ndarray (3,)` float64 R/G/B | `ndarray (n, 3)` | — |
+| `float2` | `at="float2"`, `float` kids U/V | `ndarray (2,)` float64 U/V | `ndarray (n, 2)` | — |
+| `string` | `dt="string"` | `str` | `list[str]` | — |
+| `enum` | `at="enum"` | `EnumInt` (int; `.name()` → label) | `ndarray (n,)` int64 | — |
+| `hex` | `dt="string"` | `str` (hex-decoded text) | `list[str]` | — |
+| `python` | `dt="string"` | any unpickled object (trust-gated) | `list` | — |
+| `mesh` | `dt="mesh"` | `Mesh` (any `MFnMesh` method) or `None` | `list` | — |
+| `nurbsCurve` | `dt="nurbsCurve"` | `NurbsCurve` (any `MFnNurbsCurve` method) or `None` | `list` | — |
+| `nurbsSurface` | `dt="nurbsSurface"` | `NurbsSurface` (any `MFnNurbsSurface` method) or `None` | `list` | — |
+| `time` | `at="time"` | `float`, the FRAME | `ndarray (n,)` float64 | UI time unit |
+
+mPyFile's Compute reads `float2` as a list and `hex` / `python` undecoded; see
+`docs/node_types/_input_type_contract.md`.
+
+The Add-Attribute dialog offers all 21 and pre-selects `double` until you pick
+another type; it then remembers the last pick for the session.
+
+**Which one.** `double` for a number; `float` only to match a 32-bit plug.
+`position` for anything wired to or from `translate`, or a point, when the
+value is in cm; a value computed from a unitless input (e.g. mPyConstraint's
+presets) stays `double3`. `euler` for `rotate`; `double3` for a unitless
+direction or scale. `doubleLinear` / `doubleAngle` for one channel of those.
+
+**Units.** The unit types are Maya's INTERNAL units whatever the scene's UI
+units: the code reads and writes CM and RADIANS. `min_value` / `max_value` /
+`default_value` on a `doubleLinear` / `doubleAngle` (and the dialog's Min /
+Max / Default for them, labelled `(cm)` / `(radians)`) are typed in them;
+`position` and `euler` take none. A `position` wires to `translate` with no
+`unitConversion` node; a `double3` wired in a non-cm scene gets one and reads
+UI units (one wired in a cm scene has none and keeps reading cm).
+
+**Retired names** are rejected, with the replacement named: `int` → `long`,
+`vector` → `double3` (or `position`), `angle` → `doubleAngle`, `double4` →
+`quaternion`, `float3` → `color`. v1 scenes map their old names on upgrade; a
+v2 scene or `.mpn` saved before the rename that stores an old name fails with
+the same error.
 
 ### `add_input_attr` kwargs
 
@@ -76,7 +103,7 @@ dialog offers 17 of these; `double` and `float2` are API-only.
 | `enum_names=[...]` | Required for `enum`; falls back to `['False','True']`. |
 | `min_value` / `max_value` / `default_value` | Scalar numerics; `default_value` also for `enum` (start index) and `bool`. |
 | `sparse=True` | Compact, connected-only read. Default `False` = DENSE read of length `max_logical+1`, gaps filled with the default, so `self.X[i]` == logical index `i`. |
-| `packed=True` | `double`/`int` arrays only: ONE typed-array plug. 655,928 values = 41.5 min as a multi vs 0.017 s packed. Excludes `sparse` and per-element connections; cannot be toggled later. |
+| `packed=True` | `double`/`long` arrays only: ONE typed-array plug. 655,928 values = 41.5 min as a multi vs 0.017 s packed. Excludes `sparse` and per-element connections; cannot be toggled later. |
 | `auto_connect_time=False` | Suppress the automatic `time1.outTime` connect on scalar `time` inputs. |
 
 Names: valid Python identifier, no dashes, no leading digit, not a keyword, not
@@ -143,13 +170,21 @@ self.product = np.asarray(self.offset) * float(self.amp)
 
 | Output type | Assign | Written as |
 |---|---|---|
-| `float` / `double` / `int` / `bool` | numeric | `float()` / `int()` / `bool()` |
-| `vector` / `euler` | `[x,y,z]`, tuple, or `(3,)` ndarray | `np.asarray(..., float64).flatten()` → double3 |
-| `color` | `[r,g,b]` | `set3Float` on the float3 |
-| `quaternion` | `[x,y,z,w]` | per-child `setDouble` |
-| `matrix` | `MMatrix`, `MTransformationMatrix`, flat-16, `(4,4)`, `(3,3)` | coerced to 4x4 |
-| `string` / `hex` | `str` | type-specific encoder |
-| `vector` array | list of `(3,)` items | array of double3 plugs |
+| `double` / `float` / `long` / `bool` / `enum` | numeric | `float()` / `int()` / `bool()` |
+| `doubleAngle` / `doubleLinear` | numeric, RADIANS / CM | `setDouble` |
+| `double3` / `euler` / `position` | `[x,y,z]`, tuple, or `(3,)` ndarray | `np.asarray(..., float64).flatten()` → `set3Double` |
+| `color` / `float2` | `[r,g,b]` / `[u,v]` | `set3Float` / `set2Float` |
+| `quaternion` | `[x,y,z,w]` | `set4Double` on the double4 |
+| `matrix` | `MMatrix`, `MTransformationMatrix`, flat-16, `(4,4)`, `(3,3)` | coerced to 4x4 → `setMMatrix` |
+| `time` | a frame | `MTime` in the UI time unit |
+| `string` / `hex` / `python` | `str` / `str` / any picklable | as-is / UTF-8 hex / pickle + base64 |
+| `double3` array | list of `(3,)` items | array of double3 plugs |
+
+These are the API 2.0 nodes' writes. The API 1.0 nodes write by plug kind:
+`hex` / `python` outputs get plain `str(value)`; on mPyDeformer /
+mPyBlendShape / mPySkinCluster a `time` output is taken as SECONDS; on
+mPyTransform / mPyIkSolver (`setAttr`) a `doubleAngle` / `euler` lands in UI
+units, unconverted. See `docs/node_types/_input_type_contract.md`.
 
 ## 5. Stored variables
 

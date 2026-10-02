@@ -16,7 +16,7 @@ Generic compute node. Define your own inputs + outputs + write Python.
 
 ## Example
 
-A generic `mPyNode` that multiplies two float inputs. We declare inputs `a`/`b` and output `c` through the wrapper, set a one-line Compute expression (inputs read as `self.a`/`self.b`, the output committed via `self.c =`), then drive the inputs and read back the computed result headless.
+A generic `mPyNode` that multiplies two double inputs. We declare inputs `a`/`b` and output `c` through the wrapper, set a one-line Compute expression (inputs read as `self.a`/`self.b`, the output committed via `self.c =`), then drive the inputs and read back the computed result headless.
 
 ```python
 import maya.cmds as mc
@@ -26,9 +26,9 @@ mc.file(new=True, force=True)
 
 # Generic compute node: c = a * b.
 node = MPyNode.create(name="multiply")
-node.add_input_attr("a", "float")
-node.add_input_attr("b", "float")
-node.add_output_attr("c", "float")
+node.add_input_attr("a", "double")
+node.add_input_attr("b", "double")
+node.add_output_attr("c", "double")
 # Inputs read as self.a / self.b; the output is committed via self.c.
 node.set_compute_expression("self.c = self.a * self.b")
 
@@ -46,7 +46,7 @@ print("mPyNode computed c =", result)
 
 ## Supported attribute types
 
-`float`, `double`, `int`, `bool`, `angle` (doubleAngle, radians), `vector` (double3), `euler` (double3 of doubleAngle children, radians), `matrix` (4×4), `string`, `enum` (requires `enum_names`), `time` (auto-connects to `time1.outTime`), `python` (pickled object), `hex` (hex-encoded string), `mesh`, `nurbsCurve`, `nurbsSurface` — 16 types total. All support `is_array=True` for multi plugs.
+`double` (the default), `float` (32-bit), `long`, `bool`, `doubleAngle` (radians), `doubleLinear` (a distance, cm), `double3` (no unit), `euler` (double3 of doubleAngle children, like rotate, radians), `position` (double3 of doubleLinear children, like translate, cm), `matrix` (4×4, `-at matrix`), `quaternion` (double4 X/Y/Z/W, W defaults to 1), `color` (float3 used as colour), `float2` (U/V), `string`, `enum` (requires `enum_names`), `hex` (hex-encoded string), `python` (pickled object), `mesh`, `nurbsCurve`, `nurbsSurface`, `time` (auto-connects to `time1.outTime`) — 21 types total, in the Add Attribute dialog's order. All support `is_array=True` for multi plugs. The unit types read and write Maya's internal units (radians, cm) whatever the scene's UI units. Retired names (`int`, `vector`, `angle`, `double4`, `float3`) are rejected with the replacement named; v1 scenes map them on upgrade, but a v2 scene or `.mpn` saved before the rename that stores one fails with the same error. The full value contract is in [`_input_type_contract.md`](_input_type_contract.md).
 
 ---
 

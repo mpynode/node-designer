@@ -31,7 +31,7 @@ MTypeId: `0x0013571D`.
 
 | `self.X` | Type | Access | Notes |
 |---|---|---|---|
-| `self.time` | `TimeFloat` | read | Current frame. Time is **opt-in** — manually connect `time1.outTime` → `<node>._timeIn` (or `add_input_attr("t", "time")` and read `self.t`) to re-evaluate per frame; otherwise the curve is static. Carries the scene fps: `self.time.fps` / `self.time.asSeconds()`. |
+| `self.time` | `TimeFloat` | read | Current frame. Time is **opt-in** — manually connect `time1.outTime` → `<node>._timeIn` (or `add_input_attr("t", "time")` and read `self.t`, a plain float frame) to re-evaluate per frame; otherwise the curve is static. Carries the scene fps: `self.time.fps` / `self.time.asSeconds()`. |
 | `self.cvs` | `np.ndarray(N, 3)` float64 | write | **REQUIRED** CV positions. Must be `(N, 3)`; needs at least `degree + 1` CVs or an empty curve ships. |
 | `self.knots` | `np.ndarray(K,)` float64 or `None` | write | Optional knot vector; default uniform. If the count doesn't match Maya's rule (`N + degree − 1` open/closed, `N + 2·degree − 1` periodic) it is rebuilt uniform. |
 | `self.degree` | `int` | write | One of `{1, 2, 3, 5, 7}`; default `3`. Anything else falls back to `3`. |

@@ -31,7 +31,7 @@ MTypeId: `0x0013571E`.
 
 | `self.X` | Type | Access | Notes |
 |---|---|---|---|
-| `self.time` | `TimeFloat` | read | Current frame. Time is **opt-in** — connect `time1.outTime` → `<node>._timeIn` (or `add_input_attr("t", "time")` and read `self.t`) to re-evaluate per frame; otherwise the surface is static. Carries the scene fps. |
+| `self.time` | `TimeFloat` | read | Current frame. Time is **opt-in** — connect `time1.outTime` → `<node>._timeIn` (or `add_input_attr("t", "time")` and read `self.t`, a plain float frame) to re-evaluate per frame; otherwise the surface is static. Carries the scene fps. |
 | `self.cvs` | `np.ndarray(num_cvs_u, num_cvs_v, 3)` **or** `(num_cvs_u·num_cvs_v, 3)` | write | **REQUIRED** CV grid. Preferred form is the 3-D grid — the bridge derives `num_cvs_u`/`num_cvs_v` from its shape. The flat 2-D form requires `self.num_cvs_u` + `self.num_cvs_v` (row-major, matching `grid.reshape(u·v, 3)`). |
 | `self.num_cvs_u` / `self.num_cvs_v` | `int` | write | CV counts per direction. **Required only for the flat `(N, 3)` form**; ignored when `cvs` is a 3-D grid. `num_cvs_u·num_cvs_v` must equal the row count. |
 | `self.knots_u` / `self.knots_v` | `np.ndarray(K,)` float64 or `None` | write | Optional per-direction knot vectors; default uniform. Mismatched counts are rebuilt uniform. |

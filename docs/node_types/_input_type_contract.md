@@ -16,12 +16,14 @@ Because attributes are accessed through `self`, attribute names must be valid
 Python identifiers and must not be Python keywords. Names that shadow a
 builtin (e.g. `min`, `type`) are fine — `self.min` is unambiguous.
 
-**Numpy rule:** vector / euler / array inputs come through as
-`numpy.ndarray`. A matrix input comes through as a `MatrixView`, which is
-numpy-transparent (`np.asarray(m)` → `(4, 4)`, `m @ x`, `m.shape`,
-indexing) and also offers `.asNumpy()` / `.translation()` / `.rotation()` /
-`.scale()` / `.asMatrix()`. Scalars (`float`, `int`, `bool`, `str`) stay
-Python primitives.
+**Numpy rule:** double3 / euler / position / color / float2 / quaternion
+inputs and numeric array inputs come through as `numpy.ndarray`. A matrix
+input comes through as a `MatrixView`, which is numpy-transparent
+(`np.asarray(m)` → `(4, 4)`, `m @ x`, `m.shape`, indexing) and also offers
+`.asNumpy()` / `.translation()` / `.rotation()` / `.scale()` /
+`.asMatrix()`; a matrix array as a `MatrixArrayView` (`np.asarray` →
+`(n, 4, 4)`). String / hex / python / geometry arrays are Python lists.
+Scalars (`float`, `int`, `bool`, `str`) stay Python primitives.
 
 ## Modules in the namespace
 
@@ -39,31 +41,41 @@ User-added inputs only. Each is read as `self.<name>`:
 
 | Attr type | Value type |
 |---|---|
-| `float` / `double` | `float` |
-| `int` | `int` |
+| `double` / `float` | `float` |
+| `long` | `int` |
 | `bool` | `bool` |
-| `angle` | `float` (radians) |
-| `vector` | `numpy.ndarray (3,)` float64 |
+| `doubleAngle` | `float` (radians) |
+| `doubleLinear` | `float` (cm) |
+| `double3` | `numpy.ndarray (3,)` float64 (no unit) |
 | `euler` | `numpy.ndarray (3,)` float64 (radians) |
+| `position` | `numpy.ndarray (3,)` float64 (cm) |
+| `matrix` | `MatrixView` (numpy-transparent → `(4, 4)`; `.asNumpy()` / `.translation()` / …; identity until set) |
+| `quaternion` | `numpy.ndarray (4,)` float64 (X/Y/Z/W; W defaults to 1, so `[0, 0, 0, 1]` until set) |
 | `color` | `numpy.ndarray (3,)` float64 (R/G/B; `usedAsColor`) |
-| `quaternion` | `numpy.ndarray (4,)` float64 (X/Y/Z/W; default identity `[0, 0, 0, 1]`) |
-| `matrix` | `MatrixView` (numpy-transparent → `(4, 4)`; `.asNumpy()` / `.translation()` / …) |
+| `float2` | `numpy.ndarray (2,)` float64 (U/V) |
 | `string` | `str` |
 | `enum` | `int` (an `EnumInt`; `.name()` gives the field label) |
-| `time` | `float` (a `TimeFloat`, current FRAME; `.fps` / `.asSeconds()`) |
-| `python` | arbitrary unpickled object (trust-gated; `None` in an untrusted scene) |
 | `hex` | `str` (hex-decoded text) |
-| `mesh` / `nurbsCurve` / `nurbsSurface` | `MFnMesh` / `MFnNurbsCurve` / `MFnNurbsSurface` (or `None` if unconnected) |
+| `python` | arbitrary unpickled object (trust-gated; `None` in an untrusted scene) |
+| `mesh` / `nurbsCurve` / `nurbsSurface` | `Mesh` / `NurbsCurve` / `NurbsSurface`, which pass any `MFnMesh` / `MFnNurbsCurve` / `MFnNurbsSurface` method through (or `None` if unconnected) |
+| `time` | `float` (the current frame, in the UI time unit) |
+
+The unit types read Maya's internal units whatever the scene's UI units:
+radians for `doubleAngle` / `euler`, centimetres for `doubleLinear` /
+`position` (at linear unit m, a `translate` of 1.5 reads 150.0 through a
+`position`). A `double3` has no unit: wired from `translate` in a non-cm
+scene, Maya puts a `unitConversion` node in front of it and it reads UI units.
 
 **Array inputs (`is_array=True`):**
 
 | Element type | Array value |
 |---|---|
-| numeric scalar (`float`/`double`/`int`/`bool`/`angle`/`time`) | `numpy.ndarray (n,)` of the matching dtype (float64 / int64 / bool) |
-| `vector` / `euler` / `color` | `numpy.ndarray (n, 3)` float64 |
+| numeric scalar (`double`/`float`/`long`/`bool`/`enum`/`doubleAngle`/`doubleLinear`/`time`) | `numpy.ndarray (n,)` of the matching dtype (float64 / int64 / bool) |
+| `double3` / `euler` / `position` / `color` | `numpy.ndarray (n, 3)` float64 |
+| `float2` | `numpy.ndarray (n, 2)` float64 |
 | `quaternion` | `numpy.ndarray (n, 4)` float64 |
 | `matrix` | `MatrixArrayView` (`np.asarray` → `(n, 4, 4)`) |
-| `string` / `python` / `mesh` / `nurbsCurve` / `nurbsSurface` | Python `list` |
+| `string` / `hex` / `python` / `mesh` / `nurbsCurve` / `nurbsSurface` | Python `list` |
 
 Stored variables are accessible via `self.<name>` (e.g. `self.cached_table`),
 like every other plug. Their type is whatever the user assigned, preserved
@@ -77,17 +89,31 @@ preset inputs reachable via `self.X`:
 
 | Name | Type | Source |
 |---|---|---|
-| `self.targetTranslate` | `numpy.ndarray (3,)` | preset plug |
-| `self.targetRotate` | `numpy.ndarray (3,)` | preset plug — raw double3; units follow the connected source (a `transform.rotate` connection delivers radians, not degrees) |
-| `self.targetWeight` | `float` | preset plug |
-| `self.restTranslate` | `numpy.ndarray (3,)` | preset plug |
-| `self.restRotate` | `numpy.ndarray (3,)` | preset plug — raw double3 (see `targetRotate`) |
+| `self.targetTranslate` | `numpy.ndarray (3,)` | preset plug — a raw Maya `float3`, no unit; a `transform.translate` connection made in a non-cm scene goes through a `unitConversion` node and delivers the UI linear unit |
+| `self.targetRotate` | `numpy.ndarray (3,)` | preset plug — a raw Maya `float3`, no unit; a `transform.rotate` connection goes through a `unitConversion` node and delivers the UI angle unit (degrees by default), not radians |
+| `self.targetWeight` | `float` | preset plug (a `float`, default `1.0`) |
+| `self.restTranslate` | `numpy.ndarray (3,)` | preset plug — a raw Maya `float3` (see `targetTranslate`) |
+| `self.restRotate` | `numpy.ndarray (3,)` | preset plug — a raw Maya `float3` (see `targetRotate`) |
+
+The presets are 32-bit plugs; they still read as float64 arrays.
 
 ```python
 # Weighted blend between target and rest — numpy makes this a one-liner.
 constrained_pos = self.targetTranslate * self.targetWeight \
                   + self.restTranslate * (1 - self.targetWeight)
 ```
+
+### mPyFile
+
+User-added inputs follow the mPyNode tables, except in the **Compute** tab.
+Compute reads them off the datablock (safe on the Hypershade swatch / Arnold
+worker thread), and three types arrive differently there:
+
+| Attr type | In mPyFile's Compute |
+|---|---|
+| `float2` | Python `list` `[u, v]`; an array is a list of `[u, v]` lists |
+| `hex` | the stored hex string (`"48 69"`), not decoded |
+| `python` | the stored base64 string, not unpickled |
 
 ### mPyIkSolver
 
@@ -137,20 +163,45 @@ How an output write is coerced depends on the output's type:
 
 | Output type | What you assign | How it's written |
 |---|---|---|
-| `float` / `double` | numeric | `float()` on the plug |
-| `int` | numeric | `int()` |
-| `bool` | bool/numeric | `bool()` |
-| `vector` / `euler` | `[x, y, z]` (list, tuple, OR numpy `(3,)`) | `np.asarray(..., dtype=float64).flatten()` → double3 plug |
+| `double` / `float` | numeric | `float()` → `setDouble` / `setFloat` |
+| `long` / `enum` | numeric | `int()` → `setInt` |
+| `bool` | bool/numeric | `bool()` → `setBool` |
+| `doubleAngle` / `doubleLinear` | numeric, in radians / cm | `float()` → `setDouble` |
+| `double3` / `euler` / `position` | `[x, y, z]` (list, tuple, OR numpy `(3,)`); radians for `euler`, cm for `position` | `set3Double` on the double3 plug |
 | `color` | `[r, g, b]` (list, tuple, OR numpy `(3,)`) | `set3Float` on the float3 (R/G/B) plug |
-| `quaternion` | `[x, y, z, w]` (list, tuple, OR numpy `(4,)`) | per-child `setDouble` on the 4-double compound |
-| `matrix` | `MMatrix` / `MTransformationMatrix` / flat-16 / `(4, 4)` / `(3, 3)` | `_coerce_to_4x4_numpy()` → matrix plug |
-| `string` / `hex` | str | type-specific encoder |
-| `vector` array | list/array of `(3,)` items | array of double3 plugs |
+| `float2` | `[u, v]` (list, tuple, OR numpy `(2,)`) | `set2Float` on the float2 (U/V) plug |
+| `quaternion` | `[x, y, z, w]` (list, tuple, OR numpy `(4,)`) | `set4Double` on the numeric double4 |
+| `matrix` | `MMatrix` / `MTransformationMatrix` / flat-16 / `(4, 4)` / `(3, 3)` | `_coerce_to_4x4_numpy()` → `setMMatrix` on the `-at matrix` plug |
+| `time` | a frame | `setMTime` in the UI time unit |
+| `string` / `hex` / `python` | str / str / any picklable | `setString` of the text / its UTF-8 hex / its pickle in base64 |
+| `mesh` / `nurbsCurve` / `nurbsSurface` | a `Mesh` / `NurbsCurve` / `NurbsSurface`, an arrays bucket, or an `MFn*Data` MObject | `setMObject` |
+| `double3` array | list/array of `(3,)` items | array of double3 plugs |
 
-Only **vector/euler** outputs use the
-`np.asarray(..., dtype=float64).flatten()` path; scalars use
-`float()`/`int()`/`bool()`, matrices use `_coerce_to_4x4_numpy()`, and
-string/hex/python/time use their own type-specific encoders.
+The numeric compounds (`double3` / `euler` / `position` / `color` / `float2` /
+`quaternion`) flatten what you assign with
+`np.asarray(..., dtype=float64).flatten()` and zero-pad a short value before
+the one `set<N><Type>` call; scalars use `float()`/`int()`/`bool()`, matrices
+use `_coerce_to_4x4_numpy()`, and string/hex/python/time use their own
+type-specific encoders.
+
+A scene saved before 2026-10 can carry a typed `-dt matrix` plug or a generic
+4-child compound quaternion. Both still read; their writes take
+`setMObject(MFnMatrixData)` and per-child `setDouble`, picked from the plug's
+real kind (the wrong matrix call crashes Maya).
+
+These are the writes on the API 2.0 nodes (mPyNode, mPyConstraint, mPyFile,
+mPyMesh, mPyNurbsCurve, mPyNurbsSurface). The API 1.0 nodes pick the call
+from the plug's kind, not the attr type, so a `hex` or `python` output gets
+plain `str(value)`, with no hex encoding and no pickle. Beyond that:
+
+* mPyDeformer, mPyBlendShape and mPySkinCluster write through the datablock.
+  A `time` output is taken as SECONDS there: `10.0` at 30 fps lands as frame
+  300.
+* mPyTransform and mPyIkSolver write through `setAttr`. A `time` output is a
+  frame in the UI time unit, and a `doubleLinear` / `position` value is
+  converted from cm. A `doubleAngle` / `euler` value is NOT converted from
+  radians: it lands in the UI angle unit, so `math.pi / 2` reads back as
+  1.5708°, not 90°.
 
 ## Why this matters
 

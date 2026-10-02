@@ -14,7 +14,7 @@ The general-purpose node. A plain `MPxNode` (API 2.0) whose `compute()` runs the
 * `self.<input>` for each declared input. Scalars are Python primitives, vectors and arrays are numpy, a matrix is a numpy-transparent `MatrixView` with `.asNumpy()`, `.translation()`, `.rotation()` and the rest of the `MTransformationMatrix` surface.
 * `self.<output> = value` is the only write that reaches a plug. Any other `self.x = ...` becomes a stored variable.
 * No module is injected. Import `numpy`, `math` or `maya.cmds` in the expression or in Init.
-* A `time` input auto-connects to `time1.outTime` and reads as a `TimeFloat` with `.fps` and `.asSeconds()`.
+* A `time` input auto-connects to `time1.outTime` and reads as a float: the current frame, in the UI time unit. The built-in `self.time` of `mPyMesh`, `mPyNurbsCurve`, `mPyNurbsSurface`, `mPyFile` and `mPyLocator` is the one that is a `TimeFloat`, with `.fps` and `.asSeconds()`.
 
 ## Creating one
 
@@ -25,7 +25,7 @@ The general-purpose node. A plain `MPxNode` (API 2.0) whose `compute()` runs the
 ## Common to all node types
 
 * **Three code tiers.** Init runs once per file open and its names are bare globals in Compute; Compute runs on every dependency-graph pull; Methods is an isolated namespace for `@maya_command`, `@maya_demo` and `@maya_test` defs.
-* **Runtime attributes.** `add_input_attr` / `add_output_attr` with 19 wire types, any of them an array, plus `sparse`, `packed`, `enum_names`, min / max / default values. Dirty propagation for these is synthesised for you.
+* **Runtime attributes.** `add_input_attr` / `add_output_attr` with 21 wire types, any of them an array, plus `sparse`, `packed`, `enum_names`, min / max / default values. Dirty propagation for these is synthesised for you.
 * **Stored variables.** A bare `self.x = ...` in Init or Compute becomes a variable; persistent ones save with the scene, temporary ones live for the session.
 * **Instrumentation.** The Log, Watch and Profile tabs read the `watch_enabled`, `profile_enabled` and `deep_profile_enabled` plugs.
 * **Round trips.** Export the node as `.mpn` (everything, variable values included), bake it to a `.py` class, or fill in the Metadata tab (authors, version) the gallery shows.

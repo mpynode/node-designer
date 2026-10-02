@@ -23,11 +23,11 @@ workaround.
 
 | `self.X` | Type | Access | Notes |
 |---|---|---|---|
-| `self.targetTranslate` | `(3,) float64` numpy | read | Preset vector input (`double3`). |
-| `self.targetRotate` | `(3,) float64` numpy | read | Preset vector input (`double3`). Plain doubles, **not** an angle attr — a connection from a transform's `.rotate` delivers Maya's internal angular unit (radians); use `np.degrees(...)` if you want degrees. |
-| `self.targetWeight` | `float` | read | Preset scalar input, default `1.0`. |
-| `self.restTranslate` | `(3,) float64` numpy | read | Preset vector input (`double3`). |
-| `self.restRotate` | `(3,) float64` numpy | read | Preset vector input (`double3`); same angular-unit caveat as `targetRotate`. |
+| `self.targetTranslate` | `(3,) float64` numpy | read | Preset vector input (a Maya `float3` plug, no unit): wired from `.translate` in a non-cm scene it reads the UI linear unit (a `unitConversion` node sits between them); wired in a cm scene it reads cm. |
+| `self.targetRotate` | `(3,) float64` numpy | read | Preset vector input (a Maya `float3` plug). Plain floats, **not** an angle attr — a connection from a transform's `.rotate` goes through a `unitConversion` node and delivers the scene's UI angle unit (degrees by default); use `np.radians(...)` if you want radians. |
+| `self.targetWeight` | `float` | read | Preset scalar input (`float`), default `1.0`. |
+| `self.restTranslate` | `(3,) float64` numpy | read | Preset vector input (a Maya `float3` plug); same linear-unit caveat as `targetTranslate`. |
+| `self.restRotate` | `(3,) float64` numpy | read | Preset vector input (a Maya `float3` plug); same angular-unit caveat as `targetRotate`. |
 | user input attrs | per type | read | Anything added with `add_input_attr(...)` is readable as `self.<name>`. See [`_input_type_contract.md`](_input_type_contract.md). |
 | user output attrs | per type | write | Anything added with `add_output_attr(...)`; assign `self.out = ...` to drive it. |
 | user storage | any | read/write | `self.foo = ...` for arbitrary per-node Python state persisted across evaluations. |
@@ -102,7 +102,7 @@ the parent `MPyNode` dirty logic.
 
 ## Example
 
-Point-constrain one cube to another: the constraint reads its preset `targetTranslate` input and writes it back out through a user-added `constrained_pos` vector output, which drives the driven cube's `translate`. After moving the source, forcing evaluation shows the driven cube following exactly.
+Point-constrain one cube to another: the constraint reads its preset `targetTranslate` input and writes it back out through a user-added `constrained_pos` double3 output, which drives the driven cube's `translate`. After moving the source, forcing evaluation shows the driven cube following exactly. The output is a `double3`, not a `position`, because it carries the preset's unitless value: wired in a metre scene, `targetTranslate` reads metres, and a `position` output would write them as centimetres.
 
 ```python
 import maya.cmds as mc
@@ -114,10 +114,10 @@ mc.file(new=True, force=True)
 src = mc.polyCube(name="srcCube")[0]
 dst = mc.polyCube(name="drivenCube")[0]
 
-# Build the constraint, add a vector output, and write targetTranslate to it.
+# Build the constraint, add a double3 output, and write targetTranslate to it.
 c    = MPyConstraint.create(name="myConstraint")
 node = c.get_name()
-c.add_output_attr("constrained_pos", "vector")
+c.add_output_attr("constrained_pos", "double3")
 c.set_compute_expression("self.constrained_pos = self.targetTranslate")
 
 # Wire: src.translate -> constraint -> dst.translate.

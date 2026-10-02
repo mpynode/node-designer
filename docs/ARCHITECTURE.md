@@ -13,7 +13,7 @@ into a distributable C++ Maya plug-in whose compute contains **no Python**.
 
 ```text
  ┌──────────────────────┐   INTERPRETED NODE: a live Maya node. Attributes declared
- │ _initSource          │   at RUNTIME (19 wire types); compute() is a Python string
+ │ _initSource          │   at RUNTIME (21 wire types); compute() is a Python string
  │ _computeSource       │   on a plug. DG callbacks synthesise the attributeAffects
  │ _methodsSource       │   Maya cannot declare for runtime attrs
  │ _storedVarsData      │   (_common/plugs/auto_dirty.py).
@@ -181,13 +181,28 @@ and from `ls` for free, which is exactly the coexist contract — the hidden
 sibling drives downstream while the Python node stays the visible source of
 truth.
 
-Attribute surface: 19 wire types (`_mpy_node.py :: _ADD_ATTR_KIND`, exposed as
-`VALID_INPUT_TYPES`), any of them arrayable. The Add-Attribute dialog offers 17
-(`add_attr.py :: _ATTR_TYPE_GROUPS` -> `ALL_ATTR_TYPES`); **two are omitted, not
-one**: `double` deliberately and with a comment (redundant with `float` — both
-come back from `read_plug_value` as a Python float), and `float2`, which is in
-no group. Both still resolve through `_ADD_ATTR_KIND`, so old scenes, `.mpn`
-files and the programmatic `add_attr(...)` keep accepting them.
+Attribute surface: 21 wire types, any of them arrayable, declared once in
+`_common/attr_types.py :: ATTR_TYPES`. Every list of them derives from that
+table: the wrapper's `cmds.addAttr` kwargs and accepted names
+(`_mpy_node.py :: _ADD_ATTR_KIND`, exposed as `VALID_INPUT_TYPES`), the
+Add-Attribute dialog's groups (`add_attr.py :: _ATTR_TYPE_GROUPS` ->
+`ALL_ATTR_TYPES`) and the assistant's tool enum and prompt lists. The dialog
+offers all 21 in table order and pre-selects `double` (`DIALOG_DEFAULT`),
+Maya's own "Float", until a type is picked; after that it pre-selects the last
+type picked that session (`add_attr.py :: _LAST_SELECTED_TYPE`).
+
+A stored name is Maya's attribute type when that alone describes the plug
+(`double`, `float`, `long`, `bool`, `doubleAngle`, `doubleLinear`, `double3`,
+`matrix`, `float2`, ...). `euler` and `position` (double3 of doubleAngle /
+doubleLinear children), `color` (float3 + `usedAsColor`), `hex` and `python`
+(strings with an encoding) are our words, because Maya tells them apart only
+by child type or a flag, or has no type for them; `quaternion` is our word for
+Maya's numeric `double4`. The unit types read and write Maya's internal units
+(radians, cm) whatever the scene's UI units, so a `position` wires to
+`translate` with no `unitConversion` node. Retired names (`int`, `vector`,
+`angle`, `double4`, `float3`) are rejected, never aliased; `RETIRED` maps each
+to its replacement for the error, and for the v1 scene upgrade, the one reader
+allowed to map them.
 
 ## 5. The compile pipeline in detail
 

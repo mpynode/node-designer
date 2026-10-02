@@ -73,6 +73,25 @@ macOS) -- the version is the folder, never part of the file name. The tree it
 writes rebuilds with its own `build/build.bat` / `build.sh`, which need only a
 compiler and Maya.
 
+## Data migrations
+
+```bash
+python tools/migrate_attr_names.py            # dry run: what would change, per file and per name
+python tools/migrate_attr_names.py --apply    # rewrite in place
+```
+
+`migrate_attr_names.py` renames the retired `attr_type` names (`int` ->
+`long`, `vector` -> `double3`, `angle` -> `doubleAngle`) in the repo's own
+data: every git-tracked `template.mpn`, `.ma` scene, template build manifest,
+spec fixture and generated `verify_in_maya.py`. Each rewrite is a token
+replacement, re-parsed and checked so the type value is the only change. Plain
+Python 3, no Maya.
+
+Repo-only: it never touches a scene or `.mpn` outside the repo. One of those
+that still stores an old name is rejected with the replacement named; v1
+scenes map their old names on upgrade. Idempotent: a dry run after `--apply`
+reports 0.
+
 ## Attended probes and gates
 
 Run by hand when investigating the thing they name; none is wired into a script.

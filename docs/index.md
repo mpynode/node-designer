@@ -166,7 +166,7 @@ import maya.cmds as mc
 
 t = MPyTransform.create(name="myBobber")
 # Add a time input and wire time1.outTime so the matrix re-evaluates each frame.
-t.add_input_attr("time", "float")
+t.add_input_attr("time", "double")
 mc.connectAttr("time1.outTime", t.get_name() + ".time", force=True)
 t.set_compute_expression("""
 import numpy as np
@@ -246,33 +246,76 @@ d.list_valid_input_types()  # list of supported attr_type strings
 
 ### Supported `attr_type` values
 
-18 types total. All support `is_array=True` for multi plugs.
+21 types total, declared once in `_common/attr_types.py`. All support
+`is_array=True` for multi plugs. The Add Attribute dialog offers all 21, in
+this order, and pre-selects `double` until you pick another type; it then
+remembers the last pick for the session.
 
-| `attr_type` | Python value the expression sees |
-|---|---|
-| `"double"` / `"float"` | `float` |
-| `"int"` | `int` |
-| `"bool"` | `bool` |
-| `"angle"` | `float` (radians) |
-| `"vector"` / `"euler"` | `np.ndarray(3,)` float64 (`euler` is radians) |
-| `"color"` | `np.ndarray(3,)` float64 (R/G/B; `usedAsColor`, binds to shader color plugs) |
-| `"quaternion"` | `np.ndarray(4,)` float64 (X/Y/Z/W; default identity `[0, 0, 0, 1]`) |
-| `"matrix"` | `MatrixView` — numpy-transparent → `(4, 4)`; `np.asarray(m)`, `m @ x`, `.asNumpy()` / `.translation()` / … |
-| `"string"` | `str` |
-| `"enum"` | `int` (`EnumInt`; `.name()` gives the field label) |
-| `"time"` | `float` (`TimeFloat`, current FRAME; `.fps` / `.asSeconds()`) |
-| `"python"` | arbitrary unpickled object (trust-gated; `None` in an untrusted scene) |
-| `"hex"` | `str` (hex-decoded text) |
-| `"mesh"` / `"nurbsCurve"` / `"nurbsSurface"` | `MFnMesh` / `MFnNurbsCurve` / `MFnNurbsSurface` (or `None` if unconnected) |
+| `attr_type` | Maya plug | Python value the expression sees |
+|---|---|---|
+| `"double"` | `double` (the default; Maya's own "Float") | `float` |
+| `"float"` | `float` (32-bit) | `float` |
+| `"long"` | `long` | `int` |
+| `"bool"` | `bool` | `bool` |
+| `"doubleAngle"` | `doubleAngle` | `float` (radians) |
+| `"doubleLinear"` | `doubleLinear` (a distance, like `translateX`) | `float` (cm) |
+| `"double3"` | `double3` of `double` | `np.ndarray(3,)` float64 (no unit) |
+| `"euler"` | `double3` of `doubleAngle`, like `rotate` | `np.ndarray(3,)` float64 (radians) |
+| `"position"` | `double3` of `doubleLinear`, like `translate` | `np.ndarray(3,)` float64 (cm) |
+| `"matrix"` | `matrix` (`-at`) | `MatrixView` — numpy-transparent → `(4, 4)`; `np.asarray(m)`, `m @ x`, `.asNumpy()` / `.translation()` / …; identity until set |
+| `"quaternion"` | `double4`, children X/Y/Z/W | `np.ndarray(4,)` float64 (X/Y/Z/W; W defaults to 1, so `[0, 0, 0, 1]` until set) |
+| `"color"` | `float3`, `usedAsColor` | `np.ndarray(3,)` float64 (R/G/B; binds to shader color plugs) |
+| `"float2"` | `float2`, children U/V | `np.ndarray(2,)` float64 (U/V) |
+| `"string"` | `string` | `str` |
+| `"enum"` | `enum` | `int` (`EnumInt`; `.name()` gives the field label) |
+| `"hex"` | `string` | `str` (hex-decoded text) |
+| `"python"` | `string` | arbitrary unpickled object (trust-gated; `None` in an untrusted scene) |
+| `"mesh"` / `"nurbsCurve"` / `"nurbsSurface"` | the typed geometry plug | `Mesh` / `NurbsCurve` / `NurbsSurface`, which pass any `MFnMesh` / `MFnNurbsCurve` / `MFnNurbsSurface` method through (or `None` if unconnected) |
+| `"time"` | `time` | `float` (the current frame, in the UI time unit) |
 
 `is_array=True` produces a Maya multi-plug:
-* Numeric / vector / color / quaternion / matrix multis arrive as a stacked
-  `np.ndarray` (e.g. matrix multi → `(n, 4, 4)`, vector/color multi → `(n, 3)`,
-  quaternion multi → `(n, 4)`).
-* String / python / geometry multis arrive as a `list`.
+* Numeric / 3-vector / color / float2 / quaternion multis arrive as a stacked
+  `np.ndarray` (double3 / euler / position / color multi → `(n, 3)`; float2
+  multi → `(n, 2)`; quaternion multi → `(n, 4)`).
+* A matrix multi arrives as a `MatrixArrayView`, numpy-transparent
+  (`np.asarray` → `(n, 4, 4)`).
+* String / hex / python / geometry multis arrive as a `list`.
 
 See [`node_types/_input_type_contract.md`](node_types/_input_type_contract.md)
-for the complete attr-type → value contract.
+for the complete attr-type → value contract, including the two places it
+bends: mPyFile's Compute reads `float2` as a list and `hex` / `python`
+undecoded, and the API 1.0 nodes write `hex` / `python` / `time` (and, on
+mPyTransform / mPyIkSolver, `doubleAngle` / `euler`) outputs differently.
+
+### Which type to pick
+
+* `double` for a number. `float` only to match a 32-bit plug; it reads as a
+  Python `float` either way.
+* `position` for anything wired to or from `translate`, or any point, when
+  the value is in cm; `doubleLinear` for one translate channel. A value
+  computed from a unitless input (e.g. mPyConstraint's presets) stays
+  `double3`.
+* `euler` for `rotate`; `doubleAngle` for one rotate channel.
+* `double3` for a unitless 3-vector: a direction, a scale.
+
+The unit types use Maya's internal units whatever the scene's UI units:
+`doubleAngle` / `euler` in radians, `doubleLinear` / `position` in
+centimetres. The expression reads and writes those units. `min_value` /
+`max_value` / `default_value` on a `doubleAngle` / `doubleLinear` are typed in
+them too, and the Add Attribute dialog labels its Min / Max / Default fields
+for those two `(radians)` / `(cm)`; `euler` and `position` take none. At
+linear unit m, a `translate` of 1.5 reads 150.0 through a `position`, with no
+`unitConversion` node between them. A `double3` wired from the same
+`translate` in that scene gets a `unitConversion` node and reads 1.5; one
+wired while the scene was still cm has none and keeps reading 150.0.
+
+### Retired type names
+
+`int`, `vector`, `angle`, `double4` and `float3` are rejected, never aliased;
+the error names the replacement: `long`, `double3` (or `position` for a
+distance), `doubleAngle`, `quaternion`, `color`. v1 scenes map their old names
+on upgrade. A v2 scene or `.mpn` saved before the rename that stores an old
+name fails with the same error.
 
 ### How the expression sees them
 
@@ -666,7 +709,7 @@ from mpynode import MPyTransform
 import maya.cmds as mc
 
 t = MPyTransform.create(name="myBobber")
-t.add_input_attr("time", "float")
+t.add_input_attr("time", "double")
 mc.connectAttr("time1.outTime", t.get_name() + ".time", force=True)  # time is opt-in
 t.set_compute_expression("""
 import numpy as np

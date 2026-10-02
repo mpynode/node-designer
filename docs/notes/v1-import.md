@@ -100,17 +100,23 @@ Three things worth knowing before writing any code:
 
 ## What converts mechanically
 
-**Attribute types need no mapping at all.** v1's 15 types are a strict subset
-of v2's 19:
+**Attribute types map by name, one table.** v1's 15 types are a subset of the
+old v2 names; three have since been renamed to Maya's, and v2 rejects the old
+spellings:
 
 ```
 v1: int float bool enum vector matrix color time angle euler
     string mesh nurbsCurve nurbsSurface python
-v2: the same 15, plus double float2 hex quaternion
+v2: long float bool enum double3 matrix color time doubleAngle euler
+    string mesh nurbsCurve nurbsSurface python
+    plus double doubleLinear position quaternion float2 hex (21)
 ```
 
-So `_inputAttrs` and `_outputAttrs` feed `add_input_attr` / `add_output_attr`
-directly, name and type unchanged. Stored variables likewise: `_storedVarsData`
+The map is `attr_types.RETIRED` (`int` -> `long`, `vector` -> `double3`,
+`angle` -> `doubleAngle`), applied by `attr_types.upgrade_legacy_name` on the
+way in; it is the only place a retired name is still read. So `_inputAttrs`
+and `_outputAttrs` feed `add_input_attr` / `add_output_attr` directly, names
+unchanged and types mapped. Stored variables likewise: `_storedVarsData`
 is already `{name: value}`, which is what `set_variable(name, value,
 persistent=True)` wants.
 
@@ -358,9 +364,9 @@ can fire on something that merely looks like a plug:
   `X.asTransformationMatrix()` **only** when `X` is `self.<n>` or
   `self.<n>[...]` and `<n>` is declared `matrix`. A helper that returns a real
   `MMatrix` keeps its constructor.
-* A write to a `vector` / `color` / `euler` plug is wrapped in a `_v1_vec3`
-  shim injected into Init, unless the right-hand side is already a 3-element
-  display.
+* A write to a `double3` (v1's `vector`) / `color` / `euler` plug is wrapped
+  in a `_v1_vec3` shim injected into Init, unless the right-hand side is
+  already a 3-element display.
 
 The shim rather than a table of api return types, because the spine wrote
 `p0 + t0 * n` — MPoint-valued with nothing on the line to infer it from, and
