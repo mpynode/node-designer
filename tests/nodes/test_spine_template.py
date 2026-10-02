@@ -338,5 +338,148 @@ class TestWeights(unittest.TestCase):
         self.assertFalse(hasattr(out, "outputWeights"))
 
 
+def _maya_default_kv(c, d, per):
+    """Maya's own knots for a uniform curve (what curveInfo.knots gives)."""
+    if per:
+        return [float(v) for v in range(-d + 1, c + d)]
+    S = c - d
+    return [0.0] * (d - 1) + [float(v) for v in range(S + 1)] + [float(S)] * (d - 1)
+
+
+def _reference_points(P, kv, d, per, x=None, n=200001):
+    """Points of the B-spline with Maya-form knots ``kv`` at parameters ``x``
+    (default: ``n`` across the domain), by de Boor's algorithm written here,
+    independent of the template's helpers."""
+    P = np.asarray(P, dtype=np.float64)
+    if per:
+        P = np.concatenate([P, P[:d]])
+    t = np.concatenate([[kv[0] - 1.0], kv, [kv[-1] + 1.0]])  # unread end knots
+    m = P.shape[0]
+    if x is None:
+        x = np.linspace(t[d], t[m], n)
+    x = np.asarray(x, dtype=np.float64)
+    s = np.clip(np.searchsorted(t, x, side="right") - 1, d, m - 1)
+    Q = np.stack([P[s - d + j] for j in range(d + 1)], axis=1)
+    for r in range(1, d + 1):
+        for j in range(d, r - 1, -1):
+            i       = s - d + j
+            a       = (x - t[i]) / (t[i + d + 1 - r] - t[i])
+            Q[:, j] = (1.0 - a)[:, None] * Q[:, j - 1] + a[:, None] * Q[:, j]
+    return Q[:, d]
+
+
+def _distance_to_polyline(p, line):
+    a  = line[:-1]
+    b  = line[1:]
+    ab = b - a
+    w  = np.clip(np.einsum("ij,ij->i", p - a, ab) / np.einsum("ij,ij->i", ab, ab), 0.0, 1.0)
+    return float(np.min(np.linalg.norm(a + w[:, None] * ab - p, axis=1)))
+
+
+class TestKnots(unittest.TestCase):
+    """openKv / closedKv: Maya's knot convention (c + d - 1 open, c + 2d - 1
+    closed); a vector that does not fit the curve falls back to the default."""
+
+    _OUTS = ("outputTranslate", "outputRotate", "outputScale", "currentLength",
+             "outputWeights")
+
+    def _same(self, a, b):
+        for o in self._OUTS:
+            np.testing.assert_array_equal(np.asarray(getattr(a, o)), np.asarray(getattr(b, o)),
+                                          err_msg=o)
+
+    def test_maya_default_knots_change_nothing(self):
+        us = np.linspace(-0.2, 1.2, 15)
+        for per in (False, True):
+            for d in (1, 2, 3, 4):
+                key  = "closedKv" if per else "openKv"
+                kw   = dict(samples=us, degree=d, periodic=per, computeWeights=True)
+                base = run(_points(_ZIGZAG), **kw)
+                kv   = run(_points(_ZIGZAG), **dict(kw, **{key: _maya_default_kv(5, d, per)}))
+                with self.subTest(periodic=per, degree=d):
+                    self._same(base, kv)
+
+    def test_unfit_knots_fall_back_to_the_default(self):
+        us = np.linspace(0.0, 1.0, 9)
+        bad_open = {
+            "too short":            [0, 0, 0, 1, 2, 2],
+            "too long":             [0, 0, 0, 1, 2, 2, 2, 2],
+            "decreasing":           [0, 0, 0, 1.5, 1.0, 2, 2],
+            "not finite":           [0, 0, 0, float("nan"), 2, 2, 2],
+            "infinite":             [0, 0, 0, 1, 2, 2, float("inf")],
+            "zero range":           [1, 1, 1, 1, 1, 1, 1],
+            "ends not pinned":      [0, 1, 2, 3, 4, 5, 6],
+            "repeated d + 1 times": [0, 0, 0, 0, 2, 2, 2],
+        }
+        bad_closed = {
+            "too short":            _maya_default_kv(5, 3, True)[:-1],
+            "spacing not periodic": [-2, -1, 0, 1, 2.5, 3, 4, 5, 6, 7],
+            "decreasing":           [-2, -1, 0, 1, 0.5, 3, 4, 5, 6, 7],
+        }
+        for per, cases in ((False, bad_open), (True, bad_closed)):
+            base = run(_points(_ZIGZAG), samples=us, periodic=per, computeWeights=True)
+            for label, kv in cases.items():
+                key = "closedKv" if per else "openKv"
+                out = run(_points(_ZIGZAG), samples=us, periodic=per, computeWeights=True,
+                          **{key: kv})
+                with self.subTest(periodic=per, case=label):
+                    self._same(base, out)
+
+    def test_the_other_mode_knots_are_ignored(self):
+        us = np.linspace(0.0, 1.0, 9)
+        for per, key, kv in ((False, "closedKv", [-2, -1, 0, 0.4, 2, 3, 4, 5, 5.4, 7]),
+                             (True, "openKv", [0, 0, 0, 0.3, 2, 2, 2])):
+            base = run(_points(_ZIGZAG), samples=us, periodic=per, computeWeights=True)
+            out = run(_points(_ZIGZAG), samples=us, periodic=per, computeWeights=True,
+                      **{key: kv})
+            with self.subTest(periodic=per):
+                self._same(base, out)
+
+    def test_uneven_knots_put_the_riders_on_that_curve(self):
+        """Riders on the reference curve with the same knots, and still
+        spread by arc length (the arc table follows the knot spans)."""
+        P = np.asarray(_ZIGZAG)
+        for per, kv in ((False, [0, 0, 0, 0.3, 2, 2, 2]),
+                        (True, [0.0, 1.0, 1.4, 3.0, 4.0, 6.0, 7.0, 7.4, 9.0, 10.0])):
+            key  = "closedKv" if per else "openKv"
+            line = _reference_points(P, kv, 3, per)
+            out = run(_points(_ZIGZAG), samples=np.linspace(0.0, 1.0, 41), periodic=per,
+                      computeWeights=True, **{key: kv})
+            base = run(_points(_ZIGZAG), samples=np.linspace(0.0, 1.0, 41), periodic=per)
+            with self.subTest(periodic=per):
+                far = max(_distance_to_polyline(p, line) for p in out.outputTranslate)
+                self.assertLess(far, 1e-6)
+                self.assertGreater(float(np.abs(out.outputTranslate - base.outputTranslate).max()),
+                                   0.05)
+                W = np.asarray(out.outputWeights).reshape(-1, 5)
+                np.testing.assert_allclose(W @ P, out.outputTranslate, atol=1e-9)
+                length = float(np.linalg.norm(np.diff(line, axis=0), axis=1).sum())
+                self.assertAlmostEqual(out.currentLength / length, 1.0, delta=1e-7)
+        n = 4001
+        out = run(_points(_ZIGZAG), samples=np.linspace(0.0, 1.0, n),
+                  openKv=[0, 0, 0, 0.3, 2, 2, 2])
+        chords = np.linalg.norm(np.diff(out.outputTranslate, axis=0), axis=1)
+        self.assertLess((chords.max() - chords.min()) / chords.mean(), 1e-5)
+        np.testing.assert_allclose(out.outputTranslate[0], _ZIGZAG[0], atol=1e-9)
+        np.testing.assert_allclose(out.outputTranslate[-1], _ZIGZAG[-1], atol=1e-9)
+
+    def test_closed_uneven_knots_register_u0_on_control_0(self):
+        """u = 0 sits on control 0's Greville point (the mean of its d inner
+        knots), as with the default knots."""
+        P   = np.asarray(_ZIGZAG)
+        kv  = [0.0, 1.0, 1.4, 3.0, 4.0, 6.0, 7.0, 7.4, 9.0, 10.0]
+        out = run(_points(_ZIGZAG), samples=[0.0], degree=3, periodic=True, closedKv=kv)
+        g   = (kv[0] + kv[1] + kv[2]) / 3.0 + 6.0  # + one period
+        np.testing.assert_allclose(out.outputTranslate[0],
+                                   _reference_points(P, kv, 3, True, x=[g])[0], atol=1e-9)
+
+    def test_knots_may_be_scaled_and_shifted(self):
+        us = np.linspace(0.0, 1.0, 9)
+        kv = [0, 0, 0, 0.3, 2, 2, 2]
+        a  = run(_points(_ZIGZAG), samples=us, openKv=kv)
+        b  = run(_points(_ZIGZAG), samples=us, openKv=[7.0 + 2.5 * v for v in kv])
+        np.testing.assert_allclose(a.outputTranslate, b.outputTranslate, atol=1e-9)
+
+
 if __name__ == "__main__":
     unittest.main()

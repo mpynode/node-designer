@@ -56,6 +56,11 @@ class TestSpineLowering(unittest.TestCase):
         self.assertNotIn("MFnNurbsCurve", self.cpp)
         self.assertNotIn("inputCurve", self.cpp)
 
+    def test_knot_vector_inputs_are_double_multis(self):
+        for name in ("openKv", "closedKv"):
+            self.assertIn('nAttr.create("%s", "%s", MFnNumericData::kDouble, 0.0);'
+                          % (name, name), self.cpp)
+
     def test_companion_commands_registered(self):
         for cmd in ("spineBuildSystem", "spineResetRest", "spineSetDrivers"):
             self.assertIn('plugin.registerCommand("%s"' % cmd, self.cpp)
