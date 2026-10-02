@@ -36,13 +36,13 @@ import mpynode
 
 def sample_val(t):
     if t == "bool": return random.choice([0, 1])
-    if t == "int": return random.randint(-3, 3)
-    if t == "vector": return [random.uniform(-2, 2) for _ in range(3)]
+    if t == "long": return random.randint(-3, 3)
+    if t == "double3": return [random.uniform(-2, 2) for _ in range(3)]
     return random.uniform(-2, 2)
 
 
 def set_val(node, attr, t, v):
-    if t == "vector":
+    if t == "double3":
         cmds.setAttr(node + "." + attr, v[0], v[1], v[2], type="double3")
     else:
         cmds.setAttr(node + "." + attr, v)

@@ -19,12 +19,11 @@ from typing import Any
 
 import maya.cmds as mc
 
-# Curated subset of the wrapper type map the assistant may create.
-_ATTR_TYPES = [
-    "float", "int", "bool", "vector", "quaternion", "color", "euler", "matrix",
-    "string", "hex", "python", "angle", "enum", "time",
-    "mesh", "nurbsCurve", "nurbsSurface",
-]
+from mpynode._common.attr_types import ASSISTANT_NAMES
+
+# The types the assistant may create: the Add Attribute dialog's list, in the
+# same order (``double`` first), from the one type table.
+_ATTR_TYPES = list(ASSISTANT_NAMES)
 
 # Reusable attribute / variable item schemas for the batched ``define_node``.
 _CAMEL = ("camelCase, lowercase first letter (e.g. noiseAmount, driverMatrix); "
@@ -156,11 +155,11 @@ TOOL_SCHEMAS: list[dict] = [
                 "compute": {"type": "string",
                             "description": "Compute expression source. Inputs read "
                                            "via self.<name> are already the right "
-                                           "type (float/int/bool/str, vector->np "
+                                           "type (float/int/bool/str, double3->np "
                                            "(3,), matrix->MatrixView) -- do NOT "
                                            "recast: no float()/int()/str() on "
                                            "scalars, no np.asarray()/np.array()/"
-                                           ".reshape(-1)/.astype() on vector/array "
+                                           ".reshape(-1)/.astype() on double3/array "
                                            "reads, and no float()/int() around a "
                                            "numpy scalar used only in math -- "
                                            "np.linalg.norm/np.dot/np.clip/np.sin/... "
@@ -272,7 +271,7 @@ TOOL_SCHEMAS: list[dict] = [
         "name":        "set_compute_expression",
         "description": "Replace the node's Compute expression (the per-frame "
                        "body). Inputs read via self.<name> are ALREADY native "
-                       "Python (float/int/bool/str; vector->numpy (3,); "
+                       "Python (float/int/bool/str; double3->numpy (3,); "
                        "matrix->MatrixView) -- do NOT recast with "
                        "float()/int()/str(), and do NOT wrap a numpy scalar "
                        "(np.linalg.norm/np.dot/np.clip/np.sin/...) in "

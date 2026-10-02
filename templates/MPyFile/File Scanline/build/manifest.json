@@ -68,7 +68,7 @@
         },
         "inputs": {
           "bands": {
-            "type": "int",
+            "type": "long",
             "is_array": false,
             "portable": true,
             "cpp": {

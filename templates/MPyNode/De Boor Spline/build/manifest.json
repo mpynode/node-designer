@@ -67,7 +67,7 @@
         },
         "inputs": {
           "cv": {
-            "type": "vector",
+            "type": "double3",
             "is_array": true,
             "portable": true,
             "cpp": {
@@ -80,7 +80,7 @@
             }
           },
           "degree": {
-            "type": "int",
+            "type": "long",
             "is_array": false,
             "portable": true,
             "cpp": {
@@ -96,7 +96,7 @@
         },
         "outputs": {
           "samples": {
-            "type": "vector",
+            "type": "double3",
             "is_array": true,
             "portable": true,
             "cpp": {

@@ -103,7 +103,7 @@ createNode mPyFile -n "proceduralTex";
 	addAttr -ci true -h true -sn "_initSource" -ln "_initSource" -dt "string";
 	setAttr "._computeSource" -type "string" "u = self.uIn\nv = self.vIn\ns = self.kScale\nr = 0.5 + 0.5 * math.sin(u * s)\ng = 0.5 + 0.5 * math.sin(v * s)\nb = 0.5 + 0.5 * math.sin((u + v) * s)\nself.outRGB = (r, g, b)\nself.outVal = (r + g + b) / 3.0\n";
 	setAttr "._inputAttrs" -type "string" "{\"kScale\":{\"attr_type\":\"float\",\"is_array\":false},\"uIn\":{\"attr_type\":\"float\",\"is_array\":false},\"vIn\":{\"attr_type\":\"float\",\"is_array\":false}}";
-	setAttr "._outputAttrs" -type "string" "{\"outRGB\":{\"attr_type\":\"vector\",\"is_array\":false},\"outVal\":{\"attr_type\":\"float\",\"is_array\":false}}";
+	setAttr "._outputAttrs" -type "string" "{\"outRGB\":{\"attr_type\":\"double3\",\"is_array\":false},\"outVal\":{\"attr_type\":\"float\",\"is_array\":false}}";
 	setAttr -k on ".uIn" 0.30000001192092896;
 	setAttr -k on ".vIn" 0.69999998807907104;
 	setAttr -k on ".kScale" 4;

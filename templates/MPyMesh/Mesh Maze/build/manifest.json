@@ -80,7 +80,7 @@
             }
           },
           "start": {
-            "type": "int",
+            "type": "long",
             "is_array": false,
             "portable": true,
             "cpp": {
@@ -94,7 +94,7 @@
             "default_value": 0
           },
           "end": {
-            "type": "int",
+            "type": "long",
             "is_array": false,
             "portable": true,
             "cpp": {
@@ -108,7 +108,7 @@
             "default_value": -1
           },
           "seed": {
-            "type": "int",
+            "type": "long",
             "is_array": false,
             "portable": true,
             "cpp": {
@@ -183,7 +183,7 @@
             "default_value": false
           },
           "solutionStep": {
-            "type": "int",
+            "type": "long",
             "is_array": false,
             "portable": true,
             "cpp": {
@@ -236,7 +236,7 @@
         },
         "outputs": {
           "solutionSteps": {
-            "type": "int",
+            "type": "long",
             "is_array": false,
             "portable": true,
             "cpp": {

@@ -39,7 +39,7 @@ PACKED_INCLUDES = [
 # differ. Mirrors _api2/helpers.py::_PACKED_DATA_KIND / _PACKED_FN.
 _PACKED_DATA = {
     "double": ("kDoubleArray", "MFnDoubleArrayData", "MDoubleArray"),
-    "int":    ("kIntArray", "MFnIntArrayData", "MIntArray"),
+    "long":   ("kIntArray", "MFnIntArrayData", "MIntArray"),
 }
 
 def _ident(name: str) -> str:
@@ -159,17 +159,17 @@ def _create_lines(m):
         ]
         L += _flags("tAttr", is_out, keyable=False)
         return L
-    if t in ("float", "double", "int", "bool"):
-        data = {"float": "kFloat", "double": "kDouble", "int": "kInt",
+    if t in ("float", "double", "long", "bool"):
+        data = {"float": "kFloat", "double": "kDouble", "long": "kInt",
                 "bool": "kBoolean"}[t]
         dflt = {"float": _num_default(meta, float, "0.0"),
                 "double": _num_default(meta, float, "0.0"),
-                "int":    _num_default(meta, int, "0"),
+                "long":   _num_default(meta, int, "0"),
                 "bool": _bool_default(meta)}[t]
         L.append("    %s = nAttr.create(%s, %s, MFnNumericData::%s, %s);"
                   % (mem, a, a, data, dflt))
         L += _flags("nAttr", is_out)
-    elif t == "vector":
+    elif t == "double3":
         # Build the 3 children explicitly so they're named <plug>X/Y/Z
         # (matching the Python wrapper) instead of Maya's default <plug>0/1/2.
         cx, cy, cz = mem + "X", mem + "Y", mem + "Z"
@@ -183,7 +183,7 @@ def _create_lines(m):
         # Like vector (double3 X/Y/Z) but the children are doubleAngle
         # (MFnUnitAttribute kAngle), matching the Python wrapper's euler and
         # Maya's own rotate. The parent stays numeric, so reads/writes and flags
-        # go through nAttr like vector; values flow as radians.
+        # go through nAttr like double3; values flow as radians.
         cx, cy, cz = mem + "X", mem + "Y", mem + "Z"
         for cm, ax in ((cx, "X"), (cy, "Y"), (cz, "Z")):
             L.append('    MObject %s = uAttr.create("%s%s", "%s%s", '
@@ -193,7 +193,7 @@ def _create_lines(m):
         L += _flags("nAttr", is_out)
     elif t == "quaternion":
         # Generic compound of 4 doubles X/Y/Z/W (W default 1.0 = identity).
-        # There is no numeric double4, so unlike vector/euler this is an
+        # There is no numeric double4, so unlike double3/euler this is an
         # MFnCompoundAttribute read/written via child handles (see _read_line /
         # _out_handle_default).
         cx, cy, cz, cw = mem + "X", mem + "Y", mem + "Z", mem + "W"
@@ -245,18 +245,19 @@ def _create_lines(m):
             L.append("    nAttr.setDefault(%s);"
                      % ", ".join("%rf" % c for c in _cdv))
         L += _flags("nAttr", is_out)
-    elif t in ("angle", "time"):
-        unit = "kAngle" if t == "angle" else "kTime"
-        # angle: the recorded default is honoured, in RADIANS, on both sides --
-        # the MFnUnitAttribute default is internal units here, and the
-        # interpreted node's `cmds.addAttr -dv` on a doubleAngle is radians
-        # too (0.5 -> 28.648 deg measured on both, 2026-09-14). time: the
+    elif t in ("doubleAngle", "time"):
+        unit = "kAngle" if t == "doubleAngle" else "kTime"
+        # doubleAngle: the recorded default is honoured, in RADIANS, on both
+        # sides -- the MFnUnitAttribute default is internal units here, and the
+        # interpreted node's `cmds.addAttr -dv` on a doubleAngle is radians too
+        # (0.5 -> 28.648 deg measured on both, 2026-09-14). time: the
         # interpreted node passes NO default for a time attr (add_input_attr
-        # forwards default_value for float/double/int/angle only, and a scalar
-        # time plug is auto-connected to time1 anyway), so a recorded time
-        # default is ignored here as well -- honouring it read 2.0 where the
-        # Python node read 0.0. No shipped template records one; byte-identical.
-        dflt = _num_default(meta, float, "0.0") if t == "angle" else "0.0"
+        # forwards default_value for float/double/long/doubleAngle only, and a
+        # scalar time plug is auto-connected to time1 anyway), so a recorded
+        # time default is ignored here as well -- honouring it read 2.0 where
+        # the Python node read 0.0. No shipped template records one;
+        # byte-identical.
+        dflt = _num_default(meta, float, "0.0") if t == "doubleAngle" else "0.0"
         L.append("    %s = uAttr.create(%s, %s, MFnUnitAttribute::%s, %s);"
                   % (mem, a, a, unit, dflt))
         L += _flags("uAttr", is_out)
@@ -313,12 +314,12 @@ def _create_lines(m):
 def _fn_for(t):
     # euler's parent compound, float2 and color all go through nAttr (euler's
     # children are angles, but the compound + array/flag calls are numeric).
-    if t in ("float", "double", "int", "bool", "vector", "euler",
+    if t in ("float", "double", "long", "bool", "double3", "euler",
              "float2", "color"):
         return "nAttr"
     if t == "quaternion":
         return "cAttr"
-    if t in ("angle", "time"):
+    if t in ("doubleAngle", "time"):
         return "uAttr"
     if t == "matrix":
         return "mAttr"
@@ -372,14 +373,14 @@ def _read_line(m, src="data"):
             "    MFnNurbsSurface %s(%s_obj);" % (v, v),
         ])
     rd = {
-        "float": "asFloat", "double": "asDouble", "int": "asInt", "bool": "asBool",
+        "float": "asFloat", "double": "asDouble", "long": "asInt", "bool": "asBool",
         "enum": "asShort", "matrix": "asMatrix", "string": "asString",
     }
     if t in rd:
-        ctype = {"float": "float", "double": "double", "int": "int", "bool": "bool",
+        ctype = {"float": "float", "double": "double", "long": "int", "bool": "bool",
                  "enum": "short", "matrix": "MMatrix", "string": "MString"}[t]
         return "    const %s %s = %s.inputValue(%s).%s();" % (ctype, v, src, mem, rd[t])
-    if t in ("vector", "euler"):
+    if t in ("double3", "euler"):
         # euler reads identically to vector: asDouble3() on an angle compound
         # returns Maya's internal radians (matching .asAngle().asRadians()).
         return "    const double3& %s = %s.inputValue(%s).asDouble3();" % (v, src, mem)
@@ -403,7 +404,7 @@ def _read_line(m, src="data"):
             "        %s[3] = _qh.child(_qf.child(3)).asDouble();" % v,
             "    }",
         ])
-    if t == "angle":
+    if t == "doubleAngle":
         return "    const double %s = %s.inputValue(%s).asAngle().asRadians();" % (v, src, mem)
     if t == "time":
         return "    const double %s = %s.inputValue(%s).asTime().value();" % (v, src, mem)
@@ -418,12 +419,12 @@ def _read_plug_decl(m):
     inside a plug-valid guard while the local stays visible + defaulted when the
     read is deferred (scene load). Local SHAPES match _read_line exactly, so
     nd_lower._materialise_input binds either path identically. Scalar (non-array)
-    leaf / numeric-compound / matrix / string / angle / time types."""
+    leaf / numeric-compound / matrix / string / doubleAngle / time types."""
     mem, t = m["member"], m["meta"]["type"]
     v = "in_" + mem
-    if t in ("float", "double", "angle", "time"):
+    if t in ("float", "double", "doubleAngle", "time"):
         return "    double %s = 0.0;" % v       # angle radians / time value
-    if t == "int":
+    if t == "long":
         return "    int %s = 0;" % v
     if t == "bool":
         return "    bool %s = false;" % v
@@ -431,7 +432,7 @@ def _read_plug_decl(m):
         return "    short %s = 0;" % v
     if t in ("string", "hex"):
         return "    MString %s;" % v
-    if t in ("vector", "euler"):
+    if t in ("double3", "euler"):
         return "    double %s[3] = {0.0, 0.0, 0.0};" % v
     if t == "color":
         return "    float %s[3] = {0.0f, 0.0f, 0.0f};" % v
@@ -447,25 +448,25 @@ def _read_plug_assign(m, plug_expr):
     """Assign ``in_<member>`` from an MPlug ``plug_expr`` (the findPlug read).
 
     Mirrors _read_line's per-type accessors, but off a plug: scalar leaf types
-    via MPlug::asX(); numeric compounds (vector/euler/color/float2/quaternion)
+    via MPlug::asX(); numeric compounds (double3/euler/color/float2/quaternion)
     via child(i).asDouble()/asFloat() (no asDouble3 on a plug); matrix via
-    getValue + MFnMatrixData; angle/time via asMAngle()/asMTime(). Indent-2
-    (goes inside a ``if (_st) { ... }`` plug-valid guard)."""
+    getValue + MFnMatrixData; doubleAngle/time via asMAngle()/asMTime().
+    Indent-2 (goes inside a ``if (_st) { ... }`` plug-valid guard)."""
     mem, t = m["member"], m["meta"]["type"]
     v = "in_" + mem
     p = plug_expr
-    acc = {"float": "asFloat", "double": "asDouble", "int": "asInt",
+    acc = {"float": "asFloat", "double": "asDouble", "long": "asInt",
            "bool": "asBool", "enum": "asShort", "string": "asString"}
     if t in acc:
         return "        %s = %s.%s();" % (v, p, acc[t])
     if t == "hex":
         # stored space-separated hex -> plain text (mirrors _read_line's hex).
         return "        %s = nd_hex_decode(%s.asString());" % (v, p)
-    if t == "angle":
+    if t == "doubleAngle":
         return "        %s = %s.asMAngle().asRadians();" % (v, p)
     if t == "time":
         return "        %s = %s.asMTime().value();" % (v, p)
-    if t in ("vector", "euler"):
+    if t in ("double3", "euler"):
         return ("        %s[0] = %s.child(0).asDouble(); "
                 "%s[1] = %s.child(1).asDouble(); "
                 "%s[2] = %s.child(2).asDouble();"
@@ -510,7 +511,7 @@ def _elem_plug_read_expr(t, p):
     is a statement) -- _read_plug_array_assign special-cases it."""
     if t == "hex":
         return "nd_hex_decode(%s.asString())" % p
-    if t in ("vector", "euler"):
+    if t in ("double3", "euler"):
         return ("MVector(%s.child(0).asDouble(), %s.child(1).asDouble(), "
                 "%s.child(2).asDouble())" % (p, p, p))
     if t == "color":
@@ -526,8 +527,8 @@ def _elem_plug_read_expr(t, p):
                 % (p, p, p, p))
     return {
         "float": "%s.asFloat()", "double": "%s.asDouble()",
-        "int": "%s.asInt()", "bool": "%s.asBool()", "enum": "%s.asShort()",
-        "string": "%s.asString()", "angle": "%s.asMAngle().asRadians()",
+        "long": "%s.asInt()", "bool": "%s.asBool()", "enum": "%s.asShort()",
+        "string": "%s.asString()", "doubleAngle": "%s.asMAngle().asRadians()",
         "time": "%s.asMTime().value()",
     }[t] % p
 
@@ -618,7 +619,7 @@ def findplug_family_extras(generics):
     for t, hdr in (("color", "maya/MFloatVector.h"),
                    ("float2", "maya/MFloatVector.h"),
                    ("quaternion", "maya/MQuaternion.h"),
-                   ("vector", "maya/MVector.h"), ("euler", "maya/MVector.h"),
+                   ("double3", "maya/MVector.h"), ("euler", "maya/MVector.h"),
                    ("matrix", "maya/MFnMatrixData.h"),
                    ("string", "maya/MString.h"), ("hex", "maya/MString.h")):
         if t in arr_types:
@@ -775,15 +776,15 @@ def _image_read_hint_lines(ins):
 
 _OUT_DEFAULT = {
     "float": "%s.setFloat(0.0f);", "double": "%s.setDouble(0.0);",
-    "int": "%s.setInt(0);",
+    "long": "%s.setInt(0);",
     "bool": "%s.setBool(false);", "enum": "%s.setShort(0);",
     "matrix": "%s.setMMatrix(MMatrix());",
     "string": '%s.setString("");', "hex": '%s.setString("");',
-    "angle": "%s.setMAngle(MAngle(0.0));", "time": "%s.setMTime(MTime(0.0));",
-    "vector": "%s.set3Double(0.0, 0.0, 0.0);",
-    "euler":  "%s.set3Double(0.0, 0.0, 0.0);",
-    "float2": "%s.set2Float(0.0f, 0.0f);",
-    "color":  "%s.set3Float(0.0f, 0.0f, 0.0f);",
+    "doubleAngle": "%s.setMAngle(MAngle(0.0));", "time": "%s.setMTime(MTime(0.0));",
+    "double3": "%s.set3Double(0.0, 0.0, 0.0);",
+    "euler":   "%s.set3Double(0.0, 0.0, 0.0);",
+    "float2":  "%s.set2Float(0.0f, 0.0f);",
+    "color":   "%s.set3Float(0.0f, 0.0f, 0.0f);",
 }
 
 def _out_handle_default(m):
@@ -821,16 +822,16 @@ def _setter_hint(m):
     mem, t = m["member"], m["meta"]["type"]
     call = {
         "float": "h_%s.setFloat(<float>)", "double": "h_%s.setDouble(<double>)",
-        "int": "h_%s.setInt(<int>)",
+        "long": "h_%s.setInt(<int>)",
         "bool": "h_%s.setBool(<bool>)", "enum": "h_%s.setShort(<short>)",
         "matrix": "h_%s.setMMatrix(<MMatrix>)",
         "string": "h_%s.setString(<MString>)", "hex": "h_%s.setString(<MString>)",
-        "angle":  "h_%s.setMAngle(MAngle(<radians>))",
-        "time":   "h_%s.setMTime(MTime(<seconds>))",
-        "vector": "h_%s.set3Double(<x>, <y>, <z>)",
-        "euler":  "h_%s.set3Double(<rx>, <ry>, <rz>)  // radians",
-        "float2": "h_%s.set2Float(<u>, <v>)",
-        "color":  "h_%s.set3Float(<r>, <g>, <b>)  // 0..1 linear color",
+        "doubleAngle": "h_%s.setMAngle(MAngle(<radians>))",
+        "time":        "h_%s.setMTime(MTime(<seconds>))",
+        "double3":     "h_%s.set3Double(<x>, <y>, <z>)",
+        "euler":       "h_%s.set3Double(<rx>, <ry>, <rz>)  // radians",
+        "float2":      "h_%s.set2Float(<u>, <v>)",
+        "color":       "h_%s.set3Float(<r>, <g>, <b>)  // 0..1 linear color",
         "quaternion": ("MFnCompoundAttribute qf(<member>); "
                        "h_%s.child(qf.child(0..3)).setDouble(<x>,<y>,<z>,<w>)"),
     }[t]
@@ -860,11 +861,11 @@ def _elem_read_expr(t):
                 "eh.child(_qf.child(3)).asDouble())")
     return {
         "float": "eh.asFloat()", "double": "eh.asDouble()",
-        "int": "eh.asInt()", "bool": "eh.asBool()",
+        "long": "eh.asInt()", "bool": "eh.asBool()",
         "enum": "eh.asShort()", "matrix": "eh.asMatrix()",
-        "angle": "eh.asAngle().asRadians()", "time": "eh.asTime().value()",
-        "vector": "MVector(eh.asDouble3())",
-        "euler":  "MVector(eh.asDouble3())",
+        "doubleAngle": "eh.asAngle().asRadians()", "time": "eh.asTime().value()",
+        "double3": "MVector(eh.asDouble3())",
+        "euler":   "MVector(eh.asDouble3())",
     }[t]
 
 def _elem_set_stmt(t, val):
@@ -873,11 +874,11 @@ def _elem_set_stmt(t, val):
     `hex` re-encodes the plain-text buffer to space-separated hex on write
     (mirrors the single-hex finalize). `quaternion` writes its 4 compound
     children via `_qf` (declared by the array write loop for quaternion)."""
-    if t in ("vector", "euler"):
+    if t in ("double3", "euler"):
         return "eh.set3Double((%s).x, (%s).y, (%s).z);" % (val, val, val)
     if t == "matrix":
         return "eh.setMMatrix(%s);" % val
-    if t == "angle":
+    if t == "doubleAngle":
         return "eh.setMAngle(MAngle(%s));" % val
     if t == "time":
         return "eh.setMTime(MTime(%s));" % val
@@ -897,19 +898,19 @@ def _elem_set_stmt(t, val):
             "eh.child(_qf.child(%d)).setDouble((%s).%s);" % (i, val, ax)
             for i, ax in enumerate("xyzw")))
     return {"float": "eh.setFloat(%s);", "double": "eh.setDouble(%s);",
-            "int": "eh.setInt(%s);",
+            "long": "eh.setInt(%s);",
             "bool": "eh.setBool(%s);"}[t] % val
 
 def _array_gap_default_cpp(meta):
     """C++ literal for a dense-array gap slot, mirroring
-    ``_api2.helpers.array_gap_default`` (matrix=identity, vector/euler=zero,
+    ``_api2.helpers.array_gap_default`` (matrix=identity, double3/euler=zero,
     numeric=the addAttr default value)."""
     t = meta["type"]
     if t == "matrix":
         return "MMatrix()"
-    if t in ("vector", "euler"):
+    if t in ("double3", "euler"):
         return "MVector()"
-    if t == "int":
+    if t == "long":
         return _num_default(meta, int, "0")
     if t == "bool":
         return _bool_default(meta)
@@ -925,7 +926,7 @@ def _array_gap_default_cpp(meta):
         return "MFloatVector(0.0f, 0.0f, 0.0f)"
     if t == "quaternion":
         return "MQuaternion()"
-    # float / double / angle (radians) -- dv recorded for numeric types.
+    # float / double / doubleAngle (radians) -- dv recorded for numeric types.
     return _num_default(meta, float, "0.0")
 
 def _qf_decl(t, mem):

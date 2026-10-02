@@ -167,7 +167,7 @@ FILE_TEXTURE_ATTRS = [
         "affects_output": True,
     },
     {
-        "long": "maxAnisotropy", "short": "maxa", "attr_type": "int", "direction": "input",
+        "long": "maxAnisotropy", "short": "maxa", "attr_type": "long", "direction": "input",
         "default": 16, "min": 1, "max": 16,
         "flags":          {"keyable": True, "storable": True},
         "affects_output": True,
@@ -186,13 +186,13 @@ FILE_TEXTURE_ATTRS = [
         "affects_output": True,
     },
     {
-        "long": "minLOD", "short": "mnl", "attr_type": "int", "direction": "input",
+        "long": "minLOD", "short": "mnl", "attr_type": "long", "direction": "input",
         "default": 0, "min": 0, "max": 16,
         "flags":          {"keyable": True},
         "affects_output": True,
     },
     {
-        "long": "maxLOD", "short": "mxl", "attr_type": "int", "direction": "input",
+        "long": "maxLOD", "short": "mxl", "attr_type": "long", "direction": "input",
         "default": 16, "min": 0, "max": 16,
         "flags":          {"keyable": True},
         "affects_output": True,

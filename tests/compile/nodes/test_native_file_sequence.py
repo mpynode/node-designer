@@ -61,7 +61,7 @@ def _seq_spec():
 
     cmds.file(new=True, force=True)
     w = MPyFile.create(name="seqFile#")
-    w.add_input_attr("frame", "int")
+    w.add_input_attr("frame", "long")
     w.set_init_expression(fd.DEFAULT_INIT_SOURCE)
     w.set_compute_expression(_SEQ_COMPUTE)
     spec                                = spec_extractor.extract_spec(w.get_name())

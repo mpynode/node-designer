@@ -154,7 +154,7 @@ def _norm_attr_list(spec) -> list:
         for name, meta in items:
             meta = meta if isinstance(meta, dict) else {}
             item = {"name": name,
-                    "type": meta.get("attr_type") or meta.get("type") or "float"}
+                    "type": meta.get("attr_type") or meta.get("type") or "double"}
             if meta.get("is_array"):
                 item["is_array"] = True
             for k_src, k_dst in (("min_value", "min"), ("max_value", "max"),
@@ -169,7 +169,7 @@ def _norm_attr_list(spec) -> list:
             if not isinstance(meta, dict) or not meta.get("name"):
                 continue
             item = {"name": meta["name"],
-                    "type": meta.get("type") or meta.get("attr_type") or "float"}
+                    "type": meta.get("type") or meta.get("attr_type") or "double"}
             if meta.get("is_array"):
                 item["is_array"] = True
             for k in ("min", "max", "default", "enum_names"):

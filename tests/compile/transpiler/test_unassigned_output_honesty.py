@@ -165,8 +165,8 @@ class TestScaffoldNamesTheUnassignedOutputs(unittest.TestCase):
 
         cmds.file(new=True, force=True)
         w = MPyNode.create(name=name + "#")
-        w.add_input_attr("queries", "vector", is_array=True)
-        w.add_output_attr("output", "vector", is_array=True)
+        w.add_input_attr("queries", "double3", is_array=True)
+        w.add_output_attr("output", "double3", is_array=True)
         w.add_output_attr("distance", "float", is_array=True)
         w.set_compute_expression(compute)
         spec                                = spec_extractor.extract_spec(w.get_name())
@@ -208,8 +208,8 @@ class TestScaffoldNamesTheUnassignedOutputs(unittest.TestCase):
 
         cmds.file(new=True, force=True)
         w = MPyNode.create(name="kdScalarSrc#")
-        w.add_input_attr("queries", "vector", is_array=True)
-        w.add_output_attr("output", "vector", is_array=True)
+        w.add_input_attr("queries", "double3", is_array=True)
+        w.add_output_attr("output", "double3", is_array=True)
         w.add_output_attr("total", "float")
         w.set_compute_expression(
             "if len(self.queries):\n"

@@ -5,12 +5,12 @@
     "init_source": "# Init tab \u2014 runs once per file open (not per compute()).\n# Imports + helper functions shared by the Compute expression.\n\nimport numpy as np\n\n\ndef DeBoor(u, k, d, kv):\n    # b-spline basis (Cox-de Boor recursion). kv reads are float()-wrapped and\n    # the basis test uses `and` (not bitwise &) so the same source both runs in\n    # numpy AND lowers 1:1 to deterministic C++ (nd_lower / py_to_cpp).\n    if d == 0:\n        left = float(kv[k])\n        right = float(kv[k + 1])\n        if u - left >= 0.0 and u - right < 0.0:\n            return 1.0\n        return 0.0\n\n    denom1 = float(kv[k + d]) - float(kv[k])\n    term1 = 0.0\n    if denom1 > 0.0:\n        term1 = ((u - float(kv[k])) / denom1) * DeBoor(u, k, d - 1, kv)\n\n    denom2 = float(kv[k + d + 1]) - float(kv[k + 1])\n    term2 = 0.0\n    if denom2 > 0.0:\n        term2 = ((-(u - float(kv[k + d + 1])) / denom2) * DeBoor(u, k + 1, d - 1, kv))\n\n    return term1 + term2\n",
     "input_attrs": {
       "cv": {
-        "attr_type": "vector",
+        "attr_type": "double3",
         "is_array": true,
         "order": 0
       },
       "degree": {
-        "attr_type": "int",
+        "attr_type": "long",
         "default_value": 3,
         "is_array": false,
         "order": 1
@@ -29,7 +29,7 @@
     "node_name": "spline",
     "output_attrs": {
       "samples": {
-        "attr_type": "vector",
+        "attr_type": "double3",
         "is_array": true,
         "order": 0
       }

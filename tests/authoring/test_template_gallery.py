@@ -624,11 +624,11 @@ class BundledMeshGameOfLifeTest(unittest.TestCase):
         from mpynode._common.io import mpn_io
         raw    = mpn_io.load_mpn_header(self._entry().mpn_path)   # no decode
         inputs = raw.get("input_attrs") or {}
-        self.assertEqual(inputs.get("boardX", {}).get("attr_type"), "int")
-        self.assertEqual(inputs.get("boardY", {}).get("attr_type"), "int")
+        self.assertEqual(inputs.get("boardX", {}).get("attr_type"), "long")
+        self.assertEqual(inputs.get("boardY", {}).get("attr_type"), "long")
         self.assertEqual(inputs.get("frame", {}).get("attr_type"),  "time")
         self.assertEqual(
-            inputs.get("randomSamples", {}).get("attr_type"), "int")
+            inputs.get("randomSamples", {}).get("attr_type"), "long")
         self.assertEqual(inputs.get("resetBoard", {}).get("attr_type"), "enum")
         self.assertEqual(inputs.get("cellSize", {}).get("attr_type"), "double")
 
@@ -688,16 +688,16 @@ class BundledMeshMetaballsTest(unittest.TestCase):
         inputs = raw.get("input_attrs") or {}
         # Per-shape parallel arrays (index == CSG fold order) + two scalars.
         expected_arrays = {
-            "shapeMatrix": "matrix", "shapeType": "int", "additive": "bool",
+            "shapeMatrix": "matrix", "shapeType": "long", "additive": "bool",
             "smoothing": "double", "radius": "double", "height": "double",
-            "axis": "int", "halfExtents": "vector",
+            "axis": "long", "halfExtents": "double3",
         }
         for name, atype in expected_arrays.items():
             self.assertEqual(inputs.get(name, {}).get("attr_type"), atype,
                              "%s should be a %s" % (name, atype))
             self.assertTrue(inputs.get(name, {}).get("is_array"),
                             "%s should be a multi/array attr" % name)
-        self.assertEqual(inputs.get("resolution", {}).get("attr_type"), "int")
+        self.assertEqual(inputs.get("resolution", {}).get("attr_type"), "long")
         self.assertFalse(inputs.get("resolution", {}).get("is_array"))
         self.assertEqual(inputs.get("isoValue", {}).get("attr_type"), "double")
 

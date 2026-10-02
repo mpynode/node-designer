@@ -58,6 +58,7 @@ _TYPE_FLAGS = {
     "enum":   {"attributeType": "enum", "enumName": "0:1"},
     "matrix": {"dataType": "matrix"},
     "vector": {"attributeType": "double3"},
+    "angle":  {"attributeType": "doubleAngle"},
 }
 
 
@@ -167,6 +168,19 @@ class TestTheAttributeRegistry(_Base):
         node = _make_v1_node(inputs={"a": "float"})
         self.assertTrue(mc.getAttr(node + "._inputAttrs").strip())
         self.assertEqual(MPyNode(node).get_input_attr_map(), {})
+
+    def test_renamed_v1_types_register_under_the_new_names(self):
+        # v1 wrote int / vector / angle; v2 renamed them (long / double3 /
+        # doubleAngle) and rejects the old names, so the upgrade maps them.
+        node = _make_v1_node(inputs={"n": "int", "a": "angle"},
+                             outputs={"out": "vector"},
+                             expression="out = [n, a, 0]")
+        U.upgrade_node(node)
+        ins  = MPyNode(node).get_input_attr_map()
+        outs = MPyNode(node).get_output_attr_map()
+        self.assertEqual(ins["n"]["attr_type"],    "long")
+        self.assertEqual(ins["a"]["attr_type"],    "doubleAngle")
+        self.assertEqual(outs["out"]["attr_type"], "double3")
 
     def test_the_registry_is_json_not_a_pickle_blob(self):
         node = _make_v1_node(inputs={"a": "float"})

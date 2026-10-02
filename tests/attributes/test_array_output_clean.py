@@ -85,9 +85,9 @@ class _Case(unittest.TestCase):
         w    = _create(family)
         name = w.get_name()
         w.add_input_attr("k", "float")
-        w.add_output_attr("a", "vector", is_array=True)
-        w.add_output_attr("b", "float",  is_array=True)
-        w.add_output_attr("c", "float",  is_array=True)
+        w.add_output_attr("a", "double3", is_array=True)
+        w.add_output_attr("b", "float",   is_array=True)
+        w.add_output_attr("c", "float",   is_array=True)
         w.add_output_attr("s", "float")
         w.set_compute_expression(_EXPR)
         a_out, b_out = [], []

@@ -56,7 +56,7 @@ class TestCollectPlugTree(unittest.TestCase):
         from mpynode.wrappers.mpy_deformer import MPyDeformer
 
         self.deformer = MPyDeformer.create_on(plane, name="ct_td")
-        self.deformer.add_input_attr("amplitude", "vector")
+        self.deformer.add_input_attr("amplitude", "double3")
 
     def test_returns_nested_tree(self):
         from mpynode.ui.widgets.variables import collect_plug_tree

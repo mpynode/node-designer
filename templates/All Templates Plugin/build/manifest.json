@@ -79,7 +79,7 @@
             }
           },
           "start": {
-            "type": "int",
+            "type": "long",
             "is_array": false,
             "portable": true,
             "cpp": {
@@ -93,7 +93,7 @@
             "default_value": 0
           },
           "end": {
-            "type": "int",
+            "type": "long",
             "is_array": false,
             "portable": true,
             "cpp": {
@@ -107,7 +107,7 @@
             "default_value": -1
           },
           "seed": {
-            "type": "int",
+            "type": "long",
             "is_array": false,
             "portable": true,
             "cpp": {
@@ -182,7 +182,7 @@
             "default_value": false
           },
           "solutionStep": {
-            "type": "int",
+            "type": "long",
             "is_array": false,
             "portable": true,
             "cpp": {
@@ -235,7 +235,7 @@
         },
         "outputs": {
           "solutionSteps": {
-            "type": "int",
+            "type": "long",
             "is_array": false,
             "portable": true,
             "cpp": {
@@ -493,7 +493,7 @@
             "default_value": 0.2
           },
           "maxVoxels": {
-            "type": "int",
+            "type": "long",
             "is_array": false,
             "portable": true,
             "cpp": {
@@ -793,7 +793,7 @@
             }
           },
           "index0": {
-            "type": "int",
+            "type": "long",
             "is_array": true,
             "portable": true,
             "cpp": {
@@ -806,7 +806,7 @@
             }
           },
           "index1": {
-            "type": "int",
+            "type": "long",
             "is_array": true,
             "portable": true,
             "cpp": {
@@ -847,7 +847,7 @@
             "default_value": 0.0
           },
           "iterations": {
-            "type": "int",
+            "type": "long",
             "is_array": false,
             "portable": true,
             "cpp": {
@@ -982,7 +982,7 @@
         },
         "outputs": {
           "positions": {
-            "type": "vector",
+            "type": "double3",
             "is_array": true,
             "portable": true,
             "cpp": {
@@ -1009,7 +1009,7 @@
             "default_value": 0.0
           },
           "maxIterations": {
-            "type": "int",
+            "type": "long",
             "is_array": false,
             "portable": true,
             "cpp": {
@@ -1185,7 +1185,7 @@
             }
           },
           "targetOffset": {
-            "type": "int",
+            "type": "long",
             "is_array": true,
             "portable": true,
             "cpp": {
@@ -1199,7 +1199,7 @@
             "packed": true
           },
           "targetComponents": {
-            "type": "int",
+            "type": "long",
             "is_array": true,
             "portable": true,
             "cpp": {
@@ -1227,7 +1227,7 @@
             "packed": true
           },
           "interBase": {
-            "type": "int",
+            "type": "long",
             "is_array": true,
             "portable": true,
             "cpp": {
@@ -1255,7 +1255,7 @@
             "packed": true
           },
           "comboOffset": {
-            "type": "int",
+            "type": "long",
             "is_array": true,
             "portable": true,
             "cpp": {
@@ -1269,7 +1269,7 @@
             "packed": true
           },
           "comboDriver": {
-            "type": "int",
+            "type": "long",
             "is_array": true,
             "portable": true,
             "cpp": {
@@ -1311,7 +1311,7 @@
             "default_value": true
           },
           "shapeSlot": {
-            "type": "int",
+            "type": "long",
             "is_array": true,
             "portable": true,
             "cpp": {
@@ -1781,7 +1781,7 @@
             }
           },
           "ringNbrs": {
-            "type": "int",
+            "type": "long",
             "is_array": true,
             "portable": true,
             "cpp": {
@@ -1794,7 +1794,7 @@
             }
           },
           "ringWidth": {
-            "type": "int",
+            "type": "long",
             "is_array": false,
             "portable": true,
             "cpp": {
@@ -1807,7 +1807,7 @@
             }
           },
           "iterations": {
-            "type": "int",
+            "type": "long",
             "is_array": false,
             "portable": true,
             "cpp": {
@@ -2637,7 +2637,7 @@
         },
         "inputs": {
           "bands": {
-            "type": "int",
+            "type": "long",
             "is_array": false,
             "portable": true,
             "cpp": {
@@ -3276,7 +3276,7 @@
         },
         "inputs": {
           "width": {
-            "type": "int",
+            "type": "long",
             "is_array": false,
             "portable": true,
             "cpp": {
@@ -3290,7 +3290,7 @@
             "default_value": 100
           },
           "height": {
-            "type": "int",
+            "type": "long",
             "is_array": false,
             "portable": true,
             "cpp": {
@@ -4881,7 +4881,7 @@
         },
         "inputs": {
           "boardX": {
-            "type": "int",
+            "type": "long",
             "is_array": false,
             "portable": true,
             "cpp": {
@@ -4895,7 +4895,7 @@
             "default_value": 10
           },
           "boardY": {
-            "type": "int",
+            "type": "long",
             "is_array": false,
             "portable": true,
             "cpp": {
@@ -4922,7 +4922,7 @@
             }
           },
           "randomSamples": {
-            "type": "int",
+            "type": "long",
             "is_array": false,
             "portable": true,
             "cpp": {
@@ -5410,7 +5410,7 @@
             }
           },
           "shapeType": {
-            "type": "int",
+            "type": "long",
             "is_array": true,
             "portable": true,
             "cpp": {
@@ -5477,7 +5477,7 @@
             "default_value": 1.0
           },
           "axis": {
-            "type": "int",
+            "type": "long",
             "is_array": true,
             "portable": true,
             "cpp": {
@@ -5491,7 +5491,7 @@
             "default_value": 1
           },
           "halfExtents": {
-            "type": "vector",
+            "type": "double3",
             "is_array": true,
             "portable": true,
             "cpp": {
@@ -5504,7 +5504,7 @@
             }
           },
           "resolution": {
-            "type": "int",
+            "type": "long",
             "is_array": false,
             "portable": true,
             "cpp": {
@@ -6265,7 +6265,7 @@
         },
         "inputs": {
           "decimals": {
-            "type": "int",
+            "type": "long",
             "is_array": false,
             "portable": true,
             "cpp": {
@@ -6279,7 +6279,7 @@
             "default_value": 2
           },
           "inPosition": {
-            "type": "vector",
+            "type": "double3",
             "is_array": false,
             "portable": true,
             "cpp": {
@@ -6363,7 +6363,7 @@
         },
         "inputs": {
           "angle": {
-            "type": "angle",
+            "type": "doubleAngle",
             "is_array": false,
             "portable": true,
             "cpp": {
@@ -6519,7 +6519,7 @@
             }
           },
           "degree": {
-            "type": "int",
+            "type": "long",
             "is_array": false,
             "portable": true,
             "cpp": {
@@ -6714,7 +6714,7 @@
             ]
           },
           "controlUpAxes": {
-            "type": "int",
+            "type": "long",
             "is_array": true,
             "portable": true,
             "cpp": {
@@ -6925,7 +6925,7 @@
             }
           },
           "outputScale": {
-            "type": "vector",
+            "type": "double3",
             "is_array": true,
             "portable": true,
             "cpp": {
@@ -6938,7 +6938,7 @@
             }
           },
           "outputTranslate": {
-            "type": "vector",
+            "type": "double3",
             "is_array": true,
             "portable": true,
             "cpp": {
@@ -7189,7 +7189,7 @@
         },
         "inputs": {
           "cv": {
-            "type": "vector",
+            "type": "double3",
             "is_array": true,
             "portable": true,
             "cpp": {
@@ -7202,7 +7202,7 @@
             }
           },
           "degree": {
-            "type": "int",
+            "type": "long",
             "is_array": false,
             "portable": true,
             "cpp": {
@@ -7218,7 +7218,7 @@
         },
         "outputs": {
           "samples": {
-            "type": "vector",
+            "type": "double3",
             "is_array": true,
             "portable": true,
             "cpp": {
@@ -7334,7 +7334,7 @@
             "default_value": 0.6
           },
           "driver": {
-            "type": "vector",
+            "type": "double3",
             "is_array": false,
             "portable": true,
             "cpp": {
@@ -7347,7 +7347,7 @@
             }
           },
           "gravity": {
-            "type": "vector",
+            "type": "double3",
             "is_array": false,
             "portable": true,
             "cpp": {
@@ -7446,7 +7446,7 @@
         },
         "outputs": {
           "driven": {
-            "type": "vector",
+            "type": "double3",
             "is_array": true,
             "portable": true,
             "cpp": {

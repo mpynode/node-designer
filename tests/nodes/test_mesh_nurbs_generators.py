@@ -1199,7 +1199,7 @@ class TestGeometryVectorArrayInputDense(unittest.TestCase):
         """Add a vector-array input + numeric probe outputs, seed 6
         elements, run ``np.asarray(self.<input>)`` and report back what
         the expression saw. Returns the node name."""
-        wrapper.add_input_attr(input_name, "vector", is_array=True)
+        wrapper.add_input_attr(input_name, "double3", is_array=True)
         wrapper.add_output_attr("outIsNdarray", "float")
         wrapper.add_output_attr("outRows",      "float")
         wrapper.add_output_attr("outCols",      "float")

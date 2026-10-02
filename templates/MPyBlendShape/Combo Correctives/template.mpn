@@ -17,19 +17,19 @@
         "order": 8
       },
       "comboDriver": {
-        "attr_type": "int",
+        "attr_type": "long",
         "is_array": true,
         "order": 7,
         "packed": true
       },
       "comboOffset": {
-        "attr_type": "int",
+        "attr_type": "long",
         "is_array": true,
         "order": 6,
         "packed": true
       },
       "interBase": {
-        "attr_type": "int",
+        "attr_type": "long",
         "is_array": true,
         "order": 4,
         "packed": true
@@ -41,13 +41,13 @@
         "packed": true
       },
       "shapeSlot": {
-        "attr_type": "int",
+        "attr_type": "long",
         "is_array": true,
         "order": 10,
         "packed": true
       },
       "targetComponents": {
-        "attr_type": "int",
+        "attr_type": "long",
         "is_array": true,
         "order": 2,
         "packed": true
@@ -59,7 +59,7 @@
         "packed": true
       },
       "targetOffset": {
-        "attr_type": "int",
+        "attr_type": "long",
         "is_array": true,
         "order": 1,
         "packed": true

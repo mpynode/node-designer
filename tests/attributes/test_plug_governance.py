@@ -55,7 +55,7 @@ class _GovernanceCase(unittest.TestCase):
         self.node = self.nd.get_name()
         # MANAGED: recorded in _inputAttrs by the framework's own API.
         self.nd.add_input_attr("managedIn", "float")
-        self.nd.add_input_attr("managedVec", "vector")
+        self.nd.add_input_attr("managedVec", "double3")
         self.nd.add_output_attr("probeOut", "float")
         cmds.setAttr(self.node + ".managedIn", 3.5)
         # UNMANAGED: a bare Maya command, behind the framework's back. Given a

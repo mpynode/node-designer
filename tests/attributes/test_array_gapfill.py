@@ -73,7 +73,7 @@ class TestGapFillRead(unittest.TestCase):
 
     def test_int_gaps_fill_dv(self):
         n = self.MPyNode.create(name="gf_i")
-        n.add_input_attr("k", "int", is_array=True, default_value=7)
+        n.add_input_attr("k", "long", is_array=True, default_value=7)
         mc.setAttr(n.get_name() + ".k[4]", 3)
         out = _read(n, ["k"])["k"]
         self.assertEqual(len(out),      5)
@@ -105,7 +105,7 @@ class TestGapFillRead(unittest.TestCase):
 
     def test_vector_gaps_fill_zeros(self):
         n = self.MPyNode.create(name="gf_v")
-        n.add_input_attr("v", "vector", is_array=True)
+        n.add_input_attr("v", "double3", is_array=True)
         mc.setAttr(n.get_name() + ".v[2]", 1.0, 2.0, 3.0, type="double3")
         out = _read(n, ["v"])["v"]
         self.assertEqual(out.shape,       (3, 3))

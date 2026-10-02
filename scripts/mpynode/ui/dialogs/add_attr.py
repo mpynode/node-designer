@@ -32,6 +32,7 @@ from mpynode._base.commands import (
     _AddOutputAttrCommand,
     run_undoable,
 )
+from mpynode._common import attr_types as _attr_types
 from mpynode._common.interface.reserved_names import check_reserved_name
 from mpynode.ui.qt_wrapper import (
     QButtonGroup,
@@ -54,20 +55,15 @@ from mpynode.ui.qt_wrapper import (
 )
 
 
-# Attr types the dialog offers, grouped into families (common-first). Per-type
-# subframe key = the type name; ALL_ATTR_TYPES is the flattened tuple and the
-# single source of truth for both order and membership.
-# "double" is deliberately absent: it is redundant with "float" (both come back
-# from read_plug_value as a Python float). The wrapper's _ADD_ATTR_KIND still
-# accepts it, so existing scenes and .mpn templates keep loading.
-_ATTR_TYPE_GROUPS = (
-    ("float", "int", "bool", "angle"),
-    ("vector", "euler", "matrix", "quaternion", "color"),
-    ("string", "enum", "hex", "python"),
-    ("mesh", "nurbsCurve", "nurbsSurface"),
-    ("time",),
-)
-ALL_ATTR_TYPES = tuple(t for _group in _ATTR_TYPE_GROUPS for t in _group)
+# Attr types the dialog offers, grouped into families, from the one type table
+# (``_common/attr_types.py``). Per-type subframe key = the type name;
+# ALL_ATTR_TYPES is the flattened tuple: the dialog's order and membership.
+# "double" (a 64-bit real, what Maya's own Add Attribute calls "Float") leads
+# and is pre-selected; "float" is the 32-bit plug, a different storage, not a
+# synonym. A type the API accepts but the dialog does not offer ("float2") is
+# absent here.
+_ATTR_TYPE_GROUPS = _attr_types.DIALOG_GROUPS
+ALL_ATTR_TYPES    = _attr_types.DIALOG_NAMES
 
 # Last attr type selected in the dialog this session (module-global; resets on
 # Maya restart). Used as the default type when the dialog re-opens.
@@ -222,11 +218,14 @@ class NDAddAttrDialog(QDialog):
         """Populate the type combo with the types valid for the current
         direction. Preserves the current selection across input/output
         switches when the chosen type is valid for the new direction.
-        Falls back to the first item otherwise.
+        Falls back to ``double`` otherwise.
+
+        Each item shows ``"<name>  -  <label>"``; the type name itself is the
+        item data, so every lookup goes through ``findData`` / ``currentData``.
         """
         # Snapshot the user's current selection so we can try to
         # restore it after re-populating the list.
-        prev_selection = self._type_combo.currentText() or ""
+        prev_selection = self._type_combo.currentData() or ""
         # Block signals so re-population doesn't fire currentIndexChanged.
         self._type_combo.blockSignals(True)
         self._type_combo.clear()
@@ -247,21 +246,22 @@ class NDAddAttrDialog(QDialog):
             allowed = list(ALL_ATTR_TYPES)
         # Render in family-group order (no separators or colour). Every group
         # member is in ALL_ATTR_TYPES, so a type in ``allowed`` that isn't in a
-        # group (e.g. legacy "double") is correctly dropped.
+        # group (e.g. "float2") is correctly dropped.
         allowed_set = set(allowed)
         for group in _ATTR_TYPE_GROUPS:
             for t in group:
                 if t in allowed_set:
-                    self._type_combo.addItem(t)
-        # Attempt to restore the previous selection, falling back to the last
-        # type selected this session. If neither is valid for the new
-        # direction, the combo just stays at its default (index 0).
+                    self._type_combo.addItem(_attr_types.dialog_label(t), t)
+        # Restore the previous selection, else the last type selected this
+        # session, else ``double``. If none is valid for the new direction,
+        # the combo stays at index 0.
         if not prev_selection:
             prev_selection = _LAST_SELECTED_TYPE or ""
-        if prev_selection:
-            idx = self._type_combo.findText(prev_selection)
+        for wanted in (prev_selection, _attr_types.DIALOG_DEFAULT):
+            idx = self._type_combo.findData(wanted) if wanted else -1
             if idx >= 0:
                 self._type_combo.setCurrentIndex(idx)
+                break
         self._type_combo.blockSignals(False)
         # Refresh the stack frame for the now-current type.
         self._on_type_changed(self._type_combo.currentIndex())
@@ -289,10 +289,10 @@ class NDAddAttrDialog(QDialog):
     def _make_subframe(self, attr_type: str) -> QWidget:
         if attr_type in ("float", "double"):
             return self._make_numeric_subframe(attr_type, is_int=False)
-        if attr_type == "int":
+        if attr_type == "long":
             return self._make_numeric_subframe(attr_type, is_int=True)
-        if attr_type == "angle":
-            # angle uses numeric subframe (radians).
+        if attr_type == "doubleAngle":
+            # doubleAngle uses numeric subframe (radians).
             return self._make_numeric_subframe(attr_type, is_int=False)
         if attr_type == "bool":
             return self._make_bool_subframe()
@@ -301,7 +301,7 @@ class NDAddAttrDialog(QDialog):
         if attr_type == "time":
             # time has its own subframe with auto-connect option.
             return self._make_time_subframe()
-        # vector / matrix / string / euler / python /
+        # double3 / matrix / string / euler / python /
         # mesh / nurbsCurve / nurbsSurface — blank
         w      = QWidget(self)
         layout = QVBoxLayout(w)
@@ -447,7 +447,7 @@ class NDAddAttrDialog(QDialog):
         # init before _stack exists. Safe no-op in that case.
         if not hasattr(self, "_stack"):
             return
-        type_name = self._type_combo.itemText(index) if index >= 0 else ""
+        type_name = (self._type_combo.itemData(index) if index >= 0 else "") or ""
         for i, t in enumerate(ALL_ATTR_TYPES):
             if t == type_name:
                 self._stack.setCurrentIndex(i)
@@ -479,7 +479,7 @@ class NDAddAttrDialog(QDialog):
             QMessageBox.warning(self, "Invalid Name", err)
             return
 
-        attr_type = self._type_combo.currentText()
+        attr_type = self._type_combo.currentData() or ""
         is_array  = self._array_check.isChecked()
 
         # Per-type extras (enum gets enum_names; time gets auto_connect_time;
@@ -506,7 +506,8 @@ class NDAddAttrDialog(QDialog):
             # time subframe.
             auto_connect_time = sub._auto_connect_check.isChecked()
         elif sub is not None and hasattr(sub, "_min_edit"):
-            # numeric subframe (float / int / angle): read min / max / default.
+            # numeric subframe (double / float / long / doubleAngle): read
+            # min / max / default.
             is_int = bool(getattr(sub, "_is_int", False))
 
             def _parse(text, field):

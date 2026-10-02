@@ -76,7 +76,7 @@ class TestApplyDrive(unittest.TestCase):
         try:
             verify._apply_drive(_Cmds(), ("a", "b"), {
                 "gain": ("double", False, 0.5),
-                "pts":  ("vector", True, [[0, 0, 0], [1, 1, 1]]),
+                "pts":  ("double3", True, [[0, 0, 0], [1, 1, 1]]),
             })
         finally:
             verify._drive_input       = orig_scalar

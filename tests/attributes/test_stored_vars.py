@@ -364,7 +364,7 @@ class TestStoredVarRoundTrip(unittest.TestCase):
 
         n = MPyNode.create(name="rt1")
         n.add_input_attr("trigger", "float")
-        n.add_output_attr("counter_out", "int")
+        n.add_output_attr("counter_out", "long")
         n.add_variable("counter", 0)
         n.set_compute_expression("self.counter = self.counter + 1\nself.counter_out = self.counter")
         # Trigger compute by reading the output.
@@ -1194,7 +1194,7 @@ class TestStoredVarsExpression(unittest.TestCase):
         n = MPyNode.create(name="counterNode")
         n.add_variable("counter", 0)
         n.add_input_attr("trigger", "float")
-        n.add_output_attr("out", "int")
+        n.add_output_attr("out", "long")
         n.set_compute_expression("""
 self.counter = self.counter + 1
 out = self.counter

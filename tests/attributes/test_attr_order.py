@@ -35,8 +35,8 @@ def _make_node(name="ordNode#"):
     from mpynode.wrappers._mpy_node import MPyNode
 
     n = MPyNode.create(name=name)
-    n.add_input_attr("width",   "int",   default_value=100)
-    n.add_input_attr("height",  "int",   default_value=100)
+    n.add_input_attr("width",   "long",  default_value=100)
+    n.add_input_attr("height",  "long",  default_value=100)
     n.add_input_attr("density", "float", default_value=0.5)
     n.add_input_attr("frame", "time")
     n.add_input_attr("reset", "enum", enum_names=["False", "True"])

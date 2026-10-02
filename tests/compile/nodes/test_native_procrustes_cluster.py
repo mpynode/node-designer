@@ -78,8 +78,8 @@ def _make_node(name):
     w = mpynode.wrap_node(n)
     w.add_input_attr("meshOrig", "mesh")
     w.add_input_attr("mesh", "mesh")
-    w.add_input_attr("clusters", "int", is_array=True)
-    w.add_input_attr("clusterWidth", "int")
+    w.add_input_attr("clusters", "long", is_array=True)
+    w.add_input_attr("clusterWidth", "long")
     w.add_input_attr("bindMatrices", "matrix", is_array=True)
     w.add_output_attr("outMatrix", "matrix", is_array=True)
     w.set_init_expression(_INIT)
@@ -343,8 +343,8 @@ class TestStrideCoupledArrayDetection(unittest.TestCase):
     def test_cluster_aliased_reshape_is_coupled(self):
         from mpynode.native.toolchain import verify
         spec = self._spec(
-            {"clusters": {"type": "int", "is_array": True},
-             "clusterWidth": {"type": "int"},
+            {"clusters": {"type": "long", "is_array": True},
+             "clusterWidth": {"type": "long"},
              "bindMatrices": {"type": "matrix", "is_array": True}},
             "Lw = int(self.clusterWidth)\nclusters = flat.reshape(-1, Lw)\n")
         self.assertTrue(verify._has_stride_coupled_arrays(spec))
@@ -353,7 +353,7 @@ class TestStrideCoupledArrayDetection(unittest.TestCase):
         from mpynode.native.toolchain import verify
         spec = self._spec(
             {"data": {"type": "float", "is_array": True},
-             "width": {"type": "int"}},
+             "width": {"type": "long"}},
             "m = np.asarray(self.data).reshape(-1, self.width)\n")
         self.assertTrue(verify._has_stride_coupled_arrays(spec))
 
@@ -361,7 +361,7 @@ class TestStrideCoupledArrayDetection(unittest.TestCase):
         # procrustesSingle: width from the array's OWN shape, NO int scalar input.
         from mpynode.native.toolchain import verify
         spec = self._spec(
-            {"cluster": {"type": "int", "is_array": True},
+            {"cluster": {"type": "long", "is_array": True},
              "bindMatrix": {"type": "matrix"}},
             "flat = np.asarray(self.cluster).ravel()\n"
             "Lw = int(flat.shape[0])\nclusters = flat.reshape(1, Lw)\n")
@@ -370,8 +370,8 @@ class TestStrideCoupledArrayDetection(unittest.TestCase):
     def test_no_reshape_not_coupled(self):
         from mpynode.native.toolchain import verify
         spec = self._spec(
-            {"vals": {"type": "int", "is_array": True},
-             "k": {"type": "int"}},
+            {"vals": {"type": "long", "is_array": True},
+             "k": {"type": "long"}},
             "self.out = np.asarray(self.vals) * self.k\n")
         self.assertFalse(verify._has_stride_coupled_arrays(spec))
 
@@ -379,8 +379,8 @@ class TestStrideCoupledArrayDetection(unittest.TestCase):
         # reshape by a LITERAL, int scalar present but unrelated -> not coupled.
         from mpynode.native.toolchain import verify
         spec = self._spec(
-            {"pts": {"type": "vector", "is_array": True},
-             "mode": {"type": "int"}},
+            {"pts": {"type": "double3", "is_array": True},
+             "mode": {"type": "long"}},
             "g = np.asarray(self.pts).reshape(-1, 3)\nif self.mode:\n    pass\n")
         self.assertFalse(verify._has_stride_coupled_arrays(spec))
 

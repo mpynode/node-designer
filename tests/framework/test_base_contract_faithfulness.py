@@ -300,7 +300,7 @@ class TestOwnPathComputeUsesSharedSuppression(unittest.TestCase):
 
         def mk():
             c = MPyConstraint.create(name="conErr")
-            c.add_output_attr("constrained_pos", "vector")
+            c.add_output_attr("constrained_pos", "double3")
             c.set_compute_expression("x = self.nopePlug\n")
             return c.get_name()
 
@@ -532,7 +532,7 @@ class TestOwnPathComputeArrayOutputPreSize(unittest.TestCase):
         from mpynode.wrappers.mpy_mesh import MPyMesh
 
         p = MPyMesh.create(name="mArr")
-        p.add_output_attr("outVec", "vector", is_array=True)
+        p.add_output_attr("outVec", "double3", is_array=True)
         p.set_compute_expression("self.outVec[0] = [1.0, 2.0, 3.0]\n")
         self._assert_array_output_presized(p.get_name())
 
@@ -540,7 +540,7 @@ class TestOwnPathComputeArrayOutputPreSize(unittest.TestCase):
         from mpynode.wrappers.mpy_nurbs_curve import MPyNurbsCurve
 
         p = MPyNurbsCurve.create(name="cArr")
-        p.add_output_attr("outVec", "vector", is_array=True)
+        p.add_output_attr("outVec", "double3", is_array=True)
         p.set_compute_expression("self.outVec[0] = [1.0, 2.0, 3.0]\n")
         self._assert_array_output_presized(p.get_name())
 
@@ -548,7 +548,7 @@ class TestOwnPathComputeArrayOutputPreSize(unittest.TestCase):
         from mpynode.wrappers.mpy_nurbs_surface import MPyNurbsSurface
 
         p = MPyNurbsSurface.create(name="sArr")
-        p.add_output_attr("outVec", "vector", is_array=True)
+        p.add_output_attr("outVec", "double3", is_array=True)
         p.set_compute_expression("self.outVec[0] = [1.0, 2.0, 3.0]\n")
         self._assert_array_output_presized(p.get_name())
 
@@ -556,7 +556,7 @@ class TestOwnPathComputeArrayOutputPreSize(unittest.TestCase):
         from mpynode.wrappers.mpy_file import MPyFile
 
         p = MPyFile.create(name="fArr", seed_defaults=False)
-        p.add_output_attr("outVec", "vector", is_array=True)
+        p.add_output_attr("outVec", "double3", is_array=True)
         p.set_compute_expression("self.outVec[0] = [1.0, 2.0, 3.0]\n")
         self._assert_array_output_presized(p.get_name())
 
@@ -592,7 +592,7 @@ class TestOwnPathComputeDenseInputSeeding(unittest.TestCase):
         from mpynode.wrappers.mpy_locator import MPyLocator
 
         loc = MPyLocator.create(name="locDense")
-        loc.add_input_attr("pts", "vector", is_array=True)
+        loc.add_input_attr("pts", "double3", is_array=True)
         n = loc.get_name()
         for i, v in enumerate([(1, 2, 3), (4, 5, 6), (7, 8, 9)]):
             mc.setAttr("%s.pts[%d]" % (n, i), v[0], v[1], v[2], type="double3")
@@ -631,8 +631,8 @@ class TestOwnPathComputeDenseInputSeeding(unittest.TestCase):
         from mpynode.wrappers.mpy_file import MPyFile
 
         p = MPyFile.create(name="fDense", seed_defaults=False)
-        p.add_input_attr("pts", "vector", is_array=True)
-        p.add_output_attr("sumVec", "vector")
+        p.add_input_attr("pts", "double3", is_array=True)
+        p.add_output_attr("sumVec", "double3")
         n = p.get_name()
         for i, v in enumerate([(1, 2, 3), (4, 5, 6), (7, 8, 9)]):
             mc.setAttr("%s.pts[%d]" % (n, i), v[0], v[1], v[2], type="double3")
@@ -662,7 +662,7 @@ class TestOwnPathComputeDenseInputSeeding(unittest.TestCase):
 
         t = MPyTransform.create(name="txDense")
         n = t.get_name()
-        t.add_input_attr("pts", "vector", is_array=True)
+        t.add_input_attr("pts", "double3", is_array=True)
         for i, v in enumerate([(1, 2, 3), (4, 5, 6), (7, 8, 9)]):
             mc.setAttr("%s.pts[%d]" % (n, i), v[0], v[1], v[2], type="double3")
         t.set_compute_expression(
@@ -696,7 +696,7 @@ class TestOwnPathComputeDenseInputSeeding(unittest.TestCase):
         plane = mc.polyPlane(name="defDenseP", w=2, h=2, sx=2, sy=2)[0]
         d     = MPyDeformer.create_on(plane)
         n     = d.get_name()
-        d.add_input_attr("pts", "vector", is_array=True)
+        d.add_input_attr("pts", "double3", is_array=True)
         for i, v in enumerate([(1, 2, 3), (4, 5, 6), (7, 8, 9)]):
             mc.setAttr("%s.pts[%d]" % (n, i), v[0], v[1], v[2], type="double3")
         d.set_compute_expression(
@@ -732,7 +732,7 @@ class TestOwnPathComputeDenseInputSeeding(unittest.TestCase):
 
         s = MPyIkSolver.create(name="ikDense")
         n = s.get_name()
-        s.add_input_attr("pts", "vector", is_array=True)
+        s.add_input_attr("pts", "double3", is_array=True)
         for i, v in enumerate([(1, 2, 3), (4, 5, 6), (7, 8, 9)]):
             mc.setAttr("%s.pts[%d]" % (n, i), v[0], v[1], v[2], type="double3")
         mc.setAttr(

@@ -23,7 +23,7 @@
         "order": 3
       },
       "height": {
-        "attr_type": "int",
+        "attr_type": "long",
         "default_value": 100,
         "is_array": false,
         "order": 1
@@ -38,7 +38,7 @@
         "order": 4
       },
       "width": {
-        "attr_type": "int",
+        "attr_type": "long",
         "default_value": 100,
         "is_array": false,
         "order": 0

@@ -6,7 +6,7 @@ The format is a single JSON object on the plug.
 For attr maps:
  {
  "myInputAttr": {"attr_type": "float", "is_array": false},
- "myOutputAttr": {"attr_type": "vector", "is_array": true}
+ "myOutputAttr": {"attr_type": "double3", "is_array": true}
  }
 
 For stored vars:

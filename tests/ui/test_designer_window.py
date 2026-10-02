@@ -504,10 +504,10 @@ class TestAttrColorRegistry(unittest.TestCase):
         original node_designer.py)."""
         from mpynode.ui.widgets.icons import ATTR_TYPE_COLORS
 
-        self.assertEqual(ATTR_TYPE_COLORS["int"],          (0, 128, 1))
+        self.assertEqual(ATTR_TYPE_COLORS["long"],         (0, 128, 1))
         self.assertEqual(ATTR_TYPE_COLORS["float"],        (80, 230, 80))
-        self.assertEqual(ATTR_TYPE_COLORS["vector"],       (80, 230, 80))
-        self.assertEqual(ATTR_TYPE_COLORS["angle"],        (128, 230, 230))
+        self.assertEqual(ATTR_TYPE_COLORS["double3"],      (80, 230, 80))
+        self.assertEqual(ATTR_TYPE_COLORS["doubleAngle"],  (128, 230, 230))
         self.assertEqual(ATTR_TYPE_COLORS["bool"],         (221, 135, 36))
         self.assertEqual(ATTR_TYPE_COLORS["matrix"],       (128, 170, 170))
         self.assertEqual(ATTR_TYPE_COLORS["mesh"],         (230, 1, 230))

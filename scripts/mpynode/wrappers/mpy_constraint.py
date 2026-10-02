@@ -11,7 +11,7 @@ parentConstraint with arbitrary user math)::
 
  c = MPyConstraint.create(name="myConstraint")
  mc.connectAttr(src + ".translate", c.get_name() + ".targetTranslate")
- c.add_output_attr("constrained_pos", "vector")
+ c.add_output_attr("constrained_pos", "double3")
  c.set_compute_expression("constrained_pos = self.targetTranslate")
  mc.connectAttr(c.get_name() + ".constrained_pos", dst + ".translate", force=True)
 

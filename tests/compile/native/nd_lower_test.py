@@ -43,16 +43,16 @@ from mpynode.native.compiler import nd_lower
 
 # Maya C++ container element type per attr type (matches codegen._CPP subset).
 _MAYA_CTYPE = {
-    "float": "float", "double": "double", "int": "int", "bool": "bool",
-    "enum": "short", "angle": "double", "time": "double", "matrix": "MMatrix",
+    "float": "float", "double": "double", "long": "int", "bool": "bool",
+    "enum": "short", "doubleAngle": "double", "time": "double", "matrix": "MMatrix",
 }
 # numpy dtype per attr type, for the oracle inputs.
 _NP_DTYPE = {
-    "float": np.float64, "double": np.float64, "angle": np.float64,
-    "time": np.float64, "int": np.int64, "enum": np.int64, "bool": np.bool_,
+    "float": np.float64, "double": np.float64, "doubleAngle": np.float64,
+    "time": np.float64, "long": np.int64, "enum": np.int64, "bool": np.bool_,
     "matrix": np.float64,
 }
-_VEC = ("vector", "euler")
+_VEC = ("double3", "euler")
 
 
 def _member(plug):
@@ -224,7 +224,7 @@ def _oracle(ins, outs, values, source, init=None):
             setattr(obj, d["plug"], np.asarray(v, dtype=np.float64))
         elif t == "bool":
             setattr(obj, d["plug"], bool(v))
-        elif t in ("int", "enum"):
+        elif t in ("long", "enum"):
             setattr(obj, d["plug"], int(v))
         else:
             setattr(obj, d["plug"], float(v))
@@ -286,20 +286,20 @@ def _parse_probes(text):
 POS = [
     ("scalar_double", [("a", "double", False)], [("b", "double", False)],
      "self.b = self.a * 2.0 + 1.0", {"a": 3.5}),
-    ("scalar_int", [("n", "int", False)], [("m", "int", False)],
+    ("scalar_int", [("n", "long", False)], [("m", "long", False)],
      "self.m = self.n * self.n", {"n": 7}),
     ("scalar_bool_passthrough", [("flag", "bool", False)],
      [("r", "bool", False)], "self.r = self.flag", {"flag": True}),
     ("scalar_bool_from_cmp", [("a", "double", False)], [("r", "bool", False)],
      "self.r = self.a >= 2.0", {"a": 3.0}),
-    ("angle_io", [("ang", "angle", False)], [("res", "angle", False)],
+    ("angle_io", [("ang", "doubleAngle", False)], [("res", "doubleAngle", False)],
      "self.res = self.ang * 2.0", {"ang": 0.5}),
     ("time_io", [("t", "time", False)], [("o", "double", False)],
      "self.o = self.t + 10.0", {"t": 24.0}),
-    ("vector_scalar", [("v", "vector", False)], [("w", "vector", False)],
+    ("vector_scalar", [("v", "double3", False)], [("w", "double3", False)],
      "self.w = self.v * 2.0", {"v": [1.0, 2.0, 3.0]}),
-    ("vector_cross", [("v", "vector", False), ("u", "vector", False)],
-     [("w", "vector", False)], "self.w = np.cross(self.v, self.u)",
+    ("vector_cross", [("v", "double3", False), ("u", "double3", False)],
+     [("w", "double3", False)], "self.w = np.cross(self.v, self.u)",
      {"v": [1.0, 0.0, 0.0], "u": [0.0, 1.0, 0.0]}),
     ("numeric_array_sq", [("xs", "double", True)], [("ys", "double", True)],
      "self.ys = self.xs * self.xs", {"xs": [1.0, 2.0, 3.0, 4.0]}),
@@ -309,10 +309,10 @@ POS = [
     ("numeric_array_norm", [("xs", "double", True)],
      [("nrm", "double", False)], "self.nrm = np.linalg.norm(self.xs)",
      {"xs": [3.0, 4.0]}),
-    ("int_array_scale", [("ks", "int", True)], [("ss", "int", True)],
+    ("int_array_scale", [("ks", "long", True)], [("ss", "long", True)],
      "self.ss = self.ks * 2", {"ks": [1, 2, 3]}),
-    ("vector_array_offset", [("pts", "vector", True)],
-     [("outp", "vector", True)], "self.outp = self.pts + 1.0",
+    ("vector_array_offset", [("pts", "double3", True)],
+     [("outp", "double3", True)], "self.outp = self.pts + 1.0",
      {"pts": [[0.0, 0.0, 0.0], [1.0, 1.0, 1.0], [2.0, -3.0, 4.0]]}),
     ("multi_output", [("a", "double", False), ("b", "double", False)],
      [("s", "double", False), ("d", "double", False)],
@@ -336,11 +336,11 @@ POS = [
      "rng = np.random.RandomState(12345)\n"
      "v = rng.random(4)\n"
      "self.total = float(np.sum(v))\n", {}),
-    ("rng_random_vec", [], [("w", "vector", False)],
+    ("rng_random_vec", [], [("w", "double3", False)],
      "import numpy as np\n"
      "rng = np.random.RandomState(7)\n"
      "self.w = rng.random(3)\n", {}),
-    ("rng_seed_from_input", [("seed", "int", False)],
+    ("rng_seed_from_input", [("seed", "long", False)],
      [("total", "double", False)],
      "import numpy as np\n"
      "rng = np.random.RandomState(int(self.seed))\n"
@@ -370,8 +370,8 @@ POS = [
     ("bitwise_bool_array", [("a", "bool", True), ("b", "bool", True)],
      [("r", "bool", True)], "self.r = (self.a & self.b) | (~self.a)",
      {"a": [True, False, True, False], "b": [True, True, False, False]}),
-    ("bitwise_int_array", [("a", "int", True), ("b", "int", True)],
-     [("r", "int", True)], "self.r = (self.a & self.b) | (self.a ^ self.b)",
+    ("bitwise_int_array", [("a", "long", True), ("b", "long", True)],
+     [("r", "long", True)], "self.r = (self.a & self.b) | (self.a ^ self.b)",
      {"a": [6, 3, 12], "b": [3, 3, 10]}),
     ("where_array", [("xs", "double", True)], [("r", "double", True)],
      "self.r = np.where(self.xs > 0.0, self.xs, -self.xs)",
@@ -387,7 +387,7 @@ POS = [
      "pts = centers[:, None, :] + corners[None, :, :]\n"
      "self.out = pts.reshape(-1)\n", {}),
     # DOUBLE np.newaxis -> GoL's base=(8*np.arange(m))[:,None,None]
-    ("double_newaxis_int", [], [("out", "int", True)],
+    ("double_newaxis_int", [], [("out", "long", True)],
      "import numpy as np\n"
      "base = (8 * np.arange(3, dtype=np.int64))[:, None, None]\n"
      "quad = np.arange(24, dtype=np.int64).reshape(1, 6, 4)\n"
@@ -402,7 +402,7 @@ POS = [
      "                           np.cumsum(m, axis=1).reshape(-1),\n"
      "                           np.cumsum(m).reshape(-1)])\n",
      {"xs": [1.0, 2.0, 3.0, 4.0, 5.0, 6.0]}),
-    ("cumsum_int", [("a", "int", True)], [("out", "int", True)],
+    ("cumsum_int", [("a", "long", True)], [("out", "long", True)],
      "self.out = np.cumsum(self.a)", {"a": [5, -2, 7, 0, 3]}),
     # The EXCLUSIVE prefix sum as a strictly-upper matmul (what patch_relax used
     # before cumsum existed) vs the shift form. `cumsum(a) - a` would NOT match:
@@ -426,11 +426,11 @@ POS = [
     # with the bounded GoL neighbour count.
     ("roll_wrap", [("xs", "double", True)], [("out", "double", True)],
      "self.out = np.roll(self.xs, 2)", {"xs": [1.0, 2.0, 3.0, 4.0, 5.0]}),
-    ("take_flat", [("xs", "double", True), ("idx", "int", True)],
+    ("take_flat", [("xs", "double", True), ("idx", "long", True)],
      [("out", "double", True)], "self.out = np.take(self.xs, self.idx)",
      {"xs": [10.0, 20.0, 30.0, 40.0], "idx": [3, 0, 2, 1, 0]}),
     # ys, xs = np.nonzero(2d) unpack -> per-axis int64 index arrays (GoL cores).
-    ("nonzero_unpack_2d", [], [("ysout", "int", True), ("xsout", "int", True)],
+    ("nonzero_unpack_2d", [], [("ysout", "long", True), ("xsout", "long", True)],
      "import numpy as np\n"
      "board = np.array([[0, 1, 0], [1, 0, 1]], dtype=np.int64)\n"
      "ys, xs = np.nonzero(board)\n"
@@ -519,10 +519,10 @@ POS = [
     # `self.w = (0, 0, 1)` lowers to nd::from_data<int64_t>(...); the vector
     # writer must _cast_array to double, else `nd::Array<double> = <int64_t>` does
     # not compile. Up-vectors / zero directions / euler resets all take this shape.
-    ("vector_int_pack", [], [("w", "vector", False)],
+    ("vector_int_pack", [], [("w", "double3", False)],
      "self.w = (0, 0, 1)", {}),
-    ("vector_int_pack_from_ints", [("n", "int", False)],
-     [("w", "vector", False)], "self.w = (self.n, 0, self.n * 2)", {"n": 3}),
+    ("vector_int_pack_from_ints", [("n", "long", False)],
+     [("w", "double3", False)], "self.w = (self.n, 0, self.n * 2)", {"n": 3}),
 ]
 
 # ---------------------------------------------------------------------------
@@ -589,24 +589,24 @@ HELP = [
     # same helper called with int AND double args -> two monomorphisations
     # (distinct C++ scalar types) from one def.
     ("help_polymorphic",
-     [("i", "int", False), ("f", "double", False)],
-     [("ri", "int", False), ("rf", "double", False)],
+     [("i", "long", False), ("f", "double", False)],
+     [("ri", "long", False), ("rf", "double", False)],
      "def _sq(x):\n    return x * x\n",
      "self.ri = _sq(self.i)\nself.rf = _sq(self.f)",
      {"i": 6, "f": 2.5}),
     # THE FLAGSHIP KERNEL: the full GoL board (nested helpers, default arg,
     # for-loop, RNG, zero-pad stencil, Conway mask) lowered + bit-faithful.
     ("help_gol_board",
-     [("h", "int", False), ("w", "int", False), ("samples", "int", False),
-      ("frame", "int", False), ("reset", "enum", False)],
+     [("h", "long", False), ("w", "long", False), ("samples", "long", False),
+      ("frame", "long", False), ("reset", "enum", False)],
      [("out", "bool", True)], _GOL_INIT,
      "board = _gol_board(self.h, self.w, self.samples, self.frame, self.reset)\n"
      "self.out = board.reshape(-1)\n",
      {"h": 6, "w": 6, "samples": 10, "frame": 4, "reset": 0}),
     # GoL board with reset=1 -> the reset branch (seed varies with frame).
     ("help_gol_board_reset",
-     [("h", "int", False), ("w", "int", False), ("samples", "int", False),
-      ("frame", "int", False), ("reset", "enum", False)],
+     [("h", "long", False), ("w", "long", False), ("samples", "long", False),
+      ("frame", "long", False), ("reset", "enum", False)],
      [("out", "bool", True)], _GOL_INIT,
      "board = _gol_board(self.h, self.w, self.samples, self.frame, self.reset)\n"
      "self.out = board.reshape(-1)\n",
@@ -615,7 +615,7 @@ HELP = [
     # an int and the recursive branch is int*int -> the least-fixed-point return
     # type must stay int64 (not over-widen to double). Emits a
     # `std::function<int64_t(int64_t)>` recursive lambda.
-    ("help_rec_factorial", [("n", "int", False)], [("r", "int", False)],
+    ("help_rec_factorial", [("n", "long", False)], [("r", "long", False)],
      "def _fac(n):\n"
      "    if n <= 1:\n"
      "        return 1\n"
@@ -625,7 +625,7 @@ HELP = [
     # branch base case: the Cox-de Boor / uniform B-spline basis recurrence.
     # Exercises float return-type inference + double recursion depth.
     ("help_rec_cox_deboor",
-     [("i", "int", False), ("k", "int", False), ("x", "double", False)],
+     [("i", "long", False), ("k", "long", False), ("x", "double", False)],
      [("r", "double", False)],
      "def _cdb(i, k, x):\n"
      "    if k == 0:\n"
@@ -640,7 +640,7 @@ HELP = [
     # DIRECT SELF-RECURSION whose returns MIX int (base) and float (recursive
     # branch adds 0.5): the fixed point must promote to double so the recursive
     # sum is not truncated. Guards against base-case-only dtype inference.
-    ("help_rec_mixed_dtype", [("n", "int", False)], [("r", "double", False)],
+    ("help_rec_mixed_dtype", [("n", "long", False)], [("r", "double", False)],
      "def _acc(n):\n"
      "    if n <= 0:\n"
      "        return 0\n"
@@ -650,7 +650,7 @@ HELP = [
     # helper: the sibling must be emitted exactly once across the fixed-point
     # re-transpiles, and the self-call arg (`n - 1`) must map to the SAME
     # monomorphisation as the top-level call (`self.n`), else it looks polymorphic.
-    ("help_rec_fib_sibling", [("n", "int", False)], [("r", "int", False)],
+    ("help_rec_fib_sibling", [("n", "long", False)], [("r", "long", False)],
      "def _bump(x):\n"
      "    return x + 1\n"
      "\n"
@@ -688,7 +688,7 @@ HELP_REJ = [
      "self.r = _pr(self.a)"),
     # ARRAY-returning recursion: only scalar recursion is supported; a helper
     # whose base case returns an array is rejected (fail-closed).
-    ("help_array_recursive", [("a", "double", True), ("k", "int", False)],
+    ("help_array_recursive", [("a", "double", True), ("k", "long", False)],
      [("r", "double", True)],
      "def _ar(a, k):\n    if k <= 0:\n        return a\n"
      "    return _ar(a, k - 1) + 1.0\n",
@@ -855,7 +855,7 @@ def _geo_oracle(ins, kind, values, source, init=None):
             setattr(obj, d["plug"], np.asarray(v, dtype=np.float64))
         elif t == "bool":
             setattr(obj, d["plug"], bool(v))
-        elif t in ("int", "enum"):
+        elif t in ("long", "enum"):
             setattr(obj, d["plug"], int(v))
         else:
             setattr(obj, d["plug"], float(v))
@@ -982,19 +982,19 @@ _SURF_CTOR_PER = (
 )
 GEO = [
     ("mesh_scaled", "mesh",
-     [("vin", "vector", True), ("scale", "double", False),
-      ("cin", "int", True), ("iin", "int", True)],
+     [("vin", "double3", True), ("scale", "double", False),
+      ("cin", "long", True), ("iin", "long", True)],
      _MESH_SRC,
      {"vin": [[0.0, 0.0, 0.0], [1.0, 2.0, 3.0], [4.0, 5.0, 6.0]],
       "scale": 2.0, "cin": [3], "iin": [0, 1, 2]}),
     ("curve_offset", "curve",
-     [("cvsIn", "vector", True), ("offset", "double", False)],
+     [("cvsIn", "double3", True), ("offset", "double", False)],
      _CURVE_SRC,
      {"cvsIn": [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [2.0, 0.0, 0.0],
                 [3.0, 0.0, 0.0]], "offset": 1.0}),
     ("surface_scaled", "surface",
-     [("cvsIn", "vector", True), ("scale", "double", False),
-      ("nu", "int", False), ("nv", "int", False)],
+     [("cvsIn", "double3", True), ("scale", "double", False),
+      ("nu", "long", False), ("nv", "long", False)],
      _SURF_SRC,
      {"cvsIn": [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0],
                 [1.0, 1.0, 0.0]], "scale": 1.5, "nu": 2, "nv": 2}),
@@ -1024,17 +1024,17 @@ GEO = [
 # geo rejects: try_lower_geo_compute must return None (fall back to AI porter)
 GEO_REJ = [
     # required buffers (counts/indices) never filled.
-    ("mesh_missing_buffers", "mesh", [("vin", "vector", True)],
+    ("mesh_missing_buffers", "mesh", [("vin", "double3", True)],
      "self.points = self.vin"),
     # a self-write to an attr that is not a geo buffer.
     ("geo_unknown_attr", "mesh",
-     [("vin", "vector", True), ("cin", "int", True), ("iin", "int", True)],
+     [("vin", "double3", True), ("cin", "long", True), ("iin", "long", True)],
      "self.points = self.vin\nself.counts = self.cin\n"
      "self.indices = self.iin\nself.junk = self.vin"),
     # a deferred P1 op (np.nonzero) -- exactly what GoL needs; rejects cleanly
     # until SP-5 lands, so codegen keeps the AI porter (zero regression).
     ("geo_deferred_op", "mesh",
-     [("vin", "vector", True), ("cin", "int", True), ("iin", "int", True)],
+     [("vin", "double3", True), ("cin", "long", True), ("iin", "long", True)],
      "import numpy as np\nys = np.nonzero(self.vin)\n"
      "self.points = self.vin\nself.counts = self.cin\nself.indices = self.iin"),
 ]
@@ -1093,8 +1093,8 @@ _GOL_MESH_COMPUTE = (
 # (name, kind, ins, init, source, values)
 GEO_HELP = [
     ("gol_mesh", "mesh",
-     [("boardX", "int", False), ("boardY", "int", False),
-      ("randomSamples", "int", False), ("frame", "int", False),
+     [("boardX", "long", False), ("boardY", "long", False),
+      ("randomSamples", "long", False), ("frame", "long", False),
       ("resetBoard", "enum", False), ("cellSize", "double", False)],
      _GOL_INIT, _GOL_MESH_COMPUTE,
      {"boardX": 8, "boardY": 8, "randomSamples": 20, "frame": 3,
@@ -1243,7 +1243,7 @@ def _deform_oracle(ins, rest, env_val, values, source):
             setattr(obj, d["plug"], np.asarray(v, dtype=np.float64))
         elif t == "bool":
             setattr(obj, d["plug"], bool(v))
-        elif t in ("int", "enum"):
+        elif t in ("long", "enum"):
             setattr(obj, d["plug"], int(v))
         else:
             setattr(obj, d["plug"], float(v))
@@ -1321,7 +1321,7 @@ DEF = [
     ("deform_no_env", _REST3, 1.0,
      [], _DEF_NO_ENV, {}),
     ("deform_per_vertex", _REST3, 0.5,
-     [("offsets", "vector", True)], _DEF_PER_VERTEX,
+     [("offsets", "double3", True)], _DEF_PER_VERTEX,
      {"offsets": [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]]}),
     ("deform_sphereWave", _SW_REST, 0.5,
      [], _DEF_SPHEREWAVE, {}),
@@ -1862,8 +1862,8 @@ def _check_output_buffer_contract(fails):
         fails.append("OUTBUF: numeric subscript output missing sized-buffer "
                      "materialisation")
     vec = nd_lower.lower_compute(
-        [_descr("vin", "vector", True, "input")],
-        [_descr("pts", "vector", True, "output")],
+        [_descr("vin", "double3", True, "input")],
+        [_descr("pts", "double3", True, "output")],
         "n = len(self.pts)\nfor i in range(n):\n    self.pts[i] = self.vin[i]\n")
     vtext = "\n".join(vec)
     if ("outputArrayValue(aPts)" not in vtext
@@ -1896,7 +1896,7 @@ def _check_output_buffer_contract(fails):
          "for i in range(n):\n"
          "    self.out[i] = self.xs[i] * 2.0 + float(i)\n",
          {"xs": [1.0, 2.0, 3.0, 4.0]}, (N,)),
-        ("vec", [("vin", "vector", True)], "pts",
+        ("vec", [("vin", "double3", True)], "pts",
          "n = len(self.pts)\n"
          "for i in range(n):\n"
          "    self.pts[i] = self.vin[i] * 2.0\n",
@@ -1905,7 +1905,7 @@ def _check_output_buffer_contract(fails):
     ]
     for kind, ins_s, out_plug, source, values, seed_shape in fixtures:
         ins      = [_descr(p, t, a, "input") for (p, t, a) in ins_s]
-        out_type = "vector" if kind == "vec" else "double"
+        out_type = "double3" if kind == "vec" else "double"
         outd     = _descr(out_plug, out_type, True, "output")
         try:
             body = nd_lower.lower_compute(ins, [outd], source)

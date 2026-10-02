@@ -84,7 +84,7 @@
             "default_value": 0.6
           },
           "driver": {
-            "type": "vector",
+            "type": "double3",
             "is_array": false,
             "portable": true,
             "cpp": {
@@ -97,7 +97,7 @@
             }
           },
           "gravity": {
-            "type": "vector",
+            "type": "double3",
             "is_array": false,
             "portable": true,
             "cpp": {
@@ -196,7 +196,7 @@
         },
         "outputs": {
           "driven": {
-            "type": "vector",
+            "type": "double3",
             "is_array": true,
             "portable": true,
             "cpp": {

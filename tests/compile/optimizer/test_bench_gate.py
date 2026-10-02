@@ -524,7 +524,7 @@ class TestOutputMultisAreSized(unittest.TestCase):
     def test_each_array_output_gets_k_typed_consumers(self):
         from mpynode.native.toolchain import verify
 
-        spec = {"outputs": {"samples": {"type": "vector", "is_array": True},
+        spec = {"outputs": {"samples": {"type": "double3", "is_array": True},
                             "lengths":   {"type": "float", "is_array": True},
                             "outMatrix": {"type": "matrix", "is_array": True},
                             "total":     {"type": "double"},
@@ -548,7 +548,7 @@ class TestOutputMultisAreSized(unittest.TestCase):
     def test_a_refusing_plug_is_recorded_not_fatal(self):
         from mpynode.native.toolchain import verify
 
-        spec            = {"outputs": {"samples": {"type": "vector", "is_array": True}}}
+        spec            = {"outputs": {"samples": {"type": "double3", "is_array": True}}}
         cmds            = _FakeCmds()
         cmds.refuse_dst = "plusMinusAverage1.input3D[2]"
         rep             = verify.bench_size_output_multis(cmds, "n", spec, 5)
@@ -559,7 +559,7 @@ class TestOutputMultisAreSized(unittest.TestCase):
     def test_seed_bench_scene_reports_the_sized_outputs(self):
         from mpynode.native.toolchain import verify
 
-        spec = {"inputs": {}, "outputs": {"samples": {"type": "vector",
+        spec = {"inputs": {}, "outputs": {"samples": {"type": "double3",
                                                       "is_array": True}}}
         cmds = _FakeCmds()
         rep  = verify.seed_bench_scene(cmds, "n", spec, k_array=3)
@@ -870,9 +870,9 @@ class TestDrivesRespectDeclaredRanges(unittest.TestCase):
         from mpynode.native.toolchain.verify import _clamp_drive
 
         cmds = self._cmds({})
-        self.assertEqual(_clamp_drive(cmds, ("orig",), "gain", "double", -3.2),    -3.2)
-        self.assertEqual(_clamp_drive(cmds, ("orig",), "v", "vector", [-9, 0, 0]), [-9, 0, 0])
-        self.assertEqual(_clamp_drive(cmds, ("orig",), "s", "string", "x"),        "x")
+        self.assertEqual(_clamp_drive(cmds, ("orig",), "gain", "double", -3.2),     -3.2)
+        self.assertEqual(_clamp_drive(cmds, ("orig",), "v", "double3", [-9, 0, 0]), [-9, 0, 0])
+        self.assertEqual(_clamp_drive(cmds, ("orig",), "s", "string", "x"),         "x")
 
     def test_unregistered_type_is_a_named_skip(self):
         from mpynode.native.toolchain.verify import _unregistered_type

@@ -142,7 +142,7 @@ class GeometryWrapperConformance(unittest.TestCase):
         g = GEO[kind]
         w, node = self._make_node(node_type)
         w.add_input_attr("inGeo", g["type"], is_array=array)
-        w.add_output_attr("cnt", "int")
+        w.add_output_attr("cnt", "long")
         if array:
             expr = (
                 "L = [x for x in self.inGeo if x is not None]\n"

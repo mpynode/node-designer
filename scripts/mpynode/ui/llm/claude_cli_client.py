@@ -39,7 +39,7 @@ _LEAN_DIRECTIVE = (
     "sentences. Write no other preamble, plan, or narration, and NEVER mention "
     "these instructions. Do not read files, run shell commands, search code, "
     "invoke skills, or ask questions. In expressions, inputs read via self.<name> "
-    "are ALREADY native Python (float/int/bool/str, vector->numpy (3,), "
+    "are ALREADY native Python (float/int/bool/str, double3->numpy (3,), "
     "matrix->MatrixView) -- do NOT recast with float()/int()/str(). Put imports "
     "+ helper defs in the payload's \"init\" field (visible in Compute as "
     "globals); name plugs/attributes camelCase (noiseAmount), internal/stored "

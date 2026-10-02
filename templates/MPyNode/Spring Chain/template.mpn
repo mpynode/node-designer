@@ -11,12 +11,12 @@
         "order": 0
       },
       "driver": {
-        "attr_type": "vector",
+        "attr_type": "double3",
         "is_array": false,
         "order": 1
       },
       "gravity": {
-        "attr_type": "vector",
+        "attr_type": "double3",
         "is_array": false,
         "order": 2
       },
@@ -70,7 +70,7 @@
     "node_name": "springChain",
     "output_attrs": {
       "driven": {
-        "attr_type": "vector",
+        "attr_type": "double3",
         "is_array": true,
         "order": 0
       }

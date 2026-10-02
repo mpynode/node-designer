@@ -7,21 +7,21 @@ import maya.cmds as cmds
 BUNDLE    = os.path.join(os.path.dirname(__file__), 'spine.mll')
 NODE_TYPE = 'spine'
 SOURCE    = 'spine'
-INPUTS    = {"controlMatrices": "matrix", "samples": "float", "degree": "int", "periodic": "bool", "stretch": "float", "pivot": "float", "scale": "float", "shift": "float", "defaultLength": "double", "restKeys": "double", "translateProjection": "enum", "curveAimAxis": "enum", "curveUpAxis": "enum", "curveInvertAimAxis": "enum", "curveInvertUpAxis": "enum", "controlUpAxes": "int", "rotateMode": "enum", "rotateFlags": "bool", "rotateMatrix": "matrix", "rotateProjection": "enum", "scaleMode": "enum", "scaleFlags": "bool", "scaleMatrix": "matrix", "scaleProjection": "enum", "scaleMethod": "enum", "computeWeights": "bool", "openKv": "double", "closedKv": "double"}
-OUTPUTS   = {"outputRotate": "euler", "outputScale": "vector", "outputTranslate": "vector", "currentLength": "double", "controlKeys": "double", "restValid": "bool", "outputWeights": "double"}
+INPUTS    = {"controlMatrices": "matrix", "samples": "float", "degree": "long", "periodic": "bool", "stretch": "float", "pivot": "float", "scale": "float", "shift": "float", "defaultLength": "double", "restKeys": "double", "translateProjection": "enum", "curveAimAxis": "enum", "curveUpAxis": "enum", "curveInvertAimAxis": "enum", "curveInvertUpAxis": "enum", "controlUpAxes": "long", "rotateMode": "enum", "rotateFlags": "bool", "rotateMatrix": "matrix", "rotateProjection": "enum", "scaleMode": "enum", "scaleFlags": "bool", "scaleMatrix": "matrix", "scaleProjection": "enum", "scaleMethod": "enum", "computeWeights": "bool", "openKv": "double", "closedKv": "double"}
+OUTPUTS   = {"outputRotate": "euler", "outputScale": "double3", "outputTranslate": "double3", "currentLength": "double", "controlKeys": "double", "restValid": "bool", "outputWeights": "double"}
 TOL       = 1e-4
 
 
 def _sample(t):
     if t == "bool": return random.choice([0, 1])
-    if t == "int": return random.randint(-10, 10)
+    if t == "long": return random.randint(-10, 10)
     if t == "enum": return random.randint(0, 1)
-    if t in ("vector", "euler"): return [random.uniform(-5, 5) for _ in range(3)]
+    if t in ("double3", "euler"): return [random.uniform(-5, 5) for _ in range(3)]
     return random.uniform(-5, 5)
 
 
 def _set(node, attr, t, v):
-    if t in ("vector", "euler"):
+    if t in ("double3", "euler"):
         cmds.setAttr(node + "." + attr, v[0], v[1], v[2], type="double3")
     else:
         cmds.setAttr(node + "." + attr, v)

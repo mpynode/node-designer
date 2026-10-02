@@ -196,8 +196,8 @@ class TestApi2SuspendedNodesDoNotRunTheirExpression(unittest.TestCase):
     def _build(self, module, cls_name, name):
         import importlib
         w = getattr(importlib.import_module(module), cls_name).create(name=name)
-        w.add_input_attr("k", "int")
-        w.add_output_attr("n", "int")
+        w.add_input_attr("k", "long")
+        w.add_output_attr("n", "long")
         w.set_compute_expression(self._EXPR)
         node = w.get_name()
         mc.setKeyframe(node + ".k", t=1, v=0)

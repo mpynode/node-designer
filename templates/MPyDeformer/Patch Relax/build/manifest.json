@@ -70,7 +70,7 @@
             }
           },
           "ringNbrs": {
-            "type": "int",
+            "type": "long",
             "is_array": true,
             "portable": true,
             "cpp": {
@@ -83,7 +83,7 @@
             }
           },
           "ringWidth": {
-            "type": "int",
+            "type": "long",
             "is_array": false,
             "portable": true,
             "cpp": {
@@ -96,7 +96,7 @@
             }
           },
           "iterations": {
-            "type": "int",
+            "type": "long",
             "is_array": false,
             "portable": true,
             "cpp": {

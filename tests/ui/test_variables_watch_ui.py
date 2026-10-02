@@ -1097,7 +1097,7 @@ class TestWatchNoForceEval(unittest.TestCase):
         from mpynode.wrappers._mpy_node import MPyNode
 
         node = MPyNode.create(name=name)
-        node.add_output_attr("pts", "vector", is_array=True)
+        node.add_output_attr("pts", "double3", is_array=True)
         node.set_compute_expression(
             'print("%s")\nself.pts = [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]\n' % marker
         )
@@ -1117,7 +1117,7 @@ class TestWatchNoForceEval(unittest.TestCase):
         mc.file(new=True, force=True)
         name = self._make("EVALW1", "EVALW1")
         mc.getAttr(name + ".pts[0]")  # prime -> clean
-        meta = {"attr_type": "vector", "is_array": True}
+        meta = {"attr_type": "double3", "is_array": True}
         n, _ = self._count("EVALW1", lambda: read_multi_plug_values(name, "pts", meta))
         self.assertEqual(n, 0)
 
@@ -1129,7 +1129,7 @@ class TestWatchNoForceEval(unittest.TestCase):
         mc.file(new=True, force=True)
         name = self._make("EVALW2", "EVALW2")
         mc.getAttr(name + ".pts[0]")  # prime
-        meta  = {"attr_type": "vector", "is_array": True}
+        meta  = {"attr_type": "double3", "is_array": True}
         total = 0
         for _ in range(5):
             n, _ = self._count(
@@ -1145,7 +1145,7 @@ class TestWatchNoForceEval(unittest.TestCase):
         mc.file(new=True, force=True)
         name = self._make("EVALW3", "EVALW3")
         mc.getAttr(name + ".pts[0]")  # prime
-        meta = {"attr_type": "vector", "is_array": True}
+        meta = {"attr_type": "double3", "is_array": True}
         val  = read_multi_plug_values(name, "pts", meta)
         import numpy as np
 
@@ -1163,13 +1163,13 @@ class TestWatchNoForceEval(unittest.TestCase):
         mc.file(new=True, force=True)
         node = MPyNode.create(name="inDriven")
         node.add_input_attr("k", "float", default_value=1.0)
-        node.add_output_attr("pts", "vector", is_array=True)
+        node.add_output_attr("pts", "double3", is_array=True)
         node.set_compute_expression(
             'print("EVALW4")\n'
             "self.pts = [[self.k, 0.0, 0.0], [0.0, self.k, 0.0]]\n"
         )
         name = node.get_name()
-        meta = {"attr_type": "vector", "is_array": True}
+        meta = {"attr_type": "double3", "is_array": True}
         mc.setAttr(name + ".k", 1.0)
         mc.getAttr(name + ".pts[0]")  # real first eval (viewport/connection)
         v1 = read_multi_plug_values(name, "pts", meta)
@@ -1195,11 +1195,11 @@ class TestWatchNoForceEval(unittest.TestCase):
 
         mc.file(new=True, force=True)
         node = MPyNode.create(name="scalarArrays")
-        node.add_input_attr("idx",   "int",    is_array=True)
+        node.add_input_attr("idx",   "long",   is_array=True)
         node.add_input_attr("wts",   "float",  is_array=True)
         node.add_input_attr("flags", "bool",   is_array=True)
         node.add_input_attr("tags",  "string", is_array=True)
-        node.add_input_attr("empty", "int",    is_array=True)
+        node.add_input_attr("empty", "long",   is_array=True)
         name = node.get_name()
         for i, v in enumerate((2, 3, 1)):
             mc.setAttr("%s.idx[%d]" % (name, i), v)
@@ -1211,7 +1211,7 @@ class TestWatchNoForceEval(unittest.TestCase):
             mc.setAttr("%s.tags[%d]" % (name, i), v, type="string")
 
         idx = read_multi_plug_values(
-            name, "idx", {"attr_type": "int", "is_array": True})
+            name, "idx", {"attr_type": "long", "is_array": True})
         self.assertIsInstance(idx, np.ndarray)
         self.assertEqual(idx.dtype, np.dtype(np.int64))
         self.assertEqual(list(idx), [2, 3, 1])
@@ -1237,7 +1237,7 @@ class TestWatchNoForceEval(unittest.TestCase):
         # An empty array still reports the right dtype (0-length numpy array),
         # matching read_user_inputs_dict's np.zeros(0, dtype=...) contract.
         empt = read_multi_plug_values(
-            name, "empty", {"attr_type": "int", "is_array": True})
+            name, "empty", {"attr_type": "long", "is_array": True})
         self.assertIsInstance(empt, np.ndarray)
         self.assertEqual(empt.dtype, np.dtype(np.int64))
         self.assertEqual(empt.shape, (0,))
@@ -1253,7 +1253,7 @@ class TestWatchNoForceEval(unittest.TestCase):
 
         mc.file(new=True, force=True)
         node = MPyNode.create(name="sparseArrays")
-        node.add_input_attr("g", "int", is_array=True)
+        node.add_input_attr("g", "long", is_array=True)
         name = node.get_name()
         # Non-contiguous indices: set 0 and 2, leave 1 unset (a gap).
         mc.setAttr("%s.g[0]" % name, 5)
@@ -1261,7 +1261,7 @@ class TestWatchNoForceEval(unittest.TestCase):
 
         # sparse -> COMPACT [5, 7] (present values, sorted by index), int64.
         sp = read_multi_plug_values(
-            name, "g", {"attr_type": "int", "is_array": True, "sparse": True})
+            name, "g", {"attr_type": "long", "is_array": True, "sparse": True})
         self.assertIsInstance(sp, np.ndarray)
         self.assertEqual(sp.dtype, np.dtype(np.int64))
         self.assertEqual(list(sp), [5, 7])
@@ -1269,7 +1269,7 @@ class TestWatchNoForceEval(unittest.TestCase):
         # dense -> the index-1 gap is filled with the attr default (0 for int),
         # int64, length 3 -- matching what the expression sees.
         dn = read_multi_plug_values(
-            name, "g", {"attr_type": "int", "is_array": True, "sparse": False})
+            name, "g", {"attr_type": "long", "is_array": True, "sparse": False})
         self.assertIsInstance(dn, np.ndarray)
         self.assertEqual(dn.dtype,   np.dtype(np.int64))
         self.assertEqual(dn.shape,   (3,))
@@ -1291,8 +1291,8 @@ class TestWatchNoForceEval(unittest.TestCase):
 
         mc.file(new=True, force=True)
         node = MPyNode.create(name="angleNode")
-        node.add_input_attr("ang", "angle")
-        node.add_input_attr("angs", "angle", is_array=True)
+        node.add_input_attr("ang", "doubleAngle")
+        node.add_input_attr("angs", "doubleAngle", is_array=True)
         node.add_input_attr("rot", "euler")
         name = node.get_name()
         mc.setAttr("%s.ang" % name,     90)          # 90 deg (UI unit)
@@ -1302,11 +1302,11 @@ class TestWatchNoForceEval(unittest.TestCase):
 
         single = reshape_plug_value(
             mc.getAttr("%s.ang" % name),
-            {"attr_type": "angle", "is_array": False})
+            {"attr_type": "doubleAngle", "is_array": False})
         self.assertAlmostEqual(float(single), math.pi / 2, places=6)
 
         arr = read_multi_plug_values(
-            name, "angs", {"attr_type": "angle", "is_array": True})
+            name, "angs", {"attr_type": "doubleAngle", "is_array": True})
         self.assertIsInstance(arr, np.ndarray)
         self.assertEqual(arr.dtype, np.dtype(np.float64))
         self.assertAlmostEqual(float(arr[0]), math.pi / 2, places=6)
@@ -1330,10 +1330,10 @@ class TestWatchNoForceEval(unittest.TestCase):
 
         mc.file(new=True, force=True)
         node = MPyNode.create(name="emptyVec")
-        node.add_input_attr("v", "vector", is_array=True)  # no elements set
+        node.add_input_attr("v", "double3", is_array=True)  # no elements set
         name = node.get_name()
         v = read_multi_plug_values(
-            name, "v", {"attr_type": "vector", "is_array": True})
+            name, "v", {"attr_type": "double3", "is_array": True})
         self.assertIsInstance(v, np.ndarray)
         self.assertEqual(v.dtype,         np.dtype(np.float64))
         self.assertEqual(v.shape,         (0, 3))

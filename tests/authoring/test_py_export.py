@@ -83,12 +83,12 @@ class TestGenerateNodeScript(unittest.TestCase):
 
         n = MPyNode.create(name="rich#")
         n.add_input_attr("mode", "enum", enum_names=["off", "on", "auto"])
-        n.add_input_attr("points", "vector", is_array=True)
+        n.add_input_attr("points", "double3", is_array=True)
         n.add_input_attr(
             "amp", "float", min_value=0.0, max_value=1.0, default_value=0.5
         )
         n.set_input_attr_color("amp", "#ff0000")
-        n.add_output_attr("result", "vector")
+        n.add_output_attr("result", "double3")
 
         cls     = _build_cls(self._gen(n), "RebuiltNode")
         rebuilt = cls.build(name="rebuiltRich#")

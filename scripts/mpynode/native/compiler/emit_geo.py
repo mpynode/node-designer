@@ -37,14 +37,14 @@ _GEO_INCLUDES_KIND = {
 # Scalar OUTPUT attr types a geometry GENERATOR may declare beside its geometry
 # output -- exactly the kinds emit_attr creates, seeds (_out_handle_default) and
 # hints (_setter_hint) the same way for the generic MPxNode path, so the two
-# families cannot drift. Compound outputs (vector/euler/color/quaternion/float2)
+# families cannot drift. Compound outputs (double3/euler/color/quaternion/float2)
 # need the per-child attributeAffects wiring node_scaffold does for downstream
 # child connections, hex needs the nd_hex_encode write path, and arrays have no
 # geo write path at all: none of those is half-wired here, they are refused by
 # name (see _generate_geo_cpp) -- the fail-LOUD convention of the locator and
 # iksolver input gates.
 _GEO_SCALAR_OUT_TYPES = frozenset(
-    ("float", "double", "int", "bool", "enum", "matrix", "string", "angle", "time"))
+    ("float", "double", "long", "bool", "enum", "matrix", "string", "doubleAngle", "time"))
 
 def _geo_build_lines(kind, info):
     """C++ that turns the filled buffers into the geo data MObject `newData`.

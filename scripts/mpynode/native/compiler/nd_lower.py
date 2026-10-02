@@ -18,10 +18,10 @@ is_array}}``) and the node's Python compute source, it emits the C++ that:
      construct, or a declared output is never written.
 
 Supported I/O (numeric only -- everything nd:: can represent bit-faithfully):
-  * scalar   : float/double/int/bool/enum/angle/time
-  * 1-D array: float/double/int/bool/enum/angle/time            -> nd shape (N,)
-  * vector   : vector/euler (a double3)                          -> nd shape (3,)
-  * vec array: vector/euler multi (std::vector<MVector>)         -> nd shape (N,3)
+  * scalar   : float/double/long/bool/enum/doubleAngle/time
+  * 1-D array: float/double/long/bool/enum/doubleAngle/time     -> nd shape (N,)
+  * vector   : double3/euler                                     -> nd shape (3,)
+  * vec array: double3/euler multi (std::vector<MVector>)        -> nd shape (N,3)
 Unsupported (matrix/string/hex/quaternion/float2/color, matrix arrays, meshes,
 nurbs) reject -- those keep the existing AI-porter path with zero regression.
 
@@ -47,8 +47,8 @@ from mpynode._common.interface.morph_method_interface import (WEIGHT_PLUG,
 
 # nd element dtype for each Maya attr type (only numeric types map).
 _ND_DTYPE = {
-    "float": "double", "double": "double", "angle": "double", "time": "double",
-    "int": "int64", "enum": "int64",
+    "float": "double", "double": "double", "doubleAngle": "double", "time": "double",
+    "long": "int64", "enum": "int64",
     "bool": "bool",
 }
 # nd C++ element type for an nd dtype.
@@ -56,11 +56,11 @@ _ND_CTYPE = {"double": "double", "int64": "int64_t", "bool": "bool"}
 # Maya C++ container element type per attr type (mirrors codegen._CPP for the
 # numeric subset; used to decide whether a read needs an element conversion).
 _MAYA_CTYPE = {
-    "float": "float", "double": "double", "int": "int", "bool": "bool",
-    "enum": "short", "angle": "double", "time": "double",
+    "float": "float", "double": "double", "long": "int", "bool": "bool",
+    "enum": "short", "doubleAngle": "double", "time": "double",
 }
 # Types carried as a 3-component vector (double3 scalar / std::vector<MVector>).
-_VEC_TYPES = ("vector", "euler")
+_VEC_TYPES = ("double3", "euler")
 
 # ---- geometry-INPUT read surface (Phase 6). A typed geo INPUT (mesh/
 # nurbsCurve/nurbsSurface) is handed to compute() as ``in_<member>`` (an MFn*)
@@ -404,7 +404,7 @@ def _materialise_input(m, dst):
 
     if _is_float2_array(meta):
         # std::vector<MFloatVector> (float2 carrier; u=.x, v=.y) -> nd (N,2)
-        # double (mirrors vector/color-array; float2 has 2 components).
+        # double (mirrors double3/color-array; float2 has 2 components).
         return ([
             "    nd::Array<double> %s;" % dst,
             "    {",
@@ -488,13 +488,13 @@ def _scalar_output_lines(m, val):
         return ["%s.setFloat((float)(%s));" % (h, e)]
     if t == "double":
         return ["%s.setDouble((double)(%s));" % (h, e)]
-    if t == "int":
+    if t == "long":
         return ["%s.setInt((int)(%s));" % (h, e)]
     if t == "bool":
         return ["%s.setBool((bool)(%s));" % (h, e)]
     if t == "enum":
         return ["%s.setShort((short)(%s));" % (h, e)]
-    if t == "angle":
+    if t == "doubleAngle":
         return ["%s.setMAngle(MAngle((double)(%s)));" % (h, e)]
     if t == "time":
         return ["%s.setMTime(MTime((double)(%s)));" % (h, e)]
@@ -4054,11 +4054,12 @@ def lower_transform(spec):
     matrix_inputs = {
         plug for plug, meta in (spec.get("inputs") or {}).items()
         if meta.get("type") == "matrix" and not meta.get("is_array")}
-    # Generic scalar inputs (float/vector/euler/color/quaternion/float2/angle/
-    # time/enum/string) the scaffold exposes as ``in_a<ident>`` locals. Reuse
-    # emit_transform's collector so the member names + type filter are a single
-    # source of truth (the read local + this bind must agree). _materialise_input
-    # lifts every one except string (-> raises -> the whole compute PORTs).
+    # Generic scalar inputs (float/double3/euler/color/quaternion/float2/
+    # doubleAngle/time/enum/string) the scaffold exposes as ``in_a<ident>``
+    # locals. Reuse emit_transform's collector so the member names + type
+    # filter are a single source of truth (the read local + this bind must
+    # agree). _materialise_input lifts every one except string (-> raises ->
+    # the whole compute PORTs).
     from mpynode.native.compiler.emit_transform import _transform_generic_inputs
     generic_ms = {gm["plug"]: gm for gm in _transform_generic_inputs(spec)}
     allowed = (set(_TRANSFORM_MATRIX_SINKS) | set(_TRANSFORM_GATE_SINKS)

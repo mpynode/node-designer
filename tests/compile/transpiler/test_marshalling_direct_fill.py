@@ -66,7 +66,7 @@ class TestInputsAreMoved(unittest.TestCase):
                      "rest = mesh.getPoints()\n"
                      "mesh.setPoints(rest + self.offsets)\n",
                      base="MPxDeformerNode", mpy_type="mPyDeformer",
-                     inputs={"offsets": {"type": "vector", "is_array": True}})
+                     inputs={"offsets": {"type": "double3", "is_array": True}})
         cpp = codegen.generate_cpp(spec, for_port=True)
         self.assertIn("lowered deform (no port)", cpp)
         self.assertIn("nd::from_data<double>(std::move(_tmp), {(int64_t)in_aOffsets.size(), 3});", cpp)

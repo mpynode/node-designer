@@ -196,12 +196,12 @@ def _full_inputs(extra=None):
     base = {
         "fileName":        {"type": "string"},
         "uvCoord":         {"type": "float2"},
-        "colorSpace":      {"type": "int"},
+        "colorSpace":      {"type": "long"},
         "preFilter":       {"type": "bool"},
-        "preFilterKernel": {"type": "int"},
+        "preFilterKernel": {"type": "long"},
         "preFilterRadius": {"type": "float"},
-        "wrapModeU":       {"type": "int"},
-        "wrapModeV":       {"type": "int"},
+        "wrapModeU":       {"type": "long"},
+        "wrapModeV":       {"type": "long"},
         "borderColor":     {"type": "color"},
     }
     if extra:
@@ -250,12 +250,12 @@ def _members():
     ins = [
         mk("inputs", "fileName", "string"),
         mk("inputs", "uvCoord", "float2"),
-        mk("inputs", "colorSpace", "int"),
+        mk("inputs", "colorSpace", "long"),
         mk("inputs", "preFilter", "bool"),
-        mk("inputs", "preFilterKernel", "int"),
+        mk("inputs", "preFilterKernel", "long"),
         mk("inputs", "preFilterRadius", "float"),
-        mk("inputs", "wrapModeU", "int"),
-        mk("inputs", "wrapModeV", "int"),
+        mk("inputs", "wrapModeU", "long"),
+        mk("inputs", "wrapModeV", "long"),
         mk("inputs", "borderColor", "color"),
         mk("inputs", "tIn", "float"),
     ]
@@ -327,7 +327,7 @@ class TestClassify(unittest.TestCase):
         # a valid cast, and `self.tIn * SPEED` would be elementwise, so fall
         # back instead of emitting wrong C++.
         compute = ftc.make_scanline_compute(_INLINE_DEFAULT_COMPUTE)
-        for bad in ("vector", "float2", "matrix", "string"):
+        for bad in ("double3", "float2", "matrix", "string"):
             kind, _ = ftc.classify_full_parity_compute(
                 _spec(compute, init=SCANLINE_INIT,
                       inputs=_full_inputs({"tIn": {"type": bad}})))

@@ -234,8 +234,8 @@ def _type_compatible(target_maya_type: str, source_maya_type: str) -> bool:
     symmetric for our purposes).
 
     Maya's connection rules in practice:
-      * Numeric scalars (float/double/int/bool/angle/time/enum) are all
-        interconvertible \u2014 you can connect a bool into a float input.
+      * Numeric scalars (float/double/long/bool/doubleAngle/time/enum) are
+        all interconvertible \u2014 you can connect a bool into a float input.
       * 3-vector compounds (float3/double3) match each other.
       * 4-vector compounds (float4/double4) match each other.
       * Matrix matches matrix (and fltMatrix).
@@ -797,7 +797,7 @@ class _BaseConnectDialog(QDialog):
         self._compat_check = QCheckBox("Filter by compatible type", self)
         self._compat_check.setToolTip(
             "Only show plugs whose type can be connected to the target. "
-            "E.g. a vector input only shows compound 3-tuples (translate, "
+            "E.g. a double3 input only shows compound 3-tuples (translate, "
             "rotate, scale); a float input only shows scalars (visibility, "
             "translateX,...). Uncheck to see every settable plug."
         )

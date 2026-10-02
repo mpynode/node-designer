@@ -93,7 +93,7 @@
             }
           },
           "degree": {
-            "type": "int",
+            "type": "long",
             "is_array": false,
             "portable": true,
             "cpp": {
@@ -288,7 +288,7 @@
             ]
           },
           "controlUpAxes": {
-            "type": "int",
+            "type": "long",
             "is_array": true,
             "portable": true,
             "cpp": {
@@ -499,7 +499,7 @@
             }
           },
           "outputScale": {
-            "type": "vector",
+            "type": "double3",
             "is_array": true,
             "portable": true,
             "cpp": {
@@ -512,7 +512,7 @@
             }
           },
           "outputTranslate": {
-            "type": "vector",
+            "type": "double3",
             "is_array": true,
             "portable": true,
             "cpp": {

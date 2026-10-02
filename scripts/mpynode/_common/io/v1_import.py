@@ -32,8 +32,10 @@ Python 2 -> 3 migration: the shipped ``quaternionSpineNode.ma`` has
 
 The conversion itself is three problems:
 
-1. **Attributes** -- free. v1's 15 types are a strict subset of v2's 19, so
-   names and types carry over unchanged.
+1. **Attributes** -- names carry over unchanged. v1's 15 types are a subset
+   of the old v2 names; three were renamed since (``int`` -> ``long``,
+   ``vector`` -> ``double3``, ``angle`` -> ``doubleAngle``), so types go
+   through ``attr_types.upgrade_legacy_name`` on the way in.
 2. **The expression** -- v1 exposed plugs as BARE LOCALS (``pivot``,
    ``outputTranslate = ...``); v2 uses ``self.pivot``. Rewritten by AST, never
    by text substitution, which would corrupt strings, comments and any local
@@ -48,6 +50,8 @@ import ast
 import codecs
 import io
 import pickle
+
+from mpynode._common.attr_types import upgrade_legacy_name
 
 # v1's identity, for reference and for error messages.
 V1_NODE_TYPE = "mPyNode"
@@ -416,13 +420,13 @@ _MATRIX_CTORS = {"MMatrix": "asMatrix",
                  "MTransformationMatrix": "asTransformationMatrix"}
 
 # Plug types that take exactly three components.
-_VEC3_TYPES = ("vector", "color", "euler")
+_VEC3_TYPES = ("double3", "color", "euler")
 
 # Plug types v1 handed back WRAPPED in a unit object rather than as a number:
 # DEFAULT_ANGLE = MAngle and DEFAULT_TIME = MTime in v1's node module. Both
 # expose the number as `.value`. v2 hands the number directly, so the extra
 # hop raises `AttributeError: 'float' object has no attribute 'value'`.
-_UNIT_WRAPPED_TYPES = ("time", "angle")
+_UNIT_WRAPPED_TYPES = ("time", "doubleAngle")
 
 _VEC3_SHIM = "_v1_vec3"
 
@@ -537,7 +541,7 @@ class _ApiTypeFix(ast.NodeTransformer):
     def visit_Attribute(self, node):
         """``self.<time plug>.value`` -> ``self.<time plug>``.
 
-        v1 handed a ``time`` plug back as an ``MTime`` and an ``angle`` plug
+        v1 handed a ``time`` plug back as an ``MTime`` and an angle plug
         as an ``MAngle``, both of which expose the number as ``.value``. v2
         hands the number directly, so the extra hop raises
         ``AttributeError: 'float' object has no attribute 'value'`` --
@@ -738,8 +742,9 @@ def split_and_selfify(expression, inputs, outputs):
     # Now that plug access wears a `self.` prefix, the declared types can be
     # used to repair the two v1/v2 type mismatches outright. Ordering is not
     # optional: _ApiTypeFix recognises a plug by that prefix.
-    types = dict(inputs)
-    types.update(outputs)
+    # v1's type names are the old v2 names; the fixes key on today's names.
+    types = _upgrade_types(inputs)
+    types.update(_upgrade_types(outputs))
     fix  = _ApiTypeFix(types)
     body = [fix.visit(s) for s in body]
 
@@ -851,6 +856,15 @@ def _api_object_use(src):
     return sorted(hits)
 
 
+def _upgrade_types(table):
+    """``{name: v1 type}`` -> ``{name: today's type}``.
+
+    v1 wrote the old v2 names; ``int``, ``vector`` and ``angle`` have since
+    been renamed, and v2 rejects the old ones (``attr_types.RETIRED``).
+    """
+    return {k: upgrade_legacy_name(v) for k, v in table.items()}
+
+
 def convert(v1):
     """A v1 node -> the pieces v2 needs, plus a report of what was inexact."""
     from mpynode._common.io import v1_compat
@@ -868,8 +882,8 @@ def convert(v1):
         "api_objects": api_use,
         "needs_hand_finish": bool(api_use),
         "name": v1.name,
-        "inputs": dict(v1.inputs),
-        "outputs": dict(v1.outputs),
+        "inputs": _upgrade_types(v1.inputs),
+        "outputs": _upgrade_types(v1.outputs),
         # Demoted v1 vectors become V1Vec so they can be computed with.
         # The restricted unpickler maps v1's classes to plain lists, which is
         # right for reading a file without v1 installed and wrong for

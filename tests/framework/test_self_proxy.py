@@ -654,7 +654,7 @@ class TestMeshInputCollisionEndToEnd(unittest.TestCase):
         from mpynode.wrappers.mpy_mesh import MPyMesh
 
         loc = MPyMesh.create(name="meshCollide")
-        loc.add_input_attr("colors", "vector")
+        loc.add_input_attr("colors", "double3")
         mc.setAttr(loc.get_name() + ".colors", 0.25, 0.5, 0.75, type="double3")
         # Read the input via self.colors, persist it as a stored var so we can
         # observe it after compute commits.

@@ -3,7 +3,7 @@
 The user hit "compiled meshRegion has no input mesh plug". The mesh plug itself
 is generated correctly; the real, durable hazard is that codegen's locator path
 SILENTLY drops any input it can't represent: ``_loc_scalar_inputs`` only keeps
-float/int/bool/enum and ``_loc_mesh_inputs`` only keeps mesh, so a vector / euler
+float/long/bool/enum and ``_loc_mesh_inputs`` only keeps mesh, so a double3 / euler
 / string / array / second-mesh input vanishes with NO error -- the compiled node
 just lacks that plug. ``_check`` for the locator base only validated portability
 and never asserted the inputs survived (its comment even claimed "user INPUT
@@ -61,7 +61,7 @@ class TestLocatorInputGate(unittest.TestCase):
         from mpynode.native import compiler as codegen
         spec = _loc_spec({
             "wire_width": {"type": "float", "is_array": False},
-            "count":      {"type": "int", "is_array": False},
+            "count":      {"type": "long", "is_array": False},
             "show":       {"type": "bool", "is_array": False},
             "mode":       {"type": "enum", "is_array": False, "enum_names": ["a", "b"]},
             "inMesh":     {"type": "mesh", "is_array": False},
@@ -69,9 +69,9 @@ class TestLocatorInputGate(unittest.TestCase):
         codegen._check(spec)  # must NOT raise
 
     def test_accepts_vector_input(self):
-        # vector/euler ride the shared findPlug readers into the Inputs POD.
+        # double3/euler ride the shared findPlug readers into the Inputs POD.
         from mpynode.native import compiler as codegen
-        spec = _loc_spec({"dir": {"type": "vector", "is_array": False}})
+        spec = _loc_spec({"dir": {"type": "double3", "is_array": False}})
         codegen._check(spec)  # must NOT raise
 
     def test_accepts_euler_input(self):
@@ -244,7 +244,7 @@ class TestGeoGeneratorInputGate(unittest.TestCase):
     def test_accepts_scalar_inputs(self):
         from mpynode.native import compiler as codegen
         spec = _geo_spec({
-            "resolution": {"type": "int", "is_array": False},
+            "resolution": {"type": "long", "is_array": False},
             "isoValue":   {"type": "double", "is_array": False},
             "label":      {"type": "hex", "is_array": False},   # scalar hex is fine
         })
@@ -255,10 +255,10 @@ class TestGeoGeneratorInputGate(unittest.TestCase):
         from mpynode.native import compiler as codegen
         spec = _geo_spec({
             "shapeMatrix": {"type": "matrix", "is_array": True},
-            "shapeType":   {"type": "int", "is_array": True},
+            "shapeType":   {"type": "long", "is_array": True},
             "additive":    {"type": "bool", "is_array": True},
             "smoothing":   {"type": "double", "is_array": True},
-            "halfExtents": {"type": "vector", "is_array": True},
+            "halfExtents": {"type": "double3", "is_array": True},
         })
         codegen._check(spec)  # must NOT raise
 
@@ -300,11 +300,11 @@ class TestGeoScalarOutputGate(unittest.TestCase):
     test died on ``No object matches name: meshMaze1.solutionSteps``. Same shape
     as the locator input gate above: represent it fully, or fail LOUD."""
 
-    _INT_OUT = {"solutionSteps": {"type": "int", "is_array": False,
+    _INT_OUT = {"solutionSteps": {"type": "long", "is_array": False,
                                   "default_value": 0}}
 
     def _spec(self, outputs, inputs=None):
-        spec            = _geo_spec(inputs or {"start": {"type": "int", "is_array": False}})
+        spec            = _geo_spec(inputs or {"start": {"type": "long", "is_array": False}})
         spec["outputs"] = outputs
         return spec
 
@@ -446,7 +446,7 @@ class TestGeoQuaternionInclude(unittest.TestCase):
     def test_generator_without_quaternion_is_unchanged(self):
         from mpynode.native import compiler as codegen
         cpp = codegen.generate_cpp(_geo_spec(
-            {"start": {"type": "int", "is_array": False}}))
+            {"start": {"type": "long", "is_array": False}}))
         self.assertNotIn("MQuaternion.h", cpp)
 
 
@@ -455,8 +455,8 @@ class TestDefaultValueContract(unittest.TestCase):
     contract: the compiled node must do exactly what the interpreted node does
     (``wrappers._mpy_node.add_input_attr``), measured on a live node 2026-09-14:
 
-        honoured : float double int bool enum angle(RADIANS) color(inputs)
-        ignored  : vector euler float2 quaternion string time
+        honoured : float double long bool enum doubleAngle(RADIANS) color(inputs)
+        ignored  : double3 euler float2 quaternion string time
 
     Honouring a default the Python side ignores would make the two nodes
     disagree on a fresh scene -- exactly what ``time`` did (compiled 2.0 vs
@@ -465,14 +465,14 @@ class TestDefaultValueContract(unittest.TestCase):
     Update BOTH sides together if that contract ever changes."""
 
     HONOURED = {
-        "float": (1.5, "1.5"), "double": (2.5, "2.5"), "int": (7, ", 7);"),
+        "float": (1.5, "1.5"), "double": (2.5, "2.5"), "long": (7, ", 7);"),
         "bool": (True, "true"), "enum": (1, '"p", 1);'),
-        "angle": (0.5, "kAngle, 0.5);"),
-        "color": ([0.2, 0.55, 0.2], "setDefault(0.2f, 0.55f, 0.2f);"),
+        "doubleAngle": (0.5, "kAngle, 0.5);"),
+        "color":       ([0.2, 0.55, 0.2], "setDefault(0.2f, 0.55f, 0.2f);"),
     }
     # distinctive literals that must NOT appear anywhere in initialize()
     IGNORED = {
-        "vector":     ([1.25, 2.5, 3.75], ("1.25", "3.75")),
+        "double3":    ([1.25, 2.5, 3.75], ("1.25", "3.75")),
         "euler":      ([0.11, 0.22, 0.33], ("0.11", "0.22", "0.33")),
         "float2":     ([0.125, 0.875], ("0.125", "0.875")),
         "quaternion": ([0.11, 0.22, 0.33, 0.44], ("0.11", "0.22", "0.44")),

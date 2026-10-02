@@ -117,7 +117,7 @@ _FLAG_ATTR = {
 # scalar attr_type -> MFnNumericData token.
 _SCALAR_DATA = {
     "float": om.MFnNumericData.kFloat,
-    "int":   om.MFnNumericData.kInt,
+    "long":  om.MFnNumericData.kInt,
     "bool":  om.MFnNumericData.kBoolean,
 }
 _CHILD_DATA = {"kFloat": om.MFnNumericData.kFloat}

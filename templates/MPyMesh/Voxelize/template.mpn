@@ -20,7 +20,7 @@
         "order": 0
       },
       "maxVoxels": {
-        "attr_type": "int",
+        "attr_type": "long",
         "default_value": 500000,
         "is_array": false,
         "min_value": 0,

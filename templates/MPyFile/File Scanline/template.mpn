@@ -5,7 +5,7 @@
     "init_source": "# ----------------------------------------------------------------------\n# File Simple -- Init tier.\n#\n# There is deliberately NO image-loading code here.\n#\n# Loading, colour-space decoding and pre-filtering are FRAMEWORK services.\n# Compute and Viewport reach them as self.read_texture() and\n# self.sample_texture() -- the \"M\" (method) rows in the Variables tab. They\n# honour every preset input an mPyFile already carries:\n#\n#   self.colorSpace       25 colour spaces (sRGB, ACEScct, LogC, S-Log3, ...)\n#   self.preFilter        smoothing on/off\n#   self.preFilterKernel  box / quadratic / quartic / gaussian\n#   self.preFilterRadius  smoothing radius\n#   self.wrapModeU/V      repeat / clamp / mirror / border\n#   self.borderColor      what a border-wrapped lookup returns off-image\n#   self.embeddedImage    baked image bytes read_texture() falls back to when\n#                         `fileName` is blank / missing, so a node ships\n#                         renderable with no file on disk\n#\n# So this template gets a stock Maya file node's full colour management for\n# free, and compiles to the same deterministic nd_tex_load_linear /\n# nd_tex_sample C++ kernels as the built-in default -- no AI port.\n#\n# numpy is imported because the Viewport tier uses it for the whole-image\n# brightness/contrast pass. The Init namespace is merged into the Compute and\n# Viewport namespaces before either runs, so anything defined here is in scope\n# for both.\n# ----------------------------------------------------------------------\nimport numpy as np\n",
     "input_attrs": {
       "bands": {
-        "attr_type": "int",
+        "attr_type": "long",
         "default_value": 12,
         "is_array": false,
         "min_value": 1,

@@ -11,7 +11,7 @@
         "order": 7
       },
       "end": {
-        "attr_type": "int",
+        "attr_type": "long",
         "default_value": -1,
         "is_array": false,
         "order": 2
@@ -22,7 +22,7 @@
         "order": 0
       },
       "seed": {
-        "attr_type": "int",
+        "attr_type": "long",
         "default_value": 0,
         "is_array": false,
         "min_value": 0,
@@ -47,14 +47,14 @@
         "order": 4
       },
       "solutionStep": {
-        "attr_type": "int",
+        "attr_type": "long",
         "default_value": 0,
         "is_array": false,
         "min_value": 0,
         "order": 8
       },
       "start": {
-        "attr_type": "int",
+        "attr_type": "long",
         "default_value": 0,
         "is_array": false,
         "order": 1
@@ -97,7 +97,7 @@
     "node_name": "meshMaze",
     "output_attrs": {
       "solutionSteps": {
-        "attr_type": "int",
+        "attr_type": "long",
         "default_value": 0,
         "is_array": false,
         "order": 0

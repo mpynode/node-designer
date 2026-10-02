@@ -33,8 +33,9 @@ _IKSOLVER_INCLUDES = [
     # MTransformationMatrix.h (already included above).
     "maya/MFnNumericAttribute.h", "maya/MFnEnumAttribute.h",
     "maya/MFnTypedAttribute.h", "maya/MFnNumericData.h", "maya/MFnData.h",
-    # generic (non-scalar/non-mesh) user INPUT attrs: unit (angle/time/euler),
-    # compound (quaternion), matrix create + the MAngle/MTime plug reads.
+    # generic (non-scalar/non-mesh) user INPUT attrs: unit (doubleAngle/time/
+    # euler), compound (quaternion), matrix create + the MAngle/MTime plug
+    # reads.
     "maya/MFnUnitAttribute.h", "maya/MFnCompoundAttribute.h",
     "maya/MFnMatrixAttribute.h", "maya/MAngle.h", "maya/MTime.h",
     "maya/MFnMesh.h", "maya/MPointArray.h", "maya/MIntArray.h",
@@ -133,19 +134,19 @@ static void nd_ik_persist_bind(const MString& plugName, const MMatrixArray& arr)
 }
 """
 
-_IK_CREATE_DATA = {"float": "kFloat", "double": "kDouble", "int": "kInt",
+_IK_CREATE_DATA = {"float": "kFloat", "double": "kDouble", "long": "kInt",
                    "bool": "kBoolean"}
 
-_IK_READ_ACC = {"float": "asFloat", "double": "asDouble", "int": "asInt",
+_IK_READ_ACC = {"float": "asFloat", "double": "asDouble", "long": "asInt",
                 "bool": "asBool", "enum": "asShort"}
 
-_IK_CTYPE = {"float": "float", "double": "double", "int": "int",
+_IK_CTYPE = {"float": "float", "double": "double", "long": "int",
              "bool": "bool", "enum": "short"}
 
 def _ik_default(t, val, enum_names=None):
     if t == "bool":
         return "true" if val else "false"
-    if t in ("enum", "int"):
+    if t in ("enum", "long"):
         try:
             return "%d" % int(val)
         except Exception:
@@ -156,7 +157,7 @@ def _ik_default(t, val, enum_names=None):
         return "0.0"
 
 def _ik_scalar_inputs(spec):
-    """Scalar user inputs on the solver node (float/double/int/bool/enum)."""
+    """Scalar user inputs on the solver node (float/double/long/bool/enum)."""
     out = []
     for plug, meta in (spec.get("inputs") or {}).items():
         t = meta.get("type")
@@ -178,7 +179,7 @@ def _ik_mesh_inputs(spec):
 # a SINGLE mesh likewise (_ik_mesh_inputs). EVERY other input -- remaining scalar
 # types and ARRAYS of any type, geometry included -- rides the shared findPlug
 # readers below.
-_IK_BESPOKE_SCALAR_TYPES = ("float", "double", "int", "bool", "enum")
+_IK_BESPOKE_SCALAR_TYPES = ("float", "double", "long", "bool", "enum")
 
 def _ik_generic_inputs(spec):
     """User INPUT attrs read into doSolve through the shared findPlug readers.
@@ -204,9 +205,9 @@ def _ik_generic_inputs(spec):
 def _ik_generic_local_hint(t):
     """C++ shape of a generic input's ``in_a<ident>`` local (PORT comment)."""
     return {
-        "vector": "double[3]; .x==[0]", "euler": "double[3], RADIANS",
+        "double3": "double[3]; .x==[0]", "euler": "double[3], RADIANS",
         "color": "float[3] RGB", "float2": "float[2]",
-        "quaternion": "double[4] {x,y,z,w}", "angle": "double, RADIANS",
+        "quaternion": "double[4] {x,y,z,w}", "doubleAngle": "double, RADIANS",
         "time": "double, seconds", "string": "MString; .asChar()",
         "matrix": "MMatrix; m(row,col)",
     }.get(t, t)

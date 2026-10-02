@@ -255,7 +255,7 @@ class MPyNode(om.MPxNode):
 
         user_out_defaults: dict = {}
         for out_attr_name, meta in output_map.items():
-            attr_type = meta.get("attr_type", "float")
+            attr_type = meta.get("attr_type", "double")
             is_array  = bool(meta.get("is_array", False))
             # ARRAY outputs seed a PRE-SIZED (N, ...) buffer for in-place
             # slice-assign. N = the multi's connected element span (max
@@ -354,7 +354,7 @@ class MPyNode(om.MPxNode):
             try:
                 out_plug_full = fn_node.findPlug(out_attr_name, True)
                 attr          = out_plug_full.attribute()
-                attr_type     = meta.get("attr_type", "float")
+                attr_type     = meta.get("attr_type", "double")
                 if bool(meta.get("is_array", False)):
                     helpers.write_multi_plug_value(
                         data_block,

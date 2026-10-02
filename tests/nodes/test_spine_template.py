@@ -66,7 +66,7 @@ def _defaults():
         if t == "matrix":
             out[name] = _MatArray() if meta.get("is_array") else _Mat(np.eye(4))
         elif meta.get("is_array"):
-            out[name] = np.zeros(0, dtype=np.int64 if t == "int" else np.float64)
+            out[name] = np.zeros(0, dtype=np.int64 if t == "long" else np.float64)
         else:
             out[name] = meta.get("default_value", 0)
     return out

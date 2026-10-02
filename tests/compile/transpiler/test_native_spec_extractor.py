@@ -643,7 +643,7 @@ class TestShouldCaptureDefault(unittest.TestCase):
         self.assertFalse(se._input_wants_default_capture(
             {"type": "float", "is_array": True}))
         self.assertFalse(se._input_wants_default_capture(
-            {"type": "vector", "is_array": False}))
+            {"type": "double3", "is_array": False}))
         self.assertFalse(se._input_wants_default_capture(
             {"type": "mesh", "is_array": False}))
 
@@ -1071,12 +1071,12 @@ class TestCaptureNamedPresets(unittest.TestCase):
         for nm in VIEWPORT_ONLY:
             self.assertIn(nm, got, "viewport preset %r not captured" % nm)
         # Real types (not coerced): the enums must be enums (with field names),
-        # the numeric ones int/float -- matching the Python node's attrs.
+        # the numeric ones long/float -- matching the Python node's attrs.
         self.assertEqual(got["filterMode"]["type"],    "enum")
         self.assertEqual(got["mipmapMode"]["type"],    "enum")
-        self.assertEqual(got["maxAnisotropy"]["type"], "int")
-        self.assertEqual(got["minLOD"]["type"],        "int")
-        self.assertEqual(got["maxLOD"]["type"],        "int")
+        self.assertEqual(got["maxAnisotropy"]["type"], "long")
+        self.assertEqual(got["minLOD"]["type"],        "long")
+        self.assertEqual(got["maxLOD"]["type"],        "long")
         self.assertEqual(got["mipLODBias"]["type"],    "float")
         self.assertEqual(
             got["filterMode"].get("enum_names"),

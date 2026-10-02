@@ -1,12 +1,14 @@
 """Spec tables + predicates (leaf): supported types, geo maps, _check."""
 from __future__ import annotations
 
+from mpynode._common import attr_types
+
 from .errors import UnsupportedSpec  # noqa: F401
 
 
 _SUPPORTED = {
-    "float", "double", "int", "bool", "angle", "time",
-    "vector", "euler", "matrix", "enum", "string", "hex",
+    "float", "double", "long", "bool", "doubleAngle", "time",
+    "double3", "euler", "matrix", "enum", "string", "hex",
     # texture/file interface (mPyFile preset capture): uvCoord (float2) +
     # outColor/borderColor (renderable color3).
     "float2", "color",
@@ -37,16 +39,16 @@ _GEO_INPUT_ONLY = {"mesh", "nurbsCurve", "nurbsSurface"}
 # round-trips decoded<->encoded per element); color is an MFloatVector (rgb)
 # vector; quaternion is an MQuaternion vector via the attr's compound children.
 # Geometry and python remain non-array.
-_ARRAY_OK = {"float", "double", "int", "bool", "vector", "euler", "matrix",
-             "angle", "time", "enum", "string", "hex", "color", "quaternion",
+_ARRAY_OK = {"float", "double", "long", "bool", "double3", "euler", "matrix",
+             "doubleAngle", "time", "enum", "string", "hex", "color", "quaternion",
              "float2"}
 
 # float2 arrays are carried as std::vector<MFloatVector> (u=.x, v=.y, .z unused)
 # -- reuses the color-array machinery (no new include) with a 2-component
 # read/write (asFloat2 / set2Float); see emit_attr._elem_read_expr/_elem_set_stmt.
-_CPP = {"float": "float", "double": "double", "int": "int", "bool": "bool",
-        "enum": "short", "angle": "double", "time": "double",
-        "vector": "MVector", "euler": "MVector", "matrix": "MMatrix",
+_CPP = {"float": "float", "double": "double", "long": "int", "bool": "bool",
+        "enum": "short", "doubleAngle": "double", "time": "double",
+        "double3": "MVector", "euler": "MVector", "matrix": "MMatrix",
         "string": "MString", "hex": "MString", "color": "MFloatVector",
         "quaternion": "MQuaternion", "float2": "MFloatVector"}
 
@@ -162,6 +164,11 @@ def _check(spec):
                     "attr %r type %r is the only kind of attr excluded from "
                     "compilation: %s. Every other attr type compiles."
                     % (plug, t, _EXCLUDED[t]))
+            # A retired name (an .mpn saved before the renames) gets the
+            # rename hint, not a bare "unsupported" from a family branch.
+            if isinstance(t, str) and t in attr_types.RETIRED:
+                raise UnsupportedSpec(
+                    "attr %r: %s" % (plug, attr_types.unknown_type_message(t)))
     # @maya_command commands are not a compile error on any base: every command is
     # emitted INTO the node's own .bundle (mesh-region templates via
     # command_codegen, everything else via command_dispatch) -- never silently

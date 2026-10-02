@@ -11,7 +11,7 @@
         "order": 4
       },
       "iterations": {
-        "attr_type": "int",
+        "attr_type": "long",
         "default_value": 20,
         "is_array": false,
         "order": 3
@@ -22,12 +22,12 @@
         "order": 0
       },
       "ringNbrs": {
-        "attr_type": "int",
+        "attr_type": "long",
         "is_array": true,
         "order": 1
       },
       "ringWidth": {
-        "attr_type": "int",
+        "attr_type": "long",
         "is_array": false,
         "order": 2
       },

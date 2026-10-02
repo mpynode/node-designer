@@ -70,7 +70,7 @@
             }
           },
           "shapeType": {
-            "type": "int",
+            "type": "long",
             "is_array": true,
             "portable": true,
             "cpp": {
@@ -137,7 +137,7 @@
             "default_value": 1.0
           },
           "axis": {
-            "type": "int",
+            "type": "long",
             "is_array": true,
             "portable": true,
             "cpp": {
@@ -151,7 +151,7 @@
             "default_value": 1
           },
           "halfExtents": {
-            "type": "vector",
+            "type": "double3",
             "is_array": true,
             "portable": true,
             "cpp": {
@@ -164,7 +164,7 @@
             }
           },
           "resolution": {
-            "type": "int",
+            "type": "long",
             "is_array": false,
             "portable": true,
             "cpp": {

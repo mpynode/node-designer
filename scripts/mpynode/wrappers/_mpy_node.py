@@ -26,6 +26,7 @@ import importlib
 import keyword
 
 import maya.cmds as mc
+from mpynode._common import attr_types as _attr_types
 from mpynode._common.lifecycle.init_registry import InitSourceMixin
 from mpynode._common.lifecycle.gap_spacing_registry import GapSpacingMixin
 from mpynode._common.lifecycle.metadata_registry import MetadataMixin
@@ -162,40 +163,10 @@ def _validate_attr_name(name: str, node_type: str | None = None) -> None:
     raise ValueError(msg)
 
 
-# Maya cmds.addAttr type strings keyed by our wire-type strings.
-_ADD_ATTR_KIND: dict[str, dict] = {
-    "float":  {"at": "float"},
-    "double": {"at": "double"},
-    "int":    {"at": "long"},
-    "bool":   {"at": "bool"},
-    "vector": {"at": "double3"},
-    "matrix": {"dt": "matrix"},
-    "string": {"dt": "string"},
-    # angle / euler / enum.
-    "angle": {"at": "doubleAngle"},
-    "euler": {"at": "double3"},  # parent compound; XYZ children are doubleAngle
-    "enum":  {"at": "enum"},     # enumName supplied per-instance below
-    # python = string with pickle/base64 wrap; hex = string with UTF-8-hex wrap
-    # (write plain text -> "48 69 ..."; read decodes back), which drives Maya's
-    # ``type`` node textInput. mesh/nurbsCurve/nurbsSurface = typed geo plugs.
-    "python":       {"dt": "string"},
-    "hex":          {"dt": "string"},
-    "mesh":         {"dt": "mesh"},
-    "nurbsCurve":   {"dt": "nurbsCurve"},
-    "nurbsSurface": {"dt": "nurbsSurface"},
-    # time — single time value, auto-connectable to time1.
-    "time": {"at": "time"},
-    # quaternion — 4 doubles (X/Y/Z/W), identity [0,0,0,1]. cmds can't make a
-    # numeric double4, so at='compound' nc=4 with 4 explicit double children
-    # (matches Maya's eulerToQuat.outputQuat).
-    "quaternion": {"at": "compound", "numberOfChildren": 4},
-    # color — 3-float RENDERABLE color (R/G/B children + usedAsColor) so it
-    # binds to material.color / Arnold like a stock file node's outColor.
-    "color": {"at": "float3", "usedAsColor": True},
-    # float2 — 2-float compound (U/V), e.g. a uvCoord pair. Like float3/color
-    # the 2 children must be added explicitly (cmds does NOT auto-create them).
-    "float2": {"at": "float2"},
-}
+# Maya cmds.addAttr type strings keyed by our wire-type strings. Derived from
+# the one type table (``_common/attr_types.py``), which also feeds the Add
+# Attribute dialog and the assistant.
+_ADD_ATTR_KIND: dict[str, dict] = _attr_types.add_attr_kwargs()
 
 
 # Identity-matrix flat-16 for ``mc.setAttr(..., type="matrix")``. Initializes
@@ -221,7 +192,7 @@ VALID_OUTPUT_TYPES = list(_ADD_ATTR_KIND.keys())
 # tables as typed arrays are three setAttr calls totalling 0.017 s.
 #
 # ``packed`` is a STORAGE flag, not a new wire type: the element type stays
-# ``double`` / ``int``, so the expression still sees a flat sequence and the
+# ``double`` / ``long``, so the expression still sees a flat sequence and the
 # generated C++ still materialises the same ``std::vector<T>``. Only the plug
 # kind and the read/write prologue change.
 #
@@ -232,7 +203,7 @@ VALID_OUTPUT_TYPES = list(_ADD_ATTR_KIND.keys())
 #     (see ``_api2/helpers.write_multi_plug_value``) and the self-sizing
 #     templates read that count back as their N -- a packed output would have
 #     no element count to read, so outputs keep the multi.
-_PACKED_DT = {"double": "doubleArray", "int": "Int32Array"}
+_PACKED_DT = {"double": "doubleArray", "long": "Int32Array"}
 
 
 def _validate_packed(name, attr_type, is_array, sparse):
@@ -253,9 +224,9 @@ def _validate_packed(name, attr_type, is_array, sparse):
         )
 
 # Child-axis suffixes for compound attrs whose children are renamed alongside
-# the parent (vector/euler XYZ, quaternion XYZW, color RGB).
+# the parent (double3/euler XYZ, quaternion XYZW, color RGB).
 _COMPOUND_CHILD_AXES = {
-    "vector":     ("X", "Y", "Z"),
+    "double3":    ("X", "Y", "Z"),
     "euler":      ("X", "Y", "Z"),
     "quaternion": ("X", "Y", "Z", "W"),
     "color":      ("R", "G", "B"),
@@ -264,7 +235,7 @@ _COMPOUND_CHILD_AXES = {
 
 # Scalar numeric types that accept min/max/default via cmds.addAttr. Compound,
 # bool, enum, string, geometry and time don't take these here.
-_NUMERIC_LIMIT_TYPES = ("float", "double", "int", "angle")
+_NUMERIC_LIMIT_TYPES = ("float", "double", "long", "doubleAngle")
 
 
 def _apply_numeric_limits(kwargs, attr_type, min_value, max_value, default_value):
@@ -272,7 +243,7 @@ def _apply_numeric_limits(kwargs, attr_type, min_value, max_value, default_value
     scalar numeric attr. No-op for non-numeric types or None values."""
     if attr_type not in _NUMERIC_LIMIT_TYPES:
         return
-    cast = int if attr_type == "int" else float
+    cast = int if attr_type == "long" else float
     if min_value is not None:
         kwargs["minValue"] = cast(min_value)
     if max_value is not None:
@@ -851,7 +822,7 @@ class MPyNode(InitSourceMixin, MethodsSourceMixin, MetadataMixin,
         a "collector" wired via ``nextAvailable`` where only the values matter,
         not their indices.
 
-        ``packed`` (array inputs, ``double``/``int`` only): store the array as
+        ``packed`` (array inputs, ``double``/``long`` only): store the array as
         ONE typed-array plug (``doubleArray`` / ``Int32Array``) instead of a
         numeric multi. The expression sees the same flat sequence and the
         compiled node materialises the same ``std::vector<T>``; what changes is
@@ -866,7 +837,7 @@ class MPyNode(InitSourceMixin, MethodsSourceMixin, MetadataMixin,
         and re-adding the attribute.
 
         ``min_value`` / ``max_value`` / ``default_value`` apply to scalar
-        numeric types (float / double / int / angle). They map to
+        numeric types (float / double / long / doubleAngle). They map to
         ``cmds.addAttr`` minValue / maxValue / defaultValue (hard limits +
         unconnected value); each is optional (None = unset). Ignored for
         non-numeric types. ``default_value`` alone also applies to ``enum``
@@ -882,9 +853,7 @@ class MPyNode(InitSourceMixin, MethodsSourceMixin, MetadataMixin,
         """
         _validate_attr_name(name, type(self).NATIVE_TYPE)
         if attr_type not in _ADD_ATTR_KIND:
-            raise ValueError(
-                f"attr_type {attr_type!r} not supported; valid: {sorted(_ADD_ATTR_KIND)}"
-            )
+            raise ValueError(_attr_types.unknown_type_message(attr_type))
         if packed:
             _validate_packed(name, attr_type, is_array, sparse)
 
@@ -920,8 +889,8 @@ class MPyNode(InitSourceMixin, MethodsSourceMixin, MetadataMixin,
 
         mc.addAttr(self._name, **kwargs)
 
-        # vector (double3) — also create the 3 child plugs Maya expects.
-        if attr_type == "vector":
+        # double3 — also create the 3 child plugs Maya expects.
+        if attr_type == "double3":
             for axis in ("X", "Y", "Z"):
                 mc.addAttr(
                     self._name,
@@ -1074,7 +1043,7 @@ class MPyNode(InitSourceMixin, MethodsSourceMixin, MetadataMixin,
     def rename_input_attr(self, old_name: str, new_name: str) -> None:
         """Rename an existing user-added INPUT attr.
 
-        Renames the Maya plug + its X/Y/Z children for vector attrs +
+        Renames the Maya plug + its X/Y/Z children for double3 attrs +
         updates the ``_inputAttrs`` JSON map.
         """
         attr_map = self._read_input_map()
@@ -1126,9 +1095,7 @@ class MPyNode(InitSourceMixin, MethodsSourceMixin, MetadataMixin,
     ) -> None:
         _validate_attr_name(name, type(self).NATIVE_TYPE)
         if attr_type not in _ADD_ATTR_KIND:
-            raise ValueError(
-                f"attr_type {attr_type!r} not supported; valid: {sorted(_ADD_ATTR_KIND)}"
-            )
+            raise ValueError(_attr_types.unknown_type_message(attr_type))
 
         kwargs              = dict(_ADD_ATTR_KIND[attr_type])
         kwargs["longName"]  = name
@@ -1155,7 +1122,7 @@ class MPyNode(InitSourceMixin, MethodsSourceMixin, MetadataMixin,
 
         mc.addAttr(self._name, **kwargs)
 
-        if attr_type == "vector":
+        if attr_type == "double3":
             for axis in ("X", "Y", "Z"):
                 mc.addAttr(
                     self._name,
@@ -1700,7 +1667,7 @@ class MPyNode(InitSourceMixin, MethodsSourceMixin, MetadataMixin,
         return snap
 
     def _readd_attr_for_reorder(self, adder, name: str, meta: dict) -> None:
-        attr_type  = meta.get("attr_type", "float")
+        attr_type  = meta.get("attr_type", "double")
         is_array   = bool(meta.get("is_array", False))
         enum_names = meta.get("enum_names")
         kw = {
@@ -1745,7 +1712,7 @@ class MPyNode(InitSourceMixin, MethodsSourceMixin, MetadataMixin,
         if is_matrix:
             mc.setAttr(plug, *value, type="matrix")
             return
-        # getAttr on a compound (vector/euler/quaternion/color) returns a
+        # getAttr on a compound (double3/euler/quaternion/color) returns a
         # single-tuple list like [(x, y, z)]; unwrap it to positional args.
         if (isinstance(value, (list, tuple)) and len(value) == 1
                 and isinstance(value[0], (list, tuple))):

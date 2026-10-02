@@ -103,14 +103,14 @@ def _verify_script_deformer(spec: dict) -> str:
     )
     body = r'''def _sample(t):
     if t == "bool": return random.choice([0, 1])
-    if t == "int": return random.randint(-3, 3)
+    if t == "long": return random.randint(-3, 3)
     if t == "enum": return random.randint(0, 1)
-    if t in ("vector", "euler"): return [random.uniform(-2, 2) for _ in range(3)]
+    if t in ("double3", "euler"): return [random.uniform(-2, 2) for _ in range(3)]
     return random.uniform(-2, 2)
 
 
 def _set(node, attr, t, v):
-    if t in ("vector", "euler"):
+    if t in ("double3", "euler"):
         cmds.setAttr(node + "." + attr, v[0], v[1], v[2], type="double3")
     else:
         cmds.setAttr(node + "." + attr, v)
@@ -194,7 +194,7 @@ def _verify_script_iksolver(spec: dict) -> str:
     name     = spec["suggested"]["node_type_name"]
     src_type = spec.get("mpy_type") or "mPyIkSolver"
     scalar_inputs = {n: m["type"] for n, m in (spec.get("inputs") or {}).items()
-                     if m.get("type") in ("float", "double", "int", "bool", "enum")}
+                     if m.get("type") in ("float", "double", "long", "bool", "enum")}
     enum_fields = {n: (m.get("enum_names") or [])
                    for n, m in (spec.get("inputs") or {}).items()
                    if m.get("type") == "enum"}
@@ -239,7 +239,7 @@ def _solver_inst(node_type, configure=None):
 def _sample(t, fields):
     if t == "bool":
         return random.choice([0, 1])
-    if t == "int":
+    if t == "long":
         return random.randint(-3, 3)
     if t == "enum":
         return random.randint(0, max(0, len(fields) - 1))
@@ -344,14 +344,14 @@ def _verify_script_scalar(spec: dict) -> str:
     )
     body = r'''def _sample(t):
     if t == "bool": return random.choice([0, 1])
-    if t == "int": return random.randint(-10, 10)
+    if t == "long": return random.randint(-10, 10)
     if t == "enum": return random.randint(0, 1)
-    if t in ("vector", "euler"): return [random.uniform(-5, 5) for _ in range(3)]
+    if t in ("double3", "euler"): return [random.uniform(-5, 5) for _ in range(3)]
     return random.uniform(-5, 5)
 
 
 def _set(node, attr, t, v):
-    if t in ("vector", "euler"):
+    if t in ("double3", "euler"):
         cmds.setAttr(node + "." + attr, v[0], v[1], v[2], type="double3")
     else:
         cmds.setAttr(node + "." + attr, v)

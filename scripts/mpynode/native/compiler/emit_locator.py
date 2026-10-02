@@ -80,11 +80,11 @@ _LOCATOR_INCLUDES_GENERIC_PLUGIN = [
 ]
 
 def _loc_scalar_inputs(spec):
-    """Scalar user inputs (float/int/bool/enum) wired into the draw."""
+    """Scalar user inputs (float/long/bool/enum) wired into the draw."""
     out = []
     for plug, meta in (spec.get("inputs") or {}).items():
         t = meta.get("type")
-        if t in ("float", "int", "bool", "enum") and not meta.get("is_array"):
+        if t in ("float", "long", "bool", "enum") and not meta.get("is_array"):
             out.append({"plug": plug, "member": "in_" + _ident(plug),
                         "type": t, "enum_names": meta.get("enum_names") or [],
                         "default_value": meta.get("default_value")})
@@ -107,7 +107,7 @@ def _loc_scalar_bespoke(meta):
     geometry included -- rides the shared findPlug readers."""
     if meta.get("is_array"):
         return False
-    return meta.get("type") in ("float", "int", "bool", "enum", "string",
+    return meta.get("type") in ("float", "long", "bool", "enum", "string",
                                 "color", "mesh")
 
 def _loc_string_inputs(spec):
@@ -148,9 +148,9 @@ def _loc_color_default(val):
 # into the draw via the shared findPlug readers and the same Inputs-POD
 # marshalling: the remaining scalar types, ARRAYS of any type, and geometry.
 # element count for the compound (C-array) generic types (scalar/matrix absent).
-_LOC_GENERIC_ARITY = {"vector": 3, "euler": 3, "quaternion": 4, "float2": 2}
+_LOC_GENERIC_ARITY = {"double3": 3, "euler": 3, "quaternion": 4, "float2": 2}
 # element C-type for those compounds (float2 is float; the rest double).
-_LOC_GENERIC_ELEM = {"vector": "double", "euler": "double",
+_LOC_GENERIC_ELEM = {"double3": "double", "euler": "double",
                      "quaternion": "double", "float2": "float"}
 
 def _loc_generic_inputs(spec):
@@ -210,17 +210,17 @@ def _loc_generic_expose(gm):
         return "    const MMatrix& in_%s = inp.%s; (void)in_%s;" % (mem, mem, mem)
     if t in ("string", "hex"):
         return "    const MString& in_%s = inp.%s; (void)in_%s;" % (mem, mem, mem)
-    if t in ("int", "bool", "enum"):
+    if t in ("long", "bool", "enum"):
         return ("    const %s in_%s = inp.%s; (void)in_%s;"
-                % ({"int": "int", "bool": "bool", "enum": "short"}[t],
+                % ({"long": "int", "bool": "bool", "enum": "short"}[t],
                    mem, mem, mem))
     return "    const double in_%s = inp.%s; (void)in_%s;" % (mem, mem, mem)
 
 def _loc_generic_hint(t):
     """C++ shape of a generic input's ``in_a<ident>`` local (PORT comment)."""
     return {
-        "double": "double", "angle": "double, RADIANS", "time": "double, seconds",
-        "vector": "double[3]; .x==[0]", "euler": "double[3], RADIANS",
+        "double": "double", "doubleAngle": "double, RADIANS", "time": "double, seconds",
+        "double3": "double[3]; .x==[0]", "euler": "double[3], RADIANS",
         "quaternion": "double[4] {x,y,z,w}", "float2": "float[2]",
         "matrix": "MMatrix; m(row,col)",
     }.get(t, t)
@@ -308,7 +308,7 @@ def _loc_input_default(t, val, enum_names):
             return "%d" % int(val)
         except Exception:
             return "0"
-    if t == "int":
+    if t == "long":
         try:
             return "%d" % int(val)
         except Exception:
@@ -320,11 +320,11 @@ def _loc_input_default(t, val, enum_names):
         return "0.0f"
 
 def _loc_input_ctype(t):
-    return {"float": "float", "int": "int", "bool": "bool", "enum": "short"}[t]
+    return {"float": "float", "long": "int", "bool": "bool", "enum": "short"}[t]
 
 def _loc_input_read(member, plug, t):
     """C++ to read one scalar input plug into inp.<member> (plugin side)."""
-    acc = {"float": "asFloat", "int": "asInt", "bool": "asBool",
+    acc = {"float": "asFloat", "long": "asInt", "bool": "asBool",
            "enum": "asShort"}[t]
     return [
         "    { MStatus _ms; MPlug _p = fn.findPlug(\"%s\", false, &_ms);" % plug,
@@ -1370,9 +1370,9 @@ def _generate_locator_cpp(spec, for_port=False):
                          % (mem, plug, plug, _loc_input_default("float", s["default_value"], [])))
                 L.append("    nAttr.setStorable(true); nAttr.setKeyable(true);")
                 L.append("    nAttr.setAffectsAppearance(true);")
-            elif t == "int":
+            elif t == "long":
                 L.append('    %s = nAttr.create("%s", "%s", MFnNumericData::kInt, %s);'
-                         % (mem, plug, plug, _loc_input_default("int", s["default_value"], [])))
+                         % (mem, plug, plug, _loc_input_default("long", s["default_value"], [])))
                 L.append("    nAttr.setStorable(true); nAttr.setKeyable(true);")
                 L.append("    nAttr.setAffectsAppearance(true);")
             elif t == "bool":
@@ -2021,7 +2021,7 @@ def _generate_locator_cpp(spec, for_port=False):
                 L.append('    %s (n == "%s") f.%s = (v != 0.0);' % (kw, s["member"], s["member"]))
             elif s["type"] == "enum":
                 L.append('    %s (n == "%s") f.%s = (short)v;' % (kw, s["member"], s["member"]))
-            elif s["type"] == "int":
+            elif s["type"] == "long":
                 L.append('    %s (n == "%s") f.%s = (int)v;' % (kw, s["member"], s["member"]))
             else:
                 L.append('    %s (n == "%s") f.%s = (float)v;' % (kw, s["member"], s["member"]))

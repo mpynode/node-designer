@@ -70,7 +70,7 @@
             }
           },
           "targetOffset": {
-            "type": "int",
+            "type": "long",
             "is_array": true,
             "portable": true,
             "cpp": {
@@ -84,7 +84,7 @@
             "packed": true
           },
           "targetComponents": {
-            "type": "int",
+            "type": "long",
             "is_array": true,
             "portable": true,
             "cpp": {
@@ -112,7 +112,7 @@
             "packed": true
           },
           "interBase": {
-            "type": "int",
+            "type": "long",
             "is_array": true,
             "portable": true,
             "cpp": {
@@ -140,7 +140,7 @@
             "packed": true
           },
           "comboOffset": {
-            "type": "int",
+            "type": "long",
             "is_array": true,
             "portable": true,
             "cpp": {
@@ -154,7 +154,7 @@
             "packed": true
           },
           "comboDriver": {
-            "type": "int",
+            "type": "long",
             "is_array": true,
             "portable": true,
             "cpp": {
@@ -196,7 +196,7 @@
             "default_value": true
           },
           "shapeSlot": {
-            "type": "int",
+            "type": "long",
             "is_array": true,
             "portable": true,
             "cpp": {

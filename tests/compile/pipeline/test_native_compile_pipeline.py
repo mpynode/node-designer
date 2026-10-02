@@ -1519,8 +1519,8 @@ class TestGeometryMultiAndAliasBlockers(unittest.TestCase):
 
     BS_INPUTS = {
         "weight":           {"attr_type": "float", "is_array": True},
-        "targetOffset":     {"attr_type": "int", "is_array": True},
-        "targetComponents": {"attr_type": "int", "is_array": True},
+        "targetOffset":     {"attr_type": "long", "is_array": True},
+        "targetComponents": {"attr_type": "long", "is_array": True},
         "targetDeltas":     {"attr_type": "double", "is_array": True},
     }
 
@@ -1617,7 +1617,7 @@ class TestImageReadCodegen(unittest.TestCase):
         if with_filename:
             w.add_input_attr("fileName", "string")
         w.add_input_attr("uIn", "float")
-        w.add_output_attr("outColor", "vector")
+        w.add_output_attr("outColor", "double3")
         # CANARY -- must stay NON-lowerable: the MImage scaffold is emitted only on
         # the AI-porter path, so if this compute lowers to C++ the test silently
         # stops checking anything. A class definition is rejected STRUCTURALLY
@@ -1867,7 +1867,7 @@ _IMG_SPEC = {
     "compute": "self.outColor = [0.5, 0.5, 0.5]",
     "init":    "from PIL import Image",
     "inputs":  {"fileName": {"type": "string"}},
-    "outputs": {"outColor": {"type": "vector"}},
+    "outputs": {"outColor": {"type": "double3"}},
 }
 
 
@@ -1897,7 +1897,7 @@ class TestVerifySkipsImageRead(unittest.TestCase):
         from mpynode.native.toolchain import verify as cc
 
         spec            = dict(_IMG_SPEC)
-        spec["outputs"] = {"outColor": {"type": "vector", "is_array": True}}
+        spec["outputs"] = {"outColor": {"type": "double3", "is_array": True}}
         res             = cc._verify_one(object(), "/some/tex.bundle", spec)
         self.assertFalse(res["ran"])
         self.assertIn("image file", res["reason"].lower())
@@ -2161,8 +2161,8 @@ _ARRAY_SPEC = {
     "suggested": {"node_type_name": "cubicCurveSampler", "mpx_base": "MPxNode"},
     "compute":   "self.outSamples[:] = self.controlPoints",
     "init":      "import numpy as np",
-    "inputs":    {"controlPoints": {"type": "vector", "is_array": True}},
-    "outputs":   {"outSamples": {"type": "vector", "is_array": True}},
+    "inputs":    {"controlPoints": {"type": "double3", "is_array": True}},
+    "outputs":   {"outSamples": {"type": "double3", "is_array": True}},
 }
 
 
@@ -2199,7 +2199,7 @@ class TestVerifyOneArrayNodesNowRun(unittest.TestCase):
             "suggested": {"node_type_name": "n", "mpx_base": "MPxNode"},
             "compute": "self.outSamples[:] = self.a", "init": "",
             "inputs":  {"a": {"type": "float"}},
-            "outputs": {"outSamples": {"type": "vector", "is_array": True}},
+            "outputs": {"outSamples": {"type": "double3", "is_array": True}},
         }
         with self.assertRaises(AssertionError):
             cc._verify_one(_BoomCmds(), "/some/x.bundle", spec)
@@ -2250,7 +2250,7 @@ class TestVerifyArrayHelpers(unittest.TestCase):
         import random
         rng = random.Random(0)
         for k in (1, 4, 9):
-            vals = v._array_values("int", k, rng)
+            vals = v._array_values("long", k, rng)
             self.assertEqual(len(vals), k)
             self.assertTrue(all(0 <= x <= k - 1 for x in vals), vals)
 
@@ -2502,10 +2502,10 @@ _GEO_MESH_SPEC = {
     ),
     "init": "",
     "inputs": {
-        "vin":   {"type": "vector", "is_array": True},
+        "vin":   {"type": "double3", "is_array": True},
         "scale": {"type": "double", "default_value": 2.0},
-        "cin":   {"type": "int", "is_array": True},
-        "iin":   {"type": "int", "is_array": True},
+        "cin":   {"type": "long", "is_array": True},
+        "iin":   {"type": "long", "is_array": True},
     },
     "outputs":     {},
     "portability": {"portable": True, "blockers": []},
@@ -2571,7 +2571,7 @@ class TestGeoSeedingConsistency(unittest.TestCase):
 
     def test_cvs_seed_is_a_full_grid(self):
         from mpynode.native.toolchain import verify as cc
-        vals = cc._geo_array_value("cvs", "vector", 0)
+        vals = cc._geo_array_value("cvs", "double3", 0)
         dim  = cc._GEO_SURF_DIM
         # A dim x dim CV grid: enough for a degree-3 curve AND a dim x dim
         # surface (numU*numV == len(cvs)); every element an [x,y,z] triple.
@@ -2582,21 +2582,21 @@ class TestGeoSeedingConsistency(unittest.TestCase):
         from mpynode.native.toolchain import verify as cc
         # The mesh path pairs points with counts=[4]/indices=[0..3]; its point
         # seed must remain a 4-vertex quad, unaffected by the grid CV change.
-        vals = cc._geo_array_value("points", "vector", 0)
+        vals = cc._geo_array_value("points", "double3", 0)
         self.assertEqual(len(vals), 4)
-        self.assertEqual(cc._geo_array_value("counts", "int", 0), [4])
-        self.assertEqual(cc._geo_array_value("indices", "int", 0), [0, 1, 2, 3])
+        self.assertEqual(cc._geo_array_value("counts", "long", 0), [4])
+        self.assertEqual(cc._geo_array_value("indices", "long", 0), [0, 1, 2, 3])
 
     def test_numuv_scalar_driven_to_grid_dim_every_config(self):
         from mpynode.native.toolchain import verify as cc
-        meta = {"type": "int"}
+        meta = {"type": "long"}
         dim  = cc._GEO_SURF_DIM
         for cfg in range(cc._GEO_CFGS):
             self.assertEqual(
-                cc._geo_scalar_value(meta, "int", cfg, self._rng(), role="numU"),
+                cc._geo_scalar_value(meta, "long", cfg, self._rng(), role="numU"),
                 dim)
             self.assertEqual(
-                cc._geo_scalar_value(meta, "int", cfg, self._rng(), role="numV"),
+                cc._geo_scalar_value(meta, "long", cfg, self._rng(), role="numV"),
                 dim)
 
 
@@ -2620,8 +2620,8 @@ class TestVerifyScriptHonesty(unittest.TestCase):
         spec = {
             "suggested": {"node_type_name": "n", "mpx_base": "MPxNode"},
             "compute": "self.out = self.a", "init": "",
-            "inputs":  {"a": {"type": "vector"}},
-            "outputs": {"out": {"type": "vector"}},
+            "inputs":  {"a": {"type": "double3"}},
+            "outputs": {"out": {"type": "double3"}},
         }
         s = porter._verify_script(spec)
         self.assertIn("_flat(", s)           # full flatten, every component

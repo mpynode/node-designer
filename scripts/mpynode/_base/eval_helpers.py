@@ -101,7 +101,7 @@ def force_one_eval(py_node) -> None:
                     break
                 except Exception:
                     continue
-            elif attr_type == "int":
+            elif attr_type == "long":
                 try:
                     old = cmds.getAttr(plug)
                     cmds.setAttr(plug, old + 1)

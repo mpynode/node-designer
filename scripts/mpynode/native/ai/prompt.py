@@ -112,7 +112,7 @@ The scaffold has ALREADY marshalled the IK context into these locals (in scope):
                                        rotate-only reorients in place.
 
 USER INPUTS (if the solver node declares them) are also in scope:
-- scalar input X (float/double/int/bool/enum): local `in_X`. Map BOTH self.X and
+- scalar input X (float/double/long/bool/enum): local `in_X`. Map BOTH self.X and
   bare X to in_X. For an enum X there is also `in_X_name` (std::string field name)
   -- map self.X.name()/string compares to in_X_name (compare with ==).
 - mesh input M (a floor/collision surface): local `RegionMesh M` (WORLD space).
@@ -175,7 +175,7 @@ DRAW STATE in scope (all already declared):
 - <Data>& data            -- OUTPUT (data.reset() already called)
 
 USER INPUT attrs (if the node has them) are declared as locals:
-- scalar input X (float/int/bool/enum): local `in_X`. Map BOTH self.X and bare X to in_X.
+- scalar input X (float/long/bool/enum): local `in_X`. Map BOTH self.X and bare X to in_X.
   For an enum X there is also `in_X_name` (std::string, the field name) -- map self.X.name()
   to in_X_name (compare with ==, e.g. in_X_name == "face").
 - mesh input M: local `RegionMesh M` (bare name). `M.present` is the connected flag.

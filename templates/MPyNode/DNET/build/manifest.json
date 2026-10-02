@@ -94,7 +94,7 @@
             }
           },
           "index0": {
-            "type": "int",
+            "type": "long",
             "is_array": true,
             "portable": true,
             "cpp": {
@@ -107,7 +107,7 @@
             }
           },
           "index1": {
-            "type": "int",
+            "type": "long",
             "is_array": true,
             "portable": true,
             "cpp": {
@@ -148,7 +148,7 @@
             "default_value": 0.0
           },
           "iterations": {
-            "type": "int",
+            "type": "long",
             "is_array": false,
             "portable": true,
             "cpp": {
@@ -283,7 +283,7 @@
         },
         "outputs": {
           "positions": {
-            "type": "vector",
+            "type": "double3",
             "is_array": true,
             "portable": true,
             "cpp": {
@@ -310,7 +310,7 @@
             "default_value": 0.0
           },
           "maxIterations": {
-            "type": "int",
+            "type": "long",
             "is_array": false,
             "portable": true,
             "cpp": {

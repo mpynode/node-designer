@@ -63,7 +63,7 @@ class TestCodegenEmitsClassification(unittest.TestCase):
         cmds.file(new=True, force=True)
         w = MPyNode.create(name="classSrc#")
         w.add_input_attr("uIn", "float")
-        w.add_output_attr("outColor", "vector")
+        w.add_output_attr("outColor", "double3")
         w.set_compute_expression("self.outColor = [self.uIn, self.uIn, self.uIn]")
         spec                                = spec_extractor.extract_spec(w.get_name())
         spec["suggested"]["node_type_name"] = "classTestNode"
@@ -130,7 +130,7 @@ class TestBundlerPreservesClassification(unittest.TestCase):
         cmds.file(new=True, force=True)
         w = MPyNode.create(name="bclassSrc#")
         w.add_input_attr("uIn", "float")
-        w.add_output_attr("outColor", "vector")
+        w.add_output_attr("outColor", "double3")
         w.set_compute_expression("self.outColor = [self.uIn, self.uIn, self.uIn]")
         spec                                = spec_extractor.extract_spec(w.get_name())
         spec["suggested"]["node_type_name"] = "bclassTestNode"
@@ -1163,11 +1163,11 @@ class TestArrayElementTypeCoverage(unittest.TestCase):
 
     def test_numeric_array_input_is_not_keyable(self):
         # A scalar-numeric multi INPUT must be non-keyable or Maya leaks it into
-        # the channel box (float/int/bool arrays do; compound and dt-typed ones
+        # the channel box (float/long/bool arrays do; compound and dt-typed ones
         # don't). The is_array block emits setKeyable(false), overriding the
         # earlier keyable=true.
         from mpynode.native import compiler as codegen
-        for t in ("float", "double", "int", "bool"):
+        for t in ("float", "double", "long", "bool"):
             cpp = codegen.generate_cpp(self._arr_spec(t), for_port=False)
             self.assertIn("nAttr.setKeyable(false);", cpp,
                           "%s array input still keyable (channel-box leak)" % t)
@@ -1758,9 +1758,10 @@ class TestEulerTypeTables(unittest.TestCase):
 class TestEulerGeneratedVerifyScripts(unittest.TestCase):
     """The standalone ``verify_in_maya.py`` scripts that ship beside each ported
     node must SAMPLE + SET a euler input as a double3 triple, exactly like
-    vector. Pre-fix ``_sample``/``_set`` handled only ``vector`` (``if t ==
-    "vector"``), so a euler input fell through to the scalar path -> a single
-    random float fed to ``setAttr`` on a double3 compound (wrong/raises). Mirrors
+    double3. Pre-fix ``_sample``/``_set`` handled only ``vector`` (``if t ==
+    "vector"``, the old name of ``double3``), so a euler input fell through to
+    the scalar path -> a single random float fed to ``setAttr`` on a double3
+    compound (wrong/raises). Mirrors
     the in-process fix in ``compile_controller._verify_one`` (setv/smp).
     These generators are pure spec->str (no Maya needed)."""
 
@@ -1784,23 +1785,23 @@ class TestEulerGeneratedVerifyScripts(unittest.TestCase):
             "outputs": {},
         }
 
-    def test_scalar_verify_script_samples_and_sets_euler_like_vector(self):
+    def test_scalar_verify_script_samples_and_sets_euler_like_double3(self):
         from mpynode.native.ai import porter
         script = porter._verify_script_scalar(self._scalar_spec())
-        # euler joins vector in BOTH _sample (triple) and _set (type=double3).
-        self.assertIn('if t in ("vector", "euler")', script)
-        self.assertGreaterEqual(script.count('"vector", "euler"'), 2,
+        # euler joins double3 in BOTH _sample (triple) and _set (type=double3).
+        self.assertIn('if t in ("double3", "euler")', script)
+        self.assertGreaterEqual(script.count('"double3", "euler"'), 2,
                                 "euler must be handled in both _sample and _set")
-        # The old vector-only form must be gone (else euler still falls through).
-        self.assertNotIn('if t == "vector"', script)
+        # The double3-only form must be gone (else euler still falls through).
+        self.assertNotIn('if t == "double3"', script)
 
-    def test_deformer_verify_script_samples_and_sets_euler_like_vector(self):
+    def test_deformer_verify_script_samples_and_sets_euler_like_double3(self):
         from mpynode.native.ai import porter
         script = porter._verify_script_deformer(self._deformer_spec())
-        self.assertIn('if t in ("vector", "euler")', script)
-        self.assertGreaterEqual(script.count('"vector", "euler"'), 2,
+        self.assertIn('if t in ("double3", "euler")', script)
+        self.assertGreaterEqual(script.count('"double3", "euler"'), 2,
                                 "euler must be handled in both _sample and _set")
-        self.assertNotIn('if t == "vector"', script)
+        self.assertNotIn('if t == "double3"', script)
 
 
 class TestEulerCodegen(unittest.TestCase):
@@ -1828,7 +1829,7 @@ class TestEulerCodegen(unittest.TestCase):
         cpp = codegen.generate_cpp(spec, for_port=True)
         # Children are doubleAngle (MFnUnitAttribute kAngle), not plain kDouble.
         self.assertIn("MFnUnitAttribute::kAngle", cpp)
-        # Read as a double3 of radians (mirrors the verified single 'angle').
+        # Read as a double3 of radians (mirrors the verified single 'doubleAngle').
         self.assertIn("asDouble3", cpp)
         # Named X/Y/Z children + a numeric compound parent (like vector).
         self.assertIn("rotInX", cpp)
@@ -1851,8 +1852,8 @@ class TestEulerCodegen(unittest.TestCase):
 
         cmds.file(new=True, force=True)
         w = MPyNode.create(name="vecSrc#")
-        w.add_input_attr("v", "vector")
-        w.add_output_attr("o", "vector")
+        w.add_input_attr("v", "double3")
+        w.add_output_attr("o", "double3")
         w.set_compute_expression("self.o = self.v")
         spec                                = spec_extractor.extract_spec(w.get_name())
         spec["suggested"]["node_type_name"] = "vecTestNode"
@@ -1863,7 +1864,7 @@ class TestEulerCodegen(unittest.TestCase):
 class TestQuaternionCodegen(unittest.TestCase):
     """A quaternion attr generates C++ as a generic 4-double compound (X/Y/Z/W).
 
-    Unlike vector/euler (numeric double3 parents read via asDouble3), a
+    Unlike double3/euler (numeric double3 parents read via asDouble3), a
     quaternion is a generic compound -- children are accessed through
     MFnCompoundAttribute in initialize() + compute()."""
 
@@ -2038,7 +2039,7 @@ class TestNurbsCurveInputCodegen(unittest.TestCase):
         cmds.file(new=True, force=True)
         w = MPyNode.create(name="crvSrc#")
         w.add_input_attr("inCrv", "nurbsCurve")
-        w.add_output_attr("outP", "vector")
+        w.add_output_attr("outP", "double3")
         # Reference self.inCrv so the input survives into the port spec.
         w.set_compute_expression("c = self.inCrv\nself.outP = [0.0, 0.0, 0.0]\n")
         spec                                = spec_extractor.extract_spec(w.get_name())

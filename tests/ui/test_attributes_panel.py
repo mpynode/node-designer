@@ -918,7 +918,7 @@ class TestExpandStatePreserved(unittest.TestCase):
 
         self.node = MPyNode.create(name="expand_state_test")
         # a vector attr gives an expandable compound row.
-        self.node.add_input_attr("amplitude", "vector")
+        self.node.add_input_attr("amplitude", "double3")
 
     def _make_tree(self):
         from mpynode.ui.widgets.attributes import NDInputAttrTree
@@ -1306,7 +1306,7 @@ class TestWrapperAttrColors(unittest.TestCase):
         from mpynode.wrappers._mpy_node import MPyNode
 
         n = MPyNode.create(name="c2")
-        n.add_output_attr("out", "vector")
+        n.add_output_attr("out", "double3")
         n.set_output_attr_color("out", "#00ffff")
         self.assertEqual(n.get_output_attr_color("out"), "#00ffff")
 
@@ -1333,7 +1333,7 @@ class TestWrapperAttrColors(unittest.TestCase):
 
         n = MPyNode.create(name="c5")
         n.add_input_attr("a", "float")
-        n.add_input_attr("b", "vector")
+        n.add_input_attr("b", "double3")
         n.add_output_attr("out", "float")
         n.set_input_attr_color("a", "#ff0000")
         n.set_output_attr_color("out", "#00ff00")
@@ -1393,7 +1393,7 @@ class TestSetAttrColorCommand(unittest.TestCase):
         from mpynode.wrappers._mpy_node import MPyNode
 
         n = MPyNode.create(name="cmd2")
-        n.add_output_attr("out", "vector")
+        n.add_output_attr("out", "double3")
         n.set_output_attr_color("out", "#abcdef")
 
         run_undoable(_SetAttrColorCommand(n, "out", None, "output"))
@@ -1563,7 +1563,7 @@ class TestWrapperRenameAttr(unittest.TestCase):
         from mpynode.wrappers._mpy_node import MPyNode
 
         n = MPyNode.create(name="rn2")
-        n.add_input_attr("v", "vector")
+        n.add_input_attr("v", "double3")
         for axis in ("X", "Y", "Z"):
             self.assertTrue(mc.attributeQuery("v" + axis, node=n.get_name(), exists=True))
         n.rename_input_attr("v", "vec")
@@ -1620,7 +1620,7 @@ class TestAttrCommands(unittest.TestCase):
         from mpynode.wrappers._mpy_node import MPyNode
 
         n = MPyNode.create(name="ac2")
-        run_undoable(_AddOutputAttrCommand(n, "out", "vector"))
+        run_undoable(_AddOutputAttrCommand(n, "out", "double3"))
         self.assertIn("out", n.get_output_attr_map())
 
         mc.undo()
@@ -1634,7 +1634,7 @@ class TestAttrCommands(unittest.TestCase):
         from mpynode.wrappers._mpy_node import MPyNode
 
         n = MPyNode.create(name="ac3")
-        n.add_input_attr("k", "int")
+        n.add_input_attr("k", "long")
         self.assertIn("k", n.get_input_attr_map())
 
         run_undoable(_DeleteAttrCommand(n, "k", "input"))
@@ -1642,7 +1642,7 @@ class TestAttrCommands(unittest.TestCase):
 
         mc.undo()
         self.assertIn("k", n.get_input_attr_map())
-        self.assertEqual(n.get_input_attr_map()["k"]["attr_type"], "int")
+        self.assertEqual(n.get_input_attr_map()["k"]["attr_type"], "long")
 
     def test_rename_attr_command_undoable(self):
         from mpynode._base.commands import _RenameAttrCommand, run_undoable
@@ -1712,7 +1712,7 @@ class TestForceOneEval(unittest.TestCase):
 
         n = MPyNode.create(name="counted")
         n.add_input_attr("trigger", "float")
-        n.add_output_attr("out", "int")
+        n.add_output_attr("out", "long")
         n.add_variable("counter", 0)
         n.set_compute_expression("self.counter = self.counter + 1\nout = self.counter")
 

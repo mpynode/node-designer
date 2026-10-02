@@ -87,7 +87,7 @@ class TestWrapperReorder(unittest.TestCase):
 
         n = MPyNode.create(name="vecReord#")
         n.add_input_attr("a",   "float")
-        n.add_input_attr("vec", "vector")
+        n.add_input_attr("vec", "double3")
         n.add_input_attr("z",   "float")
         name = n.get_name()
         drv  = mc.createNode("transform", name="vdrv#")

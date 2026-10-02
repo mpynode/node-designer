@@ -7,6 +7,7 @@ def build_system_prompt() -> str:
     """Return the system prompt, with the live node-type list injected."""
     types_block = _node_types_block()
     return (_PROMPT.replace("{NODE_TYPES}", types_block)
+                   .replace("{ATTR_TYPES}", _attr_types_block())
                    .replace("{WRITE_CONTRACTS}", _WRITE_CONTRACTS))
 
 
@@ -18,7 +19,19 @@ def build_payload_system_prompt() -> str:
     payload we apply through the same spine. This prompt teaches that protocol;
     the node/value/naming/safety guidance mirrors the tool-mode prompt."""
     return (_PAYLOAD_PROMPT.replace("{NODE_TYPES}", _node_types_block())
+                           .replace("{ATTR_TYPES}", _attr_types_block())
                            .replace("{WRITE_CONTRACTS}", _WRITE_CONTRACTS))
+
+
+def _attr_types_block() -> str:
+    """The ATTRIBUTE TYPES list: the assistant's types, in the dialog's order,
+    from the one type table (``_common/attr_types.py``)."""
+    import textwrap
+
+    from mpynode._common.attr_types import ASSISTANT_NAMES
+
+    return textwrap.fill(", ".join(ASSISTANT_NAMES) + ".", width=79,
+                         initial_indent="  ", subsequent_indent="  ")
 
 
 def _node_types_block() -> str:
@@ -147,7 +160,7 @@ HOW mPy NODES WORK
 VALUE TYPES -- reads are ALREADY the right native type; MATCH the attr's declared
 type to what your math needs and do NOT defensively recast. Casts to AVOID:
 `float(self.x)`/`int(self.x)`/`str(self.x)` on a scalar read; `np.asarray(self.v)`
-/`np.array(self.v)`/`self.v.reshape(-1)`/`self.v.astype(...)` on a vector/array
+/`np.array(self.v)`/`self.v.reshape(-1)`/`self.v.astype(...)` on a double3/array
 read (already numpy, right dtype & shape); and wrapping ANY numpy scalar that is
 only used in math -- `float(np.linalg.norm(v))`, `int(np.count_nonzero(a))`,
 `abs(float(np.dot(a, b)))`, `float(np.clip(self.x, 0, 1))`. A numpy scalar (the
@@ -158,10 +171,10 @@ indexing, `np.array([...])` construction, and output writes -- so drop the
 float()/int() (write `abs(np.dot(a, b))`, NOT `abs(float(np.dot(a, b)))`;
 `length = np.linalg.norm(v)`, NOT `float(np.linalg.norm(v))`). Reading
 `self.<input>` gives:
-    float -> float          int -> int            bool -> bool
-    angle -> float (rad)    time -> float
+    double/float -> float   long -> int           bool -> bool
+    doubleAngle -> float (rad)   time -> float
     enum -> EnumInt (an int; .name() gives the field label)
-    string/hex -> str       vector -> numpy (3,)   euler -> numpy (3,) rad
+    string/hex -> str       double3 -> numpy (3,)  euler -> numpy (3,) rad
     quaternion -> numpy (4,) [x,y,z,w]   color -> numpy (3,) [r,g,b]
     matrix -> MatrixView ((4,4) row-major, numpy-transparent)
     matrix[] (array) -> MatrixArrayView ((N,4,4); M[i] -> view, M.translation() -> (N,3))
@@ -196,7 +209,7 @@ float()/int() (write `abs(np.dot(a, b))`, NOT `abs(float(np.dot(a, b)))`;
   matrix, so mutating it would not mean what it means interpreted. Read, do not
   mutate.
   Writing `self.<output> = value`: assign the matching native type directly
-  (scalar for float/int/bool, a 3-list or np (3,) for vector, a 4x4 numpy array
+  (scalar for double/float/long/bool, a 3-list or np (3,) for double3, a 4x4 numpy array
   or MatrixView for matrix). Don't wrap scalars in float()/int(); don't json/str
   them. NEVER construct a maya.api object (om.MMatrix / om.MVector / om.MPoint)
   for a plug write -- outputs consume numpy / Python natives and the bridge does
@@ -204,8 +217,7 @@ float()/int() (write `abs(np.dot(a, b))`, NOT `abs(float(np.dot(a, b)))`;
   a mistake. Array outputs are pre-seeded numpy buffers -- slice-assign into them.
 
 ATTRIBUTE TYPES (for add_input / add_output)
-  float, int, bool, vector, quaternion, color, euler, matrix, string, hex,
-  python, angle, enum, time, mesh, nurbsCurve, nurbsSurface.
+{ATTR_TYPES}
   * "enum": REQUIRES enum_names -- the ordered field labels, index 0 first,
     because Maya stores the field INDEX. A rotate-order plug is
     enum_names: ["xyz","yzx","zxy","xzy","yxz","zyx"], which matches
@@ -412,14 +424,14 @@ HOW mPy NODES WORK
 VALUE TYPES -- reads are ALREADY the right native type; MATCH the attr type to
 what your math needs and do NOT defensively recast. AVOID: `float(self.x)` /
 `int(self.x)` / `str(self.x)` on a scalar; `np.asarray(self.v)` / `np.array(self.v)`
-/ `.reshape(-1)` / `.astype(...)` on a vector/array read (already numpy, right
+/ `.reshape(-1)` / `.astype(...)` on a double3/array read (already numpy, right
 dtype+shape); and wrapping a numpy scalar used only in math -- write
 `abs(np.dot(a,b))` not `abs(float(np.dot(a,b)))`, `np.linalg.norm(v)` not
 `float(np.linalg.norm(v))`. Reading `self.<input>` gives:
-    float -> float          int -> int            bool -> bool
-    angle -> float (rad)    time -> float
+    double/float -> float   long -> int           bool -> bool
+    doubleAngle -> float (rad)   time -> float
     enum -> EnumInt (an int; .name() gives the field label)
-    string/hex -> str       vector -> numpy (3,)   euler -> numpy (3,) rad
+    string/hex -> str       double3 -> numpy (3,)  euler -> numpy (3,) rad
     quaternion -> numpy (4,) [x,y,z,w]   color -> numpy (3,) [r,g,b]
     matrix -> MatrixView ((4,4) row-major, numpy-transparent)
     matrix[] (array) -> MatrixArrayView ((N,4,4))
@@ -452,14 +464,13 @@ dtype+shape); and wrapping a numpy scalar used only in math -- write
   matrix, so mutating it would not mean what it means interpreted. Read, do not
   mutate.
   Writing `self.<output> = value`: assign the matching
-  native type directly (scalar; a 3-list or np (3,) for vector; a 4x4 numpy for
+  native type directly (scalar; a 3-list or np (3,) for double3; a 4x4 numpy for
   matrix). NEVER construct om.MMatrix / om.MVector for a plug write or import
   maya.api in an expression. Array outputs are pre-seeded numpy buffers --
   slice-assign into them.
 
 ATTRIBUTE TYPES (for inputs / outputs)
-  float, int, bool, vector, quaternion, color, euler, matrix, string, hex,
-  python, angle, enum, time, mesh, nurbsCurve, nurbsSurface.
+{ATTR_TYPES}
   * "enum": REQUIRES enum_names -- the ordered field labels, index 0 first,
     because Maya stores the field INDEX. A rotate-order plug is
     enum_names: ["xyz","yzx","zxy","xzy","yxz","zyx"], which matches

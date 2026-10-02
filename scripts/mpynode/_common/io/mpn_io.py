@@ -45,6 +45,21 @@ def _ordered_attr_items(attr_map: dict):
     )
 
 
+def _check_attr_types(payload: dict) -> None:
+    """Raise ``ValueError`` when an input/output attr type is not in the type
+    table, BEFORE anything is created. A retired name (``int`` / ``vector`` /
+    ``angle``, e.g. in an ``.mpn`` saved before the renames) would otherwise
+    abort the restore part-way and leave a half-built node. Same message as
+    ``add_input_attr`` (``attr_types.unknown_type_message``)."""
+    from mpynode._common.attr_types import BY_NAME, unknown_type_message
+
+    for key in ("input_attrs", "output_attrs"):
+        for meta in (payload.get(key) or {}).values():
+            attr_type = meta.get("attr_type", "double")
+            if not isinstance(attr_type, str) or attr_type not in BY_NAME:
+                raise ValueError(unknown_type_message(attr_type))
+
+
 # ---- Capture ----
 
 
@@ -347,6 +362,7 @@ def deserialize_node(
     native_type = payload.get("native_type")
     if not native_type:
         raise ValueError("payload missing native_type")
+    _check_attr_types(payload)
 
     # No explicit name? Name the node after the template's short class name
     # (source_name) so a scene node is demo-relevant -- e.g. gameOfLifeMesh1
@@ -421,6 +437,7 @@ def apply_payload_to_node(
     ``return_failures=True`` returns ``(py_node, {tier_key: reason})`` for any
     sister tier that did not cleanly restore (same contract as
     :func:`deserialize_node`)."""
+    _check_attr_types(payload)
     # A legacy payload can carry an attr whose name has since become a
     # framework slot. The add-attr guard RAISES on that name, which would abort
     # the restore mid-way and leave a half-built node, so mark an
@@ -432,7 +449,7 @@ def apply_payload_to_node(
         # Restore input attrs (in authored add-order, not the .mpn's alphabetical
         # key order, so the rebuilt plugs / Channel Box match the original).
         for attr_name, meta in _ordered_attr_items(payload.get("input_attrs")):
-            attr_type  = meta.get("attr_type", "float")
+            attr_type  = meta.get("attr_type", "double")
             is_array   = bool(meta.get("is_array", False))
             enum_names = meta.get("enum_names")
             limits = {
@@ -470,7 +487,7 @@ def apply_payload_to_node(
 
         # Restore output attrs (authored add-order; see input note above).
         for attr_name, meta in _ordered_attr_items(payload.get("output_attrs")):
-            attr_type  = meta.get("attr_type", "float")
+            attr_type  = meta.get("attr_type", "double")
             is_array   = bool(meta.get("is_array", False))
             enum_names = meta.get("enum_names")
             limits = {

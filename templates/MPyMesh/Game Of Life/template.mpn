@@ -5,13 +5,13 @@
     "init_source": "# Conway's Game of Life -- numpy-array kernel shared with the mPyFile texture\n# variant (_gol_seed / _gol_step). A bounded uint8 board (no wrap) is seeded\n# deterministically and advanced one Conway step per frame. Compute rebuilds the\n# board from a fixed seed on every eval, so the node keeps NO cross-eval state\n# and scrubbing the timeline forward OR backward is stable.\nimport numpy as np\nfrom mpynode._api2.geometry import Mesh\n\n\ndef _gol_seed(h, w, density, seed=0):\n    \"\"\"Random board: a `density` fraction of cells alive. Deterministic for a\n    given (shape, density, seed) so a reset is reproducible.\"\"\"\n    rng = np.random.RandomState(int(seed) & 0x7fffffff)\n    return rng.random((int(h), int(w))) < float(density)\n\n\ndef _gol_step(board):\n    \"\"\"One Conway step on a BOUNDED grid: neighbours beyond the edge are dead\n    (zero padding, NOT np.roll), so live cells never wrap around the border.\"\"\"\n    b = board.astype(np.uint8)\n    pad = np.zeros((b.shape[0] + 2, b.shape[1] + 2), dtype=np.uint8)\n    pad[1:-1, 1:-1] = b\n    n = (pad[:-2, :-2] + pad[:-2, 1:-1] + pad[:-2, 2:] +\n         pad[1:-1, :-2]                 + pad[1:-1, 2:] +\n         pad[2:, :-2]  + pad[2:, 1:-1]  + pad[2:, 2:])\n    return (n == 3) | ((b == 1) & (n == 2))\n\n\ndef _gol_board(h, w, samples, frame, reset):\n    \"\"\"Deterministic board at `frame`: seed then advance (frame - 1) steps.\n\n    `samples` is a target live-cell COUNT (density = samples / cells). When\n    `reset` is truthy the seed varies with frame (a fresh random board each\n    frame); otherwise the board evolves from one fixed seed. Pure function of\n    the inputs -- no stored state -- so frame N always yields the same board.\n    \"\"\"\n    h = max(1, int(h))\n    w = max(1, int(w))\n    density = float(samples) / float(h * w)\n    if reset:\n        return _gol_seed(h, w, density, seed=int(frame))\n    board = _gol_seed(h, w, density, seed=0)\n    for _ in range(max(0, int(frame) - 1)):\n        board = _gol_step(board)\n    return board\n",
     "input_attrs": {
       "boardX": {
-        "attr_type": "int",
+        "attr_type": "long",
         "default_value": 10,
         "is_array": false,
         "order": 0
       },
       "boardY": {
-        "attr_type": "int",
+        "attr_type": "long",
         "default_value": 10,
         "is_array": false,
         "order": 1
@@ -29,7 +29,7 @@
         "order": 2
       },
       "randomSamples": {
-        "attr_type": "int",
+        "attr_type": "long",
         "default_value": 40,
         "is_array": false,
         "order": 3

@@ -96,7 +96,7 @@
             "default_value": 0.2
           },
           "maxVoxels": {
-            "type": "int",
+            "type": "long",
             "is_array": false,
             "portable": true,
             "cpp": {

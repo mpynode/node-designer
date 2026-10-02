@@ -205,7 +205,7 @@ class TestSelfProxyStoredVars(unittest.TestCase):
         n = MPyNode.create(name="self_write")
         n.add_variable("counter", 0)
         n.add_input_attr("trigger", "float")
-        n.add_output_attr("out", "int")
+        n.add_output_attr("out", "long")
         n.set_compute_expression("self.counter = self.counter + 1\nself.out = self.counter")
         mc.setAttr(n.get_name() + ".trigger", 1.0)
         first = mc.getAttr(n.get_name() + ".out")
@@ -302,7 +302,7 @@ class TestConstraintInputsAreNumpy(unittest.TestCase):
         src = mc.polyCube(name="srcCube")[0]
         dst = mc.polyCube(name="dstCube")[0]
         c   = MPyConstraint.create(name="weightedCstr")
-        c.add_output_attr("out", "vector")
+        c.add_output_attr("out", "double3")
         # numpy expression reading preset inputs via self.X.
         c.set_compute_expression(
             "constrained = self.targetTranslate * self.targetWeight + "

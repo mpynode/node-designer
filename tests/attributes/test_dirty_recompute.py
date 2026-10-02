@@ -316,7 +316,7 @@ class TestDeclareUserAffectsExtraTriggers(unittest.TestCase):
         from mpynode.wrappers.mpy_constraint import MPyConstraint
 
         c = MPyConstraint.create(name="cstr_xt")
-        c.add_output_attr("out", "vector")
+        c.add_output_attr("out", "double3")
         sel = om.MSelectionList()
         sel.add(c.get_name())
         mobj = sel.getDependNode(0)
@@ -431,7 +431,7 @@ class TestDeclareUserAffectsCompoundChildTriggers(unittest.TestCase):
         from mpynode._common.plugs import dirty_affects
 
         node = MPyNode.create(name="mpn_vec")
-        node.add_input_attr("vec", "vector")
+        node.add_input_attr("vec", "double3")
         node.add_output_attr("outLen", "float")
         sel = om.MSelectionList()
         sel.add(node.get_name())
@@ -464,7 +464,7 @@ class TestDeclareUserAffectsCompoundChildTriggers(unittest.TestCase):
         from mpynode._common.plugs import dirty_affects
 
         c = MPyConstraint.create(name="cstr_child")
-        c.add_output_attr("out", "vector")
+        c.add_output_attr("out", "double3")
         sel = om.MSelectionList()
         sel.add(c.get_name())
         mobj       = sel.getDependNode(0)
@@ -492,7 +492,7 @@ class TestDeclareUserAffectsCompoundChildTriggers(unittest.TestCase):
         from mpynode import MPyNode
 
         node = MPyNode.create(name="mpn_vec_e2e")
-        node.add_input_attr("vec", "vector")
+        node.add_input_attr("vec", "double3")
         node.add_output_attr("s", "float")
         node.set_compute_expression("self.s = self.vec[0] + self.vec[1] + self.vec[2]")
         name = node.get_name()

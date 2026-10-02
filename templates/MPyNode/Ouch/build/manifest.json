@@ -70,7 +70,7 @@
         },
         "inputs": {
           "angle": {
-            "type": "angle",
+            "type": "doubleAngle",
             "is_array": false,
             "portable": true,
             "cpp": {

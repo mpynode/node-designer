@@ -5,8 +5,8 @@ default so an empty / partial expression still produces valid data and so
 the user can *mutate in place* instead of constructing a value from
 scratch. The convention mirrors Maya's stock plugs:
 
-  * scalar ``float``/``double`` -> ``0.0``; ``int`` -> ``0``; ``bool`` ->
-    ``False``; ``vector``/``euler`` -> ``[0, 0, 0]``; ``matrix`` ->
+  * scalar ``float``/``double`` -> ``0.0``; ``long`` -> ``0``; ``bool`` ->
+    ``False``; ``double3``/``euler`` -> ``[0, 0, 0]``; ``matrix`` ->
     identity; ``string`` -> ``""``; anything else -> ``None``.
 
   * ARRAY (multi) outputs get a PRE-SIZED ``(N, ...)`` buffer of the same
@@ -36,11 +36,11 @@ def scalar_default(attr_type: str) -> Any:
     """Per-type default for a SINGLE (non-array) output."""
     if attr_type in ("float", "double"):
         return 0.0
-    if attr_type == "int":
+    if attr_type == "long":
         return 0
     if attr_type == "bool":
         return False
-    if attr_type in ("vector", "euler", "color"):
+    if attr_type in ("double3", "euler", "color"):
         return [0.0, 0.0, 0.0]
     if attr_type == "quaternion":
         return [0.0, 0.0, 0.0, 1.0]
@@ -56,11 +56,11 @@ def array_default(attr_type: str, n: int) -> Any:
     n = max(int(n), 0)
     if attr_type in ("float", "double"):
         return np.zeros((n,), dtype=np.float64)
-    if attr_type == "int":
+    if attr_type == "long":
         return np.zeros((n,), dtype=np.int64)
     if attr_type == "bool":
         return np.zeros((n,), dtype=bool)
-    if attr_type in ("vector", "euler", "color"):
+    if attr_type in ("double3", "euler", "color"):
         return np.zeros((n, 3), dtype=np.float64)
     if attr_type == "quaternion":
         # (N, 4) of identity [0,0,0,1] -- mutable, ideal for slice-assignment.
@@ -102,7 +102,7 @@ def seed_user_output_defaults_api2(fn_node, output_map) -> dict:
     seeded: dict = {}
     for out_attr_name, meta in (output_map or {}).items():
         meta      = meta or {}
-        attr_type = meta.get("attr_type", "float")
+        attr_type = meta.get("attr_type", "double")
         is_array  = bool(meta.get("is_array", False))
         n         = 0
         if is_array:
@@ -176,7 +176,7 @@ def seed_array_outputs_api1(node_mobject) -> dict:
         if not meta.get("is_array"):
             continue
         n            = _array_output_size_api1(fn, name)
-        seeded[name] = array_default(meta.get("attr_type", "float"), n)
+        seeded[name] = array_default(meta.get("attr_type", "double"), n)
     return seeded
 
 

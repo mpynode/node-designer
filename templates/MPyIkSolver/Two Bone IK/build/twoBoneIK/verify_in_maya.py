@@ -37,7 +37,7 @@ def _solver_inst(node_type, configure=None):
 def _sample(t, fields):
     if t == "bool":
         return random.choice([0, 1])
-    if t == "int":
+    if t == "long":
         return random.randint(-3, 3)
     if t == "enum":
         return random.randint(0, max(0, len(fields) - 1))

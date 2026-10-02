@@ -57,7 +57,7 @@
         },
         "inputs": {
           "boardX": {
-            "type": "int",
+            "type": "long",
             "is_array": false,
             "portable": true,
             "cpp": {
@@ -71,7 +71,7 @@
             "default_value": 10
           },
           "boardY": {
-            "type": "int",
+            "type": "long",
             "is_array": false,
             "portable": true,
             "cpp": {
@@ -98,7 +98,7 @@
             }
           },
           "randomSamples": {
-            "type": "int",
+            "type": "long",
             "is_array": false,
             "portable": true,
             "cpp": {

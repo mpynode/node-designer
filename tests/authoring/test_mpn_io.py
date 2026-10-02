@@ -56,9 +56,9 @@ class TestMpnRoundTrip(unittest.TestCase):
 
         n = MPyNode.create(name=name)
         n.add_input_attr("alpha", "float")
-        n.add_input_attr("vec", "vector")
+        n.add_input_attr("vec", "double3")
         n.add_input_attr("mode", "enum", enum_names=["off", "on", "standby"])
-        n.add_output_attr("out", "vector")
+        n.add_output_attr("out", "double3")
         n.set_input_attr_color("alpha", "#ff0000")
         n.set_input_attr_color("vec", "#00ffff")
         n.set_compute_expression("out = vec * alpha")

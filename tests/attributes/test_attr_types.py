@@ -1,4 +1,4 @@
-"""Attribute types: angle/euler/enum, python/geometry, time
+"""Attribute types: doubleAngle/euler/enum, python/geometry, time
 
 Consolidated from: test_phase18_7.py, test_phase18_8.py, test_phase18_9.py.
 """
@@ -44,7 +44,7 @@ def _qt_available() -> bool:
 
 
 # ===========================================================================
-# Wrapper-level: add_input_attr/add_output_attr for angle/euler/enum
+# Wrapper-level: add_input_attr/add_output_attr for doubleAngle/euler/enum
 # ===========================================================================
 
 
@@ -57,10 +57,10 @@ class TestNewAttrTypes(unittest.TestCase):
         from mpynode.wrappers._mpy_node import MPyNode
 
         n = MPyNode.create(name="ang1")
-        n.add_input_attr("a", "angle")
+        n.add_input_attr("a", "doubleAngle")
         self.assertEqual(mc.getAttr(n.get_name() + ".a", type=True), "doubleAngle")
         self.assertIn("a", n.get_input_attr_map())
-        self.assertEqual(n.get_input_attr_map()["a"]["attr_type"], "angle")
+        self.assertEqual(n.get_input_attr_map()["a"]["attr_type"], "doubleAngle")
 
     def test_euler_input_creates_xyz_doubleAngle_children(self):
         from mpynode.wrappers._mpy_node import MPyNode
@@ -185,7 +185,7 @@ class TestComputeSideTypes(unittest.TestCase):
         return mc.getAttr(n.get_name() + ".type_name") or ""
 
     def test_angle_returns_float(self):
-        result = self._probe("ang", "angle", "self.type_name = type(self.ang).__name__")
+        result = self._probe("ang", "doubleAngle", "self.type_name = type(self.ang).__name__")
         self.assertEqual(result, "float")
 
     def test_euler_returns_ndarray_3(self):
@@ -217,7 +217,7 @@ class TestComputeSideTypes(unittest.TestCase):
 
         n = MPyNode.create(name="enval")
         n.add_input_attr("mode", "enum", enum_names=["off", "on", "standby"])
-        n.add_output_attr("idx", "int")
+        n.add_output_attr("idx", "long")
         n.set_compute_expression("self.idx = self.mode")
         self.assertEqual(mc.getAttr(n.get_name() + ".idx"), 0)
         mc.setAttr(n.get_name() + ".mode", 2)
@@ -266,20 +266,20 @@ class TestAddCommandsEnumNames(unittest.TestCase):
 
 @unittest.skipUnless(_qt_available(), "Qt unavailable")
 class TestAddAttrDialogPhase18_7(unittest.TestCase):
-    def test_all_attr_types_includes_angle_euler_enum(self):
+    def test_all_attr_types_includes_doubleangle_euler_enum(self):
         from mpynode.ui.dialogs.add_attr import ALL_ATTR_TYPES
 
-        self.assertIn("angle", ALL_ATTR_TYPES)
-        self.assertIn("euler", ALL_ATTR_TYPES)
-        self.assertIn("enum",  ALL_ATTR_TYPES)
+        self.assertIn("doubleAngle", ALL_ATTR_TYPES)
+        self.assertIn("euler",       ALL_ATTR_TYPES)
+        self.assertIn("enum",        ALL_ATTR_TYPES)
 
-    def test_subframe_router_routes_angle_to_numeric(self):
+    def test_subframe_router_routes_doubleangle_to_numeric(self):
         import inspect
 
         from mpynode.ui.dialogs.add_attr import NDAddAttrDialog
 
         src = inspect.getsource(NDAddAttrDialog._make_subframe)
-        self.assertIn('"angle"', src)
+        self.assertIn('"doubleAngle"', src)
         self.assertIn("_make_numeric_subframe", src)
 
     def test_enum_subframe_uses_editable_items(self):
@@ -408,7 +408,7 @@ class TestMultiOutputWrite(unittest.TestCase):
         from mpynode.wrappers._mpy_node import MPyNode
 
         n = MPyNode.create(name=name)
-        n.add_input_attr("count", "int")
+        n.add_input_attr("count", "long")
         n.add_output_attr("out", attr_type, is_array=True)
         n.set_compute_expression("import numpy as np\n" + expr)
         return n
@@ -439,7 +439,7 @@ class TestMultiOutputWrite(unittest.TestCase):
     def test_multi_int_output(self):
         n = self._build(
             "mint",
-            "int",
+            "long",
             "self.out = []\nfor i in range(self.count):\n    self.out.append(i * 7)",
         )
         mc.setAttr(n.get_name() + ".count", 4)
@@ -474,7 +474,7 @@ class TestMultiOutputWrite(unittest.TestCase):
     def test_multi_vector_output(self):
         n = self._build(
             "mvec",
-            "vector",
+            "double3",
             "self.out = []\n"
             "for i in range(self.count):\n"
             "    self.out.append([float(i), float(i*2), float(i*3)])",
@@ -596,7 +596,7 @@ class TestMultiOutputWrite(unittest.TestCase):
         from mpynode._node_registry import wrap_node
 
         cn = wrap_node(cn_name, "mPyConstraint")
-        cn.add_input_attr("count", "int")
+        cn.add_input_attr("count", "long")
         cn.add_output_attr("out", "float", is_array=True)
         cn.set_compute_expression(
             "self.out = []\nfor i in range(self.count):\n    self.out.append(float(i) * 11.0)"
@@ -628,7 +628,7 @@ class TestPythonAttrRoundTrip(unittest.TestCase):
 
         n = MPyNode.create(name="pyrt1")
         n.add_input_attr("cfg", "python")
-        n.add_output_attr("got_a", "int")
+        n.add_output_attr("got_a", "long")
         n.set_compute_expression("self.got_a = self.cfg['a']")
         self._set_python_input(n, "cfg", {"a": 42, "b": "hello"})
         self.assertEqual(mc.getAttr(n.get_name() + ".got_a"), 42)
@@ -638,7 +638,7 @@ class TestPythonAttrRoundTrip(unittest.TestCase):
 
         n = MPyNode.create(name="pyrt2")
         n.add_input_attr("items", "python")
-        n.add_output_attr("count", "int")
+        n.add_output_attr("count", "long")
         n.set_compute_expression("self.count = len(self.items)")
         self._set_python_input(n, "items", [1, 2, 3, 4, 5])
         self.assertEqual(mc.getAttr(n.get_name() + ".count"), 5)
@@ -730,8 +730,8 @@ class TestTypedGeometryInputs(unittest.TestCase):
         n          = MPyNode.create(name="meshprobe")
         n.add_input_attr("inMesh", "mesh")
         n.add_output_attr("type_name", "string")
-        n.add_output_attr("nverts",    "int")
-        n.add_output_attr("npoints",   "int")
+        n.add_output_attr("nverts",    "long")
+        n.add_output_attr("npoints",   "long")
         n.set_compute_expression(
             "self.type_name = type(self.inMesh).__name__\n"
             "self.nverts = self.inMesh.numVertices if self.inMesh is not None else -1\n"
@@ -752,7 +752,7 @@ class TestTypedGeometryInputs(unittest.TestCase):
         n           = MPyNode.create(name="curveprobe")
         n.add_input_attr("inCurve", "nurbsCurve")
         n.add_output_attr("type_name", "string")
-        n.add_output_attr("ncvs", "int")
+        n.add_output_attr("ncvs", "long")
         n.set_compute_expression(
             "self.type_name = type(self.inCurve).__name__ if self.inCurve is not None else 'None'\n"
             "self.ncvs = self.inCurve.numCVs if self.inCurve is not None else -1"
@@ -769,7 +769,7 @@ class TestTypedGeometryInputs(unittest.TestCase):
         n          = MPyNode.create(name="surfprobe")
         n.add_input_attr("inSurf", "nurbsSurface")
         n.add_output_attr("type_name", "string")
-        n.add_output_attr("ncvsU", "int")
+        n.add_output_attr("ncvsU", "long")
         n.set_compute_expression(
             "self.type_name = type(self.inSurf).__name__ if self.inSurf is not None else 'None'\n"
             "self.ncvsU = self.inSurf.numCVsInU if self.inSurf is not None else -1"
@@ -1302,7 +1302,7 @@ class TestQuaternionColorCompute(unittest.TestCase):
         n.add_output_attr("q", "quaternion")
         n.set_compute_expression("self.q = [0.1, 0.2, 0.3, 0.4]")
         # Read the parent compound: a direct child getAttr does NOT trigger
-        # compute on any compound output (vector/euler behave the same).
+        # compute on any compound output (double3/euler behave the same).
         got = mc.getAttr(n.get_name() + ".q")[0]
         for v, exp in zip(got, (0.1, 0.2, 0.3, 0.4)):
             self.assertAlmostEqual(v, exp)
@@ -1332,7 +1332,7 @@ class TestQuaternionColorCompute(unittest.TestCase):
         from mpynode.wrappers._mpy_node import MPyNode
 
         n = MPyNode.create(name="q_marr")
-        n.add_input_attr("count", "int")
+        n.add_input_attr("count", "long")
         n.add_output_attr("out", "quaternion", is_array=True)
         n.set_compute_expression(
             "self.out = []\n"
@@ -1350,7 +1350,7 @@ class TestQuaternionColorCompute(unittest.TestCase):
         from mpynode.wrappers._mpy_node import MPyNode
 
         n = MPyNode.create(name="c_marr")
-        n.add_input_attr("count", "int")
+        n.add_input_attr("count", "long")
         n.add_output_attr("out", "color", is_array=True)
         n.set_compute_expression(
             "self.out = []\n"
@@ -1626,6 +1626,20 @@ class TestAttrTypeGrouping(unittest.TestCase):
         self.assertEqual(len(set(flat)), len(flat))
         self.assertEqual(len(_ATTR_TYPE_GROUPS), 5)
 
+    def test_groups_are_pinned(self):
+        from mpynode.ui.dialogs.add_attr import _ATTR_TYPE_GROUPS
+
+        self.assertEqual(
+            _ATTR_TYPE_GROUPS,
+            (
+                ("double", "float", "long", "bool", "doubleAngle"),
+                ("double3", "euler", "matrix", "quaternion", "color"),
+                ("string", "enum", "hex", "python"),
+                ("mesh", "nurbsCurve", "nurbsSurface"),
+                ("time",),
+            ),
+        )
+
     def test_type_combo_grouped_no_separators_no_color(self):
         import sys
 
@@ -1663,12 +1677,12 @@ class TestAttrTypeGrouping(unittest.TestCase):
                 == "separator"
             ]
             self.assertEqual(seps, [])
-            items = [combo.itemText(i) for i in range(n)]
+            items = [combo.itemData(i) for i in range(n)]
             self.assertEqual(
                 items,
                 [
-                    "float", "int", "bool", "angle",
-                    "vector", "euler", "matrix", "quaternion", "color",
+                    "double", "float", "long", "bool", "doubleAngle",
+                    "double3", "euler", "matrix", "quaternion", "color",
                     "string", "enum", "hex", "python",
                     "mesh", "nurbsCurve", "nurbsSurface", "time",
                 ],
@@ -1709,7 +1723,7 @@ class TestAttrTypeGrouping(unittest.TestCase):
             add_attr._LAST_SELECTED_TYPE = None
             dlg1                         = NDAddAttrDialog(None, _Fake(), "input")
             try:
-                i = dlg1._type_combo.findText("matrix")
+                i = dlg1._type_combo.findData("matrix")
                 self.assertGreaterEqual(i, 0)
                 dlg1._type_combo.setCurrentIndex(i)
                 self.assertEqual(add_attr._LAST_SELECTED_TYPE, "matrix")
@@ -1719,11 +1733,87 @@ class TestAttrTypeGrouping(unittest.TestCase):
             # A freshly-opened dialog starts on the remembered type.
             dlg2 = NDAddAttrDialog(None, _Fake(), "input")
             try:
-                self.assertEqual(dlg2._type_combo.currentText(), "matrix")
+                self.assertEqual(dlg2._type_combo.currentData(), "matrix")
             finally:
                 dlg2.deleteLater()
         finally:
             add_attr._LAST_SELECTED_TYPE = saved
+
+    def _dialog(self):
+        import sys
+
+        from mpynode.ui.dialogs.add_attr import NDAddAttrDialog
+        from mpynode.wrappers._mpy_node import VALID_INPUT_TYPES
+
+        try:
+            from PySide6.QtWidgets import QApplication
+        except ImportError:
+            from PySide2.QtWidgets import QApplication
+
+        app = QApplication.instance() or QApplication(sys.argv)  # noqa: F841
+
+        class _Fake:
+            def get_name(self):
+                return "fakeNode"
+
+            def list_valid_input_types(self):
+                return list(VALID_INPUT_TYPES)
+
+            def list_valid_output_types(self):
+                return list(VALID_INPUT_TYPES)
+
+        return NDAddAttrDialog(None, _Fake(), "input")
+
+    def test_double_is_first_and_preselected(self):
+        from mpynode.ui.dialogs import add_attr
+
+        saved = add_attr._LAST_SELECTED_TYPE
+        try:
+            add_attr._LAST_SELECTED_TYPE = None
+            dlg                          = self._dialog()
+            try:
+                combo = dlg._type_combo
+                self.assertEqual(combo.itemData(0), "double")
+                self.assertEqual(combo.currentData(), "double")
+                self.assertEqual(combo.currentText(),
+                                 "double  -  64-bit real (Maya's Float)")
+            finally:
+                dlg.deleteLater()
+        finally:
+            add_attr._LAST_SELECTED_TYPE = saved
+
+    def test_item_data_holds_the_type_name_and_text_the_label(self):
+        from mpynode._common import attr_types
+        from mpynode.ui.dialogs.add_attr import ALL_ATTR_TYPES
+
+        dlg = self._dialog()
+        try:
+            combo = dlg._type_combo
+            names = [combo.itemData(i) for i in range(combo.count())]
+            self.assertEqual(tuple(names), ALL_ATTR_TYPES)
+            for i, name in enumerate(names):
+                self.assertEqual(combo.itemText(i),
+                                 attr_types.dialog_label(name))
+                self.assertTrue(combo.itemText(i).startswith(name + "  -  "))
+            self.assertEqual(combo.itemText(names.index("float")),
+                             "float  -  32-bit real")
+            self.assertEqual(combo.itemText(names.index("long")),
+                             "long  -  integer")
+        finally:
+            dlg.deleteLater()
+
+    def test_dialog_reads_the_type_from_item_data(self):
+        import inspect
+
+        from mpynode.ui.dialogs.add_attr import NDAddAttrDialog
+
+        for meth in (NDAddAttrDialog._populate_type_combo,
+                     NDAddAttrDialog._on_type_changed,
+                     NDAddAttrDialog._on_add_clicked):
+            src = inspect.getsource(meth)
+            self.assertNotIn("currentText()", src, meth.__name__)
+            self.assertNotIn("findText(",     src, meth.__name__)
+            self.assertNotIn("itemText(",     src, meth.__name__)
 
 
 def setUpModule():

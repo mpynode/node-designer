@@ -93,9 +93,9 @@ WEIGHT_ATTR = "weight"
 
 # CSR delta tables -- always rebuilt, always read by the compute.
 DELTA_ATTRS = (
-    ("targetOffset", "int"),          # (T+1,) CSR offsets
-    ("targetComponents", "int"),      # (K,)   vertex ids
-    ("targetDeltas", "double"),       # (3K,)  flat xyz
+    ("targetOffset", "long"),      # (T+1,) CSR offsets
+    ("targetComponents", "long"),  # (K,)   vertex ids
+    ("targetDeltas", "double"),    # (3K,)  flat xyz
 )
 
 # Corrective tables -- ALWAYS declared and written, even on a rig with no
@@ -104,10 +104,10 @@ DELTA_ATTRS = (
 # that fails to bind is a COMPILE-TIME reject, so a node missing these could
 # not compile at all.
 CORRECTIVE_ATTRS = (
-    ("interBase", "int"),             # (T,) in-between -> main target, else -1
-    ("interKnot", "double"),          # (T,) in-between position, else 0
-    ("comboOffset", "int"),           # (T+1,) CSR into comboDriver
-    ("comboDriver", "int"),           # driver target indices
+    ("interBase", "long"),    # (T,) in-between -> main target, else -1
+    ("interKnot", "double"),  # (T,) in-between position, else 0
+    ("comboOffset", "long"),  # (T+1,) CSR into comboDriver
+    ("comboDriver", "long"),  # driver target indices
 )
 
 # Name indirection for ``self.morphs["browUp"]`` in a Compute. shapeSlot[k] is
@@ -117,7 +117,7 @@ CORRECTIVE_ATTRS = (
 # and one bundle serves any rig. Declared unconditionally for the same reason
 # as the corrective tables: morph_weight_at names it as an implicit read.
 SLOT_ATTRS = (
-    ("shapeSlot", "int"),             # (K,) slot -> weight[] index, else -1
+    ("shapeSlot", "long"),  # (K,) slot -> weight[] index, else -1
 )
 
 # Every table above is stored PACKED (one typed-array plug, not a numeric
@@ -129,8 +129,8 @@ _TABLE_KIND = {name: kind
 
 # cmds.setAttr needs the Maya data-type name, and needs the values already in
 # the right Python type -- an int table handed floats writes silently wrong.
-_PACKED_SET_TYPE = {"double": "doubleArray", "int": "Int32Array"}
-_TABLE_CAST      = {"double": float, "int": int}
+_PACKED_SET_TYPE = {"double": "doubleArray", "long": "Int32Array"}
+_TABLE_CAST      = {"double": float, "long": int}
 
 # Scene formats that need a plug-in before mc.file can read them. Loaded on
 # demand: a rig that never loads an .obj should not pay for objExport.

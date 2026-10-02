@@ -711,7 +711,7 @@ class TestCompoundAsNumpy(unittest.TestCase):
         from mpynode.wrappers.mpy_deformer import MPyDeformer
 
         self.deformer = MPyDeformer.create_on(plane, name="td2")
-        self.deformer.add_input_attr("amplitude", "vector")
+        self.deformer.add_input_attr("amplitude", "double3")
         mc.setAttr(self.deformer.get_name() + ".amplitude", 1.5, 2.5, 3.5, type="double3")
 
     def test_asNumpy_returns_3_floats(self):
@@ -838,7 +838,7 @@ class TestUserAddedPlugsRideAlongside(unittest.TestCase):
         self.deformer = MPyDeformer.create_on(plane, name="testDef2")
         # Add the lattice-style user inputs.
         self.deformer.add_input_attr("driverMatrixA", "matrix")
-        self.deformer.add_input_attr("amplitude", "vector")
+        self.deformer.add_input_attr("amplitude", "double3")
 
     def test_user_added_matrix_resolves_as_mtmview(self):
         from mpynode._common.plugs.plug_proxy import make_node_proxy_for_name

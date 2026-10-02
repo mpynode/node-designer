@@ -285,7 +285,7 @@ class TestMPyNodeAddAttrs(unittest.TestCase):
         from mpynode.wrappers._mpy_node import MPyNode
 
         n = MPyNode.create(name="addVec")
-        n.add_input_attr("v", "vector")
+        n.add_input_attr("v", "double3")
         for child in ("v", "vX", "vY", "vZ"):
             self.assertTrue(
                 mc.attributeQuery(child, node=n.get_name(), exists=True),
@@ -376,7 +376,7 @@ class TestMPyNodeExpression(unittest.TestCase):
 
         n = MPyNode.create(name="vecNode")
         n.add_input_attr("scale", "float")
-        n.add_output_attr("pos", "vector")
+        n.add_output_attr("pos", "double3")
         n.set_compute_expression("self.pos = [self.scale, self.scale * 2, self.scale * 3]")
 
         cube = mc.polyCube(name="vecCube")[0]
@@ -483,7 +483,7 @@ class TestSerializationRoundTrip(unittest.TestCase):
 
         data = {
             "myFloat":  {"attr_type": "float", "is_array": False},
-            "myVecArr": {"attr_type": "vector", "is_array": True},
+            "myVecArr": {"attr_type": "double3", "is_array": True},
         }
         encoded = encode_attr_map(data)
         self.assertEqual(decode_attr_map(encoded), data)

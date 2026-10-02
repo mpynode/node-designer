@@ -1475,7 +1475,7 @@ _DEFAULT_OUTCOLOR_RE = re.compile(
 
 # Numeric-scalar input types the scanline tail's tIn may have (read into a scalar
 # C++ member that `(double)` can cast). Anything else falls back to the porter.
-_SCALAR_TIN_TYPES = ("float", "double", "int", "bool", "enum")
+_SCALAR_TIN_TYPES = ("float", "double", "long", "bool", "enum")
 
 
 def make_scanline_compute(default_compute: str) -> str:
@@ -1969,7 +1969,7 @@ def _ssot_meta(entry):
         meta["default_value"] = entry["default"]
     elif t == "float2":
         meta["children"] = [c["long"] for c in entry["children"]]
-    elif t in ("float", "double", "int", "bool") and entry.get("default") is not None:
+    elif t in ("float", "double", "long", "bool") and entry.get("default") is not None:
         meta["default_value"] = entry["default"]
     return meta
 

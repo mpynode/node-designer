@@ -585,6 +585,42 @@ class TestUnitWrappedPlugReads(unittest.TestCase):
         self.assertEqual(rep["time_fixes"], [])
 
 
+class TestRenamedTypes(unittest.TestCase):
+    """v1 wrote the old v2 type names. Three have since been renamed (int ->
+    long, vector -> double3, angle -> doubleAngle) and v2 rejects the old ones,
+    so the conversion maps them (``attr_types.RETIRED``)."""
+
+    def test_convert_reports_the_new_names(self):
+        n            = V.V1Node("n")
+        n.expression = "out = [k, a, 0]"
+        n.inputs     = {"k": "int", "a": "angle", "f": "float"}
+        n.outputs    = {"out": "vector"}
+        spec         = V.convert(n)
+        self.assertEqual(spec["inputs"],
+                         {"k": "long", "a": "doubleAngle", "f": "float"})
+        self.assertEqual(spec["outputs"], {"out": "double3"})
+        # The v1 read itself stays in v1's vocabulary.
+        self.assertEqual(n.outputs, {"out": "vector"})
+
+    def test_the_type_fixes_still_fire_on_the_old_names(self):
+        _i, comp, rep = V.split_and_selfify(
+            "out = p0 + t0 * 3\nang = a.value", {"a": "angle"},
+            {"out": "vector", "ang": "float"})
+        self.assertIn("self.a", comp)
+        self.assertEqual(rep["time_fixes"], ["a"])
+        self.assertEqual(rep["vec3_fixes"], ["out"])
+
+    def test_upgrade_legacy_name(self):
+        from mpynode._common.attr_types import upgrade_legacy_name
+
+        self.assertEqual(upgrade_legacy_name("int"),    "long")
+        self.assertEqual(upgrade_legacy_name("vector"), "double3")
+        self.assertEqual(upgrade_legacy_name("angle"),  "doubleAngle")
+        self.assertEqual(upgrade_legacy_name("float"),  "float")
+        self.assertEqual(upgrade_legacy_name("euler"),  "euler")
+        self.assertIsNone(upgrade_legacy_name(None))
+
+
 class TestEvalOfAPlugName(unittest.TestCase):
     """``eval('boardX')`` -- v1 introspection with a plug name inside a STRING.
 

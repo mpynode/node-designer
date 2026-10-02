@@ -4,13 +4,13 @@
     "expression": "# Name: Text Mesh Generator  (numpy-first port)\n# Author: Eric Vignola - eric.vignola@gmail.com\n# The `output` attribute is typed `hex`: assign plain text and the attr\n# auto-encodes it to the space-separated UTF-8 hex a Maya `type` node\n# consumes as mesh text -- no manual unicode -> hex step needed.\n\n# Convert XYZ input (a numpy 3-vector) to rounded strings.\nself.output = 'DRAG ME AROUND!\\n'\nself.output += 'X: %s\\n' % round(float(self.inPosition[0]), self.decimals)\nself.output += 'Y: %s\\n' % round(float(self.inPosition[1]), self.decimals)\nself.output += 'Z: %s\\n' % round(float(self.inPosition[2]), self.decimals)\n",
     "input_attrs": {
       "decimals": {
-        "attr_type": "int",
+        "attr_type": "long",
         "default_value": 2,
         "is_array": false,
         "order": 0
       },
       "inPosition": {
-        "attr_type": "vector",
+        "attr_type": "double3",
         "is_array": false,
         "order": 1
       }

@@ -28,12 +28,12 @@ def setUpModule():
 # interpreted adapter, so parity holds regardless of the Maya attr kind.
 _INPUTS = {
     "fileName": {"type": "string", "is_array": False},
-    "colorSpace": {"type": "int", "is_array": False},
+    "colorSpace": {"type": "long", "is_array": False},
     "preFilter": {"type": "bool", "is_array": False},
-    "preFilterKernel": {"type": "int", "is_array": False},
+    "preFilterKernel": {"type": "long", "is_array": False},
     "preFilterRadius": {"type": "float", "is_array": False},
-    "wrapModeU": {"type": "int", "is_array": False},
-    "wrapModeV": {"type": "int", "is_array": False},
+    "wrapModeU": {"type": "long", "is_array": False},
+    "wrapModeV": {"type": "long", "is_array": False},
     "borderColor": {"type": "color", "is_array": False},
     "u": {"type": "float", "is_array": False},
     "v": {"type": "float", "is_array": False},

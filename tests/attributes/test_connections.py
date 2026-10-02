@@ -44,7 +44,7 @@ class TestDisconnectAllMulti(unittest.TestCase):
 
         mc.file(new=True, force=True)
         node = MPyNode.create(name="emit")
-        node.add_output_attr("pts", "vector", is_array=True)
+        node.add_output_attr("pts", "double3", is_array=True)
         node.set_compute_expression(
             "self.pts = [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]]\n"
         )
@@ -66,7 +66,7 @@ class TestDisconnectAllMulti(unittest.TestCase):
         # A "collector" multi input. All multis are indexMatters=True (Maya
         # default); nextAvailable picks the next free index, so N drivers
         # give N elements.
-        node.add_input_attr("inv", "vector", is_array=True)
+        node.add_input_attr("inv", "double3", is_array=True)
         plug = node.get_name() + ".inv"
         srcs = [mc.createNode("transform", name="s%d" % i) for i in range(3)]
         for i, s in enumerate(srcs):
@@ -127,7 +127,7 @@ class TestOutputMultiConnectIndex(unittest.TestCase):
         from mpynode.wrappers._mpy_node import MPyNode
 
         self.node = MPyNode.create(name="noiseEmitter")
-        self.node.add_output_attr("points", "vector", is_array=True)
+        self.node.add_output_attr("points", "double3", is_array=True)
         self.node.set_compute_expression(_COMPUTE)
         self.plug = self.node.get_name() + ".points"
         # One eval caches 5 elements at logical [0..4] -- the buggy state.
@@ -239,7 +239,7 @@ class TestOutputMultiWriteIndex(unittest.TestCase):
         from mpynode.wrappers._mpy_node import MPyNode
 
         node = MPyNode.create(name=name)
-        node.add_output_attr("points", "vector", is_array=True)
+        node.add_output_attr("points", "double3", is_array=True)
         node.set_compute_expression(compute)
         return node, node.get_name() + ".points"
 
@@ -1043,7 +1043,7 @@ class TestMultiAttrTypeContract(unittest.TestCase):
         self.assertEqual(result, "ndarray")
 
     def test_multi_int_returns_ndarray(self):
-        result = self._probe_input_type("counts", "int")
+        result = self._probe_input_type("counts", "long")
         self.assertEqual(result, "ndarray")
 
     def test_multi_bool_returns_ndarray(self):
@@ -1052,13 +1052,13 @@ class TestMultiAttrTypeContract(unittest.TestCase):
 
     def test_multi_vector_returns_ndarray(self):
         """was list, now stacked ndarray (n, 3)."""
-        result = self._probe_input_type("vecs", "vector")
+        result = self._probe_input_type("vecs", "double3")
         self.assertEqual(result, "ndarray")
 
     def test_multi_vector_empty_shape_is_n_3(self):
         """Empty multi vector still has the (0, 3) shape so user code
         that does ``.shape[1]`` doesn't blow up on empty input."""
-        result = self._probe_input_shape("vecs", "vector")
+        result = self._probe_input_shape("vecs", "double3")
         # Empty multi \u2192 numElements()==0 \u2192 np.zeros((0, 3))
         self.assertEqual(result, "(0, 3)")
 
@@ -1093,7 +1093,7 @@ class TestMultiAttrTypeContract(unittest.TestCase):
         from mpynode.wrappers._mpy_node import MPyNode
 
         n = MPyNode.create(name="vshape")
-        n.add_input_attr("vs", "vector", is_array=True)
+        n.add_input_attr("vs", "double3", is_array=True)
         n.add_output_attr("shape_str", "string")
         n.set_compute_expression("self.shape_str = str(self.vs.shape)")
 
@@ -1151,7 +1151,7 @@ class TestComputeConnectionPairs(unittest.TestCase):
         from mpynode.ui.dialogs.connect_attr import compute_connection_pairs
 
         n = MPyNode.create(name="multi1")
-        n.add_input_attr("input", "vector", is_array=True)
+        n.add_input_attr("input", "double3", is_array=True)
         target = f"{n.get_name()}.input"
 
         pairs = compute_connection_pairs(
@@ -1175,7 +1175,7 @@ class TestComputeConnectionPairs(unittest.TestCase):
         from mpynode.ui.dialogs.connect_attr import compute_connection_pairs
 
         n = MPyNode.create(name="multi2")
-        n.add_input_attr("input", "vector", is_array=True)
+        n.add_input_attr("input", "double3", is_array=True)
         target = f"{n.get_name()}.input"
 
         # Pre-populate indices [0] and [1]
@@ -1208,7 +1208,7 @@ class TestComputeConnectionPairs(unittest.TestCase):
         from mpynode.ui.dialogs.connect_attr import compute_connection_pairs
 
         n = MPyNode.create(name="bugfix")
-        n.add_input_attr("input", "vector", is_array=True)
+        n.add_input_attr("input", "double3", is_array=True)
         target  = f"{n.get_name()}.input"
 
         cubes   = [mc.polyCube(name=f"bug_{i}")[0] for i in range(3)]
@@ -1413,7 +1413,7 @@ class TestMPyConstraintExpression(unittest.TestCase):
         driven = mc.polyCube(name="dst")[0]
 
         c = MPyConstraint.create(name="ptCstr")
-        c.add_output_attr("out", "vector")
+        c.add_output_attr("out", "double3")
         c.set_compute_expression("self.out = list(self.targetTranslate)")
 
         mc.connectAttr(source + ".translate", c.get_name() + ".targetTranslate", force=True)
@@ -1444,7 +1444,7 @@ class TestMPyConstraintExpression(unittest.TestCase):
         driven = mc.polyCube(name="dstW")[0]
 
         c = MPyConstraint.create(name="weightedCstr")
-        c.add_output_attr("out", "vector")
+        c.add_output_attr("out", "double3")
         c.set_compute_expression(
             "self.out = ["
             "    self.targetTranslate[0] * self.targetWeight + self.restTranslate[0] * (1 - self.targetWeight),"
@@ -1748,7 +1748,7 @@ class TestClobberVsAppendPairs(unittest.TestCase):
         from mpynode.wrappers._mpy_node import MPyNode
 
         n = MPyNode.create(name="ob")
-        n.add_output_attr("pts", "vector", is_array=True)
+        n.add_output_attr("pts", "double3", is_array=True)
         n.set_compute_expression(
             "self.pts=[[float(i)]*3 for i in range(len(self.pts))]\n"
         )
@@ -1772,7 +1772,7 @@ class TestClobberVsAppendPairs(unittest.TestCase):
         from mpynode.wrappers._mpy_node import MPyNode
 
         n = MPyNode.create(name="ib")
-        n.add_input_attr("inv", "vector", is_array=True)
+        n.add_input_attr("inv", "double3", is_array=True)
         plug = n.get_name() + ".inv"
         srcs = [mc.createNode("transform", name="ib%d" % i) for i in range(2)]
         for i, s in enumerate(srcs):
@@ -1809,7 +1809,7 @@ class TestClobberMultiConnectCommand(unittest.TestCase):
 
         mc.file(new=True, force=True)
         n = MPyNode.create(name="cl")
-        n.add_output_attr("pts", "vector", is_array=True)
+        n.add_output_attr("pts", "double3", is_array=True)
         # Self-sizing (len-based) compute: the array follows the connection
         # count, like the real point-emitter nodes.
         n.set_compute_expression(
@@ -1854,7 +1854,7 @@ class TestClobberMultiConnectCommand(unittest.TestCase):
 
         mc.file(new=True, force=True)
         m = MPyNode.create(name="recvc")
-        m.add_input_attr("inv", "vector", is_array=True)
+        m.add_input_attr("inv", "double3", is_array=True)
         ip   = m.get_name() + ".inv"
         srcs = [mc.createNode("transform", name="rc%d" % i) for i in range(6)]
         for i, s in enumerate(srcs):

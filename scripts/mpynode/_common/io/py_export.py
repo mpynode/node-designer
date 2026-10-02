@@ -609,7 +609,7 @@ _NUMERIC_LIMIT_KEYS = ("min_value", "max_value", "default_value")
 
 def _attr_call(method: str, attr_name: str, meta: dict) -> str:
     """One ``node.add_input_attr(...)`` / ``add_output_attr(...)`` line."""
-    parts = [repr(attr_name), repr(meta.get("attr_type", "float"))]
+    parts = [repr(attr_name), repr(meta.get("attr_type", "double"))]
     if meta.get("is_array"):
         parts.append("is_array=True")
         # sparse is INPUT-array-only (default False = dense), so emit only the

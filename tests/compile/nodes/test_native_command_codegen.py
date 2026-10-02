@@ -479,7 +479,7 @@ def _loc_spec_every_input():
     spec["inputs"] = {
         "inMesh":  {"type": "mesh", "is_array": False},
         "offset":  {"type": "float", "is_array": False},
-        "steps":   {"type": "int", "is_array": False},
+        "steps":   {"type": "long", "is_array": False},
         "enabled": {"type": "bool", "is_array": False},
         "mode": {"type": "enum", "is_array": False,
                  "enum_names": ["a", "b"]},

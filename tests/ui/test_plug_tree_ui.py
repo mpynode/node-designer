@@ -109,7 +109,7 @@ class TestTreeify(unittest.TestCase):
         from mpynode.wrappers.mpy_deformer import MPyDeformer
 
         self.deformer = MPyDeformer.create_on(plane, name="treeifytd")
-        self.deformer.add_input_attr("amplitude", "vector")
+        self.deformer.add_input_attr("amplitude", "double3")
 
     def test_treeify_returns_nested_tree(self):
         from mpynode.ui.widgets.plug_tree_walker import walk_plug_tree, treeify
@@ -184,7 +184,7 @@ class TestAttributesWidgetWalker(unittest.TestCase):
         from mpynode.wrappers.mpy_deformer import MPyDeformer
 
         self.deformer = MPyDeformer.create_on(plane, name="attrtestdef")
-        self.deformer.add_input_attr("amplitude", "vector")
+        self.deformer.add_input_attr("amplitude", "double3")
         self.deformer.add_input_attr("driverMatrixA", "matrix")
 
     def _make_input_tree(self):
@@ -392,7 +392,7 @@ class TestStorageTreeRender(unittest.TestCase):
         from mpynode.wrappers.mpy_deformer import MPyDeformer
 
         self.deformer = MPyDeformer.create_on(plane, name="o0_td")
-        self.deformer.add_input_attr("amplitude", "vector")
+        self.deformer.add_input_attr("amplitude", "double3")
 
     def _flag_set(self):
         """Build the widget + run refresh; return the populated

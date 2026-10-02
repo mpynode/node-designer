@@ -428,7 +428,7 @@ class TestVocabularyBuilder(unittest.TestCase):
         from mpynode.wrappers.mpy_deformer import MPyDeformer
 
         self.deformer = MPyDeformer.create_on(plane, name="ac_td")
-        self.deformer.add_input_attr("amplitude", "vector")
+        self.deformer.add_input_attr("amplitude", "double3")
         self.deformer.add_input_attr("driverMatrixA", "matrix")
 
     def test_no_node_returns_builtin_stub(self):

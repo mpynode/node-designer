@@ -109,7 +109,7 @@
         "is_array": false,
         "min_value": 1,
         "portable": true,
-        "type": "int"
+        "type": "long"
       },
       "fileName": {
         "cpp": {
@@ -357,7 +357,7 @@
         "default_value": 100,
         "is_array": false,
         "portable": true,
-        "type": "int"
+        "type": "long"
       },
       "reset": {
         "cpp": {
@@ -401,7 +401,7 @@
         "default_value": 100,
         "is_array": false,
         "portable": true,
-        "type": "int"
+        "type": "long"
       }
     },
     "outputs": {

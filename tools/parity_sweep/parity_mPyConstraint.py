@@ -15,18 +15,18 @@ BUNDLE    = os.path.join(HERE, "pointBlendConstraint.bundle")
 NODE_TYPE = "pointBlendConstraint"
 TOL       = 1e-4
 
-INPUTS = {"blend": "float", "offset": "vector", "targetA": "vector", "targetB": "vector"}
+INPUTS = {"blend": "float", "offset": "double3", "targetA": "double3", "targetB": "double3"}
 OUT    = "outPos"
 
 
 def _sample(t):
-    if t == "vector":
+    if t == "double3":
         return [random.uniform(-5, 5) for _ in range(3)]
     return random.uniform(0.0, 1.0)  # blend constrained 0..1
 
 
 def _set(node, attr, t, v):
-    if t == "vector":
+    if t == "double3":
         cmds.setAttr(node + "." + attr, v[0], v[1], v[2], type="double3")
     else:
         cmds.setAttr(node + "." + attr, v)

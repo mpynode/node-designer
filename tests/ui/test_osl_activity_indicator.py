@@ -415,7 +415,7 @@ class _CompositeNode:
         return {"filePaths": {"attr_type": "string", "is_array": True}}
 
     def get_output_attr_map(self):
-        return {"maxWidth": {"attr_type": "int", "is_array": False}}
+        return {"maxWidth": {"attr_type": "long", "is_array": False}}
 
 
 @unittest.skipIf(_QApplication is None, "Qt unavailable")

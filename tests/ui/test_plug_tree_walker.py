@@ -30,7 +30,7 @@ class TestWalkPlugTreeShape(unittest.TestCase):
 
         self.deformer = MPyDeformer.create_on(plane, name="walktd")
         self.deformer.add_input_attr("driverMatrixA", "matrix")
-        self.deformer.add_input_attr("amplitude", "vector")
+        self.deformer.add_input_attr("amplitude", "double3")
 
     def test_walker_returns_nonempty(self):
         from mpynode.ui.widgets.plug_tree_walker import walk_plug_tree
@@ -133,7 +133,7 @@ class TestVariablesWidgetUnification(unittest.TestCase):
         from mpynode.wrappers.mpy_deformer import MPyDeformer
 
         self.deformer = MPyDeformer.create_on(plane, name="varstd")
-        self.deformer.add_input_attr("amplitude", "vector")
+        self.deformer.add_input_attr("amplitude", "double3")
 
     def test_inherited_envelope_in_collect_plug_rows(self):
         from mpynode.ui.widgets.variables import collect_plug_rows
@@ -195,7 +195,7 @@ class TestPlugTreeNoForceEval(unittest.TestCase):
 
         mc.file(new=True, force=True)
         node = MPyNode.create(name="walkTest")
-        node.add_output_attr("pts", "vector", is_array=True)
+        node.add_output_attr("pts", "double3", is_array=True)
         node.set_compute_expression(
             'print("EVALPT")\nself.pts = [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]\n'
         )
@@ -214,7 +214,7 @@ class TestPlugTreeNoForceEval(unittest.TestCase):
 
         mc.file(new=True, force=True)
         node = MPyNode.create(name="walkTest2")
-        node.add_output_attr("pts", "vector", is_array=True)
+        node.add_output_attr("pts", "double3", is_array=True)
         node.set_compute_expression(
             "self.pts = [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]\n"
         )

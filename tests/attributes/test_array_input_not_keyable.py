@@ -1,7 +1,7 @@
 """Array INPUTs must not be keyable.
 
-Scalar-numeric multi inputs (float / int / bool) created keyable leak into the
-channel box; compound (vector/euler) and dt-typed arrays never display there.
+Scalar-numeric multi inputs (float / long / bool) created keyable leak into the
+channel box; compound (double3/euler) and dt-typed arrays never display there.
 An array input should be absent from BOTH channel-box sections (keyable and
 non-keyable "displayable") yet still exist -- so it stays editable in the
 Attribute Editor. Single (non-array) inputs are unchanged: keyable, in the CB.
@@ -50,7 +50,7 @@ class TestArrayInputNotKeyable(unittest.TestCase):
 
     def test_int_array_input_not_keyable(self):
         n = self._make("ia")
-        n.add_input_attr("w", "int", is_array=True)
+        n.add_input_attr("w", "long", is_array=True)
         self._assert_not_in_channel_box(n.get_name(), "w")
 
     def test_bool_array_input_not_keyable(self):

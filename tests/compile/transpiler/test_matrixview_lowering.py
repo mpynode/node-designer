@@ -154,7 +154,7 @@ class TestTheGate(unittest.TestCase):
     def test_method_name_without_a_matrix_input_is_not_enough(self):
         # `.scale(` is a common spelling on unrelated objects.
         self.assertFalse(nd_maya_cpp.spec_uses_maya_xform(
-            self._spec(compute="x = someObject.scale()", itype="vector")))
+            self._spec(compute="x = someObject.scale()", itype="double3")))
 
     def test_empty_spec(self):
         self.assertFalse(nd_maya_cpp.spec_uses_maya_xform({}))

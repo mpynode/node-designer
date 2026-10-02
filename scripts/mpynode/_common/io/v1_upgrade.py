@@ -174,6 +174,8 @@ def _rewrite_attr_registry(node, v1_table, enums, plug):
 
     import maya.cmds as mc
 
+    from mpynode._common.attr_types import upgrade_legacy_name
+
     table, missing = {}, []
     for i, (name, typ) in enumerate(v1_table.items()):
         if not mc.objExists("%s.%s" % (node, name)):
@@ -183,7 +185,9 @@ def _rewrite_attr_registry(node, v1_table, enums, plug):
             is_array = bool(mc.attributeQuery(name, node=node, multi=True))
         except Exception:
             is_array = False
-        meta = {"attr_type": typ, "is_array": is_array, "order": i}
+        # v1 wrote the old v2 names (int / vector / angle), which v2 rejects.
+        meta = {"attr_type": upgrade_legacy_name(typ), "is_array": is_array,
+                "order": i}
         if typ == "enum":
             meta["enum_names"] = list(enums.get(name) or ["0", "1"])
         table[name] = meta

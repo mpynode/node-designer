@@ -5,7 +5,7 @@ returns a dense ``max_logical+1`` array, gaps filled with the attribute default)
 The generated C++ array read now does the same by default: scatter existing
 elements to their logical index (``elementIndex()``), growing the vector to
 ``max_logical+1`` with gaps pre-filled by the per-type default (matrix=identity,
-vector/euler=zero, numeric=addAttr dv). A per-input ``sparse=True`` flag keeps
+double3/euler=zero, numeric=addAttr dv). A per-input ``sparse=True`` flag keeps
 the legacy compact (physical, connection-order) read.
 
 Universal scope: dense is the DEFAULT for every node family (both the generic
@@ -52,16 +52,16 @@ class TestArrayGapDefaultCpp(unittest.TestCase):
         self.assertEqual(self._d("matrix"), "MMatrix()")
 
     def test_vector_and_euler_are_zero(self):
-        self.assertEqual(self._d("vector"), "MVector()")
+        self.assertEqual(self._d("double3"), "MVector()")
         self.assertEqual(self._d("euler"), "MVector()")
 
     def test_numeric_uses_addattr_dv(self):
         self.assertEqual(self._d("float", default_value=5.0), "5.0")
-        self.assertEqual(self._d("int", default_value=7), "7")
+        self.assertEqual(self._d("long", default_value=7), "7")
 
     def test_numeric_fallbacks_to_zero(self):
         self.assertEqual(self._d("float"), "0.0")
-        self.assertEqual(self._d("int"), "0")
+        self.assertEqual(self._d("long"), "0")
 
     def test_bool_enum_time(self):
         self.assertEqual(self._d("bool"), "false")
@@ -70,7 +70,7 @@ class TestArrayGapDefaultCpp(unittest.TestCase):
 
     def test_angle_radians_default(self):
         # angle dv is recorded (radians); fallback zero.
-        self.assertEqual(self._d("angle"), "0.0")
+        self.assertEqual(self._d("doubleAngle"), "0.0")
 
 
 class TestArrayReadLinesDense(unittest.TestCase):
@@ -98,7 +98,7 @@ class TestArrayReadLinesDense(unittest.TestCase):
         self.assertIn("in_myarr[_li] = eh.asMatrix();", cpp)
 
     def test_vector_dense_zero_gap(self):
-        cpp = self._cpp(_member("vector"))
+        cpp = self._cpp(_member("double3"))
         self.assertIn("in_myarr.resize(_li + 1, MVector())", cpp)
 
     def test_sparse_keeps_compact(self):

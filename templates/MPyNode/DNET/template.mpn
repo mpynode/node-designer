@@ -26,12 +26,12 @@
         "order": 11
       },
       "index0": {
-        "attr_type": "int",
+        "attr_type": "long",
         "is_array": true,
         "order": 2
       },
       "index1": {
-        "attr_type": "int",
+        "attr_type": "long",
         "is_array": true,
         "order": 3
       },
@@ -41,7 +41,7 @@
         "order": 9
       },
       "iterations": {
-        "attr_type": "int",
+        "attr_type": "long",
         "default_value": 100,
         "is_array": false,
         "min_value": 1,
@@ -123,13 +123,13 @@
         "order": 3
       },
       "maxIterations": {
-        "attr_type": "int",
+        "attr_type": "long",
         "default_value": 0,
         "is_array": false,
         "order": 2
       },
       "positions": {
-        "attr_type": "vector",
+        "attr_type": "double3",
         "is_array": true,
         "order": 0
       }

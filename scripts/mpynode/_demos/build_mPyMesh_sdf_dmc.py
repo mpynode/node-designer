@@ -176,7 +176,7 @@ def addCylinder(self, transform: Optional[str] = None, radius=0.5,
 # Two are still NOT declared, for different reasons:
 #
 #   halfExtents (overlays 0.5): BLOCKED. _api2.helpers.array_gap_default returns
-#     a hardcoded [0,0,0] for vector/euler/color -- it does NOT read the
+#     a hardcoded [0,0,0] for double3/euler/color -- it does NOT read the
 #     declared default the way it does for numerics -- and emit_attr's
 #     _array_gap_default_cpp mirrors that, so the two agree today. Declaring 0.5
 #     would move the ATTRIBUTE default without moving either gap fill: an
@@ -193,13 +193,13 @@ def addCylinder(self, transform: Optional[str] = None, radius=0.5,
 #     written to the .ma), so the revert cannot reach the authoring path.
 _ARRAY_INPUTS = [
     ("shapeMatrix", "matrix", None),
-    ("shapeType", "int", None),
+    ("shapeType", "long", None),
     ("additive", "bool", True),
     ("smoothing", "double", None),
     ("radius", "double", None),
     ("height", "double", 1.0),
-    ("axis", "int", 1),
-    ("halfExtents", "vector", None),
+    ("axis", "long", 1),
+    ("halfExtents", "double3", None),
 ]
 
 
@@ -220,7 +220,7 @@ def configure_node(wrapper):
     for name, attr_type, default_value in _ARRAY_INPUTS:
         wrapper.add_input_attr(name, attr_type, is_array=True,
                                default_value=default_value)
-    wrapper.add_input_attr("resolution", "int", default_value=8)
+    wrapper.add_input_attr("resolution", "long", default_value=8)
     wrapper.add_input_attr("isoValue", "double", default_value=0.0)
     wrapper.set_init_expression(INIT_SOURCE)
     wrapper.set_compute_expression(COMPUTE_SOURCE)

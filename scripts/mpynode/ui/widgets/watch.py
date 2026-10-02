@@ -214,7 +214,7 @@ def read_multi_plug_values(node_name: str, attr: str, meta: dict):
     # read_user_inputs_dict. An EMPTY input returns a 0-length array of the
     # right shape/dtype -- NOT a bare list -- so Type/Size still read
     # numpy.ndarray[float64] / (0, 3) rather than list / 0.
-    if atype in ("vector", "euler", "color"):
+    if atype in ("double3", "euler", "color"):
         try:
             import numpy as _np
 
@@ -240,18 +240,18 @@ def read_multi_plug_values(node_name: str, attr: str, meta: dict):
             return vals
     # Scalar numeric multis mirror read_user_inputs_dict's type contract so
     # the Watch shows the SAME array AND dtype the expression sees:
-    #   float / double / angle / time -> float64
-    #   int / enum                    -> int64
-    #   bool                          -> bool
+    #   float / double / doubleAngle / time -> float64
+    #   long / enum                         -> int64
+    #   bool                                -> bool
     # string / python / geometry stay Python lists (numpy can't stack them).
     # Empty arrays keep the right dtype so it is still reported.
     try:
         import numpy as _np
 
-        if atype in ("float", "double", "angle", "time"):
+        if atype in ("float", "double", "doubleAngle", "time"):
             return (_np.asarray(vals, dtype=_np.float64)
                     if vals else _np.zeros(0, dtype=_np.float64))
-        if atype in ("int", "enum"):
+        if atype in ("long", "enum"):
             return (_np.asarray(vals, dtype=_np.int64)
                     if vals else _np.zeros(0, dtype=_np.int64))
         if atype == "bool":
@@ -280,7 +280,7 @@ def _angle_ui_to_radians(value):
 def reshape_plug_value(value, meta: dict):
     """Reshape a raw ``cmds.getAttr`` value for nicer Watch display so an
     input/output reads like the expression sees it: a ``matrix`` becomes a
-    4x4 numpy array, a ``vector`` / ``euler`` a (3,) array. ``angle`` / ``euler``
+    4x4 numpy array, a ``double3`` / ``euler`` a (3,) array. ``doubleAngle`` / ``euler``
     values are converted from the UI angular unit (degrees) to RADIANS so they
     match what the expression reads (``plug.asDouble()``). Scalars, strings, and
     array (multi) plugs pass through unchanged. Pure + defensive."""
@@ -293,12 +293,12 @@ def reshape_plug_value(value, meta: dict):
             return value
         import numpy as _np
 
-        if atype == "angle":
+        if atype == "doubleAngle":
             # The expression sees radians; cmds.getAttr gave the UI unit.
             return _angle_ui_to_radians(value)
         if atype == "matrix":
             return _np.array(value, dtype=float).reshape(4, 4)
-        if atype in ("vector", "euler", "color"):
+        if atype in ("double3", "euler", "color"):
             # cmds.getAttr returns [(x, y, z)] for a double3 / float3.
             flat = (
                 value[0]

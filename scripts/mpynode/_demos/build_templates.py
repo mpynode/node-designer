@@ -2190,8 +2190,8 @@ def build_game_of_life_file():
     # Add order IS the Channel Box / Designer display order (preserved end to
     # end via each attr's ``order`` field): width + height (the grid pair) stay
     # adjacent, then density, then frame, then reset.
-    f.add_input_attr("width", "int", default_value=100)
-    f.add_input_attr("height", "int", default_value=100)
+    f.add_input_attr("width", "long", default_value=100)
+    f.add_input_attr("height", "long", default_value=100)
     f.add_input_attr("density", "float", default_value=0.5,
                      min_value=0.0, max_value=1.0)
     # A user `time` input (auto-connected to time1 by add_input_attr, INCLUDING
@@ -2653,10 +2653,10 @@ def build_game_of_life_mesh():
     # Add order IS the Channel Box / Designer display order: the grid pair
     # (boardX, boardY) stays adjacent, then the animation clock, then the seed
     # controls, then the per-cube size.
-    g.add_input_attr("boardX", "int", default_value=10)
-    g.add_input_attr("boardY", "int", default_value=10)
+    g.add_input_attr("boardX", "long", default_value=10)
+    g.add_input_attr("boardY", "long", default_value=10)
     g.add_input_attr("frame", "time")
-    g.add_input_attr("randomSamples", "int", default_value=40)
+    g.add_input_attr("randomSamples", "long", default_value=40)
     g.add_input_attr("resetBoard", "enum", enum_names=["False", "True"])
     g.add_input_attr("cellSize", "double", default_value=0.9,
                      min_value=0.0)
@@ -3959,7 +3959,7 @@ def build_voxelize_mesh():
     n.add_input_attr("inMesh", "mesh")
     n.add_input_attr("voxelSize", "double", default_value=0.2,
                      min_value=0.0)
-    n.add_input_attr("maxVoxels", "int", default_value=500000, min_value=0)
+    n.add_input_attr("maxVoxels", "long", default_value=500000, min_value=0)
     n.add_input_attr("textureFile", "string")
     n.add_input_attr("defaultColor", "color", default_value=(0.3, 0.3, 0.3))
     n.set_init_expression(VOXELIZE_INIT)
@@ -5687,7 +5687,7 @@ def build_file_scanline():
     grid = os.path.join(ASSETS_DIR, "test_grid.png")
 
     f = MPyFile.create(name="scanlineTex", seed_defaults=False, as_texture=True)
-    f.add_input_attr("bands", "int", default_value=12, min_value=1)
+    f.add_input_attr("bands", "long", default_value=12, min_value=1)
     f.add_input_attr("speed", "float", default_value=0.1)
     f.add_input_attr("intensity", "float", default_value=0.6,
                      min_value=0.0, max_value=1.0)
@@ -10959,14 +10959,14 @@ def build_dnet():
     # in the trailing comment is the .mpn attribute `order`.
     node.add_input_attr("matrices", "matrix", is_array=True)                       # 0
     node.add_input_attr("anchors",  "float",  is_array=True)                       # 1
-    node.add_input_attr("index0",   "int",    is_array=True)                       # 2
-    node.add_input_attr("index1",   "int",    is_array=True)                       # 3
+    node.add_input_attr("index0",   "long",   is_array=True)                       # 2
+    node.add_input_attr("index1",   "long",   is_array=True)                       # 3
     node.add_input_attr("restLengths", "float", is_array=True, default_value=1.0)  # 4
     # PER-LINK tension: create_link wires each link curve's own tension attr to a
     # tension[e] slot, so this is an array (a scalar plug takes only ONE incoming
     # connection). Unset/unconnected links read the 0.0 default (no contraction).
     node.add_input_attr("tension", "float", is_array=True, default_value=0.0)  # 5
-    node.add_input_attr("iterations", "int", default_value=100, min_value=1)   # 6
+    node.add_input_attr("iterations", "long", default_value=100, min_value=1)  # 6
     node.add_input_attr("tolerance", "float", default_value=0.001)             # 7
     node.add_input_attr("damping", "float", default_value=0.1)                 # 8
     node.add_input_attr("inverseMatrix", "matrix")                             # 9
@@ -10994,9 +10994,9 @@ def build_dnet():
     # (goal-local displacement, == the old `driven`) fed to each knot's child
     # transform; `lengths` the per-link solved lengths; `maxIterations` the
     # iteration count reached; `maxForce` the final max displacement.
-    node.add_output_attr("positions", "vector", is_array=True)                  # 0
+    node.add_output_attr("positions", "double3", is_array=True)                 # 0
     node.add_output_attr("lengths", "float", is_array=True, default_value=0.0)  # 1
-    node.add_output_attr("maxIterations", "int", default_value=0)               # 2
+    node.add_output_attr("maxIterations", "long", default_value=0)              # 2
     node.add_output_attr("maxForce", "float", default_value=0.0)                # 3
 
     node.set_init_expression(DNET_INIT)
@@ -14818,9 +14818,9 @@ def build_patch_relax():
     d.add_input_attr("restMesh", "mesh")
     # Flat row-major CCW 1-ring + its padded width: DECLARED INPUTS seeded by the
     # Rebuild Rings command, so the compute lowers deterministically.
-    d.add_input_attr("ringNbrs", "int", is_array=True)
-    d.add_input_attr("ringWidth", "int")
-    d.add_input_attr("iterations",   "int",    default_value=20)
+    d.add_input_attr("ringNbrs", "long", is_array=True)
+    d.add_input_attr("ringWidth", "long")
+    d.add_input_attr("iterations",   "long",   default_value=20)
     d.add_input_attr("alpha",        "double", default_value=1.0)
     d.add_input_attr("surfaceBlend", "double", default_value=0.0)
     d.set_init_expression(PATCH_RELAX_INIT)
@@ -16749,9 +16749,9 @@ def build_mesh_maze():
     # Add order IS the Channel Box / Designer display order: the source, then
     # where the maze runs, then which maze, then how the walls look.
     n.add_input_attr("inMesh", "mesh")
-    n.add_input_attr("start", "int", default_value=0)
-    n.add_input_attr("end", "int", default_value=-1)
-    n.add_input_attr("seed", "int", default_value=0, min_value=0)
+    n.add_input_attr("start", "long", default_value=0)
+    n.add_input_attr("end", "long", default_value=-1)
+    n.add_input_attr("seed", "long", default_value=0, min_value=0)
     n.add_input_attr("solutionLength", "double", default_value=0.35,
                      min_value=0.0, max_value=1.0)
     n.add_input_attr("wallHeight", "double", default_value=0.25,
@@ -16762,10 +16762,10 @@ def build_mesh_maze():
     # entrance tile alone), and the two vertex colours that tell tiles from
     # walls. `solutionSteps` reports how far `solutionStep` can go.
     n.add_input_attr("drawSolution", "bool", default_value=False)
-    n.add_input_attr("solutionStep", "int", default_value=0, min_value=0)
+    n.add_input_attr("solutionStep", "long", default_value=0, min_value=0)
     n.add_input_attr("wallColor", "color", default_value=(0.2, 0.55, 0.2))
     n.add_input_attr("solutionColor", "color", default_value=(1.0, 0.9, 0.1))
-    n.add_output_attr("solutionSteps", "int", default_value=0)
+    n.add_output_attr("solutionSteps", "long", default_value=0)
     n.set_init_expression(MAZE_INIT)
     n.set_compute_expression(MAZE_COMPUTE)
     n.set_methods_source(MAZE_METHODS)

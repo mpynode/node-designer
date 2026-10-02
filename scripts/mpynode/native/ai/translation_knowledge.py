@@ -495,7 +495,7 @@ A color input (e.g. borderColor) is a 3-float array: in_<name>[0/1/2] = R/G/B.
 WRITE a color OUTPUT with set3Float on its handle (NOT set3Double):
   h_<name>.set3Float((float)r, (float)g, (float)b);   // r,g,b 0..1 linear
 A float2 OUTPUT uses set2Float((float)u, (float)v). color/float2 handles take the
-float setters; only plain `vector` outputs use set3Double."""
+float setters; only plain `double3` outputs use set3Double."""
 
 
 NURBS_CURVE_INPUT = """\

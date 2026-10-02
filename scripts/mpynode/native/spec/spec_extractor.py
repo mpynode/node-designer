@@ -63,30 +63,30 @@ _IMAGE_READ_BASE_TYPES = ("mPyDeformer", "mPySkinCluster", "mPyBlendShape",
 #   read  : MDataHandle accessor
 #   portable: representable natively at all?
 _NORM_TYPE = {
-    "float":  {"cat": "scalar", "fn": "MFnNumericAttribute", "data": "kFloat",   "cpp": "float",   "read": "asFloat",  "portable": True},
-    "double": {"cat": "scalar", "fn": "MFnNumericAttribute", "data": "kDouble",  "cpp": "double",  "read": "asDouble", "portable": True},
-    "int":    {"cat": "scalar", "fn": "MFnNumericAttribute", "data": "kInt",     "cpp": "int",     "read": "asInt",    "portable": True},
-    "bool":   {"cat": "scalar", "fn": "MFnNumericAttribute", "data": "kBoolean", "cpp": "bool",    "read": "asBool",   "portable": True},
-    "angle":  {"cat": "unit",   "fn": "MFnUnitAttribute",    "data": "kAngle",   "cpp": "double",  "read": "asMAngle","portable": True},
-    "time":   {"cat": "unit",   "fn": "MFnUnitAttribute",    "data": "kTime",    "cpp": "double",  "read": "asMTime", "portable": True},
-    "vector": {"cat": "vector", "fn": "MFnNumericAttribute", "data": "k3Double", "cpp": "double[3]","read": "asDouble3","portable": True},
+    "float":       {"cat": "scalar", "fn": "MFnNumericAttribute", "data": "kFloat", "cpp": "float", "read": "asFloat", "portable": True},
+    "double":      {"cat": "scalar", "fn": "MFnNumericAttribute", "data": "kDouble", "cpp": "double", "read": "asDouble", "portable": True},
+    "long":        {"cat": "scalar", "fn": "MFnNumericAttribute", "data": "kInt", "cpp": "int", "read": "asInt", "portable": True},
+    "bool":        {"cat": "scalar", "fn": "MFnNumericAttribute", "data": "kBoolean", "cpp": "bool", "read": "asBool", "portable": True},
+    "doubleAngle": {"cat": "unit", "fn": "MFnUnitAttribute", "data": "kAngle", "cpp": "double", "read": "asMAngle", "portable": True},
+    "time":        {"cat": "unit", "fn": "MFnUnitAttribute", "data": "kTime", "cpp": "double", "read": "asMTime", "portable": True},
+    "double3":     {"cat": "vector", "fn": "MFnNumericAttribute", "data": "k3Double", "cpp": "double[3]", "read": "asDouble3", "portable": True},
     # float2 (mPyFile uvCoord/uvFilterSize) MUST stay a genuine float2 so it
     # connects to place2dTexture.outUV.
-    "float2": {"cat": "vector2","fn": "MFnNumericAttribute", "data": "k2Float",  "cpp": "float[2]", "read": "asFloat2", "portable": True},
+    "float2": {"cat": "vector2", "fn": "MFnNumericAttribute", "data": "k2Float", "cpp": "float[2]", "read": "asFloat2", "portable": True},
     # color: 3-float RENDERABLE compound (createColor/usedAsColor) -- binds to
-    # material.color + Arnold, unlike a plain vector.
-    "color": {"cat": "color",  "fn": "MFnNumericAttribute", "data": "color",    "cpp": "float[3]", "read": "asFloat3", "portable": True},
-    "euler": {"cat": "vector", "fn": "MFnUnitAttribute*3",  "data": "kAngle*3", "cpp": "double[3]","read": "asDouble3","portable": True},
+    # material.color + Arnold, unlike a plain double3.
+    "color": {"cat": "color", "fn": "MFnNumericAttribute", "data": "color", "cpp": "float[3]", "read": "asFloat3", "portable": True},
+    "euler": {"cat": "vector", "fn": "MFnUnitAttribute*3", "data": "kAngle*3", "cpp": "double[3]", "read": "asDouble3", "portable": True},
     # quaternion: generic compound of 4 doubles -- there is no numeric double4,
     # so children are read via MFnCompoundAttribute child handles (no asDouble4).
     "quaternion":   {"cat": "quaternion", "fn": "MFnCompoundAttribute", "data": "kDouble*4", "cpp": "double[4]", "read": "child", "portable": True},
-    "matrix":       {"cat": "matrix", "fn": "MFnMatrixAttribute",  "data": "kDouble",  "cpp": "MMatrix", "read": "asMatrix", "portable": True},
-    "enum":         {"cat": "enum",   "fn": "MFnEnumAttribute",    "data": "enum",     "cpp": "short",   "read": "asShort",  "portable": True},
-    "string":       {"cat": "string", "fn": "MFnTypedAttribute",   "data": "kString",  "cpp": "MString", "read": "asString", "portable": True},
-    "hex":          {"cat": "string", "fn": "MFnTypedAttribute",   "data": "kString",  "cpp": "MString", "read": "asString", "portable": True},
-    "mesh":         {"cat": "geo",    "fn": "MFnTypedAttribute",   "data": "kMesh",        "cpp": "MObject", "read": "asMesh",        "portable": True},
-    "nurbsCurve":   {"cat": "geo", "fn": "MFnTypedAttribute","data": "kNurbsCurve",  "cpp": "MObject", "read": "asNurbsCurve",  "portable": True},
-    "nurbsSurface": {"cat": "geo", "fn": "MFnTypedAttribute","data": "kNurbsSurface","cpp": "MObject", "read": "asNurbsSurface","portable": True},
+    "matrix":       {"cat": "matrix", "fn": "MFnMatrixAttribute", "data": "kDouble", "cpp": "MMatrix", "read": "asMatrix", "portable": True},
+    "enum":         {"cat": "enum", "fn": "MFnEnumAttribute", "data": "enum", "cpp": "short", "read": "asShort", "portable": True},
+    "string":       {"cat": "string", "fn": "MFnTypedAttribute", "data": "kString", "cpp": "MString", "read": "asString", "portable": True},
+    "hex":          {"cat": "string", "fn": "MFnTypedAttribute", "data": "kString", "cpp": "MString", "read": "asString", "portable": True},
+    "mesh":         {"cat": "geo", "fn": "MFnTypedAttribute", "data": "kMesh", "cpp": "MObject", "read": "asMesh", "portable": True},
+    "nurbsCurve":   {"cat": "geo", "fn": "MFnTypedAttribute", "data": "kNurbsCurve", "cpp": "MObject", "read": "asNurbsCurve", "portable": True},
+    "nurbsSurface": {"cat": "geo", "fn": "MFnTypedAttribute", "data": "kNurbsSurface", "cpp": "MObject", "read": "asNurbsSurface", "portable": True},
     # Arbitrary pickled Python -- no native representation.
     "python": {"cat": "python", "fn": None, "data": None, "cpp": None, "read": None, "portable": False},
 }
@@ -316,7 +316,13 @@ def normalize_attr(meta: dict) -> dict:
         if k in meta:
             out[k] = meta[k]
     if norm is None:
-        out["note"] = "unknown attr_type %r -- no native mapping" % attr_type
+        from mpynode._common import attr_types
+
+        if isinstance(attr_type, str) and attr_type in attr_types.RETIRED:
+            out["note"] = attr_types.unknown_type_message(attr_type)
+        else:
+            out["note"] = ("unknown attr_type %r -- no native mapping"
+                           % attr_type)
     return out
 
 
@@ -348,7 +354,8 @@ def detect_needs_hover(compute: str, init: str = "") -> bool:
 # turns default_value into nAttr.setDefault(r,g,b) -- without capture that path
 # was unreachable, so a draw wanting a sensible starting colour had to fake one
 # in the compute and could never express a deliberate BLACK.
-_DEFAULT_CAPTURE_TYPES = frozenset(("float", "int", "bool", "enum", "color"))
+_DEFAULT_CAPTURE_TYPES = frozenset(("float", "double", "long", "bool", "enum",
+                                    "color"))
 
 
 def _input_wants_default_capture(entry: dict) -> bool:
@@ -833,13 +840,13 @@ def __getattr__(name):
     raise AttributeError("module %r has no attribute %r" % (__name__, name))
 
 # Maya attributeType (cmds.attributeQuery -attributeType) -> native spec type.
-# 'typed' (string) and 'float3' (color vs vector) are resolved separately.
+# 'typed' (string) and 'float3' (color vs double3) are resolved separately.
 _MAYA_ATTR_TO_SPEC = {
     "float": "float", "double": "double", "doubleLinear": "double",
-    "long": "int", "short": "int", "byte": "int", "bool": "bool",
-    "enum": "enum", "doubleAngle": "angle", "time": "time",
+    "long": "long", "short": "long", "byte": "long", "bool": "bool",
+    "enum": "enum", "doubleAngle": "doubleAngle", "time": "time",
     "float2":  "float2",
-    "double3": "vector",
+    "double3": "double3",
     "matrix": "matrix", "fltMatrix": "matrix",
 }
 
@@ -897,9 +904,9 @@ def _preset_attr_meta(node: str, attr: str, mc) -> dict | None:
         except Exception:
             spec_type = None
     elif at == "float3":
-        # usedAsColor -> a renderable color (createColor), else a plain vector.
-        # mPyFile's float3s are all colors; the vector branch is defensive.
-        spec_type = "color" if bool(q(usedAsColor=True)) else "vector"
+        # usedAsColor -> a renderable color (createColor), else a plain double3.
+        # mPyFile's float3s are all colors; the double3 branch is defensive.
+        spec_type = "color" if bool(q(usedAsColor=True)) else "double3"
     if spec_type is None:
         return None
     meta = {"attr_type": spec_type, "_writable": writable, "_readable": readable}

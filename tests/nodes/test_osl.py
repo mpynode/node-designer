@@ -727,7 +727,7 @@ class TestAssessTractability(unittest.TestCase):
     def test_extra_output_attr_is_intractable(self):
         ok, reason = self._assess(
             "self.outColor = (0.0, 0.0, 0.0)\n",
-            output_attrs={"maxWidth": {"attr_type": "int", "is_array": False}})
+            output_attrs={"maxWidth": {"attr_type": "long", "is_array": False}})
         self.assertFalse(ok)
         self.assertIn("maxWidth", reason)
 

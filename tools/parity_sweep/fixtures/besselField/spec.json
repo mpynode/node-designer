@@ -40,7 +40,7 @@
       "default_value": 2.5
     },
     "pos": {
-      "type": "vector",
+      "type": "double3",
       "is_array": false,
       "portable": true,
       "cpp": {
