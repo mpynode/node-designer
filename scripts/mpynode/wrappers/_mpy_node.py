@@ -169,16 +169,6 @@ def _validate_attr_name(name: str, node_type: str | None = None) -> None:
 _ADD_ATTR_KIND: dict[str, dict] = _attr_types.add_attr_kwargs()
 
 
-# Identity-matrix flat-16 for ``mc.setAttr(..., type="matrix")``. Initializes
-# new matrix plugs so they read as identity: Maya leaves ``dt='matrix'`` storage
-# unset by default, which breaks ``mc.getAttr`` / ``plug.asMObject``.
-_IDENTITY_MATRIX_16 = (
-    1.0, 0.0, 0.0, 0.0,
-    0.0, 1.0, 0.0, 0.0,
-    0.0, 0.0, 1.0, 0.0,
-    0.0, 0.0, 0.0, 1.0,
-)
-
 VALID_INPUT_TYPES  = list(_ADD_ATTR_KIND.keys())
 VALID_OUTPUT_TYPES = list(_ADD_ATTR_KIND.keys())
 
@@ -911,8 +901,9 @@ class MPyNode(InitSourceMixin, MethodsSourceMixin, MetadataMixin,
                     parent        = name,
                     keyable       = True,
                 )
-        # quaternion — generic compound; 4 double children X/Y/Z/W. W defaults
-        # to 1.0 so an unset / unconnected quaternion reads as identity.
+        # quaternion — Maya's numeric double4; its 4 double children X/Y/Z/W
+        # must be added explicitly. W defaults to 1.0 so an unset /
+        # unconnected quaternion reads as identity.
         elif attr_type == "quaternion":
             for axis in ("X", "Y", "Z", "W"):
                 mc.addAttr(
@@ -975,20 +966,6 @@ class MPyNode(InitSourceMixin, MethodsSourceMixin, MetadataMixin,
         meta["order"]  = self._next_order_value(attr_map)
         attr_map[name] = meta
         self._write_input_map(attr_map)
-
-        # Initialize a matrix INPUT to identity: ``dt='matrix'`` leaves the
-        # storage empty, so mc.getAttr returns None and plug.asMObject raises
-        # kFailure until something writes to it. Skip multis -- per-element init
-        # is impractical, and read_plug_value already falls back to identity.
-        if attr_type == "matrix" and not is_array:
-            try:
-                mc.setAttr(
-                    self._name + "." + name,
-                    _IDENTITY_MATRIX_16,
-                    type="matrix",
-                )
-            except Exception:
-                pass
 
         # auto-connect time1.outTime → our time input.
         if attr_type == "time" and auto_connect_time and not is_array:
@@ -1147,7 +1124,8 @@ class MPyNode(InitSourceMixin, MethodsSourceMixin, MetadataMixin,
                     writable      = False,
                     readable      = True,
                 )
-        # quaternion — generic compound; 4 double children X/Y/Z/W (W default 1.0).
+        # quaternion — numeric double4; explicit X/Y/Z/W double children (W
+        # default 1.0).
         elif attr_type == "quaternion":
             for axis in ("X", "Y", "Z", "W"):
                 mc.addAttr(
@@ -1198,18 +1176,6 @@ class MPyNode(InitSourceMixin, MethodsSourceMixin, MetadataMixin,
         meta["order"]  = self._next_order_value(attr_map)
         attr_map[name] = meta
         self._write_output_map(attr_map)
-
-        # Initialize a matrix OUTPUT to identity -- same rationale as
-        # add_input_attr: ``dt='matrix'`` storage is empty and reads fail.
-        if attr_type == "matrix" and not is_array:
-            try:
-                mc.setAttr(
-                    self._name + "." + name,
-                    _IDENTITY_MATRIX_16,
-                    type="matrix",
-                )
-            except Exception:
-                pass
 
         _invalidate_affects()
 

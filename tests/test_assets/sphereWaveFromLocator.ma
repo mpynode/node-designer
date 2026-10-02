@@ -126,7 +126,7 @@ createNode polySphere -n "polySphere1";
 	setAttr ".sh" 24;
 createNode mPyDeformer -n "sphereWaveFromLocator";
 	rename -uid "2BC41AE0-CE44-B3A2-ADCB-D1989F0BF3B0";
-	addAttr -ci true -k true -sn "driverMatrix" -ln "driverMatrix" -dt "matrix";
+	addAttr -ci true -k true -sn "driverMatrix" -ln "driverMatrix" -at "matrix";
 	addAttr -ci true -k true -sn "frequency" -ln "frequency" -at "float";
 	addAttr -ci true -k true -sn "amplitude" -ln "amplitude" -at "float";
 	addAttr -ci true -k true -sn "falloffDistance" -ln "falloffDistance" -at "float";

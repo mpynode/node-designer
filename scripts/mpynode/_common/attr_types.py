@@ -13,9 +13,10 @@ Every list of attr types is derived from :data:`ATTR_TYPES`:
 The table is in dialog order, so ``double`` -- Maya's own "Float" -- comes
 first everywhere a list is shown. A stored name is Maya's attribute type for
 the plug when that type alone describes it (``double``, ``long``,
-``doubleAngle``, and ``double3`` with plain double children). ``euler``,
-``quaternion``, ``color``, ``hex`` and ``python`` are our own words: Maya
-tells those apart only by their child type or a flag, or has no type for them.
+``doubleAngle``, ``matrix``, ``float2``, and ``double3`` with plain double
+children). ``euler``, ``color``, ``hex`` and ``python`` are our own words:
+Maya tells those apart only by their child type or a flag, or has no type for
+them. ``quaternion`` is our word for Maya's ``double4``.
 
 Retired names are rejected, never aliased: :data:`RETIRED` maps each one to
 its replacement so the error can say what to type instead.
@@ -66,17 +67,26 @@ ATTR_TYPES: tuple[AttrType, ...] = (
     # parent compound; the X/Y/Z children are doubleAngle.
     AttrType("euler", {"at": "double3"},
              "3 angles like rotate, radians", 1),
-    AttrType("matrix", {"dt": "matrix"},
+    # Maya's numeric matrix (kMatrixAttribute, like multMatrix.matrixIn):
+    # reads as identity until set. Scenes saved before 2026-10 carry a typed
+    # ``-dt matrix`` plug instead; readers take both, and every compute write
+    # picks its call from the plug's actual kind (the wrong one crashes Maya).
+    AttrType("matrix", {"at": "matrix"},
              "4x4 doubles", 1),
-    # 4 doubles (X/Y/Z/W), identity [0,0,0,1]. cmds can't make a numeric
-    # double4, so at='compound' nc=4 with 4 explicit double children (matches
-    # Maya's eulerToQuat.outputQuat).
-    AttrType("quaternion", {"at": "compound", "numberOfChildren": 4},
-             "X/Y/Z/W", 1),
+    # Maya's numeric double4 (like decomposeMatrix.outputQuat) with 4 explicit
+    # double children X/Y/Z/W, added by the wrapper; W defaults to 1, so it
+    # reads as the identity [0,0,0,1]. Connects both ways with a generic
+    # compound of 4 (eulerToQuat.outputQuat).
+    AttrType("quaternion", {"at": "double4"},
+             "double4 X/Y/Z/W", 1),
     # 3-float RENDERABLE colour (R/G/B children + usedAsColor) so it binds to
     # material.color / Arnold like a stock file node's outColor.
     AttrType("color", {"at": "float3", "usedAsColor": True},
              "float3 used as colour", 1),
+    # 2-float compound (U/V), e.g. a uvCoord pair. Like color, the 2 children
+    # must be added explicitly (cmds does NOT auto-create them).
+    AttrType("float2", {"at": "float2"},
+             "2 floats U/V", 1),
     # -- text and data
     AttrType("string", {"dt": "string"},
              "text", 2),
@@ -100,11 +110,6 @@ ATTR_TYPES: tuple[AttrType, ...] = (
     # -- time: a single time value, auto-connectable to time1.
     AttrType("time", {"at": "time"},
              "scene time, e.g. frames", 4),
-    # 2-float compound (U/V), e.g. a uvCoord pair. Like color, the 2 children
-    # must be added explicitly (cmds does NOT auto-create them). Accepted by
-    # the API; not offered by the dialog or the assistant yet.
-    AttrType("float2", {"at": "float2"},
-             "2 floats U/V", None, in_dialog=False, in_assistant=False),
 )
 
 BY_NAME: dict[str, AttrType] = {t.name: t for t in ATTR_TYPES}

@@ -28,6 +28,12 @@ _ARRAY_COUNTED = frozenset({"vectorArray", "pointArray", "stringArray",
                             "matrixArray"})
 _ARRAY_TYPES = _ARRAY_FLAT | _ARRAY_COUNTED
 
+# Numeric compounds: ``getAttr`` returns ``[(a, b, ...)]`` and ``setAttr`` takes
+# the unpacked tuple with ``-type <name>``. A quaternion's ``double4`` and a
+# ``float2`` belong here: neither reports "TdataCompound", so an array element
+# of either was dropped by the multi copy, which recurses into compounds only.
+_TUPLE_TYPES = frozenset({"float2", "float3", "double3", "double4"})
+
 
 def _array_value(plug, typ):
     """Read a typed-array plug. ``cmds.getAttr`` returns ``None`` for
@@ -98,7 +104,7 @@ def copy_values(src, dst):
                 _set_array_value(dp, typ, _array_value(sp, typ))
                 continue
             val = mc.getAttr(sp)
-            if typ in ("double3", "float3"):
+            if typ in _TUPLE_TYPES:
                 mc.setAttr(dp, *val[0], type=typ)
             elif typ == "string":
                 mc.setAttr(dp, val if val is not None else "", type="string")
@@ -121,7 +127,7 @@ def _set_scalar_value(sp, dp):
     val = mc.getAttr(sp)
     if typ == "matrix":
         mc.setAttr(dp, *val, type="matrix")
-    elif typ in ("double3", "float3"):
+    elif typ in _TUPLE_TYPES:
         mc.setAttr(dp, *val[0], type=typ)
     elif typ == "string":
         mc.setAttr(dp, val if val is not None else "", type="string")

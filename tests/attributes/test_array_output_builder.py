@@ -163,7 +163,7 @@ class TestArrayOutputSizedBuilder(unittest.TestCase):
 
     def test_every_array_type_emits_the_sized_builder(self):
         """Every ``_ARRAY_OK`` element type routes through the same writer --
-        incl. quaternion, whose block also declares an MFnCompoundAttribute."""
+        incl. quaternion, whose elements are written with set4Double."""
         from mpynode.native import compiler as codegen
         for t in sorted(codegen._ARRAY_OK):
             cpp = codegen.generate_cpp(_arr_spec(t), for_port=False)

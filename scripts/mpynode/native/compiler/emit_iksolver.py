@@ -34,8 +34,8 @@ _IKSOLVER_INCLUDES = [
     "maya/MFnNumericAttribute.h", "maya/MFnEnumAttribute.h",
     "maya/MFnTypedAttribute.h", "maya/MFnNumericData.h", "maya/MFnData.h",
     # generic (non-scalar/non-mesh) user INPUT attrs: unit (doubleAngle/time/
-    # euler), compound (quaternion), matrix create + the MAngle/MTime plug
-    # reads.
+    # euler), compound, matrix create + the MAngle/MTime plug reads. (A
+    # quaternion is a numeric double4 created through nAttr.)
     "maya/MFnUnitAttribute.h", "maya/MFnCompoundAttribute.h",
     "maya/MFnMatrixAttribute.h", "maya/MAngle.h", "maya/MTime.h",
     "maya/MFnMesh.h", "maya/MPointArray.h", "maya/MIntArray.h",

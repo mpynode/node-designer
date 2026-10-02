@@ -295,12 +295,14 @@ def _generate_geo_cpp(spec: dict, kind: str, for_port: bool = False) -> str:
             % (type_name, "\n  ".join(cmd_out["errors"])))
 
     includes = list(_GEO_INCLUDES_BASE) + _GEO_INCLUDES_KIND[kind]
-    # A quaternion attr is read through MQuaternion, whose header the geometry
-    # base list never carried: the generic scaffold gets it from
+    # A quaternion array is carried as std::vector<MQuaternion>, whose header
+    # the geometry base list never carried: the generic scaffold gets it from
     # emit_attr._INCLUDES, this path did not, so a quaternion INPUT on any
     # generator failed to compile with C2027 'use of undefined type MQuaternion'.
     # Found by the compiled-surface audit 2026-09-14 (no shipped generator
-    # declares one). Gated, so every other generator's includes are unchanged.
+    # declares one). A scalar quaternion is a double4 (asDouble4) and needs no
+    # MQuaternion, but keeps the include so its frag stays as it was. Gated, so
+    # every other generator's includes are unchanged.
     if any(m["meta"]["type"] == "quaternion" for m in in_members + out_members):
         includes.append("maya/MQuaternion.h")
     # A SINGLE geo INPUT is read by emit_attr._read_line as `MFn<Kind> in_<m>`,

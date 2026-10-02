@@ -1160,7 +1160,7 @@ class TestDialogShapePhase18_9(unittest.TestCase):
 
 
 # ===========================================================================
-# quaternion (compound of 4 doubles X/Y/Z/W, identity [0,0,0,1]) +
+# quaternion (Maya's double4, X/Y/Z/W, identity [0,0,0,1]) +
 # color (float3 usedAsColor, R/G/B).
 # ===========================================================================
 
@@ -1558,7 +1558,8 @@ class TestQuaternionColorDefaults(unittest.TestCase):
         from mpynode._common.compute.output_defaults import scalar_default
 
         self.assertEqual(scalar_default("quaternion"), [0.0, 0.0, 0.0, 1.0])
-        self.assertEqual(scalar_default("color"), [0.0, 0.0, 0.0])
+        self.assertEqual(scalar_default("color"),      [0.0, 0.0, 0.0])
+        self.assertEqual(scalar_default("float2"),     [0.0, 0.0])
 
     def test_array_defaults(self):
         from mpynode._common.compute.output_defaults import array_default
@@ -1569,6 +1570,9 @@ class TestQuaternionColorDefaults(unittest.TestCase):
         self.assertTrue((q[:, :3] == 0.0).all())
         c = array_default("color", 3)
         self.assertEqual(c.shape, (3, 3))
+        f2 = array_default("float2", 2)
+        self.assertEqual(f2.shape, (2, 2))
+        self.assertTrue((f2 == 0.0).all())
 
 
 @unittest.skipUnless(_qt_available(), "Qt unavailable")
@@ -1599,6 +1603,12 @@ class TestQuaternionColorUI(unittest.TestCase):
         r = reshape_plug_value([(0.1, 0.2, 0.3)], {"attr_type": "color"})
         self.assertEqual(tuple(np.asarray(r).shape), (3,))
 
+    def test_watch_reshape_float2_is_2(self):
+        from mpynode.ui.widgets.watch import reshape_plug_value
+
+        r = reshape_plug_value([(0.25, 0.75)], {"attr_type": "float2"})
+        self.assertEqual(tuple(np.asarray(r).shape), (2,))
+
 
 class TestQuaternionColorAI(unittest.TestCase):
     def test_llm_tools_attr_types(self):
@@ -1613,6 +1623,15 @@ class TestQuaternionColorAI(unittest.TestCase):
         p = build_system_prompt()
         self.assertIn("quaternion", p)
         self.assertIn("color -> numpy (3,)", p)
+
+    def test_both_prompts_give_the_float2_shape(self):
+        # float2 is offered to the assistant, so both prompts say how it reads.
+        from mpynode.ui.llm.system_prompt import (build_payload_system_prompt,
+                                                  build_system_prompt)
+
+        for p in (build_system_prompt(), build_payload_system_prompt()):
+            self.assertIn("float2 -> numpy (2,)", p)
+            self.assertIn('"float2"', p)
 
 
 @unittest.skipUnless(_qt_available(), "Qt unavailable")
@@ -1633,7 +1652,8 @@ class TestAttrTypeGrouping(unittest.TestCase):
             _ATTR_TYPE_GROUPS,
             (
                 ("double", "float", "long", "bool", "doubleAngle"),
-                ("double3", "euler", "matrix", "quaternion", "color"),
+                ("double3", "euler", "matrix", "quaternion", "color",
+                 "float2"),
                 ("string", "enum", "hex", "python"),
                 ("mesh", "nurbsCurve", "nurbsSurface"),
                 ("time",),
@@ -1683,6 +1703,7 @@ class TestAttrTypeGrouping(unittest.TestCase):
                 [
                     "double", "float", "long", "bool", "doubleAngle",
                     "double3", "euler", "matrix", "quaternion", "color",
+                    "float2",
                     "string", "enum", "hex", "python",
                     "mesh", "nurbsCurve", "nurbsSurface", "time",
                 ],

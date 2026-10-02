@@ -837,12 +837,14 @@ class TestFloat2ChildNamesComeFromTheSSOT(unittest.TestCase):
         self.assertIn('nAttr.create("uvFilterSizeY", "uvFilterSizeY"', cpp)
 
     def test_a_float2_with_no_declared_children_still_falls_back(self):
-        """A user-declared float2 has no SSOT entry, so the generic rule stands."""
+        """A user-declared float2 has no SSOT entry, so the generic rule stands:
+        <plug>U/<plug>V, the names the Python wrapper gives a float2."""
         from mpynode.native.spec import spec_extractor as se
 
         cpp = self._emit("myUv", se.normalize_attr({"attr_type": "float2"}))
-        self.assertIn('nAttr.create("myUvX", "myUvX"', cpp)
-        self.assertIn('nAttr.create("myUvY", "myUvY"', cpp)
+        self.assertIn('nAttr.create("myUvU", "myUvU"', cpp)
+        self.assertIn('nAttr.create("myUvV", "myUvV"', cpp)
+        self.assertNotIn('"myUvX"', cpp)
 
 
 class TestExactTexelFastPath(unittest.TestCase):

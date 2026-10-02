@@ -473,7 +473,13 @@ from typing import Optional
 # stage-1 files -- animatedSelection, animatedText, circularText,
 # meshRegionLocator and widgetShowcase, in their templates and in the All
 # Templates Plugin -- 2026-09-25.
-PORTER_RECIPE_VERSION = "36"
+# v37: a float2 the spec gives no child names for is now created with U/V
+# children (was X/Y), matching the interpreted node. That SKELETON change is
+# invisible to the key, so a hit would keep serving X/Y plugs. (The quaternion
+# move to a numeric double4 changes its _NORM_TYPE row, so those keys move by
+# themselves.) Moves 0 of 76 stage-1 files: every shipped float2 names its
+# children -- 2026-10-02.
+PORTER_RECIPE_VERSION = "37"
 
 # Spec keys excluded from the cache key -- provably irrelevant to the generated
 # C++. A deny-list, NOT an allow-list (design C1).

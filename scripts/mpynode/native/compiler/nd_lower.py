@@ -248,12 +248,12 @@ def _is_color_array(meta):
 
 
 def _is_quaternion_scalar(meta):
-    # A single `quaternion` compound (4 double children x/y/z/w) -> nd (4,).
+    # A single `quaternion` (numeric double4, children x/y/z/w) -> nd (4,).
     return (not meta.get("is_array")) and meta["type"] == "quaternion"
 
 
 def _is_quaternion_array(meta):
-    # A `quaternion` multi -> std::vector<MQuaternion> (nd (N,4)).
+    # A `quaternion` (double4) multi -> std::vector<MQuaternion> (nd (N,4)).
     return bool(meta.get("is_array")) and meta["type"] == "quaternion"
 
 
@@ -372,8 +372,7 @@ def _materialise_input(m, dst):
         ], array_t("double", 2))
 
     if _is_quaternion_scalar(meta):
-        # double in_<m>[4] {x,y,z,w} (read via the 4 compound child handles) ->
-        # nd (4,) double.
+        # double4 in_<m> {x,y,z,w} (read with asDouble4) -> nd (4,) double.
         return (["    nd::Array<double> %s = nd::from_data<double>("
                  "{%s[0], %s[1], %s[2], %s[3]}, {4});"
                  % (dst, src, src, src, src)],
@@ -573,16 +572,14 @@ def _color_array_output_lines(m, val):
 
 
 def _quaternion_scalar_output_lines(m, val):
-    """A single ``quaternion`` output: an nd (4,) value -> the 4 compound child
-    handles (x/y/z/w) of ``h_<m>`` (there is no numeric set4Double; mirrors
-    emit_attr._out_handle_default's child-handle seed). Missing components default
-    to identity [0,0,0,1]; the value length is guarded so a shorter/longer pack
-    never reads out of bounds."""
+    """A single ``quaternion`` output: an nd (4,) value -> ``h_<m>.set4Double``
+    (x/y/z/w of the double4; mirrors emit_attr._out_handle_default's seed).
+    Missing components default to identity [0,0,0,1]; the value length is
+    guarded so a shorter/longer pack never reads out of bounds."""
     if not val.type.is_array():
         raise UnsupportedSpec("nd_lower: non-array value assigned to quaternion "
                               "output %r" % m["plug"])
-    h   = "h_" + m["member"]
-    mem = m["member"]
+    h = "h_" + m["member"]
     return [
         "{",
         "    nd::Array<double> _o = (%s);" % _cast_array(val, "double"),
@@ -591,11 +588,7 @@ def _quaternion_scalar_output_lines(m, val):
         "    double _q[4] = {0.0, 0.0, 0.0, 1.0};",
         "    for (int64_t _i = 0; _i < _n && _i < 4; ++_i)",
         "        _q[_i] = (*_o.data)[_i];",
-        "    MFnCompoundAttribute _qf(%s);" % mem,
-        "    %s.child(_qf.child(0)).setDouble(_q[0]);" % h,
-        "    %s.child(_qf.child(1)).setDouble(_q[1]);" % h,
-        "    %s.child(_qf.child(2)).setDouble(_q[2]);" % h,
-        "    %s.child(_qf.child(3)).setDouble(_q[3]);" % h,
+        "    %s.set4Double(_q[0], _q[1], _q[2], _q[3]);" % h,
         "}",
     ]
 
@@ -603,7 +596,7 @@ def _quaternion_scalar_output_lines(m, val):
 def _quaternion_array_output_lines(m, val):
     """A ``quaternion`` ARRAY output: an nd (N,4) value -> ``std::vector<MQuaternion>
     out_<m>`` (flushed by emit_attr._array_write_lines, whose quaternion element
-    setter writes .x/.y/.z/.w via the compound children)."""
+    setter writes .x/.y/.z/.w with set4Double)."""
     if not val.type.is_array():
         raise UnsupportedSpec("nd_lower: scalar value assigned to quaternion-array "
                               "output %r" % m["plug"])

@@ -2391,12 +2391,17 @@ class TestVerifyDriveInputsAndTexSkip(unittest.TestCase):
         plug, a, k = calls["setAttr"][0]
         self.assertEqual((plug, a, k.get("type")), ("n.col", (0.1, 0.2, 0.3), "double3"))
 
-    def test_set_plug_quaternion_drives_four_children(self):
+    def test_set_plug_quaternion_sets_the_double4(self):
+        # One -type "double4" call on the parent, so a multi ELEMENT plug
+        # (n.q[2]) works too -- appending a child suffix to it did not.
         from mpynode.native.toolchain import verify as v
-        cmds, calls = self._rec()
-        v._set_plug(cmds, "n.q", "quaternion", [0.1, 0.2, 0.3, 0.9])
-        self.assertEqual([c[0] for c in calls["setAttr"]],
-                         ["n.qX", "n.qY", "n.qZ", "n.qW"])
+        for plug in ("n.q", "n.q[2]"):
+            cmds, calls = self._rec()
+            v._set_plug(cmds, plug, "quaternion", [0.1, 0.2, 0.3, 0.9])
+            self.assertEqual(len(calls["setAttr"]), 1)
+            got, a, k = calls["setAttr"][0]
+            self.assertEqual((got, a, k.get("type")),
+                             (plug, (0.1, 0.2, 0.3, 0.9), "double4"))
 
     def test_drive_input_skips_connected_plug(self):
         from mpynode.native.toolchain import verify as v
@@ -2430,8 +2435,8 @@ class TestVerifyDriveInputsAndTexSkip(unittest.TestCase):
             v._verify_one(_BoomCmds(), "/x.bundle", spec)
 
     def test_float2_on_nonmpyfile_still_skipped_without_touching_maya(self):
-        # float2 is the NATIVE texture interface; a float2 attr on a NON-mPyFile
-        # node has no generic host to rebuild on -> honest skip (never a raise).
+        # float2 is the NATIVE texture interface; the harness does not drive a
+        # float2 attr on a NON-mPyFile node yet -> honest skip (never a raise).
         from mpynode.native.toolchain import verify as v
         spec = {
             "suggested": {"node_type_name": "n", "mpx_base": "MPxNode"},

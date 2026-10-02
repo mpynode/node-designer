@@ -60,8 +60,8 @@ from mpynode.ui.qt_wrapper import (
 # ALL_ATTR_TYPES is the flattened tuple: the dialog's order and membership.
 # "double" (a 64-bit real, what Maya's own Add Attribute calls "Float") leads
 # and is pre-selected; "float" is the 32-bit plug, a different storage, not a
-# synonym. A type the API accepts but the dialog does not offer ("float2") is
-# absent here.
+# synonym. A type the API accepts but the table keeps out of the dialog
+# (``in_dialog=False``) is absent here.
 _ATTR_TYPE_GROUPS = _attr_types.DIALOG_GROUPS
 ALL_ATTR_TYPES    = _attr_types.DIALOG_NAMES
 
@@ -246,7 +246,7 @@ class NDAddAttrDialog(QDialog):
             allowed = list(ALL_ATTR_TYPES)
         # Render in family-group order (no separators or colour). Every group
         # member is in ALL_ATTR_TYPES, so a type in ``allowed`` that isn't in a
-        # group (e.g. "float2") is correctly dropped.
+        # group (one the table keeps out of the dialog) is correctly dropped.
         allowed_set = set(allowed)
         for group in _ATTR_TYPE_GROUPS:
             for t in group:

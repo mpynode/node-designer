@@ -222,12 +222,13 @@ def read_multi_plug_values(node_name: str, attr: str, meta: dict):
                     if vals else _np.zeros((0, 3), dtype=_np.float64))
         except Exception:
             return vals
-    if atype == "quaternion":
+    if atype in ("quaternion", "float2"):
+        width = 4 if atype == "quaternion" else 2
         try:
             import numpy as _np
 
-            return (_np.array([_np.asarray(v).reshape(4) for v in vals])
-                    if vals else _np.zeros((0, 4), dtype=_np.float64))
+            return (_np.array([_np.asarray(v).reshape(width) for v in vals])
+                    if vals else _np.zeros((0, width), dtype=_np.float64))
         except Exception:
             return vals
     if atype == "matrix":
@@ -311,14 +312,17 @@ def reshape_plug_value(value, meta: dict):
                     [_angle_ui_to_radians(x) for x in flat], dtype=float
                 ).reshape(3)
             return _np.array(flat, dtype=float).reshape(3)
-        if atype == "quaternion":
-            # cmds.getAttr returns [(x, y, z, w)] for the 4-double compound.
+        if atype in ("quaternion", "float2"):
+            # cmds.getAttr returns [(x, y, z, w)] for a double4 (and for the
+            # generic compound of 4 in a scene saved before 2026-10), and
+            # [(u, v)] for a float2.
             flat = (
                 value[0]
                 if len(value) == 1 and isinstance(value[0], (list, tuple))
                 else value
             )
-            return _np.array(flat, dtype=float).reshape(4)
+            width = 4 if atype == "quaternion" else 2
+            return _np.array(flat, dtype=float).reshape(width)
     except Exception:
         pass
     return value

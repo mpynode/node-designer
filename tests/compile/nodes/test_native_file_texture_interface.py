@@ -36,7 +36,7 @@ class TestPorterProjection(unittest.TestCase):
         # eAttr.create, so it genuinely changes the generated C++ and a key miss
         # there is the port_cache contract working, not churn.
         # float2 additionally carries `children`, for the same reason: codegen
-        # otherwise synthesizes <plug>X/<plug>Y, and uvCoord's children are
+        # otherwise synthesizes <plug>U/<plug>V, and uvCoord's children are
         # uCoord/vCoord -- without it a compiled mPyFile has no uCoord plug at
         # all, so the key miss there is likewise the contract working.
         allowed        = {"attr_type", "_writable", "_readable"}

@@ -1154,12 +1154,13 @@ class TestArrayElementTypeCoverage(unittest.TestCase):
         self.assertIn("MFloatVector(eh.asFloat3())", cpp)
         self.assertIn("eh.set3Float(", cpp)
 
-    def test_quaternion_array_uses_compound_children(self):
+    def test_quaternion_array_is_double4_vector(self):
         from mpynode.native import compiler as codegen
         cpp = codegen.generate_cpp(self._arr_spec("quaternion"), for_port=False)
-        self.assertIn("std::vector<MQuaternion>",         cpp)
-        self.assertIn("MFnCompoundAttribute _qf(",        cpp)
-        self.assertIn("eh.child(_qf.child(0)).setDouble", cpp)
+        self.assertIn("std::vector<MQuaternion>", cpp)
+        self.assertIn("MQuaternion(eh.asDouble4())", cpp)
+        self.assertIn("eh.set4Double(", cpp)
+        self.assertNotIn("MFnCompoundAttribute _qf(", cpp)
 
     def test_numeric_array_input_is_not_keyable(self):
         # A scalar-numeric multi INPUT must be non-keyable or Maya leaks it into
@@ -1862,11 +1863,11 @@ class TestEulerCodegen(unittest.TestCase):
 
 
 class TestQuaternionCodegen(unittest.TestCase):
-    """A quaternion attr generates C++ as a generic 4-double compound (X/Y/Z/W).
+    """A quaternion attr generates C++ as Maya's numeric double4 (X/Y/Z/W).
 
-    Unlike double3/euler (numeric double3 parents read via asDouble3), a
-    quaternion is a generic compound -- children are accessed through
-    MFnCompoundAttribute in initialize() + compute()."""
+    Like double3 (a numeric parent built from named children and read with
+    asDouble3), the parent is MFnNumericAttribute's 4-child create, read with
+    asDouble4 and written with set4Double; W defaults to 1."""
 
     def _spec(self):
         from mpynode.native.spec import spec_extractor
@@ -1892,17 +1893,25 @@ class TestQuaternionCodegen(unittest.TestCase):
 
         spec = self._spec()
         cpp  = codegen.generate_cpp(spec, for_port=True)
-        # Generic compound built via MFnCompoundAttribute with X/Y/Z/W children.
-        self.assertIn("MFnCompoundAttribute", cpp)
+        # Numeric double4: nAttr's 4-child create over named X/Y/Z/W children.
+        self.assertIn("aQIn = nAttr.create(\"qIn\", \"qIn\", aQInX, aQInY, "
+                      "aQInZ, aQInW);", cpp)
         self.assertIn("qInX", cpp)
         self.assertIn("qInW", cpp)
-        # Children are plain kDouble.
-        self.assertIn("MFnNumericData::kDouble", cpp)
+        # Children are plain kDouble, W defaulting to 1.
+        self.assertIn('MObject aQInW = nAttr.create("qInW", "qInW", '
+                      'MFnNumericData::kDouble, 1.0);', cpp)
+        # Read with asDouble4, the output seeded with set4Double.
+        self.assertIn("const double4& in_aQIn = data.inputValue(aQIn).asDouble4();",
+                      cpp)
+        self.assertIn("h_aQOut.set4Double(0.0, 0.0, 0.0, 1.0);", cpp)
+        # No generic compound anywhere.
+        self.assertNotIn("cAttr.create(", cpp)
+        self.assertNotIn("_qf", cpp)
 
     def test_quaternion_array_is_now_supported(self):
         # quaternion is in _ARRAY_OK (was rejected): the array input reads into
-        # std::vector<MQuaternion>, addressing each element's 4 compound
-        # children through an MFnCompoundAttribute (_qf).
+        # std::vector<MQuaternion>, one element's double4 at a time.
         from mpynode.native.spec import spec_extractor
         from mpynode.native import compiler as codegen
         from mpynode import MPyNode
@@ -1918,8 +1927,19 @@ class TestQuaternionCodegen(unittest.TestCase):
         spec["suggested"]["node_type_name"] = "quatArrNode"
         cpp                                 = codegen.generate_cpp(spec, for_port=False)  # complete stub
         self.assertIn("std::vector<MQuaternion>", cpp)
-        self.assertIn("MFnCompoundAttribute _qf(", cpp)
-        self.assertIn("MQuaternion(eh.child(_qf.child(0)).asDouble()", cpp)
+        self.assertIn("MQuaternion(eh.asDouble4())", cpp)
+        self.assertIn("eh.set4Double(", cpp)
+        self.assertNotIn("_qf", cpp)
+
+    def test_findplug_read_defaults_to_identity(self):
+        # The transform / locator / IK solver families read off a plug and keep
+        # the declared value while the read is deferred (scene load): identity,
+        # like the plug's own W = 1, never a zero-length quaternion.
+        from mpynode.native.compiler import emit_attr
+
+        decl = emit_attr._read_plug_decl(
+            {"member": "aQIn", "meta": {"type": "quaternion"}})
+        self.assertEqual(decl, "    double in_aQIn[4] = {0.0, 0.0, 0.0, 1.0};")
 
 
 class TestHexCodegen(unittest.TestCase):

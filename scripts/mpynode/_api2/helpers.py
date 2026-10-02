@@ -441,7 +441,8 @@ def read_plug_value(plug: om.MPlug, attr_type: str, data_block=None) -> Any:
             dtype=np.float64,
         )
     if attr_type == "quaternion":
-        # generic compound of 4 doubles (X/Y/Z/W).
+        # numeric double4 (X/Y/Z/W), or a generic compound of 4 doubles in a
+        # scene saved before 2026-10; the children read the same on both.
         return np.array(
             [
                 plug.child(0).asDouble(),
@@ -592,8 +593,41 @@ def _geo_value_to_data(attr_type: str, value: Any):
     return None
 
 
+def _handle_write_kind(attr_obj, attr_type: str) -> dict:
+    """The keyword arguments :func:`_write_value_to_handle` needs for the plug
+    KIND behind ``attr_obj``, for the two types whose kind changed in 2026-10.
+
+    * ``matrix``: today's plug is ``-at matrix`` (kMatrixAttribute), written
+      with ``setMMatrix``. A scene saved earlier carries a typed ``-dt matrix``
+      plug, written with ``setMObject(MFnMatrixData)``. The wrong call on
+      either kind crashes Maya, so the kind is read off the attribute, never
+      assumed.
+    * ``quaternion``: today's plug is a numeric double4, written with
+      ``set4Double``. A scene saved earlier carries a generic compound of 4
+      doubles, which has no numeric accessor: its 4 child handles are written.
+      A double4 also reports ``hasFn(kCompoundAttribute)``, so the test is the
+      exact api type.
+
+    Empty for every other type, and for today's kinds.
+    """
+    if attr_obj is None or attr_obj.isNull():
+        return {}
+    if attr_type == "matrix" and attr_obj.hasFn(om.MFn.kTypedAttribute):
+        return {"typed_matrix": True}
+    if (attr_type == "quaternion"
+            and attr_obj.apiType() == om.MFn.kCompoundAttribute):
+        cfn  = om.MFnCompoundAttribute(attr_obj)
+        kids = [cfn.child(i) for i in range(cfn.numChildren())]
+        return {"child_attrs": kids}
+    return {}
+
+
 def _write_value_to_handle(
-    handle: "om.MDataHandle", attr_type: str, value: Any, child_attrs=None
+    handle:       "om.MDataHandle",
+    attr_type:    str,
+    value:        Any,
+    child_attrs                    = None,
+    typed_matrix: bool             = False,
 ) -> None:
     """Write ``value`` into an already-resolved ``handle``.
 
@@ -603,10 +637,11 @@ def _write_value_to_handle(
     handle.setClean() / array_handle.setAllClean() + data_block.setClean(attr)
     bookkeeping.
 
-    ``child_attrs`` is the list of child attribute MObjects for a
-    ``quaternion`` (a GENERIC compound of 4 doubles whose handle has no
-    numeric set4Double accessor) -- the caller supplies them so each child
-    handle can be written. Ignored for every other type.
+    ``child_attrs`` and ``typed_matrix`` describe a LEGACY plug kind (see
+    :func:`_handle_write_kind`, which callers use to fill them): the child
+    attribute MObjects of a generic-compound ``quaternion``, and True for a
+    typed ``-dt matrix`` plug. Left at their defaults, a quaternion is written
+    as a numeric double4 and a matrix as an ``-at matrix`` plug.
 
     For ``mesh`` / ``nurbsCurve`` / ``nurbsSurface``, marshals ``value`` (a
     ``Mesh`` / ``NurbsCurve`` / ``NurbsSurface`` wrapper, a duck-typed arrays
@@ -640,14 +675,17 @@ def _write_value_to_handle(
             v = np.pad(v, (0, 2 - v.size))
         handle.set2Float(float(v[0]), float(v[1]))
     elif attr_type == "quaternion":
-        # generic compound (NOT numeric4): write each child handle by hand.
         v = np.asarray(value, dtype=np.float64).flatten()
         if v.size < 4:
             v = np.pad(v, (0, 4 - v.size))
         if child_attrs is None:
-            raise ValueError("quaternion write requires child attributes")
-        for i, attr in enumerate(child_attrs):
-            handle.child(attr).setDouble(float(v[i]))
+            # numeric double4: one call on the parent handle.
+            handle.set4Double(
+                float(v[0]), float(v[1]), float(v[2]), float(v[3]))
+        else:
+            # legacy generic compound: no numeric accessor, write each child.
+            for i, attr in enumerate(child_attrs):
+                handle.child(attr).setDouble(float(v[i]))
     # doubleAngle / euler / enum write side.
     elif attr_type == "doubleAngle":
         handle.setDouble(float(value))
@@ -709,9 +747,13 @@ def _write_value_to_handle(
                 f"accepted forms: MMatrix, MTransformationMatrix, "
                 f"flat 16-iterable, 4x4 array, 3x3 array."
             )
-        m       = om.MMatrix(arr.flatten().tolist())
-        mat_obj = om.MFnMatrixData().create(m)
-        handle.setMObject(mat_obj)
+        m = om.MMatrix(arr.flatten().tolist())
+        if typed_matrix:
+            # legacy typed ``-dt matrix`` plug: setMMatrix here crashes Maya.
+            handle.setMObject(om.MFnMatrixData().create(m))
+        else:
+            # ``-at matrix`` plug: setMObject here crashes Maya.
+            handle.setMMatrix(m)
     elif attr_type == "string":
         handle.setString(str(value))
     else:
@@ -727,11 +769,9 @@ def write_plug_value(
     parent plug silently no-ops (Maya's ``data_block.outputValue`` on a
     multi parent doesn't write anything).
     """
-    handle      = data_block.outputValue(plug)
-    child_attrs = None
-    if attr_type == "quaternion":
-        child_attrs = [plug.child(i).attribute() for i in range(4)]
-    _write_value_to_handle(handle, attr_type, value, child_attrs)
+    handle = data_block.outputValue(plug)
+    kind   = _handle_write_kind(plug.attribute(), attr_type)
+    _write_value_to_handle(handle, attr_type, value, **kind)
     handle.setClean()
 
 
@@ -876,15 +916,12 @@ def write_multi_plug_value(
     else:
         dest_indices = range(len(seq))
 
-    child_attrs = None
-    if attr_type == "quaternion":
-        cfn         = om.MFnCompoundAttribute(attr_obj)
-        child_attrs = [cfn.child(i) for i in range(4)]
+    kind         = _handle_write_kind(attr_obj, attr_type)
     array_handle = data_block.outputArrayValue(attr_obj)
     builder      = array_handle.builder()
     for logical_idx, value in zip(dest_indices, seq):
         elem_handle = builder.addElement(logical_idx)
-        _write_value_to_handle(elem_handle, attr_type, value, child_attrs)
+        _write_value_to_handle(elem_handle, attr_type, value, **kind)
     array_handle.set(builder)
     array_handle.setAllClean()
     # setAllClean cleans the ELEMENTS only; the array attribute stayed dirty, so
@@ -1265,17 +1302,31 @@ def _read_handle_value(handle, attr_type, attr_obj=None):
             except Exception:
                 return [float(x) for x in handle.asDouble2()]
         if attr_type == "quaternion":
-            # Generic compound (X/Y/Z/W) -- no asDouble4 accessor; read the
-            # child handles (thread-safe). Needs the compound attr object.
+            # Needs the attr object to tell the kinds apart (thread-safe).
             if attr_obj is None:
                 return None
+            if attr_obj.apiType() != om.MFn.kCompoundAttribute:
+                # numeric double4 (X/Y/Z/W).
+                return [float(x) for x in handle.asDouble4()]
+            # legacy generic compound -- no numeric accessor; read the child
+            # handles.
             cfn = om.MFnCompoundAttribute(attr_obj)
             return [
                 float(handle.child(cfn.child(i)).asDouble())
                 for i in range(cfn.numChildren())
             ]
         if attr_type == "matrix":
-            m = handle.asMatrix()
+            if attr_obj is not None and attr_obj.hasFn(om.MFn.kTypedAttribute):
+                # A typed ``-dt matrix`` plug, from a scene saved before
+                # 2026-10: asMatrix() on its handle reads garbage memory, so
+                # read its matrix DATA; unset (null data) reads as identity,
+                # like read_plug_value.
+                try:
+                    m = om.MFnMatrixData(handle.data()).matrix()
+                except Exception:
+                    m = om.MMatrix()
+            else:
+                m = handle.asMatrix()
             return [[m.getElement(r, c) for c in range(4)] for r in range(4)]
         if attr_type in ("mesh", "nurbsCurve", "nurbsSurface"):
             # Geometry read STRAIGHT off the data handle: the EM-safe
@@ -1372,8 +1423,8 @@ def read_user_inputs_dict_from_datablock(
     and are DENSE by default (length ``max_logical+1``, gaps filled by
     :func:`array_gap_default`) unless the attr was declared ``sparse``.
 
-    ``quaternion`` reads via child handles; a compound with no child accessor
-    falls back to the identity gap default. Returns a dict keyed by attr name.
+    ``quaternion`` reads a double4 with ``asDouble4`` and a legacy generic
+    compound through its child handles. Returns a dict keyed by attr name.
     """
     out: dict = {}
     # The MFnDependencyNode.attribute() MObject lookup is a stateless read

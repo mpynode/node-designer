@@ -6,7 +6,8 @@ the user can *mutate in place* instead of constructing a value from
 scratch. The convention mirrors Maya's stock plugs:
 
   * scalar ``float``/``double`` -> ``0.0``; ``long`` -> ``0``; ``bool`` ->
-    ``False``; ``double3``/``euler`` -> ``[0, 0, 0]``; ``matrix`` ->
+    ``False``; ``double3``/``euler``/``color`` -> ``[0, 0, 0]``; ``float2``
+    -> ``[0, 0]``; ``quaternion`` -> ``[0, 0, 0, 1]``; ``matrix`` ->
     identity; ``string`` -> ``""``; anything else -> ``None``.
 
   * ARRAY (multi) outputs get a PRE-SIZED ``(N, ...)`` buffer of the same
@@ -42,6 +43,8 @@ def scalar_default(attr_type: str) -> Any:
         return False
     if attr_type in ("double3", "euler", "color"):
         return [0.0, 0.0, 0.0]
+    if attr_type == "float2":
+        return [0.0, 0.0]
     if attr_type == "quaternion":
         return [0.0, 0.0, 0.0, 1.0]
     if attr_type == "matrix":
@@ -62,6 +65,10 @@ def array_default(attr_type: str, n: int) -> Any:
         return np.zeros((n,), dtype=bool)
     if attr_type in ("double3", "euler", "color"):
         return np.zeros((n, 3), dtype=np.float64)
+    if attr_type == "float2":
+        # (N, 2): an element the expression leaves alone writes (0, 0), never
+        # the NaN a None seed turned into.
+        return np.zeros((n, 2), dtype=np.float64)
     if attr_type == "quaternion":
         # (N, 4) of identity [0,0,0,1] -- mutable, ideal for slice-assignment.
         return np.broadcast_to(

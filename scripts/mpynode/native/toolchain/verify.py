@@ -506,18 +506,17 @@ def _pair_stats(a, b):
 
 def _set_plug(cmds, plug, t, v):
     """setAttr one input plug per type. double3/euler/color are double3 (color's
-    usedAsColor float3 accepts a double3 setAttr, verified); quaternion is an
-    at='compound' of 4 double children X/Y/Z/W (no parent setAttr, so drive the
-    children); matrix is a flat-16 -type "matrix"; everything else is a plain
-    scalar. Works on both a plain plug and a multi ELEMENT plug (node.attr[i])."""
+    usedAsColor float3 accepts a double3 setAttr, verified); quaternion is a
+    numeric double4 set in one -type "double4" call; matrix is a flat-16 -type
+    "matrix"; everything else is a plain scalar. Works on both a plain plug and
+    a multi ELEMENT plug (node.attr[i])."""
     if t in ("double3", "euler", "color"):
         cmds.setAttr(plug, v[0], v[1], v[2], type="double3")
     elif t == "float2":
         # numeric compound-2 (mPyFile's uvCoord = uCoord/vCoord) -> double2 setAttr.
         cmds.setAttr(plug, v[0], v[1], type="double2")
     elif t == "quaternion":
-        for ax, ev in zip(("X", "Y", "Z", "W"), v):
-            cmds.setAttr(plug + ax, ev)
+        cmds.setAttr(plug, *[float(x) for x in v], type="double4")
     elif t == "matrix":
         cmds.setAttr(plug, *[float(x) for x in v], type="matrix")
     else:
@@ -2282,21 +2281,22 @@ def _verify_one(cmds, bundle_path, spec, maya=_MAYA_DEFAULT, deadline=None):
     # non-vacuous guard skips the row if no component ended up comparable, so an
     # empty-output node is a not-checked skip, never a false PASS.
 
-    # float2 (uvCoord) is the texture interface -- a NATIVE mPyFile attr, never
-    # user-declarable, so a texture node is rebuilt AS an mPyFile below and its
-    # uvCoord DRIVEN with outColor/outAlpha compared. Most file nodes were already
-    # skipped above via reads_image_file; a PROCEDURAL texture (no file read) falls
-    # through and gets real parity. A float2 on a NON-texture node has no host to
-    # rebuild on (can't happen today) -- skip honestly rather than raise.
+    # float2 (uvCoord) is the texture interface -- a NATIVE mPyFile attr, so a
+    # texture node is rebuilt AS an mPyFile below and its uvCoord DRIVEN with
+    # outColor/outAlpha compared. Most file nodes were already skipped above via
+    # reads_image_file; a PROCEDURAL texture (no file read) falls through and
+    # gets real parity. A float2 on a NON-texture node -- user-declarable since
+    # 2026-10 (the dialog and the assistant offer it) -- is not driven by this
+    # harness yet: skip honestly rather than raise.
     tex = sorted({n for n, m in
                   list((spec.get("inputs") or {}).items())
                   + list((spec.get("outputs") or {}).items())
                   if isinstance(m, dict) and m.get("type") == "float2"})
     if tex and spec.get("mpy_type") != "mPyFile":
         return {"ran": False, "pass": None, "maxerr": None, "tol": None,
-                "reason": "uses float2 attr(s) %s on a non-mPyFile node; float2 is "
-                          "the native texture interface and has no generic host to "
-                          "rebuild on -- pointwise parity skipped" % ", ".join(tex)}
+                "reason": "uses float2 attr(s) %s on a non-mPyFile node; this "
+                          "harness drives float2 only as a texture's uvCoord "
+                          "-- pointwise parity skipped" % ", ".join(tex)}
 
     # Cross-coupled array inputs (procrustesCluster's flat `clusters` reshaped by
     # `clusterWidth`, one row per `bindMatrices` element): the generic drive seeds

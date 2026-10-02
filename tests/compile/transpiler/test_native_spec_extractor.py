@@ -772,6 +772,32 @@ class TestFloat2Codegen(unittest.TestCase):
         # The read exposes in_<member> indexable as [0]/[1].
         self.assertIn("in_aUvCoord", cpp)
 
+    def test_float2_without_declared_children_names_them_u_v(self):
+        # The Python wrapper names a float2's children <plug>U/<plug>V, so the
+        # compiled node must too when the spec declares no names of its own.
+        from mpynode.native import compiler as codegen
+        spec = _codegen_spec({"st": {"attr_type": "float2"}},
+                             {"stOut": {"attr_type": "float2"}},
+                             compute="self.stOut = self.st")
+        cpp = codegen.generate_cpp(spec, for_port=True)
+        for plug in ("st", "stOut"):
+            for ax in "UV":
+                self.assertIn('nAttr.create("%s%s", "%s%s", MFnNumericData::kFloat'
+                              % (plug, ax, plug, ax), cpp)
+            for ax in "XY":
+                self.assertNotIn('"%s%s"' % (plug, ax), cpp)
+
+    def test_float2_declared_children_win(self):
+        from mpynode.native import compiler as codegen
+        spec = _codegen_spec(
+            {"uvCoord": {"attr_type": "float2", "children": ["uCoord", "vCoord"]}},
+            {"outVal": {"attr_type": "float"}},
+            compute="u, v = self.uvCoord\nself.outVal = u + v")
+        cpp = codegen.generate_cpp(spec, for_port=True)
+        self.assertIn('nAttr.create("uCoord", "uCoord"', cpp)
+        self.assertIn('nAttr.create("vCoord", "vCoord"', cpp)
+        self.assertNotIn('"uvCoordU"', cpp)
+
 
 class TestColorCodegen(unittest.TestCase):
     def test_color_output_create_and_write(self):
@@ -803,11 +829,12 @@ class TestQuaternionCodegen2(unittest.TestCase):
                              {"outVal": {"attr_type": "float"}},
                              compute="self.outVal = self.qIn[0] + self.qIn[3]")
         cpp = codegen.generate_cpp(spec, for_port=True)
-        # Generic compound: children read via MFnCompoundAttribute child handles.
-        self.assertIn("MFnCompoundAttribute", cpp)
-        self.assertIn("in_aQIn", cpp)
+        # Numeric double4: read in one asDouble4 call off the parent handle.
+        self.assertIn("const double4& in_aQIn = data.inputValue(aQIn).asDouble4();",
+                      cpp)
         self.assertIn("qInX", cpp)
         self.assertIn("qInW", cpp)
+        self.assertNotIn("MFnCompoundAttribute _qf", cpp)
 
     def test_quaternion_output_write(self):
         from mpynode.native import compiler as codegen
@@ -815,9 +842,9 @@ class TestQuaternionCodegen2(unittest.TestCase):
                              {"qOut": {"attr_type": "quaternion"}},
                              compute="self.qOut = (0.0, 0.0, 0.0, 1.0)")
         cpp = codegen.generate_cpp(spec, for_port=True)
-        # Output compound seeds the identity default via child handles.
-        self.assertIn("MFnCompoundAttribute", cpp)
-        self.assertIn("setDouble", cpp)
+        # The double4 output seeds the identity default in one set4Double call.
+        self.assertIn("h_aQOut.set4Double(0.0, 0.0, 0.0, 1.0);", cpp)
+        self.assertNotIn("MFnCompoundAttribute _qf", cpp)
 
 
 class TestPresetCapture(unittest.TestCase):
@@ -1013,10 +1040,11 @@ class TestEnumLabelEscaping(unittest.TestCase):
 
 class TestVerifySkipsTextureTypes(unittest.TestCase):
     """Review finding #3 (updated by #1b): float2/uvCoord is the ONLY texture
-    type the generic parity harness still can't drive (add_input_attr has no
-    float2 kind), so a node carrying one must SKIP cleanly with an honest reason
-    -- NOT raise. color (float3 usedAsColor) and quaternion (compound-4) are now
-    rebuildable + driveable, so they no longer gate the check."""
+    type the generic parity harness still doesn't drive on a non-mPyFile node
+    (add_input_attr takes float2 since 2026-10, but the harness has not been
+    wired for it), so a node carrying one must SKIP cleanly with an honest
+    reason -- NOT raise. color (float3 usedAsColor) and quaternion (double4) are
+    now rebuildable + driveable, so they no longer gate the check."""
 
     def test_verify_skips_float2_without_touching_maya(self):
         from mpynode.native.toolchain import verify as cc

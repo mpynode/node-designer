@@ -12,8 +12,7 @@ _SUPPORTED = {
     # texture/file interface (mPyFile preset capture): uvCoord (float2) +
     # outColor/borderColor (renderable color3).
     "float2", "color",
-    # quaternion: generic compound of 4 doubles (X/Y/Z/W). Scalar only --
-    # like color/float2, it is NOT in _ARRAY_OK and is parity-skipped.
+    # quaternion: Maya's numeric double4 (X/Y/Z/W children, W default 1).
     "quaternion",
     # nurbsCurve INPUT: a kNurbsCurve typed attr read into an MFnNurbsCurve so the
     # ported compute can call curve queries in pure C++ (spine). Scalar only (NOT
@@ -37,7 +36,7 @@ _GEO_INPUT_ONLY = {"mesh", "nurbsCurve", "nurbsSurface"}
 # the input read and output write paths (emit_attr._elem_read_expr /
 # _elem_set_stmt / _array_gap_default_cpp). string/hex are MString vectors (hex
 # round-trips decoded<->encoded per element); color is an MFloatVector (rgb)
-# vector; quaternion is an MQuaternion vector via the attr's compound children.
+# vector; quaternion is an MQuaternion vector (asDouble4 / set4Double).
 # Geometry and python remain non-array.
 _ARRAY_OK = {"float", "double", "long", "bool", "double3", "euler", "matrix",
              "doubleAngle", "time", "enum", "string", "hex", "color", "quaternion",

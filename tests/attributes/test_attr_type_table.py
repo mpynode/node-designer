@@ -53,12 +53,16 @@ class TestTheTable(unittest.TestCase):
         self.assertEqual(attr_types.DIALOG_NAMES[0], "double")
         self.assertEqual(attr_types.DIALOG_DEFAULT,  "double")
 
-    def test_float2_accepted_but_not_offered(self):
+    def test_float2_offered_after_color(self):
         from mpynode._common import attr_types
 
-        self.assertIn("float2", attr_types.ALL_NAMES)
-        self.assertNotIn("float2", attr_types.DIALOG_NAMES)
-        self.assertNotIn("float2", attr_types.ASSISTANT_NAMES)
+        self.assertIn("float2", attr_types.DIALOG_NAMES)
+        self.assertIn("float2", attr_types.ASSISTANT_NAMES)
+        group = attr_types.DIALOG_GROUPS[1]
+        self.assertEqual(group.index("float2"), group.index("color") + 1)
+        self.assertEqual(attr_types.BY_NAME["float2"].label, "2 floats U/V")
+        self.assertEqual(attr_types.dialog_label("float2"),
+                         "float2  -  2 floats U/V")
 
     def test_assistant_list_is_the_dialog_list(self):
         from mpynode._common import attr_types

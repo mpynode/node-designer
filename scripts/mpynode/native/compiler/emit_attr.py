@@ -192,10 +192,11 @@ def _create_lines(m):
                   % (mem, a, a, cx, cy, cz))
         L += _flags("nAttr", is_out)
     elif t == "quaternion":
-        # Generic compound of 4 doubles X/Y/Z/W (W default 1.0 = identity).
-        # There is no numeric double4, so unlike double3/euler this is an
-        # MFnCompoundAttribute read/written via child handles (see _read_line /
-        # _out_handle_default).
+        # Maya's numeric double4 (kAttribute4Double, like
+        # decomposeMatrix.outputQuat) built from 4 named double children
+        # X/Y/Z/W (W default 1.0 = identity), matching the Python wrapper. Read
+        # with asDouble4(), written with set4Double() -- see _read_line /
+        # _out_handle_default.
         cx, cy, cz, cw = mem + "X", mem + "Y", mem + "Z", mem + "W"
         for cm, ax, dv in (
             (cx, "X", "0.0"), (cy, "Y", "0.0"),
@@ -203,22 +204,22 @@ def _create_lines(m):
         ):
             L.append('    MObject %s = nAttr.create("%s%s", "%s%s", '
                      'MFnNumericData::kDouble, %s);' % (cm, plug, ax, plug, ax, dv))
-        L.append("    %s = cAttr.create(%s, %s);" % (mem, a, a))
-        for cm in (cx, cy, cz, cw):
-            L.append("    cAttr.addChild(%s);" % cm)
-        L += _flags("cAttr", is_out)
+        L.append("    %s = nAttr.create(%s, %s, %s, %s, %s, %s);"
+                  % (mem, a, a, cx, cy, cz, cw))
+        L += _flags("nAttr", is_out)
     elif t == "float2":
         # 2-float numeric compound (e.g. uvCoord); read via asFloat2(). Stays a
         # genuine float2 so it connects to place2dTexture.outUV.
         #
         # Child names come from the interface SSOT via ``children`` when it
-        # declares them, else <plug>X/<plug>Y. The parent connect DOES ignore
-        # child names -- but addressing a child by name does not, and mPyFile's
-        # uvCoord children are uCoord/vCoord, not uvCoordX/uvCoordY. The generic
-        # rule left a compiled mPyFile with no uCoord plug while the outUV
-        # connect kept working, which is exactly why it went unnoticed.
-        # uvFilterSize's declared children ARE <plug>X/Y, so it is unchanged.
-        kids = meta.get("children") or [plug + "X", plug + "Y"]
+        # declares them, else <plug>U/<plug>V -- the names the Python wrapper
+        # gives a float2. The parent connect DOES ignore child names -- but
+        # addressing a child by name does not, and mPyFile's uvCoord children
+        # are uCoord/vCoord, not uvCoordX/uvCoordY. The generic rule left a
+        # compiled mPyFile with no uCoord plug while the outUV connect kept
+        # working, which is exactly why it went unnoticed. uvFilterSize's
+        # declared children ARE <plug>X/Y, so it is unchanged.
+        kids = meta.get("children") or [plug + "U", plug + "V"]
         cx, cy = mem + "X", mem + "Y"
         for cm, cn in ((cx, kids[0]), (cy, kids[1])):
             L.append('    MObject %s = nAttr.create("%s", "%s", '
@@ -312,13 +313,12 @@ def _create_lines(m):
     return L
 
 def _fn_for(t):
-    # euler's parent compound, float2 and color all go through nAttr (euler's
-    # children are angles, but the compound + array/flag calls are numeric).
+    # euler's parent compound, float2, color and quaternion (double4) all go
+    # through nAttr (euler's children are angles, but the compound + array/flag
+    # calls are numeric).
     if t in ("float", "double", "long", "bool", "double3", "euler",
-             "float2", "color"):
+             "float2", "color", "quaternion"):
         return "nAttr"
-    if t == "quaternion":
-        return "cAttr"
     if t in ("doubleAngle", "time"):
         return "uAttr"
     if t == "matrix":
@@ -391,19 +391,9 @@ def _read_line(m, src="data"):
         # 3-float color compound (borderColor); access as in_<m>[0/1/2].
         return "    const float3& %s = %s.inputValue(%s).asFloat3();" % (v, src, mem)
     if t == "quaternion":
-        # Generic compound of 4 doubles: read each child handle (no asDouble4).
-        # Exposed to the ported compute as double in_<m>[4] = {x, y, z, w}.
-        return "\n".join([
-            "    double %s[4];" % v,
-            "    {",
-            "        MFnCompoundAttribute _qf(%s);" % mem,
-            "        MDataHandle _qh = %s.inputValue(%s);" % (src, mem),
-            "        %s[0] = _qh.child(_qf.child(0)).asDouble();" % v,
-            "        %s[1] = _qh.child(_qf.child(1)).asDouble();" % v,
-            "        %s[2] = _qh.child(_qf.child(2)).asDouble();" % v,
-            "        %s[3] = _qh.child(_qf.child(3)).asDouble();" % v,
-            "    }",
-        ])
+        # numeric double4; the ported compute indexes in_<m>[0..3] = x/y/z/w.
+        return ("    const double4& %s = %s.inputValue(%s).asDouble4();"
+                % (v, src, mem))
     if t == "doubleAngle":
         return "    const double %s = %s.inputValue(%s).asAngle().asRadians();" % (v, src, mem)
     if t == "time":
@@ -439,7 +429,9 @@ def _read_plug_decl(m):
     if t == "float2":
         return "    float %s[2] = {0.0f, 0.0f};" % v
     if t == "quaternion":
-        return "    double %s[4] = {0.0, 0.0, 0.0, 0.0};" % v
+        # identity, like the matrix's MMatrix() and the plug's own W = 1: a
+        # deferred read must not hand the body a zero-length quaternion.
+        return "    double %s[4] = {0.0, 0.0, 0.0, 1.0};" % v
     if t == "matrix":
         return "    MMatrix %s;" % v
     return ""
@@ -449,8 +441,9 @@ def _read_plug_assign(m, plug_expr):
 
     Mirrors _read_line's per-type accessors, but off a plug: scalar leaf types
     via MPlug::asX(); numeric compounds (double3/euler/color/float2/quaternion)
-    via child(i).asDouble()/asFloat() (no asDouble3 on a plug); matrix via
-    getValue + MFnMatrixData; doubleAngle/time via asMAngle()/asMTime().
+    via child(i).asDouble()/asFloat() (no asDouble3/asDouble4 on a plug);
+    matrix via getValue + MFnMatrixData; doubleAngle/time via
+    asMAngle()/asMTime().
     Indent-2 (goes inside a ``if (_st) { ... }`` plug-valid guard)."""
     mem, t = m["member"], m["meta"]["type"]
     v = "in_" + mem
@@ -506,9 +499,9 @@ def _elem_plug_read_expr(t, p):
     """Expression reading ONE array element off the element MPlug ``p``.
 
     Plug sibling of _elem_read_expr: there is no MDataHandle in these hooks, and
-    a plug addresses its compound children by index directly (so no ``_qf``
-    MFnCompoundAttribute is needed). ``matrix`` has no expression form (getValue
-    is a statement) -- _read_plug_array_assign special-cases it."""
+    a plug addresses its compound children by index directly. ``matrix`` has no
+    expression form (getValue is a statement) -- _read_plug_array_assign
+    special-cases it."""
     if t == "hex":
         return "nd_hex_decode(%s.asString())" % p
     if t in ("double3", "euler"):
@@ -781,30 +774,17 @@ _OUT_DEFAULT = {
     "matrix": "%s.setMMatrix(MMatrix());",
     "string": '%s.setString("");', "hex": '%s.setString("");',
     "doubleAngle": "%s.setMAngle(MAngle(0.0));", "time": "%s.setMTime(MTime(0.0));",
-    "double3": "%s.set3Double(0.0, 0.0, 0.0);",
-    "euler":   "%s.set3Double(0.0, 0.0, 0.0);",
-    "float2":  "%s.set2Float(0.0f, 0.0f);",
-    "color":   "%s.set3Float(0.0f, 0.0f, 0.0f);",
+    "double3":    "%s.set3Double(0.0, 0.0, 0.0);",
+    "euler":      "%s.set3Double(0.0, 0.0, 0.0);",
+    "float2":     "%s.set2Float(0.0f, 0.0f);",
+    "color":      "%s.set3Float(0.0f, 0.0f, 0.0f);",
+    "quaternion": "%s.set4Double(0.0, 0.0, 0.0, 1.0);",
 }
 
 def _out_handle_default(m):
     """Declare an output MDataHandle `h_<member>` + seed a neutral default."""
     mem, t = m["member"], m["meta"]["type"]
     h = "h_" + mem
-    if t == "quaternion":
-        # Generic compound: seed identity [0,0,0,1] via child handles (the
-        # parent handle has no numeric set4Double). The porter overwrites by
-        # constructing its own MFnCompoundAttribute(<member>) -- see _setter_hint.
-        return [
-            "    MDataHandle %s = data.outputValue(%s);" % (h, mem),
-            "    {",
-            "        MFnCompoundAttribute _qf(%s);" % mem,
-            "        %s.child(_qf.child(0)).setDouble(0.0);" % h,
-            "        %s.child(_qf.child(1)).setDouble(0.0);" % h,
-            "        %s.child(_qf.child(2)).setDouble(0.0);" % h,
-            "        %s.child(_qf.child(3)).setDouble(1.0);" % h,
-            "    }",
-        ]
     return [
         "    MDataHandle %s = data.outputValue(%s);" % (h, mem),
         "    " + _OUT_DEFAULT[t] % h,
@@ -832,8 +812,7 @@ def _setter_hint(m):
         "euler":       "h_%s.set3Double(<rx>, <ry>, <rz>)  // radians",
         "float2":      "h_%s.set2Float(<u>, <v>)",
         "color":       "h_%s.set3Float(<r>, <g>, <b>)  // 0..1 linear color",
-        "quaternion": ("MFnCompoundAttribute qf(<member>); "
-                       "h_%s.child(qf.child(0..3)).setDouble(<x>,<y>,<z>,<w>)"),
+        "quaternion":  "h_%s.set4Double(<x>, <y>, <z>, <w>)",
     }[t]
     return call % mem
 
@@ -842,9 +821,7 @@ def _elem_read_expr(t):
 
     `string`/`color` read straight off the element handle. `hex` decodes the
     stored space-separated hex to plain text (mirrors the single-hex read).
-    `quaternion` needs the attr's compound children, addressed via `_qf` (an
-    ``MFnCompoundAttribute`` the array read/write loops declare when the element
-    type is a quaternion) -- so this expression references `_qf`."""
+    `quaternion` reads the element's double4 (x, y, z, w)."""
     if t == "string":
         return "eh.asString()"
     if t == "hex":
@@ -855,10 +832,7 @@ def _elem_read_expr(t):
         # float2 carried as MFloatVector (u=.x, v=.y, .z=0); read the 2 floats.
         return "MFloatVector(eh.asFloat2()[0], eh.asFloat2()[1], 0.0f)"
     if t == "quaternion":
-        return ("MQuaternion(eh.child(_qf.child(0)).asDouble(), "
-                "eh.child(_qf.child(1)).asDouble(), "
-                "eh.child(_qf.child(2)).asDouble(), "
-                "eh.child(_qf.child(3)).asDouble())")
+        return "MQuaternion(eh.asDouble4())"
     return {
         "float": "eh.asFloat()", "double": "eh.asDouble()",
         "long": "eh.asInt()", "bool": "eh.asBool()",
@@ -872,8 +846,8 @@ def _elem_set_stmt(t, val):
     """Statement setting one array element (handle `eh`) from `val`.
 
     `hex` re-encodes the plain-text buffer to space-separated hex on write
-    (mirrors the single-hex finalize). `quaternion` writes its 4 compound
-    children via `_qf` (declared by the array write loop for quaternion)."""
+    (mirrors the single-hex finalize). `quaternion` writes the element's
+    double4 (x, y, z, w)."""
     if t in ("double3", "euler"):
         return "eh.set3Double((%s).x, (%s).y, (%s).z);" % (val, val, val)
     if t == "matrix":
@@ -894,9 +868,8 @@ def _elem_set_stmt(t, val):
         # float2 carried as MFloatVector (u=.x, v=.y); write the 2 floats.
         return "eh.set2Float((%s).x, (%s).y);" % (val, val)
     if t == "quaternion":
-        return (" ".join(
-            "eh.child(_qf.child(%d)).setDouble((%s).%s);" % (i, val, ax)
-            for i, ax in enumerate("xyzw")))
+        return ("eh.set4Double((%s).x, (%s).y, (%s).z, (%s).w);"
+                % (val, val, val, val))
     return {"float": "eh.setFloat(%s);", "double": "eh.setDouble(%s);",
             "long": "eh.setInt(%s);",
             "bool": "eh.setBool(%s);"}[t] % val
@@ -928,14 +901,6 @@ def _array_gap_default_cpp(meta):
         return "MQuaternion()"
     # float / double / doubleAngle (radians) -- dv recorded for numeric types.
     return _num_default(meta, float, "0.0")
-
-def _qf_decl(t, mem):
-    """A ``quaternion`` array element addresses its 4 compound children through an
-    ``MFnCompoundAttribute`` bound to the attr MObject -- declared once per array
-    loop block. Empty for every other (leaf/numeric-compound) element type."""
-    if t == "quaternion":
-        return ["        MFnCompoundAttribute _qf(%s);" % mem]
-    return []
 
 def _array_read_lines(m, src="data"):
     """Read an array INPUT into ``std::vector<T> in_<member>``.
@@ -971,7 +936,6 @@ def _array_read_lines(m, src="data"):
         return [
             "    std::vector<%s> %s;" % (_CPP[t], v),
             "    {",
-        ] + _qf_decl(t, mem) + [
             "        MArrayDataHandle _arr = %s.inputArrayValue(%s);" % (src, mem),
             "        unsigned _n = _arr.elementCount();",
             "        for (unsigned _i = 0; _i < _n; ++_i) {",
@@ -985,7 +949,6 @@ def _array_read_lines(m, src="data"):
     return [
         "    std::vector<%s> %s;" % (_CPP[t], v),
         "    {",
-    ] + _qf_decl(t, mem) + [
         "        MArrayDataHandle _arr = %s.inputArrayValue(%s);" % (src, mem),
         "        unsigned _n = _arr.elementCount();",
         "        for (unsigned _i = 0; _i < _n; ++_i) {",
@@ -1039,7 +1002,6 @@ def _array_write_lines(m):
     v = "out_" + mem
     return [
         "    {",
-    ] + _qf_decl(t, mem) + [
         "        MArrayDataHandle _outArr = data.outputArrayValue(%s);" % mem,
         "        if (!%s.empty()) {" % v,
         "            MArrayDataBuilder _b(&data, %s, (unsigned)%s.size());"

@@ -550,7 +550,7 @@ createNode renderLayer -n "defaultRenderLayer";
 	setAttr ".g" yes;
 createNode mPyMesh -n "sdfIgloo";
 	rename -uid "9F26E9B9-6A45-F50D-9980-90B432F24440";
-	addAttr -ci true -k true -m -sn "shapeMatrix" -ln "shapeMatrix" -dt "matrix";
+	addAttr -ci true -k true -m -sn "shapeMatrix" -ln "shapeMatrix" -at "matrix";
 	addAttr -ci true -k true -m -sn "shapeType" -ln "shapeType" -at "long";
 	addAttr -ci true -k true -m -sn "additive" -ln "additive" -min 0 -max 1 -at "bool";
 	addAttr -ci true -k true -m -sn "smoothing" -ln "smoothing" -at "double";

@@ -332,7 +332,7 @@ createNode renderLayer -n "defaultRenderLayer";
 	setAttr ".g" yes;
 createNode mPyMesh -n "sdfText";
 	rename -uid "01DAB745-4348-BF90-0A3D-F98AB00622C6";
-	addAttr -ci true -k true -m -sn "shapeMatrix" -ln "shapeMatrix" -dt "matrix";
+	addAttr -ci true -k true -m -sn "shapeMatrix" -ln "shapeMatrix" -at "matrix";
 	addAttr -ci true -k true -m -sn "shapeType" -ln "shapeType" -at "long";
 	addAttr -ci true -k true -m -sn "additive" -ln "additive" -min 0 -max 1 -at "bool";
 	addAttr -ci true -k true -m -sn "smoothing" -ln "smoothing" -at "double";

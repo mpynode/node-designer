@@ -137,40 +137,25 @@ def _write_plug_compute_time(
                 handle.setFloat(float(value))
             elif nt in (om.MFnNumericData.kDouble,):
                 handle.setDouble(float(value))
-            elif nt in (
-                om.MFnNumericData.k2Float, om.MFnNumericData.k3Float,
-                om.MFnNumericData.k2Double, om.MFnNumericData.k3Double,
-                om.MFnNumericData.k4Double,
-            ):
-                # Compound numeric: use MFnNumericData wrapping.
-                if nt in (om.MFnNumericData.k2Float, om.MFnNumericData.k2Double):
-                    n_comp = 2
-                elif nt in (om.MFnNumericData.k3Float, om.MFnNumericData.k3Double):
-                    n_comp = 3
-                else:
-                    n_comp = 4
-                data_obj = om.MFnNumericData().create(nt)
-                fn_data  = om.MFnNumericData(data_obj)
-                if nt in (om.MFnNumericData.k2Float, om.MFnNumericData.k3Float):
-                    if n_comp == 2:
-                        fn_data.setData2Float(float(value[0]), float(value[1]))
-                    else:
-                        fn_data.setData3Float(
-                            float(value[0]), float(value[1]), float(value[2])
-                        )
-                else:
-                    if n_comp == 2:
-                        fn_data.setData2Double(float(value[0]), float(value[1]))
-                    elif n_comp == 3:
-                        fn_data.setData3Double(
-                            float(value[0]), float(value[1]), float(value[2])
-                        )
-                    else:
-                        fn_data.setData4Double(
-                            float(value[0]), float(value[1]),
-                            float(value[2]), float(value[3]),
-                        )
-                handle.setMObject(data_obj)
+            # Numeric compounds (float2, color, double3, quaternion): one
+            # set<N><Type> call on the handle. An MFnNumericData pushed with
+            # setMObject lands as garbage on every one of them (measured
+            # 2026-10-02: a double4's X read 1.27e-311, a float2's U 7.98e+33).
+            elif nt == om.MFnNumericData.k2Float:
+                handle.set2Float(float(value[0]), float(value[1]))
+            elif nt == om.MFnNumericData.k3Float:
+                handle.set3Float(
+                    float(value[0]), float(value[1]), float(value[2]))
+            elif nt == om.MFnNumericData.k2Double:
+                handle.set2Double(float(value[0]), float(value[1]))
+            elif nt == om.MFnNumericData.k3Double:
+                handle.set3Double(
+                    float(value[0]), float(value[1]), float(value[2]))
+            elif nt == om.MFnNumericData.k4Double:
+                handle.set4Double(
+                    float(value[0]), float(value[1]),
+                    float(value[2]), float(value[3]),
+                )
             else:
                 handle.setDouble(float(value))
         except Exception as exc:
@@ -199,6 +184,10 @@ def _write_plug_compute_time(
             )
 
     # ---- matrix ----
+    # An ``-at matrix`` plug (kMatrixAttribute) takes setMMatrix; setMObject on
+    # its handle crashes Maya. The typed ``-dt matrix`` plug of a scene saved
+    # before 2026-10 is the opposite, and takes the kTypedAttribute branch
+    # below.
     elif attr_mobject.hasFn(om.MFn.kMatrixAttribute):
         try:
             arr = _coerce_to_4x4_numpy(value)
@@ -208,8 +197,7 @@ def _write_plug_compute_time(
                 )
             mtx = om.MMatrix()
             om.MScriptUtil.createMatrixFromList(arr.flatten().tolist(), mtx)
-            data_obj = om.MFnMatrixData().create(mtx)
-            handle.setMObject(data_obj)
+            handle.setMMatrix(mtx)
         except Exception as exc:
             raise AttributeError(
                 f"compute-time matrix write to {plug_name!r} failed: {exc}"
@@ -226,6 +214,7 @@ def _write_plug_compute_time(
             if attr_type == om.MFnData.kString:
                 handle.setString(str(value))
             elif attr_type == om.MFnData.kMatrix:
+                # typed matrix: setMObject(MFnMatrixData); setMMatrix crashes.
                 arr = _coerce_to_4x4_numpy(value)
                 if arr is None:
                     raise ValueError(

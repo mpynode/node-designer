@@ -77,9 +77,9 @@ _NORM_TYPE = {
     # material.color + Arnold, unlike a plain double3.
     "color": {"cat": "color", "fn": "MFnNumericAttribute", "data": "color", "cpp": "float[3]", "read": "asFloat3", "portable": True},
     "euler": {"cat": "vector", "fn": "MFnUnitAttribute*3", "data": "kAngle*3", "cpp": "double[3]", "read": "asDouble3", "portable": True},
-    # quaternion: generic compound of 4 doubles -- there is no numeric double4,
-    # so children are read via MFnCompoundAttribute child handles (no asDouble4).
-    "quaternion":   {"cat": "quaternion", "fn": "MFnCompoundAttribute", "data": "kDouble*4", "cpp": "double[4]", "read": "child", "portable": True},
+    # quaternion: Maya's numeric double4 (X/Y/Z/W children, W default 1), like
+    # decomposeMatrix.outputQuat; read with asDouble4, written with set4Double.
+    "quaternion":   {"cat": "quaternion", "fn": "MFnNumericAttribute", "data": "k4Double", "cpp": "double[4]", "read": "asDouble4", "portable": True},
     "matrix":       {"cat": "matrix", "fn": "MFnMatrixAttribute", "data": "kDouble", "cpp": "MMatrix", "read": "asMatrix", "portable": True},
     "enum":         {"cat": "enum", "fn": "MFnEnumAttribute", "data": "enum", "cpp": "short", "read": "asShort", "portable": True},
     "string":       {"cat": "string", "fn": "MFnTypedAttribute", "data": "kString", "cpp": "MString", "read": "asString", "portable": True},
@@ -309,7 +309,7 @@ def normalize_attr(meta: dict) -> dict:
     # the generated C++, and a bundle built for the wrong storage would read the
     # plug with the wrong handle type.
     # ``children`` MUST reach the spec for the same reason: it carries a float2's
-    # child LONG names, and codegen falls back to <plug>X/<plug>Y without it -- which
+    # child LONG names, and codegen falls back to <plug>U/<plug>V without it -- which
     # gives a compiled mPyFile no ``uCoord`` plug.
     for k in ("min_value", "max_value", "default_value", "enum_names", "sparse",
               "packed", "children"):
@@ -912,7 +912,7 @@ def _preset_attr_meta(node: str, attr: str, mc) -> dict | None:
     meta = {"attr_type": spec_type, "_writable": writable, "_readable": readable}
     if spec_type == "float2":
         # Child LONG names, which codegen needs: it otherwise synthesizes
-        # <plug>X/<plug>Y, and uvCoord's children are uCoord/vCoord. Reading
+        # <plug>U/<plug>V, and uvCoord's children are uCoord/vCoord. Reading
         # them here is what lets the drift guards check the SSOT's declared
         # child names against the ones the live node actually has.
         # listChildren can report a DOTTED path (see node_swap.py), so keep the

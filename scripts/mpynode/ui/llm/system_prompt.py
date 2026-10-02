@@ -176,6 +176,7 @@ float()/int() (write `abs(np.dot(a, b))`, NOT `abs(float(np.dot(a, b)))`;
     enum -> EnumInt (an int; .name() gives the field label)
     string/hex -> str       double3 -> numpy (3,)  euler -> numpy (3,) rad
     quaternion -> numpy (4,) [x,y,z,w]   color -> numpy (3,) [r,g,b]
+    float2 -> numpy (2,) [u,v]
     matrix -> MatrixView ((4,4) row-major, numpy-transparent)
     matrix[] (array) -> MatrixArrayView ((N,4,4); M[i] -> view, M.translation() -> (N,3))
   A MatrixView ALREADY behaves like a numpy (4,4): `pos = self.driverMatrix[3, :3]`,
@@ -228,8 +229,9 @@ ATTRIBUTE TYPES (for add_input / add_output)
     node `textInput` wants. Reading a hex INPUT decodes back to text.
   * "color": a float3 (R/G/B children) flagged usedAsColor so it binds to
     shader color plugs / Arnold; reads/writes as numpy (3,). "quaternion": a
-    4-double compound (X/Y/Z/W children), reads/writes as numpy (4,), default
-    identity [0,0,0,1].
+    double4 (X/Y/Z/W), reads/writes as numpy (4,), default identity
+    [0,0,0,1]. "float2": 2 floats (U/V children), reads/writes as numpy
+    (2,).
   * Array outputs are pre-seeded mutable (N,...) buffers, so you can
     slice-assign: `self.outMatrices[:, 3, :3] = positions`.
 
@@ -433,6 +435,7 @@ dtype+shape); and wrapping a numpy scalar used only in math -- write
     enum -> EnumInt (an int; .name() gives the field label)
     string/hex -> str       double3 -> numpy (3,)  euler -> numpy (3,) rad
     quaternion -> numpy (4,) [x,y,z,w]   color -> numpy (3,) [r,g,b]
+    float2 -> numpy (2,) [u,v]
     matrix -> MatrixView ((4,4) row-major, numpy-transparent)
     matrix[] (array) -> MatrixArrayView ((N,4,4))
   A MatrixView already behaves like a numpy (4,4) (`m[3,:3]`, `m @ v`,
@@ -479,7 +482,8 @@ ATTRIBUTE TYPES (for inputs / outputs)
   * "hex": a string transcoding UTF-8<->hex -- write plain text to a hex OUTPUT
     and the plug stores e.g. "48 69" (what Maya's `type` node textInput wants).
   * "color": float3 (R/G/B) flagged usedAsColor; reads/writes as numpy (3,).
-    "quaternion": 4-double compound (X/Y/Z/W), numpy (4,), default [0,0,0,1].
+    "quaternion": double4 (X/Y/Z/W), numpy (4,), default [0,0,0,1].
+    "float2": 2 floats (U/V), numpy (2,).
 
 NAMING -- plug / attribute names are camelCase, lowercase first letter
 (`noiseAmount`, `driverMatrix`, `outValue`); NEVER snake_case, leading capital,
