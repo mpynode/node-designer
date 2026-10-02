@@ -170,12 +170,18 @@ class TestTheAttributeRegistry(_Base):
         self.assertEqual(MPyNode(node).get_input_attr_map(), {})
 
     def test_renamed_v1_types_register_under_the_new_names(self):
-        # v1 wrote int / vector / angle; v2 renamed them (long / double3 /
-        # doubleAngle) and rejects the old names, so the upgrade maps them.
+        # v1 wrote int / vector / angle; v2 stores long / double3 /
+        # doubleAngle, so the upgrade writes the stored names into the plug
+        # map (the raw JSON, not just what the reader translates).
         node = _make_v1_node(inputs={"n": "int", "a": "angle"},
                              outputs={"out": "vector"},
                              expression="out = [n, a, 0]")
         U.upgrade_node(node)
+        raw = json.loads(mc.getAttr(node + "._inputAttrs"))
+        self.assertEqual(raw["n"]["attr_type"], "long")
+        self.assertEqual(raw["a"]["attr_type"], "doubleAngle")
+        raw = json.loads(mc.getAttr(node + "._outputAttrs"))
+        self.assertEqual(raw["out"]["attr_type"], "double3")
         ins  = MPyNode(node).get_input_attr_map()
         outs = MPyNode(node).get_output_attr_map()
         self.assertEqual(ins["n"]["attr_type"],    "long")

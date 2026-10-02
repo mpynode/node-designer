@@ -92,7 +92,7 @@ class TestLocatorInputGate(unittest.TestCase):
 
     def test_still_rejects_excluded_types(self):
         from mpynode.native import compiler as codegen
-        for t in ("python", "message"):
+        for t in ("pickle", "message"):
             with self.assertRaises(codegen.UnsupportedSpec):
                 codegen._check(_loc_spec({"p": {"type": t, "is_array": False}}))
 

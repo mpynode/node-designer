@@ -46,18 +46,24 @@ def _ordered_attr_items(attr_map: dict):
 
 
 def _check_attr_types(payload: dict) -> None:
-    """Raise ``ValueError`` when an input/output attr type is not in the type
-    table, BEFORE anything is created. A retired name (``int`` / ``vector`` /
-    ``angle``, e.g. in an ``.mpn`` saved before the renames) would otherwise
-    abort the restore part-way and leave a half-built node. Same message as
-    ``add_input_attr`` (``attr_types.unknown_type_message``)."""
-    from mpynode._common.attr_types import BY_NAME, unknown_type_message
+    """Translate every input/output ``attr_type`` to its stored name IN PLACE,
+    and raise ``ValueError`` on a name that is neither stored nor an alias,
+    BEFORE anything is created.
+
+    An alias (``int`` / ``vector`` / ``float64`` ..., e.g. an ``.mpn`` written
+    by hand with the dropdown's names) restores as its stored name. A retired
+    name (``python``) or an unknown one would otherwise abort the restore
+    part-way and leave a half-built node. Same message as ``add_input_attr``
+    (``attr_types.canonical``)."""
+    from mpynode._common.attr_types import canonical
 
     for key in ("input_attrs", "output_attrs"):
         for meta in (payload.get(key) or {}).values():
-            attr_type = meta.get("attr_type", "double")
-            if not isinstance(attr_type, str) or attr_type not in BY_NAME:
-                raise ValueError(unknown_type_message(attr_type))
+            if "attr_type" not in meta:
+                continue  # restored as the "double" default
+            stored = canonical(meta["attr_type"])
+            if stored != meta["attr_type"]:
+                meta["attr_type"] = stored
 
 
 # ---- Capture ----

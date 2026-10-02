@@ -27,7 +27,7 @@ def _is_batch(cmds) -> bool:
 
 
 def _node_has_pickle_python_literal(cmds, node) -> bool:
-    """True if ``node`` has an UNCONNECTED python-typed input attr holding a
+    """True if ``node`` has an UNCONNECTED pickle-typed input attr holding a
     (pickle) literal value loaded from the file -- as opposed to a runtime
     value driven by an upstream connection (which is not a file-trust concern)."""
     from mpynode._common.io import serialization as _ser
@@ -39,7 +39,7 @@ def _node_has_pickle_python_literal(cmds, node) -> bool:
     except Exception:
         return False
     for name, meta in amap.items():
-        if not isinstance(meta, dict) or meta.get("attr_type") != "python":
+        if not isinstance(meta, dict) or meta.get("attr_type") != "pickle":
             continue
         base = "%s.%s" % (node, name)
         try:
@@ -107,7 +107,7 @@ def _scene_has_pickle_blobs(cmds) -> bool:
     """True if opening/importing needs a trust decision, because some mPy node
     carries something the load would EXECUTE:
 
-      * pickled data -- a stored-var pickle blob or a python-attr literal
+      * pickled data -- a stored-var pickle blob or a pickle-attr literal
         (``pickle.loads`` is arbitrary code); or
       * node Python -- a non-empty ``_initSource`` / legacy ``_jitSource`` /
         ``_computeSource`` (see :func:`_node_has_exec_source`).
@@ -137,7 +137,7 @@ def _scene_has_pickle_blobs(cmds) -> bool:
                         return True
             except Exception:
                 pass
-            # Cheapest check first; the python-literal scan below decodes the
+            # Cheapest check first; the pickle-literal scan below decodes the
             # attr map and walks multi-element connections.
             if _node_has_exec_source(cmds, node):
                 return True

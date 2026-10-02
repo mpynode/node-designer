@@ -185,7 +185,8 @@ def _rewrite_attr_registry(node, v1_table, enums, plug):
             is_array = bool(mc.attributeQuery(name, node=node, multi=True))
         except Exception:
             is_array = False
-        # v1 wrote the old v2 names (int / vector / angle), which v2 rejects.
+        # v1 wrote the old v2 names (int / vector / angle / python); the map
+        # stores today's names.
         meta = {"attr_type": upgrade_legacy_name(typ), "is_array": is_array,
                 "order": i}
         if typ == "enum":

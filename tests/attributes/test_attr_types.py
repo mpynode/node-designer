@@ -344,14 +344,14 @@ class TestNewTypesAddable(unittest.TestCase):
         mc.file(new=True, force=True)
         ensure_plugins_loaded()
 
-    def test_python_input_lands_as_string(self):
+    def test_pickle_input_lands_as_string(self):
         from mpynode.wrappers._mpy_node import MPyNode
 
         n = MPyNode.create(name="py1")
-        n.add_input_attr("cfg", "python")
-        # python is backed by a string plug.
+        n.add_input_attr("cfg", "pickle")
+        # pickle is backed by a string plug.
         self.assertEqual(mc.getAttr(n.get_name() + ".cfg", type=True), "string")
-        self.assertEqual(n.get_input_attr_map()["cfg"]["attr_type"], "python")
+        self.assertEqual(n.get_input_attr_map()["cfg"]["attr_type"], "pickle")
 
     def test_mesh_input_lands_as_mesh_plug(self):
         from mpynode.wrappers._mpy_node import MPyNode
@@ -375,11 +375,11 @@ class TestNewTypesAddable(unittest.TestCase):
         n.add_input_attr("inSurf", "nurbsSurface")
         self.assertTrue(mc.attributeQuery("inSurf", node=n.get_name(), exists=True))
 
-    def test_python_output_lands(self):
+    def test_pickle_output_lands(self):
         from mpynode.wrappers._mpy_node import MPyNode
 
         n = MPyNode.create(name="pyo1")
-        n.add_output_attr("outData", "python")
+        n.add_output_attr("outData", "pickle")
         self.assertEqual(mc.getAttr(n.get_name() + ".outData", type=True), "string")
 
 
@@ -504,10 +504,10 @@ class TestMultiOutputWrite(unittest.TestCase):
             self.assertAlmostEqual(m0[d_idx], 1.0)
             self.assertAlmostEqual(m1[d_idx], 2.0)
 
-    def test_multi_python_output(self):
+    def test_multi_pickle_output(self):
         n = self._build(
             "mpy",
-            "python",
+            "pickle",
             "self.out = []\n"
             "for i in range(self.count):\n"
             "    self.out.append({'index': i, 'doubled': i * 2})",
@@ -608,58 +608,58 @@ class TestMultiOutputWrite(unittest.TestCase):
 
 
 # ===========================================================================
-# python attr round-trip via expressions (read + write)
+# pickle attr round-trip via expressions (read + write)
 # ===========================================================================
 
 
-class TestPythonAttrRoundTrip(unittest.TestCase):
+class TestPickleAttrRoundTrip(unittest.TestCase):
     def setUp(self):
         mc.file(new=True, force=True)
         ensure_plugins_loaded()
 
-    def _set_python_input(self, n, attr_name, value):
+    def _set_pickle_input(self, n, attr_name, value):
         """Manually pickle+base64 + setAttr, mimicking what an upstream
         node's compute would do via write_plug_value."""
         payload = base64.b64encode(pickle.dumps(value)).decode("ascii")
         mc.setAttr(f"{n.get_name()}.{attr_name}", payload, type="string")
 
-    def test_python_input_dict_via_expression(self):
+    def test_pickle_input_dict_via_expression(self):
         from mpynode.wrappers._mpy_node import MPyNode
 
         n = MPyNode.create(name="pyrt1")
-        n.add_input_attr("cfg", "python")
+        n.add_input_attr("cfg", "pickle")
         n.add_output_attr("got_a", "long")
         n.set_compute_expression("self.got_a = self.cfg['a']")
-        self._set_python_input(n, "cfg", {"a": 42, "b": "hello"})
+        self._set_pickle_input(n, "cfg", {"a": 42, "b": "hello"})
         self.assertEqual(mc.getAttr(n.get_name() + ".got_a"), 42)
 
-    def test_python_input_list(self):
+    def test_pickle_input_list(self):
         from mpynode.wrappers._mpy_node import MPyNode
 
         n = MPyNode.create(name="pyrt2")
-        n.add_input_attr("items", "python")
+        n.add_input_attr("items", "pickle")
         n.add_output_attr("count", "long")
         n.set_compute_expression("self.count = len(self.items)")
-        self._set_python_input(n, "items", [1, 2, 3, 4, 5])
+        self._set_pickle_input(n, "items", [1, 2, 3, 4, 5])
         self.assertEqual(mc.getAttr(n.get_name() + ".count"), 5)
 
-    def test_python_input_none_when_empty_string(self):
+    def test_pickle_input_none_when_empty_string(self):
         from mpynode.wrappers._mpy_node import MPyNode
 
         n = MPyNode.create(name="pyrt3")
-        n.add_input_attr("maybe", "python")
+        n.add_input_attr("maybe", "pickle")
         n.add_output_attr("is_none", "bool")
         n.set_compute_expression("self.is_none = (self.maybe is None)")
         # Default empty plug \u2192 should read as None.
         self.assertTrue(mc.getAttr(n.get_name() + ".is_none"))
 
-    def test_python_output_round_trip_through_compute(self):
+    def test_pickle_output_round_trip_through_compute(self):
         """Compute writes a dict; read_plug_value (via getAttr decoded
         manually) recovers the same dict."""
         from mpynode.wrappers._mpy_node import MPyNode
 
         n = MPyNode.create(name="pyout1")
-        n.add_output_attr("out", "python")
+        n.add_output_attr("out", "pickle")
         n.set_compute_expression("self.out = {'k': 'v', 'n': 7}")
         # Reading the raw string plug forces compute; write_plug_value
         # encoded the dict.
@@ -668,16 +668,16 @@ class TestPythonAttrRoundTrip(unittest.TestCase):
         decoded = pickle.loads(base64.b64decode(raw.encode("ascii")))
         self.assertEqual(decoded, {"k": "v", "n": 7})
 
-    def test_python_node_to_node_communication(self):
+    def test_pickle_node_to_node_communication(self):
         """Two mPyNodes share a Python dict via DG connection."""
         from mpynode.wrappers._mpy_node import MPyNode
 
         producer = MPyNode.create(name="producer")
-        producer.add_output_attr("out", "python")
+        producer.add_output_attr("out", "pickle")
         producer.set_compute_expression("self.out = {'msg': 'hello world', 'count': 3}")
 
         consumer = MPyNode.create(name="consumer")
-        consumer.add_input_attr("in_data", "python")
+        consumer.add_input_attr("in_data", "pickle")
         consumer.add_output_attr("got", "string")
         consumer.set_compute_expression("self.got = self.in_data['msg']")
 
@@ -687,11 +687,11 @@ class TestPythonAttrRoundTrip(unittest.TestCase):
             "hello world",
         )
 
-    def test_python_corrupted_payload_raises(self):
+    def test_pickle_corrupted_payload_raises(self):
         from mpynode.wrappers._mpy_node import MPyNode
 
         n = MPyNode.create(name="pybad")
-        n.add_input_attr("cfg", "python")
+        n.add_input_attr("cfg", "pickle")
         n.add_output_attr("ok", "bool")
         n.set_compute_expression("ok = (cfg is not None)")
         mc.setAttr(n.get_name() + ".cfg", "not_valid_base64!!!", type="string")
@@ -705,7 +705,7 @@ class TestPythonAttrRoundTrip(unittest.TestCase):
         sel.add(n.get_name() + ".cfg")
         plug = sel.getPlug(0)
         with self.assertRaises(ValueError):
-            read_plug_value(plug, "python")
+            read_plug_value(plug, "pickle")
 
 
 # ===========================================================================
@@ -827,10 +827,10 @@ class TestTypedGeometryInputs(unittest.TestCase):
 
 @unittest.skipUnless(_qt_available(), "Qt unavailable")
 class TestDialogShapePhase18_8(unittest.TestCase):
-    def test_all_attr_types_includes_python_and_geometry(self):
+    def test_all_attr_types_includes_pickle_and_geometry(self):
         from mpynode.ui.dialogs.add_attr import ALL_ATTR_TYPES
 
-        for t in ("python", "mesh", "nurbsCurve", "nurbsSurface"):
+        for t in ("pickle", "mesh", "nurbsCurve", "nurbsSurface"):
             self.assertIn(t, ALL_ATTR_TYPES)
 
     def test_array_checkbox_enabled_for_every_type(self):
@@ -889,22 +889,22 @@ class TestDialogShapePhase18_8(unittest.TestCase):
         from mpynode._api2.helpers import read_plug_value
 
         src = inspect.getsource(read_plug_value)
-        for t in ('"python"', '"mesh"', '"nurbsCurve"', '"nurbsSurface"'):
+        for t in ('"pickle"', '"mesh"', '"nurbsCurve"', '"nurbsSurface"'):
             self.assertIn(t, src)
         self.assertIn("MFnMesh",         src)
         self.assertIn("MFnNurbsCurve",   src)
         self.assertIn("MFnNurbsSurface", src)
 
-    def test_write_plug_value_handles_python(self):
+    def test_write_plug_value_handles_pickle(self):
         """per-type write logic moved to
         ``_write_value_to_handle`` (shared by scalar + multi paths).
-        Inspect that helper for the python-attr branches."""
+        Inspect that helper for the pickle-attr branches."""
         import inspect
 
         from mpynode._api2.helpers import _write_value_to_handle
 
         src = inspect.getsource(_write_value_to_handle)
-        self.assertIn('"python"',         src)
+        self.assertIn('"pickle"',         src)
         self.assertIn("pickle.dumps",     src)
         self.assertIn("base64.b64encode", src)
 
@@ -1655,7 +1655,7 @@ class TestAttrTypeGrouping(unittest.TestCase):
                  "doubleLinear"),
                 ("double3", "euler", "position", "matrix", "quaternion",
                  "color", "float2"),
-                ("string", "enum", "hex", "python"),
+                ("string", "enum", "hex", "pickle"),
                 ("mesh", "nurbsCurve", "nurbsSurface"),
                 ("time",),
             ),
@@ -1706,7 +1706,7 @@ class TestAttrTypeGrouping(unittest.TestCase):
                     "doubleLinear",
                     "double3", "euler", "position", "matrix", "quaternion",
                     "color", "float2",
-                    "string", "enum", "hex", "python",
+                    "string", "enum", "hex", "pickle",
                     "mesh", "nurbsCurve", "nurbsSurface", "time",
                 ],
             )

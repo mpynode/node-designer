@@ -514,7 +514,7 @@ class TestAttrColorRegistry(unittest.TestCase):
         self.assertEqual(ATTR_TYPE_COLORS["nurbsCurve"],   (128, 230, 230))
         self.assertEqual(ATTR_TYPE_COLORS["nurbsSurface"], (128, 128, 128))
         self.assertEqual(ATTR_TYPE_COLORS["string"],       (255, 218, 76))
-        self.assertEqual(ATTR_TYPE_COLORS["python"],       (255, 218, 76))
+        self.assertEqual(ATTR_TYPE_COLORS["pickle"],       (255, 218, 76))
         self.assertEqual(ATTR_TYPE_COLORS["enum"],         (146, 101, 49))
 
 

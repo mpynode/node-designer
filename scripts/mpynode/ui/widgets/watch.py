@@ -245,7 +245,7 @@ def read_multi_plug_values(node_name: str, attr: str, meta: dict):
     #   float / double / doubleAngle / doubleLinear / time -> float64
     #   long / enum                         -> int64
     #   bool                                -> bool
-    # string / python / geometry stay Python lists (numpy can't stack them).
+    # string / pickle / geometry stay Python lists (numpy can't stack them).
     # Empty arrays keep the right dtype so it is still reported.
     try:
         import numpy as _np
@@ -648,7 +648,7 @@ def _format_size(value) -> str:
 def decode_io_value(raw, attr_type):
     """Turn a raw plug value into the object to DISPLAY in the Watch tab.
 
-    For a ``python`` attr the stored value is a ``base64(pickle(obj))`` bus
+    For a ``pickle`` attr the stored value is a ``base64(pickle(obj))`` bus
     string; decode it (trust-gated) so the panel shows the live object and
     its real type (dict / ndarray / custom class / ...) instead of an opaque
     string. Any other ``attr_type`` is returned unchanged.
@@ -657,7 +657,7 @@ def decode_io_value(raw, attr_type):
     when the scene is untrusted (pickle refused), the payload is empty, or
     decoding fails (corrupt blob).
     """
-    if attr_type != "python":
+    if attr_type != "pickle":
         return raw
     if not raw:
         return raw
@@ -679,7 +679,7 @@ def decode_io_value(raw, attr_type):
 
 
 def decode_io_value_cached(cache: dict, attr: str, raw, attr_type):
-    """``decode_io_value`` with a per-attr memo so an unchanged ``python``
+    """``decode_io_value`` with a per-attr memo so an unchanged ``pickle``
     blob is not re-unpickled on every live-poll tick.
 
     ``cache`` maps ``attr -> (raw, decoded)`` and keeps only the LATEST blob
@@ -712,7 +712,7 @@ class NDWatchWidget(QWidget):
         # The wrapper's self.X framework surface, carried inside the watch
         # snapshot under WATCH_FRAMEWORK_KEY (so it needs Enable Watch).
         self._cached_framework: dict = {}
-        # Memo of the last decoded ``python`` value per full plug path, so an
+        # Memo of the last decoded ``pickle`` value per full plug path, so an
         # unchanged base64+pickle blob isn't re-unpickled every 80 ms poll.
         self._py_decode_cache: dict = {}
         # Live-poll suspension (set while a Save / F5 is in flight so timer
@@ -1195,8 +1195,8 @@ class NDWatchWidget(QWidget):
                 val = mc.getAttr(name + "." + attr)
             except Exception:
                 continue
-            if atype == "python":
-                # python attrs carry base64+pickle bus data; show the decoded
+            if atype == "pickle":
+                # pickle attrs carry base64+pickle bus data; show the decoded
                 # object and its real type, not the opaque string.
                 out[attr] = decode_io_value_cached(
                     self._py_decode_cache, name + "." + attr, val, atype

@@ -139,8 +139,8 @@ class TestTypedArraysRunOncePerChange(_DGCase):
         for value, got in pulls:
             self.assertEqual(got, [str(value + i) for i in range(N)])
 
-    def test_python_array(self):
-        self._pull_each("python", "[{'v': self.a + i} for i in range(%d)]" % N)
+    def test_pickle_array(self):
+        self._pull_each("pickle", "[{'v': self.a + i} for i in range(%d)]" % N)
 
 
 class TestMeshOutputRunsOnceForManyConsumers(_DGCase):

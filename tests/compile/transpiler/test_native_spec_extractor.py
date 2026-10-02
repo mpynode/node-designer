@@ -83,15 +83,15 @@ class TestAdapterPure(unittest.TestCase):
         self.assertEqual(spec["metadata"], md.coerce(meta))
 
     def test_assess_portability_uses_raw_maps(self):
-        """A python-typed input must register as a blocker -- proving the RAW
+        """A pickle-typed input must register as a blocker -- proving the RAW
         attr map (attr_type=...) reaches assess_portability, not normalize_attr's
         output (which renames the key to 'type')."""
         from mpynode.native.spec import mpn_spec_adapter as adapter
 
         spec = adapter.spec_from_mpn_payload(
-            self._payload(input_attrs={"p": {"attr_type": "python"}}))
+            self._payload(input_attrs={"p": {"attr_type": "pickle"}}))
         self.assertFalse(spec["portability"]["portable"])
-        self.assertTrue(any("python" in b for b in spec["portability"]["blockers"]))
+        self.assertTrue(any("pickle" in b for b in spec["portability"]["blockers"]))
 
     def test_locator_needs_hover_reproduced(self):
         from mpynode.native.spec import mpn_spec_adapter as adapter

@@ -308,7 +308,7 @@ class NDAddAttrDialog(QDialog):
         if attr_type == "time":
             # time has its own subframe with auto-connect option.
             return self._make_time_subframe()
-        # double3 / matrix / string / euler / position / python /
+        # double3 / matrix / string / euler / position / pickle /
         # mesh / nurbsCurve / nurbsSurface — blank
         w      = QWidget(self)
         layout = QVBoxLayout(w)

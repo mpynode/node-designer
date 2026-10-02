@@ -1,5 +1,5 @@
 """Trust manager for the (arbitrary-object) PICKLE fallback in stored-var /
-python-attr decoding.
+pickle-attr decoding.
 
 Why this exists: ``pickle.loads`` on attacker-controlled ``.ma`` data is remote
 code execution on open/import. We keep pickle (so users can store ANY

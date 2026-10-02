@@ -4,7 +4,7 @@ Functions here build / read / write Maya plugs via ``maya.api.OpenMaya``.
 Used by the API 2.0 plugin node modules (``_api2/_mpy_node.py``,
 ``_api2/mpy_locator.py``, ``_api2/mpy_constraint.py``, etc.).
 
-adds python (pickle+base64 over string) + mesh + nurbsCurve
+adds pickle (pickle+base64 over string) + mesh + nurbsCurve
 + nurbsSurface support to read_plug_value / write_plug_value.
 """
 
@@ -18,9 +18,10 @@ import maya.api.OpenMaya as om
 import numpy as np
 
 from mpynode._common.attr_types import BY_NAME as _ATTR_TYPES_BY_NAME
-from mpynode._common.attr_types import unknown_type_message
+from mpynode._common.attr_types import (canonical, stored_name,
+                                       unknown_type_message)
 
-# Maya-free; imported at module top so the python-attr read hot path consults
+# Maya-free; imported at module top so the pickle-attr read hot path consults
 # pickle-trust with a plain global read (no per-compute import cost).
 from mpynode._common.io import trust
 
@@ -278,6 +279,8 @@ def make_dynamic_user_attr(long_name: str, attr_type: str, is_array: bool = Fals
     ``cmds.addAttr`` or ``MFnDependencyNode.addAttribute`` per-instance.
     """
     short = long_name  # users get the same short name; can be customized later
+    # An alias makes the same plug as its stored name.
+    attr_type = canonical(attr_type)
 
     if packed:
         kind = _PACKED_DATA_KIND.get(attr_type)
@@ -371,7 +374,7 @@ def _geom_data_mobject(plug, data_block, kind):
 
 
 def decode_python_string(raw: str) -> Any:
-    """Decode a ``python`` attr's ``base64(pickle(obj))`` bus string into its
+    """Decode a ``pickle`` attr's ``base64(pickle(obj))`` bus string into its
     live Python object. Canonical decoder shared by the compute read path
     (:func:`read_plug_value`) and UI code (the Watch tab).
 
@@ -391,7 +394,7 @@ def decode_python_string(raw: str) -> Any:
         return pickle.loads(base64.b64decode(raw.encode("ascii")))
     except Exception:
         raise ValueError(
-            "failed to decode python attr payload; "
+            "failed to decode pickle attr payload; "
             "payload is not valid pickle+base64"
         )
 
@@ -485,13 +488,13 @@ def read_plug_value(plug: om.MPlug, attr_type: str, data_block=None) -> Any:
         except Exception:
             # Fall back to asDouble if MTime API is missing.
             return plug.asDouble()
-    # python is a base64+pickle node-to-node data BUS. ``pickle.loads`` on
+    # pickle is a base64+pickle node-to-node data BUS. ``pickle.loads`` on
     # attacker-controlled .ma data is RCE, so it is gated on the per-scene trust
     # resolved once at open/import (same boundary as stored vars). "Connected"
     # is NOT special-cased: an attacker .ma can wire a plain string source
     # carrying the malicious literal into this input, so ``isDestination`` is no
     # proof of a safe runtime value. Untrusted scene -> refuse pickle outright.
-    if attr_type == "python":
+    if attr_type == "pickle":
         # ``decode_python_string`` is the single source of truth for the
         # RCE-critical decode (trust gate + base64/pickle + corrupt payloads).
         return decode_python_string(plug.asString() or "")
@@ -560,7 +563,12 @@ def read_plug_value(plug: om.MPlug, attr_type: str, data_block=None) -> Any:
         return MatrixView(out)
     if attr_type == "string":
         return plug.asString()
-    raise ValueError(unknown_type_message(attr_type))
+    # Every stored name is handled above. An alias reads as its stored name;
+    # anything else raises (a retired name with its replacement).
+    stored = canonical(attr_type)
+    if stored == attr_type:
+        raise ValueError(unknown_type_message(attr_type))
+    return read_plug_value(plug, stored, data_block)
 
 
 def _geo_value_to_data(attr_type: str, value: Any):
@@ -709,8 +717,8 @@ def _write_value_to_handle(
         except Exception:
             # Older Maya: just write the raw double.
             handle.setDouble(float(value))
-    # python output -- pickle the value, store as base64 string.
-    elif attr_type == "python":
+    # pickle output -- pickle the value, store as base64 string.
+    elif attr_type == "pickle":
         if value is None:
             handle.setString("")
         else:
@@ -721,7 +729,7 @@ def _write_value_to_handle(
                     pickle.dumps(value, protocol=5)
                 ).decode("ascii")
             except Exception as exc:
-                raise ValueError(f"failed to pickle value for python attr: {exc}")
+                raise ValueError(f"failed to pickle value for pickle attr: {exc}")
             handle.setString(payload)
     # hex output -- encode a plain ``str`` to the space-separated UTF-8
     # hex string Maya's ``type`` node expects on ``textInput`` ("Hi" -> "48 69").
@@ -762,7 +770,13 @@ def _write_value_to_handle(
     elif attr_type == "string":
         handle.setString(str(value))
     else:
-        raise ValueError(unknown_type_message(attr_type))
+        # Every stored name is handled above. An alias writes as its stored
+        # name; anything else raises (a retired name with its replacement).
+        stored = canonical(attr_type)
+        if stored == attr_type:
+            raise ValueError(unknown_type_message(attr_type))
+        _write_value_to_handle(handle, stored, value, child_attrs=child_attrs,
+                               typed_matrix=typed_matrix)
 
 
 def write_plug_value(
@@ -774,8 +788,11 @@ def write_plug_value(
     parent plug silently no-ops (Maya's ``data_block.outputValue`` on a
     multi parent doesn't write anything).
     """
-    handle = data_block.outputValue(plug)
-    kind   = _handle_write_kind(plug.attribute(), attr_type)
+    # An alias writes as its stored name: _handle_write_kind picks the write
+    # call by it. Any other name is left for _write_value_to_handle to judge.
+    attr_type = stored_name(attr_type)
+    handle    = data_block.outputValue(plug)
+    kind      = _handle_write_kind(plug.attribute(), attr_type)
     _write_value_to_handle(handle, attr_type, value, **kind)
     handle.setClean()
 
@@ -894,7 +911,7 @@ def write_multi_plug_value(
 
     Type contract for ``values``:
       * scalar types (float / double / long / bool / string / doubleAngle /
-        doubleLinear / enum / time / python) \u2014 1D iterable of scalars,
+        doubleLinear / enum / time / pickle) \u2014 1D iterable of scalars,
         e.g. ``[1.0, 2.0, 3.0]`` or ``np.array([1.0, 2.0, 3.0])``
       * double3 / euler / position \u2014 iterable of 3-element vectors, e.g.
         ``[[1,2,3], np.array([4,5,6])]``
@@ -904,6 +921,10 @@ def write_multi_plug_value(
         (``Mesh`` / ``NurbsCurve`` / ``NurbsSurface`` wrappers, duck-typed
         buckets, or finished ``MFn*Data`` MObjects)
     """
+    # An alias writes as its stored name: _handle_write_kind picks the write
+    # call by it. Any other name is left for _write_value_to_handle to judge.
+    attr_type = stored_name(attr_type)
+
     # Tolerate None / non-iterable -- skip with empty list.
     try:
         seq = list(values) if values is not None else []
@@ -942,7 +963,7 @@ def array_gap_default(attr_obj, attr_type: str):
     [0,0,0,1], double3/euler/position/color -> zeros(3), numeric -> the
     attribute's ``defaultValue`` (``addAttr dv=..``; radians / centimetres for
     the unit types), string -> "", and
-    python / mesh / nurbsCurve / nurbsSurface -> None (gap-fill ill-defined)."""
+    pickle / mesh / nurbsCurve / nurbsSurface -> None (gap-fill ill-defined)."""
     if attr_type == "matrix":
         return [[1.0 if r == c else 0.0 for c in range(4)] for r in range(4)]
     if attr_type == "quaternion":
@@ -1090,7 +1111,7 @@ def read_user_inputs_dict(
       * MULTI matrix input: ``MatrixArrayView`` (numpy-transparent:
         ``np.asarray(M)`` -> (n,4,4); ``M[i]`` -> single view;
         ``M.translation()`` -> (n,3))
-      * MULTI python / mesh / nurbsCurve / nurbsSurface input: ``list``
+      * MULTI pickle / mesh / nurbsCurve / nurbsSurface input: ``list``
         (heterogeneous types, can't stack)
 
     Numerical compound multis (double3 / euler / position / matrix)
@@ -1112,6 +1133,10 @@ def read_user_inputs_dict(
         except RuntimeError:
             # plug doesn't exist on this instance (yet); skip
             continue
+        # An alias reads as its stored name: the array branches below pick
+        # their container by it. Any other name is left for read_plug_value
+        # to judge.
+        attr_type = stored_name(attr_type)
         if not is_array:
             out[name] = read_plug_value(plug, attr_type, data_block=data_block)
             # EM-safe geometry DATA capture: stash the raw data MObject so
@@ -1236,7 +1261,7 @@ def read_user_inputs_dict(
                 np.asarray(values, dtype=bool) if values else np.zeros(0, dtype=bool)
             )
         else:
-            # string / python / mesh / nurbsCurve / nurbsSurface stay
+            # string / pickle / mesh / nurbsCurve / nurbsSurface stay
             # as Python list (heterogeneous / non-stackable).
             out[name] = values
     return out
@@ -1300,7 +1325,7 @@ def _read_handle_value(handle, attr_type, attr_obj=None):
             return int(handle.asShort())
         if attr_type == "bool":
             return bool(handle.asBool())
-        if attr_type in ("string", "hex", "python"):
+        if attr_type in ("string", "hex", "pickle"):
             return handle.asString()
         if attr_type in ("double3", "euler", "position"):
             # double3 numeric compound (euler XYZ children are doubleAngle,
@@ -1417,7 +1442,7 @@ def _cast_datablock_multi(values, attr_type):
         )
     if attr_type == "bool":
         return np.asarray(values, dtype=bool) if values else np.zeros(0, dtype=bool)
-    # string / python / mesh / nurbsCurve / nurbsSurface stay a Python list.
+    # string / pickle / mesh / nurbsCurve / nurbsSurface stay a Python list.
     return values
 
 
@@ -1462,11 +1487,12 @@ def read_user_inputs_dict_from_datablock(
         if attr_obj.isNull():
             continue
         # The handle reads below return None for a name they don't know, and
-        # None means "skip", so a retired name would silently vanish from
-        # ``self``. Raise read_plug_value's error instead.
+        # None means "skip", so an unknown name would silently vanish from
+        # ``self``. An alias reads as its stored name; anything else raises
+        # read_plug_value's error.
         if (not isinstance(attr_type, str)
                 or attr_type not in _ATTR_TYPES_BY_NAME):
-            raise ValueError(unknown_type_message(attr_type))
+            attr_type = canonical(attr_type)
 
         if not is_array:
             try:

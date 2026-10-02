@@ -586,9 +586,10 @@ class TestUnitWrappedPlugReads(unittest.TestCase):
 
 
 class TestRenamedTypes(unittest.TestCase):
-    """v1 wrote the old v2 type names. Three have since been renamed (int ->
-    long, vector -> double3, angle -> doubleAngle) and v2 rejects the old ones,
-    so the conversion maps them (``attr_types.RETIRED``)."""
+    """v1 wrote the old v2 type names. Three are aliases today (int -> long,
+    vector -> double3, angle -> doubleAngle) and python is retired (-> pickle),
+    so the conversion maps them to the stored names
+    (``attr_types.upgrade_legacy_name``)."""
 
     def test_convert_reports_the_new_names(self):
         n            = V.V1Node("n")
@@ -616,6 +617,7 @@ class TestRenamedTypes(unittest.TestCase):
         self.assertEqual(upgrade_legacy_name("int"),    "long")
         self.assertEqual(upgrade_legacy_name("vector"), "double3")
         self.assertEqual(upgrade_legacy_name("angle"),  "doubleAngle")
+        self.assertEqual(upgrade_legacy_name("python"), "pickle")
         self.assertEqual(upgrade_legacy_name("float"),  "float")
         self.assertEqual(upgrade_legacy_name("euler"),  "euler")
         self.assertIsNone(upgrade_legacy_name(None))

@@ -859,8 +859,9 @@ def _api_object_use(src):
 def _upgrade_types(table):
     """``{name: v1 type}`` -> ``{name: today's type}``.
 
-    v1 wrote the old v2 names; ``int``, ``vector`` and ``angle`` have since
-    been renamed, and v2 rejects the old ones (``attr_types.RETIRED``).
+    v1 wrote the old v2 names; ``int``, ``vector`` and ``angle`` are aliases
+    today and ``python`` is retired, so each maps to its stored name
+    (``attr_types.upgrade_legacy_name``).
     """
     return {k: upgrade_legacy_name(v) for k, v in table.items()}
 

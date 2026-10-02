@@ -28,6 +28,8 @@ import zlib
 from collections import OrderedDict
 from typing import Any
 
+from mpynode._common.attr_types import ALIASES as _ATTR_ALIASES
+from mpynode._common.attr_types import RETIRED as _ATTR_RETIRED
 from mpynode._common.io import trust, value_codec
 
 
@@ -48,7 +50,17 @@ def encode_attr_map(data: dict[str, dict[str, Any]]) -> str:
 
 
 def decode_attr_map(plug_value: str) -> dict[str, dict[str, Any]]:
-    """Parse a JSON attr-map string. Returns ``{}`` for empty/None."""
+    """Parse a JSON attr-map string. Returns ``{}`` for empty/None.
+
+    An ``attr_type`` that is an alias (``attr_types.ALIASES``) comes back as
+    its stored name, so a scene saved before 2026-10-01 -- whose maps carry
+    ``int`` / ``vector`` / ``angle`` -- reads like a new one, and every reader
+    of the map sees one vocabulary. A retired stored name
+    (``attr_types.RETIRED``: ``python``, now ``pickle``) is translated too,
+    but only here: a scene is data already written, so its node keeps
+    computing, while new code and ``.mpn`` files that name it are rejected.
+    Any other name is returned as stored.
+    """
     if not plug_value or plug_value == "None":
         return {}
     try:
@@ -71,6 +83,11 @@ def decode_attr_map(plug_value: str) -> dict[str, dict[str, Any]]:
             raise InvalidAttrMapError(
                 f"attr map entry {name!r} missing required key 'attr_type'"
             )
+        attr_type = entry["attr_type"]
+        if isinstance(attr_type, str):
+            stored = _ATTR_ALIASES.get(attr_type) or _ATTR_RETIRED.get(attr_type)
+            if stored:
+                entry["attr_type"] = stored
     return parsed
 
 

@@ -5,7 +5,7 @@ the codegen + AI porter consume to emit an MPxNode plugin. Captures the typed
 attributes (with limits/defaults/enum names), the Compute + Init expressions,
 stored variables (summarized, with a "bake" hint for large data), the target
 MPx base class, and a PORTABILITY assessment -- what can be auto-ported to C++
-versus what blocks it (arbitrary-Python libs, scene access, python-typed
+versus what blocks it (arbitrary-Python libs, scene access, pickle-typed
 attrs).
 
 Maya is imported lazily inside ``extract_spec`` so the pure helpers (type
@@ -92,7 +92,7 @@ _NORM_TYPE = {
     "nurbsCurve":   {"cat": "geo", "fn": "MFnTypedAttribute", "data": "kNurbsCurve", "cpp": "MObject", "read": "asNurbsCurve", "portable": True},
     "nurbsSurface": {"cat": "geo", "fn": "MFnTypedAttribute", "data": "kNurbsSurface", "cpp": "MObject", "read": "asNurbsSurface", "portable": True},
     # Arbitrary pickled Python -- no native representation.
-    "python": {"cat": "python", "fn": None, "data": None, "cpp": None, "read": None, "portable": False},
+    "pickle": {"cat": "pickle", "fn": None, "data": None, "cpp": None, "read": None, "portable": False},
 }
 
 # Libraries with no DETERMINISTIC C++ lowering (network, dataframes, ML, plotting).
@@ -296,8 +296,15 @@ def map_mpx_base(mpy_type: str) -> dict:
 
 
 def normalize_attr(meta: dict) -> dict:
-    """Augment a raw attr meta dict with normalized C++ codegen hints."""
-    attr_type = meta.get("attr_type", "")
+    """Augment a raw attr meta dict with normalized C++ codegen hints.
+
+    An alias ``attr_type`` (``attr_types.ALIASES``, e.g. an ``.mpn`` written
+    with the dropdown's names) becomes its stored name, so the spec -- and
+    the port-cache key and C++ built from it -- only ever carries stored
+    names."""
+    from mpynode._common import attr_types
+
+    attr_type = attr_types.stored_name(meta.get("attr_type", ""))
     norm      = _NORM_TYPE.get(attr_type)
     portable  = bool(norm["portable"]) if norm else False
     out = {
@@ -320,8 +327,6 @@ def normalize_attr(meta: dict) -> dict:
         if k in meta:
             out[k] = meta[k]
     if norm is None:
-        from mpynode._common import attr_types
-
         if isinstance(attr_type, str) and attr_type in attr_types.RETIRED:
             out["note"] = attr_types.unknown_type_message(attr_type)
         else:
@@ -486,11 +491,13 @@ def assess_portability(compute: str, init: str, inputs: dict, outputs: dict,
         the input gate to the output.
 
     ``blockers`` -- "the node's declared SHAPE has no C++ representation".
-        Only ``python`` / ``message`` attrs qualify: the attr table gives them
+        Only ``pickle`` / ``message`` attrs qualify: the attr table gives them
         no MFnAttribute, no data kind and no cpp type, so there is nothing for
-        anyone -- deterministic or AI -- to emit. ``portable`` is ``not
-        blockers``. (spec_model._check rejects these independently and FIRST, so
-        this is the message, not the only guard.)
+        anyone -- deterministic or AI -- to emit. A retired name (``python``,
+        in an ``.mpn`` saved before the rename) blocks too, with the rename
+        hint. ``portable`` is ``not blockers``. (spec_model._check rejects
+        these independently and FIRST, so this is the message, not the only
+        guard.)
 
     ``allow_file_read`` (set by extract_spec for texture/file nodes, e.g.
     mPyFile) sanctions an in-compute image-FILE READ: it becomes a warning +
@@ -704,21 +711,31 @@ def assess_portability(compute: str, init: str, inputs: dict, outputs: dict,
             "so it is unreliable interpreted and impossible compiled. Decode "
             "names into numeric tables in MPyBlendShape.rebuild() instead")
 
-    # python + message are the ONLY intentionally-excluded attr types (every other
+    # pickle + message are the ONLY intentionally-excluded attr types (every other
     # type compiles to deterministic pure C++), and THE ONLY remaining blockers.
     # A different kind of "no" from everything above: not "no port written yet"
     # (that is `unported`, which the AI porter takes on) but "no C++ representation
     # exists" -- the attr table gives both fn=None, data=None, cpp=None. Demoting
     # them would not even reach the porter: spec_model._check rejects them FIRST,
     # before it consults `portable` at all.
+    # The maps are RAW (an .mpn's own, untranslated): an alias is judged as its
+    # stored name, and a retired name (python) blocks with the rename hint that
+    # spec_model._check would raise later.
+    from mpynode._common import attr_types
+
     for label, amap in (("input", inputs), ("output", outputs)):
         for name, meta in (amap or {}).items():
-            if meta.get("attr_type") == "python":
-                blockers.append("%s %r is type 'python' (no native type)" % (label, name))
-            elif meta.get("attr_type") == "message":
+            attr_type = attr_types.stored_name(meta.get("attr_type"))
+            if attr_type == "pickle":
+                blockers.append("%s %r is type 'pickle' (no native type)" % (label, name))
+            elif attr_type == "message":
                 blockers.append("%s %r is type 'message' (no data payload to "
                                 "compile; message is a pure connection marker)"
                                 % (label, name))
+            elif (isinstance(attr_type, str)
+                  and attr_type in attr_types.RETIRED):
+                blockers.append("%s %r: %s" % (
+                    label, name, attr_types.unknown_type_message(attr_type)))
 
     # 3) Portable-math libraries: warning + a pointer to the translation guide.
     _LIB_GUIDANCE = {

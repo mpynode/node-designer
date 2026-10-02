@@ -796,7 +796,7 @@ def _setUpModule__watch_python_decode():
 
 
 def _encode(obj) -> str:
-    """Mirror the wire format read_plug_value writes/reads for python attrs."""
+    """Mirror the wire format read_plug_value writes/reads for pickle attrs."""
     return base64.b64encode(pickle.dumps(obj)).decode("ascii")
 
 
@@ -851,46 +851,46 @@ class TestWatchDecodeIOValue(unittest.TestCase):
 
         trust.reset_for_new_scene()
 
-    def test_non_python_passthrough(self):
+    def test_non_pickle_passthrough(self):
         from mpynode.ui.widgets.watch import decode_io_value
 
         self.assertEqual(decode_io_value(0.5, "float"), 0.5)
         self.assertEqual(decode_io_value("[1.0, 2.0]", "string"), "[1.0, 2.0]")
 
-    def test_python_dict_decoded_with_real_type(self):
+    def test_pickle_dict_decoded_with_real_type(self):
         from mpynode.ui.widgets.watch import decode_io_value, _format_type
 
         raw     = _encode({"x": 1, "y": 2})
-        decoded = decode_io_value(raw, "python")
+        decoded = decode_io_value(raw, "pickle")
         self.assertEqual(decoded, {"x": 1, "y": 2})
         self.assertEqual(_format_type(decoded), "dict")
 
-    def test_python_numpy_decoded_with_real_type(self):
+    def test_pickle_numpy_decoded_with_real_type(self):
         from mpynode.ui.widgets.watch import decode_io_value, _format_type
 
         arr     = np.arange(6, dtype=float).reshape(2, 3)
-        decoded = decode_io_value(_encode(arr), "python")
+        decoded = decode_io_value(_encode(arr), "pickle")
         self.assertIsInstance(decoded, np.ndarray)
         np.testing.assert_array_equal(decoded, arr)
         # The type label now carries the element dtype (int64 vs float64 vs
         # float32 is the whole point of the column for numpy arrays).
         self.assertEqual(_format_type(decoded), "numpy.ndarray[float64]")
 
-    def test_python_corrupt_falls_back_to_raw_string(self):
+    def test_pickle_corrupt_falls_back_to_raw_string(self):
         """A corrupt payload must NOT raise on the live poll -- show the
         raw string instead."""
         from mpynode.ui.widgets.watch import decode_io_value
 
         raw = "garbage-not-pickle"
-        self.assertEqual(decode_io_value(raw, "python"), raw)
+        self.assertEqual(decode_io_value(raw, "pickle"), raw)
 
-    def test_python_untrusted_shows_raw_string(self):
+    def test_pickle_untrusted_shows_raw_string(self):
         from mpynode.ui.widgets.watch import decode_io_value
         from mpynode._common.io import trust
 
         trust.note_file_opened(False)
         raw = _encode({"x": 1})
-        self.assertEqual(decode_io_value(raw, "python"), raw)
+        self.assertEqual(decode_io_value(raw, "pickle"), raw)
 
 
 class TestWatchDecodeCache(unittest.TestCase):
@@ -916,8 +916,8 @@ class TestWatchDecodeCache(unittest.TestCase):
         try:
             cache: dict = {}
             raw = _encode({"a": 1})
-            v1  = W.decode_io_value_cached(cache, "python", raw, "python")
-            v2  = W.decode_io_value_cached(cache, "python", raw, "python")
+            v1  = W.decode_io_value_cached(cache, "pickle", raw, "pickle")
+            v2  = W.decode_io_value_cached(cache, "pickle", raw, "pickle")
             self.assertEqual(v1, {"a": 1})
             self.assertEqual(v2, {"a": 1})
             self.assertEqual(calls["n"], 1, "unchanged blob should decode once")
@@ -928,17 +928,17 @@ class TestWatchDecodeCache(unittest.TestCase):
         from mpynode.ui.widgets.watch import decode_io_value_cached
 
         cache: dict = {}
-        a = decode_io_value_cached(cache, "python", _encode({"v": 1}), "python")
-        b = decode_io_value_cached(cache, "python", _encode({"v": 2}), "python")
+        a = decode_io_value_cached(cache, "pickle", _encode({"v": 1}), "pickle")
+        b = decode_io_value_cached(cache, "pickle", _encode({"v": 2}), "pickle")
         self.assertEqual(a, {"v": 1})
         self.assertEqual(b, {"v": 2})
         # Only the latest blob per attr is retained.
         self.assertEqual(len(cache), 1)
-        self.assertEqual(cache["python"][1], {"v": 2})
+        self.assertEqual(cache["pickle"][1], {"v": 2})
 
 
 class TestEndToEndRealNode(unittest.TestCase):
-    """Lock the wire-format contract: what a real mPyNode WRITES to a python
+    """Lock the wire-format contract: what a real mPyNode WRITES to a pickle
     output plug must be exactly what the Watch reader decodes back."""
 
     @classmethod
@@ -948,7 +948,7 @@ class TestEndToEndRealNode(unittest.TestCase):
         if not mc.pluginInfo("mpynode_api2", q=True, loaded=True):
             mc.loadPlugin("mpynode_api2")
 
-    def test_node_python_output_roundtrips_through_decode_io_value(self):
+    def test_node_pickle_output_roundtrips_through_decode_io_value(self):
         import maya.cmds as mc
 
         from mpynode._common.io import trust
@@ -959,7 +959,7 @@ class TestEndToEndRealNode(unittest.TestCase):
         trust.reset_for_new_scene()  # authored scene -> trusted
 
         node = MPyNode.create(name="pyEmitter")
-        node.add_output_attr("cfg", "python")
+        node.add_output_attr("cfg", "pickle")
         node.set_compute_expression(
             "import numpy as _np\n"
             "self.cfg = {'name': 'demo', 'pts': _np.arange(6).reshape(2, 3)}\n"
@@ -969,7 +969,7 @@ class TestEndToEndRealNode(unittest.TestCase):
         raw = mc.getAttr(node.get_name() + ".cfg")
         self.assertIsInstance(raw, str)
 
-        decoded = decode_io_value(raw, "python")
+        decoded = decode_io_value(raw, "pickle")
         self.assertEqual(_format_type(decoded), "dict")
         self.assertEqual(decoded["name"], "demo")
         np.testing.assert_array_equal(

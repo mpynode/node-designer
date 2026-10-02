@@ -809,6 +809,11 @@ class MPyNode(InitSourceMixin, MethodsSourceMixin, MetadataMixin,
         ``_inputAttrs`` JSON so the bridge knows which plugs to read
         when the expression executes.
 
+        ``attr_type`` is a stored name or an alias (``int``, ``vector``,
+        ``float64`` ...; ``attr_types.ALIASES``). An alias makes the same plug
+        as its stored name, and the stored name is what ``_inputAttrs``
+        records and ``get_input_attr_map`` reports.
+
         ``enum_names`` is required for ``attr_type='enum'``; ignored
         otherwise. Falls back to ``['False', 'True']`` if omitted.
 
@@ -851,8 +856,10 @@ class MPyNode(InitSourceMixin, MethodsSourceMixin, MetadataMixin,
         Pass False to add the time plug bare.
         """
         _validate_attr_name(name, type(self).NATIVE_TYPE)
-        if attr_type not in _ADD_ATTR_KIND:
-            raise ValueError(_attr_types.unknown_type_message(attr_type))
+        # An alias (int, vector, float64 ...) becomes its stored name here, so
+        # the plug and the _inputAttrs map only ever see the stored name; an
+        # unknown or retired name raises.
+        attr_type = _attr_types.canonical(attr_type)
         if packed:
             _validate_packed(name, attr_type, is_array, sparse)
 
@@ -1081,8 +1088,8 @@ class MPyNode(InitSourceMixin, MethodsSourceMixin, MetadataMixin,
         default_value                  = None,
     ) -> None:
         _validate_attr_name(name, type(self).NATIVE_TYPE)
-        if attr_type not in _ADD_ATTR_KIND:
-            raise ValueError(_attr_types.unknown_type_message(attr_type))
+        # Alias -> stored name, as in add_input_attr.
+        attr_type = _attr_types.canonical(attr_type)
 
         kwargs              = dict(_ADD_ATTR_KIND[attr_type])
         kwargs["longName"]  = name

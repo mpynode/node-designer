@@ -44,6 +44,7 @@ import keyword
 import re
 from typing import Any
 
+from mpynode._common import attr_types as _attr_types
 from mpynode._common.lifecycle import metadata_registry as md
 
 
@@ -608,8 +609,10 @@ _NUMERIC_LIMIT_KEYS = ("min_value", "max_value", "default_value")
 
 
 def _attr_call(method: str, attr_name: str, meta: dict) -> str:
-    """One ``node.add_input_attr(...)`` / ``add_output_attr(...)`` line."""
-    parts = [repr(attr_name), repr(meta.get("attr_type", "double"))]
+    """One ``node.add_input_attr(...)`` / ``add_output_attr(...)`` line. The
+    type is written as its stored name, even for a map carrying an alias."""
+    attr_type = _attr_types.stored_name(meta.get("attr_type", "double"))
+    parts     = [repr(attr_name), repr(attr_type)]
     if meta.get("is_array"):
         parts.append("is_array=True")
         # sparse is INPUT-array-only (default False = dense), so emit only the

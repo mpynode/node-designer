@@ -40,7 +40,7 @@ _GEO_INPUT_ONLY = {"mesh", "nurbsCurve", "nurbsSurface"}
 # _elem_set_stmt / _array_gap_default_cpp). string/hex are MString vectors (hex
 # round-trips decoded<->encoded per element); color is an MFloatVector (rgb)
 # vector; quaternion is an MQuaternion vector (asDouble4 / set4Double).
-# Geometry and python remain non-array.
+# Geometry and pickle remain non-array.
 _ARRAY_OK = {"float", "double", "long", "bool", "double3", "euler", "matrix",
              "doubleAngle", "time", "enum", "string", "hex", "color", "quaternion",
              "float2", "doubleLinear", "position"}
@@ -154,13 +154,13 @@ def _geo_kind(spec):
 
 def _check(spec):
     base = spec.get("suggested", {}).get("mpx_base")
-    # python + message are the ONLY two intentionally-excluded attr types. Reject
+    # pickle + message are the ONLY two intentionally-excluded attr types. Reject
     # them here -- BEFORE any family-specific branch -- so the reject is uniform
     # across every node family AND authoritative even for a synthetic/external spec
     # that bypassed the extractor's portability blocker. EVERY other attr type
     # compiles to deterministic pure C++ (this is the whole-directive contract).
     _EXCLUDED = {
-        "python": "python carries pickled/base64 data with no native C++ "
+        "pickle": "pickle carries pickled/base64 data with no native C++ "
                   "representation",
         "message": "message carries no data payload -- it is a pure connection "
                    "marker with nothing to compute",
@@ -168,13 +168,20 @@ def _check(spec):
     for kind in ("inputs", "outputs"):
         for plug, meta in (spec.get(kind) or {}).items():
             t = meta.get("type")
+            # A spec built by normalize_attr carries stored names. A hand-built
+            # one may carry an alias (int, vector ...): it is translated in
+            # place so every check below, and the C++, see the stored name.
+            stored = attr_types.stored_name(t)
+            if stored != t:
+                meta["type"] = t = stored
             if t in _EXCLUDED:
                 raise UnsupportedSpec(
                     "attr %r type %r is the only kind of attr excluded from "
                     "compilation: %s. Every other attr type compiles."
                     % (plug, t, _EXCLUDED[t]))
-            # A retired name (an .mpn saved before the renames) gets the
-            # rename hint, not a bare "unsupported" from a family branch.
+            # A retired name (python, in an .mpn saved before the rename)
+            # gets the rename hint, not a bare "unsupported" from a family
+            # branch.
             if isinstance(t, str) and t in attr_types.RETIRED:
                 raise UnsupportedSpec(
                     "attr %r: %s" % (plug, attr_types.unknown_type_message(t)))
@@ -200,7 +207,7 @@ def _check(spec):
             # array into std::vector<Nd<Kind>> via emit_geo_io.geo_array_input_lines
             # (emit_geo uses the same machinery as the generic MPxNode). Every
             # _ARRAY_OK element type + geo (_GEO_INPUT_ONLY) is representable; any
-            # other array element (python) fails LOUD here instead of emitting a
+            # other array element (pickle) fails LOUD here instead of emitting a
             # silently-wrong scalar read.
             if (meta.get("is_array") and t not in _ARRAY_OK
                     and t not in _GEO_INPUT_ONLY):

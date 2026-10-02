@@ -1044,13 +1044,13 @@ def _drive_input(cmds, nodes, attr, t, v):
 # _wire_geo_input rather than being duplicated into the harness.
 #
 # EVERY supported input and output type is driven/pulled, single AND array. Only
-# `python` and `message` are out of scope (no scene-side value).
+# `pickle` and `message` are out of scope (no scene-side value).
 # =====================================================================
 
-# No driveable scene value: a python attr is a live object, a message plug a pure
+# No driveable scene value: a pickle attr is a live object, a message plug a pure
 # connection. Everything else -- including string/hex, which PARITY leaves alone
 # -- is seeded here.
-_BENCH_SKIP_TYPES = frozenset(("python", "message"))
+_BENCH_SKIP_TYPES = frozenset(("pickle", "message"))
 
 
 def _bench_string_value(t, attr):
@@ -1512,7 +1512,7 @@ def bench_pull_plugs(spec):
 
     ALL of them: pulling only one output lets the DG leave the others clean, so
     a node that writes three arrays would be timed doing a third of its work.
-    ``python``/``message`` outputs are excluded (nothing to pull).
+    ``pickle``/``message`` outputs are excluded (nothing to pull).
 
     Declared outputs are UNIONed with the family's native output rather than
     used as a fallback: a deformer that also declares a scalar output still does

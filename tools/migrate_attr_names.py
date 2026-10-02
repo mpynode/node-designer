@@ -1,9 +1,10 @@
-"""Rename the retired attr_type names in the repo's data files.
+"""Translate every attr_type name in the repo's data files to its stored name.
 
-    int -> long      vector -> double3      angle -> doubleAngle
-
-The code no longer accepts the old names (``scripts/mpynode/_common/
-attr_types.py`` ``RETIRED``), so every stored copy moves with it:
+Each type has one stored name (``scripts/mpynode/_common/attr_types.py``). A
+name that is not stored -- an alias (``attr_types.ALIASES``: ``int`` ->
+``long``, ``vector`` -> ``double3``, ``angle`` -> ``doubleAngle``,
+``float64`` -> ``double`` ...) or a retired name (``attr_types.RETIRED``:
+``python`` -> ``pickle``) -- is rewritten to the stored name in:
 
   * ``templates/*/*/template.mpn``: ``input_attrs`` / ``output_attrs``
     ``attr_type``;
@@ -14,7 +15,11 @@ attr_types.py`` ``RETIRED``), so every stored copy moves with it:
   * ``tests/data/mpyfile_spec_golden.json`` and
     ``tools/parity_sweep/fixtures/*/spec.json``: ``inputs|outputs[].type``;
   * every generated ``verify_in_maya.py``: the embedded spec data and the
-    generated-code literals (``if t == "int"``, ``t in ("vector", "euler")``).
+    generated-code literals (``if t == "int"``, ``t in ("vector", "euler")``)
+    -- old stored names only (``int``, ``vector``, ``angle``, ``python``).
+
+The map is the table's own (``ALIASES`` + ``RETIRED``), read from
+``attr_types.py`` by path, so the tool follows the table.
 
 Every other byte is preserved. Each rewrite is a token replacement, and each
 file is then re-parsed and checked: the only change allowed is the type value
@@ -36,6 +41,7 @@ from __future__ import annotations
 import argparse
 import ast
 import collections
+import importlib.util
 import io
 import json
 import os
@@ -46,10 +52,36 @@ import tokenize
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-# The three renames. ``attr_types.RETIRED`` also lists ``double4`` and
-# ``float3``, which were never stored names, so they have no data to move.
-RENAME = {"int": "long", "vector": "double3", "angle": "doubleAngle"}
-_OLD   = "|".join(RENAME)
+
+def _load_attr_types():
+    """``scripts/mpynode/_common/attr_types.py``, loaded by path: the module
+    imports nothing, but importing it through the ``mpynode._common`` package
+    needs Maya."""
+    path = os.path.join(ROOT, "scripts", "mpynode", "_common", "attr_types.py")
+    spec = importlib.util.spec_from_file_location("_migrate_attr_types", path)
+    mod  = importlib.util.module_from_spec(spec)
+    # dataclasses looks the defining module up in sys.modules.
+    sys.modules[spec.name] = mod
+    spec.loader.exec_module(mod)
+    return mod
+
+
+_ATTR_TYPES = _load_attr_types()
+
+# Non-stored name -> stored name: every alias and every retired name.
+RENAME = dict(_ATTR_TYPES.ALIASES)
+RENAME.update(_ATTR_TYPES.RETIRED)
+# Longest first, so no name matches as the prefix of a longer one.
+_OLD = "|".join(re.escape(n) for n in sorted(RENAME, key=len, reverse=True))
+
+# The names a generated verify script can hold as a bare code literal
+# (``if t == "int"``): the old stored names only, since the generator only
+# ever wrote stored names. Every other alias (``double4``, ``float3``, ``uv``,
+# ``distance`` ...) was never stored, so a bare one in a script means something
+# else -- a ``setAttr`` type, a uvSet -- and is left alone. The embedded spec
+# is still renamed by structure, with the full map.
+_CODE_NAMES = frozenset(("int", "vector", "angle")
+                        + tuple(_ATTR_TYPES.RETIRED))
 
 
 class MigrationError(Exception):
@@ -222,12 +254,28 @@ def _is_dict_key(toks, i):
             and nxt.string == ":")
 
 
+def _is_keyword_value(toks, i):
+    """``initialize(name="python")``: a keyword argument's value, not a
+    type."""
+    prev = []
+    j    = i - 1
+    while j >= 0 and len(prev) < 3:
+        if toks[j].type not in _SKIP:
+            prev.append(toks[j])
+        j -= 1
+    return (len(prev) == 3
+            and prev[0].type == tokenize.OP and prev[0].string == "="
+            and prev[1].type == tokenize.NAME
+            and prev[2].type == tokenize.OP and prev[2].string in ("(", ","))
+
+
 def migrate_verify_script(rel, text, counts):
-    """Generated parity script. A string token that IS an old name is renamed
-    unless it is a dict key (an attr name). The ``json.loads('<spec>')``
-    payload is renamed structurally and re-dumped the way the generator wrote
-    it (``repr(json.dumps(spec))``), after proving that round trip is
-    byte-identical."""
+    """Generated parity script. A string token that IS an old stored name
+    (:data:`_CODE_NAMES`) is renamed unless it is a dict key (an attr name) or
+    a keyword argument's value. The ``json.loads('<spec>')`` payload is
+    renamed structurally, with every alias, and re-dumped the way the
+    generator wrote it (``repr(json.dumps(spec))``), after proving that round
+    trip is byte-identical."""
     toks  = list(tokenize.generate_tokens(io.StringIO(text).readline))
     lines = text.split("\n")
     edits = []
@@ -242,8 +290,12 @@ def migrate_verify_script(rel, text, counts):
             continue
         new = None
         if val in RENAME:
+            if val not in _CODE_NAMES:
+                continue  # never stored, so not a type literal here
             if _is_dict_key(toks, i):
                 continue  # an attr name, not a type
+            if _is_keyword_value(toks, i):
+                continue  # e.g. initialize(name="python")
             counts[val] += 1
             new = tok.string[0] + RENAME[val] + tok.string[0]
         elif val.startswith("{") and '"inputs"' in val:
