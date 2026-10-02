@@ -13,7 +13,8 @@ Best-effort (strict=False): unportable nodes (Phase-0 honest-drops, unsupported
 attrs) drop out with a recorded reason; every portable node links into the one
 bundle.  verify=False -- per-node parity is already established by the per-template
 audit; here we prove they all CO-EXIST + LINK + register in a single plugin.
-Writes mega_results.json next to the bundle.
+The bundle lands in <out_dir>/<maya year>/ (the bundler decides; its path is
+recorded as bundle_path); mega_results.json goes in <out_dir>/build/.
 """
 import os, sys, json, time
 
@@ -261,7 +262,8 @@ def main():
         "companions": comps,
     }
     # The build report is an artifact, not something loaded -- keep it under
-    # build/ beside the manifest (top level holds only the bundle + companions).
+    # build/ beside the manifest (the top level holds only build/ and the
+    # bundle's version folder).
     build_dir = os.path.join(OUT_DIR, "build")
     os.makedirs(build_dir, exist_ok=True)
     with open(os.path.join(build_dir, "mega_results.json"), "w") as f:

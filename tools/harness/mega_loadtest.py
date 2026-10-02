@@ -4,7 +4,8 @@ Every @maya_command now compiles into the bundle as an MPxCommand, so a mega
 build must produce a single loadable artifact that, by itself, registers every
 node type AND every command:
 
-  1. exactly ONE plug-in artifact in the mega dir -- no sibling *_commands.py.
+  1. exactly ONE plug-in artifact in the mega dir's Maya-version folder
+     (<mega>/2025/) -- no sibling *_commands.py.
   2. loadPlugin the .bundle -> every node type registers under ONE plugin.
   3. createNode each registered node type (mixed bases: DG/deformer/locator/
      transform/iksolver) -> the C++ classes co-exist + instantiate.
@@ -123,7 +124,8 @@ def main():
     import maya.cmds as mc
     from mpynode.native.toolchain import toolchain
 
-    # Source/scripts/manifest live under build/; only the bundle sits on top.
+    # Source/scripts/manifest live under build/; the bundle is in its version
+    # folder (<mega>/2025/), not on top.
     manifest    = json.load(open(os.path.join(MEGA_DIR, "build", "manifest.json")))
     plugin_name = manifest.get("plugin_name") or "mPyMega"
     built       = [n for n in manifest.get("nodes", []) if n.get("type_id")]
@@ -134,9 +136,15 @@ def main():
     linked_types = {n.get("source_node") or n.get("type_name"): n["type_name"]
                     for n in built}
 
-    # .bundle on macOS, .mll on Windows, .so on Linux -- the host builds its own.
-    ext    = toolchain.plugin_ext()
-    bundle = os.path.join(MEGA_DIR, plugin_name + ext)
+    # .bundle on macOS, .mll on Windows, .so on Linux -- the host builds its own,
+    # into the folder named after the Maya this mayapy belongs to
+    # (<mega>/2025/mPyMega.mll).
+    ext     = toolchain.plugin_ext()
+    running = toolchain.running_maya_dir()
+    bundle  = toolchain.plugin_path_for(MEGA_DIR, plugin_name, running)
+    if bundle is None:
+        raise SystemExit(toolchain.maya_year_unknown_message(running))
+    plug_dir = os.path.dirname(bundle)
     L("=" * 74)
     L("MEGA LOAD TEST: %s" % bundle)
     L("=" * 74)
@@ -144,10 +152,10 @@ def main():
     problems = []
 
     # ---- 1. ONE artifact ---------------------------------------------------
-    arts = sorted(f for f in os.listdir(MEGA_DIR)
+    arts = sorted(f for f in os.listdir(plug_dir)
                   if f.endswith((".bundle", ".mll", ".so"))
-                  or f.endswith("_commands.py"))
-    L("artifacts in mega dir : %s" % arts)
+                  or f.endswith("_commands.py")) if os.path.isdir(plug_dir) else []
+    L("artifacts in %s : %s" % (os.path.basename(plug_dir), arts))
     if arts != [plugin_name + ext]:
         problems.append("expected exactly [%s%s], got %s"
                         % (plugin_name, ext, arts))

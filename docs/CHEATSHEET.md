@@ -374,6 +374,7 @@ res = porter.port_from_node("myNode", "out")   # one node -> one plug-in
 | 2 | `build/stages/<Type>/2_assisted.cpp` | only if a `PORT` region survived AND assist is on. Absent = it lowered deterministically. |
 | 3 | `build/stages/<Type>/3_optimized/NN_*.cpp` | opt-in optimizer, one file per round, rejects kept. |
 | ship | `build/source/<Type>.cpp` | what actually links. `build/manifest.json` is the receipt. `build/<Type>/` is per-node SCRATCH, swept on success. |
+| plug-in | `<year>/<plugin>.mll` | the binary, in a folder named after the Maya version it was built for (`out/2025/myPlugin.mll`; `.bundle` on macOS). Never a versioned file name -- Maya records the name in every scene. Several target versions: one `out/<year>/` each, plug-in beside that version's `build/`. |
 
 - `strict=True` aborts on a BLOCKED node; `strict=False` drops it and bundles the rest.
 - The compute is pure C++ on BOTH paths — there is no interpreter fallback.
@@ -400,7 +401,9 @@ tools/bundle.sh --refresh rigTools    # rebuild from the inputs its manifest lis
   store ids.
 - Each node's inlined runtime is wrapped in its own namespace, so nodes built
   at different times cannot silently share one copy of it.
-- The output has the All Templates Plugin layout: `<name>.mll`, `build/source/`,
+- The output has the All Templates Plugin layout: `<year>/<name>.mll` (the
+  folder is the target Maya's version, e.g. `2025/`; the file name never
+  carries it), `build/source/`,
   `build/build.bat` + `build.sh` (a compiler and Maya, nothing else), and
   `build/manifest.json` whose `bundled_from` is the saved selection.
 - The result is test-loaded in the target Maya's own mayapy. At load, a member

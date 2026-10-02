@@ -493,7 +493,7 @@ def index_report_text(out_dir, plugin_name, rows):
         L.append("")
     L += ["## Layout", "",
           "```",
-          "<Plugin>.bundle              the plug-in you load",
+          "<year>/<Plugin>.bundle       the plug-in you load (folder = Maya version)",
           "build/source/                the C++ that was compiled -- and only that",
           "build/stages/<Type>/         how it got there (kept; never swept)",
           "  1_transpiled.cpp             deterministic, no AI",

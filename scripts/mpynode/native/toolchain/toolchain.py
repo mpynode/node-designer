@@ -479,7 +479,7 @@ def qt_resolver_bat(_os_name: Optional[str] = None) -> List[str]:
 
 def link_via_temp_bat(plugin_name: str, dest: str) -> Tuple[List[str], str, List[str]]:
     """Batch lines to link a plug-in in a LOCAL temp folder and copy the result
-    to ``dest`` (a batch expression such as ``%HERE%..\\foo.mll``).
+    to ``dest`` (a batch expression such as ``%PLUGIN_DIR%\\foo.mll``).
 
     Returns ``(before, out_args, after)``: ``before`` makes the temp folder,
     ``out_args`` is the ``/IMPLIB:... /OUT:...`` pair to splice into the link
@@ -718,6 +718,115 @@ def preferred_maya_dir(os_name: Optional[str] = None) -> str:
 
 
 # ---------------------------------------------------------------------------
+# Where a built plug-in lands
+# ---------------------------------------------------------------------------
+#
+# A plug-in binary goes into a folder named after the Maya version it was built
+# for -- <out>/2025/<plugin>.mll -- and its file name never carries that version.
+# Maya takes a plug-in's NAME from its file name and records it in every scene
+# that uses it (``requires "mPyFoo"``), so a ``mPyFoo_2025.mll`` would tie each
+# scene to one Maya release. The generated build scripts spell the same rules in
+# shell: plugin_dir_sh / plugin_dir_bat below.
+
+_MAYA_DIR_YEAR_RE = re.compile(r"maya(\d{4})", re.I)
+_MAYA_API_RE      = re.compile(r"^#define\s+MAYA_API_VERSION\s+(\d{4})", re.M)
+
+
+def maya_year(maya) -> Optional[str]:
+    """The Maya version an install root belongs to, as a bare year (``"2025"``).
+
+    From the install folder's name first (``Maya2025`` / ``maya2026``), else
+    from its devkit's ``include/maya/MTypes.h`` (``#define MAYA_API_VERSION
+    20250300``), which also covers a custom-named install. ``None`` when
+    neither says. Splits on BOTH separators, like :func:`build_provenance`.
+    """
+    if not maya:
+        return None
+    name = str(maya).rstrip("/\\").replace("\\", "/").rsplit("/", 1)[-1]
+    m    = _MAYA_DIR_YEAR_RE.match(name)
+    if m:
+        return m.group(1)
+    header = os.path.join(maya_include_dir(str(maya)), "maya", "MTypes.h")
+    try:
+        with open(header, encoding="utf-8", errors="replace") as fh:
+            m = _MAYA_API_RE.search(fh.read())
+    except OSError:
+        return None
+    return m.group(1) if m else None
+
+
+def maya_year_unknown_message(maya) -> str:
+    """Why a plug-in for ``maya`` has nowhere to land (see :func:`maya_year`)."""
+    return ("cannot tell which Maya version %s is: its folder name carries no "
+            "year (Maya2025) and its devkit has no MAYA_API_VERSION in "
+            "include/maya/MTypes.h. A compiled plug-in lands in a folder named "
+            "after its Maya version." % maya)
+
+
+def plugin_dir_for(out_dir: str, year: str) -> str:
+    """The folder a plug-in built for Maya ``year`` lands in: ``out_dir/<year>``,
+    or ``out_dir`` itself when it already IS that folder -- which is where a
+    multi-version compile puts each version's build tree (``<out>/2025/build``),
+    so its plug-in sits at ``<out>/2025/<plugin>`` rather than one level deeper.
+    """
+    if os.path.basename(os.path.normpath(out_dir)) == year:
+        return out_dir
+    return os.path.join(out_dir, year)
+
+
+def plugin_path_for(out_dir: str, plugin_name: str, maya,
+                    os_name: Optional[str] = None) -> Optional[str]:
+    """``<out_dir>/<year>/<plugin_name><ext>`` for the Maya at ``maya``, or
+    ``None`` when its version cannot be told (:func:`maya_year`)."""
+    year = maya_year(maya)
+    if not year:
+        return None
+    return os.path.join(plugin_dir_for(out_dir, year),
+                        plugin_name + plugin_ext(os_name))
+
+
+_YEAR_DIR_RE = re.compile(r"^\d{4}$")
+
+
+def out_dir_for_plugin(plugin_path: str) -> str:
+    """The compile output folder a built plug-in belongs to: the one holding
+    its ``build/`` tree (``build/manifest.json``, ``build/source/``). The
+    inverse of :func:`plugin_dir_for`.
+
+    A multi-version compile puts the plug-in beside its own ``build/``
+    (``<out>/2025/{<plugin>, build/}``), so the plug-in's folder wins when it
+    holds a ``build/``. Otherwise a plug-in in a year folder
+    (``<out>/2025/<plugin>`` beside ``<out>/build/``) belongs to the folder
+    above. Anything else -- a plug-in written before the year folders -- is its
+    own folder.
+    """
+    here = os.path.dirname(plugin_path)
+    if os.path.isdir(os.path.join(here, "build")):
+        return here
+    if _YEAR_DIR_RE.match(os.path.basename(here)):
+        return os.path.dirname(here)
+    return here
+
+
+def older_plugin_note(plugin_path: str) -> Optional[str]:
+    """A one-line note when a same-named plug-in sits one folder up from
+    ``plugin_path`` -- where every build put it before the per-version folders.
+
+    It is never deleted: it may be the copy a scene or a ``MAYA_PLUG_IN_PATH``
+    still relies on. But two same-named plug-ins on the path load whichever Maya
+    meets first, so the user is told. ``None`` when there is none.
+    """
+    name = os.path.basename(plugin_path)
+    older = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(plugin_path))),
+                         name)
+    if not os.path.exists(older):
+        return None
+    return ("note: an older %s sits one folder up (%s) and is left in place; Maya "
+            "loads whichever comes first on the plug-in path (MAYA_PLUG_IN_PATH)"
+            % (name, older))
+
+
+# ---------------------------------------------------------------------------
 # Shell mirrors of discover_maya_installs(), emitted INTO the build scripts
 # ---------------------------------------------------------------------------
 #
@@ -815,6 +924,97 @@ def maya_resolver_bat(os_name: Optional[str] = None) -> List[str]:
         ')',
     ]
     return out
+
+
+# The shell mirrors of maya_year() + plugin_dir_for() + older_plugin_note(). They
+# run after the Maya resolver and the HERE= line, and set PLUGIN_DIR: the folder
+# the rebuilt plug-in is written to. The year is read from the install the
+# resolver PICKED -- with or without a version argument -- so the folder always
+# names the devkit the plug-in was actually built against.
+
+_PLUGIN_DIR_WHY = [
+    "The plug-in lands in a folder named after the Maya version, never with the",
+    "version in its file name: Maya records the file name in every scene that",
+    "uses it. The year comes from the install's folder name (Maya2026), else from",
+    "its devkit's MAYA_API_VERSION. A build folder already inside its version",
+    "folder (a multi-version compile's out/2026/build) writes beside itself.",
+]
+
+
+def plugin_dir_sh(plugin_file: str) -> List[str]:
+    """Bash lines that set ``$PLUGIN_DIR`` for ``plugin_file`` (see above).
+
+    ``|| true`` keeps a missing ``MTypes.h`` from ending the script under
+    ``set -euo pipefail``: an unknown version gets its own message below.
+    """
+    note = ("build.sh: note: an older %s sits one folder up and is left in "
+            "place; Maya loads whichever comes first on the plug-in path" % plugin_file)
+    return ["# " + line for line in _PLUGIN_DIR_WHY] + [
+        '_mn="$(basename "$MAYA")"',
+        'YEAR=""',
+        'case "$_mn" in',
+        '  [Mm][Aa][Yy][Aa][0-9][0-9][0-9][0-9]*) YEAR="${_mn:4:4}" ;;',
+        'esac',
+        'if [ -z "$YEAR" ]; then',
+        '  YEAR="$(sed -n \'s/^#define[[:space:]]\\{1,\\}MAYA_API_VERSION'
+        '[[:space:]]\\{1,\\}\\([0-9]\\{4\\}\\).*/\\1/p\' '
+        '"$MAYA/include/maya/MTypes.h" 2>/dev/null | head -n 1 || true)"',
+        'fi',
+        'if [ -z "$YEAR" ]; then',
+        '  echo "build.sh: cannot tell which Maya version $MAYA is: no year in its '
+        'folder name and no MAYA_API_VERSION in include/maya/MTypes.h" >&2',
+        '  exit 1',
+        'fi',
+        'if [ "$(basename "$(cd "$HERE/.." && pwd)")" = "$YEAR" ]; then',
+        '  PLUGIN_DIR="$HERE/.."',
+        'else',
+        '  PLUGIN_DIR="$HERE/../$YEAR"',
+        'fi',
+        'mkdir -p "$PLUGIN_DIR"',
+        'if [ -e "$PLUGIN_DIR/../%s" ]; then' % plugin_file,
+        '  echo "%s" >&2' % note,
+        'fi',
+    ]
+
+
+def plugin_dir_bat(plugin_file: str) -> List[str]:
+    """Batch lines that set ``%PLUGIN_DIR%`` for ``plugin_file`` (see above).
+
+    Batch hazards designed around: an undefined variable's substring
+    (``%_MN:~0,4%``) expands to the literal ``~0,4``, so every candidate year
+    is checked to be four digits before it is used; and nothing that expands
+    ``%MAYA%`` sits inside a parenthesised block, where a ``)`` in the install
+    path (``Program Files (x86)``) would end the block early.
+    """
+    four_digits = ('echo %_YEAR%| findstr /r "^[0-9][0-9][0-9][0-9]$" >nul '
+                   '|| set "_YEAR="')
+    note = ("build.bat: note: an older %s sits one folder up and is left in "
+            "place; Maya loads whichever comes first on the plug-in path 1>&2"
+            % plugin_file)
+    return ["REM " + line for line in _PLUGIN_DIR_WHY] + [
+        'set "_MN="',
+        'set "_API="',
+        'set "_YEAR="',
+        'for %%D in ("%MAYA%\\.") do set "_MN=%%~nxD"',
+        'if /i "%_MN:~0,4%"=="maya" set "_YEAR=%_MN:~4,4%"',
+        four_digits,
+        'if "%_YEAR%"=="" for /f "tokens=3" %%D in (\'findstr /r '
+        '/c:"^#define  *MAYA_API_VERSION " "%MAYA%\\include\\maya\\MTypes.h" '
+        '2^>nul\') do set "_API=%%D"',
+        'if "%_YEAR%"=="" set "_YEAR=%_API:~0,4%"',
+        four_digits,
+        'if not "%_YEAR%"=="" goto :plugin_dir_year',
+        'echo build.bat: cannot tell which Maya version "%MAYA%" is: no year in 1>&2',
+        'echo   its folder name and no MAYA_API_VERSION in include\\maya\\MTypes.h 1>&2',
+        'exit /b 1',
+        ':plugin_dir_year',
+        'set "_PN="',
+        'for %%D in ("%HERE%..") do set "_PN=%%~nxD"',
+        'set "PLUGIN_DIR=%HERE%..\\%_YEAR%"',
+        'if "%_PN%"=="%_YEAR%" set "PLUGIN_DIR=%HERE%.."',
+        'if not exist "%PLUGIN_DIR%" mkdir "%PLUGIN_DIR%"',
+        'if exist "%PLUGIN_DIR%\\..\\' + plugin_file + '" echo ' + note,
+    ]
 
 
 def msvc_resolver_bat() -> List[str]:

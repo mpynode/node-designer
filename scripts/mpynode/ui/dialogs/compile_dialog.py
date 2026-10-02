@@ -246,6 +246,26 @@ def _format_elapsed(seconds) -> str:
     return "%d:%02d" % (minutes, secs)
 
 
+def _result_out_dir(result):
+    """The output folder of a single-version compile ``result``: the one that
+    holds ``build/`` (manifest, sources, scripts), or ``None``.
+
+    Not the plug-in's own folder: the plug-in lands in a version folder below
+    it (``<out>/2025/<plugin>``). The manifest names the folder exactly
+    (``<out>/build/manifest.json``); without one, the plug-in path is mapped
+    back by ``toolchain.out_dir_for_plugin``.
+    """
+    manifest_path = (result or {}).get("manifest_path")
+    if manifest_path and os.path.basename(os.path.dirname(manifest_path)) == "build":
+        return os.path.dirname(os.path.dirname(manifest_path))
+    bundle_path = (result or {}).get("bundle_path")
+    if not bundle_path:
+        return None
+    from mpynode.native.toolchain import toolchain
+
+    return toolchain.out_dir_for_plugin(bundle_path)
+
+
 def _generated_sources(out_dir, rows):
     """Absolute paths of the per-node C++ the assembler wrote under
     ``out_dir/build/source/`` as ``<type_name>.cpp``, for the rows whose file
@@ -1079,7 +1099,7 @@ class CompileDialog(QDialog):
         # --- target Maya versions (multi-version compile) ----------------
         # Auto-detect installed Maya versions usable as build targets (devkit +
         # mayapy); one checkbox each, the RUNNING Maya pre-checked. Check 2+ to
-        # build a plugin per version into out_dir/<label>/. If discovery finds
+        # build a plugin per version into out_dir/<year>/. If discovery finds
         # nothing the group is omitted and the compile targets the running Maya.
         self._maya_targets = []
         self._maya_checks  = {}
@@ -2871,8 +2891,10 @@ class CompileDialog(QDialog):
         # Which Maya version(s) to build against:
         #   * no version row shown -> the running Maya, single build into out_dir.
         #   * exactly one checked -> single build against it, into out_dir.
-        #   * two or more checked -> one build PER version into out_dir/<label>/,
+        #   * two or more checked -> one build PER version into out_dir/<year>/,
         #     built + verified against that version's devkit.
+        # Either way the plug-in lands in a folder named after its Maya version
+        # (out_dir/2025/<plugin>.mll); its file name never carries the version.
         # The parity verify always runs in a SEPARATE mayapy process
         # (subprocess_verify_fn): it does file(new=True), which run in-process
         # would WIPE the user's live session.
@@ -3370,8 +3392,9 @@ class CompileDialog(QDialog):
 
         if (ok or ai_failed) and bundle_exists:
             self._bundle_path = bundle_path
-            # Generated artifacts: the per-node .cpp sit next to the bundle.
-            out_dir = os.path.dirname(bundle_path)
+            # Generated artifacts: the per-node .cpp sit under <out>/build/source,
+            # not beside the bundle (which is in its version folder, <out>/2025).
+            out_dir = _result_out_dir(result)
             sources = _generated_sources(out_dir, rows)
             # Per-node summary carries the verify verdict (pass/fail/maxerr or
             # the "did not run" reason), so parity is FIRST-CLASS and persistent
@@ -3452,8 +3475,7 @@ class CompileDialog(QDialog):
             if errors:
                 msg = "Compile failed:\n\n" + "\n".join(str(e) for e in errors)
             QMessageBox.warning(self, "Compile Failed", msg)
-            self._update_ai_button(
-                result, os.path.dirname(bundle_path) if bundle_path else None)
+            self._update_ai_button(result, _result_out_dir(result))
 
     def _update_ai_button(self, result, out_dir) -> None:
         """Show the "Fix with AI" button iff this result has something the
@@ -3721,8 +3743,8 @@ class CompileDialog(QDialog):
         intact. If the unload fails because the plugin still has nodes in the
         scene, that is surfaced as a warning rather than crashing.
 
-        ``companion_paths`` are the sibling companion command plugins written
-        beside the bundle. They are loaded AFTER the bundle (the bundle registers
+        ``companion_paths`` are the companion command plugins written at the top
+        of the output folder. They are loaded AFTER the bundle (the bundle registers
         the compiled node type; the companion registers the commands that drive
         it), so ``maya.cmds.<command>()`` works once both are loaded.
         """
@@ -3780,8 +3802,9 @@ class CompileDialog(QDialog):
         # Non-fatal -- a load without the bridge is still a usable plugin.
         try:
             from mpynode._common.plugs import auto_dirty
+            from mpynode.native.toolchain import toolchain
 
-            out_dir  = os.path.dirname(bundle_path)
+            out_dir  = toolchain.out_dir_for_plugin(bundle_path)
             manifest = os.path.join(out_dir, "build", "manifest.json")
             auto_dirty.install_native_geo_coverage_from_manifest(manifest)
             auto_dirty.install_native_geo_coverage()

@@ -72,7 +72,7 @@ and no AI — which is what makes the freshness gates (section 5) possible.
 | `scripts/` | The only Python root. Put it on `PYTHONPATH`; everything lives in `scripts/mpynode/`. |
 | `plug-ins/` | The two Maya entry points: `mpynode_api1.py` (OpenMaya 1.0 node types) and `mpynode_api2.py` (OpenMaya 2.0). Put this dir on `MAYA_PLUG_IN_PATH`. |
 | `templates/` | 37 shipped gallery templates, `templates/<Type>/<Name>/{template.mpn,description.md}` across all 12 node types — **and the compiled C++ for each one, in that same folder**: `<Type>/<Name>/build/` holds the generated sources, the full optimizer stage lineage and a `build.sh`/`build.bat` beside them, so everything for one template is in one place. 39 per-template build trees (40 node `.cpp` files — `MPyLocator/Mesh Regions` ships two types). Sources + stage lineage are committed; binaries are not. |
-| `templates/All Templates Plugin/` | The multi-node build tree that links every template into one plug-in, plus the turnkey demo around it: `build/` (37 namespaced fragments + the generated `plugin_main.cpp`, and the full stage lineage), 39 `.ma` demo scenes, `reports/`, and `plugin/` — where you build `mPyMega` (37/37 node types + 32 bundled commands). No binary is committed; its `build.sh` / `build.bat` compiles `build/` and installs the result into `plugin/`. The filename must stay `mPyMega.*` — Maya takes the plug-in name from it and the scenes `requires "mPyMega"`. |
+| `templates/All Templates Plugin/` | The multi-node build tree that links every template into one plug-in, plus the turnkey demo around it: `build/` (37 namespaced fragments + the generated `plugin_main.cpp`, and the full stage lineage), 39 `.ma` demo scenes, `reports/`, and one `<year>/` folder per Maya version you build for — where `mPyMega` lands (37/37 node types + 32 bundled commands). No binary is committed; its `build.sh` / `build.bat` compiles `build/` and writes the result to `2026/mPyMega.*` (the folder named after the Maya version). The filename must stay `mPyMega.*` — Maya takes the plug-in name from it and the scenes `requires "mPyMega"`. |
 | `tests/` | The unit suite, outside the package so shipping `scripts/mpynode/` does not ship the tests. 278 test modules grouped by area: `nodes/`, `ui/`, `authoring/`, `attributes/`, `framework/`, and `compile/` (split into `transpiler/`, `pipeline/`, `nodes/`, `optimizer/`, `freshness/`, `native/`). Shared bootstrap `_setup.py`, repo anchors `_paths.py`, fixtures in `data/` and `test_assets/`. `compile/native/` is the odd one out: eleven standalone transpiler oracle harnesses, named `*_test.py` / `*_parity.py` so discovery does **not** collect them — `compile/transpiler/test_native_transpiler_harnesses.py` subprocesses each one and asserts its printed marker. |
 | `docs/` | All reference material: `index.md` (the API guide), `CHEATSHEET.md` (the authoring quick reference), this file, `PORTING.md` (Windows/Linux finish-and-verify handoff), and `node_types/` (one `.md` per type + `_input_type_contract.md`). Only `index.md` and `node_types/` are reachable from the in-app Help menu — `docs_locator` enumerates exactly those. |
 | `tools/` | Every dev/CI script, and the only place they live — there are no runners at the repo root. The four gate launchers are `run_tests.sh` / `run_tests.bat` (unit suite) and `run_parity_sweep.sh` / `.bat` (compiled parity), plus `build_compiled_templates.sh`, `bundle.sh` / `bundle.bat` (combine compiled node sources into one plug-in), the freshness checkers (`check_stage1_freshness.py`, `check_std_includes.py`, `regen_build_scripts.py`, `regen_plugin_main.py`, `regen_mega_transpiled.py`), `parity_sweep/`, and the probes and audits. Most of these are not optional: thirteen are executed or imported by the unit suite, so deleting one turns tests red. `tools/harness/` holds the attended out-of-suite mayapy drivers (see its `README.md`), including `benchmark_node.py`, which the AI optimizer shells out to at runtime. |
@@ -208,8 +208,20 @@ e / f          verify - parity in a throwaway mayapy; write manifest.json
 ```
 
 `compile_plugin_multi(...)` runs the same specs once per detected Maya version
-into `out_dir/<label>/`, deep-copying the spec list per version so one build's
-in-place mutations cannot leak into the next.
+into `out_dir/<year>/` (plug-in beside that version's `build/`), deep-copying
+the spec list per version so one build's in-place mutations cannot leak into
+the next.
+
+Where the binary lands is one rule everywhere — `compile_plugin`,
+`bundle_prebuilt`, `tools/bundle.sh` and every generated `build.sh` /
+`build.bat`: a folder named after the Maya version it was built against,
+`<out>/2025/<plugin>.mll`, never a versioned file name (Maya records the
+plug-in's file name in every scene). The year comes from the install folder's
+name, else its devkit's `MAYA_API_VERSION` (`toolchain.maya_year`); an `<out>`
+that already is the year folder takes the plug-in itself
+(`toolchain.plugin_dir_for`). A same-named plug-in left one folder up by an
+older build is never deleted — one log line says it is there, since Maya loads
+whichever comes first on the plug-in path.
 
 ### The 3 stages
 

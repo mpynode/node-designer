@@ -575,8 +575,8 @@ def build(plan: Plan, name: str, out_dir: str, *, maya: str,
           compile_now: bool = True, best_effort: bool = False,
           strict_load: bool = False, vendor: str = "mpynode-native",
           version: Optional[str] = None, log_cb=None) -> dict:
-    """Assemble the plan into ``<out_dir>/<name>.<ext>`` (+ its re-buildable
-    ``build/`` tree) and write ``build/manifest.json``.
+    """Assemble the plan into ``<out_dir>/<maya year>/<name>.<ext>`` (+ its
+    re-buildable ``build/`` tree) and write ``build/manifest.json``.
 
     Raises :class:`BundleRefused` on pre-flight errors or an unsafe
     ``out_dir``; every other failure comes back in the report's ``reason``.

@@ -1171,8 +1171,12 @@ class TestAssembleSingleStaleBundlePreserved(unittest.TestCase):
         from mpynode.native.toolchain.typeid_registry import TypeIdRegistry
 
         with tempfile.TemporaryDirectory() as d:
+            # The prior good bundle sits where a compile puts it: the folder
+            # named after the default Maya's version.
             ext   = bundler.toolchain.plugin_ext()
-            stale = os.path.join(d, "smokePlug" + ext)
+            year  = bundler.toolchain.maya_year(bundler._MAYA_DEFAULT)
+            stale = os.path.join(d, year, "smokePlug" + ext)
+            os.makedirs(os.path.dirname(stale))
             with open(stale, "w") as fh:
                 fh.write("PRIOR-GOOD-BUNDLE")
             cpp = os.path.join(d, "smokeDoubler.cpp")
@@ -3320,15 +3324,17 @@ class TestCompilePluginMulti(unittest.TestCase):
                 [_target("maya2024", "/m/2024"),
                  _target("maya2026", "/m/2026")])
 
+        # The per-version folder is the bare year, never the install label:
+        # the plug-in lands there and its file name carries no version.
         self.assertTrue(res["ok"])
         self.assertEqual(len(res["results"]),        2)
-        self.assertEqual(calls[0]["out_dir"],        os.path.join("/out", "maya2024"))
+        self.assertEqual(calls[0]["out_dir"],        os.path.join("/out", "2024"))
         self.assertEqual(calls[0]["maya"],           "/m/2024")
-        self.assertEqual(calls[1]["out_dir"],        os.path.join("/out", "maya2026"))
+        self.assertEqual(calls[1]["out_dir"],        os.path.join("/out", "2026"))
         self.assertEqual(calls[1]["maya"],           "/m/2026")
         self.assertEqual(res["results"][0]["label"], "maya2024")
         self.assertEqual(res["results"][0]["out_dir"],
-                         os.path.join("/out", "maya2024"))
+                         os.path.join("/out", "2024"))
 
     def test_specs_deepcopied_per_version(self):
         from mpynode.native.toolchain import compile_controller as cc

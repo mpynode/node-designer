@@ -2291,5 +2291,83 @@ class TestOnFinishedMultiVerifyCrashGate(unittest.TestCase):
                          "a clean multi build must still offer to load")
 
 
+
+class TestTheDialogFindsTheBuildTree(unittest.TestCase):
+    """The plug-in lands in its version folder (``<out>/2025/<plugin>``) while
+    ``build/`` (manifest, sources) stays at ``<out>``. Everything the dialog
+    reads after a build must look there, not in the plug-in's own folder."""
+
+    def setUp(self):
+        self.d = tempfile.mkdtemp(prefix="ndwiring_year_")
+        self.addCleanup(shutil.rmtree, self.d, True)
+        src_dir = os.path.join(self.d, "build", "source")
+        os.makedirs(src_dir)
+        os.makedirs(os.path.join(self.d, "2025"))
+        self.cpp = os.path.join(src_dir, "aNode.cpp")
+        with open(self.cpp, "w") as fh:
+            fh.write("// x\n")
+        self.manifest = os.path.join(self.d, "build", "manifest.json")
+        with open(self.manifest, "w") as fh:
+            fh.write('{"nodes": []}')
+        self.bundle = os.path.join(self.d, "2025", "myPlug.bundle")
+        with open(self.bundle, "w") as fh:
+            fh.write("")
+
+    def test_result_out_dir(self):
+        from mpynode.ui.dialogs import compile_dialog as cd
+
+        for result in ({"bundle_path": self.bundle, "manifest_path": self.manifest},
+                       {"bundle_path": self.bundle, "manifest_path": None},
+                       {"bundle_path": None, "manifest_path": self.manifest}):
+            with self.subTest(result):
+                self.assertEqual(cd._result_out_dir(result), self.d)
+        self.assertIsNone(cd._result_out_dir({}))
+
+    def _finish(self, manifest_path):
+        from mpynode.ui.dialogs import compile_dialog as cd
+
+        fake            = _FakeSelf()
+        fake._run_start = None
+        result = {"ok": True, "bundle_path": self.bundle,
+                  "manifest_path": manifest_path, "plugin_name": "myPlug",
+                  "errors": [], "nodes": [{"type_name": "aNode",
+                                           "build_status": "compiled"}]}
+
+        class _Ctrl:
+            pass
+
+        _Ctrl.result     = result
+        fake._controller = _Ctrl()
+        cd.CompileDialog._on_finished(fake)
+        return fake
+
+    def test_the_summary_lists_the_sources_and_the_hand_off_gets_the_out_folder(self):
+        for manifest_path in (self.manifest, None):
+            with self.subTest(manifest_path=manifest_path):
+                fake = self._finish(manifest_path)
+                self.assertIn("  Source:   %s" % self.cpp, fake._appended_logs)
+                self.assertEqual(fake._update_ai_button_calls[-1][1], self.d)
+                self.assertEqual(fake._offer_load_calls, [self.bundle])
+
+    def test_loading_arms_the_geometry_bridge_from_the_out_folder(self):
+        from mpynode._base import plugins
+        from mpynode._common.plugs import auto_dirty
+        from mpynode.ui.dialogs import compile_dialog as cd
+
+        armed = []
+        fake  = _FakeSelf()
+        loaded = {"base": "myPlug.bundle", "loaded": True, "reloaded": False,
+                  "error": None}
+        with mock.patch.object(cd.QMessageBox, "question",
+                               staticmethod(lambda *a, **k: cd.QMessageBox.Yes)), \
+             mock.patch.object(plugins, "load_or_reload_native_plugin",
+                               lambda p: loaded), \
+             mock.patch.object(auto_dirty, "install_native_geo_coverage_from_manifest",
+                               armed.append), \
+             mock.patch.object(auto_dirty, "install_native_geo_coverage", lambda: None):
+            cd.CompileDialog._offer_load(fake, self.bundle)
+        self.assertEqual(armed, [self.manifest])
+
+
 if __name__ == "__main__":
     unittest.main()

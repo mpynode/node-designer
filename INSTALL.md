@@ -195,17 +195,37 @@ over from something else. If nothing resolves, the script says which
 versions it looked for and exits 1 — it never compiles against the wrong
 Maya.
 
+The plug-in lands one level up from `build/`, in a folder named after the
+Maya version it was built against:
+
+```
+templates/MPyNode/Ouch/2026/MPyNode_Ouch.bundle    # macOS
+templates\MPyNode\Ouch\2025\MPyNode_Ouch.mll       # Windows
+```
+
+The year comes from the install's folder name (`Maya2025`, `maya2026`), else
+from its devkit's `MAYA_API_VERSION`. It is never part of the file name: Maya
+takes a plug-in's name from its file name and records it in every scene that
+uses it, so `MPyNode_Ouch_2025.mll` would tie each scene to one Maya release.
+Point `MAYA_PLUG_IN_PATH` at the version folder of the Maya you run. A
+same-named plug-in an earlier build left one level up is never deleted; the
+script prints a note when one is there, because Maya loads whichever copy comes
+first on the plug-in path. The Compile tab, `compile_plugin` and
+`tools/bundle.sh` use the same layout (`<out>/2025/<plugin>`); a multi-version
+compile gives each version its own `<out>/<year>/` with the plug-in beside that
+version's `build/`.
+
 The whole set at once, and the mega demo plug-in:
 
 ```bash
 tools/build_compiled_templates.sh     # every template tree
 
-# all 37 in one plug-in, installed into the same folder's plugin/
+# all 37 in one plug-in, written to the same folder's 2026/
 cd "templates/All Templates Plugin" && ./build.sh 2026
 ```
 
 These scripts are generated, not hand-written; `tools/regen_build_scripts.py`
-refreshes them from the generators and
+refreshes them (and each tree's `build/README.txt`) from the generators and
 `tests.compile.freshness.test_build_script_freshness` fails if a committed one has
 drifted.
 

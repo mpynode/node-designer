@@ -104,6 +104,8 @@ Full detail in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 Browse them in the Designer's **Templates** tab.
 
 Source code for each template is provided. To compile them yourself — see [INSTALL.md](INSTALL.md).
+A compiled plug-in lands in a folder named after the Maya version it was built for
+(`2026/`), never with the version in its file name.
 
 ## Documentation
 

@@ -62,7 +62,7 @@ def _mega_info():
     bundle = d.get("bundle_path")
     if bundle and not os.path.isabs(bundle):
         # mega_plugin writes bundle_path relative to the PROJECT ROOT
-        # ("templates/All Templates Plugin/mPyMega.bundle"), not to MEGA_DIR --
+        # ("templates/All Templates Plugin/2026/mPyMega.bundle"), not to MEGA_DIR --
         # joining it onto MEGA_DIR doubled the path and failed every build with
         # "mega bundle not found: .../All Templates Plugin/templates/All
         # Templates Plugin/...".
@@ -120,8 +120,11 @@ def base_env(out_dir):
     e["PYTHONPATH"] = ":".join(
         p for p in [ext, os.path.join(ROOT, "scripts"),
                     e.get("PYTHONPATH", "")] if p)
+    # The mega plug-in sits in its Maya-version folder (<mega>/2026/), so that
+    # folder -- the one the recorded bundle is in -- is what goes on the path.
     e["MAYA_PLUG_IN_PATH"] = ":".join(
-        [os.path.join(ROOT, "plug-ins"), MEGA_DIR, out_dir,
+        [os.path.join(ROOT, "plug-ins"),
+         os.path.dirname(BUNDLE) if BUNDLE else MEGA_DIR, out_dir,
          e.get("MAYA_PLUG_IN_PATH", "")])
     e["QT_QPA_PLATFORM"] = "offscreen"
     return e

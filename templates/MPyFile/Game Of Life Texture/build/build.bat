@@ -2,6 +2,7 @@
 setlocal
 REM Rebuild native plugin 'MPyFile_Game_Of_Life_Texture' from its single source 'source\gameOfLifeTex.cpp'.
 REM Edit source\gameOfLifeTex.cpp, then run build.bat from any cmd.exe -- it sets up MSVC itself.
+REM MPyFile_Game_Of_Life_Texture.mll lands one level up, in a folder named after the Maya version (..\2026\).
 REM
 REM Usage:  build.bat [maya-version]      e.g. build.bat 2026
 REM With no argument the newest installed Maya is used; set MAYA to
@@ -45,6 +46,31 @@ if not exist "%MAYA%\include\maya" (
   exit /b 1
 )
 set "HERE=%~dp0"
+REM The plug-in lands in a folder named after the Maya version, never with the
+REM version in its file name: Maya records the file name in every scene that
+REM uses it. The year comes from the install's folder name (Maya2026), else from
+REM its devkit's MAYA_API_VERSION. A build folder already inside its version
+REM folder (a multi-version compile's out/2026/build) writes beside itself.
+set "_MN="
+set "_API="
+set "_YEAR="
+for %%D in ("%MAYA%\.") do set "_MN=%%~nxD"
+if /i "%_MN:~0,4%"=="maya" set "_YEAR=%_MN:~4,4%"
+echo %_YEAR%| findstr /r "^[0-9][0-9][0-9][0-9]$" >nul || set "_YEAR="
+if "%_YEAR%"=="" for /f "tokens=3" %%D in ('findstr /r /c:"^#define  *MAYA_API_VERSION " "%MAYA%\include\maya\MTypes.h" 2^>nul') do set "_API=%%D"
+if "%_YEAR%"=="" set "_YEAR=%_API:~0,4%"
+echo %_YEAR%| findstr /r "^[0-9][0-9][0-9][0-9]$" >nul || set "_YEAR="
+if not "%_YEAR%"=="" goto :plugin_dir_year
+echo build.bat: cannot tell which Maya version "%MAYA%" is: no year in 1>&2
+echo   its folder name and no MAYA_API_VERSION in include\maya\MTypes.h 1>&2
+exit /b 1
+:plugin_dir_year
+set "_PN="
+for %%D in ("%HERE%..") do set "_PN=%%~nxD"
+set "PLUGIN_DIR=%HERE%..\%_YEAR%"
+if "%_PN%"=="%_YEAR%" set "PLUGIN_DIR=%HERE%.."
+if not exist "%PLUGIN_DIR%" mkdir "%PLUGIN_DIR%"
+if exist "%PLUGIN_DIR%\..\MPyFile_Game_Of_Life_Texture.mll" echo build.bat: note: an older MPyFile_Game_Of_Life_Texture.mll sits one folder up and is left in place; Maya loads whichever comes first on the plug-in path 1>&2
 REM Link in a local temp folder, then copy the plug-in into place: the
 REM MSVC linker memory-maps its outputs, and on a cloud-synced folder
 REM (Google Drive, OneDrive) that write hangs forever. A copy is fine.
@@ -53,9 +79,9 @@ if exist "%LINKTMP%" rd /s /q "%LINKTMP%"
 mkdir "%LINKTMP%"
 cl /nologo /LD /std:c++17 /O2 /fp:precise /EHsc /MD /bigobj /utf-8 /D NT_PLUGIN /D REQUIRE_IOSTREAM /D _BOOL /D WIN32 /D _WINDOWS /D _CRT_SECURE_NO_WARNINGS /I "%MAYA%\include" "%HERE%source\gameOfLifeTex.cpp" /Fo"%HERE%gameOfLifeTex.obj" /link /LIBPATH:"%MAYA%\lib" OpenMaya.lib OpenMayaAnim.lib OpenMayaUI.lib OpenMayaRender.lib Foundation.lib /IMPLIB:"%LINKTMP%\MPyFile_Game_Of_Life_Texture.lib" /OUT:"%LINKTMP%\MPyFile_Game_Of_Life_Texture.mll" /EXPORT:initializePlugin /EXPORT:uninitializePlugin
 if errorlevel 1 exit /b 1
-copy /Y "%LINKTMP%\MPyFile_Game_Of_Life_Texture.mll" "%HERE%..\MPyFile_Game_Of_Life_Texture.mll" >nul
+copy /Y "%LINKTMP%\MPyFile_Game_Of_Life_Texture.mll" "%PLUGIN_DIR%\MPyFile_Game_Of_Life_Texture.mll" >nul
 if errorlevel 1 exit /b 1
 rd /s /q "%LINKTMP%" 2>nul
 del "%HERE%gameOfLifeTex.obj" 2>nul
-echo Built: %HERE%..\MPyFile_Game_Of_Life_Texture.mll
+echo Built: %PLUGIN_DIR%\MPyFile_Game_Of_Life_Texture.mll
 exit /b 0

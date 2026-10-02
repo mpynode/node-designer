@@ -48,7 +48,10 @@ class TestBundleCliBuildsAndLoads(unittest.TestCase):
         self.assertIn("load check: ok -- 2 type(s)", text)
         from mpynode.native.toolchain import toolchain
 
-        self.assertTrue(os.path.isfile(os.path.join(out, "duo" + toolchain.plugin_ext())))
+        # In the folder named after the Maya it was built for; the file name
+        # carries no version (Maya records it in every scene).
+        year = toolchain.maya_year(maya)
+        self.assertTrue(os.path.isfile(os.path.join(out, year, "duo" + toolchain.plugin_ext())))
         self.assertTrue(os.path.isfile(os.path.join(out, "build", "manifest.json")))
 
 

@@ -135,7 +135,9 @@ def ML(msg=""):
     print(line, flush=True)
 
 
-def base_env(out_dir):
+def base_env(plugin_dir):
+    """The step environment; ``plugin_dir`` -- the folder holding the compiled
+    plug-in -- goes on MAYA_PLUG_IN_PATH."""
     e                       = dict(os.environ)
     e["MPYNODE_ROOT"]       = ROOT
     e["MPYNODE_USE_STUDIO"] = "1"
@@ -146,7 +148,7 @@ def base_env(out_dir):
     e["MPYNODE_TRUST_PICKLE"] = "1"
     e["PYTHONPATH"]           = os.path.join(ROOT, "scripts") + ":" + e.get("PYTHONPATH", "")
     e["MAYA_PLUG_IN_PATH"] = ":".join(
-        [os.path.join(ROOT, "plug-ins"), out_dir, e.get("MAYA_PLUG_IN_PATH", "")])
+        [os.path.join(ROOT, "plug-ins"), plugin_dir, e.get("MAYA_PLUG_IN_PATH", "")])
     e["QT_QPA_PLATFORM"] = "offscreen"
     cb                   = e.get("CLAUDE_BIN")
     if not cb:
@@ -159,11 +161,11 @@ def base_env(out_dir):
     return e
 
 
-def run_step(script, args, out_dir, prefix, timeout):
+def run_step(script, args, plugin_dir, prefix, timeout):
     """Run a mayapy step; return (json_dict_or_None, ok, tail)."""
     cmd = [MAYAPY, os.path.join(HARNESS, script)] + args
     try:
-        p = subprocess.run(cmd, cwd=ROOT, env=base_env(out_dir),
+        p = subprocess.run(cmd, cwd=ROOT, env=base_env(plugin_dir),
                            stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                            timeout=timeout)
         out = p.stdout.decode("utf-8", "replace")
@@ -240,10 +242,14 @@ for idx, t in enumerate(TEMPLATES, 1):
 
     # 1b. ONE ARTIFACT. Every @maya_command now compiles into the node's own
     # bundle as an MPxCommand, so a compile must leave exactly one loadable
-    # plug-in in out_dir and NO sibling <type>_commands.py. Checked here rather
-    # than trusted, because a stray companion still LOADS -- the failure would
-    # only show up as a duplicate plug-in in Maya's plug-in manager.
-    _arts = sorted(f for f in os.listdir(out_dir)
+    # plug-in in its folder and NO sibling <type>_commands.py. Checked here
+    # rather than trusted, because a stray companion still LOADS -- the failure
+    # would only show up as a duplicate plug-in in Maya's plug-in manager. The
+    # plug-in lands in a folder named after the Maya version
+    # (<out_dir>/2026/<plugin>.bundle), so that folder -- not out_dir -- is what
+    # is listed here and what the demo steps put on MAYA_PLUG_IN_PATH.
+    plug_dir = os.path.dirname(cj.get("bundle_path") or "") or out_dir
+    _arts = sorted(f for f in os.listdir(plug_dir)
                    if f.endswith((".bundle", ".mll", ".so"))
                    or f.endswith("_commands.py"))
     rec["artifacts"] = _arts
@@ -272,7 +278,7 @@ for idx, t in enumerate(TEMPLATES, 1):
 
         bj, bok, btail = run_step(
             "build_demo_compiled.py", [mpn, out_dir, plugin, demo_sel, ma_base],
-            out_dir, "BUILD_JSON:", timeout=_btmo)
+            plug_dir, "BUILD_JSON:", timeout=_btmo)
         drec["build"] = bj
         if bj is None:
             drec["status"] = "build_failed"
@@ -291,7 +297,7 @@ for idx, t in enumerate(TEMPLATES, 1):
                 rec["issues"].append("[%s] build failed: %s" % (dlabel, bj.get("errors")))
             elif bj.get("ma"):
                 rj, rok, rtail = run_step(
-                    "reopen_check.py", [out_dir, bj["ma"]], out_dir,
+                    "reopen_check.py", [out_dir, bj["ma"]], plug_dir,
                     "REOPEN_JSON:", timeout=600)
                 drec["reopen"] = rj
                 if rj is None:

@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Rebuild native plugin 'MPyLocator_Animated_Text' from its single source 'source/animatedText.cpp'.
-# Edit source/animatedText.cpp, then run ./build.sh to produce MPyLocator_Animated_Text.bundle (one level up).
+# Edit source/animatedText.cpp, then run ./build.sh to produce MPyLocator_Animated_Text.bundle (one level
+# up, in a folder named after the Maya version: ../2026/).
 #
 # Usage:  ./build.sh [maya-version]      e.g. ./build.sh 2026
 # With no argument the newest installed Maya is used; MAYA=<path>
@@ -26,6 +27,32 @@ if [ ! -d "${MAYA:-}/include/maya" ]; then
   exit 1
 fi
 HERE="$(cd "$(dirname "$0")" && pwd)"
+# The plug-in lands in a folder named after the Maya version, never with the
+# version in its file name: Maya records the file name in every scene that
+# uses it. The year comes from the install's folder name (Maya2026), else from
+# its devkit's MAYA_API_VERSION. A build folder already inside its version
+# folder (a multi-version compile's out/2026/build) writes beside itself.
+_mn="$(basename "$MAYA")"
+YEAR=""
+case "$_mn" in
+  [Mm][Aa][Yy][Aa][0-9][0-9][0-9][0-9]*) YEAR="${_mn:4:4}" ;;
+esac
+if [ -z "$YEAR" ]; then
+  YEAR="$(sed -n 's/^#define[[:space:]]\{1,\}MAYA_API_VERSION[[:space:]]\{1,\}\([0-9]\{4\}\).*/\1/p' "$MAYA/include/maya/MTypes.h" 2>/dev/null | head -n 1 || true)"
+fi
+if [ -z "$YEAR" ]; then
+  echo "build.sh: cannot tell which Maya version $MAYA is: no year in its folder name and no MAYA_API_VERSION in include/maya/MTypes.h" >&2
+  exit 1
+fi
+if [ "$(basename "$(cd "$HERE/.." && pwd)")" = "$YEAR" ]; then
+  PLUGIN_DIR="$HERE/.."
+else
+  PLUGIN_DIR="$HERE/../$YEAR"
+fi
+mkdir -p "$PLUGIN_DIR"
+if [ -e "$PLUGIN_DIR/../MPyLocator_Animated_Text.bundle" ]; then
+  echo "build.sh: note: an older MPyLocator_Animated_Text.bundle sits one folder up and is left in place; Maya loads whichever comes first on the plug-in path" >&2
+fi
 clang++ -std=c++17 -O3 -ffp-contract=off -arch arm64 -bundle \
   -D OSMac_ -D REQUIRE_IOSTREAM -D _BOOL \
   -Wno-nontrivial-memcall \
@@ -35,6 +62,6 @@ clang++ -std=c++17 -O3 -ffp-contract=off -arch arm64 -bundle \
   -F"$MAYA/Maya.app/Contents/Frameworks" \
   -framework QtCore -framework QtGui -framework QtWidgets \
   -Wl,-rpath,"$MAYA/Maya.app/Contents/Frameworks" \
-  -o "$HERE/../MPyLocator_Animated_Text.bundle" "$HERE/source/animatedText.cpp"
-echo "Built: $HERE/../MPyLocator_Animated_Text.bundle"
-lipo -info "$HERE/../MPyLocator_Animated_Text.bundle"
+  -o "$PLUGIN_DIR/MPyLocator_Animated_Text.bundle" "$HERE/source/animatedText.cpp"
+echo "Built: $PLUGIN_DIR/MPyLocator_Animated_Text.bundle"
+lipo -info "$PLUGIN_DIR/MPyLocator_Animated_Text.bundle"

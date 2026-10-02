@@ -73,6 +73,9 @@ class TestBundlePrebuilt(unittest.TestCase):
         self.assertTrue(res["multi"])
         self.assertTrue(res["ok"], res)
         self.assertEqual([r["label"] for r in res["results"]], ["Maya2025", "Maya2027"])
+        # One folder per version, named by the bare year -- never the label.
+        self.assertEqual([r["out_dir"] for r in res["results"]],
+                         [os.path.join(self.d, "out", y) for y in ("2025", "2027")])
         for r in res["results"]:
             self.assertTrue(r["result"]["ok"])
             self.assertTrue(os.path.isfile(os.path.join(r["out_dir"], "build", "manifest.json")))

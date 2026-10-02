@@ -1,13 +1,12 @@
 """Compile OUTPUT-FOLDER layout: a clean, self-explanatory folder.
 
-Only the importable ``<plugin>.bundle`` (and any ``*_commands.py`` companion
-plugins, emitted by the controller) sit at the top level; ALL source, build
-scripts, README and the manifest live under ``build/`` -- with the C++ source
-(``<node>.cpp`` / ``plugin_main.cpp`` / ``shared_helpers.cpp``) nested one level
-deeper in ``build/source/``. The build scripts therefore read their inputs from
-``$HERE/source/`` and write the rebuilt bundle back up to ``$HERE/../`` (the top
-level), so a hand rebuild lands the bundle exactly where the programmatic build
-did.
+The importable ``<plugin>.bundle`` sits in a folder named after its Maya version
+(``<out>/2025/``); ALL source, build scripts, README and the manifest live under
+``build/`` -- with the C++ source (``<node>.cpp`` / ``plugin_main.cpp`` /
+``shared_helpers.cpp``) nested one level deeper in ``build/source/``. The build
+scripts therefore read their inputs from ``$HERE/source/`` and write the rebuilt
+bundle back up to ``$PLUGIN_DIR`` (``$HERE/../<year>``), so a hand rebuild
+lands the bundle exactly where the programmatic build did.
 
 These assert the bundler's file placement with ``compile_now=False`` (no compiler
 needed): the source/scripts are written regardless of whether the link runs.
@@ -98,8 +97,9 @@ class TestCompileOutputLayout(unittest.TestCase):
         out = self._assemble([("fooNode", p)], "solo", d)
         with open(os.path.join(out, "build", "build.sh")) as fh:
             sh = fh.read()
-        self.assertIn("$HERE/source/fooNode.cpp", sh)   # input from source/
-        self.assertIn('-o "$HERE/../solo.bundle"', sh)  # bundle to top level
+        self.assertIn("$HERE/source/fooNode.cpp",     sh)  # input from source/
+        self.assertIn('-o "$PLUGIN_DIR/solo.bundle"', sh)  # bundle to the version folder
+        self.assertIn('PLUGIN_DIR="$HERE/../$YEAR"',  sh)
 
     # ---- multi-node ------------------------------------------------------
     def test_multi_node_clean_top_level(self):
@@ -122,8 +122,9 @@ class TestCompileOutputLayout(unittest.TestCase):
         out = self._assemble([("fooNode", p1), ("barNode", p2)], "duo", d)
         with open(os.path.join(out, "build", "build.sh")) as fh:
             sh = fh.read()
-        self.assertIn("$HERE/source/", sh)             # inputs from source/
-        self.assertIn('-o "$HERE/../duo.bundle"', sh)  # bundle to top level
+        self.assertIn("$HERE/source/", sh)                # inputs from source/
+        self.assertIn('-o "$PLUGIN_DIR/duo.bundle"', sh)  # bundle to the version folder
+        self.assertIn('PLUGIN_DIR="$HERE/../$YEAR"', sh)
 
     # ---- a DROPPED node must not orphan its fragment in source/ ----------
     def test_dropped_node_fragment_not_left_in_source(self):
@@ -148,13 +149,14 @@ class TestCompileOutputLayout(unittest.TestCase):
         self.assertTrue(os.path.isfile(os.path.join(src, "goodNode.cpp")))
         self.assertFalse(os.path.exists(os.path.join(src, "badNode.cpp")),
                          "dropped node's fragment must be removed from source/")
-        # The good node still linked into the bundle at the top level.
+        # The good node still linked into the bundle, in its version folder.
         self.assertTrue(report.get("ok"))
         # Platform extension, not a hardcoded ".bundle": the artifact is
         # duo.mll on Windows and duo.so on Linux, so this asserted a file that
         # could never exist there (measured 2026-08-14).
+        year = toolchain.maya_year(bundler._MAYA_DEFAULT)
         self.assertTrue(os.path.isfile(
-            os.path.join(out, "duo" + toolchain.plugin_ext())))
+            os.path.join(out, year, "duo" + toolchain.plugin_ext())))
 
     # ---- layout helpers are the single source of truth -------------------
     def test_layout_helpers(self):
@@ -319,7 +321,8 @@ class TestBuildsInATempFolder(unittest.TestCase):
 
     def _check(self, report, runs, out, ext):
         self.assertTrue(report.get("ok"), report)
-        self.assertEqual(report["bundle"], os.path.join(out, "plug" + ext))
+        year = toolchain.maya_year(bundler._MAYA_DEFAULT)
+        self.assertEqual(report["bundle"], os.path.join(out, year, "plug" + ext))
         self.assertTrue(os.path.isfile(report["bundle"]))
         self.assertFalse([r for r in runs
                           if os.path.basename(r["cmd"][0]) == "bash"],
@@ -339,7 +342,8 @@ class TestBuildsInATempFolder(unittest.TestCase):
                         os.listdir(src))
         for f in ("build.sh", "build.bat", "README.txt"):
             self.assertTrue(os.path.isfile(os.path.join(out, "build", f)), f)
-        self.assertEqual(sorted(os.listdir(out)), sorted(["build", "plug" + ext]))
+        self.assertEqual(sorted(os.listdir(out)), sorted(["build", year]))
+        self.assertEqual(os.listdir(os.path.join(out, year)), ["plug" + ext])
 
     def test_single_node(self):
         for os_name, compiler in self._PLATFORMS:

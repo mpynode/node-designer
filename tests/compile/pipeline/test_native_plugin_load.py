@@ -175,12 +175,42 @@ class TestValidateRegisteredTypes(unittest.TestCase):
         plugins.cmds = fake
         self.addCleanup(lambda: setattr(plugins, "cmds", orig))
 
-    def _bundle_with_manifest(self, tmp, type_names):
-        build = os.path.join(tmp, "build")
+    # Where a compile puts the plug-in and its build/ tree, keyed by layout:
+    #   single  <out>/2025/<plugin> beside <out>/build/   (every build now)
+    #   multi   <out>/2025/{<plugin>, build/}             (a multi-version compile)
+    #   flat    <out>/<plugin> beside <out>/build/        (a build from before)
+    _LAYOUTS = {
+        "single": ("build", "2025"),
+        "multi":  (os.path.join("2025", "build"), "2025"),
+        "flat":   ("build", ""),
+    }
+
+    def _bundle_with_status_manifest(self, tmp, rows, layout="single"):
+        build_rel, plugin_rel = self._LAYOUTS[layout]
+        build = os.path.join(tmp, build_rel)
         os.makedirs(build, exist_ok=True)
         with open(os.path.join(build, "manifest.json"), "w") as fh:
-            json.dump({"nodes": [{"type_name": t} for t in type_names]}, fh)
-        return os.path.join(tmp, "mPyThing.bundle")
+            json.dump({"nodes": rows}, fh)
+        return os.path.join(tmp, plugin_rel, "mPyThing.bundle")
+
+    def _bundle_with_manifest(self, tmp, type_names, layout="single"):
+        return self._bundle_with_status_manifest(
+            tmp, [{"type_name": t} for t in type_names], layout)
+
+    def test_the_manifest_is_found_in_every_layout(self):
+        # The plug-in sits in its version folder, so its own folder is not where
+        # build/manifest.json lives for a single-version build. Reading it from
+        # there checked nothing and passed every load.
+        from mpynode._base.plugins import validate_registered_types
+
+        self._patch(self._FakeCmds([]))  # loaded, but registered nothing
+        for layout in self._LAYOUTS:
+            with self.subTest(layout=layout), tempfile.TemporaryDirectory() as tmp:
+                bundle = self._bundle_with_manifest(tmp, ["mPyThing"], layout)
+                res    = validate_registered_types(bundle)
+                self.assertEqual(res["expected"], ["mPyThing"])
+                self.assertFalse(res["ok"])
+                self.assertEqual(res["missing"], ["mPyThing"])
 
     def test_ok_when_all_expected_types_registered(self):
         from mpynode._base.plugins import validate_registered_types
@@ -227,13 +257,6 @@ class TestValidateRegisteredTypes(unittest.TestCase):
             res    = validate_registered_types(bundle)
         self.assertFalse(res["ok"])
         self.assertIsNotNone(res["error"])
-
-    def _bundle_with_status_manifest(self, tmp, rows):
-        build = os.path.join(tmp, "build")
-        os.makedirs(build, exist_ok=True)
-        with open(os.path.join(build, "manifest.json"), "w") as fh:
-            json.dump({"nodes": rows}, fh)
-        return os.path.join(tmp, "mPyThing.bundle")
 
     def test_dropped_and_failed_nodes_not_expected(self):
         # A best-effort (strict=False) build records DROPPED / compile-failed

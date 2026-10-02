@@ -68,8 +68,10 @@ Both find a mayapy (`MPYNODE_MAYAPY`, then `MAYA_LOCATION`, then the newest
 install with a devkit) and run `mpynode.native.bundle` under it -- `--help`
 lists the input forms and options, `--check` runs every pre-flight check and
 writes nothing, `--refresh DIR` rebuilds a bundle from the inputs its manifest
-records. The tree it writes rebuilds with its own `build/build.bat` /
-`build.sh`, which need only a compiler and Maya.
+records. The plug-in lands in `--out DIR/<maya year>/NAME.mll` (`.bundle` on
+macOS) -- the version is the folder, never part of the file name. The tree it
+writes rebuilds with its own `build/build.bat` / `build.sh`, which need only a
+compiler and Maya.
 
 ## Attended probes and gates
 

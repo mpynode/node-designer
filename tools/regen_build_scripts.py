@@ -1,5 +1,6 @@
-"""Rewrite every committed build.sh / build.bat -- and, for Qt builds, the
-shipped copy of the MSVC stdext compat header -- from today's sources.
+"""Rewrite every committed build.sh / build.bat / README.txt -- and, for Qt
+builds, the shipped copy of the MSVC stdext compat header -- from today's
+sources.
 
 The build scripts are CODEGEN output, exactly like ``1_transpiled.cpp``: a
 change to ``bundler.make_*_build_*`` silently leaves 120 checked-in scripts
@@ -83,12 +84,16 @@ def _plugin_name(build_dir, man):
 
 # Inputs as recorded in the committed script. The multi-node compile lines keep
 # frag_files in its original ORDER; the single-node link line names its one
-# source; the provenance is either the label already stamped in, or -- first time
-# through, before the resolver replaced it -- the old baked-in $MAYA default.
+# source (writing to $PLUGIN_DIR, the Maya-version folder -- or $HERE/.. before
+# that existed); the provenance is either the label already stamped in, or --
+# first time through, before the resolver replaced it -- the old baked-in $MAYA
+# default. The README records the plug-in file name (its extension says which
+# host compiled it) on its "the plugin you load" line.
 _FRAG_RE       = re.compile(r'-c "\$HERE/source/([^"]+)"')
-_SINGLE_SRC_RE = re.compile(r'-o "\$HERE/\.\./[^"]+" "\$HERE/source/([^"]+)"')
+_SINGLE_SRC_RE = re.compile(r'-o "\$(?:HERE/\.\.|PLUGIN_DIR)/[^"]+" "\$HERE/source/([^"]+)"')
 _PROV_RE       = re.compile(r"^# Built against: (.+)$", re.M)
 _OLD_MAYA_RE   = re.compile(r'^MAYA="\$\{MAYA:-([^}]+)\}"$', re.M)
+_README_PLUGIN = re.compile(r"^  \.\./(?:<year>/)?(\S+)   <- the plugin you load", re.M)
 
 
 def _recorded_inputs(old_sh):
@@ -153,6 +158,18 @@ def _regen_one(build_dir, man, bundler, build_scripts, toolchain):
         # copy ships beside the sources; it is codegen output like the scripts.
         gen["source/" + toolchain.QT_MSVC_COMPAT_HEADER] = \
             _compat_header_text(toolchain)
+    # README.txt is make_readme output: the node list is the script's (minus
+    # the shared unit, which the README describes in prose), the plug-in file
+    # name is read back from the README itself.
+    readme_path = os.path.join(build_dir, "README.txt")
+    if os.path.isfile(readme_path):
+        with open(readme_path, encoding="utf-8", newline="") as fh:
+            m = _README_PLUGIN.search(fh.read())
+        if m:
+            nodes = ([f for f in frags if f != bundler.SHARED_HELPERS_FILE]
+                     if frags else [node_file])
+            gen["README.txt"] = bundler.make_readme(
+                plugin, nodes, single=not frags, bundle_name=m.group(1))
 
     for fname, new in gen.items():
         path = os.path.join(build_dir, fname)
@@ -238,7 +255,7 @@ def main(argv=None):
                                   toolchain)
         orphans += ["%s/%s" % (rel, o)
                     for o in _orphans(build_dir, set(scripts),
-                                      ("build.sh", "build.bat",
+                                      ("build.sh", "build.bat", "README.txt",
                                        toolchain.QT_MSVC_COMPAT_HEADER))]
         if not scripts:
             skipped += 1
@@ -252,7 +269,7 @@ def main(argv=None):
             stale.append("%s/%s" % (rel, fname))
             if not read_only:
                 with open(os.path.join(build_dir, fname), "w",
-                          newline="") as fh:
+                          newline="", encoding="utf-8") as fh:
                     fh.write(new)
                 if fname.endswith(".sh"):
                     os.chmod(os.path.join(build_dir, fname), 0o755)

@@ -93,6 +93,31 @@ if "%QTINC%"=="" (
 )
 set "HERE=%~dp0"
 set "OBJS="
+REM The plug-in lands in a folder named after the Maya version, never with the
+REM version in its file name: Maya records the file name in every scene that
+REM uses it. The year comes from the install's folder name (Maya2026), else from
+REM its devkit's MAYA_API_VERSION. A build folder already inside its version
+REM folder (a multi-version compile's out/2026/build) writes beside itself.
+set "_MN="
+set "_API="
+set "_YEAR="
+for %%D in ("%MAYA%\.") do set "_MN=%%~nxD"
+if /i "%_MN:~0,4%"=="maya" set "_YEAR=%_MN:~4,4%"
+echo %_YEAR%| findstr /r "^[0-9][0-9][0-9][0-9]$" >nul || set "_YEAR="
+if "%_YEAR%"=="" for /f "tokens=3" %%D in ('findstr /r /c:"^#define  *MAYA_API_VERSION " "%MAYA%\include\maya\MTypes.h" 2^>nul') do set "_API=%%D"
+if "%_YEAR%"=="" set "_YEAR=%_API:~0,4%"
+echo %_YEAR%| findstr /r "^[0-9][0-9][0-9][0-9]$" >nul || set "_YEAR="
+if not "%_YEAR%"=="" goto :plugin_dir_year
+echo build.bat: cannot tell which Maya version "%MAYA%" is: no year in 1>&2
+echo   its folder name and no MAYA_API_VERSION in include\maya\MTypes.h 1>&2
+exit /b 1
+:plugin_dir_year
+set "_PN="
+for %%D in ("%HERE%..") do set "_PN=%%~nxD"
+set "PLUGIN_DIR=%HERE%..\%_YEAR%"
+if "%_PN%"=="%_YEAR%" set "PLUGIN_DIR=%HERE%.."
+if not exist "%PLUGIN_DIR%" mkdir "%PLUGIN_DIR%"
+if exist "%PLUGIN_DIR%\..\mPyMega.mll" echo build.bat: note: an older mPyMega.mll sits one folder up and is left in place; Maya loads whichever comes first on the plug-in path 1>&2
 cl /nologo /std:c++17 /O2 /fp:precise /EHsc /MD /bigobj /utf-8 /D NT_PLUGIN /D REQUIRE_IOSTREAM /D _BOOL /D WIN32 /D _WINDOWS /D _CRT_SECURE_NO_WARNINGS /Zc:__cplusplus /permissive- /I "%QTINC%" /FI nd_msvc_stdext_compat.h /D MNoVersionString /D MNoPluginEntry /c "%HERE%source\mPyDnet.cpp" /Fo"%HERE%source\mPyDnet.obj" /I "%MAYA%\include"
 if errorlevel 1 exit /b 1
 set "OBJS=%OBJS% "%HERE%source\mPyDnet.obj""
@@ -215,9 +240,9 @@ if exist "%LINKTMP%" rd /s /q "%LINKTMP%"
 mkdir "%LINKTMP%"
 cl /nologo /LD %OBJS% /link /LIBPATH:"%MAYA%\lib" OpenMaya.lib OpenMayaAnim.lib OpenMayaUI.lib OpenMayaRender.lib Foundation.lib Qt6Core.lib Qt6Gui.lib Qt6Widgets.lib /IMPLIB:"%LINKTMP%\mPyMega.lib" /OUT:"%LINKTMP%\mPyMega.mll" /EXPORT:initializePlugin /EXPORT:uninitializePlugin
 if errorlevel 1 exit /b 1
-copy /Y "%LINKTMP%\mPyMega.mll" "%HERE%..\mPyMega.mll" >nul
+copy /Y "%LINKTMP%\mPyMega.mll" "%PLUGIN_DIR%\mPyMega.mll" >nul
 if errorlevel 1 exit /b 1
 rd /s /q "%LINKTMP%" 2>nul
 del %OBJS% 2>nul
-echo Built: %HERE%..\mPyMega.mll
+echo Built: %PLUGIN_DIR%\mPyMega.mll
 exit /b 0

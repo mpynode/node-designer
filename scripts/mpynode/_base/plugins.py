@@ -90,9 +90,11 @@ def validate_registered_types(bundle_path: str) -> dict:
     node type (a bad ``initializePlugin``), so "loaded" is necessary but not
     sufficient to call a compile a success. This reads the build manifest
     (``<out_dir>/build/manifest.json``, the SSOT written by the compile
-    controller) for the expected per-node ``type_name`` values and checks each
-    against ``cmds.pluginInfo(base, query=True, dependNode=True)`` (the node
-    types the loaded plugin provides).
+    controller; the bundle itself sits in a version folder, ``<out_dir>/2025/``,
+    so ``out_dir`` comes from ``toolchain.out_dir_for_plugin``) for the expected
+    per-node ``type_name`` values and checks each against
+    ``cmds.pluginInfo(base, query=True, dependNode=True)`` (the node types the
+    loaded plugin provides).
 
     Returns ``{"base", "ok": bool, "expected": [...], "registered": [...],
     "missing": [...], "error": str | None}`` and NEVER raises. Tolerant: a
@@ -106,8 +108,10 @@ def validate_registered_types(bundle_path: str) -> dict:
     result = {"base": base, "ok": True, "expected": [], "registered": [],
               "missing": [], "error": None}
     try:
-        manifest = os.path.join(os.path.dirname(bundle_path), "build",
-                                "manifest.json")
+        from mpynode.native.toolchain import toolchain
+
+        manifest = os.path.join(toolchain.out_dir_for_plugin(bundle_path),
+                                "build", "manifest.json")
         if not os.path.isfile(manifest):
             return result  # no receipt -> nothing to validate against
         with open(manifest) as fh:

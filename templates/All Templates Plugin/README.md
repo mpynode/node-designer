@@ -11,8 +11,9 @@ demo, each already swapped over to the compiled node.
   `demo_layout`, `demo_two_knots`; Spine has three: `demo`,
   `demo_twist_squash`, `demo_closed_loop`).
 * `reports/` -- the evidence behind them.
-* `plugin/` -- where you build `mPyMega` (37/37 node types, 32 bundled
-  `@maya_command`s, zero node drops). **Empty in a fresh clone**: see below.
+* `<year>/` (`2026/`, `2025/` ...) -- where `mPyMega` lands when you build it
+  (37/37 node types, 32 bundled `@maya_command`s, zero node drops), one folder
+  per Maya version. **Absent in a fresh clone**: see below.
 
 ## Build the plug-in first
 
@@ -32,23 +33,30 @@ build.bat 2026
 ```
 
 It compiles `build/` (37 node types + 32 bundled commands, each namespaced and
-linked through one generated `plugin_main.cpp`) and installs the result into
-`plugin/`, creating that folder if it does not exist yet.
+linked through one generated `plugin_main.cpp`) and writes the result into a
+folder named after the Maya version it was built for: `2026/mPyMega.bundle`
+(`2026\mPyMega.mll` on Windows), creating that folder if it does not exist yet.
+Building for a second version adds its own folder beside the first.
 
-**Do not rename the built file.** Maya derives a plug-in's *name* from its
-filename, and every scene here carries `requires ... "mPyMega"`. A
-version-stamped copy like `mPyMega.2026.bundle` loads without complaint but
-registers as `mPyMega.2026`, and then all 40 scenes open with unknown nodes —
-nothing fails at build time, so the breakage only shows up in the viewport.
+**Do not rename the built file.** The version lives in the folder, never in the
+file name: Maya derives a plug-in's *name* from its filename, and every scene
+here carries `requires ... "mPyMega"`. A version-stamped copy like
+`mPyMega.2026.bundle` loads without complaint but registers as `mPyMega.2026`,
+and then all 40 scenes open with unknown nodes — nothing fails at build time, so
+the breakage only shows up in the viewport.
+
+A `plugin/mPyMega.*` or a top-level `mPyMega.*` left by a build from before the
+version folders is never deleted; the build says when one is there, because Maya
+loads whichever `mPyMega` comes first on `MAYA_PLUG_IN_PATH`.
 
 ## Opening a scene
 
 The scenes reference `mPyMega` by name, so Maya has to be able to find the
-plug-in. Point `MAYA_PLUG_IN_PATH` at `plugin/` before launching. From the repo
-root:
+plug-in. Point `MAYA_PLUG_IN_PATH` at the version folder of the Maya you launch
+(`2026/` for Maya 2026) before launching. From the repo root:
 
 ```
-export MAYA_PLUG_IN_PATH="$PWD/templates/All Templates Plugin/plugin:$PWD/plug-ins:$MAYA_PLUG_IN_PATH"
+export MAYA_PLUG_IN_PATH="$PWD/templates/All Templates Plugin/2026:$PWD/plug-ins:$MAYA_PLUG_IN_PATH"
 export PYTHONPATH="$PWD/scripts:$PYTHONPATH"
 ```
 

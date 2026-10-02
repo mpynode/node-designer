@@ -1,15 +1,16 @@
 """Assemble ported single-node MPyNode .cpp file(s) into ONE compiled plugin,
 laid out as a CLEAN, self-documenting, re-buildable folder.
 
-Folder shape: ONLY the importable ``<plugin>.bundle`` sits at the top of
-``out_dir`` (the controller adds any ``*_commands.py`` companion plugins beside
-it); everything the compiler produced to MAKE it lives under ``out_dir/build/``
--- ``build.sh`` / ``build.bat`` / ``README.txt`` directly in ``build/``, and all
-C++ source (``<node>.cpp`` / ``plugin_main.cpp`` / ``shared_helpers.cpp``) nested
-in ``build/source/``. The build scripts read their inputs from ``$HERE/source/``
-and write the rebuilt bundle back up to ``$HERE/../`` so a hand rebuild lands it
-exactly where the programmatic build did. See :func:`build_dir_for` /
-:func:`source_dir_for`.
+Folder shape: the importable ``<plugin>.bundle`` sits in a folder named after
+the Maya version it was built for, ``out_dir/<year>/`` (``out_dir/2025/``) --
+never with the version in its file name, which Maya records in every scene
+(``toolchain.plugin_path_for``). Everything the compiler produced to MAKE it
+lives under ``out_dir/build/`` -- ``build.sh`` / ``build.bat`` / ``README.txt``
+directly in ``build/``, and all C++ source (``<node>.cpp`` / ``plugin_main.cpp``
+/ ``shared_helpers.cpp``) nested in ``build/source/``. The build scripts read
+their inputs from ``$HERE/source/`` and write the rebuilt bundle back up to
+``$HERE/../<year>/`` so a hand rebuild lands it exactly where the programmatic
+build did. See :func:`build_dir_for` / :func:`source_dir_for`.
 
 Output source (what a compile produces, under ``build/source/``):
   * **Single-node plugin (the common case).** ONE self-contained ``<node>.cpp``
@@ -51,6 +52,7 @@ import os
 import re
 import shutil
 import subprocess
+import sys
 from typing import Dict, List, Optional, Tuple
 
 from mpynode.native.toolchain import toolchain
@@ -61,10 +63,10 @@ from .errors import UnsupportedSpec
 _MAYA_DEFAULT = toolchain.preferred_maya_dir()
 
 # Output-folder layout (SINGLE SOURCE OF TRUTH -- compile_controller and the UI
-# import these). A compile leaves ONLY the importable ``<plugin>.bundle`` (and
-# any ``*_commands.py`` companions) at the TOP of ``out_dir``; build scripts,
-# README and manifest live in ``out_dir/build/``, C++ source one level deeper in
-# ``out_dir/build/source/``. "Here is the plugin, here is how it was made".
+# import these). A compile leaves the importable ``<plugin>.bundle`` in
+# ``out_dir/<maya year>/``; build scripts, README and manifest live in
+# ``out_dir/build/``, C++ source one level deeper in ``out_dir/build/source/``.
+# "Here is the plugin, here is how it was made".
 BUILD_DIRNAME  = "build"
 SOURCE_DIRNAME = "source"
 STAGES_DIRNAME = "stages"
@@ -1115,13 +1117,14 @@ def make_build_sh(plugin_name: str, frag_files: List[str],
         "set -euo pipefail",
     ] + toolchain.maya_resolver_sh("darwin") + [
         'HERE="$(cd "$(dirname "$0")" && pwd)"',
+    ] + toolchain.plugin_dir_sh(plugin_name + ".bundle") + [
         'CXX=(clang++ %s -I"$MAYA/include"%s)' % (cxx, qt_cxx),
         "OBJS=()",
         "# Node fragments suppress the plugin-version symbols (%s);" % frag_def,
         "# only plugin_main.cpp emits them (exactly one per plugin).",
     ]
     # Sources live in build/source/ (this script sits in build/); the rebuilt
-    # bundle is written UP to the top level ($HERE/../) beside nothing else.
+    # bundle is written UP into the Maya-version folder ($PLUGIN_DIR).
     for f in frag_files:
         o = os.path.splitext(f)[0] + ".o"
         lines.append('"${CXX[@]}" %s -c "$HERE/source/%s" -o "$HERE/source/%s"'
@@ -1135,13 +1138,13 @@ def make_build_sh(plugin_name: str, frag_files: List[str],
     lines.append(
         'clang++ -std=c++17 -arch arm64 -bundle '
         '-L"$MAYA/Maya.app/Contents/MacOS" %s "${OBJS[@]}"%s '
-        '-o "$HERE/../%s.bundle"' % (libs, qt_link, plugin_name)
+        '-o "$PLUGIN_DIR/%s.bundle"' % (libs, qt_link, plugin_name)
     )
     # Drop the object files so a hand-rebuild leaves the folder as clean as the
-    # compiler did (bundle at top; source + scripts under build/).
+    # compiler did (bundle in its version folder; source + scripts under build/).
     lines.append('rm -f "${OBJS[@]}"')
-    lines.append('echo "Built: $HERE/../%s.bundle"' % plugin_name)
-    lines.append('lipo -info "$HERE/../%s.bundle"' % plugin_name)
+    lines.append('echo "Built: $PLUGIN_DIR/%s.bundle"' % plugin_name)
+    lines.append('lipo -info "$PLUGIN_DIR/%s.bundle"' % plugin_name)
     return "\n".join(lines) + "\n"
 
 
@@ -1196,9 +1199,9 @@ def make_build_bat(plugin_name: str, frag_files: List[str],
         toolchain.qt_resolver_bat() if needs_qt else []) + [
         'set "HERE=%~dp0"',
         'set "OBJS="',
-    ]
+    ] + toolchain.plugin_dir_bat(plugin_name + ".mll")
     # Sources live in build\source\ (this script sits in build\); the rebuilt
-    # .mll is written UP to the top level (%HERE%..\).
+    # .mll is written UP into the Maya-version folder (%PLUGIN_DIR%).
     for f in frag_files:
         o = os.path.splitext(f)[0] + ".obj"
         lines.append(
@@ -1216,7 +1219,7 @@ def make_build_bat(plugin_name: str, frag_files: List[str],
     # folder the user ran this from. Pin them into build\ and delete them with
     # the objects: nothing ever loads the import library of a Maya plug-in.
     pre, out_args, post = toolchain.link_via_temp_bat(
-        plugin_name, "%HERE%..\\" + plugin_name + ".mll")
+        plugin_name, "%PLUGIN_DIR%\\" + plugin_name + ".mll")
     lines.extend(pre)
     lines.append(
         'cl /nologo /LD %%OBJS%% /link /LIBPATH:"%%MAYA%%\\lib" %s %s '
@@ -1226,9 +1229,9 @@ def make_build_bat(plugin_name: str, frag_files: List[str],
     # Drop the object files so a hand-rebuild leaves a clean folder (the link
     # byproducts went with the temp folder).
     lines.append('del %OBJS% 2>nul')
-    # The link above writes UP to %HERE%..\ (the plugin lives beside build/),
-    # so name that exact path -- not %HERE%.
-    lines.append('echo Built: %%HERE%%..\\%s.mll' % plugin_name)
+    # The link above writes UP into the version folder (%PLUGIN_DIR%), so name
+    # that exact path -- not %HERE%.
+    lines.append('echo Built: %%PLUGIN_DIR%%\\%s.mll' % plugin_name)
     # `del` above reports errorlevel 1 when an object file is already gone, and
     # `echo` does NOT reset it -- so a FULLY SUCCESSFUL build exited 1 and every
     # caller believed it had failed. MEASURED on Windows 2026-09-01: mPyMega.mll
@@ -1257,8 +1260,9 @@ def make_single_build_sh(plugin_name: str, node_file: str, libs: List[str],
         "#!/usr/bin/env bash",
         "# Rebuild native plugin '%s' from its single source 'source/%s'."
         % (plugin_name, node_file),
-        "# Edit source/%s, then run ./build.sh to produce %s.bundle (one level up)."
+        "# Edit source/%s, then run ./build.sh to produce %s.bundle (one level"
         % (node_file, plugin_name),
+        "# up, in a folder named after the Maya version: ../2026/).",
         "#",
         "# Usage:  ./build.sh [maya-version]      e.g. ./build.sh 2026",
         "# With no argument the newest installed Maya is used; MAYA=<path>",
@@ -1267,6 +1271,7 @@ def make_single_build_sh(plugin_name: str, node_file: str, libs: List[str],
         "set -euo pipefail",
     ] + toolchain.maya_resolver_sh("darwin") + [
         'HERE="$(cd "$(dirname "$0")" && pwd)"',
+    ] + toolchain.plugin_dir_sh(plugin_name + ".bundle") + [
         "clang++ -std=c++17 -O3 -ffp-contract=off -arch arm64 -bundle \\",
         "  -D OSMac_ -D REQUIRE_IOSTREAM -D _BOOL \\",
         "  -Wno-nontrivial-memcall \\",
@@ -1282,9 +1287,9 @@ def make_single_build_sh(plugin_name: str, node_file: str, libs: List[str],
             "  -Wl,-rpath,%s \\" % fw,
         ]
     lines += [
-        '  -o "$HERE/../%s.bundle" "$HERE/source/%s"' % (plugin_name, node_file),
-        'echo "Built: $HERE/../%s.bundle"' % plugin_name,
-        'lipo -info "$HERE/../%s.bundle"' % plugin_name,
+        '  -o "$PLUGIN_DIR/%s.bundle" "$HERE/source/%s"' % (plugin_name, node_file),
+        'echo "Built: $PLUGIN_DIR/%s.bundle"' % plugin_name,
+        'lipo -info "$PLUGIN_DIR/%s.bundle"' % plugin_name,
         "",
     ]
     return "\n".join(lines)
@@ -1314,7 +1319,7 @@ def make_single_build_bat(plugin_name: str, node_file: str, libs: List[str],
                  toolchain.QT_MSVC_COMPAT_HEADER)) if needs_qt else ""
     stem = os.path.splitext(node_file)[0]
     pre, out_args, post = toolchain.link_via_temp_bat(
-        plugin_name, "%HERE%..\\" + plugin_name + ".mll")
+        plugin_name, "%PLUGIN_DIR%\\" + plugin_name + ".mll")
     return "\r\n".join([
         "@echo off",
         "setlocal",
@@ -1322,6 +1327,8 @@ def make_single_build_bat(plugin_name: str, node_file: str, libs: List[str],
         % (plugin_name, node_file),
         "REM Edit source\\%s, then run build.bat from any cmd.exe -- it sets up "
         "MSVC itself." % node_file,
+        "REM %s.mll lands one level up, in a folder named after the Maya version "
+        "(..\\2026\\)." % plugin_name,
         "REM",
         "REM Usage:  build.bat [maya-version]      e.g. build.bat 2026",
         "REM With no argument the newest installed Maya is used; set MAYA to",
@@ -1332,6 +1339,7 @@ def make_single_build_bat(plugin_name: str, node_file: str, libs: List[str],
       + (  # Must follow the Maya resolver: the Qt probe reads %MAYA%\include.
         toolchain.qt_resolver_bat() if needs_qt else []) + [
         'set "HERE=%~dp0"',
+        *toolchain.plugin_dir_bat(plugin_name + ".mll"),
         *pre,
         ('cl /nologo /LD /std:c++17 /O2 /fp:precise /EHsc /MD /bigobj /utf-8 '
          '/D NT_PLUGIN /D REQUIRE_IOSTREAM /D _BOOL /D WIN32 /D _WINDOWS '
@@ -1344,7 +1352,7 @@ def make_single_build_bat(plugin_name: str, node_file: str, libs: List[str],
         # cl /LD drops <src>.obj in the CWD; /Fo above pins it into build\ so
         # this can remove it (the link byproducts went with the temp folder).
         'del "%%HERE%%%s.obj" 2>nul' % stem,
-        'echo Built: %%HERE%%..\\%s.mll' % plugin_name,
+        'echo Built: %%PLUGIN_DIR%%\\%s.mll' % plugin_name,
         # Cleanup is best effort; it must not decide the exit status.
         "exit /b 0",
         "",
@@ -1360,14 +1368,16 @@ def make_readme(plugin_name: str, node_files: List[str], *, single: bool,
         title, "=" * len(title), "",
         "This 'build/' folder holds everything the compiler produced EXCEPT the",
         "plugin itself: the C++ source (under source/) plus the scripts to rebuild",
-        "it. The importable plugin lives ONE LEVEL UP, beside this folder, so you",
-        "(or an AI agent) can read/tweak the source here and recompile in place.",
+        "it. The importable plugin lives ONE LEVEL UP, in a folder named after the",
+        "Maya version it was built for (../2026/), so you (or an AI agent) can",
+        "read/tweak the source here and recompile in place.",
         "",
         "What you'll see",
         "---------------",
-        "  ../%s   <- the plugin you load into Maya (one level up)." % bundle_name,
+        "  ../<year>/%s   <- the plugin you load into Maya (one level up, in" % bundle_name,
+        "                   the folder named after its Maya version: ../2026/).",
         "  ../<type>_commands.py   <- companion command plugin(s), if any (also",
-        "                             one level up, beside the bundle).",
+        "                             one level up, beside this build/ folder).",
         "  source/       <- the C++ source for every node that LINKED.",
         "  build.sh, build.bat   <- rebuild scripts (see Rebuild below).",
         "  README.txt    <- this file.",
@@ -1398,10 +1408,21 @@ def make_readme(plugin_name: str, node_files: List[str], *, single: bool,
         "  macOS / Linux:  ./build.sh",
         "  Windows:        build.bat   (any cmd.exe -- it locates MSVC via vswhere)",
         "",
-        "Both scripts read $MAYA / %MAYA% for the Maya install (defaulting to the",
-        "standard location). The rebuilt plugin is written to the PARENT folder",
-        "(one level up from here) as:",
-        "  ../%s" % bundle_name,
+        "Both take an optional Maya version (./build.sh 2026, build.bat 2026);",
+        "without one they use $MAYA / %MAYA%, else the newest installed Maya with",
+        "a devkit. The rebuilt plugin is written one level up from here, into a",
+        "folder named after the Maya version it was built against:",
+        "  ../<year>/%s      e.g. ../2026/%s" % (bundle_name, bundle_name),
+        "The year comes from the install's folder name (Maya2026), else from its",
+        "devkit's MAYA_API_VERSION. A build folder that already sits inside its",
+        "version folder (a multi-version compile's <out>/2026/build/) writes the",
+        "plugin beside itself instead.",
+        "",
+        "The version is never part of the file name: Maya records the plugin's",
+        "file name in every scene that uses it, so a versioned name would tie each",
+        "scene to one Maya release. An older copy left one level up by an earlier",
+        "build (../%s) is never deleted; the scripts say when one is" % bundle_name,
+        "there, because Maya loads whichever copy comes first on its plug-in path.",
         "",
         "Failed nodes leave breadcrumbs",
         "------------------------------",
@@ -1559,6 +1580,31 @@ def _rm(path: str) -> None:
         pass
 
 
+def _plugin_path(out_dir: str, plugin_name: str, maya: str, report: dict) -> Optional[str]:
+    """Where the linked plug-in goes: ``<out_dir>/<maya year>/<plugin><ext>``
+    (``toolchain.plugin_path_for``) -- never a versioned file name, which Maya
+    would record in every scene. ``None``, with ``report['reason']`` set, when
+    the version of ``maya`` cannot be told."""
+    path = toolchain.plugin_path_for(out_dir, plugin_name, maya)
+    if path is None:
+        report["reason"] = toolchain.maya_year_unknown_message(maya)
+    return path
+
+
+def _note_older_plugin(out_plugin: str, report: dict, log_cb=None) -> None:
+    """Say -- once, to the build log or else stderr -- when a same-named plug-in
+    from before the per-version folders sits one folder up. It is never deleted
+    (``toolchain.older_plugin_note``); the note also rides on the report."""
+    note = toolchain.older_plugin_note(out_plugin)
+    if not note:
+        return
+    report["older_plugin_note"] = note
+    if log_cb is not None:
+        log_cb(note)
+    else:
+        sys.stderr.write(note + "\n")
+
+
 # What every file this module (or the emitters) writes says about itself, so
 # the migration sweep can tell its own leftovers from a user's files by name.
 _GENERATED_BANNERS = (
@@ -1592,7 +1638,8 @@ def _clean_stale_intermediates(out_dir: str, keep=()) -> None:
 
     Two jobs: (1) MIGRATE -- a pre-reorg compile wrote source / build scripts /
     README / manifest FLAT at the top of ``out_dir``; sweep those so the top
-    level ends up holding only the bundle (+ ``*_commands.py`` companions, which
+    level ends up holding only ``build/`` and the plug-in's version folder (+
+    ``*_commands.py`` companions and any plug-in an older build left there, which
     are left untouched). (2) drop any stale ``frag_*.cpp`` / object files inside
     the build tree. Current-layout sources are overwritten in place.
 
@@ -1653,7 +1700,11 @@ def assemble(
     + ``plugin_main.cpp`` (+ optional ``shared_helpers.cpp``). Either way the
     folder also gets ``build.sh`` AND ``build.bat`` + a ``README.txt``. On every
     platform the compile and link run in-process in a local temp folder; only
-    the finished plug-in is copied to ``out_dir``.
+    the finished plug-in is copied out, to ``out_dir/<maya year>/`` (or to
+    ``out_dir`` itself when that is already the year folder, as a multi-version
+    compile's per-version ``out_dir`` is). A same-named plug-in left one folder
+    up by an earlier build is never deleted; one log line (``log_cb``, else
+    stderr) says it is there.
 
     Returns a report dict: ``{plugin, bundle, nodes:[{name,status,id,reason}],
     ok, dropped}``. With ``strict=True`` any per-node compile failure aborts and
@@ -1688,9 +1739,10 @@ def assemble(
     # Protect the input node .cpp files from the migration sweep in case a caller
     # points out_dir at the folder that holds them.
     _clean_stale_intermediates(out_dir, keep=[cp for _tn, cp in nodes])
-    # Nested layout: source under build/source, scripts under build/, bundle at
-    # the top of out_dir. Create build/source (also makes build/) for both the
-    # single- and multi-node paths below.
+    # Nested layout: source under build/source, scripts under build/, bundle in
+    # its version folder (out_dir/2025/, see toolchain.plugin_dir_for). Create
+    # build/source (also makes build/) for both the single- and multi-node paths
+    # below.
     src_dir   = source_dir_for(out_dir)
     build_dir = build_dir_for(out_dir)
     os.makedirs(src_dir, exist_ok=True)
@@ -1776,6 +1828,13 @@ def assemble(
     tc = _prepare_compiler(report, compile_now)
     if tc is None:
         return report
+    # Where the plug-in goes is settled before anything compiles: a Maya whose
+    # version cannot be told has no folder to land in.
+    out_plugin = None
+    if compile_now:
+        out_plugin = _plugin_path(out_dir, plugin_name, maya, report)
+        if out_plugin is None:
+            return report
     exe, obj_env, compiler = tc["exe"], tc["obj_env"], tc["compiler"]
     arch           = toolchain.mac_arch()
     frag_files     = []
@@ -1847,7 +1906,7 @@ def assemble(
             frag_files.append(os.path.basename(shared_path))
 
         # 3) plugin_main (into build/source) + BOTH build scripts + README (into
-        #    build/), then link the bundle at the TOP of out_dir.
+        #    build/), then link the bundle into its version folder (out_dir/2025/).
         with open(os.path.join(src_dir, "plugin_main.cpp"), "w", encoding="utf-8") as fh:
             fh.write(make_plugin_main(compiled_infos, plugin_name,
                                       vendor=vendor, version=version,
@@ -1868,10 +1927,10 @@ def assemble(
             os.chmod(build_sh, 0o755)
         with open(os.path.join(build_dir, "build.bat"), "w", newline="", encoding="utf-8") as fh:
             fh.write(make_build_bat(plugin_name, frag_files, needs_qt=needs_qt))
-        out_plugin = os.path.join(out_dir, plugin_name + toolchain.plugin_ext())
-        with open(os.path.join(build_dir, "README.txt"), "w", encoding="utf-8") as fh:
+        # newline="" here too: the README is LF everywhere, like the committed ones.
+        with open(os.path.join(build_dir, "README.txt"), "w", newline="", encoding="utf-8") as fh:
             fh.write(make_readme(plugin_name, node_cpp_files, single=False,
-                                 bundle_name=os.path.basename(out_plugin)))
+                                 bundle_name=plugin_name + toolchain.plugin_ext()))
 
         # Remove any stale bundle from a PRIOR compile up-front so the post-link
         # existence check below means "THIS run produced it", not a leftover an
@@ -1917,6 +1976,7 @@ def assemble(
                 report["reason"] = problem
                 return report
             report["bundle"] = out_plugin
+            _note_older_plugin(out_plugin, report, log_cb)
 
     if report.get("bundle"):
         # The linker returned 0 but must have actually produced the artifact --
@@ -2011,10 +2071,10 @@ def _assemble_single(node, plugin_name, out_dir, reg, report, *, strict, maya,
     with open(os.path.join(build_dir, "build.bat"), "w", newline="", encoding="utf-8") as fh:
         fh.write(make_single_build_bat(plugin_name, node_file, libs,
                                        needs_qt=needs_qt, maya=None))
-    out_plugin = os.path.join(out_dir, plugin_name + toolchain.plugin_ext())
-    with open(os.path.join(build_dir, "README.txt"), "w", encoding="utf-8") as fh:
+    # newline="" -- the README is LF everywhere, like the committed ones.
+    with open(os.path.join(build_dir, "README.txt"), "w", newline="", encoding="utf-8") as fh:
         fh.write(make_readme(plugin_name, [node_file], single=True,
-                             bundle_name=os.path.basename(out_plugin)))
+                             bundle_name=plugin_name + toolchain.plugin_ext()))
 
     if not compile_now:
         report["ok"] = True
@@ -2024,6 +2084,12 @@ def _assemble_single(node, plugin_name, out_dir, reg, report, *, strict, maya,
     if tc is None:
         rec["status"] = "compile-failed"
         rec["reason"] = report.get("reason", "toolchain unavailable")
+        report["dropped"].append(type_name)
+        return report
+    out_plugin = _plugin_path(out_dir, plugin_name, maya, report)
+    if out_plugin is None:
+        rec["status"] = "compile-failed"
+        rec["reason"] = report["reason"]
         report["dropped"].append(type_name)
         return report
 
@@ -2085,4 +2151,5 @@ def _assemble_single(node, plugin_name, out_dir, reg, report, *, strict, maya,
         return report
     report["bundle"] = out_plugin
     report["ok"]     = True
+    _note_older_plugin(out_plugin, report, log_cb)
     return report

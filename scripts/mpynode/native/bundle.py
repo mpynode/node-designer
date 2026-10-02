@@ -59,7 +59,8 @@ def _parser() -> argparse.ArgumentParser:
                         "be told and more than one devkit is installed")
     p.add_argument("--out", metavar="DIR",
                    help="output folder (default ./NAME); must be new, empty, or one "
-                        "the bundler wrote")
+                        "the bundler wrote. The plug-in lands in DIR/<maya year>/"
+                        "NAME.mll (.bundle on macOS), its build tree in DIR/build")
     p.add_argument("--exclude", action="append", default=[], metavar="T[,T]",
                    help="drop node type(s) after resolving")
     p.add_argument("--pin", action="append", default=[], metavar="KEY=0xID",
@@ -247,6 +248,8 @@ def main(argv: Optional[List[str]] = None) -> int:
                  % os.path.join(out_dir, "build"))
         else:
             _say("built    : %s" % report.get("bundle"))
+        if report.get("older_plugin_note"):
+            _say("  %s" % report["older_plugin_note"])
         _say("manifest : %s" % report.get("manifest"))
 
     if ok and not ns.no_compile and not ns.no_load_check:

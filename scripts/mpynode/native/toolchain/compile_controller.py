@@ -145,6 +145,17 @@ def _make_port_log_cb(progress_cb, node, i, n, log_path):
     return _cb
 
 
+def _version_dir(target):
+    """The folder name a multi-version build gives one Maya target: its bare
+    year (``2025``, never the install's ``Maya2025`` label), read from the
+    install root the way the bundler reads it (``toolchain.maya_year``), else the
+    target's recorded ``version``. The bundler sees ``<out>/2025`` is already the
+    year folder and puts that version's plug-in straight into it, beside its
+    ``build/`` tree."""
+    return (toolchain.maya_year(target.get("root")) or target.get("version")
+            or target.get("label") or str(target.get("root")))
+
+
 def _cancelled(cancel_event):
     return bool(cancel_event is not None and cancel_event.is_set())
 
@@ -345,11 +356,12 @@ def compile_plugin_multi(specs, plugin_name, out_dir, targets, *,
     """Compile the SAME ``specs`` once per Maya version in ``targets``.
 
     Each target is built against THAT version's devkit (``maya=target["root"]``)
-    into its OWN ``out_dir/<label>/`` subfolder, and (when verifying) parity-
-    checked in that version's ``mayapy`` -- so the produced ``.bundle``/``.mll``
-    is ABI-correct for the version it lives under. ``targets`` is the
-    ``toolchain.discover_maya_installs`` shape (each a dict with ``label`` +
-    ``root``).
+    into its OWN ``out_dir/<year>/`` subfolder (``out_dir/2025/``: the plug-in
+    beside that version's ``build/`` tree, its file name carrying no version),
+    and (when verifying) parity-checked in that version's ``mayapy`` -- so the
+    produced ``.bundle``/``.mll`` is ABI-correct for the version it lives under.
+    ``targets`` is the ``toolchain.discover_maya_installs`` shape (each a dict
+    with ``label`` + ``root``); see :func:`_version_dir`.
 
     Robustness:
       * the spec list is DEEP-COPIED per version, so ``compile_plugin``'s
@@ -400,7 +412,7 @@ def compile_plugin_multi(specs, plugin_name, out_dir, targets, *,
         root  = target.get("root")
         _emit(progress_cb, "version", label, "start",
               "Compiling %s (%d/%d)" % (label, i + 1, n), i, n)
-        sub_out = os.path.join(out_dir, label)
+        sub_out = os.path.join(out_dir, _version_dir(target))
         specs_i = _copy.deepcopy(specs)
         if verify_fn_for is not None:
             vf = verify_fn_for(root)
@@ -618,13 +630,14 @@ def compile_plugin(specs, plugin_name, out_dir, *, strict=True, verify=True,
          it is measurably faster (else keep the original). Default OFF -> no-op.
          Every round's source is kept under ``build/stages/<Type>/3_optimized/``;
          ``keep_intermediates`` keeps each round's compiled plug-in there too.
-      d. ``bundler.assemble`` the surviving ``(type_name, cpp_path)`` pairs once.
+      d. ``bundler.assemble`` the surviving ``(type_name, cpp_path)`` pairs once;
+         the plug-in lands in ``out_dir/<maya year>/`` (``bundle_path``).
       d.1. (``clean_scratch``, default on) delete the build lint -- the per-node
          working dirs and the optimizer's ``_optscratch``. Never ``build/source``
          or ``build/stages``.
       e. (verify only) ``verify_fn`` if given, else the default Maya parity check
          -- a verify FAIL marks the row but is NOT a build failure.
-      f. write ``manifest.json`` next to the bundle.
+      f. write ``manifest.json`` into ``out_dir/build/``.
 
     Returns ``{ok, bundle_path, manifest_path, plugin_name, nodes:[rows],
     errors:[...], strict}``.
@@ -1548,9 +1561,10 @@ def _clean_working_subdirs(out_dir, rows, clean_scratch=True):
     New-layout scratch lives at ``build/<type>/``: removed for every node that
     BUILT, kept for a DROPPED node (debugging). ALSO sweeps the PRE-REORG scratch
     location ``out_dir/<type>/`` (top level) for EVERY node -- migration so
-    re-compiling an old FLAT folder ends with only the bundle (+ ``*_commands.py``
-    companions) and ``build/`` at the top. Both removals are guarded to stay
-    strictly under ``out_dir`` so a surprising type name can't escape the folder.
+    re-compiling an old FLAT folder ends with only the plug-in's version folder
+    (+ ``*_commands.py`` companions) and ``build/`` at the top. Both removals are
+    guarded to stay strictly under ``out_dir`` so a surprising type name can't
+    escape the folder.
 
     ``clean_scratch`` additionally removes the optimizer's working directory
     (``build/_optscratch/``), which nothing used to clean and which grows a full
@@ -1621,8 +1635,9 @@ def _write_manifest(out_dir, plugin_name, bundle_path, rows, strict, provider,
 
     The manifest is a build receipt, not something loaded at runtime, so it lives
     in the ``build/`` folder next to the source/scripts (the top level holds only
-    the bundle + companions). Top-level fields: manifest_version,
-    porter_recipe_version, provider, model, strict, plugin_name, bundle, created.
+    ``build/``, the bundle's version folder and any companions). Top-level
+    fields: manifest_version, porter_recipe_version, provider, model, strict,
+    plugin_name, bundle, created.
     Per-node: source_node hint, type_name, type_id, base, spec_hash,
     port_cache_key, verify row, AND the full spec (so scope B can recompute the
     exact cache key and rebuild byte-identically).
@@ -1710,10 +1725,13 @@ def bundle_prebuilt(paths, plugin_name, out_dir, *, targets=None,
     no verify. The Compile dialog's path when every checked row is compiled
     C++; the CLI (``mpynode.native.bundle``) is the same engine from a shell.
 
-    Returns the dict ``compile_plugin`` returns. With two or more ``targets``
-    (``discover_maya_installs`` rows) it builds one plug-in per version into
-    ``out_dir/<label>/`` and returns the ``compile_plugin_multi`` shape, so the
-    dialog's finish path needs nothing new.
+    Returns the dict ``compile_plugin`` returns. The plug-in always lands in a
+    folder named after its Maya version: with one target, ``out_dir/<year>/``
+    beside ``out_dir/build/``; with two or more ``targets``
+    (``discover_maya_installs`` rows) one build per version, each in
+    ``out_dir/<year>/`` (plug-in + that version's ``build/``), returned in the
+    ``compile_plugin_multi`` shape, so the dialog's finish path needs nothing
+    new.
     """
     from mpynode.native.toolchain import bundle_plan
 
@@ -1758,7 +1776,7 @@ def bundle_prebuilt(paths, plugin_name, out_dir, *, targets=None,
             if _cancelled(cancel_event):
                 cancelled = True
                 break
-            label, sub_out = t["label"], os.path.join(out_dir, t["label"])
+            label, sub_out = t["label"], os.path.join(out_dir, _version_dir(t))
             _emit(progress_cb, "version", label, "start", "Building %s…" % label, 0, n)
             res = _one(t["root"], sub_out)
             _emit(progress_cb, "version", label, "ok" if res["ok"] else "fail", "", 0, n)
@@ -1910,7 +1928,7 @@ class CompileController:
 
     def start_multi(self, specs, plugin_name, out_dir, targets, **opts):
         """Like ``start`` but builds ``specs`` against EVERY Maya version in
-        ``targets`` (``compile_plugin_multi``), each into ``out_dir/<label>/``.
+        ``targets`` (``compile_plugin_multi``), each into ``out_dir/<year>/``.
 
         ``opts`` are forwarded to ``compile_plugin_multi`` EXCEPT
         ``cancel_event`` (always this controller's Event) and ``progress_cb``

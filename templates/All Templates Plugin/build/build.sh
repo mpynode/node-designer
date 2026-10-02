@@ -25,6 +25,32 @@ if [ ! -d "${MAYA:-}/include/maya" ]; then
   exit 1
 fi
 HERE="$(cd "$(dirname "$0")" && pwd)"
+# The plug-in lands in a folder named after the Maya version, never with the
+# version in its file name: Maya records the file name in every scene that
+# uses it. The year comes from the install's folder name (Maya2026), else from
+# its devkit's MAYA_API_VERSION. A build folder already inside its version
+# folder (a multi-version compile's out/2026/build) writes beside itself.
+_mn="$(basename "$MAYA")"
+YEAR=""
+case "$_mn" in
+  [Mm][Aa][Yy][Aa][0-9][0-9][0-9][0-9]*) YEAR="${_mn:4:4}" ;;
+esac
+if [ -z "$YEAR" ]; then
+  YEAR="$(sed -n 's/^#define[[:space:]]\{1,\}MAYA_API_VERSION[[:space:]]\{1,\}\([0-9]\{4\}\).*/\1/p' "$MAYA/include/maya/MTypes.h" 2>/dev/null | head -n 1 || true)"
+fi
+if [ -z "$YEAR" ]; then
+  echo "build.sh: cannot tell which Maya version $MAYA is: no year in its folder name and no MAYA_API_VERSION in include/maya/MTypes.h" >&2
+  exit 1
+fi
+if [ "$(basename "$(cd "$HERE/.." && pwd)")" = "$YEAR" ]; then
+  PLUGIN_DIR="$HERE/.."
+else
+  PLUGIN_DIR="$HERE/../$YEAR"
+fi
+mkdir -p "$PLUGIN_DIR"
+if [ -e "$PLUGIN_DIR/../mPyMega.bundle" ]; then
+  echo "build.sh: note: an older mPyMega.bundle sits one folder up and is left in place; Maya loads whichever comes first on the plug-in path" >&2
+fi
 CXX=(clang++ -std=c++17 -O3 -ffp-contract=off -arch arm64 -D OSMac_ -D REQUIRE_IOSTREAM -D _BOOL -Wno-nontrivial-memcall -I"$MAYA/include" -F"$MAYA/Maya.app/Contents/Frameworks")
 OBJS=()
 # Node fragments suppress the plugin-version symbols (-D MNoVersionString -D MNoPluginEntry);
@@ -105,7 +131,7 @@ OBJS+=("$HERE/source/aimTransform.o")
 OBJS+=("$HERE/source/circularText.o")
 "${CXX[@]}" -c "$HERE/source/plugin_main.cpp" -o "$HERE/source/plugin_main.o"
 OBJS+=("$HERE/source/plugin_main.o")
-clang++ -std=c++17 -arch arm64 -bundle -L"$MAYA/Maya.app/Contents/MacOS" -lOpenMaya -lOpenMayaAnim -lOpenMayaUI -lOpenMayaRender -lFoundation "${OBJS[@]}" -framework QtCore -framework QtGui -framework QtWidgets -F"$MAYA/Maya.app/Contents/Frameworks" -Wl,-rpath,"$MAYA/Maya.app/Contents/Frameworks" -o "$HERE/../mPyMega.bundle"
+clang++ -std=c++17 -arch arm64 -bundle -L"$MAYA/Maya.app/Contents/MacOS" -lOpenMaya -lOpenMayaAnim -lOpenMayaUI -lOpenMayaRender -lFoundation "${OBJS[@]}" -framework QtCore -framework QtGui -framework QtWidgets -F"$MAYA/Maya.app/Contents/Frameworks" -Wl,-rpath,"$MAYA/Maya.app/Contents/Frameworks" -o "$PLUGIN_DIR/mPyMega.bundle"
 rm -f "${OBJS[@]}"
-echo "Built: $HERE/../mPyMega.bundle"
-lipo -info "$HERE/../mPyMega.bundle"
+echo "Built: $PLUGIN_DIR/mPyMega.bundle"
+lipo -info "$PLUGIN_DIR/mPyMega.bundle"

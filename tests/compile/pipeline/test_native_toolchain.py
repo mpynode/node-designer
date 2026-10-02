@@ -637,14 +637,14 @@ class TestRunningMayaDir(unittest.TestCase):
         self.addCleanup(env.stop); self.addCleanup(exe.stop)
 
     def test_it_reads_the_session_maya_location(self):
-        tc = tc_mod()
+        tc   = tc_mod()
         root = self._tree()
         self._isolate(maya_location=root)
         self.assertEqual(tc.running_maya_dir(), root)
 
     def test_it_walks_up_from_the_macos_shape(self):
         """macOS MAYA_LOCATION is <root>/Maya.app/Contents, not <root>."""
-        tc = tc_mod()
+        tc   = tc_mod()
         root = self._tree()
         self._isolate(maya_location=os.path.join(root, "Maya.app", "Contents"))
         self.assertEqual(tc.running_maya_dir(), root)
@@ -652,7 +652,7 @@ class TestRunningMayaDir(unittest.TestCase):
     def test_it_falls_back_to_the_interpreter(self):
         """An embedded Maya need not export MAYA_LOCATION; mayapy still sits
         under <root>/bin."""
-        tc = tc_mod()
+        tc   = tc_mod()
         root = self._tree()
         self._isolate(executable=os.path.join(root, "bin", "mayapy.exe"))
         self.assertEqual(tc.running_maya_dir(), root)
@@ -2001,14 +2001,16 @@ class TestBundlerBuildScripts(unittest.TestCase):
     def test_make_build_bat_echo_names_the_file_it_actually_wrote(self):
         from mpynode.native.compiler import bundler
 
-        # The link writes %HERE%..\<name>.mll (the bundle lives one level up,
-        # beside build/); the echo used to claim %HERE%<name>.mll.
+        # The link writes %PLUGIN_DIR%\<name>.mll (the bundle lives one level
+        # up, in its Maya-version folder); the echo used to claim
+        # %HERE%<name>.mll.
         body = bundler.make_build_bat("myBundle", ["frag_a.cpp"])
         # The link lands in a local temp folder (a cloud-synced checkout hangs
-        # the linker) and is COPIED to %HERE%..\<name>.mll, which the echo names.
+        # the linker) and is COPIED to %PLUGIN_DIR%\<name>.mll, which the echo
+        # names.
         self.assertIn('/OUT:"%LINKTMP%\\myBundle.mll"', body)
-        self.assertIn('copy /Y "%LINKTMP%\\myBundle.mll" "%HERE%..\\myBundle.mll"', body)
-        self.assertIn("echo Built: %HERE%..\\myBundle.mll", body)
+        self.assertIn('copy /Y "%LINKTMP%\\myBundle.mll" "%PLUGIN_DIR%\\myBundle.mll"', body)
+        self.assertIn("echo Built: %PLUGIN_DIR%\\myBundle.mll", body)
 
     def test_make_build_bat_mirrors_the_msvc_charset_and_crt_flags(self):
         from mpynode.native.compiler import bundler
@@ -2404,10 +2406,11 @@ class MsvcLinkByproductTests(unittest.TestCase):
         self.assertIn('/Fo"%HERE%foo.obj"', single)
         self.assertIn('del "%HERE%foo.obj" 2>nul', single)
         self.assertIn('del %OBJS% 2>nul', multi)
-        # ...and the plug-in is copied to where the old in-place link put it
-        self.assertIn('copy /Y "%LINKTMP%\\gizmoCube.mll" "%HERE%gizmoCube.mll"',   porter)
-        self.assertIn('copy /Y "%LINKTMP%\\myBundle.mll" "%HERE%..\\myBundle.mll"', single)
-        self.assertIn('copy /Y "%LINKTMP%\\myBundle.mll" "%HERE%..\\myBundle.mll"', multi)
+        # ...and the plug-in is copied to where it belongs: beside the per-node
+        # scratch script, or into the tree's Maya-version folder
+        self.assertIn('copy /Y "%LINKTMP%\\gizmoCube.mll" "%HERE%gizmoCube.mll"',       porter)
+        self.assertIn('copy /Y "%LINKTMP%\\myBundle.mll" "%PLUGIN_DIR%\\myBundle.mll"', single)
+        self.assertIn('copy /Y "%LINKTMP%\\myBundle.mll" "%PLUGIN_DIR%\\myBundle.mll"', multi)
 
     def test_vs_installer_on_path(self):
         from mpynode.native.toolchain import toolchain as tc
