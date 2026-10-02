@@ -1,12 +1,12 @@
 # rbfWrapDeformer -- compile report
 
-**Source node:** `rbfWrapDeformer`  ·  **Base:** `MPxDeformerNode`  ·  **Generated:** 2026-08-26 01:21
+**Source node:** `rbfWrapDeformer`  ·  **Base:** `MPxDeformerNode`  ·  **Generated:** 2026-09-09 14:57
 
 | stage | outcome |
 |---|---|
 | 1 Transpile | deterministic C++, no AI |
 | 2 AI assist | not run (nothing to fill) |
-| 3 AI optimize | not run |
+| 3 AI optimize | **6616.12x** over 2 round(s) -- 2 run of max 6, stopped: round 2 no-change -- nothing new to compound from |
 
 ## The Python this was generated from
 
@@ -76,9 +76,43 @@ hasCage       = 1.0 if (M > 0 and M == Md) else 0.0
 mesh.setPoints(P + (self.envelope * hasCage) * (warped - P))
 ```
 
+## Optimization
+
+Parity gate: `authored+pointwise`. Every accepted round was re-checked against the interpreted Python before it was allowed to win. Where a node's generic pointwise parity SKIPS -- a deformer writes through the native `outputGeometry`, which the scalar harness cannot read -- the authored `@maya_test` is the ONLY gate, so treat those rows as behavioural checks rather than numerical ones.
+
+Bench scene: geo density 40 / array length 512; noise floor 15 ms; moved per tick: `deformCage <- pSphereShape2.vtx[0]`, `input[0].inputGeometry <- pSphereShape1Orig.vtx[0]`; outputs checked (1 plug(s)).
+
+Baseline **4921.733 ms** -> best **0.744 ms** (**6616.12x**).
+
+Rounds: **2** run of at most 6; the loop stopped because round 2 no-change -- nothing new to compound from.
+
+| # | change | theme | predicted | measured | time | outcome |
+|---|---|---|---|---|---|---|
+| 00 | `--` | -- | -- | 4921.733 ms | -- | -- |
+| 01 | `cache_inverse_thread_rows` | cache the (M+4)x(M+4) Gauss-Jordan inverse on the rest cage's bytes, cache the evaluation matrix H row-by-row on each point's bytes, and run the two remaining per-row matmuls (Ainv@T, H@W) as a deterministic parallel map on a persistent per-node pool | 500.00x | 6616.12x | 15.1 min | ACCEPTED |
+| 02 | `merge_pool_regions` | fold the two per-tick worker wake-ups (W = Ainv@T, then out = H@W) into one pool job with an in-region completion barrier; measured slower on both barrier flavours, so the file is left at the round's entry state | 1.10x | -- | 21.4 min | rejected: no change to the source |
+
+### Predicted vs measured
+
+The rounds where the guess and the stopwatch disagreed. These are the transferable part -- a prediction that missed says more about the machine than one that landed.
+
+* `cache_inverse_thread_rows` -- predicted 500.00x, measured **6616.12x**. the whole 4.9 s is the O(M^3) nd::inv of a 1566x1566 system that depends only on restCage, which HOLDS between ticks; deformCage and one input vertex move, so per tick only W = Ainv@T (7.4 MFLOP), one H row (1562 logs) and warped = H@W (7.3 MFLOP) need recomputing; every accumulation keeps nd::matmul/sum_mul's order (acc starts at 0, ascending terms, a*b operand order), so the result is bit-identical to the unoptimised lowering
+* `merge_pool_regions` -- predicted 1.10x, **rejected: no change to the source**. candidate is identical to the current best
+
+### Rejected rounds
+
+* `merge_pool_regions` -- rejected: no change to the source. candidate is identical to the current best
+
+## Verification
+
+* parity: **pass**
+* verify could not run: Unable to create/find dependency node. | authored @maya_test: 1/1 passed
+
 ## Files
 
 ```
 build/stages/rbfWrapDeformer/1_transpiled.cpp     deterministic transpile (no AI)
+build/stages/rbfWrapDeformer/3_optimized/00_baseline.cpp
+build/stages/rbfWrapDeformer/3_optimized/01_cache_inverse_thread_rows.cpp
 build/source/rbfWrapDeformer.cpp      SHIPPED
 ```

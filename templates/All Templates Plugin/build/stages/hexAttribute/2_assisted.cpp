@@ -220,63 +220,154 @@ MStatus HexAttribute::compute(const MPlug& plug, MDataBlock& data) {
     MString out_aOutput;
 
     // ===== BEGIN PORTED COMPUTE =====
-        // Reproduce CPython str(round(float(v), nd)) in FIXED-point notation using
-        // only <cmath>/<string>. round() is half-to-even on the true double value;
-        // %s of the resulting float is its shortest round-trip repr, which in the
-        // normal magnitude range is the fixed-point form with trailing zeros
-        // stripped (a whole float still shows ".0").
-        // ND_PORT_INCOMPLETE: CPython's str(float) switches to scientific notation
-        // for |exp|>=16 or <=-5 (e.g. 1e+20), and this path also loses precision
-        // for extreme `decimals`. Those exotic ranges emit fixed notation instead
-        // of matching CPython's repr; no dtoa / std::to_chars(double) is portably
-        // available here (libc++ lacks the FP to_chars). Realistic locator XYZ with
-        // small decimals ports exactly. Every output is still written.
-        auto fmtnum = [](double v, int nd) -> std::string {
-            bool neg = std::signbit(v);
-            double a = std::fabs(v);
-            std::string body;
-            if (nd >= 0) {
-                double scale = std::pow(10.0, (double)nd);
-                double t = a * scale;
-                double r = std::floor(t + 0.5);                       // round half..
-                if (std::fabs(t + 0.5 - r) < 1e-9 && std::fmod(r, 2.0) != 0.0)
-                    r -= 1.0;                                          // ..to even
-                std::string s = std::to_string((long long)r);         // scaled int
-                if (nd == 0) {
-                    body = s + ".0";
-                } else {
-                    while ((int)s.size() < nd + 1)
-                        s = "0" + s;                                  // pad leading 0s
-                    std::string ip = s.substr(0, s.size() - (std::size_t)nd);
-                    std::string fp = s.substr(s.size() - (std::size_t)nd);
-                    body = ip + "." + fp;
+        // Python semantics reproduced here:
+        //   round(x, n)  -> exact-decimal rounding, half-to-EVEN, then nearest double
+        //   '%s' % float -> repr(): SHORTEST digit string that strtod's back to x,
+        //                   exponent form iff decpt <= -4 or decpt > 16, ".0" added
+        //                   to integral values in fixed form.
+        // Both are exact-decimal operations, so both are built on the EXACT decimal
+        // expansion of the double (a double is m * 2^e, hence a finite decimal).
+
+        // Exact decimal expansion of a finite, non-zero, positive `ax`.
+        // Fills `digits` (big-endian ASCII digits) and `pointPos` = number of those
+        // digits that sit before the decimal point.
+        auto nd_exact = [](double ax, std::string& digits, int& pointPos) {
+            int e2 = 0;
+            double f = std::frexp(ax, &e2);                 // ax = f * 2^e2, 0.5 <= f < 1
+            std::uint64_t m = (std::uint64_t)std::ldexp(f, 53);
+            int e = e2 - 53;                                // ax = m * 2^e, exactly
+            while (m != 0 && (m & 1ULL) == 0ULL) { m >>= 1; ++e; }  // shrink the work
+            std::vector<int> d;                             // little-endian base-10 bigint
+            d.reserve(64);
+            for (std::uint64_t t = m; t > 0; t /= 10ULL) d.push_back((int)(t % 10ULL));
+            if (d.empty()) d.push_back(0);
+            const int reps = (e < 0) ? -e : e;
+            const int mul  = (e < 0) ? 5 : 2;               // m*2^-k == m*5^k * 10^-k
+            const int frac = (e < 0) ? -e : 0;
+            if (reps > 0) {
+                d.reserve(d.size() + (std::size_t)reps + 4);
+                for (int i = 0; i < reps; ++i) {
+                    int carry = 0;
+                    for (std::size_t j = 0; j < d.size(); ++j) {
+                        int v = d[j] * mul + carry;
+                        d[j] = v % 10;
+                        carry = v / 10;
+                    }
+                    while (carry != 0) { d.push_back(carry % 10); carry /= 10; }
                 }
-            } else {
-                double scale = std::pow(10.0, (double)(-nd));
-                double t = a / scale;
-                double r = std::floor(t + 0.5);
-                if (std::fabs(t + 0.5 - r) < 1e-9 && std::fmod(r, 2.0) != 0.0)
-                    r -= 1.0;
-                std::string s = std::to_string((long long)r);
-                for (int k = 0; k < -nd; ++k) s += "0";               // scale back up
-                body = s + ".0";
             }
-            // strip trailing zeros, keep one digit after the '.'
-            std::string::size_type dot = body.find('.');
-            if (dot != std::string::npos) {
-                std::string::size_type last = body.size() - 1;
-                while (last > dot + 1 && body[last] == '0') --last;
-                body.erase(last + 1);
-            }
-            if (neg) body = "-" + body;                               // preserves -0.0
-            return body;
+            while ((int)d.size() < frac + 1) d.push_back(0);  // at least one integer digit
+            digits.assign(d.size(), '0');
+            for (std::size_t j = 0; j < d.size(); ++j)
+                digits[d.size() - 1 - j] = (char)('0' + d[j]);
+            pointPos = (int)digits.size() - frac;
         };
 
-        std::string txt = "DRAG ME AROUND!\n";
-        txt += "X: " + fmtnum(in_aInPosition[0], in_aDecimals) + "\n";
-        txt += "Y: " + fmtnum(in_aInPosition[1], in_aDecimals) + "\n";
-        txt += "Z: " + fmtnum(in_aInPosition[2], in_aDecimals) + "\n";
-        out_aOutput = MString(txt.c_str());
+        // Round-half-to-even decision for a digit string cut after `keep` digits.
+        auto nd_round_up = [](const std::string& digits, std::size_t keep) -> bool {
+            char d0 = digits[keep];
+            if (d0 != '5') return d0 > '5';
+            for (std::size_t i = keep + 1; i < digits.size(); ++i)
+                if (digits[i] != '0') return true;           // > half -> up
+            char last = (keep > 0) ? digits[keep - 1] : '0'; // exact half -> to even
+            return ((last - '0') % 2) != 0;
+        };
+
+        // Increment a decimal digit string by one (may grow by one digit).
+        auto nd_inc = [](std::string s) -> std::string {
+            for (int i = (int)s.size() - 1; i >= 0; --i) {
+                if (s[(std::size_t)i] != '9') {
+                    s[(std::size_t)i] = (char)(s[(std::size_t)i] + 1);
+                    return s;
+                }
+                s[(std::size_t)i] = '0';
+            }
+            return std::string("1") + s;
+        };
+
+        // Python round(x, nd) -- nd may be negative (round left of the point).
+        auto nd_py_round = [&](double x, int nd) -> double {
+            if (!std::isfinite(x) || x == 0.0) return x;     // nan/inf/+-0 pass through
+            const bool neg = std::signbit(x);
+            std::string dg;
+            int pp = 0;
+            nd_exact(std::fabs(x), dg, pp);
+            const long long keep = (long long)pp + (long long)nd;
+            if (keep >= (long long)dg.size()) return x;      // nothing to drop -> exact
+            double r = 0.0;
+            if (keep >= 0) {                                 // keep < 0 -> rounds to zero
+                std::string kept = dg.substr(0, (std::size_t)keep);
+                if (nd_round_up(dg, (std::size_t)keep)) kept = nd_inc(kept);
+                if (!kept.empty()) {
+                    std::string lit = kept + "e" + std::to_string(-(long long)nd);
+                    try { r = std::stod(lit); } catch (...) { return x; }
+                }
+            }
+            return neg ? -r : r;                             // preserves -0.0
+        };
+
+        // Python repr()/str() of a float.
+        auto nd_py_repr = [&](double v) -> std::string {
+            if (std::isnan(v)) return std::string("nan");
+            const bool neg = std::signbit(v);
+            if (std::isinf(v)) return neg ? std::string("-inf") : std::string("inf");
+            if (v == 0.0) return neg ? std::string("-0.0") : std::string("0.0");
+            const double av = std::fabs(v);
+            std::string dg;
+            int pp = 0;
+            nd_exact(av, dg, pp);
+            std::size_t lz = 0;
+            while (dg[lz] == '0') ++lz;                      // av != 0 -> terminates
+            std::string sig = dg.substr(lz);
+            int decpt = pp - (int)lz;                        // av = 0.sig * 10^decpt
+            while (sig.size() > 1 && sig[sig.size() - 1] == '0') sig.erase(sig.size() - 1);
+
+            std::string best = sig;                          // exact expansion: always round-trips
+            int bestdecpt = decpt;
+            for (std::size_t p = 1; p < sig.size(); ++p) {   // shortest round-tripping prefix
+                std::string kept = sig.substr(0, p);
+                int dp = decpt;
+                if (nd_round_up(sig, p)) {
+                    kept = nd_inc(kept);
+                    if (kept.size() > p) { kept.erase(p); dp += 1; }
+                }
+                while (kept.size() > 1 && kept[kept.size() - 1] == '0') kept.erase(kept.size() - 1);
+                std::string lit = kept + "e" + std::to_string(dp - (int)kept.size());
+                double back = 0.0;
+                try { back = std::stod(lit); } catch (...) { continue; }
+                if (back == av) { best = kept; bestdecpt = dp; break; }
+            }
+
+            std::string s;
+            if (bestdecpt <= -4 || bestdecpt > 16) {         // exponent form (no ".0")
+                s += best[0];
+                if (best.size() > 1) { s += '.'; s += best.substr(1); }
+                int ex = bestdecpt - 1;
+                s += 'e';
+                s += (ex < 0) ? '-' : '+';
+                std::string es = std::to_string((ex < 0) ? -ex : ex);
+                if (es.size() < 2) es = std::string("0") + es;
+                s += es;
+            } else if (bestdecpt <= 0) {
+                s = "0.";
+                s.append((std::size_t)(-bestdecpt), '0');
+                s += best;
+            } else if ((int)best.size() <= bestdecpt) {
+                s = best;
+                s.append((std::size_t)(bestdecpt - (int)best.size()), '0');
+                s += ".0";
+            } else {
+                s = best.substr(0, (std::size_t)bestdecpt) + "." + best.substr((std::size_t)bestdecpt);
+            }
+            return neg ? (std::string("-") + s) : s;
+        };
+
+        const int nd_dec = in_aDecimals;
+        std::string nd_txt = "DRAG ME AROUND!\n";
+        nd_txt += "X: " + nd_py_repr(nd_py_round(in_aInPosition[0], nd_dec)) + "\n";
+        nd_txt += "Y: " + nd_py_repr(nd_py_round(in_aInPosition[1], nd_dec)) + "\n";
+        nd_txt += "Z: " + nd_py_repr(nd_py_round(in_aInPosition[2], nd_dec)) + "\n";
+        out_aOutput = MString(nd_txt.c_str());
     // ===== END PORTED COMPUTE =====
 
     // --- finalize ---

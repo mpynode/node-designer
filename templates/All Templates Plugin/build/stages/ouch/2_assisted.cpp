@@ -109,28 +109,52 @@ MStatus Ouch::compute(const MPlug& plug, MDataBlock& data) {
     h_aColor.set3Float(0.0f, 0.0f, 0.0f);
 
     // ===== BEGIN PORTED COMPUTE =====
-    // The colour output is a pure function of the bend angle: green in the safe
-    // range, red once the arm bends past the threshold. That is the ONLY part of
-    // this node that has a C++ lowering.
-    double col_r = 0.0, col_g = 1.0, col_b = 0.0;   // self.color = [0, 1, 0]
-    if (in_aAngle < 0.165009870842) {
-        col_r = 1.0; col_g = 0.0; col_b = 0.0;      // self.color = [1, 0, 0]
-    }
+    // Persistent per-instance state: `self.pain` is a session latch that survives
+        // between evals (it gates the one-shot playback in the Python).
+        struct NodeState {
+            const void* key;
+            bool  initialized = false;   // hasattr(self, "pain")
+            bool  pain = false;          // self.pain
+        };
+        static std::vector<NodeState*> s_states;   // POINTERS: the vector reallocates,
+                                                   // the states it points at never move
+        NodeState* st = nullptr;
+        for (NodeState* s : s_states)
+            if (s->key == (const void*)this) { st = s; break; }
+        if (!st) { st = new NodeState(); st->key = (const void*)this; s_states.push_back(st); }
 
-    // ND_PORT_INCOMPLETE: audioFile -> self.audioData sync needs open()/file I/O
-    // (ouch_resolve_clip_path + ouch_load_bytes read a clip off disk, and
-    // ouch_resolve_clip_path also calls maya.cmds file(q=True,sceneName=True)); a
-    // compiled compute may do neither. No colour effect -- audioData only feeds the
-    // player. Left unloaded.
+        if (!st->initialized) { st->pain = false; st->initialized = true; }
 
-    // ND_PORT_INCOMPLETE: the async Qt media player (ouch_make_player /
-    // make_audio_player -> QMediaPlayer, plus the temp-file write and the
-    // self._player / self._player_sig / self.pain playback latch) is a GUI/Qt
-    // side-effect with no C++ equivalent and no bearing on the colour output. The
-    // one-shot play()/setPosition(0)/stop() calls are dropped; nothing downstream
-    // reads them.
+        // ND_PORT_INCOMPLETE: the whole audio block (self.audioData / self.audioPath /
+        // self._player_sig / self._player, and the Init helpers ouch_resolve_clip_path,
+        // ouch_load_bytes, ouch_bytes_signature, ouch_audio_ext, ouch_make_player, plus
+        // mpynode.ui.qt_wrapper.make_audio_player) cannot be ported. It needs disk I/O
+        // (open() on the clip and on a temp file), maya.cmds file(q=True, sceneName=True)
+        // to resolve a relative path, and a Qt QMediaPlayer -- all forbidden in a compiled
+        // compute. The `audioFile` input is therefore read but unused, no clip is loaded,
+        // and no player is built.
+        (void)in_aAudioFile;
 
-    h_aColor.set3Float((float)col_r, (float)col_g, (float)col_b);
+        // ND_PORT_INCOMPLETE: player.setPosition(0)/play()/stop() have no C++ equivalent
+        // here (no player object exists), so the one-shot playback side effect is dropped.
+        // The `pain` latch itself is still carried across evals so the state machine keeps
+        // its Python semantics; only the sound is missing.
+
+        // -- colour (fully ported) --
+        double r = 0.0, g = 1.0, b = 0.0;
+        if (in_aAngle < 0.165009870842) {
+            r = 1.0; g = 0.0; b = 0.0;
+            if (!st->pain) {
+                st->pain = true;
+                // player.setPosition(0); player.play();  -- unported, see note above
+            }
+        }
+        else {
+            st->pain = false;
+            // player.stop();  -- unported, see note above
+        }
+
+        h_aColor.set3Float((float)r, (float)g, (float)b);
     // ===== END PORTED COMPUTE =====
 
     // --- finalize ---

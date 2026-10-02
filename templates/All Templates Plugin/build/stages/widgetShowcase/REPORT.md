@@ -1,12 +1,12 @@
 # widgetShowcase -- compile report
 
-**Source node:** `widgetShowcase`  ·  **Base:** `MPxLocatorNode`  ·  **Generated:** 2026-08-26 01:21
+**Source node:** `widgetShowcase`  ·  **Base:** `MPxLocatorNode`  ·  **Generated:** 2026-09-25 23:47
 
 | stage | outcome |
 |---|---|
 | 1 Transpile | emitted, with region(s) the transpiler could not lower |
 | 2 AI assist | ran -- no unresolved regions |
-| 3 AI optimize | not run |
+| 3 AI optimize | ran, nothing accepted (baseline could not be benchmarked) -- 0 run of max 6, stopped: baseline could not be benchmarked |
 
 ## The Python this was generated from
 
@@ -15,7 +15,7 @@
 # locator (no auto_refresh). The `preset` enum selects which draw slots
 # light up; a persistent `presets` dict (if present) overrides the shipped
 # DEFAULT_PRESETS. Unassigned slots stay None and simply don't draw.
-preset  = self.preset.name()
+preset = self.preset.name()
 presets = getattr(self, "presets", None)
 if not isinstance(presets, dict):
     presets = DEFAULT_PRESETS
@@ -62,10 +62,30 @@ if "text" in active:
 self.draw = items
 ```
 
+## Optimization
+
+Parity gate: not exercised -- no candidate reached the parity check (the baseline was unmeasurable or no round compiled).
+
+Bench scene: geo density 40 / array length 512; noise floor 15 ms.
+
+Baseline **--** -> best **--** (**1.00x**).
+
+Rounds: **0** run of at most 6; the loop stopped because baseline could not be benchmarked.
+
+| # | change | theme | predicted | measured | time | outcome |
+|---|---|---|---|---|---|---|
+| 00 | `--` | -- | -- | -- | -- | -- |
+
+## Verification
+
+* parity: **pass**
+* no scalar outputs to compare -- pointwise parity skipped (vacuous check) | authored @maya_test: 1/1 passed
+
 ## Files
 
 ```
 build/stages/widgetShowcase/1_transpiled.cpp     deterministic transpile (no AI)
 build/stages/widgetShowcase/2_assisted.cpp       AI filled the unported region(s)
+build/stages/widgetShowcase/3_optimized/00_baseline.cpp
 build/source/widgetShowcase.cpp      SHIPPED
 ```

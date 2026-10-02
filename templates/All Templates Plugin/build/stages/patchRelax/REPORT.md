@@ -1,12 +1,12 @@
 # patchRelax -- compile report
 
-**Source node:** `patchRelax`  ·  **Base:** `MPxDeformerNode`  ·  **Generated:** 2026-08-26 01:21
+**Source node:** `patchRelax`  ·  **Base:** `MPxDeformerNode`  ·  **Generated:** 2026-09-09 14:19
 
 | stage | outcome |
 |---|---|
 | 1 Transpile | deterministic C++, no AI |
 | 2 AI assist | not run (nothing to fill) |
-| 3 AI optimize | not run |
+| 3 AI optimize | **3.21x** over 2 round(s) -- 2 run of max 6, stopped: round 2 not-faster -- nothing new to compound from |
 
 ## The Python this was generated from
 
@@ -53,9 +53,44 @@ if (Kw > 0) and (flat.shape[0] == N * Kw):
 mesh.setPoints(P + self.envelope * (out - P))
 ```
 
+## Optimization
+
+**Parity gate: authored `@maya_test` only.** The generic pointwise compare did not run for this node, so every accepted round below was judged by the authored test's own scene -- a behavioural check, not a numerical one. The bench-scene fingerprint (when recorded below) is the only value-level check these rounds had.
+
+Bench scene: geo density 400 / array length 20000; noise floor 15 ms; moved per tick: `alpha (double)`, `iterations (int)`, `ringNbrs[0] (int)`, `ringWidth (int)`, `surfaceBlend (double)`, `input[0].inputGeometry <- pSphereShape1Orig.vtx[0]`; outputs checked (1 plug(s)); accepts re-timed against the incumbent on geo 40 / array 512 and rejected if slower there; baseline under the noise floor at the largest scene, so every accept had to clear 1.15x on two independent timings. baseline 7.790 ms is below the 15 ms noise floor even at the largest bench scene (geo=400 array=20000); measured anyway -- every accept must clear 1.15x on two independent timings.
+
+Baseline **7.790 ms** -> best **2.430 ms** (**3.21x**).
+
+Rounds: **2** run of at most 6; the loop stopped because round 2 not-faster -- nothing new to compound from.
+
+| # | change | theme | predicted | measured | time | outcome |
+|---|---|---|---|---|---|---|
+| 00 | `--` | -- | -- | 7.790 ms | -- | -- |
+| 01 | `lazy_gate_inputs` | pull the rest mesh and read the 20k ring values only inside the size gate that consumes them, and probe the ring array's length in O(1) instead of walking 20k element handles | 2.00x | 3.21x | 13.2 min | ACCEPTED |
+| 02 | `float_passthrough` | the bench never passes the ring-size gate (20000 ring ids vs 159602*Kw), so the timed path is the envelope pass-through; evaluate it in float, where this exact expression is bit-identical to the double form, and skip building the 20k-element ring handle when ringWidth <= 0 | 1.12x | 2.416 ms | 13.9 min | rejected: not faster |
+
+### Predicted vs measured
+
+The rounds where the guess and the stopwatch disagreed. These are the transferable part -- a prediction that missed says more about the machine than one that landed.
+
+* `lazy_gate_inputs` -- predicted 2.00x, measured **3.21x**. at 159,602 verts and 20,000 ring elements the gate `len(flat) == N*Kw` can never pass, so every timed tick paid for a 20k MDataHandle walk, a 160k-vertex rest-mesh input pull (measured ~0.9-1.6 ms by itself), and three (N,3) double temporaries whose result is just P; the source reads restMesh and the ring values only inside the gate, so deferring them is a pure reordering with identical output. Measured on this Windows box: 8.06 -> 3.55 ms (ring probe + no double temporaries) -> 2.52 ms (rest-mesh pull deferred). A 4-wide unroll of the remaining float write-back loop measured slower (2.97 ms) and was reverted; the ~2.3 ms left is Maya's own deformer input->output mesh copy.
+* `float_passthrough` -- predicted 1.12x, **rejected: not faster**. the deform body is dominated by the P + env*(P-P) loop widening 480k floats to double and narrowing back; (p-p) is exactly +-0/NaN, env*0 is exactly +-0/NaN, and p + (+-0) is exactly p in either precision, so float loses no bits and runs 4 lanes per op with no cvt; the ring array handle is only observable once Kw > 0, so reading ringWidth first and short-circuiting is the Python's own `and` semantics
+
+### Rejected rounds
+
+* `float_passthrough` -- rejected: not faster. the bench never passes the ring-size gate (20000 ring ids vs 159602*Kw), so the timed path is the envelope pass-through; evaluate it in float, where this exact expression is bit-identical to the double form, and skip building the 20k-element ring handle when ringWidth <= 0
+
+## Verification
+
+* parity: **pass**
+* compute reshapes an array input by a scalar-int stride/width -- its array inputs are cross-coupled (element counts must be mutually consistent), which the generic per-input random drive cannot synthesize; pointwise parity skipped (authored @maya_test is the parity gate) | authored @maya_test: 1/1 passed
+
 ## Files
 
 ```
 build/stages/patchRelax/1_transpiled.cpp     deterministic transpile (no AI)
+build/stages/patchRelax/3_optimized/00_baseline.cpp
+build/stages/patchRelax/3_optimized/01_lazy_gate_inputs.cpp
+build/stages/patchRelax/3_optimized/02_float_passthrough.cpp
 build/source/patchRelax.cpp      SHIPPED
 ```

@@ -22,43 +22,43 @@
 #define ND_BUNDLE_STRICT 0
 #endif
 
-MStatus register_MPyDnet(MFnPlugin&); MStatus deregister_MPyDnet(MFnPlugin&);
-MStatus register_ComboCorrectives(MFnPlugin&); MStatus deregister_ComboCorrectives(MFnPlugin&);
-MStatus register_ProcrustesTags(MFnPlugin&); MStatus deregister_ProcrustesTags(MFnPlugin&);
-MStatus register_NurbsWave(MFnPlugin&); MStatus deregister_NurbsWave(MFnPlugin&);
-MStatus register_PatchRelax(MFnPlugin&); MStatus deregister_PatchRelax(MFnPlugin&);
-MStatus register_RbfWrapDeformer(MFnPlugin&); MStatus deregister_RbfWrapDeformer(MFnPlugin&);
-MStatus register_SineRipple(MFnPlugin&); MStatus deregister_SineRipple(MFnPlugin&);
-MStatus register_UnitSphereCollision(MFnPlugin&); MStatus deregister_UnitSphereCollision(MFnPlugin&);
-MStatus register_CompositeTexture(MFnPlugin&); MStatus deregister_CompositeTexture(MFnPlugin&);
-MStatus register_ScanlineTex(MFnPlugin&); MStatus deregister_ScanlineTex(MFnPlugin&);
-MStatus register_FileTexture(MFnPlugin&); MStatus deregister_FileTexture(MFnPlugin&);
-MStatus register_GameOfLifeTex(MFnPlugin&); MStatus deregister_GameOfLifeTex(MFnPlugin&);
-MStatus register_TwoBoneIK(MFnPlugin&); MStatus deregister_TwoBoneIK(MFnPlugin&);
-MStatus register_AnimatedSelection(MFnPlugin&); MStatus deregister_AnimatedSelection(MFnPlugin&);
-MStatus register_AnimatedText(MFnPlugin&); MStatus deregister_AnimatedText(MFnPlugin&);
-MStatus register_MeshRegionLocator(MFnPlugin&); MStatus deregister_MeshRegionLocator(MFnPlugin&);
-MStatus register_WidgetShowcase(MFnPlugin&); MStatus deregister_WidgetShowcase(MFnPlugin&);
-MStatus register_DiskMeshCache(MFnPlugin&); MStatus deregister_DiskMeshCache(MFnPlugin&);
-MStatus register_GameOfLifeMesh(MFnPlugin&); MStatus deregister_GameOfLifeMesh(MFnPlugin&);
-MStatus register_JsonMeshReader(MFnPlugin&); MStatus deregister_JsonMeshReader(MFnPlugin&);
-MStatus register_MeshMaze(MFnPlugin&); MStatus deregister_MeshMaze(MFnPlugin&);
-MStatus register_Metaballs(MFnPlugin&); MStatus deregister_Metaballs(MFnPlugin&);
-MStatus register_UvLayoutMesh(MFnPlugin&); MStatus deregister_UvLayoutMesh(MFnPlugin&);
-MStatus register_VoxelizeMesh(MFnPlugin&); MStatus deregister_VoxelizeMesh(MFnPlugin&);
-MStatus register_BubbleSort(MFnPlugin&); MStatus deregister_BubbleSort(MFnPlugin&);
-MStatus register_HexAttribute(MFnPlugin&); MStatus deregister_HexAttribute(MFnPlugin&);
-MStatus register_Ouch(MFnPlugin&); MStatus deregister_Ouch(MFnPlugin&);
-MStatus register_Spine(MFnPlugin&); MStatus deregister_Spine(MFnPlugin&);
-MStatus register_Spline(MFnPlugin&); MStatus deregister_Spline(MFnPlugin&);
-MStatus register_SpringChain(MFnPlugin&); MStatus deregister_SpringChain(MFnPlugin&);
-MStatus register_HelixCurve(MFnPlugin&); MStatus deregister_HelixCurve(MFnPlugin&);
-MStatus register_RippleSurf(MFnPlugin&); MStatus deregister_RippleSurf(MFnPlugin&);
-MStatus register_DualQuaternionSkin(MFnPlugin&); MStatus deregister_DualQuaternionSkin(MFnPlugin&);
-MStatus register_LinearBlendSkin(MFnPlugin&); MStatus deregister_LinearBlendSkin(MFnPlugin&);
-MStatus register_TwistSwingSkin(MFnPlugin&); MStatus deregister_TwistSwingSkin(MFnPlugin&);
-MStatus register_AimTransform(MFnPlugin&); MStatus deregister_AimTransform(MFnPlugin&);
-MStatus register_CircularText(MFnPlugin&); MStatus deregister_CircularText(MFnPlugin&);
+MStatus register_nd_mPyDnet(MFnPlugin&); MStatus deregister_nd_mPyDnet(MFnPlugin&);
+MStatus register_nd_comboCorrectives(MFnPlugin&); MStatus deregister_nd_comboCorrectives(MFnPlugin&);
+MStatus register_nd_procrustesTags(MFnPlugin&); MStatus deregister_nd_procrustesTags(MFnPlugin&);
+MStatus register_nd_nurbsWave(MFnPlugin&); MStatus deregister_nd_nurbsWave(MFnPlugin&);
+MStatus register_nd_patchRelax(MFnPlugin&); MStatus deregister_nd_patchRelax(MFnPlugin&);
+MStatus register_nd_rbfWrapDeformer(MFnPlugin&); MStatus deregister_nd_rbfWrapDeformer(MFnPlugin&);
+MStatus register_nd_sineRipple(MFnPlugin&); MStatus deregister_nd_sineRipple(MFnPlugin&);
+MStatus register_nd_unitSphereCollision(MFnPlugin&); MStatus deregister_nd_unitSphereCollision(MFnPlugin&);
+MStatus register_nd_compositeTexture(MFnPlugin&); MStatus deregister_nd_compositeTexture(MFnPlugin&);
+MStatus register_nd_scanlineTex(MFnPlugin&); MStatus deregister_nd_scanlineTex(MFnPlugin&);
+MStatus register_nd_fileTexture(MFnPlugin&); MStatus deregister_nd_fileTexture(MFnPlugin&);
+MStatus register_nd_gameOfLifeTex(MFnPlugin&); MStatus deregister_nd_gameOfLifeTex(MFnPlugin&);
+MStatus register_nd_twoBoneIK(MFnPlugin&); MStatus deregister_nd_twoBoneIK(MFnPlugin&);
+MStatus register_nd_animatedSelection(MFnPlugin&); MStatus deregister_nd_animatedSelection(MFnPlugin&);
+MStatus register_nd_animatedText(MFnPlugin&); MStatus deregister_nd_animatedText(MFnPlugin&);
+MStatus register_nd_meshRegionLocator(MFnPlugin&); MStatus deregister_nd_meshRegionLocator(MFnPlugin&);
+MStatus register_nd_widgetShowcase(MFnPlugin&); MStatus deregister_nd_widgetShowcase(MFnPlugin&);
+MStatus register_nd_diskMeshCache(MFnPlugin&); MStatus deregister_nd_diskMeshCache(MFnPlugin&);
+MStatus register_nd_gameOfLifeMesh(MFnPlugin&); MStatus deregister_nd_gameOfLifeMesh(MFnPlugin&);
+MStatus register_nd_jsonMeshReader(MFnPlugin&); MStatus deregister_nd_jsonMeshReader(MFnPlugin&);
+MStatus register_nd_meshMaze(MFnPlugin&); MStatus deregister_nd_meshMaze(MFnPlugin&);
+MStatus register_nd_metaballs(MFnPlugin&); MStatus deregister_nd_metaballs(MFnPlugin&);
+MStatus register_nd_uvLayoutMesh(MFnPlugin&); MStatus deregister_nd_uvLayoutMesh(MFnPlugin&);
+MStatus register_nd_voxelizeMesh(MFnPlugin&); MStatus deregister_nd_voxelizeMesh(MFnPlugin&);
+MStatus register_nd_bubbleSort(MFnPlugin&); MStatus deregister_nd_bubbleSort(MFnPlugin&);
+MStatus register_nd_hexAttribute(MFnPlugin&); MStatus deregister_nd_hexAttribute(MFnPlugin&);
+MStatus register_nd_ouch(MFnPlugin&); MStatus deregister_nd_ouch(MFnPlugin&);
+MStatus register_nd_spine(MFnPlugin&); MStatus deregister_nd_spine(MFnPlugin&);
+MStatus register_nd_spline(MFnPlugin&); MStatus deregister_nd_spline(MFnPlugin&);
+MStatus register_nd_springChain(MFnPlugin&); MStatus deregister_nd_springChain(MFnPlugin&);
+MStatus register_nd_helixCurve(MFnPlugin&); MStatus deregister_nd_helixCurve(MFnPlugin&);
+MStatus register_nd_rippleSurf(MFnPlugin&); MStatus deregister_nd_rippleSurf(MFnPlugin&);
+MStatus register_nd_dualQuaternionSkin(MFnPlugin&); MStatus deregister_nd_dualQuaternionSkin(MFnPlugin&);
+MStatus register_nd_linearBlendSkin(MFnPlugin&); MStatus deregister_nd_linearBlendSkin(MFnPlugin&);
+MStatus register_nd_twistSwingSkin(MFnPlugin&); MStatus deregister_nd_twistSwingSkin(MFnPlugin&);
+MStatus register_nd_aimTransform(MFnPlugin&); MStatus deregister_nd_aimTransform(MFnPlugin&);
+MStatus register_nd_circularText(MFnPlugin&); MStatus deregister_nd_circularText(MFnPlugin&);
 
 namespace {
 
@@ -185,43 +185,43 @@ const unsigned    kIds_36[]   = {0x000792d9u, 0u};
 const char* const kCmds_36[]  = {nullptr};
 
 const NdMember kMembers[] = {
-    {"mPyDnet", kTypes_0, kIds_0, kCmds_0, register_MPyDnet, deregister_MPyDnet},
-    {"comboCorrectives", kTypes_1, kIds_1, kCmds_1, register_ComboCorrectives, deregister_ComboCorrectives},
-    {"procrustesTags", kTypes_2, kIds_2, kCmds_2, register_ProcrustesTags, deregister_ProcrustesTags},
-    {"nurbsWave", kTypes_3, kIds_3, kCmds_3, register_NurbsWave, deregister_NurbsWave},
-    {"patchRelax", kTypes_4, kIds_4, kCmds_4, register_PatchRelax, deregister_PatchRelax},
-    {"rbfWrapDeformer", kTypes_5, kIds_5, kCmds_5, register_RbfWrapDeformer, deregister_RbfWrapDeformer},
-    {"sineRipple", kTypes_6, kIds_6, kCmds_6, register_SineRipple, deregister_SineRipple},
-    {"unitSphereCollision", kTypes_7, kIds_7, kCmds_7, register_UnitSphereCollision, deregister_UnitSphereCollision},
-    {"compositeTexture", kTypes_8, kIds_8, kCmds_8, register_CompositeTexture, deregister_CompositeTexture},
-    {"scanlineTex", kTypes_9, kIds_9, kCmds_9, register_ScanlineTex, deregister_ScanlineTex},
-    {"fileTexture", kTypes_10, kIds_10, kCmds_10, register_FileTexture, deregister_FileTexture},
-    {"gameOfLifeTex", kTypes_11, kIds_11, kCmds_11, register_GameOfLifeTex, deregister_GameOfLifeTex},
-    {"twoBoneIK", kTypes_12, kIds_12, kCmds_12, register_TwoBoneIK, deregister_TwoBoneIK},
-    {"animatedSelection", kTypes_13, kIds_13, kCmds_13, register_AnimatedSelection, deregister_AnimatedSelection},
-    {"animatedText", kTypes_14, kIds_14, kCmds_14, register_AnimatedText, deregister_AnimatedText},
-    {"meshRegionLocator", kTypes_15, kIds_15, kCmds_15, register_MeshRegionLocator, deregister_MeshRegionLocator},
-    {"widgetShowcase", kTypes_16, kIds_16, kCmds_16, register_WidgetShowcase, deregister_WidgetShowcase},
-    {"diskMeshCache", kTypes_17, kIds_17, kCmds_17, register_DiskMeshCache, deregister_DiskMeshCache},
-    {"gameOfLifeMesh", kTypes_18, kIds_18, kCmds_18, register_GameOfLifeMesh, deregister_GameOfLifeMesh},
-    {"jsonMeshReader", kTypes_19, kIds_19, kCmds_19, register_JsonMeshReader, deregister_JsonMeshReader},
-    {"meshMaze", kTypes_20, kIds_20, kCmds_20, register_MeshMaze, deregister_MeshMaze},
-    {"metaballs", kTypes_21, kIds_21, kCmds_21, register_Metaballs, deregister_Metaballs},
-    {"uvLayoutMesh", kTypes_22, kIds_22, kCmds_22, register_UvLayoutMesh, deregister_UvLayoutMesh},
-    {"voxelizeMesh", kTypes_23, kIds_23, kCmds_23, register_VoxelizeMesh, deregister_VoxelizeMesh},
-    {"bubbleSort", kTypes_24, kIds_24, kCmds_24, register_BubbleSort, deregister_BubbleSort},
-    {"hexAttribute", kTypes_25, kIds_25, kCmds_25, register_HexAttribute, deregister_HexAttribute},
-    {"ouch", kTypes_26, kIds_26, kCmds_26, register_Ouch, deregister_Ouch},
-    {"spine", kTypes_27, kIds_27, kCmds_27, register_Spine, deregister_Spine},
-    {"spline", kTypes_28, kIds_28, kCmds_28, register_Spline, deregister_Spline},
-    {"springChain", kTypes_29, kIds_29, kCmds_29, register_SpringChain, deregister_SpringChain},
-    {"helixCurve", kTypes_30, kIds_30, kCmds_30, register_HelixCurve, deregister_HelixCurve},
-    {"rippleSurf", kTypes_31, kIds_31, kCmds_31, register_RippleSurf, deregister_RippleSurf},
-    {"dualQuaternionSkin", kTypes_32, kIds_32, kCmds_32, register_DualQuaternionSkin, deregister_DualQuaternionSkin},
-    {"linearBlendSkin", kTypes_33, kIds_33, kCmds_33, register_LinearBlendSkin, deregister_LinearBlendSkin},
-    {"twistSwingSkin", kTypes_34, kIds_34, kCmds_34, register_TwistSwingSkin, deregister_TwistSwingSkin},
-    {"aimTransform", kTypes_35, kIds_35, kCmds_35, register_AimTransform, deregister_AimTransform},
-    {"circularText", kTypes_36, kIds_36, kCmds_36, register_CircularText, deregister_CircularText},
+    {"mPyDnet", kTypes_0, kIds_0, kCmds_0, register_nd_mPyDnet, deregister_nd_mPyDnet},
+    {"comboCorrectives", kTypes_1, kIds_1, kCmds_1, register_nd_comboCorrectives, deregister_nd_comboCorrectives},
+    {"procrustesTags", kTypes_2, kIds_2, kCmds_2, register_nd_procrustesTags, deregister_nd_procrustesTags},
+    {"nurbsWave", kTypes_3, kIds_3, kCmds_3, register_nd_nurbsWave, deregister_nd_nurbsWave},
+    {"patchRelax", kTypes_4, kIds_4, kCmds_4, register_nd_patchRelax, deregister_nd_patchRelax},
+    {"rbfWrapDeformer", kTypes_5, kIds_5, kCmds_5, register_nd_rbfWrapDeformer, deregister_nd_rbfWrapDeformer},
+    {"sineRipple", kTypes_6, kIds_6, kCmds_6, register_nd_sineRipple, deregister_nd_sineRipple},
+    {"unitSphereCollision", kTypes_7, kIds_7, kCmds_7, register_nd_unitSphereCollision, deregister_nd_unitSphereCollision},
+    {"compositeTexture", kTypes_8, kIds_8, kCmds_8, register_nd_compositeTexture, deregister_nd_compositeTexture},
+    {"scanlineTex", kTypes_9, kIds_9, kCmds_9, register_nd_scanlineTex, deregister_nd_scanlineTex},
+    {"fileTexture", kTypes_10, kIds_10, kCmds_10, register_nd_fileTexture, deregister_nd_fileTexture},
+    {"gameOfLifeTex", kTypes_11, kIds_11, kCmds_11, register_nd_gameOfLifeTex, deregister_nd_gameOfLifeTex},
+    {"twoBoneIK", kTypes_12, kIds_12, kCmds_12, register_nd_twoBoneIK, deregister_nd_twoBoneIK},
+    {"animatedSelection", kTypes_13, kIds_13, kCmds_13, register_nd_animatedSelection, deregister_nd_animatedSelection},
+    {"animatedText", kTypes_14, kIds_14, kCmds_14, register_nd_animatedText, deregister_nd_animatedText},
+    {"meshRegionLocator", kTypes_15, kIds_15, kCmds_15, register_nd_meshRegionLocator, deregister_nd_meshRegionLocator},
+    {"widgetShowcase", kTypes_16, kIds_16, kCmds_16, register_nd_widgetShowcase, deregister_nd_widgetShowcase},
+    {"diskMeshCache", kTypes_17, kIds_17, kCmds_17, register_nd_diskMeshCache, deregister_nd_diskMeshCache},
+    {"gameOfLifeMesh", kTypes_18, kIds_18, kCmds_18, register_nd_gameOfLifeMesh, deregister_nd_gameOfLifeMesh},
+    {"jsonMeshReader", kTypes_19, kIds_19, kCmds_19, register_nd_jsonMeshReader, deregister_nd_jsonMeshReader},
+    {"meshMaze", kTypes_20, kIds_20, kCmds_20, register_nd_meshMaze, deregister_nd_meshMaze},
+    {"metaballs", kTypes_21, kIds_21, kCmds_21, register_nd_metaballs, deregister_nd_metaballs},
+    {"uvLayoutMesh", kTypes_22, kIds_22, kCmds_22, register_nd_uvLayoutMesh, deregister_nd_uvLayoutMesh},
+    {"voxelizeMesh", kTypes_23, kIds_23, kCmds_23, register_nd_voxelizeMesh, deregister_nd_voxelizeMesh},
+    {"bubbleSort", kTypes_24, kIds_24, kCmds_24, register_nd_bubbleSort, deregister_nd_bubbleSort},
+    {"hexAttribute", kTypes_25, kIds_25, kCmds_25, register_nd_hexAttribute, deregister_nd_hexAttribute},
+    {"ouch", kTypes_26, kIds_26, kCmds_26, register_nd_ouch, deregister_nd_ouch},
+    {"spine", kTypes_27, kIds_27, kCmds_27, register_nd_spine, deregister_nd_spine},
+    {"spline", kTypes_28, kIds_28, kCmds_28, register_nd_spline, deregister_nd_spline},
+    {"springChain", kTypes_29, kIds_29, kCmds_29, register_nd_springChain, deregister_nd_springChain},
+    {"helixCurve", kTypes_30, kIds_30, kCmds_30, register_nd_helixCurve, deregister_nd_helixCurve},
+    {"rippleSurf", kTypes_31, kIds_31, kCmds_31, register_nd_rippleSurf, deregister_nd_rippleSurf},
+    {"dualQuaternionSkin", kTypes_32, kIds_32, kCmds_32, register_nd_dualQuaternionSkin, deregister_nd_dualQuaternionSkin},
+    {"linearBlendSkin", kTypes_33, kIds_33, kCmds_33, register_nd_linearBlendSkin, deregister_nd_linearBlendSkin},
+    {"twistSwingSkin", kTypes_34, kIds_34, kCmds_34, register_nd_twistSwingSkin, deregister_nd_twistSwingSkin},
+    {"aimTransform", kTypes_35, kIds_35, kCmds_35, register_nd_aimTransform, deregister_nd_aimTransform},
+    {"circularText", kTypes_36, kIds_36, kCmds_36, register_nd_circularText, deregister_nd_circularText},
 };
 const int kCount = (int)(sizeof(kMembers) / sizeof(kMembers[0]));
 bool g_live[kCount] = {};  // what THIS load registered

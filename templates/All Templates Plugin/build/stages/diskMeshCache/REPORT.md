@@ -1,12 +1,12 @@
 # diskMeshCache -- compile report
 
-**Source node:** `diskMeshCache`  ·  **Base:** `MPxNode`  ·  **Generated:** 2026-08-26 01:21
+**Source node:** `diskMeshCache`  ·  **Base:** `MPxNode`  ·  **Generated:** 2026-09-09 15:24
 
 | stage | outcome |
 |---|---|
 | 1 Transpile | deterministic C++, no AI |
 | 2 AI assist | not run (nothing to fill) |
-| 3 AI optimize | not run |
+| 3 AI optimize | ran, nothing accepted (baseline could not be benchmarked) -- 0 run of max 6, stopped: baseline could not be benchmarked |
 
 ## The Python this was generated from
 
@@ -47,9 +47,29 @@ else:
 self.outMesh = Mesh(points=pts, counts=counts, indices=indices)
 ```
 
+## Optimization
+
+Parity gate: not exercised -- no candidate reached the parity check (the baseline was unmeasurable or no round compiled).
+
+Bench scene: geo density 40 / array length 512; noise floor 15 ms.
+
+Baseline **--** -> best **--** (**1.00x**).
+
+Rounds: **0** run of at most 6; the loop stopped because baseline could not be benchmarked.
+
+| # | change | theme | predicted | measured | time | outcome |
+|---|---|---|---|---|---|---|
+| 00 | `--` | -- | -- | -- | -- | -- |
+
+## Verification
+
+* parity: **pass**
+* verify could not run: 'NoneType' object has no attribute 'add_input_attr' | authored @maya_test: 1/1 passed
+
 ## Files
 
 ```
 build/stages/diskMeshCache/1_transpiled.cpp     deterministic transpile (no AI)
+build/stages/diskMeshCache/3_optimized/00_baseline.cpp
 build/source/diskMeshCache.cpp      SHIPPED
 ```

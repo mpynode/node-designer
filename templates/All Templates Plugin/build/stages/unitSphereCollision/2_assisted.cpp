@@ -132,79 +132,78 @@ MStatus UnitSphereCollision::deform(MDataBlock& block, MItGeometry& iter,
     }
 
     // ===== BEGIN PORTED COMPUTE =====
-        // Unit-sphere collision: accumulating "pusher" port. Every vertex inside the
-        // unit collider sphere (in pusher-local space) is pushed onto its surface;
-        // the pushed result is kept in a persistent per-instance buffer so it BAKES.
-        //
-        // PERSISTENT PER-INSTANCE STATE (self.positions): (N,4) homogeneous buffer
-        // latched across evals. Constrained function-static registry keyed on this
-        // (cannot add a class member or <mutex> in the PORT region; emit as specified).
+        // --- persistent per-instance state: self.positions ---
+        // The Python latches the pushed (baked) buffer on self.positions and reads
+        // it back on later evals, so the dent accumulates. compute() is stateless,
+        // so keep it in a function-static registry keyed on `this`.
         struct NodeState {
             const void* key;
-            bool initialized = false;
-            std::vector<double> positions;   // 4*n, homogeneous rows (self.positions)
+            bool initialized = false;         // hasattr(self, 'positions')
+            std::vector<double> positions;    // (n,4) row-major homogeneous buffer
         };
-        static std::vector<NodeState*> s_states;   // POINTERS: states never move
+        static std::vector<NodeState*> s_states;   // POINTERS: the vector reallocates,
+                                                   // the states it points at never move
         NodeState* st = nullptr;
         for (NodeState* s : s_states)
             if (s->key == (const void*)this) { st = s; break; }
         if (!st) { st = new NodeState(); st->key = (const void*)this; s_states.push_back(st); }
 
+        // The Python honours only self.envelope (no weightValue / painted weights),
+        // so the port applies `env` alone.
         if (n > 0) {
-            // Seed on first eval / topology change (buf shape != (len(pts),4)).
+            // buf is None / wrong shape (first eval or topology change) -> seed from
+            // the current input points, w = 1.
             if (!st->initialized || st->positions.size() != (size_t)n * 4) {
-                st->positions.resize((size_t)n * 4);
+                st->positions.assign((size_t)n * 4, 0.0);
                 for (unsigned int i = 0; i < n; ++i) {
-                    st->positions[i*4+0] = pts[i].x;
-                    st->positions[i*4+1] = pts[i].y;
-                    st->positions[i*4+2] = pts[i].z;
-                    st->positions[i*4+3] = 1.0;   // np.ones column
+                    st->positions[(size_t)i*4+0] = pts[i].x;
+                    st->positions[(size_t)i*4+1] = pts[i].y;
+                    st->positions[(size_t)i*4+2] = pts[i].z;
+                    st->positions[(size_t)i*4+3] = 1.0;
                 }
                 st->initialized = true;
             }
 
-            const MMatrix inv = in_aPusher.inverse();   // M.inverse() (analytic, EM-safe)
-            const MMatrix& fwd = in_aPusher;            // M
+            const MMatrix inv = in_aPusher.inverse();   // analytic inverse (EM-safe)
+            const MMatrix& fwd = in_aPusher;
+            const double e = (double)env;
 
             for (unsigned int i = 0; i < n; ++i) {
-                // P: accumulated homogeneous buffer row.
-                const double P0 = st->positions[i*4+0];
-                const double P1 = st->positions[i*4+1];
-                const double P2 = st->positions[i*4+2];
-                const double P3 = st->positions[i*4+3];
+                const size_t b = (size_t)i * 4;
+                const double p0 = st->positions[b+0];
+                const double p1 = st->positions[b+1];
+                const double p2 = st->positions[b+2];
+                const double p3 = st->positions[b+3];
 
-                // local = P @ inv  (row-vector * matrix; keep full 4-vector, no cartesianize)
-                double local[4];
-                for (int c = 0; c < 4; ++c)
-                    local[c] = P0*inv(0,c) + P1*inv(1,c) + P2*inv(2,c) + P3*inv(3,c);
-
-                // dist = norm(local[:3]); push onto unit sphere only when 0 < dist < 1.
-                const double dist = std::sqrt(local[0]*local[0] + local[1]*local[1] + local[2]*local[2]);
-                if (dist > 0.0 && dist < 1.0) {
-                    const double invd = 1.0 / dist;
-                    local[0] *= invd; local[1] *= invd; local[2] *= invd;
+                // local = P @ inv   (row-vector convention, same as MPoint * matrix)
+                double loc[4];
+                for (int c = 0; c < 4; ++c) {
+                    loc[c] = p0 * inv[0][c] + p1 * inv[1][c] + p2 * inv[2][c] + p3 * inv[3][c];
                 }
 
-                // P = local @ fwd  (back to object space; buffer accumulates/bakes)
-                double Pnew[4];
-                for (int c = 0; c < 4; ++c)
-                    Pnew[c] = local[0]*fwd(0,c) + local[1]*fwd(1,c) + local[2]*fwd(2,c) + local[3]*fwd(3,c);
+                // dist = |local[:3]|; push onto the unit sphere when 0 < dist < 1.
+                const double d = std::sqrt(loc[0]*loc[0] + loc[1]*loc[1] + loc[2]*loc[2]);
+                if (d > 0.0 && d < 1.0) {
+                    loc[0] /= d;
+                    loc[1] /= d;
+                    loc[2] /= d;
+                }
 
-                // Persist the baked buffer (self.positions = P).
-                st->positions[i*4+0] = Pnew[0];
-                st->positions[i*4+1] = Pnew[1];
-                st->positions[i*4+2] = Pnew[2];
-                st->positions[i*4+3] = Pnew[3];
+                // P = local @ fwd   (back to object space; the buffer accumulates)
+                double q[4];
+                for (int c = 0; c < 4; ++c) {
+                    q[c] = loc[0] * fwd[0][c] + loc[1] * fwd[1][c] + loc[2] * fwd[2][c] + loc[3] * fwd[3][c];
+                }
 
-                // Blend baked buffer against rest by the envelope:
-                //   pts + env * (P[:, :3] - pts)   (Python used envelope only, no painted weight)
-                const double ox = pts[i].x, oy = pts[i].y, oz = pts[i].z;
-                MPoint outp;
-                outp.x = ox + (double)env * (Pnew[0] - ox);
-                outp.y = oy + (double)env * (Pnew[1] - oy);
-                outp.z = oz + (double)env * (Pnew[2] - oz);
-                outp.w = 1.0;
-                pts[i] = outp;
+                st->positions[b+0] = q[0];
+                st->positions[b+1] = q[1];
+                st->positions[b+2] = q[2];
+                st->positions[b+3] = q[3];
+
+                // setPoints(pts + env * (P[:, :3] - pts))
+                pts[i].x = pts[i].x + e * (q[0] - pts[i].x);
+                pts[i].y = pts[i].y + e * (q[1] - pts[i].y);
+                pts[i].z = pts[i].z + e * (q[2] - pts[i].z);
             }
         }
     // ===== END PORTED COMPUTE =====

@@ -1,48 +1,49 @@
 # animatedText -- compile report
 
-**Source node:** `animatedText`  ·  **Base:** `MPxLocatorNode`  ·  **Generated:** 2026-08-26 01:21
+**Source node:** `animatedText`  ·  **Base:** `MPxLocatorNode`  ·  **Generated:** 2026-09-26 00:20
 
 | stage | outcome |
 |---|---|
 | 1 Transpile | deterministic C++, no AI |
 | 2 AI assist | not run (nothing to fill) |
-| 3 AI optimize | not run |
+| 3 AI optimize | ran, nothing accepted (baseline could not be benchmarked) -- 0 run of max 6, stopped: baseline could not be benchmarked |
 
 ## The Python this was generated from
 
 ```python
-# Animated rainbow text gizmo. The motion is driven by the timeline position
-# (mod `loopFrames`) PLUS a gentle wall-clock drift, so it keeps flowing whether
-# you scrub / play the timeline OR leave it idle -- the locator has no
-# time-input plug, so a still timeline alone would freeze it (this is how the
-# original text gizmo kept moving). auto_refresh keeps it repainting so the
-# wall-clock term stays live.
+# Animated rainbow text gizmo, driven by the WALL CLOCK only. self.wallclock is
+# seconds since the epoch (time.time()) and is identical in the compiled node,
+# so the motion is the same at idle, while scrubbing and in every playback
+# mode: frame rate and scene time units never change its speed. Timeline
+# animation is opt-in -- an expression gets it by reading self.time (or a
+# time plug); this one deliberately does not. `loopDuration` is wall-clock
+# seconds per loop: 1 = one loop per second, 2 = two seconds per loop,
+# -1 = one loop per second in reverse, 0 = frozen. auto_refresh keeps the
+# gizmo repainting between the redraws Maya would otherwise never issue.
 self.auto_refresh = True
 
-raw   = getattr(self, "displayText", "")
-msg   = raw if (raw and str(raw).strip()) else "MPyNode!"
+raw = getattr(self, "displayText", "")
+msg = raw if (raw and str(raw).strip()) else "MPyNode!"
 chars = list(str(msg))
-n     = len(chars)
-idx   = np.arange(n, dtype=np.float64)
+n = len(chars)
+idx = np.arange(n, dtype=np.float64)
 
-loop  = max(self.loopFrames, 1)
-frame = float(getattr(self, "time", 0.0))
-# timeline position (0..1 per loop) plus a slow wall-clock drift so the gizmo
-# animates even when the timeline is idle (matches the original text gizmo).
-cyc     = (frame % loop) / loop + _wall.time() * 0.15
-phase   = TWO_PI * cyc
+dur = float(self.loopDuration)
+speed = (1.0 / dur) if dur != 0.0 else 0.0    # loops per wall-clock second
+cyc = self.wallclock * speed                  # loop position; its fraction is the phase
+phase = TWO_PI * cyc
 
 spacing = self.spacing
-wave    = self.waveHeight
+wave = self.waveHeight
 
 # layout along X with a slow one-per-loop horizontal sway
-xs        = (idx - (n - 1) / 2.0) * spacing + 1.2 * np.sin(phase)
-ys        = wave * np.sin(idx * 0.7 - 2.0 * phase)     # 2 travelling waves / loop
-zs        = 0.5 * np.cos(idx * 0.5 - 1.0 * phase)
+xs = (idx - (n - 1) / 2.0) * spacing + 1.2 * np.sin(phase)
+ys = wave * np.sin(idx * 0.7 - 2.0 * phase)     # 2 travelling waves / loop
+zs = 0.5 * np.cos(idx * 0.5 - 1.0 * phase)
 positions = np.stack([xs, ys, zs], axis=1).astype(np.float32)
 
 # scrolling rainbow (hue cycles once per loop + per-glyph offset)
-rgb    = hue2rgb(idx / max(n, 1) + cyc)
+rgb = hue2rgb(idx / max(n, 1) + cyc)
 colors = np.concatenate([rgb, np.ones((n, 1))], axis=1).astype(np.float32)
 if bool(getattr(self, "selected", False)):
     colors[:] = (1.0, 1.0, 1.0, 1.0)          # flash white while selected
@@ -64,10 +65,10 @@ psize = (5.0 + 6.0 * np.abs(np.sin(idx * 0.9 + 2.0 * phase))).astype(np.float32)
 # pts[:-1] / pts[1:] segment split itself -- including trimming the per-vertex
 # colours to the segment count, which is easy to forget by hand and silently
 # rejects the whole buffer when the lengths disagree.
-m    = 64
-lx   = np.linspace(xs.min() - 1.0, xs.max() + 1.0, m)
-ly   = 0.7 * np.sin(lx * 0.8 + 1.0 * phase) - 2.4
-pts  = np.stack([lx, ly, np.zeros(m)], axis=1).astype(np.float32)
+m = 64
+lx = np.linspace(xs.min() - 1.0, xs.max() + 1.0, m)
+ly = 0.7 * np.sin(lx * 0.8 + 1.0 * phase) - 2.4
+pts = np.stack([lx, ly, np.zeros(m)], axis=1).astype(np.float32)
 lrgb = hue2rgb(lx * 0.04 + cyc)
 lcol = np.concatenate([lrgb, np.ones((m, 1))], axis=1).astype(np.float32)
 
@@ -84,9 +85,29 @@ self.draw = (DrawText(chars, positions, color=colors, size=sizes)
                           color=hue2rgb(np.array([cyc]))))
 ```
 
+## Optimization
+
+Parity gate: not exercised -- no candidate reached the parity check (the baseline was unmeasurable or no round compiled).
+
+Bench scene: geo density 40 / array length 512; noise floor 15 ms.
+
+Baseline **--** -> best **--** (**1.00x**).
+
+Rounds: **0** run of at most 6; the loop stopped because baseline could not be benchmarked.
+
+| # | change | theme | predicted | measured | time | outcome |
+|---|---|---|---|---|---|---|
+| 00 | `--` | -- | -- | -- | -- | -- |
+
+## Verification
+
+* parity: **pass**
+* no scalar outputs to compare -- pointwise parity skipped (vacuous check) | authored @maya_test: 1/1 passed
+
 ## Files
 
 ```
 build/stages/animatedText/1_transpiled.cpp     deterministic transpile (no AI)
+build/stages/animatedText/3_optimized/00_baseline.cpp
 build/source/animatedText.cpp      SHIPPED
 ```
